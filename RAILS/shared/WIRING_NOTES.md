@@ -704,3 +704,24 @@ calls in brgen set a message's link preview and expiry, an order's gclid and
 conversion stamp, and two seeder backfills. No fragment cache keys on a message
 or an order, and the seeder runs before any cache exists, so the stale-cache
 trap this file names does not apply to them.
+
+## Conditional GET is bsdports-only, and keyed on the viewer (2026-09-14)
+
+bsdports answers `ports#show` and `maintainers#show` with `stale?`, and every
+ETag there carries the signed-in user through `etag { }` in its
+`ApplicationController`. The port page is not identical for everyone: it renders
+the watch toggle, CSRF-bearing forms and comments, so an ETag keyed only on the
+port lets a reader who signed in, or whose page gained a comment, revalidate a
+stale copy. Rows that never touch their parent (comments, advisories, version
+history) put their newest `updated_at` in the key at microsecond precision,
+because a bare `Time` expands to whole seconds. The HTML index carries no public
+max-age: it is root, where sign-in lands, and a browser serves a fresh cached
+entry without asking. The RSS feed keeps its ten minutes.
+
+brgen and amber stay without conditional GET for the reasons in "No conditional
+GET on brgen's show pages": the user id in the key fixes the signed-out copy but
+not vote state or badge counts, which no record's `updated_at` covers.
+
+In an app without guests, `authenticated?` resumes the session itself, because
+`allow_unauthenticated_access` skips `resume_session` there. A broadcast partial
+renders with no key generator and stays signed-out.

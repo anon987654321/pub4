@@ -51,9 +51,16 @@ module Shared
 
     private
 
+    # In an app without guests, allow_unauthenticated_access skips
+    # resume_session, so a public page resumes it here on first ask — the
+    # generator's own shape — so a signed-in reader of a public page sees their
+    # own nav and controls rather than the sign-in link. A broadcast renders
+    # through ApplicationController.renderer with no key generator to read a
+    # signed cookie, and a partial sent to everyone renders signed-out.
     def authenticated?
       return Current.user.present? && !guest? if supports_guests?
 
+      resume_session unless @session_resumed || request.key_generator.nil?
       Current.session.present?
     end
 
@@ -66,6 +73,7 @@ module Shared
     end
 
     def resume_session
+      @session_resumed = true
       Current.session = find_session_by_cookie
       Current.user = Current.session&.user || find_or_create_guest_user
     end

@@ -11,8 +11,6 @@ class PortsController < ApplicationController
   before_action :require_authentication, only: %i[crossref_cves review watch unwatch]
 
   def index
-    expires_in 10.minutes, public: true if params[:q].blank? && params[:category_id].blank?
-
     scope = Port.includes(:category)
     scope = apply_live_search(scope, columns: %w[name comment description], vertical: "ports") if live_search_query.present?
     scope = scope.by_category(params[:category_id]) if params[:category_id].present?
@@ -26,7 +24,10 @@ class PortsController < ApplicationController
         @last_import = ImportRun.recent.first if defined?(ImportRun)
         finish_live_search(partial: "ports/live_search_results")
       end
+      # The feed has no chrome, so it can be cached for everyone. The HTML index
+      # is root, where sign-in lands, and its nav belongs to one viewer.
       format.rss do
+        expires_in 10.minutes, public: true if params[:q].blank? && params[:category_id].blank?
         @ports = scope.where("last_updated >= ?", 7.days.ago).order(last_updated: :desc).limit(100)
         render layout: false
       end
@@ -34,7 +35,17 @@ class PortsController < ApplicationController
   end
 
   def show
-    fresh_when(@port, public: true)
+    @watching = authenticated? && @port.watches.exists?(user: Current.user)
+    @port.record_activity!("PortViewed", source_vertical: "bsdports") unless passive_request?
+    # Comments, advisories and version history are rows that never touch the
+    # port, so each one's newest change is in the key beside the viewer's watch.
+    # A bare Time expands to whole seconds in an ETag; :usec keeps the change.
+    return unless stale?(etag: [
+      @port.cache_key_with_version, @watching,
+      @port.comments.maximum(:updated_at)&.to_fs(:usec), @port.comments.count,
+      @port.security_advisories.maximum(:updated_at)&.to_fs(:usec),
+      @port.port_updates.maximum(:updated_at)&.to_fs(:usec)
+    ])
 
     @updates = @port.port_updates.order(committed_at: :desc).limit(10)
     @dependencies = @port.dependencies.includes(:depends_on)
@@ -42,7 +53,6 @@ class PortsController < ApplicationController
     @rdeps = @port.reverse_deps.includes(:category).limit(20)
     @comments = @port.comments.roots.includes(:user, replies: :user)
     @comment = Comment.new
-    @watching = authenticated? && @port.watches.exists?(user: Current.user)
     @advisories = @port.security_advisories.recent
     @maintainer = @port.maintainer || Maintainer.find_by(name: @port[:maintainer])
     @dependency_tree = Dependency.tree_for(@port)
@@ -57,7 +67,6 @@ class PortsController < ApplicationController
         "(pkg_info not available in this env)"
       end
     end
-    @port.record_activity!("PortViewed", source_vertical: "bsdports") unless passive_request?
   end
 
   def watch

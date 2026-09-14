@@ -14,7 +14,15 @@ class MaintainersController < ApplicationController
 
   def show
     @maintainer = Maintainer.find(params[:id])
-    @pagy, @ports = pagy(@maintainer.ports.order(:name))
     @maintainer.record_activity!("MaintainerViewed", source_vertical: "bsdports") unless passive_request?
+    # The page is the maintainer and a page of ports; an import that changes
+    # either moves one of these. The page number lives in the URL, and :usec
+    # keeps a same-second import from expanding to an unchanged key.
+    return unless stale?(etag: [
+      @maintainer.cache_key_with_version,
+      @maintainer.ports.maximum(:updated_at)&.to_fs(:usec), @maintainer.ports.count
+    ])
+
+    @pagy, @ports = pagy(@maintainer.ports.order(:name))
   end
 end

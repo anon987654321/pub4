@@ -64,6 +64,64 @@ class PortsControllerTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t("flash.review_issues", issues: issues), flash[:notice]
   end
 
+  def test_a_port_page_revalidates_until_a_comment_or_the_viewer_changes
+    port = seed_port
+    get port_path(port)
+    assert_response :success
+    etag = response.headers["ETag"]
+    assert etag, "ports#show must answer with an ETag"
+    assert_no_match(/public/, response.headers["Cache-Control"].to_s)
+
+    get port_path(port), headers: { "If-None-Match" => etag }
+    assert_response :not_modified
+
+    user = User.strict_loading(false).create!(email_address: "etag-#{SecureRandom.hex(4)}@bsdports.test", password: "password")
+    Comment.create!(user:, port:, content: "builds fine on arm64")
+    get port_path(port), headers: { "If-None-Match" => etag }
+    assert_response :success, "a new comment must change the port page's ETag"
+
+    etag = response.headers["ETag"]
+    post session_path, params: { email_address: user.email_address, password: "password" }
+    get port_path(port), headers: { "If-None-Match" => etag }
+    assert_response :success, "signing in must not revalidate the signed-out copy"
+  end
+
+  # bsdports has no guests, so allow_unauthenticated_access skips
+  # resume_session on public pages; authenticated? has to resume it there.
+  def test_a_signed_in_reader_sees_their_own_controls_on_a_public_port_page
+    port = seed_port
+    get port_path(port)
+    assert_select "#port_watch_#{port.id}", count: 0
+
+    user = User.strict_loading(false).create!(email_address: "reader-#{SecureRandom.hex(4)}@bsdports.test", password: "password")
+    post session_path, params: { email_address: user.email_address, password: "password" }
+    get port_path(port)
+    assert_response :success
+    assert_select "#port_watch_#{port.id} form[action=?]", watch_port_path(port)
+  end
+
+  def test_a_maintainer_page_revalidates_until_its_ports_change
+    port = seed_port
+    maintainer = Maintainer.create!(name: "Jane Porter")
+    port.update!(maintainer_id: maintainer.id)
+
+    get maintainer_path(maintainer)
+    assert_response :success
+    etag = response.headers["ETag"]
+    get maintainer_path(maintainer), headers: { "If-None-Match" => etag }
+    assert_response :not_modified
+
+    port.update!(version: "2.5")
+    get maintainer_path(maintainer), headers: { "If-None-Match" => etag }
+    assert_response :success
+  end
+
+  def test_the_html_index_is_not_cached_for_everyone
+    get root_url
+    assert_response :success
+    assert_no_match(/public|max-age=600/, response.headers["Cache-Control"].to_s)
+  end
+
   private
 
   # A Port needs a platform and a category; the fixtures carry only the platform.
