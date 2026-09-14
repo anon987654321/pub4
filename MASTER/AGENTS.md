@@ -130,11 +130,12 @@ you type, which is why it is written here.
 
 You have decision authority over anything in `TODO.md`, and the backlog is
 worked by closing entries rather than by annotating them. An entry closes two
-ways: you do it, or you decide against it and write the argument into the file
-that owns the decision — `MASTER/DECISIONS.md`, `OPENBSD/DECISIONS.md`, or the
-comment beside the code the decision is about. Then delete the entry. A record
-of finished work is closed by deleting it; git holds the why, and a backlog
-that keeps its own history stops being a backlog.
+ways: you do it, or you decide against it and write the argument where the next
+person to change that code reads it — a present-tense comment beside the code,
+or, for a standing refusal with no code site, one bullet under "Refused, and
+why" in `MASTER/AGENTS.md` or `OPENBSD/CLAUDE.md`. Then delete the entry. A
+record of finished work is closed by deleting it; git holds the why, and a
+backlog that keeps its own history stops being a backlog.
 
 What that authority does not extend to: anything that changes a rendered value
 — a colour, a font, a sound, a graded look — and anything that needs money, a
@@ -308,6 +309,36 @@ which. If a gate reported a pass having measured nothing — several here do whe
 the triangle is down — that is not a pass, and calling it one is worse than
 failing.
 
+A check certifies what it did not measure in seven ways, and each turns the
+absence of a property into evidence of it:
+
+1. **A comment outlives its rule.** A check that greps source strips comments
+   first, with the pattern chosen by extension; a `/*` stripper run over Ruby
+   eats `"etc/rc.d/*"`, and an assertion that reads comments teaches the next
+   author to delete the explanation.
+2. **An exemption outlives its subject.** Check each allow-list entry against the
+   tree, as `rake lint:autoload` does.
+3. **A build artifact outlives its source.** When behaviour contradicts source,
+   diff what is served against the file it claims to be; Rack::Static serves a
+   stale `public/assets` ahead of propshaft.
+4. **A staleness alarm is silenced by regenerating.** Before running
+   `assets:precompile` to clear a drift message, ask what the drift is evidence
+   of.
+5. **A test punishes the improvement it watches for.** Assert the invariant
+   (`refute_empty findings`), never the instance (`ratio < threshold`).
+6. **A writer reports an edit it did not make.** Read back what was written; in
+   YAML the indentation is the syntax, and a census that cannot parse a file
+   reports it clean.
+7. **A root constant resolves one level too high.** A fallback that ends in "use
+   the last candidate anyway" is not a fallback; assert what the root holds.
+
+So a new gate's first run is against a known-bad input, since a green first run
+is equally consistent with nothing measured. Registration is not execution: a
+gate listed in `gates.yml` with no class-level `.run` never ran. A gate reads the
+source of truth rather than restating it, and a test that turns green while
+asserting only what every subclass inherits is worse than one that errors,
+because it reads as coverage.
+
 ## When it goes wrong
 
 Nothing in this repo is so urgent that it is worth destroying someone else's
@@ -428,7 +459,7 @@ to edit it by hand. Editing the build is a fix that survives until the next
 | Deploy / VPS / rc.d | `topics.deploy` |
 | Persona / voice policy | `topics.persona` |
 | Law / scanners / loop | `START_HERE.md` → Data File Budget; all scanner law is `data/rules.yml` |
-| Extend runtime behavior | `DECISIONS.md` → One Spine. New ability in the fold = one Effect verb in `lib/core/world.rb`; new constraint = one rule in `lib/core/constitution.rb`; anything else is ordinary `lib/` and must not grow it (`rake lint:spine`) |
+| Extend runtime behavior | `data/spine.yml` header and `test/test_core_no_lib_backedges.rb`. New ability in the fold = one Effect verb in `lib/core/world.rb`; new constraint = one rule in `lib/core/constitution.rb`; anything else is ordinary `lib/` and must not grow it (`rake lint:spine`) |
 | Worn type / layout gates | `data/rules.yml` `design_rules.worn_type` + `RAILS/gates/support/geometry_type.rb`. Feed is a short measure; legal/prose is 66ch. |
 | brgen city network / verticals | `RAILS/brgen/AGENTS.md` — one process, city apex + subdomain engines |
 
@@ -447,3 +478,117 @@ Run the smallest proof in `START_HERE.md` "Checks by change type". On failure: `
 ## Patch closeout
 
 Match `EXAMPLES.md`: what changed, exact checks run, known debt called out explicitly.
+
+## Refused, and why
+
+Standing refusals with no line of code to sit beside. Each was argued against
+the tree once; reopen one only with the measurement or the consumer it names. A
+reason tied to code lives as a comment on that code, and OPENBSD's refusals are
+in `OPENBSD/CLAUDE.md`.
+
+- **No third surface.** MASTER is `bin/master` and the face. A product surface
+  born in an agent session, a desktop or companion app, or an editor extension
+  restates one of the two and drifts from it; a new public app waits on the
+  refusal of the same kind in `OPENBSD/CLAUDE.md`.
+- **No external agent protocol.** No ACP stdio mode, A2A, OpenAI-compatible
+  `/v1`, another harness behind `Io::Exec`, models.dev scrape or npm SDK. Each
+  makes MASTER a backend to someone else's policy, which the constitution
+  forbids; channel models and target URIs serve surfaces MASTER does not have.
+- **No TUI.** A full-screen interface is a second presenter for one event
+  stream. The CLI stays a dmesg-style line printer, terse and Unix-like in
+  OpenBSD dmesg's shape with Bringhurst's economy, and the face is the rich
+  surface.
+- **No browser verification by the agent.** Driving a browser to confirm its
+  own clicks is a computer-use driver, and so are screenshot and VNC workers.
+  Rendered pages are measured by the gates over CDP, on the deploy host.
+- **No parallel change streams.** Isolation is `operator worktree`, one checkout
+  per line of work, merged and deleted in the same session, and the fix loop
+  commits only the paths its own pass changed. Docker, Modal and Daytona
+  backends, a worker fleet and an agent process table answer a question one
+  OpenBSD host does not ask. A session writable set seeded from git-dirty paths
+  inverts in a shared checkout, admitting the files other sessions hold; the
+  fold's `new_path_ask` scopes writes to what the turn has read instead.
+- **No skill marketplace and no self-writing law.** No ClawHub, no unsigned or
+  scanner-admitted skill, and no learning loop that writes `data/soul.yml`,
+  which is immutable. `/soul propose`, approve and rollback is the proposal
+  lifecycle and `data/proposals.yml` its ledger; Mission Control inboxes,
+  profiles, a cost-aware self-improvement loop and live judge panels add
+  nothing to it. Paid tiers, prompt collection and advisory counts sold as a
+  safety score fall with them.
+- **No second record beside memory.** A belief store of verified, inferred and
+  contradicted facts, an execution-context object and a durable notification
+  queue each copy what memory, fiber locals and `StandingOrders` already hold.
+  MASTER's sixteen tools need no lazy schemas or tool search.
+- **No search or debate wrapped around FixLoop.** MCTS or a debate of three
+  models adds calls to a loop whose value agent is already the council.
+- **No golden traces or golden renders.** A model call's output and timing, and
+  a dilla render, are not deterministic to the byte, so a golden file fails on
+  noise or overwrites a take. A/B in dilla is `DILLA_FROZEN` and interleaved
+  listening.
+- **No telemetry, score or gate without a reader.** The face's audio clock
+  closes the gap a TTS state enum, a timestamped event stream or a sync budget
+  measures, and frame-time, thermal and soak data have no consumer. dilla's
+  `TIMBRAL_FIT`-style scores, research ledgers and NaN checks on delivered PCM
+  fall the same way: `MixScore` takes targets from takes kept after listening,
+  never from a threshold picked in advance. The face's look and dilla's sound
+  are the operator's.
+- **No native extension and no second language.** tree-sitter, Herb,
+  `tiktoken_ruby` and a Python compressor each put a toolchain beside a
+  pure-Ruby runtime that deploys to OpenBSD; Prism is in the stdlib. tree-sitter
+  reopens only as an operator decision about what MASTER is, Herb when Rails
+  ships it as its ERB implementation.
+- **No detector, index or corpus without a subject.** `LAYER_CAKE` finds nothing
+  at three links and aliases at two; `DEAD_ABSTRACTION`'s module half measures
+  Zeitwerk's file mapping and its class half finds nothing. A cross-file symbol
+  index, more visibility, metaprogramming or Liskov corpora, and a
+  clone-to-extract-method autofix wait for a finding in hand.
+- **No performance machinery ahead of a measured slowness.** No benchmark,
+  profile or hotpath commands, scan cache, per-detector budget, verdict cache or
+  concurrent gates. An optimisation lands with its instrument in the commit, the
+  number before and after, and a check that the output did not change; a cache
+  keys facts by what invalidates them, never verdicts.
+- **No audit without a path.** An intake item names a file, a caller or a
+  measurement; a repo-wide audit prompt closes as a class, because the
+  instruments it asks for exist. Mutation campaigns over whole directories,
+  skip-count dashboards, an architecture graph with expiring exceptions and
+  rules about the shape of backlog entries are the same request.
+- **No writer for a reader that does not exist.** SARIF output waits for a
+  consumer outside pub4, and taint tracking waits for a planner that never reads
+  untrusted text; `InjectionGuard` and the Governor are the defences that run.
+  `/forget` has no tombstone to write, because no index keys a memory by
+  session.
+- **No anchors inside `rules:`.** Every rule in `data/rules.yml` reads whole
+  where it sits, because agents read the law one rule at a time and the
+  exemption is the half a jump skips. Reopen with a duplicate body, not a line
+  count.
+- **No synonym beside an established word.** Two words for one concept split
+  every search. `rule` is the word; `axiom`, `principle`, `guideline`,
+  `doctrine`, `heuristic`, `standard` and `norm` are not introduced for it, and
+  `law` names `law/`. `Ground::Policy` is authorisation, a different concept.
+  Whether `gate`, `lint`, `probe`, `audit` and `verify` name one act is
+  unmeasured.
+- **No docs/ directory.** `AEGIS.md`, `COGNITION.md` and `EXAMPLES.md` stay at
+  MASTER's root, where `START_HERE.md`, `PATH_OWNERSHIP.yml`, `lib/cognition/`
+  and the doc tests name them by path.
+- **No media generation in MASTER.** STUDIO's repligen and lora keep it. A
+  generation need is a `lib/core/world.rb` handler, never the deleted LoRA
+  pipeline and video chain restored from history.
+- **No unmeasured gem.** The ruby_llm satellites stay out: `-schema` is
+  deprecated in favour of a Hash, and `-resilience`, `-top_secret`, `-agents`,
+  `-team` and `-template` are thinner than what MASTER owns. `-test`,
+  `-evaluations` and `-tribunal` are lock entries, changed only on the box, one
+  at a time, against a named test they replace.
+- **No RAILS stack import.** No Kamal, Thruster, Dockerfile, Inertia, Vite,
+  ViewComponent, Lookbook, Cucumber, Percy, Chromatic, Playwright or
+  capybara-screenshot-diff: deploy is rc.d and relayd, the frontend is
+  importmaps, ERB, Stimulus and Turbo, and `visual_contract` and
+  `layout_snapshot` are the one paint and one layout baseline. No Chart.js,
+  Google Places, Pickr, scroll-to, timeago, content-loader or glow, each a third
+  renderer, a third party on a Norwegian city app, or an effect `FLAT_UI`
+  forbids. No two-tower feed, neural outfit model or pgvector ranking on a 1 GB
+  SQLite box; the portable result is a SQL union in `RAILS/apps.horizon.yml`.
+- **No look taken from a book.** Books are read for detectors. Parametricism,
+  an Itten palette, a second type scale, Pallasmaa as texture and a swing retune
+  each change a rendered value, which is the operator's; Venturi argues against
+  Rams and Ando, who are already law. A book imported as YAML needs a reader the
+  same day.

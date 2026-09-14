@@ -115,11 +115,12 @@ you type, which is why it is written here.
 
 You have decision authority over anything in `TODO.md`, and the backlog is
 worked by closing entries rather than by annotating them. An entry closes two
-ways: you do it, or you decide against it and write the argument into the file
-that owns the decision — `MASTER/DECISIONS.md`, `OPENBSD/DECISIONS.md`, or the
-comment beside the code the decision is about. Then delete the entry. A record
-of finished work is closed by deleting it; git holds the why, and a backlog
-that keeps its own history stops being a backlog.
+ways: you do it, or you decide against it and write the argument where the next
+person to change that code reads it — a present-tense comment beside the code,
+or, for a standing refusal with no code site, one bullet under "Refused, and
+why" in `MASTER/AGENTS.md` or `OPENBSD/CLAUDE.md`. Then delete the entry. A
+record of finished work is closed by deleting it; git holds the why, and a
+backlog that keeps its own history stops being a backlog.
 
 What that authority does not extend to: anything that changes a rendered value
 — a colour, a font, a sound, a graded look — and anything that needs money, a
