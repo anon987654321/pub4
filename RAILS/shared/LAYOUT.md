@@ -36,7 +36,7 @@ Social primitives (shared engine):
 
 | Surface | Body attributes | Main landmark | Chrome |
 |---------|-----------------|---------------|--------|
-| MASTER chat | `data-layout="face" data-surface="face"` | `#zin` (prompt) | CRT HUD, radius 0 |
+| MASTER chat | `data-layout="face" data-surface="face"` | `main#chat-shell`, holding the `#zin` prompt form | CRT HUD, radius 0 |
 | MASTER dashboard | `data-layout="document" data-surface="face"` | `#main-content` | mono panels |
 | brgen | `data-layout="document" data-surface="social"` | `#main-content` | app-shell + tab-bar |
 | amber | `data-layout="document" data-surface="luxury"` | `#main-content` | app-shell + tab-bar |
