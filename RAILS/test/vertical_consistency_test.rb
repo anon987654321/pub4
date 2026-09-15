@@ -41,7 +41,7 @@ class VerticalConsistencyTest < Minitest::Test
 
   # Newlines kept, so a line number reported from here is the file's own.
   def source_without_comments(path)
-    File.read(path).gsub(%r{/\*.*?\*/}m) { |comment| comment.gsub(/[^\n]/, " ") }.gsub(%r{^\s*//.*$}, "")
+    File.read(path).gsub(%r{/\*.*?\*/}m) { |comment| comment.gsub(/[^\n]/, " ") }.gsub(%r{^[ \t]*//.*$}, "")
   end
 
   def brgen_rules
