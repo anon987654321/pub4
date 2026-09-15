@@ -290,6 +290,18 @@ symbol names over line numbers.
 - **Chop rows in `TRACK_PRESETS`**, when there are chops again. A slug with no row
   falls through to `:timeless`; the `sheger_*` derivation in `dilla.rb` is
   mechanical and whether it sounds right is his.
+- **`semantic-techno` is measured, not heard.** Five 16-bar renders, a 32-bar
+  detroit and hate's reference sit in `~/dilla-semantic-renders-2026-09-15/` with
+  spectrograms and `measure.rb`. Two readings want his ear: industrial's kick
+  holds the sub 4 dB over the others, and detroit's `lift` section drops the
+  sub band only 1.1 dB when the bass leaves.
+- **What the techno log asked for and the renderer does not yet do.** Feedback
+  is one value per render (`SpaceFx.space_echo` takes a constant), so it cannot
+  move on the 16-bar filter period; a profile cannot move `hate`'s tempo,
+  because `HATE_BPM` is computed at load; and the energy vector is read from a
+  section's state rather than from the audio `lib/listen.rb` could measure.
+  Moving `render_hate_techno` and `render_industrial` onto `TechnoVoices`
+  changes both sounds and stays his call.
 
 ### Guards
 
