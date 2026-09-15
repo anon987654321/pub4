@@ -13333,11 +13333,33 @@ def stems(*args)
     name = args[1] or abort "usage: ruby dilla.rb stems add <name> <dir> [bpm]"
     dir = args[2] or abort "usage: ruby dilla.rb stems add <name> <dir> [bpm]"
     stems_register(name, File.expand_path(dir), bpm: (args[3] && args[3].to_f))
-  when nil
-    stems_register("default", STEM_DIR, bpm: 90, source: "Sirkel Sag · Voicemails")
+  when nil, "check"
+    stems_check
   else
     stems_scan(args[0], args[1] || STEM_MANIFEST)
   end
+end
+
+# Whether the rack data/stems.json describes is still on disk, as `dilla assets`
+# asks of the crate. samples/ is gitignored, so a checkout or a cleared crate
+# keeps the manifest and loses the audio, and render_liveset then hands ffmpeg a
+# path that is not there. Bare `stems` checks rather than registers, because the
+# one directory it could register from, STEM_DIR, is not in the tree; `stems add
+# <name> <dir>` registers a set on purpose.
+def stems_check(manifest = stems_load_manifest)
+  missing = stems_missing(manifest)
+  sets = manifest.fetch("sets", {})
+  missing.each { |path| puts "MISSING  #{path}" }
+  puts "#{sets.size} stem set(s), #{sets.sum { |_, set| Array(set["files"]).size }} stem(s), #{missing.size} missing"
+  exit(1) unless missing.empty?
+end
+
+# Every file a set names that is not on disk, as repo-relative paths.
+def stems_missing(manifest = stems_load_manifest)
+  manifest.fetch("sets", {}).flat_map do |_name, set|
+    base = File.expand_path(set["dir"] || ".", ROOT)
+    Array(set["files"]).map { |file| File.join(base, file) }.reject { |path| File.file?(path) }
+  end.map { |path| path.delete_prefix("#{ROOT}/") }
 end
 
 def stem_paths(files)
@@ -14668,6 +14690,7 @@ def assets_report(argument = nil)
   end
 
   result = DillaAssets.verify
+  puts "UNREADABLE  #{DillaAssets.manifest_path.sub("#{ROOT}/", '')} is not JSON, so no fingerprint was checked" if result[:unreadable]
   result[:missing].each { |name| puts "MISSING  #{name}" }
   result[:changed].each { |name| puts "CHANGED  #{name}" }
   result[:unrecorded].each { |name| puts "NOTE     #{name} is in the crate and not recorded" }
@@ -14678,7 +14701,7 @@ def assets_report(argument = nil)
 
   live = DillaAssets.missing_inputs
   live.each { |problem| puts "INPUT    #{problem}" }
-  exit(1) unless result[:missing].empty? && result[:changed].empty? && live.empty?
+  exit(1) unless !result[:unreadable] && result[:missing].empty? && result[:changed].empty? && live.empty?
 end
 
 def debug
@@ -28043,7 +28066,7 @@ def command_help
       ["chop", "[path] | list", "A long recording -> bar-aligned loops, drums and vocals stripped; list shows the rack"],
       ["clean", "<in> [out]", "Denoise and loudnorm"],
       ["prepare", "[path]", "Drum kit and ffmpeg stem rack (neosoul.mp3 default)"],
-      ["stems", "[add <name> <dir> [bpm] | scan [root] [manifest]]", "The stem rack in data/stems.json"],
+      ["stems", "[check | add <name> <dir> [bpm] | scan [root] [manifest]]", "The stem rack in data/stems.json; bare checks it is on disk"],
       ["kit", "", "A drum kit cut from our own recordings (KIT_LIMIT=)"],
       ["vocal-chop", "", "Recover the voices chop separated and discarded"],
       ["acapella", "", "Measure every separated acapella: tempo and first downbeat"],
@@ -33204,6 +33227,8 @@ def render_liveset(name = "default", minutes: LIVESET_MIN)
   base_dir = File.expand_path(set["dir"] || ".", ROOT)
   files = set["files"]
   abort "liveset: empty set" if files.nil? || files.empty?
+  absent = stems_missing("sets" => { name => set })
+  abort "liveset: #{absent.size} stem(s) of '#{name}' are not on disk, starting with #{absent.first}" unless absent.empty?
   inputs = files.flat_map { |f| ["-stream_loop", "-1", "-i", File.join(base_dir, f)] }
   out = File.join(OUTPUT_DIR, "liveset_#{name}_#{minutes}m.wav")
   sh! "ffmpeg", "-y", *inputs, "-filter_complex", liveset_filter(files.size),

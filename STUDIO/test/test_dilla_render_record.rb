@@ -70,4 +70,20 @@ class TestDillaRenderRecord < Minitest::Test
       assert_operator inverted.fetch("low_side_to_mid_db"), :>, 60, "and all of that low end is side"
     end
   end
+  # An absent assets.json is a crate nobody recorded. A present one that is not
+  # JSON is a record that says nothing, and verify has to say so rather than
+  # check zero fingerprints and call the crate intact.
+  def test_an_unreadable_asset_manifest_is_not_an_intact_crate
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "assets.json")
+      DillaAssets.singleton_class.send(:alias_method, :real_manifest_path, :manifest_path)
+      DillaAssets.define_singleton_method(:manifest_path) { path }
+
+      refute DillaAssets.verify[:unreadable], "no manifest is an unrecorded crate, not a broken record"
+      File.write(path, "{ not json")
+      capture_io { assert DillaAssets.verify[:unreadable] }
+    ensure
+      DillaAssets.singleton_class.send(:alias_method, :manifest_path, :real_manifest_path)
+    end
+  end
 end

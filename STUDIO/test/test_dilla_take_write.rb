@@ -75,4 +75,21 @@ class TestTakeWrite < Minitest::Test
       end
     end
   end
+  # The stem rack is gitignored and its manifest is not, so a manifest naming
+  # audio that is gone is the ordinary state of a fresh checkout. The check
+  # names each missing stem and exits non-zero, and the liveset refuses before
+  # ffmpeg is handed a path that is not there.
+  def test_a_stem_rack_that_is_not_on_disk_is_refused
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, "bass.wav"), "x")
+      manifest = { "sets" => { "probe" => { "dir" => dir, "files" => %w[bass.wav drums.wav] } } }
+
+      assert_equal [File.join(dir, "drums.wav")], send(:stems_missing, manifest)
+      out, = capture_io { assert_raises(SystemExit) { send(:stems_check, manifest) } }
+      assert_includes out, "MISSING  #{File.join(dir, "drums.wav")}"
+
+      File.write(File.join(dir, "drums.wav"), "x")
+      capture_io { send(:stems_check, manifest) }
+    end
+  end
 end

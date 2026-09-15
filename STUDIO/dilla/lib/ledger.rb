@@ -1563,13 +1563,17 @@ module DillaAssets
     def root = File.expand_path("..", __dir__)
     def manifest_path = File.join(root, "data", "assets.json")
 
+    # The recorded crate, or nil when data/assets.json is there and is not JSON.
+    # An absent manifest is a crate nobody recorded; an unreadable one is a
+    # record that exists and says nothing, and verify has to tell the two apart,
+    # or `dilla assets` checks zero fingerprints and exits 0 over a broken file.
     def manifest
       return { "assets" => {} } unless File.file?(manifest_path)
 
       JSON.parse(File.read(manifest_path))
     rescue JSON::ParserError => e
-      warn "assets: #{manifest_path} is not readable JSON (#{e.message}); treating the crate as unrecorded"
-      { "assets" => {} }
+      warn "assets: #{manifest_path} is not readable JSON (#{e.message})"
+      nil
     end
 
     # Everything a recipe can name and a render can quietly do without.
@@ -1612,9 +1616,11 @@ module DillaAssets
     end
 
     # missing: recorded and not on disk. changed: on disk and different.
-    # unrecorded: on disk, tracked, and never written down.
+    # unrecorded: on disk, tracked, and never written down. unreadable: the
+    # manifest exists and could not be parsed, so nothing above was checked.
     def verify
-      recorded = manifest["assets"] || {}
+      doc = manifest
+      recorded = doc ? doc["assets"] || {} : {}
       missing = []
       changed = []
       recorded.each do |name, want|
@@ -1625,7 +1631,7 @@ module DillaAssets
         changed << "#{name} (#{describe_change(want, got)})" if got["sha256"] != want["sha256"]
       end
       unrecorded = tracked_paths.map { |p| relative(p) } - recorded.keys
-      { missing:, changed:, unrecorded:, recorded: recorded.length }
+      { missing:, changed:, unrecorded:, recorded: recorded.length, unreadable: doc.nil? }
     end
 
     # The comparison is on the hash, so the report has to name the hash.
