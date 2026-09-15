@@ -73,9 +73,28 @@ Forward work is the last section of this file.
   brgen runs a migration that nulls orphaned `dating_profiles.neighborhood_id`
   and adds the foreign key. `nsd-resign` now reads `NSD_ZONES_DIR` and
   `renew-certs.sh` reads `RENEW_CERTS_ACME_CONF` and `RENEW_CERTS_SSL_DIR`, each
-  defaulting to today's path, from the next `OPERATOR.sh` install. dev's
-  `/home/dev/.zshrc` still sources the missing `FUN/zshrc.shared`, and
-  `OPERATOR.sh` no longer installs over it.
+  defaulting to today's path, from the next `OPERATOR.sh` install.
+- **brgen's job queue does not drain.** `/var/log/drain-jobs.log` reads brgen
+  due 347 -> 347, 348 -> 348, 349 -> 349, 350 -> 350 hour after hour (ahead
+  ~57–66, failed=10), with nothing due for amber or bsdports, while brgen_jobs'
+  resident supervisor, dispatcher, worker and scheduler have been up about four
+  hours and the worker is "waiting for job". Two facts narrow it. First,
+  `drain-jobs.sh` skips brgen when `rcctl check brgen_jobs` passes, yet it ran
+  brgen every hour, so `rcctl check` reports brgen_jobs down while its
+  processes live — the pexp `ruby34.*solid[-_]queue.*` against titles like
+  `ruby34: solid-queue-supervisor(1.2.4): supervising`; check the `-xf` match —
+  and a second Solid Queue starts beside the resident one each hour. Second,
+  "due" means unfinished, `scheduled_at <= now` and no failed execution, so a
+  waiting worker with 350 due means those jobs sit in no ready execution: most
+  likely `solid_queue_blocked_executions` (10 brgen jobs use
+  `limits_concurrency`), or claimed executions held by processes killed at
+  deploy. It needs brgen or root on vm23, since dev cannot `doas -u brgen`; run
+  the query below, then group the jobs by `class_name` where `finished_at` is
+  null.
+
+  ```zsh
+  sqlite3 /home/brgen/app/storage/production_queue.sqlite3 "select 'ready',count(*) from solid_queue_ready_executions union all select 'scheduled',count(*) from solid_queue_scheduled_executions union all select 'claimed',count(*) from solid_queue_claimed_executions union all select 'blocked',count(*) from solid_queue_blocked_executions union all select 'semaphores',count(*) from solid_queue_semaphores union all select 'processes',count(*) from solid_queue_processes;"
+  ```
 
 ### The face's mood, and TTS on the box — operator-owned
 
@@ -97,15 +116,13 @@ Forward work is the last section of this file.
 
 ### Audit findings — 2026-09-12
 
-- **`constitutional_scan` is over two ceilings, and every finding is a design
-  value.** Re-measured 2026-09-13 on the aesthetic profile the budget counts:
-  bsdports 5 against 3 (`EIGHT_PX_RHYTHM` ×3, `CHOICE_OVERLOAD`,
-  `SIGNAL_NOISE`) and shared 15 against 8 (`EIGHT_PX_RHYTHM` ×6, `MAGIC_COLOR`
-  ×3, and one each of `NO_DECORATIVE_FX`, `TOUCH_TARGET_MIN`,
-  `CONTRAST_TOKENS`, `RAMS_UNOBTRUSIVE`, `REDUCED_MOTION`,
-  `WHITESPACE_RHYTHM`). The operator decides: change the spacing, colour and
-  motion values, or record new ceilings with a reason in
-  `RAILS/gates/data/constitutional_budget.yml`.
+- **`constitutional_scan` is over shared's ceiling, and what is left is a
+  design value or the scanner's reach.** On the aesthetic profile the budget
+  counts, shared reads 11 against 8 and bsdports sits at its 3, the jox-logo's
+  artwork coordinates. shared's remainder includes tiptap's 30px and vendored
+  CSS, which only MASTER's scanner or its pen allowlist could exempt, both on a
+  sacred path. The operator decides: change the values, or record new ceilings
+  with a reason in `RAILS/gates/data/constitutional_budget.yml`.
 
 ### Instant — what the operator still decides
 
@@ -151,15 +168,17 @@ process and every site for nine minutes, seconds after the deploy logged
 20 s after the restart and names the shape: 443 refused with the app port
 answering is relayd, both refused is the app.
 
-**3. bsdports stays down after its own deploy** — agent; needs vm23 to reproduce.
-On 2026-09-15 two single-app deploys of bsdports (`02a056827` and `86437202a`)
-passed CI, restarted and exited 0, and `vps-state` then read `bsdports(failed)`
-with :47312 closed; `doas rcctl restart bsdports` brought it back each time and
-it served. Deploying bsdports last is meant to fold the shed restore into the
-same pass, so either its own restart races the shed or the post-restart check
-reads the port before the app binds. A deploy whose last app is down on exit is
-not a deploy. Unblocked when three consecutive `vps-deploy bsdports` runs leave
-it `ok` with the port open. amber's post-deploy `page_simulation` and
+**3. bsdports stays down after its own deploy** — agent; fixed in source, needs
+vm23 to prove. On 2026-09-15 two single-app deploys of bsdports (`02a056827` and
+`86437202a`) passed CI, restarted and exited 0, and `vps-state` then read
+`bsdports(failed)` with :47312 closed; `doas rcctl restart bsdports` brought it
+back each time and it served. The rc.d flag had covered only the restart's
+`/up` wait, so `resource_guard.sh` counted strikes through CI, migrate and
+precompile and shed the first optional service, which is bsdports.
+`vps-deploy` now holds the deploy flag for the whole deploy and runs `rcctl
+check` on its own app before stamping it ok. A
+deploy whose last app is down on exit is not a deploy. Unblocked when three
+consecutive `vps-deploy bsdports` runs on vm23 leave it `ok` with the port open. amber's post-deploy `page_simulation` and
 `flow_journey` fail meanwhile whenever bsdports is shed, and pass rerun once it
 is up.
 
@@ -232,16 +251,18 @@ only the box can take.
   list; the repo is the newer side everywhere. `emergency_cpu.sh` (the only thing
   `resource_guard.sh`'s crisis tier runs), `vps_weekly_integrity.sh`, its root
   crontab line and `/var/log/pub4/` are absent, so the weekly integrity pass has
-  never run.
+  never run. The same run lands the job workers' login.conf classes and
+  `smtpd.conf`'s `listen on egress`.
 - **relayd restarts five times per `vps-deploy all`.** Each rc.d script and
   `start_all_apps.sh` run `rcctl restart relayd` once an app answers `/up`,
   dropping the one TLS listener; the 2026-08-10 nine-minute outage was that.
-  `relayctl table disable|enable` and `relayctl poll` do the kick without touching
-  the listener. Read relayd.conf(5) and relayctl(8) on vm23 and bracket one app by
-  hand first.
+  `relayctl poll` is the documented alternative, and `relayctl table
+  disable|enable` brackets one app; neither touches the listener. Read
+  relayd.conf(5) and relayctl(8) on vm23 and bracket one app by hand first.
 - **The `rails` login.conf class caps datasize at 4096M on a 1 GB box**, and
   `openfiles-cur` inherits 128. Set per-app `datasize-cur` from each app's
-  steady-state RSS measured on vm23; a number guessed low kills a healthy app.
+  steady-state VSZ measured on vm23, not RSS: brgen reads 869 MB VSZ, and a
+  number guessed from RSS kills a healthy app.
 
 ## STUDIO
 
@@ -266,22 +287,9 @@ symbol names over line numbers.
   source FLACs and their demucs stems from an abandoned 61-track fetch;
   `~/Music/dilla_sines/` is a running installation beside three drifted twins of
   tracked scripts. Keep, move or delete is his, never an agent's.
-- **Sound that moves under a pinned seed.** Eight bare `rand` calls and one
-  `.sample` in `dilla.rb` escape `render_rng`, which is why a pinned render moves
-  about 0.012 dB. Routing each changes what that site renders: one site at a
-  time, by ear.
-- **The `HARM_VOL` bump stays a pass behind itself**: 2.4 plus 0.05 is the 2.45
-  default, and raising the base is a mix value (`harmony.rb`).
 - **Chop rows in `TRACK_PRESETS`**, when there are chops again. A slug with no row
   falls through to `:timeless`; the `sheger_*` derivation in `dilla.rb` is
   mechanical and whether it sounds right is his.
-
-### Blocked while `dilla.rb` is under another session's edit
-
-- **Classify dilla's default-off flags** into additive, exclusive fork and
-  operational, and delete the dead ones. `lib/ledger.rb` is the instrument (727
-  knobs, 286 flags, 206 default-off); the counts in `dilla.rb`'s own comments
-  are stale.
 
 ### Guards
 
@@ -341,19 +349,16 @@ slices. Each is a hypothesis with its seam.
   and `sprawl.lone_dirs`. Each row wants its fall recorded or its raise named,
   never absorbed.
 - **The CLI's last seams.** Rotate the web token printed at boot on 2026-09-13;
-  it sits in two saved terminal transcripts in `~/Downloads` (operator).
-  `/status` prints its event rows as `key=value`, short of the dmesg grammar the
-  rest of the CLI keeps. The review report prints its posture twice, in the
-  `mode0` line and as a section. `CLI::Propose` and `Ground::OperatorPlaybook`
-  have no caller outside their tests. `/soul approve` bumps a `Version:` line
-  `SOUL.md` does not have.
+  it sits in two saved terminal transcripts in `~/Downloads` (operator). With
+  `CLI::Propose` gone, `Ground::BiasGuard` has no runtime caller and the
+  `biases` and `principle_priorities` blocks in `data/rules.yml` are unread;
+  wiring or deleting them edits an immutable file, so it is the operator's.
+- **The bare IP lingers in `MASTER/bin/operator`,** whose `ssh_host` defaults
+  `PUB4_SSH_HOST` to `dev@46.23.89.226` where the contract names `dev@brgen.no`.
 - **`solid_queue` and `solid_cache` sit in the web Gemfile with nothing loading
   them.** Dropping them is a lockfile change, so it lands with a watched deploy.
 - **`Policy::FALLBACK` speaks at `+0%` where `voice.yml` says `-18%`,** a sound
   value and the operator's.
-- **A session receipt waits for a reader.** Joining the memory store version,
-  worktree HEAD and model id to `Ground::BootReceipt` would let two runs be
-  diffed; it is built when `/why` or `bin/doctor` asks.
 
 ### RAILS
 
@@ -361,28 +366,19 @@ slices. Each is a hypothesis with its seam.
   library, and the reverse Stimulus contract exempts it with that reason.
   Drag-only reorder (amber outfits, marketplace variants) has no keyboard path
   (WCAG 2.5.7), and a keyboard path means visible controls: the operator's.
-- **maplibre loses its DOM on a morph.** Nothing refreshes the maps home today;
-  `WIRING_NOTES.md` records why it is unguarded.
-- **The playlist set page prints "likes" in English.**
 - **42 `needs_id` guest pages get no live probe;** `page_inventory` names them
   now, and giving them record ids needs a booted triangle.
-
-### OPENBSD
-
-- **Stale paths after renames.** `tools/tree.rb --ground-policies` targets
-  `*_policy.rb` files that no longer exist in `MASTER/lib/ground/`, and
-  `RAILS/shared/app/services/shared/strunk_white_pass.rb` names the pre-rename
-  `MASTER/lib/now/stages/prune.rb`. `bin/vps-deploy` still carries comments that
-  narrate what the code used to do, and `OPENBSD/solid_queue_proof.rb` says the
-  jobs workers are disabled at boot while `brgen_jobs` sits in `pkg_scripts`.
-- **`reach.rb` is a third cron-line parser** beside the drift gate's and
-  installed-targets'.
-- **The bare IP lingers** as `lib/ssh_vm23.sh`'s `SSH_HOST` default and
-  `data/operator.yml` `meta.vps`, where the contract names `dev@brgen.no`.
-- **`rc.d/*_jobs` scripts carry no login.conf class,** so the job workers run
-  under `daemon` without the `rails` limits.
-- **`rottrdam.nl` reads unknown with the note "is free",** which the AVAILABLE
-  regex should match; `_net.sh`'s remaining functions may have no callers.
+- **A stale path after the rename.**
+  `RAILS/shared/app/services/shared/strunk_white_pass.rb` says it was ported
+  from the pre-rename `MASTER/lib/now/stages/prune.rb`.
+- **Playlist links match hosts by substring.** `Playlist::TrackImport` files a
+  link as YouTube or SoundCloud when its host merely includes `youtube.com` or
+  `soundcloud.com`, so a lookalike host passes; `Shared::LinkEmbed` compares
+  hosts whole and could carry the playlist's links.
+- **A post's link embed loads the provider's thumbnail before a tap.**
+  `shared/_link_embed` renders the facade image straight from the provider's
+  image host, so the reader's browser asks the provider before pressing play.
+  Proxying the thumbnails is the owner's call.
 
 ## The refinement inventory — opened 2026-09-11, instrument pass 2026-09-14
 
@@ -411,8 +407,8 @@ a count. What is left:
 - **Sampled five and right:** `DOUBLE_BRACKET` (the eight files are ksh, which
   has `[[ ]]`, and they are rc.d files, so the edit is vm23's), `NO_ASCII_LINE_ART`,
   `SILENT_RESCUE` (one kill on a dead process should name its error),
-  `NO_COLUMN_ALIGN` (`.muttrc` is a misread) and `FROZEN_STRING_LITERAL` (the 25
-  are mostly generated binstubs and Gemfiles). `TAB_CHARACTER` is down to 1;
+  `NO_COLUMN_ALIGN` (`.muttrc` is a misread) and `FROZEN_STRING_LITERAL` (10
+  remain, seven in MASTER and three in RAILS). `TAB_CHARACTER` is down to 1;
   `DOLLAR_PAREN` and `STRICT_MODE_ZSH` read 0.
 - **Geometry.** wiki and post show want geometry surfaces with seeded ids, which
   needs triangle; `void_target` and the `list_marker_hang` note live in
@@ -463,8 +459,6 @@ What is actually wrong, each seen rather than inferred:
   "immersive" variant in brgen's `application.scss`. Under the decision above it
   gets the nav and the column like everything else. messenger is the other
   immersive surface; same treatment.
-- **marketplace 500s.** `marketplace.brgen.no` raises where tv, dating and
-  playlist render. Nothing about layout can be judged there until it serves.
 - **amber speaks a different language entirely.** A serif tagline against
   brgen's sans, pastel-green wordmark at roughly 1.3:1 against its own
   background, a floating "Style notes" card aligned to nothing, and a hero SVG
@@ -478,15 +472,10 @@ What is actually wrong, each seen rather than inferred:
   brgen's. The `#primer-voice` button can go; the full-viewport `#primer`
   behind it cannot, because a browser will not start an AudioContext without a
   gesture.
-- **The layout's own comment is stale.** `application.html.erb` opens with a
-  long paragraph explaining that `data-theme="dark"` is load-bearing.
-  `DEFAULT_SURFACE_THEME` is `"light"` and has been; the surfaces render
-  `#efefef`. A comment states the present-tense reason.
 
 Order of work: the content column first, because it is one container shared by
 six verticals and it is what makes them read as one product; then amber's type
-and palette; then MASTER's chrome; marketplace's 500 whenever someone is in
-that engine. Screenshot before and after — this section exists because two
+and palette; then MASTER's chrome. Screenshot before and after — this section exists because two
 confident readings of the source were both wrong.
 
 ## The ad design system, and the marketplace study — opened 2026-09-11
@@ -501,9 +490,7 @@ verticals and amber. Expected to take a while and to end up automated.
 The stated target is worth keeping verbatim, because it names what this is
 not: **Kaufland's catalogue + bol's cleanliness + eBay's marketplace depth +
 Vinted's simplicity + brgen's local and social layer** — rather than a
-Norwegian Amazon. That lands on an irony the tree already recorded:
-`_marketplace_nav_bar.scss` opens by saying it "was a two-row Amazon clone",
-and its eleven Amazon hex literals came out on 2026-09-11.
+Norwegian Amazon.
 
 This is a program, not an item.
 
@@ -539,143 +526,22 @@ this file for a measured reason: of the last external enumeration, thirty-nine
 items declared themselves done and another fourteen proved already true on a
 grep. A list arriving from outside is a hypothesis about this repo.
 
-### What exists already
-
-- **`Shared::Affiliate` is the one path over every network**, and
-  `affiliate_deals_for(category:, limit:)` is its reader. A new network appears
-  in every unit without editing a view.
-- **`shared/_affiliate_feed_unit`** is an in-feed band: product tiles packed
-  edge to edge by CSS grid with call-to-action tiles among them, a
-  `parallax-tilt` Stimulus controller over it, and an `--in_grid` modifier for
-  surfaces that are grids (amber's wardrobe and outfit galleries) rather than
-  lists (brgen's feed). It replaced a CodePen banner that needed five CDN
-  scripts, one of them GPLv3-or-paid.
-- **Models**: `Shared::AffiliateProduct`, `AffiliateVoucher`,
-  `AffiliateConversion`, plus amber's `AffiliateLink`. brgen has
-  `AffiliateImportJob` and `Brgen::AffiliatePlaceholders`.
-- **Disclosure** is its own partial, `shared/_affiliate_disclosure`, and the
-  band labels itself `affiliate.sponsored`. Whatever the ad system becomes, it
-  inherits that: an ad says it is one.
-- **Photography has a producer.** STUDIO's preprompt generates imagery and fills
-  tv; lora trains on real subjects. An ad system needing product photography
-  has a generator in this repo rather than a stock budget.
-
-### What Kaufland does that markedsplass does not
-
-Read against markedsplass.brgen.no as it renders today, and not yet verified
-against the live site at a set viewport — do that first and record numbers,
-because this list is a description.
-
-- A full-bleed hero of photographic banners. markedsplass opens with a text
-  headline at display size and no image at all.
-- Category tiles as pictures rather than a text row. markedsplass has
-  `Ting Jobb Bolig Oppdrag` as plain links.
-- Offer grids with price as display type. A listing card's price here is body type.
-- Image-first cards at a consistent aspect ratio, which is what makes a dense
-  grid read as one surface rather than a ransom note.
-
-### Amazon is the functional model; the visual is ours
-
-Operator position: Amazon remains the main inspiration for how a storefront
-works, and its visual execution is below this fleet's standard. So the
-storefront bar keeps its Amazon structure — a search field dominating the row,
-deliver-to, account, cart, and a sections row beneath — because the structure
-is the part that was right. What came out on 2026-09-11 was the execution:
-eleven hardcoded Amazon hex values, #131921 and #232f3e navy, #febd69 and
-#f3a847 amber, #cd9042 on the cart count, in a fleet that paints from tokens
-everywhere else. The bar reads --surface, --text, --text-secondary and
---accent now, so it follows the theme and carries the marketplace accent
-_vertical_shell already tuned for contrast in both directions.
-
-Kaufland and the nineteen beside it are read the same way: take the mechanism,
-leave the paint.
-
 ### The external Kaufland patch, assessed 2026-09-11
 
-A fifth log arrived proposing the catalogue redesign as one patch: replace the
-storefront header with a Kaufland utility strip and an `Alle Kategorien`
-control, repaint the chrome white with red, rebuild the product card, drop the
-hero, and move the filters into a persistent left rail. Most of it is either
-already done, already decided against, or a rendered value. Two parts are real
-and are the ones worth starting from.
+A fifth log proposed the catalogue redesign as one patch: a Kaufland utility
+strip and an `Alle Kategorien` control, a chrome repainted white with red, a
+rebuilt product card, no hero, and the filters in a persistent left rail. Its
+two structural parts stand in the tree: `live_search_results` lets a caller
+place the search form and the results frame apart, and
+`StorefrontCardLadderTest` holds every storefront tile to one field order.
 
-**Its premise was a comment rather than the code.** The patch opens by removing
-Amazon's dark palette wholesale, quoting `_marketplace_nav_bar.scss` calling
-itself "a faithful two-row Amazon clone". That sentence is history and the file
-says so; all eleven hex literals came out earlier the same day, and `#131921`,
-`#232f3e`, `#febd69`, `#f3a847` and `#cd9042` appear nowhere in RAILS source
-now. The bar has read `--surface`, `--text`, `--text-secondary` and `--accent`
-since. Its headline target — Kaufland's catalogue plus bol's cleanliness plus
-eBay's depth plus Vinted's simplicity plus brgen's local layer — is the
-operator's own sentence from the top of this section, handed back.
-
-**And it overturns a recorded position without knowing it existed.** The
-subsection above states that the storefront bar keeps Amazon's structure — a
-search field dominating the row, deliver-to, account, cart, sections beneath —
-because the structure was the part that was right. The patch replaces exactly
-that structure. The rule for all twenty references is the same one: take the
-mechanism, leave the paint.
-
-**The DOM is the real finding, and the log names it itself.**
-`shared/_live_search_index.html.erb` renders the search form — with the filter
-`<details>` captured inside it — and the results turbo frame as siblings. A
-persistent filter rail beside a product grid cannot be built over that shape
-with CSS; the helper has to let a caller place the form and the frame
-separately, or wrap both in a container it does not currently provide. That is
-structural, it is testable, and it blocks the catalogue layout whoever builds
-it. Do this one first.
-
-**The second is a card contract rather than a card look.** Kaufland's density
-comes from every product exposing the same fields at the same vertical
-positions: image, title, rating and count, price, reference price, discount,
-shipping, delivery window, seller, condition, unit price. markedsplass has the
-data — listings carry variants, facets, ratings, reviews and distance — and
-renders a subset in a different order per surface. A fixed ladder is a contract
-a gate can hold, and `distance_km` is the field Kaufland has no answer to.
-
-Everything else in the patch is a rendered value: the white canvas, the red
+What the patch still proposes is a rendered value: the white canvas, the red
 accent, `object-fit: contain` on product photography, the card's borders and
-type scale, and removing the hero. Fenced, as the section below says. Build the
-information architecture, measure it at a set viewport, and bring the look back
-for a decision.
-
-### Every unit is multi-city, multi-domain and multi-language
-
-brgen is one app over roughly twenty city domains, and the marketplace
-subdomain is localised per country: `markedsplass.brgen.no` in Bergen,
-`marketplace.lsangeles.com` in Los Angeles, and nine more spellings in
-`Brgen::DomainRegistry::SUBAPP_ALIASES` — marche, markadur, markedsplads,
-markkinapaikka, marknadsplats, marktplaats, marktplatz, mercado, mercato.
-`DomainRegistry.resolve(host)` is the one way to ask which city and which
-vertical; never re-derive a subdomain.
-
-That constraint already caught something. The storefront header carried a
-hand-written logotype reading `markedsplass` + `.no`, and takeaway's read
-`takeaway` + `.no` — hardcoded Norwegian words and a Norwegian TLD rendered on
-every city, so `marketplace.lsangeles.com` said "markedsplass.no" in its own
-header. Both came out with the second wordmark on 2026-09-11, which means the
-fix landed as a side effect of the chrome decision rather than on its own
-merits. Anything the ad system renders — a category name, a price, a call to
-action, a crop with words burnt into it — carries the same exposure.
-
-Some city domains are expired or expiring, with funding for renewal in
-progress. Treat the domain list as a live set: read it, never hardcode it, and
-expect a surface to be unreachable without that being a defect in the surface.
-
-### Two search fields on one storefront, and the better-placed one is the worse one
-
-Measured on takeaway.brgen.no and markedsplass.brgen.no at 1440x900: two
-`input[type=search]` on the page with the same placeholder. The storefront
-bar's sits at y=131 and is a plain `form_with method: :get` — a full page
-navigation. The one in the page body sits at y=390 and is `live_search_index`,
-a turbo frame with results as you type.
-
-So the field in the right place does the worse thing, and the field doing the
-right thing is below the fold. Amazon — the functional model — has one, in the
-bar. The fix is to make the bar's field drive the live frame and drop the body
-copy, which is a decision about where search lives on these surfaces rather
-than a tidy-up, and the Kaufland pass will answer it. Left here so that pass
-starts from the measurement.
+type scale, and removing the hero. The storefront pen also declares Kaufland's
+two shadows, on the category shortcut well and the product buy box, as the
+family's one breach of the flat rule; they stay or flatten on the operator's
+word. Fenced, as the section below says. Measure the information architecture
+at a set viewport and bring the look back for a decision.
 
 ### The shape to aim for
 
@@ -811,20 +677,12 @@ sitting.
 
 **Operator — the look.**
 
-- **Static error pages keep a dark palette the app no longer uses.**
-  `{brgen,amber,bsdports}/public/{404,422,500}.html` set `color-scheme: dark`
-  and inline `--x-*` colours over `shared/public/styles/errors.css`, while every
-  app renders light; bsdports' 404 and 500 are still Rails' English defaults.
-  Decide the palette; the seam is `errors.css` plus each page's inline `:root`.
 - **`.page-header` is five different elements across the verticals.** Measured
   at 1440px on 2026-09-12: absent on markedsplass and playlist, 0px wide on
   dating, 747px on takeaway, 600px on tv, and brgen's front page uses
   `.feed-header`. The contract in `shared/LAYOUT.md` describes an element four
   of seven surfaces do not render. Whether the contract or the verticals are
-  wrong is a layout call. Two inert `grid-template-*` pairs remain on `.layout`
-  (a flex box) in `body.vertical-messenger .layout` and
-  `body.vertical-maps .layout` in brgen's `application.scss`; remove them with a
-  before/after measurement.
+  wrong is a layout call.
 
 **vm23.**
 
@@ -860,9 +718,6 @@ sitting.
 
 ### OPENBSD
 
-789. **vm23: `/home/dev/.zshrc` still sources the missing `FUN/zshrc.shared`.**
-     The Mac side is fixed and `OPERATOR.sh` no longer installs the redacted
-     mirror over the live file; the box's own copy needs editing there.
 1062. **`.dash-stats dl` wants auto-fit and could not be verified for it.** Amber's
      stat grid is four columns, two below md, and nothing between — a tablet gets
      the phone grid. `repeat(auto-fit, minmax(<floor>, 1fr))` computes the count and
@@ -874,26 +729,9 @@ sitting.
 
 ### STUDIO — dilla
 
-Re-measured 2026-09-13; 190 entries became these. The first group is real and
-blocked only because `STUDIO/dilla/dilla.rb`, `lib/groove.rb`,
-`README.md` and `ENV_AND_RENDER.md` carry another session's uncommitted work.
-Take them the day those files are clean.
+Re-measured 2026-09-13. What is left accepts a changed input, so it is the
+operator's:
 
-811. **dilla.rb comments that describe the split.** 80 `# engine part:` headers still say "split out of dilla.rb"; `:230` says load order lives in `engine_sources.rb`; `:248`, `:13733`, `:14870`, `:20805` still name `lib/engine/`; `:14900` names the gone `ENGINE_PARTS`; `:14672` hardcodes "35,000 lines / 83 markers" instead of asking `parts_report`. `:35237` should say the gate and tests depend on the CLI guard.
-812. **`ENGINE_SOURCES = DillaSources.all` sits at `:34385`,** after `wiring_dead_constants` and `parts_report` close over it. Move it up to the require at `:36`.
-822. **Lazy requires are undocumented.** Say beside the requires which of `console_strip`, `tape_hysteresis`, `mix_score`, `verify_fx`, `kit_dig` are command-only, so a fold does not pull DSP into boot.
-829. **Locale.** brgen's CI loads dilla.rb as user brgen; set `Encoding.default_external = Encoding::UTF_8` at the top of dilla.rb rather than touching 37 `File.read` sites.
-853. **`dilla stems` should refuse** when `data/stems.json` names `samples/demux/…` paths not on disk, as `dilla assets` does.
-855. **"~60 presets"** in `groove.rb` and the README: count in `dilla knobs` instead of restating.
-868. **Chop registry JSON is parsed twice** (`:18223` warns, `registered_loops` rescues again). Parse once; drop bad rows by slug.
-871. **`rap-vocal list`** should mark sidecar-only rows "audio missing", and say `_mislabelled_untitled_flac/` is deliberate so nobody cleans it.
-873. **`dilla assets` exits 0 on an unreadable `data/assets.json`.** The module warns and returns an empty crate; the command should exit non-zero.
-965. **dilla README and ENV_AND_RENDER.md.** README names `sample_loops.rb` (it is an engine part), tells a stale restore story, and never says a worktree has no crate so crate tests skip; ENV_AND_RENDER.md says command aliases are gone while `loose_pocket`, `industrial` and `techno` remain as genre renderers. One sentence should name the three ways to hear it: `dilla.html`, `dilla.rb live`, `dilla.rb sines`.
-1000. **Provenance pins.** Confirm a probe asserts the sidecar note carries a non-seed pin when `USER_PINNED_ENV` is set; add one to `test_dilla_engine_probes.rb` if not.
-
-These are the operator's, because each changes a sound or accepts a changed input:
-
-850. **`data/modes.yml` has no reader.** Nothing in STUDIO loads it — `tizita`, `bati`, `ambassel` appear only in the file, and the `chord_theory.rb` it names is gone. Wiring it into the harmony spine changes what dilla generates; the other choice is deleting it. (The principles file went the third way: it is the `principles` section of `dilla_reference.yml`, kept as the argument a sound change answers to, with no reader by design.)
 859. **The crate on main disagrees with `data/assets.json`.** `DillaAssets.verify` there: `samples/{kembara_rindu,lo_borges,semua_untuk_mu}/loop.wav` missing, and seven one-shots under `samples/drums/` changed hash at the same size. Restore them, or `dilla assets record` to accept the new drums as the inputs.
 
 ### STUDIO — postpro, preprompt, lora
@@ -901,27 +739,11 @@ These are the operator's, because each changes a sound or accepts a changed inpu
 907. **Chains are ungraded by default.** `generate` applies `HOUSE_POSTPRO` (`portrait`); `chain` grades its final frame only when `--postpro` is given. Whether chains share the house grade is a graded-look call.
 926. **`lora/guides/*.m4a` are tracked TTS output** beside their `.txt` scripts. Keep them in git or untrack them; either is the operator's.
 931. **`lora/_toolkit/judge_thresholds.yml` was calibrated on seven images;** `ragnhild/dataset/` now holds six. Recalibrating moves the quality floors.
-932. **AMBITION.md and PHOTOGRAPHY.md are triaged, not yet folded.** All 168 items were checked against the code on 2026-09-14. Before either document is deleted, each open item lands in its owner or in this list, and the reasons that code cites move beside that code. Defects first:
-   - `chains/relight_portrait.yml` has three faults. It claims an `unverified: true` flag that no table row sets, it sets a stage `postpro:` that nothing reads, and it would feed IC-Light the depth map as its image.
-   - postpro's one-shot path, which is the one preprompt uses, skips the camera-profile pass that `process_file` runs.
-   
-   Cheap open items, grouped by owner:
-   - **chain/preprompt:** model version in provenance; a per-stage timeout; a registry of failed chains; a lint for two adjacent global-colour stages.
-   - **craft:** the moment after a laugh rather than "smile"; terms for key-to-fill ratio, negative fill, micro-expression, hands and the arm.
-   - **postpro:** the before and after `Uncanny` readings in the grade sidecar; sidecars from `process_file`, `run_watch` and `uplift`; a house-version constant; a contact sheet of one frame through every stock; a palette histogram under `--measure`.
-   - **rescue:** honest cast-remedy text, and an underexposure diagnosis.
-   - **golden_grade:** a luminance band and ΔE on a patch, measured first.
-   - **curate:** `FrameSet.near_duplicates` in the report; a holdout split in `prepare`.
-   - **lora:** the base model written beside the weights; a secret-leak scan over tracked notebooks and `subject.env`; a per-subject grade knob that defaults to `portrait`.
-   
-   AMBITION's video section (117–128) is all deep work. Its argument for removing the frame-by-frame path belongs at the orphan comment `postpro.rb:337`. Item 104 contradicts item 35; the code sides with 35, grading after any upscale.
-933. **Photography research for `preprompt/lib/craft.rb`, 2026-09-14.**
-   - **Close faces are judged worse.** A face shot from 45 cm loses attractiveness (d=0.31) and trust (d=0.24) against one from 135 cm (PMC3448657). This supports scenario distances of 2 m or more.
-   - **FLUX.1 reads 512 tokens through T5.** CLIP gives only a pooled vector (black-forest-labs/flux `conditioner.py`), so `TOKEN_LIMIT = 77` protects the SD-family lane only. The FLUX budget is T5 plus BFL's 30–80 words.
-   - **Lens and bokeh strings act as style cues.** FLUX's response correlates with physically correct behaviour at about 0.20 (arXiv 2412.02168), so the written-out distance geometry is the stronger instruction.
-   - **Seeds outweigh phrasing** (ar5iv 2109.06977), so vary the seed at a fixed prompt.
-   - **Pick scorers carefully.** Score with HPSv2.1 or PickScore plus pyiqa `qalign`. LAION's aesthetic score alone is random-level on Pick-a-Pic (ar5iv 2305.01569), and multimodal LLMs judge aesthetics poorly (AesBench 2401.08276).
-934. **Melody research for dilla and preprompt, 2026-09-14.**
+932. **What the photography triage left open.**
+   - postpro's one-shot path, which is the one preprompt uses, skips the camera-profile pass that `process_file` runs. Adding it changes the graded look, so it is the operator's.
+   - A chain's provenance names no model version, because MASTER's `replicate_client` predict returns none. It waits on that client.
+   - Postpro on video is deep work: an ffmpeg path beside the vips one, a grain seed held steady across frames, halation that does not crawl, optional period artefacts (gate flicker, weave, telecine), shutter-angle emulation, one graded frame applied to all, a per-minute budget, and a stills-and-video parity test. The comment above `POSTPRO_USAGE` in `postpro.rb` states what a replacement must hold.
+934. **Melody research for dilla, 2026-09-14.**
    - **Arch or falling phrases dominate.** Arch and falling contours beat V shapes and rises, and phrase-final notes last 1.58× the average (Essen corpus, PMC3174665). dilla's inverted and retrograde motif transforms can produce the rare shapes, and every sustain is gap × 0.82.
    - **Short, low-surprise, repeated phrases survive oral transmission** (β −0.30, −0.24, +0.09; PMC5403935).
    - **Surprise pleases after predictable context and displeases in unstable context** (Cheung 2019; Frontiers 2023, fnins.2023.1209398). dilla's melody is scale-locked, with no placed surprise.
@@ -935,8 +757,7 @@ These are the operator's, because each changes a sound or accepts a changed inpu
 
 Worked 2026-09-13 and 2026-09-14. Refusals are in `MASTER/AGENTS.md`, Refused, and
 `RAILS/shared/WIRING_NOTES.md` ("Toggles redirect", "System tests stay on
-Selenium"). `data/modes.yml` has no reader (see STUDIO 850), so entries
-elsewhere that treat it as the live scale are wrong.
+Selenium").
 
 ### The operator's — behaviour the face or a page shows
 
@@ -947,15 +768,11 @@ R23. **Native `<dialog>` for confirms.** The dating match overlay is a celebrati
 
 ### The operator's — each changes how a page looks
 
-55. **Reading surfaces that do not wear `.prose`:** legal (`legal-prose`), mailer, listing description (`66ch` literal), dating bio, errors. Joining `.prose` brings measure, hanging, hyphenation, `text-wrap: pretty`, orphans, oldstyle numerals; `.reading-column` and `.form-measure` exist and no view wears them.
-59. **The mailer is a third type system** — three families, private size ladder, tracking 0.04–0.28em, off-scale radius and leading, dark `#050505`, no tabular price. Snap to the tokens; the letter's colour stays the operator's.
+55. **Reading surfaces that do not wear `.prose`:** legal (`legal-prose`), mailer, listing description (`66ch` literal), dating bio, errors. Joining `.prose` brings measure, hanging, hyphenation, `text-wrap: pretty`, orphans, oldstyle numerals.
 64. **Measures in px:** `.page-header` 660, bsdports header 660/62ch, amber `.item-detail` 700, playlist 720, forms 480/584, splash tagline 28em, errors 30em, print `.prose` 100%. Chrome widths (map HUD 280/320, dressing room 420, `--feed-max`) stay.
 78. **Scale and rhythm:** `--line-height: 20px` absolute; `--text-display` is a ninth size and H1 is 1.75× body against a 2.0 law — decide which token is H1; `font-size` 1.17/0.92/0.6em; two paragraph rhythms; 500/700 weights unused; legal 1.62 and mailer 1.55 leading; `.post_body` 1.6 against `.prose` 1.5.
-86. **Tracking:** `--tracking-tightest` −0.03 on heavy headings and marketplace −0.045em; primer h1 lowercase `.01em`; face `.04em` and `.32em`; legal eyebrow `.12em` at `.72rem`; mailer kickers; uppercase labels in maps and marketplace cards without tracking.
-95. **Families per surface:** marketplace hero three families; face primer names Inter beside system-ui and mono; splash chips mono on a system-ui splash.
-99. **OpenType and quotes on `.prose`:** `onum pnum liga clig`, `hyphenate-limit-lines: 2`, `quotes` for nb, `smcp` on `abbr`, tabular numerals on mailer price, legal dates and wiki history; face `font-feature-settings` lacks the defaults.
-109. **`_fonts.scss` falls back to jsDelivr for JetBrains Mono** though `/fonts/` is self-hosted, and Libre Baskerville files may have no `@font-face`. Dropping the CDN is a first-paint change on a missing file.
-111. **Flat UI residue:** `_search_yep.scss` shadow (PEN_ALLOW), `#ccc` and `white` on search, dating button gradient, splash `scale(1.02)` at rest, `chat_upload.css` `.42s`, vote `duration-value="900"`, `_tab_bar.scss:99` max-width band unmarked, marketplace masthead clamp 5.5rem.
+86. **Tracking:** `--tracking-tightest` (−0.03em in `shared/_typography.scss`) on the heavy headings of brgen, bsdports and shared.
+95. **Families per surface:** MASTER's face still names Inter in `offline.html` and in `face_vision_c.js`'s vision 96, beside `face.css`'s Helvetica Neue Pro label and mono stacks.
 B16. **Modulor:** if H1 stays 1.75×, lower the ratio in law or raise the title token.
 
 ### Needs vm23
@@ -974,29 +791,6 @@ sit in comments beside the code they concern, in the Refused lists in `MASTER/AG
 SQLite transactions here are `BEGIN IMMEDIATE`, so a finding about a uniqueness
 race or a rolled-back callback is false until it names a second database.
 
-### Blocked on `STUDIO/dilla/dilla.rb` (another session holds it)
-
-- **Album master and encode trust a failed ffmpeg.** Album master reads `I=0`
-  from a failed run and applies ~19 dB of make-up; album encode ignores status,
-  deletes the staged file and prints loudness from the missing dest;
-  `audio_duration_sec` rescues to 0.0 and `build_harmony_loud` then mixes 8 s.
-  First step: route them through `lib/listen.rb`, which MixScore and
-  VerifyFx already use.
-- **Scratch names collide.** `harmony_loud.wav`, `live_tmp.wav`,
-  `dilla_drums.wav` are not pid-scoped, and the fallback dir is per-uid. The
-  pid-scoped temp helper exists in dilla.rb; use it everywhere.
-- **Loose ends in the same file.** Playlist/learn loaders rescue a corrupt
-  catalog to empty and the next save overwrites it; engine `capture` returns
-  `[out, err, status]` while `RadioChop.capture` returns a string;
-  `STREAM_ITERATE_LOG` is appended without flock; the `council`/`scan` slogans
-  still sit in dilla's dispatch.
-
-### Operator decisions
-
-- **`.reading-column` / `.form-measure`** (`shared/_typography.scss`) are
-  defined and worn nowhere. Wearing them on legal and compose changes the
-  measure; deleting them is the alternative.
-
 ### Needs vm23
 
 - **After the next deploy, install and check on the box:** the four app/master
@@ -1005,15 +799,35 @@ race or a rolled-back callback is false until it names a second database.
   and `emergency_cpu.sh`, then read `/var/log/drain-jobs.log` and the next
   `nsd-resign` run in the daily mail for a FAIL line. brgen migrates
   `20260913130000_drop_unwritten_tv_video_counters`.
-- **`smtpd.conf` listens on `vio0`.** `listen on egress` survives an interface
-  rename; read smtpd.conf(5) on the box before changing it.
 
-### STUDIO
+## MASTER as a continuity engine — ChatGPT intake 2026-09-15
 
-- `rake test:dilla` loads every `test_dilla_*.rb` into one `-e` process, so ENV
-  pins and `session.json` mtimes leak between files, and `EnvSandbox` restores
-  ENV but not constants computed from it at load (acapella `ONLY`/`EXCLUDE`).
-  Run each file in its own process, or stop calling it isolation.
+A screenshot of a ChatGPT answer proposed an objective that stays alive for
+months rather than a model that stays awake. OpenClaw's pieces —
+Gateway-owned persistent sessions, queued and background work, isolated runs,
+cron, event wakes and heartbeat awareness — would become an explicit
+constitutional system with evidence, capability boundaries, verification and
+durable personal state: one memory and event spine across coding, research,
+projects, household, finance, security, wellbeing, devices and personal
+organisation, separated by explicit authority boundaries.
+
+Much of it is built under other names; verify each before building on it:
+`Fix::Heartbeat` (scheduled jobs, `run_due!`), `Cognition::Mind` (persistent
+state over `.master/`, `tick!` and `reflect!`), `Ground::PersonalWorkspace`
+(per-subject `USER.md` and `MEMORY.md`), `Ground::StandingOrders`, the event
+bus, and `lib/core/execution`'s states with the runs and session recovery
+tests.
+Open:
+
+- **No durable objective ledger.** An objective wants an owner, a wake
+  condition (time, event or heartbeat), evidence of progress, a verification
+  step and an authority domain, and it must survive a restart.
+- **No per-domain capability boundary,** so nothing stops a finance or
+  household objective reaching coding tools or another domain's memory.
+
+The fences: MASTER is never wired in as an OpenClaw or OpenCrabs backend, only
+learned from; progress is command output, not a claim (`anti_simulation`); and
+finance, household and devices each need the operator's consent per domain.
 
 ## MASTER as a semantic system — ChatGPT intake 2026-09-14
 
@@ -1040,12 +854,6 @@ no named reader, and an intent-to-deliver pipeline that renames stages
   `aria-busy` over CDP and measuring them waits on "Motion is a rendered value"
   and the feedback items in the RAILS section. Seam:
   `RAILS/gates/lib/rendered/keyboard_flow.rb`.
-- **`/review` never reaches the rendered gates for a RAILS target.** A gates
-  stage in `MASTER/lib/cli/pipeline/pass.rb` would call `RAILS/gates/runner.rb`
-  on the deploy host, never drive a browser here.
-- **Run the fixed file's test after a fix.** `FixVerification#note_unverified_fix`
-  only publishes "fix unverified"; running the test `test_file_for` finds
-  would prove a fix rather than rescan it.
 - **Escalate a local model that cannot hold the fold.** After two parse errors
   or refusals in a row, ask the next larger local model, or the cloud lane when
   online. Seams: `CoreBridge::AgentChat`, `ModelRouter#local_models`.
@@ -1054,14 +862,6 @@ no named reader, and an intent-to-deliver pipeline that renames stages
   write out until their preconditions hold, so an early `done` cannot be
   generated at all. Measure against gemma3:4b first; a worked example in the
   prompt made it worse.
-- **Cap a long RESULT.** Exec output enters `Core::Memory` whole; keep head and
-  tail, about 1,500 characters, as mini-swe-agent does.
-- **Local throughput has no reader.** Ollama reports `eval_count` and
-  `eval_duration` and `ollama_sender.rb` discards the rate. Record it in
-  `provider_health.rb` only together with a reader, such as speed in
-  `ModelRouter#effective_score`.
-- **`lib/review/embeddings.rb` calls `/api/embeddings`,** which Ollama marks
-  superseded by `/api/embed`.
 
 ## OpenCrabs borrow list — ChatGPT intake 2026-09-13
 
@@ -1148,15 +948,13 @@ Refused. What stays open:
 - **`shared/_toast.html.erb` is rendered by no view.** `stimulus_boot.js`
   registers the controller, so the component is wired at one end only. Where a
   toast appears is the operator's call.
-- **`swarm.html` and `codebase.js` are built and unreached.** `swarm.html` is the
-  May face renderer, still public at ai.brgen.no/swarm.html and linked from
-  nothing. `codebase.js` is the Repository Body renderer that
-  `topologies.yml:95` names, but `face_assets.yml` does not load it, so the
-  topology is never drawn. Delete, gate or load each; both are product calls.
-  `diag.html` reads only the visitor's own WebGL and stays.
+- **`codebase.js` is built and unreached.** It is the Repository Body renderer
+  that `topologies.yml:95` names, but `face_assets.yml` does not load it, so the
+  topology is never drawn. Delete, gate or load it; a product call.
 - **`ListeningLoop.converge` targets -14.5..-10.5 LUFS** (`harmony.rb`)
-  while the critique scores against the house -20..-16. Aligning it changes when
-  a render stops raising `HARM_VOL`, so it waits for the operator's ear.
+  while the critique scores against the house -20..-16. The loop levels a quiet
+  pass to the window's middle through `MASTER_LUFS`, so aligning the window
+  changes how loud its renders land, and it waits for the operator's ear.
 - **`core-reclaim.sh` parses `swapctl -l` and `vm.loadavg` with head, tail and
   awk** in five places. Four are field splits `set --` can do; the fifth is a
   float comparison OpenBSD ksh cannot make, and a careless replacement moves
@@ -1212,10 +1010,6 @@ default unless marked.
 - **`VoiceStack` plans `cutoff_scale` and nothing applies it** (`lib/sound.rb`
   plans it; the only other reader is `describe`). Wire it into
   `render_lead_voice!`'s filter or delete the field.
-- **`data/modes.yml` has no reader.** The engine still walks the hardcoded
-  heptatonic `SCALE_SEMITONES`/`DEGREE_TRANSITIONS` in `dilla.rb`, so the four
-  qenit modes are inert and adding hicaz or hüseyni there would be too. Load the
-  file into those tables first.
 - **`insert_secondary_dominants` and `insert_backdoor` write one-note chords**
   (`lib/harmony.rb:351,368`). `apply_voicing` returns any chord without a
   third unchanged, and both pass it a single pitch, so `V7/ii` and `bVII7` land
@@ -1295,8 +1089,8 @@ operator's ear.
 The operator approved all forty-five ("APPROVE ALL", "dont forget to implement
 all these"). Landed and deleted from this list: 3 (lib/ in six subjects), 11
 (root YAML in data/), 14 (`sh!` for render steps, `ToolRun` for every other
-tool call, each with a deadline), 33 (help from the command table), 37 (live/
-gone), 38 (scripts/ gone). Every change here must leave a snapshot identical, which the
+tool call, each with a deadline), 33 (help from the command table), 18 (all
+randomness through `seed_for`), 37 (live/ gone), 38 (scripts/ gone). Every change here must leave a snapshot identical, which the
 harness in `STUDIO/test/support/dilla_snapshot/` proves; a row that changes
 sound says so. Delete a row when it lands.
 
@@ -1321,14 +1115,13 @@ sound says so. Delete a row when it lands.
 - **10. One preset lookup**: `TRACK_PRESETS`, `profile_preset`, style defaults.
 - **12. Kept records apart from runtime state in `project/`**; renders still
   dirty `session.json` and `liveset.jsonl`.
-- **13. One loudness module.** Stage 1 landed (`FfmpegProbe` in lib/listen.rb
-  measures); the ~20 methods that set level remain.
+- **13. One loudness module.** Stage 1 landed: `FfmpegProbe` in lib/listen.rb
+  measures, and `build_harmony_loud` and `audio_duration_sec` read a file's
+  length through it. The ~20 methods that set level remain.
 - **15. One output-path function.** Parts still go to `scratch/all_tracks_demo`.
 - **16. One job runner with locks and signals**; `pkill` cannot stop
   `demo-all` and the lock exits 0 (see measured defects above).
 - **17. A real mixer with dB staging** in place of ENV multipliers.
-- **18. All randomness through `seed_for`** (see "Sound that moves under a
-  pinned seed").
 - **19. A cache policy for `scratch/`.**
 - **20–26. Subsystem homes** for drums, leads, effects, mastering, analysis,
   rap vocals and the crate. lib/ holds six subjects; the matching sections of
