@@ -61,7 +61,7 @@
       "position": "static"
     },
     {
-      "key": "#main-content>div.radio-tunnel>nav.playlist-transport-bar>button.transport-btn.transport-btn-primary",
+      "key": "#main-content>div.radio-tunnel>nav.playlist-transport-bar>button.transport-btn.transport-btn--primary",
       "tag": "button",
       "rect": {
         "x": 636,
