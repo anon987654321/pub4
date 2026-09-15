@@ -247,7 +247,7 @@ Each of these needs vm23: a root run, a man page read there, or a measurement
 only the box can take.
 
 - **One `doas zsh OPENBSD/OPERATOR.sh` run closes the drift.** Ask
-  `SSH_HOST=dev@brgen.no ruby OPENBSD/config_drift_gate.rb --remote`, never a
+  `SSH_HOST=dev@brgen.no ruby OPENBSD/gates/config_drift_gate.rb --remote`, never a
   list; the repo is the newer side everywhere. `emergency_cpu.sh` (the only thing
   `resource_guard.sh`'s crisis tier runs), `vps_weekly_integrity.sh`, its root
   crontab line and `/var/log/pub4/` are absent, so the weekly integrity pass has
