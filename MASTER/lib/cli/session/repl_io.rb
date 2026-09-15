@@ -11,7 +11,7 @@ module Master
         arg = command.to_s.strip
         text = arg.empty? ? Master::CLI::CommandRegistry.help_summary : Master::CLI::CommandRegistry.help_text(arg)
         puts @refs.renderer.render(text, mode: :dim)
-        puts @refs.renderer.render("<< for multiline. anything else is a prompt.", mode: :dim) if arg.empty?
+        puts @refs.renderer.render("<< for multiline, !command runs zsh. anything else is a prompt.", mode: :dim) if arg.empty?
       end
 
       # Reline asks the terminal where the cursor is, and a reply that arrives

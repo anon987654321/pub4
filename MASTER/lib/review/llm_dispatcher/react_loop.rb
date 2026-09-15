@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "did_you_mean"
+
 module Master
   module Review
     class LLMDispatcher
@@ -95,9 +97,12 @@ module Master
           end
         end
 
-        def execute_react_tool(name, args)
-          tool = @tools.find { |t| t.class.name.split("::").last == name }
-          return "<tool_result name=\"#{name}\">error: tool not found</tool_result>" unless tool
+        def execute_react_tool(requested, args)
+          tool = find_react_tool(requested)
+          return unknown_tool_result(requested) unless tool
+
+          name = tool.class.name.split("::").last
+          @bus&.publish("tool:healed", tool: name, from: requested, to: name) unless name == requested
           runtime = tool.class.const_defined?(:NAME) ? tool.class::NAME : name
           unless CLI::SubagentContext.permits?(name) && CLI::SubagentContext.permits?(runtime)
             return "<tool_result name=\"#{name}\">error: tool denied for subagent #{CLI::SubagentContext.active_type}</tool_result>"
@@ -110,6 +115,33 @@ module Master
           "<tool_result name=\"#{name}\">\n#{out}\n</tool_result>"
         rescue StandardError => e
           "<tool_result name=\"#{name}\">error: #{e.message}</tool_result>"
+        end
+
+        # Case, underscores and hyphens are spelling, not identity: a model
+        # without native tools writes read_file or readFile for ReadFile. An exact
+        # name wins; otherwise a name that folds onto exactly one tool reaches it,
+        # and any other answers with the nearest names instead of a bare refusal.
+        def find_react_tool(requested)
+          exact = @tools.find { |tool| tool.class.name.to_s.split("::").last == requested }
+          return exact if exact
+
+          folded = fold_tool_name(requested)
+          matches = @tools.select { |tool| react_tool_names(tool).any? { |known| fold_tool_name(known) == folded } }
+          matches.first if matches.size == 1
+        end
+
+        def react_tool_names(tool)
+          short = tool.class.name.to_s.split("::").last
+          tool.class.const_defined?(:NAME) ? [short, tool.class::NAME] : [short]
+        end
+
+        def fold_tool_name(name) = name.to_s.downcase.delete("_-")
+
+        def unknown_tool_result(requested)
+          names = @tools.map { |tool| tool.class.name.to_s.split("::").last }.uniq
+          near = DidYouMean::SpellChecker.new(dictionary: names).correct(requested.to_s).first(3)
+          hint = near.empty? ? "" : "; nearest: #{near.join(", ")}"
+          "<tool_result name=\"#{requested}\">error: tool not found#{hint}</tool_result>"
         end
 
         # Through the same RubyLLM wrapper a native tool call uses, so both paths

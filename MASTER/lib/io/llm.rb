@@ -32,6 +32,8 @@ module Master
         # tool:call and tool:return bracket every call, reads and fetches
         # included, so the operator sees each one the model makes.
         def forward(**args)
+          return repeated_call_reply(args) if repeated_call?(args)
+
           @bus&.publish("tool:call", tool: tool_name, subject: subject_of(args))
           started = Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond)
           result = @tool.call(**args)
@@ -53,6 +55,34 @@ module Master
         def subject_of(args)
           key = SUBJECT_KEYS.find { |name| !args[name].to_s.empty? }
           key ? args[key].to_s : ""
+        end
+
+        # The same call three times running, nothing between, is a loop and not
+        # work: the third is answered, not run. Digits and whitespace fold, so a
+        # counter or a reflowed command still reads as the same call. read_file
+        # is exempt because rereading after an edit is the method. Core::Memory
+        # answers a repeated read inside the fold, and this dispatcher path never
+        # passes through it. The streak lives in fiber storage, which
+        # Agent#prepare_chat_turn clears.
+        REPEAT_LIMIT = 3
+        REPEAT_EXEMPT = %w[read_file].freeze
+
+        def repeated_call?(args)
+          signature = call_signature(args)
+          streak = Fiber[:master_tool_streak]
+          count = streak && streak.first == signature ? streak.last + 1 : 1
+          Fiber[:master_tool_streak] = [signature, count]
+          count >= REPEAT_LIMIT && !REPEAT_EXEMPT.include?(tool_name)
+        end
+
+        def call_signature(args)
+          pairs = args.sort_by { |key, _| key.to_s }.map { |key, value| "#{key}=#{value}" }
+          "#{tool_name} #{pairs.join(" ")}".gsub(/\d+/, "#").gsub(/\s+/, " ")
+        end
+
+        def repeated_call_reply(args)
+          @bus&.publish("tool:failed", tool: tool_name, category: :validation, error: "repeat: #{subject_of(args)}"[0, 200])
+          "Error: the same #{tool_name} call #{REPEAT_LIMIT} times running. Its result is above; act on it or change the call."
         end
 
         def tool_name = @tool.class.const_defined?(:NAME) ? @tool.class::NAME : @tool.class.name.split("::").last

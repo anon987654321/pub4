@@ -214,6 +214,7 @@ end
         return compaction if compaction.is_a?(Master::Result::Err)
 
         @tools.each { |t| t.reset! if t.respond_to?(:reset!) }
+        Fiber[:master_tool_streak] = nil
         @session.add_message(role: :user, content: message)
       end
 

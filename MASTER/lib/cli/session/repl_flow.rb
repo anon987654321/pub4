@@ -6,6 +6,8 @@ module Master
   module CLI
     class Session
       CONTEXT_STEP = 10_000
+      CLOSE_WINDOW_S = 3
+      BANG = /\A!(?<command>\S.*)\z/m
 
       private
 
@@ -16,23 +18,41 @@ module Master
         # WebSearch, no ReadFile, and a 45-cent reply asking for the text.
       end
 
-      # ^D reads nil and ^C at the prompt raises Interrupt; both leave here and
-      # close the session. A second ^C while it closes exits at once, so a save
-      # stuck on a full disk cannot hold the terminal.
+      # ^D reads nil and closes the session. ^C at the prompt clears the line, as
+      # zsh does, and a second ^C inside CLOSE_WINDOW_S closes it: on a phone
+      # keyboard one stray press cost the session. A second ^C while it closes
+      # exits at once, so a save stuck on a full disk cannot hold the terminal.
       def repl_loop
         while @running
-          line = safe_read_line(prompt_for_mode)
-          if line.nil?
-            puts
-            break
-          end
-          handle_repl_line(line)
+          line = read_prompt_line
+          break if line.nil?
+
+          handle_repl_line(line) unless line == :interrupted
         end
       rescue Interrupt
         puts
       ensure
         trap("INT") { exit!(130) }
         close_session
+      end
+
+      def read_prompt_line
+        line = safe_read_line(prompt_for_mode)
+        puts if line.nil?
+        line
+      rescue Interrupt
+        puts
+        return if close_requested?
+
+        puts @refs.renderer.render("^C again within #{CLOSE_WINDOW_S}s to close", mode: :dim)
+        :interrupted
+      end
+
+      def close_requested?
+        now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        recent = @interrupted_at && now - @interrupted_at <= CLOSE_WINDOW_S
+        @interrupted_at = now
+        recent
       end
 
       def close_session
@@ -98,6 +118,8 @@ module Master
         handled = dispatch_core_slash_command(stripped)
         return handled unless handled == :unhandled
 
+        bang = stripped.match(BANG)
+        return run_bang(bang[:command]) if bang
         return run_input(read_multiline) if stripped == "<<"
 
         run_agent_turn(line)
@@ -115,6 +137,27 @@ module Master
 
       def run_chitchat
         puts @refs.renderer.render("hello. MASTER is awake. describe a goal.", mode: :dim)
+      end
+
+      # !command runs one zsh line through the Io::Shell the model's zsh tool
+      # uses — its blocklist, sandbox, interactive refusal and governor — and
+      # costs no model call. The output joins the transcript so the next prompt
+      # can refer to it. Fast mode builds no governor, so it refuses.
+      def run_bang(command)
+        shell = bang_shell
+        return puts(@refs.renderer.render("!: no governor in this mode", mode: :warning)) unless shell
+
+        result = shell.call(command:)
+        text = result.ok? ? result.value!.to_s : result.message.to_s
+        puts @refs.renderer.render(text, mode: result.ok? ? :dim : :error)
+        @refs.session.add_message(role: :user, content: "$ #{command}\n#{text}")
+      end
+
+      def bang_shell
+        governor = @container[:governor]
+        return unless governor
+
+        @bang_shell ||= Master::Io::Shell.new(root: @refs.root, governor:, event_bus: @refs.bus)
       end
 
       def run_agent_turn(line)
