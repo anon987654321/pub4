@@ -367,8 +367,8 @@ module Master
           private
 
           # A lone directory beside a .rb of its own name is how Zeitwerk spells a
-          # nested constant: Propose::CandidateSources can only live at
-          # propose/candidate_sources.rb, so the directory is the nesting, not
+          # nested constant: RepoEcology::CoChangeGraph can only live at
+          # repo_ecology/co_change_graph.rb, so the directory is the nesting, not
           # sprawl. tools/sprawl_census.rb forgives the same shape for the same
           # reason, and a rule and its census that disagree report one tree twice.
           def lone_file_finding(dir, siblings, subdirs)

@@ -65,13 +65,12 @@ module Operator
 
     # A directory holding one file and no subdirectories is a namespace bought
     # for nothing — unless a `.rb` of the same name sits beside it, which is how
-    # Zeitwerk spells a nested constant. `Propose::CandidateSources` can only
-    # live at `propose/candidate_sources.rb`, next to `propose.rb`, so the
+    # Zeitwerk spells a nested constant. `RepoEcology::CoChangeGraph` can only
+    # live at `repo_ecology/co_change_graph.rb`, next to `repo_ecology.rb`, so the
     # directory buys the nesting the constant already had when it was inline;
-    # flattening it to `ProposeCandidateSources` is a worse name, not less
-    # sprawl. Two directories in the repo match, both created by splitting a god
-    # class the day this exemption was written, and no pre-existing lone
-    # directory is forgiven by it — the ceiling did not move.
+    # flattening it to `RepoEcologyCoChangeGraph` is a worse name, not less
+    # sprawl. The shape comes from splitting a god class, and no lone directory
+    # that predates it is forgiven by the exemption.
     def lone_dirs
       tracked.group_by { |f| File.dirname(f) }
              .select { |dir, files| files.size == 1 && dir != "." && Dir.glob(File.join(ROOT, dir, "*/")).empty? }
