@@ -165,8 +165,12 @@ module Master
         ""
       end
 
+      # owner/name:version pins a version; a bare owner/name takes the latest. A
+      # trained LoRA gains a version per training, and frames meant to compare
+      # checkpoints have to name the one they came from.
       def predict(model_id, input, timeout: 600)
-        version = latest_version(model_id)
+        pinned = model_id.split(":", 2)[1]
+        version = pinned || latest_version(model_id)
         pred = post(URI("#{BASE}/predictions"), { version:, input: })
         wait_for(pred["id"], timeout:)
       end
