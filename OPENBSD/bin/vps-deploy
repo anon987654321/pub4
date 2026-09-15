@@ -28,9 +28,9 @@ esac
 # key to root's known_hosts would "fix" it by giving root a path to fetch and
 # execute code from the network, which is the thing the split avoids.
 #
-# The habit is easy to acquire because everything else on this box is doas'd, and
-# RUNBOOK.md listed OPERATOR.sh, vps-deploy and vps_ci.sh in one breath after the
-# word doas. That line now says which is which.
+# The habit is easy to acquire because everything else on this box is doas'd;
+# RUNBOOK.md's agent contract says which of OPERATOR.sh, vps-deploy and vps_ci.sh
+# takes doas.
 if [[ $(id -u) -eq 0 ]]; then
   print -u2 "vps-deploy: run this as dev, not root — it escalates per step, and"
   print -u2 "            root cannot reach github (no host key). Try:"
@@ -59,10 +59,9 @@ fi
 
 # The whole fleet, in the order that survives its own side effects.
 #
-# There was no way to say "deploy everything", so the list lived in whoever was
-# typing, and master fell out of it: it is not under /home/*/app, so an operator
-# enumerating the Rails apps does not see it. Naming the four here makes the set
-# a definition rather than a habit.
+# master is not under /home/*/app, so an operator enumerating the Rails apps does
+# not see it and a typed list leaves it behind. Naming the four here makes the
+# set a definition rather than a habit.
 #
 # Order is load-bearing. Every deploy sheds amber and bsdports — they go to
 # rcctl failed with their ports closed while TLS keeps answering, so the outage
@@ -84,8 +83,8 @@ if [[ $app == all ]]; then
     # when run alone. The load is the pass's own wake, so the pass should wait
     # for it rather than hand the bill to whichever app is next.
     #
-    # CiGuard also waits now, so this is the cheap half — a fixed pause costs a
-    # minute and avoids most of the waiting the guard would otherwise do.
+    # CiGuard waits on load too, so this is the cheap half — a fixed pause costs
+    # a minute and avoids most of the waiting the guard would otherwise do.
     if (( ! first )); then
       print "vps-deploy: all — settling for ${PUB4_DEPLOY_COOLDOWN:-60}s before $one"
       sleep ${PUB4_DEPLOY_COOLDOWN:-60}
@@ -128,19 +127,19 @@ if [[ $app == master ]]; then
     write_stamp master ok
     exit 0
   fi
-  # A failed restart used to leave last_deploy_master.json saying ok from
-  # the last good run, so /health and the operator read a live SHA while
-  # :53187 was closed (measured 2026-08-13).
+  # A failed run stamps failed, or last_deploy_master.json keeps saying ok
+  # from the last good run and /health reports a live SHA while :53187 is
+  # closed (measured 2026-08-13).
   write_stamp master failed
   exit 1
 fi
 
 [[ -d /home/${app}/app ]] || { print -u2 "missing /home/${app}/app"; exit 1 }
 
-# Rails apps do not pull inside vps_ci.sh. A laptop `vps-deploy brgen --remote`
-# used to CI and sync whatever the VPS checkout already had, which lagged
-# origin/main by days. master pulls inside vps_deploy_master.sh; this is the
-# matching step for the three copy-tree apps.
+# Rails apps do not pull inside vps_ci.sh, so without this step a deploy CIs and
+# syncs whatever the VPS checkout already holds, which can lag origin/main by
+# days. master pulls inside vps_deploy_master.sh; this is the matching step for
+# the three copy-tree apps.
 print "vps-deploy: $app (git pull --ff-only)"
 git -C "$repo" pull --ff-only origin main
 
@@ -151,11 +150,9 @@ fi
 
 # What is about to be deployed, against what is actually running.
 #
-# The gate compares OPENBSD/etc byte-for-byte with live /etc, and until
-# 001142b7e it had never compared anything: ROOT resolved relative to the
-# installed script, every lookup missed, and it printed "clean (0 verbatim
-# configs)". Its first working run found six of eleven drifted. A deploy is
-# exactly when that matters — it is the moment the repo becomes the box.
+# The gate compares OPENBSD/etc byte-for-byte with live /etc and root's crontab
+# with etc/crontab.vm23. A deploy is exactly when that matters — it is the moment
+# the repo becomes the box.
 #
 # Advisory, not blocking, and deliberately so. Measured 2026-09-10 with
 # `SSH_HOST=dev@brgen.no ruby OPENBSD/config_drift_gate.rb --remote`: eight files
@@ -166,9 +163,6 @@ fi
 # starts a production service. Make it blocking the first time a deploy runs with
 # this clean; a warning that names a number is still the difference between
 # knowing and not.
-#
-# The count now includes root's crontab, which is the drift that hid the longest:
-# every /etc file matched while a scheduled job existed only in this repository.
 if [[ -x /usr/local/bin/config_drift_gate.rb ]]; then
   if ! /usr/local/bin/ruby34 /usr/local/bin/config_drift_gate.rb > /tmp/vps-deploy-drift.out 2>&1; then
     # ruby34, not grep: coreutils are banned in committed scripts here, and the
@@ -208,12 +202,11 @@ else
 
   print "vps-deploy: $app (ci + sync)"
   # `|| ci_status=$?` rather than a bare call and `ci_status=$?` after it. This
-  # script runs under `set -e`, so a failing CI run exited here immediately and
-  # the restart below — the whole reason the stand-down records jobs_was_up —
-  # never ran. On 2026-08-23 that left brgen_jobs stopped after a failed deploy,
-  # invisibly: nothing 5xx'd, the queue simply stopped draining. A command
-  # followed by `||` is exempt from errexit, which is what makes the status
-  # capture reachable at all.
+  # script runs under `set -e`, so a bare failing CI run exits here and the
+  # restart below — the whole reason the stand-down records jobs_was_up — never
+  # runs, leaving the worker stopped with nothing 5xx'ing and the queue simply not
+  # draining. A command followed by `||` is exempt from errexit, which is what
+  # makes the status capture reachable at all.
   ci_status=0
   zsh "$repo/OPENBSD/vps_ci.sh" "$app" || ci_status=$?
 
@@ -310,14 +303,14 @@ fi
 
 # Restore whatever the guard shed while we were deploying.
 #
-# resource_guard sheds the OPTIONAL list — litestream, bsdports, amber — under
+# resource_guard sheds its OPTIONAL list — bsdports, then amber — under
 # sustained pressure, and a deploy is exactly that. relayd keeps answering TLS
 # with their ports closed, so the outage reads as a hang rather than a 5xx and
 # nothing reports it: on 2026-08-23 amber and bsdports were restarted by hand
 # three times in one session, each time discovered by a person running curl.
 #
-# `vps-deploy all` folds the restore into its ordering; a single-app deploy had
-# no such pass at all, which is the common case. Reported, not silent — a
+# `vps-deploy all` folds the restore into its ordering; this pass gives a
+# single-app deploy, the common case, the same restore. Reported, not silent — a
 # service that needed restoring is a fact about the box worth seeing.
 restored=()
 for other in amber bsdports; do
@@ -334,12 +327,11 @@ done
 
 # The gates, on the deployed thing.
 #
-# Fifty-one gates existed and nothing ran them unattended: the only callers were
-# four commands a person types, so the half that can only be measured against a
-# running app was measured on a laptop where it meant less. flow_journey is the
-# worked example — it sent no Host header, production answers 403 from host
-# authorization, and the gate therefore passed in development and could never
-# pass here, which is the only place a user journey is real.
+# Outside this pass the gates run only when a person types a command, so the
+# half that can only be measured against a running app would be measured on a
+# laptop where it means less. A user journey is real only here: production
+# answers 403 to a request without the right Host header, which development
+# never does.
 #
 # This set is the cheap half: source checks plus the live probes against the
 # loopback. It runs in about forty seconds on this one core with the fleet up,
@@ -359,9 +351,9 @@ done
 # flow_journey, page_simulation, port_inventory — measures nothing without a
 # listening app. The fleet was just restarted and the shed apps restored a few
 # lines above, so a closed port here is a deploy that did not come up, not a
-# laptop. bin/check-rails has taken exactly this position on the box since it
-# learned Environment.on_vps?; a second caller on the same host that quietly
-# accepted a skip was the inconsistency, not the flag.
+# laptop. bin/check-rails takes the same position on the box through
+# Environment.on_vps?, and a second caller on the same host must not quietly
+# accept a skip.
 gate_names=(production port_inventory generated_asset schema_migration
             phantom_foreign_keys frontend_production stimulus_components
             flow_journey page_simulation)
