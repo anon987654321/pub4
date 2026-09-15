@@ -4608,9 +4608,9 @@ def generate_tritone_sub_progression(root_hz:, mode: :minor, length: 8, seed: ni
   Array.new(length) do
     substituted = degree == 5 && rng.rand < sub_chance
     chord_root = if substituted
-                   root_hz * (2**((semitones[(degree - 1) % 7] + 6) / 12.0))
+                   root_hz * (2**((semitones[(degree - 1) % semitones.size] + 6) / 12.0))
                  else
-                   root_hz * (2**(semitones[(degree - 1) % 7] / 12.0))
+                   root_hz * (2**(semitones[(degree - 1) % semitones.size] / 12.0))
                  end
     quality = substituted ? "7" : quality_for.fetch(degree, "m9")
     label = substituted ? "trisub#{degree}7" : "deg#{degree}#{quality}"
@@ -4629,7 +4629,7 @@ def generate_backdoor_progression(root_hz:, mode: :minor, length: 8, seed: nil)
   Array.new(length) do
     quality = quality_for.fetch(degree, "m9")
     quality = "7alt" if degree == 5 && rng.rand < 0.35
-    chord_root = root_hz * (2**(semitones[(degree - 1) % 7] / 12.0))
+    chord_root = root_hz * (2**(semitones[(degree - 1) % semitones.size] / 12.0))
     chord = { name: "bk#{degree}#{quality}", hz: chord_from_quality(chord_root, quality) }
     degree = weighted_pick(rng, transitions.fetch(degree, { 1 => 1 }))
     chord
@@ -4661,7 +4661,7 @@ def generate_modal_interchange(root_hz:, mode: :minor, length: 8, seed: nil)
     degree = pool[i % pool.length]
     q = borrow[degree] || SCALE_DEGREE_QUALITY.fetch(mode).fetch(degree, "m9")
     q = PLANING_QUALITIES.sample(random: rng) if rng.rand < 0.2
-    root = root_hz * (2**(semitones[(degree - 1) % 7] / 12.0))
+    root = root_hz * (2**(semitones[(degree - 1) % semitones.size] / 12.0))
     { name: "mod#{degree}#{q}", hz: chord_from_quality(root, q) }
   end
 end
@@ -12175,26 +12175,36 @@ CHORD_TEMPLATES = {
 # ii/IV before finding its way back. Extended qualities (m9/maj9/dominant7)
 # keep it in the same lush-pad harmonic language as the researched
 # progressions rather than plain triads.
-SCALE_DEGREE_QUALITY = {
-  major: { 1 => "maj9", 2 => "m9", 3 => "m7", 4 => "maj9", 5 => "7", 6 => "m9", 7 => "dim" },
-  minor: { 1 => "m9", 2 => "dim", 3 => "maj9", 4 => "m9", 5 => "7", 6 => "maj9", 7 => "7" },
-}.freeze
-SCALE_SEMITONES = {
-  major: [0, 2, 4, 5, 7, 9, 11],
-  minor: [0, 2, 3, 5, 7, 8, 10],
-}.freeze
-# Degree -> {next_degree => relative weight}. Standard functional motion:
-# tonic radiates outward, predominants (ii/IV) gravitate to the dominant,
-# the dominant resolves home, vi is the deceptive detour.
-DEGREE_TRANSITIONS = {
-  1 => { 4 => 3, 5 => 3, 6 => 2, 2 => 1 },
-  2 => { 5 => 4, 7 => 1, 4 => 1 },
-  3 => { 6 => 2, 4 => 1, 2 => 1 },
-  4 => { 5 => 3, 1 => 2, 2 => 1 },
-  5 => { 1 => 4, 6 => 1, 4 => 1 },
-  6 => { 2 => 2, 4 => 2, 5 => 1 },
-  7 => { 1 => 3, 3 => 1 },
-}.freeze
+#
+# The modes the walk can take live in data/modes.yml: the scale, a quality per
+# degree and the transition weights, each mode checked here against itself so a
+# degree the scale lacks fails at load rather than as a nil pitch mid-render.
+# major and minor carry the values these tables always held, so no default
+# render moves; GEN_MODE=tizita (or bati, ambassel, anchihoye and their minor
+# forms) walks a pentatonic qenit, which is why every walk below indexes by the
+# scale's own length and never by seven.
+HARMONY_MODES = YAML.safe_load_file(File.join(ROOT, "data", "modes.yml")).fetch("modes").to_h do |name, mode|
+  semitones = mode.fetch("semitones")
+  degrees = (1..semitones.size).to_a
+  qualities = mode.fetch("qualities").transform_keys(&:to_i).transform_values(&:to_s)
+  transitions = mode.fetch("transitions").to_h { |from, to| [from.to_i, to.to_h { |k, v| [k.to_i, v] }] }
+  named = qualities.keys | transitions.keys | transitions.values.flat_map(&:keys)
+  unless qualities.keys.sort == degrees && (named - degrees).empty?
+    raise ArgumentError, "data/modes.yml: #{name} names degrees #{(named - degrees).inspect} " \
+                         "outside its #{semitones.size}-note scale, or leaves one without a quality"
+  end
+
+  [name.to_sym, { semitones: semitones.freeze, qualities: qualities.freeze, transitions: transitions.freeze }.freeze]
+end.freeze
+SCALE_DEGREE_QUALITY = HARMONY_MODES.transform_values { |mode| mode[:qualities] }.freeze
+SCALE_SEMITONES = HARMONY_MODES.transform_values { |mode| mode[:semitones] }.freeze
+# Degree -> {next_degree => relative weight}, per mode. Functional motion for
+# the heptatonic two: tonic radiates outward, predominants (ii/IV) gravitate to
+# the dominant, the dominant resolves home, vi is the deceptive detour.
+MODE_TRANSITIONS = HARMONY_MODES.transform_values { |mode| mode[:transitions] }.freeze
+# The heptatonic motion, for the walks that alter a dominant or borrow a degree
+# and so only mean something with seven degrees.
+DEGREE_TRANSITIONS = MODE_TRANSITIONS.fetch(:major)
 
 def weighted_pick(rng, weights)
   total = weights.values.sum
@@ -12457,9 +12467,9 @@ def generate_progression(root_hz: 130.81, mode: :minor, length: 8, seed: nil)
   degree = 1
   Array.new(length) do
     quality = quality_for.fetch(degree)
-    chord_root_hz = root_hz * (2**(semitones[(degree - 1) % 7] / 12.0))
+    chord_root_hz = root_hz * (2**(semitones[(degree - 1) % semitones.size] / 12.0))
     chord = { name: "deg#{degree}#{quality}", hz: chord_from_root(chord_root_hz, quality) }
-    degree = weighted_pick(rng, DEGREE_TRANSITIONS.fetch(degree))
+    degree = weighted_pick(rng, MODE_TRANSITIONS.fetch(mode).fetch(degree))
     chord
   end
 end
@@ -12516,14 +12526,14 @@ def generate_polytonal_progression(root_hz: 130.81, mode: :minor, length: 8, see
   degree = 1
   Array.new(length) do
     quality = quality_for.fetch(degree)
-    chord_root_hz = root_hz * (2**(semitones[(degree - 1) % 7] / 12.0))
+    chord_root_hz = root_hz * (2**(semitones[(degree - 1) % semitones.size] / 12.0))
     hz = chord_from_root(chord_root_hz, quality, voices: 4)
     if rng.rand < 0.45
       poly_root = chord_root_hz * (2**(POLYTONAL_OFFSETS.sample(random: rng) / 12.0))
       hz += chord_from_root(poly_root, "maj", voices: 2)
     end
     chord = { name: "poly#{degree}#{quality}", hz: hz.sort.first(6) }
-    degree = weighted_pick(rng, DEGREE_TRANSITIONS.fetch(degree))
+    degree = weighted_pick(rng, MODE_TRANSITIONS.fetch(mode).fetch(degree))
     chord
   end
 end

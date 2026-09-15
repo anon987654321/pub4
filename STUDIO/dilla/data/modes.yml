@@ -1,15 +1,11 @@
 # The modes the harmony spine can walk, and what walking each one means.
 #
-# Until now `mode:` took exactly two values, :major and :minor, and three
-# separate constants in chord_theory.rb had to agree about them —
-# SCALE_SEMITONES, SCALE_DEGREE_QUALITY and DEGREE_TRANSITIONS. Nothing made
-# them agree, and all six call sites in the progression builder indexed
-# `semitones[(degree - 1) % 7]`, so the spine was structurally heptatonic: a
-# five-note scale added to that table would have indexed past the end and
-# produced a nil pitch somewhere deep inside a render.
-#
-# That is why the engine had no Ethio-jazz. Not a missing scale — a spine that
-# could only hold seven-note ones.
+# dilla.rb builds SCALE_SEMITONES, SCALE_DEGREE_QUALITY and MODE_TRANSITIONS
+# from this file at load, and refuses to load if a mode names a degree its scale
+# does not have. `mode:` in the progression walks comes from GEN_MODE, minor by
+# default, so a generated style set to GEN_MODE=tizita walks that qenit. Every
+# walk indexes a scale by its own length, which is what lets a five-note mode
+# sit beside the two seven-note ones.
 #
 # A mode here declares three things and they are checked against each other:
 #
@@ -24,10 +20,8 @@
 # said different things about 7alt.
 
 modes:
-  # --- the two the engine already had ------------------------------------
-  #
-  # Unchanged in value. Moved here so that adding a mode is one edit rather
-  # than three, and so the pentatonic modes below are held to the same shape.
+  # The two functional modes, held to the same shape as the pentatonic ones so
+  # that adding a mode is one edit. test_dilla_chord_theory.rb pins their values.
   major:
     semitones: [0, 2, 4, 5, 7, 9, 11]
     qualities: { 1: maj9, 2: m9, 3: m7, 4: maj9, 5: "7", 6: m9, 7: dim }
@@ -41,7 +35,7 @@ modes:
       5: { 1: 4, 6: 1, 4: 1 }
       6: { 2: 2, 4: 2, 5: 1 }
       7: { 1: 3, 3: 1 }
-    source: functional harmony, unchanged from chord_theory.rb
+    source: functional harmony
 
   minor:
     semitones: [0, 2, 3, 5, 7, 8, 10]
@@ -54,9 +48,9 @@ modes:
       5: { 1: 4, 6: 1, 4: 1 }
       6: { 2: 2, 4: 2, 5: 1 }
       7: { 1: 3, 3: 1 }
-    source: functional harmony, unchanged from chord_theory.rb
+    source: functional harmony
 
-  # --- the four Ethiopian qenit (ቅኝት) ------------------------------------
+  # The four Ethiopian qenit (ቅኝት).
   #
   # Mulatu Astatke, on what Ethio-jazz is: the four modes underneath, and the
   # world — Latin, American jazz, European — on top. That is the arrangement

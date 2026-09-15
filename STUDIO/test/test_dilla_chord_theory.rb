@@ -131,10 +131,13 @@ class TestChordTheory < Minitest::Test
     200.times { assert_includes weights.keys, send(:weighted_pick, rng, weights) }
   end
 
-  def test_both_scales_are_seven_note_and_ascend_within_an_octave
+  # Seven notes for the functional pair, five for the qenit; every scale rises
+  # from its root inside one octave, whatever its length.
+  def test_every_scale_ascends_within_an_octave_from_its_root
+    assert_equal [7, 7], SCALE_SEMITONES.values_at(:major, :minor).map(&:size)
     SCALE_SEMITONES.each do |mode, degrees|
-      assert_equal 7, degrees.size, "#{mode} is not a seven-note scale"
-      assert_equal degrees.sort, degrees
+      assert_includes [5, 7], degrees.size, "#{mode} is neither heptatonic nor pentatonic"
+      assert_equal degrees.sort.uniq, degrees
       assert_operator degrees.last, :<, 12
       assert_equal 0, degrees.first
     end
@@ -157,5 +160,37 @@ class TestChordTheory < Minitest::Test
                     "the mute floor must sit under the guard floor or one of them is unreachable"
     assert_operator HARMONIC_MUTE_MIN, :>, 0.0
     assert_operator HARMONIC_GUARD_MIN, :<, 1.0
+  end
+
+  # The walk reads its modes from data/modes.yml. major and minor must be the
+  # tables the engine always held, digit for digit, or loading the file moved
+  # every generated progression; these literals are those tables.
+  def test_the_heptatonic_modes_from_the_file_are_the_tables_the_engine_held
+    assert_equal [0, 2, 4, 5, 7, 9, 11], SCALE_SEMITONES.fetch(:major)
+    assert_equal [0, 2, 3, 5, 7, 8, 10], SCALE_SEMITONES.fetch(:minor)
+    assert_equal({ 1 => "maj9", 2 => "m9", 3 => "m7", 4 => "maj9", 5 => "7", 6 => "m9", 7 => "dim" },
+                 SCALE_DEGREE_QUALITY.fetch(:major))
+    assert_equal({ 1 => "m9", 2 => "dim", 3 => "maj9", 4 => "m9", 5 => "7", 6 => "maj9", 7 => "7" },
+                 SCALE_DEGREE_QUALITY.fetch(:minor))
+    assert_equal({ 1 => { 4 => 3, 5 => 3, 6 => 2, 2 => 1 }, 2 => { 5 => 4, 7 => 1, 4 => 1 },
+                   3 => { 6 => 2, 4 => 1, 2 => 1 }, 4 => { 5 => 3, 1 => 2, 2 => 1 },
+                   5 => { 1 => 4, 6 => 1, 4 => 1 }, 6 => { 2 => 2, 4 => 2, 5 => 1 }, 7 => { 1 => 3, 3 => 1 } },
+                 DEGREE_TRANSITIONS)
+    assert_equal DEGREE_TRANSITIONS, MODE_TRANSITIONS.fetch(:minor)
+  end
+
+  # A pentatonic qenit walks five degrees. Indexed by seven, degree 5 of a
+  # five-note scale reads past the end and the chord root is nil.
+  def test_a_pentatonic_qenit_walks_its_own_five_degrees
+    %i[tizita bati ambassel anchihoye].each do |mode|
+      scale = SCALE_SEMITONES.fetch(mode)
+      assert_equal 5, scale.size, "#{mode} is pentatonic"
+
+      chords = send(:generate_progression, root_hz: 130.81, mode:, length: 16, seed: 7)
+      assert_equal 16, chords.size
+      chords.each { |chord| refute_empty chord[:hz], "#{mode} voiced an empty chord" }
+      degrees = chords.map { |chord| chord[:name][/\Adeg(\d+)/, 1].to_i }
+      assert degrees.all? { |d| (1..5).cover?(d) }, "#{mode} walked to a degree it lacks: #{degrees.uniq.sort}"
+    end
   end
 end
