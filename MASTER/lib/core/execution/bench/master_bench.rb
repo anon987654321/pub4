@@ -6,9 +6,12 @@ module Master::Core::Execution
   # A set of validated cases with an Oracle policy that determines
   # not just if the result is correct, but if the process was optimal.
   class MasterBench
+    attr_reader :cases
+
     def initialize
       @cases = [] # [ { task: "...", oracle: ->(res) { ... } } ]
     end
+
 
     def add_case(task, oracle)
       @cases << { task: task, oracle: oracle }
