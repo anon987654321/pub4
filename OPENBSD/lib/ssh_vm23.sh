@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 set -euo pipefail
-# Shared SSH helper for vm23 (dev@46.23.89.226).
+# Shared SSH helper for vm23 (dev@brgen.no).
 #
 # Source from deploy scripts:
 #   source OPENBSD/lib/ssh_vm23.sh
@@ -19,7 +19,7 @@ set -euo pipefail
 # one file's SSH_HOST into another's yields dev@dev@brgen.no and every ssh fails.
 
 : "${SSH_USER:=dev}"
-: "${SSH_HOST:=46.23.89.226}"
+: "${SSH_HOST:=brgen.no}"
 : "${SSH_KEY:=${HOME}/.ssh/id_ed25519_brgen}"
 : "${REMOTE_PUB4:=/home/dev/pub4}"
 

@@ -47,7 +47,7 @@ One session at a time. Rapid reconnects trip pf bruteforce.
 
 | Target | Command |
 |--------|---------|
-| VM (apps) | `ssh -i ~/.ssh/id_ed25519_brgen dev@46.23.89.226` or `ssh brgen` |
+| VM (apps) | `ssh -i ~/.ssh/id_ed25519_brgen dev@brgen.no` or `ssh brgen` |
 | VMM host | `ssh -p 31415 -i ~/.ssh/id_ed25519_brgen dev@server4.openbsd.amsterdam` |
 | Console | `vmctl console vm23` then `doas pfctl -t bruteforce -T flush` |
 

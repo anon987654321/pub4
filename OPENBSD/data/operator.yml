@@ -3,7 +3,7 @@
 
 meta:
   source: runtime authority
-  vps: dev@46.23.89.226
+  vps: dev@brgen.no
   repo_on_vps: /home/dev/pub4
 
 stack:
