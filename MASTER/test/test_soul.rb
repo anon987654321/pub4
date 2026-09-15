@@ -2,6 +2,7 @@
 
 require_relative "test_helper"
 require_relative "../tools/agent_context"
+require "open3"
 
 class TestSoul < Minitest::Test
   Agent = Struct.new(:draft) do
@@ -89,7 +90,7 @@ class TestSoul < Minitest::Test
   # absolute section out of SOUL.md at approval.
   def test_approve_refuses_a_proposal_that_drops_an_absolute_section
     soul = Master::Voice::Soul.new(root: @root)
-    soul.define_singleton_method(:commit_approval) { |_version| flunk "approval must not commit" }
+    soul.define_singleton_method(:commit_approval) { flunk "approval must not commit" }
     proposal = File.join(@root, ".master", "soul_proposal.md")
     FileUtils.mkdir_p(File.dirname(proposal))
     File.write(proposal, DOCUMENT.sub(/The anti-simulation rule.*\n/, ""))
@@ -107,13 +108,39 @@ class TestSoul < Minitest::Test
     assert_match(/\ASOUL is the absolute tier/, summary.lines.last)
   end
 
-  def test_approve_updates_version_at_instance_root
-    draft = DOCUMENT + "\nA small clarification.\n"
-    soul = Master::Voice::Soul.new(root: @root, agent: Agent.new(draft))
-    soul.define_singleton_method(:commit_approval) { |_version| true }
+  # SOUL.md carries no Version line, so approval must not invent one: the
+  # revision it makes is the commit, and the reply and /soul version name it.
+  def test_approve_names_the_commit_it_made
+    with_git_identity do
+      git("init", "-q")
+      git("add", "data/SOUL.md")
+      git("commit", "-q", "-m", "seed")
+      draft = "#{DOCUMENT}\nA small clarification.\n"
+      soul = Master::Voice::Soul.new(root: @root, agent: Agent.new(draft))
+      soul.propose("clarify")
 
-    soul.propose("clarify")
-    assert_equal "soul updated to v1.2.4", soul.approve
-    assert_includes File.read(File.join(@root, "data", "SOUL.md")), "Version: 1.2.4"
+      reply = soul.approve
+      head = git("rev-parse", "--short", "HEAD").strip
+
+      assert_equal "soul updated in #{head}", reply
+      assert_equal draft.strip, File.read(File.join(@root, "data", "SOUL.md"))
+      assert_match(/\A#{head} \S+ soul: evolution protocol update/, soul.changelog)
+    end
+  end
+
+  GIT_IDENTITY = %w[GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_COMMITTER_NAME GIT_COMMITTER_EMAIL].freeze
+
+  def with_git_identity
+    saved = GIT_IDENTITY.to_h { |key| [key, ENV[key]] }
+    GIT_IDENTITY.each { |key| ENV[key] = key.end_with?("EMAIL") ? "soul@example.test" : "soul" }
+    yield
+  ensure
+    saved.each { |key, value| ENV[key] = value }
+  end
+
+  def git(*args)
+    out, status = Open3.capture2e("git", "-C", @root, *args)
+    assert status.success?, out
+    out
   end
 end

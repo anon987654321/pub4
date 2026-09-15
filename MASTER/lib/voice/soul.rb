@@ -37,13 +37,14 @@ module Master
           drift = measure_drift(@soul, proposal)
           return blocked_proposal_message(drift) if drift[:absolute_changed].any?
 
-          version = bump_version(extract_version, :patch)
-          updated = with_version_and_changelog(proposal, version)
+          # SOUL.md carries no version line and no changelog table, so the
+          # revision an approval makes is the commit, and the reply names it.
+          updated = proposal
           persist(@soul_path, updated)
           File.unlink(@proposal_path)
           @soul = updated
-          committed = commit_approval(version)
-          "soul updated to v#{version}#{committed ? "" : " (git commit failed)"}"
+          commit = commit_approval
+          commit ? "soul updated in #{commit}" : "soul updated (git commit failed)"
         rescue StandardError => e
           "approve error: #{e.message}"
         end
@@ -82,9 +83,12 @@ module Master
         ["soul0: rev #{version}, persona #{persona.to_s.empty? ? 'none' : persona}", opening].reject(&:empty?).join("\n")
       end
 
+      # The commits that touched SOUL.md, which is where an approval records
+      # itself.
       def changelog
-        block = @soul[/## Changelog\n+(.*?)(?=\n## |\z)/m, 1].to_s.strip
-        block.empty? ? "(no changelog)" : block
+        log, status = Master::Io::Exec.capture2e("git", "-C", @root, "log", "-n", "10", "--date=short",
+                                                 "--format=%h %ad %s", "--", "data/SOUL.md")
+        status.success? && !log.strip.empty? ? log.strip : "no git history for data/SOUL.md"
       end
 
       def rollback
@@ -149,23 +153,20 @@ module Master
         changed.any? ? " [PROTECTED sections affected: #{changed.join(", ")}]" : ""
       end
 
-      def with_version_and_changelog(document, version)
-        updated = document.sub(/Version: [\d.]+/, "Version: #{version}")
-        date = Time.now.strftime("%Y-%m-%d")
-        entry = "| #{version} | #{date} | Evolution Protocol change | Approved via `soul approve` |\n"
-        updated.sub(/\| 1\.0\.0 \|/, entry + "| 1.0.0 |")
-      end
-
-      def commit_approval(version)
+      # The short hash of the approval commit, or nil when git refused it.
+      def commit_approval
         relative = Pathname.new(@soul_path).relative_path_from(Pathname.new(@root)).to_s
         _, add_status = Master::Io::Exec.capture2e("git", "-C", @root, "add", "--", relative)
-        return false unless add_status.success?
+        return unless add_status.success?
 
         _, commit_status = Master::Io::Exec.capture2e(
-          "git", "-C", @root, "commit", "-m", "soul: v#{version} — evolution protocol update",
+          "git", "-C", @root, "commit", "-m", "soul: evolution protocol update",
           "-m", Master::Core::World::COMMIT_TRAILER
         )
-        commit_status.success?
+        return unless commit_status.success?
+
+        head, head_status = Master::Io::Exec.capture2e("git", "-C", @root, "rev-parse", "--short", "HEAD")
+        head_status.success? ? head.strip : nil
       end
 
       def previous_revision
@@ -195,12 +196,6 @@ module Master
 
       def extract_version = @soul[/^Version: ([\d.]+)/, 1] || "1.0.0"
       def extract_field(name) = @soul[/^#{Regexp.escape(name)}:\s*(.+)/, 1].to_s.strip
-
-      def bump_version(version, level)
-        major, minor, patch = version.split(".").map(&:to_i)
-        { major: "#{major + 1}.0.0", minor: "#{major}.#{minor + 1}.0", patch: "#{major}.#{minor}.#{patch + 1}" }
-          .fetch(level)
-      end
 
       def measure_drift(old_doc, new_doc)
         {
