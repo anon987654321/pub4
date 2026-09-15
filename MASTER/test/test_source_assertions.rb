@@ -36,9 +36,11 @@ require_relative "test_helper"
 # 186 -> 176: across the 2026-09-14 backlog merges, which deleted classes with
 # their tests (the snapshot publisher, MemoryIndex, Ground::Taint, the ActionCable
 # channel) and turned spelling checks into behaviour checks.
+# 176 -> 175: test_soul stopped reading SOUL.md for a Version line approval no
+# longer writes, and compares the whole approved document instead.
 class TestSourceAssertions < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
-  BASELINE = 176
+  BASELINE = 175
 
   # An assertion whose subject is the text of a file rather than a value the
   # code produced. `source`, `src` and `body` are this repo's names for that
