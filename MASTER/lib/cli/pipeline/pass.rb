@@ -82,6 +82,11 @@ module Master
         # them would change what that gate compares against.
         SWARM_EXCERPT = 400
 
+        # No gates stage for a RAILS target. bin/operator gate already runs this
+        # pass over RAILS through bin/gate and then `RAILS/gates/runner.rb --all`
+        # as its own rails stage, so a runner call here would run every app gate
+        # twice in the ladder, and the rendered half needs a browser on the
+        # deploy host, where the ladder already reaches it.
         STAGES = %w[scan critique map].freeze
         STAGE_ALIASES = { "fix" => "scan", "aesthetic" => "scan", "council" => "critique" }.freeze
 
