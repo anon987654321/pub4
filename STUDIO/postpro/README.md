@@ -229,7 +229,7 @@ which asks a different and narrower question.
 
 A grade answers one of the four ways a photograph fails, and `--measure` and
 `--rescue` exist to say which one is in front of it. Two more readings come
-from the rules `STUDIO/PHOTOGRAPHY.md` refits to pictures.
+from MASTER's own laws, returned to the pictures they were borrowed from.
 
 The finest octave asks whether detail steps smoothly across scales. A frame at
 its own resolution holds about twice as much energy in its finest octave as in

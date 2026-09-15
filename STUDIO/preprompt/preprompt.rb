@@ -470,7 +470,7 @@ end
 # them: kodak_portra with skin_protect, and grain. The grain is not decoration.
 # Generated skin is too clean and its specular response uniform, because models
 # learn from retouched photography and have no account of subsurface scattering
-# — see STUDIO/PHOTOGRAPHY.md §4. Grain is the direct answer to the first half
+# — the tell of a generated portrait. Grain is the direct answer to the first half
 # of that, and it is the single highest-yield thing that can be done to a
 # generated face after the fact.
 #
@@ -793,7 +793,8 @@ when "chain"
   end
 
   # postpro last, on the final frame only — grading an intermediate would be
-  # graded again by every stage after it.
+  # graded again by every stage after it. Last means after any upscale too: grain
+  # laid down and then resampled turns to mush.
   preset = Preprompt::Chain.grade_for(chain, produced: produced, requested: options[:postpro])
   maybe_handoff_postpro(produced.last, preset) if produced.any?
   puts "preprompt: chain #{name} produced #{produced.length} frame(s)"

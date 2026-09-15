@@ -6,11 +6,7 @@ its lean and genre-agnostic in intent. `postpro/` is the house grade, analog
 photographic emulation for stills. `preprompt/` generates images, and
 chains radically different models to do it. `lora/` trains person-specific
 fine-tunes, so a name survives across worlds. Each keeps its own contract in its
-own README.
-
-Two documents carry the theory rather than the code: `PHOTOGRAPHY.md`, on what
-makes a photograph good, in four layers, and `AMBITION.md`, 168 proposals and
-which of them are built.
+own README, and the reasons behind a setting sit in a comment beside it.
 
 ## Read this part first
 
@@ -77,7 +73,7 @@ aperture, because those constrain geometry and depth of field in a way that
 "cinematic" does not.
 
 **Distance, not focal length, distorts a face.** The single most useful fact in
-`PHOTOGRAPHY.md`. A nose looks enlarged because the camera was 40 cm away, not
+this tree. A nose looks enlarged because the camera was 40 cm away, not
 because the lens was wide — perspective is a function of subject distance alone.
 This is why a selfie flatters nobody and why no grade can fix it: it is a
 projection, not a rendering. Prompt for the distance you want.
@@ -153,8 +149,8 @@ energy), specular spread, clipping, tonal range. **The number to watch is the
 delta, not the value.** If the film emulation is doing what it claims, texture
 rises and clipping falls. When it does the opposite, that is a bug report.
 
-`rescue.rb` is the honest half. `PHOTOGRAPHY.md` splits a photograph into four
-layers, and a grade reaches exactly one of them. Geometry — the perspective that
+`rescue.rb` is the honest half. A photograph fails on four layers, and a grade
+reaches exactly one of them. Geometry — the perspective that
 comes of shooting too close — is unreachable at any effort, and so is
 expression, which is the moment. Light, the pattern the key made, is reachable
 partly, as tonality. Only the optical layer is fully reachable: plastic skin,

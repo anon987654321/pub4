@@ -7,7 +7,7 @@ require_relative "../postpro/lib/rescue"
 
 # "Make any bad photo look good", with "although I realize that's a stretch"
 # attached. The stretch is not uniform, and that is the whole design:
-# PHOTOGRAPHY.md splits a photograph into four layers that fail independently,
+# a photograph fails on four layers, independently of one another,
 # and exactly one of them is a grade's to fix.
 #
 # So the tests that matter most here are the ones asserting what it REFUSES. A

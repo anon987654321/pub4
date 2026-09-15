@@ -7,8 +7,8 @@ require_relative "uncanny"
 #
 # The ask was "make any bad photo look good", with "although I realize that's a
 # stretch" attached — and the stretch is the interesting part, because it is not
-# uniformly a stretch. STUDIO/PHOTOGRAPHY.md splits a photograph into four
-# layers that fail independently:
+# uniformly a stretch. A photograph fails on four layers, and they fail
+# independently:
 #
 #   geometry     perspective distortion from shooting too close. A projection,
 #                not a rendering. NOT FIXABLE, at any effort.

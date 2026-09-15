@@ -1761,8 +1761,8 @@ end
 # Relighting, which is the one thing a grade can do to light and the one thing
 # this file could not do.
 #
-# PHOTOGRAPHY.md splits a photograph into geometry, light, expression and
-# optics, and says light is PARTLY fixable: gradeable as tonality, and a grade
+# A photograph fails on four layers — geometry, light, expression and optics —
+# and light is PARTLY fixable: gradeable as tonality, and a grade
 # cannot move a shadow to the other side of a nose. Both halves are true, and
 # the gradeable half has a standard method nobody here had written.
 #

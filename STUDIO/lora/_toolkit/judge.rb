@@ -8,9 +8,16 @@
 # They arrive as a finished JPEG alongside the good ones, and the only thing that
 # has ever caught them here is somebody scrolling a folder.
 #
-# The four failures below are measurable, and STUDIO/PHOTOGRAPHY.md names three
-# of them in prose already — this is that document with numbers attached, which
-# is what it needed to become something a pipeline can enforce.
+# The four failures below are measurable, and they are the tell of a generated
+# portrait: skin with no pores, highlights that clip rather than roll, a veiled
+# frame, and a specular sheen uniform across the face.
+#
+# Four uncanny proxies rather than an aesthetic score, on measured grounds. The
+# LAION aesthetic predictor alone scores at chance against human picks on
+# Pick-a-Pic (ar5iv 2305.01569), and multimodal models judge aesthetics poorly
+# (AesBench, arXiv 2401.08276). A scorer that ranks renders belongs here only as
+# HPSv2.1 or PickScore with pyiqa's qalign beside it, and it answers a different
+# question from this gate, which is whether a frame is worse than a photograph.
 #
 # Thresholds are CALIBRATED, not chosen. They come from the subject's own
 # training photographs, on the argument that a generated frame has no business

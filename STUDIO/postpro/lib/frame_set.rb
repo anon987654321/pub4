@@ -4,8 +4,8 @@ require "vips"
 
 # Two questions about a set of frames rather than about one.
 #
-# PHOTOGRAPHY.md's DRY: two frames of the same moment are one photograph stored
-# twice, and a set carrying both loses a place to the repeat. And its
+# MASTER's DRY, read on a set: two frames of the same moment are one photograph
+# stored twice, and a set carrying both loses a place to the repeat. And its
 # CONSISTENT_ERROR_STRATEGY: a set graded frame by frame reads as a pile, because
 # each frame arrives at the grade from a different exposure.
 #
