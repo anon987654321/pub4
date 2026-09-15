@@ -138,4 +138,25 @@ class TestUncanny < Minitest::Test
   def test_a_flat_frame_squints_to_zero_rather_than_dividing_by_it
     assert_equal 0.0, Postpro::Uncanny.squint_image((Vips::Image.black(64, 64) + 128).cast(:uchar))
   end
+  def swatch(rgb) = (Vips::Image.black(16, 16) + rgb).cast(:uchar).copy(interpretation: :srgb)
+
+  # Each named hue on its own pure sRGB swatch, and a grey that has none. Equal
+  # hue bins read sRGB red as orange and blue as magenta, which is why the
+  # boundaries are measured and why every name is asserted here.
+  def test_a_pure_colour_lands_in_its_own_name_and_grey_is_neutral
+    { "red" => [255, 0, 0], "orange" => [255, 128, 0], "yellow" => [255, 255, 0], "green" => [0, 200, 0],
+      "cyan" => [0, 255, 255], "azure" => [0, 128, 255], "blue" => [0, 0, 255], "magenta" => [255, 0, 255],
+      "rose" => [255, 0, 128], "neutral" => [128, 128, 128] }.each do |name, rgb|
+      assert_in_delta 1.0, Postpro::Uncanny.palette(swatch(rgb)).fetch(name), 1e-9, "#{rgb.inspect} is not #{name}"
+    end
+  end
+
+  def test_a_half_and_half_frame_splits_its_palette
+    frame = swatch([255, 0, 0]).join(swatch([128, 128, 128]), :horizontal)
+    palette = Postpro::Uncanny.palette(frame)
+
+    assert_in_delta 0.5, palette["red"], 1e-9
+    assert_in_delta 0.5, palette["neutral"], 1e-9
+    assert_in_delta 1.0, palette.values.sum, 1e-9
+  end
 end

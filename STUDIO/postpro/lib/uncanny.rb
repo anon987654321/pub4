@@ -4,12 +4,13 @@ require "vips"
 
 # Four numbers that say whether a picture looks rendered.
 #
-# PHOTOGRAPHY.md §4 states the failure and STUDIO/AMBITION.md §F 96-98 asks for
-# this: generated skin is too clean and its specular response uniform, because
+# Generated skin is too clean and its specular response uniform, because
 # diffusion models learn from retouched photography and carry no account of
-# subsurface scattering. Everything written about fixing that — the grain, the
-# halation, the H&D shoulder, the whole of §G — is an assertion until something
-# measures it.
+# subsurface scattering: real skin is translucent, and light comes back from
+# below it warm and uneven. That is the tell of a generated portrait, and the
+# one layer of a photograph a grade can reach. Everything written about fixing
+# it — the grain, the halation, the H&D shoulder — is an assertion until
+# something measures it.
 #
 # Deliberately whole-image and deliberately without face detection. A metric
 # that needs a face model is a metric that fails on half the inputs and brings a
@@ -17,9 +18,9 @@ require "vips"
 # the right direction for the right reasons. They are proxies and are named as
 # proxies.
 #
-# Two more readings sit beside the four, outside Reading because the grade calls
-# read_image and has no use for them: finest_octave and squint_image answer two
-# of the rules PHOTOGRAPHY.md refits to pictures, and print under --measure.
+# Three more readings sit beside the four, outside Reading because the grade
+# calls read_image and has no use for them: finest_octave, squint_image and
+# palette. They print under --measure.
 #
 # The number to watch is not any single score. It is the DELTA across postpro:
 # if the grade is doing what §4 claims, texture rises and clipping falls, and if
@@ -117,7 +118,7 @@ module Postpro
 
     # The finest octave's energy against the next octave down.
     #
-    # PHOTOGRAPHY.md's LEVELS_OF_SCALE: a photograph resolves at every distance,
+    # MASTER's LEVELS_OF_SCALE, read on a picture: a photograph resolves at every distance,
     # from the silhouette at a glance to the pores up close. A frame recorded at
     # its own resolution carries detail in every octave, and the finest holds
     # about twice the next, so this reads near 2. An upscaled frame holds almost
@@ -143,7 +144,7 @@ module Postpro
 
     # Whether a frame's structure survives a squint.
     #
-    # PHOTOGRAPHY.md's SQUINT_TEST, in its original photographic use: squint until
+    # MASTER's SQUINT_TEST, in its original photographic use: squint until
     # detail disappears, and if the subject no longer separates from its
     # surroundings, the composition depends on detail a viewer will not always have.
     # The squint is a gaussian blur a fortieth of the long edge wide — a face in a
@@ -163,6 +164,39 @@ module Postpro
 
       sigma = [image.width, image.height].max / SQUINT_DIVISOR
       luma.gaussblur(sigma).deviate / whole
+    end
+
+    # Where a frame's colour sits, as shares of nine named hues and a neutral.
+    #
+    # A chain of radically different models is supposed to produce radically
+    # different colour, and whether it did is a question about the pixels rather
+    # than about the recipe. Hue is read in LCh, where the named colours do not
+    # sit evenly: measured on pure sRGB, rose reads 3 degrees, red 40, orange 60,
+    # yellow 103, green 136, cyan 196, azure 285, blue 306 and magenta 328. Equal
+    # bins called sRGB red orange and blue magenta, so each boundary here is the
+    # midpoint between two measured neighbours. A pixel under CHROMA_FLOOR has no
+    # hue worth naming and counts as neutral, which is how a black-and-white frame
+    # reads as all neutral rather than as noise spread across every hue.
+    HUE_BOUNDARIES = [21.5, 50.0, 81.5, 118.5, 165.0, 240.5, 297.0, 318.0, 345.5].freeze
+    HUE_NAMES = %w[rose red orange yellow green cyan azure blue magenta rose].freeze
+    CHROMA_FLOOR = 8.0
+
+    def self.palette(image)
+      rgb = image.bands >= 3 ? image.extract_band(0, n: 3) : image.colourspace("srgb")
+      lch = rgb.copy(interpretation: :srgb).colourspace("lch")
+      hue = HUE_BOUNDARIES.map { |edge| (lch[2] >= edge) / 255 }.reduce(:+)
+      labels = (lch[1] >= CHROMA_FLOOR).ifthenelse(hue + 1, 0).cast(:uchar)
+      counts = labels.hist_find.to_a.first.map(&:first)
+      total = counts.sum.to_f
+      shares = { "neutral" => counts[0] / total }
+      HUE_NAMES.each_with_index { |name, index| shares[name] = shares.fetch(name, 0.0) + counts[index + 1].to_f / total }
+      shares
+    end
+
+    # The palette as one line, strongest first, dropping hues under 2%.
+    def self.palette_line(image)
+      palette(image).select { |_, share| share >= 0.02 }.sort_by { |_, share| -share }
+                    .map { |name, share| format("%s=%.2f", name, share) }.join(" ")
     end
 
     # Before and after, with the direction each number should move if the grade

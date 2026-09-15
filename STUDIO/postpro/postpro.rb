@@ -324,22 +324,15 @@ end
 
 BOOTSTRAP = PostproBootstrap.run
 
-# Four numbers on an image, or the delta across a grade. Handled here, straight
-# after boot, because everything below this point can reach the interactive
-# prompt — and a measurement that waits for a keypress is a measurement nobody
-# puts in a script.
+# Stills only. Every input glob is jpg/jpeg/png/webp and nothing here reads a
+# video.
 #
-# Everything this file claims about putting texture back — the grain, the
-# halation, the H&D shoulder — was an assertion until something measured it.
-# `--measure FILE` reads one image; adding `--against AFTER` reads the pair and
-# says which way each number moved and whether that is the direction film
-# emulation should move it.
-# Video, frame by frame, through the same grade the stills use.
-#
-# Handled here with --measure, before anything that can reach the interactive
-# prompt. postpro is libvips and every input glob is jpg/jpeg/png/webp, so this
-# is the half of "the house filter on all our photos and videos" that did not
-# exist.
+# A frame-by-frame video path existed and was removed. It shelled out to a fresh
+# interpreter per frame, so a minute of 1080p cost about an hour while its own
+# estimate promised six minutes, and two of its eight tests timed out rather
+# than passed. Whatever replaces it grades in-process, holds the grain seed
+# steady across frames so the grain does not boil, and declares a per-minute
+# budget it is held to; a path that cannot do those is not worth having back.
 POSTPRO_USAGE = <<~TXT
   usage: postpro.rb [flags]           with no flags, asks what to grade
 
@@ -351,7 +344,8 @@ POSTPRO_USAGE = <<~TXT
     --auto                            grade the default globs without prompting
     --from-preprompt                   grade what preprompt just wrote
     --rescue FILE [--output FILE]     diagnose a photograph, then apply the fix
-    --measure FILE [--against AFTER]  read texture numbers, or how a grade moved them
+    --measure FILE [--against AFTER]  read texture numbers and palette, or how a grade moved them
+    --stock-sheet FILE [--preset NAME] [--output FILE]  one frame through every stock, tiled
     --set DIR                         which frames repeat, and how far each sits from the set's exposure
     --vocab-check                     are the tables consistent?
     --capabilities                    what this build can do
@@ -437,6 +431,16 @@ if ARGV.include?("--set")
   exit 0
 end
 
+# Four numbers on an image, or the delta across a grade. Handled here, straight
+# after boot, because everything below this point can reach the interactive
+# prompt — and a measurement that waits for a keypress is a measurement nobody
+# puts in a script.
+#
+# Everything this file claims about putting texture back — the grain, the
+# halation, the H&D shoulder — was an assertion until something measured it.
+# `--measure FILE` reads one image; adding `--against AFTER` reads the pair and
+# says which way each number moved and whether that is the direction film
+# emulation should move it.
 if ARGV.include?("--measure")
   require_relative "lib/uncanny"
   subject = ARGV[ARGV.index("--measure") + 1]
@@ -451,6 +455,7 @@ if ARGV.include?("--measure")
     image = Vips::Image.new_from_file(subject, access: :random)
     PostproBootstrap.dmesg(format("measure %s: finest_octave=%.2f squint=%.2f", File.basename(subject),
                                   Postpro::Uncanny.finest_octave(image), Postpro::Uncanny.squint_image(image)))
+    PostproBootstrap.dmesg("measure #{File.basename(subject)}: palette #{Postpro::Uncanny.palette_line(image)}")
   elsif !File.file?(against)
     PostproBootstrap.dmesg("ERROR --against #{against} is not a file")
     exit 1
@@ -459,6 +464,10 @@ if ARGV.include?("--measure")
     PostproBootstrap.dmesg("measure before: #{comparison[:before]}")
     PostproBootstrap.dmesg("measure after:  #{comparison[:after]}")
     Postpro::Uncanny.verdict(comparison).each { |line| PostproBootstrap.dmesg("measure #{line}") }
+    [subject, against].each do |path|
+      image = Vips::Image.new_from_file(path, access: :random)
+      PostproBootstrap.dmesg("measure #{File.basename(path)}: palette #{Postpro::Uncanny.palette_line(image)}")
+    end
   end
   exit 0
 end
@@ -3287,9 +3296,13 @@ def curve_strength(tonal_range)
   CURVE_FLOOR + ((tonal_range - TONAL_FLOOR) / (TONAL_NATIVE - TONAL_FLOOR)) * (1.0 - CURVE_FLOOR)
 end
 
-def preset(image, name)
+# `stock:` swaps the film under an otherwise unchanged chain, which is how the
+# stock sheet shows one grade on every emulsion.
+def preset(image, name, stock: nil)
   p = PRESETS[name.to_sym]
   return image unless p
+
+  p = p.merge(stock: stock) if stock
   processed = image
   t_start = Time.now
   n_steps = p[:fx].length
@@ -3910,13 +3923,19 @@ def process_file(file, variations, preset_name = nil, recipe_data = nil, random_
 
       quality = CONFIG["jpeg_quality"] || 95
       if ARGV.include?("--tiff16") || output.end_with?(".tif", ".tiff")
-        processed.cast("ushort").write_to_file(output.sub(/\.(jpg|jpeg|png)$/i, ".tif"))
+        output = output.sub(/\.(jpg|jpeg|png|webp)$/i, ".tif")
+        processed.cast("ushort").write_to_file(output)
       else
         processed.write_to_file(output, Q: quality)
       end
-      # A preset can be looked up again by name; a random chain cannot be looked up
-      # at all, so it goes out beside the picture or it is gone.
-      write_chain_sidecar(file, output, recipe_data) if recipe_data
+      # A random chain cannot be looked up again at all, so its recipe goes out
+      # beside the picture or it is gone. A preset can, but its tables change,
+      # so the grade's version and what it did to the picture go out too.
+      if recipe_data
+        write_chain_sidecar(file, output, recipe_data)
+      else
+        write_grade_sidecar(file, output, preset_name, image, processed)
+      end
       PostproBootstrap.dmesg "write out=#{File.basename(output)} q=#{quality}"
       processed_count += 1
 
@@ -4021,18 +4040,44 @@ rescue JSON::ParserError
   data
 end
 
-def write_grade_sidecar(input_path, output_path, preset_name, original, processed)
+# Which grade made a frame, as the hash of the code that graded it.
+#
+# The house look changes: a stock's curve is re-fitted, a step leaves `house`.
+# A version somebody has to remember to bump is stale the first time they
+# forget, and the recipe alone names effects whose arithmetic lives in this
+# file. The digest of postpro.rb and its lib/ cannot drift from the grade, so a
+# frame whose sidecar carries it can be re-graded identically by checking out
+# the commit whose files hash to it.
+GRADE_VERSION = Digest::SHA256.hexdigest(
+  [__FILE__, *Dir[File.join(__dir__, "lib", "*.rb")].sort].map { |path| File.binread(path) }.join,
+)[0, 12].freeze
+
+# The four uncanny numbers on the picture that went in and the one that came
+# out, so a sidecar says which way the grade moved texture and clipping without
+# anyone re-reading two files.
+def uncanny_readings(original, processed)
+  { before: Postpro::Uncanny.read_image(rgb_bands(original)).to_h,
+    after: Postpro::Uncanny.read_image(rgb_bands(processed)).to_h }
+rescue StandardError => e
+  { unavailable: e.message }
+end
+
+# `presets` is one name, or the two uplift stacks, in the order they ran.
+def write_grade_sidecar(input_path, output_path, presets, original, processed)
+  names = Array(presets).map(&:to_sym)
   report = postpro_quality_report(original, processed, argv_flag("--reference"))
   data = {
-    schema: "postpro.grade.v1",
+    schema: "postpro.grade.v2",
     generated_at: Time.now.utc.iso8601,
     input: File.expand_path(input_path),
     output: File.expand_path(output_path),
-    preset: preset_name,
-    recipe: PRESETS.fetch(preset_name.to_sym),
+    preset: names.join("+"),
+    recipe: names.map { |name| PRESETS.fetch(name) },
+    grade_version: GRADE_VERSION,
     seed: $postpro_seed,
     output_sha256: Digest::SHA256.file(output_path).hexdigest,
     quality: report,
+    uncanny: uncanny_readings(original, processed),
     capabilities: Master::Io::AnalogCapabilities.for(:postpro).map { |entry| entry[:id] },
   }
   write_sidecar(output_path, data)
@@ -4044,6 +4089,7 @@ def write_chain_sidecar(input_path, output_path, chain)
     generated_at: Time.now.utc.iso8601,
     input: File.expand_path(input_path),
     output: File.expand_path(output_path),
+    grade_version: GRADE_VERSION,
     seed: $postpro_seed,
     chain: chain.map { |fx, params| { fx => params } },
   })
@@ -4167,7 +4213,7 @@ def fit_grain_report(path, luma, bins)
 end
 
 def vocab_check
-  implemented = File.read(__FILE__)[/^def preset\(image, name\).*?^end$/m]
+  implemented = File.read(__FILE__)[/^def preset\b.*?^end$/m]
                     .scan(/when "([a-z0-9_]+)"/).flatten.uniq
   problems = []
 
@@ -4299,7 +4345,7 @@ def vocab_check
   source = File.read(__FILE__)
   ungrained = %w[process_file run_random run_uplift run_one_shot run_watch].reject do |name|
     body = source[/^def #{name}\b.*?^end$/m]
-    body&.include?("apply_finishing_grain") || body&.include?("process_file(")
+    %w[apply_finishing_grain process_file( grade_watched(].any? { |reach| body&.include?(reach) }
   end
   unless ungrained.empty?
     problems << "output paths disagree on the finishing grain: #{ungrained.join(", ")} " \
@@ -4448,6 +4494,46 @@ def watch_mode?
   ARGV.include?("--watch")
 end
 
+# One frame through one preset on every stock, tiled in STOCKS order with each
+# stock's name under its tile.
+#
+# The eye compares neighbours without moving between windows, and the
+# difference between two emulsions is only visible side by side. Graded at
+# STOCK_SHEET_CELL rather than at full size: fourteen full grades of a large
+# frame take minutes, and grain is sized by image width, so a tile carries the
+# grain a print of that size would.
+STOCK_SHEET_CELL = 512
+STOCK_SHEET_GAP = 12
+STOCK_SHEET_LABEL = 22
+
+def stock_sheet(image, preset_name, cell: STOCK_SHEET_CELL)
+  small = rgb_bands(image.thumbnail_image(cell, height: cell, size: :down))
+  stocks = STOCKS.keys
+  tiles = stocks.map do |stock|
+    graded = rgb_bands(apply_finishing_grain(preset(small, preset_name, stock: stock), preset_name))
+    label = Vips::Image.text(stock.to_s, width: cell, dpi: 62)
+    tag = label.ifthenelse([210, 210, 210], [18, 18, 18], blend: true)
+    tile = (Vips::Image.black(cell, cell + STOCK_SHEET_LABEL) + 18).cast(:uchar).bandjoin([18, 18])
+    tile.insert(graded.cast(:uchar), (cell - graded.width) / 2, (cell - graded.height) / 2)
+        .insert(tag, 0, cell + 4)
+  end
+  columns = Math.sqrt(stocks.length).ceil
+  [Vips::Image.arrayjoin(tiles, across: columns, shim: STOCK_SHEET_GAP, background: [18, 18, 18]), stocks]
+end
+
+def run_stock_sheet
+  input_path = argv_flag("--stock-sheet")
+  preset_name = (argv_flag("--preset") || "house").to_sym
+  abort "postpro: --stock-sheet needs a readable file" unless input_path && File.file?(input_path)
+  abort "postpro: unknown preset #{preset_name}" unless PRESETS.key?(preset_name)
+
+  ext = File.extname(input_path)
+  output = argv_flag("--output") || File.join(File.dirname(input_path), "#{File.basename(input_path, ext)}_stocks_#{preset_name}.jpg")
+  sheet, stocks = stock_sheet(load_image(input_path), preset_name)
+  sheet.write_to_file(output, Q: CONFIG["jpeg_quality"] || 95)
+  $cli_logger.info "ok stock sheet preset=#{preset_name} stocks=#{stocks.length} out=#{output}"
+end
+
 def random_mode?
   ARGV.include?("--random")
 end
@@ -4529,6 +4615,7 @@ def run_uplift(dir, files)
       output = File.join(File.dirname(file),
                          "#{File.basename(file, ext)}_#{base}+#{layer}_v#{i + 1}_#{Time.now.strftime("%Y%m%d%H%M%S")}#{ext}")
       processed.write_to_file(output, Q: CONFIG["jpeg_quality"] || 95)
+      write_grade_sidecar(file, output, [base, layer], image, processed)
       PostproBootstrap.dmesg "write chain=#{base}+#{layer} out=#{File.basename(output)}"
     end
     GC.start if (index % 5).zero?
@@ -4567,11 +4654,7 @@ def run_watch
       out = File.join(dir, "#{base}_#{preset_name}#{ext}")
       PostproBootstrap.dmesg "new path=#{File.basename(path)} -> #{File.basename(out)}"
       begin
-        image = load_image(path)
-        processed = preset(image, preset_name)
-        processed = apply_finishing_grain(processed, preset_name)
-        processed = rgb_bands(processed)
-        processed.write_to_file(out, Q: CONFIG["jpeg_quality"] || 95)
+        grade_watched(path, out, preset_name)
         $cli_logger.info "ok preset=#{preset_name} out=#{out}"
       rescue StandardError => e
         $cli_logger.error "watch error: #{e.message}"
@@ -4580,8 +4663,18 @@ def run_watch
   end
 end
 
+# One photograph off the camera roll, graded and recorded. Out of the watch loop
+# so a single arrival can be graded without a loop that never returns.
+def grade_watched(path, out, preset_name)
+  image = load_image(path)
+  processed = rgb_bands(apply_finishing_grain(preset(image, preset_name), preset_name))
+  processed.write_to_file(out, Q: CONFIG["jpeg_quality"] || 95)
+  write_grade_sidecar(path, out, preset_name, image, processed)
+end
+
 def auto_launch
   return run_introspect if introspect_mode?
+  return run_stock_sheet if ARGV.include?("--stock-sheet")
   return run_watch       if watch_mode?
   return run_one_shot    if one_shot_mode?
   return run_random      if random_mode?

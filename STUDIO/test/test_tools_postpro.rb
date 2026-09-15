@@ -631,4 +631,61 @@ class TestPostproFilm < Minitest::Test
       assert_equal "portrait", JSON.parse(File.read("#{out}.json"))["preset"]
     end
   end
+  def probe_file(dir)
+    path = File.join(dir, "frame.jpg")
+    build_probe.write_to_file(path)
+    path
+  end
+
+  # Every path that writes a graded frame says which grade, from which code, and
+  # what it did to the picture. process_file and the watch path wrote none.
+  def test_a_graded_frame_records_its_version_and_the_uncanny_readings_either_side
+    Dir.mktmpdir do |dir|
+      input = probe_file(dir)
+      assert_equal 1, process_file(input, 1, "portrait")
+
+      out = Dir[File.join(dir, "frame_portrait_v1_*.jpg")].first
+      sidecar = JSON.parse(File.read("#{out}.json"))
+      assert_equal "postpro.grade.v2", sidecar["schema"]
+      assert_equal GRADE_VERSION, sidecar["grade_version"]
+      assert_match(/\A\h{12}\z/, GRADE_VERSION)
+      assert_equal %w[before after], sidecar["uncanny"].keys
+      assert_operator sidecar.dig("uncanny", "after", "texture"), :>, 0
+    end
+  end
+
+  def test_a_watched_arrival_and_an_uplift_stack_both_leave_a_sidecar
+    Dir.mktmpdir do |dir|
+      input = probe_file(dir)
+      watched = File.join(dir, "IMG_1_portrait.jpg")
+      grade_watched(input, watched, :portrait)
+      assert_equal "portrait", JSON.parse(File.read("#{watched}.json"))["preset"]
+
+      stacked = File.join(dir, "stacked.jpg")
+      image = load_image(input)
+      processed = rgb_bands(preset_chain(image, %i[portrait noir]))
+      processed.write_to_file(stacked)
+      write_grade_sidecar(input, stacked, %i[portrait noir], image, processed)
+      written = JSON.parse(File.read("#{stacked}.json"))
+      assert_equal "portrait+noir", written["preset"]
+      assert_equal 2, written["recipe"].length
+    end
+  end
+
+  # One tile per stock, and the stock actually changes the grade under it.
+  def test_the_stock_sheet_grades_one_frame_on_every_stock
+    image = build_probe
+    # Grain differs between two runs of one stock, so the stock has to move the
+    # picture well past that before the swap counts as reaching the chain.
+    kodak = rgb_bands(preset(image, :house, stock: :kodak_portra)).cast(:float)
+    again = rgb_bands(preset(image, :house, stock: :kodak_portra)).cast(:float)
+    tri_x = rgb_bands(preset(image, :house, stock: :tri_x)).cast(:float)
+    assert_operator (kodak - tri_x).abs.avg, :>, 3 * (kodak - again).abs.avg,
+                    "swapping the stock moved the grade no further than grain does"
+
+    sheet, stocks = stock_sheet(image, :house, cell: 48)
+    assert_equal STOCKS.keys, stocks
+    columns = Math.sqrt(stocks.length).ceil
+    assert_equal columns * 48 + (columns - 1) * STOCK_SHEET_GAP, sheet.width
+  end
 end
