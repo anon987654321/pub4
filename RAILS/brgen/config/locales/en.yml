@@ -531,6 +531,9 @@ en:
         reason: "Reason"
       tv/comment:
         body: "Comment"
+      business_verification:
+        legal_name: "Legal name"
+        organisation_number: "Organisation number"
       tv/stream_chat:
         message: "Message"
       tv/video_note:
@@ -559,6 +562,11 @@ en:
         terms: Terms
     errors:
       models:
+        business_verification:
+          attributes:
+            base:
+              not_owner: only the owner of the business can ask for verification
+              already_pending: a request is already waiting for review
         block:
           attributes:
             base:
@@ -1591,6 +1599,10 @@ en:
       pending: asked
       accepted: following
   flash:
+    business_verifications:
+      sent: Request sent. A person reviews it.
+      reviewed: Review saved.
+      no_decision: Choose approve or reject.
     fediverse:
       follow_sent: Asked. Their instance answers when it answers.
       follow_already: Already asked.
@@ -1865,6 +1877,26 @@ en:
     following:
       one: following %{count}
       other: following %{count}
+  business_verifications:
+    badge: Verified business
+    request: Ask for verification
+    pending: Verification is waiting for review
+    new_title: Verify the business
+    new_body: Give the legal name and organisation number as Brønnøysundregistrene records them. A person compares them with the register. Verification is free, and nothing you buy affects it.
+    for_business: "For: %{name}"
+    send: Send request
+    queue_title: Business verification
+    queue_empty: No requests waiting
+    queue_empty_body: New requests land here.
+    approve: Approve
+    reject: Reject
+    note: Note to the business
+    requested_by: Asked by %{name}
+    organisation_number: Org. no. %{number}
+    approved_title: The business is verified
+    approved_body: Your business now shows as verified.
+    rejected_title: Verification was not approved
+    rejected_body: The name or organisation number did not match the register. Check both and send a new request.
   admin:
     reports_title: Moderation reports
     moderation: Admin / moderation

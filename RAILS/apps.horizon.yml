@@ -42,7 +42,7 @@ horizon:
     monetization:
       - { name: plans / subscriptions / entitlements as data (free, Pro, Business), status: planned }
       - { name: shared Commerce, Ledger and Campaign domains, status: planned, notes: "before any affiliate or promotion code; marketplace, takeaway and amber consume it" }
-      - { name: verified business and seller verification badges, status: planned }
+      - { name: seller verification badge for a seller with no shop, status: planned, notes: "verified business for stores and restaurants is done (apps.yml); a private seller has no organisation number to check, so this needs its own proof" }
       - { name: paid listing boosts and category/homepage placement, status: planned, notes: "organic discovery stays quality-weighted; paid never overwhelms it" }
       - { name: seller credits with a transparent ledger, status: planned, notes: "Finta-style 0% commission plus Flon-style credits" }
       - { name: seller, listing and promotion analytics, status: planned }

@@ -5,6 +5,7 @@
 <%= tag.section class: "marketplace-store" do %>
   <%= tag.header do %>
     <%= tag.h1 @store.name %>
+    <%= render "business_verifications/status", business: @store, kind: "store", owner: authenticated? && Current.user&.id == @store.owner_id %>
     <%= tag.p t("marketplace.verticals.#{@store.vertical}") if @store.vertical.present? %>
     <%= tag.p @store.description if @store.description.present? %>
     <% if @store.place.present? %>

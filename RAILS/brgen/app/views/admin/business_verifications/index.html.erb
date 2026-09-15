@@ -1,0 +1,33 @@
+<% content_for :title, t("business_verifications.queue_title") %>
+
+<div class="page-header">
+  <hgroup>
+    <%= tag.p t("admin.moderation") %>
+    <%= tag.h1 t("business_verifications.queue_title") %>
+  </hgroup>
+</div>
+
+<% if @verifications.any? %>
+  <% @verifications.each do |verification| %>
+    <article aria-label="<%= verification.legal_name %>">
+      <%= tag.h2 verification.legal_name %>
+      <%= tag.p t("business_verifications.organisation_number", number: verification.organisation_number) %>
+      <%= tag.p t("business_verifications.for_business", name: verification.business&.name) %>
+      <%= tag.p t("business_verifications.requested_by", name: verification.requested_by.display_name.presence || verification.requested_by.username) %>
+      <%= form_with url: admin_business_verification_path(verification), method: :patch, class: "form-wrap" do |f| %>
+        <div class="field">
+          <%= f.label :note, t("business_verifications.note"), for: "note-#{verification.id}" %>
+          <%= f.text_area :note, id: "note-#{verification.id}", rows: 2 %>
+        </div>
+        <p class="cluster">
+          <%= f.button t("business_verifications.approve"), name: "decision", value: "approve", class: "btn btn-sm" %>
+          <%= f.button t("business_verifications.reject"), name: "decision", value: "reject", class: "btn btn-ghost btn-sm" %>
+        </p>
+      <% end %>
+    </article>
+  <% end %>
+  <%= render "shared/pager", pagy: @pagy, label: t("business_verifications.queue_title") %>
+<% else %>
+  <%# empty_state: no-action-ok — a cleared review queue is the goal state, not a dead end %>
+  <%= render "shared/empty_state", title: t("business_verifications.queue_empty"), body: t("business_verifications.queue_empty_body") %>
+<% end %>

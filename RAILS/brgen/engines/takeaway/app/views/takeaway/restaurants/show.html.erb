@@ -36,6 +36,7 @@
   <div class="store-pdp-info">
     <div class="page-header">
       <%= tag.h1 @restaurant.name %>
+      <%= render "business_verifications/status", business: @restaurant, kind: "restaurant", owner: authenticated? && @restaurant.owner?(Current.user) %>
       <% if authenticated? && @restaurant.owner?(Current.user) %>
         <nav aria-label="<%= t("takeaway.restaurant_actions") %>">
           <%= link_to t("actions.edit"), edit_restaurant_path(@restaurant), class: "btn btn-ghost btn-sm" %>

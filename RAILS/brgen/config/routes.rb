@@ -63,7 +63,12 @@ Rails.application.routes.draw do
 
   namespace :admin do
     resources :reports, only: %i[index update]
+    resources :business_verifications, only: %i[index update]
   end
+
+  # A business owner asks for the verified badge; kind is store or restaurant.
+  get  "business_verifications/:kind/:business_id/new" => "business_verifications#new", as: :new_business_verification
+  post "business_verifications/:kind/:business_id" => "business_verifications#create", as: :business_verifications
 
   # Declared before the shallow nesting below, which yields GET /posts/:id. That
   # route matched /posts/new first and sent "new" through as an id, so the

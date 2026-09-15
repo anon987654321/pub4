@@ -1,0 +1,21 @@
+<% content_for :title, t("business_verifications.new_title") %>
+
+<div class="page-header">
+  <%= tag.h1 t("business_verifications.new_title") %>
+</div>
+
+<%= tag.p t("business_verifications.for_business", name: @business.name) %>
+<%= tag.p t("business_verifications.new_body") %>
+
+<%= form_with model: @verification, url: main_app.business_verifications_path(kind: @kind, business_id: @business.id), scope: :business_verification, class: "form-wrap" do |f| %>
+  <%= render "shared/errors", object: @verification %>
+  <div class="field">
+    <%= f.label :legal_name %>
+    <%= f.text_field :legal_name, required: true, maxlength: 200, autocomplete: "organization" %>
+  </div>
+  <div class="field">
+    <%= f.label :organisation_number %>
+    <%= f.text_field :organisation_number, required: true, inputmode: "numeric", pattern: "[0-9 ]{9,11}", autocomplete: "off" %>
+  </div>
+  <%= tag.p f.submit(t("business_verifications.send"), class: "btn btn-primary") %>
+<% end %>

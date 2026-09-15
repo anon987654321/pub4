@@ -536,6 +536,9 @@ nb:
         reason: "Årsak"
       tv/comment:
         body: "Kommentar"
+      business_verification:
+        legal_name: "Juridisk navn"
+        organisation_number: "Organisasjonsnummer"
       tv/stream_chat:
         message: "Melding"
       tv/video_note:
@@ -564,6 +567,11 @@ nb:
         terms: Vilkår
     errors:
       models:
+        business_verification:
+          attributes:
+            base:
+              not_owner: bare eieren av bedriften kan be om verifisering
+              already_pending: en forespørsel venter allerede på vurdering
         block:
           attributes:
             base:
@@ -1600,6 +1608,10 @@ nb:
       pending: spurt
       accepted: følger
   flash:
+    business_verifications:
+      sent: Forespørselen er sendt. En person vurderer den.
+      reviewed: Vurderingen er lagret.
+      no_decision: Velg godkjenn eller avvis.
     fediverse:
       follow_sent: Spurt. Instansen deres svarer når den svarer.
       follow_already: Allerede spurt.
@@ -1875,6 +1887,26 @@ nb:
     following:
       one: følger %{count}
       other: følger %{count}
+  business_verifications:
+    badge: Verifisert bedrift
+    request: Be om verifisering
+    pending: Verifiseringen venter på vurdering
+    new_title: Verifiser bedriften
+    new_body: Oppgi det juridiske navnet og organisasjonsnummeret slik de står i Brønnøysundregistrene. En person sammenligner dem med registeret. Verifisering er gratis, og ingenting du kjøper påvirker den.
+    for_business: "Gjelder: %{name}"
+    send: Send forespørsel
+    queue_title: Bedriftsverifisering
+    queue_empty: Ingen forespørsler venter
+    queue_empty_body: Nye forespørsler havner her.
+    approve: Godkjenn
+    reject: Avvis
+    note: Merknad til bedriften
+    requested_by: Spurt av %{name}
+    organisation_number: Org.nr. %{number}
+    approved_title: Bedriften er verifisert
+    approved_body: Bedriften din vises nå som verifisert.
+    rejected_title: Verifiseringen ble ikke godkjent
+    rejected_body: Navnet eller organisasjonsnummeret stemte ikke med registeret. Sjekk begge og send en ny forespørsel.
   admin:
     reports_title: Moderasjonsrapporter
     moderation: Admin / moderering

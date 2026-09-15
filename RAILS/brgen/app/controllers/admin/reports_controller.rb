@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class Admin::ReportsController < ApplicationController
+  include AdminAccess
+
   before_action :require_admin!
   before_action :set_report, only: :update
 
@@ -22,14 +24,5 @@ class Admin::ReportsController < ApplicationController
 
   def set_report
     @report = ModerationReport.find(params[:id])
-  end
-
-  def require_admin!
-    expected = ENV["BRGEN_ADMIN_EMAIL"].to_s.strip
-    if expected.present? && Current.user&.email_address == expected
-      return if !Current.user.respond_to?(:email_verified?) || Current.user.email_verified?
-    end
-
-    redirect_to(root_path, alert: t("shared.flash.not_authorized"))
   end
 end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_15_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_15_130000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -201,6 +201,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_15_120000) do
     t.index ["post_id"], name: "index_bookmarks_on_post_id"
     t.index ["user_id", "post_id"], name: "index_bookmarks_on_user_id_and_post_id", unique: true
     t.index ["user_id"], name: "index_bookmarks_on_user_id"
+  end
+
+  create_table "business_verifications", force: :cascade do |t|
+    t.integer "business_id", null: false
+    t.string "business_type", null: false
+    t.datetime "created_at", null: false
+    t.string "legal_name", null: false
+    t.string "organisation_number", limit: 9, null: false
+    t.integer "requested_by_id", null: false
+    t.text "review_note"
+    t.datetime "reviewed_at"
+    t.integer "reviewed_by_id"
+    t.string "status", default: "pending", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_type", "business_id", "status"], name: "index_business_verifications_on_business_and_status"
+    t.index ["requested_by_id"], name: "index_business_verifications_on_requested_by_id"
+    t.index ["reviewed_by_id"], name: "index_business_verifications_on_reviewed_by_id"
   end
 
   create_table "cities", force: :cascade do |t|
@@ -1555,6 +1572,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_15_120000) do
     t.string "slug"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.boolean "verified", default: false, null: false
     t.index ["city_id", "slug"], name: "index_takeaway_restaurants_on_city_and_slug", unique: true
     t.index ["city_id"], name: "index_takeaway_restaurants_on_city_id"
     t.index ["latitude", "longitude"], name: "index_takeaway_restaurants_on_latitude_and_longitude"
@@ -1836,6 +1854,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_15_120000) do
   add_foreign_key "blocks", "users", column: "blocker_id"
   add_foreign_key "bookmarks", "posts"
   add_foreign_key "bookmarks", "users"
+  add_foreign_key "business_verifications", "users", column: "requested_by_id"
+  add_foreign_key "business_verifications", "users", column: "reviewed_by_id"
   add_foreign_key "comments", "users"
   add_foreign_key "communities", "cities"
   add_foreign_key "community_bans", "communities"
