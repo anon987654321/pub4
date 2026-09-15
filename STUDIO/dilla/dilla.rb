@@ -13234,7 +13234,6 @@ def dilla_quality(path, baseline_path = nil)
     harmony_score:, harmony_breakdown:,
     progression_chord_names: chords&.map { |c| c[:name] },
     harshness:, sub_kick_balance: sub_kick,
-    ml_notes: (ENV["DILLA_ML"] == "1" ? [DillaMl.ddsp_stub_note] : nil),
     loudness_range_lu: loudness["input_lra"]&.to_f, mono_rms_db: mono, spectral_rms_db: spectrum,
     # MASTER_LUFS_BY_STYLE targets -17..-20 (dilla/donuts as low as -20) --
     # deliberately pulled down from a "-14..-11 radio-ready" figure after

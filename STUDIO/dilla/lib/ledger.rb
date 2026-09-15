@@ -229,18 +229,21 @@ end
 
 require "digest"
 require "json"
-require "net/http"
-require "uri"
 
-# External + text seeds for swing, BPM, render RNG — live-coding hooks.
+# The render seed, and the text seed that names one: swing, BPM and the RNG a
+# render draws from.
 module DillaSeeds
   module_function
 
+  # The text seed is the only seed a render derives from something outside its
+  # own knobs, and it stays in the process. DILLA_SEED_URL, SEISMIC_SEED and
+  # WEATHER_SEED fetched a tempo and a swing from the network at render time,
+  # which broke the two promises this engine is built on: it never phones home,
+  # and a take is made again from its knobs and its seed. The USGS feed and the
+  # forecast change by the hour, so a seeded take could not be rendered twice,
+  # and SEISMIC_SEED's other write, HARM_VOL, reaches no render at all.
   def apply!
     apply_text_seed!
-    apply_external_url!
-    apply_seismic_stub!
-    apply_weather_stub!
   end
 
   def apply_to_cfg!(cfg)
@@ -285,62 +288,6 @@ module DillaSeeds
     ENV["GEN_SEED"] ||= h.to_s
     ENV["SWING"] ||= (52 + (h % 11)).to_s
     ENV["BPM"] ||= (84 + (h % 18)).to_s
-  end
-
-  def apply_external_url!
-    url = ENV["DILLA_SEED_URL"]
-    return unless url && !url.empty?
-    data = fetch_json(url)
-    return unless data.is_a?(Hash)
-    ENV["SWING"] = data["swing"].to_s if data["swing"]
-    ENV["BPM"] = data["bpm"].to_s if data["bpm"]
-    ENV["GEN_SEED"] = data["seed"].to_s if data["seed"]
-    if data["humidity"]
-      hum = data["humidity"].to_f
-      ENV["SWING"] = (50 + hum * 0.12).round.clamp(52, 62).to_s
-    end
-    ENV["VINYL"] = (data["vinyl"].to_f * 100).round.to_s if data["vinyl"]
-  rescue StandardError => e
-    warn "DILLA_SEED_URL: fetch failed (#{e.class}: #{e.message}) — SWING, BPM and GEN_SEED keep their values"
-  end
-
-  def apply_seismic_stub!
-    return unless ENV["SEISMIC_SEED"] == "1"
-    mag = fetch_json("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson")
-    return unless mag.is_a?(Hash)
-    features = mag["features"] || []
-    m = features.first&.dig("properties", "mag") || 2.5
-    ENV["SWING"] = (54 + m * 2).round.clamp(52, 62).to_s
-    ENV["HARM_VOL"] = (2.2 + m * 0.08).round(2).to_s
-  # An operator who set SEISMIC_SEED=1 asked for a seeded swing. Discarding the
-  # failure leaves the defaults in place and renders a take that looks seeded and
-  # is not, with nothing anywhere to tell the two apart.
-  rescue StandardError => e
-    warn "SEISMIC_SEED: USGS fetch failed (#{e.class}: #{e.message}) — SWING and HARM_VOL keep their defaults"
-    nil
-  end
-
-  def apply_weather_stub!
-    return unless ENV["WEATHER_SEED"] == "1" && ENV["WEATHER_LAT"] && ENV["WEATHER_LON"]
-    lat = ENV["WEATHER_LAT"]
-    lon = ENV["WEATHER_LON"]
-    data = fetch_json("https://api.open-meteo.com/v1/forecast?latitude=#{lat}&longitude=#{lon}&current=relative_humidity_2m")
-    hum = data.dig("current", "relative_humidity_2m") || 50
-    ENV["SWING"] = (50 + hum * 0.12).round.clamp(52, 62).to_s
-  # Same as the seismic seed above: say so, rather than render an unseeded take
-  # the operator has no way to tell from a seeded one.
-  rescue StandardError => e
-    warn "WEATHER_SEED: open-meteo fetch failed (#{e.class}: #{e.message}) — SWING keeps its default"
-    nil
-  end
-
-  def fetch_json(url)
-    uri = URI(url)
-    Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", open_timeout: 4, read_timeout: 6) do |http|
-      res = http.get(uri.request_uri)
-      return nil unless res.is_a?(Net::HTTPSuccess)
-      JSON.parse(res.body)
-    end
   end
 
   def drift_sleep(base = 0.5)
@@ -1529,7 +1476,7 @@ module DillaProvenance
   end
 end
 
-# Tier-B ML stubs — heuristic fallbacks until `tools/dilla-ml/` ships.
+# The vinyl level, following the ghost notes against the kicks.
 module DillaMl
   module_function
 
@@ -1541,11 +1488,6 @@ module DillaMl
     lo = [base * 0.85, 0.008].max
     (base + g * 0.012).clamp(lo, 0.12).round(3)
   end
-
-  def ddsp_stub_note
-    "DDSP sidecar not installed — using heuristic spectral regen. Set DILLA_ML=1 when tools/dilla-ml ships."
-  end
-
 end
 
 require "json"
