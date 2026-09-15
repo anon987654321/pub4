@@ -3375,14 +3375,14 @@ module RadioBergenStudy
     return unless path && File.file?(path)
     return unless system("which", "ffprobe", out: File::NULL, err: File::NULL)
 
-    duration_out, = Open3.capture2(
+    duration_out, = ToolRun.capture2(
       "ffprobe", "-v", "error", "-show_entries", "format=duration",
       "-of", "default=noprint_wrappers=1:nokey=1", path
     )
     duration = duration_out.to_f
     return { duration_seconds: duration.round(2) } if duration <= 0
 
-    stats, = Open3.capture2(
+    stats, = ToolRun.capture2(
       "ffmpeg", "-hide_banner", "-nostats", "-i", path,
       "-af", "astats=metadata=1:reset=1,ametadata=print:file=-",
       "-f", "null", "-", err: File::NULL
@@ -3687,7 +3687,7 @@ module RadioBergenStudy
       module_function
 
       def ffprobe(path)
-        out, = Open3.capture2(
+        out, = ToolRun.capture2(
           "ffprobe", "-v", "error", "-show_entries", "format=duration,bit_rate:stream=sample_rate,channels",
           "-of", "json", path
         )
@@ -3697,7 +3697,7 @@ module RadioBergenStudy
       end
 
       def band_rms(path, filter, window: 0.05, max_sec: 120)
-        out, = Open3.capture2(
+        out, = ToolRun.capture2(
           "ffmpeg", "-hide_banner", "-loglevel", "error", "-t", max_sec.to_s, "-i", path,
           "-af", "#{filter},astats=metadata=1:reset=1:length=#{window},ametadata=print:key=lavfi.astats.Overall.RMS_level:file=-",
           "-f", "null", "-"
@@ -8130,15 +8130,15 @@ def normalise_master!(path, cfg)
   # more than twelve is wrong somewhere earlier and should be found there.
   gain = (target - measured).clamp(-12.0, 12.0)
   tmp = "#{path}.norm#{File.extname(path)}"
-  ok = system("ffmpeg", "-nostdin", "-y", "-v", "error", "-i", path,
-              "-af", "volume=#{gain.round(2)}dB," \
-                     "alimiter=limit=#{TRUE_PEAK_CEILING_LINEAR}:attack=1:release=40:level=disabled",
-              # codec_for, not a hardcoded 192k. Every renderer writes mp3 at 320k
-              # and this pass re-encoded the finished file at 192k on the way to
-              # setting its level -- a silent quality drop on every mp3 render,
-              # applied by the one stage whose job was supposed to be a gain.
-              *codec_for(path),
-              tmp, out: File::NULL, err: File::NULL)
+  ok = ToolRun.system("ffmpeg", "-nostdin", "-y", "-v", "error", "-i", path,
+                      "-af", "volume=#{gain.round(2)}dB," \
+                             "alimiter=limit=#{TRUE_PEAK_CEILING_LINEAR}:attack=1:release=40:level=disabled",
+                      # codec_for, not a hardcoded 192k. Every renderer writes mp3 at 320k
+                      # and this pass re-encoded the finished file at 192k on the way to
+                      # setting its level -- a silent quality drop on every mp3 render,
+                      # applied by the one stage whose job was supposed to be a gain.
+                      *codec_for(path),
+                      tmp, out: File::NULL, err: File::NULL)
   if ok && File.file?(tmp) && File.size(tmp).positive?
     FileUtils.mv(tmp, path)
     dmesg("master: #{measured.round(1)} LUFS -> #{target} (#{format('%+.1f', gain)} dB, one static gain)",
@@ -12431,8 +12431,8 @@ def sample_chroma(path)
   return @sample_chroma_cache[path] if @sample_chroma_cache.key?(path)
 
   @sample_chroma_cache[path] = begin
-    raw = IO.popen(["ffmpeg", "-v", "error", "-t", CHROMA_ANALYSIS_SEC.to_s, "-i", path,
-                    "-ac", "1", "-ar", CHROMA_RATE.to_s, "-f", "s16le", "-"], "rb", &:read)
+    raw = ToolRun.capture2(["ffmpeg", "-v", "error", "-t", CHROMA_ANALYSIS_SEC.to_s, "-i", path,
+                            "-ac", "1", "-ar", CHROMA_RATE.to_s, "-f", "s16le", "-"], binmode: true).first
     samples = raw.to_s.unpack("s<*").map { |s| s / PCM16_FULL_SCALE }
     if samples.empty?
       nil
@@ -12868,7 +12868,7 @@ def fluidsynth_render!(out_path, sf2, midi_path, gain:)
 end
 
 def capture(*command)
-  Open3.capture3(*command.flatten.map(&:to_s))
+  ToolRun.capture3(*command)
 end
 
 def tool_available?(name)
@@ -14948,13 +14948,13 @@ module Arrangement
 
     columns ||= columns_for(duration_of(path))
     png = File.join(Dir.tmpdir, "arrangement_#{Process.pid}.png")
-    ok = system("ffmpeg", "-v", "error", "-y", "-i", path,
-                "-lavfi", "showspectrumpic=s=#{columns}x#{BINS}:mode=combined:scale=log:legend=0",
-                "-frames:v", "1", png, out: File::NULL, err: File::NULL)
+    ok = ToolRun.system("ffmpeg", "-v", "error", "-y", "-i", path,
+                        "-lavfi", "showspectrumpic=s=#{columns}x#{BINS}:mode=combined:scale=log:legend=0",
+                        "-frames:v", "1", png, out: File::NULL, err: File::NULL)
     return nil unless ok && File.file?(png)
 
-    raw = IO.popen(["ffmpeg", "-v", "error", "-i", png, "-vf", "format=gray",
-                    "-frames:v", "1", "-f", "rawvideo", "-"], "rb", err: File::NULL, &:read)
+    raw = ToolRun.capture3(["ffmpeg", "-v", "error", "-i", png, "-vf", "format=gray",
+                            "-frames:v", "1", "-f", "rawvideo", "-"], binmode: true).first
     File.unlink(png)
     return nil if raw.nil? || raw.bytesize < columns * BINS
 
@@ -15065,9 +15065,8 @@ NOISE_FLOOR = 0.005
   # would report a busy loop as dynamic, while 3 s is about a bar and tracks
   # what a section does.
   def loudness_envelope(path)
-    out = IO.popen(["ffmpeg", "-hide_banner", "-nostats", "-i", path,
-                    "-af", "ebur128=peak=none", "-f", "null", "-"],
-                   err: %i[child out], &:read)
+    out = ToolRun.capture2e(["ffmpeg", "-hide_banner", "-nostats", "-i", path,
+                             "-af", "ebur128=peak=none", "-f", "null", "-"]).first
     out.scan(/t:\s*([\d.]+)\s+.*?S:\s*(-?[\d.inf]+)/).filter_map do |t, s|
       value = s.to_f
       # -inf and the first three seconds, where the 3 s window is not yet full.
@@ -18732,8 +18731,8 @@ def showcase_demo!(dest = File.join(ROOT, "demo.wav"))
     list_file = File.join(tmp, "concat.txt")
     File.write(list_file, parts.map { |p| "file #{Shellwords.escape(p)}" }.join("\n"))
     FileUtils.mkdir_p(File.dirname(dest))
-    system("ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", list_file, "-c", "copy", dest,
-           out: File::NULL, err: File::NULL)
+    ToolRun.system("ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", list_file, "-c", "copy", dest,
+                   out: File::NULL, err: File::NULL)
   end
   ok = File.file?(dest) && File.size(dest) > 0
   dmesg(ok ? "showcase: wrote #{dest} (#{parts.length}/#{styles.length} styles)" : "showcase: failed", unit: "demo0", parent: "dilla0")
@@ -19585,8 +19584,8 @@ end
 def demo_suspect_parts(parts)
   measured = parts.filter_map do |p|
     next unless File.file?(p)
-    out = Open3.capture2e("ffmpeg", "-hide_banner", "-i", p, "-af",
-                          "astats=metadata=1:reset=0", "-f", "null", "-").first
+    out = ToolRun.capture2e("ffmpeg", "-hide_banner", "-i", p, "-af",
+                            "astats=metadata=1:reset=0", "-f", "null", "-").first
     # astats prints "-inf" for a digitally silent file, and the obvious
     # /(-?[\d.]+)/ does not match it -- so the first version of this returned nil
     # there and `next if rms.nil?` dropped the file from the set entirely. A
@@ -19627,8 +19626,8 @@ end
 DEAD_PART_PEAK_DBFS = -70.0
 
 def demo_part_dead?(path)
-  out, status = Open3.capture2e("ffmpeg", "-hide_banner", "-nostats", "-i", path,
-                                "-af", "volumedetect", "-f", "null", "-")
+  out, status = ToolRun.capture2e("ffmpeg", "-hide_banner", "-nostats", "-i", path,
+                                  "-af", "volumedetect", "-f", "null", "-")
   # A file ffmpeg cannot measure is not provably dead, and this runs after hours
   # of rendering: keep it and let demo_report_suspect_parts name it instead.
   return false unless status.success?
@@ -19666,9 +19665,9 @@ end
 
 def demo_parts_uniform?(parts)
   codecs = parts.map do |p|
-    out, status = Open3.capture2e("ffprobe", "-v", "error", "-select_streams", "a:0",
-                                  "-show_entries", "stream=codec_name",
-                                  "-of", "default=nw=1:nk=1", p)
+    out, status = ToolRun.capture2e("ffprobe", "-v", "error", "-select_streams", "a:0",
+                                    "-show_entries", "stream=codec_name",
+                                    "-of", "default=nw=1:nk=1", p)
     status.success? ? out.strip : "unknown"
   end
   codecs.uniq.length <= 1
@@ -20024,8 +20023,8 @@ def demo_ringtone_fx!(path)
     "stereowiden=delay=18:feedback=0.22:crossfeed=0.28",
   ])
   filter = stages.join(",")
-  ok = system("ffmpeg", "-y", "-v", "error", "-i", path, "-af", filter,
-              "-c:a", "pcm_s16le", filtered)
+  ok = ToolRun.system("ffmpeg", "-y", "-v", "error", "-i", path, "-af", filter,
+                      "-c:a", "pcm_s16le", filtered)
   abort "demo ringtone effects failed" unless ok && File.file?(filtered) && File.size(filtered).positive?
 
   after = album_loudness(filtered)[:i]
@@ -20033,8 +20032,8 @@ def demo_ringtone_fx!(path)
     matched = "#{path}.matched.wav"
     gain = (before - after).round(2)
     limiter = "alimiter=limit=#{TRUE_PEAK_CEILING_LINEAR}:attack=1:release=40:level=disabled"
-    ok = system("ffmpeg", "-y", "-v", "error", "-i", filtered, "-af", "volume=#{gain}dB,#{limiter}",
-                "-c:a", "pcm_s16le", matched)
+    ok = ToolRun.system("ffmpeg", "-y", "-v", "error", "-i", filtered, "-af", "volume=#{gain}dB,#{limiter}",
+                        "-c:a", "pcm_s16le", matched)
     abort "demo ringtone level match failed" unless ok && File.file?(matched) && File.size(matched).positive?
 
     FileUtils.mv(matched, filtered)
@@ -22950,17 +22949,17 @@ else
 (name.start_with?("snare") ? 0.22 : 0.12)
 end
     out = File.join(dest, name)
-    ok = system("ffmpeg", "-y", "-ss", t0.to_s, "-t", dur.to_s, "-i", src,
-                "-af", "aformat=sample_rates=44100:channel_layouts=mono,highpass=f=30,alimiter=limit=0.95",
-                "-c:a", "pcm_s16le", out, out: File::NULL, err: File::NULL)
+    ok = ToolRun.system("ffmpeg", "-y", "-ss", t0.to_s, "-t", dur.to_s, "-i", src,
+                        "-af", "aformat=sample_rates=44100:channel_layouts=mono,highpass=f=30,alimiter=limit=0.95",
+                        "-c:a", "pcm_s16le", out, out: File::NULL, err: File::NULL)
     FileUtils.rm_f(out) unless ok
   end
   File.file?(File.join(dest, "kick.wav")) ? dest : nil
 end
 
 def wav_sample_rate(path)
-  out, = Open3.capture2("ffprobe", "-v", "error", "-show_entries", "stream=sample_rate",
-                        "-of", "default=noprint_wrappers=1:nokey=1", path)
+  out, = ToolRun.capture2("ffprobe", "-v", "error", "-show_entries", "stream=sample_rate",
+                          "-of", "default=noprint_wrappers=1:nokey=1", path)
   out.to_s.strip.to_i
 rescue StandardError
   0
@@ -22980,8 +22979,8 @@ def load_kit_wav(path)
     return samples if samples && !samples.empty?
   end
   # ffmpeg fallback — resamples to SAMPLE_RATE, no wavefile gem required
-  raw, = Open3.capture2("ffmpeg", "-v", "error", "-i", path,
-                        "-f", "f32le", "-ac", "1", "-ar", SAMPLE_RATE.to_s, "pipe:1")
+  raw, = ToolRun.capture2("ffmpeg", "-v", "error", "-i", path,
+                          "-f", "f32le", "-ac", "1", "-ar", SAMPLE_RATE.to_s, "pipe:1")
   return if raw.nil? || raw.empty?
   raw.unpack("e*")
 rescue StandardError
@@ -25514,8 +25513,8 @@ def pad_grain_events(duration, source_frames, rng, grain_cfg, segments: nil)
 end
 
 def render_pad_granular_layer(path, pads_path, duration, pad_events = nil)
-  raw, = Open3.capture2("ffmpeg", "-v", "error", "-i", pads_path,
-                        "-f", "f32le", "-ac", "1", "-ar", SAMPLE_RATE.to_s, "pipe:1")
+  raw, = ToolRun.capture2("ffmpeg", "-v", "error", "-i", pads_path,
+                          "-f", "f32le", "-ac", "1", "-ar", SAMPLE_RATE.to_s, "pipe:1")
   return if raw.nil? || raw.length < 4 * SAMPLE_RATE # under a second of source
 
   source = raw.unpack("e*")
@@ -31222,8 +31221,8 @@ end
 
 def rap_vocal_onset_times(vocal_path, hop: 0.010)
   rate = 8000
-  raw = IO.popen(["ffmpeg", "-v", "error", "-i", vocal_path, "-ac", "1",
-                  "-ar", rate.to_s, "-f", "s16le", "-"], "rb", &:read)
+  raw = ToolRun.capture2(["ffmpeg", "-v", "error", "-i", vocal_path, "-ac", "1",
+                          "-ar", rate.to_s, "-f", "s16le", "-"], binmode: true).first
   samples = raw.to_s.unpack("s<*")
   return [] if samples.empty?
 
@@ -32719,11 +32718,11 @@ RAP_VOCAL_MIN_ANALYSIS_FRAMES = 10
 
 # RMS envelope of `path` in the voice band, one value per hop.
 def rap_vocal_envelope(path, hop: RAP_VOCAL_ANALYSIS_HOP)
-  raw = IO.popen(["ffmpeg", "-v", "error", "-i", path, "-af",
-                  "highpass=f=#{RAP_VOCAL_VOICE_HIGHPASS_HZ}," \
-                  "lowpass=f=#{RAP_VOCAL_VOICE_LOWPASS_HZ}",
-                  "-ac", "1", "-ar", RAP_VOCAL_ANALYSIS_RATE.to_s,
-                  "-f", "s16le", "-"], "rb", &:read)
+  raw = ToolRun.capture2(["ffmpeg", "-v", "error", "-i", path, "-af",
+                          "highpass=f=#{RAP_VOCAL_VOICE_HIGHPASS_HZ}," \
+                          "lowpass=f=#{RAP_VOCAL_VOICE_LOWPASS_HZ}",
+                          "-ac", "1", "-ar", RAP_VOCAL_ANALYSIS_RATE.to_s,
+                          "-f", "s16le", "-"], binmode: true).first
   samples = raw.to_s.unpack("s<*")
   return [] if samples.empty?
 
@@ -34002,8 +34001,8 @@ module DillaTiming
   end
 
   def pocket_envelope(path, filter)
-    raw = IO.popen(["ffmpeg", "-v", "error", "-i", path, "-af", filter,
-                    "-ac", "1", "-ar", POCKET_RATE.to_s, "-f", "s16le", "-"], "rb", &:read)
+    raw = ToolRun.capture2(["ffmpeg", "-v", "error", "-i", path, "-af", filter,
+                            "-ac", "1", "-ar", POCKET_RATE.to_s, "-f", "s16le", "-"], binmode: true).first
     samples = raw.to_s.unpack("s<*")
     return [] if samples.empty?
 
@@ -34307,7 +34306,7 @@ def album_stem(src, title, index, out_dir)
   chain = "volume=#{gain}dB," \
           "alimiter=limit=#{10**(ALBUM_TARGET_TP / 20.0)}:level=disabled," \
           "aresample=44100:out_sample_fmt=s16:dither_method=triangular_hp"
-  Open3.capture2e("ffmpeg", "-hide_banner", "-nostats", "-y", "-i", staged, "-af", chain, "-ac", "2", dest)
+  ToolRun.capture2e("ffmpeg", "-hide_banner", "-nostats", "-y", "-i", staged, "-af", chain, "-ac", "2", dest)
   FileUtils.rm_f(staged)
 
   after = album_loudness(dest)
@@ -34329,9 +34328,9 @@ def album_stage_mid_side(src, side_cut, index, out_dir)
           "[m_b]pan=mono|c0=0.5*c0-0.5*c1,volume=#{side_cut}dB[sid];" \
           "[mid][sid]join=inputs=2:channel_layout=stereo[ms];" \
           "[ms]pan=stereo|c0=c0+c1|c1=c0-c1,"
-  Open3.capture2e("ffmpeg", "-hide_banner", "-nostats", "-y", "-i", src,
-                  "-filter_complex", "[0:a]#{graph}anull[o]", "-map", "[o]",
-                  "-ac", "2", "-ar", "44100", staged)
+  ToolRun.capture2e("ffmpeg", "-hide_banner", "-nostats", "-y", "-i", src,
+                    "-filter_complex", "[0:a]#{graph}anull[o]", "-map", "[o]",
+                    "-ac", "2", "-ar", "44100", staged)
   staged
 end
 
@@ -34348,9 +34347,9 @@ def album_trim_to_target(stems)
     next stem if trim.abs < 0.1
 
     dest = stem.sub(".wav", "_lvl.wav")
-    Open3.capture2e("ffmpeg", "-hide_banner", "-nostats", "-y", "-i", stem,
-                    "-af", "volume=#{trim}dB,alimiter=limit=#{10**(ALBUM_TARGET_TP / 20.0)}:level=disabled",
-                    "-ac", "2", "-ar", "44100", dest)
+    ToolRun.capture2e("ffmpeg", "-hide_banner", "-nostats", "-y", "-i", stem,
+                      "-af", "volume=#{trim}dB,alimiter=limit=#{10**(ALBUM_TARGET_TP / 20.0)}:level=disabled",
+                      "-ac", "2", "-ar", "44100", dest)
     dest
   end
 end
@@ -34375,7 +34374,7 @@ def album_stitch(stems, dest)
   argv = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y"]
   stems.each { |stem| argv << "-i" << stem }
   argv += ["-filter_complex_script", script, "-map", "[lim]", "-c:a", "libmp3lame", "-q:a", "0", dest]
-  system(*argv)
+  ToolRun.system(*argv)
 end
 
 def album_master(dest)
@@ -34536,7 +34535,7 @@ module Bed
   PINNED = "aformat=sample_fmts=fltp:channel_layouts=stereo"
 
   def ffmpeg!(*args, what:)
-    _out, err, status = Open3.capture3("ffmpeg", "-y", "-hide_banner", *args)
+    _out, err, status = ToolRun.capture3("ffmpeg", "-y", "-hide_banner", *args)
     abort "bed #{what}: #{err.lines.last}" unless status.success?
     true
   end
@@ -34944,7 +34943,7 @@ module Bed
   # rotation from a Rhodes to a Moog is a change of colour and not a jump in
   # volume.
   def level!(path, target_db)
-    _out, err, _status = Open3.capture3("ffmpeg", "-hide_banner", "-nostats", "-i", path, "-af", "volumedetect", "-f", "null", "-")
+    _out, err, _status = ToolRun.capture3("ffmpeg", "-hide_banner", "-nostats", "-i", path, "-af", "volumedetect", "-f", "null", "-")
     mean = err[/mean_volume:\s*(-?[\d.]+) dB/, 1] or return path
     levelled = "#{path}.lvl.wav"
     ffmpeg!("-i", path, "-af", "volume=#{(target_db - mean.to_f).clamp(-30, 30).round(2)}dB", levelled, what: "level")
@@ -35686,7 +35685,7 @@ module Bed
   LOUDNESS = BED.fetch("loudness")
 
   def integrated_lufs(path)
-    _out, err, _status = Open3.capture3("ffmpeg", "-hide_banner", "-nostats", "-i", path, "-af", "ebur128", "-f", "null", "-")
+    _out, err, _status = ToolRun.capture3("ffmpeg", "-hide_banner", "-nostats", "-i", path, "-af", "ebur128", "-f", "null", "-")
     err[/Integrated loudness:.*?I:\s*(-?[\d.]+)/m, 1]&.to_f
   end
 
@@ -35851,14 +35850,14 @@ module Bed
     levels = BAND_EDGES.map do |low, high|
       chain = "aformat=channel_layouts=mono,highpass=f=#{low},highpass=f=#{low},lowpass=f=#{high},lowpass=f=#{high}," \
               "astats=metadata=0:measure_perchannel=RMS_level:measure_overall=none"
-      _out, err, _status = Open3.capture3("ffmpeg", "-hide_banner", "-nostats", "-i", path, "-af", chain, "-f", "null", "-")
+      _out, err, _status = ToolRun.capture3("ffmpeg", "-hide_banner", "-nostats", "-i", path, "-af", chain, "-f", "null", "-")
       err[/RMS level dB:\s*(-?[\d.]+)/, 1].to_f
     end
     levels.map { |level| (level - levels.first).round(1) }
   end
 
   def loudness_of(path)
-    _out, err, _status = Open3.capture3("ffmpeg", "-hide_banner", "-nostats", "-i", path, "-af", "ebur128=peak=true", "-f", "null", "-")
+    _out, err, _status = ToolRun.capture3("ffmpeg", "-hide_banner", "-nostats", "-i", path, "-af", "ebur128=peak=true", "-f", "null", "-")
     summary = err[/Integrated loudness:.*\z/m].to_s
     { lufs: summary[/I:\s*(-?[\d.]+)/, 1].to_f, lra: summary[/LRA:\s*(-?[\d.]+)/, 1].to_f,
       true_peak: summary[/True peak:\s*\n\s*Peak:\s*(-?[\d.]+)/, 1].to_f }

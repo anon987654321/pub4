@@ -109,7 +109,7 @@ module DillaMaster
   # to mono. Reports the worst moment, not the average, since a single bad
   # section is what actually breaks on a mono sum.
   def min_phase_correlation(path)
-    out, = Open3.capture2(
+    out, = ToolRun.capture2(
       "ffmpeg", "-hide_banner", "-v", "error", "-i", path, "-af",
       "aphasemeter=video=0,ametadata=print:key=lavfi.aphasemeter.phase:file=-",
       "-f", "null", "-"
@@ -123,7 +123,7 @@ module DillaMaster
   # Average level in the 200-400Hz "mud zone" (center 283Hz, ~1 octave wide)
   # — sustained energy here masks snare body and reads as boxy/undefined.
   def mud_db_200_400hz(path)
-    out, = Open3.capture2(
+    out, = ToolRun.capture2(
       "ffmpeg", "-hide_banner", "-v", "error", "-i", path, "-af",
       "bandpass=f=283:w=200,astats=metadata=1:reset=0,ametadata=print:key=lavfi.astats.Overall.RMS_level:file=-",
       "-f", "null", "-"
@@ -248,7 +248,7 @@ module DillaMaster
 
   def apply_phone_preview!(path)
     tmp = "#{path}.phone.wav"
-    system("ffmpeg", "-y", "-i", path, "-af", phone_preview_chain, "-c:a", "pcm_s16le", tmp)
+    ToolRun.system("ffmpeg", "-y", "-i", path, "-af", phone_preview_chain, "-c:a", "pcm_s16le", tmp)
     File.exist?(tmp) ? tmp : path
   end
 
@@ -405,8 +405,7 @@ module DillaTaste
 
     # Onsets per second and the peak-to-RMS spread, from one decode.
     def rhythm(path)
-      raw = IO.popen(["ffmpeg", "-v", "quiet", "-i", path.to_s, "-ac", "1", "-ar", "8000", "-f", "s16le", "-"],
-                     "rb", &:read)
+      raw = ToolRun.capture2(["ffmpeg", "-v", "quiet", "-i", path.to_s, "-ac", "1", "-ar", "8000", "-f", "s16le", "-"], binmode: true).first
       return {} if raw.nil? || raw.empty?
 
       samples = raw.unpack("s<*")
@@ -436,6 +435,91 @@ end
 
 require "json"
 require "open3"
+
+# One way to run ffmpeg, ffprobe or any other tool that is not a render step.
+#
+# sh! runs the render steps: it writes to dmesg, reads the error tail and
+# raises. Everything else -- a measurement read off stderr, raw samples read
+# off stdout, a quiet conversion whose failure the caller handles -- called
+# Open3, IO.popen or Kernel#system directly, and none of those can time out.
+# A decode that hangs on a truncated file then held a render, a demo part or
+# a test forever. These keep each call's own contract (the same return
+# values, the same nil for a missing binary) and add the two things every
+# call needs: a deadline, and a child that cannot stop on SIGTTIN.
+#
+# The child runs in its own process group with no terminal on stdin, because
+# a tool that polls stdin (ffmpeg's interactive q) is stopped by the terminal
+# otherwise and sits until something kills it. On the deadline the whole
+# group is killed, since ffmpeg forks.
+module ToolRun
+  module_function
+
+  def timeout = Integer(ENV.fetch("DILLA_TOOL_TIMEOUT", "900"))
+
+  # Open3.capture3 with a deadline: [stdout, stderr, status]. A run past the
+  # deadline returns what it wrote, a failed status, and says so on stderr.
+  def capture3(*argv, stdin_data: nil, binmode: false, timeout: self.timeout, **spawn)
+    Open3.popen3(*argv.flatten.map(&:to_s), pgroup: true, **spawn) do |stdin, out, err, wait|
+      [stdin, out, err].each(&:binmode) if binmode
+      writer = stdin_data && Thread.new { feed(stdin, stdin_data) }
+      stdin.close unless writer
+      readers = [out, err].map { |io| Thread.new { io.read } }
+      expired = !wait.join(timeout)
+      kill_group(wait.pid) if expired
+      writer&.join
+      output, error = readers.map(&:value)
+      error = "#{error}\n#{argv.flatten.first} timeout after #{timeout}s" if expired
+      [output, error, wait.value]
+    end
+  end
+
+  # Open3.capture2: stdout and the status, stderr passed to the terminal.
+  def capture2(*argv, **options)
+    output, error, status = capture3(*argv, **options)
+    $stderr.write(error) unless error.to_s.empty?
+    [output, status]
+  end
+
+  # Open3.capture2e: stdout and stderr in one string, and the status.
+  def capture2e(*argv, **options)
+    output, error, status = capture3(*argv, **options)
+    ["#{output}#{error}", status]
+  end
+
+  # Kernel#system with a deadline: true, false, or nil when the binary is
+  # missing, and $? set in the calling thread as system sets it.
+  def system(*argv, timeout: self.timeout, **spawn)
+    pid = Process.spawn(*argv.flatten.map(&:to_s), { in: File::NULL, pgroup: true }.merge(spawn))
+    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + timeout
+    until Process.wait2(pid, Process::WNOHANG)
+      if Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
+        kill_group(pid)
+        Process.wait2(pid)
+        return false
+      end
+      sleep 0.02
+    end
+    $?.success?
+  rescue Errno::ENOENT
+    nil
+  end
+
+  # Writes the input and closes the pipe, which is the child's end of input. A
+  # child that exits before reading all of it closes its end first.
+  def feed(stdin, data)
+    stdin.write(data)
+  rescue Errno::EPIPE
+    nil
+  ensure
+    stdin.close
+  end
+
+  def kill_group(pid)
+    Process.kill("-KILL", pid)
+  rescue Errno::ESRCH, Errno::EPERM
+    nil
+  end
+end
 
 # One way to ask ffmpeg for a measurement, for the scoring modules.
 #
@@ -491,19 +575,11 @@ module FfmpegProbe
   end
 
   def execute(argv, path, timeout:)
-    Open3.popen2e(*argv) do |stdin, out, wait|
-      stdin.close
-      reader = Thread.new { out.read }
-      unless wait.join(timeout)
-        Process.kill("KILL", wait.pid)
-        wait.join
-        raise Error, "#{argv.first} timed out after #{timeout}s on #{path}"
-      end
-      log = reader.value.to_s
-      raise Error, "#{argv.first} exited #{wait.value.exitstatus} on #{path}: #{log.lines.last(2).join.strip}" unless wait.value.success?
+    log, status = ToolRun.capture2e(*argv, timeout:)
+    raise Error, "#{argv.first} timed out after #{timeout}s on #{path}" if status.signaled?
+    raise Error, "#{argv.first} exited #{status.exitstatus} on #{path}: #{log.lines.last(2).join.strip}" unless status.success?
 
-      log
-    end
+    log
   rescue Errno::ENOENT
     raise Error, "#{argv.first} is not installed or not on PATH"
   end
@@ -711,7 +787,7 @@ module VerifyFx
   end
 
   def run(*args)
-    system("ffmpeg", "-v", "error", "-y", *args.map(&:to_s), out: File::NULL, err: File::NULL)
+    ToolRun.system("ffmpeg", "-v", "error", "-y", *args.map(&:to_s), out: File::NULL, err: File::NULL)
   end
 
   def measure(path, af)
@@ -1046,7 +1122,7 @@ module SpectralAudit
   # stdout alone is why the first run of this returned -120dB for every band:
   # the numbers were there, on the other stream.
   def sh(*cmd)
-    out, err, _status = Open3.capture3(*cmd)
+    out, err, _status = ToolRun.capture3(*cmd)
     [out, err].join("\n")
   end
 

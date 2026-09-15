@@ -1471,8 +1471,8 @@ module DillaProvenance
     def duration_of(path)
       return unless File.file?(path)
 
-      out = IO.popen(["ffprobe", "-v", "error", "-show_entries", "format=duration",
-                      "-of", "default=nk=1:nw=1", path.to_s], err: File::NULL, &:read)
+      out = ToolRun.capture3(["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                              "-of", "default=nk=1:nw=1", path.to_s]).first
       value = out.to_s.strip.to_f
       value.positive? ? value : nil
     rescue StandardError

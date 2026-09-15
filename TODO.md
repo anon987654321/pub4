@@ -1181,6 +1181,12 @@ default unless marked.
 - **Names.** `demo-all` is the catalogue, `demo` is `generate_demo`'s crate matrix,
   `showcase` is a third medley. Rename to `demo` / `demo-crate`, alias `demo-all`
   one release. No MASTER or RAILS caller.
+- **A bed pass does not repeat at one seed.** `bed render seed 4242` twice on
+  the same code differs by about 0.1 s in length and in the order its parallel
+  renders start, so the snapshot harness cannot hold the bed to identical
+  commands; its loudness and a bit-identical run are the only evidence.
+  `each_parallel` seeds each item, so the drift is elsewhere: find it before
+  trusting a bed snapshot.
 - **No smoke test for the no-arg path.** `test_dilla_bed` renders one catalogue
   piece through the bed; nothing yet runs `Bed.catalogue!` end to end with a
   two-piece order into a tmpdir and asserts demo.wav, demo.mp3 and the join's
@@ -1235,8 +1241,9 @@ operator's ear.
 
 The operator approved all forty-five ("APPROVE ALL", "dont forget to implement
 all these"). Landed and deleted from this list: 3 (lib/ in six subjects), 11
-(root YAML in data/), 33 (help from the command table), 37 (live/ gone), 38
-(scripts/ gone). Every change here must leave a snapshot identical, which the
+(root YAML in data/), 14 (`sh!` for render steps, `ToolRun` for every other
+tool call, each with a deadline), 33 (help from the command table), 37 (live/
+gone), 38 (scripts/ gone). Every change here must leave a snapshot identical, which the
 harness in `STUDIO/test/support/dilla_snapshot/` proves; a row that changes
 sound says so. Delete a row when it lands.
 
@@ -1263,8 +1270,6 @@ sound says so. Delete a row when it lands.
   dirty `session.json` and `liveset.jsonl`.
 - **13. One loudness module.** Stage 1 landed (`FfmpegProbe` in lib/listen.rb
   measures); the ~20 methods that set level remain.
-- **14. One ffmpeg runner.** Stage 2 (timeouts, errors, codecs through one
-  call) waits in branch `ffmpeg-runner`.
 - **15. One output-path function.** Parts still go to `scratch/all_tracks_demo`.
 - **16. One job runner with locks and signals**; `pkill` cannot stop
   `demo-all` and the lock exits 0 (see measured defects above).

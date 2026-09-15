@@ -86,8 +86,10 @@ end
 class << IO
   alias_method :__snapshot_popen, :popen
 
+  # The command only: a mode string ("rb", "wb") says how Ruby reads the pipe,
+  # not what the tool is asked to do, and a call moved to Open3 drops it.
   def popen(*args, **opts, &block)
-    DillaSnapshot.record(args)
+    DillaSnapshot.record(args.first.is_a?(Array) ? [args.first] : args)
     __snapshot_popen(*args, **opts, &block)
   end
 end

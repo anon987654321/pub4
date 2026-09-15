@@ -205,7 +205,10 @@ class TestDillaDirectives < Minitest::Test
   def ringtone_chain(pairs)
     filters = []
     define_singleton_method(:album_loudness) { |_| { i: 0.0 } }
-    define_singleton_method(:system) do |*argv|
+    # The chain runs through ToolRun, so the stub goes there, and the real
+    # function comes back after: module_function keeps it on the singleton.
+    original = ToolRun.singleton_class.instance_method(:system)
+    ToolRun.define_singleton_method(:system) do |*argv, **|
       filters << argv[argv.index("-af") + 1]
       File.binwrite(argv.last, "fx")
       true
@@ -216,6 +219,8 @@ class TestDillaDirectives < Minitest::Test
       with_env(pairs.merge("DEMO_FX" => "ringtone")) { demo_ringtone_fx!(part) }
     end
     filters.first.to_s
+  ensure
+    ToolRun.singleton_class.define_method(:system, original) if original
   end
 
   # Every chord in the catalogue beside the chord that follows it, the verified

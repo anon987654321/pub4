@@ -91,7 +91,9 @@ drum chops, `GROOVE_DNA=cosmogramma`, quartal voicing, dub_chamber chain.
 | `KICK_GAIN` / `DRUM_BUS_VOL` | Kit bus (`0.88` / `0.95` in `DILLA_STYLE_DEFAULTS`) |
 | `CHOIR_VOX` / `CHOIR_VOX_GAIN` | Soft ooh/aah (`0` / `0.16` default; `CHOIR_VOX=1` re-enables) |
 | `STREAM_CREATIVE` / `STREAM_PUNCH` | Opt-in wild layer (LA_BEAT/vinyl/hot LUFS) — **off** by default |
-| `DILLA_SH_TIMEOUT` | Kill hung ffmpeg/fluidsynth (default 120s) |
+| `DILLA_SH_TIMEOUT` | Kill a hung render step run through `sh!` (default 900s) |
+| `DILLA_TOOL_TIMEOUT` | Kill a hung tool run through `ToolRun`: measurements, decodes, quiet conversions (default 900s) |
+| `DILLA_PROBE_TIMEOUT` | Deadline for one `FfmpegProbe` measurement (default 300s) |
 | `DILLA_FS_DRY` | Fluidsynth with its own chorus/reverb off — **off** by default; costs 12.6 dB of pad side-channel |
 | `THEORY_RUNTIME` / `THEORY_DILLA` / `THEORY_BACH` | Voicing operators |
 | `PAD_VOICE` / `PAD_VOL` / `PAD_LAYERS` | Pad bed |

@@ -602,10 +602,8 @@ module AnalogSynth
       inter[(i * 2) + 1] = (right[i] * 32_767.0).round.clamp(-32_768, 32_767)
       i += 1
     end
-    IO.popen(["ffmpeg", "-y", "-v", "quiet", "-f", "s16le", "-ar", RATE.to_s,
-              "-ac", "2", "-i", "-", "-c:a", "pcm_s16le", dest], "wb") do |io|
-      io.write(inter.pack("s<*"))
-    end
+    ToolRun.capture3(["ffmpeg", "-y", "-v", "quiet", "-f", "s16le", "-ar", RATE.to_s,
+                      "-ac", "2", "-i", "-", "-c:a", "pcm_s16le", dest], stdin_data: inter.pack("s<*"), binmode: true)
     dest
   end
 end
@@ -1125,10 +1123,9 @@ module WavMap
   def height_field(image_path)
     return nil unless image_path && File.file?(image_path)
 
-    raw = IO.popen(["ffmpeg", "-v", "error", "-i", image_path,
-                    "-vf", "scale=#{GRID}:#{GRID}:flags=area,format=gray",
-                    "-frames:v", "1", "-f", "rawvideo", "-"],
-                   "rb", err: File::NULL, &:read)
+    raw = ToolRun.capture3(["ffmpeg", "-v", "error", "-i", image_path,
+                            "-vf", "scale=#{GRID}:#{GRID}:flags=area,format=gray",
+                            "-frames:v", "1", "-f", "rawvideo", "-"], binmode: true).first
     return nil if raw.nil? || raw.bytesize < GRID * GRID
 
     raw.unpack("C*")
@@ -3487,9 +3484,8 @@ module DillaModulation
   def follow(path, floor: -50.0, ceiling: -8.0)
     return nil unless path && File.file?(path)
 
-    out = IO.popen(["ffmpeg", "-hide_banner", "-nostats", "-i", path.to_s,
-                    "-af", "ebur128=peak=none", "-f", "null", "-"],
-                   err: %i[child out], &:read)
+    out = ToolRun.capture2e(["ffmpeg", "-hide_banner", "-nostats", "-i", path.to_s,
+                             "-af", "ebur128=peak=none", "-f", "null", "-"]).first
     points = out.scan(/t:\s*([\d.]+)\s+.*?M:\s*(-?[\d.inf]+)/).filter_map do |t, m|
       next if m.include?("inf")
 
@@ -3599,7 +3595,7 @@ module DillaModulation
 
   def probe_params(filter)
     help = begin
-      IO.popen(["ffmpeg", "-hide_banner", "-h", "filter=#{filter}"], err: %i[child out], &:read)
+      ToolRun.capture2e(["ffmpeg", "-hide_banner", "-h", "filter=#{filter}"]).first
     rescue StandardError
       ""
     end
