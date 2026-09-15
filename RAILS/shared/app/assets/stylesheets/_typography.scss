@@ -55,8 +55,24 @@
   // short word or leave a two-letter stub, and orphans/widows 3 for the paged
   // case, where a single trailing line is the defect the rule names.
   hyphenate-limit-chars: 6 3 2;
+  hyphenate-limit-lines: 2;
+  -webkit-hyphenate-limit-lines: 2;
   orphans: 3;
   widows: 3;
+  // design_rules micro default_features and body_numerals: kerning, ligatures
+  // and old-style proportional figures in running text. A face without onum
+  // ignores it and keeps its lining figures.
+  font-feature-settings: "kern", "liga", "clig", "onum", "pnum";
+
+  // norwegian_guillemets: a quotation opens with « in Bokmål.
+  &:lang(nb) {
+    quotes: "«" "»" "‘" "’";
+  }
+
+  // contextual_features abbreviations: small caps sit an acronym in the line.
+  abbr {
+    font-variant-caps: all-small-caps;
+  }
 
   p + p {
     margin-block-start: var(--space-3, 0.75rem);

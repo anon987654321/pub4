@@ -84,6 +84,7 @@
 
 .legal-prose .legal-updated {
   color: var(--text-secondary, #4d4d4d);
+  font-variant-numeric: tabular-nums;
   font-size: 0.85rem;
   margin: 0 0 24px;
 }

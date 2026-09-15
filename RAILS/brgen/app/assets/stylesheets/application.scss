@@ -2351,6 +2351,7 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 .wiki-history {
   margin-block-start: var(--space-4);
   font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
 }
 
 .wiki-history ul {
