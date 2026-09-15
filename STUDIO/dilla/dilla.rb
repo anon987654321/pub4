@@ -34,6 +34,11 @@ DillaMusicGems.bootstrap!
 # The one definition of which files the engine is made of. Required this early
 # because it has no dependencies and defines the engine's own corpus.
 require_relative "lib/engine_sources"
+# Every file the engine is made of: dilla.rb and lib/*.rb. `wiring_check`,
+# `debug`, `where`, provenance and the stream's restart-on-edit all mean the
+# engine, and a method body reading this constant must not find it undefined
+# because the method sits above the line that sets it.
+ENGINE_SOURCES = DillaSources.all
 
 # Everything the caller set before dilla touched the environment.
 #
@@ -84,6 +89,12 @@ require "timeout"
 # pulls ledger in for frozen state and harmony pulls groove in for the groove
 # score, so the order below is the order a reader meets them and no file
 # depends on one that has not loaded.
+#
+# All six load at boot, DSP included, so ConsoleStrip, TapeHysteresis, MixScore,
+# VerifyFx and KitDig are always defined. The two live-side files are not:
+# lib/livesets.rb loads when `live set|recall|broadcast|dig` asks for it, and
+# lib/sine_stream.rb runs as its own process under `sines`. Folding either into
+# one of these six puts it into every render's boot.
 require_relative "lib/sound"
 require_relative "lib/sampling"
 require_relative "lib/harmony"
@@ -198,16 +209,11 @@ DEMUX_MODEL = "htdemucs_6s"
 # catalog afterward, so the extra model/shifts time is worth spending here.
 DEMUX_VOCAL_MODEL = "htdemucs_ft"
 
-# The engine's own top-level program, split by concern. The list and its order
-# live in lib/engine_sources.rb, which is also what provenance, the parse check
-# and the wiring ratchets read -- see that file for why there is exactly one of
-# them now. The order is load-bearing: constants in these files are computed at
-# load time from ones above them, and reordering silently changes their values.
-# The engine, inline. It was 81 files under lib/engine/ required in a hand-
-# pinned order, and the order was load-bearing: constants are computed at load
-# time from ones above them. Concatenating them in that order is what the order
-# always meant, and it removes the two ways the list could lie -- a part on disk
-# that nothing required, and a name in the list with no file behind it.
+# The engine, one part after another under `# engine part:` markers, which
+# `dilla parts` indexes. The order is load-bearing: constants in a part are
+# computed at load time from ones in the parts above it, so moving a part moves
+# values. lib/engine_sources.rb names the files the engine is made of, which is
+# what provenance, the parse check and the wiring ratchets read.
 
 # --------------------------------------------------------------------------
 # engine part: audio_graph
@@ -435,11 +441,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Ingest a source track and turn it into engine hints.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # YouTube/local ingest → demucs → rhythm/harmony analysis → engine hints (inlined).
 module DillaSourceLearn
@@ -601,11 +602,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Measured sonic profiles, track maps, curated progression names, LUFS/LRA by style.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # =============================================================================
 # ENHANCEMENT LAYER — sonic profiles, extended harmony, eclectic drums,
@@ -999,11 +995,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Pad, lead and morph voice presets, layer stacks and patch cycles.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # Pad voice stacks — classic analog + curated experimental electronic.
 # stack_soul = multi-preset layer (EP + Moog + Prophet + texture) for rich beds.
@@ -1625,11 +1616,6 @@ PAD_TO_LEAD_ARP = {
 # --------------------------------------------------------------------------
 #
 # The render seed: one draw per render, everything else derived from it.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # RENDER_SEED reached patch_cycle_seed above and stopped there. It never crossed
 # into ffmpeg, and ffmpeg is where most of this engine's randomness lives:
@@ -1732,7 +1718,7 @@ end
 # that picks one. These were patch_catalog.rb, patch_pools.rb and
 # patch_select.rb — three files for one concept, each referring to the others
 # in both directions, and none of them a namespace: every method here lands on
-# Object like the rest of lib/engine.
+# Object like the rest of the engine.
 #
 # Merged in catalogue-pools-selection order because the catalogue is the data
 # the other two read.
@@ -1741,11 +1727,6 @@ end
 
 #
 # The synth patch catalogue and its MIDI-FX stacks.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # Rich synth patch catalog — GM programs, optional external sf2, native fallback timbres,
 # and per-patch post-FX chains (tremolo/LFO/filter/delay) applied at render time.
@@ -2720,11 +2701,6 @@ SYNTH_PATCH_BY_ID = SYNTH_PATCH_CATALOG.each_with_object({}) { |p, h| h[p[:id]] 
 
 #
 # Patch pools and the timbre filters that keep flutes, choirs and metal out.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # GM chromatic percussion is struck metal — celesta, glockenspiel, music box,
 # vibraphone, marimba, xylophone, tubular bells — and 94 is literally "metallic
@@ -3083,11 +3059,6 @@ end
 
 #
 # Patch lookup, arp modes, and the morph voice/patch choices per chord.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 def synth_patch_by_id(id)
   SYNTH_PATCH_BY_ID[id]
@@ -3307,11 +3278,6 @@ end
 # --------------------------------------------------------------------------
 #
 # The Radio Bergen study: catalogue audio in, sonic dossiers out.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # Measured reference sonic profiles. These lived in STUDIO/radio-bergen until
 # that directory was removed — brgen's playlist replaced what it served. The
@@ -3993,11 +3959,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Style family, BPM, swing and track preset resolution.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 def load_radio_bergen_learnings
   return @radio_bergen_learnings if defined?(@radio_bergen_learnings)
@@ -4597,11 +4558,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Progression generators: Coltrane changes, tritone subs, backdoors, modal interchange.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 def chord_from_quality(root_hz, quality, voices: 5)
   intervals = CHORD_TEMPLATES.fetch(quality)
@@ -4982,11 +4938,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Per-role swing offsets, cyclic timing drift and section density.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # Different degrees of swing on different voices -- the near-polyrhythmic
 # quality described in accounts of both producers, and the thing a single
@@ -5111,11 +5062,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Synthesised percussion one-shots: rim, clap, tabla, tambourine, woodblock, agogo.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # Percussion belongs to the idiom, not to every track alike.
 #
@@ -5513,11 +5459,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Which drums play at all: kick gates, halftime, Wonky overlays and grids.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 def extended_drum_kit(base_kit)
   base_kit.merge(
@@ -5737,11 +5678,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Render scratch directory and the stream lock.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 def dilla_render_tmp(tag)
   File.join(SCRATCH_DIR, "dilla_#{tag}.#{Process.pid}.wav")
@@ -5789,11 +5725,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Drum bus routing: Wonky dual bus, ducking, field layer, drop bars.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # "All his drums are dirty as fuck, sans the kick" -- and the cymbals in
 # particular are swished through phaser and flanger until they are soupy rather
@@ -6062,11 +5993,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Sampled beds: the loop catalogue, chopping, cross-sampling and excitation.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # Audio loops that play UNDERNEATH the synth arrangement. Deliberately not the
 # stems path (use_stem_harmony), which REPLACES the harmonic bus wholesale --
@@ -6751,11 +6677,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Bus filter chains: analog colour, bass, harmony, sidechain and bridges.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # The bass gets its own bus rather than riding the harmonic one. It used to be
 # mixed into the harmonic render, which is high-passed to keep pad mud out of
@@ -7144,11 +7065,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Small render helpers shared across the engines.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # Hands the record and this track's chords to SampleFlip, and returns a loop
 # entry pointing at what comes back.
@@ -7510,11 +7426,6 @@ end
 # --------------------------------------------------------------------------
 #
 # The drum bus filter: smooth vs hard kits, width, build-ups.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 def build_drum_bus_filter(cfg, sonic, duration: nil)
   crush_mix = sonic&.dig("synth", "crush_mix")&.to_f
@@ -7780,11 +7691,6 @@ end
 # --------------------------------------------------------------------------
 #
 # The master bus: console emulation, width, true-peak guard, loudness.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # The console and the mastering desk, in that order, before the loudness stage.
 #
@@ -8340,11 +8246,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Song form: section maps, motifs per chord.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 def motif_from_chord(chord)
   return [0, 1, 2, 1] unless chord && chord[:hz]&.any?
@@ -8475,11 +8376,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Scale-locked leads and arpeggios.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 def harmony_lead_enabled?
   # Dilla/camel style DNA enables harmony lead (DILLA_STYLE_DEFAULTS /
@@ -9222,11 +9118,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Melodic lead writing: voice leading, phrase shape, parallel-interval rejection.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # Occasional lead bursts — not every chord gets an arp. When they fire, use
 # intricate patterns (euclidean, fibonacci, wonky wobble, etc.) with
@@ -9767,11 +9658,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Engine-wide defaults: tempos, chords, stocks, grades, Sonitex and analog chains.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 GENERATED_STYLE_ROUTES = {
   major_third_cycle_full: :generate_coltrane_changes,
@@ -10235,11 +10121,6 @@ MICROTIMING_MS = {
 # --------------------------------------------------------------------------
 #
 # Drum pattern, fill and feel tables.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # Curated 16-step drum phrases per feel — rotated bar-to-bar instead of
 # probabilistic organic generation. Kicks/snares/ghosts/hats are authored
@@ -10789,11 +10670,6 @@ end.freeze
 # --------------------------------------------------------------------------
 #
 # Chord voicing tables and the artist-verified progression set.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 MODAL_MINOR_CHORDS = [
   { name: "Fm9",       hz: [174.61, 207.65, 261.63, 311.13, 392.00] },
@@ -11063,11 +10939,6 @@ end
 # --------------------------------------------------------------------------
 #
 # The progression catalogue and per-track presets.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # Album / track progressions — verified first; rest are experimental / theory pack.
 # --- extended progressions -------------------------------------------------
@@ -12271,11 +12142,6 @@ TRACK_PRESETS = {
 # --------------------------------------------------------------------------
 #
 # Chord theory: templates, scales, key detection, transposition, voicings.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 CHORD_TEMPLATES = {
   "maj" => [0, 4, 7],
@@ -12718,11 +12584,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Running external tools: ffmpeg, fluidsynth, demucs, playback.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # Per-tool wall-clock cap: fluidsynth and ffmpeg hang, and waitpid without one
 # blocks the stream behind them forever.
@@ -13141,11 +13002,6 @@ end
 # --------------------------------------------------------------------------
 #
 # CLI commands: scan, render, verify, stems, chords and the wiring ratchet.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 def scan(groove: false)
   groove_pid, groove_tmp = groove ? start_groove_preview : [nil, nil]
@@ -13711,11 +13567,9 @@ WIRING_EXTERNAL_READERS = %w[
 WIRING_DEAD_BASELINE = 0
 
 def wiring_dead_constants
-  # ENGINE_SOURCES, not just the entry script: most of the engine's constants
-  # live in lib/engine/ since the split, and reading only dilla.rb would report
-  # every one of them as undeclared and every reader as the only mention.
-  # It used to append Dir[lib/*.rb] here by hand, in two places, because
-  # ENGINE_SOURCES excluded them. It no longer does -- see lib/engine_sources.rb.
+  # ENGINE_SOURCES, not just the entry script: a constant declared in lib/*.rb
+  # and read in dilla.rb would otherwise read as undeclared, and its reader as
+  # the only mention.
   sources = ENGINE_SOURCES
   defined_at = {}
   bodies = sources.to_h do |path|
@@ -14289,11 +14143,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Listening back: spectral, rhythmic and harmonic analysis of a finished file.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 INTERVAL_NAMES = {
   0 => "root", 1 => "b9", 2 => "9", 3 => "b3", 4 => "3", 5 => "11",
@@ -14631,29 +14480,13 @@ end
 
 PRECEDENCE_ORDER = DillaKnobs::PRECEDENCE
 
-# `dilla where <name>` — which file owns a method, a constant or a knob.
-#
-# This is what namespacing the engine was wanted for. 79 files define methods on
-# Object, so nothing declares ownership and grep is the only way to answer
-# "where does this live" -- and grep answers it badly here, because a name is
-# mentioned in prose far more often than it is defined, which is the same
-# property that makes the wiring ratchets strip comments.
-#
-# Wrapping the engine in modules would answer it too, and would be a rewrite of
-# 116 files whose load order is load-bearing (constants are computed at require
-# time from ones above them) for no change in behaviour. This answers the
-# question directly instead, from the AST for methods and from the source for
-# constants, and it distinguishes a definition from a mention -- which is the
-# part that actually helps.
 # `parts [needle]` — the engine's own table of contents.
 #
-# dilla.rb is one file of 35,000 lines carrying 83 `# engine part:` markers, in
-# the order they were required back when they were separate files, because that
-# order is load-bearing. The map has always been in the file and nothing has ever
-# indexed it, so finding a subject meant grepping for a word you had to already
-# know. This prints the markers with the line each one starts at and how many
-# lines it holds, longest-first when asked, so the seams worth knowing about
-# announce themselves.
+# dilla.rb carries its `# engine part:` markers in load order, and this prints
+# them with the line each one starts at and how many lines it holds, then the
+# count and the largest, so finding a subject does not mean grepping for a word
+# you already had to know. The count is asked of the file each time rather
+# than written here.
 #
 # Generated rather than written down, for the reason lib/ledger.rb gives about the
 # knob count: a table maintained beside the code goes stale against the code, and
@@ -14680,6 +14513,14 @@ def parts_report(needle = nil)
   puts "largest: #{biggest.map { |p| "#{p[:name]} #{p[:lines]}" }.join(', ')}"
 end
 
+# `dilla where <name>` — which file owns a method, a constant or a knob.
+#
+# Nothing in the engine declares ownership: its methods land on Object, so grep
+# is the only other way to answer "where does this live", and grep answers it
+# badly here, because a name is mentioned in prose far more often than it is
+# defined -- the same property that makes the wiring ratchets strip comments.
+# This answers from the AST for methods and from the source for constants, and
+# it tells a definition from a mention, which is the part that helps.
 def where_report(name)
   return puts("usage: dilla where <method|CONSTANT|KNOB>") if name.to_s.empty?
 
@@ -14843,9 +14684,9 @@ end
 def debug
   scan
   puts "music gems: #{DillaMusicGems.status.inspect}" if defined?(DillaMusicGems)
-  # Every source, not just the entry script. Checking dilla.rb alone would have
-  # reported "ok" for a broken engine ever since the split moved 97% of it into
-  # lib/engine/ -- and a syntax check that cannot fail is the worst kind.
+  # Every source, not just the entry script: a syntax error in lib/*.rb stops a
+  # render as dead as one in dilla.rb, and a check that reads only the entry
+  # reports "ok" over it.
   broken = ENGINE_SOURCES.filter_map do |path|
     _output, error, status = capture("ruby", "-c", path)
     error unless status.success?
@@ -15181,11 +15022,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Grades, Sonitex tape presets and analog emulation chains.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # --- Analog grade engine ---
 
@@ -15799,11 +15635,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Setlists: several takes and the environment they share.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # --- Setlists ---
 #
@@ -15906,11 +15737,6 @@ end
 # --------------------------------------------------------------------------
 #
 # The speaking voice over the stream.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # --- Live playback ---
 
@@ -16186,11 +16012,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Playback: play, loop, live and regenerate.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # Stream / demo capture — WAV skips lame encode (faster than demo.mp3).
 def stream_demo_path
@@ -16347,11 +16168,6 @@ end
 # --------------------------------------------------------------------------
 #
 # The style default tables — what each named style sets.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # Curated rotation — researched progressions only (no random generated_* walks).
 STREAM_TRACKS = DillaLofiMachine::STREAM_ROTATION
@@ -16965,11 +16781,6 @@ STREAM_SOUL_DEFAULTS = DILLA_STYLE_DEFAULTS.slice(
 # --------------------------------------------------------------------------
 #
 # Drum archetypes and ghost-note tiers.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 GHOST_TIERS = {
   whisper: { mul: 0.58, steps_scale: 0.72, fill_mul: 0.35 },
@@ -17125,11 +16936,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Deep, creative and fast stream tuning, and the quality gates.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 SLASH_BASS_PROFILES = %i[
   syncopated_slash_ninth syncopated_slash_alt slash_neo_soul slash_ninth_cycle
@@ -17394,11 +17200,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Environment provenance: who pinned which knob, and what may overwrite it.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # Style-lock keys — reassert after track soul / iterate so the mix doesn't drift.
 # Exclude lead/synth/progression-rotation keys so stream can cycle voices + arps.
@@ -17618,11 +17419,6 @@ alias reassert_camel_beauty_locks! reassert_dilla_style_locks!
 # --------------------------------------------------------------------------
 #
 # Iterating a stream track: measure the render, evolve, render again.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # Loss-gate report for stream promote — RadioBergenStudy#analyze_audio is
 # module-private; DeepAudio has the dynamics block gates need.
@@ -17987,11 +17783,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Applying a genre, track or soul profile to the environment.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # One word for genre.
 #
@@ -18417,11 +18208,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Mix measurement and the default render path.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # low/mid/high stay at their historical edges so sub_kick_balance and old
 # quality sidecars keep the same numbers. body/presence/air are the three
@@ -18660,11 +18446,6 @@ end
 # --------------------------------------------------------------------------
 #
 # The showcase demo and single-track stream playback.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # Bare `ruby dilla.rb` (no args, no options) used to mean "continuous live
 # stream" -- a `stream()` infinite loop needing afplay/ffplay to real
@@ -18816,11 +18597,6 @@ end
 # --------------------------------------------------------------------------
 #
 # What the stream plays next: track, drum, voice and arp rotation.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # Non-stop: one engine (dilla.rb DNA). Rotates progressions + drums only.
 # Ctrl-C to stop. Pin one track: STREAM_LOCK=1 + STREAM_TRACK=…
@@ -19154,11 +18930,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Building the demo catalogue: ordering, titles, and rejecting dead parts.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # The pad voices demo-all draws from, one per slot -- a distinct identity per
 # slot, because stream DNA alone keeps stack_soul+held+jonas_v and reads as one
@@ -19941,11 +19712,6 @@ end
 # --------------------------------------------------------------------------
 #
 # demo-all: render every style and join the parts.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # One demo-all at a time, for the same reason stream() takes a lock.
 #
@@ -20692,11 +20458,6 @@ end
 # --------------------------------------------------------------------------
 #
 # The stream loop itself.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 def stream(bars_count = STREAM_BARS_COUNT)
   require_playback_tool!
@@ -20790,9 +20551,9 @@ def stream(bars_count = STREAM_BARS_COUNT)
   # again, so edits since the last track take effect automatically between
   # tracks without needing a manual kill+relaunch.
   #
-  # The newest of ALL the engine's sources, not dilla.rb's own: since the split
-  # nearly every edit lands in lib/engine/, and watching only the entry script
-  # would mean a stream that never picks up a change while looking like it does.
+  # The newest of ALL the engine's sources, not dilla.rb's own: an edit to
+  # lib/*.rb changes the render too, and watching only the entry script would
+  # mean a stream that never picks up that change while looking like it does.
   self_mtime = engine_mtime
   mode = if stream_deep?
            "deep+QC"
@@ -20883,11 +20644,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Composition session state and the resolved per-render config.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # --- J Dilla Time beat engine (MPC3000 cyclic microtiming) ---
 
@@ -21077,11 +20833,6 @@ end
 # --------------------------------------------------------------------------
 #
 # The learned engine: what listening to sources taught, and promoting it.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # Sparse boom-bap base. Bar-to-bar phrase rotation is DillaGroove.pocket_* when
 # POCKET_DNA=1. Keep this simple — dense grids are why the kit sounded wrong.
@@ -21355,11 +21106,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Choosing and voice-leading the progression for a render.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 def safe_producer_progression(track)
   DillaLofiMachine.progression_for(track)
@@ -21518,11 +21264,6 @@ end
 # --------------------------------------------------------------------------
 #
 # The Dilla drum part: patterns, fills, ghosts, sections.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 def drum_feel_key(feel)
   feel = feel.to_sym
@@ -22118,11 +21859,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Scheduling every event in a Dilla render.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 def melody_pitch_from_chord(chord, bar, mel_step)
   return unless chord && chord[:hz]&.any?
@@ -22687,11 +22423,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Drum kits: generating them, external kits, chopping them.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # kick.wav deliberately excluded: it's a 4-layer synthesis (sample + sub
 # drop + body punch + click transient via layered_kick_sample) tuned
@@ -23053,11 +22784,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Fetching external soundfonts and kits, and digging the crate.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # Explicit, opt-in external asset fetch (never runs on its own — the whole
 # engine is otherwise pure-Ruby/ffmpeg synthesis with zero external assets).
@@ -23301,11 +23027,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Synthesised samples: shakers, cowbells, Karplus-Strong plucks, layered kicks.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 def load_mono_sample(path)
   floats = DillaMusicGems.read_mono_wav(path) if defined?(DillaMusicGems)
@@ -23559,11 +23280,6 @@ end
 # --------------------------------------------------------------------------
 #
 # The native Ruby synthesiser: waveforms, FM, pad rendering.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 STREAM_CHUNK_SECONDS = 4
 PAD_RENDER_SAMPLE_RATE = 22_050
@@ -23901,11 +23617,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Writing standard MIDI files and their FX automation.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # --- FluidSynth pad rendering (real sampled electric-piano tone instead of ---
 # --- the pure-additive-sine aevalsrc engine above) -------------------------
@@ -24335,11 +24046,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Rendering pads through fluidsynth.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # RMS the pad bus is normalised to. Was -17.5, which only balanced against the
 # ~-38 dB drum bus because warm_dilla_pad_post immediately took ~19 dB back off
@@ -24861,11 +24567,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Extra pad layers: chopped singers, stretched melody, tunnel, choir, granular cloud.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # --- Singers Unlimited chop pads -------------------------------------------
 # The pad bed built from CHOPS of a real Singers Unlimited vocal stem instead
@@ -25672,11 +25373,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Rendering leads and counter-leads, and mixing the harmonic stems.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # 81 Sawtooth (original), 87 Lead 8 "bass+lead" (GM's own name traces to the
 # classic Prophet-5 "BigLead" patch — literally the historical big-lead
@@ -26745,11 +26441,6 @@ end
 # --------------------------------------------------------------------------
 #
 # The Dilla renderer.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # Which bus each channel belongs to, when there are buses at all.
 #
@@ -27936,11 +27627,6 @@ end
 # --------------------------------------------------------------------------
 #
 # The industrial techno renderer.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 def industrial_techno_section(bar)
   case bar
@@ -28155,11 +27841,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Composition commands: jam, evolve, critique, listen.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # =============================================================================
 # COMPOSITION — memory, arrangement, performers, evolution, critique
@@ -28292,11 +27973,6 @@ end
 # --------------------------------------------------------------------------
 #
 # The help screen.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # =============================================================================
 # HELP
@@ -28606,11 +28282,6 @@ end
 # --------------------------------------------------------------------------
 #
 # The analog renderer.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # =============================================================================
 # ANALOG RENDERER (dilla_analog.rb)
@@ -28850,11 +28521,6 @@ end
 # --------------------------------------------------------------------------
 #
 # The Madlib and Slum Village renderers.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # =============================================================================
 # MADLIB DRUMS — pure dirty MPC beats, Dilla-time, no harmony/stems
@@ -29027,11 +28693,6 @@ end
 # --------------------------------------------------------------------------
 #
 # The hate/techno renderers and their harmony.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # =============================================================================
 # TECHNO SYNTH (techno_hate.rb) — acid-industrial hybrid at 142 BPM
@@ -30098,11 +29759,6 @@ end
 # --------------------------------------------------------------------------
 #
 # The v7-v11 vocal mix recipes and stem preparation.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # =============================================================================
 # VOCAL MIXES v7–v11 (make.rb)
@@ -30412,11 +30068,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Learning drum grids from stems, and the demux/chop pipeline.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 WONKY_LEARNINGS_DIR = File.join(DillaSourceLearn::LEARNINGS_DIR, "wonky_drums").freeze
 
@@ -30786,11 +30437,6 @@ end
 # --------------------------------------------------------------------------
 #
 # The rap vocal catalogue: ingest, isolate, clean, measure.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 RAP_VOCAL_DIR = File.join(DillaSourceLearn::LEARNINGS_DIR, "vocals").freeze
 RAP_VOCAL_CATALOG = File.join(RAP_VOCAL_DIR, "catalog.json").freeze
@@ -31298,11 +30944,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Organic movement: breath, swell, and letting the sample drive the pads.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # --- breathing --------------------------------------------------------------
 #
@@ -31440,11 +31081,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Building the crate, and importing/exporting drum MIDI.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # --- the crate ----------------------------------------------------------------
 #
@@ -31785,11 +31421,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Pitch shifting and FM-morphing a sample.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # --- morphing a sample toward FM -----------------------------------------------
 #
@@ -31936,11 +31567,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Varying the loop each pass: pitch, time and tone walks, dropouts.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # A sampled loop played with -stream_loop is bit-identical every repetition, and
 # nothing acoustic repeats exactly. ORGANIC_VARY=1 pre-builds the bed as N
@@ -32136,11 +31762,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Tape and console on the master: hysteresis, tilt, mono bass, drone, tape stop.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # Real tape hysteresis, applied to the finished master.
 #
@@ -32598,11 +32219,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Fitting a rap vocal to the beat: snapping, warping, key shifting.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # --- phrase snapping ---------------------------------------------------------
 #
@@ -33308,11 +32924,6 @@ end
 # --------------------------------------------------------------------------
 #
 # The punk guitar layer.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 def punk_guitar_enabled?
   ENV["PUNK_GUITAR"] == "1"
@@ -33397,11 +33008,6 @@ end
 # --------------------------------------------------------------------------
 #
 # Learning from a source or a whole playlist.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 def learn_source!(src, apply: false, deep: false, start_sec: nil, meta: nil)
   DillaMusicGems.bootstrap! if defined?(DillaMusicGems)
@@ -33610,11 +33216,6 @@ end
 # --------------------------------------------------------------------------
 #
 # The MIDI electronium.
-#
-# Part of the dilla engine, split out of dilla.rb. Defines methods and
-# constants at top level exactly as it did there; dilla.rb requires the
-# parts in the file's original order, because several constants are
-# computed at load time from ones declared above them.
 
 # =============================================================================
 # ELECTRONIUM — Raymond Scott × J Dilla (midilib MIDI + full-engine bridge)
@@ -33923,9 +33524,8 @@ end
 #
 # Measuring where the drums actually land.
 #
-# Part of the dilla engine, split out of dilla.rb. Wrapped in DillaTiming
-# because its only callers are the two `timing` command sites in dilla.rb,
-# both reached long after every part has loaded -- unlike most of this
+# Wrapped in DillaTiming because its only callers are the two `timing` command
+# sites, both reached long after every part has loaded -- unlike most of this
 # engine's flat files, nothing here needs to be a bare top-level name at
 # load time. module_function keeps the internal calls between these methods
 # (pocket_band_delay_frames calling pocket_onsets calling pocket_envelope,
@@ -34175,11 +33775,6 @@ module DillaTiming
     end
   end
 end
-
-
-# Every file the engine is made of. `wiring_check`, `debug`, provenance and the
-# stream's restart-on-edit all mean "the engine", which stopped being one file.
-ENGINE_SOURCES = DillaSources.all
 
 def engine_source
   ENGINE_SOURCES.map { |path| File.read(path) }.join("\n")
@@ -35992,7 +35587,6 @@ module Bed
   READY = File.join(Dir.tmpdir, "master_bed.wav")
   READY_CARVED = File.join(Dir.tmpdir, "master_bed_carved.wav")
 
-
   # The narration's entry: `ruby dilla.rb bed` plays until stopped, `bed render
   # [seed N] [out.wav]` writes one pass and its carved copy, `bed check [seeds
   # 1,2,3]` measures seeded passes against the reference, `bed stop` ends a
@@ -36703,6 +36297,8 @@ def render_output_path?(token)
   token =~ /\.(wav|mp3|flac|ogg|m4a|aiff?)\z/i
 end
 
+# The guard is what lets STUDIO/gate.rb's load probe and the test suite require
+# this file as a library: without it, loading dilla.rb runs a command.
 if __FILE__ == $PROGRAM_NAME
   # The live side and the bed play what they are given: the defaults tables, the
   # provenance recipe and the asset check belong to the older render path.
