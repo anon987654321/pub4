@@ -100,4 +100,46 @@ class TestOpenCrabsGuards < Minitest::Test
     refute cli.send(:close_requested?)
     assert cli.send(:close_requested?)
   end
+
+  class RecordingBus
+    attr_reader :events
+    def initialize = @events = []
+    def publish(name, _payload = {}) = @events << name
+  end
+
+  def test_a_refused_repeat_is_bracketed_so_dmesg_prints_it
+    bus = RecordingBus.new
+    wrapper = Wrapper.new(EchoTool.new, bus:)
+    3.times { wrapper.run(command: "ls") }
+    assert_equal %w[tool:call tool:failed tool:return], bus.events.last(3)
+  end
+
+  def stream(chunks, width: 20)
+    cli = Master::CLI::Session.allocate
+    state = { width: }
+    chunks.map { |chunk| cli.send(:wrap_stream, chunk, state) }.join
+  end
+
+  def test_a_streamed_reply_wraps_at_words_and_keeps_every_word
+    out = stream(["the quick brown fox jumps over the lazy dog"])
+    assert(out.lines.all? { |line| line.chomp.rstrip.length <= 20 }, out)
+    assert_equal "the quick brown fox jumps over the lazy dog", out.delete("\n")
+  end
+
+  def test_a_word_split_across_chunks_is_not_broken
+    assert_equal "a" * 30, stream(["a" * 15, "a" * 15])
+  end
+
+  def test_fenced_code_and_table_rows_stream_untouched
+    code = "```\nx = a line of code longer than the measure\n```\n"
+    row = "| a | b | c | d | e | f | g |\n"
+    assert_equal code + row, stream([code, row])
+  end
+
+  def test_the_prompt_path_gets_what_the_screen_leaves
+    renderer = Master::Voice::Renderer.allocate
+    TTY::Screen.stub(:width, 200) { assert_equal 44, renderer.send(:prompt_path_budget) }
+    TTY::Screen.stub(:width, 50) { assert_equal 14, renderer.send(:prompt_path_budget) }
+    TTY::Screen.stub(:width, 30) { assert_equal 8, renderer.send(:prompt_path_budget) }
+  end
 end

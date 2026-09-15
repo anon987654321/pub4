@@ -40,7 +40,7 @@ module Master
             @think_mutex.synchronize do
               next if @think_paused
 
-              print "\r\e[K#{@refs.renderer.render("thinking #{elapsed_seconds}s, #{@think_stage}", mode: :dim)}"
+              print "\r\e[K#{@refs.renderer.render(one_row("thinking #{elapsed_seconds}s, #{@think_stage}"), mode: :dim)}"
               $stdout.flush
             end
             sleep TICK_SECONDS
@@ -96,10 +96,10 @@ module Master
       end
 
       def units_console?
-    @refs.logging.respond_to?(:listen) && Master::Trace::Dmesg.enabled?
-  end
+        @refs.logging.respond_to?(:listen) && Master::Trace::Dmesg.enabled?
+      end
 
-  def close_unit_console
+      def close_unit_console
         @unit_sub&.call
         @unit_sub = nil
       end
@@ -125,6 +125,17 @@ module Master
         end
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "cli.print_unit_line", event_bus: @refs.bus)
+      end
+
+      # The spinner repaints with \r\e[K, which clears one row. A line wider
+      # than the screen wraps onto a second row that nothing clears, and every
+      # tick left another copy behind it. Unit lines are printed once and may
+      # wrap.
+      def one_row(text)
+        width = TTY::Screen.width - 1
+        text.length > width ? "#{text[0, width - 3]}..." : text
+      rescue StandardError
+        text
       end
 
       def elapsed_seconds

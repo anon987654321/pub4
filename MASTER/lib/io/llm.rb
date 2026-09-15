@@ -80,8 +80,14 @@ module Master
           "#{tool_name} #{pairs.join(" ")}".gsub(/\d+/, "#").gsub(/\s+/, " ")
         end
 
+        # Bracketed like a call that ran, so the dmesg console prints the unit
+        # and its refusal instead of nothing.
         def repeated_call_reply(args)
-          @bus&.publish("tool:failed", tool: tool_name, category: :validation, error: "repeat: #{subject_of(args)}"[0, 200])
+          subject = subject_of(args)
+          error = "repeat refused: #{subject}"[0, 200]
+          @bus&.publish("tool:call", tool: tool_name, subject:)
+          @bus&.publish("tool:failed", tool: tool_name, category: :validation, error:)
+          @bus&.publish("tool:return", tool: tool_name, ok: false, ms: 0, error:)
           "Error: the same #{tool_name} call #{REPEAT_LIMIT} times running. Its result is above; act on it or change the call."
         end
 

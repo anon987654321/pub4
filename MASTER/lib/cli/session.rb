@@ -108,8 +108,8 @@ module Master
         @seen_violations = {}
         @user_active = false
         @focus_mode = false
-                @last_input = nil
-                        @exit_code = 0
+        @last_input = nil
+        @exit_code = 0
       end
 
       def init_turn_state(input)
@@ -190,9 +190,45 @@ module Master
           print "\r\e[K"
           state[:thinking_shown] = false
         end
-        print text
+        print wrap_stream(text, state)
         $stdout.flush
         state[:streamed] = true
+      end
+
+      # A streamed reply wraps at word boundaries against the measure a printed
+      # one gets through Renderer#measure; unwrapped, a phone terminal split
+      # words at its edge. The transcript keeps the text as it arrived. Fenced
+      # code, table rows and indented lines pass through, and a word split
+      # across two chunks is never broken, because the half already printed
+      # cannot be taken back.
+      def wrap_stream(text, state)
+        state[:width] ||= reply_measure
+        text.scan(/\n|[^\S\n]+|\S+/).map { |piece| wrap_piece(piece, state) }.join
+      end
+
+      def wrap_piece(piece, state)
+        return stream_newline(state) if piece == "\n"
+
+        column = state[:column].to_i
+        word = !piece.strip.empty?
+        mark_raw_line(piece, state) if column.zero?
+        breaks = word && column.positive? && state[:after_space] && !state[:fenced] && !state[:raw_line] &&
+                 column + piece.length > state[:width]
+        state[:column] = breaks ? piece.length : column + piece.length
+        state[:after_space] = !word
+        breaks ? "\n#{piece}" : piece
+      end
+
+      def mark_raw_line(piece, state)
+        state[:fenced] = !state[:fenced] if piece.start_with?("```")
+        state[:raw_line] = piece.start_with?("|", "```") || piece.match?(/\A[^\S\n]{2,}\z/)
+      end
+
+      def stream_newline(state)
+        state[:column] = 0
+        state[:after_space] = true
+        state[:raw_line] = false
+        "\n"
       end
 
       def cli_felt_sense

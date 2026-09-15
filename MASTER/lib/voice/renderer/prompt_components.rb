@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "tty-screen"
+
 module Master
   module Voice
     class Renderer
@@ -13,6 +15,10 @@ module Master
       module PromptComponents
         TOKEN_KILO_THRESHOLD = 1000
         PROMPT_PATH_MAX = 44
+        # What the branch, ahead/behind, phase and prompt token take beside the
+        # path on one line.
+        PROMPT_SEGMENTS_WIDTH = 36
+        PROMPT_PATH_MIN = 8
         PHASE_COLORS = {
           "discover" => :yellow,
           "implement" => :cyan,
@@ -97,9 +103,20 @@ module Master
         # the tail you are actually in stays readable.
         def prompt_path
           path = Dir.pwd.sub(/\A#{Regexp.escape(Dir.home)}/, "~")
-          return path if path.length <= PROMPT_PATH_MAX
+          budget = prompt_path_budget
+          return path if path.length <= budget
 
-          ".../#{path.split('/').last(2).join('/')}"
+          tail = ".../#{path.split('/').last(2).join('/')}"
+          tail.length <= budget ? tail : File.basename(path)
+        end
+
+        # PROMPT_PATH_MAX on a desktop; on a phone the path, branch and phase
+        # took the whole line before the cursor, so the path gets what the
+        # screen leaves, down to the directory name alone.
+        def prompt_path_budget
+          (TTY::Screen.width - PROMPT_SEGMENTS_WIDTH).clamp(PROMPT_PATH_MIN, PROMPT_PATH_MAX)
+        rescue StandardError
+          PROMPT_PATH_MAX
         end
 
         def splash_ready_line(context)
