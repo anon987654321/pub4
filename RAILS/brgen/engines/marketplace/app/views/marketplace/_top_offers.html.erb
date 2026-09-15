@@ -3,7 +3,7 @@
     featured deal and a listing read as the same object. %>
 <% offers = local_assigns[:offers] || @top_offers %>
 <% if offers.present? %>
-<section class="marketplace-top-offers" aria-labelledby="top-offers-heading">
+<section aria-labelledby="top-offers-heading">
   <%= tag.h2 t("marketplace.top_offers_heading"), id: "top-offers-heading", class: "store-heading" %>
 
   <%# The photos keep alt "": each sits inside a link whose visible text is the

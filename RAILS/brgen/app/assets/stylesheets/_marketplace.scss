@@ -95,8 +95,9 @@
   }
 }
 
-/* From 1024px the categories stand in Kaufland's 256px column as a list. */
-@media (min-width: 1024px) {
+/* From 1265px the categories stand in Kaufland's 256px column as a list; the
+   family has no 1024 edge, so narrower screens keep the pill row. */
+@media (min-width: 1265px) {
   .store-results--filtered {
     grid-template-columns: 256px minmax(0, 1fr);
   }
@@ -124,13 +125,12 @@
     font-weight: var(--weight-bold);
     text-decoration: underline;
   }
-}
 
-@media (min-width: 1265px) {
   .store-results--filtered .deal-grid {
     --store-cols: 4;
   }
 }
+
 
 .cart-pay-actions {
   display: flex;

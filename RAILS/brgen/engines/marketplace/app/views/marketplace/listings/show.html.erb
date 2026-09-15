@@ -52,36 +52,12 @@
       <%= render "shared/store_stars", rating: @listing.rating, count: @listing.reviews_count %>
     <% end %>
 
-    <section class="store-buybox marketplace-listing" aria-label="<%= t("marketplace.buy_actions") %>">
-      <p class="listing-price"><%= @listing.price_display %></p>
-      <% if @listing.sold? %>
-        <p class="listing-status"><%= t("marketplace.sold_notice") %></p>
-      <% elsif @listing.expired? %>
-        <p class="listing-status"><%= t("marketplace.expired_notice") %></p>
-        <% if Current.user.present? && Current.user == @listing.user %>
-          <%= button_to t("marketplace.renew"), renew_listing_path(@listing), method: :post, class: "btn btn-primary btn-sm" %>
-        <% end %>
-      <% end %>
-      <p><%= [(@listing.condition.present? ? t("marketplace.conditions.#{@listing.condition}", default: @listing.condition) : nil), @listing.location].compact.join(" · ") %></p>
-      <p><%= tag.strong(@listing.user&.display_name || t("chat.anon")) %>
-        <% if @listing.reviews_count.to_i.positive? %> · <%= t("marketplace.seller_rating", rating: number_with_precision(@listing.rating, precision: 1)) %><% end %></p>
-      <p><%= t("marketplace.views", count: @listing.views_count.to_i) %> · <%= t("marketplace.saves", count: @listing.favorites.size) %></p>
-      <%= render "marketplace/listings/buy_bar" %>
-      <%# seller can read back nil: User is acts_as_tenant-scoped on city, so a
-          seller with no city (or another city) is invisible under this tenant and
-          the association returns nil. Without this guard the != test passes and
-          main_app.user_conversations_path(nil) raises UrlGenerationError, 500ing the whole
-          listing page. %>
-      <% seller = @listing.user %>
-      <% if @listing.buyable? && Current.user.present? && seller.present? && Current.user != seller %>
-        <%= button_to t("marketplace.message_seller_btn"), main_app.user_conversations_path(seller), method: :post, class: "btn btn-ghost" %>
-      <% end %>
-    </section>
+    <%= render "marketplace/listings/buybox" %>
   </div>
 </div>
 
 <section class="store-pdp-description">
-  <div class="listing-description"><%= read_more(@listing.description, lines: 6, more: t("actions.read_more"), less: t("actions.read_less")) %></div>
+  <div><%= read_more(@listing.description, lines: 6, more: t("actions.read_more"), less: t("actions.read_less")) %></div> <%# scan: intentional — read_more needs one block to clamp %>
   <button class="btn-share" data-controller="share"
           data-share-title-value="<%= @listing.title %>"
           data-share-url-value="<%= request.original_url %>"

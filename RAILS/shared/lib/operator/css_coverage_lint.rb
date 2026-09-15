@@ -224,7 +224,7 @@ module Operator
 # What is left is still not a list of dead rules. The caveat at the top of this
 # file stands — a literal search cannot prove a runtime-composed name dead — and
 # the amber sheets that dominate the remainder belong to amber's own session.
-BASELINES = { "undefined_class" => 0, "unused_selector" => 134 }.freeze
+BASELINES = { "undefined_class" => 0, "unused_selector" => 133 }.freeze
 
     Finding = Struct.new(:kind, :name, :count, :example)
 

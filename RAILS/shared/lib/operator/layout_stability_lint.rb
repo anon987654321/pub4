@@ -256,7 +256,7 @@ module Operator
       # in prose above each tag, and nothing read it. `.zone img` sizes them at
       # 100%/100% inside an absolute box, but the reservation is SCSS-nested, so
       # wrapper_classes cannot see it and the marker is the honest answer.
-      "unreserved_media" => 15,
+      "unreserved_media" => 13,
       "layout_transition" => 2,
       "font_without_display" => 0,
     }.freeze

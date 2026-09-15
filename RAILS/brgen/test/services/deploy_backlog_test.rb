@@ -284,7 +284,7 @@ class DeployBacklogTest < Minitest::Test
     assert_includes orders_controller, "params[:status].presence"
     assert_includes new_view, "f.number_field :latitude"
     assert_includes restaurant_show, "f.check_box :available"
-    assert_includes restaurant_show, "item.vegan?"
+    assert_includes read_source(File.join(ROOT, "brgen/app/views/takeaway/restaurants/_menu.html.erb")), "item.vegan?"
     assert_includes order_show, "Takeaway::Order::TRANSITIONS.fetch"
   end
 

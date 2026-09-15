@@ -259,7 +259,7 @@ module Operator
       # -> 82 (2026-09-13). The backlog sweep across marketplace, dating, tv,
       # playlist, maps, amber's wardrobe and brgen's profile, post and chrome
       # views dropped the fallbacks of keys that exist in en and nb.
-      "translate_default" => 82,
+      "translate_default" => 80,
       # 0, and a ratchet at zero is a ban. Every finding was a sentence written
       # in English inside a view option — an empty state's body, an action's
       # label, a title that does not open with "No" — on apps that default to
