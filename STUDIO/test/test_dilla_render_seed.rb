@@ -107,6 +107,17 @@ class TestRenderSeed < Minitest::Test
     end
   end
 
+  # The fourth time. Seven sites drew from Kernel#rand, which no pin reaches: the
+  # speech timing, the self-sample slice, the stream's radio roll and the patch
+  # pick's fallback. Under a pin each must repeat; each is a float, so two free
+  # draws agreeing is not a coincidence this can mistake for a pass.
+  def test_the_draws_that_escaped_the_pin_now_repeat_under_it
+    with_env("RENDER_SEED" => "42", "DILLA_STREAMING" => nil) do
+      assert_equal send(:speech_talk_length), send(:speech_talk_length)
+      assert_equal send(:self_sample_offset, 30.0), send(:self_sample_offset, 30.0)
+    end
+  end
+
   # SEED_TEXT is the other half of the same promise, and it was broken the same
   # way: it derived from String#hash, which Ruby randomises per process, so the
   # one knob whose whole purpose is a repeatable seed named a different seed

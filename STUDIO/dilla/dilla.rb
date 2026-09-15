@@ -1707,6 +1707,17 @@ end
 # Random.new(Time.now.to_i + Process.pid), which four stream-evolution sites
 # used, cannot be pinned by anything -- it re-seeds from the clock on every run
 # by construction.
+#
+# Every draw that shapes a render comes from here, render_pick or seed_for, and
+# never from Kernel#rand: a bare rand is a draw the pin cannot reach, and seven
+# of them (the patch-pick fallback, four in the speech timing, the stream's
+# radio roll, the self-sample offset) were why a pinned render moved between
+# two runs. Each site takes its own tag rather than a shared stream, so routing
+# it drew nothing from any stream that already existed and every journalled
+# seed still reproduces what it reproduced before. The distribution each site
+# draws from is the same uniform one, so no take changed character: a pinned
+# take now repeats, and an unpinned take is as free as it was. The one bare
+# rand left names a temp file, which shapes no sound.
 def render_rng(tag, drift: 0)
   return Random.new(seed_for(tag)) if render_pinned?
 
@@ -2974,7 +2985,7 @@ def weighted_patch_pick(role, seed: nil, soulful: true)
   pool = reject_choral(pool)
   pool = reject_flutes(pool)
   return if pool.empty?
-  rng = Random.new(seed || @render_seed || rand(1_000_000))
+  rng = Random.new(seed || @render_seed || render_rng("weighted_patch_pick_#{role}").rand(1_000_000))
   total = pool.sum { |p| p[:weight] || 1.0 }
   roll = rng.rand * total
   pool.each do |patch|
@@ -16067,13 +16078,13 @@ def speech_tts_pitch
   ENV.fetch("SPEAK_PITCH", "+8Hz")
 end
 
-def speech_talk_length
+def speech_talk_length(rng: render_rng("speech_talk"))
   base = if ENV["DILLA_STREAMING"] == "1"
            (ENV["SPEECH_TALK_STREAM"] || "14").to_f
          else
            SPEECH_TALK_SEC
          end
-  base + (ENV["DILLA_STREAMING"] == "1" ? 0.0 : (rand - 0.5) * 6.0)
+  base + (ENV["DILLA_STREAMING"] == "1" ? 0.0 : (rng.rand - 0.5) * 6.0)
 end
 
 def speech_max_segments
@@ -16117,13 +16128,16 @@ def speak_over_track!(mp3_path, duration, _bpm = 90.0)
   segments = []
   # Never talk right at t=0 — that reads as a scripted "intro" every time a
   # track starts/loops. Let the track establish itself first.
-  t = 10.0 + rand * 14.0
+  # One stream for every draw below, so a pinned render speaks at the same
+  # moments with the same words; unpinned, render_rng is still a fresh draw.
+  rng = render_rng("speech")
+  t = 10.0 + rng.rand * 14.0
   idx = 0
   max_seg = speech_max_segments
   while t < duration
     break if max_seg && idx >= max_seg
-    talk_len = speech_talk_length
-    text = continuous_speech_text(talk_len, seed: idx + rand(100_000))
+    talk_len = speech_talk_length(rng: rng)
+    text = continuous_speech_text(talk_len, seed: idx + rng.rand(100_000))
     seg_path = "#{mp3_path}.voice#{idx}.mp3"
     ok = false
     Open3.popen2(Gem.ruby, TTS_WORKER, voice, rate, pitch, seg_path) do |stdin, _stdout, wait|
@@ -16136,7 +16150,7 @@ def speak_over_track!(mp3_path, duration, _bpm = 90.0)
       break
     end
     segments << { path: seg_path, start: t } if File.exist?(seg_path) && File.size(seg_path) > 500
-    t += SPEECH_CYCLE_SEC + (rand - 0.5) * 8.0
+    t += SPEECH_CYCLE_SEC + (rng.rand - 0.5) * 8.0
     idx += 1
   end
   return mp3_path if segments.empty?
@@ -20812,7 +20826,8 @@ def stream(bars_count = STREAM_BARS_COUNT)
       sync_progression_to_track!(track)
       stream_rotate_drums!(idx)
       reassert_dilla_style_locks! if dilla_style? && ENV["STREAM_LOCK"] == "1"
-      if radio_bergen_stream_enabled? && rand < 0.38 && (rb = pick_radio_bergen_stream_track!)
+      if radio_bergen_stream_enabled? && render_rng("radio_bergen_stream_#{idx}", drift: idx).rand < 0.38 &&
+         (rb = pick_radio_bergen_stream_track!)
         track = rb
         apply_track_soul_profile!(track, force: !user_pad_locked && !user_lead_locked)
         stream_rotate_voices_and_arps!(idx) unless user_lead_locked
@@ -26482,13 +26497,17 @@ def cache_self_sample!(destination)
   return unless status.success?
   duration = output.to_f
   return if duration < 2.0
-  offset = (rand * [duration - 1.5, 0.1].max).round(2)
+  offset = self_sample_offset(duration)
   FileUtils.mkdir_p(SCRATCH_DIR)
   sh! "ffmpeg", "-y", "-i", destination, "-ss", offset.to_s, "-t", "1.2",
       "-ac", "2", "-ar", SAMPLE_RATE.to_s, "-c:a", "pcm_s16le", SELF_SAMPLE_CACHE
 rescue StandardError
   FileUtils.rm_f(SELF_SAMPLE_CACHE)
 end
+
+# Where in the predecessor the slice starts, drawn from the pin like every other
+# choice a render makes.
+def self_sample_offset(duration) = (render_rng("self_sample").rand * [duration - 1.5, 0.1].max).round(2)
 
 # --------------------------------------------------------------- MIDI Bag
 #
