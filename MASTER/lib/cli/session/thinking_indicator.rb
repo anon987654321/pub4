@@ -38,6 +38,8 @@ module Master
         Thread.new do
           loop do
             @think_mutex.synchronize do
+              next if @think_paused
+
               print "\r\e[K#{@refs.renderer.render("thinking #{elapsed_seconds}s, #{@think_stage}", mode: :dim)}"
               $stdout.flush
             end
@@ -46,6 +48,40 @@ module Master
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "cli.spinner", event_bus: @refs.bus)
         end
+      end
+
+      # The fold stops to ask a person about a push, a hard reset or a deploy,
+      # and a terminal the operator is typing into is a person. The operator
+      # said approval belongs there, so the interactive session answers; the
+      # daemon, a pipe and the web face build no asker and still refuse.
+      #
+      # Carried as a fiber local because the turn runs on its own thread and
+      # CoreBridge builds the World deep below it. A thread spawned inside the
+      # turn inherits fiber storage, so the asker answers only on the thread
+      # the turn owns: a standing order firing mid-turn runs unattended and is
+      # refused, as it is everywhere else.
+      def terminal_ask(owner)
+        return unless $stdin.tty? && $stdout.tty?
+
+        lambda do |prompt:, **|
+          next "no: asked off the terminal turn" unless Thread.current == owner
+
+          answer_at_terminal(prompt)
+        end
+      end
+
+      # y/N, with the spinner held still so the question is not painted over.
+      # Anything but a yes is a no, which Core::Fold decides.
+      def answer_at_terminal(prompt)
+        @think_mutex&.synchronize do
+          @think_paused = true
+          print "\r\e[K"
+        end
+        print "#{@refs.renderer.render("#{prompt} [y/N]", mode: :warning)} "
+        $stdout.flush
+        $stdin.gets.to_s.strip
+      ensure
+        @think_paused = false
       end
 
       # The spinner stops when a reply starts streaming; the units keep printing

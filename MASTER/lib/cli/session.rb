@@ -152,6 +152,7 @@ module Master
         Thread.new do
           Thread.current.report_on_exception = false
           Fiber[:master_children] = @turn_children
+          Fiber[:master_terminal_ask] = terminal_ask(Thread.current)
           TurnRouter.call(
             message: input,
             container: @container,

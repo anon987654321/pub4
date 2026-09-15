@@ -169,6 +169,35 @@ class CoreBridgeTest < Minitest::Test
     assert_equal "ollama:llama3", models.last
   end
 
+  # A push is a Request. The interactive terminal answers it; a turn with no
+  # asker on its fiber (the daemon, a pipe, the web face) refuses as before.
+  # The push runs in a directory that is no repository, so an approved one
+  # fails at git rather than reaching a remote.
+  def push_transcript(asker)
+    Dir.mktmpdir do |root|
+      model = ScriptedModel.new(Master::Core::Effect.exec(%w[git push origin main]))
+      Fiber[:master_terminal_ask] = asker
+      Master::CLI::CoreBridge.run("push", root:, model:, max_turns: 1)[:transcript].join("\n")
+    ensure
+      Fiber[:master_terminal_ask] = nil
+    end
+  end
+
+  def test_a_terminal_yes_lets_a_requested_effect_run
+    asked = []
+    line = push_transcript(lambda { |prompt:, **| asked << prompt; "y" })
+    assert_match(/git push origin main/, asked.first)
+    refute_match(/needs approval/, line)
+  end
+
+  def test_a_terminal_no_refuses_and_says_who_asked
+    assert_match(/sandboxed_exec needs approval/, push_transcript(->(**) { "" }))
+  end
+
+  def test_no_asker_on_the_turn_still_refuses
+    assert_match(/needs approval.*no surface to ask/, push_transcript(nil))
+  end
+
   def test_on_turn_callback_fires_per_turn
     Dir.mktmpdir do |root|
       lines = []

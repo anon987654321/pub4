@@ -17,7 +17,9 @@ module Master
 
         memory ||= Master::Core::Memory.new(risk:)
         critique_runner = container ? CouncilCrit.runner_for(container) : nil
-        world = Master::Core::World.new(root:, critique_runner:, undo: container&.fetch(:undo, nil))
+        # Only the interactive session sets an asker; see Session#terminal_ask.
+        world = Master::Core::World.new(root:, ask: Fiber[:master_terminal_ask], critique_runner:,
+                                        undo: container&.fetch(:undo, nil))
 
         model ||= Master::Core::Model.new(**{ model_id:, chat: agent_chat(container, bus:) }.compact)
         done = build_fold(model:, memory:, world:, max_turns:, observer:).run(goal)
