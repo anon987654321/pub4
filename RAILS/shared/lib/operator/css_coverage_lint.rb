@@ -234,7 +234,7 @@ module Operator
 # 93 -> 91 (2026-09-15). .reading-column and .form-measure went: no view wore
 # either, and the measure they carried is the one .prose and the chrome columns
 # already set through var(--measure) and var(--measure-narrow).
-BASELINES = { "undefined_class" => 0, "unused_selector" => 91 }.freeze
+BASELINES = { "undefined_class" => 0, "unused_selector" => 90 }.freeze
 
     Finding = Struct.new(:kind, :name, :count, :example)
 
