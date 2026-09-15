@@ -72,7 +72,8 @@ directory named after the model, as `Conversation` and `Takeaway::Order` do.
 ## The storefront nav bars stay two partials
 
 `marketplace/_nav_bar.html.erb` and `takeaway/_nav_bar.html.erb` share their
-markup skeleton and every style, from `_marketplace_nav_bar.scss`, so their
+markup skeleton and every style, from the marketplace nav bar section of
+`application.scss`, so their
 geometry cannot drift apart. What differs is content: marketplace carries a
 cart and six sections, takeaway no cart and four different sections, and each
 names its own engine's routes and search keys. One partial would take the

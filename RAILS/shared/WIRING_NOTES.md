@@ -393,7 +393,7 @@ the first, and so described brgen in a palette and radius scale it had left.
 | App | Dialect | Dark → light mechanism |
 |---|---|---|
 | brgen (+ verticals) | `brgen_old` | `:root` → `#dark-toggle:checked ~ .theme-root` |
-| amber | `luxury` | `_variables.scss`, both halves |
+| amber | `luxury` | `:root` and the light selectors in its `application.scss`, both halves |
 | bsdports | `openbsd_wscons`, all radii **0** | Inline `:root` in its own `application.scss` — *not* a mixin here |
 | MASTER web face | `face_root`, radius 0 | `MASTER/web`, outside this tree |
 
@@ -426,7 +426,7 @@ identifies itself — the same reason bsdports and the face are CRT-mono and brg
 social is not. What would be wrong is the mono spreading into feed chrome; it is
 scoped to the embed and should stay there.
 
-**brgen's actual dark palette** — grayscale, and deliberately so (`_root.scss`:
+**brgen's actual dark palette** — grayscale, and deliberately so (brgen's `application.scss`:
 "this app's identity is the direction itself, not a rotated hue"):
 - bg `#000000`, surface/elevated `#1a1a1a`, search `#222222`
 - text `#e0e0e0`, secondary `#969696`, border `#333333`
@@ -438,7 +438,7 @@ scoped to the embed and should stay there.
 **The social indigo palette is still compiled into brgen** (`#17161c`/`#f7f6fa`/
 `#897dda`), because `stack_brgen` forwards `_tokens.scss`. Verified against the
 built bundle 2026-08-21: it is outranked everywhere it appears, and the "two
-light themes" this section used to warn about is fixed — `_root.scss` restates
+light themes" this section used to warn about is fixed — brgen's `application.scss` restates
 brgen-old under `:root[data-theme="light"]` **and** under `@media
 (prefers-color-scheme: light)`, each emitted after the indigo block and winning
 on specificity as well as order, so the checkbox path and the dataset path wear
@@ -451,7 +451,7 @@ scales, the tabular money widths) stay exactly as worn: a layered token still
 applies wherever nothing un-layered redeclares it.
 
 Social dark-tokens is worn intentionally in exactly one brgen place —
-`body.vertical-maps` (`_vertical_maps_shell.scss`) — plus `shared/_minimal.scss`
+`body.vertical-maps` (brgen's `application.scss`) — plus `shared/_minimal.scss`
 and `shared/_tokens.scss` themselves.
 
 **Focus triangle:** brgen + amber + MASTER web. Shared engine glue (layout,
@@ -461,12 +461,12 @@ maintenance-only unless named.
 **Layout:** single-column feed (`--feed-max: 600px`) with edge-swiper
 sidebar/widgets panels (`_shell.scss`). Footer tab bar is progressive (closed by
 default; peel + scroll-up reveal via `scroll-chrome`). Side drawers and top
-vertical nav are edge-swipe progressive. Verticals may hide chrome via
-`_vertical_shell.scss`.
+vertical nav are edge-swipe progressive. Verticals may hide chrome through the
+vertical shell section of brgen's `application.scss`.
 
 **Vertical accents:** single map in `design_tokens.yml` → `vertical_accents` and
-`_vertical_shell.scss` only. Do not re-set `--accent` in ui_refinements or
-vertical-local sheets.
+the `$vertical-accents` map in brgen's `application.scss` only. Do not re-set
+`--accent` anywhere else.
 
 **Empty states:** `shared/app/views/shared/_empty_state.html.erb` +
 `_empty_state.scss`.

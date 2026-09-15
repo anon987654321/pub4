@@ -44,7 +44,7 @@ pwa-standalone and offline-feed implemented in the shared engine, global `/` +
 - Maps: cool cartography blue-gray, solid accent buttons
 
 ### D · amber luxury
-- `luxury-light-tokens` / `luxury-dark-tokens` wired in `_variables.scss`
+- `luxury-light-tokens` / `luxury-dark-tokens` wired in amber's `application.scss`
 - Caprasimo display, editorial grid (collapses on small screens)
 - Placeholder tiles with flat diagonal hatch; sustainability grade chip
 - Empty/skeleton/high-contrast floor
