@@ -80,7 +80,8 @@ class ReachTest < Minitest::Test
   # scheduled_commands, so an environment prefix is the gate's parsing, proved
   # here from reach's side.
   def test_an_environment_prefix_is_not_mistaken_for_the_command
-    write("etc/crontab.vm23", "PATH=/bin:/usr/local/bin\n*/5 * * * * ALLOW_X=1 /usr/local/bin/b.sh >> /var/log/b.log 2>&1\n")
+    line = "*/5 * * * * ALLOW_X=1 /usr/local/bin/b.sh >> /var/log/b.log 2>&1"
+    write("etc/crontab.vm23", "PATH=/bin:/usr/local/bin\n#{line}\n")
     write("usr/local/bin/b.sh", "#!/bin/ksh\n")
 
     assert_equal ["/usr/local/bin/b.sh"], R.cron_commands

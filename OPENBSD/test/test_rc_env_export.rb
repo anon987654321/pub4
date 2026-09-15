@@ -99,12 +99,14 @@ class RcLoginClassTest < Minitest::Test
   def test_every_app_user_script_has_a_login_class_that_inherits_rails
     missing = app_scripts.reject { |name| record(name).to_s.match?(/:tc=rails:/) }
 
-    assert_empty missing,
-                 "rc.subr runs these under the daemon class because login.conf has no rails class by their name: #{missing.join(', ')}"
+    assert_empty missing, "rc.subr runs these under the daemon class, since login.conf has " \
+                          "no rails class by their name: #{missing.join(', ')}"
   end
 
   def test_the_guard_reads_a_real_population
-    assert_operator app_scripts.size, :>=, 6, "three apps and three job workers run as app users; fewer means the scan broke"
-    assert_match(/:openfiles-cur=2048:/, record("rails").to_s, "the rails record did not parse, so every lookup above is blind")
+    assert_operator app_scripts.size, :>=, 6,
+                    "three apps and three job workers run as app users; fewer means the scan broke"
+    assert_match(/:openfiles-cur=2048:/, record("rails").to_s,
+                 "the rails record did not parse, so every lookup above is blind")
   end
 end
