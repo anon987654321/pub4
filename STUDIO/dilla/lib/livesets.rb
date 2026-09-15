@@ -1582,6 +1582,11 @@ module Livesets
   # A take is not a wav. demo.wav is the only audio dilla keeps and the next
   # render replaces it, so what makes a take survive is its line here: the seed
   # and every choice, which rebuild it on any machine that has the crate.
+  #
+  # So a kept take has no stems. A stem is an audio file, and the one audio file
+  # is demo.wav; and every bus of a take is already one recall away -- the take
+  # with LIVE_MUTE naming the others is that bus alone, rendered from the same
+  # seed, which is a stem that cannot go stale or go missing.
   CATALOGUE = File.join(D, "project", "liveset_catalogue.json")
 
   def catalogue_path = ENV.fetch("LIVE_CATALOGUE", CATALOGUE)
