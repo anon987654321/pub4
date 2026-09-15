@@ -41,6 +41,12 @@ file: the Dilla Lab page brgen serves from `RAILS/brgen/public/dilla/dilla.html`
 `ruby dilla.rb live`, which plays the catalogue and, as `live set`, the livesets
 in `lib/livesets.rb`, and `ruby dilla.rb sines`, which runs the sine stream.
 
+A liveset take is not a wav. Every pass writes one line to
+`project/liveset.jsonl` naming its seed and every choice it made, and keeping a
+take renders it to `demo.wav` and adds that line, titled, to
+`project/liveset_catalogue.json`. The next render replaces the audio; the line,
+which is tracked, rebuilds the take on any machine that has the crate.
+
 Renders sit beside `dilla.rb`, never in a folder of their own. `samples/` is the
 one directory named for material: it is the crate, gitignored, and holds the
 records, the grids and the synthesised kit. Nothing new is named `renders`,
