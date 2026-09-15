@@ -5,6 +5,7 @@ require "json"
 require "net/http"
 require "time"
 require "uri"
+require "yaml"
 
 module Shared
   # Media players for the links people put in posts, resolved once and rendered
@@ -54,8 +55,9 @@ module Shared
     YOUTUBE_PATH = %r{\A/(?:shorts|embed|live)/([\w-]+)/?\z}
     SOUNDCLOUD_PATH = %r{\A/([a-z0-9][\w-]*)/((?:sets/)?[a-z0-9][\w-]*)/?\z}i
     # First path segments that are SoundCloud's own pages rather than an artist.
-    SOUNDCLOUD_PAGES = %w[discover search stream upload you charts pages jobs terms-of-use mobile settings
-messages].freeze
+    SOUNDCLOUD_PAGES = %w[
+      discover search stream upload you charts pages jobs terms-of-use mobile settings messages
+    ].freeze
     VIMEO_PATH = %r{\A/(\d+)(?:/([0-9a-f]+))?/?\z}
     SPOTIFY_PATH = %r{\A/(?:intl-[a-z]{2}(?:-[a-z]{2})?/)?(track|album|playlist|episode|show)/([A-Za-z0-9]{22})/?\z}
 
@@ -64,10 +66,9 @@ messages].freeze
         key: "youtube", label: "YouTube",
         hosts: %w[youtube.com www.youtube.com m.youtube.com youtu.be],
         media_id: lambda { |uri|
-          id = if uri.host.to_s.downcase == "youtu.be" then uri.path.delete_prefix("/")
-          elsif uri.path == "/watch" then URI.decode_www_form(uri.query.to_s).to_h["v"]
-          else uri.path[YOUTUBE_PATH, 1]
-          end
+          id = uri.path[YOUTUBE_PATH, 1]
+          id = URI.decode_www_form(uri.query.to_s).to_h["v"] if uri.path == "/watch"
+          id = uri.path.delete_prefix("/") if uri.host.to_s.downcase == "youtu.be"
           id if id.to_s.match?(YOUTUBE_ID)
         },
         canonical: ->(id) { "https://www.youtube.com/watch?v=#{id}" },
@@ -86,8 +87,9 @@ messages].freeze
         },
         canonical: ->(id) { "https://soundcloud.com/#{id}" },
         oembed: "https://soundcloud.com/oembed",
-        player: ->(id) {
- "https://w.soundcloud.com/player/?url=#{CGI.escape("https://soundcloud.com/#{id}")}&auto_play=true&visual=true" },
+        player: lambda { |id|
+          "https://w.soundcloud.com/player/?url=#{CGI.escape("https://soundcloud.com/#{id}")}&auto_play=true&visual=true"
+        },
         thumbnail_hosts: [ /\Ai\d*\.sndcdn\.com\z/ ],
         allow: "autoplay"
       ),
@@ -128,6 +130,7 @@ messages].freeze
     URL = %r{https?://[^\s<>"']+}
     TRAILING_PUNCTUATION = /[.,;:!?)\]]+\z/
     OEMBED_MAX_BODY = 100_000
+    DEMO = File.expand_path("../../../config/demo_link_embeds.yml", __dir__)
     USER_AGENT = "pub4 link embed"
 
     module_function
@@ -152,6 +155,23 @@ messages].freeze
       nil
     rescue URI::InvalidURIError
       nil
+    end
+
+    # The seeders' posts for one app, each carrying the resolved embed of the
+    # verified link its text names, so seeding asks no provider.
+    def demo_posts(app, catalog: DEMO)
+      catalog = YAML.safe_load_file(catalog)
+      catalog.fetch("posts").fetch(app.to_s).map do |row|
+        link = catalog.fetch("links").fetch(row.fetch("link"))
+        match = find(row["content"] || row["body"])
+        unless match&.source_url == link["source_url"]
+          raise KeyError, "demo post #{row["link"]} does not carry #{link["source_url"]}"
+        end
+
+        embed = Record.new(match:, status: "ok", title: link["title"], author_name: link["author_name"],
+                           thumbnail_url: link["thumbnail_url"], fetched_at: catalog.fetch("verified_on"))
+        row.transform_keys(&:to_sym).merge(link_embed: embed.to_h)
+      end
     end
 
     def resolve(match, fetch: method(:fetch_oembed), at: Time.now)

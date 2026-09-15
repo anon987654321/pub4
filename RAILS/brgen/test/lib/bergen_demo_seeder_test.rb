@@ -1,8 +1,11 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "minitest/mock"
 
 class BergenDemoSeederTest < ActiveSupport::TestCase
+  include ActiveJob::TestHelper
+
   parallelize(workers: 1)
 
   setup do
@@ -110,6 +113,25 @@ class BergenDemoSeederTest < ActiveSupport::TestCase
     channel = Tv::Channel.find_by!(slug: "bergen-live")
     assert_equal "Bergen Live", channel.name
     assert Tv::Video.exists?(channel: channel, title: "Open mic på Logen — høydepunkter")
+  end
+
+  # The music posts carry links a reader can play. Their embeds are written
+  # resolved, from the verified catalogue, so seeding neither asks a provider
+  # nor leaves a lookup queued behind it.
+  test "seeds front-page music posts with resolved embeds and no provider request" do
+    Shared::LinkEmbed.stub(:fetch_oembed, ->(_uri) { flunk "the seeder asked a provider" }) do
+      assert_no_enqueued_jobs(only: Shared::LinkEmbedJob) do
+        ActsAsTenant.with_tenant(@city) { Brgen::BergenDemoSeeder.new(@city, attach_media: false).seed! }
+      end
+    end
+
+    linked = Shared::LinkEmbed.demo_posts(:brgen)
+    embedded = Post.where(city: @city, title: linked.map { |row| row[:title] }).to_a
+    assert_equal linked.size, embedded.size
+    assert embedded.all? { |post| post.link_embed_record&.ok? }
+    assert_equal %w[soundcloud youtube], embedded.map { |post| post.link_embed["provider"] }.uniq.sort
+    assert_includes embedded.map { |post| post.link_embed_record.player_url },
+                    "https://www.youtube-nocookie.com/embed/yeTdadYSSGo?autoplay=1"
   end
 
   test "is idempotent on re-run" do

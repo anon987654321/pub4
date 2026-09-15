@@ -79,7 +79,7 @@ module Brgen
     end
 
     def seed_posts(communities)
-      POSTS.each do |row|
+      (POSTS + Shared::LinkEmbed.demo_posts(:brgen)).each do |row|
         next if Post.exists?(city: @city, title: row[:title])
 
         user = @users_by_username.fetch(row[:user])
@@ -92,6 +92,7 @@ module Brgen
           title: row[:title],
           content: row[:content],
           anonymous: row[:anonymous] == true,
+          link_embed: row[:link_embed],
           created_at: row[:hours_ago].hours.ago + rand(0..45).minutes
         )
         post.record_activity!("BergenDemoSeed") if post.respond_to?(:record_activity!)
@@ -114,10 +115,7 @@ module Brgen
 
     def seed_listings
       category = Marketplace::Category.first || Marketplace::Category.create!(name: "Diverse", slug: "diverse-bergen")
-      base_lat = @city.latitude.to_f
-      base_lng = @city.longitude.to_f
-      base_lat = 60.3913 if base_lat.zero?
-      base_lng = 5.3221 if base_lng.zero?
+      base_lat, base_lng = base_coordinates
 
       LISTINGS.each do |row|
         next if Marketplace::Listing.exists?(title: row[:title])
@@ -141,11 +139,14 @@ module Brgen
       end
     end
 
+    # The city's own centre, or Bergen's when the row carries no coordinates.
+    def base_coordinates
+      lat, lng = @city.latitude.to_f, @city.longitude.to_f
+      [ lat.zero? ? 60.3913 : lat, lng.zero? ? 5.3221 : lng ]
+    end
+
     def seed_live_posts
-      base_lat = @city.latitude.to_f
-      base_lng = @city.longitude.to_f
-      base_lat = 60.3913 if base_lat.zero?
-      base_lng = 5.3221 if base_lng.zero?
+      base_lat, base_lng = base_coordinates
       users = @users_by_username.values
       return if users.empty?
 

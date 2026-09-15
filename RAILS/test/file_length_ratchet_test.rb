@@ -59,7 +59,10 @@ class FileLengthRatchetTest < Minitest::Test
     # every name reads the same inside the seeder and BergenDemoSeeder::
     # LIVE_NOTES still resolves through the ancestor chain. The seeder's own six
     # tests pass unchanged, which is the proof the move preserved it.
-    "brgen/lib/brgen/bergen_demo_seeder.rb" => 337,
+    # 337 -> 336: seed_listings and seed_live_posts each spelled the four-line
+    # city-centre fallback, and base_coordinates says it once. That paid for
+    # the line that stores a demo post's link embed, with one to spare.
+    "brgen/lib/brgen/bergen_demo_seeder.rb" => 336,
     # The data itself, which is long because Bergen is. It is on this list for
     # the same reason db/seeds.rb is: splitting it is possible, not obviously
     # worth doing. Splitting it further would be splitting a list of restaurants

@@ -2,6 +2,8 @@
 
 require "minitest/autorun"
 require "json"
+require "tmpdir"
+require "yaml"
 require_relative "../../app/services/shared/outbound_http"
 require_relative "../../app/services/shared/link_embed"
 require_relative "../../app/services/shared/link_embed/record"
@@ -192,6 +194,33 @@ class LinkEmbedTest < Minitest::Test
       Shared::OutboundHttp::BodyTooLarge.new("big"),
     ].each do |answer|
       assert_nil with_outbound(answer) { Shared::LinkEmbed.fetch_oembed(uri) }[:result], answer.inspect
+    end
+  end
+
+  # The seeders' catalogue, read offline. Every post resolves to an ok embed on
+  # a privacy host, and every post's text carries the link it claims.
+  def test_the_demo_catalogue_gives_every_seeded_post_an_ok_embed
+    %w[brgen amber].each do |app|
+      rows = Shared::LinkEmbed.demo_posts(app)
+      refute_empty rows, app
+      rows.each do |row|
+        record = Shared::LinkEmbed::Record.from_stored(row[:link_embed])
+        assert record&.ok?, "#{app} #{row[:link]}"
+        assert_equal "2026-09-15", record.fetched_at
+        refute_nil record.thumbnail_url, row[:link]
+        assert_match %r{\Ahttps://(?:www\.youtube-nocookie\.com|w\.soundcloud\.com)/}, record.player_url
+      end
+    end
+  end
+
+  def test_a_demo_post_whose_text_lost_its_link_is_refused
+    catalog = YAML.safe_load_file(Shared::LinkEmbed::DEMO)
+    catalog["posts"]["amber"] = [ { "link" => "aurora_runaway", "body" => "<p>ingen lenke</p>" } ]
+
+    Dir.mktmpdir do |dir|
+      broken = File.join(dir, "demo.yml")
+      File.write(broken, catalog.to_yaml)
+      assert_raises(KeyError) { Shared::LinkEmbed.demo_posts(:amber, catalog: broken) }
     end
   end
 

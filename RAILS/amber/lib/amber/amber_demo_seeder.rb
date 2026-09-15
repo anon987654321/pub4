@@ -76,6 +76,7 @@ module Amber
       demo = ensure_demo_user!
       items_by_title = seed_items!(demo)
       seed_outfits!(demo, items_by_title)
+      seed_posts!(demo)
     end
 
     private
@@ -142,6 +143,14 @@ module Amber
 
     def silhouette_attached?(item)
       item.photos.attached? && item.photos.any? { |photo| photo.blob.content_type == "image/png" }
+    end
+
+    # Feed posts carrying a verified media link, so the front page shows a
+    # player facade. The embed is written with the post and asks no provider.
+    def seed_posts!(user)
+      Shared::LinkEmbed.demo_posts(:amber).each do |row|
+        user.posts.find_or_create_by!(body: row[:body]) { |post| post.link_embed = row[:link_embed] }
+      end
     end
 
     def seed_outfits!(user, items_by_title)
