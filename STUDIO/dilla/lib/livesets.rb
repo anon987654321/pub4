@@ -546,12 +546,26 @@ module Livesets
       exec("/bin/zsh", "-c",
            "#{cmd} -f wav - 2>/dev/null | #{FFPLAY} -nodisp -autoexit -loglevel quiet -i - 2>/dev/null")
     else
-      FileUtils.mkdir_p(File.dirname(dest))
-      ok = system("/bin/zsh", "-c", "#{cmd} -y #{dest.shellescape}")
-      abort "render failed" unless ok
-
-      warn "kept #{dest}"
+      render_to!(cmd, dest)
     end
+  end
+
+  # A take is never written over, and never half-written under its own name.
+  # Renders are irreplaceable and not deterministic, so an existing file stops
+  # the pass (DILLA_OVERWRITE=1 is the engine's one way past that); and ffmpeg
+  # writes beside the take and the finished file is renamed onto it, so a pass
+  # killed halfway leaves a .partial.wav that says what it is rather than a
+  # short take that does not.
+  def render_to!(cmd, dest)
+    abort "#{dest} exists -- a take is not rendered over (DILLA_OVERWRITE=1 to replace it)" unless take_overwrite_allowed?(dest) || !File.exist?(dest)
+
+    FileUtils.mkdir_p(File.dirname(dest))
+    partial = dest.sub(/(\.\w+)?\z/, '.partial\1')
+    ok = system("/bin/zsh", "-c", "#{cmd} -y #{partial.shellescape}")
+    abort "render failed -- #{File.basename(partial)} kept for inspection" unless ok
+
+    File.rename(partial, dest)
+    warn "kept #{dest}"
   end
 
   # chord_based_beats plays the builtin progressions.
@@ -1129,15 +1143,17 @@ module Livesets
     abort "usage: ruby dilla.rb live ab <#{SETS.join('|')}> [seconds] [seed=N] [ref=<commit>] [KNOB=value ...]" unless SETS.include?(set)
 
     plan = ab_plan(set, argv)
-    out = File.join(SCRATCH_DIR, "live_ab_#{set}_#{plan[:seed]}_#{Time.now.strftime('%Y%m%d_%H%M%S')}")
-    FileUtils.mkdir_p(out)
-    rendered = plan[:arms].to_h { |arm, spec| [arm, ab_render(arm, spec, plan, out)] }
+    name = "live_ab_#{set}_#{plan[:seed]}_#{Time.now.strftime('%Y%m%d_%H%M%S')}"
+    work = File.join(SCRATCH_DIR, name)
+    FileUtils.mkdir_p(work)
+    rendered = plan[:arms].to_h { |arm, spec| [arm, ab_render(arm, spec, plan, work, File.join(OUTPUT_DIR, "#{name}_#{arm}.wav"))] }
     trims = ab_trims(rendered)
     report = ab_report(rendered, trims)
-    File.write(File.join(out, "report.txt"), report)
+    File.write(File.join(work, "report.txt"), report)
     puts report
-    ab_interleave(rendered, trims, plan[:seconds], File.join(out, "interleaved.wav"))
-    puts "interleaved: #{File.join(out, 'interleaved.wav')} (A baseline, B changed, every #{AB_WINDOW}s, level-matched)"
+    heard = File.join(OUTPUT_DIR, "#{name}_interleaved.wav")
+    ab_interleave(rendered, trims, plan[:seconds], heard)
+    puts "interleaved: #{heard} (A baseline, B changed, every #{AB_WINDOW}s, level-matched)"
   end
 
   # The arms as data, so which environment each one runs is testable without a
@@ -1163,8 +1179,9 @@ module Livesets
   AB_CARRIED = %w[PATH HOME TMPDIR LANG SHELL USER DILLA_SCRATCH_DIR
                   LIVE_KIT LIVE_PROGRESSION LIVE_VOICING].freeze
 
-  def ab_render(arm, (ref, env), plan, out)
-    dest = File.join(out, "#{arm}.wav")
+  # The arms are renders, so they land where every render lands, beside
+  # dilla.rb; their journals, logs and any exported tree are scratch.
+  def ab_render(arm, (ref, env), plan, out, dest)
     journal = File.join(out, "#{arm}.jsonl")
     FileUtils.cp(journal_path, journal) if File.file?(journal_path)
     carried = AB_CARRIED.to_h { |k| [k, ENV.fetch(k, nil)] }.compact
@@ -1217,7 +1234,9 @@ module Livesets
   # Baseline and changed in turn, every AB_WINDOW seconds, each at its trim.
   def ab_interleave(rendered, trims, seconds, dest)
     graph = ab_interleave_graph(trims, seconds)
-    ok = system(FF, "-nostdin", "-loglevel", "error", "-y", "-i", rendered.fetch("baseline"), "-i", rendered.fetch("changed"),
+    abort "#{dest} exists" if File.exist?(dest)
+
+    ok = system(FF, "-nostdin", "-loglevel", "error", "-i", rendered.fetch("baseline"), "-i", rendered.fetch("changed"),
                 "-filter_complex", graph.join(";"), "-map", "[out]", dest)
     abort "ab: interleave failed" unless ok
   end

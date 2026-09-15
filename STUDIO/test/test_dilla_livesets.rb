@@ -241,6 +241,23 @@ class TestDillaLivesets < Minitest::Test
     end
   end
 
+  # A kept take is never rendered over, and a render only takes the take's name
+  # once it has finished.
+  def test_a_take_is_not_written_over_and_arrives_whole
+    Dir.mktmpdir do |dir|
+      dest = File.join(dir, "chord_based_beats_7.wav")
+      writer = "#{RbConfig.ruby.shellescape} -e 'File.write(ARGV.last, %(audio))' --"
+      with_env("DILLA_OVERWRITE" => nil) { Livesets.render_to!(writer, dest) }
+
+      assert_equal "audio", File.read(dest)
+      assert_empty Dir[File.join(dir, "*partial*")]
+      assert_raises(SystemExit) { with_env("DILLA_OVERWRITE" => nil) { Livesets.render_to!(writer, dest) } }
+      failing = "#{RbConfig.ruby.shellescape} -e 'File.write(ARGV.last, %(half)); exit 1' --"
+      assert_raises(SystemExit) { Livesets.render_to!(failing, File.join(dir, "other.wav")) }
+      refute File.exist?(File.join(dir, "other.wav")), "a failed render never takes the take's name"
+    end
+  end
+
   def test_a_recalled_pass_replays_the_voicing_it_was_journalled_under
     handed = nil
     row = { "seed" => 7, "set" => "sampled_based_beats", "bed" => "b", "voicing" => "up" }
