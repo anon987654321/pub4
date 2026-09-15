@@ -257,8 +257,6 @@ class ProjectTree
     end
   end
 
-  private
-
   def load_skip_dirs
     rules_path = [
       File.join(@root, "data/rules.yml"),
@@ -385,6 +383,10 @@ class ProjectTree
 end
 
 if __FILE__ == $PROGRAM_NAME
+  # The named views resolve from this file, not from the shell: run from OPENBSD/
+  # or MASTER/, a Dir.pwd root named a directory that does not exist, and walk
+  # printed an empty tree as if the target held nothing.
+  repo = File.expand_path("../..", __dir__)
   options = { max_depth: 4, summary: false, root: nil, focus: nil, overview: false, pillar: nil }
 
   OptionParser.new do |opts|
@@ -397,12 +399,12 @@ if __FILE__ == $PROGRAM_NAME
       options[:summary] = true
     end
     opts.on("--stages-hotspots", "Show small-file hotspots specifically in cli/stages (KISS target)") do
-      options[:root] = File.join(Dir.pwd, "MASTER/lib/cli/stages")
+      options[:root] = File.join(repo, "MASTER/lib/cli/stages")
       options[:max_depth] = 1
       options[:summary] = true
     end
-    opts.on("--ground-policies", "Focus on ground/ policy files (common duplication area)") do
-      options[:root] = File.join(Dir.pwd, "MASTER/lib/ground")
+    opts.on("--ground-policies", "Focus on ground/policy/ (common duplication area)") do
+      options[:root] = File.join(repo, "MASTER/lib/ground/policy")
       options[:max_depth] = 2
       options[:summary] = true
     end
@@ -415,14 +417,14 @@ if __FILE__ == $PROGRAM_NAME
     opts.on("--master-overview", "Far-away MASTER pillar: lib/data/tools/web collapsed, .master pruned") do
       options[:overview] = true
       options[:pillar] = :master
-      options[:root] = File.join(Dir.pwd, "MASTER")
+      options[:root] = File.join(repo, "MASTER")
       options[:max_depth] = 3
       options[:summary] = true
     end
     opts.on("--deploy-overview", "Far-away OPENBSD pillar: rails apps + config backup collapsed, noise pruned") do
       options[:overview] = true
       options[:pillar] = :deploy
-      options[:root] = File.join(Dir.pwd, "OPENBSD")
+      options[:root] = File.join(repo, "OPENBSD")
       options[:max_depth] = 3
       options[:summary] = true
     end
@@ -457,6 +459,8 @@ if __FILE__ == $PROGRAM_NAME
     puts "=== #{banner} (noise pruned: vendor, tmp, log, storage, node_modules, builds, assets, .master) ==="
     puts
   end
+
+  abort "tree: #{options[:root]} is not a directory" unless Dir.exist?(options[:root])
 
   tree = ProjectTree.new(
     root: options[:root],
