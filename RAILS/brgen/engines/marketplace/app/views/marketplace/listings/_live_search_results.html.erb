@@ -11,14 +11,22 @@
 <% end %>
 
 <% if @categories.any? %>
-  <%# Every link that rebuilds the index carries the kind, or a category tap on
+  <%# Kaufland.de's category shortcut rail: a 110px white well over each name.
+      Categories carry no picture, so the well holds the name's initial rather
+      than a stock photograph standing in for goods nobody listed.
+
+      Every link that rebuilds the index carries the kind, or a category tap on
       the jobs list lands back on goods. %>
-  <div class="deal-cats" aria-label="<%= t("aria.categories") %>">
-    <%= link_to t("marketplace.all_categories"), listings_path(kind: @kind), class: "deal-cat#{" active" unless params[:category_id]}" %>
-    <% @categories.each do |cat| %>
-      <%= link_to cat.name, listings_path(kind: @kind, category_id: cat.id, q: params[:q].presence), class: "deal-cat#{" active" if params[:category_id].to_s == cat.id.to_s}" %>
+  <nav class="deal-cats" aria-label="<%= t("aria.categories") %>">
+    <%= link_to listings_path(kind: @kind), class: "deal-cat#{" active" unless params[:category_id]}" do %>
+      <span class="store-shortcut-well" aria-hidden="true"><%= icon :layers, size: 32 %></span><%= t("marketplace.all_categories") %>
     <% end %>
-  </div>
+    <% @categories.each do |cat| %>
+      <%= link_to listings_path(kind: @kind, category_id: cat.id, q: params[:q].presence), class: "deal-cat#{" active" if params[:category_id].to_s == cat.id.to_s}" do %>
+        <span class="store-shortcut-well" aria-hidden="true"><%= cat.name.to_s.first&.upcase %></span><%= cat.name %>
+      <% end %>
+    <% end %>
+  </nav>
 <% end %>
 
 <% if @top_offers.present? && live_search_query.blank? && params[:category_id].blank? %>
@@ -26,6 +34,7 @@
 <% end %>
 
 <% if @listings.any? %>
+  <%= tag.h2 t("marketplace.inspire_heading", city: Current.city_name), class: "store-heading" %>
   <%= turbo_frame_tag "marketplace-listings", target: "_top" do %>
     <div class="deal-grid" id="marketplace-listings" aria-label="<%= t("aria.listings") %>">
       <% @listings.each do |listing| %>
@@ -56,4 +65,16 @@
         title: t("marketplace.kind_empty.#{@kind}", city: Current.city_name),
         body: t("marketplace.kind_empty_body"),
         action: { label: t("marketplace.kind_empty_action.#{@kind}"), path: new_listing_path(kind: @kind) } %>
+<% end %>
+
+<% if @categories.any? { |cat| cat.children.any? } %>
+  <%# Kaufland.de's popular search terms panel: #f5f5f5, 8px corners, underlined
+      14px links. brgen has no public search log, so the terms are the real
+      subcategories a reader can narrow to. %>
+  <nav class="store-terms" aria-labelledby="store-terms-title">
+    <%= tag.h2 t("marketplace.browse_categories"), id: "store-terms-title", class: "store-heading" %>
+    <% @categories.flat_map(&:children).each do |sub| %>
+      <%= link_to sub.name, listings_path(kind: @kind, category_id: sub.id) %>
+    <% end %>
+  </nav>
 <% end %>

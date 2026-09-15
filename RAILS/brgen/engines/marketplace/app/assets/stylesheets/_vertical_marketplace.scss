@@ -1,102 +1,63 @@
-/* Marketplace vertical — the family shell and a taupe accent. Catalogue type is
-   --font; the hero headline alone wears the display face. */
+/* Markedsplass — Kaufland.de's storefront, measured from its archived pages at
+   1440 and 400. The shared catalogue lives in _marketplace_cards.scss and the
+   palette in _vertical_shell.scss; this sheet holds what only markedsplass
+   renders: the teaser banner, the listing page and the basket. */
 
-/* main's 1280px was dead: .layout caps every surface at --feed-max (600px) and
-   main is inside it, so the storefront was rendering in the 600px feed column
-   with an Amazon-width nav bar crushed into it. Opt out of the feed column the
-   same way dating/maps/messenger/playlist already do. A storefront is a grid,
-   not a timeline. */
+/* .layout caps every surface at --feed-max (600px). A storefront is a grid, not
+   a timeline, so it opens up; main takes Kaufland's container in
+   _vertical_shell.scss. */
 body.vertical-marketplace .layout {
   max-width: 100%;
 }
 
-/* The front page hero. Type is the whole design here — see the view for why a
-   marketplace has nothing permanent to photograph.
-
-   The size is the point: clamp tops out at 5.5rem, which on a desktop is large
-   enough to read as a masthead rather than as a heading, and bottoms out at
-   2.5rem, where the condensed face still sets the city name on one line.
-   Tracking holds at -0.02em, the tightest TYPOGRAPHY allows a heading: the face
-   is already narrow, and tighter than that the counters close. */
+/* The teaser banner. Type is the whole design here — see the view for why a
+   marketplace has nothing permanent to photograph. Kaufland's first banner is
+   274px tall at 1440; the city's name in --font-ad fills it the way its
+   campaign lettering does. */
 .market-hero {
-  padding: var(--space-6, 2rem) var(--space-4) var(--space-5, 1.5rem);
-  max-width: var(--measure);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 12px;
+  min-height: 274px;
+  padding: 24px;
+  border-radius: var(--radius-sm);
+  background: var(--store-well);
 }
 
-/* The id is carried under protest. `main#main-content > header h1` in
-   _typography sets every page title to --text-2xl, and it wins at (1,0,3)
-   against any class selector — this hero is a <header> under main, so it
-   matched and rendered at 31.5px instead of 88. Matching the id is the only way
-   to outrank an id, short of editing a rule that a dozen other surfaces rely
-   on. */
-main#main-content > header.market-hero h1 {
-  margin: var(--space-2) 0;
+.market-hero h1 {
+  margin: 0;
+  color: var(--store-ink);
   font-family: var(--font-ad);
-  font-size: clamp(2.5rem, 9vw, 5.5rem);
+  font-size: clamp(2.5rem, 7vw, 5.5rem);
   font-weight: var(--weight-normal);
   line-height: var(--leading-none);
-  letter-spacing: var(--tracking-tighter);
   text-wrap: balance;
-  color: var(--text);
 }
 
-.market-hero p:not([class]) {
+.market-hero p {
   margin: 0;
   max-width: 46ch;
-  font-size: var(--text-lg);
-  line-height: 1.5;
-  color: var(--text-secondary);
+  color: var(--store-ink-soft);
+  font-size: 16px;
+  line-height: var(--leading-normal);
 }
 
-/* The live number, so the masthead says something true rather than something
+/* The live number, so the banner says something true rather than something
    evergreen. */
-.market-hero-count {
-  margin: var(--space-3) 0 0;
-  font-family: var(--font);
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-}
-
-.market-hero-count strong {
-  font-family: var(--font);
-  font-size: var(--text-lg);
-  /* The ladder is 400/600/800, spaced 200 apart so a step is visible —
-     _dialect_tokens.scss moved --weight-bold off 700 for exactly that reason,
-     so a literal 700 lands between two tokens and reads as neither. Heavy,
-     matching the hero h1 above it. */
+.market-hero .market-hero-count strong {
+  color: var(--store-ink);
   font-weight: var(--weight-heavy);
-  color: var(--text);
-}
-
-body.vertical-marketplace main {
-  max-width: var(--container-max);
 }
 
 body.vertical-marketplace .page-header h1,
 body.vertical-marketplace .marketplace-deals h1 {
+  color: var(--store-ink);
   font-family: var(--font);
-  font-weight: var(--weight-heavy);
-  letter-spacing: var(--tracking-tighter);
-  font-size: var(--text-title, 1.25rem);
+  font-size: var(--store-text-heading);
+  font-weight: var(--weight-bold);
   text-transform: none;
-}
-
-body.vertical-marketplace .deal-grid {
-  gap: var(--space-3);
-}
-
-body.vertical-marketplace a.deal-card:hover,
-body.vertical-marketplace .deal-card:hover {
-  background: color-mix(in srgb, var(--accent) 8%, var(--hover-subtle, var(--hover)));
-}
-
-body.vertical-marketplace .deal-card-img {
-  aspect-ratio: 1 / 1;
-}
-
-body.vertical-marketplace .deal-price {
-  font-size: var(--text-lg);
-  font-weight: var(--weight-heavy);
 }
 
 body.vertical-marketplace .listing-status {
@@ -104,49 +65,14 @@ body.vertical-marketplace .listing-status {
   font-weight: var(--weight-bold);
 }
 
-body.vertical-marketplace .deal-cat.active,
-body.vertical-marketplace .marketplace-subnav .feed-tab.active {
-  border-bottom-color: var(--accent);
-}
+@media (min-width: 768px) {
+  .market-hero {
+    padding: 32px;
+  }
 
-body.vertical-marketplace .deal-cat.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  /* --accent-ink, not --bg: see _dialect_tokens.scss. The taupe storefront
-     accent carries #f7f6fa at 3.24:1 and #1a1824 at 5.02:1. */
-  color: var(--accent-ink);
-}
-
-/* .deal-rating inherits --text. It wore the taupe at 3.48 on #ffffff, which is
-   the accent's fill floor rather than a text one, and a rating is read rather
-   than pressed. Operator decision 2026-09-08. */
-
-body.vertical-marketplace .marketplace-top-offers .top-offer-card:hover {
-  border-color: var(--accent);
-}
-
-body.vertical-marketplace .deal-search {
-  background: var(--search-bg, var(--surface));
-  padding: var(--space-3) var(--space-4);
-}
-
-body.vertical-marketplace .deal-search input {
-  border-radius: var(--radius-pill);
-  padding: var(--space-3) var(--space-4);
-  background: var(--bg);
-  border: 1px solid var(--border);
-}
-
-body.vertical-marketplace .deal-cats {
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-4);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  body.vertical-marketplace a.deal-card,
-  body.vertical-marketplace .deal-card,
-  body.vertical-marketplace .deal-cat {
-    transition: none !important;
+  body.vertical-marketplace .page-header h1,
+  body.vertical-marketplace .marketplace-deals h1 {
+    font-size: 28px;
   }
 }
 
@@ -231,32 +157,6 @@ body.vertical-marketplace .deal-cats {
   margin-block-start: var(--space-3);
 }
 
-// Favourite toggle. The slot reserves the corner on a card so adding a favourite
-// does not reflow the grid; --on is the pressed state.
-.deal-card-fav-slot {
-  position: absolute;
-  inset-block-start: var(--space-1);
-  inset-inline-end: var(--space-1);
-}
-
-.deal-fav-form {
-  margin: 0;
-}
-
-.deal-fav {
-  appearance: none;
-  background: none;
-  border: 0;
-  min-width: var(--tap-min);
-  min-height: var(--tap-min);
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
-.deal-fav--on {
-  color: var(--accent);
-}
-
 // The two payment buttons on the cart. Shape only: each provider's brand colour is
 // theirs, and choosing one here would be inventing a brand.
 .cart-pay-stripe,
@@ -266,13 +166,6 @@ body.vertical-marketplace .deal-cats {
   justify-content: center;
   min-height: var(--tap-min);
   width: 100%;
-}
-
-// The whole card is the hit target, with the anchor stretched over it so the tap area
-// matches what a thumb aims at rather than the title's text box.
-.deal-card-hit {
-  position: absolute;
-  inset: 0;
 }
 
 .address-list {

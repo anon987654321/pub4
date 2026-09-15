@@ -3,7 +3,10 @@
 <% favorited = local_assigns.fetch(:favorited) {
      @favorited_listing_ids&.include?(listing.id)
    } %>
-<%# Tise-style tile: photo wall + price first; heart overlays the photo. %>
+<%# Kaufland.de's grid tile: a square #f5f5f5 image well with the wishlist heart
+    in its corner, then price, title, stars and a seller badge on an 8px gap.
+    Kaufland sets the title above the price; brgen keeps the price first, which
+    layout_search holds as a hard floor for catalogue scanning. %>
 <article class="deal-card listing" data-product-id="<%= listing.id %>">
   <div class="deal-card-fav-slot">
     <%= render "marketplace/listings/favorite_button", listing: listing, favorited: favorited == true %>
@@ -27,22 +30,16 @@
           which of the three detail tables to ask. %>
       <div class="deal-price"><%= listing.headline_amount %></div>
       <h2 class="deal-card-title"><%= listing.title %></h2>
-      <div class="deal-meta">
-        <% meta_bits = [
-             listing.location,
-             (distance_km ? t("marketplace.distance_km", km: number_with_precision(distance_km, precision: 1)) : nil),
-             listing.category&.name,
-             t("marketplace.views", count: listing.views_count.to_i)
-           ].compact %>
-        <%= meta_bits.join(" · ") %>
-      </div>
       <% if listing.reviews_count.to_i.positive? %>
-        <div class="deal-meta deal-meta--rating">
-          <span class="deal-rating" aria-label="<%= t("marketplace.rating_of_five", rating: number_with_precision(listing.rating, precision: 1)) %>">
-            <%= number_with_precision(listing.rating, precision: 1) %> ★
-          </span>
-          <%= t("marketplace.reviews_count", count: listing.reviews_count) %>
-        </div>
+        <%= render "shared/store_stars", rating: listing.rating, count: listing.reviews_count %>
+      <% end %>
+      <div class="deal-meta">
+        <%= [ listing.location,
+              (distance_km ? t("marketplace.distance_km", km: number_with_precision(distance_km, precision: 1)) : nil),
+              listing.category&.name ].compact.join(" · ") %>
+      </div>
+      <% if (seller = listing.user&.display_name).present? %>
+        <%= tag.span t("marketplace.seller_badge", name: seller), class: "store-badge" %>
       <% end %>
     </div>
   <% end %>

@@ -10,6 +10,9 @@
 # Keys the host already carries are NOT copied here. Use them.
 nb:
   marketplace:
+    inspire_heading: "Nytt i %{city}"
+    browse_categories: "Utforsk kategorier"
+    seller_badge: "Selger: %{name}"
     precise_coordinates: "Nøyaktige koordinater (valgfritt)"
     top: "Topp"
     verified: "Verifisert"

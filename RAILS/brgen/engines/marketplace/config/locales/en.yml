@@ -10,6 +10,9 @@
 # Keys the host already carries are NOT copied here. Use them.
 en:
   marketplace:
+    inspire_heading: "New in %{city}"
+    browse_categories: "Browse categories"
+    seller_badge: "Seller: %{name}"
     precise_coordinates: "Precise coordinates (optional)"
     top: "Top"
     verified: "Verified"

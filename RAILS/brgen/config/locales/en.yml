@@ -828,6 +828,7 @@ en:
     drivers: Drivers
     add_restaurant: Add restaurant
     saved_searches: Saved searches
+    rating_of_five: "%{rating} of 5"
   dating:
     who_liked_you: Who liked you
     back_to_deck: Back to the deck
@@ -1176,12 +1177,9 @@ en:
     top_offers_heading: Picked for the city
     make_offer: Make an offer
     add_photos: Add photos
-    top_offers_kicker: Top offers
     seller_dashboard: Seller dashboard
     alerts: Marketplace alerts
     chat_with: Chat with %{name}
-    top_offers_blurb: Featured deals and high-signal listings — denser than the feed,
-      still flat.
     message_seller_hint: Send a short message to the seller. They can accept or decline
       from this listing page.
     near_me: Near me
@@ -1192,7 +1190,6 @@ en:
     expired_notice: This listing has expired.
     renew: Renew listing
     distance_km: "%{km} km away"
-    rating_of_five: "%{rating} of 5"
     no_reviews_body: Buyers can review after an order.
     no_offers_body: Incoming offers will list here.
     offers: Offers

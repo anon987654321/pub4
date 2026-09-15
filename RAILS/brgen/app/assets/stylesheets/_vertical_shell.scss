@@ -86,6 +86,8 @@ body.vertical-takeaway {
   --store-red: #e10915;
   --store-green: #237916;
   --store-focus: #0091c4;
+  --store-star: #da591a;
+  --store-container: 1440px;
   --store-text-meta: 13px;
   --store-text-heading: 21px;
   --store-text-price: 32px;
@@ -167,27 +169,31 @@ body.vertical-playlist .brgen-logo-mark {
   color: var(--color-text, var(--text));
 }
 
-body.vertical-marketplace [data-controller="live-search"],
-body.vertical-takeaway [data-controller="live-search"] {
-  background: var(--search-bg, var(--surface));
-  padding: var(--space-3) var(--space-4);
+/* The in-page search on the two storefronts is Kaufland.de's field rather than
+   the yep pill: 44px, a 1px #8e8e8e edge, 4px corners, 16px type, sitting on
+   the page with no band of its own. */
+:is(body.vertical-marketplace, body.vertical-takeaway) [data-controller~="live-search"] {
+  padding: 0;
+  background: none;
 }
 
-body.vertical-marketplace .search-form input[type="search"],
-body.vertical-takeaway .search-form input[type="search"] {
-  border-radius: var(--radius-pill);
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--border);
-  background: var(--bg);
-  width: 100%;
-}
-
-body.vertical-marketplace .search-form,
-body.vertical-takeaway .search-form {
+:is(body.vertical-marketplace, body.vertical-takeaway) .search-form {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
   align-items: center;
+}
+
+:is(body.vertical-marketplace, body.vertical-takeaway) .search-form input[type="search"] {
+  flex: 1 1 16rem;
+  width: 100%;
+  min-height: var(--tap-min);
+  padding-inline: 12px;
+  border: 1px solid var(--store-rule);
+  border-radius: var(--radius-xs);
+  background: var(--store-page);
+  color: var(--store-ink);
+  font-size: 16px;
 }
 
 /* One column, one left edge.
@@ -203,4 +209,30 @@ body.vertical-takeaway .search-form {
    cannot drift apart. */
 body[class*="vertical-"] main > section {
   padding-inline: var(--space-4);
+}
+
+/* The storefronts carry Kaufland.de's 1440px container and its 12px phone and
+   44px desktop gutter on main itself, so their sections take none of their own.
+   The id is carried because `.layout > main#main-content` zeroes the gutter at
+   (1,1,1), and no class selector outranks an id. */
+:is(body.vertical-marketplace, body.vertical-takeaway) .layout > main#main-content {
+  /* .layout is a flex column that does not stretch its children, so main
+     sized to its content: the tile slider pushed it to 537px on a 400px phone. */
+  width: 100%;
+  max-width: var(--store-container);
+  margin-inline: auto;
+  padding-inline: var(--store-gutter);
+}
+
+:is(body.vertical-marketplace, body.vertical-takeaway) main > section {
+  padding-inline: 0;
+}
+
+/* The yep pen paints every .search as a #ccc pill; on the storefronts the field
+   carries its own edge, so the wrapper draws nothing. */
+:is(body.vertical-marketplace, body.vertical-takeaway) .search {
+  width: auto;
+  border: 0;
+  border-radius: 0;
+  background: none;
 }

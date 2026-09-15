@@ -834,6 +834,7 @@ nb:
     drivers: Sjåfører
     add_restaurant: Legg til restaurant
     saved_searches: Lagrede søk
+    rating_of_five: "%{rating} av 5"
   dating:
     who_liked_you: Hvem har likt deg
     back_to_deck: Tilbake til bunken
@@ -1183,12 +1184,9 @@ nb:
     top_offers_heading: Plukket ut for byen
     make_offer: Gi et bud
     add_photos: Legg til bilder
-    top_offers_kicker: Beste tilbud
     seller_dashboard: Selgeroversikt
     alerts: Varsler fra markedsplassen
     chat_with: Chat med %{name}
-    top_offers_blurb: Utvalgte tilbud og annonser med høy signalverdi — tettere enn
-      strømmen, fortsatt flatt.
     message_seller_hint: Send en kort melding til selgeren. De kan godta eller avslå
       fra denne annonsesiden.
     near_me: Nær meg
@@ -1199,7 +1197,6 @@ nb:
     expired_notice: Denne annonsen har utløpt.
     renew: Forny annonsen
     distance_km: "%{km} km unna"
-    rating_of_five: "%{rating} av 5"
     no_reviews_body: Kjøpere kan omtale etter en ordre.
     no_offers_body: Innkommende bud vises her.
     offers: Bud

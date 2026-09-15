@@ -38,31 +38,32 @@
   display: none;
 }
 
+/* Kaufland.de's smart-filter pill: 14px in a 1px #8e8e8e pill that darkens to
+   the ink on hover. The applied one fills with the ink. */
 .deal-cat {
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   min-height: var(--tap-min);
-  padding: var(--space-2) var(--space-3);
-  background: var(--surface-elevated);
-  border: 1px solid var(--border);
+  padding-inline: 12px;
+  border: 1px solid var(--store-rule, var(--border));
   border-radius: var(--radius-pill);
-  font-size: var(--text-sm);
-  color: var(--text);
+  background: var(--store-page, var(--surface));
+  color: var(--store-ink, var(--text));
+  font-size: 14px;
   white-space: nowrap;
-  transition: background var(--transition-fast) var(--ease-out), border-color var(--transition-fast) var(--ease-out), color var(--transition-fast) var(--ease-out);
+  transition: border-color var(--transition-fast) var(--ease-out);
 }
 
 .deal-cat:hover {
-  background: var(--search-bg);
-  border-color: var(--text-secondary);
+  border-color: var(--store-ink, var(--text));
   text-decoration: none;
 }
 
 .deal-cat.active {
-  background: var(--text);
-  color: var(--bg);
-  border-color: var(--text);
+  border-color: var(--store-ink, var(--text));
+  background: var(--store-ink, var(--text));
+  color: var(--store-page, var(--bg));
 }
 
 .marketplace-listing .listing-price {
