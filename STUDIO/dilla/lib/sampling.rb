@@ -10,6 +10,7 @@ require "json"
 require "net/http"
 require "time"
 require "uri"
+require "yaml"
 
 # Crate digging over sources that are actually free to sample.
 #
@@ -1137,6 +1138,13 @@ module RadioChop
   # attack after a decay, so this is positive at a bar line and near zero in
   # the middle of a sustain. Clamped at 12dB: past that it is a level jump
   # rather than a downbeat, and it should not outvote the seam terms.
+  #
+  # Neither edge may be silence. A quiet tail against any head reads as the
+  # full 12 dB, so a rack that fades out scored as the best bar line it had --
+  # one started at -57 dB -- and a silent head is no attack at all. Under
+  # SILENCE_FLOOR_DB, measured on the low band, there is no downbeat to reward.
+  SILENCE_FLOOR_DB = -45.0
+
   def downbeat(pcm, rate, start_idx, length_idx, edge)
     a = 1 - Math.exp(-2 * Math::PI * 200 / rate.to_f)
     low = lambda do |slice|
@@ -1147,7 +1155,11 @@ module RadioChop
     tail = pcm[start_idx + length_idx - edge, edge]
     return 0.0 unless head&.length == edge && tail&.length == edge
 
-    [[db(rms(low.call(head))) - db(rms(low.call(tail))), 0.0].max, 12.0].min
+    head_db = db(rms(low.call(head)))
+    tail_db = db(rms(low.call(tail)))
+    return 0.0 if [head_db, tail_db].min < SILENCE_FLOOR_DB
+
+    [[head_db - tail_db, 0.0].max, 12.0].min
   rescue StandardError
     0.0
   end
@@ -1386,10 +1398,15 @@ module RadioChop
   # The HTTP URL that produced this source, copied from crate provenance.
   # The dug wav is deleted after the chop; the registry row has to name the
   # fetch, not a path that no longer exists.
+  #
+  # A record `live dig` fetched from project/crate.yml has no row there; its
+  # file is named for the crate entry's title, so that is where its URL is
+  # found. Forty-one of forty-two racks once lost their source this way, with
+  # the URL sitting in the tracked crate the whole time.
   def source_url_for(src, items: nil)
     items ||= CrateDig.manifest["items"]
     abs = File.expand_path(src)
-    items.find do |item|
+    dug = items.find do |item|
       next if item["url"].to_s.empty?
 
       path = item["path"].to_s
@@ -1397,6 +1414,20 @@ module RadioChop
 
       File.expand_path(path, ROOT) == abs
     end&.[]("url")
+    dug || crate_entry_for(src)&.fetch("url", nil)
+  end
+
+  CRATE = File.join(ROOT, "project", "crate.yml")
+
+  # The slug a crate entry's audio is fetched under: its title, slugged, to
+  # forty-four characters. One spelling, so the fetch and the lookup agree.
+  def crate_slug(title) = slugify(title)[0, 44]
+
+  def crate_entry_for(src)
+    return nil unless File.file?(CRATE)
+
+    base = slugify(File.basename(src, ".*"))
+    Array(YAML.safe_load_file(CRATE)["crate"]).find { |entry| crate_slug(entry["title"]) == base && !base.empty? }
   end
 
   # --- 6: registry ------------------------------------------------------------
@@ -1668,6 +1699,7 @@ module RadioChop
       }.merge(key_fields(dest, key_probe).transform_keys(&:to_s))
       url = source_url_for(src)
       row["url"] = url unless url.to_s.empty?
+      row["sha256"] = Digest::SHA256.file(dest).hexdigest
       row
     end
 
@@ -1687,11 +1719,40 @@ module RadioChop
       abs = File.absolute_path?(row["path"].to_s) ? row["path"].to_s : File.join(ROOT, row["path"].to_s)
       slug.start_with?("#{slug_base}_") || !File.file?(abs)
     end
-    merged = (kept + loops).sort_by { |row| row["slug"].to_s }
+    merged = unique_audio(kept + loops).sort_by { |row| row["slug"].to_s }
     data = { "version" => 1, "ingested_at" => Time.now.utc.iso8601, "loops" => merged }
     DillaFrozen.write_json(REGISTRY, data)
+    DillaFrozen.write_json(MANIFEST_PATH, manifest_rows(merged))
     puts "chop: #{loops.length} new, #{kept.length} kept -> #{merged.length} registered"
     loops
+  end
+
+  # One row per sound, not per name. Two slugs whose loop.wav hash the same are
+  # one rack with two names: the registry once held 161 rows over 123 distinct
+  # wavs, and the duplicates were played, scored and ranked as records of their
+  # own. The first slug in order keeps the sound. A row from before hashes were
+  # recorded is kept as it is, since nothing says what it holds.
+  def unique_audio(rows)
+    seen = {}
+    rows.sort_by { |row| row["slug"].to_s }.select do |row|
+      sha = row["sha256"].to_s
+      next true if sha.empty?
+      next false if seen.key?(sha)
+
+      seen[sha] = true
+    end
+  end
+
+  # The crate without the audio, in git. samples/ is ignored and lives on one
+  # machine; this is what makes a lost rack a re-cut rather than a loss: where
+  # each rack came from, where in the record it starts and how long it runs,
+  # its key, its worth and the hash of what was cut.
+  MANIFEST_PATH = File.join(ROOT, "project", "racks.json")
+  MANIFEST_FIELDS = %w[slug url source source_label rights source_start_sec duration_sec bars bpm
+                       key key_pc key_mode sample_worth sha256].freeze
+
+  def manifest_rows(rows)
+    { "version" => 1, "racks" => rows.map { |row| row.slice(*MANIFEST_FIELDS) } }
   end
 
   def fmt_time(sec) = format("%d:%02d", sec.to_i / 60, sec.to_i % 60)

@@ -3,6 +3,7 @@
 require_relative "dilla_helper"
 require_relative "../dilla/lib/livesets"
 require "open3"
+require "fileutils"
 
 # The livesets' choices, read without playing a pass: exec is stubbed wherever a
 # pass would start, so nothing reaches ffmpeg or a speaker.
@@ -324,6 +325,41 @@ class TestDillaLivesets < Minitest::Test
     assert_includes read, "LIVE_HOCKET", "the scan has to see a knob read through knob_int"
     assert_empty read - Livesets::KNOB_DOCS.keys
     assert_empty Livesets::RECALLED.keys - Livesets::KNOB_DOCS.keys
+  end
+
+  # The queue: a starred rack outranks every score, LIVE_KEY keeps the beds in
+  # one key, a skip sends a bed to the back, and a pass names what it owes.
+  def test_the_bed_queue_honours_stars_keys_skips_and_credits
+    Dir.mktmpdir do |dir|
+      %w[high low starred other].each { |slug| FileUtils.mkdir_p(File.join(dir, slug)) && File.write(File.join(dir, slug, "loop.wav"), "") }
+      rows = { "high" => { "key" => "A minor", "source_label" => "Record", "rights" => "unlicensed", "url" => "https://youtu.be/x" },
+               "low" => { "key" => "C major" }, "starred" => { "key" => "C major" }, "other" => { "key" => "A minor" } }
+      stubs = { bed_rows: -> { rows }, worth: -> { { "high" => 0.9, "low" => 0.1, "starred" => 0.05, "other" => 0.5 } },
+                worth_doc: -> { { "starred" => ["starred"] } } }
+      queue = ->(env = {}) { with_env({ "LIVE_BEDS_DIR" => dir, "LIVE_JOURNAL" => File.join(dir, "j.jsonl") }.merge(env)) { Livesets.bed_queue.map { |b| Livesets.slug_of(b) } } }
+      stubbing(stubs) do
+        assert_equal %w[starred high other low], queue.call.first(4)
+        assert_equal %w[high other], queue.call("LIVE_KEY" => "a minor")
+        assert_raises(SystemExit) { queue.call("LIVE_KEY" => "F# lydian") }
+        with_env("LIVE_JOURNAL" => File.join(dir, "j.jsonl")) { Livesets.journal!(cue: "skip", bed: "starred") }
+        assert_equal "starred", queue.call.last
+        assert_equal "Record — unlicensed — https://youtu.be/x", Livesets.credit("high")
+        assert_nil Livesets.credit("low")
+      end
+    end
+  end
+
+  # A fetch that fails still leaves the URL it was fetching: the record comes
+  # before the audio, so nothing it describes can outlive it.
+  def test_a_fetched_record_names_its_url_before_the_audio_arrives
+    Dir.mktmpdir do |dir|
+      out = File.join(dir, "source.wav")
+      define_singleton_method(:require_tools!) { |*| nil }
+      define_singleton_method(:sh!) { |*| raise "offline" }
+      assert_raises(RuntimeError) { download_track("https://youtu.be/abc", out) }
+
+      assert_equal "https://youtu.be/abc", JSON.parse(File.read("#{out}.source.json"))["url"]
+    end
   end
 
   # A render writes demo.wav and no other audio file, and only takes its name

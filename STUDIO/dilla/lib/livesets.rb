@@ -16,6 +16,8 @@
 #   ruby dilla.rb live ab <set> KNOB=value       three arms of one seed, level-matched, interleaved
 #
 #   ruby dilla.rb live knobs                     every LIVE_ knob a set reads
+#   ruby dilla.rb live cue [skip <slug>]         the next beds, and passing one over
+#   ruby dilla.rb live star <slug> [off]         mark a rack above every score
 #
 # What the sets share is the room -- the console, the crate, the clock and the
 # journal -- and what differs is the arrangement, which is what a set is. Written
@@ -343,24 +345,95 @@ module Livesets
   def pick_bed
     beds = Dir.glob(File.join(beds_dir, "*", "loop.wav"))
     abort "no beds" if beds.empty?
-    slug_of = ->(b) { File.basename(File.dirname(b)) }
     if (want = ENV["LIVE_BED"].to_s) && !want.empty?
-      pinned = beds.find { |b| slug_of.call(b) == want }
+      pinned = beds.find { |b| slug_of(b) == want }
       abort "no such bed: #{want}" unless pinned
 
       return [pinned, want, worth.fetch(want, nil)]
     end
-    ranked = beds.sort_by { |b| -worth.fetch(slug_of.call(b), 0.35).to_f }
+    bed = bed_queue(beds).first
+    [bed, slug_of(bed), worth.fetch(slug_of(bed), nil)]
+  end
+
+  def slug_of(bed) = File.basename(File.dirname(bed))
+
+  # Every bed in the order the rig would play them. A starred rack outranks any
+  # score, because the operator saying "this one" is the better judgement, and
+  # two equally stale beds go in that same order. The order draws nothing: a draw
+  # here from the pass stream would shift every choice after it whenever the bed
+  # is pinned on replay, which was measured before the tiebreak left the stream.
+  def bed_queue(beds = Dir.glob(File.join(beds_dir, "*", "loop.wav")))
+    beds = in_key(beds)
+    ranked = beds.sort_by { |b| -(starred.include?(slug_of(b)) ? 2.0 : worth.fetch(slug_of(b), 0.35).to_f) }
     pool = ranked.size >= 8 ? ranked.first((ranked.size * 0.5).ceil) : ranked
+    pool |= ranked.select { |b| starred.include?(slug_of(b)) }
     seen = recency
-    # Its own generator, not the seeded stream. The tiebreak between two equally
-    # stale beds is not part of what a seed names -- and if it drew from the main
-    # stream, pinning the bed on replay would skip that draw and shift every
-    # choice after it, so the same seed would come back at a different drag with
-    # a different progression. Measured exactly that before it was separated.
-    @tiebreak ||= Random.new
-    bed = pool.min_by { |b| [seen.fetch(slug_of.call(b), -1), @tiebreak.rand] }
-    [bed, slug_of.call(bed), worth.fetch(slug_of.call(bed), nil)]
+    pool.sort_by { |b| [seen.fetch(slug_of(b), -1), ranked.index(b)] }
+  end
+
+  # The chop registry's row for each rack: its key, its source and its rights.
+  def bed_rows = Array(RadioChop.registry["loops"]).to_h { |row| [row["slug"].to_s, row] }
+
+  # LIVE_KEY="A minor" keeps the beds whose chopped key it names -- every rack
+  # carries one, and two records under one harmony need it.
+  def in_key(beds)
+    want = ENV.fetch("LIVE_KEY", "").strip.downcase
+    return beds if want.empty?
+
+    rows = bed_rows
+    keyed = beds.select { |b| rows.dig(slug_of(b), "key").to_s.downcase == want }
+    known = rows.values.filter_map { |row| row["key"] }.uniq.sort
+    abort "LIVE_KEY: no bed in #{want} — the rack has #{known.join(', ')}" if keyed.empty?
+    keyed
+  end
+
+  # What a pass owes the record under it, printed with the pass, so a set that
+  # plays someone's work names it without being asked.
+  def credit(slug)
+    row = bed_rows.fetch(slug.to_s, {})
+    parts = [row["source_label"] || row["source"], row["rights"], row["url"]].compact.map(&:to_s).reject(&:empty?)
+    parts.empty? ? nil : parts.join(" — ")
+  end
+
+  # The racks the operator marked, in sample_worth.json beside the scores.
+  def starred = Array(worth_doc["starred"])
+
+  def worth_doc
+    JSON.parse(File.read(WORTH))
+  rescue StandardError
+    {}
+  end
+
+  #   ruby dilla.rb live star <slug>       mark a rack; it outranks every score
+  #   ruby dilla.rb live star <slug> off   unmark it
+  def star!(argv)
+    slug = argv.shift or abort "usage: ruby dilla.rb live star <slug> [off]"
+    doc = worth_doc
+    list = Array(doc["starred"])
+    list = argv.include?("off") ? list - [slug] : (list | [slug])
+    DillaFrozen.write_json(WORTH, doc.merge("starred" => list.sort))
+    puts "starred: #{list.empty? ? 'none' : list.sort.join(' ')}"
+  end
+
+  # The next beds, in order, and a way to say no to one.
+  #
+  #   ruby dilla.rb live cue               the five the rig plays next
+  #   ruby dilla.rb live cue skip <slug>   send one to the back of the queue
+  #
+  # A skip is a journal line the recency reader counts as played, so the rig
+  # passes it over as it would a bed it has just played -- one history, not a
+  # second list of rejections to reconcile with it.
+  def cue!(argv)
+    if argv.first == "skip"
+      slug = argv[1] or abort "usage: ruby dilla.rb live cue skip <slug>"
+      journal!(at: Time.now.utc.iso8601, cue: "skip", bed: slug)
+      puts "skipped #{slug}"
+    end
+    rows = bed_rows
+    bed_queue.first(5).each_with_index do |bed, i|
+      slug = slug_of(bed)
+      puts format("  %d  %-32s sw %.2f  %-10s %s", i + 1, slug, worth.fetch(slug, 0.35).to_f, rows.dig(slug, "key"), starred.include?(slug) ? "starred" : "")
+    end
   end
 
   # The grid comes from the record, not from a random number.
@@ -1123,7 +1196,7 @@ module Livesets
              "aformat=sample_rates=44100:channel_layouts=stereo[out]"
 
     journal!(
-      at: Time.now.utc.iso8601, seed: seed, set: "sampled_based_beats", seconds: total, bed: slug, sample_worth: sw,
+      at: Time.now.utc.iso8601, seed: seed, set: "sampled_based_beats", seconds: total, bed: slug, credit: credit(slug), sample_worth: sw,
       bpm: g[:bpm], drag: drag, bars_in_loop: g[:bars_in_loop], voicing: choice, progression: prog,
       chop_at: slice_at, reversed: reverse, bar_s: bar, form: form, hocket: voice_of.values.max.to_i + 1,
       bus_patch: ENV['LIVE_BUS_PATCH'], muted: muted.join(","),
@@ -1136,7 +1209,7 @@ module Livesets
           "▶ sampled  #{slug}  sw=#{format('%.2f', sw.to_f)}  #{g[:bpm]}bpm " \
           "(#{g[:bars_in_loop]}bar loop, drag #{drag})  " \
           "#{prog.map { |c| c ? "#{c[0]}#{c[1]}" : '.' }.join(' ')}" \
-          "#{reverse ? '  REV' : ''}  chop@#{slice_at}s")
+          "#{reverse ? '  REV' : ''}  chop@#{slice_at}s#{credit(slug) ? "\n  from #{credit(slug)}" : ''}")
   end
 
   # ambient_pads holds the same crate instead of striking it.
@@ -1245,7 +1318,7 @@ module Livesets
              "aformat=sample_rates=44100:channel_layouts=stereo[out]"
 
     journal!(
-      at: Time.now.utc.iso8601, seed: seed, set: "ambient_pads", seconds: total, bed: slug, sample_worth: sw,
+      at: Time.now.utc.iso8601, seed: seed, set: "ambient_pads", seconds: total, bed: slug, credit: credit(slug), sample_worth: sw,
       bpm: g[:bpm], drag: drag, bars_in_loop: g[:bars_in_loop], progression: prog,
       chop_at: slice_at, hold_s: hold, bar_s: bar, drums: nil, form: form,
       copy_machine: copies('ambient_pads'), voice_stack: voice_stack_plan.size, bus_patch: ENV['LIVE_BUS_PATCH'], muted: muted.join(","),
@@ -1256,7 +1329,7 @@ module Livesets
     play!(inputs, graph,
           "▶ pads  #{slug}  sw=#{format('%.2f', sw.to_f)}  #{g[:bpm]}bpm " \
           "(#{g[:bars_in_loop]}bar loop, drag #{drag})  hold #{hold}s  " \
-          "#{prog.map { |semi, v| "#{semi}#{v}" }.join(' ')}  chop@#{slice_at}s")
+          "#{prog.map { |semi, v| "#{semi}#{v}" }.join(' ')}  chop@#{slice_at}s#{credit(slug) ? "\n  from #{credit(slug)}" : ''}")
   end
 
   def play_set!(name)
@@ -1327,6 +1400,7 @@ module Livesets
     "LIVE_MUTE" => "comma list of #{MUTABLE.join(',')} (DRUMS=0 mutes the kit)",
     "LIVE_WEIGHTS" => "bus=weight pairs, how loud each bus meets the others",
     "LIVE_BED" => "pin the record a bed set plays, by rack slug",
+    "LIVE_KEY" => "only beds chopped in this key, as the registry spells it (A minor)",
     "LIVE_DRAG" => "pin how far under its pitch the record runs, 0.5..1.0",
     "LIVE_KIT" => "a directory under samples/drums with every kit role, or synth",
     "LIVE_KIT_CYCLE" => "bar (default) or phrase, how often the chord set's kit repeats",
@@ -1589,10 +1663,9 @@ module Livesets
     warn "dig: YouTube rips — unlicensed, not cleared for release. " \
          "lib/sampling.rb is the path that clears (Internet Archive, LibriVox, expired copyright)."
     crate = YAML.safe_load_file("project/crate.yml")["crate"].select { |e| e["available"] }
-    slugify = ->(t) { t.to_s.downcase.gsub(/[^a-z0-9]+/, "_").gsub(/\A_|_\z/, "")[0, 44] }
 
     crate.each_with_index do |entry, i|
-      slug = slugify.call(entry["title"])
+      slug = RadioChop.crate_slug(entry["title"])
       next if slug.empty?
       next if entry["duration_s"].to_i > MAX_SECONDS
 

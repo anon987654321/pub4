@@ -13118,8 +13118,14 @@ def latest_stems
   stem_paths(Dir[File.join(newest_directory, "*.wav")])
 end
 
+# The URL is written beside the audio before a byte of it is fetched. A record
+# described only after it arrives is outlived by any download that fails or is
+# moved, and forty-one of forty-two racks once lost the one line that would have
+# re-fetched them; a sidecar that comes first cannot be outlived by what it
+# describes.
 def download_track(url, output)
   require_tools! "yt-dlp", "ffmpeg"
+  File.write("#{output}.source.json", JSON.pretty_generate(url: url, fetched_at: Time.now.utc.iso8601, tool: "yt-dlp"))
   temporary = File.join(SAMPLE_DIR, "download.%(ext)s")
   sh! "yt-dlp", "-f", "bestaudio", "--extract-audio", "--audio-format", "wav", url, "-o", temporary
   downloaded = Dir[File.join(SAMPLE_DIR, "download.wav")].max_by { |path| File.mtime(path) }
@@ -28119,7 +28125,7 @@ def command_help
       ["stream", "[bars]", "Non-stop rotation, rendered and played (#{STREAM_BARS_COUNT} bars default)"],
       ["play", "[preset] [bars]", "Render one preset and play it (default dilla, 8 bars)"],
       ["bed", "[render [seed N] [out.wav] | check [seeds 1,2,3] | stop]", "The bed under the narration: passes rendered and played, ducking under speech"],
-      ["live", "[passes] [out.wav] | set|recall|broadcast|dig|ab|knobs", "The catalogue played as generated; the livesets (live dig rips YouTube, unlicensed)"],
+      ["live", "[passes] [out.wav] | set|recall|broadcast|dig|ab|knobs|cue|star", "The catalogue played as generated; the livesets (live dig rips YouTube, unlicensed)"],
       ["sines", "[play | demo | beat]", "The continuous stream through the engine's pads, queued and played; demo and beat render the two kept 08-28 takes' rows -> sines_demo.mp3, sines_beat.wav"],
       ["regenerate", "[bars]", "Fresh render and harmony-forward mix, looped"],
       ["live_now", "", "Loop the cached harmony or full render, no render wait"],
@@ -36038,7 +36044,7 @@ def live!(argv)
   # nothing for the first several progressions and looks stalled while it is
   # playing perfectly well.
   $stdout.sync = true
-  if %w[set recall broadcast dig ab knobs].include?(argv.first)
+  if %w[set recall broadcast dig ab knobs cue star].include?(argv.first)
     require_relative "lib/livesets"
     case argv.shift
     when "set" then Livesets.play_set!(argv.shift || abort("usage: ruby dilla.rb live set <#{Livesets::SETS.join('|')}>"))
@@ -36047,6 +36053,8 @@ def live!(argv)
     when "dig" then Livesets.dig_beds!
     when "ab" then Livesets.ab!(argv)
     when "knobs" then Livesets.knobs!
+    when "cue" then Livesets.cue!(argv)
+    when "star" then Livesets.star!(argv)
     end
     return
   end

@@ -5,6 +5,7 @@ require "fileutils"
 require "json"
 require "rbconfig"
 require "tmpdir"
+require "yaml"
 require_relative "../dilla/lib/sampling"
 require_relative "../dilla/lib/listen"
 
@@ -88,6 +89,41 @@ class TestCrateDig < Minitest::Test
 
   def test_chop_sidecar_does_not_invent_a_url
     assert_nil RadioChop.source_url_for("/tmp/unknown.mp3", items: [])
+  end
+
+  # live dig names each fetch for its crate entry's title, and the tracked crate
+  # holds the URL, so the chop records it without a row in the dug manifest.
+  def test_a_record_dug_from_the_crate_carries_its_url_into_the_chop
+    entry = YAML.safe_load_file(RadioChop::CRATE)["crate"].find { |e| e["available"] }
+    src = "samples/dug/#{RadioChop.crate_slug(entry["title"])}.wav"
+
+    assert_equal entry["url"], RadioChop.source_url_for(src, items: [])
+  end
+
+  # A quiet edge is not a bar line: a head against a silent tail used to score
+  # the full 12 dB, which put one rack's start at -57 dB.
+  def test_a_downbeat_needs_sound_at_both_edges
+    rate = 8000
+    edge = 400
+    loud = Array.new(edge) { |i| 0.5 * Math.sin(2 * Math::PI * 60 * i / rate) }
+    quieter = loud.map { |x| x * 0.1 }
+    silent = Array.new(edge, 0.0)
+
+    assert_operator RadioChop.downbeat(loud + quieter, rate, 0, edge * 2, edge), :>, 15.0 - 12.0
+    assert_equal 0.0, RadioChop.downbeat(loud + silent, rate, 0, edge * 2, edge)
+    assert_equal 0.0, RadioChop.downbeat(silent + loud, rate, 0, edge * 2, edge)
+  end
+
+  # One sound, one rack: a second slug holding the same audio goes, a row from
+  # before hashes stays, and the committed manifest carries no local path.
+  def test_the_registry_holds_one_row_per_sound_and_the_manifest_no_audio
+    rows = [{ "slug" => "b_01", "sha256" => "aa", "path" => "samples/chopped/b_01/loop.wav" },
+            { "slug" => "a_01", "sha256" => "aa" }, { "slug" => "c_01", "sha256" => "" }, { "slug" => "d_01" }]
+
+    assert_equal %w[a_01 c_01 d_01], RadioChop.unique_audio(rows).map { |r| r["slug"] }
+    racks = RadioChop.manifest_rows(rows)["racks"]
+    assert(racks.none? { |r| r.key?("path") })
+    assert_equal "aa", racks.first["sha256"]
   end
 
   # Cached stems are keyed by the cut's name, and a re-trimmed source cuts the
