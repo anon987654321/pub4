@@ -894,7 +894,7 @@ These are the operator's, because each changes a sound or accepts a changed inpu
    
    Cheap open items, grouped by owner:
    - **chain/preprompt:** `--from STAGE`; the chain name, stage and YAML sha in each stage sidecar; duration and model version in provenance; a per-stage timeout; chain frames in `gallery.jsonl`; a registry of failed chains; a lint for two adjacent global-colour stages.
-   - **craft:** conflict rows for selfie_geometry against a near subject_distance; a warning on "flawless"; the moment after a laugh rather than "smile"; terms for key-to-fill ratio, negative fill, micro-expression, hands and the arm.
+   - **craft:** the moment after a laugh rather than "smile"; terms for key-to-fill ratio, negative fill, micro-expression, hands and the arm.
    - **postpro:** the before and after `Uncanny` readings in the grade sidecar; sidecars from `process_file`, `run_watch` and `uplift`; a house-version constant; a contact sheet of one frame through every stock; a palette histogram under `--measure`.
    - **rescue:** honest cast-remedy text, and an underexposure diagnosis.
    - **golden_grade:** a luminance band and ΔE on a patch, measured first.
@@ -903,12 +903,9 @@ These are the operator's, because each changes a sound or accepts a changed inpu
    
    AMBITION's video section (117–128) is all deep work. Its argument for removing the frame-by-frame path belongs at the orphan comment `postpro.rb:337`. Item 104 contradicts item 35; the code sides with 35, grading after any upscale.
 933. **Photography research for `preprompt/lib/craft.rb`, 2026-09-14.**
-   - **Eye sharpness leads.** Sharpness at the facial landmarks is 4 of the top 5 predictors of portrait ratings, the eyes highest (ar5iv 1501.07304). Add a focus term for the nearest eye, make it the scenario default, and add a conflict against `soft_focus` and `petzval`.
-   - **The rule of thirds barely predicts ratings** (Amirshahi 2014). Content and object emphasis rank first (arXiv 2311.14410). Compose by isolation, layering and clean edges, and never draw thirds by default.
    - **Close faces are judged worse.** A face shot from 45 cm loses attractiveness (d=0.31) and trust (d=0.24) against one from 135 cm (PMC3448657). This supports scenario distances of 2 m or more.
    - **FLUX.1 reads 512 tokens through T5.** CLIP gives only a pooled vector (black-forest-labs/flux `conditioner.py`), so `TOKEN_LIMIT = 77` protects the SD-family lane only. The FLUX budget is T5 plus BFL's 30–80 words.
    - **Lens and bokeh strings act as style cues.** FLUX's response correlates with physically correct behaviour at about 0.20 (arXiv 2412.02168), so the written-out distance geometry is the stronger instruction.
-   - **Quality boosters pull toward illustration.** "8k", "artstation" and "octane render" raised SD 1.x aesthetic scores that way (ar5iv 2212.09611, 2209.11711). Record them as refused.
    - **Seeds outweigh phrasing** (ar5iv 2109.06977), so vary the seed at a fixed prompt.
    - **Pick scorers carefully.** Score with HPSv2.1 or PickScore plus pyiqa `qalign`. LAION's aesthetic score alone is random-level on Pick-a-Pic (ar5iv 2305.01569), and multimodal LLMs judge aesthetics poorly (AesBench 2401.08276).
 934. **Melody research for dilla and preprompt, 2026-09-14.**

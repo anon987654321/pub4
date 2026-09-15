@@ -23,7 +23,13 @@ composes onto it from named vocabularies, so a house style is a set of flags
 rather than a paragraph to remember:
 
 `--stock` 23 values, `--lens` 14, `--lighting` 20, `--weather` 12,
-`--time-of-day` 11, `--distance` 8, `--camera-height` 7. Spelling is normalised
+`--time-of-day` 11, `--distance` 8, `--camera-height` 7, `--composition` 6 and
+`--focus` 4. Focus defaults to nothing, but every drawn scenario asks for sharp
+eyes, the feature portrait ratings follow most closely; composition names what
+the frame does for the subject, and thirds is on offer without being a default,
+because ratings barely follow it. A prompt that says "8k", "artstation",
+"octane render" or "flawless" is warned about, since those pull a picture
+toward concept art or retouched skin. Spelling is normalised
 for case, hyphens and spaces, so `--time-of-day Golden-Hour` finds
 `golden_hour`. An unknown value **aborts and prints the valid ones**: it used to
 be documented as "a no-op rather than a crash", which in practice meant
@@ -88,7 +94,8 @@ the text, because recording the negative on its own says nothing about whether
 `PREPROMPT_MODEL` is set. `--final` forces `flux-2-max` and **does**
 override `PREPROMPT_MODEL`, which is the asymmetry it exists for: the
 environment variable is how a session stays in preview, and `--final` is how
-one image leaves it for the highest-fidelity model in the table. `vocab-check` covers it, because `--final` spent a while parsed into
+one image leaves it for the highest-fidelity model in the table. `vocab-check`
+covers it, because `--final` spent a while parsed into
 an option nothing read.
 
 ## Batches

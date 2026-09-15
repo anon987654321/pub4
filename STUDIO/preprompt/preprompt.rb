@@ -352,15 +352,33 @@ def warn_bare_selfie(prompt, options)
        "the distortion; --subject-distance selfie asks for it deliberately."
 end
 
+# --selfie-geometry asks for the proportions of a portrait from three metres, so
+# a --subject-distance inside the distortion range contradicts it.
+NEAR_SUBJECT_DISTANCES = %w[selfie 0.5m 1m].freeze
+
+def warn_selfie_geometry_distance(options)
+  near = options[:subject_distance]&.to_s&.downcase&.tr("- ", "__")
+  return unless options[:selfie_geometry] && NEAR_SUBJECT_DISTANCES.include?(near)
+
+  warn "warn: --selfie-geometry asks for a portrait's proportions from three metres, and " \
+       "--subject-distance #{near} puts the camera inside the distortion range"
+end
+
+def warn_backfiring_words(prompt)
+  backfiring_words(prompt).each { |word, why| warn "warn: the prompt says \"#{word}\", which #{why}" }
+end
+
 def warn_vocab_conflicts(options)
   warn_bare_selfie(options[:prompt], options)
+  warn_selfie_geometry_distance(options)
+  warn_backfiring_words(options[:prompt])
   VOCAB_CONFLICTS.each do |field_a, values_a, field_b, values_b|
     a = options[field_a]&.to_s&.downcase&.tr("- ", "__")
     b = options[field_b]&.to_s&.downcase&.tr("- ", "__")
     next unless a && b && values_a.include?(a) && values_b.include?(b)
 
     warn "warn: --#{field_a.to_s.tr('_', '-')} #{a} and --#{field_b.to_s.tr('_', '-')} #{b} describe " \
-         "incompatible light; the model will honour one of them and not tell you which"
+         "an incompatible picture; the model will honour one of them and not tell you which"
   end
 end
 
@@ -568,6 +586,8 @@ parser = OptionParser.new do |p|
   p.on("--until STAGE") { |v| options[:until] = v }
   p.on("--stock NAME") { |v| options[:stock] = v }
   p.on("--lens NAME") { |v| options[:lens] = v }
+  p.on("--focus NAME") { |v| options[:focus] = v }
+  p.on("--composition NAME") { |v| options[:composition] = v }
   p.on("--camera-height NAME") { |v| options[:camera_height] = v }
   p.on("--distance NAME") { |v| options[:distance] = v }
   p.on("--subject-distance NAME") { |v| options[:subject_distance] = v }

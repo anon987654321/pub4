@@ -302,7 +302,7 @@ class TestPreprompt < Minitest::Test
     end
 
     assert_empty out
-    assert_includes err, "incompatible light"
+    assert_includes err, "incompatible picture"
   end
 
   def test_a_compatible_pair_is_silent
@@ -427,5 +427,51 @@ class TestPreprompt < Minitest::Test
     table = BACKGROUND_LIGHT_CONFLICTS.merge("a moon base" => %w[soft])
     assert(send(:scenario_problems, conflicts: table).any? { |line| line.include?("a moon base") })
     assert_empty send(:scenario_problems)
+  end
+
+  # --- focus, composition and words that backfire -------------------------
+
+  def test_focus_and_composition_compose_like_any_other_field
+    prompt = send(:compile_prompt, "a woman at a window", { focus: "eyes", composition: "isolated" })
+
+    assert_includes prompt, FOCUS_VOCAB.fetch("eyes")
+    assert_includes prompt, COMPOSITION_VOCAB.fetch("isolated")
+  end
+
+  def test_sharp_eyes_against_a_soft_focus_lens_warns
+    _, loud = capture_io { send(:warn_vocab_conflicts, { focus: "eyes", lens: "soft_focus" }) }
+    _, quiet = capture_io { send(:warn_vocab_conflicts, { focus: "eyes", lens: "85mm" }) }
+
+    assert_match(/--focus eyes and --lens soft_focus/, loud)
+    assert_empty quiet
+  end
+
+  def test_words_that_pull_away_from_a_photograph_are_named
+    found = send(:backfiring_words, "Flawless skin, 8K, trending on ArtStation, octane render")
+
+    assert_equal %w[8k artstation octane\ render flawless].sort, found.keys.sort
+  end
+
+  # "4k" inside "4kg" or a word containing "flawless" as part of another token is
+  # not the booster.
+  def test_a_backfiring_word_matches_only_as_a_word
+    assert_empty send(:backfiring_words, "a 4kg bag, a flawlessness study, masterpieces of the Hanseatic league")
+  end
+
+  def test_selfie_geometry_with_a_near_camera_warns
+    _, loud = capture_io { send(:warn_vocab_conflicts, { selfie_geometry: true, subject_distance: "1m" }) }
+    _, quiet = capture_io { send(:warn_vocab_conflicts, { selfie_geometry: true, subject_distance: "3m" }) }
+
+    assert_match(/--subject-distance 1m/, loud)
+    assert_empty quiet
+  end
+
+  def test_a_drawn_sitting_asks_for_sharp_eyes_and_a_written_one_is_unchanged
+    drawn = send(:sitting_prompt, send(:scenario_sitting, 1), trigger: "t", descriptor: "d")
+    written = { "scene" => "at a window", "key" => "sky", "distance" => "3 m", "lens" => "85mm", "stock" => "Portra 400" }
+
+    assert_includes drawn, SCENARIO_FOCUS
+    assert_equal "t, d, at a window, key light sky, 3 m from camera, 85mm, Portra 400",
+                 send(:sitting_prompt, written, trigger: "t", descriptor: "d")
   end
 end

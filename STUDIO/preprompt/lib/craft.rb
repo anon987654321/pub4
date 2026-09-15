@@ -214,6 +214,32 @@ SKIN_VOCAB = {
   "sweat" => "a film of sweat catching hard specular highlights across the forehead and nose",
 }.freeze
 
+# Where the plane of focus sits. The eyes lead because they are measured to:
+# across 10,000 AVA portraits, four of the five features most correlated with
+# rating were sharpness at facial landmarks, the eyes highest
+# (ar5iv.labs.arxiv.org/html/1501.07304). A face with soft eyes reads as a
+# missed photograph however good the rest is.
+FOCUS_VOCAB = {
+  "eyes" => "focus on the nearest eye, both eyes critically sharp, background softer than the face",
+  "face" => "the face in sharp focus, shallow depth of field",
+  "deep" => "deep focus, subject and background both sharp",
+  "soft" => "soft overall focus, no plane critically sharp",
+}.freeze
+
+# How the frame is arranged, named by what it does for the subject rather than
+# by grid. Object emphasis ranks second only to content among rated attributes
+# (arxiv.org/pdf/2311.14410), while aesthetic ratings correlate only weakly
+# with judged rule-of-thirds placement and not at all with computed placement
+# (Amirshahi et al. 2014). So thirds is available and never a default.
+COMPOSITION_VOCAB = {
+  "isolated" => "subject clearly separated from the background",
+  "layered" => "foreground, subject and background in distinct depth layers",
+  "clean" => "uncluttered frame edges, nothing competing with the subject",
+  "fill_frame" => "subject filling the frame",
+  "centered" => "subject centred in the frame",
+  "thirds" => "subject placed on a rule-of-thirds line",
+}.freeze
+
 # Every structured field, in the order compile_prompt emits them. Keeping the
 # list here rather than repeating it in compile_prompt, resolve_vocab and the
 # option parser is what makes it possible to add a dimension in one place --
@@ -221,8 +247,10 @@ SKIN_VOCAB = {
 VOCABULARIES = {
   stock: STOCK_VOCAB,
   lens: LENS_VOCAB,
+  focus: FOCUS_VOCAB,
   camera_height: CAMERA_HEIGHT_VOCAB,
   distance: DISTANCE_VOCAB,
+  composition: COMPOSITION_VOCAB,
   subject_distance: SUBJECT_DISTANCE_VOCAB,
   key_side: KEY_SIDE_VOCAB,
   catchlight: CATCHLIGHT_VOCAB,
@@ -324,7 +352,7 @@ end
 
 # Vocabulary that contradicts itself. Not fatal — a neon sign at midday is a
 # real photograph, and so is candlelight in an afternoon interior — but two
-# fields describing incompatible light is far more often a mistake than an
+# fields describing an incompatible picture is far more often a mistake than an
 # intention, and the model resolves it by picking one and ignoring the other
 # without saying which.
 VOCAB_CONFLICTS = [
@@ -334,11 +362,44 @@ VOCAB_CONFLICTS = [
   [:lighting, %w[hard direct_flash], :weather, %w[fog haze downpour]],
   [:lighting, %w[window golden_hour rembrandt split butterfly loop], :time_of_day, %w[midnight]],
   [:weather, %w[snow frost aurora], :time_of_day, %w[golden_hour]],
+  [:focus, %w[eyes face deep], :lens, %w[soft_focus]],
+  [:focus, %w[deep], :lens, %w[macro large_format]],
 ].freeze
 
-# CLIP's text encoder takes 77 tokens and discards the rest without saying so, so
-# a prompt that runs long loses its tail — which is where the film stock and the
-# focal length are. Counted here rather than hoped about.
+# Words that ask for the opposite of a photograph, or for the failure itself.
+#
+# The boosters raised aesthetic scores on Stable Diffusion by pulling the
+# picture toward concept art: an optimiser searching for better prompts
+# appended "artstation" and "8k" (ar5iv.labs.arxiv.org/html/2212.09611), and a
+# crowd-driven search settled on "concept art, octane render, trending on
+# artstation" (ar5iv.labs.arxiv.org/html/2209.11711). "Flawless" and its kin
+# name the retouched skin this vocabulary exists to avoid. Warned rather than
+# stripped, because the prompt is the caller's.
+BACKFIRING_WORDS = {
+  "8k" => "pulls the picture toward rendered concept art",
+  "4k" => "pulls the picture toward rendered concept art",
+  "masterpiece" => "pulls the picture toward illustration",
+  "best quality" => "pulls the picture toward illustration",
+  "artstation" => "names a concept-art site, and the picture follows it there",
+  "octane render" => "names a 3D renderer, so the picture reads as rendered",
+  "unreal engine" => "names a game engine, so the picture reads as rendered",
+  "hyperrealistic" => "reads as illustration imitating a photograph",
+  "flawless" => "asks for the retouched, poreless skin that marks a generated face",
+  "poreless" => "asks for the retouched, poreless skin that marks a generated face",
+  "airbrushed" => "asks for the retouched, poreless skin that marks a generated face",
+}.freeze
+
+def backfiring_words(prompt)
+  text = prompt.to_s.downcase
+  BACKFIRING_WORDS.select { |word, _| text.match?(/(?<![\w-])#{Regexp.escape(word)}(?![\w-])/) }
+end
+
+# CLIP's text encoder takes 77 tokens and discards the rest without saying so.
+# On the SD-family lane that loses a long prompt's tail, which is where the film
+# stock and the focal length are. FLUX.1 reads CLIP only as a pooled vector and
+# carries the whole prompt through T5 at up to 512 tokens
+# (black-forest-labs/flux, src/flux/util.py), so there the tail still arrives.
+# The ceiling stays 77 because a sitting has to render on either lane.
 #
 # This is an approximation of BPE, not BPE: roughly one token per word plus one
 # per punctuation mark, which runs slightly high on ordinary English. Erring high
@@ -363,7 +424,8 @@ def sitting_prompt(sitting, trigger:, descriptor:)
    "key light #{sitting.fetch('key')}",
    "#{sitting.fetch('distance')} from camera",
    sitting.fetch("lens"),
-   sitting.fetch("stock")].join(", ")
+   sitting["focus"],
+   sitting.fetch("stock")].compact.join(", ")
 end
 
 # Sittings drawn from the vocabularies rather than written by hand.
@@ -381,6 +443,9 @@ end
 # Distances start at two metres. Closer than that the nose enlarges and the ears
 # fall away, and a likeness is judged on exactly that geometry.
 SCENARIO_LENSES = %w[50mm 85mm 105mm 135mm].freeze
+# Every drawn sitting asks for sharp eyes, the feature portrait ratings follow
+# most closely; see FOCUS_VOCAB. Written sittings keep their own wording.
+SCENARIO_FOCUS = "sharp focus on the nearest eye"
 SCENARIO_DISTANCES = %w[2m 3m 5m].freeze
 SCENARIO_FIELDS = {
   expression: [EXPRESSION_POOL, POOL_STRIDES.fetch(:expression)],
@@ -466,6 +531,7 @@ def scenario_sitting(number)
     "key" => pick.fetch(:lighting).tr("_", " "),
     "distance" => pick.fetch(:distance).sub(/m\z/, " m"),
     "lens" => pick.fetch(:lens),
+    "focus" => SCENARIO_FOCUS,
     "stock" => STOCK_VOCAB.fetch(pick.fetch(:stock)).split(",").first,
   }
 end
