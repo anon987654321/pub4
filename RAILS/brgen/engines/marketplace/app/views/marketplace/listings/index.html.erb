@@ -17,15 +17,15 @@
     than a photograph: a marketplace whose stock changes hourly has nothing
     permanent to photograph, so the city's name in --font-ad, the storefront
     promotional face, is the honest campaign. %>
-<section class="store-teasers" aria-labelledby="market-hero-title">
-  <header class="market-hero">
-    <h1 id="market-hero-title"><%= t("marketplace.hero_title", city: city_name) %></h1>
+<section class="store-teasers" aria-labelledby="store-hero-title">
+  <header class="store-hero">
+    <h1 id="store-hero-title"><%= t("marketplace.hero_title", city: city_name) %></h1>
     <%= tag.p t("marketplace.hero_lede") %>
     <%# @pagy.count is everything the current filter matches, not the 25 on this
         page — the number is only worth printing if it is the real one. %>
     <%= tag.p safe_join([ tag.strong(number_with_delimiter(@pagy&.count.to_i)),
                           t("marketplace.hero_count_suffix", city: city_name) ], " "),
-              class: "market-hero-count" %>
+              class: "store-hero-count" %>
     <%# The form for the kind on show: a jobs page offers to post a job. %>
     <%= link_to t("marketplace.kind_empty_action.#{@kind}"), new_listing_path(kind: @kind), class: "store-cta" %>
   </header>

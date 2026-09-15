@@ -675,6 +675,7 @@ nb:
     no_listings_search: Ingen annonser matcher søket.
     no_deals: Ingen tilbud
     no_deals_search: Ingen tilbud matcher søket.
+    no_deals_yet: "Ingen butikker i %{city} har tilbud ute akkurat nå."
     no_stores: Ingen butikker
     no_stores_search: Ingen butikker matcher søket.
     no_places: Ingen steder
@@ -1113,9 +1114,15 @@ nb:
     saves:
       one: "%{count} lagring"
       other: "%{count} lagringer"
-    reviews_count:
-      one: "%{count} omtale"
-      other: "%{count} omtaler"
+    listing_count:
+      one: "%{count} annonse"
+      other: "%{count} annonser"
+    deal_count:
+      one: "%{count} tilbud"
+      other: "%{count} tilbud"
+    store_count:
+      one: "%{count} butikk"
+      other: "%{count} butikker"
     deals:
       featured: Utvalgte tilbud
       title: Tilbud

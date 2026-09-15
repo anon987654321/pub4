@@ -603,7 +603,7 @@ assert_includes haystack, "turbo_prefetch: false",
     assert_includes controller, "authorize_owner"
     assert [ File.join(ROOT, "brgen/app/views/marketplace/stores/edit.html.erb"),
             File.join(ROOT, "brgen/engines/marketplace/app/views/marketplace/stores/edit.html.erb") ].any? { |p| File.file?(p) }
-    assert_includes read_brgen("app/assets/stylesheets/_marketplace_stores.scss"), ".store-grid"
+    assert_includes read_brgen("engines/marketplace/app/views/marketplace/stores/_live_search_results.html.erb"), "deal-grid"
     assert_includes read_brgen("app/assets/stylesheets/application.scss"), "_marketplace_stores"
   end
 

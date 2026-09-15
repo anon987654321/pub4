@@ -17,10 +17,7 @@
     <% if listing %>
       <p class="deal-card-subtitle"><%= listing.title %></p>
       <% if listing.reviews_count.to_i.positive? %>
-        <div class="deal-meta deal-meta--rating">
-          <span class="deal-rating"><%= number_with_precision(listing.rating, precision: 1) %> ★</span>
-          <%= t("marketplace.reviews_count", count: listing.reviews_count) %>
-        </div>
+        <%= render "shared/store_stars", rating: listing.rating, count: listing.reviews_count %>
       <% end %>
     <% end %>
   </div>

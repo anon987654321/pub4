@@ -7,24 +7,17 @@
   align-items: center;
 }
 
-/* The kind switcher is the category scroller one row up: goods, jobs,
-   housing, gigs. Same chip geometry, so it reads as the same control. */
-.deal-cats,
-.listing-kinds {
+/* A row of Kaufland's smart-filter pills: sort orders, store kinds, sibling
+   categories. It scrolls sideways on a phone rather than wrapping into rows. */
+.store-pills {
   display: flex;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-4);
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
   overflow-x: auto;
   scrollbar-width: none;
-  /* Without this the flex item's automatic minimum size sizes the scroller to
-     its content instead of its parent, so the scroll box itself hung 160px past
-     the viewport on /shops at 390px rather than scrolling inside it. */
-  min-width: 0;
-}
-
-.deal-cats::-webkit-scrollbar,
-.listing-kinds::-webkit-scrollbar {
-  display: none;
+  list-style: none;
 }
 
 /* Kaufland.de's smart-filter pill: 14px in a 1px #8e8e8e pill that darkens to
@@ -56,39 +49,87 @@
 }
 
 
-/* Same catalogue geometry as .deal-grid — a store tile and a deal tile are the
-   same object, and they were sized by two different ladders. */
-.store-grid {
+/* Kaufland's result header: the name at 28px (21px on a phone) with the count
+   beside it in the muted grey, and the sort under both. */
+.store-results {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: var(--tile-gap-col);
-  row-gap: var(--tile-gap-row);
-  padding: var(--space-4);
+  gap: 16px;
+  min-width: 0;
+}
+
+.store-results-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 12px;
+  margin-block: 16px;
+}
+
+.store-results-head h1 {
+  margin: 0;
+  color: var(--store-ink);
+  font-size: var(--store-text-heading);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-snug);
+}
+
+.store-results-count {
+  margin: 0;
+  color: var(--store-rule);
+  font-size: 16px;
+}
+
+.store-results-head .store-pills {
+  flex-basis: 100%;
+}
+
+.store-filters h2 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: var(--weight-bold);
 }
 
 @media (min-width: 768px) {
-  .store-grid {
-    grid-template-columns: repeat(auto-fill, minmax(var(--tile-min-xl), 1fr));
+  .store-results-head h1 {
+    font-size: 28px;
   }
 }
 
-.featured-deals {
-  padding: var(--space-4) 0 0;
+/* From 1024px the categories stand in Kaufland's 256px column as a list. */
+@media (min-width: 1024px) {
+  .store-results--filtered {
+    grid-template-columns: 256px minmax(0, 1fr);
+  }
+
+  .store-filters {
+    padding-inline-end: 24px;
+    border-inline-end: 1px solid var(--store-hairline);
+  }
+
+  .store-filters .store-pills {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .store-filters .deal-cat {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--store-ink);
+    font-size: 16px;
+    white-space: normal;
+  }
+
+  .store-filters .deal-cat.active {
+    font-weight: var(--weight-bold);
+    text-decoration: underline;
+  }
 }
 
-.featured-deals h2 {
-  margin: 0 var(--space-4) var(--space-3);
-  font-size: var(--text-sm);
-  font-weight: var(--weight-bold);
-  color: var(--text-secondary);
-}
-
-.featured-deals .deal-grid {
-  padding-top: 0;
-}
-
-.deal-grid--featured {
-  padding-bottom: var(--space-4);
+@media (min-width: 1265px) {
+  .store-results--filtered .deal-grid {
+    --store-cols: 4;
+  }
 }
 
 .cart-pay-actions {

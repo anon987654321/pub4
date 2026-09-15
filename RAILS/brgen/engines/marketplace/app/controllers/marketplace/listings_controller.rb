@@ -36,13 +36,8 @@ class Marketplace::ListingsController < Marketplace::BaseController
     # Price + sort facets (Amazon/Craigslist-style browsing, was recency only).
     scope = scope.where("price_cents >= ?", (params[:min_price].to_f * 100).to_i) if params[:min_price].present?
     scope = scope.where("price_cents <= ?", (params[:max_price].to_f * 100).to_i) if params[:max_price].present?
-    @sort = %w[recent price_low price_high].include?(params[:sort]) ? params[:sort] : "recent"
-    sorted = case @sort
-    when "price_low"  then scope.order(price_cents: :asc)
-    when "price_high" then scope.order(price_cents: :desc)
-    else scope.recent
-    end
-    @pagy, @listings = pagy(sorted)
+    @sort = Marketplace::Listing::SORTS.include?(params[:sort]) ? params[:sort] : "recent"
+    @pagy, @listings = pagy(scope.sorted_by(@sort))
     @listing_distances = listing_distances(@listings, @search_lat, @search_lng)
     @categories = Marketplace::Category.roots.includes(:children)
     @top_offers = top_offers_for_index(@kind)

@@ -670,6 +670,7 @@ en:
     no_listings_search: No listings match this search.
     no_deals: No deals
     no_deals_search: No deals match this search.
+    no_deals_yet: "No store in %{city} is running a deal right now."
     no_stores: No stores
     no_stores_search: No stores match this search.
     no_places: No places
@@ -1106,9 +1107,15 @@ en:
     saves:
       one: "%{count} save"
       other: "%{count} saves"
-    reviews_count:
-      one: "%{count} review"
-      other: "%{count} reviews"
+    listing_count:
+      one: "%{count} listing"
+      other: "%{count} listings"
+    deal_count:
+      one: "%{count} deal"
+      other: "%{count} deals"
+    store_count:
+      one: "%{count} store"
+      other: "%{count} stores"
     deals:
       featured: Featured deals
       title: Deals

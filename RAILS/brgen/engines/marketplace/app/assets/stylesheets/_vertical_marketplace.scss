@@ -6,15 +6,16 @@
 /* .layout caps every surface at --feed-max (600px). A storefront is a grid, not
    a timeline, so it opens up; main takes Kaufland's container in
    _vertical_shell.scss. */
-body.vertical-marketplace .layout {
+:is(body.vertical-marketplace, body.vertical-takeaway) .layout {
   max-width: 100%;
 }
 
-/* The teaser banner. Type is the whole design here — see the view for why a
-   marketplace has nothing permanent to photograph. Kaufland's first banner is
-   274px tall at 1440; the city's name in --font-ad fills it the way its
-   campaign lettering does. */
-.market-hero {
+/* The teaser banner on both storefronts. Type is the whole design here — see
+   the views for why neither has anything permanent to photograph. Kaufland's
+   first banner is 274px tall at 1440; the headline in --font-ad fills it the
+   way its campaign lettering does. Instrument Serif is drawn at one weight, so
+   it stands at 400; a heavier step would be synthesised. */
+.store-hero {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -26,7 +27,12 @@ body.vertical-marketplace .layout {
   background: var(--store-well);
 }
 
-.market-hero h1 {
+/* Standing alone, as on takeaway, the banner keeps the teaser row's offset. */
+.store-hero--alone {
+  margin-block: 24px var(--store-section);
+}
+
+.store-hero h1 {
   margin: 0;
   color: var(--store-ink);
   font-family: var(--font-ad);
@@ -36,7 +42,7 @@ body.vertical-marketplace .layout {
   text-wrap: balance;
 }
 
-.market-hero p {
+.store-hero p {
   margin: 0;
   max-width: 46ch;
   color: var(--store-ink-soft);
@@ -46,13 +52,12 @@ body.vertical-marketplace .layout {
 
 /* The live number, so the banner says something true rather than something
    evergreen. */
-.market-hero .market-hero-count strong {
+.store-hero .store-hero-count strong {
   color: var(--store-ink);
   font-weight: var(--weight-heavy);
 }
 
-body.vertical-marketplace .page-header h1,
-body.vertical-marketplace .marketplace-deals h1 {
+:is(body.vertical-marketplace, body.vertical-takeaway) .page-header h1 {
   color: var(--store-ink);
   font-family: var(--font);
   font-size: var(--store-text-heading);
@@ -66,12 +71,11 @@ body.vertical-marketplace .listing-status {
 }
 
 @media (min-width: 768px) {
-  .market-hero {
+  .store-hero {
     padding: 32px;
   }
 
-  body.vertical-marketplace .page-header h1,
-  body.vertical-marketplace .marketplace-deals h1 {
+  :is(body.vertical-marketplace, body.vertical-takeaway) .page-header h1 {
     font-size: 28px;
   }
 }
@@ -97,9 +101,9 @@ body.vertical-marketplace .listing-status {
   text-decoration: none;
 }
 
-.store-breadcrumb a + a::before {
+.store-breadcrumb > * + *::before {
   content: "›";
-  margin-inline: 8px;
+  padding-inline: 8px;
   color: var(--store-ink-soft);
 }
 
