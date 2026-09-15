@@ -53,6 +53,15 @@ module Postpro
     # tungsten, one with a filter already baked in) and drops the four that were
     # only faces.
     CAST_SPREAD = 34.0
+    # A frame whose middle sits below this, in coded 0..1 luminance, is dark
+    # all through: 0.18 is about two and a half stops under mid-grey. It only
+    # counts when the brightest two percent stay under DARK_HIGHLIGHT too,
+    # because a night street with a lit window is dark by choice and its window
+    # says so. On noisy frames whose answer is known, one at 30 of 255 reads 0.12
+    # and 0.20, mid-grey 0.55 and 0.63, and the dark one with a lamp across 5% of
+    # it 0.12 and 0.98.
+    DARK_MEDIAN = 0.18
+    DARK_HIGHLIGHT = 0.6
 
     Finding = Struct.new(:code, :severity, :message, :remedy, keyword_init: true)
 
@@ -88,6 +97,16 @@ module Postpro
         )
       end
 
+      if (dark = underexposure(image))
+        findings << Finding.new(
+          code: :underexposed, severity: :partly,
+          message: format("underexposed — half the frame sits below %.2f and the brightest 2%% below %.2f",
+                          dark[:median], dark[:highlight]),
+          remedy: "not lifted here: raise exposure where the file was made, from raw if there is one. " \
+                  "A grade can open shadows only as far as the capture recorded them, and noise rises with them"
+        )
+      end
+
       if (cast = colour_cast(image))
         findings << Finding.new(
           code: :cast, severity: :fixable,
@@ -99,6 +118,14 @@ module Postpro
       end
 
       findings
+    end
+
+    # The frame's median and its 98th percentile, when both say it is dark.
+    def self.underexposure(image)
+      luma = (image.bands >= 3 ? image.colourspace("b-w") : image).cast(:uchar)
+      median = luma.percent(50) / 255.0
+      highlight = luma.percent(98) / 255.0
+      median < DARK_MEDIAN && highlight < DARK_HIGHLIGHT ? { median: median, highlight: highlight } : nil
     end
 
     # Mixed lighting and wrong white balance both show as the channel means
@@ -142,7 +169,7 @@ module Postpro
         lines << "rescue: nothing measurable is wrong with the optical layer"
       else
         findings.each do |finding|
-          tag = finding.severity == :unfixable ? "CANNOT FIX" : "fixable"
+          tag = { unfixable: "CANNOT FIX", partly: "partly" }.fetch(finding.severity, "fixable")
           lines << "rescue: [#{tag}] #{finding.message}"
           lines << "rescue:            #{finding.remedy}"
         end

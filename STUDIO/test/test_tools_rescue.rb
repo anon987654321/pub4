@@ -38,6 +38,13 @@ class TestRescue < Minitest::Test
     path
   end
 
+  def noisy(dir, name, value)
+    path = File.join(dir, name)
+    band = Vips::Image.gaussnoise(256, 256, mean: value, sigma: 10, seed: 1).cast(:uchar)
+    yield(band).then { |b| b.bandjoin([b, b]) }.write_to_file(path)
+    path
+  end
+
   def codes(path) = Postpro::Rescue.diagnose(path).map(&:code)
 
   # The phone-filter / diffusion case, and the one thing here that genuinely
@@ -109,5 +116,17 @@ class TestRescue < Minitest::Test
     findings = [Postpro::Rescue::Finding.new(code: :flat), Postpro::Rescue::Finding.new(code: :plastic)]
 
     assert_equal "quality_uplift", Postpro::Rescue.preset_for(findings)
+  end  # Dark all through is diagnosed; dark with a lit lamp in frame is a choice.
+  def test_a_frame_dark_all_through_is_underexposed_and_a_night_scene_with_a_lamp_is_not
+    Dir.mktmpdir do |dir|
+      dark = Postpro::Rescue.diagnose(noisy(dir, "dark.png", 30) { |b| b }).find { |f| f.code == :underexposed }
+      assert dark, "a frame at 30 of 255 has to read as underexposed"
+      assert_equal :partly, dark.severity
+      assert_includes Postpro::Rescue.report([dark]).join(" "), "[partly]"
+
+      lamp = noisy(dir, "lamp.png", 30) { |b| b.draw_rect([250], 0, 0, 256, 13, fill: true) }
+      refute_includes codes(lamp), :underexposed, "a lit window says the dark is deliberate"
+      refute_includes codes(noisy(dir, "grey.png", 140) { |b| b }), :underexposed
+    end
   end
 end
