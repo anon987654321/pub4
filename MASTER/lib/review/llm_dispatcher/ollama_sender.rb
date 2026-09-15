@@ -175,6 +175,13 @@ module Master
         end
 
         # [prompt, reply], as Ollama counts them.
+        #
+        # eval_duration is left unread, so no tokens-per-second figure is kept.
+        # Nothing would rank by it: the local lane leads with the largest model
+        # the machine holds (ModelRouter#local_models), and the pulled models
+        # that lane offers mostly carry no models.yml row whose speed score a
+        # measurement could replace. A throughput figure would argue for the
+        # smallest model, which is the one that loses the fold.
         def ollama_tokens(parsed)
           [parsed["prompt_eval_count"].to_i, parsed["eval_count"].to_i]
         end
