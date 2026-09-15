@@ -69,7 +69,16 @@ module Master::Core
       @proof = Proof.new(risk:)
     end
 
+    def seed_from_intent(intent)
+      note(:goal, intent.goal)
+      note(:approach, intent.approach) if intent.approach
+      note(:evidence, intent.evidence_summary) if intent.evidence_summary
+      @proof.risk = intent.risk
+      self
+    end
+
     def note(kind, text)
+
       @entries << Entry.new(role: :note, text: "#{kind}: #{text}")
       self
     end
