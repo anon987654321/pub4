@@ -11,7 +11,7 @@ class FoldObserverTest < Minitest::Test
   # Minimal offline model: emit a scripted list of effects, then done.
   class ScriptedModel
     def initialize(*effects) = @effects = effects
-    def propose(_context, verbs:) = @effects.shift || Master::Core::Effect.done("done")
+    def propose(_context, verbs:, **) = @effects.shift || Master::Core::Effect.done("done")
   end
 
   def build(model, root:, observer: nil)

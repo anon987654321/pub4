@@ -123,4 +123,17 @@ class EvidencePolicyTest < Minitest::Test
     end
     assert proof.proved?, "a fold that re-proves its work after a change is stuck"
   end
+  # A refused write touched nothing. Measured on gemma3:4b: a fold asked what a
+  # file said read it, tried to write it, was refused, and lost both its
+  # evidence and the read-only answer for every turn after.
+  def test_a_refused_write_leaves_the_evidence_and_the_answer_standing
+    proof = proof_with(:test_pass, :scan_clean, :code_review)
+    proof.record_evidence(E.write("notes.md", "x\n"), Master::Core::Observation.no("refused by forbidden_file"))
+    assert proof.proved?, "a write that never happened voided the evidence"
+
+    reader = Master::Core::Proof.new
+    reader.record_evidence(E.read("notes.md"), OK)
+    reader.record_evidence(E.write("notes.md", "x\n"), Master::Core::Observation.no("refused"))
+    assert reader.answered_from_reads?, "a refused write turned a read-only answer into a change"
+  end
 end

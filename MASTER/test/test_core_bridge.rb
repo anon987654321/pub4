@@ -10,7 +10,7 @@ require "tmpdir"
 class CoreBridgeTest < Minitest::Test
   class ScriptedModel
     def initialize(*effects) = @effects = effects
-    def propose(_context, verbs:) = @effects.shift || Master::Core::Effect.done("done")
+    def propose(_context, verbs:, **) = @effects.shift || Master::Core::Effect.done("done")
   end
 
   class FakeBus
@@ -110,9 +110,63 @@ class CoreBridgeTest < Minitest::Test
       refute_empty agent.calls
       assert_equal Master::Core::Model::SYSTEM, agent.calls.first[:system]
       refute agent.calls.first[:law], "Core::Model's prompt is the whole contract"
-      assert_equal Master::Core::Model::SCHEMA, agent.calls.first[:format]
+      offered = agent.calls.first[:format].dig(:properties, :verb, :enum)
+      refute_includes offered, "done", "a first turn has read nothing and proved nothing"
+      assert_includes offered, "read"
       assert_equal 0, agent.calls.first[:temperature], "every model decodes the fold alike"
     end
+  end
+
+  # A small local model that cannot hold the fold answers in prose. Two such
+  # replies in a row move the fold to the next larger local model, and past the
+  # largest to the routed cloud lane when the network answers.
+  class LadderAgent
+    attr_reader :models
+    attr_accessor :replies
+
+    def initialize(replies) = (@replies, @models = replies, [])
+    def model = "ollama:gemma3:4b"
+    def candidate_models = ["ollama:gemma3:4b", "openrouter/some-cloud"]
+
+    def ask_once(_prompt, model: nil, **)
+      @models << model
+      @replies.shift || %({"why": "look", "verb": "read", "args": {"path": "a"}})
+    end
+  end
+
+  class SizedRouter
+    SIZES = { "gemma3:4b" => 3, "llama3" => 4, "phi" => 2 }.freeze
+    def local_models = %w[ollama:llama3 ollama:gemma3:4b ollama:phi]
+    def ollama_size(name) = SIZES.fetch(name, 0)
+  end
+
+  def ladder_run(replies, online:)
+    agent = LadderAgent.new(replies)
+    ladder = Master::CLI::CoreBridge::ModelLadder.new(agent:, router: SizedRouter.new, online: -> { online })
+    chat = Master::CLI::CoreBridge::AgentChat.new(agent, nil, nil, nil, ladder)
+    6.times { chat.with_instructions("sys").ask("turn") }
+    agent.models
+  end
+
+  def test_two_unparseable_replies_climb_to_the_next_larger_local_model
+    models = ladder_run(["I cannot help with that.", "no idea"], online: false)
+    assert_equal [nil, nil, "ollama:llama3"], models.first(3)
+  end
+
+  def test_one_bad_reply_between_good_ones_does_not_climb
+    good = %({"why": "x", "verb": "read", "args": {"path": "a"}})
+    assert_equal [nil] * 6, ladder_run(["prose", good, "prose", good], online: false)
+  end
+
+  def test_past_the_largest_local_model_the_cloud_lane_answers_when_online
+    models = ladder_run(["a", "b", "c", "d"], online: true)
+    assert_equal "ollama:llama3", models[2]
+    assert_equal "openrouter/some-cloud", models[4]
+  end
+
+  def test_offline_past_the_largest_local_model_the_fold_stays_where_it_is
+    models = ladder_run(["a", "b", "c", "d"], online: false)
+    assert_equal "ollama:llama3", models.last
   end
 
   def test_on_turn_callback_fires_per_turn

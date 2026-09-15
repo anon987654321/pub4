@@ -77,3 +77,65 @@ class TestModelParse < Minitest::Test
     assert_equal({}, e.args)
   end
 end
+
+# The reply schema is built per turn from Proof#scope. A verb whose
+# precondition fails is not in the enum, so a schema-bound model cannot write
+# it; these read the offer off real Proof states rather than hand-built hashes.
+class TestModelOffer < Minitest::Test
+  Effect = Master::Core::Effect
+  Observation = Master::Core::Observation
+
+  def offered(proof) = Master::Core::Model.offer(Master::Core::VERBS, proof.scope)
+  def verbs(schema) = schema.dig(:properties, :verb, :enum)
+  def operations(schema) = schema.dig(:properties, :args, :properties, :operation, :enum)
+
+  def test_a_fresh_goal_cannot_be_offered_done_or_a_commit
+    schema = offered(Master::Core::Proof.new)
+    refute_includes verbs(schema), "done"
+    refute_includes operations(schema), "commit"
+    assert_includes verbs(schema), "read"
+    assert_includes verbs(schema), "write"
+  end
+
+  def test_a_read_answers_so_done_opens
+    proof = Master::Core::Proof.new
+    proof.record_evidence(Effect.read("notes.md"), Observation.ok("hello"))
+    assert_includes verbs(offered(proof)), "done"
+  end
+
+  def test_evidence_opens_done_and_commit
+    proof = Master::Core::Proof.new
+    proof.record_evidence(Effect.write("a.rb", "A = 1\n"), Observation.ok)
+    refute_includes verbs(offered(proof)), "done", "a write with no proof since is a claim nobody checked"
+    { test_pass: %w[rake test], scan_clean: %w[rubocop], code_review: %w[rake review] }.each do |kind, argv|
+      proof.record_evidence(Effect.exec(argv, evidence: kind), Observation.ok("ok"))
+    end
+    assert_includes verbs(offered(proof)), "done"
+    assert_includes operations(offered(proof)), "commit"
+  end
+
+  def test_pending_ideation_closes_write_and_high_risk_closes_done_until_council
+    proof = Master::Core::Proof.new(risk: :high)
+    proof.record_evidence(Effect.read("notes.md"), Observation.ok("hello"))
+    refute_includes verbs(offered(proof)), "write"
+    refute_includes verbs(offered(proof)), "done"
+    proof.mark_ideation_complete!
+    proof.mark_council_pass!
+    assert_includes verbs(offered(proof)), "write"
+    assert_includes verbs(offered(proof)), "done"
+  end
+
+  def test_no_scope_offers_everything
+    assert_equal Master::Core::Model::SCHEMA, Master::Core::Model.offer(Master::Core::VERBS, nil)
+  end
+end
+
+# llama.cpp turns a JSON schema into a grammar and reads an object that names
+# properties and is silent on the rest as closed. Measured on gemma3:4b: args
+# that named only `operation` came back {"operation":"stage"} for a read.
+class TestModelSchemaArgsStayOpen < Minitest::Test
+  def test_args_accept_keys_the_schema_does_not_name
+    schema = Master::Core::Model.offer(Master::Core::VERBS, Master::Core::Proof.new.scope)
+    assert_equal true, schema.dig(:properties, :args, :additionalProperties)
+  end
+end

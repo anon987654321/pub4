@@ -7,7 +7,7 @@ require "master"
 
 class TestKernelSpine < Minitest::Test
   Model = Struct.new(:effects) do
-    def propose(_context, verbs:)
+    def propose(_context, verbs:, **)
       raise "missing verbs" unless verbs.include?(:done)
 
       effects.shift || Master::Core::Effect.done("empty")

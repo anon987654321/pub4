@@ -29,7 +29,7 @@ module Master::Core
       @memory.note(:goal, goal)
 
       @max_turns.times do |turn|
-        effect = @model.propose(@memory.context, verbs: @world.verbs)
+        effect = @model.propose(@memory.context, verbs: @world.verbs, scope: @memory.proof.scope)
 
         case @law.admit(effect, @memory)
         in Verdict::Block(reason:, by:)

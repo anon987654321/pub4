@@ -35,17 +35,86 @@ module Master
       # behaves alike whichever model answers, and each tier enforces the
       # schema as far as it can. The reply's `why` is the model's reason for the
       # effect, and the bus carries it to the operator before the effect runs.
-      AgentChat = Struct.new(:agent, :bus, :system) do
-        def with_instructions(text) = AgentChat.new(agent, bus, text)
+      #
+      # The schema is the turn's offer (Core::Model.offer), and the ladder is
+      # shared by every copy, because Core::Model makes a fresh one per turn.
+      AgentChat = Struct.new(:agent, :bus, :system, :format, :ladder) do
+        def with_instructions(text) = AgentChat.new(agent, bus, text, format, ladder)
+        def with_format(schema) = AgentChat.new(agent, bus, system, schema, ladder)
 
         def ask(prompt)
-          reply = agent.ask_once(prompt, system:, law: false, temperature: 0, format: Master::Core::Model::SCHEMA)
+          reply = agent.ask_once(prompt, system:, law: false, temperature: 0,
+                                         format: format || Master::Core::Model::SCHEMA, **Hash(ladder&.pinned))
+          ladder&.hear(reply)
           why = CoreBridge.reason_in(reply)
           bus&.publish("core:reason", why:) if why
           Reply.new(reply)
         end
       end
       Reply = Struct.new(:content)
+
+      # A local model that cannot hold the fold says so the same way twice: a
+      # reply with no object in it, or an object with no verb the fold knows.
+      # A refusal arrives as one of those. After STRIKES in a row the fold asks
+      # the next larger model this machine runs, and past the largest, the
+      # routed cloud lane when the network answers. It climbs and never steps
+      # back down within a goal: a model that failed twice in a row on this
+      # transcript has shown what it does with it.
+      class ModelLadder
+        STRIKES = 2
+        LOCAL = /\Aollama[:\/]/
+
+        def initialize(agent:, bus: nil, config: nil, router: nil, online: -> { Master::Ground::BootReceipt.network? })
+          @agent = agent
+          @config = config
+          @bus = bus
+          @router = router
+          @online = online
+          @model = nil
+          @strikes = 0
+        end
+
+        def pinned = @model ? { model: @model } : {}
+
+        def hear(reply)
+          @strikes = unparsed?(reply) ? @strikes + 1 : 0
+          climb if @strikes >= STRIKES
+        end
+
+        private
+
+        def unparsed?(reply)
+          effect = Master::Core::Model.parse(reply, verbs: Master::Core::VERBS)
+          effect.verb == :note && effect.args[:kind] == :parse_error
+        end
+
+        def climb
+          current = @model || @agent.model
+          @strikes = 0
+          higher = larger_local(current) || cloud_lane(current)
+          @bus&.publish("core:escalation", from: current, to: higher, strikes: STRIKES)
+          @model = higher if higher
+        end
+
+        # The smallest pulled model heavier than this one, among those that fit.
+        def larger_local(current)
+          return unless current.to_s.match?(LOCAL)
+
+          sized = router.local_models.map { |id| [id, router.ollama_size(id.sub(LOCAL, ""))] }
+          floor = router.ollama_size(current.to_s.sub(LOCAL, ""))
+          sized.select { |_, size| size > floor }.min_by(&:last)&.first
+        end
+
+        def cloud_lane(current)
+          return unless @online.call
+
+          Array(@agent.candidate_models).find { |id| !id.to_s.match?(LOCAL) && id != current }
+        end
+
+        def router
+          @router ||= Master::CLI::Routing::ModelRouter.new(config: @config)
+        end
+      end
 
       # Read the way Core::Model.parse reads the object: first brace to last.
       def reason_in(reply)
@@ -60,7 +129,9 @@ module Master
 
       def agent_chat(container, bus:)
         agent = container && container[:agent]
-        AgentChat.new(agent, bus) if agent.respond_to?(:ask_once)
+        return unless agent.respond_to?(:ask_once)
+
+        AgentChat.new(agent, bus, nil, nil, ModelLadder.new(agent:, bus:, config: container[:config]))
       end
 
       # The Fold writes through World rather than the Io tools, so the turn's

@@ -29,16 +29,45 @@ module Master::Core
     # commits to a verb, which is where format-constrained reasoning holds up
     # (arXiv 2408.02442). It is bounded, because an unbounded string is where a
     # constrained small model loops.
-    SCHEMA = {
-      type: "object",
-      properties: {
-        why: { type: "string", maxLength: 200 },
-        verb: { type: "string", enum: VERBS.map(&:to_s) },
-        args: { type: "object" },
-      },
-      required: %w[why verb args],
-      additionalProperties: false,
-    }.freeze
+    #
+    # Built per turn from what is legal on it. A verb the Constitution would
+    # refuse is left out of the enum, so a model held to the schema cannot
+    # generate an early `done` or a commit ahead of its evidence at all, and
+    # spends the turn on a move that can land. The Constitution still judges
+    # every effect: a lane that ignores the schema meets the same refusal it
+    # always did.
+    GIT_OPERATIONS = %w[diff stage commit].freeze
+
+    def self.schema(verbs: VERBS, operations: GIT_OPERATIONS)
+      {
+        type: "object",
+        properties: {
+          why: { type: "string", maxLength: 200 },
+          verb: { type: "string", enum: verbs.map(&:to_s) },
+          # additionalProperties is spelled out: llama.cpp's grammar reads an
+          # object that names properties and says nothing else as closed, and a
+          # read then has nowhere to put its path.
+          args: { type: "object", properties: { operation: { type: "string", enum: operations } },
+                  additionalProperties: true },
+        },
+        required: %w[why verb args],
+        additionalProperties: false,
+      }
+    end
+
+    SCHEMA = schema.freeze
+
+    # The verbs and git operations whose preconditions hold, read off
+    # Proof#scope. No scope is no knowledge of the turn, so everything is offered.
+    def self.offer(verbs, scope)
+      return schema(verbs:) unless scope
+
+      closed = []
+      closed << :done unless (scope[:proved] || scope[:answerable]) && scope[:cleared]
+      closed << :write unless scope[:writable]
+      operations = scope[:proved] ? GIT_OPERATIONS : GIT_OPERATIONS - %w[commit]
+      schema(verbs: verbs - closed, operations:)
+    end
 
     # What a malformed reply is shown, so the next turn can repair itself.
     SHAPE = '{"why": "what the last result showed, and the next step", "verb": "read", ' \
@@ -99,8 +128,8 @@ module Master::Core
     end
 
     # The one method the Core calls. Returns an Effect.
-    def propose(context, verbs:)
-      reply = ask(transcript(context))
+    def propose(context, verbs:, scope: nil)
+      reply = ask(transcript(context), Model.offer(verbs, scope))
       Model.parse(reply, verbs:)
     end
 
@@ -141,8 +170,12 @@ module Master::Core
       end.join("\n")
     end
 
-    def ask(prompt)
-      chat.with_instructions(SYSTEM).ask(prompt).content.to_s
+    # with_format, not RubyLLM's with_schema: that one parses the reply into a
+    # Hash, and parse reads text. A chat without it decodes unconstrained.
+    def ask(prompt, schema)
+      held = chat.with_instructions(SYSTEM)
+      held = held.with_format(schema) if held.respond_to?(:with_format)
+      held.ask(prompt).content.to_s
     end
 
     def chat

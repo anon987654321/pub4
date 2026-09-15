@@ -8,7 +8,7 @@ require "cli/fold_risk"
 class FoldDeliberationTest < Minitest::Test
   class ScriptedModel
     def initialize(*effects) = @effects = effects
-    def propose(_context, verbs:) = @effects.shift || Master::Core::Effect.done("done")
+    def propose(_context, verbs:, **) = @effects.shift || Master::Core::Effect.done("done")
   end
 
   def evidence_effects

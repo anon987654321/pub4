@@ -8,7 +8,7 @@ require "master"
 class CritiqueFoldTest < Minitest::Test
   class ScriptedModel
     def initialize(*effects) = @effects = effects
-    def propose(_context, verbs:) = @effects.shift || Master::Core::Effect.done("shipped")
+    def propose(_context, verbs:, **) = @effects.shift || Master::Core::Effect.done("shipped")
   end
 
   def constitution

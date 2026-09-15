@@ -76,10 +76,12 @@ module Master::Core
       tap { @ideation_complete = approaches.nil? || approaches.to_i >= ALTERNATIVES_REQUIRED }
     end
 
+    # writable and cleared are the preconditions the Model reads to leave write
+    # and done out of the reply schema, so the offer and the gate ask one object.
     def scope
       { trees: @write_trees.dup, elapsed_s: Time.now - @started_at, write_lines: @write_lines,
         read_paths: @read_paths.dup, asked: @asked, evidence: evidence_score, proved: proved?,
-        answerable: answered_from_reads? }
+        answerable: answered_from_reads?, writable: ideation_satisfied?, cleared: council_cleared? }
     end
 
     def mark_council_pass!(detail: "council pass")
@@ -89,8 +91,11 @@ module Master::Core
       self
     end
 
+    # A write the Constitution refused changed no tree, so it starts no new
+    # generation: counting it voided the evidence and the read-only answer of a
+    # fold whose only write was the one it was stopped from making.
     def record_evidence(effect, observation)
-      remember_write(effect) if effect.verb == :write
+      remember_write(effect) if effect.verb == :write && observation.ok?
       remember_read(effect) if effect.verb == :read && observation.ok?
       @asked = true if effect.verb == :ask && observation.ok?
       @acted = true if %i[exec git].include?(effect.verb)
