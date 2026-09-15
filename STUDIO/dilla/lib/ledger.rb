@@ -721,8 +721,8 @@ module DillaKnobs
     # `ENV.fetch("SAMPLE_NATIVE_BPM", "1") != "0"` defaults to "1".
     SENTINEL = /ENV\.fetch[\[(]\s*["']NAME["']\s*,\s*(["'][^"']*["']|-?\d+(?:\.\d+)?)\s*[)\]]\s*(?:==|!=)\s*\1(?![\w.])/
 
-    # The self-updating fallback. `ENV["HARM_VOL"] = (ENV["HARM_VOL"] || "2.4")
-    # .to_f + 0.05` reads a knob to raise it; "2.4" is the base of an increment,
+    # The self-updating fallback. `ENV["PAD_VOL"] = ((ENV["PAD_VOL"] || "52")
+    # .to_i + 2).to_s` reads a knob to raise it; "52" is the base of an increment,
     # not what the engine renders with when nobody set it. Recorded as opaque
     # rather than dropped, because a line that both reads and writes a knob is
     # exactly where a real default can hide.

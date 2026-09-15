@@ -2748,8 +2748,8 @@ class TestDilla < Minitest::Test
   # `ENV.fetch("MELODIC_LEAD", "0") != "0"`, one line below a `return false if
   # ENV["MELODIC_LEAD"] == "0"`, so no set value of "0" ever reaches it: the
   # fetch default exists to make the test false when the knob is unset and route
-  # that case to the LEAD_ARP_MODE lookup below. HARM_VOL's "2.4" is the base of
-  # `ENV["HARM_VOL"] = (ENV["HARM_VOL"] || "2.4").to_f + 0.05`, an increment
+  # that case to the LEAD_ARP_MODE lookup below. PAD_VOL's "52" is the base of
+  # `ENV["PAD_VOL"] = ((ENV["PAD_VOL"] || "52").to_i + 2).to_s`, an increment
   # rather than a default. EVOLVE_EVERY's "2" is the tail of `ENV[
   # "STREAM_HARMONY_EVERY"] || ENV["EVOLVE_EVERY"] || "2"`, which belongs to the
   # chain and was being compared against a different method's cadence.
@@ -2759,8 +2759,8 @@ class TestDilla < Minitest::Test
     refute DillaKnobs["MELODIC_LEAD"].conflicting_defaults?,
            "the presence sentinel at melodic_lead_mode? is being read as a default: " \
            "#{DillaKnobs['MELODIC_LEAD'].default_sites.inspect}"
-    refute DillaKnobs["HARM_VOL"].conflicting_defaults?,
-           "an increment's base is being read as a default: #{DillaKnobs['HARM_VOL'].default_sites.inspect}"
+    refute DillaKnobs["PAD_VOL"].conflicting_defaults?,
+           "an increment's base is being read as a default: #{DillaKnobs['PAD_VOL'].default_sites.inspect}"
     refute DillaKnobs["EVOLVE_EVERY"].conflicting_defaults?,
            "a chained fallback is being read as this knob's default: " \
            "#{DillaKnobs['EVOLVE_EVERY'].default_sites.inspect}"

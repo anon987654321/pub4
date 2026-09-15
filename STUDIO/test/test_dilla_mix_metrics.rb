@@ -116,4 +116,23 @@ class TestMixMetrics < Minitest::Test
     assert_operator MIX_METRIC_WINDOW_SEC, :>=, 30
     assert_operator MIX_METRIC_WINDOW_SEC, :<=, 600
   end
+
+  # The listening loop answers a quiet pass by aiming the next at the window's
+  # middle through the one knob the render's level comes from. Its old answer
+  # wrote a Float into ENV, which raises, so the first quiet pass ended the loop.
+  def test_a_quiet_listening_pass_aims_the_next_at_the_loudness_window
+    passes = []
+    with_env("MASTER_LUFS" => nil, "DRUM_VOL" => nil, "DRUM_MIX_WEIGHT" => nil) do
+      out, = capture_io do
+        DillaComposition::ListeningLoop.converge(
+          render_fn: ->(pass) { passes << ENV["MASTER_LUFS"]; "pass#{pass}.wav" },
+          analyze_fn: ->(_path) { { integrated_lufs: -20.0 } },
+          max_passes: 2,
+        )
+      end
+
+      assert_includes out, "pass 2:"
+      assert_equal [nil, "-12.5"], passes, "the second pass did not render at the window's middle"
+    end
+  end
 end

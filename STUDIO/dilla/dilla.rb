@@ -28273,7 +28273,13 @@ def composition_listen_loop(n_bars = 16)
   n_bars = (ENV["BARS"] || n_bars).to_i
   max_passes = (ENV["LISTEN_PASSES"] || 3).to_i
   dest = File.join(SCRATCH_DIR, "listen_loop.wav")
-  render_fn = ->(pass) { render_dilla(File.join(SCRATCH_DIR, "listen_pass#{pass}.wav"), n_bars); dest }
+  # The pass's own file, so each pass is measured on what it rendered rather
+  # than on the last run's listen_loop.wav.
+  render_fn = lambda do |pass|
+    take = File.join(SCRATCH_DIR, "listen_pass#{pass}.wav")
+    render_dilla(take, n_bars)
+    take
+  end
   analyze_fn = ->(path) { dilla_quality(path) }
   path = DillaComposition::ListeningLoop.converge(render_fn:, analyze_fn:, max_passes:)
   FileUtils.cp(path, dest) if path && File.exist?(path)

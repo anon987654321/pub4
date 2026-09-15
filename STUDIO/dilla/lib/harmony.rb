@@ -2076,15 +2076,24 @@ module DillaComposition
         puts "pass #{pass + 1}: LUFS=#{lufs} groove=#{groove}"
         break if lufs && lufs.to_f >= targets[:lufs_min] && lufs.to_f <= targets[:lufs_max] && groove >= targets[:groove_min]
         apply_drum_vol!((resolved_drum_mix_weight + 0.02)) if groove < targets[:groove_min]
-        # The base is one step below the engine's own 2.45 (dilla.rb's
-        # `harm_gain`), so on a run where nobody set HARM_VOL the first bump
-        # lands exactly on the value the render already had and the loop spends
-        # a pass standing still — a three-pass loop gets two effective bumps.
-        # Raising the base to 2.45 is the fix. It is a mix value and therefore
-        # the owner's ear, not an agent's: this comment is the record.
-        ENV["HARM_VOL"] = (ENV["HARM_VOL"] || "2.4").to_f + 0.05 if lufs && lufs.to_f < targets[:lufs_min]
+        aim_master_loudness!(lufs, targets)
       end
       path
+    end
+
+    # A pass outside the loudness window aims the next one at the window's
+    # middle through MASTER_LUFS, the knob normalise_master! sets the render's
+    # level from. Raising HARM_VOL by 0.05, which the loop did before, moved
+    # nothing: HARM_VOL is read only by build_harmony_loud, which this loop never
+    # calls, and loudnorm at the end of render_dilla flattens a harmony gain
+    # anyway. That write also raised TypeError, because ENV takes strings, so the
+    # first quiet pass ended the command. The middle rather than the edge,
+    # because a limiter-bound master lands a little under what it was asked for.
+    def aim_master_loudness!(lufs, targets)
+      return unless lufs
+      return if lufs.to_f.between?(targets[:lufs_min], targets[:lufs_max])
+
+      ENV["MASTER_LUFS"] = ((targets[:lufs_min] + targets[:lufs_max]) / 2.0).round(1).to_s
     end
   end
 end
