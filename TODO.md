@@ -151,6 +151,18 @@ process and every site for nine minutes, seconds after the deploy logged
 20 s after the restart and names the shape: 443 refused with the app port
 answering is relayd, both refused is the app.
 
+**3. bsdports stays down after its own deploy** — agent; needs vm23 to reproduce.
+On 2026-09-15 two single-app deploys of bsdports (`02a056827` and `86437202a`)
+passed CI, restarted and exited 0, and `vps-state` then read `bsdports(failed)`
+with :47312 closed; `doas rcctl restart bsdports` brought it back each time and
+it served. Deploying bsdports last is meant to fold the shed restore into the
+same pass, so either its own restart races the shed or the post-restart check
+reads the port before the app binds. A deploy whose last app is down on exit is
+not a deploy. Unblocked when three consecutive `vps-deploy bsdports` runs leave
+it `ok` with the port open. amber's post-deploy `page_simulation` and
+`flow_journey` fail meanwhile whenever bsdports is shed, and pass rerun once it
+is up.
+
 ## OPENBSD
 
 ### Operator debt — still open
