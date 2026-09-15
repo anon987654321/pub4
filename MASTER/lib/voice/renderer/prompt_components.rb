@@ -172,7 +172,7 @@ module Master
           [
             d("model0 at mainbus0: #{short_model(context[:model])}"),
             d("model0: #{provider_for(context[:model])}, " \
-              "#{token_label(Master.context_window(@config['model']))} context"),
+              "#{token_label(Master.context_window(context[:model]))} context"),
           ]
         end
 

@@ -91,6 +91,20 @@ class TestRenderer < Minitest::Test
     assert_equal 1, lines.count(&:empty?)
   end
 
+  # The splash names the model the session runs on, which a pin or the router
+  # chooses, and config["model"] can still hold another. The context beside
+  # the name belongs to the named model.
+  def test_the_splash_reads_the_context_window_of_the_model_it_names
+    named = "agy:gemini-2.5-pro"
+    configured = "deepseek-chat"
+    refute_equal Master.context_window(named), Master.context_window(configured), "the fixture needs two windows"
+
+    renderer = FakeRenderer.new(config: { "model" => configured })
+    line = strip_ansi(renderer.splash(named)).lines.find { |l| l.start_with?("model0: ") }
+
+    assert_includes line, "1000.0k context"
+  end
+
   def strip_ansi(text)
     text.to_s.gsub(/\e\[[0-9;]*m/, "")
   end
