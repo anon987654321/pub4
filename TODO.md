@@ -1010,6 +1010,54 @@ race or a rolled-back callback is false until it names a second database.
   ENV but not constants computed from it at load (acapella `ONLY`/`EXCLUDE`).
   Run each file in its own process, or stop calling it isolation.
 
+## MASTER as a semantic system — ChatGPT intake 2026-09-14
+
+Checked the same day. Of 28 UI, type and layout proposals, 12 were built under
+other names, 12 partly, 3 missing and 1 an operator wish; of 7 on the local
+model tier and 7 on the scan ladder, most partly built. Landed 2026-09-14/15:
+six rendered detectors and the snapshot's diff classes in `RAILS/gates`, the
+drag `touch-action` check, `/review`'s counts, the keyless and offline local
+tier, a schema-held fold every model is asked the same way, `keep_alive` and
+a sized `num_ctx`, local models ranked by what fits. Not built, by the rules in
+`MASTER/AGENTS.md`: a per-surface UI record or a model capability profiler with
+no named reader, and an intent-to-deliver pipeline that renames stages
+`/review` already has. Open:
+
+- **Prove the new rendered detectors on vm23.** Wrapped labels at phone width,
+  first-screen weight, a secondary action heavier than the primary, duplicate
+  navigation and search, column width drift, an action lost in a card, æøå
+  drawn from a fallback, reading type that shrinks as the viewport widens. All
+  are soft. Count each surface's findings on the first run and the probe cost of
+  the extra awaited script, then decide which harden. Seams:
+  `RAILS/gates/support/rendered_geometry/`, `geometry_probe/glyphs.js`,
+  `RAILS/gates/lib/rendered/reflow.rb`.
+- **Interaction states beyond focus.** Forcing `:disabled`, `:active` and
+  `aria-busy` over CDP and measuring them waits on "Motion is a rendered value"
+  and the feedback items in the RAILS section. Seam:
+  `RAILS/gates/lib/rendered/keyboard_flow.rb`.
+- **`/review` never reaches the rendered gates for a RAILS target.** A gates
+  stage in `MASTER/lib/cli/pipeline/pass.rb` would call `RAILS/gates/runner.rb`
+  on the deploy host, never drive a browser here.
+- **Run the fixed file's test after a fix.** `FixVerification#note_unverified_fix`
+  only publishes "fix unverified"; running the test `test_file_for` finds
+  would prove a fix rather than rescan it.
+- **Escalate a local model that cannot hold the fold.** After two parse errors
+  or refusals in a row, ask the next larger local model, or the cloud lane when
+  online. Seams: `CoreBridge::AgentChat`, `ModelRouter#local_models`.
+- **Offer only the verbs that are legal this turn.** Build
+  `Core::Model::SCHEMA` per turn from `Proof#scope`, leaving `done`, commit and
+  write out until their preconditions hold, so an early `done` cannot be
+  generated at all. Measure against gemma3:4b first; a worked example in the
+  prompt made it worse.
+- **Cap a long RESULT.** Exec output enters `Core::Memory` whole; keep head and
+  tail, about 1,500 characters, as mini-swe-agent does.
+- **Local throughput has no reader.** Ollama reports `eval_count` and
+  `eval_duration` and `ollama_sender.rb` discards the rate. Record it in
+  `provider_health.rb` only together with a reader, such as speed in
+  `ModelRouter#effective_score`.
+- **`lib/review/embeddings.rb` calls `/api/embeddings`,** which Ollama marks
+  superseded by `/api/embed`.
+
 ## OpenCrabs borrow list — ChatGPT intake 2026-09-13
 
 Worked 2026-09-13 and 2026-09-14: items 2 to 8 landed with a test each, and the
@@ -1463,6 +1511,9 @@ choose. Numbers are for citation, not for order.
     `groove_score`, `harmony_score` and `spectral_audit` can each judge a render.
     Nothing judges a pass. A set that scored itself and refused to journal a bad
     take would make the catalogue self-curating.
+    Harmony and groove are scored from the note plan, not the render; measure
+    them from audio beside the loudness and width `listen.rb` already takes, with
+    targets drawn from takes the operator kept.
 36. **`RINGTONE_LAYER` and `PAD_LAYERS`** [cheap] [risk] — known-good layers with
     known switches, unreached from the livesets.
 
