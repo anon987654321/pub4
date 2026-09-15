@@ -6,6 +6,7 @@ require "json"
 require "rbconfig"
 require "tmpdir"
 require_relative "../dilla/lib/sampling"
+require_relative "../dilla/lib/listen"
 
 # The crate's provenance has to name the HTTP URL that was fetched. The dug
 # file is deleted after the chop, and a sidecar that only names a local path
@@ -127,28 +128,40 @@ class TestCrateDig < Minitest::Test
     end
   end
 
-# One unreadable row drops that row by its slug and leaves the rest of the
-# rack. A rescue around the whole walk answered one bad row with no rack.
-def test_a_malformed_chop_row_drops_itself_and_not_the_rack
-  Dir.mktmpdir do |dir|
-    good = File.join(dir, "good.wav")
-    File.write(good, "x")
-    doc = { "loops" => [
-      { "slug" => "good", "path" => good, "bpm" => 92, "hp" => 60, "sub_db" => -3, "lp" => 6000 },
-      { "slug" => "broken", "path" => good, "bpm" => { "not" => "a tempo" } },
-      { "path" => good },
-    ] }
+  # One unreadable row drops that row by its slug and leaves the rest of the
+  # rack. A rescue around the whole walk answered one bad row with no rack.
+  def test_a_malformed_chop_row_drops_itself_and_not_the_rack
+    Dir.mktmpdir do |dir|
+      good = File.join(dir, "good.wav")
+      File.write(good, "x")
+      doc = { "loops" => [
+        { "slug" => "good", "path" => good, "bpm" => 92, "hp" => 60, "sub_db" => -3, "lp" => 6000 },
+        { "slug" => "broken", "path" => good, "bpm" => { "not" => "a tempo" } },
+        { "path" => good },
+      ] }
 
-    rack = nil
-    _out, err = capture_io { rack = RadioChop.registered_loops(doc) }
+      rack = nil
+      _out, err = capture_io { rack = RadioChop.registered_loops(doc) }
 
-    assert_equal %i[good], rack.keys
-    assert_equal 92.0, rack[:good][:bpm]
-    assert_includes err, "\"broken\" dropped"
+      assert_equal %i[good], rack.keys
+      assert_equal 92.0, rack[:good][:bpm]
+      assert_includes err, "\"broken\" dropped"
+    end
   end
-end
 
-private
+  # The chop reads its measurements from a tool's stdout, and a tool that could
+  # not open the file printed nothing, which read as a file with no readings.
+  def test_a_failed_measurement_raises_instead_of_reading_as_no_readings
+    Dir.mktmpdir do |dir|
+      missing = File.join(dir, "gone.wav")
+
+      error = assert_raises(RuntimeError) { RadioChop.rms_series(missing) }
+      assert_match(/\Affmpeg exited \d+/, error.message)
+      assert_raises(RuntimeError) { Acapella.duration(missing) }
+    end
+  end
+
+  private
 
   def with_crate_dir(dir)
     orig_manifest = CrateDig::MANIFEST

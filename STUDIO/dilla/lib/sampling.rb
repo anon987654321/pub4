@@ -870,9 +870,16 @@ module RadioChop
     true
   end
 
-  def capture(*argv)
-    out, = ToolRun.capture2(*argv)
-    out
+  # A tool's stdout, or an error naming the tool when it fails. Named apart from
+  # the engine's `capture`, which returns [out, err, status] as Open3 does: two
+  # methods of one name with two contracts is how a caller written against one
+  # reads the other, and this one returned an empty string for a failed run, so
+  # a measurement of a file ffmpeg could not open came back as no readings.
+  def stdout!(*argv)
+    out, err, status = ToolRun.capture3(*argv)
+    return out if status.success?
+
+    raise "#{File.basename(argv.first.to_s)} exited #{status.exitstatus}: #{err.to_s.lines.last.to_s.strip}"
   end
 
   # --- measurement ------------------------------------------------------------
@@ -915,7 +922,7 @@ module RadioChop
              "astats=metadata=1:reset=1," \
              "ametadata=print:key=lavfi.astats.Overall.RMS_level:file=-",
              "-f", "null", "-"]
-    capture(*argv).lines.filter_map do |line|
+    stdout!(*argv).lines.filter_map do |line|
       next unless line.include?("RMS_level=")
 
       raw = line.split("=").last.strip
@@ -3008,7 +3015,7 @@ module Acapella
   # ffprobe rather than a decode, because the verse offset is a fraction of the
   # WHOLE record and reading its length is cheaper than measuring it.
   def duration(path)
-    RadioChop.capture("ffprobe", "-v", "error", "-show_entries", "format=duration",
+    RadioChop.stdout!("ffprobe", "-v", "error", "-show_entries", "format=duration",
                       "-of", "default=nokey=1:noprint_wrappers=1", path).to_f
   end
 
