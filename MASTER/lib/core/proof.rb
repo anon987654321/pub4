@@ -54,6 +54,7 @@ module Master::Core
       @write_lines = 0
       @read_paths = []
       @asked = false
+      @acted = false
       @started_at = Time.now
       @generation = 0
     end
@@ -62,6 +63,14 @@ module Master::Core
     def council_cleared? = @council_pass || !council_required?
     def ideation_satisfied? = !ideation_required? || @ideation_complete
     def proved? = evidence_score >= PASS_THRESHOLD
+
+    # A fold that wrote nothing and ran nothing changed nothing, so its `done`
+    # claims no state of the tree; it answers from what it read, and the reads
+    # are on the record. The threshold is proof about changed code, and a
+    # question asked of the code could never meet it: the model read, answered
+    # in notes, and was refused `done` until max_turns. A commit still needs
+    # proved?, since committing is a claim about code.
+    def answered_from_reads? = @generation.zero? && !@acted && @read_paths.any?
 
     def mark_ideation_complete!(approaches: nil)
       tap { @ideation_complete = approaches.nil? || approaches.to_i >= ALTERNATIVES_REQUIRED }
@@ -84,6 +93,7 @@ module Master::Core
       remember_write(effect) if effect.verb == :write
       remember_read(effect) if effect.verb == :read && observation.ok?
       @asked = true if effect.verb == :ask && observation.ok?
+      @acted = true if %i[exec git].include?(effect.verb)
       return unless effect.verb == :exec && observation.ok?
 
       kind = effect.args[:evidence].to_s.to_sym

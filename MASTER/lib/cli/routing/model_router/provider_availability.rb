@@ -149,8 +149,8 @@ end
 # This is the method the CLI agent calls for an offline default, and the one
 # FallbackChain walks when a paid lane fails with no network.
 #
-# And only what runs on this machine. A :cloud tag answers from ollama.com, so
-# an offline boot pinned glm-5.3-flash:cloud and asked the network it had just
+# And what runs on this machine. A :cloud tag answers from ollama.com, so
+# an offline boot pinned glm-5.3-flash:cloud and asked the network it had
 # found missing. A model past LOCAL_FIT of physical memory pages for every
 # token, as gemma4:26b's 17 GB does on an 8 GB laptop. Among the rest, the
 # largest the machine holds leads.
