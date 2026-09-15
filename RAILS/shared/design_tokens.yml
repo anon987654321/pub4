@@ -579,7 +579,9 @@ scale:
       # of changed. Snap them and re-run to take this back down.
       # 16 -> 15 on 2026-09-15, measured: the storefront header rewrite to
       # Kaufland.de's measured bands took one of the hand-tuned nav values with it.
-      off_scale_space: 15
+      # 15 -> 8 on 2026-09-15, measured: _site_legal.scss moved its seven off-grid
+      # gaps and margins to EIGHT_PX_RHYTHM's nearest steps.
+      off_scale_space: 8
       # 13 -> 6 on 2026-08-24 (operator). The nine sites that flanked the
       # carrier value are on it: 1.55 in _channel_irc, _chrome_polish, _posts
       # and _chat_reactions, and 1.45 in _vertical_marketplace and
