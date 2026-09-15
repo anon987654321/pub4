@@ -55,8 +55,9 @@ both the spelling and the range. On `flux-dev` they are `guidance` (0–10) and
 chosen model's range is a refusal, not a clamp — clamping silently is how
 you pay for 28 steps on a four-step model and get four.
 
-`--final` is Ultra (4 MP). `--raw` / `--no-raw` reach Ultra's camera-look
-toggle; `--stock` or `--lens` turns raw on unless `--no-raw`. `--image PATH`
+`--final` is `flux-2-max`. `--raw` / `--no-raw` reach the camera-look toggle
+on `flux-1.1-pro-ultra`, the one model that has it; `--stock` or `--lens`
+turns raw on there unless `--no-raw`. `--image PATH`
 is required on `flux-kontext-pro` (text-instructed edit); generate without
 one is a refusal, not a silent text-to-image fallback.
 
@@ -67,7 +68,7 @@ that shape.
 ## Negative prompts
 
 **No model in the table takes a negative prompt.** Every Flux model, including
-the default `flux-1.1-pro`, has no such input, and `stable-diffusion-3.5-large`
+the default `flux-2-pro`, has no such input, and `stable-diffusion-3.5-large`
 dropped the one SD3 had — its live schema is prompt / aspect_ratio / cfg /
 image / prompt_strength / steps / seed / output_format / output_quality, and
 nothing else. The capability table is the place that gets this wrong: while it
@@ -83,12 +84,11 @@ the text, because recording the negative on its own says nothing about whether
 
 ## Preview and final
 
-`--preview` swaps in `flux-schnell` unless a model was named explicitly or
-`PREPROMPT_MODEL` is set. `--final` forces `flux-1.1-pro-ultra` and **does**
+`--preview` swaps in `flux-2-klein-4b` unless a model was named explicitly or
+`PREPROMPT_MODEL` is set. `--final` forces `flux-2-max` and **does**
 override `PREPROMPT_MODEL`, which is the asymmetry it exists for: the
 environment variable is how a session stays in preview, and `--final` is how
-one image leaves it — now at 4 MP, with raw mode when the request is a
-photograph. `vocab-check` covers it, because `--final` spent a while parsed into
+one image leaves it for the highest-fidelity model in the table. `vocab-check` covers it, because `--final` spent a while parsed into
 an option nothing read.
 
 ## Batches

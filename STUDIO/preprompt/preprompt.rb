@@ -126,9 +126,9 @@ PREVIEW_MODEL = "black-forest-labs/flux-2-klein-4b"
 # ever read it, so `--final` did nothing at all: with PREPROMPT_MODEL set to a
 # preview model it silently kept previewing.
 #
-# Ultra, not Pro: 4 MP and a raw mode that matches the stock/lens vocabulary.
-# Cheap one-shots stay on flux-1.1-pro (the default); --final is how one
-# image leaves preview and also leaves the 1 MP-class model.
+# Max, the highest-fidelity FLUX 2 model. Ordinary runs use PREPROMPT_MODEL,
+# flux-2-pro by default; --final is how one image leaves that for the best
+# model the table declares.
 FINAL_MODEL = "black-forest-labs/flux-2-max"
 
 def capability_for(model_id)
@@ -209,7 +209,8 @@ def model_number(cap, kind, value)
   [key.to_sym, value]
 end
 
-# Ultra's raw mode is the camera look. Stock or lens in the request means
+# flux-1.1-pro-ultra's raw mode is the camera look, and the only model here
+# that declares it. Stock or lens in the request means
 # the caller asked for a photograph; --no-raw is how they opt out, --raw
 # is how they force it on a model that has the key.
 def raw_mode?(options)

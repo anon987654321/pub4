@@ -889,12 +889,7 @@ These are the operator's, because each changes a sound or accepts a changed inpu
 926. **`lora/guides/*.m4a` are tracked TTS output** beside their `.txt` scripts. Keep them in git or untrack them; either is the operator's.
 931. **`lora/_toolkit/judge_thresholds.yml` was calibrated on seven images;** `ragnhild/dataset/` now holds six. Recalibrating moves the quality floors.
 932. **AMBITION.md and PHOTOGRAPHY.md are triaged, not yet folded.** All 168 items were checked against the code on 2026-09-14. Before either document is deleted, each open item lands in its owner or in this list, and the reasons that code cites move beside that code. Defects first:
-   - preprompt hands its output path to postpro, whose one-shot grade overwrites the provenance sidecar `<out>.json`. Prompt, model and seed then survive only in `gallery.jsonl`, which chains never write.
-   - `Chain.run` accepts a `references` inherit and carries nothing for it.
    - `chains/relight_portrait.yml` has three faults. It claims an `unverified: true` flag that no table row sets, it sets a stage `postpro:` that nothing reads, and it would feed IC-Light the depth map as its image.
-   - `rescue.rb` says `spectral_temp` neutralises a cast. The `portrait` preset it applies warms the frame instead.
-   - `curate.rb` writes the caption stub `"<token>, woman, "` for every subject, johann included.
-   - `preprompt/README.md` still names flux-schnell, 1.1-pro-ultra and 1.1-pro where the code uses klein-4b, flux-2-max and flux-2-pro.
    - postpro's one-shot path, which is the one preprompt uses, skips the camera-profile pass that `process_file` runs.
    
    Cheap open items, grouped by owner:

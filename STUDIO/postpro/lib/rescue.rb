@@ -93,7 +93,8 @@ module Postpro
           code: :cast, severity: :fixable,
           message: format("channel means %s are %.1f apart — a colour cast rather than a colour",
                           cast[:means].map { |m| m.round(1) }.inspect, cast[:spread]),
-          remedy: "spectral_temp neutralises it"
+          remedy: "not corrected here: set white balance from something neutral in the frame. " \
+                  "The portrait grade this rescue applies warms the picture; it does not neutralise a cast"
         )
       end
 

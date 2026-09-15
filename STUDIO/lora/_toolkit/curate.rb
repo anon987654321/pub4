@@ -345,7 +345,7 @@ module Lora
     # it, and unedited_captions() recognises it to report which captions nobody
     # has touched. Written out twice, an edit to the wording in one place would
     # have made the other silently report zero unedited captions.
-    def self.caption_stub(token) = "#{token}, woman, "
+    def self.caption_stub(token) = "#{token}, "
 
     def self.dataset_dir(subject_dir) = File.join(subject_dir, DATASET_DIRNAME)
 
