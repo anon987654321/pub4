@@ -6,8 +6,6 @@ require "openssl"
 require "resolv"
 require "uri"
 
-require_relative "../outbound_http"
-
 module Fediverse
   # Outgoing HTTP. Net::HTTP from stdlib rather than a gem, because this deploys
   # to OpenBSD and the dependency surface of federation is already large enough.
@@ -45,19 +43,19 @@ module Fediverse
       # it again below, so a peer controlling its own DNS could answer public
       # for the check and 127.0.0.1 for the connection. Inbox and key fetches
       # run before signature verification, so the host is attacker-chosen here.
-      OutboundHttp.request(uri, method: method, headers: headers, body: body)
+      Shared::OutboundHttp.request(uri, method: method, headers: headers, body: body)
     rescue *NETWORK_ERRORS => e
       Rails.logger.warn("fediverse: #{method} #{url} failed: #{e.class}") if defined?(Rails)
       nil
     end
 
-    NETWORK_ERRORS = OutboundHttp::NETWORK_ERRORS
+    NETWORK_ERRORS = Shared::OutboundHttp::NETWORK_ERRORS
 
     # Inbox/key fetches run before signature verify, so the SSRF rule bites here
-    # first. It lives in OutboundHttp because link previews fetch remote URLs
-    # too, and a network allowlist written twice ends up disagreeing with
-    # itself.
-    def public_https?(uri) = OutboundHttp.public_https?(uri)
-    def unsafe_ip?(addr) = OutboundHttp.unsafe_ip?(addr)
+    # first. It lives in Shared::OutboundHttp because link previews and link
+    # embeds fetch remote URLs too, and a network allowlist written twice ends
+    # up disagreeing with itself.
+    def public_https?(uri) = Shared::OutboundHttp.public_https?(uri)
+    def unsafe_ip?(addr) = Shared::OutboundHttp.unsafe_ip?(addr)
   end
 end

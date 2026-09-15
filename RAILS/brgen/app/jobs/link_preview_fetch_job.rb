@@ -43,13 +43,13 @@ class LinkPreviewFetchJob < ApplicationJob
     return nil unless response["content-type"].to_s.start_with?("text/html")
 
     Nokogiri::HTML(response.body.to_s[0, MAX_HTML])
-  rescue *OutboundHttp::NETWORK_ERRORS => e
+  rescue *Shared::OutboundHttp::NETWORK_ERRORS => e
     Rails.logger.warn("link_preview: #{url} failed: #{e.class}")
     nil
   end
 
   def get(uri)
-    OutboundHttp.request(
+    Shared::OutboundHttp.request(
       uri,
       headers: { "Accept" => "text/html", "User-Agent" => "brgen link preview" }
     )

@@ -78,11 +78,11 @@ module Ports
       # because a silent nil here reads as an empty index, and an empty index reads
       # as "this platform has no packages".
       #
-      # brgen's OutboundHttp is the fuller rule — it resolves the name and rejects
-      # RFC1918, loopback and link-local — and it lives in another app. This is the
-      # same principle at the one seam that needs it here, rather than a second copy
-      # of that module. Folding OutboundHttp into RAILS/shared/ so both apps read
-      # one rule is the larger move.
+      # Shared::OutboundHttp is the fuller rule — it resolves the name and rejects
+      # RFC1918, loopback and link-local — but it holds a read to ten seconds and a
+      # body to a megabyte, which is sized for a web page, and this fetch allows a
+      # sixty-second read for a whole package index. This is the same principle at
+      # the one seam that needs it here, rather than a second copy of that module.
       def get(url, limit: 3)
         raise "too many redirects for #{url}" if limit.zero?
 

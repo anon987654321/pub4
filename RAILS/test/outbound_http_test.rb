@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require_relative "../shared/app/services/shared/outbound_http"
 require_relative "../brgen/app/lib/fediverse/client"
 
 class FediverseSsrfTest < Minitest::Test
@@ -19,18 +20,18 @@ class FediverseSsrfTest < Minitest::Test
   # The predicate tests above pass whether or not the request path consults it,
   # so they cannot tell a guard from a decoration. These drive the real method.
   def test_request_refuses_a_loopback_host
-    error = assert_raises(SocketError) { OutboundHttp.request(URI("https://127.0.0.1/actor")) }
+    error = assert_raises(SocketError) { Shared::OutboundHttp.request(URI("https://127.0.0.1/actor")) }
     assert_match(/unsafe or unresolvable/, error.message)
   end
 
   def test_ipv4_mapped_loopback_is_refused
-    assert OutboundHttp.unsafe_ip?("::ffff:127.0.0.1")
-    assert OutboundHttp.unsafe_ip?("::ffff:10.0.0.1")
-    assert OutboundHttp.unsafe_ip?("::ffff:169.254.169.254")
+    assert Shared::OutboundHttp.unsafe_ip?("::ffff:127.0.0.1")
+    assert Shared::OutboundHttp.unsafe_ip?("::ffff:10.0.0.1")
+    assert Shared::OutboundHttp.unsafe_ip?("::ffff:169.254.169.254")
   end
 
   def test_request_refuses_a_non_443_port
-    assert_raises(URI::InvalidURIError) { OutboundHttp.request(URI("https://example.com:8443/actor")) }
+    assert_raises(URI::InvalidURIError) { Shared::OutboundHttp.request(URI("https://example.com:8443/actor")) }
   end
 
   def test_client_returns_nil_rather_than_raising_at_a_loopback_host
@@ -42,7 +43,7 @@ class FediverseSsrfTest < Minitest::Test
   # time inside Net::HTTP and a rebinding answer would land on the private net.
   def test_the_checked_address_is_the_one_connected_to
     pinned = with_stubbed_dns("93.184.216.34") do
-      OutboundHttp.request(URI("https://rebind.test/actor"))
+      Shared::OutboundHttp.request(URI("https://rebind.test/actor"))
     end
 
     assert_equal "93.184.216.34", pinned
@@ -50,13 +51,63 @@ class FediverseSsrfTest < Minitest::Test
 
   def test_a_host_answering_one_public_and_one_private_address_pins_the_public_one
     pinned = with_stubbed_dns("127.0.0.1", "93.184.216.34") do
-      OutboundHttp.request(URI("https://rebind.test/actor"))
+      Shared::OutboundHttp.request(URI("https://rebind.test/actor"))
     end
 
     assert_equal "93.184.216.34", pinned
   end
 
+  # The cap is enforced while reading, so a hostile server cannot make this
+  # process hold its whole answer before anything checks the size.
+  def test_a_body_past_the_cap_stops_the_read
+    response = ChunkedResponse.new(%w[aaaa bbbb cccc])
+
+    with_stubbed_exchange(response) do
+      assert_raises(Shared::OutboundHttp::BodyTooLarge) do
+        Shared::OutboundHttp.request(URI("https://rebind.test/actor"), max_body: 6)
+      end
+    end
+    assert_equal 2, response.chunks_read
+  end
+
+  def test_a_body_inside_the_cap_is_kept_whole
+    response = ChunkedResponse.new(%w[aaaa bbbb])
+
+    with_stubbed_exchange(response) do
+      Shared::OutboundHttp.request(URI("https://rebind.test/actor"), max_body: 8)
+    end
+    assert_equal "aaaabbbb", response.body
+  end
+
+  def test_an_oversized_body_is_a_network_error_callers_already_rescue
+    assert_includes Shared::OutboundHttp::NETWORK_ERRORS, Shared::OutboundHttp::BodyTooLarge
+  end
+
   private
+
+  ChunkedResponse = Struct.new(:chunks, :body, :chunks_read) do
+    def read_body
+      self.chunks_read = 0
+      chunks.each do |chunk|
+        self.chunks_read += 1
+        yield chunk
+      end
+    end
+  end
+
+  # Hands the request block a response that streams its chunks, instead of
+  # opening a socket.
+  def with_stubbed_exchange(response)
+    Resolv.singleton_class.alias_method(:real_getaddresses, :getaddresses)
+    Net::HTTP.alias_method(:real_request, :request)
+    Resolv.define_singleton_method(:getaddresses) { |_host| [ "93.184.216.34" ] }
+    Net::HTTP.define_method(:request) { |_req, &block| block.call(response) }
+
+    yield
+  ensure
+    Resolv.singleton_class.alias_method(:getaddresses, :real_getaddresses)
+    Net::HTTP.alias_method(:request, :real_request)
+  end
 
   # Answers the lookup with fixed addresses and reports the ipaddr Net::HTTP was
   # left holding, instead of opening a socket.

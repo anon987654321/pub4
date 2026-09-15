@@ -59,7 +59,7 @@ class LinkPreviewTest < ActiveSupport::TestCase
   end
 
   test "an unsafe host is refused before any request is made" do
-    assert_not OutboundHttp.public_https?(URI("https://127.0.0.1/x"))
-    assert_not OutboundHttp.public_https?(URI("https://169.254.169.254/latest/meta-data"))
+    assert_not Shared::OutboundHttp.public_https?(URI("https://127.0.0.1/x"))
+    assert_not Shared::OutboundHttp.public_https?(URI("https://169.254.169.254/latest/meta-data"))
   end
 end
