@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require "tmpdir"
 require "yaml"
 
 # vps-deploy is the entrypoint for every production deploy and had no test.
@@ -56,5 +57,42 @@ class VpsDeployContractTest < Minitest::Test
     refute_nil branch, "the SKIP_CI branch is gone — the scan broke, or the path did"
     assert_match(%r{RAILS/\$\{app\}/\$\{app\}\.sh}, branch,
                  "SKIP_CI=1 must still run the app script, which is what reaches rails_runtime_gate")
+  end
+
+  GUARD = File.read(File.join(ROOT, "OPENBSD", "resource_guard.sh"), encoding: "UTF-8")
+
+  def flag_block
+    SOURCE[/^deploy_flag=.*?^hold_deploy_flag$/m]
+  end
+
+  # resource_guard stops shedding while a .deploying* flag is fresh. rc.d holds
+  # one only across the restart, so CI and the gates ran as strikes and the app
+  # deployed last was shed on the first tick after its flag came off. The flag
+  # this script holds has to be one the guard reads, live across the deploy,
+  # and gone when the script exits.
+  def test_the_deploy_flag_is_held_for_the_whole_deploy_and_released_on_exit
+    refute_nil flag_block, "the deploy flag block is gone — the scan broke, or the flag did"
+    guard_glob = GUARD[%r{for _flag in (/home/dev/pub4/\.deploying\S*); do}, 1]
+    refute_nil guard_glob, "resource_guard no longer reads a deploy flag glob"
+
+    Dir.mktmpdir do |repo|
+      script = "repo=#{repo}; app=bsdports\n#{flag_block}\nprint -r -- $deploy_flag\n[[ -e $deploy_flag ]] && print held\n"
+      out = IO.popen(["zsh", "-c", script], &:read).lines.map(&:chomp)
+      flag = out.first
+
+      assert_equal "held", out.last, "the flag is not on disk while the deploy runs"
+      assert File.fnmatch?(guard_glob.sub("/home/dev/pub4", repo), flag, File::FNM_DOTMATCH),
+             "#{flag} is not a name resource_guard's #{guard_glob} reads"
+      refute File.exist?(flag), "the flag outlived the script, so shedding stays off for 30 minutes"
+
+      rcd_flag = File.read(File.join(ROOT, "OPENBSD", "etc", "rc.d", "bsdports"))[%r{touch \S+/(\.deploying\S*)}, 1]
+      refute_equal rcd_flag, File.basename(flag),
+                   "rc.d removes its own flag after /up, so sharing its name drops the hold mid-deploy"
+    end
+  end
+
+  def test_the_flag_is_taken_before_ci_and_the_app_is_checked_before_ok
+    assert_operator SOURCE.index("\nhold_deploy_flag\n"), :<, SOURCE.index("OPENBSD/vps_ci.sh")
+    assert_operator SOURCE.rindex(%(doas rcctl check "$app")), :>, SOURCE.index("GATE_REQUIRE_LIVE=1 ruby34")
   end
 end

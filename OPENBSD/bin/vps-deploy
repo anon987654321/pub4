@@ -148,6 +148,26 @@ if [[ -x $repo/OPENBSD/resource_guard.sh ]]; then
   doas ksh "$repo/OPENBSD/resource_guard.sh" || true
 fi
 
+# The guard's deploy flag, held for the whole deploy and not only the restart.
+#
+# rc.d/<app> touches .deploying-<app> from rc_pre to the end of its /up wait and
+# removes it there. CI, migrate, precompile and the gates all run outside that
+# window at the box's highest load, and resource_guard counts every one of those
+# ticks as a strike. So the counter already stands past GUARD_SHED_STRIKES when
+# the restart's flag comes off, and the next tick sheds the first OPTIONAL
+# service. bsdports leads that list, which is why its own deploy exits 0 and
+# vps-state then reads bsdports(failed) with :47312 closed.
+#
+# Taken after the preflight guard run, which may still shed to free memory for
+# CI. A tick that sees the flag resets the counter, so the guard needs two fresh
+# breaching ticks after this deploy ends before it sheds anything. The name is
+# not .deploying-<app>, because rc.d removes that one mid-deploy; it is touched
+# again at each long stage because the guard ignores a flag older than 30 minutes.
+deploy_flag="$repo/.deploying-vps-deploy-${app}"
+hold_deploy_flag() { touch "$deploy_flag" 2>/dev/null || true }
+trap 'rm -f -- "$deploy_flag"' EXIT
+hold_deploy_flag
+
 # What is about to be deployed, against what is actually running.
 #
 # The gate compares OPENBSD/etc byte-for-byte with live /etc and root's crontab
@@ -249,6 +269,7 @@ print "vps-deploy: $app (assets precompile)"
 rails_assets_precompile_as_app "$app" "/home/${app}/app" || exit 1
 
 print "vps-deploy: $app (restart)"
+hold_deploy_flag
 if ! doas rcctl restart "$app" || ! doas rcctl check "$app"; then
   write_stamp "$app" failed
   exit 1
@@ -361,10 +382,20 @@ if [[ -n ${PUB4_DEPLOY_BROWSER_GATES:-} ]]; then
   gate_names+=(rendered_suite layout_suite)
 fi
 print "vps-deploy: $app (gates: ${gate_names})"
+hold_deploy_flag
 if ! GATE_AUTOFIX=0 GATE_REQUIRE_LIVE=1 ruby34 "$repo/RAILS/gates/runner.rb" "${gate_names[@]}"; then
   write_stamp "$app" failed
   print -u2 "vps-deploy: $app gates failed — the app is deployed and serving, and something"
   print -u2 "            it is now serving does not hold. Fix or revert; do not deploy over it."
+  exit 1
+fi
+
+# The app deployed last has to be the app still running when the deploy says ok.
+# Every check above ran minutes ago, and a deploy whose own app is down on exit
+# is the one outcome the stamp must never call ok.
+if ! doas rcctl check "$app" >/dev/null 2>&1; then
+  write_stamp "$app" failed
+  print -u2 "vps-deploy: $app is down at the end of its own deploy — doas rcctl restart $app, then read /var/log/daemon"
   exit 1
 fi
 
