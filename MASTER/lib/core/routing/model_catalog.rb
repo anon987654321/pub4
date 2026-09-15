@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Master
-  module CLI
+  module Core
     module Routing
       # One resolver for every place a model name enters MASTER.
       #
@@ -9,6 +9,7 @@ module Master
       # dispatcher must not maintain separate vocabularies. Exact ids win;
       # aliases are accepted only when they resolve to one unambiguous id.
       module ModelCatalog
+
         module_function
 
         LOCAL_ALIASES = %w[local ollama].freeze

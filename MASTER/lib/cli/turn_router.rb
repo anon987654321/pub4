@@ -15,11 +15,16 @@ module Master
         text = message.to_s.strip
         return Master::Result.err("empty message", category: :validation) if text.empty?
 
-        # Deterministic Interception: Check CommandRegistry before anything else
+        # Deterministic Interception: Exact Command Registry Match (Priority 0)
+        if (intercepted = deterministic_intercept(text, container:))
+          return intercepted
+        end
+
+        # Direct slash command: priority 1
         if text.start_with?("/")
-          # Direct slash command: priority 1
           return dispatch_slash(rewrite_slash(text), container:, felt_sense:, on_turn:)
         end
+
 
         # Inferred slash command: priority 2
         # We check this before the Fold or casual_reply to ensure "fix this" 
@@ -40,7 +45,23 @@ module Master
         run_fold(text, container:, on_turn:)
       end
 
-      def visitor? = Fiber[:master_visitor] == true
+      def deterministic_intercept(text, container:)
+        commands = container[:commands]
+        return nil unless commands
+
+        # Check for exact match in registry (e.g., "status", "help")
+        # We strip leading slash for the registry check
+        clean_text = text.sub(%r{\A/}, "").split(/\s+/, 2).first.to_s.downcase
+        return nil if clean_text.empty?
+
+        if commands.key?(clean_text)
+          # Convert to slash form to reuse the existing dispatch_slash pipeline
+          # which handles Intake -> Route -> Execute -> Render
+          args = text.sub(%r{\A/?#{clean_text}}, "").strip
+          return dispatch_slash("/#{clean_text} #{args}", container:)
+        end
+        nil
+      end
 
       def dispatch_review_pass(text, container:, felt_sense: nil, on_turn: nil)
         dispatch_inferred({ command: "review", args: pass_args_from(text), confidence: 0.9 }, container:, felt_sense:, on_turn:)
