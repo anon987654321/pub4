@@ -5,12 +5,254 @@
 @use "dialect_tokens" as x;
 @use "sass:list";
 
+// ============================================================ tokens
+
+// Instrument Serif, the one promotional face on brgen. Markedsplass and takeaway
+// set it on hero banners, promo headlines and campaign tiles through --font-ad,
+// declared once on body.vertical-marketplace and body.vertical-takeaway; every
+// other line of brgen, prices and cards included, sets the family face, --font.
+//
+// Copyright 2022 The Instrument Serif Project Authors, SIL Open Font Licence 1.1
+// (https://openfontlicense.org), so it ships in the repo rather than per seat.
+// Latin-subset static woff2, regular and italic, vendored to public/fonts/ from
+// fontsource 5.3.0, which builds them from the Google Fonts upstream. local()
+// first, the vendored file second, the pinned CDN copy last.
+//
+// font-display: swap, because a hero is the first thing painted and the face is
+// the point of it; a late swap there does not reflow text anyone is reading.
+$fs: "https://cdn.jsdelivr.net/npm/@fontsource/instrument-serif@5.3.0/files";
+// Latin-1 (U+0000-00FF) covers Norwegian æ ø å; the rest is fontsource's own
+// latin range, so a page without those glyphs never fetches the file.
+$latin: "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD";
+
+// The wordmark keeps the platform UI face it has always been set in. Body text
+// takes --font from app-root-tokens, the one typeface design_tokens.yml names.
+$brgen-logo-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+/* Per-vertical accent identity. Overriding --accent cascades to --accent,
+   --upvote, --focus-ring and the turbo bar, so each vertical's buttons, links,
+   and active states read as its own place rather than the shared indigo. The
+   second selector carries the accent into light mode on browsable verticals
+   (immersive ones hide #dark-toggle, so it simply never matches there). */
+/* Single accent map — keep in sync with design_tokens.yml vertical_accents.
+   Do not re-set --accent in ui_refinements or vertical-local sheets. */
+$vertical-accents: (
+  // (dark accent, hover, light accent). Slot 3 exists because the dark-mode
+  // hues are tuned as ink on dark: on white, dating reads 1.91:1, playlist
+  // 2.47:1 and takeaway 2.97:1 (visual_contract_lint low_contrast, WCAG
+  // 1.4.11 wants 3:1), so light mode wears a darkened variant of the same
+  // hue. Verticals whose dark hue already clears 3:1 on white repeat it.
+  marketplace: (#98876e, #8d7e66, #98876e), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
+  tv:          (#dc635c, #b83a33, #dc635c), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
+  dating:      (#00d4aa, #00b391, #009579), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
+  takeaway:    (#e07b39, #c26a30, #c26a30), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
+  playlist:    (#12b6c4, #0f9aa6, #0e8a94), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
+  maps:        (#5b8fd4, #4a7ab8, #5585c5), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
+  messenger:   (#6b7fd7, #5566c4, #6b7fd7), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
+);
+/* Ink for anything painted ON these accents. Every one of the seven is tuned
+   to be legible as ink on a light surface, which makes them all too light to
+   carry light ink: against --bg (#f7f6fa) they run 1.77–3.46:1, and
+   .compose-btn and brgen's own .btn both paint color: var(--bg) on
+   background: var(--accent). One dark ink clears AA for all of them.
+
+   The ink holds against both the dark and the light column of the map above:
+   #110f19 runs 4.59 to 5.45 on the light accents and 5.10 to 9.94 on the dark
+   ones, clearing the 4.5 floor for the button type they carry. It is the
+   smallest step in the same near-black that does.
+
+   The hover column is the third. .nav-search-submit:hover swaps the fill to it
+   and keeps color: var(--accent-ink); marketplace's hover, the only one wired,
+   measures 4.80. tv's 3.34 and maps' 4.31 are under 4.5 and reach no pixel
+   until their hover is wired. Moving a colour is the operator's. */
+$vertical-accent-ink: #110f19;
+
+@each $style in (normal, italic) {
+  @font-face {
+    font-family: "Instrument Serif";
+    src: local("Instrument Serif"),
+         url("/fonts/instrument-serif-latin-400-#{$style}.woff2") format("woff2"),
+         url("#{$fs}/instrument-serif-latin-400-#{$style}.woff2") format("woff2");
+    font-weight: 400;
+    font-style: $style;
+    font-display: swap;
+    unicode-range: #{$latin};
+  }
+}
+
+:root {
+  // BRGEN_OLD dark — dark-inverted port of the real 2014 desktop.css/
+  // mobile.css (pub/__OLD_BACKUPS/BRGEN_OLD). True grayscale, no accent
+  // hue: this app's identity is the direction itself, not a rotated hue.
+  @include x.brgen-old-dark-tokens;
+  @include x.app-root-tokens;
+  color-scheme: dark;
+  // Real 2014 mobile.css body base ("font: 18px sans-serif") -- this app's
+  // own deliberate size, distinct from the 16px shared default.
+  --font-size: var(--text-lg);
+  --upvote: var(--accent);
+  --downvote: oklch(58% 0.15 30);
+  --z-canvas: 0;
+  --z-splash: 1000;
+  --focus-ring: 2px solid var(--accent);
+  /* The gutter the wordmark reserves, sized from the wordmark.
+
+     _layout_chrome publishes --brand-mark-inline as a flat 4.75rem, which is
+     right for amber and bsdports: their marks are one fixed word. brgen's is a
+     city domain, 8 glyphs on brgen.no and 13 on lsangeles.com, too wide for a
+     flat number. A link under the mark stops being clickable, which is the
+     failure the variable exists to prevent, so brgen sizes it instead of
+     inheriting it.
+
+     0.64 is the measured worst-case glyph advance. The mark does not render in
+     --font-brand here: `a.brgen-logo-mark` at (0,1,1) sets
+     `font: ... $brgen-logo-font`, which outranks the shared .brand-mark's
+     var(--font-brand) at (0,1,0), so on brgen the wordmark is system-ui.
+     system-ui on macOS is SF Pro, which switches optical size around 20px, so
+     "brgen.no" measures 83.3px at a 20.25px font and 84.1px at 16.875px: wider
+     type at the smaller size. A factor from Helvetica Neue (0.503 em/glyph)
+     under-reserves by 11px at 390px and puts the first nav link under the
+     wordmark.
+
+     So 0.64 covers 84.1 / (8 x 16.875). It over-reserves on desktop, where there
+     is width to spare, and is right on the phone, where there is not. Narrowing it
+     is safe only while the wordmark keeps $brgen-logo-font.
+
+     The clamp is the same one .brand-mark sets its own type in, so the gutter
+     widens and narrows exactly when the mark does rather than being right at one
+     viewport. 0.5rem is the mark's own 4px inline padding, both sides.
+
+     --chrome-inset and --safe-left are in the sum because the gutter has to clear
+     where the mark ENDS, not how wide it is: the mark is inset 12px from the edge
+     before it draws a glyph. Without them the gutter reserves 95px against a mark
+     whose right edge is at 104px, and the first nav link sits under the wordmark
+     at 390px.
+
+     --brand-mark-glyphs comes from the layout, which is the only place that
+     knows the label. The 9 fallback covers a mark rendered without it. */
+    --brand-mark-inline: calc(
+  var(--chrome-inset, 12px) + var(--safe-left, 0px) +
+  var(--brand-mark-glyphs, 9) * 0.64 * clamp(0.9375rem, 2.8vw, 1.125rem) + 0.5rem
+    );
+  /* The active rule's colour and weight, declared here because they are this
+     bar's own and nothing else in the app draws them. The rule is #d62828 in both
+     themes, the operator's choice: a 3px band is not text, so it needs only the
+     3:1 a boundary does, and it clears that on either ground.
+
+     The "nytt!" badge is white bold type on a red fill with no padding, the
+     operator's specification. The fill is #cc2424, the red the tree already
+     carries a step under the rule, and white on it measures 5.46:1, which clears
+     WCAG 1.4.3's 4.5 for small bold text on either ground because the badge
+     brings its own. It stays under TYPOGRAPHY's 7.0 for normal text; #991b1b
+     would reach 8.31 if the operator wants that floor too. */
+  --nav-rule: #d62828;
+  --nav-rule-w: 3px;
+  --nav-badge-fill: #cc2424;
+  --nav-badge-ink: #ffffff;
+  /* --logo-detail: the animated mark's micro-stroke — logo art, not text. */
+  --logo-detail: 3px;
+  /* Hue-carrying ink: the live signal and every nick keep their hue and take one
+     lightness per theme, because a single oklch lightness cannot clear TYPOGRAPHY's
+     7.0 on both grounds. 38% is 7.49:1 on #efefef at the worst hue, 78% is 9.89:1
+     on #000000. */
+  --hue-ink-lightness: 78%;
+  /* UI_REFINEMENTS pass — tokens, a11y floor, nav, vertical accents.
+     Flat borders only (no box-shadow). Honors prefers-reduced-motion. */
+
+  /* color-success/warning/info, ease-out/spring and transition-fast/normal come
+     from shared/_tokens.scss through stack_brgen's @forward "tokens", so they are
+     not declared here. */
+  --elev-1: 1px solid var(--border);
+}
+
+/* brgen's light palette, stated once. Shared [data-theme=light] is the social
+   indigo palette and outranks a bare :root, so brgen-old light is restated
+   here. There is no @media (prefers-color-scheme: light) twin: [data-theme=light]
+   is a stated choice and holds whatever the OS prefers. */
+:root[data-theme="light"] {
+  @include x.brgen-old-light-tokens;
+  @include x.app-root-tokens;
+  color-scheme: light;
+  --font-size: var(--text-lg);
+  --hue-ink-lightness: 38%;
+}
+@each $v, $c in $vertical-accents {
+  body.vertical-#{$v} {
+    --accent: #{list.nth($c, 1)};
+    --accent-ink: #{$vertical-accent-ink};
+    --vertical-#{$v}-accent: #{list.nth($c, 1)};
+    --vertical-#{$v}-accent-hover: #{list.nth($c, 2)};
+  }
+  /* Light restates rather than carries: the dataset is the one light path. */
+  :root[data-theme="light"] body.vertical-#{$v} {
+    --accent: #{list.nth($c, 3)};
+    --accent-ink: #{$vertical-accent-ink};
+    --vertical-#{$v}-accent: #{list.nth($c, 3)};
+  }
+}
+
+/* No large-screen upscale: brgen's original desktop.css is a fixed, dense
+   information display (Craigslist-like), not a scaling reading experience. */
+
+// ============================================================ base
+
+a { color: var(--text); text-decoration: none; }
+
+@keyframes composer-drop-in {
+  from { transform: translateY(-24px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes composer-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+label { display: block; font-size: var(--text-sm); color: var(--text-secondary); }
+
+@keyframes nearby-in {
+  from { opacity: 0; transform: translateY(0.75rem) scale(.95); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .4; }
+}
+
+@keyframes matchFadeIn {
+  from { opacity: 0; transform: scale(.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes radio-pulse {
+  0%, 100% { opacity: 0.9; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes tv-live-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.72; }
+}
+
+@keyframes msg-type-bar {
+  0%, 100% { opacity: 0.35; transform: scaleX(0.6); }
+  50% { opacity: 1; transform: scaleX(1); }
+}
+@keyframes skeleton-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+// ============================================================ chrome: search palette and shell
+
+@include meta.load-css("responsive");
+
 /* Search, opened over the page.
 
-   Replaces two rails: a nav link on the left and a field on the right. It costs
-   one glyph of permanent chrome instead of two columns, and it keeps the feed
-   on screen behind it — a search is something done to the page rather than a
-   place to travel to.
+   One glyph of permanent chrome rather than a nav link and a field in two
+   rails, and the feed stays on screen behind it: a search is something done to
+   the page rather than a place to travel to.
 
    Flat, like everything else here: no shadow, no blur. The panel is separated
    from the page by a border and a dimmed ground, which is what the design rules
@@ -20,9 +262,9 @@
   position: fixed;
   inset-block-start: var(--chrome-inset, 12px);
   /* One tap target clear of the theme toggle, which is fixed to the same
-     corner. At the plain inset the two overlapped by 32px and the toggle sits
-     higher, so it took the taps -- the same swallowed-tap defect the brand
-     mark's gutter exists to prevent, in the opposite corner. */
+     corner. At the plain inset the two overlap by 32px and the toggle sits
+     higher, so it takes the taps; the brand mark's gutter prevents the same
+     swallowed tap in the opposite corner. */
   inset-inline-end: calc(var(--chrome-inset, 12px) + var(--tap-min, 44px) + var(--space-1, 4px));
   /* The brand layer, because this is the mark's peer: fixed chrome that must
      stay above the feed and the swiper both. */
@@ -78,6 +320,7 @@
   max-block-size: min(60vh, 32rem);
   overflow-y: auto;
   overscroll-behavior: contain;
+  margin-block-start: var(--space-3, 16px);
 }
 
 .search_palette_results:empty {
@@ -137,94 +380,18 @@ html.palette-open {
   border-block-end-color: var(--text, currentColor);
 }
 
-.search_palette_results {
-  margin-block-start: var(--space-3, 16px);
-}
-
 @include meta.load-css("shell_widgets");
-
-@include meta.load-css("responsive");
 
 @include meta.load-css("master_embed");
 
-// Instrument Serif, the one promotional face on brgen. Markedsplass and takeaway
-// set it on hero banners, promo headlines and campaign tiles through --font-ad,
-// declared once in _vertical_shell.scss; every other line of brgen, prices and
-// cards included, sets the family face, --font.
-//
-// Copyright 2022 The Instrument Serif Project Authors, SIL Open Font Licence 1.1
-// (https://openfontlicense.org), so it ships in the repo rather than per seat.
-// Latin-subset static woff2, regular and italic, vendored to public/fonts/ from
-// fontsource 5.3.0, which builds them from the Google Fonts upstream. local()
-// first, the vendored file second, the pinned CDN copy last.
-//
-// font-display: swap, because a hero is the first thing painted and the face is
-// the point of it; a late swap there does not reflow text anyone is reading.
-$fs: "https://cdn.jsdelivr.net/npm/@fontsource/instrument-serif@5.3.0/files";
-// Latin-1 (U+0000-00FF) covers Norwegian æ ø å; the rest is fontsource's own
-// latin range, so a page without those glyphs never fetches the file.
-$latin: "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD";
-
-@each $style in (normal, italic) {
-  @font-face {
-    font-family: "Instrument Serif";
-    src: local("Instrument Serif"),
-         url("/fonts/instrument-serif-latin-400-#{$style}.woff2") format("woff2"),
-         url("#{$fs}/instrument-serif-latin-400-#{$style}.woff2") format("woff2");
-    font-weight: 400;
-    font-style: $style;
-    font-display: swap;
-    unicode-range: #{$latin};
-  }
-}
-
-// The wordmark keeps the platform UI face it has always been set in. Body text
-// takes --font from app-root-tokens, the one typeface design_tokens.yml names.
-$brgen-logo-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-
-:root {
-  // BRGEN_OLD dark — dark-inverted port of the real 2014 desktop.css/
-  // mobile.css (pub/__OLD_BACKUPS/BRGEN_OLD). True grayscale, no accent
-  // hue: this app's identity is the direction itself, not a rotated hue.
-  @include x.brgen-old-dark-tokens;
-  @include x.app-root-tokens;
-  color-scheme: dark;
-  // Real 2014 mobile.css body base ("font: 18px sans-serif") -- this app's
-  // own deliberate size, distinct from the 16px shared default.
-  --font-size: var(--text-lg);
-  --upvote: var(--accent);
-  --downvote: oklch(58% 0.15 30);
-  --z-canvas: 0;
-  --z-splash: 1000;
-  --focus-ring: 2px solid var(--accent);
-}
+// ============================================================ layout: root and canvas
 
 .theme-root {
   min-height: 100dvh;
 }
 
-/* The light palette lives once, in the :root[data-theme="light"] restatement
-   below; the checkbox-sibling lane retired with the mechanism. */
-
-/* Shared [data-theme=light] is the social indigo palette and outranks a bare
-   :root. Restate brgen-old here so the checkbox path and the dataset path
-   wear the same 2014 light, not two lights. */
-/* Unconditional, and there is no @media (prefers-color-scheme: light) twin.
-   [data-theme=light] is a stated choice, so it has to hold whatever the OS
-   prefers — which this rule already does. The twin restated the same six
-   declarations at the same specificity two lines further down, so it could
-   never win a cascade this rule lost, and it cost 1,061 bytes of every
-   brgen page load against a weight ceiling this app was over. */
-:root[data-theme="light"] {
-  @include x.brgen-old-light-tokens;
-  @include x.app-root-tokens;
-  color-scheme: light;
-  --font-size: var(--text-lg);
-}
-
 /* The universal border-box/zero-margin reset is shared/_zen_shell.scss's first
-   rule, and it reaches every app. Restating it here emitted the same three
-   declarations a second time under the same selector. */
+   rule and reaches every app, so brgen does not restate it. */
 
 html, body {
   height: 100%;
@@ -236,41 +403,24 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* html only, and that is the whole point.
+/* html only. --font-size is var(--text-lg), 1.125rem, and rem resolves against
+ * the root, so html takes 18px. On body as well, the same declaration would
+ * resolve again against html's 18px and set body at 20.25px, 12.5% larger than
+ * --text-base. body inherits instead, so the pair cannot drift, and 1rem stays
+ * the 18px --font-size asks for: the real 2014 mobile.css body base.
  *
- * This shorthand used to sit on `html, body` together. --font-size is
- * var(--text-lg), which is 1.125rem, and rem resolves against the root — so html
- * took 1.125 x 16px = 18px, and then body resolved the *same declaration* against
- * html's new 18px and took 20.25px. Every unstyled paragraph on brgen rendered
- * 12.5% larger than --text-base, the token that says what body text is.
- *
- * Measured before: html 18px, body 20.25px, 1rem 18px. After: html 18px, body
- * 18px, 1rem 18px. The rem base does not move, so _canvas.scss's clamp comment
- * about one rem being 18px here stays true.
- *
- * 18px is what this app asked for — see --font-size above, "the real 2014
- * mobile.css body base, this app's own deliberate size". It has not been getting
- * it. body inherits rather than restating, so the pair cannot drift again.
- *
- * Set with the `font` shorthand, which is worth knowing because it is invisible
- * to the obvious search: grep for `font-size:` on html and brgen appears to set
- * no root size at all, so rem looks like it resolves against the browser default.
- * It does not — this line is the 18px that thirty-odd comments across the tree,
- * design_tokens.yml and ScaleLint all refer to. */
+ * Set with the `font` shorthand, which is invisible to the obvious search: grep
+ * for `font-size:` on html and brgen appears to set no root size at all. This
+ * line is the 18px that comments across the tree, design_tokens.yml and
+ * ScaleLint all refer to. */
 html {
   font: var(--font-size)/var(--line-height) var(--font);
+  -webkit-tap-highlight-color: color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 body {
   font: inherit;
 }
-
-/* No large-screen upscale here: the original desktop.css was a fixed,
-   dense information display (Craigslist-like), not a scaling reading
-   experience -- that behavior belonged to the x.com dialect this app is
-   moving away from. */
-
-a { color: var(--text); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
 /* Keyboard focus floor: fills any interactive element that lacks its own
@@ -282,15 +432,12 @@ a:hover { text-decoration: underline; }
 }
 
 /* Brgen-specific shell tweaks on top of the shared x shell. */
-/* Inset below the permanent nav. The bar is fixed chrome at y=0, and this
-   shell is the scroll container -- without the offset main starts at y=0 and
-   .compose-trigger lands inside the bar's band, which is the exact collision
-   that turned the nav into a drawer in the first place. Content scrolls UNDER
-   the bar from here, which is what its opaque background is for. */
-/* Two bands on a phone since 2026-09-12: the wordmark sits on its own band and
-   the nav runs under it, so the shell clears both. One band from md up, where
-   the nav is beside the mark again — that is the arrangement the note above
-   describes and the `inset` below restores. */
+/* Inset below the fixed top chrome. This shell is the scroll container, so
+   without the offset main starts at y=0 and .compose-trigger lands inside the
+   nav's band. Content scrolls under the bar, which is what its opaque
+   background is for. On a phone the wordmark has its own band and the nav runs
+   under it, so the shell clears both; from md up the nav sits beside the mark
+   and the shell clears one band. */
 .app-shell {
   position: fixed;
   inset: calc(var(--top-band-block) + var(--nav-swiper-h, 3.5rem) + var(--safe-top, 0px)) 0 0 0;
@@ -309,96 +456,29 @@ a:hover { text-decoration: underline; }
   font-weight: var(--weight-heavy);
 }
 
-/* The gutter the wordmark reserves, sized from the wordmark.
-
-   _layout_chrome publishes --brand-mark-inline as a flat 4.75rem, which is
-   right for amber and bsdports: their marks are one fixed word. brgen's is a
-   city domain, so it is 8 glyphs on brgen.no and 13 on lsangeles.com, and the
-   flat number was already too narrow for the longest city before .no and .com
-   joined the mark. A link under the mark stops being clickable — that is the
-   failure the variable exists to prevent — so brgen sizes it instead of
-   inheriting it.
-
-   0.64 is the measured worst-case glyph advance, and measuring is the only
-   reason it is not 0.53. The mark does not render in --font-brand here: the
-   rule below is `a.brgen-logo-mark` at (0,1,1) and sets `font: ... $brgen-logo-font`,
-   which outranks the shared .brand-mark's var(--font-brand) at (0,1,0), so on
-   brgen the wordmark is system-ui. system-ui on macOS is SF Pro, which switches
-   optical size around 20px — so "brgen.no" measured 83.3px at a 20.25px font and
-   84.1px at 16.875px: wider type at the smaller size. A factor derived from
-   Helvetica Neue (0.503 em/glyph) under-reserved by 11px at 390px and put the
-   first nav link under the wordmark.
-
-   So 0.64 covers 84.1 / (8 x 16.875). It over-reserves on desktop, where there
-   is width to spare, and is right on the phone, where there is not. Narrowing it
-   is safe only while the wordmark keeps $brgen-logo-font.
-
-   The clamp is the same one .brand-mark sets its own type in, so the gutter
-   widens and narrows exactly when the mark does rather than being right at one
-   viewport. 0.5rem is the mark's own 4px inline padding, both sides.
-
-   --chrome-inset and --safe-left are in the sum because the gutter has to clear
-   where the mark ENDS, not how wide it is: the mark is inset 12px from the edge
-   before it draws a glyph. Leaving them out reserved 95px against a mark whose
-   right edge was at 104px, and the first nav link sat under the wordmark at
-   390px — the same failure, 9px smaller, that put this variable here.
-
-   --brand-mark-glyphs comes from the layout, which is the only place that
-   knows the label. The 9 fallback covers a mark rendered without it. */
-:root {
-  --brand-mark-inline: calc(
-var(--chrome-inset, 12px) + var(--safe-left, 0px) +
-var(--brand-mark-glyphs, 9) * 0.64 * clamp(0.9375rem, 2.8vw, 1.125rem) + 0.5rem
-  );
-}
-
-/* --brand-mark-inline and --chrome-toggle-inline moved to _layout_chrome.scss
-   with the shared .brand-mark that owns them, so they are declared once for all
-   three apps rather than in brgen only. The reasoning that earned them is kept
-   there. What follows is brgen's own mark styling, which .brand-mark now shares.
-
-   Kept for the record:
-   Footprint published as a variable so anything a surface anchors to the top
-   inline-start can clear it, the way --tab-bar-h works for the bottom edge.
-   The brand is fixed and takes pointer events, so whatever it lands on stops
-   being clickable: the first .feed-tab on the feed and #map-search on maps
-   both had their left ~63px swallowed, and a tap there navigated home instead.
-   #navBar already cleared it with a hardcoded 4.75rem; this is that number,
-   named, so the next top-left surface inherits the fix instead of rediscovering
-   the bug.
-
-   The trailing mirror, --chrome-toggle-inline, exists because .theme-toggle is
-   fixed 44px wide at inset-inline-end 0.75rem with z-index 110, so it covered
-   the last nav item exactly the way the brand covered the first one. */
-
 /* City brand: fixed top-left, identical on core + every vertical.
    MASTER face.css .top-left-logo — type only. Never a bordered/outlined chip. */
 a.brgen-logo-mark,
 .brgen-logo-mark {
   position: fixed;
-  /* Above the nav band, not below it. This was calc(--z-chrome + 1) = 11, and
-     .nav_swiper carries --z-nav (--z-ui, 90) with an opaque `background:
-     var(--bg)` on .nav_swiper_bar. Once the nav became always-visible it landed
-     at y 0-55 over the brand's y 14-58, so the wordmark painted behind a solid
-     black rectangle and elementFromPoint at its own centre returned the "front"
-     .nav_link -- the brand corner navigated to front instead of home.
+  /* Above the nav band, not below it. .nav_swiper carries --z-nav (--z-ui, 90)
+     with an opaque `background: var(--bg)` on .nav_swiper_bar, so below it the
+     wordmark would paint behind a solid rectangle and a tap on its centre would
+     reach a .nav_link instead of home.
 
      Decorative chrome stays below --z-ui (90, nav_swiper's grip) so it never
      buries the interactive element in that band. The brand is the other case:
-     it belongs above, because it is a link, and it is the one
-     piece of chrome that is identical on every surface. .nav_swiper_bar's
-     padding-inline keeps nav items clear of this footprint at rest, and its
-     left-edge mask fades them out as they scroll under it. */
+     it belongs above, because it is a link, and it is the one piece of chrome
+     that is identical on every surface. .nav_swiper_bar's margin-inline keeps
+     nav items clear of this footprint at rest, and its leading-edge mask fades
+     them out as they scroll under it. */
   z-index: var(--z-brand, 120);
   /* Same corner inset as the theme control and the chat widget, and additive
-     over the safe area rather than max()'d against it -- see --chrome-inset.
-     This was 0.5rem top / 0.75rem start, so the brand sat 4px higher than the
-     toggle opposite it and lost its inset entirely on a notched phone.
+     over the safe area rather than max()'d against it; see --chrome-inset.
 
-     No `top` here anymore: the shared .brand-mark owns positioning (with
-     --top-band-nudge centring it on the nav link), and this a.-prefixed
-     duplicate outranked it at (0,1,1) — which is why the nudge landed on
-     brgen.no and missed every vertical (rendered_invariants, 2026-08-22). */
+     No `top` here: the shared .brand-mark owns positioning, with
+     --top-band-nudge centring it on the nav link, and a `top` on this
+     a.-prefixed selector would outrank it at (0,1,1) on every surface. */
   inset-inline-start: calc(var(--chrome-inset, 12px) + var(--safe-left, 0px));
   display: inline-flex;
   align-items: center;
@@ -434,13 +514,11 @@ a.brgen-logo-mark,
   background: transparent !important;
 }
 
-/* :focus-visible is deliberately NOT in this list. It used to be, and because
-   `a.brgen-logo-mark:focus-visible` (0,2,1) outranks the design system's
-   `.brgen-logo-mark:focus-visible` (0,2,0), the wordmark was the one nav element
-   in brgen with no keyboard focus ring at all — keyboard_flow reported it on
-   both /core and /marketplace. The intent here is "no chrome around the
-   wordmark", which `:focus:not(:focus-visible)` expresses without also
-   suppressing the keyboard indicator. */
+/* :focus-visible is deliberately NOT in this list: `a.brgen-logo-mark:focus-visible`
+   (0,2,1) outranks the design system's `.brgen-logo-mark:focus-visible` (0,2,0),
+   so listing it here would strip the wordmark's keyboard focus ring. The intent
+   is "no chrome around the wordmark", which `:focus:not(:focus-visible)`
+   expresses without also suppressing the keyboard indicator. */
 a.brgen-logo-mark:hover,
 a.brgen-logo-mark:focus:not(:focus-visible),
 a.brgen-logo-mark:active,
@@ -483,8 +561,7 @@ body.vertical-marketplace #navBar {
 }
 
 /* 768, not 769: every other bound in the family treats 768 as the tablet edge,
-   so at exactly 768px the compose control fell through to base styling while
-   the rest of the shell was already in its tablet band. */
+   so the compose control changes band at the same width as the rest of the shell. */
 @media (min-width: 768px) and (max-width: 1264px) {
   .compose-label { display: none; }
   .compose-icon { display: block; }
@@ -506,16 +583,15 @@ body.vertical-marketplace #navBar {
   }
 }
 
-/* Overflow guard at the origin — carried by _autofix_geometry until 2026-08-09
-   (brgen/core, table.lines spilled past a 320px viewport). */
+/* Overflow guard: table.lines on brgen/core spills past a 320px viewport without it. */
 table.lines {
   max-width: 100%;
   overflow-wrap: anywhere;
 }
 
-/* Phone chrome — operator, 2026-09-12.
+/* Phone chrome, the operator's arrangement.
    The wordmark is centred on its own band and a step larger; the nav runs under
-   it (see _nav_swiper); sign-in and light/dark sit together in the upper-left
+   it (see .nav_swiper); sign-in and light/dark sit together in the upper-left
    corner. inset-inline: 0 with auto margins is what centres a fixed box — the
    shared rule sets inset-inline-end: auto to let it shrink-wrap, so both ends
    have to be restated here or the box keeps hugging the leading edge. */
@@ -565,8 +641,8 @@ table.lines {
 }
 
 /* From md the wordmark returns to the leading edge beside the nav, and the
-   light/dark control returns to the opposite corner — the arrangement every
-   rule above this block was written for. */
+   light/dark control returns to the opposite corner, where the base
+   .brgen-logo-mark and .theme-toggle rules place them. */
 @media (min-width: 768px) {
   .brand-mark.brgen-logo-mark {
     inset-inline-start: calc(var(--chrome-inset, 12px) + var(--safe-left, 0px));
@@ -598,8 +674,6 @@ table.lines {
   opacity: 1;
   transition: opacity var(--transition-fast) var(--ease-out);
 }
-
-.splash.ack { opacity: 0; }
 .splash[hidden] { display: none; }
 .splash h2 { margin: 0 0 8px; font-size: clamp(2.5rem, 12vw, 5rem); font-weight: var(--weight-heavy); color: var(--text); letter-spacing: var(--tracking-tightest); transition: transform var(--transition-fast) var(--ease-out); }
 .splash h2.clicked { transform: scale(1.02); }
@@ -622,6 +696,8 @@ table.lines {
 }
 .splash .hint { color: var(--text-secondary); font-size: var(--text-xs); letter-spacing: var(--tracking-wide); }
 .splash a { color: inherit; }
+
+// ============================================================ chrome: nav
 
 /* Sticky feed header — single source (accent underline + scroll fade) */
 .feed-header {
@@ -653,9 +729,9 @@ table.lines {
   gap: 0;
   overflow-x: auto;
   scrollbar-width: none;
-  /* Clear the fixed chrome at both ends — the city brand covered the first tab
-     and the theme toggle covered the last one, so tapping either hit the
-     chrome instead of the tab. */
+  /* Clear the fixed chrome at both ends: the city brand covers the first tab
+     and the theme toggle the last, so a tap there would hit the chrome instead
+     of the tab. */
   padding: 0 var(--chrome-toggle-inline) 0 var(--brand-mark-inline);
   mask-image: linear-gradient(to right, var(--bg) 88%, transparent 100%);
   -webkit-mask-image: linear-gradient(to right, var(--bg) 88%, transparent 100%);
@@ -677,9 +753,8 @@ table.lines {
 .feed-tabs::-webkit-scrollbar { display: none; }
 
 .feed-tab {
-  /* A touch bigger than the 0.875rem/space-4 it was: these seven verticals are
-     brgen's primary nav, so they should read as destinations, not as metadata.
-     scroll-snap-align pairs with the scroller's snap type above. */
+  /* These verticals are brgen's primary nav, so they read as destinations, not
+     as metadata. scroll-snap-align pairs with the scroller's snap type above. */
   padding: var(--space-3) var(--space-5, 1.25rem);
   font-size: var(--text-base);
   scroll-snap-align: start;
@@ -715,16 +790,7 @@ table.lines {
 
 a.feed-tab { text-decoration: none; }
 
-/* The inline compose box went with the Live surface, 2026-08-17. Everything it
-   styled — .compose-box and its --expanded state, .compose-label-visible,
-   .compose-inner, .compose-prompt, .compose-footer, .compose-submit,
-   .compose-as, .compose-action--attached — had exactly one caller left in
-   live/index.html.erb, because the front page moved to the <dialog> composer in
-   _composer.scss some time before. The rules below are the parts the dialog
-   still uses.
-
-   The orphaned comment above this one described a MASTER AI embed rule that had
-   already been deleted out from under it. */
+/* The parts of the compose styling the <dialog> composer uses. */
 .compose-hint details summary { cursor: pointer; min-height: var(--tap-min); display: flex; align-items: center; }
 
 .compose-avatar {
@@ -780,34 +846,6 @@ label.compose-action {
 label.compose-action:hover { color: var(--text); }
 .compose-hint { font-size: var(--font-size); margin: var(--space-2) 0 0; }
 
-/* Permanent, per operator decision 2026-08-08: the primary nav is always
-   visible and is swiped horizontally, not pulled down.
-
-   It was a drawer because when it was last permanent it overlaid the top of
-   main -- brgen's .app-shell is `position: fixed; inset: 0`, so main starts at
-   y=0 and .compose-trigger sat at y=14, inside this bar's band. The drawer
-   dodged the collision instead of resolving it. Resolved properly here: the bar
-   is fixed chrome and .app-shell is inset below it by --nav-swiper-h, so
-   nothing starts underneath it. Content still scrolls *under* the bar, which is
-   what the opaque background is for. */
-/* The active rule's colour and weight, declared here because they are this
-   bar's own and nothing else in the app draws them. The rule is #d62828 in both
-   themes, operator choice 2026-08-29: a 3px band is not text, so it needs only
-   the 3:1 a boundary does, and it clears that on either ground.
-
-   The "nytt!" badge is white bold type on a red fill with no padding, the
-   operator's specification. The fill is #cc2424, the red the tree already
-   carries a step under the rule, and white on it measures 5.46:1, which clears
-   WCAG 1.4.3's 4.5 for small bold text on either ground because the badge
-   brings its own. It stays under TYPOGRAPHY's 7.0 for normal text; #991b1b
-   would reach 8.31 if the operator wants that floor too. */
-:root {
-  --nav-rule: #d62828;
-  --nav-rule-w: 3px;
-  --nav-badge-fill: #cc2424;
-  --nav-badge-ink: #ffffff;
-}
-
 /* Under the wordmark on a phone, beside it from md up. --top-band-block is the
    fixed band's own height, published by _layout_chrome for exactly this: the
    next piece of chrome inherits the measurement instead of guessing it. */
@@ -827,10 +865,8 @@ label.compose-action:hover { color: var(--text); }
   }
 }
 
-
-/* Rests visible, then gets out of the way — operator instruction 2026-08-17,
-   which supersedes the "always visible" note above. The collision that made it a
-   drawer is still resolved; this is a bar that retires, not a drawer that hides.
+/* Rests visible, then gets out of the way, as the operator asked: a bar that
+   retires, not a drawer that hides.
 
    It translates rather than collapsing: the wordmark and the theme control are
    fixed above this bar at a higher z-index, so the band stays occupied when the
@@ -853,42 +889,30 @@ label.compose-action:hover { color: var(--text); }
   overflow-x: auto;
   scrollbar-width: none;
   /* auto, not 100%: 100% is the full viewport, and with the inline margins
-     below that made the box wider than what contains it — so its right edge
-     still ran under the theme toggle and the margin bought nothing. auto fills
-     what is left between the two chrome footprints, which is the whole point of
-     the margins.
-     (max-content was the older mistake here, from when this was a drawer: it
-     left the bar ending mid-viewport with the page showing past its edge.) */
+     below that makes the box wider than what contains it, so its right edge
+     runs under the theme toggle. auto fills what is left between the two chrome
+     footprints, which is the whole point of the margins. */
   width: auto;
   padding-block: var(--space-2);
   padding-block-start: calc(var(--space-2) + var(--safe-top));
-  /* Leading inset clears the fixed wordmark, which sits above this bar in the
-     stack (--z-nav + 1). Trailing inset clears the theme control opposite it.
-     Both footprints are published as variables in _root.scss precisely so the
-     next piece of top chrome inherits the fix instead of rediscovering it. */
-  /* Centred on the viewport, not on whatever the logo leaves over.
-     The two chrome footprints differ — brand 4.75rem, toggle 4.25rem — so
-     padding of one on each side put the content box half a rem off centre, and
-     the links sat visibly right of middle. Clearing both sides by the LARGER
-     footprint makes the content box symmetric about the viewport, so centring
-     it centres it on the page. Operator instruction 2026-08-10: the nav is
-     centred regardless of where the logo sits.
-     `safe` matters: past the point where the links no longer fit, plain
-     `center` overflows equally in both directions and the first link becomes
-     unreachable behind the leading edge. `safe center` falls back to flex-start
-     exactly then, which is also when the bar becomes a swiper again. */
+  /* Centred on the viewport, not on whatever the logo leaves over. The two
+     chrome footprints differ, so clearing both sides by the larger one
+     (--nav-clear from md up) makes the content box symmetric about the
+     viewport, and centring it centres it on the page, as the operator asked.
+     `safe` matters: once the links no longer fit, plain `center` overflows
+     both ways and the first link becomes unreachable behind the leading edge.
+     `safe center` falls back to flex-start exactly then, which is also when the
+     bar becomes a swiper again. */
   /* Zero on a phone: the bar sits under the wordmark, so there is no fixed
      control on its row to clear. The md rule below restores the clearance for
      the arrangement that needs it. */
   --nav-clear: 0px;
   /* margin, not padding. Padding insets where the content *starts*; it cannot
-     say where the scrolling viewport ends, so once the run overflows — 1208px
-     against a 390px screen — any link can be dragged under the fixed wordmark
-     or the theme toggle. "sign up" was measured at x 315-410 with its centre at
-     362, directly beneath a toggle occupying 337-381: visible, faded by the
-     mask below, and not pressable. The occlusion gate found it on six surfaces.
-     Making the box itself stop short of both controls means no scroll position
-     can put a link under them. */
+     say where the scrolling viewport ends, so once the run overflows a 390px
+     screen any link could be dragged under the fixed wordmark or the theme
+     toggle: visible, faded by the mask below, and not pressable. The box itself
+     stops short of both controls, so no scroll position can put a link under
+     them. */
   margin-inline: var(--nav-clear);
   justify-content: safe center;
   /* Same swipe contract as .feed-tabs: pan-x so Chrome on a phone does not
@@ -903,19 +927,14 @@ label.compose-action:hover { color: var(--text); }
   /* Fades BOTH edges, and the two do different jobs.
      Right: the "there is more, drag me" signal the operator asked for.
      Left: the wordmark is fixed on top of this bar at --z-brand, so a link
-     scrolled to the leading edge would slide out from behind solid type. The
-     fade dissolves it into the background instead — which is what _root.scss's
-     note on the brand stack already said this bar should do, written while the
-     bar was a drawer and so never true until now.
+     scrolled to the leading edge would slide out from behind solid type; the
+     fade dissolves it into the background instead.
      Both stops are the footprints of the chrome they sit under, not round
-     numbers: --brand-mark-inline leading, --chrome-toggle-inline trailing. The
-     trailing stop was 86%, which is a fraction of the viewport rather than of
-     the toggle, so on a 390px screen a link was still ~40% opaque where the sun
-     icon starts and the two read as one smudge. Anchoring to the token makes a
-     link fully dissolved before it reaches either control, at any width.
-     The ramp has to FINISH where the toggle starts, not begin there: ending
-     it at the toggle's edge left a link ~59% opaque under the sun icon and
-     the two read as one smudge, so it completes over the 2.5rem before it. */
+     numbers: --brand-mark-inline leading, --chrome-toggle-inline trailing, so a
+     link is fully dissolved before it reaches either control, at any width.
+     The ramp FINISHES where the toggle starts, completing over the 2.5rem
+     before it; a ramp that begins there leaves a link half opaque under the sun
+     icon, and the two read as one smudge. */
   /* On a phone both fades are edge fades — the only thing to dissolve into is
      the screen edge, because nothing overlaps the bar any more. */
   --nav-fade-lead: 0px;
@@ -941,11 +960,10 @@ label.compose-action:hover { color: var(--text); }
    reader would otherwise announce "pipe" between every destination, and
    aria-hidden on eight separator spans is eight chances to forget one. And
    :first-child gives the leading edge for free, so no entry has to know
-   whether it is first — which is what breaks the moment the order changes,
-   and the order here has changed twice.
+   whether it is first, which is what breaks the moment the order changes.
 
    --border is the token, not a literal: it is #666 on both grounds, the colour
-   every other hairline in the app draws in. Operator, 2026-08-29.
+   every other hairline in the app draws in.
 
    The pipe sits in the padding rather than adding width, so the 44px tap
    target the run is tuned around is untouched. */
@@ -953,20 +971,17 @@ label.compose-action:hover { color: var(--text); }
   content: "|";
   /* Taken out of flow and hung on the seam.
 
-     Two negative-margin versions came before this one, and both were wrong in a
-     way the rendered bar showed and the rule did not. Half a padding left the
-     pipe inside the link's box, so an active link's rule ran under the
-     separator and the underline read a character too long. A full padding
-     cleared the box but put the pipe hard against the following word -- the bar
-     read "|Radio |Marketplace" rather than "Radio | Marketplace", because a
-     margin can move a glyph left but cannot also hold the text after it away.
+     A negative margin cannot do this: half a padding leaves the pipe inside the
+     link's box, so an active link's rule runs under the separator, and a full
+     padding puts the pipe hard against the following word ("|Radio" rather than
+     "Radio |"), because a margin can move a glyph but cannot also hold the text
+     after it away.
 
-     Absolute is what says the thing meant all along: the separator is part of
-     neither word. inset-inline-start: 0 is the seam, because adjacent flex
-     items share a border edge and the visible gap is the two links' padding
-     either side of it -- so the border edge IS the middle of the gap. The
-     translate centres the glyph on that line in both axes, and being out of
-     flow it costs the run no width and cannot be caught by the active link's
+     The separator is part of neither word. inset-inline-start: 0 is the seam,
+     because adjacent flex items share a border edge and the visible gap is the
+     two links' padding either side of it, so the border edge IS the middle of
+     the gap. The translate centres the glyph on that line in both axes, and out
+     of flow it costs the run no width and cannot be caught by the active link's
      inset shadow. */
   position: absolute;
   inset-inline-start: 0;
@@ -983,13 +998,11 @@ label.compose-action:hover { color: var(--text); }
   flex: 0 0 auto;
   /* Containing block for the separator hung on this link's leading seam. */
   position: relative;
-  /* Tighter than the old space-4 both ways: twelve destinations in a drawer, so
-     the run should cost as little width as it can while keeping the 44px tap
-     target that comes from min-height in _chrome_polish. */
+  /* Tight both ways, so the run costs as little width as it can while keeping
+     its 44px tap target. */
   padding: var(--space-3) var(--space-3);
-  /* Big letters — operator, 2026-08-17. --text-sm was sized for twelve
-     destinations in a drawer; there are nine on a bar that now retires, so the
-     run can afford the width and the primary nav should read as primary. */
+  /* Big letters, the operator's call: the primary nav reads as primary, and a
+     bar that retires can afford the width. */
   font: var(--text-lg)/1 var(--font);
   font-weight: var(--weight-bold);
   color: var(--text-secondary);
@@ -1001,7 +1014,7 @@ label.compose-action:hover { color: var(--text); }
 .nav_link:hover { color: var(--text); background: var(--hover); text-decoration: none; }
 
 /* Active state is a thick red rule under the entry, and exactly one entry
-   wears it — operator, 2026-08-29. With eight peers all set in --weight-bold,
+   wears it, as the operator designed. With eight peers all set in --weight-bold,
    weight cannot mark one of them, and colour alone is a contrast step a reader
    scanning a row does not register.
 
@@ -1042,7 +1055,6 @@ label.compose-action:hover { color: var(--text); }
   vertical-align: super;
 }
 
-
 /* From md the bar shares its row with the wordmark and the toggle again, so the
    clearances and the leading fade come back. Same values the phone rule zeroes;
    stated once here rather than duplicated into both branches. */
@@ -1057,8 +1069,8 @@ label.compose-action:hover { color: var(--text); }
 
 // The messenger window.
 //
-// Geometry copied from Discord first, then moved onto this tree's rules, which is
-// the order the operator asked for: replicate exactly, then mould.
+// Geometry follows Discord, replicated exactly and then moulded onto this
+// tree's rules, which is the order the operator asks for.
 //
 //   Discord            here            why it changed
 //   ---------------------------------------------------------------------------
@@ -1073,37 +1085,36 @@ label.compose-action:hover { color: var(--text); }
 // room for two. 1280 is design_tokens viewport.xl — BreakpointLint asserts every
 // media width is one of those edges, so this is not a width chosen here.
 //
-// Separation is surface, not line (operator, 2026-08-04: "no lines at all", one
+// Separation is surface, not line (the operator's "no lines at all", with one
 // exemption for form fields). The window has three real seams — rail against
 // pane, header against log, composer against log — and all three are drawn by
 // putting chrome on --surface-elevated and content on --bg. That pair differs in
 // both themes, where --surface and --bg do not: brgen-old light sets both to
-// #ffffff, so a rail on --surface against a pane on --bg would have had no seam
-// at all under the theme this app now defaults to.
+// #ffffff, so a rail on --surface against a pane on --bg would have no seam.
 //
 // Two borders survive and each cites its rule:
 //   .messenger-composer-box   the form-field exemption — you must see where to type
 //   .messenger-details-panel  ui_polish.flat_ui — floating chrome is 1px border
 //                             plus an elevated surface, never a shadow
 
+// ============================================================ components: messenger
+
 .messenger-window {
   display: grid;
   grid-template-columns: 1fr;
   gap: 0;
   /* Not 100dvh. This sits inside <main>, which starts 62px down and adds 58.5px
-     of padding, so a full viewport height here begins at y=121 and runs 121px
-     past the fold — measured on production at 1440x900. CSS has no expression
-     for "a viewport minus my own distance from the top", so the window stops
-     asking for one: it is sized by its content and the two panes below own their
-     own scrolling. */
+     of padding, so a full viewport height here would run 121px past the fold.
+     CSS has no expression for "a viewport minus my own distance from the top",
+     so the window is sized by its content and the two panes own their own
+     scrolling. */
 }
 
 // Master-detail on a phone: the rail, or the room, never both.
 //
-// The comment that stood above this claimed one pane on a phone and the CSS did
-// not do it — a single 1fr column stacks the rail on top of the conversation, so
-// reaching a message meant scrolling past every room first. That is the whole of
-// the layout on the device this will mostly be used on.
+// A single 1fr column would stack the rail on top of the conversation, so
+// reaching a message would mean scrolling past every room first, on the device
+// this is mostly used on.
 //
 // :has(.conversation-log) is the test for "a room is open", because that class is
 // already the thing Message#broadcast_to_logs appends to — it exists in both show
@@ -1152,11 +1163,11 @@ label.compose-action:hover { color: var(--text); }
 
 // One hover state for the whole window, listed once. Six controls — the rail
 // search, a room row, the invite copy button, the two header controls and a
-// composer tool — all lift to --hover with full-strength ink, and each carried
-// its own copy of these two declarations. Stated at the earliest of the six so
-// none of them moves later in the cascade: the only rule in this file that ties
-// on specificity is .messenger-rail-room[aria-current="page"] below, which still
-// comes after this and still wins the ground it sets on the open room.
+// composer tool — all lift to --hover with full-strength ink. Stated at the
+// earliest of the six so none of them moves later in the cascade: the only
+// messenger rule that ties with it on specificity is
+// .messenger-rail-room[aria-current="page"] below, which comes after this and
+// wins the ground it sets on the open room.
 .messenger-rail-search:hover,
 .messenger-rail-room:hover,
 .messenger-rail-invite-copy:hover,
@@ -1285,9 +1296,8 @@ label.compose-action:hover { color: var(--text); }
   padding-inline: var(--space-1);
   border-radius: var(--radius-pill);
   background: var(--accent);
-  // --accent-ink, the tree's existing token for text on the accent (see _forms).
-  // The literal that stood here would have tripped magic_color_hex_ban_inline,
-  // and invented a second name for a colour that already had one.
+  // --accent-ink, the tree's token for text on the accent; a literal here would
+  // trip magic_color_hex_ban_inline and name a colour that already has a name.
   color: var(--accent-ink);
   font-size: var(--text-xs);
   font-weight: var(--weight-bold);
@@ -1602,10 +1612,6 @@ label.compose-action:hover { color: var(--text); }
   font-size: var(--text-xs);
 }
 
-// The inbox row itself is _messenger_inbox.scss, @used immediately after this
-// file: a list of conversations is a different surface from the window that
-// opens one, and nothing below can match an element it reaches.
-
 /* The empty state is a message, not a room. Hold it to a measure and put it
    near the top of the pane, where the first line of a conversation would be —
    dead centre of a tall column is where nothing lives. */
@@ -1647,25 +1653,17 @@ label.compose-action:hover { color: var(--text); }
   .messenger-pane .conversation-log { padding-inline: var(--space-4); }
 }
 
-// After messenger_window, not before: the inbox row specialises two rules the
-// window declares for every avatar and every meta cell.
-
 // The inbox row — one conversation in a list, not a room in the window.
 //
-// A different surface from _messenger_window.scss, which is why it is a
-// different file. The window is the two-pane frame at conversations#index and
-// #show; this is the flat list conversations/_conversation_row renders, and
-// that partial lives inside <noscript> plus the infinite-scroll reflex. Nothing
-// here paints inside .messenger-window, and the split was checked on exactly
-// that: these rules move past _messenger_window's tail (the pane empty state
-// and the 1280 media block) and not one selector there can match an element
-// these reach.
+// The window is the two-pane frame at conversations#index and #show; this is
+// the flat list conversations/_conversation_row renders, inside <noscript> and
+// the infinite-scroll reflex. Nothing here paints inside .messenger-window.
 //
 // Same anatomy as the rail's DM row — avatar, name, preview, then unread or
-// time — at a larger size, so the shared halves are declared once in
-// _messenger_window.scss (.messenger-inbox-avatar in the avatar group,
-// .messenger-inbox-meta in the meta group) and specialised here. That is why
-// this file is @used AFTER messenger_window and never before it.
+// time — at a larger size, so the shared halves are declared once with the
+// window (.messenger-inbox-avatar in the avatar group, .messenger-inbox-meta in
+// the meta group) and specialised here, which is why these rules follow the
+// window's.
 
 .messenger-inbox-row {
   display: flex;
@@ -1729,18 +1727,17 @@ label.compose-action:hover { color: var(--text); }
 
 @include meta.load-css("tiptap");
 
-/* The compose launcher and its floating composer.
-   The resting row used to be a live textarea that grew the feed downward on
-   focus, so the page reflowed under the reader the moment they touched it. Now
-   the resting row is a thin pill of fixed height and the writing surface is a
-   modal <dialog> over the feed. */
+/* The compose launcher and its floating composer. The resting row is a thin
+   pill of fixed height and the writing surface is a modal <dialog> over the
+   feed, so the page never reflows under a reader who touches it. */
+
+// ============================================================ chrome: composer and tabs
 
 .compose-launcher {
   margin: var(--space-3) var(--space-4);
 }
 
-/* Thin: one row, avatar-height, no vertical padding beyond what centres it.
-   The old box was padding + a 44px min-height input + margins. */
+/* Thin: one row, avatar-height, no vertical padding beyond what centres it. */
 .compose-trigger {
   display: flex;
   align-items: center;
@@ -1773,8 +1770,7 @@ label.compose-action:hover { color: var(--text); }
   white-space: nowrap;
 }
 
-/* 32px here, against 40px in the old resting box -- the pill is the thing being
-   made thinner and the avatar sets its height. */
+/* 32px: the pill stays thin, and the avatar sets its height. */
 .compose-trigger .compose-avatar {
   width: 32px;
   height: 32px;
@@ -1784,11 +1780,8 @@ label.compose-action:hover { color: var(--text); }
 /* --- the floating composer --- */
 
 .composer {
-  width: min(500px, calc(100vw - var(--space-4) * 2));
   max-height: min(90vh, 760px);
   padding: 0;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md, var(--radius-sm));
   /* --surface-elevated sits a hair off the page value, which is right for a
      card in the feed and wrong for a modal: against a dimmed backdrop the
      composer read as a border with nothing inside it. The separation is the
@@ -1800,11 +1793,10 @@ label.compose-action:hover { color: var(--text); }
   overflow: hidden;
   /* Sits high rather than dead-centre, so it lands nearer the trigger than the
      middle of a tall screen.
-     inset-inline and margin-inline are both needed and neither is redundant:
-     margin-block alone replaced the UA's `margin: auto`, which is what was
-     centring it, and the dialog snapped to the left edge of a 1440px viewport
-     (measured at left: 0). Stating the inline axis explicitly means the block
-     axis can be overridden without taking the horizontal centring with it. */
+     inset-inline and margin-inline are both needed: margin-block alone would
+     replace the UA's `margin: auto`, which is what centres the dialog, and snap
+     it to the left edge. Stating the inline axis lets the block axis change
+     without taking the horizontal centring with it. */
   inset-inline: 0;
   margin-inline: auto;
   margin-block: 10vh auto;
@@ -1813,7 +1805,6 @@ label.compose-action:hover { color: var(--text); }
 .composer::backdrop {
   background: var(--scrim-55);
 }
-
 
 .composer-form {
   display: flex;
@@ -1872,10 +1863,9 @@ label.compose-action:hover { color: var(--text); }
   overflow-y: auto;
 }
 
-/* The field spans the dialog. The horizontal inset used to sit on this
-   scrolling container, which stopped the writing surface short of the edge on
-   both sides and left it reading as a box inside a box; on the input itself it
-   keeps the text off the edge without bounding the field. */
+/* The field spans the dialog. The horizontal inset sits on the input rather
+   than on the scrolling container, so it keeps the text off the edge without
+   stopping the writing surface short of it, a box inside a box. */
 .composer-body .compose-input,
 .composer-body .tiptap_area {
   min-height: 120px;
@@ -1891,13 +1881,13 @@ label.compose-action:hover { color: var(--text); }
 }
 
 /* One row, two groups pushed to opposite ends: the marks that apply to the text
-   on the left, the things you attach to it on the right. They were two stacked
-   rows, which read as two unrelated toolbars and spent a whole row of height on
-   a phone for six targets that fit in one.
+   on the left, the things you attach to it on the right. Two stacked rows would
+   read as two unrelated toolbars and spend a phone's row of height on six
+   targets that fit in one.
 
    Anchored to the bottom of the writing area rather than floating in the middle
-   of it: the editor is min-height 120px, so an unattached toolbar sat in ~90px
-   of blank space belonging to neither the text nor the controls. */
+   of it: the editor is min-height 120px, so an unattached toolbar would sit in
+   blank space belonging to neither the text nor the controls. */
 .composer-body .composer-toolbar {
   position: sticky;
   bottom: 0;
@@ -1910,8 +1900,8 @@ label.compose-action:hover { color: var(--text); }
   background: inherit;
 }
 
-/* The groups themselves carry no chrome now — the row above owns the rule, the
-   stickiness and the ground, so each is just its own run of buttons. */
+/* The groups carry no chrome: .composer-body .composer-toolbar owns the rule,
+   the stickiness and the ground, so each group is just its own run of buttons. */
 .composer-body .tiptap_toolbar,
 .composer-body .compose-actions {
   display: flex;
@@ -1923,8 +1913,8 @@ label.compose-action:hover { color: var(--text); }
   position: static;
 }
 
-/* Was --text-secondary at default weight against a dark surface: the B, the i
-   and the bullet were the dimmest thing in the dialog. */
+/* Full ink, not --text-secondary: at default weight on a dark surface the B,
+   the i and the bullet would be the dimmest thing in the dialog. */
 .composer-body .tiptap_btn {
   min-width: var(--tap-min);
   min-height: var(--tap-min);
@@ -1937,7 +1927,6 @@ label.compose-action:hover { color: var(--text); }
 }
 
 .composer-body .tiptap_btn:hover { background: var(--hover); }
-
 
 /* The "attach my area" opt-in, selected by what it is rather than by a class
    the markup has to carry. :has() is the reason this is possible at all — a
@@ -1972,12 +1961,8 @@ label.compose-action:hover { color: var(--text); }
   margin: 0 0 var(--space-1, 0.25rem);
 }
 
-/* Composer motion and breakpoints.
-   Split from _composer.scss to keep each file under the 200-line budget. The
-   animation and its prefers-reduced-motion guard must live in the SAME file:
-   css_constitution checks per file, so parking them apart reads as an animation
-   with no guard at all -- which is what the first attempt at this split
-   produced, and what the gate caught. */
+/* Composer motion and breakpoints. The prefers-reduced-motion guard sits beside
+   the animation it stops. */
 
 /* Slides down into place. The dialog is display:none until showModal(), so the
    animation runs on open with no JS class toggling. */
@@ -1989,16 +1974,6 @@ label.compose-action:hover { color: var(--text); }
   animation: composer-backdrop-in 180ms var(--ease-out);
 }
 
-@keyframes composer-drop-in {
-  from { transform: translateY(-24px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-@keyframes composer-backdrop-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .composer[open],
   .composer[open]::backdrop {
@@ -2006,12 +1981,9 @@ label.compose-action:hover { color: var(--text); }
   }
 }
 
-/* Full-bleed, the way a native sheet behaves. This is the unconditional shape now;
-   it was a max-width: 767px block, which made the windowed dialog the default and
-   the phone sheet the exception. The min-width step restates _composer.scss base
-   verbatim rather than relying on that file winning — two rules of equal
-   specificity in different files, where order decides, is what the old
-   arrangement quietly depended on. */
+/* Full-bleed on a phone, the way a native sheet behaves. From 768px the query
+   restates the windowed .composer shape in full, so the dialog never depends on
+   which of two equal rules comes later. */
 .composer {
   width: 100vw;
   max-width: 100vw;
@@ -2036,25 +2008,15 @@ label.compose-action:hover { color: var(--text); }
   }
 }
 
-/* Verticals hide the launcher the same way they hid the old compose box. */
+/* Verticals hide the launcher. */
 body[class*="vertical-"] .compose-launcher {
   display: none;
 }
 
-/* Mobile tab bar. The .tab-bar rule itself is shared/_tab_bar.scss's, which
-   this app reaches through _shell.scss: the copy that stood here restated all
-   eight declarations, with inset-inline written as its two longhands and
-   --z-nav and --safe-bottom without the fallbacks shared gives them, both of
-   which are declared on :root anyway. Same eight computed values, 178 bytes. */
-
-/* .tab-item, its aria-current state, that state's dot and its hover are
-   shared/_tab_bar.scss's, reached through _shell.scss before this file. The
-   copies here restated them declaration for declaration — var(--space-3) is
-   the 0.75rem shared writes — so they could only ever repaint the same
-   pixels, and shared's .tab-item also carries touch-action: manipulation,
-   which already applied. 362 bytes, no paint. What stays below is brgen's
-   own: the button reset shared has no rule for, and the :active pairing with
-   .compose-btn. */
+/* Mobile tab bar. .tab-bar, .tab-item, its aria-current state, that state's dot
+   and its hover are shared/_tab_bar.scss's, reached through _shell.scss. What
+   brgen adds is the button reset shared has no rule for and the :active pairing
+   with .compose-btn. */
 .tab-item-button {
   background: transparent;
   border: 0;
@@ -2094,12 +2056,11 @@ body[class*="vertical-"] .compose-launcher {
   border-top-left-radius: var(--radius-card);
   border-top-right-radius: var(--radius-card);
   transform: translateY(100%);
-  /* Off-screen is not hidden. Parked at translateY(100%) the sheet still sat in
-     the tab order and the accessibility tree, so tabbing the front page walked
-     through an invisible menu -- AI assistant, Live, Channels, New post, New
-     community, Profile, Sign out -- none of which was on screen. visibility
-     takes it out of both; the delayed transition lets the slide finish before it
-     goes, so closing still animates. */
+  /* Off-screen is not hidden. Parked at translateY(100%) the sheet still sits in
+     the tab order and the accessibility tree, so tabbing the front page would
+     walk through a menu that is not on screen. visibility takes it out of both;
+     the delayed transition lets the slide finish before it goes, so closing
+     still animates. */
   visibility: hidden;
   transition:
     transform 220ms cubic-bezier(0.32, 0.72, 0, 1),
@@ -2140,27 +2101,7 @@ body[class*="vertical-"] .compose-launcher {
 
 .mobile-sheet-links a:hover { background: var(--hover); }
 
-/* Post cards — x.com flat feed style, token aligned */
-.post-card {
-  display: flex;
-  padding: var(--space-4);
-  margin-bottom: var(--space-2);
-  cursor: pointer;
-  transition: background var(--transition-fast) var(--ease-out);
-}
-
-.post-card:hover { background: var(--hover-subtle); }
-
-.vote-col {
-  width: 36px;
-  min-width: 36px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-1);
-  padding-top: var(--space-1);
-  margin-inline-end: var(--space-3);
-}
+// ============================================================ components: posts, forms, feed cards
 
 .vote-btn {
   background: none;
@@ -2184,29 +2125,9 @@ body[class*="vertical-"] .compose-launcher {
 .vote-btn.active-up { color: var(--upvote); }
 .vote-btn.active-down { color: var(--downvote); }
 .vote-score { font: var(--weight-bold) var(--text-xs) / 1 var(--font); color: var(--text-secondary); }
-
-.post-body { flex: 1; min-width: 0; }
-.post-meta { font: var(--text-sm) / 1.5 var(--font); color: var(--text-secondary); margin-bottom: var(--space-1); }
-.post-meta a { color: var(--text-secondary); }
-.post-meta .community { color: var(--text); font-weight: var(--weight-bold); }
 .post-title { font: var(--weight-bold) var(--text-sm) / 1.5 var(--font); color: var(--text); margin-bottom: var(--space-3); }
 .post-title a { color: var(--text); }
 .post-title a:hover { text-decoration: underline; }
-
-.post-actions { display: flex; gap: 0; }
-
-.post-actions a {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  color: var(--text-secondary);
-  font: var(--text-sm) / 1 var(--font);
-  padding: var(--space-2);
-  border-radius: var(--radius-pill);
-  transition: color var(--transition-fast) var(--ease-out), background var(--transition-fast) var(--ease-out);
-}
-
-.post-actions a:hover { color: var(--accent); background: var(--hover); text-decoration: none; }
 
 .post_body { color: var(--text); line-height: var(--leading-loose); font-size: var(--text-base); }
 .post_body p { margin: 0 0 var(--space-5); }
@@ -2216,9 +2137,6 @@ body[class*="vertical-"] .compose-launcher {
 .post_body ol { list-style: decimal; }
 .post_body li { margin-bottom: 4px; }
 .post_body a { text-decoration: underline; }
-
-/* Comments — nested thread aligned with feed-post-show */
-.comment-form-wrap { padding: var(--space-4) var(--space-4) var(--space-6); }
 
 .comment_item {
   display: block;
@@ -2256,16 +2174,10 @@ body[class*="vertical-"] .compose-launcher {
   border-inline-start: 2px solid var(--border);
   border-bottom: 0;
 }
-/* The replies box is always in the markup so turbo can append a first reply.
-   Without this, an empty box draws a leftover indent rail. :empty is the
-   wrong test — ERB whitespace is a text node. */
-/* The reply disclosure, the comment body and the delete control are shared's:
-   _chat_reactions.scss owns all seven rules and brgen @use's it after this
-   file, so the copies that stood here were overridden by a later, richer
-   twin — shared's .comment-delete also carries border, background, colour and
-   cursor, and its .comment-body carries colour, line-height and size. Nothing
-   here painted; deleting it changes no pixel and takes 393 bytes off every
-   brgen page. Comment chrome belongs in the engine all three apps read. */
+
+/* The reply disclosure, the comment body and the delete control belong to
+   shared/_chat_reactions.scss, which loads after these rules; comment chrome
+   lives in the engine all three apps read. */
 
 /* Forms — x.com minimal */
 .form-wrap { padding: var(--space-6) var(--space-4); max-width: 480px; }
@@ -2273,12 +2185,14 @@ body[class*="vertical-"] .compose-launcher {
 .field { display: flex; flex-direction: column; gap: var(--space-1); margin-bottom: var(--space-4); }
 .field--check { flex-direction: row; align-items: center; gap: var(--space-2); }
 
-label { display: block; font-size: var(--text-sm); color: var(--text-secondary); }
-
 /* Not in the list below, because a file input must keep the browser's own
-   button rather than take the field treatment — but it also ships an
-   intrinsic width wider than a phone, and nothing was capping it. */
-input[type=file] { max-width: 100%; }
+   button rather than take the field treatment — but it ships an intrinsic
+   width wider than a phone, so max-width caps it. */
+input[type=file] {
+  max-width: 100%;
+  padding: var(--space-2) 0;
+  color: var(--text-secondary);
+}
 
 input[type=text], input[type=email], input[type=password], input[type=number], input[type=date], input[type=url], input[type=search], textarea, select {
   width: 100%;
@@ -2291,12 +2205,6 @@ input[type=text], input[type=email], input[type=password], input[type=number], i
   font-family: inherit;
   outline: none;
   transition: background var(--transition-fast) var(--ease-out);
-}
-
-input[type=file] {
-  max-width: 100%;
-  padding: var(--space-2) 0;
-  color: var(--text-secondary);
 }
 
 input[type=file]::file-selector-button {
@@ -2455,10 +2363,9 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  /* One control block with the shared .btn, which this used to restate at a
-     different size: --space-5 is 1.25rem, and brgen roots at 18px, so the
-     inline padding rendered at 22.5px here and 20px everywhere else. The
-     token is absolute for that reason. What stays brgen is the fill below —
+  /* One control block with the shared .btn. brgen roots at 18px, so a rem
+     inset would render 22.5px here against 20px everywhere else; the control
+     tokens are absolute for that reason. What stays brgen is the fill below —
      a dialect skins the button, it does not resize it. */
   gap: var(--control-gap);
   padding: 0 var(--control-pad-inline);
@@ -2585,7 +2492,6 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
   justify-content: center;
   font-weight: var(--weight-bold);
   font-size: var(--text-sm);
-  border-radius: var(--radius-sm);
   border-radius: 50%;
 }
 
@@ -2617,10 +2523,8 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 .feed-card-text a:hover { text-decoration: underline; }
 
 .post-feed { display: block; }
-/* Padding is the only thing separating one post from the next now that the
-   hairline is gone, so it carries that job at every breakpoint — these
-   overrides sit after the base rule and were still on the old, tighter
-   line-era values. */
+/* Padding is the only thing separating one post from the next, so it carries
+   that job at every breakpoint. */
 .post-feed .feed-card {
   margin: 0;
   padding: var(--space-4) var(--space-3);
@@ -2637,8 +2541,7 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
   }
 }
 
-/* From xs up the card opens out to its full padding. The narrow block this
-   replaces also restated gap: var(--space-3), which the base already sets. */
+/* From xs up the card opens out to its full padding. */
 @media (min-width: 480px) {
   .feed-card,
   .post-feed .feed-card {
@@ -2652,9 +2555,6 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
   gap: 0;
   color: var(--text-secondary);
   font-size: var(--text-sm);
-  margin-top: 8px;
-  flex-wrap: wrap;
-  justify-content: flex-start;
 }
 .feed-action {
   display: inline-flex;
@@ -2681,7 +2581,12 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
-.feed-action-count { font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
+.feed-action-count {
+  font-size: var(--text-sm); font-variant-numeric: tabular-nums;
+  font-size: var(--text-xs, 0.75rem);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--leading-none, 1);
+}
 .feed-action-icon {
   flex-shrink: 0;
   width: 1.125rem;
@@ -2751,8 +2656,6 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 /* PRESERVE_THEN_IMPROVE action bar — mobile optical distribution.
    Spaces and taps on scale (4 / 8 / 44). Line-heights on scale only. */
 .feed-action-form {
-  display: inline-flex;
-  margin: 0;
   padding: 0;
   border: 0;
   background: none;
@@ -2764,9 +2667,7 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 
 /* The phone action row: one line, each control an equal share of the width, no
    wrapping, and the view count dropped because five targets do not fit a 375px
-   card at the 44px tap floor. This is the unconditional rule now — it was a
-   max-width: 639px block, which made the wide layout the default and the phone
-   the exception. */
+   card at the 44px tap floor. */
 .feed-card-actions {
   width: 100%;
   justify-content: space-between;
@@ -2788,12 +2689,21 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
   justify-content: center;
   padding-block: var(--space-2, 0.5rem);
   padding-inline: var(--space-1, 0.25rem);
-}
+  /* Popover-arrow tooltip, after the 2014 desktop.css .trigger_description
+     component (pub/__OLD_BACKUPS/BRGEN_OLD).
 
-.feed-action-count {
-  font-size: var(--text-xs, 0.75rem);
-  font-variant-numeric: tabular-nums;
-  line-height: var(--leading-none, 1);
+     @stimulus-components/popover's show() appends the
+     <template data-popover-target="content"> markup as a real child of the
+     trigger, so only that injected [data-popover-target="card"] node and its
+     arrow need styling: one element, one filter: drop-shadow(). Focus and blur
+     trigger it as well as hover, so it works on touch (tapping a button focuses
+     it) with no @media (hover: none) exclusion.
+
+     Shadow kept intentionally: the card and page share the same background,
+     so the shadow is the arrow's only depth cue. The author's explicit call
+     overrides the flat default for this one component only
+     (design_rules.yml pixel_perfection.exception_policy). */
+  position: relative;
 }
 
 .feed-action--views {
@@ -2830,11 +2740,8 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
   }
 }
 
-.feed-post-show .post_body,
-.feed-post-show .post-body {
+.feed-post-show .post_body {
   max-width: var(--measure);
-  font-size: var(--text-base);
-  line-height: var(--leading-normal, 1.5);
   letter-spacing: var(--tracking-normal, 0);
   hanging-punctuation: first allow-end last;
   hyphens: auto;
@@ -2842,35 +2749,9 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 
 .feed-post-show h1 {
   max-width: var(--measure-wide);
-  line-height: var(--leading-tight, 1.25);
-  letter-spacing: var(--tracking-tight, -0.01em);
 }
 
 @include meta.load-css("feed_list");
-
-/* Popover-arrow tooltip — ported from the real 2014 desktop.css
-   .trigger_description component (pub/__OLD_BACKUPS/BRGEN_OLD). Original
-   was pure CSS, hover-only, stacking two triangle pseudo-elements to fake
-   a drop-shadow behind the visible one since filter: drop-shadow() wasn't
-   reliably supported in 2014.
-
-   Rebuilt on @stimulus-components/popover (already vendored) instead of
-   a custom attr()-content trick: the controller's show() appends the
-   <template data-popover-target="content"> markup as a real child of the
-   trigger, so this file only has to style that injected
-   [data-popover-target="card"] node and its arrow -- one element, one
-   filter: drop-shadow(), same shadowed-arrow look as the original.
-   mouseenter/focus + mouseleave/blur triggers mean it works for touch too
-   (tapping a button focuses it), no @media (hover: none) exclusion needed.
-
-   Shadow kept intentionally: the card and page share the same background,
-   so the shadow is the arrow's only depth cue. Author's explicit call
-   2026-07-21, overriding the flat default for this one component only
-   (design_rules.yml pixel_perfection.exception_policy). */
-
-.feed-action {
-  position: relative;
-}
 
 [data-popover-target="card"] {
   position: absolute;
@@ -2903,6 +2784,8 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
    Mobile-first base, desktop overrides.
    Avoids duplicating shared x- primitives.
 */
+
+// ============================================================ chrome: widgets
 
 .inherit { color: inherit; text-decoration: underline; }
 
@@ -2977,16 +2860,18 @@ article mark { background: var(--hover); color: var(--text-secondary); padding: 
  * cannot drift apart. Kaufland.de's two bands, measured at 1440 and 400: tabs and
  * account links on a white band, then a #f5f5f5 strip holding the place link
  * and the search. Colours and the three off-ladder type steps are the --store-*
- * tokens in _vertical_shell.scss.
+ * tokens on body.vertical-marketplace, body.vertical-takeaway.
  *
- * This file is also the storefront pen in css_constitution's PEN_ALLOW, and the
- * reason the two measured shadows live at its end rather than beside their
- * components: see "Kaufland's elevation" below.
+ * The header is a product pen (Shared::FrontendRuleSet), and its two measured
+ * shadows sit together at the end of it rather than beside their components:
+ * see "The storefront carries exactly two shadows" below.
  */
 
+// ============================================================ pages: marketplace
+
 #navBar {
-  /* The header is edge-to-edge. This partial renders inside main, which carries
-     a clamp() gutter and a max-width, so break out to the viewport. */
+  /* The header is edge-to-edge. The nav bar partial renders inside main, which
+     carries a clamp() gutter and a max-width, so break out to the viewport. */
   margin-inline: calc(50% - 50vw);
   background: var(--store-page);
   color: var(--store-ink);
@@ -3241,9 +3126,6 @@ body.vertical-marketplace .search {
   box-shadow: var(--store-lift);
 }
 
-/* --logo-detail: the animated mark's micro-stroke — logo art, not text. */
-:root { --logo-detail: 3px; }
-
 /* zYaJege marketplace banner — exact layout/geometry from source pen.
    Placement only: transparent banner background, white foreground for yellow/dark header. */
 
@@ -3323,11 +3205,11 @@ body.vertical-marketplace .search {
   margin-inline-start: -8px;
 }
 
-/* No font-size here. The pen this was lifted from rendered standalone at
-   300x280 and set 70px; in this app the partial is only ever rendered from
-   marketplace/takeaway _nav_bar.html.erb, inside #logoWrapper, where the rule
-   below wins on specificity every time. A declaration that no page can reach
-   is not a type-scale violation, it is a leftover. */
+/* No font-size here. The source pen rendered standalone at 300x280 and set
+   70px; in this app the partial renders only from the marketplace and takeaway
+   _nav_bar.html.erb, inside #logoWrapper, where #logoWrapper .number_animate
+   below wins on specificity every time. A declaration no page can reach is a
+   leftover, not a type-scale value. */
 .number_animate {
   position: relative;
   left: 8px;
@@ -3348,18 +3230,18 @@ body.vertical-marketplace .search {
   right: -2px;
 }
 
-/* Same story as .number_animate: the 4px was the standalone pen's value and is
-   always beaten by the #logoWrapper rule below, so it is dropped rather than
-   tokenised. The 3px that survives is decoration inside the logo's own
-   geometry, well under the smallest rung of the type scale (--text-xs, 12px) —
-   a modular scale has no rung there and should not grow one for it.
+/* As with .number_animate: the standalone pen's 4px always loses to the
+   #logoWrapper rule below, so it is left out rather than tokenised. The 3px
+   that stays is decoration inside the logo's own geometry, well under the
+   smallest rung of the type scale (--text-xs, 12px) — a modular scale has no
+   rung there and should not grow one for it.
 
    Worth knowing before anyone wires this up: the span it sizes is the
    `seedPlus` target, and it is inert. marketplace_logo_controller.js names
    seedPlus in its `static targets` list and never reads it, so nothing ever
    lifts this opacity: 0. The visible "+" is a different element — the
    controller builds its own span inside .number_animate (see .number_animate
-   span above). This rule styles something no visitor has seen. */
+   span above). This rule styles something no visitor sees. */
 .marketplace .banner > span {
   font-weight: normal;
   position: absolute;
@@ -3378,7 +3260,8 @@ body.vertical-marketplace .search {
 /* The storefront catalogue, shared by markedsplass and takeaway: Kaufland.de's
    grid tile, category shortcut rail, teaser row and search-terms panel,
    measured from its archived home page at 1440 and 400. Colours and the
-   off-ladder type steps are the --store-* tokens in _vertical_shell.scss. */
+   off-ladder type steps are the --store-* tokens on body.vertical-marketplace,
+   body.vertical-takeaway. */
 
 .store-heading {
   margin: 0 0 16px;
@@ -3811,6 +3694,20 @@ a.deal-card,
   .store-cta {
     transition: none;
   }
+
+  .deal-cat {
+    transition: none !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+  }
+
+  *,
+  *::before,
+  *::after {
+  }
 }
 
 /* Marketplace chrome — subnav, filters, cats, PDP, store grid. */
@@ -3862,7 +3759,6 @@ a.deal-card,
   background: var(--store-ink, var(--text));
   color: var(--store-page, var(--bg));
 }
-
 
 /* Kaufland's result header: the name at 28px (21px on a phone) with the count
    beside it in the muted grey, and the sort under both. */
@@ -3946,7 +3842,6 @@ a.deal-card,
   }
 }
 
-
 .cart-pay-actions {
   display: flex;
   flex-wrap: wrap;
@@ -3958,23 +3853,14 @@ a.deal-card,
   min-height: var(--tap-min);
 }
 
-// The order page's chat heading. It was a bare h3 under the order h1 -- a
-// skipped level -- and is now an h2 inside <section class="order-chat">.
-//
-// Both halves of that move need this rule. The bare h3 rendered at the UA
-// default, measured 23.6925px; as a plain h2 it would have gone to 30.375px, and
-// wrapping it in a <section> hands it to _zen_shell's `section h2` at --text-xs
-// (13.5px) instead. The class (0,1,1) outranks that pair (0,0,2), and 1.17em is
-// the UA h3 ratio the heading has always rendered at.
+// The order page's chat heading: an h2 inside <section class="order-chat">, one
+// level under the order h1. As a plain h2 it would render at 30.375px, and
+// inside a <section> _zen_shell's `section h2` takes it to --text-xs (13.5px).
+// The class (0,1,1) outranks that pair (0,0,2), and 1.17em is the UA h3 ratio,
+// the size the heading reads at.
 .order-chat h2 {
   font-size: 1.17em;
   margin-bottom: var(--space-2);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .deal-cat {
-    transition: none !important;
-  }
 }
 
 /* Questions on a listing. Answered ones read as the answer they carry; an
@@ -4044,8 +3930,9 @@ a.deal-card,
 
 /* The filter drawer. Everything that is not the search field or one of the four
    kinds lives behind this: source, category, distance, sort, price bounds and
-   the facets. Before it, twenty-one peer controls stood in front of the first
-   listing on the densest surface in the family, against a Hick ceiling of seven.
+   the facets. Without it, twenty-one peer controls would stand in front of the
+   first listing on the densest surface in the family, against a Hick ceiling of
+   seven.
 
    The summary wears .deal-cat, so nothing new is introduced — it is the chip
    that opens the drawer holding the other chips. Only the marker, the count and
@@ -4261,6 +4148,8 @@ a.deal-card,
   border: 0;
 }
 
+// ============================================================ pages: nearby and channels
+
 /* Nearby alerts — clear the flush corner chat tab (~48px) + tab-bar when open. */
 .nearby-alerts {
   position: fixed;
@@ -4287,11 +4176,6 @@ a.deal-card,
   animation: nearby-in 280ms cubic-bezier(.34, 1.56, .64, 1) both;
 }
 
-@keyframes nearby-in {
-  from { opacity: 0; transform: translateY(0.75rem) scale(.95); }
-  to { opacity: 1; transform: none; }
-}
-
 .nearby-alert-body { display: flex; align-items: center; gap: 8px; flex: 1; font-size: var(--text-base); }
 
 .nearby-alert-dot {
@@ -4301,11 +4185,6 @@ a.deal-card,
   background: var(--text-secondary);
   flex-shrink: 0;
   animation: pulse-dot 1.8s var(--ease-in-out) infinite;
-}
-
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; }
-  50% { opacity: .4; }
 }
 
 .nearby-alert-cta { flex-shrink: 0; }
@@ -4342,15 +4221,6 @@ a.deal-card,
 .media-input-hidden { display: none; }
 .hidden { display: none; }
 [hidden] { display: none; }
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation: none !important;
-    transition: none !important;
-  }
-}
 
 /* Public IRC-style channels (apex /channels) — messenger chrome via body.vertical-messenger */
 
@@ -4459,14 +4329,11 @@ a.deal-card,
   position: sticky;
   bottom: max(var(--space-3, 0.75rem), env(safe-area-inset-bottom));
   padding: var(--space-3, 0.75rem);
-  border: 1px solid var(--border);
   border-radius: var(--radius-md, 12px);
-  background: var(--surface-elevated);
 }
 
 .channel-composer textarea {
   width: 100%;
-  min-height: 4rem;
   resize: vertical;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm, 8px);
@@ -4491,18 +4358,6 @@ a.deal-card,
 /* Bot messages read apart from anonymous lurkers: accented handle + faint tint. */
 .channel-log article[data-bot] { border-inline-start: 2px solid var(--accent); padding-inline-start: var(--space-2, 0.5rem); }
 .channel-log article[data-bot] header span:first-child { color: var(--accent); font-weight: var(--weight-bold); }
-
-/* Hue-carrying ink: the live signal and every nick keep their hue and take one
-   lightness per theme, because a single oklch lightness cannot clear TYPOGRAPHY's
-   7.0 on both grounds. 38% is 7.49:1 on #efefef at the worst hue, 78% is 9.89:1
-   on #000000. */
-:root {
-  --hue-ink-lightness: 78%;
-}
-
-:root[data-theme="light"] {
-  --hue-ink-lightness: 38%;
-}
 
 /* Live-activity signal on channel cards */
 .channel-live { color: oklch(var(--hue-ink-lightness) 0.13 145); font-weight: var(--weight-bold); }
@@ -4533,6 +4388,8 @@ a.deal-card,
   padding: 0 var(--space-1);
   border-radius: var(--radius-xs);
 }
+
+// ============================================================ components: share, media, affiliate
 
 .media-actions { display: flex; gap: var(--space-2); margin-bottom: var(--space-2); }
 
@@ -4578,10 +4435,9 @@ a.deal-card,
   border: none;
   color: var(--text);
   border-radius: var(--radius-sm);
-  /* Was 12px (var(--space-3)) — smaller than the WCAG 24px floor, let alone
-     Fitts's 44px. 32px is the largest this can go without eating most of
-     the 80px thumbnail it sits on; still a real improvement, not full
-     compliance (design_rules.yml ux_laws.fitts). */
+  /* 32px clears the WCAG 24px floor but not Fitts's 44px: it is the largest
+     this can go without eating most of the 80px thumbnail it sits on
+     (design_rules.yml ux_laws.fitts). */
   width: 32px;
   height: 32px;
   font-size: var(--text-xs);
@@ -4611,7 +4467,7 @@ a.deal-card,
 .preset-strip[hidden] { display: none; }
 
 /* Five pills with no heading read as five unrelated buttons. One word says
-   what they do to the photo they now sit under. */
+   what they do to the photo they sit under. */
 .preset-strip-legend {
   padding: 0;
   font-size: var(--text-sm);
@@ -4688,15 +4544,6 @@ a.deal-card,
   flex-shrink: 0;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation: none !important;
-    transition: none !important;
-  }
-}
-
 .affiliate-title {
   font-size: var(--text-sm);
   font-weight: var(--weight-bold);
@@ -4750,11 +4597,9 @@ a.deal-card,
 .field--grow { flex: 1; min-width: 0; }
 .field--check-label { display: flex; align-items: flex-start; gap: var(--space-2); font-size: var(--text-sm); margin-bottom: var(--space-2); cursor: pointer; }
 .field--check-label input { margin-top: 4px; flex-shrink: 0; }
-/* Fitts floor at the origin — carried by _autofix_geometry until 2026-08-09
-   (brgen/core mobile, checkbox rendered 13x13 against a 44px floor). The
-   selector is the autofix's own: `.field--check-label input` is one specificity
-   step lower, and the generated layer used to load last, so matching its shape
-   is what keeps the rendered box identical. */
+/* The 44px Fitts floor for the checkbox. label.field--check-label > input is
+   one specificity step above `.field--check-label input`, so the floor wins
+   over that rule's box. */
 label.field--check-label > input { min-height: var(--tap-min); min-width: var(--tap-min); }
 .chips--bar { padding: var(--space-3) var(--space-4); border-bottom: 0; }
 .listing-price { font-size: var(--text-2xl); font-weight: var(--weight-heavy); color: var(--danger, var(--color-danger)); margin-bottom: var(--space-1); }
@@ -4775,8 +4620,8 @@ label.field--check-label > input { min-height: var(--tap-min); min-width: var(--
 /* Starts clear of the fixed city brand, which otherwise covered the left edge
    of #map-search and ate taps meant for the search box. */
 .map-hud { position: fixed; top: var(--space-4); left: var(--brand-mark-inline); z-index: var(--z-app); display: flex; flex-direction: column; gap: var(--space-2); max-width: 280px; }
-/* min-height: the newsletter email field carries this class and rendered_geometry
-   measured it at 232x38, under the 44px design_rules.ux_laws.fitts minimum. */
+/* min-height: the newsletter email field carries this class, and it holds the
+   44px design_rules.ux_laws.fitts minimum. */
 .map-search-input { flex: 1; min-height: var(--tap-min); padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: inherit; font-size: var(--text-base); }
 .map-place-popup { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: var(--space-3); font-size: var(--text-sm); }
 
@@ -4785,10 +4630,12 @@ label.field--check-label > input { min-height: var(--tap-min); min-width: var(--
    Stimulus controller does the tilt, so the unit costs no dependency and no
    licence. See RAILS/shared/reference/affiliate_banner/ for the original. */
 
-// Immediately after _affiliate: these rules were its tail before the move, and
-// this keeps the cascade order they had.
+// The shared in-feed unit loads right after brgen's affiliate rules, so its
+// rules follow them in the cascade.
 
 @include meta.load-css("affiliate_feed_unit");
+
+// ============================================================ pages: dating
 
 /* Dating swipe stack */
 #swipe-stack {
@@ -4915,10 +4762,10 @@ label.field--check-label > input { min-height: var(--tap-min); min-width: var(--
   opacity: 0.18;
 }
 
-/* Profile detail meta rows. These separated their label/value pairs with three
-   bare &nbsp; entities -- a spacing hack that collapses at some widths, wraps
-   mid-pair at others, and is read aloud as a space. The pairs are elements now
-   and the gap does the separating (layout_rules.whitespace.gap_over_margin). */
+/* Profile detail meta rows. The label/value pairs are elements and the gap
+   separates them (layout_rules.whitespace.gap_over_margin); &nbsp; entities
+   would collapse at some widths, wrap mid-pair at others and read aloud as a
+   space. */
 .profile-meta {
   display: flex;
   flex-wrap: wrap;
@@ -5068,16 +4915,7 @@ label.field--check-label > input { min-height: var(--tap-min); min-width: var(--
   align-items: center;
 }
 
-.match-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-pill);
-  object-fit: cover;
-  float: inline-start;
-  margin-inline-end: var(--space-3);
-}
-
-/* Dating — immersive vertical branding (Inter, neon intro). Core x shell hidden via _vertical_shell. */
+/* Dating: the immersive vertical's own branding. */
 body.vertical-dating {
   --dating-bg: var(--bg);
   --dating-ink: var(--text);
@@ -5090,17 +4928,13 @@ body.vertical-dating {
      the one label on the intro a user is meant to read carefully. Same hue,
      darkened until it clears AA: 5.62:1 on --bg. Dark mode keeps the bright
      teal, which is already 9.42:1 there. */
-  /* The accent is the ink unconditionally, and the premise that earned that is
-     gone. It was written when the layout pinned dating dark, where the bright
-     teal measures 9.11 on the card and #00705c would have been APCA Lc 22.2 —
-     so one value, no theme branch. brgen now defaults LIGHT on all eight
-     surfaces (ApplicationHelper::DEFAULT_SURFACE_THEME), where --dating-accent
-     resolves to the map's light slot #009579 and this ink measures 3.77 on
-     #ffffff. That clears the 3:1 non-text floor visual_contract_lint holds
-     accents to and misses AA for text, and the BankID trust line is text.
-     #00705c is 6.05 there, so it is the ink and the dark override below
-     restores the bright teal where that one is 9.11 on the card. Operator
-     decision 2026-09-08. */
+  /* brgen defaults light on all eight surfaces
+     (ApplicationHelper::DEFAULT_SURFACE_THEME), where --dating-accent resolves
+     to the map's light slot #009579 and measures 3.77 on #ffffff. That clears
+     the 3:1 non-text floor visual_contract_lint holds accents to and misses AA
+     for text, and the BankID trust line is text. #00705c is 6.05 there, so it
+     is the ink, and the :root[data-theme="dark"] body.vertical-dating rule below
+     restores the bright teal, 9.11 on the card. Operator decision. */
   --dating-accent-ink: #00705c;
   --dating-accent-warm: #ff5500;
   --dating-pass: var(--danger);
@@ -5109,23 +4943,18 @@ body.vertical-dating {
   font-family: var(--font);
 }
 
-/* The dataset lane, for the same reason takeaway's twin moved: the checkbox is
-   nested inside the toggle's wrapper and is not rendered on a vertical at all,
-   so `#dark-toggle:checked ~ .theme-root` could never match. Here it was inert
-   rather than costly — it set what the base block already set — but the base
-   block now names the light ink, so this override is load-bearing. On dark,
-   --dating-accent is the map's bright teal at 9.11 on the card. */
+/* The dataset lane, like takeaway's twin: the checkbox is nested inside the
+   toggle's wrapper and is not rendered on a vertical at all, so
+   `#dark-toggle:checked ~ .theme-root` could never match. The base block names
+   the light ink, so this override carries the dark one: --dating-accent, the
+   map's bright teal at 9.11 on the card. */
 :root[data-theme="dark"] body.vertical-dating {
   --dating-accent-ink: var(--dating-accent);
 }
 
-/* Immersive-vertical chrome hiding is centralised in _vertical_shell.scss. */
-
-/* Full bleed because dating is an immersive vertical: _vertical_shell.scss
-   hides the core chrome here, so there is no column for content to sit in.
-   The two grid-template declarations that used to sit above max-width were
-   inert — .layout is display:flex in _shell.scss on every surface, measured
-   flex on brgen, dating, playlist and markedsplass alike. */
+/* Full bleed because dating is an immersive vertical, with no column for
+   content to sit in. .layout is display:flex in _shell.scss on every surface,
+   so max-width is all it needs. */
 body.vertical-dating .layout {
   max-width: 100%;
 }
@@ -5154,13 +4983,12 @@ body.vertical-dating .match .feed-card-avatar-img {
   object-fit: cover;
 }
 
-// The dating immersive splash is a bare swipe surface. dating is already in the
-// immersive chrome-hide list in _vertical_shell.scss (nav/sidebar/tab-bar/etc.),
-// but two host elements still floated over "sveip for å begynne": the feed
-// keyboard-hotkey coach (a desktop hint, meaningless on a touch swipe surface) and
-// the nearby chat widget. Hidden here. The .brgen-logo-mark is deliberately KEPT —
-// _vertical_shell.scss documents it as the one fleet-wide brand mark; removing it
-// on dating is a product decision for the architect, not a cleanup.
+// The dating immersive splash is a bare swipe surface. Two host elements would
+// float over "sveip for å begynne": the feed keyboard-hotkey coach (a desktop
+// hint, meaningless on a touch swipe surface) and the nearby chat widget, so both
+// hide here. The .brgen-logo-mark is deliberately KEPT — it is the one fleet-wide
+// brand mark; removing it on dating is a product decision for the architect, not
+// a cleanup.
 body.vertical-dating .hotkey-coach,
 body.vertical-dating .nearby-chat-widget {
   display: none !important;
@@ -5210,8 +5038,6 @@ body.vertical-dating .nearby-chat-widget {
   text-align: start;
   max-width: var(--measure-narrow);
   padding-top: clamp(48px, 12vh, 96px);
-  /* Was a hand-written stack with Inter LAST, so it rendered system-ui and the
-     Inter in it never had a chance to apply. */
   font-family: var(--font);
   font-size: clamp(1rem, 3.8vw, 1.125rem);
   font-weight: var(--weight-bold);
@@ -5242,7 +5068,7 @@ body.vertical-dating .nearby-chat-widget {
   width: 100%;
   height: 100%;
   display: block;
-  /* No CSS filter — flat UI rule (saturate/contrast lived here before). */
+  /* No CSS filter — flat UI rule. */
 }
 
 .dating-intro-title {
@@ -5256,12 +5082,10 @@ body.vertical-dating .nearby-chat-widget {
   color: var(--dating-ink);
 }
 
-/* Three statements stacked, not one line wrapping.
-
-   This was a flex row with a 4px gap holding the age text, the trust mark and a
-   three-link nav — so at 1440 it read as one run-on sentence with no boundary
-   between "Beskyttet med Vipps" and "Personvern Vilkår Informasjonskapsler",
-   and on a phone it broke into four ragged lines with Vipps stranded on its own.
+/* Three statements stacked, not one line wrapping: the age text, the trust mark
+   and a three-link nav. In one row they read as a run-on sentence with no
+   boundary between "Beskyttet med Vipps" and "Personvern Vilkår
+   Informasjonskapsler", and on a phone they break into ragged lines.
 
    Column by default because a phone has one column; the row only appears when
    there is width for the whole of it. */
@@ -5289,10 +5113,8 @@ body.vertical-dating .nearby-chat-widget {
   white-space: nowrap;
 }
 
-/* The trust mark. This was a bankID badge whose "logo" was .dating-intro-bankid-
-   mark: an inline grid styling `span` children that the markup never contained,
-   so it reserved space and drew nothing. Vipps replaces it — same company, and
-   a Vipps Login is not billed per use the way a BankID verification is. */
+/* The trust mark is Vipps: the same company as BankID, and a Vipps Login is not
+   billed per use the way a BankID verification is. */
 .dating-intro-vipps {
   font-weight: var(--weight-bold);
   letter-spacing: var(--tracking-tighter);
@@ -5330,10 +5152,6 @@ body.vertical-dating .nearby-chat-widget {
    gesture; the swipe still works, and the pointer user has the panel below. */
 @media (hover: hover) and (pointer: fine) {
   .dating-intro-arrow { opacity: 0.28; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .dating-intro-arrow { transition: none; }
 }
 
 /* Progressive profile form — essentials first, optional under details. */
@@ -5376,11 +5194,9 @@ body.vertical-dating .nearby-chat-widget {
   margin-block-end: var(--space-3, 0.75rem);
 }
 
-/* The three legal links in this footer measured 85x19, 42x19 and 151x19 on the
-   live surface — a third of the 44px floor design_rules.ux_laws sets, and the
-   same floor _chrome_surfaces cites by name when it gives .city-today summary a
-   real target. Found by measuring rectangles in a browser; no source-text lint
-   can see a line box.
+/* The three legal links in this footer set 19px line boxes, a third of the 44px
+   floor design_rules.ux_laws sets. No source-text lint can see a line box; a
+   browser measuring rectangles can.
 
    The target grows, the type does not. These are legal links rather than
    navigation and are meant to stay quiet, so padding does the work and
@@ -5388,8 +5204,7 @@ body.vertical-dating .nearby-chat-widget {
    is still hit-tested at 19: the box itself has to be 44.
 
    Scoped to this footer. The shared .site-legal footer already clears the floor
-   at 48px on brgen.no, so a shared rule would have been inert here and
-   redundant there — which is exactly what the first attempt at this was. */
+   at 48px on brgen.no, so a shared rule would be redundant there. */
 .dating-intro-trust nav a {
   display: inline-flex;
   align-items: center;
@@ -5398,10 +5213,9 @@ body.vertical-dating .nearby-chat-widget {
 
 .dating-discover-panel {
   min-height: 100dvh;
-  /* --space-22 was never declared, and max() with an unresolvable argument
-     invalidates the whole declaration — so this panel had no padding at all,
-     not merely a short bottom inset. --space-16 (4rem) is the largest declared
-     step and clears the tab bar plus composer. */
+  /* --space-16 (4rem) is the largest declared step and clears the tab bar plus
+     composer. An undeclared step would invalidate the whole max(), and with it
+     all of this panel's padding. */
   padding: max(var(--space-3), env(safe-area-inset-top)) var(--space-3) max(var(--space-16), env(safe-area-inset-bottom));
 }
 
@@ -5447,10 +5261,6 @@ body.vertical-dating .swipe-card {
   border-radius: var(--radius-card);
 }
 
-body.vertical-dating .swipe-bio {
-  color: var(--dating-muted);
-}
-
 body.vertical-dating .btn,
 body.vertical-dating .btn-primary,
 body.vertical-dating .swipe-signin {
@@ -5493,8 +5303,170 @@ body.vertical-dating .empty {
   font-style: italic;
 }
 
-// Measured by Operator::CssCoverageLint 2026-08-11: match overlay and profile form
-// carried classes nothing defined. Token-only.
+// ============================================================ layout: vertical shell
+
+/* Vertical surfaces — x shell underneath, product chrome on top */
+body[class*="vertical-"] .feed-header,
+body[class*="vertical-"] .compose-box {
+  display: none;
+}
+
+/* The storefront promotional face, in one line so it can be swapped in one line.
+   Markedsplass and takeaway set it on hero banners, promo headlines and campaign
+   tiles and nowhere else; body, prices and cards keep --font. Instrument Serif
+   is vendored by the @font-face rules among the tokens. */
+body.vertical-marketplace,
+body.vertical-takeaway {
+  --font-ad: "Instrument Serif", var(--font);
+  /* Kaufland.de's storefront system, measured from its archived home, category
+     and product pages at 1440 and 400 (the owner's instruction: copy it
+     exactly, then mould). The palette is its light theme; the three sizes are the
+     steps it sets that the family ladder does not carry — 13px meta, 21px section
+     headings and tile prices, 32px on the product page's price. */
+  --store-ink: #3c3c3c;
+  --store-ink-soft: #747474;
+  --store-rule: #8e8e8e;
+  --store-hairline: #dedede;
+  --store-well: #f5f5f5;
+  --store-page: var(--surface);
+  --store-red: #e10915;
+  --store-green: #237916;
+  --store-focus: #0091c4;
+  --store-star: #da591a;
+  --store-container: 1440px;
+  --store-text-meta: 13px;
+  --store-text-heading: 21px;
+  --store-text-price: 32px;
+  --store-gutter: 12px;
+  --store-section: 32px;
+  font-size: 14px;
+  background: var(--store-page);
+}
+
+/* A dark reader keeps the anatomy and takes brgen's own dark greys, because
+   Kaufland ships no dark theme to copy. */
+:root[data-theme="dark"] :is(body.vertical-marketplace, body.vertical-takeaway) {
+  --store-ink: var(--text);
+  --store-ink-soft: var(--text-secondary);
+  --store-rule: var(--border);
+  --store-hairline: var(--border);
+  --store-well: var(--surface-elevated);
+}
+
+/* Kaufland widens its gutter and section rhythm, and sets body copy at 16px,
+   from the tablet edge up. */
+@media (min-width: 768px) {
+  body.vertical-marketplace,
+  body.vertical-takeaway {
+    --store-gutter: 44px;
+    --store-section: 48px;
+    font-size: 16px;
+  }
+}
+
+body[class*="vertical-"] main {
+  padding-top: 0;
+}
+
+/* No surface hides the shell. Every vertical wears the front page's chrome —
+   operator decision, and the whole of it. Where the product is a canvas, as on
+   maps and playlist, the surface still needs a way back to the rest of the
+   city: the canvas reaches every edge and the chrome sits above it, through
+   --z-brand and the tunnel's z-index arithmetic. */
+
+/* Playlist uses the same fixed city brand (.brgen-logo-mark) as every other
+   surface. Kill the tunnel's duplicate radio-header wordmark so nothing can sit
+   on top of / push the brand.
+
+   Skip links are left alone: a display:none element cannot receive focus, and
+   the shared .skip-link in _shell.scss hides by clipping to 1×1 with clip-path +
+   opacity:0, so it still takes focus and reveals itself. */
+body.vertical-playlist .radio-header {
+  display: none !important;
+}
+
+/* dat.GUI autoPlace is a light panel that steals the top chrome. */
+body.vertical-playlist .dg.ac {
+  display: none !important;
+}
+
+/* Brand mark sits above the tunnel canvas (z:50). Position and size are the
+   fleet default — the wordmark lands in the same place on every surface, so it
+   reads as one product rather than a set of lookalikes. The only thing playlist
+   needs is to win the stacking contest with the tunnel canvas. */
+body.vertical-playlist .brgen-logo-mark {
+  z-index: calc(var(--z-toast, 1100) + 1);
+  color: var(--color-text, var(--text));
+}
+
+/* The in-page search on the two storefronts is Kaufland.de's field rather than
+   the yep pill: 44px, a 1px #8e8e8e edge, 4px corners, 16px type, sitting on
+   the page with no band of its own. */
+:is(body.vertical-marketplace, body.vertical-takeaway) [data-controller~="live-search"] {
+  padding: 0;
+  background: none;
+}
+
+:is(body.vertical-marketplace, body.vertical-takeaway) .search-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+:is(body.vertical-marketplace, body.vertical-takeaway) .search-form input[type="search"] {
+  flex: 1 1 16rem;
+  width: 100%;
+  min-height: var(--tap-min);
+  padding-inline: 12px;
+  border: 1px solid var(--store-rule);
+  border-radius: var(--radius-xs);
+  background: var(--store-page);
+  color: var(--store-ink);
+  font-size: 16px;
+}
+
+/* One column, one left edge.
+
+   <main> is the same 600px column the front page uses, so the verticals need
+   only an inset. .page-header carries var(--space-4) inline; without the same
+   inset on the sections beneath it, a bare section heading would sit to the
+   left of the intro text directly above it.
+
+   The inset is the header's own token rather than its current value, so the two
+   cannot drift apart. */
+body[class*="vertical-"] main > section {
+  padding-inline: var(--space-4);
+}
+
+/* The storefronts carry Kaufland.de's 1440px container and its 12px phone and
+   44px desktop gutter on main itself, so their sections take none of their own.
+   The id is carried because `.layout > main#main-content` zeroes the gutter at
+   (1,1,1), and no class selector outranks an id. */
+:is(body.vertical-marketplace, body.vertical-takeaway) .layout > main#main-content {
+  /* .layout is a flex column that does not stretch its children, so main
+     sized to its content: the tile slider pushed it to 537px on a 400px phone. */
+  width: 100%;
+  max-width: var(--store-container);
+  margin-inline: auto;
+  padding-inline: var(--store-gutter);
+}
+
+:is(body.vertical-marketplace, body.vertical-takeaway) main > section {
+  padding-inline: 0;
+}
+
+/* The yep pen paints every .search as a #ccc pill; on the storefronts the field
+   carries its own edge, so the wrapper draws nothing. */
+:is(body.vertical-marketplace, body.vertical-takeaway) .search {
+  width: auto;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+
+// Classes the match overlay and profile form name and nothing else defines, as
+// Operator::CssCoverageLint finds them. Token-only.
 .match-overlay-card {
   display: flex;
   flex-direction: column;
@@ -5525,12 +5497,6 @@ body.vertical-dating .empty {
   flex-direction: column;
   gap: var(--space-3);
   max-width: var(--measure);
-}
-
-// The safety line under a swipe card: present on every card, never the focus.
-.swipe-safety {
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
 }
 
 /* Today's five, and the verification queue. A picks card is a photo with a name
@@ -5692,11 +5658,6 @@ body.vertical-dating .empty {
   color: var(--text-secondary);
 }
 
-@keyframes matchFadeIn {
-  from { opacity: 0; transform: scale(.96); }
-  to { opacity: 1; transform: scale(1); }
-}
-
 [dir="rtl"] {
   direction: rtl;
 }
@@ -5716,261 +5677,17 @@ body.vertical-dating .empty {
   margin-inline-start: var(--space-1);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation: none !important;
-    transition: none !important;
-  }
-}
-
-/* Vertical surfaces — x shell underneath, product chrome on top */
-body[class*="vertical-"] .feed-header,
-body[class*="vertical-"] .compose-box {
-  display: none;
-}
-
-/* Per-vertical accent identity. Overriding --accent cascades to --accent,
-   --upvote, --focus-ring and the turbo bar, so each vertical's buttons, links,
-   and active states read as its own place rather than the shared indigo. The
-   second selector carries the accent into light mode on browsable verticals
-   (immersive ones hide #dark-toggle, so it simply never matches there). */
-/* Single accent map — keep in sync with design_tokens.yml vertical_accents.
-   Do not re-set --accent in ui_refinements or vertical-local sheets. */
-$vertical-accents: (
-  // (dark accent, hover, light accent). Slot 3 exists because the dark-mode
-  // hues were tuned as ink on dark: on white, dating ran 1.91:1, playlist
-  // 2.47:1 and takeaway 2.97:1 (visual_contract_lint low_contrast, WCAG
-  // 1.4.11 wants 3:1), so light mode wears a darkened variant of the same
-  // hue. Verticals whose dark hue already clears 3:1 on white repeat it.
-  marketplace: (#98876e, #8d7e66, #98876e), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
-  tv:          (#dc635c, #b83a33, #dc635c), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
-  dating:      (#00d4aa, #00b391, #009579), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
-  takeaway:    (#e07b39, #c26a30, #c26a30), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
-  playlist:    (#12b6c4, #0f9aa6, #0e8a94), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
-  maps:        (#5b8fd4, #4a7ab8, #5585c5), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
-  messenger:   (#6b7fd7, #5566c4, #6b7fd7), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
-);
-/* Ink for anything painted ON these accents. Every one of the seven was tuned
-   to be legible as ink on a light surface, which makes them all too light to
-   carry light ink: measured against --bg (#f7f6fa) they run 1.77–3.46:1, and
-   .compose-btn and brgen's own .btn all paint color: var(--bg) on
-   background: var(--accent). One dark ink clears AA for all of them.
-
-   The ink is verified against BOTH columns of the map above, which is the half
-   that was missing. #1a1824 was measured against the dark accents — 4.70 to
-   9.16, the range the previous note recorded — and the light variants in slot 3
-   arrived afterwards without being checked against it. Measured per accent:
-   against the light column #1a1824 runs 4.23 to 5.02, so playlist's #0e8a94 sat
-   at 4.23 and takeaway's #c26a30 at 4.50, both under the 4.5 floor for the
-   button type they carry.
-
-   #110f19 is the smallest step in the same near-black that clears it: light
-   4.59 to 5.45, dark 5.10 to 9.94. A step this size is not a visible change to
-   the ink; it is the ink meeting the contract this comment already claimed.
-
-   BOTH was two of three. The map has a hover column, .nav-search-submit:hover
-   swaps the fill to it and keeps color: var(--accent-ink), and nobody measured
-   the ink there. marketplace's hover, the only one wired, measures 4.80 since
-   the operator lightened it; tv 3.34 and maps 4.31 are still under 4.5 and
-   reach no pixel until their hover is wired. Moving a colour is the operator's. */
-$vertical-accent-ink: #110f19;
-@each $v, $c in $vertical-accents {
-  body.vertical-#{$v} {
-    --accent: #{list.nth($c, 1)};
-    --accent-ink: #{$vertical-accent-ink};
-    --vertical-#{$v}-accent: #{list.nth($c, 1)};
-    --vertical-#{$v}-accent-hover: #{list.nth($c, 2)};
-  }
-  /* Light restates rather than carries: the dataset is the one light path. */
-  :root[data-theme="light"] body.vertical-#{$v} {
-    --accent: #{list.nth($c, 3)};
-    --accent-ink: #{$vertical-accent-ink};
-    --vertical-#{$v}-accent: #{list.nth($c, 3)};
-  }
-}
-
-/* The storefront promotional face, in one line so it can be swapped in one line.
-   Markedsplass and takeaway set it on hero banners, promo headlines and campaign
-   tiles and nowhere else; body, prices and cards keep --font. Instrument Serif
-   is vendored by _fonts_brand.scss. */
-body.vertical-marketplace,
-body.vertical-takeaway {
-  --font-ad: "Instrument Serif", var(--font);
-  /* Kaufland.de's storefront system, measured from its archived home, category
-     and product pages at 1440 and 400 (owner instruction 2026-09-14: copy it
-     exactly, then mould). The palette is its light theme; the three sizes are the
-     steps it sets that the family ladder does not carry — 13px meta, 21px section
-     headings and tile prices, 32px on the product page's price. */
-  --store-ink: #3c3c3c;
-  --store-ink-soft: #747474;
-  --store-rule: #8e8e8e;
-  --store-hairline: #dedede;
-  --store-well: #f5f5f5;
-  --store-page: var(--surface);
-  --store-red: #e10915;
-  --store-green: #237916;
-  --store-focus: #0091c4;
-  --store-star: #da591a;
-  --store-container: 1440px;
-  --store-text-meta: 13px;
-  --store-text-heading: 21px;
-  --store-text-price: 32px;
-  --store-gutter: 12px;
-  --store-section: 32px;
-  font-size: 14px;
-  background: var(--store-page);
-}
-
-/* A dark reader keeps the anatomy and takes brgen's own dark greys, because
-   Kaufland ships no dark theme to copy. */
-:root[data-theme="dark"] :is(body.vertical-marketplace, body.vertical-takeaway) {
-  --store-ink: var(--text);
-  --store-ink-soft: var(--text-secondary);
-  --store-rule: var(--border);
-  --store-hairline: var(--border);
-  --store-well: var(--surface-elevated);
-}
-
-/* Kaufland widens its gutter and section rhythm, and sets body copy at 16px,
-   from the tablet edge up. */
-@media (min-width: 768px) {
-  body.vertical-marketplace,
-  body.vertical-takeaway {
-    --store-gutter: 44px;
-    --store-section: 48px;
-    font-size: 16px;
-  }
-}
-
-body[class*="vertical-"] main {
-  padding-top: 0;
-}
-
-/* No surface hides the shell any more. Every vertical wears the front page's
-   chrome — operator decision, and the whole of it.
-
-   maps and playlist were the last two here, on the reasoning that the product
-   IS the viewport and a nav bar over a canvas covers it rather than framing
-   it. That reasoning described the canvas, not the navigation: both surfaces
-   still need a way back to the rest of the city, and both were reachable only
-   through the browser's own back button. The canvas still reaches every edge
-   and the chrome sits above it, which is what --z-brand and the tunnel's
-   z-index arithmetic were already built for.
-
-   dating and messenger left before them, and marketplace, takeaway and tv
-   were never here. */
-
-/* Playlist uses the same fixed city brand (.brgen-logo-mark) as every other
-   surface. Kill the tunnel's duplicate radio-header wordmark so nothing can sit
-   on top of / push the brand.
-
-   The .skip-link and .radio-skip-link overrides that used to live here were
-   removed 2026-07-29: both set `display: none`, and a display:none element
-   cannot receive focus — so the `:focus` rule meant to reveal the tunnel's skip
-   link could never fire, and this surface had no working skip-to-content at
-   all. The shared .skip-link in _shell.scss is clipped to 1×1 with clip-path +
-   opacity:0, which is the residue-free hide these rules were reaching for. */
-body.vertical-playlist .radio-header {
-  display: none !important;
-}
-
-/* dat.GUI autoPlace is a light panel that steals the top chrome. */
-body.vertical-playlist .dg.ac {
-  display: none !important;
-}
-
-/* Brand mark sits above the tunnel canvas (z:50). Position and size are the
-   fleet default and stay that way — the wordmark lands in the same place on
-   every surface, so it reads as one product rather than a set of lookalikes.
-
-   This block used to be "a touch larger + tighter to the corner", which put
-   the mark at (6, 4) 53x23 here against (14, 9) 63x44 everywhere else: it
-   visibly jumped when you moved between playlist and anything else. The only
-   thing playlist genuinely needs is to win the stacking contest with the
-   tunnel canvas. */
-body.vertical-playlist .brgen-logo-mark {
-  z-index: calc(var(--z-toast, 1100) + 1);
-  color: var(--color-text, var(--text));
-}
-
-/* The in-page search on the two storefronts is Kaufland.de's field rather than
-   the yep pill: 44px, a 1px #8e8e8e edge, 4px corners, 16px type, sitting on
-   the page with no band of its own. */
-:is(body.vertical-marketplace, body.vertical-takeaway) [data-controller~="live-search"] {
-  padding: 0;
-  background: none;
-}
-
-:is(body.vertical-marketplace, body.vertical-takeaway) .search-form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  align-items: center;
-}
-
-:is(body.vertical-marketplace, body.vertical-takeaway) .search-form input[type="search"] {
-  flex: 1 1 16rem;
-  width: 100%;
-  min-height: var(--tap-min);
-  padding-inline: 12px;
-  border: 1px solid var(--store-rule);
-  border-radius: var(--radius-xs);
-  background: var(--store-page);
-  color: var(--store-ink);
-  font-size: 16px;
-}
-
-/* One column, one left edge.
-
-   <main> is already the same 600px column the front page uses, so the verticals
-   were never missing a container — only an inset. .page-header carried
-   var(--space-4) inline and the sections beneath it carried nothing, so a bare
-   section heading sat to the left of the intro text directly above it. Measured
-   on tv.brgen.no at 1440x900: the intro at x=439, "POPULÆRE VIDEOER" at x=419,
-   and the empty state centred at 720 — three left edges on one page.
-
-   The inset is the header's own token rather than its current value, so the two
-   cannot drift apart. */
-body[class*="vertical-"] main > section {
-  padding-inline: var(--space-4);
-}
-
-/* The storefronts carry Kaufland.de's 1440px container and its 12px phone and
-   44px desktop gutter on main itself, so their sections take none of their own.
-   The id is carried because `.layout > main#main-content` zeroes the gutter at
-   (1,1,1), and no class selector outranks an id. */
-:is(body.vertical-marketplace, body.vertical-takeaway) .layout > main#main-content {
-  /* .layout is a flex column that does not stretch its children, so main
-     sized to its content: the tile slider pushed it to 537px on a 400px phone. */
-  width: 100%;
-  max-width: var(--store-container);
-  margin-inline: auto;
-  padding-inline: var(--store-gutter);
-}
-
-:is(body.vertical-marketplace, body.vertical-takeaway) main > section {
-  padding-inline: 0;
-}
-
-/* The yep pen paints every .search as a #ccc pill; on the storefronts the field
-   carries its own edge, so the wrapper draws nothing. */
-:is(body.vertical-marketplace, body.vertical-takeaway) .search {
-  width: auto;
-  border: 0;
-  border-radius: 0;
-  background: none;
-}
-
 /* Markedsplass — Kaufland.de's storefront, measured from its archived pages at
-   1440 and 400. The shared catalogue lives in _marketplace_cards.scss and the
-   palette in _vertical_shell.scss; this sheet holds what only markedsplass
-   renders: the teaser banner, the listing page and the basket. */
+   1440 and 400. The shared storefront catalogue starts at .store-heading and the
+   --store-* palette sits on body.vertical-marketplace, body.vertical-takeaway;
+   what follows is what only markedsplass renders: the teaser banner, the listing
+   page and the basket. */
 
 /* .layout caps every surface at --feed-max (600px). A storefront is a grid, not
-   a timeline, so it opens up; main takes Kaufland's container in
-   _vertical_shell.scss. */
+   a timeline, so it opens up; main takes Kaufland's container from the
+// ============================================================ pages: verticals
+
+   vertical shell rules. */
 :is(body.vertical-marketplace, body.vertical-takeaway) .layout {
   max-width: 100%;
 }
@@ -6045,8 +5762,8 @@ body.vertical-marketplace .listing-status {
   }
 }
 
-// Classes the marketplace markup asked for and nothing defined, measured by
-// Operator::CssCoverageLint 2026-08-11. Token-only, no hex, no !important.
+// Classes the marketplace markup uses that nothing else defines, as
+// Operator::CssCoverageLint finds them. Token-only, no hex, no !important.
 
 // ---- listing page ------------------------------------------------------
 
@@ -6380,13 +6097,13 @@ body.vertical-marketplace :is(.also-nearby h2, .section-heading--md) {
   z-index: 1;
   touch-action: manipulation;
   background: var(--color-bg);
-  /* A canvas is a replaced element, so inset:0 anchors it at each edge but
-     does not stretch it: width and height stay auto, which for a replaced
-     element means its intrinsic size -- the drawing buffer. That is capped
-     at BUFFER_MAX_W 960 for fill rate, so the tunnel painted a 960px box in
-     the corner of a wide screen and looked like it rendered at a third.
-     MASTER/web/public/face.css sizes its own full-bleed canvas the same way. */
-  display: block;
+/* A canvas is a replaced element, so inset:0 anchors it at each edge but
+   does not stretch it: width and height stay auto, which for a replaced
+   element means its intrinsic size, the drawing buffer. That buffer is
+   capped at BUFFER_MAX_W 960 for fill rate, so without an explicit size the
+   tunnel paints a 960px box in the corner of a wide screen.
+   MASTER/web/public/face.css sizes its own full-bleed canvas the same way. */
+display: block;
   width: 100dvw;
   height: 100dvh;
 }
@@ -6400,10 +6117,10 @@ body.vertical-marketplace :is(.also-nearby h2, .section-heading--md) {
 }
 
 .radio-header h1 {
-  /* The brand face, as shared/_layout_chrome.scss sets it for the same
-     wordmark. This inherited --font from .radio-tunnel, so "brgen" read in
-     the body face here and the brand face everywhere else in the app. */
-  font-family: var(--font-brand, var(--font));
+/* The brand face, as shared/_layout_chrome.scss sets it for the same
+   wordmark. .radio-tunnel sets --font, so without this "brgen" would read in
+   the body face here and the brand face everywhere else in the app. */
+font-family: var(--font-brand, var(--font));
   font-size: var(--text-xl);
   font-weight: var(--weight-bold);
   margin: 0;
@@ -6441,18 +6158,15 @@ body.vertical-marketplace :is(.also-nearby h2, .section-heading--md) {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  /* Ramped rather than stepped. The phone treatment for this panel was a
-     clamp inside a `max-width: 767px` query — a width-adaptive value wrapped in
-     a width test, which made it jump from 14px to 15.75px at one pixel. The
-     clamp does that job by itself, so the query is gone. px floor for the same
-     reason as _canvas.scss: brgen roots at 18px, so --text-sm is 15.75px here. */
-  font-size: clamp(12px, 3vw, var(--text-sm));
-  /* Pinned, not themed, and opaque rather than translucent. This panel floats
-     over the tunnel's WebGL canvas, so with rgba(0,0,0,0.7) its real background
-     was whatever the animation happened to be rendering — there was no stable
-     contrast to hold. Measured where the probe sampled (#4a4a4b) the themed ink
-     gave 1.30:1 for the track title and 3.59:1 for the note icon, both below AA.
-     A solid #14141a gives 12.77 and 7.44 and cannot drift with the animation. */
+/* Ramped rather than stepped: the clamp adapts to width by itself, so no
+   width query makes the size jump at one pixel. The floor is px because
+   brgen roots at 18px, where --text-sm is 15.75px. */
+font-size: clamp(12px, 3vw, var(--text-sm));
+/* Pinned, not themed, and opaque rather than translucent. This panel floats
+   over the tunnel's WebGL canvas, so a translucent background would be
+   whatever the animation happens to render, with no stable contrast to hold.
+   Solid #14141a gives the track title 12.77:1 and the note icon 7.44:1, and
+   cannot drift with the animation. */
   color: #d8d6e0; // scan: intentional — stage type on glass, not theme text
   font-family: var(--font);
   background: #14141a; // scan: intentional — the tunnel floor, not a theme surface
@@ -6503,22 +6217,6 @@ body.vertical-marketplace :is(.also-nearby h2, .section-heading--md) {
   display: none;
 }
 
-.radio-start-eyebrow {
-  margin: 0;
-  font: 10px/1.4 var(--font);
-  color: var(--color-accent);
-  pointer-events: none;
-}
-
-.radio-start-message {
-  margin: 0;
-  font-size: var(--text-xl);
-  font-weight: var(--weight-normal);
-  color: var(--color-text);
-  animation: radio-pulse 2s var(--ease-in-out) infinite;
-  pointer-events: none;
-}
-
 .radio-start-hint {
   margin: 0;
   font: var(--text-sm)/1.5 var(--font);
@@ -6543,17 +6241,6 @@ body.vertical-marketplace :is(.also-nearby h2, .section-heading--md) {
 
 .radio-archaeology-line + .radio-archaeology-line {
   margin-top: var(--space-1);
-}
-
-@keyframes radio-pulse {
-  0%, 100% { opacity: 0.9; }
-  50% { opacity: 0.6; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .radio-start-message {
-    animation: none !important;
-  }
 }
 
 .radio-youtube-container {
@@ -6633,10 +6320,13 @@ body.vertical-marketplace :is(.also-nearby h2, .section-heading--md) {
   color: var(--color-muted);
 }
 
-/* No .visually-hidden here. This engine compiles into brgen's application.css
-   alongside shared/_zen_shell.scss, which declares it identically for all
-   three apps; a third copy is a utility that can drift out from under a
-   screen reader. */
+@media (prefers-reduced-motion: reduce) {
+  .dating-intro-arrow { transition: none; }
+}
+
+/* No .visually-hidden here. shared/_zen_shell.scss declares it identically for
+   all three apps and compiles into the same application.css; a second copy is
+   a utility that can drift out from under a screen reader. */
 
 body.vertical-playlist {
   /* The immersive dark-glass idiom: near-black panes with white-alpha
@@ -6647,32 +6337,35 @@ body.vertical-playlist {
   --edge-soft: rgba(255, 255, 255, 0.06);
   --edge: rgba(255, 255, 255, 0.08);
   --edge-strong: rgba(255, 255, 255, 0.12);
-}
-
-/* Playlist — immersive vertical branding (radio tunnel). Core shell hidden via _vertical_shell. */
-body.vertical-playlist {
+/* Playlist — immersive vertical branding (radio tunnel). The vertical shell rules hide the core shell. */
   /* Token-backed — vertical shell sets --accent to playlist teal */
   --color-bg: var(--bg);
   --color-text: var(--text);
   --color-accent: var(--accent);
-  // #8a879c matched no real definition of --text-secondary — a stale hex from
-  // an older palette. fallback_drift_lint never caught it because its glob
-  // stopped at <app>/app/assets, and the verticals moved into engines/.
-  --color-muted: var(--text-secondary);
+// The muted ink is the theme's secondary text, so it cannot drift to a hex
+// no palette defines.
+--color-muted: var(--text-secondary);
   --color-overlay: color-mix(in srgb, var(--bg) 92%, transparent);
   --color-elevated: var(--surface-elevated);
   --transition: color 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: var(--color-bg);
   color: var(--color-text);
+/* Bottom transport bar.
+
+   Height is published as --tab-bar-h on the body rather than kept private,
+   because .nearby-chat-widget lifts itself by that token
+   (shared/_shell_widgets.scss). One token keeps the chat tab's position and
+   the bar's height equal without anyone keeping them equal by hand. */
+--transport-bar-h: 60px;
+  /* The bar floats a --space-4 gap above the footer, so anything that clears the
+     tab area (the chat dock) clears the bar plus that gap. */
+  --tab-bar-h: calc(var(--transport-bar-h) + var(--space-4));
 }
 
-/* Immersive-vertical chrome hiding is centralised in _vertical_shell.scss. */
-
-/* Full bleed because playlist is an immersive vertical: _vertical_shell.scss
-   hides the core chrome here, so there is no column for content to sit in.
-   The two grid-template declarations that used to sit above max-width were
-   inert — .layout is display:flex in _shell.scss on every surface, measured
-   flex on brgen, dating, playlist and markedsplass alike. */
+/* Full bleed because playlist is an immersive vertical: the vertical shell
+   rules hide the core chrome here, so there is no column for content to sit
+   in. .layout is display:flex on every surface (shared/_shell.scss), so only
+   max-width matters. */
 body.vertical-playlist .layout {
   max-width: 100%;
 }
@@ -6711,8 +6404,7 @@ body.vertical-playlist .radio-back-link a {
 body.vertical-playlist .playlist-app,
 body.vertical-playlist .playlist-admin,
 body.vertical-playlist details,
-body.vertical-playlist .playlist-details,
-body.vertical-playlist .playlist-index {
+body.vertical-playlist .playlist-details {
   position: relative;
   z-index: 3;
   background: var(--color-bg);
@@ -6720,15 +6412,6 @@ body.vertical-playlist .playlist-index {
 
 @media (min-width: 768px) {
   .radio-track-display { max-width: 350px; }
-}
-
-
-@media (prefers-reduced-motion: reduce) {
-  .radio-start-message { animation: none; }
-}
-
-@media (prefers-contrast: high) {
-  .radio-tunnel canvas { filter: contrast(150%); }
 }
 
 /* Playlist detail player (library drill-down) */
@@ -6991,21 +6674,6 @@ body.vertical-playlist .playlist-index {
   margin: 0;
 }
 
-/* Bottom transport bar.
-
-   Height is published as --tab-bar-h on the body rather than kept private,
-   because .nearby-chat-widget already lifts itself by that token
-   (shared/_shell_widgets.scss). Before this, playlist hardcoded the clearance
-   twice — bottom: calc(72px + safe) and an 88px mobile override 340 lines apart
-   in the same file — so the chat tab's position and the bar's height were two
-   facts that had to be kept equal by hand. Now there is one. */
-body.vertical-playlist {
-  --transport-bar-h: 60px;
-  /* The bar floats a --space-4 gap above the footer, so anything that clears the
-     tab area (the chat dock) clears the bar plus that gap. */
-  --tab-bar-h: calc(var(--transport-bar-h) + var(--space-4));
-}
-
 .playlist-transport-bar {
   position: fixed;
   /* Floats free above the footer: a gap on every side lifts it off all four
@@ -7029,10 +6697,10 @@ body.vertical-playlist {
   transition: transform var(--transition-normal) var(--ease-out);
 }
 
-/* Retired, not removed: it slides out of the viewport and keeps its place in
+/* Hidden, not removed: it slides out of the viewport and keeps its place in
    the tab order, so a keyboard reader can still reach the controls and
    focusin brings it back (nav_autohide_controller). translate rather than
-   display or visibility for the same reason — a hidden button is not a
+   display or visibility for the same reason: a hidden button is not a
    focusable one. */
 .playlist-transport-bar--hidden {
   transform: translateY(100%);
@@ -7092,7 +6760,8 @@ body.vertical-playlist {
 .playlist-transport-bar .transport-btn--primary.is-playing .transport-icon-play { display: none; }
 .playlist-transport-bar .transport-btn--primary.is-playing .transport-icon-pause { display: inline; }
 
-// Measured by Operator::CssCoverageLint 2026-08-11. Token-only, no hex.
+// Classes the markup uses that nothing else defines, as
+// Operator::CssCoverageLint finds them. Token-only, no hex.
 .playlist-row {
   display: flex;
   flex-wrap: wrap;
@@ -7133,40 +6802,32 @@ body.vertical-takeaway {
      the hue. */
   --food-dash: oklch(66% 0.2 30);
   --foodora: oklch(52% 0.2 350);
-  /* Pinned, not var(--hover-subtle). That token follows the theme, so the chip
-     the 4.78 above was measured against (#202020) only existed in dark mode; in
-     light mode the same red landed on a near-white chip at 2.77:1. The tuning
-     was already done for a dark chip — this makes the chip actually be one. */
-  --food-eta-bg: #202020;
+/* Pinned, not var(--hover-subtle). That token follows the theme, and the red
+   above clears 4.78 only on a dark chip; on a light chip it would read
+   2.77:1. The chip is dark in every theme. */
+--food-eta-bg: #202020;
   /* --food-dash is an urgency red on a dark chip. Used as ink directly on a
      light feed card it measures 2.93:1, so text-on-surface takes its own value:
      4.80 on --surface-elevated, 4.54 on the card fill. */
-  /* Unconditional: the darkened red is the ink for a light card, and the bright
-     --food-dash stays the ink for the dark #202020 eta chip. This was written
-     when the layout pinned takeaway light on its own; brgen now defaults light
-     on all eight surfaces (ApplicationHelper::DEFAULT_SURFACE_THEME), so the
-     value is still right and the reason is now the fleet default rather than
-     this surface's exception. Measured 2026-09-08: #c62b1b is 5.58 on #ffffff
-     and 4.99 on #f2f2f2. This fill/ink split is the shape the other six
-     verticals want — see TODO.md. */
-  --food-dash-ink: #c62b1b;
+/* The darkened red is the ink for a light card, and the bright --food-dash
+   stays the ink for the dark #202020 eta chip. brgen defaults light on every
+   surface (ApplicationHelper::DEFAULT_SURFACE_THEME), so this is the
+   unconditional value: #c62b1b is 5.58 on #ffffff and 4.99 on #f2f2f2. The
+   other verticals want the same fill/ink split; TODO.md carries it. */
+--food-dash-ink: #c62b1b;
 }
 
 /* Dark mode puts that same meta text on a dark card, where the darkened red
-   would fail the other way — the bright chip red is the correct ink there.
+   would fail the other way; the bright chip red is the correct ink there,
+   at 5.85:1.
 
-   The dataset lane, not the checkbox one. This rule read `#dark-toggle:checked
-   ~ .theme-root` and could never match: shared/_theme_toggle renders the input
-   inside the role="region" wrapper, so it is not a sibling of .theme-root, and
-   brgen renders the toggle only `unless vertical_surface?` — on a vertical the
-   input is not in the document at all. So the correction never fired and dark
-   mode wore #c62b1b, a light-card ink, on #1a1a1a at 3.12:1. This selector is
-   the one _vertical_shell already uses for its light accents, and it restores
-   the 5.85 this block was written to get. */
+   The data-theme lane, not the checkbox one: shared/_theme_toggle renders its
+   input inside a region wrapper, not as a sibling of .theme-root, and brgen
+   renders no toggle on a vertical at all, so `#dark-toggle:checked ~` could
+   never match here. The vertical shell's light accents use this selector too. */
 :root[data-theme="dark"] body.vertical-takeaway {
   --food-dash-ink: var(--food-dash);
 }
-
 
 /* Flat, in Kaufland's dark primary: #3c3c3c with white 600 type in a pill, the
    same button markedsplass wears. --food-dash and --foodora keep their other
@@ -7370,11 +7031,6 @@ body.vertical-tv .live-badge {
   animation: tv-live-pulse 2s var(--ease-in-out) infinite;
 }
 
-@keyframes tv-live-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.72; }
-}
-
 body.vertical-tv .tv {
   margin-bottom: var(--space-2);
 }
@@ -7390,9 +7046,9 @@ body.vertical-tv .preset-opt input:checked + span {
 }
 
 /* --accent-ink, not --text: this paints ON the accent, and the shared .btn
-   rule already reads the ink _vertical_shell tuned for it. Overriding the
-   background here while leaving the ink behind put --text (#333333) on
-   #dc635c at 3.60, under the 4.5 floor for 15.8px type. */
+   rule already reads the ink the vertical accent map tunes for it. Overriding
+   the background without the ink would put --text (#333333) on #dc635c at
+   3.60, under the 4.5 floor for 15.8px type. */
 body.vertical-tv .btn-primary {
   background: var(--tv-accent);
   color: var(--accent-ink);
@@ -7414,23 +7070,8 @@ body.vertical-tv .show-grid {
   padding: 0 var(--space-4) var(--space-6);
 }
 
-body.vertical-tv .show-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  text-decoration: none;
-  color: inherit;
-  transition: background var(--transition-fast) var(--ease-out);
-}
-
-body.vertical-tv .show-card:hover {
-  background: var(--hover-subtle);
-}
-
-// Measured by Operator::CssCoverageLint 2026-08-11.
+// A class the markup uses that nothing else defines, as
+// Operator::CssCoverageLint finds it.
 .episode-link {
   display: flex;
   align-items: center;
@@ -7453,10 +7094,9 @@ body.vertical-tv .show-card:hover {
   /* dvh, not vh: mobile browser chrome collapses on scroll, and vh leaves a
      strip of the next video showing under the address bar the whole way down. */
   height: 100dvh;
-  /* Edge to edge measured from the viewport, not by undoing a pad this
-     page's main does not have — cancelling 18px of padding that was never
-     applied put 18px of video past each edge. */
-  width: 100dvw;
+/* Edge to edge measured from the viewport: this page's main has no padding
+   to undo, so cancelling one would push video past each edge. */
+width: 100dvw;
   margin-inline: calc(50% - 50dvw);
 }
 
@@ -7503,10 +7143,6 @@ body.vertical-tv .show-card:hover {
 
 .tv-feed-channel { margin: 0; color: var(--text-secondary); }
 
-@media (prefers-reduced-motion: reduce) {
-  .tv-feed-scroller { scroll-behavior: auto; }
-}
-
 /* A sound is a name and a count of what was built on it; a clip's lineage is
    one quiet line under the title, because it is a way out of the page rather
    than the page itself. */
@@ -7546,23 +7182,6 @@ body.vertical-tv .show-card:hover {
   display: grid;
   gap: var(--space-3);
   grid-template-columns: repeat(auto-fill, minmax(var(--tile-min-2xl), 1fr));
-}
-
-.live-stream-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  border: 0;
-  border-radius: var(--radius-card);
-  background: var(--surface-elevated, var(--surface));
-  text-decoration: none;
-  color: inherit;
-  transition: background var(--transition-fast) var(--ease-out);
-}
-
-.live-stream-card:hover {
-  background: var(--hover-subtle);
 }
 
 .tv-live-stream {
@@ -7649,35 +7268,18 @@ body.vertical-tv .show-card:hover {
 .tv-card-sub { color: var(--text-secondary); font-size: var(--text-sm); margin-block-start: 4px; }
 .tv-views { font-variant-numeric: tabular-nums; }
 
-/* Maps — immersive vertical branding (Inter, MapLibre HUD). Core x shell hidden via _vertical_shell. */
+/* Maps: immersive vertical branding (Inter, MapLibre HUD). The vertical shell
+   rules hide the core chrome. */
 
 body.vertical-maps {
-  /* maps is a LIGHT surface (operator, 2026-08-24) and the layout pins it, so
-     this dialect follows the theme like every other vertical.
+  /* maps is a light surface and the layout pins it, so this dialect follows
+     the theme like every other vertical. The basemap it loads, openfreemap's
+     positron (rgb(242,243,240)), is light too, so chrome and map match, and
+     --text-secondary #545454 reads APCA Lc 78.6 on the #f2f2f2 place cards. */
 
-     What was here pinned the whole dialect dark, on the stated grounds that
-     "the basemap is pinned dark". The basemap it actually loads is
-     openfreemap's positron -- background rgb(242,243,240) -- and liberty
-     before it was #f8f4f0. Both light. The comment was describing a basemap
-     this app has not used, so the shell was rendering dark chrome around a
-     light map and the two never matched.
-
-     The concern that comment recorded was real and is answered by the theme
-     rather than by pinning: secondary text resolved to #5c586e in light mode
-     and measured 2.44:1 on the place cards. Those cards are on a light ground
-     now, where --text-secondary is #545454 -- APCA Lc 78.6 on #f2f2f2. */
-
-  /* Cool graphite cartography — aligns with vertical_accents.maps. These stay
-     token references rather than literals so they follow whatever theme the
-     surface is in. They used to resolve against a dark dialect included on
-     THIS element, which is why the note here said --text was #d8d6e0; with the
-     include gone they resolve against the light theme the layout now pins.
-
-     The failure that include was answering is still worth knowing about: with
-     no dialect at all the wordmark once rendered near-black on near-black at
-     1.04:1, on a page whose whole purpose is a map you read labels off. A
-     pinned theme fixes that as well as a pinned dialect did, and matches the
-     basemap instead of fighting it. */
+  /* Cool graphite cartography, aligned with vertical_accents.maps. These are
+     token references rather than literals so they follow the theme the layout
+     pins, and the wordmark and labels always contrast with their ground. */
   --maps-bg: var(--bg);
   --maps-ink: var(--text);
   --maps-muted: var(--text-secondary);
@@ -7688,8 +7290,6 @@ body.vertical-maps {
   color: var(--maps-ink);
   font-family: var(--font);
 }
-
-/* Immersive-vertical chrome hiding is centralised in _vertical_shell.scss. */
 
 body.vertical-maps .layout {
   grid-template-areas: "main";
@@ -7718,14 +7318,12 @@ body.vertical-maps .map-canvas {
 body.vertical-maps .map-hud {
   position: fixed;
   top: max(var(--space-4), env(safe-area-inset-top));
-  /* Clear the fixed city brand — it sat on the left edge of #map-search, so a
-     tap meant for the search box navigated home instead. See
-     --brand-mark-inline in _root.scss. */
-  /* Additive, matching the brand it clears: the brand is now offset by the safe
-     area rather than max()'d against it, so a max() clearance here would stop
-     clearing it on a notched phone in landscape -- exactly the overlap the
-     comment below describes, back again on the devices that have a safe area. */
-  inset-inline-start: calc(var(--brand-mark-inline) + var(--safe-left, 0px));
+/* Clear the fixed city brand, which sits on the left edge of #map-search, so
+   a tap meant for the search box does not navigate home (--brand-mark-inline
+   on :root). Additive, matching the brand it clears: the brand is offset by
+   the safe area rather than max()'d against it, so a max() clearance here
+   would stop clearing it on a notched phone in landscape. */
+inset-inline-start: calc(var(--brand-mark-inline) + var(--safe-left, 0px));
   inset-inline-end: max(var(--space-4), env(safe-area-inset-right));
   z-index: var(--z-app);
   display: flex;
@@ -7803,8 +7401,8 @@ body.vertical-maps article.place dd {
 
 /* --accent-ink, not --maps-ink. --maps-ink is the ink for --maps-bg and
    --maps-surface, which is what its other three uses ask of it, and on the
-   accent it measured 3.34 against the 4.5 floor. _vertical_shell tunes one ink
-   for anything painted on an accent; this is that. */
+   accent it reads 3.34 against the 4.5 floor. The vertical shell tunes one
+   ink for anything painted on an accent; this is that. */
 body.vertical-maps .btn,
 body.vertical-maps .btn-primary {
   background: var(--maps-accent);
@@ -7866,8 +7464,6 @@ body.vertical-messenger {
   color: var(--msg-ink);
   font-family: var(--font);
 }
-
-/* Immersive-vertical chrome hiding is centralised in _vertical_shell.scss. */
 
 body.vertical-messenger .layout {
   grid-template-areas: "main";
@@ -8040,13 +7636,9 @@ body.vertical-messenger ul[aria-label="Conversations"] mark {
   min-height: var(--tap-min);
 }
 
-/* The field-and-submit row on conversations/search.
-   
-   Unscoped for the same reason as the picker above: the rules this replaces were
-   body.vertical-messenger .messenger-compose-row, and they also targeted
-   input[type="text"] while the search view renders a search_field — so on the
-   city domain they matched nothing, and on the messenger subdomain they matched
-   the wrong input. */
+/* The field-and-submit row on conversations/search. Unscoped, like the picker
+   rules above: the search view renders on the city domain as well as the
+   messenger subdomain, and its field is a search_field, not a text input. */
 .messenger-compose-row {
   display: flex;
   gap: var(--space-2);
@@ -8063,6 +7655,75 @@ body.vertical-messenger ul[aria-label="Conversations"] mark {
 .edited-mark {
   color: var(--text-secondary);
   font-size: var(--text-sm);
+}
+
+/* card-embed extensions: shared/_minimal.scss carries these for the other
+   apps, and brgen's stack does not forward it. */
+
+.feed-card-body {
+  font-size: var(--text-base);
+  line-height: 1.5;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.feed-card-meta {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  margin: 4px 0;
+  line-height: 1.5;
+}
+
+.price {
+  /* Weight alone carries the emphasis: hierarchy via weight and brightness,
+     not decoration, and the accent stays with interactive and state elements
+     (visual_contract_lint accent_on_prose). */
+  font-weight: var(--weight-bold);
+  font-size: var(--text-base);
+  margin-top: 4px;
+}
+
+.feed-action--primary {
+  color: var(--accent);
+  font-weight: var(--weight-bold);
+}
+
+// :is(...) rather than eight repeated compound selectors: one selector, and
+// no worse either way.
+/* Space, not hairlines — elevated surface only (family "separation is space"). */
+.feed-card:is(.listing, .deal, .store, .community, .match, .playlist, .tv, .takeaway) {
+  background: var(--surface-elevated);
+  border: 0;
+  border-radius: var(--radius-card);
+  margin-bottom: 0;
+  padding: 12px 12px;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.feed-card:is(.listing, .deal, .store, .community, .match, .playlist, .tv, .takeaway) .feed-card-avatar {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+  flex: none;
+}
+
+@media (min-width: 768px) {
+  .feed-card:is(.listing, .deal, .store, .community, .match, .playlist, .tv, .takeaway) {
+    flex-direction: row;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+
+  .feed-card:is(.listing, .deal, .store, .community, .match, .playlist, .tv, .takeaway) .feed-card-avatar {
+    width: 80px;
+    height: 80px;
+    aspect-ratio: auto;
+    border-radius: var(--radius-sm);
+    margin-bottom: 0;
+  }
 }
 
 body.vertical-messenger header[aria-label="Conversation header"] {
@@ -8252,16 +7913,20 @@ body.vertical-messenger #typing-indicator[data-active="true"]::before {
   animation: msg-type-bar 1s var(--ease-in-out) infinite;
 }
 
-@keyframes msg-type-bar {
-  0%, 100% { opacity: 0.35; transform: scaleX(0.6); }
-  50% { opacity: 1; transform: scaleX(1); }
-}
-
 @media (prefers-reduced-motion: reduce) {
   body.vertical-messenger #typing-indicator[data-active="true"]::before {
     animation: none;
     opacity: 0.7;
   }
+
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .tv-feed-scroller { scroll-behavior: auto; }
 }
 
 body.vertical-messenger p[role="status"] {
@@ -8327,13 +7992,6 @@ body.vertical-messenger .link-preview-body {
   font-size: var(--text-sm);
 }
 
-/* .group-roster is gone with the block it described. The roster was "a quiet
-   block above the log" and is now a section of the conversation's disclosure
-   panel, where .messenger-member-list gives each member a --tap-min row with its
-   remove control — a wrapping flex of names could not hold a button per name.
-   The rules are deleted rather than kept against a class nothing renders:
-   css_coverage_lint counts a selector with no consumer, and it counted these. */
-
 // Must load after vertical_messenger_thread: it turns that file's bubble rules
 // off for the channel log, and the two selectors tie at (0,1,2,2), so order is
 // what decides. Winning by adding a redundant class instead would leave a
@@ -8344,11 +8002,11 @@ body.vertical-messenger .link-preview-body {
    brgen already IS an IRC system underneath: Conversation::CHANNELS holds seven
    #-prefixed rooms, bots are real User rows with op/voice roles and @/+ prefixes
    (ConversationParticipant::PREFIX), humans get `Stranger #A3F1` handles, and
-   lib/brgen/irc/ speaks the actual protocol on 127.0.0.1:6667. Only the
-   presentation disagreed: _vertical_messenger_thread.scss styles
-   `body.vertical-messenger #messages article` as iMessage bubbles — max-width
-   82%, alternating flex-end/flex-start, rounded with a tail — and the channel
-   page inherits that because its <ul> also carries id="messages".
+lib/brgen/irc/ speaks the actual protocol on 127.0.0.1:6667. Only the
+presentation differs: the messenger thread rules style
+`body.vertical-messenger #messages article` as iMessage bubbles — max-width
+82%, alternating flex-end/flex-start, rounded with a tail — and the channel
+page would inherit that because its <ul> also carries id="messages".
 
    Alternating sides is the wrong idea for a room. It encodes "me vs them",
    which is what a 1:1 thread is; a channel has many speakers and no side. So a
@@ -8362,11 +8020,10 @@ body.vertical-messenger .link-preview-body {
    (0,1,1,2) and a bare `.channel-log article` (0,0,1,1) loses to them. */
 
 body.vertical-messenger #messages.channel-log {
-  /* Hanging indent for wrapped lines. Named because the article's padding and
-     its negative text-indent have to stay equal and opposite — when the
-     [data-bot] rule below zeroed the padding on its own, the indent survived
-     and dragged `19:` off the left edge to be clipped. */
-  --irc-hang: 1.6rem;
+/* Hanging indent for wrapped lines. Named because the article's padding and
+   its negative text-indent have to stay equal and opposite, including in the
+   [data-bot] rule below, or the indent drags `19:` off the left edge. */
+--irc-hang: 1.6rem;
 
   gap: 0;
   font-family: var(--font-mono, ui-monospace, monospace);
@@ -8376,23 +8033,22 @@ body.vertical-messenger #messages.channel-log {
 
 /* Phone first, and the phone does not get the aligned column.
 
-   Measured at 430x900: `19:37 <Stranger #8A0B>` is 21 mono characters, about
-   164px at this size, against a 129px gutter. The nick truncated to `#8A…` and
-   then wrapped underneath the timestamp, so the one thing the column exists to
-   buy — a straight left edge on the text — was gone, and every row cost two
-   lines plus the handle that identifies the speaker. A fixed nick column is a
-   desktop-terminal idea and brgen's primary surface is 390px wide.
+   `19:37 <Stranger #8A0B>` is 21 mono characters, about 164px at this size,
+   against a 129px gutter: at 430px the nick would truncate and wrap under the
+   timestamp, losing the straight left edge the column exists to buy and
+   costing every row two lines. A fixed nick column is a desktop-terminal idea
+   and brgen's primary surface is 390px wide.
 
    So the base layout flows inline, `19:37 <nick> message…`, which is what a
    mobile IRC client does and what uses the width. A hanging indent keeps
    wrapped lines from starting under the timestamp, so the message body is
-   still findable down the left edge. The aligned grid comes back at 40rem in
-   the media query at the end of this file, where it fits. */
+   still findable down the left edge. The aligned grid comes back in the 40rem
+   query after these rules, where it fits. */
 body.vertical-messenger #messages.channel-log article {
   display: block;
 
-  /* Undo the bubble. Every one of these is load-bearing against
-     _vertical_messenger_thread.scss:76-96. */
+  /* Undo the bubble. Every one of these is load-bearing against the messenger
+     thread's `body.vertical-messenger #messages article` rule. */
   max-width: none;
   align-self: stretch;
   background: none;
@@ -8406,7 +8062,7 @@ body.vertical-messenger #messages.channel-log article {
 
 /* A room reads by speaker, so the nick repeats on every line the way it does in
    a real client. conversation_log_controller stamps data-grouped on messages
-   within 5 minutes of the same sender and shared/_chat_reactions.scss:83 hides
+   within 5 minutes of the same sender and shared/_chat_reactions.scss hides
    the header for those — correct for a bubble thread, wrong for a transcript,
    where it would leave orphan lines under a gutter that says nothing. */
 body.vertical-messenger #messages.channel-log article[data-grouped="true"] > header {
@@ -8415,9 +8071,9 @@ body.vertical-messenger #messages.channel-log article[data-grouped="true"] > hea
 
 /* inline-flex, not inline: the ERB emits the nick before the time, and IRC
    reads time first. Flex `order` is what reverses them without touching a
-   partial the DM thread and the corner widget also render. `nowrap` matters —
-   _vertical_messenger_thread.scss:113 sets flex-wrap: wrap on this header, and
-   that inherited wrap is what let the nick fall below the timestamp. */
+   partial the DM thread and the corner widget also render. `nowrap` matters:
+   the messenger thread sets flex-wrap: wrap on this header, and that wrap
+   would let the nick fall below the timestamp. */
 body.vertical-messenger #messages.channel-log article > header {
   display: inline-flex;
   flex-wrap: nowrap;
@@ -8430,10 +8086,10 @@ body.vertical-messenger #messages.channel-log article > header {
   font-size: inherit;
   opacity: 1;
   white-space: nowrap;
-  /* text-indent inherits, and inline-flex is a block container, so the article's
-     -1.6rem hanging indent was applied a second time inside this header and
-     dragged `<@ma` off the left edge to be clipped. */
-  text-indent: 0;
+/* text-indent inherits, and inline-flex is a block container, so without this
+   the article's -1.6rem hanging indent applies a second time inside the
+   header and drags `<@ma` off the left edge. */
+text-indent: 0;
 }
 
 /* Header order in the ERB is nick, time, chips. IRC reads time first. */
@@ -8481,14 +8137,14 @@ body.vertical-messenger #messages.channel-log .msg-nick {
   font-weight: var(--weight-normal);
 }
 
-/* The accent rule and left border from _channels.scss:135 were a bubble-era
-   device; in a transcript the @ prefix and the nick colour already separate a
-   bot, and a rule down the side of every bot line is a line. */
+/* No accent rule down the side of bot lines: in a transcript the @ prefix and
+   the nick colour already separate a bot, and a rule beside every bot line is
+   a line. */
 body.vertical-messenger #messages.channel-log article[data-bot] {
   border-inline-start: 0;
-  /* Keeps the hanging indent — _channels.scss:135 sets its own
-     padding-inline-start for the bubble-era accent rule, and simply zeroing it
-     here broke the indent/text-indent pair. */
+  /* Keeps the hanging indent: the channel [data-bot] rules set their own
+     padding-inline-start, and zeroing it instead would break the
+     indent/text-indent pair. */
   padding-inline-start: var(--irc-hang);
 }
 
@@ -8525,10 +8181,9 @@ body.vertical-messenger .roster-nick {
   font-size: var(--text-xs);
 }
 
-/* The composer had `border: 1px solid` on the container plus a second border on
-   the textarea inside it — two rules around one control. The 2026-08-04 "no
-   lines at all" decision leaves exactly one exemption, form-field outlines, so
-   the field keeps its edge and the box around it becomes a surface. */
+/* One edge around one control: the "no lines at all" rule exempts form-field
+   outlines, so the textarea keeps its edge and the box around it is a
+   surface rather than a second border. */
 .channel-composer {
   border: 0;
   background: var(--surface-elevated);
@@ -8588,92 +8243,15 @@ body.vertical-messenger .roster-nick {
   }
 }
 
-/* card-embed extensions — ported from shared/_minimal.scss for brgen (no minimal forward). */
+/* Shell polish — profile, discovery, post detail, thread summary. */
 
-.feed-card-body {
-  font-size: var(--text-base);
-  line-height: 1.5;
-  color: var(--text);
-  margin-bottom: 8px;
-}
-
-.feed-card-meta {
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-  margin: 4px 0;
-  line-height: 1.5;
-}
-
-.price {
-  /* Weight alone carries the emphasis: hierarchy via weight and brightness,
-     not decoration, and the accent stays with interactive and state elements
-     (visual_contract_lint accent_on_prose). */
-  font-weight: var(--weight-bold);
-  font-size: var(--text-base);
-  margin-top: 4px;
-}
-
-.feed-action--primary {
-  color: var(--accent);
-  font-weight: var(--weight-bold);
-}
-
-// :is(...) rather than 8 repeated compound selectors. This was originally
-// written up as a dart-sass compressed-mode corruption bug after avatars
-// broke site-wide in production, but a later re-test against the exact
-// pre-fix source (same sass-embedded version) compiled cleanly -- the
-// actual cause was more likely a stale Propshaft asset manifest serving an
-// old CSS build under the current URL (a separate, confirmed footgun; see
-// MASTER/web/CLAUDE.md). Keeping :is() anyway: it's one selector instead
-// of eight and no worse either way.
-/* Space, not hairlines — elevated surface only (family "separation is space"). */
-.feed-card:is(.listing, .deal, .store, .community, .match, .playlist, .tv, .takeaway) {
-  background: var(--surface-elevated);
-  border: 0;
-  border-radius: var(--radius-card);
-  margin-bottom: 0;
-  padding: 12px 12px;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.feed-card:is(.listing, .deal, .store, .community, .match, .playlist, .tv, .takeaway) .feed-card-avatar {
-  width: 100%;
-  height: auto;
-  aspect-ratio: 16 / 9;
-  border-radius: var(--radius-sm);
-  margin-bottom: 8px;
-  flex: none;
-}
-
-@media (min-width: 768px) {
-  .feed-card:is(.listing, .deal, .store, .community, .match, .playlist, .tv, .takeaway) {
-    flex-direction: row;
-    gap: 12px;
-    padding: 12px 16px;
-  }
-
-  .feed-card:is(.listing, .deal, .store, .community, .match, .playlist, .tv, .takeaway) .feed-card-avatar {
-    width: 80px;
-    height: 80px;
-    aspect-ratio: auto;
-    border-radius: var(--radius-sm);
-    margin-bottom: 0;
-  }
-}
-
-/* Shell polish — profile, discovery, post detail, thread summary.
-   Includes former _ui_refinements_pass.scss (merged 2026-07-31). */
+// ============================================================ pages: city home and surfaces
 
 /* Guest/city home orientation — sits above the feed, not under an AI hero. */
 .city-home-intro {
   padding: var(--space-4, 1rem) 0 var(--space-3, 0.75rem);
   max-width: var(--measure);
 }
-
-.city-home-paths a:hover,
-
-.city-home-ai-link:hover,
 
 .profile-header {
   display: flex;
@@ -8687,32 +8265,6 @@ body.vertical-messenger .roster-nick {
   margin: 0;
   font-size: var(--text-title);
   font-weight: var(--weight-heavy);
-}
-
-.who-follow {
-  display: grid;
-  gap: var(--space-2);
-}
-
-.who-follow li {
-  list-style: none;
-}
-
-/* flex + min-height, the same idiom _minimal.scss uses for `nav a` and for the
-   same reason: the anchor's own box is the tap target, and padding alone left
-   it at 232x38 against the 44px design_rules.ux_laws.fitts floor. */
-.who-follow a {
-  display: flex;
-  align-items: center;
-  min-height: var(--tap-min, 44px);
-  min-inline-size: var(--tap-min, 44px);
-  padding: var(--space-2) 0;
-  color: var(--text);
-  text-decoration: none;
-}
-
-.who-follow a:hover {
-  color: var(--accent);
 }
 
 .thread-summary {
@@ -8779,9 +8331,9 @@ body.vertical-messenger .roster-nick {
   font-size: var(--text-sm);
 }
 
-// h2, not h3: these follow the page h1 with no h2 between them, which is a
-// skipped level in the outline screen readers navigate by. Promoted 2026-08-10;
-// the selectors moved with the markup so the rendered size does not change.
+// h2, not h3: these follow the page h1 with no h2 between them, and a skipped
+// level breaks the outline screen readers navigate by. The rule sizes them so
+// the heading level does not change the rendered size.
 .post-show-aside h2 {
   margin: 0 0 var(--space-2);
   font-size: var(--text-base);
@@ -8794,23 +8346,18 @@ body.vertical-messenger .roster-nick {
 
 // The id matters here beyond habit. #comments-section is a <section>, and
 // _zen_shell's `section h2 { font-size: var(--text-xs) }` would otherwise catch
-// this heading the moment it stopped being an h3 -- measured 18px -> 13.5px.
-// An id (1,0,1) outranks that element pair (0,0,2), so it stays at --text-base.
+// this heading. An id (1,0,1) outranks that element pair (0,0,2), so it stays
+// at --text-base.
 #comments-section h2 {
   font-size: var(--text-base);
   margin-bottom: var(--space-3);
 }
 
-// The two class-less <aside> sidebars -- communities/show and posts/index --
-// were the only headings in brgen that no rule sized at all, so they rendered at
-// the UA h3 default. Promoting them to h2 would have taken them to the UA h2
-// default: measured 23.6925px -> 30.375px on both.
-//
-// 1.17em *is* that UA h3 ratio, kept deliberately so the promotion is an
-// accessibility fix and nothing else. It is not on the type scale -- at brgen's
-// 20.25px root the scale offers --text-lg 20.25px and --text-xl 27px, and
-// neither is what these have always rendered at. Moving them onto the scale is a
-// visual decision and a separate one.
+// The two class-less <aside> sidebars, communities/show and posts/index, carry
+// h2 headings that nothing else sizes. 1.17em is the UA h3 ratio, which keeps
+// them at the size an h3 would render rather than the UA h2 size. It is not on
+// the type scale: at brgen's 20.25px root the scale offers --text-lg 20.25px and
+// --text-xl 27px, and moving them onto it is a visual decision.
 //
 // :not([class]) keeps this off .post-show-aside, .sidebar-card, .sidebar,
 // .widgets and .channel-roster, all of which size their own headings.
@@ -8837,17 +8384,6 @@ aside:not([class]) > h2 {
   letter-spacing: var(--tracking-tighter);
 }
 
-/* UI_REFINEMENTS pass — tokens, a11y floor, nav, vertical accents.
-   Flat borders only (no box-shadow). Honors prefers-reduced-motion. */
-
-/* color-success/warning/info, ease-out/spring, transition-fast/normal all come
-   from shared/_tokens.scss via stack_brgen's @forward "tokens" -- redeclaring
-   them here at the same values was pure redundant CSS output, not an
-   override (verified: shared's values are byte-identical to what was here). */
-:root {
-  --elev-1: 1px solid var(--border);
-}
-
 /* G · a11y floor + touch targets */
 :where(button, .btn, .feed-action, .nav-item, .nav_link, a.chip, .push-enable-btn) {
   min-height: var(--tap-min);
@@ -8857,7 +8393,6 @@ aside:not([class]) > h2 {
 .feed-action-count,
 .feed-card-time,
 .price,
-.duration-chip,
 [data-count],
 time {
   font-variant-numeric: tabular-nums;
@@ -8869,11 +8404,8 @@ time {
   content-visibility: auto;
   contain-intrinsic-size: auto 160px;
 }
-.video-card,
 .channel-card,
 .feed-post:has(.feed-card-media),
-
-/* Flash / toast flat card */
 .flash-notice,
 .flash-alert,
 .toast,
@@ -8888,17 +8420,10 @@ time {
 .flash-notice { border-color: color-mix(in srgb, var(--color-success) 40%, var(--border)); }
 .flash-alert { border-color: color-mix(in srgb, var(--danger) 50%, var(--border)); }
 
-/* Post body measure */
-.post-body,
-.article-body {
-  max-width: var(--measure);
-}
-
-/* .nav_swiper_bar's scroll-snap now lives with the rest of the bar in
-   _nav_swiper.scss. It was here, later in the @use order, and its
-   `scroll-padding-inline: var(--space-1)` outranked the brand inset -- so the
-   snap engine pulled the first .nav_link back under the fixed wordmark and
-   cancelled the padding that was supposed to clear it. One owner per property. */
+/* .nav_swiper_bar's scroll-snap lives with the rest of the bar in the nav
+   swiper rules. One owner per property: a later scroll-padding-inline here
+   would outrank the brand inset and pull the first .nav_link back under the
+   fixed wordmark. */
 .nav_link {
   scroll-snap-align: start;
   min-height: var(--tap-min);
@@ -8913,11 +8438,9 @@ time {
 }
 
 /* TV 16:9 + duration chip */
-body.vertical-tv .video-card,
 body.vertical-tv .channel-card {
   position: relative;
 }
-body.vertical-tv .video-card img,
 body.vertical-tv .channel-card img,
 body.vertical-tv .tv-poster {
   aspect-ratio: 16 / 9;
@@ -8925,24 +8448,13 @@ body.vertical-tv .tv-poster {
   width: 100%;
   border-radius: var(--radius-sm);
 }
-body.vertical-tv .duration-chip {
-  position: absolute;
-  inset-block-end: var(--space-1);
-  inset-inline-end: var(--space-1);
-  padding: var(--space-0-5) 4px;
-  font: var(--weight-bold) var(--text-xs)/1 var(--font);
-  font-variant-numeric: tabular-nums;
-  background: var(--scrim-72);
-  border-radius: 2px;
-}
 body.vertical-tv .live-badge::before {
   content: "● ";
-  /* No hex fallback: --danger is set by the dialect mixin at :root for every
-     dialect, and it is a different value in each one (#e46151, #b24c3f,
-     #a9483c, …). #d1594a is design_tokens.yml's color_danger, a different
-     token — writing it here as "the" --danger was drift waiting to happen,
-     the same way the stale Twitter-red (#f4212e) it replaced was. */
-  color: var(--danger);
+/* No hex fallback: --danger is set by the dialect mixin at :root for every
+   dialect, with a different value in each (#e46151, #b24c3f, #a9483c, …).
+   #d1594a is design_tokens.yml's color_danger, a different token, so a
+   literal here would drift from the dialect it sits in. */
+color: var(--danger);
 }
 
 /* Playlist embed controls */
@@ -8956,8 +8468,7 @@ body.vertical-playlist input[type="range"] {
   accent-color: var(--accent);
 }
 
-/* Shell surfaces — cart, community, flash, sidebar, empty states.
-   Includes former _ui_refinements_surfaces.scss (merged 2026-07-31). */
+/* Shell surfaces — cart, community, flash, sidebar, empty states. */
 
 .marketplace-deal {
   padding: var(--space-4);
@@ -9010,9 +8521,8 @@ body.vertical-playlist input[type="range"] {
 }
 
 /* Same inline inset as .compose-launcher. .post-feed is the home list, the
-   posts index, bookmarks and hashtags -- #feed-panel alone left those sibling
-   feeds full-bleed after the home column was inset. It shared this rule with
-   the city strip until that strip was removed. */
+   posts index, bookmarks and hashtags, so every sibling feed sits in the same
+   inset column as the home feed. */
 .post-feed {
   margin-inline: var(--space-4);
   box-sizing: border-box;
@@ -9050,9 +8560,9 @@ body.vertical-playlist input[type="range"] {
 }
 
 /* The rows are scannable columns of links, and a link's own box is what takes
-   the tap — measured at 39x21 on the sidebar cards,
-   against the 44px design_rules.ux_laws.fitts floor. The li above stays
-   baseline-aligned, so the text keeps its column; only the hit area grows. */
+   the tap, so it holds the 44px design_rules.ux_laws.fitts floor. The li above
+   stays baseline-aligned, so the text keeps its column; only the hit area
+   grows. */
 .sidebar-card li a,
 .also-nearby li a,
 .profile-verticals li a {
@@ -9150,10 +8660,6 @@ body.vertical-playlist input[type="range"] {
   animation: skeleton-shimmer 1.2s var(--ease-in-out) infinite;
   min-height: 1rem;
 }
-@keyframes skeleton-shimmer {
-  0% { background-position: 100% 0; }
-  100% { background-position: -100% 0; }
-}
 
 /* Safe area + tap highlight */
 .sidebar,
@@ -9161,8 +8667,15 @@ body.vertical-playlist input[type="range"] {
 .push-enable-btn {
   padding-inline: max(0px, env(safe-area-inset-left));
 }
-html {
-  -webkit-tap-highlight-color: color-mix(in srgb, var(--accent) 18%, transparent);
+
+// ============================================================ shared modules and overrides
+
+@include meta.load-css("auth_form");
+
+@include meta.load-css("chat_reactions");
+
+@media (prefers-contrast: high) {
+  .radio-tunnel canvas { filter: contrast(150%); }
 }
 
 /* High contrast */
@@ -9182,36 +8695,17 @@ html {
   .feed-action:active { transform: none; }
 }
 
-/* prefers-contrast + link affordance in body text */
-.post-body a,
-.article-body a {
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-.post-body a:hover {
-  color: var(--accent);
-}
-
-@include meta.load-css("auth_form");
-
 @include meta.load-css("focus_ring");
 
-@include meta.load-css("chat_reactions");
-
-// Classes the markup asked for and nothing defined, measured by
-// Operator::CssCoverageLint 2026-08-11. Last on purpose: these complement the
-// components above rather than competing with them.
+// Classes the markup uses that no component defines, shared and then brgen's
+// own, as Operator::CssCoverageLint finds them. They load last so they
+// complement the components above rather than compete with them.
 
 @include meta.load-css("shared_coverage_fills");
 
-// Classes brgen's markup asked for and no stylesheet defined.
-//
-// Measured by Operator::CssCoverageLint on 2026-08-11 (see shared/_coverage_fills.scss
-// for why the lint exists). Token-only, no hex, no !important.
-//
-// Classes whose element already carries a styled sibling — `.channel-guest-hint dim`,
-// `.affiliate-placeholder dim`, `.conversation-log` beside `.channel-log` — are not
-// here and are not missing styles: they inherit, and the lint knows that now.
+// brgen's own: token-only, no hex, no !important. A class whose element already
+// carries a styled sibling (`.channel-guest-hint dim`, `.affiliate-placeholder
+// dim`, `.conversation-log` beside `.channel-log`) inherits, so it is not here.
 
 // Profile activity feed.
 .profile-activity {
@@ -9290,8 +8784,8 @@ html {
   margin-block-end: var(--space-3);
 }
 
-// Surfaces shipped after the 2026-08-11 fill: Event, Story, community
-// governance, quote-posts. Token-only, space-not-lines, no hex.
+// Event, Story, community governance and quote-posts. Token-only,
+// space-not-lines, no hex.
 
 /* Admin rosters are indexes, not feeds: hairline rows, tabular density,
    no card padding — the moderation surfaces share one list pattern. */
@@ -9541,11 +9035,9 @@ html {
 }
 
 // The map's no-JS-map fallback: when the tile layer cannot load, map_controller
-// lists the points as cards instead. Neither the container nor the cards had a
-// rule anywhere, which the coverage lint could not see until it learned to read
-// classes out of JavaScript as well as out of templates.
+// lists the points as cards instead.
 //
-// Structural and token-only, like the rest of this file: geometry so the
+// Structural and token-only, like the rest of these fills: geometry so the
 // fallback is legible, and no colour, because what it should look like is a
 // design decision and this is a floor.
 .map-fallback {

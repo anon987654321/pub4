@@ -337,7 +337,7 @@ weight_kb:
   # not spendable without reading them: the census counts `woff2`, `type`,
   # `nth` and `ProseMirror` among them, and the last is applied by the editor
   # at runtime.
-  brgen: 207
+  brgen: 203
   amber: 108
 # 64 -> 65 on 2026-09-12. Mobile-first costs bytes: stating the phone case
 # unconditionally and restoring the wider one at a min-width edge writes each
