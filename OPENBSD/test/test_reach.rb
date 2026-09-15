@@ -76,6 +76,17 @@ class ReachTest < Minitest::Test
     assert_includes checks("cron").map(&:subject), "/opt"
   end
 
+  # The uptime-check shape. reach reads cron lines through the drift gate's
+  # scheduled_commands, so an environment prefix is the gate's parsing, proved
+  # here from reach's side.
+  def test_an_environment_prefix_is_not_mistaken_for_the_command
+    write("etc/crontab.vm23", "PATH=/bin:/usr/local/bin\n*/5 * * * * ALLOW_X=1 /usr/local/bin/b.sh >> /var/log/b.log 2>&1\n")
+    write("usr/local/bin/b.sh", "#!/bin/ksh\n")
+
+    assert_equal ["/usr/local/bin/b.sh"], R.cron_commands
+    assert_empty checks("cron")
+  end
+
   def test_redirections_are_not_mistaken_for_the_command
     write("etc/crontab.vm23", "PATH=/bin:/usr/local/bin\n0 2 * * 1 /usr/local/bin/a.sh >> /var/log/a.log 2>&1\n")
     write("usr/local/bin/a.sh", "#!/bin/ksh\n")

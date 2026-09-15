@@ -21,6 +21,10 @@
 
 require "json"
 require_relative "../lib/utf8"
+# For scheduled_commands, the one cron-line parser: its fixtures live in
+# test/test_config_drift_gate.rb, and test_tracked_crontab.rb reads through it too.
+# The gate returns before running anything when it is required rather than run.
+require_relative "../config_drift_gate"
 
 module Operator
   module OpenbsdReach
@@ -49,18 +53,7 @@ module Operator
     # installs it there from somewhere else — resource_guard.sh is tracked at the
     # OPENBSD root and installed into /usr/local/bin, which reads as missing to
     # anything that only checks the path.
-    # cron runs the command through SHELL, so a line may prefix it with any
-    # number of NAME=value assignments — uptime-check carries ALLOW_BSDPORTS_DOWN=1
-    # that way. Taking the first word regardless read the assignment as the
-    # command and reported a path that was never scheduled.
-    ENV_ASSIGNMENT = /\A[A-Za-z_][A-Za-z0-9_]*=\S*\z/
-
-    def cron_commands
-      read("etc", "crontab.vm23").lines
-        .grep(/\A[\d*]/)
-        .filter_map { |line| line.split(/\s+/, 6).last.to_s.split(/\s+/).find { |w| !w.match?(ENV_ASSIGNMENT) } }
-        .uniq
-    end
+    def cron_commands = scheduled_commands(read("etc", "crontab.vm23"))
 
     def cron_findings
       operator = read("OPERATOR.sh")
