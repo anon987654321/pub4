@@ -79,43 +79,150 @@ body.vertical-marketplace .listing-status {
 // Classes the marketplace markup asked for and nothing defined, measured by
 // Operator::CssCoverageLint 2026-08-11. Token-only, no hex, no !important.
 
-// Buy bar: price on one side, actions on the other, stacking on a narrow viewport.
-.listing-buy-bar {
+// ---- listing page ------------------------------------------------------
+
+.store-breadcrumb {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  margin-block: var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: var(--space-2) var(--space-3);
+  margin-block: 8px;
+  font-size: var(--store-text-meta);
 }
 
-.listing-buy-bar-price {
+.store-breadcrumb a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min);
+  color: var(--store-ink-soft);
+  text-decoration: none;
+}
+
+.store-breadcrumb a + a::before {
+  content: "›";
+  margin-inline: 8px;
+  color: var(--store-ink-soft);
+}
+
+.store-breadcrumb a:hover {
+  color: var(--store-ink);
+  text-decoration: underline;
+}
+
+.store-pdp {
+  display: grid;
+  gap: 16px;
+  margin-block-end: var(--store-section);
+}
+
+/* Kaufland's picture well is 679 by 536 beside its thumbnails. */
+.store-pdp-media .deal-card-img {
+  aspect-ratio: 5 / 4;
+}
+
+.store-pdp-info {
   display: flex;
-  align-items: baseline;
-  gap: var(--space-2);
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
 }
 
-.listing-buy-bar-amount {
-  font-weight: var(--weight-bold);
+body.vertical-marketplace .store-pdp .page-header {
+  display: flex;
+  background: none;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+}
+
+body.vertical-marketplace .store-pdp .page-header h1 {
+  margin: 0;
+  line-height: var(--leading-snug);
+}
+
+/* The buy box: white, 8px corners, 16px padding, facts parted by a hairline.
+   Its shadow is one of the two Kaufland draws; it sits in the storefront pen. */
+.store-buybox {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+  border-radius: var(--radius-sm);
+  background: var(--store-page);
+  color: var(--store-ink);
+}
+
+.store-buybox > p {
+  margin: 0;
+  padding-block-end: 16px;
+  border-block-end: 1px solid var(--store-hairline);
+}
+
+.store-buybox > .listing-price {
+  padding: 0;
+  border: 0;
+  color: var(--store-ink);
+  font-size: var(--store-text-price);
+  font-weight: var(--weight-heavy);
+  line-height: var(--leading-none);
   font-variant-numeric: tabular-nums;
-}
-
-.listing-buy-bar-meta {
-  text-transform: capitalize;
 }
 
 .listing-buy-bar-actions {
   display: flex;
-  align-items: center;
-  gap: var(--space-2);
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-.listing-buy-bar-cta,
-.listing-buy-bar-secondary {
-  min-height: var(--tap-min);
+.listing-buy-bar-actions > * {
+  flex: 1 1 12rem;
+}
+
+.store-buybox .btn {
+  width: 100%;
+  min-height: 48px;
+  padding-inline: 24px;
+  border: 2px solid var(--store-ink);
+  border-radius: var(--radius-pill);
+  background: var(--store-page);
+  color: var(--store-ink);
+  font-size: 16px;
+  font-weight: var(--weight-bold);
+}
+
+.store-buybox .btn:hover {
+  background: var(--store-well);
+}
+
+.store-buybox .btn-primary {
+  border-color: var(--store-red);
+  background: var(--store-red);
+  color: var(--store-page);
+}
+
+.store-buybox .btn-primary:hover {
+  background: var(--store-red);
+  text-decoration: underline;
+}
+
+/* Below the fold Kaufland heads each section at 21px 600. */
+body.vertical-marketplace :is(.also-nearby h2, .section-heading--md) {
+  color: var(--store-ink);
+  font-size: var(--store-text-heading);
+  font-weight: var(--weight-bold);
+}
+
+.store-pdp-description {
+  max-width: 66ch;
+  margin-block-end: var(--store-section);
+}
+
+@media (min-width: 768px) {
+  .store-pdp {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    gap: 16px 32px;
+    align-items: start;
+  }
 }
 
 // Order list and detail.
@@ -166,25 +273,6 @@ body.vertical-marketplace .listing-status {
   justify-content: center;
   min-height: var(--tap-min);
   width: 100%;
-}
-
-.address-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  margin: 0 0 var(--space-6);
-  padding: 0;
-  list-style: none;
-}
-
-.address-list > li {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-4);
-  background: var(--surface-elevated);
-  border-radius: var(--radius-sm);
 }
 
 .cart-address {

@@ -835,6 +835,7 @@ nb:
     add_restaurant: Legg til restaurant
     saved_searches: Lagrede søk
     rating_of_five: "%{rating} av 5"
+    breadcrumb: Brødsmulesti
   dating:
     who_liked_you: Hvem har likt deg
     back_to_deck: Tilbake til bunken
@@ -1103,8 +1104,6 @@ nb:
       én ting.
     sold: Solgt
     nearby_listings: I nærheten
-    listing: Annonse
-    listing_kicker: Markedsplass / %{category}
     share: Del
     reviews: Omtaler
     seller_rating: "%{rating} ★ vurdering av selger"

@@ -829,6 +829,7 @@ en:
     add_restaurant: Add restaurant
     saved_searches: Saved searches
     rating_of_five: "%{rating} of 5"
+    breadcrumb: Breadcrumb
   dating:
     who_liked_you: Who liked you
     back_to_deck: Back to the deck
@@ -1096,8 +1097,6 @@ en:
     casual_hint: No shop needed — a listing without a store is you selling one thing.
     sold: Sold
     nearby_listings: Nearby
-    listing: Listing
-    listing_kicker: Marketplace / %{category}
     share: Share
     reviews: Reviews
     seller_rating: "%{rating} ★ seller interaction rating"
