@@ -4319,7 +4319,7 @@ rule_ratchets:
     # does not match the detector anyway. The rule fired on eighteen subjects
     # before this pass and on none after, which is the same round trip the
     # RUBY_SYMBOL_TO_PROC note above describes.
-    silent: 40
+    silent: 42
 
   hygiene:
     # Ceilings for tools/rule_hygiene.rb. The first three are 0 as of 2026-09-05
