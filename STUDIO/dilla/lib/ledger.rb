@@ -406,6 +406,44 @@ module DillaKnobs
     DILLA_USER_PINNED_KEYS
   ].freeze
 
+  # What a switch does when it is turned on, which no scan of a comparison can
+  # tell. Three kinds, and the difference decides what folding one into the
+  # defaults means:
+  #
+  #   additive     adds a layer, a device or a variation on top of what already
+  #                plays: turning it on is a new sound over the old one, and the
+  #                "devices on" direction is about these.
+  #   fork         plays one path instead of another -- a timing, a kit, a
+  #                harmony language, a source -- so on is a different render,
+  #                not a richer one, and two forks can contradict each other.
+  #   operational  changes how a run behaves and not what it sounds like: logs,
+  #                locks, supervisors, gates, caches, the demo's bookkeeping.
+  #
+  # Hand-kept, because the kind is a fact about the branch a switch guards, and
+  # checked against the scan by test_every_classified_switch_is_a_knob_the_engine_
+  # reads, so a switch that stops existing fails a test rather than lingering
+  # here. A flag in no list is additive until someone reads its branch and says
+  # otherwise; `dilla knobs flags` prints the three lists.
+  FLAG_KINDS = {
+    fork: %w[
+      BASS_CONTRARY BPM_STAIRCASE CHORAL_PADS CREEPY_PATCHES DILLA_COMFORT DILLA_FS_DRY DILLA_MIX_BUSES
+      DRUM_ROTATE_CURATED DRUM_SAMPLE_RAW ELECTRONIUM_CLASSIC EUCLIDEAN_HATS FLIP FLIP_RECORDS FLUTES
+      FM_DRUMS FM_NATIVE GENRE_HARMONY GOLDEN_SWING HALFTIME HARMONIC_KEEP HARMONIC_SHUFFLE KICK_SNARE_SWAP
+      LAYER_KICK LEAD_FORCE_ARP LOOP_PAD_ROTATE MELODIC_LEAD MIDI_BAG NO_QUANTIZE OWN_VOCALS
+      PATCH_PER_PROGRESSION RAP_VOCAL_RAW RAP_VOCAL_SKIP_LOUDNORM RAW_KICK REHARM_LOOP SAMPLE_FM SAMPLE_SCALE
+      SLASH_BASS SOUL_ENRICH STREAM_COMFORT STREAM_CREATIVE STREAM_PUNCH TECHNO_HARMONY TEMPO_ACCEL TEMPO_RAMP
+      THEORY_BACH THEORY_PEDAL WONKY_DRUMS_ONLY
+    ].freeze,
+    operational: %w[
+      CHOP_FRESH CRATE_ALLOW_SHARE_ALIKE DEBUG_NO_LOUDNORM DEMO_ALBUM_NORM DEMO_CRATE DEMO_EACH DEMO_FORCE
+      DEMO_KEEP_PARTS DEMO_NO_LOCK DILLA_AGENT_LAUNCHED DILLA_DETACH DILLA_FORCE_TERMINAL DILLA_FROZEN
+      DILLA_JSON DILLA_NO_PROVENANCE DILLA_OVERWRITE DILLA_QUIET DILLA_RAW DILLA_SOFT_SH DILLA_STREAMING
+      DILLA_STREAM_LAUNCHED DILLA_STREAM_SUPERVISOR ELECTRONIUM_RENDER FORCE_KIT GROK_AGENT HATE_ARRIVED
+      MODE_UNCERTAIN PHONE_PREVIEW_GATE REBUILD SAMPLE_CARRIES_HARMONY SKIP_VOLUME_NUDGE STREAM_CONTINUOUS
+      STREAM_DEEP STREAM_ITERATE STREAM_LOCK STREAM_NORMALIZE STREAM_TRACK VOICE_STACK_STEMS
+    ].freeze,
+  }.freeze
+
   # DILLA_STREAM_LAUNCHED is deliberately NOT on that list, though the engine
   # does write it (stream.rb, twice). It fails both criteria above: it is not an
   # output of a render, and the operator does set it -- stream.rb reads it as
@@ -435,6 +473,15 @@ module DillaKnobs
 
     # Where the source disagrees with itself about a default.
     def conflicts = all.select { |_, k| k.conflicting_defaults? }
+
+    # Every switch that is off unless set, by kind: FLAG_KINDS's two named lists,
+    # and additive for the rest. A default-on switch is already part of the
+    # sound, so what turning it on does is not a question it raises.
+    def flags_by_kind
+      flags = all.values.select { |knob| knob.type == :flag && !knob.default_on? }.map(&:name).sort
+      named = FLAG_KINDS.values.flatten
+      FLAG_KINDS.transform_values { |names| names & flags }.merge(additive: flags - named)
+    end
 
     # Problems with a set of environment values, as sentences. Advisory: a knob
     # this cannot make sense of is far more often the checker's ignorance than

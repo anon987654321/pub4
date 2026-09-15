@@ -14470,15 +14470,16 @@ end
 #                        are the two arms of one `if` and a list of file names
 #                        cannot say so
 #   knobs check          what is wrong with the environment right now
+#   knobs flags          every switch by what turning it on does: additive,
+#                        fork or operational (DillaKnobs::FLAG_KINDS)
 #
 # Words rather than --flags: the global flag parser consumes anything starting
 # with -- before dispatch ever runs, so `knobs --check` aborts with the flag list
 # instead of reaching this method.
 #
-# `knobs` with no argument prints the count — 729 across 45 files today — rather
-# than a figure typed here, which goes stale the next time a knob lands. Until
-# this existed the only way to learn what one did was to grep for it and read
-# the coercion.
+# `knobs` with no argument prints the count rather than a figure typed here,
+# which goes stale the next time a knob lands. Until this existed the only way
+# to learn what one did was to grep for it and read the coercion.
 def knobs_report(argument = nil)
   case argument
   when nil, ""
@@ -14517,6 +14518,11 @@ def knobs_report(argument = nil)
     end
     puts "#{conflicts.length} knob(s) read with more than one literal default — the site that runs first wins, " \
          "unless the method names beside them say the sites are exclusive"
+  when "flags"
+    DillaKnobs.flags_by_kind.each do |kind, names|
+      puts "#{kind} (#{names.length})"
+      names.each_slice(6) { |row| puts "  #{row.join(' ')}" }
+    end
   when "check"
     problems = DillaKnobs.validate
     problems.each { |problem| puts "NOTE   #{problem}" }

@@ -3277,4 +3277,23 @@ class TestDilla < Minitest::Test
     assert_operator result.fetch("n"), :<=, result.fetch("baseline"),
                     "uncalled methods rose: #{result.fetch('orphans').inspect}"
   end
+
+  # FLAG_KINDS names switches by hand, so a name there has to be a switch the
+  # engine still reads, or the list is keeping a place for something gone.
+  def test_every_classified_switch_is_a_knob_the_engine_reads
+    require File.expand_path("../dilla/lib/ledger", __dir__)
+
+    named = DillaKnobs::FLAG_KINDS.values.flatten
+    assert_equal named.uniq.size, named.size, "a switch is classified twice"
+    named.each do |name|
+      knob = DillaKnobs[name]
+      refute_nil knob, "#{name} is classified and no longer read"
+      assert_equal :flag, knob.type, "#{name} is classified as a switch and reads as #{knob&.type}"
+    end
+
+    kinds = DillaKnobs.flags_by_kind
+    assert_includes kinds.fetch(:fork), "MIDI_BAG", "the bag moves when every lead note sounds; that is a fork"
+    assert_includes kinds.fetch(:additive), "LPG", "an unclassified default-off switch reads as additive"
+    assert_empty kinds.fetch(:additive) & named
+  end
 end
