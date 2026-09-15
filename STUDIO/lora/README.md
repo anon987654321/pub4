@@ -137,13 +137,19 @@ steps of a 12B model is not a run anyone finishes.
 
 ## Status
 
-**ragnhild**: a captioned set in `ragnhild/dataset/`, kept on this machine and
-nowhere in git, 1024 on the short edge with every original aspect ratio kept.
-Each pair shares a random stem, so no filename names her. No `.safetensors`.
-Each caption is a full sentence naming the setting, clothing and light after
-the trigger word.
+**ragnhild**: a trained FLUX.1-dev LoRA exists. It sits in the private
+Replicate model `anon987654321/ragnhild-flux`, and its weights are in
+`ragnhild/weights/ragnhild/lora.safetensors`, which git ignores. It learned from
+seven captioned photographs with random stems, prepared by `curate.rb` at 1024
+on the short edge, over 1000 steps at rank 16. The dataset is ignored too, so
+none of those faces are published. Five of the seven are the same flat-lit shot
+against a pale wall, and the set is below the ten-to-thirty the guidance asks
+for; a wider set is the next likeness gain.
 
-The set is below the ten-to-thirty the guidance asks for.
+The adapter holds her fringe and her face across all twelve validation lights.
+Render it at full strength, since lowering it drops the fringe first, and leave
+her age out of the prompt, since the photographs already carry it. The
+descriptor in `ragnhild/subject.env` says why.
 
 An earlier 17-image set is gone, along with the 40
 source photographs it came from — removed at `b7d47d6b6` because the subject
@@ -158,9 +164,9 @@ photographs that were rejected, so it is the wrong LoRA of the right person.
 `train.yaml`, and nothing to train on. Curate twelve to eighteen varied
 photos — angles, light, expressions — into `johann/sources/`, caption them, then pick a lane.
 
-The free Kaggle lane exists because neither of the other two has produced FLUX
-weights: one needs hardware this Mac does not have, the other needs money per
-attempt.
+The free Kaggle lane exists because the local lane needs hardware this Mac does
+not have and Replicate needs money per attempt. A Replicate run of 1000 steps
+took fourteen minutes of H100 time.
 
 **Local training on this Mac is not a slow lane, it is a closed one.** The
 machine is an M2 with 8 GB of unified memory, shared with the display. A
