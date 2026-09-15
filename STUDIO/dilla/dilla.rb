@@ -5683,6 +5683,34 @@ def dilla_render_tmp(tag, ext = ".wav")
   File.join(SCRATCH_DIR, "dilla_#{tag}.#{Process.pid}#{ext}")
 end
 
+# A scratch file this process owns and keeps past a render: a preview, a take a
+# command plays or measures, a pass of a loop. Pid-scoped like dilla_render_tmp,
+# so two processes sharing a scratch directory -- a stream and a demo, two
+# agents, the per-uid fallback scratch_path falls back to -- never write one
+# file, and deleted when the process exits, because render_dilla's cleanup
+# (dilla_*.<pid>.*) would take it while the caller still needs it.
+def scratch_take(name)
+  ext = File.extname(name)
+  path = scratch_path("#{File.basename(name, ext)}.#{Process.pid}#{ext}")
+  unless @scratch_takes
+    @scratch_takes = []
+    owner = Process.pid
+    at_exit { @scratch_takes.each { |take| FileUtils.rm_rf(take) } if Process.pid == owner }
+  end
+  @scratch_takes |= [path, "#{path.delete_suffix(ext)}_stems"]
+  path
+end
+
+# Moves a finished take onto the shared name a later run reads -- live_now's
+# cache, critique's jam -- in one rename within scratch, so a reader finds the
+# last whole file and never one another process is still writing.
+def publish_scratch!(take, name)
+  dest = scratch_path(name)
+  FileUtils.rm_rf(dest) if File.directory?(take)
+  File.rename(take, dest)
+  dest
+end
+
 # PID-scoped temp files (drums/harmonic/wonky_*/pads.wav.L0/.smf.mid/etc.)
 # are reused across every track iteration within one long-running stream
 # process, not just within a single render. If a write is ever interrupted
@@ -13002,7 +13030,7 @@ end
 def start_groove_preview
   return unless tool_available?("ffplay")
 
-  tmp = File.join(SCRATCH_DIR, "groove_tmp.wav")
+  tmp = scratch_take("groove_tmp.wav")
   render_dilla(tmp, [8, bars].max)
   pid = spawn("ffplay", "-nodisp", "-loop", "0", tmp, out: "/dev/null", err: "/dev/null")
   [pid, tmp]
@@ -13980,8 +14008,7 @@ def modulate_cli!(argv)
   duration = audio_duration_sec(src).to_f
   return puts("modulate: could not read a duration from #{src}") unless duration.positive?
 
-  cmds = File.join(SCRATCH_DIR, "modulation.cmds")
-  FileUtils.mkdir_p(SCRATCH_DIR)
+  cmds = scratch_take("modulation.cmds")
   prefix = DillaModulation.prefix_for(matrix, path: cmds, duration:)
   route = matrix.routes.first
   chain = "#{prefix},#{matrix.instance_name(route)}=#{route.param}=#{matrix.initial(route)}"
@@ -16075,7 +16102,7 @@ def play(preset_name = nil, bars_count = 8)
   preset_name ||= "dilla"
   keep_demo = stream_save_demo?
   # WAV during stream: pcm_s16le only — no libmp3lame pass (faster cycle).
-  out = keep_demo ? stream_demo_path : scratch_path("play_tmp.wav")
+  out = keep_demo ? stream_demo_path : scratch_take("play_tmp.wav")
   prev = ENV["BARS"]
   ENV["BARS"] = bars_count.to_s
   attempts = play_render_attempts
@@ -16145,12 +16172,15 @@ def live_now
   play_loop(path)
 end
 
-# Harmony-forward stem mix from cached drum + harmonic renders.
+# Harmony-forward stem mix from the stems regenerate publishes. Written beside
+# out under a pid-scoped name and renamed onto it, so live_now never plays a mix
+# another process is halfway through writing.
 def build_harmony_loud(
-  drums: File.join(SCRATCH_DIR, "dilla_drums.wav"),
-  harmonic: File.join(SCRATCH_DIR, "dilla_harmonic.wav"),
+  drums: File.join(SCRATCH_DIR, "live_tmp_stems", "drums.wav"),
+  harmonic: File.join(SCRATCH_DIR, "live_tmp_stems", "harmonic.wav"),
   out: File.join(SCRATCH_DIR, "harmony_loud.wav")
 )
+  part = "#{out.delete_suffix('.wav')}.#{Process.pid}.part.wav"
   abort "missing #{drums}" unless File.exist?(drums)
   abort "missing #{harmonic}" unless File.exist?(harmonic)
   # FfmpegProbe raises on a stem ffprobe cannot read. The 0.0 the old read
@@ -16164,7 +16194,7 @@ def build_harmony_loud(
   if drum_vol <= 0.001
     filt = "[0:a]#{harm_chain}[out]"
     sh! "ffmpeg", "-y", "-i", harmonic, "-filter_complex", filt,
-        "-map", "[out]", "-t", dur.round(3).to_s, "-c:a", "pcm_s16le", out
+        "-map", "[out]", "-t", dur.round(3).to_s, "-c:a", "pcm_s16le", part
     puts "wrote #{out} (#{dur.round(1)}s harmony-only, drums muted)"
   else
     filt = [
@@ -16173,9 +16203,10 @@ def build_harmony_loud(
       "[drm][harm]amix=inputs=2:weights=1.0 1.0:duration=first:normalize=0[out]",
     ].join(";")
     sh! "ffmpeg", "-y", "-i", drums, "-i", harmonic, "-filter_complex", filt,
-        "-map", "[out]", "-t", dur.round(3).to_s, "-c:a", "pcm_s16le", out
+        "-map", "[out]", "-t", dur.round(3).to_s, "-c:a", "pcm_s16le", part
     puts "wrote #{out} (#{dur.round(1)}s harmony-forward, drums=#{drum_vol})"
   end
+  File.rename(part, out)
   out
 end
 
@@ -16183,20 +16214,21 @@ end
 def regenerate(bars_count = 16)
   require_tools! "ffmpeg"
   bars_count = (ENV["BARS"] || bars_count).to_i
-  tmp = File.join(SCRATCH_DIR, "live_tmp.wav")
-  harm = File.join(SCRATCH_DIR, "harmony_loud.wav")
+  take = scratch_take("live_tmp.wav")
   puts "regenerating #{bars_count} bars (TRACK=#{ENV['TRACK'] || 'timeless'})…"
-  render_dilla(tmp, bars_count, keep_stems: true)
-  build_harmony_loud
-  puts "wrote #{tmp}"
+  render_dilla(take, bars_count, keep_stems: true)
+  publish_scratch!("#{take.delete_suffix('.wav')}_stems", "live_tmp_stems")
+  cached = publish_scratch!(take, "live_tmp.wav")
+  harm = build_harmony_loud
+  puts "wrote #{cached}"
   play_loop(harm)
 end
 
 # Chords + melody up front — loops .harmony_loud.wav.
 def harmony_now
   harm = File.join(SCRATCH_DIR, "harmony_loud.wav")
-  drums = File.join(SCRATCH_DIR, "dilla_drums.wav")
-  harmonic = File.join(SCRATCH_DIR, "dilla_harmonic.wav")
+  drums = File.join(SCRATCH_DIR, "live_tmp_stems", "drums.wav")
+  harmonic = File.join(SCRATCH_DIR, "live_tmp_stems", "harmonic.wav")
   if ENV["REBUILD"] == "1" || !File.exist?(harm)
     if File.exist?(drums) && File.exist?(harmonic)
       build_harmony_loud
@@ -27793,7 +27825,7 @@ def render_industrial(destination = File.join(ROOT, "foundry_pulse.mp3"), bars_c
     ind_stab: load_mono_sample(drum_sample_path("ind_stab.wav")),
   }
   stab_hits = events[:stab].map { |t, v| [t, v, :ind_stab] }
-  drum_tmp = File.join(SCRATCH_DIR, "ind_drums.wav")
+  drum_tmp = dilla_render_tmp("ind_drums")
   render_sample_bus_wav(
     drum_tmp,
     events.merge(stab: stab_hits),
@@ -27896,9 +27928,10 @@ def composition_jam(n_bars = 16)
   n_bars = (ENV["BARS"] || n_bars).to_i
   sess = composition_session!(n_bars:, force_new: true)
   puts "jam — #{sess.track} | performer=#{sess.performer} groove=#{sess.groove_dna} | #{n_bars} bars"
-  dest = File.join(SCRATCH_DIR, "jam_tmp.wav")
-  render_dilla(dest, n_bars, keep_stems: true)
-  play_loop(dest)
+  take = scratch_take("jam_tmp.wav")
+  render_dilla(take, n_bars, keep_stems: true)
+  publish_scratch!("#{take.delete_suffix('.wav')}_stems", "jam_tmp_stems") if File.directory?("#{take.delete_suffix('.wav')}_stems")
+  play_loop(publish_scratch!(take, "jam_tmp.wav"))
 end
 
 def composition_evolve(n_bars = 16, generations = 5)
@@ -27908,10 +27941,10 @@ def composition_evolve(n_bars = 16, generations = 5)
   reset_composition_session!
   sess = composition_session!(n_bars:, force_new: true)
   cfg = dilla_resolve_config
-  dest = File.join(SCRATCH_DIR, "evolve_best.wav")
+  dest = nil
   render_fn = lambda do |session|
     @composition_session = session
-    out = File.join(SCRATCH_DIR, "evolve_gen#{session.generation}.wav")
+    out = scratch_take("evolve_gen#{session.generation}.wav")
     render_dilla(out, n_bars, keep_stems: false)
     out
   end
@@ -27919,7 +27952,10 @@ def composition_evolve(n_bars = 16, generations = 5)
   render_fn.define_singleton_method(:last_events) { @last_drum_events }
   best = DillaComposition::Evolution.run(session: sess, cfg:, n_bars:,
                                          generations:, render_fn:)
-  FileUtils.cp(best[:path], dest) if best[:path] && File.exist?(best[:path])
+  if best[:path] && File.exist?(best[:path])
+    FileUtils.cp(best[:path], copy = scratch_take("evolve_best.wav"))
+    dest = publish_scratch!(copy, "evolve_best.wav")
+  end
   DillaComposition::Critique.print_report(best[:critique]) if best[:critique]
   puts "evolve best score=#{best[:score]} → #{dest}"
   dest
@@ -28001,13 +28037,16 @@ def composition_listen_loop(n_bars = 16)
   # The pass's own file, so each pass is measured on what it rendered rather
   # than on the last run's listen_loop.wav.
   render_fn = lambda do |pass|
-    take = File.join(SCRATCH_DIR, "listen_pass#{pass}.wav")
+    take = scratch_take("listen_pass#{pass}.wav")
     render_dilla(take, n_bars)
     take
   end
   analyze_fn = ->(path) { dilla_quality(path) }
   path = DillaComposition::ListeningLoop.converge(render_fn:, analyze_fn:, max_passes:)
-  FileUtils.cp(path, dest) if path && File.exist?(path)
+  if path && File.exist?(path)
+    FileUtils.cp(path, copy = scratch_take("listen_loop.wav"))
+    publish_scratch!(copy, "listen_loop.wav")
+  end
   puts "listen_loop → #{dest}"
   play_loop(dest) if File.exist?(dest)
 end
@@ -28657,7 +28696,7 @@ def render_madlib_drums(destination = File.join(ROOT, "beat.wav"), bars_count = 
     hat: load_mono_sample(drum_sample_path("hat.wav")),
     open_hat: load_mono_sample(drum_sample_path("open_hat.wav")),
   }
-  drum_tmp = File.join(SCRATCH_DIR, "madlib_drums.wav")
+  drum_tmp = dilla_render_tmp("madlib_drums")
   render_sample_bus_wav(
     drum_tmp,
     events, duration, kit,

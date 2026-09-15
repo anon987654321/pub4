@@ -115,4 +115,30 @@ class TestTakeWrite < Minitest::Test
       assert_includes lines.find { |l| l.start_with?("j_dilla") }, "sidecar only"
     end
   end
+
+  # A take a command keeps past its render is this process's own file, and the
+  # shared name a later run reads is only ever replaced whole. harmony_loud.wav,
+  # live_tmp.wav and jam_tmp.wav were written in place under one name, so two
+  # processes sharing scratch wrote into the same file.
+  def test_a_kept_take_is_this_process_file_and_is_published_whole
+    take = send(:scratch_take, "probe_take.wav")
+    assert_includes File.basename(take), ".#{Process.pid}.", "the take is not pid-scoped"
+    refute_equal File.join(SCRATCH_DIR, "probe_take.wav"), take
+
+    File.write(take, "new")
+    shared = send(:publish_scratch!, take, "probe_take.wav")
+    assert_equal File.join(SCRATCH_DIR, "probe_take.wav"), shared
+    assert_equal "new", File.read(shared)
+    refute File.exist?(take), "the take is still there beside the name it was published to"
+
+    stems = "#{send(:scratch_take, 'probe_take.wav').delete_suffix('.wav')}_stems"
+    FileUtils.mkdir_p(stems)
+    File.write(File.join(stems, "drums.wav"), "fresh")
+    FileUtils.mkdir_p(File.join(SCRATCH_DIR, "probe_take_stems"))
+    File.write(File.join(SCRATCH_DIR, "probe_take_stems", "stale.wav"), "old")
+    send(:publish_scratch!, stems, "probe_take_stems")
+    assert_equal %w[drums.wav], Dir.children(File.join(SCRATCH_DIR, "probe_take_stems"))
+  ensure
+    FileUtils.rm_rf([File.join(SCRATCH_DIR, "probe_take.wav"), File.join(SCRATCH_DIR, "probe_take_stems")])
+  end
 end
