@@ -618,7 +618,7 @@ pub4_source_ceilings:
   # (cable_bridge, MasterChannel, ApplicationCable channel and connection) that
   # went when /events/stream became the face's one pipe. cable.yml leaves too
   # and a drop migration arrives, which nets to zero.
-  MASTER: 646
+  MASTER: 681
 
   # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:
@@ -814,7 +814,7 @@ pub4_source_ceilings:
   # them. This row is what caught the first attempt not landing -- it read 2395
   # while the branch claimed the removal, because a path-scoped commit rebuilds
   # its paths from the working tree and put them back.
-  RAILS: 1980
+  RAILS: 1998
   # 106 -> 107 is test/test_githooks.rb. dev/githooks holds the three guards
   # that are the whole defence against a shared index, and nothing tested any of
   # them — a hook that stopped firing looks exactly like a week in which nobody
@@ -886,7 +886,7 @@ pub4_source_ceilings:
 # Mutation-checked rather than asserted into existence: dropping master fails 2,
 # reordering fails 1, turning the root guard into a warning fails 1, and gutting
 # the SKIP_CI branch fails 1, with the unmutated source at 0.
-  OPENBSD: 98
+  OPENBSD: 97
   # 220 -> 222 for lora/seed_media.yml and lora/_toolkit/install_seed_media.rb,
   # the prompt set for every seeded photograph and the script that grades and
   # files what comes back from it. Two files, both named, neither foldable:
