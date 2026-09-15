@@ -136,16 +136,29 @@ if [[ "$rss_mb" -lt "$CEILING_MB" ]] && [[ "$swap_pct" -lt "$SWAP_PCT_MAX" ]]; t
 fi
 
 # Field 1 is the 1-minute average, and it is the right one here while
-# resource_guard.sh:101 takes field 2. The two ask opposite questions. The guard
+# resource_guard.sh takes field 2. The two ask opposite questions. The guard
 # must not shed a site over a passing spike, so it wants the smoothed figure; this
 # script is about to cost somebody a cold boot, so it wants to know whether the box
 # is busy in this minute. Reading the same field in both would make one of them
 # wrong, which is why there is no shared helper for this line.
 set -- $(sysctl -n vm.loadavg)
 load=$1
-# ksh has no floating point, so the comparison is ruby34's.
-over=$(ruby34 -e 'print(ARGV[0].to_f > ARGV[1].to_f ? 1 : 0)' "$load" "$LOAD_MAX")
-if [[ "$over" = "1" ]]; then
+# ksh arithmetic is integer only, so both figures are compared as millionths.
+# sysctl prints the load with two decimals and LOAD_MAX has one, so six places
+# lose nothing; measured on vm23 against Ruby's Float comparison over 22
+# values, from 0.00 through 99.99 and both sides of 2.5, with no disagreement.
+# The fraction is read as base 10 because ksh(1) takes a leading 0 as octal,
+# and 08 would not parse. It spares a ruby34 start at the one moment this job
+# knows the box is short of memory.
+micro() {
+  _int=${1%%.*}
+  _frac=
+  [[ "$1" = *.* ]] && _frac=${1#*.}
+  _frac="${_frac}000000"
+  while (( ${#_frac} > 6 )); do _frac=${_frac%?}; done
+  print -r -- "$(( 10#${_int:-0} * 1000000 + 10#$_frac ))"
+}
+if (( $(micro "$load") > $(micro "$LOAD_MAX") )); then
   echo "$(date '+%Y-%m-%dT%H:%M:%S') skip $APP ${rss_mb}M — load $load over $LOAD_MAX"
   exit 0
 fi

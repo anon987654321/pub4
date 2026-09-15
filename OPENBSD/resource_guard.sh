@@ -108,7 +108,7 @@ MEM_RESTORE=10
 
 # Field 2 is the 5-minute average. Shedding a site is expensive and reversible
 # only on the next tick, so this guard reads the smoothed figure and not the
-# 1-minute one core-reclaim.sh:65 reads for its own, opposite question. The two
+# 1-minute one core-reclaim.sh reads for its own, opposite question. The two
 # have to disagree, so the scripts that read the load share no library; a shared
 # file also means one more root-owned install target, since root sources only
 # root-owned absolute paths.
