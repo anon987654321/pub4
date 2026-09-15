@@ -7,6 +7,7 @@
 #   ruby dilla.rb live set sampled_based_beats
 #   LIVE_VOICING=up ruby dilla.rb live set sampled_based_beats   the 08-31 voicings
 #   ruby dilla.rb live set ambient_pads
+#   ruby dilla.rb live set interlude|long_form|minimal|gospel   named sets
 #   ruby dilla.rb live recall                    the last twenty passes
 #   ruby dilla.rb live recall 41205993           play that one again
 #   ruby dilla.rb live recall 41205993 keep      render it to demo.wav, record it beside dilla.rb
@@ -1103,7 +1104,7 @@ module Livesets
     bar = (beat * 4).round(4)
     step = (beat / 2).round(4)
     sxt = (beat / 4).round(4)
-    chord_s = (bar * (chords.size == 8 ? 0.5 : 1.0)).round(4)
+    chord_s = (bar * chord_bars(chords.size)).round(4)
 
     inputs = []
     graph = []
@@ -1170,8 +1171,8 @@ module Livesets
              "aformat=sample_rates=44100:channel_layouts=stereo[out]"
 
     journal!(
-      at: Time.now.utc.iso8601, seed: seed, set: "chord_based_beats", seconds: total, bed: nil, progression_name: name.to_s,
-      progression: symbols, bpm: bpm, bar_s: bar, chord_s: chord_s, kit_cycle: kit_cycle, form: form,
+      named: @named, at: Time.now.utc.iso8601, seed: seed, set: "chord_based_beats", seconds: total, bed: nil, progression_name: name.to_s,
+      progression: symbols, bpm: bpm, bar_s: bar, chord_s: chord_s, chord_bars: ENV["LIVE_CHORD_BARS"], kit_cycle: kit_cycle, form: form,
       bus_patch: ENV['LIVE_BUS_PATCH'], muted: muted.join(","),
       weights: weights("chord_based_beats"),
       drums: { kick_ms: hits[:kick], snare_ms: hits[:snare], ghost_ms: hits[:ghost], hat_ms: hits[:hat] }, groove: groove,
@@ -1342,7 +1343,7 @@ module Livesets
              "aformat=sample_rates=44100:channel_layouts=stereo[out]"
 
     journal!(
-      at: Time.now.utc.iso8601, seed: seed, set: "sampled_based_beats", seconds: total, bed: slug, credit: credit(slug), sample_worth: sw,
+      named: @named, at: Time.now.utc.iso8601, seed: seed, set: "sampled_based_beats", seconds: total, bed: slug, credit: credit(slug), sample_worth: sw,
       bpm: g[:bpm], bpm_pin: pinned_bpm, drag: drag, bars_in_loop: g[:bars_in_loop], voicing: choice, progression: prog,
       chop_at: slice_at, reversed: reverse, bar_s: bar, form: form, hocket: voice_of.values.max.to_i + 1,
       bus_patch: ENV['LIVE_BUS_PATCH'], muted: muted.join(","),
@@ -1464,7 +1465,7 @@ module Livesets
              "aformat=sample_rates=44100:channel_layouts=stereo[out]"
 
     journal!(
-      at: Time.now.utc.iso8601, seed: seed, set: "ambient_pads", seconds: total, bed: slug, credit: credit(slug), sample_worth: sw,
+      named: @named, at: Time.now.utc.iso8601, seed: seed, set: "ambient_pads", seconds: total, bed: slug, credit: credit(slug), sample_worth: sw,
       bpm: g[:bpm], bpm_pin: pinned_bpm, drag: drag, bars_in_loop: g[:bars_in_loop], progression: prog,
       chop_at: slice_at, hold_s: hold, bar_s: bar, drums: nil, form: form,
       copy_machine: copies('ambient_pads'), voice_stack: voice_stack_plan.size, bus_patch: ENV['LIVE_BUS_PATCH'], muted: muted.join(","),
@@ -1478,10 +1479,51 @@ module Livesets
           "#{prog.map { |semi, v| "#{semi}#{v}" }.join(' ')}  chop@#{slice_at}s#{credit(slug) ? "\n  from #{credit(slug)}" : ''}")
   end
 
-  def play_set!(name)
-    abort "no set #{name.inspect} — have #{SETS.join(', ')}" unless SETS.include?(name.to_s)
+  # Sets named for what they are, each one of the three with its knobs set. A
+  # named set is data rather than a fourth arrangement, so everything a set can
+  # do stays in one place; a knob exported by hand still wins over the name's.
+  #
+  #   interlude   thirty-one seconds of the sampled set: one idea, no arrangement
+  #               reaching it. Donuts is thirty-one pieces in forty-three minutes.
+  #   long_form   twenty minutes of pads across the soul_32 form, to leave
+  #               running; rendered whole, its graph peaked at 86 MB.
+  #   minimal     one voice: the chord set with no kit, no crackle and no room --
+  #               the control every addition is measured against.
+  #   gospel      the eight-bar climb as the whole arrangement, a bar a chord at 72.
+  #
+  # Flip and DFAM are not named sets, and the reason is where their sound is
+  # made: SampleFlip and DfamEngine are per-sample Ruby that write audio files,
+  # and a set is one real-time ffmpeg graph whose only file is demo.wav. The
+  # sampled set already plays the crate's slices against chords, which is the
+  # flip; the engine keeps DFAM for its note-plan renders.
+  NAMED_SETS = {
+    "interlude" => ["sampled_based_beats", { "LIVE_LENGTH" => "31" }],
+    "long_form" => ["ambient_pads", { "LIVE_LENGTH" => "1200", "LIVE_FORM" => "soul_32" }],
+    "minimal" => ["chord_based_beats", { "LIVE_ROOM" => "dry", "LIVE_MUTE" => "kit,crackle" }],
+    "gospel" => ["chord_based_beats", { "LIVE_PROGRESSION" => "eight_bar_gospel_climb", "LIVE_BPM" => "72",
+                                        "LIVE_CHORD_BARS" => "1" }],
+  }.freeze
 
-    send(:"#{name}!")
+  def set_names = SETS + NAMED_SETS.keys
+
+  def play_set!(name)
+    abort "no set #{name.inspect} — have #{set_names.join(', ')}" unless set_names.include?(name.to_s)
+
+    base, knobs = NAMED_SETS.fetch(name.to_s, [name.to_s, {}])
+    knobs.each { |knob, value| ENV[knob] ||= value }
+    @named = NAMED_SETS.key?(name.to_s) ? name.to_s : nil
+    send(:"#{base}!")
+  end
+
+  # How many bars each chord of the chord set holds: LIVE_CHORD_BARS, or half a
+  # bar when eight chords share a phrase and a bar when four do.
+  def chord_bars(count)
+    want = ENV.fetch("LIVE_CHORD_BARS", "").to_s
+    return count == 8 ? 0.5 : 1.0 if want.empty?
+
+    value = Float(want, exception: false)
+    abort "LIVE_CHORD_BARS=#{want} is not a number of bars from 0.25 to 4" unless value&.between?(0.25, 4)
+    value
   end
 
   # Every pass the journal holds, torn rows named rather than dropped. The journal
@@ -1525,7 +1567,7 @@ module Livesets
   RECALLED = {
     "LIVE_BED" => ["bed", nil], "LIVE_KIT" => ["kit", nil], "LIVE_PROGRESSION" => ["progression_name", nil],
     "LIVE_VOICING" => ["voicing", "down"], "LIVE_LENGTH" => ["seconds", nil], "LIVE_ROOM" => ["room", "warm"],
-    "LIVE_KIT_CYCLE" => ["kit_cycle", "phrase"], "LIVE_FORM" => ["form", nil], "LIVE_MUTE" => ["muted", nil], "LIVE_WEIGHTS" => ["weights", nil], "LIVE_DRAG" => ["drag", nil], "LIVE_BPM" => ["bpm_pin", nil], "LIVE_GROOVE" => ["groove", "drunk"],
+    "LIVE_KIT_CYCLE" => ["kit_cycle", "phrase"], "LIVE_FORM" => ["form", nil], "LIVE_MUTE" => ["muted", nil], "LIVE_WEIGHTS" => ["weights", nil], "LIVE_DRAG" => ["drag", nil], "LIVE_BPM" => ["bpm_pin", nil], "LIVE_GROOVE" => ["groove", "drunk"], "LIVE_CHORD_BARS" => ["chord_bars", nil],
     "LIVE_COPY_MACHINE" => ["copy_machine", "0"], "LIVE_VOICE_STACK" => ["voice_stack", "1"], "LIVE_HOCKET" => ["hocket", "1"],
     "LIVE_BUS_PATCH" => ["bus_patch", nil],
   }.freeze
@@ -1553,6 +1595,7 @@ module Livesets
     "LIVE_GROOVE" => "a GROOVE_DNA row (donuts default) or drunk, the flat swing a take kept before it",
     "LIVE_KIT_CYCLE" => "bar (default) or phrase, how often the chord set's kit repeats",
     "LIVE_PROGRESSION" => "pin the chord set's progression by name",
+    "LIVE_CHORD_BARS" => "bars per chord in the chord set, 0.25..4 (half a bar for eight chords, one for four)",
     "LIVE_VOICING" => "down (default) or up, the sampled set's voicing tables",
     "LIVE_COPY_MACHINE" => "copies in the cloud under a bed, 0..8 (4 on the pads)",
     "LIVE_VOICE_STACK" => "voices per held pad slice, 1..7 (3)",
@@ -1621,7 +1664,7 @@ module Livesets
   # stops the night, the second stops the pass now. Stopping meant killing
   # processes before, mid-bar.
   def broadcast!(name = nil)
-    abort "broadcast: no set named #{name} -- have #{SETS.join(', ')}" if name && !SETS.include?(name)
+    abort "broadcast: no set named #{name} -- have #{set_names.join(', ')}" if name && !set_names.include?(name)
 
     @stopping = false
     sets = name ? [name] : ROTATION
