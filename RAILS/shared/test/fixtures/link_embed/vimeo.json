@@ -1,0 +1,23 @@
+{
+  "type": "video",
+  "version": "1.0",
+  "provider_name": "Vimeo",
+  "provider_url": "https://vimeo.com/",
+  "title": "Big Buck Bunny",
+  "author_name": "Blender",
+  "author_url": "https://vimeo.com/yourown3dsoftware",
+  "is_plus": "0",
+  "account_type": "basic",
+  "html": "<iframe src=\"https://player.vimeo.com/video/1084537?app_id=122963\" width=\"640\" height=\"360\" frameborder=\"0\" allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\" referrerpolicy=\"strict-origin-when-cross-origin\" title=\"Big Buck Bunny\"></iframe>",
+  "width": 640,
+  "height": 360,
+  "duration": 597,
+  "description": "Big Buck Bunny tells the story of a giant rabbit with a heart bigger than himself. When one sunny day three rodents rudely harass him, something snaps... and the rabbit ain't no bunny anymore! In the typical cartoon tradition he prepares the nasty rodents a comical revenge.\n\nLicensed under the Creative Commons Attribution license\n\nhttp://www.bigbuckbunny.org",
+  "thumbnail_url": "https://i.vimeocdn.com/video/20963649-f02817456fc48e7c317ef4c07ba259cd4b40a3649bd8eb50a4418b59ec3f5af5-d_640?region=us",
+  "thumbnail_width": 640,
+  "thumbnail_height": 360,
+  "thumbnail_url_with_play_button": "https://i.vimeocdn.com/filter/overlay?src0=https%3A%2F%2Fi.vimeocdn.com%2Fvideo%2F20963649-f02817456fc48e7c317ef4c07ba259cd4b40a3649bd8eb50a4418b59ec3f5af5-d_640%3Fregion%3Dus&src1=http%3A%2F%2Ff.vimeocdn.com%2Fp%2Fimages%2Fcrawler_play.png",
+  "upload_date": "2008-05-29 05:08:02",
+  "video_id": 1084537,
+  "uri": "/videos/1084537"
+}

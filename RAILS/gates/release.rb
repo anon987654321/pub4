@@ -188,6 +188,7 @@ end
   shared/test/services/domain_event_test.rb
   shared/test/services/frontend_auditor_test.rb
   shared/test/services/geo_isolation_test.rb
+  shared/test/services/link_embed_test.rb
   shared/test/services/live_search_test.rb
   shared/test/services/newsletter_composer_test.rb
   shared/test/services/postpro_processor_test.rb
