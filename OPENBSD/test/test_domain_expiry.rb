@@ -100,6 +100,35 @@ class TestDomainExpiry < Minitest::Test
     refute_match(/\bsystem\(/, code, "a lookup was handed to a shell")
   end
 
+  # The registry's own words decide the state. Both patterns are /x so they can
+  # wrap, and /x drops every literal space: "is free" compiled to "isfree", so
+  # rottrdam.nl answering "rottrdam.nl is free" was filed unknown with that line
+  # as its note. Each phrase is held against the answer it has to read.
+  def whois_answer(body)
+    watch = Deploy::DomainWatch
+    original = watch.method(:capture_bounded)
+    watch.define_singleton_method(:capture_bounded) { |*_argv, **_opts| body }
+    watch.whois_query("example.nl")
+  ensure
+    watch.define_singleton_method(:capture_bounded, original)
+  end
+
+  def test_every_available_phrase_reads_as_available
+    ["example.nl is free", "No match for \"EXAMPLE.NL\".", "NOT FOUND", "No entries found",
+     "Domain example.nl is available", "No Data Found", "Object does not exist",
+     "example.nl not registered", "Status: free"].each do |body|
+      assert_equal "available", whois_answer(body)["state"], "#{body.inspect} did not read as available"
+    end
+  end
+
+  def test_every_registered_phrase_reads_as_registered
+    ["example.nl\nRegistered on: 2020-01-01", "example.nl\nCreation Date: 2020-01-01",
+     "example.nl\nName Server: ns.example.nl", "example.nl\nDomain nameservers:\n ns.example.nl",
+     "example.nl\nRegistrar: Example"].each do |body|
+      assert_equal "registered", whois_answer(body)["state"], "#{body.inspect} did not read as registered"
+    end
+  end
+
   def test_a_hung_lookup_is_killed_rather_than_waited_on
     started = Time.now
     out = Deploy::DomainWatch.capture_bounded("sleep", "30", seconds: 1)

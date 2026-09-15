@@ -49,10 +49,12 @@ module Deploy
       "us" => "whois.nic.us", "org" => "whois.pir.org",
     }.freeze
 
-    AVAILABLE = /No match|NOT FOUND|not found|No entries found|is free|Status:\s*free|
-                 is available|No Data Found|Object does not exist|not registered/xi
-    REGISTERED = /Registrar:|Registrant|Registered on|Creation Date|Created:|
-                  Name Server|nserver|Domain nameservers|holder/xi
+    # /x so the alternations can wrap, which is also why every literal space is
+    # escaped: /x ignores a bare one, and "is free" would match only "isfree".
+    AVAILABLE = /No\ match|NOT\ FOUND|not\ found|No\ entries\ found|is\ free|Status:\s*free|
+                 is\ available|No\ Data\ Found|Object\ does\ not\ exist|not\ registered/xi
+    REGISTERED = /Registrar:|Registrant|Registered\ on|Creation\ Date|Created:|
+                  Name\ Server|nserver|Domain\ nameservers|holder/xi
 
     module_function
 

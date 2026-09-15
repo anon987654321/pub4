@@ -12,8 +12,7 @@ anticasinoblog.com:
 antigamblingblog.com:
   state: available
 austn.us:
-  state: unknown
-  note: registry referral, not a domain record
+  state: available
 brdeaux.fr:
   state: available
 brgen.no:
@@ -41,8 +40,7 @@ cardff.uk:
   status: Renewal required.
   registrar: Domeneshop AS t/a Domain Name Shop [Tag = DOMENESHOP-NO]
 chcago.us:
-  state: unknown
-  note: registry referral, not a domain record
+  state: available
 denvr.us:
   state: registered
   created: '2021-08-13T11:20:09Z'
@@ -51,16 +49,14 @@ denvr.us:
 discordb.org:
   state: available
 dllas.us:
-  state: unknown
-  note: registry referral, not a domain record
+  state: available
 dnver.us:
   state: registered
   created: '2021-07-03T22:55:07Z'
   expires: '2026-07-03T22:55:07Z'
   registrar: Domeneshop AS dba domainnameshop.com
 dtroit.us:
-  state: unknown
-  note: registry referral, not a domain record
+  state: available
 edinbrgh.uk:
   state: registered
   created: 13-Aug-2021
@@ -71,8 +67,7 @@ foball.no:
   state: registered
   created: '2022-07-30'
 foodielicio.us:
-  state: unknown
-  note: registry referral, not a domain record
+  state: available
 frankfrt.de:
   state: registered
 freehelp.legal:
@@ -86,16 +81,13 @@ glasgw.uk:
   status: Renewal required.
   registrar: Domeneshop AS t/a Domain Name Shop [Tag = DOMENESHOP-NO]
 gtebrg.se:
-  state: unknown
-  note: "# Copyright (c) 1997- The Swedish Internet Foundation."
+  state: available
 hlsinki.fi:
   state: available
 houstn.us:
-  state: unknown
-  note: registry referral, not a domain record
+  state: available
 kbenhvn.dk:
-  state: unknown
-  note: registry referral, not a domain record
+  state: available
 lchtenstein.li:
   state: unknown
   note: registry referral, not a domain record
@@ -118,8 +110,7 @@ mlan.it:
   state: unknown
   note: 'Domain:             mlan.it'
 mlmoe.se:
-  state: unknown
-  note: "# Copyright (c) 1997- The Swedish Internet Foundation."
+  state: available
 mnchester.uk:
   state: registered
   created: 25-Jun-2021
@@ -131,8 +122,7 @@ mnnesota.com:
 mrseille.fr:
   state: available
 newyrk.us:
-  state: unknown
-  note: registry referral, not a domain record
+  state: available
 oshlo.no:
   state: registered
   created: '2020-08-22'
@@ -145,13 +135,11 @@ pub.healthcare:
 reykjavk.is:
   state: available
 rottrdam.nl:
-  state: unknown
-  note: rottrdam.nl is free
+  state: available
 stacyspassion.com:
   state: available
 stholm.se:
-  state: unknown
-  note: "# Copyright (c) 1997- The Swedish Internet Foundation."
+  state: available
 stvanger.no:
   state: registered
   created: '2020-08-22'
