@@ -146,51 +146,53 @@
 
   function handleRuntimeEvent(event) {
     const type = event?.type || event?.event || event?.data?.event || "runtime:event";
+    // EventsController sends { t, type, data: busEvent }; listeners read the bus event.
+    const payload = event?.data || event;
     const mapped = (window.MASTERTopology && typeof window.MASTERTopology.classifyEvent === "function")
-      ? window.MASTERTopology.classifyEvent(type, event)
-      : classify(type, event);
+      ? window.MASTERTopology.classifyEvent(type, payload)
+      : classify(type, payload);
     mapped.raw = event;
     emitVisual(type, mapped);
     // Architecture #15: forward codebase topology to particle system.
-    if (/codebase:topology/i.test(type) && event.modules) {
-      window.dispatchEvent(new CustomEvent("master:codebase", { detail: event }));
+    if (/codebase:topology/i.test(type) && payload.modules) {
+      window.dispatchEvent(new CustomEvent("master:codebase", { detail: payload }));
     }
     // The topics rule_loop.rb publishes, which are not the ones this tested for:
     // it read cycle|clean|converged and the bus sends pass, error, fix_applied,
     // write_error, fix_rejected and autofix_skipped. Zero overlap, so
     // master:rule_event had never once fired.
     if (/rule_loop:(pass|error|fix_applied|write_error|fix_rejected|autofix_skipped)/i.test(type)) {
-      window.dispatchEvent(new CustomEvent("master:rule_event", { detail: event }));
+      window.dispatchEvent(new CustomEvent("master:rule_event", { detail: payload }));
     }
     if (type === "self_violation") {
-      window.dispatchEvent(new CustomEvent("master:self_violation", { detail: event }));
+      window.dispatchEvent(new CustomEvent("master:self_violation", { detail: payload }));
     }
     if (type === "tts:anticipate") {
-      window.dispatchEvent(new CustomEvent("tts:anticipate", { detail: event }));
+      window.dispatchEvent(new CustomEvent("tts:anticipate", { detail: payload }));
     }
     if (type === "tts:style:active") {
-      window.dispatchEvent(new CustomEvent("tts:style:active", { detail: event }));
-      window.dispatchEvent(new CustomEvent("master:visual", { detail: { ...event, name: type, raw: event } }));
+      window.dispatchEvent(new CustomEvent("tts:style:active", { detail: payload }));
+      window.dispatchEvent(new CustomEvent("master:visual", { detail: { ...payload, name: type, raw: event } }));
     }
     if (type === "tts:viseme:plan") {
-      window.dispatchEvent(new CustomEvent("tts:viseme:plan", { detail: event }));
+      window.dispatchEvent(new CustomEvent("tts:viseme:plan", { detail: payload }));
     }
     if (type === "tts:job_cancelled") {
-      window.dispatchEvent(new CustomEvent("tts:job_cancelled", { detail: event }));
+      window.dispatchEvent(new CustomEvent("tts:job_cancelled", { detail: payload }));
       window.MASTER_FACE?.ttsSkip?.();
     }
     if (type === "user:expression") {
-      window.dispatchEvent(new CustomEvent("user:expression", { detail: event }));
-      window.dispatchEvent(new CustomEvent("master:visual", { detail: { ...event, name: type, expression: event.expression, raw: event } }));
+      window.dispatchEvent(new CustomEvent("user:expression", { detail: payload }));
+      window.dispatchEvent(new CustomEvent("master:visual", { detail: { ...payload, name: type, expression: payload.expression, raw: event } }));
     }
     if (/ctx:footer/i.test(type)) {
-      const pct = event.pct ?? event.value ?? 0;
-      window.dispatchEvent(new CustomEvent("master:pressure", { detail: { pct, ...event } }));
+      const pct = payload.pct ?? payload.value ?? 0;
+      window.dispatchEvent(new CustomEvent("master:pressure", { detail: { pct, ...payload } }));
     }
     // council:start is the one topic the bus publishes when a council opens.
     if (/council:start/i.test(type)) {
       startCouncilRotator();
-      const spiritRadius = event.spirit_radius ?? event.spiritRadius ?? 1.14;
+      const spiritRadius = payload.spirit_radius ?? payload.spiritRadius ?? 1.14;
       window.dispatchEvent(new CustomEvent("master:visual", {
         detail: { name: type, mode: "council", entropy: 0.42, confidence: 0.62, spirit_radius: spiritRadius, raw: event }
       }));

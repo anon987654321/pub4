@@ -143,3 +143,18 @@ test("every topic the bridge listens for is one the bus publishes", () => {
   const expired = Object.keys(NOT_BUS_TOPICS).filter((name) => !listened.has(name));
   assert.deepEqual(expired, [], "NOT_BUS_TOPICS excuses names the bridge no longer uses");
 });
+
+// EventsController writes each bus event as { t, type, data: event }, so the
+// fields a listener reads sit under data. A handler that re-dispatched the
+// whole frame gave user:expression listeners no expression to apply.
+test("a frame from /events/stream hands listeners the bus event, not the frame", () => {
+  const { visual, dispatched } = loadBridge();
+
+  visual.runtime({ t: 1, type: "user:expression", data: { event: "user:expression", expression: "smile" } });
+  visual.runtime({ t: 2, type: "ctx:footer", data: { event: "ctx:footer", pct: 42 } });
+
+  const expression = dispatched.find((event) => event.type === "user:expression");
+  assert.equal(expression?.detail?.expression, "smile");
+  const pressure = dispatched.find((event) => event.type === "master:pressure");
+  assert.equal(pressure?.detail?.pct, 42);
+});
