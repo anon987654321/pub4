@@ -36,8 +36,10 @@ and a square, struck and never held. The bed plays its own oscillator families,
 declared in `data/bed.yml`.
 
 ENV knobs, the switch reference and the render path in detail are in
-`ENV_AND_RENDER.md`. The catalogue plays live through `ruby dilla.rb live`, and the livesets through
-`ruby dilla.rb live set` from `lib/livesets.rb`.
+`ENV_AND_RENDER.md`. There are three ways to hear the engine without rendering a
+file: the Dilla Lab page brgen serves from `RAILS/brgen/public/dilla/dilla.html`,
+`ruby dilla.rb live`, which plays the catalogue and, as `live set`, the livesets
+in `lib/livesets.rb`, and `ruby dilla.rb sines`, which runs the sine stream.
 
 Renders sit beside `dilla.rb`, never in a folder of their own. `samples/` is the
 one directory named for material: it is the crate, gitignored, and holds the
@@ -91,23 +93,21 @@ Older ingest names (`four_seven`, `nightbus`, `dmaj_open`) still resolve through
 
 ### Restoring a loop
 
-`samples/` and `crate/` are gitignored, so a lost checkout loses the audio and
-keeps every decision made about it. Drop the file back at
-`samples/<track>/loop.wav` and nothing else is needed: `demo_sampled_order` reads
-the disk, so a restored loop rejoins the demo on the next run.
+`samples/` is gitignored, so a checkout without it loses the audio and keeps
+every decision made about it. A fresh worktree has no crate at all, and the
+tests that need a loop rack skip there with a sentence saying so rather than
+fail; run the suite from the checkout that holds the crate before trusting a
+green result about samples. Drop a loop back at `samples/<track>/loop.wav` and
+nothing else is needed: `demo_sampled_order` reads the disk, so a restored loop
+rejoins the demo on the next run, and `ruby dilla.rb assets` stops reporting it
+missing.
 
-`crate/` is what makes a restore cheap, and it is worth keeping whole. For
-`semua_untuk_mu` it holds `sources/` (the fetched `source.wav` plus a `fetch.txt`
-naming the artist, duration and URL), `stems/` (a six-stem `htdemucs_6s` pass over
-the whole record and a second pass over the sampled window), and `loops/` (the
-cut itself and its variants). Restoring from that is a copy, with no re-fetch and
-no re-separation — and `fetch.txt`'s duration is what proves the source is the
-same upload the cut was measured against, which a fresh search cannot promise.
-
-Verify a restore by rendering it: the loop should report the tempo and key
-named above. `semua_untuk_mu` reads Eb major at fit 0.82 against the 0.79 in
-`sample_loops.rb`, and 96 BPM, which is close enough to identify the passage and
-not close enough to be a coincidence.
+The fetched sources and their stems are not kept beside the engine, so a
+restore starts from the record itself, cut at the window named above. Verify it
+by rendering: the loop should report the tempo and key named above.
+`semua_untuk_mu` reads Eb major at fit 0.82 against the 0.79 in the note beside
+its `TRACK_SAMPLE_LOOPS` entry, and 96 BPM, which is close enough to identify
+the passage and not close enough to be a coincidence.
 
 ### Finding a loop's boundaries is a manual job
 
@@ -167,8 +167,10 @@ before release rather than after. `lib/sampling.rb` is the route that clears.
 
 ## Drums
 
-~60 presets in `lib/groove.rb`, in categories that are deliberately
-kept apart. Being able to say which a grid is matters more than having more.
+The drum grids are `DRUM_PRESETS` in `lib/groove.rb`, in categories that are
+deliberately kept apart; `ruby dilla.rb audit` counts them and names any that no
+rotation reaches. Being able to say which a grid is matters more than having
+more.
 
 A transcribed grid — `four_seven`, `transcribed_soul_nine` — was measured off a
 recording. A constructed one — `dilla_donuts`, `flylo_zodiac`, `boom_bap`,
