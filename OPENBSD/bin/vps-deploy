@@ -288,7 +288,7 @@ home_page=$(curl -fsS --max-time 30 -H "Host: ${domain}" "http://127.0.0.1:${por
   print -u2 "vps-deploy: $app / did not answer on :${port} with Host ${domain}"
   exit 1
 }
-css_href=$(print -r -- "$home_page" | ruby34 -e 'print $stdin.read[%r{/assets/[^"]+\.css}].to_s')
+css_href=$(print -r -- "$home_page" | ruby34 -e 'print $stdin.binmode.read[%r{/assets/[^"]+\.css}n].to_s')
 if [[ -n $css_href ]]; then
   if curl -fsS -o /dev/null --max-time 30 -H "Host: ${domain}" "http://127.0.0.1:${port}${css_href}" 2>/dev/null; then
     print "vps-deploy: $app stylesheet ok (${css_href})"
