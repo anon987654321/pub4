@@ -266,19 +266,24 @@ end)
                          "temporary failure in name resolution", "network is unreachable",
                          "no route to host", "enetunreach", "ehostunreach"].freeze
         OFFLINE_RE = Regexp.new(OFFLINE_SIGNS.map { |sign| Regexp.escape(sign) }.join("|"), Regexp::IGNORECASE)
+        # A spent subscription reads as a spent balance: codex answers "You've
+        # hit your usage limit" until its plan resets, and no retry cures that.
+        BILLING_SIGNS = ["insufficient credits", "credit balance", "payment required", "402", "billing",
+                         "usage limit", "quota reached", "quota exceeded"].freeze
+        BILLING_RE = Regexp.union(BILLING_SIGNS.map { |sign| /\b#{Regexp.escape(sign)}/i }).freeze
+        # An overloaded upstream is a rate limit in all but name: the free
+        # nemotron answered "Service temporarily overloaded", and retrying it in
+        # place slept the 30s and 60s backoff while other free models were idle.
+        RATE_LIMIT_RE = /rate.?limit|too many requests|\b429\b|overloaded|at capacity/i.freeze
 
         def offline_error?(err)
           message = err.message.to_s
           !message.start_with?("ollama ") && message.match?(OFFLINE_RE)
         end
 
-        def billing_error?(err)
-          err.message.to_s.match?(/insufficient credits|credit balance|payment required|\b402\b|billing/i)
-        end
+        def billing_error?(err) = err.message.to_s.match?(BILLING_RE)
 
-        def rate_limit_error?(err)
-          err.message.to_s.match?(/rate.?limit|too many requests|\b429\b/i)
-        end
+        def rate_limit_error?(err) = err.message.to_s.match?(RATE_LIMIT_RE)
 
         def missing_key_error?(err)
           return false if Master.keyless_llm_enabled?

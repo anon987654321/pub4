@@ -25,6 +25,7 @@ module Master
 
             if response.is_a?(Master::Result::Ok)
               answered = response.model || attempt.fetch(:model)
+              follow_answering_model(answered)
               publish_llm_success(answered, response)
               @bus&.publish("agent:stage_warnings", warnings: stage_warnings) unless stage_warnings.empty?
               return response.with_model(answered)
@@ -34,7 +35,32 @@ module Master
           end
 
           @bus&.publish("agent:all_fallbacks_exhausted", warnings: stage_warnings)
-          last_response || Result.err("all LLM fallback modes exhausted", category: :llm_call_failure)
+          exhausted_result(last_response, stage_warnings)
+        end
+
+        # OpenCrabs' rule: when the chosen model fails and another answers, the
+        # session moves to the one that answered and says so once, instead of
+        # asking the failed one first on every turn. Not saved to config, so the
+        # next boot tries the operator's choice again.
+        def follow_answering_model(answered)
+          return if @pinned_model.nil? || answered == @pinned_model
+          return unless Io::ModelSkipCache.skipped?(@pinned_model)
+
+          Trace::Dmesg.once("model0", "#{@pinned_model} failed, switched to #{answered}")
+          @pinned_model = answered
+        end
+
+        # A turn no model answered ends on one line naming each model tried and
+        # its reason, rather than the last failure alone.
+        def exhausted_result(last_response, stage_warnings)
+          return Result.err("all LLM fallback modes exhausted", category: :llm_call_failure) unless last_response
+
+          tried = stage_warnings.filter_map { |line| line[/\Allm failed in \S+ on (.*)\z/m, 1] }
+                                .uniq { |line| line.split(": ", 2).first }
+          return last_response if tried.size < 2
+
+          Result.err("no model answered: #{tried.map { |line| line.lines.first.strip[0, 90] }.join('; ')}",
+                     category: last_response.category)
         end
 
         def try_fallback_attempt(attempt, timed_out_models:, stage_warnings:, prompt:, context:, stream:, image:, &blk)

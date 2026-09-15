@@ -42,6 +42,30 @@ class TestFallbackChain < Minitest::Test
     agent
   end
 
+  # The chosen model fails, another answers, and the session follows the one
+  # that answered; a turn nothing answers names every model it tried.
+  def test_the_session_follows_the_model_that_answered_and_a_dead_chain_names_each_model
+    dispatcher = CountingDispatcher.new(
+      "ollama:llama3.2:3b" => lambda {
+        Master::Io::ModelSkipCache.skip!("ollama:llama3.2:3b", reason: "no model", category: :model_missing)
+        Master::Result.err("ollama has no model llama3.2:3b", category: :model_missing)
+      },
+      "google/gemma-4-31b-it:free" => -> { Master::Result.ok("answered") },
+      :default => -> { Master::Result.err("overloaded", category: :timeout) },
+    )
+    agent = build_agent(dispatcher)
+    agent.instance_variable_set(:@pinned_model, "ollama:llama3.2:3b")
+
+    agent.send(:attempt_chat_with_fallbacks, candidate_models: %w[ollama:llama3.2:3b google/gemma-4-31b-it:free],
+                                             prompt: "hi", context: [], stream: false)
+    assert_equal "google/gemma-4-31b-it:free", agent.instance_variable_get(:@pinned_model)
+
+    dead = agent.send(:attempt_chat_with_fallbacks, candidate_models: %w[a/one:free b/two:free], prompt: "hi", context: [], stream: false)
+    assert_match(/\Ano model answered: a\/one:free: overloaded; b\/two:free: overloaded/, dead.message)
+  ensure
+    Master::Io::ModelSkipCache.clear!
+  end
+
   def test_timeout_skips_retries_and_later_modes_for_same_model
     dispatcher = CountingDispatcher.new(
       "claude-cli:claude-opus-4-8" => -> { Master::Result.err("timed out", category: :timeout) },

@@ -98,6 +98,30 @@ class TestAgent < Minitest::Test
     assert_equal "claude-sonnet-4-6", agent.candidate_models.first
   end
 
+  # A config saved llama3.2:3b on a machine that never pulled it, and every call
+  # of the next session failed on it before anything else was asked.
+  def test_a_saved_model_out_of_reach_is_passed_over_at_boot
+    router = LocalRouter.new(%w[ollama:gemma3:4b])
+    router.define_singleton_method(:unreachable_reason) { |id, wait: false| "ollama pull llama3.2:3b" if id == "claude-sonnet-4-6" }
+    agent = agent_routed_by(router)
+
+    Master::Ground::BootReceipt.stub(:network?, true) { agent.pin_boot_model! }
+
+    assert_equal "agy:auto", agent.model
+  end
+
+  # The scan's model rules each ask model_for; a pinned model that just failed
+  # must not be asked by every one of them in turn.
+  def test_a_pinned_model_that_just_failed_is_routed_around
+    agent = agent_routed_by(LocalRouter.new(%w[ollama:gemma3:4b]))
+    agent.model = "ollama:llama3.2:3b"
+    Master::Io::ModelSkipCache.skip!("ollama:llama3.2:3b", reason: "no model", category: :model_missing)
+
+    assert_equal "deepseek-reasoner", agent.model_for(operation: :scan)
+  ensure
+    Master::Io::ModelSkipCache.clear!
+  end
+
   def test_a_config_holding_the_default_model_leaves_routing_in_charge
     agent = agent_routed_by(LocalRouter.new(%w[ollama:phi4:mini]))
     agent.instance_variable_get(:@config).model = Master::Ground::Config::DEFAULTS["model"]

@@ -404,6 +404,77 @@ end
     assert_equal "note", JSON.parse(text)["verb"]
   end
 
+  # codex takes its prompt on stdin and writes the answer to a file; a lane
+  # whose model is auto passes no model flag, so the CLI keeps its own default.
+  def test_a_cli_lane_asks_on_stdin_and_reads_the_reply_file
+    dispatcher, = build_dispatcher
+    seen = {}
+    dispatcher.define_singleton_method(:capture3_with_timeout) do |_t, *args, stdin_data: nil|
+      seen[:args], seen[:stdin] = args, stdin_data
+      File.write(args[args.index("--output-last-message") + 1], "pong\n")
+      ["progress chatter", "", Struct.new(:success?).new(true)]
+    end
+
+    result = dispatcher.send(:send_cli_lane, "codex-cli:auto", [{ role: "user", content: "ping" }], sys: "LAW")
+
+    assert_equal "pong", result.value!
+    assert seen[:stdin].start_with?("LAW\n\n---\n\n")
+    assert_includes seen[:stdin], "ping"
+    refute_includes seen[:args], "--model"
+  end
+
+  # A spent plan is a spent balance to the chain: it walks on rather than
+  # retrying codex until tomorrow.
+  def test_a_spent_cli_plan_reads_as_budget
+    dispatcher, = build_dispatcher
+    failed = Struct.new(:success?, :exitstatus).new(false, 1)
+    dispatcher.define_singleton_method(:capture3_with_timeout) do |*_a, **_k|
+      ["", "ERROR: You've hit your usage limit. Upgrade to Plus to continue using Codex", failed]
+    end
+
+    result = dispatcher.send(:send_cli_lane, "codex-cli:auto", [{ role: "user", content: "ping" }], sys: nil)
+
+    assert_equal :budget, dispatcher.send(:reclassify_provider_error, result).category
+    assert_match(/usage limit/, result.message)
+    assert dispatcher.send(:rate_limit_error?, StandardError.new("Upstream error from Nvidia: Service temporarily overloaded"))
+  end
+
+  def test_a_local_server_answers_through_the_openai_chat_call
+    server = TCPServer.new("127.0.0.1", 0)
+    thread = Thread.new do
+      socket = server.accept
+      length = 0
+      while (line = socket.gets.to_s.strip) != ""
+        length = line.split(":").last.to_i if line.downcase.start_with?("content-length")
+      end
+      request = JSON.parse(socket.read(length))
+      body = JSON.generate("choices" => [{ "message" => { "content" => "hello from #{request['model']}" } }])
+      socket.print("HTTP/1.1 200 OK\r\nContent-Length: #{body.bytesize}\r\nConnection: close\r\n\r\n#{body}")
+      socket.close
+    end
+    dispatcher, = build_dispatcher
+    base = "http://127.0.0.1:#{server.addr[1]}/v1"
+    router = Object.new
+    router.define_singleton_method(:local_server_for) { |_id| base }
+    dispatcher.instance_variable_set(:@model_router, router)
+
+    result = dispatcher.send(:send_local_server, "local:Qwen/Qwen3-4B", [{ role: "user", content: "hi" }], sys: nil)
+
+    assert_equal "hello from Qwen/Qwen3-4B", result.value!
+  ensure
+    thread&.kill
+    server&.close
+  end
+
+  def test_an_http_lane_names_a_refused_key_and_a_spent_balance
+    dispatcher, = build_dispatcher
+    response = ->(code) { Struct.new(:code, :body).new(code, "no") }
+
+    assert_equal :no_api_key, dispatcher.send(:http_lane_error, "replicate", response.call("401")).category
+    assert_equal :budget, dispatcher.send(:http_lane_error, "replicate", response.call("402")).category
+    assert_equal :provider_error, dispatcher.send(:http_lane_error, "replicate", response.call("503")).category
+  end
+
   private
 
   def build_dispatcher

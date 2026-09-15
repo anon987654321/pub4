@@ -18,6 +18,9 @@ end
 
 ENV["MT_NO_PLUGINS"] = "1"
 ENV["MASTER_TTS_MODE"] = "classic"
+# The pool's live probes sign-in-check CLIs, ask OpenRouter for a balance and
+# knock on local server ports; a suite that did so would grade this machine.
+ENV["MASTER_NO_POOL_PROBES"] = "1"
 gem "minitest", "~> 5.25"
 require "minitest/autorun"
 require "minitest/mock"

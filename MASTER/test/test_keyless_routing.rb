@@ -61,20 +61,21 @@ class TestKeylessRouting < Minitest::Test
     assert_equal "nvidia/nemotron-3-super-120b-a12b:free", chain.first
   end
 
-  # The same gate, for the local tier. models.yml has declared the ollama tier
-  # `enabled_when_env: OLLAMA_BASE_URL` since it was written and nothing read
-  # that key, so three ollama ids sat in every fallback chain on machines with no
-  # ollama — and the dispatcher has no ollama branch, so reaching one ships the
-  # id to the OpenRouter client and errors.
-  def test_local_tier_is_absent_unless_ollama_base_url_is_set
+  # The local tier is whatever the daemon holds, with or without
+  # OLLAMA_BASE_URL: a pulled model closes the chain, and a machine whose daemon
+  # is silent offers no ollama id at all, so none can answer "no model".
+  def test_local_tier_is_what_the_daemon_lists_and_closes_the_chain
     ENV["OPENROUTER_API_KEY"] = "sk-or-v1-#{'a' * 64}"
     ENV.delete("OLLAMA_BASE_URL")
     router = Master::CLI::Routing::ModelRouter.new(
       config: FakeConfig.new(model: Master.free_primary_model), root: Master::ROOT,
     )
-
-    refute router.ollama_enabled?
+    router.define_singleton_method(:ollama_installed_models) { nil }
     assert_empty router.fallback_chain(task_type: :exploration).grep(/\Aollama[:\/]/)
+
+    router.define_singleton_method(:ollama_installed_models) { ["gemma3:4b"] }
+    chain = router.fallback_chain(task_type: :exploration)
+    assert_equal "ollama:gemma3:4b", chain.last
   ensure
     ENV.delete("OLLAMA_BASE_URL")
   end
@@ -123,7 +124,9 @@ class TestKeylessRouting < Minitest::Test
                                                    "gemma4:26b" => 18_604_148_513, "llama3:latest" => 4_661_224_676 })
 
     Master::Core::Memory.stub(:host_memory_mb, 8192) do
-      assert_equal %w[ollama:llama3 ollama:gemma3:4b], router.local_models
+      assert_equal %w[ollama:gemma3:4b ollama:llama3], router.local_models
+      refute router.reachable?("ollama:gemma4:26b")
+      assert router.reachable?("ollama:glm-5.3-flash:cloud")
     end
   end
 
@@ -133,11 +136,11 @@ class TestKeylessRouting < Minitest::Test
       config: FakeConfig.new(model: Master.free_primary_model), root: Master::ROOT,
     )
     router.define_singleton_method(:ollama_installed_models) do
-      ["mistral:latest", "qwen2.5-coder:7b", "nomic-embed-text:latest"]
+      ["mistral:latest", "qwen2.5-coder:3b", "nomic-embed-text:latest"]
     end
 
     assert_equal "http://localhost:11434", router.ollama_tags_base_url
-    assert_equal ["ollama:qwen2.5-coder:7b", "ollama:mistral"], router.local_models
+    assert_equal ["ollama:qwen2.5-coder:3b", "ollama:mistral"], router.local_models
 
     router.define_singleton_method(:ollama_installed_models) { nil }
     assert_empty router.local_models, "a silent daemon offered models while the tier is off"
@@ -166,6 +169,64 @@ class TestKeylessRouting < Minitest::Test
     thread&.kill
     server&.close
     ENV.delete("OLLAMA_BASE_URL")
+  end
+
+  # gemini-2.5-flash is Google's own endpoint; with only an OpenRouter key the
+  # session chose it, every call failed, and the error claimed no LLM was wired.
+  def test_a_model_whose_key_is_unset_leaves_the_pool_naming_the_key
+    ENV["OPENROUTER_API_KEY"] = "sk-or-v1-#{'a' * 64}"
+    router = Master::CLI::Routing::ModelRouter.new(config: FakeConfig.new(model: Master.free_primary_model), root: Master::ROOT)
+    router.define_singleton_method(:ollama_installed_models) { [] }
+
+    assert_match(/GEMINI_API_KEY/, router.unreachable_reason("gemini-2.5-flash"))
+    assert router.reachable?("google/gemini-2.5-flash")
+    refute_includes router.fallback_chain(task_type: :exploration), "gemini-2.5-flash"
+    assert_match(/GEMINI_API_KEY/, router.pool_growth.first)
+  end
+
+  def test_spent_openrouter_credit_keeps_the_free_models_and_drops_the_paid
+    ENV["OPENROUTER_API_KEY"] = "sk-or-v1-#{'a' * 64}"
+    router = Master::CLI::Routing::ModelRouter.new(config: FakeConfig.new(model: Master.free_primary_model), root: Master::ROOT)
+    router.define_singleton_method(:probe_value) { |name, wait:| name == "openrouter_credits" ? false : nil }
+
+    assert router.reachable?("nvidia/nemotron-3-super-120b-a12b:free")
+    assert_match(/credit is spent/, router.unreachable_reason("anthropic/claude-opus-4"))
+  end
+
+  def test_a_cli_lane_joins_when_signed_in_and_names_its_login_when_not
+    router = Master::CLI::Routing::ModelRouter.new(config: FakeConfig.new(model: Master.free_primary_model), root: Master::ROOT)
+    router.define_singleton_method(:executable_on_path?) { |_binary| true }
+    signed_in = false
+    router.define_singleton_method(:probe_value) { |_name, wait:| signed_in }
+
+    assert_equal "run codex login", router.unreachable_reason("codex-cli:auto")
+    signed_in = true
+    assert router.reachable?("codex-cli:auto")
+    assert_equal "codex", router.cli_lane("codex-cli:auto")["binary"]
+  end
+
+  # mistral.rs, LM Studio and llama-server all answer the OpenAI /models call.
+  def test_a_local_server_puts_the_models_it_lists_in_the_pool
+    server = TCPServer.new("127.0.0.1", 0)
+    body = JSON.generate("data" => [{ "id" => "Qwen/Qwen3-4B" }])
+    thread = Thread.new do
+      socket = server.accept
+      nil until socket.gets.to_s.strip.empty?
+      socket.print("HTTP/1.1 200 OK\r\nContent-Length: #{body.bytesize}\r\nConnection: close\r\n\r\n#{body}")
+      socket.close
+    end
+    ENV.delete("MASTER_NO_POOL_PROBES")
+    router = Master::CLI::Routing::ModelRouter.new(config: FakeConfig.new(model: Master.free_primary_model), root: Master::ROOT)
+    base = "http://127.0.0.1:#{server.addr[1]}/v1"
+    router.instance_variable_get(:@rules)["local_servers"] = [base]
+    router.define_singleton_method(:start_pool_probes) { {} }
+
+    assert_equal base, router.local_server_for("local:Qwen/Qwen3-4B")
+    assert router.reachable?("local:Qwen/Qwen3-4B")
+  ensure
+    ENV["MASTER_NO_POOL_PROBES"] = "1"
+    thread&.kill
+    server&.close
   end
 
   def test_web_chat_disabled_when_keys_present_without_opt_in

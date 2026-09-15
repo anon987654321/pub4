@@ -11,7 +11,7 @@ module Master
     module ModelSkipCache
       SKIP_CATEGORIES = %i[
         rate_limit quota_exceeded no_api_key timeout auth_error
-        provider_error llm_call_failure
+        provider_error llm_call_failure model_missing
       ].freeze
 
       # A failure that says nothing about the next call parks a model briefly. One

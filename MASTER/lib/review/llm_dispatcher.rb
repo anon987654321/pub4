@@ -9,6 +9,8 @@ require_relative "llm_dispatcher/react_loop"
 require_relative "llm_dispatcher/ollama_sender"
 require_relative "llm_dispatcher/ruby_llm_sender"
 require_relative "llm_dispatcher/tool_registry"
+require_relative "llm_dispatcher/cli_sender"
+require_relative "llm_dispatcher/http_sender"
 
 module Master
   module Review
@@ -110,6 +112,8 @@ module Master
       include RubyLLMSender
       include ToolRegistry
       include ProviderFailure
+      include CliSender
+      include HttpSender
 
       def initialize(deps:, system_prompt:)
         @config, @cache, @circuit_breaker = deps.config, deps.cache, deps.circuit_breaker
@@ -220,11 +224,19 @@ module Master
       # :budget / :rate_limit, the chain and the single-shot hop walk on.
       def classified_call_failure(err)
         return Result.err(redact_secrets(err.message.to_s), category: :offline) if offline_error?(err)
-        return Result.err(Master.no_api_key_message, category: :no_api_key) if missing_key_error?(err)
+        return Result.err(key_refusal(err), category: :no_api_key) if missing_key_error?(err)
         return Result.err(redact_secrets(err.message.to_s), category: :budget) if billing_error?(err)
         return Result.err(redact_secrets(err.message.to_s), category: :rate_limit) if rate_limit_error?(err)
 
         Result.err(redact_secrets(err.message.to_s), category: :llm_call_failure)
+      end
+
+      # With no key at all, the setup message. With a key the provider refused,
+      # its own words: "not wired to any LLM" read false while OpenRouter answered.
+      def key_refusal(err)
+        return Master.no_api_key_message unless Master.any_api_key_present?
+
+        "key refused: #{redact_secrets(err.message.to_s)}"
       end
 
       def reclassify_provider_error(result)
@@ -259,6 +271,9 @@ module Master
         return send_agy_cli(selected_model.delete_prefix("agy:"), messages, sys:, stream:, &blk) if agy_model?(selected_model)
         return send_claude_cli(selected_model.delete_prefix("claude-cli:"), messages, sys:) if claude_cli_model?(selected_model)
         return send_web_chat(selected_model.delete_prefix("web-chat:"), messages, sys:) if web_chat_model?(selected_model)
+        return send_cli_lane(selected_model, messages, sys:) if cli_lane_model?(selected_model)
+        return send_local_server(selected_model, messages, sys:, temperature:) if local_server_model?(selected_model)
+        return send_replicate_chat(selected_model, messages, sys:) if replicate_chat_model?(selected_model)
         return send_ollama(selected_model, messages, sys:, stream:, temperature:, format:, &blk) if ollama_model?(selected_model)
         # A schema-bound call wants one object back, not a tool conversation,
         # which is also all the local tier ever sends.
@@ -266,116 +281,6 @@ module Master
           return react_tool_loop(selected_model, messages, sys:, stream:, image:, &blk)
         end
         send_ruby_llm(selected_model, messages, sys:, stream:, image:, temperature:, format:, &blk)
-      end
-
-      def send_agy_cli(model_alias, messages, sys:, stream: false, &blk)
-        CLI_SLOTS.pop
-        agy_bin = find_agy_bin
-        prompt = text_prompt_for(messages)
-        full_prompt = sys && !sys.empty? ? "#{sys}\n\n---\n\n#{prompt}" : prompt
-        args = [agy_bin, "-p", full_prompt, "--output-format", "text"]
-        if model_alias && !model_alias.empty? && model_alias != "auto" && model_alias != "agy"
-          args += ["--model", model_alias]
-        end
-        timeout_s = agy_cli_timeout_s
-        out, err, status = capture3_with_timeout(timeout_s, *args)
-        return Result.err("agy: #{err.strip}", category: :provider_error) unless status.success?
-        res = out.strip
-        blk&.call(res) if stream && block_given?
-        Result.ok(res)
-      rescue Timeout::Error
-        Result.err("agy: timed out after #{timeout_s}s", category: :timeout)
-      rescue StandardError => e
-        Result.err("agy: #{e.message}", category: :provider_error)
-      ensure
-        CLI_SLOTS << true
-      end
-
-      def find_agy_bin
-        if ENV["AGY_BIN"] && File.file?(ENV["AGY_BIN"]) && File.executable?(ENV["AGY_BIN"])
-          return ENV["AGY_BIN"]
-        end
-        home_bin = File.expand_path("~/.local/bin/agy")
-        return home_bin if File.file?(home_bin) && File.executable?(home_bin)
-
-        ENV["PATH"].to_s.split(File::PATH_SEPARATOR).each do |dir|
-          candidate = File.join(dir, "agy")
-          return candidate if File.file?(candidate) && File.executable?(candidate)
-        end
-        "agy"
-      end
-
-      def agy_cli_timeout_s
-        Integer(ENV.fetch("MASTER_AGY_CLI_TIMEOUT", AGY_CLI_TIMEOUT_S.to_s))
-      rescue ArgumentError
-        AGY_CLI_TIMEOUT_S
-      end
-
-      # At most two claude subprocesses at once, process-wide. The latency
-      # table above CLAUDE_CLI_TIMEOUT_S measured it: two concurrent finish
-      # together, four roughly double per-call latency for the same total
-      # throughput — and the fix loop runs rule groups in threads, so the
-      # 2026-08-20 proof run showed CLI calls dying empty-stderr under
-      # four-way contention, opening the circuit. Callers block for a slot;
-      # waiting beats thrashing.
-      CLI_SLOTS = SizedQueue.new(2).tap { |queue| 2.times { queue << true } }
-
-      def send_claude_cli(model_alias, messages, sys:)
-        CLI_SLOTS.pop
-        args = ["claude", "--print", "--model", model_alias]
-        args += ["--system-prompt", sys] if sys && !sys.empty?
-        timeout_s = claude_cli_timeout_s
-        out, err, status = capture3_with_timeout(timeout_s, *args, stdin_data: text_prompt_for(messages))
-        return Result.err("claude-cli: #{err.strip}", category: :provider_error) unless status.success?
-        Result.ok(out.strip)
-      rescue Timeout::Error
-        Result.err("claude-cli: timed out after #{timeout_s}s", category: :timeout)
-      rescue StandardError => e
-        Result.err("claude-cli: #{e.message}", category: :provider_error)
-      ensure
-        CLI_SLOTS << true
-      end
-
-      def capture3_with_timeout(timeout_s, *cmd, stdin_data: nil)
-        Open3.popen3(*cmd) do |stdin, stdout, stderr, wait_thr|
-          stdin.write(stdin_data) if stdin_data
-          stdin.close
-          out_reader = Thread.new { stdout.read }
-          err_reader = Thread.new { stderr.read }
-          if wait_thr.join(timeout_s)
-            [out_reader.value, err_reader.value, wait_thr.value]
-          else
-            terminate_subprocess(wait_thr)
-            # Kill the readers before closing what they are reading. Closing
-            # first left both threads inside IO#read on a closed handle, so each
-            # terminated with "stream closed in another thread" and
-            # report_on_exception printed a backtrace over the operator's
-            # prompt — twice, on every timeout.
-            [out_reader, err_reader].each { |reader| reader.kill.join }
-            [stdout, stderr].each { |io| io.close unless io.closed? }
-            raise Timeout::Error
-          end
-        end
-      end
-
-      def terminate_subprocess(wait_thr)
-        return unless signal_process(wait_thr, "TERM")
-        return if wait_thr.join(0.5)
-        signal_process(wait_thr, "KILL", log_context: "LLMDispatcher.terminate_subprocess")
-      end
-
-      def signal_process(wait_thr, signal, log_context: nil)
-        Process.kill(signal, wait_thr.pid)
-        true
-      rescue Errno::ESRCH => e
-        Master::Ground::Swallow.log(e, context: log_context) if log_context
-        false
-      end
-
-      def claude_cli_timeout_s
-        Integer(ENV.fetch("MASTER_CLAUDE_CLI_TIMEOUT", CLAUDE_CLI_TIMEOUT_S.to_s))
-      rescue ArgumentError
-        CLAUDE_CLI_TIMEOUT_S
       end
 
       def send_web_chat(provider, messages, sys:)
@@ -428,6 +333,7 @@ module Master
         when :timeout then :timeout
         when :budget then :quota_exceeded
         when :provider_error then :provider_error
+        when :model_missing then :model_missing
         else :failure
         end
       end

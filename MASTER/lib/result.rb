@@ -27,7 +27,8 @@ module Master
 
       # Retrying reproduces it. Either the request is wrong, the answer is no, or
       # the operation is over.
-      PERMANENT = %i[validation axiom_violation budget no_api_key policy shutdown abort handler_exception].freeze
+      PERMANENT = %i[validation model_missing axiom_violation budget no_api_key policy shutdown abort
+                     handler_exception].freeze
 
       def retriable? = RETRIABLE.include?(@category)
       def permanent? = PERMANENT.include?(@category)
@@ -54,6 +55,7 @@ module Master
 
     CATEGORIES = {
       validation: "input failed preconditions",
+      model_missing: "the provider answered and holds no such model",
       axiom_violation: "constitutional rule broken",
       provider_error: "upstream model / network failure",
       llm_failure: "LLM returned unusable output",

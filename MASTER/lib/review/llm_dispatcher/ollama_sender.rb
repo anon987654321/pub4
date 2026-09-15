@@ -136,7 +136,7 @@ module Master
 
         def ollama_http_error(response, model)
           detail = response.body.to_s[0, 300]
-          return Result.err("ollama has no model #{model}: #{detail}", category: :validation) if response.code == "404"
+          return Result.err("ollama has no model #{model}: #{detail}", category: :model_missing) if response.code == "404"
           return Result.err("ollama #{response.code}: #{detail}", category: :rate_limit) if response.code == "429"
           # Any other 4xx is the request, not the server, so a retry repeats it.
           return Result.err("ollama #{response.code}: #{detail}", category: :validation) if response.code.start_with?("4")

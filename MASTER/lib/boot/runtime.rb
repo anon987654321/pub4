@@ -137,11 +137,13 @@ module Master
       api_key_specs.any? { |_attr, env_var, minimum| key_present?(ENV[env_var], minimum) }
     end
 
-    # A local model needs no key. Offline, the session pins one, and /model
-    # local or MASTER_MODEL=ollama:… chooses one; refusing those for want of a
-    # provider key sent a keyless laptop with Ollama running to "no key".
+    # Lanes that answer with no provider key: a local model, a local server, a
+    # signed-in subscription CLI, the browser. Refusing those for want of a key
+    # sent a keyless laptop with Ollama running to "no key".
+    KEYLESS_LANE_PREFIXES = %w[ollama: ollama/ local: claude-cli: codex-cli: grok-cli: agy: web-chat:].freeze
+
     def llm_reachable?(model = nil)
-      [model, ENV["MASTER_MODEL"]].any? { |id| id.to_s.start_with?("ollama:", "ollama/") } || any_api_key_present?
+      [model, ENV["MASTER_MODEL"]].any? { |id| id.to_s.start_with?(*KEYLESS_LANE_PREFIXES) } || any_api_key_present?
     end
 
     def context_window(model = nil, root: ROOT)

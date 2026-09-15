@@ -5,6 +5,7 @@ require_relative "model_router/escalation"
 require_relative "model_router/intent_classification"
 require_relative "model_router/failover_config"
 require_relative "model_router/diagnostics"
+require_relative "model_router/pool"
 
 module Master
   module CLI
@@ -15,6 +16,7 @@ module Master
         include IntentClassification
         include FailoverConfig
         include Diagnostics
+        include Pool
 
         UNCERTAINTY_PHRASES = [
           "i'm not sure", "i don't know", "cannot determine",
@@ -33,6 +35,7 @@ module Master
           @provider_health = provider_health
           @rules = load_rules
           @capability_map = Master::Core::Routing::CapabilityMap.new
+          start_pool_probes
         end
 
         def preferred(task_type: :exploration)
@@ -40,39 +43,38 @@ module Master
 
           # Empirical override: check if we have a proven winner for this task class
           empirical_best = @capability_map.best_model_for(task_type)
-          return empirical_best if empirical_best
+          return empirical_best if empirical_best && reachable?(empirical_best)
 
-          tier = @rules.dig("routes", task_type.to_s) || @rules.dig("routes", "fallback_default") || "cheap"
-
-          candidates = @rules.dig("models", tier).to_a
+          candidates = reachable_candidates(task_type)
           return @config.model if candidates.empty?
 
-          best = healthy(candidates).max_by { |m| effective_score(m) }
-          best ||= candidates.max_by { |m| effective_score(m) }
+          best = healthy(candidates).max_by { |m| effective_score(m) } ||
+                 candidates.max_by { |m| effective_score(m) }
           best["id"] || @config.model
         end
 
+        # Only models the pool can reach. Free cloud lanes follow the tiers, paid
+        # Replicate follows those, and the local tier closes the chain: a 3B model
+        # on a laptop is the lane of last resort while any network lane answers.
         def fallback_chain(task_type: :exploration)
           return [@config.model] unless enabled?
 
-          pref = preferred(task_type:)
-          all = @rules.fetch("models", {}).values.flat_map { |tier| tier.filter_map { |m| m["id"] } }
-          all = all.reject { |id| web_chat_model?(id) } unless web_chat_enabled?
-          all = all.reject { |id| ollama_model?(id) }
-          all += local_models if ollama_enabled?
-          paid_or_subscription = Ground::AuthProfileLane.models_for_router(self) + primary_models
-          # Greetings are explicitly routed to the free tier. A locally installed
-          # subscription CLI used to jump ahead of `pref`, contradicting the route
-          # table and spending the strongest lane on “hello”. Keep it available as
-          # fallback, but let the task-specific preference lead.
-          chain = if task_type.to_sym == :chitchat
-                    ([pref] + all + continuity_models + paid_or_subscription + [@config.model]).uniq
-                  else
-                    (paid_or_subscription + [pref] + all + continuity_models + [@config.model]).uniq
-                  end
-          chain = Io::ModelSkipCache.filter(chain.select { |id| cli_lane_installed?(id) })
+          chain = chain_for(task_type).uniq.select { |id| reachable?(id) }
+          chain = Io::ModelSkipCache.filter(chain)
           ranked = @provider_health ? @provider_health.rank(chain) : chain
           Io::ModelSkipCache.filter(ranked)
+        end
+
+        # Greetings are explicitly routed to the free tier. A locally installed
+        # subscription CLI used to jump ahead of `pref`, contradicting the route
+        # table and spending the strongest lane on “hello”. Keep it available as
+        # fallback, but let the task-specific preference lead.
+        def chain_for(task_type)
+          lanes = { pref: [preferred(task_type:)], tiers: tier_ids.reject { |id| ollama_model?(id) },
+                    free: continuity_models + ollama_cloud_models + local_server_models,
+                    subscription: Ground::AuthProfileLane.models_for_router(self) + primary_models + cli_lane_models }
+          order = task_type.to_sym == :chitchat ? %i[pref tiers free subscription] : %i[subscription pref tiers free]
+          order.flat_map { |lane| lanes.fetch(lane) } + replicate_models + local_models + [@config.model]
         end
 
         def constrained_for(operation:)
@@ -104,24 +106,17 @@ module Master
 
         private
 
-        # A CLI lane without its binary fails with ENOENT, which the dispatcher
-        # files as a retriable provider_error, so the chain slept through the 30s
-        # and 60s backoff on it before walking on. Measured on ai.brgen.no
-        # 2026-09-15: 90s of a web turn spent on claude-cli with no claude.
-        def cli_lane_installed?(model_id)
-          id = model_id.to_s
-          return claude_cli_available? if id.start_with?("claude-cli:")
-          return agy_cli_available? if id.start_with?("agy:") || id == "agy"
-
-          true
-        end
-
         def enabled?
           @rules.dig("routing", "enabled") != false
         end
 
+        def reachable_candidates(task_type)
+          tier = @rules.dig("routes", task_type.to_s) || @rules.dig("routes", "fallback_default") || "cheap"
+          @rules.dig("models", tier).to_a.select { |model| reachable?(model["id"]) }
+        end
+
         def healthy(models)
-          models.reject { |m| unhealthy?(m["id"]) }
+          models.reject { |m| unhealthy?(m["id"]) || !reachable?(m["id"]) }
         end
 
         def effective_score(model)

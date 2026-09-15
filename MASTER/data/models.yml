@@ -23,11 +23,10 @@ fallback_policy:
   # had no reader at all. And its vocabulary was invented: `network_error`,
   # `refusal`, `insufficient_balance` and `quota_exceeded` are not Result
   # categories this codebase produces, so wiring it as written would have matched
-  # nothing. These five are the categories `Result.err(category:)` actually
-  # carries.
+  # nothing. These are the categories `Result.err(category:)` actually carries.
   #
   # A rate-limited or out-of-budget model cannot succeed on an immediate retry, so
-  # both belong here. `provider_error` deliberately does not: a transient 5xx is
+  # both belong here, and so does a model the provider does not hold. `provider_error` deliberately does not: a transient 5xx is
   # what in-place retry exists for. `retries_per_tier` was removed — the retry
   # count has one source, `failover.max_retries` below.
   "on":
@@ -35,6 +34,7 @@ fallback_policy:
     - no_api_key
     - rate_limit
     - budget
+    - model_missing
 
 failover:
   sequence: [fast, default, medium, strong]
@@ -166,17 +166,17 @@ model_defs:
     <<: *model_defaults
     score: { quality: 0.83, speed: 0.35, cost: 1.0 }
 ollama_qwen: &ollama_qwen
-  id: ollama:qwen2.5-coder:7b
+  id: ollama:qwen2.5-coder:3b
   <<: *model_defaults
-  score: { quality: 0.62, speed: 0.85, cost: 1.0 }
-ollama_llama: &ollama_llama
-  id: ollama:llama3.2:3b
+  score: { quality: 0.60, speed: 0.90, cost: 1.0 }
+ollama_granite: &ollama_granite
+  id: ollama:granite4.2:3b
   <<: *model_defaults
-  score: { quality: 0.55, speed: 0.92, cost: 1.0 }
-ollama_phi: &ollama_phi
-  id: ollama:phi4:mini
+  score: { quality: 0.58, speed: 0.90, cost: 1.0 }
+ollama_gemma: &ollama_gemma
+  id: ollama:gemma3:4b
   <<: *model_defaults
-  score: { quality: 0.58, speed: 0.95, cost: 1.0 }
+  score: { quality: 0.58, speed: 0.85, cost: 1.0 }
 
 models:
   grok_primary:
@@ -228,9 +228,9 @@ models:
     - *claude_cli_sonnet
     - *claude_cli_opus
   local:
-    - *ollama_phi
-    - *ollama_llama
     - *ollama_qwen
+    - *ollama_granite
+    - *ollama_gemma
 
 routes:
   detect_lexical: free
@@ -251,6 +251,8 @@ tool_capable_prefixes:
   - "agy:"
   - claude
   - claude-cli
+  - codex-cli
+  - grok-cli
   - gpt-4
   - gpt-4o
   - gemini
@@ -300,8 +302,8 @@ continuity:
   updated_at: "2026-05-01T00:00:00Z"
 
 openrouter:
-  # When true, the router merges live :free slugs from the SQLite provider catalog
-  # (populated by Providers::CatalogIndex#refresh). Read-only; no-ops until refreshed.
+  # When true, the router merges live :free slugs from the SQLite provider catalog,
+  # which the pool refreshes from OpenRouter when it is a day old (pool.rb).
   use_live_catalog: true
   # Per-model daily cap before router skips the slug (OpenRouter free tier ~200/day/key).
   daily_quota_per_model: 200
@@ -356,9 +358,53 @@ three_mirror_redundancy:
   quorum:        2
   on_disagreement: "fall back to council vote with all dissent recorded"
 
-# Tier-D (local ollama). OLLAMA_BASE_URL offers the tier while online; offline
-# the session starts on it whatever the variable says. The sender speaks
-# Ollama's own /api/chat at the host root, so a /v1 suffix here is read past.
+# Subscription CLIs, signed in once through the browser. The pool offers a
+# lane when its binary is installed and `signed_in` says so: the args are run
+# once per process, and the lane counts as signed in when the output carries
+# `match`, or lacks `refuse`. `ask` puts one question to it; %{reply_file}
+# names a file the CLI writes its answer to, and a prompt with no %{prompt}
+# goes in on stdin. A model named auto passes no model flag, so the CLI uses
+# its own default. `login` is the command the pool names when signed out.
+cli_lanes:
+  codex-cli:
+    binary: codex
+    signed_in: { args: [login, status], match: Logged in }
+    ask: [exec, --skip-git-repo-check, --sandbox, read-only, --ephemeral, --output-last-message, "%{reply_file}", "-"]
+    model_flag: --model
+    models: [auto]
+    login: codex login
+  grok-cli:
+    binary: grok
+    signed_in: { args: [models], refuse: not authenticated }
+    ask: [--single, "%{prompt}"]
+    model_flag: --model
+    models: [auto]
+    login: grok login
+
+# OpenAI-compatible servers on this machine. A server that answers /models
+# puts each model it lists in the pool as local:<id>. mistral.rs
+# (`mistralrs serve`) and LM Studio listen on 1234, llama.cpp's llama-server
+# on 8080.
+local_servers:
+  - http://localhost:1234/v1
+  - http://localhost:8080/v1
+
+# Language models Replicate hosts, asked as replicate:<owner>/<name> with
+# REPLICATE_API_TOKEN. Paid per call, so they sit behind the free lanes.
+replicate_chat:
+  - anthropic/claude-4.5-sonnet
+  - openai/gpt-5
+  - deepseek-ai/deepseek-v3.1
+  - google/gemini-2.5-flash
+  - moonshotai/kimi-k2.5
+
+# Tier-D (local ollama). Every pulled model that fits in memory joins the
+# pool's tail, and a :cloud tag the daemon holds joins the free lanes, since
+# Ollama Cloud answers it for a signed-in account at no charge. Offline the
+# session starts on the local tier. OLLAMA_BASE_URL names a daemon elsewhere,
+# and with it set the configured list stands when that daemon cannot be asked
+# what it holds. The sender speaks Ollama's own /api/chat at the host root,
+# so a /v1 suffix here is read past.
 # keep_alive holds a model in memory between the turns of one fold instead of
 # reloading it for each; max_num_ctx caps the window the sender sizes to each
 # request (ollama_sender.rb).

@@ -35,11 +35,19 @@ module Master
 
         # The session's model at boot. /model saves its choice to config, so an
         # online boot puts that choice first again; a config still holding the
-        # default chose nothing and leaves the routed chain in charge.
+        # default chose nothing and leaves the routed chain in charge. A saved
+        # model the pool cannot reach any more — a key removed, a model deleted —
+        # is passed over with one line, as OpenCode passes over a stale recent
+        # model, rather than pinned to fail every call of the session.
         def pin_boot_model!
           start_on_local_tier_when_offline!
           saved = @config["model"].to_s
-          @pinned_model ||= saved unless saved.empty? || saved == Ground::Config::DEFAULTS["model"]
+          return if @pinned_model || saved.empty? || saved == Ground::Config::DEFAULTS["model"]
+
+          reason = @model_router.unreachable_reason(saved, wait: true) if @model_router.respond_to?(:unreachable_reason)
+          return @pinned_model = saved unless reason
+
+          Trace::Dmesg.once("model0", "#{saved} passed over, #{reason}")
         end
 
         # Offline, every remote lane costs a resolver timeout before
@@ -53,8 +61,12 @@ module Master
           @pinned_model = local if local
         end
 
+        # A pinned model that just failed is parked in the skip cache, and the
+        # scan's model rules ask here one after another; they route around it
+        # until it comes back instead of each failing on it in turn.
         def model_for(operation:)
-          @pinned_model || @model_router&.constrained_for(operation:) || model
+          pinned = @pinned_model unless @pinned_model && Io::ModelSkipCache.skipped?(@pinned_model)
+          pinned || @model_router&.constrained_for(operation:) || model
         end
 
         # The full fallback chain (cheap-first/strong-first as configured),

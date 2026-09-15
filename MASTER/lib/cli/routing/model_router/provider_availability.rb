@@ -106,12 +106,9 @@ module Master
 
           def web_chat_model?(model_id) = model_id.to_s.start_with?("web-chat:")
 
-          # models.yml declares the local tier `enabled_when_env: OLLAMA_BASE_URL`
-          # and nothing enforced it, so three ollama ids sat in every chat
-          # fallback chain on every machine — including the ones with no ollama.
-          # The dispatcher has no ollama branch either, so reaching one ships the
-          # id to the OpenRouter client and errors. The gate is the same shape as
-          # web_chat_enabled? above, because it is the same question.
+          # A daemon named by OLLAMA_BASE_URL is one the operator vouches for, so
+          # when it cannot be asked what it holds the configured local list
+          # stands. With the variable unset, a silent daemon offers nothing.
           def ollama_enabled?
             gate = @rules.dig("ollama", "enabled_when_env").to_s
             gate.empty? ? false : ENV[gate].to_s != ""

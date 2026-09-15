@@ -271,11 +271,36 @@ end
   end
 
   def test_model_list_is_one_row_per_model_with_the_current_one_marked
-    agent = Struct.new(:model).new("ollama:phi4:mini")
+    agent = Struct.new(:model).new("ollama:gemma3:4b")
     rows = Master::CLI::CommandRegistry.list_models(root: Master::ROOT, metrics: nil, agent:).lines
 
     assert_equal rows.size, rows.map { |row| row.split[row.start_with?("→") ? 1 : 0] }.uniq.size
-    assert_match(/\A→ ollama:phi4:mini +local\n\z/, rows.find { |row| row.start_with?("→") })
+    assert_match(/\A→ ollama:gemma3:4b +local\n?\z/, rows.find { |row| row.start_with?("→") })
+  end
+
+  # The pool lists what answers and names what would add more; a model out of
+  # reach is refused with its fix, or swapped for the same model on a lane the
+  # pool has.
+  def test_model_list_shows_the_pool_and_model_refuses_what_it_cannot_reach
+    router = Object.new
+    def router.unreachable_reason(id, wait: false) = id == "gemini-2.5-flash" || id == "o3" ? "set GEMINI_API_KEY" : nil
+    def router.pool(wait: false) = %w[nvidia/nemotron-3-super-120b-a12b:free google/gemini-2.5-flash]
+    def router.pool_growth(wait: false) = ["set GEMINI_API_KEY"]
+    def router.lane_label(id) = "free"
+    agent = Struct.new(:model, :model_router).new("nvidia/nemotron-3-super-120b-a12b:free", router)
+    config = Struct.new(:saved) { def save! = self.saved = true }.new
+
+    listing = Master::CLI::CommandRegistry.list_models(root: Master::ROOT, metrics: nil, agent:)
+    assert_match(/^→ nvidia\/nemotron-3-super-120b-a12b:free +grok_primary/, listing)
+    assert_match(/^more with:\n  set GEMINI_API_KEY/, listing)
+
+    output = Master::CLI::CommandRegistry.dispatch_model(agent:, config:, metrics: nil, root: Master::ROOT, arg: "gemini-2.5-flash")
+    assert_equal "google/gemini-2.5-flash", agent.model
+    assert_match(/itself needs: set GEMINI_API_KEY/, output)
+
+    refused = Master::CLI::CommandRegistry.dispatch_model(agent:, config:, metrics: nil, root: Master::ROOT, arg: "o3")
+    assert_equal "model: o3 is out of reach: set GEMINI_API_KEY", refused
+    assert_equal "google/gemini-2.5-flash", agent.model
   end
 
   def test_dispatch_model_switches_active_model
