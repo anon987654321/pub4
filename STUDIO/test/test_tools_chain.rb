@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "studio_helper"
+require "tmpdir"
 require_relative "../preprompt/lib/chain"
 
 # preprompt refuses an option a model does not accept rather than letting the API
@@ -324,5 +325,59 @@ class TestChain < Minitest::Test
     produced = Preprompt::Chain.run(chain, perform: perform)
 
     assert_equal %w[out-1.jpg], produced, "stage 1 is kept; nothing after the failure runs"
+  end
+
+  # --- resuming ------------------------------------------------------------
+
+  THREE_STAGES = <<~YML
+    stages:
+      - { name: a, model: black-forest-labs/flux-kontext-pro, prompt: one }
+      - { name: b, model: black-forest-labs/flux-kontext-pro, prompt: two, inherits: [image, seed] }
+      - { name: c, model: black-forest-labs/flux-kontext-pro, prompt: three, inherits: [image] }
+  YML
+
+  # A stage before --from has been paid for, so it is read back and not made
+  # again, and the stage after it inherits the resumed file and seed.
+  def test_from_stage_resumes_earlier_stages_instead_of_performing_them
+    calls, perform = recorder
+    Dir.mktmpdir do |dir|
+      earlier = File.join(dir, "out-1-a.jpg")
+      File.write(earlier, "frame")
+      resume = ->(stage:, index:) { { path: earlier, seed: 77 } }
+
+      produced = Preprompt::Chain.run(chain_from(THREE_STAGES), perform: perform, from_stage: "b", resume: resume)
+
+      assert_equal %w[b c], calls.map { |call| call[:name] }, "stage a was performed again"
+      assert_equal earlier, calls.first[:image]
+      assert_equal 77, calls.first[:seed]
+      assert_equal earlier, produced.first
+    end
+  end
+
+  def test_resuming_a_stage_with_nothing_on_disk_stops_the_run
+    _, perform = recorder
+    resume = ->(stage:, index:) { { path: "/nonexistent/out-1-a.jpg" } }
+
+    assert_raises(Preprompt::Chain::NothingToResume) do
+      Preprompt::Chain.run(chain_from(THREE_STAGES), perform: perform, from_stage: "b", resume: resume)
+    end
+  end
+
+  def test_from_a_stage_the_chain_does_not_have_is_refused
+    _, perform = recorder
+
+    assert_raises(Preprompt::Chain::Invalid) do
+      Preprompt::Chain.run(chain_from(THREE_STAGES), perform: perform, from_stage: "nope")
+    end
+  end
+
+  # The YAML's hash rides with the chain, so a frame's sidecar names the recipe.
+  def test_a_loaded_chain_carries_the_hash_of_its_file
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, "probe.yml"), THREE_STAGES)
+      chain = Preprompt::Chain.load("probe", dir: dir)
+
+      assert_equal Digest::SHA256.file(File.join(dir, "probe.yml")).hexdigest, chain[:sha256]
+    end
   end
 end

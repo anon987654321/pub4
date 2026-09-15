@@ -893,7 +893,7 @@ These are the operator's, because each changes a sound or accepts a changed inpu
    - postpro's one-shot path, which is the one preprompt uses, skips the camera-profile pass that `process_file` runs.
    
    Cheap open items, grouped by owner:
-   - **chain/preprompt:** `--from STAGE`; the chain name, stage and YAML sha in each stage sidecar; duration and model version in provenance; a per-stage timeout; chain frames in `gallery.jsonl`; a registry of failed chains; a lint for two adjacent global-colour stages.
+   - **chain/preprompt:** model version in provenance; a per-stage timeout; a registry of failed chains; a lint for two adjacent global-colour stages.
    - **craft:** the moment after a laugh rather than "smile"; terms for key-to-fill ratio, negative fill, micro-expression, hands and the arm.
    - **postpro:** the before and after `Uncanny` readings in the grade sidecar; sidecars from `process_file`, `run_watch` and `uplift`; a house-version constant; a contact sheet of one frame through every stock; a palette histogram under `--measure`.
    - **rescue:** honest cast-remedy text, and an underexposure diagnosis.

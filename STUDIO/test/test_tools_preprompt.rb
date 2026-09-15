@@ -429,6 +429,23 @@ class TestPreprompt < Minitest::Test
     assert_empty send(:scenario_problems)
   end
 
+  # --- provenance ----------------------------------------------------------
+
+  # A chain stage's sidecar names the chain, the stage and the YAML's hash, and
+  # how long the call took, beside everything a single generation records.
+  def test_a_chain_stage_sidecar_carries_its_trace
+    Dir.mktmpdir do |dir|
+      out = File.join(dir, "chain-01-establish.webp")
+      trace = { chain: { name: "probe", sha256: "abc", stage: "establish", index: 1 }, duration_s: 4.2 }
+      send(:write_provenance, out, "a quayside", "a quayside, 85mm", nil, { model: SCHNELL }, 7, "d1", trace)
+
+      written = JSON.parse(File.read("#{out}.json"))
+      assert_equal "a quayside", written["prompt"]
+      assert_equal "abc", written.dig("chain", "sha256")
+      assert_equal 4.2, written["duration_s"]
+    end
+  end
+
   # --- focus, composition and words that backfire -------------------------
 
   def test_focus_and_composition_compose_like_any_other_field

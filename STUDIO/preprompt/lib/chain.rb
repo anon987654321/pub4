@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "yaml"
+require "digest"
 
 # A chain is several models in a row, where each stage's output is the next
 # stage's input.
@@ -67,7 +68,9 @@ module Preprompt
       path = File.join(dir, "#{name}.yml")
       raise Invalid, "no chain named #{name} in #{dir}" unless File.file?(path)
 
-      parse(YAML.safe_load_file(path), name: name)
+      # The file's hash travels with the chain, so a frame's sidecar names the
+      # exact recipe that made it and a later edit to the YAML is visible.
+      parse(YAML.safe_load_file(path), name: name).merge(sha256: Digest::SHA256.file(path).hexdigest)
     end
 
     def self.available(dir: DEFAULT_DIR)
@@ -192,7 +195,16 @@ module Preprompt
     # ones a character should hold to.
     REFERENCE_LIMIT = 8
 
-    def self.run(chain, perform:, until_stage: nil, image: nil, seed: nil)
+    # Resumed, not rerun. A stage before `from_stage` has already been paid for,
+    # so `resume` hands back the file it wrote (and its seed) instead of `perform`
+    # making it again. A chain has no other memory, so a stage with nothing on disk
+    # stops the run rather than being regenerated without anyone deciding to.
+    class NothingToResume < StandardError; end
+
+    def self.run(chain, perform:, until_stage: nil, image: nil, seed: nil, from_stage: nil, resume: nil)
+      names = chain.fetch(:stages).map(&:name)
+      raise Invalid, "chain #{chain[:name]} has no stage #{from_stage}" if from_stage && !names.include?(from_stage)
+
       carried_image = image
       carried_seed = seed
       produced = []
@@ -202,10 +214,13 @@ module Preprompt
         inherited_seed = stage.inherits.include?("seed") ? carried_seed : nil
         references = stage.inherits.include?("references") ? produced.last(REFERENCE_LIMIT) : []
 
-        result = perform.call(
-          stage: stage, index: index, total: chain[:stages].length,
-          image: inherited_image, seed: inherited_seed, references: references
-        )
+        result =
+          if from_stage && index < names.index(from_stage)
+            resumed(resume, stage, index)
+          else
+            perform.call(stage: stage, index: index, total: names.length,
+                         image: inherited_image, seed: inherited_seed, references: references)
+          end
         break if result.nil?
 
         produced << result[:path]
@@ -215,6 +230,13 @@ module Preprompt
       end
 
       produced
+    end
+
+    def self.resumed(resume, stage, index)
+      found = resume&.call(stage: stage, index: index)
+      raise NothingToResume, "stage #{stage.name} has no output to resume from" unless found && File.file?(found[:path].to_s)
+
+      found
     end
 
     # What will happen, in order, without doing it.

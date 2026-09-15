@@ -392,7 +392,9 @@ def cache_blob(path, cache_dir)
   [digest, blob_path]
 end
 
-def write_provenance(output, prompt, compiled_prompt, negative_prompt, options, seed, digest)
+# `extra` carries what only a chain knows: which chain, which stage, the YAML's
+# hash, and how long the call took.
+def write_provenance(output, prompt, compiled_prompt, negative_prompt, options, seed, digest, extra = {})
   sidecar = { output: }.merge(
     prompt:,
     compiled_prompt:,
@@ -408,7 +410,7 @@ def write_provenance(output, prompt, compiled_prompt, negative_prompt, options, 
     seed:,
     sha256: digest,
     generated_at: Time.now.utc.iso8601,
-  )
+  ).merge(extra)
   File.write("#{output}.json", JSON.pretty_generate(sidecar))
   sidecar
 end
@@ -574,7 +576,7 @@ parser = OptionParser.new do |p|
     generate without --output prints the result URLs and writes nothing.
     The token is REPLICATE_API_TOKEN, then REPLICATE_API_KEY, then api_token in
     ~/.config/preprompt/config.json. vocab-check, chains and --dry-run need none.
-    chain NAME --until STAGE stops after that stage; a chain does not resume.
+    chain NAME --until STAGE stops after that stage; --from STAGE resumes from files an earlier run wrote.
     Live schemas: cd STUDIO && rake preprompt:schema_audit (skipped without a token).
   TXT
   p.on("--prompt TEXT") { |v| options[:prompt] = v }
@@ -584,6 +586,7 @@ parser = OptionParser.new do |p|
   p.on("--limit N", Integer) { |v| options[:limit] = v.clamp(1, 1_000) }
   p.on("--dry-run") { options[:dry_run] = true }
   p.on("--until STAGE") { |v| options[:until] = v }
+  p.on("--from STAGE") { |v| options[:from] = v }
   p.on("--stock NAME") { |v| options[:stock] = v }
   p.on("--lens NAME") { |v| options[:lens] = v }
   p.on("--focus NAME") { |v| options[:focus] = v }
@@ -692,8 +695,19 @@ when "chain"
   stem = base.sub(/#{Regexp.escape(File.extname(base))}\z/, "")
   client = Master::Io::ReplicateClient.new
 
+  target_for = ->(stage, index) { "#{stem}-#{format('%02d', index + 1)}-#{stage.name}#{ext}" }
+  # --from reads back what an earlier run wrote: the frame, and the seed its
+  # sidecar recorded, so a stage that inherits the seed gets the one it had.
+  resume = lambda do |stage:, index:|
+    path = target_for.call(stage, index)
+    next nil unless File.file?(path)
+
+    sidecar = File.file?("#{path}.json") ? JSON.parse(File.read("#{path}.json")) : {}
+    { path: path, seed: sidecar["seed"] }
+  end
+
   perform = lambda do |stage:, index:, total:, image:, seed:, references:|
-    target = "#{stem}-#{format('%02d', index + 1)}-#{stage.name}#{ext}"
+    target = target_for.call(stage, index)
     stage_options = options.merge(stage.options).merge(model: stage.model)
     # Uploaded, not passed as a path: the provider fetches these over HTTP and
     # a local path is resolvable only here.
@@ -706,19 +720,28 @@ when "chain"
     input = build_input(compiled, stage_options, seed: stage_seed, negative_prompt: negative)
 
     puts "preprompt: stage #{index + 1}/#{total} #{stage.name} — #{stage.model}"
+    started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
     urls = Array(client.predict(stage.model, input)).flatten.compact
+    duration = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started).round(2)
     abort "preprompt: stage #{stage.name} returned no output; earlier stages are kept" if urls.empty?
 
     FileUtils.mkdir_p(File.dirname(target))
     client.download_url(urls.first, target)
     digest, = cache_blob(target, blob_cache_dir)
-    write_provenance(target, prompt, compiled, negative, stage_options, stage_seed, digest)
+    trace = { chain: { name: chain[:name], sha256: chain[:sha256], stage: stage.name, index: index + 1 },
+              duration_s: duration }
+    sidecar = write_provenance(target, prompt, compiled, negative, stage_options, stage_seed, digest, trace)
+    append_gallery_manifest(sidecar, alt_text_for(prompt, stage_options))
     puts "preprompt: stage #{index + 1} wrote #{target}"
     { path: target, seed: stage_seed }
   end
 
-  produced = Preprompt::Chain.run(chain, perform: perform, until_stage: options[:until],
-                                        image: options[:image], seed: options[:seed])
+  produced = begin
+    Preprompt::Chain.run(chain, perform: perform, until_stage: options[:until], image: options[:image],
+                                seed: options[:seed], from_stage: options[:from], resume: resume)
+  rescue Preprompt::Chain::Invalid, Preprompt::Chain::NothingToResume => e
+    abort "preprompt: #{e.message}"
+  end
 
   # postpro last, on the final frame only — grading an intermediate would be
   # graded again by every stage after it.
