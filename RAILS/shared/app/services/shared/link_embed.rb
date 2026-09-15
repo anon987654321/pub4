@@ -88,7 +88,8 @@ module Shared
         canonical: ->(id) { "https://soundcloud.com/#{id}" },
         oembed: "https://soundcloud.com/oembed",
         player: lambda { |id|
-          "https://w.soundcloud.com/player/?url=#{CGI.escape("https://soundcloud.com/#{id}")}&auto_play=true&visual=true"
+          track = CGI.escape("https://soundcloud.com/#{id}")
+          "https://w.soundcloud.com/player/?url=#{track}&auto_play=true&visual=true"
         },
         thumbnail_hosts: [ /\Ai\d*\.sndcdn\.com\z/ ],
         allow: "autoplay"

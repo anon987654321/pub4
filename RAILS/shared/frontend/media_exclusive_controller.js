@@ -76,8 +76,8 @@ export default class extends Controller {
   embedFrame(src, { allow, title }) {
     const frame = document.createElement("iframe")
     frame.src = src
-    frame.title = title || ""
-    frame.allow = allow || ""
+    frame.title = title ?? ""
+    frame.allow = allow ?? ""
     frame.allowFullscreen = true
     frame.loading = "lazy"
     // YouTube refuses to play in a frame that sends no referrer at all.
