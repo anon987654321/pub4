@@ -163,14 +163,20 @@ class Post < ApplicationRecord
   # comments.count, which queries even when the association is loaded — two
   # queries per feed post, 50 on the home page alone.
   def comment_count = comments_count
-  def author_name = (anonymous? || user&.guest? || live?) ? "anon" : (user&.username.presence || "anon")
 
-  # Same anon check as author_name -- an identicon is only safe to show
-  # alongside a real name. Showing it under "anon" too would give every
-  # anonymous post from the same user a matching visual signature, letting
-  # readers correlate "anon" posts by eye even though the name can't.
+  # Whether the post publicly names who wrote it. One answer for every surface
+  # that shows an author: the name, the identicon and the structured data.
+  def attributed? = !(anonymous? || user&.guest? || live?)
+
+  def author_name = attributed? ? (user&.username.presence || "anon") : "anon"
+
+  # An identicon is only safe to show alongside a real name. Showing it under
+  # "anon" too would give every anonymous post from the same user a matching
+  # visual signature, letting readers correlate "anon" posts by eye even though
+  # the name can't.
   def author_avatar_url
-    return nil if anonymous? || user&.guest? || live?
+    return nil unless attributed?
+
     user&.avatar_url
   end
 

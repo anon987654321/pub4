@@ -150,7 +150,8 @@
         </span>
         <span class="playlist-queue-meta">
           <strong itemprop="name"><%= track.title %></strong>
-          <span><span itemprop="byArtist"><%= track.artist.presence || t("playlist.unknown_artist") %></span> · <%= track.duration_formatted %></span>
+          <%# Only a named artist is marked up as byArtist; "unknown artist" is copy for the reader, not a fact about the track. %>
+          <span><%= tag.span track.artist.presence || t("playlist.unknown_artist"), itemprop: ("byArtist" if track.artist.present?) %> · <%= track.duration_formatted %></span>
         </span>
       </button>
     <% end %>

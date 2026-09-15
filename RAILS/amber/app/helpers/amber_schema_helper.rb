@@ -2,15 +2,15 @@
 
 # Structured data for amber's public pages.
 #
-# The shared `SchemaHelper` covers most of this, but two of its assumptions do
-# not hold here:
+# The shared `SchemaHelper` covers most of this, but its URLs do not hold here:
+# `item_list_schema` and `product_schema` build them with `url_for(item)`,
+# which for an amber Item resolves to `/items/:id` — behind authentication. A
+# crawler following that reaches the sign-in page, so the public demo wardrobe
+# needs its own public URLs.
 #
-#   * `item_list_schema` and `product_schema` build URLs with `url_for(item)`,
-#     which for an amber Item resolves to `/items/:id` — behind authentication.
-#     A crawler following that reaches the sign-in page, so the public demo
-#     wardrobe needs its own public URLs.
-#   * `product_schema` describes a marketplace listing, with an Offer, a price
-#     and an availability. A garment in someone's closet is not for sale.
+# A garment in someone's closet is not for sale, and neither helper sells it:
+# the shared `product_schema` gives an Offer only to a record that answers
+# `buyable?`, and Item does not.
 #
 # Everything else — Article on posts, Organization in the layout — goes through
 # the shared helper unchanged.

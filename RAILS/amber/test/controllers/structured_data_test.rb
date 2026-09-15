@@ -62,6 +62,24 @@ class StructuredDataTest < ActionDispatch::IntegrationTest
     assert_nil product["offers"]
   end
 
+  # items#show is behind sign-in, but its markup still states facts. A garment
+  # with a purchase price is not on sale, so the price is no Offer, and the
+  # label it carries is the only brand it has.
+  test "a garment in a signed-in wardrobe carries no offer and its own brand" do
+    user = User.strict_loading(false).create!(email_address: "schema-item-#{SecureRandom.hex(4)}@example.test",
+                                              password: "password")
+    post session_path, params: { email_address: user.email_address, password: "password" }
+    item = user.items.create!(title: "Ullkåpe", category: "Outerwear", brand: "Filippa K", price_cents: 250_000)
+
+    get item_path(item)
+
+    assert_response :success
+    product = schema_of("Product")
+    assert product, "items#show emitted no Product schema"
+    assert_nil product["offers"]
+    assert_equal "Filippa K", product.dig("brand", "name")
+  end
+
   test "a hex dominant colour is not published as a colour name" do
     demo = seed_demo_wardrobe
     item = demo.items.first

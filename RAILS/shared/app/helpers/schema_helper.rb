@@ -154,7 +154,7 @@ module SchemaHelper
       "@context" => "https://schema.org",
       "@type" => "Article",
       "headline" => post.try(:title) || body&.truncate(80),
-      "author" => person_snippet(post.try(:user) || Current.user),
+      "author" => article_author(post),
       "datePublished" => post.created_at&.iso8601,
       "dateModified" => post.updated_at&.iso8601,
       "description" => meta_description_for(post),
@@ -170,7 +170,7 @@ module SchemaHelper
     {
       "@context" => "https://schema.org",
       "@type" => "Person",
-      "name" => user.try(:display_name) || user.try(:name) || user.try(:username) || "User",
+      "name" => user.try(:display_name) || user.try(:name) || user.try(:username),
       "url" => schema_url_for(user),
       "image" => user.try(:avatar_url),
     }.compact
@@ -212,8 +212,9 @@ module SchemaHelper
     }.compact
   end
 
+  # No sku: a database id is not a stock-keeping unit, and no record here
+  # carries a real one at the product level.
   def product_schema(listing)
-    price = listing.try(:price_cents).to_i / 100.0 if listing.try(:price_cents).to_i > 0
     url = schema_url_for(listing)
 
     data = {
@@ -222,22 +223,8 @@ module SchemaHelper
       "name" => listing.try(:title),
       "description" => listing.try(:description)&.truncate(300),
       "url" => url,
-      "sku" => listing.try(:id)&.to_s,
-      # try(:name), not &.name: only brgen's User responds to #name. amber's
-      # does not, so &.name raised NoMethodError and took out every
-      # amber /items/:id render via json_ld_for(@item, type: :product).
-      # Every other branch in this helper already uses try(:name).
-      "brand" => { "@type" => "Brand", "name" => listing.try(:user).try(:name) || "Local Seller" },
-      "offers" => {
-        "@type" => "Offer",
-        "price" => price,
-        "priceCurrency" => listing.try(:currency) || "NOK",
-        # try(:sold?), not sold?: this branch was written for brgen's
-        # Marketplace::Listing but amber renders its Item through it, and Item
-        # has no #sold?. nil is falsy, so unknown reads as InStock.
-        "availability" => listing.try(:sold?) ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
-        "url" => url,
-      }.compact,
+      "brand" => brand_snippet(listing),
+      "offers" => offer_snippet(listing, url),
     }
 
     if listing.respond_to?(:photos) && listing.photos.attached?
@@ -278,7 +265,7 @@ module SchemaHelper
         {
           "@type" => "MusicRecording",
           "name" => track.title,
-          "byArtist" => { "@type" => "MusicGroup", "name" => track.artist.presence || "Unknown artist" },
+          "byArtist" => ({ "@type" => "MusicGroup", "name" => track.artist } if track.artist.present?),
           "duration" => iso8601_duration(track.duration_seconds.to_i),
         }.compact
       end,
@@ -304,8 +291,48 @@ module SchemaHelper
   end
 
   def person_snippet(user)
-    return nil unless user
-    { "@type" => "Person", "name" => user.try(:name) || user.try(:username) }
+    name = user.try(:name).presence || user.try(:username).presence
+    return if name.nil?
+
+    { "@type" => "Person", "name" => name }
+  end
+
+  # An anonymous, guest or Live post names no author on the page — it reads
+  # "anon" — so its markup names nobody either. The reader is never the author.
+  def article_author(post)
+    return if post.respond_to?(:attributed?) && !post.attributed?
+
+    person_snippet(post.try(:user))
+  end
+
+  # A garment's label is a brand. A marketplace seller is not one, so a record
+  # with no brand of its own carries none.
+  def brand_snippet(record)
+    brand = record.try(:brand)
+    { "@type" => "Brand", "name" => brand } if brand.is_a?(String) && brand.present?
+  end
+
+  # Only a record that knows whether it can be bought carries an Offer, which
+  # leaves amber's garments without one: shown, not sold. Buyable is InStock
+  # and sold is SoldOut; reserved, out of stock or lapsed leaves availability
+  # out, because none of those is a state schema.org can say truthfully here.
+  def offer_snippet(listing, url)
+    return unless listing.respond_to?(:buyable?)
+
+    price_cents = listing.try(:price_cents).to_i
+    {
+      "@type" => "Offer",
+      "price" => (price_cents / 100.0 if price_cents.positive?),
+      "priceCurrency" => listing.try(:currency) || "NOK",
+      "availability" => offer_availability(listing),
+      "url" => url,
+    }.compact
+  end
+
+  def offer_availability(listing)
+    return "https://schema.org/InStock" if listing.buyable?
+
+    "https://schema.org/SoldOut" if listing.try(:sold?)
   end
 
   def organization_snippet
@@ -328,7 +355,8 @@ module SchemaHelper
   end
 
   def geo_snippet(place)
-    return nil unless place.respond_to?(:latitude) && place.latitude.present?
+    return nil unless place.respond_to?(:latitude) && place.latitude.present? && place.longitude.present?
+
     {
       "@type" => "GeoCoordinates",
       "latitude" => place.latitude,
