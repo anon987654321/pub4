@@ -1394,13 +1394,25 @@ module RadioChop
 
   # --- 6: registry ------------------------------------------------------------
 
-  def registry
-    return { "version" => 1, "loops" => [] } unless File.file?(REGISTRY)
+  # Parsed once per version of the file. The engine asks at load, when
+  # TRACK_SAMPLE_LOOPS merges the rack, and again for every chopped bed a render
+  # picks, and each read used to parse and warn afresh; keyed on mtime and size,
+  # so the rows chop writes are read back rather than a copy from before it.
+  EMPTY_REGISTRY = { "version" => 1, "loops" => [] }.freeze
 
-    JSON.parse(File.read(REGISTRY))
-  rescue JSON::ParserError => e
-    warn "chop registry unreadable (#{e.message}) — treating as empty"
-    { "version" => 1, "loops" => [] }
+  def registry
+    return EMPTY_REGISTRY unless File.file?(REGISTRY)
+
+    stamp = [File.mtime(REGISTRY), File.size(REGISTRY)]
+    return @registry if @registry_stamp == stamp
+
+    @registry_stamp = stamp
+    @registry = begin
+      JSON.parse(File.read(REGISTRY))
+    rescue JSON::ParserError => e
+      warn "chop registry unreadable (#{e.message}) — treating as empty"
+      EMPTY_REGISTRY
+    end
   end
 
   # Symbol-keyed and shaped exactly like a TRACK_SAMPLE_LOOPS literal, so the
@@ -1408,18 +1420,28 @@ module RadioChop
   # has gone missing are dropped here rather than at render time -- sample_loop_for
   # would silently return no bed, and a bed that quietly does not play is the
   # hardest kind of absence to notice.
-  def registered_loops
-    Array(registry["loops"]).filter_map do |loop|
-      path = File.absolute_path?(loop["path"].to_s) ? loop["path"] : File.join(ROOT, loop["path"].to_s)
-      next unless File.file?(path)
-
-      [loop["slug"].to_s.to_sym,
-       { path:, bpm: loop["bpm"].to_f, hp: loop["hp"].to_i,
-         sub_db: loop["sub_db"].to_f, lp: loop["lp"].to_i }]
+  #
+  # A row that cannot be read is dropped by its slug, and the rest of the rack
+  # stays. A rescue around the whole walk answered one malformed row by
+  # returning no rack at all, which is every chopped bed gone for one typo.
+  def registered_loops(doc = registry)
+    Array(doc["loops"]).each_with_index.filter_map do |row, index|
+      registered_loop(row)
+    rescue StandardError => e
+      warn "chop registry: row #{row.is_a?(Hash) ? row["slug"].inspect : index} dropped (#{e.message})"
+      nil
     end.to_h
-  rescue StandardError => e
-    warn "chop registry: #{e.message}"
-    {}
+  end
+
+  def registered_loop(row)
+    slug = row.fetch("slug").to_s
+    raise ArgumentError, "no slug" if slug.empty?
+
+    path = File.absolute_path?(row["path"].to_s) ? row["path"] : File.join(ROOT, row["path"].to_s)
+    return unless File.file?(path)
+
+    [slug.to_sym, { path:, bpm: Float(row["bpm"] || 0), hp: Integer(row["hp"] || 0),
+                    sub_db: Float(row["sub_db"] || 0), lp: Integer(row["lp"] || 0) }]
   end
 
   # --- the pass ---------------------------------------------------------------
@@ -2353,7 +2375,8 @@ module VocalChop
   ROOT = File.expand_path("..", __dir__)
   WORK = File.join(ROOT, "scratch", "chop_work")
   MODEL_DIR = "htdemucs_6s"
-  MANIFEST = File.join(ROOT, "samples", "chopped", "loops.json")
+  # The chop registry, named once where chop writes it.
+  MANIFEST = RadioChop::REGISTRY
   SAMPLE_RATE = 44_100
 
   # Below this the stem holds no voice worth cutting -- just bleed from the

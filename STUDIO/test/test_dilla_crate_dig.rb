@@ -127,7 +127,28 @@ class TestCrateDig < Minitest::Test
     end
   end
 
-  private
+# One unreadable row drops that row by its slug and leaves the rest of the
+# rack. A rescue around the whole walk answered one bad row with no rack.
+def test_a_malformed_chop_row_drops_itself_and_not_the_rack
+  Dir.mktmpdir do |dir|
+    good = File.join(dir, "good.wav")
+    File.write(good, "x")
+    doc = { "loops" => [
+      { "slug" => "good", "path" => good, "bpm" => 92, "hp" => 60, "sub_db" => -3, "lp" => 6000 },
+      { "slug" => "broken", "path" => good, "bpm" => { "not" => "a tempo" } },
+      { "path" => good },
+    ] }
+
+    rack = nil
+    _out, err = capture_io { rack = RadioChop.registered_loops(doc) }
+
+    assert_equal %i[good], rack.keys
+    assert_equal 92.0, rack[:good][:bpm]
+    assert_includes err, "\"broken\" dropped"
+  end
+end
+
+private
 
   def with_crate_dir(dir)
     orig_manifest = CrateDig::MANIFEST
