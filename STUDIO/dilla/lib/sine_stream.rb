@@ -1798,10 +1798,263 @@ ENV["WONKY_TOP_DIRT"] ||= "0.42"
 ENV["WONKY_HAT_DUCK"] ||= "0.55"
 ENV["DRUM_FIELD_MIX"] ||= "0.18"
 
+# The two takes the operator kept from this stream on 08-28, as recipes.
+#
+#   ruby dilla.rb sines demo    the 30 rows below -> sines_demo.mp3
+#   ruby dilla.rb sines beat    the four-row beat   -> sines_beat.wav
+#
+# demo is ~/Music/dilla_sines/demo_with_vocals.mp3, the ten minutes kept as
+# 2026-08-28_demo.mp3; beat is the one played to friends, kept as
+# 2026-08-28_beat_for_friends.wav. Their drivers lived outside the repo and
+# chose rows by slicing the catalogue, whose size has changed since, so the rows
+# are written down here instead: progression|stack|feel|drum chain|vocal|~depth,
+# the demo's own tracklist verbatim. The row's index is its slot, and the slot
+# drives what the drivers derived from it -- the river's depth and chord count,
+# the drum-chain seed, the feel of each bar -- so the feel, chain and depth
+# columns are what those derivations produced, and a test holds them to it.
+#
+# The pads go through render_pad_stack!, which is AnalogSynth unless
+# ANALOG_SYNTH=0; the August takes played soundfonts, and ANALOG_SYNTH=0 is
+# how to hear them that way.
+SINE_DEMO_ROWS = <<~ROWS.lines.map { |line| line.chomp.split("|") }.freeze
+  transcribed_soul_nine|stack_odyssey|dilla_canon|grain-echo-lpg-ring-comb-smear|store_p|~66
+  alternating_minor7_pair|stack_rhodes|wonky_canon|grain-crush-fold-phase-lpg-echo|store_p|~79
+  fourth_third_sixth_second_turn|stack_vapor|liquid_dnb|comb-lpg-phase-crush-fold-cloud|gunnhild|~90
+  cm_chromatic_fall|stack_vintage|detroit_stumble|lpg-echo-phase-cloud-crush|store_p|~98
+  ascending_minor_stack|stack_odyssey|la_beat_scene|echo-crush-grain-lpg|store_p|~100
+  suspended_minor_close|stack_rhodes|timeless|fold-ring-crush-smear-phase-lpg-dropout|gunnhild|~97
+  two_chord_luminous|stack_vapor|timeless|comb-cloud-ring-echo-crush-phase-smear|store_p|~89
+  minor_add9_lullaby|stack_vintage|loose_pocket|fold-crush-phase-lpg-dropout-echo|store_p|~77
+  stepwise_bass|stack_odyssey|syncopated_slash_ninth|crush-smear-echo-dropout-cloud-lpg|gunnhild|~63
+  minor_aeolian_fall|stack_rhodes|syncopated_slash_ninth|grain-ring-phase-smear-dropout-crush-comb|store_p|~49
+  dorian_two_chord|stack_vapor|organic|smear-cloud-lpg-crush|store_p|~36
+  descending_bass_minor|stack_vintage|techno_drive|smear-echo-lpg-ring|gunnhild|~26
+  two_five_one_minor|stack_odyssey|one_drop|echo-grain-fold-phase|store_p|~21
+  minor_third_cycle|stack_rhodes|dilla_canon|crush-cloud-dropout-comb|store_p|~21
+  jazz_blues_turn|stack_vapor|wonky_canon|smear-crush-phase-fold-ring|gunnhild|~26
+  eight_bar_modal_drift|stack_vintage|techno_house|echo-ring-comb-lpg-crush-fold-cloud|store_p|~34
+  secondary_five_of_four|stack_odyssey|detroit_stumble|comb-fold-dropout-crush-echo-ring-smear|store_p|~44
+  upper_structure_c|stack_rhodes|la_beat_scene|lpg-phase-dropout-ring-crush|gunnhild|~54
+  house_sus_pump|stack_vapor|timeless|ring-phase-comb-dropout|store_p|~62
+  minor_line_descent_long|stack_vintage|loose_pocket|smear-lpg-ring-echo|store_p|~67
+  crate_minor_turn|stack_odyssey|syncopated_slash_ninth|cloud-echo-lpg-grain|gunnhild|~68
+  eight_bar_soul_climb|stack_rhodes|organic|dropout-fold-grain-comb-smear-lpg-echo|store_p|~64
+  descending_bass_minor_six|stack_vapor|organic|phase-lpg-fold-ring-smear-crush-grain|store_p|~56
+  lydian_augmented_haze|stack_vintage|broken_beat|comb-crush-cloud-fold|gunnhild|~45
+  bell_chain_of_fifths|stack_odyssey|one_drop|lpg-grain-dropout-cloud-phase|store_p|~33
+  quartal_suspension_twelve|stack_rhodes|dilla_canon|echo-dropout-smear-ring-comb-fold-cloud|store_p|~20
+  royal_road_minor|stack_vapor|wonky_canon|dropout-crush-comb-fold-echo-grain-cloud|gunnhild|~10
+  phrygian_borrow_step|stack_vintage|amapiano_offbeat|smear-lpg-grain-echo-dropout-phase-cloud|store_p|~4
+  borrowed_augmented_lift|stack_odyssey|detroit_stumble|crush-echo-cloud-phase-smear-comb|store_p|~3
+  double_mediant_arc|stack_rhodes|la_beat_scene|grain-comb-fold-crush-ring-cloud|gunnhild|~7
+ROWS
+
+# The beat: four progressions, four chords each, one stack each, the vocal
+# alternating. progression|stack|feel|vocal, from the showcase script it was
+# rendered with.
+SINE_BEAT_ROWS = <<~ROWS.lines.map { |line| line.chomp.split("|") }.freeze
+  maj7_minor_cycle|stack_soul|one_drop|store_p
+  dorian_soul_turn|stack_beauty|dilla_canon|gunnhild
+  upper_triad_tower|stack_odyssey|wonky_canon|store_p
+  minor_line_descent_long|stack_rhodes|liquid_dnb|gunnhild
+ROWS
+
+# The drivers' drum-chain seeds, per slot: the demo's and the beat's differ.
+SINE_DEMO_CHAIN_SALT = 7
+SINE_BEAT_CHAIN_SALT = 11
+SINE_VOCAL_GAIN = 0.26
+
+# A take's path beside dilla.rb, refused before any work if a take is there.
+def sine_take_path(name)
+  path = File.join(OUTPUT_DIR, name)
+  refuse_existing_take!(path)
+  path
+end
+
+# One row's chords: the progression through the beautifier, as the stream plays
+# it, cut to the chords the row has room for.
+def sine_row_chords(name, cfg, limit)
+  p0 = dilla_progression(name.to_sym)
+  return [] if p0.nil? || p0.empty?
+
+  p1, = DillaHarmony.beautify_pipeline(p0, cfg.merge(progression: name.to_sym))
+  (p1 && !p1.empty? ? p1 : p0).first(limit)
+end
+
+# The pad bus for one row, through the named stack. A failed render warns and
+# leaves the row out rather than ending a ten-minute take.
+def sine_pad_bus(pads, stack)
+  tmp = File.join(OUT, "sines_take_pad_#{Process.pid}.wav")
+  ENV["PAD_VOICE"] = stack.to_s
+  events = pads.each_with_index.map { |c, i| [i * SECS, 0.85, c, SECS * 1.02] }
+  render_pad_stack!(tmp, events, pads.length * SECS)
+  got = File.file?(tmp) ? read_wav(tmp) : nil
+  got ? got.first(2) : [[], []]
+rescue StandardError => e
+  warn "sines: pad render failed for #{stack}: #{e.class}: #{e.message}"
+  [[], []]
+ensure
+  FileUtils.rm_f(tmp)
+end
+
+# Kit and bassline summed into the pad bus. The bar index carries the slot, so
+# each bar's feel is the one the slot's rotation gives. Returns the last bar's
+# feel and the drum chain drawn.
+def sine_rhythm!(pl, pr, pads, slot, chain_seed)
+  dl = Array.new(pl.length, 0.0)
+  dr = Array.new(pr.length, 0.0)
+  feel = nil
+  pads.each_index { |b| feel = drums_for_bar!(dl, dr, (b * SECS * RATE).to_i, SECS, slot * 4 + b) }
+  used = drum_chain!(dl, dr, chain_seed)
+  tame_transients!(dl, dr)
+  level_drums!(dl, dr, pl, pr)
+  bl = Array.new(pl.length, 0.0)
+  br = Array.new(pr.length, 0.0)
+  pads.each_with_index do |c, b|
+    at = (b * SECS * RATE).to_i
+    bass_line!(bl, br, c, pads[b + 1], at, SECS, slot * 4 + b)
+    duck_bass_under_kick!(bl, br, at, SECS, slot * 4 + b)
+  end
+  tame_transients!(bl, br, over_db: 6.0)
+  level_drums!(bl, br, pl, pr)
+  dl.length.times { |i| pl[i] += dl[i] + bl[i]; pr[i] += dr[i] + br[i] }
+  [feel, used]
+end
+
+# The demo's treatment, set by how deep the river runs at this slot: the deep
+# water gets the cloud, the tape and the ring modulator, the middle an echo.
+def sine_demo_treatment!(pl, pr, flow, slot)
+  case flow[:depth]
+  when 0.85..1.0
+    copy_machine!(pl, pr, copies: 5, reverse: 0.4, width: 1.0)
+    space_echo!(pl, pr, time_s: SECS / 5.0, feedback: 0.5, heads: 3, mix: 0.3)
+    ring_mod!(pl, pr, hz: 61.0, drift_hz: 0.23, mix: 0.18)
+  when 0.5...0.85
+    space_echo!(pl, pr, time_s: SECS / 6.0, feedback: 0.5, heads: 3, mix: 0.25)
+  end
+  artifacts!(pl, pr, seed: slot * 101, count: flow[:artifacts]) if flow[:artifacts].positive?
+  barber_phaser!(pl, pr, rate_hz: 0.04 + flow[:depth] * 0.09,
+                         depth: 0.35 + flow[:depth] * 0.4, mix: 0.14 + flow[:depth] * 0.26)
+end
+
+# The row's vocal on its own bus, laid where the row lands once the crossfade
+# has eaten into it. The bus grows even when the take is silent, so the vocal
+# stays aligned. SINE_VOCALS=0 leaves it empty.
+def sine_vocal!(voc, length, slug, slot, at)
+  sl = Array.new(length, 0.0)
+  sr = Array.new(length, 0.0)
+  voiced = ENV["SINE_VOCALS"] != "0" && add_vocal!(sl, sr, slug.to_sym, 1.0, slot, gain: 1.0)
+  vocal_chain!(sl, sr) if voiced
+  (voc[0].length...(at + length)).each { voc[0] << 0.0; voc[1] << 0.0 }
+  sl.each_index { |i| voc[0][at + i] += sl[i]; voc[1][at + i] += sr[i] }
+  voiced
+end
+
+# Mastered as a record rather than take by take, and the vocal laid over the
+# master rather than through it.
+def sine_master!(l, r, voc)
+  master_chain!(l, r)
+  n = [l.length, voc[0].length].min
+  n.times { |i| l[i] += voc[0][i] * SINE_VOCAL_GAIN; r[i] += voc[1][i] * SINE_VOCAL_GAIN }
+  soft_limit!(l, r, ceiling: 0.94)
+end
+
+def sine_fade_edges!(l, r, seconds)
+  edge = [(RATE * seconds).to_i, l.length / 2].min
+  edge.times do |i|
+    g = i.to_f / edge
+    l[i] *= g; r[i] *= g
+    l[-1 - i] *= g; r[-1 - i] *= g
+  end
+end
+
+# One demo row onto the record. Returns its tracklist line, or nil when the pad
+# render gave nothing.
+def sine_demo_row!(record, row, slot, cfg)
+  name, stack, _feel, _chain, vocal = row
+  flow = flow_shape(slot)
+  pads = sine_row_chords(name, cfg, flow[:chords])
+  pl, pr = sine_pad_bus(pads, stack)
+  return nil if pl.empty?
+
+  feel, used = sine_rhythm!(pl, pr, pads, slot, slot * 977 + SINE_DEMO_CHAIN_SALT)
+  sine_demo_treatment!(pl, pr, flow, slot)
+  voiced = sine_vocal!(record[:voc], pl.length, vocal, slot, [record[:l].length - record[:xf], 0].max)
+  cassette!(pl, pr)
+  crossfade_append!(record[:l], record[:r], pl, pr, record[:xf])
+  "#{name}|#{stack}|#{feel}|#{used.join('-')}|#{voiced ? vocal : 'inst'}|~#{(flow[:depth] * 100).round}"
+end
+
+def sine_demo!
+  dest = sine_take_path("sines_demo.mp3")
+  FileUtils.mkdir_p(OUT)
+  cfg = dilla_resolve_config
+  record = { l: [], r: [], voc: [[], []], xf: (RATE * 0.6).to_i }
+  SINE_DEMO_ROWS.each_with_index do |row, slot|
+    line = sine_demo_row!(record, row, slot, cfg) or next
+    puts format("  %3d  %6.1fs  %s", slot + 1, record[:l].length.to_f / RATE, line)
+  end
+  abort "sines demo: nothing rendered" if record[:l].empty?
+
+  sine_master!(record[:l], record[:r], record[:voc])
+  sine_fade_edges!(record[:l], record[:r], 2.0)
+  sine_encode_mp3!(record[:l], record[:r], dest)
+end
+
+# 320 kbps, as the kept demo was. The wav between is a temporary, never a take.
+def sine_encode_mp3!(l, r, dest)
+  wav = File.join(OUT, "sines_take_#{Process.pid}.wav")
+  write_wav(wav, l, r)
+  ok = system(SINE_FFMPEG, "-y", "-loglevel", "error", "-i", wav, "-codec:a", "libmp3lame", "-b:a", "320k", dest)
+  abort "sines: mp3 encode failed for #{dest}" unless ok
+
+  puts format("  wrote %s  %.1f min", dest, l.length.to_f / RATE / 60)
+ensure
+  FileUtils.rm_f(wav)
+end
+
+# One beat row: four chords, the kit and bass, the vocal, cassette. No river:
+# the beat was one piece, not a stream.
+def sine_beat_row!(record, row, slot, cfg)
+  name, stack, _feel, vocal = row
+  pads = sine_row_chords(name, cfg, 4)
+  pl, pr = sine_pad_bus(pads, stack)
+  return nil if pl.empty?
+
+  feel, used = sine_rhythm!(pl, pr, pads, slot, slot * 977 + SINE_BEAT_CHAIN_SALT)
+  voiced = sine_vocal!(record[:voc], pl.length, vocal, slot, [record[:l].length - record[:xf], 0].max)
+  cassette!(pl, pr)
+  crossfade_append!(record[:l], record[:r], pl, pr, record[:xf])
+  "#{name} [#{stack}] feel=#{feel} kit={#{used.join('-')}}#{voiced ? "+#{vocal}" : ''}"
+end
+
+def sine_beat!
+  dest = sine_take_path("sines_beat.wav")
+  FileUtils.mkdir_p(OUT)
+  cfg = dilla_resolve_config
+  record = { l: [], r: [], voc: [[], []], xf: (RATE * 0.5).to_i }
+  SINE_BEAT_ROWS.each_with_index do |row, slot|
+    line = sine_beat_row!(record, row, slot, cfg) or next
+    puts "  #{line}"
+  end
+  abort "sines beat: nothing rendered" if record[:l].empty?
+
+  sine_master!(record[:l], record[:r], record[:voc])
+  write_wav(dest, record[:l], record[:r])
+  puts format("  wrote %s  %.1fs", dest, record[:l].length.to_f / RATE)
+end
+
 # Everything above is the synthesis library; everything below is the endless
 # generator, or with `play` the player that drains its queue. Loading this file
 # from anywhere but the command line stops here rather than starting a stream.
 return unless __FILE__ == $PROGRAM_NAME
+
+# The two kept takes render once and end; the stream and its player never do.
+SINE_TAKES = { "demo" => :sine_demo!, "beat" => :sine_beat! }.freeze
+if (take = SINE_TAKES[ARGV.first])
+  send(take)
+  exit
+end
 
 # `ruby dilla.rb sines play` drains the generator's queue and never replays a
 # verse. The rule is that a rap vocal is never heard twice: a take that carried

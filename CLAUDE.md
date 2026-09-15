@@ -99,11 +99,12 @@ surface. Two surfaces, no third.
    literals, and a hardcoded English string is a defect rather than a placeholder.
 5. **MASTER speaks, and the settings are data.** `MASTER/data/voice.yml` carries
 the whole of it: `rotation` (the voices, chosen per utterance), `post_chain`
-(the ffmpeg chain applied after synthesis) and `bed` (the pad under the
-speech). `Voice::Policy` reads them, `Speech#shaped` applies the chain,
-`browser_payload` hands them to the face so it sounds like the server. The
-chain and the bed are dillas vocabulary borrowed, never its renderer; the
-comments on `voice.yml` `post_chain` and `Speech#shaped` carry the argument.
+(the ffmpeg chain applied after synthesis) and `bed` (the level under the
+speech, and a pointer). `Voice::Policy` reads them, `Speech#shaped` applies the
+chain, `browser_payload` hands them to the face so it sounds like the server.
+The chain borrows dillas vocabulary; the bed is dillas own render, module `Bed`
+in `STUDIO/dilla/dilla.rb`, declared in `STUDIO/dilla/data/bed.yml` and played
+by `ruby STUDIO/dilla/dilla.rb bed` (the operator's call, 2026-09-14).
 
 **Renders are irreplaceable.** dilla and postpro write real output with rotating
    seeds. Never render over a take that matters, and never change a rendered-sound

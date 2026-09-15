@@ -125,6 +125,44 @@ class BrowserFlowGatesTest < Minitest::Test
     assert_clean reflow_run(reflow_sample(scroll_width: 390))
   end
 
+  # One sample per swept width, in sweep order, so the reading type can move.
+  def reflow_type_run(*type)
+    queue = type.map do |size, line_height, reading = "p.lede"|
+      reflow_sample(scroll_width: 390).merge(typeset(size, line_height, reading: reading))
+    end
+    with_methods(PROBE, reflow_widths: proc { |*, **| [320, 390, 768, 1440].first(queue.size) }) do
+      live_run(Deploy::ReflowGate, method: :run_once) { |js, _| js.include?("document.fonts") ? true : queue.shift }
+    end
+  end
+
+  def typeset(size, line_height, reading: "p.lede")
+    { "reading" => reading, "reading_size" => size, "reading_line_height" => line_height }
+  end
+
+  def reading_type_findings(result) = result.soft_failures.grep(/reflow type:/)
+
+  def test_reflow_names_reading_type_that_shrinks_as_the_viewport_widens
+    found = reading_type_findings(reflow_type_run([18.0, 27.0], [16.0, 24.0]))
+
+    assert_match(/p\.lede gets smaller as the viewport widens — 18\.0px at 320 → 16\.0px at 390/, found.join)
+  end
+
+  # Fluid type under a px line height: each step is a fraction of a pixel, so only the narrowest width shows it.
+  def test_reflow_names_a_fixed_line_height_under_fluid_type
+    found = reading_type_findings(reflow_type_run([16.0, 24.0], [16.4, 24.0], [17.2, 24.0], [18.0, 24.0]))
+
+    assert_match(/fixed line height while its size changes — 16\.0px at 320 → 17\.2px at 768 under 24\.0px/, found.join)
+  end
+
+  def test_reflow_passes_type_that_grows_with_its_leading
+    assert_empty reading_type_findings(reflow_type_run([16.0, 24.0], [16.4, 24.6], [17.2, 25.8], [18.0, 27.0]))
+  end
+
+  # A paragraph hidden at one width leaves the body to be measured, and the body is not the paragraph.
+  def test_reflow_compares_reading_type_only_on_the_same_element
+    assert_empty reading_type_findings(reflow_type_run([18.0, 27.0], [16.0, 24.0, "body"]))
+  end
+
   def test_reflow_without_chrome_sweeps_nothing_and_says_so
     assert_inconclusive dark_run(Deploy::ReflowGate, method: :run_once), /no Chrome/
   end

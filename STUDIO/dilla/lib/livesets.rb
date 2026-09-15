@@ -5,6 +5,7 @@
 #
 #   ruby dilla.rb live set chord_based_beats     one pass of a set
 #   ruby dilla.rb live set sampled_based_beats
+#   LIVE_VOICING=up ruby dilla.rb live set sampled_based_beats   the 08-31 voicings
 #   ruby dilla.rb live set ambient_pads
 #   ruby dilla.rb live recall                    the last twenty passes
 #   ruby dilla.rb live recall 41205993           play that one again
@@ -340,6 +341,20 @@ module Livesets
     (CURATED_PROGRESSIONS + ARTIST_VERIFIED_PROGRESSIONS.keys).uniq
   end
 
+  # The progression a pass plays, pinned by LIVE_PROGRESSION the way LIVE_BED
+  # pins a bed. The pool is the catalogue's shortlist and the shortlist changes,
+  # so a seed alone lands on a different progression once it has. The draw is
+  # made either way, so pinning it leaves every later choice on the same stream.
+  def pick_progression
+    drawn = chord_pool.select { |k| v = CHORD_PROGRESSIONS[k]; v && [4, 8].include?(v.length) }.sample
+    want = ENV["LIVE_PROGRESSION"].to_s
+    return drawn if want.empty?
+
+    abort "no such progression: #{want}" unless CHORD_PROGRESSIONS.key?(want.to_sym)
+
+    want.to_sym
+  end
+
   def chord_based_beats!
     total = 96
     seed = seed!
@@ -347,7 +362,7 @@ module Livesets
     # register and a ceiling -- a synthesised chord voiced high is the one thing in
     # this room that would sound like a plugin.
     root_a = 110.0
-    name = chord_pool.select { |k| v = CHORD_PROGRESSIONS[k]; v && [4, 8].include?(v.length) }.sample
+    name = pick_progression
     symbols = CHORD_PROGRESSIONS.fetch(name)
     chords = symbols.filter_map { |s| [s, parse_chord(s)] if parse_chord(s) }
 
@@ -475,6 +490,46 @@ module Livesets
     [[0, :min11], [0, :min11], nil, [-2, :maj9], [-3, :min7], nil, [-5, :min9], nil],
   ].freeze
 
+  # LIVE_VOICING=up: the tables the rig played on 08-31, when the operator said
+  # "i like it" of these passes. Built upward from the slice, so a chord climbs
+  # above the record's pitch, and no clamp holds it under the drag. The downward
+  # tables above stay the default; up is the operator's to reach for.
+  UP_VOICINGS = {
+    min7:  [0, 3, 10],
+    maj9:  [0, 4, 14],
+    min9:  [0, 3, 14],
+    sus4:  [0, 5, 10],
+    min11: [0, 3, 17],
+  }.freeze
+  UP_PROGRESSIONS = [
+    [[0, :min7], nil, [5, :min9], [3, :maj9], nil, [-2, :sus4], [0, :min7], nil],
+    [[0, :min9], [3, :min7], nil, [7, :sus4], [5, :maj9], nil, [3, :min7], [0, :min11]],
+    [[7, :min7], nil, [5, :min9], nil, [3, :maj9], [0, :min7], nil, [-4, :sus4]],
+    [[0, :min11], [0, :min11], nil, [-2, :maj9], [3, :min7], nil, [5, :min9], nil],
+  ].freeze
+  VOICING_TABLES = {
+    "down" => [SAMPLED_VOICINGS, SAMPLED_PROGRESSIONS],
+    "up" => [UP_VOICINGS, UP_PROGRESSIONS],
+  }.freeze
+
+  # A voicing that does not resolve aborts, for the reason kit_dir gives: a pass
+  # journalled under a voicing it did not play cannot be recalled.
+  def voicing
+    want = ENV.fetch("LIVE_VOICING", "down")
+    abort "no voicing #{want.inspect} — have #{VOICING_TABLES.keys.join(', ')}" unless VOICING_TABLES.key?(want)
+
+    want
+  end
+
+  # Sampler ratios for one cell. Downward, every ratio is held at or under the
+  # drag, so no arithmetic can pitch the record up; up leaves them where they fall.
+  def slice_ratios(semi, intervals, drag, choice)
+    intervals.map do |iv|
+      ratio = (2.0**((semi + iv) / 12.0)) * drag
+      (choice == "up" ? ratio : [ratio, drag].min).round(6)
+    end
+  end
+
   def sampled_based_beats!
     total = 96
     seed = seed!
@@ -485,7 +540,9 @@ module Livesets
     g = grid(bed, drag)
     bar = g[:bar]
     step = g[:step]
-    prog = SAMPLED_PROGRESSIONS.sample
+    choice = voicing
+    voicings, progressions = VOICING_TABLES.fetch(choice)
+    prog = progressions.sample
     slice_at = (rand * 2.2).round(3)
     reverse = rand < 0.28 # a reversed chop, sometimes
 
@@ -496,8 +553,8 @@ module Livesets
     prog.each_with_index do |cell, i|
       next if cell.nil?
 
-      semi, voicing = cell
-      ratios = SAMPLED_VOICINGS.fetch(voicing).map { |iv| [((2.0**((semi + iv) / 12.0)) * drag), drag].min.round(6) }
+      semi, quality = cell
+      ratios = slice_ratios(semi, voicings.fetch(quality), drag, choice)
       longest = (step * ratios.max * 1.8).round(4)
       inputs << "-ss #{slice_at} -t #{longest} -i #{bed.shellescape}"
       idx = inputs.size - 1
@@ -570,7 +627,7 @@ module Livesets
 
     journal!(
       at: Time.now.utc.iso8601, seed: seed, set: "sampled_based_beats", bed: slug, sample_worth: sw,
-      bpm: g[:bpm], drag: drag, bars_in_loop: g[:bars_in_loop], progression: prog,
+      bpm: g[:bpm], drag: drag, bars_in_loop: g[:bars_in_loop], voicing: choice, progression: prog,
       chop_at: slice_at, reversed: reverse, bar_s: bar,
       weights: { phrase: 0.30, under: 0.14, kit: 3.4 },
       drums: { kick_ms: hits[:kick], snare_ms: hits[:snare], ghost_ms: hits[:ghost], hat_ms: hits[:hat] },
@@ -784,6 +841,8 @@ module Livesets
     # pass under whatever LIVE_KIT happens to be exported would come back with
     # different drums and the same seed printed over them.
     env["LIVE_KIT"] = row["kit"].to_s if row["kit"]
+    env["LIVE_PROGRESSION"] = row["progression_name"].to_s if row["progression_name"]
+    env["LIVE_VOICING"] = row["voicing"].to_s if row["voicing"]
     label = "#{row['set']} #{row['seed']}"
     if keep
       take = File.join(D, "#{row['set']}_#{row['seed']}")

@@ -424,11 +424,14 @@ SUFFIX_MATCHERS = CHORD_SUFFIXES.map { |sfx| [sfx, /\A[A-G][#b]?#{sfx}\z/i] }.fr
       kicks: [0, 4, 8, 12], snares: [4, 12], hats: (0..15).to_a,
       ghosts: [], claps: [4, 12], perc: [],
     },
-    # Industrial techno: a 92 BPM four-on-floor anchor with displaced kicks,
-    # ghost claps, ratcheted hats and off-grid percussion. The extra movement
-    # is supplied by the synced eclectic/DFAM layers; this grid stays legible.
+    # Industrial techno: a four-on-floor anchor with displaced kicks, ghost
+    # claps, ratcheted hats and off-grid percussion. The extra movement is
+    # supplied by the synced eclectic/DFAM layers; this grid stays legible.
+    # 128 BPM because the kick follows a techno tempo -- the operator's "kick-wise
+    # maybe we could follow more of a techno tempo" -- and industrial is its own
+    # album rather than hip-hop pads at hip-hop speed with a techno kit on them.
     industrial_techno: {
-      swing: 50, humanize: 1, bpm: 92, mode: :straight_sixteenth,
+      swing: 50, humanize: 1, bpm: 128, mode: :straight_sixteenth,
       kicks: [0, 3, 4, 7, 8, 11, 12, 14], snares: [4, 12], hats: (0..15).to_a,
       ghosts: [2, 6, 10, 15], claps: [4, 12], perc: [1, 5, 9, 13, 15],
     },

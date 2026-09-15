@@ -6,7 +6,19 @@ module Master
       # Full singularity pass: posture → aesthetic scan → deep scan → fix → re-scan → optional critique.
       # Progress is OpenBSD dmesg-style (device at bus: detail).
       class Pass
-        Result = Data.define(:target, :mode, :sections, :ok, :unit, :failed_stages) do
+        Result = Data.define(:target, :mode, :sections, :ok, :unit, :failed_stages, :totals) do
+          def initialize(totals: {}, **fields) = super(totals:, **fields)
+
+          # "567 findings, 480 after the fix": the deep scan before the fix and the
+          # re-scan after it. "complete" alone said nothing about what the pass found
+          # or changed.
+          def counts
+            before, after = totals.values_at(:before, :after)
+            return unless before
+
+            after ? "#{before} findings, #{after} after the fix" : "#{before} findings"
+          end
+
           # A section is its title and then its body, one blank line after, with
           # no "#" in front: a terminal is not Markdown, and the title's place
           # at the head of the block is the hierarchy.
@@ -27,6 +39,7 @@ module Master
                    else
                      "#{unit}: complete with open findings"
                    end
+            base = "#{base}, #{counts}" if counts
             skipped = Master::Io::QuotaGate.report
             skipped ? "#{base}\n#{skipped}" : base
           end
@@ -52,6 +65,7 @@ module Master
           @review_crew = review_crew
           @t0 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
           @unit = "review0"
+          @scan_totals = {}
         end
 
         # The stages a caller can ask for by name, in the order they run.
@@ -86,15 +100,14 @@ module Master
 
           sections = build_sections(resolved:, shell:, posture:, apply:, critique:, aesthetic:)
 
-          ok = @failed_stages.empty? && sections.none? do |title, body|
-            title.include?("scan") && body.to_s.match?(/\berror\b|\bcritical\b/i) && body.to_s.match?(/\d{2,}\s+finding/i)
-          end
+          ok = pass_ok?(sections)
           elapsed = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - @t0).round
-          Master::Trace::Dmesg.status(@unit, "#{ok ? "complete" : "incomplete"}, #{elapsed}s") if elapsed >= 1
+          result = Result.new(target: resolved, mode: posture[:name], sections:, ok:, unit: @unit,
+                              failed_stages: @failed_stages.dup, totals: scan_totals)
+          Master::Trace::Dmesg.status(@unit, [ok ? "complete" : "incomplete", result.counts, "#{elapsed}s"].compact.join(", ")) if elapsed >= 1
           @bus&.publish("review:complete", target: resolved, apply:, ok:, elapsed_s: elapsed,
                                             failed_stages: @failed_stages)
-          Result.new(target: resolved, mode: posture[:name], sections:, ok:, unit: @unit,
-                     failed_stages: @failed_stages.dup)
+          result
         end
 
         private
@@ -108,8 +121,8 @@ module Master
           if run?("scan")
             sections << aesthetic_scan_section(shell) if aesthetic
 
-            deep_unit = aesthetic ? "scan1" : "scan0"
-            sections << ["deep scan", log_phase(deep_unit, "deep", "path=#{shell}") { run_scan(shell, unit: deep_unit) }]
+            @deep_unit = aesthetic ? "scan1" : "scan0"
+            sections << ["deep scan", log_phase(@deep_unit, "deep", "path=#{shell}") { run_scan(shell, unit: @deep_unit) }]
             sections.concat(build_fix_sections(resolved:, shell:, posture:, apply:, aesthetic:))
           end
           sections << critique_section(resolved, shell) if critique && run?("critique")
@@ -151,8 +164,8 @@ module Master
           sections = [["fix", log_phase("fix0", "apply", "path=#{shell} max_passes=#{posture[:max_fix_passes]}") do
             run_fix(resolved)
           end]]
-          re_unit = aesthetic ? "scan2" : "scan1"
-          sections << ["re-scan", log_phase(re_unit, "recheck", "path=#{shell}") { run_scan(shell, unit: re_unit) }]
+          @re_unit = aesthetic ? "scan2" : "scan1"
+          sections << ["re-scan", log_phase(@re_unit, "recheck", "path=#{shell}") { run_scan(shell, unit: @re_unit) }]
           if aesthetic
             sections << ["aesthetic re-scan", log_phase("scan3", "aesthetic_recheck", "path=#{shell}") do
               run_scan("aesthetic #{shell}", unit: "scan3")
@@ -274,13 +287,22 @@ def default_apply?(*) = false
             scanner: @scanner,
             root: @root,
             ctx: { args: scan_arg },
+            on_total: ->(total) { @scan_totals[unit] = total },
           )
         rescue StandardError => e
           stage_failure("scan", unit, e)
         end
 
+        def pass_ok?(sections)
+          @failed_stages.empty? && sections.none? do |title, body|
+            title.include?("scan") && body.to_s.match?(/\berror\b|\bcritical\b/i) && body.to_s.match?(/\d{2,}\s+finding/i)
+          end
+        end
+
+        def scan_totals = { before: @scan_totals[@deep_unit], after: @scan_totals[@re_unit] }.compact
+
         def run_fix(abs)
-          result = @fix_loop.run(abs)
+          result = @fix_loop.run(abs, requested: true)
           msg = result.ok? ? result.value!.to_s : "fix: #{result.message}"
           Master::Trace::Dmesg.status("fix0", result.ok? ? msg[0, 80] : "failed: #{result.message}")
           msg

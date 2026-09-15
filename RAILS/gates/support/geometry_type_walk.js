@@ -161,7 +161,29 @@
     }
   }
 
+  // The blocks main's content is laid out in: descend through lone wrappers
+  // to the first level holding two or more, and read each one's width. That
+  // is the column the sections are meant to share.
+  let mainBlocks = [];
+  let level = main;
+  for (let depth = 0; level && depth < 4 && !mainBlocks.length; depth++) {
+    const kids = Array.from(level.children).filter(k => {
+      const cs = getComputedStyle(k);
+      if (cs.display === 'none' || cs.position === 'absolute' || cs.position === 'fixed') return false;
+      const kr = k.getBoundingClientRect();
+      return kr.width > 0 && kr.height > 24;
+    });
+    if (kids.length >= 2) {
+      mainBlocks = kids.map(k => {
+        const kr = k.getBoundingClientRect();
+        return { sel: selFor(k), x: Math.round(kr.left), w: Math.round(kr.width) };
+      });
+    }
+    level = kids[0];
+  }
+
   return {
+    main_blocks: mainBlocks.slice(0, 40),
     prose: prose.slice(0, 40),
     type_sizes: sizes,
     tabular: tabular.slice(0, 40),

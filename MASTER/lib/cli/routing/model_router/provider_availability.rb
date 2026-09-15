@@ -148,6 +148,14 @@ end
 #
 # This is the method the CLI agent calls for an offline default, and the one
 # FallbackChain walks when a paid lane fails with no network.
+#
+# And what runs on this machine. A :cloud tag answers from ollama.com, so
+# an offline boot pinned glm-5.3-flash:cloud and asked the network it had
+# found missing. A model past LOCAL_FIT of physical memory pages for every
+# token, as gemma4:26b's 17 GB does on an 8 GB laptop. Among the rest, the
+# largest the machine holds leads.
+LOCAL_FIT = 0.6
+
 def local_models
   configured = Array(@rules.dig("models", "local")).filter_map { |row| row["id"] }
   installed = ollama_installed_models
@@ -155,8 +163,25 @@ def local_models
 
   pulled = configured.select { |id| ollama_pulled?(id) }
   extra = installed.reject { |name| name.match?(/embed/i) }
-                   .map { |name| "ollama:#{name.delete_suffix(':latest')}" }
-  (pulled + extra).uniq
+                   .each_with_index.sort_by { |name, index| [-ollama_size(name), index] }
+                   .map { |name, _| "ollama:#{name.delete_suffix(':latest')}" }
+  (pulled + extra).uniq.select { |id| runs_here?(id) }
+end
+
+def runs_here?(model_id)
+  name = model_id.to_s.sub(%r{\Aollama[:/]}, "")
+  return false if name.end_with?(":cloud", "-cloud")
+
+  size = ollama_size(name)
+  memory_mb = Master::Core::Memory.host_memory_mb
+  size.zero? || memory_mb.nil? || size <= memory_mb * 1_048_576 * LOCAL_FIT
+end
+
+# Bytes on disk, which is close to what the weights take in memory; 0 when
+# the daemon did not say.
+def ollama_size(name)
+  sizes = @ollama_sizes || {}
+  sizes.fetch(name) { sizes.fetch("#{name}:latest", 0) }
 end
 
 OLLAMA_TAGS_TIMEOUT_S = 2
@@ -180,7 +205,9 @@ def fetch_ollama_tags
   end
   return nil unless response.is_a?(Net::HTTPSuccess)
 
-  Array(JSON.parse(response.body.to_s)["models"]).filter_map { |row| row["name"]&.to_s }
+  rows = Array(JSON.parse(response.body.to_s)["models"])
+  @ollama_sizes = rows.to_h { |row| [row["name"].to_s, row["size"].to_i] }
+  rows.filter_map { |row| row["name"]&.to_s }
 rescue StandardError => e
   Master::Ground::Swallow.log(e, context: "model_router.ollama_tags")
   nil

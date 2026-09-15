@@ -203,20 +203,6 @@ DEMUX_VOCAL_MODEL = "htdemucs_ft"
 # and the wiring ratchets read -- see that file for why there is exactly one of
 # them now. The order is load-bearing: constants in these files are computed at
 # load time from ones above them, and reordering silently changes their values.
-# The overlay's knobs were spelled FLYLO_* until the engine stopped naming a
-# competitor in its own source. An operator's shell history, notes and scripts
-# still say the old word, and an env var that is silently ignored is worse than
-# one that errors: the render runs, reports success, and does not do the thing
-# that was asked. So a legacy name is copied onto the new one here, once, before
-# any part reads ENV -- and only when the new name is unset, so the new spelling
-# always wins where both are given.
-ENV.keys.grep(/\AFLYLO_/).each do |legacy|
-  current = legacy.sub("FLYLO_", "WONKY_")
-  next if ENV[current] && !ENV[current].empty?
-  ENV[current] = ENV[legacy]
-  warn "dilla: #{legacy} is the old spelling of #{current} — honoured, but rename it"
-end
-
 # The engine, inline. It was 81 files under lib/engine/ required in a hand-
 # pinned order, and the order was load-bearing: constants are computed at load
 # time from ones above them. Concatenating them in that order is what the order
@@ -3389,14 +3375,14 @@ module RadioBergenStudy
     return unless path && File.file?(path)
     return unless system("which", "ffprobe", out: File::NULL, err: File::NULL)
 
-    duration_out, = Open3.capture2(
+    duration_out, = ToolRun.capture2(
       "ffprobe", "-v", "error", "-show_entries", "format=duration",
       "-of", "default=noprint_wrappers=1:nokey=1", path
     )
     duration = duration_out.to_f
     return { duration_seconds: duration.round(2) } if duration <= 0
 
-    stats, = Open3.capture2(
+    stats, = ToolRun.capture2(
       "ffmpeg", "-hide_banner", "-nostats", "-i", path,
       "-af", "astats=metadata=1:reset=1,ametadata=print:file=-",
       "-f", "null", "-", err: File::NULL
@@ -3701,7 +3687,7 @@ module RadioBergenStudy
       module_function
 
       def ffprobe(path)
-        out, = Open3.capture2(
+        out, = ToolRun.capture2(
           "ffprobe", "-v", "error", "-show_entries", "format=duration,bit_rate:stream=sample_rate,channels",
           "-of", "json", path
         )
@@ -3711,7 +3697,7 @@ module RadioBergenStudy
       end
 
       def band_rms(path, filter, window: 0.05, max_sec: 120)
-        out, = Open3.capture2(
+        out, = ToolRun.capture2(
           "ffmpeg", "-hide_banner", "-loglevel", "error", "-t", max_sec.to_s, "-i", path,
           "-af", "#{filter},astats=metadata=1:reset=1:length=#{window},ametadata=print:key=lavfi.astats.Overall.RMS_level:file=-",
           "-f", "null", "-"
@@ -5541,10 +5527,10 @@ end
 
 # The whole drum bus, one switch.
 #
-# Off by default, operator instruction 2026-08-27: "kill all the drums". The
-# custom kit carries exactly one snare and it landed on every track of a
-# 451-track demo, which is what that instruction was about. DRUMS=1 brings
-# them back with nothing else changed.
+# Drums play. FullEngine::FULL_ENGINE_DEFAULTS sets DRUMS=1 at load, so the
+# "0" fallback below is reached only under DILLA_FULL=0 -- the operator's
+# standing instruction is fresh drums on every take. DRUMS=0 still silences the
+# bus with nothing else changed.
 #
 # Gated here rather than at the kit, because a kit swap still plays drums.
 def drums_enabled?
@@ -8144,15 +8130,15 @@ def normalise_master!(path, cfg)
   # more than twelve is wrong somewhere earlier and should be found there.
   gain = (target - measured).clamp(-12.0, 12.0)
   tmp = "#{path}.norm#{File.extname(path)}"
-  ok = system("ffmpeg", "-nostdin", "-y", "-v", "error", "-i", path,
-              "-af", "volume=#{gain.round(2)}dB," \
-                     "alimiter=limit=#{TRUE_PEAK_CEILING_LINEAR}:attack=1:release=40:level=disabled",
-              # codec_for, not a hardcoded 192k. Every renderer writes mp3 at 320k
-              # and this pass re-encoded the finished file at 192k on the way to
-              # setting its level -- a silent quality drop on every mp3 render,
-              # applied by the one stage whose job was supposed to be a gain.
-              *codec_for(path),
-              tmp, out: File::NULL, err: File::NULL)
+  ok = ToolRun.system("ffmpeg", "-nostdin", "-y", "-v", "error", "-i", path,
+                      "-af", "volume=#{gain.round(2)}dB," \
+                             "alimiter=limit=#{TRUE_PEAK_CEILING_LINEAR}:attack=1:release=40:level=disabled",
+                      # codec_for, not a hardcoded 192k. Every renderer writes mp3 at 320k
+                      # and this pass re-encoded the finished file at 192k on the way to
+                      # setting its level -- a silent quality drop on every mp3 render,
+                      # applied by the one stage whose job was supposed to be a gain.
+                      *codec_for(path),
+                      tmp, out: File::NULL, err: File::NULL)
   if ok && File.file?(tmp) && File.size(tmp).positive?
     FileUtils.mv(tmp, path)
     dmesg("master: #{measured.round(1)} LUFS -> #{target} (#{format('%+.1f', gain)} dB, one static gain)",
@@ -12445,8 +12431,8 @@ def sample_chroma(path)
   return @sample_chroma_cache[path] if @sample_chroma_cache.key?(path)
 
   @sample_chroma_cache[path] = begin
-    raw = IO.popen(["ffmpeg", "-v", "error", "-t", CHROMA_ANALYSIS_SEC.to_s, "-i", path,
-                    "-ac", "1", "-ar", CHROMA_RATE.to_s, "-f", "s16le", "-"], "rb", &:read)
+    raw = ToolRun.capture2(["ffmpeg", "-v", "error", "-t", CHROMA_ANALYSIS_SEC.to_s, "-i", path,
+                            "-ac", "1", "-ar", CHROMA_RATE.to_s, "-f", "s16le", "-"], binmode: true).first
     samples = raw.to_s.unpack("s<*").map { |s| s / PCM16_FULL_SCALE }
     if samples.empty?
       nil
@@ -12882,7 +12868,7 @@ def fluidsynth_render!(out_path, sf2, midi_path, gain:)
 end
 
 def capture(*command)
-  Open3.capture3(*command.flatten.map(&:to_s))
+  ToolRun.capture3(*command)
 end
 
 def tool_available?(name)
@@ -14962,13 +14948,13 @@ module Arrangement
 
     columns ||= columns_for(duration_of(path))
     png = File.join(Dir.tmpdir, "arrangement_#{Process.pid}.png")
-    ok = system("ffmpeg", "-v", "error", "-y", "-i", path,
-                "-lavfi", "showspectrumpic=s=#{columns}x#{BINS}:mode=combined:scale=log:legend=0",
-                "-frames:v", "1", png, out: File::NULL, err: File::NULL)
+    ok = ToolRun.system("ffmpeg", "-v", "error", "-y", "-i", path,
+                        "-lavfi", "showspectrumpic=s=#{columns}x#{BINS}:mode=combined:scale=log:legend=0",
+                        "-frames:v", "1", png, out: File::NULL, err: File::NULL)
     return nil unless ok && File.file?(png)
 
-    raw = IO.popen(["ffmpeg", "-v", "error", "-i", png, "-vf", "format=gray",
-                    "-frames:v", "1", "-f", "rawvideo", "-"], "rb", err: File::NULL, &:read)
+    raw = ToolRun.capture3(["ffmpeg", "-v", "error", "-i", png, "-vf", "format=gray",
+                            "-frames:v", "1", "-f", "rawvideo", "-"], binmode: true).first
     File.unlink(png)
     return nil if raw.nil? || raw.bytesize < columns * BINS
 
@@ -15079,9 +15065,8 @@ NOISE_FLOOR = 0.005
   # would report a busy loop as dynamic, while 3 s is about a bar and tracks
   # what a section does.
   def loudness_envelope(path)
-    out = IO.popen(["ffmpeg", "-hide_banner", "-nostats", "-i", path,
-                    "-af", "ebur128=peak=none", "-f", "null", "-"],
-                   err: %i[child out], &:read)
+    out = ToolRun.capture2e(["ffmpeg", "-hide_banner", "-nostats", "-i", path,
+                             "-af", "ebur128=peak=none", "-f", "null", "-"]).first
     out.scan(/t:\s*([\d.]+)\s+.*?S:\s*(-?[\d.inf]+)/).filter_map do |t, s|
       value = s.to_f
       # -inf and the first three seconds, where the 3 s window is not yet full.
@@ -16182,90 +16167,6 @@ ensure
   segments&.each { |s| FileUtils.rm_f(s[:path]) } # scan: intentional — removes only the temp files this method rendered
 end
 
-# The README, spoken. Stripped of the video tag, the fences, and the
-# markdown so Edge TTS reads the argument, not the markup.
-def master_readme_speech_text
-  path = File.expand_path("../../MASTER/README.md", ROOT)
-  body = File.read(path)
-  body = body.sub(/<!--.*?-->/m, "")
-  body = body.sub(/<video[\s\S]*?<\/video>/i, "")
-  body = body.sub(/\A#\s*MASTER\s*/, "")
-  body = body.split(/^#### /).first.to_s
-  body = body.gsub(/```[\s\S]*?```/, "")
-  body = body.gsub(/^\s*#+\s*/, "")
-  body = body.gsub(/\[([^\]]+)\]\([^)]+\)/, '\1')
-  body = body.gsub(/[*_`]/, "")
-  spoken = body.lines.map(&:strip).reject { |line| line.empty? || line.match?(/\A[\p{Emoji}\s.]+\z/) }.join(" ").gsub(/\s+/, " ").strip
-  spoken.gsub(/Innovasjon Norge/i, "Innovation Norway")
-end
-
-def write_readme_tts!(dest)
-  text = master_readme_speech_text
-  abort "dilla: MASTER/README.md produced no speakable prose" if text.length < 40
-  FileUtils.mkdir_p(File.dirname(dest))
-  mp3 = dest.sub(/\.wav\z/i, ".mp3")
-  voice = speech_tts_voice
-  rate = speech_tts_rate
-  pitch = speech_tts_pitch
-  ok = false
-  Open3.popen2(Gem.ruby, TTS_WORKER, voice, rate, pitch, mp3) do |stdin, _stdout, wait|
-    stdin.write(text)
-    stdin.close
-    ok = wait.value.success?
-  end
-  abort "dilla: README TTS failed (#{voice})" unless ok && File.size?(mp3).to_i > 500
-  if dest.end_with?(".wav")
-    sh! "ffmpeg", "-y", "-i", mp3, "-ac", "2", "-ar", "44100", dest
-    FileUtils.rm_f(mp3)
-  else
-    FileUtils.mv(mp3, dest)
-  end
-  dest
-end
-
-# Bare invoke. Every mix/speech/stem knob the README loop needs is on here
-# so `ruby dilla.rb` is the whole command — no flags, no ENV.
-README_LOOP_DEFAULTS = {
-  "SPEAK" => "1",
-  "SCRAMBLE_SPEECH" => "0",
-  "SPEAK_QUIRK" => "0",
-  "SPEAK_RATE" => "-22%",
-  "STEM_EXPORT" => "1",
-  "KEEP_STEMS" => "1",
-  "COMPOSITION" => "1",
-  "DILLA_QUALITY_GATE" => "1",
-  "LISTEN_PASSES" => "2",
-  "MOTIF_RECALL" => "1",
-  "LAYER_KICK" => "1",
-  "BACKBEAT_CLAP" => "1",
-  "HARMONY_LEAD" => "1",
-  "BARS" => "8",
-  "SYNTH_CYCLE" => "1",
-  "SYNTH_MORPH" => "1",
-  "LOOP_PAD_ROTATE" => "1",
-  "ANALOG_PAD" => "1",
-  "SPACE_ECHO" => "1",
-  "PAD_LAYERS" => "1",
-  "LEARNED_PROGRESSION" => "1",
-  # The kit is synthesised, so the readme loop plays it rather than a recording
-  # of somebody else's drums.
-  "DRUM_LOOP" => "0",
-}.freeze
-
-def readme_loop!
-  force_env!(README_LOOP_DEFAULTS, label: "README_LOOP_DEFAULTS")
-  ENV["RENDER_MODE"] = "record" if ENV["RENDER_MODE"].to_s.empty?
-  apply_render_mode!
-  dest = File.join(OUTPUT_DIR, "loop.wav")
-  tts = File.join(OUTPUT_DIR, "tts.wav")
-  n_bars = ENV.fetch("BARS", "8").to_i
-  dmesg("readme TTS -> #{File.basename(tts)}", unit: "speech0", parent: "dilla0")
-  write_readme_tts!(tts)
-  dmesg("readme loop #{n_bars} bars -> #{File.basename(dest)}", unit: "loop0", parent: "dilla0")
-  render_dilla(dest, n_bars)
-  dest
-end
-
 # --------------------------------------------------------------------------
 # engine part: live_play
 # --------------------------------------------------------------------------
@@ -16733,7 +16634,8 @@ DILLA_BEST_DEFAULTS = DILLA_STYLE_DEFAULTS.slice(
   "SONITEX" => "donuts_soul",
   "SONITEX_PRESET" => "donuts_soul",
   "ANALOG_CHAIN" => "broadcast",
-  "EXTERNAL_KIT" => "03-soulful-vintage",
+  # No EXTERNAL_KIT: a sample pack is somebody else's recording, and the
+  # operator asked on 2026-09-08 for every sound to be synthesised here.
   "MARKOV_DRUMS" => "1",
   "FLAM" => "1",
   "GROOVE_LOCK" => "kick",
@@ -16781,9 +16683,9 @@ RENDER_MODE_DEFAULTS = {
   # produces zero lead events and an 8-bar one produces six, against 54 at
   # sixteen. A short render of this mode is silently a different arrangement.
   album: {
-    # Real sampled kit, with the layered kick an external kit otherwise disables
-    # and the backbeat clap that is implemented and off.
-    "EXTERNAL_KIT" => "03-soulful-vintage", "LAYER_KICK" => "1", "BACKBEAT_CLAP" => "1",
+    # The synthesised kit with its kick layered and the backbeat clap that is
+    # implemented and off. No sample pack: every sound is made here.
+    "LAYER_KICK" => "1", "BACKBEAT_CLAP" => "1",
     # Made new things old: 12-bit sampler grit and even-harmonic tube on the kit.
     "DRUM_CRUSH_MIX" => "0.42", "DRUM_CRUSH_BITS" => "12", "DRUM_TUBE_DB" => "6",
     "DRUM_PRESENCE_DB" => "6", "DRUM_AIR_DB" => "5", "DRUM_CRISP_AIR_DB" => "6",
@@ -18184,7 +18086,11 @@ def promote_progression_hook!(track, beauty, report: nil, path: nil)
     warn "promoted_profiles.json corrupt (#{e.message}), resetting"
     {}
   end
-  key = track.to_s.downcase.tr("-", "_")
+  # The profile's own spelling, not a downcased one: the stream weights are
+  # matched against rotation names, and gospel_bIII downcased is a name no
+  # rotation carries, so its promotions never counted.
+  spelled = track.to_s.downcase.tr("-", "_")
+  key = DillaLofiMachine::PROFILE_KEY_INDEX.fetch(spelled.to_sym, spelled).to_s
   promoted[key] = (promoted[key] || 0) + 1
   promoted["_last"] = { "track" => key, "beauty" => beauty.round(1), "at" => Time.now.utc.iso8601 }
   DillaFrozen.write_json(PROMOTED_PROFILES_PATH, promoted)
@@ -18825,8 +18731,8 @@ def showcase_demo!(dest = File.join(ROOT, "demo.wav"))
     list_file = File.join(tmp, "concat.txt")
     File.write(list_file, parts.map { |p| "file #{Shellwords.escape(p)}" }.join("\n"))
     FileUtils.mkdir_p(File.dirname(dest))
-    system("ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", list_file, "-c", "copy", dest,
-           out: File::NULL, err: File::NULL)
+    ToolRun.system("ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", list_file, "-c", "copy", dest,
+                   out: File::NULL, err: File::NULL)
   end
   ok = File.file?(dest) && File.size(dest) > 0
   dmesg(ok ? "showcase: wrote #{dest} (#{parts.length}/#{styles.length} styles)" : "showcase: failed", unit: "demo0", parent: "dilla0")
@@ -19096,11 +19002,12 @@ def demo_slot_pad_env(idx)
     "PAD_VOICE" => DEMO_PAD_ROTATION[idx % DEMO_PAD_ROTATION.length],
     "PAD_ARP_MODE" => DEMO_PAD_ARP_ROTATION[idx % DEMO_PAD_ARP_ROTATION.length],
     "VOICING" => DEMO_VOICING_ROTATION[idx % DEMO_VOICING_ROTATION.length],
-    "PAD_LAYERS" => "0",
-    "CHORD_BARS" => "1",
-    # The catalogue is a listening reference, not a pad loudness test. Keep
-    # the documented single voice, but leave room for the pocket, bass and
-    # short lead fragments that define the source records.
+    # A stack_* slot plays as its stack, and each progression keeps its own
+    # chord length rather than a one-bar change forced on every slot.
+    "PAD_LAYERS" => "1",
+    # The catalogue is a listening reference, not a pad loudness test: leave
+    # room for the pocket, bass and short lead fragments that define the
+    # source records.
     "PAD_VOL" => "38",
     "HARM_MIX_WEIGHT" => "0.78",
     "HARM_BUS_VOL" => "0.88",
@@ -19239,24 +19146,38 @@ end
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-# Pad / arp / voicing pools for demo-all — distinct sonic identity per slot
-# (stream DNA alone keeps stack_soul+held+jonas_v and reads as "one song").
-# Rhodes / Prophet first — glass/vapor/neon are spice, not the main course.
-# The pad voices the demo draws from.
+# The pad voices demo-all draws from, one per slot -- a distinct identity per
+# slot, because stream DNA alone keeps stack_soul+held+jonas_v and reads as one
+# song.
 #
-# This was fourteen slots naming nine voices, and three of them -- stack_rhodes,
-# stack_prophet, stack_soul -- filled more than half. Measured across all 86
-# tracks, 13 of the 37 defined pad voices were ever selected and 24 never were,
-# including every one of pad_dilla, pad_wonky and pad_royksopp: voices named for
-# the producers this engine models, which had never been rendered once.
+# This is the rotation behind the 08-27 demo the operator called "wonderful and
+# magical" ("i love the pads and chord progressions now"): 53 slots naming 38
+# voices, so every voice named for a producer the engine models (pad_dilla,
+# pad_wonky, pad_royksopp, pad_madlib) is reached. The repeats are deliberate:
+# the Rhodes and Prophet stacks are the house sound and come up most often, and
+# glass, vapor and neon are spice. A three-voice cut replaced it on 09-12
+# without a listening pass and the next demo was judged "horrible", so the
+# full rotation is the default.
 #
-# Widened to reach all of them. The repeats that remain are deliberate -- the
-# Rhodes and Prophet stacks are the house sound and should still come up most
-# often -- but a catalogue of 86 pieces now draws on 37 voices rather than
-# leaning on three.
-#
+# stack_world, stack_giga, stack_yamaha and stack_vintage are layer stacks
+# rather than single voices, so they arrive with their own internal blend; they
+# are spaced out rather than clustered, because two thick stacks in consecutive
+# slots read as one long stack. demo_slot_pad_env keeps PAD_LAYERS=1 so a
+# stack_* slot renders as the stack it names. `texture` names no preset and
+# plays apply_pad_voice_preset!'s Rhodes/Moog/Prophet soul default, which is
+# what that slot played in the demo the rotation comes from.
 DEMO_PAD_ROTATION = %w[
-  rhodes_solo pad_madlib yamaha_solo
+  stack_rhodes stack_prophet pad_dilla stack_soul rhodes
+  pad_wonky prophet stack_glass rhodes_solo stack_vapor
+  stack_rhodes pad_madlib moog stack_prophet vintage
+  stack_soul pad_royksopp blend stack_yamaha glass
+  stack_rhodes fm stack_vintage prophet nylon_soul
+  stack_prophet vapor stack_giga crystal stack_fm_epiano
+  stack_soul yamaha stack_world ice giga_fm
+  stack_rhodes neon supersaw_bed stack_prophet orchestral
+  pulse stack_soul vintage_choir stack_rhodes
+  harmonica stack_vapor accordion stack_glass yamaha_solo
+  stack_soul giga_stack stack_prophet texture
 ].freeze
 DEMO_PAD_ARP_ROTATION = %w[held held wash shimmer held wash figure held].freeze
 DEMO_VOICING_ROTATION = %w[
@@ -19335,6 +19256,7 @@ def demo_all_order
   # DEMO_CATALOG=stream reproduces what the broadcast would actually play,
   # including any DILLA_PROGRESSIONS_ONLY filtering.
   return locked if ENV["DEMO_CATALOG"].to_s.strip.downcase == "stream"
+  return demo_wide_order if ENV["DEMO_CATALOG"].to_s.strip.downcase == "curated"
 
   order = demo_curated_order
   # The crate, when it is asked for. The records are material rather than
@@ -19369,6 +19291,16 @@ def demo_curated_order
   VERIFIED_PROGRESSION_SLOTS.map(&:to_sym) + DillaImprovisation.names
 end
 
+# DEMO_CATALOG=curated: the wide catalogue behind the 08-18 86-piece demo and the
+# 08-27 demo the operator called "wonderful" -- the records on disk first, then
+# the stream rotation, the generated styles and the artist-verified
+# progressions. Opt-in, because the operator asked for bare `ruby dilla.rb` to
+# play the short catalogue; this keeps the long one a word away.
+def demo_wide_order
+  extra = GENERATED_STYLES.map(&:to_sym) + ARTIST_VERIFIED_PROGRESSIONS.keys.map(&:to_sym)
+  (demo_sampled_order + STREAM_TRACKS.map(&:to_sym) + extra).uniq
+end
+
 # Catalogue sizes, derived rather than written down.
 #
 # Both counts in the help text were stale, and not by a little: it advertised
@@ -19394,6 +19326,7 @@ def demo_catalog_sizes
     verified: VERIFIED_PROGRESSION_SLOTS.length,
     improvised: DillaImprovisation.names.length,
     crate: demo_sampled_order.length,
+    wide: demo_wide_order.length,
     stream: stream_track_order.length,
   }
 end
@@ -19436,7 +19369,8 @@ end
 #   DEMO_CREATIVE=1 (default) rotate pads/leads/MIDI/analog + sparse rap so chords read
 #   DEMO_TRACK_TIMEOUT=300 max seconds per track (creative stacks need headroom)
 #   DEMO_RAP_EVERY=4 rap only every Nth track (0 = never; 1 = always)
-#   DEMO_CATALOG=stream restrict to the stream rotation; DEMO_CRATE=1 adds the
+#   DEMO_CATALOG=stream restrict to the stream rotation; DEMO_CATALOG=curated
+#     plays the wide catalogue (demo_wide_order); DEMO_CRATE=1 adds the
 #     records on disk. Sizes are in demo_catalog_sizes -- do not write them here,
 #     the two that used to live in this file drifted to 4x wrong.
 #   DEMO_MP3=0 skip the mp3; DEMO_MP3_BITRATE=192k
@@ -19650,8 +19584,8 @@ end
 def demo_suspect_parts(parts)
   measured = parts.filter_map do |p|
     next unless File.file?(p)
-    out = Open3.capture2e("ffmpeg", "-hide_banner", "-i", p, "-af",
-                          "astats=metadata=1:reset=0", "-f", "null", "-").first
+    out = ToolRun.capture2e("ffmpeg", "-hide_banner", "-i", p, "-af",
+                            "astats=metadata=1:reset=0", "-f", "null", "-").first
     # astats prints "-inf" for a digitally silent file, and the obvious
     # /(-?[\d.]+)/ does not match it -- so the first version of this returned nil
     # there and `next if rms.nil?` dropped the file from the set entirely. A
@@ -19692,8 +19626,8 @@ end
 DEAD_PART_PEAK_DBFS = -70.0
 
 def demo_part_dead?(path)
-  out, status = Open3.capture2e("ffmpeg", "-hide_banner", "-nostats", "-i", path,
-                                "-af", "volumedetect", "-f", "null", "-")
+  out, status = ToolRun.capture2e("ffmpeg", "-hide_banner", "-nostats", "-i", path,
+                                  "-af", "volumedetect", "-f", "null", "-")
   # A file ffmpeg cannot measure is not provably dead, and this runs after hours
   # of rendering: keep it and let demo_report_suspect_parts name it instead.
   return false unless status.success?
@@ -19731,9 +19665,9 @@ end
 
 def demo_parts_uniform?(parts)
   codecs = parts.map do |p|
-    out, status = Open3.capture2e("ffprobe", "-v", "error", "-select_streams", "a:0",
-                                  "-show_entries", "stream=codec_name",
-                                  "-of", "default=nw=1:nk=1", p)
+    out, status = ToolRun.capture2e("ffprobe", "-v", "error", "-select_streams", "a:0",
+                                    "-show_entries", "stream=codec_name",
+                                    "-of", "default=nw=1:nk=1", p)
     status.success? ? out.strip : "unknown"
   end
   codecs.uniq.length <= 1
@@ -19949,10 +19883,23 @@ def album_slot_env(idx)
     env.merge!("COPY_MACHINE" => "6", "WAV_MAP" => image, "WAV_MAP_PATH" => "spiral",
                "DILLA_MIX_BUSES" => "1", "BUS_MOD_SYNC" => "1/8")
   else
-    env.merge!("COPY_MACHINE" => "0", "WAV_MAP" => "", "DILLA_MIX_BUSES" => "0")
+    env.merge!(album_undevice_env)
   end
 
   env
+end
+
+# A beat between device slots loses only the wav-map. Copy Machine and the mix
+# buses go back to what the ringtone layer and the full engine default them to,
+# not to off: the operator loves the ringtone effects ("i also love the ringtool
+# effects"), and switching them off on three beats in four took them out of
+# most of the record. An operator pin still wins.
+def album_undevice_env
+  copies = RingtoneLayer.ringtone_layer_enabled? ? RingtoneLayer::RINGTONE_LAYER_DEFAULTS["COPY_MACHINE"] : "0"
+  buses = FullEngine.full_engine_enabled? ? FullEngine::FULL_ENGINE_DEFAULTS["DILLA_MIX_BUSES"] : "0"
+  { "COPY_MACHINE" => USER_PINNED_ENV.fetch("COPY_MACHINE", copies),
+    "WAV_MAP" => "",
+    "DILLA_MIX_BUSES" => USER_PINNED_ENV.fetch("DILLA_MIX_BUSES", buses) }
 end
 
 # The bed is audio, and audio is not in git. A record that names a loop nobody
@@ -20044,8 +19991,17 @@ def demo_part_rendered?(part)
   !demo_part_dead?(part)
 end
 
+# The ringtone post-chain over the joined demo is opt-in: DEMO_FX=ringtone.
+# Every slot already carries its own ringtone layer (copy machine, LPG, voice
+# stack), and printing tremolo, chorus and a crusher over the whole album on
+# top of that went out by default on 09-12 unheard; the demo it produced was
+# called "horrible".
+def demo_fx_ringtone?
+  ENV.fetch("DEMO_FX", "0") == "ringtone"
+end
+
 def demo_ringtone_fx!(path)
-  return path if ENV.fetch("DEMO_FX", "ringtone") == "0"
+  return path unless demo_fx_ringtone?
 
   # The chain is a colour, not a fader, and it has to leave the level where it
   # found it. Its in/out gains multiply to about -21 LU: parts at -18.8 LUFS come
@@ -20067,8 +20023,8 @@ def demo_ringtone_fx!(path)
     "stereowiden=delay=18:feedback=0.22:crossfeed=0.28",
   ])
   filter = stages.join(",")
-  ok = system("ffmpeg", "-y", "-v", "error", "-i", path, "-af", filter,
-              "-c:a", "pcm_s16le", filtered)
+  ok = ToolRun.system("ffmpeg", "-y", "-v", "error", "-i", path, "-af", filter,
+                      "-c:a", "pcm_s16le", filtered)
   abort "demo ringtone effects failed" unless ok && File.file?(filtered) && File.size(filtered).positive?
 
   after = album_loudness(filtered)[:i]
@@ -20076,8 +20032,8 @@ def demo_ringtone_fx!(path)
     matched = "#{path}.matched.wav"
     gain = (before - after).round(2)
     limiter = "alimiter=limit=#{TRUE_PEAK_CEILING_LINEAR}:attack=1:release=40:level=disabled"
-    ok = system("ffmpeg", "-y", "-v", "error", "-i", filtered, "-af", "volume=#{gain}dB,#{limiter}",
-                "-c:a", "pcm_s16le", matched)
+    ok = ToolRun.system("ffmpeg", "-y", "-v", "error", "-i", filtered, "-af", "volume=#{gain}dB,#{limiter}",
+                        "-c:a", "pcm_s16le", matched)
     abort "demo ringtone level match failed" unless ok && File.file?(matched) && File.size(matched).positive?
 
     FileUtils.mv(matched, filtered)
@@ -20088,10 +20044,24 @@ def demo_ringtone_fx!(path)
   path
 end
 
-def demo_all(bars_count = 4, destination = nil)
+# Twelve bars a slot: long enough for a progression to turn round twice and for
+# the arrangement to leave its intro, which four bars never did -- the 09-14
+# four-bar demo ran under three minutes and was stopped as "horrible". Eight for
+# demo-quick, whose job is a fast A/B.
+DEMO_BARS = 12
+DEMO_QUICK_BARS = 8
+
+# The bar count a demo command renders: a numeric first argument, else BARS as
+# the operator pinned it at load (apply_best_defaults! writes BARS=32 into ENV,
+# so ENV cannot tell a pin from a fill), else the command's default.
+def demo_command_bars(default)
+  (ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift : nil) || USER_PINNED_ENV["BARS"] || default.to_s
+end
+
+def demo_all(bars_count = DEMO_BARS, destination = nil)
   acquire_demo_lock! unless ENV["DEMO_NO_LOCK"] == "1"
   bars_count = bars_count.to_i
-  bars_count = 4 unless bars_count.positive?
+  bars_count = DEMO_BARS unless bars_count.positive?
   dest = destination.to_s
   dest = File.join(ROOT, "demo.wav") if dest.empty?
   # each-mode writes its mp3s to the dilla root and its transient wav straight
@@ -20458,7 +20428,9 @@ voice_stack_every = (ENV["DEMO_VOICE_STACK_EVERY"] || "3").to_i
 if demo_techno_slot?(idx, slug)
   force_env!({ "DRUM_PRESET" => "industrial_techno",
                "POCKET_SET" => "industrial",
-               "BPM" => "92",
+               # The slot pad env pins every slot to 92, so a techno slot
+               # re-pins to its kit's own tempo or the kit plays at hip-hop speed.
+               "BPM" => DillaLofiMachine::DRUM_PRESETS[:industrial_techno][:bpm].to_s,
                "SNARE_EARLY" => "0",
                "KICK_LATE" => "0",
                # The four-bar phrase in schedule_eclectic_percussion! plays over
@@ -22977,17 +22949,17 @@ else
 (name.start_with?("snare") ? 0.22 : 0.12)
 end
     out = File.join(dest, name)
-    ok = system("ffmpeg", "-y", "-ss", t0.to_s, "-t", dur.to_s, "-i", src,
-                "-af", "aformat=sample_rates=44100:channel_layouts=mono,highpass=f=30,alimiter=limit=0.95",
-                "-c:a", "pcm_s16le", out, out: File::NULL, err: File::NULL)
+    ok = ToolRun.system("ffmpeg", "-y", "-ss", t0.to_s, "-t", dur.to_s, "-i", src,
+                        "-af", "aformat=sample_rates=44100:channel_layouts=mono,highpass=f=30,alimiter=limit=0.95",
+                        "-c:a", "pcm_s16le", out, out: File::NULL, err: File::NULL)
     FileUtils.rm_f(out) unless ok
   end
   File.file?(File.join(dest, "kick.wav")) ? dest : nil
 end
 
 def wav_sample_rate(path)
-  out, = Open3.capture2("ffprobe", "-v", "error", "-show_entries", "stream=sample_rate",
-                        "-of", "default=noprint_wrappers=1:nokey=1", path)
+  out, = ToolRun.capture2("ffprobe", "-v", "error", "-show_entries", "stream=sample_rate",
+                          "-of", "default=noprint_wrappers=1:nokey=1", path)
   out.to_s.strip.to_i
 rescue StandardError
   0
@@ -23007,8 +22979,8 @@ def load_kit_wav(path)
     return samples if samples && !samples.empty?
   end
   # ffmpeg fallback — resamples to SAMPLE_RATE, no wavefile gem required
-  raw, = Open3.capture2("ffmpeg", "-v", "error", "-i", path,
-                        "-f", "f32le", "-ac", "1", "-ar", SAMPLE_RATE.to_s, "pipe:1")
+  raw, = ToolRun.capture2("ffmpeg", "-v", "error", "-i", path,
+                          "-f", "f32le", "-ac", "1", "-ar", SAMPLE_RATE.to_s, "pipe:1")
   return if raw.nil? || raw.empty?
   raw.unpack("e*")
 rescue StandardError
@@ -24499,8 +24471,15 @@ end
 # ANALOG_SYNTH=0 puts the soundfont back, for a take voiced against it and for
 # the sampled instruments an oscillator cannot be -- a choir is a recording of
 # people, and no filter setting gets there.
+#
+# The default is a named constant because provenance records it: every take
+# before d6ab8a0c8 played its pads through soundfonts and its sidecar names no
+# ANALOG_SYNTH, so replaying one silently swapped the instrument. A sidecar now
+# says which instrument played even when nobody set the knob.
+ANALOG_SYNTH_DEFAULT = "1"
+
 def analog_synth_enabled?
-  ENV.fetch("ANALOG_SYNTH", "1") != "0"
+  ENV.fetch("ANALOG_SYNTH", ANALOG_SYNTH_DEFAULT) != "0"
 end
 
 # Struck instruments, which keep their envelope whatever they are asked to
@@ -25534,8 +25513,8 @@ def pad_grain_events(duration, source_frames, rng, grain_cfg, segments: nil)
 end
 
 def render_pad_granular_layer(path, pads_path, duration, pad_events = nil)
-  raw, = Open3.capture2("ffmpeg", "-v", "error", "-i", pads_path,
-                        "-f", "f32le", "-ac", "1", "-ar", SAMPLE_RATE.to_s, "pipe:1")
+  raw, = ToolRun.capture2("ffmpeg", "-v", "error", "-i", pads_path,
+                          "-f", "f32le", "-ac", "1", "-ar", SAMPLE_RATE.to_s, "pipe:1")
   return if raw.nil? || raw.length < 4 * SAMPLE_RATE # under a second of source
 
   source = raw.unpack("e*")
@@ -28328,17 +28307,14 @@ def command_help
       ["bass", "[hz]", "A modulating bass tone, played: a speaker check"],
     ]],
     ["demo", "DEMO AND TAKES", [
-      ["demo-all", "[bars] [out.wav]", "#{sizes[:verified]} verified + #{sizes[:improvised]} improvised -> demo.wav + demo.mp3 (a bare invoke)"],
+      ["demo-all", "[bars] [out.wav]", "The older engine's catalogue: #{sizes[:verified]} verified + #{sizes[:improvised]} improvised -> demo.wav + demo.mp3"],
       ["demo-each", "[bars]", "The same catalogue, one mp3 per track, no concat"],
       ["demo-quick", "[bars]", "An evenly spaced sample of the catalogue, for judging a change"],
-      ["demo", "", "Every record in the demo crate against three progressions"],
       ["showcase", "", "A few bars of each named style -> demo.wav"],
-      ["readme-loop", "", "loop.wav plus a spoken reading of MASTER's README"],
       ["album", "[out.mp3]", "Master data/album_tracks.yml into one crossfaded record"],
       ["setlist", "<file.json> [outdir] | save <file.json>", "Render a set of takes from its recipe, or save one"],
       ["replay", "<file.provenance.json>", "Print the command that rebuilds a render"],
       ["rerender", "<src|sidecar> <dest> [KEY=VAL...]", "A render's own recipe with a fresh seed"],
-      ["balance", "<#{BALANCE_VARIANTS.keys.join('|')}>", "Audition the sample-to-pad balance"],
       ["mix", "[version]", "The Sirkel Sag x Voicemails vocal mix (default v11)"],
       ["v7", "", "That vocal mix generation"],
       ["v8", "", "That vocal mix generation"],
@@ -28349,8 +28325,9 @@ def command_help
     ["play", "PLAYING -- speakers, not files", [
       ["stream", "[bars]", "Non-stop rotation, rendered and played (#{STREAM_BARS_COUNT} bars default)"],
       ["play", "[preset] [bars]", "Render one preset and play it (default dilla, 8 bars)"],
+      ["bed", "[render [seed N] [out.wav] | check [seeds 1,2,3] | stop]", "The bed under the narration: passes rendered and played, ducking under speech"],
       ["live", "[passes] [out.wav] | set|recall|broadcast|dig", "The catalogue played as generated; the livesets (live dig rips YouTube, unlicensed)"],
-      ["sines", "[args]", "The continuous stream through the engine's pads, queued and played"],
+      ["sines", "[play | demo | beat]", "The continuous stream through the engine's pads, queued and played; demo and beat render the two kept 08-28 takes' rows -> sines_demo.mp3, sines_beat.wav"],
       ["regenerate", "[bars]", "Fresh render and harmony-forward mix, looped"],
       ["live_now", "", "Loop the cached harmony or full render, no render wait"],
       ["harmony_now", "", "Loop the harmony-forward mix of the cached stems"],
@@ -28477,7 +28454,7 @@ def help(topic = nil)
   puts "    Dilla Lab (#{ROOT})"
   case topic
   when nil
-    puts "", "      ruby dilla.rb                         the catalogue -> demo.wav (demo-all)",
+    puts "", "      ruby dilla.rb                         the catalogue through the bed -> demo.wav",
          "      ruby dilla.rb out.wav [bars]          one render to that path"
     commands.call(sections)
     puts "", "    ruby dilla.rb help <topic> for one section, help knobs for the environment, help all for both."
@@ -28515,6 +28492,8 @@ def knob_help
           DEMO_CRATE=1                     Add the #{sizes[:crate]} records on disk after the catalogue
           IMPROV_SEED=<n>                  Replay one set of improvisations (drawn and logged when unset)
           DEMO_CATALOG=stream              Restrict demo-all to the stream rotation (#{sizes[:stream]})
+          DEMO_CATALOG=curated             The wide catalogue: records, stream, generated, verified (#{sizes[:wide]})
+          DEMO_FX=ringtone                 Print the ringtone chain over the joined demo
           DEMO_MP3=0 / DEMO_MP3_BITRATE    Skip the tracked mp3 / override 128k
           DEMO_TRACK_TIMEOUT=420           Seconds a track gets before the minimal retry
 
@@ -28547,7 +28526,7 @@ def knob_help
           WONKY_DRUM_OVERLAY=1             Wonky overlay; Camel grid on quartal_west_coast / wonky_camel
           LA_BEAT_PROGRESSION=1            Long random progressions + variable chord lengths
           RAP_VOCAL=<slug>                 Fit and mix a vocal (RAP_VOCAL_MIX, _WEIGHT, _BED_WEIGHT, _SPARKLE_DB)
-          SPEAK=0|1                        The README reading on readme-loop; SPEAK_VOICE, SPEAK_RATE
+          SPEAK=0|1                        Speech over a render; SPEAK_VOICE, SPEAK_RATE
           CHOP_CANDIDATES / CHOP_KEEP / CHOP_SPAN   Tune chop; TRACK=<slug> renders over one, CHOP_BED=1 picks by key
 
         DEVICES IN A RENDER (all off by default; each replaces or adds a real layer)
@@ -30844,6 +30823,15 @@ def rap_vocal_atempo_chain(ratio)
   parts.map { |t| "atempo=#{t.round(4)}" }.join(",")
 end
 
+# Stage 1 of a rap vocal fit: clean the voice, then fit its tempo with atempo,
+# which keeps pitch. Nothing here resamples. A rapper is never pitch shifted --
+# not into the beat's key, not by a semitone -- because a moved voice stops
+# being that rapper; the operator's golden rule, and the reason no key-align
+# step exists.
+def rap_vocal_segment_filter(voice_chain, tempo_ratio)
+  "#{voice_chain},#{rap_vocal_atempo_chain(tempo_ratio)},asetpts=PTS-STARTPTS"
+end
+
 # Voice-only chain for demucs "vocals" stems.
 # Goal: hear Jonas V (speech/rap), never residual kick/bass/hats from the source beat.
 # Demucs always leaves some kit bleed; we kill it hard then denoise the floor.
@@ -31233,8 +31221,8 @@ end
 
 def rap_vocal_onset_times(vocal_path, hop: 0.010)
   rate = 8000
-  raw = IO.popen(["ffmpeg", "-v", "error", "-i", vocal_path, "-ac", "1",
-                  "-ar", rate.to_s, "-f", "s16le", "-"], "rb", &:read)
+  raw = ToolRun.capture2(["ffmpeg", "-v", "error", "-i", vocal_path, "-ac", "1",
+                          "-ar", rate.to_s, "-f", "s16le", "-"], binmode: true).first
   samples = raw.to_s.unpack("s<*")
   return [] if samples.empty?
 
@@ -32730,11 +32718,11 @@ RAP_VOCAL_MIN_ANALYSIS_FRAMES = 10
 
 # RMS envelope of `path` in the voice band, one value per hop.
 def rap_vocal_envelope(path, hop: RAP_VOCAL_ANALYSIS_HOP)
-  raw = IO.popen(["ffmpeg", "-v", "error", "-i", path, "-af",
-                  "highpass=f=#{RAP_VOCAL_VOICE_HIGHPASS_HZ}," \
-                  "lowpass=f=#{RAP_VOCAL_VOICE_LOWPASS_HZ}",
-                  "-ac", "1", "-ar", RAP_VOCAL_ANALYSIS_RATE.to_s,
-                  "-f", "s16le", "-"], "rb", &:read)
+  raw = ToolRun.capture2(["ffmpeg", "-v", "error", "-i", path, "-af",
+                          "highpass=f=#{RAP_VOCAL_VOICE_HIGHPASS_HZ}," \
+                          "lowpass=f=#{RAP_VOCAL_VOICE_LOWPASS_HZ}",
+                          "-ac", "1", "-ar", RAP_VOCAL_ANALYSIS_RATE.to_s,
+                          "-f", "s16le", "-"], binmode: true).first
   samples = raw.to_s.unpack("s<*")
   return [] if samples.empty?
 
@@ -32927,226 +32915,6 @@ def rap_vocal_render_snapped!(stretched, fit_path, placements, duration:, outer:
   fit_path
 end
 
-# --- Vocal key alignment -----------------------------------------------------
-# atempo preserves pitch. That is correct for a tempo fit and it is also why the
-# vocal path has never changed a stem's key: rap_vocal_atempo_chain, asetpts and
-# the crossfade loop all leave pitch alone, and nothing else in the chain touches
-# it. So a stem whose notes sit outside the beat's key stays outside it for the
-# entire render.
-#
-# Measured on gunnhild's 86bpm/32bar fit against db_major_minor_fall (Dbmaj7 Cm7 Fm7
-# Bbm7 — Db major): the three strongest pitch classes in the vocal are A (17.5%
-# of voiced energy), Ab (14.7%) and B (13.1%). A and B are not in Db major. In
-# total 38.3% of the vocal's energy landed on non-key notes against 32.1% on key
-# notes, with A — a major third against the Fm7 the progression sits on — the
-# single loudest thing in the take.
-#
-# This is a key mismatch, not a detuned stem: the same fit measures -0.6 cents
-# mean deviation from equal temperament, so it is in tune with itself and with
-# A=440. Correcting it needs a transpose, not a fine-tune.
-RAP_VOCAL_KEY_OCTAVES = (3..5).freeze
-# ~130-988 Hz. Below C3 a semitone is narrower than the analysis resolution
-# (3.9 Hz at N=2048/8kHz), so those octaves would smear into their neighbours.
-RAP_VOCAL_KEY_SR = 8_000
-RAP_VOCAL_KEY_N = 2_048
-RAP_VOCAL_KEY_HOP = 1_024
-# A transpose is a real cost -- asetrate resampling shifts formants, so a voice
-# moved far reads as pitched-up/down rather than as the same singer in a new
-# key. Cap it at a whole tone and take the smaller of two near-equal wins.
-RAP_VOCAL_KEY_MAX_SHIFT = 2
-# Don't spend a transpose on a coin-flip: the shift has to move at least this
-# much of the vocal's energy onto key notes to be worth the formant cost.
-RAP_VOCAL_KEY_MIN_GAIN = 0.05
-
-# Chroma vector: 12 pitch classes, framewise Goertzel at each class's frequency
-# in each analysed octave. Goertzel rather than a full FFT because only 36 of
-# 1024 bins are ever read, and framewise rather than one pass over the whole
-# take because a 16s window resolves to 0.06 Hz — far narrower than a sung note
-# wanders, so the energy would smear across bins instead of accumulating.
-def audio_chroma(path)
-  raw = pipe_floats(path, "highpass=f=110,lowpass=f=1100," \
-                          "aformat=sample_fmts=flt:channel_layouts=mono:sample_rates=#{RAP_VOCAL_KEY_SR}")
-  return nil if raw.length < RAP_VOCAL_KEY_N
-
-  targets = RAP_VOCAL_KEY_OCTAVES.flat_map do |octave|
-    (0..11).map do |pc|
-      midi = ((octave + 1) * 12) + pc
-      [pc, 440.0 * (2**((midi - 69) / 12.0))]
-    end
-  end
-  # Goertzel coefficient per target frequency, plus a Hann window reused across
-  # frames.
-  coeffs = targets.map { |pc, hz| [pc, 2.0 * Math.cos(2.0 * Math::PI * hz / RAP_VOCAL_KEY_SR)] }
-  han = Array.new(RAP_VOCAL_KEY_N) { |n| 0.5 - (0.5 * Math.cos(2.0 * Math::PI * n / (RAP_VOCAL_KEY_N - 1))) }
-  chroma = Array.new(12, 0.0)
-  frames = 0
-  pos = 0
-  while pos + RAP_VOCAL_KEY_N <= raw.length
-    win = Array.new(RAP_VOCAL_KEY_N) { |n| raw[pos + n] * han[n] }
-    rms = Math.sqrt(win.sum { |v| v * v } / RAP_VOCAL_KEY_N)
-    # Voiced frames only. Silence and breath carry no key, and a gated stem is
-    # mostly silence — including it adds a flat floor to every class.
-    if rms > 0.008
-      coeffs.each do |pc, coeff|
-        s1 = 0.0
-        s2 = 0.0
-        i = 0
-        while i < RAP_VOCAL_KEY_N
-          s0 = win[i] + (coeff * s1) - s2
-          s2 = s1
-          s1 = s0
-          i += 1
-        end
-        chroma[pc] += Math.sqrt((s1 * s1) + (s2 * s2) - (coeff * s1 * s2))
-      end
-      frames += 1
-    end
-    pos += RAP_VOCAL_KEY_HOP
-  end
-  return nil if frames.zero?
-
-  total = chroma.sum
-  return nil unless total.positive?
-
-  chroma.map { |v| v / total }
-end
-
-# Root pitch class of a chord name. PAD_CHORD_LOOKUP only holds the voicings the
-# pad engine registered, and the progressions name chords it never registered:
-# db_major_minor_fall is Dbmaj7/Cm7/Fm7/Bbm7 while the lookup carries the ...maj9/m9
-# forms, so every one of its four chords missed and the whole progression scored
-# as having no harmony at all.
-CHORD_ROOT_RE = /\A([A-G])([b#]?)/
-def chord_name_root_class(name)
-  m = CHORD_ROOT_RE.match(name.to_s)
-  return nil unless m
-
-  base = { "C" => 0, "D" => 2, "E" => 4, "F" => 5, "G" => 7, "A" => 9, "B" => 11 }[m[1]]
-  return nil if base.nil?
-
-  case m[2]
-  when "b" then (base - 1) % 12
-  when "#" then (base + 1) % 12
-  else base
-  end
-end
-
-# Third and fifth implied by the name, so a chord the lookup does not carry still
-# contributes the interval that decides major vs minor -- the distinction the
-# vocal actually clashes with.
-def chord_name_tone_classes(name)
-  root = chord_name_root_class(name)
-  return [] if root.nil?
-
-  body = name.to_s.sub(CHORD_ROOT_RE, "").sub(%r{/.*\z}, "")
-  minor = body.match?(/\Am(?!aj)/)
-  dim = body.match?(/\Adim|\A0/)
-  third = if dim || minor then 3 else 4 end
-  fifth = dim ? 6 : 7
-  [root, (root + third) % 12, (root + fifth) % 12]
-end
-
-# How strongly each pitch class belongs to the progression, as a weight rather
-# than a member/non-member flag. A binary set is useless on the slash-chord
-# progressions: pedal_e_descent (D/E Db/E C/E Bm/E Bbm/E Am/E) unions to all
-# twelve classes, so every shift scored a perfect 100% and the comparison
-# carried no information. Counting how many chords contain a class keeps the
-# tonic centre distinguishable from a passing chromatic tone.
-def progression_pitch_class_weights(progression)
-  names = CHORD_PROGRESSIONS[progression]
-  return nil if names.nil? || names.empty?
-
-  weights = Array.new(12, 0.0)
-  names.each do |name|
-    chord = PAD_CHORD_LOOKUP[name]
-    classes = Array(chord && chord[:hz]).filter_map do |hz|
-      next nil unless hz.to_f.positive?
-      (69 + (12 * Math.log2(hz.to_f / 440.0))).round % 12
-    end
-    classes = chord_name_tone_classes(name) if classes.empty?
-    # Root and third carry the chord's identity; count the whole voicing but
-    # give the root extra weight so the tonic centre wins ties.
-    classes.uniq.each { |c| weights[c] += 1.0 }
-    root = chord_name_root_class(name)
-    weights[root] += 0.5 if root
-  end
-  total = weights.sum
-  return nil unless total.positive?
-
-  weights.map { |w| w / total }
-end
-
-# Pick the transpose that best lines the vocal's energy up with the progression's
-# harmony: the dot product of the vocal chroma against the shifted chord-tone
-# weights. Ties go to the smaller shift, and 0 wins unless a shift clears
-# RAP_VOCAL_KEY_MIN_GAIN relative to it, so a vocal already in key is untouched.
-def rap_vocal_key_shift(chroma, key_weights, max_shift: RAP_VOCAL_KEY_MAX_SHIFT)
-  return 0 if chroma.nil? || key_weights.nil?
-
-  scored = (-max_shift..max_shift).map do |shift|
-    # Shifting the audio up by `shift` moves energy at class c to c+shift, so
-    # compare chroma[c] against the weight of where it lands.
-    fit = (0..11).sum { |c| chroma[c] * key_weights[(c + shift) % 12] }
-    [shift, fit]
-  end
-  base = scored.find { |shift, _| shift.zero? }.last
-  return 0 unless base.positive?
-
-  # The threshold is relative, and it scales with the size of the move. Relative
-  # because the dot product's scale depends on how concentrated the
-  # progression's weights are, so one absolute number would mean different
-  # things for a 4-chord vamp and a 12-class slash cycle. Scaled because the
-  # cost is not flat: a whole tone through asetrate resamples formants by 12%,
-  # which reads as a pitched-up singer rather than the same singer in a new key,
-  # so it has to earn twice what a semitone does. Measured on gunnhild: this is
-  # what separates db_major_minor_fall (+1 at 5.1%, taken) from its own +2 at 8.7%
-  # (rejected — a bigger move on weaker evidence).
-  qualified = scored.select do |shift, fit|
-    next false if shift.zero?
-    (fit - base) / base >= RAP_VOCAL_KEY_MIN_GAIN * shift.abs
-  end
-  return 0 if qualified.empty?
-
-  qualified.max_by { |shift, fit| [fit.round(6), -shift.abs] }.first
-end
-
-# asetrate raises pitch and tempo together; atempo puts the tempo back. That
-# leaves the take its original length in the new key. Formants move with the
-# resample, which is the reason RAP_VOCAL_KEY_MAX_SHIFT is small.
-def rap_vocal_pitch_shift_chain(semitones)
-  return nil if semitones.to_i.zero?
-
-  ratio = 2**(semitones.to_f / 12.0)
-  "asetrate=#{(SAMPLE_RATE * ratio).round},aresample=#{SAMPLE_RATE}," \
-    "#{rap_vocal_atempo_chain(1.0 / ratio)}"
-end
-
-# Resolved once per fit and cached on the catalog entry: the chroma pass costs a
-# full decode plus 36 Goertzel accumulators per frame, and a stem's key does not
-# change between renders.
-def rap_vocal_resolved_key_shift(entry, vocal_path, progression)
-  return 0 if ENV["RAP_VOCAL_KEY_ALIGN"] == "0"
-
-  forced = ENV["RAP_VOCAL_KEY_SHIFT"]
-  return forced.to_i.clamp(-6, 6) if forced && !forced.strip.empty?
-
-  key_weights = progression_pitch_class_weights(progression)
-  return 0 if key_weights.nil?
-
-  chroma = entry.is_a?(Hash) ? entry["chroma"] : nil
-  if chroma.nil? || chroma.length != 12
-    chroma = audio_chroma(vocal_path)
-    return 0 if chroma.nil?
-    if entry.is_a?(Hash)
-      entry["chroma"] = chroma.map { |v| v.round(5) }
-      cat = rap_vocal_load_catalog
-      cat["vocals"] = Array(cat["vocals"]).map { |v| v["slug"] == entry["slug"] ? entry : v }
-      rap_vocal_save_catalog!(cat)
-    end
-  end
-  rap_vocal_key_shift(chroma, key_weights)
-end
-
 # Where in the take this track enters.
 #
 # The offset above is computed from the take alone -- densest region, snapped
@@ -33261,16 +33029,10 @@ def rap_vocal_fit!(slug_or_path, beat_bpm:, n_bars:, bar_offset: nil, progressio
   variant = variant.to_i
   ss = rap_vocal_variant_offset(ss, variant, phrases:, vocal_path:) if variant.positive? && !bar_offset
   out_dir = File.dirname(vocal_path)
-  # Transposed into the beat's key in stage 1 below. Resolved here because the
-  # shift has to be part of the filename: bpm+bars alone named the same file for
-  # two tracks at the same tempo in different keys, so whichever rendered first
-  # won and the second silently reused a fit built for someone else's harmony.
-  key_shift = rap_vocal_resolved_key_shift(entry, vocal_path, progression)
-  key_tag = key_shift.zero? ? "" : format("_key%+d", key_shift)
   # variant is part of the name because the fit is cached on this path: without
-  # it two tracks at one tempo and key were handed the same rendered vocal.
+  # it two tracks at one tempo were handed the same rendered vocal.
   variant_tag = variant.positive? ? "_v#{variant}" : ""
-  fit_path = File.join(out_dir, "fit_#{beat_bpm.round}_#{n_bars}bars#{key_tag}#{variant_tag}.wav")
+  fit_path = File.join(out_dir, "fit_#{beat_bpm.round}_#{n_bars}bars#{variant_tag}.wav")
   # Already-isolated → light polish only (no second heavy makeup that re-lifts bleed).
   # Fresh/unclean → full voice-only isolation.
   voice_chain = isolated ? rap_vocal_voice_polish_filter : rap_vocal_isolation_filter
@@ -33314,18 +33076,8 @@ def rap_vocal_fit!(slug_or_path, beat_bpm:, n_bars:, bar_offset: nil, progressio
   # With gunnhild (11.5s usable from ss) a 32-bar render wrapped ~8 times, which
   # is exactly the "choppy" report.
   seg_path = File.join(out_dir, "seg_#{beat_bpm.round}_#{n_bars}bars.wav")
-  # Transpose in the same pass as the tempo fit and before the loudnorm/limiter
-  # tail, so the level measured downstream is the level of what actually plays.
-  pitch_chain = rap_vocal_pitch_shift_chain(key_shift)
-  if pitch_chain
-    dmesg("rap-vocal key: #{key_shift.positive? ? '+' : ''}#{key_shift} semitone#{key_shift.abs == 1 ? '' : 's'} " \
-          "into #{progression || 'beat'} key",
-          unit: "vox0", parent: "dilla0")
-  end
-  seg_af = ["#{voice_chain},#{rap_vocal_atempo_chain(ratio)}", pitch_chain, "asetpts=PTS-STARTPTS"]
-           .compact.join(",")
   sh! "ffmpeg", "-y", "-ss", ss.round(3).to_s, "-i", vocal_path,
-      "-af", seg_af,
+      "-af", rap_vocal_segment_filter(voice_chain, ratio),
       "-ar", SAMPLE_RATE.to_s, "-ac", "2", "-c:a", "pcm_s16le", seg_path
   seg_len = audio_duration_sec(seg_path).to_f
 
@@ -33407,7 +33159,7 @@ def rap_vocal_fit!(slug_or_path, beat_bpm:, n_bars:, bar_offset: nil, progressio
                           "source_bpm" => vocal_bpm, "tempo_ratio" => ratio.round(4),
                           "rms_db" => peak, "sub_bleed_db" => sub_bleed,
                           "snapped_lines" => snapped&.size, "has_pulse" => has_pulse,
-                          "key_shift" => key_shift, "progression" => progression&.to_s,
+                          "progression" => progression&.to_s,
                           "voice_only" => true }
     entry["bpm_estimate"] = vocal_bpm if vocal_bpm.positive?
     entry["voice_only"] = true
@@ -34249,8 +34001,8 @@ module DillaTiming
   end
 
   def pocket_envelope(path, filter)
-    raw = IO.popen(["ffmpeg", "-v", "error", "-i", path, "-af", filter,
-                    "-ac", "1", "-ar", POCKET_RATE.to_s, "-f", "s16le", "-"], "rb", &:read)
+    raw = ToolRun.capture2(["ffmpeg", "-v", "error", "-i", path, "-af", filter,
+                            "-ac", "1", "-ar", POCKET_RATE.to_s, "-f", "s16le", "-"], binmode: true).first
     samples = raw.to_s.unpack("s<*")
     return [] if samples.empty?
 
@@ -34425,9 +34177,32 @@ def replay_environment(src, overrides = {})
   path = src.end_with?(DillaProvenance::MANIFEST_EXT) ? src : DillaProvenance.manifest_path(src)
   abort "no sidecar at #{path}" unless File.file?(path)
 
-  JSON.parse(File.read(path)).fetch("environment")
-      .reject { |key, _| key.match?(/RENDER_SEED\z/) }
-      .merge(overrides)
+  recorded = JSON.parse(File.read(path)).fetch("environment")
+  replay_renamed(recorded)
+    .reject { |key, _| key.match?(/RENDER_SEED\z/) }
+    .merge(overrides)
+end
+
+# Sidecars from before the wonky rename name knobs and values the engine no
+# longer reads, and a replay that passes them on renders without the thing it
+# claims to reproduce. The translation lives here, at the one reader of old
+# recipes, and nowhere in the engine: a knob has one name.
+REPLAY_RENAMED_PREFIXES = { "FLYLO_" => "WONKY_" }.freeze
+REPLAY_RENAMED_VALUES = {
+  "LEAD_VOICE" => { "flylo" => "wonky" },
+  "PAD_VOICE" => { "pad_flylo" => "pad_wonky" },
+  "LEAD_ARP_MODE" => { "flylo_spiral" => "wonky_spiral" },
+  "SIDECHAIN_STYLE" => { "flylo" => "wonky" },
+}.freeze
+
+# A recipe that carries both spellings keeps the new one.
+def replay_renamed(environment)
+  renamed = environment.each_with_object({}) do |(key, value), out|
+    old_prefix = REPLAY_RENAMED_PREFIXES.keys.find { |prefix| key.start_with?(prefix) }
+    current = old_prefix ? key.sub(old_prefix, REPLAY_RENAMED_PREFIXES[old_prefix]) : key
+    out[current] = value unless old_prefix && environment.key?(current)
+  end
+  renamed.to_h { |key, value| [key, REPLAY_RENAMED_VALUES.fetch(key, {}).fetch(value, value)] }
 end
 
 # KEY=VAL pairs left on the command line. One command covers the fresh-take,
@@ -34450,93 +34225,6 @@ def rerender_from_sidecar(src, dest, overrides = {})
   warn "  #{env.size} vars replayed, seed dropped, BARS=#{bars} " \
        "SAMPLE_LOOP=#{env['SAMPLE_LOOP'].inspect} MASTER_WIDTH=#{env['MASTER_WIDTH'].inspect}"
   exec(env, RbConfig.ruby, File.join(ROOT, "dilla.rb"), "dilla", "--bars=#{bars}", dest)
-end
-
-# Sample-to-pad balance, so it can be chosen by ear rather than by argument.
-#
-# The record carries its own harmony, so nothing else should state one.
-# semua_untuk_mu has vocal chords in it, and a curated progression played by pads
-# on top is a second piece of music in the same bar — which is what the harmonic
-# guard says in as many words. That guard only fires when the loop's key is
-# unreadable; this loop reads G minor at fit 0.75, so the pads played.
-#
-# DRUM_FORWARD=0 throughout: the default carves the bed at 180/3000 Hz to clear
-# room for drums, which removes the sample's body and leaves the noisy middle.
-BALANCE_VARIANTS = {
-  # Mutes exactly the layer list the harmonic guard mutes, plus the synth voices.
-  # FLIP=0 because the chords are IN the record and chopping it destroys them.
-  "chordless" => { "PAD_VOL" => "0", "HARM_MIX_WEIGHT" => "0", "MELODIC_LEAD" => "0",
-                   "SCALE_LEAD" => "0", "LEAD_ARP" => "0", "HARMONY_LEAD" => "0",
-                   "PAD_LAYERS" => "0", "PAD_TEXTURE" => "0", "CHOIR_VOX" => "0",
-                   "LUSH_SYNTH" => "0", "SYNTH_MORPH" => "0", "LEAD_MORPH" => "0",
-                   "SAMPLE_LOOP_VOL" => "1.2", "SAMPLE_LOOP_WEIGHT" => "1.5",
-                   "DRUM_FORWARD" => "0", "FLIP" => "0" },
-  "flip_only" => { "FLIP" => "1", "FLIP_RECORDS" => "1", "VOCAL_CHOPS" => "0", "DRUM_FORWARD" => "0" },
-  "flip" => { "FLIP" => "1", "DRUM_FORWARD" => "0" },
-  "a_sample_forward" => { "SAMPLE_LOOP_VOL" => "1.3", "SAMPLE_LOOP_WEIGHT" => "1.6",
-                          "HARM_BUS_VOL" => "1.4", "DRUM_FORWARD" => "0" },
-  "b_pads_back" => { "SAMPLE_LOOP_VOL" => "1.3", "SAMPLE_LOOP_WEIGHT" => "1.6",
-                     "HARM_BUS_VOL" => "1.0", "DRUM_FORWARD" => "0" },
-  "c_sample_leads" => { "SAMPLE_LOOP_VOL" => "1.5", "SAMPLE_LOOP_WEIGHT" => "1.8",
-                        "HARM_BUS_VOL" => "0.7", "DRUM_FORWARD" => "0" },
-}.freeze
-
-BALANCE_RECIPE = "renders/beats/dilla_semua_96.mp3"
-
-def render_balance(name)
-  overrides = BALANCE_VARIANTS.fetch(name) { abort "unknown variant #{name}" }
-  dest = File.join(ROOT, "semua_#{name}.wav")
-  warn "#{name} -> #{dest}"
-  warn "  sample vol #{overrides['SAMPLE_LOOP_VOL']} weight #{overrides['SAMPLE_LOOP_WEIGHT']}  " \
-       "pads #{overrides['HARM_BUS_VOL']}  bed carve off"
-  rerender_from_sidecar(File.join(ROOT, BALANCE_RECIPE), dest, overrides)
-end
-
-# A demo of dilla is generated, not assembled from whatever is sitting in
-# renders/beats — that would treat old output as the work. SAMPLE_LOOP picks the
-# record and TRACK picks the progression, chosen independently so each record is
-# heard against more than one harmonic setting.
-#
-# semua_untuk_mu carries carries_own_harmony in the crate, so its beats mute the
-# tonal layers automatically. Nothing here special-cases it; the flag does.
-DEMO_PROGRESSIONS = %w[pedal_e_descent circle_fifths_descent minor_iv_loop].freeze
-DEMO_SAMPLES = %w[semua_untuk_mu arat_swost_wolet kembara_rindu lo_borges].freeze
-DEMO_MIN_BYTES = 1_000_000
-
-def generate_demo(bars: ENV.fetch("BARS", "32"), parallel: ENV.fetch("PARALLEL", "3").to_i)
-  out = ROOT
-  FileUtils.mkdir_p(out)
-  base = replay_environment(File.join(ROOT, BALANCE_RECIPE))
-
-  jobs = DEMO_SAMPLES.flat_map do |sample|
-    DEMO_PROGRESSIONS.map do |progression|
-      { sample:, progression:, dest: File.join(out, "#{sample}__#{progression}.wav") }
-    end
-  end
-  jobs.reject! { |job| File.file?(job[:dest]) && File.size(job[:dest]) > DEMO_MIN_BYTES }
-
-  puts "#{jobs.size} beats to render (#{DEMO_SAMPLES.size} records x " \
-       "#{DEMO_PROGRESSIONS.size} progressions), #{bars} bars, #{parallel} at a time"
-
-  jobs.each_slice(parallel) { |batch| demo_render_batch(batch, base, bars) }
-  puts "#{jobs.count { |job| File.file?(job[:dest]) }}/#{jobs.size} beats in #{out}/"
-end
-
-def demo_render_batch(batch, base, bars)
-  pids = batch.map do |job|
-    env = base.merge("SAMPLE_LOOP" => job[:sample], "TRACK" => job[:progression],
-                     "PROGRESSION" => job[:progression], "BARS" => bars)
-    log = File.join(Dir.tmpdir, "demo_#{job[:sample]}__#{job[:progression]}.log")
-    puts "  -> #{File.basename(job[:dest])}"
-    spawn(env, RbConfig.ruby, File.join(ROOT, "dilla.rb"), "dilla", "--bars=#{bars}", job[:dest],
-          out: log, err: log)
-  end
-  pids.each { |pid| Process.wait(pid) }
-  batch.each do |job|
-    ok = File.file?(job[:dest]) && File.size(job[:dest]) > DEMO_MIN_BYTES
-    puts format("  %-46s %s", File.basename(job[:dest]),
-                ok ? "ok #{File.size(job[:dest]) / 1_048_576}MB" : "FAILED")
-  end
 end
 
 # Album master. The chain per track, in this order:
@@ -34618,7 +34306,7 @@ def album_stem(src, title, index, out_dir)
   chain = "volume=#{gain}dB," \
           "alimiter=limit=#{10**(ALBUM_TARGET_TP / 20.0)}:level=disabled," \
           "aresample=44100:out_sample_fmt=s16:dither_method=triangular_hp"
-  Open3.capture2e("ffmpeg", "-hide_banner", "-nostats", "-y", "-i", staged, "-af", chain, "-ac", "2", dest)
+  ToolRun.capture2e("ffmpeg", "-hide_banner", "-nostats", "-y", "-i", staged, "-af", chain, "-ac", "2", dest)
   FileUtils.rm_f(staged)
 
   after = album_loudness(dest)
@@ -34640,9 +34328,9 @@ def album_stage_mid_side(src, side_cut, index, out_dir)
           "[m_b]pan=mono|c0=0.5*c0-0.5*c1,volume=#{side_cut}dB[sid];" \
           "[mid][sid]join=inputs=2:channel_layout=stereo[ms];" \
           "[ms]pan=stereo|c0=c0+c1|c1=c0-c1,"
-  Open3.capture2e("ffmpeg", "-hide_banner", "-nostats", "-y", "-i", src,
-                  "-filter_complex", "[0:a]#{graph}anull[o]", "-map", "[o]",
-                  "-ac", "2", "-ar", "44100", staged)
+  ToolRun.capture2e("ffmpeg", "-hide_banner", "-nostats", "-y", "-i", src,
+                    "-filter_complex", "[0:a]#{graph}anull[o]", "-map", "[o]",
+                    "-ac", "2", "-ar", "44100", staged)
   staged
 end
 
@@ -34659,9 +34347,9 @@ def album_trim_to_target(stems)
     next stem if trim.abs < 0.1
 
     dest = stem.sub(".wav", "_lvl.wav")
-    Open3.capture2e("ffmpeg", "-hide_banner", "-nostats", "-y", "-i", stem,
-                    "-af", "volume=#{trim}dB,alimiter=limit=#{10**(ALBUM_TARGET_TP / 20.0)}:level=disabled",
-                    "-ac", "2", "-ar", "44100", dest)
+    ToolRun.capture2e("ffmpeg", "-hide_banner", "-nostats", "-y", "-i", stem,
+                      "-af", "volume=#{trim}dB,alimiter=limit=#{10**(ALBUM_TARGET_TP / 20.0)}:level=disabled",
+                      "-ac", "2", "-ar", "44100", dest)
     dest
   end
 end
@@ -34686,7 +34374,7 @@ def album_stitch(stems, dest)
   argv = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y"]
   stems.each { |stem| argv << "-i" << stem }
   argv += ["-filter_complex_script", script, "-map", "[lim]", "-c:a", "libmp3lame", "-q:a", "0", dest]
-  system(*argv)
+  ToolRun.system(*argv)
 end
 
 def album_master(dest)
@@ -34798,6 +34486,1557 @@ def apply_flags!(argv)
     ENV["SONITEX"] = ENV[env_name] if env_name == "SONITEX_PRESET"
     USER_PINNED_ENV["SONITEX"] = ENV["SONITEX"] if env_name == "SONITEX_PRESET"
     true
+  end
+end
+
+# The bed: dilla's harmony, a drummer who plays behind the beat, a lead and a
+# bass, and no two passes alike.
+#
+# It began as the pad under MASTER's narration, rendered by a script beside the
+# hooks, and it sounded better than the engine's own catalogue; so it is the
+# engine's now (operator, 2026-09-14). A bare `ruby dilla.rb` plays the
+# catalogue through it into demo.wav, and `ruby dilla.rb bed` is the narration
+# player, which ducks under speech: speaker.rb holds a flag file while a line
+# plays, and the player crossfades to a copy of the pass with the voice band
+# carved out and the level down.
+#
+# STUDIO/dilla/data/bed.yml declares every number that shapes the sound; this
+# module is the method. It renders with ffmpeg and its own oscillators, and
+# reaches into the engine only for what the engine owns: the progression table,
+# the chord resolver, the catalogue's order and the bass line's generator.
+module Bed
+  module_function
+
+  DATA_FILE = File.join(ROOT, "data", "bed.yml")
+  # The narration's own files stay beside its hooks: the player's pid, the
+  # speaking flag speaker.rb holds, and the log of which seed each pass was.
+  HOOKS = File.join(Dir.home, ".claude", "hooks")
+  PIDFILE = File.join(HOOKS, "bed.pid")
+  LOG = File.join(HOOKS, "bed.log")
+
+  BED = YAML.load_file(DATA_FILE, aliases: true)
+
+  # A word option's value: `seed 42` gives "42".
+  def word(argv, name) = (index = argv.index(name)) && argv[index + 1]
+
+  BPM = Float(BED.fetch("bpm"))
+  BEAT = 60.0 / BPM
+  BAR = BEAT * 4
+  STEP = BEAT / 4.0
+  BARS_PER_CHORD = Integer(BED.fetch("bars_per_chord"))
+  CHORD_BARS = BAR * BARS_PER_CHORD
+  CHORDS = Integer(BED.fetch("chords_per_pass"))
+  XFADE = Float(BED.fetch("crossfade_s"))
+  OVERSAMPLE = 44_100 * Integer(BED.fetch("oversample"))
+  # Every aeval stage names its layout and is followed by an explicit format.
+  # Left to negotiate on its own inside a graph, an identity aeval moved the
+  # 2-4 kHz band by 2.4 dB through the filters after it, measured on this bed's
+  # own stems, and the tilt that sat downstream measured as if it were not there.
+  PINNED = "aformat=sample_fmts=fltp:channel_layouts=stereo"
+
+  def ffmpeg!(*args, what:)
+    _out, err, status = ToolRun.capture3("ffmpeg", "-y", "-hide_banner", *args)
+    abort "bed #{what}: #{err.lines.last}" unless status.success?
+    true
+  end
+
+  # Randomness is per thread. Items rendered in parallel each get a stream seeded
+  # in order from the pass seed, so a pass replays exactly whatever order the
+  # threads finish in.
+  def rand(*args) = (Thread.current[:rng] || Random).rand(*args)
+  def rng = Thread.current[:rng] || Random
+
+  WORKERS = [Etc.nprocessors - 2, 2].max
+
+  def each_parallel(items)
+    seeds = items.map { rand(2**31) }
+    results = Array.new(items.size)
+    queue = Queue.new
+    items.each_index { |index| queue << index }
+    Array.new([WORKERS, items.size].min) do
+      Thread.new do
+        while (index = (queue.pop(true) rescue nil))
+          Thread.current[:rng] = Random.new(seeds[index])
+          results[index] = yield(items[index], index)
+        end
+      end
+    end.each(&:join)
+    results
+  end
+
+  SCRATCH = File.join(SCRATCH_DIR, "bed")
+
+  def scratch(name)
+    FileUtils.mkdir_p(SCRATCH)
+    File.join(SCRATCH, "#{Process.pid}_#{name}.wav")
+  end
+
+  # The harmony
+
+  PITCH = { "C" => 0, "D" => 2, "E" => 4, "F" => 5, "G" => 7, "A" => 9, "B" => 11 }.freeze
+
+  def midi_hz(note) = 440.0 * (2**((note - 69) / 12.0))
+
+  # Equal temperament, on purpose. Stretched octaves come from the inharmonic
+  # strings of a piano; a Rhodes tine is tuned straight, and the sampled Rhodes
+  # carries whatever its own samples carry.
+  def pitch_class(name)
+    step = PITCH[name[0].to_s.upcase] or return nil
+    name[1..].to_s.each_char do |mark|
+      step += 1 if mark == "#"
+      step -= 1 if mark == "b"
+    end
+    step % 12
+  end
+
+  # Longest suffix first, because "m7b5" starts with "m7" and "maj9" starts with
+  # "m". The empty suffix comes last and matches a bare triad.
+  QUALITIES = [
+    ["maj13#11", [0, 4, 7, 11, 18, 21]],
+    ["maj13",    [0, 4, 7, 11, 14, 21]],
+    ["mmaj7",    [0, 3, 7, 11]],
+    ["maj9",     [0, 4, 7, 11, 14]],
+    ["maj7",     [0, 4, 7, 11]],
+    ["m7b5",     [0, 3, 6, 10]],
+    ["m11",      [0, 3, 7, 10, 17]],
+    ["m9",       [0, 3, 7, 10, 14]],
+    ["m7",       [0, 3, 7, 10]],
+    ["m6",       [0, 3, 7, 9]],
+    ["9sus4",    [0, 5, 7, 10, 14]],
+    ["7sus4",    [0, 5, 7, 10]],
+    ["7sus",     [0, 5, 7, 10]],
+    ["sus9",     [0, 5, 7, 14]],
+    ["sus4",     [0, 5, 7]],
+    ["add9",     [0, 4, 7, 14]],
+    ["7alt",     [0, 4, 8, 10, 13]],
+    ["7b9",      [0, 4, 7, 10, 13]],
+    ["7#9",      [0, 4, 7, 10, 15]],
+    ["7#11",     [0, 4, 7, 10, 18]],
+    ["13",       [0, 4, 7, 10, 14, 21]],
+    ["11",       [0, 4, 7, 10, 17]],
+    ["9",        [0, 4, 7, 10, 14]],
+    ["7",        [0, 4, 7, 10]],
+    ["6",        [0, 4, 7, 9]],
+    ["m",        [0, 3, 7]],
+    ["",         [0, 4, 7]],
+  ].freeze
+
+  # dilla tags a few symbols with words that are instructions to its engine
+  # rather than parts of the chord: a filtered voicing, a low octave, a climax.
+  TAGS = /(fil|low|nc|climax|hendrix|overg)+\z/
+
+  Chord = Struct.new(:symbol, :root, :bass, :intervals, keyword_init: true)
+
+  # A chord symbol as pitch classes. Nil when the symbol is not one this
+  # understands, which is how the caller skips dilla's stranger spellings.
+  def parse_chord(symbol) = parse_symbol(symbol) || resolved_chord(symbol)
+
+  # The catalogue's improvised progressions spell chords this table does not
+  # hold -- quartal stacks, sus2, bare triad words -- and the engine resolves every
+  # one of them to frequencies. Those frequencies are the chord: the lowest note
+  # is its root, and the rest are its tones above it.
+  def resolved_chord(symbol)
+    hz = Array(resolve_pad_chord_symbol(symbol.to_s)&.dig(:hz)).map(&:to_f).select(&:positive?)
+    return nil if hz.empty?
+
+    notes = hz.map { |freq| (69 + (12 * Math.log2(freq / 440.0))).round }.sort
+    root = notes.first % 12
+    Chord.new(symbol: symbol.to_s, root:, bass: root, intervals: notes.map { |note| (note - notes.first) % 12 }.uniq.sort)
+  end
+
+  def parse_symbol(symbol)
+    head, bass = symbol.to_s.split(/\s+/).first.to_s.split("/", 2)
+    head = head.gsub("s11", "#11").downcase.sub(TAGS, "")
+    parts = head.match(/\A([a-g])([#b]*)(.*)\z/) or return nil
+    root = pitch_class(parts[1] + parts[2]) or return nil
+    # The whole quality, not its first letters: "dimimp" starts with the empty
+    # suffix too, and read that way a diminished chord came back major. A symbol
+    # this table does not spell exactly goes to the resolver in parse_chord.
+    _, intervals = QUALITIES.find { |suffix, _| parts[3] == suffix }
+    return nil unless intervals
+
+    bass_class = bass ? pitch_class(bass.downcase.sub(TAGS, "")) : root
+    return nil unless bass_class
+
+    Chord.new(symbol: symbol.to_s, root:, bass: bass_class, intervals:)
+  end
+
+  # The engine's own progression table, the one every render reads.
+  def dilla_progressions
+    CHORD_PROGRESSIONS.each_with_object({}) { |(name, symbols), table| table[name.to_s] = symbols.map(&:to_s) if symbols.is_a?(Array) }
+  end
+
+  FALLBACK = { "maj7_minor_cycle" => %w[Dbmaj9 Cm9 Fm9 Bbm9] }.freeze
+
+  # The progressions Dilla actually played and the company they keep: every row
+  # here is transcribed from a record in ARTIST_VERIFIED_PROGRESSIONS.
+  VERIFIED = %w[
+    db_major_minor_fall maj7_minor_cycle eb_minor_two_chord pedal_e_descent
+    syncopated_slash_ninth e_major_third_rise major7_relative_minor_turn
+    d_add9_soul_arc sus_add9_ballad alternating_minor7_pair minor_half_step_pair
+    dorian_two_chord_modal transcribed_soul_nine
+  ].freeze
+
+  # Minor, not major. Against a four-to-the-floor a major-rooted progression
+  # sounds like a different record, so the major rows stay out unless nothing
+  # else parses.
+  def minor?(symbols)
+    symbols.count { |symbol| symbol.match?(/m(?!aj)/) } >= (symbols.size / 2.0)
+  end
+
+  Progression = Struct.new(:name, :chords, keyword_init: true)
+
+  # Two keys can hold the same chords -- eb_minor_two_chord and
+  # alternating_minor7_pair are one progression under two names -- so rows are
+  # made unique by what they play, not by what they are called.
+  def pick_progressions
+    table = dilla_progressions
+    table = FALLBACK if table.empty?
+    rows = table.slice(*VERIFIED)
+    minor = rows.select { |_, symbols| minor?(symbols) }
+    rows = minor unless minor.size < 3
+    rows = table if rows.empty?
+
+    chosen = []
+    count = 0
+    rows.to_a.uniq { |_, symbols| symbols }.shuffle.each do |name, symbols|
+      chords = symbols.map { |symbol| parse_chord(symbol) }
+      next if chords.any?(&:nil?)
+
+      chords = chords.first(CHORDS - count)
+      chosen << Progression.new(name:, chords:)
+      count += chords.size
+      break if count >= CHORDS
+    end
+    chosen
+  end
+
+  VOICING = BED.fetch("voicing")
+  BASS_RANGE = VOICING.fetch("bass_range")
+  UPPER_RANGE = VOICING.fetch("upper_range")
+  MAX_SPAN = Integer(VOICING.fetch("max_span"))
+  DROP_FIFTH_FROM = Integer(VOICING.fetch("drop_fifth_from"))
+
+  # The fifth carries no colour, so a chord with five tones or more gives its
+  # room to the ninth and the seventh. An altered fifth is colour and stays.
+  def colour_steps(chord)
+    steps = chord.intervals.uniq
+    steps.size >= DROP_FIFTH_FROM ? steps - [7] : steps
+  end
+
+  # The guide tones: the third (or the fourth of a sus chord) and the seventh (or
+  # the sixth). They are what makes a maj9 read as a maj9, so they are placed
+  # first and kept inside one octave of each other.
+  def guide_steps(steps)
+    third = steps.find { |step| [3, 4].include?(step) } || steps.find { |step| step == 5 }
+    seventh = steps.find { |step| [10, 11].include?(step) } || steps.find { |step| step == 9 }
+    [third, seventh].compact
+  end
+
+  def placements(pitch) = (UPPER_RANGE[0]..UPPER_RANGE[1]).select { |note| note % 12 == pitch }
+
+  def nearest(candidates, anchors) = candidates.min_by { |note| anchors.map { |anchor| (note - anchor).abs }.min }
+
+  # Voice leading. Each tone goes to the octave nearest a note of the chord before,
+  # so a common tone holds and the rest move by the smallest step there is. A
+  # minor second against a tone already placed is avoided whenever another octave
+  # is free, because a smear under speech is the one thing a bed cannot afford.
+  def voice_upper(chord, previous)
+    anchors = previous.empty? ? [64] : previous
+    steps = colour_steps(chord)
+    guides = guide_steps(steps)
+    placed = []
+    (guides + (steps - guides)).each_with_index do |step, index|
+      options = placements((chord.root + step) % 12)
+      options = options.select { |note| (note - placed.first).abs < 12 } if index == 1 && guides.size == 2
+      clear = options.reject { |note| placed.any? { |other| (note - other).abs <= 1 } }
+      options = clear unless clear.empty?
+      placed << nearest(options, anchors)
+    end
+    within_span(placed)
+  end
+
+  # Two octaves at most across the upper structure: a wider spread is a synth
+  # patch, and the bass carries the distance on its own.
+  def within_span(notes)
+    notes = notes.uniq.sort
+    8.times do
+      break if notes.max - notes.min <= MAX_SPAN
+
+      centre = (notes.max + notes.min) / 2.0
+      far = notes.max_by { |note| (note - centre).abs }
+      moved = far > centre ? far - 12 : far + 12
+      break unless moved.between?(*UPPER_RANGE) && !notes.include?(moved)
+
+      notes = (notes - [far] + [moved]).sort
+    end
+    notes
+  end
+
+  def bass_note(pitch)
+    note = 36 + pitch
+    note -= 12 while note > BASS_RANGE[1]
+    note += 12 while note < BASS_RANGE[0]
+    note
+  end
+
+  PassChord = Struct.new(:notes, :family, :patch, :program, keyword_init: true)
+
+  # The pass, voiced.
+  #
+  # Once a pass, one progression holds its first bass note under every chord --
+  # a pedal reframes the harmony above it -- except where the pedal would sit a
+  # semitone above a chord's root, which is a clash rather than a reframing. And a
+  # chord heard a second time in the pass comes back in first inversion: the same
+  # harmony with different weight, which is what a player does on the way round.
+  def voice_pass(progressions, instruments)
+    previous = []
+    heard = Hash.new(0)
+    pedal_row = progressions.select { |row| row.chords.size >= 4 }.sample
+    progressions.each_with_index.flat_map do |progression, row|
+      pedal = progression.chords.first.bass if progression.equal?(pedal_row)
+      family, patch, program = instruments[row]
+      progression.chords.map do |chord|
+        heard[chord.symbol] += 1
+        bass = chord.bass
+        third = chord.intervals.find { |step| [3, 4].include?(step) }
+        bass = (chord.root + third) % 12 if heard[chord.symbol] > 1 && chord.bass == chord.root && third
+        bass = pedal if pedal && (pedal - chord.root) % 12 != 1
+        previous = voice_upper(chord, previous)
+        PassChord.new(notes: [bass_note(bass)] + previous, family:, patch:, program:)
+      end
+    end
+  end
+
+  # The instruments
+
+  # Oscillators are written as a phase and an FM index, so a note can glide (the
+  # phase integrates a moving frequency) and a bell can soften (the index moves
+  # across the note) with the same shapes the pads use held still.
+  WAVES = {
+    saw: ->(phase, _index) { "(2*mod(#{phase},1)-1)" },
+    square: ->(phase, _index) { "(2*lt(mod(#{phase},1),0.5)-1)" },
+    pulse: ->(phase, _index) { "(2*lt(mod(#{phase},1),0.22)-1)" },
+    triangle: ->(phase, _index) { "(4*abs(mod(#{phase},1)-0.5)-1)" },
+    sine: ->(phase, _index) { "sin(2*PI*#{phase})" },
+    # Two-operator FM. The modulator ratio decides the timbre and the index how
+    # far from a sine it gets: 1.41 rings like struck metal, 2.0 reads as wood.
+    fm_bell: ->(phase, index) { "sin(2*PI*#{phase}+3.0*#{index}*sin(2*PI*1.41*#{phase}))" },
+    fm_wood: ->(phase, index) { "sin(2*PI*#{phase}+1.4*#{index}*sin(2*PI*2*#{phase}))" },
+    fm_glass: ->(phase, index) { "sin(2*PI*#{phase}+2.0*#{index}*sin(2*PI*3.5*#{phase}))" },
+  }.freeze
+
+  def phase(freq) = "(t*#{freq.round(4)})"
+
+  Patch = Struct.new(:name, :family, :wave, :detune, :cutoff, :res, :attack, keyword_init: true)
+
+  PATCHES = BED.fetch("patches").map do |row|
+    Patch.new(name: row.fetch("name"), family: row.fetch("family").to_sym, wave: row.fetch("wave").to_sym,
+              detune: row.fetch("detune_cents").map { |cents| 2**(cents / 1200.0) },
+              cutoff: row.fetch("cutoff"), res: row.fetch("res"), attack: row.fetch("attack"))
+  end.freeze
+
+  FAMILIES = BED.fetch("families").transform_keys(&:to_sym)
+  MIN_ATTACK = Float(BED.fetch("min_attack_s"))
+  CHORD_LEVEL_DB = Float(BED.fetch("chord_level_db"))
+
+  # One instrument per progression, the families dealt in a shuffled rotation so a
+  # pass never holds one colour, and a preset drawn from the family each time.
+  # Every family is oscillators: the engine synthesises every sound it plays.
+  def deal_instruments(count)
+    rotation = FAMILIES.keys.shuffle
+    Array.new(count) do |index|
+      family = rotation[index % rotation.size]
+      [family, PATCHES.select { |patch| patch.family == family }.sample, nil]
+    end
+  end
+
+  # A hand does not put five fingers down at the same instant, and the thumb hits
+  # harder than the little finger. One voice arrives 10 to 25 ms late, each voice
+  # up the chord is quieter than the one below, and the voices sit slightly apart
+  # in the field on alternate sides so the chord's centre does not move.
+  def humanised(notes)
+    late = rand(1...[notes.size, 2].max)
+    notes.each_with_index.map do |note, voice|
+      level = (1.0 - (voice * 0.09)).clamp(0.45, 1.0)
+      delay = voice == late ? 0.010 + (rand * 0.015) : 0.0
+      spread = notes.size < 2 ? 0.0 : 0.3 * voice / (notes.size - 1)
+      pan = voice.odd? ? 0.5 - spread : 0.5 + spread
+      [note, level, delay.round(4), pan]
+    end
+  end
+
+  def pan_gains(pan, scale) = [(Math.cos(pan * Math::PI / 2) * scale).round(4), (Math.sin(pan * Math::PI / 2) * scale).round(4)]
+
+  # The filter closes as the chord sustains, because a real instrument loses its
+  # high partials first and a fixed cutoff over a held note is the tell.
+  def closing_sweep(cutoff, seconds, path)
+    file = "#{path}.cmd"
+    lines = (0..16).map do |k|
+      "#{(seconds * k / 16).round(3)} lowpass@sweep f #{(cutoff * (1.3 - (0.6 * k / 16))).round};"
+    end
+    File.write(file, "#{lines.join("\n")}\n")
+    file
+  end
+
+  # One chord per ffmpeg run. A single graph with twenty oscillators answered
+  # "Result too large", and a failure here is attributable to one chord.
+  #
+  # The oscillators run at four times the output rate and come back through the
+  # resampler: a modulo saw has a vertical edge, and at 44.1 kHz its harmonics
+  # fold back as a field of bleeps. The ladder is a lowpass with an equalizer
+  # bump at the cutoff standing in for its resonance, which ffmpeg has no filter
+  # for.
+  def render_chord(notes, patch, seconds, path)
+    shape = WAVES.fetch(patch.wave)
+    attack = FAMILIES.dig(patch.family, "struck") ? patch.attack : [patch.attack, MIN_ATTACK].max
+    scale = 0.75 / patch.detune.size
+    inputs = []
+    humanised(notes).each do |note, level, delay, pan|
+      tone = patch.detune.map { |ratio| shape.call(phase(midi_hz(note) * ratio), "1") }.join("+")
+      onset = "min(max(t-#{delay},0)/0.008,1)"
+      left, right = pan_gains(pan, scale * level)
+      inputs << "-f" << "lavfi" << "-t" << seconds.to_s <<
+        "-i" << "aevalsrc='#{left}*(#{tone})*#{onset}|#{right}*(#{tone})*#{onset}':s=#{OVERSAMPLE}:d=#{seconds}"
+    end
+    voices = inputs.size / 6
+    sweep = closing_sweep(patch.cutoff, seconds, path)
+    release_at = (seconds * 0.55).round(3)
+    ladder = "aresample=44100,asendcmd=f=#{sweep}," \
+             "lowpass@sweep=f=#{(patch.cutoff * 1.3).round}:p=2:width_type=q:width=0.9," \
+             "equalizer=f=#{patch.cutoff}:t=q:w=1.4:g=#{patch.res}," \
+             "afade=t=in:st=0:d=#{attack}:curve=qsin," \
+             "afade=t=out:st=#{release_at}:d=#{(seconds - release_at).round(3)}:curve=qsin"
+    taps = (0...voices).map { |index| "[#{index}:a]" }.join
+    ffmpeg!(*inputs, "-filter_complex", "#{taps}amix=inputs=#{voices}:normalize=0[m];[m]#{ladder}[out]",
+            "-map", "[out]", "-ac", "2", path, what: "chord #{patch.name}")
+    File.unlink(sweep)
+    path
+  end
+
+  # Hocket II on the chord: the notes stop arriving together. Each one enters on
+  # its own eighth and in its own place across the field, then holds, so the chord
+  # assembles in front of you instead of being struck. A chord is two bars and six
+  # notes at most, so it has assembled inside two seconds.
+  def render_hocket(notes, patch, seconds, path)
+    shape = WAVES.fetch(patch.wave)
+    order = notes.each_index.to_a.shuffle(random: rng)
+    left = []
+    right = []
+    notes.each_with_index do |note, index|
+      start = (order[index] * STEP * 2).round(4)
+      pan = notes.size < 2 ? 0.5 : index.to_f / (notes.size - 1)
+      gain_l, gain_r = pan_gains(pan, 0.3)
+      body = "#{shape.call(phase(midi_hz(note)), '1')}*min(max(t-#{start},0)/0.35,1)*between(t,#{start},#{seconds})"
+      left << "#{gain_l}*#{body}"
+      right << "#{gain_r}*#{body}"
+    end
+    release_at = (seconds * 0.55).round(3)
+    ffmpeg!("-f", "lavfi", "-t", seconds.to_s, "-i", "aevalsrc='#{left.join('+')}'|'#{right.join('+')}':s=#{OVERSAMPLE}:d=#{seconds}",
+            "-af", "aresample=44100,lowpass=f=#{patch.cutoff}:p=2,equalizer=f=#{patch.cutoff}:t=q:w=1.4:g=#{patch.res}," \
+                   "afade=t=out:st=#{release_at}:d=#{(seconds - release_at).round(3)}:curve=qsin",
+            "-ac", "2", path, what: "hocket #{patch.name}")
+    path
+  end
+
+  # Every chord arrives at one level, whichever instrument played it, so the
+  # rotation from a Rhodes to a Moog is a change of colour and not a jump in
+  # volume.
+  def level!(path, target_db)
+    _out, err, _status = ToolRun.capture3("ffmpeg", "-hide_banner", "-nostats", "-i", path, "-af", "volumedetect", "-f", "null", "-")
+    mean = err[/mean_volume:\s*(-?[\d.]+) dB/, 1] or return path
+    levelled = "#{path}.lvl.wav"
+    ffmpeg!("-i", path, "-af", "volume=#{(target_db - mean.to_f).clamp(-30, 30).round(2)}dB", levelled, what: "level")
+    File.rename(levelled, path)
+    path
+  end
+
+  HOCKET_ODDS = Float(BED.fetch("hocket_odds"))
+  REVERSE_ODDS = Float(BED.fetch("reverse_odds"))
+
+  # About one chord in six plays backwards: the attack arrives where the release
+  # should be. Only the chord's own bars are reversed, so its swell peaks on the
+  # bar line where the next chord lands.
+  def render_part(chord, index)
+    seconds = (CHORD_BARS + XFADE).round(4)
+    path = scratch("chord#{index}")
+    if rand < HOCKET_ODDS
+      render_hocket(chord.notes, chord.patch, seconds, path)
+    else
+      render_chord(chord.notes, chord.patch, seconds, path)
+    end
+    level!(path, CHORD_LEVEL_DB)
+    return path unless rand < REVERSE_ODDS
+
+    reversed = scratch("rev#{index}")
+    ffmpeg!("-i", path, "-af", "atrim=0:#{CHORD_BARS.round(4)},areverse,apad=whole_dur=#{seconds}", "-ac", "2", reversed, what: "reverse")
+    File.unlink(path)
+    reversed
+  end
+
+  # The chords overlap the way a sustain pedal makes them: the next chord enters
+  # whole on its bar line while the last one's tail fades out under it. Each part
+  # is one crossfade longer than its bars, so the joins cost no time.
+  def pedal_join(parts, path)
+    inputs = parts.flat_map { |part| ["-i", part] }
+    total = (CHORD_BARS * parts.size).round(4)
+    graph = []
+    label = "[0:a]"
+    (1...parts.size).each do |index|
+      graph << "#{label}[#{index}:a]acrossfade=d=#{XFADE}:c1=qsin:c2=nofade[x#{index}]"
+      label = "[x#{index}]"
+    end
+    graph << "#{label}atrim=0:#{total}[out]"
+    ffmpeg!(*inputs, "-filter_complex", graph.join(";"), "-map", "[out]", "-ac", "2", path, what: "pedal join")
+    path
+  end
+
+  # The pad racks, one per pass. A rack is a whole signal path, and every one ends
+  # in the same tail so whatever happens upstairs stays smooth enough to talk over.
+  #
+  # The tail carries a second chorus at rates unrelated to the first, so the
+  # modulation stops being something the ear can follow; its own flutter under
+  # the rack's slower wow, because per-instrument drift reads as tape where one
+  # global drift reads as a broken file; and a lowpass that wanders a few hundred
+  # hertz across the pass, because a static cutoff is the most synthetic thing in
+  # a pad.
+  #
+  # No sampler round trip on the pads. They carry nothing above 1.9 kHz, and
+  # aresample filters before it decimates, so a 26 kHz pass would remove nothing
+  # and alias nothing.
+  def drift_commands(seconds, path)
+    file = "#{path}.drift"
+    lines = (0..(seconds / 1.5).ceil).map do |k|
+      at = k * 1.5
+      "#{at.round(2)} lowpass@drift f #{(1900 + (300 * Math.sin(2 * Math::PI * at / 47)) + (120 * Math.sin(2 * Math::PI * at / 13))).round};"
+    end
+    File.write(file, "#{lines.join("\n")}\n")
+    file
+  end
+
+  def pad_tail(drift)
+    "equalizer=f=220:t=o:w=1.4:g=2.5," \
+      "acrusher=bits=13:mode=lin:aa=1:mix=0.14," \
+      "chorus=0.9:0.9:61|83:0.22|0.18:0.07|0.05:0.6|0.9," \
+      "vibrato=f=5.3:d=0.0015," \
+      "highpass=f=70,asendcmd=f=#{drift},lowpass@drift=f=1900:p=2,alimiter=limit=0.9,volume=-6dB"
+  end
+
+  #   wash      dilla's vocoder formants and chorus. The house sound.
+  #   shimmer   the pad pitched up an octave and laid under itself late. Every
+  #             repeat arrives after an 80 ms gap -- one that starts with the note
+  #             reads as a filter, one that waits reads as a room -- and each is
+  #             darker than the one before, because a real tail loses its top
+  #             first and a bright one is the most fatiguing thing a bed can do.
+  #             The wet is compressed before it is mixed, so a dense chord does not
+  #             wash louder than a sparse one.
+  def pad_rack(name, drift)
+    case name
+    when "wash"
+      "[0:a]equalizer=f=520:t=q:w=1.1:g=3.0,equalizer=f=1480:t=q:w=1.3:g=2.0," \
+        "chorus=0.5:0.7:19|27:0.3|0.26:0.24|0.2:0.9|1.4," \
+        "aecho=0.9:0.6:171|317|523|787:0.42|0.3|0.2|0.12," \
+        "vibrato=f=0.18:d=0.006,#{pad_tail(drift)}[out]"
+    when "shimmer"
+      taps = [[351, 0.55, 3000], [621, 0.4, 2300], [813, 0.28, 1700], [1089, 0.18, 1200]]
+      legs = taps.each_index.map { |index| "[s#{index}]" }.join
+      echoes = taps.each_with_index.map do |(ms, gain, cutoff), index|
+        "[s#{index}]adelay=#{ms}|#{ms},lowpass=f=#{cutoff},volume=#{gain}[e#{index}]"
+      end
+      "[0:a]asplit=2[dry][up];[up]asetrate=88200,aresample=44100,atempo=0.5,asplit=#{taps.size}#{legs};" \
+        "#{echoes.join(';')};" \
+        "#{taps.each_index.map { |index| "[e#{index}]" }.join}amix=inputs=#{taps.size}:normalize=0," \
+        "acompressor=threshold=-30dB:ratio=6:attack=40:release=400:makeup=2[shine];" \
+        "[dry][shine]amix=inputs=2:normalize=0:duration=first," \
+        "chorus=0.6:0.8:23|41:0.3|0.24:0.2|0.18:1.1|1.7," \
+        "vibrato=f=0.15:d=0.008,#{pad_tail(drift)}[out]"
+    else
+      abort "bed: voice.yml names pad rack #{name}, which this file does not build"
+    end
+  end
+
+  # The lead
+
+  LEAD = BED.fetch("lead")
+
+  # Hocket II: eight channels, each its own oscillator, octave, place in the field
+  # and decay, so a phrase is passed between instruments.
+  Channel = Struct.new(:wave, :octave, :pan, :decay, keyword_init: true)
+  CHANNELS = [
+    Channel.new(wave: :saw,      octave: 0,   pan: 0.06, decay: 13),
+    Channel.new(wave: :fm_bell,  octave: 12,  pan: 0.94, decay: 9),
+    Channel.new(wave: :pulse,    octave: 0,   pan: 0.30, decay: 18),
+    Channel.new(wave: :fm_wood,  octave: 12,  pan: 0.70, decay: 7),
+    Channel.new(wave: :square,   octave: -12, pan: 0.50, decay: 15),
+    Channel.new(wave: :saw,      octave: 12,  pan: 0.18, decay: 22),
+    Channel.new(wave: :fm_glass, octave: 0,   pan: 0.82, decay: 6),
+    Channel.new(wave: :pulse,    octave: 12,  pan: 0.42, decay: 26),
+  ].freeze
+
+  # MIDI Bag: the last few chords, stored, and a note drawn from any of them that
+  # still belongs where it lands. The pitches are never quantised away from that:
+  # belonging is the whole reason the bag filters them.
+  BAG_DEPTH = Integer(BED.fetch("bag_depth"))
+  @bag = []
+
+  def bag_push(notes)
+    @bag << notes
+    @bag.shift while @bag.size > BAG_DEPTH
+  end
+
+  def bag_draw(current, upcoming)
+    belongs = (current + upcoming).map { |note| note % 12 }
+    stored = @bag.flatten.uniq.select { |note| belongs.include?(note % 12) }
+    stored = current.drop(1) if stored.size < 3
+    stored.select { |note| note.between?(48, 84) }.sort
+  end
+
+  # Discrete echoes rather than aecho, because every repeat here is its own
+  # sound: each darker than the last, a few cents off, thrown hard left and then
+  # hard right, and in the octave rack every second one a fifth up. ffmpeg graphs
+  # cannot feed back into themselves, so a tail is a row of taps.
+  def echo_taps(tag, taps_ms, fifth: false)
+    n = taps_ms.size
+    lines = ["[#{tag}]asplit=#{n + 1}[#{tag}_dry]#{(0...n).map { |index| "[#{tag}_s#{index}]" }.join}"]
+    taps_ms.each_with_index do |ms, index|
+      ratio = fifth && index.odd? ? 1.5 : (index.even? ? 1.003 : 0.997)
+      side = index.even? ? "c0=c0+c1|c1=0*c0" : "c0=0*c0|c1=c0+c1"
+      lines << "[#{tag}_s#{index}]asetrate=#{(44_100 * ratio).round},aresample=44100,atempo=#{(1.0 / ratio).round(5)}," \
+               "adelay=#{ms}|#{ms},lowpass=f=#{(3400 * (0.7**(index + 1))).round},volume=#{(0.45 * (0.62**index)).round(3)}," \
+               "pan=stereo|#{side}[#{tag}_e#{index}]"
+    end
+    lines << "[#{tag}_dry]#{(0...n).map { |index| "[#{tag}_e#{index}]" }.join}amix=inputs=#{n + 1}:normalize=0:duration=first[#{tag}_out]"
+    lines.join(";")
+  end
+
+  def lead_tail(rack)
+    "lowpass=f=2600:p=2,alimiter=limit=0.9," \
+      "afade=t=out:st=#{(BAR - 0.012).round(4)}:d=0.012,volume=#{LEAD.dig('racks', rack)}dB[out]"
+  end
+
+  # Six racks, drawn per bar. The lead plays one bar in four, so it can afford a
+  # signal path with two of everything; the strangeness is in the middle and every
+  # rack ends smooth.
+  #
+  #   ring        multiplied by a tone from the harmony, so the sidebands are notes.
+  #   ghost       the echoes reversed: each repeat arrives before its own note.
+  #   inharmonic  frequency-shifted and hard clipped, with the phaser before the
+  #               clip on some bars and after it on others, because order is a
+  #               parameter.
+  #
+  # Not here: a formant shift, which needs rubberband and this ffmpeg has none;
+  # a self-oscillating filter, which no ffmpeg biquad can be; and a spectral
+  # freeze, which afftfilt cannot hold because it evaluates every window without
+  # memory. The freeze is granular instead.
+  def lead_rack(rack, root_hz)
+    tap = ->(steps) { (STEP * 1000 * steps).round }
+    case rack
+    when "tape"
+      "[0:a]aresample=44100,lowpass=f=3400:p=2,equalizer=f=1100:t=q:w=1.2:g=5," \
+        "tremolo=f=#{(1.0 / (STEP * 3)).round(3)}:d=0.45,flanger=delay=3:depth=1.6:regen=28:speed=0.35[tp];" \
+        "#{echo_taps('tp', [tap[3], tap[6]])};" \
+        "[tp_out]haas=left_delay=7,aphaser=type=t:speed=0.18:decay=0.4:delay=2.6," \
+        "acrusher=bits=12:mode=lin:aa=1:mix=0.3,#{lead_tail(rack)}"
+    when "weather"
+      "[0:a]aresample=44100,lowpass=f=3800:p=2,aphaser=type=t:speed=0.5:decay=0.5:delay=3.0," \
+        "aphaser=type=t:speed=0.13:decay=0.4:delay=1.8,chorus=0.6:0.9:27|44:0.32|0.26:0.22|0.19:1.2|1.9[wt];" \
+        "#{echo_taps('wt', [tap[2], tap[5], tap[9]])};" \
+        "[wt_out]crystalizer=i=1.4,haas=left_delay=11,#{lead_tail(rack)}"
+    when "octave"
+      "[0:a]aresample=44100,asplit=2[l_dry][l_up];" \
+        "[l_up]asetrate=88200,aresample=44100,atempo=0.5,lowpass=f=3600,volume=-6dB[oc];" \
+        "#{echo_taps('oc', [tap[4], tap[8], tap[12]], fifth: true)};" \
+        "[l_dry][oc_out]amix=inputs=2:normalize=0:duration=first," \
+        "flanger=delay=2:depth=2.2:regen=34:speed=0.6,aphaser=type=t:speed=0.22:decay=0.45:delay=2.2,#{lead_tail(rack)}"
+    when "inharmonic"
+      clip = "volume=6dB,asoftclip=type=hard:threshold=0.5:oversample=4,volume=-4dB"
+      phaser = "aphaser=type=t:speed=0.1:decay=0.35:delay=3.4"
+      middle = rand < Float(LEAD.fetch("order_flip_odds")) ? "#{phaser},#{clip}" : "#{clip},#{phaser}"
+      "[0:a]aresample=44100,afreqshift=shift=4,apulsator=hz=#{(1.0 / (STEP * 6)).round(3)}:amount=0.4," \
+        "aecho=0.85:0.6:#{tap[3]}|#{tap[7]}|#{tap[11]}:0.45|0.3|0.18," \
+        "chorus=0.5:0.8:19|37:0.3|0.24:0.2|0.17:1.0|1.6,#{middle},haas=left_delay=9,#{lead_tail(rack)}"
+    when "ring"
+      "[0:a]aresample=44100,aformat=sample_fmts=fltp:channel_layouts=stereo,asplit=2[r_dry][r_wet];" \
+        "sine=f=#{root_hz.round(3)}:sample_rate=44100:d=#{BAR.round(4)},aformat=sample_fmts=fltp:channel_layouts=stereo[r_car];" \
+        "[r_wet][r_car]amultiply[r_mod];" \
+        "[r_dry][r_mod]amix=inputs=2:weights=0.55 0.45:normalize=0:duration=first,lowpass=f=3400:p=2[rg];" \
+        "#{echo_taps('rg', [tap[3], tap[7]])};" \
+        "[rg_out]chorus=0.5:0.8:21|33:0.3|0.22:0.21|0.18:1.0|1.5,#{lead_tail(rack)}"
+    when "ghost"
+      "[0:a]aresample=44100,areverse,aecho=0.8:0.75:#{tap[2]}|#{tap[5]}|#{tap[8]}:0.5|0.32|0.18,areverse," \
+        "lowpass=f=3000:p=2,aphaser=type=t:speed=0.2:decay=0.4:delay=2.8,haas=left_delay=8,#{lead_tail(rack)}"
+    else
+      abort "bed: voice.yml names lead rack #{rack}, which this file does not build"
+    end
+  end
+
+  # A glide moves the frequency from the last note to this one over a few tens of
+  # milliseconds. The phase is the integral of that frequency, so the pitch
+  # slides rather than the waveform tearing.
+  def glide_phase(from, to, start)
+    g = Float(LEAD.fetch("glide_ms")) / 1000.0
+    "(#{to.round(4)}*(t-#{start})+#{(from - to).round(4)}*#{g}*(1-exp(-max(t-#{start},0)/#{g})))"
+  end
+
+  # The hi-hats open and close the lead on some bars, so a line that came from the
+  # kick's placement is chopped by the hats' rhythm. Written in the note's own
+  # time, since each note is rendered from zero.
+  def hat_gate(shape, start)
+    windows = shape[:hats].map { |step| "max(0,1-abs(t-#{(step_time(step, :hat) + 0.045 - start).round(4)})/0.045)" }
+    "(0.25+0.75*min(1,#{windows.join('+')}))"
+  end
+
+  NOTE_S = 0.55
+
+  # Rhythm from the drums, pitch from the bag. The figure is Bach's: a shape
+  # stated and restated lower. Its first note carries a sine an octave down, so
+  # the accent has weight the rest of the line does not; notes within a statement
+  # glide into each other when they are close enough to slide; and an FM note
+  # starts bright and softens.
+  #
+  # Each note is its own short source, placed and panned afterwards. Evaluated
+  # across the whole bar in both channels, nine notes cost thirty seconds a bar
+  # while silent for most of it.
+  def lead_dry(chord, next_chord, shape, path)
+    bag_push(chord.notes.drop(1))
+    pool = bag_draw(chord.notes, next_chord.notes)
+    entries = (shape[:kick].keys + shape[:ghosts]).uniq.sort.first(3)
+    return nil if pool.size < 3 || entries.empty?
+
+    figure = [0, [2, pool.size - 1].min, 1]
+    gated = rand < Float(LEAD.fetch("gate_odds"))
+    inputs = []
+    legs = []
+    voice = 0
+    last_start = nil
+    entries.each_with_index do |entry, statement|
+      previous = nil
+      figure.each_with_index do |offset, note_index|
+        channel = CHANNELS[voice % CHANNELS.size]
+        voice += 1
+        freq = midi_hz(pool[(offset + pool.size - statement) % pool.size] + channel.octave).round(4)
+        next if freq > 5000 || freq < 60
+
+        start = step_time(entry + note_index, :hat)
+        next if start >= BAR - 0.05
+
+        slide = previous && (freq / previous).between?(0.67, 1.5)
+        tone = WAVES.fetch(channel.wave).call(slide ? glide_phase(previous, freq, 0) : phase(freq), "(0.35+0.65*exp(-6*t))")
+        tone = "(#{tone}+0.5*sin(2*PI*t*#{(freq / 2).round(4)}))" if note_index.zero? && freq / 2 >= 55
+        body = "#{tone}*exp(-#{channel.decay}*t)"
+        body = "#{body}*#{hat_gate(shape, start)}" if gated
+        gain_l, gain_r = pan_gains(channel.pan, 0.34)
+        index = inputs.size / 6
+        inputs << "-f" << "lavfi" << "-t" << NOTE_S.to_s << "-i" << "aevalsrc='#{body}':s=88200:d=#{NOTE_S}"
+        ms = (start * 1000).round
+        legs << "[#{index}:a]aresample=44100,pan=stereo|c0=#{gain_l}*c0|c1=#{gain_r}*c0,adelay=#{ms}|#{ms}[n#{index}]"
+        previous = freq
+        last_start = start
+      end
+    end
+    return nil if legs.empty?
+
+    count = legs.size
+    graph = "#{legs.join(';')};#{(0...count).map { |index| "[n#{index}]" }.join}amix=inputs=#{count}:normalize=0," \
+            "apad=whole_dur=#{BAR.round(4)},atrim=0:#{BAR.round(4)}[out]"
+    ffmpeg!(*inputs, "-filter_complex", graph, "-map", "[out]", "-ac", "2", path, what: "leaddry")
+    [path, last_start]
+  end
+
+  # The last note of the phrase, frozen: short grains of its attack laid one after
+  # another at jittered offsets, fading, so the note hangs in the air after the
+  # line has stopped.
+  def freeze!(dry, start, path)
+    grains = Integer(LEAD.fetch("freeze_grains"))
+    return dry if start + 0.14 + (grains * 0.055) > BAR
+
+    lines = ["[0:a]asplit=#{grains + 1}[fd]#{(0...grains).map { |k| "[g#{k}]" }.join}"]
+    grains.times do |k|
+      from = (start + 0.005 + (rand * 0.04)).round(4)
+      at = ((start + 0.14 + (k * 0.055) + (rand * 0.012)) * 1000).round
+      lines << "[g#{k}]atrim=#{from}:#{(from + 0.08).round(4)},asetpts=PTS-STARTPTS," \
+               "afade=t=in:d=0.03,afade=t=out:st=0.05:d=0.03,adelay=#{at}|#{at},volume=#{(0.55 * (0.86**k)).round(3)}[gg#{k}]"
+    end
+    lines << "[fd]#{(0...grains).map { |k| "[gg#{k}]" }.join}amix=inputs=#{grains + 1}:normalize=0:duration=first,atrim=0:#{BAR.round(4)}[out]"
+    ffmpeg!("-i", dry, "-filter_complex", lines.join(";"), "-map", "[out]", "-ac", "2", path, what: "freeze")
+    path
+  end
+
+  RACKS = LEAD.fetch("racks").keys.freeze
+
+  # One rack on most bars and two on a few: rotation gives variety between bars,
+  # stacking gives density within one.
+  def lead_bar(chord, next_chord, shape, path)
+    dry, last_start = lead_dry(chord, next_chord, shape, scratch("lead_dry"))
+    return nil unless dry
+
+    source = rand < Float(LEAD.fetch("freeze_odds")) ? freeze!(dry, last_start, scratch("lead_frozen")) : dry
+    root_hz = midi_hz(chord.notes[1] || chord.notes.first)
+    root_hz *= 2 while root_hz < 110
+    root_hz /= 2 while root_hz > 440
+    racks = RACKS.sample(rand < Float(LEAD.fetch("stack_odds")) ? 2 : 1)
+    outs = racks.map do |rack|
+      out = scratch("lead_#{rack}")
+      ffmpeg!("-i", source, "-filter_complex", lead_rack(rack, root_hz), "-map", "[out]", "-ac", "2", out, what: "lead #{rack}")
+      out
+    end
+    if outs.size == 1
+      File.rename(outs.first, path)
+    else
+      ffmpeg!("-i", outs[0], "-i", outs[1], "-filter_complex", "[0:a][1:a]amix=inputs=2:weights=0.71 0.71:normalize=0[out]",
+              "-map", "[out]", "-ac", "2", path, what: "lead stack")
+    end
+    (outs + [dry, source]).uniq.each { |file| File.unlink(file) if File.file?(file) }
+    path
+  end
+
+  # The drummer
+
+  DRUMS = BED.fetch("drums")
+
+  # Dilla time, as Dan Charnas sets it out: straight and swing at once. The hats
+  # are the rigid reference, the snare is pushed early, the kick is swung and
+  # late, and the ghosts drag later still. Drift is a few milliseconds and small
+  # on purpose; his feel is a placement, not an imprecision.
+  FEELS = DRUMS.fetch("feels").to_h do |name, feel|
+    [name.to_sym, { swing: Float(feel["swing"]), shift: Float(feel["shift"]), drift: Float(feel["drift"]) }]
+  end.freeze
+
+  def step_time(step, feel)
+    bend = FEELS.fetch(feel)
+    base = step * STEP
+    base += bend[:swing] * STEP if step.odd?
+    base += bend[:shift]
+    base += (rand - 0.5) * bend[:drift] if bend[:drift].positive?
+    [base, 0.0].max.round(4)
+  end
+
+  # The grids are read, not written: dilla's MIDI library, one file per voice per
+  # grid, named by who played that way. Only a note-on with a non-zero velocity
+  # counts, because a note-on at velocity zero is a note-off.
+  GRIDS = File.join(ROOT, DRUMS.fetch("grids"))
+
+  def midi_steps(file)
+    return [] unless File.file?(file)
+
+    data = File.binread(file)
+    return [] unless data[0, 4] == "MThd"
+
+    division = data[12, 2].unpack1("n")
+    at = 22
+    tick = 0
+    status = 0
+    steps = []
+    while at < data.bytesize
+      delta = 0
+      loop do
+        byte = data.getbyte(at) or return steps
+        at += 1
+        delta = (delta << 7) | (byte & 0x7f)
+        break if byte < 0x80
+      end
+      tick += delta
+      byte = data.getbyte(at) or break
+      if byte >= 0x80
+        status = byte
+        at += 1
+      end
+      case status & 0xf0
+      when 0x90
+        note, velocity = data.getbyte(at), data.getbyte(at + 1)
+        at += 2
+        steps << ((tick * 4.0 / division).round % 16) if velocity.to_i.positive? && note
+      when 0x80, 0xa0, 0xb0, 0xe0 then at += 2
+      when 0xc0, 0xd0 then at += 1
+      else
+        break if status == 0xff && data.getbyte(at) == 0x2f
+
+        at += 1
+      end
+    end
+    steps.uniq.sort
+  end
+
+  def grid_shape(name)
+    dir = File.join(GRIDS, name)
+    kick = midi_steps(File.join(dir, "kick.mid"))
+    return nil if kick.empty?
+
+    snare = midi_steps(File.join(dir, "snare.mid"))
+    clap = midi_steps(File.join(dir, "clap.mid"))
+    hats = midi_steps(File.join(dir, "hat.mid"))
+    perc = midi_steps(File.join(dir, "perc.mid"))
+    {
+      name: name.tr("_", " "),
+      kick: kick.to_h { |step| [step, step.zero? ? 1.0 : 0.85] },
+      snare: (snare + clap).uniq.sort,
+      double: nil,
+      ghosts: (perc + (snare & clap)).uniq.sort,
+      hats: hats.empty? ? [0, 2, 4, 6, 8, 10, 12, 14] : hats,
+    }
+  end
+
+  # The hand-written shapes, for a checkout without the grid library. Boom bap
+  # first -- kick on one, snare on two and four -- with the invention in the kick
+  # and the placement; then the Flying Lotus shapes that break the bar; then
+  # four to the floor, where the kick becomes the clock.
+  SHAPES = [
+    { name: "so far", kick: { 0 => 1.0, 6 => 0.85, 10 => 1.0 }, snare: [4, 12], double: 13, ghosts: [7], hats: [0, 2, 4, 6, 8, 10, 12, 14] },
+    { name: "workin", kick: { 0 => 1.0, 3 => 0.8, 10 => 1.0 }, snare: [4, 12], double: nil, ghosts: [7, 15], hats: [0, 2, 4, 6, 8, 10, 12, 14, 15] },
+    { name: "runnin", kick: { 0 => 1.0, 7 => 0.9, 8 => 0.75 }, snare: [4, 12], double: 5, ghosts: [11], hats: [0, 2, 4, 6, 8, 10, 12, 14] },
+    { name: "the light", kick: { 0 => 1.0, 5 => 0.7, 10 => 1.0, 11 => 0.65 }, snare: [4, 12], double: nil, ghosts: [14], hats: [0, 2, 4, 6, 8, 10, 12, 14] },
+    { name: "stakes", kick: { 0 => 1.0, 10 => 1.0, 15 => 0.7 }, snare: [4, 12], double: 13, ghosts: [7, 9], hats: [0, 2, 4, 6, 8, 10, 12, 14] },
+    { name: "dont cry", kick: { 0 => 1.0, 2 => 0.7, 6 => 0.9, 10 => 1.0 }, snare: [4, 12], double: nil, ghosts: [15], hats: [0, 2, 4, 6, 8, 10, 12, 14] },
+    { name: "fall in love", kick: { 0 => 1.0, 10 => 0.9 }, snare: [8], double: 9, ghosts: [3, 13], hats: [0, 2, 4, 6, 8, 10, 12, 14] },
+    { name: "two turntables", kick: { 0 => 1.0, 3 => 0.75, 8 => 0.9, 14 => 0.8 }, snare: [4, 12], double: nil, ghosts: [6, 11], hats: [0, 2, 4, 6, 8, 10, 12, 14] },
+    { name: "flylo triplets", kick: { 0 => 1.0, 6 => 0.85, 11 => 0.9 }, snare: [4, 12], double: nil, ghosts: [2, 9], hats: [0, 3, 5, 8, 11, 13] },
+    { name: "flylo double time", kick: { 0 => 1.0, 7 => 0.8, 10 => 0.95 }, snare: [8], double: 10, ghosts: [3, 5, 13], hats: (0..15).to_a },
+    { name: "flylo hole", kick: { 0 => 1.0, 3 => 0.7, 9 => 0.9, 14 => 0.8 }, snare: [4, 12], double: 5, ghosts: [7], hats: [0, 2, 4, 6] },
+    { name: "flylo displaced", kick: { 0 => 1.0, 6 => 0.9, 10 => 0.85 }, snare: [5, 13], double: nil, ghosts: [2, 8, 11], hats: [0, 2, 4, 6, 8, 10, 12, 14] },
+    { name: "flylo stagger", kick: { 0 => 1.0, 2 => 0.8, 3 => 0.6, 9 => 0.95, 13 => 0.7 }, snare: [4, 12], double: 13, ghosts: [6, 15], hats: [0, 3, 6, 9, 12, 15] },
+    { name: "flylo drift", kick: { 1 => 0.9, 6 => 1.0, 11 => 0.85 }, snare: [4, 12], double: nil, ghosts: [9, 14], hats: [0, 2, 5, 7, 10, 12, 15] },
+    { name: "techno floor", kick: { 0 => 1.0, 4 => 1.0, 8 => 1.0, 12 => 1.0 }, snare: [4, 12], double: nil, ghosts: [7, 15], hats: [2, 6, 10, 14] },
+    { name: "techno offbeat", kick: { 0 => 1.0, 4 => 1.0, 8 => 1.0, 12 => 1.0 }, snare: [12], double: nil, ghosts: [3, 7, 11, 15], hats: [2, 6, 10, 14] },
+    { name: "techno rolling", kick: { 0 => 1.0, 4 => 1.0, 8 => 1.0, 12 => 1.0, 15 => 0.7 }, snare: [4, 12], double: nil, ghosts: [2, 10], hats: [2, 4, 6, 10, 12, 14] },
+    { name: "techno broken", kick: { 0 => 1.0, 4 => 1.0, 7 => 0.85, 12 => 1.0 }, snare: [4, 12], double: 13, ghosts: [9, 14], hats: [2, 6, 10, 14, 15] },
+    { name: "hate floor", kick: { 0 => 1.0, 4 => 1.0, 8 => 1.0, 12 => 1.0 }, snare: [], double: nil, ghosts: [3, 11], hats: [2, 6, 10, 14] },
+    { name: "hate rumble", kick: { 0 => 1.0, 4 => 1.0, 8 => 1.0, 12 => 1.0 }, snare: [], double: nil, ghosts: [7], hats: [2, 6, 10, 14, 15] },
+    { name: "hate clang", kick: { 0 => 1.0, 4 => 1.0, 8 => 1.0, 12 => 1.0 }, snare: [14], double: nil, ghosts: [5, 9], hats: [2, 6, 10, 14] },
+    { name: "hate stripped", kick: { 0 => 1.0, 4 => 1.0, 8 => 1.0, 12 => 1.0 }, snare: [], double: nil, ghosts: [], hats: [6, 14] },
+  ].freeze
+
+  def banks
+    grids = File.directory?(GRIDS) ? Dir.children(GRIDS).sort.filter_map { |name| grid_shape(name) } : []
+    fallback = { "dilla" => SHAPES[0, 8], "flylo" => SHAPES[8, 6], "techno" => SHAPES[14, 4], "industrial" => SHAPES[18, 4] }
+    return fallback if grids.empty?
+
+    DRUMS.fetch("grid_banks").to_h do |bank, patterns|
+      matchers = patterns.map { |pattern| Regexp.new("\\A#{Regexp.escape(pattern.tr('_', ' ')).sub('\\*', '.*')}\\z") }
+      picked = grids.select { |shape| matchers.any? { |matcher| shape[:name].match?(matcher) } }
+      [bank, picked.empty? ? fallback.fetch(bank, SHAPES[0, 8]) : picked]
+    end
+  end
+
+  BANKS = banks
+  ARRANGEMENT = DRUMS.fetch("arrangement")
+  BARS_PER_SHAPE = Integer(ARRANGEMENT.fetch("bars_per_shape"))
+
+  # One shape per block and its last bar varied: a beat is a loop held long
+  # enough for the conflict inside it to become the groove, and then broken.
+  def arrangement(bars)
+    order = ARRANGEMENT.fetch("bank_order")
+    Array.new(bars) do |index|
+      block = index / BARS_PER_SHAPE
+      pool = BANKS.fetch(order[block % order.size])
+      shape = pool[block % pool.size]
+      next shape unless (index % BARS_PER_SHAPE) == BARS_PER_SHAPE - 1
+
+      varied = shape.dup
+      varied[:kick] = shape[:kick].reject { rand < 0.3 }
+      varied[:kick] = shape[:kick] if varied[:kick].empty?
+      varied[:ghosts] = shape[:ghosts] + [15]
+      varied
+    end
+  end
+
+  # The kit is recordings: dilla's crate, each hit the sample delayed to its place
+  # and scaled by its velocity. The pattern and the placement are ours; the sound
+  # is a record.
+  CRATE = File.join(ROOT, DRUMS.fetch("crate"))
+  KIT = DRUMS.fetch("samples").transform_keys(&:to_sym)
+
+  def sample_path(name) = File.join(CRATE, KIT.fetch(name))
+
+  # asplit rather than one input per hit: ffmpeg opens the file once and the graph
+  # fans it out.
+  def voice_branch(tag, hits, index)
+    legs = hits.each_with_index.map { |(start, velocity), n| [start, velocity, "#{tag}#{n}"] }
+    lines = ["[#{index}:a]aformat=sample_rates=44100:channel_layouts=stereo,asplit=#{legs.size}#{legs.map { |(_s, _v, name)| "[#{name}_src]" }.join}"]
+    legs.each do |start, velocity, name|
+      delay = (start * 1000).round
+      lines << "[#{name}_src]adelay=#{delay}|#{delay},volume=#{velocity.round(3)}[#{name}]"
+    end
+    lines << "#{legs.map { |(_s, _v, name)| "[#{name}]" }.join}amix=inputs=#{legs.size}:normalize=0,apad=whole_dur=#{BAR}[#{tag}]"
+    [lines.join(";"), "[#{tag}]"]
+  end
+
+  # Tape, then the slam, then the sampler, and the order is the whole thing.
+  #
+  # Tape is a head bump, a soft knee into saturation, wow and flutter and a top
+  # the head gap cannot resolve. The slam is parallel compression: one copy
+  # crushed until it is all body, mixed under the clean copy, so the attack
+  # survives in the clean one -- which is also why there is no transient shaper
+  # here. The sampler is dilla's Sonitex at the sp1200 preset.
+  def kit_chain(taps)
+    tape = DRUMS.fetch("tape")
+    slam = DRUMS.fetch("slam")
+    sonitex = DRUMS.fetch("sonitex")
+    drive = Float(sonitex.fetch("drive"))
+    norm = Math.tanh(drive).round(6)
+    tape_drive = Float(tape.fetch("drive"))
+    tape_norm = Math.tanh(tape_drive).round(6)
+    tape_chain = "equalizer=f=#{tape['head_bump_hz']}:t=o:w=0.9:g=#{tape['head_bump_db']}," \
+                 "aeval=exprs='tanh(#{tape_drive}*val(0))/#{tape_norm}|tanh(#{tape_drive}*val(1))/#{tape_norm}':channel_layout=stereo,#{PINNED}," \
+                 "vibrato=f=#{tape['wow_hz']}:d=0.009,vibrato=f=#{tape['flutter_hz']}:d=0.006," \
+                 "equalizer=f=120:t=o:w=1.4:g=1.8,lowpass=f=#{tape['rolloff_hz']}:width_type=q:width=0.8"
+    slam_chain = "acompressor=threshold=#{slam['threshold_db']}dB:ratio=#{slam['ratio']}:attack=#{slam['attack_ms']}:" \
+                 "release=#{slam['release_ms']}:makeup=#{slam['makeup_db']},highpass=f=45,lowpass=f=7000,alimiter=limit=0.95"
+    sonitex_chain = "acompressor=threshold=-22dB:ratio=3.4:attack=18:release=130:makeup=2.2," \
+                    "equalizer=f=2800:t=o:w=1.2:g=3.2,lowpass=f=#{sonitex['bandwidth_hz']}," \
+                    "aeval=exprs='tanh(#{drive}*(val(0)+0.025))/#{norm}|tanh(#{drive}*(val(1)+0.025))/#{norm}':channel_layout=stereo,#{PINNED}," \
+                    "equalizer=f=2800:t=o:w=1.2:g=-3.2,highpass=f=34:width_type=q:width=0.9," \
+                    "equalizer=f=58:t=o:w=0.82:g=3.8,equalizer=f=82:t=o:w=2:g=2.4," \
+                    "lowpass=f=12600:width_type=q:width=0.85,vibrato=f=0.26:d=0.007,vibrato=f=4.4:d=0.0045," \
+                    "aresample=#{sonitex['crush_hz']},aresample=44100," \
+                    "acrusher=bits=#{sonitex['crush_bits']}:mode=lin:aa=1:mix=#{sonitex['crush_mix']}," \
+                    "lowpass=f=#{sonitex['lowpass_hz']},acompressor=threshold=-19dB:ratio=2.6:makeup=1.8,alimiter=limit=0.92"
+    "#{taps.join}amix=inputs=#{taps.size}:normalize=0,#{tape_chain}[kit_tape];" \
+      "[kit_tape]asplit=2[kit_clean][kit_smash];[kit_smash]#{slam_chain}[kit_crushed];" \
+      "[kit_clean][kit_crushed]amix=inputs=2:weights=1 #{slam['blend']}:normalize=0," \
+      "#{sonitex_chain},atrim=0:#{BAR},afade=t=out:st=#{(BAR - 0.012).round(4)}:d=0.012,volume=#{DRUMS['gain_db']}dB[out]"
+  end
+
+  HAT_ACCENTS = DRUMS.fetch("hat_accents")
+
+  def drum_bar(shape, path)
+    # A kick rings for a tenth of a second, so two a sixteenth apart read as one
+    # hit with a flam, and a pickup on step 15 is a sixteenth from the next one.
+    placed = []
+    spaced = shape[:kick].sort_by(&:first).reject do |step, _velocity|
+      too_close = placed.any? { |at| (step - at).abs < 3 } || (step >= 14 && placed.include?(0))
+      placed << step unless too_close
+      too_close
+    end.to_h
+
+    kicks = spaced.map { |step, velocity| [step_time(step, :kick), velocity] }
+    backbeats = shape[:snare].map { |step| [step_time(step, :snare), 1.0] }
+    backbeats << [step_time(shape[:double], :snare), 0.55] if shape[:double]
+    ghosts = shape[:ghosts].map { |step| [step_time(step, :ghost), 0.22 + (rand * 0.12)] }
+    hats = []
+    opens = []
+    shape[:hats].each do |step|
+      velocity = if (step % 4).zero? then HAT_ACCENTS["downbeat"]
+                 elsif step.even? then HAT_ACCENTS["eighth"]
+                 else HAT_ACCENTS["sixteenth"]
+                 end
+      velocity *= 1 - (HAT_ACCENTS["jitter"] / 2.0) + (rand * HAT_ACCENTS["jitter"])
+      (step == 14 && rand < HAT_ACCENTS["open_odds"] ? opens : hats) << [step_time(step, :hat), velocity.round(3)]
+    end
+
+    parts = { kick: kicks, snare: backbeats, ghost: ghosts, hat: hats, open_hat: opens }
+    inputs = []
+    graph = []
+    taps = []
+    KIT.each_key do |name|
+      hits = parts[name]
+      next if hits.nil? || hits.empty?
+
+      inputs << "-i" << sample_path(name)
+      branch, tap = voice_branch(name, hits, (inputs.size / 2) - 1)
+      graph << branch
+      taps << tap
+    end
+    return silence(BAR, path) if taps.empty?
+
+    graph << kit_chain(taps)
+    ffmpeg!(*inputs, "-filter_complex", graph.join(";"), "-map", "[out]", "-ac", "2", path, what: "drum bar")
+    path
+  end
+
+  DUST = BED.fetch("dust")
+
+  # Surface noise under everything: a band of hiss where a stylus lives, and a
+  # crackle that comes round once a turn, because a record's damage repeats with
+  # the record. Both are seeded with the pass, so a replayed seed is the same
+  # record.
+  def dust(seconds, seed, path)
+    turn = scratch("dust_turn")
+    rotation = Float(DUST.fetch("rotation_s"))
+    low, high = DUST.fetch("band_hz")
+    crackle = "if(eq(n,0),st(2,#{seed % 99_991})+st(3,#{(seed * 7) % 99_989}),0)*0+0.35*(random(2)-0.5)*gt(random(3),0.9994)"
+    ffmpeg!("-f", "lavfi", "-i", "aevalsrc='#{crackle}':s=44100:d=#{rotation}", "-ac", "2", turn, what: "dust turn")
+    ffmpeg!("-f", "lavfi", "-t", seconds.to_s, "-i", "anoisesrc=color=pink:sample_rate=44100:amplitude=0.5:duration=#{seconds}:seed=#{seed}",
+            "-stream_loop", "-1", "-i", turn,
+            "-filter_complex",
+            "[0:a]highpass=f=#{low},lowpass=f=#{high},volume=#{DUST['hiss_db']}dB,aformat=channel_layouts=stereo[hiss];" \
+            "[1:a]atrim=0:#{seconds},highpass=f=1200,lowpass=f=9000,volume=#{DUST['crackle_db']}dB[pops];" \
+            "[hiss][pops]amix=inputs=2:normalize=0:duration=first[out]",
+            "-map", "[out]", "-ac", "2", path, what: "dust")
+    File.unlink(turn)
+    path
+  end
+
+  def silence(seconds, path)
+    ffmpeg!("-f", "lavfi", "-t", seconds.to_s, "-i", "anullsrc=r=44100:cl=stereo", "-t", seconds.to_s, path, what: "silence")
+    path
+  end
+
+  # Assembly
+
+  CHOP = BED.fetch("chop")
+
+  # The progression treated as a sample, because that is what Dilla did to one:
+  # chopped bar by bar and put back in a different order, a chop repeated, one
+  # dropped, one run backwards. The chops stay on bar lines so the drums still
+  # land. The rate is fixed rather than following the talk: the bed renders ahead
+  # of the speech it will play under, so it cannot know which passes are quiet.
+  def chop(source, bars, path)
+    slices = each_parallel(Array.new(bars) { |index| index }) do |index, _|
+      slice = scratch("slice#{index}")
+      ffmpeg!("-ss", (index * BAR).to_s, "-t", BAR.to_s, "-i", source, "-ac", "2", slice, what: "chop slice")
+      slice
+    end
+    ordered = slices.each_slice(4).flat_map { |group| group.size < 4 ? group : CHOP.fetch("orders").sample.map { |index| group[index] } }
+    ordered = ordered.map do |slice|
+      next slice unless rand < Float(CHOP.fetch("reverse_odds"))
+
+      back = "#{slice}.rev.wav"
+      ffmpeg!("-i", slice, "-af", "areverse", "-ac", "2", back, what: "chop reverse")
+      back
+    end
+    concat(ordered, path)
+    (slices + ordered).uniq.each { |file| File.unlink(file) if File.file?(file) }
+    path
+  end
+
+  def concat(parts, path)
+    list = "#{path}.txt"
+    # The trailing newline is load-bearing: without it ffmpeg misreads the last
+    # entry and fails with "Result too large".
+    File.write(list, "#{parts.map { |part| "file '#{part}'" }.join("\n")}\n")
+    ffmpeg!("-f", "concat", "-safe", "0", "-i", list, "-ac", "2", path, what: "concat #{File.basename(path)}")
+    File.unlink(list)
+    path
+  end
+
+  BASS = BED.fetch("bass")
+
+  # The bass line: dilla's own generator, the one the live catalogue plays --
+  # Bach's walking notes with dub's placement, the root landing after the one
+  # and an octave answering in the gap. Each chord is one source, its notes
+  # summed inside it, so a pass is as many ffmpeg runs as it has chords.
+  def bass_track(chords, path)
+    parts = chords.each_with_index.map do |chord, index|
+      start = index * CHORD_BARS
+      following = chords[(index + 1) % chords.size]
+      notes = ImprovisedLine.bass(chord.notes.map { |note| midi_hz(note) }, midi_hz(following.notes.min), start, CHORD_BARS,
+                                  Random.new(rand(2**31)))
+      bass_chord(notes, start, scratch("bass#{index}"))
+    end
+    concat(parts, path)
+    parts.each { |file| File.unlink(file) if File.file?(file) }
+    path
+  end
+
+  def bass_chord(notes, start, path)
+    shape = WAVES.fetch(BASS.fetch("wave").to_sym)
+    decay = Float(BASS.fetch("decay"))
+    bodies = notes.map do |note|
+      at = (note[:at] - start).round(4)
+      stop = (at + note[:held] + 0.08).round(4)
+      "#{note[:gain]}*(#{shape.call(phase(note[:hz]), '1')}+0.6*sin(2*PI*#{note[:hz].round(4)}*t))" \
+        "*min(max(t-#{at},0)/0.006,1)*exp(-#{decay}*max(t-#{at},0))*between(t,#{at},#{stop})"
+    end
+    expression = bodies.empty? ? "0" : bodies.join("+")
+    ffmpeg!("-f", "lavfi", "-t", CHORD_BARS.round(4).to_s, "-i", "aevalsrc='#{expression}':s=88200:d=#{CHORD_BARS.round(4)}",
+            "-af", "aresample=44100,lowpass=f=#{BASS['cutoff_hz']}:p=2,highpass=f=30,volume=#{BASS['gain_db']}dB",
+            "-ac", "2", path, what: "bass")
+    path
+  end
+
+  MASTER_BUS = BED.fetch("master_bus")
+  TILT = BED.fetch("tilt")
+  SIDECHAIN = BED.fetch("sidechain")
+
+  def ducker(name, key_label, input, output)
+    side = SIDECHAIN.fetch(name)
+    "#{input}#{key_label}sidechaincompress=threshold=#{side['threshold']}:ratio=#{side['ratio']}:" \
+      "attack=#{side['attack_ms']}:release=#{side['release_ms']}:makeup=#{side['makeup']}#{output}"
+  end
+
+  # One master bus, dilla's Sonitex at the subtle preset.
+  #
+  # Saturation comes in two stages: a gentle soft clip before the first
+  # compressor and the tanh stage after it, so there are harmonics without the
+  # squash. The width is mid/side in effect: below the crossover the bus is
+  # summed to mono, because a wide low end is vague and the kick owns it, and
+  # only the band above is widened. The two fourth-order halves sum flat. The tilt
+  # sits after the compressor and before the limiter, which is the mastering
+  # order.
+  def master_graph(input, output)
+    drive = Float(MASTER_BUS.fetch("drive"))
+    norm = Math.tanh(drive).round(6)
+    split = MASTER_BUS.fetch("mono_below_hz")
+    bells = TILT.fetch("bells").map { |bell| "equalizer=f=#{bell['hz']}:t=o:w=#{bell['octaves']}:g=#{bell['gain_db']}" }.join(",")
+    "#{input}asoftclip=type=tanh:threshold=#{MASTER_BUS['pre_clip_threshold']}:oversample=4," \
+      "acompressor=threshold=-22dB:ratio=3.4:attack=18:release=130:makeup=2.2,asplit=2[m_lo][m_hi];" \
+      "[m_lo]lowpass=f=#{split},lowpass=f=#{split},pan=stereo|c0=0.5*c0+0.5*c1|c1=0.5*c0+0.5*c1[m_mono];" \
+      "[m_hi]highpass=f=#{split},highpass=f=#{split},extrastereo=m=#{MASTER_BUS['width']}[m_wide];" \
+      "[m_mono][m_wide]amix=inputs=2:normalize=0," \
+      "equalizer=f=2800:t=o:w=1.2:g=3.2," \
+      "aeval=exprs='tanh(#{drive}*(val(0)+0.025))/#{norm}|tanh(#{drive}*(val(1)+0.025))/#{norm}':channel_layout=stereo,#{PINNED}," \
+      "equalizer=f=2800:t=o:w=1.2:g=-3.2,highpass=f=#{MASTER_BUS['rumble_hz']}:width_type=q:width=0.9," \
+      "equalizer=f=#{MASTER_BUS['body_hz']}:t=o:w=0.82:g=3.0,equalizer=f=82:t=o:w=2:g=2.4," \
+      "lowpass=f=15500:width_type=q:width=0.85,vibrato=f=0.26:d=0.004,vibrato=f=4.4:d=0.0045," \
+      "acrusher=bits=#{MASTER_BUS['crush_bits']}:mode=lin:aa=1:mix=#{MASTER_BUS['crush_mix']}," \
+      "acompressor=threshold=-19dB:ratio=2.6:makeup=1.8,#{bells},alimiter=limit=#{MASTER_BUS['limit']}:level_out=0.90#{output}"
+  end
+
+  LOUDNESS = BED.fetch("loudness")
+
+  def integrated_lufs(path)
+    _out, err, _status = ToolRun.capture3("ffmpeg", "-hide_banner", "-nostats", "-i", path, "-af", "ebur128", "-f", "null", "-")
+    err[/Integrated loudness:.*?I:\s*(-?[\d.]+)/m, 1]&.to_f
+  end
+
+  # Every pass lands on the loudness target, and under a true-peak ceiling: the
+  # limiter runs at four times the sample rate, where the peaks between samples
+  # are samples.
+  def finish!(mixed, path)
+    target = Float(LOUDNESS.fetch("lufs"))
+    gain = (target - (integrated_lufs(mixed) || target)).round(2)
+    ceiling = (10**((Float(LOUDNESS.fetch("true_peak_db")) - 0.2) / 20.0)).round(4)
+    ffmpeg!("-i", mixed, "-af", "volume=#{gain}dB,aresample=176400,alimiter=limit=#{ceiling}:attack=2:release=60:level=disabled,aresample=44100",
+            "-c:a", "pcm_s16le", "-ac", "2", path, what: "finish")
+    path
+  end
+
+  SPEECH = BED.fetch("speech")
+
+  # The copy the player turns to while somebody is talking: the voice band carved
+  # out and the whole bed down.
+  def carve!(path, carved)
+    cut = SPEECH.fetch("carve")
+    ffmpeg!("-i", path, "-af", "equalizer=f=#{cut['hz']}:t=o:w=#{cut['octaves']}:g=#{cut['gain_db']},volume=#{SPEECH['duck_db']}dB",
+            "-c:a", "pcm_s16le", "-ac", "2", carved, what: "carve")
+    carved
+  end
+
+  def log_pass(seed, progressions, chords)
+    families = chords.map(&:family).chunk_while { |a, b| a == b }.map(&:first)
+    line = "#{Time.now.strftime('%F %T')} seed=#{seed} #{progressions.map(&:name).join(',')} #{families.join(',')}"
+    lines = File.file?(LOG) ? File.readlines(LOG).last(499) : []
+    File.write(LOG, (lines + ["#{line}\n"]).join)
+  rescue SystemCallError
+    nil
+  end
+
+  # One pass. Chords are not cached between passes: a pass renders well inside
+  # its own playing time, and voice-led voicings rarely repeat a note set, so a
+  # cache would mostly miss.
+  def render!(path, seed, progressions: nil, log: true)
+    srand(seed)
+    progressions ||= pick_progressions
+    chords = voice_pass(progressions, deal_instruments(progressions.size))
+    log_pass(seed, progressions, chords) if log
+    bars = chords.size * BARS_PER_CHORD
+    seconds = (bars * BAR).round(4)
+    chord_of_bar = chords.each_index.flat_map { |index| [index] * BARS_PER_CHORD }
+
+    parts = each_parallel(chords) { |chord, index| render_part(chord, index) }
+    joined = pedal_join(parts, scratch("joined"))
+    parts.each { |file| File.unlink(file) if File.file?(file) }
+    drift = drift_commands(seconds + 2, scratch("pads"))
+    played = scratch("played")
+    ffmpeg!("-i", joined, "-filter_complex", pad_rack(BED.fetch("pad_racks").sample, drift), "-map", "[out]", "-ac", "2", played, what: "pad rack")
+    File.unlink(joined)
+    File.unlink(drift)
+    pads = chop(played, bars, scratch("pads"))
+    File.unlink(played)
+
+    ensure_drum_kit!
+    shapes = arrangement(bars)
+    kit_bars = each_parallel(shapes) { |shape, index| drum_bar(shape, scratch("bar#{index}")) }
+    kit = concat(kit_bars, scratch("kit"))
+
+    # The lead sits out one whole block a pass, so its return lands -- in a pass
+    # long enough to have a return. A track of one block keeps its lead.
+    block = Integer(LEAD.fetch("sit_out_bars"))
+    quiet = bars >= block * 2 ? rand(bars / block) : -1
+    lead_bars = shapes.each_with_index.map do |shape, index|
+      file = scratch("lead#{index}")
+      at = chord_of_bar[index]
+      resting = index / block == quiet
+      played_bar = !resting && rand < Float(LEAD.fetch("plays_odds")) && lead_bar(chords[at], chords[(at + 1) % chords.size], shape, file)
+      played_bar || silence(BAR, file)
+    end
+    lead = concat(lead_bars, scratch("lead"))
+    surface = dust(seconds, seed, scratch("dust"))
+    low = bass_track(chords, scratch("bass"))
+
+    # The drums play on top of the bed, and everything else ducks under the kick:
+    # the kick opens a hole and the harmony breathes through it, the bass gives
+    # the kick its attack, and a record's surface hides under every transient.
+    mixed = scratch("mixed")
+    ffmpeg!("-i", pads, "-i", kit, "-i", lead, "-i", surface, "-i", low,
+            "-filter_complex",
+            "[1:a]asplit=5[key1][key2][key3][key4][kitmix];" \
+            "#{ducker('pads', '[key1]', '[0:a]', '[duck]')};" \
+            "#{ducker('lead', '[key2]', '[2:a]', '[leadduck]')};" \
+            "#{ducker('dust', '[key3]', '[3:a]', '[dustduck]')};" \
+            "#{ducker('bass', '[key4]', '[4:a]', '[bassduck]')};" \
+            "[leadduck]volume=#{LEAD['gain_db']}dB[l];" \
+            "[duck][kitmix][l][dustduck][bassduck]amix=inputs=5:duration=shortest:normalize=0[bus];" \
+            "#{master_graph('[bus]', '[out]')}",
+            "-map", "[out]", "-ac", "2", mixed, what: "mix")
+    finish!(mixed, path)
+    if (stems = ENV["BED_STEMS"])
+      { "pads" => pads, "kit" => kit, "lead" => lead, "dust" => surface, "bass" => low }.each do |name, file|
+        FileUtils.cp(file, File.join(stems, "#{name}.wav"))
+      end
+    end
+    (kit_bars + lead_bars + [pads, kit, lead, surface, low, mixed]).uniq.each { |file| File.unlink(file) if File.file?(file) }
+    path
+  end
+
+  CATALOGUE = BED.fetch("catalogue")
+
+  # One catalogue piece through the bed: its own chords, voiced and played as a
+  # pass. A two-chord vamp is stated until the piece has room to move, and a long
+  # progression is cut to the length a piece holds.
+  def render_track!(name, path, seed)
+    chords = dilla_progressions.fetch(name.to_s) { abort "bed: no progression named #{name}" }.filter_map { |symbol| parse_chord(symbol) }
+    abort "bed: #{name} has no chord the bed can voice" if chords.empty?
+
+    minimum = Integer(CATALOGUE.fetch("min_chords"))
+    chords *= 2 while chords.size < minimum
+    chords = chords.first(Integer(CATALOGUE.fetch("max_chords")))
+    render!(path, seed, progressions: [Progression.new(name: name.to_s, chords:)], log: false)
+  end
+
+  # The catalogue through the bed: every piece the demo names, one after another,
+  # joined with a crossfade into demo.wav beside dilla.rb, and its mp3.
+  def catalogue!
+    names = demo_curated_order.map(&:to_s)
+    base = Integer(ENV.fetch("RENDER_SEED") { rand(2**31) })
+    parts_dir = File.join(SCRATCH_DIR, "all_tracks_demo")
+    FileUtils.mkdir_p(parts_dir)
+    FileUtils.rm_f(Dir.glob(File.join(parts_dir, "*.wav")))
+    parts = names.each_with_index.map do |name, index|
+      part = File.join(parts_dir, format("%02d_%s.wav", index, name))
+      dmesg("bed #{index + 1}/#{names.size} #{name} seed=#{base + index}", unit: "bed0", parent: "dilla0")
+      render_track!(name, part, base + index)
+    end
+    dest = File.join(ROOT, "demo.wav")
+    join_catalogue(parts, dest)
+    mp3 = demo_encode_mp3(dest)
+    puts "ok: #{dest} (#{parts.size} pieces through the bed, seed #{base})"
+    puts "ok: #{mp3}" if mp3
+    dest
+  end
+
+  def join_catalogue(parts, dest)
+    fade = Float(CATALOGUE.fetch("crossfade_s"))
+    inputs = parts.flat_map { |part| ["-i", part] }
+    graph = []
+    label = "[0:a]"
+    (1...parts.size).each do |index|
+      graph << "#{label}[#{index}:a]acrossfade=d=#{fade}:c1=qsin:c2=qsin[j#{index}]"
+      label = "[j#{index}]"
+    end
+    graph << "#{label}anull[out]"
+    ffmpeg!(*inputs, "-filter_complex", graph.join(";"), "-map", "[out]", "-c:a", "pcm_s16le", "-ac", "2", dest, what: "catalogue join")
+  end
+
+  # Measurement
+
+  BAND_EDGES = [[30, 60], [60, 120], [120, 250], [250, 500], [500, 1000], [1000, 2000], [2000, 4000], [4000, 8000], [8000, 16_000]].freeze
+  BAND_NAMES = %w[sub low low-mid mid upper-mid presence bite air top].freeze
+
+  # Band energy through a fourth-order band, RMS over the file, relative to the
+  # sub. The reference in data/bed.yml was measured with this same instrument, which
+  # is what makes a delta mean something.
+  def band_curve(path)
+    levels = BAND_EDGES.map do |low, high|
+      chain = "aformat=channel_layouts=mono,highpass=f=#{low},highpass=f=#{low},lowpass=f=#{high},lowpass=f=#{high}," \
+              "astats=metadata=0:measure_perchannel=RMS_level:measure_overall=none"
+      _out, err, _status = ToolRun.capture3("ffmpeg", "-hide_banner", "-nostats", "-i", path, "-af", chain, "-f", "null", "-")
+      err[/RMS level dB:\s*(-?[\d.]+)/, 1].to_f
+    end
+    levels.map { |level| (level - levels.first).round(1) }
+  end
+
+  def loudness_of(path)
+    _out, err, _status = ToolRun.capture3("ffmpeg", "-hide_banner", "-nostats", "-i", path, "-af", "ebur128=peak=true", "-f", "null", "-")
+    summary = err[/Integrated loudness:.*\z/m].to_s
+    { lufs: summary[/I:\s*(-?[\d.]+)/, 1].to_f, lra: summary[/LRA:\s*(-?[\d.]+)/, 1].to_f,
+      true_peak: summary[/True peak:\s*\n\s*Peak:\s*(-?[\d.]+)/, 1].to_f }
+  end
+
+  # A seed pins the material: every layer renders bit-identical. The final mix
+  # can still differ in its last bits between runs, because ffmpeg frames a
+  # multi-input graph by scheduling, but not by 0.1 dB in any band.
+  def check!(seeds)
+    reference = BED.fetch("reference_bands")
+    tolerance = Float(BED.fetch("band_tolerance_db"))
+    runs = seeds.map do |seed|
+      path = scratch("check_#{seed}")
+      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      render!(path, seed, log: false)
+      took = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started).round(1)
+      run = loudness_of(path).merge(bands: band_curve(path), seconds: took, seed:)
+      puts JSON.generate(run)
+      File.unlink(path)
+      run
+    end
+    mean = runs.map { |run| run[:bands] }.transpose.map { |column| (column.sum / column.size).round(1) }
+    failures = []
+    BAND_NAMES.each_with_index do |name, index|
+      delta = (mean[index] - reference[index]).round(1)
+      puts format("%-10s ours %6.1f  reference %6.1f  delta %+5.1f", name, mean[index], reference[index], delta)
+      failures << "#{name} #{delta}" if delta.abs > tolerance
+    end
+    target = Float(LOUDNESS.fetch("lufs"))
+    runs.each do |run|
+      failures << "seed #{run[:seed]} loudness #{run[:lufs]}" if (run[:lufs] - target).abs > 0.7
+      failures << "seed #{run[:seed]} true peak #{run[:true_peak]}" if run[:true_peak] > Float(LOUDNESS.fetch("true_peak_db"))
+    end
+    puts failures.empty? ? "bed check: pass" : "bed check: #{failures.join('; ')}"
+    exit(failures.empty? ? 0 : 1)
+  end
+
+  # Playback
+
+  # A WAV's sample data, found by walking its chunks rather than assuming a
+  # 44-byte header.
+  def pcm(path)
+    data = File.binread(path)
+    at = 12
+    while at + 8 <= data.bytesize
+      id = data[at, 4]
+      size = data[at + 4, 4].unpack1("V")
+      return data.byteslice(at + 8, size) if id == "data"
+
+      at += 8 + size + (size & 1)
+    end
+    abort "bed: no sample data in #{path}"
+  end
+
+  SPEAKING = File.expand_path(SPEECH.fetch("flag"))
+  BLOCK = 2205 # frames: 50 ms
+  AHEAD_S = 0.12
+
+  # Somebody is talking while speaker.rb's flag names a live afplay.
+  def speaking?
+    pid = File.read(SPEAKING).to_i
+    pid.positive? && Process.kill(0, pid) == 1
+  rescue StandardError
+    false
+  end
+
+  # Plays one pass into sox, 50 ms at a time and never more than a breath ahead of
+  # the clock, so a change reaches the speakers quickly. While somebody talks the
+  # output moves to the carved copy -- fast in, slow out, so the bed comes back
+  # after a sentence rather than between its words.
+  def play_pass(full_path, carved_path, sink)
+    full = pcm(full_path)
+    carved = pcm(carved_path)
+    frames = [full.bytesize, carved.bytesize].min / 4
+    attack = 50.0 / Float(SPEECH.fetch("attack_ms"))
+    release = 50.0 / Float(SPEECH.fetch("release_ms"))
+    gain = @duck || 0.0
+    started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    (0...frames).step(BLOCK).each_with_index do |frame, block|
+      target = speaking? ? 1.0 : 0.0
+      after = target > gain ? [gain + attack, 1.0].min : [gain - release, 0.0].max
+      count = [BLOCK, frames - frame].min
+      if gain.zero? && after.zero?
+        sink.write(full.byteslice(frame * 4, count * 4))
+      elsif gain == 1.0 && after == 1.0
+        sink.write(carved.byteslice(frame * 4, count * 4))
+      else
+        a = full.byteslice(frame * 4, count * 4).unpack("s<*")
+        b = carved.byteslice(frame * 4, count * 4).unpack("s<*")
+        size = a.size
+        sink.write(Array.new(size) { |i| (a[i] + ((b[i] - a[i]) * (gain + ((after - gain) * i / size)))).round }.pack("s<*"))
+      end
+      gain = after
+      wait = started + ((block + 1) * BLOCK / 44_100.0) - AHEAD_S - Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      sleep(wait) if wait.positive?
+    end
+    @duck = gain
+  end
+
+  def pass_files(tag) = { full: scratch("pass_#{tag}"), carved: scratch("pass_#{tag}_carved") }
+
+  def render_pass!(files, seed)
+    render!(files[:full], seed)
+    carve!(files[:full], files[:carved])
+  end
+
+  READY = File.join(Dir.tmpdir, "master_bed.wav")
+  READY_CARVED = File.join(Dir.tmpdir, "master_bed_carved.wav")
+
+
+  # The narration's entry: `ruby dilla.rb bed` plays until stopped, `bed render
+  # [seed N] [out.wav]` writes one pass and its carved copy, `bed check [seeds
+  # 1,2,3]` measures seeded passes against the reference, `bed stop` ends a
+  # running player. Options are words, because the engine reads every --flag as a
+  # render knob.
+  def main(argv)
+    case argv.first
+    when "stop" then stop!
+    when "check" then check!((word(argv, "seeds") || "1,2,3").split(",").map { |seed| Integer(seed) })
+    when "render"
+      seed = Integer(word(argv, "seed") || rand(2**31))
+      out = argv.find { |arg| arg.end_with?(".wav") } || READY
+      render_pass!({ full: out, carved: out.sub(/\.wav\z/, "_carved.wav") }, seed)
+      puts "#{out} seed=#{seed}"
+    else play!
+    end
+  end
+
+  def stop!
+    pid = (File.read(PIDFILE).to_i if File.file?(PIDFILE))
+    begin
+      Process.kill("TERM", pid) if pid&.positive?
+    rescue StandardError
+      nil
+    end
+    File.unlink(PIDFILE) if File.file?(PIDFILE)
+  end
+
+  # Two passes at a time: one plays while the next renders, so no pass repeats
+  # and the join is silent. When the machine is busy a render can outrun its own
+  # pass; the pass that just played goes round again until the next is ready,
+  # because a repeat is a loop and a gap is the silence this exists to prevent.
+  def play!
+    File.write(PIDFILE, Process.pid)
+    sink = system("which", "play", out: File::NULL, err: File::NULL) &&
+           IO.popen(["play", "-q", "--buffer", "2048", "-t", "raw", "-r", "44100", "-e", "signed-integer", "-b", "16", "-c", "2", "-"], "wb")
+    @builder = nil
+    trap("TERM") do
+      [@builder, sink && sink.pid].compact.each do |child|
+        Process.kill("TERM", child)
+      rescue StandardError
+        nil
+      end
+      File.unlink(PIDFILE) if File.file?(PIDFILE)
+      exit!(0)
+    end
+
+    current = pass_files("a")
+    following = pass_files("b")
+    if File.size?(READY) && File.size?(READY_CARVED)
+      File.rename(READY, current[:full])
+      File.rename(READY_CARVED, current[:carved])
+    else
+      render_pass!(current, rand(2**31))
+    end
+
+    loop do
+      seed = rand(2**31)
+      @builder = fork { render_pass!(following, seed) }
+      loop do
+        if sink
+          play_pass(current[:full], current[:carved], sink)
+        else
+          Process.wait(Process.spawn("afplay", current[:full]))
+        end
+        break if Process.wait(@builder, Process::WNOHANG)
+      end
+      current, following = following, current
+    end
   end
 end
 
@@ -35157,33 +36396,23 @@ DISPATCH = {
   "ears" => -> { ears(ARGV.shift || File.join(OUTPUT_DIR, "full_track.mp3")) },
   "play" => -> { play(ARGV.shift, (ARGV.shift || 8).to_i) },
   "live" => -> { live!(ARGV) },
+  "bed" => -> { Bed.main(ARGV) },
   "stream" => -> { stream((ARGV.shift || stream_bars_default).to_i) },
   # The short one, kept because it is genuinely useful when iterating -- a few
   # bars of each named style finishes in minutes. It is no longer what a bare
   # invoke gives you, because "the demo" means the full catalogue.
 "showcase" => -> { showcase_demo! },
-# What a bare invoke used to do: loop.wav plus a spoken reading of MASTER's
-# README. Kept reachable by name rather than deleted -- it is the one path
-# that exercises the speech overlay end to end.
-"readme-loop" => -> { readme_loop! },
-  # USER_PINNED_ENV, not ENV, for the bar count in all three demo commands.
-  # apply_best_defaults! writes BARS=32 before any of them run, so `ENV["BARS"]`
-  # is always set and the default after it was unreachable: every demo rendered
-  # 32 bars whatever the command promised, and demo-quick took five minutes a
-  # pass to do what it exists to do in one. USER_PINNED_ENV is the environment
-  # as it stood at load, so it answers the question actually being asked --
-  # did the operator set this -- rather than is the key set. Same distinction
-  # stream.rb draws, for the same reason.
+  # demo_command_bars reads USER_PINNED_ENV, not ENV, for the bar count in all
+  # three demo commands: apply_best_defaults! writes BARS=32 before any of them
+  # run, so a default after ENV["BARS"] would be unreachable.
   "demo-all" => lambda do
-    bars = (ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift : nil) || USER_PINNED_ENV["BARS"] || "4"
+    bars = demo_command_bars(DEMO_BARS)
     out = ARGV.shift
     demo_all(bars.to_i, out)
   end,
   # Same catalogue, same settings, one mp3 per track in demos/ and no concat.
-  # BARS is read here rather than left to apply_best_defaults!, which sets 32 and
-  # would otherwise silently override the 12 this and demo-all both default to.
   "demo-each" => lambda do
-    bars = (ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift : nil) || USER_PINNED_ENV["BARS"] || "4"
+    bars = demo_command_bars(DEMO_BARS)
     ENV["DEMO_EACH"] = "1"
     ENV["BARS"] = bars.to_s
     demo_all(bars.to_i)
@@ -35195,7 +36424,7 @@ DISPATCH = {
   # roughly six minutes each way — so a change can be heard while the previous
   # one is still fresh. Use demo-all for a final pass.
   "demo-quick" => lambda do
-    bars = (ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift : nil) || USER_PINNED_ENV["BARS"] || "4"
+    bars = demo_command_bars(DEMO_QUICK_BARS)
     out = ARGV.shift || File.join(ROOT, "demo_quick.wav")
     n = (ENV["DEMO_QUICK_TRACKS"] || "12").to_i.clamp(2, 84)
     order = demo_all_order
@@ -35438,13 +36667,6 @@ DISPATCH = {
     dest = ARGV.shift or abort "usage: ruby dilla.rb rerender <src.mp3|sidecar> <dest> [KEY=VAL...]"
     rerender_from_sidecar(src, dest, replay_overrides(ARGV))
   end,
-  # Audition the sample-to-pad balance by ear rather than by argument.
-  "balance" => lambda do
-    name = ARGV.shift or abort "usage: ruby dilla.rb balance <#{BALANCE_VARIANTS.keys.join("|")}>"
-    render_balance(name)
-  end,
-  # Every record in the demo crate against three progressions.
-  "demo" => -> { generate_demo },
   # Master the tracklist in data/album_tracks.yml into one crossfaded record.
   "album" => -> { album_master(ARGV.shift || File.join(ROOT, "ALBUM.mp3")) },
 }.freeze
@@ -35457,9 +36679,10 @@ def render_output_path?(token)
 end
 
 if __FILE__ == $PROGRAM_NAME
-  if ARGV.first == "live"
-    ARGV.shift
-    live!(ARGV)
+  # The live side and the bed play what they are given: the defaults tables, the
+  # provenance recipe and the asset check belong to the older render path.
+  if %w[live bed].include?(ARGV.first)
+    DISPATCH.fetch(ARGV.shift).call
     exit
   end
 
@@ -35511,15 +36734,11 @@ if __FILE__ == $PROGRAM_NAME
 
   cmd = ARGV.shift
   if cmd.nil?
-    # Bare invoke renders the catalogue.
-    #
-    # It used to render loop.wav plus a spoken reading of MASTER's README, which
-    # answers a question nobody asks of a beat engine. The catalogue is what
-    # this program is for: nineteen pieces, seven off records and twelve it
-    # wrote, every sound synthesised. `readme_loop` still reaches the old
-    # behaviour by name, and `live` is the version that plays instead of
+    # Bare invoke renders the catalogue, because the catalogue is what this
+    # program is for: nineteen pieces, seven off records and twelve it wrote,
+    # every sound synthesised. `live` is the version that plays instead of
     # writing.
-    demo_all((USER_PINNED_ENV["BARS"] || "4").to_i)
+    Bed.catalogue!
   elsif render_output_path?(cmd) && !DISPATCH.key?(cmd)
     ARGV.unshift(cmd)
     default_render!

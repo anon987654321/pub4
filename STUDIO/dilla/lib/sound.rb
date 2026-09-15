@@ -322,7 +322,7 @@ module AnalogSynth
       lpg: 0.4,
     },
     vapor_lead: {
-      waves: %i[triangle saw triangle], detune: [-9.0, 0.0, 12.0], octaves: [0, -1, 1],
+      waves: %i[triangle sine triangle], detune: [-9.0, 0.0, 12.0], octaves: [0, -1, 1],
       cutoff: 900.0, env_amount: 1800.0, resonance: 0.2, drive: 0.8,
       amp: Envelope.new(attack: 0.02, decay: 0.8, sustain: 0.45, release: 1.8),
       filter_env: Envelope.new(attack: 0.35, decay: 1.0, sustain: 0.35, release: 1.2),
@@ -343,8 +343,8 @@ module AnalogSynth
     # at related rates lock into a pattern the ear learns in a bar, and the
     # whole reason for two of them is that it should not be able to.
     ringtone_lead: {
-      waves: %i[saw square triangle], detune: [-7.0, 0.0, 11.0], octaves: [0, 0, 1],
-      cutoff: 700.0, env_amount: 3200.0, resonance: 0.41, drive: 1.1,
+      waves: %i[triangle square triangle], detune: [-7.0, 0.0, 11.0], octaves: [0, 0, 1],
+      cutoff: 700.0, env_amount: 3200.0, resonance: 0.2, drive: 1.1,
       amp: Envelope.new(attack: 0.008, decay: 0.3, sustain: 0.5, release: 0.6),
       filter_env: Envelope.new(attack: 0.006, decay: 0.4, sustain: 0.3, release: 0.4),
       vibrato_hz: 5.2, vibrato_cents: 14.0,
@@ -602,10 +602,8 @@ module AnalogSynth
       inter[(i * 2) + 1] = (right[i] * 32_767.0).round.clamp(-32_768, 32_767)
       i += 1
     end
-    IO.popen(["ffmpeg", "-y", "-v", "quiet", "-f", "s16le", "-ar", RATE.to_s,
-              "-ac", "2", "-i", "-", "-c:a", "pcm_s16le", dest], "wb") do |io|
-      io.write(inter.pack("s<*"))
-    end
+    ToolRun.capture3(["ffmpeg", "-y", "-v", "quiet", "-f", "s16le", "-ar", RATE.to_s,
+                      "-ac", "2", "-i", "-", "-c:a", "pcm_s16le", dest], stdin_data: inter.pack("s<*"), binmode: true)
     dest
   end
 end
@@ -1125,10 +1123,9 @@ module WavMap
   def height_field(image_path)
     return nil unless image_path && File.file?(image_path)
 
-    raw = IO.popen(["ffmpeg", "-v", "error", "-i", image_path,
-                    "-vf", "scale=#{GRID}:#{GRID}:flags=area,format=gray",
-                    "-frames:v", "1", "-f", "rawvideo", "-"],
-                   "rb", err: File::NULL, &:read)
+    raw = ToolRun.capture3(["ffmpeg", "-v", "error", "-i", image_path,
+                            "-vf", "scale=#{GRID}:#{GRID}:flags=area,format=gray",
+                            "-frames:v", "1", "-f", "rawvideo", "-"], binmode: true).first
     return nil if raw.nil? || raw.bytesize < GRID * GRID
 
     raw.unpack("C*")
@@ -3487,9 +3484,8 @@ module DillaModulation
   def follow(path, floor: -50.0, ceiling: -8.0)
     return nil unless path && File.file?(path)
 
-    out = IO.popen(["ffmpeg", "-hide_banner", "-nostats", "-i", path.to_s,
-                    "-af", "ebur128=peak=none", "-f", "null", "-"],
-                   err: %i[child out], &:read)
+    out = ToolRun.capture2e(["ffmpeg", "-hide_banner", "-nostats", "-i", path.to_s,
+                             "-af", "ebur128=peak=none", "-f", "null", "-"]).first
     points = out.scan(/t:\s*([\d.]+)\s+.*?M:\s*(-?[\d.inf]+)/).filter_map do |t, m|
       next if m.include?("inf")
 
@@ -3599,7 +3595,7 @@ module DillaModulation
 
   def probe_params(filter)
     help = begin
-      IO.popen(["ffmpeg", "-hide_banner", "-h", "filter=#{filter}"], err: %i[child out], &:read)
+      ToolRun.capture2e(["ffmpeg", "-hide_banner", "-h", "filter=#{filter}"]).first
     rescue StandardError
       ""
     end

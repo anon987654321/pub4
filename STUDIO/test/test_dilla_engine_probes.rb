@@ -149,13 +149,17 @@ class TestDilla < Minitest::Test
       puts JSON.generate(
         commands: COMMANDS,
         dispatch_keys: DISPATCH.keys,
-        has_aliases_const: defined?(COMMAND_ALIASES)
+        has_aliases_const: defined?(COMMAND_ALIASES),
+        readme_loop: respond_to?(:readme_loop!, true)
       )
     RUBY
     assert_equal result.fetch("dispatch_keys").sort, result.fetch("commands")
     refute result.fetch("has_aliases_const"), "COMMAND_ALIASES should be gone"
     assert_includes result.fetch("dispatch_keys"), "dilla"
     assert_includes result.fetch("dispatch_keys"), "demo-all"
+    # loop* was deleted on the operator's word; nothing renders loop.wav.
+    refute_includes result.fetch("dispatch_keys"), "readme-loop"
+    refute result.fetch("readme_loop"), "readme_loop! should be gone"
     refute_includes result.fetch("dispatch_keys"), "comfort"
     refute_includes result.fetch("dispatch_keys"), "warp"
     refute_includes result.fetch("dispatch_keys"), "camel"
@@ -2017,6 +2021,27 @@ class TestDilla < Minitest::Test
     assert_includes result.fetch("chain"), "atempo="
   end
 
+  # The golden rule: a rap vocal is time-stretched, never pitch shifted. Both
+  # voice chains the fit can choose are checked at a slow-down and a speed-up,
+  # and the pitch-shift and key-align helpers must not exist to be called.
+  def test_the_rap_vocal_fit_chain_stretches_time_and_never_moves_pitch
+    result = eval_in_engine(<<~RUBY)
+      chains = [rap_vocal_isolation_filter, rap_vocal_voice_polish_filter].product([0.8, 1.25])
+        .map { |voice, ratio| rap_vocal_segment_filter(voice, ratio) }
+      puts JSON.generate(
+        chains: chains,
+        helpers: %i[rap_vocal_pitch_shift_chain rap_vocal_resolved_key_shift rap_vocal_key_shift]
+          .select { |name| respond_to?(name, true) }
+      )
+    RUBY
+    result.fetch("chains").each do |chain|
+      assert_includes chain, "atempo=", "the fit must still match the beat's tempo"
+      refute_match(/asetrate|rubberband|afreqshift/, chain,
+                   "a rap vocal fit chain must not change pitch")
+    end
+    assert_empty result.fetch("helpers"), "rap vocal pitch-shift helpers must be gone"
+  end
+
   # A part with no signal must not reach the concat. demo_report_suspect_parts
   # names quiet and short parts, but it runs after the join -- twice now a
   # -91 dB placeholder was warned about only once it was already inside the
@@ -2094,6 +2119,132 @@ class TestDilla < Minitest::Test
 
     # DEMO_RAP_EVERY=0 means no vocals anywhere and still wins.
     assert_empty result.fetch("rap_off")
+  end
+
+  # A hundred August sidecars say FLYLO_* and flylo values. Replaying one hands
+  # the engine the names it reads now; nothing else in the engine knows the old
+  # ones.
+  def test_replaying_an_old_sidecar_translates_the_wonky_rename
+    result = eval_in_engine(<<~RUBY)
+      dir = Dir.mktmpdir
+      audio = File.join(dir, "old.wav")
+      File.write(DillaProvenance.manifest_path(audio), JSON.generate("environment" => {
+        "FLYLO_KICK_GAIN" => "0.75", "FLYLO_TOP_MIX" => "0.65", "WONKY_TOP_MIX" => "0.5",
+        "LEAD_ARP_MODE" => "flylo_spiral", "SIDECHAIN_STYLE" => "flylo", "LEAD_VOICE" => "flylo",
+        "PAD_VOICE" => "pad_flylo", "RENDER_SEED" => "1", "BARS" => "32"
+      }))
+      puts JSON.generate(
+        env: replay_environment(audio),
+        voices: [LEAD_VOICE_PRESETS.key?(:wonky), PAD_VOICE_PRESETS.key?(:pad_wonky)],
+        arp: LEAD_ARP_PRESETS.key?(:wonky_spiral)
+      )
+    RUBY
+
+    env = result.fetch("env")
+    assert_equal({ "WONKY_KICK_GAIN" => "0.75", "WONKY_TOP_MIX" => "0.5", "LEAD_ARP_MODE" => "wonky_spiral",
+                   "SIDECHAIN_STYLE" => "wonky", "LEAD_VOICE" => "wonky", "PAD_VOICE" => "pad_wonky",
+                   "BARS" => "32" }, env, "old names become new ones; a recipe with both keeps the new")
+    assert_equal [true, true], result.fetch("voices"), "the translated voices must exist"
+    assert result.fetch("arp"), "the translated arp mode must exist"
+  end
+
+  # The promotion counts are keyed by profile name. A key no profile carries is
+  # a promotion that never weights the rotation, which is what four renamed
+  # profiles and a downcased gospel_bIII were.
+  def test_every_promoted_profile_names_a_profile_the_engine_has
+    result = eval_in_engine(<<~RUBY)
+      counts = JSON.parse(File.read(PROMOTED_PROFILES_PATH)).reject { |key, _| key.start_with?("_") }
+      puts JSON.generate(counts.keys.reject { |key| DillaLofiMachine::HARMONY_PROFILES.key?(key.to_sym) ||
+                                                    CHORD_PROGRESSIONS.key?(key.to_sym) })
+    RUBY
+    assert_empty result, "promoted_profiles.json counts names no profile carries"
+  end
+
+  # DEMO_CATALOG=curated brings back the wide catalogue, opt-in. Every name in it
+  # must be something a render can resolve, or the slot is a failed part.
+  def test_demo_catalog_curated_is_opt_in_and_every_name_resolves
+    result = eval_in_engine(<<~RUBY)
+      %w[DEMO_TRACKS DEMO_CATALOG DEMO_CRATE STREAM_LOCK STREAM_TRACK].each { |k| ENV.delete(k) }
+      default = demo_all_order
+      ENV["DEMO_CATALOG"] = "curated"
+      wide = demo_all_order
+      resolvable = lambda do |name|
+        CHORD_PROGRESSIONS.key?(name) || GENERATED_STYLES.include?(name) ||
+          DillaLofiMachine.harmony_profile?(name) || TRACK_SAMPLE_LOOPS.key?(name) || TRACK_PRESETS.key?(name)
+      end
+      puts JSON.generate(
+        default: default, wide: wide, curated: demo_curated_order,
+        unresolved: wide.reject { |name| resolvable.call(name) },
+        parts: [STREAM_TRACKS, GENERATED_STYLES, ARTIST_VERIFIED_PROGRESSIONS.keys].map { |t| t.map(&:to_s) }
+      )
+    RUBY
+
+    assert_equal result.fetch("curated"), result.fetch("default"), "the short catalogue stays the default"
+    wide = result.fetch("wide")
+    result.fetch("parts").each { |part| assert_empty part - wide, "the wide catalogue carries every source" }
+    assert_equal wide.uniq, wide
+    assert_empty result.fetch("unresolved"), "every wide catalogue name must resolve"
+  end
+
+  # The album's non-device beats used to force COPY_MACHINE=0 and
+  # DILLA_MIX_BUSES=0, taking the ringtone effects the operator loves out of
+  # three beats in four. They keep the layer's defaults and lose only the wav-map.
+  def test_album_beats_between_device_slots_keep_the_ringtone_layer
+    result = eval_in_engine(<<~RUBY)
+      puts JSON.generate(
+        pinned: USER_PINNED_ENV.slice("COPY_MACHINE", "DILLA_MIX_BUSES", "RINGTONE_LAYER", "DILLA_FULL"),
+        plain: (0...ALBUM_DEVICE_EVERY - 1).map { |idx| album_slot_env(idx) },
+        copies: RingtoneLayer::RINGTONE_LAYER_DEFAULTS["COPY_MACHINE"],
+        buses: FullEngine::FULL_ENGINE_DEFAULTS["DILLA_MIX_BUSES"]
+      )
+    RUBY
+
+    skip "the ringtone keys are pinned in this shell" unless result.fetch("pinned").empty?
+    refute_equal "0", result.fetch("copies")
+    assert_equal "1", result.fetch("buses")
+    result.fetch("plain").each do |env|
+      assert_equal result.fetch("copies"), env.fetch("COPY_MACHINE"), "Copy Machine stays on between devices"
+      assert_equal result.fetch("buses"), env.fetch("DILLA_MIX_BUSES"), "the mix buses stay on between devices"
+      assert_equal "", env.fetch("WAV_MAP"), "only the wav-map belongs to a device slot"
+    end
+  end
+
+  # demo-all's defaults were cut unheard to four bars, three pad voices, an
+  # album-wide ringtone chain and a 92 BPM techno kit, and the demo that came out
+  # was stopped as "horrible". These are the defaults it renders by now.
+  def test_demo_all_defaults_twelve_bars_full_pad_rotation_no_album_fx_and_techno_tempo
+    result = eval_in_engine(<<~RUBY)
+      ENV.delete("DEMO_FX")
+      fx_default = demo_fx_ringtone?
+      ENV["DEMO_FX"] = "ringtone"
+      pads = PAD_VOICE_PRESETS.keys.map(&:to_s) + PAD_LAYER_STACKS.keys.map(&:to_s)
+      puts JSON.generate(
+        pinned_bars: USER_PINNED_ENV["BARS"],
+        all_bars: demo_command_bars(DEMO_BARS),
+        quick_bars: demo_command_bars(DEMO_QUICK_BARS),
+        fx_default: fx_default,
+        fx_opt_in: demo_fx_ringtone?,
+        techno_bpm: DillaLofiMachine::DRUM_PRESETS[:industrial_techno][:bpm],
+        rotation: DEMO_PAD_ROTATION,
+        unresolved: DEMO_PAD_ROTATION.reject { |voice| pads.include?(voice) },
+        slot_env: demo_slot_pad_env(0)
+      )
+    RUBY
+
+    skip "BARS is pinned in this shell" if result.fetch("pinned_bars")
+    assert_equal "12", result.fetch("all_bars")
+    assert_equal "8", result.fetch("quick_bars")
+    refute result.fetch("fx_default"), "the album ringtone chain is opt-in"
+    assert result.fetch("fx_opt_in"), "DEMO_FX=ringtone still turns it on"
+    assert_equal 128, result.fetch("techno_bpm")
+    rotation = result.fetch("rotation")
+    assert_equal 53, rotation.size
+    assert_equal 38, rotation.uniq.size
+    # texture names no preset and plays the Rhodes/Moog/Prophet soul default,
+    # as it did in the demo this rotation was restored from; nothing else may.
+    assert_equal ["texture"], result.fetch("unresolved"), "every other rotation voice must be a defined pad"
+    assert_equal "1", result.fetch("slot_env").fetch("PAD_LAYERS"), "a stack slot plays as its stack"
+    refute result.fetch("slot_env").key?("CHORD_BARS"), "each progression keeps its own chord length"
   end
 
   # "No leads" took six rounds to achieve, because each attempt turned off the
@@ -2452,130 +2603,6 @@ class TestDilla < Minitest::Test
                     "gridding at the wrong tempo must not coincidentally agree"
   end
 
-  # atempo preserves pitch, so nothing in the vocal path used to change a stem's
-  # key and a vocal in the wrong key stayed there for the whole render.
-  def test_progression_pitch_class_weights_cover_unregistered_voicings
-    result = eval_in_engine(<<~RUBY)
-      puts JSON.generate(
-        db_major_minor_fall: progression_pitch_class_weights(:db_major_minor_fall),
-        soul: progression_pitch_class_weights(:soul),
-        lookup_hit: !PAD_CHORD_LOOKUP["Fm9"].nil?,
-        lookup_miss: PAD_CHORD_LOOKUP["Fm7"].nil?
-      )
-    RUBY
-
-    assert result.fetch("lookup_miss"),
-           "test premise: Fm7 is not a registered pad voicing"
-    assert result.fetch("lookup_hit"), "test premise: Fm9 is registered"
-
-    # db_major_minor_fall is Dbmaj7 Cm7 Fm7 Bbm7 — every chord misses PAD_CHORD_LOOKUP,
-    # which is exactly the case that scored as "no harmony at all" before the
-    # root-parsing fallback.
-    weights = result.fetch("db_major_minor_fall")
-    refute_nil weights, "a progression of unregistered voicings must still yield weights"
-    assert_equal 12, weights.length
-    assert_in_delta 1.0, weights.sum, 0.001, "weights must be normalised"
-    names = %w[C Db D Eb E F Gb G Ab A Bb B]
-    # Db major / Bb minor: the roots Db, C, F and Bb must all carry weight, and
-    # E — in none of the four chords — must carry none.
-    %w[Db C F Bb].each do |pc|
-      assert_operator weights[names.index(pc)], :>, 0.0,
-                      "#{pc} is a chord root of db_major_minor_fall but scored zero"
-    end
-    assert_in_delta 0.0, weights[names.index("E")], 0.001,
-                    "E is in no db_major_minor_fall chord and must not score"
-  end
-
-  def test_key_shift_prefers_smaller_moves_and_leaves_in_key_vocals_alone
-    result = eval_in_engine(<<~RUBY)
-      names = %w[C Db D Eb E F Gb G Ab A Bb B]
-      weights = progression_pitch_class_weights(:db_major_minor_fall)
-      # A chroma already sitting on the progression's strongest tones.
-      in_key = Array.new(12, 0.0)
-      %w[F C Db Ab].each { |n| in_key[names.index(n)] = 0.25 }
-      # A chroma one semitone below those tones — a shift of +1 lands it home.
-      one_below = Array.new(12, 0.0)
-      %w[F C Db Ab].each { |n| one_below[(names.index(n) - 1) % 12] = 0.25 }
-      # Two semitones below.
-      two_below = Array.new(12, 0.0)
-      %w[F C Db Ab].each { |n| two_below[(names.index(n) - 2) % 12] = 0.25 }
-      puts JSON.generate(
-        in_key: rap_vocal_key_shift(in_key, weights),
-        one_below: rap_vocal_key_shift(one_below, weights),
-        two_below: rap_vocal_key_shift(two_below, weights),
-        flat_chroma: rap_vocal_key_shift(Array.new(12, 1.0 / 12), weights),
-        no_progression: rap_vocal_key_shift(in_key, nil),
-        max_shift: RAP_VOCAL_KEY_MAX_SHIFT
-      )
-    RUBY
-
-    assert_equal 0, result.fetch("in_key"),
-                 "a vocal already on the chord tones must not be transposed"
-    assert_equal 1, result.fetch("one_below"),
-                 "a vocal a semitone flat of the chord tones must come up one"
-    assert_equal 2, result.fetch("two_below"),
-                 "a whole tone is worth correcting when the evidence is unambiguous"
-    assert_equal 0, result.fetch("flat_chroma"),
-                 "a chroma with no pitch centre gives no shift any evidence"
-    assert_equal 0, result.fetch("no_progression"),
-                 "an unknown progression must not transpose anything"
-
-    # Never exceed the formant budget, whatever the chroma says.
-    assert_operator result.fetch("max_shift"), :<=, 2
-  end
-
-  # asetrate moves pitch and tempo together; without the atempo compensation the
-  # transpose would also re-tempo the vocal off the beat it was just fitted to.
-  def test_pitch_shift_chain_compensates_tempo_and_no_ops_at_zero
-    result = eval_in_engine(<<~RUBY)
-      puts JSON.generate(
-        zero: rap_vocal_pitch_shift_chain(0).inspect,
-        up1: rap_vocal_pitch_shift_chain(1),
-        down2: rap_vocal_pitch_shift_chain(-2),
-        sample_rate: SAMPLE_RATE
-      )
-    RUBY
-
-    assert_equal "nil", result.fetch("zero"),
-                 "no shift must add no filter, not a unity-ratio resample"
-
-    sr = result.fetch("sample_rate").to_f
-    up = result.fetch("up1")
-    ratio = 2**(1 / 12.0)
-    assert_includes up, "asetrate=#{(sr * ratio).round}"
-    assert_includes up, "aresample=#{sr.to_i}"
-    # atempo must undo exactly what asetrate did.
-    tempos = up.scan(/atempo=([0-9.]+)/).flatten.map(&:to_f)
-    refute_empty tempos, "pitch shift must compensate tempo"
-    assert_in_delta 1.0 / ratio, tempos.reduce(1.0, :*), 0.0005,
-                    "atempo product must invert the asetrate ratio"
-
-    down = result.fetch("down2")
-    down_ratio = 2**(-2 / 12.0)
-    assert_includes down, "asetrate=#{(sr * down_ratio).round}"
-    down_tempos = down.scan(/atempo=([0-9.]+)/).flatten.map(&:to_f)
-    assert_in_delta 1.0 / down_ratio, down_tempos.reduce(1.0, :*), 0.0005
-  end
-
-  # bpm+bars named the same fit file for two tracks at the same tempo in
-  # different keys, so the second silently reused a transpose built for the
-  # first one's harmony.
-  def test_fit_filename_encodes_the_key_shift
-    result = eval_in_engine(<<~RUBY)
-      puts JSON.generate(
-        none: format("fit_%d_%dbars%s.wav", 86, 16, 0.zero? ? "" : format("_key%+d", 0)),
-        up: format("fit_%d_%dbars%s.wav", 86, 16, format("_key%+d", 1)),
-        down: format("fit_%d_%dbars%s.wav", 86, 16, format("_key%+d", -2))
-      )
-    RUBY
-
-    assert_equal "fit_86_16bars.wav", result.fetch("none"),
-                 "an untransposed fit keeps the historical filename"
-    assert_equal "fit_86_16bars_key+1.wav", result.fetch("up")
-    assert_equal "fit_86_16bars_key-2.wav", result.fetch("down")
-    refute_equal result.fetch("up"), result.fetch("down")
-  end
-
   # The sidecar manifest beside every render claims "Reproduce with: ...", so a
   # knob the scan misses is not a missing line in a report — it is a recipe that
   # silently omits an ingredient. The scan globbed lib/*.rb, one level, and the
@@ -2593,6 +2620,35 @@ class TestDilla < Minitest::Test
     end
     assert_operator keys.length, :>=, 600,
                     "the engine reads 610 knobs; a sharp drop means the source glob stopped seeing files"
+  end
+
+  # Takes before d6ab8a0c8 played soundfont pads, and their sidecars name no
+  # ANALOG_SYNTH, so a replay silently swapped the instrument. Every sidecar's
+  # environment says which instrument played, set or not.
+  def test_provenance_environment_records_analog_synth_even_when_unset
+    result = eval_in_engine(<<~RUBY)
+      ENV.delete("ANALOG_SYNTH")
+      unset = DillaProvenance.send(:recorded_env)["ANALOG_SYNTH"]
+      ENV["ANALOG_SYNTH"] = "0"
+      puts JSON.generate(unset: unset, soundfont: DillaProvenance.send(:recorded_env)["ANALOG_SYNTH"],
+                         default: ANALOG_SYNTH_DEFAULT)
+    RUBY
+    assert_equal result.fetch("default"), result.fetch("unset"), "an unset knob records the engine's default"
+    assert_equal "0", result.fetch("soundfont"), "a set knob records what was set"
+  end
+
+  # The sidecar was renamed from .dilla to .provenance.json, and pub4 keeps no
+  # reader for a renamed file: an old sidecar beside a part is not a recipe.
+  def test_provenance_reads_no_dilla_suffix
+    require File.expand_path("../dilla/lib/ledger", __dir__)
+    Dir.mktmpdir do |dir|
+      part = File.join(dir, "part.wav")
+      File.write("#{part}.dilla", JSON.generate("render_seed" => 7))
+
+      assert_equal "#{part}.provenance.json", DillaProvenance.manifest_path(part)
+      assert_nil DillaProvenance.part_recipe(part), "a .dilla sidecar must not be read"
+      refute DillaProvenance.const_defined?(:LEGACY_MANIFEST_EXT, false)
+    end
   end
 
   # Five places each answered "which files is the engine made of" separately, and

@@ -393,6 +393,17 @@ end
     assert_equal %w[PERSONA TURN], persona.value.map { |block| block[:text] }
   end
 
+  # A schema-bound reply arrives parsed, and Hash#to_s is Ruby's inspect: the
+  # fold's parser read `{"verb" => "note"}` as no JSON object at all.
+  def test_a_parsed_schema_reply_goes_back_out_as_json
+    dispatcher, = build_dispatcher
+    reply = Struct.new(:content).new({ "verb" => "note", "why" => "look first", "args" => {} })
+
+    text = dispatcher.send(:extract_response, reply, "openai/gpt-4o-mini")
+
+    assert_equal "note", JSON.parse(text)["verb"]
+  end
+
   private
 
   def build_dispatcher

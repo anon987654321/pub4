@@ -2535,6 +2535,52 @@ runtime:
       steps: 2
       monospace: 1.0
       phosphor: 0.4
+# What MASTER reads with no network. script/clone_style_guides.sh clones every
+# repo here into knowledge/<topic>/<local> and saves every paper's ar5iv page
+# into knowledge/research/, and SearchKnowledge searches both by topic. Chosen
+# 2026-09-14 for the local tier: each repo was live that week, and each paper
+# bears on a small model held to a schema in a small window.
+offline_knowledge:
+  id: offline_knowledge
+  tier: reference
+  area: local_models
+  status: active
+  clone_script: script/clone_style_guides.sh
+  knowledge_dir: knowledge
+  sources:
+  - { topic: ollama, repo: https://github.com/ollama/ollama, local: ollama, use: "api.md, modelfile, structured outputs, keep_alive" }
+  - { topic: awesome, repo: https://github.com/rafska/awesome-local-llm, local: awesome-local-llm, use: "local runtimes and quantisation" }
+  - { topic: awesome, repo: https://github.com/EndoTheDev/Awesome-Ollama, local: awesome-ollama, use: "Ollama clients and libraries" }
+  - { topic: awesome, repo: https://github.com/promptslab/Awesome-Prompt-Engineering, local: awesome-prompt-engineering, use: "prompting papers and techniques" }
+  - { topic: awesome, repo: https://github.com/dair-ai/Prompt-Engineering-Guide, local: prompt-engineering-guide, use: "prompting prose for offline reading" }
+  - { topic: awesome, repo: https://github.com/Shubhamsaboo/awesome-llm-apps, local: awesome-llm-apps, use: "local agent and RAG patterns" }
+  - { topic: awesome, repo: https://github.com/bradAGI/awesome-cli-coding-agents, local: awesome-cli-coding-agents, use: "terminal coding agents to compare the fold with" }
+  - { topic: awesome, repo: https://github.com/EuniAI/awesome-code-agents, local: awesome-code-agents, use: "code agent research" }
+  - { topic: system_prompts, repo: https://github.com/asgeirtj/system_prompts_leaks, local: system_prompts_leaks, use: "current agent system prompts" }
+  - { topic: system_prompts, repo: https://github.com/x1xhlol/system-prompts-and-models-of-ai-tools, local: ai-tool-prompts, use: "tool schemas, reference only under GPL-3.0" }
+  - { topic: gems, repo: https://github.com/alexrudall/awesome-ruby-ai, local: awesome-ruby-ai, use: "Ruby LLM gems" }
+  - { topic: gems, repo: https://github.com/markets/awesome-ruby, local: awesome-ruby, use: "the general Ruby list" }
+  papers:
+  - { id: "2408.02442", title: "Let Me Speak Freely? format restrictions and reasoning", use: "reason before the constrained fields" }
+  - { id: "2501.10868", title: "JSONSchemaBench, structured outputs benchmark", use: "which schema features hold" }
+  - { id: "2408.11061", title: "StructuredRAG", use: "unconstrained JSON success of small models" }
+  - { id: "2305.13971", title: "Grammar-Constrained Decoding without Finetuning", use: "constrained decoding" }
+  - { id: "2307.09702", title: "Efficient Guided Generation (Outlines)", use: "constrained decoding" }
+  - { id: "2411.15100", title: "XGrammar", use: "constrained decoding" }
+  - { id: "2310.06839", title: "LongLLMLingua", use: "prompt compression for a small window" }
+  - { id: "2403.12968", title: "LLMLingua-2", use: "prompt compression for a small window" }
+  - { id: "2307.03172", title: "Lost in the Middle", use: "goal and latest result at the edges" }
+  - { id: "2405.15793", title: "SWE-agent", use: "lint-gated edits, short observations" }
+  - { id: "2407.01489", title: "Agentless", use: "localise, repair, validate for weak models" }
+  - { id: "2304.05128", title: "Self-Debugging", use: "execution feedback drives repair" }
+  - { id: "2203.11171", title: "Self-Consistency", use: "majority over cheap local samples" }
+  - { id: "2401.07324", title: "Small LLMs Are Weak Tool Learners", use: "split planning from calling" }
+  - { id: "2409.00608", title: "TinyAgent", use: "offer only the relevant tools" }
+  - { id: "2305.05176", title: "FrugalGPT", use: "cheap first, verify, escalate" }
+  - { id: "2310.12963", title: "AutoMix", use: "cheap first, verify, escalate" }
+  - { id: "2406.18665", title: "RouteLLM", use: "cheap first, verify, escalate" }
+  - { id: "2412.21139", title: "SWE-Gym", use: "what a 7B to 32B agent can do" }
+
 style_guides:
   id: style_guides
   tier: policy

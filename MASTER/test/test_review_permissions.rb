@@ -29,7 +29,8 @@ class PermissionsTest < Minitest::Test
 
   def test_every_blocklist_entry_actually_blocks
     Permissions::BLOCKLIST.each do |entry|
-      assert Permissions.blocked?(entry), "#{entry.inspect} is on the blocklist but does not block"
+      command = entry.is_a?(Regexp) ? "cat image > /dev/sda" : entry
+      assert Permissions.blocked?(command), "#{entry.inspect} is on the blocklist but does not block"
     end
   end
 
@@ -58,6 +59,9 @@ class PermissionsTest < Minitest::Test
       "git status --porcelain",
       "ruby -Ilib -Itest test/test_master.rb",
       "echo 'sh' > note.txt",
+      # A device write is refused; discarding output is not.
+      "bundle exec rake test > /dev/null 2>&1",
+      "echo x >/dev/stderr",
     ].each do |command|
       refute Permissions.blocked?(command), "#{command.inspect} should be allowed"
     end

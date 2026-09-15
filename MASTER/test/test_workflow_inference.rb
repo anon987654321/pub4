@@ -52,7 +52,7 @@ class WorkflowInferenceTest < Minitest::Test
   # "complete". A defect must escape; only operational failures degrade.
   def test_a_stage_defect_is_raised_not_formatted_into_the_report
     broken = Object.new
-    def broken.run(_) = raise(NoMethodError, "undefined method 'run'")
+    def broken.run(_, **) = raise(NoMethodError, "undefined method 'run'")
     def broken.preview(_) = Master::Result.ok({ total: 0, rules: {}, files: {} })
 
     error = assert_raises(NoMethodError) { dispatch(critique: false, fix_loop: broken, apply: true) }
@@ -61,7 +61,7 @@ class WorkflowInferenceTest < Minitest::Test
 
   def test_an_operational_stage_failure_marks_the_run_incomplete
     flaky = Object.new
-    def flaky.run(_) = raise(Errno::ENOENT, "scan target")
+    def flaky.run(_, **) = raise(Errno::ENOENT, "scan target")
     def flaky.preview(_) = Master::Result.ok({ total: 0, rules: {}, files: {} })
 
     out = dispatch(critique: false, fix_loop: flaky, apply: true)
@@ -108,7 +108,7 @@ class WorkflowInferenceTest < Minitest::Test
   end
 
   class FakeFixLoop
-    def run(_target) = Master::Result.ok("fix: nothing to do")
+    def run(_target, **) = Master::Result.ok("fix: nothing to do")
 
     def preview(_target)
       Master::Result.ok({ total: 0, rules: {}, files: {} })

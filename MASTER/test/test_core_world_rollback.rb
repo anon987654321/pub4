@@ -30,6 +30,29 @@ class WorldRollbackTest < Minitest::Test
     end
   end
 
+  # MASTER is rooted in a subdirectory of its checkout. The patch names paths
+  # from the top, the include named them from the root, nothing matched, and
+  # the operator's uncommitted edit was lost to HEAD under a "rolled back".
+  def test_rollback_from_a_subdirectory_root_keeps_the_uncommitted_edit
+    Dir.mktmpdir do |repo|
+      init_git!(repo)
+      root = File.join(repo, "MASTER")
+      FileUtils.mkdir_p(File.join(root, "lib"))
+      File.write(File.join(root, "lib", "x.rb"), "committed\n")
+      system("git", "-C", repo, "add", ".", out: File::NULL, err: File::NULL)
+      system("git", "-C", repo, "commit", "-qm", "seed", out: File::NULL, err: File::NULL)
+      File.write(File.join(root, "lib", "x.rb"), "operator edit\n")
+
+      world = Master::Core::World.new(root:)
+      checkpoint = world.checkpoint
+      File.write(File.join(root, "lib", "x.rb"), "failed write\n")
+      observation = world.rollback(checkpoint, Master::Core::Effect.write("lib/x.rb", "failed write\n"))
+
+      assert observation.ok?, observation.message
+      assert_equal "operator edit\n", File.read(File.join(root, "lib", "x.rb"))
+    end
+  end
+
   # The reason the scope exists. `git reset --hard HEAD` undid the failed write by
   # discarding every uncommitted change in the tree — and this checkout is shared,
   # so "every uncommitted change" includes whatever another session was midway

@@ -23,21 +23,44 @@ module Master::Core
     EVIDENCE_KINDS = Proof::SCORING.keys.join("|").freeze
     EVIDENCE_WEIGHTS = Proof::SCORING.map { |k, v| "#{k}=#{v}" }.join(", ").freeze
 
+    # The reply as a JSON schema, for a model that can be held to it while it
+    # decodes. A decoder writes required keys in the order listed, so `why`
+    # comes first: the model states what the last result showed before it
+    # commits to a verb, which is where format-constrained reasoning holds up
+    # (arXiv 2408.02442). It is bounded, because an unbounded string is where a
+    # constrained small model loops.
+    SCHEMA = {
+      type: "object",
+      properties: {
+        why: { type: "string", maxLength: 200 },
+        verb: { type: "string", enum: VERBS.map(&:to_s) },
+        args: { type: "object" },
+      },
+      required: %w[why verb args],
+      additionalProperties: false,
+    }.freeze
+
+    # What a malformed reply is shown, so the next turn can repair itself.
+    SHAPE = '{"why": "what the last result showed, and the next step", "verb": "read", ' \
+            '"args": {"path": "lib/x.rb"}}'
+
     SYSTEM = <<~PROMPT.freeze
       You are MASTER, a constitutional coding agent working toward one GOAL. Each
       turn, propose the single next action as ONE JSON object and nothing else:
 
-        {"verb": "<verb>", "why": "<one short clause>", "args": { ... }}
+        {"why": "<one short clause>", "verb": "<verb>", "args": { ... }}
+
+      Write `why` first: what the last RESULT showed and what you do next.
 
       Verbs and their args:
         read   {"path"}                          inspect a file before changing it
         write  {"path","content"}                create or replace a file (full contents)
         exec   {"argv":["prog","arg"...],"evidence":"#{EVIDENCE_KINDS}"}
         git    {"operation":"diff|stage|commit","paths":[...],"message":"..."}
-        ask      {"prompt","options":[...]}      ask the operator only when truly blocked
+        ask      {"prompt","options":[...]}      a question for the operator when blocked; never to answer
         note     {"kind","text"}                 record a thought when no action fits
         critique {"scope":"diff"}                run council tribunal on git diff (high-risk)
-        done     {"summary"}                      finish — only after enough evidence
+        done     {"summary"}                      finish; the summary is your answer to the operator
 
       How to work:
         - Orient first: read the files you will change and exec `ls` or
@@ -46,7 +69,13 @@ module Master::Core
         - Prove it: exec the tests or checks with an evidence tag. Each result comes
           back as the next turn's observation — react to failures, never ignore them.
         - On high-risk goals (risk: high/critical in memory), run `critique` before `done`.
-        - Then, and only then, `done`.
+        - Then, and only then, `done`. A question that needs no change is answered
+          with `done` once you have read what answers it.
+        - Never repeat an action whose RESULT you already have; a failed RESULT
+          means fix its cause, not retry the same action.
+        - `write` takes the whole file. Never elide with "..." or "rest of code".
+        - The last line of every turn is STATE: the goal, what you have read, the
+          evidence so far, and whether `done` is allowed yet. Act on it.
 
       Constraints the runtime enforces (violate them and the effect is refused):
         - never write a secret into a file or note
@@ -60,8 +89,8 @@ module Master::Core
         - medium+ goals carry approach/chosen notes — do not write before reading them
         - high-risk goals require a passing `critique` before `done`
 
-      Reason silently; output only the JSON object. `why` is the one clause of
-      that reasoning the operator reads beside the action, lowercase and terse.
+      Output only the JSON object. `why` is the one clause the operator reads
+      beside the action, lowercase and terse.
     PROMPT
 
     def initialize(model_id: ENV.fetch("MASTER_CORE_MODEL", DEFAULT_MODEL), chat: nil)
@@ -81,15 +110,15 @@ module Master::Core
     def self.parse(text, verbs:)
       cleaned = text.to_s.gsub(/```[a-z]*/i, "")
       json = cleaned[/\{.*\}/m]
-      return Effect.note(:parse_error, "no JSON object in model reply") unless json
+      return Effect.note(:parse_error, "no JSON object in the reply; reply as #{SHAPE}") unless json
 
       data = JSON.parse(json)
       verb = data["verb"].to_s.to_sym
-      return Effect.note(:parse_error, "unknown verb: #{verb}") unless verbs.include?(verb)
+      return Effect.note(:parse_error, "unknown verb: #{verb}; the verbs are #{verbs.join(", ")}") unless verbs.include?(verb)
 
       Effect.new(verb:, args: symbolize(data["args"] || {}))
     rescue StandardError => e
-      Effect.note(:parse_error, e.message)
+      Effect.note(:parse_error, "#{e.message}; reply as #{SHAPE}")
     end
 
     def self.symbolize(hash)

@@ -27,13 +27,10 @@ module Master
           lines << "#{prefix}#{header}#{total} total violations#{suffix}"
           lines << delta_line if delta_line
           lines << autofix_line if autofix_line
-          histogram_line = confidence_histogram_line
-          lines << histogram_line if histogram_line
-          lines << evidence_line
           cross_file_line = cross_file_drifts_line
           lines << cross_file_line if cross_file_line
           ranked.first(CommandRegistry::SCAN_RULE_GROUP_LIMIT).each do |rule, violations|
-            lines << "[#{rule}]"
+            lines << "#{rule} #{violations.size}"
             lines.concat(violations.first(3).map { |violation| violation_line(violation) })
           end
           lines << omitted_line if omitted_count.positive?
@@ -153,18 +150,14 @@ module Master
           end
         end
 
-        def evidence_line
-          "evidence: #{ranked.map { |rule, violations| "#{rule}=#{violations.size}" }.join(" ")}"
-        end
-
+        # "  web/public/face.css:28 raw hex color — use a design token, 14 files".
+        # The place and the message. Confidence, a why that restated the
+        # message, a genealogy that restated the rule and an impact tuple made
+        # each line a pipe-separated dump no one read.
         def violation_line(violation)
-          parts = ["  L#{violation[:line]}", violation[:message][0, CommandRegistry::VIOLATION_TRUNCATE]]
-          parts << "conf=#{format('%.2f', violation[:confidence].to_f)}" if violation[:confidence]
-          parts << "files=#{Array(violation[:files]).size}" if violation[:files]
-          parts << "why=#{violation[:why].to_s[0, 80]}" if violation[:why]
-          parts << "genealogy=#{Array(violation[:genealogy]).join(' → ')}" if violation[:genealogy]
-          parts << "impact=#{impact_summary(violation[:impact_radius])}" if violation[:impact_radius]
-          parts.join(" | ")
+          place = [violation[:file].to_s.delete_prefix("#{Master::ROOT}/"), violation[:line]].reject { |p| p.to_s.empty? }.join(":")
+          files = Array(violation[:files]).size
+          "  #{place} #{violation[:message].to_s[0, CommandRegistry::VIOLATION_TRUNCATE]}#{", #{files} files" if files > 1}"
         end
 
         def omitted_count
@@ -185,40 +178,12 @@ module Master
           "cross-file DRY: #{summary}"
         end
 
-        def confidence_histogram_line
-          buckets = confidence_histogram
-          return if buckets.empty?
-
-          "confidence: #{buckets.map { |label, count| "#{label}=#{count}" }.join(" ")}"
-        end
-
-        def confidence_histogram
-          clustered_violations.each_with_object(Hash.new(0)) do |violation, buckets|
-            next if violation[:confidence].nil?
-
-            conf = violation[:confidence].to_f
-            label =
-              if conf < 0.25 then "0.0-0.24"
-              elsif conf < 0.5 then "0.25-0.49"
-              elsif conf < 0.75 then "0.50-0.74"
-              else "0.75-1.0"
-              end
-            buckets[label] += 1
-          end.sort.to_h
-        end
-
         def impact_radius(cluster)
           {
             files_affected: Array(cluster.map { |v| v[:file] }.compact.uniq).size,
             occurrences: cluster.size,
             severity_multiplier: severity_multiplier(cluster.first[:severity]),
           }
-        end
-
-        def impact_summary(radius)
-          return "" unless radius.is_a?(Hash)
-
-          "files=#{radius[:files_affected]} occ=#{radius[:occurrences]} x#{format('%.2f', radius[:severity_multiplier])}"
         end
 
         def severity_multiplier(severity)

@@ -3,20 +3,14 @@
 require "digest"
 
 module Master::Core
-  # Memory — the record. Holds the conversation the model sees, compacted to a
-  # budget. Compaction is turn-aware: it summarises the oldest turns and keeps
-  # the recent ones whole, never orphaning an observation from the effect that
-  # produced it.
-  #
-  # This is where the old trace/, history/, and scope/ collapse to.
-  #
-  # What it no longer holds is Proof — the evidence ledger and the risk gates,
-  # which moved to lib/core/proof.rb on 2026-08-12. Memory answers what was
-  # said; Proof answers whether it was enough. Reach the second through
-  # `memory.proof`, deliberately rather than through forwarding methods: a
-  # delegator would have kept the public count where it was and hidden the seam
-  # that the count existed to point at.
+  # Memory — the unified cognitive architecture.
+  # It separates memory into three distinct channels:
+  # 1. Episodic: What happened in this session (The Trace)
+  # 2. Semantic: What is known to be true (The Knowledge)
+  # 3. Procedural: How things are done (The Recipes)
   class Memory
+    attr_reader :episodic, :semantic, :procedural, :proof
+
     Entry = Data.define(:role, :text)
 
     # Context budget in characters. A ~1GB OpenBSD VPS cannot hold a generous
@@ -45,6 +39,10 @@ module Master::Core
         bytes = `sysctl -n hw.physmem 2>/dev/null`.to_i
         return bytes / 1_048_576 if bytes.positive?
       end
+      if RUBY_PLATFORM.include?("darwin")
+        bytes = `sysctl -n hw.memsize 2>/dev/null`.to_i
+        return bytes / 1_048_576 if bytes.positive?
+      end
       if File.readable?("/proc/meminfo")
         kb = File.readlines("/proc/meminfo").find { |l| l.start_with?("MemTotal:") }&.split&.fetch(1, nil).to_i
         return kb / 1024 if kb&.positive?
@@ -60,42 +58,106 @@ module Master::Core
     # scanned".
     private_class_method :detect_host_memory_mb
 
-    attr_reader :proof
-
     def initialize(budget: self.class.host_budget, summarize: ->(dropped) { "[#{dropped.length} earlier steps summarised]" }, risk: :low)
       @entries = []
       @budget = budget
       @summarize = summarize
       @proof = Proof.new(risk:)
+
+      # Initialize Triple Memory Model
+      @episodic = Types::Episodic.new(nil) # Will be linked to episode in pipeline
+      @semantic = Types::Semantic.new
+      @procedural = Types::Procedural.new
     end
 
-    def note(kind, text)
-      @entries << Entry.new(role: :note, text: "#{kind}: #{text}")
+    def link_episode(episode)
+      @episodic = Types::Episodic.new(episode)
+    end
+
+    def seed_from_intent(intent)
+      note(:goal, intent.goal)
+      note(:approach, intent.approach) if intent.approach
+      note(:evidence, intent.evidence_summary) if intent.evidence_summary
+      # Proof takes its risk at construction and has no writer; seeding comes
+      # before any evidence, so a fresh Proof loses nothing.
+      @proof = Proof.new(risk: intent.risk)
       self
     end
 
+    def note(kind, text)
+      entry = Entry.new(role: :note, text: "#{kind}: #{text}")
+      @goal = entry if kind.to_s == "goal"
+      @entries << entry
+      self
+    end
+
+    # The action as its subject, "read lib/x.rb". Effect#to_s names only the
+    # argument keys, so the model saw "read(path)", could not tell which file it
+    # had already read, and read it again.
     def record(effect, observation)
-      @entries << Entry.new(role: :act, text: effect.to_s)
-      @entries << Entry.new(role: :obs, text: observe_text(effect, observation))
+      act = act_text(effect)
+      obs = observe_text(effect, observation)
+      # The same action straight after it failed fails the same way; gemma3:4b
+      # asked a surface-less CLI one question four times. Said once, plainly.
+      obs = "ERR: this is the action that just failed (#{obs}). Do something else." if act == @last_act && @last_failed
+      @last_act, @last_failed = act, obs.start_with?("ERR")
+      @entries << Entry.new(role: :act, text: act)
+      @entries << Entry.new(role: :obs, text: obs)
       @proof.record_evidence(effect, observation)
       @proof.mark_council_pass!(detail: observation.message) if effect.verb == :critique && observation.ok?
       self
     end
 
-    # The context the model proposes against — compacted to the budget.
+    # The context the model proposes against, compacted to the budget and
+    # closed by the goal and where the proof stands. A small model reads the end
+    # of a prompt best, and the goal at the top of a long transcript was the
+    # part it lost.
     def context
       compact if size > @budget
-      @entries
+      [*@entries, Entry.new(role: :note, text: state_text)]
     end
 
     private
 
+    # A read of a file whose content is already on the record is not shown
+    # again. gemma3:4b read one file five times with STATE saying done was
+    # allowed; the repeat now reads as an error that says what to do instead,
+    # whichever model made it, and costs no second copy of the file.
     def observe_text(effect, observation)
       text = observation.to_s
       return text unless effect.verb == :read && observation.ok?
 
       hex = Digest::SHA256.hexdigest(observation.message)[0, 12]
+      path = effect.args[:path].to_s
+      @read_shas ||= {}
+      return repeat_read_text(path) if @read_shas[path] == hex
+
+      @read_shas[path] = hex
       "#{text} sha256=#{hex} #{observation.message.bytesize}b"
+    end
+
+    def repeat_read_text(path)
+      "ERR: #{path} is unchanged since you read it, and its content is above. " \
+        "Do not read it again: answer with done, or act on what it says."
+    end
+
+    def act_text(effect)
+      args = effect.args
+      subject = case effect.verb
+                when :write then "#{args[:path]} (#{args[:content].to_s.lines.size} lines)"
+                when :exec then [Array(args[:argv]).join(" "), (" [#{args[:evidence]}]" if args[:evidence])].join
+                when :git then [args[:operation], *Array(args[:paths])].join(" ")
+                else args[:path] || args[:text] || args[:prompt] || args[:summary] || args[:scope]
+                end
+      "#{effect.verb} #{subject}".strip
+    end
+
+    def state_text
+      scope = @proof.scope
+      done = scope[:proved] || scope[:answerable] ? "allowed" : "needs exec evidence first"
+      read = scope[:read_paths].uniq.last(6)
+      ["STATE #{@goal&.text}", "read: #{read.empty? ? "nothing yet" : read.join(", ")}",
+       "evidence: #{scope[:evidence]}/#{Proof::PASS_THRESHOLD}", "done: #{done}"].join("; ")
     end
 
     def size = @entries.sum { |e| e.text.length }
@@ -116,7 +178,9 @@ module Master::Core
       dropped = @entries[0...(@entries.length - keep.length)]
       return if dropped.empty?
 
-      @entries = [Entry.new(role: :note, text: @summarize.call(dropped)), *keep]
+      # The goal outlives compaction; everything else old is summarised.
+      pinned = dropped.include?(@goal) ? [@goal] : []
+      @entries = [*pinned, Entry.new(role: :note, text: @summarize.call(dropped - pinned)), *keep]
     end
   end
 end

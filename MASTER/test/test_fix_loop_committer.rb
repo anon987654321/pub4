@@ -21,12 +21,18 @@ class TestFixLoopCommitter < Minitest::Test
 
   # changed_paths answers the baseline first, then the tree after the pass.
   class FakeGit
-    attr_reader :commits
+    attr_reader :commits, :pushes
+    attr_writer :ahead
 
     def initialize(before, after)
       @answers = [before, after]
       @commits = []
+      @pushes = 0
+      @ahead = 0
     end
+
+    def push = @pushes += 1
+    def ahead_behind = [@ahead, 3]
 
     def changed_paths
       @answers.size > 1 ? @answers.shift : @answers.first
@@ -131,6 +137,46 @@ class TestFixLoopCommitter < Minitest::Test
     committer.commit_if_dirty("fix_loop: llm-fix [pass 1]", findings:)
 
     assert_equal "fix_loop: llm-fix [pass 1]\n\nNO_PUTS lib/ok.rb:3\nLONG_LINE lib/ok.rb:9", git.commits.first.first
+  end
+
+  # An explicit fix owns its target: a change already sitting in a target
+  # file is committed with the fix, and a dirty path outside it is not.
+  def test_owned_paths_commit_prior_changes_inside_the_target_only
+    write_file("lib/ok.rb", "OK = 1\n")
+    git = FakeGit.new(["lib/ok.rb", "lib/theirs.rb"], ["lib/ok.rb", "lib/theirs.rb"])
+    committer = Master::Fix::FixLoop::Committer.new(git:, bus: FakeBus.new, root: @dir)
+    committer.baseline!
+    committer.commit_if_dirty("fix: ok", owned_paths: [File.join(@dir, "lib/ok.rb")])
+
+    assert_equal [["fix: ok", ["lib/ok.rb"]]], git.commits
+    assert_equal 1, git.pushes
+  end
+
+  # Behind is the remote moving on; only a commit still ahead means the push
+  # missed, and a delivery that missed stops the loop.
+  def test_a_push_that_left_the_commit_behind_raises
+    write_file("lib/ok.rb", "OK = 1\n")
+    git = FakeGit.new([], ["lib/ok.rb"])
+    git.ahead = 1
+    bus = FakeBus.new
+
+    assert_raises(RuntimeError) { run_committer(git, bus, "fix: ok") }
+    assert(bus.events.any? { |event, _| event == "fix_loop:commit_error" })
+  end
+
+  # A lint that did not pass blocks the commit. Io::Exec answers a timed-out
+  # rubocop with this same failed status; its own tests pin the timeout.
+  def test_a_failed_lint_blocks_the_commit
+    write_file("Gemfile", "source 'https://rubygems.org'\n")
+    write_file("lib/ok.rb", "OK = 1\n")
+    git = FakeGit.new([], ["lib/ok.rb"])
+    bus = FakeBus.new
+    failed = Struct.new(:success?).new(false)
+
+    Master::Io::Exec.stub(:capture3, ["", "", failed]) { run_committer(git, bus, "fix: ok") }
+
+    assert_empty git.commits
+    assert blocked?(bus)
   end
 
   def test_nothing_is_committed_without_a_baseline

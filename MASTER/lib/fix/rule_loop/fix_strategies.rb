@@ -29,8 +29,11 @@ module Master
           response = @agent.ask_once(prompt).to_s.strip
           handle_reflexion_response(response, path, proposed_src)
         rescue StandardError => e
+          # A check that could not run approves nothing, as a broken quorum
+          # approves nothing: the fix is refused and says why.
           Master::Ground::Swallow.log(e, context: "RuleLoop.reflexion_verify", rule: @rule.id)
-          proposed_src
+          @bus&.publish("rule_loop:reflexion_rejected", rule: @rule.id, file: path, reason: "reflexion failed: #{e.message[0, 120]}")
+          nil
         end
 
         def reflexion_prompt(violation, original_src, proposed_src)
@@ -51,8 +54,10 @@ module Master
           PROMPT
         end
 
+        # Only SAFE approves. A reply that was neither word, a refusal, a rambling
+        # paragraph, an empty string, approved the fix before.
         def handle_reflexion_response(response, path, proposed_src)
-          if response.start_with?("UNSAFE")
+          unless response.match?(/\ASAFE\b/)
             @bus&.publish("rule_loop:reflexion_rejected", rule: @rule.id, file: path, reason: response[0, 160])
             return
           end
@@ -187,7 +192,10 @@ module Master
           @bus&.publish("rule_loop:edit_format_fallback", rule: @rule.id, file: path, reason: reason.to_s[0, 160])
           prompt = build_prompt_for(violation:, src:, path:, style: :file)
           model = routing_model_ids[:fast]
-          model ? @agent.ask_once(prompt, model:).to_s : @agent.ask_once(prompt).to_s
+          raw = model ? @agent.ask_once(prompt, model:).to_s : @agent.ask_once(prompt).to_s
+          # The reply, not the file: a fenced block, a sentence around it, or
+          # UNCHANGED would otherwise be written over the source.
+          extract_code(raw, File.extname(path).downcase)
         end
 
         def architecture_plan(violation:, src:, path:, model:)

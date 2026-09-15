@@ -55,6 +55,15 @@ class AtomicWriteTest < Minitest::Test
     assert_equal "644", format("%o", File.stat(path).mode & 0o777)
   end
 
+  def test_a_rewrite_keeps_the_file_executable
+    File.write(path("run"), "#!/bin/sh\n")
+    File.chmod(0o755, path("run"))
+
+    @writer.write_atomic(path("run"), "#!/bin/sh\necho hi\n")
+
+    assert_equal "755", format("%o", File.stat(path("run")).mode & 0o777)
+  end
+
   def test_handles_empty_and_binary_content
     @writer.write_atomic(path("empty"), "")
     assert_equal "", File.read(path("empty"))

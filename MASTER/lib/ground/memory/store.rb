@@ -139,16 +139,6 @@ module Master
           end
         end
 
-        def import_external_file(path)
-          return if File.basename(path) == "MEMORY.md"
-
-          key = "claude/#{File.basename(path, ".md")}"
-          return if @store.key?(key)
-
-          type, body = parse_frontmatter(path)
-          remember(key, body, type:) unless body.empty?
-        end
-
         def parse_frontmatter(path)
           fm = Master::Ground::Frontmatter.parse_file(path)
           type = fm[:meta]["type"].to_s

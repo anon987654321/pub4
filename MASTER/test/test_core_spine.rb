@@ -18,6 +18,26 @@ class TestKernelSpine < Minitest::Test
     Master::Core::Constitution.load(data_dir: File.expand_path("../data", __dir__), sandbox:)
   end
 
+  # A question asked of the code: the fold reads and answers, and done is not a
+  # claim about a changed tree. A fold that acted still needs evidence.
+  def test_a_fold_that_only_read_may_answer
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, "notes.md"), "hello\n")
+      read = Master::Core::Effect.new(verb: :read, args: { path: "notes.md" })
+
+      answered = fold_in(dir, [read, Master::Core::Effect.done("it says hello")])
+      acted = fold_in(dir, [read, Master::Core::Effect.exec(%w[echo hi]), Master::Core::Effect.done("done")])
+
+      assert_equal :complete, answered.reason
+      assert_equal :max_turns, acted.reason
+    end
+  end
+
+  def fold_in(dir, effects)
+    Master::Core::Fold.new(model: Model.new(effects), constitution:, world: Master::Core::World.new(root: dir),
+                           memory: Master::Core::Memory.new, max_turns: 3).run("what does notes.md say")
+  end
+
   # The hardened shell policy is injected, not required — core reaches nothing in
   # lib/. These pin the seam itself: that an injected denial stops an exec, that
   # the policy's :ask default does not, and that without an injection the fold is

@@ -65,7 +65,7 @@ module Master
 
         def run_fast_stage(files, pass)
           fixed = fast_pass(files)
-          @committer.commit_if_dirty("fix_loop: fast-fix [pass #{pass}]") if fixed > 0
+          @committer.commit_if_dirty("fix_loop: fast-fix [pass #{pass}]", owned_paths: files) if fixed > 0
           fixed
         end
 
@@ -88,7 +88,7 @@ module Master
           pass_deadline = [Time.now + PASS_BUDGET_SECONDS, deadline].min
           llm_fixed = llm_pass(violations: found, files:, pass:, deadline: pass_deadline)
           Master::Trace::Dmesg.status("fix0", "pass #{pass}, #{llm_fixed} of #{Master::Trace::Dmesg.counted(found.size, "violation")} fixed")
-          @committer.commit_if_dirty("fix_loop: llm-fix [pass #{pass}]", findings: found) if llm_fixed > 0
+          @committer.commit_if_dirty("fix_loop: llm-fix [pass #{pass}]", findings: found, owned_paths: files) if llm_fixed > 0
           track_recurrence(found)
           llm_fixed
         end

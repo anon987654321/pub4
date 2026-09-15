@@ -871,7 +871,7 @@ module RadioChop
   end
 
   def capture(*argv)
-    out, = Open3.capture2(*argv.flatten.map(&:to_s))
+    out, = ToolRun.capture2(*argv)
     out
   end
 
@@ -939,8 +939,8 @@ module RadioChop
   end
 
   def pcm_mono(path, rate: ANALYSIS_RATE)
-    raw, = Open3.capture2("ffmpeg", "-v", "error", "-i", path,
-                          "-ac", "1", "-ar", rate.to_s, "-f", "s16le", "-", binmode: true)
+    raw, = ToolRun.capture2("ffmpeg", "-v", "error", "-i", path,
+                            "-ac", "1", "-ar", rate.to_s, "-f", "s16le", "-", binmode: true)
     raw.to_s.unpack("s<*").map { |s| s / 32_768.0 }
   end
 
@@ -1731,11 +1731,8 @@ module SampleFlip
   # Reads an audio file as two arrays of numbers between -1 and 1, one per
   # channel. Everything below works on these arrays rather than on the file.
   def decode(path, rate: RATE)
-    raw = IO.popen(
-      ["ffmpeg", "-v", "quiet", "-i", path, "-ac", "2", "-ar", rate.to_s,
-       "-f", "s16le", "-acodec", "pcm_s16le", "-"],
-      "rb", &:read
-    )
+    raw = ToolRun.capture2(["ffmpeg", "-v", "quiet", "-i", path, "-ac", "2", "-ar", rate.to_s,
+                            "-f", "s16le", "-acodec", "pcm_s16le", "-"], binmode: true).first
     return [[], []] if raw.nil? || raw.empty?
 
     samples = raw.unpack("s<*")
@@ -1762,11 +1759,8 @@ module SampleFlip
       interleaved[(i * 2) + 1] = clamp16(right[i])
       i += 1
     end
-    IO.popen(
-      ["ffmpeg", "-y", "-v", "quiet", "-f", "s16le", "-ar", rate.to_s, "-ac", "2",
-       "-i", "-", "-c:a", "pcm_s16le", dest],
-      "wb"
-    ) { |io| io.write(interleaved.pack("s<*")) }
+    ToolRun.capture3(["ffmpeg", "-y", "-v", "quiet", "-f", "s16le", "-ar", rate.to_s, "-ac", "2",
+                      "-i", "-", "-c:a", "pcm_s16le", dest], stdin_data: interleaved.pack("s<*"), binmode: true)
     dest
   end
 
@@ -2428,14 +2422,14 @@ module VocalChop
     from = [offset - LEAD_IN_SEC, 0.0].max
     dur = loop_entry["duration_sec"].to_f + LEAD_IN_SEC
 
-    ok = system("ffmpeg", "-nostdin", "-y", "-v", "error",
-                "-ss", from.round(3).to_s, "-t", dur.round(3).to_s, "-i", stem,
+    ok = ToolRun.system("ffmpeg", "-nostdin", "-y", "-v", "error",
+                        "-ss", from.round(3).to_s, "-t", dur.round(3).to_s, "-i", stem,
                 # Voices below 120 Hz are separator bleed, not voice. The
                 # loudness pass brings eight different broadcasts to one level so
                 # a chop from a quiet passage is as usable as one from a loud.
-                "-af", "highpass=f=120,loudnorm=I=-18:TP=-2:LRA=7",
-                "-ac", "2", "-ar", SAMPLE_RATE.to_s, "-c:a", "pcm_s16le", dest,
-                out: File::NULL, err: File::NULL)
+                        "-af", "highpass=f=120,loudnorm=I=-18:TP=-2:LRA=7",
+                        "-ac", "2", "-ar", SAMPLE_RATE.to_s, "-c:a", "pcm_s16le", dest,
+                        out: File::NULL, err: File::NULL)
     return { slug: loop_entry["slug"], skipped: "ffmpeg failed" } unless ok && File.file?(dest)
 
     { slug: loop_entry["slug"], path: dest, level: level.round(1), from: from.round(2) }

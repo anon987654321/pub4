@@ -107,9 +107,11 @@ module Deploy
     # the engine and nothing else.
     DILLA_SUPPORT = %r{/dilla/(?:lib/.+|(?!dilla\.rb\z)[^/]+\.rb)\z}
     DILLA_SUPPORT_CEILING = 10
-    # Directories support code has left for lib/. Each one coming back is the
-    # sprawl coming back, whatever its file count.
-    DILLA_RETIRED_DIRS = %w[lib/engine bin live scripts].freeze
+    # Directories dilla has left. Support code went to lib/, and each of those
+    # coming back is the sprawl coming back, whatever its file count; renders/
+    # went because every render lands beside dilla.rb, on the operator's "stop
+    # creating subdirs nest our renders willy nilly".
+    DILLA_RETIRED_DIRS = %w[lib/engine bin live scripts renders].freeze
 
     # VENDORED is matched against the path inside STUDIO, never the absolute
     # one. Matched absolutely it excluded every file in a checkout living under
@@ -248,6 +250,25 @@ end
       LAID_OUT_TOOLS.each do |tool|
         beside = files.select { |path| File.dirname(path) == File.join(@root, tool) && File.basename(path) != "#{tool}.rb" }
         beside.each { |path| @result.fail("studio layout: #{rel(path)} sits beside #{tool}.rb — support belongs in #{tool}/lib/") }
+      end
+      check_dilla_root_audio
+    end
+
+    # The operator's call, 2026-09-08: "output only demo.wav in dilla/ root",
+    # "remove all other audio". The catalogue writes demo.wav and its mp3 there.
+    # Soft, because a render named on the command line still lands beside
+    # dilla.rb by default, and the take is the operator's to move or delete.
+    DILLA_ROOT_AUDIO = %w[demo.wav demo.mp3].freeze
+    AUDIO = /\.(?:wav|mp3|flac|aiff?|m4a|ogg)\z/i
+
+    def check_dilla_root_audio
+      dir = File.join(@root, "dilla")
+      return unless Dir.exist?(dir)
+
+      stray = Dir.children(dir).select { |name| name.match?(AUDIO) && File.file?(File.join(dir, name)) } - DILLA_ROOT_AUDIO
+      stray.sort.each do |name|
+        @result.fail("studio layout: dilla/#{name} is audio in the dilla root, which holds only demo.wav and demo.mp3",
+                     severity: :soft)
       end
     end
 

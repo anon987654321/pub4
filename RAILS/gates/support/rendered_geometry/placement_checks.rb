@@ -1,18 +1,23 @@
 # frozen_string_literal: true
 
+require_relative "grammar_checks"
+
 module Deploy
   class RenderedGeometryGate
-    # Placement, not size: whether a control is anywhere a person would look.
-    # Hick's law on how many peer choices a bar offers, Gestalt proximity on
-    # whether a block's insides are further apart than its neighbours, the
-    # thumb zone on a phone, and the weak bottom-left corner of an F-pattern
-    # scan.
+    # Placement and weight, not size: whether a control is anywhere a person
+    # would look, and whether the eye reaches it before something else. Hick's
+    # law on how many peer choices a bar offers, Gestalt proximity on whether a
+    # block's insides are further apart than its neighbours, the thumb zone on
+    # a phone, the weak bottom-left corner of an F-pattern scan, the one box
+    # that outweighs the rest of the screen, and a secondary action heavier
+    # than the primary beside it.
     #
     # Split out along a seam the gate already carried as a banner comment.
     # Everything left in rendered_geometry.rb asks whether an element is big
-    # enough, legible enough or on the grid; these four ask where it sits. They
-    # are also the only checks that read design_rules' ux_laws,
-    # layout_rules.reading_patterns and layout_rules.whitespace sections.
+    # enough, legible enough or on the grid; these ask where it sits and how
+    # hard it pulls. They are also the only checks that read design_rules'
+    # ux_laws, layout_rules.reading_patterns, layout_rules.whitespace and
+    # typography.hierarchy sections.
     #
     # A module included back into the gate, like TokenChecks beside it, so it
     # keeps @rules and @result. Nothing here builds a path from __dir__ and
@@ -20,6 +25,10 @@ module Deploy
     # css_budget.yml path one directory deeper and silently ran that gate
     # unbudgeted.
     module PlacementChecks
+      # The layout grammar asks the same kind of question — is this part where
+      # and as often as it should be — so it runs from check_layout as well.
+      include GrammarChecks
+
       # Placement is about *the* primary action, not every control. CRITICAL is
       # deliberately broad — it matches any `btn` — which is right for "did this
       # control get occluded" and wrong here, where it would flag a secondary
@@ -42,6 +51,17 @@ module Deploy
       # stated action is to flag critical mobile interactions in unreachable top
       # corners. Only meaningful on a phone-sized viewport held in one hand.
       THUMB_ZONE_MAX_WIDTH = 480
+
+      def check_layout(surface, data)
+        elements = Array(data["elements"])
+        check_choice_overload(surface, data)
+        check_proximity(surface, data)
+        check_thumb_zone(surface, elements)
+        check_scan_path(surface, elements)
+        check_dominance(surface, elements)
+        check_action_weight(surface, elements)
+        check_grammar(surface, data)
+      end
 
       # Hick's law: time to choose grows with the number of peer choices. The rule
       # is about what is offered at one moment, so a horizontally scrolling rail
@@ -150,6 +170,121 @@ module Deploy
           "bottom-left area — #{buried.first(3).map { |el| el["key"] }.join('; ')} (principle=reading_patterns)",
           severity: :soft
         )
+      end
+
+      # More than half of the first screen's visual weight in one box is a page
+      # with one thing on it, and that thing ought to be what the page is for.
+      DOMINANT_SHARE = 0.5
+
+      # A share is a comparison, and two painted boxes are a pair rather than a
+      # hierarchy: 60/40 between a header and a button says nothing.
+      MIN_WEIGHED_BOXES = 3
+
+      # A box covering most of the viewport is the ground the others sit on, not
+      # a figure competing with them. The shell, main and a full-bleed section
+      # would otherwise win every surface they paint.
+      GROUND_SHARE = 0.6
+
+      # A share of a quiet page is not weight. The heaviest box has to be at
+      # least as heavy as a twentieth of the screen painted at 21:1 — weight is
+      # area times (contrast - 1), so that is one screen's area — before its
+      # share means anything; a #1a1a1a header on black is 80% of nothing.
+      MIN_DOMINANT_WEIGHT_SCREENS = 1.0
+
+      # Visual weight is how hard a box pulls the eye before anything in it is
+      # read: the screen it covers times how far its own fill stands from what
+      # it sits on. Images and canvases carry weight too and the probe does not
+      # walk them, so this reads painted boxes only and says less than it could.
+      def check_dominance(surface, elements)
+        screen = surface.width.to_f * surface.height.to_f
+        weighed = elements.filter_map do |el|
+          next unless el["visible"] && el["onscreen"]
+
+          area = onscreen_area(el, surface)
+          next if area >= screen * GROUND_SHARE
+
+          weight = area * (fill_contrast(el) - 1)
+          [el, weight] if weight.positive?
+        end
+        return if weighed.size < MIN_WEIGHED_BOXES
+
+        heaviest, weight = weighed.max_by(&:last)
+        share = weight / weighed.sum(&:last)
+        return if weight < screen * MIN_DOMINANT_WEIGHT_SCREENS
+        return if share <= DOMINANT_SHARE || intended_focus?(heaviest)
+
+        @result.fail(
+          "geometry dominance: #{surface.id} #{heaviest["key"]} carries #{(share * 100).round}% of the visual " \
+          "weight of #{weighed.size} painted boxes on the first screen and is neither the primary action " \
+          "nor the h1 (principle=hierarchy)", severity: :soft
+        )
+      end
+
+      # A secondary control that out-weighs the primary beside it asks the reader
+      # to take the other road. Weight has three axes — box size, fill contrast
+      # and font weight — and a secondary is reported only when it wins two and
+      # loses none, so a trade (larger but paler) stays a design decision.
+      def check_action_weight(surface, elements)
+        buttons = elements.select { |el| el["visible"] && el["onscreen"] && el["parent"] && button_like?(el) }
+        primaries, secondaries = buttons.partition { |el| el["key"].to_s.match?(PRIMARY_ACTION) }
+        inverted = primaries.flat_map do |primary|
+          secondaries.select { |el| el["parent"] == primary["parent"] && outweighs?(el, primary) }
+                     .map { |el| "#{el["key"]} over #{primary["key"]}" }
+        end
+        return if inverted.empty?
+
+        @result.fail(
+          "geometry action_weight: #{surface.id} has #{inverted.size} secondary action(s) heavier than the " \
+          "primary beside them — #{inverted.uniq.first(3).join('; ')} (principle=hierarchy)", severity: :soft
+        )
+      end
+
+      BUTTON_INPUTS = %w[submit button].freeze
+      BUTTON_KEY = /\b(?:btn|button)\b/
+
+      def button_like?(el)
+        el["tag"] == "button" || el["role"] == "button" || BUTTON_INPUTS.include?(el["input_type"]) ||
+          el["key"].to_s.split(">").last.to_s.match?(BUTTON_KEY)
+      end
+
+      def outweighs?(secondary, primary)
+        weight_wins(secondary, primary).size >= 2 && weight_wins(primary, secondary).empty?
+      end
+
+      # A step smaller than the one typography.hierarchy treats as the least
+      # visible difference between two levels is not a win on that axis.
+      def weight_wins(a, b)
+        step = (@rules.dig("typography", "hierarchy", "min_size_ratio_between_levels") || 1.2).to_f
+        delta = (@rules.dig("typography", "hierarchy", "min_weight_delta") || 200).to_i
+        wins = []
+        wins << :size if box_area(a) > box_area(b) * step
+        wins << :contrast if fill_contrast(a) > fill_contrast(b) * step
+        wins << :font_weight if a["font_weight"].to_i >= b["font_weight"].to_i + delta
+        wins
+      end
+
+      def intended_focus?(el)
+        el["key"].to_s.match?(PRIMARY_ACTION) || el["tag"] == "h1"
+      end
+
+      # 1.0 for a box that paints no field of its own: it adds no contrast to
+      # what is already under it.
+      def fill_contrast(el)
+        return 1.0 unless el["fill"] && el["bg"] && el["under"]
+
+        DesignMetrics.contrast_ratio(el["bg"], el["under"]) || 1.0
+      end
+
+      def box_area(el)
+        r = el["frect"] || {}
+        r["w"].to_f * r["h"].to_f
+      end
+
+      def onscreen_area(el, surface)
+        r = el["frect"] || {}
+        w = [r["x"].to_f + r["w"].to_f, surface.width.to_f].min - [r["x"].to_f, 0].max
+        h = [r["y"].to_f + r["h"].to_f, surface.height.to_f].min - [r["y"].to_f, 0].max
+        w.positive? && h.positive? ? w * h : 0.0
       end
     end
   end

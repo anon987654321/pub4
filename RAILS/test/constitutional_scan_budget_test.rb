@@ -64,6 +64,19 @@ end
 
 # No count at all is the third state, and it must stay distinguishable from
 # zero: one is a clean scan, the other is a scan that did not run.
+# /scan prints dmesg units now. The gate read "scan: done" only, so the unit
+# spelling looked like a scan that never ran.
+def test_the_dmesg_spelling_of_the_done_line_is_read
+  gate = Deploy::ConstitutionalScanGate.allocate
+  output = <<~OUT
+    scan0: done, dry-run: [profile: aesthetic] 6 violations; top EIGHT_PX_RHYTHM 4
+    scan0: done, dry-run: [profile: full] clean (no changes made)
+  OUT
+
+  assert_equal 6, gate.send(:first_pass_count, output)
+  assert_equal 0, gate.send(:first_pass_count, output.lines.last)
+end
+
 def test_no_scan_line_is_nil_rather_than_zero
   gate = Deploy::ConstitutionalScanGate.allocate
 

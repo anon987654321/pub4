@@ -61,12 +61,15 @@ end
     assert_equal "review", inferred[:command]
   end
 
-  def test_turn_router_promotes_scan_and_fix_to_through
-    ["scan lib", "fix lib"].each do |text|
-      inferred = Master::CLI::TurnRouter.infer_operator_command(text, container: { bus: nil, session: nil })
-      refute_nil inferred, "#{text} should infer a work command"
-      assert_equal "review", inferred[:command], "#{text} should run the full pass"
-    end
+  # "scan" reads, so it runs the full pass. "fix" writes: read as "review" it
+  # lost --apply, and "fix and commit" scanned for an hour and changed nothing.
+  def test_turn_router_promotes_scan_to_the_pass_and_fix_to_the_writing_stage
+    scan = Master::CLI::TurnRouter.infer_operator_command("scan lib", container: { bus: nil, session: nil })
+    fix = Master::CLI::TurnRouter.infer_operator_command("fix lib", container: { bus: nil, session: nil })
+
+    assert_equal "review", scan[:command], "scan lib should run the full pass"
+    assert_equal "fix", fix[:command], "fix lib should reach the stage that writes"
+    assert_equal "/review --only scan --apply lib", Master::CLI::TurnRouter.rewrite_slash("/fix #{fix[:args]}")
   end
 
   # "can you fix and git commit all those violations?" reviewed a directory
@@ -203,6 +206,17 @@ end
 
     assert_includes line, "swarm: approved"
     assert_includes line, "no issues"
+  end
+
+  # "complete" said nothing about what the pass found or what the fix changed.
+  def test_the_footer_names_the_findings_before_and_after_the_fix
+    result = Master::CLI::Pipeline::Pass::Result.new(
+      target: ".", mode: "balanced", sections: [], ok: true, unit: "review0", failed_stages: [],
+      totals: { before: 567, after: 480 },
+    )
+    Master::Io::QuotaGate.stub(:report, nil) do
+      assert_equal "review0: complete, 567 findings, 480 after the fix", result.footer
+    end
   end
 
   def test_through_footer_names_a_skipped_tier

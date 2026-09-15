@@ -118,6 +118,42 @@
     return seen[sel] === 1 ? sel : sel + '[' + seen[sel] + ']';
   };
 
+  // Rendered lines of an element's own text: the distinct line boxes its text
+  // nodes occupy. Height over line-height cannot answer this for a control,
+  // because padding and min-height are most of a button's box, and a 44px
+  // button around one 20px line divides out as two.
+  const textLines = (el, fontSize) => {
+    const tops = [];
+    el.childNodes.forEach(n => {
+      if (n.nodeType !== 3 || !n.textContent.trim()) return;
+      const range = document.createRange();
+      range.selectNodeContents(n);
+      for (const box of range.getClientRects()) {
+        if (box.width > 0 && box.height > 0) tops.push(box.top);
+      }
+    });
+    tops.sort((a, b) => a - b);
+    let lines = 0, last = -Infinity;
+    for (const top of tops) {
+      if (top - last > fontSize / 2) { lines++; last = top; }
+    }
+    return lines;
+  };
+
+  // The card a control sits in, with its position: two cards sharing a
+  // selector at two rects are a list, and a list item's size is the list's.
+  const CARD_SEL = 'article, .card, [class*="-card"], [class*="_card"]';
+  const cardOf = (el) => {
+    const card = el.parentElement?.closest(CARD_SEL);
+    if (!card) return null;
+    const cr = card.getBoundingClientRect();
+    return { sel: selFor(card), x: Math.round(cr.left), y: Math.round(cr.top),
+             w: Math.round(cr.width), h: Math.round(cr.height) };
+  };
+  // A search field by what it does rather than by class: a search input, a
+  // field inside a search landmark, or the conventional q parameter.
+  const SEARCH_SEL = 'input[type=search], [role=search] input, input[name=q]';
+
   const out = [];
   const colors = Object.create(null);
   const overflow = [];
@@ -162,6 +198,11 @@
     const fg = parseRgb(cs.color);
     const bg = effectiveBg(el);
     const fgOpaque = fg ? (fg.a >= 0.999 ? fg : over(fg, bg)) : null;
+    // Whether this box paints its own field, and what that field sits on.
+    // `bg` composites every ancestor, so a label inside a white card reports
+    // the card's white; visual weight belongs to the box that painted it.
+    const ownFill = parseRgb(cs.backgroundColor);
+    const fill = (ownFill?.a ?? 0) > 0;
 
     if (ownText && fgOpaque) {
       const ck = hex(fgOpaque);
@@ -230,12 +271,20 @@
       },
       color: hex(fgOpaque),
       bg: hex(bg),
+      fill: fill,
+      under: fill && el.parentElement ? hex(effectiveBg(el.parentElement)) : null,
+      // Siblings are told apart by parent, and a key that starts at an id has
+      // no parent step in it.
+      parent: interactive && el.parentElement ? selFor(el.parentElement) : null,
+      card: interactive ? cardOf(el) : null,
+      search: el.tagName === 'INPUT' && el.matches(SEARCH_SEL),
       font_size: Math.round(parseFloat(cs.fontSize) * 10) / 10,
       font_weight: cs.fontWeight,
       line_height: cs.lineHeight === 'normal' ? null : Math.round(parseFloat(cs.lineHeight) * 10) / 10,
       position: cs.position,
       display: cs.display,
       text_align: cs.textAlign,
+      text_lines: ownText ? textLines(el, parseFloat(cs.fontSize)) : 0,
       // Needed to tell a text field from a submit button: both are
       // <input>, only one takes a caret, and only one triggers the iOS
       // focus zoom. The selector alone cannot say which.
@@ -279,7 +328,8 @@
   // so this counts direct interactive children of each menu-ish container
   // rather than every link inside it.
   const groups = [];
-  document.querySelectorAll('nav, [role=navigation], [role=menu], [role=tablist], .tab-bar')
+  const GROUP_SEL = 'nav, [role=navigation], [role=menu], [role=tablist], .tab-bar';
+  document.querySelectorAll(GROUP_SEL)
     .forEach(container => {
       const cs = getComputedStyle(container);
       if (cs.display === 'none' || cs.visibility === 'hidden') return;
@@ -301,8 +351,16 @@
       const chunks = [...container.querySelectorAll('[role=group]')]
         .map(g => g.querySelectorAll('a[href], button, [role=tab], [role=menuitem]').length)
         .filter(n => n > 0);
+      // Where each choice goes, whether the bar is on the first screen, and
+      // whether it sits inside another bar — so two bars offering the same
+      // destinations can be told from one bar and its own tablist, and from
+      // a closed drawer repeating the tab bar.
+      const hrefs = [...new Set(choices.filter(k => k.href).map(k => k.pathname + k.search))].sort();
       groups.push({ sel: selFor(container), count: choices.length, chunks,
-                    scrollable: container.scrollWidth > container.clientWidth + 4 });
+                    scrollable: container.scrollWidth > container.clientWidth + 4,
+                    hrefs: hrefs.slice(0, 40),
+                    onscreen: r.right > 0 && r.left < vw && r.bottom > 0 && r.top < vh,
+                    nested: !!container.parentElement?.closest(GROUP_SEL) });
     });
 
   // Gestalt proximity, measured correctly: the space *between an element's

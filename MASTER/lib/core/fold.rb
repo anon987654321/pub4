@@ -87,9 +87,13 @@ private
         return Done.new(reason: :complete, turns: turn, summary: admitted.args[:summary])
       end
 
-      checkpoint = @world.checkpoint
+      # Only an effect that can change the tree has anything to roll back. A
+      # checkpoint is a `git diff` per turn, and a failed read or ask came back
+      # carrying "rollback skipped" about a tree it never touched.
+      mutating = %i[write exec git].include?(admitted.verb)
+      checkpoint = @world.checkpoint if mutating
       observation = @world.perform(admitted)
-      observation = undo(checkpoint, admitted, observation) if observation.err?
+      observation = undo(checkpoint, admitted, observation) if mutating && observation.err?
       @memory.record(admitted, observation)
       emit(turn, admitted, observation)
       nil

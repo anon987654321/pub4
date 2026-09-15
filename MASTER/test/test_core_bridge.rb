@@ -96,8 +96,8 @@ class CoreBridgeTest < Minitest::Test
     attr_reader :calls
     def initialize = @calls = []
 
-    def ask_once(prompt, system:, law:)
-      @calls << { prompt:, system:, law: }
+    def ask_once(prompt, system:, law:, temperature:, format:)
+      @calls << { prompt:, system:, law:, temperature:, format: }
       '{"verb": "note", "args": {"kind": "probe", "text": "asked"}}'
     end
   end
@@ -110,6 +110,8 @@ class CoreBridgeTest < Minitest::Test
       refute_empty agent.calls
       assert_equal Master::Core::Model::SYSTEM, agent.calls.first[:system]
       refute agent.calls.first[:law], "Core::Model's prompt is the whole contract"
+      assert_equal Master::Core::Model::SCHEMA, agent.calls.first[:format]
+      assert_equal 0, agent.calls.first[:temperature], "every model decodes the fold alike"
     end
   end
 

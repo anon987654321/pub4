@@ -303,6 +303,9 @@ module Master::Core
         file.flush
         file.fsync
       end
+      # The file keeps its own mode: the rename would replace an executable
+      # with a plain file.
+      File.chmod(File.stat(abs).mode & 0o7777, tmp) if File.exist?(abs)
       File.rename(tmp, abs)
     rescue StandardError
       File.delete(tmp) if tmp && File.exist?(tmp)
@@ -441,8 +444,14 @@ module Master::Core
 
     # An empty selection is not a failure: the path had no uncommitted change at
     # checkpoint time, so HEAD is already the state being restored to.
+    #
+    # The patch names paths from the repository's top, and --include matches
+    # those names. Rooted in a subdirectory, as MASTER is in pub4, a bare path
+    # matched nothing: the file went back to HEAD, the operator's uncommitted
+    # edit went with it, and the rollback reported success.
     def apply_patch_for(path, patch)
-      out, status = bounded_capture2e("git", "-C", @root, "apply", "--binary", "--include=#{path}", "-",
+      include = "#{git_capture("rev-parse", "--show-prefix")}#{path}"
+      out, status = bounded_capture2e("git", "-C", @root, "apply", "--binary", "--include=#{include}", "-",
                                       stdin_data: patch)
       raise out.strip unless status.success? || out.include?("No valid patches")
     end

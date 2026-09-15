@@ -60,6 +60,8 @@ module Deploy
     def check(result, surface, data)
       spec = profile(surface.label)
       check_measure(result, surface, data, spec)
+      check_wrap(result, surface, data)
+      check_glyphs(result, surface, data)
       check_type_scale(result, surface, data, spec)
       check_baseline(result, surface, data, spec)
       check_tabular(result, surface, data, spec)
@@ -90,6 +92,75 @@ module Deploy
       result.fail(
         "geometry measure: #{surface.id} #{bad.size} prose run(s) outside #{min.to_i}–#{max.to_i}ch " \
         "(profile=#{spec["name"]}) — #{sample} (principle=bringhurst)",
+        severity: :soft
+      )
+    end
+
+    # The phone width is where a label runs out of room, so that is the only
+    # width asked. A control label is the button's own text or a span inside
+    # it: the key's last two steps carry the control's name either way.
+    PHONE_MAX_WIDTH = 480
+    CONTROL_TAGS = %w[button summary].freeze
+    CONTROL_ROLES = %w[button tab menuitem switch].freeze
+    CONTROL_KEY = /\b(?:btn|button|tab-item|chip)\b/
+    HEADING_TAG = /\Ah[1-6]\z/
+
+    # A heading past three lines at phone width reads as a paragraph set large,
+    # and the page loses the one line that was meant to be scanned.
+    HEADING_MAX_LINES = 3
+
+    # A control label broken onto a second line no longer reads as one word on
+    # one target, and the break usually lands mid-phrase. The probe counts the
+    # line boxes the label's own text occupies, so padding and min-height do
+    # not pass for a second line.
+    def check_wrap(result, surface, data)
+      return if surface.width.to_i > PHONE_MAX_WIDTH
+
+      shown = Array(data["elements"]).select { |el| el["visible"] && el["onscreen"] && !el["inline_in_text"] }
+      labels = shown.select { |el| control_label?(el) && el["text_lines"].to_i >= 2 }
+      headings = shown.select { |el| el["tag"].to_s.match?(HEADING_TAG) && el["text_lines"].to_i > HEADING_MAX_LINES }
+      {
+        "control label(s) onto 2+ lines" => [labels, "affordance"],
+        "heading(s) past #{HEADING_MAX_LINES} lines" => [headings, "hierarchy"],
+      }.each do |what, (offenders, principle)|
+        next if offenders.empty?
+
+        count, names = wrap_names(offenders)
+        result.fail("geometry wrap: #{surface.id} breaks #{count} #{what} at #{surface.width}px — " \
+                    "#{names} (principle=#{principle})", severity: :soft)
+      end
+    end
+
+    def control_label?(el)
+      return false if el["tag"].to_s.match?(HEADING_TAG)
+
+      CONTROL_TAGS.include?(el["tag"]) || CONTROL_ROLES.include?(el["role"]) ||
+        el["key"].to_s.split(">").last(2).join(">").match?(CONTROL_KEY)
+    end
+
+    # One component wrapping in forty cards is one thing to fix, so the report
+    # names distinct keys and counts the instances beside them.
+    def wrap_names(offenders)
+      by_key = offenders.group_by { |el| el["key"].to_s.sub(/\[\d+\]\z/, "") }
+      named = by_key.first(4).map do |key, els|
+        "#{key} (#{els.map { |el| el["text_lines"].to_i }.max} lines#{" x#{els.size}" if els.size > 1})"
+      end
+      [by_key.size, named.join("; ")]
+    end
+
+    # The apps speak Norwegian by default, so a face that cannot draw æøå sets
+    # most sentences in two typefaces, the letters in a fallback beside the
+    # words around them. The probe names the face that renders each stack and
+    # whether it drew the letters itself; a stack with no named face the
+    # browser has renders in a generic, which covers them, and is not reported.
+    def check_glyphs(result, surface, data)
+      missing = Array(data["glyphs"]).select { |row| row["family"] && row["covered"] == false }
+      return if missing.empty?
+
+      families = missing.map { |row| row["family"] }.uniq
+      result.fail(
+        "geometry glyphs: #{surface.id} draws æøå from a fallback face — #{families.first(3).join(', ')} " \
+        "lack#{'s' if families.size == 1} them (principle=ui_polish)",
         severity: :soft
       )
     end

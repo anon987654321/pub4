@@ -84,14 +84,6 @@ module Master
         end
       end
 
-      def invalidate_all!
-        @lock.synchronize do
-          Dir.glob(File.join(@root, "*.json")).each { |f| File.delete(f) rescue Errno::ENOENT } # scan: intentional — clearing this cache is the method's whole job
-          File.delete(@manifest_path) if File.exist?(@manifest_path)
-          @lru.clear
-        end
-      end
-
       def stats
         @lock.synchronize do
           files = Dir.glob(File.join(@root, "*.json"))

@@ -70,6 +70,24 @@ class TestRuleLoopPolicy < Minitest::Test
     end
   end
 
+  # apply passed `encoding:` to write_atomic, which takes no such keyword, so
+  # every model fix raised at the write, was logged as a write error, and
+  # nothing a model proposed was ever applied.
+  def test_an_accepted_fix_is_written
+    Dir.mktmpdir do |root|
+      path = File.join(root, "sample.rb")
+      File.write(path, "violation\n")
+      bus = FakeBus.new
+      loop = build_loop(root:, bus:, scanner: RecordingScanner.new, agent: Agent.new)
+
+      applied = loop.send(:apply, path, "clean\n", { rule: "TEST_RULE", file: path, line: 1 })
+
+      assert applied, "the fix was not applied: #{bus.events.last.inspect}"
+      assert_equal "clean\n", File.read(path)
+      refute_includes bus.events.map(&:first), "rule_loop:write_error"
+    end
+  end
+
   def test_prediction_engine_can_skip_autofix
     Dir.mktmpdir do |root|
       path = File.join(root, "sample.rb")
@@ -218,6 +236,45 @@ class TestRuleLoopPolicy < Minitest::Test
   # case -- silently swallowed by the callers' rescue StandardError, so
   # genetic_fix/architect_then_fix degraded to whole_file_fallback (or
   # exhausted retries) even when the LLM behaved correctly.
+  class ScriptedAgent
+    def initialize(reply) = @reply = reply
+    def ask(_prompt) = @reply
+    def ask_once(_prompt, **) = @reply.respond_to?(:call) ? @reply.call : @reply
+  end
+
+  def verdict_for(reply)
+    Dir.mktmpdir do |root|
+      path = File.join(root, "sample.rb")
+      File.write(path, "puts :x\n")
+      loop = build_loop(root:, bus: FakeBus.new, scanner: Scanner.new, agent: ScriptedAgent.new(reply))
+      loop.send(:reflexion_verify, { rule: "TEST_RULE", file: path, line: 1, message: "fix me" }, "puts :y\n")
+    end
+  end
+
+  # Only SAFE approves. A ramble or a check that raised approved the fix before,
+  # and with fixes now reaching the disk that is a fix nobody reviewed.
+  def test_reflexion_approves_only_on_safe
+    assert_equal "puts :y\n", verdict_for("SAFE")
+    assert_nil verdict_for("UNSAFE: drops a branch")
+    assert_nil verdict_for("I think this looks reasonable overall.")
+    assert_nil verdict_for(-> { raise "provider down" })
+  end
+
+  # The fallback returned the model's raw reply, prose and fences included, or
+  # the literal UNCHANGED, and apply wrote that over the source.
+  def test_the_whole_file_fallback_returns_code_or_nothing
+    Dir.mktmpdir do |root|
+      path = File.join(root, "sample.rb")
+      File.write(path, "puts :x\n")
+      violation = { rule: "TEST_RULE", file: path, line: 1, message: "fix me" }
+      fenced = build_loop(root:, bus: FakeBus.new, scanner: Scanner.new, agent: ScriptedAgent.new("Here:\n```ruby\nputs :y\n```\n"))
+      unchanged = build_loop(root:, bus: FakeBus.new, scanner: Scanner.new, agent: ScriptedAgent.new("UNCHANGED"))
+
+      assert_equal "puts :y", fenced.send(:whole_file_fallback, violation:, src: "puts :x\n", path:, reason: "test")
+      assert_nil unchanged.send(:whole_file_fallback, violation:, src: "puts :x\n", path:, reason: "test")
+    end
+  end
+
   def test_extract_code_handles_fenced_response_without_nameerror
     Dir.mktmpdir do |root|
       loop = build_loop(root:, bus: FakeBus.new, scanner: Scanner.new, agent: Agent.new)

@@ -11,13 +11,15 @@ module Deploy
   # Responsive bugs live *between* breakpoints — a grid that fits at 390 and at
   # 1440 and spills at 480. Testing three widths structurally cannot see them.
   # This sweeps the declared width list collecting only cheap scalars per step,
-  # and asserts two things:
+  # and asserts three things:
   #
   #   1. No horizontal overflow at any width, with 320px as the WCAG 1.4.10 floor.
   #   2. Layout changes happen only at declared breakpoints. The set of widths
   #      where the column count or nav variant changes is a "breakpoint
   #      fingerprint" — small, stable, and committable. An unplanned transition
   #      appearing mid-range is a regression even when nothing looks broken.
+  #   3. Reading type never shrinks as the viewport widens, and never keeps a
+  #      fixed line height while its size changes.
   class ReflowGate
     ROOT = File.expand_path("../../../..", __dir__)
 
@@ -73,7 +75,16 @@ module Deploy
           return r.width > 0 && r.right > 0 && r.left < de.clientWidth;
         };
         const main = document.querySelector('#main-content, main, [role=main]');
+        // The type a reader meets: main's first visible paragraph, or the body
+        // when main holds none. Named, so two widths are only compared when
+        // they measured the same element.
+        const reading = Array.from(document.querySelectorAll('main p, [role=main] p'))
+          .find((p) => p.getClientRects().length && p.textContent.trim()) || document.body;
+        const rcs = getComputedStyle(reading);
         return {
+          reading: reading.tagName.toLowerCase() + (reading.classList.length ? '.' + reading.classList[0] : ''),
+          reading_size: Math.round(parseFloat(rcs.fontSize) * 10) / 10,
+          reading_line_height: rcs.lineHeight === 'normal' ? null : Math.round(parseFloat(rcs.lineHeight) * 10) / 10,
           scroll_width: de.scrollWidth,
           client_width: de.clientWidth,
           columns: columns,
@@ -176,6 +187,7 @@ module Deploy
 
       check_overflow(surface, samples)
       check_breakpoints(surface, samples)
+      check_reading_type(surface, samples)
       true
     end
 
@@ -203,6 +215,55 @@ module Deploy
                         detail: "#{surface.app}/#{surface.label}: spills at #{worst[0]}px viewport")
       end
     end
+
+    # Reading type may grow with the viewport, in steps or fluidly, and may
+    # not do either of the two things a fluid-type regression does: shrink as
+    # the viewport widens, or keep a fixed line height while the size moves,
+    # which changes the leading at every width. A ratio that changes along with
+    # the size is a step somebody chose and is left alone. Under half a pixel
+    # is the probe's rounding.
+    SIZE_ROUNDING_PX = 0.5
+
+    def check_reading_type(surface, samples)
+      ordered = samples.sort_by(&:first).select { |(_w, s)| s["reading_size"].to_f.positive? }
+      ordered = ordered.select { |(_w, s)| s["reading"] == ordered.first&.last&.dig("reading") }
+      return if ordered.size < 2
+
+      {
+        "gets smaller as the viewport widens" => shrinking_type(ordered),
+        "keeps a fixed line height while its size changes" => fixed_leading(ordered),
+      }.each do |what, steps|
+        next if steps.empty?
+
+        @result.fail(
+          "reflow type: #{surface.app}/#{surface.label} #{ordered.first[1]["reading"]} #{what} — " \
+          "#{steps.first(3).join('; ')} (principle=typography)", severity: :soft
+        )
+      end
+    end
+
+    def shrinking_type(ordered)
+      ordered.each_cons(2).filter_map do |narrow, wide|
+        size_step(narrow, wide) if narrow[1]["reading_size"].to_f - wide[1]["reading_size"].to_f > SIZE_ROUNDING_PX
+      end
+    end
+
+    # Against the narrowest width rather than the neighbour: fluid type moves
+    # a fraction of a pixel per step, which no adjacent pair would show.
+    def fixed_leading(ordered)
+      first = ordered.first[1]
+      ordered.drop(1).filter_map do |pair|
+        sample = pair[1]
+        next unless first["reading_line_height"] && sample["reading_line_height"]
+        next unless (sample["reading_size"].to_f - first["reading_size"].to_f).abs > SIZE_ROUNDING_PX
+        next unless (sample["reading_line_height"].to_f - first["reading_line_height"].to_f).abs <= SIZE_ROUNDING_PX
+
+        "#{size_step(ordered.first, pair)} under #{sample["reading_line_height"]}px"
+      end
+    end
+
+    # Each argument is one [width, sample] pair from the sweep.
+    def size_step(from, to) = "#{from[1]["reading_size"]}px at #{from[0]} → #{to[1]["reading_size"]}px at #{to[0]}"
 
     # The fingerprint: widths at which a layout property flips. Reported as a
     # warning so it lands in the run output and can be eyeballed against the

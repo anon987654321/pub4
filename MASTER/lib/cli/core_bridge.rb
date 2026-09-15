@@ -31,13 +31,15 @@ module Master
       # ledger all live there, and a fold that went round it had none of them —
       # forced to a local model, it still asked OpenRouter and died on a 503.
       #
-      # The reply's `why` is the model's reason for the effect, and the bus
-      # carries it to the operator before the effect runs.
+      # Every model is asked the same way: one schema, temperature 0. The fold
+      # behaves alike whichever model answers, and each tier enforces the
+      # schema as far as it can. The reply's `why` is the model's reason for the
+      # effect, and the bus carries it to the operator before the effect runs.
       AgentChat = Struct.new(:agent, :bus, :system) do
         def with_instructions(text) = AgentChat.new(agent, bus, text)
 
         def ask(prompt)
-          reply = agent.ask_once(prompt, system:, law: false)
+          reply = agent.ask_once(prompt, system:, law: false, temperature: 0, format: Master::Core::Model::SCHEMA)
           why = CoreBridge.reason_in(reply)
           bus&.publish("core:reason", why:) if why
           Reply.new(reply)

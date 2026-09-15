@@ -129,6 +129,11 @@ module Deploy
     # run against any page without helper injection.
     WALK = File.read(File.join(__dir__, "geometry_probe/walk.js")).freeze
 
+    # Which face paints æøå in each font stack the page wears. Its own
+    # evaluation because it awaits document.fonts.load, and a face is only
+    # measurable once it has loaded.
+    GLYPHS = File.read(File.join(__dir__, "geometry_probe/glyphs.js")).freeze
+
     def self.available? = CdpSession.available?
 
     # Probe a list of surfaces, yielding [surface, payload] as each completes.
@@ -206,9 +211,18 @@ module Deploy
       # Status first. A 403 host-authorization page or a 500 renders a
       # perfectly measurable DOM that has nothing to do with the design, and
       # grading it produces confident nonsense.
-      cdp.evaluate(WALK).merge(GeometryType.probe(cdp)).merge("status" => cdp.status)
+      cdp.evaluate(WALK).merge(GeometryType.probe(cdp)).merge(glyph_coverage(cdp)).merge("status" => cdp.status)
     rescue CdpSession::Error => e
       { "error" => "#{e.class.name.split('::').last}: #{e.message}" }
+    end
+
+    # A glyph probe that breaks costs its own answer, not the surface's walk.
+    def self.glyph_coverage(cdp)
+      coverage = cdp.evaluate(GLYPHS, await_promise: true)
+      coverage.is_a?(Hash) ? coverage : {}
+    rescue CdpSession::Error => e
+      warn "geometry_probe: glyph coverage failed (#{e.class.name.split('::').last}) — fallback faces not measured"
+      {}
     end
 
     def self.ok?(payload)

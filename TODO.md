@@ -42,9 +42,7 @@ Forward work is the last section of this file.
 - **tv and maps hover fills fail AA under the vertical ink** (3.34 and 4.31
   against 4.5) and reach no pixel until their hover is wired. Pick the colours
   before wiring them; `_vertical_shell.scss` records the measurement.
-- **dilla is fenced, because it renders audio.** Whether
-  `STUDIO/dilla/data/dilla_principles.yml` gets a reader (it has none, and
-  wiring it changes what dilla generates) or goes; narrowing dilla's
+- **dilla is fenced, because it renders audio.** Narrowing dilla's
   `SILENT_RESCUE` sites.
 
 ### Needs vm23
@@ -882,7 +880,7 @@ Take them the day those files are clean.
 
 These are the operator's, because each changes a sound or accepts a changed input:
 
-850. **`data/modes.yml` has no reader.** Nothing in STUDIO loads it — `tizita`, `bati`, `ambassel` appear only in the file, and the `chord_theory.rb` it names is gone. Wiring it into the harmony spine changes what dilla generates; the other choice is deleting it. Same decision as `dilla_principles.yml`.
+850. **`data/modes.yml` has no reader.** Nothing in STUDIO loads it — `tizita`, `bati`, `ambassel` appear only in the file, and the `chord_theory.rb` it names is gone. Wiring it into the harmony spine changes what dilla generates; the other choice is deleting it. (The principles file went the third way: it is the `principles` section of `dilla_reference.yml`, kept as the argument a sound change answers to, with no reader by design.)
 859. **The crate on main disagrees with `data/assets.json`.** `DillaAssets.verify` there: `samples/{kembara_rindu,lo_borges,semua_untuk_mu}/loop.wav` missing, and seven one-shots under `samples/drums/` changed hash at the same size. Restore them, or `dilla assets record` to accept the new drums as the inputs.
 
 ### STUDIO — postpro, preprompt, lora
@@ -1011,6 +1009,54 @@ race or a rolled-back callback is false until it names a second database.
   pins and `session.json` mtimes leak between files, and `EnvSandbox` restores
   ENV but not constants computed from it at load (acapella `ONLY`/`EXCLUDE`).
   Run each file in its own process, or stop calling it isolation.
+
+## MASTER as a semantic system — ChatGPT intake 2026-09-14
+
+Checked the same day. Of 28 UI, type and layout proposals, 12 were built under
+other names, 12 partly, 3 missing and 1 an operator wish; of 7 on the local
+model tier and 7 on the scan ladder, most partly built. Landed 2026-09-14/15:
+six rendered detectors and the snapshot's diff classes in `RAILS/gates`, the
+drag `touch-action` check, `/review`'s counts, the keyless and offline local
+tier, a schema-held fold every model is asked the same way, `keep_alive` and
+a sized `num_ctx`, local models ranked by what fits. Not built, by the rules in
+`MASTER/AGENTS.md`: a per-surface UI record or a model capability profiler with
+no named reader, and an intent-to-deliver pipeline that renames stages
+`/review` already has. Open:
+
+- **Prove the new rendered detectors on vm23.** Wrapped labels at phone width,
+  first-screen weight, a secondary action heavier than the primary, duplicate
+  navigation and search, column width drift, an action lost in a card, æøå
+  drawn from a fallback, reading type that shrinks as the viewport widens. All
+  are soft. Count each surface's findings on the first run and the probe cost of
+  the extra awaited script, then decide which harden. Seams:
+  `RAILS/gates/support/rendered_geometry/`, `geometry_probe/glyphs.js`,
+  `RAILS/gates/lib/rendered/reflow.rb`.
+- **Interaction states beyond focus.** Forcing `:disabled`, `:active` and
+  `aria-busy` over CDP and measuring them waits on "Motion is a rendered value"
+  and the feedback items in the RAILS section. Seam:
+  `RAILS/gates/lib/rendered/keyboard_flow.rb`.
+- **`/review` never reaches the rendered gates for a RAILS target.** A gates
+  stage in `MASTER/lib/cli/pipeline/pass.rb` would call `RAILS/gates/runner.rb`
+  on the deploy host, never drive a browser here.
+- **Run the fixed file's test after a fix.** `FixVerification#note_unverified_fix`
+  only publishes "fix unverified"; running the test `test_file_for` finds
+  would prove a fix rather than rescan it.
+- **Escalate a local model that cannot hold the fold.** After two parse errors
+  or refusals in a row, ask the next larger local model, or the cloud lane when
+  online. Seams: `CoreBridge::AgentChat`, `ModelRouter#local_models`.
+- **Offer only the verbs that are legal this turn.** Build
+  `Core::Model::SCHEMA` per turn from `Proof#scope`, leaving `done`, commit and
+  write out until their preconditions hold, so an early `done` cannot be
+  generated at all. Measure against gemma3:4b first; a worked example in the
+  prompt made it worse.
+- **Cap a long RESULT.** Exec output enters `Core::Memory` whole; keep head and
+  tail, about 1,500 characters, as mini-swe-agent does.
+- **Local throughput has no reader.** Ollama reports `eval_count` and
+  `eval_duration` and `ollama_sender.rb` discards the rate. Record it in
+  `provider_health.rb` only together with a reader, such as speed in
+  `ModelRouter#effective_score`.
+- **`lib/review/embeddings.rb` calls `/api/embeddings`,** which Ollama marks
+  superseded by `/api/embed`.
 
 ## OpenCrabs borrow list — ChatGPT intake 2026-09-13
 
@@ -1173,19 +1219,26 @@ default unless marked.
 - **The demo run lies about success.** `acquire_demo_lock!` exits 0 when another
   run holds the lock and checks-then-writes (use `File::EXCL` or flock); an
   unknown command prints help and exits 0; the loop exits 0 with parts missing
-  (exit non-zero unless `parts == order`); the next run wipes a killed run's
-  finished parts unless `DEMO_KEEP_PARTS=1`;
-  `demo_all` sets `DILLA_STREAMING=1`; `DEMO_TRACK_TIMEOUT` defaults to 420 s; help
-  still says bare `ruby dilla.rb` runs `readme_loop!` when it runs `demo_all`.
+  (exit non-zero unless `parts == order`); `demo_all` sets
+  `DILLA_STREAMING=1`; `DEMO_TRACK_TIMEOUT` defaults to 420 s. (A run wiping the
+  last run's parts is the operator's choice of 2026-09-14, "deletes", not a
+  defect.)
 - **Logs and provenance print load-time device ENV.** `ringtone_layer_describe`
   and the sidecar can report `COPY_MACHINE=6` on a slot `apply_album_slot!`
   forced to 0. Snapshot after the last `force_env!`.
 - **Names.** `demo-all` is the catalogue, `demo` is `generate_demo`'s crate matrix,
   `showcase` is a third medley. Rename to `demo` / `demo-crate`, alias `demo-all`
   one release. No MASTER or RAILS caller.
-- **No smoke test for the no-arg path.** `DEMO_TRACKS=<one verified>,<one improv>
-  BARS=4` into a tmpdir, assert files, LUFS range and exit 0 — needs a render, so
-  it runs on a quiet machine.
+- **A bed pass does not repeat at one seed.** `bed render seed 4242` twice on
+  the same code differs by about 0.1 s in length and in the order its parallel
+  renders start, so the snapshot harness cannot hold the bed to identical
+  commands; its loudness and a bit-identical run are the only evidence.
+  `each_parallel` seeds each item, so the drift is elsewhere: find it before
+  trusting a bed snapshot.
+- **No smoke test for the no-arg path.** `test_dilla_bed` renders one catalogue
+  piece through the bed; nothing yet runs `Bed.catalogue!` end to end with a
+  two-piece order into a tmpdir and asserts demo.wav, demo.mp3 and the join's
+  length. It needs a render, so it runs on a quiet machine.
 
 ## dilla — operator decisions
 
@@ -1215,6 +1268,90 @@ operator's ear.
   Bach 4–3 and the Dilla hang; `THEORY_BACH` and the Dilla pedal gated by
   language tag instead of track-name regex and `VOICING=drop2`; Picardy and
   Neapolitan on Bach languages only; cap borrowed-chord surprises at one per cell.
+
+- **Which of the live player's progressions to keep.** "dilla_live.rb had some
+  nice chord progressions though (and some not so nice)" (2026-09-14). It played
+  the catalogue: the seven verified slots, then the twelve improvisations, each
+  slot on a fixed pad patch (slots 3 and 12 on `moog_bass`, 5 and 14 on `acid`,
+  9 and 18 on `poly_lead`), so a progression that sounded bad may have been its
+  patch. No record names one he liked or disliked. The indirect evidence favours
+  `db_major_minor_fall`, `pedal_e_descent` and `d_add9_soul_arc` (promoted,
+  kept takes), and among the improvisations the minor-ninth ones —
+  `dilla_planing_m9`, `dilla_maj9_walk`, `dilla_slash_pedal`,
+  `royksopp_dorian_lift` — which match the 08-31 cells he said "i like it" to.
+  Against: the two Bach rules (plain triads), the two Flying Lotus quartal
+  stacks, and slots 1 and 2 playing the same two chords back to back. His ear
+  marks the keepers; a `keep` flag per slot in `VERIFIED_PROGRESSION_SLOTS` and
+  per language in `DillaImprovisation`, with a pinned `IMPROV_SEED`, is where
+  the answer goes.
+
+## dilla — restructuring, 1–45 — approved 2026-09-13
+
+The operator approved all forty-five ("APPROVE ALL", "dont forget to implement
+all these"). Landed and deleted from this list: 3 (lib/ in six subjects), 11
+(root YAML in data/), 14 (`sh!` for render steps, `ToolRun` for every other
+tool call, each with a deadline), 33 (help from the command table), 37 (live/
+gone), 38 (scripts/ gone). Every change here must leave a snapshot identical, which the
+harness in `STUDIO/test/support/dilla_snapshot/` proves; a row that changes
+sound says so. Delete a row when it lands.
+
+- **1. Build tables on first use**, so section order stops mattering. Unblocks
+  every split.
+- **2. The engine in modules**, not ~1,000 methods on `Object`.
+- **4. One settings object per render** instead of ENV (1,200 reads, 224
+  writes); the demo retry saving and restoring ENV is the symptom.
+- **5. One precedence order for defaults**: the twelve `*_DEFAULTS` tables,
+  `apply_best_defaults!`, `apply_dilla_style!`, `force_env!`.
+- **6. Progression tables to YAML.** `module Bed` reads `CHORD_PROGRESSIONS`
+  as a constant now, so the move no longer breaks a text scan.
+- **7. One chord and progression registry**: `CHORD_PROGRESSIONS`,
+  `DEVICE_PROGRESSIONS`, `ARTIST_VERIFIED_PROGRESSIONS`, `DillaImprovisation`,
+  generated styles; `PAD_CHORD_LOOKUP` keeps the first name, hence the `imp`
+  suffix.
+- **8. One synth patch registry**: `SYNTH_PATCH_CATALOG`, the patch section,
+  `lib/sound.rb`, and now the bed's families and patches in `data/bed.yml`.
+- **9. One drum-grid registry**: `DRUM_PATTERN_SETS`, producer DNA, the lofi
+  presets, and the bed's `samples/midi` grid banks. It also settles the snare:
+  the bed rushes it, `dilla_drag` drags it (the reason sits in `data/bed.yml`).
+- **10. One preset lookup**: `TRACK_PRESETS`, `profile_preset`, style defaults.
+- **12. Kept records apart from runtime state in `project/`**; renders still
+  dirty `session.json` and `liveset.jsonl`.
+- **13. One loudness module.** Stage 1 landed (`FfmpegProbe` in lib/listen.rb
+  measures); the ~20 methods that set level remain.
+- **15. One output-path function.** Parts still go to `scratch/all_tracks_demo`.
+- **16. One job runner with locks and signals**; `pkill` cannot stop
+  `demo-all` and the lock exits 0 (see measured defects above).
+- **17. A real mixer with dB staging** in place of ENV multipliers.
+- **18. All randomness through `seed_for`** (see "Sound that moves under a
+  pinned seed").
+- **19. A cache policy for `scratch/`.**
+- **20–26. Subsystem homes** for drums, leads, effects, mastering, analysis,
+  rap vocals and the crate. lib/ holds six subjects; the matching sections of
+  `dilla.rb` have not moved into them.
+- **27. MIDI export and speech** leave as self-contained pieces.
+- **28. One sequence runner** under demo, stream, showcase, album, setlist,
+  live and the bed catalogue.
+- **29. `live` on that runner.** It is `ruby dilla.rb live` now, not yet on a
+  runner.
+- **30. Retire overlapping players**: `lib/sine_stream.rb` against `live`.
+- **31. Genres as parameters over one pipeline** (43 `render_*` methods); read
+  all three techno renderers before merging them.
+- **32. Niche renderers** (electronium, punk guitar, organic) to plugins or
+  deleted.
+- **34. Knob tiers**: public, expert, internal.
+- **35. `ENV_AND_RENDER.md` generated from the knob ledger.**
+- **36. Split the probe test file by subject**, behaviour checks over source
+  text.
+- **39. Real-time DSP for `live`**: effects run at 0.36–0.62x; it needs 1x.
+- **40. Score first**: every renderer writes a timed event score that one
+  offline renderer and the live player both play.
+- **41. Text drum patterns** (`"bd*2 [~ sn]"`) in place of 16-step arrays.
+- **42. Effects as chain objects with a text form**, shared by render and live;
+  folds 22.
+- **43. A saved session document as the render recipe**, in place of the ENV
+  snapshot in provenance.
+- **44. `live` as a background player** the CLI sends commands to.
+- **45. Ableton Link tempo sync** for live playback.
 
 ## dilla — unbuilt opt-in devices
 
@@ -1374,6 +1511,9 @@ choose. Numbers are for citation, not for order.
     `groove_score`, `harmony_score` and `spectral_audit` can each judge a render.
     Nothing judges a pass. A set that scored itself and refused to journal a bad
     take would make the catalogue self-curating.
+    Harmony and groove are scored from the note plan, not the render; measure
+    them from audio beside the loudness and width `listen.rb` already takes, with
+    targets drawn from takes the operator kept.
 36. **`RINGTONE_LAYER` and `PAD_LAYERS`** [cheap] [risk] — known-good layers with
     known switches, unreached from the livesets.
 

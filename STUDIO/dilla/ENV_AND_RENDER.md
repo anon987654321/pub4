@@ -91,7 +91,9 @@ drum chops, `GROOVE_DNA=cosmogramma`, quartal voicing, dub_chamber chain.
 | `KICK_GAIN` / `DRUM_BUS_VOL` | Kit bus (`0.88` / `0.95` in `DILLA_STYLE_DEFAULTS`) |
 | `CHOIR_VOX` / `CHOIR_VOX_GAIN` | Soft ooh/aah (`0` / `0.16` default; `CHOIR_VOX=1` re-enables) |
 | `STREAM_CREATIVE` / `STREAM_PUNCH` | Opt-in wild layer (LA_BEAT/vinyl/hot LUFS) — **off** by default |
-| `DILLA_SH_TIMEOUT` | Kill hung ffmpeg/fluidsynth (default 120s) |
+| `DILLA_SH_TIMEOUT` | Kill a hung render step run through `sh!` (default 900s) |
+| `DILLA_TOOL_TIMEOUT` | Kill a hung tool run through `ToolRun`: measurements, decodes, quiet conversions (default 900s) |
+| `DILLA_PROBE_TIMEOUT` | Deadline for one `FfmpegProbe` measurement (default 300s) |
 | `DILLA_FS_DRY` | Fluidsynth with its own chorus/reverb off — **off** by default; costs 12.6 dB of pad side-channel |
 | `THEORY_RUNTIME` / `THEORY_DILLA` / `THEORY_BACH` | Voicing operators |
 | `PAD_VOICE` / `PAD_VOL` / `PAD_LAYERS` | Pad bed |
@@ -99,6 +101,7 @@ drum chops, `GROOVE_DNA=cosmogramma`, quartal voicing, dub_chamber chain.
 | `RAP_VOCAL` | Vocal slug or `0` |
 | `SONITEX` / `ANALOG_CHAIN` | Master character |
 | `STREAM_NORMALIZE` / `STREAM_LUFS` | Loudnorm target |
+| `STREAM_TRUE_PEAK` / `STREAM_LRA` | Retired, no reader: August sidecars (RELEASE's included) carry them, but each loudnorm path sets its own TP and LRA, so replaying them changes nothing |
 | `SPEAK` | TTS over beat (`0` product default) |
 | `STREAM_DRUM_ROTATE` | Cycle drum preset/pocket each stream slot |
 | `WONKY_DRUM_OVERLAY` / `DRUM_CHOPS` | Off by default (sparse soul kit) |
@@ -112,7 +115,8 @@ drum chops, `GROOVE_DNA=cosmogramma`, quartal voicing, dub_chamber chain.
 | `RENDER_SEED` | Pins the whole render. Drawn and recorded when unset — see Provenance |
 | `DILLA_OVERWRITE` | Replace an existing named take. Unset, `render_dilla` refuses rather than overwrite |
 | `DEMO_TRACKS` | Explicit comma-separated order; beats every other rule in `demo_all_order` |
-| `DEMO_FX` | Catalogue post-chain; `ringtone` (default) adds tremolo, chorus, crusher and stereo widening, and the phaser and echo under `HATE_TUNNEL=1`; `0` disables it |
+| `DEMO_CATALOG` | `stream` plays the stream rotation; `curated` plays the wide catalogue — records on disk, the stream rotation, the generated styles and the artist-verified progressions |
+| `DEMO_FX` | Catalogue post-chain, off by default; `ringtone` adds tremolo, chorus, crusher and stereo widening, and the phaser and echo under `HATE_TUNNEL=1` |
 | `RENDER_BEAUTY_MIN` | Harmony floor before a render is kept (55–78 across profiles) |
 
 Three of these are worth stating outright because each one is a documented
