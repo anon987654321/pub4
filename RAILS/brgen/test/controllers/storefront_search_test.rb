@@ -95,6 +95,18 @@ class StorefrontSearchTest < ActionDispatch::IntegrationTest
     assert_equal "groceries", css_select("##{StorefrontSearch::FORM} input[name=vertical]").first["value"]
   end
 
+  # One app over every city: marketplace.lsangeles.com reads English, and its
+  # header once said "Search Markedsplass" — the Bergen host word in the field
+  # every Los Angeles search starts from.
+  test "the storefront header names no Norwegian host on an English city" do
+    host! "marketplace.lsangeles.com"
+    get marketplace.listings_path
+
+    assert_response :success
+    assert_equal I18n.t("search.marketplace", locale: :en), page_search_fields.first["placeholder"]
+    refute_match(/markedsplass|brgen/i, css_select("#navBar").to_html)
+  end
+
   # A page that lists nothing to stream into keeps the plain GET, or typing on
   # a category page would stream at a region that is not there.
   test "a category page's header field is a plain search" do
