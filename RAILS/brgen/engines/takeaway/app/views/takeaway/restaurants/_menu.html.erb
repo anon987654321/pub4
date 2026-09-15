@@ -1,0 +1,58 @@
+<%# The menu is the tile grid: a dish is a product, so it wears the product
+    tile, price first. Only dishes on offer reach this list. %>
+<section id="menu" aria-labelledby="menu-heading">
+  <%= tag.h2 t("takeaway.menu"), id: "menu-heading", class: "store-heading" %>
+  <% if @menu_items.empty? %>
+    <%= render "shared/empty_state",
+          title: t("empty.no_menu"),
+          body: t("empty.kitchen_no_food"),
+          action: { label: t("actions.all_restaurants"), path: restaurants_path } %>
+  <% else %>
+    <%= form_with scope: :takeaway_order, url: restaurant_orders_path(@restaurant), data: { controller: "form-submit", action: "submit->form-submit#lock" } do |f| %>
+      <div class="deal-grid" role="list">
+        <% @menu_items.each do |item| %>
+          <article class="deal-card" role="listitem">
+            <div class="deal-card-img">
+              <% if item.photo.attached? %>
+                <%= responsive_image_tag item.photo, alt: "", widths: [ 360, 720 ], sizes: "(max-width: 768px) 50vw, 260px" %>
+              <% else %>
+                <div class="deal-card-placeholder" aria-hidden="true"><%= item.name.to_s.first&.upcase %></div>
+              <% end %>
+            </div>
+            <div class="deal-card-body">
+              <div class="deal-price"><%= item.price_display %></div>
+              <%= tag.h3 item.name, class: "deal-card-title" %>
+              <%= tag.p item.description, class: "deal-meta deal-meta--clamp" if item.description.present? %>
+              <%= tag.span t("takeaway.vegetarian"), class: "store-badge" if item.vegetarian? %>
+              <%= tag.span t("takeaway.vegan"), class: "store-badge" if item.vegan? %>
+              <% if Current.user.present? %>
+                <%= number_field_tag "takeaway_order[items][#{item.id}]", 0, min: 0, class: "qty-field", aria: { label: t("takeaway.qty_for", name: item.name) } %>
+              <% end %>
+            </div>
+          </article>
+        <% end %>
+      </div>
+
+      <% if Current.user.present? %>
+        <div class="store-panel store-order">
+          <div class="field">
+            <%= f.label :delivery_address, t("takeaway.delivery_address") %>
+            <%= f.text_field :delivery_address, required: true, autocomplete: "street-address" %>
+          </div>
+          <div class="field">
+            <%= f.label :special_instructions, t("takeaway.special_instructions") %>
+            <div data-controller="character-counter" data-character-counter-countdown-value="true">
+              <%= f.text_area :special_instructions, maxlength: 500, data: { character_counter_target: "input" } %>
+              <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+            </div>
+          </div>
+          <%= f.submit t("takeaway.place_order"), class: "btn btn-primary" %>
+        </div>
+      <% end %>
+    <% end %>
+    <% unless Current.user.present? %>
+      <p><%= t("takeaway.reload_to_order") %></p>
+      <p><%= link_to t("actions.reload"), restaurant_path(@restaurant), class: "btn btn-primary" %></p>
+    <% end %>
+  <% end %>
+</section>

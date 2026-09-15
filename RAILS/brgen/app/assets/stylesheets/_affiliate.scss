@@ -7,7 +7,6 @@
 .affiliate-merchant { font-size: var(--text-xs); }
 
 .item-subtotal { float: inline-end; }
-.menu-row { display: flex; align-items: center; justify-content: space-between; }
 .qty-field { width: 60px; }
 
 .form-inline-errors-wrap {
@@ -39,7 +38,6 @@
 .mb-8 { margin-bottom: var(--space-2); }
 .mb-12 { margin-bottom: var(--space-3); }
 .m-16 { margin: var(--space-4); }
-.text-end { text-align: end; }
 .text-sm { font-size: var(--text-sm); }
 .text-visible { color: var(--color-success); }
 .text-hidden { color: var(--text-secondary); }
@@ -70,7 +68,6 @@ label.field--check-label > input { min-height: var(--tap-min); min-width: var(--
 .photo-strip { display: flex; gap: var(--space-2); padding: var(--space-4) 0; border-bottom: 0; flex-wrap: wrap; }
 .photo-thumb { width: 96px; height: 96px; object-fit: cover; border-radius: var(--radius-sm); }
 .dating-discover { margin-top: var(--space-5); }
-.cart-summary { margin-top: var(--space-6); padding-top: var(--space-4); border-top: 0; }
 .tv-media { border-bottom: 0; }
 .tv-media-image { width: 100%; max-height: 420px; object-fit: cover; display: block; }
 .affiliate-fine { font-size: var(--text-xs); margin-top: var(--space-2); }

@@ -7,128 +7,130 @@
   align-items: center;
 }
 
-.marketplace-subnav.feed-tabs {
-  padding-inline: 0;
-  mask-image: none;
-  -webkit-mask-image: none;
-  border-bottom: 0;
-}
-
-.marketplace-subnav .feed-tab {
-  flex: 0 0 auto;
-}
-
-/* The kind switcher is the category scroller one row up: goods, jobs,
-   housing, gigs. Same chip geometry, so it reads as the same control. */
-.deal-cats,
-.listing-kinds {
+/* A row of Kaufland's smart-filter pills: sort orders, store kinds, sibling
+   categories. It scrolls sideways on a phone rather than wrapping into rows. */
+.store-pills {
   display: flex;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-4);
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
   overflow-x: auto;
   scrollbar-width: none;
-  /* Without this the flex item's automatic minimum size sizes the scroller to
-     its content instead of its parent, so the scroll box itself hung 160px past
-     the viewport on /shops at 390px rather than scrolling inside it. */
-  min-width: 0;
+  list-style: none;
 }
 
-.deal-cats::-webkit-scrollbar,
-.listing-kinds::-webkit-scrollbar {
-  display: none;
-}
-
+/* Kaufland.de's smart-filter pill: 14px in a 1px #8e8e8e pill that darkens to
+   the ink on hover. The applied one fills with the ink. */
 .deal-cat {
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   min-height: var(--tap-min);
-  padding: var(--space-2) var(--space-3);
-  background: var(--surface-elevated);
-  border: 1px solid var(--border);
+  padding-inline: 12px;
+  border: 1px solid var(--store-rule, var(--border));
   border-radius: var(--radius-pill);
-  font-size: var(--text-sm);
-  color: var(--text);
+  background: var(--store-page, var(--surface));
+  color: var(--store-ink, var(--text));
+  font-size: 14px;
   white-space: nowrap;
-  transition: background var(--transition-fast) var(--ease-out), border-color var(--transition-fast) var(--ease-out), color var(--transition-fast) var(--ease-out);
+  transition: border-color var(--transition-fast) var(--ease-out);
 }
 
 .deal-cat:hover {
-  background: var(--search-bg);
-  border-color: var(--text-secondary);
+  border-color: var(--store-ink, var(--text));
   text-decoration: none;
 }
 
 .deal-cat.active {
-  background: var(--text);
-  color: var(--bg);
-  border-color: var(--text);
+  border-color: var(--store-ink, var(--text));
+  background: var(--store-ink, var(--text));
+  color: var(--store-page, var(--bg));
 }
 
-.marketplace-listing .listing-price {
-  font: var(--weight-heavy) 1.5rem / 1.2 var(--font);
-  color: var(--text);
-  font-variant-numeric: tabular-nums;
-}
 
-.marketplace-listing .listing-description {
-  margin-top: var(--space-4);
-  max-width: 66ch;
-}
-
-.marketplace-listing .btn-share {
-  margin-top: var(--space-4);
-}
-
-.marketplace-listing-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: var(--space-3);
-  flex-wrap: wrap;
-}
-
-.listing-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin-top: var(--space-4);
-}
-
-/* Same catalogue geometry as .deal-grid — a store tile and a deal tile are the
-   same object, and they were sized by two different ladders. */
-.store-grid {
+/* Kaufland's result header: the name at 28px (21px on a phone) with the count
+   beside it in the muted grey, and the sort under both. */
+.store-results {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: var(--tile-gap-col);
-  row-gap: var(--tile-gap-row);
-  padding: var(--space-4);
+  gap: 16px;
+  min-width: 0;
+}
+
+.store-results-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 12px;
+  margin-block: 16px;
+}
+
+.store-results-head h1 {
+  margin: 0;
+  color: var(--store-ink);
+  font-size: var(--store-text-heading);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-snug);
+}
+
+.store-results-count {
+  margin: 0;
+  color: var(--store-rule);
+  font-size: 16px;
+}
+
+.store-results-head .store-pills {
+  flex-basis: 100%;
+}
+
+.store-filters h2 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: var(--weight-bold);
 }
 
 @media (min-width: 768px) {
-  .store-grid {
-    grid-template-columns: repeat(auto-fill, minmax(var(--tile-min-xl), 1fr));
+  .store-results-head h1 {
+    font-size: 28px;
   }
 }
 
-.featured-deals {
-  padding: var(--space-4) 0 0;
+/* From 1265px the categories stand in Kaufland's 256px column as a list; the
+   family has no 1024 edge, so narrower screens keep the pill row. */
+@media (min-width: 1265px) {
+  .store-results--filtered {
+    grid-template-columns: 256px minmax(0, 1fr);
+  }
+
+  .store-filters {
+    padding-inline-end: 24px;
+    border-inline-end: 1px solid var(--store-hairline);
+  }
+
+  .store-filters .store-pills {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .store-filters .deal-cat {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--store-ink);
+    font-size: 16px;
+    white-space: normal;
+  }
+
+  .store-filters .deal-cat.active {
+    font-weight: var(--weight-bold);
+    text-decoration: underline;
+  }
+
+  .store-results--filtered .deal-grid {
+    --store-cols: 4;
+  }
 }
 
-.featured-deals h2 {
-  margin: 0 var(--space-4) var(--space-3);
-  font-size: var(--text-sm);
-  font-weight: var(--weight-bold);
-  color: var(--text-secondary);
-}
-
-.featured-deals .deal-grid {
-  padding-top: 0;
-}
-
-.deal-grid--featured {
-  padding-bottom: var(--space-4);
-}
 
 .cart-pay-actions {
   display: flex;
@@ -386,9 +388,10 @@
 /* Saved addresses. The default is the selected card: accent border plus the
    chip the view already renders — state as geometry, not colour alone. */
 .address-list {
-  display: grid;
-  gap: var(--space-3);
-  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0 0 var(--space-6);
   padding: 0;
   list-style: none;
 }
@@ -396,11 +399,11 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-2) var(--space-3);
-  padding: var(--space-3) var(--space-4);
+  gap: var(--space-3);
+  padding: var(--space-4);
   border: 1px solid var(--border);
-  border-radius: var(--radius-card);
-  background: var(--surface);
+  border-radius: var(--radius-sm);
+  background: var(--surface-elevated);
 }
 .address p {
   flex: 1;

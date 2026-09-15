@@ -10,7 +10,7 @@
           class: "deal-fav deal-fav--on",
           form: { class: "deal-fav-form", data: { turbo: true } },
           aria: { label: t("marketplace.wishlist.remove"), pressed: true } do %>
-      <%= icon :like, size: 18 %>
+      <%= icon :like, size: 16 %>
     <% end %>
   <% else %>
     <%= button_to listing_favorite_path(listing),
@@ -18,7 +18,7 @@
           class: "deal-fav",
           form: { class: "deal-fav-form", data: { turbo: true } },
           aria: { label: t("marketplace.wishlist.add"), pressed: false } do %>
-      <%= icon :like, size: 18 %>
+      <%= icon :like, size: 16 %>
     <% end %>
   <% end %>
 <% end %>

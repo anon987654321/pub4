@@ -1,25 +1,65 @@
 <% content_for :title, @category.name %>
 
-<div class="page-header">
-  <%= tag.h1 @category.name %>
-</div>
+<%= render "marketplace/nav_bar",
+      cart_count: (Current.user.present? ? Current.user.marketplace_orders.where(status: "pending").count : 0) %>
 
-<turbo-frame aria-live="polite" id="marketplace-category" data-turbo-action="replace">
-<div id="marketplace-category-listings" class="deal-grid" role="region" aria-label="<%= t("aria.category_listings") %>">
-<% @listings.each do |listing| %>
-  <%= render "marketplace/listings/card", listing: %>
-<% end %>
-<% if @listings.empty? %>
-  <%= render "shared/empty_state",
-        title: t("empty.no_category"),
-        body: t("empty.no_category_body"),
-        action: { label: t("actions.sell_something"), path: new_listing_path } %>
-<% end %>
-</div>
+<%# Kaufland.de's category page, measured at 1440 and 400: breadcrumb, then a
+    256px column of categories beside the results. The results open on the
+    name with its count beside it and the sort as pills, then the tile grid,
+    four across next to the column. On a phone the column becomes a row of
+    pills above the results. %>
+<nav class="store-breadcrumb" aria-label="<%= t("storefront.breadcrumb") %>">
+  <%= link_to t("marketplace.home_title", city: city_name), listings_path %>
+  <%= link_to @category.parent.name, category_path(@category.parent) if @category.parent %>
+  <%= tag.span @category.name, aria: { current: "page" } %>
+</nav>
 
-<%= render "shared/infinite_scroll_sentinel",
-           pagy: @pagy,
-           reflex: "CategoryListingsInfiniteScrollReflex#load_more",
-           sentinel_id: "marketplace-category-sentinel",
-           category_id: @category.id %>
-</turbo-frame>
+<div class="store-results<%= " store-results--filtered" if @shortcuts.any? %>">
+  <% if @shortcuts.any? %>
+    <nav class="store-filters" aria-labelledby="store-filters-title">
+      <%= tag.h2 t("marketplace.browse_categories"), id: "store-filters-title" %>
+      <ul class="store-pills">
+        <% @shortcuts.each do |shortcut| %>
+          <li><%= link_to shortcut.name, category_path(shortcut),
+                    class: "deal-cat#{" active" if shortcut == @category}",
+                    aria: { current: (shortcut == @category ? "page" : nil) } %></li>
+        <% end %>
+      </ul>
+    </nav>
+  <% end %>
+
+  <div class="store-results-body">
+    <header class="store-results-head">
+      <h1><%= @category.name %></h1>
+      <p class="store-results-count"><%= t("marketplace.listing_count", count: @pagy.count) %></p>
+      <nav class="store-pills" aria-label="<%= t("marketplace.sort_label") %>">
+        <% Marketplace::Listing::SORTS.each do |sort| %>
+          <%= link_to t("marketplace.sort_#{sort}"), category_path(@category, sort: (sort unless sort == "recent")),
+                class: "deal-cat#{" active" if @sort == sort}", aria: { current: (@sort == sort ? "page" : nil) } %>
+        <% end %>
+      </nav>
+    </header>
+
+    <turbo-frame aria-live="polite" id="marketplace-category" data-turbo-action="replace">
+      <% if @listings.any? %>
+        <div id="marketplace-category-listings" class="deal-grid" role="region" aria-label="<%= t("aria.category_listings") %>">
+          <% @listings.each do |listing| %>
+            <%= render "marketplace/listings/card", listing: %>
+          <% end %>
+        </div>
+
+        <%= render "shared/infinite_scroll_sentinel",
+                   pagy: @pagy,
+                   reflex: "CategoryListingsInfiniteScrollReflex#load_more",
+                   sentinel_id: "marketplace-category-sentinel",
+                   category_id: @category.id,
+                   sort: @sort %>
+      <% else %>
+        <%= render "shared/empty_state",
+              title: t("empty.no_category"),
+              body: t("empty.no_category_body"),
+              action: { label: t("actions.sell_something"), path: new_listing_path } %>
+      <% end %>
+    </turbo-frame>
+  </div>
+</div>

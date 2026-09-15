@@ -8,57 +8,62 @@
       [@listing.title, request.original_url.split("?").first]
     ])) %>
 
-<div class="page-header marketplace-listing-header">
-  <hgroup>
-    <p><%= t("marketplace.listing_kicker", category: @listing.category&.name || t("marketplace.listing")) %></p>
-    <%= tag.h1 @listing.title %>
-  </hgroup>
-  <nav aria-label="<%= t("aria.listing_actions") %>" class="marketplace-actions">
-    <% if Current.user.present? && Current.user == @listing.user %>
-      <%= link_to t("actions.edit"), edit_listing_path(@listing), class: "btn btn-ghost btn-sm" %>
-    <% elsif Current.user.present? %>
-      <%= render "marketplace/listings/favorite_button",
-            listing: @listing,
-            favorited: @listing.favorite_for(Current.user).present? %>
+<%= render "marketplace/nav_bar",
+      cart_count: (Current.user.present? ? Current.user.marketplace_orders.where(status: "pending").count : 0) %>
+
+<%# Kaufland.de's product page, measured at 1440 and 400: a 13px breadcrumb, then
+    the picture on the left seven twelfths and, on the right, the title, the
+    stars and a white buy box holding price, facts and the actions. On a phone
+    the two columns stack, picture first. %>
+<nav class="store-breadcrumb" aria-label="<%= t("storefront.breadcrumb") %>">
+  <%= link_to t("marketplace.home_title", city: city_name), listings_path %>
+  <% if @listing.category %>
+    <%= link_to @listing.category.name, listings_path(kind: @listing.kind, category_id: @listing.category_id) %>
+  <% end %>
+</nav>
+
+<div class="store-pdp">
+  <div class="store-pdp-media">
+    <% if @listing.photos.attached? %>
+      <%= render "shared/media_gallery", attachments: @listing.photos, title: @listing.title %>
+    <% else %>
+      <%# No photograph was uploaded, so the well says so with the title's initial
+          rather than a picture of something else. %>
+      <div class="deal-card-img" aria-hidden="true">
+        <div class="deal-card-placeholder"><%= @listing.title.to_s.first&.upcase %></div>
+      </div>
     <% end %>
-  </nav>
+  </div>
+
+  <div class="store-pdp-info">
+    <div class="page-header marketplace-listing-header">
+      <%= tag.h1 @listing.title %>
+      <nav aria-label="<%= t("aria.listing_actions") %>" class="marketplace-actions">
+        <% if Current.user.present? && Current.user == @listing.user %>
+          <%= link_to t("actions.edit"), edit_listing_path(@listing), class: "btn btn-ghost btn-sm" %>
+        <% elsif Current.user.present? %>
+          <%= render "marketplace/listings/favorite_button",
+                listing: @listing,
+                favorited: @listing.favorite_for(Current.user).present? %>
+        <% end %>
+      </nav>
+    </div>
+    <% if @listing.reviews_count.to_i.positive? %>
+      <%= render "shared/store_stars", rating: @listing.rating, count: @listing.reviews_count %>
+    <% end %>
+
+    <%= render "marketplace/listings/buybox" %>
+  </div>
 </div>
 
-<%= render "shared/media_gallery", attachments: @listing.photos, title: @listing.title %>
-
-<article class="marketplace-listing">
-  <p class="listing-price"><%= @listing.price_display %></p>
-  <% if @listing.sold? %>
-    <p class="listing-status"><%= t("marketplace.sold_notice") %></p>
-  <% elsif @listing.expired? %>
-    <p class="listing-status"><%= t("marketplace.expired_notice") %></p>
-    <% if Current.user.present? && Current.user == @listing.user %>
-      <%= button_to t("marketplace.renew"), renew_listing_path(@listing), method: :post, class: "btn btn-primary btn-sm" %>
-    <% end %>
-  <% end %>
-  <p><%= [(@listing.condition.present? ? t("marketplace.conditions.#{@listing.condition}", default: @listing.condition) : nil), @listing.location, @listing.user&.display_name || t("chat.anon")].compact.join(" · ") %></p>
-  <p><%= t("marketplace.views", count: @listing.views_count.to_i) %> · <%= t("marketplace.saves", count: @listing.favorites.size) %> · <%= t("marketplace.reviews_count", count: @listing.reviews_count.to_i) %></p>
-  <% if @listing.reviews_count.to_i.positive? %>
-    <p><%= t("marketplace.seller_rating", rating: number_with_precision(@listing.rating, precision: 1)) %></p>
-  <% end %>
-  <div class="listing-description"><%= read_more(@listing.description, lines: 6, more: t("actions.read_more"), less: t("actions.read_less")) %></div>
+<section class="store-pdp-description">
+  <div><%= read_more(@listing.description, lines: 6, more: t("actions.read_more"), less: t("actions.read_less")) %></div> <%# scan: intentional — read_more needs one block to clamp %>
   <button class="btn-share" data-controller="share"
           data-share-title-value="<%= @listing.title %>"
           data-share-url-value="<%= request.original_url %>"
           data-action="click->share#share"><%= t("marketplace.share") %></button>
-  <%# seller can read back nil: User is acts_as_tenant-scoped on city, so a
-      seller with no city (or another city) is invisible under this tenant and
-      the association returns nil. Without this guard the != test passes and
-      main_app.user_conversations_path(nil) raises UrlGenerationError, 500ing the whole
-      listing page. %>
-  <% seller = @listing.user %>
-  <% if @listing.buyable? && Current.user.present? && seller.present? && Current.user != seller %>
-    <div class="listing-actions listing-actions--inline">
-      <%= button_to t("marketplace.message_seller_btn"), main_app.user_conversations_path(seller), method: :post, class: "btn btn-ghost" %>
-    </div>
-  <% end %>
   <%= render "shared/affiliate_disclosure" %>
-</article>
+</section>
 
 <%= render "shared/also_nearby", items: @nearby_listings, title: t("marketplace.nearby_listings") %>
 
@@ -160,4 +165,3 @@
   </div>
 <% end %>
 
-<%= render "marketplace/listings/buy_bar" %>

@@ -50,11 +50,11 @@ class AssetUrlLintTest < Minitest::Test
     brgen_sheet = File.join(L::RAILS_ROOT, "brgen/app/assets/stylesheets/_fonts_brand.scss")
 
     assert L.satisfied_everywhere?("/fonts/JetBrainsMonoNerdFont-Regular.woff2", shared_sheet)
-    # Big Shoulders Display is the marketplace display face, vendored in
+    # Instrument Serif is the storefront promotional face, vendored in
     # brgen/public only, which is the property under test.
-    assert L.satisfied_everywhere?("/fonts/big-shoulders-display-latin-wght-normal.woff2", brgen_sheet)
-    refute L.satisfied_everywhere?("/fonts/big-shoulders-display-latin-wght-normal.woff2", shared_sheet),
-           "the display faces live only in brgen/public — a shared stylesheet asking for one would 404 on amber"
+    assert L.satisfied_everywhere?("/fonts/instrument-serif-latin-400-normal.woff2", brgen_sheet)
+    refute L.satisfied_everywhere?("/fonts/instrument-serif-latin-400-normal.woff2", shared_sheet),
+           "the promotional face lives only in brgen/public — a shared stylesheet asking for it would 404 on amber"
   end
 
   # My own first run reported PP Neue Montreal in five weights because `expand`

@@ -2,10 +2,12 @@
  <p><%= t("search.results_for", count: @deals.size, query: live_search_query) %></p>
 <% end %>
 
+<%# Featured deals ride one row as Kaufland's product slider, the grid's own
+    tile at a grid column's width. %>
 <% if @featured_deals&.any? && live_search_query.blank? %>
- <section class="featured-deals" aria-label="<%= t("aria.featured_deals") %>">
- <%= tag.h2 t("marketplace.deals.featured", default: "Featured deals") %>
- <ul class="deal-grid deal-grid--featured feed_list">
+ <section aria-label="<%= t("aria.featured_deals") %>">
+ <%= tag.h2 t("marketplace.deals.featured"), class: "store-heading" %>
+ <ul class="deal-grid top-offers-rail feed_list">
  <% @featured_deals.each do |deal| %>
    <li><%= render "marketplace/deals/card", deal: deal %></li>
  <% end %>
@@ -25,9 +27,16 @@
            reflex: "DealsInfiniteScrollReflex#load_more",
            sentinel_id: "marketplace-deals-sentinel",
            q: params[:q] %>
-<% else %>
+<% elsif live_search_query.present? %>
  <%= render "shared/empty_state",
        title: t("empty.no_deals"),
        body: t("empty.no_deals_search"),
        action: { label: t("empty.clear_search"), path: deals_path } %>
+<% else %>
+ <%# Nothing was searched, so there is no search to clear: the city simply has
+     no deals, and the listings are where the stock is. %>
+ <%= render "shared/empty_state",
+       title: t("empty.no_deals"),
+       body: t("empty.no_deals_yet", city: city_name),
+       action: { label: t("storefront.listings"), path: listings_path } %>
 <% end %>

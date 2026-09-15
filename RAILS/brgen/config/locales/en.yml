@@ -671,6 +671,7 @@ en:
     no_listings_search: No listings match this search.
     no_deals: No deals
     no_deals_search: No deals match this search.
+    no_deals_yet: "No store in %{city} is running a deal right now."
     no_stores: No stores
     no_stores_search: No stores match this search.
     no_places: No places
@@ -829,6 +830,8 @@ en:
     drivers: Drivers
     add_restaurant: Add restaurant
     saved_searches: Saved searches
+    rating_of_five: "%{rating} of 5"
+    breadcrumb: Breadcrumb
   dating:
     who_liked_you: Who liked you
     back_to_deck: Back to the deck
@@ -1096,8 +1099,6 @@ en:
     casual_hint: No shop needed — a listing without a store is you selling one thing.
     sold: Sold
     nearby_listings: Nearby
-    listing: Listing
-    listing_kicker: Marketplace / %{category}
     share: Share
     reviews: Reviews
     seller_rating: "%{rating} ★ seller interaction rating"
@@ -1107,9 +1108,15 @@ en:
     saves:
       one: "%{count} save"
       other: "%{count} saves"
-    reviews_count:
-      one: "%{count} review"
-      other: "%{count} reviews"
+    listing_count:
+      one: "%{count} listing"
+      other: "%{count} listings"
+    deal_count:
+      one: "%{count} deal"
+      other: "%{count} deals"
+    store_count:
+      one: "%{count} store"
+      other: "%{count} stores"
     deals:
       featured: Featured deals
       title: Deals
@@ -1177,12 +1184,9 @@ en:
     top_offers_heading: Picked for the city
     make_offer: Make an offer
     add_photos: Add photos
-    top_offers_kicker: Top offers
     seller_dashboard: Seller dashboard
     alerts: Marketplace alerts
     chat_with: Chat with %{name}
-    top_offers_blurb: Featured deals and high-signal listings — denser than the feed,
-      still flat.
     message_seller_hint: Send a short message to the seller. They can accept or decline
       from this listing page.
     near_me: Near me
@@ -1193,7 +1197,6 @@ en:
     expired_notice: This listing has expired.
     renew: Renew listing
     distance_km: "%{km} km away"
-    rating_of_five: "%{rating} of 5"
     no_reviews_body: Buyers can review after an order.
     no_offers_body: Incoming offers will list here.
     offers: Offers
@@ -1365,9 +1368,8 @@ en:
     courier_unassigned: No free courier nearby yet.
     order_cancelled: Order cancelled
     order_from: Order from %{restaurant}
-    sold_out: Sold out
     operations: Takeaway operations
-    min_order_line: 'Min order: %{min} · Delivery: %{fee} ·'
+    min_order_short: "Minimum order %{min}"
     reload_to_order: Reload to place an order — guests can order without signup.
     saves:
       one: "%{count} save"
@@ -1387,10 +1389,14 @@ en:
     back_to_restaurant: Back to restaurant
     delivery_details: Delivery details
     delivery_heading: Delivery
+    delivery_label: Delivery
+    restaurant_count_suffix:
+      one: restaurant
+      other: restaurants
     restaurant_results: Restaurant results
+    top_rated_heading: "Top rated in %{city}"
     restaurant_actions: Restaurant actions
     qty_for: Quantity for %{name}
-    item_sold_out: "%{name} sold out"
     browse_menu: Browse menu
     group_title: "Group order — %{restaurant}"
     group_eyebrow: "One ticket, one delivery"

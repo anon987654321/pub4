@@ -130,5 +130,8 @@ class MarketplaceBasketTest < ActionDispatch::IntegrationTest
     get marketplace.cart_path
     assert_response :success
     assert_match "Marken 4", response.body
+    # One list row per line, and the total leads the buy box beside them.
+    assert_select "article.cart-item .deal-card-img"
+    assert_select ".store-buybox.cart-summary > p.store-buybox-price:first-child strong"
   end
 end

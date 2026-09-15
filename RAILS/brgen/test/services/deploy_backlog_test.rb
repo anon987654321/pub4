@@ -284,7 +284,7 @@ class DeployBacklogTest < Minitest::Test
     assert_includes orders_controller, "params[:status].presence"
     assert_includes new_view, "f.number_field :latitude"
     assert_includes restaurant_show, "f.check_box :available"
-    assert_includes restaurant_show, "item.vegan?"
+    assert_includes read_source(File.join(ROOT, "brgen/app/views/takeaway/restaurants/_menu.html.erb")), "item.vegan?"
     assert_includes order_show, "Takeaway::Order::TRANSITIONS.fetch"
   end
 
@@ -603,7 +603,7 @@ assert_includes haystack, "turbo_prefetch: false",
     assert_includes controller, "authorize_owner"
     assert [ File.join(ROOT, "brgen/app/views/marketplace/stores/edit.html.erb"),
             File.join(ROOT, "brgen/engines/marketplace/app/views/marketplace/stores/edit.html.erb") ].any? { |p| File.file?(p) }
-    assert_includes read_brgen("app/assets/stylesheets/_marketplace_stores.scss"), ".store-grid"
+    assert_includes read_brgen("engines/marketplace/app/views/marketplace/stores/_live_search_results.html.erb"), "deal-grid"
     assert_includes read_brgen("app/assets/stylesheets/application.scss"), "_marketplace_stores"
   end
 

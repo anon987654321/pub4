@@ -44,7 +44,7 @@ class Marketplace::CartsController < Marketplace::BaseController
   def load_cart
     @cart_items = Current.user.marketplace_orders
                          .where(status: "pending")
-                         .includes(listing: :user)
+                         .includes(listing: [ :user, { photos_attachments: :blob } ])
                          .order(created_at: :desc)
 
     @cart_total = @cart_items.sum(&:total_cents)

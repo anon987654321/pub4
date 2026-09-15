@@ -158,6 +158,16 @@ class TakeawayControllersTest < ActionDispatch::IntegrationTest
     assert_select "form[data-controller~='form-submit'][data-action*='submit->form-submit#lock']"
   end
 
+  test "the restaurant page leads on the delivery fee and lists each dish as a priced tile" do
+    sign_in_as(@diner)
+
+    get takeaway.restaurant_path(@restaurant)
+    assert_select ".store-breadcrumb a[href=?]", takeaway.restaurants_path(cuisine: "Norwegian")
+    assert_select ".store-buybox .store-buybox-price", text: /#{Regexp.escape(@restaurant.delivery_fee_display)}/
+    assert_select "#menu .deal-card .deal-price", text: @soup.price_display
+    assert_select "#menu .deal-card input.qty-field[name=?]", "takeaway_order[items][#{@soup.id}]"
+  end
+
   # A guest can order, so the kitchen advancing a guest's order notifies a user
   # with no browser subscription that counts. The push must stand down, not 500.
   test "advancing a guest's order sends no push to the guest" do

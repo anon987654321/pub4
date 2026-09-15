@@ -88,7 +88,7 @@ checks:
   - {id: dating.likes, in: brgen/engines/dating/app/controllers/dating/likes_controller.rb, has: ["def create"]}
   - {id: dating.rewind, in: brgen/engines/dating/app/controllers/dating/rewinds_controller.rb, has: ["def create"]}
   # --- marketplace ---
-  - {id: market.listings_h1, in: brgen/engines/marketplace/app/views/marketplace/listings/index.html.erb, has: ["<h1>", market-hero, nav_bar]}
+  - {id: market.listings_h1, in: brgen/engines/marketplace/app/views/marketplace/listings/index.html.erb, has: ["<h1", store-hero, nav_bar]}
   - {id: market.sell, in: brgen/engines/marketplace/app/views/marketplace/listings/new.html.erb, has: [listing]}
   - {id: market.cart, in: brgen/engines/marketplace/app/views/marketplace/carts/show.html.erb, has: [cart]}
   - {id: market.checkout, in: brgen/engines/marketplace/app/controllers/marketplace/checkouts_controller.rb, has: ["def create"]}

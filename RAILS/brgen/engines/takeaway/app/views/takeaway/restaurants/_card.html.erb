@@ -1,15 +1,19 @@
-<% restaurant_content = capture do %>
-  <div class="feed-card-meta">
-    <%= restaurant.city_label %> · ★ <%= restaurant.rating || "—" %>
-  </div>
-  <div class="feed-card-meta">
-    <%= t("takeaway.min_order_delivery", min: restaurant.min_order_display, fee: restaurant.delivery_fee_display) %>
-  </div>
-<% end %>
-<%= render "shared/feed_card",
-  name: restaurant.name,
-  url: restaurant_path(restaurant),
-  handle: restaurant.cuisine_type,
-  content: restaurant_content,
-  actions: link_to(t("actions.open"), restaurant_path(restaurant), class: "feed-action"),
-  class: "takeaway" %>
+<%# Kaufland.de's grid tile for a kitchen. A restaurant has no price and no
+    photograph column, so the well carries its initial and the cuisine badge,
+    and the minimum order and delivery fee stand where a price would. %>
+<article class="deal-card restaurant" role="listitem">
+  <%= link_to restaurant_path(restaurant), class: "deal-card-hit" do %>
+    <div class="deal-card-img">
+      <div class="deal-card-placeholder" aria-hidden="true"><%= restaurant.name.to_s.first&.upcase %></div>
+      <%= tag.span restaurant.cuisine_type, class: "deal-badge deal-badge--soft" if restaurant.cuisine_type.present? %>
+    </div>
+    <div class="deal-card-body">
+      <h3 class="deal-card-title"><%= restaurant.name %></h3>
+      <% if restaurant.reviews_count.to_i.positive? %>
+        <%= render "shared/store_stars", rating: restaurant.rating, count: restaurant.reviews_count %>
+      <% end %>
+      <p class="deal-meta"><%= restaurant.city_label %></p>
+      <p class="deal-meta"><%= t("takeaway.min_order_delivery", min: restaurant.min_order_display, fee: restaurant.delivery_fee_display) %></p>
+    </div>
+  <% end %>
+</article>

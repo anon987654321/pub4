@@ -676,6 +676,7 @@ nb:
     no_listings_search: Ingen annonser matcher søket.
     no_deals: Ingen tilbud
     no_deals_search: Ingen tilbud matcher søket.
+    no_deals_yet: "Ingen butikker i %{city} har tilbud ute akkurat nå."
     no_stores: Ingen butikker
     no_stores_search: Ingen butikker matcher søket.
     no_places: Ingen steder
@@ -835,6 +836,8 @@ nb:
     drivers: Sjåfører
     add_restaurant: Legg til restaurant
     saved_searches: Lagrede søk
+    rating_of_five: "%{rating} av 5"
+    breadcrumb: Brødsmulesti
   dating:
     who_liked_you: Hvem har likt deg
     back_to_deck: Tilbake til bunken
@@ -1103,8 +1106,6 @@ nb:
       én ting.
     sold: Solgt
     nearby_listings: I nærheten
-    listing: Annonse
-    listing_kicker: Markedsplass / %{category}
     share: Del
     reviews: Omtaler
     seller_rating: "%{rating} ★ vurdering av selger"
@@ -1114,9 +1115,15 @@ nb:
     saves:
       one: "%{count} lagring"
       other: "%{count} lagringer"
-    reviews_count:
-      one: "%{count} omtale"
-      other: "%{count} omtaler"
+    listing_count:
+      one: "%{count} annonse"
+      other: "%{count} annonser"
+    deal_count:
+      one: "%{count} tilbud"
+      other: "%{count} tilbud"
+    store_count:
+      one: "%{count} butikk"
+      other: "%{count} butikker"
     deals:
       featured: Utvalgte tilbud
       title: Tilbud
@@ -1184,12 +1191,9 @@ nb:
     top_offers_heading: Plukket ut for byen
     make_offer: Gi et bud
     add_photos: Legg til bilder
-    top_offers_kicker: Beste tilbud
     seller_dashboard: Selgeroversikt
     alerts: Varsler fra markedsplassen
     chat_with: Chat med %{name}
-    top_offers_blurb: Utvalgte tilbud og annonser med høy signalverdi — tettere enn
-      strømmen, fortsatt flatt.
     message_seller_hint: Send en kort melding til selgeren. De kan godta eller avslå
       fra denne annonsesiden.
     near_me: Nær meg
@@ -1200,7 +1204,6 @@ nb:
     expired_notice: Denne annonsen har utløpt.
     renew: Forny annonsen
     distance_km: "%{km} km unna"
-    rating_of_five: "%{rating} av 5"
     no_reviews_body: Kjøpere kan omtale etter en ordre.
     no_offers_body: Innkommende bud vises her.
     offers: Bud
@@ -1372,9 +1375,8 @@ nb:
     courier_unassigned: Ingen ledig bud i nærheten ennå.
     order_cancelled: Bestillingen er kansellert
     order_from: Bestill fra %{restaurant}
-    sold_out: Utsolgt
     operations: Takeaway-drift
-    min_order_line: 'Minstebeløp: %{min} · Levering: %{fee} ·'
+    min_order_short: "Minstebeløp %{min}"
     reload_to_order: Last inn på nytt for å bestille — gjester kan bestille uten registrering.
     saves:
       one: "%{count} lagret"
@@ -1394,10 +1396,14 @@ nb:
     back_to_restaurant: Tilbake til restauranten
     delivery_details: Leveringsdetaljer
     delivery_heading: Levering
+    delivery_label: Levering
+    restaurant_count_suffix:
+      one: restaurant
+      other: restauranter
     restaurant_results: Restauranttreff
+    top_rated_heading: "Best vurdert i %{city}"
     restaurant_actions: Restauranthandlinger
     qty_for: Antall av %{name}
-    item_sold_out: "%{name} er utsolgt"
     browse_menu: Se menyen
     group_title: "Gruppebestilling — %{restaurant}"
     group_eyebrow: "Én bestilling, én levering"

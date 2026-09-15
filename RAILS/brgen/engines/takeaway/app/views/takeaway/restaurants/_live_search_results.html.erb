@@ -1,20 +1,38 @@
 <%= turbo_frame_tag "takeaway-restaurants-list", target: "_top" do %>
-<section role="region" aria-label="<%= t("takeaway.restaurant_results") %>" id="takeaway-restaurants-list">
-  <% @restaurants.each do |r| %>
-    <%= render "takeaway/restaurants/card", restaurant: r %>
+<%# The cuisines are the category shortcut rail: a white square well with the
+    cuisine's initial above its name, "Alle" first. %>
+<nav class="deal-cats" aria-label="<%= t("actions.all_cuisines") %>">
+  <%= link_to restaurants_path, class: "deal-cat#{" active" if params[:cuisine].blank?}", aria: { current: (params[:cuisine].blank? ? "page" : nil) } do %>
+    <span class="store-shortcut-well" aria-hidden="true"><%= icon :layers, size: 32 %></span>
+    <%= t("marketplace.all_categories") %>
   <% end %>
-  <% if @restaurants.empty? %>
-    <% if authenticated? %>
-      <%= render "shared/empty_state",
-            title: t("empty.no_restaurants"),
-            body: t("empty.first_restaurant"),
-            action: { label: t("actions.add_one"), path: new_restaurant_path } %>
-    <% else %>
-      <%= render "shared/empty_state",
-            title: t("empty.no_restaurants"),
-            body: t("empty.restaurants_appear"),
-            action: { label: t("empty.city_feed"), path: root_path } %>
+  <% Takeaway::Restaurant::CUISINE_TYPES.each do |cuisine| %>
+    <%= link_to restaurants_path(cuisine:), class: "deal-cat#{" active" if params[:cuisine] == cuisine}", aria: { current: (params[:cuisine] == cuisine ? "page" : nil) } do %>
+      <span class="store-shortcut-well" aria-hidden="true"><%= cuisine.first %></span>
+      <%= cuisine %>
     <% end %>
+  <% end %>
+</nav>
+
+<section aria-labelledby="takeaway-restaurants-heading">
+  <%= tag.h2 (live_search_query.present? ? t("takeaway.restaurant_results") : t("takeaway.top_rated_heading", city: city_name)),
+             id: "takeaway-restaurants-heading", class: "store-heading" %>
+  <% if @restaurants.any? %>
+    <div class="deal-grid" role="list" id="takeaway-restaurants-grid">
+      <% @restaurants.each do |r| %>
+        <%= render "takeaway/restaurants/card", restaurant: r %>
+      <% end %>
+    </div>
+  <% elsif authenticated? %>
+    <%= render "shared/empty_state",
+          title: t("empty.no_restaurants"),
+          body: t("empty.first_restaurant"),
+          action: { label: t("actions.add_one"), path: new_restaurant_path } %>
+  <% else %>
+    <%= render "shared/empty_state",
+          title: t("empty.no_restaurants"),
+          body: t("empty.restaurants_appear"),
+          action: { label: t("empty.city_feed"), path: root_path } %>
   <% end %>
 </section>
 

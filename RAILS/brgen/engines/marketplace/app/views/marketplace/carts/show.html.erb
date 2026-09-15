@@ -6,17 +6,28 @@
       search_placeholder: t("search.marketplace"),
       cart_count: @cart_items.size %>
 
-<div class="page-header">
+<%# Kaufland.de's basket could not be captured: every archived copy is a 403
+    or its bot challenge. It is drawn from the parts that were measured: the
+    result header, the list row (image well, hairline under each line, 24px
+    padding and gap) and the white buy box, which holds the total and the pay
+    buttons beside the lines from 768px. %>
+<header class="store-results-head">
   <%= tag.h1 t("pages.cart") %>
-  <p><%= t("marketplace.item", count: @cart_items.size) %></p>
-</div>
+  <p class="store-results-count"><%= t("marketplace.item", count: @cart_items.size) %></p>
+</header>
 
 <% if @cart_items.any? %>
+  <div class="store-pdp">
   <div class="cart-items">
     <% @cart_items.each do |item| %>
-      <div class="cart-item">
+      <article class="cart-item">
+        <% photo = item.listing.photos.attached? ? item.listing.photos.first : nil %>
+        <%= render "marketplace/card_media", photo:, fallback_char: item.listing.title.to_s.first&.upcase || "?", badge: nil %>
         <div> <%# scan: intentional — the item's text block; the cart row is the layout %>
-          <strong><%= link_to item.listing.title, listing_path(item.listing) %></strong>
+          <h2 class="deal-card-title"><%= link_to item.listing.title, listing_path(item.listing) %></h2>
+          <% if (seller = item.listing.user&.display_name).present? %>
+            <%= tag.span t("marketplace.seller_badge", name: seller), class: "store-badge" %>
+          <% end %>
           <%# A one-of-a-kind listing has one to buy, so only stocked lines get a
               quantity to change. %>
           <% if item.listing.one_of_a_kind? %>
@@ -30,20 +41,20 @@
             <% end %>
           <% end %>
         </div>
-        <div class="text-end">
-          <%= tag.strong item.total_display, data: { money: true } %>
+        <div class="cart-item-sum">
+          <%= tag.strong item.total_display, class: "deal-price", data: { money: true } %>
           <div class="cluster">
             <%# destructive: no-confirm-ok — a cart line comes back by adding the listing again %>
             <%= button_to t("actions.remove"), cart_item_path(item),
                   method: :delete, class: "btn btn-ghost btn-sm" %>
           </div>
         </div>
-      </div>
+      </article>
     <% end %>
   </div>
 
-  <div class="cart-summary">
-    <p><%= tag.strong t("marketplace.cart_total", amount: Shared::MoneyDisplay.format(@cart_total)) %></p>
+  <aside class="store-buybox cart-summary" aria-label="<%= t("marketplace.payment_methods") %>">
+    <p class="store-buybox-price"><%= tag.strong t("marketplace.cart_total", amount: Shared::MoneyDisplay.format(@cart_total)) %></p>
     <p><%= t("marketplace.cart_pay_hint") %></p>
 
     <%# Paying the whole basket needs somewhere to send it. Shown before the pay
@@ -87,6 +98,7 @@
           method: :post, class: "btn btn-ghost",
           data: { turbo_confirm: t("marketplace.send_offers_confirm") } %>
     <p class="hint mt-8"><%= t("marketplace.cart_sellers_hint") %></p>
+  </aside>
   </div>
 <% else %>
   <%= render "shared/empty_state",

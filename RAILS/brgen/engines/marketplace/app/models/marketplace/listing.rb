@@ -104,6 +104,16 @@ class Marketplace::Listing < ApplicationRecord
     live.where(renewal_notice_sent_at: nil).where("expires_at <= ?", Time.current + RENEWAL_NOTICE)
   }
   scope :recent,   -> { order(created_at: :desc) }
+  # The three orders a browsing buyer asks for. Anything else in the param is
+  # newest first, which is the page as it arrives.
+  SORTS = %w[recent price_low price_high].freeze
+  scope :sorted_by, lambda { |sort|
+    case sort
+    when "price_low" then order(price_cents: :asc)
+    when "price_high" then order(price_cents: :desc)
+    else recent
+    end
+  }
   scope :popular,  -> { order(views_count: :desc) }
   scope :from_store, ->(store) { where(store: store) }
   # No store = a person selling a chair. The storefront already stores that;

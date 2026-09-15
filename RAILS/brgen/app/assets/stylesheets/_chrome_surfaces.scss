@@ -1,24 +1,6 @@
 /* Shell surfaces — cart, community, flash, sidebar, empty states.
    Includes former _ui_refinements_surfaces.scss (merged 2026-07-31). */
 
-/* Rows are separated by the gap, not by rules between them. */
-.cart-items {
-  display: grid;
-  gap: var(--space-4);
-}
-
-.cart-item {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-4);
-  padding: var(--space-4);
-}
-
-.cart-summary {
-  padding: var(--space-4);
-}
-
 .marketplace-deal {
   padding: var(--space-4);
 }

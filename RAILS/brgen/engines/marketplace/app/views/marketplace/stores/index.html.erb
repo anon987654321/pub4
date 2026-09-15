@@ -7,9 +7,12 @@
       cart_count: (Current.user.present? ? Current.user.marketplace_orders.where(status: "pending").count : 0) %>
 
 <%= tag.section class: "marketplace-stores", role: "region", "aria-label": t("marketplace.stores.title") do %>
-  <%= tag.h1 class: "visually-hidden" do %><%= t("marketplace.stores.title") %><% end %>
+  <header class="store-results-head">
+    <%= tag.h1 t("marketplace.stores.title") %>
+    <%= tag.p t("marketplace.store_count", count: @pagy.count), class: "store-results-count" %>
+  </header>
 
-  <%= tag.nav class: "deal-cats", "aria-label": t("marketplace.store_categories") do %>
+  <%= tag.nav class: "store-pills", "aria-label": t("marketplace.store_categories") do %>
     <% Marketplace::Store::VERTICALS.each do |vertical| %>
       <%= link_to t("marketplace.verticals.#{vertical}"), shops_path(vertical: vertical),
             class: "deal-cat#{" active" if params[:vertical].to_s == vertical}" %>

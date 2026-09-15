@@ -1,61 +1,37 @@
-<%# Curated rail above the catalog. Display type: Pangram Pangram (see _fonts_brand).
-    Body/price stay on the brgen Arial stack. %>
+<%# Curated rail above the catalogue, in the tile anatomy the grid below wears:
+    Kaufland.de runs its product sliders on the same tile as its grid, so a
+    featured deal and a listing read as the same object. %>
 <% offers = local_assigns[:offers] || @top_offers %>
 <% if offers.present? %>
-<section class="marketplace-top-offers" aria-labelledby="top-offers-heading">
-  <header class="marketplace-top-offers-header">
-    <p class="top-offers-kicker"><%= t("marketplace.top_offers_kicker") %></p>
-    <h2 id="top-offers-heading" class="top-offers-heading"><%= t("marketplace.top_offers_heading") %></h2>
-    <p class="top-offers-lede"><%= t("marketplace.top_offers_blurb") %></p>
-  </header>
+<section aria-labelledby="top-offers-heading">
+  <%= tag.h2 t("marketplace.top_offers_heading"), id: "top-offers-heading", class: "store-heading" %>
 
   <%# The photos keep alt "": each sits inside a link whose visible text is the
       headline or title, and a filled alt would announce it twice. %>
-  <div class="top-offers-rail" role="list">
+  <div class="deal-grid top-offers-rail" role="list">
     <% offers.each do |offer| %>
-      <% if offer.is_a?(Marketplace::Deal) %>
-        <% listing = offer.listing %>
-        <% photo = listing&.photos&.attached? ? listing.photos.first : nil %>
-        <%# The badge falls back twice and both fallbacks were English literals on
-            a surface that renders in Norwegian by default. offer.badge itself is
-            seller copy and stays as written. %>
-        <% badge = offer.badge.presence ||
-                   (offer.discount_percent.present? ?
-                     t("marketplace.percent_off", percent: offer.discount_percent.to_i) :
-                     t("marketplace.deal")) %>
-        <%= link_to deal_path(offer), class: "top-offer-card", role: "listitem" do %>
-          <div class="top-offer-media">
-            <% if photo %>
-              <%= responsive_image_tag photo, alt: "", widths: [480, 960], sizes: "(max-width: 768px) 80vw, 320px" %>
-            <% else %>
-              <div class="deal-card-placeholder" aria-hidden="true"><%= offer.headline.to_s.first&.upcase || "%" %></div>
-            <% end %>
-            <span class="deal-badge"><%= badge %></span>
-          </div>
-          <div class="top-offer-body">
-            <% if listing %><div class="deal-price"><%= listing.price_display %></div><% end %>
-            <p class="top-offer-title"><%= offer.headline %></p>
-            <% if listing %><p class="deal-meta"><%= listing.title %></p><% end %>
-          </div>
-        <% end %>
-      <% else %>
-        <% listing = offer %>
-        <% photo = listing.photos.attached? ? listing.photos.first : nil %>
-        <%= link_to listing_path(listing), class: "top-offer-card", role: "listitem" do %>
-          <div class="top-offer-media">
-            <% if photo %>
-              <%= responsive_image_tag photo, alt: "", widths: [480, 960], sizes: "(max-width: 768px) 80vw, 320px" %>
-            <% else %>
-              <div class="deal-card-placeholder" aria-hidden="true"><%= listing.title.to_s.first&.upcase || "?" %></div>
-            <% end %>
-            <span class="deal-badge deal-badge--soft"><%= t("marketplace.top") %></span>
-          </div>
-          <div class="top-offer-body">
-            <div class="deal-price"><%= listing.price_display %></div>
-            <p class="top-offer-title"><%= listing.title %></p>
-            <p class="deal-meta"><%= [listing.location, listing.category&.name].compact.join(" · ") %></p>
-          </div>
-        <% end %>
+      <% deal = offer if offer.is_a?(Marketplace::Deal) %>
+      <% listing = deal ? deal.listing : offer %>
+      <% photo = listing&.photos&.attached? ? listing.photos.first : nil %>
+      <% title = deal ? deal.headline : listing.title %>
+      <%# The badge falls back twice and both fallbacks were English literals on
+          a surface that renders in Norwegian by default. deal.badge itself is
+          seller copy and stays as written. %>
+      <% badge = if deal
+                   deal.badge.presence ||
+                     (deal.discount_percent.present? ? t("marketplace.percent_off", percent: deal.discount_percent.to_i) : t("marketplace.deal"))
+                 else
+                   t("marketplace.top")
+                 end %>
+      <%= link_to (deal ? deal_path(deal) : listing_path(listing)), class: "deal-card", role: "listitem" do %>
+        <%= render "marketplace/card_media", photo:, fallback_char: title.to_s.first&.upcase || "%", badge:, badge_soft: deal.nil? %>
+        <div class="deal-card-body">
+          <% if listing %><div class="deal-price"><%= listing.price_display %></div><% end %>
+          <%= tag.h3 title, class: "deal-card-title" %>
+          <% if listing %>
+            <p class="deal-meta"><%= deal ? listing.title : [listing.location, listing.category&.name].compact.join(" · ") %></p>
+          <% end %>
+        </div>
       <% end %>
     <% end %>
   </div>

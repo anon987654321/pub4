@@ -7,6 +7,7 @@ class CategoryListingsInfiniteScrollReflex < Shared::InfiniteScrollReflex
 
   def scope
     category = Marketplace::Category.find(element.dataset["categoryId"])
-    category.listings.live.recent.includes(:user, :category)
+    # The sort the first page was drawn in, or page two comes back newest first.
+    category.listings.live.with_attached_photos.includes(:user, :category).sorted_by(element.dataset["sort"])
   end
 end

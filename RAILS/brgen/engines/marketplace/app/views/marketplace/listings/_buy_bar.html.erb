@@ -1,12 +1,8 @@
-<%# Sticky PDP action bar — Tise/Bol pattern; sits above mobile tab bar. %>
+<%# The buy box's actions, as Kaufland.de stacks them under its facts: the red
+    pill first, the outlined ones after. The price above already names what
+    they buy, so the bar does not repeat it. %>
 <% if @listing.buyable? && authenticated? && Current.user != @listing.user %>
-<div class="listing-buy-bar" role="region" aria-label="<%= t("marketplace.buy_actions") %>">
-  <div class="listing-buy-bar-price">
-    <span class="listing-buy-bar-amount"><%= @listing.price_display %></span>
-    <% if @listing.condition.present? %>
-      <span class="listing-buy-bar-meta"><%= t("marketplace.conditions.#{@listing.condition}", default: @listing.condition.tr("_", " ")) %></span>
-    <% end %>
-  </div>
+<div class="listing-buy-bar" role="group" aria-label="<%= t("marketplace.buy_actions") %>">
   <div class="listing-buy-bar-actions">
     <%# One click to paid (operator, 2026-08-22): the button posts straight to
         checkout with listing_id — order created and Vipps started in the same

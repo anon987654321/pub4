@@ -201,7 +201,6 @@ time {
 
 /* H · list perf — taller intrinsic for media cards to reduce scroll jump */
 .feed-post,
-.restaurant-card,
 .item-card {
   content-visibility: auto;
   contain-intrinsic-size: auto 160px;
@@ -280,34 +279,6 @@ body.vertical-tv .live-badge::before {
      token — writing it here as "the" --danger was drift waiting to happen,
      the same way the stale Twitter-red (#f4212e) it replaced was. */
   color: var(--danger);
-}
-
-/* Takeaway sold out — text badge, not color-only */
-body.vertical-takeaway .sold-out,
-body.vertical-takeaway [data-available="false"] {
-  opacity: 0.55;
-}
-body.vertical-takeaway .sold-out-badge {
-  display: inline-block;
-  margin-inline-start: 4px;
-  font-size: var(--text-xs);
-  font-weight: var(--weight-bold);
-  border: 1px solid var(--border);
-  padding: var(--space-0-5) 4px;
-  border-radius: var(--radius-xs, 4px);
-  color: var(--text-secondary);
-}
-/* Fallback when markup only has data-available (no badge span) */
-body.vertical-takeaway [data-available="false"]:not(:has(.sold-out-badge))::after {
-  content: "Sold out";
-  display: inline-block;
-  margin-inline-start: 4px;
-  font-size: var(--text-xs);
-  font-weight: var(--weight-bold);
-  border: 1px solid var(--border);
-  padding: var(--space-0-5) 4px;
-  border-radius: var(--radius-xs, 4px);
-  color: var(--text-secondary);
 }
 
 /* Playlist embed controls */
