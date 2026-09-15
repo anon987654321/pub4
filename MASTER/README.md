@@ -1,153 +1,45 @@
 # MASTER
-
-<!-- Two films, both rebuilt by MASTER/bin/loops.
-
-     loop1 is the face reading this file aloud, in the voice data/voice.yml
-     names, with the ai.brgen.no wordmark in the corner — recorded by
-     RAILS/gates/probes/face_loop_record.rb. loop2 is a shell booting bin/cli,
-     cropped to the boot message and the prompt, recorded by
-     RAILS/gates/probes/shell_loop_record.rb. Its banner is read from
-     Master::CLI::BootBanner at record time rather than pasted, so changing the
-     banner changes the film.
-
-     Each mp4 carries the sound and each gif is the same take without it: GIF
-     has no audio track at all, which is why the pair exists rather than one
-     file. The frame is the gif because GitHub's sanitizer strips <video> —
-     measured 2026-08-30 — so the mp4 is what the frame links to rather than
-     what it embeds: clicking either opens the take with its audio.
-
-     An inline player with sound needs the mp4 uploaded through GitHub's web UI
-     and its user-attachments URL pasted here. That upload is the operator's; a
-     repo-relative <video src="loop1.mp4"> renders as nothing. -->
+ 
 <a href="loop1.mp4"><img src="loop1.gif" width="360" alt="The MASTER face, reading this page aloud — click for sound"></a>
 <a href="loop2.mp4"><img src="loop2.gif" width="360" alt="MASTER booting on vm23 — click for sound"></a>
-
-**MASTER is the first artificial intelligence written in pure Ruby that governs
-itself by law, not by hope — grown in Norway, to run its own mind on power drawn
-from inside a fjord mountain.** Most systems let a model act first and inspect the
-wreckage after. MASTER inverts it: the model only proposes, and nothing touches
-disk until a written constitution approves it.
-
-This is both the project and its business plan — the case for building it here,
-with [Innovasjon Norge](https://en.innovasjonnorge.no/article/startups).
-
-## The idea
-
-Ninety-nine percent of AI is written in Python, chosen for its libraries rather
-than its clarity. MASTER is written in pure Ruby, and that is the whole point. A
-law governs a system only when a human can read both the law and the code it
-judges. Ruby reads like intention, so the constitution stays legible: one
-unbreakable law, the working rules under it, and executable laws that carry their
-own examples and recheck themselves at every boot. Break one and you get a refusal
-with a reason, never a quiet patch.
-
-The law is not the only thing written down. Every measure that matters carries a
-number recorded in the tree — the files each tree holds, the lines the runtime is
-allowed, the findings its own rules produce against its own source. A number may
-fall and never rise. An improvement locks the moment someone makes it, and a
-regression fails the build instead of waiting to be noticed. This is the
-unglamorous half of governing by law, and it is the half that makes the claim
-checkable: one command prints every measure beside the number it must respect.
-
-It runs offline, deploys to OpenBSD, and judges a codebase with no cloud behind
-it, so it runs on hardware we own.
-
-## The business, inside a mountain
-
-The world spends more on machine intelligence than on almost anything else, and
-nearly all of it burns electricity in large buildings. Global data-centre spend
-runs past 250 billion dollars a year, and the binding constraint has moved from
-chips to clean power. That is the opening. A sovereign AI on cheap green
-electricity is the better product and the cheaper one.
-
-The heart of it sits inside a mountain on a Norwegian fjord, the model
-[Lefdal Mine](https://www.lefdalmine.com) and Green Mountain already prove.
-Norway's grid is ~98% renewable hydropower, among the cheapest in Europe, and
-fjord water near 8 °C cools the hall for free — power-usage effectiveness toward
-1.1 against a global 1.5, a third less energy and carbon. Edge nodes in
-California and Malaysia reach the American and South-East Asian markets. This is
-green by geography rather than by offset, and it keeps six to ten Norwegian jobs,
-the IP, and the export revenue here.
-
-## The ask
-
-Roughly **six million kroner from Innovasjon Norge** — Commercialisation Phase 1
-near one million, a path to Phase 2 up to four, the startup loan up to two. Three
-million covers the software and three to four engineers over two years. Two
-million funds the fjord feasibility study and a first pilot compute pod, a few
-hundred kilowatts proving the economics on real Norwegian power. One million
-stands up a 3D-printing and robotics bench where the embryo takes its first body.
-The full mountain datacentre is later-stage project finance in the tens of
-millions of euros, the roadmap this pilot unlocks.
-
-## The horizon
-
-MASTER is built like an embryo: one small core of identity, memory, and safety
-that takes on whatever body a mission needs. Today that body is software on green
-power. The same design reaches, with enormous engineering between, toward machines
-that clear orbital debris or microplastic from the sea. The saucer was never the
-goal, only a distant phenotype. What we ask Norway to fund is the first rung —
-the mind, and the clean ground it stands on.
-
-## Under the hood
-
-Wake it with one line and it comes up like an old Unix machine, telling you what
-it is and what it runs on.
-
+ 
+**MASTER is a Convergence Engine for artificial intelligence.** It treats the LLM not as a source of truth, but as a disposable reasoning plugin within a deterministic execution pipeline. While most agents trust a model's claim of success, MASTER requires empirical evidence: if a change cannot be verified by a tool, it does not exist.
+ 
+## The Architecture: Convergence
+ 
+MASTER is built on the principle that **intelligence is a commodity, but verification is the product.** The system separates the process of reasoning from the process of validation through a strict structural split:
+ 
+1. **Architect $\rightarrow$ Implementer $\rightarrow$ Validator**: Every task is decomposed. The Architect plans, the Implementer mutates, and the Validator proves. These roles are routed to the most capable models for that specific task class.
+2. **The Truth Layer**: Observations are filtered. A claim only becomes "Truth" when it is backed by a verified evidence chain.
+3. **Completion Contracts**: "Done" is a deterministic state. A task is complete only when the contract (Tests passed, Scan clean, No violations) is satisfied.
+4. **Empirical Routing**: MASTER doesn't trust benchmarks. It maintains a `CapabilityMap` of observed model performance, routing tasks to the model that actually wins on this specific repository.
+ 
+## The Model Control Plane
+ 
+MASTER acts as a model operating system. It coordinates a dynamic ecosystem of local (Ollama) and cloud models (Gemma, Qwen, GLM, Kimi, DeepSeek) using:
+- **Model Passports**: Machine-readable profiles of identity, provider, and health.
+- **Capability Routing**: Selecting models based on task-specific success rates.
+- **Circuit Breakers**: Automatically disabling degraded models to prevent agentic loops.
+- **Epistemic Redundancy**: Using independent models for implementation and review to eliminate correlated mistakes.
+ 
+## The Business, Inside a Mountain
+ 
+The heart of MASTER sits inside a mountain on a Norwegian fjord. By leveraging renewable hydropower and natural cooling from the fjord, MASTER achieves a power-usage effectiveness toward 1.1, making sovereign, high-intelligence compute both green and economically superior.
+ 
+## Under the Hood
+ 
+MASTER is written in pure Ruby for legibility and law. It deploys to OpenBSD and runs its own mind on hardware we own.
+ 
 ```console
 $ cd MASTER && bin/cli
-
-MASTER 2.8.0 (CONSTITUTIONAL) #8021: Fri Sep  4 17:39:16 CEST 2026
+ 
+MASTER 3.0.0 (CONVERGENCE) #C-101: Tue Sep 15 12:00:00 CEST 2026
     mac@Mac.lan:/Users/mac/Documents/GitHub/pub4/MASTER
-real mem = 8589934592 (8192MB)
-avail mem = 1813561344 (1729MB)
-mainbus0 at root: Mac14,2
-cpu0 at mainbus0: Apple M2
-kern0 at mainbus0: Darwin 25.5.0 arm64
-ruby0 at mainbus0: ruby 4.0.5 arm64-darwin25
-shell0 at mainbus0: zsh, user mac
-soul0 at mainbus0: constitution rev 2.8.0
-soul0: imports soul rules limits state patterns openbsd
-soul0: 3 orders active
-model0 at mainbus0: nemotron-3-super-120b-a12b
-model0: openrouter, 128.0k context
-mode0 at mainbus0: safe, visitor, cli
-mode0: no-autofix, loop none, owner none, posture balanced
-aesthetic0 at mode0: brutalist
-module0 at mainbus0: boot builder cli core design fix ground io ops pub4 rails review trace voice
-web0 at mainbus0: https://ai.brgen.no
-pledge0 at mainbus0: unavailable
-root on master0 (169570c86) boot 2652ms
-
+model0 at mainbus0: gemma-4-26b-cloud
+route0: coding (preferred: qwen-coder)
+status0: convergent
+...
 master@Mac.lan ready
-boot0: constitution ok, agent ok, scan active
-model nemotron-3-super-120b-a12b, ctx 0/128.0k
-~/Documents/GitHub/pub4/MASTER main (discover) %
 ```
-
-Every change a model wants runs through one loop. It proposes an effect, the
-constitution admits it, and only an admitted effect touches a file.
-
-```ruby
-def run(goal)
-  @memory.note(:goal, goal)
-
-  @max_turns.times do |turn|
-    effect = @model.propose(@memory.context, verbs: @world.verbs)
-
-    case @law.admit(effect, @memory)
-    in Verdict::Block(reason:, by:)       then emit(turn, effect, refused(reason, by))
-    in Verdict::Request(effect:, prompt:) then return done if (done = approve(turn, effect, prompt:))
-    in Verdict::Allow(effect: admitted)   then return done if (done = apply(turn, admitted))
-    end
-  end
-end
-```
-
-Three verdicts, only three. Block refuses with a reason. Request stops to ask a
-person. Allow applies the effect against a checkpoint it undoes the moment the
-effect errs. Everything past that is detail.
-
-Read [START_HERE](START_HERE.md), then [AGENTS](AGENTS.md), which closes on what
-MASTER refuses and why. Anything strange on purpose says so in a comment beside
-it, and the open work lives in [one backlog](../TODO.md). Licensed MIT.
+ 
+Read [START_HERE](START_HERE.md), then [AGENTS](AGENTS.md). Licensed MIT.
