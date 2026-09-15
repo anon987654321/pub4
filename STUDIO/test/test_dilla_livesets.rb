@@ -452,6 +452,52 @@ class TestDillaLivesets < Minitest::Test
     assert_includes built("minimal", knobs)[:row][:muted], "kit"
   end
 
+  # Keeping: a kept take is a titled catalogue line saying whether it may be
+  # released, a recall can change one choice, and a loudness target finishes
+  # the chain.
+  def test_a_kept_take_is_a_titled_catalogue_line_and_reopens_with_a_choice_changed
+    Dir.mktmpdir do |dir|
+      row = { "seed" => 7, "set" => "sampled_based_beats", "bed" => "be_ever_wonderful_03", "credit" => "Ted Taylor — unlicensed — u" }
+      handed = nil
+      stubs = { exec: ->(*args) { handed = args }, passes: -> { [row] }, bed_rows: -> { { "be_ever_wonderful_03" => { "rights" => "unlicensed — rip" } } } }
+      with_env("LIVE_CATALOGUE" => File.join(dir, "cat.json")) do
+        stubbing(stubs) { capture_io { Livesets.recall!(%w[7 keep LIVE_ROOM=dry]) } }
+        entry = Livesets.catalogue.last
+
+        assert_equal "Ted Taylor (sampled 7)", entry["title"]
+        refute entry["shareable"]
+        assert_equal ["LIVE_ROOM=dry"], entry["overrides"]
+        assert_equal "dry", handed.first.fetch("LIVE_ROOM")
+        assert_equal Livesets::DEMO, handed.first.fetch("LIVE_RENDER_TO")
+      end
+    end
+    assert Livesets.shareable?("seed" => 1, "set" => "chord_based_beats")
+    assert_equal "Lydian Augmented Haze (chord 1133818290)", Livesets.title_for(Livesets.passes.find { |r| r["seed"] == 1_133_818_290 })
+    assert_includes built("ambient_pads", "LIVE_LUFS" => "-16")[:graph].grep(/\[out\]\z/).first, "loudnorm=I=-16.0:TP=-1.0"
+    refute_includes built("ambient_pads", "LIVE_LUFS" => nil)[:graph].join, "loudnorm"
+  end
+
+  # Replay verification: the same seed rendered twice is the same audio. Three
+  # determinism defects were found by doing this by hand; this does it every run,
+  # on a four-second chord pass down a pipe.
+  def test_a_seed_rendered_twice_is_the_same_audio
+    skip "ffmpeg is not installed" unless system("ffmpeg", "-version", out: File::NULL, err: File::NULL)
+
+    Dir.mktmpdir do |dir|
+      env = { "LIVE_SEED" => "1133818290", "LIVE_LENGTH" => "4", "LIVE_RENDER_TO" => "-", "LIVE_JOURNAL" => File.join(dir, "j.jsonl"),
+              "LIVE_KIT" => "synth", "DILLA_QUIET" => "1", "DILLA_ASSET_CHECK" => "0", "DILLA_KNOB_CHECK" => "0" }
+      takes = Array.new(2) do
+        wav, = Open3.capture2(env, RbConfig.ruby, File.join(__dir__, "..", "dilla", "dilla.rb"), "live", "set", "chord_based_beats", err: File::NULL, binmode: true)
+        pcm, = Open3.capture2("ffmpeg", "-loglevel", "error", "-i", "-", "-f", "s16le", "-", stdin_data: wav, binmode: true)
+        pcm.unpack("s<*")
+      end
+
+      assert_operator takes.first.size, :>, 44_100 * 2 * 3
+      assert_equal takes.first.size, takes.last.size
+      assert_equal 0, takes.first.zip(takes.last).map { |a, b| (a - b).abs }.max
+    end
+  end
+
   # A render writes demo.wav and no other audio file, and only takes its name
   # once it has finished, so a killed pass leaves the last good demo in place.
   def test_a_render_lands_on_demo_wav_only_and_arrives_whole
