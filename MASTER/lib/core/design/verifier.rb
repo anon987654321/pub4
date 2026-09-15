@@ -8,6 +8,8 @@ module Master
       class VisualVerifier
         def initialize(container)
           @container = container
+          @hierarchy_verifier = HierarchyVerifier.new(container)
+          @optical_engine = OpticalAlignmentEngine
         end
 
         # Verifies a rendered UI state.
@@ -32,11 +34,25 @@ module Master
             results[:passed] << "touch_targets_valid"
           end
           
-          # 3. Verify alignment consistency
-          if screenshot_data[:alignment_drift] > 2 # pixels
-            results[:failed] << "alignment_drift"
+          # 3. Optical Alignment Check
+          optical_errors = []
+          interactive_elements.each do |e|
+            correction = @optical_engine.calculate_correction(e)
+            optical_errors << e[:id] if correction[:x_offset].abs > 1.5 || correction[:y_offset].abs > 1.5
+          end
+          
+          if optical_errors.any?
+            results[:failed] << "optical_misalignment"
+            results[:metrics][:optical_errors] = optical_errors.size
           else
-            results[:passed] << "aligned"
+            results[:passed] << "optically_aligned"
+          end
+          
+          # 4. Hierarchy Check
+          if screenshot_data[:hierarchy]
+            h_violations = @hierarchy_verifier.verify(screenshot_data[:hierarchy])
+            results[:failed] += h_violations.map { |v| v[:type].to_s }
+            results[:metrics][:hierarchy_violations] = h_violations.size
           end
           
           results
@@ -45,3 +61,4 @@ module Master
     end
   end
 end
+
