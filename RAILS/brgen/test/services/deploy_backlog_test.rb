@@ -621,10 +621,7 @@ assert_includes haystack, "turbo_prefetch: false",
     # stack forwards.
     assert_includes scss, '@use "stack_brgen"'
     assert_includes read_source(File.join(ROOT, "shared/app/assets/stylesheets/_stack_brgen.scss")), '@forward "offline_page"'
-    assert_includes scss, ".feed-card-meta"
-    assert_includes scss, ".city-home-intro"
-    assert_includes scss, ".playlist-top"
-    assert_includes scss, ".tv-live-streams"
+    %w[.feed-card-meta .city-home-intro .playlist-top .tv-live-streams].each { |selector| assert_includes scss, selector }
     assert_includes show, "feed-post-show"
     assert_includes show, "feed_icon"
     refute_includes show, "post_show"

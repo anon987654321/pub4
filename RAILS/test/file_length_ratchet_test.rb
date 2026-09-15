@@ -81,7 +81,7 @@ class FileLengthRatchetTest < Minitest::Test
     # 566 -> 510 on 2026-09-13. The shared Stimulus components — what
     # stimulus_boot.js registers, the views wired to them, and the snippet
     # library held to the registry — are shared_stimulus_components_test.rb.
-    "brgen/test/services/deploy_backlog_test.rb" => 504,
+    "brgen/test/services/deploy_backlog_test.rb" => 502,
 # 522 -> 442 on 2026-08-26. Token contrast and the budget that judges it —
 # check_token_contrast, judge_contrast_budget, contrast_budget — are
 # design_metrics/contrast_checks.rb. One subject, and the maths it calls
