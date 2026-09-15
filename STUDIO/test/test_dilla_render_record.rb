@@ -86,4 +86,23 @@ class TestDillaRenderRecord < Minitest::Test
       DillaAssets.singleton_class.send(:alias_method, :manifest_path, :real_manifest_path)
     end
   end
+
+  # The playlist catalogue, the learned engine and the vocal catalogue are read
+  # and then saved. A corrupt one read as empty, and the save wrote the empty
+  # record over the only copy; the bytes now survive beside it.
+  def test_an_unreadable_record_is_kept_before_it_reads_as_empty
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "playlist_catalog.json")
+      File.write(path, "{ \"tracks\": [ truncated")
+      empty = { "tracks" => [] }
+
+      record = nil
+      _out, err = capture_io { record = DillaFrozen.read_json(path, empty) }
+
+      assert_equal empty, record
+      assert_equal "{ \"tracks\": [ truncated", File.read("#{path}.unreadable")
+      assert_match(/kept as playlist_catalog\.json\.unreadable/, err)
+      assert_equal empty, DillaFrozen.read_json(File.join(dir, "absent.json"), empty)
+    end
+  end
 end

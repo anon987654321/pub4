@@ -549,10 +549,7 @@ module DillaSourceLearn
   end
 
   def load_playlist_catalog(path: PLAYLIST_CATALOG_PATH)
-    return { "tracks" => [], "updated_at" => nil } unless File.file?(path)
-    JSON.parse(File.read(path))
-  rescue StandardError
-    { "tracks" => [], "updated_at" => nil }
+    DillaFrozen.read_json(path, { "tracks" => [], "updated_at" => nil })
   end
 
   def save_playlist_entry!(entry, catalog_path: PLAYLIST_CATALOG_PATH)
@@ -20973,13 +20970,8 @@ def load_learned_engine(refresh: false)
   remove_instance_variable(:@learned_engine_cache) if refresh && instance_variable_defined?(:@learned_engine_cache)
   return @learned_engine_cache if instance_variable_defined?(:@learned_engine_cache) && @learned_engine_cache
   base = JSON.parse(JSON.generate(BUILTIN_LEARNED_ENGINE))
-  if File.file?(DillaSourceLearn::LEARNED_ENGINE_PATH)
-    file_data = JSON.parse(File.read(DillaSourceLearn::LEARNED_ENGINE_PATH))
-    deep_merge_learned_engine!(base, file_data)
-  end
+  deep_merge_learned_engine!(base, DillaFrozen.read_json(DillaSourceLearn::LEARNED_ENGINE_PATH, {}))
   @learned_engine_cache = base
-rescue StandardError
-  @learned_engine_cache = JSON.parse(JSON.generate(BUILTIN_LEARNED_ENGINE))
 end
 
 def ensure_learned_engine_seeded!
@@ -30529,10 +30521,7 @@ def rap_vocal_slug(artist)
 end
 
 def rap_vocal_load_catalog
-  return { "vocals" => [], "updated_at" => nil } unless File.file?(RAP_VOCAL_CATALOG)
-  JSON.parse(File.read(RAP_VOCAL_CATALOG))
-rescue StandardError
-  { "vocals" => [], "updated_at" => nil }
+  DillaFrozen.read_json(RAP_VOCAL_CATALOG, { "vocals" => [], "updated_at" => nil })
 end
 
 # Directories under vocals/ that hold a record and no catalogue row, kept on

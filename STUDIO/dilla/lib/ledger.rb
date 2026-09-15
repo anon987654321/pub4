@@ -49,6 +49,23 @@ module DillaFrozen
       write(path, "#{JSON.pretty_generate(data)}\n")
     end
 
+    # A record read back to be written again: the playlist catalogue, the
+    # learned engine, the vocal catalogue. Absent is an empty record. Present and
+    # unreadable is kept beside itself as <name>.unreadable before the empty
+    # record comes back, because every one of these callers saves what it
+    # loaded, and that save replaced the only copy of what had been there.
+    def read_json(path, empty)
+      return empty unless File.file?(path)
+
+      JSON.parse(File.read(path))
+    rescue JSON::ParserError => e
+      keep = "#{path}.unreadable"
+      keep = "#{keep}.#{Time.now.to_i}" if File.exist?(keep)
+      File.write(keep, File.binread(path)) unless on?
+      warn "#{path} is not readable JSON (#{e.message}); #{on? ? 'frozen, so not copied' : "kept as #{File.basename(keep)}"}, read as empty"
+      empty
+    end
+
     # What a run declined to write. Recorded so provenance can say the render
     # was made against held state rather than leaving that to be inferred.
     def skips = @skips ||= []
