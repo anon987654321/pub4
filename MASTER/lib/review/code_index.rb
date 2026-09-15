@@ -123,6 +123,19 @@ module Master
           super
         end
 
+        def visit_constant_read_node(node)
+          name = const_name(node)
+          if name
+            @references << Reference.new(
+              from_file: @file,
+              from_line: node.location.start_line,
+              to_fqn: name,
+              ref_type: :constant,
+            )
+          end
+          super
+        end
+
         def visit_call_node(node)
           method_name = node.name.to_s
           return super unless method_name.match?(/\A[_a-z][a-z0-9_]*[!?]?\z/i) && method_name.length > 1
@@ -196,7 +209,7 @@ module Master
       def build(path: nil)
         @lock.synchronize do
           target = path ? File.expand_path(path, @root) : @root
-          files = Dir.glob(File.join(target, "**", "*.rb")).reject { |f| f.include?("/vendor/") }
+          files = Dir.glob(File.join(target, "**", "*.{rb,js}")).reject { |f| f.include?("/vendor/") }
           @built_at.nil? ? first_build(files) : incremental_build(files)
           @built_at = Time.now
           @bus&.publish("code_index:built", files: files.size, symbols: @symbols.size)
@@ -318,6 +331,15 @@ module Master
       end
 
       def index_file(file)
+        ext = File.extname(file)
+        if ext == ".rb"
+          index_ruby(file)
+        elsif ext == ".js"
+          index_js(file)
+        end
+      end
+
+      def index_ruby(file)
         src = File.read(file, encoding: "UTF-8")
         parse_result = Prism.parse(src)
         return unless parse_result.success?
@@ -326,6 +348,23 @@ module Master
         parse_result.value.accept(visitor)
         visitor.symbols.each { |s| @symbols[s.fqn] = s }
         @references.concat(visitor.references)
+      rescue StandardError => e
+        @bus&.publish("code_index:parse_error", path: file, error: e.message)
+      end
+
+      def index_js(file)
+        src = File.read(file, encoding: "UTF-8")
+        # Heuristic JS indexing: search for function/class declarations
+        # Matches: function Name(...) {, class Name {
+        src.each_line.with_index(1) do |line, line_num|
+          if line =~ /\bfunction\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(/
+            name = $1
+            @symbols[name] = Symbol.new(fqn: name, type: :function, file: file, line: line_num, parent: "JS")
+          elsif line =~ /\bclass\s+([a-zA-Z_][a-zA-Z0-9_]*)\b/
+            name = $1
+            @symbols[name] = Symbol.new(fqn: name, type: :class, file: file, line: line_num, parent: "JS")
+          end
+        end
       rescue StandardError => e
         @bus&.publish("code_index:parse_error", path: file, error: e.message)
       end
