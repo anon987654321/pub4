@@ -143,6 +143,21 @@ class TestKernelSpine < Minitest::Test
     refute memory.proof.proved?
   end
 
+  # A long command output keeps its first and last lines, and a short one
+  # arrives whole.
+  def test_a_long_exec_result_keeps_its_head_and_tail
+    memory = Master::Core::Memory.new
+    output = "FIRST ERROR\n#{"x" * 20_000}\n12 runs, 0 failures"
+    memory.record(Master::Core::Effect.exec(%w[rake test]), Master::Core::Observation.ok(output))
+    memory.record(Master::Core::Effect.exec(%w[true]), Master::Core::Observation.ok("short"))
+
+    long, short = memory.context.select { |entry| entry.role == :obs }.map(&:text)
+    assert_operator long.length, :<, 1_600
+    assert long.start_with?("ok: FIRST ERROR"), long[0, 40]
+    assert long.end_with?("12 runs, 0 failures"), long[-40..]
+    assert_equal "ok: short", short
+  end
+
   def test_sidecar_markdown_write_is_blocked
     effect = Master::Core::Effect.write("notes.md", "# leftover\n")
     verdict = constitution.admit(effect, Master::Core::Memory.new)

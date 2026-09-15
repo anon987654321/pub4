@@ -125,6 +125,7 @@ module Master::Core
     # whichever model made it, and costs no second copy of the file.
     def observe_text(effect, observation)
       text = observation.to_s
+      return clip_result(text) if effect.verb == :exec
       return text unless effect.verb == :read && observation.ok?
 
       hex = Digest::SHA256.hexdigest(observation.message)[0, 12]
@@ -134,6 +135,19 @@ module Master::Core
 
       @read_shas[path] = hex
       "#{text} sha256=#{hex} #{observation.message.bytesize}b"
+    end
+
+    # Command output keeps its head and its tail. A test run or a build log can
+    # run to megabytes, one entry that size outweighs the whole context budget,
+    # and the command, the first error and the summary line sit at the two ends.
+    # Proof still scores the whole observation.
+    RESULT_KEEP = 1_500
+
+    def clip_result(text)
+      return text if text.length <= RESULT_KEEP
+
+      half = RESULT_KEEP / 2
+      "#{text[0, half]}\n[#{text.length - RESULT_KEEP} characters cut]\n#{text[-half..]}"
     end
 
     def repeat_read_text(path)
