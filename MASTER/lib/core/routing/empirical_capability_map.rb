@@ -1,11 +1,12 @@
 # frozen_string_literal: true
 
-module Master::Core::Execution
-  # EmpiricalModelCapabilityMap — the verified profile of model behavior.
+module Master::Core::Routing
+  # EmpiricalCapabilityMap — the verified profile of model behavior. Named for
+  # its file, in the namespace its file sits in, so the autoloader finds it.
   #
   # It extends the basic CapabilityMap by adding "Failure Mode" tracking
   # (e.g., false-completion rate, tool-error rate).
-  class EmpiricalModelCapabilityMap < Routing::CapabilityMap
+  class EmpiricalCapabilityMap < CapabilityMap
     attr_reader :failure_modes
 
     def initialize

@@ -147,15 +147,15 @@ module Master
         end
 
         class Converge < Base
+          # Unverified evidence goes back to Analyze to refine the approach.
           def call
-            if state_machine.all_verified?
-              record(:converged, result: :success)
-              :deliver
-            else
+            unless state_machine.all_verified?
               record(:converged, result: :failure, reason: "unverified_evidence")
-              # Return to Analyze to refine the approach
-              :analyze
+              return :analyze
             end
+
+            record(:converged, result: :success)
+            :deliver
           end
         end
 

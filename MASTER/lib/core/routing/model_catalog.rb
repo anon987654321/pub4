@@ -15,16 +15,14 @@ module Master
         LOCAL_ALIASES = %w[local ollama].freeze
 
         def models(root: Master::ROOT)
-          path = File.join(root, "data", "models.yml")
-          data = Master.load_yaml(path) || {}
           rows = []
-          (data["models"] || {}).each_value do |tier|
+          Master.model_tiers(root:).each_value do |tier|
             Array(tier).each do |row|
               id = row["id"].to_s.strip
               rows << id unless id.empty?
             end
           end
-          (data["model_defs"] || {}).each_value do |row|
+          Master.provider_models(root:).each_value do |row|
             id = row.is_a?(Hash) ? row["id"].to_s.strip : ""
             rows << id unless id.empty?
           end

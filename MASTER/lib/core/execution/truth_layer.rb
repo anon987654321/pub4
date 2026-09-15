@@ -5,8 +5,8 @@ require "digest"
 module Master::Core::Execution
   # TruthLayer — the deterministic filter between raw observation and known truth.
   #
-  # The Truth Layer ensures that no claim is accepted as "True" until it has
-  # been verified by a deterministic instrument.
+  # The Truth Layer accepts no claim as "True" until a deterministic
+  # instrument verifies it.
   # Flow: Observation -> Verification -> Truth State
   class TruthLayer
     attr_reader :truth_state
@@ -17,7 +17,7 @@ module Master::Core::Execution
 
     # Processes a new observation.
     def process(observation, evidence_chain = nil)
-      return Master::Result.err("no evidence provided", category: :verification) unless evidence_chain
+      return Master::Result.err("no evidence provided", category: :validation) unless evidence_chain
       
       # Verification is the gate.
       verification = verify(observation, evidence_chain)
@@ -33,7 +33,7 @@ module Master::Core::Execution
         }
         Master::Result.ok(fact_id)
       else
-        Master::Result.err("observation failed verification", category: :verification)
+        Master::Result.err("observation failed verification", category: :validation)
       end
     end
 

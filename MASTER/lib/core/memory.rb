@@ -1,9 +1,6 @@
 # frozen_string_literal: true
 
 require "digest"
-require_relative "proof"
-require_relative "memory/types"
-
 
 module Master::Core
   # Memory — the unified cognitive architecture.
@@ -42,6 +39,10 @@ module Master::Core
         bytes = `sysctl -n hw.physmem 2>/dev/null`.to_i
         return bytes / 1_048_576 if bytes.positive?
       end
+      if RUBY_PLATFORM.include?("darwin")
+        bytes = `sysctl -n hw.memsize 2>/dev/null`.to_i
+        return bytes / 1_048_576 if bytes.positive?
+      end
       if File.readable?("/proc/meminfo")
         kb = File.readlines("/proc/meminfo").find { |l| l.start_with?("MemTotal:") }&.split&.fetch(1, nil).to_i
         return kb / 1024 if kb&.positive?
@@ -57,8 +58,6 @@ module Master::Core
     # scanned".
     private_class_method :detect_host_memory_mb
 
-    attr_reader :proof
-
     def initialize(budget: self.class.host_budget, summarize: ->(dropped) { "[#{dropped.length} earlier steps summarised]" }, risk: :low)
       @entries = []
       @budget = budget
@@ -66,21 +65,22 @@ module Master::Core
       @proof = Proof.new(risk:)
 
       # Initialize Triple Memory Model
-      @episodic = MemoryTypes::Episodic.new(nil) # Will be linked to episode in pipeline
-      @semantic = MemoryTypes::Semantic.new
-      @procedural = MemoryTypes::Procedural.new
+      @episodic = Types::Episodic.new(nil) # Will be linked to episode in pipeline
+      @semantic = Types::Semantic.new
+      @procedural = Types::Procedural.new
     end
 
     def link_episode(episode)
-      @episodic = MemoryTypes::Episodic.new(episode)
+      @episodic = Types::Episodic.new(episode)
     end
-
 
     def seed_from_intent(intent)
       note(:goal, intent.goal)
       note(:approach, intent.approach) if intent.approach
       note(:evidence, intent.evidence_summary) if intent.evidence_summary
-      @proof.risk = intent.risk
+      # Proof takes its risk at construction and has no writer; seeding comes
+      # before any evidence, so a fresh Proof loses nothing.
+      @proof = Proof.new(risk: intent.risk)
       self
     end
 

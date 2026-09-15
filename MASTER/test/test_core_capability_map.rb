@@ -1,9 +1,6 @@
 # frozen_string_literal: true
 
-require "minitest/autorun"
-module Master; module Core; module Routing; end; end; end
-
-require_relative "../lib/core/routing/capability/capability_map"
+require_relative "test_helper"
 
 class TestCapabilityMap < Minitest::Test
   def setup

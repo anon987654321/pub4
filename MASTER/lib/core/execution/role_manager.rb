@@ -1,8 +1,5 @@
 # frozen_string_literal: true
 
-require_relative "roles"
-require_relative "../routing/model_catalog"
-
 module Master::Core::Execution
   # RoleManager — governs which model is currently active for a given role.
   #
@@ -28,7 +25,6 @@ module Master::Core::Execution
 
       @router.preferred
     end
-
 
     def override(role, model_name)
       @overrides[role] = Master::Core::Routing::ModelCatalog.resolve(model_name)

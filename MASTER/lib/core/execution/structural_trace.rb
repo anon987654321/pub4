@@ -43,7 +43,7 @@ module Master::Core::Execution
     # for a specific goal.
     def verified_chain?(goal)
       return false if @entries.empty?
-      @entries.all? { |e| e.evidence && e.evidence.verified? }
+      @entries.all? { |e| e.evidence&.verified? }
     end
 
     def clear!

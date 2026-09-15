@@ -1,8 +1,5 @@
 # frozen_string_literal: true
 
-require_relative "model_passport"
-require_relative "capability/capability_map"
-
 module Master::Core::Routing
   # ModelControlPlane — the central authority for model orchestration.
   #

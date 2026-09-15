@@ -1,23 +1,6 @@
 # frozen_string_literal: true
 
-require "minitest/autorun"
-# Base module setup
-module Master
-  class Result
-    def self.ok(val = true)
-      res = Struct.new(:ok?, :value, :category).new(true, val, nil)
-      res
-    end
-    def self.err(msg, category: :error)
-      res = Struct.new(:ok?, :value, :category).new(false, msg, category)
-      res
-    end
-  end
-  module Core; module Execution; end; end
-end
-
-require_relative "../lib/core/execution/completion_contract"
-require_relative "../lib/core/execution/state_machine"
+require_relative "test_helper"
 # Mock for StateMachine
 class MockStateMachine
   attr_accessor :evidence_ledger, :episode

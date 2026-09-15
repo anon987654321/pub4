@@ -8,13 +8,13 @@ module Master
       # subset of the system state into the model's prompt.
       class ContextCompiler
         BUDGETS = {
-          constitution: 2500,
-          task: 1500,
-          evidence: 6000,
-          files: 12000,
-          history: 1500,
-          tools: 2500,
-          reserve: 4000
+          constitution: 2_500,
+          task: 1_500,
+          evidence: 6_000,
+          files: 12_000,
+          history: 1_500,
+          tools: 2_500,
+          reserve: 4_000
         }.freeze
 
         def initialize(container)

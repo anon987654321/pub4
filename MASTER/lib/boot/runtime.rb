@@ -155,6 +155,12 @@ module Master
       load_yaml(File.join(root, "data", "models.yml")).fetch("model_defs", {})
     end
 
+    # models.yml models — the routing tiers, each a list of rows carrying an id.
+    # Core::Routing::ModelCatalog resolves names against these and model_defs.
+    def model_tiers(root: ROOT)
+      load_yaml(File.join(root, "data", "models.yml")).fetch("models", {})
+    end
+
     def keyless_llm_enabled?
       ENV["MASTER_KEYLESS"].to_s != "" || ENV["MASTER_WEB_CHAT"].to_s != "" || !any_api_key_present?
     end

@@ -1,12 +1,6 @@
 # frozen_string_literal: true
 
-require "minitest/autorun"
-# Load base modules
-module Master; module Core; module Execution; end; end; end
-
-require_relative "../lib/core/proof"
-require_relative "../lib/core/execution/intent"
-require_relative "../lib/core/memory"
+require_relative "test_helper"
 
 class TestIntentAndMemory < Minitest::Test
   def setup

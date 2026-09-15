@@ -1,14 +1,9 @@
 # frozen_string_literal: true
 
-require "minitest/autorun"
-module Master; module Core; module Routing; end; end; end
-
-require_relative "../lib/core/routing/model_passport"
-require_relative "../lib/core/routing/model_control_plane"
-require_relative "../lib/core/routing/capability/capability_map"
+require_relative "test_helper"
 
 # Mock Router
-class MockRouter
+class ControlPlaneRouter
   def preferred(task_type: nil); "gemma-4"; end
 end
 
@@ -16,7 +11,7 @@ class TestModelControlPlane < Minitest::Test
   def setup
     @catalog = Struct.new(:resolve).new(->(n) { n })
     @cap_map = Master::Core::Routing::CapabilityMap.new
-    @router = MockRouter.new
+    @router = ControlPlaneRouter.new
     @plane = Master::Core::Routing::ModelControlPlane.new(
       catalog: @catalog,
       capability_map: @cap_map,

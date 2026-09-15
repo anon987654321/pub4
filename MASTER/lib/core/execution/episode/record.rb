@@ -26,7 +26,6 @@ module Master
       @trace << entry
     end
 
-
           def record_event(event)
             @events << event
           end

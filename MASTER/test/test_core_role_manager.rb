@@ -1,20 +1,9 @@
 # frozen_string_literal: true
 
-require "minitest/autorun"
-
-# Base module setup
-module Master
-  ROOT = "/Users/mac/Documents/GitHub/pub4/pub4-convergence"
-  module Core; module Routing; end; end
-  module Core; module Execution; end; end
-end
-
-require_relative "../lib/core/routing/model_catalog"
-require_relative "../lib/core/execution/roles"
-require_relative "../lib/core/execution/role_manager"
+require_relative "test_helper"
 
 # Mock ModelRouter
-class MockRouter
+class RoleRouter
   def preferred(task_type: nil)
     case task_type
     when :architecture then "strong-reasoner"
@@ -27,7 +16,7 @@ end
 
 class TestRoleManager < Minitest::Test
   def setup
-    @router = MockRouter.new
+    @router = RoleRouter.new
     @container = { model_router: @router }
     @manager = Master::Core::Execution::RoleManager.new(router: @router, container: @container)
   end

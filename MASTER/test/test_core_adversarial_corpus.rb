@@ -1,22 +1,6 @@
 # frozen_string_literal: true
 
-require "minitest/autorun"
-# Base module setup
-module Master
-  class Result
-    def self.ok(val = true)
-      res = Struct.new(:ok?, :value, :category).new(true, val, nil)
-      res
-    end
-    def self.err(msg, category: :error)
-      res = Struct.new(:ok?, :value, :category).new(false, msg, category)
-      res
-    end
-  end
-  module Core; module Execution; end; end
-end
-
-require_relative "../lib/core/execution/bench/adversarial_regression_corpus"
+require_relative "test_helper"
 
 class TestAdversarialRegressionCorpus < Minitest::Test
   def setup
@@ -34,13 +18,13 @@ class TestAdversarialRegressionCorpus < Minitest::Test
 
   def test_regression_detection
     @corpus.cases << { id: "reg-1", failure_signature: :timeout }
-    
+
     # Clean evidence
     assert @corpus.check_for_regressions([:test_pass]).ok?
-    
+
     # Regressive evidence
     result = @corpus.check_for_regressions([:test_pass, :timeout])
     refute result.ok?
-    assert_match(/regression detected/, result.value)
+    assert_match(/regression detected/, result.message)
   end
 end

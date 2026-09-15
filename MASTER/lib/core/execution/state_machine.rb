@@ -1,13 +1,5 @@
 # frozen_string_literal: true
 
-require_relative "states"
-require_relative "verifier/engine"
-require_relative "observer/system_state"
-require_relative "presence/state"
-require_relative "episode/record"
-require_relative "trace/structural_trace"
-
-
 module Master
   module Core
     module Execution
@@ -15,6 +7,8 @@ module Master
       # Transitions: Intent -> Discover -> Analyze -> Plan -> Implement -> Validate -> Converge -> Deliver
       class StateMachine
         STATES = %i[intent discover analyze plan implement validate converge deliver].freeze
+
+        attr_reader :current_state, :presence, :history, :episode, :trace
 
         def initialize(goal:, container:)
           @goal = goal
@@ -27,7 +21,6 @@ module Master
           @episode = Episode::Record.new(id: SecureRandom.hex(4), intent: goal)
           @trace = StructuralTrace.new
         end
-
 
         def transition_to(next_state)
           unless STATES.include?(next_state)
@@ -81,20 +74,6 @@ module Master
           @episode.record_trace_entry(entry)
         end
 
-
-
-        def current_state
-          @current_state
-        end
-
-        def presence
-          @presence
-        end
-
-        def history
-          @history
-        end
-
         def completed?
           @current_state == :deliver
         end
@@ -107,21 +86,12 @@ module Master
         end
 
         def all_verified?
-          # Only verify chains that are evidence; snapshots are just observations
+          # Only verify chains that are evidence; snapshots are observations
           chains = @evidence_ledger.select { |e| e.respond_to?(:verified?) }
           return false if chains.empty?
           chains.all? { |chain| chain.verified? }
         end
-
-        def episode
-          @episode
-        end
-
-        def trace
-          @trace
-        end
       end
     end
   end
-
 end

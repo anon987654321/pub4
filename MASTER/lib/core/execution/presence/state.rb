@@ -1,8 +1,5 @@
 # frozen_string_literal: true
 
-require_relative "grammar"
-require_relative "semantic_field"
-
 module Master
   module Core
     module Execution
@@ -24,38 +21,25 @@ module Master
             @field = field || SemanticField.derive(phase, focus, progress: progress, risk: risk)
           end
 
+          # A new State, never a mutated one. Grammar follows a changed phase or
+          # focus, and the semantic field follows any of the four it derives from.
           def update(params)
-            # Return a new State object (immutable)
-            new_phase = params[:phase] || @phase
-            new_focus = params[:focus] || @focus
-            new_progress = params[:progress] || @progress
-            new_risk = params[:risk] || @risk
+            fields = to_h.except(:grammar, :field).merge(params.compact.slice(*to_h.keys))
+            fields[:grammar] = grammar_after(params, fields)
+            fields[:field] = field_after(params, fields)
+            self.class.new(**fields)
+          end
 
-            # Update grammar based on phase or focus
-            new_grammar = if params.key?(:phase) || params.key?(:focus)
-                            new_focus ? Grammar.for_target(new_focus) : Grammar.for_phase(new_phase)
-                          else
-                            @grammar
-                          end
-            
-            # Update semantic field based on the new phase and target
-            new_field = if params.key?(:phase) || params.key?(:focus) || params.key?(:progress) || params.key?(:risk)
-                          SemanticField.derive(new_phase, new_focus, progress: new_progress, risk: new_risk)
-                        else
-                          @field
-                        end
+          def grammar_after(params, fields)
+            return @grammar unless params.key?(:phase) || params.key?(:focus)
 
-            self.class.new(
-              phase: new_phase,
-              activity: params[:activity] || @activity,
-              attention: params[:attention] || @attention,
-              progress: new_progress,
-              risk: new_risk,
-              severity: params[:severity] || @severity,
-              focus: new_focus,
-              grammar: new_grammar,
-              field: new_field
-            )
+            fields[:focus] ? Grammar.for_target(fields[:focus]) : Grammar.for_phase(fields[:phase])
+          end
+
+          def field_after(params, fields)
+            return @field unless %i[phase focus progress risk].any? { |key| params.key?(key) }
+
+            SemanticField.derive(fields[:phase], fields[:focus], progress: fields[:progress], risk: fields[:risk])
           end
 
           def to_h

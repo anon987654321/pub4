@@ -1,7 +1,10 @@
 # frozen_string_literal: true
 
 module Master::Core
-  module MemoryTypes
+  class Memory
+  # The three channels Memory holds, as Memory::Types so the autoloader finds
+  # them at memory/types.rb.
+  module Types
   # EpisodicMemory — the chronological record of this specific session.
   # Linked directly to the Episode Ledger.
   class Episodic
@@ -11,7 +14,7 @@ module Master::Core
     end
 
     def transcript
-      @episode.events.map { |e| e.to_s }
+      @episode.events.map(&:to_s)
     end
   end
 
@@ -48,5 +51,6 @@ module Master::Core
       @recipes[name]
     end
   end
+end
 end
 end

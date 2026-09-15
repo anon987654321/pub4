@@ -27,7 +27,7 @@ module Master::Core::Execution
     def check_for_regressions(current_evidence)
       @cases.each do |c|
         if current_evidence.include?(c[:failure_signature])
-          return Master::Result.err("regression detected: #{c[:id]}", category: :regression)
+          return Master::Result.err("regression detected: #{c[:id]}", category: :validation)
         end
       end
       Master::Result.ok(true)

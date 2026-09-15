@@ -1,16 +1,6 @@
 # frozen_string_literal: true
 
-require "minitest/autorun"
-
-# No pre-defining Master::Core::Memory here to avoid collision with the required file
-module Master
-  class Proof
-    def initialize(risk: :low); @risk = risk; end
-    attr_reader :risk
-  end
-end
-
-require_relative "../lib/core/memory"
+require_relative "test_helper"
 
 class TestTripleMemory < Minitest::Test
   def setup

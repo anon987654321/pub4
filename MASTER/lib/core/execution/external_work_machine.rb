@@ -19,7 +19,7 @@ module Master::Core::Execution
       return Master::Result.err("preflight failed", category: :infrastructure) unless preflight(operation, params)
 
       @status = :auth
-      return Master::Result.err("auth failed", category: :auth) unless authenticate(operation)
+      return Master::Result.err("auth failed", category: :validation) unless authenticate(operation)
 
       @status = :execute
       result = execute(operation, params)
@@ -37,8 +37,6 @@ module Master::Core::Execution
       @status = :failed unless @status == :verify || @status == :execute
       Master::Result.err("external work failed: #{e.message}", category: :infrastructure)
     end
-
-
 
     private
 

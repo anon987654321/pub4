@@ -1,9 +1,6 @@
 # frozen_string_literal: true
 
-require "minitest/autorun"
-module Master; module Core; module Execution; end; end; end
-
-require_relative "../lib/core/execution/trace/structural_trace"
+require_relative "test_helper"
 
 class TestStructuralTrace < Minitest::Test
   def setup

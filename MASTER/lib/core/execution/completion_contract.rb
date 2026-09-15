@@ -21,7 +21,7 @@ module Master::Core::Execution
       if missing.empty?
         Master::Result.ok(true)
       else
-        Master::Result.err("completion contract not satisfied: missing #{missing.join(', ')}", category: :verification)
+        Master::Result.err("completion contract not satisfied: missing #{missing.join(', ')}", category: :validation)
       end
     end
 
@@ -44,7 +44,7 @@ module Master::Core::Execution
     end
 
     def default_requirements
-      [:tests_passed, :scan_clean, :no_violations].freeze
+      %i[tests_passed scan_clean no_violations].freeze
     end
   end
 end
