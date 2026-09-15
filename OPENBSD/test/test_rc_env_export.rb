@@ -70,3 +70,41 @@ class RcEnvExportTest < Minitest::Test
     assert_empty unclosed, "set -a is opened and never closed in: #{unclosed.join(', ')}"
   end
 end
+
+# An rc.d script that runs as an app user takes the rails login class.
+#
+# rc.subr(8) and rc.d(8) on vm23 (OpenBSD 7.8): daemon_class is read-only and
+# set by rc.subr itself — the login.conf(5) class named after the script, or
+# "daemon" when there is none. rc.d/brgen gets `brgen`, which inherits `rails`.
+# Without a `brgen_jobs` class, rc.d/brgen_jobs runs its worker under `daemon`,
+# whose openfiles-cur is 128 against the rails class's 2048.
+# A script cannot name its class, so the class has to exist under its name.
+class RcLoginClassTest < Minitest::Test
+  RC_D = File.expand_path("../etc/rc.d", __dir__)
+  LOGIN_CONF = File.read(File.expand_path("../etc/login.conf", __dir__))
+  APP_USERS = %w[brgen amber bsdports].freeze
+
+  def app_scripts
+    Dir.glob(File.join(RC_D, "*")).select { |path| File.file?(path) }.filter_map do |path|
+      user = File.read(path)[/^daemon_user="(\w+)"/, 1]
+      File.basename(path) if APP_USERS.include?(user)
+    end.sort
+  end
+
+  # A login.conf record: its names, then capability lines joined by backslashes.
+  def record(name)
+    LOGIN_CONF[/^#{Regexp.escape(name)}(?:\|[^:\n]*)?:\\\n((?:[^\n]*\\\n)*[^\n]*\n)/, 1]
+  end
+
+  def test_every_app_user_script_has_a_login_class_that_inherits_rails
+    missing = app_scripts.reject { |name| record(name).to_s.match?(/:tc=rails:/) }
+
+    assert_empty missing,
+                 "rc.subr runs these under the daemon class because login.conf has no rails class by their name: #{missing.join(', ')}"
+  end
+
+  def test_the_guard_reads_a_real_population
+    assert_operator app_scripts.size, :>=, 6, "three apps and three job workers run as app users; fewer means the scan broke"
+    assert_match(/:openfiles-cur=2048:/, record("rails").to_s, "the rails record did not parse, so every lookup above is blind")
+  end
+end
