@@ -4005,6 +4005,22 @@ rescue StandardError => e
   { warnings: ["quality analysis unavailable: #{e.message}"] }
 end
 
+# A sidecar another tool wrote keeps its fields and gains this one's under
+# "postpro". preprompt grades in place and hands over the path whose .json
+# already holds the prompt, model and seed; replacing that file left the graded
+# picture with a record of its grade and none of how it was made. A sidecar
+# postpro wrote itself, or one that does not parse, is replaced.
+def write_sidecar(output_path, data)
+  path = "#{output_path}.json"
+  existing = File.file?(path) ? JSON.parse(File.read(path)) : nil
+  foreign = existing.is_a?(Hash) && !existing["schema"].to_s.start_with?("postpro.")
+  File.write(path, JSON.pretty_generate(foreign ? existing.merge("postpro" => data) : data) + "\n")
+  data
+rescue JSON::ParserError
+  File.write(path, JSON.pretty_generate(data) + "\n")
+  data
+end
+
 def write_grade_sidecar(input_path, output_path, preset_name, original, processed)
   report = postpro_quality_report(original, processed, argv_flag("--reference"))
   data = {
@@ -4019,19 +4035,18 @@ def write_grade_sidecar(input_path, output_path, preset_name, original, processe
     quality: report,
     capabilities: Master::Io::AnalogCapabilities.for(:postpro).map { |entry| entry[:id] },
   }
-  File.write("#{output_path}.json", JSON.pretty_generate(data) + "\n")
-  data
+  write_sidecar(output_path, data)
 end
 
 def write_chain_sidecar(input_path, output_path, chain)
-  File.write("#{output_path}.json", JSON.pretty_generate(
+  write_sidecar(output_path, {
     schema: "postpro.chain.v1",
     generated_at: Time.now.utc.iso8601,
     input: File.expand_path(input_path),
     output: File.expand_path(output_path),
     seed: $postpro_seed,
-    chain: chain.map { |fx, params| { fx => params } }
-  ) + "\n")
+    chain: chain.map { |fx, params| { fx => params } },
+  })
 rescue StandardError => e
   $logger.error "chain sidecar: #{e.message}"
 end

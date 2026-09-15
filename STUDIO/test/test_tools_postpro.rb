@@ -592,4 +592,43 @@ class TestPostproFilm < Minitest::Test
     probe.draw_rect([255, 255, 255], 44, 44, 12, 12, fill: true)
          .copy(interpretation: :srgb)
   end
+
+  # --- sidecars ------------------------------------------------------------
+
+  # preprompt writes <out>.json with the prompt, model and seed, then grades the
+  # same file in place. The grade's record joins that one; it does not erase it.
+  def test_a_grade_keeps_the_sidecar_another_tool_wrote
+    Dir.mktmpdir do |dir|
+      out = File.join(dir, "frame.webp")
+      File.write("#{out}.json", JSON.generate("prompt" => "a woman at a window", "model" => "flux", "seed" => 7))
+      write_sidecar(out, { schema: "postpro.grade.v1", preset: "portrait" })
+
+      written = JSON.parse(File.read("#{out}.json"))
+      assert_equal "a woman at a window", written["prompt"]
+      assert_equal 7, written["seed"]
+      assert_equal "portrait", written.dig("postpro", "preset")
+    end
+  end
+
+  def test_a_regrade_replaces_postpros_own_sidecar
+    Dir.mktmpdir do |dir|
+      out = File.join(dir, "frame.webp")
+      write_sidecar(out, { schema: "postpro.grade.v1", preset: "house" })
+      write_sidecar(out, { schema: "postpro.grade.v1", preset: "portrait" })
+
+      written = JSON.parse(File.read("#{out}.json"))
+      assert_equal "portrait", written["preset"]
+      refute written.key?("postpro"), "a regrade nested inside the grade it replaces"
+    end
+  end
+
+  def test_an_unreadable_sidecar_is_replaced
+    Dir.mktmpdir do |dir|
+      out = File.join(dir, "frame.webp")
+      File.write("#{out}.json", "{ not json")
+      write_sidecar(out, { schema: "postpro.grade.v1", preset: "portrait" })
+
+      assert_equal "portrait", JSON.parse(File.read("#{out}.json"))["preset"]
+    end
+  end
 end
