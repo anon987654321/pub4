@@ -83,6 +83,70 @@ class TestDillaLivesets < Minitest::Test
     assert_includes Livesets::SAMPLED_PROGRESSIONS, rows.last[:progression]
   end
 
+  BED_STUBS = {
+    pick_bed: -> { ["/nonexistent/loop.wav", "bed", 0.5] },
+    grid: ->(*) { { raw: 2.0, bars_in_loop: 1, bar: 2.0, beat: 0.5, step: 0.25, sxt: 0.125, bpm: 90.0 } },
+  }.freeze
+
+  # One pass of a set, stopped at the door of ffmpeg: what it would have played
+  # and what it journalled.
+  def built(set, env = {})
+    passes = []
+    rows = []
+    stubs = BED_STUBS.merge(journal!: ->(row) { rows << row }, play!: ->(inputs, graph, _) { passes << [inputs, graph] })
+    stubbing(stubs) { with_env({ "LIVE_SEED" => "5", "LIVE_KIT" => nil }.merge(env)) { Livesets.play_set!(set) } }
+    { inputs: passes.first[0], graph: passes.first[1], row: rows.first }
+  end
+
+  def test_every_set_builds_a_graph_ffmpeg_can_read
+    Livesets::SETS.each do |set|
+      pass = built(set)
+
+      assert_empty Livesets.graph_problems(pass[:inputs], pass[:graph]), set
+    end
+  end
+
+  # The instrument, checked against the defects it exists for: a trailing comma
+  # from a comment in a continuation, a label nobody reads, an unseeded source.
+  def test_the_graph_lint_sees_the_defects_it_names
+    inputs = ["-f lavfi -i anoisesrc=c=pink:d=1", "-i a.wav"]
+    graph = ["[0:a]volume=1,,atrim=0:1[a]", "[1:a]anull[b]", "[a]anull[out]"]
+    problems = Livesets.graph_problems(inputs, graph)
+
+    assert_includes problems, "1 empty filter(s) in [0:a]volume=1,,atrim=0:1[a]"
+    assert_includes problems, "[b] made but never used"
+    assert(problems.any? { |p| p.start_with?("unseeded noise") })
+    assert_empty Livesets.graph_problems(["-i a.wav"], ["[0:a]volume='if(between(t,1,2),0.5,1.0)':eval=frame[out]"])
+  end
+
+  # PRNG draw order is an interface. A pass is named by its seed, and the seed
+  # names the pass only while every draw lands where it did when it was
+  # journalled; a rand added above an existing one silently re-rolls every take
+  # after it. The kept take's own journal line is the pin: replayed today, the
+  # seed has to draw the tempo and the drums it drew on 2026-09-01. A new
+  # decision draws from Livesets.stream(tag), never from the pass stream.
+  def test_the_kept_take_replays_the_draws_its_journal_recorded
+    kept = Livesets.passes.find { |r| r["seed"] == 1_133_818_290 }
+    row = built("chord_based_beats", "LIVE_SEED" => kept["seed"].to_s, "LIVE_KIT" => kept["kit"],
+                                     "LIVE_PROGRESSION" => kept["progression_name"])[:row]
+
+    assert_equal kept["bpm"], row[:bpm]
+    assert_equal kept["drums"], JSON.parse(JSON.generate(row[:drums]))
+  end
+
+  # anoisesrc defaults to seed=-1, a fresh seed per process, so one unseeded
+  # source makes a pinned render unrepeatable while every number it prints
+  # agrees. The class, closed by audit rather than instance by instance.
+  def test_every_noise_source_in_the_engine_names_its_seed
+    unseeded = ->(text) { text.gsub(/#\{[^}]*\}/, "X").scan(/anoisesrc=[^"',;\[\s]+/).grep_v(/seed=/) }
+
+    refute_empty unseeded.call('"anoisesrc=c=pink:d=#{total}:a=0.1"'), "the audit has to see an unseeded source"
+    sources = Dir[File.join(__dir__, "..", "dilla", "{dilla.rb,lib/*.rb}")]
+    found = sources.flat_map { |path| unseeded.call(File.read(path)).map { |hit| "#{File.basename(path)}: #{hit}" } }
+
+    assert_empty found
+  end
+
   def test_a_recalled_pass_replays_the_voicing_it_was_journalled_under
     handed = nil
     row = { "seed" => 7, "set" => "sampled_based_beats", "bed" => "b", "voicing" => "up" }

@@ -81,7 +81,15 @@ module Livesets
   def seed!
     n = (ENV["LIVE_SEED"] || Random.new_seed % 2_147_483_647).to_i
     srand(n)
-    n
+    @seed = n
+  end
+
+  # The draw order of the pass stream is an interface: every journalled seed
+  # names the draws in the order they fall, so a decision added later draws
+  # from its own stream, keyed by its tag and the pass seed, and leaves every
+  # earlier take where it was.
+  def stream(tag)
+    Random.new((@seed.to_i * 1_000_003) + stable_hash(tag))
   end
 
   def sonitex(bits:, lo:, hi:, drive:)
@@ -239,16 +247,17 @@ module Livesets
     @kit_used = dir ? File.basename(dir) : "synth"
     # anoisesrc seeds itself from the clock unless told otherwise, so without
     # these a replayed seed comes back with every number identical and the audio
-    # not. Derived from the pass seed so they follow it.
-    s = ->(k) { "seed=#{(rand * 2_147_483_647).to_i + k}" }
+    # not. Derived from the pass seed so they follow it, and spelt `seed=` at
+    # each source so the audit in graph_problems can see them.
+    s = ->(k) { (rand * 2_147_483_647).to_i + k }
     if dir
       KIT_ROLES.each { |r| inputs << "-i #{File.join(dir, "#{r}.wav").shellescape}" }
-      inputs << "-f lavfi -t #{total} -i anoisesrc=c=pink:d=#{total}:a=0.006:#{s.call(3)}"
+      inputs << "-f lavfi -t #{total} -i anoisesrc=c=pink:d=#{total}:a=0.006:seed=#{s.call(3)}"
     else
       inputs << "-f lavfi -t 0.32 -i sine=f=52:d=0.32"
-      inputs << "-f lavfi -t 0.24 -i anoisesrc=c=pink:d=0.24:#{s.call(1)}"
-      inputs << "-f lavfi -t 0.05 -i anoisesrc=c=white:d=0.05:#{s.call(2)}"
-      inputs << "-f lavfi -t #{total} -i anoisesrc=c=pink:d=#{total}:a=0.006:#{s.call(3)}"
+      inputs << "-f lavfi -t 0.24 -i anoisesrc=c=pink:d=0.24:seed=#{s.call(1)}"
+      inputs << "-f lavfi -t 0.05 -i anoisesrc=c=white:d=0.05:seed=#{s.call(2)}"
+      inputs << "-f lavfi -t #{total} -i anoisesrc=c=pink:d=#{total}:a=0.006:seed=#{s.call(3)}"
     end
 
     jit = ->(ms) { (rand * ms * 2 - ms).round(1) }
@@ -284,10 +293,65 @@ module Livesets
     { hits: hits, crackle_i: n + 3 }
   end
 
+  # A graph that builds is not a graph that sounds. Two defects in these sets
+  # were empty filters -- a trailing comma left by a Ruby comment inside a line
+  # continuation -- which ffmpeg reports only as `No such filter: ''`, after the
+  # inputs are open. So the graph is read before ffmpeg sees it: every chain
+  # names a filter at each comma, every link label is made once and used once,
+  # [out] exists, every input is read, and no noise source draws from the clock.
+  def graph_problems(inputs, graph)
+    made = Hash.new(0)
+    used = Hash.new(0)
+    problems = graph.flat_map { |statement| statement_problems(statement, made, used) }
+    problems + label_problems(inputs, made, used) + source_problems(inputs)
+  end
+
+  def statement_problems(statement, made, used)
+    m = statement.match(/\A((?:\[[^\]]+\])*)(.*?)((?:\[[^\]]+\])*)\z/m)
+    m[1].scan(/\[([^\]]+)\]/).flatten.each { |label| used[label] += 1 }
+    m[3].scan(/\[([^\]]+)\]/).flatten.each { |label| made[label] += 1 }
+    empty = filter_names(m[2]).count { |name| name.strip.empty? }
+    empty.zero? ? [] : ["#{empty} empty filter(s) in #{statement[0, 60]}"]
+  end
+
+  # Commas inside quotes or parentheses belong to an argument, as in
+  # volume='if(between(t,1,2),0.5,1.0)'.
+  def filter_names(body)
+    depth = 0
+    quoted = false
+    body.each_char.with_object([+""]) do |ch, parts|
+      quoted = !quoted if ch == "'"
+      depth += { "(" => 1, ")" => -1 }.fetch(ch, 0) unless quoted
+      next parts << +"" if ch == "," && depth.zero? && !quoted
+
+      parts.last << ch
+    end
+  end
+
+  def label_problems(inputs, made, used)
+    streams, links = used.keys.partition { |label| label.match?(/\A\d+:a\z/) }
+    problems = made.select { |_, n| n > 1 }.keys.map { |l| "[#{l}] made #{made[l]} times" }
+    problems += links.reject { |l| made.key?(l) }.map { |l| "[#{l}] used but never made" }
+    problems += links.select { |l| used[l] > 1 }.map { |l| "[#{l}] used #{used[l]} times" }
+    problems += (made.keys - links - ["out"]).map { |l| "[#{l}] made but never used" }
+    problems << "no [out]" unless made.key?("out")
+    read = streams.map(&:to_i)
+    problems += read.select { |i| i >= inputs.size }.uniq.map { |i| "input #{i} does not exist" }
+    problems + (0...inputs.size).reject { |i| read.include?(i) }.map { |i| "input #{i} never read" }
+  end
+
+  def source_problems(inputs)
+    inputs.select { |i| i.include?("anoisesrc=") && !i.match?(/anoisesrc=\S*seed=\d/) }
+          .map { |i| "unseeded noise: #{i}" }
+  end
+
   # Plays, unless LIVE_RENDER_TO names a file, in which case it writes one.
   # Keeping a pass and hearing it have to be the same code path or the take is
   # not the thing that was played.
   def play!(inputs, graph, banner)
+    problems = graph_problems(inputs, graph)
+    abort "graph: #{problems.join('; ')}" if problems.any?
+
     warn banner
     cmd = "#{FF} -nostdin -loglevel error #{inputs.join(' ')} " \
           "-filter_complex #{graph.join('; ').shellescape} -map \"[out]\""

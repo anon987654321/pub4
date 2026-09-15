@@ -743,7 +743,7 @@ module VerifyFx
   def sine_high(path) = sine(path, freq: 1200)
 
   def noise(path, seconds: 3)
-    run("-f", "lavfi", "-i", "anoisesrc=color=pink:amplitude=0.5:duration=#{seconds}:r=#{RATE}",
+    run("-f", "lavfi", "-i", "anoisesrc=color=pink:amplitude=0.5:duration=#{seconds}:r=#{RATE}:seed=5",
         "-ac", "2", path)
     path
   end
@@ -751,7 +751,7 @@ module VerifyFx
   # Two uncorrelated channels, for anything that claims to act on stereo width.
   def wide(path, seconds: 3)
     run("-filter_complex",
-        "anoisesrc=color=pink:amplitude=0.5:duration=#{seconds}:r=#{RATE}[l];" \
+        "anoisesrc=color=pink:amplitude=0.5:duration=#{seconds}:r=#{RATE}:seed=5[l];" \
         "anoisesrc=color=white:amplitude=0.5:duration=#{seconds}:r=#{RATE}:seed=7[r];" \
         "[l][r]join=inputs=2:channel_layout=stereo[o]",
         "-map", "[o]", path)
@@ -778,7 +778,7 @@ module VerifyFx
   # stage that still nulls here has nowhere left to hide.
   def hot_wide(path, seconds: 3)
     run("-filter_complex",
-        "anoisesrc=color=pink:amplitude=0.9:duration=#{seconds}:r=#{RATE}[l];" \
+        "anoisesrc=color=pink:amplitude=0.9:duration=#{seconds}:r=#{RATE}:seed=5[l];" \
         "anoisesrc=color=brown:amplitude=0.9:duration=#{seconds}:r=#{RATE}:seed=11[r];" \
         "[l][r]join=inputs=2:channel_layout=stereo[o]",
         "-map", "[o]", path)
