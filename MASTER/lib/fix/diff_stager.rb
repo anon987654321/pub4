@@ -104,24 +104,6 @@ module Master
         end.join("\n")
       end
 
-      def render_diff(id, pastel)
-        entry = @pending.find { |e| e.id == id }
-        return pastel.red("no staged change with id #{id}") unless entry
-
-        short = entry.path.sub(@root + "/", "")
-        header = "#{pastel.bold(short)} #{pastel.dim(entry.diff_stats)}\n"
-        diff_text = entry.diff.to_s
-        diff_lines = diff_text.lines.map do |line|
-          case line[0]
-          when "+" then pastel.green(line.chomp)
-          when "-" then pastel.red(line.chomp)
-          when "@" then pastel.cyan(line.chomp)
-          else pastel.dim(line.chomp)
-          end
-        end
-        header + diff_lines.join("\n")
-      end
-
       private
 
       def relative(path)

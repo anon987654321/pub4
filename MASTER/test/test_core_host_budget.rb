@@ -34,8 +34,10 @@ class HostBudgetTest < Minitest::Test
     memory.record(Master::Core::Effect.read("lib/trace/logging.rb"), Master::Core::Observation.ok("x"))
 
     texts = memory.context.map(&:text)
-    assert_includes texts, "read lib/trace/logging.rb"
-    assert_match(/read: lib\/trace\/logging\.rb; evidence: 0\/\d+; done: allowed/, texts.last)
+    recorded = "read lib/trace/logging.rb"
+    state = /read: lib\/trace\/logging\.rb; evidence: 0\/\d+; done: allowed/
+    assert_includes texts, recorded
+    assert_match state, texts.last
   end
 
   def test_a_repeated_read_of_an_unchanged_file_is_not_shown_again
@@ -76,6 +78,7 @@ class HostBudgetTest < Minitest::Test
     assert_operator history.length, :<=, 80 + 20, "compact left #{history.length} chars"
     assert ctx.any? { |e| e.text.start_with?("SUM") }, "oldest turns were not summarised"
     assert_equal "goal: do the thing", ctx.first.text, "compaction dropped the goal"
-    assert_match(/\ASTATE goal: do the thing; read: nothing yet; evidence: 0\/\d+; done: needs exec evidence first\z/, ctx.last.text)
+    state = /\ASTATE goal: do the thing; read: nothing yet; evidence: 0\/\d+; done: needs exec evidence first\z/
+    assert_match state, ctx.last.text
   end
 end

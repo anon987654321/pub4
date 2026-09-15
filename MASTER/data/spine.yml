@@ -239,7 +239,19 @@ spine:
 # the slash surface and nothing else called them; tools/snapshot.rb is the
 # writer bin/operator runs. The fall is exactly the deletion, so the row keeps
 # the overage it had.
-  lib_body_ceiling: 35196
+  # 35196 -> 35087: twelve methods and a constant nothing in the four trees
+  # names, 109 body lines. Review::Swarm::Coordinator#dispatch_parallel,
+  # #swarm_vote, #worker_roles and the five private helpers only they called
+  # (the fan-out analyse_and_review is the path the pass uses); DiffStager#
+  # render_diff; SemanticCache#invalidate_all!; Memory::Store#
+  # import_external_file; SHARED_DEADLINE. The fall is exactly the deletion.
+  # 35087 -> 35123, raised (log below): the fold made legible to a small model,
+  # where gemma3:4b read one file five times and never reached done — actions
+  # recorded by their subject, the goal pinned through compaction, a STATE line,
+  # repeat and failed-action guards, a schema-bound reply and a read-only answer;
+  # the review footer's counts; and the shell tool and rollback reporting what
+  # actually happened.
+  lib_body_ceiling: 35123
   # Raw-line anchors from before the 2026-08-10 code-line unit change, kept only
   # so the old numbers stay legible. Not comparable to lib_body_ceiling.
   lib_raw_at_switch: 47753
@@ -248,7 +260,8 @@ spine:
   introduced: "2026-07-30"
   # Raises standing since the last fall. lint:spine refuses another once this
   # reaches consecutive_raises_allowed; a genuine fall clears it.
-  raised: []
+  raised:
+  - { date: "2026-09-15", from: 35087, to: 35123, for: "small-model fold legibility, review counts, shell and rollback honesty" }
   consecutive_raises_allowed: 2
   # A tripwire on new top-level concepts in the fold, not on line count. Counted
   # as lib/{core.rb,core/*.rb} — the entrypoint plus the directory — so the glob
