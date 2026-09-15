@@ -150,11 +150,6 @@ The adapter holds her fringe and her face across all twelve validation lights.
 Render it at full strength, since lowering it drops the fringe first, and leave
 her age out of the prompt, since the photographs already carry it. The
 descriptor in `ragnhild/subject.env` says why.
-
-The older `a_photo_of_ragnhild_02` to `07` pairs are back in the dataset folder
-beside the seven. That run did not see them; a run started today reads every
-image in the folder, so it sees them.
-
 An earlier 17-image set is gone, along with the 40
 source photographs it came from — removed at `b7d47d6b6` because the subject
 disliked them and they did not look much like her. `retouched/` and
