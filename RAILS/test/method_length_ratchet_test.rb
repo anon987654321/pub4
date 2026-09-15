@@ -57,7 +57,9 @@ class MethodLengthRatchetTest < Minitest::Test
     # 37 -> 35: six gates moved to the tree they measure, and two of them carried
     # a long method with them. The count follows the code rather than the
     # directory, so this falls without anyone writing a shorter method.
-    "gates" => [35, 68],
+    # 35 -> 34 when the gates that listed partial paths learned to read rules out
+    # of each app's one application.scss, and two long checks got shorter.
+    "gates" => [34, 68],
     # 57 -> 48 on 2026-08-23. record_public_href was the 52: one case statement
     # over every routable class in the city, split into the apex, the verticals
     # and the two media engines. A sentinel separates "no branch claimed this

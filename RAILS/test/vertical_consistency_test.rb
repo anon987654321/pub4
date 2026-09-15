@@ -2,10 +2,11 @@
 
 require "minitest/autorun"
 require "set"
+require_relative "../shared/lib/operator/scss_rules"
 
-# brgen is one site. Its verticals are mountable engines, and each one owns a
-# stylesheet, which is exactly the seam a typeface escapes through — nothing
-# stopped an engine declaring its own.
+# brgen is one site. Its verticals are mountable engines, and each one's styles
+# are a body.vertical-<name> scope in brgen's stylesheet, which is exactly the
+# seam a typeface escapes through — nothing stopped a vertical declaring its own.
 #
 # Measured 2026-08-10, the font changed as you moved between subapps: Inter on
 # dating and maps, "SF Pro Display" on playlist (a face that appeared in one line
@@ -29,7 +30,8 @@ require "set"
 class VerticalConsistencyTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
 
-  # Every brgen stylesheet, host app and engines alike.
+  # Every brgen stylesheet: the host's application.scss, and any stylesheet an
+  # engine grows of its own.
   def brgen_stylesheets
     @brgen_stylesheets ||= (
       Dir.glob(File.join(ROOT, "brgen/app/assets/stylesheets/**/*.scss")) +
@@ -37,30 +39,37 @@ class VerticalConsistencyTest < Minitest::Test
     ).reject { |f| f.match?(%r{/(vendor|node_modules|public|builds)/}) }.sort
   end
 
+  # Newlines kept, so a line number reported from here is the file's own.
   def source_without_comments(path)
-    File.read(path).gsub(%r{/\*.*?\*/}m, "").gsub(%r{^\s*//.*$}, "")
+    File.read(path).gsub(%r{/\*.*?\*/}m) { |comment| comment.gsub(/[^\n]/, " ") }.gsub(%r{^\s*//.*$}, "")
   end
 
-  # _root.scss is where brgen names its typeface; nowhere else may.
-  FONT_OWNER = "brgen/app/assets/stylesheets/_root.scss"
+  def brgen_rules
+    @brgen_rules ||= brgen_stylesheets.flat_map do |path|
+      Operator::ScssRules.rules(File.read(path)).map { |rule| [path.delete_prefix("#{ROOT}/"), rule] }
+    end
+  end
 
+  # The blind spot that hid 57 views when the verticals moved, stated for the
+  # styles: every engine that exists is a vertical scope the scan reads.
   def test_the_scan_reaches_the_engines
+    engines = Dir.glob(File.join(ROOT, "brgen/engines/*")).map { |dir| File.basename(dir) }
+
     refute_empty brgen_stylesheets
-    assert brgen_stylesheets.any? { |f| f.include?("/engines/") },
-           "engine stylesheets missing — the blind spot that hid 57 views when the verticals moved"
+    refute_empty engines, "brgen has no engines — this test is measuring nothing"
+    engines.each do |engine|
+      assert brgen_rules.any? { |_, rule| rule.full_selectors.any? { |selector| selector.include?("body.vertical-#{engine}") } },
+             "no brgen rule styles body.vertical-#{engine}, so the #{engine} vertical is outside every check here"
+    end
   end
 
+  # brgen names its typeface once, on its :root theme; no other rule may.
   def test_only_root_declares_the_typeface
-    offenders = brgen_stylesheets.filter_map do |path|
-      rel = path.delete_prefix("#{ROOT}/")
-      next if rel == FONT_OWNER
+    offenders = brgen_rules.filter_map do |rel, rule|
+      next unless rule.declares?(/(?<![\w-])--font\s*:/)
+      next if rule.selector.start_with?(":root")
 
-      lines = source_without_comments(path).lines.each_with_index.select do |line, _|
-        line.match?(/^\s*--font:\s/)
-      end
-      next if lines.empty?
-
-      "#{rel}:#{lines.first[1] + 1} — #{lines.first[0].strip}"
+      "#{rel}:#{rule.line} — #{rule.selector}"
     end
 
     assert_empty offenders, <<~MSG.strip
@@ -68,8 +77,8 @@ class VerticalConsistencyTest < Minitest::Test
 
         #{offenders.join("\n  ")}
 
-      brgen is one site and names its face once, in #{FONT_OWNER}. A vertical that
-      redeclares --font changes the font as the reader moves between subapps.
+      brgen is one site and names its face once, on its :root theme. A vertical
+      that redeclares --font changes the font as the reader moves between subapps.
     MSG
   end
 
@@ -80,11 +89,13 @@ class VerticalConsistencyTest < Minitest::Test
     allowed = /var\(--font|var\(--font-mono|inherit|var\(--offer-display/
     offenders = brgen_stylesheets.flat_map do |path|
       rel = path.delete_prefix("#{ROOT}/")
+      # @font-face blocks legitimately name the family they are defining.
+      faces = brgen_rules.select { |sheet, rule| sheet == rel && rule.selector == "@font-face" }
+                         .map { |_, rule| rule.line..rule.end_line }
       source_without_comments(path).lines.each_with_index.filter_map do |line, index|
         next unless line.match?(/^\s*font-family:\s/)
         next if line.match?(allowed)
-        # @font-face blocks legitimately name the family they are defining.
-        next if rel.include?("_fonts")
+        next if faces.any? { |face| face.cover?(index + 1) }
 
         "#{rel}:#{index + 1} — #{line.strip}"
       end

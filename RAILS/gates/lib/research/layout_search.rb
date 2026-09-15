@@ -2,6 +2,7 @@
 
 require_relative "../../../../OPENBSD/lib/gate_result"
 require_relative "../../support/layout_search"
+require_relative "../../../shared/lib/operator/scss_rules"
 
 module Deploy
   # Bounded multi-candidate layout search for marketplace.
@@ -10,11 +11,12 @@ module Deploy
   class LayoutSearchGate
     ROOT = File.expand_path("../../../..", __dir__)
     RAILS = File.join(ROOT, "RAILS")
-    # Views moved to engines/marketplace in the vertical-as-engine split; the
-    # SCSS stayed in the host (engines contribute no stylesheets). See ENGINES.md.
+    # Views moved to engines/marketplace in the vertical-as-engine split. The
+    # styles live in brgen's one application.scss, and the card's CSS is the
+    # rules there whose selectors name .deal-card.
     ENGINE = File.join(RAILS, "brgen/engines/marketplace")
     CARD = File.join(ENGINE, "app/views/marketplace/listings/_card.html.erb")
-    CARDS_CSS = File.join(RAILS, "brgen/app/assets/stylesheets/_marketplace_cards.scss")
+    CARDS_CSS = File.join(RAILS, "brgen/app/assets/stylesheets/application.scss")
     # The #navBar markup is the storefront header marketplace shares with takeaway.
     NAV = File.join(RAILS, "brgen/app/views/shared/_storefront_nav_bar.html.erb")
     SEARCH = File.join(RAILS, "shared/app/assets/stylesheets/_search_yep.scss")
@@ -44,12 +46,22 @@ module Deploy
         missing.each { |p| @result.fail("layout_search: missing #{p.sub(RAILS + '/', '')}") }
         return nil
       end
+      if cards_css.empty?
+        @result.fail("layout_search: #{CARDS_CSS.sub(RAILS + '/', '')} has no .deal-card rule")
+        return nil
+      end
+
       {
         card: card_source,
-        cards_css: File.read(CARDS_CSS),
+        cards_css: cards_css,
         nav: File.read(NAV),
         search: File.read(SEARCH),
       }
+    end
+
+    def cards_css
+      @cards_css ||= Operator::ScssRules.matching(File.read(CARDS_CSS), /\.deal-card\b/)
+                                        .map { |rule| "#{rule.selector} { #{rule.body} }" }.join("\n")
     end
 
     # The card's media slot lives in marketplace/_card_media.html.erb since the

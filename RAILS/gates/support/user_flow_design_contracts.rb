@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require_relative "../../shared/lib/operator/scss_rules"
+require_relative "../../shared/app/services/shared/frontend_rule_set"
+
 module Deploy
   class UserFlowGate
     # The MASTER design contracts, and the source reader that judges them: a
@@ -44,36 +47,33 @@ module Deploy
               bsdports/app/assets/stylesheets
               shared/app/assets/stylesheets
             ],
-            # Intentional exceptions: yep.com pen (.search.focus box-shadow) and
-            # jOxVvNE carbon-example — documented product pens. Flag elsewhere.
+            # Intentional exceptions are the documented product pens — the yep.com
+            # search, jOxVvNE, Amazon's nav bar and logo — read with their rules
+            # blanked. Flag everything else.
             forbidden: /box-shadow\s*:\s*(?!none\b)|text-shadow\s*:|backdrop-filter\s*:|filter\s*:[^;]*\bblur\(/i,
-            allow_path: %r{(search_yep|jsfiddle_chrome|_marketplace_nav_bar|_marketplace_animated_logo)\.scss\z},
+            allow_path: Shared::FrontendRuleSet::PRODUCT_PEN_FILES,
+            without_pens: true,
           },
           {
             id: :vertical_accent_single_map,
             principle: "consistency / design_tokens exact_token_use",
-            meaning: "Vertical accents only from design_tokens / _vertical_shell",
+            meaning: "Vertical accents only from design_tokens, through brgen's accent map",
             paths: %w[brgen/app/assets/stylesheets],
-            # Local sheets must not re-assign --accent except shell
-            forbidden_in: {
-              glob: "_vertical_*.scss",
-              pattern: /--accent\s*:/,
-              allow_file: /_vertical_shell\.scss\z/,
+            # No rule re-assigns --accent except the @each over $vertical-accents.
+            forbidden_rule: {
+              declares: /(?<![\w-])--accent\s*:/,
+              unless_within: /\A@each\b.*\$vertical-accents\b/,
             },
           },
           {
             id: :touch_target_buy_bar,
             principle: "fitts_law / touch target_min_px 44",
             meaning: "Sticky buy bar CTAs declare min-height 44px",
-            # Was brgen/app/assets/stylesheets/_marketplace.scss, which has not held
-            # the buy bar since the verticals became mountable engines — the same
-            # blind spot that cost four other scanners 57 views. It also read
-            # `required_any: [44px literal, listing-buy-bar]`, so a sheet merely
-            # mentioning the class satisfied a rule about touch geometry, and the
-            # literal no longer matches a tree that spells the floor var(--tap-min).
-            # Both halves are required now, against the file that actually styles it.
-            paths: %w[brgen/engines/marketplace/app/assets/stylesheets/_vertical_marketplace.scss],
-            required_all: [/\.listing-buy-bar-cta/, /min-height:\s*(?:44px|var\(--tap-min\))/],
+            # The rule styling the CTA has to carry the floor itself. A sheet that
+            # merely mentions the class, or declares 44px for something else,
+            # satisfied the file-scoped version of this contract.
+            paths: %w[brgen/app/assets/stylesheets/application.scss],
+            required_rule: [/\.listing-buy-bar-cta\b/, /min-height:\s*(?:44px|var\(--tap-min\))/],
           },
         ]
       end
@@ -174,16 +174,8 @@ module Deploy
       end
 
       def scan_directory_contract(dir, contract, label)
-        if contract[:forbidden_in]
-          spec = contract[:forbidden_in]
-          Dir.glob(File.join(dir, "**", spec[:glob])).each do |path|
-            next if spec[:allow_file] && path.match?(spec[:allow_file])
-
-            body = File.read(path)
-            if body.match?(spec[:pattern])
-              @result.fail("#{label}: #{path.sub(RAILS_ROOT + '/', '')} reassigns vertical accent (use _vertical_shell only)")
-            end
-          end
+        if contract[:forbidden_rule]
+          Dir.glob(File.join(dir, "**/*.scss")).each { |path| scan_forbidden_rules(path, contract, label) }
         end
 
         if contract[:scope_glob]
@@ -201,15 +193,34 @@ module Deploy
         Dir.glob(File.join(dir, "**/*.{scss,css,erb,js,html}")).each do |path|
           next if contract[:allow_path] && path.match?(contract[:allow_path])
 
-          body = File.read(path)
-          if body.match?(contract[:forbidden])
+          if contract_body(path, contract).match?(contract[:forbidden])
             @result.fail("#{label}: forbidden pattern in #{path.sub(RAILS_ROOT + '/', '')}")
           end
         end
       end
 
-      def scan_file_contract(path, rel, contract, label)
+      def scan_forbidden_rules(path, contract, label)
+        spec = contract[:forbidden_rule]
+        Operator::ScssRules.rules(File.read(path)).each do |rule|
+          next unless rule.declares?(spec[:declares])
+          next if rule.parents.any? { |parent| parent.match?(spec[:unless_within]) }
+
+          @result.fail("#{label}: #{path.sub(RAILS_ROOT + '/', '')}:#{rule.line} #{rule.selector} " \
+                       "reassigns vertical accent (use the accent map only)")
+        end
+      end
+
+      # A stylesheet read for a hygiene pattern is read with its product pens
+      # blanked, when the contract says pens are exempt.
+      def contract_body(path, contract)
         body = File.read(path)
+        return body unless contract[:without_pens] && path.match?(/\.s?css\z/)
+
+        Operator::ScssRules.without(body, Shared::FrontendRuleSet::PRODUCT_PEN_SELECTORS)
+      end
+
+      def scan_file_contract(path, rel, contract, label)
+        body = contract_body(path, contract)
         return if contract[:performs_only_if] && !body.match?(contract[:performs_only_if])
 
         Array(contract[:required_all]).each do |pat|
@@ -218,6 +229,12 @@ module Deploy
         if contract[:required_any]
           unless contract[:required_any].any? { |pat| body.match?(pat) }
             @result.fail("#{label}: #{rel} missing any of #{contract[:required_any].map(&:inspect).join(', ')}")
+          end
+        end
+        if contract[:required_rule]
+          selector, declaration = contract[:required_rule]
+          unless Operator::ScssRules.matching(body, selector).any? { |rule| rule.declares?(declaration) }
+            @result.fail("#{label}: #{rel} has no #{selector.inspect} rule declaring #{declaration.inspect}")
           end
         end
         if contract[:max_h1]

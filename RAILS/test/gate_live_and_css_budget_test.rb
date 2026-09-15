@@ -112,26 +112,31 @@ class GateLiveAndCssBudgetTest < Minitest::Test
     end
   end
 
+  # Exempt: an !important inside a reduced-motion block, which is the pattern
+  # there rather than a lapse. Not exempt: every other !important in the same
+  # stylesheet, such as the wordmark's armor, which is real debt.
+  #
+  # The sites are found by the rule they sit in rather than pinned by line. Two
+  # pinned lines stood here and both had drifted onto lines carrying no
+  # !important at all, so the exempt half asserted nothing while it passed.
   def test_reduced_motion_overrides_are_not_important_debt
     gate = Deploy::CssConstitutionGate.new
     gate.run_once
-
     important = gate.tally.fetch("important")
 
-    # Exempt: an !important inside a reduced-motion block, which is the pattern
-    # there rather than a lapse. _canvas writes the media query and the
-    # declarations on separate lines; _root writes the whole query on one. Both
-    # are exempt, and by the same brace-depth mechanism — the one-liner sets
-    # motion_depth before the tally check on that same line.
-    refute_includes important, "brgen/app/assets/stylesheets/_canvas.scss:108"
-    refute_includes important, "brgen/app/assets/stylesheets/_root.scss:123"
+    rel = "brgen/app/assets/stylesheets/application.scss"
+    source = File.read(File.join(Deploy::CssConstitutionGate::RAILS, rel))
+    motion, rest = Operator::ScssRules.rules(source).reject(&:at_rule?)
+                                      .partition { |rule| rule.parents.any? { |parent| parent.include?("prefers-reduced-motion") } }
+    sites = lambda do |rules|
+      rules.flat_map do |rule|
+        (rule.line..rule.end_line).select { |n| source.lines[n - 1].include?("!important") }.map { |n| "#{rel}:#{n}" }
+      end
+    end
 
-    # Not exempt: the rest of _root, whose focus-armor block is real !important
-    # debt. Asserted as "some line in this file", because the previous version
-    # named _root.scss:154 and line 154 has since become a comment — a pinned
-    # line number turns any edit above it into a failure about nothing.
-    assert(important.any? { |site| site.start_with?("brgen/app/assets/stylesheets/_root.scss:") },
-           "the reduced-motion exemption has swallowed the whole file")
+    refute_empty sites.call(motion), "no reduced-motion override carries !important, so this proves nothing"
+    assert_empty sites.call(motion) & important
+    refute_empty sites.call(rest) & important, "the reduced-motion exemption has swallowed the whole file"
   end
 
   def test_reduced_motion_exception_stays_inside_its_media_block

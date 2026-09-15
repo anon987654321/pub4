@@ -46,7 +46,7 @@ module Operator
     # The 4 that remain are both deliberate:
     #
     # 3 are pp-neue-montreal-latin-{400,600,700}-normal.woff2, documented in
-    # brgen/app/assets/stylesheets/_fonts_brand.scss as a licensed face whose
+    # brgen/app/assets/stylesheets/application.scss as a licensed face whose
     # woff2 cannot be committed; the `src:` list starts with two `local()` entries
     # and the marketplace surface names an Arial fallback, so the design already
     # assumes the fetch fails. Recorded rather than removed: dropping the url()
@@ -120,7 +120,7 @@ module Operator
     # way the count is wrong.
     #
     # Scoped to the *enclosing* loop, by brace matching, not to any loop naming
-    # the same variable. _fonts_brand.scss has two `@each $w` blocks over
+    # the same variable. brgen's stylesheet has two `@each $w` blocks over
     # different weight lists; reading both reported PP Neue Montreal in five
     # weights when the source asks for three, and two of the five names appeared
     # in no stylesheet at all. A lint that invents a filename cannot be trusted

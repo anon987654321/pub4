@@ -8,6 +8,7 @@ require_relative "../../../../OPENBSD/lib/deploy_inventory"
 require_relative "../../../tools/crawl_support"
 require_relative "../../support/design_metrics"
 require_relative "../../../shared/lib/operator/master_design"
+require_relative "../../../shared/lib/operator/scss_rules"
 
 module Deploy
   # P2: measure design_rules.yml (type, contrast, touch, spacing, measure)
@@ -23,23 +24,27 @@ module Deploy
     TOKENS = File.join(RAILS, "shared", "design_tokens.yml")
     APPS = %w[brgen amber bsdports shared].freeze
 
-    # Critical interactive CSS roots (Fitts / touch).
+    # The component families the sampled checks read, named by the class a
+    # selector opens with: each app styles every component from one
+    # application.scss, so a sample is the rules for posts and their forms, the
+    # feed nav, form controls, marketplace filters and cart, dating's swipe
+    # actions or channels, wherever they sit. A rule that only reaches one of
+    # these classes from inside another component belongs to that component.
+    SAMPLES = {
+      posts: /\A(?:\.(?:post[-_]|vote-|comment[-_]|form-wrap|field\b|story-(?:reply|ring)|fedi-follow)|(?:label|input|textarea|select)\b)/,
+      nav: /\A\.(?:feed-(?:header|brand-mark|tabs?)|compose-(?:hint|avatar|input|actions?))\b/,
+      forms: /\A(?:\.(?:btn|media-btn|char-counter|form-help|advanced-fields|disappearing-settings|compose-box)\b|#comments-section\b)/,
+      marketplace: /\A\.(?:marketplace-actions|store-(?:pills|results|filters)|deal-cat|cart-pay-actions|order-(?:chat|returns?)|listing-(?:questions?|answer|facets?|filters?)|variant-|address)/,
+      dating_actions: /\A\.swipe-/,
+      channels: /\A\.(?:channels?-|roster-|msg-nick|chat-code)/,
+    }.freeze
+
+    # Critical interactive CSS (Fitts / touch): a selector sample per app, or
+    # nil for the whole stylesheet.
     TOUCH_FOCUS = {
-      "brgen" => %w[
-        app/assets/stylesheets/_forms.scss
-        app/assets/stylesheets/_nav.scss
-        app/assets/stylesheets/_marketplace.scss
-        app/assets/stylesheets/_posts.scss
-        app/assets/stylesheets/_dating_actions.scss
-        app/assets/stylesheets/_channels.scss
-        app/assets/stylesheets/_live.scss
-      ],
-      "amber" => %w[
-        app/assets/stylesheets/_jsfiddle_chrome.scss
-      ],
-      "bsdports" => %w[
-        app/assets/stylesheets/application.scss
-      ],
+      "brgen" => Regexp.union(SAMPLES.values_at(:forms, :nav, :marketplace, :posts, :dating_actions, :channels)),
+      "amber" => /\.jox-logo\b/,
+      "bsdports" => nil,
     }.freeze
 
     def self.run
@@ -208,9 +213,7 @@ module Deploy
       end
 
       # Prose max-width in ch should appear in product CSS (marketplace/posts).
-      sample = read_css(File.join(RAILS, "brgen/app/assets/stylesheets/_marketplace.scss")) +
-               read_css(File.join(RAILS, "brgen/app/assets/stylesheets/_posts.scss"))
-      chs = DesignMetrics.extract_ch_measures(sample)
+      chs = DesignMetrics.extract_ch_measures(sample_css("brgen", Regexp.union(SAMPLES.values_at(:marketplace, :posts))))
       if chs.any?
         bad = chs.reject { |c| c.between?(@rules.dig("typography", "line_length", "min_ch").to_f, @rules.dig("typography", "line_length", "max_ch").to_f) }
         bad.each do |c|
@@ -221,25 +224,23 @@ module Deploy
       end
     end
 
+    # The rules of an app's application.scss whose selectors match, as CSS
+    # text, or the whole file when the selector is nil.
+    def sample_css(app, selector = nil)
+      body = read_css(File.join(RAILS, app, "app/assets/stylesheets/application.scss"))
+      return body if selector.nil?
+
+      Operator::ScssRules.matching(body, selector).map { |rule| "#{rule.selector} { #{rule.body} }\n" }.join
+    end
+
     def check_touch_targets
       min_px = @rules.dig("layout_rules", "touch", "target_min_px").to_f
-      css_map = {}
-      TOUCH_FOCUS.each do |app, rels|
-        rels.each do |rel|
-          path = File.join(RAILS, app, rel)
-          next unless File.file?(path)
-
-          css_map[path] = File.read(path)
-        end
-      end
+      css_map = TOUCH_FOCUS.to_h { |app, selector| ["#{app}/app/assets/stylesheets/application.scss", sample_css(app, selector)] }
+                           .reject { |_, body| body.empty? }
 
       # Hard: forms/buttons in brgen declare ≥44
-      forms = File.join(RAILS, "brgen/app/assets/stylesheets/_forms.scss")
-      if File.file?(forms)
-        heights = DesignMetrics.extract_min_heights(File.read(forms))
-        unless heights.any? { |h| h + 0.01 >= min_px }
-          @result.fail("design_metrics touch: _forms.scss missing min-height ≥ #{min_px.to_i}px (principle=fitts_law)", severity: :hard)
-        end
+      unless DesignMetrics.extract_min_heights(sample_css("brgen", SAMPLES[:forms])).any? { |h| h + 0.01 >= min_px }
+        @result.fail("design_metrics touch: brgen form controls missing min-height ≥ #{min_px.to_i}px (principle=fitts_law)", severity: :hard)
       end
 
       # Interactive coverage across product CSS
@@ -247,23 +248,19 @@ module Deploy
         next if row[:covered]
 
         @result.fail(
-          "design_metrics touch: #{row[:label]} lacks min-height ≥ #{min_px.to_i}px in #{row[:paths].map { |p| p.sub(RAILS + '/', '') }.join(', ')} (principle=fitts_law)",
+          "design_metrics touch: #{row[:label]} lacks min-height ≥ #{min_px.to_i}px in #{row[:paths].join(', ')} (principle=fitts_law)",
           severity: :hard
         )
       end
 
       # Flag explicit sub-44 min-heights on interactive-looking rules (soft if not primary)
-      css_map.each do |path, body|
+      css_map.each do |rel, body|
         body.scan(/min-height\s*:\s*([\d.]+)px/i).flatten.each do |raw|
           h = raw.to_f
           next if h + 0.01 >= min_px
           next if h < 8 # decorative
 
-          # Only hard-fail if on a line with btn/tab/action context within ±2 lines — keep soft for now
-          @result.fail(
-            "design_metrics touch: #{path.sub(RAILS + '/', '')} min-height #{h.to_i}px < #{min_px.to_i}px",
-            severity: :soft
-          )
+          @result.fail("design_metrics touch: #{rel} min-height #{h.to_i}px < #{min_px.to_i}px", severity: :soft)
         end
       end
     end
@@ -271,19 +268,13 @@ module Deploy
     def check_line_height_and_body
       body_acc = @rules.dig("typography", "line_height", "body_accessibility_min").to_f
       body_min = @rules.dig("typography", "line_height", "body_min").to_f
-      files = %w[
-        brgen/app/assets/stylesheets/_posts.scss
-        brgen/app/assets/stylesheets/_nav.scss
-        brgen/app/assets/stylesheets/_forms.scss
-        brgen/app/assets/stylesheets/_live.scss
-        shared/app/assets/stylesheets/_minimal.scss
-      ]
-      files.each do |rel|
-        path = File.join(RAILS, rel)
-        next unless File.file?(path)
-
-        lhs = DesignMetrics.extract_line_heights(File.read(path))
-        lhs.each do |lh|
+      samples = {
+        "brgen/app/assets/stylesheets/application.scss (posts, nav, forms)" =>
+          sample_css("brgen", Regexp.union(SAMPLES.values_at(:posts, :nav, :forms))),
+        "shared/app/assets/stylesheets/_minimal.scss" => read_css(File.join(RAILS, "shared/app/assets/stylesheets/_minimal.scss")),
+      }
+      samples.each do |rel, css|
+        DesignMetrics.extract_line_heights(css).each do |lh|
           if lh + 0.001 < body_min
             @result.fail("design_metrics line-height: #{rel} has #{lh} < body_min #{body_min} (principle=accessibility)", severity: :hard)
           elsif lh + 0.001 < body_acc
@@ -311,17 +302,13 @@ module Deploy
       base = 8 if base <= 0
       allowed = [4, 8, 16, 24, 32, 48, 64] if allowed.empty?
 
-      samples = %w[
-        brgen/app/assets/stylesheets/_marketplace.scss
-        brgen/app/assets/stylesheets/_live.scss
-        shared/app/assets/stylesheets/_minimal.scss
-      ]
+      samples = {
+        "brgen/app/assets/stylesheets/application.scss (marketplace)" => sample_css("brgen", SAMPLES[:marketplace]),
+        "shared/app/assets/stylesheets/_minimal.scss" => read_css(File.join(RAILS, "shared/app/assets/stylesheets/_minimal.scss")),
+      }
       off = []
-      samples.each do |rel|
-        path = File.join(RAILS, rel)
-        next unless File.file?(path)
-
-        DesignMetrics.extract_spacing_px(File.read(path)).each do |px|
+      samples.each do |rel, css|
+        DesignMetrics.extract_spacing_px(css).each do |px|
           # ignore fractional rem noise; round to nearest px
           r = px.round
           next if r > 128 # section heroes

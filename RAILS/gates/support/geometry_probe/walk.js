@@ -15,7 +15,7 @@
   // style rather than converting it, so every oklch colour parsed as null
   // and the caller substituted opaque black — which is how the gate came
   // to report brgen/takeaway as "#000000 on #1a1a1a = 1.21" for text that
-  // is actually a legible red. _vertical_takeaway.scss defines its accents
+  // is actually a legible red. brgen's takeaway rules define their accents
   // in oklch, so every takeaway contrast finding was fictional, and
   // fictional failures are worse than none: they train you to skim past
   // the real ones sitting in the same list.

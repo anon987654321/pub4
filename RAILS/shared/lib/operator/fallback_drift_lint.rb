@@ -116,7 +116,7 @@ module Operator
     end
 
     # Two kinds of declaration. A literal `--name:` is a name; an interpolated
-    # one is a family. `--vertical-#{$v}-accent:` in _vertical_shell.scss emits
+    # one is a family. `--vertical-#{$v}-accent:` in brgen's accent map emits
     # seven real properties, and a check that reads only literals accuses every
     # engine that consumes one -- which it did, for --vertical-dating-accent and
     # --vertical-marketplace-accent-hover, both of which exist.

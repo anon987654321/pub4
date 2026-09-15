@@ -3,6 +3,7 @@
 # Family layout contract: MASTER face + RAILS apps share chrome vars, skip-link,
 # main landmark, and 44px tap floor. Dialects may restyle; structure stays.
 require "minitest/autorun"
+require_relative "../shared/lib/operator/scss_rules"
 
 class LayoutContractTest < Minitest::Test
   # __dir__ is RAILS/test → ROOT is RAILS/ → REPO is pub4 checkout root.
@@ -257,15 +258,19 @@ class LayoutContractTest < Minitest::Test
                     "the zone guard is what makes an unset zone silent — keep them described together"
   end
 
+  def app_rules(app, selector)
+    Operator::ScssRules.matching(File.read(File.join(ROOT, app, "app/assets/stylesheets/application.scss")), selector)
+  end
+
   def test_theme_root_uses_dynamic_viewport_height
-    brgen = File.read(File.join(ROOT, "brgen/app/assets/stylesheets/_root.scss"))
-    amber = File.read(File.join(ROOT, "amber/app/assets/stylesheets/_variables.scss"))
-    assert_match(/\.theme-root\s*\{\s*min-height:\s*100dvh/, brgen)
-    assert_match(/\.theme-root\s*\{\s*min-height:\s*100dvh/, amber)
+    %w[brgen amber].each do |app|
+      assert app_rules(app, /\A\.theme-root\z/).any? { |rule| rule.declares?(/min-height:\s*100dvh/) },
+             "#{app}'s .theme-root must size to the dynamic viewport"
+    end
   end
 
   def test_messenger_dock_reads_keyboard_inset
-    css = File.read(File.join(ROOT, "brgen/app/assets/stylesheets/_vertical_messenger_thread.scss"))
-    assert_includes css, "var(--keyboard-inset"
+    assert app_rules("brgen", /\Abody\.vertical-messenger #new_message\z/).any? { |rule| rule.declares?(/var\(--keyboard-inset/) },
+           "the messenger composer must sit above the on-screen keyboard"
   end
 end

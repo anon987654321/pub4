@@ -21,7 +21,7 @@ module Operator
   #     per call site; reserve with size attributes or an aspect-ratio class.
   #
   #   accent_on_prose — brgen's identity is grayscale ("the direction itself,
-  #     not a rotated hue" — _root.scss); accent belongs to interactive and
+  #     not a rotated hue" — brgen's :root); accent belongs to interactive and
   #     state elements only. A `color: var(--accent)` under a non-interactive
   #     selector spends the one hue on body text.
   #
@@ -61,7 +61,7 @@ module Operator
     # Measured against the three built bundles rather than the sources, because
     # the build is what production wears. brgen's .price carries no colour at
     # all: _stack_brgen does not forward _minimal, and brgen redeclares .price in
-    # _card_modifiers.scss with weight and size and nothing else, its own comment
+    # its own stylesheet with weight and size and nothing else, its own comment
     # saying the accent stays with interactive elements. amber's and bsdports'
     # .price do wear var(--accent), through _stack. So "does .price still wear
     # the accent" has two answers, and the one this file could have an opinion
@@ -226,7 +226,7 @@ end
     #
     # brgen only, and that is the rule rather than the glob. The rationale is
     # brgen's grayscale identity — "the direction itself, not a rotated hue"
-    # (_root.scss) — so a hue on prose spends the surface's one accent. amber's
+    # (brgen's :root) — so a hue on prose spends the surface's one accent. amber's
     # identity IS its warm taupe, and its `.sustainability-grade` and
     # `.weather-bar` are that identity rather than debt. Widening to amber would
     # apply brgen's rule to a surface it was never written for.
@@ -244,9 +244,10 @@ end
 
     # The bundle, not the directory. accent_on_prose is a claim about brgen's
     # grayscale identity, and brgen's bundle is not brgen's stylesheet folder:
-    # _stack_brgen forwards eleven shared partials and application.scss @uses
-    # several more by bare name, so a shared file painting accent on prose lands
-    # in brgen while sitting outside every glob this check used to have.
+    # _stack_brgen forwards eleven shared partials and application.scss loads
+    # several more by bare name, with @use or meta.load-css, so a shared file
+    # painting accent on prose lands in brgen while sitting outside every glob
+    # this check used to have.
     # _nearby_chat_widget.scss is one, and it is correct — the accent is on a
     # link — but nothing here could say so.
     #
@@ -267,7 +268,8 @@ end
         next if path.nil? || seen.include?(path) || !File.file?(path)
 
         seen << path
-        File.read(path, encoding: "UTF-8").scan(/@(?:use|forward)\s+["']([^"']+)["']/) do |(target)|
+        File.read(path, encoding: "UTF-8").scan(/@(?:use|forward)\s+["']([^"']+)["']|meta\.load-css\(\s*["']([^"']+)["']/) do |targets|
+          target = targets.compact.first
           queue << resolve_partial(target, load_paths)
         end
       end
@@ -321,15 +323,15 @@ end
     # --- compose costume ------------------------------------------------------
 
     def costume_findings
-      path = File.join(RAILS_ROOT, "brgen/app/assets/stylesheets/_chrome_surfaces.scss")
-      return [] unless File.file?(path)
+      rel = "brgen/app/assets/stylesheets/application.scss"
+      path = File.join(RAILS_ROOT, rel)
+      return [ Finding.new("compose_costume", rel, "brgen has no application.scss to read") ] unless File.file?(path)
 
       src = File.read(path, encoding: "UTF-8")
       src.scan(/^([^{\n]*\.city-today[^{\n]*)\{([^}]*)\}/m).filter_map do |(selector, body)|
         next unless costume?(selector, body)
 
-        Finding.new("compose_costume", "brgen/app/assets/stylesheets/_chrome_surfaces.scss",
-                    "#{selector.strip} wears the compose pill again")
+        Finding.new("compose_costume", rel, "#{selector.strip} wears the compose pill again")
       end
     end
 

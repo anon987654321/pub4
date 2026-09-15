@@ -55,9 +55,13 @@ class LayoutStabilityLintTest < Minitest::Test
 
   def test_it_is_reading_both_corpora
     assert_operator LINT.views.size, :>, 300, "the view glob has stopped matching"
-    assert_operator LINT.stylesheets.size, :>, 50, "the stylesheet glob has stopped matching"
+    assert_operator LINT.stylesheets.size, :>, 30, "the stylesheet glob has stopped matching"
     %w[brgen amber bsdports shared].each do |app|
       assert LINT.views.any? { |p| p.include?("/#{app}/") }, "#{app}'s views are not being read"
+    end
+    %w[brgen amber bsdports].each do |app|
+      assert LINT.stylesheets.any? { |p| p.end_with?("/#{app}/app/assets/stylesheets/application.scss") },
+             "#{app}'s application.scss is not being read"
     end
   end
 

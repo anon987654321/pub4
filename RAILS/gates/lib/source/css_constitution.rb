@@ -4,6 +4,8 @@ require "yaml"
 require_relative "../../../../OPENBSD/lib/gate_result"
 require_relative "../../support/gate_autofix"
 require_relative "../../../shared/lib/operator/master_design"
+require_relative "../../../shared/lib/operator/scss_rules"
+require_relative "../../../shared/app/services/shared/frontend_rule_set"
 require_relative "../../support/css_spacing_scans"
 require_relative "../../support/css_weight"
 require_relative "../../support/css_caps_tracking"
@@ -21,8 +23,6 @@ module Deploy
     RAILS = File.join(ROOT, "RAILS")
     MASTER_DESIGN = File.join(ROOT, "MASTER", "data", "rules.yml")
     APPS = %w[brgen amber bsdports shared].freeze
-
-    PEN_ALLOW = %r{(?:^|/)(?:_search_yep|_jsfiddle_chrome|_marketplace_nav_bar|_marketplace_animated_logo)\.scss\z}
 
     # `: none` is how a stylesheet *complies* with flat_ui, so it cannot be the
     # thing that fails it. text-shadow and backdrop-filter had no exclusion at
@@ -301,14 +301,11 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
     def css_files
       # Source of truth only — never fingerprinted public/assets copies.
       #
-      # brgen's verticals are mountable engines, so their stylesheets live at
-      # engines/<name>/app/assets/stylesheets and an <app>/app/** glob does not
-      # reach them. That is the same blind spot RAILS/CLAUDE.md records for the
-      # four scanners that stopped seeing 57 views when the verticals moved:
-      # 10 sheets and 1406 lines of dating/marketplace/playlist/takeaway/tv CSS
-      # were outside every budget here, and the `size` rule below hard-fails on
-      # `_vertical_*` sheets specifically — a rule that named files it could not
-      # open. A falling finding count reads as improvement, not blindness.
+      # Engine stylesheet directories are globbed as well as the app's own. brgen's
+      # verticals are mountable engines, and their styles live in brgen's
+      # application.scss today; an engine that grows a stylesheet of its own again
+      # must not land outside every budget here, which is what happened when the
+      # verticals first moved and 1406 lines of CSS went unmeasured.
       rails = APPS.flat_map do |app|
         bases = [File.join(RAILS, app, "app/assets/stylesheets")]
         bases.concat(Dir.glob(File.join(RAILS, app, "engines/*/app/assets/stylesheets")))
@@ -340,17 +337,25 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
       MASTER_WEB.map { |rel| File.join(ROOT, rel) }.select { |p| File.file?(p) }
     end
 
+    # Product pens reproduce an outside design exactly, so the flat, spacing and
+    # logical-property checks read the stylesheet with them blanked: a pen's own
+    # partial reads as empty, and a pen inside an app stylesheet leaves the rest
+    # of that file measured.
+    def without_pens(path, body)
+      return "" if path.match?(Shared::FrontendRuleSet::PRODUCT_PEN_FILES)
+
+      Operator::ScssRules.without(body, Shared::FrontendRuleSet::PRODUCT_PEN_SELECTORS)
+    end
+
     def scan(path)
       rel = path.sub(RAILS + "/", "")
       body = File.read(path)
-      pen = path.match?(PEN_ALLOW)
+      hygiene = without_pens(path, body)
       count_budget_rules(path, rel, body)
-      scan_spacing(rel, body) unless pen
+      scan_spacing(rel, hygiene)
 
-      unless pen
-        if body.match?(FLAT_PATTERN)
-          @result.fail("css_constitution flat_ui: #{rel}")
-        end
+      if hygiene.match?(FLAT_PATTERN)
+        @result.fail("css_constitution flat_ui: #{rel}")
       end
 
       if body.match?(TWITTER_BLUE)
@@ -363,28 +368,19 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
         @result.fail("css_constitution motion: #{rel} transition #{ms}ms > 300ms") if ms.to_i > 300
       end
 
-      if body.match?(PHYSICAL_LR) && !pen
-        hits = body.lines.count { |l| l.match?(PHYSICAL_LR) && !l.match?(%r{^\s*//}) }
-        @result.fail("css_constitution logical_props: #{rel} (#{hits} physical left/right)") if hits > 12
-      end
+      hits = hygiene.lines.count { |l| l.match?(PHYSICAL_LR) && !l.match?(%r{^\s*//}) }
+      @result.fail("css_constitution logical_props: #{rel} (#{hits} physical left/right)") if hits > 12
 
       # Code lines, like every other budget in this file and like the rest of the
-      # tree's size rules. This one counted raw lines and was the last holdout:
-      # _vertical_playlist.scss measured 418 against a 335-line body, so the way
-      # to satisfy a rule about CSS complexity was to delete the paragraphs
-      # explaining the CSS. Only that one sheet changes verdict — the next
-      # largest vertical is 234 code lines, so this is not a relaxation with
-      # somewhere to hide.
+      # tree's size rules, so explaining the CSS never counts against it. Each
+      # app's application.scss is exempt: the operator asked for one stylesheet
+      # per app, and file_length_ratchet_test.rb holds each one to a ceiling.
       lines = strip_comments(body).each_line.count do |line|
         stripped = line.strip
         !stripped.empty? && !stripped.start_with?("//", "/*", "*")
       end
-      if lines > 200 && !File.basename(path).start_with?("application")
-        @result.warn("css_constitution size: #{rel} is #{lines} code lines (budget 200)") if lines > 250
-        # Hard fail only for app-local vertical sheets, not shared shells
-        if lines > 400 && rel.match?(%r{\A(brgen|amber|bsdports)/(engines/[^/]+/)?app/assets/stylesheets/_vertical_})
-          @result.fail("css_constitution size: #{rel} is #{lines} code lines (hard fail >400)")
-        end
+      if lines > 250 && !File.basename(path).start_with?("application")
+        @result.warn("css_constitution size: #{rel} is #{lines} code lines (budget 200)")
       end
 
       if body.match?(/@keyframes|animation\s*:/i) && !body.match?(/prefers-reduced-motion:\s*reduce/i)

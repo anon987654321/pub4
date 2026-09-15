@@ -32,7 +32,7 @@ module Deploy
     #
     # This paired every vertical accent with social.bg (#17161c) and
     # social.surface_elevated (#211f28). brgen's dark theme is brgen_old_dark —
-    # _root.scss includes brgen-old-dark-tokens, whose later :root wins — so the
+    # brgen's :root includes brgen-old-dark-tokens, which outranks social — so the
     # real surfaces are #000000 and #1a1a1a. Every vertical finding was measured
     # against a background the app never renders.
     #
@@ -52,8 +52,8 @@ module Deploy
     # the stylesheets instead of from the key.
     #
     # marketplace is the case. --vertical-marketplace-accent-hover has exactly
-    # one use in the whole tree, at _vertical_marketplace.scss:73, under
-    # `:root[data-theme="light"]` — and design_tokens.yml says why in the note
+    # one use in the whole tree, in a rule under `:root[data-theme="light"]` in
+    # brgen's stylesheet — and design_tokens.yml says why in the note
     # above the token: the accent is a background carrying dark ink, so small
     # text in this vertical wears `hover`, and only the light theme swaps to it.
     # On its actual ground it measures 6.03:1. Paired against brgen_old_dark's
@@ -92,12 +92,12 @@ module Deploy
       light_only.select { |_, only| only }.keys
     end
 
-    # The vertical accent ink, read from the file that sets it. #110f19 was
+    # The vertical accent ink, read from the stylesheet that sets it. #110f19 was
     # chosen against the accent column and measured there — "dark 5.10 to 9.94",
     # which is the accent column exactly. Nobody measured it against hover.
     def vertical_accent_ink(rails_root)
-      shell = File.join(rails_root, "brgen/app/assets/stylesheets/_vertical_shell.scss")
-      File.read(shell)[/\$vertical-accent-ink:\s*(#[0-9a-fA-F]{3,8})/, 1]
+      sheet = File.join(rails_root, "brgen/app/assets/stylesheets/application.scss")
+      File.read(sheet)[/\$vertical-accent-ink:\s*(#[0-9a-fA-F]{3,8})/, 1]
     rescue StandardError => e
       # Same posture as contrast_budget below: say so and drop the pairs this ink
       # would have made, rather than reporting a clean hover column the gate
@@ -113,14 +113,14 @@ module Deploy
     # --accent is read as `color:` all over the tree, so pairing it against the
     # page backgrounds asks a question the tree answers.
     #
-    # `hover` is read in exactly one place -- _marketplace_nav_bar.scss:121, as a
-    # background-color on .nav-search-submit:hover -- and in no place as a
-    # foreground. Pairing it against the page background reported marketplace
+    # `hover` is read in exactly one place -- .nav-search-submit:hover, as a
+    # background-color -- and in no place as a foreground. Pairing it against
+    # the page background reported marketplace
     # 3.13 and 3.48 for text that is never drawn, while the pair that IS drawn
     # went unmeasured: the button keeps color: var(--accent-ink) through the
     # hover, so the ink lands on the hover fill. That measures 3.15 on
     # marketplace, 3.34 on tv and 4.31 on maps -- three real failures under the
-    # 4.5 floor _vertical_shell.scss's own comment claims, hidden behind two
+    # 4.5 floor the accent map's own comment claims, hidden behind two
     # false ones.
     #
     # design_tokens.yml still says "Small text in this vertical wears `hover`
@@ -325,7 +325,7 @@ decls.compact.each { |_, v, _| values << v }
       cands = ["--#{base.tr('_', '-')}", "--#{key.tr('_', '-')}"]
       if (m = base.match(/\A(?<vertical>[a-z]+)_(?<kind>accent|hover)\z/))
         if m[:kind] == "accent"
-          # _vertical_shell.scss:27 assigns each vertical's accent straight to
+          # The accent map assigns each vertical's accent straight to
           # --accent under body.vertical-<v>, so these paint through the token
           # every surface already reads. The --vertical-<v>-accent alias beside
           # it has no consumer, and checking only that name skipped the very

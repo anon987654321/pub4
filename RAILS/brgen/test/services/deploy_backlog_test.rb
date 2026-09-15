@@ -601,7 +601,7 @@ assert_includes haystack, "turbo_prefetch: false",
     assert [ File.join(ROOT, "brgen/app/views/marketplace/stores/edit.html.erb"),
             File.join(ROOT, "brgen/engines/marketplace/app/views/marketplace/stores/edit.html.erb") ].any? { |p| File.file?(p) }
     assert_includes read_brgen("engines/marketplace/app/views/marketplace/stores/_live_search_results.html.erb"), "deal-grid"
-    assert_includes read_brgen("app/assets/stylesheets/application.scss"), "_marketplace_stores"
+    assert_includes read_brgen("app/assets/stylesheets/application.scss"), ".marketplace-stores"
   end
 
   def test_brgen_visual_polish_stack_is_wired
@@ -616,11 +616,15 @@ assert_includes haystack, "turbo_prefetch: false",
     refute_includes layout, 'id="splash"'
     assert_includes layout, "#000000"
     assert_includes manifest, '"theme_color": "#000000"'
-    assert_includes scss, "_card_modifiers"
-    assert_includes scss, "_chrome_polish"
-    assert_includes scss, "offline_page"
-    assert_includes read_brgen("app/assets/stylesheets/_vertical_playlist.scss"), ".playlist-top"
-    assert_includes read_brgen("app/assets/stylesheets/_vertical_tv_cards.scss"), ".tv-live-streams"
+    # brgen has one stylesheet, so the polish is wired when its rules are in it:
+    # the feed card modifiers, the chrome polish, and the offline page the shared
+    # stack forwards.
+    assert_includes scss, '@use "stack_brgen"'
+    assert_includes read_source(File.join(ROOT, "shared/app/assets/stylesheets/_stack_brgen.scss")), '@forward "offline_page"'
+    assert_includes scss, ".feed-card-meta"
+    assert_includes scss, ".city-home-intro"
+    assert_includes scss, ".playlist-top"
+    assert_includes scss, ".tv-live-streams"
     assert_includes show, "feed-post-show"
     assert_includes show, "feed_icon"
     refute_includes show, "post_show"
@@ -637,8 +641,8 @@ assert_includes haystack, "turbo_prefetch: false",
     refute File.exist?(File.join(ROOT, "brgen/app/views/shared/_vote.html.erb"))
     assert_includes read_source(File.join(ROOT, "_deploy.sh")), "DEMO_SEED_ON_DEPLOY"
     assert_includes read_source(File.join(ROOT, "shared/config/initializers/omniauth.rb")), ":snapchat"
-    refute_includes read_brgen("app/assets/stylesheets/_posts.scss"), ".post_show"
-    assert_includes read_brgen("app/assets/stylesheets/_nav.scss"), "border-bottom-color: var(--accent)"
+    refute_includes scss, ".post_show"
+    assert_includes scss, "border-bottom-color: var(--accent)"
     assert_includes read_brgen("app/views/layouts/application.html.erb"), "unless vertical_surface?"
   end
 

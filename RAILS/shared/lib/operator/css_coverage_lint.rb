@@ -224,7 +224,13 @@ module Operator
 # What is left is still not a list of dead rules. The caveat at the top of this
 # file stands — a literal search cannot prove a runtime-composed name dead — and
 # the amber sheets that dominate the remainder belong to amber's own session.
-BASELINES = { "undefined_class" => 0, "unused_selector" => 124 }.freeze
+#
+# 124 -> 123 (2026-09-15), the instrument again. A Sass module call reads as a
+# class to a literal scan: `list.nth(` had counted .nth as an unused selector
+# since the vertical accent map was written, and collapsing each app's
+# stylesheets into one application.scss added `meta.load-css(` beside it. Names
+# followed by an open paren are calls, and neither is counted now.
+BASELINES = { "undefined_class" => 0, "unused_selector" => 123 }.freeze
 
     Finding = Struct.new(:kind, :name, :count, :example)
 
@@ -337,7 +343,10 @@ BASELINES = { "undefined_class" => 0, "unused_selector" => 124 }.freeze
         end
         stylesheets.each do |sheet|
           body = strip_css(File.read(sheet, encoding: "UTF-8"))
-          body.scan(/\.([a-zA-Z_][\w-]*)/) { |(name)| names << name }
+          # A name followed by an open paren is a Sass module call, not a class:
+          # `list.nth(` and `meta.load-css(` read as .nth and .load-css, two
+          # selectors nothing could ever render.
+          body.scan(/\.([a-zA-Z_][\w-]*+)(?!\()/) { |(name)| names << name }
           # SCSS builds &__child / &--modifier names no literal scan can see.
           body.scan(/&(?:__|--)([\w-]+)/) { |(fragment)| names << fragment }
         end

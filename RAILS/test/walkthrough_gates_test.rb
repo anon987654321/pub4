@@ -55,17 +55,22 @@ class WalkthroughGatesTest < Minitest::Test
   end
 
   # first_screen's source half is the touch floor: one token, read out of one
-  # stylesheet, and every sheet that spells min-height: var(--tap-min) leans on
+  # stylesheet, and every rule that spells min-height: var(--tap-min) leans on
   # the number it resolves to.
+  FIRST_SCREEN_SHEET = <<~SCSS
+    .feed-tab, .deal-cat { min-height: var(--tap-min); }
+    .btn { min-height: var(--tap-min); }
+    .deal-card { --font: 1rem; }
+    .search { color: red; }
+  SCSS
+
   def first_screen_tree(tap_min: "44px")
     sheets = %w[
-      brgen/app/assets/stylesheets/_nav.scss
-      brgen/app/assets/stylesheets/_marketplace.scss
-      brgen/app/assets/stylesheets/_marketplace_cards.scss
-      amber/app/assets/stylesheets/_items.scss
+      brgen/app/assets/stylesheets/application.scss
+      amber/app/assets/stylesheets/application.scss
       bsdports/app/assets/stylesheets/application.scss
       shared/app/assets/stylesheets/_search_yep.scss
-    ].to_h { |rel| [rel, ".target { min-height: var(--tap-min); }\n.deal-card { --font: 1rem; }\n.search { color: red; }\n"] }
+    ].to_h { |rel| [rel, FIRST_SCREEN_SHEET] }
     sheets.merge("shared/app/assets/stylesheets/_dialect_tokens.scss" => ":root { --tap-min: #{tap_min}; }\n")
   end
 
@@ -165,11 +170,23 @@ class WalkthroughGatesTest < Minitest::Test
     assert_names gate(Deploy::FirstScreenGate, tree), /declares no --tap-min/
   end
 
-  def test_first_screen_fails_when_a_sheet_stops_declaring_a_touch_target
+  # The floor has to be on the named control's own rule. A tap minimum anywhere
+  # else in the same stylesheet is the file-scoped reading this gate left.
+  def test_first_screen_fails_when_a_control_stops_declaring_a_touch_target
     tree = first_screen_tree
-    tree["amber/app/assets/stylesheets/_items.scss"] = ".target { height: 30px; }\n"
+    tree["amber/app/assets/stylesheets/application.scss"] = FIRST_SCREEN_SHEET.sub(
+      ".btn { min-height: var(--tap-min); }", ".btn { height: 30px; }"
+    )
 
-    assert_names gate(Deploy::FirstScreenGate, tree), %r{amber/app/assets/stylesheets/_items\.scss missing}
+    assert_names gate(Deploy::FirstScreenGate, tree),
+                 %r{amber/app/assets/stylesheets/application\.scss /\\A\\\.btn\\z/ rule missing min-height}
+  end
+
+  def test_first_screen_fails_when_the_named_rule_is_gone
+    tree = first_screen_tree
+    tree["brgen/app/assets/stylesheets/application.scss"] = FIRST_SCREEN_SHEET.sub(".deal-card", ".deal-tile")
+
+    assert_names gate(Deploy::FirstScreenGate, tree), %r{brgen/app/assets/stylesheets/application\.scss has no /\\\.deal-card\\b/ rule}
   end
 
   def test_first_screen_fails_when_the_token_file_is_deleted

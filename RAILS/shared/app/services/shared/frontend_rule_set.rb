@@ -33,13 +33,28 @@ module Shared
       preserve_svg_assets: true,
       prefer_unified_diff_for_large_files: true,
       shell_scripts_must_not_embed_app_files: true,
-      protected_stylesheet_files: %w[
-        application.scss
-        _dashboard.scss
-        _vertical_dating.scss
-        _vertical_playlist.scss
-      ].freeze,
+      protected_stylesheet_files: %w[application.scss].freeze,
     }.freeze
+
+    # Product pens: outside designs this tree reproduces exactly, shadows and
+    # all — the yep.com search, the jsfiddle logo (jOxVvNE), Amazon's nav bar
+    # and its animated logo. Hygiene checks leave them alone, and this is the one
+    # place that says which CSS they are.
+    #
+    # The yep search is still a shared partial of its own, so its file names it.
+    # The other three live inside each app's application.scss, so their
+    # selectors name them: a rule is a pen when every selector in its list
+    # styles one of these components.
+    PRODUCT_PEN_FILES = %r{(?:\A|/)_search_yep\.scss\z}
+    PRODUCT_PEN_SELECTORS = /
+      \#(?:navBar|topHalf|sections|accountStuff|bottomHalf)\b
+      | \.nav-(?:cart-count|search-submit)\b
+      | \Abody\.vertical-marketplace\ (?:main\ >\ |\.marketplace-(?:deals|stores)\ >\ )?
+          (?:\.search\b|\#live_search_results|\[data-controller\*="live-search"\])
+      | :is\(body\.vertical-marketplace,\ body\.vertical-takeaway\)\ :is\(\.store-shortcut-well,\ \.store-buybox\)
+      | \#logoWrapper\b | \.banner(?:_wrapper)?\b | \.smileyface\b | \.number_animate\b | \.shopping_cart\b
+      | \.jox-logo\b | \Abody\ \.search\b
+    /x
 
     MOTION = {
       max_transition_ms: 300,

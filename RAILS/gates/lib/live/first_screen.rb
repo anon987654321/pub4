@@ -5,6 +5,7 @@ require_relative "../../../../OPENBSD/lib/gate_result"
 require_relative "../../../tools/crawl_support"
 require_relative "../../support/brgen_vertical_surfaces"
 require_relative "../../support/dom_surface_schema"
+require_relative "../../../shared/lib/operator/scss_rules"
 
 module Deploy
   # The first screen carries a skip link, a main landmark and an h1, and the
@@ -41,6 +42,13 @@ module Deploy
     # what the token resolves to and #assert_token_floor fails if it is not 44.
     TAP_MIN = 'min-height:\s*(?:44px|var\(--tap-min\))'
 
+    # A css_touch row is [stylesheet, selector, needle]. The selector names the
+    # rule the needle has to sit in, because each app styles every surface from
+    # one application.scss and "the file declares a tap floor" would pass on any
+    # rule in it. A nil selector reads the whole file; a nil needle only asks
+    # that the rule exists.
+    BRGEN_CSS = "brgen/app/assets/stylesheets/application.scss"
+
     # Map surface labels (from SURFACES / verticals) → schema ids.
     # live_first_screen builds label as "app/label" (e.g. brgen/vertical_marketplace).
 # /live had a live_feed schema until 76612fd0b folded it into /nearby/room —
@@ -64,18 +72,16 @@ SCHEMA_FOR_LABEL = {
     BASE_SURFACES = [
       { app: "brgen", port_key: "brgen", path: "/", host: nil, label: "core_ip",
         first_screen: [%r{skip-link|Skip to main}i, %r{<main\b|main-content}i, %r{<h1\b}i],
-        css_touch: [["brgen/app/assets/stylesheets/_nav.scss", TAP_MIN],
-                    ["brgen/app/assets/stylesheets/_marketplace.scss", TAP_MIN]] },
+        css_touch: [[BRGEN_CSS, /\.feed-tab\b/, TAP_MIN],
+                    [BRGEN_CSS, /\.deal-cat\b/, TAP_MIN]] },
       { app: "amber", port_key: "amber", path: "/", host: nil,
         first_screen: [%r{skip-link|Skip to main}i, %r{main-content|<main\b}i, %r{Amber|jox|Signup|Login|wardrobe}i],
-        # Was _jsfiddle_chrome.scss + "jox-buttons", which asserted only that a
-        # class name appeared in a file — not that anything rendered it and not
-        # that it met a target size. Nothing rendered .jox-buttons in either app.
-        # Now the same shape as brgen's: a real 44px floor in a live sheet.
-        css_touch: [["amber/app/assets/stylesheets/_items.scss", TAP_MIN]] },
+        # A real 44px floor on a control amber renders. The row once named
+        # .jox-buttons, a class nothing rendered in either app, and passed.
+        css_touch: [["amber/app/assets/stylesheets/application.scss", /\A\.btn\z/, TAP_MIN]] },
       { app: "bsdports", port_key: "bsdports", path: "/", host: nil,
         first_screen: [%r{skip-link|Skip to main}i, %r{main-content|<main\b}i, %r{BSD|port}i],
-        css_touch: [%w[bsdports/app/assets/stylesheets/application.scss --font]] },
+        css_touch: [["bsdports/app/assets/stylesheets/application.scss", nil, "--font"]] },
       { app: "bsdports", port_key: "bsdports", path: "/ports", host: nil, label: "ports",
         first_screen: [%r{search|port}i, %r{<main\b|main-content}i],
         css_touch: [] },
@@ -95,8 +101,8 @@ SCHEMA_FOR_LABEL = {
           first_screen: Array(s[:expect_body]) + landmarks,
           skip_h1: json_api || s[:label].to_s.start_with?("maps"),
           css_touch: s[:label].to_s.start_with?("marketplace") ? [
-            %w[brgen/app/assets/stylesheets/_marketplace_cards.scss deal-card],
-            %w[shared/app/assets/stylesheets/_search_yep.scss \.search],
+            [BRGEN_CSS, /\.deal-card\b/, nil],
+            ["shared/app/assets/stylesheets/_search_yep.scss", nil, '\.search'],
           ] : [],
         }
       end
@@ -157,15 +163,26 @@ SCHEMA_FOR_LABEL = {
 
     def source_touch_checks(surface)
       assert_token_floor
-      Array(surface[:css_touch]).each do |rel, needle|
+      Array(surface[:css_touch]).each do |rel, selector, needle|
         @result.checked!
         path = File.join(@rails_root, rel)
         unless File.file?(path)
           @result.fail("first_screen: missing #{rel}")
           next
         end
-        body = File.read(path)
-        @result.fail("first_screen: #{rel} missing #{needle}") unless body.match?(Regexp.new(needle, Regexp::IGNORECASE))
+        source_touch_check(rel, File.read(path), selector, needle && Regexp.new(needle, Regexp::IGNORECASE))
+      end
+    end
+
+    def source_touch_check(rel, body, selector, needle)
+      return @result.fail("first_screen: #{rel} missing #{needle.source}") if selector.nil? && !body.match?(needle)
+      return if selector.nil?
+
+      rules = Operator::ScssRules.matching(body, selector)
+      if rules.empty?
+        @result.fail("first_screen: #{rel} has no #{selector.inspect} rule")
+      elsif needle && rules.none? { |rule| rule.declares?(needle) }
+        @result.fail("first_screen: #{rel} #{selector.inspect} rule missing #{needle.source}")
       end
     end
 

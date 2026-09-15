@@ -2,6 +2,7 @@
 
 require "yaml"
 require_relative "../../../../OPENBSD/lib/gate_result"
+require_relative "../../../shared/lib/operator/scss_rules"
 
 module Deploy
   # Dialect purity: social / luxury / CRT / face stay separate; vertical accents single map.
@@ -56,30 +57,40 @@ module Deploy
       @result.fail("dialect_purity: WIRING_NOTES lost vertical accents rule") unless notes.match?(/vertical_accents|_vertical_shell/i)
     end
 
+    # brgen sets --accent in one place: the map over $vertical-accents, which
+    # gives each vertical its own. A vertical that re-sets the accent for itself
+    # takes the colour out of the map and puts it where nothing else reads it.
+    #
+    # Every rule in brgen's stylesheets that declares --accent has to sit inside
+    # that map's @each. The rule, not the file, is the unit: brgen compiles from
+    # one application.scss, and a vertical's styles are rules in it. Engine
+    # stylesheet directories are read too, so an engine that grows a sheet of
+    # its own again is still held to the map.
     def check_vertical_accents
-      shell = File.join(@rails, "brgen/app/assets/stylesheets/_vertical_shell.scss")
-      return @result.fail("dialect_purity: missing _vertical_shell.scss") unless File.file?(shell)
+      sheets = brgen_stylesheets
+      return @result.fail("dialect_purity: brgen has no application.scss") if sheets.empty?
 
-      shell_body = File.read(shell)
+      sources = sheets.to_h { |path| [path, File.read(path)] }
       @result.checked!
-      @result.fail("dialect_purity: _vertical_shell missing $vertical-accents map") unless shell_body.include?("$vertical-accents")
+      unless sources.values.any? { |body| body.include?("$vertical-accents") }
+        @result.fail("dialect_purity: brgen's stylesheet carries no $vertical-accents map")
+      end
 
-      # The verticals moved to engines/ and their sheets went with them: the host
-      # keeps _vertical_shell and messenger, the other twelve _vertical_*.scss
-      # live under engines/<name>/app/assets/stylesheets. Globbing the host alone
-      # left this gate reading two files and calling it the dialect.
-      vertical_sheets = Dir.glob(File.join(@rails, "brgen/app/assets/stylesheets/_vertical_*.scss")) +
-                        Dir.glob(File.join(@rails, "brgen/engines/*/app/assets/stylesheets/_vertical_*.scss"))
-      vertical_sheets.each do |path|
-        next if path.end_with?("_vertical_shell.scss")
-
+      sources.each do |path, body|
         @result.checked!
+        Operator::ScssRules.rules(body).each do |rule|
+          next unless rule.body.match?(/(?<![\w-])--accent\s*:/)
+          next if rule.parents.any? { |parent| parent.match?(/\A@each\b.*\$vertical-accents\b/) }
 
-        body = File.read(path)
-        if body.match?(/--accent\s*:/)
-          @result.fail("dialect_purity: #{File.basename(path)} re-sets --accent (shell only)")
+          @result.fail("dialect_purity: #{path.sub(@rails + '/', '')}:#{rule.line} #{rule.selector} " \
+                       "re-sets --accent (the accent map only)")
         end
       end
+    end
+
+    def brgen_stylesheets
+      Dir.glob(File.join(@rails, "brgen/app/assets/stylesheets/**/*.scss")) +
+        Dir.glob(File.join(@rails, "brgen/engines/*/app/assets/stylesheets/**/*.scss"))
     end
 
     def check_no_twitter_blue
@@ -96,27 +107,34 @@ module Deploy
       end
     end
 
+    # Each app's dialect is what its own stylesheet puts on :root. brgen wears
+    # brgen_old, and the proof is a :root rule that includes those tokens rather
+    # than the name appearing somewhere in the file.
     def check_dialect_roots
-      # brgen uses brgen_old / social; amber luxury; bsdports openbsd greens
-      brgen_root = File.join(@rails, "brgen/app/assets/stylesheets/_root.scss")
-      if File.file?(brgen_root)
-        body = File.read(brgen_root)
-        @result.fail("dialect_purity: brgen _root missing brgen-old or dialect tokens") unless body.match?(/brgen-old|dialect_tokens|brgen_old/i)
+      brgen = app_stylesheet("brgen")
+      if brgen
+        roots = Operator::ScssRules.rules(File.read(brgen)).select { |rule| rule.selector.start_with?(":root") }
+        @result.fail("dialect_purity: brgen's :root does not include the brgen-old tokens") unless roots.any? { |rule| rule.body.match?(/brgen-old/) }
+      else
+        @result.fail("dialect_purity: brgen has no application.scss")
       end
-      # bsdports' dialect root is _ports_shell.scss, which application.scss @uses.
-      bsd = %w[application.scss _ports_shell.scss].map { |name| File.join(@rails, "bsdports/app/assets/stylesheets", name) }
-                                                  .select { |path| File.file?(path) }
-      if bsd.any?
-        body = bsd.map { |path| File.read(path) }.join
+
+      bsd = app_stylesheet("bsdports")
+      if bsd
+        body = File.read(bsd)
         @result.fail("dialect_purity: bsdports missing CRT green identity") unless body.include?("#63c363") || body.include?("openbsd")
       end
-      amber = File.join(@rails, "amber/app/assets/stylesheets/_variables.scss")
-      amber = File.join(@rails, "amber/app/assets/stylesheets/application.scss") unless File.file?(amber)
-      if File.file?(amber)
-        # soft check — luxury or brand present
-        body = File.read(amber)
-        @result.warn("dialect_purity: amber dialect markers weak") unless body.match?(/luxury|brand|editorial|caprasimo|jsfiddle/i) || File.file?(File.join(@rails, "amber/app/assets/stylesheets/_jsfiddle_chrome.scss"))
-      end
+
+      amber = app_stylesheet("amber")
+      return unless amber
+
+      # soft check — luxury or brand present
+      @result.warn("dialect_purity: amber dialect markers weak") unless File.read(amber).match?(/luxury|brand|editorial|caprasimo|jsfiddle/i)
+    end
+
+    def app_stylesheet(app)
+      path = File.join(@rails, app, "app/assets/stylesheets/application.scss")
+      File.file?(path) ? path : nil
     end
   end
 end

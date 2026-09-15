@@ -4,33 +4,2421 @@
 @use "shell_widgets";
 @use "responsive";
 @use "master_embed";
-// The in-feed affiliate band, shared with brgen.
 @use "affiliate_feed_unit";
-@use "variables";
-@use "base";
-@use "brand";
-@use "guest_compose";
-@use "layout";
-@use "items";
-@use "items_luxury";
-@use "item_forms";
-@use "dashboard";
-@use "dressing_room";
-@use "visualization";
-@use "organize";
-@use "today_look";
-@use "guest_showcase";
-@use "editorial";
-@use "jsfiddle_chrome";
-@use "empty_state";
-@use "offline_page";
-@use "auth_form";
-@use "tiptap";
-@use "focus_ring";
-@use "chat_reactions";
+@use "dialect_tokens" as x;
+@use "sass:meta";
+
+// The in-feed affiliate band, shared with brgen.
+
+// amber's inks over the family light palette, read from design_tokens.yml
+// luxury through the --luxury-* tokens sync_dialect_tokens keeps in step.
+// Secondary text and hairlines were the family #666666 on #efefef, 4.99:1,
+// under the 7:1 TYPOGRAPHY sets for normal text, and a rule weighed as much as
+// the text beside it. --danger has no --luxury-* token to read, so its value
+// is written here and luxury.light_danger records it for the contrast census.
+@mixin amber-light-inks {
+  --text-secondary: var(--luxury-muted);
+  --border: var(--luxury-border);
+  --danger: #82372d;
+}
+
+// Luxury on :root alone loses to stack's social light. _tokens.scss paints
+// light-tokens at [data-theme=light] and at :root:not([data-theme=dark])
+// inside prefers-color-scheme: light — (0,2,0) vs this file's (0,1,0).
+// Measured live 2026-08-13: amber.brgen.no --bg #f7f6fa / --accent #5b4fc4
+// (social) while --radius-card stayed 14px (luxury). Same leak WIRING_NOTES
+// records for brgen's two light themes. Restate luxury at those selectors
+// so the worn dialect is what a visitor with OS light mode actually sees.
+:root {
+  @include x.luxury-light-tokens;
+  @include amber-light-inks;
+  @include x.app-root-tokens;
+  color-scheme: light;
+  // Not inverted. These read as "the ink colour" and "the paper colour", and
+  // .btn paints background: var(--color-black) — pointing them at --bg/--text
+  // the other way round made every button in the app the same colour as the
+  // page it sits on, with border: none, so only its label rendered.
+  --color-black: var(--text);
+  --color-white: var(--bg);
+  --color-extra-light-grey: var(--border);
+  --color-grey-text: var(--text-secondary);
+  --color-danger: var(--danger);
+  // --color-success, --color-warning and --color-info are not restated here.
+  // shared/_tokens.scss declares all three on :root and every app reaches it
+  // through stack's @forward "tokens"; a second copy at the same value is how
+  // --color-warning came to be #ffd400 in one file and #c9a227 in another.
+  --font-size-base: var(--font-size);
+  --color-badge: var(--accent);
+  --tint-success: color-mix(in srgb, var(--color-success) 20%, var(--surface-elevated));
+  --focus-ring: 2px solid var(--accent);
+  --elev-1: 1px solid var(--border);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    @include x.luxury-light-tokens;
+    @include amber-light-inks;
+    color-scheme: light;
+  }
+}
+
+[data-theme="light"] {
+  @include x.luxury-light-tokens;
+  @include amber-light-inks;
+  color-scheme: light;
+}
+
+#dark-toggle {
+  position: fixed;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.theme-root {
+  min-height: 100dvh;
+}
+
+#dark-toggle:checked ~ .theme-root {
+  @include x.luxury-dark-tokens;
+  @include x.app-root-tokens;
+  color-scheme: dark;
+  --color-black: var(--text);
+  --color-white: var(--bg);
+  --color-extra-light-grey: var(--border);
+  --color-grey-text: var(--text-secondary);
+  --color-danger: var(--danger);
+  --color-badge: var(--accent);
+  --tint-success: color-mix(in srgb, var(--color-success) 20%, var(--surface-elevated));
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* html only: the shorthand on both made body resolve --font-size a second
+   time against html's new size. Harmless while --font-size is 1rem, which is
+   why this only ever showed at >=1280px where the media query below raises it --
+   measured there as html 18px, body 20.25px. See brgen _root.scss, same bug. */
+html {
+  font: var(--font-size) / var(--line-height) var(--font);
+}
+
+body {
+  font: inherit;
+}
+
+@media (min-width: 1280px) {
+  html {
+    font-size: var(--text-lg);
+    line-height: 1.5;
+  }
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+a {
+  color: var(--text);
+  text-decoration: none;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+/* Unread message: the same two-signal state the notification list wears —
+   weight and a leading accent dot; the "unread" word in the meta line is
+   the third, textual signal. */
+.message--unread {
+  font-weight: var(--weight-bold, 600);
+}
+.message--unread::before {
+  content: "";
+  display: inline-block;
+  inline-size: var(--space-2, 0.5rem);
+  block-size: var(--space-2, 0.5rem);
+  margin-inline-end: var(--space-2, 0.5rem);
+  border-radius: var(--radius-pill, 999px);
+  background: var(--accent);
+  vertical-align: middle;
+}
+
+:root {
+  /* The Caprasimo brand ramp (f75050a6d). Display type does not read the
+     body ladder anywhere in this tree; these four steps are the mark's own
+     scale, values unchanged from the literals they replace. */
+  --brand-mark: 200px;
+  --brand-hero: 120px;
+  --brand-title: 60px;
+  --brand-footer: 40px;
+}
+
+/* Amber logo — the wordmark on a swoosh, an animated radial gradient and white
+   retro lines. Geometry and motion match the canonical logo HTML (viewBox
+   1000×500).
+
+   Caprasimo is amber's brand mark, and the wordmark is the only thing set in
+   it: body, headings, UI and the error pages read the single sans stack in
+   var(--font). */
+@font-face {
+  font-family: "Caprasimo";
+  src: url("/fonts/caprasimo-latin-400-normal.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@property --gradient-x {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 50%;
+}
+
+@property --gradient-y {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 50%;
+}
+
+/* Mobile-first type sizes, in viewBox user units — NOT document type.
+   _logo.html.erb draws into viewBox="0 0 1000 500", so a length here is a
+   fraction of the logotype's own 1000x500 grid: 60 means "60/500 of the logo's
+   height", and the whole mark scales with the <svg> box. The document's modular
+   scale has no say in it, which is why these are px and must stay px.
+
+   The mark previously read var(--text-xs)/var(--text-xl). Those are rem, and rem
+   in an SVG resolves against the *root* font-size — which _minimal.scss raises
+   from 16px to 21px at min-width 1280. Measured in Chrome, at 1400px wide:
+   the word held at 60 user units while the (r) grew 12 -> 15.75, moving the
+   mark/word ratio 0.2000 -> 0.2625. One glyph of the wordmark inflating 31% at
+   one breakpoint, from a token swap that looked like a no-op because at the
+   default root size 0.75rem is exactly 12px. */
+.amber-logo-svg .amber-logo-word {
+  font-family: "Caprasimo", Arial, sans-serif;
+  font-size: var(--brand-title);
+}
+
+.amber-logo-svg .amber-logo-mark {
+  font-size: 12px;
+}
+
+@media (min-width: 768px) {
+  .amber-logo-svg .amber-logo-word {
+    font-size: var(--brand-hero);
+  }
+
+  .amber-logo-svg .amber-logo-mark {
+    font-size: 24px;
+  }
+}
+
+.animated-gradient,
+.amber-logo-gradient {
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(
+    circle at var(--gradient-x) var(--gradient-y),
+    #ffb999 0%,
+    #e6cce6 33%,
+    #cce6cc 66%,
+    #99e6e6 100%
+  );
+  animation: moveGradient 20s infinite var(--ease-out, cubic-bezier(0.25, 0.1, 0.25, 1));
+}
+
+@keyframes moveGradient {
+  0% { --gradient-x: 0%; --gradient-y: 0%; }
+  25% { --gradient-x: 100%; --gradient-y: 0%; }
+  50% { --gradient-x: 100%; --gradient-y: 100%; }
+  75% { --gradient-x: 0%; --gradient-y: 100%; }
+  100% { --gradient-x: 0%; --gradient-y: 0%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animated-gradient,
+  .amber-logo-gradient {
+    animation: none;
+    --gradient-x: 50%;
+    --gradient-y: 50%;
+  }
+}
+
+/* Banner: full-bleed, proportional height like logo HTML (#container) */
+.amber-logo-banner {
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
+  line-height: 0; // intentional: collapses inline-SVG descender gap
+  background: var(--surface);
+  position: sticky;
+  top: 0;
+  z-index: calc(var(--z-nav) + 1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  a {
+    display: block;
+    width: 100%;
+    max-width: 1000px; // scan: intentional — the brand mark's layout bound, not a text measure
+    text-decoration: none;
+    line-height: 0;
+  }
+
+  .amber-instance {
+    width: 100%;
+    height: 33.33vw; /* mobile: height = width/3 */
+    max-height: 500px;
+    overflow: hidden;
+  }
+
+  .amber-logo-svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+}
+
+@media (min-width: 768px) {
+  .amber-logo-banner .amber-instance {
+    width: min(100vw, 1000px);
+    height: 500px; // scan: intentional — a drawn stage: the art has fixed dimensions, not flowing content
+    max-height: 500px;
+    margin-inline: auto;
+  }
+}
+
+/* Persistent top-nav instance of the Caprasimo mark. Hero sizing above is
+   500px tall; chrome has to sit in a bar. The home link is width:auto so it
+   does not inherit the hero's `a { width: 100% }`. Word size is in viewBox
+   units and is raised here so "amber®" still reads at 52px tall. */
+.amber-logo-banner--nav {
+  justify-content: space-between;
+  align-items: center;
+  padding-inline: var(--space-3) var(--chrome-toggle-inline);
+  /* The mark inside this bar is 52px and --bar-height is 44, so the wordmark
+     overflowed its own bar and sat at y=0 with its ascenders against the
+     viewport edge — measured in Chrome at 1440x900, the anchor's box starting
+     at exactly 0. min-height is a floor rather than a height, so the block
+     padding both gives the mark its inset and lets the bar grow to hold it. */
+  padding-block: var(--space-2);
+  min-height: var(--bar-height, 44px);
+}
+
+.amber-logo-banner--nav .amber-logo-home {
+  display: block;
+  width: auto;
+  max-width: 220px;
+  flex: 0 1 auto;
+  line-height: 0;
+}
+
+.amber-logo-banner--nav .amber-instance {
+  width: 200px;
+  height: 52px;
+  max-height: 52px;
+  margin-inline: 0;
+}
+
+.amber-logo-banner--nav .amber-logo-svg .amber-logo-word {
+  font-size: var(--brand-mark);
+}
+
+.amber-logo-banner--nav .amber-logo-svg .amber-logo-mark {
+  font-size: var(--brand-footer);
+}
+
+.amber-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* Guest hero still uses the same logo mark full-bleed */
+.amber-guest-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-8);
+  padding: var(--space-12) 0 var(--space-8);
+  text-align: center;
+}
+
+.amber-guest-hero .logo {
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
+  line-height: 0;
+  background: var(--surface);
+
+  .amber-instance {
+    width: 100%;
+    height: 33.33vw;
+    max-height: 500px;
+  }
+
+  svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+}
+
+@media (min-width: 768px) {
+  .amber-guest-hero .logo .amber-instance {
+    width: min(100vw, 1000px);
+    height: 500px; // scan: intentional — a drawn stage: the art has fixed dimensions, not flowing content
+    margin-inline: auto;
+  }
+}
+
+/* main#main-content in front so the page-title rule in _layout.scss cannot
+   reach the hero sentence, which keeps its own size and weight. */
+main#main-content .amber-guest-hero .title {
+  max-width: 28rem;
+  margin-inline: auto;
+  font-family: var(--font);
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+  font-weight: var(--weight-normal);
+  margin-block: 0;
+  letter-spacing: var(--tracking-tight);
+}
+
+/* ch, not rem: 32rem is 640px at amber's root and the measure the type
+   actually sets is counted in characters, which is what the gate reads.
+   --leading-normal (1.5) because this is prose: --line-height is the root's
+   absolute 20px, which set the 15.75px paragraph at 1.27. */
+.amber-guest-hero .body {
+  max-width: var(--measure-narrow);
+  margin-inline: auto;
+  color: var(--text-secondary);
+  margin-block: 0;
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+}
+
+.amber-guest-hero .actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: center;
+  margin: 0;
+}
+
+.amber-guest-secondary {
+  margin: 0;
+  font-size: var(--text-sm, 0.875rem);
+}
+
+.amber-guest-secondary a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-weight: var(--weight-bold);
+}
+
+.amber-guest-secondary a:hover,
+.amber-guest-secondary a:focus-visible {
+  color: var(--text);
+  text-decoration: underline;
+}
+
+.amber-footer {
+  margin-block-start: var(--luxury-space-xl);
+  padding: var(--luxury-space-xl) var(--luxury-space-md) var(--luxury-space-lg);
+}
+
+.amber-footer-cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--tile-min-md), 1fr));
+  gap: var(--luxury-space-lg);
+  max-width: 640px;
+}
+
+.amber-footer-cols nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--luxury-space-xs);
+}
+
+.amber-footer-cols h2 {
+  font-size: var(--luxury-font-meta);
+  font-weight: var(--weight-bold);
+  color: var(--luxury-muted);
+  margin-bottom: var(--luxury-space-xs);
+}
+
+/* The footer nav and the language switcher are both link lists a thumb hunts
+   for, and both measured under the 44px fitts floor on nine surfaces. */
+.amber-footer-cols a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min, 44px);
+  min-inline-size: var(--tap-min, 44px);
+  font-size: var(--luxury-font-meta);
+  color: var(--luxury-text);
+}
+
+/* Language switcher. The current locale reads as chosen rather than as a link
+   you have not pressed yet. */
+.amber-footer-locales a.is-current {
+  font-weight: var(--weight-bold);
+  text-decoration: underline;
+}
+
+.amber-footer-legal {
+  margin-top: var(--luxury-space-xl);
+  font-size: var(--luxury-font-meta);
+  color: var(--luxury-muted);
+}
+/* Amber luxury refinements (UI_REFINEMENTS §D) */
+
+:root {
+  --line-height-relaxed: 1.6;
+  --letter-display: 0.04em;
+  --focus-ring: 2px solid var(--accent);
+  --elev-1: 1px solid var(--border);
+}
+
+/* a11y floor + touch targets — mirrors brgen's _ui_refinements_pass.scss.
+   Amber only had this scoped to the edge-swiper grip; every other button
+   here (including .carousel-btn) had no floor at all. :where() keeps
+   specificity at 0 so any more specific button rule still wins on size. */
+:where(button, .btn, a.chip, .carousel-btn) {
+  min-height: var(--tap-min);
+  min-width: var(--tap-min);
+}
+
+body {
+  line-height: var(--line-height-relaxed);
+  letter-spacing: var(--tracking-normal);
+}
+
+.brand,
+.logo-banner,
+.logo-bar {
+  border-bottom: 1px solid var(--border, var(--color-extra-light-grey));
+}
+
+/* Editorial grid: first card larger */
+.items-grid,
+.wardrobe-grid {
+  display: grid;
+  gap: var(--space-6);
+  grid-template-columns: repeat(auto-fill, minmax(var(--tile-min-md), 1fr));
+}
+/* One column of tiles has no spare axis to span, so the hero starts as a plain
+   cell and only becomes a hero from sm up. This base carried span 2 with a
+   max-width block below cutting it back to 1 — inverting the block without
+   moving the base left span 2 at every width. */
+.items-grid > :first-child,
+.wardrobe-grid > :first-child {
+  grid-column: span 1;
+  grid-row: span 1;
+}
+
+/* The first tile is a plain cell until there is room for a hero. One column of
+   tiles has no spare axis to span, so span 2 only means anything from sm up. */
+@media (min-width: 576px) {
+  .items-grid > :first-child,
+  .wardrobe-grid > :first-child {
+    grid-column: span 2;
+    grid-row: span 2;
+  }
+}
+
+.item-photo--placeholder,
+.item-card.is-empty {
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 6px,
+      color-mix(in srgb, var(--border) 55%, transparent) 6px,
+      color-mix(in srgb, var(--border) 55%, transparent) 7px
+    ),
+    var(--surface-elevated);
+  color: var(--text-secondary);
+  display: grid;
+  place-items: center;
+  font-size: var(--text-xs);
+  min-height: 8rem;
+  aspect-ratio: 3 / 4;
+  border: var(--elev-1);
+}
+
+/* Empty / skeleton floor for wardrobe */
+.empty-state {
+  max-width: 24rem;
+}
+
+.skeleton {
+  border-radius: var(--radius-sm, 6px);
+  background: linear-gradient(
+    90deg,
+    var(--hover-subtle) 0%,
+    var(--hover) 50%,
+    var(--hover-subtle) 100%
+  );
+  background-size: 200% 100%;
+  animation: amber-skeleton 1.2s var(--ease-in-out) infinite;
+  min-height: 1rem;
+}
+
+@keyframes amber-skeleton {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; }
+}
+
+/* Custom properties substitute at computed-value time, so --border here reads
+   --text-secondary's final value on :root — which this same block sets to
+   --text. The boundary and the meta text both become the body ink: 10.99:1 on
+   #efefef and 18.26:1 on #000 by Deploy::DesignMetrics.contrast_ratio, against
+   --border #666's 4.99 and 3.66. This is the whole override; a second one
+   further down the file restated it as the literal #2c2824, a warm near-black
+   tuned against amber's retired luxury paper, which measures 1.44:1 on #000 —
+   so a reader asking for more contrast got a border weaker than the default and
+   under the 3.0 floor WCAG 1.4.11 sets for a boundary. */
+@media (prefers-contrast: more) {
+  :root {
+    --border: var(--text-secondary);
+    --text-secondary: var(--text);
+  }
+  a { text-decoration: underline; }
+}
+
+/* Edge swiper grips */
+[data-controller="edge-swiper"] button,
+.edge-swiper-grip {
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+}
+[data-controller="edge-swiper"] button:focus-visible,
+.edge-swiper-grip:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Swiper peek */
+
+:where(button, .btn, a.btn):focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Anonymous frontpage compose — brgen pattern, Google-light Amber styling */
+
+.amber-compose-box {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-4);
+  margin: 0 0 var(--space-5);
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  font-family: var(--font);
+}
+
+.amber-compose-avatar {
+  width: var(--space-10);
+  height: var(--space-10);
+  border-radius: var(--radius-pill);
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--accent) 25%, var(--surface)),
+    color-mix(in srgb, var(--accent) 12%, var(--surface)) 58%,
+    var(--search-bg, var(--surface-elevated))
+  );
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  font-weight: var(--weight-bold);
+  font-size: var(--text-base);
+  color: var(--text-secondary);
+}
+
+.amber-compose-inner {
+  flex: 1;
+  min-width: 0;
+}
+
+.amber-compose-input {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--text-base);
+  line-height: 1.5;
+  padding: var(--space-1) 0;
+  resize: none;
+  min-height: var(--tap-min);
+}
+
+.amber-compose-input::placeholder {
+  color: var(--text-secondary);
+}
+
+.amber-compose-input:focus {
+  outline: none;
+}
+
+.amber-compose-box--expanded .amber-compose-input {
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--space-2);
+}
+
+.amber-compose-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.amber-compose-tags {
+  display: flex;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
+.amber-compose-tags span {
+  padding: var(--space-1) var(--space-1);
+  border-radius: var(--radius-pill);
+  background: var(--surface-elevated);
+}
+
+.amber-compose-submit {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-inline-start: auto;
+}
+
+.amber-compose-as {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  color: var(--text-secondary);
+  text-transform: lowercase;
+}
+
+.amber-compose-btn {
+  background: var(--accent);
+  color: var(--text);
+  border-radius: var(--radius-pill);
+  font-weight: var(--weight-bold);
+  border: none;
+}
+
+.amber-compose-hint {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  margin: var(--space-1) 0 0;
+}
+
+.amber-compose-hint a {
+  color: var(--accent);
+}
+
+.amber-guest-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.amber-guest-feed .feed-post {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: var(--space-4) var(--space-4);
+  margin-bottom: var(--space-3);
+}
+
+.amber-guest-feed .post-meta {
+  color: var(--text-secondary);
+}
+
+.amber-guest-feed .author {
+  color: var(--text);
+  font-weight: var(--weight-bold);
+}
+
+.amber-guest-feed .post-body {
+  color: var(--text);
+}
+
+/* Amber's toteme/necessaire-inspired chrome has no dividing borders anywhere
+   in the shell — override the shared shell main-content column rule. */
+main#main-content,
+main[role="main"] {
+  border-inline: none;
+}
+
+.flash {
+  padding: var(--space-3) var(--space-6);
+  border-bottom: 1px solid var(--border);
+
+  &--error,
+  &--alert {
+    color: var(--color-danger);
+  }
+
+  &--notice {
+    color: var(--color-success);
+  }
+}
+
+h1,
+h2 {
+  margin-bottom: var(--space-3);
+  font-family: var(--font);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight, 1.25);
+  letter-spacing: var(--tracking-tight, -0.01em);
+  max-width: var(--measure-wide);
+}
+
+/* A page title and a section heading on the luxury scale, both at 600: the
+   shared page-title rule set 800 and 1.75rem, which made four weights on one
+   page and an h1 1.75x body. :not([class]) outranks that rule's
+   main#main-content > header h1 and leaves classed headings (the hero
+   sentence, feed titles, empty states, showcase labels) on their own rules.
+   The h2 rule reads only a section's own heading, so a heading nested in a
+   header's action group keeps its size. */
+main#main-content h1:not([class]) {
+  font-size: var(--luxury-font-display);
+  font-weight: var(--weight-bold);
+}
+
+main#main-content > section > h2:not([class]),
+main#main-content > h2:not([class]) {
+  font-size: var(--luxury-font-title);
+  font-weight: var(--weight-bold);
+}
+
+main#main-content > :first-child:not(.flash) {
+  margin-block-start: var(--space-8);
+}
+
+main#main-content > section,
+main#main-content > header {
+  margin-block-end: var(--space-12);
+}
+
+main#main-content header > nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-block-start: var(--space-6);
+}
+
+/* Phone first: main carries the family gutter, and the section nav is a single
+   scrolling row rather than wrapping onto several. From 640px the 600px column
+   sits inside a wider viewport, whose margin is the gutter, so main gives its
+   padding back and the nav wraps again.
+   The selector names .layout because _layout_chrome zeroes `.layout > main` at
+   every width, and a bare main#main-content loses to it on specificity — which
+   put amber's text against the screen edge at 400px.
+   The `flex: 0 0 auto` on the nav's controls stays unconditional: it stops them
+   shrinking in the scrolling row and is harmless once the row wraps. */
+/* _minimal makes every main a centred flex column, so a short page floated
+   mid-screen and each child shrank to its own width and centred on its own: the
+   demo title, its outfit list and its item grid started at three different x
+   positions. A page reads from one left edge at the top of the column. */
+.layout > main#main-content {
+  padding-inline: var(--page-gutter);
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
+main#main-content header > nav {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-block-end: var(--space-2);
+  scrollbar-width: thin;
+}
+
+main#main-content header > nav .btn,
+main#main-content header > nav form {
+  flex: 0 0 auto;
+}
+
+@media (min-width: 640px) {
+  .layout > main#main-content {
+    padding-inline: 0;
+  }
+
+  main#main-content header > nav {
+    flex-wrap: wrap;
+    overflow-x: visible;
+    padding-block-end: 0;
+    scrollbar-width: auto;
+  }
+}
+
+[dir="rtl"] .form .field--check {
+  flex-direction: row-reverse;
+}
+
+.item-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--tile-min-lg), 1fr));
+  gap: var(--space-4);
+}
+
+.wardrobe-action-groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  margin-block: var(--space-6);
+}
+.wardrobe-action-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+.wardrobe-action-group h2 { width: 100%; margin: 0; font-size: var(--text-base); }
+.wardrobe-action-group--secondary { padding-block-start: var(--space-3); }
+.wardrobe-more-tools {
+  border: 0;
+  padding: 0;
+}
+.wardrobe-more-tools > summary {
+  cursor: pointer;
+  min-height: var(--tap-min);
+  display: inline-flex;
+  align-items: center;
+  font-weight: var(--weight-bold);
+  color: var(--text-secondary);
+  list-style: none;
+}
+.wardrobe-more-tools > summary::-webkit-details-marker { display: none; }
+.wardrobe-more-tools[open] > summary { margin-block-end: var(--space-3); }
+.wardrobe-more-tools .wardrobe-action-group {
+  padding: var(--space-6);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--surface-elevated, var(--surface));
+  margin-block-end: var(--space-3);
+}
+.wardrobe-more-tools .wardrobe-action-group--secondary { background: var(--hover-subtle); }
+.outfit-composition { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; aspect-ratio: 4 / 5; overflow: hidden; background: var(--luxury-border); border-radius: var(--radius-sm); }
+/* contain, not cover: a garment cropped to fill a square is a different garment.
+   The surface behind it keeps a narrow piece from floating on the grey gap. */
+.outfit-composition img { width: 100%; height: 100%; min-height: 0; object-fit: contain; background: var(--surface); }
+.outfit-composition span { display: grid; place-items: center; background: var(--surface-elevated); color: var(--text-secondary); font-weight: var(--weight-bold); }
+.danger-zone { margin-top: var(--space-8); padding-top: var(--space-6); border-top: 0; }
+.danger-zone summary { cursor: pointer; min-height: var(--tap-min); display: flex; align-items: center; }
+
+/* Base item-card (kept for compatibility) — space-not-lines; luxury variant is photo-first */
+.item-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--surface-elevated, var(--surface));
+}
+
+/* The whole garment, letterboxed on the card's own surface. cover cut the
+   cat-eye sunglasses (240x72) into two brown halves and the hoops into arcs. */
+.item-card .item-photo {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+}
+
+.item-card .item-title {
+  font-weight: var(--weight-bold);
+}
+
+/* A demo card has one destination and the title was its only 26px-tall way
+   there, so the title's hit area covers the card. */
+.item-card--demo {
+  position: relative;
+}
+
+.item-card--demo .item-title::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+/* Text links a thumb aims for on their own: the guest hero's secondary row, the
+   demo item's way back, the widget card's links and a section's closing link. */
+.amber-guest-secondary a,
+.item-detail > p:first-child a,
+.sidebar-card p a,
+.more_link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min);
+}
+
+.item-card nav {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-top: auto;
+}
+
+.item-detail {
+  max-width: 700px;
+}
+
+/* One screen of photograph, then the name. Uncapped, a 400x800 garment was drawn
+   at 600x1200 and the title landed at y=1560 on a 900px screen. */
+.item-detail .item-photo--detail,
+.luxury-photo {
+  inline-size: 100%;
+  block-size: auto;
+  max-block-size: calc(100dvh - var(--bar-height) - var(--space-12));
+  object-fit: contain;
+}
+
+/* Dynamic color from wardrobe_color_swatch helper — keep magic color out of ERB */
+.color-swatch {
+  display: inline-block;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  vertical-align: middle;
+  background: var(--swatch, var(--surface-elevated));
+}
+
+.color-swatch--sm {
+  width: 1rem;
+  height: 1rem;
+}
+
+.color-swatch-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem; /* 8px */
+}
+
+/* Light scrolly reveals for timelines and long content (compatible with existing animations) */
+.style-phase-card,
+.timeline-item {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity var(--transition-normal) var(--ease-out), transform var(--transition-normal) var(--ease-out);
+}
+
+.style-phase-card.is-visible,
+.timeline-item.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .style-phase-card,
+  .timeline-item {
+    transition: none;
+  }
+}
+
+.meta {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--space-2) var(--space-6);
+  margin: var(--space-6) 0;
+}
+
+.meta dt {
+  font-weight: var(--weight-bold);
+}
+
+.ai-card {
+  background: var(--color-extra-light-grey);
+  border-radius: var(--radius-xs);
+  padding: var(--space-6);
+  margin: var(--space-6) 0;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap-min);
+  padding: var(--space-2) var(--space-6);
+  background: var(--color-black);
+  color: var(--color-white);
+  border: none;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  font-size: var(--text-sm);
+  text-decoration: none;
+}
+
+.btn:focus-visible,
+.btn-sm:focus-visible,
+.btn.btn-sm:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* inline-flex so the label sits in the middle of the 44px it is given; as an
+   inline link the height grew below the text and "Sign in" hugged the top. */
+.btn-sm,
+.btn.btn-sm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap-min);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-xs);
+  background: var(--hover-subtle);
+  color: var(--text);
+  border: none;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+}
+
+.btn-danger,
+.btn.btn-danger {
+  background: var(--color-danger);
+}
+
+.badge {
+  display: inline-block;
+  background: var(--color-badge);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-xs);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+}
+
+/* Luxury minimalist refinements (Aesop/Toteme/Nécessaire) */
+.item-grid--luxury {
+  grid-template-columns: repeat(auto-fill, minmax(var(--tile-min-xl), 1fr));
+  gap: var(--luxury-space-lg);
+}
+
+.luxury-card,
+.item-card--luxury {
+  display: flex;
+  flex-direction: column;
+  gap: var(--luxury-space-xs);
+  transition: opacity var(--transition-fast) var(--ease-out);
+}
+
+.luxury-card .item-photo,
+.item-card--luxury .item-photo {
+  width: 100%;
+  aspect-ratio: 4 / 5; /* better for clothing than square */
+  object-fit: contain;
+  background: var(--luxury-bg);
+}
+
+.luxury-card .item-title,
+.item-card--luxury .item-title {
+  font-size: var(--luxury-font-meta);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--luxury-letter-tight);
+  line-height: 1.5;
+  color: var(--luxury-text);
+}
+
+/* Title + one meta line stay always-visible -- the image does the rest of
+   the talking. The action nav overlays the photo, revealed on hover/focus,
+   so the resting grid reads as pure photography. */
+.luxury-card .item-photo-wrap,
+.item-card--luxury .item-photo-wrap {
+  position: relative;
+}
+
+.luxury-card nav,
+.item-card--luxury nav {
+  display: flex;
+  gap: var(--luxury-space-xs);
+  flex-wrap: wrap;
+  position: absolute;
+  inset-inline: var(--luxury-space-xs);
+  bottom: var(--luxury-space-xs);
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 160ms var(--ease-out), transform 160ms var(--ease-out);
+  pointer-events: none;
+}
+
+.luxury-card:hover nav,
+.luxury-card:focus-within nav,
+.item-card--luxury:hover nav,
+.item-card--luxury:focus-within nav {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.luxury-card nav .btn-sm,
+.item-card--luxury nav .btn-sm {
+  background: var(--luxury-surface);
+}
+
+/* Luxury PDP */
+.luxury-detail-grid {
+  display: grid;
+  gap: var(--luxury-space-xl);
+}
+
+@media (min-width: 768px) {
+  .luxury-detail-grid {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+}
+
+.luxury-photos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--luxury-space-md);
+}
+
+.luxury-title {
+  font-size: var(--luxury-font-display);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--luxury-letter-tight);
+  line-height: var(--leading-tight, 1.25);
+  margin: 0.25rem 0;
+}
+
+.luxury-tags {
+  margin: var(--luxury-space-sm) 0;
+}
+
+.luxury-meta-list {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--luxury-space-xs) var(--luxury-space-md);
+  margin: var(--luxury-space-md) 0;
+  font-size: var(--luxury-font-meta);
+}
+
+.luxury-meta-list dt {
+  font-weight: var(--weight-bold);
+  color: var(--luxury-muted);
+}
+
+.luxury-section {
+  margin: var(--luxury-space-lg) 0;
+}
+
+.luxury-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--luxury-space-sm);
+  margin-top: var(--luxury-space-lg);
+}
+
+.luxury-actions .btn {
+  padding: var(--space-2) 1.25rem;
+}
+
+.form {
+  max-width: 480px;
+}
+
+.form .field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
+}
+
+.form input,
+.form select,
+.form textarea {
+  border: 1px solid var(--color-extra-light-grey);
+  border-radius: var(--radius-xs);
+  padding: var(--space-3);
+  font: inherit;
+}
+
+.form .actions {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  margin-top: var(--space-8);
+}
+
+.media-picker {
+  border: 1px dashed var(--border, var(--color-border));
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+}
+
+.media-picker.is-dragging {
+  border-color: var(--accent, var(--color-accent));
+  background: var(--hover-subtle);
+}
+
+.media-picker-preview {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--tile-min-xs), 1fr));
+  gap: 0.5rem;
+}
+
+.media-picker-thumb {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+}
+
+/* Two columns on a phone, four from md up. auto-fit with a floor would compute
+   this and give the tablet a three-column step, which is the better answer — but
+   the floor has to be measured against the real dashboard container, and that
+   page is behind a login this probe cannot reach. Guessing a floor that turns out
+   wider than the column would silently drop desktop from four columns to three.
+   Recorded in TODO.md; until then this is the same two counts, stated phone-first. */
+.dash-stats dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+
+@media (min-width: 640px) {
+  .dash-stats dl {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-8);
+  }
+}
+
+.dash-stats dl > div {
+  min-width: 0;
+  padding: var(--space-3);
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: var(--surface-elevated, var(--surface));
+}
+
+.dash-stats dt {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.dash-stats dd {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+}
+
+/* .plan-row / .cpw-row keep a query: stacking a row into a column is a layout
+   decision at a known width, not a size the browser can work out. Stated
+   phone-first, undone from md up. */
+.plan-row,
+.cpw-row {
+  align-items: flex-start;
+}
+
+.cpw-row {
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+@media (min-width: 640px) {
+  .plan-row,
+  .cpw-row {
+    align-items: center;
+  }
+
+  .cpw-row {
+    flex-direction: row;
+    gap: var(--space-4);
+  }
+}
+
+.weather-bar {
+  background: color-mix(in srgb, var(--accent) 15%, var(--surface-elevated));
+  border-bottom: 0;
+  padding: var(--space-3) var(--space-6);
+  font-size: var(--text-sm);
+  color: var(--accent);
+}
+
+.stat-warn {
+  color: var(--color-danger);
+}
+
+.plan-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: var(--space-6) 0;
+}
+
+.plan-row {
+  display: flex;
+  gap: var(--space-6);
+  align-items: center;
+  padding: var(--space-3) 0;
+  border-bottom: 0;
+}
+
+.plan-date {
+  font-weight: var(--weight-bold);
+  min-width: 4rem;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.cpw-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: var(--space-6) 0;
+}
+
+.cpw-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  /* space-between alone leaves nothing between a long title and a long value:
+     "Suede ankle boots" ran straight into "NOK 293.33/wear" once the currency
+     gained a three-letter unit. */
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 0; /* space-not-lines — matches .plan-row */
+}
+
+.cpw-val {
+  font-size: var(--text-xs);
+  color: var(--danger);
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+  white-space: nowrap;
+}
+
+.field-row {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: var(--space-6);
+}
+
+.input {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  padding: var(--space-2) var(--space-3);
+  font: inherit;
+}
+
+.input--wide {
+  flex: 1;
+  min-width: 280px;
+}
+
+.tag {
+  display: inline-block;
+  background: var(--hover-subtle);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-xs);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  margin-inline-end: var(--space-2);
+}
+
+.tag--phase {
+  background: var(--tint-success);
+  color: var(--color-success);
+}
+
+.style-phase-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--tile-min-xl), 1fr));
+  gap: var(--space-8);
+  margin: var(--space-8) 0;
+}
+
+.style-phase-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-6);
+}
+
+.style-phase-list {
+  margin: var(--space-3) 0 0;
+  padding-inline-start: var(--space-6);
+}
+
+.style-timeline {
+  margin: var(--space-6) 0;
+  padding: 0;
+  list-style: none;
+  border-inline-start: 2px solid var(--border);
+}
+
+.style-timeline li {
+  position: relative;
+  margin: 0 0 var(--space-6) var(--space-6);
+  padding-inline-start: var(--space-3);
+}
+
+.style-timeline li::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: calc(-1 * var(--space-6) - var(--space-2));
+  top: var(--space-2);
+  width: var(--space-2);
+  height: var(--space-2);
+  border-radius: 0;
+  background: var(--text);
+}
+
+.tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-3) 0;
+}
+
+.occasion-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--tile-min-md), 1fr));
+  gap: var(--space-8);
+  margin: var(--space-8) 0;
+}
+
+.occasion-card {
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-6);
+}
+
+// The card heading is an h2 as of 2026-08-10 -- it followed the page h1 as an
+// h3, skipping a level in the outline. Nothing sized it before, so it rendered
+// at the UA h3 default and the promotion alone measured 18.72px -> 24px.
+// 1.17em is that UA h3 ratio, held so the fix is structural and not visual.
+// amber's h1,h2 rule in _layout.scss still supplies family, weight and tracking.
+.occasion-card h2 {
+  font-size: 1.17em;
+  margin-bottom: var(--space-2);
+}
+
+.occasion-card--sparse {
+  border-color: var(--color-warning);
+  background: color-mix(in srgb, var(--color-warning) 15%, var(--surface-elevated));
+}
+
+.occasion-card--covered {
+  border-color: var(--color-success);
+}
+
+.occasion-count {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  display: block;
+}
+
+.occasion-warn {
+  font-size: var(--text-xs);
+}
+
+.capsule-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.capsule-row {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-xs);
+}
+
+.capsule-row--keep {
+  background: var(--tint-success);
+}
+
+.capsule-row--consider {
+  background: color-mix(in srgb, var(--color-warning) 20%, var(--surface-elevated));
+}
+
+.capsule-row--release {
+  background: color-mix(in srgb, var(--color-danger) 18%, var(--surface-elevated));
+}
+
+.capsule-decision {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  min-width: 60px;
+  padding-top: var(--space-2);
+}
+
+// Intentional FLAT_UI exception: 3D mannequin model uses perspective /
+// preserve-3d so the dressing-room preview can rotate in depth. Do not
+// treat this as a license for decorative CSS 3D elsewhere.
+.dressing-room {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-8) 0;
+  /* main is a flex container, so without this the dressing room sizes to its
+     widest zone row rather than to the screen. */
+  min-width: 0;
+  max-width: 100%;
+}
+
+.mannequin-stage {
+  perspective: 800px;
+  width: 200px;
+}
+
+.mannequin {
+  position: relative;
+  width: 200px;
+  transform-style: preserve-3d;
+  transform: rotateY(-8deg) rotateX(2deg);
+  transition: transform var(--transition-normal) cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+  &:hover {
+    transform: rotateY(8deg) rotateX(2deg);
+  }
+}
+
+.mannequin-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.zone {
+  position: absolute;
+  overflow: hidden;
+  pointer-events: none;
+
+  img {
+    width: 100%;
+    height: 100%;
+    /* contain, not cover: these are garment cut-outs, and cover crops a
+       silhouette to the zone box — a coat loses its shoulders and a pair of
+       boots loses one boot. A photograph with a background still fills the box
+       the way it always did, it just is not cropped to it. */
+    object-fit: contain;
+    opacity: 0;
+    transition: opacity var(--transition-fast) var(--ease-out);
+  }
+
+  &--head {
+    top: 1%;
+    inset-inline-start: 33.5%;
+    width: 33%;
+    height: 17.5%;
+    border-radius: 0;
+  }
+
+  &--top {
+    top: 18%;
+    inset-inline-start: 6%;
+    width: 88%;
+    height: 34%;
+    border-radius: 0;
+  }
+
+  &--bottom {
+    top: 52%;
+    inset-inline-start: 1%;
+    width: 98%;
+    height: 43%;
+    border-radius: 0;
+  }
+
+  &--shoes {
+    top: 94%;
+    inset-inline-start: 0;
+    width: 100%;
+    height: 6%;
+    border-radius: 0;
+  }
+}
+
+.zone-carousels {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  width: 100%;
+  max-width: 420px;
+}
+
+.zone-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--color-extra-light-grey);
+  border-radius: var(--radius-xs);
+}
+
+.zone-tag {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  color: var(--color-grey-text);
+  min-width: 70px;
+}
+
+.carousel-btn {
+  background: none;
+  border: 1px solid var(--color-extra-light-grey);
+  border-radius: var(--radius-pill);
+  /* 44px is the Fitts's-law touch-target floor (design_rules.yml ux_laws.fitts) —
+     the old var(--space-3) box was 12px, smaller than its own glyph. */
+  width: var(--tap-min);
+  height: var(--tap-min);
+  cursor: pointer;
+  font-size: var(--text-lg);
+  line-height: 1.5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  &:hover {
+    background: var(--hover);
+  }
+}
+
+.zone-info {
+  flex: 1;
+  /* A flex item's automatic minimum size is its content, so the truncation
+     this rule asks for could never happen: the row grew to the longest
+     garment name and took the dressing room past the edge of the phone. */
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  font-size: var(--text-sm);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.zone-count {
+  font-size: var(--text-xs);
+  color: var(--color-grey-text);
+}
+
+// Why this garment leads its zone — TasteRanker's reasons, so the rotation is
+// legible as a preference model rather than a random shuffle.
+.zone-why {
+  font-size: var(--text-xs);
+  color: var(--color-grey-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dressing-room-actions {
+  margin-top: var(--space-3);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+}
+
+.dressing-room-save {
+  display: inline-flex;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .mannequin-stage {
+    perspective: none;
+  }
+
+  .mannequin {
+    transform: none;
+    transform-style: flat;
+
+    &:hover {
+      transform: none;
+    }
+  }
+}
+
+// Information visualization for the analytics page.
+//
+// Two forms, and deliberately only two: ranked horizontal bars (.viz-rows) for
+// "which of these is biggest", and an ordered column distribution (.viz-plot)
+// for "what shape is this". Both take their length from a --share custom
+// property in the 0..1 range set inline per mark, so nothing here bakes in a
+// pixel width and every figure reflows with its column.
+//
+// Flat by contract: solid fills, hairline rules, tabular numerals. No shadow,
+// gradient or glow. Colour is only ever data — the one accent fill, plus
+// --color-warning on the bucket the page is asking you to act on.
+
+.viz {
+  margin: 0 0 var(--space-8);
+}
+
+.viz-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.viz-title {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+}
+
+.viz-caption {
+  margin: 0;
+  font-size: var(--text-xs);
+}
+
+// Ranked bars -----------------------------------------------------------
+
+.viz-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--color-extra-light-grey);
+}
+
+.viz-row {
+  display: grid;
+  grid-template-columns: minmax(6rem, 12rem) 1fr auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-extra-light-grey);
+}
+
+.viz-label {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-size: var(--text-sm);
+}
+
+.viz-label-text,
+.viz-note {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.viz-note {
+  font-size: var(--text-xs);
+}
+
+.viz-track {
+  height: 10px;
+  min-width: 2rem;
+  background: var(--color-extra-light-grey);
+}
+
+.viz-fill {
+  display: block;
+  height: 100%;
+  // Only rendered for a positive share, so the floor cannot invent a mark
+  // where the value is zero.
+  width: max(calc(var(--share, 0) * 100%), 2px);
+  background: var(--accent);
+}
+
+.viz-value {
+  font-family: var(--font);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+  white-space: nowrap;
+}
+
+// Column distribution ---------------------------------------------------
+
+.viz-plot {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  // No column gap on purpose: the label cells butt together so their top
+  // borders read as one continuous axis. The fills are separated by their own
+  // inset instead of by a gap that would break the line.
+  gap: 0;
+}
+
+.viz-column {
+  display: grid;
+  grid-template-rows: auto 140px auto;
+  justify-items: center;
+  min-width: 0;
+}
+
+.viz-column-value {
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-grey-text);
+}
+
+.viz-column-fill {
+  align-self: end;
+  width: calc(100% - var(--space-2));
+  height: max(calc(var(--share, 0) * 100%), 2px);
+  background: var(--accent);
+}
+
+.viz-column-label {
+  width: 100%;
+  padding-top: var(--space-1);
+  border-top: 1px solid var(--text);
+  text-align: center;
+  font-size: var(--text-xs);
+  color: var(--color-grey-text);
+}
+
+// The bucket the page is asking you to do something about.
+.viz-column.is-emphasis .viz-column-fill {
+  background: var(--color-warning);
+}
+
+// Closet organization page. Each tip is a rule with its principle attached,
+// so the principle gets its own line rather than being folded into the body —
+// you should be able to skim the principles alone and disagree with one.
+
+.organize-tip {
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-extra-light-grey);
+
+  h3 {
+    margin: 0 0 var(--space-1);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-bold);
+  }
+
+  p {
+    margin: 0;
+    max-width: var(--measure);
+  }
+}
+
+.organize-principle {
+  margin-top: var(--space-1);
+  font-size: var(--text-xs);
+  font-style: italic;
+}
+
+// The Style Assistant card on the dashboard. A list, not a lookbook: the
+// suggestion has to be readable before the photos load, and the reason beside
+// each garment is the point of the feature.
+
+.today-look {
+  margin: var(--space-6) 0;
+  padding: var(--space-6);
+  border: 1px solid var(--color-extra-light-grey);
+}
+
+.today-look-head {
+  h2 {
+    margin: 0;
+  }
+
+  p {
+    margin: var(--space-1) 0 0;
+    font-size: var(--text-sm);
+  }
+}
+
+.today-look-picks {
+  list-style: none;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+}
+
+.today-look-pick {
+  display: grid;
+  grid-template-columns: 6rem minmax(0, 1fr);
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+  padding: var(--space-2) 0;
+  border-top: 1px solid var(--color-extra-light-grey);
+}
+
+.today-look-zone {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  color: var(--color-grey-text);
+}
+
+.today-look-why {
+  // Second row under the garment, spanning past the zone column, so a long
+  // list of reasons wraps into the card rather than out of it.
+  grid-column: 2;
+  font-size: var(--text-xs);
+}
+
+.today-look-actions {
+  margin-top: var(--space-3);
+}
+
+/* Guest wardrobe carousels: four rows under the logo, one per body region.
+
+   The version this replaces rendered from layouts/application, so four rows at
+   1235px each sat above the content of every page a signed-out visitor could
+   reach and put the home logo at y=5410. It is rendered from home/index alone
+   now, and a row is a fixed, small height rather than whatever its contents
+   came to.
+
+   Motion is two transforms and no JavaScript. The track holds the slide list
+   twice and travels exactly half its width, so the copy under the cursor at the
+   reset is identical to the one leaving and the loop has no seam. Direction
+   alternates by row, which is the whole point of the arrangement: adjacent
+   zones drift opposite ways, so the same two garments never stay paired. */
+
+.wardrobe_showcase {
+  --slide_size: 104px;
+  --row_gap: var(--space-3);
+
+  border-block: 1px solid var(--border);
+  padding-block: var(--space-3, 16px);
+
+  /* This is a flex item, and a flex item's min-width is auto -- so it refuses
+     to shrink below its content and the track's max-content width became the
+     section's width: 2115px inside a 600px column, with overflow:hidden
+     clipping nothing because there was nothing to clip. */
+  min-width: 0;
+  max-width: 100%;
+}
+
+.wardrobe_showcase_row {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.wardrobe_showcase_row + .wardrobe_showcase_row {
+  border-top: 1px solid var(--border);
+  margin-top: var(--space-3, 16px);
+  padding-top: var(--space-3, 16px);
+}
+
+.wardrobe_showcase_head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding-inline: var(--space-6);
+  padding-bottom: var(--space-2);
+}
+
+.wardrobe_showcase_label {
+  margin: 0;
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: var(--weight-bold, 700);
+}
+
+.wardrobe_showcase_hint {
+  margin: 0;
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--text-secondary);
+}
+
+/* The column, not the viewport. Full-bleed here ran the rows under the fixed
+   right rail and the ancestor clipped them anyway, so 100vw bought a band that
+   was neither full width nor aligned to anything.
+
+   overflow-x hidden and not auto: the track is twice the visible width by
+   construction, and a scrollbar under every row would be four scrollbars. */
+.wardrobe_showcase_viewport {
+  overflow: hidden;
+}
+
+.wardrobe_showcase_track {
+  display: flex;
+  width: max-content;
+/* --ease-linear is a true linear written as a bezier, which is what _tokens
+   keeps it for: a marquee runs continuously, so any curve puts a visible
+   stutter at each cycle boundary. Same motion, named. */
+animation: wardrobe_showcase_drift 46s var(--ease-linear) infinite;
+}
+
+.wardrobe_showcase_row_reverse .wardrobe_showcase_track {
+  animation-direction: reverse;
+}
+
+.wardrobe_showcase_group {
+  display: flex;
+  gap: var(--row_gap);
+  padding-inline: calc(var(--row_gap) / 2);
+}
+
+/* A rotation that moves under the cursor mid-click picks the wrong garment. */
+.wardrobe_showcase_viewport:hover .wardrobe_showcase_track,
+.wardrobe_showcase_viewport:focus-within .wardrobe_showcase_track {
+  animation-play-state: paused;
+}
+
+.wardrobe_slide {
+  width: var(--slide_size);
+  flex: 0 0 var(--slide_size);
+}
+
+.wardrobe_slide_media {
+  display: block;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  /* Not plain surface: a white shirt or a white trainer on white paper is an
+     empty box with a caption under it. A few percent of ink behind the cut-out
+     gives the pale half of the wardrobe an edge to sit against. */
+  background: color-mix(in srgb, var(--text) 4%, var(--surface));
+}
+
+/* contain: a slide shows the whole garment, not the middle of it. */
+.wardrobe_slide_image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* No photo: the garment's own colour, with its initial over it. A grey box
+   would read as a failed image rather than as an item awaiting one. */
+.wardrobe_slide_swatch {
+  display: grid;
+  place-items: center;
+  background: var(--swatch, var(--surface));
+  color: var(--swatch-ink, var(--text));
+}
+
+/* difference against a pale swatch renders the letter invisible, which is the
+   one case the swatch exists for. Plain ink — and the ink comes with the
+   swatch, because they were not all chosen light enough to carry one: measured
+   against --text, charcoal ran 1.21 and navy 1.36. ApplicationHelper carries
+   the pair. */
+.wardrobe_slide_glyph {
+  font-size: var(--text-lg, 1.125rem);
+  font-weight: var(--weight-bold, 700);
+  color: var(--swatch-ink, var(--text));
+}
+
+.wardrobe_slide_title {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@keyframes wardrobe_showcase_drift {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wardrobe_showcase_track { animation: none; }
+
+  /* Standing still, the second copy is redundant width the reader has to scroll
+     past, so the viewport becomes an ordinary scroller over the first. */
+  .wardrobe_showcase_viewport { overflow-x: auto; }
+  .wardrobe_showcase_group + .wardrobe_showcase_group { display: none; }
+}
+
+/* Feed prose — scoped to post cards, not global chrome.
+   Vertical rhythm: only scale.line_height steps (1.25 / 1.5).
+   Optical margin: meta and body share the same measure edge.
+   Enforced by MASTER design_rules + RAILS ScaleLint. */
+
+.feed-post {
+  padding: var(--space-4, 1rem) 0;
+  border-bottom: 1px solid var(--border);
+  transition: background var(--transition-fast) var(--ease-out);
+}
+
+.feed-post:hover {
+  background: var(--hover-subtle);
+}
+
+/* shared/_typography.scss already sets the measure, size, leading, colour,
+   tracking, hanging punctuation and hyphenation on these two classes. The
+   face is the one thing amber says about them that shared does not. */
+.feed-post-body,
+.feed-post-prose {
+  font-family: var(--font);
+}
+
+.feed-post-meta,
+.feed-post-byline {
+  font-size: var(--text-sm);
+  line-height: var(--leading-tight, 1.25);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-2, 0.5rem);
+  max-width: var(--measure);
+}
+
+.feed-post-meta-author {
+  color: var(--text);
+  font-family: var(--font);
+  font-style: italic;
+  font-weight: var(--weight-normal);
+}
+
+.newsletter-cta,
+.subscribe-box {
+  margin: var(--space-6, 1.5rem) 0;
+  padding: var(--space-4, 1rem);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-elevated);
+  max-width: var(--measure);
+}
+
+/* The card may run to the full measure; its copy may not — this paragraph
+   measured 64ch against a feed profile that wants 50. */
+.newsletter-cta p,
+.subscribe-box p {
+  max-width: var(--measure-narrow);
+}
+
+/* jOxVvNE — animated logo mark (amber + bsdports), from the source pen.
+ *
+ * What is left here is the logo and nothing else. The pen was imported whole
+ * and most of it was CodePen's own site chrome — a create-button that expanded
+ * into a menu of "New Pen" / "New Pen from Template" / "New Project", and a
+ * Carbon Ads slot. None of those classes appear in any view in either app, and
+ * the controller that drove the create-button (jox_create_controller.js) was
+ * never mounted, so the whole widget was ~160 lines of styling for markup that
+ * does not exist.
+ *
+ * This file is on css_constitution's PEN_ALLOW list, which exempts it from the
+ * flat-UI rule. That exemption was carrying the ad slot's box-shadow and the
+ * menu's 40px pill radii, neither of which anything rendered. The logo itself
+ * needs no exemption; it is positioning and opacity only. */
+
+.jox-logo {
+  display: flex;
+  position: relative;
+}
+
+.jox-logo .frames div {
+  height: 50px;
+  width: 20px;
+  position: absolute;
+  opacity: 0;
+}
+
+.jox-logo .frames div:nth-of-type(1) {
+  top: 8px;
+  inset-inline-start: 4px;
+}
+
+.jox-logo .frames div:nth-of-type(2) {
+  top: 2px;
+  inset-inline-start: 14px;
+}
+
+.jox-logo .frames div:nth-of-type(3) {
+  top: -2px;
+  inset-inline-start: 26px;
+}
+
+.jox-logo .type {
+  height: 19px;
+  width: 116px;
+  position: relative;
+  top: 18px;
+  inset-inline-start: 84px;
+  transform: scale(1.4);
+}
+
+@include meta.load-css("auth_form");
+
+@include meta.load-css("tiptap");
+
+@include meta.load-css("focus_ring");
+
+@include meta.load-css("chat_reactions");
 
 // Classes the markup asked for and nothing defined, measured by
 // Operator::CssCoverageLint 2026-08-11. Last on purpose: these complement the
 // components above rather than competing with them.
-@use "shared_coverage_fills";
-@use "coverage_fills";
+
+@include meta.load-css("shared_coverage_fills");
+
+// Classes amber's markup asked for and no stylesheet defined.
+//
+// Measured by Operator::CssCoverageLint on 2026-08-11 (see the shared file of the same
+// name for why the lint exists). Token-only, no hex, no !important: layout, spacing
+// and type hierarchy from the luxury dialect's own :root, so a dialect switch carries
+// these with it.
+
+// A button that is a link, not a box. Used on five surfaces for destructive or
+// secondary actions inside a row — `button_to` renders a real <button>, so it needs
+// the chrome removed rather than added.
+.btn-link {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  min-height: var(--tap-min);
+  color: var(--text-secondary);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.btn-link:hover,
+.btn-link:focus-visible {
+  color: var(--text);
+}
+
+// Wardrobe item collection and detail.
+.wardrobe-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--tile-min-lg), 1fr));
+  gap: var(--space-3);
+}
+
+.wardrobe-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-2);
+}
+
+.wardrobe-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.wardrobe-detail {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.wardrobe-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-block-start: var(--space-3);
+}
+
+.wardrobe-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-width: var(--measure);
+}
+
+// Single-purpose containers the markup names and nothing styled.
+.declutter-page,
+.wardrobe-items,
+.outfit-visual {
+  margin-block-end: var(--space-6);
+}
+
+.outfit-visual {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.outfit-visual img {
+  max-inline-size: 25rem;
+  block-size: auto;
+}
+
+.luxury-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-secondary);
+}
+
+// A garment with no photo: the category name standing in for the image.
+.item-placeholder {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.today-look-item {
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+// The flash text itself; .flash and .flash--<type> already carry the card.
+.flash-msg {
+  flex: 1 1 auto;
+}
+
+// Nested outfit-item fields, added and removed by the nested-form controller.
+.nested-form-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.nested-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-2);
+  border-block-end: 1px solid var(--border);
+  padding-block-end: var(--space-2);
+}
+
+// Histogram figure — .viz carries the frame, this is the column variant.
+.viz-columns {
+  display: grid;
+  gap: var(--space-2);
+}
+
+// Affiliate list on the shopping page.
+.shop-links {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.shop-feed-note {
+  color: var(--text-secondary);
+}

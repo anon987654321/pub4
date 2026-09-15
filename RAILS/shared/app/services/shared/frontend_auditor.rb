@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "frontend_rule_set"
+require_relative "../../../lib/operator/scss_rules"
 
 module Shared
   class FrontendAuditor
@@ -29,10 +30,6 @@ module Shared
     LONG_TRANSITION_PATTERN = /transition(?:-duration)?\s*:\s*([4-9]\d\d|\d{4,})\s*ms/i
     CENTERED_PROSE_PATTERN = /text-align:\s*center/i
     MAX_CONTENT_WIDTH_PATTERN = /max-width:\s*(\d+(?:\.\d+)?)(ch|rem)/
-    # Product pens (yep search, jOxVvNE, Amazon nav) keep exact CSS including shadows.
-    PEN_STYLE_PATH_PATTERN = %r{
-      (?:^|/)(?:_search_yep|_jsfiddle_chrome|_marketplace_nav_bar|_marketplace_animated_logo)\.scss\z
-    }ix
     EXCLUDED_PATH_PATTERN = %r{
       (?:^|/)(?:vendor|node_modules|tmp|log|storage|coverage)(?:/|$)
       |(?:^|/)app/assets/builds/
@@ -131,12 +128,8 @@ body)
     end
 
     def scan_style(path, body)
-      # Documented product pens (yep search, jOx, Amazon nav/logo) keep exact CSS —
-      # same allow-list as css_constitution / GateAutofix. Do not hygiene-fail them.
-      if path.match?(PEN_STYLE_PATH_PATTERN)
-        add(:info, path, :product_pen, "Documented product pen — exact CSS preserved (constitution allow-list)")
-        return
-      end
+      body = without_product_pens(path, body)
+      return unless body
 
       add(:info, path, :keyframes,
 "Keyframes detected; mark restored animations as protected") if body.match?(KEYFRAMES_PATTERN)
@@ -194,6 +187,22 @@ body)
     def scan_javascript(path, body)
       add(:info, path, :chartjs,
 "Chart.js config detected; separate chart data from options") if body.match?(CHART_PATTERN)
+    end
+
+    # Product pens keep their exact CSS, so no hygiene check reads them: a pen's
+    # own partial is skipped whole (nil), and a pen inside an app stylesheet is
+    # blanked before the rest of that stylesheet is read.
+    def without_product_pens(path, body)
+      if path.match?(Shared::FrontendRuleSet::PRODUCT_PEN_FILES)
+        add(:info, path, :product_pen, "Documented product pen — exact CSS preserved (constitution allow-list)")
+        return nil
+      end
+
+      pens = Operator::ScssRules.covered(body, Shared::FrontendRuleSet::PRODUCT_PEN_SELECTORS)
+      return body if pens.empty?
+
+      add(:info, path, :product_pen, "#{pens.size} product pen rule(s) — exact CSS preserved (constitution allow-list)")
+      Operator::ScssRules.without(body, Shared::FrontendRuleSet::PRODUCT_PEN_SELECTORS)
     end
 
     def important_violations?(body)

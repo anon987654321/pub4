@@ -53,7 +53,7 @@ module Deploy
     # adding one.
     CHAT_EXCEPTIONS = {
       # The dating splash is a bare swipe surface and the widget floated over
-      # "sveip for å begynne" — see _vertical_dating_shell.scss.
+      # "sveip for å begynne" — see brgen's body.vertical-dating rules.
       "dating.brgen.no" => :absent,
       # Lifted clear of the transport bar, whose height it reads from
       # --tab-bar-h. Sitting flush would put it under a bar that intercepts the

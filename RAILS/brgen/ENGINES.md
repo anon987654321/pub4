@@ -59,8 +59,8 @@ exactly; the two starred steps are non-obvious and cost a boot each to find.
      That module (`shared/lib/shared/vertical_engine.rb`) is the boot shape all
      six verticals share: `<<` (never `+=`) on `config.autoload_paths` because
      Rails 8.1 freezes those arrays mid-boot, `config.paths["db/migrate"] <<`,
-     and initializers that `append_view_path` and push `app/assets/stylesheets`
-     + `app/javascript` onto `config.assets.paths`. It derives every path from
+     and initializers that `append_view_path` and push `app/javascript` onto
+     `config.assets.paths`. It derives every path from
      the including class's own `root` and names its initializers after the
      namespace, so `Dating::Engine` still registers `dating.view_paths`.
      Each vertical wrote that body out by hand until 2026-08-28, when six
@@ -75,8 +75,9 @@ exactly; the two starred steps are non-obvious and cost a boot each to find.
 3. **Move code** (preserve history with `git mv`):
    - `app/{controllers,models,views}/v` →
      `engines/v/app/{controllers,models,views}/v`
-   - vertical assets (`_vertical_v*.scss`, `v_*_controller.js`) →
-     `engines/v/app/assets/...`
+   - vertical controllers (`v_*_controller.js`) → `engines/v/app/javascript/...`;
+     the vertical's styles stay in brgen's one `application.scss`, scoped under
+     `body.vertical-v`
    - the vertical's tests → `engines/v/test/...`
 
 4. **Internal helper rename.** Under `isolate_namespace`, the engine's own

@@ -14,7 +14,10 @@ checks:
   - {id: chrome.legal, in: amber/app/views/layouts/application.html.erb, has: [site_legal_footer]}
   # --- design ---
   - {id: design.stack_entry, in: amber/app/assets/stylesheets/application.scss, has: ['@use "stack"']}
-  - {id: design.luxury_items, in: amber/app/assets/stylesheets/application.scss, has: [items_luxury, guest_compose, dressing_room]}
+  # The luxury item card, the guest compose box and the dressing room, by the
+  # selectors that style them: amber has one stylesheet, so a partial name no
+  # longer marks them.
+  - {id: design.luxury_items, in: amber/app/assets/stylesheets/application.scss, has: [.item-card--luxury, .amber-compose-box, .mannequin-stage]}
   - {id: design.tap_min, in: shared/app/assets/stylesheets/_layout_chrome.scss, has: ["--tap-min: 44px"]}
   - {id: design.focus_ring, in: shared/app/assets/stylesheets/_focus_ring.scss, has: [":focus-visible"]}
   - {id: design.no_dialog_compose, in: amber/app/views/shared/_feed_compose.html.erb, lack: ["<dialog", form-submit, requestSubmit]}

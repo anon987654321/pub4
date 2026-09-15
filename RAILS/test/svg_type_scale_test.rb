@@ -40,10 +40,13 @@ class SvgTypeScaleTest < Minitest::Test
     end.reject { |path| path.include?("/vendor/") || path.include?("/public/") }.sort
   end
 
+  # amber's logotype is the surface this test exists for, so the glob has to
+  # reach the stylesheet that styles it.
   def test_stylesheets_are_actually_being_read
     refute_empty stylesheets, "found no stylesheets to check — the glob is wrong, not the tree"
-    assert stylesheets.any? { |p| File.basename(p) == "_brand.scss" && p.include?("/amber/") },
-           "amber/_brand.scss is the file this test exists for and the glob did not reach it"
+    logotype = stylesheets.select { |p| VIEWBOX_SCOPES.any? { |scope| File.read(p).include?(scope) } }
+    assert logotype.any? { |p| p.include?("/amber/") },
+           "amber's logotype rules are what this test exists for and the glob did not reach them"
   end
 
   def test_font_size_inside_a_viewbox_scope_is_absolute

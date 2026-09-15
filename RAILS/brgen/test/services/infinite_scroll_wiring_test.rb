@@ -80,7 +80,7 @@ class InfiniteScrollWiringTest < Minitest::Test
     assert_includes controller, "def destroy"
     assert File.file?(File.join(ROOT, "brgen/app/views/communities/edit.html.erb"))
     assert_includes read_brgen("app/reflexes/communities_infinite_scroll_reflex.rb"), "communities/card"
-    assert_includes read_source(File.join(ROOT, "brgen/app/assets/stylesheets/_communities.scss")), ".community-list"
+    assert_includes read_brgen("app/assets/stylesheets/application.scss"), ".community-list"
   end
 
   def test_posts_infinite_scroll_preserves_search_query
@@ -116,8 +116,8 @@ class InfiniteScrollWiringTest < Minitest::Test
 
     assert_includes read_brgen("app/views/playlist/playlists/_library.html.erb"), "PlaylistsInfiniteScrollReflex#load_more"
     assert_includes read_brgen("app/reflexes/playlists_infinite_scroll_reflex.rb"), "playlist/playlists/row"
-    assert_includes read_brgen("app/assets/stylesheets/_vertical_tv.scss"), ".show-grid"
-    assert_includes read_brgen("app/assets/stylesheets/_vertical_takeaway.scss"), ".order-list"
+    assert_includes read_brgen("app/assets/stylesheets/application.scss"), ".show-grid"
+    assert_includes read_brgen("app/assets/stylesheets/application.scss"), ".order-list"
     assert_includes read_brgen("app/views/dating/matches/index.html.erb"), "match-list"
   end
 

@@ -94,51 +94,38 @@ class RenderedGatesTest < Minitest::Test
     refute_includes body, "min-height"
   end
 
-  # --- @use placement ------------------------------------------------------
+  # --- the generated block ---------------------------------------------------
   #
-  # Sass rejects a @use that follows any other rule. Appending to the end of
-  # application.scss happens to work when the file is nothing but @use lines
-  # and is a compile error when it is not — and a failed compile truncated
-  # bsdports' stylesheet from 52KB to 733 bytes. Placement is load-bearing.
+  # The fixes live at the end of the app's one application.scss, between two
+  # marker comments. The end is always a legal place for rules, where a @use
+  # would not be: appending a @use after real rules is the Sass error that once
+  # truncated bsdports' stylesheet from 52KB to 733 bytes.
 
-  def with_stylesheet(body)
-    Dir.mktmpdir do |dir|
-      entry = File.join(dir, "application.scss")
-      File.write(entry, body)
-      A.register_use("brgen", entry)
-      yield File.read(entry)
-    end
+  ROWS = [{ app: "brgen", selector: "form>label.check>input", kind: :touch, detail: "mobile" }].freeze
+
+  def test_the_block_is_appended_after_every_rule
+    out = A.with_block(%(@use "a";\n.rule { color: red; }\n), A.render(ROWS))
+
+    assert_match(/\A@use "a";\n\.rule \{ color: red; \}\n\n#{Regexp.escape(A::OPEN)}\n/, out)
+    assert out.end_with?("#{A::CLOSE}\n")
   end
 
-  def test_use_is_inserted_after_the_last_existing_use
-    with_stylesheet(%(@use "a";\n@use "b";\n\n.rule { color: red; }\n)) do |out|
-      use_line = out.lines.index { |l| l.include?("_autofix_geometry") }
-      rule_line = out.lines.index { |l| l.include?(".rule") }
-      assert use_line < rule_line, "@use must precede every other rule:\n#{out}"
-      assert_equal 2, use_line, "it belongs directly after the last existing @use"
-    end
+  def test_a_second_round_replaces_the_block_rather_than_stacking_it
+    once = A.with_block(%(.rule { color: red; }\n), A.render(ROWS))
+    twice = A.with_block(once, A.render(ROWS + [{ app: "brgen", selector: "div.grid>ul.row", kind: :overflow, detail: nil }]))
+
+    assert_equal 1, twice.scan(A::OPEN).size
+    assert_includes twice, "max-width: 100%"
   end
 
-  def test_use_is_not_appended_to_a_file_that_ends_in_rules
-    with_stylesheet(%(@use "a";\n.one { color: red; }\n.two { color: blue; }\n)) do |out|
-      refute out.lines.last.include?("_autofix_geometry"),
-             "appending after real rules is the exact Sass error that truncated bsdports"
-    end
-  end
+  # Merge, not replace: a rule that works produces no finding the next round,
+  # and reading the block back is what keeps it.
+  def test_rules_already_in_the_block_are_read_back
+    source = A.with_block(%(.rule { color: red; }\n), A.render(ROWS))
+    rows = A.existing_rows(source)
 
-  def test_use_goes_after_the_header_comment_when_no_use_exists
-    with_stylesheet(%(// header comment\n\n.rule { color: red; }\n)) do |out|
-      use_line = out.lines.index { |l| l.include?("_autofix_geometry") }
-      rule_line = out.lines.index { |l| l.include?(".rule") }
-      assert use_line < rule_line, "@use must still precede the first rule:\n#{out}"
-      assert_match(%r{\A// header comment}, out, "the header comment stays first")
-    end
-  end
-
-  def test_register_use_is_idempotent
-    with_stylesheet(%(@use "a";\n@use "_autofix_geometry";\n.rule { color: red; }\n)) do |out|
-      assert_equal 1, out.scan("_autofix_geometry").size
-    end
+    assert_equal [["label.check > input", :touch]], rows.map { |row| [row[:selector], row[:kind]] }
+    assert_empty A.existing_rows(%(.rule { color: red; }\n)), "a stylesheet without a block has no generated rows"
   end
 
   # --- mutation catalogue --------------------------------------------------

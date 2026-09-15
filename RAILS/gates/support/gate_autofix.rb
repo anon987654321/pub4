@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "set"
+require_relative "../../shared/lib/operator/scss_rules"
+require_relative "../../shared/app/services/shared/frontend_rule_set"
 
 module Deploy
   # Immediate mechanical autofix + remeasure for RAILS gates.
@@ -26,8 +28,6 @@ module Deploy
     CSS
 
     module_function
-
-    PEN_ALLOW = %r{(?:^|/)(?:_search_yep|_jsfiddle_chrome|_marketplace_nav_bar|_marketplace_animated_logo)\.scss\z}
 
     # Default ON. Opt out: GATE_AUTOFIX=0 (or false/off/no).
     def enabled?(env = ENV)
@@ -119,11 +119,11 @@ module Deploy
       Array(failures).each do |msg|
         path = extract_path(msg)
         next unless path && File.file?(path)
-        next if path.match?(PEN_ALLOW)
+        next if path.match?(Shared::FrontendRuleSet::PRODUCT_PEN_FILES)
 
-        body = File.read(path)
-        original = body.dup
-        body = fix_body(body, msg, path)
+        original = File.read(path)
+        body = outside_pens(original) { |text| fix_body(text, msg) }
+        body = ensure_reduced_motion(body) if reduced_motion_due?(body, msg)
         next if body == original
 
         if dry
@@ -155,10 +155,32 @@ module Deploy
       nil
     end
 
-    def fix_body(body, message, path)
+    # A pen's rules are handed back byte for byte and the fix runs on everything
+    # between them, so stripping a shadow from application.scss cannot reach the
+    # one in Amazon's nav bar. Only stylesheets hold pens; any other file is
+    # fixed whole.
+    def outside_pens(body)
+      return yield(body) unless body.match?(/[{}]/)
+
+      runs = Operator::ScssRules.partition(body, Shared::FrontendRuleSet::PRODUCT_PEN_SELECTORS)
+      return yield(body) if runs.none?(&:last)
+
+      runs.map { |text, pen| pen ? text : yield(text) }.join
+    end
+
+    # The reduced-motion block is appended once to the whole file, never to each
+    # run between pens, so it is decided here rather than inside fix_body.
+    def reduced_motion_due?(body, message)
+      return true if message.match?(/reduced_motion/i)
+      return false if message.match?(/flat_ui|no_twitter_blue|twitter blue|motion:.*transition \d+ms|logical_props|text-title|font-size:\s*20px|type_token/i)
+
+      body.match?(/@keyframes|animation\s*:/i) && !body.match?(/prefers-reduced-motion:\s*reduce/i)
+    end
+
+    def fix_body(body, message)
       case message
       when /reduced_motion/i
-        ensure_reduced_motion(body)
+        body
       when /flat_ui/i
         strip_flat_violations(body)
       when /no_twitter_blue|twitter blue/i
@@ -171,7 +193,6 @@ module Deploy
         prefer_title_type_token(body)
       else
         # Proactive: if failure mentions path and body has known issues, apply all safe fixers
-        body = ensure_reduced_motion(body) if body.match?(/@keyframes|animation\s*:/i) && !body.match?(/prefers-reduced-motion:\s*reduce/i)
         body = strip_flat_violations(body) if body.match?(/box-shadow\s*:\s*(?!none\b)|text-shadow\s*:|backdrop-filter\s*:|filter\s*:[^;]*\bblur\(/i)
         body = replace_twitter_blue(body) if body.match?(/#1d9bf0|#1DA1F2/i)
         body = prefer_title_type_token(body) if body.match?(/font-size\s*:\s*20px/i)

@@ -14,10 +14,17 @@ Each app compiles a **single** `app/assets/builds/application.css` via Dart
 Sass. No separate `tokens.css`, `animations.css`, or `minimal-ui*.css` links in
 layouts.
 
-**Protected file:** only `application.scss` per `limits.yml` →
-`frontend_protection`. Prefer `@use "stack"` plus existing domain partials
-(brgen pattern); avoid new `_appname.scss` sprawl when product CSS fits the
-entry or an existing partial.
+**One stylesheet per app.** Each app owns exactly one stylesheet,
+`app/assets/stylesheets/application.scss`, and brgen's verticals style
+themselves inside brgen's, scoped under `body.vertical-<name>`. The operator
+asked for it on 2026-09-15: "for all our rails apps id prefer we collapse all scss
+files into a single application.scss one such file for each app." An app adds no
+partial of its own; it may load the shared engine's partials, which stay files.
+`limits.yml` → `frontend_protection` protects that one file.
+
+A shared partial first reached after the app's own rules is loaded with
+`@include meta.load-css("name")` at that point, because Sass accepts `@use` only
+above every rule. A shared partial the stack already loaded is not loaded again.
 
 **Stack entry** (top of every `application.scss`):
 
@@ -31,8 +38,14 @@ partial's position is a cascade contract, not an ordering convenience:
 zen_shell's `@media (forced-colors: active)` block names `.btn` and ties with it
 at 0-1-0, so it has to keep the later word.
 
-**Brgen** adds product partials after the stack (`_root`, `_canvas`, `_shell`,
-…). **Standalone apps** add a thin product block below `@use "stack"`.
+Every app writes its own rules below the `@use` lines.
+
+Gates and tests that once named a partial now name the rule: `Operator::ScssRules`
+(`shared/lib/operator/scss_rules.rb`) reads a stylesheet into selectors and the
+declarations each holds, so "the nav's tabs declare a tap floor" is asserted on
+`.feed-tab` wherever that rule sits. Product pens — the yep.com search, jOxVvNE,
+Amazon's nav bar and logo — are named once, in
+`Shared::FrontendRuleSet::PRODUCT_PEN_FILES` and `PRODUCT_PEN_SELECTORS`.
 
 **Static exceptions:**
 - `shared/public/styles/errors.css` — Rails default error pages only

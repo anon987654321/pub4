@@ -4,6 +4,7 @@
 # Asserts contracts against current main paths (not the obsolete pub4_* renames).
 require "yaml"
 require "minitest/autorun"
+require_relative "../shared/lib/operator/scss_rules"
 
 class DesignContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
@@ -62,18 +63,10 @@ class DesignContractTest < Minitest::Test
     end
   end
 
-  # brgen wears the brgen_old dialect, and it wins on source order alone.
-  #
-  # `stack_brgen` forwards `_tokens.scss`, which emits the social indigo palette
-  # at plain `:root`. `_root.scss` emits brgen-old at plain `:root` too — same
-  # specificity — so the only thing making brgen grayscale rather than indigo is
-  # that `@use "_root"` comes *after* `@use "stack_brgen"` in application.scss.
-  # Reordering those lines, or moving _root into the stack, silently restores a
-  # palette this app deliberately left, with nothing failing to say so.
-  #
-  # Verified 2026-08-10 against brgen/app/assets/builds/application.css: two
-  # `:root` blocks, the second `--bg: #000000` / `--text: #e0e0e0` /
-  # `--accent: #f2f2f2` / `--radius-card: 8px`.
+  def app_rules(app)
+    Operator::ScssRules.rules(File.read(File.join(ROOT, app, "app", "assets", "stylesheets", "application.scss")))
+  end
+
   # amber wears luxury, and stack's social light outranks a plain :root.
   #
   # `_tokens.scss` (via `@use "stack"`) emits light-tokens at
@@ -81,31 +74,32 @@ class DesignContractTest < Minitest::Test
   # `prefers-color-scheme: light`. luxury-light-tokens on bare `:root` loses
   # that fight: measured 2026-08-13 on amber.brgen.no, --bg was social
   # `#f7f6fa` and --accent `#5b4fc4` while --radius-card stayed luxury 14px.
-  # `_variables.scss` must restate luxury at those two selectors.
+  # amber's stylesheet must restate luxury in rules at those two selectors.
   def test_amber_luxury_beats_the_social_light_override
-    variables = File.read(File.join(ROOT, "amber", "app", "assets", "stylesheets", "_variables.scss"))
+    luxury = app_rules("amber").select { |rule| rule.body.include?("luxury-light-tokens") }.map(&:selector)
 
-    assert_includes variables, "luxury-light-tokens",
-                    "amber/_variables.scss must include luxury-light-tokens"
-    assert_match(/:root:not\(\[data-theme=["']dark["']\]\)/, variables,
-                 "luxury must be restated at :root:not([data-theme=dark]) — that is the selector " \
-                 "stack uses for OS-light, and it outranks plain :root")
-    assert_match(/\[data-theme=["']light["']\]/, variables,
-                 "luxury must be restated at [data-theme=light] or the theme toggle restores social indigo")
+    refute_empty luxury, "amber's stylesheet must include luxury-light-tokens"
+    assert(luxury.any? { |selector| selector.match?(/\A:root:not\(\[data-theme=["']dark["']\]\)\z/) },
+           "luxury must be restated at :root:not([data-theme=dark]) — that is the selector " \
+           "stack uses for OS-light, and it outranks plain :root")
+    assert(luxury.any? { |selector| selector.match?(/\A\[data-theme=["']light["']\]\z/) },
+           "luxury must be restated at [data-theme=light] or the theme toggle restores social indigo")
   end
 
-  def test_brgen_old_dialect_is_emitted_after_the_social_stack
-    app_scss = File.read(File.join(ROOT, "brgen", "app", "assets", "stylesheets", "application.scss"))
-    uses = app_scss.scan(/^@use\s+"([^"]+)"/).flatten
+  # brgen wears the brgen_old dialect because its own stylesheet includes those
+  # tokens at plain :root, outside any cascade layer. `stack_brgen` forwards
+  # `_tokens.scss`, which emits the social palette inside `@layer tokens`, and
+  # an un-layered declaration beats a layered one whatever the source order.
+  # Moving the include into a layer, or under a narrower selector, silently
+  # restores a palette this app deliberately left.
+  def test_brgen_old_dialect_outranks_the_social_stack
+    source = File.read(File.join(ROOT, "brgen", "app", "assets", "stylesheets", "application.scss"))
+    roots = app_rules("brgen").select { |rule| rule.selector == ":root" && rule.body.include?("brgen-old-dark-tokens") }
 
-    stack = uses.index { |name| name == "stack_brgen" }
-    root  = uses.index { |name| name.delete_prefix("_") == "root" }
-
-    assert stack, "brgen/application.scss must @use stack_brgen"
-    assert root, "brgen/application.scss must @use _root (the brgen_old dialect)"
-    assert_operator root, :>, stack,
-                    "_root must come after stack_brgen or brgen renders the social indigo palette " \
-                    "instead of its own grayscale one — same specificity, source order decides"
+    assert_match(/^@use "stack_brgen"/, source, "brgen/application.scss must @use stack_brgen")
+    refute_empty roots, "brgen's stylesheet must include brgen-old-dark-tokens at plain :root"
+    assert roots.all? { |rule| rule.parents.none? { |parent| parent.start_with?("@layer") } },
+           "brgen-old sits inside a cascade layer, where the social stack's tokens can outrank it"
   end
 
   # The dialect table in WIRING_NOTES claimed brgen was `social` / 4-8-12-16 long

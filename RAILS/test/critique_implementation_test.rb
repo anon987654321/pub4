@@ -2,6 +2,7 @@
 
 require "minitest/autorun"
 require "yaml"
+require_relative "../shared/lib/operator/scss_rules"
 
 class CritiqueImplementationTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
@@ -29,7 +30,7 @@ class CritiqueImplementationTest < Minitest::Test
     home = read("brgen/app/views/home/index.html.erb")
     post = read("brgen/app/views/posts/_post.html.erb")
     compose = read("brgen/app/views/shared/_feed_compose.html.erb")
-    css = read("brgen/app/assets/stylesheets/_feed_post.scss")
+    feed_actions = Operator::ScssRules.matching(read("brgen/app/assets/stylesheets/application.scss"), /\A\.feed-action\z/)
 
     # The single ranking control lives in posts/index, not the layout — the
     # layout's feed tabs are subapp navigation (subapp_nav_items), a different
@@ -54,11 +55,13 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes compose, "Posting as a guest"
     assert_match(/post\.share|Share post/, post)
     assert_includes post, "shared/post_card"
-    # Either spelling. The sheet writes min-height: var(--tap-min) and the token
-    # is 44px; pinning the literal made this fail on a card whose tap targets are
-    # exactly what the assertion is about. first_screen asserts the token's
-    # value, so accepting the name here is not accepting a promise.
-    assert_match(/min-height:\s*(?:44px|var\(--tap-min\))/, css)
+    # Either spelling, on the feed action's own rule. The stylesheet writes
+    # min-height: var(--tap-min) and the token is 44px; pinning the literal made
+    # this fail on a card whose tap targets are exactly what the assertion is
+    # about. first_screen asserts the token's value, so accepting the name here
+    # is not accepting a promise.
+    assert feed_actions.any? { |rule| rule.declares?(/min-height:\s*(?:44px|var\(--tap-min\))/) },
+           ".feed-action must carry the tap floor"
   end
 
   def test_amber_prioritizes_owned_clothes_and_reversible_lifecycle

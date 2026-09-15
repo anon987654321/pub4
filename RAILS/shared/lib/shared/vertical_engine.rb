@@ -5,7 +5,7 @@ require "active_support/core_ext/string/inflections"
 
 module Shared
   # The boot shape every brgen vertical engine shares: autoload paths, its own
-  # db/migrate, its views, its stylesheets and javascript. brgen/ENGINES.md calls
+  # db/migrate, its views and its javascript. brgen/ENGINES.md calls
   # this the recipe and says to mirror Shared::Engine exactly; six engines
   # mirrored it by hand and the bodies were byte-identical but for the module
   # name, so the recipe lives here and each engine includes it.
@@ -23,7 +23,10 @@ module Shared
       app/helpers app/services app/jobs app/reflexes app/channels
     ].freeze
 
-    ASSET_DIRS = %w[app/assets/stylesheets app/javascript].freeze
+    # No stylesheets. brgen styles every vertical from its one application.scss,
+    # so an engine directory on the Sass load path would only let a second,
+    # engine-owned stylesheet creep back in.
+    ASSET_DIRS = %w[app/javascript].freeze
 
     def self.included(engine)
       super

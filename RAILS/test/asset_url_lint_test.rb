@@ -47,7 +47,7 @@ class AssetUrlLintTest < Minitest::Test
   # file-existence check into a measurement.
   def test_a_shared_sheet_needs_the_file_where_every_app_can_see_it
     shared_sheet = File.join(L::RAILS_ROOT, "shared/app/assets/stylesheets/_fonts.scss")
-    brgen_sheet = File.join(L::RAILS_ROOT, "brgen/app/assets/stylesheets/_fonts_brand.scss")
+    brgen_sheet = File.join(L::RAILS_ROOT, "brgen/app/assets/stylesheets/application.scss")
 
     assert L.satisfied_everywhere?("/fonts/JetBrainsMonoNerdFont-Regular.woff2", shared_sheet)
     # Instrument Serif is the storefront promotional face, vendored in
@@ -59,7 +59,7 @@ class AssetUrlLintTest < Minitest::Test
 
   # My own first run reported PP Neue Montreal in five weights because `expand`
   # read every `@each $w` in the file rather than the enclosing one, and
-  # _fonts_brand.scss has two over different weight lists. Two of the five names
+  # brgen's stylesheet has two over different weight lists. Two of the five names
   # appear in no stylesheet at all. A lint that invents a filename cannot be
   # trusted about the ones it did not invent.
   def test_each_expansion_is_scoped_to_the_enclosing_loop
@@ -87,7 +87,7 @@ class AssetUrlLintTest < Minitest::Test
   end
 
   def test_remote_and_inline_references_are_not_assets
-    sheet = File.join(L::RAILS_ROOT, "brgen/app/assets/stylesheets/_fonts_brand.scss")
+    sheet = File.join(L::RAILS_ROOT, "brgen/app/assets/stylesheets/application.scss")
     refs = L.refs_in(sheet)
 
     refute_empty refs

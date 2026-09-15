@@ -126,9 +126,9 @@ class TvFeedTest < ActionDispatch::IntegrationTest
     assert_select "video.tv-feed-video[preload=none][playsinline]", 1
     assert_select "video.tv-feed-video[autoplay]", 0
 
-    stylesheet = File.read(Rails.root.join("engines/tv/app/assets/stylesheets/_vertical_tv.scss"))
+    stylesheet = File.read(Rails.root.join("app/assets/stylesheets/application.scss"))
     feed_rule = stylesheet[/^\.tv-feed \{.*?^\}/m]
-    assert feed_rule, "the .tv-feed rule is gone from _vertical_tv.scss"
+    assert feed_rule, "the .tv-feed rule is gone from brgen's stylesheet"
     assert_match "height: 100dvh", feed_rule
   end
 

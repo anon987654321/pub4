@@ -158,18 +158,14 @@ def sync_static_tokens!
   CSS
 end
 
-# Engine stylesheets count. brgen's five verticals became mountable engines, and
-# their SCSS lives under engines/<v>/app/assets/stylesheets — outside both dirs
-# this used to glob. application.scss @use's them all, so they compile into the
-# build, but build_stale? could not see them: every marketplace/dating/playlist/
-# takeaway/tv style change reported "css: clean" and shipped the previous build.
-# Same blind spot as the four scanners that stopped seeing 57 views on the same
-# migration. A glob that stops one level above the code is not a check.
+# Every stylesheet a build reads: the app's one application.scss and the shared
+# engine's partials it loads. A glob that misses a source reports "css: clean"
+# and ships the previous build, which is what happened to every vertical style
+# change while the verticals kept stylesheets of their own under engines/.
 def scss_sources(app_dir)
   dirs = [
     File.join(app_dir, "app", "assets", "stylesheets"),
     SHARED_STYLES,
-    *Dir.glob(File.join(app_dir, "engines", "*", "app", "assets", "stylesheets")),
   ]
   dirs.flat_map { |d| File.directory?(d) ? Dir.glob(File.join(d, "**", "*.scss")) : [] }
 end
@@ -233,18 +229,9 @@ def try_npx_sass(app_dir)
   out = File.join(app_dir, "app", "assets", "builds", "application.css")
   FileUtils.mkdir_p(File.dirname(out))
   styles_dir = File.join(app_dir, "app", "assets", "stylesheets")
-  # Mountable engines contribute stylesheets that the host's application.scss
-  # @uses by bare name (`@use "_vertical_dating"`). Rails resolves those through
-  # each engine's assets.paths; a bare `sass` invocation does not, so after the
-  # vertical-as-engine split this fallback could not build brgen at all —
-  # "Can't find stylesheet to import" on line 35, while dartsass:build was fine.
-  engine_styles = Dir[File.join(app_dir, "engines", "*", "app", "assets", "stylesheets")].select do |d|
-    File.directory?(d)
-  end
   cmd = [
     "npx", "--yes", "sass", scss, out,
     "--load-path=#{styles_dir}",
-    *engine_styles.map { |d| "--load-path=#{d}" },
     "--load-path=#{SHARED_STYLES}",
     "--style=compressed",
   ]

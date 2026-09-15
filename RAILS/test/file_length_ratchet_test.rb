@@ -114,7 +114,9 @@ class FileLengthRatchetTest < Minitest::Test
 # the list's size rather than a hand-typed thirteen that drifts the first time
 # a check is added. Fourteen call lines became two, which is what paid for the
 # count.
-"gates/lib/research/design_metrics.rb" => 342,
+# 342 -> 321 when the sampled checks stopped listing partial paths and read
+# selector families out of each app's one application.scss instead.
+"gates/lib/research/design_metrics.rb" => 321,
 # 498 -> 449 on 2026-08-26. check_contrast, apca_note and check_apca are
 # rendered_geometry/contrast_checks.rb — the one subject in this gate that
 # is colour rather than geometry, and the rendered counterpart to the
@@ -185,6 +187,14 @@ class FileLengthRatchetTest < Minitest::Test
     # +5 in 7ed6920cd — the seeds asked for a visible profile without a photo,
     # which gated every deploy.
     "brgen/db/seeds.rb" => 426,
+    # Each app's one stylesheet. The operator asked for it on 2026-09-15 — "for
+    # all our rails apps id prefer we collapse all scss files into a single
+    # application.scss one such file for each app" — so these three are long by
+    # decision, and splitting them is the one fix this ratchet may not suggest.
+    # The ceilings still only fall: defragmenting a stylesheet lowers its row.
+    "brgen/app/assets/stylesheets/application.scss" => 6695,
+    "amber/app/assets/stylesheets/application.scss" => 1806,
+    "bsdports/app/assets/stylesheets/application.scss" => 493,
     # user_flow.rb left this list on 2026-09-09: 308 -> 166, under the 300 rb
     # limit, so a ceiling here would only re-admit it. Its own header admitted
     # to being two gates in one — "critical-path user flows + MASTER

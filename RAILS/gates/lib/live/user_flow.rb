@@ -109,11 +109,13 @@ module Deploy
           "#{MP}/controllers/marketplace/checkouts_controller.rb",
         ],
       },
+      # A stylesheet marker names the rule that styles the surface, not a file:
+      # the jOx chrome lives in each app's one application.scss.
       "amber" => {
-        "jox chrome" => %w[app/assets/stylesheets/_jsfiddle_chrome.scss],
+        "jox chrome" => [["app/assets/stylesheets/application.scss", /\.jox-logo\b/]],
       },
       "bsdports" => {
-        "jox chrome" => %w[app/assets/stylesheets/_jsfiddle_chrome.scss],
+        "jox chrome" => [["app/assets/stylesheets/application.scss", /\.jox-logo\b/]],
       },
     }.freeze
 
@@ -141,15 +143,23 @@ module Deploy
       markers = SOURCE_FLOW_MARKERS.fetch(app.name, {})
       markers.each do |name, rels|
         @result.checked!
-        present = Array(rels).any? { |rel| File.file?(File.join(RAILS_ROOT, app.name, rel)) || File.file?(File.expand_path(rel, File.join(RAILS_ROOT, app.name))) }
-        # allow relative ../shared
-        present ||= Array(rels).any? { |rel| File.file?(File.expand_path(rel, File.join(RAILS_ROOT, app.name))) }
+        present = rels.any? { |rel| marker_present?(app, rel) }
         if name.include?("payment") && !present
           @result.warn("#{app.name}: source flow '#{name}' not fully wired (honest stub still required by design contract)")
         elsif !present
-          @result.fail("#{app.name}: source flow missing '#{name}' (#{Array(rels).join(', ')})")
+          @result.fail("#{app.name}: source flow missing '#{name}' (#{rels.map { |rel| Array(rel).join(' ') }.join(', ')})")
         end
       end
+    end
+
+    # A path relative to the app (../shared reaches the engine), or a path and
+    # the selector of a rule that has to exist in it.
+    def marker_present?(app, rel)
+      rel, selector = Array(rel)
+      path = File.expand_path(rel, File.join(RAILS_ROOT, app.name))
+      return false unless File.file?(path)
+
+      selector.nil? || Operator::ScssRules.matching(File.read(path), selector).any?
     end
 
     def live_flow_checks(app)

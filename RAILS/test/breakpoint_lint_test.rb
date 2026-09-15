@@ -79,7 +79,6 @@ class BreakpointLintTest < Minitest::Test
   # of the three is not a failure.
   def test_findings_are_a_subset_of_the_recorded_exceptions
     recorded = [
-      "brgen/app/assets/stylesheets/_marketplace_nav_bar.scss",
       "shared/app/assets/stylesheets/_zen_shell.scss",
     ]
     unexpected = L.scan.map(&:file).uniq - recorded

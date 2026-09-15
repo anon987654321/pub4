@@ -83,7 +83,7 @@ class ScaleLintTest < Minitest::Test
     refute_empty LINT.face_stylesheets, "face.css is not in the corpus, so the face is measured by nothing"
     assert LINT.face_stylesheets.any? { |path| path.end_with?("face.css") }
 
-    assert_operator LINT.app_stylesheets.size, :>, 50
+    assert_operator LINT.app_stylesheets.size, :>, 30
     assert_empty LINT.app_stylesheets & LINT.face_stylesheets, "a sheet is counted on both surfaces"
   end
 
@@ -148,13 +148,17 @@ class ScaleLintTest < Minitest::Test
   # Verify the instrument before the finding: every wrong number this lint has
   # produced so far came from the tokeniser, not from the tree.
 
+  # Each app's one application.scss by name, and the shared engine's partials
+  # by count: a floor under the number is what says the glob still reaches them.
   def test_it_is_reading_the_family_stylesheets
     sheets = LINT.stylesheets
 
-    assert_operator sheets.size, :>, 50, "the sheet glob has stopped matching"
-    %w[brgen amber bsdports shared].each do |app|
-      assert sheets.any? { |p| p.include?("/#{app}/") }, "#{app}'s stylesheets are not being read"
+    assert_operator sheets.size, :>, 30, "the sheet glob has stopped matching"
+    %w[brgen amber bsdports].each do |app|
+      assert sheets.any? { |p| p.end_with?("/#{app}/app/assets/stylesheets/application.scss") },
+             "#{app}'s application.scss is not being read"
     end
+    assert sheets.any? { |p| p.include?("/shared/") }, "shared's stylesheets are not being read"
     assert_empty sheets.select { |p| p.match?(LINT::SKIP) }
   end
 
