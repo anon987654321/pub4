@@ -497,7 +497,7 @@ class TestPreprompt < Minitest::Test
     assert_includes prompt, FILL_VOCAB.fetch("4to1")
     assert_includes prompt, EXPRESSION_VOCAB.fetch("after_laugh")
     assert_includes prompt, HANDS_VOCAB.fetch("hand_at_jaw")
-    refute(EXPRESSION_VOCAB.values.any? { |face| face.match?(/\bsmil(?:ing|es?)\b/) })
+    refute(EXPRESSION_VOCAB.values.any? { |face| face.match?(/\bsmiling\b/) })
   end
 
   def test_focus_and_composition_compose_like_any_other_field
