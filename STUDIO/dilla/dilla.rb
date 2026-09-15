@@ -15547,12 +15547,19 @@ CONVOLUTION_ROOMS = {
 
 def synth_impulse_response!(room)
   path = format(CONVOLUTION_IR_CACHE, room)
-  return path if File.exist?(path)
+  # A size, not existence: a run killed mid-write leaves a header and no audio,
+  # and trusting it fails every later render at the afir input.
+  return path if File.size?(path).to_i > 1024
   FileUtils.mkdir_p(SCRATCH_DIR)
   cfg = CONVOLUTION_ROOMS.fetch(room)
   decay_rate = (3.0 / cfg[:decay]).round(3)
+  # anoisesrc is mono, so the envelope has one expression and names the mono
+  # layout; -ac 2 then doubles it, which is the IR every cached ir_*.wav holds.
+  # Measured on ffmpeg 8.1.1: a second expression for a channel the source lacks
+  # is an invalid argument, and c=same on this source exits without writing, so
+  # a scratch without the cache (a fresh checkout, a worktree) failed its render.
   sh! "ffmpeg", "-y", "-f", "lavfi", "-i", "anoisesrc=color=white:d=#{cfg[:decay] + 0.3}:r=#{SAMPLE_RATE}:seed=#{noise_seed(1)}",
-      "-af", "aeval=exprs='val(0)*exp(-#{decay_rate}*t)|val(1)*exp(-#{decay_rate}*t)':c=same,#{cfg[:color]}",
+      "-af", "aeval=exprs='val(0)*exp(-#{decay_rate}*t)':c=mono,#{cfg[:color]}",
       "-ac", "2", "-ar", SAMPLE_RATE.to_s, path
   path
 end
