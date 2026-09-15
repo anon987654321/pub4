@@ -45,6 +45,41 @@ class TestLora < Minitest::Test
     assert_empty prompts_for("ragnhild", set: "distance", only: [DISTANCE_LADDER.length + 1])
   end
 
+  # A notebook is written by a lane and then committed, and a token pasted into a
+  # cell rides along. The origin is public, so the check reads every tracked
+  # notebook, subject.env and config under lora/ for a credential's shape. The
+  # failure names the file and line, never the value.
+  SECRET_SHAPES = {
+    "Replicate token" => /\br8_[A-Za-z0-9]{30,}/,
+    "Hugging Face token" => /\bhf_[A-Za-z0-9]{30,}/,
+    "OpenAI-style key" => /\bsk-[A-Za-z0-9_-]{20,}/,
+    "GitHub token" => /\bgh[pousr]_[A-Za-z0-9]{30,}/,
+    "Kaggle key" => /"key"\s*:\s*"[0-9a-f]{32}"/,
+    "private key" => /-----BEGIN [A-Z ]*PRIVATE KEY-----/,
+  }.freeze
+
+  def secrets_in(text)
+    text.each_line.with_index(1).flat_map do |line, number|
+      SECRET_SHAPES.filter_map { |name, shape| "#{name} on line #{number}" if line.match?(shape) }
+    end
+  end
+
+  def test_the_secret_shapes_catch_what_they_name_and_pass_a_placeholder
+    assert_equal ["Replicate token on line 1"], secrets_in("REPLICATE_API_TOKEN=r8_#{'a1' * 20}\n")
+    assert_equal ["Hugging Face token on line 2"], secrets_in("x\nos.environ['HF_TOKEN'] = 'hf_#{'Z9' * 17}'\n")
+    assert_empty secrets_in("HF_TOKEN=hf_yourtoken\nexport HUGGINGFACE_HUB_TOKEN=\"${HF_TOKEN}\"\n")
+  end
+
+  def test_no_tracked_notebook_or_subject_file_carries_a_credential
+    tracked, status = Open3.capture2("git", "-C", Studio::ROOT, "ls-files", "--", "lora")
+    skip "not a git checkout" unless status.success?
+
+    files = tracked.lines.map(&:strip).grep(/\.(?:ipynb|env|ya?ml|json|sh)\z|\/lora\z/).reject { |f| f.include?("/dataset/") }
+    assert_operator files.length, :>=, 5, "the glob found too few files to have checked anything"
+    leaks = files.flat_map { |file| secrets_in(File.read(File.join(Studio::ROOT, file))).map { |hit| "#{file}: #{hit}" } }
+    assert_empty leaks
+  end
+
   def test_judge_thresholds_load_and_every_one_is_a_number
     thresholds = YAML.safe_load_file(File.join(LORA, "_toolkit", "judge_thresholds.yml")).fetch("thresholds")
 
@@ -58,6 +93,34 @@ class TestLora < Minitest::Test
 
     wrappers.each do |path|
       assert_match(%r{exec "\$SUBJECT_DIR/\.\./_toolkit/run_generate\.sh" "\$@"}, File.read(path), path)
+    end
+  end
+
+  # The grade a subject's samples get is the subject's to name, and portrait
+  # when it names none. Read through toolkit.sh itself, on a subject that exists
+  # only in a temporary directory.
+  def preset_for_subject(env)
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, "subject.env"), env)
+      out, status = Open3.capture2({ "SUBJECT_DIR" => dir, "POSTPRO_PRESET" => nil },
+                                   "sh", "-c", ". \"$1\" && printf %s \"$POSTPRO_PRESET\"", "sh",
+                                   File.join(LORA, "_toolkit", "toolkit.sh"))
+      assert status.success?
+      out
+    end
+  end
+
+  def test_a_subject_names_its_own_sample_grade_and_defaults_to_portrait
+    assert_equal "portrait", preset_for_subject("SUBJECT=probe\nMODEL=probe\n")
+    assert_equal "noir", preset_for_subject("SUBJECT=probe\nMODEL=probe\nPOSTPRO_PRESET=noir\n")
+  end
+
+  def test_a_sample_already_carrying_this_runs_grade_is_not_graded_again
+    load File.join(LORA, "_toolkit", "postpro_samples.rb")
+    Dir.mktmpdir do |dir|
+      %w[take.jpg take_noir.jpg].each { |name| File.write(File.join(dir, name), "x") }
+
+      assert_equal ["take.jpg"], image_files(Pathname.new(dir), 12, %w[noir]).map { |p| p.basename.to_s }
     end
   end
 

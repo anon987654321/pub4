@@ -39,7 +39,10 @@ fi
 : "${SUBJECT:?subject.env must set SUBJECT}"
 : "${MODEL:?subject.env must set MODEL}"
 TRIGGER="${TRIGGER:-$SUBJECT}"
-export SUBJECT MODEL TRIGGER SUBJECT_DIR
+# The grade a subject's samples get. Ragnhild and Johann need not share one, so
+# subject.env may name another preset; unset, it is the house portrait grade.
+POSTPRO_PRESET="${POSTPRO_PRESET:-portrait}"
+export SUBJECT MODEL TRIGGER SUBJECT_DIR POSTPRO_PRESET
 
 # Turn off xet before anything can download a model.
 #
@@ -148,6 +151,6 @@ run_postpro() {
   ruby "$POSTPRO_SCRIPT" \
     --input-dir "$OUT_DIR" \
     --output-dir "$OUT_DIR" \
-    --presets portrait \
+    --presets "$POSTPRO_PRESET" \
     --limit 12
 }

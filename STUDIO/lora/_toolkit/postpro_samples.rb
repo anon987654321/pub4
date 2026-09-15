@@ -45,18 +45,22 @@ def parse_options
   options
 end
 
-def sample_file?(path)
+# `presets` are this run's grades. A frame already carrying one of their names is
+# a graded sample, and grading it again stacks the grade on itself.
+def sample_file?(path, presets = [])
   return false unless path.file?
   return false unless IMAGE_EXT.include?(path.extname.downcase)
 
   name = path.basename.to_s
   return false if SKIP_PREFIX.any? { |prefix| name.start_with?(prefix) }
+  return false if presets.any? { |preset| File.basename(name, ".*").end_with?("_" + preset) }
+
   !name.match?(SKIP_SUFFIX)
 end
 
-def image_files(input_dir, limit)
+def image_files(input_dir, limit, presets = [])
   Dir.children(input_dir).map { |entry| input_dir.join(entry) }
-    .select { |path| sample_file?(path) }
+    .select { |path| sample_file?(path, presets) }
     .sort_by { |path| [File.mtime(path), path.to_s] }
     .last(limit)
     .map(&:expand_path)
@@ -102,11 +106,13 @@ def main
   abort "warn: refusing to write into a dataset directory (#{options[:output_dir]})" if options[:output_dir].each_filename.include?("dataset")
 
   if options[:clean_output] && !options[:dry_run]
-    Dir.glob(options[:output_dir].join("*_portrait.jpg")).each { |path| FileUtils.rm_f(path) } # scan: intentional — portraits regenerated into this run's output dir
+    options[:presets].each do |preset|
+      Dir.glob(options[:output_dir].join("*_#{preset}.jpg")).each { |path| FileUtils.rm_f(path) } # scan: intentional — this run's graded samples, regenerated below
+    end
   end
   FileUtils.mkdir_p(options[:output_dir]) unless options[:dry_run]
 
-  files = image_files(options[:input_dir], options[:limit])
+  files = image_files(options[:input_dir], options[:limit], options[:presets])
   abort "warn: no sample images in #{options[:input_dir]}" if files.empty?
 
   failures = 0

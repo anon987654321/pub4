@@ -19,7 +19,7 @@ Usage: lora [--check | --train | --train-kaggle | --train-colab | --train-replic
   --generate         Sample from latest checkpoint, then optional postpro
   --generate-replicate  Render a prompt set on the Replicate-trained LoRA
                      (--set selfies|scenarios|distance|shoots, --only, --dry-run)
-  --postpro          Portrait postpro on generated samples in out/
+  --postpro          Grade generated samples in out/ (POSTPRO_PRESET in subject.env, portrait unset)
   --all              check, generate, postpro (default) -- not train; needs
                      weights/$MODEL/*.safetensors from a train lane first
 
@@ -37,7 +37,7 @@ Environment:
                                       cuda_t4 on 16GB Turing — fp16, quantised)
   LORA_LOW_VRAM=0|1          (optional; cuda defaults to 0)
   LORA_LR, LORA_STEPS, LORA_RESOLUTIONS=512,768
-  LORA_FLUX_MODEL_PATH, LORA_SKIP_POSTPRO=1
+  LORA_FLUX_MODEL_PATH, LORA_SKIP_POSTPRO=1, POSTPRO_PRESET
 
 Four train lanes:
   A) local/RunPod:  ./lora --train

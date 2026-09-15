@@ -193,8 +193,15 @@ puts "ok: version #{version}" if version
 puts "ok: weights_url #{weights_url}" if weights_url
 
 WEIGHTS_DIR.mkpath
+# The base generation beside the weights, because a .safetensors file does not
+# say which model it adapts and nothing can infer it later: a FLUX.1-dev LoRA
+# loads into no FLUX 2 model. The trainer fixes the base, so naming the trainer
+# names it. The ai-toolkit lanes need no such line; ai-toolkit writes the config
+# it trained from, name_or_path included, into the training folder.
 sidecar = {
   trained_at: Time.now.utc.iso8601,
+  base_model: "black-forest-labs/FLUX.1-dev",
+  trainer: Master::Io::ReplicateClient::LORA_TRAINER,
   destination: destination,
   training_id: training_id,
   trigger_word: options[:trigger],
