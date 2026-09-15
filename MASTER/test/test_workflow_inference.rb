@@ -30,6 +30,19 @@ class WorkflowInferenceTest < Minitest::Test
     assert_match(/review\d+: complete/, out)
   end
 
+  # The dmesg progress and the report print to one terminal, so the posture
+  # line appears in exactly one of them.
+  def test_the_posture_prints_once
+    previous = ENV["MASTER_DMESG"]
+    ENV["MASTER_DMESG"] = "1"
+    posture = Master::Ground::ModePosture.new(root: File.expand_path("..", __dir__)).line
+    printed, = capture_io { print dispatch(critique: false) }
+
+    assert_equal 1, printed.scan(posture).size, printed
+  ensure
+    ENV["MASTER_DMESG"] = previous
+  end
+
   # --dry-run swaps the fix stage for a preview and drops the re-scan.
   def test_dry_run_previews_instead_of_fixing
     out = dispatch(critique: false)

@@ -113,7 +113,10 @@ module Master
         private
 
         def build_sections(resolved:, shell:, posture:, apply:, critique:, aesthetic:)
-          sections = [["mode", log_phase("mode0", "posture", posture_line(posture)) { posture_line(posture) }]]
+          # The posture is a section and not a dmesg line: the review0 boot line
+          # already names it, and a mode0 line printed the same text the report
+          # prints a moment later in the same terminal.
+          sections = [["mode", posture_line(posture)]]
           if @unknown_stages&.any?
             sections << ["stages", "unknown stage: #{@unknown_stages.join(", ")} — " \
                                    "--only takes #{STAGES.join(", ")} (fix and council are spellings of scan and critique)"]
