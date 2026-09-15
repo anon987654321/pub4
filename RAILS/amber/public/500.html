@@ -8,26 +8,18 @@
   <meta name="color-scheme" content="light">
   <link rel="stylesheet" href="/styles/errors.css">
   <style>
-    :root { --x-bg: #efefef; --x-text: #333333; --x-accent: #000000; --x-border: #888888; --x-text-secondary: #4d4d4d; --x-font: "Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif; }
-    .error-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.25rem; justify-content: center; }
-    .error-actions a, .error-actions button {
-      display: inline-flex; align-items: center; min-height: 44px; padding: 0.5rem 1rem;
-      border: 1px solid var(--x-border); border-radius: 4px; text-decoration: none; font-weight: 600;
-      background: transparent; color: inherit; font: inherit; cursor: pointer;
-    }
-    .error-actions a.primary, .error-actions button.primary { background: var(--x-accent); color: var(--x-bg); border-color: var(--x-accent); }
-    .kicker { color: var(--x-text-secondary); font-size: 0.875rem; margin-bottom: 0.5rem; }
+    :root { --bg: #efefef; --text: #333333; --accent: #000000; --border: #888888; --text-secondary: #4d4d4d; --font: "Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif; }
   </style>
 </head>
 <body>
   <main>
     <p class="kicker">Amber · 500</p>
     <header>
-      <h1 style="font-size:1.5rem;margin-bottom:0.75rem">Noe gikk galt</h1>
+      <h1>Noe gikk galt</h1>
     </header>
     <article>
       <p>Vi traff en uventet feil. Prøv igjen om et øyeblikk — garderoben din er trygt lagret.</p>
-      <p lang="en" style="margin-top:0.5rem;color:var(--x-text-secondary);font-size:0.9em">Something went wrong on our side. Your wardrobe is safe — try again shortly.</p>
+      <p lang="en">Something went wrong on our side. Your wardrobe is safe — try again shortly.</p>
       <nav class="error-actions" aria-label="Neste steg">
         <button type="button" class="primary" onclick="location.reload()">Prøv igjen</button>
         <a href="/">Hjem</a>

@@ -58,4 +58,41 @@ class SharedWiringGateTest < Minitest::Test
       end
     end
   end
+
+  ERROR_PAGES = Dir[File.join(ROOT, "{amber,brgen,bsdports,shared}/public/*.html")].freeze
+  ERRORS_CSS = File.read(File.join(ROOT, "shared/public/styles/errors.css"))
+
+  def declared(css) = css.scan(/(--[\w-]+)\s*:/).flatten
+
+  # A static error page renders when the app does not, so nothing but errors.css
+  # and the page's own <style> can supply a colour. Every custom property the
+  # page reads has to be declared by one of the two, or it falls back to nothing.
+  def test_error_pages_read_only_custom_properties_something_declares
+    refute_empty ERROR_PAGES
+    ERROR_PAGES.each do |page|
+      html = File.read(page)
+      missing = html.scan(/var\((--[\w-]+)\)/).flatten.uniq - declared(ERRORS_CSS) - declared(html)
+
+      assert_empty missing, "#{page} reads #{missing.join(", ")}, which neither errors.css nor the page declares"
+    end
+  end
+
+  # The apps default to Norwegian, and the error pages are the one surface I18n
+  # cannot reach.
+  def test_error_pages_speak_norwegian
+    ERROR_PAGES.each do |page|
+      assert_match(/<html lang="nb"/, File.read(page), "#{page} is not a Norwegian page")
+    end
+  end
+
+  # overlay_shared_public copies shared/public over each app's public on deploy,
+  # so a page shared carries replaces the page an app carries for itself.
+  def test_shared_carries_no_error_page_an_app_carries
+    shared = Dir[File.join(ROOT, "shared/public/*.html")].map { |path| File.basename(path) }
+    %w[amber brgen bsdports].each do |app|
+      clobbered = shared & Dir[File.join(ROOT, app, "public/*.html")].map { |path| File.basename(path) }
+
+      assert_empty clobbered, "shared/public would overwrite #{app}'s #{clobbered.join(", ")} on deploy"
+    end
+  end
 end

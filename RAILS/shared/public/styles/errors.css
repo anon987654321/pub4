@@ -3,14 +3,15 @@
 
 html { font-size: 16px; }
 
-/* Dialect defaults: graphite/indigo social (apps may override via inline :root) */
+/* The light ground every app but bsdports renders, from design_tokens.yml `light`.
+   A page on another ground sets these on its own :root; bsdports does. */
 :root {
-  --bg: #17161c;
-  --text: #d8d6e0;
-  --text-secondary: #8a879c;
-  --border: #46435a;
-  --accent: #5b4fc4;
-  --danger: #d1594a;
+  --bg: #efefef;
+  --text: #333333;
+  --text-secondary: #4d4d4d;
+  --border: #666666;
+  --accent: #000000;
+  --danger: #a9483c;
   --font: "Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif;
 }
 
@@ -26,9 +27,6 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
-
-#error-description { fill: var(--danger); }
-#error-id { fill: var(--border); }
 
 a {
   color: var(--accent);
@@ -48,15 +46,30 @@ main {
   text-align: center;
 }
 
-main header { width: min(100%, 12em); }
-main header svg { height: auto; max-width: 100%; width: 100%; }
 main article { width: min(100%, 30em); }
 main article p { font-size: 87.5%; color: var(--text-secondary); }
+main article p[lang="en"] { margin-top: 0.5rem; font-size: 0.9em; }
+main header h1 { font-size: 1.5rem; margin-bottom: 0.75rem; }
 
-main article br {
-  display: none;
+.kicker { color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.5rem; }
+
+.error-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.25rem; justify-content: center; }
+
+.error-actions a,
+.error-actions button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  text-decoration: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
 }
 
-@media (min-width: 48em) {
-  main article br { display: inline; }
-}
+.error-actions a.primary,
+.error-actions button.primary { background: var(--accent); color: var(--bg); border-color: var(--accent); }
