@@ -34,4 +34,18 @@ class TtsJobConversationTest < ActiveSupport::TestCase
     assert TtsJob.owned?(job.job_id, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
     refute TtsJob.owned?(job.job_id, "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
   end
+
+  test "a failure older than the TTL no longer answers for the sentence" do
+    job = TtsJob.new(text: "Still thinking.", voice: :jenny, style: :brief)
+    error = TtsJob::CACHE_DIR.join("#{job.job_id}.err")
+    File.write(error, "synthesis produced empty audio")
+
+    job.forget_stale_failure!
+    assert job.failed?, "a fresh failure should still hold"
+
+    stale = Time.now - TtsJob::FAILURE_TTL_S - 1
+    File.utime(stale, stale, error)
+    job.forget_stale_failure!
+    assert job.pending?, "a stale failure should let the sentence synthesize again"
+  end
 end

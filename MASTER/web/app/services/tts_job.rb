@@ -15,6 +15,14 @@ class TtsJob
   PRIORITIES = { "error" => 0, "response" => 1, "nudge" => 2 }.freeze
   DEFAULT_PRIORITY = PRIORITIES.fetch("response")
 
+  # A failure describes one attempt, not the sentence. The .err file used to be
+  # permanent, so a line that failed once during a restart answered 503 in 40ms
+  # forever after: "Still thinking." was still refused on 2026-09-15 for a
+  # failure recorded the day before. Past FAILURE_TTL_S the next request
+  # synthesizes again; inside it, a burst of retries still meets the recorded
+  # failure instead of queueing the same doomed job.
+  FAILURE_TTL_S = 60
+
   @queue_mutex = Mutex.new
   # Workers used to spin on `sleep 0.25` when the queue was empty, which is the
   # common case for the first sentence of a reply: nothing else is in flight, so
@@ -41,6 +49,7 @@ class TtsJob
     )
     return job if job.ready?
 
+    job.forget_stale_failure!
     # Write the token file now, before the client can start polling — perform()
     # used to be the only writer, but it only runs once the background worker
     # thread dequeues this job, which can be seconds after enqueue if other
@@ -216,6 +225,15 @@ class TtsJob
 
   def pending?
     !ready? && !failed?
+  end
+
+  def forget_stale_failure!
+    return unless failed?
+    return if Time.now - File.mtime(error_path) < FAILURE_TTL_S
+
+    File.delete(error_path)
+  rescue Errno::ENOENT
+    nil
   end
 
   def error
