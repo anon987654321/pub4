@@ -59,8 +59,9 @@ module Livesets
   # The kit is one-shots or it is arithmetic. drunk_kit synthesises its four hits
   # from a sine and two noise bursts, which is a drum machine, not a record; the
   # lineage this room is after ran one-shots taken off real machines and run to
-  # tape. A directory under samples/drums/ qualifies if it has all four roles.
-  KIT_ROLES = %w[kick snare ghost hat].freeze
+  # tape. A directory under samples/drums/ qualifies if it has all three roles;
+  # the ghost is the snare played quiet.
+  KIT_ROLES = %w[kick snare hat].freeze
 
   NOTE_PC = { "C" => 0, "D" => 2, "E" => 4, "F" => 5, "G" => 7, "A" => 9, "B" => 11 }.freeze
   # The tables were written by ear over years and spell chords the way a person
@@ -280,7 +281,7 @@ module Livesets
     want = ENV.fetch("LIVE_KIT", "").to_s
     return nil if want.empty? || want == "synth"
 
-    dir = File.join(D, "samples", "drums", want)
+    dir = File.expand_path(want, File.join(D, "samples", "drums"))
     missing = KIT_ROLES.reject { |r| File.file?(File.join(dir, "#{r}.wav")) }
     abort "kit #{want}: no #{missing.join(', ')}" unless missing.empty?
 
@@ -465,7 +466,7 @@ module Livesets
   # One one-shot, split and dropped at each of its hit times. aevalsrc is avoided
   # on long durations -- ruinously slow -- so one-shots are synthesised once,
   # short, and placed with adelay, which costs nothing.
-  def place(idx, label, filt, hits)
+  def place(idx, label, filt, hits, gains = nil)
     out = ["[#{idx}:a]#{filt}[#{label}_s]"]
     out << "[#{label}_s]asplit=#{hits.size}#{(0...hits.size).map { |k| "[#{label}x#{k}]" }.join}"
     # adelay refuses a negative delay, and the jitter that makes the drums drunk
@@ -473,18 +474,19 @@ module Livesets
     # site, so the graph either builds or it does not.
     hits.each_with_index do |ms, k|
       d = [ms, 0].max.round
-      out << "[#{label}x#{k}]adelay=#{d}|#{d}[#{label}p#{k}]"
+      level = gains ? ",volume=#{gains[k]}" : ""
+      out << "[#{label}x#{k}]adelay=#{d}|#{d}#{level}[#{label}p#{k}]"
     end
     out << "#{(0...hits.size).map { |k| "[#{label}p#{k}]" }.join}" \
            "amix=inputs=#{hits.size}:normalize=0[#{label}]"
     out
   end
 
-  # Drunk drums. Dilla time is not a swing setting -- the kick and the snare drag
-  # in different directions and by different amounts, and the hats do not agree
-  # with either. Appends its own sources and returns the index of the last one,
-  # which is the crackle. On the synthesised kit the hats and the record noise are
-  # the same long pink generator read twice: 0.006 amplitude pink through a 7.2 kHz
+  # Drunk drums. Dilla time is not only a swing setting -- the kick and the snare
+  # drag in different directions and by different amounts, and the hats do not
+  # agree with either. Appends its own sources and returns the index of the
+  # crackle. On the synthesised kit the hats and the record noise are the same
+  # long pink generator read twice: 0.006 amplitude pink through a 7.2 kHz
   # high-pass is the hat, and the same noise unfiltered is the surface the whole
   # thing sits on, so they share a grain no two generators would.
   def drunk_kit(n, inputs, graph, set:, beat:, bar:, step:, sxt:, total:)
@@ -495,46 +497,128 @@ module Livesets
     # not. Derived from the pass seed so they follow it, and spelt `seed=` at
     # each source so the audit in graph_problems can see them.
     s = ->(k) { (rand * 2_147_483_647).to_i + k }
-    if dir
-      KIT_ROLES.each { |r| inputs << "-i #{File.join(dir, "#{r}.wav").shellescape}" }
-      inputs << "-f lavfi -t #{total} -i anoisesrc=c=pink:d=#{total}:a=0.006:seed=#{s.call(3)}"
-    else
-      inputs << "-f lavfi -t 0.32 -i sine=f=52:d=0.32"
-      inputs << "-f lavfi -t 0.24 -i anoisesrc=c=pink:d=0.24:seed=#{s.call(1)}"
-      inputs << "-f lavfi -t 0.05 -i anoisesrc=c=white:d=0.05:seed=#{s.call(2)}"
-      inputs << "-f lavfi -t #{total} -i anoisesrc=c=pink:d=#{total}:a=0.006:seed=#{s.call(3)}"
-    end
+    seeds = dir ? { crackle: s.call(3) } : { kick_noise: s.call(1), hat_noise: s.call(2), crackle: s.call(3) }
+    hits = kit_hits(beat: beat, bar: bar, step: step, sxt: sxt)
+    crackle_i = dir ? sampled_kit!(dir, inputs, graph, hits, beat, seeds, total) : synth_kit!(n, inputs, graph, hits, beat, seeds, total)
+    graph << "[kit_raw]#{console(set, :kit)}[kit]"
+    { hits: hits, crackle_i: crackle_i }
+  end
 
+  # Where each hit lands, in ms. The jitter draws come off the pass stream in
+  # the order every journalled take drew them; the groove moves hits by table
+  # values and draws nothing.
+  def kit_hits(beat:, bar:, step:, sxt:)
     jit = ->(ms) { (rand * ms * 2 - ms).round(1) }
-    hits = {
-      kick: [0.0, (bar / 2 + step)].map { |t| [(t * 1000).round + jit.call(9), 0].max },
+    dna = groove_dna
+    hat_swing = dna ? swing_ms(dna[:swing], step) : 34
+    {
+      kick: [0.0, (bar / 2 + step)].each_with_index.map { |t, k| [(t * 1000).round + jit.call(9) + dna_offset(dna, :kick_offset_ms, k), 0].max },
       snare: [beat, beat * 3].map { |t| (t * 1000).round + 22 + jit.call(7) }, # behind the grid
       ghost: [(beat * 2 + sxt), (beat * 3 + sxt * 3)].map { |t| (t * 1000).round + jit.call(14) },
-      hat: (0...8).map { |i| (i * step * 1000).round + (i.odd? ? 34 : 0) + jit.call(6) },
+      hat: (0...8).map { |i| (i * step * 1000).round + (i.odd? ? hat_swing : 0) + jit.call(6) + dna_offset(dna, :hat_offset_ms, i) },
     }
-    if dir
-      # A synthesised hit needs a filter to become a drum and a recorded one
-      # already is one, so a sampled kit gets almost nothing on the way in; the
-      # shaping happens after the mix, in the 1260 and the console, which is where
-      # it happened on the hardware too. The ghost is the snare played quiet and
-      # short, because that is what a ghost note is.
-      graph.concat place(n, "kk", "volume=1.5", hits[:kick])
-      graph.concat place(n + 1, "sn", "volume=1.2", hits[:snare])
-      graph.concat place(n + 2, "gh", "volume=0.42,afade=t=out:st=0.02:d=0.1", hits[:ghost])
-      graph.concat place(n + 3, "hh", "volume=0.4", hits[:hat])
-      graph << "[kk][sn][gh][hh]amix=inputs=4:weights=1.6 1.5 1 1:normalize=0,volume=1.3[kit_raw]"
-    else
-      graph.concat place(n, "kk", "volume=1.9,afade=t=out:st=0.015:d=0.24,lowpass=f=180," \
-                                  "acrusher=bits=12:mode=log:aa=1", hits[:kick])
-      graph.concat place(n + 1, "sn", "volume=1.5,afade=t=out:st=0.004:d=0.19," \
-                                      "bandpass=f=1900:width_type=h:w=2600,volume=1.4", hits[:snare])
-      graph.concat place(n + 2, "gh", "volume=0.24,afade=t=out:st=0.003:d=0.09," \
-                                      "bandpass=f=2400:width_type=h:w=1800", hits[:ghost])
-      graph.concat place(n + 3, "hh", "volume=0.26,afade=t=out:st=0.002:d=0.048,highpass=f=7200", hits[:hat])
-      graph << "[kk][sn][gh][hh]amix=inputs=4:weights=2.8 2.4 1.1 1.0:normalize=0[kit_raw]"
+  end
+
+  # Swing that is a swing: the off-eighth lands at the groove's percentage of
+  # the pair, so it scales with the tempo. 50 is straight; donuts' 61 puts the
+  # off-hat 22% of an eighth late.
+  def swing_ms(percent, step) = (((percent / 50.0) - 1.0) * step * 1000).round(1)
+
+  def dna_offset(dna, key, index) = dna ? dna.fetch(key)[index % dna.fetch(key).size] : 0
+
+  # LIVE_GROOVE names a row of the engine's GROOVE_DNA -- donuts, the engine's
+  # own default, unless told -- or drunk, the flat 34 ms the sets played before
+  # the table was read, which a take kept under it replays with.
+  def groove
+    want = ENV.fetch("LIVE_GROOVE", "donuts")
+    names = ["drunk", *DillaComposition::GROOVE_DNA.keys.map(&:to_s)]
+    abort "no groove #{want.inspect} — have #{names.join(', ')}" unless names.include?(want)
+
+    want
+  end
+
+  def groove_dna = groove == "drunk" ? nil : DillaComposition::GROOVE_DNA.fetch(groove.to_sym)
+
+  # How hard each hit lands. The DNA's velocity curve is per beat of the bar, so
+  # a hit takes the level of the beat it falls in; the ghost's density scales how
+  # loud the ghosts sit under it. Velocity is the half of Dilla time the ear
+  # reads as a person, and drunk has none.
+  def velocities(hits, beat)
+    dna = groove_dna or return {}
+    curve = dna.fetch(:velocity_curve)
+    hits.to_h do |role, times|
+      gains = times.map { |ms| curve[((ms / 1000.0) / beat).floor % curve.size] }
+      [role, role == :ghost ? gains.map { |g| (g * dna.fetch(:ghost_density)).round(3) } : gains]
     end
-    graph << "[kit_raw]#{console(set, :kit)}[kit]"
-    { hits: hits, crackle_i: n + 3 }
+  end
+
+  def synth_kit!(n, inputs, graph, hits, beat, seeds, total)
+    inputs << "-f lavfi -t 0.32 -i sine=f=52:d=0.32"
+    inputs << "-f lavfi -t 0.24 -i anoisesrc=c=pink:d=0.24:seed=#{seeds[:kick_noise]}"
+    inputs << "-f lavfi -t 0.05 -i anoisesrc=c=white:d=0.05:seed=#{seeds[:hat_noise]}"
+    inputs << "-f lavfi -t #{total} -i anoisesrc=c=pink:d=#{total}:a=0.006:seed=#{seeds[:crackle]}"
+    v = velocities(hits, beat)
+    graph.concat place(n, "kk", "volume=1.9,afade=t=out:st=0.015:d=0.24,lowpass=f=180," \
+                                "acrusher=bits=12:mode=log:aa=1", hits[:kick], v[:kick])
+    graph.concat place(n + 1, "sn", "volume=1.5,afade=t=out:st=0.004:d=0.19," \
+                                    "bandpass=f=1900:width_type=h:w=2600,volume=1.4", hits[:snare], v[:snare])
+    graph.concat place(n + 2, "gh", "volume=0.24,afade=t=out:st=0.003:d=0.09," \
+                                    "bandpass=f=2400:width_type=h:w=1800", hits[:ghost], v[:ghost])
+    graph.concat place(n + 3, "hh", "volume=0.26,afade=t=out:st=0.002:d=0.048,highpass=f=7200", hits[:hat], v[:hat])
+    graph << "[kk][sn][gh][hh]amix=inputs=4:weights=2.8 2.4 1.1 1.0:normalize=0[kit_raw]"
+    n + 3
+  end
+
+  # A recorded kit, one input per file. A role's files are its own name and any
+  # numbered takes beside it -- kick.wav, kick_2.wav -- dealt to its hits in
+  # turn, so the second kick of the bar is the second body when there is one and
+  # no waveform repeats while another take waits: a kit, not a trigger. The
+  # ghost is the snare played quiet and short, because that is what a ghost note
+  # is, so a kit needs no ghost file. A synthesised hit needs a filter to become
+  # a drum and a recorded one already is one, so it gets almost nothing on the
+  # way in; the shaping happens after the mix, in the 1260 and the console.
+  KIT_GAINS = { kick: ["kk", "volume=1.5"], snare: ["sn", "volume=1.2"], hat: ["hh", "volume=0.4"] }.freeze
+
+  def sampled_kit!(dir, inputs, graph, hits, beat, seeds, total)
+    v = velocities(hits, beat)
+    trims = kit_trims(dir)
+    snare_i = nil
+    labels = KIT_GAINS.flat_map do |role, (label, gain)|
+      takes = role_takes(dir, role)
+      takes.each_with_index.map do |take, t|
+        inputs << "-i #{take.shellescape}"
+        snare_i ||= inputs.size - 1 if role == :snare
+        mine = hits[role].each_index.select { |k| k % takes.size == t }
+        graph.concat place(inputs.size - 1, "#{label}#{t}", "#{gain},volume=#{trims.fetch(role)}dB",
+                           mine.map { |k| hits[role][k] }, v[role] && mine.map { |k| v[role][k] })
+        "[#{label}#{t}]"
+      end
+    end
+    graph.concat place(snare_i, "gh", "volume=0.42,volume=#{trims.fetch(:snare)}dB,afade=t=out:st=0.02:d=0.1",
+                       hits[:ghost], v[:ghost])
+    graph << "#{labels.join}[gh]amix=inputs=#{labels.size + 1}:normalize=0,volume=1.3[kit_raw]"
+    inputs << "-f lavfi -t #{total} -i anoisesrc=c=pink:d=#{total}:a=0.006:seed=#{seeds[:crackle]}"
+    inputs.size - 1
+  end
+
+  def role_takes(dir, role)
+    Dir.glob(File.join(dir, "#{role}{,_[0-9]*}.wav")).sort_by { |path| [File.basename(path).length, path] }
+  end
+
+  # How far each role is from the kit the sampled weights were set against,
+  # measured from the files every pass rather than stored: a new kit is in level
+  # the first time it plays, and there is no table of trims to fall out of date.
+  # Peaks, because the attack is what a one-shot is heard by. The reference is
+  # custom, the one complete recorded kit on disk when the weights were set:
+  # kick -4.7, snare -6.8, hat -4.9 dBFS.
+  KIT_REFERENCE_PEAK = { kick: -4.7, snare: -6.8, hat: -4.9 }.freeze
+
+  def kit_trims(dir)
+    KIT_REFERENCE_PEAK.to_h do |role, reference|
+      out = `#{FF} -hide_banner -nostats -i #{role_takes(dir, role).first.shellescape} -af volumedetect -f null - 2>&1`
+      peak = out[/max_volume: (-?[\d.]+) dB/, 1]
+      [role, peak ? (reference - peak.to_f).round(2) : 0.0]
+    end
   end
 
   # A graph that builds is not a graph that sounds. Two defects in these sets
@@ -1090,7 +1174,7 @@ module Livesets
       progression: symbols, bpm: bpm, bar_s: bar, chord_s: chord_s, kit_cycle: kit_cycle, form: form,
       bus_patch: ENV['LIVE_BUS_PATCH'], muted: muted.join(","),
       weights: weights("chord_based_beats"),
-      drums: { kick_ms: hits[:kick], snare_ms: hits[:snare], ghost_ms: hits[:ghost], hat_ms: hits[:hat] },
+      drums: { kick_ms: hits[:kick], snare_ms: hits[:snare], ghost_ms: hits[:ghost], hat_ms: hits[:hat] }, groove: groove,
       **console_record("chord_based_beats"), rig: "dilla.rb live set chord_based_beats"
     )
 
@@ -1263,7 +1347,7 @@ module Livesets
       chop_at: slice_at, reversed: reverse, bar_s: bar, form: form, hocket: voice_of.values.max.to_i + 1,
       bus_patch: ENV['LIVE_BUS_PATCH'], muted: muted.join(","),
       weights: weights("sampled_based_beats"),
-      drums: { kick_ms: hits[:kick], snare_ms: hits[:snare], ghost_ms: hits[:ghost], hat_ms: hits[:hat] },
+      drums: { kick_ms: hits[:kick], snare_ms: hits[:snare], ghost_ms: hits[:ghost], hat_ms: hits[:hat] }, groove: groove,
       **console_record("sampled_based_beats"), rig: "dilla.rb live set sampled_based_beats"
     )
 
@@ -1441,7 +1525,7 @@ module Livesets
   RECALLED = {
     "LIVE_BED" => ["bed", nil], "LIVE_KIT" => ["kit", nil], "LIVE_PROGRESSION" => ["progression_name", nil],
     "LIVE_VOICING" => ["voicing", "down"], "LIVE_LENGTH" => ["seconds", nil], "LIVE_ROOM" => ["room", "warm"],
-    "LIVE_KIT_CYCLE" => ["kit_cycle", "phrase"], "LIVE_FORM" => ["form", nil], "LIVE_MUTE" => ["muted", nil], "LIVE_WEIGHTS" => ["weights", nil], "LIVE_DRAG" => ["drag", nil], "LIVE_BPM" => ["bpm_pin", nil],
+    "LIVE_KIT_CYCLE" => ["kit_cycle", "phrase"], "LIVE_FORM" => ["form", nil], "LIVE_MUTE" => ["muted", nil], "LIVE_WEIGHTS" => ["weights", nil], "LIVE_DRAG" => ["drag", nil], "LIVE_BPM" => ["bpm_pin", nil], "LIVE_GROOVE" => ["groove", "drunk"],
     "LIVE_COPY_MACHINE" => ["copy_machine", "0"], "LIVE_VOICE_STACK" => ["voice_stack", "1"], "LIVE_HOCKET" => ["hocket", "1"],
     "LIVE_BUS_PATCH" => ["bus_patch", nil],
   }.freeze
@@ -1466,6 +1550,7 @@ module Livesets
     "LIVE_DRAG" => "pin how far under its pitch the record runs, 0.5..1.0",
     "LIVE_BPM" => "pin the tempo, 40..200; a bed set reads its grid nearest to it (live tap finds one)",
     "LIVE_KIT" => "a directory under samples/drums with every kit role, or synth",
+    "LIVE_GROOVE" => "a GROOVE_DNA row (donuts default) or drunk, the flat swing a take kept before it",
     "LIVE_KIT_CYCLE" => "bar (default) or phrase, how often the chord set's kit repeats",
     "LIVE_PROGRESSION" => "pin the chord set's progression by name",
     "LIVE_VOICING" => "down (default) or up, the sampled set's voicing tables",

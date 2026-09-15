@@ -396,6 +396,44 @@ class TestDillaLivesets < Minitest::Test
     assert_equal "TERM", Signal.signame($?.termsig)
   end
 
+  # The kit: a groove from the engine's GROOVE_DNA that swings by percentage and
+  # sets how hard each hit lands, the flat drunk swing for a take kept under it,
+  # and a recorded kit that deals numbered takes in turn, plays its ghost off the
+  # snare, trims each role to the reference and reads its crackle from noise.
+  def test_the_kit_grooves_from_the_dna_and_a_recorded_kit_is_a_kit
+    drunk = built("chord_based_beats", "LIVE_GROOVE" => "drunk", "LIVE_BPM" => "90")
+    donuts = built("chord_based_beats", "LIVE_GROOVE" => nil, "LIVE_BPM" => "90")
+    step_ms = (60.0 / 90 / 2 * 1000).round
+    off = ->(pass) { (pass[:row][:drums][:hat_ms][1] - step_ms).round }
+
+    assert_equal "donuts", donuts[:row][:groove]
+    assert_in_delta 34, off.call(drunk), 7
+    assert_in_delta Livesets.swing_ms(61, step_ms / 1000.0) + 14, off.call(donuts), 7
+    refute(drunk[:graph].any? { |g| g.match?(/adelay=\d+\|\d+,volume=/) })
+    assert(donuts[:graph].any? { |g| g.match?(/\[kkx0\]adelay=\d+\|\d+,volume=0\.84\[/) })
+    assert_raises(SystemExit) { with_env("LIVE_GROOVE" => "polka") { Livesets.groove } }
+
+    Dir.mktmpdir do |kit|
+      %w[kick kick_2 snare hat].each do |name|
+        system("ffmpeg", "-loglevel", "error", "-f", "lavfi", "-i", "sine=f=200:d=0.2", "-af", "volume=-10dB", File.join(kit, "#{name}.wav"))
+      end
+      skip "ffmpeg is not installed" unless File.file?(File.join(kit, "hat.wav"))
+      pass = built("sampled_based_beats", "LIVE_KIT" => kit)
+      files = pass[:inputs].grep(/#{Regexp.escape(kit)}/)
+
+      assert_equal %w[kick.wav kick_2.wav snare.wav hat.wav], files.map { |i| File.basename(i.split.last) }
+      assert_empty Livesets.graph_problems(pass[:inputs], pass[:graph])
+      assert_equal 1, pass[:graph].count { |g| g.start_with?("[kk0_s]asplit=1") }
+      assert_equal 1, pass[:graph].count { |g| g.start_with?("[kk1_s]asplit=1") }
+      snare = pass[:inputs].index { |i| i.end_with?("snare.wav") }
+      assert(pass[:graph].any? { |g| g.start_with?("[#{snare}:a]volume=0.42") }, "the ghost is the snare")
+      noise = pass[:inputs].index { |i| i.include?("a=0.006") }
+      assert(pass[:graph].grep(/\[crackle\]\z/).first.start_with?("[#{noise}:a]"), "the crackle is the noise")
+      # ffmpeg's sine peaks at an eighth of full scale, -18.1 dB, so -28.1 here.
+      assert_in_delta(-4.7 - -28.1, Livesets.kit_trims(kit)[:kick], 0.5)
+    end
+  end
+
   # A render writes demo.wav and no other audio file, and only takes its name
   # once it has finished, so a killed pass leaves the last good demo in place.
   def test_a_render_lands_on_demo_wav_only_and_arrives_whole
