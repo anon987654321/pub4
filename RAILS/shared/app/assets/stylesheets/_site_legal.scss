@@ -18,8 +18,10 @@
  * measured on brgen.no/privacy before and after, .legal-prose is 724.397px wide
  * with 32px 20px 64px of padding and its h1 is 28.8px/33.12px either way.
  *
- * That is the whole of the fix here. The snap is a separate decision, and it is
- * the operator's, because every one of those numbers is something somebody sees.
+ * The spacing sits on EIGHT_PX_RHYTHM's 4px grid: 6, 10, 18, 26 and 34px each
+ * moved to the nearest step, so the gaps between the heading, the eyebrow, the
+ * sections and the page nav follow the rhythm every other surface keeps. The
+ * type values above stay as they are, because they have no rule to follow yet.
  */
 
 /* The tap floor, without moving anything.
@@ -55,7 +57,7 @@
   color: var(--text, #333333);
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 18px;
+  gap: 8px 16px;
 }
 
 .site-legal .site-verify strong {
@@ -71,13 +73,13 @@
 .legal-prose h1 {
   font-size: 1.6rem;
   line-height: 1.15;
-  margin: 0 0 6px;
+  margin: 0 0 8px;
 }
 
 .legal-prose .legal-eyebrow {
   font-size: 0.72rem;
   color: var(--text-secondary, #4d4d4d);
-  margin: 0 0 10px;
+  margin: 0 0 12px;
 }
 
 .legal-prose .legal-updated {
@@ -88,7 +90,7 @@
 
 .legal-prose h2 {
   font-size: 1.05rem;
-  margin: 26px 0 6px;
+  margin: 24px 0 8px;
 }
 
 .legal-prose p,
@@ -105,7 +107,7 @@
 .legal-prose nav {
   display: flex;
   gap: 16px;
-  margin-top: 34px;
+  margin-top: 32px;
   padding-top: 16px;
   border-top: 1px solid var(--border, #666666);
   font-size: 14px;
