@@ -17526,7 +17526,7 @@ def stream_iterate_after_render!(path)
     reassert_camel_beauty_locks!
     line = "[#{Time.now.utc.iso8601}] ##{@stream_iterate_count} track=#{ENV['TRACK']} beauty=#{beauty} " \
            "camel_beauty #{notes.join(' ')}"
-    File.open(STREAM_ITERATE_LOG, "a") { |f| f.puts(line) }
+    append_stream_iterate_log!(line)
     puts "stream iterate: beauty=#{beauty} camel_lock #{notes.join(', ')}"
     return
   end
@@ -17569,8 +17569,18 @@ def stream_iterate_after_render!(path)
   notes.concat(stream_iterate_analog_emulation!)
   line = "[#{Time.now.utc.iso8601}] ##{@stream_iterate_count} track=#{ENV['TRACK']} beauty=#{beauty} " \
          "sub=#{sk[:recommendation]} harsh=#{harsh[:harshness]} #{notes.join(' ')}"
-  File.open(STREAM_ITERATE_LOG, "a") { |f| f.puts(line) }
+  append_stream_iterate_log!(line)
   puts "stream iterate: beauty=#{beauty} #{notes.join(', ')}"
+end
+
+# One line per iteration, under an exclusive lock: a stream and a second stream
+# or a demo share scratch, and two unlocked appends can interleave inside a line.
+def append_stream_iterate_log!(line, path: STREAM_ITERATE_LOG)
+  FileUtils.mkdir_p(File.dirname(path))
+  File.open(path, "a") do |log|
+    log.flock(File::LOCK_EX)
+    log.puts(line)
+  end
 end
 
 def stream_evolve_composition!
@@ -18298,9 +18308,7 @@ def render_spectrum(path)
   RENDER_SPECTRUM_BANDS.transform_values { |lo, hi| band_rms(path, highpass: lo, lowpass: hi) }
 end
 
-# Objective mix meters for piping into MASTER council (not a parallel critique stack).
-# Persona panel, multi-solution ideation, and cherry-pick:
-#   MASTER /dilla crit [path]  or  /dilla-critique  or  /sound-critique
+# The bands mix_metrics reports a level for, tiling 40 Hz to 12 kHz.
 MIX_METRIC_BANDS = {
   sub_db: [40, 100],
   pad_body_db: [100, 300],
@@ -18341,9 +18349,9 @@ def parse_volumedetect(log)
   readings.keys.sort.map { |index| readings[index] }
 end
 
-# Objective mix meters for piping into MASTER council (not a parallel critique stack).
-# Persona panel, multi-solution ideation, and cherry-pick:
-#   MASTER /dilla crit [path]  or  /dilla-critique  or  /sound-critique
+# Objective mix meters: peak, RMS, crest and a level per band. They are evidence,
+# not a verdict; the persona critique is MASTER's /critique, and dilla keeps no
+# second one.
 def mix_metrics(path)
   return unless path && File.file?(path)
   return unless tool_available?("ffmpeg")
@@ -18366,16 +18374,14 @@ end
 def crit_session_cli!(path = nil)
   path ||= File.join(OUTPUT_DIR, "demo.wav")
   path = File.join(ROOT, "demo.wav") unless File.file?(path)
-  abort "crit: missing #{path} — render first, then perfect via MASTER" unless File.file?(path)
+  abort "crit: missing #{path} — render one first" unless File.file?(path)
   DillaDmesg.boot!(cmd: "crit")
   DillaDmesg.read!(path)
   m = mix_metrics(path)
   DillaDmesg.metrics!(m)
   puts JSON.pretty_generate(m)
-  dmesg("meters only — multi-persona cherry-pick via master /dilla crit", unit: "meter0", parent: "dilla0")
-  dmesg("master: /dilla crit #{File.basename(path)} or /dilla-critique", unit: "meter0", parent: "dilla0")
   abort "crit: unusable levels" if m[:peak_db].to_f > -0.2 || (m[:rms_db] && m[:rms_db] < -40)
-  dmesg("meters ok — run master council to perfect", unit: "meter0", parent: "dilla0")
+  dmesg("meters ok — for the council's reading, MASTER's /critique #{path}", unit: "meter0", parent: "dilla0")
 end
 
 def render_quality_acceptable?(path)

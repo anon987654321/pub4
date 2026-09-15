@@ -8,9 +8,8 @@ require "yaml"
 require "open3"
 
 # Mastering/mix heuristics — harshness, club IR, phone preview, cassette, balance.
-# Multi-persona critique + multi-solution cherry-pick live in MASTER council:
-#   /sound-critique  and  /dilla crit
-# Do not reimplement Council::Critique / Ideation here.
+# The persona critique is MASTER's /critique (Review::Council::Critique), so
+# nothing here reimplements it.
 module DillaMaster
   IR_DIR = File.join(File.expand_path("..", __dir__), "samples", "irs")
   REFERENCE_PATH = File.expand_path("../data/dilla_reference.yml", __dir__)
