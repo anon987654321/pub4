@@ -219,7 +219,9 @@ module Master
         false
       end
 
-      def create_model(model_id, hardware: "gpu-a40-large", visibility: "private")
+      # A LoRA destination serves FLUX.1-dev, and gpu-l40s is the smallest SKU
+      # Replicate accepts that holds it; the API refuses names off its list.
+      def create_model(model_id, hardware: "gpu-l40s", visibility: "private")
         owner, name = model_id.split("/", 2)
         raise ArgumentError, "destination must be owner/name" if owner.to_s.empty? || name.to_s.empty?
 
