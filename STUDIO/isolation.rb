@@ -5,10 +5,10 @@ require "rbconfig"
 
 # Which tests only pass because of the company they keep, and which only fail.
 #
-# dilla's files deliberately share one process — the engine takes half a second
-# to load and there is nothing for six files to collide over — so every test in
-# that suite can see what the ones before it left behind. Three defects this
-# session had exactly that shape and each was invisible from a normal run:
+# `rake test:dilla` runs each dilla file in its own process. This runs them all in
+# one, deliberately, because that is where a test sees what the ones before it
+# left behind. Three defects had exactly that shape and each was invisible from
+# a run that never shared a process:
 #
 #   provenance recorded DILLA_QUIET, DILLA_ASSET_CHECK and DILLA_KNOB_CHECK as
 #   operator pins. The suite sets all three to keep itself quiet, Open3 merges
