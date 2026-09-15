@@ -39,10 +39,11 @@ class TestDillaLivesets < Minitest::Test
     env, _ruby, _engine, *command = handed
 
     assert_equal %w[live set chord_based_beats], command
-    assert_equal({ "LIVE_SEED" => "1133818290", "LIVE_KIT" => "synth", "LIVE_PROGRESSION" => "lydian_augmented_haze",
-                   "LIVE_VOICING" => "down", "LIVE_ROOM" => "warm", "LIVE_KIT_CYCLE" => "phrase",
-                   "LIVE_WEIGHTS" => "phrase=0.62,kit=2.9,crackle=0.3" }, env.compact)
-    assert_equal %w[LIVE_BED LIVE_LENGTH LIVE_FORM LIVE_MUTE LIVE_DRAG], env.select { |_, v| v.nil? }.keys, "a choice the take never made is unset, not inherited"
+    pins = { "LIVE_SEED" => "1133818290", "LIVE_KIT" => "synth", "LIVE_PROGRESSION" => "lydian_augmented_haze",
+             "LIVE_ROOM" => "warm", "LIVE_KIT_CYCLE" => "phrase", "LIVE_WEIGHTS" => "phrase=0.62,kit=2.9,crackle=0.3" }
+    assert_equal pins, env.slice(*pins.keys)
+    assert_equal ["LIVE_SEED", *Livesets::RECALLED.keys].sort, env.keys.sort, "every choice is set from the take or unset"
+    assert_nil env.fetch("LIVE_BED"), "a choice the take never made is unset, not inherited"
   end
 
   # A pin replaces what the seed drew and nothing after it: the draw still
@@ -291,6 +292,28 @@ class TestDillaLivesets < Minitest::Test
     assert_equal "5", with_env("RENDER_SEED" => nil) { built("ambient_pads") && ENV.fetch("RENDER_SEED") }
     assert_equal 0.9, built("ambient_pads", "LIVE_DRAG" => "0.9")[:row][:drag]
     assert_raises(SystemExit) { with_env("LIVE_DRAG" => "1.2") { Livesets.pinned_drag(0.9) } }
+  end
+
+  # The engine's devices, reached: a copy-machine cloud under the pads that
+  # never plays above the record, a voice stack on every held slice, the sampled
+  # phrase hocketed across the stereo field, and a bus patch when one is named.
+  # Each off is the graph the take made before it existed.
+  def test_the_engine_devices_are_wired_into_the_sets_and_come_off
+    pads = built("ambient_pads")
+    sampled = built("sampled_based_beats")
+
+    assert_includes pads[:graph].join(";"), "[under_raw]asplit=4"
+    assert(pads[:graph].grep(/asetrate=\d+,aresample/).grep(/cmo/).all? { |g| g[/asetrate=(\d+)/, 1].to_i <= 44_100 })
+    assert(pads[:graph].any? { |g| g.match?(/\A\[\d+:a\]asplit=3\[p0v0s0\]/) })
+    assert(sampled[:graph].any? { |g| g.include?("pan=stereo|") })
+    assert_equal [4, 3, 3], [pads[:row][:copy_machine], pads[:row][:voice_stack], sampled[:row][:hocket]]
+    off = built("ambient_pads", "LIVE_COPY_MACHINE" => "0", "LIVE_VOICE_STACK" => "1")
+    refute_match(/\[cm0\]|p0v0s0/, off[:graph].join(";"))
+    refute_match(/pan=stereo/, built("sampled_based_beats", "LIVE_HOCKET" => "1")[:graph].join(";"))
+    patched = built("chord_based_beats", "LIVE_BUS_PATCH" => "phrase")
+    assert_includes patched[:graph].grep(/\A\[phrase_block\]/).first, "asendcmd=f="
+    [pads, sampled, patched].each { |pass| assert_empty Livesets.graph_problems(pass[:inputs], pass[:graph]) }
+    assert_raises(SystemExit) { with_env("LIVE_HOCKET" => "9") { Livesets.knob_int("LIVE_HOCKET", 3, 1..4) } }
   end
 
   # A render writes demo.wav and no other audio file, and only takes its name

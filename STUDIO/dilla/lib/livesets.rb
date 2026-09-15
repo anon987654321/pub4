@@ -516,6 +516,114 @@ module Livesets
           .map { |i| "unseeded noise: #{i}" }
   end
 
+  # The engine's devices, reached from the room rather than rebuilt in it. Each
+  # draws from its own stream, so the pass stream a journalled seed names is
+  # untouched, and each is journalled and recalled at the value a take made
+  # before it existed.
+  #
+  # Two are not reached, and the reason is the same one. LowPassGate and WavMap
+  # are per-sample Ruby that read and write audio files, and a set is one ffmpeg
+  # graph running in real time whose only file is demo.wav. The engine keeps
+  # both on its note-plan renders (LPG=1, WAV_MAP=<image>), where the audio
+  # already exists as a file to hand them.
+  #
+  # RINGTONE_LAYER and PAD_LAYERS are not reached either. RINGTONE_LAYER is copy
+  # machine, LPG, wav_map and voice stack as one decision for a note-plan
+  # render; here the devices it bundles are reached one at a time where each has
+  # a bus to act on, so the bundle has nothing left to switch. PAD_LAYERS stacks
+  # FluidSynth soundfonts over a note plan, and the sets' pads have no note plan
+  # to stack over: they are the record, held.
+  def knob_int(name, default, range)
+    raw = ENV.fetch(name, default.to_s)
+    value = Integer(raw, exception: false)
+    abort "#{name}=#{raw} is not a whole number in #{range}" unless value && range.cover?(value)
+    value
+  end
+
+  # COPY_MACHINE on the record under the pads: the bed played several times at
+  # once at harmonic speeds, drifting apart in time, which is what a bed far
+  # down and far back is for. Four copies by default on the pad set and none on
+  # the beat sets, whose record is a groove the cloud would smear. Only the
+  # speeds at or under one: a copy above the record's pitch is the record sped
+  # up, which nothing in this room does.
+  COPIES = { "ambient_pads" => 4 }.freeze
+
+  def copies(set) = knob_int("LIVE_COPY_MACHINE", COPIES.fetch(set, 0), 0..8)
+
+  def copy_machine(set, from, to, duration)
+    n = copies(set)
+    return ["[#{from}]anull[#{to}]"] if n < 2
+
+    plan = CopyMachine.plan(copies: 32, family: :harmonic, seed: stream("copymachine").rand(2**31))
+    down = plan.select { |c| c.ratio <= 1.0 }.first(n).each_with_index.map { |c, i| CopyMachine::Copy.new(**c.to_h, index: i) }
+    CopyMachine.filter_complex(down, input: from, out: to, duration: duration).split(";")
+  end
+
+  # VOICE_STACK on every held slice: three voices each playing all of it, a few
+  # cents apart on the power law, so a slice is a section rather than a copy.
+  # The cents go downward for the same reason the copies do.
+  def voice_stack_plan
+    n = knob_int("LIVE_VOICE_STACK", 3, 1..7)
+    VoiceStack.plan(voices: n, detune_mode: :power, drift: 9.0, seed: stream("voicestack").rand(2**31))
+  end
+
+  def slice_chain(ratio, hold, gain)
+    "asetrate=44100*#{ratio},aresample=44100,atrim=0:#{hold},volume=#{gain.round(3)}," \
+      "afade=t=in:st=0:d=#{(hold * 0.35).round(3)}," \
+      "afade=t=out:st=#{(hold * 0.45).round(3)}:d=#{(hold * 0.55).round(3)}"
+  end
+
+  def stacked_slice(idx, ratio, hold, gain, label)
+    voices = voice_stack_plan
+    return ["[#{idx}:a]#{slice_chain(ratio, hold, gain)}[#{label}]"] if voices.size == 1
+
+    graph = ["[#{idx}:a]asplit=#{voices.size}#{voices.map { |vc| "[#{label}s#{vc.index}]" }.join}"]
+    voices.each do |vc|
+      detuned = (ratio * (2.0**(-vc.cents.abs / 1200.0))).round(6)
+      graph << "[#{label}s#{vc.index}]#{slice_chain(detuned, hold, gain * vc.gain)}[#{label}d#{vc.index}]"
+    end
+    graph << "#{voices.map { |vc| "[#{label}d#{vc.index}]" }.join}amix=inputs=#{voices.size}:normalize=0," \
+             "volume=#{(1.0 / voices.size).round(4)}[#{label}]"
+  end
+
+  # HOCKET across the sampled phrase: the cells are dealt to voices on the
+  # pendulum and each voice sits at its own place in the stereo field, so the
+  # line is played by an ensemble that hands it along rather than by one hand.
+  HOCKET_PANS = { 1 => [0.0], 2 => [-0.5, 0.5], 3 => [-0.55, 0.0, 0.55], 4 => [-0.6, -0.2, 0.2, 0.6] }.freeze
+
+  def hocket_voices(prog)
+    n = knob_int("LIVE_HOCKET", 3, 1..4)
+    events = prog.each_index.filter_map { |i| [i.to_f, 1.0, { hz: [i] }, 1.0] if prog[i] }
+    split = MidiDevices::Hocket.split(events, voices: n, mode: :pendulum, seed: stream("hocket").rand(2**31))
+    split.each_with_index.with_object({}) { |(voice, v), map| voice.each { |event| map[event[2][:hz].first] = v } }
+  end
+
+  def hocket_pan(voice_of, cell)
+    n = voice_of.values.max.to_i + 1
+    HOCKET_PANS.fetch(n).fetch(voice_of.fetch(cell, 0))
+  end
+
+  def pan_filter(pan)
+    return "" if pan.zero?
+
+    ",pan=stereo|c0=#{(1.0 - [pan, 0].max).round(3)}*c0|c1=#{(1.0 + [pan, 0].min).round(3)}*c1"
+  end
+
+  # BUS_PATCH, asked for by name: LIVE_BUS_PATCH=phrase puts a whole random
+  # patch on that bus -- one source per destination, depths biased low. Not a
+  # default: its destinations centre a lowpass at 3 kHz, which on buses this room
+  # already limits at 6 to 9 kHz takes off more top than it moves, and nobody has
+  # heard what it does to a set. The command file is text in scratch.
+  def bus_patch(bus, bpm, total)
+    return "" unless ENV["LIVE_BUS_PATCH"].to_s == bus.to_s
+
+    matrix, = DillaModulation::PatchBay.random(bpm: bpm.to_f, routes: 3, seed: stream("buspatch").rand(2**31))
+    prefix = DillaModulation.prefix_for(matrix, path: File.join(SCRATCH_DIR, "live_buspatch_#{Process.pid}.cmds"), duration: total)
+    return "" unless prefix
+
+    "#{[prefix, *matrix.routes.map { |r| "#{matrix.instance_name(r)}=#{r.param}=#{matrix.initial(r)}" }].join(',')},"
+  end
+
   # The arrangement: what each bus plays when, as gain points over the block.
   #
   # LIVE_FORM names a form from the engine's FORM_PRESETS, stretched across the
@@ -604,10 +712,10 @@ module Livesets
   # One bus as a block: its cycle, padded to exact length, copied for the whole
   # block, then shaped. Buses are repeated apart and summed after, so each can
   # follow its own part of the arrangement and each can cycle at its own length.
-  def block!(graph, bus, cycle_s, total, points)
+  def block!(graph, bus, cycle_s, total, points, bpm:)
     graph << "[#{bus}]apad=whole_dur=#{cycle_s},atrim=0:#{cycle_s},asetpts=N/SR/TB[#{bus}_cycle]"
     graph.concat repeat("#{bus}_cycle", cycle_s, total, "#{bus}_block")
-    graph << "[#{bus}_block]#{DillaAutomation.volume_filter(points)}[#{bus}_arranged]"
+    graph << "[#{bus}_block]#{bus_patch(bus, bpm, total)}#{DillaAutomation.volume_filter(points)}[#{bus}_arranged]"
   end
 
   # The kit repeats every bar. The chord set used to mix its one-bar kit into a
@@ -826,8 +934,8 @@ module Livesets
     # on one of them.
     drop = [[0, 1.0], [(phrase_s * 2).round(3), 0.5], [(phrase_s * 3).round(3), 1.0]]
     shape = arrangement("chord_based_beats", bar, total, drop)
-    block!(graph, "phrase", phrase_s, total, shape[:phrase])
-    block!(graph, "kit", kit_cycle_s(bar, phrase_s), total, shape[:kit])
+    block!(graph, "phrase", phrase_s, total, shape[:phrase], bpm: bpm)
+    block!(graph, "kit", kit_cycle_s(bar, phrase_s), total, shape[:kit], bpm: bpm)
     graph << "[phrase_arranged][kit_arranged]amix=inputs=2:weights=#{mix_weights('chord_based_beats', :phrase, :kit)}:normalize=0:duration=first," \
              "#{console('chord_based_beats', :sum)}," \
              "vibrato=f=1.5:d=0.11," \
@@ -845,7 +953,8 @@ module Livesets
 
     journal!(
       at: Time.now.utc.iso8601, seed: seed, set: "chord_based_beats", seconds: total, bed: nil, progression_name: name.to_s,
-      progression: symbols, bpm: bpm, bar_s: bar, chord_s: chord_s, kit_cycle: kit_cycle, form: form, muted: muted.join(","),
+      progression: symbols, bpm: bpm, bar_s: bar, chord_s: chord_s, kit_cycle: kit_cycle, form: form,
+      bus_patch: ENV['LIVE_BUS_PATCH'], muted: muted.join(","),
       weights: weights("chord_based_beats"),
       drums: { kick_ms: hits[:kick], snare_ms: hits[:snare], ghost_ms: hits[:ghost], hat_ms: hits[:hat] },
       **console_record("chord_based_beats"), rig: "dilla.rb live set chord_based_beats"
@@ -947,6 +1056,7 @@ module Livesets
     graph = []
     live = []
 
+    voice_of = hocket_voices(prog)
     prog.each_with_index do |cell, i|
       next if cell.nil?
 
@@ -962,7 +1072,7 @@ module Livesets
                  "atrim=0:#{step},volume=#{v.zero? ? 1.0 : 0.62}," \
                  "afade=t=in:st=0:d=0.005,afade=t=out:st=#{(step - 0.03).round(4)}:d=0.03[v#{i}#{tag}]"
       end
-      graph << "[v#{i}a][v#{i}b][v#{i}c]amix=inputs=3:normalize=0[ch#{i}]"
+      graph << "[v#{i}a][v#{i}b][v#{i}c]amix=inputs=3:normalize=0#{pan_filter(hocket_pan(voice_of, i))}[ch#{i}]"
       live << i
     end
 
@@ -995,7 +1105,7 @@ module Livesets
     # middle so the kit and the record carry it, then returns. A beat that never
     # changes is a beat nobody listens to twice.
     shape = arrangement("sampled_based_beats", bar, total, [[0, 1.0], [(bar * 16).round(3), 0.55], [(bar * 24).round(3), 1.0]])
-    %w[phrase under kit].each { |bus| block!(graph, bus, bar, total, shape[bus.to_sym]) }
+    %w[phrase under kit].each { |bus| block!(graph, bus, bar, total, shape[bus.to_sym], bpm: g[:bpm]) }
     graph << "[phrase_arranged][under_arranged][kit_arranged]amix=inputs=3:weights=#{mix_weights('sampled_based_beats', :phrase, :under, :kit)}:" \
              "normalize=0:duration=first," \
              "#{console('sampled_based_beats', :sum)}," \
@@ -1016,7 +1126,8 @@ module Livesets
     journal!(
       at: Time.now.utc.iso8601, seed: seed, set: "sampled_based_beats", seconds: total, bed: slug, sample_worth: sw,
       bpm: g[:bpm], drag: drag, bars_in_loop: g[:bars_in_loop], voicing: choice, progression: prog,
-      chop_at: slice_at, reversed: reverse, bar_s: bar, form: form, muted: muted.join(","),
+      chop_at: slice_at, reversed: reverse, bar_s: bar, form: form, hocket: voice_of.values.max.to_i + 1,
+      bus_patch: ENV['LIVE_BUS_PATCH'], muted: muted.join(","),
       weights: weights("sampled_based_beats"),
       drums: { kick_ms: hits[:kick], snare_ms: hits[:snare], ghost_ms: hits[:ghost], hat_ms: hits[:hat] },
       **console_record("sampled_based_beats"), rig: "dilla.rb live set sampled_based_beats"
@@ -1086,10 +1197,7 @@ module Livesets
         # Long in, longer out, and they overlap between chords -- the fade tail of
         # one is still sounding when the next arrives, so four slices read as one
         # moving surface rather than four events.
-        graph << "[#{idx}:a]asetrate=44100*#{r},aresample=44100,atrim=0:#{hold}," \
-                 "volume=#{v.zero? ? 0.9 : (0.62 - (v * 0.11)).round(2)}," \
-                 "afade=t=in:st=0:d=#{(hold * 0.35).round(3)}," \
-                 "afade=t=out:st=#{(hold * 0.45).round(3)}:d=#{(hold * 0.55).round(3)}[p#{i}v#{v}]"
+        graph.concat stacked_slice(idx, r, hold, v.zero? ? 0.9 : (0.62 - (v * 0.11)).round(2), "p#{i}v#{v}")
       end
       graph << "#{(0...ratios.size).map { |v| "[p#{i}v#{v}]" }.join}" \
                "amix=inputs=#{ratios.size}:normalize=0[pad#{i}]"
@@ -1106,7 +1214,9 @@ module Livesets
     # The record itself, far down and far back: a bed to notice the absence of,
     # which is what keeps the pads from sounding synthesised.
     graph << "[#{bed_i}:a]asetrate=44100*#{(drag * 0.5).round(6)},aresample=44100," \
-             "atrim=0:#{(hold * prog.size).round(4)},volume=0.18," \
+             "atrim=0:#{(hold * prog.size).round(4)}[under_raw]"
+    graph.concat copy_machine("ambient_pads", "under_raw", "under_cloud", (hold * prog.size).round(4))
+    graph << "[under_cloud]volume=0.18," \
              "lowpass=f=1800,aecho=0.9:0.8:420:0.4," \
              "#{console('ambient_pads', :under)}[under]"
 
@@ -1118,7 +1228,7 @@ module Livesets
 
     phrase_s = (hold * prog.size).round(4)
     shape = arrangement("ambient_pads", bar, total, [[0, 1.0]])
-    %w[phrase under].each { |bus| block!(graph, bus, phrase_s, total, shape[bus.to_sym]) }
+    %w[phrase under].each { |bus| block!(graph, bus, phrase_s, total, shape[bus.to_sym], bpm: g[:bpm]) }
     # One slow breath across the whole block rather than a tremolo rate:
     # 1/(phrase*2) puts the swell either side of the loop point, so the place the
     # cycle restarts is the place it is quietest.
@@ -1138,7 +1248,8 @@ module Livesets
     journal!(
       at: Time.now.utc.iso8601, seed: seed, set: "ambient_pads", seconds: total, bed: slug, sample_worth: sw,
       bpm: g[:bpm], drag: drag, bars_in_loop: g[:bars_in_loop], progression: prog,
-      chop_at: slice_at, hold_s: hold, bar_s: bar, drums: nil, form: form, muted: muted.join(","),
+      chop_at: slice_at, hold_s: hold, bar_s: bar, drums: nil, form: form,
+      copy_machine: copies('ambient_pads'), voice_stack: voice_stack_plan.size, bus_patch: ENV['LIVE_BUS_PATCH'], muted: muted.join(","),
       weights: weights("ambient_pads"),
       **console_record("ambient_pads"), rig: "dilla.rb live set ambient_pads"
     )
@@ -1197,6 +1308,8 @@ module Livesets
     "LIVE_BED" => ["bed", nil], "LIVE_KIT" => ["kit", nil], "LIVE_PROGRESSION" => ["progression_name", nil],
     "LIVE_VOICING" => ["voicing", "down"], "LIVE_LENGTH" => ["seconds", nil], "LIVE_ROOM" => ["room", "warm"],
     "LIVE_KIT_CYCLE" => ["kit_cycle", "phrase"], "LIVE_FORM" => ["form", nil], "LIVE_MUTE" => ["muted", nil], "LIVE_WEIGHTS" => ["weights", nil], "LIVE_DRAG" => ["drag", nil],
+    "LIVE_COPY_MACHINE" => ["copy_machine", "0"], "LIVE_VOICE_STACK" => ["voice_stack", "1"], "LIVE_HOCKET" => ["hocket", "1"],
+    "LIVE_BUS_PATCH" => ["bus_patch", nil],
   }.freeze
 
   def recall_env(row)
