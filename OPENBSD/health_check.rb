@@ -9,6 +9,7 @@ require_relative "lib/utf8"
 require_relative "lib/guard_state"
 require_relative "lib/permission_audit"
 require_relative "lib/disk_usage"
+require_relative "lib/deploy_stamp"
 
 ROOT = File.expand_path("..", __dir__)
 APPS_YML = File.join(ROOT, "RAILS", "apps.yml")
@@ -182,12 +183,24 @@ if File.exist?(warm_beat)
   failures << "keep-warm: heartbeat #{age_h}h old — the ten-minute job is not running" if age_h > 1
 end
 
+  # The address nsd listens on, from the file render_dns.rb writes nsd.conf's
+  # ip-address from. nsd binds that address and nothing else, so asking
+  # 127.0.0.1 timed out on a healthy server and this reported "no local SOA
+  # (nsd reports ok)" on every run.
+  nameserver = begin
+    YAML.safe_load_file(File.join(__dir__, "data", "dns.yml")).fetch("nameserver").fetch("ip").to_s
+  rescue StandardError => e
+    failures << "dns: data/dns.yml nameserver.ip unreadable: #{e.class}: #{e.message}"
+    ""
+  end
   dns_ok = false
-  if File.executable?("/usr/bin/dig")
-    dns_ok, dns_out = run("/usr/bin/dig", "@127.0.0.1", "brgen.no", "SOA", "+short", "+time=2", "+tries=1")
+  if nameserver.empty?
+    dns_ok = true
+  elsif File.executable?("/usr/bin/dig")
+    dns_ok, dns_out = run("/usr/bin/dig", "@#{nameserver}", "brgen.no", "SOA", "+short", "+time=2", "+tries=1")
     dns_ok &&= !dns_out.empty? && dns_out.include?("brgen.no")
   elsif (dns_cmd = %w[/usr/sbin/drill /usr/bin/drill].find { |c| File.executable?(c) })
-    dns_ok, dns_out = run(dns_cmd, "@127.0.0.1", "brgen.no", "SOA")
+    dns_ok, dns_out = run(dns_cmd, "@#{nameserver}", "brgen.no", "SOA")
     dns_ok &&= dns_out.include?("brgen.no.")
   end
   unless dns_ok
@@ -263,15 +276,8 @@ DEPLOY_DRIFT_LIMIT = Integer(ENV.fetch("DEPLOY_DRIFT_LIMIT", "40"))
 if on_box
   repo = "/home/dev/pub4"
   apps.each_key do |name|
-    stamp = "/var/db/pub4/last_deploy_#{name}.json"
-    next unless File.readable?(stamp)
-
-    sha = begin
-      JSON.parse(File.read(stamp))["sha"].to_s
-    rescue StandardError
-      nil
-    end
-    next if sha.nil? || sha.empty?
+    sha = Deploy::DeployStamp.sha(name)
+    next unless sha
 
     ok, out = run("git", "-C", repo, "rev-list", "--count", "#{sha}..HEAD")
     next unless ok
@@ -385,6 +391,9 @@ up_checks.each do |name, port|
       deploy = payload["deploy"] || {}
       failures << "master health: deploy.tts_socket false" if deploy["tts_socket"] == false
       failures << "master health: missing deploy.face_runtime_digest" if deploy["face_runtime_digest"].to_s.empty?
+      booted = Deploy::DeployStamp.booted_mismatch(app: "master", booted: deploy["git_sha"],
+                                                   stamped: Deploy::DeployStamp.sha("master"))
+      failures << booted if booted
       voice = deploy.dig("voice_policy", "single_voice").to_s
       expected_voice = begin
         require "yaml"
@@ -409,11 +418,22 @@ if !on_box
   # /etc/relayd.conf is on vm23; the repo copy is deliberately not a substitute
   # (the relayd entries in RUNBOOK.md).
 elsif File.file?("/etc/relayd.conf")
-  relayd_conf = File.read("/etc/relayd.conf")
-  unless relayd_conf.include?("forward to <master>") && relayd_conf.include?('check http "/up"')
+  # relayd.conf is root 0600 on vm23, and deploy_all.sh, start_all_apps.sh and
+  # check-vps run this as dev. A plain read raised EACCES there and ended the run
+  # before one failure printed, so an unprivileged run reads it through doas, as
+  # the rcctl and pfctl checks above already do.
+  relayd_path = "/etc/relayd.conf"
+  relayd_read, relayd_conf = if File.readable?(relayd_path)
+                               [true, File.read(relayd_path)]
+                             else
+                               run(*privileged("/bin/cat", relayd_path))
+                             end
+  if !relayd_read
+    failures << "relayd: cannot read #{relayd_path} (#{relayd_conf})"
+  elsif !(relayd_conf.include?("forward to <master>") && relayd_conf.include?('check http "/up"'))
     failures << "relayd: master backend missing http /up check"
   end
-  ready_apps.each do |name|
+  (relayd_read ? ready_apps : []).each do |name|
     domain = app_domains[name]
     port = app_ports[name]
     failures << "relayd: missing domain route for #{domain}" if domain && !relayd_conf.include?(domain)
