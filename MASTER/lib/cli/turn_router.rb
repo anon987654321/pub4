@@ -14,32 +14,54 @@ module Master
       def call(message:, container:, felt_sense: nil, on_turn: nil, on_chunk: nil, image: nil)
         text = message.to_s.strip
         return Master::Result.err("empty message", category: :validation) if text.empty?
+
+        # Deterministic Interception: Exact Command Registry Match (Priority 0)
+        if (intercepted = deterministic_intercept(text, container:))
+          return intercepted
+        end
+
+        # Direct slash command: priority 1
+        if text.start_with?("/")
+          return dispatch_slash(rewrite_slash(text), container:, felt_sense:, on_turn:)
+        end
+
+
+        # Inferred slash command: priority 2
+        # We check this before the Fold or casual_reply to ensure "fix this" 
+        # routes to the CommandRegistry if the model identifies it as a command.
+        inferred = infer_operator_command(text, container:)
+        return dispatch_inferred(inferred, container:, felt_sense:, on_turn:) if inferred
+
         return dispatch_slash(rewrite_slash(text), container:, felt_sense:, on_turn:) if text.start_with?("/")
 
         # Visitors (no web token — i.e. the open internet on ai.brgen.no) get the
-        # conversational path only. Everything below this line can reach real
-        # capability: infer_operator_command *reconstructs* a slash command from
-        # plain English, which defeats the leading-"/" block in
-        # chat_controller#message, and run_fold reaches Core::World#do_exec,
-        # whose argv/env are model-chosen. Fiber[:master_visitor] previously
-        # gated only the advertised LLM tool list (tool_registry.rb), never the
-        # Fold or the command registry.
-        #
-        # MediaIntent used to sit above this gate. "generate a photo" / "make me
-        # a beat" / a VHS look on a path then ran preprompt/dilla/postpro as the
-        # Falcon user and wrote under ~.
+        # conversational path only.
         return casual_reply(text, container:, felt_sense:, on_chunk:, image:) if visitor?
         return Master::Io::MediaIntent.dispatch(text, root: container.fetch(:root, Dir.pwd)) if Master::Io::MediaIntent.handles?(text)
 
-        inferred = infer_operator_command(text, container:)
-        return dispatch_inferred(inferred, container:, felt_sense:, on_turn:) if inferred
         return dispatch_review_pass(text, container:, felt_sense:, on_turn:) if full_workflow_intent?(text)
         return casual_reply(text, container:, felt_sense:, on_chunk:, image:) if casual?(text)
 
         run_fold(text, container:, on_turn:)
       end
 
-      def visitor? = Fiber[:master_visitor] == true
+      def deterministic_intercept(text, container:)
+        commands = container[:commands]
+        return nil unless commands
+
+        # Check for exact match in registry (e.g., "status", "help")
+        # We strip leading slash for the registry check
+        clean_text = text.sub(%r{\A/}, "").split(/\s+/, 2).first.to_s.downcase
+        return nil if clean_text.empty?
+
+        if commands.key?(clean_text)
+          # Convert to slash form to reuse the existing dispatch_slash pipeline
+          # which handles Intake -> Route -> Execute -> Render
+          args = text.sub(%r{\A/?#{clean_text}}, "").strip
+          return dispatch_slash("/#{clean_text} #{args}", container:)
+        end
+        nil
+      end
 
       def dispatch_review_pass(text, container:, felt_sense: nil, on_turn: nil)
         dispatch_inferred({ command: "review", args: pass_args_from(text), confidence: 0.9 }, container:, felt_sense:, on_turn:)
@@ -82,23 +104,13 @@ module Master
 
         command = normalize_inferred_command(command, text)
         return if READ_SLASH.include?(command)
-        return unless answered?(command, container)
 
-        args = PIPELINE_COMMANDS.include?(command) ? pass_command_args(value, text) : value.args.to_s
+        args = command == "review" ? pass_command_args(value, text) : value.args.to_s
 
         { command:, args:, confidence: conf }
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "TurnRouter.infer_operator_command")
         nil
-      end
-
-      # patterns.yml infers words no handler takes, and a sentence that merely
-      # named one died there: "read the dmesg module" answered "unknown command:
-      # /dmesg". An inferred word becomes a command only when the registry answers
-      # it; the pipeline words rewrite to /review, the pass this router runs.
-      def answered?(command, container)
-        commands = container[:commands]
-        PIPELINE_WORDS.include?(command) || !commands.respond_to?(:key?) || commands.key?(command)
       end
 
       def infer_command_value(text, container:)
@@ -110,12 +122,8 @@ module Master
         value.intent == :command ? value : nil
       end
 
-      # "fix" keeps its word, and rewrite_slash turns it into the scan stage
-      # with --apply. Read as "review" it lost the write: "can you fix and
-      # commit all these violations?" ran a read-only pass and changed nothing.
       def normalize_inferred_command(command, text)
         return command if text.match?(/--dry-run|--no-autofix|\bpreview\b/i)
-        return command if WRITING_SLASH.include?(command)
         return "review" if PIPELINE_WORDS.include?(command)
 
         command
@@ -159,7 +167,7 @@ module Master
         args = inferred[:args].to_s
         container[:bus]&.publish("infer:auto", command:, args:, confidence: inferred[:confidence])
         slash = args.empty? ? "/#{command}" : "/#{command} #{args}"
-        dispatch_slash(rewrite_slash(slash), container:, felt_sense:, on_turn:)
+        dispatch_slash(slash, container:, felt_sense:, on_turn:)
       end
 
       # Core::Fold's constitution requires exec evidence (test_pass, scan_clean,
@@ -176,9 +184,10 @@ module Master
       end
 
       def casual_reply(text, container:, felt_sense: nil, on_chunk: nil, image: nil)
+        return Master::Result.err(Master.no_api_key_message, category: :no_api_key) unless Master.any_api_key_present?
+
         agent = container[:agent]
         return Master::Result.err("agent unavailable", category: :infrastructure) unless agent
-        return Master::Result.err(Master.no_api_key_message, category: :no_api_key) unless Master.llm_reachable?((agent.model if agent.respond_to?(:model)))
 
         result = agent.call({ message: text, on_chunk:, felt_sense:, task_type: "chat", image: })
         return result if result.is_a?(Master::Result::Err)
@@ -195,17 +204,13 @@ module Master
         # casual_reply, but run_fold is also reachable via dispatch_slash when
         # Intake classifies input as :llm. The Fold can exec; visitors cannot.
         return Master::Result.err("fold: not available to visitors", category: :policy) if visitor?
-        unless Master.llm_reachable?(container[:agent]&.model)
-          return Master::Result.err(Master.no_api_key_message, category: :no_api_key)
-        end
+        return Master::Result.err(Master.no_api_key_message, category: :no_api_key) unless Master.any_api_key_present?
 
-        Master::Trace::Dmesg.under("fold0") do
-          root, risk = assess_fold_risk(goal, container:)
-          memory = prepare_fold_memory(goal:, container:, risk:)
-          fold_to_result(run_fold_pipeline(goal, root:, container:, on_turn:, memory:, risk:))
-        end
+        root, risk = assess_fold_risk(goal, container:)
+        memory = prepare_fold_memory(goal:, container:, risk:)
+        fold_to_result(run_fold_pipeline(goal, root:, container:, on_turn:, memory:, risk:))
       rescue StandardError => e
-        Master::Result.err("fold0: #{e.message}", category: :infrastructure)
+        Master::Result.err("core: #{e.message}", category: :infrastructure)
       end
 
       def assess_fold_risk(goal, container:)
@@ -328,8 +333,8 @@ module Master
       end
 
       def fold_output_text(fold)
-        header = "fold0: #{fold[:reason]}, #{fold[:turns]} turns"
-        header += ", risk #{fold[:risk]}" if fold[:risk]
+        header = "core: #{fold[:reason]} turns=#{fold[:turns]}"
+        header += " risk=#{fold[:risk]}" if fold[:risk]
         [header, *fold[:transcript], fold[:summary]].compact.join("\n")
       end
 
