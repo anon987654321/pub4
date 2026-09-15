@@ -147,6 +147,58 @@ class TestDillaLivesets < Minitest::Test
     assert_empty found
   end
 
+  # aloop stopped reproducing at 1.5 million samples and held at 120 000, and
+  # nobody knows where between. Every set copies its cycle instead, at any length.
+  def test_no_set_loops_its_cycle_with_aloop_at_any_length
+    [nil, "12", "1200"].each do |length|
+      Livesets::SETS.each do |set|
+        pass = built(set, "LIVE_LENGTH" => length)
+
+        refute(pass[:graph].any? { |s| s.include?("aloop") }, "#{set} at #{length}")
+        assert_empty Livesets.graph_problems(pass[:inputs], pass[:graph])
+        assert_equal length ? length.to_f : { "ambient_pads" => 180 }.fetch(set, 96), pass[:row][:seconds]
+      end
+    end
+  end
+
+  def test_a_length_that_is_not_seconds_is_refused
+    assert_raises(SystemExit) { with_env("LIVE_LENGTH" => "long") { Livesets.seconds(96) } }
+  end
+
+  # The arms of an A/B differ in the stated knobs and nothing else, and a bed set
+  # holds one bed across all three.
+  def test_an_ab_plan_differs_only_in_what_it_names
+    plan = stubbing(pick_bed: -> { ["/b/loop.wav", "rack_01", 0.5] }) do
+      with_env("LIVE_BED" => nil) { Livesets.ab_plan("ambient_pads", %w[24 seed=777 LIVE_ROOM=dry]) }
+    end
+    base, changed = plan[:arms].values_at("baseline", "changed").map(&:last)
+
+    assert_equal plan[:arms]["baseline"], plan[:arms]["control"]
+    assert_equal({ "LIVE_SEED" => "777", "LIVE_LENGTH" => "24.0", "LIVE_BED" => "rack_01" }, base)
+    assert_equal base.merge("LIVE_ROOM" => "dry"), changed
+    assert_raises(SystemExit) { Livesets.ab_plan("chord_based_beats", %w[16]) }
+  end
+
+  # Level first: every arm is trimmed to the baseline's loudness before a band
+  # is compared or a window is heard.
+  def test_ab_trims_match_every_arm_to_the_baseline
+    lufs = { "a.wav" => -16.0, "b.wav" => -16.4, "c.wav" => -13.0 }
+    trims = stubbing(ab_measure: ->(path) { { lufs: lufs.fetch(path) } }) do
+      Livesets.ab_trims("baseline" => "a.wav", "control" => "b.wav", "changed" => "c.wav")
+    end
+
+    assert_equal({ "baseline" => 0.0, "control" => 0.4, "changed" => -3.0 }, trims)
+  end
+
+  def test_the_interleaved_file_alternates_the_arms_at_their_trims
+    graph = Livesets.ab_interleave_graph({ "baseline" => 0.0, "changed" => -3.0 }, 14)
+
+    assert_empty Livesets.graph_problems(%w[-i -i], graph)
+    assert_equal ["[s0]atrim=0.0:4.0", "[s1]atrim=4.0:8.0", "[s2]atrim=8.0:12.0", "[s3]atrim=12.0:14"],
+                 graph.grep(/atrim/).map { |g| g[/\A\[s\d\]atrim=[\d.:]+/] }
+    assert_includes graph.grep(/\[s1\]/).join, "volume=-3.0dB"
+  end
+
   def test_a_recalled_pass_replays_the_voicing_it_was_journalled_under
     handed = nil
     row = { "seed" => 7, "set" => "sampled_based_beats", "bed" => "b", "voicing" => "up" }
