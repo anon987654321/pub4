@@ -18,12 +18,13 @@ module GateProbe
   # have returned, so each gate's own PROBE/MEASURE/ACTIVE constant still selects
   # the answer and a gate that stops asking its own question fails here.
   class FakeCdp
-    attr_reader :navigated, :presses
+    attr_reader :navigated, :presses, :forced
 
     def initialize(&answer)
       @answer = answer
       @navigated = []
       @presses = 0
+      @forced = []
     end
 
     def evaluate(js, await_promise: false)
@@ -36,6 +37,11 @@ module GateProbe
     end
 
     def press(_key) = @presses += 1
+
+    def force_pseudo_state(selector, states)
+      @forced << [selector, states]
+      true
+    end
     def viewport(*, **) = nil
     def headers(*) = nil
     def clear_cookies = nil

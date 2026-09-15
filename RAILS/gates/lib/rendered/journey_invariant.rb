@@ -3,6 +3,7 @@
 require_relative "../../../../OPENBSD/lib/gate_result"
 require_relative "../../../tools/crawl_support"
 require_relative "../../support/geometry_probe"
+require_relative "../../support/turbo_journeys"
 
 module Deploy
   # Relations between two renders of the same thing. No baseline, no fixture.
@@ -18,6 +19,8 @@ module Deploy
   #   no_js_parity — the landmark set must survive with JavaScript disabled.
   #                  That is the stimulus_progressive principle, currently
   #                  enforced by grepping views for the string "jquery".
+  #   journeys     — a frame link, focus after a Turbo visit, the no-JS pager
+  #                  and a conversation log reconnecting; see TurboJourneys.
   class JourneyInvariantGate
     ROOT = File.expand_path("../../../..", __dir__)
 
@@ -53,17 +56,20 @@ module Deploy
 
           check_idempotence(cdp, surface, first)
           check_back_button(cdp, surface, first, live)
+          walk_journeys(cdp, surface)
         end
+        walk_reconnect(cdp)
       end
 
       check_no_js_parity(live)
+      check_noscript_pagers
       # Counted per surface, so one surface that could not be measured does not
       # make the ones that were count for nothing.
       @result.checked!(live.size)
       # A gate that reports nothing must be distinguishable from a gate that
       # ran nothing, or a silently-empty sweep reads as a pass forever.
       @result.warn("journey_invariant: checked idempotence + back-button on #{live.size} surface(s), " \
-                   "no-JS parity on #{live.map(&:app).uniq.size} app(s)")
+                   "no-JS parity on #{live.map(&:app).uniq.size} app(s); journeys walked: #{journey_counts}")
       @result
     end
 
@@ -77,6 +83,64 @@ module Deploy
                    .group_by(&:app)
                    .flat_map { |_app, rows| rows.first(2) }
     end
+
+    def journeys = @journeys ||= Hash.new(0)
+
+    def journey_counts = %w[frame focus reconnect pager].map { |name| "#{name} #{journeys[name]}" }.join(", ")
+
+    SURFACE_JOURNEYS = { "frame" => [TurboJourneys::FRAME, :judge_frame],
+                         "focus" => [TurboJourneys::FOCUS, :judge_focus] }.freeze
+    ROOM_JOURNEYS = { "frame" => [TurboJourneys::FRAME, :judge_frame],
+                      "reconnect" => [TurboJourneys::RECONNECT, :judge_reconnect] }.freeze
+
+    # A fresh load before each journey, because each one leaves the page changed.
+    def walk_journeys(cdp, surface)
+      SURFACE_JOURNEYS.each do |name, (script, verdict)|
+        next unless GeometryProbe.ok?(GeometryProbe.walk(cdp, surface))
+
+        journey(name, verdict, surface.id, TurboJourneys.measure(cdp, script))
+      end
+    end
+
+    def journey(name, verdict, label, answer)
+      journeys[name] += 1 if TurboJourneys.public_send(verdict, label, answer, @result)
+    end
+
+    # brgen's channel rooms are the one public conversation log: the room list
+    # is a surface, and its first room is where the log lives. The room's rail
+    # links target the messenger pane, so the room is walked for a frame too.
+    def walk_reconnect(cdp)
+      listed = GeometryProbe.surfaces.select { |s| s.app == "brgen" && s.label == "channels" }
+      rooms = GeometryProbe.reachable(listed).first
+      room = rooms && first_room_url(cdp, rooms)
+      return @result.warn("journey_invariant reconnect: brgen/channels offered no room — not measured") unless room
+
+      ROOM_JOURNEYS.each do |name, (script, verdict)|
+        cdp.navigate(room)
+        journey(name, verdict, "brgen/channel_room", TurboJourneys.measure(cdp, script))
+      end
+    rescue CdpSession::Error => e
+      @result.warn("journey_invariant reconnect: brgen/channel_room #{e.class.name.split("::").last}: #{e.message}")
+    end
+
+    def first_room_url(cdp, rooms)
+      return nil unless GeometryProbe.ok?(GeometryProbe.walk(cdp, rooms))
+
+      cdp.evaluate(%(document.querySelector('main a[href*="/channels/"]')?.href || null))
+    end
+
+    # Every reachable surface's server HTML, fetched once, and its next page once.
+    def check_noscript_pagers
+      GeometryProbe.reachable(GeometryProbe.surfaces).uniq { |s| [s.app, s.host, s.path] }.each do |surface|
+        follow = ->(href) { CrawlSupport.fetch(URI.join(surface_base(surface), href).to_s, host: surface.host).code }
+        label = "#{surface.app}/#{surface.label}"
+        journeys["pager"] += 1 if TurboJourneys.judge_pager(label, fetch_raw(surface), @result, follow: follow)
+      rescue StandardError => e
+        @result.warn("journey_invariant noscript: #{surface.app}/#{surface.label} fetch failed — #{e.class}")
+      end
+    end
+
+    def surface_base(surface) = "http://127.0.0.1:#{surface.port}#{surface.path}"
 
     def check_idempotence(cdp, surface, first)
       second = GeometryProbe.walk(cdp, surface)
@@ -155,8 +219,7 @@ module Deploy
     end
 
     def fetch_raw(surface)
-      url = "http://127.0.0.1:#{surface.port}#{surface.path}"
-      CrawlSupport.fetch(url, host: surface.host).body.to_s
+      CrawlSupport.fetch(surface_base(surface), host: surface.host).body.to_s
     end
 
     def structural_diff(a, b)

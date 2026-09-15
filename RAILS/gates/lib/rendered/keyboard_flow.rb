@@ -55,6 +55,20 @@ module Deploy
       })()
     JS
 
+    # Interaction states beyond focus. A control has to look different when it
+    # is pressed, when it cannot be pressed and when it is working, or a reader
+    # presses twice, presses a dead button, or leaves a form mid-submit.
+    # :active cannot be reached from script, so it is forced over CDP; disabled
+    # and aria-busy are set from script, read and taken off again.
+    STATE_MARK = File.read(File.join(__dir__, "../../support/journey_probe/state_mark.js")).freeze
+    STATE_READ = File.read(File.join(__dir__, "../../support/journey_probe/state_read.js")).freeze
+    STATES = %w[active disabled busy].freeze
+    STATE_WHY = {
+      "active" => "a press gives no feedback, so it is pressed again",
+      "disabled" => "a control that cannot be pressed looks like one that can",
+      "busy" => "a form mid-submit looks idle and is submitted twice",
+    }.freeze
+
     def self.run = new.run
 
     def run
@@ -190,7 +204,63 @@ module Deploy
       check_document_order(label, stops)
       check_focus_ring(label, stops)
       check_offscreen_focus(label, stops)
+      judge_states(label, read_states(cdp))
       true
+    end
+
+# One row per marked control: its painted state at rest and under each of
+# STATES. A read that fails costs that control, not the walk.
+    def read_states(cdp)
+      selectors = cdp.evaluate(STATE_MARK)
+      return [] unless selectors.is_a?(Array)
+
+      selectors.each_with_index.filter_map do |sel, index|
+        rest = paint(cdp, index, "none")
+        next unless rest
+
+        { "sel" => sel, "rest" => rest, "active" => forced_active(cdp, index),
+          "disabled" => paint(cdp, index, "disabled"), "busy" => paint(cdp, index, "busy") }
+      end
+    rescue CdpSession::Error
+      []
+    end
+
+    def paint(cdp, index, mutation)
+      cdp.evaluate(STATE_READ.sub("__INDEX__", index.to_s).sub("__MUTATION__", mutation))
+    end
+
+    def forced_active(cdp, index)
+      selector = %([data-gate-state="#{index}"])
+      return nil unless cdp.force_pseudo_state(selector, ["active"])
+
+      paint(cdp, index, "none")
+    ensure
+      cdp.force_pseudo_state(selector, []) if selector
+    end
+
+    public
+
+    # The verdict on the state rows of one surface. A state reads as missing when
+    # its paint equals the paint at rest; a state that could not be read (nil) is
+    # left out of both counts rather than scored as present or absent.
+    def judge_states(label, rows, result: @result)
+      @result = result
+      counts = STATES.map do |state|
+        read = rows.reject { |row| row[state].nil? }
+        flat = read.select { |row| row[state] == row["rest"] }
+        report_flat_state(label, state, flat, read.size) unless flat.empty?
+        "#{state} #{flat.size}/#{read.size}"
+      end
+      @result.warn("keyboard_flow states: #{label} unpainted #{counts.join(", ")}") unless rows.empty?
+      @result
+    end
+
+    private
+
+    def report_flat_state(label, state, flat, total)
+      @result.fail("keyboard_flow states: #{label} #{flat.size}/#{total} controls paint no #{state} state " \
+                   "(e.g. #{flat.first(2).map { |row| row["sel"] }.join(", ")}) — #{STATE_WHY.fetch(state)}",
+                   severity: :soft)
     end
 
     # The skip link exists so a keyboard user does not tab through the whole

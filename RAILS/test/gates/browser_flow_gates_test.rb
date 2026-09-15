@@ -239,6 +239,49 @@ class BrowserFlowGatesTest < Minitest::Test
     assert_inconclusive result, /would not release focus/
   end
 
+# keyboard_flow states — pressed, disabled and busy, each read off the page.
+
+STATE_ROW = { "sel" => "button.send", "rest" => "rest", "active" => "pressed",
+              "disabled" => "greyed", "busy" => "working" }.freeze
+
+def states_verdict(rows)
+  Deploy::KeyboardFlowGate.new.judge_states("brgen/core", rows, result: Deploy::GateResult.new)
+end
+
+def test_keyboard_flow_names_a_control_that_paints_no_pressed_state
+  result = states_verdict([STATE_ROW.merge("active" => "rest")])
+
+  assert_match(/1\/1 controls paint no active state.*button\.send/, result.soft_failures.join(" | "))
+end
+
+def test_keyboard_flow_names_a_disabled_control_that_looks_enabled_and_a_busy_one_that_looks_idle
+  result = states_verdict([STATE_ROW.merge("disabled" => "rest", "busy" => "rest")])
+
+  assert_match(/paint no disabled state/, result.soft_failures.join(" | "))
+  assert_match(/paint no busy state/, result.soft_failures.join(" | "))
+end
+
+def test_keyboard_flow_passes_controls_that_paint_every_state_and_leaves_unread_states_out
+  assert_empty states_verdict([STATE_ROW, STATE_ROW.merge("active" => nil)]).soft_failures
+end
+
+# The pressed state can only come from CDP, so the read has to force it, paint,
+# and release it; a read that skips the force would score :active as rest.
+def test_keyboard_flow_forces_active_over_cdp_and_releases_it
+  fake = nil
+  fake = FakeCdp.new do |js, _|
+    next ["button.send"] if js.include?("data-gate-state', String(index)")
+
+    mutation = js[/const mutation = '(\w+)'/, 1]
+    pressed = fake.forced.last&.last == ["active"]
+    pressed ? "pressed" : { "disabled" => "greyed", "busy" => "working" }.fetch(mutation, "rest")
+  end
+  rows = Deploy::KeyboardFlowGate.new.send(:read_states, fake)
+
+  assert_equal [STATE_ROW], rows
+  assert_equal [[%([data-gate-state="0"]), ["active"]], [%([data-gate-state="0"]), []]], fake.forced
+end
+
   # mobile_flow — the phone journey floor at 390x844.
 
   def mobile_measure(has_main: true, has_skip: true, overflow: false, chrome: [])

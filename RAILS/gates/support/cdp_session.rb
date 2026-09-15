@@ -287,6 +287,27 @@ module Deploy
       console_messages.select { |m| m[:level] == "error" }.map { |m| m[:text] }
     end
 
+    # Force pseudo-classes on the first element a selector matches, the way the
+    # DevTools element-state toggles do: :active cannot be reached by script, and
+    # a real press also moves focus and fires the control. An empty list releases
+    # the element. False when nothing matches.
+    #
+    # The document node is fetched per call because a navigation invalidates
+    # every nodeId the previous page handed out.
+    def force_pseudo_state(selector, states)
+      unless @css_enabled
+        send_cmd("DOM.enable")
+        send_cmd("CSS.enable")
+        @css_enabled = true
+      end
+      root = send_cmd("DOM.getDocument", depth: 0).dig("root", "nodeId")
+      node = send_cmd("DOM.querySelector", nodeId: root, selector: selector)["nodeId"].to_i
+      return false if node.zero?
+
+      send_cmd("CSS.forcePseudoState", nodeId: node, forcedPseudoClasses: states)
+      true
+    end
+
     private
 
     # console.error("a", 1, {b: 2}) arrives as three RemoteObjects. Primitives
@@ -399,6 +420,7 @@ module Deploy
       @events.clear
       connect(discover_page_target)
       enable_domains
+      @css_enabled = false
       @boot_scripts.each { |source| dispatch("Page.addScriptToEvaluateOnNewDocument", source: source) }
       Kernel.warn "  [cdp] rebuilt the DevTools connection after a desync (#{@recoveries}/#{MAX_RECOVERIES})"
     ensure
