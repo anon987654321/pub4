@@ -20,6 +20,8 @@
 
 require "fileutils"
 require "json"
+require "net/http"
+require "openssl"
 require "optparse"
 require "pathname"
 require "time"
@@ -70,19 +72,23 @@ def render_input(prompt, seed, scale)
     output_quality: 95, go_fast: false, seed: }
 end
 
-# A throttle is waited out; a safety refusal is one new seed, because bare
-# shoulders in the dataset trip the checker on prompts that ask for nothing of
-# the kind. Anything else is a failure worth reading.
+# A throttle or a dropped connection is waited out; a safety refusal is one new
+# seed, because bare shoulders in the dataset trip the checker on prompts that
+# ask for nothing of the kind. Anything else is a failure worth reading. Three of
+# forty-eight selfies were lost to a reset and two timeouts before the network
+# half retried.
+TRANSIENT = [Net::OpenTimeout, Net::ReadTimeout, OpenSSL::SSL::SSLError, Errno::ECONNRESET, EOFError].freeze
+
 def render(client, model, input, attempts: 4)
   attempts.times do |attempt|
     return Array(client.predict(model, input, timeout: 900)).first
-  rescue RuntimeError => e
+  rescue *TRANSIENT, RuntimeError => e
     raise if attempt == attempts - 1
-    raise unless e.message.match?(/429|NSFW/)
+    raise if e.is_a?(RuntimeError) && !e.message.match?(/429|NSFW/)
 
     input = input.merge(seed: input[:seed] + 1000) if e.message.include?("NSFW")
-    warn "note: #{e.message[/429|NSFW/]} — retrying with seed #{input[:seed]}"
-    sleep(e.message.include?("429") ? 10 : 1)
+    warn "note: #{e.class}: #{e.message[0, 80]} — retrying with seed #{input[:seed]}"
+    sleep(e.message.include?("NSFW") ? 1 : 10)
   end
 end
 
