@@ -12,7 +12,7 @@ Brgen::CitySeed.sync! if defined?(Brgen::CitySeed) && ActiveRecord::Base.connect
 
 # Scale for "wildly popular" impression in dev/demo: SEED_SCALE=50 for thousands of users/posts
 # with high engagement counters. Keep small for prod/demo.
-SEED_SCALE = [1, (ENV['SEED_SCALE'] || (Rails.env.production? ? 1 : 10)).to_i].max
+SEED_SCALE = [ 1, (ENV['SEED_SCALE'] || (Rails.env.production? ? 1 : 10)).to_i ].max
 
 if Rails.env.production? && City.table_exists?
   puts "Production seed: Bergen demo only (skipping Faker flood)."
@@ -99,7 +99,7 @@ end
 # Core posts + activity — scale for popular impression (high views/likes)
 posts_per = (4 * SEED_SCALE).clamp(1, 20)
 city_display_name = seed_city&.name.presence || 'Bergen'
-posts = users.sample([30, users.size].min).flat_map do |user|
+posts = users.sample([ 30, users.size ].min).flat_map do |user|
   posts_per.times.map do
     Post.create!(
       user: user,
@@ -116,7 +116,7 @@ end
 posts.each do |post|
   voter = users.sample
   post.reactions.find_or_create_by!(user: voter, kind: %w[like love].sample)
-  post.votes.find_or_create_by!(user: users.sample) { |v| v.value = [1, -1].sample }
+  post.votes.find_or_create_by!(user: users.sample) { |v| v.value = [ 1, -1 ].sample }
 end
 
 puts "Created #{posts.size} posts + reactions"
@@ -198,7 +198,7 @@ live_count.times do |i|
     "Noen i nærheten av #{Faker::Address.community}?",
     "Ledig plass på buss — #{Faker::Lorem.word}",
     "Gratis #{Faker::Food.dish} utenfor #{Faker::Address.street_name}",
-    Faker::Lorem.sentence(word_count: 8),
+    Faker::Lorem.sentence(word_count: 8)
   ].sample
   next if body.blank?
 
@@ -276,7 +276,7 @@ playlists = users.sample(num_play).map do |user|
     description: Faker::Lorem.sentence,
     tracks_count: rand(5..25),
     plays_count: rand((100 * SEED_SCALE)..(100_000 * SEED_SCALE)),
-    collaborative: [true, false].sample
+    collaborative: [ true, false ].sample
   )
 end
 
@@ -374,7 +374,7 @@ restaurants.sample(10).each do |rest|
     restaurant: rest,
     status: %w[pending out_for_delivery delivered].sample,
     delivery_address: Faker::Address.street_address,
-    special_instructions: [nil, Faker::Lorem.sentence].sample
+    special_instructions: [ nil, Faker::Lorem.sentence ].sample
   )
 
   subtotal = 0
@@ -411,7 +411,7 @@ end
   Takeaway::DeliveryDriver.create!(
     user: users.sample,
     vehicle_type: Takeaway::DeliveryDriver::VEHICLE_TYPES.sample,
-    available: [true, false].sample,
+    available: [ true, false ].sample,
     current_lat: 60.39 + rand(-0.03..0.03),
     current_lng: 5.33 + rand(-0.03..0.03)
   )
@@ -501,7 +501,7 @@ users.sample(12).each do |u1|
   openers.sample(3).each do |body|
     Message.create!(
       conversation: conv,
-      sender: [u1, u2].sample,
+      sender: [ u1, u2 ].sample,
       content: body,
       message_type: 'text'
     )

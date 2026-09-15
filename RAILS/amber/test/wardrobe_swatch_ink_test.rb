@@ -58,7 +58,7 @@ class WardrobeSwatchInkTest < ActiveSupport::TestCase
   # arrive without an ink.
   test "the two readers agree on the same entry" do
     COLOURS.each do |colour|
-      assert_equal [wardrobe_color_swatch(colour), wardrobe_swatch_ink(colour)],
+      assert_equal [ wardrobe_color_swatch(colour), wardrobe_swatch_ink(colour) ],
                    wardrobe_swatch_pair(colour)
     end
   end

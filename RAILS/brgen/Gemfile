@@ -96,4 +96,3 @@ if ENV["SOLIDUS_MARKETPLACE"] == "1"
   gem "solidus_marketplace", "0.1.0"
   gem "solidus_multi_domain", "~> 1.5"
 end
-

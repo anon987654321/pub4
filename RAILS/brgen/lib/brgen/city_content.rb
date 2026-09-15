@@ -112,29 +112,29 @@ module Brgen
     #               dialect markers to reach for, and pretending otherwise is
     #               worse than writing it plainly.
     #
-# The blend, and it is an editorial rule rather than a ratio: the dialect
-# carries the pronouns, the negation and the question words, and ordinary
-# bokmål carries everything else. People type the way they speak in the
-# words they think in and default to the written standard for the rest, so
-# a post that is dialect all the way down reads as an exhibition of a
-# dialect rather than as somebody asking about the bins.
-#
-# Stavanger is the exception and deliberately so. snl.no's Stavanger bymål
-# records `eg`, `ikkje` and the -a infinitive as the city's own folkemål —
-# "eg såg ikkje någen store båd" — and says the speech is clearly West
-# Norwegian and nynorsk-leaning in writing. So that bank stays nynorsk-
-# shaped; flattening it toward bokmål would be correcting the city.
-#
-# Sources, so the next editor argues with them rather than with taste:
-# bergensk — no feminine gender at all, an e-language, `eg`/`ka`
-# (no.wikipedia Bergensk dialekt; utdanningibergen's vocabulary list for
-# boss, smau, bekkalokk, kjuagutt, tebrød, "den e brun").
-# trøndersk — `æ`, `itj`, `ka`, `dokker`, `koss`, apokope, palatalisation,
-# sentence-final `sjø` (snl.no trøndersk; NTNU's ordliste).
-# stavangersk — snl.no Stavanger bymål, above.
-# oslo — east Norwegian has no dialect word to reach for, so the markers
-# are the colloquial feminine it actually speaks: boka, klokka, sola, sjæl.
-#
+    # The blend, and it is an editorial rule rather than a ratio: the dialect
+    # carries the pronouns, the negation and the question words, and ordinary
+    # bokmål carries everything else. People type the way they speak in the
+    # words they think in and default to the written standard for the rest, so
+    # a post that is dialect all the way down reads as an exhibition of a
+    # dialect rather than as somebody asking about the bins.
+    #
+    # Stavanger is the exception and deliberately so. snl.no's Stavanger bymål
+    # records `eg`, `ikkje` and the -a infinitive as the city's own folkemål —
+    # "eg såg ikkje någen store båd" — and says the speech is clearly West
+    # Norwegian and nynorsk-leaning in writing. So that bank stays nynorsk-
+    # shaped; flattening it toward bokmål would be correcting the city.
+    #
+    # Sources, so the next editor argues with them rather than with taste:
+    # bergensk — no feminine gender at all, an e-language, `eg`/`ka`
+    # (no.wikipedia Bergensk dialekt; utdanningibergen's vocabulary list for
+    # boss, smau, bekkalokk, kjuagutt, tebrød, "den e brun").
+    # trøndersk — `æ`, `itj`, `ka`, `dokker`, `koss`, apokope, palatalisation,
+    # sentence-final `sjø` (snl.no trøndersk; NTNU's ordliste).
+    # stavangersk — snl.no Stavanger bymål, above.
+    # oslo — east Norwegian has no dialect word to reach for, so the markers
+    # are the colloquial feminine it actually speaks: boka, klokka, sola, sjæl.
+    #
     # Places are real and specific. A post about Bybanen or Bakklandet belongs
     # to one city and could not have been generated for another, which is the
     # whole point of the exercise.

@@ -208,5 +208,4 @@ test "no bank contains a non-Latin homoglyph" do
   text = Brgen::CityContent::POSTS_BY_DOMAIN.values.flatten.join(" ")
   assert_no_match(/[Ѐ-ӿͰ-Ͽ]/, text, "a Cyrillic or Greek character reached the copy")
 end
-
 end

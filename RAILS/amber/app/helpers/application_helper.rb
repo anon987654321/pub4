@@ -123,18 +123,18 @@ end
   # so the numbers here are checked by the one implementation of that maths this
   # repo trusts rather than restated by hand.
   WARDROBE_SWATCHES = [
-    [/navy|indigo/, "#3c4858", "#ffffff"],
-    [/black|charcoal/, "#3c4043", "#ffffff"],
-    [/white|ivory|oatmeal|cream|pearl/, "#f8f9fa", "#111111"],
-    [/blush|rose|mauve/, "#f6d6d9", "#111111"],
-    [/sage|olive/, "#c8d5b9", "#111111"],
-    [/rust|terracotta/, "#c96b4b", "#111111"],
-    [/camel|tan|gold/, "#d4a574", "#111111"],
-    [/nude/, "#e8d2c5", "#111111"],
-    [/tortoise/, "#8b5e3c", "#ffffff"],
+    [ /navy|indigo/, "#3c4858", "#ffffff" ],
+    [ /black|charcoal/, "#3c4043", "#ffffff" ],
+    [ /white|ivory|oatmeal|cream|pearl/, "#f8f9fa", "#111111" ],
+    [ /blush|rose|mauve/, "#f6d6d9", "#111111" ],
+    [ /sage|olive/, "#c8d5b9", "#111111" ],
+    [ /rust|terracotta/, "#c96b4b", "#111111" ],
+    [ /camel|tan|gold/, "#d4a574", "#111111" ],
+    [ /nude/, "#e8d2c5", "#111111" ],
+    [ /tortoise/, "#8b5e3c", "#ffffff" ]
   ].freeze
 
-  WARDROBE_SWATCH_DEFAULT = ["#e8eaed", "#111111"].freeze
+  WARDROBE_SWATCH_DEFAULT = [ "#e8eaed", "#111111" ].freeze
 
   def wardrobe_color_swatch(color)
     wardrobe_swatch_pair(color).first
@@ -149,7 +149,7 @@ end
     match = WARDROBE_SWATCHES.find { |pattern, _swatch, _ink| pattern.match?(name) }
     return WARDROBE_SWATCH_DEFAULT unless match
 
-    [match[1], match[2]]
+    [ match[1], match[2] ]
   end
 
   def responsive_image_url(attachment, preset: :card, widths: [ 400, 800, 1_200 ])

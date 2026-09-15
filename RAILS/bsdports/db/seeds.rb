@@ -76,10 +76,10 @@ else
   end
 
   existing_ports = Port.limit(30).to_a
-  num_ports = [existing_ports.size, (15 * scale).clamp(5, 80)].max
+  num_ports = [ existing_ports.size, (15 * scale).clamp(5, 80) ].max
   ports = if existing_ports.size >= 5
             existing_ports
-          else
+  else
             num_ports.times.map do |i|
               pkg = "demo/port#{i}"
               Port.find_or_create_by!(pkgpath: pkg, platform: platform) do |p|
@@ -89,7 +89,7 @@ else
                 p.description = Faker::Lorem.paragraph(sentence_count: 2)
               end
             end
-          end
+  end
 
   puts "Using #{ports.size} ports for activity seeding."
 
