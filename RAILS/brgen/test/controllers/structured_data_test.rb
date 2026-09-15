@@ -178,6 +178,48 @@ class StructuredDataTest < ActionDispatch::IntegrationTest
     refute_includes response.headers["Location"].to_s, @listing.slug
   end
 
+  def create_restaurant(**attributes)
+    Takeaway::Restaurant.create!(user: @seller, name: "Kjøkken #{SecureRandom.hex(3)}", address: "Marken 4",
+                                 cuisine_type: "Norwegian", city: @city, active: true, **attributes)
+  end
+
+  def local_business_for(restaurant)
+    host! "takeaway.brgen.no"
+    get takeaway.restaurant_path(restaurant)
+    assert_response :success
+    schema_of("LocalBusiness")
+  end
+
+  test "a restaurant saved without coordinates has none, and its markup places it nowhere" do
+    restaurant = create_restaurant
+
+    assert_nil restaurant.reload.latitude
+    business = local_business_for(restaurant)
+    assert business, "an ordinary restaurant still describes itself"
+    assert_nil business["geo"]
+  end
+
+  test "a restaurant keeps the coordinates its owner gave, in its markup too" do
+    restaurant = create_restaurant(latitude: 60.3913, longitude: 5.3221)
+
+    assert_in_delta 60.3913, local_business_for(restaurant).dig("geo", "latitude").to_f, 0.000_001
+  end
+
+  test "the migration clears a pin the old arithmetic placed and keeps a typed one" do
+    require Rails.root.join("db/migrate/20260915090000_clear_synthesized_takeaway_coordinates")
+    pin = ClearSynthesizedTakeawayCoordinates.synthesized_pin(
+      anchor_lat: @city.latitude, anchor_lng: @city.longitude, address: "Marken 4", city: nil, name: "Pinnet"
+    )
+    pinned = create_restaurant(name: "Pinnet", latitude: pin[0], longitude: pin[1])
+    typed = create_restaurant(latitude: 60.3913, longitude: 5.3221)
+
+    ActiveRecord::Migration.suppress_messages { ClearSynthesizedTakeawayCoordinates.new.up }
+
+    assert_nil pinned.reload.latitude
+    assert_nil pinned.longitude
+    assert_in_delta 60.3913, typed.reload.latitude.to_f, 0.000_001
+  end
+
   test "a track with no artist carries no invented artist" do
     set = Playlist::Set.create!(name: "Sett #{SecureRandom.hex(3)}", user: @seller, privacy: "public")
     track = Playlist::Track.create!(title: "Regnvær", artist: "", user: @seller, source_type: "direct",

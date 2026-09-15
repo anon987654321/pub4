@@ -253,9 +253,10 @@ class DeployBacklogTest < Minitest::Test
     assert_includes show, "@reviews"
   end
 
-  def test_takeaway_geocoding_menu_availability_and_order_state_machine_are_wired
+  # A restaurant carries only the coordinates it is given, so there is no
+  # geocoding source to find; structured_data_test renders one without them.
+  def test_takeaway_menu_availability_and_order_state_machine_are_wired
     migration = read_source(File.join(ROOT, "brgen/db/migrate/20260707122000_harden_takeaway_geo_availability_and_orders.rb"))
-    restaurant = read_source(File.join(ROOT, "brgen/app/models/takeaway/restaurant.rb"))
     menu_item = read_source(File.join(ROOT, "brgen/app/models/takeaway/menu_item.rb"))
     order = read_source(File.join(ROOT, "brgen/app/models/takeaway/order.rb"))
     order_item = read_source(File.join(ROOT, "brgen/app/models/takeaway/order_item.rb"))
@@ -267,10 +268,6 @@ class DeployBacklogTest < Minitest::Test
 
     assert_includes migration, "change_column_default :takeaway_menu_items, :available"
     assert_includes migration, "add_index :takeaway_restaurants, %i[latitude longitude]"
-    assert_includes restaurant, 'require "zlib"'
-    assert_includes restaurant, "before_validation :geocode_if_needed"
-    assert_includes restaurant, "stable_coordinate_offsets"
-    assert_includes restaurant, "City.find_by(id: self[:city_id])"
     assert_includes menu_item, "available_for_order?"
     assert_includes menu_item, "self.available = true if available.nil?"
     assert_includes order_item, "menu_item_must_be_available"

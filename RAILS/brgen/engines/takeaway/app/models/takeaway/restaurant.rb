@@ -1,7 +1,10 @@
 # frozen_string_literal: true
 
-require "zlib"
-
+# Coordinates come only from the owner's form or a seed that names them. There
+# is no geocoder, so a restaurant without real coordinates has none: a pin near
+# the city centre would be published as its location, and every reader of
+# latitude — the nearby list, the near filter, courier distance and courier
+# dispatch — already handles nil, dispatch by leaving the order unassigned.
 class Takeaway::Restaurant < ApplicationRecord
   include CityTenantable
   include Shared::Sluggable # /restaurants/<name-slug>; from :name, unique per city
@@ -28,26 +31,27 @@ class Takeaway::Restaurant < ApplicationRecord
   validates :delivery_fee_cents, :min_order_cents,
             numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
 
-  before_validation :geocode_if_needed
-
   scope :active, -> { where(active: true) }
   scope :popular, -> { order(rating: :desc) }
   scope :near, ->(lat, lng, radius_km = 5) { nearby(lat, lng, radius_km) }
 
-  # A restaurant with no hours recorded is treated as open, not shut: most of
-  # them have none yet, and defaulting to closed would empty the listing.
-  # `active` remains the switch for "not taking orders at all".
+  # Open only when recorded hours say so. A restaurant with no hours is not
+  # known to be open, so it is not reported open; hours_known? tells that apart
+  # from shut.
   def open_now?(moment = Time.current)
-    return false unless active?
-    return true unless Takeaway::OpeningHour.exists?(restaurant_id: id)
+    return false unless active? && hours_known?
 
     Takeaway::OpeningHour.open_at?(id, moment)
   end
 
+  def hours_known? = Takeaway::OpeningHour.exists?(restaurant_id: id)
+
   # An order for later is still allowed while the kitchen is shut — that is
-  # most of what scheduling is for.
+  # most of what scheduling is for. With no hours recorded the kitchen has said
+  # nothing about when it cooks, so `active` alone decides: most restaurants
+  # have no hours yet, and refusing their orders would empty the vertical.
   def accepting_orders?(scheduled_for: nil)
-    return active? if scheduled_for.present?
+    return active? if scheduled_for.present? || !hours_known?
 
     open_now?
   end
@@ -79,35 +83,5 @@ class Takeaway::Restaurant < ApplicationRecord
     # updated_at with it -- same reason as Marketplace::Listing#update_rating!:
     # the rating is displayed, so the fragment cache has to see the write.
     update_columns(rating: avg&.round(1) || 0, updated_at: Time.current)
-  end
-
-  def geocode!
-    anchor = geocode_anchor
-    return super unless anchor
-
-    lat_offset, lng_offset = stable_coordinate_offsets
-    self.latitude = anchor.latitude.to_f + lat_offset
-    self.longitude = anchor.longitude.to_f + lng_offset
-    self
-  end
-
-  private
-
-  def geocode_if_needed
-    return if latitude.present? && longitude.present?
-    return if address.blank? && self[:city].blank?
-
-    geocode!
-  end
-
-  def geocode_anchor
-    City.find_by(id: self[:city_id]) || Current.city_record || City.find_by("lower(name) = ?", self[:city].to_s.downcase)
-  end
-
-  def stable_coordinate_offsets
-    seed = Zlib.crc32([ address, self[:city], name ].join("|"))
-    lat = ((seed % 2_000) - 1_000) / 100_000.0
-    lng = (((seed / 2_000) % 2_000) - 1_000) / 100_000.0
-    [ lat, lng ]
   end
 end

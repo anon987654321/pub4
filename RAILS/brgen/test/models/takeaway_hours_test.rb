@@ -33,10 +33,13 @@ class TakeawayHoursTest < ActiveSupport::TestCase
     )
   end
 
-  # Most restaurants have no hours recorded yet, and defaulting to closed would
-  # empty the listing.
-  test "a restaurant with no hours recorded counts as open" do
-    assert @restaurant.open_now?
+  # No recorded hours means nobody knows whether the kitchen is open, so it is
+  # not reported open. Most restaurants have no hours yet, so refusing their
+  # orders would empty the vertical, and `active` still decides that.
+  test "a restaurant with no hours recorded is not reported open and still takes orders" do
+    refute @restaurant.hours_known?
+    refute @restaurant.open_now?
+    assert @restaurant.accepting_orders?
   end
 
   test "open inside the window and shut outside it" do
