@@ -15,7 +15,9 @@ module Master
         private
 
         def routed_models(message = nil, task_type: nil)
-          chain = routed_chain(message, task_type:)
+          chain = routed_chain(message, task_type:).map do |m|
+            Master::CLI::Routing::ModelCatalog.resolve(m)
+          end
           @pinned_model ? ([@pinned_model] + chain).uniq : chain
         end
 

@@ -7,15 +7,18 @@ require_relative "agent/model_selector"
 require_relative "agent/model_override"
 require_relative "agent/prompt_builder"
 require_relative "agent/fallback_chain"
+require_relative "agent/roles"
 
 module Master
   module Review
-    class Agent
-      include PromptFilter
-      include ModelSelector
-      include ModelOverride
-      include PromptBuilder
-      include FallbackChain
+  class Agent
+    include PromptFilter
+    include ModelSelector
+    include ModelOverride
+    include PromptBuilder
+    include FallbackChain
+    include Roles
+
 
       DEFAULT_MESSAGE_WINDOW_SIZE = 16
 
@@ -82,15 +85,16 @@ module Master
 # fallback_policy.on the chain reads, so the two lists cannot drift.
 SINGLE_CALL_FAILOVER = %i[budget rate_limit timeout no_api_key].freeze
 
-      def ask_once(prompt, system: nil, law: true, model: nil, image: nil, temperature: nil)
-        messages = [{ role: "user", content: prompt }]
-        chosen = live_model(model || self.model)
-        sys = role_system(system, law:)
-        result = @dispatcher.send_with_cache(chosen, messages, system: sys, stream: false, image:, temperature:)
-        result = retry_on_broke_lane(result, chosen, messages, system: sys, image:, temperature:)
-        raise StandardError, result.message if result.is_a?(Master::Result::Err)
-        result.to_s
-      end
+  def ask_once(prompt, system: nil, law: true, model: nil, image: nil, temperature: nil)
+    messages = [{ role: "user", content: prompt }]
+    chosen = live_model(Master::CLI::Routing::ModelCatalog.resolve(model || self.model))
+    sys = role_system(system, law:)
+    result = @dispatcher.send_with_cache(chosen, messages, system: sys, stream: false, image:, temperature:)
+    result = retry_on_broke_lane(result, chosen, messages, system: sys, image:, temperature:)
+    raise StandardError, result.message if result.is_a?(Master::Result::Err)
+    result.to_s
+  end
+
 
       def consensus
         @consensus ||= Master::Review::Consensus.new(agent: self, event_bus: @bus)

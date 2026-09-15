@@ -46,11 +46,20 @@ module Master::Core
 
     def verbs = Master::Core::VERBS
 
-    def perform(effect)
-      send("do_#{effect.verb}", **effect.args)
-    rescue StandardError => e
-      Observation.no("#{e.class}: #{e.message}")
-    end
+  def perform(effect)
+    # Wrap every effect in a provenance chain
+    observation = send("do_#{effect.verb}", **effect.args)
+    
+    # Create a provenance chain for the effect
+    chain = Master::Core::Execution::Evidence::Chain.new(observation: observation)
+    
+    # We return the chain to allow the Execution Pipeline to record and verify it.
+    chain
+  rescue StandardError => e
+    # Errors are also recorded as failed provenance chains
+    Observation.no("#{e.class}: #{e.message}")
+  end
+
 
     def checkpoint
       {

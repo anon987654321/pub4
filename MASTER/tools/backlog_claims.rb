@@ -106,7 +106,6 @@ module BacklogClaims
     :prose
   end
 
-
 # Every identifier the tree defines, so an item's backticked tokens can be tested
 # against it.
 #
@@ -194,7 +193,6 @@ def symbol_report
   working_set.first(Integer(ENV.fetch("LIMIT", "25"))).each { |n, head| puts "  #{n}. #{head}" }
   puts "  ... #{working_set.size - 25} more" if working_set.size > 25
 end
-
 
 # Which tree does an item belong to?
 #

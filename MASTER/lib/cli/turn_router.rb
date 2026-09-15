@@ -14,25 +14,26 @@ module Master
       def call(message:, container:, felt_sense: nil, on_turn: nil, on_chunk: nil, image: nil)
         text = message.to_s.strip
         return Master::Result.err("empty message", category: :validation) if text.empty?
+
+        # Deterministic Interception: Check CommandRegistry before anything else
+        if text.start_with?("/")
+          # Direct slash command: priority 1
+          return dispatch_slash(rewrite_slash(text), container:, felt_sense:, on_turn:)
+        end
+
+        # Inferred slash command: priority 2
+        # We check this before the Fold or casual_reply to ensure "fix this" 
+        # routes to the CommandRegistry if the model identifies it as a command.
+        inferred = infer_operator_command(text, container:)
+        return dispatch_inferred(inferred, container:, felt_sense:, on_turn:) if inferred
+
         return dispatch_slash(rewrite_slash(text), container:, felt_sense:, on_turn:) if text.start_with?("/")
 
         # Visitors (no web token — i.e. the open internet on ai.brgen.no) get the
-        # conversational path only. Everything below this line can reach real
-        # capability: infer_operator_command *reconstructs* a slash command from
-        # plain English, which defeats the leading-"/" block in
-        # chat_controller#message, and run_fold reaches Core::World#do_exec,
-        # whose argv/env are model-chosen. Fiber[:master_visitor] previously
-        # gated only the advertised LLM tool list (tool_registry.rb), never the
-        # Fold or the command registry.
-        #
-        # MediaIntent used to sit above this gate. "generate a photo" / "make me
-        # a beat" / a VHS look on a path then ran repligen/dilla/postpro as the
-        # Falcon user and wrote under ~.
+        # conversational path only.
         return casual_reply(text, container:, felt_sense:, on_chunk:, image:) if visitor?
         return Master::Io::MediaIntent.dispatch(text, root: container.fetch(:root, Dir.pwd)) if Master::Io::MediaIntent.handles?(text)
 
-        inferred = infer_operator_command(text, container:)
-        return dispatch_inferred(inferred, container:, felt_sense:, on_turn:) if inferred
         return dispatch_review_pass(text, container:, felt_sense:, on_turn:) if full_workflow_intent?(text)
         return casual_reply(text, container:, felt_sense:, on_chunk:, image:) if casual?(text)
 

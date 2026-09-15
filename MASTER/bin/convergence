@@ -1,0 +1,76 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# bin/convergence - The heartbeat of the MASTER 3 Convergence Engine.
+# This entrypoint brings together the StateMachine, Truth Layer, 
+# Presence, and Domain Engine into a single living loop.
+
+require_relative "../lib/core/execution/pipeline"
+require_relative "../lib/core/execution/presence/state"
+require_relative "../lib/core/execution/bench/master_bench"
+
+# Setup the shared container (The "Nervous System")
+container = {
+  root: Dir.pwd,
+  bus: Object.new.tap do |bus|
+    def bus.publish(topic, data)
+      # In a real system, this goes to the Event Spine (WebSocket/SSE)
+      # Here, we project the semantic state to the terminal
+      if topic == "exec:state"
+        puts "\e[34m[STATE]\e[0m #{data[:state]} | Goal: #{data[:goal]}"
+      elsif topic == "voice:speak"
+        puts "\e[32m[VOICE]\e[0m \"#{data[:text]}\""
+      elsif topic == "exec:event"
+        puts "\e[33m[EVENT]\e[0m #{data[:type]} -> #{data[:data].keys.join(', ')}"
+      end
+    end
+  end,
+  agent: Object.new.tap do |a|
+    def a.model_for_role(role)
+      # Mock model for the entrypoint demonstration
+      MockModel.new(role)
+    end
+  end,
+  world: Object.new.tap do |w|
+    def w.perform(effect)
+      { status: :ok, data: "simulated_output" }
+    end
+  end,
+  episode_store: Object.new.tap do |s|
+    def s.find(id); nil; end
+  end
+}
+
+# Mock Model for demonstration
+class MockModel
+  def initialize(role); @role = role; end
+  def generate(prompt); "Verified response from #{@role}"; end
+end
+
+# The la la la loop
+begin
+  puts "\e[1mMASTER 3: CONVERGENCE ENGINE\e[0m"
+  puts "Initializing semantic field..."
+  
+  goal = ARGV[0] || "Implement a mobile-first PWA composer for Brgen"
+  
+  # 1. Run the Benchmark to certify the system before the task
+  bench = Master::Core::Execution::Bench::MasterBench.new(container)
+  bench.certify
+  
+  puts "\n\e[36mStarting execution loop for:\e[0m #{goal}"
+  
+  # 2. Execute the Pipeline
+  pipeline = Master::Core::Execution::Pipeline.new(goal: goal, container: container)
+  result = pipeline.run
+  
+  puts "\n\e[1;32mCONVERGENCE REACHED\e[0m"
+  puts "Proof of success: #{result.proof}"
+  
+rescue Interrupt
+  puts "\nInterrupted by user. Collapsing presence..."
+rescue => e
+  puts "\n\e[31mCRITICAL FAILURE\e[0m"
+  puts e.message
+  puts e.backtrace.first(5)
+end

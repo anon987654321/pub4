@@ -44,12 +44,15 @@ module Master
         end
 
         def state_line(model, **options)
-          bits = ["model #{short_model(model)}", "ctx #{context_label(options[:tokens])}"]
+          # Conditional state line: nothing to report means everything is fine.
+          return nil if options[:idle]
+          
+          bits = ["model0: #{short_model(model)}", "ctx0: #{context_label(options[:tokens])}"]
           violations = options.fetch(:violations, 0).to_i
-          bits << "#{violations} #{violations == 1 ? 'violation' : 'violations'}" if violations.positive?
+          bits << "violations0: #{violations}" if violations.positive?
           cost = cost_label(options[:cost])
-          bits << cost unless cost.empty?
-          d(bits.join(", "))
+          bits << "cost0: #{cost}" unless cost.empty?
+          d(bits.join(" · "))
         end
 
         def phase_tinted(text, phase)
@@ -92,8 +95,12 @@ module Master
         private
 
         def zsh_prompt(phase, last_ok)
-          [d(prompt_path), git_prompt_segments, phase_label(phase),
-           phase_prompt(last_ok, phase)].reject(&:empty?).join(" ") + " "
+          path_segment = [d(prompt_path), git_prompt_segments].reject(&:empty?).join(" ")
+          phase_segment = phase_label(phase)
+          
+          # hierarchy: path/branch on one line, phase and token on the next if phase is active
+          # but for a simple zsh-like prompt we keep it compact but dim the phase.
+          [path_segment, phase_segment, phase_prompt(last_ok, phase)].reject(&:empty?).join(" ") + " "
         end
 
         # zsh's own %~: home as a tilde, and a long path cut from the left so
