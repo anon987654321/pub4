@@ -455,8 +455,8 @@ guidance:
       semantic: Loads detect_semantic prompts from data/rules.yml scan corpus.
       deep_caution: deep adds 2 LLM calls per file. With 90 files at 8 req/min free tier = 22+ minutes.
   frontend_protection:
-    statement: Only application.scss is protected — one entry per app; reuse pub4_stack and existing partials
-      (brgen-style) before adding files.
+    statement: Only application.scss is protected — each app's one stylesheet, which loads the shared stack
+      and adds no partial of its own.
     protected_files:
     - application.scss
     on_view_or_css_edit:
