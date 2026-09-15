@@ -57,6 +57,11 @@ def trained_model
   version
 end
 
+# A set that varies one thing holds the seed, or the seed varies with it and the
+# frames cannot say which of the two moved the face. The first distance ladder
+# drew a new seed per rung and could not answer its own question.
+FIXED_SEED_SETS = %w[distance].freeze
+
 # The settings the first twelve validation frames of this LoRA were rendered and
 # judged at, so a new set is comparable with them.
 def render_input(prompt, seed, scale)
@@ -103,7 +108,8 @@ sittings.each do |shoot, prompt|
   path = out_dir.join(format("%02d.jpg", shoot["n"]))
   next puts("ok: have #{path.basename}") if path.file?
 
-  input = render_input(prompt, options[:seed] + shoot["n"] - 1, options[:scale])
+  seed = FIXED_SEED_SETS.include?(options[:set]) ? options[:seed] : options[:seed] + shoot["n"] - 1
+  input = render_input(prompt, seed, options[:scale])
   begin
     client.download_url(render(client, model, input), path.to_s)
   rescue StandardError => e
