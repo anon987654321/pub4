@@ -2,6 +2,8 @@
 
 require "minitest/autorun"
 require "timeout"
+require "tmpdir"
+require "rbconfig"
 require_relative "../dilla/lib/listen"
 
 # ToolRun is how dilla runs a tool that is not a render step. It must keep the
@@ -57,6 +59,58 @@ class TestDillaToolRun < Minitest::Test
     assert_equal false, within(10) { ToolRun.system("sleep", "30", timeout: 0.5) }
   end
 
+  # Ctrl-C at a terminal is SIGINT to the engine's foreground group, and a
+  # render tool leads a group of its own, so the signal never reaches it. Each
+  # of these runs an engine as a group leader, signals it the way a terminal or
+  # a `kill` would, and requires the tool it was waiting on to be gone after.
+  LISTEN = File.expand_path("../dilla/lib/listen.rb", __dir__)
+  ENGINE = File.expand_path("../dilla/dilla.rb", __dir__)
+  # A test runner started in the background inherits SIGINT ignored, and Ruby
+  # leaves an ignored signal ignored, so the engine asks for its handler back.
+  PREAMBLE = %(trap("INT", "DEFAULT"); pidfile = ARGV.fetch(0)\n)
+  TOOL = %(["sh", "-c", "echo $$ > \#{pidfile}; exec sleep 300"])
+  ENGINE_ENV = { "DILLA_QUIET" => "1", "DILLA_ASSET_CHECK" => "0", "DILLA_KNOB_CHECK" => "0" }.freeze
+
+  def test_ctrl_c_during_tool_run_capture_stops_the_tool
+    assert_tool_stopped(%(require #{LISTEN.dump}; ToolRun.capture3(*#{TOOL})), signal: "INT")
+  end
+
+  def test_sigterm_during_tool_run_system_stops_the_tool
+    assert_tool_stopped(%(require #{LISTEN.dump}; ToolRun.system(*#{TOOL})), signal: "TERM", to_group: false)
+  end
+
+  def test_ctrl_c_during_a_render_step_stops_the_tool
+    assert_tool_stopped(%(require #{ENGINE.dump}; sh!(*#{TOOL})), signal: "INT")
+  end
+
+  # A player shares the engine's group, so only a signal sent to the engine
+  # alone can leave one behind.
+  def test_sigterm_during_playback_stops_the_player
+    Dir.mktmpdir do |bin|
+      File.write(File.join(bin, "afplay"), %(#!/bin/sh\necho $$ > "$PLAYER_PIDFILE"\nexec sleep 300\n))
+      File.chmod(0o755, File.join(bin, "afplay"))
+      env = { "PATH" => "#{bin}:#{ENV['PATH']}" }
+      script = %(ENV["PLAYER_PIDFILE"] = pidfile; require #{ENGINE.dump}; sh!("afplay", "take.wav"))
+      assert_tool_stopped(script, signal: "TERM", to_group: false, env:)
+    end
+  end
+
+  # The looped player is stopped with Ctrl-C, so SIGINT to the engine alone has
+  # to take the player with it. PATH holds the stand-in player and /bin only:
+  # play_audio clears other players with pkill and raises the Mac's volume with
+  # osascript, and neither may reach a real speaker from a test.
+  def test_ctrl_c_during_a_looped_play_stops_the_player
+    Dir.mktmpdir do |bin|
+      File.write(File.join(bin, "afplay"), %(#!/bin/sh\necho $$ > "$PLAYER_PIDFILE"\nexec sleep 300\n))
+      File.chmod(0o755, File.join(bin, "afplay"))
+      take = File.join(bin, "take.wav")
+      File.write(take, "RIFF")
+      env = { "PATH" => "#{bin}:/bin", "SKIP_VOLUME_NUDGE" => "1" }
+      script = %(ENV["PLAYER_PIDFILE"] = pidfile; require #{ENGINE.dump}; play_audio(#{take.dump}, loop: true))
+      assert_tool_stopped(script, signal: "INT", to_group: false, env:)
+    end
+  end
+
   # Every ffmpeg and ffprobe the engine starts goes through sh! (render steps,
   # with dmesg) or ToolRun (everything else), so every one has a deadline. The
   # exceptions are streams, which last as long as the Ruby feeding them: the
@@ -78,5 +132,37 @@ class TestDillaToolRun < Minitest::Test
     end
 
     assert_empty bypasses
+  end
+
+  private
+
+  def assert_tool_stopped(body, signal:, to_group: true, env: {})
+    Dir.mktmpdir do |dir|
+      pidfile = File.join(dir, "tool.pid")
+      engine = Process.spawn(ENGINE_ENV.merge(env), RbConfig.ruby, "-e", PREAMBLE + body, pidfile,
+                             pgroup: true, out: File::NULL, err: File::NULL)
+      within(120) { sleep 0.05 until File.size?(pidfile) }
+      tool = Integer(File.read(pidfile))
+      Process.kill(signal, to_group ? -engine : engine)
+      within(30) { Process.wait(engine) }
+      deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 10
+      sleep 0.05 while alive?(tool) && Process.clock_gettime(Process::CLOCK_MONOTONIC) < deadline
+      refute alive?(tool), "the tool (pid #{tool}) outlived the engine that was signalled with SIG#{signal}"
+    ensure
+      stray(tool) if tool
+    end
+  end
+
+  def alive?(pid)
+    Process.kill(0, pid)
+    true
+  rescue Errno::ESRCH
+    false
+  end
+
+  def stray(pid)
+    Process.kill("KILL", pid)
+  rescue Errno::ESRCH
+    nil
   end
 end
