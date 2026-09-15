@@ -135,4 +135,33 @@ class TestMixMetrics < Minitest::Test
       assert_equal [nil, "-12.5"], passes, "the second pass did not render at the window's middle"
     end
   end
+
+  # A failed ffmpeg stops the album. The stitch ignored its status, so a failed
+  # run printed the loudness of whatever an earlier run had left at the path.
+  def test_a_failed_album_stitch_stops_the_album
+    Dir.mktmpdir do |dir|
+      dest = File.join(dir, "album.mp3")
+      stems = [File.join(dir, "missing_a.wav"), File.join(dir, "missing_b.wav")]
+
+      error = assert_raises(SystemExit) { capture_io { send(:album_stitch, stems, dest) } }
+      assert_match(/album stitch: ffmpeg exited/, error.message)
+    end
+  end
+
+  # A duration read of a file that is there and unreadable is not silence. The
+  # engine's reader still answers 0.0, and says why; the harmony mix, which
+  # mixed eight seconds of it, stops.
+  def test_an_unreadable_stem_is_not_eight_seconds_of_audio
+    Dir.mktmpdir do |dir|
+      broken = File.join(dir, "harmonic.wav")
+      File.write(broken, "not audio")
+      File.write(File.join(dir, "drums.wav"), "not audio")
+
+      _out, err = capture_io { assert_equal 0.0, send(:audio_duration_sec, broken) }
+      assert_match(/duration: ffprobe exited/, err)
+      assert_raises(FfmpegProbe::Error) do
+        send(:build_harmony_loud, drums: File.join(dir, "drums.wav"), harmonic: broken, out: File.join(dir, "out.wav"))
+      end
+    end
+  end
 end

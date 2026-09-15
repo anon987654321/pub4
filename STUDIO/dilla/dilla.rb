@@ -5679,8 +5679,8 @@ end
 #
 # Render scratch directory and the stream lock.
 
-def dilla_render_tmp(tag)
-  File.join(SCRATCH_DIR, "dilla_#{tag}.#{Process.pid}.wav")
+def dilla_render_tmp(tag, ext = ".wav")
+  File.join(SCRATCH_DIR, "dilla_#{tag}.#{Process.pid}#{ext}")
 end
 
 # PID-scoped temp files (drums/harmonic/wonky_*/pads.wav.L0/.smf.mid/etc.)
@@ -12767,14 +12767,17 @@ end
 # Here rather than in either caller, next to the tool guard and the shell
 # wrapper it is built from, and keeping both of the answers they gave: the
 # guard, so a missing ffprobe is not an exception, and the rescue, so a file
-# ffprobe cannot read is not either.
+# ffprobe cannot read is not either. The read goes through FfmpegProbe, and a
+# file that exists and cannot be read says so on stderr: the callers treat 0.0
+# as "no audio", which is the right answer for a missing take and the wrong
+# silence for a broken one. A caller that must not proceed on a broken file asks
+# FfmpegProbe.duration, which raises.
 def audio_duration_sec(path)
-  return 0.0 unless tool_available?("ffprobe")
+  return 0.0 unless tool_available?("ffprobe") && File.file?(path.to_s)
 
-  out, = capture("ffprobe", "-v", "error", "-show_entries", "format=duration",
-                 "-of", "default=noprint_wrappers=1:nokey=1", path)
-  out.to_s.strip.to_f
-rescue StandardError
+  FfmpegProbe.duration(path)
+rescue FfmpegProbe::Error => e
+  dmesg_warn("duration: #{e.message}")
   0.0
 end
 
@@ -16143,9 +16146,10 @@ def build_harmony_loud(
 )
   abort "missing #{drums}" unless File.exist?(drums)
   abort "missing #{harmonic}" unless File.exist?(harmonic)
-  dur = capture("ffprobe", "-v", "error", "-show_entries", "format=duration",
-                "-of", "default=noprint_wrappers=1:nokey=1", harmonic).first.to_f
-  dur = [dur, 8.0].max
+  # FfmpegProbe raises on a stem ffprobe cannot read. The 0.0 the old read
+  # returned became the 8-second floor below, so a broken stem mixed as eight
+  # seconds of something rather than stopping.
+  dur = [FfmpegProbe.duration(harmonic), 8.0].max
   drum_vol = (ENV["DRUM_VOL"] || ENV["DRUM_MIX_WEIGHT"] || "0.38").to_f
   harm_gain = (ENV["HARM_VOL"] || "2.45").to_f
   harm_chain = "aformat=channel_layouts=stereo,lowpass=f=3200,aecho=0.35:0.4:120:0.32," \
@@ -33958,6 +33962,18 @@ end
 
 def album_loudness(path) = FfmpegProbe.ebur128_summary(FfmpegProbe.run(path, "ebur128=peak=true"))
 
+# Every ffmpeg the album runs stops the album when it fails. Unchecked, a failed
+# encode was followed by deleting its staged input and measuring the output it
+# never wrote, and a failed stitch printed the loudness of a file from an earlier
+# run; the staged file survives a failure so the step can be run again by hand.
+def album_ffmpeg!(*argv, what:)
+  log, status = ToolRun.capture2e("ffmpeg", "-hide_banner", "-nostats", "-y", *argv)
+  return if status.success?
+
+  abort "album #{what}: ffmpeg #{status.signaled? ? "timed out" : "exited #{status.exitstatus}"} — " \
+        "#{log.to_s.lines.last(2).join.strip}"
+end
+
 def album_side_over_mid(path)
   (album_channel_db(path, "0.5*c0-0.5*c1") - album_channel_db(path, "0.5*c0+0.5*c1")).round(1)
 end
@@ -33989,7 +34005,7 @@ def album_stem(src, title, index, out_dir)
   chain = "volume=#{gain}dB," \
           "alimiter=limit=#{10**(ALBUM_TARGET_TP / 20.0)}:level=disabled," \
           "aresample=44100:out_sample_fmt=s16:dither_method=triangular_hp"
-  ToolRun.capture2e("ffmpeg", "-hide_banner", "-nostats", "-y", "-i", staged, "-af", chain, "-ac", "2", dest)
+  album_ffmpeg!("-i", staged, "-af", chain, "-ac", "2", dest, what: "encode of #{title}")
   FileUtils.rm_f(staged)
 
   after = album_loudness(dest)
@@ -34011,9 +34027,8 @@ def album_stage_mid_side(src, side_cut, index, out_dir)
           "[m_b]pan=mono|c0=0.5*c0-0.5*c1,volume=#{side_cut}dB[sid];" \
           "[mid][sid]join=inputs=2:channel_layout=stereo[ms];" \
           "[ms]pan=stereo|c0=c0+c1|c1=c0-c1,"
-  ToolRun.capture2e("ffmpeg", "-hide_banner", "-nostats", "-y", "-i", src,
-                    "-filter_complex", "[0:a]#{graph}anull[o]", "-map", "[o]",
-                    "-ac", "2", "-ar", "44100", staged)
+  album_ffmpeg!("-i", src, "-filter_complex", "[0:a]#{graph}anull[o]", "-map", "[o]",
+                "-ac", "2", "-ar", "44100", staged, what: "mid/side stage of #{File.basename(src)}")
   staged
 end
 
@@ -34030,9 +34045,8 @@ def album_trim_to_target(stems)
     next stem if trim.abs < 0.1
 
     dest = stem.sub(".wav", "_lvl.wav")
-    ToolRun.capture2e("ffmpeg", "-hide_banner", "-nostats", "-y", "-i", stem,
-                      "-af", "volume=#{trim}dB,alimiter=limit=#{10**(ALBUM_TARGET_TP / 20.0)}:level=disabled",
-                      "-ac", "2", "-ar", "44100", dest)
+    album_ffmpeg!("-i", stem, "-af", "volume=#{trim}dB,alimiter=limit=#{10**(ALBUM_TARGET_TP / 20.0)}:level=disabled",
+                  "-ac", "2", "-ar", "44100", dest, what: "trim of #{File.basename(stem)}")
     dest
   end
 end
@@ -34052,12 +34066,13 @@ def album_stitch(stems, dest)
   ceiling = 10**((ALBUM_TARGET_TP - ALBUM_ENCODER_HEADROOM) / 20.0)
   graph << "[out]alimiter=limit=#{ceiling}:level=disabled[lim]"
 
-  script = File.join(Dir.tmpdir, "album_graph.txt")
+  script = dilla_render_tmp("album_graph", ".txt")
   File.write(script, graph)
-  argv = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y"]
-  stems.each { |stem| argv << "-i" << stem }
-  argv += ["-filter_complex_script", script, "-map", "[lim]", "-c:a", "libmp3lame", "-q:a", "0", dest]
-  ToolRun.system(*argv)
+  inputs = stems.flat_map { |stem| ["-i", stem] }
+  album_ffmpeg!("-loglevel", "error", *inputs, "-filter_complex_script", script, "-map", "[lim]",
+                "-c:a", "libmp3lame", "-q:a", "0", dest, what: "stitch")
+ensure
+  FileUtils.rm_f(script) if script
 end
 
 def album_master(dest)
