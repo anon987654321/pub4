@@ -1389,7 +1389,11 @@ en:
     back_to_restaurant: Back to restaurant
     delivery_details: Delivery details
     delivery_heading: Delivery
+    restaurant_count_suffix:
+      one: restaurant
+      other: restaurants
     restaurant_results: Restaurant results
+    top_rated_heading: "Top rated in %{city}"
     restaurant_actions: Restaurant actions
     qty_for: Quantity for %{name}
     item_sold_out: "%{name} sold out"

@@ -1396,7 +1396,11 @@ nb:
     back_to_restaurant: Tilbake til restauranten
     delivery_details: Leveringsdetaljer
     delivery_heading: Levering
+    restaurant_count_suffix:
+      one: restaurant
+      other: restauranter
     restaurant_results: Restauranttreff
+    top_rated_heading: "Best vurdert i %{city}"
     restaurant_actions: Restauranthandlinger
     qty_for: Antall av %{name}
     item_sold_out: "%{name} er utsolgt"

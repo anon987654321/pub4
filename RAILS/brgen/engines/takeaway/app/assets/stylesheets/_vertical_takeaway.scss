@@ -39,83 +39,14 @@ body.vertical-takeaway {
   --food-dash-ink: var(--food-dash);
 }
 
-/* Takeaway is a storefront, same as markedsplass, and now carries the same
-   two-row #navBar. Opt out of the 600px feed column so the bar can go full
-   bleed and the restaurant grid gets room — otherwise .layout caps it and the
-   header is crushed into a timeline width. */
-body.vertical-takeaway .layout {
-  max-width: 100%;
-}
 
-body.vertical-takeaway main {
-  max-width: var(--container-max);
-}
-
-body.vertical-takeaway .page-header h1 {
-  font-size: var(--text-xl);
-  font-weight: var(--weight-heavy);
-  letter-spacing: var(--tracking-tightest);
-  color: var(--text);
-}
-
-/* The one promotional line on takeaway: the restaurants hero, in --font-ad.
-   Instrument Serif is drawn at one weight, so it stands at 400 and at normal
-   tracking; a heavier step would be synthesised. */
-body.vertical-takeaway main#main-content > header.vertical-purpose h1 {
-  font-family: var(--font-ad);
-  font-weight: var(--weight-normal);
-  letter-spacing: 0;
-}
-
-body.vertical-takeaway .deal-search,
-body.vertical-takeaway form[role="search"] {
-  background: var(--search-bg);
-  padding: var(--space-3) var(--space-4);
-}
-
-body.vertical-takeaway .deal-search input,
-body.vertical-takeaway input[type="search"] {
-  border-radius: var(--radius-pill);
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--border);
-  background: var(--bg);
-}
-
-body.vertical-takeaway select {
-  border-radius: var(--radius-pill);
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--border);
-  background: var(--surface-elevated);
-}
-
-body.vertical-takeaway .restaurant-card {
-  display: grid;
-  grid-template-columns: 96px 1fr auto;
-  gap: var(--space-3);
-  align-items: center;
-  padding: var(--space-3) var(--space-4);
-}
-
-body.vertical-takeaway .restaurant-card:hover {
-  background: var(--hover-subtle);
-}
-
-/* Flat, and the vertical's own accent.
-
-   This painted every button on the surface with a 90deg blend of --food-dash
-   into --foodora — two competitors' brand hues, gradiented. Flat fills only is
-   a house rule this tree states in two places, and the blend also went around
-   _vertical_shell, which already carries takeaway's accent tuned for contrast
-   in both themes (#e07b39 dark, #c26a30 light) and --accent-ink for anything
-   painted on top of it: one dark ink measured 4.70 to 9.16 across all seven
-   vertical accents, so it clears AA here without a value of its own.
-
-   --food-dash and --foodora keep their other jobs — the eta chip's urgency red
-   and the discovery border — where they are one flat colour each. */
+/* Flat, in Kaufland's dark primary: #3c3c3c with white 600 type in a pill, the
+   same button markedsplass wears. --food-dash and --foodora keep their other
+   jobs, the eta chip's urgency red and the discovery border. */
 body.vertical-takeaway .btn,
 body.vertical-takeaway .btn-primary {
-  background: var(--accent);
-  color: var(--accent-ink);
+  background: var(--store-ink);
+  color: var(--store-page);
   border-radius: var(--radius-pill);
   font-weight: var(--weight-bold);
 }
@@ -176,9 +107,6 @@ body.vertical-takeaway .courier {
 body.vertical-takeaway .chip {
   border-color: var(--foodora);
   color: var(--foodora);
-}
-
-body.vertical-takeaway .order-list .feed-card.takeaway {
 }
 
 body.vertical-takeaway .order-list .feed-card.takeaway:hover {
