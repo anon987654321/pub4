@@ -192,7 +192,7 @@ class FileLengthRatchetTest < Minitest::Test
     # application.scss one such file for each app" — so these three are long by
     # decision, and splitting them is the one fix this ratchet may not suggest.
     # The ceilings still only fall: defragmenting a stylesheet lowers its row.
-    "brgen/app/assets/stylesheets/application.scss" => 6489,
+    "brgen/app/assets/stylesheets/application.scss" => 6486,
     "amber/app/assets/stylesheets/application.scss" => 1773,
     "bsdports/app/assets/stylesheets/application.scss" => 454,
     # user_flow.rb left this list on 2026-09-09: 308 -> 166, under the 300 rb
