@@ -3,8 +3,8 @@
 # gates skipped, then an optional demo seed.
 #
 # Usage (on vm23, as dev):
-#   zsh OPENBSD/vps_production_push.sh
-#   DEMO_SEED_ON_DEPLOY=1 zsh OPENBSD/vps_production_push.sh   # also seed brgen's guest demo
+#   zsh OPENBSD/bin/vps_production_push.sh
+#   DEMO_SEED_ON_DEPLOY=1 zsh OPENBSD/bin/vps_production_push.sh   # also seed brgen's guest demo
 #
 # One deploy path, not two. vps-deploy owns the order (master first, amber and
 # bsdports last), the pull, the per-app health gate, the deploy stamp, the
@@ -18,7 +18,7 @@
 set -euo pipefail
 
 if [[ ${1:-} == -h || ${1:-} == --help ]]; then
-  print "usage: zsh OPENBSD/vps_production_push.sh   (DEMO_SEED_ON_DEPLOY=1 to seed brgen's demo)"
+  print "usage: zsh OPENBSD/bin/vps_production_push.sh   (DEMO_SEED_ON_DEPLOY=1 to seed brgen's demo)"
   exit 0
 fi
 

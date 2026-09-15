@@ -24,7 +24,7 @@ require_relative "../lib/utf8"
 # For scheduled_commands, the one cron-line parser: its fixtures live in
 # test/test_config_drift_gate.rb, and test_tracked_crontab.rb reads through it too.
 # The gate returns before running anything when it is required rather than run.
-require_relative "../config_drift_gate"
+require_relative "../gates/config_drift_gate"
 
 module Operator
   module OpenbsdReach

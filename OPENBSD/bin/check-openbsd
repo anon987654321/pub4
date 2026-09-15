@@ -15,11 +15,11 @@ runner = Operator::CheckRunner.new(prefix: "deploy-openbsd", root: ROOT, timeout
 LIVE_ENV = Operator::Environment.on_vps? ? { "GATE_REQUIRE_LIVE" => "1" } : {}
 
 failures = []
-failures << "identity" unless runner.run("identity", RUBY, "OPENBSD/verify_deploy_identity.rb")
+failures << "identity" unless runner.run("identity", RUBY, "OPENBSD/gates/verify_deploy_identity.rb")
 # Repo-side on purpose: a guard whose target nothing installs fails OPEN, and
 # the one that did (daily.local -> config_drift_gate.rb) went unnoticed for as
 # long as it existed because the only check that could see it ran on the box.
-failures << "installed targets" unless runner.run("installed targets", RUBY, "OPENBSD/installed_targets_gate.rb")
+failures << "installed targets" unless runner.run("installed targets", RUBY, "OPENBSD/gates/installed_targets_gate.rb")
 # The other half of the same question: every cron line, rc.d service and nsd
 # zone reaches a file the tree ships.
 failures << "reach" unless runner.run("reach", RUBY, "OPENBSD/tools/reach.rb")
@@ -31,14 +31,14 @@ failures << "dns render" unless runner.run("dns render", RUBY, "OPENBSD/bin/rend
 # in check-rails: what it compares is OPENBSD/var/nsd/zones against what
 # bin/render_dns.rb generates, plus a live query to our own nameserver.
 failures << "dns_zones" unless runner.run("dns zones", RUBY, "RAILS/gates/runner.rb", "dns_zones", env: LIVE_ENV)
-failures << "deploy_smoke" unless runner.run("deploy smoke", RUBY, "OPENBSD/deploy_smoke_gate.rb")
+failures << "deploy_smoke" unless runner.run("deploy smoke", RUBY, "OPENBSD/gates/deploy_smoke_gate.rb")
 # The shed ladder decides which site goes down under memory pressure.
 failures << "resource guard" unless runner.run("resource guard", "ksh",
                                                "OPENBSD/test/resource_guard_test.sh",
-                                               "OPENBSD/resource_guard.sh")
+                                               "OPENBSD/bin/resource_guard.sh")
 # shell_syntax_gate reads each script's shebang, so the set is the tree and the
 # parser is the one that file declares.
-failures << "shell syntax" unless runner.run("shell syntax", RUBY, "OPENBSD/shell_syntax_gate.rb")
-failures << "vps safety" unless runner.run("vps safety", RUBY, "OPENBSD/vps_safety_gate.rb")
+failures << "shell syntax" unless runner.run("shell syntax", RUBY, "OPENBSD/gates/shell_syntax_gate.rb")
+failures << "vps safety" unless runner.run("vps safety", RUBY, "OPENBSD/gates/vps_safety_gate.rb")
 
 exit(failures.empty? ? 0 : 1)

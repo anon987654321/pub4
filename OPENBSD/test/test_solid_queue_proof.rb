@@ -4,7 +4,7 @@ require "minitest/autorun"
 require "tmpdir"
 require "time"
 require_relative "../lib/utf8"
-require_relative "../solid_queue_proof"
+require_relative "../gates/solid_queue_proof"
 
 # The gate exists so an app whose jobs never run cannot deploy green. It used to
 # assert a registered SolidQueue::Process, which vm23 deliberately does not have

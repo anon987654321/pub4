@@ -1,6 +1,6 @@
 #!/bin/ksh
 # Start every pub4 service on vm23 and pin them against resource_guard shedding.
-# Usage: doas ksh /home/dev/pub4/OPENBSD/start_all_apps.sh
+# Usage: doas ksh /home/dev/pub4/OPENBSD/bin/start_all_apps.sh
 #
 # The services are master plus every app in RAILS/apps.yml, read at run time:
 # master is not an apps.yml app, and a literal list keeps starting three apps
@@ -10,7 +10,7 @@ set -eo pipefail
 
 case ${1:-} in
 -h|--help)
-  echo "usage: doas ksh OPENBSD/start_all_apps.sh — enable and start master and every apps.yml app, pin them against shedding"
+  echo "usage: doas ksh OPENBSD/bin/start_all_apps.sh — enable and start master and every apps.yml app, pin them against shedding"
   exit 0
   ;;
 esac
@@ -42,5 +42,5 @@ for svc in $SERVICES; do
   rcctl check "$svc" || exit 1
 done
 
-ruby34 "$ROOT/OPENBSD/health_check.rb" --all-ready-apps
+ruby34 "$ROOT/OPENBSD/gates/health_check.rb" --all-ready-apps
 echo "all apps up (resource_guard shedding disabled via $ALL_APPS_FLAG)"

@@ -2,8 +2,10 @@
 
 **Production is one box, and this tree is everything that puts it there and keeps
 it honest.** It holds the VPS configuration under `etc/`, `usr/` and `var/`, and
-the deploy tooling under `bin/`, `lib/` and `gates/`, with the deploy scripts
-themselves at the top of the tree.
+the deploy tooling under `bin/`, `lib/` and `gates/`. The top of the tree keeps
+the installer, `OPERATOR.sh`, the DNS helpers it sources, a few one-off Ruby
+tools, and two scripts vm23 still runs by their top-level paths, each of which
+says in its header which line on the box pins it.
 
 Start at `START_HERE.md`. The full runbook, the one to read before touching the
 box, is `RUNBOOK.md`, and `RECIPES.md` is the copy-paste companion for paths you

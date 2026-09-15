@@ -4,10 +4,10 @@
 # OPENBSD integrity chain — production, phantom FK, frontend, relayd, domain, crawl inventory.
 
 require "open3"
-require_relative "lib/utf8"
-require_relative "lib/gate_environment"
+require_relative "../lib/utf8"
+require_relative "../lib/gate_environment"
 
-INTEGRITY_ROOT = File.expand_path("..", __dir__)
+INTEGRITY_ROOT = File.expand_path("../..", __dir__)
 
 # The gate's own command, run from the repo root. Returns [output, success].
 RUN_GATE = lambda do |cmd|

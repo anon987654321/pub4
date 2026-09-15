@@ -1,9 +1,9 @@
 #!/usr/bin/env zsh
 # Run one Rails app CI on vm23 with mutex + load gate (serial operator entrypoint).
-# Usage: zsh OPENBSD/vps_ci.sh brgen
+# Usage: zsh OPENBSD/bin/vps_ci.sh brgen
 set -euo pipefail
 
-usage="usage: zsh OPENBSD/vps_ci.sh APP — sync APP's copy-tree, then run its bin/ci under the CI lock"
+usage="usage: zsh OPENBSD/bin/vps_ci.sh APP — sync APP's copy-tree, then run its bin/ci under the CI lock"
 if [[ ${1:-} == -h || ${1:-} == --help ]]; then
   print -r -- "$usage"
   exit 0

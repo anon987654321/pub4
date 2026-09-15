@@ -85,7 +85,7 @@ module Operator
     def next_command_for(mode = self.mode)
       case mode
       when :vps_operator
-        # after git pull; then ruby34 OPENBSD/integrity_gate.rb
+        # after git pull; then ruby34 OPENBSD/gates/integrity_gate.rb
         "zsh OPENBSD/bin/vps-deploy <app>"
       when :local_contributor
         if ruby_version_ok?

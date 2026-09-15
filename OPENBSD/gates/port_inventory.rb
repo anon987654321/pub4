@@ -77,8 +77,8 @@ module Deploy
     # both certificate symlinks, both DNS zones, and blognet in litestream.yml.
     # The config half of this list is where those leftovers lived.
     SCANNED_FOR_RETIRED_NAMES = [
-      "OPENBSD/vps_console_install.exp",
-      "OPENBSD/vps_console_poll_install.exp",
+      "OPENBSD/bin/vps_console_install.exp",
+      "OPENBSD/bin/vps_console_poll_install.exp",
       "OPENBSD/usr/local/bin/relayd-watchdog",
       "RAILS/env.sample",
       "RAILS/tools/build_workbox.mjs",

@@ -81,7 +81,7 @@ class DeploySmokeContractTest < Minitest::Test
   end
 
   def test_deploy_smoke_gate_static_contract
-    gate = File.join(OPENBSD_ROOT, "deploy_smoke_gate.rb")
+    gate = File.join(OPENBSD_ROOT, "gates", "deploy_smoke_gate.rb")
     assert File.file?(gate)
     body = File.read(gate)
     assert_includes body, "relayd.conf"

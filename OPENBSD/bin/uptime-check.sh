@@ -26,4 +26,4 @@ RUBY=${RUBY:-$(command -v ruby34 2>/dev/null || command -v ruby)}
 HEALTH_CHECK_TIMEOUT=${UPTIME_CHECK_TIMEOUT:-20}
 export HEALTH_CHECK_TIMEOUT
 
-exec "$RUBY" "${ROOT}/OPENBSD/health_check.rb" --public-only --all-ready-apps "$@"
+exec "$RUBY" "${ROOT}/OPENBSD/gates/health_check.rb" --public-only --all-ready-apps "$@"

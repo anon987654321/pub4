@@ -16,8 +16,8 @@
 # generated files are listed as excluded rather than diffed, because a difference
 # there is expected, not drift.
 #
-# Run on vm23:              ruby34 OPENBSD/config_drift_gate.rb
-# Run from a laptop:        SSH_HOST=dev@brgen.no ruby OPENBSD/config_drift_gate.rb --remote
+# Run on vm23:              ruby34 OPENBSD/gates/config_drift_gate.rb
+# Run from a laptop:        SSH_HOST=dev@brgen.no ruby OPENBSD/gates/config_drift_gate.rb --remote
 # Off-VPS without --remote: skips cleanly.
 
 require "open3"
@@ -42,10 +42,10 @@ Encoding.default_external = Encoding::UTF_8
 # Reading the checkout is safe in a way that executing it is not: root compares
 # bytes it never runs, so the escalation the installed copy exists to close stays
 # closed. PUB4_ROOT first so a worktree or a test can point it somewhere else.
-DRIFT_ROOT = [ENV["PUB4_ROOT"], File.expand_path("..", __dir__), "/home/dev/pub4"]
+DRIFT_ROOT = [ENV["PUB4_ROOT"], File.expand_path("../..", __dir__), "/home/dev/pub4"]
        .compact
        .find { |dir| File.file?(File.join(dir, "OPENBSD", "etc", "doas.conf")) } ||
-       File.expand_path("..", __dir__)
+       File.expand_path("../..", __dir__)
 MIRROR = File.join(DRIFT_ROOT, "OPENBSD")
 
 # Repo mirror => live path, for every file installed byte-for-byte.
@@ -84,10 +84,10 @@ VERBATIM = {
   "usr/local/bin/relayd-watchdog" => "/usr/local/bin/relayd-watchdog",
   "usr/local/bin/renew-certs.sh" => "/usr/local/bin/renew-certs.sh",
   "usr/local/bin/uptime-check.sh" => "/usr/local/bin/uptime-check.sh",
-  "resource_guard.sh" => "/usr/local/bin/resource_guard.sh",
+  "bin/resource_guard.sh" => "/usr/local/bin/resource_guard.sh",
   "emergency_cpu.sh" => "/usr/local/bin/emergency_cpu.sh",
-  "config_drift_gate.rb" => "/usr/local/bin/config_drift_gate.rb",
-  "vps_weekly_integrity.sh" => "/usr/local/bin/vps_weekly_integrity.sh",
+  "gates/config_drift_gate.rb" => "/usr/local/bin/config_drift_gate.rb",
+  "bin/vps_weekly_integrity.sh" => "/usr/local/bin/vps_weekly_integrity.sh",
 }.freeze
 
 EXCLUDED = %w[etc/relayd.conf etc/mail/smtpd.conf etc/litestream.yml etc/acme-client.conf].freeze

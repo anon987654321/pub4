@@ -17,8 +17,8 @@ RUBY = Operator::RubyRunner.gate_ruby
 runner = Operator::CheckRunner.new(prefix: "deploy-vps", root: ROOT, timeout: STEP_TIMEOUT)
 
 failures = []
-failures << "health core" unless runner.run("health core", RUBY, "OPENBSD/health_check.rb", "--core")
-failures << "public health" unless runner.run("public health", RUBY, "OPENBSD/health_check.rb", "--public", "--all-ready-apps")
-failures << "config drift" unless runner.run("config drift", RUBY, "OPENBSD/config_drift_gate.rb")
+failures << "health core" unless runner.run("health core", RUBY, "OPENBSD/gates/health_check.rb", "--core")
+failures << "public health" unless runner.run("public health", RUBY, "OPENBSD/gates/health_check.rb", "--public", "--all-ready-apps")
+failures << "config drift" unless runner.run("config drift", RUBY, "OPENBSD/gates/config_drift_gate.rb")
 
 exit(failures.empty? ? 0 : 1)

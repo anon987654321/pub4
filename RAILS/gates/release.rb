@@ -3,7 +3,7 @@
 
 # runner.rb sets this for itself, but it starts the three subprocess gates with
 # system(), and a fresh process does not inherit Encoding.default_external. Under
-# the C locale that OPENBSD/integrity_gate.rb deliberately uses, reading UTF-8
+# the C locale that OPENBSD/gates/integrity_gate.rb deliberately uses, reading UTF-8
 # source raised `invalid byte sequence in US-ASCII` from inside
 # domain_alignment.rb — a crash that could not happen when the same gate class
 # ran in-process.

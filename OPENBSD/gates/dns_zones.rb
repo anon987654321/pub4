@@ -22,7 +22,7 @@ module Deploy
   # The live half is a DNS query, not a file read. /var/nsd/zones/master is 640
   # _nsd:_nsd, so a gate running as dev cannot read a zone on the box either —
   # but anyone can ask the nameserver. Signature freshness needs the files and
-  # lives in OPENBSD/health_check.rb, which runs as root on vm23.
+  # lives in OPENBSD/gates/health_check.rb, which runs as root on vm23.
   class DnsZonesGate
     ROOT = File.expand_path("../..", __dir__)
     REGISTRY = File.join(ROOT, "RAILS", "brgen", "lib", "brgen", "domain_registry.rb")

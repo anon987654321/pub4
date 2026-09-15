@@ -1,16 +1,16 @@
 #!/bin/sh
 set -eu
 
-# OPENBSD/tree.sh — portable sh wrapper around tools/tree.rb.
+# OPENBSD/bin/tree.sh — portable sh wrapper around tools/tree.rb.
 #
 # Usage:
 #   ./tree.sh [root] [--max-depth=4] [--summary] [--pub4-overview]
 #   ./tree.sh --help      # every mode tools/tree.rb takes
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-RUBY_TREE="$SCRIPT_DIR/tools/tree.rb"
+RUBY_TREE="$SCRIPT_DIR/../tools/tree.rb"
 
-ROOT="${PUB4_ROOT:-$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)}"
+ROOT="${PUB4_ROOT:-$(CDPATH= cd -- "$SCRIPT_DIR/../.." && pwd)}"
 
 # If the first argument looks like a directory (or .), treat it as root
 if [ $# -gt 0 ]; then

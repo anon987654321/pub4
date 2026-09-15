@@ -6,8 +6,8 @@
 # Thin wrappers: vps_console_<mode>.exp and vps_drop_install.exp exec this file.
 # What each mode does: OPENBSD/RUNBOOK.md, "vps_console.exp modes".
 #
-# Usage: I_UNDERSTAND_CONSOLE_RISK=1 expect -f OPENBSD/vps_console.exp <mode> [args...]
-#        expect -f OPENBSD/vps_console.exp --help
+# Usage: I_UNDERSTAND_CONSOLE_RISK=1 expect -f OPENBSD/bin/vps_console.exp <mode> [args...]
+#        expect -f OPENBSD/bin/vps_console.exp --help
 
 set mode [lindex $argv 0]
 if {$mode eq "" || $mode eq "-h" || $mode eq "--help"} {
@@ -165,11 +165,11 @@ switch -- $mode {
     at_prompt
     send "echo $b64 | base64 -d > /tmp/pub4_deploy_sync.tgz && tar xzf /tmp/pub4_deploy_sync.tgz -C /home/dev/pub4 && echo SYNC_OK\r"
     at_prompt
-    send "chmod +x /home/dev/pub4/OPENBSD/vps_on_vm_install.sh /home/dev/pub4/OPENBSD/vps_install_all.sh\r"
+    send "chmod +x /home/dev/pub4/OPENBSD/bin/vps_on_vm_install.sh /home/dev/pub4/OPENBSD/bin/vps_install_all.sh\r"
     at_prompt
     send "pkill -f vps_on_vm_install.sh 2>/dev/null; pkill -f vps_install_all.sh 2>/dev/null; true\r"
     at_prompt
-    send "nohup zsh /home/dev/pub4/OPENBSD/vps_on_vm_install.sh > /tmp/pub4_on_vm_install.log 2>&1 & echo INSTALL_PID:\$!\r"
+    send "nohup zsh /home/dev/pub4/OPENBSD/bin/vps_on_vm_install.sh > /tmp/pub4_on_vm_install.log 2>&1 & echo INSTALL_PID:\$!\r"
     at_prompt
     send "sleep 2; head -8 /tmp/pub4_on_vm_install.log\r"
     at_prompt

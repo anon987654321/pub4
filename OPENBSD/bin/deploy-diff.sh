@@ -31,7 +31,7 @@ drift=0
 
 print "deploy-diff: ${SSH_HOST}"
 print "=== verbatim configs and root crontab (config_drift_gate --remote) ==="
-ruby "${ROOT}/OPENBSD/config_drift_gate.rb" --remote || drift=1
+ruby "${ROOT}/OPENBSD/gates/config_drift_gate.rb" --remote || drift=1
 
 print "\n=== relayd.conf (excluded from the gate; diffed here) ==="
 diff -u "${ROOT}/OPENBSD/etc/relayd.conf" <(ssh "${SSH_OPTS[@]}" "$SSH_HOST" "cat /etc/relayd.conf") || drift=1

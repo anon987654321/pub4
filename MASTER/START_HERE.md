@@ -129,7 +129,7 @@ gates it names exist.
     about the world; the repo cannot assert which host is production, only which
     one its scripts name.
 11. `I_UNDERSTAND_CONSOLE_RISK=1` and `I_UNDERSTAND_DNS_WIPE=1` are human-only
-    gates. — gate: `OPENBSD/vps_safety_gate.rb`
+    gates. — gate: `OPENBSD/gates/vps_safety_gate.rb`
 12. Dmesg every file op — see `OPENBSD/RUNBOOK.md`. — no gate: a habit for the
     operator's own audit trail, checkable only against a session transcript,
     which is not an artefact this repo keeps.
@@ -228,7 +228,7 @@ MASTER law.
 ## Repo shape (run before big refactors)
 
 ```bash
-zsh OPENBSD/tree.sh . --pub4-overview
+zsh OPENBSD/bin/tree.sh . --pub4-overview
 ```
 
 Far-away visual tree with noise pruned and alignment notes. Do this before

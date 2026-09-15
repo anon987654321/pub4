@@ -5,7 +5,7 @@ root = File.expand_path("../..", __dir__)
 ruby = ENV.fetch("RUBY", "ruby")
 
 commands = [
-  [ruby, File.join(root, "OPENBSD", "verify_deploy_identity.rb")],
+  [ruby, File.join(root, "OPENBSD", "gates", "verify_deploy_identity.rb")],
   [ruby, File.join(root, "RAILS", "gates", "runner.rb"), "domain_alignment"],
 ]
 

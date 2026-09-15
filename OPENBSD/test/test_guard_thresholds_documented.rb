@@ -15,7 +15,7 @@ require "minitest/autorun"
 # prose attaches to a guard variable has to be the number the script sets.
 class GuardThresholdsDocumentedTest < Minitest::Test
   OPENBSD = File.expand_path("..", __dir__)
-  SCRIPT = File.join(OPENBSD, "resource_guard.sh")
+  SCRIPT = File.join(OPENBSD, "bin", "resource_guard.sh")
   DOC = File.join(OPENBSD, "CLAUDE.md")
 
   # The gates the prose discusses by name.

@@ -11,7 +11,7 @@ require "tmpdir"
 # under a C locale, where Ruby reads files as US-ASCII and every read of this
 # UTF-8 source raises "invalid byte sequence".
 require_relative "../lib/utf8"
-require_relative "../config_drift_gate"
+require_relative "../gates/config_drift_gate"
 
 # etc/crontab.vm23 is the tracked half of root's crontab, and OPERATOR.sh's
 # install_tracked_crontab merges it onto the box. Both halves can be complete
@@ -50,9 +50,15 @@ class TrackedCrontabTest < Minitest::Test
   # The repo may not schedule a command it does not ship. If it does, the merge
   # loop skips the line on every run and the job is tracked but never installed.
   def test_every_scheduled_command_is_shipped_by_this_repo
+    # Shipped means copied with usr/local/bin/, or named by an `install` line in
+    # OPERATOR.sh whose source is in the tree. Where that source sits is the
+    # install line's business, so the test reads the line rather than guessing a
+    # directory.
+    installed = operator_source.scan(%r{install\s[^\n]*?"\$\{SCRIPT_DIR\}/([\w./-]+)"\s+(/usr/local/bin/[\w.-]+)})
+                               .select { |source, _| File.file?(File.join(ROOT, source)) }
+                               .map(&:last)
     missing = scheduled.reject do |command|
-      base = File.basename(command)
-      File.file?(File.join(ROOT, "usr", "local", "bin", base)) || File.file?(File.join(ROOT, base))
+      File.file?(File.join(ROOT, "usr", "local", "bin", File.basename(command))) || installed.include?(command)
     end
 
     assert_empty missing,

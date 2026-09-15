@@ -147,7 +147,7 @@ When SSH to vm23 is required, use normal paths — but note which of them takes
 |---|---|
 | `doas zsh OPERATOR.sh` | root, it installs `/etc` |
 | `zsh OPENBSD/bin/vps-deploy <app>` | **dev**; it escalates per step |
-| `zsh OPENBSD/vps_ci.sh <app>` | **dev** |
+| `zsh OPENBSD/bin/vps_ci.sh <app>` | **dev** |
 
 Under `doas`, `vps-deploy` fails at its first step with `Host key verification
 failed` — root has no github host key, and giving it one would hand root a way
@@ -161,7 +161,7 @@ so; this line used to name all three after the word `doas`.
 - Treat `RAILS/apps.yml` and `OPENBSD/deploy_inventory.json` as inventories, not
   suggestions.
 - Any `/etc` change made on vm23 must be copied back to `OPENBSD/etc/`.
-- Use `ruby34` and `bundle34` on OpenBSD; `zsh OPENBSD/vps_ci.sh <app>` for
+- Use `ruby34` and `bundle34` on OpenBSD; `zsh OPENBSD/bin/vps_ci.sh <app>` for
   per-app CI.
 - Keep secrets in `/etc/*.env`; never commit them.
 - Keep Rails `config.assume_ssl = true`; do not enable `force_ssl` behind
@@ -200,7 +200,7 @@ Recovery-only expect scripts refuse to run unless a human operator exports
 OpenBSD rejects `/etc/doas.conf` without a trailing newline — `doas` breaks for
 everyone. `OPERATOR.sh` fixes the repo copy before install, validates `su dev -c
 'doas id'`, and rolls back on failure. No cron job installs it: the only other
-path is a deliberate `doas ksh OPENBSD/validate_doas.ksh install <file> <reason>`,
+path is a deliberate `doas ksh OPENBSD/bin/validate_doas.ksh install <file> <reason>`,
 which validates the same way. The comment atop `etc/doas.conf` says what dev's
 passwordless rule exposes and why neither command scoping nor a password can
 narrow it.
@@ -281,10 +281,10 @@ deliberately:
 
 | Script | CI | Scope | When |
 |--------|----|-------|------|
-| `zsh OPENBSD/vps_ci_all.sh` | **Yes** — serial `vps_ci.sh` per app | brgen, amber, bsdports | Normal code change; tests must pass |
-| `zsh OPENBSD/vps_production_push.sh` | **No** — `SKIP_CI=1 SKIP_RUNTIME_GATE=1 bin/vps-deploy all`; only the post-restart gates run. What each flag skips: `CLAUDE.md`, "`SKIP_CI=1` does not mean skip CI" | master + every app, in vps-deploy's order; `DEMO_SEED_ON_DEPLOY=1` adds brgen's demo seed | Fast hotfix; skips test gate |
-| `zsh OPENBSD/deploy_all.sh` | **No** | Runs from a workstation: syncs pub4 to vm23 and runs `OPERATOR.sh`, so it reapplies `/etc`, relayd and the services, not just app code. `--per-app` also runs each `RAILS/<app>/<app>.sh` | The box's config has drifted or a fresh install needs redoing — not for shipping a code change |
-| `doas ksh OPENBSD/start_all_apps.sh` | **No** — not a deploy at all | Enables and starts master, brgen, amber, bsdports, restarts relayd, then `health_check.rb --all-ready-apps` | Recovery. It writes `/var/db/pub4_all_apps`, which pins the four against `resource_guard.sh` shedding |
+| `zsh OPENBSD/bin/vps_ci_all.sh` | **Yes** — serial `vps_ci.sh` per app | brgen, amber, bsdports | Normal code change; tests must pass |
+| `zsh OPENBSD/bin/vps_production_push.sh` | **No** — `SKIP_CI=1 SKIP_RUNTIME_GATE=1 bin/vps-deploy all`; only the post-restart gates run. What each flag skips: `CLAUDE.md`, "`SKIP_CI=1` does not mean skip CI" | master + every app, in vps-deploy's order; `DEMO_SEED_ON_DEPLOY=1` adds brgen's demo seed | Fast hotfix; skips test gate |
+| `zsh OPENBSD/bin/deploy_all.sh` | **No** | Runs from a workstation: syncs pub4 to vm23 and runs `OPERATOR.sh`, so it reapplies `/etc`, relayd and the services, not just app code. `--per-app` also runs each `RAILS/<app>/<app>.sh` | The box's config has drifted or a fresh install needs redoing — not for shipping a code change |
+| `doas ksh OPENBSD/bin/start_all_apps.sh` | **No** — not a deploy at all | Enables and starts master, brgen, amber, bsdports, restarts relayd, then `health_check.rb --all-ready-apps` | Recovery. It writes `/var/db/pub4_all_apps`, which pins the four against `resource_guard.sh` shedding |
 
 `vps_production_push.sh` is the footgun under pressure: it restarts production
 without running CI. Use `vps_ci_all.sh` unless you explicitly need the fast path
@@ -301,8 +301,8 @@ dead one until it is written down.
 |--------|----------|----------------|
 | `ruby OPENBSD/sync.rb` (as `doas ruby34`) | vm23 | Mirror live `/etc` config **back into** `OPENBSD/`, with secret redaction. The repo→live direction is well travelled; this is the return leg, and skipping it is how `relayd.conf` drifted for weeks (see the warning under *OpenBSD deploy*). |
 | `ruby OPENBSD/ptr_openbsd_amsterdam.rb --ipv4 … --hostname …` | anywhere | Set the PTR record via openbsd.amsterdam's `ptr4`/`ptr6` endpoints; `--ipv6` sets the v6 record. Needed only if the VM's IP changes. It prints the request as a dry run unless `APPLY_PTR=1` is set. |
-| `zsh OPENBSD/vps_run_remote.sh` | workstation | Bootstrap a *fresh* VM: copies `vps_install_all.sh` up through the server4 hypervisor jump and runs it. Not for routine deploys — use `vps-deploy`. |
-| `ksh OPENBSD/manual_master_deploy.ksh` | vm23, under tmux | Fallback when `vps_deploy_master.sh` stalls. It pkills the stuck deploy and its precompile, then precompiles MASTER web, runs the `master_web_assets` gate, restarts master and relayd, and probes `/up`. Output goes to `/tmp/master_manual.log`, not the terminal — `tail -f` it. |
+| `zsh OPENBSD/bin/vps_run_remote.sh` | workstation | Bootstrap a *fresh* VM: copies `vps_install_all.sh` up through the server4 hypervisor jump and runs it. Not for routine deploys — use `vps-deploy`. |
+| `ksh OPENBSD/bin/manual_master_deploy.ksh` | vm23, under tmux | Fallback when `vps_deploy_master.sh` stalls. It pkills the stuck deploy and its precompile, then precompiles MASTER web, runs the `master_web_assets` gate, restarts master and relayd, and probes `/up`. Output goes to `/tmp/master_manual.log`, not the terminal — `tail -f` it. |
 | `zsh OPENBSD/bin/deploy-diff.sh` | workstation | Read-only: runs `config_drift_gate.rb --remote`, then diffs `relayd.conf` (which the gate excludes) and prints `rcctl check`. It changes nothing in either direction; `sync.rb` above is what pulls the live side back into the repo. |
 
 ## Self-healing cron (vm23)
@@ -393,7 +393,7 @@ OPENBSD/OPERATOR.sh …'`.
 cd /home/dev/pub4 && git pull --ff-only
 cd RAILS && doas zsh deploy.sh          # brgen (default)
 doas zsh deploy.sh amber                     # or: all
-ruby34 OPENBSD/health_check.rb --public --all-ready-apps
+ruby34 OPENBSD/gates/health_check.rb --public --all-ready-apps
 ```
 
 Per-app: `doas zsh RAILS/<app>/<app>.sh`. New Propshaft assets need `rails
@@ -422,7 +422,7 @@ cd /home/dev/pub4 && git gc --quiet && git count-objects -v
 ```zsh
 OPENBSD/bin/check                         # local static deploy gates
 OPENBSD/bin/check-vps                     # vm23/live health gates; skips off-VPS
-ruby OPENBSD/integrity_gate.rb              # full chain: production, phantom_fk, frontend, relayd, domain_align, crawl
+ruby OPENBSD/gates/integrity_gate.rb              # full chain: production, phantom_fk, frontend, relayd, domain_align, crawl
 ruby RAILS/tools/crawl_probe.rb           # HTTP manifest + apps.yml ↔ deploy_inventory.json sync
 MASTER_CRAWL_BROWSER=1 ruby RAILS/tools/crawl_browser.rb   # Ferrum element crawl (VPS)
 cd MASTER && bundle exec ruby bin/probe integrity deploy crawl crawl-browser
@@ -440,8 +440,8 @@ workstation environment.
 
 ## Recovery
 
-Load shedding: `doas ksh OPENBSD/resource_guard.sh`. Full stack: `doas ksh
-OPENBSD/start_all_apps.sh`. Core health: `doas rcctl check master brgen relayd
+Load shedding: `doas ksh OPENBSD/bin/resource_guard.sh`. Full stack: `doas ksh
+OPENBSD/bin/start_all_apps.sh`. Core health: `doas rcctl check master brgen relayd
 pf`.
 
 SSH lockout only: `ssh server4`, then `vmctl console vm23` (manual — not
@@ -489,14 +489,14 @@ the heartbeat's age.
 
 ## Repair playbooks
 
-- Integrity failure: run `ruby OPENBSD/integrity_gate.rb` and fix the first
+- Integrity failure: run `ruby OPENBSD/gates/integrity_gate.rb` and fix the first
   failing gate.
-- App CI failure: run `zsh OPENBSD/vps_ci.sh <app>` serially. If caches are
+- App CI failure: run `zsh OPENBSD/bin/vps_ci.sh <app>` serially. If caches are
   root-owned, export the app `HOME` and `NPM_CONFIG_CACHE`.
 - MASTER dead tap: precompile `MASTER/web` production assets, restart `master`,
   then verify `https://ai.brgen.no` after the primer tap.
 - relayd/domain drift: run `RAILS/gates/runner.rb domain_alignment` and
-  `OPENBSD/deploy_smoke_gate.rb` before restarting relayd.
+  `OPENBSD/gates/deploy_smoke_gate.rb` before restarting relayd.
 - pf lockout: use the server4 console and flush the `bruteforce` table; do not
   keep reconnecting.
 - Silent TTS: `checks.tts` on `https://ai.brgen.no/health` is the authority, and
@@ -523,7 +523,7 @@ the full installer from macOS.
 
 ## Post-change
 
-- Run `ruby34 OPENBSD/health_check.rb --public --all-ready-apps`.
+- Run `ruby34 OPENBSD/gates/health_check.rb --public --all-ready-apps`.
 - Copy any live `/etc` changes back into `OPENBSD/etc/`.
 - Put a lasting reason in a comment beside the config or script it explains, a
   standing refusal in `OPENBSD/CLAUDE.md`, and open work in the repo-root

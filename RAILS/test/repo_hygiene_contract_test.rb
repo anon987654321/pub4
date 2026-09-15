@@ -140,8 +140,8 @@ class RepoHygieneContractTest < Minitest::Test
       OPENBSD/OPERATOR.sh
       OPENBSD/bin/check
       OPENBSD/lib/gate_environment.rb
-      OPENBSD/integrity_gate.rb
-      OPENBSD/vps_ci.sh
+      OPENBSD/gates/integrity_gate.rb
+      OPENBSD/bin/vps_ci.sh
     ].each do |rel|
       assert File.exist?(File.join(REPO_ROOT, rel)), "missing #{rel}"
     end

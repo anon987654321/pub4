@@ -3,9 +3,9 @@
 
 # VPS_SAFETY_ROOT lets the test point this at a fixture tree holding the shapes
 # it must flag; unset, it reads this checkout.
-ROOT = ENV.fetch("VPS_SAFETY_ROOT", File.expand_path("..", __dir__))
+ROOT = ENV.fetch("VPS_SAFETY_ROOT", File.expand_path("../..", __dir__))
 OPENBSD = File.join(ROOT, "OPENBSD")
-TOOLING = File.join(ROOT, "OPENBSD")
+TOOLING = File.join(ROOT, "OPENBSD", "bin")
 failures = []
 
 doas_conf = File.join(OPENBSD, "etc", "doas.conf")
@@ -49,21 +49,21 @@ if File.file?(validate_doas)
                 "not only that dev can reach root"
   end
 else
-  failures << "missing OPENBSD/validate_doas.ksh"
+  failures << "missing OPENBSD/bin/validate_doas.ksh"
 end
 
 console_common = File.join(TOOLING, "vps_console_common.exp")
-failures << "missing OPENBSD/vps_console_common.exp" unless File.file?(console_common)
+failures << "missing OPENBSD/bin/vps_console_common.exp" unless File.file?(console_common)
 
 console_main = File.join(TOOLING, "vps_console.exp")
 if File.file?(console_main)
   text = File.read(console_main)
   unless text.include?("vps_console_common.exp") && text.include?("require_console_risk_ack")
-    failures << "OPENBSD/vps_console.exp must source vps_console_common.exp and call require_console_risk_ack"
+    failures << "OPENBSD/bin/vps_console.exp must source vps_console_common.exp and call require_console_risk_ack"
   end
-  failures << "OPENBSD/vps_console.exp must target vm23 only (found vm27)" if text.include?("vm27")
+  failures << "OPENBSD/bin/vps_console.exp must target vm23 only (found vm27)" if text.include?("vm27")
 else
-  failures << "missing OPENBSD/vps_console.exp"
+  failures << "missing OPENBSD/bin/vps_console.exp"
 end
 
 # Nine two-line shims, each delegating to vps_console.exp. This list names every

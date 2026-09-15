@@ -14,7 +14,7 @@ class RestoreScriptsTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
 
   def test_restore_litestream_is_litestream_restore
-    source = File.read(File.join(ROOT, "restore_litestream.sh"))
+    source = File.read(File.join(ROOT, "bin", "restore_litestream.sh"))
     assert_includes source, "litestream restore"
     refute_includes source, "MASTER/RAILS"
   end
@@ -24,7 +24,7 @@ class RestoreScriptsTest < Minitest::Test
   # restored none and exited 0. A restore that reports success having restored
   # nothing is read as evidence the backups work.
   def test_restore_litestream_fails_rather_than_skipping
-    source = File.read(File.join(ROOT, "restore_litestream.sh"))
+    source = File.read(File.join(ROOT, "bin", "restore_litestream.sh"))
     assert_includes source, "require_litestream", "no check that the binary exists"
     refute_match(/log "skip \$app/, source, "a missing replica must fail, not skip")
     assert_match(/missing replica \$replica"; exit 1/, source)
@@ -35,7 +35,7 @@ class RestoreScriptsTest < Minitest::Test
   # it as an app name and failed later on "/home/[restore] missing…/app/storage".
   def test_a_dry_run_with_no_config_fails_on_the_config
     env = { "DRY_RUN" => "1", "LITESTREAM_CONFIG" => File.join(Dir.tmpdir, "no-such-litestream.yml") }
-    out, err, status = Open3.capture3(env, "zsh", File.join(ROOT, "restore_litestream.sh"))
+    out, err, status = Open3.capture3(env, "zsh", File.join(ROOT, "bin", "restore_litestream.sh"))
 
     assert_equal 1, status.exitstatus
     assert_includes err, "missing litestream config"
@@ -48,7 +48,7 @@ class RestoreScriptsTest < Minitest::Test
       config = File.join(dir, "litestream.yml")
       File.write(config, "dbs:\n  - path: /home/ghostapp/app/storage/production.sqlite3\n")
       out, _, status = Open3.capture3({ "DRY_RUN" => "1", "LITESTREAM_CONFIG" => config },
-                                      "zsh", File.join(ROOT, "restore_litestream.sh"))
+                                      "zsh", File.join(ROOT, "bin", "restore_litestream.sh"))
 
       assert_equal 1, status.exitstatus, "the app has no storage here, so the plan must fail rather than skip"
       assert_includes out, "FAIL ghostapp — missing /home/ghostapp/app/storage"
@@ -70,7 +70,7 @@ class RestoreScriptsTest < Minitest::Test
   end
 
   def test_vps_ci_mirrors_the_tracked_tree_not_vendor
-    source = File.read(File.join(ROOT, "vps_ci.sh"))
+    source = File.read(File.join(ROOT, "bin", "vps_ci.sh"))
     assert_includes source, "git -C \"$repo\" archive HEAD RAILS"
     refute_includes source, 'doas tar cf - -C "$repo" RAILS'
     assert_includes source, "vendor/javascript"
@@ -83,7 +83,7 @@ class RestoreScriptsTest < Minitest::Test
   # left the new code live with no assets: brgen served every page with a 404ing
   # <link> on 2026-08-14 while /up, rcctl check and the TLS probe all passed.
   def test_vps_ci_keeps_compiled_assets_across_the_prune
-    source = File.read(File.join(ROOT, "vps_ci.sh"))
+    source = File.read(File.join(ROOT, "bin", "vps_ci.sh"))
     prune = source[/for dir_rel in test app lib config bin db engines public.*?done/m]
     assert prune, "the prune loop moved — re-read this before trusting the assertions below"
     assert_includes prune, "public/assets", "the prune must special-case the one directory git does not carry"

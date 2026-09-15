@@ -6,7 +6,7 @@ require "stringio"
 require "tmpdir"
 require_relative "../lib/gate_result"
 require_relative "../lib/gate_environment"
-require_relative "../integrity_gate"
+require_relative "../gates/integrity_gate"
 
 class GateLibTest < Minitest::Test
   def test_gate_result_tracks_failures_and_warnings
@@ -91,7 +91,7 @@ class GateLibTest < Minitest::Test
   def test_vps_health_gate_targets_core_health_check
     gate = Deploy::GateEnvironment::INTEGRITY_GATES.find { |entry| entry.name == "vps_health" }
     refute_nil gate
-    assert_equal "OPENBSD/health_check.rb", gate.path
+    assert_equal "OPENBSD/gates/health_check.rb", gate.path
     assert_equal ["--core"], gate.args
     assert_includes gate.needs, :vps
   end

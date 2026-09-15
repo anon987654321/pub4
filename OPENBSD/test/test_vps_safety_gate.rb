@@ -7,7 +7,7 @@ require "tmpdir"
 
 class VpsSafetyGateTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
-  GATE = File.join(ROOT, "vps_safety_gate.rb")
+  GATE = File.join(ROOT, "gates", "vps_safety_gate.rb")
 
   def run_gate(root = nil)
     env = root ? { "VPS_SAFETY_ROOT" => root } : {}
@@ -21,8 +21,9 @@ class VpsSafetyGateTest < Minitest::Test
       FileUtils.mkdir_p(File.join(openbsd, "etc"))
       FileUtils.cp_r(File.join(ROOT, "etc", "rc.d"), File.join(openbsd, "etc"))
       FileUtils.cp(File.join(ROOT, "etc", "doas.conf"), File.join(openbsd, "etc"))
-      (Dir.glob(File.join(ROOT, "*.exp")) + [File.join(ROOT, "validate_doas.ksh")]).each do |path|
-        FileUtils.cp(path, openbsd)
+      FileUtils.mkdir_p(File.join(openbsd, "bin"))
+      (Dir.glob(File.join(ROOT, "bin", "*.exp")) + [File.join(ROOT, "bin", "validate_doas.ksh")]).each do |path|
+        FileUtils.cp(path, File.join(openbsd, "bin"))
       end
       yield dir, File.join(openbsd, "etc", "doas.conf")
     end
@@ -67,14 +68,14 @@ class VpsSafetyGateTest < Minitest::Test
     skip "expect not installed" unless expect
 
     env = { "I_UNDERSTAND_CONSOLE_RISK" => nil }
-    out, status = Open3.capture2e(env, expect, "-f", File.join(ROOT, "vps_console.exp"), "short")
+    out, status = Open3.capture2e(env, expect, "-f", File.join(ROOT, "bin", "vps_console.exp"), "short")
     assert_equal 1, status.exitstatus
     assert_includes out, "REFUSING"
   end
 
-  def test_console_scripts_live_at_openbsd_top_level
+  def test_console_scripts_live_in_openbsd_bin
     %w[validate_doas.ksh vps_console_common.exp vps_drop_install.exp].each do |name|
-      assert File.file?(File.join(ROOT, name)), "missing #{name} at OPENBSD top level"
+      assert File.file?(File.join(ROOT, "bin", name)), "missing #{name} in OPENBSD/bin"
     end
   end
 end

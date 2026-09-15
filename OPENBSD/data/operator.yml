@@ -57,7 +57,7 @@ recipes:
     run: OPENBSD/bin/vps-state
     expect: per-app SHA, what a deploy would move
   - want: The repo shape, pruned
-    run: zsh OPENBSD/tree.sh . --pub4-overview
+    run: zsh OPENBSD/bin/tree.sh . --pub4-overview
     expect: Rails apps collapsed, MASTER/lib subsystems, no vendor or node_modules
   - want: Refresh the domain expiry snapshot
     run: ruby OPENBSD/bin/domain_watch.rb --update
@@ -72,5 +72,5 @@ recipes:
     run: MASTER/bin/operator vps deploy master --remote
     expect: assets precompiled + master restarted
   - want: Full integrity on VPS
-    run: ssh brgen 'cd /home/dev/pub4 && ruby34 OPENBSD/integrity_gate.rb'
+    run: ssh brgen 'cd /home/dev/pub4 && ruby34 OPENBSD/gates/integrity_gate.rb'
     expect: integrity clean after apps deployed

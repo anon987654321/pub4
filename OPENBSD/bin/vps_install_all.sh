@@ -1,11 +1,11 @@
 #!/usr/bin/env zsh
 # Run ON the VPS (vm23) as dev — installs MASTER web + each Rails app deploy script.
 # The one bootstrap-on-box script: vps_on_vm_install.sh execs this file.
-# Usage: zsh OPENBSD/vps_install_all.sh     (LOG=/path to choose the log file)
+# Usage: zsh OPENBSD/bin/vps_install_all.sh     (LOG=/path to choose the log file)
 set -euo pipefail
 
 if [[ ${1:-} == -h || ${1:-} == --help ]]; then
-  print "usage: zsh OPENBSD/vps_install_all.sh — bundle and precompile MASTER, then every apps.yml app's deploy script"
+  print "usage: zsh OPENBSD/bin/vps_install_all.sh — bundle and precompile MASTER, then every apps.yml app's deploy script"
   exit 0
 fi
 

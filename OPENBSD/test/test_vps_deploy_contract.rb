@@ -59,7 +59,7 @@ class VpsDeployContractTest < Minitest::Test
                  "SKIP_CI=1 must still run the app script, which is what reaches rails_runtime_gate")
   end
 
-  GUARD = File.read(File.join(ROOT, "OPENBSD", "resource_guard.sh"), encoding: "UTF-8")
+  GUARD = File.read(File.join(ROOT, "OPENBSD", "bin", "resource_guard.sh"), encoding: "UTF-8")
 
   def flag_block
     SOURCE[/^deploy_flag=.*?^hold_deploy_flag$/m]
@@ -92,7 +92,7 @@ class VpsDeployContractTest < Minitest::Test
   end
 
   def test_the_flag_is_taken_before_ci_and_the_app_is_checked_before_ok
-    assert_operator SOURCE.index("\nhold_deploy_flag\n"), :<, SOURCE.index("OPENBSD/vps_ci.sh")
+    assert_operator SOURCE.index("\nhold_deploy_flag\n"), :<, SOURCE.index("OPENBSD/bin/vps_ci.sh")
     assert_operator SOURCE.rindex(%(doas rcctl check "$app")), :>, SOURCE.index("GATE_REQUIRE_LIVE=1 ruby34")
   end
 end

@@ -5,7 +5,7 @@ require "tmpdir"
 require "fileutils"
 require "open3"
 require_relative "../lib/utf8"
-require_relative "../installed_targets_gate"
+require_relative "../gates/installed_targets_gate"
 
 # Every OPENBSD gate beside the defect it exists to catch.
 #
@@ -82,7 +82,9 @@ class InstalledTargetsGateFixtureTest < Minitest::Test
   def test_the_committed_tree_names_the_crisis_tier_and_provides_it
     GATE.root = GATE::DEFAULT_ROOT
 
-    assert_includes GATE.referenced.keys, "bin/emergency_cpu.sh",
+    # Named by the guard itself, not by any file that mentions the path: a comment
+    # elsewhere naming it would keep the key present with the guard unread.
+    assert_includes GATE.referenced.fetch("bin/emergency_cpu.sh", []), "bin/resource_guard.sh",
                     "resource_guard.sh's crisis path is no longer read, so a missing install would pass"
     assert_includes GATE.referenced.keys, "libexec/stale_ci_cleanup.ksh"
     assert_empty GATE.orphans
@@ -94,7 +96,7 @@ end
 # hand it the script with one of them broken.
 class IdempotencyFixtureTest < Minitest::Test
   OPENBSD = File.expand_path("..", __dir__)
-  CHECK = File.join(OPENBSD, "verify_openbsd_idempotency.rb")
+  CHECK = File.join(OPENBSD, "gates", "verify_openbsd_idempotency.rb")
   BACKUP = "backup_directory /var/nsd/zones/master nsd-zones\n"
   DELETE = "rm -rf /var/nsd/etc/*(/) /var/nsd/zones/master/*(/)\n" # scan: intentional — fixture text, never run
   REST = <<~SH
@@ -149,7 +151,7 @@ end
 # the function by its spelling, which a comment satisfies as well as a definition.
 class DeployIdentityFixtureTest < Minitest::Test
   OPENBSD = File.expand_path("..", __dir__)
-  load File.join(OPENBSD, "verify_deploy_identity.rb")
+  load File.join(OPENBSD, "gates", "verify_deploy_identity.rb")
 
   def missing(body)
     Dir.mktmpdir("identity") do |dir|
@@ -178,7 +180,7 @@ class DeployIdentityFixtureTest < Minitest::Test
     Dir.mktmpdir("identity") do |dir|
       library = File.join(dir, "_deploy.sh")
       File.write(library, "# deploy_tracked_app() lives here\n")
-      out, status = Open3.capture2e(RbConfig.ruby, File.join(OPENBSD, "verify_deploy_identity.rb"), library)
+      out, status = Open3.capture2e(RbConfig.ruby, File.join(OPENBSD, "gates", "verify_deploy_identity.rb"), library)
 
       refute status.success?
       assert_includes out, "defines no deploy_tracked_app"
@@ -186,7 +188,7 @@ class DeployIdentityFixtureTest < Minitest::Test
   end
 
   def test_the_committed_tree_passes
-    out, status = Open3.capture2e(RbConfig.ruby, File.join(OPENBSD, "verify_deploy_identity.rb"))
+    out, status = Open3.capture2e(RbConfig.ruby, File.join(OPENBSD, "gates", "verify_deploy_identity.rb"))
 
     assert status.success?, out
   end
@@ -259,7 +261,7 @@ end
 
 # shell_syntax_gate parses each script with the interpreter its shebang names.
 class ShellSyntaxFixtureTest < Minitest::Test
-  GATE = File.expand_path("../shell_syntax_gate.rb", __dir__)
+  GATE = File.expand_path("../gates/shell_syntax_gate.rb", __dir__)
 
   def scan(files)
     Dir.mktmpdir("shell-syntax") do |root|
@@ -307,7 +309,7 @@ end
 
 class DeploySmokeFixtureTest < Minitest::Test
   OPENBSD = File.expand_path("..", __dir__)
-  require File.join(OPENBSD, "deploy_smoke_gate.rb")
+  require File.join(OPENBSD, "gates", "deploy_smoke_gate.rb")
 
   PUBLIC = %w[/up /health].freeze
 
@@ -385,7 +387,7 @@ class DeploySmokeFixtureTest < Minitest::Test
   end
 
   def test_the_committed_tree_passes
-    out, status = Open3.capture2e(RbConfig.ruby, File.join(OPENBSD, "deploy_smoke_gate.rb"))
+    out, status = Open3.capture2e(RbConfig.ruby, File.join(OPENBSD, "gates", "deploy_smoke_gate.rb"))
 
     assert status.success?, out
   end

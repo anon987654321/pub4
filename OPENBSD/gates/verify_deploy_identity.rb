@@ -3,11 +3,11 @@
 
 # Verifies low-level OPERATOR identity hygiene without requiring app dependencies.
 # Run from the repository root:
-#   ruby OPENBSD/verify_deploy_identity.rb [path/to/_deploy.sh]
+#   ruby OPENBSD/gates/verify_deploy_identity.rb [path/to/_deploy.sh]
 
 require "open3"
 require "yaml"
-require_relative "lib/utf8"
+require_relative "../lib/utf8"
 
 # The functions every app's deploy script reaches through _deploy.sh.
 SHARED_FUNCTIONS = %w[deploy_tracked_app need_cmd bundle_install_as_app install_rcd relayd_add_relay].freeze
@@ -28,7 +28,7 @@ end
 
 return unless $PROGRAM_NAME == __FILE__
 
-ROOT = File.expand_path("..", __dir__)
+ROOT = File.expand_path("../..", __dir__)
 RAILS_ROOT = File.join(ROOT, "RAILS")
 APPS_FILE = File.join(RAILS_ROOT, "apps.yml")
 SHARED_DEPLOY = File.join(RAILS_ROOT, "_deploy.sh")

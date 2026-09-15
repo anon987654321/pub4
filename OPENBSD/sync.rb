@@ -4,7 +4,7 @@
 # Run on VPS: doas ruby34 ~/pub4/OPENBSD/sync.rb
 
 require "fileutils"
-require_relative "config_drift_gate"
+require_relative "gates/config_drift_gate"
 
 # The files come from the drift gate, so the return leg copies exactly what the
 # gate compares plus what it skips as templated. A file the gate reports drifted

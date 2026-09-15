@@ -8,9 +8,9 @@
 # promised recovery the file cannot deliver. The name is the architecture.
 #
 # Usage (on vm23):
-#   DRY_RUN=1 zsh OPENBSD/restore_litestream.sh          # print plan only
-#   zsh OPENBSD/restore_litestream.sh brgen              # one app
-#   zsh OPENBSD/restore_litestream.sh                    # all apps in etc/litestream.yml
+#   DRY_RUN=1 zsh OPENBSD/bin/restore_litestream.sh          # print plan only
+#   zsh OPENBSD/bin/restore_litestream.sh brgen              # one app
+#   zsh OPENBSD/bin/restore_litestream.sh                    # all apps in etc/litestream.yml
 #
 # Every precondition below is a hard failure, not a skip. On vm23 litestream is
 # absent and /var/backups/litestream/ is empty, so a skipping restore walked all

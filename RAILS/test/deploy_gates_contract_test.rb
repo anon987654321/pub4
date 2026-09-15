@@ -264,7 +264,7 @@ class DeployGatesContractTest < Minitest::Test
   end
 
   def test_integrity_gate_wires_new_gates
-    integrity = File.read(File.join(OPENBSD_ROOT, "integrity_gate.rb"))
+    integrity = File.read(File.join(OPENBSD_ROOT, "gates", "integrity_gate.rb"))
     gates = File.read(File.join(OPENBSD_ROOT, "lib", "gate_environment.rb"))
     assert_includes integrity, "gate_environment"
     assert_includes integrity, "GateEnvironment::INTEGRITY_GATES"

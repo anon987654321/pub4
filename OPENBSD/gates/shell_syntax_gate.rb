@@ -18,7 +18,7 @@
 # box.
 
 # SHELL_SYNTAX_ROOT points the scan at a fixture tree, so the gate can be shown failing.
-ROOT = ENV.fetch("SHELL_SYNTAX_ROOT", File.expand_path("..", __dir__))
+ROOT = ENV.fetch("SHELL_SYNTAX_ROOT", File.expand_path("../..", __dir__))
 Dir.chdir(ROOT)
 
 INTERPRETERS = %w[zsh ksh sh bash].freeze

@@ -21,7 +21,7 @@
 
 # Forces Encoding.default_external = UTF_8. Seven of the per-gate scripts this
 # runner replaced required it and it was not delegation: under a C locale --
-# which is exactly how OPENBSD/integrity_gate.rb invokes them, deliberately --
+# which is exactly how OPENBSD/gates/integrity_gate.rb invokes them, deliberately --
 # Ruby defaults file reads to US-ASCII and every gate that reads UTF-8 source
 # or config fails. Dropping it silently broke production, frontend and
 # domain_align inside the integrity chain while they passed standalone.

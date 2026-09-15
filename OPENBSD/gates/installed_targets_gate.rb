@@ -6,7 +6,7 @@
 # On 2026-08-25 /etc/daily.local guarded a root-run drift check on
 # `[ -x /usr/local/bin/config_drift_gate.rb ]`. Nothing installed that file:
 # install_root_configs copies etc/, usr/ and var/ from the repo, and the script
-# lives at OPENBSD/config_drift_gate.rb, outside usr/local/bin/. So the guard was
+# lives at OPENBSD/gates/config_drift_gate.rb, outside usr/local/bin/. So the guard was
 # false on every run and the check had never executed. Live had been hand-edited
 # to run it out of /home/dev/pub4 instead — root executing a file the dev user
 # can rewrite, every morning.
@@ -25,14 +25,14 @@
 # OPENBSD/usr/local/ (install_root_configs copies the tree) or through an
 # explicit `install` line in OPERATOR.sh.
 #
-#   ruby OPENBSD/installed_targets_gate.rb
-#   ruby OPENBSD/installed_targets_gate.rb --json
+#   ruby OPENBSD/gates/installed_targets_gate.rb
+#   ruby OPENBSD/gates/installed_targets_gate.rb --json
 
 require "json"
 
 module Deploy
   module InstalledTargetsGate
-    DEFAULT_ROOT = File.expand_path(__dir__)
+    DEFAULT_ROOT = File.expand_path("..", __dir__)
 
     # Overridable so a test can plant a tree and watch the gate fail on it.
     @root = DEFAULT_ROOT
@@ -46,7 +46,7 @@ module Deploy
     # /usr/local/bin/lib/ that config_drift_gate.rb explains away — not a target.
     TARGET = %r{/usr/local/(bin|libexec)/([A-Za-z0-9_.-]+)(?![A-Za-z0-9_./-])}
     INSTALL_LINE = %r{install\s[^\n]*?/usr/local/(bin|libexec)/([A-Za-z0-9_.-]+)}
-    INSTALL_SOURCE = %r{install\s[^\n]*?"\$\{SCRIPT_DIR\}/([A-Za-z0-9_.-]+)"}
+    INSTALL_SOURCE = %r{install\s[^\n]*?"\$\{SCRIPT_DIR\}/([A-Za-z0-9_./-]+)"}
 
     # Base-system and package binaries. The gate is about what THIS repo is
     # responsible for installing, not about auditing the OpenBSD ports tree.

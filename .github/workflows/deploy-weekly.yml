@@ -4,7 +4,7 @@ name: Deploy Weekly Integrity
 # live services, certs and relayd. This workflow is a signpost to that, which is
 # why its only job echoes the command rather than running one, and why it has no
 # schedule to restore.
-# On VPS: add OPENBSD/vps_weekly_integrity.sh to root crontab (weekly, off-peak).
+# On VPS: add OPENBSD/bin/vps_weekly_integrity.sh to root crontab (weekly, off-peak).
 on:
   workflow_dispatch:
 
@@ -14,5 +14,5 @@ jobs:
     steps:
       - run: |
           echo "Weekly integrity runs on vm23, not GitHub runners."
-          echo "SSH: cd /home/dev/pub4 && sh OPENBSD/vps_weekly_integrity.sh"
+          echo "SSH: cd /home/dev/pub4 && sh OPENBSD/bin/vps_weekly_integrity.sh"
           echo "Log: /var/log/pub4/weekly_integrity.log"

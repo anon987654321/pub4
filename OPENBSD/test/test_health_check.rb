@@ -15,7 +15,7 @@ require_relative "../lib/utf8"
 # CURL pointed at a stub, so the verdict is the script's and not a grep of it.
 class HealthCheckBehaviourTest < Minitest::Test
   OPENBSD = File.expand_path("..", __dir__)
-  SCRIPT = File.join(OPENBSD, "health_check.rb")
+  SCRIPT = File.join(OPENBSD, "gates", "health_check.rb")
   APPS = YAML.safe_load_file(File.join(OPENBSD, "..", "RAILS", "apps.yml")).fetch("apps")
   FACE = JSON.parse(File.read(File.join(OPENBSD, "deploy_inventory.json"))).fetch("master_face")
 

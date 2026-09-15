@@ -3,6 +3,14 @@
 # Interactive:  sh OPENBSD/backup_priv.sh
 # Unattended:   run from /etc/daily.local; needs $PASSFILE (see below).
 #
+# It stays at the top of OPENBSD/ while the rest of the operator shell lives in
+# bin/, because vm23's /etc/daily.local names this path on line 28:
+#
+#   su dev -c 'cd /home/dev/pub4 && zsh OPENBSD/backup_priv.sh' ||
+#
+# Moving it means changing that line on the box and in etc/daily.local together,
+# which takes root on vm23.
+#
 # Nothing had ever been backed up. Four separate faults, each of which alone was
 # enough, and the only symptom was two lines in /var/log/daily.out that nobody
 # read:

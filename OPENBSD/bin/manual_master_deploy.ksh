@@ -6,13 +6,13 @@
 # which is the operator's call.
 #
 # Manual MASTER deploy — use when vps_deploy_master.sh stalls.
-# Run on VPS: tmux new-session -d -s masterdeploy /home/dev/pub4/OPENBSD/manual_master_deploy.ksh
+# Run on VPS: tmux new-session -d -s masterdeploy /home/dev/pub4/OPENBSD/bin/manual_master_deploy.ksh
 # Watch: tail -f /tmp/master_manual.log
 # FORCE_PRECOMPILE=1 precompiles even when a manifest exists.
 
 case ${1:-} in
 -h|--help)
-  echo "usage: ksh OPENBSD/manual_master_deploy.ksh   (FORCE_PRECOMPILE=1; output goes to /tmp/master_manual.log)"
+  echo "usage: ksh OPENBSD/bin/manual_master_deploy.ksh   (FORCE_PRECOMPILE=1; output goes to /tmp/master_manual.log)"
   exit 0
   ;;
 esac

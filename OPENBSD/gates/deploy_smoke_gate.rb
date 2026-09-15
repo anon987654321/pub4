@@ -3,10 +3,10 @@
 
 require "json"
 require "yaml"
-require_relative "lib/utf8"
-require_relative "lib/token_echo"
+require_relative "../lib/utf8"
+require_relative "../lib/token_echo"
 
-ROOT = File.expand_path("..", __dir__)
+ROOT = File.expand_path("../..", __dir__)
 RAILS_ROOT = File.join(ROOT, "RAILS")
 RELAYD = File.join(ROOT, "OPENBSD", "etc", "relayd.conf")
 HTTPD = File.join(ROOT, "OPENBSD", "etc", "httpd.conf")

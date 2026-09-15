@@ -340,7 +340,7 @@ proposals:
       for. /home/brgen, /home/brgen/app and /home/brgen/app/storage are all 755
       and production.sqlite3 is 644 brgen:brgen; amber and bsdports are the same.
       Nothing on the path is restricted. The fix is two parts: the mode
-      change on vm23, and the guard in OPENBSD/vps_ci.sh that keeps a deploy
+      change on vm23, and the guard in OPENBSD/bin/vps_ci.sh that keeps a deploy
       from widening it again.
       Proven rather than inferred: as dev — uid 1000, not brgen, not in group
       brgen — sqlite3 returned 17748 rows from brgen's users table and an email

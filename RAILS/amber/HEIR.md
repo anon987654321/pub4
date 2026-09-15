@@ -61,7 +61,7 @@ rule-based outfits, local capsule). Buttons say so in the UI.
 
 - Site down more than a few minutes
 - “AI analyse” broken after key rotation
-- Disk full / queue stuck (rare; there is `OPENBSD/amber_queue_sweep.sh`)
+- Disk full / queue stuck (rare; there is `OPENBSD/bin/amber_queue_sweep.sh`)
 - Security update or code deploy needed
 
 ## Deploy (technical)

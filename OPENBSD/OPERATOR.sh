@@ -14,7 +14,7 @@
 #   helpers exist for future --resume support; certificate-renewal cron must stay append-idempotent.
 # - Data preserved: Rails SQLite under /home/<app>/app/storage, ~/priv, acme certs in /etc/ssl when
 #   stage_1 is skipped. Re-running stage_2 does not drop databases.
-# - Post-deploy verification: ruby /home/dev/pub4/OPENBSD/health_check.rb
+# - Post-deploy verification: ruby /home/dev/pub4/OPENBSD/gates/health_check.rb
 # Engine-ize: bootstrap_rails now relies on bundle install for pub4-shared path gem (Gemfiles declare it); legacy sh shared/install_* deprecated in scripts + WIRING. No copy sprawl.
 
 set -euo pipefail
@@ -303,7 +303,7 @@ sync_openbsd_apply() {
   # five minutes and it is the load-shedding guard that keeps this 1GB box up —
   # swallowing the install failure meant it could simply be absent, with no
   # error, while every log line still said the crontab was installed.
-  if ! install -m 755 "${SCRIPT_DIR}/resource_guard.sh" /usr/local/bin/resource_guard.sh; then
+  if ! install -m 755 "${SCRIPT_DIR}/bin/resource_guard.sh" /usr/local/bin/resource_guard.sh; then
     log ERROR "resource_guard.sh install failed — the load guard would be absent"
     return 1
   fi
@@ -320,14 +320,14 @@ sync_openbsd_apply() {
   # crontab.vm23 schedules the weekly integrity run, and install_tracked_crontab
   # refuses a command that is not on the box. root runs the installed copy for
   # the same reason daily.local does: the checkout is dev-writable.
-  if ! install -m 755 "${SCRIPT_DIR}/vps_weekly_integrity.sh" /usr/local/bin/vps_weekly_integrity.sh; then
+  if ! install -m 755 "${SCRIPT_DIR}/bin/vps_weekly_integrity.sh" /usr/local/bin/vps_weekly_integrity.sh; then
     log ERROR "vps_weekly_integrity.sh install failed — the weekly integrity run would go unscheduled"
     return 1
   fi
 
   # daily.local runs this as ROOT, and it guards on `[ -x /usr/local/bin/... ]`,
   # so the guard is exactly as load-bearing as the install. Nothing installed it:
-  # config_drift_gate.rb sits at the repo root rather than under usr/local/bin/,
+  # config_drift_gate.rb sits under gates/ rather than under usr/local/bin/,
   # so install_root_configs never carried it, and the guard was false on every
   # run. Live had been edited by hand to run /home/dev/pub4/OPENBSD/... instead —
   # root executing a file the dev user can rewrite, every morning, which is the
@@ -338,7 +338,7 @@ sync_openbsd_apply() {
   # /usr/local/bin/lib/ made for the purpose, because `require_relative` resolves
   # beside the installed copy; the gate sets its own encoding now, so the install
   # cannot half-succeed and the box carries no directory holding six lines.
-  if ! install -m 755 "${SCRIPT_DIR}/config_drift_gate.rb" /usr/local/bin/config_drift_gate.rb; then
+  if ! install -m 755 "${SCRIPT_DIR}/gates/config_drift_gate.rb" /usr/local/bin/config_drift_gate.rb; then
     log ERROR "config_drift_gate install failed — daily.local would skip the drift check in silence"
     return 1
   fi
@@ -399,7 +399,7 @@ sync_openbsd_apply() {
   fi
   wait_for_up 38182 brgen 24 5 || return 1
 
-  ruby34 "${SCRIPT_DIR}/health_check.rb" --core && log INFO "health_check ok" \
+  ruby34 "${SCRIPT_DIR}/gates/health_check.rb" --core && log INFO "health_check ok" \
     || { log ERROR "health_check failed"; return 1; }
 }
 
@@ -982,8 +982,8 @@ main() {
         log ERROR "first_install rewrites DNS material; rerun with I_UNDERSTAND_DNS_WIPE=1 if this is intentional"
         exit 1
       }
-      ruby34 "${SCRIPT_DIR}/verify_openbsd_idempotency.rb" || exit 1
-      ruby34 "${SCRIPT_DIR}/verify_deploy_identity.rb" || exit 1
+      ruby34 "${SCRIPT_DIR}/gates/verify_openbsd_idempotency.rb" || exit 1
+      ruby34 "${SCRIPT_DIR}/gates/verify_deploy_identity.rb" || exit 1
       stage_1
       stage_2
       ;;
@@ -992,13 +992,13 @@ main() {
         log ERROR "stage_1 rewrites DNS material; rerun with I_UNDERSTAND_DNS_WIPE=1 if this is intentional"
         exit 1
       }
-      ruby34 "${SCRIPT_DIR}/verify_openbsd_idempotency.rb" || exit 1
-      ruby34 "${SCRIPT_DIR}/verify_deploy_identity.rb" || exit 1
+      ruby34 "${SCRIPT_DIR}/gates/verify_openbsd_idempotency.rb" || exit 1
+      ruby34 "${SCRIPT_DIR}/gates/verify_deploy_identity.rb" || exit 1
       stage_1
       ;;
     --stage-2|--stage2)
-      ruby34 "${SCRIPT_DIR}/verify_openbsd_idempotency.rb" || exit 1
-      ruby34 "${SCRIPT_DIR}/verify_deploy_identity.rb" || exit 1
+      ruby34 "${SCRIPT_DIR}/gates/verify_openbsd_idempotency.rb" || exit 1
+      ruby34 "${SCRIPT_DIR}/gates/verify_deploy_identity.rb" || exit 1
       stage_2
       ;;
     "")

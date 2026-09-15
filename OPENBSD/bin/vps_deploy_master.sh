@@ -6,13 +6,13 @@
 # is only right when vps-deploy itself is what is broken.
 #
 # Usage (from dev laptop):
-#   zsh OPENBSD/lib/ssh_vm23.sh exec 'zsh /home/dev/pub4/OPENBSD/vps_deploy_master.sh'
-#   zsh OPENBSD/vps_deploy_master.sh --from-laptop
+#   zsh OPENBSD/lib/ssh_vm23.sh exec 'zsh /home/dev/pub4/OPENBSD/bin/vps_deploy_master.sh'
+#   zsh OPENBSD/bin/vps_deploy_master.sh --from-laptop
 
 if [ "${1:-}" = "--from-laptop" ]; then
   shift
-  _lib="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)/lib/ssh_vm23.sh"
-  exec zsh "$_lib" exec "zsh /home/dev/pub4/OPENBSD/vps_deploy_master.sh" "$@"
+  _lib="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)/lib/ssh_vm23.sh"
+  exec zsh "$_lib" exec "zsh /home/dev/pub4/OPENBSD/bin/vps_deploy_master.sh" "$@"
 fi
 
 set -eo pipefail

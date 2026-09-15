@@ -3,7 +3,7 @@
 # finished jobs and orphaned executions, drop unfinished Turbo broadcast jobs and
 # duplicate media jobs, report again.
 #
-# Usage: sh OPENBSD/amber_queue_sweep.sh [APP]     (default amber)
+# Usage: sh OPENBSD/bin/amber_queue_sweep.sh [APP]     (default amber)
 #
 # The partner is /usr/local/bin/drain-jobs.sh, which RUNS due jobs hourly from
 # cron. This one DELETES what should never run; reach for it when a backlog is
@@ -13,7 +13,7 @@ set -eu
 
 case ${1:-} in
 -h|--help)
-  echo "usage: sh OPENBSD/amber_queue_sweep.sh [APP]   (default amber; deletes, see header)"
+  echo "usage: sh OPENBSD/bin/amber_queue_sweep.sh [APP]   (default amber; deletes, see header)"
   exit 0
   ;;
 esac

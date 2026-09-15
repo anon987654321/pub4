@@ -8,7 +8,7 @@
 set -euo pipefail
 
 if [[ ${1:-} == -h || ${1:-} == --help ]]; then
-  print "usage: zsh OPENBSD/vps_run_remote.sh"
+  print "usage: zsh OPENBSD/bin/vps_run_remote.sh"
   print "  upload vps_install_all.sh through the server4 hypervisor jump and start it under nohup"
   exit 0
 fi
@@ -16,7 +16,7 @@ fi
 SCRIPT_DIR=${0:a:h}
 INSTALL_SH=${SCRIPT_DIR}/vps_install_all.sh
 # The VM's login, host and key are lib/ssh_vm23.sh's, the one copy of them.
-source "${SCRIPT_DIR}/lib/ssh_vm23.sh"
+source "${SCRIPT_DIR:h}/lib/ssh_vm23.sh"
 KEY=$SSH_KEY
 VM=${SSH_USER}@${SSH_HOST}
 HYP=${HYPERVISOR:-dev@server4.openbsd.amsterdam}

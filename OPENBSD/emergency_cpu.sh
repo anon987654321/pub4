@@ -17,6 +17,17 @@ export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 # Emergency CPU relief for saturated VPS (vm23).
 # Run: doas ksh /home/dev/pub4/OPENBSD/emergency_cpu.sh
 #
+# This file stays at the top of OPENBSD/ while the rest of the operator shell
+# lives in bin/, because vm23 runs it from the checkout by this path. The guard
+# installed at /usr/local/bin/resource_guard.sh is dated 2026-08-14, older than
+# the repo copy, and its line 285 reads:
+#
+#   ksh /home/dev/pub4/OPENBSD/emergency_cpu.sh 2>&1 | logger -t resource-guard
+#
+# It moves to bin/ once `doas zsh OPENBSD/OPERATOR.sh --sync-configs` has installed
+# bin/resource_guard.sh and this script under /usr/local/bin, after which the
+# guard calls /usr/local/bin/emergency_cpu.sh and nothing reads this path.
+#
 # Typical cause: Falcon crash-loops, hung bundle install, assets:precompile on restart.
 
 # Prefer the root-owned installed copy; this script is run as root, and

@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-#   ruby OPENBSD/verify_openbsd_idempotency.rb [path/to/OPERATOR.sh]
+#   ruby OPENBSD/gates/verify_openbsd_idempotency.rb [path/to/OPERATOR.sh]
 #
 # The path argument exists so test/test_gate_fixtures.rb can hand it a snippet
 # that deletes the zones without backing them up, and watch it refuse.
@@ -9,7 +9,7 @@
 # OPERATOR.sh legitimately contains UTF-8 bytes (em dashes in comments); the
 # plain string #include? checks below tolerated that under the remote's
 # US-ASCII default external encoding, but the =~ regex checks do not.
-script = File.read(ARGV.fetch(0, File.expand_path("OPERATOR.sh", __dir__)), encoding: "UTF-8")
+script = File.read(ARGV.fetch(0, File.expand_path("../OPERATOR.sh", __dir__)), encoding: "UTF-8")
 
 issues = []
 

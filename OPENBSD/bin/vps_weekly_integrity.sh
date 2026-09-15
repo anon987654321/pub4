@@ -55,7 +55,7 @@ git fetch origin main 2>&1 || true
 # invisible. The status line below is the report; the exit code carries it to
 # anyone who runs this by hand.
 status=0
-ruby34 OPENBSD/integrity_gate.rb || status=1
-ruby34 OPENBSD/health_check.rb --public --all-ready-apps --json || status=1
+ruby34 OPENBSD/gates/integrity_gate.rb || status=1
+ruby34 OPENBSD/gates/health_check.rb --public --all-ready-apps --json || status=1
 echo "== $(date -u +%FT%TZ) weekly integrity end status=$status"
 exit "$status"

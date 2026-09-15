@@ -272,7 +272,7 @@ missing.
   restart might be in flight.
 - **The canonical source for every `/etc/rc.d/<app>` script and
   `resource_guard.sh` is this repo** (`OPENBSD/etc/rc.d/*`,
-  `OPENBSD/resource_guard.sh`) — not whatever is live on the VPS. If you
+  `OPENBSD/bin/resource_guard.sh`) — not whatever is live on the VPS. If you
   edit the live file directly (as happened during tonight's incident
   response), **mirror the change back into the repo file**, or the next
   sync from repo → server will silently revert your fix.

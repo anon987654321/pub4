@@ -32,7 +32,7 @@ require "fileutils"
 # shells run with no LANG at all — so Ruby defaults external encoding to
 # US-ASCII and the first regex against a comment raises "invalid byte sequence
 # in US-ASCII". Found by running --check over ssh, which is exactly the shape of
-# shell a gate runs in. OPENBSD/integrity_gate.rb has a test pinning the same
+# shell a gate runs in. OPENBSD/gates/integrity_gate.rb has a test pinning the same
 # failure mode (RAILS/test/integrity_locale_test.rb).
 module RenderDns
   ROOT = File.expand_path("../..", __dir__)

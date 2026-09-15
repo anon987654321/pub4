@@ -43,7 +43,7 @@ module Deploy
 
       "resource guard: #{down.join(', ')} shed and still down — relayd answers TLS for them, so this " \
         "is invisible from outside. `doas rcctl restart #{down.first}` brings one back; if they keep " \
-        "landing here, the restore thresholds in OPENBSD/resource_guard.sh no longer reach this box."
+        "landing here, the restore thresholds in OPENBSD/bin/resource_guard.sh no longer reach this box."
     end
 
     # The guard's list is append-only until its own restore path removes an

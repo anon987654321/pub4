@@ -6,7 +6,7 @@ require "tmpdir"
 # under a C locale, where Ruby reads files as US-ASCII and every read of this
 # UTF-8 source raises "invalid byte sequence".
 require_relative "../lib/utf8"
-require_relative "../config_drift_gate"
+require_relative "../gates/config_drift_gate"
 
 # The crontab half of the drift gate, with the shape it must flag and the shape
 # it must not.

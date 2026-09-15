@@ -8,26 +8,26 @@
 # Canonical app list: OPENBSD/deploy_inventory.json (active Rails apps).
 #
 # Usage:
-#   zsh OPENBSD/deploy_all.sh
-#   zsh OPENBSD/deploy_all.sh --per-app   # also run RAILS/<app>/<app>.sh (copies to /home/<app>/app)
+#   zsh OPENBSD/bin/deploy_all.sh
+#   zsh OPENBSD/bin/deploy_all.sh --per-app   # also run RAILS/<app>/<app>.sh (copies to /home/<app>/app)
 #
 # Host, login and key come from lib/ssh_vm23.sh, the one copy of them:
 # SSH_HOST is the host alone and SSH_USER the login, so `SSH_HOST=dev@…` yields
 # dev@dev@… and every ssh fails.
 set -euo pipefail
 
-# DEPLOY_ROOT is OPENBSD/ itself, not its parent: deploy_inventory.json lives
-# here, and the rsync path below mirrors exactly this directory to the remote
+# DEPLOY_ROOT is OPENBSD/, the parent of this bin/: deploy_inventory.json lives
+# there, and the rsync path below mirrors exactly that directory to the remote
 # OPENBSD/.
 SCRIPT_DIR=${0:a:h}
-DEPLOY_ROOT=${SCRIPT_DIR}
+DEPLOY_ROOT=${SCRIPT_DIR:h}
 
 : "${USE_GIT_PULL:=1}"
 : "${REMOTE_RUBY:=ruby34}"
 : "${RUN_REMOTE_HEALTH:=1}"
 : "${ALLOW_PARTIAL_DEPLOY:=0}"
 
-source "${SCRIPT_DIR}/lib/ssh_vm23.sh"
+source "${DEPLOY_ROOT}/lib/ssh_vm23.sh"
 
 log() { printf '[%s] %s\n' "$(date +%H:%M:%S)" "$*" }
 error() { log "ERROR: $*"; exit 1 }
@@ -93,7 +93,7 @@ fi
 
 if [[ $RUN_REMOTE_HEALTH == 1 ]]; then
   log "Authoritative remote health gate..."
-  if ! vssh "cd ${REMOTE_PUB4} && ${REMOTE_RUBY} OPENBSD/health_check.rb --public --all-ready-apps"; then
+  if ! vssh "cd ${REMOTE_PUB4} && ${REMOTE_RUBY} OPENBSD/gates/health_check.rb --public --all-ready-apps"; then
     [[ $ALLOW_PARTIAL_DEPLOY == 1 ]] \
       && log "WARN: remote health failed — ALLOW_PARTIAL_DEPLOY=1 set" \
       || error "remote health failed"
@@ -102,4 +102,4 @@ fi
 
 log "Deploy finished."
 log "VPS: ssh ${VM23_SSH_OPTS[*]} ${SSH_USER}@${SSH_HOST}"
-log "Health: ${REMOTE_RUBY} ${REMOTE_PUB4}/OPENBSD/health_check.rb --public --all-ready-apps (on VPS)"
+log "Health: ${REMOTE_RUBY} ${REMOTE_PUB4}/OPENBSD/gates/health_check.rb --public --all-ready-apps (on VPS)"

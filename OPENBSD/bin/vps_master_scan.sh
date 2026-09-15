@@ -1,10 +1,10 @@
 #!/usr/bin/env zsh
 # MASTER /scan on vm23 — shares CI lock so scan + CI never overlap.
-# Usage: zsh OPENBSD/vps_master_scan.sh [scan args...]
+# Usage: zsh OPENBSD/bin/vps_master_scan.sh [scan args...]
 set -euo pipefail
 
 if [[ ${1:-} == -h || ${1:-} == --help ]]; then
-  print "usage: zsh OPENBSD/vps_master_scan.sh [scan args...]"
+  print "usage: zsh OPENBSD/bin/vps_master_scan.sh [scan args...]"
   print "  MASTER bin/cli under the CI lock, refused while the 5-minute load is over PUB4_CI_MAX_LOAD"
   exit 0
 fi

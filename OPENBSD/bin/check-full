@@ -18,6 +18,6 @@ failures << "openbsd" unless runner.run("openbsd", RUBY, "OPENBSD/bin/check-open
 failures << "openbsd contracts" unless runner.run("openbsd contracts", RUBY, "OPENBSD/test/run_all.rb")
 failures << "rails contracts" unless runner.run("rails contracts", RUBY, "RAILS/test/run_all.rb")
 failures << "dr freshness" unless runner.run("dr freshness", RUBY, "OPENBSD/bin/dr-pull", "--check")
-failures << "integrity" unless runner.run("integrity", RUBY, "OPENBSD/integrity_gate.rb")
+failures << "integrity" unless runner.run("integrity", RUBY, "OPENBSD/gates/integrity_gate.rb")
 
 exit(failures.empty? ? 0 : 1)

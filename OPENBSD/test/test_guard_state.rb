@@ -67,7 +67,7 @@ class TestGuardState < Minitest::Test
     # integrity chain invokes everything on vm23 — Ruby reads files as US-ASCII,
     # and resource_guard.sh's comments are full of em-dashes. A bare File.read
     # passed on a Mac and raised "invalid byte sequence in US-ASCII" on the box.
-    guard = File.read(File.expand_path("../resource_guard.sh", __dir__), encoding: "UTF-8")
+    guard = File.read(File.expand_path("../bin/resource_guard.sh", __dir__), encoding: "UTF-8")
     warn_at = guard[/^MEM_WARN=(\d+)/, 1].to_i
     restore_at = guard[/^MEM_RESTORE=(\d+)/, 1].to_i
 

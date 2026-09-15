@@ -180,5 +180,5 @@ else
     print_deploy_in_progress(row[:deploy_in_progress])
   end
   puts
-  puts "note: dev SHA != deployed SHA until zsh OPENBSD/vps_ci.sh <app> runs"
+  puts "note: dev SHA != deployed SHA until zsh OPENBSD/bin/vps_ci.sh <app> runs"
 end

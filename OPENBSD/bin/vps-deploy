@@ -123,7 +123,7 @@ EOF
 
 if [[ $app == master ]]; then
   print "vps-deploy: master web"
-  if zsh "$repo/OPENBSD/vps_deploy_master.sh"; then
+  if zsh "$repo/OPENBSD/bin/vps_deploy_master.sh"; then
     write_stamp master ok
     exit 0
   fi
@@ -144,8 +144,8 @@ print "vps-deploy: $app (git pull --ff-only)"
 git -C "$repo" pull --ff-only origin main
 
 print "vps-deploy: $app (preflight load)"
-if [[ -x $repo/OPENBSD/resource_guard.sh ]]; then
-  doas ksh "$repo/OPENBSD/resource_guard.sh" || true
+if [[ -x $repo/OPENBSD/bin/resource_guard.sh ]]; then
+  doas ksh "$repo/OPENBSD/bin/resource_guard.sh" || true
 fi
 
 # The guard's deploy flag, held for the whole deploy and not only the restart.
@@ -175,7 +175,7 @@ hold_deploy_flag
 # the repo becomes the box.
 #
 # Advisory, not blocking, and deliberately so. Measured 2026-09-10 with
-# `SSH_HOST=dev@brgen.no ruby OPENBSD/config_drift_gate.rb --remote`: eight files
+# `SSH_HOST=dev@brgen.no ruby OPENBSD/gates/config_drift_gate.rb --remote`: eight files
 # differ and two more are absent from the box entirely — emergency_cpu.sh, which
 # is resource_guard's crisis tier, and vps_weekly_integrity.sh, which the crontab
 # has scheduled for weeks. A hard gate here would refuse every deploy until an
@@ -228,7 +228,7 @@ else
   # draining. A command followed by `||` is exempt from errexit, which is what
   # makes the status capture reachable at all.
   ci_status=0
-  zsh "$repo/OPENBSD/vps_ci.sh" "$app" || ci_status=$?
+  zsh "$repo/OPENBSD/bin/vps_ci.sh" "$app" || ci_status=$?
 
   if (( jobs_was_up )); then
     doas rcctl start "$jobs_service" >/dev/null 2>&1 \
@@ -318,7 +318,7 @@ fi
 queue_schema="$repo/RAILS/${app}/db/queue_schema.rb"
 if [[ -f $queue_schema ]] && ! ruby34 -e 'exit File.read(ARGV[0]).include?("define(version: 0)")' "$queue_schema"; then
   print "vps-deploy: $app (solid_queue proof)"
-  doas ruby34 "$repo/OPENBSD/solid_queue_proof.rb" "$app" \
+  doas ruby34 "$repo/OPENBSD/gates/solid_queue_proof.rb" "$app" \
     || { write_stamp "$app" failed; print -u2 "vps-deploy: solid_queue proof failed for $app"; exit 1; }
 fi
 

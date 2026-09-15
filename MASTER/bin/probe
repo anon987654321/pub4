@@ -119,7 +119,7 @@ CHECKS = {
   },
   "health" => {
     desc: "OpenBSD VPS stack health",
-    cmd: [RUBY, File.join(REPO_ROOT, "OPENBSD", "openbsd", "health_check.rb")],
+    cmd: [RUBY, File.join(REPO_ROOT, "OPENBSD", "gates", "health_check.rb")],
     cwd: REPO_ROOT,
     skip: -> { !File.file?("/etc/relayd.conf") },
     skip_reason: "not on OpenBSD VPS (/etc/relayd.conf missing)",
@@ -156,7 +156,7 @@ CHECKS = {
   },
   "integrity" => {
     desc: "Full RAILS + OPENBSD/OpenBSD gate chain",
-    cmd: [RUBY, File.join(REPO_ROOT, "OPENBSD", "integrity_gate.rb")],
+    cmd: [RUBY, File.join(REPO_ROOT, "OPENBSD", "gates", "integrity_gate.rb")],
     cwd: REPO_ROOT,
   },
   "selfscan" => {

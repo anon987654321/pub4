@@ -5,13 +5,13 @@ require "json"
 require "open3"
 require "optparse"
 require "yaml"
-require_relative "lib/utf8"
-require_relative "lib/guard_state"
-require_relative "lib/permission_audit"
-require_relative "lib/disk_usage"
-require_relative "lib/deploy_stamp"
+require_relative "../lib/utf8"
+require_relative "../lib/guard_state"
+require_relative "../lib/permission_audit"
+require_relative "../lib/disk_usage"
+require_relative "../lib/deploy_stamp"
 
-ROOT = File.expand_path("..", __dir__)
+ROOT = File.expand_path("../..", __dir__)
 APPS_YML = File.join(ROOT, "RAILS", "apps.yml")
 
 options = {
@@ -23,7 +23,7 @@ options = {
 }
 
 OptionParser.new do |parser|
-  parser.banner = "Usage: ruby34 OPENBSD/health_check.rb [--core|--all-ready-apps] [--public|--public-only] [--json]"
+  parser.banner = "Usage: ruby34 OPENBSD/gates/health_check.rb [--core|--all-ready-apps] [--public|--public-only] [--json]"
   parser.on("--core", "Core services only: nsd, httpd, relayd, smtpd (required — it carries johann@brgen.no), " \
                       "brgen, and master, which is a service rather than an apps.yml app") { options[:core] = true }
   parser.on("--all-ready-apps", "Require every app listed in RAILS/apps.yml") { options[:all_ready_apps] = true }
@@ -188,7 +188,7 @@ end
   # 127.0.0.1 timed out on a healthy server and this reported "no local SOA
   # (nsd reports ok)" on every run.
   nameserver = begin
-    YAML.safe_load_file(File.join(__dir__, "data", "dns.yml")).fetch("nameserver").fetch("ip").to_s
+    YAML.safe_load_file(File.join(__dir__, "..", "data", "dns.yml")).fetch("nameserver").fetch("ip").to_s
   rescue StandardError => e
     failures << "dns: data/dns.yml nameserver.ip unreadable: #{e.class}: #{e.message}"
     ""
@@ -397,7 +397,7 @@ up_checks.each do |name, port|
       voice = deploy.dig("voice_policy", "single_voice").to_s
       expected_voice = begin
         require "yaml"
-        YAML.safe_load_file(File.join(__dir__, "..", "MASTER", "data", "voice.yml"), aliases: true)
+        YAML.safe_load_file(File.join(ROOT, "MASTER", "data", "voice.yml"), aliases: true)
             .dig("tts", "single_voice").to_s
       rescue StandardError
         ""
