@@ -463,7 +463,7 @@ module ToolRun
       writer = stdin_data && Thread.new { feed(stdin, stdin_data) }
       stdin.close unless writer
       readers = [out, err].map { |io| Thread.new { io.read } }
-      expired = !wait.join(timeout)
+      expired = !wait_or_stop(wait.pid) { wait.join(timeout) }
       kill_group(wait.pid) if expired
       writer&.join
       output, error = readers.map(&:value)
@@ -490,13 +490,15 @@ module ToolRun
   def system(*argv, timeout: self.timeout, **spawn)
     pid = Process.spawn(*argv.flatten.map(&:to_s), { in: File::NULL, pgroup: true }.merge(spawn))
     deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + timeout
-    until Process.wait2(pid, Process::WNOHANG)
-      if Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
-        kill_group(pid)
-        Process.wait2(pid)
-        return false
+    wait_or_stop(pid) do
+      until Process.wait2(pid, Process::WNOHANG)
+        if Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
+          kill_group(pid)
+          Process.wait2(pid)
+          return false
+        end
+        sleep 0.02
       end
-      sleep 0.02
     end
     $?.success?
   rescue Errno::ENOENT
@@ -517,6 +519,60 @@ module ToolRun
     Process.kill("-KILL", pid)
   rescue Errno::ESRCH, Errno::EPERM
     nil
+  end
+
+  # How long a child has to act on a forwarded signal before it is killed.
+  # ffmpeg answers SIGINT by closing the file it is writing, which takes a
+  # moment; a tool that ignores the signal gets no longer than this.
+  STOP_GRACE_SEC = 2.0
+
+  # Runs the wait in the block, and takes the child down with this process if a
+  # signal ends the wait.
+  #
+  # The child leads its own process group, so Ctrl-C at the terminal reaches
+  # this process and never the tool. Ruby turns SIGINT and SIGTERM into an
+  # exception in the waiting thread, the exception unwinds past the wait, and
+  # the tool -- with every process it forked -- carries on under init, still
+  # writing, still holding a CPU. So the signal is passed on to the group, the
+  # group is given a moment and then killed, the child is reaped, and the
+  # exception carries on exactly as it arrived.
+  def wait_or_stop(pid, group: true)
+    yield
+  rescue SignalException => e
+    stop(pid, e.signo, group:)
+    raise
+  end
+
+  # The signal first, then SIGKILL after the grace period, then the reap.
+  def stop(pid, signo, group: true)
+    target = group ? -pid : pid
+    begin
+      Process.kill(signo, target)
+    rescue Errno::ESRCH, Errno::EPERM
+      return reap(pid)
+    end
+    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + STOP_GRACE_SEC
+    until reap(pid, Process::WNOHANG)
+      if Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
+        group ? kill_group(pid) : kill_one(pid)
+        return reap(pid)
+      end
+      sleep 0.02
+    end
+  end
+
+  def kill_one(pid)
+    Process.kill("KILL", pid)
+  rescue Errno::ESRCH, Errno::EPERM
+    nil
+  end
+
+  # The child's status, nil while it runs, and true once another waiter (Open3's
+  # own thread) has already reaped it.
+  def reap(pid, flags = 0)
+    Process.wait2(pid, flags)
+  rescue Errno::ECHILD
+    true
   end
 end
 

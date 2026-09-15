@@ -12663,9 +12663,16 @@ def system_with_timeout(argv, timeout_sec:, verbose: false)
   end
   status = nil
   begin
-    Timeout.timeout(timeout_sec) do
-      _pid, status = Process.wait2(pid)
+    # A Ctrl-C reaches this process and not the group it spawned, so the wait
+    # hands the signal on and reaps the tool before the exception unwinds.
+    ToolRun.wait_or_stop(pid) do
+      Timeout.timeout(timeout_sec) do
+        _pid, status = Process.wait2(pid)
+      end
     end
+  rescue SignalException
+    FileUtils.rm_f(err_path)
+    raise
   rescue Timeout::Error
     begin
       Process.kill("-KILL", pid)
@@ -12697,7 +12704,15 @@ def sh!(*command)
   err_path = nil
   if DillaDmesg.interactive_bin?(argv)
     DillaDmesg.play!(bin, argv.last.to_s) if argv.length > 1
-    ok = system(*argv)
+    # A player shares the terminal's group, so Ctrl-C reaches it directly; a
+    # SIGTERM or a SIGINT sent to this process alone does not, and the player
+    # would keep sounding after the engine that started it is gone.
+    begin
+      player = spawn(*argv)
+      ok = ToolRun.wait_or_stop(player, group: false) { Process.wait2(player).last.success? }
+    rescue Errno::ENOENT => e
+      dmesg_warn("#{bin}: #{e.message}")
+    end
   else
     ok, err_tail, err_path = system_with_timeout(
       argv,
@@ -12941,8 +12956,14 @@ def play_audio(path, loop: false)
   when "afplay"
     if loop
       dmesg("loop #{File.basename(path)} via afplay (ctrl-c stop)", unit: "play0", parent: "dilla0")
-      trap("INT") { exit 0 }
-      loop { sh! "afplay", "-v", format("%.3f", vol), path }
+      # Rescued rather than trapped. A trap that exits raises SystemExit, which
+      # the player's wait cannot tell from a normal end, so afplay outlived it;
+      # an Interrupt passes through that wait, which stops the player first.
+      begin
+        loop { sh! "afplay", "-v", format("%.3f", vol), path }
+      rescue Interrupt
+        exit 0
+      end
     else
       sh! "afplay", "-v", format("%.3f", vol), path
     end
