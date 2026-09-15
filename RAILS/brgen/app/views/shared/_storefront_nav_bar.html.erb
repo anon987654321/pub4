@@ -1,8 +1,13 @@
 <%# The storefront header marketplace and takeaway share, so the two read as
     siblings and their geometry cannot drift. Styles in _marketplace_nav_bar.scss.
-    Each vertical renders it as a layout and yields its own sections row, because
+    Each vertical renders it as a layout and yields its own sections, because
     those links resolve against that engine's routes. A cart link appears when
     the vertical passes one.
+
+    Kaufland.de's two-band anatomy: the sections sit as tabs on the first band
+    beside the account and cart links, and the second band is the grey search
+    strip, opened by the place the reader shops from where Kaufland puts its
+    category menu.
 
     No second wordmark. The fixed .brgen-logo-mark already names the host on
     every surface, and the shared nav carries the vertical's name as the way
@@ -12,29 +17,21 @@
 
 <div id="navBar">
   <div id="topHalf">
-    <%= link_to main_app.nearby_path, class: "nav-block nav-deliver nav-hover",
-                aria: { label: "#{t("storefront.deliver_to")} #{deliver_to}" } do %>
-      <%= icon :nearby, size: 13 %> <%= deliver_to %>
-    <% end %>
-
-    <div class="search marketplace-nav-search" data-controller="search-focus">
-      <%= form_with url: search_url, method: :get, local: true do %>
-        <input type="search" name="q" value="<%= params[:q] %>" class="nav-search-input"
-               placeholder="<%= search_placeholder %>" aria-label="<%= search_label %>"
-               data-action="focus->search-focus#focus blur->search-focus#blur" />
-        <button type="submit" class="nav-search-submit" aria-label="<%= t("search.submit") %>"><%= icon :search, size: 20 %></button>
-      <% end %>
+    <div id="sections">
+      <%= yield %>
     </div>
 
     <div id="accountStuff">
       <%= link_to(authenticated? ? main_app.user_path(Current.user) : main_app.new_session_path,
                   class: "nav-block nav-hover") do %>
-        <%= authenticated? ? (Current.user.username.presence || t("storefront.account")) : t("storefront.sign_in") %>
+        <%= icon :profile, size: 22 %>
+        <span class="nav-block-label"><%= authenticated? ? (Current.user.username.presence || t("storefront.account")) : t("storefront.sign_in") %></span>
       <% end %>
       <% if cart %>
         <%= link_to cart[:path], id: "cartLink", aria: { label: t("storefront.cart") },
                     class: "nav-block nav-cart nav-hover#{" nav-cart--active" if cart[:active]}" do %>
-          <%= icon :cart, size: 20, css_class: "nav-cart-icon" %>
+          <%= icon :cart, size: 22, css_class: "nav-cart-icon" %>
+          <span class="nav-block-label"><%= t("storefront.cart") %></span>
           <span class="nav-cart-count"><%= cart[:count].to_i %></span>
         <% end %>
       <% end %>
@@ -42,8 +39,18 @@
   </div>
 
   <div id="bottomHalf">
-    <div id="sections">
-      <%= yield %>
+    <%= link_to main_app.nearby_path, class: "nav-block nav-deliver nav-hover",
+                aria: { label: "#{t("storefront.deliver_to")} #{deliver_to}" } do %>
+      <%= icon :nearby, size: 22 %> <span class="nav-block-label"><%= deliver_to %></span>
+    <% end %>
+
+    <div class="search marketplace-nav-search" data-controller="search-focus">
+      <%= form_with url: search_url, method: :get, local: true do %>
+        <input type="search" name="q" value="<%= params[:q] %>" class="nav-search-input"
+               placeholder="<%= search_placeholder %>" aria-label="<%= search_label %>"
+               data-action="focus->search-focus#focus blur->search-focus#blur" />
+        <button type="submit" class="nav-search-submit" aria-label="<%= t("search.submit") %>"><%= icon :search, size: 22 %></button>
+      <% end %>
     </div>
   </div>
 </div>

@@ -1,192 +1,36 @@
 /*
  * Storefront header, shared by marketplace and takeaway so the two verticals
- * cannot drift apart. Began as a faithful two-row Amazon clone; flattened
- * 2026-08-10 toward the front page nav — one line per entry, plain text, no
- * stacked label/value blocks, no category select, no promo strip.
+ * cannot drift apart. Kaufland.de's two bands, measured at 1440 and 400: tabs and
+ * account links on a white band, then a #f5f5f5 strip holding the place link
+ * and the search. Colours and the three off-ladder type steps are the --store-*
+ * tokens in _vertical_shell.scss.
  *
- * What went, and why: the first line of each block ("Deliver to", "Hello
- * johann", "Returns") repeated what the second line already said; the category
- * select duplicated the sub row's sections; #subPromo was an ad for ourselves.
- *
- * House rules that still bind: flat fills only (no glow, no gradient) and 44px
- * hit targets on touch.
- *
- * Colours are tokens, not literals: --surface for both rows, --text and
- * --text-secondary for type, and --accent for the search button and the
- * cart count. The marketplace accent carries a light-mode variant tuned for
- * contrast in _vertical_shell.scss, so the bar follows the theme rather than
- * staying dark under a light page.
+ * This file is also the storefront pen in css_constitution's PEN_ALLOW, and the
+ * reason the two measured shadows live at its end rather than beside their
+ * components: see "Kaufland's elevation" below.
  */
 
 #navBar {
-  /* Amazon's header is edge-to-edge. This partial renders inside main, which
-     carries a clamp() gutter and a max-width, so break out to the viewport. */
+  /* The header is edge-to-edge. This partial renders inside main, which carries
+     a clamp() gutter and a max-width, so break out to the viewport. */
   margin-inline: calc(50% - 50vw);
-  background-color: var(--surface);
-  color: var(--text);
-  font-size: var(--text-sm);
-  line-height: var(--leading-tight);
+  background: var(--store-page);
+  color: var(--store-ink);
+  border-block-end: 1px solid var(--store-well);
 }
 
 #topHalf {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-2);
   min-height: 60px;
-  padding-inline: 10px;
-  /* Clear the fixed city brand (.brgen-logo-mark) pinned at the viewport's
-     inline start. See --brand-mark-inline in _root.scss. */
-  padding-inline-start: var(--brand-mark-inline);
-}
-
-/* Amazon outlines the hovered block rather than tinting it — 1px, no fill. */
-.nav-hover {
-  border: 1px solid transparent;
-  border-radius: 2px;
-}
-
-.nav-hover:hover,
-.nav-hover:focus-visible {
-  border-color: var(--text);
-}
-
-/* ---- nav blocks (deliver to, account, cart) ---------------------------- */
-
-/* One line each. These were stacked label/value pairs -- "Deliver to / Bergen",
-   "Hello johann / Account & Lists" -- which is Amazon's density, not this
-   family's. The label carried no information the value did not. */
-#navBar .nav-block {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  min-height: var(--tap-min);
-  padding: var(--space-1) var(--space-2);
-  color: inherit;
-  text-decoration: none;
-  white-space: nowrap;
-  font-weight: var(--weight-bold);
-}
-
-.nav-deliver svg {
-  flex: 0 0 auto;
-}
-
-/* ---- search ----------------------------------------------------------- */
-
-#navBar .marketplace-nav-search {
-  flex: 1 1 auto;
-  min-width: 0;
-  margin-inline: 6px;
-}
-
-#navBar .marketplace-nav-search form {
-  display: flex;
-  align-items: stretch;
-  height: 40px;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-#navBar .nav-search-input {
-  flex: 1 1 auto;
-  min-width: 0;
-  height: 100%;
-  margin: 0;
-  padding: 0 10px;
-  border: 0;
-  border-radius: 0;
-  background: var(--bg);
-  color: var(--text);
-  font-size: var(--text-base);
-  outline: none;
-}
-
-.nav-search-submit {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 45px;
-  border: 0;
-  background-color: var(--accent);
-  /* --accent-ink, not --text. The glyph sits ON the accent, and _vertical_shell
-     tuned one dark ink for exactly that — measured 4.70 to 9.16 across all
-     seven vertical accents. --text on the same fill measured 3.63 on
-     markedsplass and 3.25 on takeaway, both under the 4.5 floor. */
-  color: var(--accent-ink);
-  cursor: pointer;
-}
-
-.nav-search-submit:hover {
-  background-color: var(--vertical-marketplace-accent-hover, var(--accent));
-}
-
-/* Amazon rings the whole control on focus. Flat rule forbids a glow, so the
-   ring is a real border on the wrapper instead. */
-#navBar .marketplace-nav-search.focus form,
-#navBar .marketplace-nav-search:focus-within form {
-  outline: 2px solid var(--accent);
-  outline-offset: 0;
-}
-
-/* ---- account / cart cluster ------------------------------------------- */
-
-#accountStuff {
-  display: flex;
-  align-items: center;
-  flex: 0 0 auto;
-}
-
-#navBar .nav-cart {
-  flex-direction: row;
-  align-items: flex-end;
-  gap: 2px;
-}
-
-.nav-cart-icon {
-  flex: 0 0 auto;
-}
-
-/* The count is ink on --surface rather than a tint of the accent, and that is a
-   decision left open rather than a preference.
-   An accent is tuned to be legible as a fill with ink on top, which is the
-   opposite job from reading as small bold text on white. Measured at 18px bold,
-   where the floor is 4.5: Amazon's #cd9042 ran 2.74, the marketplace accent
-   that replaced it 3.48, and the accent's hover slot 6.03 — but this bar is
-   shared with takeaway, whose hover slot is 3.89, so the hover is not a shared
-   ink either.
-   A darker per-vertical ink for text-on-light is the right answer and it is a
-   colour the operator picks, the way --food-dash-ink was picked for takeaway's
-   eta chip. Until then the count takes --text at 12.63 and carries its emphasis
-   in weight and position, which is where the rest of this bar carries it. */
-.nav-cart-count {
-  position: relative;
-  top: -2px;
-  color: var(--text);
-  font-size: var(--text-base);
-  font-weight: var(--weight-bold);
-}
-
-.nav-cart--active {
-  border-color: var(--accent);
-}
-
-/* ---- sub row ---------------------------------------------------------- */
-
-#bottomHalf {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  min-height: 39px;
-  padding-inline: 10px;
-  padding-inline-start: var(--brand-mark-inline);
-  background-color: var(--surface);
+  padding-inline: var(--store-gutter);
 }
 
 #sections {
   display: flex;
-  align-items: center;
-  gap: 2px;
+  align-items: flex-end;
+  gap: 12px;
   min-width: 0;
   overflow-x: auto;
   scrollbar-width: none;
@@ -197,14 +41,13 @@
 }
 
 #navBar .section {
-  /* 8px of padding around a 21px line is 37px, and the tap floor in
-     shared/LAYOUT.md is 44px. Centring inside the minimum keeps the row
-     reading as one line rather than growing the bar's text. */
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   min-height: var(--tap-min);
-  padding: 8px;
-  color: var(--text);
+  padding-inline: var(--space-2);
+  color: var(--store-ink);
+  font-size: 14px;
   text-decoration: none;
   white-space: nowrap;
 }
@@ -213,84 +56,213 @@
   font-weight: var(--weight-bold);
 }
 
-/* ---- live search under the bar (yep.com surface) ---------------------- */
+#accountStuff {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex: 0 0 auto;
+  margin-inline-start: auto;
+}
+
+#navBar .nav-block {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--tap-min);
+  min-width: var(--tap-min);
+  justify-content: center;
+  color: inherit;
+  font-size: 14px;
+  font-weight: var(--weight-bold);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color var(--transition-fast) var(--ease-out);
+}
+
+/* Kaufland's header links turn green and stay underline-free. */
+#navBar .nav-hover:hover {
+  color: var(--store-green);
+}
+
+#navBar :focus-visible {
+  outline: 2px solid var(--store-focus);
+  outline-offset: 2px;
+}
+
+/* On a phone Kaufland shows the icons alone; the label stays in the
+   accessibility tree, clipped the way .visually-hidden clips. */
+#navBar .nav-block-label {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.nav-cart-count {
+  font-variant-numeric: tabular-nums;
+}
+
+#navBar .nav-cart--active {
+  color: var(--store-green);
+}
+
+#bottomHalf {
+  display: flex;
+  align-items: center;
+  min-height: 66px;
+  padding-inline-end: var(--store-gutter);
+  background: var(--store-well);
+}
+
+#navBar .nav-deliver {
+  flex: 0 0 auto;
+  min-width: 52px;
+}
+
+#navBar .marketplace-nav-search {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+#navBar .marketplace-nav-search form {
+  display: flex;
+  align-items: stretch;
+  height: var(--tap-min);
+}
+
+#navBar .nav-search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  margin: 0;
+  padding: 2px 0 0 12px;
+  border: 1px solid var(--store-rule);
+  border-inline-end: 0;
+  border-radius: 4px 0 0 4px;
+  background: var(--store-page);
+  color: var(--store-ink);
+  font-size: 16px;
+  outline: none;
+}
+
+#navBar .nav-search-input::placeholder {
+  color: var(--store-ink-soft);
+}
+
+.nav-search-submit {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap-min);
+  border: 0;
+  border-radius: 0 4px 4px 0;
+  background: var(--store-ink);
+  color: var(--store-page);
+  cursor: pointer;
+  transition: background-color var(--transition-fast) var(--ease-out);
+}
+
+.nav-search-submit:hover {
+  background: var(--store-ink-soft);
+}
+
+#navBar .marketplace-nav-search:focus-within form {
+  outline: 2px solid var(--store-focus);
+  outline-offset: 1px;
+  border-radius: 4px;
+}
+
+/* ---- live search under the bar -------------------------------------- */
 
 body.vertical-marketplace main > .search,
 body.vertical-marketplace .marketplace-deals > .search,
 body.vertical-marketplace .marketplace-stores > .search,
 body.vertical-marketplace #live_search_results {
-  margin: 16px;
+  margin-block: 16px;
 }
 
 body.vertical-marketplace main > [data-controller*="live-search"],
 body.vertical-marketplace .search {
-  margin-inline: 16px;
   margin-block: 12px;
-  /* The pill is width: 480px, max-width: 100% — and a percentage max-width
-     is measured against the container, not against what is left after
-     these margins. Without this the search ran 16px past the right edge
-     of every marketplace page on a phone. */
-  max-width: calc(100% - 32px);
+  max-width: 100%;
 }
 
-/* ---- narrow ----------------------------------------------------------- */
-
-/* Narrow: the search takes its own row at full width, deliver-to follows it. */
-/* 767, not 700: every other bound in the family treats 768 as the tablet
-   edge (see _root.scss), and 700 was the one query on no edge at all —
-   BreakpointLint's only unknown_edge. */
-/* The phone bar: two rows, with the search on the second one at full width and
-   the account cluster pushed to the end of the first. The base rule above sets
-   the single-row desktop shape, so this used to be a max-width block making the
-   phone the exception; stating it here makes the phone the rule and the min-width
-   step below the enhancement.
-   padding-inline-start is 10px rather than the brand clearance: this bar wraps,
-   and the clearance indents EVERY wrapped row, not just the one beside the mark.
-   Measured at 390px, all four rows started at x=176, leaving the search 173px of
-   a 390px screen and running the account cluster past the viewport. Nothing is
-   cleared by it either — .brand-mark is fixed at y 11–55 and #topHalf sits inside
-   .app-shell, pinned at top=62, so the two cannot meet at any scroll offset. */
-#topHalf {
-  flex-wrap: wrap;
-  padding-block: 6px;
-  padding-inline-start: 10px;
-}
-
-#navBar .nav-deliver {
-  order: 3;
-}
-
-#navBar .marketplace-nav-search {
-  order: 4;
-  flex-basis: 100%;
-  margin-inline: 0;
-}
-
-#accountStuff {
-  margin-inline-start: auto;
-}
-
-/* From lg up it is one row again: nothing wraps, so the ordering has no work to
-   do and the brand clearance is safe to apply because it indents the only row
-   there is. */
+/* From the tablet edge the first band grows to 77px with its sections as
+   Kaufland's tabs — 55px tall, 12px top corners, a 2px #f5f5f5 edge, the active
+   one filled so it runs into the search strip below — and the labels return. */
 @media (min-width: 768px) {
   #topHalf {
-    flex-wrap: nowrap;
-    padding-block: 0;
+    align-items: flex-end;
+    gap: 32px;
+    min-height: 77px;
+    padding-block-start: var(--space-6);
+    padding-inline-start: var(--brand-mark-inline);
+  }
+
+  #navBar .section {
+    min-height: 55px;
+    padding-inline: 32px;
+    border: 2px solid var(--store-well);
+    border-block-end: 0;
+    border-radius: 12px 12px 0 0;
+    font-size: 16px;
+  }
+
+  #navBar .section--active,
+  #navBar .section:hover {
+    background: var(--store-well);
+  }
+
+  #accountStuff {
+    align-self: center;
+    gap: 32px;
+  }
+
+  #navBar .nav-block-label {
+    position: static;
+    inline-size: auto;
+    block-size: auto;
+    clip-path: none;
+  }
+
+  #bottomHalf {
+    gap: 16px;
     padding-inline-start: var(--brand-mark-inline);
   }
 
   #navBar .nav-deliver {
-    order: 0;
+    padding-inline-end: var(--space-6);
+    color: var(--store-ink);
+    font-size: 16px;
   }
 
-  #navBar .marketplace-nav-search {
-    order: 0;
-    flex-basis: auto;
-    margin-inline: 6px;
+  #navBar .nav-deliver .nav-block-label {
+    color: var(--store-red);
   }
+}
 
-  #accountStuff {
-    margin-inline-start: 0;
+@media (prefers-reduced-motion: reduce) {
+  #navBar .nav-block,
+  .nav-search-submit {
+    transition: none;
   }
+}
+
+/* ---- Kaufland's elevation ------------------------------------------- */
+
+/* The storefront carries exactly two shadows, both measured on Kaufland.de at
+   0 2px 8px rgba(0, 0, 0, 0.2): the white well under each category shortcut and
+   the product page's buy box. They are the family's only second elevation
+   language, which LAYOUT.md forbids; the owner asked for the copy first and the
+   moulding after, so they are named here, in the pen, for the operator to keep
+   or flatten to a 1px --store-hairline border. */
+:is(body.vertical-marketplace, body.vertical-takeaway) {
+  --store-lift: 0 2px 8px rgb(0 0 0 / var(--opacity-medium));
+}
+
+:is(body.vertical-marketplace, body.vertical-takeaway) :is(.store-shortcut-well, .store-buybox) {
+  box-shadow: var(--store-lift);
 }

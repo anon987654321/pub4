@@ -72,6 +72,48 @@ $vertical-accent-ink: #110f19;
 body.vertical-marketplace,
 body.vertical-takeaway {
   --font-ad: "Instrument Serif", var(--font);
+  /* Kaufland.de's storefront system, measured from its archived home, category
+     and product pages at 1440 and 400 (owner instruction 2026-09-14: copy it
+     exactly, then mould). The palette is its light theme; the three sizes are the
+     steps it sets that the family ladder does not carry — 13px meta, 21px section
+     headings and tile prices, 32px on the product page's price. */
+  --store-ink: #3c3c3c;
+  --store-ink-soft: #747474;
+  --store-rule: #8e8e8e;
+  --store-hairline: #dedede;
+  --store-well: #f5f5f5;
+  --store-page: var(--surface);
+  --store-red: #e10915;
+  --store-green: #237916;
+  --store-focus: #0091c4;
+  --store-text-meta: 13px;
+  --store-text-heading: 21px;
+  --store-text-price: 32px;
+  --store-gutter: 12px;
+  --store-section: 32px;
+  font-size: 14px;
+  background: var(--store-page);
+}
+
+/* A dark reader keeps the anatomy and takes brgen's own dark greys, because
+   Kaufland ships no dark theme to copy. */
+:root[data-theme="dark"] :is(body.vertical-marketplace, body.vertical-takeaway) {
+  --store-ink: var(--text);
+  --store-ink-soft: var(--text-secondary);
+  --store-rule: var(--border);
+  --store-hairline: var(--border);
+  --store-well: var(--surface-elevated);
+}
+
+/* Kaufland widens its gutter and section rhythm, and sets body copy at 16px,
+   from the tablet edge up. */
+@media (min-width: 768px) {
+  body.vertical-marketplace,
+  body.vertical-takeaway {
+    --store-gutter: 44px;
+    --store-section: 48px;
+    font-size: 16px;
+  }
 }
 
 body[class*="vertical-"] main {
