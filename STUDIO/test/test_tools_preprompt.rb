@@ -367,9 +367,11 @@ class TestPreprompt < Minitest::Test
 
   # --- scenarios ----------------------------------------------------------
 
-  # lora's longest descriptor, so the budget is measured against the subject
-  # that spends the most of it.
-  DESCRIPTOR = "47 year old Norwegian woman, slender, fine-boned, fair Nordic blonde, west coast Norway"
+  # lora's longest descriptor, read from the subjects, so the budget is measured
+  # against the subject that spends the most of it as that subject stands today.
+  DESCRIPTOR = Dir[File.join(Studio::ROOT, "lora", "*", "subject.env")]
+               .filter_map { |path| File.read(path)[/^DESCRIPTOR="(.*)"$/, 1] }
+               .max_by(&:length)
 
   def test_a_scenario_is_the_same_sitting_every_time_it_is_asked_for
     assert_equal send(:scenario_sitting, 7), send(:scenario_sitting, 7)
@@ -481,6 +483,61 @@ class TestPreprompt < Minitest::Test
 
     assert_match(/--subject-distance 1m/, loud)
     assert_empty quiet
+  end
+
+  # --- selfies and the distance ladder --------------------------------------
+
+  def test_a_selfie_is_the_same_sitting_every_time_and_a_run_repeats_none
+    assert_equal send(:selfie_sitting, 12), send(:selfie_sitting, 12)
+    scenes = (1..300).map { |n| send(:selfie_sitting, n).except("n", "title") }
+    assert_equal scenes.length, scenes.uniq.length
+  end
+
+  # The geometry is the point: two or three metres, and the word only ever
+  # qualified, since bare it asks for arm's-length distortion.
+  def test_a_selfie_keeps_the_framing_and_refuses_the_distance
+    (1..300).each do |n|
+      sitting = send(:selfie_sitting, n)
+      assert_includes %w[2\ m 3\ m], sitting["distance"]
+      assert sitting["scene"].start_with?(SELFIE_FRAMING), sitting["scene"]
+      refute_match(/\bselfie\b/i, send(:sitting_prompt, sitting, trigger: "t", descriptor: "d"))
+    end
+  end
+
+  def test_neighbouring_selfies_change_the_light_and_no_place_gets_one_it_refuses
+    (1..300).each do |n|
+      one = send(:selfie_sitting, n)
+      refute_equal one["key"], send(:selfie_sitting, n + 1)["key"], "selfies #{n} and #{n + 1} share a light"
+      place = SELFIE_PLACES.find { |p| one["scene"].end_with?(p) }
+      light = SELFIE_LIGHTS.find { |l| one["key"].start_with?("#{l.tr('_', ' ')},") }
+      refute_includes SELFIE_PLACE_LIGHT_CONFLICTS.fetch(place, []), light, "selfie #{n}: #{place} lit by #{light}"
+    end
+  end
+
+  def test_every_selfie_light_is_drawn
+    drawn = (1..300).map { |n| send(:selfie_sitting, n)["key"].split(",").first }.uniq
+    assert_equal SELFIE_LIGHTS.map { |l| l.tr("_", " ") }.sort, drawn.sort
+  end
+
+  def test_a_composed_selfie_fits_inside_clip
+    (1..300).each do |n|
+      prompt = send(:sitting_prompt, send(:selfie_sitting, n), trigger: "ragnhild", descriptor: DESCRIPTOR)
+      assert_operator send(:approximate_tokens, prompt), :<=, TOKEN_LIMIT, prompt
+    end
+  end
+
+  # One sitting, six distances, and the lens widening as the camera closes in so
+  # the crop holds; the number is all that is said about the distance.
+  def test_the_distance_ladder_changes_only_where_the_camera_stands
+    rungs = (1..DISTANCE_LADDER.length).map { |n| send(:distance_sitting, n) }
+    assert_equal 1, rungs.map { |r| r.values_at("scene", "key", "stock") }.uniq.length
+    assert_equal DISTANCE_LADDER, rungs.map { |r| r.values_at("distance", "lens") }
+    assert_nil send(:distance_sitting, DISTANCE_LADDER.length + 1)
+    rungs.each { |r| refute_match(/distort|enlarg|compress/, send(:sitting_prompt, r, trigger: "t", descriptor: "d")) }
+  end
+
+  def test_a_selfie_table_naming_nothing_real_is_a_problem
+    assert_empty send(:selfie_problems)
   end
 
   def test_a_drawn_sitting_asks_for_sharp_eyes_and_a_written_one_is_unchanged

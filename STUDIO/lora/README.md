@@ -109,11 +109,37 @@ Zips `dataset/`, uploads via the Files API, trains
 `output.weights` into `weights/$MODEL/`. Requires `REPLICATE_API_TOKEN`. Async
 via `--async` plus `REPLICATE_WEBHOOK_URL`.
 
+A LoRA trained this way is already a hosted model, so `--generate-replicate`
+renders on it without a GPU here. It pins the version the training wrote into
+`weights/$MODEL/replicate_training.json`, renders one sitting at a time into
+`out/<set>/`, skips a frame already on disk so a stopped run resumes, and lays
+the set out as a contact sheet beside it. Name a prompt set with `--set` and
+narrow it with `--only`.
+
 ### RunPod
 
 24 GB+ GPU (RTX 4090 / A5000 / L4 / A40), PyTorch 2.x + CUDA 12 template,
 50 GB+ disk. `export HF_TOKEN=hf_... SUBJECT=<subject>`, then
 `_toolkit/setup_runpod.sh --train`, then `tmux attach -t <subject>`.
+
+## Prompt sets
+
+A prompt set is what a subject is rendered as. `shoots` is fifty written
+sittings and `warp` is the press shoot. `scenarios`, `selfies` and `distance`
+are drawn by `preprompt/lib/craft.rb` from its vocabularies, numbered so a
+sitting is the same on every run, and each fits CLIP's 77 tokens.
+
+`selfies` keeps what makes a selfie read as one — the framing, the held gaze,
+an arm in frame or not — and refuses the geometry. The camera stands two or
+three metres back with the lens that holds the crop from there, so the nose is
+not enlarged and the ears do not fall away, and the bare word never reaches the
+prompt. Each draws an in-between moment rather than a smile, a place, a light
+the place can have, and the catchlight that light makes.
+
+`distance` is one plain sitting at six stated camera distances from 0.45 to 5
+metres, with the lens widening as the camera closes in so the crop holds. It
+states only the number, so it measures what the model does with distance
+rather than whether it follows a description of distortion.
 
 ## Devices
 
@@ -245,6 +271,7 @@ lora/
 │   ├── run_train_kaggle.rb — pushes a Kaggle notebook, polls, pulls weights back
 │   ├── kaggle_session.rb — what THAT notebook runs once it is on Kaggle
 │   ├── run_train_replicate.rb — uploads the dataset, trains on Replicate, pulls weights
+│   ├── run_generate_replicate.rb — renders a prompt set on the LoRA Replicate trained
 │   ├── run_ai_toolkit.rb — the one place Python is invoked: ai-toolkit’s run.py
 │   ├── run_seed_media_colab.rb — writes seed_media.ipynb for the seed-media lane
 │   ├── install_seed_media.rb — rendered frames in, graded catalogue entries out
@@ -338,4 +365,6 @@ STUDIO/lora/ragnhild/lora --check      # HF gate, toolkit, dataset
 STUDIO/lora/ragnhild/lora --train      # local MPS or a RunPod pod
 STUDIO/lora/ragnhild/lora --generate   # sample from the newest checkpoint
 STUDIO/lora/ragnhild/lora --all        # check, generate, postpro
+STUDIO/lora/ragnhild/lora --generate-replicate --set selfies
+STUDIO/lora/ragnhild/lora --generate-replicate --set distance --dry-run
 ```

@@ -535,3 +535,151 @@ def scenario_sitting(number)
     "stock" => STOCK_VOCAB.fetch(pick.fetch(:stock)).split(",").first,
   }
 end
+
+# Selfies drawn with the selfie's geometry refused.
+#
+# A selfie is three things a photograph has always had to take together: the
+# framing and held gaze of someone photographing themselves, the arm that holds
+# the camera, and the forty-five centimetres that arm fixes. The third is what
+# enlarges the nose and drops the ears, and a generated image has no arm. So a
+# drawn selfie keeps the first two, stands the camera two or three metres back,
+# and never says the bare word, which asks for the distortion the model learned
+# from millions of real ones.
+#
+# The arm is drawn rather than defaulted: it is half of what makes the frame read
+# as a selfie, and the geometry can be refused with or without it.
+SELFIE_FRAMING = "self-portrait framing, no wide-angle distortion"
+# Both eyes, since a selfie meets the lens square on; SCENARIO_FOCUS spends four
+# more tokens on the nearest one, which a budget this full cannot give.
+SELFIE_FOCUS = "both eyes sharp"
+SELFIE_CROPS = ["close on the face", "head and shoulders", "chest up"].freeze
+# The lens follows the crop, so each crop fills its frame from the stated
+# distance with the lens a photographer standing there would carry.
+SELFIE_CROP_LENS = { "close on the face" => "105mm", "head and shoulders" => "85mm", "chest up" => "50mm" }.freeze
+SELFIE_GAZES = ["eyes on the lens", "eyes just past the lens", "chin lowered, eyes up", "looking off frame"].freeze
+# The moment after the laugh rather than the laugh, and no "smiling", which
+# collapses to one performed shape. These are the in-between faces.
+SELFIE_MOMENTS = [
+  "just after a laugh", "a lopsided half-smile", "lips parted mid-word",
+  "one eyebrow raised", "holding a breath", "tired and unguarded", "biting back a grin",
+].freeze
+SELFIE_ARMS = ["arm in frame", "no arm in frame", "hand at the jaw"].freeze
+SELFIE_PLACES = [
+  "parked car", "ferry deck", "unmade bed", "kitchen counter", "bus window seat",
+  "front hallway", "rooftop", "under an umbrella", "crowded bar",
+].freeze
+# Ten lights against nine places. Two pools of one length read at any strides
+# pair the same entries forever, and a light paired only with places that refuse
+# it is never drawn.
+SELFIE_LIGHTS = %w[window open_shade overcast golden_hour practical neon direct_flash mixed backlit hard].freeze
+SELFIE_STOCKS = %w[portra portra800 gold ultramax cinestill fuji400h superia hp5 trix instax polaroid].freeze
+
+# The catchlight follows the light, since its shape is the light's shape: a
+# window reads as a pane, a flash as a hard dot. A featureless dot on every face
+# is how generated eyes give themselves away.
+SELFIE_CATCHLIGHTS = {
+  "window" => "window catchlights", "open_shade" => "soft sky catchlights",
+  "overcast" => "soft sky catchlights", "golden_hour" => "warm sun catchlights",
+  "practical" => "lamp catchlights", "neon" => "neon catchlights",
+  "direct_flash" => "hard flash catchlights", "mixed" => "warm and cool catchlights",
+  "backlit" => "faint catchlights", "hard" => "hard sun catchlights",
+}.freeze
+
+SELFIE_FIELDS = {
+  moment: [SELFIE_MOMENTS, 1],
+  gaze: [SELFIE_GAZES, 3],
+  crop: [SELFIE_CROPS, 2],
+  arm: [SELFIE_ARMS, 1],
+  place: [SELFIE_PLACES, 4],
+  lighting: [SELFIE_LIGHTS, 3],
+  distance: [%w[3m 2m], 1],
+  stock: [SELFIE_STOCKS, 3],
+}.freeze
+
+SELFIE_PLACE_LIGHT_CONFLICTS = {
+  "ferry deck" => %w[window practical neon mixed],
+  "unmade bed" => %w[open_shade overcast neon],
+  "kitchen counter" => %w[open_shade overcast neon],
+  "bus window seat" => %w[open_shade],
+  "front hallway" => %w[open_shade overcast golden_hour neon hard],
+  "rooftop" => %w[window practical],
+  "under an umbrella" => %w[golden_hour window hard],
+  "crowded bar" => %w[window open_shade overcast golden_hour hard],
+}.freeze
+
+def selfie_pick(field, index)
+  pool, stride = SELFIE_FIELDS.fetch(field)
+  pool[(index * stride) % pool.length]
+end
+
+# The drawn light, stepped past what the place refuses and past the light the
+# previous selfie ended on, so neighbours never share one. Walked forward from
+# the first selfie rather than remembered, so it stays a function of the number.
+def selfie_light(index)
+  previous = nil
+  (0..index).each { |i| previous = selfie_light_after(selfie_pick(:place, i), i, previous) }
+  previous
+end
+
+def selfie_light_after(place, index, previous)
+  refused = SELFIE_PLACE_LIGHT_CONFLICTS.fetch(place, []) + [previous]
+  start = index * SELFIE_FIELDS.fetch(:lighting).last
+  steps = (0...SELFIE_LIGHTS.length).map { |step| SELFIE_LIGHTS[(start + step * REFUSAL_STRIDE) % SELFIE_LIGHTS.length] }
+  steps.find { |light| !refused.include?(light) }
+end
+
+# Numbered like scenarios: selfie 12 is the same sitting on every run.
+def selfie_sitting(number)
+  pick = SELFIE_FIELDS.keys.to_h { |field| [field, selfie_pick(field, number - 1)] }
+  light = selfie_light(number - 1)
+  {
+    "n" => number,
+    "side" => "Selfies",
+    "title" => "Selfie #{number}",
+    "scene" => [SELFIE_FRAMING, *pick.values_at(:crop, :gaze, :moment, :arm, :place)].join(", "),
+    "key" => "#{light.tr('_', ' ')}, #{SELFIE_CATCHLIGHTS.fetch(light)}",
+    "distance" => pick.fetch(:distance).sub(/m\z/, " m"),
+    "lens" => SELFIE_CROP_LENS.fetch(pick.fetch(:crop)),
+    "focus" => SELFIE_FOCUS,
+    "stock" => STOCK_VOCAB.fetch(pick.fetch(:stock)).split(",").first,
+  }
+end
+
+# The same sitting at six stated distances, with the lens that holds the crop at
+# each, so what changes between frames is where the camera stands.
+#
+# Only the number is stated. SUBJECT_DISTANCE_VOCAB describes what each distance
+# does to a face, and handing the model that description would measure whether
+# it follows a description of distortion rather than whether it knows what
+# distance does. The ladder is the instrument for that question.
+DISTANCE_LADDER = [["0.45 m", "24mm"], ["0.5 m", "28mm"], ["1 m", "35mm"], ["2 m", "50mm"],
+                   ["3 m", "85mm"], ["5 m", "135mm"]].freeze
+DISTANCE_LADDER_SCENE = "a calm neutral expression, facing camera directly, plain white shirt, " \
+  "plain studio backdrop, head and shoulders"
+
+def distance_sitting(number)
+  distance, lens = DISTANCE_LADDER.fetch(number - 1) { return nil }
+  {
+    "n" => number, "side" => "Distance", "title" => "Distance #{distance}",
+    "scene" => DISTANCE_LADDER_SCENE, "key" => "soft", "distance" => distance,
+    "lens" => lens, "focus" => SCENARIO_FOCUS, "stock" => "Kodak Portra 400",
+  }
+end
+
+# What vocab-check asks of the selfie tables, the same questions it asks of the
+# scenario ones.
+def selfie_problems
+  problems = SELFIE_FIELDS.filter_map do |field, (pool, stride)|
+    "selfie #{field} stride #{stride} cannot visit all #{pool.length} entries" if stride.gcd(pool.length) != 1
+  end
+  SELFIE_PLACE_LIGHT_CONFLICTS.each do |place, lights|
+    problems << "a selfie conflict names an unknown place #{place.inspect}" unless SELFIE_PLACES.include?(place)
+    problems << "#{place.inspect} refuses every selfie light" if (SELFIE_LIGHTS - lights).empty?
+    (lights - SELFIE_LIGHTS).each { |light| problems << "a selfie conflict names an unknown light #{light.inspect}" }
+  end
+  (SELFIE_LIGHTS - LIGHTING_VOCAB.keys).each { |light| problems << "selfie light #{light} is not in LIGHTING_VOCAB" }
+  (SELFIE_LIGHTS - SELFIE_CATCHLIGHTS.keys).each { |light| problems << "selfie light #{light} has no catchlight" }
+  (SELFIE_STOCKS - STOCK_VOCAB.keys).each { |stock| problems << "selfie stock #{stock} is not in STOCK_VOCAB" }
+  (SELFIE_CROP_LENS.values + DISTANCE_LADDER.map(&:last) - LENS_VOCAB.keys).each { |lens| problems << "lens #{lens} is not in LENS_VOCAB" }
+  problems
+end

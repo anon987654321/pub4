@@ -9,7 +9,7 @@ skip_postpro=0
 usage() {
   cat <<EOF
 Usage: lora [--check | --train | --train-kaggle | --train-colab | --train-replicate
-             | --generate | --postpro | --all]
+             | --generate | --generate-replicate | --postpro | --all]
 
   --check            HF FLUX gate, toolkit, dataset
   --train            Train LoRA locally / RunPod via ai-toolkit
@@ -17,12 +17,14 @@ Usage: lora [--check | --train | --train-kaggle | --train-colab | --train-replic
   --train-colab      Write a Colab notebook for a free T4 (no phone verification)
   --train-replicate  Zip dataset, train on Replicate (ostris/flux-dev-lora-trainer)
   --generate         Sample from latest checkpoint, then optional postpro
+  --generate-replicate  Render a prompt set on the Replicate-trained LoRA
+                     (--set selfies|scenarios|distance|shoots, --only, --dry-run)
   --postpro          Portrait postpro on generated samples in out/
   --all              check, generate, postpro (default) -- not train; needs
                      weights/$MODEL/*.safetensors from a train lane first
 
-Anything after a lane flag (--train-kaggle, --train-colab, --train-replicate)
-is passed to that lane, e.g.
+Anything after a lane flag (--train-kaggle, --train-colab, --train-replicate,
+--generate-replicate) is passed to that lane, e.g.
   ./lora --train-kaggle --dry-run --steps 600
   ./lora --train-replicate --dry-run
 
@@ -70,6 +72,7 @@ while [ $# -gt 0 ]; do
     --train-kaggle) mode="train-kaggle"; shift; break ;;
     --train-colab) mode="train-colab"; shift; break ;;
     --train-replicate) mode="train-replicate"; shift; break ;;
+    --generate-replicate) mode="generate-replicate"; shift; break ;;
     -h|--help) usage; exit 0 ;;
     *) echo "warn: unknown option $1" >&2; usage >&2; exit 1 ;;
   esac
@@ -158,6 +161,9 @@ case "$mode" in
     check_dataset
     ruby "$SCRIPT_DIR/run_train_replicate.rb" "$@"
     report_weights
+    ;;
+  generate-replicate)
+    ruby "$SCRIPT_DIR/run_generate_replicate.rb" "$@"
     ;;
   generate)
     run_gate_check

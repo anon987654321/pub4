@@ -36,6 +36,15 @@ class TestLora < Minitest::Test
     assert_equal 50, prompts_for("ragnhild").length, "the written record is untouched"
   end
 
+  def test_selfies_and_the_distance_ladder_are_drawn_sets_with_their_caps
+    require_relative "../lora/_toolkit/shoots"
+
+    assert_equal 48, prompts_for("ragnhild", set: "selfies").length
+    assert_equal selfie_sitting(60), prompts_for("ragnhild", set: "selfies", only: [60]).first.first
+    assert_equal DISTANCE_LADDER.length, prompts_for("ragnhild", set: "distance").length
+    assert_empty prompts_for("ragnhild", set: "distance", only: [DISTANCE_LADDER.length + 1])
+  end
+
   def test_judge_thresholds_load_and_every_one_is_a_number
     thresholds = YAML.safe_load_file(File.join(LORA, "_toolkit", "judge_thresholds.yml")).fetch("thresholds")
 

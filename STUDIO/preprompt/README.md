@@ -123,6 +123,15 @@ it cannot have — no golden hour in a car park at night — because the model
 keeps one of the two and drops the other. lora asks for them as a prompt
 set named `scenarios`, twenty-four by default or any numbers you name.
 
+A selfie is drawn the same way with the geometry refused: the framing, the
+held gaze and the arm stay, the camera stands two or three metres back with the
+lens that holds the crop, and the bare word never reaches the prompt, since it
+asks for the distortion. Each draws an in-between moment, a place, a light the
+place can have and the catchlight that light makes, and neighbours never share
+a light. lora asks for forty-eight as `selfies`. The distance ladder is one
+sitting at six stated distances, asked for as `distance`, and `vocab-check`
+holds both tables to the questions it asks of the scenarios.
+
 ## Everything else
 
 Credentials resolve from `REPLICATE_API_TOKEN`, `REPLICATE_API_KEY`, or

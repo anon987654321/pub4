@@ -31,9 +31,15 @@ LORA_ROOT = Pathname.new(__dir__).join("..").expand_path
 # one thing neither brief wants.
 #
 # A set is any shoots*.yml beside this directory, so adding a third is adding a
-# file. scenarios is the one set with no file: preprompt draws its sittings.
-SCENARIOS = "scenarios"
-SCENARIO_COUNT = 24
+# file. The drawn sets have no file: preprompt draws their sittings by number,
+# and each is capped only when nothing narrows it. scenarios are portraits in
+# drawn situations, selfies keep a selfie's framing and gaze from two or three
+# metres, and distance is one sitting at six stated camera distances.
+DRAWN_SETS = {
+  "scenarios" => [:scenario_sitting, 24],
+  "selfies" => [:selfie_sitting, 48],
+  "distance" => [:distance_sitting, DISTANCE_LADDER.length],
+}.freeze
 
 def set_file(name)
   return LORA_ROOT.join("shoots.yml") if name.nil? || name == "shoots"
@@ -43,7 +49,7 @@ end
 
 def available_sets
   stems = LORA_ROOT.glob("shoots*.yml").map { |path| path.basename(".yml").to_s.sub(/\Ashoots_?/, "") }
-  (stems.map { |stem| stem.empty? ? "shoots" : stem } + [SCENARIOS]).sort
+  (stems.map { |stem| stem.empty? ? "shoots" : stem } + DRAWN_SETS.keys).sort
 end
 
 def subject_env(subject)
@@ -73,15 +79,17 @@ def unquote(value)
   text
 end
 
-# Scenarios are numbered from one without end, so --only=30 is scenario 30 even
-# though the unfiltered set stops at SCENARIO_COUNT.
-def scenario_sittings(side: nil, only: nil)
-  all = (only || (1..SCENARIO_COUNT)).map { |number| scenario_sitting(number) }
+# Drawn sets are numbered from one, so --only=30 is scenario 30 even though the
+# unfiltered set stops at its cap. The distance ladder has six rungs and no
+# more, so a number past it draws nothing.
+def drawn_sittings(set, side: nil, only: nil)
+  composer, count = DRAWN_SETS.fetch(set)
+  all = (only || (1..count)).filter_map { |number| send(composer, number) }
   side ? all.select { |s| s["side"].casecmp?(side) } : all
 end
 
 def shoots(side: nil, only: nil, set: nil)
-  return scenario_sittings(side: side, only: only) if set == SCENARIOS
+  return drawn_sittings(set, side: side, only: only) if DRAWN_SETS.key?(set)
 
   file = set_file(set)
   abort "warn: no set #{set.inspect} — have: #{available_sets.join(', ')}" unless file.file?

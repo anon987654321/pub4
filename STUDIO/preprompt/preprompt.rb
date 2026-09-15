@@ -550,7 +550,7 @@ def vocab_problems
   # nothing and the gallery loses that part of its description.
   (ALT_TEXT_FIELDS - VOCABULARIES.keys).each { |f| problems << "ALT_TEXT_FIELDS names #{f}, which is not a vocabulary" }
 
-  problems + scenario_problems
+  problems + scenario_problems + selfie_problems
 end
 
 return unless __FILE__ == $PROGRAM_NAME

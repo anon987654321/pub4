@@ -79,6 +79,11 @@ chaining possible: each stage can change one thing while holding another.
 the distortion range by arm length. A generated image has no camera, so this is
 the one place the physical trade-off can be refused.
 
+Items 47–51, 53, 54 and 56 are built: `--subject-distance`, `--selfie-geometry`
+and its warnings in preprompt, and the drawn `selfies` and `distance` prompt
+sets lora renders with `--generate-replicate`. 52, 55, 57 and 58 wait on frames
+from the ladder.
+
 47. Prompt the **camera-to-subject distance in metres**, not the focal length. The distance is the cause.
 48. Ask for the geometry of 2.5–3.5 m with the framing and gaze of a selfie — never available together before.
 49. Build a vocabulary term for it (`selfie_geometry: portrait_distance`) so it is one word, not a paragraph. **[cheap]**
