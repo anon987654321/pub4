@@ -1,7 +1,13 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require_relative "../../gates/support/design_metrics/contrast"
+
+# The contrast maths lives in RAILS/gates, beside the apps in the checkout. The
+# deployed tree at /home/amber/app carries the app alone, so there the file is
+# absent and the suite could not load at all; the pairs are measured wherever
+# the checkout is, and skipped with that reason where it is not.
+CONTRAST_SOURCE = File.expand_path("../../gates/support/design_metrics/contrast.rb", __dir__)
+require CONTRAST_SOURCE if File.exist?(CONTRAST_SOURCE)
 
 # The swatch stands in for a missing photograph, so it is the garment's own
 # colour and carries the item's initial over it. One ink cannot serve ten
@@ -23,6 +29,10 @@ class WardrobeSwatchInkTest < ActiveSupport::TestCase
   # One colour word per branch, plus a word matching nothing so the default
   # pair is covered too.
   COLOURS = %w[navy charcoal ivory blush sage terracotta camel nude tortoise chartreuse].freeze
+
+  def setup
+    skip "no RAILS/gates beside this app, so no contrast maths to measure with" unless File.exist?(CONTRAST_SOURCE)
+  end
 
   def contrast
     @contrast ||= Object.new.extend(Deploy::DesignMetrics::Contrast)
