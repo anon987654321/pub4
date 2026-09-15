@@ -1,6 +1,6 @@
 <% content_for :title, t("storefront.restaurants") %>
 
-<%= render "takeaway/nav_bar", active: "restaurants" %>
+<%= render "takeaway/nav_bar", active: "restaurants", live: true, hidden_fields: { cuisine: params[:cuisine] } %>
 
 <%# Kaufland.de's front page, measured at 1440 and 400, dressed for kitchens:
     the campaign banner in --font-ad, the category shortcut rail as the
@@ -16,6 +16,5 @@
   <%= link_to t("storefront.add_restaurant"), new_restaurant_path, class: "store-cta" if authenticated? %>
 </div>
 
-<%= live_search_index url: restaurants_path, results_partial: "takeaway/restaurants/live_search_results", placeholder: t("search.restaurants"), label: t("search.restaurants_label"), frame_id: "takeaway-restaurants" do |f| %>
-  <%= f.hidden_field :cuisine, value: params[:cuisine] if params[:cuisine].present? %>
-<% end %>
+<%= live_search_results frame_id: "takeaway-restaurants", results_partial: "takeaway/restaurants/live_search_results",
+      label: t("search.restaurants_label"), target: StorefrontSearch::RESULTS, suggestions: StorefrontSearch::SUGGESTIONS %>

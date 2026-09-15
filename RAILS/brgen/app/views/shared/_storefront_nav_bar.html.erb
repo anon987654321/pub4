@@ -1,5 +1,5 @@
 <%# The storefront header marketplace and takeaway share, so the two read as
-    siblings and their geometry cannot drift. Styles in _marketplace_nav_bar.scss.
+    siblings and their geometry cannot drift. Styles in application.scss, pages: marketplace.
     Each vertical renders it as a layout and yields its own sections, because
     those links resolve against that engine's routes. A cart link appears when
     the vertical passes one.
@@ -44,12 +44,35 @@
       <%= icon :nearby, size: 22 %> <span class="nav-block-label"><%= deliver_to %></span>
     <% end %>
 
+    <%# The page's only search field (StorefrontSearch). A page that lists what
+        it searches passes live: its results stream into the region under the
+        teaser row as the reader types, and its filter controls join this form
+        from the page through form="storefront-search". Anywhere else the field
+        is a plain GET to that list.
+
+        hidden_fields render even when blank: geolocation#pin fills lat and lng
+        in place, and a field that is not there cannot be filled.
+
+        live-search sits on the form rather than on .search: the storefront
+        rule that clears the in-page field's band matches any live-search
+        controller, and on .search it would clear this band too. %>
+    <% live = local_assigns[:live] == true %>
+    <% live_data = { controller: "live-search", live_search_target: "form", turbo_stream: true,
+                     action: "change@document->live-search#relay turbo:submit-end->live-search#complete",
+                     live_search_updating_value: t("status.updating_results"),
+                     live_search_updated_value: t("status.results_updated"),
+                     live_search_failed_value: t("status.search_failed") } %>
     <div class="search marketplace-nav-search" data-controller="search-focus">
-      <%= form_with url: search_url, method: :get, local: true do %>
-        <input type="search" name="q" value="<%= params[:q] %>" class="nav-search-input"
-               placeholder="<%= search_placeholder %>" aria-label="<%= search_label %>"
-               data-action="focus->search-focus#focus blur->search-focus#blur" />
+      <%= form_with url: search_url, method: :get, id: StorefrontSearch::FORM, data: (live_data if live) do %>
+        <%= safe_join(local_assigns.fetch(:hidden_fields, {}).map { |name, value| hidden_field_tag(name, value, id: nil) }) %>
+        <%= search_field_tag :q, params[:q], id: nil, class: "nav-search-input", placeholder: search_placeholder,
+              aria: { label: search_label, controls: (StorefrontSearch::RESULTS if live) },
+              data: { live_search_target: ("input" if live),
+                      action: ["focus->search-focus#focus blur->search-focus#blur", ("input->live-search#input" if live)].compact.join(" ") } %>
         <button type="submit" class="nav-search-submit" aria-label="<%= t("search.submit") %>"><%= icon :search, size: 22 %></button>
+        <% if live %>
+          <span class="visually-hidden" role="status" aria-live="polite" data-live-search-target="status"></span>
+        <% end %>
       <% end %>
     </div>
   </div>

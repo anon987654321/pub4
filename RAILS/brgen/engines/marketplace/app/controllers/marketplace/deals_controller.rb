@@ -2,7 +2,7 @@
 
 module Marketplace
   class DealsController < Marketplace::BaseController
-    include Shared::LiveSearchable
+    include StorefrontSearch
 
     allow_unauthenticated_access only: %i[index show]
 
@@ -11,7 +11,7 @@ module Marketplace
       scope = apply_live_search(scope.joins(:listing), columns: Marketplace::Deal::SEARCH_COLUMNS, vertical: "deals") if live_search_query.present?
       @featured_deals = scope.featured.limit(12).to_a if live_search_query.blank?
       @pagy, @deals = pagy(scope)
-      finish_live_search(partial: "marketplace/deals/live_search_results")
+      finish_storefront_search(partial: "marketplace/deals/live_search_results")
     end
 
     def show

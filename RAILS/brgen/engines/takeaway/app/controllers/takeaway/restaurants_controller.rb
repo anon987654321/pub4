@@ -2,7 +2,7 @@
 
 class Takeaway::RestaurantsController < Takeaway::BaseController
   include Shared::FindableBySlug
-  include Shared::LiveSearchable
+  include StorefrontSearch
 
   allow_unauthenticated_access only: %i[index show]
   before_action :require_real_user, except: %i[index show]
@@ -20,7 +20,7 @@ class Takeaway::RestaurantsController < Takeaway::BaseController
       scope = scope.near(params[:lat], params[:lng], params[:radius_km] || 5) if scope.respond_to?(:near)
     end
     @pagy, @restaurants = pagy(live_search_query.present? ? scope : scope.popular)
-    finish_live_search(partial: "takeaway/restaurants/live_search_results")
+    finish_storefront_search(partial: "takeaway/restaurants/live_search_results")
   end
 
   def show

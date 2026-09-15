@@ -3034,16 +3034,16 @@ article mark { background: var(--hover); color: var(--text-secondary); padding: 
   border-radius: 4px;
 }
 
-/* ---- live search under the bar -------------------------------------- */
+/* ---- live results under the bar ------------------------------------- */
 
-body.vertical-marketplace main > .search,
-body.vertical-marketplace .marketplace-deals > .search,
-body.vertical-marketplace .marketplace-stores > .search,
+/* The field is the header's (StorefrontSearch); what streams into the page is
+   the results region. #live_search_results is the search palette's, which
+   opens over every page. */
+body.vertical-marketplace #storefront-results,
 body.vertical-marketplace #live_search_results {
   margin-block: 16px;
 }
 
-body.vertical-marketplace main > [data-controller*="live-search"],
 body.vertical-marketplace .search {
   margin-block: 12px;
   max-width: 100%;
@@ -3938,14 +3938,15 @@ a.deal-card,
    that opens the drawer holding the other chips. Only the marker, the count and
    the open state are declared here.
 
-   Its own row rather than a flex sibling of the search field: .search-form
-   already wraps, so a 100% basis with a later order puts the chip under the
-   field and the panel under the chip, and the chip does not move when the panel
-   opens. A drawer whose handle jumps as it opens is a drawer you lose. */
+   A row of its own in the page, where the in-page search field used to sit, at
+   that field's 16px. Its controls belong to the header search through their
+   form attribute. Out of .search, the yep pen's rule that hides a select, a
+   number field and a .btn inside a .search-form no longer reaches them: inside
+   it, the category, sort, radius and price controls and "near me" were never
+   shown. */
 .listing-filters {
-  flex: 0 0 100%;
-  order: 2;
   min-width: 0;
+  margin-block: 16px;
 }
 
 .listing-filters-toggle {

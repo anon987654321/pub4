@@ -1,9 +1,13 @@
 <% content_for :title, t("marketplace.stores.title") %>
 
+<%# The vertical is a field of the search, not part of its URL: a GET form
+    replaces its action's query string with its own fields. %>
 <%= render "marketplace/nav_bar",
       active: "stores",
-      search_url: shops_path(vertical: params[:vertical]),
+      search_url: shops_path,
       search_placeholder: t("search.marketplace"),
+      live: true,
+      hidden_fields: { vertical: params[:vertical] },
       cart_count: (Current.user.present? ? Current.user.marketplace_orders.where(status: "pending").count : 0) %>
 
 <%= tag.section class: "marketplace-stores", role: "region", "aria-label": t("marketplace.stores.title") do %>
@@ -19,5 +23,6 @@
     <% end %>
   <% end %>
 
-  <%= live_search_index url: shops_path(vertical: params[:vertical]), results_partial: "marketplace/stores/live_search_results", placeholder: t("search.marketplace_dots"), label: t("search.stores_label"), frame_id: "marketplace-stores" %>
+  <%= live_search_results frame_id: "marketplace-stores", results_partial: "marketplace/stores/live_search_results",
+        label: t("search.stores_label"), target: StorefrontSearch::RESULTS, suggestions: StorefrontSearch::SUGGESTIONS %>
 <% end %>

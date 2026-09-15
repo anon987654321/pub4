@@ -2,10 +2,14 @@
 <% content_for :title, market_title %>
 <% content_for :json_ld, json_ld_script(item_list_schema(@listings, title: market_title)) if @listings.any? %>
 
+<%# The kind and a pinned position ride on the header field, so a search
+    of the jobs list stays on jobs and "near me" survives the next keystroke. %>
 <%= render "marketplace/nav_bar",
       active: "listings",
       search_url: listings_path,
       search_placeholder: t("search.marketplace"),
+      live: true,
+      hidden_fields: { kind: @kind, lat: @search_lat, lng: @search_lng },
       cart_count: (Current.user.present? ? Current.user.marketplace_orders.where(status: "pending").count : 0) %>
 
 <%# The front page opened on a hidden h1 and a seven-control filter bar: the
@@ -54,11 +58,11 @@
 <% active_filters = [ params[:from], params[:category_id], params[:condition],
                       params[:min_price], params[:max_price], @search_lat ].count(&:present?) +
                     ((params[:sort].present? && params[:sort] != "recent") ? 1 : 0) %>
-<%# The kind rides along on the search and on every link below, or searching
-    or narrowing the jobs list lands back on goods. %>
-
-<%= live_search_index url: listings_path, results_partial: "marketplace/listings/live_search_results", placeholder: t("search.marketplace_dots"), label: t("search.marketplace_label"), frame_id: "marketplace-listings" do |f| %>
-  <%= f.hidden_field :kind, value: @kind %>
+<%# The drawer is not a form of its own. Its fields join the header search
+    through the form attribute, so one submission carries the query and every
+    filter, and a change here streams the results the way typing does. The
+    links below carry the kind, or narrowing the jobs list lands back on goods. %>
+<%= fields do |f| %>
   <details class="listing-filters" <%= "open" if active_filters.positive? %>>
     <%# .deal-cat, not a style of its own. This control opens the drawer holding
         the source chips, so it is a sibling of them and wears their geometry —
@@ -92,7 +96,7 @@
         <div class="listing-filter-controls">
           <%= f.select :category_id,
                 options_from_collection_for_select(@categories, :id, :name, params[:category_id]),
-                { include_blank: t("actions.all_categories") }, aria: { label: t("marketplace.filter_category") } %>
+                { include_blank: t("actions.all_categories") }, form: StorefrontSearch::FORM, aria: { label: t("marketplace.filter_category") } %>
         </div>
       </fieldset>
 
@@ -102,12 +106,12 @@
             it stays as the number field's own aria-label. %>
         <legend><%= t("marketplace.filter_distance") %></legend>
         <div class="listing-filter-controls">
-          <%= f.hidden_field :lat, value: @search_lat %>
-          <%= f.hidden_field :lng, value: @search_lng %>
-          <button type="button" class="btn btn-ghost btn-sm" data-controller="geolocation" data-action="geolocation#pin">
+          <%# lat and lng are hidden fields of the header form, which is where
+              geolocation#pin looks for them through this button's form. %>
+          <button type="button" class="btn btn-ghost btn-sm" form="<%= StorefrontSearch::FORM %>" data-controller="geolocation" data-action="geolocation#pin">
             <%= t("marketplace.near_me") %>
           </button>
-          <%= f.number_field :radius_km, value: @radius_km, min: 1, max: Marketplace::Listing::MAX_RADIUS_KM, step: 1, placeholder: t("marketplace.radius_km"), aria: { label: t("marketplace.radius_label") }, inputmode: "numeric" %>
+          <%= f.number_field :radius_km, value: @radius_km, min: 1, max: Marketplace::Listing::MAX_RADIUS_KM, step: 1, placeholder: t("marketplace.radius_km"), form: StorefrontSearch::FORM, aria: { label: t("marketplace.radius_label") }, inputmode: "numeric" %>
         </div>
       </fieldset>
 
@@ -118,26 +122,28 @@
                 options_for_select([[t("marketplace.sort_recent"), "recent"],
                                     [t("marketplace.sort_price_low"), "price_low"],
                                     [t("marketplace.sort_price_high"), "price_high"]], @sort),
-                {}, aria: { label: t("marketplace.sort_label") } %>
+                {}, form: StorefrontSearch::FORM, aria: { label: t("marketplace.sort_label") } %>
         </div>
       </fieldset>
 
       <fieldset class="listing-filter-group">
         <legend><%= t("marketplace.filter_price") %></legend>
         <div class="listing-filter-controls">
-          <%= f.number_field :min_price, value: params[:min_price], min: 0, step: 1, placeholder: t("marketplace.min_price"), aria: { label: t("marketplace.min_price") }, inputmode: "numeric" %>
-          <%= f.number_field :max_price, value: params[:max_price], min: 0, step: 1, placeholder: t("marketplace.max_price"), aria: { label: t("marketplace.max_price") }, inputmode: "numeric" %>
+          <%= f.number_field :min_price, value: params[:min_price], min: 0, step: 1, placeholder: t("marketplace.min_price"), form: StorefrontSearch::FORM, aria: { label: t("marketplace.min_price") }, inputmode: "numeric" %>
+          <%= f.number_field :max_price, value: params[:max_price], min: 0, step: 1, placeholder: t("marketplace.max_price"), form: StorefrontSearch::FORM, aria: { label: t("marketplace.max_price") }, inputmode: "numeric" %>
         </div>
       </fieldset>
 
-      <%# The facets are links rather than fields, which is why they can sit
-          inside the form without submitting anything — and why they belong here
-          rather than in a second disclosure: a reader narrowing a search does
-          not care which of the two mechanisms a control happens to use. %>
+      <%# The facets are links rather than fields, and they belong here rather
+          than in a second disclosure: a reader narrowing a search does not care
+          which of the two mechanisms a control happens to use. %>
       <%= render "marketplace/listings/facets", facets: @facets %>
     </div>
   </details>
 <% end %>
+
+<%= live_search_results frame_id: "marketplace-listings", results_partial: "marketplace/listings/live_search_results",
+      label: t("search.marketplace_label"), target: StorefrontSearch::RESULTS, suggestions: StorefrontSearch::SUGGESTIONS %>
 
 <% content_for :widgets do %>
   <%= render "shared/affiliate_deals", category: params[:category_id] %>

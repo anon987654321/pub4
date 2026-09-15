@@ -22,6 +22,18 @@ export default class extends Controller {
     this.timeout = setTimeout(() => this.submitForm(), this.delayValue)
   }
 
+  // A control can belong to this form from elsewhere on the page through its
+  // form attribute: the storefront's filter drawer sits in the page while the
+  // field it narrows sits in the header. Its change never passes through the
+  // form element, so the document relays it. A control inside the form is
+  // left to input() and to the form's own submit.
+  relay(event) {
+    const control = event.target
+    if (!this.hasFormTarget || control.form !== this.formTarget || this.formTarget.contains(control)) return
+
+    this.submitForm()
+  }
+
   submitForm() {
     if (!this.hasFormTarget) return
 

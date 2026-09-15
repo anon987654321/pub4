@@ -43,18 +43,24 @@ module Shared
       Rails.application.class.module_parent_name.to_s.downcase
     end
 
-    def finish_live_search(partial:, locals: {})
+    # update, not replace. The suggestions partial and all but one results
+    # partial lack the id they land in, so a replace swapped the target out for
+    # markup without one and every search after the first had nowhere to go.
+    #
+    # target and suggestions name those ids for a page that cannot use the
+    # defaults — see Shared::SearchHelper#live_search_results.
+    def finish_live_search(partial:, locals: {}, target: "live_search_results", suggestions: "search_suggestions")
       respond_to do |format|
         format.html
         format.turbo_stream do
           streams = []
-          streams << turbo_stream.replace(
-            "search_suggestions",
+          streams << turbo_stream.update(
+            suggestions,
             partial: "shared/search_suggestions",
             locals: { suggestions: search_suggestions },
           )
-          streams << turbo_stream.replace(
-            "live_search_results",
+          streams << turbo_stream.update(
+            target,
             partial:,
             locals:,
           )

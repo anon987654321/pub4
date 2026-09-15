@@ -34,5 +34,22 @@ module Shared
         },
       )
     end
+
+    # The results half of live_search_index on its own, so a page can put the
+    # field in one place and the results in another — the storefront header
+    # holds the field, and the grid sits under a teaser row the form knows
+    # nothing about.
+    #
+    # target is the id finish_live_search streams into. It has to be unique on
+    # the page: brgen's search palette renders a #live_search_results of its own
+    # ahead of <main> on every surface, and a stream finds the first id in the
+    # document. suggestions names the slot for the no-match terms the same way.
+    def live_search_results(frame_id:, results_partial:, label:, target: "live_search_results", suggestions: nil)
+      slot = suggestions ? tag.div(id: suggestions) : "".html_safe
+      frame = turbo_frame_tag(frame_id, data: { turbo_action: "replace" }) do
+        tag.div(render(results_partial), id: target, role: "region", aria: { label: "#{label} results" })
+      end
+      slot + frame
+    end
   end
 end

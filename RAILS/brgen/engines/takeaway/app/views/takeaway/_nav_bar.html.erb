@@ -6,7 +6,7 @@
       search_url: local_assigns.fetch(:search_url, restaurants_path),
       search_placeholder: local_assigns.fetch(:search_placeholder, t("search.restaurants")),
       search_label: t("search.restaurants_label"),
-      **local_assigns.slice(:deliver_to)
+      **local_assigns.slice(:deliver_to, :live, :hidden_fields)
     } do %>
   <%= link_to t("storefront.restaurants"), restaurants_path, class: "section nav-hover#{" section--active" if active == "restaurants"}" %>
   <%= link_to t("storefront.your_orders"), orders_path, class: "section nav-hover#{" section--active" if active == "orders"}" %>

@@ -4,12 +4,14 @@
       active: "deals",
       search_url: deals_path,
       search_placeholder: t("search.marketplace"),
+      live: true,
       cart_count: (Current.user.present? ? Current.user.marketplace_orders.where(status: "pending").count : 0) %>
 
-<%= tag.section class: "marketplace-deals", role: "region", "aria-label": t("marketplace.deals.title") do %>
+<%= tag.section role: "region", "aria-label": t("marketplace.deals.title") do %>
   <header class="store-results-head">
     <%= tag.h1 t("marketplace.deals.title") %>
     <%= tag.p t("marketplace.deal_count", count: @pagy.count), class: "store-results-count" %>
   </header>
-  <%= live_search_index url: deals_path, results_partial: "marketplace/deals/live_search_results", placeholder: t("search.marketplace_dots"), label: t("search.deals_label"), frame_id: "marketplace-deals" %>
+  <%= live_search_results frame_id: "marketplace-deals", results_partial: "marketplace/deals/live_search_results",
+        label: t("search.deals_label"), target: StorefrontSearch::RESULTS, suggestions: StorefrontSearch::SUGGESTIONS %>
 <% end %>

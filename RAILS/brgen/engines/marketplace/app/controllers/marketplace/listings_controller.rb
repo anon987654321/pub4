@@ -2,7 +2,7 @@
 
 class Marketplace::ListingsController < Marketplace::BaseController
   include Shared::FindableBySlug
-  include Shared::LiveSearchable
+  include StorefrontSearch
   include Shared::TwoFactorAuth
 
   rate_limit to: 20, within: 3.minutes, only: %i[create],
@@ -47,7 +47,7 @@ class Marketplace::ListingsController < Marketplace::BaseController
     narrowing = params.values_at(:from, :category_id, :condition, :min_price, :max_price, :lat)
     @narrowed = live_search_query.present? || narrowing.any?(&:present?)
 
-    finish_live_search(partial: "marketplace/listings/live_search_results")
+    finish_storefront_search(partial: "marketplace/listings/live_search_results")
   end
 
   def show

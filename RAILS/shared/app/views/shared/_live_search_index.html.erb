@@ -17,8 +17,4 @@
       ) %>
 <% end %>
 
-<%= turbo_frame_tag frame_id, data: { turbo_action: "replace" } do %>
-  <div id="live_search_results" role="region" aria-label="<%= label %> results">
-    <%= render results_partial %>
-  </div>
-<% end %>
+<%= live_search_results frame_id: frame_id, results_partial: results_partial, label: label %>

@@ -6,7 +6,7 @@
       search_url: local_assigns.fetch(:search_url, listings_path),
       search_placeholder: local_assigns.fetch(:search_placeholder, t("search.marketplace")),
       search_label: t("search.marketplace_label"),
-      **local_assigns.slice(:deliver_to),
+      **local_assigns.slice(:deliver_to, :live, :hidden_fields),
       cart: { path: cart_path, count: local_assigns[:cart_count], active: active == "cart" }
     } do %>
   <%= link_to t("storefront.listings"), listings_path, class: "section nav-hover#{" section--active" if active == "listings"}" %>
