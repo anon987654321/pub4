@@ -1374,9 +1374,8 @@ nb:
     courier_unassigned: Ingen ledig bud i nærheten ennå.
     order_cancelled: Bestillingen er kansellert
     order_from: Bestill fra %{restaurant}
-    sold_out: Utsolgt
     operations: Takeaway-drift
-    min_order_line: 'Minstebeløp: %{min} · Levering: %{fee} ·'
+    min_order_short: "Minstebeløp %{min}"
     reload_to_order: Last inn på nytt for å bestille — gjester kan bestille uten registrering.
     saves:
       one: "%{count} lagret"
@@ -1396,6 +1395,7 @@ nb:
     back_to_restaurant: Tilbake til restauranten
     delivery_details: Leveringsdetaljer
     delivery_heading: Levering
+    delivery_label: Levering
     restaurant_count_suffix:
       one: restaurant
       other: restauranter
@@ -1403,7 +1403,6 @@ nb:
     top_rated_heading: "Best vurdert i %{city}"
     restaurant_actions: Restauranthandlinger
     qty_for: Antall av %{name}
-    item_sold_out: "%{name} er utsolgt"
     browse_menu: Se menyen
     group_title: "Gruppebestilling — %{restaurant}"
     group_eyebrow: "Én bestilling, én levering"

@@ -1367,9 +1367,8 @@ en:
     courier_unassigned: No free courier nearby yet.
     order_cancelled: Order cancelled
     order_from: Order from %{restaurant}
-    sold_out: Sold out
     operations: Takeaway operations
-    min_order_line: 'Min order: %{min} · Delivery: %{fee} ·'
+    min_order_short: "Minimum order %{min}"
     reload_to_order: Reload to place an order — guests can order without signup.
     saves:
       one: "%{count} save"
@@ -1389,6 +1388,7 @@ en:
     back_to_restaurant: Back to restaurant
     delivery_details: Delivery details
     delivery_heading: Delivery
+    delivery_label: Delivery
     restaurant_count_suffix:
       one: restaurant
       other: restaurants
@@ -1396,7 +1396,6 @@ en:
     top_rated_heading: "Top rated in %{city}"
     restaurant_actions: Restaurant actions
     qty_for: Quantity for %{name}
-    item_sold_out: "%{name} sold out"
     browse_menu: Browse menu
     group_title: "Group order — %{restaurant}"
     group_eyebrow: "One ticket, one delivery"

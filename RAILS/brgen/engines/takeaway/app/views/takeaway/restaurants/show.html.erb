@@ -6,34 +6,77 @@
       [@restaurant.name, request.original_url.split("?").first]
     ])) %>
 
-<div class="page-header">
-  <%= tag.h1 @restaurant.name %>
-  <nav aria-label="<%= t("takeaway.restaurant_actions") %>">
-    <% if authenticated? && @restaurant.owner?(Current.user) %>
-      <%= link_to t("actions.edit"), edit_restaurant_path(@restaurant), class: "btn btn-ghost btn-sm" %>
-    <% elsif Current.user.present? && @favorited %>
-      <%# destructive: no-confirm-ok — reversible — the button becomes Save again in place %>
-      <%= button_to t("takeaway.unsave"), restaurant_favorite_restaurant_path(@restaurant), method: :delete, class: "btn btn-ghost btn-sm" %>
-    <% elsif Current.user.present? %>
-      <%= button_to t("takeaway.save_restaurant"), restaurant_favorite_restaurant_path(@restaurant), method: :post, class: "btn btn-primary btn-sm" %>
+<%= render "takeaway/nav_bar", active: "restaurants" %>
+
+<%# Kaufland.de's product page, measured at 1440 and 400, for a kitchen: the
+    breadcrumb, a picture beside a white buy box, then the menu as the tile
+    grid. The picture is the first dish that has one; a restaurant has no
+    photograph of its own, so without a dish photo the well carries its
+    initial. The buy box leads on the delivery fee, the figure a hungry reader
+    compares, where Kaufland leads on the price. %>
+<nav class="store-breadcrumb" aria-label="<%= t("storefront.breadcrumb") %>">
+  <%= link_to t("storefront.restaurants"), restaurants_path %>
+  <%= link_to @restaurant.cuisine_type, restaurants_path(cuisine: @restaurant.cuisine_type) if @restaurant.cuisine_type.present? %>
+  <%= tag.span @restaurant.name, aria: { current: "page" } %>
+</nav>
+
+<div class="store-pdp">
+  <div class="store-pdp-media">
+    <% dish = @menu_items.find { |item| item.photo.attached? } %>
+    <div class="deal-card-img">
+      <% if dish %>
+        <%= responsive_image_tag dish.photo, alt: dish.name, widths: [ 720, 1_200 ], sizes: "(max-width: 768px) 100vw, 780px" %>
+      <% else %>
+        <div class="deal-card-placeholder" aria-hidden="true"><%= @restaurant.name.to_s.first&.upcase %></div>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="store-pdp-info">
+    <div class="page-header">
+      <%= tag.h1 @restaurant.name %>
+      <% if authenticated? && @restaurant.owner?(Current.user) %>
+        <nav aria-label="<%= t("takeaway.restaurant_actions") %>">
+          <%= link_to t("actions.edit"), edit_restaurant_path(@restaurant), class: "btn btn-ghost btn-sm" %>
+        </nav>
+      <% end %>
+    </div>
+    <% if @restaurant.reviews_count.to_i.positive? %>
+      <%= render "shared/store_stars", rating: @restaurant.rating, count: @restaurant.reviews_count %>
     <% end %>
-  </nav>
+
+    <section class="store-buybox" aria-label="<%= t("takeaway.restaurant_info") %>">
+      <p class="store-buybox-price"><small><%= t("takeaway.delivery_label") %></small> <%= @restaurant.delivery_fee_display %></p>
+      <p><%= @restaurant.cuisine_type %> · <%= @restaurant.address %>, <%= @restaurant.city_label %></p>
+      <%# t(count:) goes through the locale's own plural rules. %>
+      <p><%= t("takeaway.min_order_short", min: @restaurant.min_order_display) %> · <%= t("takeaway.saves", count: @restaurant.favorites.size) %></p>
+      <% if @restaurant.place.present? %>
+        <p><%= link_to t("maps.on_the_map"), record_public_href(@restaurant.place) %></p>
+      <% end %>
+      <div class="listing-buy-bar-actions">
+        <%= link_to t("takeaway.browse_menu"), "#menu", class: "btn btn-primary" %>
+        <% if Current.user.present? && !@restaurant.owner?(Current.user) %>
+          <% if @favorited %>
+            <%# destructive: no-confirm-ok — reversible — the button becomes Save again in place %>
+            <%= button_to t("takeaway.unsave"), restaurant_favorite_restaurant_path(@restaurant), method: :delete, class: "btn" %>
+          <% else %>
+            <%= button_to t("takeaway.save_restaurant"), restaurant_favorite_restaurant_path(@restaurant), method: :post, class: "btn" %>
+          <% end %>
+        <% end %>
+      </div>
+    </section>
+  </div>
 </div>
 
-<article>
-  <%= tag.p @restaurant.description %>
-  <p><%= @restaurant.cuisine_type %> · <%= @restaurant.address %>, <%= @restaurant.city_label %></p>
-  <% if @restaurant.place.present? %>
-    <p><%= link_to t("maps.on_the_map"), record_public_href(@restaurant.place), class: "btn btn-ghost btn-sm" %></p>
-  <% end %>
-  <%# pluralize() takes an English noun and applies English rules; t(count:)
-      goes through the locale's own plural rules instead. %>
-  <p><%= t("takeaway.min_order_line", min: @restaurant.min_order_display, fee: @restaurant.delivery_fee_display) %> <%= t("takeaway.saves", count: @restaurant.favorites.size) %></p>
-</article>
+<% if @restaurant.description.present? %>
+  <section class="store-pdp-description" aria-label="<%= t("takeaway.restaurant_info") %>">
+    <%= tag.p @restaurant.description %>
+  </section>
+<% end %>
 
 <% if authenticated? && @restaurant.owner?(Current.user) %>
-  <section>
-    <%= tag.h2 t("takeaway.add_menu_item") %>
+  <section aria-labelledby="add-menu-item-heading">
+    <%= tag.h2 t("takeaway.add_menu_item"), id: "add-menu-item-heading", class: "store-heading" %>
     <div class="form-wrap">
       <%= form_with scope: :takeaway_menu_item, url: restaurant_menu_items_path(@restaurant) do |f| %>
         <div class="field"><%= f.text_field :name, placeholder: t("takeaway.item_name"), aria: { label: t("takeaway.item_name") }, required: true %></div>
@@ -48,73 +91,72 @@
   </section>
 <% end %>
 
-<section id="menu">
-  <%= tag.h2 t("takeaway.menu") %>
+<%# The menu is the tile grid: a dish is a product, so it wears the product
+    tile, price first. Only dishes on offer reach this list. %>
+<section id="menu" aria-labelledby="menu-heading">
+  <%= tag.h2 t("takeaway.menu"), id: "menu-heading", class: "store-heading" %>
   <% if @menu_items.empty? %>
     <%= render "shared/empty_state",
           title: t("empty.no_menu"),
           body: t("empty.kitchen_no_food"),
           action: { label: t("actions.all_restaurants"), path: restaurants_path } %>
-
-  <% elsif Current.user.present? %>
-    <%= form_with scope: :takeaway_order, url: restaurant_orders_path(@restaurant), data: { controller: "form-submit", action: "submit->form-submit#lock" } do |f| %>
-      <% @menu_items.each do |item| %>
-        <article class="menu-row<%= " sold-out" unless item.available? %>" data-available="<%= item.available? %>">
-          <% if item.photo.attached? %>
-            <%= responsive_image_tag(item.photo, alt: item.name, loading: "lazy", class: "menu-row__photo") %>
-          <% end %>
-          <div> <%# scan: intentional — an anonymous text block; the flex row is the layout and a name here would have no reader %>
-            <%= tag.strong item.name %> · <%= item.price_display %>
-            <% unless item.available? %><span class="sold-out-badge"><%= t("takeaway.sold_out") %></span><% end %>
-            <% if item.vegetarian? %><span class="chip"><%= t("takeaway.vegetarian") %></span><% end %>
-            <% if item.vegan? %><span class="chip"><%= t("takeaway.vegan") %></span><% end %>
-            <% if item.description.present? %><p><%= item.description %></p><% end %>
-          </div>
-          <% if item.available? %>
-            <%= number_field_tag "takeaway_order[items][#{item.id}]", 0, min: 0, class: "qty-field", aria: { label: t("takeaway.qty_for", name: item.name) } %>
-          <% else %>
-            <span aria-label="<%= t("takeaway.item_sold_out", name: item.name) %>">—</span>
-          <% end %>
-        </article>
-      <% end %>
-      <div class="field">
-        <%= f.label :delivery_address, t("takeaway.delivery_address") %>
-        <%= f.text_field :delivery_address, required: true %>
-      </div>
-      <div class="field">
-        <%= f.label :special_instructions, t("takeaway.special_instructions") %>
-        <div data-controller="character-counter" data-character-counter-countdown-value="true">
-  <%= f.text_area :special_instructions , maxlength: 500, data: { character_counter_target: "input" } %>
-  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
-</div>
-      </div>
-      <div class="field"><%= f.submit t("takeaway.place_order"), class: "btn btn-primary" %></div>
-    <% end %>
   <% else %>
-    <% @menu_items.each do |item| %>
-      <article class="menu-row<%= " sold-out" unless item.available? %>" data-available="<%= item.available? %>">
-        <% if item.photo.attached? %>
-          <%= responsive_image_tag(item.photo, alt: item.name, loading: "lazy", class: "menu-row__photo") %>
+    <%= form_with scope: :takeaway_order, url: restaurant_orders_path(@restaurant), data: { controller: "form-submit", action: "submit->form-submit#lock" } do |f| %>
+      <div class="deal-grid" role="list">
+        <% @menu_items.each do |item| %>
+          <article class="deal-card" role="listitem">
+            <div class="deal-card-img">
+              <% if item.photo.attached? %>
+                <%= responsive_image_tag item.photo, alt: "", widths: [ 360, 720 ], sizes: "(max-width: 768px) 50vw, 260px" %>
+              <% else %>
+                <div class="deal-card-placeholder" aria-hidden="true"><%= item.name.to_s.first&.upcase %></div>
+              <% end %>
+            </div>
+            <div class="deal-card-body">
+              <div class="deal-price"><%= item.price_display %></div>
+              <%= tag.h3 item.name, class: "deal-card-title" %>
+              <%= tag.p item.description, class: "deal-meta deal-meta--clamp" if item.description.present? %>
+              <%= tag.span t("takeaway.vegetarian"), class: "store-badge" if item.vegetarian? %>
+              <%= tag.span t("takeaway.vegan"), class: "store-badge" if item.vegan? %>
+              <% if Current.user.present? %>
+                <%= number_field_tag "takeaway_order[items][#{item.id}]", 0, min: 0, class: "qty-field", aria: { label: t("takeaway.qty_for", name: item.name) } %>
+              <% end %>
+            </div>
+          </article>
         <% end %>
-        <div> <%# scan: intentional — an anonymous text block; the flex row is the layout and a name here would have no reader %>
-          <%= tag.strong item.name %> · <%= item.price_display %>
-          <% unless item.available? %><span class="sold-out-badge"><%= t("takeaway.sold_out") %></span><% end %>
-          <% if item.description.present? %><p><%= item.description %></p><% end %>
-        </div>
-      </article>
-    <% end %>
-    <p><%= t("takeaway.reload_to_order") %></p>
-    <p><%= link_to t("actions.reload"), restaurant_path(@restaurant), class: "btn btn-primary" %></p>
+      </div>
 
+      <% if Current.user.present? %>
+        <div class="store-panel store-order">
+          <div class="field">
+            <%= f.label :delivery_address, t("takeaway.delivery_address") %>
+            <%= f.text_field :delivery_address, required: true, autocomplete: "street-address" %>
+          </div>
+          <div class="field">
+            <%= f.label :special_instructions, t("takeaway.special_instructions") %>
+            <div data-controller="character-counter" data-character-counter-countdown-value="true">
+              <%= f.text_area :special_instructions, maxlength: 500, data: { character_counter_target: "input" } %>
+              <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+            </div>
+          </div>
+          <%= f.submit t("takeaway.place_order"), class: "btn btn-primary" %>
+        </div>
+      <% end %>
+    <% end %>
+    <% unless Current.user.present? %>
+      <p><%= t("takeaway.reload_to_order") %></p>
+      <p><%= link_to t("actions.reload"), restaurant_path(@restaurant), class: "btn btn-primary" %></p>
+    <% end %>
   <% end %>
 </section>
 
-<section>
-  <%= tag.h2 t("takeaway.reviews_heading") %>
+<section class="store-reviews" aria-labelledby="reviews-heading">
+  <%= tag.h2 t("takeaway.reviews_heading"), id: "reviews-heading", class: "store-heading" %>
   <% if @reviews.any? %>
     <% @reviews.each do |r| %>
       <article>
-        <p>★<%= r.rating %> · <%= r.user&.display_name || t("takeaway.anon") %> · <%= time_ago(r.created_at) %></p>
+        <%= render "shared/store_stars", rating: r.rating %>
+        <p class="deal-meta"><%= r.user&.display_name || t("takeaway.anon") %> · <%= time_ago(r.created_at) %></p>
         <% if r.body.present? %><p><%= r.body %></p><% end %>
       </article>
     <% end %>

@@ -282,34 +282,6 @@ body.vertical-tv .live-badge::before {
   color: var(--danger);
 }
 
-/* Takeaway sold out — text badge, not color-only */
-body.vertical-takeaway .sold-out,
-body.vertical-takeaway [data-available="false"] {
-  opacity: 0.55;
-}
-body.vertical-takeaway .sold-out-badge {
-  display: inline-block;
-  margin-inline-start: 4px;
-  font-size: var(--text-xs);
-  font-weight: var(--weight-bold);
-  border: 1px solid var(--border);
-  padding: var(--space-0-5) 4px;
-  border-radius: var(--radius-xs, 4px);
-  color: var(--text-secondary);
-}
-/* Fallback when markup only has data-available (no badge span) */
-body.vertical-takeaway [data-available="false"]:not(:has(.sold-out-badge))::after {
-  content: "Sold out";
-  display: inline-block;
-  margin-inline-start: 4px;
-  font-size: var(--text-xs);
-  font-weight: var(--weight-bold);
-  border: 1px solid var(--border);
-  padding: var(--space-0-5) 4px;
-  border-radius: var(--radius-xs, 4px);
-  color: var(--text-secondary);
-}
-
 /* Playlist embed controls */
 body.vertical-playlist .playlist-player button,
 body.vertical-playlist [data-controller="playlist-player"] button {

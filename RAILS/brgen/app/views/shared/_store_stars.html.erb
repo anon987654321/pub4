@@ -1,4 +1,4 @@
-<%# locals: rating, count
+<%# locals: rating, count: nil
     Shared by markedsplass listings and takeaway restaurants.
 
     Kaufland.de's rating row: five 16px stars filled to the average, then the
@@ -7,5 +7,5 @@
 <% share = (rating.to_f / 5 * 100).clamp(0, 100).round %>
 <span class="store-stars" style="--rating: <%= share %>%">
   <span role="img" aria-label="<%= t("storefront.rating_of_five", rating: number_with_precision(rating, precision: 1)) %>"></span>
-  <%= tag.small "(#{number_with_delimiter(count)})" %>
+  <%= tag.small "(#{number_with_delimiter(count)})" if local_assigns[:count] %>
 </span>

@@ -130,7 +130,7 @@ body.vertical-marketplace .listing-status {
   min-width: 0;
 }
 
-body.vertical-marketplace .store-pdp .page-header {
+:is(body.vertical-marketplace, body.vertical-takeaway) .store-pdp .page-header {
   display: flex;
   background: none;
   align-items: flex-start;
@@ -140,7 +140,7 @@ body.vertical-marketplace .store-pdp .page-header {
   padding: 0;
 }
 
-body.vertical-marketplace .store-pdp .page-header h1 {
+.store-pdp .page-header h1 {
   margin: 0;
   line-height: var(--leading-snug);
 }
@@ -162,7 +162,7 @@ body.vertical-marketplace .store-pdp .page-header h1 {
   border-block-end: 1px solid var(--store-hairline);
 }
 
-.store-buybox > .listing-price {
+.store-buybox > :is(.listing-price, .store-buybox-price) {
   padding: 0;
   border: 0;
   color: var(--store-ink);
@@ -170,6 +170,15 @@ body.vertical-marketplace .store-pdp .page-header h1 {
   font-weight: var(--weight-heavy);
   line-height: var(--leading-none);
   font-variant-numeric: tabular-nums;
+}
+
+/* What the big figure is, when it is not a price: takeaway's delivery fee. */
+.store-buybox-price small {
+  display: block;
+  padding-block-end: 8px;
+  color: var(--store-ink-soft);
+  font-size: var(--store-text-meta);
+  font-weight: var(--weight-normal);
 }
 
 .listing-buy-bar-actions {
@@ -182,7 +191,7 @@ body.vertical-marketplace .store-pdp .page-header h1 {
   flex: 1 1 12rem;
 }
 
-.store-buybox .btn {
+.store-pdp .store-buybox .btn {
   width: 100%;
   min-height: 48px;
   padding-inline: 24px;
@@ -194,17 +203,17 @@ body.vertical-marketplace .store-pdp .page-header h1 {
   font-weight: var(--weight-bold);
 }
 
-.store-buybox .btn:hover {
+.store-pdp .store-buybox .btn:hover {
   background: var(--store-well);
 }
 
-.store-buybox .btn-primary {
+.store-pdp .store-buybox .btn-primary {
   border-color: var(--store-red);
   background: var(--store-red);
   color: var(--store-page);
 }
 
-.store-buybox .btn-primary:hover {
+.store-pdp .store-buybox .btn-primary:hover {
   background: var(--store-red);
   text-decoration: underline;
 }
@@ -219,6 +228,32 @@ body.vertical-marketplace :is(.also-nearby h2, .section-heading--md) {
 .store-pdp-description {
   max-width: 66ch;
   margin-block-end: var(--store-section);
+}
+
+/* A review is a row parted by a hairline, as Kaufland lists them. */
+.store-reviews article {
+  padding-block: 16px;
+  border-block-end: 1px solid var(--store-hairline);
+}
+
+.store-order {
+  margin-block: 24px var(--store-section);
+}
+
+/* Kaufland's fields: 48px, a 1px muted border, 8px corners; the quantity is
+   its 85px pill beside the buy button. */
+.store-order :is(input, textarea),
+.deal-card .qty-field {
+  min-height: 48px;
+  padding-inline: 12px;
+  border: 1px solid var(--store-rule);
+  border-radius: var(--radius-sm);
+  background: var(--store-page);
+}
+
+.deal-card .qty-field {
+  inline-size: 85px;
+  border-radius: var(--radius-pill);
 }
 
 @media (min-width: 768px) {
