@@ -671,12 +671,13 @@ when "chain"
   stem = base.sub(/#{Regexp.escape(File.extname(base))}\z/, "")
   client = Master::Io::ReplicateClient.new
 
-  perform = lambda do |stage:, index:, total:, image:, seed:|
+  perform = lambda do |stage:, index:, total:, image:, seed:, references:|
     target = "#{stem}-#{format('%02d', index + 1)}-#{stage.name}#{ext}"
     stage_options = options.merge(stage.options).merge(model: stage.model)
     # Uploaded, not passed as a path: the provider fetches these over HTTP and
     # a local path is resolvable only here.
     stage_options[:image] = upload_reference(client, image) if image
+    stage_options[:references] = references.map { |ref| upload_reference(client, ref) } unless references.empty?
     prompt = stage.inherits.include?("prompt") ? options[:prompt] : stage.prompt
     compiled = compile_prompt(prompt, stage_options)
     negative = compile_negative_prompt(stage_options)

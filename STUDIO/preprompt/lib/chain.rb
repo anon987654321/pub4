@@ -188,6 +188,10 @@ module Preprompt
     # Returns the files produced, in order. Every intermediate is kept: a chain
     # is worth running because of what happens between stages, and a run that
     # discards stage 2 cannot tell you that stage 2 was where the look was won.
+    # FLUX 2 takes at most eight references, the most recent outputs being the
+    # ones a character should hold to.
+    REFERENCE_LIMIT = 8
+
     def self.run(chain, perform:, until_stage: nil, image: nil, seed: nil)
       carried_image = image
       carried_seed = seed
@@ -196,10 +200,11 @@ module Preprompt
       chain.fetch(:stages).each_with_index do |stage, index|
         inherited_image = stage.inherits.include?("image") ? carried_image : nil
         inherited_seed = stage.inherits.include?("seed") ? carried_seed : nil
+        references = stage.inherits.include?("references") ? produced.last(REFERENCE_LIMIT) : []
 
         result = perform.call(
           stage: stage, index: index, total: chain[:stages].length,
-          image: inherited_image, seed: inherited_seed
+          image: inherited_image, seed: inherited_seed, references: references
         )
         break if result.nil?
 

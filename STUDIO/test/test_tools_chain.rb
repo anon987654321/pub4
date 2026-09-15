@@ -219,11 +219,29 @@ class TestChain < Minitest::Test
   # an argument precisely so this can be checked without spending anything.
   def recorder
     calls = []
-    perform = lambda do |stage:, index:, total:, image:, seed:|
-      calls << { name: stage.name, image: image, seed: seed, index: index, total: total }
+    perform = lambda do |stage:, index:, total:, image:, seed:, references: []|
+      calls << { name: stage.name, image: image, seed: seed, references: references, index: index, total: total }
       { path: "out-#{index + 1}-#{stage.name}.jpg", seed: 1000 + index }
     end
     [calls, perform]
+  end
+
+  # The consistency spine: a stage inheriting references is handed every file the
+  # chain has produced so far, so a character accumulates across stages instead of
+  # being held only by the one frame before. A stage that does not ask gets none.
+  def test_a_stage_inheriting_references_gets_every_earlier_output
+    calls, perform = recorder
+    chain = chain_from(<<~YML)
+      stages:
+        - { name: a, model: black-forest-labs/flux-2-max, prompt: one }
+        - { name: b, model: black-forest-labs/flux-2-max, prompt: two }
+        - { name: c, model: black-forest-labs/flux-2-max, prompt: three, inherits: [references] }
+    YML
+
+    Preprompt::Chain.run(chain, perform: perform)
+
+    assert_empty calls[1][:references], "a stage that does not inherit references is given none"
+    assert_equal %w[out-1-a.jpg out-2-b.jpg], calls[2][:references]
   end
 
   def test_each_stage_receives_the_previous_stages_file
@@ -297,7 +315,7 @@ class TestChain < Minitest::Test
         - { name: b, model: black-forest-labs/flux-kontext-pro, prompt: two, inherits: [image] }
         - { name: c, model: black-forest-labs/flux-kontext-pro, prompt: three, inherits: [image] }
     YML
-    perform = lambda do |stage:, index:, total:, image:, seed:|
+    perform = lambda do |stage:, index:, total:, image:, seed:, references: []|
       next nil if stage.name == "b"
 
       { path: "out-#{index + 1}.jpg", seed: 1 }

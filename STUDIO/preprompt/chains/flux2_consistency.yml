@@ -1,4 +1,4 @@
-description: FLUX 2 multi-reference consistency spine, AMBITION.md section B item 26.
+description: FLUX 2 consistency spine. Each later stage takes every earlier output as a reference, so a character accumulates instead of drifting.
 stages:
   - name: establish
     model: black-forest-labs/flux-2-max
@@ -6,4 +6,4 @@ stages:
   - name: hold
     model: black-forest-labs/flux-2-max
     prompt: the same person, three metres back, overcast
-    inherits: [image]
+    inherits: [image, references]
