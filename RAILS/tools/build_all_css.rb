@@ -81,7 +81,7 @@ def ensure_fonts!
 
     warn "css: fetching #{filename}"
     unless system("curl", "-fsSL", "-o", path, url)
-      warn "css: font download skipped (#{filename}) — CDN fallback in _fonts.scss"
+      warn "css: font download skipped (#{filename}) — the file is tracked; git checkout shared/public/fonts"
       FileUtils.rm_f(path)
     end
   end
