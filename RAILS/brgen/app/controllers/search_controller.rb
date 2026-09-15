@@ -3,6 +3,13 @@
 class SearchController < ApplicationController
   include Shared::LiveSearchable
 
+  # The search palette opens over every brgen page, ahead of <main>, and every
+  # index page streams its own results into #live_search_results. The palette
+  # names its slots apart and says so in the query, so its stream finds them.
+  PALETTE = "palette"
+  PALETTE_RESULTS = "search_palette_results"
+  PALETTE_SUGGESTIONS = "search_palette_suggestions"
+
   allow_unauthenticated_access only: :index
 
   def index
@@ -44,7 +51,11 @@ class SearchController < ApplicationController
     end
     return if performed?
 
-    finish_live_search(partial: "search/live_search_results")
+    if params[:surface] == PALETTE
+      finish_live_search(partial: "search/live_search_results", target: PALETTE_RESULTS, suggestions: PALETTE_SUGGESTIONS)
+    else
+      finish_live_search(partial: "search/live_search_results")
+    end
   end
 
   private

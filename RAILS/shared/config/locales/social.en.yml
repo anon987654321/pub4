@@ -256,6 +256,7 @@ en:
     results_for:
       one: "%{count} result for “%{query}”"
       other: "%{count} results for “%{query}”"
+    no_exact_matches: "No exact matches. Try:"
   # The service worker's offline shell. Rendered by all three apps.
   offline:
     badge: "Offline"

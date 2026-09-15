@@ -1,6 +1,6 @@
 <% if local_assigns[:suggestions].present? %>
   <p role="status">
-    No exact matches. Try:
+    <%= t("search.no_exact_matches") %>
     <% suggestions.each do |term| %>
       <%= link_to term, url_for(request.query_parameters.merge(q: term)), class: "chip" %>
     <% end %>

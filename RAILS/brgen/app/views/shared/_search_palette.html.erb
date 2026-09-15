@@ -33,10 +33,15 @@
                  placeholder: t("nav.search_placeholder"),
                  label: t("nav.search"),
                  show_submit: false,
-                 show_suggestions: false %>
-      <%# Where the Turbo Stream lands. The shared form's input already names
-          this id in aria-controls. %>
-      <div id="live_search_results" class="search_palette_results" aria-live="polite"></div>
+                 show_suggestions: false,
+                 results_id: SearchController::PALETTE_RESULTS,
+                 suggestions_id: SearchController::PALETTE_SUGGESTIONS,
+                 extra_fields: hidden_field_tag(:surface, SearchController::PALETTE, id: nil) %>
+      <%# Where the Turbo Stream lands, under ids of its own. This panel comes
+          before <main> on every page, and a stream lands on the first element
+          with its target id, so sharing an index page's #live_search_results
+          sent that page's results in here, behind a closed dialog. %>
+      <%= tag.div id: SearchController::PALETTE_RESULTS, class: "search_palette_results", aria: { live: "polite" } %>
     </div>
   </div>
 </div>

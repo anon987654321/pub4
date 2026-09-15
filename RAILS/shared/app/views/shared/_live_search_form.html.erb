@@ -24,7 +24,7 @@
               live_search_target: "input",
               action: "input->live-search#input focus->search-focus#focus blur->search-focus#blur"
             },
-            aria: { label: t("search.query", default: "Search query"), controls: "live_search_results" } %>
+            aria: { label: t("search.query", default: "Search query"), controls: local_assigns.fetch(:results_id, "live_search_results") } %>
       <%# capture, not call. The block was written in the calling view, so it
           owns that view's output buffer: .call appends its markup there and
           returns the last expression as a plain String, which <%= then escapes.
@@ -47,10 +47,12 @@
       it is active, which is what the 30px pill collapsing to a 16px rectangle
       is for. Sitting outside, the radius change had nothing to open onto. The
       id is unchanged — live_searchable.rb replaces this node by id over Turbo
-      Stream, and a nested target replaces the same. %>
-  <div id="search_suggestions">
+      Stream, and a nested target replaces the same. A second form on the page — the
+      search palette over every brgen surface — names its own ids, because a
+      stream lands on the first element carrying the id it targets. %>
+  <%= tag.div id: local_assigns.fetch(:suggestions_id, "search_suggestions") do %>
     <% if local_assigns.fetch(:show_suggestions, true) && respond_to?(:search_suggestions) && search_suggestions.present? %>
       <%= render "shared/search_suggestions", suggestions: search_suggestions %>
     <% end %>
-  </div>
+  <% end %>
 </div>

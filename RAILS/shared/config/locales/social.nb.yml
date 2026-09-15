@@ -259,6 +259,7 @@ nb:
     results_for:
       one: "%{count} treff for «%{query}»"
       other: "%{count} treff for «%{query}»"
+    no_exact_matches: "Ingen eksakte treff. Prøv:"
   # The service worker's offline shell. Rendered by all three apps.
   offline:
     badge: "Frakoblet"
