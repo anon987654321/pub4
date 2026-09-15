@@ -1,0 +1,5 @@
+Run options: --verbose --seed 56254
+
+# Running:
+
+TestRatchets#test_members_agree_with_the_count_they_stand_behind = 
