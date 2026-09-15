@@ -187,9 +187,7 @@
         <% if current_page?(main_app.root_path) && Current.user.present? %>
           <%= render "shared/feed_compose" %>
         <% end %>
-        <% if notice.present? %>
-          <p role="status" class="flash-notice" aria-live="polite"><%= notice %></p>
-        <% end %>
+        <%# A notice is a toast, rendered by shared/flash_toasts below. %>
         <% if alert.present? %>
           <p role="alert" class="flash-alert" aria-live="assertive"><%= alert %></p>
         <% end %>
@@ -201,6 +199,7 @@
     <%= render "shared/mobile_chrome" %>
   </div>
   </div>
+  <%= render "shared/flash_toasts" %>
   <%= render "shared/install_prompt",
         title: t("install.title"),
         body: t("install.body") %>

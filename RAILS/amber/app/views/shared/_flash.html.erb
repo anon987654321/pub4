@@ -1,6 +1,8 @@
-<%# NN/g #1 status + #3 freedom: polite region, optional undo action from flash[:undo] %>
+<%# NN/g #1 status + #3 freedom: polite region, optional undo action from flash[:undo].
+    A notice with no undo is a toast (shared/flash_toasts), so it is skipped here. %>
 <% flash.each do |type, msg| %>
   <% next if type.to_s == "undo" || msg.blank? %>
+  <% next if type.to_s == "notice" && flash[:undo].blank? %>
   <% role = type.to_s == "alert" ? "alert" : "status" %>
   <div class="flash flash--<%= type %>" role="<%= role %>" aria-live="<%= role == "alert" ? "assertive" : "polite" %>">
     <span class="flash-msg"><%= msg %></span>

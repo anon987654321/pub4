@@ -74,7 +74,6 @@
     <% end %>
   </div>
 </nav>
-<%= tag.p(notice, role: "status", class: "flash-notice") if notice %>
 <%= tag.p(alert, role: "alert", class: "flash-alert") if alert %>
 <main id="main-content" role="main">
   <%# A third link home lived here, class="logo", inside main. With the nav's
@@ -84,6 +83,7 @@
 </main>
 <%= render "shared/site_legal_footer" %>
 </div>
+<%= render "shared/flash_toasts" %>
 <%= render "shared/install_prompt",
       title: t("install.title"),
       body: t("install.body") %>

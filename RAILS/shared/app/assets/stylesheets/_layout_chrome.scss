@@ -138,6 +138,22 @@ main[role="main"] {
   z-index: var(--z-toast, 1100);
 }
 
+/* shared/_flash_toasts — where a confirmation lands. Pinned above the bottom
+   chrome by the same max() .install-prompt reads, so the tab bar's peel handle
+   stays pressable under it, and centred so the corner stays the chat dock's.
+   The stack lets presses through; only the toast itself takes them. */
+.toast-stack {
+  position: fixed;
+  inset-inline: var(--chrome-inset, 12px);
+  bottom: calc(max(var(--tab-bar-h, 0px), var(--tap-min, 44px)) + var(--safe-bottom, 0px) + var(--chrome-inset, 12px));
+  z-index: var(--z-toast, 1100);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  pointer-events: none;
+}
+
 /* The one brand mark — shared/_brand_mark, fixed top-left on every surface of
    every app. Type only: no chip, no border, no background, no shadow.
    brgen's .brgen-logo-mark is the same treatment and keeps its own selector for

@@ -1,0 +1,10 @@
+<%# A confirmation floats and leaves on its own; everything else stays in the page.
+    flash[:notice] says an action worked, and the reader has nothing to do with
+    it, so it is a toast. An alert names something to act on and a notice that
+    carries an undo offers something to press, and neither may run on a timer
+    (WCAG 2.2.1) — those stay where each layout already renders them. %>
+<% if notice.present? && flash[:undo].blank? %>
+  <%= tag.div class: "toast-stack" do %>
+    <%= render "shared/toast", message: notice, variant: "success" %>
+  <% end %>
+<% end %>
