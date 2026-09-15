@@ -3049,6 +3049,111 @@ module DillaSemantics
   end
 end
 
+# Notes as data, and what a player does to them.
+#
+# Every renderer here decides its notes and plays them in the same method, so a
+# note can be placed but never reworked: nothing can take a stated motif and play
+# it backwards, ratchet a hat or ghost a snare without rewriting the renderer.
+# An Event is a note that has not sounded yet. Pitch is MIDI, and a drum voice is
+# its General MIDI number; velocity is 0..1; time and duration are seconds;
+# probability is the odds it plays; articulation is how it is struck; expression
+# is whatever else the renderer reads. Each transform takes events and returns
+# new ones, and the randomness is the rng handed in, so a seed replays a take.
+module DillaEvents
+  Event = Data.define(:pitch, :velocity, :duration, :at, :probability, :articulation, :expression) do
+    def self.note(pitch:, at:, velocity: 0.8, duration: 0.25, probability: 1.0, articulation: :normal, expression: {})
+      new(pitch:, velocity:, duration:, at:, probability:, articulation:, expression:)
+    end
+  end
+
+  module_function
+
+  def humanize(events, rng, ms: 12.0, spread: 0.1)
+    events.map do |event|
+      late = ((rng.rand * 2.0) - 1.0) * ms / 1000.0
+      level = 1.0 + (((rng.rand * 2.0) - 1.0) * spread)
+      event.with(at: [event.at + late, 0.0].max, velocity: (event.velocity * level).clamp(0.0, 1.0))
+    end
+  end
+
+  # The off-sixteenths late by a share of a step; 0.5 is straight.
+  def swing(events, step, amount)
+    events.map { |event| (event.at / step).round.odd? ? event.with(at: event.at + (((2.0 * amount) - 1.0) * step)) : event }
+  end
+
+  def shift(events, seconds) = events.map { |event| event.with(at: [event.at + seconds, 0.0].max) }
+
+  def stretch(events, factor) = events.map { |event| event.with(at: event.at * factor, duration: event.duration * factor) }
+
+  def reverse(events, span) = events.map { |event| event.with(at: [span - event.at - event.duration, 0.0].max) }.sort_by(&:at)
+
+  def repeat(events, span, times) = (0...times).flat_map { |n| shift(events, span * n) }
+
+  # Each note struck `count` times inside its own length, falling away.
+  def ratchet(events, count, decay: 0.8)
+    events.flat_map do |event|
+      gap = event.duration / count
+      Array.new(count) { |n| event.with(at: event.at + (gap * n), duration: gap, velocity: event.velocity * (decay**n), articulation: :ratchet) }
+    end
+  end
+
+  # A quiet copy a step before some notes: the grace a drummer leaves.
+  def ghost(events, rng, step, odds:, level: 0.3)
+    graces = events.filter_map do |event|
+      event.with(at: event.at - step, velocity: event.velocity * level, articulation: :ghost) if event.at >= step && rng.rand < odds
+    end
+    events + graces
+  end
+
+  # The notes on a beat harder than the notes between.
+  def accent(events, beat, amount: 1.25)
+    events.map do |event|
+      position = event.at / beat
+      (position - position.round).abs < 0.02 ? event.with(velocity: (event.velocity * amount).clamp(0.0, 1.0)) : event
+    end
+  end
+
+  def drop(events, rng, odds) = events.reject { rng.rand < odds }
+
+  def transpose(events, semitones) = events.map { |event| event.with(pitch: event.pitch + semitones) }
+
+  # Mirrored about a pitch, so a rising line falls by the same steps.
+  def invert(events, axis) = events.map { |event| event.with(pitch: (2 * axis) - event.pitch) }
+
+  # A held note cut into slices with air between them, as a sampler chop plays it.
+  def chop(events, pieces)
+    events.flat_map do |event|
+      slice = event.duration / pieces
+      Array.new(pieces) { |n| event.with(at: event.at + (slice * n), duration: slice * 0.8, articulation: :chop) }
+    end
+  end
+
+  # The first slice said `repeats` times, over whatever it covered.
+  def stutter(events, slice, repeats)
+    head = events.select { |event| event.at < slice }
+    return events if head.empty?
+
+    repeat(head, slice, repeats) + events.reject { |event| event.at < slice * repeats }
+  end
+
+  def probabilize(events, odds) = events.map { |event| event.with(probability: event.probability * odds) }
+
+  # Which notes play this time: the dice a probability promised, thrown once.
+  def realize(events, rng) = events.select { |event| rng.rand < event.probability }
+
+  def quantize(events, step, strength: 1.0)
+    events.map { |event| event.with(at: event.at + ((((event.at / step).round * step) - event.at) * strength)) }
+  end
+
+  # Played slower, the way a sampler slows a record: later, longer and lower
+  # together. Never faster, because a sample here is a slowed short idea.
+  def resample(events, rate)
+    raise ArgumentError, "a sample is slowed, never sped up (rate #{rate})" if rate > 1.0
+
+    events.map { |event| event.with(at: event.at / rate, duration: event.duration / rate, pitch: event.pitch + (12.0 * Math.log2(rate))) }
+  end
+end
+
 # Macro/micro rhythm — tempo ramps, stripdown, gap rhythm, prime bars.
 module DillaRhythm
   @ctx = { n_bars: 16, base_bpm: 90.0, duration: 32.0 }
