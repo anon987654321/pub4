@@ -51,8 +51,9 @@ class EngineRenderSmokeTest < ActionDispatch::IntegrationTest
     video = Tv::Video.create!(title: "Smoke clip", channel: channel, user: @user)
     attach_pixel(video.thumbnail)
 
-    # Tv::Engine is mounted at "/" on the tv subdomain, so its video show is /videos/:id.
-    get "/videos/#{video.id}"
+    # Tv::Engine is mounted at "/" on the tv subdomain, so its video show is
+    # /videos/:slug. The id form answers 301 to it, and this test is about the render.
+    get "/videos/#{video.to_param}"
     assert_response :success, "tv video show 500'd: #{@response.body[0, 300]}"
   end
 

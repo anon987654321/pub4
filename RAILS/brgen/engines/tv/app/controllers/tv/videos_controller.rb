@@ -21,6 +21,8 @@ class Tv::VideosController < Tv::BaseController
   VIEW_WINDOW = 1.hour
 
   def show
+    return if redirect_id_to_slug(@video)
+
     @view_event = recent_view_event if authenticated?
     return if @view_event
 

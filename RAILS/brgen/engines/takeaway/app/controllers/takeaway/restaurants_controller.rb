@@ -24,6 +24,8 @@ class Takeaway::RestaurantsController < Takeaway::BaseController
   end
 
   def show
+    return if redirect_id_to_slug(@restaurant)
+
     @menu_items = @restaurant.menu_items.available.with_attached_photo.to_a
     @favorited = Current.user.present? && Current.user.takeaway_favorite_restaurants.exists?(restaurant: @restaurant)
     @reviews = load_neighbour_reviews

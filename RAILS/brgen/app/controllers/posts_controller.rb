@@ -41,6 +41,7 @@ class PostsController < ApplicationController
 
   def show
     return render_members_only unless @post.readable_by?(Current.user)
+    return if redirect_id_to_slug(@post)
 
     @comment_sort = COMMENT_SORTS.include?(params[:sort]) ? params[:sort] : "best"
     roots = @post.comments.where(parent_id: nil)

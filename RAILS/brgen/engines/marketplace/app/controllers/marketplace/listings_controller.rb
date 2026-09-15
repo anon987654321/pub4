@@ -52,6 +52,8 @@ class Marketplace::ListingsController < Marketplace::BaseController
 
   def show
     authorize @listing
+    return if redirect_id_to_slug(@listing)
+
     @listing.increment!(:views_count)
     @order = Marketplace::Order.new if Current.user.present?
     @reviews = @listing.reviews.includes(:user).order(created_at: :desc)

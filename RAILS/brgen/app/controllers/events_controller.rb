@@ -26,6 +26,7 @@ class EventsController < ApplicationController
 
   def show
     raise ActiveRecord::RecordNotFound unless @event.readable_by?(Current.user)
+    return if redirect_id_to_slug(@event)
 
     @rsvp = @event.rsvp_for(Current.user)
     @attendees = @event.rsvps.going.includes(:user).limit(24)

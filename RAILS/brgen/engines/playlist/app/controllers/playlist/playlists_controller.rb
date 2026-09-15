@@ -14,6 +14,8 @@ class Playlist::PlaylistsController < Playlist::BaseController
   end
 
   def show
+    return if redirect_id_to_slug(@playlist)
+
     @tracks = playlist_tracks
     @dilla_sketches = @playlist.dilla_sketches.recent.includes(:user)
     # Group per-track timestamp comments for the waveform

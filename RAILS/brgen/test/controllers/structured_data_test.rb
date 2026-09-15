@@ -135,6 +135,49 @@ class StructuredDataTest < ActionDispatch::IntegrationTest
     assert_equal "#{root_url}search?q={search_term_string}", target
   end
 
+  test "a listing reached by its id moves permanently to its slug" do
+    host! "markedsplass.brgen.no"
+
+    get marketplace.listing_path(@listing.id, ref: "gammel-lenke")
+
+    assert_response :moved_permanently
+    assert_redirected_to marketplace.listing_url(@listing, ref: "gammel-lenke")
+    refute_equal @listing.id.to_s, @listing.to_param
+  end
+
+  test "a restaurant reached by its id moves permanently to its slug" do
+    restaurant = Takeaway::Restaurant.create!(user: @seller, name: "Kjøkken #{SecureRandom.hex(3)}", address: "Marken 4",
+                                              cuisine_type: "Norwegian", city: @city, active: true)
+    host! "takeaway.brgen.no"
+
+    get takeaway.restaurant_path(restaurant.id)
+
+    assert_response :moved_permanently
+    assert_redirected_to takeaway.restaurant_url(restaurant)
+  end
+
+  test "a post reached by its id moves permanently to its slug" do
+    post_record = Post.create!(user: @seller, title: "Lenke #{SecureRandom.hex(3)}", content: "Tekst", city: @city)
+    host! "brgen.no"
+
+    get post_path(post_record.id)
+
+    assert_response :moved_permanently
+    assert_redirected_to post_url(post_record)
+  end
+
+  # The redirect names the slug, and the slug is the title. A withdrawn listing
+  # is hidden from a stranger, so reaching it by id must not hand them its title.
+  test "a withdrawn listing reached by its id does not reveal its slug" do
+    @listing.update!(status: "removed")
+    host! "markedsplass.brgen.no"
+
+    get marketplace.listing_path(@listing.id)
+
+    refute_equal 301, response.status
+    refute_includes response.headers["Location"].to_s, @listing.slug
+  end
+
   test "a track with no artist carries no invented artist" do
     set = Playlist::Set.create!(name: "Sett #{SecureRandom.hex(3)}", user: @seller, privacy: "public")
     track = Playlist::Track.create!(title: "Regnvær", artist: "", user: @seller, source_type: "direct",
