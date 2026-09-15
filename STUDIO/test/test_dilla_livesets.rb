@@ -434,6 +434,24 @@ class TestDillaLivesets < Minitest::Test
     end
   end
 
+  # A named set is one of the three with its knobs set, journalled under its
+  # name, and a knob exported by hand wins over the name.
+  def test_every_named_set_builds_from_its_knobs_and_a_hand_set_knob_wins
+    knobs = Livesets::NAMED_SETS.values.flat_map { |_, k| k.keys }.uniq.to_h { |k| [k, nil] }
+    Livesets::NAMED_SETS.each do |name, (base, set_knobs)|
+      pass = built(name, knobs)
+
+      assert_empty Livesets.graph_problems(pass[:inputs], pass[:graph]), name
+      assert_equal [name, base], [pass[:row][:named], pass[:row][:set]]
+      assert_equal set_knobs["LIVE_LENGTH"].to_f, pass[:row][:seconds] if set_knobs["LIVE_LENGTH"]
+    end
+    gospel = built("gospel", knobs)[:row]
+    assert_equal ["eight_bar_gospel_climb", 72.0, gospel[:bar_s]], [gospel[:progression_name], gospel[:bpm], gospel[:chord_s]]
+    assert_equal 12.0, built("interlude", knobs.merge("LIVE_LENGTH" => "12"))[:row][:seconds]
+    assert_nil built("chord_based_beats", knobs)[:row][:named]
+    assert_includes built("minimal", knobs)[:row][:muted], "kit"
+  end
+
   # A render writes demo.wav and no other audio file, and only takes its name
   # once it has finished, so a killed pass leaves the last good demo in place.
   def test_a_render_lands_on_demo_wav_only_and_arrives_whole
