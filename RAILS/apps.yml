@@ -32,6 +32,7 @@ apps:
         - { name: User model + auth,                                       status: done }
         - { name: "Community (slug, name, description)",                   status: done }
         - { name: "Post (title, content, hot/fresh/top scopes)",           status: done }
+        - { name: "Post link embeds (YouTube, SoundCloud, Vimeo, Spotify)", status: done, notes: "Shared::LinkEmbed resolves a post's first recognised link through the provider's oEmbed endpoint behind Shared::OutboundHttp, in Shared::LinkEmbedJob on brgen_jobs; posts.link_embed stores it; shared/_link_embed renders a thumbnail facade and media_exclusive_controller loads the privacy-host player only on press; a failed lookup shows the plain link; BergenDemoSeeder posts six verified Bergen recordings" }
         - { name: "Comment (threaded, polymorphic, controversial scope)",  status: done }
         - { name: "Vote / Like (polymorphic, karma side-effect)",          status: done }
         - { name: Hashtag + Tagging join,                                  status: done }
@@ -166,6 +167,7 @@ apps:
         - { name: Hotwire broadcasts_refreshes on Item/Outfit,             status: done }
         - { name: items + outfits index/show views,                        status: done }
         - { name: Post model for amber social feed,                        status: done }
+        - { name: "Post link embeds (YouTube, SoundCloud, Vimeo, Spotify)", status: done, notes: "Shared::LinkEmbed, as on brgen, on a JSON column read from the Tiptap body; the lookup waits for the hourly queue drain and the plain link shows until then; AmberDemoSeeder posts three verified recordings" }
         - { name: Comment (polymorphic via Shared::Commentable),           status: done, notes: "comments table + CommentsController on posts#show" }
         - { name: Wardrobe model (collection container),                   status: done, notes: "WardrobeItem join model + wardrobe_items CRUD/analytics" }
         - { name: Connection model (follow / friend),                      status: done, notes: "connections table + pending/accepted/blocked + ConnectionsController" }
