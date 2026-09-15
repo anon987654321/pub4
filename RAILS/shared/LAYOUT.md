@@ -30,6 +30,9 @@ Bridge contract: RAILS hosts embed MASTER via `shared/master_embed` +
 Social primitives (shared engine):
 - `shared/post_card` — brgen `variant: :card`, amber `variant: :prose`
 - `comments/form` + `comments/comment` — capability-aware form/row
+- `shared/link_embed` — a post's YouTube, SoundCloud, Vimeo or Spotify link as
+  a thumbnail facade; `media_exclusive_controller.js` on `<body>` loads the
+  player only on press, and an unresolved link stays a plain link
 - `social.en.yml` / `social.nb.yml` — actions, comments, post, master keys
 
 ## Surfaces
