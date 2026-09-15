@@ -30,7 +30,13 @@ require "digest"
 # bill. So a chain is validated whole, before anything is spent.
 module Preprompt
   module Chain
-    Stage = Struct.new(:name, :model, :prompt, :inherits, :options, keyword_init: true)
+    Stage = Struct.new(:name, :model, :prompt, :inherits, :options, :timeout, keyword_init: true)
+
+    # Seconds a stage may take before its prediction is cancelled, when the YAML
+    # names none. The client's own default, stated here so a chain can see it. A
+    # sub-second klein-4b call and a four-minute relight do not share a bound, so
+    # a stage that knows its model is slow says so with `timeout:`.
+    DEFAULT_TIMEOUT = 600
 
     # What a stage can take from the one before it. `image` is the common case —
     # the previous output becomes this stage's input_image — and `references`
@@ -64,6 +70,10 @@ module Preprompt
 
     class Invalid < StandardError; end
 
+    # A stage the provider answered with nothing. Raised rather than aborted, so
+    # the run can record the failure before it stops.
+    class StageFailed < StandardError; end
+
     def self.load(name, dir: DEFAULT_DIR)
       path = File.join(dir, "#{name}.yml")
       raise Invalid, "no chain named #{name} in #{dir}" unless File.file?(path)
@@ -89,7 +99,8 @@ module Preprompt
           model: row["model"],
           prompt: row["prompt"],
           inherits: Array(row["inherits"]),
-          options: (row["options"] || {}).transform_keys(&:to_sym)
+          options: (row["options"] || {}).transform_keys(&:to_sym),
+          timeout: row["timeout"]
         )
       end
       { name: name, description: doc["description"], stages: stages }
@@ -166,6 +177,22 @@ module Preprompt
           found << "#{position} sets #{opt}, which #{stage.model} does not accept"
         end
 
+        # The grade runs once, on the frame the chain ends with. A stage before
+        # the last that asks for one would have its grade regraded by every model
+        # after it, and nothing reads the request there anyway.
+        #
+        # This is also why there is no lint for two adjacent global-colour stages.
+        # postpro is the only stage in this tree that does nothing but colour, and
+        # it may stand once, at the end; every model in MODEL_CAPABILITIES
+        # generates or edits a picture, so two colour passes in a row cannot be
+        # written.
+        if stage.options.key?(:postpro) && index < stages.length - 1
+          found << "#{position} sets postpro, but only the last stage's frame is graded"
+        end
+
+        found << "#{position} has timeout #{stage.timeout.inspect}, which is not a positive number of seconds" if
+          stage.timeout && !(stage.timeout.is_a?(Numeric) && stage.timeout.positive?)
+
         found << "#{position} has neither a prompt nor an inherited one" if
           stage.prompt.to_s.strip.empty? && !stage.inherits.include?("prompt") &&
           !promptless?(keys)
@@ -237,6 +264,21 @@ module Preprompt
       raise NothingToResume, "stage #{stage.name} has no output to resume from" unless found && File.file?(found[:path].to_s)
 
       found
+    end
+
+    # Which preset grades the chain's last frame, or nil for none.
+    #
+    # --postpro on the command line wins, and --no-postpro (false) turns the
+    # grade off. Otherwise the last stage's own `postpro:` option decides — and
+    # only when the last stage actually ran, since a chain stopped by --until
+    # ends on an intermediate the author never asked to have graded.
+    def self.grade_for(chain, produced:, requested:)
+      return requested unless requested.nil?
+
+      stages = chain.fetch(:stages)
+      return nil unless produced.length == stages.length
+
+      stages.last.options[:postpro]
     end
 
     # What will happen, in order, without doing it.

@@ -371,6 +371,50 @@ class TestChain < Minitest::Test
     end
   end
 
+  # --- the grade and the bound ---------------------------------------------
+
+  GRADED = <<~YML
+    stages:
+      - { name: a, model: black-forest-labs/flux-kontext-pro, prompt: one }
+      - { name: b, model: black-forest-labs/flux-kontext-pro, prompt: two, inherits: [image], options: { postpro: house } }
+  YML
+
+  def test_the_last_stages_postpro_grades_the_chain_when_the_command_line_names_none
+    chain = chain_from(GRADED)
+
+    assert_equal "house", Preprompt::Chain.grade_for(chain, produced: %w[a b], requested: nil)
+    assert_equal "noir", Preprompt::Chain.grade_for(chain, produced: %w[a b], requested: "noir")
+    assert_equal false, Preprompt::Chain.grade_for(chain, produced: %w[a b], requested: false)
+    assert_nil Preprompt::Chain.grade_for(chain, produced: %w[a], requested: nil),
+               "a chain stopped by --until ends on a frame nobody asked to grade"
+  end
+
+  def test_postpro_on_a_stage_before_the_last_is_refused
+    assert_empty problems_for(GRADED)
+    problems = problems_for(<<~YML)
+      stages:
+        - { name: a, model: black-forest-labs/flux-kontext-pro, prompt: one, options: { postpro: house } }
+        - { name: b, model: black-forest-labs/flux-kontext-pro, prompt: two, inherits: [image] }
+    YML
+
+    assert(problems.any? { |p| p.include?("only the last stage") }, problems.inspect)
+  end
+
+  def test_a_stage_carries_its_own_timeout_and_a_nonsense_one_is_refused
+    timed = chain_from(<<~YML)
+      stages:
+        - { name: a, model: black-forest-labs/flux-kontext-pro, prompt: one, timeout: 900 }
+    YML
+    assert_equal 900, timed[:stages].first.timeout
+    assert_empty Preprompt::Chain.problems(timed, capability_for: capability_for)
+
+    problems = problems_for(<<~YML)
+      stages:
+        - { name: a, model: black-forest-labs/flux-kontext-pro, prompt: one, timeout: soon }
+    YML
+    assert(problems.any? { |p| p.include?("timeout") }, problems.inspect)
+  end
+
   # The YAML's hash rides with the chain, so a frame's sidecar names the recipe.
   def test_a_loaded_chain_carries_the_hash_of_its_file
     Dir.mktmpdir do |dir|

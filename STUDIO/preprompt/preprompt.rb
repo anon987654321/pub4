@@ -19,6 +19,7 @@ require_relative "../../MASTER/lib/boot/paths"
 # --postpro reaches a NameError instead of a handoff.
 require "shellwords"
 require_relative "lib/craft"
+require_relative "lib/chain"
 
 # What each Replicate model actually accepts, checked against the live schemas
 # rather than remembered.
@@ -110,6 +111,21 @@ MODEL_CAPABILITIES = {
   "black-forest-labs/flux-2-dev" => {
     input_keys: %w[prompt input_images aspect_ratio output_format output_quality seed],
     negative_prompt_key: nil,
+  },
+  # Relights a subject without redrawing it: the frame arrives as
+  # `subject_image`, the prompt names the new light, and `light_source` says
+  # which side it comes from. No depth map goes in. The model takes none, and a
+  # chain that hands it one hands it a depth map as the subject.
+  #
+  # Declared from the model page and never read off the schema, so it carries
+  # `unverified: true` and Chain.problems refuses it until `rake
+  # preprompt:schema_audit` confirms the keys. `light_source` has no flag; only
+  # a chain stage's options set it, which `chain_option_keys` records.
+  "zsxkib/ic-light" => {
+    input_keys: %w[prompt subject_image light_source seed output_format],
+    negative_prompt_key: nil,
+    chain_option_keys: %w[light_source],
+    unverified: true,
   },
   "stability-ai/stable-diffusion-3.5-large" => {
     input_keys: %w[prompt aspect_ratio output_format seed cfg steps],
@@ -249,9 +265,17 @@ def reference_images(options)
   refs.empty? ? nil : refs.first(8)
 end
 
-def build_input(prompt, options, seed:, negative_prompt:)
+# The one-picture input keys, in whichever spelling a model uses. input_images,
+# the FLUX 2 list, is filled from reference_images instead.
+SINGLE_IMAGE_KEYS = (Preprompt::Chain::IMAGE_INPUT_KEYS - ["input_images"]).freeze
 
+# `passthrough` is a chain stage's own options. A key the model declares and
+# nothing above fills, such as IC-Light's light_source, goes out as the stage
+# wrote it; a key the model does not declare was already refused by
+# Chain.problems, and the filter at the end drops it again.
+def build_input(prompt, options, seed:, negative_prompt:, passthrough: {})
   cap = capability_for(options[:model])
+  image_key = (cap[:input_keys] & SINGLE_IMAGE_KEYS).first
   full = {
     prompt:,
     aspect_ratio: options[:aspect_ratio],
@@ -260,7 +284,6 @@ def build_input(prompt, options, seed:, negative_prompt:)
     seed:,
     negative_prompt:,
     raw: raw_mode?(options) || nil,
-    input_image: options[:image],
     # FLUX 2 takes references as a LIST, up to eight, and holds a character
     # across them. That is the consistency spine a long chain needs: stage N's
     # outputs become stage N+1's references, so the chain accumulates rather
@@ -269,6 +292,8 @@ def build_input(prompt, options, seed:, negative_prompt:)
     input_images: reference_images(options),
     output_quality: 90,
   }.compact
+  full[image_key.to_sym] = options[:image] if image_key && options[:image]
+  passthrough.each { |key, value| full[key.to_sym] = value unless full.key?(key.to_sym) }
 
   [model_number(cap, :guidance, options[:guidance]),
    model_number(cap, :steps, options[:steps])].compact.each { |key, value| full[key] = value }
@@ -421,6 +446,20 @@ def append_gallery_manifest(sidecar, alt_text)
   File.open(manifest, "a") { |f| f.puts(sidecar.merge(alt_text:).to_json) }
 end
 
+# Every chain that stopped, and why, beside the gallery of the ones that did not.
+#
+# A dead end nobody wrote down is a dead end the next session pays for again: the
+# same model refusing the same input, the same stage timing out. The gallery
+# holds what worked; this holds the stage, the recipe's hash, the error and the
+# frames that were kept, so a failure is looked up before it is repeated.
+def record_failed_chain(chain, error, produced, manifest: File.join(MasterPaths.repo, ".master", "media", "failed_chains.jsonl"))
+  FileUtils.mkdir_p(File.dirname(manifest))
+  row = { chain: chain[:name], sha256: chain[:sha256], failed_at: Time.now.utc.iso8601,
+          error: error.class.name, message: error.message, kept: produced }
+  File.open(manifest, "a") { |f| f.puts(row.to_json) }
+  row
+end
+
 # The grade every output gets unless it is turned off.
 #
 # It was `--postpro PRESET`, opt-in, one flag on one command — so the default
@@ -472,8 +511,8 @@ end
 # the thing you asked for.
 # The keys build_input can fill from something other than a per-model knob.
 # Keep in step with the literal hash there.
-PRODUCIBLE_INPUT_KEYS = %w[prompt aspect_ratio output_format output_quality safety_tolerance seed raw
-                           input_image input_images].freeze
+PRODUCIBLE_INPUT_KEYS = (%w[prompt aspect_ratio output_format output_quality safety_tolerance seed raw
+                            input_images] + SINGLE_IMAGE_KEYS).freeze
 
 def vocab_problems
   problems = []
@@ -515,7 +554,11 @@ def vocab_problems
       problems << "#{model} names #{kind}_key #{knob.inspect} with no #{kind}_range to check against" \
         unless cap[:"#{kind}_range"]
     end
-    (cap[:input_keys] - PRODUCIBLE_INPUT_KEYS - [cap[:guidance_key], cap[:steps_key], cap[:negative_prompt_key]].compact).each do |orphan|
+    (Array(cap[:chain_option_keys]) - cap[:input_keys]).each do |key|
+      problems << "#{model} names chain option #{key.inspect}, which is not in its input_keys"
+    end
+    (cap[:input_keys] - PRODUCIBLE_INPUT_KEYS - Array(cap[:chain_option_keys]) -
+      [cap[:guidance_key], cap[:steps_key], cap[:negative_prompt_key]].compact).each do |orphan|
       problems << "#{model} declares input key #{orphan.inspect}, which build_input has no source for"
     end
   end
@@ -637,7 +680,6 @@ when "capabilities"
 when "chains"
   # The chains this tree ships, from the directory rather than a maintained
   # list, so adding one is adding a file.
-  require_relative "lib/chain"
   names = Preprompt::Chain.available
   if names.empty?
     puts "preprompt: no chains in #{Preprompt::Chain::DEFAULT_DIR}"
@@ -654,7 +696,6 @@ when "chain"
   # Validated whole, before anything is spent. A chain that fails at stage 6
   # because stage 2 could not produce what stage 3 assumed has already cost the
   # first five, which is why this refuses on the plan rather than on the wire.
-  require_relative "lib/chain"
   name = ARGV.shift.to_s
   abort "usage: preprompt chain NAME [--dry-run]" if name.empty?
 
@@ -717,13 +758,13 @@ when "chain"
     compiled = compile_prompt(prompt, stage_options)
     negative = compile_negative_prompt(stage_options)
     stage_seed = seed || options[:seed] || SecureRandom.random_number(2**31)
-    input = build_input(compiled, stage_options, seed: stage_seed, negative_prompt: negative)
+    input = build_input(compiled, stage_options, seed: stage_seed, negative_prompt: negative, passthrough: stage.options)
 
     puts "preprompt: stage #{index + 1}/#{total} #{stage.name} — #{stage.model}"
     started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-    urls = Array(client.predict(stage.model, input)).flatten.compact
+    urls = Array(client.predict(stage.model, input, timeout: stage.timeout || Preprompt::Chain::DEFAULT_TIMEOUT)).flatten.compact
     duration = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started).round(2)
-    abort "preprompt: stage #{stage.name} returned no output; earlier stages are kept" if urls.empty?
+    raise Preprompt::Chain::StageFailed, "stage #{stage.name} returned no output" if urls.empty?
 
     FileUtils.mkdir_p(File.dirname(target))
     client.download_url(urls.first, target)
@@ -733,19 +774,25 @@ when "chain"
     sidecar = write_provenance(target, prompt, compiled, negative, stage_options, stage_seed, digest, trace)
     append_gallery_manifest(sidecar, alt_text_for(prompt, stage_options))
     puts "preprompt: stage #{index + 1} wrote #{target}"
+    kept << target
     { path: target, seed: stage_seed }
   end
 
+  kept = []
   produced = begin
     Preprompt::Chain.run(chain, perform: perform, until_stage: options[:until], image: options[:image],
                                 seed: options[:seed], from_stage: options[:from], resume: resume)
   rescue Preprompt::Chain::Invalid, Preprompt::Chain::NothingToResume => e
     abort "preprompt: #{e.message}"
+  rescue StandardError => e
+    record_failed_chain(chain, e, kept)
+    abort "preprompt: chain #{name} stopped: #{e.message}; #{kept.length} frame(s) kept, failure recorded"
   end
 
   # postpro last, on the final frame only — grading an intermediate would be
   # graded again by every stage after it.
-  maybe_handoff_postpro(produced.last, options[:postpro]) if produced.any?
+  preset = Preprompt::Chain.grade_for(chain, produced: produced, requested: options[:postpro])
+  maybe_handoff_postpro(produced.last, preset) if produced.any?
   puts "preprompt: chain #{name} produced #{produced.length} frame(s)"
   puts produced
 when "vocab-check"
@@ -765,7 +812,7 @@ when "generate"
   options[:model] = FINAL_MODEL if options[:final] && !options[:model_explicit]
   if options[:image]
     abort "warn: --image #{options[:image]} is not a file" unless File.file?(options[:image])
-  elsif capability_for(options[:model])[:input_keys].include?("input_image")
+  elsif (capability_for(options[:model])[:input_keys] & SINGLE_IMAGE_KEYS).any?
     abort "warn: #{options[:model]} is an editor; pass --image PATH"
   end
   options[:aspect_ratio] = infer_aspect_ratio(options[:prompt], options[:aspect_ratio], options[:distance])

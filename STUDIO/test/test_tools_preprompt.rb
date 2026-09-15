@@ -314,7 +314,7 @@ class TestPreprompt < Minitest::Test
   # names a key outside it builds a request this file cannot populate.
   def test_no_model_declares_a_key_the_builder_cannot_produce
     MODEL_CAPABILITIES.each do |model, cap|
-      unproducible = cap[:input_keys] - PRODUCIBLE_INPUT_KEYS -
+      unproducible = cap[:input_keys] - PRODUCIBLE_INPUT_KEYS - Array(cap[:chain_option_keys]) -
                      [cap[:guidance_key], cap[:steps_key], cap[:negative_prompt_key]].compact
       assert_empty unproducible, "#{model} declares #{unproducible.inspect}, which build_input never sets"
     end
@@ -429,6 +429,45 @@ class TestPreprompt < Minitest::Test
     table = BACKGROUND_LIGHT_CONFLICTS.merge("a moon base" => %w[soft])
     assert(send(:scenario_problems, conflicts: table).any? { |line| line.include?("a moon base") })
     assert_empty send(:scenario_problems)
+  end
+
+  # --- chains against the real table --------------------------------------
+
+  # A shipped chain may be refused for one reason only: a model nobody has yet
+  # confirmed against the provider. Anything else is a fault in the recipe.
+  def test_every_shipped_chain_is_refused_for_nothing_but_an_unverified_model
+    Preprompt::Chain.available.each do |name|
+      problems = Preprompt::Chain.problems(Preprompt::Chain.load(name), capability_for: method(:capability_for))
+
+      assert_empty problems.reject { |p| p.include?("never been confirmed against the provider") },
+                   "#{name}: #{problems.inspect}"
+    end
+  end
+
+  # IC-Light spells its input subject_image. Filling only input_image left the
+  # relight stage generating from the prompt with the frame dropped.
+  def test_a_single_image_goes_under_whichever_key_the_model_declares
+    input = send(:build_input, "warm key from the left", { model: "zsxkib/ic-light", image: "https://x/in.png" },
+                 seed: 1, negative_prompt: nil, passthrough: { light_source: "Left Light", postpro: "house" })
+
+    assert_equal "https://x/in.png", input[:subject_image]
+    assert_equal "Left Light", input[:light_source]
+    refute input.key?(:input_image)
+    refute input.key?(:postpro), "the grade is local; it never goes to the provider"
+  end
+
+  def test_a_failed_chain_is_recorded_with_its_stage_error_and_kept_frames
+    Dir.mktmpdir do |dir|
+      manifest = File.join(dir, "failed_chains.jsonl")
+      chain = { name: "probe", sha256: "abc" }
+      send(:record_failed_chain, chain, Preprompt::Chain::StageFailed.new("stage b returned no output"),
+           ["out-01-a.jpg"], manifest: manifest)
+
+      row = JSON.parse(File.read(manifest).lines.last)
+      assert_equal "probe", row["chain"]
+      assert_equal "Preprompt::Chain::StageFailed", row["error"]
+      assert_equal ["out-01-a.jpg"], row["kept"]
+    end
   end
 
   # --- provenance ----------------------------------------------------------
