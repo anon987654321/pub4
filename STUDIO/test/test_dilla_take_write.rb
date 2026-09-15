@@ -92,4 +92,27 @@ class TestTakeWrite < Minitest::Test
       capture_io { send(:stems_check, manifest) }
     end
   end
+  # The vocal catalogue is tracked and its audio is not, so the list says which
+  # rows have no audio, and a directory kept for its record says why it is kept.
+  def test_the_vocal_list_marks_missing_audio_and_says_why_a_record_is_kept
+    Dir.mktmpdir do |dir|
+      heard = File.join(dir, "heard.wav")
+      File.write(heard, "x")
+      %w[_mislabelled_untitled_flac j_dilla].each do |name|
+        FileUtils.mkdir_p(File.join(dir, name))
+        File.write(File.join(dir, name, "meta.json"), "{}")
+      end
+      catalog = { "vocals" => [
+        { "slug" => "heard", "artist" => "A", "vocal_path" => heard, "phrases" => [{}] },
+        { "slug" => "gone", "artist" => "B", "vocal_path" => File.join(dir, "gone.wav"), "phrases" => [] },
+      ] }
+
+      lines = send(:rap_vocal_list_lines, catalog, dir)
+
+      refute_includes lines.find { |l| l.start_with?("heard") }, "audio missing"
+      assert_includes lines.find { |l| l.start_with?("gone") }, "audio missing"
+      assert_includes lines.find { |l| l.start_with?("_mislabelled_untitled_flac") }, "kept on purpose"
+      assert_includes lines.find { |l| l.start_with?("j_dilla") }, "sidecar only"
+    end
+  end
 end

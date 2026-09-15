@@ -28091,7 +28091,7 @@ def command_help
       ["learn-promote", "", "Merge the catalogue's copyable DNA into learned_engine.json"],
       ["learn-calibrate", "[--audio-root=PATH]", "Measured dossiers -> global BPM and swing calibration"],
       ["learn-diff", "[--audio-root=PATH]", "Curated vs measured vs learned"],
-      ["rap-vocal", "ingest <artist> <src> | fit <slug> | list", "Isolated vocals and their phrase catalogue; fit bar-aligns one"],
+      ["rap-vocal", "ingest <artist> <src> | fit <slug> | list [json]", "Isolated vocals and their phrase catalogue; fit bar-aligns one"],
       ["study", "rhythm|melody|harmony|semantics <path>", "One of the four readings below, by name"],
       ["radio-bergen-study", "[--audio-root=PATH] [--json]", "Refresh the learnings YAML from the radio manifest"],
       ["radio-bergen-analyze", "[--audio-root=PATH]", "Per-track dossiers: drums, texture, harmony"],
@@ -30473,6 +30473,34 @@ def rap_vocal_load_catalog
   JSON.parse(File.read(RAP_VOCAL_CATALOG))
 rescue StandardError
   { "vocals" => [], "updated_at" => nil }
+end
+
+# Directories under vocals/ that hold a record and no catalogue row, kept on
+# purpose. Each reason is printed by `rap-vocal list`, so the directory reads as
+# a decision rather than as litter somebody should clean up.
+RAP_VOCAL_KEPT_RECORDS = {
+  "_mislabelled_untitled_flac" => "kept on purpose: the meta.json of an Untitled.flac " \
+                                  "ingested under gunnhild's slug, which says what that " \
+                                  "stem was so the real gunnhild row is not taken for it",
+}.freeze
+
+# One line per vocal. The catalogue is tracked and the audio is not, so a row
+# whose vocals.wav is absent is the ordinary state of a checkout and says so,
+# rather than printing a path that `fit` will then fail to open.
+def rap_vocal_list_lines(catalog = rap_vocal_load_catalog, dir = RAP_VOCAL_DIR)
+  rows = Array(catalog["vocals"])
+  lines = rows.map do |row|
+    missing = File.file?(row["vocal_path"].to_s) ? "" : "  audio missing"
+    format("%-22s %-24s %4d phrases%s", row["slug"], row["artist"], Array(row["phrases"]).size, missing)
+  end
+  listed = rows.map { |row| row["slug"].to_s }
+  Dir[File.join(dir, "*", "meta.json")].sort.each do |meta|
+    name = File.basename(File.dirname(meta))
+    next if listed.include?(name)
+
+    lines << format("%-22s %s", name, RAP_VOCAL_KEPT_RECORDS.fetch(name, "sidecar only, audio missing, not in the catalogue"))
+  end
+  lines
 end
 
 def rap_vocal_save_catalog!(cat)
@@ -36287,7 +36315,7 @@ DISPATCH = {
       n_bars = (ENV["BARS"] || bars).to_i
       rap_vocal_fit!(slug, beat_bpm: cfg[:bpm], n_bars:, progression: cfg[:progression])
     when "list"
-      puts JSON.pretty_generate(rap_vocal_load_catalog)
+      ARGV.first == "json" ? puts(JSON.pretty_generate(rap_vocal_load_catalog)) : puts(rap_vocal_list_lines)
     else
       abort "usage: ruby dilla.rb rap-vocal ingest|fit|list"
     end
