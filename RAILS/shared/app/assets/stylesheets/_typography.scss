@@ -153,14 +153,3 @@ main section h2 {
   text-wrap: balance;
   margin-block-end: var(--space-3, 0.75rem);
 }
-
-.reading-column {
-  width: 100%;
-  max-width: var(--measure);
-  margin-inline: auto;
-}
-
-.form-measure {
-  width: 100%;
-  max-width: min(var(--measure-narrow), 100%);
-}

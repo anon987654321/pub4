@@ -93,8 +93,8 @@ module Operator
     # Deliberately not written here. Inventing a visual design for eleven
     # components is not a lint's decision and not a passing agent's; the numbers
     # and the cluster names are what makes it someone's.
-    # unused 279: the typography foundation adds opt-in measure classes (prose,
-    # reading-column, form-measure, ...) worn by tokens, not yet by every view.
+    # unused 279: the typography foundation adds opt-in measure classes worn by
+    # tokens, not yet by every view.
     #
     # undefined 0: _coverage_fills.scss gives Event, Story and the moderation
     # pages a box model. The fill is structural and token-only -- flex, gap,
@@ -230,7 +230,11 @@ module Operator
 # since the vertical accent map was written, and collapsing each app's
 # stylesheets into one application.scss added `meta.load-css(` beside it. Names
 # followed by an open paren are calls, and neither is counted now.
-BASELINES = { "undefined_class" => 0, "unused_selector" => 93 }.freeze
+#
+# 93 -> 91 (2026-09-15). .reading-column and .form-measure went: no view wore
+# either, and the measure they carried is the one .prose and the chrome columns
+# already set through var(--measure) and var(--measure-narrow).
+BASELINES = { "undefined_class" => 0, "unused_selector" => 91 }.freeze
 
     Finding = Struct.new(:kind, :name, :count, :example)
 
