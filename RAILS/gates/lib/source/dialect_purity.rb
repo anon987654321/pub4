@@ -119,10 +119,13 @@ module Deploy
         @result.fail("dialect_purity: brgen has no application.scss")
       end
 
+      # bsdports wears the wscons dialect's square corners on a light ground, so
+      # the proof is a plain :root rule zeroing the card and pill radii.
       bsd = app_stylesheet("bsdports")
       if bsd
-        body = File.read(bsd)
-        @result.fail("dialect_purity: bsdports missing CRT green identity") unless body.include?("#63c363") || body.include?("openbsd")
+        roots = Operator::ScssRules.rules(File.read(bsd)).select { |rule| rule.selector == ":root" && rule.parents.empty? }
+        square = roots.any? { |rule| rule.body.match?(/--radius-card:\s*0\s*;/) && rule.body.match?(/--radius-pill:\s*0\s*;/) }
+        @result.fail("dialect_purity: bsdports' :root does not zero the wscons radii") unless square
       end
 
       amber = app_stylesheet("amber")

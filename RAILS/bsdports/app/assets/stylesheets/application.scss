@@ -1,24 +1,37 @@
+// bsdports: the one stylesheet this app owns.
+//
+// It reads top to bottom in order of importance as far as the cascade lets
+// it: the element base, the components no shared module touches, the shared
+// modules each with the app rules that must sit right after them, then the
+// ports shell (tokens, layout, pages, then states), which overrides every
+// shared module and so compiles last. A rule only moves where no rule it
+// passes sets the same property on an element both could match.
+
 @use "stack" as *;
 @use "sass:meta";
 @use "dialect_tokens" as x;
 
-// The dependency graph and the wordmark.
-//
-// Split out of application.scss when that file passed its length ceiling. The
-// graph is five rules that only ever style an inline SVG on the port detail
-// page, and .logo is one rule; neither shares a selector with anything left
-// behind, which mattered here — bsdports styles `article > header` and
-// `.search-result` twice each in one file, so most blocks in it are order
-// dependent and cannot be moved. These two are not.
+// ============================================================ base
 
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  // Phone first: the primary nav wraps onto two rows with the brand alone on
+  // the first, so body clears 104px; from 640px it clears 64px.
+  padding-block-start: 104px;
+}
+
+kbd { padding: var(--space-0-5) 4px; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: var(--radius-xs); font-family: var(--font-mono); }
+
+// ============================================================ components
+
+// The dependency graph is an inline SVG on the port page.
 .dep-graph {
   display: block;
   width: 100%;
   height: auto;
   margin-block-start: var(--space-4);
-}
-
-.dep-graph {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--surface);
@@ -50,26 +63,21 @@
   background-size: contain;
 }
 
+// ============================================================ shared chrome
+
 @include meta.load-css("site_legal");
 
-/* The shared brand mark (shared/_brand_mark) is fixed at the top inline-start
-   on every app. bsdports renders its primary nav there too, and _minimal.scss
-   gives every `nav` position: fixed with z-index: 100 -- above the mark's 91 --
-   so the nav painted over the wordmark and elementFromPoint at the mark's own
-   centre returned the nav. brgen had the identical bug with .nav_swiper.
-
-   The stacking itself is fixed by --z-brand (120) in _layout_chrome, which puts
-     the mark above any nav. This padding is still needed for a second, separate
-     reason: without it the nav first link sits under the wordmark, and a tap
-     there lands on the mark instead of the link. */
+// The shared brand mark sits fixed at the top inline-start, where the primary
+// nav also starts. --z-brand keeps the mark above the nav; this padding keeps
+// the nav's first link out from under the mark, so a tap there reaches the link.
 nav[data-pwa-primary-nav] {
   padding-inline-start: calc(var(--brand-mark-inline) + var(--space-2, 0.5rem));
 }
 
 @include meta.load-css("shell_widgets");
 
-/* jOxVvNE structure on openbsd_wscons palette (same geometry as amber pen). */
-
+// The jOx logo and the yep search are product pens: their geometry is the
+// pen's own, and only the palette is this dialect's.
 .jox-logo {
   display: flex;
   position: relative;
@@ -113,7 +121,6 @@ nav[data-pwa-primary-nav] {
   letter-spacing: var(--tracking-wide);
 }
 
-/* yep search on CRT: keep pen geometry, green ink */
 body .search {
   background-color: var(--search-bg);
   border: 1px solid var(--border);
@@ -138,17 +145,11 @@ body .search.active {
 
 @include meta.load-css("focus_ring");
 
-// Classes the markup asked for and nothing defined, measured by
-// Operator::CssCoverageLint 2026-08-11. Last on purpose: these complement the
-// components above rather than competing with them.
-
+// Classes the markup uses that no component defines. They load before the
+// ports shell so the shell's own rules win wherever both apply.
 @include meta.load-css("shared_coverage_fills");
 
-// The base every bsdports page shares: the root tokens this dialect sets over
-// the shared ones, body, the primary nav, main and the tap floor on its
-// controls, and the mono text classes the listing and search results share.
-// application.scss @uses it last, so its rules compile exactly where they
-// stood as the first rules of that file.
+// ============================================================ ports shell
 
 .nav-actions {
   display: flex;
@@ -156,34 +157,19 @@ body .search.active {
   gap: 0.5rem;
 }
 
-/* Light, like the other two apps — operator, 2026-08-29.
-   
-   This was openbsd_wscons: #000000 ground, #63c363 text, the console's own
-   green, with --text-secondary hand-picked at #499149 because the #3d7a3d
-   before it failed WCAG AA on all three surfaces it sat on. That identity is
-   deliberately gone, and the operator chose that knowing what it cost — a
-   package browser that looked like the machine it describes.
-   
-   What survives is the zero radii and the dense type scale. The face is the
-   family one from design_tokens.yml shared_chrome.font; only code, kbd and the
-   install command keep --font-mono, because they are commands a reader copies.
-   
-   The palette itself comes from app-root-tokens and the shared light
-   semantics, which is what "like any other app" means here: no bsdports light
-   theme was ever designed, and inventing one to sit under this change would be
-   a look nobody has approved. The two status ambers are the exception — they
-   were chosen to warn against black and are unreadable on white, so they are
-   re-picked here against the light ground rather than inherited. */
+// A light ground like the other two apps. The palette comes from
+// app-root-tokens and the shared light semantics; this dialect keeps its zero
+// radii and dense type scale. The family face is the shared chrome font, and
+// only code, kbd and the install command use --font-mono, because a reader
+// copies them.
 :root {
   @include x.app-root-tokens;
-  /* wscons status ambers, re-picked for a light ground. The originals
-     (#b7791f border, #f6c453 text) were tuned to glow on #000000; #f6c453 on
-     white measures 1.7:1, which is not a warning, it is invisible. These clear
-     AA against --bg #ffffff at the small sizes this app sets. */
+  // The status ambers are picked for a light ground: each clears WCAG AA
+  // against --bg #ffffff at the small sizes this app sets.
   --status-stale-border: #a1660a;
   --status-stale-text: #6b4405;
   color-scheme: light;
-  /* rem (not px) so the dense listing keeps the auditor's body_font_px floor */
+  // rem, not px, so the dense listing keeps the auditor's body_font_px floor.
   --font-size: var(--text-xs);
   --line-height: 1rem;
   --radius-pill: 0;
@@ -198,47 +184,29 @@ body .search.active {
   line-height: var(--line-height);
 }
 
-body {
-  padding-block-start: 64px;
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--font);
-}
-
-/* Secondary green is meta text. It used to be documented as "non-essential
-   ... (contrast ~3:1)", but the geometry gate treats sub-4.5 body text as a hard
-   accessibility failure regardless of importance, and this class lands on
-   <time> and .meta that a reader does need. Now 4.62-5.43 across the three
-   surfaces it sits on. */
-.meta, .text-secondary, time {
+// Meta text on <time> and .meta is text a reader needs, so it holds 4.5:1
+// (4.62 to 5.43 across the surfaces it sits on).
+.meta, time {
   color: var(--text-secondary);
 }
 
-.port-row,
-.search-result {
+// ============================================================ ports shell: layout
+
+.port-row {
   font-family: var(--font);
   font-size: var(--font-size);
-  /* CRT list separators (wscons dialect): 1px hairline is allowed; no box-shadow */
-  border-bottom: 1px solid var(--border);
-  padding: 0.5rem 0; /* 8px — design_rules eight_px_rhythm */
-}
-
-.advisory-tag {
-  font-family: var(--font);
-  font-size: var(--text-xs);
-  color: var(--danger);
-  border: 1px solid var(--border);
-  padding: 0 var(--space-1);
 }
 
 main#main-content :is(button, input, select, textarea, a):focus-visible {
-  outline: var(--focus-ring);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
 body > nav[aria-label="Primary navigation"] {
   transform: translateY(0);
   min-height: 52px;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
 }
 
 body > nav[aria-label="Primary navigation"] a[aria-current="page"] {
@@ -261,32 +229,33 @@ main#main-content :is(button, input[type="submit"], .btn) {
   min-height: var(--tap-min);
 }
 
-/* Fitts floor at the origin — carried by _autofix_geometry until 2026-08-09.
-   Both controls sit OUTSIDE main#main-content, which is why the rule above
-   never reached them: nav-actions sign-in/out rendered 46x18 and the search
-   submit 58x21, against a 44px floor. The selectors are the autofix's own —
-   `.nav-actions .btn` does NOT match, because the anchor carries `btn-ghost`
-   alone and never `btn`. */
+// The sign-in link and the search submit sit outside main#main-content, so the
+// tap floor above misses them. The sign-in anchor carries btn-ghost alone,
+// which is why `.nav-actions .btn` would not match it.
 div.nav-actions > a.btn-ghost,
 div.search-form > input.btn.btn-sm {
   min-height: var(--tap-min);
   min-width: var(--tap-min);
 }
 
-main#main-content :is(button, input, select, textarea, a):focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
+// ============================================================ ports shell: pages
 
 article,
 #comments {
   width: 100%;
 }
 
+// The port page's meta strip stays in view under the nav.
 article > header {
   display: block;
   max-width: none;
   margin-block-end: var(--space-4);
+  position: sticky;
+  top: 52px;
+  z-index: 5;
+  padding-block: 0.5rem;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
 }
 
 article > header h1 {
@@ -296,9 +265,9 @@ article > header h1 {
 
 article dl {
   display: grid;
-  grid-template-columns: minmax(7rem, max-content) minmax(0, 1fr);
-  gap: var(--space-2) var(--space-4);
   margin-block: var(--space-6);
+  grid-template-columns: 1fr;
+  gap: var(--space-1);
 }
 
 article dt {
@@ -327,12 +296,9 @@ article > section,
   margin-block-start: var(--space-8);
 }
 
-/* shell_widgets' .page-header (a slim sticky 53px section bar) and stack's
-   .page-header (a generic unconstrained-height flex intro) both compile in
-   here and collide. This page's header is the intro-block kind — h1 +
-   description + search — so its height needs to fit that content instead
-   of clipping to shell_widgets' sticky bar height, which pushed the overflow
-   up into the logo above it. */
+// shell_widgets' .page-header is a slim sticky section bar; this page's header
+// is an intro block (h1, description, search), so it takes the height of its
+// content instead of the bar's and never spills up into the logo.
 header.page-header {
   height: auto;
   position: static;
@@ -404,23 +370,17 @@ header {
 
 .search-form {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--space-2);
   width: 100%;
+  grid-template-columns: 1fr;
 }
 
 .search-form input[type="search"] {
   min-width: 0;
   width: 100%;
   min-height: 48px;
-  /* 16px absolute, not a token. iOS Safari zooms the viewport on any text field
-     under 16px and does not zoom back, and that threshold is the user agent's —
-     it is not relative to anything this stylesheet controls.
-     var(--text-base) was the previous attempt and it does not hold here:
-     --text-base is 1rem, and this dialect sets its own :root font-size to
-     --text-xs (0.75rem) for CRT density, so a rem is 12px on this app and the
-     field rendered at exactly the size the rule was written to prevent. Every
-     rem token shrinks with that root; only an absolute unit clears a UA floor. */
+  // 16px absolute: iOS Safari zooms on any text field under 16px, and this
+  // dialect's root font-size is --text-xs, so every rem token lands below it.
   font-size: 16px;
   padding: var(--space-3) var(--space-4);
   border: 1px solid var(--border);
@@ -479,17 +439,13 @@ turbo-frame {
   }
 }
 
-.browse-link {
-  margin: var(--space-12) 0 var(--space-3);
-  font-size: var(--text-sm);
-}
-
 .port-list {
   width: 100%;
   max-width: none;
   margin-top: var(--space-8);
 }
 
+// Rows part with a 1px hairline, never a shadow.
 .port-row {
   display: grid;
   align-items: start;
@@ -504,7 +460,6 @@ turbo-frame {
 .data-state { display: inline-flex; width: fit-content; padding: var(--space-0-5) var(--space-1); border: 1px solid var(--border); border-radius: var(--radius-xs); color: var(--text-secondary); font-size: var(--text-xs); }
 .data-state--stale { border-color: var(--status-stale-border); color: var(--status-stale-text); }
 .ports-purpose { max-width: 58ch; font-size: var(--text-lg); line-height: 1.5; color: var(--text); }
-kbd { padding: var(--space-0-5) 4px; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: var(--radius-xs); font-family: var(--font-mono); }
 .install-panel { margin-block: var(--space-6); padding: var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-elevated); }
 .install-panel [data-controller="clipboard"] { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2); }
 .install-panel input { min-width: 0; background: var(--bg); color: var(--text); border: 1px solid var(--border); padding: var(--space-3); }
@@ -524,11 +479,6 @@ kbd { padding: var(--space-0-5) 4px; border: 1px solid var(--border); border-bot
   text-decoration: underline;
 }
 
-.port-comment {
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
-}
-
 .categories {
   width: 100%;
   max-width: none;
@@ -545,38 +495,16 @@ kbd { padding: var(--space-0-5) 4px; border: 1px solid var(--border); border-bot
   text-align: center;
 }
 
-/* Phone first. The nav wraps onto two rows with the brand taking the whole of the
-   first, so body needs 104px of clearance rather than 64; the search collapses to
-   one column and a port's definition list stacks its terms.
-   `.search-form .btn` had a width: 100% in the block this replaces, which the
-   probe read as 100% at 640 and 1440 too — the base already sets it, so it is
-   dropped rather than carried over. */
-body {
-  padding-block-start: 104px;
-}
-
-body > nav[aria-label="Primary navigation"] {
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-4);
-}
-
 body > nav[aria-label="Primary navigation"] .brand {
   flex-basis: 100%;
-}
-
-.search-form {
-  grid-template-columns: 1fr;
-}
-
-article dl {
-  grid-template-columns: 1fr;
-  gap: var(--space-1);
 }
 
 article dd + dt {
   margin-block-start: var(--space-3);
 }
 
+// From 640px the nav fits one row, the search puts its button beside the
+// field, and a port's terms sit beside their definitions.
 @media (min-width: 640px) {
   body {
     padding-block-start: 64px;
@@ -629,7 +557,9 @@ article dd + dt {
   text-decoration: none;
 }
 
-/* Empty / search miss — terminal tone */
+// ============================================================ states and overrides
+
+// Empty states and search misses keep the terminal's square, flat tone.
 .empty-state {
   border-radius: 0;
   background: transparent;
@@ -649,7 +579,6 @@ article dd + dt {
   letter-spacing: var(--tracking-wide);
 }
 
-/* Mono skeleton blocks */
 .skeleton {
   border-radius: 0;
   min-height: 0.75rem;
@@ -657,19 +586,9 @@ article dd + dt {
   border: 1px solid var(--border);
 }
 
-.port-row,
-.search-result {
+// Version numbers line up down the listing.
+.port-row {
   font-variant-numeric: tabular-nums;
-}
-
-/* Sticky meta strip on port detail */
-article > header {
-  position: sticky;
-  top: 52px;
-  z-index: 5;
-  padding-block: 0.5rem;
-  background: var(--bg);
-  border-bottom: 1px solid var(--border);
 }
 
 @media (prefers-contrast: more) {
@@ -677,5 +596,6 @@ article > header {
     --border: var(--text-secondary);
     --text-secondary: var(--text);
   }
+
   a { text-decoration: underline; }
 }

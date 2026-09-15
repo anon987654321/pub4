@@ -7,7 +7,7 @@ require_relative "../../gates/lib/source/dialect_purity"
 
 # Four dialects that must stay apart, and one map that owns the accents.
 #
-# brgen is social, amber is luxury, bsdports is the OpenBSD console green and
+# brgen is social, amber is luxury, bsdports keeps the wscons square corners and
 # MASTER's face is its own. The failure the gate exists for is a vertical
 # re-setting --accent for itself, which takes the colour out of brgen's accent
 # map and puts it somewhere nothing else reads.
@@ -48,11 +48,13 @@ class DialectPurityGateTest < Minitest::Test
     body.vertical-dating .dating { color: var(--accent); }
   SCSS
 
+  BSDPORTS = ":root {\n  color-scheme: light;\n  --radius-pill: 0;\n  --radius-card: 0;\n}\n"
+
   def sound_tree(dir)
     plant(dir, "RAILS/shared/design_tokens.yml", TOKENS)
     plant(dir, "RAILS/shared/WIRING_NOTES.md", WIRING)
     plant(dir, "RAILS/brgen/app/assets/stylesheets/application.scss", BRGEN)
-    plant(dir, "RAILS/bsdports/app/assets/stylesheets/application.scss", ":root { --fg: #63c363; }\n")
+    plant(dir, "RAILS/bsdports/app/assets/stylesheets/application.scss", BSDPORTS)
     plant(dir, "RAILS/amber/app/assets/stylesheets/application.scss", "// luxury palette\n")
   end
 
@@ -90,6 +92,15 @@ class DialectPurityGateTest < Minitest::Test
 
     refute result.ok?, "brgen without brgen-old on :root passed"
     assert_match(/brgen's :root does not include the brgen-old tokens/, result.failures.first)
+  end
+
+  def test_bsdports_with_rounded_corners_fails
+    result = gate_over do |dir|
+      plant(dir, "RAILS/bsdports/app/assets/stylesheets/application.scss", BSDPORTS.sub("--radius-card: 0;", "--radius-card: 8px;"))
+    end
+
+    refute result.ok?, "bsdports without the wscons radii on :root passed"
+    assert_match(/bsdports' :root does not zero the wscons radii/, result.failures.first)
   end
 
   # An engine that grows a stylesheet of its own again is held to the same map:

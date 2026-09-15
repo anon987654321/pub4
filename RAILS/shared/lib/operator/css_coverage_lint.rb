@@ -230,7 +230,7 @@ module Operator
 # since the vertical accent map was written, and collapsing each app's
 # stylesheets into one application.scss added `meta.load-css(` beside it. Names
 # followed by an open paren are calls, and neither is counted now.
-BASELINES = { "undefined_class" => 0, "unused_selector" => 123 }.freeze
+BASELINES = { "undefined_class" => 0, "unused_selector" => 118 }.freeze
 
     Finding = Struct.new(:kind, :name, :count, :example)
 

@@ -348,4 +348,4 @@ weight_kb:
 # It is a real raise, not a rounding one, and it is the price of the directive
 # rather than of new features. brgen and amber absorbed the same change inside
 # their existing ceilings.
-  bsdports: 65
+  bsdports: 64
