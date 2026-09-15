@@ -40,8 +40,9 @@ class TestDillaLivesets < Minitest::Test
 
     assert_equal %w[live set chord_based_beats], command
     assert_equal({ "LIVE_SEED" => "1133818290", "LIVE_KIT" => "synth", "LIVE_PROGRESSION" => "lydian_augmented_haze",
-                   "LIVE_VOICING" => "down", "LIVE_ROOM" => "warm" }, env.compact)
-    assert_equal %w[LIVE_BED LIVE_LENGTH], env.select { |_, v| v.nil? }.keys, "a choice the take never made is unset, not inherited"
+                   "LIVE_VOICING" => "down", "LIVE_ROOM" => "warm", "LIVE_KIT_CYCLE" => "phrase",
+                   "LIVE_WEIGHTS" => "phrase=0.62,kit=2.9,crackle=0.3" }, env.compact)
+    assert_equal %w[LIVE_BED LIVE_LENGTH LIVE_FORM LIVE_MUTE LIVE_DRAG], env.select { |_, v| v.nil? }.keys, "a choice the take never made is unset, not inherited"
   end
 
   # A pin replaces what the seed drew and nothing after it: the draw still
@@ -183,12 +184,21 @@ class TestDillaLivesets < Minitest::Test
   # Level first: every arm is trimmed to the baseline's loudness before a band
   # is compared or a window is heard.
   def test_ab_trims_match_every_arm_to_the_baseline
-    lufs = { "a.wav" => -16.0, "b.wav" => -16.4, "c.wav" => -13.0 }
-    trims = stubbing(ab_measure: ->(path) { { lufs: lufs.fetch(path) } }) do
-      Livesets.ab_trims("baseline" => "a.wav", "control" => "b.wav", "changed" => "c.wav")
-    end
+    trims = Livesets.ab_trims("baseline" => { lufs: -16.0 }, "control" => { lufs: -16.4 }, "changed" => { lufs: -13.0 })
 
     assert_equal({ "baseline" => 0.0, "control" => 0.4, "changed" => -3.0 }, trims)
+  end
+
+  # The measurement is read back from ffmpeg's own report: the loudness from the
+  # summary, the bands in the order the graph declares its volumedetects, and
+  # nothing at all when a band is missing rather than a report short of one.
+  def test_an_arm_is_measured_from_one_pass_down_a_pipe
+    bands = [4, 5, 6, 7, 8, 9].map.with_index { |n, i| "[Parsed_volumedetect_#{n} @ 0x1] mean_volume: -#{20 + i}.5 dB" }
+    report = "[Parsed_ebur128_1 @ 0x2] t: 1 I: -70.0 LUFS\n#{bands.reverse.join("\n")}\n  Summary:\n  Integrated loudness:\n    I:         -14.2 LUFS\n"
+
+    assert_equal({ lufs: -14.2, bands: [-20.5, -21.5, -22.5, -23.5, -24.5, -25.5] }, Livesets.ab_parse(report))
+    assert_nil Livesets.ab_parse(report.sub(bands.first, ""))
+    assert_includes Livesets.ab_measure_graph, "[m]ebur128=peak=true[loud]"
   end
 
   def test_the_interleaved_file_alternates_the_arms_at_their_trims
@@ -241,20 +251,64 @@ class TestDillaLivesets < Minitest::Test
     end
   end
 
-  # A kept take is never rendered over, and a render only takes the take's name
-  # once it has finished.
-  def test_a_take_is_not_written_over_and_arrives_whole
-    Dir.mktmpdir do |dir|
-      dest = File.join(dir, "chord_based_beats_7.wav")
-      writer = "#{RbConfig.ruby.shellescape} -e 'File.write(ARGV.last, %(audio))' --"
-      with_env("DILLA_OVERWRITE" => nil) { Livesets.render_to!(writer, dest) }
+  # The kit repeats every bar unless the take was kept with it every phrase, and
+  # LIVE_FORM arranges each bus by its engine layer across a fitted form.
+  def test_the_kit_cycles_each_bar_and_a_form_arranges_each_bus_by_its_layer
+    bar_kit = built("chord_based_beats", "LIVE_KIT_CYCLE" => nil)
+    phrase_kit = built("chord_based_beats", "LIVE_KIT_CYCLE" => "phrase")
 
-      assert_equal "audio", File.read(dest)
-      assert_empty Dir[File.join(dir, "*partial*")]
-      assert_raises(SystemExit) { with_env("DILLA_OVERWRITE" => nil) { Livesets.render_to!(writer, dest) } }
+    assert_includes bar_kit[:graph].grep(/\A\[kit\]apad/).first, "whole_dur=#{bar_kit[:row][:bar_s]}"
+    assert_includes phrase_kit[:graph].grep(/\A\[kit\]apad/).first, "whole_dur=#{phrase_kit[:row][:chord_s] * 8}"
+    shape = with_env("LIVE_FORM" => "soul_32") { Livesets.arrangement("chord_based_beats", 2.0, 64, []) }
+    # soul_32 is intro 4, main 8, build 8, turn 8, outro 4 of 32; over 32 bars
+    # of two seconds the intro is bars 0-3, and the arranged intro drops the
+    # harmony and the drums.
+    assert_equal [[0.0, 0.0], [8.0, 1.0], [24.0, 1.06], [40.0, 1.0], [56.0, 0.85]], shape[:phrase]
+    assert_equal [[0.0, 0.0], [8.0, 1.0], [56.0, 0.45]], shape[:kit]
+    assert_raises(SystemExit) { with_env("LIVE_FORM" => "polka") { Livesets.form } }
+    Livesets::SETS.each do |set|
+      pass = built(set, "LIVE_FORM" => "soul_32")
+      assert_empty Livesets.graph_problems(pass[:inputs], pass[:graph]), set
+      assert_equal "soul_32", pass[:row][:form]
+    end
+  end
+
+  # A mute keeps the graph and the pass stream and takes the part out; DRUMS=0
+  # is the engine's kit switch and mutes the kit here. Weights nudge a balance
+  # and are journalled, so a take recalls its own.
+  def test_mute_groups_and_weights_steer_a_pass_and_are_journalled
+    muted = built("sampled_based_beats", "LIVE_MUTE" => "kit,crackle", "LIVE_WEIGHTS" => "under=0.5")
+
+    assert_equal [[0, 0.0]], with_env("LIVE_MUTE" => "kit") { Livesets.arrangement("chord_based_beats", 2.0, 16, [[0, 1.0]]) }[:kit]
+    assert(muted[:graph].any? { |g| g.start_with?("[kit_block]volume='0.0'") })
+    assert(muted[:graph].any? { |g| g.include?("volume=0,") && g.end_with?("[crackle]") })
+    assert_equal "kit,crackle", muted[:row][:muted]
+    assert_equal 0.5, muted[:row][:weights][:under]
+    assert_includes muted[:graph].grep(/\[under_arranged\]\[kit_arranged\]amix/).first, "weights=0.3 0.5 3.4"
+    assert_equal %w[kit], with_env("LIVE_MUTE" => nil, "DRUMS" => "0") { Livesets.muted }
+    assert_raises(SystemExit) { with_env("LIVE_MUTE" => "vocals") { Livesets.muted } }
+    assert_raises(SystemExit) { with_env("LIVE_WEIGHTS" => "kit=loud") { Livesets.weights("chord_based_beats") } }
+    assert_equal "5", with_env("RENDER_SEED" => nil) { built("ambient_pads") && ENV.fetch("RENDER_SEED") }
+    assert_equal 0.9, built("ambient_pads", "LIVE_DRAG" => "0.9")[:row][:drag]
+    assert_raises(SystemExit) { with_env("LIVE_DRAG" => "1.2") { Livesets.pinned_drag(0.9) } }
+  end
+
+  # A render writes demo.wav and no other audio file, and only takes its name
+  # once it has finished, so a killed pass leaves the last good demo in place.
+  def test_a_render_lands_on_demo_wav_only_and_arrives_whole
+    Dir.mktmpdir do |dir|
+      demo = File.join(dir, "demo.wav")
+      File.write(demo, "last good")
       failing = "#{RbConfig.ruby.shellescape} -e 'File.write(ARGV.last, %(half)); exit 1' --"
-      assert_raises(SystemExit) { Livesets.render_to!(failing, File.join(dir, "other.wav")) }
-      refute File.exist?(File.join(dir, "other.wav")), "a failed render never takes the take's name"
+      assert_raises(SystemExit) { Livesets.render_to!(failing, demo) }
+      assert_equal "last good", File.read(demo)
+      assert_equal %w[demo.wav], Dir.children(dir)
+
+      writer = "#{RbConfig.ruby.shellescape} -e 'File.write(ARGV.last, %(audio))' --"
+      Livesets.render_to!(writer, demo)
+      assert_equal "audio", File.read(demo)
+      assert_raises(SystemExit) { Livesets.render_to!(writer, File.join(dir, "chord_based_beats_7.wav")) }
+      assert_equal %w[demo.wav], Dir.children(dir)
     end
   end
 

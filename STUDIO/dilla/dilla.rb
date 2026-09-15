@@ -8353,26 +8353,31 @@ def form_fit_enabled?(n_bars = nil)
   end
 end
 
+# The section a bar falls in when a form is stretched across n_bars: the map's
+# proportions, in bars, with the last section absorbing the rounding so the map
+# always covers the track exactly. Rounding each section independently leaves a
+# gap or an overlap at the end, and a bar belonging to no section falls through
+# to the legacy map -- which would put a stray `main` after the outro and be
+# hard to see. Takes the map rather than reading FORM, so the livesets arrange a
+# block with the same rule a render uses.
+def fitted_form_section(map, bar, n_bars)
+  cycle_len = map.sum { |_, len| len }
+  scaled = 0.0
+  map.each_with_index do |(kind, len), i|
+    return kind if i == map.length - 1
+
+    scaled += len.to_f * n_bars / cycle_len
+    return kind if bar < scaled.round
+  end
+end
+
 def form_section_at(bar, n_bars)
   map = resolve_form_map
   return unless map&.any?
   cycle_len = map.sum { |_, len| len }
   return if cycle_len <= 0
 
-  if form_fit_enabled?(n_bars) && n_bars.to_i.positive?
-    # Proportional, in bars, with the last section absorbing the rounding so the
-    # map always covers the track exactly. Rounding each section independently
-    # leaves a gap or an overlap at the end, and a bar belonging to no section
-    # falls through to the legacy map -- which would put a stray `main` after the
-    # outro and be hard to see.
-    scaled = 0.0
-    map.each_with_index do |(kind, len), i|
-      return kind if i == map.length - 1
-
-      scaled += len.to_f * n_bars / cycle_len
-      return kind if bar < scaled.round
-    end
-  end
+  return fitted_form_section(map, bar, n_bars) if form_fit_enabled?(n_bars) && n_bars.to_i.positive?
 
   pos = bar % cycle_len
   cumulative = 0

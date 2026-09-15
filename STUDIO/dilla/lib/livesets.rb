@@ -9,7 +9,7 @@
 #   ruby dilla.rb live set ambient_pads
 #   ruby dilla.rb live recall                    the last twenty passes
 #   ruby dilla.rb live recall 41205993           play that one again
-#   ruby dilla.rb live recall 41205993 keep      render it beside dilla.rb
+#   ruby dilla.rb live recall 41205993 keep      render it to demo.wav, record it beside dilla.rb
 #   ruby dilla.rb live recall keep               keep the last pass played
 #   ruby dilla.rb live broadcast [set]           all three in turn, or one all night
 #   ruby dilla.rb live dig                       fill samples/chopped/ from project/crate.yml
@@ -85,6 +85,13 @@ module Livesets
   def seed!
     n = (ENV["LIVE_SEED"] || Random.new_seed % 2_147_483_647).to_i
     srand(n)
+    # The engine's own pin follows the pass: a device from dilla.rb that draws
+    # through seed_for or noise_seed repeats with the pass that called it, rather
+    # than growing a second seed beside LIVE_SEED.
+    ENV["RENDER_SEED"] = n.to_s
+    # DILLA_FROZEN has nothing to hold still here: it stops a render writing the
+    # learned state, and a set learns nothing. What a set writes is the journal,
+    # which is the catalogue's record, and LIVE_JOURNAL is how a run keeps out.
     @seed = n
   end
 
@@ -210,7 +217,11 @@ module Livesets
   # -44 to -18 dB, so that is what it leaves behind.
   SONITEX_DB = -1.7
 
-  def level_of(kind) = "volume=#{kind == :vcs ? VCS_DB : SONITEX_DB}dB"
+  # A dry 1260 row keeps its limiter as well as its level: the limiters are the
+  # console's gain structure, and without them the kit's peaks alone set what
+  # the normaliser does to everything else, so dry measured the loss of the
+  # limit rather than of the colour.
+  def level_of(kind) = kind == :vcs ? "volume=#{VCS_DB}dB" : "volume=#{SONITEX_DB}dB,alimiter=limit=0.99"
 
   def room_warm(_set, _stage, rows) = rows.map { |kind, params| unit(kind, params) }
   def room_dry(_set, _stage, rows) = rows.map { |kind, _| level_of(kind) }
@@ -505,6 +516,116 @@ module Livesets
           .map { |i| "unseeded noise: #{i}" }
   end
 
+  # The arrangement: what each bus plays when, as gain points over the block.
+  #
+  # LIVE_FORM names a form from the engine's FORM_PRESETS, stretched across the
+  # block by the engine's own fitted_form_section, and each bus follows the
+  # engine layer it is in SECTION_LAYER_GAIN_ARRANGED -- where the part that
+  # carries a section boundary leaves rather than ducks, because a timbre change
+  # moved the engine's novelty detector 14 times as far as a 6 dB level change.
+  # It is a choice, as SECTION_LAYERS=full is in a render: an arranged intro on
+  # the chord set is crackle alone. Unset, each set keeps its own drop.
+  BUS_LAYERS = {
+    "chord_based_beats" => { phrase: :harm, kit: :drums },
+    "sampled_based_beats" => { phrase: :chops, under: :sample, kit: :drums },
+    "ambient_pads" => { phrase: :pad, under: :sample },
+  }.freeze
+
+  def form
+    want = ENV.fetch("LIVE_FORM", "").to_s
+    return nil if want.empty?
+
+    abort "no form #{want} — have #{FORM_PRESETS.keys.join(', ')}" unless FORM_PRESETS.key?(want.to_sym)
+    want
+  end
+
+  # How loud each bus meets the others, as data a pass can be nudged by:
+  # LIVE_WEIGHTS=phrase=3.2,kit=2.9 overrides any of them, and the journal keeps
+  # what played, so recall puts a take's own balance back.
+  WEIGHTS = {
+    # The chord set's phrase was 0.62, and measured with each bus muted in turn
+    # its chords sat 27 dB under its kit (-38.7 LUFS against -11.2): sines are an
+    # eighth of full scale out of ffmpeg, and a beat set whose chords cannot be
+    # heard is a drum loop. At 6.0 they sit 8 dB under (-19.0), a beat with
+    # harmony in it. The take kept at 0.62 replays at 0.62.
+    "chord_based_beats" => { phrase: 6.0, kit: 2.9, crackle: 0.30 },
+    "sampled_based_beats" => { phrase: 0.30, under: 0.14, kit: 3.4, crackle: 0.34 },
+    "ambient_pads" => { phrase: 1.0, under: 0.5, air: 0.30 },
+  }.freeze
+
+  def weights(set)
+    given = ENV.fetch("LIVE_WEIGHTS", "").split(",").to_h do |pair|
+      bus, value = pair.split("=", 2)
+      number = Float(value.to_s, exception: false)
+      abort "LIVE_WEIGHTS: #{pair.inspect} is not bus=number" unless number && WEIGHTS.fetch(set).key?(bus.to_s.strip.to_sym)
+
+      [bus.strip.to_sym, number]
+    end
+    WEIGHTS.fetch(set).merge(given)
+  end
+
+  def mix_weights(set, *buses) = buses.map { |bus| weights(set).fetch(bus) }.join(" ")
+
+  # Mute groups, from LIVE_MUTE=kit,phrase: a bus in the list plays at zero for
+  # the whole block. The graph keeps its shape and the pass stream its draws, so
+  # a muted pass is the same pass with a part out, and DRUMS=0 -- the engine's
+  # own switch for the kit -- mutes it here too.
+  MUTABLE = %w[phrase under kit crackle air].freeze
+
+  def muted
+    groups = ENV.fetch("LIVE_MUTE", "").split(",").map(&:strip).reject(&:empty?)
+    unknown = groups - MUTABLE
+    abort "LIVE_MUTE: no group #{unknown.join(', ')} — have #{MUTABLE.join(', ')}" if unknown.any?
+
+    groups << "kit" if ENV["DRUMS"] == "0"
+    groups.uniq
+  end
+
+  def mute(bus) = muted.include?(bus.to_s) ? "volume=0," : ""
+
+  def arrangement(set, bar, total, drop)
+    shape = arranged(set, bar, total, drop)
+    shape.to_h { |bus, points| [bus, muted.include?(bus.to_s) ? [[0, 0.0]] : points] }
+  end
+
+  def arranged(set, bar, total, drop)
+    layers = BUS_LAYERS.fetch(set)
+    return layers.keys.to_h { |bus| [bus, bus == :phrase ? drop : [[0, 1.0]]] } unless form
+
+    map = FORM_PRESETS.fetch(form.to_sym).fetch(:map)
+    n_bars = [(total / bar).floor, 1].max
+    sections = (0...n_bars).map { |b| fitted_form_section(map, b, n_bars) }
+    layers.to_h do |bus, layer|
+      points = sections.each_with_index.map { |kind, b| [(b * bar).round(3), SECTION_LAYER_GAIN_ARRANGED.fetch(kind, {}).fetch(layer, 1.0)] }
+      [bus, points.chunk_while { |a, b| a.last == b.last }.map(&:first)]
+    end
+  end
+
+  # One bus as a block: its cycle, padded to exact length, copied for the whole
+  # block, then shaped. Buses are repeated apart and summed after, so each can
+  # follow its own part of the arrangement and each can cycle at its own length.
+  def block!(graph, bus, cycle_s, total, points)
+    graph << "[#{bus}]apad=whole_dur=#{cycle_s},atrim=0:#{cycle_s},asetpts=N/SR/TB[#{bus}_cycle]"
+    graph.concat repeat("#{bus}_cycle", cycle_s, total, "#{bus}_block")
+    graph << "[#{bus}_block]#{DillaAutomation.volume_filter(points)}[#{bus}_arranged]"
+  end
+
+  # The kit repeats every bar. The chord set used to mix its one-bar kit into a
+  # four-bar phrase with amix duration=first, which pads the shorter input with
+  # silence, so its drums played the first bar of every four: rendered on
+  # 2026-09-15, bars two to four read nothing above 1.5 kHz. LIVE_KIT_CYCLE=phrase
+  # is that shape, and the take kept under it replays with it.
+  KIT_CYCLES = %w[bar phrase].freeze
+
+  def kit_cycle
+    want = ENV.fetch("LIVE_KIT_CYCLE", "bar")
+    abort "no kit cycle #{want.inspect} — have #{KIT_CYCLES.join(', ')}" unless KIT_CYCLES.include?(want)
+
+    want
+  end
+
+  def kit_cycle_s(bar, phrase_s) = kit_cycle == "phrase" ? phrase_s : bar
+
   # A cycle played for the whole block: split and concatenated, never aloop'd.
   # At 1.5 million samples aloop stopped being reproducible -- the same seed and
   # a byte-identical graph rendered two pad takes that differed at -17 dBFS RMS
@@ -550,19 +671,25 @@ module Livesets
     end
   end
 
-  # A take is never written over, and never half-written under its own name.
-  # Renders are irreplaceable and not deterministic, so an existing file stops
-  # the pass (DILLA_OVERWRITE=1 is the engine's one way past that); and ffmpeg
-  # writes beside the take and the finished file is renamed onto it, so a pass
-  # killed halfway leaves a .partial.wav that says what it is rather than a
-  # short take that does not.
+  # Where a render may land. The operator's rule, 2026-09-15: the only audio
+  # file dilla keeps is demo.wav beside dilla.rb, and a render overwrites it. So
+  # LIVE_RENDER_TO names demo.wav or "-", a wav down stdout for whatever reads
+  # it; any other file is refused before a sample is made. What makes a kept
+  # take survive is its journal line, not its audio.
+  DEMO = File.join(D, "demo.wav")
+
+  # And a render only takes demo.wav's name once it has finished: ffmpeg writes
+  # demo.partial.wav and the finished file is renamed onto it, so a failed pass
+  # leaves the last good demo where it was, and its fragment goes with it.
   def render_to!(cmd, dest)
-    abort "#{dest} exists -- a take is not rendered over (DILLA_OVERWRITE=1 to replace it)" unless take_overwrite_allowed?(dest) || !File.exist?(dest)
+    return system("/bin/zsh", "-c", "#{cmd} -f wav -") || abort("render failed") if dest == "-"
+    abort "#{dest}: a render writes demo.wav beside dilla.rb or a wav to stdout (-), and no other file" unless File.basename(dest) == "demo.wav"
 
     FileUtils.mkdir_p(File.dirname(dest))
     partial = dest.sub(/(\.\w+)?\z/, '.partial\1')
     ok = system("/bin/zsh", "-c", "#{cmd} -y #{partial.shellescape}")
-    abort "render failed -- #{File.basename(partial)} kept for inspection" unless ok
+    FileUtils.rm_f(partial) unless ok # scan: intentional — the fragment this call just wrote
+    abort "render failed" unless ok
 
     File.rename(partial, dest)
     warn "kept #{dest}"
@@ -603,6 +730,18 @@ module Livesets
   # a vamp with no arc and sixteen outruns a 96-second block at this tempo.
   def chord_pool
     (CURATED_PROGRESSIONS + ARTIST_VERIFIED_PROGRESSIONS.keys).uniq
+  end
+
+  # How far the record is dragged under its own pitch, pinned by LIVE_DRAG. The
+  # draw is made either way, as with LIVE_PROGRESSION, so a pinned drag moves no
+  # later choice. Downward only: a drag above 1.0 is the record sped up.
+  def pinned_drag(drawn)
+    want = ENV.fetch("LIVE_DRAG", "").to_s
+    return drawn if want.empty?
+
+    value = Float(want, exception: false)
+    abort "LIVE_DRAG=#{want} is not a ratio between 0.5 and 1.0" unless value && value.between?(0.5, 1.0)
+    value
   end
 
   # The progression a pass plays, pinned by LIVE_PROGRESSION the way LIVE_BED
@@ -681,23 +820,21 @@ module Livesets
     crackle_i = kit[:crackle_i]
 
     phrase_s = (chord_s * chords.size).round(4)
-    graph << "[phrase][kit]amix=inputs=2:weights=0.62 2.9:normalize=0:duration=first," \
-             "#{console('chord_based_beats', :sum)}," \
-             "atrim=0:#{phrase_s},asetpts=N/SR/TB[barmix]"
-
     # The same arrangement rule as the sampled set: the harmony steps back in the
     # middle so the kit carries it, then returns. Measured in phrases here rather
     # than bars, because a phrase is four or eight chords and the drop has to land
     # on one of them.
-    drop_from = (phrase_s * 2).round(3)
-    drop_to = (phrase_s * 3).round(3)
-    graph.concat repeat("barmix", phrase_s, total, "looped")
-    graph << "[looped]volume='if(between(t,#{drop_from},#{drop_to}),0.5,1.0)':eval=frame," \
+    drop = [[0, 1.0], [(phrase_s * 2).round(3), 0.5], [(phrase_s * 3).round(3), 1.0]]
+    shape = arrangement("chord_based_beats", bar, total, drop)
+    block!(graph, "phrase", phrase_s, total, shape[:phrase])
+    block!(graph, "kit", kit_cycle_s(bar, phrase_s), total, shape[:kit])
+    graph << "[phrase_arranged][kit_arranged]amix=inputs=2:weights=#{mix_weights('chord_based_beats', :phrase, :kit)}:normalize=0:duration=first," \
+             "#{console('chord_based_beats', :sum)}," \
              "vibrato=f=1.5:d=0.11," \
              "acompressor=threshold=0.4:ratio=3.2:attack=9:release=210[body]"
     graph << "[#{crackle_i}:a]highpass=f=2200,volume=0.9," \
-             "#{console('chord_based_beats', :crackle)}[crackle]"
-    graph << "[body][crackle]amix=inputs=2:weights=1 0.30:normalize=0:duration=first," \
+             "#{mute(:crackle)}#{console('chord_based_beats', :crackle)}[crackle]"
+    graph << "[body][crackle]amix=inputs=2:weights=1 #{weights('chord_based_beats').fetch(:crackle)}:normalize=0:duration=first," \
              "#{console('chord_based_beats', :master)}," \
              "aecho=0.85:0.7:83|151|229:0.20|0.12|0.06," \
              "treble=g=3:f=6500,bass=g=4:f=95," \
@@ -708,8 +845,8 @@ module Livesets
 
     journal!(
       at: Time.now.utc.iso8601, seed: seed, set: "chord_based_beats", seconds: total, bed: nil, progression_name: name.to_s,
-      progression: symbols, bpm: bpm, bar_s: bar, chord_s: chord_s,
-      weights: { phrase: 0.62, kit: 2.9, crackle: 0.30 },
+      progression: symbols, bpm: bpm, bar_s: bar, chord_s: chord_s, kit_cycle: kit_cycle, form: form, muted: muted.join(","),
+      weights: weights("chord_based_beats"),
       drums: { kick_ms: hits[:kick], snare_ms: hits[:snare], ghost_ms: hits[:ghost], hat_ms: hits[:hat] },
       **console_record("chord_based_beats"), rig: "dilla.rb live set chord_based_beats"
     )
@@ -796,7 +933,7 @@ module Livesets
     bed, slug, sw = pick_bed
     # 0.92-0.96: a semitone and a half down at the deep end, a third of one at the
     # shallow. Never none.
-    drag = (0.92 + rand * 0.04).round(4)
+    drag = pinned_drag((0.92 + rand * 0.04).round(4))
     g = grid(bed, drag)
     bar = g[:bar]
     step = g[:step]
@@ -854,23 +991,19 @@ module Livesets
              "volume=0.42,lowpass=f=5200,aecho=0.8:0.7:60:0.3," \
              "#{console('sampled_based_beats', :under)}[under]"
 
-    graph << "[phrase][under][kit]amix=inputs=3:weights=0.30 0.14 3.4:" \
-             "normalize=0:duration=longest," \
-             "#{console('sampled_based_beats', :sum)}," \
-             "atrim=0:#{bar},asetpts=N/SR/TB[barmix]"
-
     # Arrangement, not a loop on repeat: the phrase steps back for eight bars in the
     # middle so the kit and the record carry it, then returns. A beat that never
     # changes is a beat nobody listens to twice.
-    drop_from = (bar * 16).round(3)
-    drop_to = (bar * 24).round(3)
-    graph.concat repeat("barmix", bar, total, "looped")
-    graph << "[looped]volume='if(between(t,#{drop_from},#{drop_to}),0.55,1.0)':eval=frame," \
+    shape = arrangement("sampled_based_beats", bar, total, [[0, 1.0], [(bar * 16).round(3), 0.55], [(bar * 24).round(3), 1.0]])
+    %w[phrase under kit].each { |bus| block!(graph, bus, bar, total, shape[bus.to_sym]) }
+    graph << "[phrase_arranged][under_arranged][kit_arranged]amix=inputs=3:weights=#{mix_weights('sampled_based_beats', :phrase, :under, :kit)}:" \
+             "normalize=0:duration=first," \
+             "#{console('sampled_based_beats', :sum)}," \
              "vibrato=f=1.7:d=0.14," \
              "acompressor=threshold=0.4:ratio=3.2:attack=9:release=210[body]"
     graph << "[#{crackle_i}:a]highpass=f=2200,volume=0.9," \
-             "#{console('sampled_based_beats', :crackle)}[crackle]"
-    graph << "[body][crackle]amix=inputs=2:weights=1 0.34:normalize=0:duration=first," \
+             "#{mute(:crackle)}#{console('sampled_based_beats', :crackle)}[crackle]"
+    graph << "[body][crackle]amix=inputs=2:weights=1 #{weights('sampled_based_beats').fetch(:crackle)}:normalize=0:duration=first," \
              "#{console('sampled_based_beats', :master)}," \
              "aecho=0.85:0.7:83|151|229:0.20|0.12|0.06," \
              "tremolo=f=#{(2.0 / bar).round(3)}:d=0.10," \
@@ -883,8 +1016,8 @@ module Livesets
     journal!(
       at: Time.now.utc.iso8601, seed: seed, set: "sampled_based_beats", seconds: total, bed: slug, sample_worth: sw,
       bpm: g[:bpm], drag: drag, bars_in_loop: g[:bars_in_loop], voicing: choice, progression: prog,
-      chop_at: slice_at, reversed: reverse, bar_s: bar,
-      weights: { phrase: 0.30, under: 0.14, kit: 3.4 },
+      chop_at: slice_at, reversed: reverse, bar_s: bar, form: form, muted: muted.join(","),
+      weights: weights("sampled_based_beats"),
       drums: { kick_ms: hits[:kick], snare_ms: hits[:snare], ghost_ms: hits[:ghost], hat_ms: hits[:hat] },
       **console_record("sampled_based_beats"), rig: "dilla.rb live set sampled_based_beats"
     )
@@ -929,7 +1062,7 @@ module Livesets
     # Deeper than the beat sets. Their 0.92-0.96 keeps a bed danceable; a pad is
     # allowed to sit a whole tone under the record, and the slower it runs the
     # more of the tail you hear, which is the material this set is made of.
-    drag = (0.86 + rand * 0.05).round(4)
+    drag = pinned_drag((0.86 + rand * 0.05).round(4))
     bed, slug, sw = pick_bed
     # Two bars per chord, so the grid wants a slower count than the beat sets.
     g = grid(bed, drag, want: 70, range: 60..84)
@@ -981,19 +1114,19 @@ module Livesets
     # identical in every number and different in the audio.
     inputs << "-f lavfi -t #{total} -i anoisesrc=c=pink:d=#{total}:a=0.010:seed=#{(rand * 2_147_483_647).to_i}"
     air_i = inputs.size - 1
-    graph << "[#{air_i}:a]lowpass=f=4200,volume=0.7,#{console('ambient_pads', :air)}[air]"
+    graph << "[#{air_i}:a]lowpass=f=4200,volume=0.7,#{mute(:air)}#{console('ambient_pads', :air)}[air]"
 
     phrase_s = (hold * prog.size).round(4)
-    graph << "[phrase][under]amix=inputs=2:weights=1.0 0.5:normalize=0:duration=first," \
-             "atrim=0:#{phrase_s},asetpts=N/SR/TB[cycle]"
-    graph.concat repeat("cycle", phrase_s, total, "looped")
+    shape = arrangement("ambient_pads", bar, total, [[0, 1.0]])
+    %w[phrase under].each { |bus| block!(graph, bus, phrase_s, total, shape[bus.to_sym]) }
     # One slow breath across the whole block rather than a tremolo rate:
     # 1/(phrase*2) puts the swell either side of the loop point, so the place the
     # cycle restarts is the place it is quietest.
-    graph << "[looped]volume='0.72+0.28*sin(2*PI*t/#{(phrase_s * 2).round(3)})':eval=frame," \
+    graph << "[phrase_arranged][under_arranged]amix=inputs=2:weights=#{mix_weights('ambient_pads', :phrase, :under)}:normalize=0:duration=first," \
+             "volume='0.72+0.28*sin(2*PI*t/#{(phrase_s * 2).round(3)})':eval=frame," \
              "vibrato=f=0.28:d=0.06," \
              "acompressor=threshold=0.5:ratio=2.4:attack=180:release=900[body]"
-    graph << "[body][air]amix=inputs=2:weights=1 0.30:normalize=0:duration=first," \
+    graph << "[body][air]amix=inputs=2:weights=1 #{weights('ambient_pads').fetch(:air)}:normalize=0:duration=first," \
              "#{console('ambient_pads', :master)}," \
              "aecho=0.88:0.75:730|1130:0.24|0.14," \
              "treble=g=-2:f=7000,bass=g=3:f=110," \
@@ -1005,8 +1138,8 @@ module Livesets
     journal!(
       at: Time.now.utc.iso8601, seed: seed, set: "ambient_pads", seconds: total, bed: slug, sample_worth: sw,
       bpm: g[:bpm], drag: drag, bars_in_loop: g[:bars_in_loop], progression: prog,
-      chop_at: slice_at, hold_s: hold, bar_s: bar, drums: nil,
-      weights: { phrase: 1.0, under: 0.5, air: 0.30 },
+      chop_at: slice_at, hold_s: hold, bar_s: bar, drums: nil, form: form, muted: muted.join(","),
+      weights: weights("ambient_pads"),
       **console_record("ambient_pads"), rig: "dilla.rb live set ambient_pads"
     )
 
@@ -1050,7 +1183,7 @@ module Livesets
                   r["bed"] || r["progression_name"] || "-", r["bpm"], r["at"])
     end
     puts "\n  ruby dilla.rb live recall <seed>          play it again"
-    puts "  ruby dilla.rb live recall <seed> keep     render it beside dilla.rb"
+    puts "  ruby dilla.rb live recall <seed> keep     render it to demo.wav and keep its record"
   end
 
   # Every choice a pass journals, by the knob that makes it and the value a row
@@ -1063,12 +1196,17 @@ module Livesets
   RECALLED = {
     "LIVE_BED" => ["bed", nil], "LIVE_KIT" => ["kit", nil], "LIVE_PROGRESSION" => ["progression_name", nil],
     "LIVE_VOICING" => ["voicing", "down"], "LIVE_LENGTH" => ["seconds", nil], "LIVE_ROOM" => ["room", "warm"],
+    "LIVE_KIT_CYCLE" => ["kit_cycle", "phrase"], "LIVE_FORM" => ["form", nil], "LIVE_MUTE" => ["muted", nil], "LIVE_WEIGHTS" => ["weights", nil], "LIVE_DRAG" => ["drag", nil],
   }.freeze
 
   def recall_env(row)
-    pins = RECALLED.to_h { |knob, (key, legacy)| [knob, row.key?(key) ? row[key]&.to_s : legacy] }
+    pins = RECALLED.to_h { |knob, (key, legacy)| [knob, row.key?(key) ? knob_value(row[key]) : legacy] }
     { "LIVE_SEED" => row["seed"].to_s }.merge(pins)
   end
+
+  # A journalled choice as the knob spells it: a hash of weights goes back as
+  # phrase=0.62,kit=2.9.
+  def knob_value(value) = value.is_a?(Hash) ? value.map { |k, v| "#{k}=#{v}" }.join(",") : value&.to_s
 
   # Play a pass again, or keep one. keep with no seed means the last pass
   # played, which is the way it is wanted: something goes past, it was good, and
@@ -1099,11 +1237,11 @@ module Livesets
     label = "#{row['set']} #{row['seed']}"
     if keep
       take = File.join(D, "#{row['set']}_#{row['seed']}")
-      env["LIVE_RENDER_TO"] = "#{take}.wav"
+      env["LIVE_RENDER_TO"] = DEMO
       # The journal line is the sidecar. It already holds every decision the pass
       # made, so writing a second description of it would be a second source.
       File.write("#{take}.json", JSON.pretty_generate(row))
-      warn "keeping #{label} -> #{File.basename(take)}.wav (the wav is gitignored; the .json is the tracked record)"
+      warn "keeping #{label} -> demo.wav, and #{File.basename(take)}.json as the tracked record that rebuilds it"
     else
       warn "replaying #{label}"
     end
@@ -1126,34 +1264,37 @@ module Livesets
 
   # A/B by rendering, as a command rather than a habit.
   #
-  #   ruby dilla.rb live ab chord_based_beats 16 LIVE_ROOM=dry    the knobs, changed
-  #   ruby dilla.rb live ab ambient_pads 24 ref=HEAD seed=777      this tree against a commit
+  #   ruby dilla.rb live ab chord_based_beats 16 LIVE_ROOM=dry        the knobs, changed
+  #   ruby dilla.rb live ab ambient_pads 24 ref=HEAD seed=777 play     this tree against a commit
   #
   # Three arms of one seed: baseline, a control that is the baseline again, and
   # the changed arm, which differs in the stated knobs or runs this tree where
   # the other two run `ref`. The control is what turns "these differ by 0.4 dB"
-  # into a finding or into render noise. Every arm is then level-matched to the
-  # baseline before anything is compared, because the louder arm wins every
-  # informal comparison; and the verdict is heard, not hashed -- interleaved.wav
-  # alternates baseline and changed every four seconds at matched level.
+  # into a finding or into render noise. Every arm is level-matched to the
+  # baseline before a band is compared, because the louder arm wins every
+  # informal comparison. `play` then plays baseline and changed in turn, every
+  # four seconds at matched level, because the verdict is heard, not hashed.
+  #
+  # No arm is a file. The only audio dilla keeps is demo.wav, so each arm is
+  # rendered down a pipe into the measurement, and the audition renders the two
+  # arms again down two pipes into the speaker.
   AB_WINDOW = 4.0
+  AB_BANDS = [[30, 120], [120, 300], [300, 800], [800, 2000], [2000, 5000], [5000, 12_000]].freeze
 
   def ab!(argv)
     set = argv.shift
-    abort "usage: ruby dilla.rb live ab <#{SETS.join('|')}> [seconds] [seed=N] [ref=<commit>] [KNOB=value ...]" unless SETS.include?(set)
+    abort "usage: ruby dilla.rb live ab <#{SETS.join('|')}> [seconds] [seed=N] [ref=<commit>] [play] [KNOB=value ...]" unless SETS.include?(set)
 
+    play = argv.delete("play")
     plan = ab_plan(set, argv)
-    name = "live_ab_#{set}_#{plan[:seed]}_#{Time.now.strftime('%Y%m%d_%H%M%S')}"
-    work = File.join(SCRATCH_DIR, name)
+    work = File.join(SCRATCH_DIR, "live_ab_#{set}_#{plan[:seed]}_#{Time.now.strftime('%Y%m%d_%H%M%S')}")
     FileUtils.mkdir_p(work)
-    rendered = plan[:arms].to_h { |arm, spec| [arm, ab_render(arm, spec, plan, work, File.join(OUTPUT_DIR, "#{name}_#{arm}.wav"))] }
-    trims = ab_trims(rendered)
-    report = ab_report(rendered, trims)
+    measures = plan[:arms].to_h { |arm, spec| [arm, ab_measure_arm(arm, spec, plan, work)] }
+    trims = ab_trims(measures)
+    report = ab_report(measures, trims)
     File.write(File.join(work, "report.txt"), report)
     puts report
-    heard = File.join(OUTPUT_DIR, "#{name}_interleaved.wav")
-    ab_interleave(rendered, trims, plan[:seconds], heard)
-    puts "interleaved: #{heard} (A baseline, B changed, every #{AB_WINDOW}s, level-matched)"
+    ab_audition(plan, trims, work) if play
   end
 
   # The arms as data, so which environment each one runs is testable without a
@@ -1179,33 +1320,59 @@ module Livesets
   AB_CARRIED = %w[PATH HOME TMPDIR LANG SHELL USER DILLA_SCRATCH_DIR
                   LIVE_KIT LIVE_PROGRESSION LIVE_VOICING].freeze
 
-  # The arms are renders, so they land where every render lands, beside
-  # dilla.rb; their journals, logs and any exported tree are scratch.
-  def ab_render(arm, (ref, env), plan, out, dest)
-    journal = File.join(out, "#{arm}.jsonl")
+  # One arm as a shell command that writes its wav to stdout, journalling into
+  # scratch so the catalogue's history does not grow by three passes.
+  def ab_arm_command(arm, (ref, env), plan, work)
+    journal = File.join(work, "#{arm}.jsonl")
     FileUtils.cp(journal_path, journal) if File.file?(journal_path)
     carried = AB_CARRIED.to_h { |k| [k, ENV.fetch(k, nil)] }.compact
-    full = carried.merge(env, "LIVE_RENDER_TO" => dest, "LIVE_JOURNAL" => journal, "LIVE_BEDS_DIR" => beds_dir)
-    warn "rendering #{arm}#{ref ? " at #{ref}" : ''}…"
-    ok = system(full, RbConfig.ruby, ab_entry(ref, out), "live", "set", plan[:set],
-                unsetenv_others: true, out: File::NULL, err: File.join(out, "#{arm}.log"))
-    abort "ab: #{arm} failed to render -- see #{arm}.log in #{out}" unless ok && File.file?(dest)
-
-    dest
+    full = carried.merge(env, "LIVE_RENDER_TO" => "-", "LIVE_JOURNAL" => journal, "LIVE_BEDS_DIR" => beds_dir)
+    assignments = full.map { |k, v| "#{k}=#{v}".shellescape }.join(" ")
+    "env -i #{assignments} #{RbConfig.ruby.shellescape} #{ab_entry(ref, work).shellescape} " \
+      "live set #{plan[:set]} 2>>#{File.join(work, "#{arm}.log").shellescape}"
   end
 
-  # dilla.rb as it was at `ref`, exported beside the arms with the MASTER code it
+  def ab_measure_arm(arm, spec, plan, work)
+    warn "measuring #{arm}#{spec.first ? " at #{spec.first}" : ''}…"
+    measure = "#{FF} -nostdin -hide_banner -nostats -i - -filter_complex #{ab_measure_graph.shellescape} " \
+              "-map '[loud]' -f null -"
+    out = `/bin/zsh -c #{"#{ab_arm_command(arm, spec, plan, work)} | #{measure} 2>&1".shellescape}`
+    ab_parse(out) || abort("ab: #{arm} rendered nothing measurable -- see #{arm}.log in #{work}")
+  end
+
+  # Loudness and six bands in one pass over the pipe. The bands are cascaded
+  # twice each, so a neighbouring band does not leak into the reading.
+  def ab_measure_graph
+    splits = (0...AB_BANDS.size).map { |i| "[b#{i}]" }.join
+    bands = AB_BANDS.each_with_index.map do |(lo, hi), i|
+      "[b#{i}]highpass=f=#{lo},highpass=f=#{lo},lowpass=f=#{hi},lowpass=f=#{hi},volumedetect,anullsink"
+    end
+    (["[0:a]asplit=#{AB_BANDS.size + 1}[m]#{splits}", "[m]ebur128=peak=true[loud]"] + bands).join(";")
+  end
+
+  # ffmpeg's report, read back. volumedetect instances are numbered in the order
+  # the graph declares them, which is the order of AB_BANDS.
+  def ab_parse(text)
+    summary = text[(text.rindex("Summary:") || return)..]
+    lufs = summary[/I:\s+(-?[\d.]+) LUFS/, 1] or return nil
+    bands = text.scan(/Parsed_volumedetect_(\d+) @ \S+\] mean_volume: (-?[\d.]+) dB/)
+                .sort_by { |n, _| n.to_i }.map { |_, db| db.to_f }
+    bands.size == AB_BANDS.size ? { lufs: lufs.to_f, bands: bands } : nil
+  end
+
+  # dilla.rb as it was at `ref`, exported into scratch with the MASTER code it
   # loads at boot. The crate is linked in rather than copied: an old tree reads
   # samples/ where it always did.
   AB_EXPORT = %w[STUDIO/dilla MASTER/lib MASTER/Gemfile MASTER/Gemfile.lock].freeze
-  def ab_entry(ref, out)
+
+  def ab_entry(ref, work)
     return File.join(D, "dilla.rb") unless ref
 
-    tree = File.join(out, "tree_#{ref.gsub(/[^\w.-]/, '_')}")
+    tree = File.join(work, "tree_#{ref.gsub(/[^\w.-]/, '_')}")
     unless File.directory?(tree)
       FileUtils.mkdir_p(tree)
       root = `git -C #{D.shellescape} rev-parse --show-toplevel`.strip
-      ok = system("/bin/zsh", "-c", "git -C #{root.shellescape} archive #{ref.shellescape} #{AB_EXPORT.join(" ")} | tar -x -C #{tree.shellescape}")
+      ok = system("/bin/zsh", "-c", "git -C #{root.shellescape} archive #{ref.shellescape} #{AB_EXPORT.join(' ')} | tar -x -C #{tree.shellescape}")
       abort "ab: cannot export #{ref}" unless ok
       File.symlink(File.join(D, "samples"), File.join(tree, "STUDIO", "dilla", "samples")) if File.directory?(File.join(D, "samples"))
     end
@@ -1213,13 +1380,12 @@ module Livesets
   end
 
   # Decibels to add to each arm so its integrated loudness is the baseline's.
-  def ab_trims(rendered)
-    lufs = rendered.transform_values { |path| ab_measure(path)[:lufs] }
-    lufs.transform_values { |value| (lufs.fetch("baseline") - value).round(2) }
+  def ab_trims(measures)
+    measures.transform_values { |m| (measures.fetch("baseline")[:lufs] - m[:lufs]).round(2) }
   end
 
-  def ab_report(rendered, trims)
-    bands = ab_bands(rendered).to_h { |arm, levels| [arm, levels.map { |db| db + trims.fetch(arm) }] }
+  def ab_report(measures, trims)
+    bands = measures.to_h { |arm, m| [arm, m[:bands].map { |db| db + trims.fetch(arm) }] }
     noise = ab_band_move(bands, "control")
     moved = ab_band_move(bands, "changed")
     lines = trims.map { |arm, db| format("%-9s trim %+6.2f dB  bands %s", arm, db, bands[arm].map { |b| format('%6.1f', b) }.join(' ')) }
@@ -1231,20 +1397,19 @@ module Livesets
 
   def ab_band_move(bands, arm) = bands.fetch(arm).zip(bands.fetch("baseline")).map { |a, b| (a - b).abs }.max
 
-  # Baseline and changed in turn, every AB_WINDOW seconds, each at its trim.
-  def ab_interleave(rendered, trims, seconds, dest)
-    graph = ab_interleave_graph(trims, seconds)
-    abort "#{dest} exists" if File.exist?(dest)
-
-    ok = system(FF, "-nostdin", "-loglevel", "error", "-i", rendered.fetch("baseline"), "-i", rendered.fetch("changed"),
-                "-filter_complex", graph.join(";"), "-map", "[out]", dest)
-    abort "ab: interleave failed" unless ok
+  # Baseline and changed in turn, each at its trim, straight to the speaker.
+  def ab_audition(plan, trims, work)
+    a, b = %w[baseline changed].map { |arm| ab_arm_command(arm, plan[:arms].fetch(arm), plan, work) }
+    graph = ab_interleave_graph(trims, plan[:seconds]).join(";")
+    warn "playing: A baseline, B changed, every #{AB_WINDOW}s, level-matched"
+    system("/bin/zsh", "-c", "#{FF} -nostdin -loglevel error -i <(#{a}) -i <(#{b}) -filter_complex #{graph.shellescape} " \
+                             "-map '[out]' -f wav - | #{FFPLAY} -nodisp -autoexit -loglevel quiet -i -")
   end
 
   def ab_interleave_graph(trims, seconds)
     starts = (0...(seconds / AB_WINDOW).ceil).map { |k| k * AB_WINDOW }
     turns = starts.each_index.group_by(&:even?)
-    graph = [[true, 0, "baseline"], [false, 1, "changed"]].filter_map do |even, input, _|
+    graph = [[true, 0], [false, 1]].filter_map do |even, input|
       next unless turns[even]
 
       "[#{input}:a]asplit=#{turns[even].size}#{turns[even].map { |k| "[s#{k}]" }.join}"
