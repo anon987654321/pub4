@@ -182,6 +182,9 @@ module Master
         if @conflicts.reject_higher_priority?(original_violation: violation, before:, after:, path:)
           return reject_fix(path, old_src, "higher_priority_violation")
         end
+        if (failure = failing_test_for(path))
+          return reject_fix(path, old_src, "test_failed", test: failure)
+        end
 
         @bus&.publish("rule_loop:fix_applied", rule: @rule.id, file: path)
         true

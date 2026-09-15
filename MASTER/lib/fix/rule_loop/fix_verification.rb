@@ -32,6 +32,24 @@ module Master
           nil
         end
 
+        # The file's own test, run once the fix is on disk. The rescan proves the
+        # rule stopped firing; only the test proves the behaviour survived it.
+        # Named exactly, test_<stem>.rb, because test_file_for's loose match finds
+        # every test sharing a common stem. nil means the test passed or there
+        # is none; a string names the failure.
+        def failing_test_for(path)
+          test = own_test_for(path)
+          return unless test
+
+          out, status = Master::Io::Exec.capture2e(RbConfig.ruby, test, chdir: File.dirname(File.dirname(test)))
+          status.success? ? nil : "#{File.basename(test)}: #{out.lines.last(3).join.strip}"
+        end
+
+        def own_test_for(path)
+          name = "test_#{File.basename(path.to_s, File.extname(path.to_s))}.rb"
+          test_file_for(path).find { |file| File.basename(file) == name }
+        end
+
         # Delegates rather than computes: Review::Scan::SemanticFingerprint.for
         # stamps the fingerprint this compares against, and two copies of one
         # formula disagree the moment either gains a field. That module's own
