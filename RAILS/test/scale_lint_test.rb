@@ -1,6 +1,6 @@
-require "yaml"
 # frozen_string_literal: true
 
+require "yaml"
 require "minitest/autorun"
 require_relative "../shared/lib/operator/scale_lint"
 require_relative "../shared/lib/operator/master_design"
