@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
+require_relative "../../core/routing/model_catalog"
 require_relative "model_router/provider_availability"
+
 require_relative "model_router/escalation"
 require_relative "model_router/intent_classification"
 require_relative "model_router/failover_config"
@@ -49,8 +51,9 @@ module Master
 
           best = healthy(candidates).max_by { |m| effective_score(m) }
           best ||= candidates.max_by { |m| effective_score(m) }
-          best["id"] || @config.model
+          Master::Core::Routing::ModelCatalog.resolve(best["id"] || @config.model)
         end
+
 
         def fallback_chain(task_type: :exploration)
           return [@config.model] unless enabled?

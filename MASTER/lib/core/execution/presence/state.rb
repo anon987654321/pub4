@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require_relative "grammar"
+require_relative "semantic_field"
+
 module Master
   module Core
     module Execution

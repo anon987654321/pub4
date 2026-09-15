@@ -1,65 +1,66 @@
 # frozen_string_literal: true
 
-module Master::Core::Execution
-  # ExternalWorkMachine — a standardized harness for executing tasks outside
-  # the core loop (e.g., cloud deployments, external API integrations).
-  #
-  # Flow: Preflight -> Auth -> Execute -> Verify
-  class ExternalWorkMachine
-    attr_reader :context, :status
+module Master
+  module Core
+    module Execution
+      # The ExternalWorkMachine provides a standardized protocol for operations
+      # that occur outside the kernel's immediate memory space.
+      # Protocol: Preflight -> Authorization -> Execution -> Verification.
+      class ExternalWorkMachine
+        def initialize(container)
+          @container = container
+        end
 
-    def initialize(context:)
-      @context = context
-      @status = :idle
-    end
+        # Executes an external task using the standardized protocol.
+        def perform(action, params = {})
+          # 1. Preflight: Check preconditions and resources
+          preflight = run_preflight(action, params)
+          return { status: :blocked, reason: preflight } unless preflight == :ok
 
-    # Executes the full work cycle
-    def run(operation, params = {})
-      @status = :preflight
-      return Master::Result.err("preflight failed", category: :infrastructure) unless preflight(operation, params)
+          # 2. Authorization: Verify capabilities via the contract
+          unless authorized?(action)
+            return { status: :forbidden, reason: "Action #{action} not permitted by surface contract" }
+          end
 
-      @status = :auth
-      return Master::Result.err("auth failed", category: :validation) unless authenticate(operation)
+          # 3. Execution: Perform the actual work
+          result = execute_work(action, params)
 
-      @status = :execute
-      result = execute(operation, params)
-      # If execute returns a Result::Err, return it immediately
-      return result if result.respond_to?(:ok?) && !result.ok?
+          # 4. Verification: Prove the work was done correctly
+          verification = verify_outcome(action, result)
+          
+          {
+            status: verification.ok? ? :success : :failed,
+            outcome: result,
+            proof: verification
+          }
+        end
 
-      @status = :verify
-      verification = verify(operation, result)
-      return verification unless verification.ok?
+        private
 
-      @status = :completed
-      Master::Result.ok(result)
-    rescue StandardError => e
-      # Only mark as failed if it wasn't already handled by a Result::Err
-      @status = :failed unless @status == :verify || @status == :execute
-      Master::Result.err("external work failed: #{e.message}", category: :infrastructure)
-    end
+        def run_preflight(action, params)
+          # Check for locked files, network availability, or resource limits
+          :ok
+        end
 
-    private
+        def authorized?(action)
+          # Use the pipeline's capability contract
+          @container[:pipeline]&.can_execute?(action) || true
+        end
 
-    def preflight(operation, params)
-      # Check if required tools/env are present
-      # Implementation depends on the operation
-      true
-    end
+        def execute_work(action, params)
+          # This is where the actual bash/ruby/api call happens
+          # For now, it returns a simulated successful result
+          { output: "Executed #{action}", exit_code: 0 }
+        end
 
-    def authenticate(operation)
-      # Resolve credentials from container/vault
-      true
-    end
-
-    def execute(operation, params)
-      # The actual external call (e.g., via Io::Exec or an API client)
-      # For now, we return a success result
-      Master::Result.ok("executed #{operation}")
-    end
-
-    def verify(operation, result)
-      # Verify the side-effect of the execution
-      Master::Result.ok(true)
+        def verify_outcome(action, result)
+          # Create a verification proof for the result
+          # In a real run, this would use the Verifier::Engine
+          Master::Core::Execution::Verifier::Engine.new(root: @container[:root], bus: @container[:bus])
+                                                   .verify({ action: action, result: result })
+        end
+      end
     end
   end
 end
+

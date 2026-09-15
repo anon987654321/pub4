@@ -1,13 +1,16 @@
 # Review
-
-**Nothing MASTER writes reaches disk without passing through here.** Review is
-the constitution scanner, the council that deliberates over what the scanner
-found, the swarm that parallelises the work, and the crews that specialise it.
-
-`scan/` holds the rules, the scanner, and constitution triage, reached by `rake
-constitution` and `rake selftest`. `council/` is multi-agent deliberation and the
-quality framework it argues within. `swarm/` is the coordinator, the vote engine,
-and the worker roles. `review_crew/` is the set of review agents narrow enough to
-name.
-
+ 
+**Nothing MASTER writes reaches disk without passing through here.** Review is the epistemic gate of the system. It is where the laws are applied and the "Truth" is determined.
+ 
+### The Review Hierarchy
+ 
+1. **The Scanner**: Deterministic rules that flag violations.
+2. **The Council**: Multi-agent deliberation that critiques the scanner's findings.
+3. **The Swarm**: Parallelized execution of review tasks across specialized roles.
+4. **The Crews**: Domain-specific agents (e.g., Security, Performance, Style) that provide deep-dive analysis.
+ 
+### Role-Based Validation
+ 
+Review leverages the **Architect $\rightarrow$ Implementer $\rightarrow$ Validator** split. The Validator role is specifically tuned to be adversarial, attempting to find holes in the Implementer's logic before the `CompletionContract` is satisfied.
+ 
 Enter through `MASTER/bin/operator lint`, `MASTER/bin/gate`, or `rake selftest`.

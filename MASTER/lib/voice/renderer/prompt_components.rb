@@ -24,6 +24,8 @@ module Master
 
         def splash(model)
           context = splash_context(model)
+          return concise_splash(context) unless ENV["MASTER_VERBOSE_BOOT"] == "1"
+
           lines = [*identity_lines(context), *splash_dmesg_lines, *device_lines_for(context),
                    root_on_line(context)]
           host_status = Master::Ground::HostBudget.status_line
@@ -31,6 +33,7 @@ module Master
           lines.concat(["", splash_ready_line(context)])
           lines.join("\n")
         end
+
 
         alias banner splash
 
@@ -41,12 +44,15 @@ module Master
         end
 
         def state_line(model, **options)
-          bits = ["model #{short_model(model)}", "ctx #{context_label(options[:tokens])}"]
+          # Conditional state line: nothing to report means everything is fine.
+          return nil if options[:idle]
+          
+          bits = ["model0: #{short_model(model)}", "ctx0: #{context_label(options[:tokens])}"]
           violations = options.fetch(:violations, 0).to_i
-          bits << "#{violations} #{violations == 1 ? 'violation' : 'violations'}" if violations.positive?
+          bits << "violations0: #{violations}" if violations.positive?
           cost = cost_label(options[:cost])
-          bits << cost unless cost.empty?
-          d(bits.join(", "))
+          bits << "cost0: #{cost}" unless cost.empty?
+          d(bits.join(" · "))
         end
 
         def phase_tinted(text, phase)
@@ -89,8 +95,12 @@ module Master
         private
 
         def zsh_prompt(phase, last_ok)
-          [d(prompt_path), git_prompt_segments, phase_label(phase),
-           phase_prompt(last_ok, phase)].reject(&:empty?).join(" ") + " "
+          path_segment = [d(prompt_path), git_prompt_segments].reject(&:empty?).join(" ")
+          phase_segment = phase_label(phase)
+          
+          # hierarchy: path/branch on one line, phase and token on the next if phase is active
+          # but for a simple zsh-like prompt we keep it compact but dim the phase.
+          [path_segment, phase_segment, phase_prompt(last_ok, phase)].reject(&:empty?).join(" ") + " "
         end
 
         # zsh's own %~: home as a tilde, and a long path cut from the left so
@@ -109,6 +119,19 @@ module Master
           end
 
           @p.bold.red("master") + @p.dim("@#{context[:host]} ready")
+        end
+
+        def concise_splash(context)
+          [
+            d("MASTER #{soul_version} (CONSTITUTIONAL) ##{context[:build]}"),
+            d("#{context[:user]}@#{context[:host]} ready"),
+            d("model: #{short_model(context[:model])}"),
+            d("provider: #{provider_for(context[:model])}"),
+            d("ctx: #{token_label(Master.context_window(@config['model']))}"),
+            d("mode: #{Master::CLI::RuntimeMode.summary(config: @config)}"),
+            d("web: #{context[:web]}"),
+            "",
+          ].join("\n")
         end
 
         def splash_context(model)
@@ -169,10 +192,12 @@ module Master
         end
 
         def model_device_lines(context)
+          model = context[:model].to_s
+          provider = provider_for(model)
           [
-            d("model0 at mainbus0: #{short_model(context[:model])}"),
-            d("model0: #{provider_for(context[:model])}, " \
-              "#{token_label(Master.context_window(@config['model']))} context"),
+            d("model0 at mainbus0: #{short_model(model)}"),
+            d("model0: provider #{provider}, " \
+              "#{token_label(Master.context_window(model))} context"),
           ]
         end
 

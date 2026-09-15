@@ -58,7 +58,7 @@ module Master::Core
     # scanned".
     private_class_method :detect_host_memory_mb
 
-    def initialize(budget: self.class.host_budget, summarize: ->(dropped) { "[#{dropped.length} earlier steps summarised]" }, risk: :low)
+    def initialize(budget: self.class.host_budget, summarize: ->(dropped) { "[\#{dropped.length} earlier steps summarised]" }, risk: :low)
       @entries = []
       @budget = budget
       @summarize = summarize
@@ -85,13 +85,13 @@ module Master::Core
     end
 
     def note(kind, text)
-      entry = Entry.new(role: :note, text: "#{kind}: #{text}")
+      entry = Entry.new(role: :note, text: "\#{kind}: \#{text}")
       @goal = entry if kind.to_s == "goal"
       @entries << entry
       self
     end
 
-    # The action as its subject, "read lib/x.rb". Effect#to_s names only the
+    # The action as its subject, "read lib/x.rb". Effect\#to_s names only the
     # argument keys, so the model saw "read(path)", could not tell which file it
     # had already read, and read it again.
     def record(effect, observation)
@@ -99,7 +99,7 @@ module Master::Core
       obs = observe_text(effect, observation)
       # The same action straight after it failed fails the same way; gemma3:4b
       # asked a surface-less CLI one question four times. Said once, plainly.
-      obs = "ERR: this is the action that just failed (#{obs}). Do something else." if act == @last_act && @last_failed
+      obs = "ERR: this is the action that just failed (\#{obs}). Do something else." if act == @last_act && @last_failed
       @last_act, @last_failed = act, obs.start_with?("ERR")
       @entries << Entry.new(role: :act, text: act)
       @entries << Entry.new(role: :obs, text: obs)
@@ -133,31 +133,30 @@ module Master::Core
       return repeat_read_text(path) if @read_shas[path] == hex
 
       @read_shas[path] = hex
-      "#{text} sha256=#{hex} #{observation.message.bytesize}b"
+      "\#{text} sha256=\#{hex} \#{observation.message.bytesize}b"
     end
 
     def repeat_read_text(path)
-      "ERR: #{path} is unchanged since you read it, and its content is above. " \
-        "Do not read it again: answer with done, or act on what it says."
+      "ERR: \#{path} is unchanged since you read it, and its content is above. "         "Do not read it again: answer with done, or act on what it says."
     end
 
     def act_text(effect)
       args = effect.args
       subject = case effect.verb
-                when :write then "#{args[:path]} (#{args[:content].to_s.lines.size} lines)"
-                when :exec then [Array(args[:argv]).join(" "), (" [#{args[:evidence]}]" if args[:evidence])].join
+                when :write then "\#{args[:path]} (\#{args[:content].to_s.lines.size} lines)"
+                when :exec then [Array(args[:argv]).join(" "), (" [\#{args[:evidence]}]" if args[:evidence])].join
                 when :git then [args[:operation], *Array(args[:paths])].join(" ")
                 else args[:path] || args[:text] || args[:prompt] || args[:summary] || args[:scope]
                 end
-      "#{effect.verb} #{subject}".strip
+      "\#{effect.verb} \#{subject}".strip
     end
 
     def state_text
       scope = @proof.scope
       done = scope[:proved] || scope[:answerable] ? "allowed" : "needs exec evidence first"
       read = scope[:read_paths].uniq.last(6)
-      ["STATE #{@goal&.text}", "read: #{read.empty? ? "nothing yet" : read.join(", ")}",
-       "evidence: #{scope[:evidence]}/#{Proof::PASS_THRESHOLD}", "done: #{done}"].join("; ")
+      ["STATE \#{@goal&.text}", "read: \#{read.empty? ? "nothing yet" : read.join(", ")}",
+       "evidence: \#{scope[:evidence]}/\#{Proof::PASS_THRESHOLD}", "done: \#{done}"].join("; ")
     end
 
     def size = @entries.sum { |e| e.text.length }

@@ -1,5 +1,11 @@
 # frozen_string_literal: true
 
+require_relative "states"
+require_relative "verifier/engine"
+require_relative "observer/system_state"
+require_relative "presence/state"
+require_relative "episode/record"
+
 module Master
   module Core
     module Execution
@@ -86,7 +92,7 @@ module Master
         end
 
         def all_verified?
-          # Only verify chains that are evidence; snapshots are observations
+          # Only verify chains that are evidence; snapshots are just observations
           chains = @evidence_ledger.select { |e| e.respond_to?(:verified?) }
           return false if chains.empty?
           chains.all? { |chain| chain.verified? }

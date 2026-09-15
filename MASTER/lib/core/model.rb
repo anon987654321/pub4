@@ -94,9 +94,10 @@ module Master::Core
     PROMPT
 
     def initialize(model_id: ENV.fetch("MASTER_CORE_MODEL", DEFAULT_MODEL), chat: nil)
-      @model_id = model_id
+      @model_id = Master::Core::Routing::ModelCatalog.resolve(model_id)
       @chat = chat
     end
+
 
     # The one method the Core calls. Returns an Effect.
     def propose(context, verbs:)

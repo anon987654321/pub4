@@ -14,6 +14,24 @@ module Master
       def call(message:, container:, felt_sense: nil, on_turn: nil, on_chunk: nil, image: nil)
         text = message.to_s.strip
         return Master::Result.err("empty message", category: :validation) if text.empty?
+
+        # Deterministic Interception: Exact Command Registry Match (Priority 0)
+        if (intercepted = deterministic_intercept(text, container:))
+          return intercepted
+        end
+
+        # Direct slash command: priority 1
+        if text.start_with?("/")
+          return dispatch_slash(rewrite_slash(text), container:, felt_sense:, on_turn:)
+        end
+
+
+        # Inferred slash command: priority 2
+        # We check this before the Fold or casual_reply to ensure "fix this" 
+        # routes to the CommandRegistry if the model identifies it as a command.
+        inferred = infer_operator_command(text, container:)
+        return dispatch_inferred(inferred, container:, felt_sense:, on_turn:) if inferred
+
         return dispatch_slash(rewrite_slash(text), container:, felt_sense:, on_turn:) if text.start_with?("/")
 
         # Visitors (no web token — i.e. the open internet on ai.brgen.no) get the
@@ -31,18 +49,28 @@ module Master
         return casual_reply(text, container:, felt_sense:, on_chunk:, image:) if visitor?
         return Master::Io::MediaIntent.dispatch(text, root: container.fetch(:root, Dir.pwd)) if Master::Io::MediaIntent.handles?(text)
 
-        intercepted = deterministic_intercept(text, container:)
-        return intercepted if intercepted
-
-        inferred = infer_operator_command(text, container:)
-        return dispatch_inferred(inferred, container:, felt_sense:, on_turn:) if inferred
-        return dispatch_review_pass(text, container:, felt_sense:, on_turn:) if full_workflow_intent?(text)
         return casual_reply(text, container:, felt_sense:, on_chunk:, image:) if casual?(text)
 
         run_fold(text, container:, on_turn:)
       end
 
-      def visitor? = Fiber[:master_visitor] == true
+      def deterministic_intercept(text, container:)
+        commands = container[:commands]
+        return nil unless commands
+
+        # Check for exact match in registry (e.g., "status", "help")
+        # We strip leading slash for the registry check
+        clean_text = text.sub(%r{\A/}, "").split(/\s+/, 2).first.to_s.downcase
+        return nil if clean_text.empty?
+
+        if commands.key?(clean_text)
+          # Convert to slash form to reuse the existing dispatch_slash pipeline
+          # which handles Intake -> Route -> Execute -> Render
+          args = text.sub(%r{\A/?#{clean_text}}, "").strip
+          return dispatch_slash("/#{clean_text} #{args}", container:)
+        end
+        nil
+      end
 
       # A sentence that is exactly a registry word, "status" or "help", runs that
       # command without a model's inference. Below the visitor gate, as every route

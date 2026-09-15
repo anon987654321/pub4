@@ -4,7 +4,7 @@ module Master
   module Core
     module Execution
       module Observer
-        # The Observer records reality. It does not judge.
+        # The Observer simply records reality. It does not judge.
         # It produces a snapshot of the system state.
         class SystemState
           attr_reader :timestamp, :git_head, :dirty, :files_count, :processes, :ruby_version
