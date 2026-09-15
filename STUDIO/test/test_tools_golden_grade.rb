@@ -223,5 +223,45 @@ class TestGoldenGrade < Minitest::Test
                       "blacks that arrived open at #{before.round(3)} came back at #{after.round(3)} — " \
                       "the toe is a floor to reach, not an amount to add"
     end
+  end  # Where the house looks put a face, in numbers a change to them has to move.
+  #
+  # The tests above bound what a grade may do; they would pass a grade that
+  # turned every face grey, as long as it clipped nothing. This pins the look
+  # itself on one patch of skin: its mean luminance afterwards, and how far its
+  # colour moved (CIE76 ΔE on mean Lab). Measured before being asserted, under
+  # POSTPRO_SEED=42 on the sRGB skin tone 224,172,150, twice each with identical
+  # results: portrait L 71.64 and ΔE 4.42, house L 68.69 and ΔE 6.58.
+  #
+  # The bands are tight on purpose. A grading change that moves them is allowed;
+  # it lands with these numbers re-measured, so the look moved because someone
+  # decided it should.
+  SKIN = [224, 172, 150].freeze
+  SKIN_LOOK = { "portrait" => { luminance: 71.64, delta_e: 4.42 },
+                "house" => { luminance: 68.69, delta_e: 6.58 } }.freeze
+
+  def skin_patch(dir)
+    path = File.join(dir, "skin.jpg")
+    (Vips::Image.black(320, 320) + SKIN).cast(:uchar).copy(interpretation: :srgb).write_to_file("#{path}[Q=95]")
+    path
+  end
+
+  def mean_lab(path)
+    lab = Vips::Image.new_from_file(path).colourspace("lab")
+    (0..2).map { |band| lab[band].avg }
+  end
+
+  def test_the_house_looks_put_a_skin_patch_where_they_were_measured_to
+    Dir.mktmpdir do |dir|
+      input = skin_patch(dir)
+      before = mean_lab(input)
+
+      SKIN_LOOK.each do |preset, look|
+        after = mean_lab(grade(input, preset, dir))
+        delta_e = Math.sqrt(before.zip(after).sum { |was, now| (was - now)**2 })
+
+        assert_in_delta look[:luminance], after[0], 1.0, "#{preset} moved the skin patch's luminance"
+        assert_in_delta look[:delta_e], delta_e, 0.5, "#{preset} moved the skin patch's colour"
+      end
+    end
   end
 end
