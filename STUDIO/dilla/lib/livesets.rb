@@ -446,6 +446,7 @@ module Livesets
   # bar that was T seconds is now T/drag, and a kit built on the undragged figure
   # would run ahead of the record all night.
   def grid(bed, drag, want: 90, range: 76..104)
+    want, range = [pinned_bpm, 40..200] if pinned_bpm
     raw = `#{FFPROBE} -v quiet -show_entries format=duration -of csv=p=0 #{bed.shellescape}`.to_f
     # A bed with no length cannot be looped: -stream_loop -1 over an empty file
     # never reaches its end, and the pass hangs with nothing written.
@@ -764,8 +765,10 @@ module Livesets
   def mute(bus) = muted.include?(bus.to_s) ? "volume=0," : ""
 
   def arrangement(set, bar, total, drop)
-    shape = arranged(set, bar, total, drop)
-    shape.to_h { |bus, points| [bus, muted.include?(bus.to_s) ? [[0, 0.0]] : points] }
+    shape = arranged(set, bar, total, drop).to_h { |bus, points| [bus, muted.include?(bus.to_s) ? [[0, 0.0]] : points] }
+    marks = shape.flat_map { |bus, points| points.drop(1).map { |at, gain| [at, "#{bus} #{gain.zero? ? 'out' : "to #{gain}"}"] } }
+    @transport = { bar: bar, total: total, marks: marks.sort_by(&:first) }
+    shape
   end
 
   def arranged(set, bar, total, drop)
@@ -843,12 +846,36 @@ module Livesets
     cmd = "#{FF} -nostdin -loglevel error #{inputs.join(' ')} " \
           "-filter_complex #{graph.join('; ').shellescape} -map \"[out]\""
     dest = ENV["LIVE_RENDER_TO"].to_s
-    if dest.empty?
-      exec("/bin/zsh", "-c",
-           "#{cmd} -f wav - 2>/dev/null | #{FFPLAY} -nodisp -autoexit -loglevel quiet -i - 2>/dev/null")
-    else
-      render_to!(cmd, dest)
+    return render_to!(cmd, dest) unless dest.empty?
+
+    pid = Process.spawn("/bin/zsh", "-c",
+                        "#{cmd} -f wav - 2>/dev/null | #{FFPLAY} -nodisp -autoexit -loglevel quiet -i - 2>/dev/null")
+    ticker = Thread.new { transport!(Process.clock_gettime(Process::CLOCK_MONOTONIC)) }
+    Process.wait(pid)
+    ticker.kill
+    warn ""
+    exit($?.exitstatus || 1) unless $?.success?
+  end
+
+  # A visible transport: the bar, how many there are, and the next change in the
+  # arrangement, redrawn on one line every bar while a pass plays. The banner
+  # printed once and then ninety-six seconds passed in silence.
+  def transport!(started)
+    t = @transport or return
+    loop do
+      elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+      $stderr.print "\r#{transport_line(elapsed, t)}"
+      sleep t[:bar]
     end
+  end
+
+  def transport_line(elapsed, transport)
+    bar = transport[:bar]
+    bars = (transport[:total] / bar).ceil
+    now = [(elapsed / bar).floor + 1, bars].min
+    upcoming = transport[:marks].find { |at, _| at > elapsed }
+    next_change = upcoming ? "  #{upcoming.last} in #{((upcoming.first - elapsed) / bar).ceil} bar(s)" : ""
+    format("bar %d/%d%s   ", now, bars, next_change)
   end
 
   # Where a render may land. The operator's rule, 2026-09-15: the only audio
@@ -915,6 +942,41 @@ module Livesets
   # How far the record is dragged under its own pitch, pinned by LIVE_DRAG. The
   # draw is made either way, as with LIVE_PROGRESSION, so a pinned drag moves no
   # later choice. Downward only: a drag above 1.0 is the record sped up.
+  # The tempo, tapped or typed: LIVE_BPM pins the chord set's count, and on a bed
+  # set it reads the record's grid at the whole number of bars nearest to it --
+  # the record's own length still decides the bar, so a pinned tempo halves or
+  # doubles a reading rather than stretching it. The chord set's draw is made
+  # either way, so the stream moves no later choice.
+  def pinned_bpm
+    want = ENV.fetch("LIVE_BPM", "").to_s
+    return nil if want.empty?
+
+    value = Float(want, exception: false)
+    abort "LIVE_BPM=#{want} is not a tempo between 40 and 200" unless value && value.between?(40, 200)
+    value
+  end
+
+  #   ruby dilla.rb live tap     press Enter on the beat; q and Enter stops
+  #
+  # Sometimes the record is wrong. The tapped figure is what LIVE_BPM takes.
+  def tap!
+    times = []
+    warn "tap Enter on the beat, q to finish"
+    while (line = $stdin.gets) && line.strip != "q"
+      times << Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      bpm = tap_bpm(times)
+      warn(bpm ? "LIVE_BPM=#{bpm}" : "keep tapping")
+    end
+  end
+
+  # The median gap, so one late tap does not move the count.
+  def tap_bpm(times)
+    return nil if times.size < 3
+
+    gaps = times.each_cons(2).map { |a, b| b - a }.sort
+    (60.0 / gaps[gaps.size / 2]).round(1)
+  end
+
   def pinned_drag(drawn)
     want = ENV.fetch("LIVE_DRAG", "").to_s
     return drawn if want.empty?
@@ -952,7 +1014,7 @@ module Livesets
     # No record, so no record to take a tempo from. 82-94 is where the crate sits
     # once the drag is on it, and the kit is the same drunk kit, so the two beat
     # sets sit at the same count and can follow each other.
-    bpm = (82 + rand * 12).round(1)
+    bpm = pinned_bpm || (82 + rand * 12).round(1)
     beat = (60.0 / bpm).round(4)
     bar = (beat * 4).round(4)
     step = (beat / 2).round(4)
@@ -1197,7 +1259,7 @@ module Livesets
 
     journal!(
       at: Time.now.utc.iso8601, seed: seed, set: "sampled_based_beats", seconds: total, bed: slug, credit: credit(slug), sample_worth: sw,
-      bpm: g[:bpm], drag: drag, bars_in_loop: g[:bars_in_loop], voicing: choice, progression: prog,
+      bpm: g[:bpm], bpm_pin: pinned_bpm, drag: drag, bars_in_loop: g[:bars_in_loop], voicing: choice, progression: prog,
       chop_at: slice_at, reversed: reverse, bar_s: bar, form: form, hocket: voice_of.values.max.to_i + 1,
       bus_patch: ENV['LIVE_BUS_PATCH'], muted: muted.join(","),
       weights: weights("sampled_based_beats"),
@@ -1319,7 +1381,7 @@ module Livesets
 
     journal!(
       at: Time.now.utc.iso8601, seed: seed, set: "ambient_pads", seconds: total, bed: slug, credit: credit(slug), sample_worth: sw,
-      bpm: g[:bpm], drag: drag, bars_in_loop: g[:bars_in_loop], progression: prog,
+      bpm: g[:bpm], bpm_pin: pinned_bpm, drag: drag, bars_in_loop: g[:bars_in_loop], progression: prog,
       chop_at: slice_at, hold_s: hold, bar_s: bar, drums: nil, form: form,
       copy_machine: copies('ambient_pads'), voice_stack: voice_stack_plan.size, bus_patch: ENV['LIVE_BUS_PATCH'], muted: muted.join(","),
       weights: weights("ambient_pads"),
@@ -1379,7 +1441,7 @@ module Livesets
   RECALLED = {
     "LIVE_BED" => ["bed", nil], "LIVE_KIT" => ["kit", nil], "LIVE_PROGRESSION" => ["progression_name", nil],
     "LIVE_VOICING" => ["voicing", "down"], "LIVE_LENGTH" => ["seconds", nil], "LIVE_ROOM" => ["room", "warm"],
-    "LIVE_KIT_CYCLE" => ["kit_cycle", "phrase"], "LIVE_FORM" => ["form", nil], "LIVE_MUTE" => ["muted", nil], "LIVE_WEIGHTS" => ["weights", nil], "LIVE_DRAG" => ["drag", nil],
+    "LIVE_KIT_CYCLE" => ["kit_cycle", "phrase"], "LIVE_FORM" => ["form", nil], "LIVE_MUTE" => ["muted", nil], "LIVE_WEIGHTS" => ["weights", nil], "LIVE_DRAG" => ["drag", nil], "LIVE_BPM" => ["bpm_pin", nil],
     "LIVE_COPY_MACHINE" => ["copy_machine", "0"], "LIVE_VOICE_STACK" => ["voice_stack", "1"], "LIVE_HOCKET" => ["hocket", "1"],
     "LIVE_BUS_PATCH" => ["bus_patch", nil],
   }.freeze
@@ -1402,6 +1464,7 @@ module Livesets
     "LIVE_BED" => "pin the record a bed set plays, by rack slug",
     "LIVE_KEY" => "only beds chopped in this key, as the registry spells it (A minor)",
     "LIVE_DRAG" => "pin how far under its pitch the record runs, 0.5..1.0",
+    "LIVE_BPM" => "pin the tempo, 40..200; a bed set reads its grid nearest to it (live tap finds one)",
     "LIVE_KIT" => "a directory under samples/drums with every kit role, or synth",
     "LIVE_KIT_CYCLE" => "bar (default) or phrase, how often the chord set's kit repeats",
     "LIVE_PROGRESSION" => "pin the chord set's progression by name",
@@ -1467,14 +1530,35 @@ module Livesets
   # next set rather than ending the night. Hard cuts between sets: a set that
   # crossfades into the next is catalogue item 11, a set of its own. A misspelt
   # set would otherwise fail every 0.2 seconds all night, so it is refused first.
+  #
+  # It stops cleanly. Each pass runs in its own process group, so Ctrl-C reaches
+  # the rig and not the pass: the first lets the pass play to its end and then
+  # stops the night, the second stops the pass now. Stopping meant killing
+  # processes before, mid-bar.
   def broadcast!(name = nil)
     abort "broadcast: no set named #{name} -- have #{SETS.join(', ')}" if name && !SETS.include?(name)
 
+    @stopping = false
     sets = name ? [name] : ROTATION
     sets.cycle do |set|
-      system(RbConfig.ruby, File.join(D, "dilla.rb"), "live", "set", set)
+      pid = Process.spawn(RbConfig.ruby, File.join(D, "dilla.rb"), "live", "set", set, pgroup: true)
+      trap("INT") { interrupt!(pid) }
+      Process.wait(pid)
+      break if @stopping
+
       sleep 0.2
     end
+  end
+
+  def interrupt!(pid)
+    if @stopping
+      Process.kill("TERM", -pid)
+    else
+      @stopping = true
+      warn "\nstopping when this pass ends -- Ctrl-C again to stop now"
+    end
+  rescue Errno::ESRCH
+    nil
   end
 
   # A/B by rendering, as a command rather than a habit.

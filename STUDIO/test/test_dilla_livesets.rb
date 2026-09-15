@@ -362,6 +362,40 @@ class TestDillaLivesets < Minitest::Test
     end
   end
 
+  # Playing, not running: a tempo tapped or pinned, a transport that says where
+  # the pass is and what changes next, and a Ctrl-C that lets the pass end.
+  def test_a_pass_takes_a_tapped_tempo_shows_its_transport_and_stops_when_asked
+    assert_equal 120.0, Livesets.tap_bpm([0.0, 0.5, 1.0, 1.9, 2.4])
+    assert_nil Livesets.tap_bpm([0.0, 0.5])
+    assert_equal 140.0, built("chord_based_beats", "LIVE_BPM" => "140")[:row][:bpm]
+    assert_raises(SystemExit) { with_env("LIVE_BPM" => "fast") { Livesets.pinned_bpm } }
+    Dir.mktmpdir do |dir|
+      bed = File.join(dir, "loop.wav")
+      system("ffmpeg", "-loglevel", "error", "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo", "-t", "5.2", bed)
+      skip "ffmpeg is not installed" unless File.file?(bed)
+      # 5.2 seconds is 46, 92 or 185 bpm at one, two or four bars.
+      assert_equal 2, with_env("LIVE_BPM" => nil) { Livesets.grid(bed, 1.0) }[:bars_in_loop]
+      assert_equal 1, with_env("LIVE_BPM" => "46") { Livesets.grid(bed, 1.0) }[:bars_in_loop]
+      assert_equal 4, with_env("LIVE_BPM" => "180") { Livesets.grid(bed, 1.0) }[:bars_in_loop]
+    end
+
+    transport = { bar: 2.0, total: 16, marks: [[8.0, "phrase out"], [12.0, "phrase to 1.0"]] }
+    assert_equal "bar 3/8  phrase out in 2 bar(s)   ", Livesets.transport_line(4.5, transport)
+    assert_equal "bar 8/8   ", Livesets.transport_line(15.0, transport)
+    assert_equal [[32.0, "phrase out"]], with_env("LIVE_FORM" => nil) {
+      Livesets.arrangement("chord_based_beats", 2.0, 64, [[0, 1.0], [32.0, 0.0]]) && Livesets.instance_variable_get(:@transport)[:marks]
+    }
+
+    pid = Process.spawn("sleep", "5", pgroup: true)
+    Livesets.instance_variable_set(:@stopping, false)
+    capture_io { Livesets.interrupt!(pid) }
+    assert Livesets.instance_variable_get(:@stopping)
+    assert_nil Process.wait(pid, Process::WNOHANG), "the first Ctrl-C lets the pass play on"
+    Livesets.interrupt!(pid)
+    Process.wait(pid)
+    assert_equal "TERM", Signal.signame($?.termsig)
+  end
+
   # A render writes demo.wav and no other audio file, and only takes its name
   # once it has finished, so a killed pass leaves the last good demo in place.
   def test_a_render_lands_on_demo_wav_only_and_arrives_whole
