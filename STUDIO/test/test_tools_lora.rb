@@ -72,5 +72,44 @@ class TestLora < Minitest::Test
       _out, err, status = Open3.capture3(shell, "-n", path)
       assert status.success?, "#{shell} -n #{path}: #{err}"
     end
+  end  # --- curate, on generated frames only ------------------------------------
+
+  def curate_frames(dir)
+    require "vips"
+    require "tmpdir"
+    require_relative "../lora/_toolkit/curate"
+    scene = Studio.octave_scene(600, seed: 3)
+    paths = {
+      "a.jpg" => scene, "a_again.jpg" => (scene * 1.06).cast(:uchar),
+      "b.jpg" => Studio.octave_scene(600, seed: 9), "c.jpg" => Studio.octave_scene(600, seed: 17)
+    }.map { |name, image| File.join(dir, name).tap { |path| image.write_to_file(path) } }
+    Lora::Curate.scan(dir).tap { |candidates| assert_equal paths.length, candidates.length }
+  end
+
+  def test_the_curate_report_names_one_moment_chosen_twice
+    Dir.mktmpdir do |dir|
+      candidates = curate_frames(dir)
+      lines = Lora::Curate.report(candidates.map { |c| Lora::Curate.judge(c) }, candidates).join("\n")
+
+      assert_match(/one moment twice — a\.jpg ~ a_again\.jpg/, lines)
+      refute_match(/b\.jpg ~/, lines)
+    end
+  end
+
+  def test_prepare_holds_every_nth_frame_out_of_the_dataset
+    Dir.mktmpdir do |dir|
+      candidates = curate_frames(dir)
+      dataset = File.join(dir, "out", "dataset")
+      holdout = File.join(dir, "out", "holdout")
+      written = Lora::Curate.prepare(candidates, into: dataset, token: "probe", short_edge: 512,
+                                                 holdout_into: holdout, holdout_every: 2)
+
+      assert_equal 2, written.length
+      assert_equal 2, Dir[File.join(dataset, "*.jpg")].length
+      assert_equal 2, Dir[File.join(holdout, "*.jpg")].length
+      assert_equal 2, Dir[File.join(holdout, "*.txt")].length, "a held frame keeps its caption stub"
+      assert_equal candidates.values_at(1, 3), Lora::Curate.split(candidates, holdout_every: 2).last
+      assert_equal [candidates, []], Lora::Curate.split(candidates, holdout_every: nil)
+    end
   end
 end

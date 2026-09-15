@@ -6,11 +6,12 @@ require "json"
 require "fileutils"
 require "securerandom"
 require_relative "../../postpro/lib/uncanny"
+require_relative "../../postpro/lib/frame_set"
 
 # Which of these photographs should train a LoRA, and which should not.
 #
-# A dataset is not a pile of pictures of someone. STUDIO/PHOTOGRAPHY.md sets out
-# four layers, and three of them decide whether a training image earns its place:
+# A dataset is not a pile of pictures of someone. Three things a pixel reading
+# can see decide whether a training image earns its place:
 #
 #   resolution   below the training size the detail is invented by an upscaler,
 #                and the model learns the upscaler.
@@ -275,7 +276,11 @@ module Lora
 
     def self.clamp(value, limit) = value.clamp(1.0 / limit, limit)
 
-    def self.report(verdicts, chosen)
+    # `duplicates` is every pair of chosen frames close enough to be one
+    # photograph. Ten frames of one moment are one training example with nine
+    # copies, and two such frames under different names look like two examples
+    # to everything but a fingerprint.
+    def self.report(verdicts, chosen, duplicates: Postpro::FrameSet.near_duplicates(chosen.map(&:path)))
       lines = ["curate: #{verdicts.size} candidate(s)"]
       rejected = verdicts.reject(&:usable?)
       unless rejected.empty?
@@ -291,8 +296,11 @@ module Lora
                         File.basename(candidate.path), candidate.width, candidate.height,
                         candidate.megapixels, candidate.texture)
       end
-      lines << "curate: what this cannot see — whether the expression is real, whether the light"
-      lines << "curate: flatters, and whether the same moment is here twice under different names."
+      duplicates.each do |pair|
+        lines << "curate: one moment twice — #{File.basename(pair.first)} ~ #{File.basename(pair.second)} " \
+                 "(#{pair.distance}/64 bits differ); keep one"
+      end
+      lines << "curate: what this cannot see — whether the expression is real, and whether the light flatters."
       lines
     end
 
@@ -349,26 +357,42 @@ module Lora
 
     def self.dataset_dir(subject_dir) = File.join(subject_dir, DATASET_DIRNAME)
 
-    def self.prepare(candidates, into:, token:, short_edge: TRAIN_SHORT_EDGE)
+    # Frames kept back from training, so a checkpoint is judged on photographs
+    # it never saw. A LoRA reproduces its training set well by construction, so
+    # scoring it on those frames measures memory, not the person. Every
+    # `holdout_every`-th candidate goes to `holdout_into` instead of the dataset,
+    # in candidate order so the same set splits the same way on every run. No
+    # lane reads a holdout directory; only a judgement should.
+    def self.split(candidates, holdout_every:)
+      return [candidates, []] unless holdout_every
+
+      held = candidates.each_with_index.select { |_, index| (index + 1) % holdout_every == 0 }.map(&:first)
+      [candidates - held, held]
+    end
+
+    def self.prepare(candidates, into:, token:, short_edge: TRAIN_SHORT_EDGE, holdout_into: nil, holdout_every: nil)
+      training, held = split(candidates, holdout_every: holdout_into && holdout_every)
+      held.each { |candidate| write_prepared(candidate, into: holdout_into, token:, short_edge:) }
+      training.map { |candidate| write_prepared(candidate, into:, token:, short_edge:) }
+    end
+
+    def self.write_prepared(candidate, into:, token:, short_edge:)
       FileUtils.mkdir_p(into)
-      candidates.map do |candidate|
-        image = Vips::Image.new_from_file(candidate.path, access: :random).autorot
-        current = [image.width, image.height].min
-        out_image = image.resize(short_edge.to_f / current)
+      image = Vips::Image.new_from_file(candidate.path, access: :random).autorot
+      current = [image.width, image.height].min
+      out_image = image.resize(short_edge.to_f / current)
 
-        # A random stem names nobody, and adding or removing a photograph
-        # renumbers nothing.
-        name = SecureRandom.hex(8)
-        out = File.join(into, "#{name}.jpg")
-        out_image.write_to_file("#{out}[Q=95]")
+      # A random stem names nobody, and adding or removing a photograph
+      # renumbers nothing.
+      name = SecureRandom.hex(8)
+      out = File.join(into, "#{name}.jpg")
+      out_image.write_to_file("#{out}[Q=95]")
+      File.write(File.join(into, "#{name}.txt"), caption_stub(token))
 
-        File.write(File.join(into, "#{name}.txt"), caption_stub(token))
-
-        { name: name, from: File.basename(candidate.path),
-          was: "#{image.width}x#{image.height}",
-          now: "#{out_image.width}x#{out_image.height}",
-          upscaled: current < short_edge }
-      end
+      { name: name, from: File.basename(candidate.path),
+        was: "#{image.width}x#{image.height}",
+        now: "#{out_image.width}x#{out_image.height}",
+        upscaled: current < short_edge }
     end
   end
 end
