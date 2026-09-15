@@ -4,7 +4,13 @@ require_relative "state_machine"
 require_relative "voice/conversation"
 require_relative "roles"
 require_relative "role_manager"
+require_relative "completion_contract"
+require_relative "truth/truth_layer"
+require_relative "bench/adversarial_regression_corpus"
 require_relative "../domain/engine"
+
+
+
 
 require_relative "../domain/verifier"
 
@@ -27,8 +33,23 @@ module Master
           )
           @container[:role_manager] = @role_manager
 
+          # Completion Contract for deterministic "Done"
+          @contract = CompletionContract.new
+          @container[:completion_contract] = @contract
+
+          # Truth Layer for observation verification
+          @truth_layer = TruthLayer.new
+          @container[:truth_layer] = @truth_layer
+
+          # Adversarial Regression Corpus
+          @corpus = AdversarialRegressionCorpus.new
+          @container[:regression_corpus] = @corpus
+
           # Domain Expertise Setup
           @domain_engine = Domain::Engine.new(container)
+
+
+
 
           @domain_verifier = Domain::Verifier.new(container)
           
@@ -56,15 +77,18 @@ module Master
             next_state = @state_machine.run_current_state
             
             if next_state == :completed
-              # Truth Check + Domain Check
+              # Truth Check + Domain Check + Completion Contract
               simulation = @state_machine.verify_completion(:complete)
               domain_results = @domain_verifier.verify(@container[:root], domains)
+              contract_result = @contract.verify(@state_machine)
               
-              if simulation == :simulation_detected || domain_results[:failed].any?
+              if simulation == :simulation_detected || domain_results[:failed].any? || !contract_result.ok?
                 @container[:bus]&.publish("exec:domain_failure", failures: domain_results[:failed])
                 @state_machine.transition_to(:validate)
                 next
               end
+            
+              @state_machine.transition_to(:deliver)
             
               @state_machine.transition_to(:deliver)
               @state_sMachine.run_current_state

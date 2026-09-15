@@ -1,22 +1,19 @@
 # frozen_string_literal: true
 
 require "digest"
+require_relative "proof"
+require_relative "memory/types"
+
 
 module Master::Core
-  # Memory — the record. Holds the conversation the model sees, compacted to a
-  # budget. Compaction is turn-aware: it summarises the oldest turns and keeps
-  # the recent ones whole, never orphaning an observation from the effect that
-  # produced it.
-  #
-  # This is where the old trace/, history/, and scope/ collapse to.
-  #
-  # What it no longer holds is Proof — the evidence ledger and the risk gates,
-  # which moved to lib/core/proof.rb on 2026-08-12. Memory answers what was
-  # said; Proof answers whether it was enough. Reach the second through
-  # `memory.proof`, deliberately rather than through forwarding methods: a
-  # delegator would have kept the public count where it was and hidden the seam
-  # that the count existed to point at.
+  # Memory — the unified cognitive architecture.
+  # It separates memory into three distinct channels:
+  # 1. Episodic: What happened in this session (The Trace)
+  # 2. Semantic: What is known to be true (The Knowledge)
+  # 3. Procedural: How things are done (The Recipes)
   class Memory
+    attr_reader :episodic, :semantic, :procedural, :proof
+
     Entry = Data.define(:role, :text)
 
     # Context budget in characters. A ~1GB OpenBSD VPS cannot hold a generous
@@ -67,7 +64,17 @@ module Master::Core
       @budget = budget
       @summarize = summarize
       @proof = Proof.new(risk:)
+
+      # Initialize Triple Memory Model
+      @episodic = MemoryTypes::Episodic.new(nil) # Will be linked to episode in pipeline
+      @semantic = MemoryTypes::Semantic.new
+      @procedural = MemoryTypes::Procedural.new
     end
+
+    def link_episode(episode)
+      @episodic = MemoryTypes::Episodic.new(episode)
+    end
+
 
     def seed_from_intent(intent)
       note(:goal, intent.goal)

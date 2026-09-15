@@ -43,8 +43,7 @@ module Master::Core
       profiling_data: %r{\b(?:benchmark|stackprof|ruby-prof|memory_profiler|--profile)},
     }.freeze
 
-    attr_accessor :risk
-
+    attr_reader :risk
 
     def initialize(risk: :low)
       @risk = risk.to_sym

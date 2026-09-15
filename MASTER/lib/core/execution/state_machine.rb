@@ -5,6 +5,8 @@ require_relative "verifier/engine"
 require_relative "observer/system_state"
 require_relative "presence/state"
 require_relative "episode/record"
+require_relative "trace/structural_trace"
+
 
 module Master
   module Core
@@ -23,7 +25,9 @@ module Master
           @verifier = Verifier::Engine.new(root: container[:root], bus: container[:bus])
           @presence = Presence::State.new(phase: :idle)
           @episode = Episode::Record.new(id: SecureRandom.hex(4), intent: goal)
+          @trace = StructuralTrace.new
         end
+
 
         def transition_to(next_state)
           unless STATES.include?(next_state)
@@ -65,7 +69,19 @@ module Master
           chain.verify(verification) if verification.ok?
           
           @episode.record_verification(verification) if verification.ok?
+
+          # Link the evidence to the structural trace
+          entry = @trace.record(
+            role: chain.role,
+            intent: @goal,
+            effect: chain.action,
+            observation: verification.message,
+            evidence: chain
+          )
+          @episode.record_trace_entry(entry)
         end
+
+
 
         def current_state
           @current_state
@@ -100,7 +116,12 @@ module Master
         def episode
           @episode
         end
+
+        def trace
+          @trace
+        end
       end
     end
   end
+
 end

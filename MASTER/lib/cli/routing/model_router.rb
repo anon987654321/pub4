@@ -32,12 +32,18 @@ module Master
           @root = root
           @provider_health = provider_health
           @rules = load_rules
+          @capability_map = Master::Core::Routing::CapabilityMap.new
         end
 
         def preferred(task_type: :exploration)
           return @config.model unless enabled?
 
+          # Empirical override: check if we have a proven winner for this task class
+          empirical_best = @capability_map.best_model_for(task_type)
+          return empirical_best if empirical_best
+
           tier = @rules.dig("routes", task_type.to_s) || @rules.dig("routes", "fallback_default") || "cheap"
+
           candidates = @rules.dig("models", tier).to_a
           return @config.model if candidates.empty?
 
