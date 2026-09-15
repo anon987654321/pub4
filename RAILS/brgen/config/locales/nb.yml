@@ -1034,6 +1034,9 @@ nb:
     tracks:
       one: "%{count} spor"
       other: "%{count} spor"
+    likes:
+      one: "%{count} liker"
+      other: "%{count} liker"
     collaborative: Samarbeid
     add_comment: "+ Kommentar"
     add_comment_aria: Legg til tidsstemplet kommentar på nåværende tidspunkt

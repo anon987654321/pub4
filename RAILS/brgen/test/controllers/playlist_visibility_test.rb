@@ -42,4 +42,14 @@ class PlaylistVisibilityTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, @playlist.name
   end
+
+  test "a set page counts its likes in the reader's language" do
+    set = Playlist::Set.create!(name: "Sett #{SecureRandom.hex(3)}", user: @owner)
+    host! "radio.brgen.no"
+
+    get playlist.set_path(set)
+    assert_response :success
+    assert_includes response.body, I18n.t("playlist.likes", count: 0, locale: :nb)
+    assert_not_includes response.body, "0 likes"
+  end
 end

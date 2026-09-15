@@ -33,10 +33,10 @@
       <% else %>
         <%= button_to t("actions.like"), set_like_path(@set), method: :post, class: "btn btn-primary btn-sm" %>
       <% end %>
-      <%= @set.likes.count %> likes
+      <%= t("playlist.likes", count: @set.likes.count) %>
     </div>
   <% else %>
-    <p><%= @set.likes.count %> likes</p>
+    <%= tag.p t("playlist.likes", count: @set.likes.count) %>
   <% end %>
 </article>
 

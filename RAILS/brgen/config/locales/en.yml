@@ -1028,6 +1028,9 @@ en:
     tracks:
       one: "%{count} track"
       other: "%{count} tracks"
+    likes:
+      one: "%{count} like"
+      other: "%{count} likes"
     collaborative: Collaborative
     add_comment: "+ Comment"
     add_comment_aria: Add timestamped comment at current time
