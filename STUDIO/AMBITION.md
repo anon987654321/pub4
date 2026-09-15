@@ -81,8 +81,9 @@ the one place the physical trade-off can be refused.
 
 Items 47–51, 53, 54 and 56 are built: `--subject-distance`, `--selfie-geometry`
 and its warnings in preprompt, and the drawn `selfies` and `distance` prompt
-sets lora renders with `--generate-replicate`. 52, 55, 57 and 58 wait on frames
-from the ladder.
+sets lora renders with `--generate-replicate`. 58 is answered for one adapter in
+`PHOTOGRAPHY.md`: Ragnhild's FLUX.1-dev LoRA ignores a stated distance, so 52
+has nothing to measure there, and 55 and 57 wait on a model that does not.
 
 47. Prompt the **camera-to-subject distance in metres**, not the focal length. The distance is the cause.
 48. Ask for the geometry of 2.5–3.5 m with the framing and gaze of a selfie — never available together before.

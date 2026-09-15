@@ -36,6 +36,17 @@ real ones.
 
 Ask for the distance, not the lens.
 
+**What one model did with that request.** Ragnhild's FLUX.1-dev LoRA rendered
+lora's `distance` set on 2026-09-15: one sitting on one seed, stating 0.45,
+0.5, 1, 2, 3 and 5 metres with 24, 28, 35, 50, 85 and 135mm to hold the crop.
+The six frames came back nearly identical — the same face, the same crop, no
+enlargement at 0.45 m and no flattening at 5 m. That model does not act on a
+stated distance or focal length at all. Its selfies come back undistorted
+because its training photographs and its prior are, not because the prompt
+asked. One subject, one seed and one scene is a finding about this adapter,
+not about FLUX, so a model that does honour the words has to be shown doing it
+on the same ladder before the words are trusted to carry geometry.
+
 ## 2. Light — shape it at capture; postpro can grade it, not move it
 
 The classical patterns, and what each does to a face:
