@@ -108,8 +108,11 @@ module SchemaHelper
 
   private
 
+  # A demo record is seeded, not a business, a person or a product anyone
+  # offers, so it is described as nothing.
   def build_schema(resource, explicit_type)
     return nil unless resource.present?
+    return nil if resource.try(:demo?)
 
     case (explicit_type || infer_type(resource)).to_s
     when "article", "post"

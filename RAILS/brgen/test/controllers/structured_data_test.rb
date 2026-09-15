@@ -220,6 +220,57 @@ class StructuredDataTest < ActionDispatch::IntegrationTest
     assert_in_delta 60.3913, typed.reload.latitude.to_f, 0.000_001
   end
 
+  def robots_content
+    css_select("meta[name=robots]").first&.attr("content").to_s
+  end
+
+  def sitemap_locs
+    host! "takeaway.brgen.no"
+    get "/sitemap.xml"
+    assert_response :success
+    Nokogiri::XML(response.body).remove_namespaces!.xpath("//loc").map(&:text)
+  end
+
+  test "a demo restaurant keeps its page but is noindex and described as no business" do
+    demo = create_restaurant(demo: true)
+
+    assert_nil local_business_for(demo)
+    assert_includes robots_content, "noindex"
+    assert_select "h1", text: demo.name
+  end
+
+  test "an ordinary restaurant is indexable and described" do
+    real = create_restaurant
+
+    assert local_business_for(real)
+    refute_includes robots_content, "noindex"
+  end
+
+  test "the takeaway sitemap lists ordinary restaurants and leaves demo ones out" do
+    demo = create_restaurant(demo: true)
+    real = create_restaurant
+
+    locs = sitemap_locs
+
+    assert_includes locs, takeaway.restaurant_url(real, host: "takeaway.brgen.no")
+    refute_includes locs, takeaway.restaurant_url(demo, host: "takeaway.brgen.no")
+  end
+
+  test "the migration marks the seeded restaurants by name and seeded owner only" do
+    require Rails.root.join("db/migrate/20260915100000_add_demo_to_takeaway_restaurants")
+    owner = User.strict_loading(false).create!(
+      email_address: "ola_nordnes@brgen.no", password: "password123", username: "ola_nordnes", guest: false, city: @city
+    )
+    seeded = Takeaway::Restaurant.create!(user: owner, name: "Colonialen", address: "Nordnes 33",
+                                          cuisine_type: "Norwegian", city: @city, active: true)
+    namesake = create_restaurant(name: "Colonialen")
+
+    ActiveRecord::Migration.suppress_messages { AddDemoToTakeawayRestaurants.new.mark_seeded }
+
+    assert seeded.reload.demo?
+    refute namesake.reload.demo?, "a restaurant sharing the name with another owner is not the seed"
+  end
+
   test "a track with no artist carries no invented artist" do
     set = Playlist::Set.create!(name: "Sett #{SecureRandom.hex(3)}", user: @seller, privacy: "public")
     track = Playlist::Track.create!(title: "Regnvær", artist: "", user: @seller, source_type: "direct",

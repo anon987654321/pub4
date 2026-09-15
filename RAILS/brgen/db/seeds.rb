@@ -321,7 +321,7 @@ restaurants = num_rest.times.map do |i|
     name: name,
     cuisine_type: cuisine,
     address: Brgen::PlausibleContent.street_address,
-    active: true,
+    active: true, demo: true,
     delivery_fee_cents: rand(2000..6000),
     min_order_cents: rand(8000..15_000),
     latitude: 60.39 + rand(-0.04..0.04),

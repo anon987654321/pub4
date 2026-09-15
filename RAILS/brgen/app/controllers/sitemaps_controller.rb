@@ -88,7 +88,7 @@ class SitemapsController < ApplicationController
   end
 
   def takeaway_entries
-    entries_for(Takeaway::Restaurant.active.in_current_city, changefreq: "weekly", priority: "0.7") { |r| takeaway.restaurant_url(r) }
+    entries_for(Takeaway::Restaurant.indexable.in_current_city, changefreq: "weekly", priority: "0.7") { |r| takeaway.restaurant_url(r) }
   end
 
   def marketplace_entries

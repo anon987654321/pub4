@@ -324,7 +324,7 @@ module Brgen
           name: row[:name],
           cuisine_type: row[:cuisine_type],
           address: row[:address],
-          active: true,
+          active: true, demo: true,
           delivery_fee_cents: row[:delivery_fee_cents],
           min_order_cents: row[:min_order_cents],
           latitude: row[:latitude],
