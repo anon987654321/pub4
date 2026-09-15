@@ -2719,6 +2719,336 @@ module DillaGroove
   end
 end
 
+# The semantics of techno, as data a renderer reads.
+#
+# A techno track is mostly not pitch. It is where hits land and where they do
+# not, how long each figure takes to come round, which parameter moves over
+# which span of time, and which state the whole thing is in. Every renderer in
+# this engine already carries pieces of that -- GROOVE_FEELS, polymeter_steps,
+# HATE_LAYERS, the DFAM patch -- as literals inside one render method each, so a
+# style could only be copied, never described. This module is the description:
+# seventeen axes on 0..1, a low-end choice, a kick voice, and the elements a
+# track is made of, per style. Energy is not an axis; it is measured from a
+# state, because a section's energy is what it contains, not a knob.
+#
+# Pure: no ENV, no IO, no randomness it was not handed a seed for. The renderer
+# (SemanticTechno in sound.rb) and the profile-to-knob mapping for `hate` and
+# `industrial` both read it, so the two cannot describe a style differently.
+module DillaSemantics
+  AXES = %i[pulse microtiming accent density sparsity persistence mutation polyrhythm
+            velocity_curve envelope_variance spectral_motion spatial_motion harmonic_density
+            feedback resampling tension contrast].freeze
+
+  # The low end is a choice among five, not KICK + RUMBLE. A dry kick with a long
+  # tail is a whole low end in some styles and a rumble would bury it.
+  LOW_ENDS = %i[kick_tail rumble bass tom_sub hybrid].freeze
+
+  ENERGY = %i[density brightness transient_sharpness spectral_width harmonic_density
+              rhythmic_complexity tension contrast].freeze
+
+  # Two clocks per element. cycle_bars is how long its figure takes to repeat, so
+  # a 1-bar kick, 2-bar perc and 3-bar perc only line up every six bars and the
+  # relationship changes without anyone writing a new pattern. motion_beats is
+  # the period of the parameter that moves it -- a hat's decay on eighths, a
+  # filter over sixteen bars, the atmosphere over sixty-four -- so everything
+  # moves and nothing moves at the same time.
+  ELEMENTS = {
+    kick: { cycle_bars: 1, motion_beats: 1.0, register: :low },
+    hat: { cycle_bars: 1, motion_beats: 0.5, register: :high },
+    open: { cycle_bars: 2, motion_beats: 4.0, register: :high },
+    clap: { cycle_bars: 2, motion_beats: 8.0, register: :mid },
+    perc_a: { cycle_bars: 2, motion_beats: 4.0, register: :mid },
+    perc_b: { cycle_bars: 3, motion_beats: 16.0, register: :high },
+    stab: { cycle_bars: 4, motion_beats: 64.0, register: :mid },
+    texture: { cycle_bars: 4, motion_beats: 256.0, register: :wide },
+    low: { cycle_bars: 1, motion_beats: 64.0, register: :low },
+  }.freeze
+
+  # GROOVE_FEELS speaks in drum roles; these are the roles each element plays.
+  FEEL_ROLES = { kick: :kick, hat: :hat, open: :hat_up, clap: :clap, perc_a: :ghost,
+                 perc_b: :ghost, stab: :keys, texture: :keys, low: :bass }.freeze
+
+  # Each profile states what the research on that style names, in the axes'
+  # terms. The numbers are relative -- basic_channel's feedback is high against
+  # detroit's -- and each style's kick is a voice with its own body, sweep and
+  # click rather than a sample choice.
+  #
+  # Tempos are the records', not a blog's: dub techno sits near 125, hardgroove
+  # a little above 130, and the HATE-adjacent industrial style at 138, where a
+  # faster top end makes it feel quicker than its clock.
+  PROFILES = {
+    detroit: {
+      bpm: 128, low_end: :bass, feel: nil,
+      elements: %i[kick hat open clap perc_a perc_b stab low],
+      kick: { body_hz: 52.0, sweep_hz: 140.0, sweep_decay: 30.0, amp_decay: 9.0, click_ms: 3.0, drive: 0.3 },
+      axes: { pulse: 0.9, microtiming: 0.6, accent: 0.7, density: 0.6, sparsity: 0.3, persistence: 0.5,
+              mutation: 0.5, polyrhythm: 0.6, velocity_curve: 0.6, envelope_variance: 0.3,
+              spectral_motion: 0.5, spatial_motion: 0.3, harmonic_density: 0.35, feedback: 0.3,
+              resampling: 0.2, tension: 0.45, contrast: 0.5 },
+    },
+    basic_channel: {
+      bpm: 126, low_end: :rumble, feel: nil,
+      elements: %i[kick hat perc_b stab texture low],
+      kick: { body_hz: 48.0, sweep_hz: 90.0, sweep_decay: 22.0, amp_decay: 7.0, click_ms: 1.5, drive: 0.1 },
+      axes: { pulse: 1.0, microtiming: 0.0, accent: 0.3, density: 0.25, sparsity: 0.6, persistence: 0.9,
+              mutation: 0.2, polyrhythm: 0.3, velocity_curve: 0.3, envelope_variance: 0.2,
+              spectral_motion: 0.85, spatial_motion: 0.8, harmonic_density: 0.25, feedback: 0.85,
+              resampling: 0.5, tension: 0.35, contrast: 0.25 },
+    },
+    hardgroove: {
+      bpm: 134, low_end: :tom_sub, feel: nil,
+      elements: %i[kick hat open clap perc_a perc_b low],
+      kick: { body_hz: 55.0, sweep_hz: 160.0, sweep_decay: 34.0, amp_decay: 11.0, click_ms: 4.0, drive: 0.4 },
+      axes: { pulse: 0.95, microtiming: 0.35, accent: 0.8, density: 0.85, sparsity: 0.25, persistence: 0.45,
+              mutation: 0.7, polyrhythm: 0.85, velocity_curve: 0.7, envelope_variance: 0.5,
+              spectral_motion: 0.5, spatial_motion: 0.4, harmonic_density: 0.45, feedback: 0.3,
+              resampling: 0.3, tension: 0.55, contrast: 0.55 },
+    },
+    industrial: {
+      bpm: 138, low_end: :hybrid, feel: nil,
+      elements: %i[kick hat clap perc_a perc_b texture low],
+      kick: { body_hz: 50.0, sweep_hz: 220.0, sweep_decay: 26.0, amp_decay: 8.0, click_ms: 5.0, drive: 0.9 },
+      axes: { pulse: 1.0, microtiming: 0.1, accent: 0.85, density: 0.65, sparsity: 0.4, persistence: 0.85,
+              mutation: 0.3, polyrhythm: 0.45, velocity_curve: 0.8, envelope_variance: 0.4,
+              spectral_motion: 0.6, spatial_motion: 0.5, harmonic_density: 0.9, feedback: 0.55,
+              resampling: 0.7, tension: 0.85, contrast: 0.8 },
+    },
+    # Dilla's pocket on a machine: the snare late and the hats holding the grid,
+    # at the full GROOVE_FEELS depth rather than hate's two thirds.
+    dilla_pocket: {
+      bpm: 122, low_end: :kick_tail, feel: :dilla_drag,
+      elements: %i[kick hat open clap perc_a stab low],
+      kick: { body_hz: 58.0, sweep_hz: 120.0, sweep_decay: 28.0, amp_decay: 10.0, click_ms: 2.5, drive: 0.35 },
+      axes: { pulse: 0.7, microtiming: 0.9, accent: 0.6, density: 0.45, sparsity: 0.5, persistence: 0.6,
+              mutation: 0.5, polyrhythm: 0.4, velocity_curve: 0.75, envelope_variance: 0.6,
+              spectral_motion: 0.4, spatial_motion: 0.35, harmonic_density: 0.5, feedback: 0.4,
+              resampling: 0.45, tension: 0.5, contrast: 0.45 },
+    },
+  }.freeze
+
+  # The arrangement is subtractive. The busiest state is the track's definition
+  # -- every element of the profile -- and each section names what it takes away
+  # and what it transforms, never what it adds. That is what stops the chorus
+  # pile-up: no section can hold an element the full state does not.
+  SECTION_MOVES = {
+    strip: { remove: %i[clap open stab low], transform: {} },
+    ground: { remove: %i[stab open], transform: {} },
+    filter: { remove: [], transform: { low: :filtered, stab: :filtered, hat: :filtered } },
+    full: { remove: [], transform: {} },
+    lift: { remove: %i[low], transform: {} },
+    damage: { remove: %i[low stab], transform: { perc_a: :dirty, perc_b: :dirty, clap: :dirty } },
+    return: { remove: [], transform: { low: :varied } },
+  }.freeze
+  SECTION_ORDER = %i[strip ground filter full lift damage return full strip].freeze
+  SECTION_BARS = 16
+
+  module_function
+
+  def profile(name)
+    PROFILES.fetch(name.to_s.to_sym) do
+      raise ArgumentError, "no techno profile #{name.inspect} — try #{PROFILES.keys.join(', ')}"
+    end
+  end
+
+  def axis(profile, name) = profile.fetch(:axes).fetch(name)
+
+  # Swing is one shape of microtiming, and it lands on the off-sixteenths of the
+  # elements that are not the clock. The kick stays where the pulse says: a
+  # rigid kick under shifted hats is the style, a global swing is not.
+  def timing_offset(profile, element, step, beat)
+    return kick_offset(profile, beat) if element == :kick
+
+    step_sec = beat / 4.0
+    swing = 0.5 + (axis(profile, :microtiming) * 0.12)
+    swung = step.odd? ? ((2.0 * swing) - 1.0) * step_sec : 0.0
+    swung + feel_offset(profile, element, beat)
+  end
+
+  def kick_offset(profile, beat)
+    feel_offset(profile, :kick, beat) * (1.0 - axis(profile, :pulse))
+  end
+
+  # GROOVE_FEELS ticks at 96 PPQ, scaled by how far this style lets events drift.
+  def feel_offset(profile, element, beat)
+    return 0.0 unless profile[:feel]
+
+    ticks = DillaGroove::GROOVE_FEELS.fetch(profile[:feel]).fetch(FEEL_ROLES.fetch(element), 0)
+    ticks * axis(profile, :microtiming) * beat / 96.0
+  end
+
+  # One bar of one element: [[step, velocity, decay_scale], ...]. `seed` names
+  # the render; the same seed, profile, element and bar give the same figure.
+  def figure(profile, element, bar, seed:)
+    cycle = ELEMENTS.fetch(element).fetch(:cycle_bars)
+    steps = (base_steps(profile, element, bar % cycle, bar) + mutation(profile, element, bar, seed)).uniq.sort
+    steps = sparse(profile, element, steps, Random.new(seed + (bar * 131) + element_index(element)))
+    rng = Random.new(seed ^ ((bar + 1) * 7919) ^ element_index(element))
+    steps.map { |step| [step, velocity(profile, step), decay_scale(profile, rng)] }
+  end
+
+  def element_index(element) = ELEMENTS.keys.index(element)
+
+  def base_steps(profile, element, variation, bar)
+    density = axis(profile, :density)
+    case element
+    when :kick then [0, 4, 8, 12] + (density > 0.6 && variation.zero? && bar.odd? ? [14] : [])
+    when :hat then [2, 6, 10, 14] + DillaGroove.euclidean((density * 8).round, 16, rotation: variation)
+    when :open then [2, 6, 10, 14].select.with_index { |_, i| (i + variation).even? || density > 0.7 }
+    when :clap then [4, 12] + (variation == 1 && density > 0.5 ? [15] : [])
+    when :perc_a then DillaGroove.euclidean(3 + (density * 4).round, 16, rotation: 3 + (variation * 5))
+    when :perc_b then polymeter(profile, bar)
+    else melodic_steps(element, variation)
+    end
+  end
+
+  # A figure whose cycle is not a bar at all: indexed by the global step, so it
+  # precesses against the kick and meets the downbeat only every few bars.
+  def polymeter(profile, bar)
+    cycle = 5 + (axis(profile, :polyrhythm) * 6).round
+    DillaGroove.polymeter_steps(bar, cycle:, pulses: 2 + (axis(profile, :density) * 3).round)
+  end
+
+  def melodic_steps(element, variation)
+    case element
+    when :stab then [[3, 10], [6], [3, 11], [14]][variation % 4]
+    when :texture then variation.zero? ? [0] : []
+    else [2, 6, 10, 14]
+    end
+  end
+
+  # Persistence is how long a figure holds; mutation is whether it changes when
+  # the hold runs out. One step toggles per window, and it stays toggled for the
+  # whole window, so a change is a new state rather than a fill.
+  def mutation(profile, element, bar, seed)
+    window = (4 + (axis(profile, :persistence) * 28)).round
+    rng = Random.new(seed + ((bar / window) * 104_729) + element_index(element))
+    return [] unless rng.rand < axis(profile, :mutation) && element != :kick
+
+    [rng.rand(16)]
+  end
+
+  # Silence as the instrument: the hit before an accent goes, so the accent lands
+  # on a hole. Downbeats and the backbeat are the accents.
+  def sparse(profile, element, steps, rng)
+    return steps if %i[kick low].include?(element)
+
+    steps.reject { |step| [0, 4, 8, 12].include?((step + 1) % 16) && rng.rand < axis(profile, :sparsity) * 0.6 }
+  end
+
+  def velocity(profile, step)
+    weight = if (step % 4).zero? then 1.0 elsif step.even? then 0.5 else 0.2 end
+    base = (0.5 + (axis(profile, :accent) * 0.5 * weight)).clamp(0.05, 1.0)
+    (base**(0.5 + axis(profile, :velocity_curve))).round(4)
+  end
+
+  def decay_scale(profile, rng)
+    (1.0 + (((rng.rand * 2.0) - 1.0) * axis(profile, :envelope_variance) * 0.5)).round(4)
+  end
+
+  # The sections for a render of `bars`, busiest first when there is room for
+  # only one. A window of SECTION_ORDER centred on its first :full, so a short
+  # render is the peak and its neighbours rather than an intro that never
+  # arrives.
+  def sections(bars)
+    count = (bars / SECTION_BARS.to_f).ceil.clamp(1, 64)
+    return SECTION_ORDER.cycle.first(count) if count > SECTION_ORDER.length
+
+    start = (SECTION_ORDER.index(:full) - ((count - 1) / 2)).clamp(0, SECTION_ORDER.length - count)
+    SECTION_ORDER[start, count]
+  end
+
+  # One section's state: every element of the full state with a gain and a
+  # transform. Removal is not always silence -- low contrast leaves a removed
+  # element faintly present, which is how a dub track changes without a cut.
+  def section_state(profile, name)
+    move = SECTION_MOVES.fetch(name)
+    floor = ((1.0 - axis(profile, :contrast)) * 0.3).round(4)
+    profile.fetch(:elements).to_h do |element|
+      gain = move[:remove].include?(element) ? floor : 1.0
+      [element, { gain:, transform: move[:transform][element] }]
+    end
+  end
+
+  # Where the silence goes at a section's edge. The last bar before a section
+  # that has the kick loses it from the third beat -- the return is what the
+  # dropout was for -- when this style carries enough tension to want it.
+  def dropout_bar?(profile, bar, seed)
+    section_end = ((bar + 1) % SECTION_BARS).zero?
+    section_end && Random.new(seed + (bar * 613)).rand < axis(profile, :tension)
+  end
+
+  # Energy as eight numbers rather than one loudness. Measured from what the
+  # section contains, so a style cannot claim energy its state does not hold.
+  def energy(profile, name, previous: nil)
+    state = section_state(profile, name)
+    present = state.select { |_, s| s[:gain] >= 0.5 }.keys
+    vector = {
+      density: (present.sum { |e| hits_per_bar(profile, e) } / 40.0).clamp(0.0, 1.0),
+      brightness: register_share(present, :high, state),
+      transient_sharpness: ((present.include?(:kick) ? 0.5 : 0.0) + (present.include?(:hat) ? 0.3 : 0.0) +
+                            (dirty_count(state) * 0.1)).clamp(0.0, 1.0),
+      spectral_width: (present.map { |e| ELEMENTS[e][:register] }.uniq.length / 4.0).clamp(0.0, 1.0),
+      harmonic_density: (axis(profile, :harmonic_density) * (1.0 + (dirty_count(state) * 0.25))).clamp(0.0, 1.0),
+      rhythmic_complexity: (present.map { |e| ELEMENTS[e][:cycle_bars] }.uniq.length / 4.0).clamp(0.0, 1.0),
+      tension: tension(profile, present, state),
+    }
+    vector.merge(contrast: previous ? distance(vector, previous) : 0.0).transform_values { |v| v.round(4) }
+  end
+
+  def hits_per_bar(profile, element)
+    cycle = ELEMENTS.fetch(element).fetch(:cycle_bars)
+    (0...cycle).sum { |bar| base_steps(profile, element, bar, bar).uniq.length } / cycle.to_f
+  end
+
+  def register_share(present, register, state)
+    all = state.keys.select { |e| ELEMENTS[e][:register] == register }
+    return 0.0 if all.empty?
+
+    open = present.count { |e| ELEMENTS[e][:register] == register && state[e][:transform] != :filtered }
+    (open / all.length.to_f).clamp(0.0, 1.0)
+  end
+
+  def dirty_count(state) = state.count { |_, s| s[:transform] == :dirty }
+
+  # Tension is what is withheld: a missing low end or a closed filter under a
+  # running kick is anticipation, and a style's tension axis scales how much.
+  def tension(profile, present, state)
+    withheld = profile[:elements].length - present.length
+    filtered = state.count { |_, s| s[:transform] == :filtered }
+    (axis(profile, :tension) * (0.4 + (withheld * 0.15) + (filtered * 0.1))).clamp(0.0, 1.0)
+  end
+
+  def distance(a, b)
+    keys = ENERGY - [:contrast]
+    Math.sqrt(keys.sum { |k| (a[k] - b[k])**2 } / keys.length)
+  end
+
+  # The profile in `hate`'s and `industrial`'s own knobs, for the renderers that
+  # predate it. Only knobs read at render time: HATE_BPM is a constant computed
+  # at load, so a profile cannot move hate's tempo and does not pretend to.
+  def engine_env(profile)
+    a = profile.fetch(:axes)
+    {
+      "HATE_DILLA" => a[:microtiming] < 0.05 ? "0" : "1",
+      "HATE_DILLA_DEPTH" => (a[:microtiming] * 0.9).round(2).to_s,
+      "HATE_INTRICATE" => a[:density] >= 0.7 ? "1" : "0",
+      "HATE_MODERN" => a[:sparsity] >= 0.5 && a[:harmonic_density] < 0.5 ? "1" : "0",
+      "HATE_TUNNEL" => a[:feedback] >= 0.6 ? "1" : "0",
+      "HATE_DFAM_HEAVY" => a[:harmonic_density] >= 0.75 ? "1" : "0",
+      "HATE_PAULSTRETCH" => [a[:spatial_motion], a[:resampling]].max >= 0.5 ? "1" : "0",
+      "HATE_WEIRD" => a[:resampling] >= 0.6 ? "1" : "0",
+      "HATE_MELODY" => profile[:elements].include?(:stab) ? "1" : "0",
+      "IBPM" => profile[:bpm].to_s,
+    }
+  end
+
+  # A knob the operator set by hand wins over the profile, the rule DillaMacros
+  # already keeps. Returns what was applied, so the caller can say it.
+  def apply_env!(env, target = ENV)
+    env.reject { |key, _| target.key?(key) }.each { |key, value| target[key] = value }
+  end
+end
+
 # Macro/micro rhythm — tempo ramps, stripdown, gap rhythm, prime bars.
 module DillaRhythm
   @ctx = { n_bars: 16, base_bpm: 90.0, duration: 32.0 }
