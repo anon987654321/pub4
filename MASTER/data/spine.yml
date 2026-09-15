@@ -833,7 +833,9 @@ pub4_source_ceilings:
   # them. This row is what caught the first attempt not landing -- it read 2395
   # while the branch claimed the removal, because a path-scoped commit rebuilds
   # its paths from the working tree and put them back.
-  RAILS: 1980
+  # 1980 -> 1932, a fall. Each Rails app compiles from one application.scss, so
+  # 72 partials left the index and Operator::ScssRules joined it.
+  RAILS: 1932
   # 106 -> 107 is test/test_githooks.rb. dev/githooks holds the three guards
   # that are the whole defence against a shared index, and nothing tested any of
   # them — a hook that stopped firing looks exactly like a week in which nobody
