@@ -11,6 +11,8 @@ class Post < ApplicationRecord
   include Shared::Mentionable
   include Shared::Reactable
   include Shared::MediaProcessable
+  include Shared::LinkEmbeddable
+  embeds_links_from :content
   tracks_activity created: "PostCreated", source_vertical: "social", actor: :user
 
   # Jodel-style Live posts: short, hyperlocal, anonymous-by-default.

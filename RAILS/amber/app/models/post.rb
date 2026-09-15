@@ -8,6 +8,8 @@ class Post < ApplicationRecord
   belongs_to :item, optional: true, touch: true
 
   include Shared::RichTextLength
+  include Shared::LinkEmbeddable
+  embeds_links_from :body
 
   # body holds Tiptap's HTML. presence still works — the editor writes "" when
   # it is empty rather than "<p></p>" — but the limit has to measure the text,
