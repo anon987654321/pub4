@@ -41,7 +41,8 @@ Forward work is the last section of this file.
   link without colour needs an underline. Both ratchets count RAILS.
 - **tv and maps hover fills fail AA under the vertical ink** (3.34 and 4.31
   against 4.5) and reach no pixel until their hover is wired. Pick the colours
-  before wiring them; `_vertical_shell.scss` records the measurement.
+  before wiring them; `$vertical-accent-ink` in brgen's `application.scss`
+  records the measurement.
 - **dilla is fenced, because it renders audio.** Narrowing dilla's
   `SILENT_RESCUE` sites.
 
@@ -447,7 +448,7 @@ What is actually wrong, each seen rather than inferred:
   vertical and the front page, and it is a container, not a palette.
 - **dating is a second chrome, and it goes.** `dating.brgen.no` renders
   full-bleed with the nav hidden, a neon heart and a 200px wordmark — the
-  "immersive" variant in `_vertical_shell.scss`. Under the decision above it
+  "immersive" variant in brgen's `application.scss`. Under the decision above it
   gets the nav and the column like everything else. messenger is the other
   immersive surface; same treatment.
 - **marketplace 500s.** `marketplace.brgen.no` raises where tv, dating and
@@ -809,8 +810,8 @@ sitting.
   `.feed-header`. The contract in `shared/LAYOUT.md` describes an element four
   of seven surfaces do not render. Whether the contract or the verticals are
   wrong is a layout call. Two inert `grid-template-*` pairs remain on `.layout`
-  (a flex box) in `_vertical_messenger_list.scss:20-21` and
-  `engines/maps/.../_vertical_maps_shell.scss:45-46`; remove them with a
+  (a flex box) in `body.vertical-messenger .layout` and
+  `body.vertical-maps .layout` in brgen's `application.scss`; remove them with a
   before/after measurement.
 
 **vm23.**
