@@ -3138,6 +3138,501 @@ module TapeHysteresis
   end
 end
 
+# The voices DillaSemantics asks for, synthesised sample by sample.
+#
+# Pure Ruby rather than aevalsrc, for the reason render_hate_techno's comments
+# measured twice: every hit is another term in one ffmpeg expression, and
+# sixteenth hats over eight bars made ffmpeg refuse the layer for memory. Here a
+# hit is an array, built once and added where it lands, so a kick can carry a
+# pitch envelope, a click and a tail as parameters instead of as a literal.
+module TechnoVoices
+  RATE = 44_100
+  TWO_PI = 2.0 * Math::PI
+
+  module_function
+
+  # KICK. A note that happens four times a bar, designed as an instrument:
+  # a body whose pitch falls from body+sweep to body, an amplitude decay, and a
+  # click. Returned as [transient, body] so the two are processed apart -- the
+  # body is driven into harmonics and the click stays clean, because a dirty
+  # body under a clean attack is a comparison the ear can make, and a kick
+  # distorted whole is only louder.
+  def kick(voice, velocity: 1.0, decay_scale: 1.0, tail: 1.0)
+    length = (0.5 * tail * RATE).to_i
+    amp_decay = voice[:amp_decay] / (decay_scale * tail)
+    phase = 0.0
+    body = Array.new(length) do |i|
+      t = i.to_f / RATE
+      phase += TWO_PI * (voice[:body_hz] + (voice[:sweep_hz] * Math.exp(-t * voice[:sweep_decay]))) / RATE
+      Math.sin(phase) * Math.exp(-t * amp_decay) * velocity
+    end
+    [click(voice[:click_ms], velocity * 0.5), dirt!(body, voice[:drive])]
+  end
+
+  def click(ms, velocity)
+    rng = Random.new((ms * 1000).round)
+    length = (ms / 1000.0 * RATE * 4).to_i.clamp(8, RATE)
+    burst = Array.new(length) { |i| ((rng.rand * 2.0) - 1.0) * Math.exp(-i * 4.0 / length) * velocity }
+    highpass!(burst, 1800.0)
+  end
+
+  # FM BURST. The modulation index decays much faster than the note, so the hit
+  # opens as a spray of sidebands and settles into a near-sine: the transient
+  # evolution FM percussion is used for, and the DFAM patch's two oscillators.
+  def fm_burst(hz:, ratio:, index:, velocity:, decay_scale: 1.0, length: 0.3)
+    frames = (length * RATE).to_i
+    amp_decay = 14.0 / decay_scale
+    Array.new(frames) do |i|
+      t = i.to_f / RATE
+      mod = index * Math.exp(-t * 60.0) * Math.sin(TWO_PI * hz * ratio * t)
+      Math.sin((TWO_PI * hz * t) + mod) * Math.exp(-t * amp_decay) * velocity
+    end
+  end
+
+  # RESONATOR. A few milliseconds of noise struck into tuned bandpasses at
+  # inharmonic partials: metal, pipe, glass -- percussion that is not a drum.
+  def resonator(partials:, velocity:, seed:, q: 18.0, decay_scale: 1.0, length: 0.4)
+    rng = Random.new(seed)
+    frames = (length * RATE).to_i
+    strike = (0.004 * RATE).to_i
+    excite = Array.new(frames) { |i| i < strike ? (rng.rand * 2.0) - 1.0 : 0.0 }
+    rung = partials.map { |hz| bandpass(excite, hz, q) }
+    decay = 9.0 / decay_scale
+    Array.new(frames) { |i| rung.sum { |r| r[i] } * Math.exp(-i * decay / RATE) * velocity * 2.5 }
+  end
+
+  # RBJ constant-peak bandpass. Kept to one form because the resonator is its
+  # only reader and a second filter family would be a second place to tune.
+  def bandpass(input, hz, q)
+    w0 = TWO_PI * hz.clamp(20.0, (RATE / 2.0) - 100.0) / RATE
+    alpha = Math.sin(w0) / (2.0 * q)
+    a0 = 1.0 + alpha
+    b0 = alpha / a0
+    a1 = -2.0 * Math.cos(w0) / a0
+    a2 = (1.0 - alpha) / a0
+    x1 = x2 = y1 = y2 = 0.0
+    input.map do |x|
+      y = (b0 * x) - (b0 * x2) - (a1 * y1) - (a2 * y2)
+      x2 = x1
+      x1 = x
+      y2 = y1
+      y1 = y
+    end
+  end
+
+  # HAT. Noise above 7 kHz. Its decay is the parameter that moves: the shorter
+  # the hats, the faster a track feels at the same tempo.
+  def hat(velocity:, seed:, decay: 0.05)
+    rng = Random.new(seed)
+    frames = (decay * 5.0 * RATE).to_i.clamp(64, RATE)
+    noise = Array.new(frames) { |i| ((rng.rand * 2.0) - 1.0) * Math.exp(-i / (decay * RATE)) * velocity }
+    highpass!(highpass!(noise, 7000.0), 7000.0)
+  end
+
+  # A sine with a falling pitch: a bass note when `drop` is small, a tom moving
+  # the sub when it is large.
+  def tone(hz:, velocity:, length: 0.3, drop: 0.0, decay: 6.0)
+    phase = 0.0
+    Array.new((length * RATE).to_i) do |i|
+      t = i.to_f / RATE
+      phase += TWO_PI * hz * (1.0 + (drop * Math.exp(-t * 18.0))) / RATE
+      (Math.sin(phase) + (0.18 * Math.sin(2.0 * phase))) * Math.exp(-t * decay) * velocity
+    end
+  end
+
+  # STAB. A minor seventh on detuned saws through a lowpass whose cutoff is the
+  # stab's moving parameter -- the dub chord, and Detroit's.
+  def stab(root_hz:, velocity:, cutoff:, length: 0.45)
+    chord = [1.0, 1.1892, 1.4983, 1.7818].flat_map { |r| [root_hz * r * 0.997, root_hz * r * 1.003] }
+    frames = (length * RATE).to_i
+    out = Array.new(frames) do |i|
+      t = i.to_f / RATE
+      saw = chord.sum { |hz| (((hz * t) % 1.0) * 2.0) - 1.0 } / chord.length
+      saw * [t * 200.0, 1.0].min * Math.exp(-t * 7.0) * velocity
+    end
+    lowpass!(lowpass!(out, cutoff), cutoff)
+  end
+
+  # Drive into tanh, then a fold past 0.6, level-matched by the curve's own
+  # ceiling. Harmonics are generated rather than borrowed from volume.
+  def dirt!(samples, amount)
+    return samples if amount <= 0.0
+
+    drive = 1.0 + (amount * 6.0)
+    ceiling = Math.tanh(drive)
+    samples.map! { |x| Math.tanh(x * drive) / ceiling }
+    SpaceFx.fold(samples, amount: 1.2 + amount, mix: amount - 0.6) if amount > 0.6
+    samples
+  end
+
+  def lowpass!(samples, hz)
+    k = 1.0 - Math.exp(-TWO_PI * hz / RATE)
+    y = 0.0
+    samples.map! { |x| y += k * (x - y) }
+  end
+
+  def highpass!(samples, hz)
+    k = 1.0 - Math.exp(-TWO_PI * hz / RATE)
+    low = 0.0
+    samples.map! do |x|
+      low += k * (x - low)
+      x - low
+    end
+  end
+
+  # RUMBLE, derived rather than added. The kick bus goes into a long room, the
+  # room into a lowpass, the lowpass into drive and another lowpass: the attack
+  # stays the kick's and the sustain becomes the environment around it. Ducked
+  # by the kick afterwards, so the two are one low end taking turns.
+  def rumble(kick_bus, feedback:, dirt:)
+    tail = kick_bus.dup
+    SpaceFx.reverb(tail, mix: 1.0, decay: (0.8 + (feedback * 0.15)).clamp(0.0, 0.95), damping: 0.55)
+    lowpass!(tail, 180.0)
+    dirt!(tail, 0.4 + (dirt * 0.5))
+    lowpass!(lowpass!(tail, 110.0), 110.0)
+    normalize!(tail, 0.6)
+  end
+
+  # Sidechain as arithmetic: the gain dips at every kick and recovers.
+  def duck!(samples, kick_frames, depth:, release: 0.18)
+    marks = kick_frames.sort
+    last = -RATE * 10
+    pointer = 0
+    samples.each_index do |i|
+      while pointer < marks.length && marks[pointer] <= i
+        last = marks[pointer]
+        pointer += 1
+      end
+      samples[i] *= 1.0 - (depth * Math.exp(-(i - last) / (release * RATE)))
+    end
+    samples
+  end
+
+  def normalize!(samples, peak)
+    top = samples.map(&:abs).max.to_f
+    return samples if top < 1e-9
+
+    scale = peak / top
+    samples.map! { |x| x * scale }
+  end
+
+  # RESAMPLING. The track's own audio, recorded and cut again: slice it, and per
+  # slice reverse it, play it at double or half speed, or stutter its first
+  # half, then "record" the pass -- darker and more driven each generation, as
+  # a bounce to tape is -- and cut that at a different slice length. What comes
+  # out is sculpted audio no oscillator in the engine would produce.
+  def resample(samples, passes:, slice:, rng:)
+    (0...passes).reduce(samples) do |source, pass|
+      size = pass.even? ? slice : slice * 2
+      cut = source.each_slice(size).flat_map { |chunk| rework(chunk, rng.rand(6)) }
+      record!(cut, pass)
+    end
+  end
+
+  def rework(chunk, move)
+    case move
+    when 0 then chunk.reverse
+    when 1 then varispeed(chunk, 2.0)
+    when 2 then varispeed(chunk, 0.5)
+    when 3 then chunk.first(chunk.length / 2).then { |half| (half + half).first(chunk.length) }
+    else chunk
+    end
+  end
+
+  # Read at `rate` and wrap to the slice's length, so the grid survives a speed
+  # change. Linear interpolation between neighbours.
+  def varispeed(chunk, rate)
+    n = chunk.length
+    Array.new(n) do |i|
+      pos = (i * rate) % n
+      low = pos.floor
+      chunk[low] + ((chunk[(low + 1) % n] - chunk[low]) * (pos - low))
+    end
+  end
+
+  def record!(samples, pass)
+    lowpass!(samples, 9000.0 - (pass * 1800.0))
+    dirt!(samples, 0.15 + (pass * 0.1))
+  end
+
+  def place!(bus, hit, frame, gain)
+    return if frame.negative?
+
+    last = [hit.length, bus.length - frame].min
+    i = 0
+    while i < last
+      bus[frame + i] += hit[i] * gain
+      i += 1
+    end
+  end
+end
+
+# One render of a DillaSemantics profile, from plan to stereo buffers.
+#
+# The order is the log's: the busiest state defines the track and every section
+# is that state reduced or transformed; the kick is a voice; the low end is the
+# profile's choice, with rumble grown from the processed kick; the percussion is
+# one family struck three ways; delay and feedback write rhythm of their own; and
+# the texture is this render's audio, resampled.
+class SemanticTechno
+  RATE = TechnoVoices::RATE
+  V = TechnoVoices
+
+  attr_reader :profile, :bars, :seed, :bpm, :beat, :frames
+
+  def self.render(profile, bars:, seed:, roots: nil) = new(profile, bars:, seed:, roots:).render
+
+  def initialize(profile, bars:, seed:, roots: nil)
+    @profile = profile
+    @bars = bars
+    @seed = seed
+    @bpm = profile.fetch(:bpm).to_f
+    @beat = 60.0 / @bpm
+    @frames = (((bars * 4 * @beat) + 1.5) * RATE).to_i
+    @root = (Array(roots).first || 55.0).to_f
+    @root /= 2.0 while @root > 65.0
+  end
+
+  def render
+    kick = kick_bus
+    drums = [bus, bus]
+    space = [bus, bus]
+    events.each { |event| strike(event, event[:element] == :perc_b || event[:element] == :stab ? space : drums) }
+    echo!(space)
+    master = mix(kick, drums, space)
+    add_low!(master, kick)
+    add_texture!(master, drums, space)
+    master.each { |side| V.normalize!(side, 0.9) }
+  end
+
+  # Every hit of the render, as data: element, time, velocity, envelope scale,
+  # the section's gain and transform. Built before any sound, so the plan can be
+  # read and tested apart from the synthesis.
+  def events
+    @events ||= (0...bars).flat_map { |bar| bar_events(bar) }
+  end
+
+  def bar_events(bar)
+    state = DillaSemantics.section_state(profile, section_at(bar))
+    drop = DillaSemantics.dropout_bar?(profile, bar, seed)
+    state.flat_map do |element, s|
+      next [] if element == :low && low_end == :kick_tail
+
+      DillaSemantics.figure(profile, element, bar, seed:).filter_map do |step, velocity, decay|
+        next if drop && %i[kick low].include?(element) && step >= 8
+
+        at = (bar * 4 * beat) + (step * beat / 4.0) + DillaSemantics.timing_offset(profile, element, step, beat)
+        { element:, bar:, step:, at: [at, 0.0].max, velocity:, decay:, gain: s[:gain], transform: s[:transform] }
+      end
+    end
+  end
+
+  def section_at(bar)
+    DillaSemantics.sections(bars).fetch(bar / DillaSemantics::SECTION_BARS)
+  end
+
+  def low_end = profile.fetch(:low_end)
+
+  private
+
+  def bus = Array.new(frames, 0.0)
+
+  def frame(at) = (at * RATE).round
+
+  # A moving parameter at time `at`, on the element's own period, -1..1.
+  def motion(element, at)
+    DillaModulation.morphed(:curved, 0.33, (at * motion_hz(element)) % 1.0)
+  end
+
+  def motion_hz(element)
+    @motion_hz ||= {}
+    @motion_hz[element] ||= DillaModulation.sync_hz("#{DillaSemantics::ELEMENTS.fetch(element).fetch(:motion_beats) / 4.0}bar", bpm)
+  end
+
+  def axis(name) = DillaSemantics.axis(profile, name)
+
+  def kick_bus
+    out = bus
+    tail = low_end == :kick_tail ? 1.8 : 1.0
+    events.select { |e| e[:element] == :kick }.each do |e|
+      transient, body = V.kick(profile.fetch(:kick), velocity: e[:velocity], decay_scale: e[:decay], tail:)
+      V.place!(out, transient, frame(e[:at]), e[:gain])
+      V.place!(out, body, frame(e[:at]), e[:gain])
+    end
+    out
+  end
+
+  def strike(event, stereo)
+    return if event[:element] == :kick || event[:element] == :low || event[:element] == :texture
+
+    hit = voice(event)
+    hit = V.dirt!(hit, 0.5 + (0.5 * axis(:contrast))) if event[:transform] == :dirty
+    pan = pan_for(event)
+    left = Math.cos((pan + 1.0) * Math::PI / 4.0)
+    right = Math.sin((pan + 1.0) * Math::PI / 4.0)
+    V.place!(stereo[0], hit, frame(event[:at]), event[:gain] * left)
+    V.place!(stereo[1], hit, frame(event[:at]), event[:gain] * right)
+  end
+
+  def pan_for(event)
+    case event[:element]
+    when :perc_b then 0.7 * axis(:spatial_motion) * motion(:perc_b, event[:at])
+    when :open then 0.25
+    when :perc_a then -0.2
+    else 0.0
+    end
+  end
+
+  # One percussion family. The DFAM patch's two oscillators set the base and the
+  # ratio, so hats, metal and FM hits are related sounds rather than three picks.
+  def voice(event)
+    base = family_hz
+    move = motion(event[:element], event[:at])
+    hit_seed = seed + frame(event[:at])
+    case event[:element]
+    when :hat then V.hat(velocity: event[:velocity] * 1.4, seed: hit_seed, decay: hat_decay(event, move))
+    when :open then V.hat(velocity: event[:velocity] * 1.0, seed: hit_seed, decay: 0.22 * event[:decay])
+    when :clap then clap(event, hit_seed)
+    when :perc_a then metal(event, base, move, hit_seed)
+    when :perc_b then V.fm_burst(hz: base * 6.0, ratio: family_ratio, index: fm_index, velocity: event[:velocity] * 0.5,
+                                 decay_scale: event[:decay])
+    else stab(event, move)
+    end
+  end
+
+  def hat_decay(event, move)
+    base = 0.05 * event[:decay] * (1.0 + (0.35 * axis(:spectral_motion) * move))
+    event[:transform] == :filtered ? base * 0.5 : base
+  end
+
+  def clap(event, hit_seed)
+    V.resonator(partials: [1100.0, 1600.0, 2400.0], q: 3.0, velocity: event[:velocity] * 0.6, seed: hit_seed,
+                decay_scale: event[:decay] * 0.6, length: 0.25)
+  end
+
+  def metal(event, base, move, hit_seed)
+    shift = 1.0 + (0.08 * axis(:spectral_motion) * move)
+    V.resonator(partials: [base * 16.0, base * 23.5, base * 33.4].map { |hz| hz * shift },
+                velocity: event[:velocity] * 0.45, seed: hit_seed, decay_scale: event[:decay])
+  end
+
+  def stab(event, move)
+    cutoff = 700.0 + (2400.0 * (0.5 + (0.5 * axis(:spectral_motion) * move)))
+    cutoff *= 1.0 - (0.7 * axis(:contrast)) if event[:transform] == :filtered
+    V.stab(root_hz: @root * 4.0, velocity: event[:velocity] * 0.35, cutoff:)
+  end
+
+  def dfam = @dfam ||= DfamEngine.resolve_patch
+
+  def family_hz = dfam[:osc1_hz].to_f.clamp(40.0, 400.0)
+
+  def family_ratio = (dfam[:osc2_hz].to_f / [dfam[:osc1_hz].to_f, 1.0].max).clamp(0.25, 8.0)
+
+  def fm_index = dfam[:fm_pct] / 100.0 * 6.0
+
+  # Delay as composition. Left repeats on the dotted eighth and right on the
+  # quarter, so one hit becomes two figures in counterpoint; the feedback axis
+  # is how many generations each figure survives, and the damping inside
+  # SpaceFx's loop makes every generation darker than the one before -- the
+  # recursion is in the loop, not approximated after it.
+  def echo!(space)
+    feedback = (0.2 + (axis(:feedback) * 0.7)).clamp(0.0, 0.9)
+    SpaceFx.space_echo(space[0], time: beat * 0.75, feedback:, mix: 0.5, damping: 0.35)
+    SpaceFx.space_echo(space[1], time: beat, feedback:, mix: 0.5, damping: 0.35)
+    space.each_with_index { |side, i| SpaceFx.reverb(side, mix: 0.15 + (0.3 * axis(:spatial_motion)), spread: i * 23) }
+  end
+
+  def mix(kick, drums, space)
+    Array.new(2) do |side|
+      Array.new(frames) { |i| kick[i] + drums[side][i] + (space[side][i] * 0.8) }
+    end
+  end
+
+  def add_low!(master, kick)
+    low = low_bus(kick)
+    return unless low
+
+    kicks = events.select { |e| e[:element] == :kick }.map { |e| frame(e[:at]) }
+    V.duck!(low, kicks, depth: 0.85)
+    master.each { |side| frames.times { |i| side[i] += low[i] * 0.8 } }
+  end
+
+  def low_bus(kick)
+    case low_end
+    when :kick_tail then nil
+    when :rumble then gated_rumble(kick)
+    when :bass then notes(0.0)
+    when :tom_sub then notes(1.6)
+    else hybrid(kick)
+    end
+  end
+
+  def gated_rumble(kick)
+    rumble = V.rumble(kick, feedback: axis(:feedback), dirt: axis(:harmonic_density))
+    bar_frames = (4 * beat * RATE).round
+    gains = Array.new(bars + 2) { |bar| low_gain(bar) }
+    rumble.each_index { |i| rumble[i] *= gains[i / bar_frames] }
+    rumble
+  end
+
+  def hybrid(kick)
+    rumble = gated_rumble(kick)
+    bass = notes(0.0)
+    Array.new(frames) { |i| (rumble[i] * 0.45) + (bass[i] * 0.4) }
+  end
+
+  def low_gain(bar)
+    return 0.0 if bar >= bars
+
+    DillaSemantics.section_state(profile, section_at(bar)).fetch(:low, { gain: 0.0 })[:gain]
+  end
+
+  # Bass notes on the low figure; toms move a step late and fall in pitch.
+  def notes(drop)
+    out = bus
+    events.select { |e| e[:element] == :low }.each do |e|
+      at = e[:at] + (drop.positive? || e[:transform] == :varied ? beat / 4.0 : 0.0)
+      hz = e[:transform] == :varied && e[:step] % 8 == 6 ? @root * 2.0 : @root
+      note = V.tone(hz:, velocity: e[:velocity] * 0.7, drop:, length: drop.positive? ? 0.4 : 0.22)
+      note = V.lowpass!(note, 90.0) if e[:transform] == :filtered
+      V.place!(out, V.dirt!(note, axis(:harmonic_density) * 0.5), frame(at), e[:gain])
+    end
+    out
+  end
+
+  # The texture is not synthesised. It is the first cycle of this render's own
+  # drums and space, resampled, looped under the section gains, and panned on the
+  # atmosphere's sixty-four-bar period.
+  def add_texture!(master, drums, space)
+    return unless profile[:elements].include?(:texture)
+
+    loop = resampled_cycle(drums, space)
+    bar_frames = (4 * beat * RATE).round
+    frames.times.each_slice(2048) do |block|
+      bar = block.first / bar_frames
+      gain = bar < bars ? texture_gain(bar) * 0.35 : 0.0
+      pan = 0.6 * axis(:spatial_motion) * motion(:texture, block.first.to_f / RATE)
+      block.each do |i|
+        master[0][i] += loop[i % loop.length] * gain * (1.0 - pan)
+        master[1][i] += loop[i % loop.length] * gain * (1.0 + pan)
+      end
+    end
+  end
+
+  def resampled_cycle(drums, space)
+    cycle = [(4 * 4 * beat * RATE).round, frames].min
+    source = Array.new(cycle) { |i| drums[0][i] + drums[1][i] + space[0][i] + space[1][i] }
+    passes = 1 + (axis(:resampling) * 3).round
+    step = (beat / 4.0 * RATE).round
+    V.normalize!(V.resample(source, passes:, slice: step * 2, rng: Random.new(seed)), 0.8)
+  end
+
+  def texture_gain(bar)
+    @texture_gain ||= {}
+    @texture_gain[bar] ||= DillaSemantics.section_state(profile, section_at(bar)).fetch(:texture)[:gain]
+  end
+end
+
 require "json"
 # The O-U walk behind the :random source. Required here rather than left to the
 # caller: tape_master.rb loads this lazily inside tape_hysteresis!, so on a

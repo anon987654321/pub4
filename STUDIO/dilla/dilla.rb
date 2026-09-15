@@ -28081,7 +28081,8 @@ def command_help
       ["slum", "[dir]", "Batch session_01..14 beside dilla.rb (Sonitex on)"],
       ["industrial", "[out.mp3]", "Industrial techno (default foundry_pulse.mp3); its own renderer, outside AudioGraph"],
       ["techno", "[out.mp3]", "Hard distorted techno (#{TECHNO_BPM} BPM); its own renderer, outside AudioGraph"],
-      ["hate", "[out.mp3]", "Long-form industrial techno, layers arriving and leaving (HATE_MIN, HATE_BPM)"],
+      ["hate", "[out.mp3]", "Long-form industrial techno, layers arriving and leaving (HATE_MIN, HATE_BPM, TECHNO_PROFILE)"],
+      ["semantic-techno", "<profile> [out.mp3]", "Techno from DillaSemantics: detroit, basic_channel, hardgroove, industrial, dilla_pocket (SEMANTIC_BARS)"],
       ["analog", "[out.mp3]", "Full analog pad restoration; its own renderer, outside AudioGraph"],
       ["analog_liveset", "[out] [minutes]", "Long-form analog render"],
       ["loose_pocket", "[out.wav] | beats [dir]", "Dirty pocket drums and VLC effects; beats batches beat_01..14"],
@@ -29763,6 +29764,42 @@ def render_hate_techno(destination = File.join(ROOT, "hate_session.mp3"))
   puts "wrote #{destination}"
   destination
 end
+
+# A style described rather than copied: DillaSemantics names the axes, the
+# kick, the low end and the subtractive arrangement, and SemanticTechno plays
+# them. Its own command and its own file name with the seed in it, so a render
+# never lands on a take that already exists.
+def render_semantic_techno(profile_name, destination = nil)
+  require_tools! "ffmpeg"
+  profile = DillaSemantics.profile(profile_name)
+  bars = ENV.fetch("SEMANTIC_BARS", "32").to_i.clamp(4, 256)
+  seed = render_rng("semantic:#{profile_name}").rand(1_000_000)
+  destination ||= File.join(OUTPUT_DIR, "semantic_#{profile_name}_#{seed}.mp3")
+  abort "#{destination} exists; a render does not overwrite a take" if File.exist?(destination)
+
+  roots = techno_harmony_roots(4, register: TECHNO_SUB_REGISTER)
+  left, right = SemanticTechno.render(profile, bars:, seed:, roots:)
+  wav = AnalogSynth.write!(left, right, scratch_path("semantic_#{Process.pid}_#{seed}.wav"))
+  FileUtils.mkdir_p(File.dirname(destination))
+  sh! "ffmpeg", "-y", "-v", "error", "-i", wav, "-c:a", "libmp3lame", "-b:a", "256k", destination
+  FileUtils.rm_f(wav)
+  normalise_genre_master!(destination, :techno)
+  dmesg("semantic #{profile_name}: #{profile[:bpm]} BPM, #{bars} bars, low end #{profile[:low_end]}, " \
+        "sections #{DillaSemantics.sections(bars).join('/')}, seed #{seed}", unit: "techno0", parent: "dilla0")
+  destination
+end
+
+# TECHNO_PROFILE=<name> puts a profile into hate's and industrial's own knobs
+# before they render. Opt-in, and a knob set by hand is left alone.
+def apply_techno_profile!
+  name = ENV["TECHNO_PROFILE"].to_s
+  return {} if name.empty?
+
+  applied = DillaSemantics.apply_env!(DillaSemantics.engine_env(DillaSemantics.profile(name)))
+  dmesg("techno profile #{name}: #{applied.map { |k, v| "#{k}=#{v}" }.join(' ')}", unit: "techno0", parent: "dilla0")
+  applied
+end
+
 def render_techno(destination = File.join(OUTPUT_DIR, "techno_hate.mp3"))
   require_tools! "ffmpeg"
   n_bars = [bars, TECHNO_BARS].max
@@ -36255,11 +36292,21 @@ DISPATCH = {
   end,
   "hiphop" => -> { render_hiphop(ARGV.shift || File.join(OUTPUT_DIR, "hiphop.mp3")) },
   "slum" => -> { render_slum_album(ARGV.shift || ROOT) },
-  "industrial" => -> { render_industrial(ARGV.shift || File.join(ROOT, "foundry_pulse.mp3")) },
+  "industrial" => lambda {
+    apply_techno_profile!
+    render_industrial(ARGV.shift || File.join(ROOT, "foundry_pulse.mp3"))
+  },
   "techno" => -> { render_techno(ARGV.shift || File.join(OUTPUT_DIR, "techno_hate.mp3")) },
   # Long-form industrial techno with layers that arrive and leave.
   # HATE_MIN sets the length in minutes, HATE_BPM the tempo (130-150 is the range).
-  "hate" => -> { render_hate_techno(ARGV.shift || File.join(ROOT, "hate_session.mp3")) },
+  "hate" => lambda {
+    apply_techno_profile!
+    render_hate_techno(ARGV.shift || File.join(ROOT, "hate_session.mp3"))
+  },
+  "semantic-techno" => lambda {
+    name = ARGV.shift || abort("usage: semantic-techno <#{DillaSemantics::PROFILES.keys.join('|')}> [out.mp3]")
+    render_semantic_techno(name, ARGV.shift)
+  },
   "analog" => -> { render_analog(ARGV.shift || File.join(OUTPUT_DIR, "analog_full.mp3")) },
   "analog_liveset" => -> { analog_liveset(ARGV.shift || File.join(OUTPUT_DIR, "analog_liveset.mp3"), (ARGV.shift || 12).to_f) },
   "electronium" => -> { electronium_dispatch! },
