@@ -6,5 +6,7 @@
   </div>
   <small><%= link_to port.category.name, category_path(port.category) %> · <%= port.comment %></small>
   <% age = port.last_updated && (Date.current - port.last_updated).to_i %>
-  <span class="data-state <%= age && age > 365 ? "data-state--stale" : "" %>"><%= age ? (age > 365 ? "stale · #{age}d" : "updated #{age}d ago") : "update age unknown" %></span>
+  <% stale = age.present? && age > 365 %>
+  <%= tag.span age.nil? ? t("ports.age_unknown") : t(stale ? "ports.age_stale" : "ports.age_updated", count: age),
+               class: class_names("data-state", "data-state--stale": stale) %>
 </li>

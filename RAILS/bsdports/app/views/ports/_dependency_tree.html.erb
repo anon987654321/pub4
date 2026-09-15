@@ -1,9 +1,9 @@
 <%# locals: (tree:, heading: nil) %>
 <% if tree.any? %>
   <% if heading.present? %>
-    <section aria-label="<%= heading %>">
+    <%= tag.section aria: { label: heading } do %>
       <%= tag.h2 heading %>
-      <ul role="tree" aria-label="<%= heading %>">
+      <%= tag.ul role: "tree", aria: { label: heading } do %>
         <% tree.each do |node| %>
           <li role="treeitem" aria-label="<%= node[:label] %>">
             <%= node[:label] %>
@@ -12,8 +12,8 @@
             <% end %>
           </li>
         <% end %>
-      </ul>
-    </section>
+      <% end %>
+    <% end %>
   <% else %>
     <ul role="group">
       <% tree.each do |node| %>

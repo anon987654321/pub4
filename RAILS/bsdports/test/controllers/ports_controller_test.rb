@@ -44,6 +44,27 @@ class PortsControllerTest < ActionDispatch::IntegrationTest
            "the ports tree renders no import date, so its freshness is unstated")
   end
 
+  def test_a_row_states_its_update_age_in_the_reader_s_language
+    seed_port.update!(last_updated: 400.days.ago.to_date)
+    get root_url
+    assert_response :success
+    assert_select "span.data-state.data-state--stale", text: I18n.t("ports.age_stale", count: 400)
+    assert_not_includes response.body, "stale · 400d"
+  end
+
+  def test_a_port_page_marks_a_stale_update_and_labels_its_dependency_tree
+    git = seed_port
+    git.update!(last_updated: 400.days.ago.to_date)
+    gettext = Port.create!(platform: git.platform, category: git.category, name: "gettext", version: "1", pkgpath: "devel/gettext")
+    Dependency.create!(port: git, depends_on: gettext, dep_type: "build")
+
+    get port_url(git)
+    assert_response :success
+    assert_select "dd span.data-state.data-state--stale", text: /#{Regexp.escape(I18n.t("ports.stale", count: 400))}\z/
+    assert_select "section[aria-label=?] ul[role=tree][aria-label=?] li[role=treeitem]",
+                  I18n.t("ports.tree_heading"), I18n.t("ports.tree_heading")
+  end
+
   def test_the_updated_sort_has_a_control_on_the_page
     seed_port
     get root_url

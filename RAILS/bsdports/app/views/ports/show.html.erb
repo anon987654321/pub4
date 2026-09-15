@@ -21,7 +21,9 @@
     <%= tag.dt t("ports.pkgpath") %><dd><code><%= @port.pkgpath %></code></dd>
     <% if @port.homepage.present? %><%= tag.dt t("ports.homepage") %><dd><%= link_to @port.homepage, @port.homepage %></dd><% end %>
     <% update_age = @port.last_updated && (Date.current - @port.last_updated).to_i %>
-    <%= tag.dt t("ports.updated") %><dd><span class="data-state <%= update_age && update_age > 365 ? "data-state--stale" : "" %>"><%= @port.last_updated&.strftime("%Y-%m-%d") || t("ports.unknown") %><%= " #{t("ports.stale", count: update_age)}" if update_age && update_age > 365 %></span></dd>
+    <% stale = update_age.present? && update_age > 365 %>
+    <%= tag.dt t("ports.updated") %><dd><%= tag.span "#{@port.last_updated&.strftime("%Y-%m-%d") || t("ports.unknown")}#{" #{t("ports.stale", count: update_age)}" if stale}",
+                                                  class: class_names("data-state", "data-state--stale": stale) %></dd>
   </dl>
 
   <% if @dependencies.any? %>
