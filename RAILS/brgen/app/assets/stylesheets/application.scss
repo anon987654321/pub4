@@ -7292,9 +7292,9 @@ body.vertical-maps {
   font-family: var(--font);
 }
 
+/* Full bleed. .layout is display:flex on every surface (shared/_shell.scss),
+   so only max-width reaches it. */
 body.vertical-maps .layout {
-  grid-template-areas: "main";
-  grid-template-columns: 1fr;
   max-width: 100%;
 }
 
@@ -7466,9 +7466,9 @@ body.vertical-messenger {
   font-family: var(--font);
 }
 
+/* Full bleed. .layout is display:flex on every surface (shared/_shell.scss),
+   so only max-width reaches it. */
 body.vertical-messenger .layout {
-  grid-template-areas: "main";
-  grid-template-columns: 1fr;
   max-width: 100%;
 }
 
