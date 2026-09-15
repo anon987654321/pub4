@@ -63,6 +63,8 @@ require "socket"
 require "fileutils"
 require "open3"
 require "securerandom"
+require "openssl"
+require "uri"
 
 # Connect over IPv4 when the host has an IPv4 address.
 #
@@ -101,8 +103,58 @@ Faye::WebSocket::Client.singleton_class.prepend(Module.new do
     cert = ENV["SSL_CERT_FILE"].to_s
     cert = %w[/etc/ssl/cert.pem /etc/ssl/certs/ca-certificates.crt].find { |p| File.file?(p) }.to_s if cert.empty?
     tls = { verify_peer: true }
-    tls[:cert_chain_file] = cert unless cert.empty?
+    tls[:root_cert_file] = cert unless cert.empty?
     super(url, protocols, options.merge(tls: options.fetch(:tls, {}).merge(tls)))
+  end
+end)
+
+# Verify the Edge certificate against the chain the server actually sends.
+#
+# Faye checks each certificate EventMachine hands its verify callback and trusts
+# an intermediate only once it has verified it. EventMachine built against
+# LibreSSL hands over the leaf alone, so the leaf never meets its issuer and
+# every handshake fails with "unable to get local issuer certificate". The
+# failure surfaces as an empty file, and MASTER speaks through espeak.
+#
+# The intermediates come from a handshake Ruby's own OpenSSL verifies against
+# the system roots and the hostname, and each is verified again before it joins
+# Faye's store, so the leaf must still chain to a trusted root and match.
+module EdgeIntermediates
+  @chains = {}
+
+  def self.for(host) = @chains[host] ||= fetch(host)
+
+  def self.refresh(host) = @chains[host] = fetch(host)
+
+  def self.fetch(host)
+    ctx = OpenSSL::SSL::SSLContext.new
+    ctx.set_params(verify_mode: OpenSSL::SSL::VERIFY_PEER)
+    tcp = Socket.tcp(host, 443, connect_timeout: 5)
+    ssl = OpenSSL::SSL::SSLSocket.new(tcp, ctx)
+    ssl.hostname = host
+    ssl.connect
+    ssl.post_connection_check(host)
+    Array(ssl.peer_cert_chain).drop(1).reverse
+  rescue StandardError => e
+    warn "tts-worker: intermediates for #{host} unavailable: #{e.class}: #{e.message}"
+    []
+  ensure
+    ssl&.close rescue nil
+    tcp&.close rescue nil
+  end
+end
+
+Faye::WebSocket::SslVerifier.prepend(Module.new do
+  def ssl_verify_peer(cert_text)
+    result = super
+    return result if @last_cert_verified || @last_cert.nil?
+
+    %i[for refresh].each do |source|
+      EdgeIntermediates.public_send(source, @hostname).each { |cert| store_cert(cert) if @cert_store.verify(cert) }
+      @last_cert_verified = @cert_store.verify(@last_cert)
+      break if @last_cert_verified
+    end
+    result
   end
 end)
 
@@ -251,6 +303,9 @@ if ARGV[0] == "--daemon"
   # Thirty minutes, because the socket is the contract: a caller that finds no
   # daemon spawns one, and the cost of that is a boot rather than a failure.
   idle_limit = Integer(ENV.fetch("TTS_WORKER_IDLE_S", "1800"))
+  # Fetched once here so every forked synthesis inherits the chain instead of
+  # paying a second handshake per sentence.
+  EdgeIntermediates.for(URI(RbEdgeTTS::WSS_URL).host)
 
   loop do
     ready = IO.select([server], nil, nil, idle_limit)
