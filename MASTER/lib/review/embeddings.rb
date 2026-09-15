@@ -56,15 +56,17 @@ module Master
 
       # Net::HTTP rather than ruby_llm, for the reason OllamaSender gives: a
       # local daemon has no price or capability row, and the gem's Ollama
-      # provider speaks the OpenAI-compatible /v1 surface, not /api/embeddings.
+      # provider speaks the OpenAI-compatible /v1 surface, not /api/embed.
+      # /api/embed takes `input` and answers a list of vectors, one per input;
+      # Ollama marks the older /api/embeddings, with `prompt`, superseded by it.
       def ollama_embed(text)
-        uri = URI.join(ENV["OLLAMA_BASE_URL"], "/api/embeddings")
+        uri = URI.join(ENV["OLLAMA_BASE_URL"], "/api/embed")
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl = uri.scheme == "https"
         http.read_timeout = HTTP_TIMEOUT
         http.open_timeout = HTTP_TIMEOUT
         req = Net::HTTP::Post.new(uri.request_uri, "Content-Type" => "application/json")
-        req.body = JSON.generate(model: ENV.fetch("EMBEDDINGS_MODEL", DEFAULT_MODEL), prompt: text)
+        req.body = JSON.generate(model: ENV.fetch("EMBEDDINGS_MODEL", DEFAULT_MODEL), input: text)
         res = http.request(req)
         return unless res.is_a?(Net::HTTPSuccess)
         parsed = begin
@@ -73,7 +75,7 @@ module Master
           Master::Ground::Swallow.log(e, context: "Embeddings.ollama_embed")
           nil
         end
-        vec = parsed&.fetch("embedding", nil)
+        vec = parsed.is_a?(Hash) ? Array(parsed["embeddings"]).first : nil
         vec.is_a?(Array) ? vec : nil
       end
     end

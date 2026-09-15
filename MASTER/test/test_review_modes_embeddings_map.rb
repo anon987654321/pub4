@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "json"
+require "net/http"
 
 # Three review helpers with no test of their own: Modes wraps a message in the
 # reasoning template for /reasoning, Embeddings is the optional Ollama vector
@@ -40,6 +42,38 @@ class TestReviewModesEmbeddingsMap < Minitest::Test
     assert_nil Master::Review::Embeddings.embed("anything")
   ensure
     ENV["OLLAMA_BASE_URL"] = previous if previous
+  end
+
+  # /api/embed takes `input` and answers `embeddings`, a list with one vector
+  # per input; the superseded /api/embeddings took `prompt` and answered one.
+  def test_embed_speaks_the_api_embed_contract
+    reply = Net::HTTPOK.new("1.1", "200", "OK")
+    reply.instance_variable_set(:@body, JSON.generate(embeddings: [[0.6, 0.8]]))
+    reply.instance_variable_set(:@read, true)
+    previous = ENV["OLLAMA_BASE_URL"]
+    ENV["OLLAMA_BASE_URL"] = "http://127.0.0.1:9"
+
+    http = FakeHTTP.new(reply)
+    Net::HTTP.stub(:new, http) do
+      assert_equal [0.6, 0.8], Master::Review::Embeddings.ollama_embed("a garment")
+    end
+    sent = http.sent
+    assert_equal "/api/embed", sent.path
+    assert_equal "a garment", JSON.parse(sent.body)["input"]
+  ensure
+    ENV["OLLAMA_BASE_URL"] = previous
+  end
+
+  class FakeHTTP
+    attr_accessor :use_ssl, :read_timeout, :open_timeout
+    attr_reader :sent
+
+    def initialize(reply) = @reply = reply
+
+    def request(request)
+      @sent = request
+      @reply
+    end
   end
 
   Sym = Struct.new(:fqn, :file, :type, :line)
