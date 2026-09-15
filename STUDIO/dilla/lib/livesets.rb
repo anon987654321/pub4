@@ -15,8 +15,7 @@
 #   ruby dilla.rb live dig                       fill samples/chopped/ from project/crate.yml
 #   ruby dilla.rb live ab <set> KNOB=value       three arms of one seed, level-matched, interleaved
 #
-#   LIVE_ROOM=warm|dry|blown|tape|master|summed  the console the set plays through
-#   LIVE_LENGTH=30                               the block in seconds
+#   ruby dilla.rb live knobs                     every LIVE_ knob a set reads
 #
 # What the sets share is the room -- the console, the crate, the clock and the
 # journal -- and what differs is the arrangement, which is what a set is. Written
@@ -1315,6 +1314,35 @@ module Livesets
   def recall_env(row)
     pins = RECALLED.to_h { |knob, (key, legacy)| [knob, row.key?(key) ? knob_value(row[key]) : legacy] }
     { "LIVE_SEED" => row["seed"].to_s }.merge(pins)
+  end
+
+  # Every knob a set reads, and what it does, printed by `live knobs`. A set is
+  # steered from here rather than by editing it; a knob read and not listed
+  # fails the suite.
+  KNOB_DOCS = {
+    "LIVE_SEED" => "the pass: every drawn choice, replayed",
+    "LIVE_LENGTH" => "the block in seconds (96 for the beat sets, 180 for the pads)",
+    "LIVE_ROOM" => "the console: #{ROOMS.join('|')}",
+    "LIVE_FORM" => "a FORM_PRESETS name, arranged across the block by the engine's layers",
+    "LIVE_MUTE" => "comma list of #{MUTABLE.join(',')} (DRUMS=0 mutes the kit)",
+    "LIVE_WEIGHTS" => "bus=weight pairs, how loud each bus meets the others",
+    "LIVE_BED" => "pin the record a bed set plays, by rack slug",
+    "LIVE_DRAG" => "pin how far under its pitch the record runs, 0.5..1.0",
+    "LIVE_KIT" => "a directory under samples/drums with every kit role, or synth",
+    "LIVE_KIT_CYCLE" => "bar (default) or phrase, how often the chord set's kit repeats",
+    "LIVE_PROGRESSION" => "pin the chord set's progression by name",
+    "LIVE_VOICING" => "down (default) or up, the sampled set's voicing tables",
+    "LIVE_COPY_MACHINE" => "copies in the cloud under a bed, 0..8 (4 on the pads)",
+    "LIVE_VOICE_STACK" => "voices per held pad slice, 1..7 (3)",
+    "LIVE_HOCKET" => "voices the sampled phrase is dealt across, 1..4 (3)",
+    "LIVE_BUS_PATCH" => "a bus to carry a random modulation patch",
+    "LIVE_RENDER_TO" => "demo.wav, or - for a wav down stdout; unset plays",
+    "LIVE_JOURNAL" => "the journal a run writes, when it must not be the catalogue's",
+    "LIVE_BEDS_DIR" => "the rack a bed set picks from",
+  }.freeze
+
+  def knobs!
+    KNOB_DOCS.each { |knob, doc| puts format("  %-18s %s", knob, doc) }
   end
 
   # A journalled choice as the knob spells it: a hash of weights goes back as

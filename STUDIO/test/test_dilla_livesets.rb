@@ -316,6 +316,16 @@ class TestDillaLivesets < Minitest::Test
     assert_raises(SystemExit) { with_env("LIVE_HOCKET" => "9") { Livesets.knob_int("LIVE_HOCKET", 3, 1..4) } }
   end
 
+  # A knob a set reads and nobody documented is a knob nobody can steer by.
+  def test_every_knob_a_set_reads_is_documented_and_recalled_knobs_are_among_them
+    source = File.read(File.join(__dir__, "..", "dilla", "lib", "livesets.rb"))
+    read = source.scan(/ENV(?:\.fetch)?[\[(]\s*"(LIVE_[A-Z_]+)"|knob_int\("(LIVE_[A-Z_]+)"/).flatten.compact.uniq
+
+    assert_includes read, "LIVE_HOCKET", "the scan has to see a knob read through knob_int"
+    assert_empty read - Livesets::KNOB_DOCS.keys
+    assert_empty Livesets::RECALLED.keys - Livesets::KNOB_DOCS.keys
+  end
+
   # A render writes demo.wav and no other audio file, and only takes its name
   # once it has finished, so a killed pass leaves the last good demo in place.
   def test_a_render_lands_on_demo_wav_only_and_arrives_whole
