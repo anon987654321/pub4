@@ -1555,3 +1555,21 @@ rather than a beautifier, a supersaw lives only behind warp, and wav_Map never
 becomes the default pad. The deleted industrial `afftfilt` chain comes back only
 with a caller and a test.
 
+
+## Reasoning OS Implementation - Remaining Debt
+- [ ] Resolve  violation (+1502)
+- [ ] Resolve  violation (+6)
+- [ ] Resolve  violation (+8)
+- [ ] Resolve  violation (+6)
+- [ ] Resolve  violation (+1)
+- [ ] Resolve  violation (+1)
+- [ ] Fix  slack (-1)
+
+## Reasoning OS Implementation - Remaining Debt
+- [ ] Resolve `spine.lib_body_ceiling` violation (+1502)
+- [ ] Resolve `self_findings.law` violation (+6)
+- [ ] Resolve `code_reach` violation (+8)
+- [ ] Resolve `sprawl.lone_dirs` violation (+6)
+- [ ] Resolve `sprawl.vague_names` violation (+1)
+- [ ] Resolve `entrypoints.master` violation (+1)
+- [ ] Fix `data_reach` slack (-1)
