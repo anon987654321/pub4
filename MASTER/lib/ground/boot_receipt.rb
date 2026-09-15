@@ -29,6 +29,10 @@ module Master
 
       module_function
 
+      # No memory-store version and no model id. Those fields would let two
+      # runs be diffed, and no reader diffs two receipts: bin/doctor prints one.
+      # `commit` already names the checkout's HEAD. A field joins with the
+      # reader that compares it.
       def build(root: MasterPaths::ROOT)
         {
           commit: commit(root),
