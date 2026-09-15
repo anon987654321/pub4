@@ -617,11 +617,13 @@ SELFIE_CROPS = ["close on the face", "head and shoulders", "chest up"].freeze
 # distance with the lens a photographer standing there would carry.
 SELFIE_CROP_LENS = { "close on the face" => "105mm", "head and shoulders" => "85mm", "chest up" => "50mm" }.freeze
 SELFIE_GAZES = ["eyes on the lens", "eyes just past the lens", "chin lowered, eyes up", "looking off frame"].freeze
-# The moment after the laugh rather than the laugh, and no "smiling", which
-# collapses to one performed shape. These are the in-between faces.
+# Warm faces caught around a laugh rather than posed for one, and no bare
+# "smiling", which collapses to one performed shape. Neutral moments were tried
+# first and this adapter read them as dour: of forty-eight selfies drawn from
+# "holding a breath", "tired and unguarded" and their kin, one smiled.
 SELFIE_MOMENTS = [
-  "just after a laugh", "a lopsided half-smile", "lips parted mid-word",
-  "one eyebrow raised", "holding a breath", "tired and unguarded", "biting back a grin",
+  "just after a laugh", "a wide real grin", "laughing at something off frame",
+  "a warm half-smile", "amused, about to laugh", "cheeks lifted, eyes bright", "biting back a grin",
 ].freeze
 SELFIE_ARMS = ["arm in frame", "no arm in frame", "hand at the jaw"].freeze
 SELFIE_PLACES = [
