@@ -68,6 +68,10 @@
     <div class="post_body prose"><%= sanitize @post.content, tags: %w[p br strong em b i ul ol li], attributes: [] %></div>
   <% end %>
 
+  <% if (embed = @post.link_embed_record) %>
+    <%= render "shared/link_embed", embed: embed %>
+  <% end %>
+
   <%= render "posts/crosspost", post: @post, targets: @crosspost_targets, crossposts: @crossposts %>
 
   <section id="quotes" class="post-quotes">

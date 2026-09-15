@@ -49,6 +49,10 @@ module Shared
       def ok? = status == "ok"
       def pending? = status == "pending"
       def player_url = match.provider.player_url(match.media_id)
+      def source_url = match.source_url
+      def canonical_url = match.canonical_url
+      def label = match.provider.label
+      def allow = match.provider.allow
 
       def to_h
         {

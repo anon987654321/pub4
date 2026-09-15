@@ -89,6 +89,14 @@
       </button>
     <% end %>
 
+    <%# The photo and the link embed share the media slot; either may be absent. %>
+    <% post_media = capture do %>
+      <%= link_to(responsive_image_tag(post.image, alt: post.title, loading: "lazy", class: "post-image"), post) if post.image.attached? %>
+      <% if (embed = post.link_embed_record) %>
+        <%= render "shared/link_embed", embed: embed %>
+      <% end %>
+    <% end %>
+
     <%= render "shared/post_card",
           post: post,
           variant: :card,
@@ -99,7 +107,7 @@
           title: post.title,
           content: nil,
           url: post_path(post),
-          media: (post.image.attached? ? link_to(responsive_image_tag(post.image, alt: post.title, loading: "lazy", class: "post-image"), post) : nil),
+          media: post_media.presence,
           actions: post_actions,
           frame: false,
           class: "feed-card" %>

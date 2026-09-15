@@ -270,3 +270,7 @@ en:
     messages:
       file_too_large: "is too large (max %{count} MB)"
       file_type_not_allowed: "is a file type not allowed here"
+  # shared/_link_embed: the player facade on a post, and the link to the provider.
+  link_embed:
+    play: "Play “%{title}” from %{provider}"
+    open: "Open on %{provider}"

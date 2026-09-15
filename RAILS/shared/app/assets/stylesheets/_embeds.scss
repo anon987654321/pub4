@@ -1,6 +1,9 @@
-/* MASTER face embed — shared by brgen and amber.
-   Flat, no ornament: a labelled bar over a framed viewport, matching the
-   house flat/brutalist direction rather than a floating card.
+/* Embedded viewports, shared by brgen and amber: MASTER's face, and the
+   player behind a post's link. Flat, no ornament: a framed viewport under or
+   over a plain label, matching the house flat/brutalist direction rather than
+   a floating card.
+
+   MASTER face embed. A labelled bar over a framed viewport.
 
    Sizing: the face is a centred head, so it reads badly in a wide letterbox.
    aspect-ratio gives it a near-square viewport on phones and widens gently on
@@ -79,4 +82,59 @@
   .ai-embed-frame {
     max-block-size: min(50vh, 420px);
   }
+}
+
+/* Post link embeds: shared/_link_embed.html.erb, played by
+   media_exclusive_controller.js. The thumbnail and the player sit on the
+   elevated surface with no shadow, and the play glyph on its own disc is the
+   only mark over the image. The stage keeps one 16:9 box before and after the
+   tap, so swapping the facade for the player moves nothing around it. Written
+   lean, because every byte lands in both apps' weight ceilings in
+   css_budget.yml. */
+
+/* The figure, and the plain-link paragraph that stands in for it. */
+.link_embed {
+  display: grid;
+  gap: var(--space-1);
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-sm);
+}
+
+.link_embed_stage {
+  display: grid;
+  aspect-ratio: 16 / 9;
+}
+
+/* Thumbnail, button and player share one grid cell: the button covers the
+   whole thumbnail, and the player takes the same box. Each rounds its own
+   corners rather than the stage clipping them, so the button's focus ring is
+   drawn outside it and stays visible. */
+.link_embed_stage > * {
+  grid-area: 1 / 1;
+  inline-size: 100%;
+  block-size: 100%;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--surface-elevated);
+  object-fit: cover;
+}
+
+.link_embed_play {
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.link_embed_icon {
+  box-sizing: content-box;
+  padding: var(--space-3);
+  border-radius: 50%;
+  background: var(--bg);
+}
+
+.link_embed a {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--tap-min);
+  overflow-wrap: anywhere;
 }

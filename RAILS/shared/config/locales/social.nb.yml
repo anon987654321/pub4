@@ -273,3 +273,7 @@ nb:
     messages:
       file_too_large: "er for stor (maks %{count} MB)"
       file_type_not_allowed: "har en filtype som ikke er tillatt her"
+  # shared/_link_embed: the player facade on a post, and the link to the provider.
+  link_embed:
+    play: "Spill av «%{title}» fra %{provider}"
+    open: "Åpne på %{provider}"

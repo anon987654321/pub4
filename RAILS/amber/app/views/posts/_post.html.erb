@@ -20,6 +20,7 @@
     <% end %>
   <% end %>
 
+  <% embed = post.link_embed_record %>
   <%= render "shared/post_card",
         post: post,
         variant: :prose,
@@ -28,6 +29,7 @@
         content: post.body,
         title: nil,
         meta: post_meta.presence,
+        media: (render("shared/link_embed", embed:) if embed),
         actions: post_actions,
         frame: false %>
 <% end %>
