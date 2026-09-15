@@ -6,7 +6,6 @@ unnamed_members:
 - models.yml#ollama_phi
 - models.yml#ollama_qwen
 - personas.yml#british
-- providers.yml#mistral
 - pub_archive_restore.yml#pub
 - pub_archive_restore.yml#pub2
 - pub_archive_restore.yml#pub3
@@ -14,6 +13,7 @@ unnamed_members:
 - radio_bergen_track_dossiers.yml#tracks
 - recovery_pub.yml#agent_prompt
 - recovery_pub.yml#layout_note
+- rules.yml#principle_priorities
 - rules.yml#schema_metadata
 - runtime.yml#cognitive_spine
 - runtime.yml#collaboration
