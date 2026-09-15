@@ -489,6 +489,17 @@ class TestPreprompt < Minitest::Test
 
   # --- focus, composition and words that backfire -------------------------
 
+  # Fill, the moment and the hands are asked for by name, and no expression is
+  # "smiling", which collapses to the one performed shape.
+  def test_fill_expression_and_hands_compose_and_no_expression_is_smiling
+    prompt = send(:compile_prompt, "a woman at a window", { fill: "4to1", expression: "after-laugh", hands: "hand at jaw" })
+
+    assert_includes prompt, FILL_VOCAB.fetch("4to1")
+    assert_includes prompt, EXPRESSION_VOCAB.fetch("after_laugh")
+    assert_includes prompt, HANDS_VOCAB.fetch("hand_at_jaw")
+    refute(EXPRESSION_VOCAB.values.any? { |face| face.match?(/\bsmil(?:ing|es?)\b/) })
+  end
+
   def test_focus_and_composition_compose_like_any_other_field
     prompt = send(:compile_prompt, "a woman at a window", { focus: "eyes", composition: "isolated" })
 

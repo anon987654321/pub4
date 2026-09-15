@@ -638,7 +638,10 @@ parser = OptionParser.new do |p|
   p.on("--distance NAME") { |v| options[:distance] = v }
   p.on("--subject-distance NAME") { |v| options[:subject_distance] = v }
   p.on("--key-side NAME") { |v| options[:key_side] = v }
+  p.on("--fill NAME") { |v| options[:fill] = v }
   p.on("--catchlight NAME") { |v| options[:catchlight] = v }
+  p.on("--expression NAME") { |v| options[:expression] = v }
+  p.on("--hands NAME") { |v| options[:hands] = v }
   p.on("--skin NAME") { |v| options[:skin] = v }
   # The framing and gaze of a selfie with the facial proportions of a portrait
   # made from three metres. Not a combination a camera can produce.

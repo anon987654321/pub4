@@ -142,7 +142,8 @@ TIME_OF_DAY_VOCAB = {
 # Focal length does not distort a face; distance does. An 85mm lens flatters
 # because filling a frame with a head puts the photographer 2-3 m back, where
 # the nose is not meaningfully nearer the sensor than the ears. At 40 cm it is,
-# and the nose enlarges while the ears recede. See STUDIO/PHOTOGRAPHY.md.
+# and the nose enlarges while the ears recede (diyphotography.net/85mm-portrait-lens-guide,
+# fstoppers.com on 50, 85 and 135mm portraits).
 #
 # The two were one field, so there was no way to ask for a head-and-shoulders
 # crop taken from three metres — which is the ordinary portrait, and was
@@ -175,7 +176,10 @@ SELFIE_GEOMETRY = "held at arm's length in framing and eye contact but with the 
 #
 # Short lighting keys the side turned AWAY from camera and slims; broad keys the
 # near side and widens. Most portraiture wants short, and almost nobody asks for
-# it by name.
+# it by name. A grade can deepen or lift what the key did; it cannot put the
+# shadow on the other side of a nose, so the side is chosen here or not at all
+# (slrlounge.com common key light patterns; studioqphotography.com on short and
+# broad).
 KEY_SIDE_VOCAB = {
   "short" => "short lighting, key on the side of the face turned away from camera, " \
              "the near cheek falling into shadow, slimming",
@@ -202,7 +206,10 @@ CATCHLIGHT_VOCAB = {
 # Generated skin is too clean and its specular response uniform, because models
 # learn from retouched photography and have no account of subsurface scattering:
 # real skin is translucent and light returns from below it, warm and soft. These
-# are the positive terms; PLASTIC_SKIN_NEGATIVE below is the other half.
+# are the positive terms; PLASTIC_SKIN_NEGATIVE below is the other half. The
+# same failure is why generated eye reflections read as too perfect, and it is
+# the one layer of a portrait postpro's grain and halation can reach afterwards
+# (imagera.ai and morphic.com on the plastic AI skin look).
 SKIN_VOCAB = {
   "real" => "visible pores and fine vellus hair, uneven skin texture across the face, " \
             "subsurface scattering warming the light through the ears and nostrils",
@@ -212,6 +219,48 @@ SKIN_VOCAB = {
   "weathered" => "weathered skin, sun damage, broken capillaries, deep expression lines",
   "young" => "smooth young skin that still carries pores and down, not airbrushed",
   "sweat" => "a film of sweat catching hard specular highlights across the forehead and nose",
+}.freeze
+
+# How much darker the shadow side is than the lit side, as the ratio a lighting
+# diagram would write. "Dramatic" names a mood the model resolves however it
+# likes; 4:1 names a face. Negative fill is the other half of the same decision:
+# a black card beside the face takes light away, and what is absent shapes a
+# cheekbone as much as what is present.
+FILL_VOCAB = {
+  "1to1" => "key-to-fill ratio 1:1, shadow side as bright as the lit side",
+  "2to1" => "key-to-fill ratio 2:1, soft open shadows on the far cheek",
+  "4to1" => "key-to-fill ratio 4:1, the shadow side clearly darker, modelling the face",
+  "8to1" => "key-to-fill ratio 8:1, the shadow side falling nearly to black",
+  "negative" => "negative fill, a black card beside the face deepening the shadow side",
+}.freeze
+
+# The moment rather than the performance. A smile asked for by name collapses to
+# the one held, performed shape a model has seen most, and people read a held
+# expression as held. Portrait practice shoots just after a laugh, as the face
+# settles, and these name that face and its near relations. None of them says
+# "smiling". For a LoRA the same fact is a selection rule: trained on held
+# smiles, it generates held smiles (rafalwegiel.com on expression in headshots).
+EXPRESSION_VOCAB = {
+  "after_laugh" => "the moment just after a laugh, the face still settling",
+  "half_smile" => "a lopsided half-smile, one corner of the mouth higher",
+  "eye_crinkle" => "fine lines at the outer corners of the eyes from a real expression",
+  "breath_held" => "a breath held, lips just closed",
+  "mid_word" => "lips parted mid-word",
+  "unguarded" => "an unguarded, tired expression, nothing arranged for the camera",
+  "brow" => "one eyebrow slightly raised",
+}.freeze
+
+# Hands and the arm, chosen rather than left to the model. Hands are the
+# second-hardest thing to render after eyes and the second most telling, and in
+# a selfie the arm is half of what makes the frame read as one. Kept or refused
+# as a decision, never as whatever the model drew.
+HANDS_VOCAB = {
+  "arm_in_frame" => "the arm holding the camera visible at the frame edge",
+  "no_arm" => "no arm or hand in frame",
+  "hand_at_jaw" => "one hand resting at the jaw, fingers relaxed",
+  "hands_at_rest" => "hands at rest, fingers loosely curled",
+  "hands_working" => "hands busy with something, caught mid-task",
+  "hands_hidden" => "hands out of frame",
 }.freeze
 
 # Where the plane of focus sits. The eyes lead because they are measured to:
@@ -253,8 +302,11 @@ VOCABULARIES = {
   composition: COMPOSITION_VOCAB,
   subject_distance: SUBJECT_DISTANCE_VOCAB,
   key_side: KEY_SIDE_VOCAB,
+  fill: FILL_VOCAB,
   catchlight: CATCHLIGHT_VOCAB,
   skin: SKIN_VOCAB,
+  expression: EXPRESSION_VOCAB,
+  hands: HANDS_VOCAB,
   lighting: LIGHTING_VOCAB,
   weather: WEATHER_VOCAB,
   time_of_day: TIME_OF_DAY_VOCAB,
@@ -280,6 +332,12 @@ ANTI_BEAUTIFICATION_NEGATIVE = "generic influencer face, overly young face, teen
 # read at its own stride, coprime with that pool's length, so consecutive
 # indices move every field at once instead of marching them in lockstep. A
 # batch of 20 now yields 20 distinct combinations. It yielded 5.
+#
+# "a slight natural smile" and "mid-laugh" stay, though EXPRESSION_VOCAB avoids
+# both. Scenario N reads these pools at fixed strides and lora has rendered
+# scenarios by number, so an entry changed here silently becomes a different
+# sitting under an old number. A new face belongs in the vocabulary, where it
+# is asked for by name.
 EXPRESSION_POOL = [
   "a calm neutral expression", "a slight natural smile", "a direct steady gaze",
   "mid-laugh candid expression", "a thoughtful downward glance",
@@ -441,7 +499,9 @@ end
 # diversify reads the batch pools.
 #
 # Distances start at two metres. Closer than that the nose enlarges and the ears
-# fall away, and a likeness is judged on exactly that geometry.
+# fall away, and a likeness is judged on exactly that geometry. Viewers judge it
+# too: the same faces photographed from 45 cm were rated less attractive
+# (d = 0.31) and less trustworthy (d = 0.24) than from 135 cm (PMC3448657).
 SCENARIO_LENSES = %w[50mm 85mm 105mm 135mm].freeze
 # Every drawn sitting asks for sharp eyes, the feature portrait ratings follow
 # most closely; see FOCUS_VOCAB. Written sittings keep their own wording.
@@ -652,6 +712,20 @@ end
 # does to a face, and handing the model that description would measure whether
 # it follows a description of distortion rather than whether it knows what
 # distance does. The ladder is the instrument for that question.
+#
+# Two measurements shape how it is read. A lens or bokeh phrase acts on FLUX
+# mostly as a style cue: its response tracks physically correct behaviour at a
+# correlation of about 0.20 (arXiv 2412.02168), so the focal length here holds
+# the crop and is not trusted to carry geometry. And the seed moves a picture
+# more than the phrasing does (ar5iv 2109.06977), which is why lora renders
+# every rung on one seed: only then is the distance the thing that changed.
+#
+# Ragnhild's FLUX.1-dev adapter answered the question on 2026-09-15. The six
+# rungs on one seed came back nearly identical, with the same face and crop and
+# no enlargement at 0.45 m or flattening at 5 m, so that model acts on neither a
+# stated distance nor a focal length. One subject, one seed and one scene make
+# that a finding about this adapter rather than about FLUX; another model has to
+# be shown moving on this ladder before the words are trusted to carry geometry.
 DISTANCE_LADDER = [["0.45 m", "24mm"], ["0.5 m", "28mm"], ["1 m", "35mm"], ["2 m", "50mm"],
                    ["3 m", "85mm"], ["5 m", "135mm"]].freeze
 DISTANCE_LADDER_SCENE = "a calm neutral expression, facing camera directly, plain white shirt, " \
