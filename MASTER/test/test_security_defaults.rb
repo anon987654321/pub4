@@ -41,7 +41,13 @@ class TestSecurityDefaults < Minitest::Test
     %w[web_rate_limits read window_seconds] => ["web/app/controllers/application_controller.rb", "web_rate_limits"],
     %w[web_rate_limits write per_window] => ["web/app/controllers/application_controller.rb", "web_rate_limits"],
     %w[web_rate_limits write window_seconds] => ["web/app/controllers/application_controller.rb", "web_rate_limits"],
-  }.freeze
+  }.merge(
+    # Tool::Domain reads every row's reach, and consent where a domain waits for one.
+    %w[coding research projects security personal wellbeing household finance devices]
+      .to_h { |domain| [["tools", "domains", domain, "reach"], ["lib/ground/tool.rb", '"reach"']] },
+    %w[household finance devices]
+      .to_h { |domain| [["tools", "domains", domain, "consent"], ["lib/ground/tool.rb", '"consent"']] },
+  ).freeze
 
   def defaults
     @defaults ||= Master.load_yaml(PATH)

@@ -1,27 +1,31 @@
 # frozen_string_literal: true
 
 require "set"
+require "shellwords"
 
 module Master
   module Ground
+    # The objective ledger. An order is an objective that outlives the process:
+    # it has an owner, an authority domain (Tool::Domain), a wake — a schedule,
+    # a bus event, or every heartbeat — the command or callable that makes
+    # progress, and a verify command whose exit decides whether it is met. What
+    # each run and each check printed is its evidence, kept beside its state in
+    # .master/, so a restart resumes the objective rather than forgetting it.
+    #
+    # One record, not a second: memory holds what MASTER knows, this holds what
+    # MASTER is still trying to do (MASTER/AGENTS.md, "No second record beside
+    # memory").
     class StandingOrders
       # CRUD + display for the order definitions themselves — separate from
       # StandingOrders' own scheduling/event-dispatch responsibility.
       module OrderManagement
-        def upsert(name:, description: "", trigger: "scheduled",
-                   interval_s: 86_400, command:, enabled: true)
+        def upsert(name:, command: nil, **fields)
           existing = @orders.find { |o| o["name"] == name.to_s }
+          definition = order_definition(name, command, **fields)
           if existing
-            existing.merge!(
-              "description" => description, "trigger" => trigger.to_s,
-              "interval_s" => interval_s.to_i, "command" => command.to_s, "enabled" => enabled
-            )
+            existing.merge!(definition)
           else
-            @orders << {
-              "name" => name.to_s, "description" => description.to_s, "trigger" => trigger.to_s,
-              "interval_s" => interval_s.to_i, "command" => command.to_s, "enabled" => enabled,
-              "state" => "pending", "last_run_at" => 0
-            }
+            @orders << definition.merge("state" => "pending", "last_run_at" => 0, "runtime" => true)
           end
           persist
           "standing order '#{name}' saved"
@@ -49,7 +53,20 @@ module Master
           flag = o["enabled"] ? "on" : "off"
           last = o["last_run_at"].to_i > 0 ? Time.at(o["last_run_at"].to_i).strftime("%Y-%m-%d") : "never"
           err = o["last_error"] ? "  !! #{o["last_error"][0, 60]}" : ""
-          "#{o['name']} [#{flag}|#{st}] - #{o['description']} (last: #{last})#{err}"
+          seen = Array(o["evidence"]).last
+          proof = seen ? "  #{seen["kind"]} #{seen["ok"] ? "ok" : "failed"}: #{seen["output"].to_s[0, 60]}" : ""
+          "#{o['name']} [#{flag}|#{st}|#{domain_of(o)}] - #{o['description']} (last: #{last})#{err}#{proof}"
+        end
+
+        private
+
+        def order_definition(name, command, description: "", trigger: "scheduled", interval_s: DAILY_INTERVAL,
+                             enabled: true, domain: Tool::Domain::DEFAULT, owner: "operator", verify: nil)
+          {
+            "name" => name.to_s, "description" => description.to_s, "trigger" => trigger.to_s,
+            "interval_s" => interval_s.to_i, "command" => command.to_s, "enabled" => enabled,
+            "domain" => domain.to_s, "owner" => owner.to_s, "verify" => verify&.to_s
+          }.compact
         end
       end
 
@@ -59,11 +76,19 @@ module Master
       WEEKLY_INTERVAL = 604_800
       ERROR_TRUNCATE = 200
       DEBOUNCE_S = 10
+      VERIFY_TIMEOUT_S = 120
+      EVIDENCE_KEEP = 5
       DEFS_PATH = Master.state_path
       STATE_PATH = File.join(Master::ROOT, ".master", "standing_orders_state.yml")
-      STATE_KEYS = %w[state last_run_at last_error].freeze
-      VALID_STATES = %w[pending running done error].freeze
+      STATE_KEYS = %w[state last_run_at last_error evidence].freeze
+      DEFINITION_KEYS = %w[
+        name description trigger interval_s command enabled domain owner verify event filter exclude
+      ].freeze
+      VALID_STATES = %w[pending running done error verified].freeze
       EVENT_SUBSCRIPTIONS = %w[tool:after].freeze
+      # What a wake runs on its own: a schedule is due when its interval has
+      # passed, a heartbeat order on every heartbeat tick past its interval.
+      WAKES = %w[scheduled heartbeat].freeze
 
       BUILTIN_ORDERS = [
         { name: "nightly_dreams", description: "Consolidate memories during low-activity periods",
@@ -86,11 +111,13 @@ module Master
         @container = container
       end
 
+      # A verified objective is met and stops waking; an errored one waits for
+      # /orders reset.
       def due
         now = Time.now.to_i
         @orders.select do |o|
           o["enabled"] &&
-            o["trigger"] == "scheduled" &&
+            WAKES.include?(o["trigger"]) &&
             %w[pending done].include?(state_of(o)) &&
             (now - o["last_run_at"].to_i) >= o["interval_s"].to_i
         end
@@ -109,18 +136,47 @@ module Master
         persist
 
         result = execute_order(order)
-        order["last_run_at"] = Time.now.to_i
-
-        if result.ok?
-          order["state"] = "done"
-          order.delete("last_error")
-        else
-          order["state"] = "error"
-          order["last_error"] = result.message.to_s[0, ERROR_TRUNCATE]
-        end
-
+        settle(order, result)
         @bus&.publish("standing_order:ran", name: order["name"], ok: result.ok?, state: order["state"])
         { name: order["name"], result: }
+      end
+
+      # The run is evidence either way. A run that worked and has a verify is
+      # checked: a passing check meets the objective, a failing one leaves it
+      # waking. Only a run that failed is an error.
+      def settle(order, result)
+        order["last_run_at"] = Time.now.to_i
+        witness(order, "run", result)
+        if result.err?
+          order["state"] = "error"
+          order["last_error"] = result.message.to_s[0, ERROR_TRUNCATE]
+          return
+        end
+
+        order.delete("last_error")
+        met = order["verify"] && witness(order, "verify", verify(order)).ok?
+        order["state"] = met ? "verified" : "done"
+      end
+
+      def witness(order, kind, result)
+        entry = { "at" => Time.now.to_i, "kind" => kind, "ok" => result.ok?,
+                  "output" => (result.ok? ? result.value.to_s : result.message.to_s)[0, ERROR_TRUNCATE] }
+        order["evidence"] = [*Array(order["evidence"]), entry].last(EVIDENCE_KEEP)
+        result
+      end
+
+      # Command output, not a claim (soul.yml anti_simulation): the exit status
+      # of a real process decides, under the same unattended sandbox as a command.
+      def verify(order)
+        refusal = domain_refusal(order, "exec") || unattended_refusal(order["verify"])
+        return refusal if refusal
+
+        argv = Shellwords.split(order["verify"].to_s)
+
+        out, status = Master::Io::Exec.capture2e(*argv, chdir: Master::ROOT, timeout: VERIFY_TIMEOUT_S)
+        status.success? ? Result.ok(out.strip) : Result.err(out.strip)
+      rescue StandardError => e
+        Result.err("verify: #{e.message}")
       end
 
       def subscribe_events!
@@ -128,6 +184,7 @@ module Master
         EVENT_SUBSCRIPTIONS.each do |event_name|
           @bus.subscribe(event_name) { |ev| dispatch_event(event_name, ev) }
         end
+        @bus.subscribe("heartbeat:tick") { run_due! }
       end
 
       def dispatch_event(event_name, payload)
@@ -171,14 +228,7 @@ module Master
         name = order["name"]
         result = execute_order(order, event: payload)
         @mutex.synchronize do
-          order["last_run_at"] = Time.now.to_i
-          if result.ok?
-            order["state"] = "done"
-            order.delete("last_error")
-          else
-            order["state"] = "error"
-            order["last_error"] = result.message.to_s[0, ERROR_TRUNCATE]
-          end
+          settle(order, result)
           persist
         end
         @bus&.publish("standing_order:ran", name:, ok: result.ok?, trigger: "event")
@@ -189,14 +239,14 @@ module Master
       end
 
       def state_of(order) = VALID_STATES.include?(order["state"]) ? order["state"] : "done"
+      def domain_of(order) = order.fetch("domain", Tool::Domain::DEFAULT).to_s
 
       def execute_order(order, event: nil)
-        if (callable_key = order["callable"])
-          klass = Master::Ground::Orders::Registry.lookup(callable_key)
-          return Result.err("unknown callable: #{callable_key}") unless klass
-          return klass.new(container: @container.merge(bus: @bus, root: Master::ROOT, event:)).call
-        end
-        refusal = unattended_refusal(order["command"])
+        return execute_callable(order, event:) if order["callable"]
+        # An objective with nothing to do between checks: the verify is the work.
+        return Result.ok("nothing to run; the verify decides") if order["command"].to_s.empty? && order["verify"]
+
+        refusal = domain_refusal(order, "commands") || unattended_refusal(order["command"])
         return refusal if refusal
         return Master::CLI::TurnRouter.call(message: order["command"].to_s, container: @container) if @container[:commands]
 
@@ -205,6 +255,24 @@ module Master
         Result.err("no router")
       rescue StandardError => e
         Result.err(e.message)
+      end
+
+      # Callable orders are code, reviewed as code, and still act in a domain:
+      # they get only what that domain reaches.
+      def execute_callable(order, event:)
+        refusal = domain_refusal(order, "callables")
+        return refusal if refusal
+
+        klass = Master::Ground::Orders::Registry.lookup(order["callable"])
+        return Result.err("unknown callable: #{order["callable"]}") unless klass
+
+        klass.new(container: Tool::Domain.container(domain_of(order), @container)
+                                         .merge(bus: @bus, root: Master::ROOT, event:)).call
+      end
+
+      def domain_refusal(order, capability)
+        reason = Tool::Domain.refusal(domain_of(order), capability)
+        Result.err("standing order refused: #{reason}", category: :policy) if reason
       end
 
       # An order runs with nobody watching, so a command the sandbox would deny
@@ -227,17 +295,24 @@ module Master
         "#{name} #{enabled ? 'enabled' : 'disabled'}"
       end
 
+      # Declared orders come from data/state.yml; an objective added at runtime
+      # carries its definition in the state file, which is what lets it survive
+      # a restart without the runtime writing data/.
       def load_orders
-        defs = read_defs
         state = read_state
-        defs.each do |order|
-          carry = state[order["name"]] || {}
-          order["state"] = carry["state"] || "pending"
-          order["last_run_at"] = carry["last_run_at"] || 0
-          order["last_error"] = carry["last_error"] if carry["last_error"]
-          mark_interrupted(order) if order["state"] == "running"
-        end
-        defs
+        defs = read_defs
+        declared = defs.map { |o| o["name"] }
+        added = state.reject { |name, _| declared.include?(name) }
+                     .filter_map { |_, carry| carry["definition"]&.merge("runtime" => true) }
+        (defs + added).each { |order| restore(order, state[order["name"]] || {}) }
+      end
+
+      def restore(order, carry)
+        order["state"] = carry["state"] || "pending"
+        order["last_run_at"] = carry["last_run_at"] || 0
+        order["last_error"] = carry["last_error"] if carry["last_error"]
+        order["evidence"] = carry["evidence"] if carry["evidence"]
+        mark_interrupted(order) if order["state"] == "running"
       end
 
       # A fresh process runs nothing yet, so a carried "running" is a run the last
@@ -277,7 +352,9 @@ module Master
       def persist
         return unless @orders.is_a?(Array)
         state = @orders.each_with_object({}) do |order, acc|
-          acc[order["name"]] = STATE_KEYS.each_with_object({}) { |k, h| h[k] = order[k] if order.key?(k) }
+          row = STATE_KEYS.each_with_object({}) { |k, h| h[k] = order[k] if order.key?(k) }
+          row["definition"] = order.slice(*DEFINITION_KEYS) if order["runtime"]
+          acc[order["name"]] = row
         end
         FileUtils.mkdir_p(File.dirname(STATE_PATH))
         write_atomic(STATE_PATH, state.to_yaml)

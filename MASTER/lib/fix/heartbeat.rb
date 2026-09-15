@@ -44,6 +44,8 @@ module Master
             break if @stop
             run_due!
             @homeostat&.observe(:idle_tick)
+            # StandingOrders wakes its heartbeat and scheduled objectives on this.
+            @bus&.publish("heartbeat:tick")
             sleep POLL_INTERVAL
           end
         rescue StandardError => e

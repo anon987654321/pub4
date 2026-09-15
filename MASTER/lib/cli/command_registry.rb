@@ -106,11 +106,28 @@ module Master
         when "list", "" then standing.list
         when /\Aenable (.+)\z/ then standing.enable($1.strip)
         when /\Adisable (.+)\z/ then standing.disable($1.strip)
-        when /\Aadd name=(\S+) cmd=(.+)\z/ then standing.upsert(name: $1, command: $2.strip)
+        when /\Aadd (.+)\z/ then add_order(standing, $1)
         when "run" then run_due_orders(standing)
         when /\Areset (.+)\z/ then standing.reset($1.strip)
-        else "usage: /orders  /orders enable|disable|reset <name>  /orders run"
+        when /\Aconsent (\S+)\z/ then Master::Ground::Tool::Domain.grant($1)
+        when /\Arevoke (\S+)\z/ then Master::Ground::Tool::Domain.revoke($1)
+        else "usage: /orders  /orders enable|disable|reset <name>  /orders run  /orders consent|revoke <domain>\n" \
+             "       /orders add name=<n> [domain=<d>] [wake=scheduled|heartbeat] [every=<s>] [verify=<argv>] [cmd=<text>]"
         end
+      end
+
+      # key=value pairs, each value running to the next known key, so a verify
+      # or a command keeps its spaces and its own `VAR=value` words.
+      ORDER_KEYS = { "name" => :name, "cmd" => :command, "domain" => :domain, "wake" => :trigger,
+                     "every" => :interval_s, "verify" => :verify, "owner" => :owner }.freeze
+
+      def add_order(standing, text)
+        pairs = text.split(/\s+(?=(?:#{ORDER_KEYS.keys.join("|")})=)/).map { |pair| pair.split("=", 2) }
+        fields = pairs.filter_map { |key, value| [ORDER_KEYS[key], value.to_s.strip] if ORDER_KEYS[key] }.to_h
+        return "usage: /orders add name=<n> [domain=<d>] [wake=<w>] [every=<s>] [verify=<argv>] [cmd=<text>]" unless fields[:name]
+
+        fields[:owner] ||= Fiber[:master_pair_subject] || "operator"
+        standing.upsert(**fields)
       end
 
       def run_due_orders(standing)

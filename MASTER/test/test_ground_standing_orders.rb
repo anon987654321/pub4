@@ -12,18 +12,22 @@ require "fileutils"
 class StandingOrdersTest < Minitest::Test
   Orders = Master::Ground::StandingOrders
 
+  KEPT = [Orders::STATE_PATH, Master::Ground::Tool::Domain::CONSENT_PATH].freeze
+
   def setup
     @state_path = Orders::STATE_PATH
-    @saved = File.file?(@state_path) ? File.binread(@state_path) : nil
+    @saved = KEPT.to_h { |path| [path, File.file?(path) ? File.binread(path) : nil] }
     @orders = Orders.new
   end
 
   def teardown
-    if @saved
-      FileUtils.mkdir_p(File.dirname(@state_path))
-      File.binwrite(@state_path, @saved)
-    elsif File.file?(@state_path)
-      File.delete(@state_path)
+    @saved.each do |path, bytes|
+      if bytes
+        FileUtils.mkdir_p(File.dirname(path))
+        File.binwrite(path, bytes)
+      elsif File.file?(path)
+        File.delete(path)
+      end
     end
   end
 
@@ -229,5 +233,97 @@ class StandingOrdersTest < Minitest::Test
 
     assert_includes intervals, Orders::DAILY_INTERVAL
     assert_includes intervals, Orders::WEEKLY_INTERVAL
+  end
+
+  # An objective is an order with an owner, a domain, a wake and a verify, and
+  # it is still there, with what it has shown, after the process that set it
+  # has gone.
+  def objective(**fields)
+    { name: "deploy_window", command: nil, domain: "coding", trigger: "heartbeat", interval_s: 0,
+      verify: "echo window-open", owner: "johann" }.merge(fields)
+  end
+
+  def test_an_objective_added_at_runtime_survives_a_restart_with_its_evidence
+    with_orders([]) do
+      @orders.upsert(**objective)
+      @orders.run_due!
+    end
+
+    restored = Orders.new.instance_variable_get(:@orders).find { |o| o["name"] == "deploy_window" }
+    assert_equal %w[johann coding heartbeat], restored.values_at("owner", "domain", "trigger")
+    assert_equal "verified", restored["state"]
+    assert_equal "window-open", restored["evidence"].last["output"], "the check's own output is the evidence"
+  end
+
+  def test_the_heartbeat_wakes_an_objective_and_a_passing_verify_meets_it
+    bus = Master::Trace::EventBus.new
+    orders = Orders.new(event_bus: bus)
+    orders.instance_variable_set(:@orders, [])
+    orders.upsert(**objective)
+
+    bus.publish("heartbeat:tick")
+
+    met = orders.instance_variable_get(:@orders).first
+    assert_equal "verified", met["state"]
+    assert_empty orders.due, "a met objective stops waking"
+  end
+
+  def test_a_failing_verify_leaves_the_objective_waking_with_the_failure_on_record
+    with_orders([]) do
+      @orders.upsert(**objective(verify: "ruby -e exit(3)"))
+      @orders.run_due!
+      pending = @orders.instance_variable_get(:@orders).first
+
+      assert_equal "done", pending["state"]
+      refute pending["evidence"].last["ok"]
+      assert_equal %w[deploy_window], @orders.due.map { |o| o["name"] }
+    end
+  end
+
+  def test_finance_is_off_until_the_operator_consents
+    FileUtils.rm_f(Master::Ground::Tool::Domain::CONSENT_PATH)
+    with_orders([]) do
+      @orders.upsert(**objective(domain: "finance"))
+      @orders.run_due!
+      refused = @orders.instance_variable_get(:@orders).first
+      assert_equal "done", refused["state"]
+      assert_match(/finance is off until the operator consents/, refused["evidence"].last["output"])
+
+      Master::Ground::Tool::Domain.grant("finance")
+      refused["last_run_at"] = 0
+      @orders.run_due!
+      assert_equal "verified", refused["state"]
+    end
+  end
+
+  def test_a_consented_finance_objective_still_cannot_reach_the_coding_tools
+    Master::Ground::Tool::Domain.grant("finance")
+    routed = []
+    orders = Orders.new(container: { commands: {}, memory: :shared_store })
+    orders.instance_variable_set(:@orders, [])
+    Master::CLI::TurnRouter.stub(:call, ->(**kw) { routed << kw }) do
+      orders.upsert(**objective(domain: "finance", command: "write the budget", verify: nil, trigger: "scheduled"))
+      result = orders.run_due!.first[:result]
+
+      assert_empty routed
+      assert_match(/finance cannot reach commands/, result.message)
+    end
+  end
+
+  def test_a_domain_container_withholds_what_the_domain_does_not_reach
+    full = { commands: :registry, agent: :agent, memory: :store, bus: :bus }
+    Master::Ground::Tool::Domain.grant("household")
+
+    assert_equal({ bus: :bus, domain: "household" }, Master::Ground::Tool::Domain.container("household", full))
+    assert_equal full.merge(domain: "coding"), Master::Ground::Tool::Domain.container("coding", full)
+  end
+  def test_orders_add_reads_fields_whose_values_keep_their_spaces
+    saved = []
+    standing = Object.new.tap { |o| o.define_singleton_method(:upsert) { |**kw| saved << kw } }
+    Master::CLI::CommandRegistry.add_order(standing, "name=tests domain=coding wake=heartbeat verify=env RAILS_ENV=test bundle exec rake test")
+
+    assert_equal({ name: "tests", domain: "coding", trigger: "heartbeat", verify: "env RAILS_ENV=test bundle exec rake test", owner: "operator" },
+                 saved.first)
+    assert_match(/usage/, Master::CLI::CommandRegistry.add_order(standing, "domain=coding verify=true"))
   end
 end

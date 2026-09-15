@@ -51,6 +51,19 @@ tools:
       - SubdomainOrchestrator
       - WebFetch
       - MemoryRecord
+  # Read by lib/ground/tool.rb (Tool::Domain). The authority domain a standing
+  # order acts under and what it may reach. Finance, household and devices wait
+  # for the operator's consent, one domain at a time, recorded by /orders consent.
+  domains:
+    coding: { reach: [commands, callables, exec, memory] }
+    research: { reach: [commands, exec, memory] }
+    projects: { reach: [commands, callables, exec, memory] }
+    security: { reach: [callables, exec] }
+    personal: { reach: [exec] }
+    wellbeing: { reach: [exec] }
+    household: { consent: required, reach: [exec] }
+    finance: { consent: required, reach: [exec] }
+    devices: { consent: required, reach: [exec] }
 
 # Remote-channel pairing. Read by lib/ground/pairing.rb. Store is .master/
 # (gitignored); a path under data/security/ would commit identities.
