@@ -3,25 +3,23 @@
 
 # Prove that an app's background jobs actually get run.
 #
-# This asserted a mechanism — a registered SolidQueue::Process — and vm23 does
-# not use that mechanism. rc.d/<app>_jobs is disabled at boot on purpose (its
-# own footer: 1 GB and one vCPU, a resident worker per app does not fit) and
-# /usr/local/bin/drain-jobs.sh runs the queue hourly instead. So the proof
-# failed every Rails deploy for doing exactly what was decided, and because
-# vps-deploy exits 1 on it, `vps-deploy all` could never get past brgen to reach
-# amber and bsdports.
+# vm23 runs jobs two ways. brgen has a resident worker, rc.d/brgen_jobs, listed
+# in pkg_scripts because it is the one this 1 GB box can hold. amber and
+# bsdports have none: rc.d/amber_jobs and rc.d/bsdports_jobs stay off, and
+# /usr/local/bin/drain-jobs.sh runs their queues hourly. A proof that asked only
+# for a registered SolidQueue::Process would fail those two for doing what was
+# decided, and because vps-deploy exits 1 on it, the pass would halt before them.
 #
-# What the gate is actually for is unchanged: an app whose jobs never run is an
-# app whose disappearing messages never disappear and whose database never gets
-# snapshotted. That failure must still be reachable. So there are two ways to
-# pass and both are evidence of work being done:
+# What the gate is for: an app whose jobs never run is an app whose
+# disappearing messages never disappear and whose database never gets
+# snapshotted. So there are two ways to pass and both are evidence of work
+# being done:
 #
-#   1. a supervisor is registered — the resident-worker arrangement, if anyone
-#      ever enables it
-#   2. the cron drain ran for this app recently — the arrangement in use
+#   1. a supervisor is registered — the resident worker
+#   2. the cron drain ran for this app recently — the hourly drain
 #
-# The adapter check is untouched and still hard-fails. An app that is not on
-# SolidQueue at all is misconfigured no matter who runs the jobs.
+# The adapter check hard-fails either way. An app that is not on SolidQueue at
+# all is misconfigured no matter who runs the jobs.
 
 require "shellwords"
 require "time"
@@ -115,8 +113,8 @@ module SolidQueueProof
     abort "missing SECRET_KEY_BASE in /etc/#{app}.env" if secret.empty?
 
     drained = drain_recent?(app)
-    # Waiting 30 seconds for a worker that is disabled at boot is 30 seconds
-    # per app on every deploy. When the drain already proves the work is being
+    # Waiting 30 seconds for a worker an app does not run is 30 seconds per app
+    # on every deploy. When the drain already proves the work is being
     # done, look once and move on; when it does not, give a starting supervisor
     # the full window before calling it dead.
     tries = drained ? 1 : 15
