@@ -126,13 +126,36 @@ class TestMixMetrics < Minitest::Test
       out, = capture_io do
         DillaComposition::ListeningLoop.converge(
           render_fn: ->(pass) { passes << ENV["MASTER_LUFS"]; "pass#{pass}.wav" },
-          analyze_fn: ->(_path) { { integrated_lufs: -20.0 } },
+          analyze_fn: ->(_path) { { integrated_lufs: -23.0 } },
           max_passes: 2,
         )
       end
 
       assert_includes out, "pass 2:"
-      assert_equal [nil, "-12.5"], passes, "the second pass did not render at the window's middle"
+      assert_equal [nil, "-18.0"], passes, "the second pass did not render at the middle of the window the critique scores"
+    end
+  end
+
+  # The loop stops on a pass the critique accepts and keeps going on one it
+  # marks down, so the two read loudness through one window.
+  def test_the_listening_loop_stops_where_the_critique_accepts_the_loudness
+    with_env("MASTER_LUFS" => nil, "DRUM_VOL" => nil, "DRUM_MIX_WEIGHT" => nil) do
+      window = DillaComposition::Critique::HOUSE_LUFS
+      [window.begin, window.end, -14.0, -21.0].each do |lufs|
+        rendered = 0
+        capture_io do
+          DillaComposition::ListeningLoop.converge(
+            render_fn: ->(pass) { rendered += 1; "pass#{pass}.wav" },
+            analyze_fn: ->(_path) { { integrated_lufs: lufs } },
+            max_passes: 3,
+          )
+        end
+        accepted = DillaComposition::Critique.lufs_score(lufs) >= 80
+        # Groove reads 70 with no events, under the loop's 75, so loudness alone
+        # never ends it; what it must not do is re-aim a level the critique took.
+        assert_equal accepted, ENV["MASTER_LUFS"].nil?, "LUFS #{lufs}: the loop and the critique disagree"
+        ENV.delete("MASTER_LUFS")
+      end
     end
   end
 
