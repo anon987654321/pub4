@@ -162,7 +162,7 @@ module Master
           "shutdown",
           "halt",
           "poweroff",
-          "> /dev/",
+          %r{>\s*/dev/(?!null\b|stdout\b|stderr\b|tty\b|fd/)},
           "chmod 777",
           "chmod -r 777",
           "curl | sh",
@@ -181,9 +181,10 @@ module Master
         # Bare-word entries match on word boundaries; entries holding an operator or
         # a path stay literal substrings. Plain `include?` blocked by accident —
         # "sudo" is inside "pseudo", "halt" inside "shalt" — so `grep -rn
-        # shutdown_handler lib` was refused as dangerous.
+        # shutdown_handler lib` was refused as dangerous. A device write is a
+        # pattern: the literal "> /dev/" refused `rake test > /dev/null` too.
         BLOCK_MATCHERS = BLOCKLIST.map do |entry|
-          entry.match?(/\A[a-z0-9 ]+\z/) ? /\b#{Regexp.escape(entry)}\b/ : entry
+          entry.is_a?(String) && entry.match?(/\A[a-z0-9 ]+\z/) ? /\b#{Regexp.escape(entry)}\b/ : entry
         end.freeze
 
         def self.blocked?(command)
