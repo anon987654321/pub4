@@ -417,8 +417,16 @@ BASELINES = { "undefined_class" => 0, "unused_selector" => 91 }.freeze
     end
 
     # A quoted string, or a bracketed expression holding some. Anything else —
-    # a bare method call, a symbol, a local — names nothing this can read.
+    # a bare method call, a symbol, a local — names nothing this can read, except
+    # class_names and token_list, whose arguments are the class list: a
+    # conditional class is a string key there, `class_names("row", "row--stale":
+    # stale)`, and read as a bare call its modifier looked unused.
+    CLASS_LIST_HELPER = /\A(?:class_names|token_list)(?=\()/
+
     def class_value_fragments(body, at)
+      helper = CLASS_LIST_HELPER.match(body[at, 12].to_s)
+      return bracket_fragments(body, at + helper.end(0), "(", ")") if helper
+
       case body[at]
       when '"', "'" then string_fragments(body, at)
       when "(" then bracket_fragments(body, at, "(", ")")

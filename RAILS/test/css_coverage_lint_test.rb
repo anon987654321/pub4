@@ -56,6 +56,14 @@ class CssCoverageLintTest < Minitest::Test
     assert L.base_defined?("#{L.defined_names.first}__anything")
   end
 
+  # class_names takes a conditional class as a string key, so the modifier is
+  # written only there; read as a bare call, the rule styling it looked dead.
+  def test_class_names_arguments_are_class_lists
+    view = %(<%= tag.span "x", class: class_names("data-state", "data-state--stale": stale) %>)
+
+    assert_includes L.class_lists_in(view), %w[data-state data-state--stale]
+  end
+
   # An interpolated class cannot be resolved statically and must never be reported.
   def test_interpolated_classes_are_ignored
     assert L.interpolated?('card card--#{kind}')
