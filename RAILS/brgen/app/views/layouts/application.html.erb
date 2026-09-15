@@ -46,9 +46,11 @@
       so content_for?(:x) ? yield(:x) : … was two lookups and the key named twice. %>
   <% page_title = content_for(:title).presence %>
   <% page_description = content_for(:description).presence || t("pages.default_description", city: city_name) %>
-  <title><%= page_title ? "#{page_title} — #{city_name}" : city_name %></title>
+  <%# A page titled with the city's own name — the home page — takes no suffix,
+      or the tab reads "Bergen — Bergen". %>
+  <title><%= page_title && page_title != city_name ? "#{page_title} — #{city_name}" : city_name %></title>
   <meta name="description" content="<%= page_description %>">
-  <link rel="canonical" href="<%= request.original_url.split("?").first %>">
+  <link rel="canonical" href="<%= seo_canonical_url %>">
   <%= render "shared/social_card_meta", site_name: city_name, page_title: page_title,
                                         page_description: page_description,
                                         fallback_image: "#{request.base_url}/icon.png" %>

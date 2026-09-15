@@ -7,7 +7,7 @@
     )) %>
 <% content_for :json_ld, json_ld_script(breadcrumb_json_ld([
       [city_name, main_app.root_url],
-      ["##{@hashtag.name}", request.original_url.split("?").first]
+      ["##{@hashtag.name}", seo_canonical_url]
     ])) %>
 
 <header class="page-header">

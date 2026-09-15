@@ -19,7 +19,7 @@
   <meta name="theme-color" content="#ffffff" data-light-color="#ffffff" data-dark-color="#000000">
   <title><%= content_for?(:title) ? "#{yield :title} — Amber" : "Amber" %></title>
   <meta name="description" content="<%= content_for?(:description) ? yield(:description) : "Amber — social fashion. Share outfits, keep a wardrobe, and dress with people you follow." %>">
-  <link rel="canonical" href="<%= request.original_url.split("?").first %>">
+  <link rel="canonical" href="<%= seo_canonical_url %>">
   <%# The card's description is the blurb without the "Amber — " prefix the
       <title> and meta description carry: a card already shows the site name on
       its own line. %>

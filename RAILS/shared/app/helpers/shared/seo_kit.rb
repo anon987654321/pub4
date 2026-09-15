@@ -17,6 +17,8 @@ module Shared
       strip_tags(text.to_s).squish.truncate(160).presence || fallback
     end
 
+    # The one canonical: rel=canonical, og:url and the last breadcrumb all read
+    # it, so the three cannot name different URLs for one page.
     def seo_canonical_url(url = request.original_url)
       url.to_s.split("?").first
     end
@@ -84,11 +86,12 @@ module Shared
         "description" => description,
         "areaServed" => area_served,
         # compact drops this when search is false, the same way it drops a nil
-        # description — no need for a second shape.
+        # description — no need for a second shape. A root_url ends in a slash,
+        # so the path joins without doubling it.
         "potentialAction" => (if search
                                 {
                                   "@type" => "SearchAction",
-                                  "target" => "#{url}/search?q={search_term_string}",
+                                  "target" => "#{url.to_s.chomp("/")}/search?q={search_term_string}",
                                   "query-input" => "required name=search_term_string",
                                 }
                               end),

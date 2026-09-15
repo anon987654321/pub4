@@ -4,7 +4,7 @@
 <% content_for :og_image, seo_image_url(@place.photo) %>
 <% content_for :json_ld, json_ld_script(breadcrumb_json_ld([
       [t("maps.map"), root_url],
-      [@place.name, request.original_url.split("?").first]
+      [@place.name, seo_canonical_url]
     ])) %>
 
 <div class="page-header">

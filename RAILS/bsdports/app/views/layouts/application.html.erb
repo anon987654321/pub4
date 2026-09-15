@@ -19,7 +19,7 @@
   <meta name="theme-color" content="#000000" data-light-color="#ffffff" data-dark-color="#000000">
   <title><%= content_for?(:title) ? "#{yield :title} — BSDports" : "BSDports" %></title>
   <meta name="description" content="<%= content_for?(:description) ? yield(:description) : "BSDports — search OpenBSD ports, dependencies and local advisories." %>">
-  <link rel="canonical" href="<%= request.original_url.split("?").first %>">
+  <link rel="canonical" href="<%= seo_canonical_url %>">
   <%# The card's description is the blurb without the "BSDports — " prefix the
       <title> and meta description carry: a card already shows the site name on
       its own line. %>

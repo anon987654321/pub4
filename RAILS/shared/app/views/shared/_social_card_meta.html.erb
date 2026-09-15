@@ -19,7 +19,9 @@
 <meta property="og:site_name" content="<%= site_name %>">
 <meta property="og:title" content="<%= page_title || site_name %>">
 <meta property="og:description" content="<%= page_description %>">
-<meta property="og:url" content="<%= request.original_url %>">
+<%# The page's canonical, from the one helper every layout's rel=canonical reads,
+    so a shared link and a crawler name the same URL. %>
+<meta property="og:url" content="<%= seo_canonical_url %>">
 <meta property="og:type" content="<%= content_for(:og_type).presence || "website" %>">
 <%# summary_large_image only for a page that named its own image: the brand-mark
     fallback is a square icon and reads badly blown up to a wide card. %>

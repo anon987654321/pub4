@@ -5,7 +5,7 @@
 <% content_for :og_image, seo_image_url(@listing.photos.first) %>
 <% content_for :json_ld, json_ld_script(breadcrumb_json_ld([
       [t("marketplace.home_title", city: city_name), listings_url],
-      [@listing.title, request.original_url.split("?").first]
+      [@listing.title, seo_canonical_url]
     ])) %>
 
 <%= render "marketplace/nav_bar",
