@@ -2,6 +2,7 @@
 
 require_relative "dilla_helper"
 require_relative "../dilla/lib/livesets"
+require "open3"
 
 # The livesets' choices, read without playing a pass: exec is stubbed wherever a
 # pass would start, so nothing reaches ffmpeg or a speaker.
@@ -38,8 +39,9 @@ class TestDillaLivesets < Minitest::Test
     env, _ruby, _engine, *command = handed
 
     assert_equal %w[live set chord_based_beats], command
-    assert_equal({ "LIVE_SEED" => "1133818290", "LIVE_KIT" => "synth",
-                   "LIVE_PROGRESSION" => "lydian_augmented_haze" }, env)
+    assert_equal({ "LIVE_SEED" => "1133818290", "LIVE_KIT" => "synth", "LIVE_PROGRESSION" => "lydian_augmented_haze",
+                   "LIVE_VOICING" => "down", "LIVE_ROOM" => "warm" }, env.compact)
+    assert_equal %w[LIVE_BED LIVE_LENGTH], env.select { |_, v| v.nil? }.keys, "a choice the take never made is unset, not inherited"
   end
 
   # A pin replaces what the seed drew and nothing after it: the draw still
@@ -127,8 +129,7 @@ class TestDillaLivesets < Minitest::Test
   # decision draws from Livesets.stream(tag), never from the pass stream.
   def test_the_kept_take_replays_the_draws_its_journal_recorded
     kept = Livesets.passes.find { |r| r["seed"] == 1_133_818_290 }
-    row = built("chord_based_beats", "LIVE_SEED" => kept["seed"].to_s, "LIVE_KIT" => kept["kit"],
-                                     "LIVE_PROGRESSION" => kept["progression_name"])[:row]
+    row = built("chord_based_beats", Livesets.recall_env(kept))[:row]
 
     assert_equal kept["bpm"], row[:bpm]
     assert_equal kept["drums"], JSON.parse(JSON.generate(row[:drums]))
@@ -197,6 +198,47 @@ class TestDillaLivesets < Minitest::Test
     assert_equal ["[s0]atrim=0.0:4.0", "[s1]atrim=4.0:8.0", "[s2]atrim=8.0:12.0", "[s3]atrim=12.0:14"],
                  graph.grep(/atrim/).map { |g| g[/\A\[s\d\]atrim=[\d.:]+/] }
     assert_includes graph.grep(/\[s1\]/).join, "volume=-3.0dB"
+  end
+
+  def test_every_room_builds_every_set_and_is_journalled
+    Livesets::ROOMS.each do |room|
+      Livesets::SETS.each do |set|
+        pass = built(set, "LIVE_ROOM" => room)
+
+        assert_empty Livesets.graph_problems(pass[:inputs], pass[:graph]), "#{set} in #{room}"
+        assert_equal room, pass[:row][:room]
+      end
+    end
+    assert_equal({ room: "warm", sonitex: [12, 11, 12, 10], vcs: 6 }, with_env("LIVE_ROOM" => nil) { Livesets.console_record("chord_based_beats") })
+    assert_raises(SystemExit) { with_env("LIVE_ROOM" => "bathroom") { Livesets.room } }
+  end
+
+  def pink_level(chain)
+    out, = Open3.capture2e("ffmpeg", "-hide_banner", "-nostats", "-f", "lavfi", "-i", "anoisesrc=c=pink:d=3:a=0.3:seed=5",
+                           "-af", "aformat=channel_layouts=stereo,#{chain},volumedetect", "-f", "null", "-")
+    Float(out[/mean_volume: (\S+) dB/, 1])
+  end
+
+  # The level contract, measured: every vcs row lands at VCS_DB whatever its
+  # depth and smear, and the dry, blown and tape rooms move a stage's level by
+  # no more than 2.5 dB. The master and summed rooms are level-dependent by
+  # construction -- stacked 1260s add quantisation noise to a quiet signal, and
+  # console_stack's makeup was measured against a hot mix -- so what they do to
+  # level is live ab's to trim, not this test's to pin.
+  def test_every_vcs_stage_lands_at_its_declared_level_and_rooms_keep_it
+    skip "ffmpeg is not installed" unless system("ffmpeg", "-version", out: File::NULL, err: File::NULL)
+
+    base = pink_level("anull")
+    vcs_rows = Livesets::CONSOLE.values.flat_map(&:values).flatten(1).select { |kind, _| kind == :vcs }.uniq
+    vcs_rows.each do |_, params|
+      assert_in_delta Livesets::VCS_DB, pink_level(Livesets.vcs(**params)) - base, 0.75, params.inspect
+    end
+    %w[chord_based_beats ambient_pads].each do |set|
+      warm = with_env("LIVE_ROOM" => "warm") { pink_level(Livesets.console(set, :master)) }
+      %w[dry blown tape].each do |room|
+        assert_in_delta warm, with_env("LIVE_ROOM" => room) { pink_level(Livesets.console(set, :master)) }, 2.5, "#{set} in #{room}"
+      end
+    end
   end
 
   def test_a_recalled_pass_replays_the_voicing_it_was_journalled_under

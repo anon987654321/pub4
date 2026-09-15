@@ -13,6 +13,10 @@
 #   ruby dilla.rb live recall keep               keep the last pass played
 #   ruby dilla.rb live broadcast [set]           all three in turn, or one all night
 #   ruby dilla.rb live dig                       fill samples/chopped/ from project/crate.yml
+#   ruby dilla.rb live ab <set> KNOB=value       three arms of one seed, level-matched, interleaved
+#
+#   LIVE_ROOM=warm|dry|blown|tape|master|summed  the console the set plays through
+#   LIVE_LENGTH=30                               the block in seconds
 #
 # What the sets share is the room -- the console, the crate, the clock and the
 # journal -- and what differs is the arrangement, which is what a set is. Written
@@ -92,20 +96,169 @@ module Livesets
     Random.new((@seed.to_i * 1_000_003) + stable_hash(tag))
   end
 
-  def sonitex(bits:, lo:, hi:, drive:)
-    "volume=#{drive},acrusher=bits=#{bits}:mode=log:aa=1," \
+  # acrusher mixes half dry unless told otherwise, and for a long time nothing
+  # told it: every 1260 stage ran at mix=0.5 without anyone choosing that. It is
+  # named now, and the warm room keeps it, because the weights were set by ear
+  # against it. `samples` is the other half of a 12-bit sampler -- its rate, not
+  # its depth -- and 1 is off; the blown room turns both.
+  def sonitex(bits:, lo:, hi:, drive:, mix: 0.5, samples: 1)
+    "volume=#{drive},acrusher=bits=#{bits}:mode=log:aa=1:mix=#{mix}:samples=#{samples}," \
       "highpass=f=#{lo},lowpass=f=#{hi},alimiter=limit=0.99"
   end
 
-  # aphaser's delay floor is 0.1; under it nothing is audible and the knob only
-  # appears to turn. aphaser is not unity either: in_gain and out_gain multiply,
-  # so 0.6 x 0.72 is a 7dB cut per instance and three instances threw away 22dB
-  # before the limiter saw the signal. Makeup here rather than at the master, so
-  # each console stage stays level-neutral and the weights mean what they say.
-  def vcs(depth:, smear:)
+  # Every vcs stage lands at VCS_DB, whatever its depth and smear, and the makeup
+  # is worked out from them rather than typed. The stage used to carry
+  # volume=1.9 and an aecho whose out_gain of 0.25 cut 12.7 dB, which left each
+  # instance 5.5 to 9.9 dB down depending on its depth, not level-neutral as it
+  # claimed. The weights were tuned by ear against that console, so the room
+  # keeps its mean loss, -7.5 dB, as the declared level: the balance holds and a
+  # changed depth no longer moves it. Measured on pink noise, aphaser at
+  # in 0.75 x out 0.85 is -2.6 dB at decay 0.26 rising 10.9 dB per unit of
+  # decay, and 0.14 dB quieter per millisecond of delay past 2.1; aecho at
+  # 0.9:1 is -0.65 dB. aphaser's delay floor is 0.1; under it nothing is heard.
+  VCS_DB = -7.5
+  AECHO_DB = -0.65
+
+  def vcs(depth:, smear:, db: VCS_DB)
+    phaser_db = -2.6 + (10.9 * (depth - 0.26)) - (0.14 * (smear - 2.1))
     "aphaser=in_gain=0.75:out_gain=0.85:delay=#{smear}:decay=#{depth}:speed=0.5," \
-      "volume=1.9," \
-      "aecho=0.9:0.25:#{smear.round}:0.08"
+      "aecho=0.9:1:#{smear.round}:0.08," \
+      "volume=#{(db - phaser_db - AECHO_DB).round(2)}dB"
+  end
+
+  # The console as data, one row per place the sets sum. A room is what happens
+  # to these rows; the arrangement never names a number of its own.
+  #
+  # Instances measured, not assumed (220 Hz at -12 dBFS, pink noise for level):
+  # one vcs-and-1260 pair puts the 2nd harmonic at -74 dB and the 3rd at -84;
+  # each further pair lifts the 2nd by 3 to 7 dB up to four pairs, where it
+  # flattens at -58, while the 3rd holds near -80 until the fifth pair and then
+  # climbs 15 dB by the sixth. More is warmer up to four and edgier after. The
+  # longest series path here -- kit, sum, master -- is four vcs and three 1260s,
+  # the warm side of that line, so the counts stay. Alone, a 1260 stage adds
+  # almost no harmonic at all at this level (3rd at -80, no 2nd): it is a band
+  # limit and a drive into a limiter, and the colour is the vcs.
+  KIT_CONSOLE = [[:sonitex, { bits: 11, lo: 42, hi: 12_000, drive: 1.18 }], [:vcs, { depth: 0.42, smear: 2.1 }]].freeze
+  SUM_CONSOLE = [[:vcs, { depth: 0.38, smear: 1.7 }], [:sonitex, { bits: 12, lo: 40, hi: 13_000, drive: 1.12 }]].freeze
+  CRACKLE_CONSOLE = [[:vcs, { depth: 0.6, smear: 0.9 }]].freeze
+  MASTER_CONSOLE = [[:vcs, { depth: 0.34, smear: 2.4 }], [:sonitex, { bits: 10, lo: 46, hi: 11_500, drive: 1.1 }],
+                    [:vcs, { depth: 0.26, smear: 3.6 }]].freeze
+  CONSOLE = {
+    "chord_based_beats" => {
+      phrase: [[:sonitex, { bits: 12, lo: 70, hi: 7600, drive: 1.22 }], [:vcs, { depth: 0.5, smear: 1.6 }]],
+      kit: KIT_CONSOLE, sum: SUM_CONSOLE, crackle: CRACKLE_CONSOLE, master: MASTER_CONSOLE,
+    },
+    "sampled_based_beats" => {
+      phrase: [[:sonitex, { bits: 12, lo: 90, hi: 9200, drive: 1.3 }], [:vcs, { depth: 0.5, smear: 1.4 }]],
+      under: [[:sonitex, { bits: 13, lo: 60, hi: 7200, drive: 1.1 }], [:vcs, { depth: 0.55, smear: 1.1 }]],
+      kit: KIT_CONSOLE, sum: SUM_CONSOLE, crackle: CRACKLE_CONSOLE, master: MASTER_CONSOLE,
+    },
+    # Gentler than the beat sets: 13 bits and a 6 kHz ceiling on the pads,
+    # because the crush that reads as grit on a stab reads as hiss on something
+    # held.
+    "ambient_pads" => {
+      phrase: [[:sonitex, { bits: 13, lo: 55, hi: 6200, drive: 1.05 }], [:vcs, { depth: 0.55, smear: 2.8 }]],
+      under: [[:sonitex, { bits: 12, lo: 40, hi: 2600, drive: 1.0 }], [:vcs, { depth: 0.6, smear: 3.2 }]],
+      air: [[:vcs, { depth: 0.5, smear: 4.0 }]],
+      master: [[:vcs, { depth: 0.3, smear: 4.4 }], [:sonitex, { bits: 12, lo: 42, hi: 9000, drive: 1.04 }]],
+    },
+  }.freeze
+  # The engine's DILLA_MIX_BUSES is not called here, and need not be: it groups
+  # the stems of a note-plan render into drums, harmony, bass and texture so a
+  # bus can be worked as one. These sets have no stems to group -- they are
+  # built as buses from the first filter, phrase, under, kit, crackle and air,
+  # summed at the rows above -- so the grouping exists and the console on it is
+  # what a room chooses.
+  #
+  # Where a source enters, as against where sources meet.
+  SOURCE_STAGES = %i[phrase under kit air].freeze
+
+  # Which room, from LIVE_ROOM. A room changes the colour of every row and keeps
+  # each row's declared level, so the balance the weights set holds. Dry, blown
+  # and tape hold it within 2.5 dB; master and summed are level-dependent -- a
+  # stack of 1260s adds noise to a quiet signal and console_stack was trimmed
+  # against a hot mix -- and live ab trims them before anything is compared.
+  #
+  #   warm     the console as tuned: the default.
+  #   dry      no console. Every stage keeps its level and loses its colour: the
+  #            control that says whether the room is worth having.
+  #   blown    the 1260s at full wet, at half the sample rate, driven a quarter
+  #            harder. The other side of mix=0.5.
+  #   tape     the engine's tape machine ahead of the console on every source.
+  #   master   every instance in series on the master, none on the buses, which
+  #            is where a plugin chain on a master bus sits.
+  #   summed   the engine's measured summing units -- console_sum on the buses,
+  #            console_stack on the master -- where vcs was.
+  ROOMS = %w[warm dry blown tape master summed].freeze
+
+  def room
+    want = ENV.fetch("LIVE_ROOM", "warm")
+    abort "no room #{want.inspect} — have #{ROOMS.join(', ')}" unless ROOMS.include?(want)
+
+    want
+  end
+
+  def console(set, stage)
+    rows = CONSOLE.fetch(set).fetch(stage)
+    send(:"room_#{room}", set, stage, rows).join(",")
+  end
+
+  def unit(kind, params) = send(kind, **params)
+
+  # The level a row keeps when its colour is taken away. A 1260 row has no gain
+  # of its own; its band limits take 1.7 dB out of pink noise at any level from
+  # -44 to -18 dB, so that is what it leaves behind.
+  SONITEX_DB = -1.7
+
+  def level_of(kind) = "volume=#{kind == :vcs ? VCS_DB : SONITEX_DB}dB"
+
+  def room_warm(_set, _stage, rows) = rows.map { |kind, params| unit(kind, params) }
+  def room_dry(_set, _stage, rows) = rows.map { |kind, _| level_of(kind) }
+
+  # Harder into the crusher and its limiter, and the quarter taken back after,
+  # so the room is louder only where the limiter says so.
+  BLOWN_DRIVE = 1.25
+
+  def room_blown(_set, _stage, rows)
+    rows.map do |kind, params|
+      next unit(kind, params) unless kind == :sonitex
+
+      blown = params.merge(mix: 1.0, samples: 2, drive: (params[:drive] * BLOWN_DRIVE).round(3))
+      "#{unit(kind, blown)},volume=#{(-20 * Math.log10(BLOWN_DRIVE)).round(2)}dB"
+    end
+  end
+
+  def room_tape(set, stage, rows)
+    warm = room_warm(set, stage, rows)
+    SOURCE_STAGES.include?(stage) ? [Outboard.tape_machine] + warm : warm
+  end
+
+  # The master's own rows keep their level; the instances added to reach the
+  # set's count are level-neutral, since the buses already kept theirs.
+  def room_master(set, stage, rows)
+    return rows.map { |kind, _| level_of(kind) } unless stage == :master
+
+    count = CONSOLE.fetch(set).values.sum(&:size)
+    rows.cycle.first(count).each_with_index.map do |(kind, params), i|
+      i < rows.size || kind != :vcs ? unit(kind, params) : vcs(**params, db: 0.0)
+    end
+  end
+
+  # console_sum is -1.1 dB and console_stack at three is 0.0 dB on pink noise,
+  # so each is trimmed to the level the vcs it replaces declares.
+  def room_summed(_set, stage, rows)
+    rows.map do |kind, params|
+      next unit(kind, params) unless kind == :vcs
+
+      stage == :master ? "#{Outboard.console_stack(instances: 3)},volume=#{VCS_DB}dB" : "#{Outboard.console_sum},volume=#{VCS_DB + 1.1}dB"
+    end
+  end
+
+  # What the journal says about the room, counted from the table rather than
+  # typed beside it.
+  def console_record(set)
+    rows = CONSOLE.fetch(set).values.flatten(1)
+    { room: room, sonitex: rows.filter_map { |kind, p| p[:bits] if kind == :sonitex }, vcs: rows.count { |kind, _| kind == :vcs } }
   end
 
   # Naming a kit that does not resolve aborts rather than falling back: silently
@@ -211,7 +364,9 @@ module Livesets
   # would run ahead of the record all night.
   def grid(bed, drag, want: 90, range: 76..104)
     raw = `#{FFPROBE} -v quiet -show_entries format=duration -of csv=p=0 #{bed.shellescape}`.to_f
-    raw = 3.0 if raw <= 0.2
+    # A bed with no length cannot be looped: -stream_loop -1 over an empty file
+    # never reaches its end, and the pass hangs with nothing written.
+    abort "bed #{bed} has no audio ffprobe can measure" if raw <= 0.2
     # Whole bars only, and the reading that lands in a tempo a human would count.
     bars = [1, 2, 4, 8].min_by do |b|
       implied = (b * 4 * 60.0) / (raw / drag)
@@ -248,7 +403,7 @@ module Livesets
   # the same long pink generator read twice: 0.006 amplitude pink through a 7.2 kHz
   # high-pass is the hat, and the same noise unfiltered is the surface the whole
   # thing sits on, so they share a grain no two generators would.
-  def drunk_kit(n, inputs, graph, beat:, bar:, step:, sxt:, total:)
+  def drunk_kit(n, inputs, graph, set:, beat:, bar:, step:, sxt:, total:)
     dir = kit_dir
     @kit_used = dir ? File.basename(dir) : "synth"
     # anoisesrc seeds itself from the clock unless told otherwise, so without
@@ -294,8 +449,7 @@ module Livesets
       graph.concat place(n + 3, "hh", "volume=0.26,afade=t=out:st=0.002:d=0.048,highpass=f=7200", hits[:hat])
       graph << "[kk][sn][gh][hh]amix=inputs=4:weights=2.8 2.4 1.1 1.0:normalize=0[kit_raw]"
     end
-    graph << "[kit_raw]#{sonitex(bits: 11, lo: 42, hi: 12000, drive: 1.18)}," \
-             "#{vcs(depth: 0.42, smear: 2.1)}[kit]"
+    graph << "[kit_raw]#{console(set, :kit)}[kit]"
     { hits: hits, crackle_i: n + 3 }
   end
 
@@ -502,21 +656,19 @@ module Livesets
     end
 
     graph << "#{chords.each_index.map { |i| "[chd#{i}]" }.join}concat=n=#{chords.size}:v=0:a=1," \
-             "#{sonitex(bits: 12, lo: 70, hi: 7600, drive: 1.22)}," \
-             "#{vcs(depth: 0.5, smear: 1.6)}," \
+             "#{console('chord_based_beats', :phrase)}," \
              "chorus=0.6:0.9:48|72:0.4|0.3:0.22|0.3:1.8|2.6," \
              "aecho=0.8:0.85:97|181:0.30|0.18," \
              "tremolo=f=#{(1.0 / bar).round(3)}:d=0.12," \
              "extrastereo=m=1.5[phrase]"
 
-    kit = drunk_kit(inputs.size, inputs, graph, beat: beat, bar: bar, step: step, sxt: sxt, total: total)
+    kit = drunk_kit(inputs.size, inputs, graph, set: "chord_based_beats", beat: beat, bar: bar, step: step, sxt: sxt, total: total)
     hits = kit[:hits]
     crackle_i = kit[:crackle_i]
 
     phrase_s = (chord_s * chords.size).round(4)
     graph << "[phrase][kit]amix=inputs=2:weights=0.62 2.9:normalize=0:duration=first," \
-             "#{vcs(depth: 0.38, smear: 1.7)}," \
-             "#{sonitex(bits: 12, lo: 40, hi: 13000, drive: 1.12)}," \
+             "#{console('chord_based_beats', :sum)}," \
              "atrim=0:#{phrase_s},asetpts=N/SR/TB[barmix]"
 
     # The same arrangement rule as the sampled set: the harmony steps back in the
@@ -530,11 +682,9 @@ module Livesets
              "vibrato=f=1.5:d=0.11," \
              "acompressor=threshold=0.4:ratio=3.2:attack=9:release=210[body]"
     graph << "[#{crackle_i}:a]highpass=f=2200,volume=0.9," \
-             "#{vcs(depth: 0.6, smear: 0.9)}[crackle]"
+             "#{console('chord_based_beats', :crackle)}[crackle]"
     graph << "[body][crackle]amix=inputs=2:weights=1 0.30:normalize=0:duration=first," \
-             "#{vcs(depth: 0.34, smear: 2.4)}," \
-             "#{sonitex(bits: 10, lo: 46, hi: 11500, drive: 1.1)}," \
-             "#{vcs(depth: 0.26, smear: 3.6)}," \
+             "#{console('chord_based_beats', :master)}," \
              "aecho=0.85:0.7:83|151|229:0.20|0.12|0.06," \
              "treble=g=3:f=6500,bass=g=4:f=95," \
              "dynaudnorm=f=200:g=9:p=0.94:m=18," \
@@ -547,7 +697,7 @@ module Livesets
       progression: symbols, bpm: bpm, bar_s: bar, chord_s: chord_s,
       weights: { phrase: 0.62, kit: 2.9, crackle: 0.30 },
       drums: { kick_ms: hits[:kick], snare_ms: hits[:snare], ghost_ms: hits[:ghost], hat_ms: hits[:hat] },
-      sonitex: [12, 12, 11, 10], vcs: 6, rig: "dilla.rb live set chord_based_beats"
+      **console_record("chord_based_beats"), rig: "dilla.rb live set chord_based_beats"
     )
 
     play!(inputs, graph,
@@ -673,14 +823,13 @@ module Livesets
       graph << "[#{inputs.size - 1}:a]atrim=0:#{step}[ch#{i}]"
     end
     graph << "#{prog.each_index.map { |i| "[ch#{i}]" }.join}concat=n=#{prog.size}:v=0:a=1," \
-             "#{sonitex(bits: 12, lo: 90, hi: 9200, drive: 1.3)}," \
-             "#{vcs(depth: 0.5, smear: 1.4)}," \
+             "#{console('sampled_based_beats', :phrase)}," \
              "chorus=0.6:0.9:55:0.4:0.25:2," \
              "flanger=delay=4:depth=3:regen=22:speed=0.4," \
              "aecho=0.8:0.85:57|113:0.28|0.16," \
              "extrastereo=m=1.6[phrase]"
 
-    kit = drunk_kit(inputs.size, inputs, graph, beat: g[:beat], bar: bar, step: step, sxt: g[:sxt], total: total)
+    kit = drunk_kit(inputs.size, inputs, graph, set: "sampled_based_beats", beat: g[:beat], bar: bar, step: step, sxt: g[:sxt], total: total)
     hits = kit[:hits]
     crackle_i = kit[:crackle_i]
 
@@ -689,13 +838,11 @@ module Livesets
     graph << "[#{bed_i}:a]asetrate=44100*#{drag},aresample=44100," \
              "atrim=0:#{(bar * g[:bars_in_loop]).round(4)}," \
              "volume=0.42,lowpass=f=5200,aecho=0.8:0.7:60:0.3," \
-             "#{sonitex(bits: 13, lo: 60, hi: 7200, drive: 1.1)}," \
-             "#{vcs(depth: 0.55, smear: 1.1)}[under]"
+             "#{console('sampled_based_beats', :under)}[under]"
 
     graph << "[phrase][under][kit]amix=inputs=3:weights=0.30 0.14 3.4:" \
              "normalize=0:duration=longest," \
-             "#{vcs(depth: 0.38, smear: 1.7)}," \
-             "#{sonitex(bits: 12, lo: 40, hi: 13000, drive: 1.12)}," \
+             "#{console('sampled_based_beats', :sum)}," \
              "atrim=0:#{bar},asetpts=N/SR/TB[barmix]"
 
     # Arrangement, not a loop on repeat: the phrase steps back for eight bars in the
@@ -708,11 +855,9 @@ module Livesets
              "vibrato=f=1.7:d=0.14," \
              "acompressor=threshold=0.4:ratio=3.2:attack=9:release=210[body]"
     graph << "[#{crackle_i}:a]highpass=f=2200,volume=0.9," \
-             "#{vcs(depth: 0.6, smear: 0.9)}[crackle]"
+             "#{console('sampled_based_beats', :crackle)}[crackle]"
     graph << "[body][crackle]amix=inputs=2:weights=1 0.34:normalize=0:duration=first," \
-             "#{vcs(depth: 0.34, smear: 2.4)}," \
-             "#{sonitex(bits: 10, lo: 46, hi: 11500, drive: 1.1)}," \
-             "#{vcs(depth: 0.26, smear: 3.6)}," \
+             "#{console('sampled_based_beats', :master)}," \
              "aecho=0.85:0.7:83|151|229:0.20|0.12|0.06," \
              "tremolo=f=#{(2.0 / bar).round(3)}:d=0.10," \
              "treble=g=3:f=6500,bass=g=4:f=95," \
@@ -727,7 +872,7 @@ module Livesets
       chop_at: slice_at, reversed: reverse, bar_s: bar,
       weights: { phrase: 0.30, under: 0.14, kit: 3.4 },
       drums: { kick_ms: hits[:kick], snare_ms: hits[:snare], ghost_ms: hits[:ghost], hat_ms: hits[:hat] },
-      sonitex: [13, 12, 12, 11, 10], vcs: 6, rig: "dilla.rb live set sampled_based_beats"
+      **console_record("sampled_based_beats"), rig: "dilla.rb live set sampled_based_beats"
     )
 
     play!(inputs, graph,
@@ -803,11 +948,8 @@ module Livesets
                "amix=inputs=#{ratios.size}:normalize=0[pad#{i}]"
     end
 
-    # Gentler than the beat sets: 13 bits and a 6 kHz ceiling, because the crush
-    # that reads as grit on a stab reads as hiss on something held.
     graph << "#{prog.each_index.map { |i| "[pad#{i}]" }.join}concat=n=#{prog.size}:v=0:a=1," \
-             "#{sonitex(bits: 13, lo: 55, hi: 6200, drive: 1.05)}," \
-             "#{vcs(depth: 0.55, smear: 2.8)}," \
+             "#{console('ambient_pads', :phrase)}," \
              "chorus=0.7:0.9:70|95:0.45|0.3:0.2|0.28:1.6|2.4," \
              "aecho=0.9:0.85:180|340|610:0.42|0.28|0.17," \
              "extrastereo=m=1.9[phrase]"
@@ -819,14 +961,13 @@ module Livesets
     graph << "[#{bed_i}:a]asetrate=44100*#{(drag * 0.5).round(6)},aresample=44100," \
              "atrim=0:#{(hold * prog.size).round(4)},volume=0.18," \
              "lowpass=f=1800,aecho=0.9:0.8:420:0.4," \
-             "#{sonitex(bits: 12, lo: 40, hi: 2600, drive: 1.0)}," \
-             "#{vcs(depth: 0.6, smear: 3.2)}[under]"
+             "#{console('ambient_pads', :under)}[under]"
 
     # Seeded, for the reason drunk_kit gives: unseeded noise makes a replayed pass
     # identical in every number and different in the audio.
     inputs << "-f lavfi -t #{total} -i anoisesrc=c=pink:d=#{total}:a=0.010:seed=#{(rand * 2_147_483_647).to_i}"
     air_i = inputs.size - 1
-    graph << "[#{air_i}:a]lowpass=f=4200,volume=0.7,#{vcs(depth: 0.5, smear: 4.0)}[air]"
+    graph << "[#{air_i}:a]lowpass=f=4200,volume=0.7,#{console('ambient_pads', :air)}[air]"
 
     phrase_s = (hold * prog.size).round(4)
     graph << "[phrase][under]amix=inputs=2:weights=1.0 0.5:normalize=0:duration=first," \
@@ -839,8 +980,7 @@ module Livesets
              "vibrato=f=0.28:d=0.06," \
              "acompressor=threshold=0.5:ratio=2.4:attack=180:release=900[body]"
     graph << "[body][air]amix=inputs=2:weights=1 0.30:normalize=0:duration=first," \
-             "#{vcs(depth: 0.3, smear: 4.4)}," \
-             "#{sonitex(bits: 12, lo: 42, hi: 9000, drive: 1.04)}," \
+             "#{console('ambient_pads', :master)}," \
              "aecho=0.88:0.75:730|1130:0.24|0.14," \
              "treble=g=-2:f=7000,bass=g=3:f=110," \
              "dynaudnorm=f=400:g=13:p=0.9:m=10," \
@@ -853,7 +993,7 @@ module Livesets
       bpm: g[:bpm], drag: drag, bars_in_loop: g[:bars_in_loop], progression: prog,
       chop_at: slice_at, hold_s: hold, bar_s: bar, drums: nil,
       weights: { phrase: 1.0, under: 0.5, air: 0.30 },
-      sonitex: [13, 12, 12], vcs: 5, rig: "dilla.rb live set ambient_pads"
+      **console_record("ambient_pads"), rig: "dilla.rb live set ambient_pads"
     )
 
     play!(inputs, graph,
@@ -899,6 +1039,23 @@ module Livesets
     puts "  ruby dilla.rb live recall <seed> keep     render it beside dilla.rb"
   end
 
+  # Every choice a pass journals, by the knob that makes it and the value a row
+  # from before that choice existed was played with. A choice is part of the
+  # take, not part of the environment: replaying a sampled pass under whatever
+  # LIVE_KIT or LIVE_ROOM happens to be exported would come back different with
+  # the same seed printed over it, so every one is set from the row, and nil
+  # unsets it. Adding a choice means adding its row here with the value it had
+  # before, which is how a default can move without moving a kept take.
+  RECALLED = {
+    "LIVE_BED" => ["bed", nil], "LIVE_KIT" => ["kit", nil], "LIVE_PROGRESSION" => ["progression_name", nil],
+    "LIVE_VOICING" => ["voicing", "down"], "LIVE_LENGTH" => ["seconds", nil], "LIVE_ROOM" => ["room", "warm"],
+  }.freeze
+
+  def recall_env(row)
+    pins = RECALLED.to_h { |knob, (key, legacy)| [knob, row.key?(key) ? row[key]&.to_s : legacy] }
+    { "LIVE_SEED" => row["seed"].to_s }.merge(pins)
+  end
+
   # Play a pass again, or keep one. keep with no seed means the last pass
   # played, which is the way it is wanted: something goes past, it was good, and
   # reaching for the number is one step too many at that moment.
@@ -924,15 +1081,7 @@ module Livesets
     row = seed ? rows.reverse.find { |r| r["seed"].to_s == seed.to_s } : rows.last
     abort(seed ? "no pass with seed #{seed}" : "nothing in the journal yet") unless row
 
-    env = { "LIVE_SEED" => row["seed"].to_s }
-    env["LIVE_BED"] = row["bed"].to_s if row["bed"]
-    # The kit is part of the take, not part of the environment. Replaying a sampled
-    # pass under whatever LIVE_KIT happens to be exported would come back with
-    # different drums and the same seed printed over them.
-    env["LIVE_KIT"] = row["kit"].to_s if row["kit"]
-    env["LIVE_PROGRESSION"] = row["progression_name"].to_s if row["progression_name"]
-    env["LIVE_VOICING"] = row["voicing"].to_s if row["voicing"]
-    env["LIVE_LENGTH"] = row["seconds"].to_s if row["seconds"]
+    env = recall_env(row)
     label = "#{row['set']} #{row['seed']}"
     if keep
       take = File.join(D, "#{row['set']}_#{row['seed']}")
