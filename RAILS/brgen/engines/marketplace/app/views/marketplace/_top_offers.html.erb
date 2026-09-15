@@ -28,8 +28,12 @@
         <div class="deal-card-body">
           <% if listing %><div class="deal-price"><%= listing.price_display %></div><% end %>
           <%= tag.h3 title, class: "deal-card-title" %>
-          <% if listing %>
-            <p class="deal-meta"><%= deal ? listing.title : [listing.location, listing.category&.name].compact.join(" · ") %></p>
+          <%# What a deal sells is its subtitle, as on the deals page; a listing
+              has no subtitle and goes straight to its place and category. %>
+          <% if deal && listing %>
+            <%= tag.p listing.title, class: "deal-card-subtitle" %>
+          <% elsif listing %>
+            <%= tag.p [listing.location, listing.category&.name].compact.join(" · "), class: "deal-meta" %>
           <% end %>
         </div>
       <% end %>

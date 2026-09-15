@@ -6,7 +6,12 @@
 <%# Kaufland.de's grid tile: a square #f5f5f5 image well with the wishlist heart
     in its corner, then price, title, stars and a seller badge on an 8px gap.
     Kaufland sets the title above the price; brgen keeps the price first, which
-    layout_search holds as a hard floor for catalogue scanning. %>
+    layout_search holds as a hard floor for catalogue scanning.
+
+    Every storefront tile keeps its fields in one order, and
+    StorefrontCardLadderTest holds it: picture, price, title, subtitle, stars,
+    place and time, seller. A tile shows the rungs it has data for and never
+    swaps two. %>
 <article class="deal-card listing" data-product-id="<%= listing.id %>">
   <div class="deal-card-fav-slot">
     <%= render "marketplace/listings/favorite_button", listing: listing, favorited: favorited == true %>
