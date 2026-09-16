@@ -72,7 +72,7 @@ The brgen verticals (marketplace/dating/playlist/takeaway/tv/messenger + `maps`)
 are one Rails app served under subdomains via `<brgen>`; relayd already routes
 them all (`etc/relayd.conf`).
 
-### Bringing a city domain up
+### Bringing a domain up
 
 Seven city domains serve brgen, each scoped to its own city: `brgen.no`,
 `oshlo.no`, `trndheim.no`, `stvanger.no`, `cardff.uk`, `edinbrgh.uk`,
@@ -100,6 +100,13 @@ every site relayd serves, not just the new one.
    keypairs, then `doas relayd -n` and only then `doas rcctl reload relayd`.
 6. **Verify**: `curl -sS -o /dev/null -w '%{http_code}' https://glasgw.uk/` is
    200, and the page title names the city.
+
+`amber.fashion` is at step 1 as of 2026-09-16. It is in `ALL_DOMAINS`, nsd
+serves its zone, `acme-client.conf` has its block and relayd has its Host
+matches; what it does not have is a delegation at the registrar, a
+certificate, or a `tls keypair` line. amber answers on that name and no
+other — `amber.brgen.no` ceased to exist the same day — so amber is
+unreachable from outside until step 5 lands.
 
 The stack serves three Rails apps (brgen, amber, bsdports) plus MASTER. `baibl`,
 `blognet` and `hjerterom` are retired; on 2026-08-12 their users, home
