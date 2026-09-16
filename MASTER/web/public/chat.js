@@ -151,10 +151,6 @@ function appendMsg(role, text = '') {
   }
   const now = new Date();
   d.dataset.ts = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
-  if (role === 'assistant') {
-    const conf = parseFloat(document.body.dataset.confidence || '1');
-    d.style.setProperty('--conf-alpha', (0.08 + conf * 0.3).toFixed(2));
-  }
   const prompt = document.createElement('span');
   prompt.className = 'msg-prompt';
   prompt.textContent = role === 'user' ? `${promptUserName()}$ ` : 'master$ ';
@@ -169,52 +165,9 @@ function appendMsg(role, text = '') {
     typing.innerHTML = '<span></span><span></span><span></span>';
     const cur = document.createElement('span');
     cur.className = 'cursor';
-    const copyBtn = document.createElement('button');
-    copyBtn.className = 'msg-copy';
-    copyBtn.title = chatT('copy', 'Copy');
-    copyBtn.setAttribute('aria-label', chatT('copy_response', 'Copy response'));
-    copyBtn.addEventListener('click', () => {
-      navigator.clipboard?.writeText(body.textContent || '').then(() => {
-        copyBtn.textContent = '\u2713';
-        setTimeout(() => { copyBtn.textContent = ''; }, 1200);
-      });
-    });
     d.appendChild(body);
     d.appendChild(typing);
     d.appendChild(cur);
-    d.appendChild(copyBtn);
-    const actions = document.createElement('div');
-    actions.className = 'msg-actions';
-    actions.innerHTML = `<button type="button" data-act="like" title="${escapeHtml(chatT('rate_up', 'Rate up'))}">👍</button><button type="button" data-act="retry" title="${escapeHtml(chatT('retry', 'Retry'))}">🔁</button><button type="button" data-act="delete" title="${escapeHtml(chatT('delete', 'Delete'))}">🗑</button><button type="button" data-act="simpler" title="${escapeHtml(chatT('simpler', 'Explain simpler'))}">⇣</button><button type="button" data-act="deeper" title="${escapeHtml(chatT('deeper', 'Go deeper'))}">⇡</button>`;
-    actions.addEventListener('click', (ev) => {
-      const act = ev.target?.dataset?.act;
-      if (!act) return;
-      ev.preventDefault();
-      ev.stopPropagation();
-      if (act === 'like') {
-        d.dataset.reaction = 'like';
-        navigator.vibrate?.(10);
-        return;
-      }
-      if (act === 'retry') {
-        const last = window._lastUserMessageText || input.value || '';
-        if (last && window.sendMessage) window.sendMessage(last);
-        return;
-      }
-      if (act === 'delete') {
-        d.remove();
-        return;
-      }
-      if (act === 'simpler') {
-        if (window.sendMessage) window.sendMessage(`Please explain this more simply:\n${body.textContent || ''}`);
-        return;
-      }
-      if (act === 'deeper') {
-        if (window.sendMessage) window.sendMessage(`Go deeper on this answer:\n${body.textContent || ''}`);
-        return;
-      }
-    });
-    d.appendChild(actions);
     _streamEl = body;
     _typingEl = typing;
   }
@@ -235,39 +188,6 @@ window._chatOnUser  = (text) => {
   appendMsg('user', text);
   appendMsg('assistant');
 };
-
-window._chatConfirmEnhance = (original, enhanced) => new Promise(resolve => {
-  const note = document.createElement('div');
-  note.className = 'enhance-confirm';
-  note.innerHTML =
-    '<span class="enhance-arrow">\u2192</span> ' +
-    '<span class="enhance-text">' + enhanced.replace(/</g, '&lt;') + '</span> ' +
-    '<span class="enhance-yn">[y/n]</span>';
-  log.appendChild(note);
-  log.scrollTop = log.scrollHeight;
-
-  const timeout = setTimeout(() => {
-    window.MASTERVisual?.event?.('enhance:settle', { topology: 'papua-mask', entropy: 0.1, confidence: 0.9, mode: 'settle' });
-    finish(original);
-  }, 12000);
-
-  function finish(chosen) {
-    clearTimeout(timeout);
-    note.remove();
-    document.removeEventListener('keydown', onKey);
-    if (chosen === enhanced) {
-      window.MASTER_FACE_BLEND?.applyExpression?.({ arousal: 0.7 });
-    }
-    resolve(chosen);
-  }
-
-  function onKey(e) {
-    if (e.key === 'y' || e.key === 'Y' || e.key === 'Enter') { e.preventDefault(); finish(enhanced); }
-    else if (e.key === 'n' || e.key === 'N' || e.key === 'Escape') { e.preventDefault(); finish(original); }
-  }
-
-  document.addEventListener('keydown', onKey);
-});
 
 let _chunkCount = 0;
 let _streamLiveTimer = null;
@@ -311,16 +231,8 @@ window._chatOnDone  = () => {
   const finished = (_streamEl?.textContent || '').trim();
   if (finished) window._chatRememberReply?.(finished);
   window._chatCollapseLongBlock?.(_streamEl);
-  const lastAsst = log?.querySelector('.message.assistant:last-of-type');
-  // The confidence event arrives mid-stream, after the message was built, so
-  // the band is set here from this turn's value and the value is spent.
-  const conf = parseFloat(document.body.dataset.confidence || '1');
+  // The turn's confidence is spent with the turn.
   delete document.body.dataset.confidence;
-  lastAsst?.style.setProperty('--conf-alpha', (0.08 + conf * 0.3).toFixed(2));
-  if (lastAsst && conf > 0.75) {
-    lastAsst.classList.add('msg-settled');
-    setTimeout(() => lastAsst.classList.remove('msg-settled'), 1800);
-  }
   _chunkCount = 0;
   _streamEl = null;
   if (_typingEl) { _typingEl.remove(); _typingEl = null; }

@@ -140,17 +140,8 @@
     <p class="tagline" id="primer-capabilities"><%= t("face.primer_capabilities") %></p>
     <p class="primer-consent" id="primer-consent"><%= t("face.primer_consent") %></p>
   </div>
-  <%# The mic stays off by default and the reason is in face.part5: the tap that
-      starts the face says "show me this", not "listen to me", and a permission
-      prompt nobody asked for gets denied — which the browser then remembers for
-      the origin, costing the feature permanently for that visitor.
-
-      A second button offering to start with voice used to sit here. It wrote
-      master:voice-auto and nothing else, and enterVoiceMode() already writes
-      that flag on any deliberate entry while exitVoiceMode() clears it on any
-      deliberate exit — so the mic control carries the consent, and the primer
-      carried a second door to the same room. The primer is one surface with one
-      thing to press again. %>
+  <%# The mic opens at load: face.part5 says why, and how a denied permission
+      or a deliberate exit keeps it shut. %>
   <%# Boot + primer tap must run synchronously right after #primer — before ANY other
       script (including face_2d_fallback). A blocking <script src> above this line delays
       handler wiring; early taps look dead. #zsh and #ui-status are below this block —

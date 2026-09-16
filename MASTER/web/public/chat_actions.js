@@ -23,20 +23,6 @@ function validatedFeltState() {
   return null;
 }
 
-async function enhanceMessage(text) {
-  try {
-    const r = await fetch(`/chat/enhance?message=${encodeURIComponent(text)}`);
-    const data = await r.json();
-    if (data.changed && data.enhanced && data.enhanced !== text) {
-      const chosen = await (window._chatConfirmEnhance?.(text, data.enhanced) ?? Promise.resolve(text));
-      return { text: chosen, preEnhanced: chosen === data.enhanced };
-    }
-  } catch (err) {
-    window.MASTER_LOG?.warn?.("chat:enhance", err);
-  }
-  return { text, preEnhanced: false };
-}
-
 async function runSlashCommand(text) {
   window._chatOnUser?.(text);
   try {
@@ -107,13 +93,12 @@ function dispatchSseBlock(block, handlers) {
   else window.MASTER_SSE?.dispatchNamed?.(event, data, handlers.extensions);
 }
 
-async function openChatStream({ message, state, preEnhanced, imageToken, signal, handlers }) {
+async function openChatStream({ message, state, imageToken, signal, handlers }) {
   const form = new FormData();
   form.append("message", message);
   if (window.MASTER_ACTIVE_DOMAIN) form.append("active_domain", window.MASTER_ACTIVE_DOMAIN);
   const felt = state || validatedFeltState();
   if (felt) form.append("state", felt);
-  if (preEnhanced) form.append("pre_enhanced", "1");
   if (imageToken) form.append("image_token", imageToken);
 
   const resp = await fetch("/chat/message", {
@@ -224,7 +209,6 @@ async function sendMessage(text) {
   if (message.startsWith("/")) return runSlashCommand(message);
 
   window._chatOnUser?.(message);
-  const enhanced = await enhanceMessage(message);
   const imageToken = window._imageToken || null;
   window._imageToken = null;
   let assistantBuffer = "";
@@ -291,9 +275,8 @@ async function sendMessage(text) {
 
   try {
     await startChatStream({
-      message: enhanced.text,
+      message,
       state: validatedFeltState(),
-      preEnhanced: enhanced.preEnhanced,
       imageToken
     }, {
       onMessage(rawData) {
@@ -332,7 +315,6 @@ async function sendMessage(text) {
 }
 
 window.MASTERChat = {
-  enhanceMessage,
   isBangCommand,
   collectFeltState,
   triggerClientAction,

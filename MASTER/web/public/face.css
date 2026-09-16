@@ -105,7 +105,6 @@ body[data-high-contrast="1"] {
   --face-soft: white;
 }
 body[data-high-contrast="1"] .msg-body { color: white; }
-body[data-high-contrast="1"] .enhance-text { color: white; }
 
 @media (prefers-contrast: more) {
   :root {
@@ -599,13 +598,8 @@ body[data-mode="speaking"] #mic-dot {
 .message.assistant .msg-prompt { color: var(--face-muted); }
 .msg-body { color: color-mix(in srgb, var(--c-text) 82%, transparent); font-feature-settings:'liga' 1,'kern' 1; }
 .cursor { display:inline-block; width:7px; height:1em; background:currentColor; vertical-align:text-bottom; animation:cursorBlink 900ms steps(2,end) infinite; margin-inline-start:1px; }
-.enhance-confirm { margin-bottom: 8px; padding: 4px 0; white-space: pre-wrap; word-break: break-word; font-size: .88em; }
-.enhance-arrow { color: var(--face-muted); animation: blink .5s step-end 4; }
-.enhance-text { color: var(--face-muted); font-style: italic; }
-.enhance-yn { color: var(--face-muted); letter-spacing: .08em; }
 .message.msg-error-flash .msg-body { outline: 1px solid color-mix(in srgb, var(--c-danger) 55%, transparent); outline-offset: 2px; }
 .message.msg-pass-flash { border-bottom: 1px solid var(--face-fg); }
-.message.msg-settled { border-inline-start: 1px solid color-mix(in srgb, var(--face-fg) 35%, transparent); transition: border-color 1.8s var(--ease-out); }
 @keyframes blink { 0%,49% { opacity: 1; } 50%,100% { opacity: 0; } }
 
 /* Action menu for keyboard nav on messages (FA138) */
@@ -884,9 +878,6 @@ body[data-mode="speaking"] #spin-btn { display: block; }
 .message[data-ts]::after { content:attr(data-ts); font-size: var(--text-meta); line-height:1.5; color:var(--face-muted); opacity:0; transition:opacity .15s; margin-inline-start:8px; display:inline-block; vertical-align:middle; }
 .message[data-ts]:hover::after { opacity:1; }
 
-/* #40 Confidence band */
-.message.assistant { border-inline-start:2px solid color-mix(in srgb, var(--c-code) calc(var(--conf-alpha,0.14) * 100%), transparent); padding-inline-start:8px; }
-
 /* #42 Edge hover reveal */
 body[data-edge-hover="1"] #zsh,
 body[data-edge-swipe="1"] #zsh { opacity: .96; pointer-events: auto; transform: none; }
@@ -970,43 +961,6 @@ body[data-mode="speaking"] .msg-body { line-height:1.6; transition:line-height .
 body[data-mode="thinking"] #zsh-status { letter-spacing:.32em; }
 
 body[data-tts-loading="true"] canvas { filter: none; }
-
-/* FA75 copy button */
-.message.assistant .msg-copy { position:absolute; inset-block-end:0; inset-inline-start:8px; background:none; border:none; color:var(--face-muted); cursor:pointer; font: var(--text-meta)/1.5 var(--font-mono); opacity:0; transition:opacity .15s; padding:8px; min-width: var(--tap-min); min-height: var(--tap-min); }
-.message.assistant:hover .msg-copy,
-.message.assistant:focus-within .msg-copy { opacity:1; }
-.message.assistant .msg-copy:hover { color:var(--c-text); }
-
-/* A row under the reply, with the copy button at its head. Pinned to the
-   corner of a 66ch box they sat on the first line of text, and inline after
-   the text the 44px copy target stretched the last line. */
-.message.assistant .msg-actions {
-  margin-inline-start: var(--tap-min);
-  display: flex;
-  gap: 2px;
-  opacity: .42;
-  transition: opacity .15s;
-}
-
-.message.assistant:hover .msg-actions,
-.message.assistant:focus-within .msg-actions {
-  opacity: 1;
-}
-
-.message.assistant .msg-actions button {
-  background: none;
-  border: 0;
-  color: var(--face-muted);
-  cursor: pointer;
-  font: var(--text-meta)/1.5 var(--font-mono);
-  padding: 8px 10px;
-  min-width: var(--tap-min);
-  min-height: var(--tap-min);
-}
-
-.message.assistant .msg-actions button:hover {
-  color: var(--c-text);
-}
 
 .face-error-banner {
   position: fixed;

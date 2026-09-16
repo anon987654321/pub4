@@ -338,9 +338,17 @@ function shouldSpeakStreamReply(text, ttsSuppressed) {
   if (!ttsSuppressed) return true;
   return looksLikeProse(t);
 }
+// A reasoning model appends its working as <think>...</think> after the answer
+// (ruby_llm_sender.rb does this for Nemotron 3). Read aloud, it turned a
+// one-line reply into a paragraph of "We need to answer..." spoken after it.
+// Cutting a closed block and an unclosed tail keeps the text prefix-stable
+// while the stream grows, so the spoken-length cursor below stays valid.
+function withoutThinking(text) {
+  return String(text || '').replace(/<think>[\s\S]*?(?:<\/think>|$)/gi, '');
+}
 function pushLiveStreamTts(pending, spokenLen) {
   if (!ttsStreamLiveEnabled?.()) return spokenLen;
-  const slice = String(pending || '').slice(spokenLen);
+  const slice = withoutThinking(pending).slice(spokenLen);
   if (!slice || looksLikeListingStream(pending)) return spokenLen;
   const m = slice.match(/^[\s\S]*?[.!?…]["'\u201D]?\s+/);
   if (!m) return spokenLen;
@@ -350,7 +358,7 @@ function pushLiveStreamTts(pending, spokenLen) {
   return spokenLen + m[0].length;
 }
 function flushStreamTts(pending, opts = {}) {
-  const text = String(pending || '').trim();
+  const text = withoutThinking(pending).trim();
   if (!text || looksLikeListingStream(text)) return;
   let rest = text;
   let first = true;

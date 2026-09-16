@@ -123,29 +123,41 @@ function wakeWordEnabled() {
 let _voiceModeRearmFails = 0;
 let _voiceModeArmedAt = 0;
 
-// Implicit-mic preference: off until the visitor has chosen Voice Mode once.
-// Absent pref means no, not yes — a cold visitor otherwise met a microphone
-// permission prompt with nothing on screen having asked for one. A deliberate
-// opt-out ("stop listening" / mic tap / a denied permission) persists too, so
-// neither answer forces a hot mic on the next reload.
+// The mic opens when the page loads, on the operator's ask (2026-09-15): the
+// face is spoken to, and it should be listening before anyone looks for a
+// control. It used to wait for a stored opt-in that only the wake word could
+// write, and the mic button that once wrote it is gone, so it never opened.
 //
-// This read was `!== '0'`, so a first-time visitor with no preference stored got
-// true and maybeAutoVoice() opened the microphone 1.2s after the page loaded.
-// Its own comment justified that as happening "after the primer tap (a real user
-// gesture that also unlocks audio)" — and autostart deleted the primer tap, so
-// the gesture the reasoning rested on had not happened. A cold visitor met a
-// microphone permission prompt with nothing on screen having asked for one.
-//
-// Nothing else changes: enterVoiceMode() already calls setVoiceAuto(true) on any
-// deliberate entry and exitVoiceMode() clears it on any deliberate exit, so
-// hands-free still returns by itself for anyone who has used it once. The pref
-// was always meant to be a memory of a choice; it was just defaulting to a
-// choice nobody had made.
+// Permission is the browser's to remember, not this file's. Once granted, every
+// later load listens without a prompt; once denied, the Permissions API says so
+// and the page does not ask again. A deliberate exit ("stop listening",
+// Escape) holds for the rest of the page's life and no longer outlives a reload,
+// because a stored "off" was how one Escape kept the mic shut for good.
+let _micOptedOut = false;
 function voiceAutoEnabled() {
-  try { return localStorage.getItem('master:voice-auto') === '1'; } catch (err) { return false; }
+  return !_micOptedOut;
 }
 function setVoiceAuto(on) {
-  try { localStorage.setItem('master:voice-auto', on ? '1' : '0'); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:voice_auto_write", err); }
+  _micOptedOut = !on;
+}
+async function micPermissionDenied() {
+  try {
+    const status = await navigator.permissions?.query?.({ name: 'microphone' });
+    return status?.state === 'denied';
+  } catch (_) {
+    return false;
+  }
+}
+// Safari refuses recognition.start() without a gesture even when permission is
+// granted, and reports it as not-allowed. Unless the permission itself is
+// denied, the first interaction of any kind opens the mic instead.
+function listenOnFirstGesture() {
+  const events = ['pointerdown', 'keydown', 'touchend'];
+  const open = () => {
+    events.forEach((ev) => removeEventListener(ev, open, { capture: true }));
+    if (!State.voiceMode && voiceAutoEnabled()) enterVoiceMode({ fromAuto: true });
+  };
+  events.forEach((ev) => addEventListener(ev, open, { capture: true, passive: true }));
 }
 
 let recognition = null;
@@ -382,10 +394,17 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
     State.sttActive = false; State.sttDuck = 0;
     if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; }
     if (e && (e.error === 'not-allowed' || e.error === 'service-not-allowed')) {
-      // Mic denied/blocked — don't loop retries or auto-listen on future loads.
-      setVoiceAuto(false);
+      // A denied permission stops the retries; a refusal for want of a gesture
+      // waits for one.
       if (State.voiceMode) exitVoiceMode({ reason: 'denied' });
-      if (uiStatus) uiStatus.textContent = 'mic blocked — allow it, then long-press the mic';
+      micPermissionDenied().then((denied) => {
+        if (denied) {
+          if (uiStatus) uiStatus.textContent = 'mic blocked — allow it in the browser, then reload';
+          return;
+        }
+        setVoiceAuto(true);
+        listenOnFirstGesture();
+      });
     }
   };
 }
@@ -414,8 +433,8 @@ function enterVoiceMode(opts = {}) {
   State.wakeArmed = false;
   State.voiceMode = true;
   _voiceModeRearmFails = 0;
-  // Deliberate entry (mic long-press / wake word) re-opts-in for future loads.
-  // Auto entry must not touch the pref — it only reads it.
+  // A deliberate entry lifts an earlier exit for the rest of the page; an auto
+  // entry only reads it.
   if (!opts.fromAuto) setVoiceAuto(true);
   rootBody.dataset.voiceMode = '1';
   if (uiStatus) uiStatus.textContent = 'listening — say "stop listening" to exit';
@@ -434,8 +453,8 @@ function exitVoiceMode(opts = {}) {
   // indicator on after the person said stop listening, which is the one
   // thing a second microphone stream must never do.
   window.MASTER_SMART_TURN?.releaseMic?.();
-  // Any exit that isn't the device-unreliable safety bail is a user choice —
-  // remember it so we don't force the mic back on next reload.
+  // Any exit that isn't the device-unreliable safety bail is a user choice, and
+  // it holds until the page reloads or the visitor asks again.
   if (opts.reason !== 'unreliable') setVoiceAuto(false);
   if (uiStatus) uiStatus.textContent = opts.reason === 'unreliable' ? 'voice mode: mic unreliable here' : '';
   beep(660, 0.05);
@@ -444,11 +463,11 @@ function exitVoiceMode(opts = {}) {
 function toggleVoiceMode() {
   if (State.voiceMode) exitVoiceMode(); else enterVoiceMode();
 }
-// Implicit mic: after the primer tap (a real user gesture that also unlocks
-// audio) and once the welcome greeting has finished speaking, slide straight
-// into hands-free Voice Mode so a natural conversation needs no button press.
-function maybeAutoVoice() {
+// Implicit mic: at load, and once anything already speaking has finished, slide
+// straight into hands-free Voice Mode so a conversation needs no button press.
+async function maybeAutoVoice() {
   if (!recognition || State.voiceMode || !voiceAutoEnabled()) return;
+  if (await micPermissionDenied()) return;
   let waited = 0;
   const enterWhenQuiet = () => {
     if (State.voiceMode || !voiceAutoEnabled()) return;
@@ -860,17 +879,6 @@ async function sendMessage(text) {
   window._chatOnUser?.(text);
   showStage("routing…", 0);
 
-  let finalText = text, preEnhanced = false;
-  try {
-    const r = await fetch(`/chat/enhance?message=${encodeURIComponent(text)}`);
-    const data = await r.json();
-    if (data.changed && data.enhanced && data.enhanced !== text) {
-      const chosen = await (window._chatConfirmEnhance?.(text, data.enhanced) ?? Promise.resolve(text));
-      preEnhanced = chosen === data.enhanced;
-      finalText = chosen;
-    }
-  } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:enhance_message", err); }
-
   tts.lang = detectLang(text);
   const isTimeSensitive = /\b(today|now|current|latest|recent|this (week|month|year)|right now|at the moment|as of)\b/i.test(text);
   tts.prependTimestamp = isTimeSensitive;
@@ -955,9 +963,8 @@ async function sendMessage(text) {
     return;
   }
   window.MASTERChat.startChatStream({
-    message: finalText,
+    message: text,
     state: window.collectFeltState?.() || feltFallback,
-    preEnhanced,
     imageToken
   }, {
     onMessage,

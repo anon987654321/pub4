@@ -943,6 +943,31 @@ function speakWithBrowserTTS(text, token) {
   return true;
 }
 
+// The browser refuses sound until the page has had a gesture, and the face now
+// starts without one: no primer tap, and a visitor who only talks never
+// touches the page. A refused play() used to requeue the sentence and finish,
+// which retried five times in a row and dropped it, so the first reply was
+// never heard. The refused element is held, the queue waits behind it, and the
+// first interaction of any kind plays it. Once a page has had that gesture the
+// browser lets every later reply play by itself.
+const GESTURE_EVENTS = ['pointerdown', 'keydown', 'touchend', 'click'];
+function holdForGesture(audio, token) {
+  const hint = document.getElementById('zsh-status');
+  const label = window.MASTER_T ? window.MASTER_T('tap_to_hear', 'tap anywhere to hear the reply') : 'tap anywhere to hear the reply';
+  if (hint) hint.textContent = label;
+  const release = () => {
+    GESTURE_EVENTS.forEach((ev) => removeEventListener(ev, release, { capture: true }));
+    if (hint?.textContent === label) hint.textContent = '';
+    if (token !== tts.cancelToken || tts.audio !== audio) return;
+    if (actx?.state === 'suspended') actx.resume().catch(() => {});
+    audio.play().catch((err) => {
+      if (err?.name === 'NotAllowedError') holdForGesture(audio, token);
+      else finishTTSPlayback(audio.src);
+    });
+  };
+  GESTURE_EVENTS.forEach((ev) => addEventListener(ev, release, { capture: true, passive: true }));
+}
+
 function ttsTick() {
   if (tts.muted || tts.playing || tts.paused) return;
   const text = dequeueTtsLane();
@@ -1027,7 +1052,10 @@ function ttsTick() {
     };
     audio.onended = audio.onerror = () => finishTTSPlayback(src);
     connectTTSAudio(audio).catch(() => {});
-    audio.play().catch(() => { requeueChunk(text); finishTTSPlayback(src); });
+    audio.play().catch((err) => {
+      if (err?.name === 'NotAllowedError') { holdForGesture(audio, token); return; }
+      requeueChunk(text); finishTTSPlayback(src);
+    });
   }
 
   edgeBlob

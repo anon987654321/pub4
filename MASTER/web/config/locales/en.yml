@@ -57,7 +57,7 @@ en:
     mic_state: "Microphone"
     primer_title: "launch AI"
     primer_capabilities: "voice · image · music · code"
-    primer_consent: "Starts visuals and sound. Microphone access is requested only when you choose voice input; text remains available if graphics fail."
+    primer_consent: "Starts visuals, sound and the microphone; text remains available if graphics fail."
     starting: "starting…"
     loading_title: "loading… %{n}%"
     loading_status: "loading face %{n}%"
@@ -67,13 +67,7 @@ en:
     failed_live: "face failed to load (WebGL/primer timing?). Reload or see browser console for MASTER_FACE errors."
     # Strings the face scripts write into the page, served as window.MASTER_I18N.
     js:
-      copy: "Copy"
-      copy_response: "Copy response"
-      rate_up: "Rate up"
-      retry: "Retry"
-      delete: "Delete"
-      simpler: "Explain simpler"
-      deeper: "Go deeper"
+      tap_to_hear: "tap anywhere to hear the reply"
       warming_up: "master warming up"
       warming_up_placeholder: "master warming up…"
       warming_retry: "master warming up — retry shortly"

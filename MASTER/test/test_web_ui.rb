@@ -262,8 +262,7 @@ class TestWebUI < Minitest::Test
     # only by presence. Through the key, because the template now localises it —
     # the literal spelling would fail on a view that had got more correct.
     assert_localised_copy index, "face.primer_consent",
-                          "Starts visuals and sound. Microphone access is requested only when " \
-                          "you choose voice input; text remains available if graphics fail."
+                          "Starts visuals, sound and the microphone; text remains available if graphics fail."
     assert_includes index, "if(e.key===' '||e.key==='Enter')"
     assert_includes index, "fallbackUi()"
     assert_includes css, "@media (prefers-reduced-motion: reduce)"

@@ -92,36 +92,32 @@ class TestUnpromptedSpeech < Minitest::Test
                  "nudgesEnabled() should fall through to false when no preference is set")
   end
 
-  # The other half of "only when asked": the microphone.
+  # The other half of "only when asked": the microphone, and the operator asked.
   #
-  # voiceAutoEnabled() read `!== '0'`, so a visitor with no stored preference got
-  # true and maybeAutoVoice() opened the mic 1.2s after load. The comment above it
-  # justified that as happening "after the primer tap (a real user gesture that
-  # also unlocks audio)" — and autostart had deleted the primer tap. Same defect
-  # as the greeting: autostart invalidated a premise and nothing rechecked it.
-  #
-  # The pref itself is fine and stays. enterVoiceMode() sets it on a deliberate
-  # entry, exitVoiceMode() clears it on a deliberate exit; it is a memory of a
-  # choice. It was only ever wrong about what to assume before a choice was made.
-  def test_voice_mode_does_not_arm_itself_before_the_visitor_has_chosen_it
+  # The mic waited for a stored opt-in that only the wake word could write, so on
+  # ai.brgen.no it never opened (operator, 2026-09-15: "the mic isnt on from the
+  # start"). It now opens at load. What still keeps it shut is the browser's own
+  # answer: a denied permission, read through the Permissions API.
+  def test_voice_mode_listens_at_load_unless_the_permission_is_denied
     boot_sources.each do |name, source|
-      read_pref = source[/localStorage\.getItem\('master:voice-auto'\)[^\n;]*/]
+      code = code_of(source)
 
-      refute_nil read_pref, "#{name}: the voice-auto preference is no longer read here"
-      assert_includes read_pref, "=== '1'",
-                      "#{name}: absent means yes again — a first-time visitor gets the mic opened for them"
+      assert_match(/maybeAutoVoice\(\);/, code, "#{name}: startEverything no longer opens the mic")
+      assert_match(/async function maybeAutoVoice\(\) \{\n[^\n]*\n\s*if \(await micPermissionDenied\(\)\) return;/, code,
+                   "#{name}: the mic opens without checking for a denied permission")
+      refute_includes code, "master:voice-auto",
+                      "#{name}: a stored off switch is back, and one Escape shuts the mic for good"
     end
   end
 
-  # The memory of a deliberate choice must survive, or the fix above turns
-  # hands-free from a default into something unreachable.
-  def test_a_deliberate_entry_still_opts_in_for_next_time
+  # A deliberate exit is honoured for the page it happened on.
+  def test_a_deliberate_exit_holds_for_the_page
     source = read("face.part5.txt")
 
-    assert_match(/if \(!opts\.fromAuto\) setVoiceAuto\(true\);/, source,
-                 "deliberate voice-mode entry no longer remembers the choice")
     assert_match(/if \(opts\.reason !== 'unreliable'\) setVoiceAuto\(false\);/, source,
-                 "deliberate voice-mode exit no longer clears the choice")
+                 "deliberate voice-mode exit no longer holds")
+    assert_match(/function voiceAutoEnabled\(\) \{\n\s*return !_micOptedOut;/, source,
+                 "the exit no longer gates the next automatic entry")
   end
 
   # The ambient loop may play. It may not talk.

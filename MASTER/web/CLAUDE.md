@@ -136,7 +136,7 @@ contain it. `test_face_runtime_matches_its_sources` rebuilds the concatenation
 and fails on any drift, naming the task to run.
 
 The face's slow transitions are its timing, not debt. `face.css` fades a reveal
-over 1.2s and a settled message's border over 1.8s, and `chat_upload.css` steps
+over 1.2s, and `chat_upload.css` steps
 over .42s; `NO_LONG_TRANSITION` caps UI transitions at 300ms and reads only
 `ms`, so it never sees these. Do not snap them to satisfy a rule that widens.
 
