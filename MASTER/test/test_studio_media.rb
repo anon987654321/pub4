@@ -64,7 +64,7 @@ class TestStudioMedia < Minitest::Test
     # with process_file, then process_file itself, which run_watch replaced with
     # grade_watched. So the assertion follows calls instead of naming the hop.
     %w[process_file run_random run_uplift run_one_shot run_watch].each do |name|
-      assert_includes source, "def #{name}", "#{name} must still exist"
+      assert source.match?(/^def #{name}\b/), "#{name} must still exist"
       assert reaches?(source, name, "apply_finishing_grain"),
              "#{name} must reach apply_finishing_grain, through however many helpers it calls"
     end
