@@ -36,7 +36,7 @@ REPO_ROOT = TOOLKIT.join("../../..").expand_path
 require_relative "shoots"
 
 options = { set: "selfies", only: nil, side: nil, scale: 1.0, seed: 42, dry_run: false,
-            model: ENV["LORA_REPLICATE_MODEL"].to_s.strip }
+            model: ENV["LORA_REPLICATE_MODEL"].to_s.strip, grade: ENV.fetch("LORA_GRADE", "random") }
 OptionParser.new do |p|
   p.banner = "Usage: run_generate_replicate.rb [options]"
   p.on("--set NAME", "Prompt set (#{available_sets.join(', ')}); default selfies") { |v| options[:set] = v }
@@ -45,6 +45,7 @@ OptionParser.new do |p|
   p.on("--scale X", Float, "lora_scale (default 1.0; 0.85 lifts the ageing this adapter bakes in)") { |v| options[:scale] = v }
   p.on("--seed N", Integer, "Seed for sitting 1; sitting n uses seed + n - 1, the distance set holds it") { |v| options[:seed] = v }
   p.on("--model ID", "owner/name:version (default: the trained version)") { |v| options[:model] = v }
+  p.on("--grade NAME", "postpro preset, or random (default), or none") { |v| options[:grade] = v }
   p.on("--dry-run", "Print the prompts and the model; render nothing") { options[:dry_run] = true }
   p.on("-h", "--help") { puts p; exit 0 }
 end.parse!
@@ -92,11 +93,44 @@ def render(client, model, input, attempts: 4)
   end
 end
 
+POSTPRO = REPO_ROOT.join("STUDIO/postpro/postpro.rb")
+
+# A different real chain per frame rather than one house look over the set.
+#
+# postpro's own --random reads the Downloads folder and writes back to it, so a
+# set rendered here cannot reach it. Its presets are those chains under names,
+# so the draw happens here and postpro is handed one preset per frame. Drawn by
+# sitting number, so frame 7 grades the same way on every run and two takes of
+# it stay comparable.
+def postpro_presets
+  @postpro_presets ||= `ruby #{POSTPRO} --list-presets 2>/dev/null`.scan(/^([a-z][a-z0-9_]*): /).flatten.uniq
+end
+
+def preset_for(grade, number)
+  return nil if grade == "none"
+  return grade unless grade == "random"
+
+  presets = postpro_presets
+  abort "warn: postpro listed no presets" if presets.empty?
+  presets[(number - 1) % presets.length]
+end
+
+# The grade rides beside the frame rather than over it: a regrade needs the
+# ungraded render, and a render costs money where a grade costs seconds.
+def grade(path, graded_dir, preset)
+  FileUtils.mkdir_p(graded_dir)
+  ok = system("ruby", POSTPRO.to_s, "--input", path.to_s, "--output", graded_dir.join(path.basename).to_s,
+              "--preset", preset, out: File::NULL, err: File::NULL)
+  warn "warn: postpro #{preset} failed on #{path.basename}" unless ok
+  ok
+end
+
 model = options[:model].empty? ? trained_model : options[:model]
 sittings = prompts_for(SUBJECT, side: options[:side], only: options[:only], set: options[:set])
 abort "warn: set #{options[:set]} matched no sittings" if sittings.empty?
 
 out_dir = SUBJECT_DIR.join("out", options[:set])
+graded_dir = SUBJECT_DIR.join("out", "#{options[:set]}_postpro")
 puts "ok: model #{model}"
 puts "ok: #{sittings.length} sitting(s) -> #{out_dir}"
 
@@ -122,14 +156,20 @@ sittings.each do |shoot, prompt|
     failed += 1
     next warn("warn: #{shoot['title']}: #{e.message[0, 200]}")
   end
+  preset = preset_for(options[:grade], shoot["n"])
+  grade(path, graded_dir, preset) if preset
   File.open(out_dir.join("prompts.jsonl"), "a") do |log|
     log.puts JSON.generate(n: shoot["n"], title: shoot["title"], prompt:, model:, input: input.except(:prompt),
-                           rendered_at: Time.now.utc.iso8601)
+                           grade: preset, rendered_at: Time.now.utc.iso8601)
   end
-  puts "ok: #{path}"
+  puts "ok: #{path}#{preset ? " + #{preset}" : ""}"
 end
 
-sheet = SUBJECT_DIR.join("out", "#{options[:set]}_sheet.jpg")
-system("ruby", TOOLKIT.join("contact_sheet.rb").to_s, out_dir.to_s, "--cols", "4", "--cell", "384",
-       "--label", "--out", sheet.to_s)
+[out_dir, graded_dir].each do |dir|
+  next unless dir.directory?
+
+  sheet = SUBJECT_DIR.join("out", "#{dir.basename}_sheet.jpg")
+  system("ruby", TOOLKIT.join("contact_sheet.rb").to_s, dir.to_s, "--cols", "4", "--cell", "384",
+         "--label", "--out", sheet.to_s)
+end
 abort "warn: #{failed} sitting(s) did not render" if failed.positive?

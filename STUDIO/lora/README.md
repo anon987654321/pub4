@@ -110,7 +110,11 @@ Zips `dataset/`, uploads via the Files API, trains
 via `--async` plus `REPLICATE_WEBHOOK_URL`.
 
 A LoRA trained this way is already a hosted model, so `--generate-replicate`
-renders on it without a GPU here. It pins the version the training wrote into
+renders on it without a GPU here. Every frame is graded as it lands: postpro
+draws a different preset per sitting and writes it to `out/<set>_postpro/`
+beside the ungraded render, since a regrade needs the render and a render costs
+money where a grade costs seconds. `--grade portrait` fixes one look over the
+set and `--grade none` skips it. It pins the version the training wrote into
 `weights/$MODEL/replicate_training.json`, renders one sitting at a time into
 `out/<set>/`, skips a frame already on disk so a stopped run resumes, and lays
 the set out as a contact sheet beside it. Name a prompt set with `--set` and
