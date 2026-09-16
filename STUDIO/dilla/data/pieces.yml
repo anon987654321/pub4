@@ -85,6 +85,19 @@ feels:
     snare: { swing: 0.0, shift: 0.0, drift: 0.0 }
     kick:  { swing: 0.0, shift: 0.0, drift: 0.0 }
     ghost: { swing: 0.0, shift: 0.0, drift: 0.001 }
+  # The experimental side of the same lineage: dilla time with the argument
+  # widened. Dilla's feel keeps the hats rigid as the reference and pushes
+  # everything against them; this swings the hats too and puts them slightly
+  # behind, so the reference itself is moving. The snare stays early and the kick
+  # goes later still, which opens the gap between the parts rather than closing
+  # it, and the drift is doubled because the point is that no two hits land in
+  # the same relationship twice. It is the push and pull that is the groove, so
+  # this is the same idea as `dilla` with more distance in it.
+  experimental: &feel_experimental
+    hat:   { swing: 0.14, shift: 0.006,  drift: 0.004 }
+    snare: { swing: 0.10, shift: -0.018, drift: 0.005 }
+    kick:  { swing: 0.22, shift: 0.024,  drift: 0.006 }
+    ghost: { swing: 0.26, shift: 0.034,  drift: 0.008 }
   # Hard triplet swing, hats included, which is the footwork and shuffle side.
   swung: &feel_swung
     hat:   { swing: 0.2,  shift: 0.0,    drift: 0.002 }
@@ -109,7 +122,7 @@ pieces:
       pad_racks: [wash]
       overtones: { partials: [2, 3, 4, 6], gain_db: -21 }
       lead: { plays_odds: 0.55, rack_names: [tape, ghost] }
-      drums: { arrangement: { bank_order: [dilla], bars_per_shape: 4 }, samples: *kit_crate }
+      drums: { arrangement: { bank_order: [flylo, dilla], bars_per_shape: 4 }, samples: *kit_crate , feels: *feel_experimental }
       master_bus: { console: twelve_bit, crush_bits: 12, crush_mix: 0.24 }
       catalogue: { min_chords: 4, max_chords: 4, crossfade_s: 1.0 }
 
@@ -124,7 +137,7 @@ pieces:
       hocket_odds: 0.45
       overtones: { partials: [2, 3, 5], gain_db: -23 }
       lead: { rack_names: [weather, octave] }
-      drums: { arrangement: { bank_order: [dilla], bars_per_shape: 8 }, samples: *kit_crate }
+      drums: { arrangement: { bank_order: [flylo, dilla], bars_per_shape: 8 }, samples: *kit_crate , feels: *feel_experimental }
       catalogue: { min_chords: 8, max_chords: 8, crossfade_s: 1.0 }
 
   - name: get_dis_money
@@ -138,7 +151,7 @@ pieces:
       reverse_odds: 0.3
       overtones: { partials: [2, 3, 4, 5, 6], gain_db: -19 }
       lead: { gain_db: 1, rack_names: [ring, inharmonic] }
-      drums: { arrangement: { bank_order: [dilla, flylo], bars_per_shape: 4 }, samples: *kit_crate }
+      drums: { arrangement: { bank_order: [flylo, dilla], bars_per_shape: 4 }, samples: *kit_crate , feels: *feel_experimental }
       master_bus: { console: twelve_bit }
 
   - name: climax
@@ -152,7 +165,7 @@ pieces:
       min_attack_s: 0.25
       overtones: { partials: [2, 4, 6, 8], gain_db: -22 }
       lead: { plays_odds: 0.85, rack_names: [octave, weather] }
-      drums: { arrangement: { bank_order: [dilla, dilla, flylo], bars_per_shape: 4 }, samples: *kit_crate }
+      drums: { arrangement: { bank_order: [flylo, dilla, flylo], bars_per_shape: 4 }, samples: *kit_crate , feels: *feel_experimental }
       catalogue: { min_chords: 8, max_chords: 8, crossfade_s: 1.0 }
 
   - name: so_what
@@ -167,7 +180,7 @@ pieces:
       min_attack_s: 0.9
       overtones: { partials: [2, 3, 4, 5, 6, 8], gain_db: -18 }
       lead: { plays_odds: 0.5, gain_db: -3, rack_names: [ghost, tape] }
-      drums: { arrangement: { bank_order: [dilla], bars_per_shape: 8 }, samples: *kit_crate, gain_db: -9 }
+      drums: { arrangement: { bank_order: [flylo, dilla], bars_per_shape: 8 }, samples: *kit_crate, gain_db: -9 , feels: *feel_experimental }
       catalogue: { min_chords: 4, max_chords: 4, crossfade_s: 1.0 }
 
   # ---- The abstract side -------------------------------------------------
@@ -209,7 +222,7 @@ pieces:
       pad_racks: [wash]
       overtones: { partials: [2, 3, 4], gain_db: -21 }
       lead: { rack_names: [tape, weather] }
-      drums: { arrangement: { bank_order: [dilla, industrial], bars_per_shape: 4 }, samples: *kit_crate }
+      drums: { arrangement: { bank_order: [flylo, industrial], bars_per_shape: 4 }, samples: *kit_crate , feels: *feel_experimental }
 
   # ---- Techno ------------------------------------------------------------
   - name: house_pump
@@ -547,7 +560,7 @@ pieces:
       pad_racks: [shimmer]
       overtones: { partials: [2, 3, 5], gain_db: -20 }
       lead: { rack_names: [tape, ghost] }
-      drums: { arrangement: { bank_order: [dilla, flylo], bars_per_shape: 4 }, samples: *kit_crate }
+      drums: { arrangement: { bank_order: [flylo, dilla], bars_per_shape: 4 }, samples: *kit_crate , feels: *feel_experimental }
       catalogue: { min_chords: 8, max_chords: 8, crossfade_s: 1.0 }
 
   - name: ak7
@@ -560,7 +573,7 @@ pieces:
       pad_racks: [wash]
       overtones: { partials: [2, 3, 4, 6, 8], gain_db: -19 }
       lead: { plays_odds: 0.65, rack_names: [weather, ghost] }
-      drums: { arrangement: { bank_order: [dilla], bars_per_shape: 8 }, samples: *kit_crate }
+      drums: { arrangement: { bank_order: [flylo, dilla], bars_per_shape: 8 }, samples: *kit_crate , feels: *feel_experimental }
       master_bus: { console: twelve_bit }
       catalogue: { min_chords: 6, max_chords: 6, crossfade_s: 1.0 }
 
