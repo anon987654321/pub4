@@ -164,10 +164,13 @@
       const res = await fetch("/runtime/topologies");
       if (!res.ok) return;
       const remote = await res.json();
-      const classifier = remoteKey(remote, "EVENT_CLASSIFIER");
-      if (Array.isArray(classifier)) {
-        classifier.forEach(([pattern, meta]) => mergeRemoteClassifier([{ pattern, meta }]));
-      }
+      // The rows arrive as objects — {pattern, topology, entropy, confidence,
+      // mode} — because the endpoint renders the YAML verbatim. Destructuring
+      // them as [pattern, meta] left pattern undefined on every row, so
+      // mergeRemoteClassifier dropped all of them at its own guard and the
+      // casing fix above reached a merge that still did nothing. It already
+      // reads either shape, so the rows go through whole.
+      mergeRemoteClassifier(remoteKey(remote, "EVENT_CLASSIFIER"));
       mergeRemoteTopologies(remoteKey(remote, "TOPOLOGIES"));
       const canonical = remoteKey(remote, "CANONICAL_EVENTS");
       if (canonical) CANONICAL_EVENTS.splice(0, CANONICAL_EVENTS.length, ...canonical);

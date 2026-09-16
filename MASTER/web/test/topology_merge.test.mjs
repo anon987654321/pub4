@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { runInNewContext } from "node:vm";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const source = readFileSync(join(root, "public", "topology_registry.js"), "utf8");
@@ -43,4 +44,29 @@ const direct = [...code.matchAll(/remote\.([A-Z_]{4,})/g)].map((m) => m[1]);
 // should not silently stop merging the way this one silently never started.
 test("remoteKey falls back to the literal name", () => {
   assert.match(source, /remote\[name\.toLowerCase\(\)\]\s*\?\?\s*remote\[name\]/);
+});
+
+// The casing fix above reached a merge that still dropped every row: the rows
+// arrive as objects, and the caller destructured them as [pattern, meta], so
+// pattern was undefined and mergeRemoteClassifier refused each one at its own
+// guard. Lifted and fed the shape the endpoint actually sends.
+test("a classifier row in the served shape merges", () => {
+  const fn = source.match(/function mergeRemoteClassifier\(rows\) \{[\s\S]*?\n  \}/);
+  assert.ok(fn, "mergeRemoteClassifier not found");
+  const sandbox = { window: {}, EVENT_CLASSIFIER: [] };
+  const merge = runInNewContext(`${fn[0]}\nmergeRemoteClassifier`, sandbox);
+
+  merge([{ pattern: "ctx:footer", topology: "ecology", mode: "phantom" }]);
+
+  assert.equal(sandbox.EVENT_CLASSIFIER.length, 1);
+  const [re, meta] = sandbox.EVENT_CLASSIFIER[0];
+  assert.equal(re.source, "ctx:footer");
+  assert.equal(meta.topology, "ecology");
+});
+
+// The caller, not the merge: destructuring the rows is what broke it, and the
+// merge already reads either shape, so the rows go through whole.
+test("the remote classifier rows are passed through whole", () => {
+  assert.match(source, /mergeRemoteClassifier\(remoteKey\(remote, "EVENT_CLASSIFIER"\)\)/);
+  assert.doesNotMatch(source, /forEach\(\(\[pattern, meta\]\)/);
 });
