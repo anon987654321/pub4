@@ -1592,10 +1592,42 @@ module Livesets
   def catalogue_path = ENV.fetch("LIVE_CATALOGUE", CATALOGUE)
   def catalogue = File.file?(catalogue_path) ? JSON.parse(File.read(catalogue_path)) : []
 
-  def catalogue!(row, overrides = [])
+  def catalogue!(row, overrides = [], measured = {})
     entry = { "title" => title_for(row), "kept_at" => Time.now.utc.iso8601, "shareable" => shareable?(row),
-              "overrides" => overrides, "row" => row }
+              "overrides" => overrides, "mix" => measured, "row" => row }
     DillaFrozen.write_json(catalogue_path, catalogue + [entry])
+    entry
+  end
+
+  def render_take!(env, row)
+    abort "keep: the pass did not render" unless system(env, RbConfig.ruby, File.join(D, "dilla.rb"), "live", "set", row["set"].to_s)
+  end
+
+  def score_take = MixScore.score(DEMO)
+
+  # A take scores itself before it is kept. MixScore measures the render against
+  # the two takes kept on their merits -- loudness, loudness range, the kick
+  # against the mids, the sub against the mids, the cymbal crest and the tilt --
+  # and a pass that misses three of the six, or misses one of them by more than
+  # 3 dB, is not catalogued: the rig should not tell the catalogue a take is a
+  # record when its own measurement says otherwise. The numbers go in the entry
+  # either way, so a kept take carries what it measured. LIVE_KEEP_ANY=1 keeps it
+  # regardless, which is how a take the ear likes and the table does not gets in.
+  KEEP_MISS_LIMIT = 3.0
+
+  def keep!(row, overrides, scored)
+    missed = scored.reject { |_, _, miss, _| miss.zero? }
+    bad = missed.size >= 3 || missed.any? { |_, _, miss, _| miss.abs > KEEP_MISS_LIMIT }
+    measured = scored.to_h { |key, value, miss, _| [key.to_s, { "value" => value, "miss" => miss }] }
+    missed.each { |key, value, miss, spec| warn format("  %-14s %7.2f %s  %+.2f outside %s", key, value, spec[:unit], miss, spec[:range]) }
+    if bad && ENV["LIVE_KEEP_ANY"] != "1"
+      abort "keep: the take misses its window -- render it again (LIVE_LUFS=-16 is the usual answer), " \
+            "or keep it anyway with LIVE_KEEP_ANY=1"
+    end
+
+    entry = catalogue!(row, overrides, measured)
+    warn "kept \"#{entry['title']}\" -> demo.wav; project/liveset_catalogue.json holds the record that rebuilds it" \
+         "#{entry['shareable'] ? '' : ' (not for release: its record is not cleared)'}"
     entry
   end
 
@@ -1673,6 +1705,7 @@ module Livesets
     "LIVE_HOCKET" => "voices the sampled phrase is dealt across, 1..4 (3)",
     "LIVE_BUS_PATCH" => "a bus to carry a random modulation patch",
     "LIVE_LUFS" => "integrated loudness to finish at, -30..-6 (unset: as tuned)",
+    "LIVE_KEEP_ANY" => "1 keeps a take the mix score says misses its window",
     "LIVE_RENDER_TO" => "demo.wav, or - for a wav down stdout; unset plays",
     "LIVE_CATALOGUE" => "the catalogue recall keep adds to, when it must not be project/liveset_catalogue.json",
     "LIVE_JOURNAL" => "the journal a run writes, when it must not be the catalogue's",
@@ -1717,15 +1750,13 @@ module Livesets
 
     env = recall_env(row).merge(overrides.to_h { |o| o.split("=", 2) })
     label = "#{row['set']} #{row['seed']}"
-    if keep
-      env["LIVE_RENDER_TO"] = DEMO
-      entry = catalogue!(row, overrides)
-      warn "keeping \"#{entry['title']}\" -> demo.wav; project/liveset_catalogue.json holds the record that rebuilds it" \
-           "#{entry['shareable'] ? '' : ' (not for release: its record is not cleared)'}"
-    else
+    unless keep
       warn "replaying #{label}"
+      return exec(env, RbConfig.ruby, File.join(D, "dilla.rb"), "live", "set", row["set"].to_s)
     end
-    exec(env, RbConfig.ruby, File.join(D, "dilla.rb"), "live", "set", row["set"].to_s)
+    warn "rendering #{label} to demo.wav"
+    render_take!(env.merge("LIVE_RENDER_TO" => DEMO), row)
+    keep!(row, overrides, score_take)
   end
 
   # Pass after pass until interrupted. A pass that exits non-zero moves on to the
