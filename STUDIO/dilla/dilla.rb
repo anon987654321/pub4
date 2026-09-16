@@ -36690,11 +36690,34 @@ pads = chop(played, bars, scratch("pads"))
   # A piece that fails stops the catalogue instead of leaving a hole in it: a
   # join over a missing part is a demo that is quietly one piece short and says
   # nothing about it.
+  # A piece that names a grid directory which is not on this machine.
+  #
+  # samples/ is the crate and the crate is untracked: renders reproduce from
+  # data/*.yml and samples do not. Six pieces name banks that exist only because
+  # import-als was run over the operator's Ableton archive, and on a checkout
+  # without it `banks` quietly falls back to the hand-written shapes -- the piece
+  # renders, sounds fine, and is not the piece the table asked for. That is the
+  # failure this engine refuses everywhere else it can see it, so it says so here
+  # rather than letting a restored beat come back as a generic one.
+  def missing_grids
+    Pieces.rows.filter_map do |row|
+      own = row.dig("bed", "drums", "grid_banks", "own") or next
+      slug = Array(own).first or next
+      next if File.file?(File.join(ROOT, DRUMS.fetch("grids"), slug.to_s, "kick.mid"))
+
+      [row.fetch("name"), slug]
+    end
+  end
+
   def pieces!(showcase: Pieces.showcase)
     names = showcase ? Array(showcase["order"]) : Pieces.names
     unknown = names.reject { |name| Pieces.fetch(name) }
     abort "showcase: no piece named #{unknown.join(', ')}" unless unknown.empty?
 
+    missing_grids.each do |piece, slug|
+      dmesg_warn("#{piece} wants the drums of #{slug}, which are not in samples/midi — " \
+                 "run: ruby dilla.rb import-als <the set> write")
+    end
     seconds = showcase && showcase["seconds_each"]
     fade = Float((showcase && showcase["crossfade_s"]) || CATALOGUE.fetch("crossfade_s"))
     base = Integer(ENV.fetch("RENDER_SEED") { rand(2**31) })
