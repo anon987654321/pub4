@@ -5,6 +5,26 @@ require "socket"
 
 class TestSpeech < Minitest::Test
   # Offline, "edge socket produced empty audio" printed fourteen times running.
+  # voice.yml declared the chain, Policy read it, Speech applied it — and the
+  # live path never called it. synthesis_mode has been "transcendent" since
+  # Transcendent shipped, and that branch returned its file untouched, so every
+  # reply this machine spoke went out bare (measured 2026-09-16: -25.3 LUFS raw
+  # against -17.2 through the chain).
+  def test_the_transcendent_path_is_shaped_like_every_other
+    shaped = []
+    Master::Voice::Transcendent.stub(:enabled?, true) do
+      Master::Voice::Speech.stub(:synthesis_mode, "transcendent") do
+        Master::Voice::Transcendent.stub(:synthesize, "/tmp/m_tts_probe.mp3") do
+          Master::Voice::Speech.stub(:shaped, ->(path) { shaped << path; "#{path}_shaped" }) do
+            assert_equal "/tmp/m_tts_probe.mp3_shaped", Master::Voice::Speech.synthesize("a sentence")
+          end
+        end
+      end
+    end
+
+    assert_equal ["/tmp/m_tts_probe.mp3"], shaped, "the transcendent path skipped the chain"
+  end
+
   def test_a_tts_failure_prints_once_and_stays_in_last_error
     speech = Master::Voice::Speech
     message = "probe failure #{Process.pid}"
