@@ -528,6 +528,21 @@ class TestDillaLivesets < Minitest::Test
     end
   end
 
+  # The live catalogue synthesises every sample in Ruby against a deadline, so
+  # it turns the JIT on for itself. Answers for the interpreter it is running
+  # under rather than assuming one: 3.4.9 here is built without YJIT.
+  def test_the_live_catalogue_asks_for_the_jit_and_says_what_it_got
+    answer = DillaLive.accelerate!
+
+    assert_includes %i[enabled already unavailable], answer
+    if defined?(RubyVM::YJIT) && RubyVM::YJIT.respond_to?(:enable)
+      assert_predicate RubyVM::YJIT, :enabled?, "the live path asked for the JIT and did not get it"
+      assert_equal :already, DillaLive.accelerate!, "asking twice must not restart the JIT"
+    else
+      assert_equal :unavailable, answer
+    end
+  end
+
   def test_a_recalled_pass_replays_the_voicing_it_was_journalled_under
     handed = nil
     row = { "seed" => 7, "set" => "sampled_based_beats", "bed" => "b", "voicing" => "up" }

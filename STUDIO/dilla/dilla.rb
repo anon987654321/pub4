@@ -36438,9 +36438,30 @@ module DillaLive
        "-ac", "2", "-i", "-", "-c:a", "pcm_s16le", dest]
     end
 
+    # The JIT, turned on for the one command that has a deadline.
+    #
+    # Every sample here is computed in a Ruby loop -- the oscillators, the
+    # envelopes, and each of SpaceFx's stages twice over -- and the interpreter
+    # was the cost. Measured over four progressions with IMPROV_SEED pinned:
+    # 93.4 s of CPU for 32.8 s of audio against 53.2 s with the JIT, the same
+    # 1.75x on the effects chain, and the same SHA-256 over the PCM both ways.
+    # Nothing about the arithmetic changes, which is why it is allowed to be a
+    # default here: the take that plays is the take that was going to play.
+    #
+    # Live only. A render has all the time in the world, and warming a JIT costs
+    # a moment that a one-shot command does not get back.
+    def accelerate!
+      return :unavailable unless defined?(RubyVM::YJIT) && RubyVM::YJIT.respond_to?(:enable)
+      return :already if RubyVM::YJIT.enabled?
+
+      RubyVM::YJIT.enable ? :enabled : :unavailable
+    end
+
     def run(passes, dest = nil)
       command = dest ? writer_command(dest) : player_command
       abort "dilla live: needs sox's play or ffplay on PATH" unless command
+
+      accelerate!
 
       # A render has all the time in the world; playing has until the speaker
       # wants the next sample. FX_STAGES overrides either way.
