@@ -33,6 +33,44 @@ class TestLLMDispatcher < Minitest::Test
   ReplyWithUsage = Struct.new(:input_tokens, :output_tokens, :cached_tokens, :cache_creation_tokens)
   ReplyWithContent = Struct.new(:content)
 
+  # 2026-09-16: a /fix ran 194 model calls and 178 failed — the free tier out
+  # for the day, Gemini out of quota, the claude binary hung and killed, a 3B
+  # local model timing out at 250s — and every rule still walked all four lanes.
+  def test_the_door_stops_asking_once_no_lane_answers
+    dispatcher, = build_dispatcher
+    door = Master::Review::LLMDispatcher
+    door.record_lane_outcome(true)
+
+    refute door.lanes_silent?, "silent before anything failed"
+    (door::SILENT_AFTER - 1).times { door.record_lane_outcome(false) }
+    refute door.lanes_silent?, "tripped early"
+    assert door.record_lane_outcome(false), "the last failure must report the trip"
+    assert door.lanes_silent?
+
+    refused = dispatcher.send_with_cache("any-model", [{ role: "user", content: "hi" }])
+    assert_predicate refused, :err?
+    assert_equal :no_api_key, refused.category
+    assert_match(/no lane answered/, refused.message)
+
+    door.record_lane_outcome(true)
+    refute door.lanes_silent?, "one answer must clear it without a restart"
+  ensure
+    Master::Review::LLMDispatcher.record_lane_outcome(true)
+  end
+
+  # "claude-cli:" and a blank, a hundred and seventy-eight times: `claude
+  # --print` from inside a session hangs and is killed, which is exit 124 and
+  # two empty streams.
+  def test_a_cli_that_dies_silently_says_what_it_did
+    dispatcher, = build_dispatcher
+    killed = Struct.new(:success?, :exitstatus).new(false, 124)
+    dispatcher.define_singleton_method(:capture3_with_timeout) { |*_a, **_k| ["", "", killed] }
+
+    result = dispatcher.send(:claude_cli_call, "claude-sonnet-4-6", [{ role: "user", content: "hi" }], nil)
+
+    assert_equal "claude-cli: exited 124 with nothing on either stream", result.message
+  end
+
   def test_record_usage_publishes_cost_transparency_line
     dispatcher, session, bus = build_dispatcher
     reply = ReplyWithUsage.new(100, 50, 20, 10)

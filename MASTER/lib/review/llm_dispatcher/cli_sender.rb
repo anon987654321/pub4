@@ -163,7 +163,14 @@ def claude_cli_call(model_alias, messages, sys)
   args += ["--system-prompt", sys] if sys && !sys.empty?
   timeout_s = claude_cli_timeout_s
   out, err, status = capture3_with_timeout(timeout_s, *args, stdin_data: text_prompt_for(messages))
-  return Result.err("claude-cli: #{err.strip}", category: :provider_error) unless status.success?
+  # A CLI that dies with nothing on either stream taught the operator nothing:
+  # the 2026-09-16 /fix printed "claude-cli:" and a blank a hundred and
+  # seventy-eight times. `claude --print` from inside a session hangs and is
+  # killed, which is exit 124 and two empty streams.
+  unless status.success?
+    said = cli_lane_complaint(out, err) || "exited #{status.exitstatus} with nothing on either stream"
+    return Result.err("claude-cli: #{said}", category: :provider_error)
+  end
 
   Result.ok(out.strip)
 rescue Timeout::Error
