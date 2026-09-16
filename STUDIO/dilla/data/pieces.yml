@@ -1,0 +1,314 @@
+# The catalogue demo.wav plays: sixteen short pieces that are not each other.
+#
+# lib/pieces.rb lays a row's `bed` block over data/bed.yml and module Bed reads
+# the result, so every number the bed has is a number a piece may set: its
+# tempo, which oscillator families deal, which drum grids and which crate the
+# kit comes out of, how loud and how treated the lead is, which console the
+# master bus leaves through, and whether there are drums at all.
+#
+# `progression` names a row of CHORD_PROGRESSIONS in dilla.rb. All 413 of them
+# voice; the five transcribed off Dilla records are here first, and the rest of
+# the catalogue is drawn from the table's own writing.
+#
+#   ruby dilla.rb catalogue          all of it, joined into demo.wav
+#   ruby dilla.rb piece fall_in_love out.wav
+#   ruby dilla.rb pieces             the table, one line each
+#
+# A piece is repeatable because it is written here rather than drawn: the same
+# name and the same RENDER_SEED give the same take.
+
+# What every piece starts from, before its own block.
+#
+# The lead is the change the operator asked for on 2026-09-16: at -7 dB playing
+# one bar in four it was inaudible under the kit, which is not a quiet lead but
+# an absent one. It plays three bars in four now, six dB louder, and its racks
+# stack and freeze twice as often, because the layer is only worth having if it
+# is heard.
+defaults:
+  lead:
+    gain_db: -1
+    plays_odds: 0.75
+    sit_out_bars: 16
+    stack_odds: 0.3
+    freeze_odds: 0.35
+    gate_odds: 0.35
+  catalogue: { min_chords: 4, max_chords: 8, crossfade_s: 1.0 }
+  master_bus: { console: glue }
+
+# The crates. `samples` names one file per voice under samples/drums.
+kits:
+  crate: &kit_crate
+    { kick: kick.wav, snare: snare.wav, ghost: ghost.wav, hat: hat.wav, open_hat: open_hat.wav, clap: ind_clap.wav }
+  industrial: &kit_industrial
+    { kick: ind_kick.wav, snare: ind_clap.wav, ghost: ind_stab.wav, hat: ind_hat.wav, open_hat: open_hat.wav, clap: ind_clap.wav }
+
+# The feels. Dilla time is the bed's own default and lives in bed.yml; these are
+# the two that are not it.
+feels:
+  # Techno is the opposite instrument: nothing is pushed, nothing drags, and the
+  # grid is the point. A swung four-to-the-floor is a shuffle, not a techno beat.
+  rigid: &feel_rigid
+    hat:   { swing: 0.0, shift: 0.0, drift: 0.0 }
+    snare: { swing: 0.0, shift: 0.0, drift: 0.0 }
+    kick:  { swing: 0.0, shift: 0.0, drift: 0.0 }
+    ghost: { swing: 0.0, shift: 0.0, drift: 0.001 }
+  # Hard triplet swing, hats included, which is the footwork and shuffle side.
+  swung: &feel_swung
+    hat:   { swing: 0.2,  shift: 0.0,    drift: 0.002 }
+    snare: { swing: 0.22, shift: -0.008, drift: 0.003 }
+    kick:  { swing: 0.24, shift: 0.010,  drift: 0.004 }
+    ghost: { swing: 0.26, shift: 0.020,  drift: 0.005 }
+
+# Silence is a gain, not a missing part: the kit still renders and still keys the
+# sidechain, so the pads breathe on a pulse nobody hears.
+no_drums: &no_drums { gain_db: -60 }
+
+pieces:
+  # ---- Dilla, transcribed ------------------------------------------------
+  - name: fall_in_love
+    progression: eb_minor_two_chord
+    note: Slum Village, prod. J Dilla — the Gap Mangione vamp, Rhodes and nothing else in the way.
+    bed:
+      bpm: 88
+      bars_per_chord: 4
+      pad_families: [rhodes]
+      pad_racks: [wash]
+      overtones: { partials: [2, 3, 4, 6], gain_db: -21 }
+      lead: { plays_odds: 0.55, rack_names: [tape, ghost] }
+      drums: { arrangement: { bank_order: [dilla], bars_per_shape: 4 }, samples: *kit_crate }
+      master_bus: { console: twelve_bit, crush_bits: 12, crush_mix: 0.24 }
+      catalogue: { min_chords: 2, max_chords: 4, crossfade_s: 1.0 }
+
+  - name: time_donut
+    progression: maj7_minor_cycle
+    note: Donuts — Time (The Donut of the Heart), the Ab cycle at ninths.
+    bed:
+      bpm: 92
+      pad_families: [rhodes, prophet]
+      pad_racks: [shimmer]
+      hocket_odds: 0.45
+      overtones: { partials: [2, 3, 5], gain_db: -23 }
+      lead: { rack_names: [weather, octave] }
+      drums: { arrangement: { bank_order: [dilla], bars_per_shape: 8 }, samples: *kit_crate }
+      catalogue: { min_chords: 8, max_chords: 8, crossfade_s: 1.0 }
+
+  - name: get_dis_money
+    progression: pedal_e_descent
+    note: Slum Village, prod. J Dilla — Herbie's slash loop over an E pedal.
+    bed:
+      bpm: 82
+      pad_families: [prophet]
+      pad_racks: [wash]
+      reverse_odds: 0.3
+      overtones: { partials: [2, 3, 4, 5, 6], gain_db: -19 }
+      lead: { gain_db: 1, rack_names: [ring, inharmonic] }
+      drums: { arrangement: { bank_order: [dilla, flylo], bars_per_shape: 4 }, samples: *kit_crate }
+      master_bus: { console: twelve_bit }
+
+  - name: climax
+    progression: e_major_third_rise
+    note: Slum Village — Climax. Major, which in this catalogue is the exception.
+    bed:
+      bpm: 94
+      pad_families: [moog]
+      pad_racks: [shimmer]
+      min_attack_s: 0.25
+      overtones: { partials: [2, 4, 6, 8], gain_db: -22 }
+      lead: { plays_odds: 0.85, rack_names: [octave, weather] }
+      drums: { arrangement: { bank_order: [dilla, dilla, flylo], bars_per_shape: 4 }, samples: *kit_crate }
+      catalogue: { min_chords: 8, max_chords: 8, crossfade_s: 1.0 }
+
+  - name: so_what
+    progression: dorian_two_chord_modal
+    note: Jamal's two chords by way of Miles, at half time, where the space is the arrangement.
+    bed:
+      bpm: 74
+      bars_per_chord: 4
+      pad_families: [moog]
+      pad_racks: [wash]
+      min_attack_s: 0.9
+      overtones: { partials: [2, 3, 4, 5, 6, 8], gain_db: -18 }
+      lead: { plays_odds: 0.5, gain_db: -3, rack_names: [ghost, tape] }
+      drums: { arrangement: { bank_order: [dilla], bars_per_shape: 8 }, samples: *kit_crate, gain_db: -9 }
+      catalogue: { min_chords: 2, max_chords: 4, crossfade_s: 1.0 }
+
+  # ---- The abstract side -------------------------------------------------
+  - name: quartal_mediants
+    progression: flylo_quartal_mediants
+    bed:
+      bpm: 72
+      pad_families: [prophet]
+      pad_racks: [shimmer]
+      hocket_odds: 0.6
+      reverse_odds: 0.28
+      overtones: { partials: [3, 5, 7], gain_db: -20 }
+      lead: { plays_odds: 0.9, gain_db: 1, rack_names: [inharmonic, ring, ghost] }
+      drums: { arrangement: { bank_order: [flylo], bars_per_shape: 4 }, samples: *kit_crate }
+      master_bus: { console: blown, width: 1.18 }
+      catalogue: { min_chords: 4, max_chords: 6, crossfade_s: 1.0 }
+
+  - name: hexatonic_shiver
+    progression: hexatonic_pole_shiver
+    note: Two triads a major third apart with one tone in common — the horror-film hinge, played warm.
+    bed:
+      bpm: 66
+      pad_families: [prophet, moog]
+      pad_racks: [shimmer]
+      overtones: { partials: [2, 3, 5, 6], gain_db: -19 }
+      lead: { rack_names: [ghost, inharmonic] }
+      drums: { arrangement: { bank_order: [flylo], bars_per_shape: 8 }, samples: *kit_crate, gain_db: -8 }
+      master_bus: { console: air }
+
+  - name: lament_ground
+    progression: lament_ground
+    note: The descending tetrachord every century has used for grief, over a boom-bap kit.
+    bed:
+      bpm: 86
+      pad_families: [rhodes, prophet]
+      pad_racks: [wash]
+      overtones: { partials: [2, 3, 4], gain_db: -21 }
+      lead: { rack_names: [tape, weather] }
+      drums: { arrangement: { bank_order: [dilla, industrial], bars_per_shape: 4 }, samples: *kit_crate }
+
+  # ---- Techno ------------------------------------------------------------
+  - name: house_pump
+    progression: house_sus_pump
+    bed:
+      bpm: 124
+      bars_per_chord: 4
+      pad_families: [prophet]
+      pad_racks: [wash]
+      min_attack_s: 0.15
+      overtones: { partials: [2, 3, 4], gain_db: -24 }
+      lead: { plays_odds: 0.6, rack_names: [octave, tape] }
+      drums:
+        arrangement: { bank_order: [techno], bars_per_shape: 8 }
+        samples: *kit_crate
+        feels: *feel_rigid
+        hat_accents: { downbeat: 0.6, eighth: 0.95, sixteenth: 0.5, jitter: 0.15, open_odds: 0.6 }
+      bass: { wave: square, cutoff_hz: 520, decay: 0.55, gain_db: -6 }
+      catalogue: { min_chords: 2, max_chords: 4, crossfade_s: 1.0 }
+
+  - name: four_floor
+    progression: four_on_floor_minor
+    bed:
+      bpm: 128
+      bars_per_chord: 4
+      pad_families: [moog]
+      pad_racks: [shimmer]
+      min_attack_s: 0.2
+      overtones: { partials: [2, 4, 8], gain_db: -23 }
+      lead: { plays_odds: 0.7, rack_names: [inharmonic, octave] }
+      drums:
+        arrangement: { bank_order: [techno], bars_per_shape: 8 }
+        samples: *kit_industrial
+        feels: *feel_rigid
+      bass: { wave: saw, cutoff_hz: 600, decay: 0.5, gain_db: -6 }
+      master_bus: { console: blown, drive: 1.45 }
+      catalogue: { min_chords: 2, max_chords: 4, crossfade_s: 1.0 }
+
+  - name: detroit
+    progression: detroit_suspension
+    note: Strings held over a machine that never swings — the Detroit contradiction.
+    bed:
+      bpm: 126
+      bars_per_chord: 4
+      pad_families: [prophet]
+      pad_racks: [wash]
+      min_attack_s: 1.4
+      overtones: { partials: [2, 3, 5, 6], gain_db: -20 }
+      lead: { plays_odds: 0.55, gain_db: -3, rack_names: [weather, ghost] }
+      drums:
+        arrangement: { bank_order: [techno, techno, industrial], bars_per_shape: 8 }
+        samples: *kit_industrial
+        feels: *feel_rigid
+      master_bus: { console: air, width: 1.16 }
+      catalogue: { min_chords: 2, max_chords: 4, crossfade_s: 1.0 }
+
+  - name: hate_rumble
+    progression: ostinato_tritone_pair
+    note: Two chords a tritone apart and no resolution anywhere, which is the point.
+    bed:
+      bpm: 138
+      bars_per_chord: 4
+      pad_families: [moog]
+      pad_racks: [wash]
+      min_attack_s: 0.1
+      hocket_odds: 0.1
+      overtones: { partials: [2, 3], gain_db: -26 }
+      lead: { plays_odds: 0.8, gain_db: 0, rack_names: [inharmonic, ring] }
+      drums:
+        arrangement: { bank_order: [industrial], bars_per_shape: 8 }
+        samples: *kit_industrial
+        feels: *feel_rigid
+        sonitex: { drive: 1.9, bandwidth_hz: 7000, crush_bits: 10, crush_hz: 22050, crush_mix: 0.75, lowpass_hz: 11000 }
+        gain_db: -2
+      bass: { wave: square, cutoff_hz: 700, decay: 0.35, gain_db: -4 }
+      master_bus: { console: blown, drive: 1.6, crush_bits: 11, crush_mix: 0.3 }
+      catalogue: { min_chords: 4, max_chords: 4, crossfade_s: 1.0 }
+
+  - name: footwork
+    progression: one_chord_dorian
+    note: One chord at 160, where the harmony stops being the event and the grid becomes it.
+    bed:
+      bpm: 160
+      bars_per_chord: 8
+      pad_families: [rhodes]
+      pad_racks: [shimmer]
+      overtones: { partials: [2, 3, 4, 5], gain_db: -21 }
+      lead: { plays_odds: 0.85, rack_names: [ring, octave] }
+      drums:
+        arrangement: { bank_order: [techno, industrial], bars_per_shape: 4 }
+        samples: *kit_crate
+        feels: *feel_swung
+      catalogue: { min_chords: 2, max_chords: 2, crossfade_s: 1.0 }
+
+  # ---- Ambient -----------------------------------------------------------
+  - name: still_water
+    progression: still_water_pedal
+    note: No drums. The overtone series doing the work a kit does elsewhere.
+    bed:
+      bpm: 58
+      bars_per_chord: 2
+      pad_families: [prophet]
+      pad_racks: [shimmer]
+      min_attack_s: 2.2
+      hocket_odds: 0.0
+      reverse_odds: 0.25
+      overtones: { partials: [2, 3, 4, 5, 6, 7, 8, 10], gain_db: -15 }
+      lead: { plays_odds: 0.35, gain_db: -5, rack_names: [ghost, weather] }
+      drums: *no_drums
+      bass: { wave: triangle, cutoff_hz: 260, decay: 2.2, gain_db: -11 }
+      dust: { hiss_db: -34, crackle_db: -20, band_hz: [900, 7000], rotation_s: 1.8 }
+      master_bus: { console: air, drive: 1.05, crush_bits: 16, crush_mix: 0.04, width: 1.2 }
+      catalogue: { min_chords: 4, max_chords: 5, crossfade_s: 1.6 }
+
+  - name: two_moons
+    progression: two_moons_pedal
+    bed:
+      bpm: 54
+      pad_families: [moog]
+      pad_racks: [shimmer]
+      min_attack_s: 2.6
+      hocket_odds: 0.0
+      overtones: { partials: [2, 3, 5, 7, 9], gain_db: -16 }
+      lead: { plays_odds: 0.3, gain_db: -6, rack_names: [ghost] }
+      drums: *no_drums
+      bass: { wave: sine, cutoff_hz: 220, decay: 2.6, gain_db: -12 }
+      master_bus: { console: air, drive: 1.02, crush_bits: 16, crush_mix: 0.03, width: 1.22 }
+      catalogue: { min_chords: 4, max_chords: 4, crossfade_s: 1.6 }
+
+  - name: drone_quartal
+    progression: drone_quartal_wash
+    note: Fourths stacked, which have no third to be major or minor about.
+    bed:
+      bpm: 62
+      pad_families: [prophet, moog]
+      pad_racks: [wash]
+      min_attack_s: 1.8
+      overtones: { partials: [2, 3, 4, 6, 8, 12], gain_db: -17 }
+      lead: { plays_odds: 0.4, gain_db: -4, rack_names: [weather, ghost] }
+      drums: { arrangement: { bank_order: [flylo], bars_per_shape: 8 }, samples: *kit_crate, gain_db: -16 }
+      bass: { wave: triangle, cutoff_hz: 300, decay: 2.0, gain_db: -10 }
+      master_bus: { console: air, drive: 1.06, crush_bits: 15, crush_mix: 0.06 }
+      catalogue: { min_chords: 4, max_chords: 6, crossfade_s: 1.6 }
