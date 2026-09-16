@@ -147,6 +147,10 @@ lead:
   glide_ms: 35
   order_flip_odds: 0.3
   sit_out_bars: 8
+  # Close harmony on the lead: the melody carried by several voices a chord tone
+  # apart, below it, each entering a few milliseconds after the last. Voices of 1
+  # is one singer. Four is a vocal group.
+  stack: { voices: 4, entry_ms: 9, falloff_db: 2.2 }
   # The room the line plays in, drawn per pass rather than written down.
   #
   # SpaceFx (lib/sound.rb) picks from a wavefolder, a bit crusher, a phaser, a
@@ -294,11 +298,25 @@ drums:
   reference: dilla_time
   kit: karriem_riggins
   grids: samples/midi
+  # Named from what the grids contain, not from what they are called.
+  #
+  # The techno bank globbed four_floor_soul, push_*, uk_skip, footwork_lite and
+  # euclid_*, and of those thirteen shapes exactly one had a kick on 0,4,8,12.
+  # The rest are euclidean and Afro-Cuban rhythms -- cinquillo, tresillo -- plus
+  # footwork and UK skip: good material, and none of it techno. Since the
+  # arrangement walks the pool a block at a time, twelve blocks in thirteen came
+  # out with the kick off the floor, which is why the techno pieces did not sound
+  # like techno. Surveyed across all 72 grids, nine are four to the floor and
+  # they are named here outright.
+  #
+  # The broken bank keeps everything the techno one wrongly held, because those
+  # patterns are worth having where a piece wants them.
   grid_banks:
-    dilla: [dilla_*, head_nod, soul_shuffle, questlove_pocket, neo_busy, half_soul]
-    flylo: [flylo_*, knxwledge_haze, hiatus_broken, ghost_cloud, air_pocket]
-    techno: [four_floor_soul, push_*, uk_skip, footwork_lite, euclid_*]
-    industrial: [industrial_techno, sp1200, sp303, mpc3000, madlib_dusty, crate_dig, boom_*]
+    dilla: [dilla_*, head_nod, soul_shuffle, questlove_pocket, neo_busy, half_soul, gospel_pocket, jazz_brush]
+    flylo: [flylo_*, knxwledge_haze, hiatus_broken, ghost_cloud, air_pocket, samba_pulse, afro_clave]
+    techno: [four_floor_soul, industrial_techno, sp1200, sp303, sp_chop, boom_808]
+    broken: [euclid_*, push_*, uk_skip, footwork_lite, dembow_lite, trap_half, broken_kick]
+    industrial: [industrial_techno, sp1200, sp303, mpc3000, madlib_dusty, crate_dig, boom_*, pack_729_*]
   crate: samples/drums
   samples: { kick: kick.wav, snare: snare.wav, ghost: ghost.wav, hat: hat.wav, open_hat: open_hat.wav, clap: ind_clap.wav }
   # Dilla time: the hats rigid, the snare rushed, the kick swung and late,

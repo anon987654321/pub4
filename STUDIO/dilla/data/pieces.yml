@@ -98,6 +98,21 @@ feels:
     snare: { swing: 0.10, shift: -0.018, drift: 0.005 }
     kick:  { swing: 0.22, shift: 0.024,  drift: 0.006 }
     ghost: { swing: 0.26, shift: 0.034,  drift: 0.008 }
+  # Hardgroove: the kick is the clock and everything else rolls against it.
+  #
+  # The opposite construction to dilla time. There the hats are the rigid
+  # reference and the kick is swung against them; here the kick is dead on the
+  # floor -- it is the clock a room dances to and it cannot move -- and the
+  # momentum comes from percussion rolling underneath it. The ghosts carry a
+  # little swing and a little drift so the roll breathes rather than machine-guns,
+  # and the hats sit fractionally late so the offbeat pulls against the kick
+  # instead of sitting inside it. The snare is barely there, because in this music
+  # the backbeat is not the event; the roll is.
+  hardgroove: &feel_hardgroove
+    hat:   { swing: 0.0,  shift: 0.004,  drift: 0.001 }
+    snare: { swing: 0.0,  shift: 0.0,    drift: 0.001 }
+    kick:  { swing: 0.0,  shift: 0.0,    drift: 0.0 }
+    ghost: { swing: 0.08, shift: 0.006,  drift: 0.004 }
   # Hard triplet swing, hats included, which is the footwork and shuffle side.
   swung: &feel_swung
     hat:   { swing: 0.2,  shift: 0.0,    drift: 0.002 }
@@ -239,7 +254,7 @@ pieces:
       drums:
         arrangement: { bank_order: [techno], bars_per_shape: 8 }
         samples: *kit_crate
-        feels: *feel_rigid
+        feels: *feel_hardgroove
         hat_accents: { downbeat: 0.6, eighth: 0.95, sixteenth: 0.5, jitter: 0.15, open_odds: 0.6 }
       bass: { wave: square, cutoff_hz: 520, decay: 0.55, gain_db: -6 }
       catalogue: { min_chords: 4, max_chords: 4, crossfade_s: 1.0 }
@@ -258,7 +273,7 @@ pieces:
       drums:
         arrangement: { bank_order: [techno], bars_per_shape: 8 }
         samples: *kit_industrial
-        feels: *feel_rigid
+        feels: *feel_hardgroove
       bass: { wave: saw, cutoff_hz: 600, decay: 0.5, gain_db: -6 }
       master_bus: { console: blown, drive: 1.45 }
       catalogue: { min_chords: 4, max_chords: 4, crossfade_s: 1.0 }
@@ -278,7 +293,7 @@ pieces:
       drums:
         arrangement: { bank_order: [techno, techno, industrial], bars_per_shape: 8 }
         samples: *kit_industrial
-        feels: *feel_rigid
+        feels: *feel_hardgroove
       master_bus: { console: air, width: 1.16 }
       catalogue: { min_chords: 4, max_chords: 4, crossfade_s: 1.0 }
 
@@ -298,7 +313,7 @@ pieces:
       drums:
         arrangement: { bank_order: [industrial], bars_per_shape: 8 }
         samples: *kit_industrial
-        feels: *feel_rigid
+        feels: *feel_hardgroove
         sonitex: { drive: 1.9, bandwidth_hz: 7000, crush_bits: 10, crush_hz: 22050, crush_mix: 0.75, lowpass_hz: 11000 }
         gain_db: -2
       bass: { wave: square, cutoff_hz: 700, decay: 0.35, gain_db: -4 }
@@ -426,7 +441,7 @@ pieces:
         grid_banks: { own: [sandviken_hotell] }
         arrangement: { bank_order: [own], bars_per_shape: 8 }
         samples: *kit_industrial
-        feels: *feel_rigid
+        feels: *feel_hardgroove
       master_bus: { console: blown }
       catalogue: { min_chords: 6, max_chords: 6, crossfade_s: 1.0 }
 
@@ -444,7 +459,7 @@ pieces:
       drums:
         arrangement: { bank_order: [techno], bars_per_shape: 8 }
         samples: *kit_crate
-        feels: *feel_rigid
+        feels: *feel_hardgroove
       catalogue: { min_chords: 4, max_chords: 4, crossfade_s: 1.0 }
 
   - name: andand_sus
@@ -462,7 +477,7 @@ pieces:
         grid_banks: { own: [andand2] }
         arrangement: { bank_order: [own], bars_per_shape: 8 }
         samples: *kit_industrial
-        feels: *feel_rigid
+        feels: *feel_hardgroove
       master_bus: { console: blown }
       catalogue: { min_chords: 4, max_chords: 4, crossfade_s: 1.0 }
 

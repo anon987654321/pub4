@@ -35864,10 +35864,61 @@ module Bed
   end
 
   # The restored line as the lead track, rendered on the piece's own voice.
-  def restored_lead!(path, seconds)
+  # One line sung by several voices, in close harmony.
+  #
+  # A vocal group is not a thicker lead: it is the same melody carried by four or
+  # five people a third or a sixth apart, tuned tightly enough that the stack
+  # beats as one instrument rather than as a chord. Two things make it read that
+  # way and both matter. The harmony voices come from the chord that is sounding,
+  # so every added note is a chord tone and the stack can never be out of key --
+  # a fixed interval would go wrong the moment the harmony moves under it. And no
+  # two voices start together: a few milliseconds apart is a section, dead
+  # together is a chorus effect on one singer.
+  #
+  # Voices are placed BELOW the melody, which is what close harmony is. Stacking
+  # upward puts the added notes above the tune and the ear hears the top line as
+  # the melody instead -- the arrangement inverts and the part is lost.
+  STACK = LEAD["stack"] || {}
+
+  def harmonised(notes, chords)
+    voices = Integer(STACK.fetch("voices", 1))
+    return notes if voices < 2 || notes.empty?
+
+    spread = Float(STACK.fetch("entry_ms", 9.0)) / 1000.0
+    quieter = Float(STACK.fetch("falloff_db", 2.2))
+    pitches = chords.flat_map { |chord| chord.notes }.map { |note| note % 12 }.uniq
+    return notes if pitches.empty?
+
+    notes.flat_map do |note|
+      lead_midi = (12 * Math.log2(note[:hz] / 440.0)) + 69
+      [note] + (1...voices).map do |voice|
+        below = chord_tone_below(lead_midi, pitches, voice)
+        note.merge(hz: midi_hz(below).round(4),
+                   at: (note[:at] + (voice * spread * (0.6 + rand * 0.8))).round(4),
+                   gain: (note[:gain] * (10**(-quieter * voice / 20.0))).round(4))
+      end
+    end
+  end
+
+  # The nth chord tone under a melody note, by pitch class, so the interval is
+  # whatever the harmony makes it rather than a number chosen in advance.
+  def chord_tone_below(midi, pitches, step)
+    candidate = midi.round - 1
+    found = 0
+    24.times do
+      if pitches.include?(candidate % 12)
+        found += 1
+        return candidate if found == step
+      end
+      candidate -= 1
+    end
+    midi.round - (3 * step)
+  end
+
+  def restored_lead!(path, seconds, chords = [])
     spec = RESTORE["lead"] or return nil
 
-    notes = restored_notes(spec, seconds)
+    notes = harmonised(restored_notes(spec, seconds), chords)
     return nil if notes.empty?
 
     voice = PAD_VOICE || :poly_lead
@@ -36528,7 +36579,7 @@ pads = chop(played, bars, scratch("pads"))
       played_bar || silence(BAR, file)
     end
     lead = scratch("lead")
-    restored_lead!(lead, seconds) || concat(lead_bars, lead)
+    restored_lead!(lead, seconds, chords) || concat(lead_bars, lead)
     space_lead!(lead, seed)
     surface = dust(seconds, seed, scratch("dust"))
     low = bass_track(chords, scratch("bass"))
