@@ -70,7 +70,7 @@ module Master
                   else
                     (paid_or_subscription + [pref] + all + continuity_models + [@config.model]).uniq
                   end
-          chain = Io::ModelSkipCache.filter(chain)
+          chain = Io::ModelSkipCache.filter(chain.select { |id| cli_lane_installed?(id) })
           ranked = @provider_health ? @provider_health.rank(chain) : chain
           Io::ModelSkipCache.filter(ranked)
         end
@@ -103,6 +103,18 @@ module Master
         CHITCHAT_MAX_LENGTH = 80
 
         private
+
+        # A CLI lane without its binary fails with ENOENT, which the dispatcher
+        # files as a retriable provider_error, so the chain slept through the 30s
+        # and 60s backoff on it before walking on. Measured on ai.brgen.no
+        # 2026-09-15: 90s of a web turn spent on claude-cli with no claude.
+        def cli_lane_installed?(model_id)
+          id = model_id.to_s
+          return claude_cli_available? if id.start_with?("claude-cli:")
+          return agy_cli_available? if id.start_with?("agy:") || id == "agy"
+
+          true
+        end
 
         def enabled?
           @rules.dig("routing", "enabled") != false

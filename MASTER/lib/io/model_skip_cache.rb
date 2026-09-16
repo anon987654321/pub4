@@ -14,6 +14,13 @@ module Master
         provider_error llm_call_failure
       ].freeze
 
+      # A failure that says nothing about the next call parks a model briefly. One
+      # "Upstream error from Nvidia: Service temporarily overloaded" parked the only
+      # lane ai.brgen.no could reach for the full ten minutes, and every turn in
+      # that window walked a chain of lanes with no credit and failed after 268s
+      # (measured 2026-09-15). A spent key, a quota or a rate limit keeps the long park.
+      TRANSIENT_CATEGORIES = %i[timeout provider_error llm_call_failure].freeze
+
       @mutex = Mutex.new
       @skips = {}
 
@@ -27,12 +34,18 @@ module Master
         val.positive? ? val : 600_000
       end
 
-      def skip!(model, reason:, category: nil)
-        ttl = skip_ttl_ms
-        return if ttl <= 0 || model.to_s.empty?
+      def transient_skip_ttl_ms
+        val = models_failover_cfg["transient_skip_ttl_ms"].to_i
+        val = val.positive? ? val : 30_000
+        [val, skip_ttl_ms].min
+      end
 
+      def skip!(model, reason:, category: nil)
         cat = category&.to_sym
         return if cat && !SKIP_CATEGORIES.include?(cat)
+
+        ttl = TRANSIENT_CATEGORIES.include?(cat) ? transient_skip_ttl_ms : skip_ttl_ms
+        return if ttl <= 0 || model.to_s.empty?
 
         until_ms = (Process.clock_gettime(Process::CLOCK_REALTIME) * 1000).round + ttl
         @mutex.synchronize do

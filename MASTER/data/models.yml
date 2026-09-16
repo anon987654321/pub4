@@ -39,8 +39,14 @@ fallback_policy:
 failover:
   sequence: [fast, default, medium, strong]
   cooldown_seconds: 300
-  cooldown_tiers: [30, 60, 300]
+  # The wait before retrying the same model in place. Only a failure outside
+  # fallback_policy.on reaches it (a 429 walks on without waiting), so it waits
+  # on a provider 5xx inside a live turn: at 30 and 60 an overloaded free model
+  # cost a web reply 90s before the chain moved (ai.brgen.no, 2026-09-15).
+  cooldown_tiers: [2, 5, 30]
   skip_ttl_ms: 600000
+  # A timeout or a provider 5xx parks a model this long instead (ModelSkipCache).
+  transient_skip_ttl_ms: 30000
   max_retries: 2
 
 defaults: &model_defaults
