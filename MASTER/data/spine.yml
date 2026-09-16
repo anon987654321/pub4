@@ -1060,8 +1060,26 @@ command_surface: 36
 
 name_candidates: 23
 
+# UNIT CHANGED 2026-09-16: bin/ and the tree's own root, not bin/ alone.
+#
+# The old reading measured a directory rather than a tree, and a move proved it.
+# f754501d1 carried 27 operator scripts from OPENBSD's root into OPENBSD/bin and
+# this row went 16 to 43 without a script being written. Those 27 had always been
+# doors; the census had never opened the directory they sat in. OPENBSD's root
+# held 33 executables at that commit, so the honest count before the move was 49
+# and after it is 46 — a fall of three, because deploy_smoke_gate, integrity_gate
+# and solid_queue_proof went to gates/, and a gate is run by a check rather than
+# typed. Three still sit at the OPENBSD root because vm23 runs them from the
+# checkout by path: backup_priv.sh, emergency_cpu.sh and ptr_openbsd_amsterdam.rb.
+#
+# RAILS 2 -> 3 is the same blindness, not a door: RAILS/deploy.sh has sat at that
+# root the whole time. MASTER and STUDIO are unchanged, having nothing at theirs.
+#
+# Still only those two levels. An app's generated bin/rails, a tool's own bin/
+# and OPENBSD/usr/local/bin — a mirror of what is installed on vm23 rather than
+# anything run from the checkout — are not surfaces the tree offers.
 pub4_entrypoint_ceilings:
   MASTER: 26
-  RAILS: 2
-  OPENBSD: 16
+  RAILS: 3
+  OPENBSD: 46
   STUDIO: 0

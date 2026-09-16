@@ -392,12 +392,24 @@ end
 
     # Tracked, not on-disk: an untracked script in a shared checkout is another
     # session's scratch and not a surface this repo offers anyone.
+    #
+    # bin/ and the tree's own root, because a door is a door wherever it is
+    # parked. Reading bin/ alone read a directory rather than a tree: f754501d1
+    # moved 27 operator scripts from OPENBSD's root into OPENBSD/bin and this
+    # row went 16 -> 43 without a script being written, while 33 executables had
+    # been sitting at that root unseen. It still misses RAILS/deploy.sh.
+    #
+    # Only those two levels. An app's generated bin/rails, a tool's own bin/ and
+    # OPENBSD/usr/local/bin — a mirror of what is installed on vm23, not
+    # something anyone runs from the checkout — are not surfaces of the tree.
     def entrypoints(tree)
-      out, status = Open3.capture2e("git", "-C", ROOT, "ls-files", "-z", "#{tree}/bin")
+      out, status = Open3.capture2e("git", "-C", ROOT, "ls-files", "-z", tree)
       return unless status.success?
 
       out.split("\0").select do |path|
-        path.count("/") == 2 && File.executable?(File.join(ROOT, path))
+        depth = path.count("/")
+        door = depth == 1 || (depth == 2 && path.split("/")[1] == "bin")
+        door && File.executable?(File.join(ROOT, path))
       end.sort
     end
 
