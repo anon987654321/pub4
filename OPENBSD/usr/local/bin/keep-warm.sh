@@ -45,7 +45,7 @@ esac
 # visitor arrives on cold. bsdports is a low-traffic ports index nobody waits on,
 # and master is 927M of address space that is correctly swapped out until someone
 # actually opens the face. The shed case is handled below, per target.
-set -A TARGETS "brgen.no 38182" "amber.brgen.no 61352"
+set -A TARGETS "brgen.no 38182" "amber.fashion 61352"
 
 # A real page, not /up. The health endpoint answers from a handful of objects and
 # leaves the render path — views, the feed query, the template cache — exactly as

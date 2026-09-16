@@ -183,11 +183,11 @@ class ScheduledJobsTest < Minitest::Test
   # CONFIGURED ∩ HELD: a held name acme-client cannot renew is skipped, a
   # configured name with no certificate is never attempted, smtp is smtpd's own.
   def test_renew_certs_renews_only_what_is_both_held_and_configured
-    %w[brgen.no amber.brgen.no ai.brgen.no smtp].each { |name| write("ssl/#{name}.crt", "") }
-    out, _, status = renew(%(domain "brgen.no" {\n}\ndomain "amber.brgen.no" {\n}\ndomain "lapsed.uk" {\n}\n))
+    %w[brgen.no amber.fashion ai.brgen.no smtp].each { |name| write("ssl/#{name}.crt", "") }
+    out, _, status = renew(%(domain "brgen.no" {\n}\ndomain "amber.fashion" {\n}\ndomain "lapsed.uk" {\n}\n))
 
     assert status.success?, out
-    assert_includes out, "renewing 2 of 3 held certificate(s): amber.brgen.no brgen.no"
+    assert_includes out, "renewing 2 of 3 held certificate(s): amber.fashion brgen.no"
     assert_includes out, "held but not in"
     assert_includes out, "skipping: ai.brgen.no"
     refute_includes out, "lapsed.uk"

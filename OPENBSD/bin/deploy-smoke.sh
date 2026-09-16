@@ -216,7 +216,7 @@ if [ "$run_public" = "1" ]; then
   printf '\n== public ==\n'
   check_http master_public  "https://ai.brgen.no/up" 1
   check_http brgen_public   "https://brgen.no/up" 1
-  check_http amber_public   "https://amber.brgen.no/up" "$amber_req"
+  check_http amber_public   "https://amber.fashion/up" "$amber_req"
   # Required, and it fails today for a reason that is not the app: bsdports.org
   # is delegated to the registrar's parking nameservers, parking terminates no
   # TLS, and the answer is 000 whether or not port 47312 is healthy. A red line
@@ -243,7 +243,7 @@ if [ "$run_public" = "1" ]; then
   # returned 200, because it existed only under brgen/public — Operator::AssetUrlLint
   # now catches that at source, but a source lint cannot prove the file shipped.
   check_http shared_font_brgen "https://brgen.no/fonts/lg.woff2" 1
-  check_http shared_font_amber "https://amber.brgen.no/fonts/lg.woff2" "$amber_req"
+  check_http shared_font_amber "https://amber.fashion/fonts/lg.woff2" "$amber_req"
   brgen_html_smoke
 fi
 

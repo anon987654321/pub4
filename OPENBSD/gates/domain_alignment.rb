@@ -98,7 +98,7 @@ module Deploy
       end
 
       # Derived, for the same reason the port table above it is. This was a literal
-      # %w[brgen.no ai.brgen.no amber.brgen.no bsdports.org] -- the last hardcoded
+      # %w[brgen.no ai.brgen.no amber.fashion bsdports.org] -- the last hardcoded
       # fleet list inside the gate whose whole purpose is proving the fleet agrees.
       # A fourth app would have shipped with no keypair assertion and the gate would
       # have passed, which is exactly how relayd.conf drifted unnoticed for ports.

@@ -65,7 +65,7 @@ Full aliases, GitHub keys and the network map: `OPENBSD/SSH_ACCESS.md`.
 | brgen · takeaway | `https://takeaway.brgen.no` |
 | brgen · tv | `https://tv.brgen.no` |
 | brgen · messenger | `https://messenger.brgen.no` |
-| amber | `https://amber.brgen.no` |
+| amber | `https://amber.fashion` |
 | bsdports | `https://bsdports.org` |
 
 The brgen verticals (marketplace/dating/playlist/takeaway/tv/messenger + `maps`)

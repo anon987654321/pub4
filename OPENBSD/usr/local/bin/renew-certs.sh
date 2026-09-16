@@ -45,8 +45,8 @@ while IFS= read -r line; do
   CONFIGURED+=(${line%%\"*})
 done < $ACME_CONF
 
-# (N) nullglob, :t basename, :r strip the final extension -- "amber.brgen.no.crt"
-# becomes "amber.brgen.no". smtp.crt is smtpd's own self-signed certificate and
+# (N) nullglob, :t basename, :r strip the final extension -- "amber.fashion.crt"
+# becomes "amber.fashion". smtp.crt is smtpd's own self-signed certificate and
 # is not ACME's to renew; cert.pem is the trust store.
 HELD=($SSL_DIR/*.crt(N:t:r))
 HELD=(${HELD:#smtp})
