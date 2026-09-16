@@ -38,8 +38,8 @@ module Master
       # schema as far as it can. The reply's `why` is the model's reason for the
       # effect, and the bus carries it to the operator before the effect runs.
       #
-      # The schema is the turn's offer (Core::Model.offer), and the ladder is
-      # shared by every copy, because Core::Model makes a fresh one per turn.
+      # The schema is the turn's offer (Core::Model.offer). Core::Model builds a
+      # fresh chat each turn, so the ladder is shared by all of them.
       AgentChat = Struct.new(:agent, :bus, :system, :format, :ladder) do
         def with_instructions(text) = AgentChat.new(agent, bus, text, format, ladder)
         def with_format(schema) = AgentChat.new(agent, bus, system, schema, ladder)
@@ -66,9 +66,8 @@ module Master
         STRIKES = 2
         LOCAL = /\Aollama[:\/]/
 
-        def initialize(agent:, bus: nil, config: nil, router: nil, online: -> { Master::Ground::BootReceipt.network? })
+        def initialize(agent:, bus: nil, router: nil, online: -> { Master::Ground::BootReceipt.network? })
           @agent = agent
-          @config = config
           @bus = bus
           @router = router
           @online = online
@@ -85,9 +84,9 @@ module Master
 
         private
 
+        # parse answers a note whose kind is :parse_error, and only for these.
         def unparsed?(reply)
-          effect = Master::Core::Model.parse(reply, verbs: Master::Core::VERBS)
-          effect.verb == :note && effect.args[:kind] == :parse_error
+          Master::Core::Model.parse(reply, verbs: Master::Core::VERBS).args[:kind] == :parse_error
         end
 
         def climb
@@ -114,7 +113,7 @@ module Master
         end
 
         def router
-          @router ||= Master::CLI::Routing::ModelRouter.new(config: @config)
+          @router ||= Master::CLI::Routing::ModelRouter.new(config: Master::Ground::Config.new(Master::ROOT))
         end
       end
 
@@ -133,7 +132,7 @@ module Master
         agent = container && container[:agent]
         return unless agent.respond_to?(:ask_once)
 
-        AgentChat.new(agent, bus, nil, nil, ModelLadder.new(agent:, bus:, config: container[:config]))
+        AgentChat.new(agent, bus, nil, nil, ModelLadder.new(agent:, bus:))
       end
 
       # The Fold writes through World rather than the Io tools, so the turn's

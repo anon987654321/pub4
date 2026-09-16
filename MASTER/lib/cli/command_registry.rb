@@ -111,8 +111,7 @@ module Master
         when /\Areset (.+)\z/ then standing.reset($1.strip)
         when /\Aconsent (\S+)\z/ then Master::Ground::Tool::Domain.grant($1)
         when /\Arevoke (\S+)\z/ then Master::Ground::Tool::Domain.revoke($1)
-        else "usage: /orders  /orders enable|disable|reset <name>  /orders run  /orders consent|revoke <domain>\n" \
-             "       /orders add name=<n> [domain=<d>] [wake=scheduled|heartbeat] [every=<s>] [verify=<argv>] [cmd=<text>]"
+        else ORDERS_USAGE
         end
       end
 
@@ -121,12 +120,17 @@ module Master
       ORDER_KEYS = { "name" => :name, "cmd" => :command, "domain" => :domain, "wake" => :trigger,
                      "every" => :interval_s, "verify" => :verify, "owner" => :owner }.freeze
 
+      ORDERS_USAGE = "usage: /orders  /orders enable|disable|reset <name>  /orders run\n" \
+                     "       /orders consent|revoke <domain>\n" \
+                     "       /orders add name=<n> [domain=<d>] [wake=scheduled|heartbeat] [every=<s>] " \
+                     "[verify=<argv>] [cmd=<text>]"
+
       def add_order(standing, text)
         pairs = text.split(/\s+(?=(?:#{ORDER_KEYS.keys.join("|")})=)/).map { |pair| pair.split("=", 2) }
         fields = pairs.filter_map { |key, value| [ORDER_KEYS[key], value.to_s.strip] if ORDER_KEYS[key] }.to_h
-        return "usage: /orders add name=<n> [domain=<d>] [wake=<w>] [every=<s>] [verify=<argv>] [cmd=<text>]" unless fields[:name]
+        return ORDERS_USAGE unless fields[:name]
 
-        fields[:owner] ||= Fiber[:master_pair_subject] || "operator"
+        fields[:owner] ||= Fiber[:master_pair_subject].to_s.then { |paired| paired.empty? ? "operator" : paired }
         standing.upsert(**fields)
       end
 

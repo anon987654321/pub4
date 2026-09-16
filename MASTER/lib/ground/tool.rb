@@ -109,8 +109,7 @@ module Master
         end
 
         def consented?(name)
-          row = table[name.to_s]
-          return false unless row
+          row = table[name.to_s] or return false
 
           row["consent"] != "required" || granted.include?(name.to_s)
         end

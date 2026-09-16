@@ -65,7 +65,7 @@ module Master
           {
             "name" => name.to_s, "description" => description.to_s, "trigger" => trigger.to_s,
             "interval_s" => interval_s.to_i, "command" => command.to_s, "enabled" => enabled,
-            "domain" => domain.to_s, "owner" => owner.to_s, "verify" => verify&.to_s
+            "domain" => domain.to_s, "owner" => owner.to_s, "verify" => verify&.to_s,
           }.compact
         end
       end
@@ -146,7 +146,7 @@ module Master
       # waking. Only a run that failed is an error.
       def settle(order, result)
         order["last_run_at"] = Time.now.to_i
-        witness(order, "run", result)
+        witness(order, kind: "run", result:)
         if result.err?
           order["state"] = "error"
           order["last_error"] = result.message.to_s[0, ERROR_TRUNCATE]
@@ -154,13 +154,14 @@ module Master
         end
 
         order.delete("last_error")
-        met = order["verify"] && witness(order, "verify", verify(order)).ok?
+        met = order["verify"] && witness(order, kind: "verify", result: verify(order)).ok?
         order["state"] = met ? "verified" : "done"
       end
 
-      def witness(order, kind, result)
-        entry = { "at" => Time.now.to_i, "kind" => kind, "ok" => result.ok?,
-                  "output" => (result.ok? ? result.value.to_s : result.message.to_s)[0, ERROR_TRUNCATE] }
+      def witness(order, kind:, result:)
+        ok = result.ok?
+        said = (ok ? result.value : result.message).to_s
+        entry = { "at" => Time.now.to_i, "kind" => kind, "ok" => ok, "output" => said[0, ERROR_TRUNCATE] }
         order["evidence"] = [*Array(order["evidence"]), entry].last(EVIDENCE_KEEP)
         result
       end
@@ -172,7 +173,6 @@ module Master
         return refusal if refusal
 
         argv = Shellwords.split(order["verify"].to_s)
-
         out, status = Master::Io::Exec.capture2e(*argv, chdir: Master::ROOT, timeout: VERIFY_TIMEOUT_S)
         status.success? ? Result.ok(out.strip) : Result.err(out.strip)
       rescue StandardError => e
@@ -301,8 +301,7 @@ module Master
       def load_orders
         state = read_state
         defs = read_defs
-        declared = defs.map { |o| o["name"] }
-        added = state.reject { |name, _| declared.include?(name) }
+        added = state.reject { |name, _| defs.any? { |order| order["name"] == name } }
                      .filter_map { |_, carry| carry["definition"]&.merge("runtime" => true) }
         (defs + added).each { |order| restore(order, state[order["name"]] || {}) }
       end
