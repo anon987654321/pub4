@@ -13,7 +13,7 @@
     if (named === '_top') return null;
     if (named) return document.getElementById(named);
     const frame = a.closest('turbo-frame[id]');
-    return frame && frame.getAttribute('target') !== '_top' ? frame : null;
+    return frame?.getAttribute('target') !== '_top' ? frame : null;
   };
   const link = [...document.querySelectorAll('a[href]')].find((a) =>
     shown(a) && a.origin === location.origin && !a.hash && a.getAttribute('data-turbo') !== 'false' &&

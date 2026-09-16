@@ -173,7 +173,7 @@ module Deploy
       if body.include?("<html")
         static_public = page[:path].to_s.end_with?(".html")
         # The element, not the name: every page's skip link says href="#main-content",
-        # so a bare "main-content" was satisfied by a link pointing at nothing.
+        # so a link pointing at nothing satisfies a bare "main-content".
         has_main = body.match?(/id=["']main-content["']|<main\b|id=["']face["']|id=["']zin["']|role=["']main["']/i)
         if !has_main
           # MASTER offline.html is a bare public asset, not an app layout.
