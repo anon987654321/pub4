@@ -17,21 +17,28 @@ module Master
         .git .bundle node_modules vendor tmp log coverage storage cache dist build knowledge public var
       ].freeze
 
-      # /review — the whole pass (aesthetic → scan → fix → re-scan → critique),
-      # reached by the verb, by natural-language inference, and by the retired
-      # words TurnRouter rewrites into it.
+      # /review — the read-only pass. It observes, asks the council and prints
+      # the principle map; it changes nothing. The verb that changes the tree is
+      # /fix, and it owns the repair.
       def dispatch_review(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, review_crew: nil, swarm: nil, **_legacy)
-        raw = arg_for(ctx).to_s.strip
-        apply, critique, aesthetic, only, target = parse_pass_flags(raw)
-        Master::CLI::Pipeline::Pass.new(
-          scanner:,
-          fix_loop:,
-          root:,
-          deliberation:,
-          bus:,
-          review_crew:,
-          swarm:,
-        ).call(target:, apply:, critique:, aesthetic:, only:).render
+        apply, critique, aesthetic, only, target = parse_pass_flags(arg_for(ctx).to_s.strip)
+        run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, review_crew:, swarm: },
+                 target:, apply: apply || false, critique:, aesthetic:, only: only || "critique,map")
+      end
+
+      # /fix — the convergence lifecycle, and the only operation that writes.
+      # It observes, critiques, generates and picks between repairs, applies
+      # one, validates it and observes again, until the tree converges, stops
+      # improving, or hands back a state only a person can settle. `--dry-run`
+      # stops after the reading and says what it would take on.
+      def dispatch_fix(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, review_crew: nil, swarm: nil, **_legacy)
+        apply, _critique, aesthetic, _only, target = parse_pass_flags(arg_for(ctx).to_s.strip)
+        run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, review_crew:, swarm: },
+                 target:, apply: apply.nil? || apply, critique: false, aesthetic:, only: "fix")
+      end
+
+      def run_pass(deps, **call_args)
+        Master::CLI::Pipeline::Pass.new(**deps).call(**call_args).render
       end
 
       # `--only scan`, `--only scan,fix`, or `--only=critique`. This is how the

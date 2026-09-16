@@ -45,7 +45,10 @@ class TestCouncilHarvest < Minitest::Test
     prompt = critic.send(:ideation_prompt, FEEDBACK)
 
     assert_includes prompt, "apps.yml notes have grown into changelog prose"
-    assert_includes prompt, "at least two distinct"
+    # A field to choose from, and numbered so the cherry-pick can keep one per
+    # issue: two proposals give it nothing to reject.
+    assert_includes prompt, "5 to 20 materially different repairs"
+    assert_includes prompt, "1. apps.yml notes have grown into changelog prose"
     refute_includes prompt, "more detail", "took the whole feedback body instead of the issue line"
   end
 

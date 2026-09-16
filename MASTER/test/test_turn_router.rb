@@ -33,43 +33,35 @@ class TurnRouterTest < Minitest::Test
   # Core::World#do_exec with model-chosen argv, and infer_operator_command
   # reconstructs slash commands from plain English (defeating the leading-"/"
   # block in chat_controller#message). Visitors must land on casual_reply only.
-# One verb, named stages. The registry has carried a closed public surface for
-# months — scan, fix and critique are methods Pipeline::Pass calls, not slash
-# verbs — but every one of those words rewrote to a bare /review, so asking to
-# scan also ran the fix loop, the council and the principle map. Each word now
-# carries the stage it names.
-def test_each_stage_word_rewrites_to_its_own_stage
+# /fix is the verb that writes, and the words that mean "go through the tree
+# and change it" are spellings of it. The reading words argue and change
+# nothing. There is no /scan: a reading nobody acts on is what /fix absorbed.
+def test_a_writing_word_reaches_fix_and_a_reading_word_reaches_the_council
   router = Master::CLI::TurnRouter
 
-  assert_equal "/review --only scan lib/io", router.rewrite_slash("/scan lib/io")
-  # /fix is the scan with writing on, and the rewrite says so rather than
-  # leaving the write to a default nobody typed.
-  assert_equal "/review --only scan --apply lib/io", router.rewrite_slash("/fix lib/io")
+  assert_equal "/fix lib/io", router.rewrite_slash("/fix lib/io")
+  assert_equal "/fix x", router.rewrite_slash("/sweep x")
+  assert_equal "/fix", router.rewrite_slash("/triad")
   assert_equal "/review --only critique lib", router.rewrite_slash("/critique lib")
   assert_equal "/review --only critique lib", router.rewrite_slash("/council lib")
+  assert_equal "/review master", router.rewrite_slash("/review master")
 end
 
-# The words that mean the whole pass still mean the whole pass, and a flag
-# rides along rather than being eaten as a path.
-def test_the_whole_pass_words_are_untouched
+def test_scan_is_not_a_command_any_more
   router = Master::CLI::TurnRouter
 
-  assert_equal "/review master", router.rewrite_slash("/review master")
-  assert_equal "/review x", router.rewrite_slash("/sweep x")
-  assert_equal "/review", router.rewrite_slash("/triad")
-  assert_equal "/review --only scan --no-autofix ../RAILS/bsdports",
-               router.rewrite_slash("/scan --no-autofix ../RAILS/bsdports")
+  refute_includes router::PIPELINE_SLASH, "scan"
+  refute_includes router::PIPELINE_COMMANDS, "scan"
+  # An unknown slash is left alone; the registry answers it, and it has no scan.
+  assert_equal "/scan lib/io", router.rewrite_slash("/scan lib/io")
 end
 
-# The RAILS constitutional gate shells `/scan --no-autofix <app>` and greps
-# the violation line out of the output. A rewrite that dropped the flag, or
-# that stopped running the aesthetic pass the budget is measured against,
-# would change what four recorded ceilings compare to.
-def test_the_scan_stage_keeps_the_flag_the_rails_gate_passes
-  rewritten = Master::CLI::TurnRouter.rewrite_slash("/scan --no-autofix ../RAILS/amber")
+# The RAILS constitutional gate asks for a reading it can grep and no writes.
+# The flag rides along rather than being eaten as a path.
+def test_a_read_only_fix_keeps_the_flag_the_rails_gate_passes
+  rewritten = Master::CLI::TurnRouter.rewrite_slash("/fix --dry-run ../RAILS/amber")
 
-  assert_includes rewritten, "--no-autofix"
-  assert_includes rewritten, "--only scan"
+  assert_equal "/fix --dry-run ../RAILS/amber", rewritten
 end
 
   def test_a_file_read_is_not_casual_for_an_operator
@@ -145,12 +137,18 @@ end
     assert_includes Master::CLI::TurnRouter::PIPELINE_COMMANDS, inferred[:command]
   end
 
-  def test_a_sentence_asking_to_fix_reaches_the_writing_stage
+  def test_a_sentence_asking_to_fix_reaches_the_writing_verb
     inferred = Master::CLI::TurnRouter.infer_operator_command("can you fix and commit all these violations?",
                                                               container: build_container)
 
     assert_equal "fix", inferred[:command]
-    assert_match(/--apply/, Master::CLI::TurnRouter.rewrite_slash("/#{inferred[:command]} #{inferred[:args]}"))
+    assert_match(%r{\A/fix}, Master::CLI::TurnRouter.rewrite_slash("/#{inferred[:command]} #{inferred[:args]}"))
+  end
+
+  # The command is gone; the word people use for it still reaches the engine,
+  # because asking to be told what is wrong is where a fix starts.
+  def test_a_sentence_asking_to_scan_reaches_the_same_engine
+    assert_equal "fix", Master::CLI::TurnRouter.send(:normalize_inferred_command, "scan", "scan lib/io")
   end
 
   def test_an_inferred_word_no_handler_takes_stays_a_sentence

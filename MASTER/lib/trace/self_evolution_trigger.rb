@@ -18,7 +18,7 @@ module Master
         return "self-evolution: no significant refactor" unless significant_refactor?
 
         before = diff_stat
-        scan = run_master("/scan MASTER/lib")
+        scan = run_master("/fix --dry-run MASTER/lib")
         fix = run_master("/fix MASTER/lib")
         after = diff_stat
         write_capture(before:, scan:, fix:, after:)

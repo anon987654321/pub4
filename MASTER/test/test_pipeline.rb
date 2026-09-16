@@ -121,11 +121,11 @@ class TestPipeline < Minitest::Test
 
   def test_intake_parses_a_slash_command
     result = Master::CLI::Pipeline.new([Master::CLI::Stages::Intake.new])
-                                   .call(Master::CLI::PipelineContext.build(user_message: "/scan lib/"))
+                                   .call(Master::CLI::PipelineContext.build(user_message: "/fix lib/"))
 
     assert result.ok?, result.inspect
     assert_equal :command, result.value![:intent]
-    assert_equal "scan", result.value![:command]
+    assert_equal "fix", result.value![:command]
     assert_equal "lib/", result.value![:args]
   end
 

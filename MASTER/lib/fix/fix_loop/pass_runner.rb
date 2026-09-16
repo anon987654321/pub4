@@ -23,7 +23,7 @@ module Master
 
         def initialize(bus:, committer:, loop_scanner:, llm_router:, rollback:, root:,
                        rules:, agent:, scanner:, learnings:, preamble:,
-                       clean_runs_required:, plateau_window:, ground_truth: nil, homeostat: nil)
+                       clean_runs_required:, plateau_window:, ground_truth: nil, homeostat: nil, council: nil)
           @bus = bus
           @committer = committer
           @loop_scanner = loop_scanner
@@ -41,6 +41,8 @@ module Master
           @rule_recurrence = Hash.new(0)
           @ground_truth = ground_truth
           @homeostat = homeostat
+          @council = council
+          @ground_truth_failures = 0
         end
 
         def violations(files) = @loop_scanner.violations(files)
@@ -52,12 +54,16 @@ module Master
           @bus&.publish("fix_loop:pass_start", pass:, target:, file_count: files.size)
 
           run_fast_stage(files, pass)
-          found = run_scan_stage(files, target)
+          found = run_observation_stage(files, target)
           return handle_clean_pass(files, pass_mtimes, pass, consecutive_clean) if found.empty?
           return PassResult.new(status: :plateau, consecutive_clean: 0) if stagnant?(history, seen_snapshots, recurring_violations, found, pass)
 
           @homeostat&.observe(:llm_call)
-          run_llm_stage(found, files, pass, deadline)
+          # The council argues about the files this pass found violations in,
+          # and its picks ride into the repair as context. A critique that ends
+          # in prose changes nothing, which is why it sits inside the loop.
+          council = @council&.run(files: files_with_violations(found, files), pass:, deadline:)
+          run_llm_stage(found, files, pass, deadline, council:)
           PassResult.new(status: :continue, consecutive_clean: 0)
         end
 
@@ -69,11 +75,17 @@ module Master
           fixed
         end
 
-        def run_scan_stage(files, target)
+        def run_observation_stage(files, target)
           violations(files).tap { |v| emit_topology(v, target) }
         end
 
-        def run_llm_stage(found, files, pass, deadline)
+        # The council reads what the violations point at, not the whole target.
+        def files_with_violations(found, files)
+          named = found.filter_map { |violation| violation[:file].to_s }.uniq.select { |path| File.file?(path) }
+          named.empty? ? files.first(CouncilRound::FILES_PER_ROUND) : named
+        end
+
+        def run_llm_stage(found, files, pass, deadline, council: nil)
           if circuit_open?
             @bus&.publish("fix_loop:llm_skipped", pass:, reason: "circuit_open", open: open_breakers)
             Master::Trace::Dmesg.status("fix0", "pass #{pass}, model fixes skipped, circuit open for #{open_breakers.join(", ")}")
@@ -86,19 +98,29 @@ module Master
             return 0
           end
           pass_deadline = [Time.now + PASS_BUDGET_SECONDS, deadline].min
-          llm_fixed = llm_pass(violations: found, files:, pass:, deadline: pass_deadline)
+          llm_fixed = llm_pass(violations: found, files:, pass:, deadline: pass_deadline, council:)
           Master::Trace::Dmesg.status("fix0", "pass #{pass}, #{llm_fixed} of #{Master::Trace::Dmesg.counted(found.size, "violation")} fixed")
           @committer.commit_if_dirty("fix_loop: llm-fix [pass #{pass}]", findings: found, owned_paths: files) if llm_fixed > 0
           track_recurrence(found)
           llm_fixed
         end
 
+        # A reading with no violations is not a finished tree: the ground truth
+        # is asked whether the files on disk are what the loop thinks it wrote.
+        # One disagreement is a pass that repeats; the same disagreement over
+        # and over is a repair the tree refuses, and calling that clean is the
+        # false completion this loop exists to refuse.
         def handle_clean_pass(files, pass_mtimes, pass, consecutive_clean)
           ground_truth = ground_truth_violations(files)
           unless ground_truth.empty?
-            @bus&.publish("fix_loop:ground_truth_failed", pass:, violations: ground_truth.size)
-            return PassResult.new(status: :continue, consecutive_clean: 0)
+            @ground_truth_failures += 1
+            @bus&.publish("fix_loop:ground_truth_failed", pass:, violations: ground_truth.size,
+                                                          consecutive: @ground_truth_failures)
+            status = @ground_truth_failures >= @clean_runs_required ? :validation_failed : :continue
+            refused = "#{ground_truth.size} file(s) failed the ground truth after #{pass} pass(es)"
+            return PassResult.new(status:, consecutive_clean: 0, message: refused)
           end
+          @ground_truth_failures = 0
           @bus&.publish("fix_loop:ground_truth_ok", pass:)
           unless quiescent?(files, pass_mtimes)
             @bus&.publish("fix_loop:quiesce_wait", pass:)

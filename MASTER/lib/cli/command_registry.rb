@@ -3,7 +3,7 @@
 require_relative "command_registry/command"
 require_relative "command_registry/help"
 require_relative "command_registry/review"
-require_relative "command_registry/scan"
+require_relative "command_registry/observe"
 require_relative "command_registry/status"
 require_relative "command_registry/model"
 require_relative "command_registry/rules"
@@ -30,8 +30,8 @@ module Master
 
       # Closed public surface: every verb here has a help topic, and every file
       # under command_registry/ holds the dispatchers these verbs reach or the
-      # stages Pipeline::Pass calls. Scan and critique stay as methods the pass
-      # calls; they are not slash verbs.
+      # stages Pipeline::Pass calls. Observation and critique stay as methods the
+      # pass calls; they are not slash verbs.
       #
       # The surface is closed on purpose. Work is a sentence: TurnRouter reaches
       # the Fold and MediaIntent reaches STUDIO from plain language, and every
@@ -46,6 +46,10 @@ module Master
           # zips these against dispatch_review's keyword names in declaration
           # order, so swarm goes last in both places.
           "review" => command(:dispatch_review, d[:scanner], d[:fix_loop], d[:deliberation], d[:root], d[:bus],
+            d[:review_crew], d[:swarm]),
+          # The one verb that writes. Same dependencies as /review, because it
+          # is the same pipeline with the repair turned on.
+          "fix" => command(:dispatch_fix, d[:scanner], d[:fix_loop], d[:deliberation], d[:root], d[:bus],
             d[:review_crew], d[:swarm]),
           "status" => command(:dispatch_status, d[:root], d[:fix_loop], d[:bus], d[:git], d[:trace], d[:learnings]),
           "undo" => command(:dispatch_undo, undo),

@@ -4,18 +4,18 @@ require_relative "test_helper"
 
 class TestThroughInference < Minitest::Test
 # --only names stages, and the names have to mean the same thing everywhere.
-# `fix` is a spelling of `scan` because the scan stage fixes what it finds on
-# the spot — going back to relocate a finding later is the cost the fold
-# removes — and `council` is a spelling of `critique`.
+# `fix` is the convergence lifecycle — observe, repair, observe again — and
+# `council` is a spelling of `critique`. `scan` is not a stage: the reading is
+# how a fix starts.
 def test_only_accepts_stage_names_and_their_spellings
   pipeline = Master::CLI::Pipeline::Pass.allocate
 
   assert_nil pipeline.send(:normalize_stages, nil)
-  assert_equal %w[scan], pipeline.send(:normalize_stages, "scan")
-  assert_equal %w[scan], pipeline.send(:normalize_stages, "fix")
-  assert_equal %w[scan], pipeline.send(:normalize_stages, "scan,fix")
+  assert_equal %w[fix], pipeline.send(:normalize_stages, "fix")
+  assert_equal %w[fix], pipeline.send(:normalize_stages, "converge")
   assert_equal %w[critique], pipeline.send(:normalize_stages, "council")
-  assert_equal %w[scan critique], pipeline.send(:normalize_stages, "scan,critique")
+  assert_equal %w[fix critique], pipeline.send(:normalize_stages, "fix,critique")
+  assert_empty pipeline.send(:normalize_stages, "scan")
 end
 
 # A misspelled stage must not silently widen the pass to everything, which is
@@ -26,7 +26,7 @@ def test_an_unknown_stage_runs_nothing_and_is_named
   assert_empty pipeline.send(:normalize_stages, "bogus")
   assert_equal %w[bogus], pipeline.instance_variable_get(:@unknown_stages)
 
-  assert_equal %w[scan], pipeline.send(:normalize_stages, "scan,bogus")
+  assert_equal %w[fix], pipeline.send(:normalize_stages, "fix,bogus")
   assert_equal %w[bogus], pipeline.instance_variable_get(:@unknown_stages)
 end
 
@@ -35,10 +35,10 @@ end
 def test_the_only_flag_is_parsed_in_both_spellings
   registry = Master::CLI::CommandRegistry
 
-  assert_equal [nil, nil, true, "scan", "lib/io"], registry.parse_pass_flags("--only scan lib/io")
+  assert_equal [nil, nil, true, "fix", "lib/io"], registry.parse_pass_flags("--only fix lib/io")
   assert_equal [nil, nil, true, "critique", "lib"], registry.parse_pass_flags("--only=critique lib")
-  assert_equal [false, nil, true, "scan", "../RAILS/amber"],
-               registry.parse_pass_flags("--only scan --no-autofix ../RAILS/amber")
+  assert_equal [false, nil, true, "fix", "../RAILS/amber"],
+               registry.parse_pass_flags("--only fix --no-autofix ../RAILS/amber")
 end
 
   def test_infer_promotes_through_master_phrase
@@ -58,18 +58,19 @@ end
     text = "improve rails"
     inferred = Master::CLI::TurnRouter.infer_operator_command(text, container: { bus: nil, session: nil })
     refute_nil inferred, "expected natural language to infer operator command"
-    assert_equal "review", inferred[:command]
+    # A word that means "go through the tree and change it" is a spelling of /fix.
+    assert_equal "/fix rails", Master::CLI::TurnRouter.rewrite_slash("/#{inferred[:command]} #{inferred[:args]}".strip)
   end
 
-  # "scan" reads, so it runs the full pass. "fix" writes: read as "review" it
-  # lost --apply, and "fix and commit" scanned for an hour and changed nothing.
-  def test_turn_router_promotes_scan_to_the_pass_and_fix_to_the_writing_stage
+  # Both words mean the same work now: being told what is wrong is where a
+  # repair starts, so a sentence asking to scan reaches the engine that repairs.
+  def test_a_sentence_asking_to_scan_or_to_fix_reaches_the_one_engine
     scan = Master::CLI::TurnRouter.infer_operator_command("scan lib", container: { bus: nil, session: nil })
     fix = Master::CLI::TurnRouter.infer_operator_command("fix lib", container: { bus: nil, session: nil })
 
-    assert_equal "review", scan[:command], "scan lib should run the full pass"
-    assert_equal "fix", fix[:command], "fix lib should reach the stage that writes"
-    assert_equal "/review --only scan --apply lib", Master::CLI::TurnRouter.rewrite_slash("/fix #{fix[:args]}")
+    assert_equal "fix", scan[:command], "scan lib should reach the convergence engine"
+    assert_equal "fix", fix[:command], "fix lib should reach the convergence engine"
+    assert_equal "/fix lib", Master::CLI::TurnRouter.rewrite_slash("/fix #{fix[:args]}")
   end
 
   # "can you fix and git commit all those violations?" reviewed a directory
@@ -90,7 +91,7 @@ end
       container: { bus: nil, session: nil },
     )
     refute_nil inferred
-    assert_equal "review", inferred[:command]
+    assert_match(%r{\A/fix}, Master::CLI::TurnRouter.rewrite_slash("/#{inferred[:command]} #{inferred[:args]}".strip))
     assert_match(/master|self|/, inferred[:args].to_s)
   end
 
@@ -103,7 +104,7 @@ end
     def fix.preview(*) = Master::Result.ok(total: 0, rules: {}, files: {})
 
     stub_scan = lambda { |*| "scan: clean" }
-    Master::CLI::CommandRegistry.stub(:dispatch_scan, stub_scan) do
+    Master::CLI::CommandRegistry.stub(:observe, stub_scan) do
       pipe = Master::CLI::Pipeline::Pass.new(
         scanner:,
         fix_loop: fix,

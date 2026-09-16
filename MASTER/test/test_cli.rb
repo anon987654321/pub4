@@ -223,13 +223,14 @@ class TestCLI < Minitest::Test
 
   def test_help_uses_progressive_disclosure
     summary = Master::CLI::CommandRegistry.help_text
-    detail = Master::CLI::CommandRegistry.help_text("review")
+    review = Master::CLI::CommandRegistry.help_text("review")
+    fix = Master::CLI::CommandRegistry.help_text("fix")
 
-    assert_match(%r{^/review +the whole pass}, summary)
-    refute_includes summary, "--dry-run previews"
-    assert_includes detail, "/review [path]"
-    assert_includes detail, "--dry-run"
-    assert_includes detail, "--only", "the stages are the detail, not the summary"
+    assert_match(%r{^/fix +the convergence loop}, summary)
+    refute_includes summary, "--dry-run"
+    assert_includes review, "/review [path]"
+    assert_includes review, "--only", "the stages are the detail, not the summary"
+    assert_includes fix, "--dry-run", "the flag that holds the repair back is the detail"
   end
 
 # /commit is built with review_gate: true, so the page has to name the flag
@@ -335,21 +336,19 @@ end
     assert_equal "core", profile
   end
 
-  # The closed set is what the list offers. /scan and /fix are named in the
-  # footer as stages of /review — `/review --only scan` — because they are
-  # what a person types, and a help page that pretends otherwise sends them to
-  # find out by experiment. What must not appear is a `/scan - …` row: a second
-  # entry in the list is a second command.
+  # The closed set is what the list offers. /fix is in it, because it is the
+  # operation that writes and what a person types. /scan is not, and must not
+  # come back as a row: a second entry in the list is a second command.
   def test_help_names_the_closed_set
     summary = Master::CLI::CommandRegistry.help_text
     rows = summary.lines.grep(%r{\A/\w+ {2,}\S}).map { |line| line[%r{\A/(\w+)}, 1] }
     %w[review status undo commit model pair doctor rules why orders soul help clear].each do |name|
       assert_includes rows, name
     end
+    assert_includes rows, "fix"
     refute_includes rows, "scan"
-    refute_includes rows, "fix"
     refute_includes summary, "/orient"
-    assert_includes summary, "/review --only <stage>"
+    refute_includes summary, "/scan"
   end
 
   # ^C during a turn took the REPL down with "undefined method ok? for nil".

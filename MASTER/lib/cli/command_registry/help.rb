@@ -11,21 +11,29 @@ module Master
       # Stages::Route. test_command_registry_dispatch holds the two together, so a
       # verb cannot be built without a page or paged without being built.
       HELP_TOPICS = {
-        "review" => {
-          summary: "the whole pass, read-only unless --apply: scan, critique, principle map",
-          detail: [
-            "/review [path] — every stage: scan, critique, principle map. Or just say the path.",
-            "",
-            "--only <stage> runs one part: --only scan, --only critique or --only map.",
-            "`fix` is a spelling of scan and `council` of critique.",
-            "",
-            "/scan, /fix, /critique and /council are those stages by name —",
-            "/scan is /review --only scan, and /fix is /review --only scan --apply.",
-            "",
-            "Nothing is written unless --apply is given; --dry-run and --no-autofix",
-            "hold it back even then.",
-          ],
-        },
+"fix" => {
+  summary: "the convergence loop: observe, critique, repair, observe again",
+  detail: [
+    "/fix [path] — the one operation that changes the tree. It reads the",
+    "path, asks the council what is wrong, weighs competing repairs, applies",
+    "the strongest, validates it and reads the path again, until the tree",
+    "converges, stops improving or reaches something only you can settle.",
+    "",
+    "--dry-run stops after the reading and says what it would take on.",
+    "There is no /scan: observation is where a fix starts, not a command.",
+  ],
+},
+"review" => {
+  summary: "read-only: the council and the principle map",
+  detail: [
+    "/review [path] — the council reads the path and argues about it, then",
+    "the principle map. It writes nothing; /fix is the verb that writes.",
+    "",
+    "--only <stage> runs one part: --only critique or --only map, and",
+    "`council` is a spelling of critique. --only fix gives the reading and",
+    "what a repair would take on, without taking it on.",
+  ],
+},
         "status" => {
           summary: "one-frame health",
           detail: ["/status — mode, git, fix loop, last pipeline stage, recent events."],
@@ -119,9 +127,9 @@ module Master
         width = HELP_TOPICS.keys.map(&:length).max + 1
         lines = HELP_TOPICS.map { |cmd, topic| "/#{cmd.ljust(width)} #{topic[:summary]}" }
         lines << ""
-        lines << "work is a sentence. /review is the one explicit pass, and"
-        lines << "/scan reads, /critique asks the council, and /fix is the scan that"
-        lines << "writes — each is /review --only <stage>."
+        lines << "work is a sentence. /fix is the one operation that writes: it observes,"
+        lines << "critiques, repairs and observes again until the tree converges."
+        lines << "/review and /critique read and argue without changing anything."
         lines.join("\n")
       end
     end

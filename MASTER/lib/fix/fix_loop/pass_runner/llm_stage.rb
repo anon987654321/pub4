@@ -11,7 +11,7 @@ module Master
         module LlmStage
           private
 
-          def llm_pass(violations:, files:, pass:, deadline: nil)
+          def llm_pass(violations:, files:, pass:, deadline: nil, council: nil)
             rule_violations = violations.group_by { |v| v[:rule].to_s }
             ordered = @rule_order.ordered(violation_counts: @violation_counts)
             runnable = ordered.select { |rule| rule_violations.key?(rule.id.to_s) }
@@ -22,18 +22,18 @@ module Master
                 "registered: #{ordered.map { |r| r.id.to_s }.first(5).join(", ")}",
               )
             end
-            fixed = run_dependency_levels(runnable, files:, pass:, rule_violations:, deadline:)
+            fixed = run_dependency_levels(runnable, files:, pass:, rule_violations:, deadline:, council:)
             publish_llm_pass_status(pass:, deadline:)
             fixed
           end
 
-          def run_dependency_levels(runnable, files:, pass:, rule_violations:, deadline:)
+          def run_dependency_levels(runnable, files:, pass:, rule_violations:, deadline:, council: nil)
             fixed = 0
             breakdown = Hash.new(0)
             @rule_order.dependency_levels(runnable).each do |group|
               break if deadline && Time.now >= deadline
               break if circuit_open?
-              results = run_rule_group(group:, files:, pass:, rule_violations:)
+              results = run_rule_group(group:, files:, pass:, rule_violations:, council:)
               fixed += tally_rule_results(results, breakdown:, pass:)
             end
             report_skip_breakdown(breakdown, pass:)
@@ -72,15 +72,30 @@ module Master
             end
           end
 
-          def run_rule_group(group:, files:, pass:, rule_violations:)
-            return group.map { |rule| [rule, run_rule_once(rule, files, pass)] } unless disjoint_rule_files?(group, rule_violations)
+          def run_rule_group(group:, files:, pass:, rule_violations:, council: nil)
+            unless disjoint_rule_files?(group, rule_violations)
+              return group.map { |rule| [rule, run_rule_once(rule, files, pass, council:)] }
+            end
 
-            group.map { |rule| Thread.new { [rule, run_rule_once(rule, files, pass)] } }.map(&:value)
+            group.map { |rule| Thread.new { [rule, run_rule_once(rule, files, pass, council:)] } }.map(&:value)
           end
 
-          def run_rule_once(rule, files, pass)
+          # What the council picked this pass, as repairs to weigh rather than
+          # instructions to copy. The fixer still answers to the rule and to
+          # PRESERVE_FIRST: a stronger proposal is not automatically a larger
+          # change, and a proposal that breaks the rule it addresses is no repair.
+          def council_preamble(council)
+            picks = Array(council && council[:cherry_picks]).map { |pick| "- #{pick}" }
+            return if picks.empty?
+
+            "COUNCIL\nThe council read these files and argued about them. These are the repairs " \
+              "it judged strongest. Prefer the one that satisfies the rule with the smallest " \
+              "change that preserves what the code means; ignore any that does neither.\n#{picks.join("\n")}"
+          end
+
+          def run_rule_once(rule, files, pass, council: nil)
             rl = RuleLoop.new(rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus, learnings: @learnings)
-            rl.injected_preamble = @preamble
+            rl.injected_preamble = [@preamble, council_preamble(council)].compact.join("\n\n")
             @bus&.publish("fix_loop:tier2_quality_route", pass:, rule: rule.id) if @rule_order.tier2?(rule.id)
             rl.run_once(files)
           end

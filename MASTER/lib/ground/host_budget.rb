@@ -48,7 +48,7 @@ module Master
         return unless constrained?
 
         mb = total_mem_mb
-        "host0: #{mb}MB ram — /scan lib · bin/cli --fast · avoid full-repo prompts"
+        "host0: #{mb}MB ram — /fix lib · bin/cli --fast · avoid full-repo prompts"
       end
 
       def refuse_heavy_prompt?(text)
@@ -56,7 +56,7 @@ module Master
 
         body = text.to_s
         return heavy_repo_message if repo_wide_request?(body)
-        return "host budget: prompt too large (#{body.bytesize}B) — use /scan lib or <<" if body.bytesize > HEAVY_PROMPT_BYTES
+        return "host budget: prompt too large (#{body.bytesize}B) — use /fix lib or <<" if body.bytesize > HEAVY_PROMPT_BYTES
 
         nil
       end
@@ -73,11 +73,11 @@ module Master
 
       def heavy_repo_message
         mb = total_mem_mb || "low"
-        "host budget: full-repo analyze/autofix OOMs on #{mb}MB — use /scan lib, /fix lib, or bin/cli --fast"
+        "host budget: full-repo analyze/autofix OOMs on #{mb}MB — use /fix lib, or bin/cli --fast"
       end
 
       def shell_fragment_tip
-        "shell tip: if CLI dies mid-line, ksh runs the leftover text — use /scan or quote paths"
+        "shell tip: if CLI dies mid-line, ksh runs the leftover text — use a smaller target or quote paths"
       end
 
       def suspended_ruby_pids(user: ENV["USER"])

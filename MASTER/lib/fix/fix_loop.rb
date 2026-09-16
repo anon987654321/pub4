@@ -3,6 +3,7 @@
 require "set"
 require "time"
 require_relative "fix_loop/committer"
+require_relative "fix_loop/council_round"
 require_relative "fix_loop/llm_router"
 require_relative "fix_loop/scanner"
 require_relative "fix_loop/file_collector"
@@ -15,11 +16,25 @@ require_relative "violation"
 
 module Master
   module Fix
-    # Scan, fix and rescan until CLEAN_RUNS clean passes in a row, a plateau over
-    # PLATEAU_WINDOW passes, MAX_PASSES, or the wall-clock budget, whichever first.
+    # Observe, critique, repair and observe again until the tree converges, stops
+    # improving, or reaches a state MASTER may not settle on its own. A run ends
+    # in one of TERMINAL_STATES and says which: "complete" for a run that merely
+    # ran out of passes is the false completion this loop exists to refuse.
     class FixLoop
       include ConvergenceConfig
       include BackgroundRunner
+
+      # How a run is allowed to end, and every ending says which it was. DONE is
+      # the only one that claims the work is finished: the tree observed clean
+      # the required number of times in a row, with the ground truth agreeing.
+      # PLATEAU is convergence without that proof — the same findings keep
+      # coming back, or the passes ran out. BLOCKED is a halt outside the
+      # loop's authority, and VALIDATION_FAILED is a repair the tree refused.
+      #
+      # There is no state here for "a person must decide": nothing in the loop
+      # detects one yet, and a state nothing emits is a promise the report
+      # cannot keep.
+      TERMINAL_STATES = %i[done plateau blocked validation_failed].freeze
 
       IDLE_SLEEP = 300
       STARTUP_DELAY = 90
@@ -97,6 +112,7 @@ module Master
         conflict_resolver = ConflictResolver.new(root:, bus:, law_resolver:)
         loop_scanner = Scanner.new(scanner:, root:, bus:, conflict_resolver:)
         llm_router = LlmRouter.new(agent)
+        council = CouncilRound.new(agent:, root:, bus:)
         preamble = self.class.preamble_from_soul
 
         PassRunner.new(
@@ -104,7 +120,7 @@ module Master
           rules:, agent:, scanner:, learnings:, preamble:,
           clean_runs_required:,
           plateau_window:,
-          ground_truth:, homeostat:
+          ground_truth:, homeostat:, council:
         )
       end
 
@@ -113,11 +129,21 @@ module Master
 
         max_passes.times do |i|
           outcome = run_one_pass(i, files:, target:, deadline:, budget_seconds:, state:)
-          break if outcome == :break
+          return terminal(:plateau, "no further improvement after #{i + 1} pass(es)") if outcome == :break
           return outcome if outcome
         end
 
-        Result.ok("plateau or max passes reached")
+        # Reaching the bound is not finishing. The pass limit is a circuit
+        # breaker, and a run that hit it has findings it never got to.
+        terminal(:plateau, "pass limit (#{max_passes}) reached")
+      end
+
+      # Every ending carries its state, so a caller cannot read "clean after 2
+      # passes" as "the tree is done" when the loop merely stopped.
+      def terminal(state, message)
+        raise ArgumentError, "unknown terminal state: #{state}" unless TERMINAL_STATES.include?(state)
+
+        Result.ok("#{state.to_s.upcase}: #{message}")
       end
 
       def run_one_pass(i, files:, target:, deadline:, budget_seconds:, state:)
@@ -146,12 +172,13 @@ module Master
           consecutive_clean: state[:consecutive_clean]
         )
         state[:consecutive_clean] = result.consecutive_clean
-        return Result.ok(result.message) if result.status == :clean
+        return terminal(:done, result.message) if result.status == :clean
+        return terminal(:validation_failed, result.message) if result.status == :validation_failed
 
         result.status == :plateau ? :break : nil
       end
 
-      def halted_result = Result.err("fix_loop halted: #{@halt_reason || "self_violation"}", category: :policy)
+      def halted_result = Result.err("BLOCKED: fix_loop halted, #{@halt_reason || "self_violation"}", category: :policy)
 
       def workflow_cfg
         @workflow_cfg ||= Master.load_yaml(WORKFLOW_PATH) || {}

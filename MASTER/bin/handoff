@@ -61,7 +61,7 @@ puts "  cd MASTER && bin/check --profile=contributor"
 puts "  OPENBSD/bin/check --profile=contributor"
 puts "  OPENBSD/bin/check-rails --profile=contributor"
 puts "  ruby OPENBSD/gates/integrity_gate.rb"
-puts "  cd MASTER && bundle exec ruby bin/cli \"/review --only scan ../RAILS/<app>\""
+puts "  cd MASTER && bundle exec ruby bin/cli \"/fix --dry-run ../RAILS/<app>\""
 puts
 
 ports = {

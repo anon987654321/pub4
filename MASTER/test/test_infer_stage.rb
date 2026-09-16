@@ -67,7 +67,7 @@ class InferStageTest < Minitest::Test
   end
 
   def test_skips_command_intent
-    result = @infer.call(ctx("/scan lib", intent: :command, command: "scan", args: "lib"))
+    result = @infer.call(ctx("/fix lib", intent: :command, command: "fix", args: "lib"))
     assert result.ok?
     assert_equal :command, result.value!.intent
     assert_nil result.value!.inferred_command

@@ -41,11 +41,11 @@ sentence. The slash set is `/review` `/status` `/undo` `/commit` `/model`
   own fixtures. `bin/probe` runs any of them, and the RAILS and OPENBSD gates,
   as named subprocesses (`quick`, `all`, `deploy`). Staged lines go to
   `bin/operator lint --staged --changed-lines`.
-- Work: say the path. `/review [path]` is the one explicit pass, and its
-  stages are `--only scan`, `--only critique` and `--only map`. `/scan`, `/fix`,
-  `/critique` and `/council` are those stages by name — `/scan` is `/review
-  --only scan`. Nothing is written unless `--apply` is given, which is what
-  `/fix` adds; `--dry-run` and `--no-autofix` hold it back even then.
+- Work: say the path. `/fix [path]` is the operation that changes the tree —
+  observe, critique, repair, observe again, until it converges or says why it
+  stopped. `/review [path]` reads and argues without writing, and its stages are
+  `--only critique` and `--only map`. `/fix --dry-run` stops after the reading
+  and says what it would take on. There is no `/scan`.
 
 ## Runtime Map
 

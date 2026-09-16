@@ -13,12 +13,14 @@ module Master
       VIOLATION_TRUNCATE = Master::VIOLATION_TRUNCATE
       SCAN_RULE_GROUP_LIMIT = 10
 
-      # The scan stage of /review. Pipeline::Pass calls it; it is not a verb of
-      # its own, because /scan is rewritten to `/review --only scan`.
+      # The observation /fix starts from: read the tree, repair what a rule can
+      # repair mechanically, and report what is left. Pipeline::Pass calls it
+      # inside the fix lifecycle. It is not a command — a reading nobody acts on
+      # is what /scan was, and what this architecture removed.
       #
       # on_total hears the final count, for a caller that reports it; the text
       # stays the report.
-      def dispatch_scan(scanner:, root:, ctx: nil, on_total: nil)
+      def observe(scanner:, root:, ctx: nil, on_total: nil)
         Scan::Live.ensure_sync!
         _arg, dry_run, no_autofix, clean_arg, do_autofix = parse_scan_args(ctx)
 

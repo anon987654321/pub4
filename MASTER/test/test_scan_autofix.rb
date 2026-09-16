@@ -99,7 +99,7 @@ class TestScanAutofix < Minitest::Test
     refute Master::Review::Scan::MechanicalAutofix.enabled?(env: { "MASTER_SCAN_AUTOFIX" => "0" })
   end
 
-  def test_dispatch_scan_applies_ast_fixer_then_rescans
+  def test_observe_applies_ast_fixer_then_rescans
     Dir.mktmpdir do |root|
       path = File.join(root, "example.rb")
       File.write(path, "class Example\nend\n")
@@ -108,7 +108,7 @@ class TestScanAutofix < Minitest::Test
         rules: [FakeRule.new("FROZEN_LITERAL", true)],
       )
 
-      out = Master::CLI::CommandRegistry.dispatch_scan(
+      out = Master::CLI::CommandRegistry.observe(
         scanner:,
         root:,
         ctx: { args: path },
@@ -122,7 +122,7 @@ class TestScanAutofix < Minitest::Test
     end
   end
 
-  def test_dispatch_scan_dry_run_does_not_write
+  def test_observe_dry_run_does_not_write
     Dir.mktmpdir do |root|
       path = File.join(root, "example.rb")
       original = "class Example\nend\n"
@@ -132,7 +132,7 @@ class TestScanAutofix < Minitest::Test
         rules: [FakeRule.new("FROZEN_LITERAL", true)],
       )
 
-      out = Master::CLI::CommandRegistry.dispatch_scan(
+      out = Master::CLI::CommandRegistry.observe(
         scanner:,
         root:,
         ctx: { args: "#{path} --dry-run" },
@@ -144,7 +144,7 @@ class TestScanAutofix < Minitest::Test
     end
   end
 
-  def test_dispatch_scan_no_autofix_flag_skips_writes
+  def test_observe_no_autofix_flag_skips_writes
     Dir.mktmpdir do |root|
       path = File.join(root, "example.rb")
       original = "class Example\nend\n"
@@ -154,7 +154,7 @@ class TestScanAutofix < Minitest::Test
         rules: [FakeRule.new("FROZEN_LITERAL", true)],
       )
 
-      out = Master::CLI::CommandRegistry.dispatch_scan(
+      out = Master::CLI::CommandRegistry.observe(
         scanner:,
         root:,
         ctx: { args: "#{path} --no-autofix" },
@@ -166,9 +166,8 @@ class TestScanAutofix < Minitest::Test
     end
   end
 
-  def test_help_documents_through_dry_run
-    detail = Master::CLI::CommandRegistry.help_text("review")
-    assert_includes detail, "--dry-run"
+  def test_help_documents_the_flag_that_holds_the_repair_back
+    assert_includes Master::CLI::CommandRegistry.help_text("fix"), "--dry-run"
   end
 
   # The old pass walked the whole tree, then fixed, then walked it again.

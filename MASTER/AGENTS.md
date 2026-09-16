@@ -356,13 +356,15 @@ restores from HEAD. Say what you did rather than hoping it is unnoticed.
 every commit beneath yours, including other people's. Name in your report what
 went with you.
 
-**One verb, named stages.** `/review [path]` runs every stage: scan, critique,
-principle map. `--only <stage>` runs one, and `/scan`, `/fix`, `/critique` and
-`/council` are those stages by name — `/scan` is `/review --only scan`. The
-scan stage fixes what it finds as it finds it, so `/scan` and `/fix` name the
-same stage; a finding is cheapest to repair at the moment it is found.
+**One verb that writes.** `/fix [path]` is the convergence lifecycle: it reads
+the path, lets the council argue about what it found, weighs competing repairs,
+applies the strongest, validates it and reads the path again, until the tree
+converges, stops improving, or reaches a state MASTER may not settle alone. A
+run ends as DONE, PLATEAU, BLOCKED or VALIDATION_FAILED, and only DONE claims
+the work is finished. `/review` and `/critique` read and argue without writing.
+There is no `/scan`: observation is where a fix starts, not a command.
 
-**That means a scan mutates the tree** — it has broken dilla, postpro and
+**That means a fix mutates the tree** — it has broken dilla, postpro and
 MASTER's own chat path. `--no-autofix` and `--dry-run` hold it back. Read the
 printed diff before committing, and never commit rewrites of generated caches:
 the scanner descends into them.

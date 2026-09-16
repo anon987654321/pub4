@@ -78,10 +78,10 @@ class TestScanRequestTargets < Minitest::Test
   # how --no-autofix once became a directory that resolved nowhere.
   def test_parse_pass_flags_reads_the_stage_beside_the_path
     apply, _critique, _aesthetic, only, path =
-      Master::CLI::CommandRegistry.parse_pass_flags("--only scan --no-autofix ../RAILS/amber")
+      Master::CLI::CommandRegistry.parse_pass_flags("--only fix --no-autofix ../RAILS/amber")
 
     assert_equal false, apply
-    assert_equal "scan", only
+    assert_equal "fix", only
     assert_equal "../RAILS/amber", path
   end
 

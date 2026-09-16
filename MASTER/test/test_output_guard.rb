@@ -92,7 +92,7 @@ class TestOutputGuard < Minitest::Test
   end
 
   def test_rejects_help_without_detail
-    result = @guard.validate("/scan - deep scan files", context: :help)
+    result = @guard.validate("/fix - observe, repair, observe again", context: :help)
 
     refute result.ok?
     assert_match(/help output/, result.message)

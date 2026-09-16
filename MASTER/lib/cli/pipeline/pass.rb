@@ -65,19 +65,19 @@ module Master
           @review_crew = review_crew
           @t0 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
           @unit = "review0"
-          @scan_totals = {}
+          @observation_totals = {}
+          @observe_units = []
         end
 
         # The stages a caller can ask for by name, in the order they run.
         #
-        # `scan` fixes. It is both scan passes, the fix, and the re-scan that
-        # proves the fix, because a finding is cheapest to repair at the moment it
-        # is found — going back to relocate it later is the cost this fold
-        # removes. `fix` is accepted as a spelling of the same stage rather than a
-        # separate one, since a fix loop with no scan in front of it has nothing
-        # to act on.
+        # `fix` is the whole convergence lifecycle: it observes, repairs what the
+        # reading found, and observes again, and the council argues inside the
+        # repair. There is no scan stage, because a reading nobody acts on is
+        # what this architecture removes — observation is how a fix starts, not
+        # an operation of its own.
         #
-        # Both scan passes stay together for a second reason: the RAILS
+        # Both readings keep their aesthetic half for a second reason: the RAILS
         # constitutional budget is measured off the aesthetic one, so splitting
         # them would change what that gate compares against.
         SWARM_EXCERPT = 400
@@ -87,8 +87,8 @@ module Master
         # as its own rails stage, so a runner call here would run every app gate
         # twice in the ladder, and the rendered half needs a browser on the
         # deploy host, where the ladder already reaches it.
-        STAGES = %w[scan critique map].freeze
-        STAGE_ALIASES = { "fix" => "scan", "aesthetic" => "scan", "council" => "critique" }.freeze
+        STAGES = %w[fix critique map].freeze
+        STAGE_ALIASES = { "converge" => "fix", "council" => "critique" }.freeze
 
         def call(target: nil, apply: nil, critique: nil, aesthetic: true, only: nil)
           resolved = resolve_target(target)
@@ -108,7 +108,7 @@ module Master
           ok = pass_ok?(sections)
           elapsed = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - @t0).round
           result = Result.new(target: resolved, mode: posture[:name], sections:, ok:, unit: @unit,
-                              failed_stages: @failed_stages.dup, totals: scan_totals)
+                              failed_stages: @failed_stages.dup, totals: totals_for_report)
           Master::Trace::Dmesg.status(@unit, [ok ? "complete" : "incomplete", result.counts, "#{elapsed}s"].compact.join(", ")) if elapsed >= 1
           @bus&.publish("review:complete", target: resolved, apply:, ok:, elapsed_s: elapsed,
                                             failed_stages: @failed_stages)
@@ -124,15 +124,9 @@ module Master
           sections = [["mode", posture_line(posture)]]
           if @unknown_stages&.any?
             sections << ["stages", "unknown stage: #{@unknown_stages.join(", ")} — " \
-                                   "--only takes #{STAGES.join(", ")} (fix and council are spellings of scan and critique)"]
+                                   "--only takes #{STAGES.join(", ")} (council is a spelling of critique)"]
           end
-          if run?("scan")
-            sections << aesthetic_scan_section(shell) if aesthetic
-
-            @deep_unit = aesthetic ? "scan1" : "scan0"
-            sections << ["deep scan", log_phase(@deep_unit, "deep", "path=#{shell}") { run_scan(shell, unit: @deep_unit) }]
-            sections.concat(build_fix_sections(resolved:, shell:, posture:, apply:, aesthetic:))
-          end
+          sections.concat(fix_sections(resolved:, shell:, posture:, aesthetic:)) if run?("fix")
           sections << critique_section(resolved, shell) if critique && run?("critique")
           sections << ["principle map", log_phase("map0", "principle_map", nil) { map_line }] if run?("map")
           sections
@@ -156,34 +150,41 @@ module Master
 
         def run?(stage) = @only.nil? || @only.include?(stage)
 
-        def aesthetic_scan_section(shell)
-          ["aesthetic scan", log_phase("scan0", "aesthetic", "path=#{shell}") { run_scan("aesthetic #{shell}", unit: "scan0") }]
-        end
-
         def critique_section(resolved, shell)
           ["critique", log_phase("crit0", "deliberation", "path=#{shell}") { run_critique(resolved) }]
         end
 
-        def build_fix_sections(resolved:, shell:, posture:, apply:, aesthetic:)
-          unless apply
-            return [["fix preview", log_phase("fix0", "preview", "path=#{shell}") { run_fix_preview(resolved) }]]
+        # The /fix lifecycle in three sections: what the tree says now, what the
+        # repair did about it, and what the tree says after. Read-only, the
+        # reading is followed by what a repair would take on rather than by a
+        # repair. The council argues inside the repair, not beside it.
+        def fix_sections(resolved:, shell:, posture:, aesthetic:)
+          sections = [observe_section("observe", "obs0", shell, aesthetic:)]
+          unless @apply
+            return sections << ["would repair", log_phase("fix0", "preview", "path=#{shell}") { run_fix_preview(resolved) }]
           end
 
-          sections = [["fix", log_phase("fix0", "apply", "path=#{shell} max_passes=#{posture[:max_fix_passes]}") do
+          sections << ["repair", log_phase("fix0", "converge", "path=#{shell} max_passes=#{posture[:max_fix_passes]}") do
             run_fix(resolved)
-          end]]
-          @re_unit = aesthetic ? "scan2" : "scan1"
-          sections << ["re-scan", log_phase(@re_unit, "recheck", "path=#{shell}") { run_scan(shell, unit: @re_unit) }]
-          if aesthetic
-            sections << ["aesthetic re-scan", log_phase("scan3", "aesthetic_recheck", "path=#{shell}") do
-              run_scan("aesthetic #{shell}", unit: "scan3")
-            end]
-          end
-          sections
+          end]
+          sections << observe_section("re-observe", "obs1", shell, aesthetic:)
+        end
+
+        # One reading, aesthetic half first where it applies. Both halves report
+        # under one unit, because they are one look at one tree.
+        def observe_section(title, unit, shell, aesthetic:)
+          @observe_units << unit
+          [title, log_phase(unit, "observe", "path=#{shell}") do
+            readings = []
+            readings << run_observation("aesthetic #{shell}", unit:) if aesthetic
+            readings << run_observation(shell, unit:)
+            readings.join("\n")
+          end]
         end
 
         def dmesg_boot(resolved, posture, apply, critique, aesthetic)
-          stages = [("aesthetic" if aesthetic && run?("scan")), ("scan" if run?("scan")), ("critique" if critique && run?("critique")), ("map" if run?("map"))].compact.join(", ")
+          stages = [("aesthetic" if aesthetic && run?("fix")), ("fix" if run?("fix")),
+                    ("critique" if critique && run?("critique")), ("map" if run?("map"))].compact.join(", ")
           Master::Trace::Dmesg.attach(@unit, "master0",
             "#{resolved}, #{apply ? "writes" : "read-only"}, #{posture[:name]}, #{stages}")
         end
@@ -284,30 +285,36 @@ def default_apply?(*) = false
           abs
         end
 
-        def run_scan(arg, unit: "scan0")
-          # Stash unit so Scanner progress lines attach to this scanN
+        def run_observation(arg, unit:)
+          # Stash unit so Scanner progress lines attach to this observation.
           if @scanner.respond_to?(:instance_variable_set)
             @scanner.instance_variable_set(:@through_scan_unit, unit)
           end
-          # Preview/dry-run through must not write files via scan-phase mechanical autofix.
-          scan_arg = @apply == false ? "#{arg} --dry-run".strip : arg
-          Master::CLI::CommandRegistry.dispatch_scan(
+          # A read-only pass must not write through the observation's mechanical
+          # autofix either.
+          observe_arg = @apply == false ? "#{arg} --dry-run".strip : arg
+          Master::CLI::CommandRegistry.observe(
             scanner: @scanner,
             root: @root,
-            ctx: { args: scan_arg },
-            on_total: ->(total) { @scan_totals[unit] = total },
+            ctx: { args: observe_arg },
+            on_total: ->(total) { @observation_totals[unit] = total },
           )
         rescue StandardError => e
-          stage_failure("scan", unit, e)
+          stage_failure("observe", unit, e)
         end
 
         def pass_ok?(sections)
           @failed_stages.empty? && sections.none? do |title, body|
-            title.include?("scan") && body.to_s.match?(/\berror\b|\bcritical\b/i) && body.to_s.match?(/\d{2,}\s+finding/i)
+            title.include?("observe") && body.to_s.match?(/\berror\b|\bcritical\b/i) && body.to_s.match?(/\d{2,}\s+finding/i)
           end
         end
 
-        def scan_totals = { before: @scan_totals[@deep_unit], after: @scan_totals[@re_unit] }.compact
+        def totals_for_report
+          before, after = @observe_units.first, @observe_units.last
+          return {} unless before
+
+          { before: @observation_totals[before], after: (@observation_totals[after] if after != before) }.compact
+        end
 
         def run_fix(abs)
           result = @fix_loop.run(abs, requested: true)

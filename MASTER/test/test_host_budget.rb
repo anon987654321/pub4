@@ -13,7 +13,7 @@ class TestHostBudget < Minitest::Test
   end
 
   def test_repo_wide_request_ignores_bounded_scan
-    refute Master::Ground::HostBudget.repo_wide_request?("/scan lib")
+    refute Master::Ground::HostBudget.repo_wide_request?("/fix lib")
   end
 
   def test_refuse_heavy_prompt_when_constrained

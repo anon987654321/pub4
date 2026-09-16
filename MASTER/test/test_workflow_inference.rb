@@ -15,16 +15,16 @@ class WorkflowInferenceTest < Minitest::Test
     refute_equal :unknown, router.classify("read CLAUDE.md")
   end
 
-  # /workflow is an alias of /review (see help.rb), so it renders the through
-  # pipeline's sections. This test used to assert a "workflow: deliberation" /
-  # "verdict:" shape from a design that no longer exists, and its doubles had
-  # drifted from the real interfaces — FakeFixLoop had no #run and
-  # FakeDeliberation had no #agent. Both crashes were swallowed into the report
-  # as prose, so the only visible symptom was this assertion.
-  def test_dispatch_workflow_renders_the_through_sequence
+  # /fix renders its lifecycle: what the tree says, what the repair did, and
+  # what the tree says after. This test used to assert a "workflow:
+  # deliberation" / "verdict:" shape from a design that no longer exists, and
+  # its doubles had drifted from the real interfaces — FakeFixLoop had no #run
+  # and FakeDeliberation had no #agent. Both crashes were swallowed into the
+  # report as prose, so the only visible symptom was this assertion.
+  def test_fix_renders_observe_repair_and_observe_again
     out = dispatch(critique: false, apply: true)
 
-    ["mode", "aesthetic scan", "deep scan", "fix", "re-scan", "principle map"].each do |section|
+    ["mode", "observe", "repair", "re-observe"].each do |section|
       assert_includes out.lines.map(&:chomp), section
     end
     assert_match(/review\d+: complete/, out)
@@ -43,22 +43,43 @@ class WorkflowInferenceTest < Minitest::Test
     ENV["MASTER_DMESG"] = previous
   end
 
-  # --dry-run swaps the fix stage for a preview and drops the re-scan.
-  def test_dry_run_previews_instead_of_fixing
+  # --dry-run reads and says what it would take on, then stops.
+  def test_dry_run_says_what_it_would_repair_instead_of_repairing
     out = dispatch(critique: false)
 
-    assert_includes out.lines.map(&:chomp), "fix preview"
-    refute_includes out.lines.map(&:chomp), "re-scan"
+    assert_includes out.lines.map(&:chomp), "observe"
+    assert_includes out.lines.map(&:chomp), "would repair"
+    refute_includes out.lines.map(&:chomp), "re-observe"
   end
 
-  def test_dispatch_workflow_reaches_deliberation_when_critique_is_on
+  # /review is where the council is a stage of its own. Inside /fix it argues
+  # per repair instead, which test_fix_council covers.
+  def test_review_reaches_deliberation_when_critique_is_on
     asked = []
     deliberation = FakeDeliberation.new(asked)
-    out = dispatch(critique: true, deliberation:)
+    out = Master::CLI::CommandRegistry.stub(:observe, ->(*, **) { "clean -- no violations" }) do
+      Master::CLI::CommandRegistry.dispatch_review(
+        scanner: FakeScanner.new, fix_loop: FakeFixLoop.new, deliberation:,
+        root: File.expand_path("..", __dir__), bus: nil, ctx: { args: ". --critique" },
+      )
+    end
 
     assert_includes out.lines.map(&:chomp), "critique"
     refute_empty asked, "critique stage never reached the deliberation"
     refute_match(/NoMethodError/, out)
+  end
+
+  # /review writes nothing, whatever it is asked: the verb that writes is /fix.
+  def test_review_never_repairs
+    out = Master::CLI::CommandRegistry.stub(:observe, ->(*, **) { "clean -- no violations" }) do
+      Master::CLI::CommandRegistry.dispatch_review(
+        scanner: FakeScanner.new, fix_loop: FakeFixLoop.new, deliberation: FakeDeliberation.new([]),
+        root: File.expand_path("..", __dir__), bus: nil, ctx: { args: ". --apply --no-critique" },
+      )
+    end
+
+    refute_includes out.lines.map(&:chomp), "repair"
+    refute_includes out.lines.map(&:chomp), "re-observe"
   end
 
   # The pipeline used to format a stage crash into the report and still print
@@ -89,8 +110,8 @@ class WorkflowInferenceTest < Minitest::Test
     args << (apply ? "--apply" : "--dry-run")
     args << (critique ? "--critique" : "--no-critique")
 
-    Master::CLI::CommandRegistry.stub(:dispatch_scan, ->(*, **) { "clean -- no violations" }) do
-      Master::CLI::CommandRegistry.dispatch_review(
+    Master::CLI::CommandRegistry.stub(:observe, ->(*, **) { "clean -- no violations" }) do
+      Master::CLI::CommandRegistry.dispatch_fix(
         scanner: FakeScanner.new,
         fix_loop:,
         deliberation:,

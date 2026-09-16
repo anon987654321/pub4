@@ -27,7 +27,7 @@ and vm23 call, and it resolves to `check --profile=ci`.
 Three things judge code by the law, and they differ in what they may do.
 `bin/operator lint` scans files with every deterministic rule and no model, and
 writes nothing, so it is the one to run on a diff before a commit; `--staged
---changed-lines` is the pre-commit shape. `/review --only scan` inside a session
+--changed-lines` is the pre-commit shape. `/fix --dry-run` inside a session
 is the same scan with the council behind it, and it writes fixes only when
 given `--apply`. `rake constitution` counts MASTER's own findings against a
 budget and is a ratchet, not a linter. To ask who reaches a file, use

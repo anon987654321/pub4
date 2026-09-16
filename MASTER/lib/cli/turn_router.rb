@@ -61,11 +61,12 @@ module Master
 
       # Two vocabularies, and they are not the same size on purpose.
       #
-      # PIPELINE_COMMANDS is what a person types: four words where there were ten.
-      # The verb is /review, named for lib/review, the subsystem that scans and
-      # critiques; /scan and /critique are its stages, and /fix is the stage that
-      # writes and says so.
-      PIPELINE_COMMANDS = %w[review scan fix critique].freeze
+      # PIPELINE_COMMANDS is what a person types: three words where there were
+      # ten. /fix is the operation that changes the tree — it observes,
+      # critiques, repairs and observes again — while /review and /critique read
+      # and argue without writing. There is no /scan: a reading nobody acts on
+      # is the thing /fix absorbed.
+      PIPELINE_COMMANDS = %w[review fix critique].freeze
 
       # MODEL_ALIASES is what the intent router accepts from a model, which is not
       # ours to shrink. A model asked to name the command may answer "sweep" or
@@ -81,7 +82,7 @@ module Master
       # learned, and a retired word that falls silently to chat is a worse answer
       # than one that still works. They rewrite to the canonical form; only four
       # words are advertised, in help and in the contract.
-      PIPELINE_SLASH = %w[scan fix critique council self workflow triad sweep through].freeze
+      PIPELINE_SLASH = %w[fix critique council self workflow triad sweep through].freeze
 
       INFER_MIN_CONFIDENCE = 0.62
 
@@ -124,12 +125,15 @@ module Master
         value.intent == :command ? value : nil
       end
 
-      # "fix" keeps its word, and rewrite_slash turns it into the scan stage
-      # with --apply. Read as "review" it lost the write: "can you fix and
-      # commit all these violations?" ran a read-only pass and changed nothing.
+      # "fix" keeps its word: read as "review" it lost the write, and "can you
+      # fix and commit all these violations?" ran a read-only pass and changed
+      # nothing. A sentence that asks to scan asks to be told what is wrong,
+      # which is where /fix starts, so it reaches the same engine — the command
+      # is gone, the word people use for it is not.
       def normalize_inferred_command(command, text)
-        return command if text.match?(/--dry-run|--no-autofix|\bpreview\b/i)
+        return "review" if text.match?(/--dry-run|--no-autofix|\bpreview\b/i) && !WRITING_SLASH.include?(command)
         return command if WRITING_SLASH.include?(command)
+        return "fix" if command == "scan"
         return "review" if PIPELINE_WORDS.include?(command)
 
         command
@@ -256,37 +260,22 @@ module Master
         memory
       end
 
-      # One verb, named stages. /scan, /fix and /critique are not separate
-      # commands and have not been since the registry closed its public surface
-      # — but until 2026-09-06 they all rewrote to a bare /review, so asking to
-      # scan ran the fix stage and the critique too. Each now carries the stage
-      # it names; the words that mean the whole pass still mean the whole pass.
-      #
-      # The scan stage fixes what it finds, on the spot, which is why /scan and
-      # /fix name the same stage: a finding is cheapest to repair at the moment
-      # it is found, and a fix loop with no scan in front of it has nothing to
-      # act on. `--no-autofix` and `--dry-run` still hold it back.
-      STAGE_FOR_SLASH = {
-        "scan" => "scan",
-        "fix" => "scan",
-        "critique" => "critique",
-        "council" => "critique",
-      }.freeze
+      # The words that reach the council rather than the repair. /council is
+      # /critique under the name people learned for it.
+      STAGE_FOR_SLASH = { "critique" => "critique", "council" => "critique" }.freeze
 
-      # /fix is /scan with the writing on. The two name one stage — a finding is
-      # cheapest to repair where it is found — and the difference between them is
-      # whether the tree changes, which is the thing a reader most needs the verb
-      # to say.
-      WRITING_SLASH = %w[fix].freeze
+      # The words that mean "go through the tree and change it". They are
+      # spellings of /fix: a sweep with its own reading-and-repair lifecycle
+      # beside the engine's is a second engine, which is what /fix absorbed.
+      WRITING_SLASH = %w[fix sweep through workflow triad self].freeze
 
       def rewrite_slash(input)
         name, rest = input.sub(%r{\A/}, "").split(/\s+/, 2)
         name = name.to_s.downcase
         return input unless PIPELINE_SLASH.include?(name)
+        return ["/fix", rest.to_s.strip].reject(&:empty?).join(" ") if WRITING_SLASH.include?(name)
 
-        stage = STAGE_FOR_SLASH[name]
-        apply = "--apply" if WRITING_SLASH.include?(name)
-        parts = ["/review", ("--only #{stage}" if stage), apply, rest.to_s.strip]
+        parts = ["/review", ("--only #{STAGE_FOR_SLASH[name]}" if STAGE_FOR_SLASH[name]), rest.to_s.strip]
         parts.compact.reject(&:empty?).join(" ")
       end
 

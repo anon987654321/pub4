@@ -76,7 +76,7 @@ class TestScanOutput < Minitest::Test
     end
   end
 
-  def test_dispatch_scan_emits_multiphase_and_snapshot
+  def test_observe_emits_multiphase_and_snapshot
     Dir.mktmpdir do |root|
       path = File.join(root, "example.rb")
       File.write(path, "class Example\nend\n")
@@ -85,7 +85,7 @@ class TestScanOutput < Minitest::Test
         rules: [FakeRule.new("FROZEN_LITERAL", true)],
       )
 
-      out = Master::CLI::CommandRegistry.dispatch_scan(
+      out = Master::CLI::CommandRegistry.observe(
         scanner:,
         root:,
         ctx: { args: path },

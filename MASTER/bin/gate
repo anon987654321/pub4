@@ -24,9 +24,9 @@ ROOT = File.expand_path("..", __dir__)
 REPO = File.expand_path("..", ROOT)
 # MASTER_AUTOFIX gates the background fix *loop* (lib/ops/loop_slot.rb,
 # builder/ai_boot.rb) -- it has never had anything to do with the deterministic
-# AstFixer pass that /scan runs. That pass reads MASTER_SCAN_AUTOFIX, defaulting
-# to "1", so for as long as this hash listed only MASTER_AUTOFIX the full chain's
-# *first* `/scan .` wrote to the tree before `/fix` was ever reached, and the
+# AstFixer pass the observation runs. That pass reads MASTER_SCAN_AUTOFIX,
+# defaulting to "1", so for as long as this hash listed only MASTER_AUTOFIX the
+# full chain's first reading wrote to the tree before the repair was reached, and the
 # variable set to prevent it was inert. Scan-only mode was safe by accident,
 # because it passes --no-autofix on the command line instead of trusting the env.
 #
@@ -91,18 +91,20 @@ TIER = if ARGV.include?("--lexical-only")
          :both
        end
 
-# One path per invocation: /scan takes a single target, so each tree gets its
+# One path per invocation: /fix takes a single target, so each tree gets its
 # own pass.
 #
 # One line per tier, since 2026-09-06. The lexical pass used to be
-# `/scan`, `/fix`, `/scan` — three boots of the runtime for a pipeline that
-# already scans, fixes and re-scans inside one: /scan is /review --only scan,
-# whose stages are the aesthetic pass, the deep pass, the fix, and the re-scan
-# that proves it. Running it three times ran that sequence three times. The
-# semantic pass was `/critique` then `/review`, and both words name the critique
-# stage, so it ran the council twice — the tier that already costs the most.
+# `/scan`, `/fix`, `/scan` — three boots of the runtime for a lifecycle that
+# observes, repairs and observes again inside one /fix. Running it three times
+# ran that sequence three times. The semantic pass was `/critique` then
+# `/review`, and both words name the critique stage, so it ran the council
+# twice — the tier that already costs the most.
+#
+# Scan-only mode is `/fix --dry-run`: the reading, and what a repair would take
+# on, with nothing written.
 def lines_for(path)
-  lexical = SCAN_ONLY ? ["/scan --no-autofix #{path}"] : ["/scan --apply #{path}"]
+  lexical = SCAN_ONLY ? ["/fix --dry-run #{path}"] : ["/fix #{path}"]
   semantic = ["/critique #{path}"]
   case TIER
   when :lexical then lexical

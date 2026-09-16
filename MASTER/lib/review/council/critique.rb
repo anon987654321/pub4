@@ -61,20 +61,32 @@ module Master
         # Ideation used to run on the mode's canned prompt alone, blind to what
         # the panel just found — proposals for nothing in particular, ranked
         # against complaints they never addressed. The panel's issues ARE the
-        # prompt: several proposals per issue, so the challenge round has
-        # something to eliminate.
+        # prompt, and each wants a field to choose from: two proposals give the
+        # cherry-pick nothing to reject, and twenty restatements of one idea
+        # give it nothing either. Materially different means the repairs differ
+        # in what they change, not in how they are worded.
+        IDEAS_PER_ISSUE = (5..20).freeze
+
         def ideation_prompt(feedback)
-          issues = Array(feedback).filter_map { |entry| entry[:feedback].to_s.lines.first&.strip }
-                                  .reject(&:empty?).uniq.first(12)
+          issues = panel_issues(feedback)
           return @mode[:ideation_prompt] if issues.empty?
 
           <<~PROMPT
             #{@mode[:ideation_prompt]}
 
-            The council raised these issues. Propose at least two distinct
-            fixes for each, so the weaker can be discarded:
-            #{issues.map { |issue| "- #{issue}" }.join("\n")}
+            The council raised the issues below. For each one, propose
+            #{IDEAS_PER_ISSUE.first} to #{IDEAS_PER_ISSUE.last} materially different repairs — different in what
+            they change, not in how they are phrased. Number each proposal and
+            name the issue it repairs. The weakest are discarded, so a field of
+            near-identical proposals is a field of one.
+            #{issues.each_with_index.map { |issue, index| "#{index + 1}. #{issue}" }.join("\n")}
           PROMPT
+        end
+
+        # The first line of each critique: the issue, without the argument for it.
+        def panel_issues(feedback)
+          Array(feedback).filter_map { |entry| entry[:feedback].to_s.lines.first&.strip }
+                         .reject(&:empty?).uniq.first(12)
         end
 
         def harvest_path(payload:, feedback:, ideation_result:, cherry:)

@@ -12,7 +12,11 @@ module Master
         # Pure text ranking with no council state, so it lived in Critique only
         # by proximity. Out here it is directly testable.
         module CherryPick
-          LIMIT = 12
+          LIMIT = 20
+          # A proposal names the issue it repairs; everything else shares one
+          # bucket, so an unnumbered field still ranks.
+          ISSUE_RE = /\b(?:issue|critique|finding)\s*(\d+)\b/i.freeze
+          HEADING_RE = /\A(?:solution|idea|proposal)s?\s*:?\s*\z/i.freeze
 
           module_function
 
@@ -37,10 +41,22 @@ module Master
             ideation_result.respond_to?(:value) ? ideation_result.value : ideation_result
           end
 
+          # Every issue keeps its strongest proposal before the remaining slots
+          # are filled by score alone. Ranked flat, one verbose critique took the
+          # whole budget and the other issues went into the repair with nothing
+          # proposed for them.
           def rank(feedback, ideas_text)
             feedback_text = Array(feedback).map { |item| item[:feedback].to_s }.join("\n")
-            lines = ideas_text.to_s.lines.map(&:strip).reject(&:empty?)
-            lines.sort_by { |line| -text_overlap(line, feedback_text) }.first(LIMIT)
+            ranked = proposals(ideas_text).sort_by { |line| -text_overlap(line, feedback_text) }
+            (strongest_per_issue(ranked) + ranked).uniq.first(LIMIT)
+          end
+
+          def proposals(ideas_text)
+            ideas_text.to_s.lines.map(&:strip).reject { |line| line.empty? || line.match?(HEADING_RE) }
+          end
+
+          def strongest_per_issue(ranked)
+            ranked.group_by { |line| line[ISSUE_RE, 1] || "unlabelled" }.values.filter_map(&:first)
           end
 
           # Jaccard-ish overlap normalized by the larger side, so a long idea
