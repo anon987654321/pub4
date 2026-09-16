@@ -7,9 +7,12 @@
 #   ruby dilla.rb live set sampled_based_beats
 #   LIVE_VOICING=up ruby dilla.rb live set sampled_based_beats   the 08-31 voicings
 #   ruby dilla.rb live set ambient_pads
+#   ruby dilla.rb live set interlude|long_form|minimal|gospel   named sets
 #   ruby dilla.rb live recall                    the last twenty passes
 #   ruby dilla.rb live recall 41205993           play that one again
-#   ruby dilla.rb live recall 41205993 keep      render it to demo.wav, record it beside dilla.rb
+#   ruby dilla.rb live recall 41205993 keep      render it to demo.wav and add it to the catalogue
+#   ruby dilla.rb live recall 41205993 LIVE_ROOM=dry   the take, with one choice changed
+#   ruby dilla.rb live catalogue                 the kept takes, titled, in order
 #   ruby dilla.rb live recall keep               keep the last pass played
 #   ruby dilla.rb live broadcast [set]           all three in turn, or one all night
 #   ruby dilla.rb live dig                       fill samples/chopped/ from project/crate.yml
@@ -893,6 +896,22 @@ module Livesets
 
   def kit_cycle_s(bar, phrase_s) = kit_cycle == "phrase" ? phrase_s : bar
 
+  # Loudness for where the pass is going. Unset, a set ends as tuned -- the
+  # normaliser, a fixed volume and a limiter, which lands the three sets between
+  # -10 and -14 LUFS. LIVE_LUFS=-16 adds ffmpeg's loudnorm after all of it, aimed
+  # at that integrated loudness with a -1 dBTP ceiling, for a stream or a platform
+  # that asks for a number. Integrated LUFS weighs the whole mix, so it reads
+  # speech over music as louder than an ear does; a set with a voice in it wants
+  # its target a few LU lower.
+  def loudness
+    want = ENV.fetch("LIVE_LUFS", "").to_s
+    return "" if want.empty?
+
+    value = Float(want, exception: false)
+    abort "LIVE_LUFS=#{want} is not a loudness between -30 and -6" unless value&.between?(-30, -6)
+    "loudnorm=I=#{value}:TP=-1.0:LRA=11,"
+  end
+
   # A cycle played for the whole block: split and concatenated, never aloop'd.
   # At 1.5 million samples aloop stopped being reproducible -- the same seed and
   # a byte-identical graph rendered two pad takes that differed at -17 dBFS RMS
@@ -1103,7 +1122,7 @@ module Livesets
     bar = (beat * 4).round(4)
     step = (beat / 2).round(4)
     sxt = (beat / 4).round(4)
-    chord_s = (bar * (chords.size == 8 ? 0.5 : 1.0)).round(4)
+    chord_s = (bar * chord_bars(chords.size)).round(4)
 
     inputs = []
     graph = []
@@ -1166,16 +1185,16 @@ module Livesets
              "treble=g=3:f=6500,bass=g=4:f=95," \
              "dynaudnorm=f=200:g=9:p=0.94:m=18," \
              "volume=2.4," \
-             "alimiter=limit=0.98:level=disabled," \
+             "alimiter=limit=0.98:level=disabled,#{loudness}" \
              "aformat=sample_rates=44100:channel_layouts=stereo[out]"
 
     journal!(
-      at: Time.now.utc.iso8601, seed: seed, set: "chord_based_beats", seconds: total, bed: nil, progression_name: name.to_s,
-      progression: symbols, bpm: bpm, bar_s: bar, chord_s: chord_s, kit_cycle: kit_cycle, form: form,
+      named: @named, at: Time.now.utc.iso8601, seed: seed, set: "chord_based_beats", seconds: total, bed: nil, progression_name: name.to_s,
+      progression: symbols, bpm: bpm, bar_s: bar, chord_s: chord_s, chord_bars: ENV["LIVE_CHORD_BARS"], kit_cycle: kit_cycle, form: form,
       bus_patch: ENV['LIVE_BUS_PATCH'], muted: muted.join(","),
       weights: weights("chord_based_beats"),
       drums: { kick_ms: hits[:kick], snare_ms: hits[:snare], ghost_ms: hits[:ghost], hat_ms: hits[:hat] }, groove: groove,
-      **console_record("chord_based_beats"), rig: "dilla.rb live set chord_based_beats"
+      **console_record("chord_based_beats"), lufs: ENV["LIVE_LUFS"], rig: "dilla.rb live set chord_based_beats"
     )
 
     play!(inputs, graph,
@@ -1338,17 +1357,17 @@ module Livesets
              "treble=g=3:f=6500,bass=g=4:f=95," \
              "dynaudnorm=f=200:g=9:p=0.94:m=18," \
              "volume=2.4," \
-             "alimiter=limit=0.98:level=disabled," \
+             "alimiter=limit=0.98:level=disabled,#{loudness}" \
              "aformat=sample_rates=44100:channel_layouts=stereo[out]"
 
     journal!(
-      at: Time.now.utc.iso8601, seed: seed, set: "sampled_based_beats", seconds: total, bed: slug, credit: credit(slug), sample_worth: sw,
+      named: @named, at: Time.now.utc.iso8601, seed: seed, set: "sampled_based_beats", shareable: shareable?("bed" => slug), seconds: total, bed: slug, credit: credit(slug), sample_worth: sw,
       bpm: g[:bpm], bpm_pin: pinned_bpm, drag: drag, bars_in_loop: g[:bars_in_loop], voicing: choice, progression: prog,
       chop_at: slice_at, reversed: reverse, bar_s: bar, form: form, hocket: voice_of.values.max.to_i + 1,
       bus_patch: ENV['LIVE_BUS_PATCH'], muted: muted.join(","),
       weights: weights("sampled_based_beats"),
       drums: { kick_ms: hits[:kick], snare_ms: hits[:snare], ghost_ms: hits[:ghost], hat_ms: hits[:hat] }, groove: groove,
-      **console_record("sampled_based_beats"), rig: "dilla.rb live set sampled_based_beats"
+      **console_record("sampled_based_beats"), lufs: ENV["LIVE_LUFS"], rig: "dilla.rb live set sampled_based_beats"
     )
 
     play!(inputs, graph,
@@ -1460,16 +1479,16 @@ module Livesets
              "treble=g=-2:f=7000,bass=g=3:f=110," \
              "dynaudnorm=f=400:g=13:p=0.9:m=10," \
              "volume=1.9," \
-             "alimiter=limit=0.97:level=disabled," \
+             "alimiter=limit=0.97:level=disabled,#{loudness}" \
              "aformat=sample_rates=44100:channel_layouts=stereo[out]"
 
     journal!(
-      at: Time.now.utc.iso8601, seed: seed, set: "ambient_pads", seconds: total, bed: slug, credit: credit(slug), sample_worth: sw,
+      named: @named, at: Time.now.utc.iso8601, seed: seed, set: "ambient_pads", shareable: shareable?("bed" => slug), seconds: total, bed: slug, credit: credit(slug), sample_worth: sw,
       bpm: g[:bpm], bpm_pin: pinned_bpm, drag: drag, bars_in_loop: g[:bars_in_loop], progression: prog,
       chop_at: slice_at, hold_s: hold, bar_s: bar, drums: nil, form: form,
       copy_machine: copies('ambient_pads'), voice_stack: voice_stack_plan.size, bus_patch: ENV['LIVE_BUS_PATCH'], muted: muted.join(","),
       weights: weights("ambient_pads"),
-      **console_record("ambient_pads"), rig: "dilla.rb live set ambient_pads"
+      **console_record("ambient_pads"), lufs: ENV["LIVE_LUFS"], rig: "dilla.rb live set ambient_pads"
     )
 
     play!(inputs, graph,
@@ -1478,10 +1497,51 @@ module Livesets
           "#{prog.map { |semi, v| "#{semi}#{v}" }.join(' ')}  chop@#{slice_at}s#{credit(slug) ? "\n  from #{credit(slug)}" : ''}")
   end
 
-  def play_set!(name)
-    abort "no set #{name.inspect} — have #{SETS.join(', ')}" unless SETS.include?(name.to_s)
+  # Sets named for what they are, each one of the three with its knobs set. A
+  # named set is data rather than a fourth arrangement, so everything a set can
+  # do stays in one place; a knob exported by hand still wins over the name's.
+  #
+  #   interlude   thirty-one seconds of the sampled set: one idea, no arrangement
+  #               reaching it. Donuts is thirty-one pieces in forty-three minutes.
+  #   long_form   twenty minutes of pads across the soul_32 form, to leave
+  #               running; rendered whole, its graph peaked at 86 MB.
+  #   minimal     one voice: the chord set with no kit, no crackle and no room --
+  #               the control every addition is measured against.
+  #   gospel      the eight-bar climb as the whole arrangement, a bar a chord at 72.
+  #
+  # Flip and DFAM are not named sets, and the reason is where their sound is
+  # made: SampleFlip and DfamEngine are per-sample Ruby that write audio files,
+  # and a set is one real-time ffmpeg graph whose only file is demo.wav. The
+  # sampled set already plays the crate's slices against chords, which is the
+  # flip; the engine keeps DFAM for its note-plan renders.
+  NAMED_SETS = {
+    "interlude" => ["sampled_based_beats", { "LIVE_LENGTH" => "31" }],
+    "long_form" => ["ambient_pads", { "LIVE_LENGTH" => "1200", "LIVE_FORM" => "soul_32" }],
+    "minimal" => ["chord_based_beats", { "LIVE_ROOM" => "dry", "LIVE_MUTE" => "kit,crackle" }],
+    "gospel" => ["chord_based_beats", { "LIVE_PROGRESSION" => "eight_bar_gospel_climb", "LIVE_BPM" => "72",
+                                        "LIVE_CHORD_BARS" => "1" }],
+  }.freeze
 
-    send(:"#{name}!")
+  def set_names = SETS + NAMED_SETS.keys
+
+  def play_set!(name)
+    abort "no set #{name.inspect} — have #{set_names.join(', ')}" unless set_names.include?(name.to_s)
+
+    base, knobs = NAMED_SETS.fetch(name.to_s, [name.to_s, {}])
+    knobs.each { |knob, value| ENV[knob] ||= value }
+    @named = NAMED_SETS.key?(name.to_s) ? name.to_s : nil
+    send(:"#{base}!")
+  end
+
+  # How many bars each chord of the chord set holds: LIVE_CHORD_BARS, or half a
+  # bar when eight chords share a phrase and a bar when four do.
+  def chord_bars(count)
+    want = ENV.fetch("LIVE_CHORD_BARS", "").to_s
+    return count == 8 ? 0.5 : 1.0 if want.empty?
+
+    value = Float(want, exception: false)
+    abort "LIVE_CHORD_BARS=#{want} is not a number of bars from 0.25 to 4" unless value&.between?(0.25, 4)
+    value
   end
 
   # Every pass the journal holds, torn rows named rather than dropped. The journal
@@ -1515,6 +1575,59 @@ module Livesets
     puts "  ruby dilla.rb live recall <seed> keep     render it to demo.wav and keep its record"
   end
 
+  # The catalogue: the passes worth keeping, in the order they were kept, each
+  # with a title and whether it may leave the building. The journal is a log of
+  # everything played; this is the subset that is a record.
+  #
+  # A take is not a wav. demo.wav is the only audio dilla keeps and the next
+  # render replaces it, so what makes a take survive is its line here: the seed
+  # and every choice, which rebuild it on any machine that has the crate.
+  #
+  # So a kept take has no stems. A stem is an audio file, and the one audio file
+  # is demo.wav; and every bus of a take is already one recall away -- the take
+  # with LIVE_MUTE naming the others is that bus alone, rendered from the same
+  # seed, which is a stem that cannot go stale or go missing.
+  CATALOGUE = File.join(D, "project", "liveset_catalogue.json")
+
+  def catalogue_path = ENV.fetch("LIVE_CATALOGUE", CATALOGUE)
+  def catalogue = File.file?(catalogue_path) ? JSON.parse(File.read(catalogue_path)) : []
+
+  def catalogue!(row, overrides = [])
+    entry = { "title" => title_for(row), "kept_at" => Time.now.utc.iso8601, "shareable" => shareable?(row),
+              "overrides" => overrides, "row" => row }
+    DillaFrozen.write_json(catalogue_path, catalogue + [entry])
+    entry
+  end
+
+  def catalogue_show!
+    entries = catalogue
+    return puts("nothing kept yet -- ruby dilla.rb live recall <seed> keep") if entries.empty?
+
+    entries.each_with_index do |e, i|
+      puts format("  %2d  %-44s %-11s %s", i + 1, e["title"], e.dig("row", "seed"), e["shareable"] ? "" : "not for release")
+    end
+  end
+
+  # A title rather than a seed: what the take is made of, named the way a
+  # person would name it -- the progression for the chord set, the record for a
+  # bed set -- with the set and seed after it so two takes of one record differ.
+  def title_for(row)
+    subject = row["progression_name"] || row["credit"].to_s.split(" — ").first || row["bed"] || row["set"]
+    words = subject.to_s.sub(/_\d+\z/, "").tr("_", " ").split.map(&:capitalize).join(" ")
+    "#{words} (#{row['named'] || row['set'].to_s.split('_').first} #{row['seed']})"
+  end
+
+  # Whether a take may be shared. A pass over a bed is as releasable as the
+  # record under it, and the rack's rights say so: a YouTube rip or an off-air
+  # capture is unlicensed, and a bed with no rights recorded is treated the same,
+  # because nobody has said otherwise. The chord set plays no record.
+  def shareable?(row)
+    return true unless row["bed"]
+
+    rights = bed_rows.dig(row["bed"].to_s, "rights").to_s
+    !rights.empty? && !rights.match?(/unlicensed|not cleared/i)
+  end
+
   # Every choice a pass journals, by the knob that makes it and the value a row
   # from before that choice existed was played with. A choice is part of the
   # take, not part of the environment: replaying a sampled pass under whatever
@@ -1525,7 +1638,7 @@ module Livesets
   RECALLED = {
     "LIVE_BED" => ["bed", nil], "LIVE_KIT" => ["kit", nil], "LIVE_PROGRESSION" => ["progression_name", nil],
     "LIVE_VOICING" => ["voicing", "down"], "LIVE_LENGTH" => ["seconds", nil], "LIVE_ROOM" => ["room", "warm"],
-    "LIVE_KIT_CYCLE" => ["kit_cycle", "phrase"], "LIVE_FORM" => ["form", nil], "LIVE_MUTE" => ["muted", nil], "LIVE_WEIGHTS" => ["weights", nil], "LIVE_DRAG" => ["drag", nil], "LIVE_BPM" => ["bpm_pin", nil], "LIVE_GROOVE" => ["groove", "drunk"],
+    "LIVE_KIT_CYCLE" => ["kit_cycle", "phrase"], "LIVE_FORM" => ["form", nil], "LIVE_MUTE" => ["muted", nil], "LIVE_WEIGHTS" => ["weights", nil], "LIVE_DRAG" => ["drag", nil], "LIVE_BPM" => ["bpm_pin", nil], "LIVE_GROOVE" => ["groove", "drunk"], "LIVE_CHORD_BARS" => ["chord_bars", nil], "LIVE_LUFS" => ["lufs", nil],
     "LIVE_COPY_MACHINE" => ["copy_machine", "0"], "LIVE_VOICE_STACK" => ["voice_stack", "1"], "LIVE_HOCKET" => ["hocket", "1"],
     "LIVE_BUS_PATCH" => ["bus_patch", nil],
   }.freeze
@@ -1553,12 +1666,15 @@ module Livesets
     "LIVE_GROOVE" => "a GROOVE_DNA row (donuts default) or drunk, the flat swing a take kept before it",
     "LIVE_KIT_CYCLE" => "bar (default) or phrase, how often the chord set's kit repeats",
     "LIVE_PROGRESSION" => "pin the chord set's progression by name",
+    "LIVE_CHORD_BARS" => "bars per chord in the chord set, 0.25..4 (half a bar for eight chords, one for four)",
     "LIVE_VOICING" => "down (default) or up, the sampled set's voicing tables",
     "LIVE_COPY_MACHINE" => "copies in the cloud under a bed, 0..8 (4 on the pads)",
     "LIVE_VOICE_STACK" => "voices per held pad slice, 1..7 (3)",
     "LIVE_HOCKET" => "voices the sampled phrase is dealt across, 1..4 (3)",
     "LIVE_BUS_PATCH" => "a bus to carry a random modulation patch",
+    "LIVE_LUFS" => "integrated loudness to finish at, -30..-6 (unset: as tuned)",
     "LIVE_RENDER_TO" => "demo.wav, or - for a wav down stdout; unset plays",
+    "LIVE_CATALOGUE" => "the catalogue recall keep adds to, when it must not be project/liveset_catalogue.json",
     "LIVE_JOURNAL" => "the journal a run writes, when it must not be the catalogue's",
     "LIVE_BEDS_DIR" => "the rack a bed set picks from",
   }.freeze
@@ -1587,6 +1703,9 @@ module Livesets
       return
     end
     keep = argv.delete("keep")
+    # A take reopens as parameters: LIVE_ROOM=dry after the seed replays the take
+    # with that one choice changed, which is what editing a set means here.
+    overrides, argv = argv.partition { |a| a.match?(/\ALIVE_[A-Z_]+=/) }
     unknown = argv.reject { |a| a.match?(/\A\d+\z/) }
     abort("recall: unknown word #{unknown.join(' ')} -- see ruby dilla.rb live recall help") if unknown.any?
     seed = argv.shift
@@ -1596,15 +1715,13 @@ module Livesets
     row = seed ? rows.reverse.find { |r| r["seed"].to_s == seed.to_s } : rows.last
     abort(seed ? "no pass with seed #{seed}" : "nothing in the journal yet") unless row
 
-    env = recall_env(row)
+    env = recall_env(row).merge(overrides.to_h { |o| o.split("=", 2) })
     label = "#{row['set']} #{row['seed']}"
     if keep
-      take = File.join(D, "#{row['set']}_#{row['seed']}")
       env["LIVE_RENDER_TO"] = DEMO
-      # The journal line is the sidecar. It already holds every decision the pass
-      # made, so writing a second description of it would be a second source.
-      File.write("#{take}.json", JSON.pretty_generate(row))
-      warn "keeping #{label} -> demo.wav, and #{File.basename(take)}.json as the tracked record that rebuilds it"
+      entry = catalogue!(row, overrides)
+      warn "keeping \"#{entry['title']}\" -> demo.wav; project/liveset_catalogue.json holds the record that rebuilds it" \
+           "#{entry['shareable'] ? '' : ' (not for release: its record is not cleared)'}"
     else
       warn "replaying #{label}"
     end
@@ -1621,7 +1738,7 @@ module Livesets
   # stops the night, the second stops the pass now. Stopping meant killing
   # processes before, mid-bar.
   def broadcast!(name = nil)
-    abort "broadcast: no set named #{name} -- have #{SETS.join(', ')}" if name && !SETS.include?(name)
+    abort "broadcast: no set named #{name} -- have #{set_names.join(', ')}" if name && !set_names.include?(name)
 
     @stopping = false
     sets = name ? [name] : ROTATION

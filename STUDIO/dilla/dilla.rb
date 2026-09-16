@@ -28125,7 +28125,7 @@ def command_help
       ["stream", "[bars]", "Non-stop rotation, rendered and played (#{STREAM_BARS_COUNT} bars default)"],
       ["play", "[preset] [bars]", "Render one preset and play it (default dilla, 8 bars)"],
       ["bed", "[render [seed N] [out.wav] | check [seeds 1,2,3] | stop]", "The bed under the narration: passes rendered and played, ducking under speech"],
-      ["live", "[passes] [out.wav] | set|recall|broadcast|dig|ab|knobs|cue|star|tap", "The catalogue played as generated; the livesets (live dig rips YouTube, unlicensed)"],
+      ["live", "[passes] [out.wav] | set|recall|broadcast|dig|ab|knobs|cue|star|tap|catalogue", "The catalogue played as generated; the livesets (live dig rips YouTube, unlicensed)"],
       ["sines", "[play | demo | beat]", "The continuous stream through the engine's pads, queued and played; demo and beat render the two kept 08-28 takes' rows -> sines_demo.mp3, sines_beat.wav"],
       ["regenerate", "[bars]", "Fresh render and harmony-forward mix, looped"],
       ["live_now", "", "Loop the cached harmony or full render, no render wait"],
@@ -36044,7 +36044,7 @@ def live!(argv)
   # nothing for the first several progressions and looks stalled while it is
   # playing perfectly well.
   $stdout.sync = true
-  if %w[set recall broadcast dig ab knobs cue star tap].include?(argv.first)
+  if %w[set recall broadcast dig ab knobs cue star tap catalogue].include?(argv.first)
     require_relative "lib/livesets"
     case argv.shift
     when "set" then Livesets.play_set!(argv.shift || abort("usage: ruby dilla.rb live set <#{Livesets::SETS.join('|')}>"))
@@ -36056,6 +36056,7 @@ def live!(argv)
     when "cue" then Livesets.cue!(argv)
     when "star" then Livesets.star!(argv)
     when "tap" then Livesets.tap!
+    when "catalogue" then Livesets.catalogue_show!
     end
     return
   end
