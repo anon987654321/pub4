@@ -314,13 +314,11 @@ module Livesets
   def journal_path = ENV.fetch("LIVE_JOURNAL", JOURNAL)
   def beds_dir = ENV.fetch("LIVE_BEDS_DIR", File.join(D, "samples", "chopped"))
 
-  def worth
-    @worth ||= begin
-      JSON.parse(File.read(WORTH))["slugs"]
-    rescue StandardError
-      {}
-    end
-  end
+  # Through worth_doc, which is the one read of sample_worth.json: this opened
+  # the same file a second way, so a missing or unparseable file had two
+  # rescues to get wrong and the scores and the stars could disagree about
+  # whether it was there.
+  def worth = @worth ||= worth_doc["slugs"] || {}
 
   # Least recently played, not random. Random repeats: with fifty racks it played
   # the same four beds inside ten minutes, which reads as a short loop rather than
@@ -1055,7 +1053,7 @@ module Livesets
     return nil if want.empty?
 
     value = Float(want, exception: false)
-    abort "LIVE_BPM=#{want} is not a tempo between 40 and 200" unless value && value.between?(40, 200)
+    abort "LIVE_BPM=#{want} is not a tempo between 40 and 200" unless value&.between?(40, 200)
     value
   end
 
@@ -1085,7 +1083,7 @@ module Livesets
     return drawn if want.empty?
 
     value = Float(want, exception: false)
-    abort "LIVE_DRAG=#{want} is not a ratio between 0.5 and 1.0" unless value && value.between?(0.5, 1.0)
+    abort "LIVE_DRAG=#{want} is not a ratio between 0.5 and 1.0" unless value&.between?(0.5, 1.0)
     value
   end
 
