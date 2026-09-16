@@ -35314,6 +35314,23 @@ module Bed
   # Nil when the patch names no voice or the synthesiser will not play it, and
   # the ffmpeg expression below runs instead -- so this is reversible by one key
   # in data/bed.yml and a render can be compared against the old sound.
+  # A note for whoever sees six idle cores here and reaches for threads.
+  #
+  # each_parallel runs the chords on six threads, which worked for years because
+  # every chord was an ffmpeg subprocess and a thread waiting on one releases the
+  # interpreter lock. AnalogSynth is Ruby, and Ruby threads do not run Ruby in
+  # parallel: moving the pads onto it turned that parallel stage into a serial
+  # loop. Measured here, four chords through each_parallel take 17.6 s against
+  # 4.4 s for one, which is 4.0x and therefore no parallelism at all.
+  #
+  # Forking each chord was tried and is worse, which is why there is no fork
+  # here. In isolation it does help -- four chords in 12.9 s rather than 17.6 --
+  # but a whole render went from 35.2 s to 45.3 s, because by the time the chords
+  # are reached the parent's heap is large and copy-on-write costs more per child
+  # than the concurrency returns. A real fix moves the inner loop out of Ruby or
+  # renders the pass in one child rather than one per chord; both are work, and
+  # neither is a thread.
+
   def synth_chord(notes, patch, seconds, path)
     return nil unless SYNTH_VOICES && patch.synth
 
@@ -35712,6 +35729,48 @@ module Bed
   # instruments. A hash of trims cannot narrow anything, because a piece naming
   # two of them merges into the six underneath and draws all six; a list
   # replaces. Every name still carries its measured trim from `racks`.
+  LEAD_SPACE = LEAD["space"]
+
+  # The whole line through one drawn room, after the bars are joined.
+  #
+  # Per pass rather than per bar on purpose: a room that changes every bar is an
+  # effect, and a room that holds is a place. The two channels get the same plan
+  # with the reverb's comb lengths offset on one side, so it is a space rather
+  # than the same room played twice.
+  #
+  # Scaled back to the peak it arrived with. A reverb and an echo both add
+  # energy, write! clamps at full scale, and a lead that clipped here would
+  # arrive at the mix already broken with the ducking and the master bus unable
+  # to tell.
+  def space_lead!(path, seed)
+    wet = Float(LEAD_SPACE&.fetch("wet", 0) || 0)
+    return path unless wet.positive?
+
+    left, right = AnalogSynth.read!(path)
+    return path if left.empty?
+
+    before = channels_peak(left, right)
+    plan = SpaceFx.random_plan(Random.new(seed), wet:, max_stages: LEAD_SPACE["stages"])
+    SpaceFx.apply!(left, plan, spread: 0)
+    SpaceFx.apply!(right, plan, spread: 23)
+    after = channels_peak(left, right)
+    if after > before && before.positive?
+      scale = before / after
+      left.map! { |v| v * scale }
+      right.map! { |v| v * scale }
+    end
+    dmesg("lead room #{SpaceFx.describe(plan)}", unit: "bed0", parent: "dilla0")
+    AnalogSynth.write!(left, right, path)
+    path
+  end
+
+  def channels_peak(left, right)
+    peak = 0.0
+    left.each { |v| peak = v.abs if v.abs > peak }
+    right.each { |v| peak = v.abs if v.abs > peak }
+    peak
+  end
+
   RACKS = begin
     named = Array(LEAD["rack_names"]) & LEAD.fetch("racks").keys
     (named.empty? ? LEAD.fetch("racks").keys : named).freeze
@@ -36259,6 +36318,7 @@ module Bed
       played_bar || silence(BAR, file)
     end
     lead = concat(lead_bars, scratch("lead"))
+    space_lead!(lead, seed)
     surface = dust(seconds, seed, scratch("dust"))
     low = bass_track(chords, scratch("bass"))
 

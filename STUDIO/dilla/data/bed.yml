@@ -117,6 +117,20 @@ lead:
   glide_ms: 35
   order_flip_odds: 0.3
   sit_out_bars: 8
+  # The room the line plays in, drawn per pass rather than written down.
+  #
+  # SpaceFx (lib/sound.rb) picks from a wavefolder, a bit crusher, a phaser, a
+  # chorus, a tremolo, a space echo with wow on its delay, and a reverb, then
+  # sorts what it drew into the order those belong in: distortion before a
+  # filter sounds like an instrument and after it sounds like a broken speaker,
+  # and the room goes last because everything before it is the sound and the room
+  # is where the sound happens. The reverb is always there and always last.
+  #
+  # The live path has drawn its chains this way since it was written and the bed
+  # never has, which is why the bed's lead sat dry under a wet pad. `stages`
+  # trims the draw: live needs the samples before the speaker wants them and a
+  # render does not, so a render can afford all seven.
+  space: { stages: 7, wet: 1.0 }
 # The bass line under the bed: dilla's ImprovisedLine.bass, rendered as a
 # rounded wave with a sine at its own pitch under it -- an octave lower lands
 # below the kick, where nothing is heard and the sub band swells -- lowpassed so it is felt more than
