@@ -34,9 +34,15 @@ module Master
           @scanner = scanner
           @learnings = learnings
           @preamble = preamble
+          @rule_order = RuleOrder.new(rules:, learnings:, bus:, root:)
+          take_limits(clean_runs_required:, plateau_window:, ground_truth:, homeostat:, council:)
+        end
+
+        # What a pass is judged by, apart from the collaborators it runs through:
+        # when it may stop, when it has stopped moving, and who else gets a say.
+        def take_limits(clean_runs_required:, plateau_window:, ground_truth:, homeostat:, council:)
           @clean_runs_required = clean_runs_required
           @plateau_window = plateau_window
-          @rule_order = RuleOrder.new(rules:, learnings:, bus:, root:)
           @violation_counts = Hash.new(0)
           @rule_recurrence = Hash.new(0)
           @ground_truth = ground_truth
