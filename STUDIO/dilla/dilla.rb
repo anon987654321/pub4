@@ -28184,6 +28184,7 @@ def command_help
       ["bass", "[hz]", "A modulating bass tone, played: a speaker check"],
     ]],
     ["demo", "DEMO AND TAKES", [
+      ["catalogue", "", "The catalogue through the bed -> demo.wav + demo.mp3"],
       ["demo-all", "[bars] [out.wav]", "The older engine's catalogue: #{sizes[:verified]} verified + #{sizes[:improvised]} improvised -> demo.wav + demo.mp3"],
       ["demo-each", "[bars]", "The same catalogue, one mp3 per track, no concat"],
       ["demo-quick", "[bars]", "An evenly spaced sample of the catalogue, for judging a change"],
@@ -28331,7 +28332,7 @@ def help(topic = nil)
   puts "    Dilla Lab (#{ROOT})"
   case topic
   when nil
-    puts "", "      ruby dilla.rb                         the catalogue through the bed -> demo.wav",
+    puts "", "      ruby dilla.rb                         one six-minute piece, every part of the engine -> demo.wav",
          "      ruby dilla.rb out.wav [bars]          one render to that path"
     commands.call(sections)
     puts "", "    ruby dilla.rb help <topic> for one section, help knobs for the environment, help all for both."
@@ -35368,7 +35369,11 @@ module Bed
 
   HAT_ACCENTS = DRUMS.fetch("hat_accents")
 
-  def drum_bar(shape, path)
+  def drum_bar(shape, path) = kit_bar(drum_parts(shape), path)
+
+  # The bar's hits, voice by voice, as [seconds, velocity]: the grid placed in
+  # dilla time. Apart from the render so a composition can rework them first.
+  def drum_parts(shape)
     # A kick rings for a tenth of a second, so two a sixteenth apart read as one
     # hit with a flam, and a pickup on step 15 is a sixteenth from the next one.
     placed = []
@@ -35393,7 +35398,10 @@ module Bed
       (step == 14 && rand < HAT_ACCENTS["open_odds"] ? opens : hats) << [step_time(step, :hat), velocity.round(3)]
     end
 
-    parts = { kick: kicks, snare: backbeats, ghost: ghosts, hat: hats, open_hat: opens }
+    { kick: kicks, snare: backbeats, ghost: ghosts, hat: hats, open_hat: opens }
+  end
+
+  def kit_bar(parts, path)
     inputs = []
     graph = []
     taps = []
@@ -35909,6 +35917,364 @@ module Bed
   end
 end
 
+# demo.wav: one piece in which every part of the engine plays and the parts
+# answer each other.
+#
+# The bed plays a pass and the catalogue plays pieces, so neither shows what
+# dilla is: an engine whose layers listen. This is one form, read from
+# data/bed.yml `composition`, in which a section shapes the parts rather than
+# switching them. The drums play every bar from the first to the last. Dilla's
+# time and HATE's pulse are two drum layers under a lane each, so the heavy
+# section is the HATE layer pushed over a kit that keeps swinging rather than a
+# change of record.
+#
+# The bass states the key before any chord does. The chords are one of the
+# engine's verified progressions, heard at home and then mirrored about the key
+# over the same bass. The lead's motif is read from the chord it enters on and
+# follows each chord after it. Percussion answers every lead note; the lead's
+# racks echo on the sixteenth grid, a second rhythm; lanes open the drum filter
+# into the heavy section; the kick drops out for a bar before a return so the
+# harmony is heard alone; and the return plays the motif backwards and inverted.
+# Every note is a DillaEvents::Event before it sounds, so each of those moves is
+# a transform named in the data.
+module Composition
+  module_function
+
+  Event = DillaEvents::Event
+  FORM = Bed::BED.fetch("composition")
+  SECTIONS = FORM.fetch("sections").freeze
+  BAR_SECTIONS = SECTIONS.flat_map { |section| [section] * Integer(section.fetch("bars")) }.freeze
+  STARTS = SECTIONS.each_with_object([0]) { |section, starts| starts << (starts.last + Integer(section.fetch("bars"))) }.freeze
+  SILENT_DB = -60
+  STEMS = %w[texture kit hate bass pads lead].freeze
+  FILTERED = %w[kit hate pads].freeze
+  GM = { kick: 36, snare: 38, ghost: 37, hat: 42, open_hat: 46 }.freeze
+  VOICES = GM.invert.freeze
+  # The kick is the pulse, so it takes only the transforms that move a note.
+  # Nothing but a dropout removes one.
+  TIMING = %w[humanize swing shift quantize accent].freeze
+  LANE_HZ = 10
+
+  TRANSFORMS = {
+    "humanize" => ->(events, rng, p) { DillaEvents.humanize(events, rng, ms: p.fetch("ms"), spread: p.fetch("spread")) },
+    "swing" => ->(events, _rng, p) { DillaEvents.swing(events, Bed::STEP, p.fetch("amount")) },
+    "shift" => ->(events, _rng, p) { DillaEvents.shift(events, Bed::STEP * p.fetch("steps")) },
+    "stretch" => ->(events, _rng, p) { DillaEvents.stretch(events, p.fetch("factor")) },
+    "reverse" => ->(events, _rng, _p) { DillaEvents.reverse(events, Bed::BAR) },
+    "repeat" => lambda do |events, _rng, p|
+      span = Bed::BAR / p.fetch("times")
+      DillaEvents.repeat(events.select { |event| event.at < span }, span, p.fetch("times"))
+    end,
+    "ratchet" => lambda do |events, rng, p|
+      struck, rest = events.partition { rng.rand < p.fetch("odds") }
+      rest + DillaEvents.ratchet(struck, p.fetch("count"))
+    end,
+    "ghost" => ->(events, rng, p) { DillaEvents.ghost(events, rng, Bed::STEP, odds: p.fetch("odds"), level: p.fetch("level")) },
+    "accent" => ->(events, _rng, p) { DillaEvents.accent(events, Bed::BEAT, amount: p.fetch("amount")) },
+    "drop" => ->(events, rng, p) { DillaEvents.drop(events, rng, p.fetch("odds")) },
+    "transpose" => ->(events, _rng, p) { DillaEvents.transpose(events, p.fetch("semitones")) },
+    "invert" => ->(events, _rng, _p) { events.empty? ? events : DillaEvents.invert(events, events.first.pitch) },
+    "chop" => ->(events, _rng, p) { DillaEvents.chop(events, p.fetch("pieces")) },
+    "stutter" => ->(events, _rng, p) { DillaEvents.stutter(events, Bed::STEP * p.fetch("steps"), p.fetch("repeats")) },
+    "probabilize" => ->(events, _rng, p) { DillaEvents.probabilize(events, p.fetch("odds")) },
+    "quantize" => ->(events, _rng, p) { DillaEvents.quantize(events, Bed::STEP, strength: p.fetch("strength")) },
+    "resample" => ->(events, _rng, p) { DillaEvents.resample(events, p.fetch("rate")) },
+  }.freeze
+
+  def bars = BAR_SECTIONS.size
+  def seconds = (bars * Bed::BAR).round(4)
+  def section_index(bar) = SECTIONS.index { |section| section.equal?(BAR_SECTIONS.fetch(bar)) }
+  def offset(bar) = bar - STARTS.fetch(section_index(bar))
+  def plays?(section, stem) = section.fetch("gains_db").fetch(stem) > SILENT_DB
+  def chord_at(chords, bar) = chords.fetch(bar / Bed::BARS_PER_CHORD)
+
+  def transform(events, names, rng)
+    names.reduce(events) { |current, name| TRANSFORMS.fetch(name).call(current, rng, FORM.fetch("transforms").fetch(name)) }
+  end
+
+  # demo.wav beside dilla.rb, over whatever take it held: the demo is the
+  # engine's current statement of itself, and RENDER_SEED replays one.
+  def demo!
+    seed = Integer(ENV.fetch("RENDER_SEED") { rand(2**31) })
+    dest = File.join(ROOT, "demo.wav")
+    dmesg("piece #{bars} bars, #{SECTIONS.size} sections, seed=#{seed}", unit: "piece0", parent: "dilla0")
+    render!(dest, seed)
+    puts "ok: #{dest} (#{format('%d:%02d', seconds / 60, seconds % 60)}, seed #{seed})"
+    dest
+  end
+
+  def render!(dest, seed)
+    srand(seed)
+    ensure_drum_kit!
+    chords, tonic = harmony
+    lead = lead_plan(chords, Random.new(seed))
+    pads = pad_stem(chords)
+    stems = { "texture" => texture_stem(pads, seed), "kit" => kit_stem(lead), "hate" => hate_stem(tonic, seed),
+              "bass" => Bed.bass_track(chords, Bed.scratch("piece_bass")), "pads" => pads, "lead" => lead_stem(lead, chords) }
+    mixed = mix(stems, Bed.scratch("piece_mixed"))
+    Bed.finish!(mixed, dest)
+    (stems.values + [mixed]).each { |file| File.unlink(file) if File.file?(file) }
+    dest
+  end
+
+  # One progression, voiced a section at a time so each section is dealt its own
+  # instrument, and the key it is in: the bass of its first chord.
+  def harmony
+    row = Bed.pick_progressions.first
+    slots = (bars / Bed::BARS_PER_CHORD.to_f).ceil
+    rows = (0...slots).chunk_while { |a, b| section_index(a * Bed::BARS_PER_CHORD) == section_index(b * Bed::BARS_PER_CHORD) }.map do |group|
+      Bed::Progression.new(name: row.name, chords: group.map { |slot| row.chords[slot % row.chords.size] })
+    end
+    tonic = row.chords.first.bass
+    voiced = Bed.voice_pass(rows, Bed.deal_instruments(rows.size)).each_with_index.map do |chord, slot|
+      BAR_SECTIONS.fetch(slot * Bed::BARS_PER_CHORD)["harmony"] == "mirrored" ? mirror(chord, tonic) : chord
+    end
+    [voiced, tonic]
+  end
+
+  # Negative harmony: every upper tone mirrored about the axis between the key's
+  # root and its fifth, so the progression moves as far from home in the other
+  # direction and a minor colour comes back major. The bass stays, and the key
+  # stays with it, which is what makes the new chords ambiguous rather than a
+  # modulation.
+  def mirror(chord, tonic)
+    upper = chord.notes.drop(1).map { |note| Event.note(pitch: note, at: 0.0) }
+    turned = DillaEvents.invert(upper, 60 + tonic + 3.5).map { |event| within(event.pitch.round, Bed::UPPER_RANGE) }
+    Bed::PassChord.new(**chord.to_h, notes: [chord.notes.first] + turned.uniq.sort)
+  end
+
+  def within(note, range)
+    note += 12 while note < range[0]
+    note -= 12 while note > range[1]
+    note
+  end
+
+  MOTIF = FORM.fetch("motif")
+
+  # The motif's degrees come from the chord the lead first plays over; its
+  # pitches come from whichever chord is sounding, so the figure is one idea
+  # carried through the harmony.
+  def lead_plan(chords, rng)
+    entry = (0...bars).find { |bar| plays?(BAR_SECTIONS[bar], "lead") }
+    degrees = motif_from_chord({ hz: chord_at(chords, entry).notes.drop(1).map { |note| Bed.midi_hz(note) } })
+    Array.new(bars) do |bar|
+      section = BAR_SECTIONS[bar]
+      next [] unless plays?(section, "lead") && (offset(bar) % Integer(FORM.fetch("lead_every"))).zero?
+
+      transform(motif_bar(degrees, chord_at(chords, bar)), section.fetch("lead"), rng).select { |event| event.at < Bed::BAR }
+    end
+  end
+
+  def motif_bar(degrees, chord)
+    tones = chord.notes.drop(1).sort
+    MOTIF.fetch("steps").each_with_index.map do |step, index|
+      Event.note(pitch: tones[degrees[index % degrees.size] % tones.size], at: step * Bed::STEP,
+                 duration: MOTIF.fetch("lengths")[index] * Bed::STEP, velocity: MOTIF.fetch("velocities")[index])
+    end
+  end
+
+  # One bar of the kit: the section's grid in dilla time, the lead's notes
+  # answered on the ghost, the section's transforms, then its density and voices.
+  def drum_events(bar, lead, rng)
+    section = BAR_SECTIONS.fetch(bar)
+    hits = Bed.drum_parts(grid(bar)).flat_map do |voice, placed|
+      placed.map { |at, velocity| Event.note(pitch: GM.fetch(voice), at:, velocity:, duration: Bed::STEP) }
+    end
+    kick, rest = hits.partition { |event| event.pitch == GM[:kick] }
+    kick = [] if Array(section["kick_drop"]).include?(offset(bar))
+    kick = transform(kick, section.fetch("drums") & TIMING, rng)
+    rest = transform(rest + answers(lead), section.fetch("drums"), rng)
+    rest = DillaEvents.realize(DillaEvents.probabilize(rest, section.fetch("density")), rng)
+    voices = section.fetch("voices").map(&:to_sym)
+    (kick + rest).select { |event| voices.include?(VOICES[event.pitch]) && event.at.between?(0.0, Bed::BAR - 0.01) }
+  end
+
+  def answers(lead)
+    answer = FORM.fetch("answer")
+    lead.map { |note| Event.note(pitch: GM[:ghost], at: note.at + (answer.fetch("steps") * Bed::STEP), velocity: answer.fetch("velocity"), duration: Bed::STEP) }
+  end
+
+  def grid(bar)
+    pool = Bed::BANKS.fetch(BAR_SECTIONS.fetch(bar).fetch("grid"))
+    pool[(section_index(bar) + (offset(bar) / Bed::BARS_PER_SHAPE)) % pool.size]
+  end
+
+  def pad_stem(chords)
+    parts = Bed.each_parallel(chords) { |chord, index| Bed.render_part(chord, index) }
+    joined = Bed.pedal_join(parts, Bed.scratch("piece_joined"))
+    drift = Bed.drift_commands(seconds + 2, Bed.scratch("piece_drift"))
+    played = Bed.scratch("piece_pads")
+    Bed.ffmpeg!("-i", joined, "-filter_complex", Bed.pad_rack(Bed::BED.fetch("pad_racks").sample, drift), "-map", "[out]", "-ac", "2", played, what: "piece pads")
+    (parts + [joined, drift]).each { |file| File.unlink(file) if File.file?(file) }
+    played
+  end
+
+  # The atmosphere is the harmony before it is heard as harmony: the pads chopped
+  # bar by bar, reordered and reversed the way dilla chops a record, then slowed
+  # the way a sampler slows one, an octave down and twice as long, over the
+  # record's own surface. Slowed an octave, the pads land under the kick and the
+  # bass, so the texture keeps only what sits above them.
+  def texture_stem(pads, seed)
+    chopped = Bed.chop(pads, bars, Bed.scratch("piece_chop"))
+    surface = Bed.dust(seconds, seed, Bed.scratch("piece_dust"))
+    out = Bed.scratch("piece_texture")
+    Bed.ffmpeg!("-i", chopped, "-i", surface, "-filter_complex",
+                "[0:a]asetrate=22050,aresample=44100,highpass=f=180:p=2,lowpass=f=1600,aecho=0.8:0.7:410|730:0.35|0.22,apad,atrim=0:#{seconds}[slow];" \
+                "[slow][1:a]amix=inputs=2:normalize=0:duration=first[out]",
+                "-map", "[out]", "-ac", "2", out, what: "piece texture")
+    [chopped, surface].each { |file| File.unlink(file) }
+    out
+  end
+
+  def kit_stem(lead)
+    files = Bed.each_parallel((0...bars).to_a) do |bar, _|
+      events = drum_events(bar, lead.fetch(bar), Bed.rng)
+      parts = events.group_by { |event| VOICES.fetch(event.pitch) }.transform_values do |hits|
+        hits.map { |event| [event.at.round(4), event.velocity.clamp(0.0, 1.0).round(3)] }
+      end
+      Bed.kit_bar(parts, Bed.scratch("piece_kit#{bar}"))
+    end
+    joined(files, "piece_kit")
+  end
+
+  # HATE, a section at a time: the profile's own voices at the bed's tempo, rooted
+  # on the key. Its low end plays only where the bass does not, so the two never
+  # stack in the sub.
+  def hate_stem(tonic, seed)
+    root = Bed.midi_hz(Bed.bass_note(tonic))
+    files = SECTIONS.each_with_index.map do |section, index|
+      length = (Integer(section.fetch("bars")) * Bed::BAR).round(4)
+      left, right = SemanticTechno.render(hate_profile(section), bars: Integer(section.fetch("bars")), seed: seed + index, roots: [root])
+      raw = AnalogSynth.write!(left, right, Bed.scratch("piece_hate_raw#{index}"))
+      cut = Bed.scratch("piece_hate#{index}")
+      Bed.ffmpeg!("-i", raw, "-af", "atrim=0:#{length},afade=t=out:st=#{(length - 0.01).round(4)}:d=0.01", "-ac", "2", cut, what: "piece hate")
+      File.unlink(raw)
+      cut
+    end
+    joined(files, "piece_hate")
+  end
+
+  def hate_profile(section)
+    spec = section.fetch("hate")
+    profile = DillaSemantics.profile(spec.fetch("profile"))
+    elements = spec.fetch("elements").map(&:to_sym) & profile.fetch(:elements)
+    elements -= [:low] if plays?(section, "bass")
+    profile.merge(bpm: Bed::BPM, elements:)
+  end
+
+  def lead_stem(lead, chords)
+    files = Bed.each_parallel(lead) do |events, bar|
+      path = Bed.scratch("piece_lead#{bar}")
+      dry = events.empty? ? nil : notes_bar(events, Bed.scratch("piece_lead_dry#{bar}"))
+      dry ? lead_rack(dry, chord_at(chords, bar), path) : Bed.silence(Bed::BAR, path)
+    end
+    joined(files, "piece_lead")
+  end
+
+  # The bed's lead racks, echoes and all: their taps fall on the sixteenth grid
+  # a few steps behind each note, which is the delay's own rhythm.
+  def lead_rack(dry, chord, path)
+    root_hz = Bed.midi_hz(chord.notes[1] || chord.notes.first)
+    root_hz *= 2 while root_hz < 110
+    root_hz /= 2 while root_hz > 440
+    rack = Bed::RACKS.sample(random: Bed.rng)
+    Bed.ffmpeg!("-i", dry, "-filter_complex", Bed.lead_rack(rack, root_hz), "-map", "[out]", "-ac", "2", path, what: "piece lead #{rack}")
+    File.unlink(dry)
+    path
+  end
+
+  # Events to a dry bar, one short oscillator source per note on the bed's
+  # channels, so a phrase is passed between instruments. A chopped or ratcheted
+  # note decays twice as fast, which is what makes it a hit rather than a note.
+  def notes_bar(events, path)
+    inputs = []
+    legs = []
+    events.each_with_index do |event, index|
+      channel = Bed::CHANNELS[index % Bed::CHANNELS.size]
+      freq = Bed.midi_hz(event.pitch + channel.octave).round(4)
+      next if freq > 5000 || freq < 60
+
+      decay = channel.decay * (event.articulation == :normal ? 1 : 2)
+      held = [event.duration + 0.3, 1.0].min.round(3)
+      tone = Bed::WAVES.fetch(channel.wave).call(Bed.phase(freq), "(0.35+0.65*exp(-6*t))")
+      gain_l, gain_r = Bed.pan_gains(channel.pan, 0.34 * event.velocity)
+      inputs << "-f" << "lavfi" << "-t" << held.to_s << "-i" << "aevalsrc='#{tone}*exp(-#{decay}*t)':s=88200:d=#{held}"
+      ms = (event.at * 1000).round
+      legs << "[#{legs.size}:a]aresample=44100,pan=stereo|c0=#{gain_l}*c0|c1=#{gain_r}*c0,adelay=#{ms}|#{ms}[n#{legs.size}]"
+    end
+    return nil if legs.empty?
+
+    taps = (0...legs.size).map { |index| "[n#{index}]" }.join
+    graph = "#{legs.join(';')};#{taps}amix=inputs=#{legs.size}:normalize=0,apad=whole_dur=#{Bed::BAR.round(4)},atrim=0:#{Bed::BAR.round(4)}[out]"
+    Bed.ffmpeg!(*inputs, "-filter_complex", graph, "-map", "[out]", "-ac", "2", path, what: "piece notes")
+    path
+  end
+
+  def joined(files, name)
+    out = Bed.concat(files, Bed.scratch(name))
+    files.each { |file| File.unlink(file) if File.file?(file) }
+    out
+  end
+
+  # Every stem under its lanes, the pads, lead, texture and bass ducked under both
+  # drum layers together, then the bed's master bus and its loudness target.
+  def mix(stems, path)
+    lanes = lanes_file(path.sub(/\.wav\z/, ".cmd"))
+    chains = STEMS.each_with_index.map do |stem, index|
+      head = index.zero? ? "asendcmd=f=#{lanes}," : ""
+      filter = FILTERED.include?(stem) ? "lowpass@f_#{stem}=f=16000:p=2," : ""
+      "[#{index}:a]#{head}#{filter}volume@g_#{stem}=0[#{stem}]"
+    end
+    fade = Float(FORM.fetch("fade_out_s"))
+    graph = "#{chains.join(';')};[kit][hate]amix=inputs=2:normalize=0,asplit=5[key1][key2][key3][key4][drums];" \
+            "#{Bed.ducker('pads', '[key1]', '[pads]', '[pads_d]')};#{Bed.ducker('lead', '[key2]', '[lead]', '[lead_d]')};" \
+            "#{Bed.ducker('dust', '[key3]', '[texture]', '[texture_d]')};#{Bed.ducker('bass', '[key4]', '[bass]', '[bass_d]')};" \
+            "[drums][pads_d][lead_d][texture_d][bass_d]amix=inputs=5:normalize=0:duration=longest," \
+            "atrim=0:#{seconds},afade=t=out:st=#{(seconds - fade).round(4)}:d=#{fade}[bus];#{Bed.master_graph('[bus]', '[out]')}"
+    Bed.ffmpeg!(*STEMS.flat_map { |stem| ["-i", stems.fetch(stem)] }, "-filter_complex", graph, "-map", "[out]", "-ac", "2", path, what: "piece mix")
+    File.unlink(lanes)
+    path
+  end
+
+  def lanes_file(path)
+    lines = lanes.flat_map do |target, param, points|
+      last = nil
+      (0..(seconds * LANE_HZ).ceil).filter_map do |tick|
+        at = tick.to_f / LANE_HZ
+        value = DillaModulation.envelope_at(points, at).round(4)
+        next if value == last
+
+        last = value
+        [at.round(2), "#{target} #{param} #{value}"]
+      end
+    end
+    # One interval per time, its commands joined by commas, as sendcmd reads them.
+    grouped = lines.group_by(&:first).sort.map { |at, commands| "#{at} #{commands.map(&:last).join(', ')};" }
+    File.write(path, "#{grouped.join("\n")}\n")
+    path
+  end
+
+  def lanes
+    gains = STEMS.map do |stem|
+      ["volume@g_#{stem}", "volume", lane { |section| [10**(section.fetch("gains_db").fetch(stem) / 20.0)] * 2 }]
+    end
+    gains + FILTERED.map { |stem| ["lowpass@f_#{stem}", "f", lane { |section| section.fetch("cutoff_hz").fetch(stem) }] }
+  end
+
+  # Each section's value, reached over the first ramp_bars of it from wherever
+  # the last section left off, then moved to its second value by the end.
+  def lane
+    ramp = Integer(FORM.fetch("ramp_bars")) * Bed::BAR
+    SECTIONS.each_with_index.each_with_object([]) do |(section, index), points|
+      from, to = yield(section)
+      start = STARTS[index] * Bed::BAR
+      points << [start, points.empty? ? from : points.last.last]
+      points << [start + (index.zero? ? 0.0 : ramp), from]
+      points << [(STARTS[index + 1] * Bed::BAR) - 0.001, to]
+    end
+  end
+end
+
 # The catalogue, generated and played as it goes.
 #
 # Every decision here is made somewhere else and this section only arranges
@@ -36273,6 +36639,7 @@ DISPATCH = {
   "play" => -> { play(ARGV.shift, (ARGV.shift || 8).to_i) },
   "live" => -> { live!(ARGV) },
   "bed" => -> { Bed.main(ARGV) },
+  "catalogue" => -> { Bed.catalogue! },
   "stream" => -> { stream((ARGV.shift || stream_bars_default).to_i) },
   # The short one, kept because it is genuinely useful when iterating -- a few
   # bars of each named style finishes in minutes. It is no longer what a bare
@@ -36622,11 +36989,10 @@ if __FILE__ == $PROGRAM_NAME
 
   cmd = ARGV.shift
   if cmd.nil?
-    # Bare invoke renders the catalogue, because the catalogue is what this
-    # program is for: nineteen pieces, seven off records and twelve it wrote,
-    # every sound synthesised. `live` is the version that plays instead of
-    # writing.
-    Bed.catalogue!
+    # Bare invoke renders the piece, because it is the one render in which every
+    # part of the engine plays at once and answers the others. `catalogue` plays
+    # the nineteen pieces through the bed, and `live` plays instead of writing.
+    Composition.demo!
   elsif render_output_path?(cmd) && !DISPATCH.key?(cmd)
     ARGV.unshift(cmd)
     default_render!

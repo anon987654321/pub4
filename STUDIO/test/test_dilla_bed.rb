@@ -9,7 +9,10 @@ require "open3"
 # the catalogue voiced, nothing played that the engine did not synthesise, no
 # setting without a reader, and a rendered piece that lands where it should.
 class TestDillaBed < Minitest::Test
-  BED_SOURCE = File.read(File.expand_path("../dilla/dilla.rb", __dir__))[/^module Bed\n.*?^end\n/m]
+  DILLA_SOURCE = File.read(File.expand_path("../dilla/dilla.rb", __dir__))
+  BED_SOURCE = DILLA_SOURCE[/^module Bed\n.*?^end\n/m]
+  # data/bed.yml declares the bed and the piece, and module Composition reads the piece.
+  READERS = BED_SOURCE + DILLA_SOURCE[/^module Composition\n.*?^end\n/m]
 
   # The catalogue is seven recordings and twelve improvisations, and a bare
   # invoke plays exactly that. A cut to four was made once and reversed.
@@ -59,7 +62,7 @@ class TestDillaBed < Minitest::Test
 
   def test_every_declared_setting_has_a_reader
     unread = Bed::BED.keys.reject do |key|
-      DESCRIPTIVE_KEYS.include?(key) || BED_SOURCE.match?(/BED\.fetch\("#{key}"\)|BED\.dig\("#{key}"|BED\["#{key}"\]/)
+      DESCRIPTIVE_KEYS.include?(key) || READERS.match?(/BED\.fetch\("#{key}"\)|BED\.dig\("#{key}"|BED\["#{key}"\]/)
     end
 
     assert_empty unread
@@ -98,5 +101,139 @@ class TestDillaBed < Minitest::Test
     assert_operator reading[:tp], :<=, Float(Bed::LOUDNESS.fetch("true_peak_db"))
   ensure
     FileUtils.rm_f(out) if out
+  end
+end
+
+# demo.wav is one piece, and these pin what the operator asked of it on
+# 2026-09-15: about six minutes, the drums every bar with a kick dropout of a bar
+# or two at most, the parts answering each other, and every move an event
+# transform the data names.
+class TestDillaComposition < Minitest::Test
+  C = Composition
+  E = DillaEvents
+  SOURCE = File.read(File.expand_path("../dilla/dilla.rb", __dir__))
+
+  def test_a_bare_invoke_renders_the_piece
+    assert_match(/if cmd\.nil\?\n(?:\s*#[^\n]*\n)*\s*Composition\.demo!/, SOURCE)
+  end
+
+  def test_the_piece_is_about_six_minutes_in_twelve_sections
+    assert_equal 12, C::SECTIONS.size
+    assert_in_delta 360, C.seconds, 30
+  end
+
+  # A kick sounds from the kit or from the HATE layer's own kick, and never goes
+  # missing for more than two bars running.
+  def test_the_pulse_is_never_gone_for_more_than_two_bars
+    srand(5)
+    chords, = C.harmony
+    lead = C.lead_plan(chords, Random.new(5))
+    pulse = (0...C.bars).map do |bar|
+      C.drum_events(bar, lead[bar], Random.new(bar)).any? { |event| event.pitch == C::GM[:kick] } ||
+        C.hate_profile(C::BAR_SECTIONS[bar]).fetch(:elements).include?(:kick)
+    end
+    gaps = pulse.chunk_while { |a, b| a == b }.reject(&:first).map(&:size)
+
+    assert_operator gaps.max.to_i, :<=, 2
+    assert_operator gaps.size, :>=, 2, "the kick never drops out to expose the harmony"
+  end
+
+  def test_every_section_plays_drums
+    C::SECTIONS.each do |section|
+      refute_empty section.fetch("voices"), section["name"]
+      assert_operator section.fetch("gains_db").fetch("kit"), :>, C::SILENT_DB, section["name"]
+      assert_operator section.fetch("density"), :>, 0.0, section["name"]
+    end
+  end
+
+  def test_every_transform_the_data_names_exists
+    named = C::SECTIONS.flat_map { |section| section.fetch("drums") + section.fetch("lead") }.uniq
+
+    assert_empty named - C::TRANSFORMS.keys
+    assert_equal C::TRANSFORMS.keys.sort, C::FORM.fetch("transforms").keys.sort
+  end
+
+  # The motif is the sounding chord's own tones wherever it is stated plainly.
+  def test_the_stated_motif_is_made_of_the_chord_under_it
+    srand(8)
+    chords, = C.harmony
+    lead = C.lead_plan(chords, Random.new(8))
+    stated = (0...C.bars).select { |bar| C::BAR_SECTIONS[bar].fetch("lead").empty? && lead[bar].any? }
+
+    refute_empty stated
+    stated.each do |bar|
+      tones = C.chord_at(chords, bar).notes.drop(1)
+      lead[bar].each { |note| assert_includes tones, note.pitch }
+    end
+  end
+
+  def test_the_mirrored_harmony_keeps_the_bass_and_moves_the_upper_voices
+    chord = Bed::PassChord.new(notes: [38, 60, 65, 69, 72], family: :rhodes, patch: nil, program: nil)
+    turned = C.mirror(chord, 2)
+
+    assert_equal 38, turned.notes.first
+    refute_equal chord.notes.drop(1), turned.notes.drop(1)
+  end
+
+  # The mirrored section is heard: its chords hold tones the progression at home
+  # never plays.
+  def test_the_mirrored_section_plays_harmony_the_home_sections_do_not
+    srand(13)
+    chords, = C.harmony
+    slots = chords.each_index.group_by { |slot| C::BAR_SECTIONS[slot * Bed::BARS_PER_CHORD]["harmony"] == "mirrored" }
+    classes = ->(indexes) { indexes.flat_map { |slot| chords[slot].notes.drop(1).map { |note| note % 12 } }.uniq }
+
+    refute_empty classes.call(slots.fetch(true)) - classes.call(slots.fetch(false))
+  end
+
+  def test_the_hate_layer_takes_its_low_end_only_where_the_bass_is_silent
+    section = C::SECTIONS.find { |s| s.dig("hate", "profile") == "industrial" }
+    with_low = section.merge("hate" => { "profile" => "industrial", "elements" => %w[kick low] })
+
+    refute_includes C.hate_profile(with_low).fetch(:elements), :low
+    silent = with_low.merge("gains_db" => with_low.fetch("gains_db").merge("bass" => C::SILENT_DB))
+    assert_includes C.hate_profile(silent).fetch(:elements), :low
+    assert_equal Bed::BPM, C.hate_profile(silent).fetch(:bpm)
+  end
+
+  def note(pitch, at, duration = 0.5) = E::Event.note(pitch:, at:, duration:)
+
+  def test_reverse_mirrors_time_within_the_span
+    reversed = E.reverse([note(60, 0.0), note(62, 1.0)], 2.0)
+
+    assert_equal [[62, 0.5], [60, 1.5]], reversed.map { |event| [event.pitch, event.at] }
+  end
+
+  def test_ratchet_strikes_a_note_inside_its_own_length
+    hits = E.ratchet([note(60, 1.0, 0.3)], 3)
+
+    assert_equal [1.0, 1.1, 1.2], hits.map { |event| event.at.round(3) }
+    assert_operator hits.last.velocity, :<, hits.first.velocity
+  end
+
+  def test_invert_and_transpose_move_pitch_only
+    assert_equal [64, 60], E.invert([note(60, 0.0), note(64, 0.5)], 62).map(&:pitch)
+    assert_equal [72], E.transpose([note(60, 0.25)], 12).map(&:pitch)
+  end
+
+  def test_stutter_repeats_the_first_slice_over_what_it_covered
+    played = E.stutter([note(60, 0.0), note(62, 0.3), note(64, 1.0)], 0.25, 3)
+
+    assert_equal [[60, 0.0], [60, 0.25], [60, 0.5], [64, 1.0]], played.map { |event| [event.pitch, event.at] }
+  end
+
+  def test_a_sample_is_slowed_never_sped_up
+    slowed = E.resample([note(60, 1.0)], 0.5).first
+
+    assert_equal [2.0, 1.0, 48.0], [slowed.at, slowed.duration, slowed.pitch]
+    assert_raises(ArgumentError) { E.resample([note(60, 1.0)], 2.0) }
+  end
+
+  def test_probability_decides_which_notes_play
+    events = Array.new(400) { |index| note(60, index * 0.01) }
+    kept = E.realize(E.probabilize(events, 0.25), Random.new(1)).size
+
+    assert_in_delta 100, kept, 30
+    assert_equal 400, E.realize(events, Random.new(1)).size
   end
 end
