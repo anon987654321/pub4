@@ -2064,8 +2064,19 @@ module DillaComposition
   module ListeningLoop
     module_function
 
+    # The loop converges on the window the critique scores in, HOUSE_LUFS.
+    #
+    # It aimed at -14.5..-10.5, broadcast loudness, which no style this engine
+    # masters reaches: MASTER_LUFS_BY_STYLE runs -19 to -14, and the loop renders
+    # render_dilla, whose target is -19. So every pass it measured was "too
+    # quiet", every retry was pushed to -12.5 through MASTER_LUFS, and the take it
+    # kept was the one the critique beside it marked down for loudness and the
+    # operator had already called way too loud. One window means a pass the
+    # critique accepts ends the loop, and a pass outside it is levelled to -18,
+    # inside the house range rather than above every style in it.
     def converge(render_fn:, analyze_fn:, max_passes: 3, targets: {})
-      targets = { lufs_min: -14.5, lufs_max: -10.5, groove_min: 75 }.merge(targets)
+      targets = { lufs_min: Critique::HOUSE_LUFS.begin, lufs_max: Critique::HOUSE_LUFS.end,
+                  groove_min: 75 }.merge(targets)
       path = nil
       max_passes.times do |pass|
         path = render_fn.call(pass)
