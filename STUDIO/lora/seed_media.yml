@@ -1,6 +1,6 @@
 # Every photograph the three RAILS apps seed with, as a prompt.
 #
-# Sibling to shoots.yml and built on the same conviction: a prompt names a real
+# Sibling to ideas.yml and built on the same conviction: a prompt names a real
 # light, a real distance and a real subject, because that is the part a
 # diffusion model can act on. "Beautiful lighting" gets the average of
 # everything it has seen.

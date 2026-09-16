@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Turn shoots.yml into prompts, for whichever subject is being rendered.
+# Turn ideas.yml into prompts, for whichever subject is being rendered.
 #
 # The fifty sittings are subject-agnostic: a north window is a north window
 # whoever stands in it. What changes per subject is the trigger token the LoRA
@@ -23,33 +23,37 @@ require_relative "../../preprompt/lib/craft"
 
 LORA_ROOT = Pathname.new(__dir__).join("..").expand_path
 
-# Two briefs, not one file with a mode flag.
+# Every written sitting lives in ideas.yml, tagged with the brief it belongs to.
 #
-# shoots.yml is a record of light and it flatters. shoots_warp.yml is the press
-# shoot — degraded media, clinical framing, obstruction, hard flash — and it is
-# not trying to. Mixing them would produce an average of the two, which is the
-# one thing neither brief wants.
+# shoots is a record of light and it flatters; warp is the press shoot and it is
+# not trying to. Mixing them produces an average of the two, which is the one
+# thing neither brief wants, so a set is a filter on that file rather than a
+# blend of it. best is the short list, and it names sittings in the other two
+# rather than copying their prose.
 #
-# A set is any shoots*.yml beside this directory, so adding a third is adding a
-# file. The drawn sets have no file: preprompt draws their sittings by number,
-# and each is capped only when nothing narrows it. scenarios are portraits in
-# drawn situations, selfies keep a selfie's framing and gaze from two or three
-# metres, and distance is one sitting at six stated camera distances.
+# The drawn sets have no entries there at all: preprompt draws their sittings by
+# number, and each is capped only when nothing narrows it. scenarios are
+# portraits in drawn situations, selfies keep a selfie's framing and gaze from
+# two or three metres, and distance is one sitting at six stated camera
+# distances.
+IDEAS = LORA_ROOT.join("ideas.yml")
+BEST = "best"
 DRAWN_SETS = {
   "scenarios" => [:scenario_sitting, 24],
   "selfies" => [:selfie_sitting, 48],
   "distance" => [:distance_sitting, DISTANCE_LADDER.length],
 }.freeze
 
-def set_file(name)
-  return LORA_ROOT.join("shoots.yml") if name.nil? || name == "shoots"
+def ideas_document
+  @ideas_document ||= YAML.safe_load_file(IDEAS)
+end
 
-  LORA_ROOT.join("shoots_#{name}.yml")
+def written_sets
+  ideas_document.fetch("sets").keys + [BEST]
 end
 
 def available_sets
-  stems = LORA_ROOT.glob("shoots*.yml").map { |path| path.basename(".yml").to_s.sub(/\Ashoots_?/, "") }
-  (stems.map { |stem| stem.empty? ? "shoots" : stem } + DRAWN_SETS.keys).sort
+  (written_sets + DRAWN_SETS.keys).sort
 end
 
 def subject_env(subject)
@@ -91,11 +95,14 @@ end
 def shoots(side: nil, only: nil, set: nil)
   return drawn_sittings(set, side: side, only: only) if DRAWN_SETS.key?(set)
 
-  file = set_file(set)
-  abort "warn: no set #{set.inspect} — have: #{available_sets.join(', ')}" unless file.file?
+  set ||= "shoots"
+  abort "warn: no set #{set.inspect} — have: #{available_sets.join(', ')}" unless written_sets.include?(set)
 
-  doc = YAML.safe_load_file(file)
-  all = doc["selection"] ? resolve_selection(doc.fetch("selection"), file) : doc.fetch("shoots")
+  all = if set == BEST
+          resolve_selection(ideas_document.fetch(BEST))
+        else
+          ideas_document.fetch("ideas").select { |sitting| sitting["set"] == set }
+        end
   all = all.select { |s| s["side"].casecmp?(side) } if side
   all = all.select { |s| only.include?(s["n"]) } if only
   all
@@ -103,19 +110,19 @@ end
 
 # A curated set names sittings in other sets rather than copying them.
 #
-# A copy drifts. The first time a scene is reworded in shoots.yml the duplicate
+# A copy drifts. The first time a scene is reworded in the shoots set the duplicate
 # in the short list still says the old thing, two files describe the same sitting
 # differently, and nothing indicates which one rendered. So the short list is
 # { from:, n: } and the prose has exactly one home.
 #
 # Renumbered so a short list reads 1..24 rather than carrying the numbers it was
 # drawn from, and the source is kept on each so a frame can be traced back.
-def resolve_selection(entries, file)
+def resolve_selection(entries)
   entries.each_with_index.map do |entry, index|
     source = entry.fetch("from")
     number = entry.fetch("n")
-    found = shoots(set: source == "shoots" ? nil : source).find { |s| s["n"] == number }
-    abort "warn: #{file.basename} references #{source} ##{number}, which does not exist" unless found
+    found = shoots(set: source).find { |sitting| sitting["n"] == number }
+    abort "warn: best names #{source} ##{number}, which does not exist" unless found
 
     found.merge("n" => index + 1, "source" => "#{source}##{number}", "why" => entry["why"])
   end

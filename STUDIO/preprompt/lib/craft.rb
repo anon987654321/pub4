@@ -488,7 +488,7 @@ end
 
 # Sittings drawn from the vocabularies rather than written by hand.
 #
-# lora's shoots.yml is fifty sittings somebody composed, and it stays the record.
+# lora's ideas.yml is seventy-four sittings somebody composed, and it stays the record.
 # A scenario has the same schema, filled from the pools and tables above, so a
 # subject renders in more situations than anyone wrote down and each one still
 # names a real light, a lens and a distance.
