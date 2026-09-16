@@ -308,12 +308,20 @@ end
     # variant of the base — in the vocabulary because it is worn and styled.
     BTN_VOCABULARY = %w[btn btn-primary btn-ghost btn-danger btn-sm btn-link btn-block btn-share].to_set
 
+    # A class of this vocabulary begins with btn, so the character before it is
+    # neither a word character nor a hyphen. `\b` treated a hyphen as a boundary
+    # and so read every component whose own name ends in -btn as a stray variant
+    # of this one: playlist's transport-btn--primary, a BEM modifier on a
+    # different component that the stylesheet and two layout snapshots spell the
+    # same way, was reported twice as the btn--primary schism.
+    STRAY_BTN = /(?<![\w-])btn--?[\w-]+/
+
     def btn_findings
       views = Dir.glob(File.join(RAILS_ROOT, "{brgen,amber,bsdports,shared}/app/views/**/*.erb")) +
               Dir.glob(File.join(RAILS_ROOT, "brgen/engines/*/app/views/**/*.erb"))
       views.flat_map do |path|
         File.read(path, encoding: "UTF-8").each_line.with_index(1).filter_map do |line, n|
-          stray = line.scan(/\bbtn--?[\w-]+/).uniq.reject { |c| BTN_VOCABULARY.include?(c) }
+          stray = line.scan(STRAY_BTN).uniq.reject { |c| BTN_VOCABULARY.include?(c) }
           next if stray.empty?
           Finding.new("btn_vocabulary", path.sub("#{RAILS_ROOT}/", ""), "line #{n}: #{stray.join(" ")}")
         end
