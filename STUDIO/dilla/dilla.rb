@@ -6526,6 +6526,23 @@ def sample_excite_shaper
   "aeval=exprs='tanh(#{SAMPLE_EXCITE_DRIVE}*val(0))/#{n}|tanh(#{SAMPLE_EXCITE_DRIVE}*val(1))/#{n}':c=same"
 end
 
+# Where the sampled loop starts against the grid, independent of the drums.
+#
+#   SAMPLE_START_MS=18     the loop lands 18 ms behind the kit
+#   SAMPLE_START_MS=-12    the loop starts 12 ms into itself, ahead of the kit
+#
+# Every timing dial here moves a drum; nothing moved the sample, so a chop always
+# sat exactly where its file begins and the pocket could only be built on one
+# side of it. Measured in output time, after the tempo match, so the number is
+# the lag heard. Unset or 0, the chain is the text it was.
+def sample_start_offset
+  ms = ENV.fetch("SAMPLE_START_MS", "0").to_f.clamp(-500.0, 500.0)
+  return "" if ms.zero?
+  return "adelay=#{ms.round(2)}:all=1," if ms.positive?
+
+  "atrim=start=#{(-ms / 1000.0).round(5)},asetpts=PTS-STARTPTS,"
+end
+
 def build_sample_loop_filter(idx, duration, loop_bpm, target_bpm)
   # Looked up first because the per-loop defaults below all read from it. It was
   # assigned further down and referenced up here, which in Ruby is nil rather
@@ -6673,7 +6690,7 @@ end
            "equalizer=f=300:t=o:w=1.4:g=#{ENV.fetch('SAMPLE_LOOP_MUD_DB', '-2.0')}," \
            "#{shape}" \
            "lowpass=f=#{(ENV['SAMPLE_LOOP_LP'] || entry[:lp] || 11_000).to_i}"
-  tail = "atrim=0:#{duration},apad=whole_dur=#{duration},asetpts=PTS-STARTPTS"
+  tail = "#{sample_start_offset}atrim=0:#{duration},apad=whole_dur=#{duration},asetpts=PTS-STARTPTS"
 
   return "[#{idx}:a]#{common},#{tail}[loopbed]" if SAMPLE_EXCITE_MIX <= 0.0
 
@@ -15699,6 +15716,13 @@ def break_filter(input_tag, duration, out_tag: "broke")
     "[#{out_tag}]"
 end
 
+# The master chain stays in the render's graph rather than running as a second
+# pass over a written pre-master mix. The seam is already one label -- the mix
+# sum the routing spine emits -- and loudness, the one master decision an
+# operator revisits, is its own pass in normalise_master!. A pre-master file
+# would cost a full-length write and decode per take and have no reader: no
+# command masters a kept mix, and a stage nothing reads is the inert wiring this
+# engine keeps having to find and remove.
 def master_bus_filters(input_tag = "mix", track: nil, duration: nil, ir_input_idx: nil, cfg: nil)
   cfg ||= dilla_resolve_config
   filt = master_bus_filters_enhanced(input_tag, cfg:, duration:, ir_input_idx:)
@@ -16305,6 +16329,13 @@ DEFAULT_RENDER_OUTPUT = File.join(OUTPUT_DIR, "beat.mp3")
 DILLA_PAD_ATTACK_CEILING = (ENV["PAD_ATTACK_CEILING"] || 260).to_i
 DILLA_PAD_RELEASE_CEILING = (ENV["PAD_RELEASE_CEILING"] || 2200).to_i
 
+# No ROUGH_HEWN or DENSE_EXPERIMENTAL profile. A profile is a bundle of knob
+# values, and each overlay this engine carries was set against a take somebody
+# heard; those two names come with no values, only adjectives. Every dial such a
+# profile would bundle already stands on its own -- SHIFT_TIMING, SAMPLE_START_MS,
+# DRUM_WIDTH, CONSOLE_STRIP, DILLA_MIX_BUSES with BUS_PATCH, SAMPLE_EXCITE -- so a
+# rough or dense take is reachable today, and a named bundle of numbers nobody
+# chose by ear would be a label that sounds like whatever it was typed as.
 DILLA_STYLE_DEFAULTS = {
   # Ethan Hein exact Get Dis Money slash cycle (artist-verified).
   "TRACK" => "slum_village_intro_documented",
@@ -20812,7 +20843,33 @@ def reset_composition_session!
   remove_instance_variable(:@composition_session) if instance_variable_defined?(:@composition_session)
 end
 
+# The MPC's Shift Timing: one role moved early or late by a fixed amount, on top
+# of the pocket rather than instead of it.
+#
+#   SHIFT_TIMING=snare:-6,hat:4      snare 6 ms earlier, both hats 4 ms later
+#
+# MICROTIMING_MS and the performer profile already lean every role, but both are
+# the engine's answer; neither is a dial an operator turns to push one drum
+# against the rest. `kick` and `hat` name both of their roles. Unset, no role
+# moves and every offset is returned exactly as it was computed.
+SHIFT_TIMING_GROUPS = { kick: %i[kick_anchor kick_sync], hat: %i[hat_down hat_up] }.freeze
+
+def shift_timing_ms(role)
+  ENV["SHIFT_TIMING"].to_s.split(",").sum(0.0) do |pair|
+    name, ms = pair.split(":", 2).map(&:strip)
+    roles = SHIFT_TIMING_GROUPS.fetch(name.to_s.to_sym, [name.to_s.to_sym])
+    roles.include?(role) ? ms.to_f.clamp(-60.0, 60.0) : 0.0
+  end
+end
+
 def dilla_timing_ms(role, bar_index, step_index, timing = nil, beat_p = nil)
+  shift = shift_timing_ms(role)
+  return (pocket_timing_ms(role, bar_index, step_index, timing, beat_p) + shift).round(3) unless shift.zero?
+
+  pocket_timing_ms(role, bar_index, step_index, timing, beat_p)
+end
+
+def pocket_timing_ms(role, bar_index, step_index, timing, beat_p)
   base = cyclic_timing_offset(role, bar_index, step_index, timing, beat_p, cycle: 4)
   return base unless composition_enabled? && instance_variable_defined?(:@composition_session) && @composition_session
   perf = @composition_session.performer_profile

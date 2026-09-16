@@ -156,6 +156,7 @@ Sample handling:
 | `SAMPLE_SCALE=1` | layer the loop at degrees of its own key |
 | `LOOP_WOW_CENTS` | tape instability on the loop only, never the kit |
 | `LOOP_DELAY_BEATS` | tempo-synced echo (1.5 = dotted-8th) |
+| `SAMPLE_START_MS` | the loop lands this many ms behind the kit, or ahead of it when negative; the drums do not move |
 
 Two loops as one instrument — `DILLA_XSAMPLE` names the partner:
 
@@ -171,6 +172,7 @@ Drums:
 | `DRUM_PRESET` | any drum preset key (`ruby -e` / `DRUM_PRESET=boom_bap`) |
 | `NO_QUANTIZE=1` | quantise off entirely |
 | `SWING_ROLE_SPREAD` | how far the per-voice lean spreads |
+| `SHIFT_TIMING=snare:-6,hat:4` | the MPC's shift timing: one role early or late by a fixed ms, on top of the pocket (`kick` and `hat` name both their roles) |
 | `WONKY_DRUM_OVERLAY=1` | Camel dual-bus: sub at 55/110/180, top at 3.5k/6.5k/9k |
 | `WONKY_TOP_DIRT` | phaser/flanger/crush on cymbals, kick untouched |
 | `WONKY_HAT_DUCK` | duck the top bus by the kick bus |
