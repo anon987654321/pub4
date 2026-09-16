@@ -385,9 +385,10 @@ slices. Each is a hypothesis with its seam.
   from the top level, so they arrive undefined. Fixing it changes what the face
   shows: the operator's.
 - **`test_ratchets` is red on rows nobody moved on purpose.** Over the ceiling
-  on 2026-09-16: `spine.lib_body_ceiling`, `growth.master`, `growth.rails`,
-  `growth.openbsd`, `growth.studio`, `self_findings.registry`,
-  `entrypoints.openbsd` and `namespace`. The numbers move every few hours while
+  on 2026-09-16, measured after the day's merges: `spine.lib_body_ceiling`,
+  `growth.master`, `growth.rails`, `growth.openbsd`, `growth.studio`,
+  `self_findings.law` (231 against a ceiling another session had just lowered to
+  230) and `namespace`. The numbers move every few hours while
   four sessions write, so read them from `bin/operator measure` rather than from
   here. Each row wants its fall recorded or its raise named, never absorbed —
   and the growth is several sessions' at once, which is why no one session has
