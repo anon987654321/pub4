@@ -37522,7 +37522,9 @@ DISPATCH = {
   "pieces-list" => lambda {
     Pieces.rows.each do |row|
       bed = row.fetch("bed", {})
-      puts format("  %-18s %-24s %3s bpm  %-16s %s", row.fetch("name"), row.fetch("progression"),
+      # A row names a progression the engine holds or carries its own chords.
+      source = row["progression"] || "own: #{Array(row['chords']).first(3).join(' ')}"
+      puts format("  %-18s %-28s %3s bpm  %-16s %s", row.fetch("name"), source,
                   bed["bpm"] || Bed::BPM.round, Array(bed["pad_families"]).join("+"),
                   bed.dig("drums", "arrangement", "bank_order")&.join("/") || "none")
     end
