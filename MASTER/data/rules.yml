@@ -1104,23 +1104,8 @@ rules:
       five years out? Designing for hypothetical scale?
     fix: Small deliberate steps. Reassess after each. Feedback from each step illuminates
       the next.
-# ... (existing laws) ...
   - id: REVERSIBILITY
     source: The Pragmatic Programmer — reversibility (Hunt & Thomas)
-    name: Ability to undo a decision
-    tier: core
-    severity: warning
-    autofix: false
-    detect_semantic: Is this change an irreversible one-way door?
-    fix: Design for reversibility. If irreversible, document why and create a rollback plan.
-  - id: NO_RECURSIVE_WRAPPERS
-    source: MASTER-native
-    name: No redundant execution wrappers
-    tier: architecture
-    severity: error
-    autofix: false
-    detect_semantic: Does this tool wrap another tool that performs the same core action?
-    fix: Remove the wrapper and call the underlying tool directly.
     name: Prefer decisions that are easy to undo
     tier: philosophy
     severity: info
@@ -4341,7 +4326,23 @@ rule_ratchets:
     # does not match the detector anyway. The rule fired on eighteen subjects
     # before this pass and on none after, which is the same round trip the
     # RUBY_SYMBOL_TO_PROC note above describes.
-    silent: 40
+    #
+    # 43 on 2026-09-16, net of four arrivals and one departure, identified the
+    # way 24 -> 23 was: this audit run at a2d6912c7 — the commit that recorded
+    # 40 — and the two name lists diffed, because "over by three" names nobody.
+    # Each arrival is the second population, a rule the tree stopped breaking:
+    #   NO_VAR             viewport_inset.js declared seven `var`s and declares
+    #                      none; it was the file the 25 -> 23 note above names.
+    #   RATE_LIMITING_MISSING  authentication.rb and sso_user_provisioning.rb
+    #                      were its two subjects; authentication.rb throttles now.
+    #   NEVER_BATCH_DELETE database_snapshot_job.rb was its one subject.
+    #   NO_MULTIPLE_LANGUAGES  its one subject was _shell.scss line 11 — a
+    #                      sentence in a comment mentioning Turbo's <style>. The
+    #                      file has not changed; the scanner stopped reading a
+    #                      comment as code, so this arrival is a false positive
+    #                      leaving rather than a subject being fixed.
+    # The departure is WHY_NOT_WHAT, which found findable_by_slug.rb.
+    silent: 43
 
 
   hygiene:
