@@ -34477,6 +34477,19 @@ module Ableton
     require "zlib"
   end
 
+  # What to call a set's grids and profile.
+  #
+  # Live puts a set inside "<name> Project", and the file inside it is as often
+  # called Untitled, import3 or 090911 as it is called anything. Named from the
+  # file, four of the operator's sets come back as "untitled" and overwrite each
+  # other; named from the folder they come back as dnb, joggetur and
+  # sang_til_pappa, which is what he calls them.
+  def slug(path)
+    folder = File.basename(File.dirname(path)).sub(/ Project\z/i, "")
+    name = folder.empty? || folder.start_with?(".") ? File.basename(path, ".als") : folder
+    name.downcase.gsub(/[^a-z0-9]+/, "_").gsub(/\A_|_\z/, "")
+  end
+
   def xml(path)
     libraries!
     Zlib::GzipReader.open(path) { |gz| gz.read }
@@ -37570,7 +37583,7 @@ DISPATCH = {
     grid_root = File.join(ROOT, "samples", "midi")
     profiles = []
     sets.each_with_index do |path, index|
-      slug = File.basename(path, ".als").downcase.gsub(/[^a-z0-9]+/, "_").gsub(/\A_|_\z/, "")
+      slug = Ableton.slug(path)
       begin
         profile = Ableton.profile(path, Bed::QUALITIES)
       rescue StandardError => e
