@@ -5,14 +5,14 @@
 #
 #   ruby tools/readme_take.rb              # speech, then the take
 #   ruby tools/readme_take.rb --full       # the whole README, not the highlights
-#   ruby tools/readme_take.rb --speech     # only tts.wav
+#   ruby tools/readme_take.rb --speech     # only README.wav
 #   ruby tools/readme_take.rb --record     # only loop.mp4 and loop.gif
 #
 # Three steps, each skippable and each resumable, because the whole thing takes
 # twenty minutes and has been killed twice mid-way by the machine running out of
 # memory.
 #
-#   1. README.md becomes speakable prose and then tts.wav, read by the voice
+#   1. README.md becomes speakable prose and then README.wav, read by the voice
 #      data/voice.yml names. Code blocks, the image and the HTML comment are
 #      dropped: they are for a reader's eye and are noise read aloud.
 #   2. The face speaks it, recorded frame by frame by RAILS/gates/probes/
@@ -40,7 +40,7 @@ RAILS_DIR = File.join(REPO, "RAILS")
 FACE_URL = "http://127.0.0.1:53187/"
 
 README = File.join(ROOT, "README.md")
-WAV = File.join(ROOT, "tts.wav")
+WAV = File.join(ROOT, "README.wav")
 MP4 = File.join(ROOT, "loop.mp4")
 GIF = File.join(ROOT, "loop.gif")
 WORK = File.join(Dir.tmpdir, "master_readme_take")
@@ -87,8 +87,8 @@ SILENT = [
 # seven paragraphs are the ones a person who might fund this needs: what it is,
 # why the language is the moat, that it runs with nothing behind it, the size
 # of the market, where it is going to live, the ask, and where it ends up. Five
-# hundred and fifteen words, about three and a half minutes against six and a
-# half for the file.
+# hundred and fifteen words, measured at 3:53 in this voice against about six
+# and a half minutes for the whole file.
 #
 # Matched on their opening words rather than copied here, so README.md stays
 # the only place the sentences live. A phrase that stops matching drops out of
