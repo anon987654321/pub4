@@ -94,6 +94,14 @@ class TestFixConvergence < Minitest::Test
     assert_includes out.lines.map(&:chomp), "re-observe"
   end
 
+  # The loop builds its own council: the test below injects one, and an
+  # injected double would pass just as well against a loop that never built it.
+  def test_a_fix_loop_carries_a_council_of_its_own
+    runner = build_loop([]).instance_variable_get(:@pass_runner)
+
+    assert_instance_of Master::Fix::FixLoop::CouncilRound, runner.instance_variable_get(:@council)
+  end
+
   # 9. The council argues inside the loop, and 11: its pick reaches the repair.
   def test_the_council_runs_inside_the_pass_and_its_picks_reach_the_repair
     council = Object.new

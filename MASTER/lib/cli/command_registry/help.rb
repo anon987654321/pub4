@@ -6,34 +6,34 @@ module Master
       module_function
 
       # One topic per registered command, and the registry is the whole list:
-      # `build` returns clear, commit, doctor, help, model, orders, pair, review,
-      # rollback, rules, soul, status, undo and why, and nothing else reaches
+      # `build` returns clear, commit, doctor, fix, help, model, orders, pair,
+      # review, rollback, rules, soul, status, undo and why, and nothing reaches
       # Stages::Route. test_command_registry_dispatch holds the two together, so a
       # verb cannot be built without a page or paged without being built.
       HELP_TOPICS = {
-"fix" => {
-  summary: "the convergence loop: observe, critique, repair, observe again",
-  detail: [
-    "/fix [path] — the one operation that changes the tree. It reads the",
-    "path, asks the council what is wrong, weighs competing repairs, applies",
-    "the strongest, validates it and reads the path again, until the tree",
-    "converges, stops improving or reaches something only you can settle.",
-    "",
-    "--dry-run stops after the reading and says what it would take on.",
-    "There is no /scan: observation is where a fix starts, not a command.",
-  ],
-},
-"review" => {
-  summary: "read-only: the council and the principle map",
-  detail: [
-    "/review [path] — the council reads the path and argues about it, then",
-    "the principle map. It writes nothing; /fix is the verb that writes.",
-    "",
-    "--only <stage> runs one part: --only critique or --only map, and",
-    "`council` is a spelling of critique. --only fix gives the reading and",
-    "what a repair would take on, without taking it on.",
-  ],
-},
+        "fix" => {
+          summary: "the convergence loop: observe, critique, repair, observe again",
+          detail: [
+            "/fix [path] — the one operation that changes the tree. It reads the",
+            "path, asks the council what is wrong, weighs competing repairs, applies",
+            "the strongest, validates it and reads the path again, until the tree",
+            "converges, stops improving or reaches something only you can settle.",
+            "",
+            "--dry-run stops after the reading and says what it would take on.",
+            "There is no /scan: observation is where a fix starts, not a command.",
+          ],
+        },
+        "review" => {
+          summary: "read-only: the council and the principle map",
+          detail: [
+            "/review [path] — the council reads the path and argues about it, then",
+            "the principle map. It writes nothing; /fix is the verb that writes.",
+            "",
+            "--only <stage> runs one part: --only critique or --only map, and",
+            "`council` is a spelling of critique. --only fix gives the reading and",
+            "what a repair would take on, without taking it on.",
+          ],
+        },
         "status" => {
           summary: "one-frame health",
           detail: ["/status — mode, git, fix loop, last pipeline stage, recent events."],
