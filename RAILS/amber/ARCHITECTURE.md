@@ -122,7 +122,7 @@ which is why services are enumerated here and controllers are not.
 `amber.sh` sources the shared `_deploy.sh` contract and copies the tracked tree
 at `RAILS/amber` into `/home/amber/app`, with the `pub4-shared` engine copied
 alongside at `/home/amber/shared` — a sibling of `app/`, not inside it. Port
-61352, `amber.brgen.no`, Falcon behind relayd. Deploy matrix: `RAILS/apps.yml`.
+61352, `amber.fashion`, Falcon behind relayd. Deploy matrix: `RAILS/apps.yml`.
 
 The original document described `DEPLOY/rails/@shared_functions.sh` and a
 `/var/cache/pub4/bundle/ruby34` bundle cache. The `DEPLOY/` tree no longer

@@ -1,12 +1,12 @@
 # Amber — heir / operator one-pager
 
-Amber is a **social fashion** app (`amber.brgen.no`) — feed, follows, outfits
+Amber is a **social fashion** app (`amber.fashion`) — feed, follows, outfits
 and a wardrobe, sharing the same social stack as brgen. Day-to-day it should run
 without engineering. This page is for the person who inherits stewardship.
 
 ## What you do
 
-1. Open https://amber.brgen.no and watch wardrobes grow.
+1. Open https://amber.fashion and watch wardrobes grow.
 2. Help the occasional user (password, “what is declutter?”, content concern).
 3. Keep bills paid: VPS + domain.
 4. If the site is down, tell a technical contact (see below).
@@ -19,7 +19,7 @@ servers on a normal week.
 | Piece | Behaviour |
 |--------|-----------|
 | OpenBSD service | `rc.d/amber` starts Falcon + Solid Queue on port 61352 |
-| TLS | relayd + cert renew scripts for `amber.brgen.no` |
+| TLS | relayd + cert renew scripts for `amber.fashion` |
 | Photo upload | Variants, colour extract, one portrait polish, local fingerprint, sustainability score |
 | Declutter hygiene | Daily job: expire overdue wear challenges; nudge 30-day box items |
 | Queue cleanup | Hourly clear of finished Solid Queue jobs |
@@ -28,7 +28,7 @@ servers on a normal week.
 ## Health checks (tech or laptop)
 
 ```sh
-curl -fsS https://amber.brgen.no/up
+curl -fsS https://amber.fashion/up
 # or full stack:
 sh OPENBSD/bin/uptime-check.sh
 ```

@@ -17,7 +17,7 @@ class VapidTest < Minitest::Test
   def test_subject_defaults_to_the_apps_own_mail_host
     with_env("VAPID_SUBJECT" => nil) do
       assert_equal "mailto:admin@bsdports.org", Shared::Vapid.subject("bsdports.org")
-      assert_equal "mailto:admin@amber.brgen.no", Shared::Vapid.subject("amber.brgen.no")
+      assert_equal "mailto:admin@amber.fashion", Shared::Vapid.subject("amber.fashion")
     end
   end
 

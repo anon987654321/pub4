@@ -72,7 +72,7 @@ class DesignContractTest < Minitest::Test
   # `_tokens.scss` (via `@use "stack"`) emits light-tokens at
   # `[data-theme=light]` and at `:root:not([data-theme=dark])` inside
   # `prefers-color-scheme: light`. luxury-light-tokens on bare `:root` loses
-  # that fight: measured 2026-08-13 on amber.brgen.no, --bg was social
+  # that fight: measured 2026-08-13 on amber.fashion, --bg was social
   # `#f7f6fa` and --accent `#5b4fc4` while --radius-card stayed luxury 14px.
   # amber's stylesheet must restate luxury in rules at those two selectors.
   def test_amber_luxury_beats_the_social_light_override

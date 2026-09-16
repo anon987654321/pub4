@@ -3,7 +3,7 @@
 module Amber
   # Public demo capsule wardrobe for guests (production marketing / TradeDoubler).
   module DemoWardrobe
-    DEMO_EMAIL = "demo@amber.brgen.no"
+    DEMO_EMAIL = "demo@amber.fashion"
     DEMO_DISPLAY_NAME = "Amber demo"
 
     module_function
