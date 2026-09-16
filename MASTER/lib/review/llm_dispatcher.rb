@@ -5,6 +5,7 @@ require "digest"
 require "json"
 require "open3"
 require "timeout"
+require_relative "llm_dispatcher/cli_sender"
 require_relative "llm_dispatcher/react_loop"
 require_relative "llm_dispatcher/ollama_sender"
 require_relative "llm_dispatcher/ruby_llm_sender"
@@ -52,7 +53,6 @@ module Master
       # holds for TOOL_CAPABLE_RE below.
       VISION_RE = /gemini-[12]|claude|gpt-4o|gpt-4\.1|llama-4|qwen.*vl|pixtral|gemma-[34]|vision/i.freeze
       NON_VISION_RE = /glm|nemotron|deepseek(?!.*vl)|qwen3-next|gpt-oss|phi-4/i.freeze
-      NEMOTRON3_RE = /nemotron-3/i.freeze
       LLAMA_NEMOTRON_RE = /llama.*nemotron|nemotron.*llama/i.freeze
       TOOL_CALL_RE = /<tool_call>(.*?)<\/tool_call>/m.freeze
       TOOL_RESULT_ROLE = "user"
@@ -107,12 +107,12 @@ module Master
         end
       end
 
+      include CliSender
       include ReactLoop
       include OllamaSender
       include RubyLLMSender
       include ToolRegistry
       include ProviderFailure
-      include CliSender
       include HttpSender
 
       def initialize(deps:, system_prompt:)

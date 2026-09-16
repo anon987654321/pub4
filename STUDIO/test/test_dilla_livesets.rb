@@ -459,7 +459,9 @@ class TestDillaLivesets < Minitest::Test
     Dir.mktmpdir do |dir|
       row = { "seed" => 7, "set" => "sampled_based_beats", "bed" => "be_ever_wonderful_03", "credit" => "Ted Taylor — unlicensed — u" }
       handed = nil
-      stubs = { exec: ->(*args) { handed = args }, passes: -> { [row] }, bed_rows: -> { { "be_ever_wonderful_03" => { "rights" => "unlicensed — rip" } } } }
+      clean = [[:lufs, -16.5, 0.0, { unit: "LUFS", range: (-18.0..-15.0) }], [:lra, 6.0, 0.0, { unit: "LU", range: (4.0..9.0) }]]
+      stubs = { render_take!: ->(env, _) { handed = [env] }, score_take: -> { clean }, passes: -> { [row] },
+                bed_rows: -> { { "be_ever_wonderful_03" => { "rights" => "unlicensed — rip" } } } }
       with_env("LIVE_CATALOGUE" => File.join(dir, "cat.json")) do
         stubbing(stubs) { capture_io { Livesets.recall!(%w[7 keep LIVE_ROOM=dry]) } }
         entry = Livesets.catalogue.last
@@ -469,6 +471,15 @@ class TestDillaLivesets < Minitest::Test
         assert_equal ["LIVE_ROOM=dry"], entry["overrides"]
         assert_equal "dry", handed.first.fetch("LIVE_ROOM")
         assert_equal Livesets::DEMO, handed.first.fetch("LIVE_RENDER_TO")
+        assert_equal({ "value" => -16.5, "miss" => 0.0 }, entry.dig("mix", "lufs"))
+
+        # A take that misses its window is not catalogued unless it is kept anyway.
+        loud = [[:lufs, -10.5, 4.5, { unit: "LUFS", range: (-18.0..-15.0) }]]
+        stubbing(stubs.merge(score_take: -> { loud })) do
+          assert_raises(SystemExit) { capture_io { with_env("LIVE_KEEP_ANY" => nil) { Livesets.recall!(%w[7 keep]) } } }
+          capture_io { with_env("LIVE_KEEP_ANY" => "1") { Livesets.recall!(%w[7 keep]) } }
+        end
+        assert_equal 2, Livesets.catalogue.size
       end
     end
     assert Livesets.shareable?("seed" => 1, "set" => "chord_based_beats")

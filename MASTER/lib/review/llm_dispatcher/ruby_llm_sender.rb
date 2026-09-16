@@ -24,7 +24,7 @@ module Master
                       chat_session.ask(ask_arg)
                     end
             record_usage(reply, selected_model)
-            Result.ok(extract_response(reply, selected_model))
+            Result.ok(extract_response(reply))
           rescue ToolRoundLimit => e
             Result.err("#{selected_model}: #{e.message}", category: :llm_call_failure)
           ensure
@@ -216,15 +216,17 @@ end)
 
         # A schema-bound reply arrives parsed. Hash#to_s is Ruby's inspect, which
         # no JSON parser reads, so it goes back out as the JSON it came in as.
-        def extract_response(reply, selected_model)
+        def extract_response(reply)
           return reply.to_s unless reply.respond_to?(:content)
           content = reply.content
           content = content.is_a?(Hash) || content.is_a?(Array) ? JSON.generate(content) : content.to_s
           thinking = reply.respond_to?(:thinking) ? reply.thinking&.text.to_s.strip : ""
-          if NEMOTRON3_RE.match?(selected_model) && !thinking.empty?
-            return content.empty? ? thinking : "#{content}\n\n<think>\n#{thinking}\n</think>"
-          end
-          content.empty? && !thinking.empty? ? thinking : content
+          # A reasoning model's working is not its answer: appended, it reached the
+          # terminal verbatim, and every other reader had to strip it. The answer
+          # stands alone, and the working speaks only when there is no answer.
+          return thinking if content.empty? && !thinking.empty?
+
+          content
         end
 
         def nemotron_system_prompt(selected_model, base = nil)

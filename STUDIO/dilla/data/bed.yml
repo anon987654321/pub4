@@ -157,3 +157,165 @@ drums:
   sonitex: { drive: 1.45, bandwidth_hz: 8000, crush_bits: 12, crush_hz: 26095, crush_mix: 0.52, lowpass_hz: 12000 }
   gain_db: -5
   arrangement: { bars_per_shape: 8, bank_order: [dilla, flylo, dilla, techno, industrial] }
+# demo.wav: one piece of about six minutes, read by module Composition in
+# dilla.rb. A section shapes the parts and never removes the drums: it thins
+# them (density is the odds a hit other than the kick plays), filters them,
+# chooses their voices and may drop the kick for a bar or two. Two drum layers
+# play under every bar: `kit` is the bed's grid kit in dilla time and `hate` is
+# a DillaSemantics profile rendered at the bed's tempo, so the heavy section is
+# the HATE layer pushed over a kit that keeps swinging. Gains are dB, -60 is
+# silent, and each moves to its section's value over `ramp_bars`; a pair of
+# cutoffs sweeps across the section. A kick dropout sits only where the HATE
+# layer carries no kick of its own, or the dropout would not be heard.
+composition:
+  ramp_bars: 2
+  fade_out_s: 6
+  lead_every: 2
+  # The motif's rhythm in sixteenths; its pitches are motif_from_chord's degrees
+  # of the chord the lead enters on, played on whichever chord is sounding.
+  motif: { steps: [0, 3, 6, 10], lengths: [3, 2, 4, 5], velocities: [0.9, 0.7, 0.8, 0.65] }
+  # Percussion answers each lead note this many sixteenths later.
+  answer: { steps: 2, velocity: 0.35 }
+  transforms:
+    humanize: { ms: 8, spread: 0.12 }
+    swing: { amount: 0.54 }
+    shift: { steps: 1 }
+    stretch: { factor: 1.5 }
+    reverse: {}
+    repeat: { times: 2 }
+    ratchet: { count: 3, odds: 0.25 }
+    ghost: { odds: 0.3, level: 0.3 }
+    accent: { amount: 1.25 }
+    drop: { odds: 0.15 }
+    transpose: { semitones: 12 }
+    invert: {}
+    chop: { pieces: 3 }
+    stutter: { steps: 2, repeats: 4 }
+    probabilize: { odds: 0.7 }
+    quantize: { strength: 1.0 }
+    resample: { rate: 0.75 }
+  sections:
+    - name: atmosphere
+      bars: 11
+      grid: dilla
+      voices: [kick, hat]
+      density: 0.4
+      drums: [humanize]
+      hate: { profile: basic_channel, elements: [perc_b, texture] }
+      lead: []
+      gains_db: { texture: -4, kit: -2, hate: -12, bass: -60, pads: -60, lead: -60 }
+      cutoff_hz: { kit: [500, 900], hate: [2500, 2500], pads: [16000, 16000] }
+    - name: pulse
+      bars: 11
+      grid: dilla
+      voices: [kick, ghost, hat]
+      density: 0.55
+      drums: [humanize]
+      hate: { profile: basic_channel, elements: [perc_a, perc_b, texture] }
+      lead: []
+      gains_db: { texture: -3, kit: 0, hate: -12, bass: -60, pads: -60, lead: -60 }
+      cutoff_hz: { kit: [1500, 4000], hate: [4000, 4000], pads: [16000, 16000] }
+    - name: bass
+      bars: 11
+      grid: dilla
+      voices: [kick, snare, ghost, hat]
+      density: 0.7
+      drums: [humanize]
+      hate: { profile: hardgroove, elements: [hat, perc_a, perc_b] }
+      lead: []
+      gains_db: { texture: -6, kit: 0, hate: -12, bass: 0, pads: -60, lead: -60 }
+      cutoff_hz: { kit: [7000, 7000], hate: [6000, 6000], pads: [16000, 16000] }
+    - name: chords
+      bars: 11
+      grid: flylo
+      voices: [kick, snare, ghost, hat, open_hat]
+      density: 0.85
+      drums: [humanize, swing]
+      hate: { profile: hardgroove, elements: [hat, perc_a, perc_b] }
+      lead: []
+      gains_db: { texture: -8, kit: 0, hate: -12, bass: 0, pads: 0, lead: -60 }
+      cutoff_hz: { kit: [12000, 12000], hate: [8000, 8000], pads: [16000, 16000] }
+    - name: motif
+      bars: 11
+      grid: dilla
+      voices: [kick, snare, ghost, hat, open_hat]
+      density: 1.0
+      drums: [humanize, swing]
+      hate: { profile: hardgroove, elements: [hat, clap, perc_a, perc_b] }
+      lead: []
+      gains_db: { texture: -10, kit: 0, hate: -10, bass: 0, pads: -2, lead: 0 }
+      cutoff_hz: { kit: [16000, 16000], hate: [10000, 10000], pads: [16000, 16000] }
+    - name: mutation
+      bars: 11
+      grid: flylo
+      voices: [kick, snare, ghost, hat, open_hat]
+      density: 1.0
+      drums: [swing, ghost, ratchet, accent, stutter]
+      hate: { profile: hardgroove, elements: [hat, open, clap, perc_a, perc_b] }
+      lead: [ratchet, stutter]
+      kick_drop: [10]
+      gains_db: { texture: -10, kit: 0, hate: -6, bass: 0, pads: -4, lead: -1 }
+      cutoff_hz: { kit: [2500, 16000], hate: [1500, 16000], pads: [16000, 16000] }
+    - name: hate
+      bars: 16
+      grid: techno
+      voices: [snare, ghost, hat, open_hat]
+      density: 0.9
+      drums: [humanize, ghost, drop]
+      hate: { profile: industrial, elements: [kick, hat, clap, perc_a, perc_b, texture] }
+      lead: [chop, repeat]
+      gains_db: { texture: -12, kit: -5, hate: 0, bass: -2, pads: -10, lead: -8 }
+      cutoff_hz: { kit: [16000, 16000], hate: [16000, 16000], pads: [1500, 1500] }
+    - name: breakdown
+      bars: 11
+      grid: dilla
+      voices: [kick, ghost, hat]
+      density: 0.45
+      drums: [humanize, drop]
+      hate: { profile: basic_channel, elements: [perc_b, texture] }
+      lead: []
+      kick_drop: [0]
+      gains_db: { texture: -5, kit: -3, hate: -14, bass: -60, pads: -1, lead: -60 }
+      cutoff_hz: { kit: [1400, 1400], hate: [2000, 2000], pads: [1200, 6000] }
+    - name: mirrored
+      bars: 11
+      grid: flylo
+      voices: [kick, ghost, hat]
+      density: 0.6
+      drums: [shift, humanize, probabilize]
+      hate: { profile: detroit, elements: [hat, perc_a, perc_b] }
+      harmony: mirrored
+      lead: []
+      kick_drop: [10]
+      gains_db: { texture: -6, kit: -1, hate: -10, bass: 0, pads: 0, lead: -60 }
+      cutoff_hz: { kit: [3000, 8000], hate: [4000, 8000], pads: [16000, 16000] }
+    - name: return
+      bars: 16
+      grid: dilla
+      voices: [kick, snare, ghost, hat, open_hat]
+      density: 1.0
+      drums: [swing, accent, ghost]
+      hate: { profile: industrial, elements: [kick, hat, clap, perc_a, perc_b] }
+      lead: [reverse, invert]
+      gains_db: { texture: -10, kit: 0, hate: -4, bass: 0, pads: -3, lead: 0 }
+      cutoff_hz: { kit: [16000, 16000], hate: [16000, 16000], pads: [16000, 16000] }
+    - name: everything
+      bars: 11
+      grid: techno
+      voices: [kick, snare, ghost, hat, open_hat]
+      density: 1.0
+      drums: [swing, ghost, ratchet, accent, quantize]
+      hate: { profile: industrial, elements: [kick, hat, open, clap, perc_a, perc_b, texture] }
+      lead: [transpose]
+      gains_db: { texture: -8, kit: 0, hate: -3, bass: 0, pads: -2, lead: 0 }
+      cutoff_hz: { kit: [16000, 16000], hate: [16000, 16000], pads: [16000, 16000] }
+    - name: decay
+      bars: 8
+      grid: dilla
+      voices: [kick, hat]
+      density: 0.4
+      drums: [humanize, probabilize]
+      hate: { profile: basic_channel, elements: [perc_b, texture] }
+      lead: [stretch, resample]
+      gains_db: { texture: -3, kit: -3, hate: -12, bass: -60, pads: -6, lead: -8 }
+      cutoff_hz: { kit: [6000, 400], hate: [4000, 500], pads: [4000, 700] }

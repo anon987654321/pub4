@@ -14,8 +14,19 @@ twice — once naming a file that had not existed for months, once naming a
 directory that has never existed — and both times it sent an operator to
 validate nothing and read the result as passing.
 
-Bare `ruby dilla.rb` plays the catalogue through the bed and writes `demo.wav`
-and `demo.mp3` beside it. The catalogue is the seven verified recordings and the
+Bare `ruby dilla.rb` writes `demo.wav` beside it: one piece of about six
+minutes in which every part of the engine plays and answers the others. The bass
+states the key, one verified progression follows it and later comes back
+mirrored about that key, the lead's motif is read from the chords, percussion
+answers each lead note, and filter and gain lanes carry the form. The drums play
+every bar. A dilla kit and a HATE layer drawn from `DillaSemantics` run under
+lanes of their own, so the heavy section pushes one over the other rather than
+switching records, and the kick drops out for a bar or two at most before a return.
+Every note is an event before it sounds, and the swing, ratchets, stutters and
+reversals are transforms that `data/bed.yml` names under `composition`.
+
+`ruby dilla.rb catalogue` plays the catalogue through the bed and writes
+`demo.wav` and `demo.mp3`. The catalogue is the seven verified recordings and the
 twelve improvisations. The bed voices each piece on one instrument, voice-led,
 with the drums on top, a lead and a bass under it, and sets every piece to the
 same loudness under a true-peak ceiling. The bed began as the pad under MASTER's
@@ -367,8 +378,7 @@ path, or accept that the old seeds are gone and say so where they are recorded.
 
 Run everything from `STUDIO/dilla`. `ruby dilla.rb out.wav 18` renders one
 track of eighteen bars, and naming `TRACK=kembara_rindu` in front of it picks
-the track. Bare `ruby dilla.rb` renders the catalogue through the bed into
-`demo.wav`, `ruby dilla.rb stream` plays without end, and `ruby dilla.rb help`
+the track. Bare `ruby dilla.rb` renders the six-minute piece into `demo.wav`, `ruby dilla.rb stream` plays without end, and `ruby dilla.rb help`
 prints every command from the table the dispatcher reads.
 
 The crate has its own verbs. `chop` cuts a long recording into beds, reading

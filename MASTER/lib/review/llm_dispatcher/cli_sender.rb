@@ -83,28 +83,32 @@ module Master
 
         def cli_lanes = Master.cli_lanes
 
-      def send_agy_cli(model_alias, messages, sys:, stream: false, &blk)
-        CLI_SLOTS.pop
-        agy_bin = find_agy_bin
-        prompt = text_prompt_for(messages)
-        full_prompt = sys && !sys.empty? ? "#{sys}\n\n---\n\n#{prompt}" : prompt
-        args = [agy_bin, "-p", full_prompt, "--output-format", "text"]
-        if model_alias && !model_alias.empty? && model_alias != "auto" && model_alias != "agy"
-          args += ["--model", model_alias]
-        end
-        timeout_s = agy_cli_timeout_s
-        out, err, status = capture3_with_timeout(timeout_s, *args)
-        return Result.err("agy: #{err.strip}", category: :provider_error) unless status.success?
-        res = out.strip
-        blk&.call(res) if stream && block_given?
-        Result.ok(res)
-      rescue Timeout::Error
-        Result.err("agy: timed out after #{timeout_s}s", category: :timeout)
-      rescue StandardError => e
-        Result.err("agy: #{e.message}", category: :provider_error)
-      ensure
-        CLI_SLOTS << true
-      end
+# A lane whose program is not installed refuses at once rather than
+# failing inside a subprocess that never starts: ENOENT reads as a
+# provider error, and the chain slept through its backoff before
+# walking on. Absent is permanent, so the chain walks on at once.
+def send_agy_cli(model_alias, messages, sys:, stream: false, &blk)
+  agy_bin = find_agy_bin
+  return Result.err("agy: no agy on PATH", category: :no_api_key) unless agy_bin
+
+  with_cli_slot { agy_cli_call(agy_bin, model_alias, messages, sys, stream, &blk) }
+end
+
+def agy_cli_call(agy_bin, model_alias, messages, sys, stream, &blk)
+  prompt = text_prompt_for(messages)
+  full_prompt = sys && !sys.empty? ? "#{sys}\n\n---\n\n#{prompt}" : prompt
+  args = [agy_bin, "-p", full_prompt, "--output-format", "text"]
+  args += ["--model", model_alias] if model_alias && !["", "auto", "agy"].include?(model_alias)
+  timeout_s = agy_cli_timeout_s
+  out, err, status = capture3_with_timeout(timeout_s, *args)
+  return Result.err("agy: #{err.strip}", category: :provider_error) unless status.success?
+
+  out.strip.tap { |said| blk&.call(said) if stream && block_given? }.then { |said| Result.ok(said) }
+rescue Timeout::Error
+  Result.err("agy: timed out after #{timeout_s}s", category: :timeout)
+rescue StandardError => e
+  Result.err("agy: #{e.message}", category: :provider_error)
+end
 
       def find_agy_bin
         if ENV["AGY_BIN"] && File.file?(ENV["AGY_BIN"]) && File.executable?(ENV["AGY_BIN"])
@@ -117,7 +121,7 @@ module Master
           candidate = File.join(dir, "agy")
           return candidate if File.file?(candidate) && File.executable?(candidate)
         end
-        "agy"
+        nil
       end
 
       def agy_cli_timeout_s
@@ -135,21 +139,38 @@ module Master
       # waiting beats thrashing.
       CLI_SLOTS = SizedQueue.new(2).tap { |queue| 2.times { queue << true } }
 
-      def send_claude_cli(model_alias, messages, sys:)
-        CLI_SLOTS.pop
-        args = ["claude", "--print", "--model", model_alias]
-        args += ["--system-prompt", sys] if sys && !sys.empty?
-        timeout_s = claude_cli_timeout_s
-        out, err, status = capture3_with_timeout(timeout_s, *args, stdin_data: text_prompt_for(messages))
-        return Result.err("claude-cli: #{err.strip}", category: :provider_error) unless status.success?
-        Result.ok(out.strip)
-      rescue Timeout::Error
-        Result.err("claude-cli: timed out after #{timeout_s}s", category: :timeout)
-      rescue StandardError => e
-        Result.err("claude-cli: #{e.message}", category: :provider_error)
-      ensure
-        CLI_SLOTS << true
-      end
+def send_claude_cli(model_alias, messages, sys:)
+  return Result.err("claude-cli: no claude on PATH", category: :no_api_key) unless claude_on_path?
+
+  with_cli_slot { claude_cli_call(model_alias, messages, sys) }
+end
+
+# The same reading of PATH that ModelRouter uses to keep an absent lane
+# out of a chain, here so a dispatch reached any other way refuses too.
+# MASTER_NO_CLAUDE_CLI=1 takes the lane out on a box that has the binary.
+def claude_on_path?
+  return false if ENV["MASTER_NO_CLAUDE_CLI"] == "1"
+  return @claude_on_path unless @claude_on_path.nil?
+
+  @claude_on_path = ENV["PATH"].to_s.split(File::PATH_SEPARATOR).any? do |dir|
+    exe = File.join(dir, "claude")
+    File.file?(exe) && File.executable?(exe)
+  end
+end
+
+def claude_cli_call(model_alias, messages, sys)
+  args = ["claude", "--print", "--model", model_alias]
+  args += ["--system-prompt", sys] if sys && !sys.empty?
+  timeout_s = claude_cli_timeout_s
+  out, err, status = capture3_with_timeout(timeout_s, *args, stdin_data: text_prompt_for(messages))
+  return Result.err("claude-cli: #{err.strip}", category: :provider_error) unless status.success?
+
+  Result.ok(out.strip)
+rescue Timeout::Error
+  Result.err("claude-cli: timed out after #{timeout_s}s", category: :timeout)
+rescue StandardError => e
+  Result.err("claude-cli: #{e.message}", category: :provider_error)
+end
 
       def capture3_with_timeout(timeout_s, *cmd, stdin_data: nil)
         Open3.popen3(*cmd) do |stdin, stdout, stderr, wait_thr|

@@ -136,4 +136,43 @@ class TestGrooveTiming < Minitest::Test
     assert_equal 1.0, send(:phase_gain_multiplier, :not_a_phase)
     assert_equal 1.0, send(:phase_gain_multiplier, nil)
   end
+
+  POCKET_ROLES = %i[kick_anchor kick_sync snare ghost hat_down hat_up open clap bass pad perc].freeze
+
+  # Shift timing is opt-in. Unset, every offset is the pocket's own value, down
+  # to its class, so no take made without the knob changes by a digit.
+  def test_unset_shift_timing_leaves_every_offset_as_the_pocket_computed_it
+    with_env("SHIFT_TIMING" => nil) do
+      POCKET_ROLES.product([nil, 0.5]).each do |role, beat_p|
+        pocket = send(:pocket_timing_ms, role, 3, 5, nil, beat_p)
+        timed = send(:dilla_timing_ms, role, 3, 5, nil, beat_p)
+        assert_equal [pocket.class, pocket], [timed.class, timed], "#{role} moved with SHIFT_TIMING unset"
+      end
+    end
+  end
+
+  def test_shift_timing_moves_only_the_roles_it_names
+    with_env("SHIFT_TIMING" => "snare:-6, hat:4.5") do
+      POCKET_ROLES.each do |role|
+        pocket = send(:pocket_timing_ms, role, 2, 4, nil, 0.5)
+        shift = { snare: -6.0, hat_down: 4.5, hat_up: 4.5 }.fetch(role, 0.0)
+        assert_in_delta pocket + shift, send(:dilla_timing_ms, role, 2, 4, nil, 0.5), 1e-9, role.to_s
+      end
+    end
+  end
+
+  # The sample moves against the grid and the kit stays: a drum offset is
+  # dilla_timing_ms's, and the loop's start is the bed chain's alone.
+  def test_sample_start_moves_the_loop_and_nothing_else
+    with_env("SAMPLE_START_MS" => nil) do
+      assert_equal "", send(:sample_start_offset)
+      refute_match(/adelay|atrim=start/, send(:build_sample_loop_filter, 0, 8.0, 90, 90))
+    end
+    with_env("SAMPLE_START_MS" => "18") do
+      assert_includes send(:build_sample_loop_filter, 0, 8.0, 90, 90), "adelay=18.0:all=1,atrim=0:8.0"
+    end
+    with_env("SAMPLE_START_MS" => "-12") do
+      assert_includes send(:build_sample_loop_filter, 0, 8.0, 90, 90), "atrim=start=0.012,asetpts=PTS-STARTPTS,atrim=0:8.0"
+    end
+  end
 end
