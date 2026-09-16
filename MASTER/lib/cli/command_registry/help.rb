@@ -62,9 +62,10 @@ module Master
           detail: ["/clear — does not undo file changes."],
         },
         "orders" => {
-          summary: "standing orders — the work that runs without being asked",
+          summary: "the objective ledger — the work that runs without being asked",
           detail: ["/orders", "/orders enable|disable|reset <name>", "/orders run",
-                   "/orders add name=<name> cmd=<command> — the table is data/state.yml."],
+                   "/orders consent|revoke <domain> — finance, household and devices start off",
+                   "/orders add name=<n> [domain=] [wake=] [every=] [verify=] [cmd=] — declared orders are data/state.yml."],
         },
         "soul" => {
           summary: "read and amend the constitution",

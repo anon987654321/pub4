@@ -62,9 +62,8 @@ module Master::Core
     def self.offer(verbs, scope)
       return schema(verbs:) unless scope
 
-      closed = []
-      closed << :done unless (scope[:proved] || scope[:answerable]) && scope[:cleared]
-      closed << :write unless scope[:writable]
+      answered = (scope[:proved] || scope[:answerable]) && scope[:cleared]
+      closed = [(:done unless answered), (:write unless scope[:writable])].compact
       operations = scope[:proved] ? GIT_OPERATIONS : GIT_OPERATIONS - %w[commit]
       schema(verbs: verbs - closed, operations:)
     end
