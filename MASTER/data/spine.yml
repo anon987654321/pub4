@@ -1056,7 +1056,7 @@ pub4_source_ceilings:
 # Counted for the same reason files are: adding a verb costs no file, moves no
 # other ceiling, and each one is a thing the next reader has to learn before
 # they can be sure which of them writes.
-command_surface: 36
+command_surface: 35
 
 name_candidates: 23
 
