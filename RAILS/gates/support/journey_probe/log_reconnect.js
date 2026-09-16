@@ -28,7 +28,7 @@
   await tick();
   const arrived = log.scrollTop;
   const pill = log.parentElement.querySelector('.conversation_unread_pill');
-  const pillShown = !!pill && pill.getBoundingClientRect().height > 0;
+  const pillShown = pill?.getBoundingClientRect().height > 0;
   if (pill) { pill.click(); await tick(); }
   return {
     found: true, scrollable: true, padded, before, reconnected, arrived, pill: pillShown,

@@ -48,4 +48,13 @@ class TtsJobConversationTest < ActiveSupport::TestCase
     job.forget_stale_failure!
     assert job.pending?, "a stale failure should let the sentence synthesize again"
   end
+
+  test "audio on disk outranks a recorded failure" do
+    job = TtsJob.new(text: "Still thinking.", voice: :jenny, style: :brief)
+    File.write(TtsJob::CACHE_DIR.join("#{job.job_id}.err"), "synthesis produced empty audio")
+    File.binwrite(TtsJob::CACHE_DIR.join("#{job.job_id}.mp3"), "ID3 audio bytes")
+
+    assert job.ready?
+    refute job.failed?, "a job with audio must not answer as failed"
+  end
 end

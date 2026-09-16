@@ -1055,7 +1055,7 @@ module Livesets
     return nil if want.empty?
 
     value = Float(want, exception: false)
-    abort "LIVE_BPM=#{want} is not a tempo between 40 and 200" unless value && value.between?(40, 200)
+    abort "LIVE_BPM=#{want} is not a tempo between 40 and 200" unless value&.between?(40, 200)
     value
   end
 
@@ -1085,7 +1085,7 @@ module Livesets
     return drawn if want.empty?
 
     value = Float(want, exception: false)
-    abort "LIVE_DRAG=#{want} is not a ratio between 0.5 and 1.0" unless value && value.between?(0.5, 1.0)
+    abort "LIVE_DRAG=#{want} is not a ratio between 0.5 and 1.0" unless value&.between?(0.5, 1.0)
     value
   end
 

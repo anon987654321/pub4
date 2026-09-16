@@ -219,8 +219,12 @@ class TtsJob
     File.file?(cache_path) && !File.zero?(cache_path)
   end
 
+  # Audio on disk outranks a recorded failure. The face asked for "Still
+  # thinking." on 2026-09-16 and got a 503 in 3s while its own mp3 sat beside
+  # the .err file: a failure from 09-14 was written, the sentence was
+  # synthesized later, and nothing removed the note.
   def failed?
-    File.file?(error_path)
+    File.file?(error_path) && !ready?
   end
 
   def pending?

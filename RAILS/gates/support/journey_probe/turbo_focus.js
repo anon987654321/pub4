@@ -25,7 +25,7 @@
   const cls = el ? String(el.className || '').split(' ').filter(Boolean).slice(0, 2).join('.') : '';
   return {
     found: true, href: link.getAttribute('href'), outcome, same_document: window.__gateDocument === true,
-    body, connected: !!el && el.isConnected, painted: !!el && (body || shown(el)),
+    body, connected: el?.isConnected === true, painted: !!el && (body || shown(el)),
     sel: el ? el.tagName.toLowerCase() + (el.id ? '#' + el.id : (cls ? '.' + cls : '')) : null
   };
 })()
