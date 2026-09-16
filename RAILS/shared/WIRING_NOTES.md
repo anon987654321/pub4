@@ -11,8 +11,8 @@ Topology: `RAILS/brgen/AGENTS.md`.
 ## Visual system — one `application.css` per app
 
 Each app compiles a **single** `app/assets/builds/application.css` via Dart
-Sass. No separate `tokens.css`, `animations.css`, or `minimal-ui*.css` links in
-layouts.
+Sass. A layout links that file and nothing else — no second stylesheet for
+tokens, animations or a minimal UI.
 
 **One stylesheet per app.** Each app owns exactly one stylesheet,
 `app/assets/stylesheets/application.scss`, and brgen's verticals style
