@@ -378,13 +378,40 @@ def default_apply?(*) = false
           if result.ok?
             v = result.value!
             Master::Trace::Dmesg.status("fix0", "preview, #{v[:total]} findings")
-            "preview total=#{v[:total]} top_rules=#{v[:rules].inspect} top_files=#{v[:files].inspect}"
+            preview_lines(v)
           else
             Master::Trace::Dmesg.status("fix0", "preview failed: #{result.message}")
             "preview: #{result.message}"
           end
         rescue StandardError => e
           stage_failure("preview", "fix0", e)
+        end
+
+        # What the repair would take on, as two lines a person reads rather than
+        # two Ruby hashes printed with #inspect. The dump ran past the width of a
+        # terminal, so the counts that matter were wherever the wrap happened to
+        # put them, and it named every file by its full path when the pass has
+        # already said which tree it is in.
+        PREVIEW_SHOWN = 6
+
+        def preview_lines(value)
+          total = value[:total].to_i
+          files = value[:files].to_h.transform_keys { |path| File.basename(path.to_s) }
+          [
+            "preview: #{total} #{total == 1 ? 'repair' : 'repairs'}",
+            preview_row("rules", value[:rules]),
+            preview_row("files", files),
+          ].compact.join("\n")
+        end
+
+        def preview_row(label, counts)
+          counts = counts.to_h
+          return if counts.empty?
+
+          shown = counts.first(PREVIEW_SHOWN).map { |name, count| "#{name} #{count}" }
+          rest = counts.size - shown.size
+          line = "preview #{label}: #{shown.join(', ')}"
+          rest.positive? ? "#{line}, and #{rest} more" : line
         end
 
         def run_critique(abs)

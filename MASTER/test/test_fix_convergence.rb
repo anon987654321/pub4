@@ -176,4 +176,26 @@ class TestFixConvergence < Minitest::Test
     assert(picks.any? { |pick| pick.include?("cap the retry") }, "the second issue lost its only proposal")
     refute_includes picks, "Solutions:"
   end
+
+  # The preview printed two Ruby hashes through #inspect: one line past the
+  # width of any terminal, with the counts that matter wherever the wrap put
+  # them, and every file named by its full path inside a tree the pass has
+  # already named.
+  def test_the_repair_preview_reads_as_lines
+    pass = Master::CLI::Pipeline::Pass.allocate
+    counts = { "FEW_ARGUMENTS" => 28, "magic_number" => 26, "FEATURE_ENVY" => 14,
+               "CQS" => 9, "SMALL_FILES" => 6, "COUPLER_SMELLS" => 5, "duplicate_code" => 4 }
+    lines = pass.send(:preview_lines, total: 107, rules: counts, files: { "lib/voice/engines.rb" => 20 })
+
+    assert_equal "preview: 107 repairs", lines.lines.first.chomp
+    assert_match(/^preview rules: FEW_ARGUMENTS 28, /, lines)
+    assert_match(/, and 1 more$/, lines.lines[1].chomp)
+    assert_equal "preview files: engines.rb 20", lines.lines[2].chomp
+    refute_match(/lib.voice.engines/, lines)
+  end
+
+  def test_one_repair_is_not_repairs
+    pass = Master::CLI::Pipeline::Pass.allocate
+    assert_equal "preview: 1 repair", pass.send(:preview_lines, total: 1, rules: {}, files: {})
+  end
 end
