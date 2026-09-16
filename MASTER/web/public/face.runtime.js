@@ -962,12 +962,31 @@ function sampleDepthMapGrid(canvas, cols, rows) {
   for (let i = 0; i < n; i++) {
     const nx = home[i*3], ny = home[i*3+1];
     const anx = Math.abs(nx);
-    if (ny < -0.15) zone[i] = 0.0;
-    else if (anx > 0.12 && ny >= -0.15 && ny <= 0.08) zone[i] = 0.2;
-    else if (anx < 0.06 && ny >= -0.02 && ny <= 0.14) zone[i] = 0.4;
-    else if (anx >= 0.06 && anx <= 0.18 && ny >= 0.03 && ny <= 0.14) zone[i] = 0.6;
-    else if (ny > 0.14) zone[i] = 0.8;
-    else zone[i] = 0.5;
+    // The depth map is painted in canvas space, where y grows downward, and
+    // the sampler above flips it. These bands were written as though it had
+    // not, so every feature landed on the wrong one: the painted lips sit at
+    // ny -0.196 and the chin at -0.345, all of which fell in zone 0.0, while
+    // the crown and cranial vault at +0.595 and +0.496 fell in zone 0.8 --
+    // the band the fragment shader reads as mouthRgn and the band
+    // initSemanticPools seeds the mouth pool from. Speech was driving the
+    // forehead. It survived because the result is a symmetric brightness
+    // modulation on a monochrome field, which looks plausible anywhere.
+    //
+    // Set from the painted centres rather than mirrored, because mirroring
+    // alone moves the mouth onto the lips but leaves eyeRgn peaking on the
+    // nose bridge. Measured, in this space: crown +0.60, vault +0.50, brows
+    // +0.26 at |nx| 0.13-0.15, eyes +0.16 at |nx| 0.14-0.16, nose bridge
+    // +0.07, cheeks +0.04 at |nx| 0.22-0.24, lips -0.20, chin -0.35. Only two
+    // consumers read zone: eyeRgn, which peaks at 0.5, and mouthRgn with
+    // initSemanticPools, which take >= 0.68. 0.25 is the inert bucket -- both
+    // regions evaluate to zero there.
+    if (ny < -0.14) zone[i] = 0.8;                                                   // lips, chin
+    else if (anx >= 0.09 && anx <= 0.20 && ny >= 0.10 && ny <= 0.21) zone[i] = 0.5;  // eyes
+    else if (anx >= 0.09 && anx <= 0.20 && ny > 0.21 && ny <= 0.34) zone[i] = 0.6;   // brows
+    else if (ny > 0.40) zone[i] = 0.0;                                               // crown, vault
+    else if (anx > 0.20) zone[i] = 0.2;                                              // cheeks
+    else if (anx < 0.09) zone[i] = 0.4;                                              // nose column
+    else zone[i] = 0.25;
   }
 
   // The edge list stays — curvature and boundary above are derived from it, and

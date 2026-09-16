@@ -400,14 +400,34 @@ uniform float uExposure;
 // that is where alpha already lives, and a blink is a dimming rather than a
 // movement -- a creature closing its eye does not change shape.
 uniform float uBlink;
+// Screen door. topologies.yml names dithering as the channel for uncertainty
+// and density as the channel for pressure, and no renderer has ever drawn
+// either. 0 keeps the continuous alpha this shader has always used, so the
+// two can be compared on one machine before either is preferred.
+uniform float uDither;
 varying float vNear;
 varying float vSeed;
+// Ordered 4x4 Bayer by nested 2x2 recursion, matching the matrix
+// particle_kernel.bayer4 uses. GLSL ES 1.00 has no integer bit operators, so
+// the table lookup that file can write is not available here.
+float bayer2(vec2 a) { a = floor(a); return fract(a.x * 0.5 + a.y * a.y * 0.75); }
+float bayer4(vec2 a) { return (bayer2(0.5 * a) * 0.25 + bayer2(a)) * 1.06667; }
 void main() {
   // No gl_PointCoord shaping: at gl_PointSize 1.0 there is no interior to carve.
   float near = vNear * vNear;
   float alpha = mix(uAlphaMin, uAlphaMax, near) * uExposure;
   if (uBlink >= 0.0) alpha *= 1.0 - 0.92 * (1.0 - smoothstep(0.0, 0.16, abs(near - uBlink)));
   vec3 col = mix(uInkFar, uInkNear, near);
+  if (uDither > 0.5) {
+    // Depth stops being alpha and becomes ink density: the fragment is drawn
+    // whole or discarded, and how often it wins its cell is how far away it
+    // is. At gl_PointSize 1.0 the far half of the tube otherwise spends its
+    // entire range inside a handful of 8-bit values above black. No size, no
+    // second pass, no glow -- this stays inside pixel_perfection.
+    if (alpha < bayer4(gl_FragCoord.xy)) discard;
+    gl_FragColor = vec4(col, 1.0);
+    return;
+  }
   gl_FragColor = vec4(col, alpha);
 }`
 
@@ -466,6 +486,8 @@ class VisualEngine {
     this._bassEnv = 0
     this.lastBass = 0
     this.blink = -1
+    // Off until the two have been compared on one machine.
+    this.dither = false
     this._blinkAt = performance.now() + 21000
     this.isMobile = window.innerWidth < 768 || "ontouchstart" in window
     // Classic c7c8effcd / Radio Bergen tunnel: fov 250, speed 0.75, dense rings.
@@ -505,7 +527,7 @@ class VisualEngine {
     for (const n of ["uTime", "uZ", "uFov", "uRadius", "uResolution", "uCenter",
       "uBass", "uMid", "uHigh", "uBreath", "uInkFar", "uInkNear",
       "uAlphaMin", "uAlphaMax", "uExposure",
-      "uPeristalsis", "uLean", "uTwist", "uSag", "uSpread", "uBlink"]) {
+      "uPeristalsis", "uLean", "uTwist", "uSag", "uSpread", "uBlink", "uDither"]) {
       this.uni[n] = gl.getUniformLocation(this.prog, n)
     }
     this.fadeAttr = gl.getAttribLocation(this.fadeProg, "aQuad")
@@ -737,6 +759,7 @@ class VisualEngine {
     gl.uniform1f(u.uSag, post.sag)
     gl.uniform1f(u.uSpread, post.spread)
     gl.uniform1f(u.uBlink, this.blink)
+    gl.uniform1f(u.uDither, this.dither ? 1 : 0)
     // Press inverts toward warm white rather than flipping the buffer: the old
     // softInvert walked every byte of the image on the CPU each pressed frame.
     const inv = this.colorInvertValue / 255
