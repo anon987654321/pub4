@@ -252,15 +252,28 @@ class TestDillaPieces < Minitest::Test
   ROWS = Pieces.rows
   BED = YAML.load_file(File.expand_path("../dilla/data/bed.yml", __dir__), aliases: true)
 
-  def test_the_catalogue_is_ten_to_twenty_pieces
+  # Sixteen written here plus fifteen read out of the operator's own Ableton
+  # sets on 2026-09-16. The ceiling is what a listener will sit through rather
+  # than what the engine can render.
+  def test_the_catalogue_is_ten_to_forty_pieces
     assert_operator ROWS.size, :>=, 10
-    assert_operator ROWS.size, :<=, 20
+    assert_operator ROWS.size, :<=, 40
     assert_equal ROWS.size, Pieces.names.uniq.size, "two pieces share a name"
+  end
+
+  # A row names a progression the engine holds or carries its own, and never
+  # both: two sources for one piece's chords is a piece that plays whichever the
+  # code happens to check first.
+  def test_a_row_has_one_source_of_chords
+    ROWS.each do |row|
+      has = [row["progression"], row["chords"]].compact
+      assert_equal 1, has.size, "#{row['name']}: #{has.size} sources of chords"
+    end
   end
 
   def test_every_progression_voices
     ROWS.each do |row|
-      symbols = CHORD_PROGRESSIONS[row.fetch("progression").to_sym]
+      symbols = row["chords"] || CHORD_PROGRESSIONS[row.fetch("progression").to_sym]
       refute_nil symbols, "#{row['name']}: no progression named #{row['progression']}"
       symbols.each { |symbol| refute_nil Bed.parse_chord(symbol.to_s), "#{row['name']}: #{symbol} does not voice" }
     end
@@ -301,5 +314,52 @@ class TestDillaPieces < Minitest::Test
 
   def test_an_unknown_piece_stops_rather_than_rendering_the_plain_bed
     assert_raises(SystemExit) { Pieces.overlay(BED, "no_such_piece") }
+  end
+end
+
+# `ears` is the engine describing a render to somebody who cannot hear it. These
+# pin the two halves that make it worth having: the numbers answer questions a
+# band average cannot, and the picture gets written.
+class TestDillaEars < Minitest::Test
+  def setup
+    @wav = File.join(Dir.tmpdir, "ears_test_#{Process.pid}.wav")
+    skip "ffmpeg not on PATH" unless system("which", "ffmpeg", out: File::NULL, err: File::NULL)
+
+    # Two seconds of a 440 Hz tone: a known signal, so every reading below is
+    # checked against arithmetic rather than against a previous run.
+    system("ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "sine=f=440:d=2:r=44100",
+           "-ac", "2", @wav, out: File::NULL, err: File::NULL)
+  end
+
+  def teardown = FileUtils.rm_f(@wav.to_s)
+
+  def test_it_measures_a_known_tone
+    m = Ears.measure(@wav)
+    assert_in_delta 2.0, m[:seconds], 0.05
+    # A sine peaks 3 dB over its RMS, and the crest is that difference.
+    assert_in_delta 3.0, m[:crest], 0.5
+    # Nothing at 440 Hz survives two poles at 25 Hz or two at 13 kHz.
+    assert_operator m[:sub] - m[:rms], :<, -40
+    assert_operator m[:air] - m[:rms], :<, -40
+  end
+
+  # The reading the nine octave bands cannot give: their top band is 8 to 16 kHz,
+  # so a record that stops at 13 kHz averages away inside it.
+  def test_air_and_sub_are_measured_outside_the_octave_bands
+    assert_operator Ears::AIR_HZ, :>, 8_000
+    assert_operator Ears::SUB_HZ, :<, 30
+  end
+
+  def test_it_writes_a_picture
+    png = File.join(Dir.tmpdir, "ears_test_#{Process.pid}.png")
+    assert_equal png, Ears.spectrogram(@wav, png)
+    assert_operator File.size(png), :>, 1_000
+  ensure
+    FileUtils.rm_f(png.to_s)
+  end
+
+  # Mono in, so the sides are empty and the width is far below the centre.
+  def test_width_reads_side_against_mid
+    assert_operator Ears.width_db(@wav), :<, -40
   end
 end

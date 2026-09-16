@@ -34470,12 +34470,31 @@ module Ableton
 
   # A whole set. Live 9 through 12 keep the same shape for everything read here;
   # a version that does not simply yields fewer tracks rather than raising.
+  # Three spellings of one number, because sixteen years of Live are in this
+  # archive. Live 12 renamed MasterTrack to MainTrack; Live 8 and 9 keep the
+  # tempo as an automation event at time -63072000 rather than as a manual
+  # value. Measured over the operator's 63 sets, the first spelling alone read
+  # ten of them as zero BPM.
+  TEMPO_PATHS = [
+    "MasterTrack//Tempo/Manual/@Value",
+    "MainTrack//Tempo/Manual/@Value",
+    "MasterTrack//Tempo//FloatEvent/@Value",
+    "MainTrack//Tempo//FloatEvent/@Value",
+  ].freeze
+
+  def tempo_of(live)
+    TEMPO_PATHS.each do |xpath|
+      value = REXML::XPath.first(live, xpath).to_s.to_f
+      return value if value.positive?
+    end
+    0.0
+  end
+
   def set(path)
     libraries!
     doc = REXML::Document.new(xml(path))
     live = doc.root.elements["LiveSet"] or raise "#{path}: no LiveSet"
-    Set.new(path:, creator: doc.root.attributes["Creator"],
-            tempo: REXML::XPath.first(live, "MasterTrack//Tempo/Manual/@Value").to_s.to_f,
+    Set.new(path:, creator: doc.root.attributes["Creator"], tempo: tempo_of(live),
             tracks: REXML::XPath.match(live, "Tracks/*").filter_map { |node| track(node) })
   end
 
@@ -34584,18 +34603,222 @@ module Ableton
   # step. Written rather than described, so an imported beat joins the grid
   # library and every bank that globs for it.
   def write_grid(steps, path)
-    events = steps.sort.flat_map { |step| [[step * (TICKS / 4), 0x90, 100], [(step * (TICKS / 4)) + 12, 0x80, 0]] }
-                  .sort_by { |tick, status, _| [tick, status] }
+    events = steps.sort.flat_map { |step| [[step * (TICKS / 4), 0x90, 38, 100], [(step * (TICKS / 4)) + 12, 0x80, 38, 0]] }
+                  .sort_by { |tick, status, _pitch, _velocity| [tick, status] }
+    write_track(events, path)
+  end
+
+  # The rest of a set: what played, through what, at what level.
+  #
+  # A parameter in Live's XML is any element with a <Manual Value="..."/> child,
+  # whatever device it belongs to. Reading it that way rather than from a table
+  # of forty devices means a device nobody here has heard of still comes back
+  # with its settings, which is the only version of this that survives the next
+  # Live release.
+  Device = Struct.new(:kind, :plugin, :preset, :on, :params, keyword_init: true)
+  Mix = Struct.new(:volume_db, :pan, :sends, :on, keyword_init: true)
+
+  # Live stores a gain as an amplitude, and every mix decision in this archive is
+  # more legible in dB. 0.0003162 is its floor and reads as silence.
+  def gain_db(value)
+    amp = value.to_f
+    return -70.0 if amp <= 0.0003163
+
+    (20 * Math.log10(amp)).round(1)
+  end
+
+  def manual(node, name)
+    REXML::XPath.first(node, "#{name}/Manual/@Value")&.value
+  end
+
+  # Every child that carries a Manual value, by its own element name. Ableton's
+  # own devices name their parameters this way; a VST names them inside
+  # PluginFloatParameter instead, and both end up in one hash.
+  def params_of(node)
+    out = {}
+    node.elements.each do |child|
+      value = REXML::XPath.first(child, "Manual/@Value")&.value
+      out[child.name] = value if value
+    end
+    REXML::XPath.match(node, ".//PluginFloatParameter").each do |param|
+      name = REXML::XPath.first(param, "ParameterName/@Value")&.value or next
+      value = REXML::XPath.first(param, "ParameterValue/Manual/@Value")&.value
+      out[name] = value if value
+    end
+    out.delete("On")
+    out
+  end
+
+  # A rack holds its devices in branches, so the chain is a tree. Flattened, with
+  # the branch in the name, because what matters for reading somebody's mixing is
+  # the order things happened in and not the folding.
+  def devices(node, prefix: nil)
+    REXML::XPath.match(node, "DeviceChain/DeviceChain/Devices/*").flat_map do |dev|
+      plug = REXML::XPath.first(dev, "PluginDesc/VstPluginInfo/PlugName/@Value")&.value ||
+             REXML::XPath.first(dev, "PluginDesc/AuPluginInfo/Name/@Value")&.value
+      preset = REXML::XPath.first(dev, ".//LastPresetRef//RelativePath/@Value")&.value
+      here = Device.new(kind: [prefix, dev.name].compact.join("/"), plugin: plug, preset:,
+                        on: manual(dev, "On") != "false", params: params_of(dev))
+      branches = REXML::XPath.match(dev, "Branches/*").flat_map do |branch|
+        name = REXML::XPath.first(branch, "Name/EffectiveName/@Value")&.value
+        devices(branch, prefix: [prefix, dev.name, name].compact.join("/"))
+      end
+      [here] + branches
+    end
+  end
+
+  # The fader, the pan and the sends, which is most of what a mix is.
+  def mixer(node)
+    mix = node.elements["DeviceChain/Mixer"] or return nil
+
+    sends = REXML::XPath.match(mix, "Sends/TrackSendHolder/Send").map { |send| gain_db(REXML::XPath.first(send, "Manual/@Value")&.value) }
+    Mix.new(volume_db: gain_db(manual(mix, "Volume")), pan: manual(mix, "Pan")&.to_f,
+            sends: sends.reject { |db| db <= -69 }, on: manual(mix, "Speaker") != "false")
+  end
+
+  # Every file the set points at, whether or not it is still there. A set that
+  # will not open because a sample moved still says what the sample was called.
+  def sample_refs(live)
+    REXML::XPath.match(live, ".//SampleRef//FileRef").filter_map do |ref|
+      name = REXML::XPath.first(ref, "Name/@Value")&.value ||
+             REXML::XPath.first(ref, "Path/@Value")&.value
+      relative = REXML::XPath.match(ref, "RelativePath//RelativePathElement/@Dir").map(&:value)
+      next unless name
+
+      { "name" => name, "dir" => relative.join("/") }
+    end.uniq
+  end
+
+  # A clip as a MIDI file: real pitches, real durations, real velocities, at the
+  # clip's own start. write_grid is the drum case of this folded onto one bar;
+  # this is the melodic case, which is what makes an imported set playable rather
+  # than merely readable.
+  def write_clip(clip, path)
+    events = clip.notes.flat_map do |note|
+      on = (note.time * TICKS).round
+      [[on, 0x90, note.pitch, note.velocity.round.clamp(1, 127)],
+       [on + [(note.duration * TICKS).round, 1].max, 0x80, note.pitch, 0]]
+    end.sort_by { |tick, status, pitch, _| [tick, status, pitch] }
+    write_track(events, path)
+  end
+
+  def write_track(events, path)
     body = +""
     tick = 0
-    events.each do |at, status, velocity|
-      body << varlen(at - tick) << [status, 38, velocity].pack("C3")
+    events.each do |at, status, pitch, velocity|
+      body << varlen(at - tick) << [status, pitch, velocity].pack("C3")
       tick = at
     end
     body << varlen(0) << [0xff, 0x2f, 0x00].pack("C3")
     header = ["MThd"].pack("a4") + [6].pack("N") + [0, 1, TICKS].pack("n3")
+    FileUtils.mkdir_p(File.dirname(path))
     File.binwrite(path, header + ["MTrk"].pack("a4") + [body.bytesize].pack("N") + body)
     path
+  end
+
+  # One set, whole: what it ran, how it was mixed, what it played and what it
+  # pointed at. Plain hashes, because this is written to YAML and read by people.
+  def profile(path, qualities)
+    doc = (libraries!; REXML::Document.new(xml(path)))
+    live = doc.root.elements["LiveSet"] or raise "#{path}: no LiveSet"
+    tracks = REXML::XPath.match(live, "Tracks/*")
+    rows = tracks.filter_map do |node|
+      parsed = track(node) or next
+      notes = parsed.clips.sum { |clip| clip.notes.size }
+      chain = devices(node)
+      mix = mixer(node)
+      row = { "name" => parsed.name, "kind" => parsed.kind, "notes" => notes,
+              "devices" => chain.map { |dev| device_row(dev) } }
+      row["mix"] = { "volume_db" => mix.volume_db, "pan" => mix.pan, "sends_db" => mix.sends } if mix
+      if notes.positive?
+        row[drums?(parsed) ? "grid" : "harmony"] =
+          drums?(parsed) ? grid(parsed).transform_values { |s| s.join(",") } : progression(parsed, qualities, limit: 16)
+      end
+      row
+    end
+    { "file" => File.expand_path(path), "creator" => doc.root.attributes["Creator"],
+      "tempo" => tempo_of(live).round(2), "tracks" => rows, "samples" => sample_refs(live) }
+  end
+
+  # Only the parameters that were moved off their device's own default would be
+  # the interesting set, and Live does not record a default. So every parameter
+  # is kept and the reader decides -- but a device with two hundred of them is
+  # noise in a YAML file a person reads, so those are counted rather than listed.
+  PARAM_LIMIT = 24
+
+  def device_row(dev)
+    row = { "kind" => dev.kind }
+    row["plugin"] = dev.plugin if dev.plugin
+    row["preset"] = dev.preset if dev.preset
+    row["off"] = true unless dev.on
+    row[dev.params.size > PARAM_LIMIT ? "param_count" : "params"] =
+      dev.params.size > PARAM_LIMIT ? dev.params.size : dev.params
+    row
+  end
+
+  # Every note a set holds, as MIDI beside the set's name: the drum tracks folded
+  # onto one bar under the names the grid banks glob for, and every other clip at
+  # its own length. A clip with three notes is not worth a file, and a track that
+  # merely doubles another is, because which of the two the operator kept is not
+  # knowable from here.
+  LEAST_NOTES = 4
+
+  def write_set_midi!(path, dir, qualities)
+    set = set(path)
+    written = []
+    set.tracks.each do |track|
+      next if track.clips.all? { |clip| clip.notes.empty? }
+
+      safe = track.name.downcase.gsub(/[^a-z0-9]+/, "_").gsub(/\A_|_\z/, "")
+      if drums?(track)
+        grid(track).each { |role, steps| written << write_grid(steps, File.join(dir, "#{role}.mid")) }
+        next
+      end
+      track.clips.each_with_index do |clip, index|
+        next if clip.notes.size < LEAST_NOTES
+
+        written << write_clip(clip, File.join(dir, "#{safe}_#{index}.mid"))
+      end
+    end
+    # The harmony beside the notes, so the folder says what it is without being
+    # opened in anything.
+    chords = set.tracks.reject { |track| drums?(track) }
+                .to_h { |track| [track.name, progression(track, qualities, limit: 16)] }
+                .reject { |_name, list| list.size < 2 }
+    unless chords.empty?
+      FileUtils.mkdir_p(dir)
+      File.write(File.join(dir, "harmony.yml"), YAML.dump("tempo" => set.tempo.round(2), "harmony" => chords))
+    end
+    written
+  end
+
+  # What the archive says about how its maker worked. Counted across every set:
+  # which devices and plugins, how often, in what order they sat on a chain, at
+  # what tempos, and which samples were reached for. A habit is a number here,
+  # not a recollection.
+  CHAIN_DEPTH = 5
+
+  def census(profiles)
+    devices = Hash.new(0)
+    plugins = Hash.new(0)
+    chains = Hash.new(0)
+    samples = Hash.new(0)
+    tempos = []
+    profiles.each do |profile|
+      tempos << profile["tempo"] if profile["tempo"].to_f.positive?
+      profile["samples"].each { |ref| samples[ref["name"]] += 1 }
+      profile["tracks"].each do |row|
+        kinds = row["devices"].map { |dev| dev["plugin"] || dev["kind"] }
+        kinds.each { |kind| devices[kind] += 1 }
+        row["devices"].each { |dev| plugins[dev["plugin"]] += 1 if dev["plugin"] }
+        chains[kinds.first(CHAIN_DEPTH).join(" > ")] += 1 unless kinds.empty?
+      end
+    end
+    sorted = ->(hash) { hash.sort_by { |name, count| [-count, name.to_s] }.to_h }
+    { "sets" => profiles.size, "tempos" => tempos.sort,
+      "tempo_median" => tempos.empty? ? nil : tempos.sort[tempos.size / 2],
+      "devices" => sorted[devices], "plugins" => sorted[plugins],
+      "chains" => sorted[chains].first(40).to_h, "samples" => sorted[samples].first(60).to_h }
   end
 
   def varlen(value)
@@ -36000,7 +36223,15 @@ module Bed
   # pass. A two-chord vamp is stated until the piece has room to move, and a long
   # progression is cut to the length a piece holds.
   def render_track!(name, path, seed)
-    chords = dilla_progressions.fetch(name.to_s) { abort "bed: no progression named #{name}" }.filter_map { |symbol| parse_chord(symbol) }
+    symbols = dilla_progressions.fetch(name.to_s) { abort "bed: no progression named #{name}" }
+    render_symbols!(name, symbols, path, seed)
+  end
+
+  # A progression from wherever it came from: a row of CHORD_PROGRESSIONS, or a
+  # piece that carries its own chords because they were read out of an Ableton
+  # set and belong to nobody else's table.
+  def render_symbols!(name, symbols, path, seed)
+    chords = Array(symbols).filter_map { |symbol| parse_chord(symbol.to_s) }
     abort "bed: #{name} has no chord the bed can voice" if chords.empty?
 
     minimum = Integer(CATALOGUE.fetch("min_chords"))
@@ -36072,6 +36303,8 @@ module Bed
   # BED before this file finished loading; what is left is which chords.
   def render_piece!(name, path, seed)
     row = Pieces.fetch(name) or abort "pieces: no piece named #{name} — have #{Pieces.names.join(', ')}"
+    return render_symbols!(name, row.fetch("chords"), path, seed) if row["chords"]
+
     render_track!(row.fetch("progression"), path, seed)
   end
 
@@ -36904,6 +37137,163 @@ def live!(argv)
   DillaLive.run((argv.shift || (dest ? "1" : "0")).to_i, dest)
 end
 
+# What a render measures like, written down where somebody who cannot hear it
+# can read it.
+#
+# That is the honest reason this exists. An agent working on this engine has no
+# ears: it can read a number and it can look at a picture, and it cannot tell
+# whether a mix is dull. So `ears` writes both -- a spectrogram it can look at
+# and a table it can read -- and the two together catch the class of fault that
+# a listener catches in a second and a band curve hides. The 2026-09-16
+# catalogue measured well on every band and had nothing above 13 kHz, which the
+# spectrogram showed as a flat ceiling across all sixteen pieces and the nine
+# octave bands, whose top one spans 8 to 16 kHz, averaged away.
+#
+# What it cannot do, said plainly because the temptation is to forget it: none
+# of this says whether a render is good. module Arrangement makes the argument
+# at length and it holds here. A measurement is worth something once it is
+# anchored to material an ear has already sorted, which is why `ears <render>
+# <reference>` takes a second file and prints the deltas, and why the single-file
+# form is a description rather than a verdict.
+module Ears
+  module_function
+
+  # Octave bands, and the two edges that matter either side of them. Below 25 Hz
+  # nothing is heard and everything costs headroom; above 13 kHz is the air, and
+  # a chain of lowpasses removes it one filter at a time without any single
+  # filter looking wrong.
+  SUB_HZ = 25
+  AIR_HZ = 13_000
+  SPECTRUM = "s=1400x480:mode=combined:scale=log:legend=1"
+
+  # astats prints a crest factor per channel and none in its Overall block, so
+  # the crest here is peak over RMS, which is the same statement in dB and comes
+  # out of two numbers Overall does print.
+  def probe(path, chain = nil)
+    graph = [chain, "astats=metadata=0:measure_perchannel=none"].compact.join(",")
+    _out, err, _status = ToolRun.capture3("ffmpeg", "-hide_banner", "-nostats", "-i", path, "-af", graph, "-f", "null", "-")
+    tail = err[/Overall.*\z/m].to_s
+    rms = decibels(tail, "RMS level")
+    peak = decibels(tail, "Peak level")
+    { rms:, peak:, dc: decibels(tail, "DC offset"),
+      crest: (rms && peak ? (peak - rms).round(1) : nil) }
+  end
+
+  # Digital silence reads as -inf, which is the honest answer and not a number.
+  # A side channel is exactly silent whenever a file is truly mono, so this is
+  # the ordinary case rather than an edge one. The floor keeps the arithmetic
+  # downstream working without pretending the silence was quiet sound.
+  FLOOR_DB = -120.0
+
+  def decibels(text, field)
+    raw = text[/#{Regexp.escape(field)}(?: dB)?:\s*(-?[\d.a-z]+)/, 1] or return nil
+
+    raw.include?("inf") ? FLOOR_DB : raw.to_f
+  end
+
+  def level(path, chain = nil) = probe(path, chain)[:rms]
+
+  # Two poles each side, so the edge is steep enough that what the number says
+  # is out really is out.
+  def sub_rms(path) = level(path, "lowpass=f=#{SUB_HZ},lowpass=f=#{SUB_HZ}")
+  def air_rms(path) = level(path, "highpass=f=#{AIR_HZ},highpass=f=#{AIR_HZ}")
+
+  # Side against mid, in dB. Zero is a mono record, and a positive number is a
+  # record whose sides carry more than its centre, which is a phase problem
+  # rather than a wide mix.
+  def width_db(path)
+    mid = level(path, "pan=mono|c0=0.5*c0+0.5*c1")
+    side = level(path, "pan=mono|c0=0.5*c0-0.5*c1")
+    return nil unless mid && side
+
+    (side - mid).round(1)
+  end
+
+  def duration(path)
+    out, _err, _status = ToolRun.capture3("ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=nk=1:nw=1", path)
+    out.to_f
+  end
+
+  def spectrogram(path, png)
+    FileUtils.mkdir_p(File.dirname(png))
+    ok = ToolRun.system("ffmpeg", "-v", "error", "-y", "-i", path, "-lavfi", "showspectrumpic=#{SPECTRUM}",
+                        "-frames:v", "1", png, out: File::NULL, err: File::NULL)
+    ok && File.file?(png) ? png : nil
+  end
+
+  # Everything about one file, as numbers. The bands come from Bed.band_curve,
+  # which is the instrument data/bed.yml's reference_bands were measured with --
+  # a second band analyser here would make the reference meaningless.
+  def measure(path)
+    overall = probe(path)
+    loud = Bed.loudness_of(path)
+    { path:, seconds: duration(path), bands: Bed.band_curve(path),
+      rms: overall[:rms], peak: overall[:peak], crest: overall[:crest], dc: overall[:dc],
+      lufs: loud[:lufs], lra: loud[:lra], true_peak: loud[:true_peak],
+      sub: sub_rms(path), air: air_rms(path), width: width_db(path) }
+  end
+
+  STEMS = %w[drums bass other vocals].freeze
+
+  # demucs, so a kick is compared with a kick. Comparing two mixes tells you one
+  # is duller; comparing two kicks tells you which part of it is.
+  def stems(path)
+    require_tools! "demucs"
+    out = File.join(Dir.tmpdir, "ears_stems_#{Process.pid}")
+    FileUtils.mkdir_p(out)
+    sh! "demucs", "-n", "htdemucs_ft", "-o", out, path
+    found = Dir[File.join(out, "**", "*.wav")].group_by { |file| File.basename(file, ".wav") }
+    STEMS.filter_map { |name| [name, found[name]&.first] if found[name] }.to_h
+  end
+
+  def row(label, m)
+    format("  %-14s %6.1fs  %6.1f LUFS  LRA %4.1f  tp %5.1f  crest %4.1f  sub %+6.1f  air %+6.1f  width %+5.1f",
+           label, m[:seconds], m[:lufs], m[:lra], m[:true_peak], m[:crest] || 0,
+           (m[:sub] || -99) - (m[:rms] || 0), (m[:air] || -99) - (m[:rms] || 0), m[:width] || 0)
+  end
+
+  def bands_row(label, m)
+    format("  %-14s %s", label, m[:bands].map { |v| format("%6.1f", v) }.join)
+  end
+
+  # `ears <file> [reference] [--stems]`. Sub and air are printed relative to the
+  # file's own level, because that is the question -- how much of this record is
+  # inaudible, and how much of it is air -- and an absolute number would only
+  # restate the loudness.
+  def report!(paths, with_stems:)
+    png_dir = File.join(OUTPUT_DIR, "ears")
+    measures = paths.map { |path| [File.basename(path, ".*")[0, 14], measure(path)] }
+
+    puts (" " * 16) + Bed::BAND_NAMES.map { |name| format("%6s", name) }.join
+    measures.each { |label, m| puts bands_row(label, m) }
+    if measures.size > 1
+      first = measures.first.last[:bands]
+      measures.drop(1).each do |label, m|
+        deltas = m[:bands].each_with_index.map { |v, i| v - first[i] }
+        puts format("  %-14s %s", "Δ #{label}"[0, 14], deltas.map { |v| format("%+6.1f", v) }.join)
+      end
+    end
+    puts
+    measures.each { |label, m| puts row(label, m) }
+    puts
+    measures.each do |label, m|
+      png = spectrogram(m[:path], File.join(png_dir, "#{label}.png"))
+      puts "  spectrogram: #{png}" if png
+    end
+    return unless with_stems
+
+    puts
+    measures.each do |label, m|
+      stems(m[:path]).each do |name, file|
+        stem = measure(file)
+        puts row("#{label}/#{name}"[0, 14], stem)
+        png = spectrogram(file, File.join(png_dir, "#{label}_#{name}.png"))
+        puts "  spectrogram: #{png}" if png
+      end
+    end
+  end
+end
+
 DISPATCH = {
   "capabilities" => -> { puts Master::Io::AnalogCapabilities.report(:dilla) },
   "quality" => -> { dilla_quality(ARGV.shift || File.join(OUTPUT_DIR, "full_track.mp3"), ARGV.shift) },
@@ -37028,7 +37418,27 @@ DISPATCH = {
   "crit" => -> { crit_session_cli!(ARGV.shift) },
   "phone-preview" => -> { phone_preview(ARGV.shift) },
   "semantics" => -> { semantics(ARGV.shift) },
-  "ears" => -> { ears(ARGV.shift || File.join(OUTPUT_DIR, "full_track.mp3")) },
+  # What a render measures like, for whoever cannot hear it.
+  #
+  #   ears                                 demo.wav, described
+  #   ears a.wav b.wav                     both, with the band deltas
+  #   ears a.wav b.wav stems               demucs first, so kick meets kick
+  #   ears a.wav json                      the metadata report, as it was
+  #
+  # Writes a spectrogram per file under <output>/ears and says where. The
+  # picture is the half that catches a fault a band average hides: nine octave
+  # bands put 8 to 16 kHz in one number, and a record with no air above 13 kHz
+  # can pass every band and still be dull.
+  "ears" => lambda {
+    next ears(ARGV.first || File.join(OUTPUT_DIR, "full_track.mp3")) if ARGV.delete("json")
+
+    with_stems = !ARGV.delete("stems").nil?
+    paths = ARGV.empty? ? [File.join(ROOT, "demo.wav")] : ARGV.dup
+    missing = paths.reject { |path| File.file?(path) }
+    abort "ears: no such file: #{missing.join(', ')}" unless missing.empty?
+
+    Ears.report!(paths, with_stems:)
+  },
   "play" => -> { play(ARGV.shift, (ARGV.shift || 8).to_i) },
   "live" => -> { live!(ARGV) },
   "bed" => -> { Bed.main(ARGV) },
@@ -37040,61 +37450,66 @@ DISPATCH = {
   # this file is loading, so a name arriving as an argument arrives too late.
   # DILLA_PIECE already matching is what stops the second exec.
   "pieces" => -> { Bed.pieces! },
-  # An old Ableton set, read back as a piece.
+  # Old Ableton sets, read back.
   #
-  # `import-als <file.als>` prints what the set holds: its tempo, its tracks and
-  # the devices each one ran, the harmony of every track that plays chords, and
-  # the drum grids of every track that plays drums. `--write` puts the grids in
-  # samples/midi/<slug>/ where the banks glob for them, and the recipe in
-  # project/imported/<slug>.yml, which is a data/pieces.yml row: paste it in and
-  # the beat is in the catalogue.
+  #   import-als <file.als>            what one set holds
+  #   import-als <dir>                 every set under it, one line each
+  #   import-als <dir> write           and the whole of it to project/imported
   #
-  # The samples the set pointed at are not needed and mostly not there. What
-  # comes back is the writing -- the tempo, the changes and the placement -- and
-  # the engine plays it on instruments it synthesises itself.
+  # A set is a gzipped XML document, so one that no longer opens in Live -- wrong
+  # version, missing plugin, sample long gone -- still reads here in full: the
+  # tempo, every track's device chain with its parameters, the plugin names and
+  # paths, the fader, pan and sends, every note, and the name of every sample it
+  # pointed at. The audio is not in the file and the samples usually are not on
+  # the disk; what comes back is the writing and the decisions, and this engine
+  # synthesises the sound itself.
+  #
+  # `write` puts a profile per set in project/imported, the drum grids in
+  # samples/midi/<slug> where the banks glob for them, and every melodic clip
+  # beside them as MIDI. Over a folder it also writes _census.yml: which devices
+  # and plugins were used how often, in what order, and at what tempos -- the
+  # operator's own habits, counted rather than remembered.
   "import-als" => lambda {
-    path = ARGV.shift or abort "usage: dilla.rb import-als <file.als> [--write]"
-    abort "no such set: #{path}" unless File.file?(path)
+    target = ARGV.shift or abort "usage: dilla.rb import-als <file.als|dir> [write]"
+    write = !ARGV.delete("write").nil?
+    sets = if File.directory?(target)
+             Dir.glob(File.join(target, "**", "*.als")).reject { |path| path.include?("/Backup/") }.sort
+           else
+             [target]
+           end
+    abort "no sets under #{target}" if sets.empty?
 
-    write = ARGV.delete("--write")
-    slug = File.basename(path, ".als").downcase.gsub(/[^a-z0-9]+/, "_").gsub(/\A_|_\z/, "")
-    set = Ableton.set(path)
-    puts "#{File.basename(path)} — #{set.creator}, #{set.tempo.round} bpm, #{set.tracks.size} tracks"
-
-    harmony = {}
-    grids = {}
-    set.tracks.each do |track|
-      notes = track.clips.sum { |clip| clip.notes.size }
-      next if notes.zero?
-
-      if Ableton.drums?(track)
-        grid = Ableton.grid(track)
-        grids[track.name] = grid
-        puts format("  %-26s drums  %s", track.name, grid.map { |role, steps| "#{role}:#{steps.join(',')}" }.join("  "))
-      else
-        chords = Ableton.progression(track, Bed::QUALITIES)
-        next if chords.size < 2
-
-        harmony[track.name] = chords
-        puts format("  %-26s %-6s %s", track.name, track.devices.first.to_s[0, 6], chords.join(" "))
+    out = File.join(ROOT, "project", "imported")
+    grid_root = File.join(ROOT, "samples", "midi")
+    profiles = []
+    sets.each_with_index do |path, index|
+      slug = File.basename(path, ".als").downcase.gsub(/[^a-z0-9]+/, "_").gsub(/\A_|_\z/, "")
+      begin
+        profile = Ableton.profile(path, Bed::QUALITIES)
+      rescue StandardError => e
+        puts format("  %3d/%d  %-40s unreadable (%s)", index + 1, sets.size, slug[0, 40], e.class)
+        next
       end
+      profiles << profile
+      playing = profile["tracks"].select { |row| row["notes"].to_i.positive? }
+      kit = playing.count { |row| row["grid"] }
+      puts format("  %3d/%d  %-30s %5.1f bpm  %2d tracks  %2d playing  %2d kit  %3d devices  %2d samples",
+                  index + 1, sets.size, slug[0, 30], profile["tempo"], profile["tracks"].size,
+                  playing.size, kit, profile["tracks"].sum { |row| row["devices"].size }, profile["samples"].size)
+      next unless write
+
+      FileUtils.mkdir_p(out)
+      File.write(File.join(out, "#{slug}.yml"), YAML.dump(profile))
+      Ableton.write_set_midi!(path, File.join(grid_root, slug), Bed::QUALITIES)
     end
+    puts "  read #{profiles.size}/#{sets.size} sets"
     next unless write
 
-    grid_root = File.join(ROOT, "samples", "midi")
-    grids.each_with_index do |(name, grid), index|
-      dir = File.join(grid_root, "#{slug}#{grids.size > 1 ? "_#{index + 1}" : ''}")
-      FileUtils.mkdir_p(dir)
-      grid.each { |role, steps| Ableton.write_grid(steps, File.join(dir, "#{role}.mid")) }
-      puts "  wrote #{dir} (#{grid.keys.join(', ')}) — from #{name}"
-    end
-    out = File.join(ROOT, "project", "imported")
-    FileUtils.mkdir_p(out)
-    recipe = File.join(out, "#{slug}.yml")
-    File.write(recipe, YAML.dump("imported" => { "from" => File.expand_path(path), "creator" => set.creator,
-                                                 "tempo" => set.tempo, "harmony" => harmony,
-                                                 "grids" => grids.transform_values { |g| g.transform_values { |s| s.join(",") } } }))
-    puts "  wrote #{recipe}"
+    census = Ableton.census(profiles)
+    File.write(File.join(out, "_census.yml"), YAML.dump(census))
+    puts "  wrote #{out} (#{profiles.size} profiles + _census.yml)"
+    puts "  devices: #{census['devices'].first(8).map { |kind, n| "#{kind} #{n}" }.join(', ')}"
+    puts "  plugins: #{census['plugins'].keys.first(8).join(', ')}"
   },
   "piece" => lambda {
     name = ARGV.shift or abort "usage: dilla.rb piece <#{Pieces.names.join('|')}> [out.wav]"

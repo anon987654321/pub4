@@ -36,3 +36,5 @@ tools/
 # Render sessions filed away by hand. The whole tree, not a pattern list: the
 # anchored sidecar rules above stop matching one level down.
 renders/
+/ears/
+/project/imported/
