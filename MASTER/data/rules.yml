@@ -1105,8 +1105,6 @@ rules:
     fix: Small deliberate steps. Reassess after each. Feedback from each step illuminates
       the next.
 # ... (existing laws) ...
-# ... (existing laws) ...
-# ... (existing laws) ...
   - id: REVERSIBILITY
     source: The Pragmatic Programmer — reversibility (Hunt & Thomas)
     name: Ability to undo a decision
@@ -1123,6 +1121,14 @@ rules:
     autofix: false
     detect_semantic: Does this tool wrap another tool that performs the same core action?
     fix: Remove the wrapper and call the underlying tool directly.
+    name: Prefer decisions that are easy to undo
+    tier: philosophy
+    severity: info
+    autofix: false
+    detect_semantic: Is this decision hard to reverse? Does it lock in a vendor? Waive
+      future rights? Have no rollback pathway?
+    fix: Soft-delete over hard-delete. Option agreements over binding. Feature flags
+      over big-bang.
   - id: DESIGN_IT_TWICE
     source: A Philosophy of Software Design — Design it Twice (Ousterhout)
     name: Consider at least two approaches before committing

@@ -1,0 +1,479 @@
+# frozen_string_literal: true
+
+require "set"
+require_relative "design_metrics/contrast"
+
+module Deploy
+  # Pure-Ruby design measurements against MASTER/data/rules.yml design_rules.
+  # No browser required. Used by DesignMetricsGate + unit tests.
+  module DesignMetrics
+    extend Contrast
+
+    module_function
+
+    # Which token keys read as foreground vs background, and which light/dark
+    # mode they belong to. Pairing a light-mode text colour against a dark-mode
+    # surface would invent a combination the UI never renders.
+    MODE_PREFIX = /\A(light|dark)_/
+    FOREGROUND_KEY = /\A(?:light_|dark_)?(text|text_secondary|muted|accent|accent_hover|link|danger)\z/
+    BACKGROUND_KEY = /\A(?:light_|dark_)?(bg|surface|surface_elevated|search_bg|chrome_bg)\z/
+
+    # brgen's vertical accents sit in their own top-level map with no background
+    # of their own, so token_pairs -- which only pairs inside one dialect -- never
+    # saw them. They render on the social chrome, and nothing reported them.
+    #
+    # Both accents this found have since been lifted: marketplace is #98876e and
+    # tv is #dc635c in design_tokens.yml, which records tv's own history. The
+    # measurement below is kept because its lesson is about the background, not
+    # about two hex values.
+    VERTICAL_BACKGROUNDS = %w[bg surface_elevated].freeze
+
+    # Against the surfaces brgen actually paints, which are not social's.
+    #
+    # This paired every vertical accent with social.bg (#17161c) and
+    # social.surface_elevated (#211f28). brgen's dark theme is brgen_old_dark —
+    # brgen's :root includes brgen-old-dark-tokens, which outranks social — so the
+    # real surfaces are #000000 and #1a1a1a. Every vertical finding was measured
+    # against a background the app never renders.
+    #
+    # It mattered in both directions. The marketplace accent read 3.92:1 on
+    # social.surface_elevated and 4.19 on the real one — still failing, so the
+    # lift was right for the wrong reason. messenger #6b7fd7 reads 4.37 on
+    # social's and 4.68 on the real one — it already passed, and was "corrected"
+    # for nothing.
+    VERTICAL_SURFACE_DIALECT = "brgen_old_dark"
+
+    # Vertical accents used only inside a light-theme block.
+    #
+    # The comment on MODE_PREFIX above states the rule this enforces — pairing a
+    # light-mode foreground against a dark-mode surface invents a combination
+    # the UI never renders — and MODE_PREFIX cannot reach these, because
+    # vertical_accents carry no light_/dark_ prefix. So the mode is read from
+    # the stylesheets instead of from the key.
+    #
+    # marketplace is the case. --vertical-marketplace-accent-hover has exactly
+    # one use in the whole tree, in a rule under `:root[data-theme="light"]` in
+    # brgen's stylesheet — and design_tokens.yml says why in the note
+    # above the token: the accent is a background carrying dark ink, so small
+    # text in this vertical wears `hover`, and only the light theme swaps to it.
+    # On its actual ground it measures 6.03:1. Paired against brgen_old_dark's
+    # #000000 and #1a1a1a it reads 3.48 and 2.89, and reported two AA failures
+    # for a combination that cannot be rendered.
+    #
+    # Raising the ceiling to absorb those would have been worse than the finding:
+    # contrast_below_aa is 0 precisely so a real one is visible the day it lands.
+    def light_only_vertical_keys(rails_root)
+      globs = %w[
+        {shared,brgen,amber,bsdports}/app/assets/stylesheets/**/*.scss
+        brgen/engines/*/app/assets/stylesheets/*.scss
+      ]
+      light_only = {}
+      globs.each do |pattern|
+        Dir.glob(File.join(rails_root, pattern)).each do |path|
+          next if path.include?("/builds/") || path.include?("/public/assets/") ||
+                  path.include?("/vendor/") || path.include?("/node_modules/")
+
+          theme = nil
+          File.readlines(path).each do |line|
+            theme = "light" if line.include?('data-theme="light"')
+            theme = "dark" if line.include?('data-theme="dark"')
+            theme = nil if line.strip == "}"
+            line.scan(/--vertical-(\w+)-accent-(\w+)/) do |vertical, key|
+              token = "#{vertical}_#{key}"
+              # Any use outside a light block disqualifies it for good.
+              light_only[token] = false unless theme == "light"
+              light_only[token] = true unless light_only.key?(token)
+            end
+          end
+        rescue StandardError
+          next
+        end
+      end
+      light_only.select { |_, only| only }.keys
+    end
+
+    # The vertical accent ink, read from the stylesheet that sets it. #110f19 was
+    # chosen against the accent column and measured there — "dark 5.10 to 9.94",
+    # which is the accent column exactly. Nobody measured it against hover.
+    def vertical_accent_ink(rails_root)
+      sheet = File.join(rails_root, "brgen/app/assets/stylesheets/application.scss")
+      File.read(sheet)[/\$vertical-accent-ink:\s*(#[0-9a-fA-F]{3,8})/, 1]
+    rescue StandardError => e
+      # Same posture as contrast_budget below: say so and drop the pairs this ink
+      # would have made, rather than reporting a clean hover column the gate
+      # never measured.
+      warn "design_metrics: vertical accent ink unreadable (#{e.class}) — hover fills unmeasured"
+      nil
+    end
+
+    # `accent` and `hover` are not the same kind of colour and were paired as
+    # though they were.
+    #
+    # `accent` is assigned straight to --accent under body.vertical-<v>, and
+    # --accent is read as `color:` all over the tree, so pairing it against the
+    # page backgrounds asks a question the tree answers.
+    #
+    # `hover` is read in exactly one place -- .nav-search-submit:hover, as a
+    # background-color -- and in no place as a foreground. Pairing it against
+    # the page background reported marketplace
+    # 3.13 and 3.48 for text that is never drawn, while the pair that IS drawn
+    # went unmeasured: the button keeps color: var(--accent-ink) through the
+    # hover, so the ink lands on the hover fill. That measures 3.15 on
+    # marketplace, 3.34 on tv and 4.31 on maps -- three real failures under the
+    # 4.5 floor the accent map's own comment claims, hidden behind two
+    # false ones.
+    #
+    # design_tokens.yml still says "Small text in this vertical wears `hover`
+    # instead"; .market-hero-kicker, the rule it names, is gone.
+    def vertical_accent_pairs(tokens, rails_root = nil)
+      verticals = tokens["vertical_accents"]
+      social = tokens[VERTICAL_SURFACE_DIALECT] || tokens["social"]
+      return [] unless verticals.is_a?(Hash) && social.is_a?(Hash)
+
+      # Computed once, not per vertical.
+      light_only = rails_root ? light_only_vertical_keys(rails_root) : []
+      ink = rails_root ? vertical_accent_ink(rails_root) : nil
+
+      verticals.flat_map do |vertical, row|
+        next [] unless row.is_a?(Hash)
+
+        foreground_accent_pairs(vertical:, row:, social:, light_only:) +
+          hover_fill_pairs(vertical:, row:, ink:)
+      end
+    end
+
+    def foreground_accent_pairs(vertical:, row:, social:, light_only:)
+      return [] if light_only.include?("#{vertical}_accent")
+
+      fg = row["accent"]
+      return [] unless fg
+
+      VERTICAL_BACKGROUNDS.filter_map do |bg_key|
+        bg = social[bg_key]
+        ratio = bg && contrast_ratio(fg, bg)
+        next unless ratio
+
+        { label: "vertical_accents.#{vertical}_accent/#{VERTICAL_SURFACE_DIALECT}.#{bg_key}", fg: fg, bg: bg,
+          fg_key: "#{vertical}_accent", bg_key: bg_key, ratio: ratio }
+      end
+    end
+
+    def hover_fill_pairs(vertical:, row:, ink:)
+      hover = row["hover"]
+      return [] unless hover && ink
+
+      ratio = contrast_ratio(ink, hover)
+      return [] unless ratio
+
+      [{ label: "vertical_accent_ink/vertical_accents.#{vertical}_hover", fg: ink, bg: hover,
+         fg_key: "accent_ink", bg_key: "#{vertical}_hover", ratio: ratio }]
+    end
+
+    # Values of a custom property that survive the cascade.
+    #
+    # read_custom_properties below answers "is this property read anywhere",
+    # which is necessary and not sufficient. A dialect can declare a value, the
+    # property can be read all over the tree, and the value still never reach a
+    # pixel because a later rule at the same specificity overwrites it.
+    #
+    # That is what social.accent does. Every app emits `:root { --accent:
+    # #897dda }` from the shared baseline and then a second `:root` further down
+    # with its own dialect — #f2f2f2 for brgen's BRGEN_OLD grayscale, #7e6e55 for
+    # amber's luxury, #63c363 for bsdports' wscons. Same specificity, later wins,
+    # so the social value is shadowed in all three. Measured: with the accent
+    # "corrected" locally and production still on the old value, both computed
+    # --accent as #f2f2f2. Identical. The contrast finding that prompted the
+    # change was about a colour nothing paints.
+    #
+    # Deliberately reads the built CSS, unlike read_custom_properties, which
+    # excludes builds/ so a stale artifact cannot vote. Cascade order only exists
+    # after compilation — the SCSS says which mixins exist, not which one lands
+    # last in a given app. The freshness risk is real and is covered by
+    # `build_all_css.rb --check` and the generated_asset gate; if those are
+    # skipped this reads yesterday's answer.
+    #
+    # Scope: plain `:root` shadowing, which is the demonstrated defect. It does
+    # not resolve @media, [data-theme], or body-class scopes — a value at a more
+    # specific selector (body.vertical-marketplace) is treated as painting,
+    # which is correct for those and conservative elsewhere.
+    def winning_property_values(rails_root, prop)
+      @winning_property_values ||= {}
+      @winning_property_values[[rails_root, prop]] ||= begin
+        values = Set.new
+        Dir.glob(File.join(rails_root, "*/app/assets/builds/application.css")).each do |path|
+          css = File.read(path) rescue next
+decls = []
+css.scan(/([^{}]+)\{([^{}]*)\}/) do
+  selector = Regexp.last_match(1)
+  body = Regexp.last_match(2)
+  offset = Regexp.last_match.begin(0)
+  body.scan(/(?:\A|;)\s*#{Regexp.escape(prop)}\s*:\s*([^;]+)/) do
+    decls << [selector.strip.split(",").map(&:strip), Regexp.last_match(1).strip.downcase,
+              conditional_at(css, offset)]
+  end
+end
+# Among bare `:root` rules only the last one is the default winner —
+# but a `:root` inside @media is not a bare `:root`. It applies only
+# when its condition holds, so it cannot shadow the default, and the
+# regex above cannot tell them apart on its own: both have the
+# selector text ":root".
+#
+# bsdports is the case. application.scss:38 sets --text-secondary to
+# #499149 and line 509 sets it to var(--text) inside
+# `@media (prefers-contrast: more)`. Reading the second as the winner
+# made this report #499149 as overridden — a colour that never reaches
+# a pixel — while a browser with default settings paints it on 45
+# elements of the ports index. design_tokens.yml then recorded the
+# wrong value twice on the strength of that reading, most recently with
+# a note reasoning explicitly from "a later :root".
+#
+# Both values paint, under different conditions, so both stay in the
+# set; only the unconditional one gets to shadow.
+bare = decls.each_index.select { |i| decls[i][0] == [":root"] && !decls[i][2] }
+bare[0..-2].to_a.each { |i| decls[i] = nil }
+decls.compact.each { |_, v, _| values << v }
+        end
+        values
+      end
+    end
+
+# Is the rule starting at this offset nested inside a conditional at-rule?
+#
+# Counts unclosed `@media`/`@supports`/`@container` blocks before the offset.
+# A declaration inside one applies only when its condition holds, which is
+# what separates an override from an alternative.
+  def conditional_at(css, offset)
+    head = css[0...offset]
+    depth = 0
+    opens = []
+    head.scan(/@(media|supports|container)[^{;]*\{|\{|\}/) do |kind|
+      token = Regexp.last_match(0)
+      if token.end_with?("{") && kind.first
+        opens << depth
+        depth += 1
+      elsif token == "{"
+        depth += 1
+      else
+        depth -= 1
+        opens.pop while opens.any? && opens.last >= depth
+      end
+    end
+    opens.any?
+  end
+
+    # Does this dialect's declared value survive the cascade under any of the
+    # CSS names the token can take?
+    def token_value_wins?(rails_root, fg_key, value)
+      custom_property_candidates(fg_key).any? { |prop| token_value_paints?(rails_root, prop, value) }
+    end
+
+    def token_value_paints?(rails_root, prop, value)
+      return true if value.nil? || value.to_s.strip.empty?
+
+      winning = winning_property_values(rails_root, prop)
+      # No declarations found at all (property lives outside the built sheets) —
+      # do not silence a finding on the strength of a failed lookup.
+      return true if winning.empty?
+
+      winning.include?(value.to_s.strip.downcase)
+    end
+
+    # Custom properties actually read by something, as `var(--name`.
+    #
+    # A contrast finding is only worth a reader's attention if the colour it
+    # measures reaches a pixel. design_tokens.yml declares several that no longer
+    # do -- every *_hover value among them, since --accent-hover and
+    # --vertical-<v>-accent-hover have no var() consumer anywhere in the tree --
+    # so a third of the contrast list was about colours nothing paints, and the
+    # count could never reach zero by fixing CSS.
+    #
+    # Same rule the rest of this repo applies to declarations: find the reader
+    # before trusting one.
+    def read_custom_properties(rails_root)
+      @read_custom_properties ||= {}
+      @read_custom_properties[rails_root] ||= begin
+        globs = %w[
+          {shared,brgen,amber,bsdports}/app/assets/stylesheets/**/*.scss
+          brgen/engines/*/app/assets/stylesheets/*.scss
+          {shared,brgen,amber,bsdports}/app/**/*.erb
+          brgen/engines/*/app/**/*.erb
+          shared/frontend/**/*.js
+          {shared,brgen,amber,bsdports}/app/javascript/**/*.js
+        ]
+        names = Set.new
+        globs.each do |pattern|
+          Dir.glob(File.join(rails_root, pattern)).each do |path|
+            next if path.include?("/builds/") || path.include?("/public/assets/") ||
+                    path.include?("/vendor/") || path.include?("/node_modules/")
+
+            File.read(path).scan(/var\(\s*(--[\w-]+)/) { |m| names << m.first }
+          rescue StandardError
+            next
+          end
+        end
+        names
+      end
+    end
+
+    # Candidate CSS names for a token key, since design_tokens.yml and the
+    # stylesheets spell the same colour differently: `light_accent` is --accent
+    # inside a light block, and `marketplace_hover` is
+    # --vertical-marketplace-accent-hover.
+    def custom_property_candidates(fg_key)
+      key = fg_key.to_s
+      base = key.sub(MODE_PREFIX, "")
+      cands = ["--#{base.tr('_', '-')}", "--#{key.tr('_', '-')}"]
+      if (m = base.match(/\A(?<vertical>[a-z]+)_(?<kind>accent|hover)\z/))
+        if m[:kind] == "accent"
+          # The accent map assigns each vertical's accent straight to
+          # --accent under body.vertical-<v>, so these paint through the token
+          # every surface already reads. The --vertical-<v>-accent alias beside
+          # it has no consumer, and checking only that name skipped the very
+          # findings vertical_accent_pairs was written to surface (see its
+          # header: marketplace 4.33:1 and tv 4.14:1 on social chrome, "and
+          # nothing had reported either").
+          cands << "--accent"
+          cands << "--vertical-#{m[:vertical]}-accent"
+        else
+          cands << "--vertical-#{m[:vertical]}-accent-hover"
+        end
+      end
+      cands.uniq
+    end
+
+    def token_painted?(rails_root, fg_key)
+      read = read_custom_properties(rails_root)
+      custom_property_candidates(fg_key).any? { |c| read.include?(c) }
+    end
+
+    # All plausible fg/bg pairings within a dialect, mode-matched.
+    def token_pairs(dialect_name, dialect)
+      return [] unless dialect.is_a?(Hash)
+
+      mode = ->(key) { key.to_s[MODE_PREFIX, 1] }
+      fgs = dialect.keys.select { |k| k.to_s.match?(FOREGROUND_KEY) }
+      bgs = dialect.keys.select { |k| k.to_s.match?(BACKGROUND_KEY) }
+      pairs = []
+      fgs.each do |fg|
+        bgs.each do |bg|
+          next unless mode.call(fg) == mode.call(bg)
+
+          fg_value = dialect[fg]
+          bg_value = dialect[bg]
+          next unless fg_value && bg_value
+
+          ratio = contrast_ratio(fg_value, bg_value)
+          next unless ratio
+
+          pairs << { label: "#{dialect_name}.#{fg}/#{bg}", fg: fg_value, bg: bg_value,
+                     fg_key: fg, bg_key: bg, ratio: ratio }
+        end
+      end
+      pairs
+    end
+
+    # rem/em/px → px assuming 16px root
+    def to_px(value, root_px: 16.0)
+      s = value.to_s.strip
+      case s
+      when /\A(-?[\d.]+)px\z/i then Regexp.last_match(1).to_f
+      when /\A(-?[\d.]+)rem\z/i then Regexp.last_match(1).to_f * root_px
+      when /\A(-?[\d.]+)em\z/i then Regexp.last_match(1).to_f * root_px
+      when /\A(-?[\d.]+)\z/ then Regexp.last_match(1).to_f
+      else nil
+      end
+    end
+
+    def extract_declarations(css, property)
+      prop = Regexp.escape(property)
+      css.to_s.scan(/#{prop}\s*:\s*([^;}+{]+)/i).flatten.map(&:strip)
+    end
+
+    def extract_min_heights(css)
+      extract_declarations(css, "min-height").filter_map { |v| to_px(v) }
+    end
+
+    def extract_line_heights(css)
+      extract_declarations(css, "line-height").filter_map do |v|
+        next v.to_f if v.match?(/\A[\d.]+\z/)
+
+        # unitless preferred; skip multi-value / normal
+        nil
+      end
+    end
+
+    def extract_font_sizes_px(css, root_px: 16.0)
+      extract_declarations(css, "font-size").filter_map { |v| to_px(v, root_px: root_px) }
+    end
+
+    def extract_ch_measures(css)
+      css.to_s.scan(/max-width\s*:\s*([\d.]+)\s*ch/i).flatten.map(&:to_f)
+    end
+
+    def extract_spacing_px(css, root_px: 16.0)
+      props = %w[margin padding gap row-gap column-gap margin-block margin-inline padding-block padding-inline]
+      values = []
+      props.each do |prop|
+        extract_declarations(css, prop).each do |raw|
+          raw.split(/\s+/).each do |token|
+            px = to_px(token, root_px: root_px)
+            values << px if px && px.positive?
+          end
+        end
+      end
+      values
+    end
+
+    # 8px rhythm: allow exact allowed list or multiples of base with hairline 4.
+    def off_rhythm?(px, allowed:, base: 8)
+      return false if allowed.include?(px.to_i)
+      return false if (px % base).zero?
+      return false if px == 4 || (px % 4).zero? && px < base # hairline
+
+      true
+    end
+
+    def type_scale_ratio(sizes_px)
+      uniq = sizes_px.map { |s| s.round(2) }.uniq.sort
+      return nil if uniq.size < 2
+
+      ratios = uniq.each_cons(2).map { |a, b| (b / a).round(3) }
+      ratios
+    end
+
+    # Interactive selector clusters that must declare Fitts-safe min-height somewhere nearby.
+    INTERACTIVE_NEEDLES = [
+      [/\.btn\b/, "button .btn"],
+      [/\.tab-item\b|\.tab-bar\b/, "mobile tab bar"],
+      [/\.swipe-action\b/, "dating swipe"],
+      [/\.feed-action\b/, "feed action"],
+      [/listing-buy-bar|\.deal-fav\b/, "marketplace buy/fav"],
+      [/\.compose-submit\b|\.compose-box\b/, "compose"],
+      [/\.channel-composer\b/, "channel composer"],
+    ].freeze
+
+    def extract_box_mins(css)
+      %w[min-height min-width height width].flat_map do |prop|
+        extract_declarations(css, prop).filter_map { |v| to_px(v) }
+      end
+    end
+
+    def interactive_touch_coverage(css_by_path, min_px:)
+      findings = []
+      INTERACTIVE_NEEDLES.each do |needle, label|
+        paths = css_by_path.select { |_p, body| body.match?(needle) }.keys
+        next if paths.empty?
+
+        covered = paths.any? do |p|
+          body = css_by_path[p]
+          # Accept min-height/width or explicit height/width ≥ Fitts floor.
+          # Also treat CSS vars named --space-12+ / --touch as covered (tokenized Fitts).
+          extract_box_mins(body).any? { |h| h + 0.01 >= min_px } ||
+            body.match?(/--space-(1[2-9]|[2-9]\d)|--touch|min-height:\s*44px|height:\s*44px|width:\s*var\(--space-1[2-9]/i)
+        end
+        findings << { label: label, paths: paths, covered: covered }
+      end
+      findings
+    end
+  end
+end

@@ -1,0 +1,39 @@
+# frozen_string_literal: true
+
+require_relative "../../../../OPENBSD/lib/gate_result"
+
+module Deploy
+  class PhantomForeignKeysGate
+    ROOT = File.expand_path("../../../..", __dir__)
+    PHANTOM_TABLES = %w[
+      buyers listings likers likees dislikers dislikees initiators receivers orders menu_items
+      followees followers followed
+    ].freeze
+
+    def self.run(root: ROOT)
+      new(root:).run
+    end
+
+    def initialize(root: ROOT)
+      @root = root
+    end
+
+    def run
+      result = GateResult.new
+      files = Dir.glob(File.join(@root, "RAILS", "*", "db", "schema.rb"))
+      # No schema.rb is not a clean tree, it is an unread one: every app keeps
+      # one, so an empty glob means the path moved and this gate saw nothing.
+      return result.inconclusive!("phantom_foreign_keys: no db/schema.rb under RAILS/*/ — nothing was read") if files.empty?
+
+      files.each do |path|
+        result.checked!
+        File.read(path).scan(/add_foreign_key\s+"([^"]+)"\s*,\s*"([^"]+)"/).each do |from, to|
+          next unless PHANTOM_TABLES.include?(to)
+
+          result.fail("#{path}: add_foreign_key #{from} → #{to} (phantom — use prefixed table or to_table:)")
+        end
+      end
+      result
+    end
+  end
+end

@@ -1,0 +1,304 @@
+{
+  "title": "Kart — Bergen",
+  "viewport": [
+    390,
+    844
+  ],
+  "scroll_width": 390,
+  "h1_count": 1,
+  "landmarks": {
+    "main": true,
+    "nav": true,
+    "skip": true
+  },
+  "elements": [
+    {
+      "key": "#app-tab-bar",
+      "tag": "nav",
+      "rect": {
+        "x": 0,
+        "y": 844,
+        "w": 390,
+        "h": 54
+      },
+      "color": "#333333",
+      "bg": "#ffffff",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "flex",
+      "position": "fixed"
+    },
+    {
+      "key": "#app-tab-bar>a.tab-item",
+      "tag": "a",
+      "rect": {
+        "x": 0,
+        "y": 844,
+        "w": 56,
+        "h": 54
+      },
+      "color": "#5585c5",
+      "bg": "#f9f9f9",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "flex",
+      "position": "relative"
+    },
+    {
+      "key": "#app-tab-bar>button.tab-item.tab-item-button",
+      "tag": "button",
+      "rect": {
+        "x": 334,
+        "y": 844,
+        "w": 56,
+        "h": 54
+      },
+      "color": "#333333",
+      "bg": "#ffffff",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "flex",
+      "position": "relative"
+    },
+    {
+      "key": "#install-prompt>div.install-prompt-actions>button.install-prompt-primary",
+      "tag": "button",
+      "rect": {
+        "x": 270,
+        "y": 730,
+        "w": 89,
+        "h": 44
+      },
+      "color": "#efefef",
+      "bg": "#333333",
+      "font_size": 15.8,
+      "line_height": 15.8,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "#install-prompt>div.install-prompt-actions>button.install-prompt-secondary",
+      "tag": "button",
+      "rect": {
+        "x": 180,
+        "y": 730,
+        "w": 82,
+        "h": 44
+      },
+      "color": "#666666",
+      "bg": "#ffffff",
+      "font_size": 15.8,
+      "line_height": 15.8,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "#main-content",
+      "tag": "main",
+      "rect": {
+        "x": 0,
+        "y": 62,
+        "w": 390,
+        "h": 844
+      },
+      "color": "#333333",
+      "bg": "#efefef",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "#map-search",
+      "tag": "input",
+      "rect": {
+        "x": 107,
+        "y": 23,
+        "w": 151,
+        "h": 44
+      },
+      "color": "#333333",
+      "bg": "#fefefe",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "#map>div.maplibregl-canvas-container.maplibregl-interactive>canvas.maplibregl-canvas",
+      "tag": "canvas",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "color": "#333333",
+      "bg": "#efefef",
+      "font_size": 12,
+      "line_height": 20,
+      "display": "block",
+      "position": "absolute"
+    },
+    {
+      "key": "#nav_sections",
+      "tag": "nav",
+      "rect": {
+        "x": 107,
+        "y": 0,
+        "w": 175,
+        "h": 65
+      },
+      "color": "#333333",
+      "bg": "#efefef",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "#nav_sections>div.nav_swiper_group.nav_swiper_group--verticals>a.nav_link",
+      "tag": "a",
+      "rect": {
+        "x": 107,
+        "y": 9,
+        "w": 108,
+        "h": 47
+      },
+      "color": "#666666",
+      "bg": "#efefef",
+      "font_size": 20.3,
+      "line_height": 20.3,
+      "display": "flex",
+      "position": "relative"
+    },
+    {
+      "key": "body.vertical-maps>div.theme-root>div.app-shell>button.tab-bar-peel",
+      "tag": "button",
+      "rect": {
+        "x": 171,
+        "y": 800,
+        "w": 48,
+        "h": 44
+      },
+      "color": "#666666",
+      "bg": "#efefef",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "flex",
+      "position": "fixed"
+    },
+    {
+      "key": "body.vertical-maps>footer.site-legal>nav>a",
+      "tag": "a",
+      "rect": {
+        "x": 14,
+        "y": 889,
+        "w": 80,
+        "h": 48
+      },
+      "color": "#666666",
+      "bg": "#efefef",
+      "font_size": 13,
+      "line_height": 20,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "html>body.vertical-maps>div.search_palette>button.search_palette_trigger",
+      "tag": "button",
+      "rect": {
+        "x": 286,
+        "y": 12,
+        "w": 44,
+        "h": 44
+      },
+      "color": "#333333",
+      "bg": "#efefef",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "grid",
+      "position": "fixed"
+    },
+    {
+      "key": "html>body.vertical-maps>footer.site-legal",
+      "tag": "footer",
+      "rect": {
+        "x": 0,
+        "y": 884,
+        "w": 390,
+        "h": 113
+      },
+      "color": "#333333",
+      "bg": "#efefef",
+      "font_size": 13,
+      "line_height": 20,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "html>body.vertical-maps>footer.site-legal>nav",
+      "tag": "nav",
+      "rect": {
+        "x": 20,
+        "y": 903,
+        "w": 252,
+        "h": 20
+      },
+      "color": "#333333",
+      "bg": "#efefef",
+      "font_size": 13,
+      "line_height": 20,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "html>body.vertical-maps>footer.site-legal>p.affiliate-fine",
+      "tag": "p",
+      "rect": {
+        "x": 20,
+        "y": 933,
+        "w": 350,
+        "h": 36
+      },
+      "color": "#666666",
+      "bg": "#efefef",
+      "font_size": 12,
+      "line_height": 18,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "html>body.vertical-maps>header>a.brand-mark.brgen-logo-mark",
+      "tag": "a",
+      "rect": {
+        "x": 12,
+        "y": 11,
+        "w": 92,
+        "h": 44
+      },
+      "color": "#333333",
+      "bg": "#efefef",
+      "font_size": 16.9,
+      "line_height": 16.9,
+      "display": "flex",
+      "position": "fixed"
+    },
+    {
+      "key": "section>div.map-hud>div.cluster>a.btn.btn-ghost.btn-sm",
+      "tag": "a",
+      "rect": {
+        "x": 267,
+        "y": 27,
+        "w": 105,
+        "h": 44
+      },
+      "color": "#666666",
+      "bg": "#efefef",
+      "font_size": 15.8,
+      "line_height": 20,
+      "display": "flex",
+      "position": "static"
+    }
+  ]
+}

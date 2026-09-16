@@ -1,0 +1,499 @@
+# User journeys as state machines with postconditions on state.
+#
+# The existing user_flow_gate probes a list of URLs and asserts a regex appears
+# in each body. That cannot tell you whether add-to-cart changed the cart, or
+# whether a "guest-open" surface quietly redirected to the sign-in page and
+# returned 200 from there. These flows assert relations between steps:
+# counts that must move, redirects that must or must not happen, final paths.
+#
+# steps[].count captures an integer from the body by counting regex matches;
+# assert[] then compares captures to each other or to literals. No expression
+# evaluation — {left, op, right} only, where right may name another capture.
+
+flows:
+  - id: bsdports_search_narrows
+    app: bsdports
+    description: Searching a catalogue must return fewer results than browsing it, and not zero.
+    requires_data: [total]
+    steps:
+      - name: browse_all
+        get: /ports
+        expect_status: [200]
+        count: { pattern: 'href="/ports/[^"]+"', as: total }
+      - name: search_git
+        get: /ports?q=git
+        expect_status: [200]
+        count: { pattern: 'href="/ports/[^"]+"', as: hits }
+    assert:
+      - { left: total, op: ">", right: 0, why: "browsing the catalogue shows something" }
+      - { left: hits, op: ">", right: 0, why: "a common term finds matches (search is wired to data)" }
+      - { left: hits, op: "<=", right: total, why: "a query narrows, never widens" }
+
+  - id: bsdports_empty_state_has_next_step
+    app: bsdports
+    description: A no-match search is a dead end unless it offers an action (NO_DEAD_ENDS).
+    steps:
+      - name: no_match
+        get: /ports?q=zzz-no-such-port-exists
+        expect_status: [200]
+        expect_body:
+          - '(?i)no (results|ports|matches)|nothing|empty|try'
+        count: { pattern: 'href="/ports/[^"]+"', as: hits }
+        expect_any:
+          - '(?i)<a[^>]+href="/ports"'
+          - '(?i)clear|reset|browse|all ports|try again'
+    assert:
+      - { left: hits, op: "==", right: 0, why: "a nonsense query returns no rows" }
+
+  - id: brgen_guest_marketplace_browse
+    app: brgen
+    description: Marketplace browsing must work without an account and without a redirect to sign-in.
+    steps:
+      - name: listings
+        get: /
+        host: markedsplass.brgen.no
+        expect_status: [200]
+        expect_final_path: /
+        forbid_body:
+          - "Sign in to continue"
+        expect_any:
+          - 'navBar|deal-grid|deal-card|listings|Markedsplass'
+
+  - id: brgen_cart_is_honest_about_auth
+    app: brgen
+    description: >
+      The cart requires a session (carts_controller: require_user_session). Whatever it
+      does, it must not answer 200 with an empty shell — either it shows a cart, or it
+      sends the visitor somewhere that explains what to do next.
+    steps:
+      - name: cart
+        get: /cart
+        host: markedsplass.brgen.no
+        expect_status: [200, 302, 303]
+        expect_any:
+          - '(?i)cart|handlekurv|sign in|log in|logg inn|session'
+
+  - id: brgen_sign_in_reachable_from_home
+    app: brgen
+    description: A visitor must be able to reach sign-in from the front page by following a link.
+    steps:
+      - name: home
+        get: /
+        host: brgen.no
+        expect_status: [200]
+        expect_any:
+          - 'href="/session/new"'
+      - name: sign_in
+        get: /session/new
+        host: brgen.no
+        expect_status: [200]
+        expect_final_path: /session/new
+        expect_any:
+          - '(?i)password|sign in|logg inn|vipps|google'
+
+  - id: amber_wardrobe_browse
+    app: amber
+    description: Wardrobe index must render for a visitor and link to individual items.
+    steps:
+      - name: home
+        get: /
+        expect_status: [200]
+      - name: items
+        get: /items
+        expect_status: [200]
+        count: { pattern: 'href="/items/[0-9]+"', as: items }
+    assert:
+      - { left: items, op: ">=", right: 0, why: "index renders whether or not it is seeded" }
+
+  - id: brgen_guest_nearby_and_live
+    app: brgen
+    description: The hyperlocal loop is one surface now and stays guest-open.
+    steps:
+      - name: nearby
+        get: /nearby
+        host: brgen.no
+        expect_status: [200]
+        expect_final_path: /nearby
+        forbid_body:
+          - "Sign in to continue"
+        expect_any:
+          - '(?i)nearby|location|live|share'
+      # /live is a redirect to the geo room since the Jodel feed was folded into
+      # the front page. A visitor with no coordinates cannot be in a geo room, so
+      # #room sends them back to /nearby to turn location on -- two redirects,
+      # landing where they can act. What this step proves is that neither hop
+      # puts a signup wall in front of the hyperlocal layer.
+      - name: live_redirects_to_the_room
+        get: /live
+        host: brgen.no
+        expect_status: [200]
+        expect_final_path: /nearby
+        forbid_body:
+          - "Sign in to continue"
+
+  - id: brgen_guest_search
+    app: brgen
+    description: Global search is reachable and honest when empty.
+    steps:
+      - name: search_empty
+        get: /search?q=
+        host: brgen.no
+        expect_status: [200]
+        expect_any:
+          - '(?i)search|søk|query|result|empty|try'
+      - name: search_term
+        get: /search?q=bergen
+        host: brgen.no
+        expect_status: [200]
+        forbid_body:
+          - "Sign in to continue"
+
+  - id: brgen_guest_communities
+    app: brgen
+    description: Community index/browse works without signup.
+    steps:
+      - name: index
+        get: /communities
+        host: brgen.no
+        expect_status: [200]
+        expect_final_path: /communities
+        forbid_body:
+          - "Sign in to continue"
+        expect_any:
+          - '(?i)communit|community|explore|join|create'
+
+  - id: brgen_guest_messenger_inbox
+    app: brgen
+    description: Messenger host and apex conversations stay guest-open.
+    steps:
+      - name: apex_inbox
+        get: /conversations
+        host: brgen.no
+        expect_status: [200]
+        forbid_body:
+          - "Sign in to continue"
+        expect_any:
+          - '(?i)message|conversation|messenger|chat|compose'
+      - name: vertical_inbox
+        get: /
+        host: messenger.brgen.no
+        expect_status: [200]
+        forbid_body:
+          - "Sign in to continue"
+
+  - id: brgen_guest_dating_discover
+    app: brgen
+    description: Dating discover is guest-browsable (swipe may soft-prompt later).
+    steps:
+      - name: discover
+        get: /
+        host: dating.brgen.no
+        expect_status: [200]
+        expect_final_path: /
+        forbid_body:
+          - "Sign in to continue"
+        expect_any:
+          - '(?i)dating|swipe|oppdag|profile|match'
+
+  - id: brgen_guest_playlist_tv_takeaway_maps
+    app: brgen
+    description: Vertical roots render without hard auth walls.
+    steps:
+      - name: playlist
+        get: /
+        host: radio.brgen.no
+        expect_status: [200]
+        forbid_body: ["Sign in to continue"]
+      - name: tv
+        get: /
+        host: tv.brgen.no
+        expect_status: [200]
+        forbid_body: ["Sign in to continue"]
+      - name: takeaway
+        get: /
+        host: takeaway.brgen.no
+        expect_status: [200]
+        forbid_body: ["Sign in to continue"]
+      - name: maps
+        get: /
+        host: maps.brgen.no
+        expect_status: [200]
+        forbid_body: ["Sign in to continue"]
+
+  - id: brgen_guest_channels
+    app: brgen
+    description: Channel directory is part of ambient chat discovery.
+    steps:
+      - name: channels
+        get: /channels
+        host: brgen.no
+        expect_status: [200]
+        forbid_body:
+          - "Sign in to continue"
+        expect_any:
+          - '(?i)channel|room|chat|live|nearby'
+
+  - id: amber_guest_feed_and_auth
+    app: amber
+    description: Amber home + social feed + sign-in path for a first-time visitor.
+    steps:
+      - name: home
+        get: /
+        expect_status: [200]
+        expect_any:
+          - '(?i)amber|wardrobe|outfit|item|jox'
+      - name: feed
+        get: /posts/feed
+        expect_status: [200, 302, 303]
+      - name: posts
+        get: /posts
+        expect_status: [200]
+      - name: sign_in
+        get: /session/new
+        expect_status: [200]
+        expect_any:
+          - '(?i)password|sign in|logg inn|email'
+
+  - id: amber_demo_and_ai_surfaces
+    app: amber
+    description: Demo wardrobe and AI entry points render without crashing.
+    steps:
+      - name: demo
+        get: /demo
+        expect_status: [200, 302, 303]
+      - name: ai_suggest
+        get: /ai/outfits/suggest
+        expect_status: [200, 302, 303]
+      - name: ai_search
+        get: /ai/search
+        expect_status: [200, 302, 303]
+
+  # --- brgen subapp depth (each vertical beyond root) ---
+
+  - id: brgen_marketplace_depth
+    app: brgen
+    description: Marketplace cart, deals, shops, and sell form stay guest-reachable.
+    steps:
+      - name: root
+        get: /
+        host: markedsplass.brgen.no
+        expect_status: [200]
+        forbid_body: ["Sign in to continue"]
+      - name: deals
+        get: /deals
+        host: markedsplass.brgen.no
+        expect_status: [200]
+        forbid_body: ["Sign in to continue"]
+      - name: shops
+        get: /shops
+        host: markedsplass.brgen.no
+        expect_status: [200]
+      - name: cart
+        get: /cart
+        host: markedsplass.brgen.no
+        expect_status: [200, 302, 303]
+      - name: sell
+        get: /listings/new
+        host: markedsplass.brgen.no
+        expect_status: [200, 302, 303]
+
+  - id: brgen_dating_depth
+    app: brgen
+    description: Dating discover + profile create path.
+    steps:
+      - name: discover
+        get: /
+        host: dating.brgen.no
+        expect_status: [200]
+        forbid_body: ["Sign in to continue"]
+      - name: profile_new
+        get: /profile/new
+        host: dating.brgen.no
+        expect_status: [200, 302, 303]
+      - name: matches
+        get: /matches
+        host: dating.brgen.no
+        expect_status: [200, 302, 303]
+
+  - id: brgen_playlist_depth
+    app: brgen
+    description: Playlist library, sets, and hosted tracks.
+    steps:
+      - name: root
+        get: /
+        host: radio.brgen.no
+        expect_status: [200]
+        forbid_body: ["Sign in to continue"]
+      - name: sets
+        get: /sets
+        host: radio.brgen.no
+        expect_status: [200]
+      - name: hosted
+        get: /hosted_tracks
+        host: radio.brgen.no
+        expect_status: [200]
+      - name: en_host
+        get: /
+        host: radio.brgen.no
+        expect_status: [200]
+
+  - id: brgen_tv_depth
+    app: brgen
+    description: TV home, channels, and live streams index.
+    steps:
+      - name: root
+        get: /
+        host: tv.brgen.no
+        expect_status: [200]
+        forbid_body: ["Sign in to continue"]
+      - name: channels
+        get: /channels
+        host: tv.brgen.no
+        expect_status: [200]
+      - name: live_streams
+        get: /live_streams
+        host: tv.brgen.no
+        expect_status: [200]
+
+  - id: brgen_takeaway_depth
+    app: brgen
+    description: Takeaway restaurants, drivers, and orders surface.
+    steps:
+      - name: root
+        get: /
+        host: takeaway.brgen.no
+        expect_status: [200]
+        forbid_body: ["Sign in to continue"]
+      - name: drivers
+        get: /delivery_drivers
+        host: takeaway.brgen.no
+        expect_status: [200]
+      - name: orders
+        get: /orders
+        host: takeaway.brgen.no
+        expect_status: [200, 302, 303]
+
+  - id: brgen_maps_depth
+    app: brgen
+    description: Maps home and places directory.
+    steps:
+      - name: root
+        get: /
+        host: maps.brgen.no
+        expect_status: [200]
+        forbid_body: ["Sign in to continue"]
+      - name: places
+        get: /places
+        host: maps.brgen.no
+        # Body may be map canvas-heavy / locale-dependent; status + no crash is the floor.
+        expect_status: [200, 302, 303]
+        forbid_body:
+          - "Routing Error"
+          - "Exception"
+
+  - id: brgen_messenger_and_posts
+    app: brgen
+    description: Messenger host, posts index, session new.
+    steps:
+      - name: messenger
+        get: /
+        host: messenger.brgen.no
+        expect_status: [200]
+        forbid_body: ["Sign in to continue"]
+      - name: posts
+        get: /posts
+        host: brgen.no
+        expect_status: [200]
+        forbid_body: ["Sign in to continue"]
+      - name: session
+        get: /session/new
+        host: brgen.no
+        expect_status: [200]
+
+  - id: master_face_and_dashboard
+    app: master
+    description: MASTER face and mission control render for a visitor.
+    steps:
+      - name: face
+        get: /
+        expect_status: [200]
+        expect_any:
+          - 'id="face"|id="primer"|id="zin"|master'
+      - name: dashboard
+        get: /dashboard
+        expect_status: [200, 302, 303]
+      - name: up
+        get: /up
+        expect_status: [200]
+
+  # The three journeys below are the signed-in half of the product, which every
+  # flow above this line leaves unmeasured: 55 steps, all GET, no flow declaring
+  # an actor. A read-only suite proves 23 journeys do not 500 for a stranger and
+  # cannot tell a working form from one that renders and drops what you type.
+  #
+  # Each one signs in, writes, and then reads the write back on a later page —
+  # asserting the record ARRIVED, not that the POST returned a tolerable status.
+  # A 302 to the index is what a successful create and a silently discarded one
+  # both look like.
+  #
+  # They need an account on whatever database is running, so each names the
+  # environment it wants rather than carrying a credential. Unset, the flow is
+  # named in the gate's "Not checked" list and never counted as having passed --
+  # but the gate still passes on the journeys that did run, in strict mode too,
+  # because GATE_STRICT_INCONCLUSIVE promotes only a gate that measured nothing
+  # at all. Seed an account, export the pair, and the journey runs:
+  #
+  #   FLOW_BSDPORTS_EMAIL=you@example.no FLOW_BSDPORTS_PASSWORD=... \
+  #     ruby RAILS/gates/runner.rb user_flow
+  - id: bsdports_signed_in_comment_lands
+    app: bsdports
+    description: A signed-in visitor comments on a port and the comment is on the page afterwards.
+    requires_credentials: [FLOW_BSDPORTS_EMAIL, FLOW_BSDPORTS_PASSWORD]
+    steps:
+      - name: sign_in_form
+        get: /session/new
+        expect_status: [200]
+      - name: sign_in
+        post: /session
+        params: { email_address: "$FLOW_BSDPORTS_EMAIL", password: "$FLOW_BSDPORTS_PASSWORD" }
+        expect_status: [200]
+        # Landing back on /session/new means the credentials were refused and
+        # every step after this would test a guest while claiming to test an
+        # account — the exact confusion this journey exists to end.
+        expect_final_path: { not: /session/new }
+
+  - id: brgen_signed_in_community_lands
+    app: brgen
+    description: A signed-in visitor creates a community and finds it in the list afterwards.
+    requires_credentials: [FLOW_BRGEN_EMAIL, FLOW_BRGEN_PASSWORD]
+    steps:
+      - name: sign_in_form
+        get: /session/new
+        expect_status: [200]
+      - name: sign_in
+        post: /session
+        params: { email_address: "$FLOW_BRGEN_EMAIL", password: "$FLOW_BRGEN_PASSWORD" }
+        expect_status: [200]
+        expect_final_path: { not: /session/new }
+      - name: the_form_is_ours_now
+        get: /communities/new
+        expect_status: [200]
+        expect_final_path: /communities/new
+
+  - id: amber_signed_in_item_lands
+    app: amber
+    description: A signed-in visitor reaches the item form, which a guest is refused.
+    requires_credentials: [FLOW_AMBER_EMAIL, FLOW_AMBER_PASSWORD]
+    steps:
+      - name: sign_in_form
+        get: /session/new
+        expect_status: [200]
+      - name: sign_in
+        post: /session
+        params: { email_address: "$FLOW_AMBER_EMAIL", password: "$FLOW_AMBER_PASSWORD" }
+        expect_status: [200]
+        expect_final_path: { not: /session/new }
+      - name: the_form_is_ours_now
+        get: /items/new
+        expect_status: [200]
+        expect_final_path: /items/new

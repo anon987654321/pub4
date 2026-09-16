@@ -1,0 +1,398 @@
+# frozen_string_literal: true
+
+require "yaml"
+require "net/http"
+require "uri"
+require_relative "../../../../OPENBSD/lib/deploy_inventory"
+require_relative "../../../../OPENBSD/lib/gate_result"
+require_relative "../../../tools/crawl_support"
+require_relative "../../support/fleet"
+
+module Deploy
+  # Journeys with postconditions on state, not a list of URLs with body regexes.
+  #
+  # The difference that matters: this follows redirects and knows where it
+  # landed. A "guest-open" surface that 302s to /session/new and renders 200
+  # from there passes a body-regex probe and fails here.
+  class FlowJourneyGate
+    ROOT = File.expand_path("../../../..", __dir__)
+    DATA = File.join(File.expand_path("../..", __dir__), "data", "flows.yml")
+    MAX_REDIRECTS = 5
+
+    def self.run = new.run
+
+    def initialize(path: DATA, root: ROOT)
+      @path = path
+      @root = root
+    end
+
+    def run
+      @result = GateResult.new
+      flows = Array(YAML.safe_load_file(@path)["flows"])
+      ports = Inventory.new(root: @root).apps.to_h { |a| [a.name, a.port] }
+      # MASTER web is not a RAILS/apps.yml row — face + mission control.
+      ports["master"] ||= 53_187
+
+      ran = 0
+      flows.each do |flow|
+        app = flow["app"]
+        port = ports[app]
+        unless port
+          @result.fail("flow:#{flow["id"]} unknown app #{app.inspect}")
+          next
+        end
+        unless CrawlSupport.port_open?("127.0.0.1", port)
+          @result.skipped_live("flow:#{flow["id"]} skipped — #{app} port #{port} closed")
+          next
+        end
+        ran += 1
+        # A journey that ran is a check that ran. Without this the gate could
+        # never report PASSED: `measured_nothing?` reads checks_ran, nothing here
+        # ever raised it, and one skipped precondition then spoke for the whole
+        # run — 25 journeys green and the verdict line said "checked nothing".
+        # That is the same defect checked! was added for in human_walkthrough.
+        @result.checked!
+        run_flow(flow, port, app)
+      end
+      @result.warn("flow_journey: ran #{ran}/#{flows.size} journeys") if ran.positive?
+      @result
+    end
+
+    private
+
+    # A journey that writes needs an account on the app under test, and this
+    # gate probes whatever database happens to be running. Hardcoding a login
+    # would be a credential in git that works on one machine; inventing one
+    # would need the gate to write to a database it does not own. So the flow
+    # names the environment it wants and is recorded unchecked without it, by
+    # name, in the gate's "Not checked" list.
+    #
+    # Unchecked is NOT blocking here, and measuring that live is what corrected
+    # the first version of this comment. GATE_STRICT_INCONCLUSIVE promotes only
+    # `measured_nothing?` -- checks_ran zero -- so a run that exercises 25
+    # journeys and skips one passes in either mode. gate_result.rb says why in
+    # as many words: promoting at record time made a gate that ran fifty checks
+    # and skipped one hard-fail on the deploy host. So the guarantee is narrower
+    # than it looks and is worth stating plainly: the skipped journey is named
+    # in the output every run and never counted as having passed, and noticing
+    # it is still a person's job.
+    def credentials_for(flow)
+      keys = Array(flow["requires_credentials"])
+      return {} if keys.empty?
+
+      values = keys.to_h { |key| [ key, ENV[key].to_s ] }
+      return values unless values.value?("")
+
+      missing = values.select { |_, v| v.empty? }.keys
+      @result.inconclusive!(
+        "flow:#{flow["id"]} did not run — #{missing.join(', ')} unset, so the signed-in half " \
+        "of this app went unmeasured (export them against a seeded app to run it)"
+      )
+      nil
+    end
+
+    def run_flow(flow, port, app)
+      id = flow["id"]
+      captures = {}
+      client = FlowClient.new(port: port, default_host: Fleet.public_host(app))
+      credentials = credentials_for(flow)
+      return if credentials.nil?
+
+      Array(flow["steps"]).each do |step|
+        name = step["name"] || step["get"] || step["post"]
+        label = "flow:#{id}/#{name}"
+        response = begin
+          if (path = step["post"])
+            client.post(path, resolve_params(step["params"], credentials), host: step["host"])
+          else
+            client.get(step.fetch("get"), host: step["host"])
+          end
+        rescue StandardError => e
+          @result.fail("#{label}: #{e.class}: #{e.message}")
+          return
+        end
+
+        return unless check_step(label, step, response, captures)
+      end
+
+      check_assertions(flow, captures)
+    end
+
+    # A journey over a catalogue cannot distinguish "search is broken" from
+    # "nobody seeded this database" — and reporting the second as the first is
+    # how a gate loses its credibility. Flows that need rows say so, and an
+    # empty dataset downgrades to a warning naming the cause.
+    def unseeded?(flow, captures)
+      return false unless flow["requires_data"]
+
+      names = Array(flow["requires_data"]).map(&:to_s)
+      names.all? { |n| captures[n].to_i.zero? }
+    end
+
+    # `$NAME` in a param takes the value the flow asked the environment for.
+    # Substitution rather than interpolation of the whole string, so a password
+    # containing a dollar sign is a password and not a template.
+    def resolve_params(params, credentials)
+      return params unless params.is_a?(Hash)
+
+      params.transform_values do |value|
+        case value
+        when Hash then resolve_params(value, credentials)
+        when String then value.start_with?("$") ? credentials.fetch(value[1..], value) : value
+        else value
+        end
+      end
+    end
+
+    def check_step(label, step, response, captures)
+      expected = Array(step["expect_status"]).map(&:to_i)
+      expected = [200] if expected.empty?
+      unless expected.include?(response.code)
+        @result.fail("#{label}: HTTP #{response.code} (want #{expected.join('/')}) at #{response.final_url}")
+        return false
+      end
+
+      if (want = step["expect_final_path"])
+        actual = response.final_path
+        hops = response.redirects.empty? ? "" : " via #{response.redirects.join(' → ')}"
+        # `{ not: /session/new }` as well as a literal path. A successful sign-in
+        # lands wherever the app was headed — root, the stored return path, a
+        # vertical — so the only stable thing to assert is where it must NOT be.
+        # Equality cannot say that, and without it a refused sign-in renders 200
+        # from the sign-in page and every later step tests a guest while the
+        # journey's name says account.
+        if want.is_a?(Hash) && want.key?("not")
+          if actual == want["not"]
+            @result.fail("#{label}: landed back on #{actual}#{hops} — refused, not signed in")
+            return false
+          end
+        elsif actual != want
+          @result.fail("#{label}: landed on #{actual} not #{want}#{hops} — the surface redirected away")
+          return false
+        end
+      end
+
+      # Falcon/Net::HTTP may return BINARY; UTF-8 regexes need a compatible string.
+      body = response.body.to_s.dup.force_encoding(Encoding::UTF_8)
+      body = body.encode(Encoding::UTF_8, invalid: :replace, undef: :replace) unless body.valid_encoding?
+      Array(step["expect_body"]).each do |pattern|
+        next if Regexp.new(pattern).match?(body)
+
+        @result.fail("#{label}: body missing #{pattern.inspect}")
+      end
+
+      any = Array(step["expect_any"])
+      if any.any? && any.none? { |pattern| Regexp.new(pattern).match?(body) }
+        @result.fail("#{label}: body matched none of #{any.map(&:inspect).join(', ')}")
+      end
+
+      Array(step["forbid_body"]).each do |pattern|
+        next unless Regexp.new(pattern).match?(body)
+
+        @result.fail("#{label}: body contains forbidden #{pattern.inspect}", severity: :hard)
+      end
+
+      %w[Exception].each do |bad|
+        @result.fail("#{label}: response contains #{bad}") if body.include?(bad)
+      end
+      @result.fail("#{label}: response contains Routing Error") if body.include?("Routing Error")
+
+      if (spec = step["count"])
+        value = body.scan(Regexp.new(spec.fetch("pattern"))).size
+        captures[spec.fetch("as").to_s] = value
+      end
+      true
+    end
+
+    OPS = {
+      ">" => ->(a, b) { a > b }, "<" => ->(a, b) { a < b },
+      ">=" => ->(a, b) { a >= b }, "<=" => ->(a, b) { a <= b },
+      "==" => ->(a, b) { a == b }, "!=" => ->(a, b) { a != b },
+    }.freeze
+
+    def check_assertions(flow, captures)
+      if unseeded?(flow, captures)
+        # inconclusive!, not warn. Both print, but only unchecked is what
+        # GATE_STRICT_INCONCLUSIVE promotes to a failure, and "the invariants
+        # did not run" is the definition of nothing measured. Filed as a warning
+        # it was unpromotable in every mode, so a run that meant to demand a
+        # seeded dataset had no way to say so and bsdports_search_narrows scored
+        # green against an empty catalogue.
+        @result.inconclusive!(
+          "flow:#{flow["id"]} skipped invariants — #{Array(flow["requires_data"]).join('/')} is 0, " \
+          "the dataset is empty (seed the app to make this journey meaningful)"
+        )
+        return
+      end
+
+      Array(flow["assert"]).each do |rule|
+        left_name = rule.fetch("left").to_s
+        unless captures.key?(left_name)
+          @result.fail("flow:#{flow["id"]} assertion references unknown capture #{left_name.inspect}")
+          next
+        end
+        left = captures.fetch(left_name)
+        right_raw = rule.fetch("right")
+        right = right_raw.is_a?(Integer) ? right_raw : captures[right_raw.to_s]
+        if right.nil?
+          @result.fail("flow:#{flow["id"]} assertion references unknown capture #{right_raw.inspect}")
+          next
+        end
+
+        op = OPS[rule.fetch("op").to_s]
+        unless op
+          @result.fail("flow:#{flow["id"]} unknown operator #{rule["op"].inspect}")
+          next
+        end
+        next if op.call(left, right)
+
+        why = rule["why"] ? " — #{rule["why"]}" : ""
+        @result.fail(
+          "flow:#{flow["id"]} invariant broken: #{left_name}(#{left}) #{rule["op"]} " \
+          "#{right_raw.is_a?(Integer) ? right : "#{right_raw}(#{right})"}#{why}"
+        )
+      end
+    end
+
+    # Cookie-jar HTTP client that follows redirects and remembers the path it
+    # actually ended on.
+    class FlowClient
+      Response = Struct.new(:code, :body, :final_url, :redirects, keyword_init: true) do
+        def final_path = URI(final_url).request_uri
+      end
+
+      # Rails puts the per-session token in a meta tag on every rendered page and
+      # in a hidden field in every form. Either will do; the meta tag is on more
+      # pages, so it is tried first.
+      CSRF_META = /<meta name="csrf-token" content="([^"]+)"/
+      CSRF_FIELD = /name="authenticity_token"[^>]*value="([^"]+)"/
+
+      # default_host is the Host header every request carries unless a step names
+      # its own. Without it a probe of the loopback identifies as nothing, and
+      # production answers 403 from host authorization before the app sees the
+      # path — so these journeys passed in development, where the allow list is
+      # permissive, and could never pass against the deployed app, which is the
+      # only place they measure anything.
+      def initialize(port:, host: "127.0.0.1", default_host: nil)
+        @port = port
+        @host = host
+        @default_host = default_host
+        @cookies = {}
+        @csrf = nil
+      end
+
+      def get(path, host: nil) = run(:get, path, nil, host)
+
+      # A write, with the token the last rendered page handed us. Every journey
+      # in flows.yml was a GET, so the signed-in half of the product — the
+      # product — went unmeasured: a suite that only reads cannot tell a working
+      # form from one that renders and drops what you type.
+      def post(path, params, host: nil) = run(:post, path, params || {}, host)
+
+      private
+
+      def run(verb, path, params, host)
+        redirects = []
+        url = "http://#{@host}:#{@port}#{path}"
+        header_host = host || @default_host
+        MAX_REDIRECTS.times do
+          response = request(url, header_host, verb, params)
+          store_cookies(response)
+          store_csrf(response.body)
+          code = response.code.to_i
+          if [301, 302, 303, 307, 308].include?(code)
+            location = response["location"].to_s
+            redirects << location
+            url, header_host = follow(location, url, header_host)
+            # 303 means "see other", and 301/302 after a POST are treated the
+            # same way by every browser: the next hop is a GET with no body.
+            # Replaying the params would post the form twice.
+            verb, params = :get, nil if code != 307 && code != 308
+            next
+          end
+          return Response.new(code: code, body: response.body.to_s,
+                              final_url: display_url(url, header_host), redirects: redirects)
+        end
+        raise "too many redirects (#{redirects.join(' → ')})"
+      end
+
+      def store_csrf(body)
+        token = body.to_s[CSRF_META, 1] || body.to_s[CSRF_FIELD, 1]
+        @csrf = token if token
+      end
+
+      # Where the next hop is fetched from, and under which name.
+      #
+      # Always the app under test: url stays on 127.0.0.1:<port> and the public
+      # hostname travels in the Host header, which is the shape a relative
+      # redirect already had. Taking an absolute Location at face
+      # value, so a 301 to http://brgen.no/nearby/room sent the next request to
+      # the real brgen.no on port 80 — relayd answers there with a TLS redirect
+      # that Net::HTTP reads as "EOFError: end of file reached", which is how
+      # this was found. The quiet half is the worse one: every absolute redirect
+      # that did not happen to fail was measuring production and reporting it as
+      # a local journey.
+      def follow(location, current, header_host)
+        target = URI.join(current, location)
+        host = local?(target.host) ? header_host : target.host
+
+        [ "http://#{@host}:#{@port}#{target.request_uri}", host ]
+      end
+
+      def local?(host) = [ @host, "127.0.0.1", "localhost" ].include?(host)
+
+      # Report the vanity host in messages when one was used, so a failure reads
+      # markedsplass.brgen.no/cart rather than 127.0.0.1:38182/cart.
+      def display_url(url, header_host)
+        return url unless header_host
+
+        uri = URI(url)
+        "http://#{header_host}#{uri.request_uri}"
+      end
+
+      def request(url, header_host, verb = :get, params = nil)
+        uri = URI(url)
+        Net::HTTP.start(uri.host, uri.port, open_timeout: 8, read_timeout: 15) do |http|
+          req = build_request(uri, verb, params)
+          req["Host"] = header_host if header_host
+          req["Cookie"] = @cookies.map { |k, v| "#{k}=#{v}" }.join("; ") unless @cookies.empty?
+          http.request(req)
+        end
+      end
+
+      def build_request(uri, verb, params)
+        return Net::HTTP::Get.new(uri.request_uri) if verb == :get
+
+        req = Net::HTTP::Post.new(uri.request_uri)
+        # The token goes in the header rather than the body: Rails accepts
+        # either, and a header does not have to be threaded through nested
+        # params whose shape differs per form.
+        req["X-CSRF-Token"] = @csrf if @csrf
+        req.set_form_data(flatten_params(params))
+        req
+      end
+
+      # form_data is flat, and a Rails form is not: `{listing: {title: "x"}}`
+      # has to arrive as `listing[title]=x`. One level of nesting is all any
+      # journey here needs, and guessing deeper would hide a typo in a flow as
+      # a silently dropped parameter.
+      def flatten_params(params, prefix = nil)
+        params.each_with_object({}) do |(key, value), out|
+          name = prefix ? "#{prefix}[#{key}]" : key.to_s
+          if value.is_a?(Hash)
+            out.merge!(flatten_params(value, name))
+          else
+            out[name] = value.to_s
+          end
+        end
+      end
+
+      def store_cookies(response)
+        Array(response.get_fields("Set-Cookie")).each do |raw|
+          key, value = raw.split(";").first.to_s.split("=", 2)
+          @cookies[key] = value if key && value
+        end
+      end
+    end
+  end
+end

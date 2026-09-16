@@ -1,0 +1,92 @@
+# frozen_string_literal: true
+
+require_relative "../../../../OPENBSD/lib/deploy_inventory"
+require_relative "../../../../OPENBSD/lib/gate_result"
+require_relative "../../../tools/crawl_support"
+require_relative "../../support/source_contract"
+
+module Deploy
+  # Checkout without PSP keys must fail honestly (MASTER fail_fast / good_design_is_honest).
+  class PaymentHonestyGate
+    ROOT = File.expand_path("../../../..", __dir__)
+    RAILS = File.join(ROOT, "RAILS")
+
+    # The vertical-as-engine split moved marketplace's controllers, views and
+    # routes to engines/marketplace/ and left the payment *services* in the host.
+    # This gate kept the pre-split paths, so it failed on "missing" files that had
+    # only moved — and would have gone on failing identically had the checkout
+    # actually been deleted. Engine paths below; host paths for what stayed.
+    ENGINE = "brgen/engines/marketplace"
+
+    REQUIRED = {
+      "brgen/app/services/marketplace/payments/not_configured.rb" => /NotConfigured/,
+      "brgen/app/services/marketplace/payments/stripe_checkout.rb" => /NotConfigured|configured\?/,
+      "brgen/app/services/marketplace/payments/stripe_refund.rb" => /NotConfigured|StripeCheckout\.ensure!/,
+      "brgen/app/services/marketplace/payments/stripe_transfer.rb" => /NotConfigured|StripeCheckout\.ensure!/,
+      "brgen/app/services/marketplace/payments/vipps_checkout.rb" => /NotConfigured|configured\?/,
+      "#{ENGINE}/app/controllers/marketplace/checkouts_controller.rb" => /NotConfigured|provider/,
+      # i18n keys or EN fallbacks after cart polish
+      "#{ENGINE}/app/views/marketplace/carts/show.html.erb" => /pay_vipps|pay_stripe|Pay with Vipps|Pay with Stripe|not configured|cart_honest_pay|marketplace\.pay_/i,
+      # Checkout + PSP webhook routes are drawn on the engine now. The host
+      # routes.rb still matches /webhooks/ via webhooks/tradedoubler, so keeping
+      # the assertion there would have passed on an unrelated route forever.
+      # Both must be present, hence the lookahead rather than an alternation.
+      "#{ENGINE}/config/routes.rb" => /(?=.*checkout)(?=.*webhooks)/m,
+    }.freeze
+
+    # rails_root: is what makes this gate testable. A contract table is only
+    # enforcement if a tree that violates it fails, and the only way to show
+    # that is to run the gate over a tree built to violate it.
+    def self.run(rails_root: RAILS)
+      new(rails_root: rails_root).run
+    end
+
+    def initialize(rails_root: RAILS)
+      @rails_root = rails_root
+    end
+
+    def run
+      @result = GateResult.new
+      SourceContract.require_patterns(@result, root: @rails_root, required: REQUIRED, gate: "payment_honesty")
+
+      # Stripe/Vipps must raise NotConfigured when keys blank — source contract
+      stripe = read("brgen/app/services/marketplace/payments/stripe_checkout.rb")
+      @result.fail("payment_honesty: StripeCheckout must raise NotConfigured") unless stripe.match?(/raise NotConfigured/)
+      vipps = read("brgen/app/services/marketplace/payments/vipps_checkout.rb")
+      @result.fail("payment_honesty: VippsCheckout must raise NotConfigured") unless vipps.match?(/raise NotConfigured/)
+      # The source contract above is the bulk of this gate and does not need a
+      # booted app; only the cart probe does. Counting it stops a closed brgen port
+      # from reporting the whole gate as having measured nothing.
+      @result.checked!(REQUIRED.size + 2)
+
+      live_cart_probe
+      @result
+    end
+
+    private
+
+    # A deleted payment service is already reported by the REQUIRED table, so
+    # reading it back must not raise on top of that: an exception here reaches
+    # the runner as :errored, which blocks nothing and hides a finding the gate
+    # had already made.
+    def read(relative)
+      path = File.join(@rails_root, relative)
+      File.file?(path) ? File.read(path) : ""
+    end
+
+    def live_cart_probe
+      inv = Inventory.new(root: ROOT).apps.find { |a| a.name == "brgen" }
+      return @result.inconclusive!("payment_honesty: brgen not in inventory — live cart not probed") unless inv
+      return @result.inconclusive!("payment_honesty: brgen port closed — live cart not probed") unless CrawlSupport.port_open?("127.0.0.1", inv.port)
+
+      # Guest cart should redirect to sign-in or show cart — never 500
+      res = CrawlSupport.fetch("http://127.0.0.1:#{inv.port}/cart", host: "markedsplass.brgen.no", timeout: 12)
+      code = res.code.to_i
+      @result.fail("payment_honesty: cart HTTP #{code}") unless code.between?(200, 399)
+      body = res.body.to_s
+      @result.fail("payment_honesty: cart shows Exception") if body.include?("Exception") || body.include?("Routing Error")
+    rescue StandardError => e
+      @result.fail("payment_honesty live: #{e.class}: #{e.message}")
+    end
+  end
+end

@@ -1,0 +1,413 @@
+# The gate registry. One row per gate, and this file is the only place a gate
+# is declared.
+#
+# One registry, one runner, three trees. A gate's row lives here whatever tree
+# holds its implementation: `require` names the tree when the check belongs to
+# one — MASTER/gates for the gates that measure MASTER's own face and scan
+# chain, OPENBSD/gates for the ones that measure the box (DNS, domains, the
+# port inventory), and a bare path for the RAILS gates, which are most of them.
+#
+# The runner stays single: three runners would be three ideas of what a gate
+# result is, which is the shape OPENBSD/lib/gate_result.rb exists to prevent.
+#
+# It replaces four hand-maintained tables that had to agree with each other:
+# runner.rb's GATE_MAP (name -> file), IN_PROCESS (name -> class),
+# SUBPROCESS_ONLY (the set difference of those two, stored by hand) and
+# GATE_COVERED_BY (leaf -> composite). Adding a gate meant editing up to four
+# places, and GATE_MAP's file paths outlived the shims they pointed at.
+#
+# Fields
+#   require     path under RAILS/gates/, loaded before the class is named
+#   class       Deploy::* constant answering .run and returning a GateResult
+#   pass        success line; %{apps} / %{schemas} / %{assets} resolve via
+#               runner.rb's COUNTERS
+#   covered_by  the composite that already runs this gate as a leaf, so --all
+#               does not run it twice
+#   script      set instead of require/class for gates that stay subprocesses
+#   env_flags   ENV name -> keyword argument, passed to .run when the var is "1"
+#   needs       preconditions the machine must satisfy for this gate to measure
+#               anything. Today the only value is `browser`, which was runner.rb's
+#               hardcoded BROWSER_BACKED list — a fifth hand-maintained table of
+#               exactly the kind this file replaced.
+#
+# There is deliberately no `cost` field, and it is not an oversight.
+#
+# A cost declared here is a number somebody typed once, and this registry exists
+# because four such tables drifted from each other. The failure a cost field is
+# meant to catch is a gate that DOUBLES — constitutional_scan at 48 minutes on
+# brgen, rendered_suite at an hour on a Mac — and a declaration can never show a
+# doubling; only a history can. The ledger already records duration_ms per gate
+# per run, so runner.rb prints each gate's measured median before it starts and
+# says "unmeasured here" for the ones this machine has never run. A gate whose
+# median moves is visible in `runner.rb --ledger`.
+#
+# A gate is named for what it measures, never for the criterion near it, and owns
+# one assertion. Two gates asserting one property are two places for it to rot,
+# and a gate named after a WCAG criterion invites the criterion's number to be
+# declared again inside it: MASTER names the law and holds the number, and the
+# gate reads it from there. Under lib/, the directory names what a gate needs
+# before it can measure: source/ files only, live/ a booted app, rendered/ a
+# browser, research/ scores rather than verdicts.
+#
+# Order is run order.
+rails_doctrine:
+  script: rails_doctrine.rb
+  pass: "rails_doctrine: Rails Doctrine and MASTER rules passed"
+  covered_by: release
+
+production:
+
+  require: lib/production
+  class: Deploy::ProductionGate
+  pass: "Production gate passed for %{apps} Rails apps."
+  env_flags:
+    GATE_SKIP_NESTED: skip_nested
+
+rendered_invariants:
+  needs: [browser]
+  require: lib/rendered/rendered_invariants
+  class: Deploy::RenderedInvariants
+  pass: "Rendered invariants passed (theme served matches theme declared; chat tab corner consistent or declared)."
+  covered_by: rendered_suite
+
+dns_zones:
+  require: OPENBSD/gates/dns_zones
+  class: Deploy::DnsZonesGate
+  pass: "dns_zones: repo and nsd agree (zones, nsd.conf, acme-client.conf)."
+
+domain_alignment:
+  require: OPENBSD/gates/domain_alignment
+  class: Deploy::DomainAlignmentGate
+  pass: "Domain alignment gate passed (city domains + deploy_inventory.json/relayd checks)."
+  covered_by: release
+
+frontend_auditor:
+  require: lib/source/frontend_auditor
+  class: Deploy::FrontendAuditorGate
+  pass: "auditor: 0 warnings"
+  covered_by: layout_suite
+
+frontend_production:
+  require: lib/source/frontend_production
+  class: Deploy::FrontendProductionGate
+  pass: "Frontend production gate passed (%{apps} apps + MASTER/web layouts)."
+  covered_by: release
+
+generated_asset:
+  require: lib/source/generated_asset
+  class: Deploy::GeneratedAssetGate
+  pass: "Generated asset freshness gate passed for %{apps} Rails apps."
+
+human_walkthrough:
+  require: lib/live/human_walkthrough
+  class: Deploy::HumanWalkthroughGate
+  pass: "Human walkthrough gate passed for %{apps} Rails apps."
+
+master_tts:
+  require: MASTER/gates/master_tts
+  class: Deploy::MasterTtsGate
+  pass: "MASTER TTS gate passed."
+  covered_by: production
+
+master_web_assets:
+  require: MASTER/gates/master_web_assets
+  class: Deploy::MasterWebAssetsGate
+  pass: "MASTER/web assets gate passed (%{assets} required assets present)."
+  covered_by: production
+
+phantom_foreign_keys:
+  require: lib/source/phantom_foreign_keys
+  class: Deploy::PhantomForeignKeysGate
+  pass: "phantom_foreign_keys: clean (%{schemas} schemas)"
+
+# isolate_namespace isolates tables and routes, not constants; this holds the
+# one deliberate cross-engine read at one.
+engine_boundaries:
+  require: lib/source/engine_boundaries
+  class: Deploy::EngineBoundariesGate
+  pass: "engine_boundaries: no engine names another's constants beyond its declared reads"
+
+port_inventory:
+  require: OPENBSD/gates/port_inventory
+  class: Deploy::PortInventoryGate
+  pass: "Port inventory gate passed for %{apps} Rails apps."
+
+# Boots each app under its own bundle, so it stays a subprocess.
+rails_runtime:
+  script: rails_runtime.rb
+
+# Multi-step: shells out to rbenv, bundler and per-app CI.
+release:
+  script: release.rb
+
+schema_migration:
+  require: lib/source/schema_migration
+  class: Deploy::SchemaMigrationGate
+  pass: "Schema/migration gate passed for %{apps} Rails apps."
+
+stimulus_components:
+  require: lib/source/stimulus_components
+  class: Deploy::StimulusComponentsGate
+  pass: "Stimulus Components adoption gate passed."
+  covered_by: release
+
+# Forwards --capture/--app/--base, so it stays a subprocess.
+visual_contract:
+  needs: [browser]
+  script: visual_contract.rb
+
+user_flow:
+  require: lib/live/user_flow
+  class: Deploy::UserFlowGate
+  pass: "User flow + MASTER design-principle gate passed."
+  covered_by: layout_suite
+
+css_constitution:
+  require: lib/source/css_constitution
+  class: Deploy::CssConstitutionGate
+  pass: "CSS constitution gate passed (all stylesheets)."
+  covered_by: layout_suite
+
+scale_ratchet:
+  require: lib/source/scale_ratchet
+  class: Deploy::ScaleRatchetGate
+  pass: "Spacing, leading, radius and weight are on the declared scale."
+  covered_by: layout_suite
+
+css_minify_integrity:
+  require: lib/source/css_minify_integrity
+  class: Deploy::CssMinifyIntegrityGate
+  pass: "css_minify_integrity: ok"
+  covered_by: layout_suite
+
+first_screen:
+  require: lib/live/first_screen
+  class: Deploy::FirstScreenGate
+  pass: "ok: first-screen markers present, tap minimum declared"
+  covered_by: layout_suite
+
+dialect_purity:
+  require: lib/source/dialect_purity
+  class: Deploy::DialectPurityGate
+  pass: "Dialect purity gate passed."
+  covered_by: layout_suite
+
+payment_honesty:
+  require: lib/source/payment_honesty
+  class: Deploy::PaymentHonestyGate
+  pass: "Payment honesty gate passed."
+  covered_by: layout_suite
+
+affiliate_honesty:
+  require: lib/source/affiliate_honesty
+  class: Deploy::AffiliateHonestyGate
+  pass: "Affiliate honesty gate passed."
+  covered_by: layout_suite
+
+content_honesty:
+  require: lib/source/content_honesty
+  class: Deploy::ContentHonestyGate
+  pass: "Content honesty gate passed (no Faker filler on public surfaces)."
+  covered_by: layout_suite
+
+layout_search:
+  require: lib/research/layout_search
+  class: Deploy::LayoutSearchGate
+  pass: "Layout search (least-resistance) gate passed."
+  covered_by: layout_suite
+
+# Owns the professional layout + CSS stack, frontend_auditor included.
+stimulus_wiring:
+  require: lib/source/stimulus_wiring
+  class: Deploy::StimulusWiringGate
+  pass: "Stimulus wiring gate passed."
+  covered_by: layout_suite
+
+layout_suite:
+  require: lib/layout_suite
+  class: Deploy::LayoutSuiteGate
+  pass: "Layout suite passed (CSS + geometry + dialect + payment + content + flow + auditor + stimulus)."
+
+surface_schema:
+  require: lib/live/surface_schema
+  class: Deploy::SurfaceSchemaGate
+  pass: "surface_schema: ok"
+  covered_by: layout_suite
+
+design_metrics:
+  require: lib/research/design_metrics
+  class: Deploy::DesignMetricsGate
+  pass: "design_metrics: ok"
+  covered_by: layout_suite
+
+visual_quality:
+  require: lib/research/visual_quality
+  class: Deploy::VisualQualityGate
+  pass: "visual_quality: ok"
+  covered_by: layout_suite
+
+calibration:
+  require: lib/research/calibration
+  class: Deploy::CalibrationGate
+  pass: "calibration: ok"
+  covered_by: layout_suite
+
+apps_yml:
+  require: lib/source/apps_yml
+  class: Deploy::AppsYmlValidator
+  pass: "apps.yml validator: OK"
+  covered_by: production
+
+shared_wiring:
+  require: lib/source/shared_wiring
+  class: Deploy::SharedWiringGate
+  pass: "Shared wiring gate passed (routes, importmap, public assets, Stimulus)."
+
+# An app translation and a shared one for the same key: one renders, the other
+# is dead, and nothing says which. Measured, not reasoned: shared/config/locales
+# sits in I18n.load_path TWICE and the second entry lands after every app, so
+# shared always wins. nav.brand_home is why all three apps render "Home".
+locale_shadowing:
+  require: lib/source/locale_shadowing
+  class: Deploy::LocaleShadowingGate
+  pass: "locale_shadowing: ok"
+  covered_by: production
+
+# MASTER's 164 executable rules reach this tree through exactly one door, and
+# until now it was a door nobody opened: no covered_by meant this ran only when
+# named by hand, so a RAILS deploy was gated by RuboCop, Brakeman and the app
+# suite and by none of the constitution. Two trailing commas blocked brgen for
+# ten hours on 2026-08-25 while NO_COLUMN_ALIGN, which exists for exactly that,
+# never ran.
+#
+# release rather than production: this is scan-only and takes about eleven
+# minutes, which is right for the gate that fronts a release and wrong for every
+# CI run on a 1 vCPU box.
+constitutional_scan:
+  require: MASTER/gates/constitutional_scan
+  class: Deploy::ConstitutionalScanGate
+  pass: "Constitutional scan preflight completed."
+  covered_by: release
+
+# Owns every browser-backed gate below it. Each leaf launches Chrome, so running
+# one twice in a single invocation is pure wall-clock waste.
+rendered_suite:
+  needs: [browser]
+  require: lib/rendered_suite
+  class: Deploy::RenderedSuiteGate
+  pass: "ok: rendered browser suite clean"
+
+rendered_geometry:
+  needs: [browser]
+  require: lib/rendered/rendered_geometry
+  class: Deploy::RenderedGeometryGate
+  pass: "ok: rendered geometry contracts satisfied"
+  covered_by: rendered_suite
+
+webgl_surfaces:
+  needs: [browser]
+  require: lib/rendered/webgl_surfaces
+  class: Deploy::WebglSurfacesGate
+  pass: "ok: webgl surfaces draw"
+  covered_by: rendered_suite
+
+viewport_spill:
+  needs: [browser]
+  require: lib/rendered/viewport_spill
+  class: Deploy::ViewportSpillGate
+  pass: "ok: nothing hangs off the right edge at 390px"
+  covered_by: rendered_suite
+
+layout_snapshot:
+  needs: [browser]
+  require: lib/rendered/layout_snapshot
+  class: Deploy::LayoutSnapshotGate
+  pass: "ok: layout snapshots match committed baselines"
+  covered_by: rendered_suite
+
+journey_invariant:
+  needs: [browser]
+  require: lib/rendered/journey_invariant
+  class: Deploy::JourneyInvariantGate
+  pass: "ok: journey invariants hold"
+  covered_by: rendered_suite
+
+reflow:
+  needs: [browser]
+  require: lib/rendered/reflow
+  class: Deploy::ReflowGate
+  pass: "ok: no overflow across the width sweep"
+  covered_by: rendered_suite
+
+keyboard_flow:
+  needs: [browser]
+  require: lib/rendered/keyboard_flow
+  class: Deploy::KeyboardFlowGate
+  pass: "ok: keyboard tab order is sound"
+  covered_by: rendered_suite
+
+# Phone viewport journey floor (Fitts 44px, overflow, landmarks, verticals).
+mobile_flow:
+  needs: [browser]
+  require: lib/rendered/mobile_flow
+  class: Deploy::MobileFlowGate
+  pass: "ok: mobile journey floor holds"
+  covered_by: rendered_suite
+
+cross_app:
+  needs: [browser]
+  require: lib/rendered/cross_app
+  class: Deploy::CrossAppEquivalenceGate
+  pass: "ok: shared chrome agrees across apps"
+  covered_by: rendered_suite
+
+deploy_drift:
+  require: lib/live/deploy_drift
+  class: Deploy::DeployDriftGate
+  pass: "ok: no deploy drift detected"
+
+flow_journey:
+  require: lib/live/flow_journey
+  class: Deploy::FlowJourneyGate
+  pass: "ok: user journeys pass with postconditions"
+
+# Full-matrix UI/UX simulation: every full-page view (brgen · amber · MASTER).
+# Source always; live HTTP when triangle ports are open.
+page_simulation:
+  require: lib/live/page_simulation
+  class: Deploy::PageSimulationGate
+  pass: "ok: page UI/UX simulations clean across inventory"
+
+gate_mutation:
+  require: lib/gate_mutation
+  class: Deploy::GateMutationGate
+  pass: "ok: gates detect the defects they exist to prevent"
+
+# Does a press on this control reach this control? elementFromPoint at each
+# control centre, so deliberate stacking (fixed nav, modal, chat widget) is
+# not mistaken for a defect the way rect intersection would.
+occlusion:
+  needs: [browser]
+  require: lib/rendered/occlusion
+  class: Deploy::OcclusionGate
+  pass: "ok: every control answers a press at its own centre"
+  covered_by: rendered_suite
+
+# PERF-100. The vitals sampler in hotwire.js has beaconed LCP/CLS/INP at one
+# percent for some time and nothing ever failed on the numbers; GATE_ADEQUACY
+# item 8 records the hole. Source half asserts the field collection still runs,
+# live half measures the two paint metrics against a budget.
+web_vitals_budget:
+  require: lib/rendered/web_vitals_budget
+  class: Deploy::WebVitalsBudget
+  pass: "ok: LCP and CLS within budget, field collection intact"
+
+# PWA-100 and BRGEN-115. Three manifests, and nothing checked that the icons
+# they declare exist or that brgen's name follows the host's city. An icon
+# resolves from two public roots — the app's and the shared engine's, which
+# mounts its own ActionDispatch::Static — so a check that reads one of them
+# reports two apps as broken when they are not.
+pwa_installable:
+  require: lib/source/pwa_installable
+  class: Deploy::PwaInstallable
+  pass: "ok: three manifests installable, icons resolve, brgen follows its host"

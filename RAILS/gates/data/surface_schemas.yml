@@ -1,0 +1,200 @@
+# DOM / HTML surface schemas for layout + flow gates (P1).
+# Markers are structural patterns on rendered HTML or view source — not CSS selectors.
+# severity: hard (merge block) | soft (warn unless GATE_STRICT_SOFT=1)
+# principle: MASTER principle_map cluster id for fail messages.
+#
+# order: list of marker ids; earlier markers must appear before later ones in the document.
+# counts: pattern with min/max occurrences. Presence markers cannot express "exactly one",
+#   which is why gate_mutation's drop_h1, duplicate_h1 and cta_flood all survived.
+
+schemas:
+  marketplace_listings:
+    label: marketplace listings
+    principle: hierarchy / catalog_retail
+    dialect: marketplace
+    severity_default: hard
+    counts:
+      page_heading:
+        pattern: '<h1\b'
+        min: 1
+        max: 1
+        principle: hierarchy
+      primary_actions:
+        pattern: 'btn-primary'
+        max: 6
+        principle: hicks_law
+    markers:
+      main_landmark:
+        pattern: '<main\b|role="main"'
+        principle: accessibility
+      skip_link:
+        pattern: 'skip-link|Skip to main|#main-content'
+        principle: accessibility
+      nav_bar:
+        pattern: 'id="navBar"|id=''navBar'''
+        principle: consistency
+      search:
+        pattern: 'marketplace-nav-search|class="[^"]*search|name="q"'
+        principle: affordance
+      # An empty catalogue still renders the catalogue region, as the empty
+      # state. Without the third alternate this hard marker reported a checkout
+      # with no listings as a page missing its product grid — the same reading
+      # error exemplars.yml's nav_before_grid carried, and for the same reason.
+      product_grid:
+        pattern: 'deal-grid|deal-card|empty-state-title'
+        principle: hierarchy
+      sell_or_cart:
+        pattern: 'Cart|Sell|listings/new|marketplace_cart'
+        principle: good_design_is_useful
+        severity: soft
+    order:
+      - [nav_bar, product_grid]
+      - [search, product_grid]
+    forbidden:
+      - pattern: '<button(?![^>]*aria-label=)[^>]*>\s*</button>'
+        principle: accessibility
+        note: button with no accessible name
+      - pattern: 'Sign in to continue'
+        principle: clarity
+        note: guest-open surface must not auth-wall browse
+      - pattern: 'class="[^"]*feed-card'
+        principle: dialect_purity
+        severity: soft
+        note: social feed-card dialect should not dominate retail grid
+
+  marketplace_cart:
+    label: marketplace cart
+    principle: good_design_is_useful
+    dialect: marketplace
+    severity_default: hard
+    counts:
+      page_heading:
+        pattern: '<h1\b'
+        min: 1
+        max: 1
+        principle: hierarchy
+      primary_actions:
+        pattern: 'btn-primary'
+        max: 6
+        principle: hicks_law
+    markers:
+      main_landmark:
+        pattern: '<main\b|role="main"'
+        principle: accessibility
+      skip_link:
+        pattern: 'skip-link|Skip to main|#main-content'
+        principle: accessibility
+      cart_chrome:
+        pattern: 'Cart|Your Cart|cart'
+      empty_or_items:
+        pattern: 'empty|offer|listing|pending|Checkout|Send'
+    forbidden:
+      - pattern: '<button(?![^>]*aria-label=)[^>]*>\s*</button>'
+        principle: accessibility
+        note: button with no accessible name
+      - pattern: 'Sign in to continue'
+        principle: clarity
+        note: guest cart is a core capability
+
+  dating_home:
+    label: dating discover
+    principle: hierarchy / face
+    dialect: dating
+    severity_default: hard
+    counts:
+      page_heading:
+        pattern: '<h1\b'
+        min: 1
+        max: 1
+        principle: hierarchy
+      primary_actions:
+        pattern: 'btn-primary'
+        max: 6
+        principle: hicks_law
+    markers:
+      main_landmark:
+        pattern: '<main\b|role="main"'
+        principle: accessibility
+      skip_link:
+        pattern: 'skip-link|Skip to main|#main-content'
+        principle: accessibility
+      discover:
+        pattern: 'Oppdag|swipe|dating|profile'
+      card_or_empty:
+        pattern: 'swipe-card|swipe-action|No profiles|empty|swipe-signin'
+    forbidden:
+      - pattern: '<button(?![^>]*aria-label=)[^>]*>\s*</button>'
+        principle: accessibility
+        note: button with no accessible name
+      - pattern: 'Sign in to continue'
+        principle: clarity
+        severity: soft
+
+  messenger_inbox:
+    label: messenger inbox
+    principle: good_design_is_useful
+    dialect: social
+    severity_default: hard
+    counts:
+      page_heading:
+        pattern: '<h1\b'
+        min: 1
+        max: 1
+        principle: hierarchy
+      primary_actions:
+        pattern: 'btn-primary'
+        max: 6
+        principle: hicks_law
+    markers:
+      main_landmark:
+        pattern: '<main\b|role="main"'
+        principle: accessibility
+      skip_link:
+        pattern: 'skip-link|Skip to main|#main-content'
+        principle: accessibility
+      messages_chrome:
+        pattern: 'Messages|messenger-compose|conversation'
+    forbidden:
+      - pattern: '<button(?![^>]*aria-label=)[^>]*>\s*</button>'
+        principle: accessibility
+        note: button with no accessible name
+      - pattern: 'Sign in to continue'
+        principle: clarity
+        note: guest messenger is a core capability
+
+  brgen_home:
+    label: brgen home feed
+    principle: hierarchy / social
+    dialect: social
+    severity_default: hard
+    counts:
+      page_heading:
+        pattern: '<h1\b'
+        min: 1
+        max: 1
+        principle: hierarchy
+      primary_actions:
+        pattern: 'btn-primary'
+        max: 6
+        principle: hicks_law
+    forbidden:
+      - pattern: '<button(?![^>]*aria-label=)[^>]*>\s*</button>'
+        principle: accessibility
+        note: button with no accessible name
+    markers:
+      main_landmark:
+        pattern: '<main\b|role="main"'
+        principle: accessibility
+      skip_link:
+        pattern: 'skip-link|Skip to main|#main-content'
+        principle: accessibility
+      home:
+        pattern: 'Home|feed|Bergen|local-feed|compose'
+      # The door to the ambient hyperlocal layer. It was href="/live" while that
+      # was a separate Jodel-shaped feed; /live is the geo chat room now, and the
+      # home page reaches it through the floating chat widget rather than a link
+      # in the body, so the pattern has to admit both.
+      chat_entry:
+        pattern: 'href="/live"|href="/nearby|nearby-chat|nearby_room_path|nearby_widget'
+        principle: progressive_disclosure
+        severity: soft
