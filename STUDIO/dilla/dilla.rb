@@ -35750,6 +35750,43 @@ module Bed
   # energy, write! clamps at full scale, and a lead that clipped here would
   # arrive at the mix already broken with the ducking and the master bus unable
   # to tell.
+  PAD_SPACE = BED["pad_space"]
+
+  # The same room machinery as the lead, drawn and then filtered to the stages a
+  # held chord can afford. Applied to the pads after the rack and before the chop,
+  # so the echo is chopped with the chord rather than smeared across the cut.
+  def space_pads!(path, seed)
+    space!(path, seed, PAD_SPACE)
+  end
+
+  def space!(path, seed, config)
+    wet = Float(config&.fetch("wet", 0) || 0)
+    return path unless wet.positive?
+
+    left, right = AnalogSynth.read!(path)
+    return path if left.empty?
+
+    before = channels_peak(left, right)
+    plan = SpaceFx.random_plan(Random.new(seed), wet:, max_stages: config["stages"])
+    if (only = config["only"])
+      allowed = Array(only).map(&:to_sym)
+      plan = plan.select { |stage, _| allowed.include?(stage) }
+    end
+    return path if plan.empty?
+
+    SpaceFx.apply!(left, plan, spread: 0)
+    SpaceFx.apply!(right, plan, spread: 23)
+    after = channels_peak(left, right)
+    if after > before && before.positive?
+      scale = before / after
+      left.map! { |v| v * scale }
+      right.map! { |v| v * scale }
+    end
+    dmesg("pad room #{SpaceFx.describe(plan)}", unit: "bed0", parent: "dilla0") if config.equal?(PAD_SPACE)
+    AnalogSynth.write!(left, right, path)
+    path
+  end
+
   def space_lead!(path, seed)
     wet = Float(LEAD_SPACE&.fetch("wet", 0) || 0)
     return path unless wet.positive?
@@ -36331,7 +36368,8 @@ module Bed
     ffmpeg!("-i", joined, "-filter_complex", pad_rack(BED.fetch("pad_racks").sample, drift), "-map", "[out]", "-ac", "2", played, what: "pad rack")
     File.unlink(joined)
     File.unlink(drift)
-    pads = chop(played, bars, scratch("pads"))
+        space_pads!(played, seed)
+pads = chop(played, bars, scratch("pads"))
     File.unlink(played)
 
     ensure_drum_kit!

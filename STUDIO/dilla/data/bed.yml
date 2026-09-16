@@ -87,6 +87,26 @@ patches:
 min_attack_s: 0.4
 chord_level_db: -14
 pad_racks: [wash, shimmer]
+# A space echo on the pads, and only that.
+#
+# The lead gets the whole drawn chain because it is sparse and a fold or a
+# crusher on two seconds of line is character. The pads sound three quarters of
+# every bar, and measured tonight it is exactly the folder, the crusher and the
+# phaser that cost this mix its air and its width -- a phaser notches both
+# channels the same way, which removes energy and collapses the picture at
+# once. An echo does neither: it adds depth behind the chord and takes nothing
+# off the top. So the draw is filtered to the two stages that give a place
+# without charging for it, and the wet is half, because a pad is already wide.
+# stages is the trim, and random_plan applies it before `only` is applied here:
+# it drops the costliest first, keeps reverb, and the cheap survivors are the
+# fold and the crusher, which are the two this excludes. Set to 2 it therefore
+# drew reverb on its own. Left untrimmed, so the filter does the choosing.
+# Off, on the measurement. At wet 0.5 it cost 1.1 of loudness range and 4.9 dB of
+# upper-mid against the arrangement without it, and returned 1 dB of air: a pad
+# sounds three quarters of every bar, so a room behind it softens the chord more
+# than it places it. The lead can afford one because it is sparse. Raise the wet
+# to hear it; the machinery and the filter stay.
+pad_space: { stages: 7, wet: 0.0, only: [space_echo, reverb] }
 # Which families deal_instruments draws from and which presets inside them.
 # All of both here; a piece in data/pieces.yml narrows the list, and that
 # narrowing is most of what makes one piece a Rhodes record and the next a
