@@ -173,10 +173,10 @@ def test_the_post_chain_is_read_and_applied
   assert_match(/Policy\.post_chain/, source, "Speech never reads the chain")
   assert_match(/shaped\(/, source, "Speech never applies the chain")
 
-  # loudnorm before the gain, gain before the limiter. Reversed, the first is
-  # only peak-lifting and the second is distortion rather than loudness.
-  assert_operator chain.index("loudnorm"), :<, chain.index("volume="),
-                  "loudnorm must come before the gain"
+  # No per-file normalisation: the chain runs once per utterance, and loudnorm
+  # levelled every sentence to the same loudness (measured: two clips 20 dB
+  # apart both left it at -3.9 LUFS).
+  refute_includes chain, "loudnorm", "a per-utterance chain must not normalise per file"
   assert_operator chain.index("volume="), :<, chain.index("alimiter"),
                   "the gain must come before the limiter"
 end

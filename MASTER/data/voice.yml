@@ -91,13 +91,23 @@ tts:
   # tuned for a synth pad and land on speech for the first time here: the
   # formants sit where a voice already puts its energy and lift it.
   #
-  # loudnorm BEFORE the gain, and the gain before the limiter. Normalising
-  # first brings quiet sentences up to meet loud ones rather than only lifting
-  # peaks; gain after a limiter is distortion rather than loudness.
+  # A fixed makeup gain before the limiter, and no loudnorm. The chain runs
+  # once per utterance now that a reply is spoken sentence by sentence, and
+  # loudnorm normalises per file: measured on this Mac, two clips 20 dB apart
+  # both left it at -3.9 LUFS, so a quiet trailing clause was lifted to meet an
+  # emphatic opening and the reply spoke in one flat voice. A fixed gain keeps
+  # what the synthesiser meant — the same sentence 10 dB down stays 9.3 dB down.
+  #
+  # +23 dB is what lands nearest the level the chain used to reach: -12.0 LUFS
+  # against -9.6, measured through the whole chain on a spoken sentence. It also
+  # flattens fewer samples than loudnorm did (astats flat factor 0.31 against
+  # 14.73), because normalising first pushed the limiter harder than the gain
+  # does. Gain after a limiter would be distortion rather than loudness, so it
+  # stays before it. Operator's to re-tune by ear.
   #
   # A reader that cannot run ffmpeg should skip the chain and speak dry. A
   # missing filter must cost the effect, never the sentence.
-  post_chain: "equalizer=f=520:t=q:w=1.1:g=4.5,equalizer=f=1480:t=q:w=1.3:g=3.6,equalizer=f=2520:t=q:w=1.5:g=2.8,chorus=0.5:0.7:19|27:0.3|0.26:0.24|0.2:0.9|1.4,aphaser=type=t:speed=0.12:decay=0.3:delay=2.4,highpass=f=200,lowpass=f=6000,loudnorm=I=-9:TP=-0.5:LRA=7,volume=8dB,alimiter=limit=0.98"
+  post_chain: "equalizer=f=520:t=q:w=1.1:g=4.5,equalizer=f=1480:t=q:w=1.3:g=3.6,equalizer=f=2520:t=q:w=1.5:g=2.8,chorus=0.5:0.7:19|27:0.3|0.26:0.24|0.2:0.9|1.4,aphaser=type=t:speed=0.12:decay=0.3:delay=2.4,highpass=f=200,lowpass=f=6000,volume=23dB,alimiter=limit=0.98"
 
   # The bed under the speech, so a pause is not silence.
   #
