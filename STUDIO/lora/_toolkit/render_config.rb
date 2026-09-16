@@ -306,7 +306,7 @@ def apply_env_overrides!(process)
   process["sample"]["sample_every"] = Integer(sample_every) unless sample_every.empty?
 end
 
-# The twelve in train.yaml and the fifty in shoots.yml are different jobs.
+# The twelve in train.yaml and the seventy-four in ideas.yml are different jobs.
 #
 # The twelve are a validation suite, chosen to disagree with each other as much
 # as possible — hard sun against candlelight against overcast — so that watching

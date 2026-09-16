@@ -36,6 +36,21 @@ class TestLora < Minitest::Test
     assert_equal 50, prompts_for("ragnhild").length, "the written record is untouched"
   end
 
+  # One file holds every written sitting, and best points into it rather than
+  # copying prose that would then drift.
+  def test_every_written_set_reads_from_ideas_yml
+    require_relative "../lora/_toolkit/shoots"
+
+    assert_empty Dir[File.join(LORA, "shoots*.yml")], "a written set outside ideas.yml"
+    assert_equal %w[best distance scenarios selfies shoots warp], available_sets
+    assert_equal 50, prompts_for("ragnhild", set: "shoots").length
+    assert_equal 24, prompts_for("ragnhild", set: "warp").length
+
+    best = prompts_for("ragnhild", set: "best").map(&:first)
+    assert_equal (1..24).to_a, best.map { |sitting| sitting["n"] }
+    best.each { |sitting| assert_match(/\A(shoots|warp)#\d+\z/, sitting["source"]) }
+  end
+
   def test_selfies_and_the_distance_ladder_are_drawn_sets_with_their_caps
     require_relative "../lora/_toolkit/shoots"
 

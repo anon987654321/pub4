@@ -662,7 +662,7 @@ end
 # Training samples its twelve validation prompts as it goes, which is how the
 # first portraits arrived without a second GPU. But the twelve are chosen to
 # disagree with each other — they are a likeness diagnostic, not a record — and
-# the fifty in shoots.yml are the actual deliverable.
+# the fifty in the shoots set of ideas.yml are the actual deliverable.
 #
 # Separated from train because it is a different economics. Training is thirty
 # minutes and produces one adapter; this is a sampling pass against an adapter
