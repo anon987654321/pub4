@@ -534,6 +534,16 @@ in `OPENBSD/CLAUDE.md`.
   fall the same way: `MixScore` takes targets from takes kept after listening,
   never from a threshold picked in advance. The face's look and dilla's sound
   are the operator's.
+- **Nothing restored from `master.yml` because the fossil declared it.** The
+  2026-09-16 `codify-master-gaps` patch added `analysis_depth` (practical /
+  analytical / extreme, with depth limits and time budgets) and
+  `version_control` (`message_format: "v{version}: {change_summary}
+  [violations={before}→{after}]"`) to `data/rules.yml` from
+  `master.yml@30dad7ead`. Nothing in the tree names a depth of analysis, so the
+  first block is a declaration with no reader in a file that is `paths.immutable`;
+  the second contradicts the convention every commit here follows, which is a
+  capitalised sentence after `Master:`. A fossil is evidence of what was once
+  meant, not a reason to declare it again.
 - **No native extension and no second language.** tree-sitter, Herb,
   `tiktoken_ruby` and a Python compressor each put a toolchain beside a
   pure-Ruby runtime that deploys to OpenBSD; Prism is in the stdlib. tree-sitter
