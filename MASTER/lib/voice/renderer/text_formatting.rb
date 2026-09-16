@@ -30,14 +30,27 @@ module Master
         # digit-hyphen-digit rewrote identifiers and dates too: model IDs
         # printed as claude-opus-4–8 and dates as 2026–08–02.
         def beautify(text)
-          text
-            .gsub(/"([^"]*?)"/) { "“#{Regexp.last_match(1)}”" }
+          curl_quotes(text)
             .gsub(/\s--\s/, " — ")
             .gsub(/(?<![\w-])(\d+)-(\d+)(?![\w-])/, "\\1–\\2")
             .gsub("...", "…")
         end
 
         private
+
+        # A quoted string on a record line is a value, and curling it changes the
+        # value: a repair preview printed {“FEW_ARGUMENTS” => 28}, which is no
+        # longer the hash it came from and no longer pastes back into anything.
+        # The test is the one prose_line? already uses for the same reason — a
+        # line carrying an `=` is a record, and its columns mean something.
+        def curl_quotes(text)
+          lines = text.lines.map do |line|
+            next line if line.include?("=")
+
+            line.gsub(/"([^"]*?)"/) { "“#{Regexp.last_match(1)}”" }
+          end
+          lines.join
+        end
 
         # A sentence, not a record: long, a dozen words or more, and mostly
         # words rather than numbers, paths and identifiers.

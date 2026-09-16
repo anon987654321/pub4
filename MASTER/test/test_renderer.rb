@@ -108,4 +108,17 @@ class TestRenderer < Minitest::Test
   def strip_ansi(text)
     text.to_s.gsub(/\e\[[0-9;]*m/, "")
   end
+
+  # A repair preview printed {“FEW_ARGUMENTS” => 28}: the renderer curled the
+  # quotes inside a hash dump, so the line was no longer the value it reported
+  # and no longer pasted back. Prose still gets the typographic pair.
+  def test_quotes_stay_straight_on_a_record_line
+    renderer = FakeRenderer.new(config: {})
+
+    record = renderer.send(:beautify, %q{preview total=107 top_rules={"FEW_ARGUMENTS" => 28}})
+    assert_equal %q{preview total=107 top_rules={"FEW_ARGUMENTS" => 28}}, record
+
+    prose = renderer.send(:beautify, %q{The council called this a "plateau" and stopped.})
+    assert_equal "The council called this a “plateau” and stopped.", prose
+  end
 end
