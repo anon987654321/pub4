@@ -257,7 +257,17 @@ spine:
   # reason to keep it, not a budget for it; the row stays red until the tree is
   # wired into the fold or paid for by a fall. Its two simulated classes were
   # never under this ceiling, so deleting them lowers nothing.
-  lib_body_ceiling: 35123
+  # 35123 -> 35302, raised (log below) for the forward work MASTER owed: the
+  # fold's reply schema built per turn from Proof#scope, so an early done, an
+  # unproved commit and a write before ideation are not in the enum a
+  # schema-bound model decodes into; the model ladder that climbs a local model
+  # which cannot hold the fold to the next larger one, and past it to the cloud
+  # lane; the terminal's y/N answer to a Request, which is the only surface that
+  # can give one; and the objective ledger — owner, domain, wake, evidence and a
+  # verify whose exit status meets the objective — with the per-domain reach
+  # that keeps a finance or household objective out of the coding tools. 179
+  # body lines across lib/core, lib/cli, lib/ground and lib/fix.
+  lib_body_ceiling: 35302
   # Raw-line anchors from before the 2026-08-10 code-line unit change, kept only
   # so the old numbers stay legible. Not comparable to lib_body_ceiling.
   lib_raw_at_switch: 47753
@@ -268,6 +278,7 @@ spine:
   # reaches consecutive_raises_allowed; a genuine fall clears it.
   raised:
   - { date: "2026-09-15", from: 35087, to: 35123, for: "small-model fold legibility, review counts, shell and rollback honesty" }
+  - { date: "2026-09-16", from: 35123, to: 35302, for: "the per-turn verb offer, the model ladder, the terminal's approval, and the objective ledger with its domain boundary" }
   consecutive_raises_allowed: 2
   # A tripwire on new top-level concepts in the fold, not on line count. Counted
   # as lib/{core.rb,core/*.rb} — the entrypoint plus the directory — so the glob
