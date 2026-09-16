@@ -392,6 +392,39 @@ end
     assert_equal ["LAW\n\nanswer in JSON"], role.value.map { |block| block[:text] }
     assert_equal %w[PERSONA TURN], persona.value.map { |block| block[:text] }
   end
+  # A CLI lane without its binary answered ENOENT, a retriable provider_error,
+  # so a chain slept through backoff on it once per file of a scan.
+  def test_a_cli_lane_without_its_binary_refuses_permanently
+    dispatcher, = build_dispatcher
+    previous = ENV["MASTER_NO_CLAUDE_CLI"]
+    ENV["MASTER_NO_CLAUDE_CLI"] = "1"
+    result = dispatcher.send(:send_claude_cli, "claude-sonnet-4-6", [{ role: "user", content: "hei" }], sys: nil)
+    ENV["MASTER_NO_CLAUDE_CLI"] = previous
+
+    assert_predicate result, :err?
+    assert_predicate result, :permanent?
+    assert_includes result.message, "no claude on PATH"
+  end
+
+
+  # A reasoning model sends its working beside its answer. Appended, it was
+  # printed at the terminal and every other reader had to strip it.
+  def test_a_reasoning_replys_working_stays_out_of_its_answer
+    dispatcher, = build_dispatcher
+    thinking = Struct.new(:text).new("the user asked who I am, so I introduce myself")
+    reply = Struct.new(:content, :thinking).new("Hei! Jeg er MASTER.", thinking)
+
+    assert_equal "Hei! Jeg er MASTER.", dispatcher.send(:extract_response, reply)
+  end
+
+  # With nothing else to say, the working is the only answer there is.
+  def test_a_reply_that_is_only_working_answers_with_it
+    dispatcher, = build_dispatcher
+    thinking = Struct.new(:text).new("still deciding")
+    reply = Struct.new(:content, :thinking).new("", thinking)
+
+    assert_equal "still deciding", dispatcher.send(:extract_response, reply)
+  end
 
   # A schema-bound reply arrives parsed, and Hash#to_s is Ruby's inspect: the
   # fold's parser read `{"verb" => "note"}` as no JSON object at all.
@@ -399,7 +432,7 @@ end
     dispatcher, = build_dispatcher
     reply = Struct.new(:content).new({ "verb" => "note", "why" => "look first", "args" => {} })
 
-    text = dispatcher.send(:extract_response, reply, "openai/gpt-4o-mini")
+    text = dispatcher.send(:extract_response, reply)
 
     assert_equal "note", JSON.parse(text)["verb"]
   end

@@ -50,7 +50,6 @@ module Master
       # holds for TOOL_CAPABLE_RE below.
       VISION_RE = /gemini-[12]|claude|gpt-4o|gpt-4\.1|llama-4|qwen.*vl|pixtral|gemma-[34]|vision/i.freeze
       NON_VISION_RE = /glm|nemotron|deepseek(?!.*vl)|qwen3-next|gpt-oss|phi-4/i.freeze
-      NEMOTRON3_RE = /nemotron-3/i.freeze
       LLAMA_NEMOTRON_RE = /llama.*nemotron|nemotron.*llama/i.freeze
       TOOL_CALL_RE = /<tool_call>(.*?)<\/tool_call>/m.freeze
       TOOL_RESULT_ROLE = "user"
@@ -269,8 +268,14 @@ module Master
       end
 
       def send_agy_cli(model_alias, messages, sys:, stream: false, &blk)
-        CLI_SLOTS.pop
         agy_bin = find_agy_bin
+        return Result.err("agy: no agy on PATH", category: :no_api_key) unless agy_bin
+
+        agy_cli_call(agy_bin, model_alias, messages, sys, stream, &blk)
+      end
+
+      def agy_cli_call(agy_bin, model_alias, messages, sys, stream, &blk)
+        CLI_SLOTS.pop
         prompt = text_prompt_for(messages)
         full_prompt = sys && !sys.empty? ? "#{sys}\n\n---\n\n#{prompt}" : prompt
         args = [agy_bin, "-p", full_prompt, "--output-format", "text"]
@@ -289,6 +294,19 @@ module Master
         Result.err("agy: #{e.message}", category: :provider_error)
       ensure
         CLI_SLOTS << true
+      end
+
+      # The same reading of PATH that ModelRouter uses to keep an absent lane
+      # out of a chain, here so a dispatch reached any other way refuses too.
+      # MASTER_NO_CLAUDE_CLI=1 takes the lane out on a box that has the binary.
+      def claude_on_path?
+        return false if ENV["MASTER_NO_CLAUDE_CLI"] == "1"
+        return @claude_on_path unless @claude_on_path.nil?
+
+        @claude_on_path = ENV["PATH"].to_s.split(File::PATH_SEPARATOR).any? do |dir|
+          exe = File.join(dir, "claude")
+          File.file?(exe) && File.executable?(exe)
+        end
       end
 
       def find_agy_bin
@@ -320,7 +338,19 @@ module Master
       # waiting beats thrashing.
       CLI_SLOTS = SizedQueue.new(2).tap { |queue| 2.times { queue << true } }
 
+      # A lane whose binary is absent fails with ENOENT, which reads as a
+      # retriable provider_error, so the chain sleeps through a backoff on a
+      # lane that cannot answer at all, and a scan pays that on every file.
+      # Absent is permanent, so the chain walks on at once.
       def send_claude_cli(model_alias, messages, sys:)
+        return Result.err("claude-cli: no claude on PATH", category: :no_api_key) unless claude_on_path?
+
+        claude_cli_call(model_alias, messages, sys)
+      end
+
+      # The slot is taken and returned here, so a lane refused above never
+      # returns one it did not take and leaves the queue as it found it.
+      def claude_cli_call(model_alias, messages, sys)
         CLI_SLOTS.pop
         args = ["claude", "--print", "--model", model_alias]
         args += ["--system-prompt", sys] if sys && !sys.empty?
