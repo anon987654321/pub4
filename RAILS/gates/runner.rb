@@ -394,7 +394,7 @@ end
 # A subprocess gate has no result object to read and can only speak in exit
 # codes, so it contributes the code and nothing else. Say that rather than
 # leaving a blank line under its name.
-REASONS = {}
+@reasons = {}
 
 # A gate that failed while naming no finding is the shape rails_runtime wore for
 # months: red every run with an empty failure list, because it broke at require
@@ -405,7 +405,7 @@ REASONS = {}
 # own findings, so the runner holds no result to count — release names a failing
 # MASTER contract test on its own stdout and would otherwise be reported here as
 # naming nothing, which is the false positive this line exists to avoid.
-EMPTY_FAILURES = []
+@empty_failures = []
 
 def record_reasons(key, outcome)
   result = @last_result
@@ -413,9 +413,9 @@ def record_reasons(key, outcome)
   when :inconclusive
     reasons = result.respond_to?(:unchecked) ? Array(result.unchecked) : []
     reasons = ["exit #{SUBPROCESS_INCONCLUSIVE}, no reason given (subprocess gate)"] if reasons.empty?
-    REASONS[key] = reasons
+    @reasons[key] = reasons
   when :failed
-    EMPTY_FAILURES << key if result.respond_to?(:failures) && result.failures.empty?
+    @empty_failures << key if result.respond_to?(:failures) && result.failures.empty?
   end
 end
 
@@ -515,16 +515,16 @@ end
 
 # Most gates already open the reason with their own name, and printing it twice
 # reads like two gates.
-REASONS.each do |key, reasons|
+@reasons.each do |key, reasons|
   reasons.each { |reason| say("#{key} measured nothing: #{reason.to_s.delete_prefix("#{key}: ")}") }
 end
-unless REASONS.empty?
+unless @reasons.empty?
   say("GATE_STRICT_INCONCLUSIVE=1 fails on these; RAILS/bin/triangle up satisfies a live precondition, " \
       "not a deploy-host one")
 end
 
-if EMPTY_FAILURES.any?
-  say("#{EMPTY_FAILURES.join(', ')} failed naming no finding, so broke before a check; run each alone")
+if @empty_failures.any?
+  say("#{@empty_failures.join(', ')} failed naming no finding, so broke before a check; run each alone")
 end
 
 # The verdict. Never a coverage number the run did not earn: an inconclusive or

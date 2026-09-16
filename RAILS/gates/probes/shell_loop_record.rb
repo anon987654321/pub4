@@ -126,6 +126,38 @@ COLOUR = <<~'JS'
   };
 JS
 
+# One evaluate per frame, each advancing the fiction by one step. The page keeps
+# the state; this only says "advance", so a dropped frame is a slower film and
+# not a different one.
+ADVANCE = <<~'JS'
+  (() => {
+    const term = document.getElementById('term');
+    const rows = window.ROWS;
+    let s = window.step++;
+    let html = '';
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+      const typing = r.kind.startsWith('cmd');
+      if (typing) {
+        const shown = Math.max(0, Math.min(r.text.length, s));
+        if (shown <= 0) break;
+        html += '<span class="row">' + window.paint(r.kind, r.text.slice(0, shown)) +
+                (shown < r.text.length ? '<span class="caret"> </span>' : '') + '</span>';
+        s -= r.text.length + 4;
+        if (s < 0) break;
+      } else if (r.kind === 'ready') {
+        html += '<span class="row"><span class="sigil">› </span><span class="caret"> </span></span>';
+      } else {
+        if (s <= 0) break;
+        html += '<span class="row">' + window.paint(r.kind, r.text) + '</span>';
+        s -= 5;
+      }
+    }
+    term.innerHTML = html;
+    return window.step;
+  })()
+JS
+
 rows_json = JSON.generate(rows)
 fps = options[:fps]
 frame_dir = File.join(Dir.tmpdir, "shell_loop_#{Process.pid}")
@@ -151,40 +183,9 @@ Deploy::CdpSession.open do |cdp|
   cdp.evaluate(COLOUR)
   cdp.evaluate("window.ROWS = #{rows_json}; window.step = 0;")
 
-  # One evaluate per frame, each advancing the fiction by one step. The page keeps
-  # the state; this only says "advance", so a dropped frame is a slower film and
-  # not a different one.
-  advance = <<~'JS'
-    (() => {
-      const term = document.getElementById('term');
-      const rows = window.ROWS;
-      let s = window.step++;
-      let html = '';
-      for (let i = 0; i < rows.length; i++) {
-        const r = rows[i];
-        const typing = r.kind.startsWith('cmd');
-        if (typing) {
-          const shown = Math.max(0, Math.min(r.text.length, s));
-          if (shown <= 0) break;
-          html += '<span class="row">' + window.paint(r.kind, r.text.slice(0, shown)) +
-                  (shown < r.text.length ? '<span class="caret"> </span>' : '') + '</span>';
-          s -= r.text.length + 4;
-          if (s < 0) break;
-        } else if (r.kind === 'ready') {
-          html += '<span class="row"><span class="sigil">› </span><span class="caret"> </span></span>';
-        } else {
-          if (s <= 0) break;
-          html += '<span class="row">' + window.paint(r.kind, r.text) + '</span>';
-          s -= 5;
-        }
-      }
-      term.innerHTML = html;
-      return window.step;
-    })()
-  JS
 
   total.times do |i|
-    cdp.evaluate(advance)
+    cdp.evaluate(ADVANCE)
     cdp.screenshot(File.join(frame_dir, format("f%05d.png", i)))
     count += 1
   end
