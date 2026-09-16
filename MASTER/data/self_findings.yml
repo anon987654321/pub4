@@ -115,30 +115,30 @@
 # and the eighteenth does not match the detector. rule_audit.silent rose to 40
 # in the same pass and for the same reason, which is the trade that row's own
 # comment describes.
-findings: 241
+findings: 233
 by_rule:
   BARE_DIV_WRAPPER: 2
   BLANK_LINE_RUN: 1
   GUARD_CLAUSE: 27
-  I18N_COVERAGE: 9
-  IMMUTABLE: 2
+  I18N_COVERAGE: 8
   MEANINGFUL_NAMES: 1
   MIGRATION_REMOVE_COLUMN: 1
+  NEVER_BATCH_DELETE: 1
   NO_CHANGELOG_COMMENT: 15
-  NO_COLUMN_ALIGN: 29
+  NO_COLUMN_ALIGN: 23
   NO_INLINE_SCRIPT_BLOCK: 15
   NO_INLINE_STYLES: 1
-  NO_MULTIPLE_LANGUAGES: 23
-  NULLISH_COALESCING: 75
+  NO_MULTIPLE_LANGUAGES: 22
+  NULLISH_COALESCING: 73
   OPTIONAL_CHAINING: 2
   PROSE_ACTIVE_VOICE: 5
   PROSE_ACTIVE_VOICE_NB: 1
   PROSE_OMIT_QUALIFIERS: 18
   RUBY_NUMERIC_UNDERSCORE: 3
-  SAFE_NAVIGATION: 1
+  SAFE_NAVIGATION: 3
   SQUINT_TEST: 2
   USE_THEN: 7
-  WHY_NOT_WHAT: 1
+  WHY_NOT_WHAT: 2
 finding_members:
   - BARE_DIV_WRAPPER RAILS/brgen/public/dilla/dilla.html:35
   - BARE_DIV_WRAPPER RAILS/brgen/public/dilla/dilla.html:45
@@ -177,12 +177,10 @@ finding_members:
   - I18N_COVERAGE RAILS/brgen/engines/playlist/app/views/playlist/playlists/_player.html.erb:34
   - I18N_COVERAGE RAILS/brgen/engines/playlist/app/views/playlist/playlists/_radio_tunnel.html.erb:34
   - I18N_COVERAGE RAILS/brgen/engines/playlist/app/views/playlist/playlists/_radio_tunnel.html.erb:68
-  - I18N_COVERAGE RAILS/brgen/engines/playlist/app/views/playlist/sets/show.html.erb:39
   - I18N_COVERAGE RAILS/brgen/engines/playlist/app/views/playlist/shared/_dilla_sketches.html.erb:13
-  - IMMUTABLE RAILS/gates/runner.rb:329
-  - IMMUTABLE RAILS/gates/runner.rb:340
   - MEANINGFUL_NAMES RAILS/brgen/engines/marketplace/app/services/marketplace/listing_facets.rb:47
   - MIGRATION_REMOVE_COLUMN RAILS/brgen/db/migrate/20260913130000_drop_unwritten_tv_video_counters.rb:1
+  - NEVER_BATCH_DELETE STUDIO/dilla/dilla.rb:5695
   - NO_CHANGELOG_COMMENT MASTER/web/app/services/tts_job.rb:45
   - NO_CHANGELOG_COMMENT MASTER/web/config/initializers/master_container.rb:63
   - NO_CHANGELOG_COMMENT MASTER/web/script/face_asset_paths.rb:6
@@ -192,12 +190,12 @@ finding_members:
   - NO_CHANGELOG_COMMENT RAILS/brgen/db/migrate/20260714164502_add_integrity_constraints.rb:6
   - NO_CHANGELOG_COMMENT RAILS/brgen/engines/dating/app/models/dating/profile.rb:54
   - NO_CHANGELOG_COMMENT RAILS/brgen/engines/marketplace/test/models/marketplace/order_test.rb:20
-  - NO_CHANGELOG_COMMENT RAILS/brgen/test/services/deploy_backlog_test.rb:356
+  - NO_CHANGELOG_COMMENT RAILS/brgen/test/services/deploy_backlog_test.rb:353
   - NO_CHANGELOG_COMMENT RAILS/brgen/test/services/playlist_wiring_test.rb:30
   - NO_CHANGELOG_COMMENT STUDIO/lora/_toolkit/colab_session.rb:219
-  - NO_CHANGELOG_COMMENT STUDIO/postpro/postpro.rb:1520
-  - NO_CHANGELOG_COMMENT STUDIO/postpro/postpro.rb:2077
-  - NO_CHANGELOG_COMMENT STUDIO/postpro/postpro.rb:4457
+  - NO_CHANGELOG_COMMENT STUDIO/postpro/postpro.rb:1529
+  - NO_CHANGELOG_COMMENT STUDIO/postpro/postpro.rb:2086
+  - NO_CHANGELOG_COMMENT STUDIO/postpro/postpro.rb:4558
   - NO_COLUMN_ALIGN MASTER/web/app/controllers/chat_controller.rb:171
   - NO_COLUMN_ALIGN MASTER/web/app/controllers/chat_controller.rb:172
   - NO_COLUMN_ALIGN MASTER/web/app/controllers/chat_controller.rb:26
@@ -215,12 +213,6 @@ finding_members:
   - NO_COLUMN_ALIGN MASTER/web/public/chat.js:233
   - NO_COLUMN_ALIGN MASTER/web/public/chat.js:306
   - NO_COLUMN_ALIGN MASTER/web/public/chat.js:45
-  - NO_COLUMN_ALIGN MASTER/web/public/codebase.js:104
-  - NO_COLUMN_ALIGN MASTER/web/public/codebase.js:127
-  - NO_COLUMN_ALIGN MASTER/web/public/codebase.js:128
-  - NO_COLUMN_ALIGN MASTER/web/public/codebase.js:152
-  - NO_COLUMN_ALIGN MASTER/web/public/codebase.js:153
-  - NO_COLUMN_ALIGN MASTER/web/public/codebase.js:69
   - NO_COLUMN_ALIGN MASTER/web/public/face_semantics.js:265
   - NO_COLUMN_ALIGN MASTER/web/public/face_semantics.js:397
   - NO_COLUMN_ALIGN MASTER/web/public/face_semantics.js:441
@@ -265,7 +257,6 @@ finding_members:
   - NO_MULTIPLE_LANGUAGES RAILS/brgen/test/helpers/chat_helper_test.rb:10
   - NO_MULTIPLE_LANGUAGES RAILS/brgen/test/helpers/chat_helper_test.rb:9
   - NO_MULTIPLE_LANGUAGES RAILS/brgen/test/system/tiptap_morph_test.rb:26
-  - NO_MULTIPLE_LANGUAGES RAILS/gates/probes/shell_loop_record.rb:157
   - NULLISH_COALESCING MASTER/web/public/chat.js:200
   - NULLISH_COALESCING MASTER/web/public/chat.js:347
   - NULLISH_COALESCING MASTER/web/public/chat.js:364
@@ -276,8 +267,6 @@ finding_members:
   - NULLISH_COALESCING MASTER/web/public/chat.js:991
   - NULLISH_COALESCING MASTER/web/public/chat_actions.js:300
   - NULLISH_COALESCING MASTER/web/public/chat_actions.js:8
-  - NULLISH_COALESCING MASTER/web/public/codebase.js:103
-  - NULLISH_COALESCING MASTER/web/public/codebase.js:62
   - NULLISH_COALESCING MASTER/web/public/cognition_ecology.js:174
   - NULLISH_COALESCING MASTER/web/public/face_2d_fallback.js:149
   - NULLISH_COALESCING MASTER/web/public/face_council_multi.js:30
@@ -317,7 +306,7 @@ finding_members:
   - NULLISH_COALESCING MASTER/web/public/particle_kernel.js:55
   - NULLISH_COALESCING MASTER/web/public/particle_kernel.js:56
   - NULLISH_COALESCING MASTER/web/public/smart_turn.js:166
-  - NULLISH_COALESCING MASTER/web/public/visual_bridge.js:313
+  - NULLISH_COALESCING MASTER/web/public/visual_bridge.js:315
   - NULLISH_COALESCING RAILS/brgen/app/javascript/controllers/lazy_image_controller.js:52
   - NULLISH_COALESCING RAILS/brgen/app/javascript/controllers/lazy_image_controller.js:53
   - NULLISH_COALESCING RAILS/brgen/app/javascript/controllers/map_controller.js:137
@@ -345,10 +334,10 @@ finding_members:
   - OPTIONAL_CHAINING RAILS/brgen/app/javascript/controllers/form_submit_controller.js:98
   - PROSE_ACTIVE_VOICE RAILS/brgen/app/lib/fediverse/signature.rb:16
   - PROSE_ACTIVE_VOICE RAILS/brgen/test/jobs/prune_guest_users_job_test.rb:5
-  - PROSE_ACTIVE_VOICE RAILS/gates/lib/live/page_simulation.rb:176
   - PROSE_ACTIVE_VOICE RAILS/shared/app/models/concerns/shared/strict_safe_associations.rb:13
-  - PROSE_ACTIVE_VOICE STUDIO/postpro/postpro.rb:2079
-  - PROSE_ACTIVE_VOICE_NB RAILS/brgen/config/locales/nb.yml:1734
+  - PROSE_ACTIVE_VOICE STUDIO/dilla/dilla.rb:34060
+  - PROSE_ACTIVE_VOICE STUDIO/postpro/postpro.rb:2088
+  - PROSE_ACTIVE_VOICE_NB RAILS/brgen/config/locales/nb.yml:1748
   - PROSE_OMIT_QUALIFIERS MASTER/lib/builder/ai_boot.rb:183
   - PROSE_OMIT_QUALIFIERS MASTER/web/CLAUDE.md:295
   - PROSE_OMIT_QUALIFIERS MASTER/web/test/controllers/tts_controller_test.rb:28
@@ -359,18 +348,20 @@ finding_members:
   - PROSE_OMIT_QUALIFIERS RAILS/brgen/engines/playlist/app/helpers/playlist_helper.rb:18
   - PROSE_OMIT_QUALIFIERS RAILS/brgen/engines/takeaway/app/models/takeaway/delivery_driver.rb:26
   - PROSE_OMIT_QUALIFIERS RAILS/shared/app/controllers/concerns/shared/authentication.rb:240
-  - PROSE_OMIT_QUALIFIERS STUDIO/dilla/lib/harmony.rb:2211
+  - PROSE_OMIT_QUALIFIERS STUDIO/dilla/lib/harmony.rb:2220
   - PROSE_OMIT_QUALIFIERS STUDIO/dilla/lib/sine_stream.rb:240
   - PROSE_OMIT_QUALIFIERS STUDIO/dilla/lib/sine_stream.rb:5
   - PROSE_OMIT_QUALIFIERS STUDIO/lora/_toolkit/colab_session.rb:485
-  - PROSE_OMIT_QUALIFIERS STUDIO/lora/_toolkit/curate.rb:213
+  - PROSE_OMIT_QUALIFIERS STUDIO/lora/_toolkit/curate.rb:214
   - PROSE_OMIT_QUALIFIERS STUDIO/lora/_toolkit/render_config.rb:365
-  - PROSE_OMIT_QUALIFIERS STUDIO/postpro/postpro.rb:1529
-  - PROSE_OMIT_QUALIFIERS STUDIO/postpro/postpro.rb:3630
+  - PROSE_OMIT_QUALIFIERS STUDIO/postpro/postpro.rb:1538
+  - PROSE_OMIT_QUALIFIERS STUDIO/postpro/postpro.rb:3643
   - RUBY_NUMERIC_UNDERSCORE OPENBSD/test/test_disk_usage.rb:10
   - RUBY_NUMERIC_UNDERSCORE OPENBSD/test/test_disk_usage.rb:11
   - RUBY_NUMERIC_UNDERSCORE OPENBSD/test/test_disk_usage.rb:9
-  - SAFE_NAVIGATION STUDIO/dilla/dilla.rb:36009
+  - SAFE_NAVIGATION STUDIO/dilla/dilla.rb:35800
+  - SAFE_NAVIGATION STUDIO/dilla/lib/livesets.rb:1039
+  - SAFE_NAVIGATION STUDIO/dilla/lib/livesets.rb:1069
   - SQUINT_TEST RAILS/brgen/app/assets/stylesheets/application.scss:1
   - SQUINT_TEST RAILS/shared/app/assets/stylesheets/_search_yep.scss:1
   - USE_THEN MASTER/web/script/browser_probe_support.rb:1
@@ -381,10 +372,11 @@ finding_members:
   - USE_THEN RAILS/shared/app/services/shared/newsletter_visuals.rb:1
   - USE_THEN RAILS/shared/app/services/shared/tradedoubler.rb:1
   - WHY_NOT_WHAT RAILS/brgen/app/jobs/listing_expiry_job.rb:26
-registry_findings: 49
+  - WHY_NOT_WHAT RAILS/shared/app/controllers/concerns/shared/findable_by_slug.rb:15
+registry_findings: 46
 registry_by_rule:
-  NO_GOD_CLASS: 26
-  SILENT_RESCUE: 23
+  NO_GOD_CLASS: 22
+  SILENT_RESCUE: 24
 registry_finding_members:
   - NO_GOD_CLASS MASTER/web/app/services/chat_service.rb:7
   - NO_GOD_CLASS MASTER/web/app/services/tts_job.rb:7
@@ -406,32 +398,29 @@ registry_finding_members:
   - NO_GOD_CLASS RAILS/brgen/lib/brgen/bergen_demo_seeder.rb:8
   - NO_GOD_CLASS RAILS/brgen/lib/brgen/irc/bridge.rb:10
   - NO_GOD_CLASS RAILS/brgen/lib/brgen/radio_bergen_manifest.rb:7
-  - NO_GOD_CLASS RAILS/gates/lib/rendered/rendered_geometry.rb:26
-  - NO_GOD_CLASS RAILS/gates/lib/research/design_metrics.rb:17
-  - NO_GOD_CLASS RAILS/gates/support/cdp_session.rb:30
-  - NO_GOD_CLASS RAILS/gates/support/geometry_probe.rb:20
   - NO_GOD_CLASS STUDIO/dilla/lib/harmony.rb:1657
-  - NO_GOD_CLASS STUDIO/dilla/lib/sound.rb:3690
+  - NO_GOD_CLASS STUDIO/dilla/lib/sound.rb:4185
   - SILENT_RESCUE MASTER/lib/core/routing/model_catalog.rb:30
-  - SILENT_RESCUE STUDIO/dilla/lib/ledger.rb:1349
-  - SILENT_RESCUE STUDIO/dilla/lib/ledger.rb:1383
-  - SILENT_RESCUE STUDIO/dilla/lib/ledger.rb:1467
+  - SILENT_RESCUE STUDIO/dilla/lib/ledger.rb:1360
+  - SILENT_RESCUE STUDIO/dilla/lib/ledger.rb:1394
   - SILENT_RESCUE STUDIO/dilla/lib/ledger.rb:1478
-  - SILENT_RESCUE STUDIO/dilla/lib/listen.rb:1050
-  - SILENT_RESCUE STUDIO/dilla/lib/listen.rb:119
-  - SILENT_RESCUE STUDIO/dilla/lib/listen.rb:135
-  - SILENT_RESCUE STUDIO/dilla/lib/listen.rb:30
-  - SILENT_RESCUE STUDIO/dilla/lib/listen.rb:919
-  - SILENT_RESCUE STUDIO/dilla/lib/listen.rb:930
-  - SILENT_RESCUE STUDIO/dilla/lib/livesets.rb:137
-  - SILENT_RESCUE STUDIO/dilla/lib/livesets.rb:153
+  - SILENT_RESCUE STUDIO/dilla/lib/ledger.rb:1489
+  - SILENT_RESCUE STUDIO/dilla/lib/listen.rb:1049
+  - SILENT_RESCUE STUDIO/dilla/lib/listen.rb:118
+  - SILENT_RESCUE STUDIO/dilla/lib/listen.rb:134
+  - SILENT_RESCUE STUDIO/dilla/lib/listen.rb:29
+  - SILENT_RESCUE STUDIO/dilla/lib/listen.rb:918
+  - SILENT_RESCUE STUDIO/dilla/lib/listen.rb:929
+  - SILENT_RESCUE STUDIO/dilla/lib/livesets.rb:317
+  - SILENT_RESCUE STUDIO/dilla/lib/livesets.rb:333
+  - SILENT_RESCUE STUDIO/dilla/lib/livesets.rb:404
   - SILENT_RESCUE STUDIO/dilla/lib/music_gems.rb:155
   - SILENT_RESCUE STUDIO/dilla/lib/music_gems.rb:177
   - SILENT_RESCUE STUDIO/dilla/lib/music_gems.rb:209
   - SILENT_RESCUE STUDIO/dilla/lib/music_gems.rb:240
   - SILENT_RESCUE STUDIO/dilla/lib/music_gems.rb:249
   - SILENT_RESCUE STUDIO/gate.rb:474
-  - SILENT_RESCUE STUDIO/lora/_toolkit/curate.rb:162
+  - SILENT_RESCUE STUDIO/lora/_toolkit/curate.rb:163
   - SILENT_RESCUE STUDIO/postpro/postpro.rb:291
   - SILENT_RESCUE STUDIO/postpro/postpro.rb:302
   - SILENT_RESCUE STUDIO/test/test_dilla_engine_probes.rb:1299
