@@ -131,7 +131,9 @@ class CritiqueImplementationTest < Minitest::Test
   # primer is localised now, so the English spelling only appears in en.yml —
   # and an assertion on the spelling fails on a view that has got more correct.
   # Both halves: the template must name the key, and the key must still carry
-  # the three things a visitor has to be told before they tap.
+  # what a visitor is told before they tap: what starts, and that text survives
+  # a failed canvas. The microphone starts with the rest, so nothing promises
+  # it waits.
   def test_master_primer_names_consent_and_text_fallback
     master = File.expand_path("../../MASTER/web", __dir__)
     primer = File.read(File.join(master, "app/views/chat/index.html.erb"))
@@ -139,8 +141,7 @@ class CritiqueImplementationTest < Minitest::Test
 
     consent = YAML.safe_load_file(File.join(master, "config/locales/en.yml"))
                   .fetch("en").fetch("face").fetch("primer_consent")
-    assert_includes consent, "Starts visuals and sound"
-    assert_includes consent, "Microphone access is requested only"
+    assert_includes consent, "Starts visuals, sound and the microphone"
     assert_includes consent, "text remains available if graphics fail"
   end
 end
