@@ -42,7 +42,7 @@ OptionParser.new do |p|
   p.on("--set NAME", "Prompt set (#{available_sets.join(', ')}); default selfies") { |v| options[:set] = v }
   p.on("--only LIST", "Sitting numbers, e.g. 1,5,9") { |v| options[:only] = v.split(",").map { |n| Integer(n) } }
   p.on("--side NAME", "One side of a written set") { |v| options[:side] = v }
-  p.on("--scale X", Float, "lora_scale (default 1.0; 0.8 lost the fringe)") { |v| options[:scale] = v }
+  p.on("--scale X", Float, "lora_scale (default 1.0; 0.85 lifts the ageing this adapter bakes in)") { |v| options[:scale] = v }
   p.on("--seed N", Integer, "Seed for sitting 1; sitting n uses seed + n - 1, the distance set holds it") { |v| options[:seed] = v }
   p.on("--model ID", "owner/name:version (default: the trained version)") { |v| options[:model] = v }
   p.on("--dry-run", "Print the prompts and the model; render nothing") { options[:dry_run] = true }
