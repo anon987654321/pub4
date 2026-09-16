@@ -90,7 +90,14 @@ module Master
         queue = ensure_worker
         return if echo?(str)
 
-        queue.push(str)
+        # Sentence by sentence, so the first words are heard while the rest is
+        # still being synthesised. Speech.chunks packs sentences up to 220
+        # characters and had no caller: one Edge round trip carried the whole
+        # reply, so a long answer stood silent for its entire synthesis and
+        # then spoke. The worker stays single, so they are heard in order.
+        parts = Speech.chunks(str)
+        parts = [str] if parts.empty?
+        parts.each_with_index { |part, index| queue.push([str, part, index == parts.size - 1]) }
         nil
       end
 
@@ -127,9 +134,10 @@ module Master
       end
 
       def drain
-        while (text = @queue.pop)
-          path = synthesize(text)
-          spoken(text)
+        while (job = @queue.pop)
+          text, part, last = job.is_a?(Array) ? job : [job, job, true]
+          path = synthesize(part)
+          spoken(text) if last
           next unless path
 
           play(path)

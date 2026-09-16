@@ -70,7 +70,7 @@ class TestVoiceSupport < Minitest::Test
       end
     end
 
-    assert_equal ["hello"], queued
+    assert_equal ["hello"], queued.map { |job| job[1] }
   end
 
   # Two paths reached the door with one reply and MASTER said it twice; a
@@ -96,11 +96,32 @@ class TestVoiceSupport < Minitest::Test
       end
     end
 
-    assert_equal ["the same sentence", "a different sentence", "the same sentence"], queued
+    assert_equal ["the same sentence", "a different sentence", "the same sentence"], queued.map { |job| job.first }
   ensure
     PB.instance_variable_set(:@pending, nil)
     PB.instance_variable_set(:@last_said, nil)
   end
+
+# One Edge round trip carried the whole reply, so a long answer stood silent
+# for its entire synthesis and then spoke. Speech.chunks packed sentences and
+# had no caller.
+def test_a_reply_is_spoken_sentence_by_sentence_so_the_first_words_come_first
+  queued = []
+  reply = "The pool is every model this machine can reach. A lane joins it when it can answer. " \
+          "A model outside it carries the one thing to do about that. " \
+          "The council argues inside the loop, and its picks ride into the repair as context."
+  PB.instance_variable_set(:@pending, nil)
+  PB.instance_variable_set(:@last_said, nil)
+
+  PB.stub(:enabled?, true) { PB.stub(:available?, true) { PB.stub(:ensure_worker, queued) { PB.speak(reply) } } }
+
+  assert_operator queued.size, :>, 1, "the reply went out as one utterance"
+  assert_equal reply, queued.map { |job| job[1] }.join(" "), "the words changed on the way out"
+  assert_equal [false] * (queued.size - 1) + [true], queued.map(&:last), "only the last utterance closes the reply"
+ensure
+  PB.instance_variable_set(:@pending, nil)
+  PB.instance_variable_set(:@last_said, nil)
+end
 
   DNA = Master::Voice::ProductionDna
 
