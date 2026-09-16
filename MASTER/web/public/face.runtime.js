@@ -3128,11 +3128,14 @@ function speakWithBrowserTTS(text, token) {
 const GESTURE_EVENTS = ['pointerdown', 'keydown', 'touchend', 'click'];
 function holdForGesture(audio, token) {
   const hint = document.getElementById('zsh-status');
-  const label = window.MASTER_T ? window.MASTER_T('tap_to_hear', 'tap anywhere to hear the reply') : 'tap anywhere to hear the reply';
-  if (hint) hint.textContent = label;
+  // Written as an attribute the stylesheet prints, not as text: State.mode's
+  // setter blanks this element's textContent on every mode change, and the
+  // mic re-arming does exactly that while the audio waits.
+  if (hint) hint.dataset.blockedLabel = window.MASTER_T ? window.MASTER_T('tap_to_hear', 'tap anywhere to hear the reply') : 'tap anywhere to hear the reply';
+  rootBody.dataset.ttsBlocked = '1';
   const release = () => {
     GESTURE_EVENTS.forEach((ev) => removeEventListener(ev, release, { capture: true }));
-    if (hint?.textContent === label) hint.textContent = '';
+    delete rootBody.dataset.ttsBlocked;
     if (token !== tts.cancelToken || tts.audio !== audio) return;
     if (actx?.state === 'suspended') actx.resume().catch(() => {});
     audio.play().catch((err) => {

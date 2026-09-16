@@ -820,6 +820,10 @@ body[data-tts-loading="true"] #tts-live {
 body[data-mode="thinking"] #zsh-status { opacity: .7; }
 body[data-mode="speaking"] #zsh-status { opacity: 1; }
 body[data-tts-error="true"] #zsh-status { opacity: 1; color: var(--c-danger); }
+/* The reply is synthesized and waiting on the gesture the browser needs before
+   it will play sound. The element's textContent is cleared on every mode
+   change, so the line is printed from the attribute instead. */
+body[data-tts-blocked="1"] #zsh-status::after { content: attr(data-blocked-label); opacity: 1; }
 
 /* Cancel button — appears during thinking/speaking */
 #spin-btn {
