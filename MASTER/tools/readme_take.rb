@@ -4,6 +4,7 @@
 # readme_take — the README's opening image, from the README's own words.
 #
 #   ruby tools/readme_take.rb              # speech, then the take
+#   ruby tools/readme_take.rb --full       # the whole README, not the highlights
 #   ruby tools/readme_take.rb --speech     # only tts.wav
 #   ruby tools/readme_take.rb --record     # only loop.mp4 and loop.gif
 #
@@ -78,6 +79,39 @@ SILENT = [
   "Every change a model wants", "Three verdicts",
 ].freeze
 
+# The take, by default, is the highlights rather than the file.
+#
+# Read whole, README.md is 950 words and six and a half minutes, and the first
+# three paragraphs are about how GitHub embeds an mp4 — repository mechanics
+# that mean nothing to a listener and are most of what they hear first. These
+# seven paragraphs are the ones a person who might fund this needs: what it is,
+# why the language is the moat, that it runs with nothing behind it, the size
+# of the market, where it is going to live, the ask, and where it ends up. Five
+# hundred and fifteen words, about three and a half minutes against six and a
+# half for the file.
+#
+# Matched on their opening words rather than copied here, so README.md stays
+# the only place the sentences live. A phrase that stops matching drops out of
+# the take silently, so the count is asserted below.
+HIGHLIGHTS = [
+  "MASTER is the first artificial intelligence written in pure Ruby",
+  "Ninety-nine percent of AI is written in Python",
+  "It runs offline, deploys to OpenBSD",
+  "The world spends more on machine intelligence",
+  "The heart of it sits inside a mountain",
+  "Roughly **six million kroner from Innovasjon Norge**",
+  "MASTER is built like an embryo",
+].freeze
+
+# `--full` reads the whole file, which is what the take was before 2026-09-16.
+def highlights_only? = !ARGV.include?("--full")
+
+# Leading emphasis is markup, not a word, so it comes off before the match.
+def highlight?(paragraph)
+  bare = paragraph.sub(/\A[*_\s]+/, "")
+  HIGHLIGHTS.any? { |opening| bare.start_with?(opening.sub(/\A[*_\s]+/, "")) }
+end
+
 def prose
   kept = []
   fenced = false
@@ -101,7 +135,12 @@ def prose
     kept << line
   end
 
-  paragraphs(kept).map { |para| speakable(para) }.reject(&:empty?)
+  found = paragraphs(kept)
+  if highlights_only?
+    found = found.select { |para| highlight?(para) }
+    warn "readme_take: #{found.size} of #{HIGHLIGHTS.size} highlights matched — README.md has moved" if found.size < HIGHLIGHTS.size
+  end
+  found.map { |para| speakable(para) }.reject(&:empty?)
 end
 
 def paragraphs(lines)
