@@ -67,7 +67,10 @@ class CoverageRatchetTest < Minitest::Test
     # models 23 -> 24: mention_test.rb arrived with the Mention writer.
     # models 24 -> 55: every dating, marketplace, playlist, takeaway and tv model
     # has its own test in its engine.
-    "brgen" => { "controllers" => 21, "models" => 55 },
+# controllers 21 -> 23 and models 55 -> 56: the verified-business review
+# arrived with its own controller and model tests, and the fleet health
+# controller with the test for the 503 it used to answer.
+    "brgen" => { "controllers" => 23, "models" => 56 },
     # models 1 -> 8 on 2026-08-16. bsdports had one model test (user) against
     # thirteen models, and it was the smallest tree in the repo — Port, the record
     # everything else hangs off, had nothing naming it. Writing them found two

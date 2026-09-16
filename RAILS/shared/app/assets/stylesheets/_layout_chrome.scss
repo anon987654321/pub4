@@ -132,8 +132,7 @@ main[role="main"] {
 }
 
 
-/* Flash / status share toast z-tier with face errors. */
-.flash-notice,
+/* A flash alert shares the toast z-tier with face errors. */
 .flash-alert {
   z-index: var(--z-toast, 1100);
 }

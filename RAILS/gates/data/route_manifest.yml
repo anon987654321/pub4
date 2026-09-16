@@ -2,7 +2,7 @@
 schema: 1
 apps:
   brgen:
-    digest: 1e6c512ddf2453f4
+    digest: b3b01f146142dddf
     routes:
       rails/pwa#offline:
       - "/offline"
@@ -62,6 +62,10 @@ apps:
       - "/notifications"
       admin/reports#index:
       - "/admin/reports"
+      admin/business_verifications#index:
+      - "/admin/business_verifications"
+      business_verifications#new:
+      - "/business_verifications/:kind/:business_id/new"
       posts#index:
       - "/posts"
       - "/communities/:community_id/posts"

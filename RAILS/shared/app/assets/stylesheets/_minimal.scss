@@ -290,14 +290,6 @@ footer {
 
 /* The button family lives in _zen_buttons.scss — the position that wins. */
 
-.flash-notice {
-  background: var(--hover);
-  color: var(--black);
-  padding: 0.75rem 1rem;
-  border-radius: var(--radius-card);
-  margin-bottom: 1rem;
-}
-
 .flash-alert {
   background: var(--hover-subtle);
   color: var(--warning-red);

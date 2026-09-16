@@ -47,17 +47,7 @@ module Deploy
       end
 
       GeometryProbe.with_browser do |cdp|
-        live.each do |surface|
-          first = GeometryProbe.walk(cdp, surface)
-          unless GeometryProbe.ok?(first)
-            @result.fail("journey_invariant: #{surface.id} unreachable (#{first["error"] || "HTTP #{first["status"]}"})")
-            next
-          end
-
-          check_idempotence(cdp, surface, first)
-          check_back_button(cdp, surface, first, live)
-          walk_journeys(cdp, surface)
-        end
+        live.each { |surface| walk_surface(cdp, surface, live) }
         walk_reconnect(cdp)
       end
 
@@ -74,6 +64,18 @@ module Deploy
     end
 
     private
+
+    def walk_surface(cdp, surface, live)
+      first = GeometryProbe.walk(cdp, surface)
+      unless GeometryProbe.ok?(first)
+        @result.fail("journey_invariant: #{surface.id} unreachable (#{first["error"] || "HTTP #{first["status"]}"})")
+        return
+      end
+
+      check_idempotence(cdp, surface, first)
+      check_back_button(cdp, surface, first, live)
+      walk_journeys(cdp, surface)
+    end
 
     # One representative surface per app per viewport keeps this gate a
     # relation check rather than a second full sweep.

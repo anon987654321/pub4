@@ -195,7 +195,9 @@ class FileLengthRatchetTest < Minitest::Test
     # application.scss one such file for each app" — so these three are long by
     # decision, and splitting them is the one fix this ratchet may not suggest.
     # The ceilings still only fall: defragmenting a stylesheet lowers its row.
-    "brgen/app/assets/stylesheets/application.scss" => 6486,
+    # 6486 -> 6479: the inline flash notice went with the markup that wore
+    # it — a notice is a toast now, so its four rules styled nothing.
+    "brgen/app/assets/stylesheets/application.scss" => 6479,
     "amber/app/assets/stylesheets/application.scss" => 1767,
     "bsdports/app/assets/stylesheets/application.scss" => 454,
     # user_flow.rb left this list on 2026-09-09: 308 -> 166, under the 300 rb
@@ -212,7 +214,9 @@ class FileLengthRatchetTest < Minitest::Test
     # reads VIEW_PATHS and the gate class builds that in its own body after the
     # require. That is the load-order half of the trap this file already
     # records twice for __dir__ paths.
-    "shared/app/assets/stylesheets/_minimal.scss" => 455,
+    # 455 -> 449: the same inline-notice rule, in the sheet amber and
+    # bsdports share.
+    "shared/app/assets/stylesheets/_minimal.scss" => 449,
     # 502 -> 454 on 2026-09-10. The button family — .btn, its three states, the
     # four compound variants and .btn-sm — is _zen_buttons.scss, forwarded
     # immediately before zen_shell in both stacks so nothing moves relative to

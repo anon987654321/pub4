@@ -77,14 +77,6 @@
   letter-spacing: var(--tracking-tighter);
 }
 
-.flash-notice {
-  background: var(--hover);
-  color: var(--text);
-  border-radius: var(--radius-card);
-  padding: 0.75rem 1rem;
-  margin: 0.75rem 1rem;
-}
-
 .flash-alert {
   background: var(--hover-subtle);
   color: var(--text-secondary);

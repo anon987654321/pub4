@@ -234,7 +234,12 @@ module Operator
 # 93 -> 91 (2026-09-15). .reading-column and .form-measure went: no view wore
 # either, and the measure they carried is the one .prose and the chrome columns
 # already set through var(--measure) and var(--measure-narrow).
-BASELINES = { "undefined_class" => 0, "unused_selector" => 90 }.freeze
+#
+# 90 -> 89 (2026-09-16). .flash-notice went with the markup that wore it: a
+# notice is a toast now (shared/_flash_toasts), so the four sheets that styled
+# an inline notice styled nothing. .toast--error went the same way — a toast
+# only ever carries a confirmation, because an alert stays in the page.
+BASELINES = { "undefined_class" => 0, "unused_selector" => 89 }.freeze
 
     Finding = Struct.new(:kind, :name, :count, :example)
 

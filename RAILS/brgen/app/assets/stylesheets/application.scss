@@ -8408,7 +8408,6 @@ time {
 }
 .channel-card,
 .feed-post:has(.feed-card-media),
-.flash-notice,
 .flash-alert,
 .toast,
 .nearby-alerts > * {
@@ -8419,7 +8418,6 @@ time {
   z-index: var(--z-toast, 1100);
 }
 
-.flash-notice { border-color: color-mix(in srgb, var(--color-success) 40%, var(--border)); }
 .flash-alert { border-color: color-mix(in srgb, var(--danger) 50%, var(--border)); }
 
 /* .nav_swiper_bar's scroll-snap lives with the rest of the bar in the nav
@@ -8491,17 +8489,11 @@ body.vertical-playlist input[type="range"] {
   font-weight: var(--weight-heavy);
 }
 
-.flash-notice,
 .flash-alert {
   margin: var(--space-3) var(--space-4) 0;
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-sm);
   font-size: var(--text-sm);
-}
-
-.flash-notice {
-  background: rgb(from var(--accent) r g b / var(--opacity-soft));
-  border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
 }
 
 .flash-alert {
