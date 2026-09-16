@@ -52,10 +52,16 @@ showcase:
 # stack and freeze twice as often, because the layer is only worth having if it
 # is heard.
 defaults:
+  # Measured on one piece, stem by stem: the kit peaked at -5.0 dB and sounded
+  # 63.7% of the bar, while the lead peaked 6.0 dB under it and sounded 23.4%.
+  # A layer present a quarter of the time and six decibels down is a layer
+  # nobody hears, which is why an evening of work on the room it plays in
+  # changed nothing anyone could hear. It plays nearly every bar now, and the
+  # kit gives it the room.
   lead:
-    gain_db: -1
-    plays_odds: 0.75
-    sit_out_bars: 16
+    gain_db: 4
+    plays_odds: 0.95
+    sit_out_bars: 32
     stack_odds: 0.3
     freeze_odds: 0.35
     gate_odds: 0.35
@@ -99,6 +105,7 @@ pieces:
       bpm: 88
       bars_per_chord: 4
       pad_families: [rhodes]
+      pad_voice: rhodes_tine
       pad_racks: [wash]
       overtones: { partials: [2, 3, 4, 6], gain_db: -21 }
       lead: { plays_odds: 0.55, rack_names: [tape, ghost] }
@@ -112,6 +119,7 @@ pieces:
     bed:
       bpm: 92
       pad_families: [rhodes, prophet]
+      pad_voice: e_piano
       pad_racks: [shimmer]
       hocket_odds: 0.45
       overtones: { partials: [2, 3, 5], gain_db: -23 }
@@ -125,6 +133,7 @@ pieces:
     bed:
       bpm: 82
       pad_families: [prophet]
+      pad_voice: prophet_pad
       pad_racks: [wash]
       reverse_odds: 0.3
       overtones: { partials: [2, 3, 4, 5, 6], gain_db: -19 }
@@ -138,6 +147,7 @@ pieces:
     bed:
       bpm: 94
       pad_families: [moog]
+      pad_voice: poly_lead
       pad_racks: [shimmer]
       min_attack_s: 0.25
       overtones: { partials: [2, 4, 6, 8], gain_db: -22 }
@@ -152,6 +162,7 @@ pieces:
       bpm: 74
       bars_per_chord: 4
       pad_families: [moog]
+      pad_voice: prophet_pad
       pad_racks: [wash]
       min_attack_s: 0.9
       overtones: { partials: [2, 3, 4, 5, 6, 8], gain_db: -18 }
@@ -165,6 +176,7 @@ pieces:
     bed:
       bpm: 72
       pad_families: [prophet]
+      pad_voice: surreal_wash
       pad_racks: [shimmer]
       hocket_odds: 0.6
       reverse_odds: 0.28
@@ -180,6 +192,7 @@ pieces:
     bed:
       bpm: 66
       pad_families: [prophet, moog]
+      pad_voice: surreal_wash
       pad_racks: [shimmer]
       overtones: { partials: [2, 3, 5, 6], gain_db: -19 }
       lead: { rack_names: [ghost, inharmonic] }
@@ -192,6 +205,7 @@ pieces:
     bed:
       bpm: 86
       pad_families: [rhodes, prophet]
+      pad_voice: rhodes_tine
       pad_racks: [wash]
       overtones: { partials: [2, 3, 4], gain_db: -21 }
       lead: { rack_names: [tape, weather] }
@@ -204,6 +218,7 @@ pieces:
       bpm: 124
       bars_per_chord: 4
       pad_families: [prophet]
+      pad_voice: juno_pad
       pad_racks: [wash]
       min_attack_s: 0.15
       overtones: { partials: [2, 3, 4], gain_db: -24 }
@@ -222,6 +237,7 @@ pieces:
       bpm: 128
       bars_per_chord: 4
       pad_families: [moog]
+      pad_voice: acid
       pad_racks: [shimmer]
       min_attack_s: 0.2
       overtones: { partials: [2, 4, 8], gain_db: -23 }
@@ -241,6 +257,7 @@ pieces:
       bpm: 126
       bars_per_chord: 4
       pad_families: [prophet]
+      pad_voice: poly_strings
       pad_racks: [wash]
       min_attack_s: 1.4
       overtones: { partials: [2, 3, 5, 6], gain_db: -20 }
@@ -259,6 +276,7 @@ pieces:
       bpm: 138
       bars_per_chord: 4
       pad_families: [moog]
+      pad_voice: moog_bass
       pad_racks: [wash]
       min_attack_s: 0.1
       hocket_odds: 0.1
@@ -281,6 +299,7 @@ pieces:
       bpm: 160
       bars_per_chord: 8
       pad_families: [rhodes]
+      pad_voice: glass_bell
       pad_racks: [shimmer]
       overtones: { partials: [2, 3, 4, 5], gain_db: -21 }
       lead: { plays_odds: 0.85, rack_names: [ring, octave] }
@@ -298,6 +317,7 @@ pieces:
       bpm: 58
       bars_per_chord: 2
       pad_families: [prophet]
+      pad_voice: vp330_ensemble
       pad_racks: [shimmer]
       min_attack_s: 2.2
       hocket_odds: 0.0
@@ -315,6 +335,7 @@ pieces:
     bed:
       bpm: 54
       pad_families: [moog]
+      pad_voice: warm_pad
       pad_racks: [shimmer]
       min_attack_s: 2.6
       hocket_odds: 0.0
@@ -331,6 +352,7 @@ pieces:
     bed:
       bpm: 62
       pad_families: [prophet, moog]
+      pad_voice: vp330_ensemble
       pad_racks: [wash]
       min_attack_s: 1.8
       overtones: { partials: [2, 3, 4, 6, 8, 12], gain_db: -17 }
@@ -355,6 +377,7 @@ pieces:
     bed:
       bpm: 98
       pad_families: [rhodes]
+      pad_voice: prophet_five
       pad_racks: [wash]
       overtones: { partials: [2, 3, 4, 6], gain_db: -20 }
       lead: { plays_odds: 0.7, rack_names: [tape, weather] }
@@ -368,6 +391,7 @@ pieces:
     bed:
       bpm: 97
       pad_families: [rhodes, prophet]
+      pad_voice: e_piano
       pad_racks: [shimmer]
       overtones: { partials: [2, 3, 5], gain_db: -21 }
       lead: { rack_names: [octave, weather] }
@@ -380,6 +404,7 @@ pieces:
       bpm: 166
       bars_per_chord: 4
       pad_families: [prophet]
+      pad_voice: poly_strings
       pad_racks: [wash]
       min_attack_s: 0.3
       overtones: { partials: [2, 3, 4], gain_db: -22 }
@@ -398,6 +423,7 @@ pieces:
       bpm: 135
       bars_per_chord: 4
       pad_families: [moog]
+      pad_voice: juno_pad
       pad_racks: [shimmer]
       overtones: { partials: [2, 4, 6], gain_db: -21 }
       lead: { plays_odds: 0.75, rack_names: [inharmonic, tape] }
@@ -413,6 +439,7 @@ pieces:
       bpm: 150
       bars_per_chord: 4
       pad_families: [prophet]
+      pad_voice: prophet_five
       pad_racks: [wash]
       min_attack_s: 0.2
       overtones: { partials: [2, 3, 4, 5], gain_db: -20 }
@@ -431,6 +458,7 @@ pieces:
       bpm: 130
       bars_per_chord: 4
       pad_families: [prophet, moog]
+      pad_voice: vp330_ensemble
       pad_racks: [shimmer]
       min_attack_s: 1.0
       overtones: { partials: [2, 3, 5, 6], gain_db: -19 }
@@ -448,6 +476,7 @@ pieces:
       bpm: 176
       bars_per_chord: 4
       pad_families: [prophet]
+      pad_voice: poly_lead
       pad_racks: [wash]
       overtones: { partials: [2, 3, 4, 6], gain_db: -21 }
       lead: { plays_odds: 0.85, rack_names: [ring, inharmonic] }
@@ -465,6 +494,7 @@ pieces:
       bpm: 92
       bars_per_chord: 4
       pad_families: [rhodes]
+      pad_voice: rhodes_tine
       pad_racks: [wash]
       min_attack_s: 0.6
       overtones: { partials: [2, 3, 4, 5, 6], gain_db: -18 }
@@ -480,6 +510,7 @@ pieces:
       bpm: 104
       bars_per_chord: 4
       pad_families: [rhodes, prophet]
+      pad_voice: warm_pad
       pad_racks: [shimmer]
       min_attack_s: 0.8
       overtones: { partials: [2, 3, 4, 5, 7], gain_db: -17 }
@@ -493,6 +524,7 @@ pieces:
     bed:
       bpm: 134
       pad_families: [moog]
+      pad_voice: moog_bass
       pad_racks: [wash]
       min_attack_s: 0.25
       overtones: { partials: [2, 3, 4], gain_db: -22 }
@@ -509,6 +541,7 @@ pieces:
     bed:
       bpm: 87
       pad_families: [rhodes, moog]
+      pad_voice: glass_bell
       pad_racks: [shimmer]
       overtones: { partials: [2, 3, 5], gain_db: -20 }
       lead: { rack_names: [tape, ghost] }
@@ -521,6 +554,7 @@ pieces:
     bed:
       bpm: 84
       pad_families: [prophet]
+      pad_voice: prophet_pad
       pad_racks: [wash]
       overtones: { partials: [2, 3, 4, 6, 8], gain_db: -19 }
       lead: { plays_odds: 0.65, rack_names: [weather, ghost] }
@@ -534,6 +568,7 @@ pieces:
       bpm: 112
       bars_per_chord: 4
       pad_families: [moog]
+      pad_voice: soft_reed
       pad_racks: [wash]
       min_attack_s: 0.9
       overtones: { partials: [2, 3, 4, 5, 6], gain_db: -18 }
@@ -548,6 +583,7 @@ pieces:
       bpm: 120
       bars_per_chord: 4
       pad_families: [prophet]
+      pad_voice: e_piano
       pad_racks: [shimmer]
       overtones: { partials: [2, 3, 4, 5, 6, 8], gain_db: -18 }
       lead: { rack_names: [octave, ring] }
@@ -562,6 +598,7 @@ pieces:
       bpm: 88
       bars_per_chord: 4
       pad_families: [rhodes]
+      pad_voice: rhodes_tine
       pad_racks: [wash]
       overtones: { partials: [2, 3, 4], gain_db: -21 }
       lead: { plays_odds: 0.7, rack_names: [tape, weather] }

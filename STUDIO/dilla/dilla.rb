@@ -35255,13 +35255,21 @@ module Bed
     (picked.empty? ? PATCHES : picked).freeze
   end
 
+  # A piece may name its voice outright, and then every chord is played on it --
+  # a band does not change keyboards halfway through a phrase. The presets keep
+  # their own filter and attack; only the voice is overridden, so a named piece
+  # still sounds like the preset the draw gave it, on the instrument it asked for.
+  PAD_VOICE = BED["pad_voice"]&.to_sym
+
   def deal_instruments(count)
     rotation = PAD_FAMILIES.shuffle
     Array.new(count) do |index|
       family = rotation[index % rotation.size]
       pool = PAD_PATCHES.select { |patch| patch.family == family }
       pool = PATCHES.select { |patch| patch.family == family } if pool.empty?
-      [family, pool.sample, nil]
+      picked = pool.sample
+      picked = picked.dup.tap { |p| p.synth = PAD_VOICE } if PAD_VOICE
+      [family, picked, nil]
     end
   end
 
@@ -36177,6 +36185,30 @@ module Bed
   # two filter strings.
   CONSOLES = BED.fetch("consoles", {})
 
+  STEM_CONSOLES = BED.fetch("stem_consoles", {})
+  TAPE = BED.fetch("tape", nil)
+
+  # One stem's console, as a labelled link in the graph. A stem with no console
+  # still needs the link, because the labels either side of it are already wired.
+  def stem_console(name, input, output)
+    "#{input}#{console_chain(STEM_CONSOLES[name.to_s]) || 'anull'}#{output}"
+  end
+
+  # Wow and flutter are one vibrato each, because that is what they are: a slow
+  # speed error and a fast one. Doing them as two stages rather than averaging
+  # them into one is the difference between a machine and a wobble.
+  def tape_chain
+    return nil unless TAPE
+
+    norm = Math.tanh(Float(TAPE.fetch("drive"))).round(6)
+    "equalizer=f=#{TAPE['head_bump_hz']}:t=o:w=1.0:g=#{TAPE['head_bump_db']}," \
+      "aeval=exprs='tanh(#{TAPE['drive']}*val(0))/#{norm}|tanh(#{TAPE['drive']}*val(1))/#{norm}'" \
+      ":channel_layout=stereo,#{PINNED}," \
+      "vibrato=f=#{TAPE['wow_hz']}:d=#{TAPE['wow_depth']}," \
+      "vibrato=f=#{TAPE['flutter_hz']}:d=#{TAPE['flutter_depth']}," \
+      "lowpass=f=#{TAPE['rolloff_hz']}:width_type=q:width=0.7"
+  end
+
   def console_chain(name)
     stages = CONSOLES[name.to_s]
     return nil if stages.nil? || stages.empty?
@@ -36224,7 +36256,8 @@ module Bed
     norm = Math.tanh(drive).round(6)
     split = MASTER_BUS.fetch("mono_below_hz")
     bells = TILT.fetch("bells").map { |bell| "equalizer=f=#{bell['hz']}:t=o:w=#{bell['octaves']}:g=#{bell['gain_db']}" }.join(",")
-    "#{input}asoftclip=type=tanh:threshold=#{MASTER_BUS['pre_clip_threshold']}:oversample=4," \
+    tape = tape_chain
+"#{input}#{tape ? "#{tape}," : ''}asoftclip=type=tanh:threshold=#{MASTER_BUS['pre_clip_threshold']}:oversample=4," \
       "#{bus_compressor(0)},asplit=2[m_lo][m_hi];" \
       "[m_lo]lowpass=f=#{split},lowpass=f=#{split},pan=stereo|c0=0.5*c0+0.5*c1|c1=0.5*c0+0.5*c1[m_mono];" \
       "[m_hi]highpass=f=#{split},highpass=f=#{split},extrastereo=m=#{MASTER_BUS['width']}[m_wide];" \
@@ -36329,12 +36362,16 @@ module Bed
     ffmpeg!("-i", pads, "-i", kit, "-i", lead, "-i", surface, "-i", low,
             "-filter_complex",
             "[1:a]asplit=5[key1][key2][key3][key4][kitmix];" \
-            "#{ducker('pads', '[key1]', '[0:a]', '[duck]')};" \
-            "#{ducker('lead', '[key2]', '[2:a]', '[leadduck]')};" \
+            "#{ducker('pads', '[key1]', '[0:a]', '[duckraw]')};" \
+            "#{stem_console('pads', '[duckraw]', '[duck]')};" \
+            "#{ducker('lead', '[key2]', '[2:a]', '[leadraw]')};" \
+            "#{stem_console('lead', '[leadraw]', '[leadduck]')};" \
             "#{ducker('dust', '[key3]', '[3:a]', '[dustduck]')};" \
-            "#{ducker('bass', '[key4]', '[4:a]', '[bassduck]')};" \
+            "#{ducker('bass', '[key4]', '[4:a]', '[bassraw]')};" \
+            "#{stem_console('bass', '[bassraw]', '[bassduck]')};" \
+            "#{stem_console('kit', '[kitmix]', '[kitc]')};" \
             "[leadduck]volume=#{LEAD['gain_db']}dB[l];" \
-            "[duck][kitmix][l][dustduck][bassduck]amix=inputs=5:duration=shortest:normalize=0[bus];" \
+            "[duck][kitc][l][dustduck][bassduck]amix=inputs=5:duration=shortest:normalize=0[bus];" \
             "#{master_graph('[bus]', '[out]')}",
             "-map", "[out]", "-ac", "2", mixed, what: "mix")
     finish!(mixed, path)

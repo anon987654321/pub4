@@ -93,6 +93,16 @@ pad_racks: [wash, shimmer]
 # Prophet one. An empty list means all of them, not none.
 pad_families: [rhodes, moog, prophet]
 pad_patches: []
+# One AnalogSynth voice for the whole piece, named outright.
+#
+# pad_families narrows which family deals and deal_instruments then picks a
+# preset inside it, which is right for a pass that moves through several
+# progressions. A catalogue piece is one progression, so the draw gives it one
+# instrument anyway -- and with four rhodes presets all pointing at rhodes_tine
+# the draw was choosing between four names for the same sound. Naming the voice
+# per piece is what makes the catalogue a catalogue rather than one instrument
+# playing sixteen sets of changes. Null leaves the draw alone.
+pad_voice:
 # The harmonic series under the chord: sines at whole multiples of its lowest
 # note. A whole multiple of a frequency is what being in tune means, so this
 # can be poured on without leaving the key -- the difference between a chord
@@ -185,7 +195,50 @@ master_bus:
 #               at the sets' 9 kHz an ambient piece measured -34 dB at 8k and
 #               -50 at 16k, which is not gentle, it is closed.
 #   blown       the 1260 at full wet, half rate, driven a quarter harder.
+# A console stage where each stem enters the sum, not only on the master.
+#
+# Nasty VCS is a summing colour: what a desk does is add things, and the reason
+# summed material glues is that every channel went through the same iron on the
+# way in. One instance is a colour and three are a sound, so the longest path
+# here -- a stem, the sum, the master -- is three, which is the warm side of the
+# line lib/livesets.rb measured. `none` for dust, because a record's surface is
+# already the colour and a second 1260 only raises its noise floor.
+stem_consoles:
+  # Measured, twice. Every stem through a 1260 took 7.4 dB off the top octave and
+  # 11 dB off the stereo width; VCS alone on every stem still took 3.7 to 4.6 dB
+  # across presence, bite, air and top, and narrowed the image by 6 dB. A phaser
+  # puts the same notches in both channels, so it removes energy and collapses
+  # the picture at the same time.
+  #
+  # So the summing colour goes where phase smear is what glues -- the kit, which
+  # is transients that want gluing, and the bass, which has no air to lose -- and
+  # the pads and the lead keep theirs. That is the trade this mix wants; a warmer
+  # and duller one is two words away.
+  pads: none
+  lead: none
+  bass: vcs_tight
+  kit: vcs_warm
+  dust: none
+# The machine the sum goes to tape on, before the master's own console. The
+# head bump is the low lift a tape head gives near 60 Hz, wow is the capstan's
+# slow speed error and flutter its fast one, the rolloff is the top the tape
+# cannot hold, and the drive is into a tanh, which is what tape saturation is.
+tape:
+  head_bump_hz: 58
+  head_bump_db: 2.6
+  drive: 1.35
+  wow_hz: 0.28
+  wow_depth: 0.0035
+  flutter_hz: 5.7
+  flutter_depth: 0.0018
+  rolloff_hz: 19000
 consoles:
+  vcs_warm:
+    - [vcs, { depth: 0.36, smear: 2.2 }]
+  vcs_wide:
+    - [vcs, { depth: 0.44, smear: 3.4 }]
+  vcs_tight:
+    - [vcs, { depth: 0.28, smear: 1.2 }]
   none: []
   glue:
     - [vcs, { depth: 0.34, smear: 2.4 }]
@@ -248,7 +301,7 @@ drums:
   slam: { threshold_db: -38, ratio: 12, attack_ms: 0.6, release_ms: 90, makeup_db: 8, blend: 0.6 }
   finish: sonitex_sp1200
   sonitex: { drive: 1.45, bandwidth_hz: 8000, crush_bits: 12, crush_hz: 26095, crush_mix: 0.52, lowpass_hz: 12000 }
-  gain_db: -5
+  gain_db: -8
   arrangement: { bars_per_shape: 8, bank_order: [dilla, flylo, dilla, techno, industrial] }
 # demo.wav: one piece of about six minutes, read by module Composition in
 # dilla.rb. A section shapes the parts and never removes the drums: it thins
