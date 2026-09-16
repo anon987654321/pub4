@@ -38,9 +38,12 @@ require_relative "test_helper"
 # channel) and turned spelling checks into behaviour checks.
 # 176 -> 175: test_soul stopped reading SOUL.md for a Version line approval no
 # longer writes, and compares the whole approved document instead.
+# 175 -> 171, and the refutes 20 -> 18: the needle is code now, not a quoted
+# word, so an assertion about the verb `read` or a field named `body` stops
+# counting as a file grep. Nine such lines were never source assertions.
 class TestSourceAssertions < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
-  BASELINE = 175
+  BASELINE = 171
 
   # An assertion whose subject is the text of a file rather than a value the
   # code produced. `source`, `src` and `body` are this repo's names for that
@@ -51,7 +54,7 @@ class TestSourceAssertions < Minitest::Test
   # round the assert ceiling, and so the existing refutes are measured without
   # moving the number above.
   REFUTE_PATTERN = /refute_(?:includes|match)\b[^\n]*\b(?:source|src|body|read|File\.read)\b/
-  REFUTE_BASELINE = 20
+  REFUTE_BASELINE = 18
 
   # The exception the header already names, made writable. A test that reads a
   # file the code under test just wrote is asserting an output, not grepping a
@@ -61,6 +64,12 @@ class TestSourceAssertions < Minitest::Test
   # somebody wrote rather than a hole in the pattern.
   OPT_OUT = "source-assertion: ok"
 
+  # The needle has to be code, not a quoted word. `read` is one of MASTER's
+  # eight verbs and `body` is a field name, so `assert_includes offered, "read"`
+  # — an assertion about a verb enum, with no file in it — counted as a source
+  # grep. String literals are blanked before the pattern runs.
+  def self.code_of(line) = line.gsub(/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/, '""')
+
   def self.occurrences(pattern = PATTERN)
     Dir.glob(File.join(ROOT, "{test,spec}", "**", "*.rb")).sort.flat_map do |path|
       rel = path.sub("#{ROOT}/", "")
@@ -68,7 +77,7 @@ class TestSourceAssertions < Minitest::Test
 
       lines = File.readlines(path)
       lines.each_with_index.filter_map do |line, i|
-        next unless line.match?(pattern)
+        next unless code_of(line).match?(pattern)
         next if line.include?(OPT_OUT) || (i.positive? && lines[i - 1].include?(OPT_OUT))
 
         "#{rel}:#{i + 1}"

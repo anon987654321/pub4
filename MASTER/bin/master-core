@@ -29,7 +29,7 @@ class NullModel
 
   def turns = @script.size
 
-  def propose(_context, verbs:)
+  def propose(_context, verbs:, **)
     unsupported = @script.map(&:verb).uniq - verbs
     raise "kernel verbs unavailable: #{unsupported.join(", ")}" unless unsupported.empty?
 
