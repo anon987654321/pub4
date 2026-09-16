@@ -60,21 +60,28 @@ families:
 # chord arrived at one brightness and stayed there. That is the whole reason
 # the pads sounded like arithmetic.
 synth_voices: true
+# How far each voice sits from concert pitch, in cents, when the bed plays a
+# chord. AnalogSynth seeds every note separately, so this is not one instrument
+# drifting: at its own default of four cents two tones of a chord could sit
+# eight apart, which does not read as analogue warmth, it reads as out of tune,
+# and on a ninth chord it destroys the beating between the partials that is the
+# point of the voicing. A line can have the four; a chord gets this.
+voice_drift_cents: 0.7
 # The oscillator presets. Detune stays inside five cents: past that a chord
 # reads as out of tune rather than as chorus.
 patches:
-  - { name: rhodes mk1,      family: rhodes,  wave: fm_wood,  cutoff: 1400, res: 2.0, attack: 0.04, detune_cents: [0, 2.8], synth: e_piano }
-  - { name: rhodes suitcase, family: rhodes,  wave: fm_bell,  cutoff: 1500, res: 1.5, attack: 0.05, detune_cents: [0, 5.0, -5.0], synth: e_piano }
-  - { name: rhodes bark,     family: rhodes,  wave: fm_glass, cutoff: 1200, res: 3.5, attack: 0.03, detune_cents: [0, 1.6], synth: e_piano }
-  - { name: rhodes soft,     family: rhodes,  wave: sine,     cutoff: 1100, res: 1.0, attack: 0.09, detune_cents: [0, 3.8, -3.8], synth: e_piano }
+  - { name: rhodes mk1,      family: rhodes,  wave: fm_wood,  cutoff: 1400, res: 2.0, attack: 0.04, detune_cents: [0, 2.8], synth: rhodes_tine }
+  - { name: rhodes suitcase, family: rhodes,  wave: fm_bell,  cutoff: 1500, res: 1.5, attack: 0.05, detune_cents: [0, 5.0, -5.0], synth: rhodes_tine }
+  - { name: rhodes bark,     family: rhodes,  wave: fm_glass, cutoff: 1200, res: 3.5, attack: 0.03, detune_cents: [0, 1.6], synth: rhodes_tine }
+  - { name: rhodes soft,     family: rhodes,  wave: sine,     cutoff: 1100, res: 1.0, attack: 0.09, detune_cents: [0, 3.8, -3.8], synth: rhodes_tine }
   - { name: moog bowed,      family: moog,    wave: saw,      cutoff: 900,  res: 5.5, attack: 1.4,  detune_cents: [0, 5.0, -4.8], synth: warm_pad }
   - { name: moog bassoon,    family: moog,    wave: square,   cutoff: 560,  res: 8.5, attack: 0.6,  detune_cents: [0, -4.8], synth: moog_bass }
   - { name: moog horn,       family: moog,    wave: saw,      cutoff: 780,  res: 6.5, attack: 1.1,  detune_cents: [0, 3.6, -3.3], synth: poly_strings }
   - { name: moog reed,       family: moog,    wave: pulse,    cutoff: 1050, res: 7.0, attack: 0.5,  detune_cents: [0, 5.0, -5.0], synth: soft_reed }
-  - { name: prophet strings, family: prophet, wave: saw,      cutoff: 1050, res: 4.0, attack: 2.0,  detune_cents: [0, 5.0, -5.0, 0.8], synth: poly_strings }
+  - { name: prophet strings, family: prophet, wave: saw,      cutoff: 1050, res: 4.0, attack: 2.0,  detune_cents: [0, 5.0, -5.0, 0.8], synth: prophet_five }
   - { name: prophet pwm,     family: prophet, wave: pulse,    cutoff: 1300, res: 3.5, attack: 0.8,  detune_cents: [0, 5.0, -5.0, 1.7], synth: juno_pad }
-  - { name: prophet brass,   family: prophet, wave: saw,      cutoff: 1450, res: 5.0, attack: 0.45, detune_cents: [0, 4.8, -4.5], synth: prophet_pad }
-  - { name: prophet choir,   family: prophet, wave: triangle, cutoff: 1200, res: 2.5, attack: 1.7,  detune_cents: [0, 5.0, -5.0, 0.2], synth: warm_pad }
+  - { name: prophet brass,   family: prophet, wave: saw,      cutoff: 1450, res: 5.0, attack: 0.45, detune_cents: [0, 4.8, -4.5], synth: prophet_five }
+  - { name: prophet choir,   family: prophet, wave: triangle, cutoff: 1200, res: 2.5, attack: 1.7,  detune_cents: [0, 5.0, -5.0, 0.2], synth: vp330_ensemble }
 # A pad that is not struck never starts faster than this: a fast attack is
 # an event, and an event draws the ear off the voice.
 min_attack_s: 0.4
@@ -128,7 +135,29 @@ sidechain:
 # plays, and the player crossfades to a copy of the pass with the voice
 # band carved out and the level down.
 speech: { flag: "~/.claude/hooks/speaking", duck_db: -4, carve: { hz: 2800, octaves: 1.0, gain_db: -6 }, attack_ms: 120, release_ms: 700 }
-master_bus: { drive: 1.25, pre_clip_threshold: 0.9, rumble_hz: 42, body_hz: 100, crush_bits: 14, crush_mix: 0.18, width: 1.08, mono_below_hz: 120, limit: 0.92, console: none }
+# The bus, and the two compressors on it.
+#
+# They were -22 dB at 3.4:1 and -19 dB at 2.6:1, in series, after a soft clip
+# and before a tanh stage, a crusher and a limiter -- and the pad path already
+# carried a limiter of its own, a rack compressor and a sidechain before it
+# arrived. Measured on one chord, the voice leaves AnalogSynth with 19.1 dB of
+# crest and 19.2 LRA and reaches the finished mix at 1.4: the chain was
+# flattening the instrument into a tone. Gentler now -- the limiter catches the
+# peaks, which is its job, and the compressors shape rather than squash.
+master_bus:
+  drive: 1.25
+  pre_clip_threshold: 0.9
+  rumble_hz: 42
+  body_hz: 100
+  crush_bits: 14
+  crush_mix: 0.18
+  width: 1.08
+  mono_below_hz: 120
+  limit: 0.92
+  console: none
+  compressors:
+    - { threshold_db: -16, ratio: 1.8, attack_ms: 28, release_ms: 240, makeup: 1.3 }
+    - { threshold_db: -11, ratio: 1.4, attack_ms: 40, release_ms: 300, makeup: 1.1 }
 # The console a bus may leave through. lib/livesets.rb writes Sonitex STX-1260
 # and Nasty VCS as chains and measures both; these are the stacks, named, so a
 # piece picks its colour with a word. One instance is a colour and three are a

@@ -34398,6 +34398,7 @@ module Pieces
   def rows = table.fetch("pieces")
   def names = rows.map { |row| row.fetch("name") }
   def fetch(name) = rows.find { |row| row.fetch("name") == name.to_s }
+  def showcase = table["showcase"]
   def progression(name) = fetch(name)&.fetch("progression")
 
   # Hashes merge key by key; an array or a scalar replaces what it lands on. A
@@ -34418,7 +34419,20 @@ module Pieces
     return bed if name.nil? || name.to_s.empty?
 
     row = fetch(name) or abort "pieces: no piece named #{name} — have #{names.join(', ')}"
-    deep_merge(deep_merge(bed, defaults), row.fetch("bed", {}))
+    fitted(deep_merge(deep_merge(bed, defaults), row.fetch("bed", {})))
+  end
+
+  # A showcase piece has a budget in seconds and a progression is four chords, so
+  # the only thing left to move is how many bars each chord holds. At 88 BPM four
+  # chords of four bars is forty-four seconds and of one bar is eleven; the budget
+  # picks between them. Never below one, because half a bar is not a chord.
+  def fitted(bed)
+    seconds = ENV["DILLA_SHOWCASE_SECONDS"].to_f
+    return bed unless seconds.positive?
+
+    bar = 240.0 / Float(bed.fetch("bpm"))
+    bars = [(seconds / (4 * bar)).round, 1].max
+    bed.merge("bars_per_chord" => [bars, Integer(bed.fetch("bars_per_chord"))].min)
   end
 end
 
@@ -35172,6 +35186,7 @@ module Bed
   end.freeze
 
   SYNTH_VOICES = BED.fetch("synth_voices", false) && defined?(AnalogSynth)
+  DRIFT_CENTS = Float(BED.fetch("voice_drift_cents", 0.7))
 
   FAMILIES = BED.fetch("families").transform_keys(&:to_sym)
   MIN_ATTACK = Float(BED.fetch("min_attack_s"))
@@ -35293,7 +35308,8 @@ module Bed
       { hz: midi_hz(note), at: delay, held: (seconds - delay).round(4), gain: (0.62 * level).round(4) }
     end
     AnalogSynth.render_groups!([{ patch: patch.synth, notes: voiced }], dest: path, duration: seconds,
-                                                                       seed: rand(2**31))
+                                                                       seed: rand(2**31),
+                                                                       drift_cents: DRIFT_CENTS)
   end
 
   def render_chord(notes, patch, seconds, path)
@@ -36115,6 +36131,19 @@ module Bed
   # only the band above is widened. The two fourth-order halves sum flat. The tilt
   # sits after the compressor and before the limiter, which is the mastering
   # order.
+  # One compressor from the table, as a filter. A row that is not there is a
+  # stage that does nothing rather than a crash, so shortening the list is how
+  # the bus comes apart when somebody wants to hear what each stage was doing.
+  def bus_compressor(index)
+    row = Array(MASTER_BUS["compressors"])[index] or return "anull"
+
+    parts = ["acompressor=threshold=#{row['threshold_db']}dB", "ratio=#{row['ratio']}"]
+    parts << "attack=#{row['attack_ms']}" if row["attack_ms"]
+    parts << "release=#{row['release_ms']}" if row["release_ms"]
+    parts << "makeup=#{row['makeup']}" if row["makeup"]
+    parts.join(":")
+  end
+
   def master_graph(input, output)
     drive = Float(MASTER_BUS.fetch("drive"))
     # An empty console is no stage at all, not a stage that does nothing.
@@ -36124,7 +36153,7 @@ module Bed
     split = MASTER_BUS.fetch("mono_below_hz")
     bells = TILT.fetch("bells").map { |bell| "equalizer=f=#{bell['hz']}:t=o:w=#{bell['octaves']}:g=#{bell['gain_db']}" }.join(",")
     "#{input}asoftclip=type=tanh:threshold=#{MASTER_BUS['pre_clip_threshold']}:oversample=4," \
-      "acompressor=threshold=-22dB:ratio=3.4:attack=18:release=130:makeup=2.2,asplit=2[m_lo][m_hi];" \
+      "#{bus_compressor(0)},asplit=2[m_lo][m_hi];" \
       "[m_lo]lowpass=f=#{split},lowpass=f=#{split},pan=stereo|c0=0.5*c0+0.5*c1|c1=0.5*c0+0.5*c1[m_mono];" \
       "[m_hi]highpass=f=#{split},highpass=f=#{split},extrastereo=m=#{MASTER_BUS['width']}[m_wide];" \
       "[m_mono][m_wide]amix=inputs=2:normalize=0," \
@@ -36134,7 +36163,7 @@ module Bed
       "equalizer=f=#{MASTER_BUS['body_hz']}:t=o:w=0.82:g=3.0,equalizer=f=82:t=o:w=2:g=2.4," \
       "lowpass=f=15500:width_type=q:width=0.85,vibrato=f=0.26:d=0.004,vibrato=f=4.4:d=0.0045," \
       "acrusher=bits=#{MASTER_BUS['crush_bits']}:mode=lin:aa=1:mix=#{MASTER_BUS['crush_mix']}," \
-      "acompressor=threshold=-19dB:ratio=2.6:makeup=1.8,#{bells},#{console}" \
+      "#{bus_compressor(1)},#{bells},#{console}" \
       "alimiter=limit=#{MASTER_BUS['limit']}:level_out=0.90#{output}"
   end
 
@@ -36258,13 +36287,35 @@ module Bed
   # A progression from wherever it came from: a row of CHORD_PROGRESSIONS, or a
   # piece that carries its own chords because they were read out of an Ableton
   # set and belong to nobody else's table.
+  # Four chords, because a progression is four chords. A showcase piece states
+  # one of them and pieces! cuts the result to length afterwards; what makes four
+  # fit in nine seconds is bars_per_chord, which Pieces works out from the tempo
+  # before this module reads a constant. Cutting the count instead would buy the
+  # seconds by playing something that is not a progression.
+  SHOWCASE_CHORDS = 4
+
+  def showcase_chords
+    ENV["DILLA_SHOWCASE_SECONDS"].to_f.positive? ? SHOWCASE_CHORDS : nil
+  end
+
+  # The first `seconds` of a piece, faded out so the join has something to
+  # crossfade into rather than a cut.
+  def trim!(path, seconds, fade: 0.4)
+    short = "#{path}.trim.wav"
+    ffmpeg!("-i", path, "-af", "atrim=0:#{seconds.round(3)},afade=t=out:st=#{(seconds - fade).round(3)}:d=#{fade}",
+            "-c:a", "pcm_s16le", "-ac", "2", short, what: "trim")
+    File.rename(short, path)
+    path
+  end
+
   def render_symbols!(name, symbols, path, seed)
     chords = Array(symbols).filter_map { |symbol| parse_chord(symbol.to_s) }
     abort "bed: #{name} has no chord the bed can voice" if chords.empty?
 
-    minimum = Integer(CATALOGUE.fetch("min_chords"))
+    fitted = showcase_chords
+    minimum = fitted || Integer(CATALOGUE.fetch("min_chords"))
     chords *= 2 while chords.size < minimum
-    chords = chords.first(Integer(CATALOGUE.fetch("max_chords")))
+    chords = chords.first(fitted || Integer(CATALOGUE.fetch("max_chords")))
     render!(path, seed, progressions: [Progression.new(name: name.to_s, chords:)], log: false)
   end
 
@@ -36300,28 +36351,35 @@ module Bed
   # A piece that fails stops the catalogue instead of leaving a hole in it: a
   # join over a missing part is a demo that is quietly one piece short and says
   # nothing about it.
-  def pieces!
+  def pieces!(showcase: Pieces.showcase)
+    names = showcase ? Array(showcase["order"]) : Pieces.names
+    unknown = names.reject { |name| Pieces.fetch(name) }
+    abort "showcase: no piece named #{unknown.join(', ')}" unless unknown.empty?
+
+    seconds = showcase && showcase["seconds_each"]
+    fade = Float((showcase && showcase["crossfade_s"]) || CATALOGUE.fetch("crossfade_s"))
     base = Integer(ENV.fetch("RENDER_SEED") { rand(2**31) })
     parts_dir = File.join(SCRATCH_DIR, "pieces")
     FileUtils.mkdir_p(parts_dir)
     FileUtils.rm_f(Dir.glob(File.join(parts_dir, "*.wav")))
-    names = Pieces.names
     parts = names.each_with_index.map do |name, index|
       part = File.join(parts_dir, format("%02d_%s.wav", index, name))
       dmesg("piece #{index + 1}/#{names.size} #{name} seed=#{base + index}", unit: "bed0", parent: "dilla0")
-      spawn_piece!(name, part, base + index)
+      spawn_piece!(name, part, base + index, seconds:)
+      trim!(part, Float(seconds)) if seconds
       part
     end
     dest = File.join(ROOT, "demo.wav")
-    join_catalogue(parts, dest)
+    join_catalogue(parts, dest, fade)
     mp3 = demo_encode_mp3(dest)
     puts "ok: #{dest} (#{parts.size} pieces, seed #{base})"
     puts "ok: #{mp3}" if mp3
     dest
   end
 
-  def spawn_piece!(name, path, seed)
+  def spawn_piece!(name, path, seed, seconds: nil)
     env = { "DILLA_PIECE" => name.to_s, "RENDER_SEED" => seed.to_s }
+    env["DILLA_SHOWCASE_SECONDS"] = seconds.to_s if seconds
     ok = system(env, RbConfig.ruby, File.join(ROOT, "dilla.rb"), "piece", name.to_s, path)
     abort "pieces: #{name} did not render" unless ok && File.file?(path)
     path
@@ -36336,8 +36394,7 @@ module Bed
     render_track!(row.fetch("progression"), path, seed)
   end
 
-  def join_catalogue(parts, dest)
-    fade = Float(CATALOGUE.fetch("crossfade_s"))
+  def join_catalogue(parts, dest, fade = Float(CATALOGUE.fetch("crossfade_s")))
     inputs = parts.flat_map { |part| ["-i", part] }
     graph = []
     label = "[0:a]"
@@ -37478,6 +37535,8 @@ DISPATCH = {
   # this file is loading, so a name arriving as an argument arrives too late.
   # DILLA_PIECE already matching is what stops the second exec.
   "pieces" => -> { Bed.pieces! },
+  # Every piece at its written length, which is thirty-one and eighteen minutes.
+  "catalogue-full" => -> { Bed.pieces!(showcase: nil) },
   # Old Ableton sets, read back.
   #
   #   import-als <file.als>            what one set holds
@@ -37542,7 +37601,7 @@ DISPATCH = {
   "piece" => lambda {
     name = ARGV.shift or abort "usage: dilla.rb piece <#{Pieces.names.join('|')}> [out.wav]"
     dest = ARGV.shift || File.join(OUTPUT_DIR, "#{name}.wav")
-    exec({ "DILLA_PIECE" => name }, RbConfig.ruby, __FILE__, "piece", name, dest) unless ENV["DILLA_PIECE"] == name
+    exec(ENV.to_h.merge("DILLA_PIECE" => name), RbConfig.ruby, __FILE__, "piece", name, dest) unless ENV["DILLA_PIECE"] == name
 
     seed = Integer(ENV.fetch("RENDER_SEED") { Random.new_seed % (2**31) })
     puts "ok: #{Bed.render_piece!(name, dest, seed)}"
