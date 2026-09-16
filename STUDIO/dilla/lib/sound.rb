@@ -256,7 +256,7 @@ module AnalogSynth
     # struck, not held.
     e_piano: {
       waves: %i[triangle square], detune: [0.0, 3.0], octaves: [0, 1],
-      cutoff: 900.0, env_amount: 2600.0, resonance: 0.18, drive: 1.1,
+      cutoff: 900.0, env_amount: 2600.0, resonance: 0.18, drive: 1.1, lpg: 0.8,
       amp: Envelope.new(attack: 0.003, decay: 1.4, sustain: 0.0, release: 0.5),
       filter_env: Envelope.new(attack: 0.001, decay: 0.5, sustain: 0.1, release: 0.4),
     },
@@ -305,7 +305,7 @@ module AnalogSynth
     # half.
     rhodes_tine: {
       waves: %i[sine sine triangle], detune: [0.0, 1.2, 0.0], octaves: [0, 0, 2],
-      osc_decay: [nil, nil, 0.16], drift_cents: 0.6,
+      osc_decay: [nil, nil, 0.16], drift_cents: 0.6, lpg: 0.85,
       cutoff: 1400.0, env_amount: 1800.0, resonance: 0.10, drive: 1.06,
       amp: Envelope.new(attack: 0.004, decay: 2.6, sustain: 0.42, release: 1.4),
       filter_env: Envelope.new(attack: 0.002, decay: 0.8, sustain: 0.30, release: 0.9),
@@ -316,7 +316,7 @@ module AnalogSynth
     # each other while each chord is wide on its own.
     prophet_five: {
       waves: %i[saw saw square], detune: [-6.0, 6.0, 0.0], octaves: [0, 0, -1],
-      drift_cents: 0.9,
+      drift_cents: 0.9, lpg: 0.35,
       cutoff: 380.0, env_amount: 2800.0, resonance: 0.28, drive: 1.0,
       amp: Envelope.new(attack: 0.05, decay: 1.4, sustain: 0.72, release: 1.0),
       filter_env: Envelope.new(attack: 0.20, decay: 1.8, sustain: 0.35, release: 1.0),

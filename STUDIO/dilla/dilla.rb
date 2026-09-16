@@ -35442,6 +35442,47 @@ module Bed
   # its own eighth and in its own place across the field, then holds, so the chord
   # assembles in front of you instead of being struck. A chord is two bars and six
   # notes at most, so it has assembled inside two seconds.
+  # The chord as rhythm rather than as harmony.
+  #
+  # A pad states its notes together and holds them; this gives each chord tone
+  # its own step on the sixteenth grid and its own short decay, so what arrives
+  # is a sequence of pitched hits -- a stab per note -- and the harmony is heard
+  # across time instead of all at once. It is the same chord, played as a part
+  # rather than as a chord.
+  #
+  # Rendered through AnalogSynth rather than as an expression, because the whole
+  # effect is the envelope: a hit is an attack and a fast decay, and an ffmpeg
+  # expression has neither. The steps cycle, so a chord of five notes over four
+  # steps wraps and the pattern shifts against the bar the way a real sequence
+  # does rather than repeating flat.
+  STABS = BED["pad_stabs"]
+
+  def render_stabs(notes, patch, seconds, path)
+    steps = Array(STABS["steps"])
+    return nil if steps.empty?
+
+    hold = Float(STABS.fetch("hold_s", 0.14))
+    voiced = []
+    at = 0.0
+    index = 0
+    while at < seconds
+      notes.each_with_index do |note, voice|
+        step = steps[(index + voice) % steps.size]
+        start = at + (step * STEP)
+        next if start >= seconds
+
+        voiced << { hz: midi_hz(note), at: start.round(4), held: hold,
+                    gain: (0.55 * (1.0 - (voice * 0.06))).clamp(0.2, 0.7).round(4) }
+      end
+      at += BAR
+      index += 1
+    end
+    return nil if voiced.empty?
+
+    AnalogSynth.render_groups!([{ patch: patch.synth || :e_piano, notes: voiced }],
+                               dest: path, duration: seconds, seed: rand(2**31), drift_cents: DRIFT_CENTS)
+  end
+
   def render_hocket(notes, patch, seconds, path)
     shape = WAVES.fetch(patch.wave)
     order = notes.each_index.to_a.shuffle(random: rng)
@@ -35484,10 +35525,14 @@ module Bed
   def render_part(chord, index)
     seconds = (CHORD_BARS + XFADE).round(4)
     path = scratch("chord#{index}")
-    if rand < HOCKET_ODDS
-      render_hocket(chord.notes, chord.patch, seconds, path)
-    else
-      render_chord(chord.notes, chord.patch, seconds, path)
+    stabbed = STABS && rand < Float(STABS.fetch("odds", 0)) &&
+              render_stabs(chord.notes, chord.patch, seconds, path)
+    unless stabbed
+      if rand < HOCKET_ODDS
+        render_hocket(chord.notes, chord.patch, seconds, path)
+      else
+        render_chord(chord.notes, chord.patch, seconds, path)
+      end
     end
     level!(path, CHORD_LEVEL_DB)
     return path unless rand < REVERSE_ODDS
@@ -35949,6 +35994,25 @@ module Bed
     space!(path, seed, PAD_SPACE)
   end
 
+  # A stage the draw must include, however the coins fell.
+  #
+  # random_plan is a seeded coin toss per stage, which is right when the point is
+  # variety and wrong when a stage IS the sound. A tape echo is the second: the
+  # repeats and their wow are the character, not a garnish the chain may or may
+  # not pick that pass. `always` names the stages a config insists on, and they
+  # are added with the config's own settings if the draw left them out.
+  def insisted_plan(plan, config, rng)
+    Array(config["always"]).each do |name|
+      stage = name.to_sym
+      next if plan.any? { |drawn, _| drawn == stage }
+
+      settings = SpaceFx.random_plan(rng, wet: Float(config.fetch("wet", 1.0)))
+                        .to_h[stage] or next
+      plan << [stage, settings]
+    end
+    SpaceFx::STAGE_ORDER.filter_map { |stage| plan.find { |drawn, _| drawn == stage } }
+  end
+
   def space!(path, seed, config)
     wet = Float(config&.fetch("wet", 0) || 0)
     return path unless wet.positive?
@@ -35957,7 +36021,9 @@ module Bed
     return path if left.empty?
 
     before = channels_peak(left, right)
-    plan = SpaceFx.random_plan(Random.new(seed), wet:, max_stages: config["stages"])
+    rng = Random.new(seed)
+    plan = SpaceFx.random_plan(rng, wet:, max_stages: config["stages"])
+    plan = insisted_plan(plan, config, Random.new(seed + 1)) if config["always"]
     if (only = config["only"])
       allowed = Array(only).map(&:to_sym)
       plan = plan.select { |stage, _| allowed.include?(stage) }
@@ -36388,7 +36454,7 @@ module Bed
     bodies = notes.map do |note|
       at = (note[:at] - start).round(4)
       stop = (at + note[:held] + 0.08).round(4)
-      "#{note[:gain]}*(#{shape.call(phase(note[:hz]), '1')}+0.6*sin(2*PI*#{note[:hz].round(4)}*t))" \
+      "#{note[:gain]}*(#{shape.call(phase(note[:hz]), '1')}+#{BASS.fetch('sine_mix', 0.6)}*sin(2*PI*#{note[:hz].round(4)}*t))" \
         "*min(max(t-#{at},0)/0.006,1)*exp(-#{decay}*max(t-#{at},0))*between(t,#{at},#{stop})"
     end
     expression = bodies.empty? ? "0" : bodies.join("+")

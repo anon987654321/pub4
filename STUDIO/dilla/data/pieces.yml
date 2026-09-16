@@ -35,7 +35,8 @@ showcase:
   order:
     - dnb_ninths
     - quartal_mediants
-    - house_pump
+    - four_floor
+    - detroit
     - hate_rumble
     - footwork
     - sandviken_hotell
@@ -210,7 +211,7 @@ pieces:
       reverse_odds: 0.28
       overtones: { partials: [3, 5, 7], gain_db: -20 }
       lead: { plays_odds: 0.9, gain_db: 1, rack_names: [inharmonic, ring, ghost] }
-      drums: { arrangement: { bank_order: [flylo], bars_per_shape: 4 }, samples: *kit_crate }
+      drums: { arrangement: { bank_order: [flylo, broken], bars_per_shape: 4 }, samples: *kit_crate }
       master_bus: { console: blown, width: 1.18 }
       catalogue: { min_chords: 4, max_chords: 6, crossfade_s: 1.0 }
 
@@ -247,6 +248,7 @@ pieces:
       bars_per_chord: 4
       pad_families: [prophet]
       pad_voice: juno_pad
+      pad_stabs: { steps: [2, 6, 10, 14], hold_s: 0.12, odds: 0.85 }
       pad_racks: [wash]
       min_attack_s: 0.15
       overtones: { partials: [2, 3, 4], gain_db: -24 }
@@ -266,6 +268,7 @@ pieces:
       bars_per_chord: 4
       pad_families: [moog]
       pad_voice: acid
+      pad_stabs: { steps: [0, 3, 6, 10], hold_s: 0.13, odds: 0.9 }
       pad_racks: [shimmer]
       min_attack_s: 0.2
       overtones: { partials: [2, 4, 8], gain_db: -23 }
@@ -286,6 +289,7 @@ pieces:
       bars_per_chord: 4
       pad_families: [prophet]
       pad_voice: poly_strings
+      pad_stabs: { steps: [0, 6, 10, 14], hold_s: 0.16, odds: 0.8 }
       pad_racks: [wash]
       min_attack_s: 1.4
       overtones: { partials: [2, 3, 5, 6], gain_db: -20 }
@@ -305,13 +309,14 @@ pieces:
       bars_per_chord: 4
       pad_families: [moog]
       pad_voice: moog_bass
+      pad_stabs: { steps: [0, 2, 7, 9, 12], hold_s: 0.10, odds: 0.95 }
       pad_racks: [wash]
       min_attack_s: 0.1
       hocket_odds: 0.1
       overtones: { partials: [2, 3], gain_db: -26 }
       lead: { plays_odds: 0.8, gain_db: 0, rack_names: [inharmonic, ring] }
       drums:
-        arrangement: { bank_order: [industrial], bars_per_shape: 8 }
+        arrangement: { bank_order: [industrial, broken], bars_per_shape: 8 }
         samples: *kit_industrial
         feels: *feel_hardgroove
         sonitex: { drive: 1.9, bandwidth_hz: 7000, crush_bits: 10, crush_hz: 22050, crush_mix: 0.75, lowpass_hz: 11000 }
@@ -328,11 +333,12 @@ pieces:
       bars_per_chord: 8
       pad_families: [rhodes]
       pad_voice: glass_bell
+      pad_stabs: { steps: [0, 3, 5, 8, 11, 13], hold_s: 0.09, odds: 0.8 }
       pad_racks: [shimmer]
       overtones: { partials: [2, 3, 4, 5], gain_db: -21 }
       lead: { plays_odds: 0.85, rack_names: [ring, octave] }
       drums:
-        arrangement: { bank_order: [techno, industrial], bars_per_shape: 4 }
+        arrangement: { bank_order: [broken, techno], bars_per_shape: 4 }
         samples: *kit_crate
         feels: *feel_swung
       catalogue: { min_chords: 4, max_chords: 4, crossfade_s: 1.0 }
@@ -433,6 +439,7 @@ pieces:
       bars_per_chord: 4
       pad_families: [prophet]
       pad_voice: poly_strings
+      pad_stabs: { steps: [0, 4, 7, 11], hold_s: 0.15, odds: 0.7 }
       pad_racks: [wash]
       min_attack_s: 0.3
       overtones: { partials: [2, 3, 4], gain_db: -22 }

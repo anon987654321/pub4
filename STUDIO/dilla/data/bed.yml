@@ -87,6 +87,12 @@ patches:
 min_attack_s: 0.4
 chord_level_db: -14
 pad_racks: [wash, shimmer]
+# The chord played as rhythm: each tone on its own sixteenth with a short decay,
+# so the harmony arrives as a sequence of pitched hits rather than as a pad. Off
+# by default -- a held chord is what a bed is for -- and the techno pieces turn
+# it on, because there a sustained chord is the thing that makes the track stand
+# still.
+pad_stabs: { steps: [0, 3, 6, 10], hold_s: 0.14, odds: 0.0 }
 # A space echo on the pads, and only that.
 #
 # The lead gets the whole drawn chain because it is sparse and a fold or a
@@ -164,12 +170,20 @@ lead:
   # never has, which is why the bed's lead sat dry under a wet pad. `stages`
   # trims the draw: live needs the samples before the speaker wants them and a
   # render does not, so a render can afford all seven.
-  space: { stages: 7, wet: 1.0 }
+  # Heavy, and the echo is not optional. A drawn chain is a coin toss per stage,
+  # which is right for variety and wrong when one stage IS the sound: a tape echo
+  # and its wow are the character of this lead, not a garnish the draw may skip.
+  # `always` puts it in whatever the coins did.
+  space: { stages: 7, wet: 1.0, always: [space_echo, reverb] }
 # The bass line under the bed: dilla's ImprovisedLine.bass, rendered as a
 # rounded wave with a sine at its own pitch under it -- an octave lower lands
 # below the kick, where nothing is heard and the sub band swells -- lowpassed so it is felt more than
 # heard, and ducked under the kick so the kick keeps its attack.
-bass: { wave: triangle, cutoff_hz: 380, decay: 1.1, gain_db: -9 }
+# Deeper: more of the sine that sits under the wave, and four decibels more of
+# all of it. Not an octave down -- that was tried and refused just above,
+# because it lands beneath the kick where nothing is heard and only the sub
+# band swells. Weight at the fundamental is body; an octave down is rumble.
+bass: { wave: triangle, cutoff_hz: 340, decay: 1.3, gain_db: -5, sine_mix: 0.95 }
 # A catalogue piece through the bed: a two-chord vamp is stated until the
 # piece has four chords to move through, a long progression is cut at eight,
 # and the pieces are joined with a crossfade into demo.wav.
