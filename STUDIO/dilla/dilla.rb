@@ -35162,13 +35162,16 @@ module Bed
 
   def phase(freq) = "(t*#{freq.round(4)})"
 
-  Patch = Struct.new(:name, :family, :wave, :detune, :cutoff, :res, :attack, keyword_init: true)
+  Patch = Struct.new(:name, :family, :wave, :detune, :cutoff, :res, :attack, :synth, keyword_init: true)
 
   PATCHES = BED.fetch("patches").map do |row|
     Patch.new(name: row.fetch("name"), family: row.fetch("family").to_sym, wave: row.fetch("wave").to_sym,
               detune: row.fetch("detune_cents").map { |cents| 2**(cents / 1200.0) },
-              cutoff: row.fetch("cutoff"), res: row.fetch("res"), attack: row.fetch("attack"))
+              cutoff: row.fetch("cutoff"), res: row.fetch("res"), attack: row.fetch("attack"),
+              synth: row["synth"]&.to_sym)
   end.freeze
+
+  SYNTH_VOICES = BED.fetch("synth_voices", false) && defined?(AnalogSynth)
 
   FAMILIES = BED.fetch("families").transform_keys(&:to_sym)
   MIN_ATTACK = Float(BED.fetch("min_attack_s"))
@@ -35270,7 +35273,32 @@ module Bed
   # fold back as a field of bleeps. The ladder is a lowpass with an equalizer
   # bump at the cutoff standing in for its resonance, which ffmpeg has no filter
   # for.
+  # The chord on the engine's own synthesiser.
+  #
+  # AnalogSynth is a sample-level voice: oscillators that drift apart and start
+  # at different points in their cycles, a four-pole ladder whose resonance is
+  # feedback rather than an equalizer bump, and an amplitude envelope and a
+  # filter envelope that move independently. A held chord therefore opens and
+  # closes while it sounds, which is the difference between an instrument and a
+  # tone. It leaves 18 percent headroom, and level! sets the chord to its mark
+  # afterwards as it always did.
+  #
+  # Nil when the patch names no voice or the synthesiser will not play it, and
+  # the ffmpeg expression below runs instead -- so this is reversible by one key
+  # in data/bed.yml and a render can be compared against the old sound.
+  def synth_chord(notes, patch, seconds, path)
+    return nil unless SYNTH_VOICES && patch.synth
+
+    voiced = humanised(notes).map do |note, level, delay, _pan|
+      { hz: midi_hz(note), at: delay, held: (seconds - delay).round(4), gain: (0.62 * level).round(4) }
+    end
+    AnalogSynth.render_groups!([{ patch: patch.synth, notes: voiced }], dest: path, duration: seconds,
+                                                                       seed: rand(2**31))
+  end
+
   def render_chord(notes, patch, seconds, path)
+    return path if synth_chord(notes, patch, seconds, path)
+
     shape = WAVES.fetch(patch.wave)
     attack = FAMILIES.dig(patch.family, "struck") ? patch.attack : [patch.attack, MIN_ATTACK].max
     scale = 0.75 / patch.detune.size

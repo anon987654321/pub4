@@ -50,21 +50,31 @@ families:
   rhodes: { source: oscillator, struck: true }
   moog: { source: oscillator }
   prophet: { source: oscillator }
+# Every chord goes through AnalogSynth in lib/sound.rb -- oscillator stacks
+# with drift, a four-pole Moog ladder with real resonance, and separate
+# amplitude and filter envelopes. The `wave`, `cutoff`, `res` and `attack`
+# below describe the same instrument as an ffmpeg expression, which is what
+# the bed built before 2026-09-16 and what it falls back to when
+# synth_voices is off. An expression has no feedback, so its resonance was an
+# equalizer bump standing in for a filter, and it had no envelope at all: the
+# chord arrived at one brightness and stayed there. That is the whole reason
+# the pads sounded like arithmetic.
+synth_voices: true
 # The oscillator presets. Detune stays inside five cents: past that a chord
 # reads as out of tune rather than as chorus.
 patches:
-  - { name: rhodes mk1,      family: rhodes,  wave: fm_wood,  cutoff: 1400, res: 2.0, attack: 0.04, detune_cents: [0, 2.8] }
-  - { name: rhodes suitcase, family: rhodes,  wave: fm_bell,  cutoff: 1500, res: 1.5, attack: 0.05, detune_cents: [0, 5.0, -5.0] }
-  - { name: rhodes bark,     family: rhodes,  wave: fm_glass, cutoff: 1200, res: 3.5, attack: 0.03, detune_cents: [0, 1.6] }
-  - { name: rhodes soft,     family: rhodes,  wave: sine,     cutoff: 1100, res: 1.0, attack: 0.09, detune_cents: [0, 3.8, -3.8] }
-  - { name: moog bowed,      family: moog,    wave: saw,      cutoff: 900,  res: 5.5, attack: 1.4,  detune_cents: [0, 5.0, -4.8] }
-  - { name: moog bassoon,    family: moog,    wave: square,   cutoff: 560,  res: 8.5, attack: 0.6,  detune_cents: [0, -4.8] }
-  - { name: moog horn,       family: moog,    wave: saw,      cutoff: 780,  res: 6.5, attack: 1.1,  detune_cents: [0, 3.6, -3.3] }
-  - { name: moog reed,       family: moog,    wave: pulse,    cutoff: 1050, res: 7.0, attack: 0.5,  detune_cents: [0, 5.0, -5.0] }
-  - { name: prophet strings, family: prophet, wave: saw,      cutoff: 1050, res: 4.0, attack: 2.0,  detune_cents: [0, 5.0, -5.0, 0.8] }
-  - { name: prophet pwm,     family: prophet, wave: pulse,    cutoff: 1300, res: 3.5, attack: 0.8,  detune_cents: [0, 5.0, -5.0, 1.7] }
-  - { name: prophet brass,   family: prophet, wave: saw,      cutoff: 1450, res: 5.0, attack: 0.45, detune_cents: [0, 4.8, -4.5] }
-  - { name: prophet choir,   family: prophet, wave: triangle, cutoff: 1200, res: 2.5, attack: 1.7,  detune_cents: [0, 5.0, -5.0, 0.2] }
+  - { name: rhodes mk1,      family: rhodes,  wave: fm_wood,  cutoff: 1400, res: 2.0, attack: 0.04, detune_cents: [0, 2.8], synth: e_piano }
+  - { name: rhodes suitcase, family: rhodes,  wave: fm_bell,  cutoff: 1500, res: 1.5, attack: 0.05, detune_cents: [0, 5.0, -5.0], synth: e_piano }
+  - { name: rhodes bark,     family: rhodes,  wave: fm_glass, cutoff: 1200, res: 3.5, attack: 0.03, detune_cents: [0, 1.6], synth: e_piano }
+  - { name: rhodes soft,     family: rhodes,  wave: sine,     cutoff: 1100, res: 1.0, attack: 0.09, detune_cents: [0, 3.8, -3.8], synth: e_piano }
+  - { name: moog bowed,      family: moog,    wave: saw,      cutoff: 900,  res: 5.5, attack: 1.4,  detune_cents: [0, 5.0, -4.8], synth: warm_pad }
+  - { name: moog bassoon,    family: moog,    wave: square,   cutoff: 560,  res: 8.5, attack: 0.6,  detune_cents: [0, -4.8], synth: moog_bass }
+  - { name: moog horn,       family: moog,    wave: saw,      cutoff: 780,  res: 6.5, attack: 1.1,  detune_cents: [0, 3.6, -3.3], synth: poly_strings }
+  - { name: moog reed,       family: moog,    wave: pulse,    cutoff: 1050, res: 7.0, attack: 0.5,  detune_cents: [0, 5.0, -5.0], synth: soft_reed }
+  - { name: prophet strings, family: prophet, wave: saw,      cutoff: 1050, res: 4.0, attack: 2.0,  detune_cents: [0, 5.0, -5.0, 0.8], synth: poly_strings }
+  - { name: prophet pwm,     family: prophet, wave: pulse,    cutoff: 1300, res: 3.5, attack: 0.8,  detune_cents: [0, 5.0, -5.0, 1.7], synth: juno_pad }
+  - { name: prophet brass,   family: prophet, wave: saw,      cutoff: 1450, res: 5.0, attack: 0.45, detune_cents: [0, 4.8, -4.5], synth: prophet_pad }
+  - { name: prophet choir,   family: prophet, wave: triangle, cutoff: 1200, res: 2.5, attack: 1.7,  detune_cents: [0, 5.0, -5.0, 0.2], synth: warm_pad }
 # A pad that is not struck never starts faster than this: a fast attack is
 # an event, and an event draws the ear off the voice.
 min_attack_s: 0.4
