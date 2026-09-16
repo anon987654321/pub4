@@ -173,6 +173,25 @@ end
 
 # One synthesis per paragraph: data/tts.yml caps an utterance at 900 characters,
 # and a paragraph break is the pause a listener expects anyway.
+# Who reads paragraph N.
+#
+# Policy.voice_for_utterance picks at random and says why: over a session of
+# short utterances a strict alternation makes the pattern audible and draws
+# attention to the mechanism. A scripted reading of seven paragraphs is not
+# that. Two readers taking a section each is an editorial device older than
+# radio, and at this length the listener hears two people rather than a rota,
+# so this alternates deliberately and leaves that method for the sessions it
+# was written for.
+#
+# Through voice_aliases, which is the Policy's own table, so a name the server
+# can speak is the only kind that can be asked for here.
+def reader_for(policy, index)
+  keys = policy.rotation_keys
+  return policy.neural_voice unless keys.size > 1
+
+  policy.voice_aliases.fetch(keys[index % keys.size].to_s, policy.neural_voice)
+end
+
 def speak!
   # Through Policy, not through the file. voice.yml decides how MASTER sounds and
   # Master::Voice::Policy is its one reader; loading the YAML here would make a
@@ -189,7 +208,7 @@ def speak!
     text = File.join(parts_dir, format("%02d.txt", index))
     File.write(text, para)
     ok = system({ "RBENV_VERSION" => "3.4.9" }, "rbenv", "exec", "ruby",
-                File.join(ROOT, "bin", "tts-worker"), policy.neural_voice,
+                File.join(ROOT, "bin", "tts-worker"), reader_for(policy, index),
                 policy.default_rate, policy.default_pitch, out,
                 in: text, out: File::NULL, err: File::NULL)
     abort "tts-worker failed on paragraph #{index}" unless ok && File.size?(out)
@@ -200,7 +219,29 @@ def speak!
   File.write(list, parts.map { |part| "file '#{part}'" }.join("\n") + "\n")
   system("ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0",
          "-i", list, "-ar", "44100", "-ac", "1", "-c:a", "pcm_s16le", WAV) or abort "ffmpeg concat failed"
+  shape!(policy)
   puts "#{parts.size} paragraphs -> #{WAV} (#{File.size(WAV) / 1_048_576} MB)"
+end
+
+# The take through the chain MASTER speaks through.
+#
+# voice.yml declares post_chain and Voice::Policy is its reader; the browser
+# face already applies it through browser_payload, and this take did not, so
+# the README was the one place MASTER was heard dry. The chain borrows dilla's
+# vocabulary -- the same formant lifts and chorus the pads go through -- which
+# is the point: the voice and the music should sound like one room.
+#
+# In place, through a temporary file, because ffmpeg will not read and write
+# the same path in one pass.
+def shape!(policy)
+  chain = policy.post_chain or return
+
+  shaped = "#{WAV}.shaped.wav"
+  ok = system("ffmpeg", "-y", "-loglevel", "error", "-i", WAV, "-af", chain,
+              "-ar", "44100", "-ac", "1", "-c:a", "pcm_s16le", shaped)
+  return warn("readme_take: post_chain failed, keeping the dry take") unless ok && File.size?(shaped)
+
+  FileUtils.mv(shaped, WAV)
 end
 
 def face_up?

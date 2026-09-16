@@ -106,7 +106,7 @@ pad_racks: [wash, shimmer]
 # sounds three quarters of every bar, so a room behind it softens the chord more
 # than it places it. The lead can afford one because it is sparse. Raise the wet
 # to hear it; the machinery and the filter stay.
-pad_space: { stages: 7, wet: 0.0, only: [space_echo, reverb] }
+pad_space: { stages: 7, wet: 0.5, only: [space_echo, reverb] }
 # Which families deal_instruments draws from and which presets inside them.
 # All of both here; a piece in data/pieces.yml narrows the list, and that
 # narrowing is most of what makes one piece a Rhodes record and the next a
@@ -224,21 +224,18 @@ master_bus:
 # line lib/livesets.rb measured. `none` for dust, because a record's surface is
 # already the colour and a second 1260 only raises its noise floor.
 stem_consoles:
-  # Measured, twice. Every stem through a 1260 took 7.4 dB off the top octave and
-  # 11 dB off the stereo width; VCS alone on every stem still took 3.7 to 4.6 dB
-  # across presence, bite, air and top, and narrowed the image by 6 dB. A phaser
-  # puts the same notches in both channels, so it removes energy and collapses
-  # the picture at the same time.
-  #
-  # So the summing colour goes where phase smear is what glues -- the kit, which
-  # is transients that want gluing, and the bass, which has no air to lose -- and
-  # the pads and the lead keep theirs. That is the trade this mix wants; a warmer
-  # and duller one is two words away.
-  pads: none
-  lead: none
+  # Every stem through the console, by the operator's decision of 2026-09-16:
+  # everything on. The measured cost is 3.7 to 4.6 dB across presence, bite,
+  # air and top and about 6 dB of stereo width, because a phaser puts the same
+  # notches in both channels and so removes energy and narrows the picture at
+  # once. Written down so a later reader knows the trade was chosen rather than
+  # overlooked; kit and bass alone is two words away.
+  pads: vcs_warm
+  lead: vcs_wide
   bass: vcs_tight
   kit: vcs_warm
-  dust: none
+  dust: vcs_tight
+
 # The machine the sum goes to tape on, before the master's own console. The
 # head bump is the low lift a tape head gives near 60 Hz, wow is the capstan's
 # slow speed error and flutter its fast one, the rolloff is the top the tape

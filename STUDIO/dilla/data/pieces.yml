@@ -381,7 +381,7 @@ pieces:
       pad_racks: [wash]
       overtones: { partials: [2, 3, 4, 6], gain_db: -20 }
       lead: { plays_odds: 0.7, rack_names: [tape, weather] }
-      drums: { arrangement: { bank_order: [dilla], bars_per_shape: 8 }, samples: *kit_crate }
+      drums: { grid_banks: { own: [dnb] }, arrangement: { bank_order: [own], bars_per_shape: 8 }, samples: *kit_crate }
       master_bus: { console: twelve_bit }
       catalogue: { min_chords: 8, max_chords: 8, crossfade_s: 1.0 }
 
@@ -395,7 +395,7 @@ pieces:
       pad_racks: [shimmer]
       overtones: { partials: [2, 3, 5], gain_db: -21 }
       lead: { rack_names: [octave, weather] }
-      drums: { arrangement: { bank_order: [dilla, flylo], bars_per_shape: 4 }, samples: *kit_crate }
+      drums: { grid_banks: { own: [my_little_pony] }, arrangement: { bank_order: [own], bars_per_shape: 4 }, samples: *kit_crate }
       catalogue: { min_chords: 8, max_chords: 8, crossfade_s: 1.0 }
 
   - name: sandviken_hotell
@@ -410,7 +410,8 @@ pieces:
       overtones: { partials: [2, 3, 4], gain_db: -22 }
       lead: { plays_odds: 0.8, rack_names: [ring, octave] }
       drums:
-        arrangement: { bank_order: [techno, industrial], bars_per_shape: 8 }
+        grid_banks: { own: [sandviken_hotell] }
+        arrangement: { bank_order: [own], bars_per_shape: 8 }
         samples: *kit_industrial
         feels: *feel_rigid
       master_bus: { console: blown }
@@ -445,7 +446,8 @@ pieces:
       overtones: { partials: [2, 3, 4, 5], gain_db: -20 }
       lead: { plays_odds: 0.7, rack_names: [octave, ring] }
       drums:
-        arrangement: { bank_order: [techno], bars_per_shape: 8 }
+        grid_banks: { own: [andand2] }
+        arrangement: { bank_order: [own], bars_per_shape: 8 }
         samples: *kit_industrial
         feels: *feel_rigid
       master_bus: { console: blown }
@@ -499,7 +501,7 @@ pieces:
       min_attack_s: 0.6
       overtones: { partials: [2, 3, 4, 5, 6], gain_db: -18 }
       lead: { plays_odds: 0.6, rack_names: [ghost, tape] }
-      drums: { arrangement: { bank_order: [dilla], bars_per_shape: 8 }, samples: *kit_crate }
+      drums: { grid_banks: { own: [home_improvement] }, arrangement: { bank_order: [own], bars_per_shape: 8 }, samples: *kit_crate }
       master_bus: { console: twelve_bit }
       catalogue: { min_chords: 4, max_chords: 4, crossfade_s: 1.0 }
 
@@ -602,6 +604,6 @@ pieces:
       pad_racks: [wash]
       overtones: { partials: [2, 3, 4], gain_db: -21 }
       lead: { plays_odds: 0.7, rack_names: [tape, weather] }
-      drums: { arrangement: { bank_order: [dilla], bars_per_shape: 4 }, samples: *kit_crate }
+      drums: { grid_banks: { own: [gresk_valutta] }, arrangement: { bank_order: [own], bars_per_shape: 4 }, samples: *kit_crate }
       master_bus: { console: twelve_bit }
       catalogue: { min_chords: 4, max_chords: 4, crossfade_s: 1.0 }
