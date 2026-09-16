@@ -342,6 +342,36 @@ call, and the operator's. The pass's doctrine lives in `WIRING_NOTES.md`.
 
 Wishes and measured proposals not yet shipped; each section is dated.
 
+## What /fix does not yet do — opened 2026-09-16
+
+`/fix` became the whole improvement operation that day — it observes, lets the
+council argue and propose five to twenty repairs an issue, cherry-picks one per
+issue, repairs, and observes again, ending as DONE, PLATEAU, VALIDATION_FAILED
+or BLOCKED — and `/scan` left the vocabulary. Three pieces of the handoff were
+not built, each on purpose.
+
+- **A finding is not classified.** The loop treats every violation the same and
+  orders them by rule and severity. The handoff asks for `mandatory_violation`,
+  `actionable_opportunity`, `human_decision`, `informational` and `blocked`, so
+  an opportunity cannot churn and a decision that is not MASTER's stops the
+  loop. That classification is also the only thing that would emit a
+  HUMAN_DECISION_REQUIRED terminal state; `FixLoop::TERMINAL_STATES` deliberately
+  has no such state while nothing detects one. Seams:
+  `lib/fix/fix_loop/pass_runner.rb`, `data/rules.yml` severities.
+- **Nothing converges on the rendered artifact.** For a standalone page, `/fix`
+  reads source; typography, hierarchy, keyboard reachability and runtime errors
+  are measured by `RAILS/gates/lib/rendered/*` on the deploy host and never come
+  back into the loop. A repair that satisfies a rule and breaks the page reads
+  as progress.
+- **The council's cost inside a pass is unmeasured.** It asks one panel per pass
+  over up to twelve files. On a spent OpenRouter balance the free lanes answer,
+  but nobody has run a full `/fix` against a real target and priced it. Measure
+  before raising `CouncilRound::FILES_PER_ROUND` or the pass budget.
+
+Two lanes of the model pool are built and unproven: Replicate has no valid key
+on this Mac or on vm23, and the local OpenAI-compatible lane was proved against
+a running `mistralrs serve` only to the point of a 500 from mistral.rs itself.
+
 ## Found by the backlog pass — opened 2026-09-14
 
 The agents that worked this file on 2026-09-14 and noticed these outside their
@@ -354,12 +384,14 @@ slices. Each is a hypothesis with its seam.
   `visual_bridge.js` reads `event.pct`, `event.modules` and `event.spirit_radius`
   from the top level, so they arrive undefined. Fixing it changes what the face
   shows: the operator's.
-- **`test_ratchets` is red on rows nobody moved on purpose.** Over the ceiling:
-  `rule_audit.silent` 44/40, `growth.rails` 1998/1980 (model tests and a
-  migration), and `namespace` 3/2 from `STUDIO/dilla/lib/sine_stream.rb`. Slack
-  on `spine.lib_body_ceiling`, `growth.master`, `self_findings`, `data_reach`
-  and `sprawl.lone_dirs`. Each row wants its fall recorded or its raise named,
-  never absorbed.
+- **`test_ratchets` is red on rows nobody moved on purpose.** Over the ceiling
+  on 2026-09-16: `spine.lib_body_ceiling`, `growth.master`, `growth.rails`,
+  `growth.openbsd`, `growth.studio`, `self_findings.registry`,
+  `entrypoints.openbsd` and `namespace`. The numbers move every few hours while
+  four sessions write, so read them from `bin/operator measure` rather than from
+  here. Each row wants its fall recorded or its raise named, never absorbed —
+  and the growth is several sessions' at once, which is why no one session has
+  been willing to own the raise.
 - **The CLI's last seams.** Rotate the web token printed at boot on 2026-09-13;
   it sits in two saved terminal transcripts in `~/Downloads` (operator). With
   `CLI::Propose` gone, `Ground::BiasGuard` has no runtime caller and the
@@ -829,13 +861,13 @@ state over `.master/`, `tick!` and `reflect!`), `Ground::PersonalWorkspace`
 (per-subject `USER.md` and `MEMORY.md`), `Ground::StandingOrders`, the event
 bus, and `lib/core/execution`'s states with the runs and session recovery
 tests.
-Open:
 
-- **No durable objective ledger.** An objective wants an owner, a wake
-  condition (time, event or heartbeat), evidence of progress, a verification
-  step and an authority domain, and it must survive a restart.
-- **No per-domain capability boundary,** so nothing stops a finance or
-  household objective reaching coding tools or another domain's memory.
+Closed 2026-09-16: `Ground::StandingOrders` is the ledger the intake asked for
+— an order carries an owner, an authority domain, a wake (schedule, event or
+heartbeat), the evidence each run and check printed, and a verify command whose
+exit decides whether it is met, all persisted in `.master/` — and
+`Tool::Domain` is the boundary, with `/orders consent|revoke <domain>` and
+finance, household and devices starting off.
 
 The fences: MASTER is never wired in as an OpenClaw or OpenCrabs backend, only
 learned from; progress is command output, not a claim (`anti_simulation`); and
@@ -903,12 +935,6 @@ under other names, so grep for the mechanism, never the proposal's word.
   `/home/*/app/storage`, tts-worker log owner) and the `df -ik` disk check must
   pass, and `/health` `deploy.git_sha` must name the booted commit. No reboot of
   vm23 has been verified end to end; do one in a window the operator picks.
-- **dilla may orphan its children on Ctrl-C (unverified).**
-  `system_with_timeout` spawns with `pgroup: true`, so the terminal's SIGINT
-  never reaches the child, and it kills the group only on timeout; the looping
-  play path traps INT with a bare `exit 0`. Check with `ps` after interrupting a
-  render and a looped play; the fix lives in `STUDIO/dilla/dilla.rb`, which
-  another session holds uncommitted.
 
 ## STUDIO/dilla mix and reference research — ChatGPT intake 2026-09-11
 
