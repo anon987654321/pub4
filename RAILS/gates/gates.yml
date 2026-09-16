@@ -50,7 +50,10 @@
 # browser, research/ scores rather than verdicts.
 #
 # Order is run order.
-production:
+rails_doctrine:
+  script: rails_doctrine.rb
+  pass: "rails_doctrine: Rails Doctrine and MASTER rules passed"
+  covered_by: release
 
 production:
 
