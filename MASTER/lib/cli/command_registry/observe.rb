@@ -46,7 +46,8 @@ module Master
         return request.pairs if request.pairs.is_a?(String)
 
         pairs, profile, rule_filter, severity_filter = request.pairs, request.profile, request.rule_filter, request.severity_filter
-        pass1_total = run_scan_pass1(pairs:, profile:, rule_filter:, severity_filter:, dry_run:, root:, holder:)
+        pass1_total = run_scan_pass1(pairs:, profile:, rule_filter:, severity_filter:, dry_run:, root:, holder:,
+                                     do_autofix:)
 
         pairs, autofixes = run_scan_autofix_phase(
           scanner:, root:, clean_arg:, pairs:, do_autofix:, dry_run:, no_autofix:,
@@ -60,14 +61,19 @@ module Master
         text
       end
 
-      def run_scan_pass1(pairs:, profile:, rule_filter:, severity_filter:, dry_run:, root:, holder:)
+      # "pass 1" is only a first pass when a second one follows. With no fix
+      # phase — a dry run, or --no-autofix — it reported the same counts the
+      # "done" line reports four lines later, and the snapshot line under it
+      # named the same two files twice. The snapshot is still written either
+      # way: an interrupted scan leaving nothing behind is what it is for.
+      def run_scan_pass1(pairs:, profile:, rule_filter:, severity_filter:, dry_run:, root:, holder:, do_autofix: true)
         pass1 = Scan::Report.new(
           pairs:, profile:, rule_filter:, severity_filter:,
           dry_run:, phase: "pass1"
         )
-        Scan::Live.emit("pass 1, #{pass1.brief}")
+        Scan::Live.emit("pass 1, #{pass1.brief}") if do_autofix
         holder[:text] = pass1.render
-        Scan::Live.snapshot!(holder[:text], root:, note: "pass1 before autofix")
+        Scan::Live.snapshot!(holder[:text], root:, note: "pass1 before autofix", announce: false)
         pass1.total_count
       end
 
