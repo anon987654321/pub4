@@ -207,6 +207,8 @@ module Deploy
       # visited with a stale locale choice re-answers in that language.
       cdp.clear_cookies
       cdp.navigate(surface.url)
+      return { "error" => "chrome error page — nothing answered at #{surface.url}" } if browser_error_page?(cdp)
+
       wait_for_fonts(cdp)
       # Status first. A 403 host-authorization page or a 500 renders a
       # perfectly measurable DOM that has nothing to do with the design, and
@@ -214,6 +216,18 @@ module Deploy
       cdp.evaluate(WALK).merge(GeometryType.probe(cdp)).merge(glyph_coverage(cdp)).merge("status" => cdp.status)
     rescue CdpSession::Error => e
       { "error" => "#{e.class.name.split('::').last}: #{e.message}" }
+    end
+
+    # Chrome answers a refused connection with its own page, and that page has a
+    # DOM: measured on vm23 while amber and bsdports were shed, eight surfaces
+    # were graded on Chrome's "site can't be reached" — its reload and details
+    # buttons were reported as the app's controls, painting no state. A failed
+    # navigation carries no navigation-timing status either, so `ok?` read the
+    # zero as fine. The scheme is the tell.
+    def self.browser_error_page?(cdp)
+      cdp.evaluate("location.protocol === 'chrome-error:'") == true
+    rescue CdpSession::Error
+      false
     end
 
     # A glyph probe that breaks costs its own answer, not the surface's walk.
