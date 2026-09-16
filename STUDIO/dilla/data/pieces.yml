@@ -17,6 +17,33 @@
 # A piece is repeatable because it is written here rather than drawn: the same
 # name and the same RENDER_SEED give the same take.
 
+# demo.wav: ninety seconds, not the whole catalogue.
+#
+# Thirty-one pieces is eighteen minutes and nobody listens to eighteen minutes
+# of a demo. The showcase is ten of them at nine seconds each, ordered so no two
+# neighbours share a tempo, a family, a drum bank or a console: a Rhodes vamp at
+# 88, the operator's own ninths at 98, a Flying Lotus stagger at 72, four to the
+# floor at 124, industrial at 138, footwork at 160, his own set at 166, then two
+# ambient pieces with no kit at all and a half-time close. Everything the engine
+# can be, inside a minute and a half.
+#
+# Nine seconds is two to four bars depending on the tempo, which is one statement
+# of a loop. `ruby dilla.rb catalogue-full` renders all thirty-one at length.
+showcase:
+  seconds_each: 9
+  crossfade_s: 0.7
+  order:
+    - fall_in_love
+    - dnb_ninths
+    - quartal_mediants
+    - house_pump
+    - hate_rumble
+    - footwork
+    - sandviken_hotell
+    - still_water
+    - two_moons
+    - so_what
+
 # What every piece starts from, before its own block.
 #
 # The lead is the change the operator asked for on 2026-09-16: at -7 dB playing
@@ -77,7 +104,7 @@ pieces:
       lead: { plays_odds: 0.55, rack_names: [tape, ghost] }
       drums: { arrangement: { bank_order: [dilla], bars_per_shape: 4 }, samples: *kit_crate }
       master_bus: { console: twelve_bit, crush_bits: 12, crush_mix: 0.24 }
-      catalogue: { min_chords: 2, max_chords: 4, crossfade_s: 1.0 }
+      catalogue: { min_chords: 4, max_chords: 4, crossfade_s: 1.0 }
 
   - name: time_donut
     progression: maj7_minor_cycle
@@ -130,7 +157,7 @@ pieces:
       overtones: { partials: [2, 3, 4, 5, 6, 8], gain_db: -18 }
       lead: { plays_odds: 0.5, gain_db: -3, rack_names: [ghost, tape] }
       drums: { arrangement: { bank_order: [dilla], bars_per_shape: 8 }, samples: *kit_crate, gain_db: -9 }
-      catalogue: { min_chords: 2, max_chords: 4, crossfade_s: 1.0 }
+      catalogue: { min_chords: 4, max_chords: 4, crossfade_s: 1.0 }
 
   # ---- The abstract side -------------------------------------------------
   - name: quartal_mediants
@@ -187,7 +214,7 @@ pieces:
         feels: *feel_rigid
         hat_accents: { downbeat: 0.6, eighth: 0.95, sixteenth: 0.5, jitter: 0.15, open_odds: 0.6 }
       bass: { wave: square, cutoff_hz: 520, decay: 0.55, gain_db: -6 }
-      catalogue: { min_chords: 2, max_chords: 4, crossfade_s: 1.0 }
+      catalogue: { min_chords: 4, max_chords: 4, crossfade_s: 1.0 }
 
   - name: four_floor
     progression: four_on_floor_minor
@@ -205,7 +232,7 @@ pieces:
         feels: *feel_rigid
       bass: { wave: saw, cutoff_hz: 600, decay: 0.5, gain_db: -6 }
       master_bus: { console: blown, drive: 1.45 }
-      catalogue: { min_chords: 2, max_chords: 4, crossfade_s: 1.0 }
+      catalogue: { min_chords: 4, max_chords: 4, crossfade_s: 1.0 }
 
   - name: detroit
     progression: detroit_suspension
@@ -223,7 +250,7 @@ pieces:
         samples: *kit_industrial
         feels: *feel_rigid
       master_bus: { console: air, width: 1.16 }
-      catalogue: { min_chords: 2, max_chords: 4, crossfade_s: 1.0 }
+      catalogue: { min_chords: 4, max_chords: 4, crossfade_s: 1.0 }
 
   - name: hate_rumble
     progression: ostinato_tritone_pair
@@ -261,7 +288,7 @@ pieces:
         arrangement: { bank_order: [techno, industrial], bars_per_shape: 4 }
         samples: *kit_crate
         feels: *feel_swung
-      catalogue: { min_chords: 2, max_chords: 2, crossfade_s: 1.0 }
+      catalogue: { min_chords: 4, max_chords: 4, crossfade_s: 1.0 }
 
   # ---- Ambient -----------------------------------------------------------
   - name: still_water

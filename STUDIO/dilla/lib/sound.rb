@@ -293,6 +293,45 @@ module AnalogSynth
       amp: Envelope.new(attack: 0.55, decay: 0.8, sustain: 0.82, release: 1.6),
       filter_env: Envelope.new(attack: 1.8, decay: 1.2, sustain: 0.7, release: 1.2),
     },
+    # A struck tine, which is what an electric piano is: a bell partial two octaves
+    # up that is gone in a sixth of a second, over a near-sine body that holds. The
+    # difference between those two decays is the whole character, and one amplitude
+    # envelope for the stack cannot say it — which is why osc_decay exists. The two
+    # sines a cent apart are the tine and its pickup beating, slowly, on purpose.
+    #
+    # e_piano was standing in for this and was a triangle under a square an octave
+    # up: the square's odd harmonics land between the tones of a ninth chord and
+    # fight them, and its sustain of zero killed a held chord in a second and a
+    # half.
+    rhodes_tine: {
+      waves: %i[sine sine triangle], detune: [0.0, 1.2, 0.0], octaves: [0, 0, 2],
+      osc_decay: [nil, nil, 0.16], drift_cents: 0.6,
+      cutoff: 1400.0, env_amount: 1800.0, resonance: 0.10, drive: 1.06,
+      amp: Envelope.new(attack: 0.004, decay: 2.6, sustain: 0.42, release: 1.4),
+      filter_env: Envelope.new(attack: 0.002, decay: 0.8, sustain: 0.30, release: 0.9),
+    },
+    # Two saws either side of centre with a square an octave below, into a filter
+    # that opens over a quarter of a second and closes again. The detune is inside
+    # the voice, where a polysynth's drift belongs, so chords stay in tune with
+    # each other while each chord is wide on its own.
+    prophet_five: {
+      waves: %i[saw saw square], detune: [-6.0, 6.0, 0.0], octaves: [0, 0, -1],
+      drift_cents: 0.9,
+      cutoff: 380.0, env_amount: 2800.0, resonance: 0.28, drive: 1.0,
+      amp: Envelope.new(attack: 0.05, decay: 1.4, sustain: 0.72, release: 1.0),
+      filter_env: Envelope.new(attack: 0.20, decay: 1.8, sustain: 0.35, release: 1.0),
+    },
+    # The string machine: a divide-down stack that does not articulate at all, held
+    # wide by three layers a few cents apart rather than by a filter doing
+    # anything. Nearly no envelope on purpose — these machines had one speed, and
+    # the ensemble was the instrument.
+    vp330_ensemble: {
+      waves: %i[triangle triangle saw triangle], detune: [-8.0, 8.0, 0.0, 0.0],
+      octaves: [0, 0, 0, 1], drift_cents: 0.5,
+      cutoff: 1600.0, env_amount: 400.0, resonance: 0.08, drive: 0.9,
+      amp: Envelope.new(attack: 0.50, decay: 1.6, sustain: 0.88, release: 2.0),
+      filter_env: Envelope.new(attack: 1.4, decay: 1.6, sustain: 0.75, release: 1.4),
+    },
     # Leads that are not a buzzsaw.
     #
     # A saw has every harmonic in it. That is what a lead wants in a mix with a
@@ -415,13 +454,22 @@ module AnalogSynth
   # `hz` is the pitch, `at` the time it starts, `held` how long the key is down.
   # Voices are rendered one at a time and summed, which is exactly what a
   # polyphonic synthesiser does.
-  def render_note!(left, right, patch:, hz:, at:, held:, gain: 1.0, seed: 0)
+  def render_note!(left, right, patch:, hz:, at:, held:, gain: 1.0, seed: 0, drift_cents: nil)
     spec = PATCHES.fetch(patch) { PATCHES.fetch(:warm_pad) }
     rng = Random.new(seed)
     # Analogue drift: this voice is a few cents off, permanently, and its
     # oscillators do not start at the same point in their cycles. Both are
     # imperfections and both are why it does not sound printed.
-    voice_drift = 2.0**((rng.rand(-4.0..4.0)) / 1200.0)
+    #
+    # How far off is the caller's business, because it depends on what is being
+    # played. Every note is seeded separately, so on a chord this is not one
+    # instrument drifting -- it is each chord tone pulled somewhere else, and at
+    # the old flat four cents two tones could sit eight cents apart. A line does
+    # not care and a ninth chord does: the beating between its own partials is
+    # the sound, and detuning the tones against each other destroys it. A melodic
+    # caller keeps the four it always had.
+    spread = (drift_cents || spec[:drift_cents] || 4.0).to_f
+    voice_drift = spread.positive? ? 2.0**(rng.rand(-spread..spread) / 1200.0) : 1.0
     phases = spec[:waves].map { rng.rand }
 
     ladder = Ladder.new
@@ -434,6 +482,16 @@ module AnalogSynth
       hz * voice_drift * (2.0**spec[:octaves][i]) * (2.0**(spec[:detune][i] / 1200.0))
     end
     level = 1.0 / spec[:waves].length
+
+    # Per-oscillator decay, as a multiplier stepped once per sample rather than an
+    # exp() per oscillator per sample: at 44.1 kHz and three oscillators that is
+    # 132,300 exponentials a second of audio, and this renderer is already the
+    # slow part. nil is an oscillator that does not decay on its own.
+    osc_gain = Array.new(spec[:waves].length, 1.0)
+    osc_step = spec[:waves].each_index.map do |k|
+      tau = spec[:osc_decay] && spec[:osc_decay][k]
+      tau ? Math.exp(-1.0 / (RATE * tau)) : nil
+    end
 
     # Modulation, and all of it is off unless a patch asks. Each is guarded on a
     # positive value rather than multiplied by zero, so a patch that declares
@@ -467,7 +525,12 @@ module AnalogSynth
       raw = 0.0
       spec[:waves].each_with_index do |shape, k|
         phases[k] = (phases[k] + (freqs[k] * bend / RATE)) % 1.0
-        raw += wave(shape, phases[k]) * level
+        if osc_step[k]
+          raw += wave(shape, phases[k]) * level * osc_gain[k]
+          osc_gain[k] *= osc_step[k]
+        else
+          raw += wave(shape, phases[k]) * level
+        end
       end
 
       # The filter envelope decides the cutoff, moment by moment. This is the
@@ -510,7 +573,7 @@ module AnalogSynth
   #
   # Each group is {patch:, notes:}. The seed advances across every note in
   # order, so a single-group call is identical to what render! did alone.
-  def render_groups!(groups, dest:, duration:, seed: 4242)
+  def render_groups!(groups, dest:, duration:, seed: 4242, drift_cents: nil)
     groups = Array(groups).reject { |g| g[:notes].nil? || g[:notes].empty? }
     return nil if groups.empty?
 
@@ -522,7 +585,7 @@ module AnalogSynth
     groups.each do |group|
       group[:notes].each do |note|
         render_note!(left, right, patch: group[:patch], hz: note[:hz], at: note[:at],
-                     held: note[:held], gain: note[:gain] || 1.0, seed: seed + i)
+                     held: note[:held], gain: note[:gain] || 1.0, seed: seed + i, drift_cents:)
         i += 1
       end
     end
@@ -548,7 +611,7 @@ module AnalogSynth
   # wants to put one layer through a reverb and leave another dry needs each
   # layer on its own, which neither the file writer nor the PCM packer can hand
   # back.
-  def buffers!(groups, duration:, seed: 4242)
+  def buffers!(groups, duration:, seed: 4242, drift_cents: nil)
     groups = Array(groups).reject { |g| g[:notes].nil? || g[:notes].empty? }
     return nil if groups.empty?
 
@@ -559,7 +622,7 @@ module AnalogSynth
     groups.each do |group|
       group[:notes].each do |note|
         render_note!(left, right, patch: group[:patch], hz: note[:hz], at: note[:at],
-                     held: note[:held], gain: note[:gain] || 1.0, seed: seed + i)
+                     held: note[:held], gain: note[:gain] || 1.0, seed: seed + i, drift_cents:)
         i += 1
       end
     end
