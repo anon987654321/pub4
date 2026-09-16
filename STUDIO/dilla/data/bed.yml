@@ -70,6 +70,18 @@ patches:
 min_attack_s: 0.4
 chord_level_db: -14
 pad_racks: [wash, shimmer]
+# Which families deal_instruments draws from and which presets inside them.
+# All of both here; a piece in data/pieces.yml narrows the list, and that
+# narrowing is most of what makes one piece a Rhodes record and the next a
+# Prophet one. An empty list means all of them, not none.
+pad_families: [rhodes, moog, prophet]
+pad_patches: []
+# The harmonic series under the chord: sines at whole multiples of its lowest
+# note. A whole multiple of a frequency is what being in tune means, so this
+# can be poured on without leaving the key -- the difference between a chord
+# that is sustained and one that is lush. Off in the bed itself, where speech
+# sits on top and the midrange is spoken for; the ambient pieces run it at -15.
+overtones: { partials: [], gain_db: -20 }
 hocket_odds: 0.33
 reverse_odds: 0.17
 bag_depth: 3
@@ -106,7 +118,35 @@ sidechain:
 # plays, and the player crossfades to a copy of the pass with the voice
 # band carved out and the level down.
 speech: { flag: "~/.claude/hooks/speaking", duck_db: -4, carve: { hz: 2800, octaves: 1.0, gain_db: -6 }, attack_ms: 120, release_ms: 700 }
-master_bus: { drive: 1.25, pre_clip_threshold: 0.9, rumble_hz: 42, body_hz: 100, crush_bits: 14, crush_mix: 0.18, width: 1.08, mono_below_hz: 120, limit: 0.92 }
+master_bus: { drive: 1.25, pre_clip_threshold: 0.9, rumble_hz: 42, body_hz: 100, crush_bits: 14, crush_mix: 0.18, width: 1.08, mono_below_hz: 120, limit: 0.92, console: none }
+# The console a bus may leave through. lib/livesets.rb writes Sonitex STX-1260
+# and Nasty VCS as chains and measures both; these are the stacks, named, so a
+# piece picks its colour with a word. One instance is a colour and three are a
+# sound, which is why glue is three.
+#
+#   none        the bus as it was before a piece could ask for a console.
+#   glue        the sets' master row: vcs, a 1260, vcs again.
+#   twelve_bit  the sampler lineage, hard: 12 bits and a 7.6 kHz ceiling.
+#   air         gentler, for something held -- the crush that reads as grit on
+#               a stab reads as hiss on a pad. Its ceiling is 15 kHz:
+#               at the sets' 9 kHz an ambient piece measured -34 dB at 8k and
+#               -50 at 16k, which is not gentle, it is closed.
+#   blown       the 1260 at full wet, half rate, driven a quarter harder.
+consoles:
+  none: []
+  glue:
+    - [vcs, { depth: 0.34, smear: 2.4 }]
+    - [sonitex, { bits: 10, lo: 46, hi: 11500, drive: 1.1 }]
+    - [vcs, { depth: 0.26, smear: 3.6 }]
+  twelve_bit:
+    - [sonitex, { bits: 12, lo: 70, hi: 7600, drive: 1.22 }]
+    - [vcs, { depth: 0.5, smear: 1.6 }]
+  air:
+    - [vcs, { depth: 0.3, smear: 4.4 }]
+    - [sonitex, { bits: 13, lo: 42, hi: 15000, drive: 1.04 }]
+  blown:
+    - [sonitex, { bits: 8, lo: 60, hi: 6000, drive: 1.5, mix: 1.0, samples: 2 }]
+    - [vcs, { depth: 0.6, smear: 1.2 }]
 # Measured rather than chosen, and only part of each delta applied: a full
 # correction chases the reference into its own arrangement, and this one
 # has speech on top. It sits after the compressor, whose makeup gain would

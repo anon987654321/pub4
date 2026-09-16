@@ -14,26 +14,48 @@ twice — once naming a file that had not existed for months, once naming a
 directory that has never existed — and both times it sent an operator to
 validate nothing and read the result as passing.
 
-Bare `ruby dilla.rb` writes `demo.wav` beside it: one piece of about six
-minutes in which every part of the engine plays and answers the others. The bass
-states the key, one verified progression follows it and later comes back
-mirrored about that key, the lead's motif is read from the chords, percussion
-answers each lead note, and filter and gain lanes carry the form. The drums play
-every bar. A dilla kit and a HATE layer drawn from `DillaSemantics` run under
-lanes of their own, so the heavy section pushes one over the other rather than
-switching records, and the kick drops out for a bar or two at most before a return.
-Every note is an event before it sounds, and the swing, ratchets, stutters and
-reversals are transforms that `data/bed.yml` names under `composition`.
+Bare `ruby dilla.rb` writes `demo.wav` beside it: sixteen short pieces that are
+not each other, about ten minutes in all, hip hop through techno into ambient.
+Each one is a row of `data/pieces.yml`, and a row names everything the bed knows
+how to be — its tempo, which oscillator family plays the chords, which drum
+grids and which crate the kit comes from, how loud and how treated the lead is,
+and which console the master bus leaves through. The row is laid over
+`data/bed.yml` before the bed reads a single number, so a piece renders in a
+process of its own and keeps its own clock. Five of the sixteen are progressions
+transcribed off Dilla records; the rest the engine wrote. Under every held chord
+runs its own harmonic series, whole multiples of its lowest note, which is in
+tune by construction and is what makes a sustained chord lush rather than merely
+long.
 
-`ruby dilla.rb catalogue` plays the catalogue through the bed and writes
-`demo.wav` and `demo.mp3`. The catalogue is the seven verified recordings and the
-twelve improvisations. The bed voices each piece on one instrument, voice-led,
-with the drums on top, a lead and a bass under it, and sets every piece to the
-same loudness under a true-peak ceiling. The bed began as the pad under MASTER's
-narration and became the engine's render because it sounded better than the
-engine's own catalogue; `ruby dilla.rb bed` still plays it under the narration,
-ducking while a line is spoken, and `STUDIO/dilla/data/bed.yml` holds every
-number it uses. `ruby dilla.rb demo-all` renders the older engine's catalogue.
+`ruby dilla.rb compose` writes the other demo: one piece of about six minutes in
+which every part of the engine plays and answers the others. The bass states the
+key, one verified progression follows it and later comes back mirrored about that
+key, the lead's motif is read from the chords, percussion answers each lead note,
+and filter and gain lanes carry the form. The drums play every bar. A dilla kit
+and a HATE layer drawn from `DillaSemantics` run under lanes of their own, so the
+heavy section pushes one over the other rather than switching records, and the
+kick drops out for a bar or two at most before a return. Every note is an event
+before it sounds, and the swing, ratchets, stutters and reversals are transforms
+that `data/bed.yml` names under `composition`.
+
+`ruby dilla.rb catalogue` plays the older catalogue through one unchanged bed:
+the seven verified recordings and the twelve improvisations, voiced on one
+instrument each, voice-led, with the drums on top, a lead and a bass under it,
+and every piece set to the same loudness under a true-peak ceiling. The bed began
+as the pad under MASTER's narration and became the engine's render because it
+sounded better than the engine's own catalogue; `ruby dilla.rb bed` still plays
+it under the narration, ducking while a line is spoken, and
+`STUDIO/dilla/data/bed.yml` holds every number it uses. `ruby dilla.rb demo-all`
+renders the older engine's catalogue.
+
+Old work comes back. An Ableton set is a gzipped XML document, so
+`ruby dilla.rb import-als <file.als>` reads a set that may no longer open in
+Live and prints its tempo, its tracks and the devices each one ran, the harmony
+of every track that plays chords and the drum grid of every track that plays
+drums. With `--write` the grids join `samples/midi` and the recipe lands in
+`project/imported`, ready to paste into `data/pieces.yml`. The audio is not in
+the file and the samples it pointed at are usually gone; what comes back is the
+writing, and the engine plays it on instruments it synthesises itself.
 Bare `ruby dilla.rb` does not open by asking what you want, as postpro and
 preprompt do: a render is reproduced from its knobs and its seed, and a question
 at the start is a step a script cannot answer.
@@ -378,7 +400,9 @@ path, or accept that the old seeds are gone and say so where they are recorded.
 
 Run everything from `STUDIO/dilla`. `ruby dilla.rb out.wav 18` renders one
 track of eighteen bars, and naming `TRACK=kembara_rindu` in front of it picks
-the track. Bare `ruby dilla.rb` renders the six-minute piece into `demo.wav`, `ruby dilla.rb stream` plays without end, and `ruby dilla.rb help`
+the track. Bare `ruby dilla.rb` renders the sixteen-piece catalogue into `demo.wav`,
+`ruby dilla.rb piece <name>` renders one of them, `ruby dilla.rb compose` renders
+the six-minute piece, `ruby dilla.rb stream` plays without end, and `ruby dilla.rb help`
 prints every command from the table the dispatcher reads.
 
 The crate has its own verbs. `chop` cuts a long recording into beds, reading

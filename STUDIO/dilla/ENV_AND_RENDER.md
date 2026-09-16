@@ -283,6 +283,38 @@ sidechain amix → sonitex → analog → heuristics → loudnorm
 - **No style sequence** — one DNA every slot; mix knobs only (`STREAM_COMFORT`, etc.)
 - **Style DNA wins** after force; `STREAM_CREATIVE_MAX` only when `STREAM_CREATIVE=1` or `STREAM_PUNCH=1`
 
+## The catalogue demo.wav plays
+
+Sixteen rows in `data/pieces.yml`. Each is laid over `data/bed.yml` by
+`lib/pieces.rb` before `module Bed` reads a number, so a row may set anything
+the bed has — tempo, `pad_families`, `lead.rack_names`, `drums.arrangement`,
+`drums.samples`, `master_bus.console`, `overtones`.
+
+```sh
+cd STUDIO/dilla
+ruby dilla.rb                      # the catalogue -> demo.wav + demo.mp3
+ruby dilla.rb pieces-list          # the table, one line each
+ruby dilla.rb piece still_water out.wav
+RENDER_SEED=42 ruby dilla.rb       # the same take again
+ruby dilla.rb compose              # the six-minute piece instead
+```
+
+`DILLA_PIECE=<name>` is the knob under all of it: it chooses the overlay at
+load, so anything that boots `dilla.rb` with it set is that piece. `piece`
+sets it and re-execs when it was typed by hand, because a name that arrives in
+`ARGV` arrives after `Bed` has already settled its constants.
+
+## Reading an old Ableton set
+
+```sh
+ruby dilla.rb import-als "~/Downloads/kp Project/kp.als"
+ruby dilla.rb import-als "~/Downloads/kp Project/kp.als" --write
+```
+
+Prints tempo, tracks, devices, the harmony of each chord track and the grid of
+each drum track. `--write` puts the grids in `samples/midi/<slug>/` and the
+recipe in `project/imported/<slug>.yml`.
+
 ## Full playlist demo
 
 ```sh

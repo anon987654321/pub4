@@ -34375,6 +34375,240 @@ end
 # module is the method. It renders with ffmpeg and its own oscillators, and
 # reaches into the engine only for what the engine owns: the progression table,
 # the chord resolver, the catalogue's order and the bass line's generator.
+# The catalogue as a table of recipes.
+#
+# demo.wav is not one beat played through nineteen progressions. Each piece in
+# data/pieces.yml names its own tempo, instrument family, drum bank, kit, lead
+# level and console, and those land as an overlay on data/bed.yml before module
+# Bed reads a single constant out of it. Everything the bed already knows how to
+# do is reachable from that one file, and a piece is repeatable because its
+# recipe is written down rather than drawn.
+#
+# One piece renders in its own process -- `ruby dilla.rb piece <name> <out.wav>`
+# -- because the bed's numbers are constants resolved once at load, and tempo is
+# the first of them. A Ruby boot costs about a second against a render that
+# costs thirty, which is the whole price of giving every piece its own clock.
+module Pieces
+  module_function
+
+  FILE = File.join(ROOT, "data", "pieces.yml")
+
+  def table = @table ||= YAML.load_file(FILE, aliases: true)
+  def defaults = table.fetch("defaults", {})
+  def rows = table.fetch("pieces")
+  def names = rows.map { |row| row.fetch("name") }
+  def fetch(name) = rows.find { |row| row.fetch("name") == name.to_s }
+  def progression(name) = fetch(name)&.fetch("progression")
+
+  # Hashes merge key by key; an array or a scalar replaces what it lands on. A
+  # piece that names two grid banks means those two, not those two added to the
+  # five underneath -- which is the difference between a techno piece and a
+  # techno piece that still plays boom bap every third block.
+  def deep_merge(base, over)
+    return over unless base.is_a?(Hash) && over.is_a?(Hash)
+
+    base.merge(over) { |_key, mine, theirs| deep_merge(mine, theirs) }
+  end
+
+  # data/bed.yml with the piece's own numbers on top. An unknown name stops the
+  # render: without this it falls through to the plain bed and produces a
+  # finished, good-sounding piece that is not the one asked for, which is the
+  # one failure that sounds like success.
+  def overlay(bed, name)
+    return bed if name.nil? || name.to_s.empty?
+
+    row = fetch(name) or abort "pieces: no piece named #{name} — have #{names.join(', ')}"
+    deep_merge(deep_merge(bed, defaults), row.fetch("bed", {}))
+  end
+end
+
+# Ableton Live sets, read.
+#
+# An .als is a gzipped XML document and nothing else, which means a set that
+# will not open in Live -- wrong version, missing plugin, corrupt project -- is
+# still entirely readable here. What a set holds that this engine can use is the
+# tempo, the track names, the devices each track ran, and every note: 31,000 of
+# them in one of the operator's own sets. The audio is not in the file, and the
+# samples it points at may be gone; the writing is all in the XML.
+#
+# So an old beat comes back as what it actually was -- a tempo, a progression
+# and a set of drum grids -- and is then played by an engine that synthesises
+# every sound, rather than by a host that needs the plugins back. That is the
+# whole of why this is worth having: the harmony and the placement survive, and
+# the instrument is replaced by a better one.
+#
+# The chord namer here reads Bed::QUALITIES rather than keeping a table of its
+# own, so the spellings it writes are the spellings the bed parses back.
+
+module Ableton
+  module_function
+
+  Note = Struct.new(:pitch, :time, :duration, :velocity, keyword_init: true)
+  Clip = Struct.new(:name, :start, :length, :notes, keyword_init: true)
+  Track = Struct.new(:name, :kind, :devices, :clips, keyword_init: true)
+  Set = Struct.new(:path, :tempo, :creator, :tracks, keyword_init: true)
+
+  NAMES = %w[C Db D Eb E F Gb G Ab A Bb B].freeze
+  # General MIDI percussion, which is what a Drum Rack writes.
+  DRUM_ROLES = {
+    36 => "kick", 35 => "kick", 38 => "snare", 40 => "snare", 37 => "snare",
+    42 => "hat", 44 => "hat", 46 => "open_hat", 39 => "clap", 75 => "perc",
+    41 => "perc", 43 => "perc", 45 => "perc", 47 => "perc", 48 => "perc", 50 => "perc",
+  }.freeze
+
+  # Required by the reader rather than at the top of the file: REXML is a whole
+  # XML parser and every other command here loads without it.
+  def libraries!
+    require "rexml/document"
+    require "zlib"
+  end
+
+  def xml(path)
+    libraries!
+    Zlib::GzipReader.open(path) { |gz| gz.read }
+  end
+
+  # A whole set. Live 9 through 12 keep the same shape for everything read here;
+  # a version that does not simply yields fewer tracks rather than raising.
+  def set(path)
+    libraries!
+    doc = REXML::Document.new(xml(path))
+    live = doc.root.elements["LiveSet"] or raise "#{path}: no LiveSet"
+    Set.new(path:, creator: doc.root.attributes["Creator"],
+            tempo: REXML::XPath.first(live, "MasterTrack//Tempo/Manual/@Value").to_s.to_f,
+            tracks: REXML::XPath.match(live, "Tracks/*").filter_map { |node| track(node) })
+  end
+
+  def track(node)
+    kind = node.name.sub(/Track\z/, "").downcase
+    return nil unless %w[midi audio].include?(kind)
+
+    Track.new(name: REXML::XPath.first(node, "Name/EffectiveName/@Value").to_s, kind:,
+              devices: REXML::XPath.match(node, "DeviceChain/DeviceChain/Devices/*").map(&:name),
+              clips: REXML::XPath.match(node, ".//MidiClip").map { |clip| midi_clip(clip) })
+  end
+
+  # A clip's notes, in beats from the clip's own start. Live files them under one
+  # KeyTrack per pitch, so the pitch is on the track and the times are on the
+  # events under it.
+  def midi_clip(node)
+    notes = REXML::XPath.match(node, "Notes/KeyTracks/KeyTrack").flat_map do |key|
+      pitch = REXML::XPath.first(key, "MidiKey/@Value").to_s.to_i
+      REXML::XPath.match(key, "Notes/MidiNoteEvent").filter_map do |event|
+        next unless event.attributes["IsEnabled"] != "false"
+
+        Note.new(pitch:, time: event.attributes["Time"].to_f,
+                 duration: event.attributes["Duration"].to_f,
+                 velocity: event.attributes["Velocity"].to_f)
+      end
+    end
+    start = REXML::XPath.first(node, "CurrentStart/@Value").to_s.to_f
+    Clip.new(name: REXML::XPath.first(node, "Name/@Value").to_s, start:,
+             length: REXML::XPath.first(node, "CurrentEnd/@Value").to_s.to_f - start,
+             notes: notes.sort_by { |note| [note.time, note.pitch] })
+  end
+
+  # Notes that begin within a sixteenth of each other were played as one chord.
+  # A tighter window splits a rolled chord into arpeggio; a looser one joins a
+  # chord to the bass note that answers it.
+  def stacks(notes, window: 0.25, least: 3)
+    notes.group_by { |note| (note.time / window).round }
+         .sort_by(&:first)
+         .filter_map do |slot, group|
+           pitches = group.map(&:pitch).uniq.sort
+           [slot * window, pitches] if pitches.size >= least
+         end
+  end
+
+  # A stack of pitches as a symbol the bed can parse back.
+  #
+  # Every root in the stack is tried and scored against every quality: a missing
+  # chord tone costs twice what an extra one does, because a chord with a ninth
+  # added is still that chord and a chord missing its third is not. The
+  # qualities are read in Bed's order, which runs most specific first, so a
+  # tie goes to the fuller reading.
+  def name_stack(pitches, qualities)
+    present = pitches.map { |pitch| pitch % 12 }.uniq
+    bass = pitches.min % 12
+    best = nil
+    present.each do |root|
+      qualities.each_with_index do |(quality, intervals), rank|
+        tones = intervals.map { |step| (root + step) % 12 }.uniq
+        score = (((tones - present).size * 2) + (present - tones).size) * 100
+        score += rank
+        score -= 50 if root == bass
+        best = [score, root, quality] if best.nil? || score < best.first
+      end
+    end
+    return nil unless best
+
+    _score, root, quality = best
+    symbol = "#{NAMES[root]}#{quality}"
+    root == bass ? symbol : "#{symbol}/#{NAMES[bass]}"
+  end
+
+  # A track's harmony as a progression: one symbol per chord, repeats collapsed,
+  # because a chord held for four bars is one chord and not four.
+  def progression(track, qualities, limit: 16)
+    symbols = track.clips.flat_map { |clip| stacks(clip.notes).filter_map { |_at, pitches| name_stack(pitches, qualities) } }
+    symbols.chunk_while { |a, b| a == b }.map(&:first).first(limit)
+  end
+
+  # Which of a track's notes are drums, by General MIDI. A track is a drum track
+  # when most of what it plays is on the percussion map.
+  def drums?(track)
+    pitches = track.clips.flat_map { |clip| clip.notes.map(&:pitch) }
+    return false if pitches.size < 8
+
+    pitches.count { |pitch| DRUM_ROLES.key?(pitch) } > (pitches.size * 0.6)
+  end
+
+  # A drum track as one sixteenth-step list per role, folded onto a single bar,
+  # which is the shape samples/midi grids are in.
+  def grid(track)
+    steps = Hash.new { |hash, key| hash[key] = [] }
+    track.clips.each do |clip|
+      clip.notes.each do |note|
+        role = DRUM_ROLES[note.pitch] or next
+        steps[role] << ((note.time * 4).round % 16)
+      end
+    end
+    steps.transform_values { |list| list.uniq.sort }
+  end
+
+  TICKS = 96
+  private_constant :TICKS
+
+  # One bar of sixteenth steps as a format-0 MIDI file, which is what
+  # Bed.midi_steps reads: a 14-byte header, one track, a note on and off per
+  # step. Written rather than described, so an imported beat joins the grid
+  # library and every bank that globs for it.
+  def write_grid(steps, path)
+    events = steps.sort.flat_map { |step| [[step * (TICKS / 4), 0x90, 100], [(step * (TICKS / 4)) + 12, 0x80, 0]] }
+                  .sort_by { |tick, status, _| [tick, status] }
+    body = +""
+    tick = 0
+    events.each do |at, status, velocity|
+      body << varlen(at - tick) << [status, 38, velocity].pack("C3")
+      tick = at
+    end
+    body << varlen(0) << [0xff, 0x2f, 0x00].pack("C3")
+    header = ["MThd"].pack("a4") + [6].pack("N") + [0, 1, TICKS].pack("n3")
+    File.binwrite(path, header + ["MTrk"].pack("a4") + [body.bytesize].pack("N") + body)
+    path
+  end
+
+  def varlen(value)
+    bytes = [value & 0x7f]
+    value >>= 7
+    while value.positive?
+      bytes.unshift((value & 0x7f) | 0x80)
+      value >>= 7
+    end
+    bytes.pack("C*")
+  end
+end
+
 module Bed
   module_function
 
@@ -34385,7 +34619,13 @@ module Bed
   PIDFILE = File.join(HOOKS, "bed.pid")
   LOG = File.join(HOOKS, "bed.log")
 
-  BED = YAML.load_file(DATA_FILE, aliases: true)
+  # data/bed.yml with one piece of the catalogue laid over it, when DILLA_PIECE
+  # names one. Every constant below derives from BED -- the tempo, the families
+  # that deal, the grid banks, the crate, the lead levels, the console -- so a
+  # recipe reaches the whole module without a parameter being threaded through
+  # it. That is why a piece renders in its own process: the numbers are settled
+  # here, once, and a second tempo in one process would mean a second Bed.
+  BED = Pieces.overlay(YAML.load_file(DATA_FILE, aliases: true), ENV["DILLA_PIECE"])
 
   # A word option's value: `seed 42` gives "42".
   def word(argv, name) = (index = argv.index(name)) && argv[index + 1]
@@ -34711,14 +34951,63 @@ module Bed
   MIN_ATTACK = Float(BED.fetch("min_attack_s"))
   CHORD_LEVEL_DB = Float(BED.fetch("chord_level_db"))
 
+  # The harmonic series under the chord: sines at whole multiples of its lowest
+  # note, falling with the partial the way a real spectrum does, each one paired
+  # with a twin a fraction of a hertz away so the stack beats slowly instead of
+  # standing still.
+  #
+  # In tune by construction rather than by choice -- a whole multiple of a
+  # frequency is what being in tune means -- so a piece can ask for as much of
+  # this as it likes and never leave the key. It is the difference between a
+  # chord that is sustained and one that is lush, and it costs one more
+  # oscillator bank in a graph that already has twenty.
+  OVERTONES = BED.fetch("overtones", {})
+
+  def overtone_channels(notes, seconds)
+    partials = Array(OVERTONES["partials"])
+    return nil if partials.empty? || notes.empty?
+
+    root = midi_hz(notes.min)
+    gain = 10**(Float(OVERTONES.fetch("gain_db", -20)) / 20.0)
+    swell = "min(t/#{(seconds * 0.4).round(3)},1)"
+    [0, 1].map do |side|
+      legs = partials.each_with_index.map do |partial, index|
+        # The two channels beat at different rates, so the stack moves across the
+        # field rather than swelling in the middle of it.
+        beat = 0.07 + (index * 0.031) + (side * 0.019)
+        level = (gain / Math.sqrt(partial)).round(6)
+        "#{level}*(sin(2*PI*#{phase((root * partial).round(4))})+sin(2*PI*#{phase(((root * partial) + beat).round(4))}))"
+      end
+      "#{swell}*(#{legs.join('+')})"
+    end
+  end
+
   # One instrument per progression, the families dealt in a shuffled rotation so a
   # pass never holds one colour, and a preset drawn from the family each time.
   # Every family is oscillators: the engine synthesises every sound it plays.
+  # Which families a piece deals from and which presets inside them. bed.yml
+  # lists all three families and every preset; a piece narrows the list, and
+  # that narrowing is most of what makes one piece a Rhodes record and the next
+  # a Prophet one. An empty or unknown list falls back to everything rather
+  # than to silence.
+  PAD_FAMILIES = begin
+    named = Array(BED["pad_families"]).map(&:to_sym).select { |name| FAMILIES.key?(name) }
+    (named.empty? ? FAMILIES.keys : named).freeze
+  end
+
+  PAD_PATCHES = begin
+    named = Array(BED["pad_patches"])
+    picked = PATCHES.select { |patch| named.include?(patch.name) }
+    (picked.empty? ? PATCHES : picked).freeze
+  end
+
   def deal_instruments(count)
-    rotation = FAMILIES.keys.shuffle
+    rotation = PAD_FAMILIES.shuffle
     Array.new(count) do |index|
       family = rotation[index % rotation.size]
-      [family, PATCHES.select { |patch| patch.family == family }.sample, nil]
+      pool = PAD_PATCHES.select { |patch| patch.family == family }
+      pool = PATCHES.select { |patch| patch.family == family } if pool.empty?
+      [family, pool.sample, nil]
     end
   end
 
@@ -34769,6 +35058,12 @@ module Bed
       left, right = pan_gains(pan, scale * level)
       inputs << "-f" << "lavfi" << "-t" << seconds.to_s <<
         "-i" << "aevalsrc='#{left}*(#{tone})*#{onset}|#{right}*(#{tone})*#{onset}':s=#{OVERSAMPLE}:d=#{seconds}"
+    end
+    # The overtone bank is one more voice in the same amix, so it goes through the
+    # ladder with everything else and loses its top as the chord does.
+    if (channels = overtone_channels(notes, seconds))
+      inputs << "-f" << "lavfi" << "-t" << seconds.to_s <<
+        "-i" << "aevalsrc='#{channels[0]}|#{channels[1]}':s=#{OVERSAMPLE}:d=#{seconds}"
     end
     voices = inputs.size / 6
     sweep = closing_sweep(patch.cutoff, seconds, path)
@@ -35133,7 +35428,14 @@ module Bed
     path
   end
 
-  RACKS = LEAD.fetch("racks").keys.freeze
+  # Which of the six a piece draws from, named the way pad_families narrows the
+  # instruments. A hash of trims cannot narrow anything, because a piece naming
+  # two of them merges into the six underneath and draws all six; a list
+  # replaces. Every name still carries its measured trim from `racks`.
+  RACKS = begin
+    named = Array(LEAD["rack_names"]) & LEAD.fetch("racks").keys
+    (named.empty? ? LEAD.fetch("racks").keys : named).freeze
+  end
 
   # One rack on most bars and two on a few: rotation gives variety between bars,
   # stacking gives density within one.
@@ -35526,6 +35828,27 @@ module Bed
   TILT = BED.fetch("tilt")
   SIDECHAIN = BED.fetch("sidechain")
 
+  # The console the bus leaves through: Sonitex STX-1260 and Nasty VCS written as
+  # chains rather than as plugins, from lib/livesets.rb, where both are measured
+  # against pink noise and a 220 Hz tone. One instance is a colour and three are
+  # a sound, which is why the stacks in bed.yml are stacks.
+  #
+  # Required where it is used, not at the top: the sets bring a journal, a crate
+  # and a console of their own, and none of that belongs in a render that wants
+  # two filter strings.
+  CONSOLES = BED.fetch("consoles", {})
+
+  def console_chain(name)
+    stages = CONSOLES[name.to_s]
+    return nil if stages.nil? || stages.empty?
+
+    require_relative "lib/livesets"
+    stages.map do |kind, args|
+      options = args.transform_keys(&:to_sym)
+      kind.to_s == "sonitex" ? Livesets.sonitex(**options) : Livesets.vcs(**options)
+    end.join(",")
+  end
+
   def ducker(name, key_label, input, output)
     side = SIDECHAIN.fetch(name)
     "#{input}#{key_label}sidechaincompress=threshold=#{side['threshold']}:ratio=#{side['ratio']}:" \
@@ -35543,6 +35866,9 @@ module Bed
   # order.
   def master_graph(input, output)
     drive = Float(MASTER_BUS.fetch("drive"))
+    # An empty console is no stage at all, not a stage that does nothing.
+    chain = console_chain(MASTER_BUS["console"])
+    console = chain ? "#{chain}," : ""
     norm = Math.tanh(drive).round(6)
     split = MASTER_BUS.fetch("mono_below_hz")
     bells = TILT.fetch("bells").map { |bell| "equalizer=f=#{bell['hz']}:t=o:w=#{bell['octaves']}:g=#{bell['gain_db']}" }.join(",")
@@ -35557,7 +35883,8 @@ module Bed
       "equalizer=f=#{MASTER_BUS['body_hz']}:t=o:w=0.82:g=3.0,equalizer=f=82:t=o:w=2:g=2.4," \
       "lowpass=f=15500:width_type=q:width=0.85,vibrato=f=0.26:d=0.004,vibrato=f=4.4:d=0.0045," \
       "acrusher=bits=#{MASTER_BUS['crush_bits']}:mode=lin:aa=1:mix=#{MASTER_BUS['crush_mix']}," \
-      "acompressor=threshold=-19dB:ratio=2.6:makeup=1.8,#{bells},alimiter=limit=#{MASTER_BUS['limit']}:level_out=0.90#{output}"
+      "acompressor=threshold=-19dB:ratio=2.6:makeup=1.8,#{bells},#{console}" \
+      "alimiter=limit=#{MASTER_BUS['limit']}:level_out=0.90#{output}"
   end
 
   LOUDNESS = BED.fetch("loudness")
@@ -35701,6 +36028,51 @@ module Bed
     puts "ok: #{dest} (#{parts.size} pieces through the bed, seed #{base})"
     puts "ok: #{mp3}" if mp3
     dest
+  end
+
+  # The catalogue as data/pieces.yml writes it: sixteen pieces that are not each
+  # other, joined with a crossfade into demo.wav beside dilla.rb.
+  #
+  # Each one renders in a process of its own, because a piece sets its tempo and
+  # the bed settles its tempo at load. The boot costs about a second against a
+  # render that costs thirty, and it buys every number in bed.yml as something a
+  # piece may set rather than the handful a parameter list would carry.
+  #
+  # A piece that fails stops the catalogue instead of leaving a hole in it: a
+  # join over a missing part is a demo that is quietly one piece short and says
+  # nothing about it.
+  def pieces!
+    base = Integer(ENV.fetch("RENDER_SEED") { rand(2**31) })
+    parts_dir = File.join(SCRATCH_DIR, "pieces")
+    FileUtils.mkdir_p(parts_dir)
+    FileUtils.rm_f(Dir.glob(File.join(parts_dir, "*.wav")))
+    names = Pieces.names
+    parts = names.each_with_index.map do |name, index|
+      part = File.join(parts_dir, format("%02d_%s.wav", index, name))
+      dmesg("piece #{index + 1}/#{names.size} #{name} seed=#{base + index}", unit: "bed0", parent: "dilla0")
+      spawn_piece!(name, part, base + index)
+      part
+    end
+    dest = File.join(ROOT, "demo.wav")
+    join_catalogue(parts, dest)
+    mp3 = demo_encode_mp3(dest)
+    puts "ok: #{dest} (#{parts.size} pieces, seed #{base})"
+    puts "ok: #{mp3}" if mp3
+    dest
+  end
+
+  def spawn_piece!(name, path, seed)
+    env = { "DILLA_PIECE" => name.to_s, "RENDER_SEED" => seed.to_s }
+    ok = system(env, RbConfig.ruby, File.join(ROOT, "dilla.rb"), "piece", name.to_s, path)
+    abort "pieces: #{name} did not render" unless ok && File.file?(path)
+    path
+  end
+
+  # The piece this process was told to be. DILLA_PIECE settled every number in
+  # BED before this file finished loading; what is left is which chords.
+  def render_piece!(name, path, seed)
+    row = Pieces.fetch(name) or abort "pieces: no piece named #{name} — have #{Pieces.names.join(', ')}"
+    render_track!(row.fetch("progression"), path, seed)
   end
 
   def join_catalogue(parts, dest)
@@ -36661,6 +37033,88 @@ DISPATCH = {
   "live" => -> { live!(ARGV) },
   "bed" => -> { Bed.main(ARGV) },
   "catalogue" => -> { Bed.catalogue! },
+  # The catalogue demo.wav plays, and one piece of it.
+  #
+  # `piece` puts the recipe in the environment and starts again when it was typed
+  # by hand rather than spawned: module Bed settles every number it has while
+  # this file is loading, so a name arriving as an argument arrives too late.
+  # DILLA_PIECE already matching is what stops the second exec.
+  "pieces" => -> { Bed.pieces! },
+  # An old Ableton set, read back as a piece.
+  #
+  # `import-als <file.als>` prints what the set holds: its tempo, its tracks and
+  # the devices each one ran, the harmony of every track that plays chords, and
+  # the drum grids of every track that plays drums. `--write` puts the grids in
+  # samples/midi/<slug>/ where the banks glob for them, and the recipe in
+  # project/imported/<slug>.yml, which is a data/pieces.yml row: paste it in and
+  # the beat is in the catalogue.
+  #
+  # The samples the set pointed at are not needed and mostly not there. What
+  # comes back is the writing -- the tempo, the changes and the placement -- and
+  # the engine plays it on instruments it synthesises itself.
+  "import-als" => lambda {
+    path = ARGV.shift or abort "usage: dilla.rb import-als <file.als> [--write]"
+    abort "no such set: #{path}" unless File.file?(path)
+
+    write = ARGV.delete("--write")
+    slug = File.basename(path, ".als").downcase.gsub(/[^a-z0-9]+/, "_").gsub(/\A_|_\z/, "")
+    set = Ableton.set(path)
+    puts "#{File.basename(path)} — #{set.creator}, #{set.tempo.round} bpm, #{set.tracks.size} tracks"
+
+    harmony = {}
+    grids = {}
+    set.tracks.each do |track|
+      notes = track.clips.sum { |clip| clip.notes.size }
+      next if notes.zero?
+
+      if Ableton.drums?(track)
+        grid = Ableton.grid(track)
+        grids[track.name] = grid
+        puts format("  %-26s drums  %s", track.name, grid.map { |role, steps| "#{role}:#{steps.join(',')}" }.join("  "))
+      else
+        chords = Ableton.progression(track, Bed::QUALITIES)
+        next if chords.size < 2
+
+        harmony[track.name] = chords
+        puts format("  %-26s %-6s %s", track.name, track.devices.first.to_s[0, 6], chords.join(" "))
+      end
+    end
+    next unless write
+
+    grid_root = File.join(ROOT, "samples", "midi")
+    grids.each_with_index do |(name, grid), index|
+      dir = File.join(grid_root, "#{slug}#{grids.size > 1 ? "_#{index + 1}" : ''}")
+      FileUtils.mkdir_p(dir)
+      grid.each { |role, steps| Ableton.write_grid(steps, File.join(dir, "#{role}.mid")) }
+      puts "  wrote #{dir} (#{grid.keys.join(', ')}) — from #{name}"
+    end
+    out = File.join(ROOT, "project", "imported")
+    FileUtils.mkdir_p(out)
+    recipe = File.join(out, "#{slug}.yml")
+    File.write(recipe, YAML.dump("imported" => { "from" => File.expand_path(path), "creator" => set.creator,
+                                                 "tempo" => set.tempo, "harmony" => harmony,
+                                                 "grids" => grids.transform_values { |g| g.transform_values { |s| s.join(",") } } }))
+    puts "  wrote #{recipe}"
+  },
+  "piece" => lambda {
+    name = ARGV.shift or abort "usage: dilla.rb piece <#{Pieces.names.join('|')}> [out.wav]"
+    dest = ARGV.shift || File.join(OUTPUT_DIR, "#{name}.wav")
+    exec({ "DILLA_PIECE" => name }, RbConfig.ruby, __FILE__, "piece", name, dest) unless ENV["DILLA_PIECE"] == name
+
+    seed = Integer(ENV.fetch("RENDER_SEED") { Random.new_seed % (2**31) })
+    puts "ok: #{Bed.render_piece!(name, dest, seed)}"
+  },
+  "pieces-list" => lambda {
+    Pieces.rows.each do |row|
+      bed = row.fetch("bed", {})
+      puts format("  %-18s %-24s %3s bpm  %-16s %s", row.fetch("name"), row.fetch("progression"),
+                  bed["bpm"] || Bed::BPM.round, Array(bed["pad_families"]).join("+"),
+                  bed.dig("drums", "arrangement", "bank_order")&.join("/") || "none")
+    end
+  },
+  # The six-minute piece whose parts answer each other, which a bare dilla.rb was
+  # until the catalogue took the bare invoke back on 2026-09-16.
+  "compose" => -> { Composition.demo! },
   "stream" => -> { stream((ARGV.shift || stream_bars_default).to_i) },
   # The short one, kept because it is genuinely useful when iterating -- a few
   # bars of each named style finishes in minutes. It is no longer what a bare
@@ -37010,10 +37464,12 @@ if __FILE__ == $PROGRAM_NAME
 
   cmd = ARGV.shift
   if cmd.nil?
-    # Bare invoke renders the piece, because it is the one render in which every
-    # part of the engine plays at once and answers the others. `catalogue` plays
-    # the nineteen pieces through the bed, and `live` plays instead of writing.
-    Composition.demo!
+    # Bare invoke renders the catalogue: sixteen short pieces that are not each
+    # other, which is what the operator asked demo.wav to be on 2026-09-16.
+    # `compose` is the six-minute piece that held this spot before, `catalogue`
+    # the nineteen progressions through one unchanged bed, and `live` plays
+    # instead of writing.
+    Bed.pieces!
   elsif render_output_path?(cmd) && !DISPATCH.key?(cmd)
     ARGV.unshift(cmd)
     default_render!

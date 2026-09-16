@@ -62,7 +62,7 @@ class TestDillaBed < Minitest::Test
 
   def test_every_declared_setting_has_a_reader
     unread = Bed::BED.keys.reject do |key|
-      DESCRIPTIVE_KEYS.include?(key) || READERS.match?(/BED\.fetch\("#{key}"\)|BED\.dig\("#{key}"|BED\["#{key}"\]/)
+      DESCRIPTIVE_KEYS.include?(key) || READERS.match?(/BED\.fetch\("#{key}"[,)]|BED\.dig\("#{key}"|BED\["#{key}"\]/)
     end
 
     assert_empty unread
@@ -104,17 +104,22 @@ class TestDillaBed < Minitest::Test
   end
 end
 
-# demo.wav is one piece, and these pin what the operator asked of it on
-# 2026-09-15: about six minutes, the drums every bar with a kick dropout of a bar
-# or two at most, the parts answering each other, and every move an event
-# transform the data names.
+# The six-minute piece, which is `dilla.rb compose` since 2026-09-16 and was the
+# bare invoke before it. These pin what the operator asked of it on 2026-09-15:
+# about six minutes, the drums every bar with a kick dropout of a bar or two at
+# most, the parts answering each other, and every move an event transform the
+# data names.
 class TestDillaComposition < Minitest::Test
   C = Composition
   E = DillaEvents
   SOURCE = File.read(File.expand_path("../dilla/dilla.rb", __dir__))
 
-  def test_a_bare_invoke_renders_the_piece
-    assert_match(/if cmd\.nil\?\n(?:\s*#[^\n]*\n)*\s*Composition\.demo!/, SOURCE)
+  # The bare invoke is the catalogue, which is what the operator asked demo.wav
+  # to be on 2026-09-16: ten to twenty short pieces that are not each other. The
+  # six-minute piece keeps a door of its own rather than losing one.
+  def test_a_bare_invoke_renders_the_catalogue
+    assert_match(/if cmd\.nil\?\n(?:\s*#[^\n]*\n)*\s*Bed\.pieces!/, SOURCE)
+    assert_match(/"compose" => -> \{ Composition\.demo! \}/, SOURCE)
   end
 
   def test_the_piece_is_about_six_minutes_in_twelve_sections
@@ -235,5 +240,66 @@ class TestDillaComposition < Minitest::Test
 
     assert_in_delta 100, kept, 30
     assert_equal 400, E.realize(events, Random.new(1)).size
+  end
+end
+
+# data/pieces.yml is the catalogue demo.wav plays. A row here is a recipe laid
+# over data/bed.yml, and every name in it -- a progression, a console, a lead
+# rack, a drum sample, an oscillator family -- has to be a name the engine
+# answers to. A wrong one does not fail: it renders a finished piece that is not
+# the one the table asked for, which is the failure that sounds like success.
+class TestDillaPieces < Minitest::Test
+  ROWS = Pieces.rows
+  BED = YAML.load_file(File.expand_path("../dilla/data/bed.yml", __dir__), aliases: true)
+
+  def test_the_catalogue_is_ten_to_twenty_pieces
+    assert_operator ROWS.size, :>=, 10
+    assert_operator ROWS.size, :<=, 20
+    assert_equal ROWS.size, Pieces.names.uniq.size, "two pieces share a name"
+  end
+
+  def test_every_progression_voices
+    ROWS.each do |row|
+      symbols = CHORD_PROGRESSIONS[row.fetch("progression").to_sym]
+      refute_nil symbols, "#{row['name']}: no progression named #{row['progression']}"
+      symbols.each { |symbol| refute_nil Bed.parse_chord(symbol.to_s), "#{row['name']}: #{symbol} does not voice" }
+    end
+  end
+
+  def test_every_named_part_exists
+    families = BED.fetch("families").keys
+    racks = BED.fetch("lead").fetch("racks").keys
+    consoles = BED.fetch("consoles").keys
+    crate = File.expand_path("../dilla/samples/drums", __dir__)
+    ROWS.each do |row|
+      bed = row.fetch("bed", {})
+      Array(bed["pad_families"]).each { |name| assert_includes families, name, "#{row['name']}: no family #{name}" }
+      Array(bed.dig("lead", "rack_names")).each { |name| assert_includes racks, name, "#{row['name']}: no rack #{name}" }
+      console = bed.dig("master_bus", "console") || Pieces.defaults.dig("master_bus", "console")
+      assert_includes consoles, console, "#{row['name']}: no console #{console}"
+      bed.dig("drums", "samples")&.each_value do |file|
+        assert_path_exists File.join(crate, file), "#{row['name']}: #{file} is not in the crate"
+      end
+    end
+  end
+
+  # The point of the table: a recipe reaches the constants. Checked on the data
+  # rather than by booting sixteen processes -- the overlay is what a child
+  # process reads, and if it is right the constants follow.
+  def test_a_recipe_reaches_the_bed
+    plain = Pieces.overlay(BED, nil)
+    assert_equal BED.fetch("bpm"), plain.fetch("bpm")
+
+    ROWS.each do |row|
+      over = Pieces.overlay(BED, row.fetch("name"))
+      wanted = row.dig("bed", "bpm")
+      assert_equal wanted, over.fetch("bpm"), "#{row['name']}: tempo did not reach the bed" if wanted
+    end
+    tempos = ROWS.map { |row| Pieces.overlay(BED, row.fetch("name")).fetch("bpm") }
+    assert_operator tempos.uniq.size, :>=, 10, "the catalogue plays at one tempo"
+  end
+
+  def test_an_unknown_piece_stops_rather_than_rendering_the_plain_bed
+    assert_raises(SystemExit) { Pieces.overlay(BED, "no_such_piece") }
   end
 end
