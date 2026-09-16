@@ -14,12 +14,13 @@
     return true;
   }
 
-  // Fallback only. The live level is tts.playbackGain, published by the
-  // speech runtime (1.9 — the largest gain that fits under 0 dBFS; see face_speech_runtime.js). A second
-  // copy here is why every previous attempt to raise the voice was undone the
-  // first time speech recognition ducked it. Keep this number equal to the
-  // runtime's published value so a missed publish still restores the new level.
-  const TTS_PLAYBACK_GAIN = 1.9;
+  // Fallback only, and unity because the level belongs to the voice chain the
+  // speech runtime builds, not to a number kept in step here. The copy that
+  // used to sit at this line held 1.9, and a second copy of a level is why
+  // every previous attempt to raise the voice was undone the first time
+  // speech recognition ducked it. tts.playbackGain is the live value; this is
+  // reached only when the graph exists without one.
+  const TTS_PLAYBACK_GAIN = 1;
 
   // Both branches of applySttDuck need an undo, and only the WebAudio one had
   // it: this returned early unless outputGain and actx were both present, so on

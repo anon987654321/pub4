@@ -112,7 +112,7 @@
     }
     return true;
   }
-  const TTS_PLAYBACK_GAIN = 1.9;
+  const TTS_PLAYBACK_GAIN = 1;
   function restorePlaybackGain(tts, actx, playing) {
     if (!playing) return;
     if (tts?.outputGain && actx) {
@@ -681,23 +681,5 @@
       if (primerLive) blink.style.animationDuration = primerPulse ? "600ms" : "900ms";
     }, 450);
   }
-  let idleSince = performance.now();
-  const zin = document.getElementById("zin");
-  setInterval(() => {
-    if (!zin || document.activeElement === zin || zin.value) {
-      idleSince = performance.now();
-      return;
-    }
-    if (performance.now() - idleSince < 18e3) return;
-    const hint = document.getElementById("idle-help-trail");
-    if (!hint) {
-      const el = document.createElement("div");
-      el.id = "idle-help-trail";
-      el.className = "idle-help-trail";
-      el.textContent = "\u2193 ask";
-      document.body.appendChild(el);
-    }
-    document.body.dataset.longSilence = "1";
-  }, 2e3);
   window.MASTER_BRUTALIST = Object.freeze({ apply: applyBrutalist });
 })();

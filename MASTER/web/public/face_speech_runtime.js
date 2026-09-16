@@ -525,14 +525,153 @@ async function pollTTSJob(job, signal) {
   throw new Error('tts timeout');
 }
 
-function buildRoomIR(ctx) {
-  const sr = ctx.sampleRate, len = Math.floor(sr * 0.28);
-  const ir = ctx.createBuffer(2, len, sr);
-  for (let ch = 0; ch < 2; ch++) {
-    const d = ir.getChannelData(ch);
-    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 4.2);
+// data/voice.yml's tts.post_chain, built as WebAudio nodes.
+//
+// The chain is dilla's: three resonant peaks at the vowel formants, a chorus,
+// a phaser, a band and a limiter. The server applies it with ffmpeg and hands
+// the same string to the page in MASTER_VOICE_POLICY, and until now nothing in
+// the page read it — the face had its own invented chain instead, so the web
+// and the terminal were two voices sharing a name. One declaration, two
+// readers: ffmpeg on the server, these nodes here.
+//
+// Only the filters the chain actually uses are built. Anything else is named
+// once in the console and skipped, because a filter silently dropped is a
+// voice that differs from the server's without saying so.
+function parseFilterArgs(argText) {
+  const args = {};
+  const positional = [];
+  (argText || '').split(':').filter((part) => part.length).forEach((part) => {
+    const eq = part.indexOf('=');
+    if (eq > 0) args[part.slice(0, eq)] = part.slice(eq + 1);
+    else positional.push(part);
+  });
+  args._ = positional;
+  return args;
+}
+
+function dbToGain(text) {
+  const value = parseFloat(text);
+  if (!Number.isFinite(value)) return 1;
+  return /db$/i.test(String(text).trim()) ? Math.pow(10, value / 20) : value;
+}
+
+// A chorus is delayed copies whose delay is swept by a slow oscillator. ffmpeg
+// writes the voices as parallel lists: delays, decays, speeds and depths, one
+// entry each per voice, in milliseconds, gain, hertz and milliseconds.
+function buildChorus(ctx, args) {
+  const [inGain, outGain] = [parseFloat(args._[0]) || 1, parseFloat(args._[1]) || 1];
+  const lists = args._.slice(2).map((list) => list.split('|').map(parseFloat));
+  const [delays = [20], decays = [0.3], speeds = [0.25], depths = [1]] = lists;
+  const input = ctx.createGain();
+  const output = ctx.createGain();
+  const dry = ctx.createGain();
+  dry.gain.value = inGain;
+  input.connect(dry);
+  dry.connect(output);
+  delays.forEach((delayMs, i) => {
+    const delay = ctx.createDelay(1);
+    delay.delayTime.value = (delayMs || 20) / 1000;
+    const voice = ctx.createGain();
+    voice.gain.value = decays[i] === undefined ? 0.3 : decays[i];
+    const lfo = ctx.createOscillator();
+    lfo.frequency.value = speeds[i] === undefined ? 0.25 : speeds[i];
+    const depth = ctx.createGain();
+    depth.gain.value = ((depths[i] === undefined ? 1 : depths[i]) / 1000);
+    lfo.connect(depth);
+    depth.connect(delay.delayTime);
+    lfo.start();
+    input.connect(delay);
+    delay.connect(voice);
+    voice.connect(output);
+  });
+  output.gain.value = outGain;
+  return { input, output };
+}
+
+// A phaser is allpass stages whose corner frequency is swept. Four stages is
+// what ffmpeg's aphaser uses by default, and the sweep centre is chosen so the
+// notches sit in the range a voice occupies.
+function buildPhaser(ctx, args) {
+  const speed = parseFloat(args.speed) || 0.5;
+  const decay = parseFloat(args.decay) || 0.4;
+  const input = ctx.createGain();
+  const output = ctx.createGain();
+  const wet = ctx.createGain();
+  wet.gain.value = decay;
+  const lfo = ctx.createOscillator();
+  lfo.frequency.value = speed;
+  const depth = ctx.createGain();
+  depth.gain.value = 700;
+  lfo.connect(depth);
+  lfo.start();
+  let node = input;
+  for (let stage = 0; stage < 4; stage++) {
+    const allpass = ctx.createBiquadFilter();
+    allpass.type = 'allpass';
+    allpass.frequency.value = 500 + stage * 400;
+    allpass.Q.value = 0.7;
+    depth.connect(allpass.frequency);
+    node.connect(allpass);
+    node = allpass;
   }
-  return ir;
+  node.connect(wet);
+  wet.connect(output);
+  input.connect(output);
+  return { input, output };
+}
+
+function buildChainNode(ctx, name, args) {
+  if (name === 'equalizer') {
+    const node = ctx.createBiquadFilter();
+    node.type = 'peaking';
+    node.frequency.value = parseFloat(args.f) || 1000;
+    node.Q.value = parseFloat(args.w) || 1;
+    node.gain.value = parseFloat(args.g) || 0;
+    return { input: node, output: node };
+  }
+  if (name === 'highpass' || name === 'lowpass') {
+    const node = ctx.createBiquadFilter();
+    node.type = name;
+    node.frequency.value = parseFloat(args.f) || (name === 'highpass' ? 200 : 6000);
+    return { input: node, output: node };
+  }
+  if (name === 'volume') {
+    const node = ctx.createGain();
+    node.gain.value = dbToGain(args.volume || args._[0] || '0dB');
+    return { input: node, output: node };
+  }
+  if (name === 'alimiter') {
+    // WebAudio has no limiter, and a compressor with a hard ratio just above
+    // the ceiling is the nearest honest thing. The knee is zero so it catches
+    // peaks rather than shaping everything under them.
+    const node = ctx.createDynamicsCompressor();
+    const limit = parseFloat(args.limit) || 0.98;
+    node.threshold.value = 20 * Math.log10(limit) - 1;
+    node.knee.value = 0;
+    node.ratio.value = 20;
+    node.attack.value = 0.002;
+    node.release.value = 0.08;
+    return { input: node, output: node };
+  }
+  if (name === 'chorus') return buildChorus(ctx, args);
+  if (name === 'aphaser') return buildPhaser(ctx, args);
+  return null;
+}
+
+function buildVoiceChain(ctx, chainText) {
+  const stages = [];
+  const skipped = [];
+  String(chainText || '').split(',').map((part) => part.trim()).filter(Boolean).forEach((filter) => {
+    const eq = filter.indexOf('=');
+    const name = eq > 0 ? filter.slice(0, eq) : filter;
+    const built = buildChainNode(ctx, name, parseFilterArgs(eq > 0 ? filter.slice(eq + 1) : ''));
+    if (built) stages.push(built);
+    else skipped.push(name);
+  });
+  if (skipped.length) console.info('voice chain: no node for', skipped.join(', '));
+  if (!stages.length) return null;
+  stages.forEach((stage, i) => { if (i) stages[i - 1].output.connect(stage.input); });
+  return { input: stages[0].input, output: stages[stages.length - 1].output, stages: stages.length, skipped };
 }
 
 async function connectTTSAudio(audio, boostValue = 1.35) {
@@ -541,55 +680,39 @@ async function connectTTSAudio(audio, boostValue = 1.35) {
   if (actx.state === 'suspended') await actx.resume().catch(() => {});
   if (actx.state !== 'running') return;
   const msrc = actx.createMediaElementSource(audio);
-  const boost = actx.createGain();
-  const warmth = actx.createBiquadFilter();
-  const smooth = actx.createBiquadFilter();
-  const presence = actx.createBiquadFilter();
-  const compressor = actx.createDynamicsCompressor();
-  const convolver = actx.createConvolver();
-  const dryGain = actx.createGain();
-  const wetGain = actx.createGain();
-  const masterGain = actx.createGain();
   const analyser = actx.createAnalyser();
-  boost.gain.value = boostValue;
-  warmth.type = 'lowshelf'; warmth.frequency.value = 220; warmth.gain.value = 3.5;
-  smooth.type = 'highshelf'; smooth.frequency.value = 8500; smooth.gain.value = -3;
-  presence.type = 'peaking'; presence.frequency.value = 3200; presence.Q.value = 1.2; presence.gain.value = -1.8;
-  // Opened up because the gain above feeds this. At -22/7:1 almost everything
-  // was above the knee, so raising masterGain bought compression rather than
-  // loudness — the level went up and got squashed back down in the same graph.
-  // -12 and 3:1 still catches peaks and lets the gain reach the output.
-  compressor.threshold.value = -12; compressor.knee.value = 18; compressor.ratio.value = 3;
-  compressor.attack.value = 0.004; compressor.release.value = 0.22;
-  convolver.buffer = buildRoomIR(actx);
-  // Operator, 2026-08-11: no reverb on the voice, and 10x louder. The wet leg is
-  // left wired rather than unpicked from the graph so restoring it is one
-  // number, but it contributes nothing at 0.
+  const masterGain = actx.createGain();
+  // The server's streaming path — the one TtsJob uses — hands the browser bare
+  // edge-tts, because only Speech#synthesize shapes and
+  // synthesize_streaming_to_file does not. So the page is where the chain gets
+  // applied for the web, and it applies the declared one rather than an
+  // invented one. What stood here until 2026-09-16 was a hand-built
+  // warmth/smooth/presence/convolver graph nobody had declared anywhere: the
+  // terminal spoke through dilla's chain and the face spoke through this, two
+  // voices under one name.
+  const chain = buildVoiceChain(actx, window.MASTER_VOICE_POLICY?.post_chain);
+  // The chain ends in volume=23dB and a limiter, so it carries its own level
+  // and masterGain is left at unity for the duck to ride. Without a chain the
+  // graph is the old bare one, and 1.9 is the gain measured to fit under
+  // 0 dBFS against a real /chat/tts response.
   //
-  // 1.9, which is what fits. Measured 2026-08-13 against a real /chat/tts
-// response: edge-tts hands us speech peaking at -4.5 dBFS, and this graph
-// (boost 1.35 -> warmth +3.5 -> smooth -3 -> presence -1.8 -> compressor at
-// -12/3:1) leaves it peaking at -5.5 dBFS. The largest gain that fits under
-// 0 dBFS is 1.88x. 19.0 put the output 20.1 dB over, so every utterance was
-// hard-clipped by the destination and the compressor pumped underneath it —
-// audible as a thin, torn voice rather than a loud one.
-//
-// "10x louder" multiplied a number that was already at the ceiling. The lever
-// for loudness is the synthesiser, where data/voice.yml already asks for
-// +40% volume, or a limiter here. Not raw gain into a clamped destination.
-//
-// Published on tts so face_audio_bridge duck-restores to the live value;
-// TTS_PLAYBACK_GAIN there must stay equal to this.
-const masterGainValue = 1.9;
-  dryGain.gain.value = 1.0; wetGain.gain.value = 0.0; masterGain.gain.value = masterGainValue;
+  // Published on tts so face_audio_bridge duck-restores to the live value;
+  // TTS_PLAYBACK_GAIN there is the fallback when it is not.
+  const masterGainValue = chain ? 1.0 : 1.9;
+  masterGain.gain.value = masterGainValue;
   tts.playbackGain = masterGainValue;
   analyser.fftSize = 256;
-  msrc.connect(boost);
-  boost.connect(warmth); warmth.connect(smooth); smooth.connect(presence);
-  presence.connect(dryGain); presence.connect(convolver);
-  convolver.connect(wetGain);
-  dryGain.connect(masterGain); wetGain.connect(masterGain);
-  masterGain.connect(compressor); compressor.connect(analyser); analyser.connect(actx.destination);
+  if (chain) {
+    msrc.connect(chain.input);
+    chain.output.connect(masterGain);
+  } else {
+    const boost = actx.createGain();
+    boost.gain.value = boostValue;
+    msrc.connect(boost);
+    boost.connect(masterGain);
+  }
+  masterGain.connect(analyser);
+  analyser.connect(actx.destination);
   tts.analyser = analyser;
   tts.outputGain = masterGain;
   tts.analyserBuf = new Uint8Array(analyser.fftSize);

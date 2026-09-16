@@ -575,12 +575,18 @@ class TestWebUI < Minitest::Test
     (manifest_js + Array(manifest["shell_blocking"]) + Array(manifest["shell_boot"]) + face_parts).uniq
   end
 
-  def test_face_tts_audio_graph_uses_compressor_before_analyser
+  # The analyser sits last, after the shaping and after the gain the duck rides,
+  # so the face moves to what a listener hears rather than to the raw stream.
+  # This used to pin the spelling "compressor.connect(analyser)", which named a
+  # node in a hand-built graph; the shaping is now data/voice.yml's chain and
+  # the compressor is one filter inside it, so the assertion names the seam.
+  def test_face_tts_audio_graph_ends_at_the_analyser
     source = face_runtime_source
 
-    assert_includes source, "createDynamicsCompressor()"
-    assert_includes source, "compressor.connect(analyser)"
     assert_includes source, "connectTTSAudio(audio"
+    assert_includes source, "buildVoiceChain(actx, window.MASTER_VOICE_POLICY?.post_chain)"
+    assert_includes source, "masterGain.connect(analyser)"
+    assert_includes source, "analyser.connect(actx.destination)"
   end
 
   # This test used to pin the opposite: a clamped, depth-scaled gl_PointSize and

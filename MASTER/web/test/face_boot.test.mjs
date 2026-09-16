@@ -139,11 +139,13 @@ test("TTS playback gain is one published number, and fits under 0 dBFS", () => {
   const bridge = readFileSync(join(publicDir, "face_audio_bridge.js"), "utf8");
   const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
   // One constant feeding both assignments, rather than the literal written
-  // twice — this test is named for that and was pinning the duplication.
-  assert.match(speech, /const masterGainValue = 1\.9/);
+  // twice — this test is named for that and was pinning the duplication. The
+  // level itself moved into data/voice.yml's chain, so what is pinned here is
+  // that the graph and the duck read the same published value: unity while the
+  // chain carries the level, 1.9 on the bare fallback path, never a second copy.
+  assert.match(speech, /const masterGainValue = chain \? 1\.0 : 1\.9/);
   assert.match(speech, /masterGain\.gain\.value = masterGainValue/);
   assert.match(speech, /tts\.playbackGain = masterGainValue/);
-  assert.match(bridge, /TTS_PLAYBACK_GAIN = 1\.9/);
   assert.match(bridge, /tts\.playbackGain \|\| TTS_PLAYBACK_GAIN/);
   assert.match(speech, /setValueAtTime\(tts\.playbackGain/);
   assert.doesNotMatch(speech, /setValueAtTime\(1\.9/);
