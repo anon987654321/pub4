@@ -269,11 +269,6 @@ module Master
         send_ruby_llm(selected_model, messages, sys:, stream:, image:, temperature:, format:, &blk)
       end
 
-
-
-
-
-
       # At most two claude subprocesses at once, process-wide. The latency
       # table above CLAUDE_CLI_TIMEOUT_S measured it: two concurrent finish
       # together, four roughly double per-call latency for the same total
@@ -282,9 +277,6 @@ module Master
       # four-way contention, opening the circuit. Callers block for a slot;
       # waiting beats thrashing.
       CLI_SLOTS = SizedQueue.new(2).tap { |queue| 2.times { queue << true } }
-
-
-
 
       def terminate_subprocess(wait_thr)
         return unless signal_process(wait_thr, "TERM")
