@@ -81,9 +81,7 @@ module Master
           File.executable?(home) ? home : binary.to_s
         end
 
-        def cli_lanes
-          @cli_lanes ||= Master.load_yaml(File.join(Master::ROOT, "data", "models.yml")).fetch("cli_lanes", {})
-        end
+        def cli_lanes = Master.cli_lanes
 
       def send_agy_cli(model_alias, messages, sys:, stream: false, &blk)
         CLI_SLOTS.pop

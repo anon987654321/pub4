@@ -196,7 +196,11 @@ class RuntimeHardeningTest < Minitest::Test
     end
   end
 
+  # Both ids are OpenRouter slugs, and the pool offers a lane only with its key,
+  # so the key stands in for the machine this routing would run on.
   def test_model_router_uses_provider_health_to_avoid_unhealthy_primary
+    saved = ENV["OPENROUTER_API_KEY"]
+    ENV["OPENROUTER_API_KEY"] = "sk-or-v1-#{'a' * 64}"
     Dir.mktmpdir do |dir|
       FileUtils.mkdir_p(File.join(dir, "data"))
       File.write(File.join(dir, "data", "models.yml"), <<~YAML)
@@ -225,5 +229,7 @@ class RuntimeHardeningTest < Minitest::Test
 
       assert_equal "steady-free", router.preferred(task_type: :exploration)
     end
+  ensure
+    saved.nil? ? ENV.delete("OPENROUTER_API_KEY") : ENV["OPENROUTER_API_KEY"] = saved
   end
 end

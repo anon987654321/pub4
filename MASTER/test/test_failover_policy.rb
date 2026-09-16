@@ -38,7 +38,7 @@ class TestFailoverPolicy < Minitest::Test
   end
 
   def test_router_exposes_the_configured_categories
-    assert_equal %i[timeout no_api_key rate_limit budget], router.failover_skip_categories
+    assert_equal %i[timeout no_api_key rate_limit budget model_missing], router.failover_skip_categories
   end
 
   def test_retry_count_has_one_source

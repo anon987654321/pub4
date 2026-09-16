@@ -100,7 +100,9 @@ class TestFeedbackLedger < Minitest::Test
     end
     wrapper = Master::Io::LLM::WebFetch.new(broken.new, bus:)
 
-    3.times { assert_match(/\AError: timeout/, wrapper.execute(url: "https://example.org")) }
+    # Three different pages: the same call three times running is refused as a
+    # loop rather than run, which is what test_opencrabs_guards holds.
+    %w[one two three].each { |page| assert_match(/\AError: timeout/, wrapper.execute(url: "https://example.org/#{page}")) }
     3.times { bus.publish("tool:after", tool: "dynamic_http", status: 503) }
     3.times { bus.publish("tool:after", tool: "read_file") }
 

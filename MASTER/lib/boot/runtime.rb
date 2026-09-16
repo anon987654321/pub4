@@ -157,6 +157,13 @@ module Master
       load_yaml(File.join(root, "data", "models.yml")).fetch("model_defs", {})
     end
 
+    # models.yml cli_lanes — the subscription CLIs the pool offers and the
+    # dispatcher asks. Read here with the other models.yml accessors, because
+    # a data file with a second loader is a data file with two shapes.
+    def cli_lanes(root: ROOT)
+      @cli_lanes ||= load_yaml(File.join(root, "data", "models.yml")).fetch("cli_lanes", {})
+    end
+
     # models.yml models — the routing tiers, each a list of rows carrying an id.
     # Core::Routing::ModelCatalog resolves names against these and model_defs.
     def model_tiers(root: ROOT)

@@ -25,10 +25,11 @@ fallback_policy:
   # categories this codebase produces, so wiring it as written would have matched
   # nothing. These are the categories `Result.err(category:)` actually carries.
   #
-  # A rate-limited or out-of-budget model cannot succeed on an immediate retry, so
-  # both belong here, and so does a model the provider does not hold. `provider_error` deliberately does not: a transient 5xx is
-  # what in-place retry exists for. `retries_per_tier` was removed — the retry
-  # count has one source, `failover.max_retries` below.
+  # A rate-limited or out-of-budget model cannot succeed on an immediate retry,
+  # so both belong here, and so does a model the provider does not hold.
+  # `provider_error` deliberately does not: a transient 5xx is what in-place
+  # retry exists for. `retries_per_tier` was removed — the retry count has one
+  # source, `failover.max_retries` below.
   "on":
     - timeout
     - no_api_key
