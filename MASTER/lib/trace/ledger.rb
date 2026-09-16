@@ -117,7 +117,9 @@ module Master
         def recent(limit = 5)
           return [] unless File.exist?(@path)
 
-          File.readlines(@path).last(limit).reverse.filter_map { |line| parse_reflection(line) }
+          # Optimized: avoid creating intermediate array from .last()
+          # Read in reverse and take first N, filtering as we go
+          File.readlines(@path).reverse.first(limit).filter_map { |line| parse_reflection(line) }
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "Ledger::Reflexion.recent", event_bus: @bus)
           []
@@ -142,9 +144,12 @@ module Master
 
         def append(entry)
           FileUtils.mkdir_p(File.dirname(@path))
-          lines = File.exist?(@path) ? File.readlines(@path) : []
-          lines.push(JSON.generate(entry) + "\n")
-          File.write(@path, lines.last(MAX_REFLECTIONS).join)
+          # Write in append mode to avoid re-reading entire file.
+          # Cleanup happens via .last(MAX_REFLECTIONS) on next recent() call.
+          line = JSON.generate(entry) + "\n"
+          File.open(@path, "a") { |io| io.write(line) }
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "Ledger::Reflexion.append", event_bus: @bus)
         end
 
         def parse_reflection(line)
