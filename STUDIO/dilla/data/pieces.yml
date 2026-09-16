@@ -510,6 +510,8 @@ pieces:
       bars_per_chord: 4
       pad_families: [rhodes]
       pad_voice: rhodes_tine
+      # The melody he played, not one this engine writes.
+      restore: { lead: home_improvement/vox_1 }
       pad_racks: [wash]
       min_attack_s: 0.6
       overtones: { partials: [2, 3, 4, 5, 6], gain_db: -18 }

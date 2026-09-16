@@ -34720,6 +34720,59 @@ module Ableton
   # clip's own start. write_grid is the drum case of this folded onto one bar;
   # this is the melodic case, which is what makes an imported set playable rather
   # than merely readable.
+  # write_clip's inverse: a MIDI file back into notes, in beats.
+  #
+  # A note-on with a velocity is a start and the matching note-off ends it, so
+  # the walk carries open notes by pitch rather than assuming every note-on is
+  # followed by its own note-off -- in a chord they interleave, and pairing them
+  # in order would give the first note the last note's length.
+  def read_clip(path)
+    data = File.binread(path)
+    return [] unless data[0, 4] == "MThd"
+
+    division = data[12, 2].unpack1("n").to_f
+    at = 22
+    tick = 0
+    status = 0
+    open = {}
+    notes = []
+    while at < data.bytesize
+      delta = 0
+      loop do
+        byte = data.getbyte(at) or return notes
+        at += 1
+        delta = (delta << 7) | (byte & 0x7f)
+        break if byte < 0x80
+      end
+      tick += delta
+      byte = data.getbyte(at) or break
+      if byte >= 0x80
+        status = byte
+        at += 1
+      end
+      case status & 0xf0
+      when 0x90, 0x80
+        pitch, velocity = data.getbyte(at), data.getbyte(at + 1)
+        at += 2
+        break if pitch.nil?
+
+        if (status & 0xf0) == 0x90 && velocity.to_i.positive?
+          open[pitch] = [tick, velocity]
+        elsif (start = open.delete(pitch))
+          notes << { pitch:, beat: start[0] / division, beats: [(tick - start[0]) / division, 0.05].max,
+                     velocity: start[1] }
+        end
+      when 0xa0, 0xb0, 0xe0 then at += 2
+      when 0xc0, 0xd0 then at += 1
+      else
+        break if status == 0xff && data.getbyte(at) == 0x2f
+
+        at += 1
+      end
+    end
+    notes.sort_by { |note| [note[:beat], note[:pitch]] }
+  end
+
   def write_clip(clip, path)
     events = clip.notes.flat_map do |note|
       on = (note.time * TICKS).round
@@ -35737,6 +35790,92 @@ module Bed
   # instruments. A hash of trims cannot narrow anything, because a piece naming
   # two of them merges into the six underneath and draws all six; a list
   # replaces. Every name still carries its measured trim from `racks`.
+  # A part the operator actually played, instead of one this engine invents.
+  #
+  # RESTORE names a track exported from his own Ableton set -- `slug/track`, the
+  # directory under samples/midi and the clip prefix inside it. The clips are
+  # laid end to end in filename order, each after the last, because Live starts
+  # every clip's notes at its own beat zero and concatenating them any other way
+  # stacks the whole track into the first bar.
+  #
+  # Beats become seconds at the bed's tempo, not the set's: the piece is being
+  # played here, and a line that keeps its original clock against a bed at a
+  # different one is not a restoration, it is two records at once.
+  RESTORE = BED["restore"] || {}
+
+  def restored_notes(spec, seconds)
+    whole = restored_line(spec)
+    return [] if whole.empty?
+
+    window(whole, seconds)
+  end
+
+  # Every clip of the track, laid end to end in filename order, each after the
+  # last -- Live starts every clip's notes at its own beat zero, so any other
+  # ordering stacks the whole track into the first bar. Beats become seconds at
+  # the bed's tempo and not the set's: the piece is being played here, and a line
+  # keeping its original clock against a bed at a different one is not a
+  # restoration, it is two records at once.
+  def restored_line(spec)
+    slug, track = spec.to_s.split("/", 2)
+    return [] if slug.nil? || track.nil?
+
+    dir = File.join(ROOT, "samples", "midi", slug)
+    files = Dir[File.join(dir, "#{track}_*.mid")].sort
+    files = Dir[File.join(dir, "#{track}.mid")] if files.empty?
+    at = 0.0
+    files.flat_map do |file|
+      clip = Ableton.read_clip(file)
+      next [] if clip.empty?
+
+      here = at
+      at += clip.map { |note| note[:beat] + note[:beats] }.max * BEAT
+      clip.map do |note|
+        { hz: midi_hz(note[:pitch]), at: (here + (note[:beat] * BEAT)).round(4),
+          held: (note[:beats] * BEAT).round(4), gain: (note[:velocity] / 127.0 * 0.7).round(4) }
+      end
+    end
+  end
+
+  # The busiest `seconds` of the line, moved to the front.
+  #
+  # A part is as long as it was played and a showcase piece is nine seconds, so
+  # something has to give. Taking the opening gives whatever the take happened to
+  # begin with, which for a line of 96 notes spread over 480 beats was five
+  # notes and four seconds of rest. Stretching the line to fit would change what
+  # was played, which is the one thing a restoration must not do. So the notes
+  # keep their spacing exactly and only the entry moves -- which is what anybody
+  # does when they pull a loop out of a take.
+  def window(notes, seconds)
+    return notes if notes.empty? || notes.last[:at] < seconds
+
+    best_start = notes.first[:at]
+    best_count = -1
+    notes.each do |note|
+      start = note[:at]
+      count = notes.count { |other| other[:at] >= start && other[:at] < start + seconds }
+      if count > best_count
+        best_count = count
+        best_start = start
+      end
+    end
+    notes.select { |note| note[:at] >= best_start && note[:at] < best_start + seconds }
+         .map { |note| note.merge(at: (note[:at] - best_start).round(4)) }
+  end
+
+  # The restored line as the lead track, rendered on the piece's own voice.
+  def restored_lead!(path, seconds)
+    spec = RESTORE["lead"] or return nil
+
+    notes = restored_notes(spec, seconds)
+    return nil if notes.empty?
+
+    voice = PAD_VOICE || :poly_lead
+    dmesg("lead restored #{spec} — #{notes.size} notes on #{voice}", unit: "bed0", parent: "dilla0")
+    AnalogSynth.render_groups!([{ patch: voice, notes: }], dest: path, duration: seconds,
+                                                          seed: rand(2**31), drift_cents: DRIFT_CENTS)
+  end
+
   LEAD_SPACE = LEAD["space"]
 
   # The whole line through one drawn room, after the bars are joined.
@@ -36388,7 +36527,8 @@ pads = chop(played, bars, scratch("pads"))
       played_bar = !resting && rand < Float(LEAD.fetch("plays_odds")) && lead_bar(chords[at], chords[(at + 1) % chords.size], shape, file)
       played_bar || silence(BAR, file)
     end
-    lead = concat(lead_bars, scratch("lead"))
+    lead = scratch("lead")
+    restored_lead!(lead, seconds) || concat(lead_bars, lead)
     space_lead!(lead, seed)
     surface = dust(seconds, seed, scratch("dust"))
     low = bass_track(chords, scratch("bass"))
