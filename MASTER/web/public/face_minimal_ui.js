@@ -44,8 +44,9 @@ const F_FACE_STATE = F_FACE_MINIMAL.State || window.State;
     let t = null;
     cvEl.addEventListener('pointerdown', () => {
       t = setTimeout(() => {
-        if (window._chatSpeakLast) window._chatSpeakLast();
-        else if (window.sendMessage) window.sendMessage('/voice last dramatic');
+        // face.part5 defines _chatSpeakLast; there is no /voice command to
+        // fall back to, and the one that was here reached the model as prose.
+        window._chatSpeakLast?.();
         F_FACE_STATE.pulse = 1.1;
       }, 480);
     });

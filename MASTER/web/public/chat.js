@@ -506,7 +506,8 @@ document.querySelectorAll('.tool').forEach(btn => {
 
 (function wireCommandPalette() {
   const COMMANDS = [
-    { cmd: '/review ', hint: 'scan → fix → critique a path' },
+    { cmd: '/fix ', hint: 'observe, critique, repair, observe again' },
+    { cmd: '/review ', hint: 'the council and the principle map, read-only' },
     { cmd: '/status', hint: 'one-frame health' },
     { cmd: '/undo', hint: 'revert last recorded change' },
     { cmd: '/commit', hint: 'record the current diff' },
@@ -516,8 +517,6 @@ document.querySelectorAll('.tool').forEach(btn => {
     { cmd: '/help', hint: 'list commands' },
     { cmd: '/clear', hint: 'clear the session transcript' },
     { cmd: 'ping', hint: 'smoke test connection' },
-    { cmd: '/voice last', hint: 'replay last reply (Ryan en-GB)' },
-    { cmd: '/voice stream on', hint: 'sentence TTS during stream' },
     { action: 'dashboard', label: 'mission control', hint: 'open /dashboard' },
     { action: 'history', label: 'toggle history', hint: 'sidebar · Ctrl+Shift+H' },
     { action: 'export', label: 'export session', hint: 'markdown download · Ctrl+Shift+E' },
