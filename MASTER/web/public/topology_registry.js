@@ -46,7 +46,7 @@
     codebase: {
       id: "codebase",
       label: "Repository Body",
-      renderer: "codebase.js",
+      renderer: "face.js",
       palette: "operator",
       zones: ["districts", "vectors", "bridges", "fractures", "field_density"],
       events: ["codebase:topology", "rule_loop:cycle", "rule_loop:clean", "rule_loop:converged", "fix_loop:idle", "fix_loop:pass"]

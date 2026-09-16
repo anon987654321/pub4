@@ -92,7 +92,11 @@ topologies:
   - id: codebase
     label: Repository Body
     purpose: Modules as clusters, dependencies as bridges, fractures as risk, density as ownership
-    renderer: codebase.js
+    # The face draws it. codebase:topology reaches the face as entropy and
+    # confidence through visual_bridge.js and as a cluster in cluster_miner.js;
+    # a canvas of its own would be a second layer over the face, and what the
+    # face looks like is the operator's call.
+    renderer: face.js
     anchors: [module_centroids]
     zones:   [districts, vectors, bridges, fractures, field_density]
     transitions: [scanning, fixing, converged, drifting]

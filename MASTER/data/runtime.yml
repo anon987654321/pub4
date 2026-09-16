@@ -186,7 +186,7 @@ event_registry:
     target: cluster registry
     purpose: cluster registry updates
   - event: master:codebase
-    target: codebase visual
+    target: cluster_miner.js
     purpose: repo-map or file-tree refreshes
   - event: master:rule_event
     target: scan pipeline
