@@ -39,6 +39,35 @@ class TestCLI < Minitest::Test
   end
 
   # container accessor
+  # Reading a pass report aloud from the top takes longer than the pass did.
+  # Its milestones are spoken as they happen, so the report has only its
+  # closing line left to say.
+  def test_a_pass_report_is_spoken_as_its_footer_and_a_reply_whole
+    session = Master::CLI::Session.allocate
+    report = ["mode", "mode=balanced profile=full", "", "observe",
+              "scan0: done, 1127 files, 87 violations in 22 files", "", "repair",
+              "fix0: pass 1, 12 of 87 fixed", "", "changes", "abc1234 Master: a repair", "",
+              "review0: complete, 87 findings, 41 after the fix"].join("\n")
+
+    assert_equal "review0: complete, 87 findings, 41 after the fix", session.send(:spoken_form, report)
+    assert_equal "the pool is every model this machine can reach.",
+                 session.send(:spoken_form, "the pool is every model this machine can reach.")
+  end
+
+  def test_the_lines_spoken_while_a_pass_runs_are_its_milestones
+    milestone = Master::CLI::Session::MILESTONE
+
+    ["obs0: done, 1127 files, 87 violations in 22 files", "scan0: pass 1, 5 violations",
+     "fix0: pass 1, 12 of 87 fixed", "review0: complete, 601s"].each do |line|
+      assert_match milestone, line
+    end
+    ["obs0: 113/1127 files, 0 violations in 0 files, 35s, eta 311s",
+     "scan0: 194 model calls, 178 failed, 4 lanes",
+     "llm8 at obs0: ollama:qwen2.5-coder:3b"].each do |line|
+      refute_match milestone, line, "a torrent line must not be spoken"
+    end
+  end
+
   def test_container_accessor
     assert_same @container, @cli.container
   end

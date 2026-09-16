@@ -3,6 +3,37 @@
 require_relative "test_helper"
 
 class WorkflowInferenceTest < Minitest::Test
+  # A repair that says it repaired and shows nothing sends the operator to go
+  # and look for it.
+  def test_the_repair_shows_its_commits_and_its_patch
+    pass = Master::CLI::Pipeline::Pass.allocate
+    pass.instance_variable_set(:@root, Master::ROOT)
+    fake = Object.new
+    def fake.head = "abc1234"
+    def fake.log_between(*) = ["abc1234 Master: a repair", "def5678 Master: another"]
+    def fake.patch_between(*) = "diff --git a/x b/x\n@@ -1 +1 @@\n-old\n+new\n"
+    def fake.working_patch(*) = ""
+    pass.instance_variable_set(:@git, fake)
+
+    section = pass.send(:changes_section, "abc1234")
+
+    assert_includes section, "abc1234 Master: a repair"
+    assert_includes section, "+new"
+    assert_includes section, "-old"
+  end
+
+  def test_a_repair_that_changed_nothing_says_so
+    pass = Master::CLI::Pipeline::Pass.allocate
+    pass.instance_variable_set(:@root, Master::ROOT)
+    quiet = Object.new
+    def quiet.log_between(*) = []
+    def quiet.patch_between(*) = ""
+    def quiet.working_patch(*) = ""
+    pass.instance_variable_set(:@git, quiet)
+
+    assert_equal "nothing changed", pass.send(:changes_section, "abc1234")
+  end
+
   def test_intent_router_classifies_through_master
     router = Master::CLI::IntentRouter.new
     assert_equal :run_full_workflow, router.classify("run this through master")

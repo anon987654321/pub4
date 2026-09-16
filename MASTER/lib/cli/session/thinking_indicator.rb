@@ -113,6 +113,14 @@ module Master
         @think_stage = stage if stage
       end
 
+      # What is worth saying out loud while a pass runs. A pass prints hundreds
+      # of unit lines and speaking each would be a torrent; these are the ones a
+      # person waiting for it would want called out — a reading finished, a pass
+      # of repairs counted, the council's verdict, the pass itself ending.
+      # Spoken as they happen, so the reply at the end has only its footer left
+      # to say instead of the whole log.
+      MILESTONE = /\A(?:obs\d+: done|scan\d+: (?:done|pass \d)|fix\d+: pass \d|crit\d+: |review\d+: (?:complete|incomplete))/
+
       # A pipe keeps stdout for the reply, so the units go to stderr there.
       def print_unit_line(line)
         return unless Master::Trace::Dmesg.enabled?
@@ -123,6 +131,7 @@ module Master
           io.print "\r\e[K" if io.isatty
           io.puts @refs.renderer.render(line, mode: :dim)
         end
+        Master::Voice::Playback.speak(line) if line.match?(MILESTONE)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "cli.print_unit_line", event_bus: @refs.bus)
       end

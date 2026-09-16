@@ -89,6 +89,31 @@ module Master
         out.strip
       end
 
+      # What a range of commits did, for a report that would otherwise say a
+      # repair happened and show nothing of it.
+      def log_between(from, to = "HEAD")
+        out, _, st = Master::Io::Exec.capture3("git", "-C", @root_path, "log", "--oneline", "#{from}..#{to}")
+        st.success? ? out.strip.lines.map(&:chomp) : []
+      end
+
+      def patch_between(from, to = "HEAD", limit: 400)
+        out, _, st = Master::Io::Exec.capture3("git", "-C", @root_path, "diff", "#{from}..#{to}")
+        return "" unless st.success?
+
+        lines = out.lines
+        return out if lines.size <= limit
+
+        "#{lines.first(limit).join}… #{lines.size - limit} more lines of patch\n"
+      end
+
+      def working_patch(limit: 400)
+        out, _, st = Master::Io::Exec.capture3("git", "-C", @root_path, "diff")
+        return "" unless st.success?
+
+        lines = out.lines
+        lines.size <= limit ? out : "#{lines.first(limit).join}… #{lines.size - limit} more lines of patch\n"
+      end
+
       def head
         out, _, st = Master::Io::Exec.capture3("git", "-C", @root_path, "rev-parse", "--short", "HEAD")
         st.success? ? out.strip : nil

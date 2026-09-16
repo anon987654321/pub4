@@ -164,11 +164,48 @@ module Master
             return sections << ["would repair", log_phase("fix0", "preview", "path=#{shell}") { run_fix_preview(resolved) }]
           end
 
+          before = git.head
           sections << ["repair", log_phase("fix0", "converge", "path=#{shell} max_passes=#{posture[:max_fix_passes]}") do
             run_fix(resolved)
           end]
+          sections << ["changes", changes_section(before)]
           sections << observe_section("re-observe", "obs1", shell, aesthetic:)
         end
+
+        # A repair that says it repaired and shows nothing asks the operator to
+        # go and look. The commits it wrote and the patch they carry belong in
+        # the report, under the repair that made them.
+        def changes_section(before)
+          commits = before ? git.log_between(before) : []
+          patch = before ? git.patch_between(before) : ""
+          patch = git.working_patch if patch.strip.empty?
+          return "nothing changed" if commits.empty? && patch.strip.empty?
+
+          head = commits.empty? ? ["uncommitted, in the working tree"] : commits
+          [head.join("\n"), "", colour_patch(patch)].join("\n").rstrip
+        end
+
+        # A diff reads by its marks: what left, what arrived, and where. Every
+        # other line dims, so the two colours carry the meaning.
+        def colour_patch(patch)
+          return "" if patch.to_s.strip.empty?
+          return patch unless $stdout.tty?
+
+          pastel = Master::Trace::Dmesg.pastel
+          patch.lines.map { |line| pastel.decorate(line, *patch_style(line)) }.join
+        end
+
+        def patch_style(line)
+          case line
+          when /\A(?:diff |\+\+\+ |--- )/ then [:bold]
+          when /\A@@/ then [:cyan]
+          when /\A\+/ then [:green]
+          when /\A-/ then [:red]
+          else [:dim]
+          end
+        end
+
+        def git = @git ||= Master::Io::GitOperations.new(@root)
 
         # One reading, aesthetic half first where it applies. Both halves report
         # under one unit, because they are one look at one tree.

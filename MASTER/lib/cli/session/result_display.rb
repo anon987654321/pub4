@@ -48,10 +48,25 @@ module Master
         # The reply is printed before it is spoken, and speaking does not block
         # the prompt. A routine success returns above and stays silent: "ok" is
         # not worth a synthesis.
-        Master::Voice::Playback.speak(text)
+        Master::Voice::Playback.speak(spoken_form(text))
         print_parallel_errors_footer(ok)
         puts
       end
+
+      # A pass report is a log, and reading a log aloud from the top takes
+      # longer than the pass did. Its milestones were already spoken as they
+      # happened (Session::MILESTONE), so what is left to say is the line that
+      # closes it. Anything that is not a report is spoken whole.
+      REPORT_FOOTER = /\A[a-z]+\d+: (?:complete|incomplete)\b/
+
+      def spoken_form(text)
+        last = text.to_s.lines.map(&:strip).reject(&:empty?).last.to_s
+        return text unless text.to_s.lines.size > REPORT_MIN_LINES && last.match?(REPORT_FOOTER)
+
+        last
+      end
+
+      REPORT_MIN_LINES = 8
 
       def reply_measure
         [Master::Voice::Renderer::MEASURE, TTY::Screen.width - 1].min
