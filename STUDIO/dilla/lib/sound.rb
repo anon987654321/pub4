@@ -656,6 +656,28 @@ module AnalogSynth
     inter.pack("s<*")
   end
 
+  # write!'s inverse: a file back into the pair of ±1.0 buffers every device in
+  # this file works on. Decoded through ffmpeg rather than by parsing RIFF here,
+  # so a file that arrived as mp3, or at another rate, or with its chunks in an
+  # order this would not have guessed, still comes back — and it is the same
+  # decoder that wrote it.
+  def read!(path)
+    raw, _err, _status = ToolRun.capture3(["ffmpeg", "-v", "quiet", "-i", path, "-f", "s16le",
+                                           "-ar", RATE.to_s, "-ac", "2", "-"], binmode: true)
+    return [[], []] if raw.nil? || raw.empty?
+
+    samples = raw.unpack("s<*")
+    left = Array.new(samples.length / 2)
+    right = Array.new(samples.length / 2)
+    i = 0
+    while (i * 2) + 1 < samples.length
+      left[i] = samples[i * 2] / 32_767.0
+      right[i] = samples[(i * 2) + 1] / 32_767.0
+      i += 1
+    end
+    [left, right]
+  end
+
   def write!(left, right, dest)
     FileUtils.mkdir_p(File.dirname(dest))
     inter = Array.new(left.length * 2)
