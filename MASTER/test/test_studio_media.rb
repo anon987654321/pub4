@@ -58,15 +58,31 @@ class TestStudioMedia < Minitest::Test
     assert_includes source, "def apply_finishing_grain"
     assert_includes source, "GRAIN_REFERENCE_WIDTH"
     refute_match(/grain\(processed, 400, :kodak_portra, 0\.35\)/, source)
-    # Reaching the pass is the invariant; naming it is one way to reach it. This
-    # asserted the call site verbatim and went red when run_random started writing
-    # through process_file — the behaviour right, the spelling gone.
+    # Reaching the pass is the invariant; naming it is one way to reach it. Two
+    # spellings have already been asserted here and both went stale while the
+    # behaviour stayed right: the verbatim call site, which run_random replaced
+    # with process_file, then process_file itself, which run_watch replaced with
+    # grade_watched. So the assertion follows calls instead of naming the hop.
     %w[process_file run_random run_uplift run_one_shot run_watch].each do |name|
-      body = source[/^def #{name}\b.*?^end$/m]
-      assert body, "#{name} must still exist"
-      assert body.include?("apply_finishing_grain") || body.include?("process_file("),
-             "#{name} must reach apply_finishing_grain, itself or through process_file"
+      assert_includes source, "def #{name}", "#{name} must still exist"
+      assert reaches?(source, name, "apply_finishing_grain"),
+             "#{name} must reach apply_finishing_grain, through however many helpers it calls"
     end
+  end
+
+  # Whether one top-level method of a single-file script reaches another, by
+  # following the names it calls. Shallow on purpose: it reads call spellings in
+  # a body, so a dynamic send is invisible to it — postpro has none on this path,
+  # and a reachability check that tried to be exact would be a second interpreter.
+  def reaches?(source, from, target, seen = [])
+    return false if seen.include?(from)
+
+    body = source[/^def #{from}\b.*?^end$/m]
+    return false unless body
+    return true if body.include?(target)
+
+    body.scan(/\b([a-z_][a-z0-9_]*)\(/).flatten.uniq
+        .any? { |callee| reaches?(source, callee, target, seen + [from]) }
   end
 
   # The model string is not the invariant. This pinned flux-1.1-pro-ultra and
