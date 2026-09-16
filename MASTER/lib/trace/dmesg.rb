@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "set"
+
 module Master
   module Trace
     # OpenBSD dmesg-style kernel lines for operator progress.
@@ -112,6 +114,8 @@ module Master
           @open = {}
           @attached = {}
           @usage = nil
+          @llm = {}
+          @llm_parent = {}
         end
 
         def lines(payload)
@@ -132,22 +136,68 @@ module Master
 
         # Lanes ask in parallel, often of one model, so a call is its model on
         # its thread: the bus publishes in the caller's thread, and a call's
-        # send and outcome happen on the same one.
+        # send and outcome happen on the same one. A call attaches to the unit
+        # that asked for it, fold0 or scan0, named by Dmesg.under; anything else
+        # asks from master0.
         #
-        # A call attaches to the unit that asked for it, fold0 or scan0, named
-        # by Dmesg.under; anything else asks from master0.
+        # A burst is not a conversation. A scan asks a model per file per rule,
+        # and a line for each send and each outcome buried the operator: the
+        # 2026-09-16 /fix printed some two thousand llm lines, every one of them
+        # a lane failing over to the next, and no report at the end. The first
+        # calls under a unit still attach, as devices do; past that the unit
+        # speaks in rollups — how many were asked, how many failed, how many
+        # lanes it walked — and a failure the chain recovered from is not news.
+        # Every call is still in runtime/events/activity.jsonl.
+        BURST_AFTER = 3
+        ROLLUP_EVERY = 25
+        ROLLUP_SECONDS = 20
+
         def llm_send(payload)
+          parent = Fiber[:master_unit] || "master0"
           unit = open_unit("llm", llm_key(payload))
-          ["#{unit} at #{Fiber[:master_unit] || "master0"}: #{model_name(payload[:model])}"]
+          @llm_parent[llm_key(payload)] = parent
+          tally = llm_tally(parent)
+          tally[:calls] += 1
+          tally[:models] << model_name(payload[:model])
+          return ["#{unit} at #{parent}: #{model_name(payload[:model])}"] if tally[:calls] <= BURST_AFTER
+
+          rollup(parent, tally)
         end
 
         def llm_outcome(payload)
-          unit = @open.delete(llm_key(payload)) || "llm0"
+          key = llm_key(payload)
+          unit = @open.delete(key) || "llm0"
+          # The outcome is published on the thread that sent, so the unit that
+          # asked is still in fiber storage when the send's key does not match.
+          parent = @llm_parent.delete(key) || Fiber[:master_unit] || "master0"
           usage, @usage = @usage, nil
+          tally = llm_tally(parent)
+          tally[:failed] += 1 unless payload[:status].to_s == "success"
+          return rollup(parent, tally) if tally[:calls] > BURST_AFTER
+
           return ["#{unit}: #{payload[:status]}, #{clip(payload[:error])}"] unless payload[:status].to_s == "success"
 
           ["#{unit}: #{[tokens(usage), seconds(payload[:latency_ms]), cents(usage)].compact.join(', ')}"]
         end
+
+        def llm_tally(parent)
+          @llm[parent] ||= { calls: 0, failed: 0, models: Set.new, said: 0, at: monotonic }
+        end
+
+        # One line per ROLLUP_SECONDS or ROLLUP_EVERY calls, whichever comes
+        # first, and never one that repeats the last.
+        def rollup(parent, tally)
+          since = tally[:calls] - tally[:said]
+          return [] if since < ROLLUP_EVERY && monotonic - tally[:at] < ROLLUP_SECONDS
+          return [] if since.zero?
+
+          tally[:said] = tally[:calls]
+          tally[:at] = monotonic
+          failed = tally[:failed].positive? ? ", #{tally[:failed]} failed" : ""
+          ["#{parent}: #{counted(tally[:calls], "model call")}#{failed}, #{counted(tally[:models].size, "lane")}"]
+        end
+
+        def monotonic = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
         # Tokens and cost arrive inside the call; the outcome that closes the
         # unit arrives after it.

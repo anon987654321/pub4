@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "set"
+
 module Master
   module Voice
     # Plays what Speech synthesises.
@@ -28,10 +30,20 @@ module Master
       # outlasts the user's patience by minutes.
       MAX_SPOKEN_CHARS = 3_000
 
+      # A line already waiting to be spoken, or spoken a moment ago, is not
+      # spoken again: two paths reach this door with one reply — the result
+      # display and the bridge summary — and a retried synthesis said it a
+      # third time. A deliberate repeat past the echo window still speaks,
+      # because asking the same question twice is a thing a person does.
+      ECHO_WINDOW_S = 20
+
       @queue = nil
       @worker = nil
       @lock = Mutex.new
       @warned = false
+      @pending = nil
+      @last_said = nil
+      @last_at = 0.0
 
       module_function
 
@@ -75,13 +87,39 @@ module Master
           return
         end
 
-        ensure_worker.push(str)
+        queue = ensure_worker
+        return if echo?(str)
+
+        queue.push(str)
         nil
+      end
+
+      # Under the lock the queue is built with, so a push and a drain cannot
+      # disagree about what is pending.
+      def echo?(str)
+        @lock.synchronize do
+          now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+          @pending ||= Set.new
+          next true if @pending.include?(str)
+          next true if str == @last_said && now - @last_at < ECHO_WINDOW_S
+
+          @pending << str
+          false
+        end
+      end
+
+      def spoken(text)
+        @lock.synchronize do
+          @pending&.delete(text)
+          @last_said = text
+          @last_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        end
       end
 
       def ensure_worker
         @lock.synchronize do
           @queue ||= Queue.new
+          @pending ||= Set.new
           @worker ||= Thread.new { drain }
           @worker[:name] = "voice-playback"
           @queue
@@ -91,6 +129,7 @@ module Master
       def drain
         while (text = @queue.pop)
           path = synthesize(text)
+          spoken(text)
           next unless path
 
           play(path)

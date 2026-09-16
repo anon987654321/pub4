@@ -73,6 +73,35 @@ class TestVoiceSupport < Minitest::Test
     assert_equal ["hello"], queued
   end
 
+  # Two paths reached the door with one reply and MASTER said it twice; a
+  # retried synthesis said it a third time. A repeat past the window still
+  # speaks, because asking the same question twice is a thing a person does.
+  def test_a_line_already_waiting_or_just_spoken_is_not_spoken_again
+    queued = []
+    PB.instance_variable_set(:@pending, nil)
+    PB.instance_variable_set(:@last_said, nil)
+    PB.instance_variable_set(:@last_at, 0.0)
+
+    PB.stub(:enabled?, true) do
+      PB.stub(:available?, true) do
+        PB.stub(:ensure_worker, queued) do
+          PB.speak("the same sentence")
+          PB.speak("the same sentence")
+          PB.send(:spoken, "the same sentence")
+          PB.speak("the same sentence")
+          PB.speak("a different sentence")
+          PB.instance_variable_set(:@last_at, Process.clock_gettime(Process::CLOCK_MONOTONIC) - PB::ECHO_WINDOW_S - 1)
+          PB.speak("the same sentence")
+        end
+      end
+    end
+
+    assert_equal ["the same sentence", "a different sentence", "the same sentence"], queued
+  ensure
+    PB.instance_variable_set(:@pending, nil)
+    PB.instance_variable_set(:@last_said, nil)
+  end
+
   DNA = Master::Voice::ProductionDna
 
   def test_the_dna_brief_restates_the_dilla_table

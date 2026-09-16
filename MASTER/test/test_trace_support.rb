@@ -21,6 +21,26 @@ class TestTraceSupport < Minitest::Test
     def emit(pattern, payload) = @handlers[pattern].each { |h| h.call(payload) }
   end
 
+  # A scan asks a model per file per rule. One line per send and one per
+  # outcome printed some two thousand lines in the 2026-09-16 /fix, every one
+  # of them a lane failing over to the next, and no report at the end.
+  def test_a_burst_of_model_calls_collapses_into_rollups
+    console = Master::Trace::Dmesg::Console.new
+    Fiber[:master_unit] = "scan0"
+    printed = 60.times.flat_map do |i|
+      console.lines(event: "llm:send", model: i.even? ? "claude-cli:claude-opus-4-8" : "ollama:gemma3:4b") +
+        console.lines(event: "llm:provider_outcome", model: "x", status: i.zero? ? :success : :provider_error,
+                      error: "claude-cli: ", latency_ms: 10)
+    end
+
+    assert_operator printed.size, :<, 12, printed.join("\n")
+    assert_match(%r{\Allm0 at scan0: }, printed.first)
+    assert(printed.any? { |line| line.match?(/\Ascan0: \d+ model calls, \d+ failed, 2 lanes\z/) },
+           "no rollup line: #{printed.join(" | ")}")
+  ensure
+    Fiber[:master_unit] = nil
+  end
+
   def test_a_span_runs_its_block_once_when_tracing_is_off
     runs = 0
     value = Master::Trace::Telemetry.span("x") { runs += 1 }
