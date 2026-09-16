@@ -1104,23 +1104,8 @@ rules:
       five years out? Designing for hypothetical scale?
     fix: Small deliberate steps. Reassess after each. Feedback from each step illuminates
       the next.
-# ... (existing laws) ...
   - id: REVERSIBILITY
     source: The Pragmatic Programmer — reversibility (Hunt & Thomas)
-    name: Ability to undo a decision
-    tier: core
-    severity: warning
-    autofix: false
-    detect_semantic: Is this change an irreversible one-way door?
-    fix: Design for reversibility. If irreversible, document why and create a rollback plan.
-  - id: NO_RECURSIVE_WRAPPERS
-    source: MASTER-native
-    name: No redundant execution wrappers
-    tier: architecture
-    severity: error
-    autofix: false
-    detect_semantic: Does this tool wrap another tool that performs the same core action?
-    fix: Remove the wrapper and call the underlying tool directly.
     name: Prefer decisions that are easy to undo
     tier: philosophy
     severity: info
