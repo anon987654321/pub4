@@ -113,7 +113,7 @@ Operator::CiGuard.run! do
     # this directory with no reader, so an entry in it changed nothing and
     # looked like it had. __dir__ resolves in both tree shapes — RAILS/shared
     # in the monorepo, /home/<app>/shared on the box.
-    audit = "bundle exec bundler-audit check --config ./bundler-audit.yml"
+    audit = "bundle exec bundler-audit check --config #{File.join(__dir__, 'bundler-audit.yml')}"
     audit += " --update" if ENV["BUNDLER_AUDIT_UPDATE"] == "1"
     step "bundler_audit", audit
     step "brakeman", "bundle exec brakeman --quiet --no-pager --exit-on-warn --exit-on-error"
