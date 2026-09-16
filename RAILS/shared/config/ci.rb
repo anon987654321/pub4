@@ -108,7 +108,12 @@ Operator::CiGuard.run! do
     step "rubocop_autocorrect", autocorrect
     rubocop = "bundle exec rubocop #{dirs}"
     step "rubocop", rubocop
-    audit = "bundle exec bundler-audit check"
+    # --config, because bundler-audit reads .bundler-audit.yml from the
+    # directory it runs in and no app has one: the shared ignore list sat in
+    # this directory with no reader, so an entry in it changed nothing and
+    # looked like it had. __dir__ resolves in both tree shapes — RAILS/shared
+    # in the monorepo, /home/<app>/shared on the box.
+    audit = "bundle exec bundler-audit check --config ./bundler-audit.yml"
     audit += " --update" if ENV["BUNDLER_AUDIT_UPDATE"] == "1"
     step "bundler_audit", audit
     step "brakeman", "bundle exec brakeman --quiet --no-pager --exit-on-warn --exit-on-error"

@@ -116,6 +116,17 @@ Forward work is the last section of this file.
 
 ### Audit findings — 2026-09-12
 
+- **ruby_llm is one major version behind its only fix, and the ignore in
+  `shared/config/bundler-audit.yml` is what stands in for it.**
+  CVE-2026-67991 (ReDoS in `RubyLLM::Utils.underscore`, High) has no patched
+  1.x: the advisory says `>= 2.0.0.rc1`, and 2.0.0 is still a release
+  candidate as of 2026-09-17. It blocked every app deploy on 2026-09-16 until
+  the ignore landed. The entry argues the advisory cannot reach this tree —
+  it is scoped to Ruby 3.1.x, we pin 3.4.9, and no user-supplied string ever
+  becomes a class, agent or tool name here — but an ignore is a standing
+  claim, not a fix. Upgrade MASTER (`~> 1.3`), brgen and amber to 2.0.0 when
+  it ships, then delete the ignore. `ruby_llm-mcp` comes with it.
+
 - **`constitutional_scan` is over shared's ceiling, and what is left is a
   design value or the scanner's reach.** On the aesthetic profile the budget
   counts, shared reads 11 against 8 and bsdports sits at its 3, the jox-logo's
