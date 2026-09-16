@@ -157,7 +157,20 @@ module Master
         def violation_line(violation)
           place = [violation[:file].to_s.delete_prefix("#{Master::ROOT}/"), violation[:line]].reject { |p| p.to_s.empty? }.join(":")
           files = Array(violation[:files]).size
-          "  #{place} #{violation[:message].to_s[0, CommandRegistry::VIOLATION_TRUNCATE]}#{", #{files} files" if files > 1}"
+          "  #{place} #{clipped(violation[:message])}#{", #{files} files" if files > 1}"
+        end
+
+        # A hard slice cut mid-word and said nothing about it: an adversarial
+        # finding ended "contradicting the commen", which reads as a typo in the
+        # finding rather than the end of the room for it. Cut at the last space
+        # and say so.
+        def clipped(message, limit: CommandRegistry::VIOLATION_TRUNCATE)
+          text = message.to_s
+          return text if text.length <= limit
+
+          head = text[0, limit]
+          space = head.rindex(" ")
+          "#{(space && space > limit / 2 ? head[0, space] : head).rstrip}…"
         end
 
         def omitted_count
@@ -165,7 +178,7 @@ module Master
         end
 
         def omitted_line
-          "#{omitted_count} more violation(s) omitted"
+          "#{omitted_count} more #{omitted_count == 1 ? 'violation' : 'violations'} omitted"
         end
 
         def cross_file_drifts_line
