@@ -36,15 +36,15 @@ bsdports.org:
 cardff.uk:
   state: registered
   created: 13-Aug-2021
-  expires: 13-Aug-2026
-  status: Renewal required.
+  expires: 13-Aug-2027
+  status: Registered until expiry date.
   registrar: Domeneshop AS t/a Domain Name Shop [Tag = DOMENESHOP-NO]
 chcago.us:
   state: available
 denvr.us:
   state: registered
   created: '2021-08-13T11:20:09Z'
-  expires: '2026-08-13T11:20:09Z'
+  expires: '2027-08-13T11:20:09Z'
   registrar: Domeneshop AS dba domainnameshop.com
 discordb.org:
   state: available
@@ -60,8 +60,8 @@ dtroit.us:
 edinbrgh.uk:
   state: registered
   created: 13-Aug-2021
-  expires: 13-Aug-2026
-  status: Renewal required.
+  expires: 13-Aug-2027
+  status: Registered until expiry date.
   registrar: Domeneshop AS t/a Domain Name Shop [Tag = DOMENESHOP-NO]
 foball.no:
   state: registered
@@ -129,7 +129,8 @@ oshlo.no:
 prtland.com:
   state: available
 pub.attorney:
-  state: available
+  state: unknown
+  note: registry referral, not a domain record
 pub.healthcare:
   state: available
 reykjavk.is:
