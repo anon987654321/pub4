@@ -48,14 +48,35 @@ it under the narration, ducking while a line is spoken, and
 `STUDIO/dilla/data/bed.yml` holds every number it uses. `ruby dilla.rb demo-all`
 renders the older engine's catalogue.
 
-Old work comes back. An Ableton set is a gzipped XML document, so
-`ruby dilla.rb import-als <file.als>` reads a set that may no longer open in
-Live and prints its tempo, its tracks and the devices each one ran, the harmony
-of every track that plays chords and the drum grid of every track that plays
-drums. With `--write` the grids join `samples/midi` and the recipe lands in
-`project/imported`, ready to paste into `data/pieces.yml`. The audio is not in
-the file and the samples it pointed at are usually gone; what comes back is the
-writing, and the engine plays it on instruments it synthesises itself.
+Old work comes back whole. An Ableton set is a gzipped XML document, so
+`ruby dilla.rb import-als <file.als>` reads a set that no longer opens in Live —
+wrong version, missing plugin, sample long gone — and gives back its tempo,
+every track's device chain with the parameters each device was set to, the
+plugin names and the paths they were loaded from, the fader, the pan and the
+sends, every note, the harmony of every track that plays chords, the grid of
+every track that plays drums, and the name of every sample it pointed at. A
+parameter is read as any element carrying a manual value, which is why a device
+nobody here has heard of still comes back with its settings.
+
+Point it at a folder and it reads the lot. With `write` each set leaves a
+profile in `project/imported`, its drum grids in `samples/midi` under the names
+the banks glob for, and every melodic clip beside them as MIDI. Over a folder
+it also writes a census: which devices and which plugins were used how often,
+in what order they sat on a chain, at what tempos, and which samples were
+reached for — the habits of whoever made the archive, counted rather than
+remembered. The audio is not in the file and the samples usually are not on the
+disk; what comes back is the writing and the decisions, and this engine
+synthesises the sound itself.
+
+`ruby dilla.rb ears` describes a render to somebody who cannot hear it. It
+prints the nine octave bands, the loudness, the crest, the stereo width, how
+much of the record sits below twenty-five hertz where nothing is heard and how
+much sits above thirteen kilohertz where the air is, and it writes a
+spectrogram. Given two files it prints the deltas between them, and with
+`stems` it separates both first so a kick is compared with a kick rather than
+a mix with a mix. The picture is the half that matters: nine octave bands put
+eight to sixteen kilohertz in one number, and a record with no air at all can
+pass every band and still be dull.
 Bare `ruby dilla.rb` does not open by asking what you want, as postpro and
 preprompt do: a render is reproduced from its knobs and its seed, and a question
 at the start is a step a script cannot answer.

@@ -304,16 +304,36 @@ load, so anything that boots `dilla.rb` with it set is that piece. `piece`
 sets it and re-execs when it was typed by hand, because a name that arrives in
 `ARGV` arrives after `Bed` has already settled its constants.
 
-## Reading an old Ableton set
+## Reading old Ableton sets
 
 ```sh
-ruby dilla.rb import-als "~/Downloads/kp Project/kp.als"
-ruby dilla.rb import-als "~/Downloads/kp Project/kp.als" --write
+ruby dilla.rb import-als "~/Downloads/kp Project/kp.als"   # one set
+ruby dilla.rb import-als ~/Downloads/livesets              # every set under it
+ruby dilla.rb import-als ~/Downloads/livesets write        # and write it all out
 ```
 
-Prints tempo, tracks, devices, the harmony of each chord track and the grid of
-each drum track. `--write` puts the grids in `samples/midi/<slug>/` and the
-recipe in `project/imported/<slug>.yml`.
+Reads tempo, every track's devices with their parameters, plugin names and
+paths, fader/pan/sends, all notes, harmony per chord track, grid per drum
+track, and every sample reference. `write` puts a profile per set in
+`project/imported/<slug>.yml`, drum grids and melodic clips in
+`samples/midi/<slug>/`, and `project/imported/_census.yml` across the folder.
+
+Three tempo spellings are tried, because sixteen years of Live are in one
+archive: Live 12 renamed `MasterTrack` to `MainTrack`, and Live 8 and 9 keep
+the tempo as an automation event rather than a manual value.
+
+## What a render measures like
+
+```sh
+ruby dilla.rb ears                        # demo.wav
+ruby dilla.rb ears a.wav b.wav            # both, with band deltas
+ruby dilla.rb ears a.wav b.wav stems      # demucs first
+ruby dilla.rb ears a.wav --json           # the old metadata report
+```
+
+Octave bands, LUFS, LRA, true peak, crest, stereo width, sub energy below
+25 Hz and air above 13 kHz, plus a spectrogram per file under `<output>/ears`.
+
 
 ## Full playlist demo
 

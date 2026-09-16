@@ -312,3 +312,232 @@ pieces:
       bass: { wave: triangle, cutoff_hz: 300, decay: 2.0, gain_db: -10 }
       master_bus: { console: air, drive: 1.06, crush_bits: 15, crush_mix: 0.06 }
       catalogue: { min_chords: 4, max_chords: 6, crossfade_s: 1.6 }
+
+  # ---- The archive ------------------------------------------------------
+  #
+  # Fifteen progressions read out of the operator's own Ableton sets, 2008 to
+  # 2024, by `dilla.rb import-als`. Each carries its chords here rather than
+  # naming a row of CHORD_PROGRESSIONS, because they are his and belong to no
+  # table. The tempo is the set's own. The instrument is not: those sets ran
+  # chipsounds, Analog Lab, MrRay73, DX7 V and a Sonitex STX-1260, and this
+  # engine synthesises everything it plays, so what comes back is the writing.
+
+  - name: dnb_ninths
+    chords: ["Fm9", "Ebm9", "Ab9", "Dbmaj9", "C7#9", "Fm9", "Bbm9", "Dbmaj7"]
+    note: The most Dilla-shaped harmony in the archive, and it was already his.
+    bed:
+      bpm: 98
+      pad_families: [rhodes]
+      pad_racks: [wash]
+      overtones: { partials: [2, 3, 4, 6], gain_db: -20 }
+      lead: { plays_odds: 0.7, rack_names: [tape, weather] }
+      drums: { arrangement: { bank_order: [dilla], bars_per_shape: 8 }, samples: *kit_crate }
+      master_bus: { console: twelve_bit }
+      catalogue: { min_chords: 8, max_chords: 8, crossfade_s: 1.0 }
+
+  - name: my_little_pony
+    chords: ["Am", "C", "Am7/E", "Cmaj7/G", "Cmaj7/E", "Cmaj7/B", "G6", "Em7"]
+    note: A descending inner voice under a held Cmaj7 — the set's own idea, kept.
+    bed:
+      bpm: 97
+      pad_families: [rhodes, prophet]
+      pad_racks: [shimmer]
+      overtones: { partials: [2, 3, 5], gain_db: -21 }
+      lead: { rack_names: [octave, weather] }
+      drums: { arrangement: { bank_order: [dilla, flylo], bars_per_shape: 4 }, samples: *kit_crate }
+      catalogue: { min_chords: 8, max_chords: 8, crossfade_s: 1.0 }
+
+  - name: sandviken_hotell
+    chords: ["Gm7/F", "Gm", "Eb", "Gm/D", "Gm", "Cm7", "Bb/F", "Ebmaj7"]
+    bed:
+      bpm: 166
+      bars_per_chord: 4
+      pad_families: [prophet]
+      pad_racks: [wash]
+      min_attack_s: 0.3
+      overtones: { partials: [2, 3, 4], gain_db: -22 }
+      lead: { plays_odds: 0.8, rack_names: [ring, octave] }
+      drums:
+        arrangement: { bank_order: [techno, industrial], bars_per_shape: 8 }
+        samples: *kit_industrial
+        feels: *feel_rigid
+      master_bus: { console: blown }
+      catalogue: { min_chords: 6, max_chords: 6, crossfade_s: 1.0 }
+
+  - name: akar_umbi
+    chords: ["Bbm/Db", "Gbmaj7/Db", "Ab7/Eb"]
+    note: Three chords over a moving bass that never lands on a root.
+    bed:
+      bpm: 135
+      bars_per_chord: 4
+      pad_families: [moog]
+      pad_racks: [shimmer]
+      overtones: { partials: [2, 4, 6], gain_db: -21 }
+      lead: { plays_odds: 0.75, rack_names: [inharmonic, tape] }
+      drums:
+        arrangement: { bank_order: [techno], bars_per_shape: 8 }
+        samples: *kit_crate
+        feels: *feel_rigid
+      catalogue: { min_chords: 4, max_chords: 4, crossfade_s: 1.0 }
+
+  - name: andand_sus
+    chords: ["Gb", "Absus4/Db", "Ebsus4/Ab"]
+    bed:
+      bpm: 150
+      bars_per_chord: 4
+      pad_families: [prophet]
+      pad_racks: [wash]
+      min_attack_s: 0.2
+      overtones: { partials: [2, 3, 4, 5], gain_db: -20 }
+      lead: { plays_odds: 0.7, rack_names: [octave, ring] }
+      drums:
+        arrangement: { bank_order: [techno], bars_per_shape: 8 }
+        samples: *kit_industrial
+        feels: *feel_rigid
+      master_bus: { console: blown }
+      catalogue: { min_chords: 4, max_chords: 4, crossfade_s: 1.0 }
+
+  - name: e_dorian
+    chords: ["Gmaj7", "Em7", "Gbm7", "Bm7"]
+    note: The set was named for its mode, which is the whole arrangement.
+    bed:
+      bpm: 130
+      bars_per_chord: 4
+      pad_families: [prophet, moog]
+      pad_racks: [shimmer]
+      min_attack_s: 1.0
+      overtones: { partials: [2, 3, 5, 6], gain_db: -19 }
+      lead: { rack_names: [weather, ghost] }
+      drums:
+        arrangement: { bank_order: [techno, flylo], bars_per_shape: 8 }
+        samples: *kit_crate
+        feels: *feel_rigid
+      master_bus: { console: air }
+      catalogue: { min_chords: 4, max_chords: 4, crossfade_s: 1.0 }
+
+  - name: gorails
+    chords: ["Esus9", "Gbm/A", "Asus9", "Bm", "Asus9", "Gmaj9/Gb", "Em/B", "Bsus4/D"]
+    bed:
+      bpm: 176
+      bars_per_chord: 4
+      pad_families: [prophet]
+      pad_racks: [wash]
+      overtones: { partials: [2, 3, 4, 6], gain_db: -21 }
+      lead: { plays_odds: 0.85, rack_names: [ring, inharmonic] }
+      drums:
+        arrangement: { bank_order: [industrial, techno], bars_per_shape: 4 }
+        samples: *kit_industrial
+        feels: *feel_swung
+      master_bus: { console: blown }
+      catalogue: { min_chords: 6, max_chords: 6, crossfade_s: 1.0 }
+
+  - name: home_improvement
+    chords: ["Bm7", "Am7"]
+    note: Two chords a tone apart, held. The archive's own So What.
+    bed:
+      bpm: 92
+      bars_per_chord: 4
+      pad_families: [rhodes]
+      pad_racks: [wash]
+      min_attack_s: 0.6
+      overtones: { partials: [2, 3, 4, 5, 6], gain_db: -18 }
+      lead: { plays_odds: 0.6, rack_names: [ghost, tape] }
+      drums: { arrangement: { bank_order: [dilla], bars_per_shape: 8 }, samples: *kit_crate }
+      master_bus: { console: twelve_bit }
+      catalogue: { min_chords: 4, max_chords: 4, crossfade_s: 1.0 }
+
+  - name: sang_til_pappa
+    chords: ["Fmaj7/E", "Esus4/F"]
+    note: A major seventh over its own leading tone, rocking. Nine drum grids in the set it came from.
+    bed:
+      bpm: 104
+      bars_per_chord: 4
+      pad_families: [rhodes, prophet]
+      pad_racks: [shimmer]
+      min_attack_s: 0.8
+      overtones: { partials: [2, 3, 4, 5, 7], gain_db: -17 }
+      lead: { plays_odds: 0.5, gain_db: -3, rack_names: [ghost, weather] }
+      drums: { arrangement: { bank_order: [dilla, flylo], bars_per_shape: 8 }, samples: *kit_crate, gain_db: -8 }
+      master_bus: { console: air }
+      catalogue: { min_chords: 4, max_chords: 4, crossfade_s: 1.2 }
+
+  - name: finish_it
+    chords: ["Dm", "C", "Dm", "C", "Dm", "C", "Dm", "Asus4/D"]
+    bed:
+      bpm: 134
+      pad_families: [moog]
+      pad_racks: [wash]
+      min_attack_s: 0.25
+      overtones: { partials: [2, 3, 4], gain_db: -22 }
+      lead: { plays_odds: 0.8, rack_names: [inharmonic, octave] }
+      drums:
+        arrangement: { bank_order: [industrial], bars_per_shape: 8 }
+        samples: *kit_industrial
+        feels: *feel_rigid
+      catalogue: { min_chords: 8, max_chords: 8, crossfade_s: 1.0 }
+
+  - name: ac_chipsounds
+    chords: ["Em", "F", "Dsus4/G", "G/B", "Abmaj7", "Dbmaj7", "Abmaj7", "Dbmaj7/F"]
+    note: Two keys a tritone apart in one loop, which is why it does not settle.
+    bed:
+      bpm: 87
+      pad_families: [rhodes, moog]
+      pad_racks: [shimmer]
+      overtones: { partials: [2, 3, 5], gain_db: -20 }
+      lead: { rack_names: [tape, ghost] }
+      drums: { arrangement: { bank_order: [dilla, flylo], bars_per_shape: 4 }, samples: *kit_crate }
+      catalogue: { min_chords: 8, max_chords: 8, crossfade_s: 1.0 }
+
+  - name: ak7
+    chords: ["Gb", "Abm", "Gbm", "Bm7"]
+    note: A major triad answered by its own minor, a device the archive uses over and over.
+    bed:
+      bpm: 84
+      pad_families: [prophet]
+      pad_racks: [wash]
+      overtones: { partials: [2, 3, 4, 6, 8], gain_db: -19 }
+      lead: { plays_odds: 0.65, rack_names: [weather, ghost] }
+      drums: { arrangement: { bank_order: [dilla], bars_per_shape: 8 }, samples: *kit_crate }
+      master_bus: { console: twelve_bit }
+      catalogue: { min_chords: 6, max_chords: 6, crossfade_s: 1.0 }
+
+  - name: roadkill
+    chords: ["Gsus4/C", "Dsus4/G"]
+    bed:
+      bpm: 112
+      bars_per_chord: 4
+      pad_families: [moog]
+      pad_racks: [wash]
+      min_attack_s: 0.9
+      overtones: { partials: [2, 3, 4, 5, 6], gain_db: -18 }
+      lead: { plays_odds: 0.55, rack_names: [ghost, octave] }
+      drums: { arrangement: { bank_order: [flylo], bars_per_shape: 8 }, samples: *kit_crate }
+      catalogue: { min_chords: 4, max_chords: 4, crossfade_s: 1.0 }
+
+  - name: yamaha_dx7
+    chords: ["Dm", "Em7", "Cmaj7", "Fmaj7"]
+    note: Written on a DX7 V, played here on oscillators that are nobody's machine.
+    bed:
+      bpm: 120
+      bars_per_chord: 4
+      pad_families: [prophet]
+      pad_racks: [shimmer]
+      overtones: { partials: [2, 3, 4, 5, 6, 8], gain_db: -18 }
+      lead: { rack_names: [octave, ring] }
+      drums: { arrangement: { bank_order: [flylo, techno], bars_per_shape: 8 }, samples: *kit_crate }
+      master_bus: { console: air }
+      catalogue: { min_chords: 4, max_chords: 4, crossfade_s: 1.0 }
+
+  - name: gresk_valutta
+    chords: ["Dm", "G", "C"]
+    note: Three chords and no seventh anywhere, which in this catalogue is the rare thing.
+    bed:
+      bpm: 88
+      bars_per_chord: 4
+      pad_families: [rhodes]
+      pad_racks: [wash]
+      overtones: { partials: [2, 3, 4], gain_db: -21 }
+      lead: { plays_odds: 0.7, rack_names: [tape, weather] }
+      drums: { arrangement: { bank_order: [dilla], bars_per_shape: 4 }, samples: *kit_crate }
+      master_bus: { console: twelve_bit }
+      catalogue: { min_chords: 4, max_chords: 4, crossfade_s: 1.0 }
