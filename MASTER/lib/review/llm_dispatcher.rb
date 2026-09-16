@@ -10,7 +10,7 @@ require_relative "llm_dispatcher/react_loop"
 require_relative "llm_dispatcher/ollama_sender"
 require_relative "llm_dispatcher/ruby_llm_sender"
 require_relative "llm_dispatcher/tool_registry"
-require_relative "llm_dispatcher/cli_sender"
+require_relative "llm_dispatcher/lane_silence"
 require_relative "llm_dispatcher/http_sender"
 
 module Master
@@ -108,57 +108,6 @@ module Master
       end
 
       include CliSender
-# Every lane failing is one condition, not two hundred failures. On
-# 2026-09-16 a /fix ran 194 model calls and 178 of them failed: the free
-# OpenRouter tier was out for the day, Gemini was out of quota, the claude
-# binary hung and was killed, and a 3B local model timed out at 250s. Each
-# semantic rule still walked all four lanes, so an hour of wall clock
-# bought nothing but a longer log.
-#
-# After SILENT_AFTER consecutive failures with no answer in between, the
-# door refuses for SILENCE_COOLOFF_S and says so once. One success from
-# any lane clears it, so a provider coming back needs no restart. The
-# refusal is :no_api_key, which callers already treat as permanent and
-# skip rather than retry.
-SILENT_AFTER = 12
-SILENCE_COOLOFF_S = 300
-
-@silence_mutex = Mutex.new
-@consecutive_failures = 0
-@silent_until = 0.0
-
-class << self
-  def lane_silence
-    @silence_mutex.synchronize { yield }
-  end
-
-  def lanes_silent?
-    lane_silence { @silent_until > Process.clock_gettime(Process::CLOCK_MONOTONIC) }
-  end
-
-  def record_lane_outcome(answered)
-    lane_silence do
-      if answered
-        @consecutive_failures = 0
-        @silent_until = 0.0
-        next false
-      end
-
-      @consecutive_failures += 1
-      next false if @consecutive_failures < SILENT_AFTER
-
-      @silent_until = Process.clock_gettime(Process::CLOCK_MONOTONIC) + SILENCE_COOLOFF_S
-      @consecutive_failures = 0
-      true
-    end
-  end
-
-  def silence_message
-    "no lane answered #{SILENT_AFTER} calls in a row; model work is skipped for " \
-      "#{SILENCE_COOLOFF_S / 60} minutes. /model list says what each lane needs."
-  end
-end
-
       include ReactLoop
       include OllamaSender
       include RubyLLMSender
@@ -186,8 +135,8 @@ end
                           &blk)
         started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         selected_model = answering_model(selected_model, image)
-        return Result.err(self.class.silence_message, category: :no_api_key) if self.class.lanes_silent?
-        return Result.err(Master.no_api_key_message, category: :no_api_key) unless Master.llm_reachable?(selected_model)
+        refusal = refusal_before_send(selected_model)
+        return refusal if refusal
 
         @bus&.publish("llm:send", model: selected_model)
         cache_key = cache_key_for(messages.last[:content], messages[0...-1], selected_model, system, temperature)
@@ -196,18 +145,7 @@ end
             send_llm_request(selected_model, messages, system:, stream:, image:, temperature:, format:, &blk)
           end
         end
-        # The circuit breaker returns provider failures as Err(:provider_error)
-        # rather than raising, so the rescue below never sees them — and
-        # :provider_error is deliberately not failover-eligible (a transient
-        # 5xx wants in-place retry). Billing and rate refusals are not
-        # transient; measured 2026-08-20: an out-of-credit call arrives here
-        # as :provider_error and no lane ever walked.
-        result = reclassify_provider_error(result)
-        note_lane_silence(result)
-        record_provider_result(model: selected_model, result:, started:)
-        # Stamped after MASTER_MODEL and the vision swap, so it names the model
-        # that was actually asked rather than the one the caller passed in.
-        result.is_a?(Master::Result::Ok) ? result.with_model(selected_model) : result
+        settle(result, selected_model, started)
       rescue Io::CircuitBreaker::CircuitError => err
         record_provider_outcome(selected_model, err.category, latency_ms: elapsed_ms(started), error: err.message)
         Result.err(redact_secrets(err.message), category: err.category)
@@ -241,7 +179,6 @@ end
         model = forced_model || selected_model
         image_present?(image) ? vision_model_for(model) : model
       end
-
 
       # One model for every lane, for one run. Set MASTER_MODEL and the router's
       # choice is overridden at the single door every request passes through —
@@ -284,15 +221,41 @@ end
         Result.err(redact_secrets(err.message.to_s), category: :llm_call_failure)
       end
 
+      # The two conditions that stop a call before it is made: every lane gone
+      # quiet, and this model unreachable. Both answer :no_api_key, which callers
+      # treat as permanent and skip rather than retry.
+      def refusal_before_send(selected_model)
+        return Result.err(LaneSilence.message, category: :no_api_key) if LaneSilence.silent?
+        return if Master.llm_reachable?(selected_model)
+
+        Result.err(Master.no_api_key_message, category: :no_api_key)
+      end
+
+      # The circuit breaker returns provider failures as Err(:provider_error)
+      # rather than raising, so send_with_cache's rescue never sees them — and
+      # :provider_error is deliberately not failover-eligible (a transient 5xx
+      # wants in-place retry). Billing and rate refusals are not transient;
+      # measured 2026-08-20: an out-of-credit call arrives here as
+      # :provider_error and no lane ever walked.
+      #
+      # The model is stamped after MASTER_MODEL and the vision swap, so it names
+      # the model that was actually asked rather than the one the caller passed.
+      def settle(result, selected_model, started)
+        result = reclassify_provider_error(result)
+        note_lane_silence(result)
+        record_provider_result(model: selected_model, result:, started:)
+        result.is_a?(Master::Result::Ok) ? result.with_model(selected_model) : result
+      end
+
       # With no key at all, the setup message. With a key the provider refused,
       # its own words: "not wired to any LLM" read false while OpenRouter answered.
       # One line when the last lane goes quiet, so the operator learns it once
       # rather than reading it two hundred times.
       def note_lane_silence(result)
-        return unless self.class.record_lane_outcome(Result.wrap(result).ok?)
+        return unless LaneSilence.record(Result.wrap(result).ok?)
 
-        Master::Trace::Dmesg.once("llm0", self.class.silence_message)
-        @bus&.publish("llm:lanes_silent", after: self.class::SILENT_AFTER)
+        Master::Trace::Dmesg.once("llm0", LaneSilence.message)
+        @bus&.publish("llm:lanes_silent", after: LaneSilence::SILENT_AFTER)
       end
 
       def key_refusal(err)

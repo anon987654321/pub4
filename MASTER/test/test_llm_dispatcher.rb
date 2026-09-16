@@ -38,24 +38,24 @@ class TestLLMDispatcher < Minitest::Test
   # local model timing out at 250s — and every rule still walked all four lanes.
   def test_the_door_stops_asking_once_no_lane_answers
     dispatcher, = build_dispatcher
-    door = Master::Review::LLMDispatcher
-    door.record_lane_outcome(true)
+    door = Master::Review::LLMDispatcher::LaneSilence
+    door.record(true)
 
-    refute door.lanes_silent?, "silent before anything failed"
-    (door::SILENT_AFTER - 1).times { door.record_lane_outcome(false) }
-    refute door.lanes_silent?, "tripped early"
-    assert door.record_lane_outcome(false), "the last failure must report the trip"
-    assert door.lanes_silent?
+    refute door.silent?, "silent before anything failed"
+    (door::SILENT_AFTER - 1).times { door.record(false) }
+    refute door.silent?, "tripped early"
+    assert door.record(false), "the last failure must report the trip"
+    assert door.silent?
 
     refused = dispatcher.send_with_cache("any-model", [{ role: "user", content: "hi" }])
     assert_predicate refused, :err?
     assert_equal :no_api_key, refused.category
     assert_match(/no lane answered/, refused.message)
 
-    door.record_lane_outcome(true)
-    refute door.lanes_silent?, "one answer must clear it without a restart"
+    door.record(true)
+    refute door.silent?, "one answer must clear it without a restart"
   ensure
-    Master::Review::LLMDispatcher.record_lane_outcome(true)
+    Master::Review::LLMDispatcher::LaneSilence.record(true)
   end
 
   # "claude-cli:" and a blank, a hundred and seventy-eight times: `claude
