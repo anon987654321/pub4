@@ -6,8 +6,8 @@ module Master::Core::Execution
 
   # StructuralTrace — a non-linear record of an agent's reasoning and action.
   #
-  # Unlike a simple transcript, a trace links every effect to the 
-  # observation and reasoning that triggered it. This is the primary 
+  # Unlike a simple transcript, a trace links every effect to the
+  # observation and reasoning that triggered it. This is the primary
   # defense against "simulation" (where a model claims a result without
   # actually executing the tool).
   class StructuralTrace

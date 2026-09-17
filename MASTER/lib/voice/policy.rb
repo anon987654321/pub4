@@ -58,13 +58,16 @@ module Master
 
       def rotating? = rotation_keys.size > 1
 
-      # A voice for one utterance. Random rather than round-robin: a session is
-      # not a sequence anybody counts, and alternating strictly makes the
-      # pattern audible in a way that draws attention to the mechanism.
+      # A voice for one utterance. Round-robin for reading paragraphs:
+      # alternates between available voices to create a dual-narrator effect.
       def voice_for_utterance
         return single_voice_key unless rotating?
 
-        rotation_keys.sample
+        @rotation_idx ||= 0
+        keys = rotation_keys
+        voice = keys[@rotation_idx % keys.size]
+        @rotation_idx += 1
+        voice
       end
 
             def neural_voice

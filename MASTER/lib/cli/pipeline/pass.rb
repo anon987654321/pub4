@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../operator/gate_chain"
+require_relative "pass_result"
 
 module Master
   module CLI
@@ -8,44 +9,8 @@ module Master
       # Full singularity pass: posture → aesthetic scan → deep scan → fix → re-scan → optional critique.
       # Progress is OpenBSD dmesg-style (device at bus: detail).
       class Pass
-        Result = Data.define(:target, :mode, :sections, :ok, :unit, :failed_stages, :totals) do
-          def initialize(totals: {}, **fields) = super(totals:, **fields)
+        # Result is defined in pass_result.rb
 
-          # "567 findings, 480 after the fix": the deep scan before the fix and the
-          # re-scan after it. "complete" alone said nothing about what the pass found
-          # or changed.
-          def counts
-            before, after = totals.values_at(:before, :after)
-            return unless before
-
-            after ? "#{before} findings, #{after} after the fix" : "#{before} findings"
-          end
-
-          # A section is its title and then its body, one blank line after, with
-          # no "#" in front: a terminal is not Markdown, and the title's place
-          # at the head of the block is the hierarchy.
-          def render
-            lines = sections.flat_map { |title, body| [title, body.to_s.chomp, ""] }
-            lines << footer
-            lines.join("\n")
-          end
-
-          # A pass whose fix stage blew up is not "complete". It used to say so
-          # anyway, because `ok` was derived from scan text alone and never looked
-          # at whether a stage had raised.
-          def footer
-            base = if failed_stages.any?
-                     "#{unit}: incomplete — #{failed_stages.join(", ")} failed"
-                   elsif ok
-                     "#{unit}: complete"
-                   else
-                     "#{unit}: complete with open findings"
-                   end
-            base = "#{base}, #{counts}" if counts
-            skipped = Master::Io::QuotaGate.report
-            skipped ? "#{base}\n#{skipped}" : base
-          end
-        end
 
         # A NameError (NoMethodError included) or TypeError out of a stage is a
         # defect in MASTER, not a finding about the target. Formatting one into

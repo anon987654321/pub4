@@ -18,10 +18,10 @@ module Master::Core::Execution
     # Processes a new observation.
     def process(observation, evidence_chain = nil)
       return Master::Result.err("no evidence provided", category: :validation) unless evidence_chain
-      
+
       # Verification is the gate.
       verification = verify(observation, evidence_chain)
-      
+
       if verification.ok?
         # The observation is promoted to Truth.
         fact_id = generate_fact_id(observation)
@@ -29,7 +29,7 @@ module Master::Core::Execution
           value: observation,
           verified: true,
           evidence: evidence_chain,
-          timestamp: Time.now
+          timestamp: Time.now,
         }
         Master::Result.ok(fact_id)
       else

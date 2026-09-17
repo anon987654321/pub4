@@ -26,7 +26,7 @@ module Master
               dirty: @dirty,
               files_count: @files_count,
               processes: @processes,
-              ruby_version: @ruby_version
+              ruby_version: @ruby_version,
             }
           end
 

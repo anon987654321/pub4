@@ -26,7 +26,7 @@ module Master::Core::Routing
         provider: @provider,
         execution: @execution,
         capabilities: @capabilities,
-        health: @health
+        health: @health,
       }
     end
   end

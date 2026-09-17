@@ -35,12 +35,12 @@ module Master
             state_machine.episode.record_event({
               type: event,
               data: data,
-              timestamp: Time.now
+              timestamp: Time.now,
             })
             @container[:bus]&.publish("exec:event", {
               type: event,
               data: data,
-              presence: state_machine.presence.to_h
+              presence: state_machine.presence.to_h,
             })
           end
 
@@ -48,21 +48,21 @@ module Master
         # Use the ContextCompiler to build a lean prompt
         compiler = Master::Core::Execution::ContextCompiler.new(@container)
         context = compiler.compile(goal, state_machine, focus: @current_focus)
-        
+
         # Construct the final lean prompt
         prompt = prompt_override || "Perform the role of #{role} for the current phase."
         full_prompt = {
           context: context,
-          instruction: prompt
+          instruction: prompt,
         }.to_json
-        
+
         # Resolve model for this role via the RoleManager
         model_id = @container[:role_manager].model_for(role)
-        
+
         # Use the agent to generate a response with the specific model
         # Assuming agent.generate(prompt, model: model_id)
         response = agent.generate(full_prompt, model: model_id)
-        
+
         # Wrap response in an evidence chain if it creates an artifact
         chain = Master::Core::Execution::Evidence::Chain.new(
           role: role,
@@ -86,11 +86,11 @@ module Master
         class Discover < Base
           def call
             record(:discover_started)
-            
+
             # Architect identifies the scope
             prompt = "Analyze the goal: '#{goal}'. Which files and contexts are required to solve this?"
             scope = request_role(:architect, prompt)
-            
+
             # Observer gathers the data
             # In a real run, the agent would call tools here. For the skeleton, we record the intent to scan.
             record(:discover_completed, scope: scope)
@@ -101,10 +101,10 @@ module Master
         class Analyze < Base
           def call
             record(:analyze_started)
-            
+
             prompt = "Based on the discovered scope, what is the root cause or the specific architectural change needed for: '#{goal}'?"
             analysis = request_role(:architect, prompt)
-            
+
             record(:analyze_completed, analysis: analysis)
             :plan
           end
@@ -113,10 +113,10 @@ module Master
         class Plan < Base
           def call
             record(:plan_started)
-            
+
             prompt = "Create a step-by-step implementation plan for: '#{goal}'. Ensure every step is verifiable."
             plan = request_role(:architect, prompt)
-            
+
             record(:plan_completed, plan: plan)
             :implement
           end
@@ -125,10 +125,10 @@ module Master
         class Implement < Base
           def call
             record(:implement_started)
-            
+
             prompt = "Execute the plan for: '#{goal}'. Provide the exact changes and justifications."
             implementation = request_role(:implementer, prompt)
-            
+
             record(:implement_completed, implementation: implementation)
             :validate
           end
@@ -137,10 +137,10 @@ module Master
         class Validate < Base
           def call
             record(:validate_started)
-            
+
             prompt = "Verify the implementation of: '#{goal}'. Check for regressions, style violations, and correctness."
             verification = request_role(:validator, prompt)
-            
+
             record(:validate_completed, verification: verification)
             :converge
           end
@@ -162,7 +162,7 @@ module Master
         class Deliver < Base
           def call
             record(:deliver_started)
-            
+
             # Final summary and proof of convergence
             proof = state_machine.episode.summarize_proof
             record(:deliver_completed, proof: proof)

@@ -67,6 +67,7 @@ module Master
 
       def emit(line)
         return unless enabled?
+        return if ENV["MASTER_QUIET"] == "1" && line.match?(/at \w+0|llm\d+:/)
 
         text = line.to_s.gsub(/\s+/, " ").strip
         # Clears the repainting "thinking" line first, or the unit prints on

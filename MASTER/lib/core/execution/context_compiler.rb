@@ -14,7 +14,7 @@ module Master
           files: 12_000,
           history: 1_500,
           tools: 2_500,
-          reserve: 4_000
+          reserve: 4_000,
         }.freeze
 
         def initialize(container)
@@ -29,7 +29,7 @@ module Master
             facts: compile_evidence(state_machine),
             files: compile_files(state_machine, focus),
             constraints: compile_constraints,
-            output_contract: compile_contract(state_machine.current_state)
+            output_contract: compile_contract(state_machine.current_state),
           }
         end
 
@@ -39,7 +39,7 @@ module Master
           {
             intent: goal,
             episode_id: sm.episode.id,
-            iteration: sm.history.size
+            iteration: sm.history.size,
           }
         end
 
@@ -47,7 +47,7 @@ module Master
           {
             phase: sm.current_state,
             presence: sm.presence.to_h[:phase],
-            verified: sm.all_verified?
+            verified: sm.all_verified?,
           }
         end
 
@@ -62,7 +62,7 @@ module Master
           # If focus is a specific symbol or file, prioritize it.
           # Otherwise, provide a list of files currently being attended to.
           return [focus] if focus.is_a?(String) && focus.start_with?("/")
-          
+
           # Use the state machine's history to find recently read files
           sm.episode.record.select { |e| e[:type] == :observation }
              .map { |e| e[:data][:path] }

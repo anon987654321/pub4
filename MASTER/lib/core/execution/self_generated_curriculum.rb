@@ -22,8 +22,8 @@ module Master::Core::Execution
 
     # Generate a targeted exercise for the most failure-prone task.
     def generate_exercise
-      worst_task = @failure_stats.max_by { |_, stats| 
-        stats[:fails].to_f / [stats[:total], 1].max 
+      worst_task = @failure_stats.max_by { |_, stats|
+        stats[:fails].to_f / [stats[:total], 1].max
       }&.first
 
       return nil unless worst_task

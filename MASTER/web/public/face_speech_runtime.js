@@ -863,7 +863,7 @@ function requeueChunk(text) {
   const n = (tts.attempts.get(text) || 0) + 1;
   if (n > 5) { tts.attempts.delete(text); return false; }
   tts.attempts.set(text, n);
-  tts.queue.unshift(text);
+  tts.queue.push(text);
   return true;
 }
 function scheduleTtsTick(delay) {

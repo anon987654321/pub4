@@ -27,7 +27,7 @@
 #photo-button::before {
   content: "";
   position: absolute;
-  inset: 13px;
+  inset: 16px;
   border: 1px solid var(--face-fg);
   z-index: -1;
 }

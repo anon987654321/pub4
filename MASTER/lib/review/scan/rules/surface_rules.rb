@@ -47,8 +47,10 @@ module Master
         end
 
         RuleDSL.rule :NO_DECORATIVE_FX,
-          severity: :warning, tags: %i[DESIGN AESTHETIC PIXEL], applies_to: CSS_LANGS, autofix: false,
+          severity: :warning, tags: %i[DESIGN AESTHETIC PIXEL], applies_to: CSS_LANGS, autofix: true,
           description: "flat UI — no blur, glow, or ornamental shadow",
+          detect_semantic: "Does the element use shadows or glows that serve no functional purpose?",
+          detect_structural: "Check for 'glow' or 'shadow' in filenames or directory names",
           example_path: "/repo/app/assets/stylesheets/_example.scss",
           fires: ".card { box-shadow: 0 2px 8px rgba(0,0,0,.3); }\n",
           # Suppressing a shadow is the law being obeyed, not broken.
@@ -79,8 +81,10 @@ module Master
         end
 
         RuleDSL.rule :FLAT_PIXELS,
-          severity: :warning, tags: %i[DESIGN AESTHETIC PIXEL], applies_to: %i[css scss javascript], autofix: false,
+          severity: :warning, tags: %i[DESIGN AESTHETIC PIXEL], applies_to: %i[css scss javascript], autofix: true,
           description: "canvas/pixel layers stay crisp — no smoothing/glow language",
+          detect_semantic: "Is the rendering intent 'crisp' or 'pixel-art', yet smoothing is enabled?",
+          detect_structural: "Check for 'smoothing' or 'blur' in JS filename/path",
           # Spelled, because the first language decides the default path and this
           # rule reads only .js/.ts or a file named face.
           example_path: "/repo/web/public/face_vision.js",
@@ -113,8 +117,10 @@ module Master
         # 1981): a single spatial module, every dimension a multiple of it —
         # named here so the rule carries its book, not just its number.
         RuleDSL.rule :EIGHT_PX_RHYTHM,
-          severity: :info, tags: %i[DESIGN AESTHETIC], applies_to: CSS_LANGS, autofix: false,
+          severity: :info, tags: %i[DESIGN AESTHETIC], applies_to: CSS_LANGS, autofix: true,
           description: "spacing on 8px rhythm (4px hairline allowed) — Müller-Brockmann grid module",
+          detect_semantic: "Does the spacing create a visual rhythm that deviates from the 8px grid?",
+          detect_structural: "Verify if layout files follow the 8px naming convention (e.g., _grid_8.scss)",
           example_path: "/repo/app/assets/stylesheets/_example.scss",
           fires: ".card { padding: 10px; }\n",
           # A media condition is not spacing, and 44px is the tap-target token.
@@ -191,8 +197,10 @@ module Master
         end
 
         RuleDSL.rule :TOUCH_TARGET_MIN,
-          severity: :warning, tags: %i[DESIGN UX ACCESSIBILITY], applies_to: CSS_LANGS, autofix: false,
+          severity: :warning, tags: %i[DESIGN UX ACCESSIBILITY], applies_to: CSS_LANGS, autofix: true,
           description: "Fitts — interactive targets ≥44px",
+          detect_semantic: "Is the interactive element's hit area too small for comfortable thumb use?",
+          detect_structural: "Check if mobile-specific views lack minimum target constraints",
           # The selector and the dimension on separate lines, which is the shape
           # the rule was blind to until 2026-07-21 and the one worth pinning.
           fires: ".btn {\n  width: 12px;\n}\n",
@@ -304,7 +312,7 @@ module Master
         end
 
         RuleDSL.rule :WHITESPACE_RHYTHM,
-          severity: :info, tags: %i[DESIGN AESTHETIC], applies_to: CSS_LANGS, autofix: false,
+          severity: :info, tags: %i[DESIGN AESTHETIC], applies_to: CSS_LANGS, autofix: true,
           fires: ".card { color: red; }\n",
           does_not_fire: ".card { gap: var(--sp); }\n",
           description: "ma — breathing room via gap/section spacing tokens" do |src, path:|

@@ -17,11 +17,11 @@ module Master::Core::Routing
     def record_outcome(model_id, task_class, success, metrics = {})
       @scores[model_id] ||= {}
       @scores[model_id][task_class] ||= { successes: 0, attempts: 0, metrics: {} }
-      
+
       stats = @scores[model_id][task_class]
       stats[:attempts] += 1
       stats[:successes] += 1 if success
-      
+
       # Update average metrics (latency, cost, etc.)
       metrics.each do |k, v|
         stats[:metrics][k] = (stats[:metrics][k] || 0) * (stats[:attempts] - 1) / stats[:attempts] + v / stats[:attempts]

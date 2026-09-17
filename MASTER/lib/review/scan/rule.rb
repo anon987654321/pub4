@@ -2,8 +2,10 @@
 
 module Master
   module Review
-    module Scan
-      require_relative "finding"
+  module Scan
+    require_relative "finding"
+    require_relative "source_masking"
+    require_relative "../../master"
 
       class Rule
         include SourceMasking

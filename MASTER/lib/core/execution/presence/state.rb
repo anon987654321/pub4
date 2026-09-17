@@ -8,7 +8,7 @@ module Master
         # It transforms raw execution events into a semantic state.
         class State
           attr_reader :phase, :activity, :attention, :progress, :risk, :severity, :focus, :grammar, :field
-          
+
           def initialize(phase: :idle, activity: 0.0, attention: 0.0, progress: 0.0, risk: 0.0, severity: :normal, focus: nil, grammar: nil, field: nil)
             @phase = phase
             @activity = activity

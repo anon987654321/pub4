@@ -19,7 +19,7 @@ module Master::Core::Execution
         id: episode.id,
         task: episode.intent,
         failure_signature: episode.outcome == :failed ? :regression : :simulated,
-        evidence_required: episode.verification.map(&:kind).uniq
+        evidence_required: episode.verification.map(&:kind).uniq,
       }
     end
 

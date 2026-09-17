@@ -31,7 +31,7 @@ module Master
               uncertainty: uncertainty_for(phase),
               risk: risk,
               progress: progress,
-              scale: :medium # Default, can be overridden by client profile
+              scale: :medium # Default, can be overridden by client profile,
             }
           end
 
@@ -39,9 +39,9 @@ module Master
 
           def self.energy_for(phase)
             {
-              idle: 0.1, listening: 0.3, understanding: 0.5, 
-              researching: 0.7, discovering: 0.8, reasoning: 0.6, 
-              executing: 0.9, validate: 0.7, error: 0.4, success: 0.2
+              idle: 0.1, listening: 0.3, understanding: 0.5,
+              researching: 0.7, discovering: 0.8, reasoning: 0.6,
+              executing: 0.9, validate: 0.7, error: 0.4, success: 0.2,
             }[phase] || 0.2
           end
 
@@ -54,34 +54,34 @@ module Master
           def self.density_for(phase, target)
             return 0.9 if target # Clustered around target
             {
-              idle: 0.3, listening: 0.5, understanding: 0.9, 
-              researching: 0.4, discovering: 0.7, reasoning: 0.6, 
-              executing: 0.8, validate: 0.9
+              idle: 0.3, listening: 0.5, understanding: 0.9,
+              researching: 0.4, discovering: 0.7, reasoning: 0.6,
+              executing: 0.8, validate: 0.9,
             }[phase] || 0.5
           end
 
           def self.complexity_for(phase, target)
             return 0.8 if target
             {
-              idle: 0.1, listening: 0.2, understanding: 0.4, 
-              researching: 0.7, discovering: 0.6, reasoning: 0.8, 
-              executing: 0.5, validate: 0.7
+              idle: 0.1, listening: 0.2, understanding: 0.4,
+              researching: 0.7, discovering: 0.6, reasoning: 0.8,
+              executing: 0.5, validate: 0.7,
             }[phase] || 0.3
           end
 
           def self.direction_for(phase)
             {
-              listening: :inward, understanding: :inward, researching: :shifting, 
-              discovering: :outward, reasoning: :shifting, executing: :outward, 
-              validate: :stable, error: :shifting, success: :stable
+              listening: :inward, understanding: :inward, researching: :shifting,
+              discovering: :outward, reasoning: :shifting, executing: :outward,
+              validate: :stable, error: :shifting, success: :stable,
             }[phase] || :stable
           end
 
           def self.uncertainty_for(phase)
             {
-              idle: 0.0, listening: 0.2, understanding: 0.4, 
-              researching: 0.6, discovering: 0.3, reasoning: 0.5, 
-              executing: 0.2, validate: 0.3, error: 0.8, success: 0.0
+              idle: 0.0, listening: 0.2, understanding: 0.4,
+              researching: 0.6, discovering: 0.3, reasoning: 0.5,
+              executing: 0.2, validate: 0.3, error: 0.8, success: 0.0,
             }[phase] || 0.2
           end
         end

@@ -20,9 +20,9 @@ module Master::Core::Routing
       # 2. Filter healthy models from Catalog
       # 3. Use CapabilityMap to find the best candidate
       # 4. Return a Route object (Plan)
-      
+
       model_id = @router.preferred(task_type: task_requirements[:task_type])
-      
+
       # In a full implementation, this would return a Route object containing:
       # - Primary model
       # - Fallback model
@@ -31,7 +31,7 @@ module Master::Core::Routing
       {
         primary: model_id,
         rationale: "Selected based on empirical capability for #{task_requirements[:task_type]}",
-        budget: task_requirements[:budget] || :default
+        budget: task_requirements[:budget] || :default,
       }
     end
 

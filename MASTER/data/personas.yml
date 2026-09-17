@@ -96,7 +96,7 @@ sysadmin:
 trader:
   voice: en-US-ChristopherNeural
   tts_rate: "-20%"
-  tts_pitch: "-80Hz"
+  tts_pitch: "-120Hz"
   style: heavy
   description: "Crypto. DeFi. Technicals. TradingView. CoinGecko."
   knowledge_sources:

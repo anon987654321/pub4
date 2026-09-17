@@ -4344,7 +4344,6 @@ rule_ratchets:
     # The departure is WHY_NOT_WHAT, which found findable_by_slug.rb.
     silent: 43
 
-
   hygiene:
     # Ceilings for tools/rule_hygiene.rb. The first three are 0 as of 2026-09-05
     # and 0 is a floor: a new rule arrives with a tier or a severity, an id that

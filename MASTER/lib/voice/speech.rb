@@ -61,6 +61,16 @@ module Master
         wayne: "en-SG-WayneNeural",
         ezinne: "en-NG-EzinneNeural",
         jenny: "en-US-JennyNeural",
+        # One-off read-out mouths for the operator's asks. The rotation never
+        # picks these: single_voice stays jenny and rotation is her and
+        # christopher, so an alias only speaks when a caller names it and
+        # locks it.
+        elsa: "it-IT-ElsaNeural",
+        prabhat: "en-IN-PrabhatNeural",
+        # The 1001 Nights mouth: an Egyptian accent for an Arabic story.
+        # One-off read-outs only; the rotation never picks it.
+        salma: "ar-EG-SalmaNeural",
+        shakir: "ar-EG-ShakirNeural",
       }.freeze
 
       # Every voice answers to its full Edge name and to its short alias; full

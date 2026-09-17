@@ -26,26 +26,26 @@ module Master
           unless STATES.include?(next_state)
             raise ArgumentError, "invalid state: #{next_state}"
           end
-          
+
           # Capture current state as an observation before transitioning
           record_system_snapshot
-          
+
           @history << { state: @current_state, timestamp: Time.now }
           @current_state = next_state
-          
+
           # Update presence state
           @presence = @presence.update(phase: next_state)
-          
+
           # Record transition in the episode
           @episode.record_event({ type: "state_transition", from: @history.last[:state], to: next_state, timestamp: Time.now })
-          
+
           # Publish event to the Event Spine
           # Now we publish a semantic event that can be rendered by the UI
           @container[:bus]&.publish("exec:event", {
             type: "state_transition",
             phase: next_state,
             presence: @presence.to_h,
-            goal: @goal
+            goal: @goal,
           })
         end
 
@@ -60,7 +60,7 @@ module Master
           # Immediately attempt to verify the new evidence
           verification = @verifier.verify(chain)
           chain.verify(verification) if verification.ok?
-          
+
           @episode.record_verification(verification) if verification.ok?
 
           # Link the evidence to the structural trace

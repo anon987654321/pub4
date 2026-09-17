@@ -248,23 +248,59 @@ module Master
             end
           end
 
-          def logical_properties(src)
+          def snap_to_eight_px_rhythm(src)
             changed = false
-            replacements = {
-              "margin-left" => "margin-inline-start",
-              "margin-right" => "margin-inline-end",
-              "padding-left" => "padding-inline-start",
-              "padding-right" => "padding-inline-end",
-              "border-left" => "border-inline-start",
-              "border-right" => "border-inline-end",
-            }
-            out = src.gsub(/\b(?:#{replacements.keys.map { |key| Regexp.escape(key) }.join("|")})\s*:/) do |match|
+            out = src.gsub(/(?<![\w-])(?:margin|padding|gap|top|left|right|bottom|inset)(?:-\w+)?\s*:\s*(-?\d+)px/i) do |match|
+              val = Regexp.last_match(1).to_i
+              abs_val = val.abs
+              next match if abs_val % 4 == 0 && abs_val <= 96
+              next match if abs_val.zero?
+              snapped = (abs_val / 8.0).round * 8
+              final_val = val < 0 ? -snapped : snapped
               changed = true
-              match.sub(match.split(":").first, replacements.fetch(match.split(":").first))
+              match.sub(/\d+px/, "#{final_val}px")
             end
-            @transforms << :logical_properties if changed
+            @transforms << :eight_px_rhythm if changed
             out
           end
+
+          def remove_decorative_fx(src)
+            changed = false
+            out = src.gsub(/(box-shadow|text-shadow)\s*:\s*(?!none|0(?:\s+0)*)\s*[^;]+;(?!\s*\/\*)/i) do |match|
+              changed = true
+              "#{@transforms << :no_decorative_fx}#{match.split(':').first}: none;"
+            end
+            out = out.gsub(/filter\s*:\s*[^;]*blur\s*\(.*?\)\s*;?|backdrop-filter\s*:\s*[^;]+;?/i) do
+              changed = true
+              ""
+            end
+            @transforms << :no_decorative_fx if changed
+            out
+          end
+
+          def enforce_flat_pixels(src)
+            changed = false
+            out = src.gsub(/imageSmoothingEnabled\s*=\s*true/i) do
+              changed = true
+              "imageSmoothingEnabled = false"
+            end
+            @transforms << :flat_pixels if changed
+            out
+          end
+
+          def snap_touch_targets(src)
+            changed = false
+            out = src.gsub(/(?:min-)?(?:width|height)\s*:\s*(\d+)px/i) do |match|
+              px = Regexp.last_match(1).to_i
+              next match if px >= 44 || px.zero?
+              changed = true
+              match.sub(/\d+px/, "44px")
+            end
+            @transforms << :touch_target_min if changed
+            out
+          end
+
+
         end
       end
     end

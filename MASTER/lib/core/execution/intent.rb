@@ -22,7 +22,7 @@ module Master::Core::Execution
         goal: @goal,
         approach: @approach,
         evidence_summary: @evidence_summary,
-        risk: @risk
+        risk: @risk,
       }
     end
 
@@ -40,7 +40,7 @@ module Master::Core::Execution
         "Goal: #{@goal}",
         (@approach ? "Approach: #{@approach}" : nil),
         (@evidence_summary ? "Verified: #{@evidence_summary}" : nil),
-        "Risk: #{@risk}"
+        "Risk: #{@risk}",
       ].compact.join("\n")
     end
   end

@@ -12,53 +12,53 @@ module Master
             idle: {
               topology: :organic_swarm,
               motion: :breathing,
-              color_profile: :ambient
+              color_profile: :ambient,
             },
             listening: {
               topology: :oriented_swarm,
               motion: :attracted,
-              color_profile: :receptive
+              color_profile: :receptive,
             },
             understanding: {
               topology: :converging_point,
               motion: :imploding,
-              color_profile: :focused
+              color_profile: :focused,
             },
             researching: {
               topology: :branching_tree,
               motion: :exploratory,
-              color_profile: :active
+              color_profile: :active,
             },
             discovering: {
               topology: :illuminated_nodes,
               motion: :pulsing,
-              color_profile: :highlight
+              color_profile: :highlight,
             },
             reasoning: {
               topology: :reorganizing_mesh,
               motion: :shifting,
-              color_profile: :intellectual
+              color_profile: :intellectual,
             },
             executing: {
               topology: :directional_flow,
               motion: :streaming,
-              color_profile: :operational
+              color_profile: :operational,
             },
             validate: {
               topology: :coherent_structure,
               motion: :solidifying,
-              color_profile: :critical
+              color_profile: :critical,
             },
             error: {
               topology: :fractured_swarm,
               motion: :propagating_shock,
-              color_profile: :warning
+              color_profile: :warning,
             },
             success: {
               topology: :stable_crystalline,
               motion: :settling,
-              color_profile: :resolved
-            }
+              color_profile: :resolved,
+            },
           }.freeze
 
           # Visual grammars for semantic targets (what MASTER is attending to).
@@ -70,7 +70,7 @@ module Master
             city: { topology: :dense_glowing_grid, motion: :urban_flow },
             relationship: { topology: :linked_entities, motion: :tethered },
             abstract_concept: { topology: :geometric_emergence, motion: :evolving },
-            error: { topology: :disturbance_cluster, motion: :erratic }
+            error: { topology: :disturbance_cluster, motion: :erratic },
           }.freeze
 
           def self.for_phase(phase)

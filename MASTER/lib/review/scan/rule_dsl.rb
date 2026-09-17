@@ -26,26 +26,19 @@ module Master
         #     fires: "Time.now.beginning_of_day",
         #     does_not_fire: "Time.now.utc.iso8601"
         def self.rule(id, severity: :warning, tags: [], applies_to: nil, autofix: true, description: nil,
-                      fires: nil, does_not_fire: nil, example_path: nil, &block)
+                      fires: nil, does_not_fire: nil, example_path: nil, detect_semantic: nil, detect_structural: nil, &block)
           raise ArgumentError, "block required" unless block
 
           dsl_id = id.to_s
           dsl_desc = description || dsl_id.tr("_", " ")
           dsl_tags = Array(tags)
           build_dsl_rule_class(dsl_id:, dsl_desc:, dsl_tags:, severity:, applies_to:, autofix:, block:,
-                               fires:, does_not_fire:, example_path:)
+                                fires:, does_not_fire:, example_path:, detect_semantic:, detect_structural:)
         end
 
         def self.build_dsl_rule_class(dsl_id:, dsl_desc:, dsl_tags:, severity:, applies_to:, autofix:, block:,
-                                      fires: nil, does_not_fire: nil, example_path: nil)
-          Class.new(Rule) do
-            @dsl_block = block
-            @dsl_langs = applies_to
-            @dsl_autofix = autofix
-            @dsl_fires = fires
-            @dsl_does_not_fire = does_not_fire
-            @dsl_example_path = example_path
-            class << self; attr_reader :dsl_block, :dsl_langs, :dsl_autofix, :dsl_fires, :dsl_does_not_fire, :dsl_example_path; end
+                                           fires: nil, does_not_fire: nil, example_path: nil, detect_semantic: nil, detect_structural: nil)
+          cls = Class.new(Rule) do
             define_method(:initialize) do
               super()
               @id = dsl_id; @description = dsl_desc
@@ -58,12 +51,22 @@ module Master
               instance_exec(code, path:, &self.class.dsl_block) || []
             end
           end
+          dsl_rule_attrs(cls, block: block, langs: applies_to, autofix: autofix, fires: fires, does_not_fire: does_not_fire, example_path: example_path, detect_semantic: detect_semantic, detect_structural: detect_structural)
+          cls.class_eval { class << self; attr_reader :dsl_block, :dsl_langs, :dsl_autofix, :dsl_fires, :dsl_does_not_fire, :dsl_example_path, :dsl_detect_semantic, :dsl_detect_structural; end }
+          cls
         end
+
+
+        def self.dsl_rule_attrs(cls, attrs)
+          attrs.each { |k, v| cls.instance_variable_set("@dsl_#{k}", v) }
+        end
+
       end
     end
   end
 end
 
+require_relative "rule"
 require_relative "rules/lexical_rules"
 require_relative "rules/ruby_rules"
 require_relative "rules/web_rules"

@@ -18,7 +18,7 @@ module Master::Core::Execution
     ROLE_TASK_MAP = {
       ARCHITECT => :architecture,
       IMPLEMENTER => :coding,
-      VALIDATOR => :review
+      VALIDATOR => :review,
     }.freeze
   end
 end

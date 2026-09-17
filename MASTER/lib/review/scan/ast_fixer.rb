@@ -33,7 +33,7 @@ module Master
           Strategy.new(predicate: :shell?, transforms: %i[add_strict_mode]),
           Strategy.new(predicate: :html?, transforms: %i[add_html_lang add_meta_charset add_viewport_fit add_skip_to_main add_lazy_loading]),
           Strategy.new(predicate: :javascript?, transforms: %i[replace_unreassigned_var convert_for_in_arrays convert_string_concat convert_optional_chaining]),
-          Strategy.new(predicate: :style?, transforms: %i[logical_properties]),
+          Strategy.new(predicate: :style?, transforms: %i[snap_to_eight_px_rhythm remove_decorative_fx enforce_flat_pixels snap_touch_targets]),
         ].freeze
         # remove_immediate_dead_code/add_trailing_commas are Ruby-AST heuristics
         # (Prism-based literal-line protection, Ruby hash/array trailing-comma
