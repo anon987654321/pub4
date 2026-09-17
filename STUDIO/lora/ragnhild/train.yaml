@@ -8,6 +8,8 @@ config:
     device: mps
     trigger_word: ragnhild
     network:
+      # ostris/flux-dev-lora-trainer builds LoRA. OFT and DoRA are not a
+      # network.type it accepts; linear timestep_type below is the identity spend.
       type: lora
       linear: 32
       linear_alpha: 32

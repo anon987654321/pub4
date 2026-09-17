@@ -4209,7 +4209,33 @@ def fit_grain_report(path, luma, bins)
   lines << format("  mid-grey sigma %.2f levels, which is STOCKS[:grain] %.0f at GRAIN_SIGMA_SCALE %.2f",
                   peak || 0.0, (peak || 0.0) / GRAIN_SIGMA_SCALE, GRAIN_SIGMA_SCALE)
   lines << "  grain_knots: [#{knots.join(", ")}]"
+  # Newson et al. (SSVM 2017): coverage u of a Boolean crystal field has
+  # variance u(1-u). GRAIN_SCALING_KNOTS is that envelope. R² against it says
+  # whether this scan is emulsion or a LUT.
+  r2 = boolean_envelope_r2(knots)
+  lines << format("  Boolean envelope R² %.3f (Newson u(1-u); a LUT stock lands well below 0.9)", r2)
   lines.join("\n")
+end
+
+def boolean_envelope_knots(bins = FIT_GRAIN_BINS)
+  denom = [bins - 1, 1].max.to_f
+  (0...bins).map do |index|
+    coverage = index / denom
+    Math.sqrt(coverage * (1.0 - coverage)) * 2.0
+  end
+end
+
+def boolean_envelope_r2(measured)
+  model = boolean_envelope_knots(measured.size)
+  n = measured.size.to_f
+  mean_m = measured.sum / n
+  mean_b = model.sum / n
+  cov = measured.zip(model).sum { |m, b| (m - mean_m) * (b - mean_b) }
+  var_m = measured.sum { |m| (m - mean_m)**2 }
+  var_b = model.sum { |b| (b - mean_b)**2 }
+  return 0.0 if var_m < 1e-12 || var_b < 1e-12
+
+  (cov / Math.sqrt(var_m * var_b))**2
 end
 
 def vocab_check

@@ -282,6 +282,15 @@ def apply_env_overrides!(process)
     warn "note: LoRA rank #{network['linear']}, alpha #{network['linear_alpha']}"
   end
 
+  # Qiu et al. OFT and Liu et al. DoRA hold identity on paper. This trainer
+  # (`ostris/flux-dev-lora-trainer`) only builds LoRA. timestep_type: linear is
+  # the identity spend that is actually trained. Naming another network here
+  # would write a YAML the trainer cannot run.
+  kind = ENV["LORA_NETWORK"].to_s.strip.downcase
+  unless kind.empty? || kind == "lora"
+    abort "warn: LORA_NETWORK=#{kind} is not a type this trainer builds (lora only)"
+  end
+
   resolutions = ENV["LORA_RESOLUTIONS"].to_s.strip
   unless resolutions.empty?
     process["datasets"].first["resolution"] = resolutions.split(",").map { |value| Integer(value.strip) }

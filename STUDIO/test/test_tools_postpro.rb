@@ -59,6 +59,17 @@ class TestPostproFilm < Minitest::Test
 
   # Silver-halide black and white has one emulsion, so its three channels are
   # the same signal and must not be scaled apart.
+  def test_grain_scaling_knots_are_the_boolean_envelope
+    model = boolean_envelope_knots(GRAIN_SCALING_KNOTS.size)
+
+    GRAIN_SCALING_KNOTS.each_with_index do |knot, index|
+      assert_in_delta model[index], knot, 0.02,
+                      "knot #{index} is not Newson coverage #{index}/#{GRAIN_SCALING_KNOTS.size - 1}"
+    end
+    assert_in_delta 1.0, boolean_envelope_r2(GRAIN_SCALING_KNOTS), 0.01
+    assert_operator boolean_envelope_r2([1.0] * GRAIN_SCALING_KNOTS.size), :<, 0.2
+  end
+
   def test_monochrome_stocks_grain_all_three_channels_identically
     %i[tri_x ilford_hp5 ilford_delta3200].each do |name|
       assert_equal [1.0, 1.0, 1.0], GRAIN_CHAN_SCALE.fetch(name),

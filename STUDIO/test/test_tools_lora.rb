@@ -174,6 +174,17 @@ class TestLora < Minitest::Test
     end
   end
 
+  def test_prepare_drops_a_near_duplicate_from_training
+    Dir.mktmpdir do |dir|
+      candidates = curate_frames(dir)
+      dataset = File.join(dir, "out", "dataset")
+      written = Lora::Curate.prepare(candidates, into: dataset, token: "probe", short_edge: 512)
+
+      assert_equal 3, written.length, "a.jpg and a_again.jpg are one moment"
+      assert_equal 3, Dir[File.join(dataset, "*.jpg")].length
+    end
+  end
+
   def test_prepare_holds_every_nth_frame_out_of_the_dataset
     Dir.mktmpdir do |dir|
       candidates = curate_frames(dir)

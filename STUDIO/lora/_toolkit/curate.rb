@@ -372,8 +372,27 @@ module Lora
 
     def self.prepare(candidates, into:, token:, short_edge: TRAIN_SHORT_EDGE, holdout_into: nil, holdout_every: nil)
       training, held = split(candidates, holdout_every: holdout_into && holdout_every)
+      # Near-duplicates are one photograph stored twice. The report already
+      # names them; leaving them in the training folder is how a LoRA learns a
+      # moment instead of a person.
+      training = without_near_duplicates(training)
       held.each { |candidate| write_prepared(candidate, into: holdout_into, token:, short_edge:) }
       training.map { |candidate| write_prepared(candidate, into:, token:, short_edge:) }
+    end
+
+    def self.without_near_duplicates(candidates)
+      return candidates if candidates.size < 2
+
+      drop = {}
+      Postpro::FrameSet.near_duplicates(candidates.map(&:path)).each do |pair|
+        first = candidates.find { |c| c.path == pair.first }
+        second = candidates.find { |c| c.path == pair.second }
+        next unless first && second
+
+        weaker = first.texture <= second.texture ? first.path : second.path
+        drop[weaker] = true
+      end
+      candidates.reject { |candidate| drop[candidate.path] }
     end
 
     def self.write_prepared(candidate, into:, token:, short_edge:)
