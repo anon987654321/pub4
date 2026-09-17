@@ -19,13 +19,17 @@ module Master
         # documented (feedback_policy.rs, issue #236) after making the same
         # mistake. :skipped is still recorded (queryable) but excluded from
         # fix_quality's denominator entirely.
-        OUTCOMES = %i[applied no_proposal reflexion_rejected consensus_rejected rejected skip_confidence skip_fingerprint].freeze
+        OUTCOMES = %i[applied commit_refused no_proposal reflexion_rejected consensus_rejected rejected skip_confidence skip_fingerprint].freeze
 
         def fix_batch(violations)
           results = violations.uniq { |violation| violation[:file] }.map { |violation| fix_violation(violation) }
           @all_skipped = results.any? && results.all? { |r| r.to_s.start_with?("skip_") }
           log_outcome_breakdown(results)
-          results.count { |r| r == :applied }
+          # A commit_refused fix is on disk but not delivered, so it counts as
+          # work the stage must still account for: llm_fixed > 0 is what sends
+          # the stage-end commit after whatever the per-fix commits could not
+          # land, and counting only :applied would strand the refused half.
+          results.count { |r| r == :applied || r == :commit_refused }
         end
 
         # A single aggregate line per rule/pass, not one per violation --

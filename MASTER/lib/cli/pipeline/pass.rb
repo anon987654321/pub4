@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../../operator/gate_chain"
+
 module Master
   module CLI
     class Pipeline
@@ -82,11 +84,14 @@ module Master
         # them would change what that gate compares against.
         SWARM_EXCERPT = 400
 
-        # No gates stage for a RAILS target. bin/operator gate already runs this
-        # pass over RAILS through bin/gate and then `RAILS/gates/runner.rb --all`
-        # as its own rails stage, so a runner call here would run every app gate
-        # twice in the ladder, and the rendered half needs a browser on the
-        # deploy host, where the ladder already reaches it.
+        # A writing pass ends in a proof stage: the target tree's own gates, run
+        # once after the repair converges. /fix used to report convergence on
+        # scanner findings while the gates could still fail, with no way to
+        # know. Per-pass proofs are refused — `bin/operator gate` runs the same
+        # instruments on its own cadence, and a gates stage inside every pass
+        # would double them and blow the pass budget — and the RAILS rendered
+        # half stays with the ladder, which already reaches the deploy host's
+        # browser.
         STAGES = %w[fix critique map].freeze
         STAGE_ALIASES = { "converge" => "fix", "council" => "critique" }.freeze
 
@@ -170,6 +175,7 @@ module Master
           end]
           sections << ["changes", changes_section(before)]
           sections << observe_section("re-observe", "obs1", shell, aesthetic:)
+          sections << proof_section(resolved)
         end
 
         # A repair that says it repaired and shows nothing asks the operator to
@@ -193,6 +199,47 @@ module Master
 
           pastel = Master::Trace::Dmesg.pastel
           patch.lines.map { |line| pastel.decorate(line, *patch_style(line)) }.join
+        end
+
+        # The proof a converged repair owes, run once at the end of a writing
+        # pass. The commands are the ladder's own, so there is one spelling of
+        # what proves each tree and this stage cannot drift from it.
+        PROOF_TAIL = 12
+
+        def proof_section(abs)
+          name, runner = proof_runner(abs)
+          return ["proof", "no proof command for #{shell_target(abs)} — nothing registered"] unless runner
+
+          ["proof", log_phase("gate0", "proof", nil) do
+            ok, out = runner.call
+            @failed_stages << "proof" unless ok
+            proof_body(ok, out)
+          end]
+        end
+
+        # RAILS proves by its source gates (GATE_AUTOFIX=0: the fix loop owns
+        # the writes, the proof measures); the other trees prove by their whole
+        # suites, which is `bin/operator test`'s mapping, unchanged.
+        def proof_runner(abs)
+          chain = Operator::GateChain
+          if abs == Master::RAILS_ROOT || abs.start_with?("#{Master::RAILS_ROOT}/")
+            return ["rails gates", -> { chain.rails_gates(scan_only: true).values_at(0, 1) }]
+          end
+
+          tree = PROOF_ROOTS.find { |_name, root| abs == root || abs.start_with?("#{root}/") }&.first
+          [tree, -> { chain.suites([tree]).values_at(0, 1) }] if tree
+        end
+
+        PROOF_ROOTS = {
+          "MASTER" => Operator::GateChain::MASTER,
+          "STUDIO" => File.join(Operator::GateChain::ROOT, "STUDIO"),
+          "OPENBSD" => File.join(Operator::GateChain::ROOT, "OPENBSD"),
+        }.freeze
+
+        def proof_body(ok, out)
+          lines = Array(out).map(&:to_s).reject(&:empty?)
+          shown = ok ? lines.last(6) : lines.last(PROOF_TAIL)
+          shown.empty? ? "proof: #{ok ? 'ok' : 'FAIL'} (no output)" : shown.join("\n")
         end
 
         def patch_style(line)

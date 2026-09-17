@@ -96,6 +96,30 @@ end
 # read the shebang. 455 of the deep scan's 573 quoting errors were idiomatic
 # zsh flagged by a sh doctrine.
 
+# New (2026-09-17, operator ask). Bash is banned: the deploy target is
+# OpenBSD, where bash is not in base and /bin/sh is ksh; the operator's
+# dialect is zsh; and a lane's default shell idiom is bash, whose word
+# splitting and globbing the QUOTE_VARIABLES comment already had to carve
+# around. `sh` shebangs stay legal — vm23's own rc.d and maintenance scripts
+# are POSIX sh and must run where bash does not exist — so this law bites the
+# one interpreter that is neither portable nor the house dialect.
+Law.define(:ZSH_SHEBANG) do
+  source "House rule: zsh, not bash — no bash in OpenBSD base, zsh is the operator dialect"
+  severity :warn
+  languages %i[zsh]
+  scope :file
+  detect { |text| text.match?(%r{\A#![^\n]*\bbash\b}) }
+  fix "Use #!/usr/bin/env zsh, or #!/bin/sh when vm23 must run it."
+  bad <<~X
+    #!/bin/bash
+    set -euo pipefail
+  X
+  good <<~X
+    #!/usr/bin/env zsh
+    set -euo pipefail
+  X
+end
+
 # Migrated from data/rules.yml STRICT_MODE_ZSH. The old detector demanded
 # `set -` on the line immediately after the shebang, so a comment between
 # them — the normal shape — made a strict script a finding. The registry

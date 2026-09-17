@@ -9,6 +9,7 @@ require_relative "fix_attempt"
 require_relative "patch_applier"
 require_relative "severity"
 require_relative "violation"
+require_relative "rule_loop/collapse_guard"
 require_relative "rule_loop/fix_strategies"
 require_relative "rule_loop/fix_verification"
 require_relative "rule_loop/outcome_tracking"
@@ -92,6 +93,7 @@ module Master
         @root = root
         @bus = options[:bus]
         @learnings = options[:learnings]
+        @committer = options[:committer]
         @conflicts = ConflictResolver.new(root:, bus: @bus)
       end
 
@@ -148,7 +150,33 @@ module Master
         return :reflexion_rejected unless verified
         return :consensus_rejected unless consensus_approves?(violation, verified)
 
-        apply(violation[:file], verified, violation) ? :applied : :rejected
+        return :rejected unless apply(violation[:file], verified, violation)
+
+        commit_applied_fix(violation)
+      end
+
+      # One fix, one commit, one push — before the next violation is touched.
+      # The stage-end commit stays as the net for a fix whose own commit was
+      # refused (a hook veto, a push that lost a race): the fix is applied, so
+      # it must not be reported as though nothing landed, but it is also not
+      # delivered until git says so, and those are different outcomes.
+      def commit_applied_fix(violation)
+        return :applied if @committer.nil? || stage_commit_mode?
+
+        @committer.commit_if_dirty(
+          "fix: #{@rule.id} in #{File.basename(violation[:file])}",
+          findings: [violation],
+          owned_paths: [violation[:file]],
+        )
+        :applied
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "RuleLoop.commit_applied_fix", event_bus: @bus, rule: @rule.id)
+        @bus&.publish("rule_loop:commit_refused", rule: @rule.id, file: violation[:file], error: e.message[0, 160])
+        :commit_refused
+      end
+
+      def stage_commit_mode?
+        ENV["MASTER_FIX_COMMIT_STAGE"] == "1"
       end
 
       # Review::Consensus fans a candidate fix out to three models and requires
@@ -175,10 +203,14 @@ module Master
 
       def apply(path, new_src, violation)
         old_src = File.read(path, encoding: "UTF-8")
+        return reject_fix(path, old_src, "collapsed_content") if CollapseGuard.collapse?(@rule.id, old_src, new_src)
         before = scan_all(path)
         write_atomic(path, new_src)
         after = scan_all(path)
         return reject_fix(path, old_src, "new_violations", before:, after:) if after.size > before.size
+        if (scouts = boyscout_violations(before, after, old_src, new_src)).any?
+          return reject_fix(path, old_src, "boyscout_violation", violations: scouts.size)
+        end
         if @conflicts.reject_higher_priority?(original_violation: violation, before:, after:, path:)
           return reject_fix(path, old_src, "higher_priority_violation")
         end
@@ -191,6 +223,34 @@ module Master
       rescue StandardError => e
         @bus&.publish("rule_loop:write_error", rule: @rule.id, file: path, error: e.message)
         false
+      end
+
+      # Boyscout, line-scoped. The golden rule this loop runs under demands the
+      # minimum change, so the scout's beat is only the lines the fix already
+      # changed: no violation may appear there that was not there before. A
+      # whole-file boyscout would command the refactors PRESERVE_FIRST forbids;
+      # this is the half of the rule that is compatible with it.
+      def boyscout_violations(before, after, old_src, new_src)
+        before_keys = before.map { |v| [v[:rule].to_s, v[:message].to_s] }
+        landed = after.reject { |v| before_keys.include?([v[:rule].to_s, v[:message].to_s]) }
+        return [] if landed.empty?
+
+        lo, hi = changed_region(old_src, new_src)
+        landed.select { |v| (lo..hi).cover?(v[:line].to_i) }
+      end
+
+      # The 1-based line span the fix changed, in the NEW file's coordinates —
+      # the common prefix and suffix are untouched, and the span between them
+      # is where a single-hunk minimum-change fix lives.
+      def changed_region(old_src, new_src)
+        old_lines = old_src.lines
+        new_lines = new_src.lines
+        prefix = 0
+        prefix += 1 while prefix < old_lines.size && prefix < new_lines.size && old_lines[prefix] == new_lines[prefix]
+        suffix = 0
+        limit = [old_lines.size - prefix, new_lines.size - prefix].min
+        suffix += 1 while suffix < limit && old_lines[old_lines.size - 1 - suffix] == new_lines[new_lines.size - 1 - suffix]
+        [prefix + 1, [new_lines.size - suffix, prefix + 1].max]
       end
 
       def reject_fix(path, original, reason, **details)
@@ -252,11 +312,17 @@ module Master
       end
 
       def extract_code(text, ext = nil)
-        return if text.nil? || text.strip.empty? || text.strip == "UNCHANGED"
+        return if text.nil? || text.strip.empty? || CollapseGuard.sentinel?(text)
 
         lang = ext ? ext_language(ext) : "text"
         langs_re = Regexp.union(lang, "text", "")
         match = text.match(/```(?:#{langs_re})?\n(.*?)```/m)
+        # A fence can carry the refusal too: the 2026-09-17 RAILS run wrote a
+        # fenced UNCHANGED over a live view because only the bare spelling
+        # was refused. The content inside the fence is the file, or it is
+        # nothing.
+        return if match && CollapseGuard.sentinel?(match[1])
+
         return match[1].strip if match
 
         text.strip

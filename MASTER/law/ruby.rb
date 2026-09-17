@@ -572,3 +572,73 @@ Law.define(:DIRNAME_FILE) do
   bad  "File.expand_path(File.dirname(__FILE__))"
   good "File.expand_path(__dir__)"
 end
+
+# New (2026-09-17, book research). Fowler's Replace Loop with Pipeline:
+# map-then-compact is two passes and a nil detour to say "give me the present
+# values"; filter_map says it in one. RuboCop's Style/MapCompactWithFilterMap
+# is disabled in both this tree's config and the omakase one, so nothing else
+# flags it, and live sites existed in wardrobe_ai.rb and lib/trace at the time
+# this landed. Only the single-line spelling: a map block spanning lines with
+# .compact on its own line is invisible to a line detector, and chasing it
+# costs more noise than the finding is worth.
+Law.define(:FILTER_MAP) do
+  source "Fowler, Refactoring — Replace Loop with Pipeline"
+  severity :warn
+  languages %i[ruby]
+  # \b after compact so compact_blank, a different operation with no
+  # filter_map twin, does not fire.
+  detect { |line| line.match?(/\.map\s*(?:\{[^}]*\}|&:[\w!?]+)\s*\.compact\b/) }
+  fix "Collapse map { }.compact into filter_map { } — one pass, no nil detour."
+  bad  "ids = items.map { |i| i.external_id }.compact"
+  good "ids = items.filter_map { |i| i.external_id }"
+end
+
+# New (2026-09-17, book research). Kleppmann: a stalled peer stalls you. An
+# outbound HTTP call with no timeout hangs indefinitely on a silent peer, and
+# on a 1-vCPU vm23 that is the box's signature outage shape — a hang, not a
+# 5xx. DEGRADE_GRACEFULLY declared the principle with no timeout-shaped
+# detector; this is one. File-scoped on purpose: `http = Net::HTTP.new(...)`
+# followed by `http.open_timeout = 5` on its own line is the disciplined
+# spelling a line detector would flag, so the question asked is whether the
+# FILE ever names a timeout at all. A file naming one for a different call
+# covers its HTTP too — a narrowing, recorded here, that keeps the honest
+# idioms quiet.
+Law.define(:EXPLICIT_HTTP_TIMEOUT) do
+  source "Kleppmann, DDIA — timeouts on every outbound call"
+  severity :warn
+  languages %i[ruby]
+  # The shared boundary already enforces this for everything routed through
+  # it; a finding here names a call that bypassed it.
+  path_exclude %r{(?:outbound_http|ssrf_guard)\.rb\z}
+  scope :file
+  detect do |text|
+    text.match?(/Net::HTTP\.(?:start|get)\b|URI\([^)]*\)\.open\b/) &&
+      !text.match?(/(?:open_timeout|read_timeout|\btimeout:)/)
+  end
+  fix "Set open_timeout/read_timeout, or route the call through the shared HTTP boundary."
+  bad  "Net::HTTP.start(uri.host, uri.port, use_ssl: true) { |h| h.request(req) }"
+  good "Net::HTTP.start(uri.host, uri.port, use_ssl: true, open_timeout: 5, read_timeout: 10) { |h| h.request(req) }"
+end
+
+# New (2026-09-17, book research). A NOT NULL column added with no default
+# breaks the previous code version during a rolling deploy: every insert
+# between the migrate and the restart fails, and on this box a deploy already
+# sheds amber and bsdports. The tree carried zero violations when this landed
+# — every null: false had its default — so this is a guard on the exact shape
+# of the most expensive failure class the deploys have, in the role
+# MIGRATION_ADD_REFERENCE_NO_FK plays for references. add_column only:
+# change_column_null is constrained after a backfill that lives in an earlier
+# migration file, invisible from here, and flagging every one of those would
+# cry wolf until the rule was ignored.
+Law.define(:MIGRATION_NOT_NULL_NO_DEFAULT) do
+  source "Kleppmann, DDIA — schema evolution under rolling deploy"
+  severity :error
+  languages %i[ruby]
+  path "/db/migrate/"
+  detect do |line|
+    line.match?(/\badd_column\b/) && line.match?(/null:\s*false/) && !line.match?(/default:\s/)
+  end
+  fix "Give the column a default:, or backfill in one migration and constrain in the next."
+  bad  "add_column :posts, :kind, :string, null: false"
+  good "add_column :posts, :kind, :string, null: false, default: \"post\""
+end

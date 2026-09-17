@@ -29,6 +29,11 @@ module Master
           @ground_truth = ground_truth
           @preserve_user_intent = preserve_user_intent
           @baseline = nil
+          # One commit-and-push at a time. Rule groups run in threads, and the
+          # index is shared: two commits interleaving `git add` would let one
+          # fix ride another's staging, which is the sweep this class exists
+          # to refuse.
+          @commit_mutex = Mutex.new
         end
 
         def baseline!
@@ -42,6 +47,14 @@ module Master
         # committed file are named in the body, so git log says which rule each
         # runtime commit answered.
         def commit_if_dirty(message, findings: [], owned_paths: nil)
+          @commit_mutex.synchronize do
+            commit_if_dirty!(message, findings:, owned_paths:)
+          end
+        end
+
+        private
+
+        def commit_if_dirty!(message, findings: [], owned_paths: nil)
           paths = own_changes(owned_paths)
           return if paths.empty?
 
@@ -59,8 +72,6 @@ module Master
           @bus&.publish("fix_loop:commit_error", error: e.message)
           raise
         end
-
-        private
 
         def with_finding_ids(message, findings, paths)
           lines = Array(findings).filter_map do |finding|
