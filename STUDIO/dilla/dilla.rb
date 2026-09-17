@@ -5451,6 +5451,29 @@ def synth_agogo_sample
   out
 end
 
+# Struck sheet metal: a modal cluster whose partials are deliberately not
+# multiples of one another -- a plate, not a drum -- behind a noise transient,
+# hard-clipped so it reads as steel under distortion. Industrial techno's
+# metallic voice is the genre's signature percussion and the rim cannot carry
+# it: a rim is a click with no ring, and five hits over sixteen need a hit
+# that decays across the next two.
+def synth_ind_metal_sample
+  len = (0.42 * SAMPLE_RATE).round
+  out = Array.new(len, 0.0)
+  # Fixed seed: the kit is a kit. The same plate every hit is what a struck
+  # object is, and a voice that re-rolls per render is a second lead, not a
+  # drum.
+  rng = Random.new(917)
+  modes = [[211, 9.0], [568, 16.0], [903, 24.0], [1371, 38.0], [1836, 52.0]].freeze
+  len.times do |i|
+    t = i.to_f / SAMPLE_RATE
+    ring = modes.sum { |hz, decay| Math.exp(-t * decay) * Math.sin(2 * Math::PI * hz * t) } / modes.length
+    strike = (rng.rand * 2.0 - 1.0) * Math.exp(-t * 260.0) * 0.6
+    out[i] = Math.tanh((ring * 1.9 + strike) * 2.6) * 0.58
+  end
+  out
+end
+
 # --------------------------------------------------------------------------
 # engine part: drum_policy
 # --------------------------------------------------------------------------
@@ -5469,6 +5492,7 @@ def extended_drum_kit(base_kit)
     ind_clap: load_mono_sample(drum_sample_path("ind_clap.wav")),
     ind_hat: load_mono_sample(drum_sample_path("ind_hat.wav")),
     ind_stab: load_mono_sample(drum_sample_path("ind_stab.wav")),
+    ind_metal: synth_ind_metal_sample,
   )
 rescue StandardError
   base_kit
@@ -5950,6 +5974,7 @@ def drum_bus_mapping
     poly: :ghost, shaker: :shaker, cowbell: :cowbell,
     poly5: :rim, clap: :clap, rim: :rim, glitch: :ind_stab, tabla: :tabla,
     tambourine: :tambourine, woodblock: :woodblock, agogo: :agogo,
+    metal: :ind_metal,
   }
   map[:kick] = :kick if kicks_enabled?
   map
@@ -16672,6 +16697,20 @@ RENDER_MODE_DEFAULTS = {
     # The signature every beat carries.
     "MELT" => "0.7", "MASTER_SMOOTH_DB" => "2", "MASTER_AIR_DB" => "0", "MASTER_TILT_DB" => "3",
     "BARS" => "16", "COMPOSITION" => "1", "KEEP_STEMS" => "0",
+  },
+  # A controlled four-clock feel: kick and bass establish the pulse while the
+  # late backbeat, moving hats and phrase-led metal work against it. Harmonic
+  # motion stays rich and unresolved so the tension comes from colour rather
+  # than a conventional cadence. This is opt-in because it is a specific record
+  # direction, not a better default for every dilla render.
+  dillatime: {
+    "FORM" => "soul_32", "BARS" => "32", "COMPOSITION" => "1",
+    "DRUM_PRESET" => "industrial_techno", "POCKET_SET" => "industrial",
+    "GROOVE_LOCK" => "kick", "GHOST_TIER" => "accent", "MARKOV_DRUMS" => "1",
+    "FLAM" => "1", "KICK_DOUBLE" => "0", "KICK_DROP" => "1",
+    "VOICING" => "quartal", "HARMONY_LEAD" => "1", "MOTIF_RECALL" => "1",
+    "GENRE_HARMONY" => "1", "SONITEX" => "heavy", "SONITEX_PRESET" => "heavy",
+    "ANALOG_CHAIN" => "vinyl_hot", "RENDER_BEAUTY_MIN" => "75",
   },
   long_soul: {
     "FORM" => "soul_32", "COMPOSITION" => "1", "VOICING" => "bill_evans",
@@ -35960,10 +35999,46 @@ module Bed
     midi.round - (3 * step)
   end
 
+  # The Copy Machine on the line.
+  #
+  # RingtoneLayer puts COPY_MACHINE in the environment at load and has done since
+  # it was written, but only the live path ever read it -- the bed's lead is built
+  # in ffmpeg and there was no note list to hand the device. A restored or stacked
+  # lead is a note list, so it can finally have one.
+  #
+  # ImprovisedLine.copies keeps lead copies to octaves, and says why: the harmonic
+  # family reaches a fifth in both directions, which on a sustained sample is a
+  # cloud and on a line already sitting above the pad is a piercing fifth over
+  # every note. A copy here can only ever double something the line played.
+  # How many notes AnalogSynth is asked to sound at once, across every device.
+  #
+  # The stack and the Copy Machine multiply, and they compound: four voices of
+  # close harmony times six copies is twenty-four notes for every one played.
+  # AnalogSynth is a per-sample Ruby loop, so a twelve-second piece that rendered
+  # in twenty seconds took nearly three minutes -- the devices were not wrong,
+  # there were simply too many of them at once. The budget is shared: whatever
+  # the harmony left, the Copy Machine gets, and it takes fewer copies rather
+  # than the render taking longer.
+  VOICE_BUDGET = 96
+
+  def copied(notes)
+    count = ENV.fetch("COPY_MACHINE", "0").to_i
+    return notes if count < 2 || notes.empty?
+
+    affordable = (VOICE_BUDGET.to_f / notes.size).floor
+    count = [count, affordable].min
+    return notes if count < 2
+
+    ImprovisedLine.copies(notes, copies: count,
+                                 family: ENV.fetch("COPY_MACHINE_FAMILY", "harmonic").to_sym,
+                                 drift: ENV.fetch("COPY_MACHINE_DRIFT", "320").to_f,
+                                 seed: rand(2**31))
+  end
+
   def restored_lead!(path, seconds, chords = [])
     spec = RESTORE["lead"] or return nil
 
-    notes = harmonised(restored_notes(spec, seconds), chords)
+    notes = copied(harmonised(restored_notes(spec, seconds), chords))
     return nil if notes.empty?
 
     voice = PAD_VOICE || :poly_lead
@@ -36806,7 +36881,11 @@ pads = chop(played, bars, scratch("pads"))
   end
 
   def spawn_piece!(name, path, seed, seconds: nil)
+    # The catalogue workers are fresh Ruby processes. Carry the selected render
+    # mode into them or the parent can announce Dillatime while every piece
+    # silently falls back to the ordinary dilla profile.
     env = { "DILLA_PIECE" => name.to_s, "RENDER_SEED" => seed.to_s }
+    env["RENDER_MODE"] = ENV["RENDER_MODE"] if ENV["RENDER_MODE"] && !ENV["RENDER_MODE"].empty?
     env["DILLA_SHOWCASE_SECONDS"] = seconds.to_s if seconds
     ok = system(env, RbConfig.ruby, File.join(ROOT, "dilla.rb"), "piece", name.to_s, path)
     abort "pieces: #{name} did not render" unless ok && File.file?(path)
