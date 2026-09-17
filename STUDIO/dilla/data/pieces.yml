@@ -33,7 +33,10 @@ showcase:
   seconds_each: 9
   crossfade_s: 0.7
   order:
-    - dnb_ninths
+    # The first beat of dnb_ninths was the downbeat the operator did not want.
+    # Fall In Love is the Gap Mangione vamp — Dilla's two-chord neo-soul, not a
+    # DnB pickup. FlyLo, four-to-the-floor, Detroit, and HATE follow.
+    - fall_in_love
     - quartal_mediants
     - four_floor
     - detroit
@@ -254,6 +257,7 @@ pieces:
       overtones: { partials: [2, 3, 4], gain_db: -24 }
       lead: { plays_odds: 0.6, rack_names: [octave, tape] }
       drums:
+        grid_banks: { techno: [four_floor_soul] }
         arrangement: { bank_order: [techno], bars_per_shape: 8 }
         samples: *kit_crate
         feels: *feel_hardgroove
@@ -274,6 +278,7 @@ pieces:
       overtones: { partials: [2, 4, 8], gain_db: -23 }
       lead: { plays_odds: 0.7, rack_names: [inharmonic, octave] }
       drums:
+        grid_banks: { techno: [four_floor_soul] }
         arrangement: { bank_order: [techno], bars_per_shape: 8 }
         samples: *kit_industrial
         feels: *feel_hardgroove
@@ -295,7 +300,8 @@ pieces:
       overtones: { partials: [2, 3, 5, 6], gain_db: -20 }
       lead: { plays_odds: 0.55, gain_db: -3, rack_names: [weather, ghost] }
       drums:
-        arrangement: { bank_order: [techno, techno, industrial], bars_per_shape: 8 }
+        grid_banks: { techno: [four_floor_soul] }
+        arrangement: { bank_order: [techno], bars_per_shape: 8 }
         samples: *kit_industrial
         feels: *feel_hardgroove
       master_bus: { console: air, width: 1.16 }
@@ -316,7 +322,8 @@ pieces:
       overtones: { partials: [2, 3], gain_db: -26 }
       lead: { plays_odds: 0.8, gain_db: 0, rack_names: [inharmonic, ring] }
       drums:
-        arrangement: { bank_order: [industrial, broken], bars_per_shape: 8 }
+        grid_banks: { techno: [four_floor_soul] }
+        arrangement: { bank_order: [techno], bars_per_shape: 8 }
         samples: *kit_industrial
         feels: *feel_hardgroove
         sonitex: { drive: 1.9, bandwidth_hz: 7000, crush_bits: 10, crush_hz: 22050, crush_mix: 0.75, lowpass_hz: 11000 }

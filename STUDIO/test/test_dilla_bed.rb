@@ -50,6 +50,14 @@ class TestDillaBed < Minitest::Test
 
   # dilla synthesises every sound it plays. The bed's families are oscillators
   # and the kit is the engine's own; a soundfont is somebody else's instrument.
+  def test_techno_floor_is_four_on_the_floor
+    floor = DillaLofiMachine::DRUM_PRESETS.fetch(:techno_floor)
+
+    assert_equal [0, 4, 8, 12], floor[:kicks]
+    assert_equal [2, 6, 10, 14], floor[:hats]
+    assert_equal [4, 12], floor[:claps]
+  end
+
   def test_the_catalogue_join_is_taped_and_chipped
     assert_includes BED_SOURCE, "grit_catalogue!"
     assert_includes BED_SOURCE, "catalogue chip"

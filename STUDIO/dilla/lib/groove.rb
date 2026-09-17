@@ -435,6 +435,13 @@ SUFFIX_MATCHERS = CHORD_SUFFIXES.map { |sfx| [sfx, /\A[A-G][#b]?#{sfx}\z/i] }.fr
       kicks: [0, 3, 4, 7, 8, 11, 12, 14], snares: [4, 12], hats: (0..15).to_a,
       ghosts: [2, 6, 10, 15], claps: [4, 12], perc: [1, 5, 9, 13, 15],
     },
+    # The floor and nothing else. HATE/Detroit catalogue rows overlay this
+    # name so a nine-second techno piece cannot wander into boom_808.
+    techno_floor: {
+      swing: 50, humanize: 1, bpm: 128, mode: :straight_sixteenth,
+      kicks: [0, 4, 8, 12], snares: [4, 12], hats: [2, 6, 10, 14],
+      ghosts: [], claps: [4, 12], perc: [6, 14],
+    },
     # Transcribed from a D'Angelo reference track via learn_source! (onset
     # detection on the demucs drums.wav stem, step_grid in project/learnings/
     # last_learn.json) -- not hand-tuned, this is what the analysis measured.
