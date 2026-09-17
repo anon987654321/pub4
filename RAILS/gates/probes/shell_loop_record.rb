@@ -70,10 +70,10 @@ PROMPT_HOST = "dev@brgen.no"
 # parses ANSI: the banner's shape is `master: key=value`, which is richer to
 # colour from structure than from escape codes it does not emit.
 def rows
+  # Only characters BootBanner printed. Invented ssh/motd lines were a film
+  # of a session that did not happen.
   [
-    { kind: "cmd", text: "ssh #{PROMPT_HOST}" },
-    { kind: "motd", text: "OpenBSD 7.8 (GENERIC.MP) #54: Wed Sep 10 04:12:33 CEST 2026" },
-    { kind: "cmd2", text: "cd pub4/MASTER && bundle exec ruby bin/cli" },
+    { kind: "cmd2", text: "bundle exec ruby bin/cli" },
     *BANNER.map { |line| { kind: "boot", text: line } },
     { kind: "ready", text: "" },
   ]
@@ -122,7 +122,7 @@ COLOUR = <<~'JS'
         '<span class="key">$1</span>=<span class="val">$2</span>');
       return '<span class="lit">' + esc(m[1]) + ':</span> ' + body;
     }
-    return '';
+    return '<span class="cmd">' + esc(text) + '</span>';
   };
 JS
 
@@ -182,7 +182,6 @@ Deploy::CdpSession.open do |cdp|
   cdp.navigate("file://#{page}", settle: 0.4)
   cdp.evaluate(COLOUR)
   cdp.evaluate("window.ROWS = #{rows_json}; window.step = 0;")
-
 
   total.times do |i|
     cdp.evaluate(ADVANCE)

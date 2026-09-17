@@ -217,6 +217,8 @@ else
 end
 
 url = options[:url] || Fleet.local_urls.fetch("master")
+# The README film is the field and the wordmark. ?film=1 hides the mic.
+url += (url.include?("?") ? "&" : "?") + "film=1" unless url.include?("film=")
 abort "warn: no Chrome. #{Deploy::CdpSession.chrome_path.inspect}" unless Deploy::CdpSession.available?
 
 begin
