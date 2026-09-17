@@ -117,7 +117,7 @@ function start2DFallback() {
     return a;
   };
 
-  const ANCHORS = buildAnchors();
+  const ANCHORS = buildAnchors().filter((_, i) => i % 3 === 0);
   // Structural landmarks for the bio-luminescent accent nodes -- outer brow
   // corners, cheekbones, chin -- expressed in the same anchor unit space.
   const ACCENT_ANCHORS = [[-0.36, -0.26, 0.20], [0.36, -0.26, 0.20], [-0.34, 0.20, 0.22], [0.34, 0.20, 0.22], [0, 0.68, 0.14]];
