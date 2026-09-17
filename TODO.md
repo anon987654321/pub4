@@ -1575,3 +1575,40 @@ rather than a beautifier, a supersaw lives only behind warp, and wav_Map never
 becomes the default pad. The deleted industrial `afftfilt` chain comes back only
 with a caller and a test.
 
+## Rule candidates from the book pass — deferred 2026-09-17
+
+The 2026-09-17 pass over Clean Code, Refactoring, The Pragmatic Programmer,
+Ousterhout, DDD, Kleppmann and the type/design canon found the 242-rule corpus
+already covers nearly all of it — all 22 Fowler smells, the Pragmatic
+orthodoxy, and typography as measured thresholds rather than prose
+(`design` config in `data/rules.yml`). Three line-detector survivors landed in
+`MASTER/law/ruby.rb` (FILTER_MAP, EXPLICIT_HTTP_TIMEOUT,
+MIGRATION_NOT_NULL_NO_DEFAULT). What remains needs an instrument the scanner
+does not have; each is opened at the seam it needs, not as a grep.
+
+- **TEMPORARY_FIELD** [AST] — a field set only to be read by one other method
+  is a parameter wearing a costume (Fowler). Detecting it means seeing the
+  write site and every read site together; line detectors cry wolf on
+  legitimate memoisation.
+- **PASS_THROUGH_METHOD** [AST] — a method that only delegates to one other is
+  either indirection earning nothing or a boundary the caller should hold
+  (Ousterhout). Needs the call graph, not the spelling; `delegate` and engine
+  mounting are deliberate indirection.
+- **ATTR_WRITER_SURFACE** [graph] — a writer with no reader is half an
+  interface. Census must include `Gemfile.lock` dependents and vendored
+  `RAILS/shared` copies on the VPS, or every engine export reads as dead.
+- **NO_NIL_FOR_ABSENCE** [model] — nil where a typed absence is meant
+  (`nil` vs `[]` vs `NONE`). Judgement about intent, so it is a model lane,
+  and lanes are down.
+- **SYNONYM_VERBS** [model] — `fetch`/`get`/`load`/`find` meaning one thing
+  across a file invites drift. A synonym list is taste until a model can tell
+  the deliberate aliases (`render`/`draw`) from the accidental ones.
+- **MONOTONIC_ELAPSED** [cross-line] — `Time.now` subtraction measuring
+  elapsed time should be `Process.clock_gettime(Process::CLOCK_MONOTONIC)`.
+  The detector must see both timestamps in the same expression; a lone
+  `Time.now` is usually a timestamp, not a stopwatch.
+- **FINISH_WHAT_YOU_START** [long-lived FP] — every `start`/`open`/`begin`
+  wants its finish (Pragmatic). The tree holds deliberate long-lived handles
+  (TTS socket, watcher threads) that would fire on every boot; the detector
+  needs a liveness model before it can name the leaks.
+
