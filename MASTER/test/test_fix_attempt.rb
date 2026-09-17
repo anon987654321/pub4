@@ -53,4 +53,11 @@ class TestFixAttempt < Minitest::Test
     assert_nil codes
     assert_equal ["fatal"], errors
   end
+
+  def test_first_code_returns_nil_when_the_run_stops
+    code = attempt([RuntimeError.new("fatal")], on_error: ->(_) { :stop })
+           .first_code(prompt: "p", ext: ".rb", source: "x", wait_context: nil)
+
+    assert_nil code
+  end
 end

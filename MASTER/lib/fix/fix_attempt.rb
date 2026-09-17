@@ -12,7 +12,9 @@ module Master
       end
 
       def first_code(prompt:, ext:, source:, wait_context:)
-        codes(prompt:, ext:, source:, wait_context:).first
+        # codes returns nil when on_error stops the run (`break nil`). Calling
+        # .first on that nil is the NoMethodError /fix RAILS hit on NO_GOD_CLASS.
+        codes(prompt:, ext:, source:, wait_context:)&.first
       end
 
       def codes(prompt:, ext:, source:, wait_context:)
