@@ -14,15 +14,18 @@ twice — once naming a file that had not existed for months, once naming a
 directory that has never existed — and both times it sent an operator to
 validate nothing and read the result as passing.
 
-Bare `ruby dilla.rb` writes `demo.wav` beside it: sixteen short pieces that are
-not each other, about ten minutes in all, hip hop through techno into ambient.
+Bare `ruby dilla.rb` writes `demo.wav` beside it: ten short pieces that are not
+each other, about ninety seconds in all, hip hop through techno into ambient.
 Each one is a row of `data/pieces.yml`, and a row names everything the bed knows
 how to be — its tempo, which oscillator family plays the chords, which drum
 grids and which crate the kit comes from, how loud and how treated the lead is,
 and which console the master bus leaves through. The row is laid over
 `data/bed.yml` before the bed reads a single number, so a piece renders in a
-process of its own and keeps its own clock. Five of the sixteen are progressions
-transcribed off Dilla records; the rest the engine wrote. Under every held chord
+process of its own and keeps its own clock. The showcase is ninety seconds
+because thirty-one pieces at length is eighteen minutes and nobody listens to
+a demo that long; `ruby dilla.rb catalogue-full` is the whole table. An existing
+`demo.wav` is a named take. The engine refuses to overwrite it unless
+`DILLA_OVERWRITE=1`. Under every held chord
 runs its own harmonic series, whole multiples of its lowest note, which is in
 tune by construction and is what makes a sustained chord lush rather than merely
 long.

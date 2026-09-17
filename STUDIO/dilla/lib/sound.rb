@@ -2835,6 +2835,11 @@ module Outboard
     # mono_bass last and non-negotiable, since everything above it moves phase
     # and a club system folds the bottom to mono anyway.
     foundry: %i[hedd_triode freq_shift phase_rotate neve_80 la2a console_sum mono_bass],
+
+    # The joined catalogue only. Tape and a mild triode on a finished mix is
+    # the dirt the demo is supposed to carry; putting either in donuts would
+    # change the bed under MASTER's speech.
+    catalogue_grit: %i[tape_machine hedd_tape hedd_triode_mix],
   }.freeze
 
   DEFAULT_RACK = :donuts
@@ -2849,6 +2854,7 @@ module Outboard
     units.filter_map do |unit|
       case unit
       when :hedd_triode then hedd_triode
+      when :hedd_triode_mix then hedd_triode(drive: 6, offset: 0.22, param: 2.0)
       when :hedd_pentode then hedd_pentode
       when :hedd_tape then hedd_tape
       when :stc8 then stc8(bpm:)

@@ -50,6 +50,15 @@ class TestDillaBed < Minitest::Test
 
   # dilla synthesises every sound it plays. The bed's families are oscillators
   # and the kit is the engine's own; a soundfont is somebody else's instrument.
+  def test_the_catalogue_join_is_taped_and_chipped
+    assert_includes BED_SOURCE, "grit_catalogue!"
+    assert_includes BED_SOURCE, "catalogue chip"
+    assert_includes Outboard::RACKS.fetch(:catalogue_grit), :tape_machine
+    assert_includes Outboard::RACKS.fetch(:catalogue_grit), :hedd_triode_mix
+    assert_includes Outboard.chain(:catalogue_grit, bpm: 88), "asoftclip"
+    assert_includes Outboard.chain(:catalogue_grit, bpm: 88), "vibrato"
+  end
+
   def test_the_bed_plays_nothing_it_did_not_synthesise
     refute_match(/fluidsynth|\.sf2/, BED_SOURCE)
     assert(Bed::FAMILIES.values.all? { |spec| spec["source"] == "oscillator" })

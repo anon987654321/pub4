@@ -36874,6 +36874,7 @@ pads = chop(played, bars, scratch("pads"))
     end
     dest = File.join(ROOT, "demo.wav")
     join_catalogue(parts, dest, fade)
+    grit_catalogue!(dest)
     mp3 = demo_encode_mp3(dest)
     puts "ok: #{dest} (#{parts.size} pieces, seed #{base})"
     puts "ok: #{mp3}" if mp3
@@ -36899,6 +36900,41 @@ pads = chop(played, bars, scratch("pads"))
     return render_symbols!(name, row.fetch("chords"), path, seed) if row["chords"]
 
     render_track!(row.fetch("progression"), path, seed)
+  end
+
+  # Dirt that belongs on the joined showcase, not on the bed under speech.
+  # 7.5 ips tape, a mild triode, 11-bit crush, and a gated square chip that
+  # is the console-game layer — all after the pieces have already met.
+  def grit_catalogue!(path)
+    seconds = wav_seconds(path)
+    chip = scratch("catalogue_chip")
+    grit = scratch("catalogue_grit")
+    pulse = "if(lt(sin(2*PI*(196*pow(1.33484,mod(floor(t*3),5)))*t),0),-1,1)" \
+            "*gt(mod(t,0.5),0.22)*gt(sin(2*PI*t/11),-0.2)"
+    noise = "sin(2*PI*t*9173)*sin(2*PI*t*4301)*gt(mod(t,2.1),1.85)"
+    src = "aevalsrc='0.11*(#{pulse})+0.045*(#{noise})':s=44100:d=#{seconds}"
+    ffmpeg!("-f", "lavfi", "-t", format("%.3f", seconds), "-i", src,
+            "-af", "aecho=0.8:0.72:170|340|680:0.38|0.24|0.14,volume=0.9",
+            chip, what: "catalogue chip")
+    tape = Outboard.tape_machine(speed: :ips7, wow: 0.14, flutter: 0.05)
+    sat = Outboard.hedd_tape(drive: 16, param: 2.0)
+    tube = Outboard.hedd_triode(drive: 6, offset: 0.22, param: 2.0)
+    graph = "[0:a][1:a]amix=inputs=2:weights=1 0.17:duration=first[mix];" \
+            "[mix]#{tape},#{sat},#{tube},highpass=f=60,lowpass=f=7800," \
+            "acrusher=bits=11:mode=log:mix=0.4,alimiter=limit=0.95[out]"
+    ffmpeg!("-i", path, "-i", chip, "-filter_complex", graph, "-map", "[out]",
+            "-c:a", "pcm_s16le", "-ac", "2", grit, what: "catalogue grit")
+    FileUtils.mv(grit, path)
+    FileUtils.rm_f(chip)
+    path
+  end
+
+  def wav_seconds(path)
+    out, err, status = ToolRun.capture3("ffprobe", "-v", "error", "-show_entries", "format=duration",
+                                        "-of", "default=nw=1:nokey=1", path)
+    abort "bed duration: #{err}" unless status.success?
+
+    Float(out.strip)
   end
 
   def join_catalogue(parts, dest, fade = Float(CATALOGUE.fetch("crossfade_s")))
