@@ -19,16 +19,18 @@ module Master
       IMAGE_RE = /\b(?:make|create|generate|render|photograph|photo|portrait|image|picture)\b/i.freeze
       AUDIO_RE = /\b(?:make|create|generate|compose|render)\b.*\b(?:beat|loop|instrumental|track|music)\b|\b(?:dilla|j dilla|fly(?:ing)?\s+lotus|madlib|bach|baroque)\b.*\b(?:beat|loop|instrumental|track|music)\b/i.freeze
       KICK_RE = /\b(?:generate|create|make|render)\b.*\b(?:hard\s+hitting\s+)?(?:techno\s+)?kick\b/i.freeze
+      SYNTH_RE = /\b(?:play|generate|create|make|render)\b.*\b(?:sine|square|triangle|saw|white|brown)\b.*\b(?:wave|noise|tone)\b/i.freeze
       POSTPRO_RE = /\b(?:post-?process|colour\s+grade|color\s+grade|film\s+look|vhs(?:\s+tape)?\s+look|crt(?:\s+broadcast)?\s+look|camcorder(?:\s+glitch)?\s+look|make\s+this\s+(?:cinematic|analog|analogue))\b/i.freeze
       IMAGE_PATH_RE = /(?:["']([^"']+\.(?:jpe?g|png|webp|tiff?))["']|(?:\A|\s)([^\s"']+\.(?:jpe?g|png|webp|tiff?))(?=\z|\s))/i.freeze
 
       def handles?(text)
-        text.match?(KICK_RE) || text.match?(AUDIO_RE) || text.match?(POSTPRO_RE) ||
+        text.match?(KICK_RE) || text.match?(SYNTH_RE) || text.match?(AUDIO_RE) || text.match?(POSTPRO_RE) ||
           text.match?(IMAGE_RE) && text.match?(/\b(?:photo|portrait|image|picture)\b/i)
       end
 
       def dispatch(text, root: MasterPaths.root)
         return generate_kick(text, root:) if text.match?(KICK_RE)
+        return generate_tone(text, root:) if text.match?(SYNTH_RE)
         return postprocess(text, root:) if text.match?(POSTPRO_RE)
         return generate_beat(text, root:) if text.match?(AUDIO_RE)
 
@@ -57,6 +59,33 @@ module Master
         args = ["--input", source, "--output", output, "--preset", preset]
         result = ScriptDispatch.run(root:, tool: "postpro", arg: args.map { |value| Shellwords.escape(value) }.join(" "))
         result.ok? ? Result.ok({ output: result.value!, rendered: result.value!, media: :postpro, path: output }) : result
+      end
+
+      SYNTH_SHAPES = {
+        "sine" => :sine,
+        "square" => :square,
+        "triangle" => :triangle,
+        "saw" => :saw,
+        "white noise" => :white,
+        "white wave" => :white,
+        "brown noise" => :brown,
+        "brown wave" => :brown,
+      }.freeze
+
+      def synth_shape_for(text)
+        needle = text.to_s.downcase
+        SYNTH_SHAPES.each do |word, shape|
+          return shape if needle.include?(word)
+        end
+        nil
+      end
+
+      def generate_tone(text, root: MasterPaths.root)
+        shape = synth_shape_for(text) || :sine
+        hz = text.match?(/\b(?:deep|low|bass)\b/i) ? 110.0 : 440.0
+        destination = File.join(MEDIA_OUTPUT_DIR, "master-#{shape}-#{Time.now.utc.strftime('%Y%m%dT%H%M%SZ')}.wav")
+        result = Master::Music::Synth.render(shape:, hz:, destination:)
+        Result.ok({ output: result, rendered: result, media: :synth, path: result })
       end
 
       def generate_kick(_text, root: MasterPaths.root)
