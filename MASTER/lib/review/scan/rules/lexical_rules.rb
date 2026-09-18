@@ -11,12 +11,21 @@ module Master
 
   RuleDSL.rule :NO_DEBUG,
     severity: :error, tags: %i[CLEAN_CODE], applies_to: %i[ruby],
-    fires: "  binding.pry\n",
-    # A word boundary is what separates the breakpoint from a name containing it.
-    does_not_fire: "debugger_enabled = false\n",
+    fires: "  binding.pry\\n",
+    does_not_fire: "debugger_enabled = false\\n",
     description: "no debug breakpoints in committed code" do |src, path:|
     next [] if path.to_s.include?("/review/scan/rules/")
-    scan_lines(src, /\b(binding\.pry|debugger|byebug|binding\.irb)\b/, message: "debug breakpoint")
+    
+    parsed = Prism.parse(src)
+    next [] if parsed.failure?
+    
+    findings = []
+    walk(parsed.value) do |node|
+      if node.is_a?(Prism::CallNode) && node.name.to_s.match?(/^(pry|debugger|byebug|irb)$/)
+        findings << finding(line: node.location.start_line, message: "debug breakpoint: #{node.name}")
+      end
+    end
+    findings
   end
 
   # A file that runs itself: `Tool.run(ARGV) if $PROGRAM_NAME == __FILE__`, or
