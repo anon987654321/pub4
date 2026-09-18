@@ -5,6 +5,7 @@ require "shellwords"
 require "time"
 require_relative "../boot/paths"
 require_relative "script_dispatch"
+require_relative "constraint_dsl"
 
 module Master
   module Io
@@ -111,6 +112,10 @@ module Master
       DEFAULT_BEAT_BARS = 12
 
       def generate_beat(text, root:)
+        # Use ConstraintDSL to resolve intent before rendering
+        constraints = ConstraintDSL.parse_intent(text)
+        resolved_params = ConstraintDSL.resolve(constraints)
+        
         style = if text.match?(/\bbach|baroque\b/i)
                   "baroque"
                 elsif text.match?(/\bneo[ -]?soul\b/i)
@@ -127,9 +132,11 @@ module Master
         output = File.join(output_dir, "#{style}-#{Time.now.utc.strftime('%Y%m%dT%H%M%SZ')}.mp3")
         # Mirror Shared::DillaProcessor#run_script: the engine's CLI is
         # `dilla.rb dilla <output> <bars>` — style/track selection happens via
-        # TRACK/PROGRESSION ENV, not CLI flags (there is no --style/--output flag).
+        # TRACK/PROGRESSION ENV, and resolved constraints now drive the renders.
         track = style.tr("-", "_")
         env = { "RENDER_MODE" => "dilla", "SPEAK" => "0" }
+        # Merge resolved constraints into the environment for the dilla engine
+        resolved_params.each { |k, v| env[k.to_s.upcase] = v.to_s }
         env.merge!("TRACK" => track, "PROGRESSION" => track) unless track == "dilla"
         args = ["dilla", output, DEFAULT_BEAT_BARS.to_s]
         result = ScriptDispatch.run(root:, tool: "dilla", arg: args.map { |v| Shellwords.escape(v) }.join(" "), env:)

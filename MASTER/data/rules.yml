@@ -86,9 +86,13 @@ engineering_fit:
   fit: Solution matches the load and the failure modes — no slack, no shortfall.
   why_required: State the load the artifact carries (users, edge cases, lifetimes,
     blast radius). The verdict follows from the load.
-# Output-text bias patterns (scanned by the RuleDSL text scanner). Distinct from
-# the `biases` block below (confirmation/sunk-cost/authority), which BiasGuard
-# reads for decision proposals — same word, two different pipeline stages.
+# Conduct rules: how to work. These are not lexical detectors but behavioral mandates.
+conduct:
+  HOSTILE_AUDIT:
+    priority: 1
+    principle: self_apply
+    mandate: "Systematically interrogate every project rule/law. Accuse self of violation, propose multiple remediations, cherry-pick the robust solution, and commit. No filler."
+    trigger: "significant_change, architectural_shift, or explicit request"
 beauty:
   typography_bringhurst:
   - choose_appropriate_typeface_for_function
