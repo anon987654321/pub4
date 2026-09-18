@@ -18,15 +18,17 @@ module Master
 
       IMAGE_RE = /\b(?:make|create|generate|render|photograph|photo|portrait|image|picture)\b/i.freeze
       AUDIO_RE = /\b(?:make|create|generate|compose|render)\b.*\b(?:beat|loop|instrumental|track|music)\b|\b(?:dilla|j dilla|fly(?:ing)?\s+lotus|madlib|bach|baroque)\b.*\b(?:beat|loop|instrumental|track|music)\b/i.freeze
+      KICK_RE = /\b(?:generate|create|make|render)\b.*\b(?:hard\s+hitting\s+)?(?:techno\s+)?kick\b/i.freeze
       POSTPRO_RE = /\b(?:post-?process|colour\s+grade|color\s+grade|film\s+look|vhs(?:\s+tape)?\s+look|crt(?:\s+broadcast)?\s+look|camcorder(?:\s+glitch)?\s+look|make\s+this\s+(?:cinematic|analog|analogue))\b/i.freeze
       IMAGE_PATH_RE = /(?:["']([^"']+\.(?:jpe?g|png|webp|tiff?))["']|(?:\A|\s)([^\s"']+\.(?:jpe?g|png|webp|tiff?))(?=\z|\s))/i.freeze
 
       def handles?(text)
-        text.match?(AUDIO_RE) || text.match?(POSTPRO_RE) ||
+        text.match?(KICK_RE) || text.match?(AUDIO_RE) || text.match?(POSTPRO_RE) ||
           text.match?(IMAGE_RE) && text.match?(/\b(?:photo|portrait|image|picture)\b/i)
       end
 
       def dispatch(text, root: MasterPaths.root)
+        return generate_kick(text, root:) if text.match?(KICK_RE)
         return postprocess(text, root:) if text.match?(POSTPRO_RE)
         return generate_beat(text, root:) if text.match?(AUDIO_RE)
 
@@ -55,6 +57,12 @@ module Master
         args = ["--input", source, "--output", output, "--preset", preset]
         result = ScriptDispatch.run(root:, tool: "postpro", arg: args.map { |value| Shellwords.escape(value) }.join(" "))
         result.ok? ? Result.ok({ output: result.value!, rendered: result.value!, media: :postpro, path: output }) : result
+      end
+
+      def generate_kick(_text, root: MasterPaths.root)
+        destination = File.join(MEDIA_OUTPUT_DIR, "master-techno-kick-#{Time.now.utc.strftime('%Y%m%dT%H%M%SZ')}.wav")
+        result = Master::Music::KickLoop.render(destination:)
+        Result.ok({ output: result, rendered: result, media: :kick_loop, path: result })
       end
 
       POSTPRO_PRESETS = [
