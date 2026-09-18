@@ -22,21 +22,21 @@ module Master
         def play(path, loop: false)
           raise ArgumentError, "missing audio #{path}" unless File.file?(path)
 
-          cmd = if loop && player?("ffplay")
+          cmd = if loop && tool_available?("ffplay")
                   ["ffplay", "-loop", "0", "-nodisp", "-autoexit", "-loglevel", "quiet", "-i", path]
                 elsif File.exist?("/usr/bin/afplay")
                   ["afplay", path]
-                elsif `command -v ffplay`.strip.any?
+                elsif tool_available?("ffplay")
                   ["ffplay", "-nodisp", "-autoexit", "-i", path]
                 else
                   raise "afplay or ffplay required"
                 end
 
-          with open('/tmp/master-synth-play.log', 'w') do |out|
-            p = Process.spawn(*cmd, out:, err: out)
-            Process.detach(p)
-          end
-          p
+          log = File.open("/tmp/master-synth-play.log", "a")
+          pid = Process.spawn(*cmd, out: log, err: log)
+          log.close
+          Process.detach(pid)
+          pid
         end
 
         private
@@ -45,6 +45,10 @@ module Master
           return if SHAPES.include?(shape)
 
           raise ArgumentError, "unknown shape #{shape}; valid: #{SHAPES.join(', ')}"
+        end
+
+        def tool_available?(name)
+          system("command", "-v", name, out: File::NULL, err: File::NULL)
         end
 
         def default_destination(shape)
