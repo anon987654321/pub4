@@ -131,7 +131,7 @@ class AudioEngine {
   #loadLocal(track) {
     // Silence the iframe first or the two sources overlap: the embed keeps
     // playing while an <audio> element starts on top of it.
-    if (this.iframe && this.iframe.src) this.iframe.src = ""
+    if (this.iframe?.src) this.iframe.src = ""
     const el = this.#ensureAudioElement()
     el.src = track.src
     const play = () => {

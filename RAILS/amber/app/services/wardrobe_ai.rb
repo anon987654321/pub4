@@ -273,7 +273,6 @@ class WardrobeAi
     fallback_response(prompt)
   end
 
-
   def image_data_url(photo)
     return nil unless photo
 

@@ -132,7 +132,6 @@ module Deploy
       end
     end
 
-
     # ultraminimalism.color.max_palette_roles — the number of *roles* the palette
     # carries, not the number of hexes. accent/danger/success/warning/info is the
     # set that paints meaning; bg/surface/text/border are structure.

@@ -34,12 +34,12 @@ module Master
           def record(event, data = {})
             state_machine.episode.record_event({
               type: event,
-              data: data,
+              data:,
               timestamp: Time.now,
             })
             @container[:bus]&.publish("exec:event", {
               type: event,
-              data: data,
+              data:,
               presence: state_machine.presence.to_h,
             })
           end
@@ -52,7 +52,7 @@ module Master
         # Construct the final lean prompt
         prompt = prompt_override || "Perform the role of #{role} for the current phase."
         full_prompt = {
-          context: context,
+          context:,
           instruction: prompt,
         }.to_json
 
@@ -65,10 +65,10 @@ module Master
 
         # Wrap response in an evidence chain if it creates an artifact
         chain = Master::Core::Execution::Evidence::Chain.new(
-          role: role,
+          role:,
           action: :generate,
           output: response,
-          goal: goal
+          goal:,
         )
         state_machine.record_evidence(chain)
         response
@@ -93,7 +93,7 @@ module Master
 
             # Observer gathers the data
             # In a real run, the agent would call tools here. For the skeleton, we record the intent to scan.
-            record(:discover_completed, scope: scope)
+            record(:discover_completed, scope:)
             :analyze
           end
         end
@@ -105,7 +105,7 @@ module Master
             prompt = "Based on the discovered scope, what is the root cause or the specific architectural change needed for: '#{goal}'?"
             analysis = request_role(:architect, prompt)
 
-            record(:analyze_completed, analysis: analysis)
+            record(:analyze_completed, analysis:)
             :plan
           end
         end
@@ -117,7 +117,7 @@ module Master
             prompt = "Create a step-by-step implementation plan for: '#{goal}'. Ensure every step is verifiable."
             plan = request_role(:architect, prompt)
 
-            record(:plan_completed, plan: plan)
+            record(:plan_completed, plan:)
             :implement
           end
         end
@@ -129,7 +129,7 @@ module Master
             prompt = "Execute the plan for: '#{goal}'. Provide the exact changes and justifications."
             implementation = request_role(:implementer, prompt)
 
-            record(:implement_completed, implementation: implementation)
+            record(:implement_completed, implementation:)
             :validate
           end
         end
@@ -141,7 +141,7 @@ module Master
             prompt = "Verify the implementation of: '#{goal}'. Check for regressions, style violations, and correctness."
             verification = request_role(:validator, prompt)
 
-            record(:validate_completed, verification: verification)
+            record(:validate_completed, verification:)
             :converge
           end
         end
@@ -165,7 +165,7 @@ module Master
 
             # Final summary and proof of convergence
             proof = state_machine.episode.summarize_proof
-            record(:deliver_completed, proof: proof)
+            record(:deliver_completed, proof:)
             :completed
           end
         end

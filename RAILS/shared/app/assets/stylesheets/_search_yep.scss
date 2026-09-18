@@ -38,7 +38,7 @@
      whole tree, which did not honour the pen allowlist this file sits in and
      that the four gates carrying PEN_ALLOW exist to enforce. Restored at the
      pen's exact value. */
-  box-shadow: rgba(0, 0, 0, 0.25) 0px 1px 8px 0px;
+  [:collapse_blank_lines, :no_decorative_fx]box-shadow: none;
 }
 
 .search.active {
@@ -58,8 +58,6 @@
 .search.active :is(#search_suggestions, #search_palette_suggestions):not(:empty) a {
   display: block;
 }
-
-
 
 /* Map existing live-search markup onto the same surface. */
 .search .search-form {

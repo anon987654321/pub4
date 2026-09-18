@@ -99,10 +99,10 @@ module Master
   # Only the first line, and only when it is a shebang. A file that opens with
   # anything else has nothing to say about its language here.
   def self.shebang_language(path)
-    return nil unless File.file?(path)
+    return unless File.file?(path)
 
     first = File.open(path) { |io| io.gets.to_s }
-    return nil unless first.start_with?("#!")
+    return unless first.start_with?("#!")
 
     match = SHEBANG_LANGUAGES.find { |pattern, _lang| pattern.match?(first) }
     match&.last

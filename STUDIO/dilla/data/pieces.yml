@@ -33,14 +33,13 @@ showcase:
   seconds_each: 9
   crossfade_s: 0.7
   order:
-    # The first beat of dnb_ninths was the downbeat the operator did not want.
-    # Fall In Love is the Gap Mangione vamp — Dilla's two-chord neo-soul, not a
-    # DnB pickup. FlyLo, four-to-the-floor, Detroit, and HATE follow.
-    - fall_in_love
-    - quartal_mediants
+    # The operator prefers demo2: industrial floor first (four_floor, detroit,
+    # hate_rumble). Fall In Love and FlyLo follow.
     - four_floor
     - detroit
     - hate_rumble
+    - fall_in_love
+    - quartal_mediants
     - footwork
     - sandviken_hotell
     - still_water

@@ -119,7 +119,7 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
       @tally = {
         "important" => [], "rhythm" => [], "magic_hex" => [],
         "type_scale" => [], "weight_ladder" => [],
-        "child_margin" => [], "card_padding" => [], "leading" => []
+        "child_margin" => [], "card_padding" => [], "leading" => [],
       }
       files.each { |path| scan(path) }
       judge_budgets

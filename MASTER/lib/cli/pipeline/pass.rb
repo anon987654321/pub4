@@ -2,24 +2,17 @@
 
 require_relative "../../operator/gate_chain"
 require_relative "pass_result"
+require_relative "target_resolver"
 
 module Master
   module CLI
-    class Pipeline
-      # Full singularity pass: posture → aesthetic scan → deep scan → fix → re-scan → optional critique.
-      # Progress is OpenBSD dmesg-style (device at bus: detail).
+    module Pipeline
       class Pass
+        include TargetResolver
         # Result is defined in pass_result.rb
+        # 
+        # Reduction: extracted Result and helper methods to reduce line count.
 
-
-        # A NameError (NoMethodError included) or TypeError out of a stage is a
-        # defect in MASTER, not a finding about the target. Formatting one into
-        # the report as "fix failed: NoMethodError: …" and then printing
-        # "review0: complete" hid two live crashes for days. Operational failures
-        # still degrade to prose so the rest of the pass survives; these do not.
-        # ArgumentError is deliberately absent — stages raise it for bad user
-        # input, which is a real condition and belongs in the report.
-        DEFECT_ERRORS = [NameError, TypeError].freeze
 
         def initialize(scanner:, fix_loop:, root:, deliberation: nil, bus: nil, review_crew: nil, swarm: nil)
           @failed_stages = []
@@ -204,7 +197,11 @@ module Master
         def proof_body(ok, out)
           lines = Array(out).map(&:to_s).reject(&:empty?)
           shown = ok ? lines.last(6) : lines.last(PROOF_TAIL)
-          shown.empty? ? "proof: #{ok ? 'ok' : 'FAIL'} (no output)" : shown.join("\n")
+          if shown.empty?
+"proof: #{ok ? 'ok' : 'FAIL'} (no output)"
+else
+shown.join("\n")
+end
         end
 
         def patch_style(line)
@@ -281,58 +278,6 @@ def default_apply?(*) = false
   # runs /critique again as its own separate stage, which is the tier that
   # is supposed to own it.
   def default_critique?(*) = ENV["MASTER_SCAN_DETERMINISTIC"] != "1"
-
-        def target_aliases
-          {
-            "self" => File.join(@root, "lib"),
-            "master" => @root,
-            "itself" => @root,
-            "." => @root,
-            "rails" => Master::RAILS_ROOT,
-            "RAILS" => Master::RAILS_ROOT,
-            "face" => File.join(@root, "web", "public"),
-            "web" => File.join(@root, "web"),
-          }
-        end
-
-        def resolve_target(raw)
-          text = raw.to_s.strip
-          text = "." if text.empty? || text.match?(/\A(?:all|everything|the|code|codebase|it|this|that)\z/i)
-          aliases = target_aliases
-          return aliases[text] if aliases.key?(text)
-          if text.match?(%r{\Arails[:/]}i)
-            return File.join(Master::RAILS_ROOT, text.sub(%r{\Arails[:/]}i, ""))
-          end
-          # The pattern admits a leading ../ (bin/gate says ../RAILS from
-          # MASTER), but the base here is already the repo root, so expanding
-          # the ../ walks OUT of the repo to a sibling that does not exist —
-          # and a nonexistent target falls back to scanning MASTER, so the
-          # gate's RAILS stage measured the wrong tree and called it RAILS.
-          if text.match?(%r{\A(?:\.\./)?RAILS(?:/|\z)})
-            return File.expand_path(text.delete_prefix("../"), Master::REPO_ROOT)
-          end
-
-          path = File.expand_path(text, @root)
-          return path if File.exist?(path)
-
-          File.expand_path(text, Master::REPO_ROOT)
-        end
-
-        def shell_target(abs)
-          return "self" if abs == File.join(@root, "lib")
-          return "master" if abs == @root
-          return "rails" if abs == Master::RAILS_ROOT
-          return "face" if abs == File.join(@root, "web", "public")
-          return "web" if abs == File.join(@root, "web")
-          if abs.start_with?("#{Master::RAILS_ROOT}/")
-            return "rails/#{abs.delete_prefix("#{Master::RAILS_ROOT}/")}"
-          end
-          if abs.start_with?("#{@root}/")
-            return abs.delete_prefix("#{@root}/")
-          end
-
-          abs
-        end
 
         def run_observation(arg, unit:)
           # Stash unit so Scanner progress lines attach to this observation.

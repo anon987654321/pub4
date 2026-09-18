@@ -11,7 +11,7 @@ module Master::Core::Execution
     end
 
     def add_case(task, oracle)
-      @cases << { task: task, oracle: oracle }
+      @cases << { task:, oracle: }
     end
 
     def run_all(pipeline)
@@ -28,7 +28,7 @@ module Master::Core::Execution
       scores = results.map { |r| r[:score] }
       {
         mean: scores.sum / scores.size.to_f,
-        pass_rate: scores.count { |s| s == 1.0 } / scores.size.to_f
+        pass_rate: scores.count { |s| s == 1.0 } / scores.size.to_f,
       }
     end
   end

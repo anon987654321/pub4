@@ -281,6 +281,31 @@ Re-measured 2026-09-11 against the real crate. `samples/` is gitignored, so a
 worktree shows an empty crate that is not; dilla is under active edit, so trust
 symbol names over line numbers.
 
+### Open from 2026-09-17 session
+
+`dilla.rb` stays the engine. `demo.rb`, `demo2.rb` and `demo3.rb` are the takes.
+Do not triplicate the engine file.
+
+- **README.mp4 split.** Half face, half a zsh prompt that launches
+  `bundle exec ruby bin/cli`. Face take is at `/tmp/new_takes/face.mp4`,
+  zsh take at `/tmp/new_takes/zsh_cli.mp4`. Mux with `demo.wav` under
+  `README.wav`. `?film=1` hides the mic; `face.css` film rules are still
+  mixed with another session's 44px autofix and were not committed.
+- **TTS of findings through dilla's chain.** `reverse_engineering/NOTES.md`
+  read by Jenny/Christopher, then tape / space echo / triode, layered with
+  demo2 and demo3.
+- **postpro on the MASTER web UI.** Not started. The face already has
+  upload; the grader is `STUDIO/postpro/postpro.rb --preset cinematic`.
+- **Papua masks as a light 3D field.** Eligible: frontal masks with two eye
+  holes (`yam_mask_papua_new_guinea`, `highlands_mask`, `malangan_mask`).
+  Not eligible: the Vanuatu figure, sulka headdress, gulf full-body, profile
+  bird-beaks, yam helmets without a face. No LoRAs. Same anchor space as
+  `face_2d_fallback.js`, sparse.
+- **HATE YouTube channel.** Refused: commercial mixes, not a drum analysis.
+  Notes live in `STUDIO/dilla/reverse_engineering/`.
+- **CLI eyes and ears.** The browser already has getUserMedia. The TTY does
+  not. `Master::Io::Sense` was not written.
+
 ### The owner's calls
 
 - **The crate holds `drums`, `dug` and `own`, and no 124 racks.**

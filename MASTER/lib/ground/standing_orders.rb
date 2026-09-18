@@ -54,7 +54,11 @@ module Master
           last = o["last_run_at"].to_i > 0 ? Time.at(o["last_run_at"].to_i).strftime("%Y-%m-%d") : "never"
           err = o["last_error"] ? "  !! #{o["last_error"][0, 60]}" : ""
           seen = Array(o["evidence"]).last
-          proof = seen ? "  #{seen["kind"]} #{seen["ok"] ? "ok" : "failed"}: #{seen["output"].to_s[0, 60]}" : ""
+          proof = if seen
+"  #{seen["kind"]} #{seen["ok"] ? "ok" : "failed"}: #{seen["output"].to_s[0, 60]}"
+else
+""
+end
           "#{o['name']} [#{flag}|#{st}|#{domain_of(o)}] - #{o['description']} (last: #{last})#{err}#{proof}"
         end
 
@@ -65,7 +69,7 @@ module Master
           {
             "name" => name.to_s, "description" => description.to_s, "trigger" => trigger.to_s,
             "interval_s" => interval_s.to_i, "command" => command.to_s, "enabled" => enabled,
-            "domain" => domain.to_s, "owner" => owner.to_s, "verify" => verify&.to_s,
+            "domain" => domain.to_s, "owner" => owner.to_s, "verify" => verify&.to_s
           }.compact
         end
       end

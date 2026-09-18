@@ -20,7 +20,7 @@
       "Dmaj9nc",
       "DMaj7overG"
     ],
-    "flylo_camel": [
+    "wonky_camel": [
       "Dm9",
       "Cm11nc",
       "AbMaj13s11",
@@ -49,6 +49,16 @@
       "Ebmaj9",
       "Abmaj9",
       "Dbmaj9"
+    ],
+    "flylo_camel": [
+      "Dm9",
+      "Cm11nc",
+      "AbMaj13s11",
+      "Gm7",
+      "Eb7",
+      "A7nc",
+      "Dmaj9nc",
+      "DMaj7overG"
     ],
     "learned_promo_test": [
       "Dbmaj9",
@@ -131,6 +141,40 @@
       "learned_at": "2026-07-16T14:01:04Z",
       "source_url": "https://www.youtube.com/watch?v=t6SXXx1Fu_4"
     },
+    "wonky_camel": {
+      "bpm": 86,
+      "swing": 60,
+      "source": "pocket_dna_simple",
+      "source_url": "https://www.youtube.com/watch?v=fU9YRGLPDQ8",
+      "wonky_kicks": [
+        0,
+        6,
+        10
+      ],
+      "wonky_snares": [
+        4,
+        12
+      ],
+      "wonky_ghost_snares": [
+        7
+      ],
+      "wonky_hats": [
+        0,
+        2,
+        4,
+        6,
+        8,
+        10,
+        12,
+        14
+      ],
+      "wonky_hat_ghosts": [],
+      "wonky_perc": [],
+      "wonky_claps": [
+        4,
+        12
+      ]
+    },
     "flylo_camel": {
       "bpm": 86,
       "swing": 54,
@@ -195,11 +239,12 @@
   },
   "calibrations": {},
   "track_aliases": {
-    "flylo_camel": "quartal_west_coast",
+    "wonky_camel": "chromatic_mediant_drift",
     "quartal_west_coast": "chromatic_mediant_drift",
+    "flylo_camel": "quartal_west_coast",
     "promo_test": "learned_promo_test",
     "fourth_third_sixth_second_turn": "learned_promo_test"
   },
   "top_track": "db_major_minor_fall",
-  "promoted_at": "2026-08-25T21:22:01Z"
+  "promoted_at": "2026-09-17T00:03:13Z"
 }

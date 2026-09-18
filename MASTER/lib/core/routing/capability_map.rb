@@ -34,7 +34,7 @@ module Master::Core::Routing
       stats[:successes].to_f / stats[:attempts]
     end
 
-    def best_model_for(task_class, constraints = {})
+    def best_model_for(task_class, _constraints = {})
       # Simple empirical selection: highest success rate
       @scores.each_with_object({best: nil, rate: -1.0}) do |(model_id, tasks), result|
         rate = success_rate(model_id, task_class)

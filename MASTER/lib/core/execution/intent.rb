@@ -31,7 +31,7 @@ module Master::Core::Execution
         goal: hash[:goal] || hash["goal"],
         approach: hash[:approach] || hash["approach"],
         evidence_summary: hash[:evidence_summary] || hash["evidence_summary"],
-        risk: (hash[:risk] || hash["risk"] || :low).to_sym
+        risk: (hash[:risk] || hash["risk"] || :low).to_sym,
       )
     end
 

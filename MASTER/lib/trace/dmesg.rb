@@ -67,6 +67,14 @@ module Master
 
       def emit(line)
         return unless enabled?
+        
+        # Suppress "at unit0" lines by default if we are just in a top-level conversational turn (master0).
+        # This prevents dmesg flood during chitchat without requiring a flag.
+        if Fiber[:master_unit] == "master0" && line.match?(/at \w+0|llm\d+:/)
+          return
+        end
+
+        # Fallback for other contexts if MASTER_QUIET is set.
         return if ENV["MASTER_QUIET"] == "1" && line.match?(/at \w+0|llm\d+:/)
 
         text = line.to_s.gsub(/\s+/, " ").strip

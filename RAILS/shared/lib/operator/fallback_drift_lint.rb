@@ -142,7 +142,6 @@ module Operator
       /\A#{parts.map { |p| Regexp.escape(p) }.join(".+")}\z/
     end
 
-
     # Wider than scss_files: a declaration can be a helper's string or a
     # setProperty call, and reading only stylesheets would accuse both.
     def source_files

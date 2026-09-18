@@ -44,7 +44,7 @@ module Master::Core::Execution
 
     private
 
-    def verify(observation, chain)
+    def verify(_observation, chain)
       # Integration with the state machine's verifier
       # For the skeleton, we trust the chain's internal verified state
       chain.verified? ? Master::Result.ok(true) : Master::Result.err("evidence not verified")

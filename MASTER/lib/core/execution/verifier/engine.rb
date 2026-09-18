@@ -33,13 +33,13 @@ module Master
 
           private
 
-          def verify_write(observation)
+          def verify_write(_observation)
             # Logic to check if the file actually exists and has the expected content
             # Use git diff or checksums.
             Master::Result.ok(truth: :verified)
           end
 
-          def verify_commit(observation)
+          def verify_commit(_observation)
             # Logic to check if HEAD has actually moved and the commit exists.
             Master::Result.ok(truth: :verified)
           end

@@ -22,16 +22,16 @@ module Master::Core::Execution
 
     # Generate a targeted exercise for the most failure-prone task.
     def generate_exercise
-      worst_task = @failure_stats.max_by { |_, stats|
+      worst_task = @failure_stats.max_by do |_, stats|
         stats[:fails].to_f / [stats[:total], 1].max
-      }&.first
+      end&.first
 
-      return nil unless worst_task
+      return unless worst_task
 
       {
         task: worst_task,
         type: :recovery_drill,
-        goal: "Targeted exercise for #{worst_task}: solve a known failure case."
+        goal: "Targeted exercise for #{worst_task}: solve a known failure case.",
       }
     end
   end

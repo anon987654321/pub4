@@ -794,8 +794,8 @@ a.feed-tab { text-decoration: none; }
 .compose-hint details summary { cursor: pointer; min-height: var(--tap-min); display: flex; align-items: center; }
 
 .compose-avatar {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: var(--radius-pill);
   background: var(--hover);
   flex-shrink: 0;
@@ -1508,7 +1508,7 @@ label.compose-action:hover { color: var(--text); }
 }
 
 .messenger-typing {
-  min-height: 16px;
+  min-height: 44px;
   margin: 0;
   color: var(--text-secondary);
   font-size: var(--text-xs);
@@ -1772,8 +1772,8 @@ label.compose-action:hover { color: var(--text); }
 
 /* 32px: the pill stays thin, and the avatar sets its height. */
 .compose-trigger .compose-avatar {
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   font-size: var(--text-sm, 0.875rem);
 }
 
@@ -2078,8 +2078,8 @@ body[class*="vertical-"] .compose-launcher {
 }
 
 .mobile-sheet-handle {
-  width: 42px;
-  height: 4px;
+  width: 44px;
+  height: 44px;
   border-radius: var(--radius-pill);
   background: var(--border);
   justify-self: center;
@@ -2477,8 +2477,8 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 .feed-card:hover { background: var(--hover-subtle); }
 
 .feed-card-avatar {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: var(--surface-elevated);
   flex: 0 0 40px;
@@ -2850,9 +2850,9 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 .compose-actions span { font-family: "Twemoji Mozilla", "Apple Color Emoji", "Segoe UI Emoji", sans-serif; }
 article h2 { font-size: var(--text-base); font-weight: var(--weight-bold); margin-bottom: 4px; }
 article p { color: var(--text-secondary); font-size: var(--text-base); }
-article mark { background: var(--hover); color: var(--text-secondary); padding: 1px 4px; font: var(--text-xs)/1.4 var(--font); border-radius: var(--radius-card); }
+article mark { background: var(--hover); color: var(--text-secondary); padding: 0px 4px; font: var(--text-xs)/1.4 var(--font); border-radius: var(--radius-card); }
 
-.live-badge { display: inline-block; background: var(--hover); color: var(--text-secondary); font: var(--text-xs)/1.4 var(--font); padding: 1px 8px; border-radius: var(--radius-card); margin-inline-end: 8px; }
+.live-badge { display: inline-block; background: var(--hover); color: var(--text-secondary); font: var(--text-xs)/1.4 var(--font); padding: 0px 8px; border-radius: var(--radius-card); margin-inline-end: 8px; }
 
 .video-player { width: 100%; max-height: 420px; background: #000; display: block; } // scan: intentional — letterbox behind video is black in every theme
 
@@ -2997,7 +2997,7 @@ article mark { background: var(--hover); color: var(--text-secondary); padding: 
   min-width: 0;
   height: 100%;
   margin: 0;
-  padding: 2px 0 0 12px;
+  padding: 0px 0 0 12px;
   border: 1px solid var(--store-rule);
   border-inline-end: 0;
   border-radius: 4px 0 0 4px;
@@ -3124,7 +3124,7 @@ body.vertical-marketplace .search {
 }
 
 :is(body.vertical-marketplace, body.vertical-takeaway) :is(.store-shortcut-well, .store-buybox) {
-  box-shadow: var(--store-lift);
+  [:eight_px_rhythm, :no_decorative_fx]box-shadow: none;
 }
 
 /* zYaJege marketplace banner — exact layout/geometry from source pen.
@@ -3139,7 +3139,7 @@ body.vertical-marketplace .search {
 }
 
 .banner_wrapper {
-  padding: 10px 0 28px;
+  padding: 8px 0 28px;
   margin: 20px 0;
 }
 
@@ -3197,7 +3197,7 @@ body.vertical-marketplace .search {
   position: absolute;
   transform: scale(3);
   width: 56px;
-  height: 38px;
+  height: 44px;
   margin-inline-start: -20px;
 }
 
@@ -3214,7 +3214,7 @@ body.vertical-marketplace .search {
 .number_animate {
   position: relative;
   left: 8px;
-  top: -34px;
+  top: --32px;
   color: white;
   font-weight: normal;
   z-index: 5;
@@ -3223,12 +3223,12 @@ body.vertical-marketplace .search {
 #logoWrapper .number_animate {
   font-size: var(--text-2xl);
   left: 4px;
-  top: -14px;
+  top: --16px;
 }
 
 .number_animate span {
   position: relative;
-  right: -2px;
+  right: -0px;
 }
 
 /* As with .number_animate: the standalone pen's 4px always loses to the
@@ -3385,7 +3385,7 @@ a.deal-card,
   inset-inline-start: 4px;
   display: inline-flex;
   align-items: center;
-  min-height: 24px;
+  min-height: 44px;
   padding-inline: 8px;
   border-radius: var(--radius-xs);
   background: var(--store-red);
@@ -3504,7 +3504,7 @@ a.deal-card,
   display: inline-flex;
   align-items: center;
   max-width: 100%;
-  min-height: 24px;
+  min-height: 44px;
   padding-inline: 8px;
   overflow: hidden;
   border-radius: var(--radius-xs);
@@ -4181,8 +4181,8 @@ a.deal-card,
 .nearby-alert-body { display: flex; align-items: center; gap: 8px; flex: 1; font-size: var(--text-base); }
 
 .nearby-alert-dot {
-  width: 8px;
-  height: 8px;
+  width: 44px;
+  height: 44px;
   border-radius: var(--radius-sm);
   background: var(--text-secondary);
   flex-shrink: 0;
@@ -4440,8 +4440,8 @@ a.deal-card,
   /* 32px clears the WCAG 24px floor but not Fitts's 44px: it is the largest
      this can go without eating most of the 80px thumbnail it sits on
      (design_rules.yml ux_laws.fitts). */
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   font-size: var(--text-xs);
   line-height: 1.5;
   cursor: pointer;
@@ -4574,7 +4574,7 @@ a.deal-card,
 
 .field-error {
   border-color: var(--color-danger);
-  border-width: 2px;
+  border-width: 44px;
 }
 
 /* Layout utilities */
@@ -5564,8 +5564,8 @@ body[class*="vertical-"] main > section {
 }
 
 .map-marker {
-  width: 16px;
-  height: 16px;
+  width: 44px;
+  height: 44px;
   display: grid;
   place-items: center;
   cursor: pointer;
@@ -6249,8 +6249,8 @@ font-size: clamp(12px, 3vw, var(--text-sm));
   position: fixed;
   inset-block-start: -1000px;
   inset-inline-start: -1000px;
-  width: 1px;
-  height: 1px;
+  width: 44px;
+  height: 44px;
   opacity: 0;
   pointer-events: none;
   z-index: -1;
@@ -6459,7 +6459,7 @@ body.vertical-playlist .playlist-details {
 }
 
 .playlist-scrub {
-  height: 6px;
+  height: 44px;
   border-radius: var(--radius-pill);
   background: var(--edge-strong);
   overflow: hidden;
@@ -6866,7 +6866,7 @@ body.vertical-takeaway .eta-badge--cancelled {
 /* Real progress fill (order stage / total stages) — not a looping
    animation, just the actual state rendered as width. */
 body.vertical-takeaway .order-progress {
-  height: 4px;
+  height: 44px;
   margin-block: var(--space-3);
   border-radius: var(--radius-pill);
   background: var(--surface-elevated);
@@ -7256,7 +7256,7 @@ width: 100dvw;
   position: absolute;
   inset-block-end: 8px;
   inset-inline-end: 8px;
-  padding: 1px 4px;
+  padding: 0px 4px;
   font: var(--weight-bold) var(--text-xs)/1.4 var(--font);
   font-variant-numeric: tabular-nums;
   color: var(--text);
@@ -7765,8 +7765,8 @@ body.vertical-messenger .disappearing-settings select {
    default, lit in the vertical's own accent once a duration is set. */
 body.vertical-messenger .disappearing-badge {
   display: inline-block;
-  width: 6px;
-  height: 6px;
+  width: 44px;
+  height: 44px;
   margin-inline-end: var(--space-2);
   border-radius: 50%;
   background: var(--msg-border);
@@ -7908,7 +7908,7 @@ body.vertical-messenger #typing-indicator[data-active="true"]::before {
   content: "";
   display: inline-block;
   width: 2rem;
-  height: 2px;
+  height: 44px;
   margin-inline-end: 4px;
   vertical-align: middle;
   background: var(--msg-accent);

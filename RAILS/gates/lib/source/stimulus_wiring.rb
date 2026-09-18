@@ -52,7 +52,7 @@ module Deploy
     UNMOUNTED_ALLOWED = {
       # @stimulus-components/reveal. Its one element is in shared/frontend/examples,
       # a snippet library nothing renders.
-      "reveal" => "stimulus_boot.js component table entry with no rendered element"
+      "reveal" => "stimulus_boot.js component table entry with no rendered element",
     }.freeze
 
     # An app controller whose identifier stimulus_boot.js also registers never
@@ -63,7 +63,7 @@ module Deploy
     SHADOWED_ALLOWED = {
       # brgen's subclass turns on lightGallery's download, counter and print
       # controls. Loading it changes what the gallery shows: the operator's call.
-      "lightbox" => "brgen/app/javascript/controllers/lightbox_controller.js"
+      "lightbox" => "brgen/app/javascript/controllers/lightbox_controller.js",
     }.freeze
 
     # Every way this tree puts an identifier on an element: ERB attributes,

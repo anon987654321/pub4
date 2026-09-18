@@ -23,12 +23,12 @@ module Master::Core::Execution
     def record(role:, intent:, effect:, observation:, evidence: nil)
       entry = Entry.new(
         id: SecureRandom.hex(4),
-        role: role,
-        intent: intent,
-        effect: effect,
-        observation: observation,
-        evidence: evidence,
-        timestamp: Time.now
+        role:,
+        intent:,
+        effect:,
+        observation:,
+        evidence:,
+        timestamp: Time.now,
       )
       @entries << entry
       entry
@@ -41,7 +41,7 @@ module Master::Core::Execution
 
     # Verifies if the trace contains a continuous chain of evidence
     # for a specific goal.
-    def verified_chain?(goal)
+    def verified_chain?(_goal)
       return false if @entries.empty?
       @entries.all? { |e| e.evidence&.verified? }
     end

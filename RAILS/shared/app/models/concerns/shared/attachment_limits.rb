@@ -39,7 +39,7 @@ module Shared
     NAMED_KINDS = {
       "audio" => :audio, "audio_file" => :audio,
       "video" => :video, "video_file" => :video,
-      "media" => :mixed, "attachment" => :mixed, "render" => :mixed
+      "media" => :mixed, "attachment" => :mixed, "render" => :mixed,
     }.freeze
 
     included do

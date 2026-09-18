@@ -76,7 +76,6 @@ private
 # measure the same surface as the parent.
 def surfaces = self.class::SURFACES
 
-
     def unavailable
       @result.inconclusive!("webgl_surfaces: no Chrome, so no WebGL surface was measured")
       @result

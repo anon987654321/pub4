@@ -69,7 +69,7 @@ module Master
             intent: @goal,
             effect: chain.action,
             observation: verification.message,
-            evidence: chain
+            evidence: chain,
           )
           @episode.record_trace_entry(entry)
         end
@@ -80,7 +80,7 @@ module Master
 
         def run_current_state
           state_class = Master::Core::Execution::States.const_get(
-            @current_state.to_s.capitalize
+            @current_state.to_s.capitalize,
           )
           state_class.new(@goal, @container).call
         end
@@ -89,7 +89,7 @@ module Master
           # Only verify chains that are evidence; snapshots are observations
           chains = @evidence_ledger.select { |e| e.respond_to?(:verified?) }
           return false if chains.empty?
-          chains.all? { |chain| chain.verified? }
+          chains.all?(&:verified?)
         end
       end
     end

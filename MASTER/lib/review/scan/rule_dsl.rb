@@ -51,11 +51,10 @@ module Master
               instance_exec(code, path:, &self.class.dsl_block) || []
             end
           end
-          dsl_rule_attrs(cls, block: block, langs: applies_to, autofix: autofix, fires: fires, does_not_fire: does_not_fire, example_path: example_path, detect_semantic: detect_semantic, detect_structural: detect_structural)
+          dsl_rule_attrs(cls, block:, langs: applies_to, autofix:, fires:, does_not_fire:, example_path:, detect_semantic:, detect_structural:)
           cls.class_eval { class << self; attr_reader :dsl_block, :dsl_langs, :dsl_autofix, :dsl_fires, :dsl_does_not_fire, :dsl_example_path, :dsl_detect_semantic, :dsl_detect_structural; end }
           cls
         end
-
 
         def self.dsl_rule_attrs(cls, attrs)
           attrs.each { |k, v| cls.instance_variable_set("@dsl_#{k}", v) }

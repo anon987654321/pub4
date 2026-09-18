@@ -300,7 +300,6 @@ module Master
             out
           end
 
-
         end
       end
     end

@@ -121,7 +121,6 @@ class SavedSearchAlertJobTest < ActiveJob::TestCase
   # Create-time alerts are per-event, so a new listing that already notified
   # leaves the deal inside the interval. That is the interval test, not this one.
 
-
   test "nothing matching leaves the watermark alone" do
     search = saved_search(query: "kajakk")
     listing(title: "Terrengsykkel til salgs", description: "Pent brukt")

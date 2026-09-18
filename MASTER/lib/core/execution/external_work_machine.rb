@@ -40,24 +40,24 @@ module Master::Core::Execution
 
     private
 
-    def preflight(operation, params)
+    def preflight(_operation, _params)
       # Check if required tools/env are present
       # Implementation depends on the operation
       true
     end
 
-    def authenticate(operation)
+    def authenticate(_operation)
       # Resolve credentials from container/vault
       true
     end
 
-    def execute(operation, params)
+    def execute(operation, _params)
       # The actual external call (e.g., via Io::Exec or an API client)
       # For now, we return a success result
       Master::Result.ok("executed #{operation}")
     end
 
-    def verify(operation, result)
+    def verify(_operation, _result)
       # Verify the side-effect of the execution
       Master::Result.ok(true)
     end

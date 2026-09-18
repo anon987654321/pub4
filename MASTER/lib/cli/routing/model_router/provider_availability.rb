@@ -200,7 +200,7 @@ def fetch_ollama_tags
                                                  read_timeout: OLLAMA_TAGS_TIMEOUT_S) do |http|
     http.get(uri.request_uri)
   end
-  return nil unless response.is_a?(Net::HTTPSuccess)
+  return unless response.is_a?(Net::HTTPSuccess)
 
   rows = Array(JSON.parse(response.body.to_s)["models"])
   @ollama_sizes = rows.to_h { |row| [row["name"].to_s, row["size"].to_i] }

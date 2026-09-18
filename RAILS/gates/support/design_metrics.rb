@@ -65,7 +65,7 @@ module Deploy
     def light_only_vertical_keys(rails_root)
       globs = %w[
         {shared,brgen,amber,bsdports}/app/assets/stylesheets/**/*.scss
-        brgen/engines/*/app/assets/stylesheets/*.scss
+        brgen/engines/*/app/assets/stylesheets/*.scss,
       ]
       light_only = {}
       globs.each do |pattern|

@@ -14,8 +14,8 @@ module Master
       # a line. These passes compare whole lines, loosest last, and a pass that
       # finds more than one window refuses rather than choosing.
       TOLERANT_PASSES = {
-        rstrip: ->(line) { line.rstrip },
-        strip: ->(line) { line.strip },
+        rstrip: lambda(&:rstrip),
+        strip: lambda(&:strip),
         punctuation: ->(line) { line.strip.tr("\u2018\u2019\u201C\u201D\u2013\u2014\u00A0", "''\"\"-- ").squeeze(" ") },
       }.freeze
 

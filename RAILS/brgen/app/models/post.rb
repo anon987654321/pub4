@@ -222,7 +222,6 @@ class Post < ApplicationRecord
     Rails.logger.warn("broadcast_to_city_feed #{id}: #{e.class}: #{e.message}")
   end
 
-
   def federatable_post?
     community_id.nil? && !anonymous? && !live? && strict_safe(:user)&.federated?
   end

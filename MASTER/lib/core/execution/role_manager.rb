@@ -21,7 +21,7 @@ module Master::Core::Execution
       return @overrides[role] if @overrides.key?(role)
 
       task_type = Roles::ROLE_TASK_MAP[role]
-      return @router.preferred(task_type: task_type) if task_type
+      return @router.preferred(task_type:) if task_type
 
       @router.preferred
     end

@@ -173,7 +173,7 @@ module Master
         # line still too long with the marker removed is still too long.
         #
         # The marker can share its comment with other machine directives —
-        # `# rubocop:disable Lint/RescueException -- scan: intentional` is one
+        # `-- scan: intentional` is one
         # comment carrying two instructions — so the exemption is the whole
         # comment the marker sits in, found by walking back from the marker to
         # whichever opener began it. Walking back rather than matching forward

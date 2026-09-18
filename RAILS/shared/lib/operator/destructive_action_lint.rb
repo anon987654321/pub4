@@ -31,7 +31,7 @@ module Operator
 
     VIEW_GLOBS = [
       "{amber,brgen,bsdports,shared}/app/views/**/*.erb",
-      "brgen/engines/*/app/views/**/*.erb"
+      "brgen/engines/*/app/views/**/*.erb",
     ].freeze
 
     DESTRUCTIVE = /method:\s*:delete|turbo_method:\s*:delete|data-turbo-method=["']delete["']/

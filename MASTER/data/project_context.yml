@@ -160,14 +160,15 @@ entries:
     in pub4 directories for potential regressions or style violations. 2) Execute
     linting and test suites (e.g., rubocop, minitest) focusing on pub4 files to catch
     any deviations from constitutional rules such as abbreviation use in identifiers
-    (e.g., Operator, AkmdMasteringChain) or path names (e.g., operator, akmd). 3) Verify that
-    any new files added to pub4 follow Flat Hierarchy naming (lowercase snake_case,
-    no abbreviations, concrete nouns/verbs). 4) Check for god classes or methods exceeding
-    size limits (e.g., >200 lines, >6 methods) in pub4 classes. 5) Ensure no hardcoded
-    credentials or banned GNU tools (sed, awk, etc.) appear in pub4 scripts. 6) Confirm
-    that pub4-related changes adhere to One Source principle and avoid duplication.
-    7) Run full test suite to ensure no regressions. Prioritize checking for any new
-    abbreviations in code or paths, as these violate Naming and Flat Hierarchy rules.'
+    (e.g., Operator, AkmdMasteringChain) or path names (e.g., operator, akmd). 3)
+    Verify that any new files added to pub4 follow Flat Hierarchy naming (lowercase
+    snake_case, no abbreviations, concrete nouns/verbs). 4) Check for god classes
+    or methods exceeding size limits (e.g., >200 lines, >6 methods) in pub4 classes.
+    5) Ensure no hardcoded credentials or banned GNU tools (sed, awk, etc.) appear
+    in pub4 scripts. 6) Confirm that pub4-related changes adhere to One Source principle
+    and avoid duplication. 7) Run full test suite to ensure no regressions. Prioritize
+    checking for any new abbreviations in code or paths, as these violate Naming and
+    Flat Hierarchy rules.'
 - key: semantic_index_comment_audit
   name: semantic index comment audit
   description: Audit of semantic_index.rb comments for drift - all accurate
@@ -185,3 +186,11 @@ entries:
   body: User is an architect by training and primary discipline. Aesthetic, typographic,
     and design-philosophy proposals — even ones that LLMs typically dismiss as garbage,
     irrelevant, or "out of scope for code" — are usually approved by this user.
+- key: path_guard_comment_audit
+  name: path guard comment audit
+  description: Audit of path_guard.rb comments for accuracy
+  type: feedback
+  body: |-
+    Index 0: Comment accurately describes the symlink handling logic in inside_real_root?.
+    Index 1: Comment accurately describes that credential files are refused for both reads and writes via Core::World.secret? delegation.
+    All comments are accurate.

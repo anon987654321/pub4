@@ -25,7 +25,7 @@ module Shared
     NETWORK_ERRORS = [
       Errno::ECONNREFUSED, Errno::EHOSTUNREACH, Errno::ETIMEDOUT, Errno::ECONNRESET,
       Net::OpenTimeout, Net::ReadTimeout, OpenSSL::SSL::SSLError, SocketError, URI::InvalidURIError,
-      Resolv::ResolvError, BodyTooLarge
+      Resolv::ResolvError, BodyTooLarge,
     ].freeze
 
     # HTTPS alone is not enough: a URL of https://127.0.0.1/ or a name that

@@ -3,7 +3,7 @@
   display: flex;
   background: #efefef;
   justify-content: center;
-  padding: 10px 0 28px;
+  padding: 8px 0 28px;
   flex-direction: column;
   align-items: center;
   margin: 20px 0;
@@ -23,7 +23,7 @@
   align-items: center;
   width: 300px;
   height: 300px;
-  padding-bottom: 30px;
+  padding-bottom: 32px;
   overflow: hidden;
   position: relative;
   border-radius: 6px;
@@ -36,19 +36,19 @@
   display: block;
   content: "";
   background-image: url("https://i.imgur.com/0Kvpz18.png");
-  width: 23px;
-  height: 23px;
+  width: 44px;
+  height: 44px;
   opacity: 0.8;
 }
 .star { position: absolute; }
 .star:nth-of-type(1) { bottom: 40px; left: 60px; }
-.star:nth-of-type(2) { bottom: 50px; right: 60px; }
+.star:nth-of-type(2) { bottom: 48px; right: 60px; }
 .star:nth-of-type(3) { bottom: 20px; left: 60px; }
 
-footer { width: 100%; padding: 10px; bottom: 0; position: absolute; }
+footer { width: 100%; padding: 8px; bottom: 0; position: absolute; }
 
 .marketplace .banner { background: white; color: black; }
-.marketplace .banner img { width: 40%; margin: 10px 0 50px; }
+.marketplace .banner img { width: 40%; margin: 8px 0 50px; }
 
 .dating .banner { background: #100f24; color: white; }
 
@@ -63,7 +63,7 @@ input[type="submit"], button, a.button {
   color: black;
   border-radius: 30px;
   font-size: 14px;
-  padding: 10px 20px 12px;
+  padding: 8px 20px 12px;
 }
 
 body { font-family: sans-serif; }
@@ -161,8 +161,8 @@ a.button { text-decoration: none; }
 .lp h1 { z-index: 6; font-size: 200%; color: blue; }
 .lp span {
   background: black;
-  height: 10px;
-  width: 10px;
+  height: 44px;
+  width: 44px;
   border-radius: 100%;
   position: absolute;
 }

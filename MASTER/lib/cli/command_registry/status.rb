@@ -30,7 +30,7 @@ module Master
           failures: failure_events(root, 3),
           stage: last_event(root, "pipeline:stage_complete")&.dig("payload", "stage"),
           verdict: format_verdict(last_event(root, "review:verdict")),
-          config: (Master::Ground::Config.new(root) rescue {}),
+          config: (Master::Ground::Config.new(root) rescue {})
         }
       end
 

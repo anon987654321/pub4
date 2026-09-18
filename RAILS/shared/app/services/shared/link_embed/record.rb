@@ -59,7 +59,7 @@ module Shared
           "provider" => match.provider.key, "media_id" => match.media_id,
           "source_url" => match.source_url, "canonical_url" => match.canonical_url,
           "status" => status, "title" => title, "author_name" => author_name,
-          "thumbnail_url" => thumbnail_url, "fetched_at" => fetched_at
+          "thumbnail_url" => thumbnail_url, "fetched_at" => fetched_at,
         }.compact
       end
     end

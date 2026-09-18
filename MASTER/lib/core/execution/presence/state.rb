@@ -18,7 +18,7 @@ module Master
             @severity = severity
             @focus = focus
             @grammar = grammar || Grammar.for_phase(phase)
-            @field = field || SemanticField.derive(phase, focus, progress: progress, risk: risk)
+            @field = field || SemanticField.derive(phase, focus, progress:, risk:)
           end
 
           # A new State, never a mutated one. Grammar follows a changed phase or
@@ -52,7 +52,7 @@ module Master
               severity: @severity,
               focus: @focus,
               grammar: @grammar,
-              field: @field
+              field: @field,
             }
           end
         end

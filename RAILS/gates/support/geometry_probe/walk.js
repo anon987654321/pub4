@@ -101,11 +101,11 @@
     return cls.length ? '.' + cls.join('.') : '';
   };
   const selFor = (el) => {
-    if (el.id) return '#' + el.id;
+    if (el.id) return `#${el.id}`;
     const parts = [];
     let node = el, depth = 0;
     while (node?.nodeType === 1 && depth < 4) {
-      if (node.id) { parts.unshift('#' + node.id); break; }
+      if (node.id) { parts.unshift(`#${node.id}`); break; }
       parts.unshift(node.tagName.toLowerCase() + classSig(node));
       node = node.parentElement; depth++;
     }

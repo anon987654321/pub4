@@ -23,7 +23,7 @@ module Master
 
       def safe_read_line(prompt = "")
         line = Reline.readline(prompt, false)
-        return nil if line.nil?
+        return if line.nil?
 
         line = [line, *pasted_lines].join("\n")
         clean = line.gsub(TERMINAL_REPLY, "").chomp

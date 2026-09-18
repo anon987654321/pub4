@@ -241,7 +241,6 @@ expires_in: cache_ttl_for(:search_results)) do
         []
       end
 
-
       # EPI helpers for tracked surfaces (appended by views / Link Converter).
       def epi_for(**parts) = Shared::LinkConverter.epi_for(**parts)
 

@@ -111,8 +111,8 @@ COLOUR = <<~'JS'
     if (kind === 'cmd' || kind === 'cmd2') {
       const m = text.match(/^(\S+)\s+(.*)$/);
       const head = m ? m[1] : text, rest = m ? m[2] : '';
-      return '<span class="sigil">$ </span><span class="cmd">' + esc(head) + '</span> ' +
-             '<span class="host">' + esc(rest) + '</span>';
+      return '<span class="host">dev@brgen.no</span><span class="sigil">% </span>' +
+             '<span class="cmd">' + esc(head) + (rest ? (' ' + esc(rest)) : '') + '</span>';
     }
     if (kind === 'motd') return '<span class="motd">' + esc(text) + '</span>';
     if (kind === 'boot') {

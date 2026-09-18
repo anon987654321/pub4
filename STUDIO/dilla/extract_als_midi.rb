@@ -49,8 +49,12 @@ def extract(als)
   tempo = xml[%r{<Tempo>.*?<Manual Value="([0-9.]+)" }m, 1].to_f
   tempo = 120.0 if tempo < 20 || tempo > 300
   notes = []
-  xml.scan(%r{<KeyTrack Id="(\d+)">(.*?)</KeyTrack>}m) do |pitch, body|
-    p = pitch.to_i
+  xml.scan(%r{<KeyTrack Id="\d+">(.*?)</KeyTrack>}m) do |*caps|
+    body = caps.flatten.first.to_s
+    key = body[%r{<MidiKey Value="(\d+)" />}, 1]
+    next unless key
+
+    p = key.to_i
     next if p.negative? || p > 127
 
     body.scan(/<MidiNoteEvent Time="([^"]+)" Duration="([^"]+)" Velocity="([^"]+)"/) do |t, d, v|

@@ -76,14 +76,14 @@ module Master
           [
             "preserve dmesg style",
             "no new dependencies",
-            "Ruby only"
+            "Ruby only",
           ]
         end
 
         def compile_contract(phase)
           {
-            phase: phase,
-            required: phase == :implement ? [:patch, :tests] : [:analysis, :plan]
+            phase:,
+            required: phase == :implement ? [:patch, :tests] : [:analysis, :plan],
           }
         end
       end

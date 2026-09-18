@@ -69,45 +69,11 @@
       <span class="visually-hidden"><%= t("home.show_new_posts") %></span>
     <% end %>
   </p>
-  <%# Hot / New / Following / Communities order this feed, so they sit with it.
-      They spent a while on the nav swiper, which was right about the second
-      horizontal row being wrong and wrong about where they belonged: the swiper
-      is how you leave brgen — eight verticals, each its own host — and the tab
-      bar is how you move within it. An ordering is neither, and putting it on
-      the wayfinding bar meant root had two controls for "go to the front page".
-
-      `chips` rather than a tab row, and that is the part that keeps the earlier
-      decision intact: four links that wrap is not a second horizontal scroller.
-      communities/show uses the same control for the same job, so this invents
-      no layout.
-
-      Signed-in only, matching what the swiper group did — guest root carries no
-      feed controls. %>
-  <% if authenticated? %>
-    <%# Fresh is the default, so it is the bare root path and Hot carries the
-        parameter. `latest` still lands on fresh because it still means fresh. %>
-    <% fresh = params[:feed].blank? && params[:sort].to_s != "hot" %>
-    <% ranked = params[:feed].blank? && params[:sort] == "hot" %>
-    <nav class="chips" aria-label="<%= t("home.feed_sort", default: "Feed") %>">
-      <%= link_to t("home.feed_latest"), root_path,
-            class: "chip#{" active" if fresh}",
-            "aria-current": ("page" if fresh) %>
-      <%= link_to t("home.feed_hot", default: "Hot"), root_path(sort: "hot"),
-            class: "chip#{" active" if ranked}",
-            "aria-current": ("page" if ranked) %>
-      <%# Following and Communities travel with the orderings: they are which
-          posts, where Hot and New are which order, and a reader picks one of
-          the four. Left behind, feed=following and feed=communities would be
-          implemented in the controller and reachable only by typing the query
-          string. %>
-      <%= link_to t("home.feed_following"), root_path(feed: "following"),
-            class: "chip#{" active" if params[:feed] == "following"}",
-            "aria-current": ("page" if params[:feed] == "following") %>
-      <%= link_to t("home.feed_communities"), root_path(feed: "communities"),
-            class: "chip#{" active" if params[:feed] == "communities"}",
-            "aria-current": ("page" if params[:feed] == "communities") %>
-    </nav>
-  <% end %>
+  <%# No feed-ordering chips on the front page — operator decision 2026-09-17.
+      Nytt / Hot / Følger / Fellesskap is a which-posts decision, and on root it
+      sat above the thing it ordered. communities/show keeps its chips for the
+      same job; root opens straight into the feed, and feed=following and
+      feed=communities are still reachable by query string. %>
   <% if home_feed_following? && !authenticated? %>
     <p class="feed-hint"><%= link_to t("home.follow_sign_in"), new_session_path %><%= t("home.follow_hint") %></p>
   <% end %>

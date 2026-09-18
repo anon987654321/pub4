@@ -29,9 +29,9 @@ module Master
               complexity: complexity_for(phase, target),
               direction: direction_for(phase),
               uncertainty: uncertainty_for(phase),
-              risk: risk,
-              progress: progress,
-              scale: :medium # Default, can be overridden by client profile,
+              risk:,
+              progress:,
+              scale: :medium, # Default, can be overridden by client profile,
             }
           end
 

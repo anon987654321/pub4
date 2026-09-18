@@ -75,7 +75,7 @@ export default class extends Controller {
 
     this.element.classList.remove("open")
     this.release()
-    if (this.returnFocus && this.returnFocus.focus) this.returnFocus.focus()
+    if (this.returnFocus?.focus) this.returnFocus.focus()
     this.returnFocus = null
   }
 

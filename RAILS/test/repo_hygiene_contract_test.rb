@@ -177,5 +177,4 @@ class RepoHygieneContractTest < Minitest::Test
     output.lines.map(&:chomp).reject(&:empty?).sort
   end
 
-
 end

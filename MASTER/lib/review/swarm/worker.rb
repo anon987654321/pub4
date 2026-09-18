@@ -77,7 +77,7 @@ module Master
         # the same way for the same reason.
         def json_object(raw)
           match = raw.to_s.match(/\{.*\}/m)
-          return nil unless match
+          return unless match
 
           parsed = JSON.parse(match.to_s)
           parsed.is_a?(Hash) ? parsed : nil

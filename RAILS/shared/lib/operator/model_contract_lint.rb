@@ -36,7 +36,7 @@ module Operator
 
     MODEL_GLOBS = [
       "{amber,brgen,bsdports,shared}/app/models/**/*.rb",
-      "brgen/engines/*/app/models/**/*.rb"
+      "brgen/engines/*/app/models/**/*.rb",
     ].freeze
 
     ASSOCIATION = /^\s*(has_many|has_one|belongs_to)\s+:(\w+)([^\n]*)$/
