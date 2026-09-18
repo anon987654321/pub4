@@ -76,6 +76,18 @@ laws:
         url: "https://www.gutenberg.org/ebooks/37134"
       - name: "Signal-to-Noise Ratio in Code"
         url: "https://ar5iv.labs.arxiv.org/html/2310.19102"
+  RENDERED_VALUES:
+    priority: 7
+    principle: Rendered values are operator-owned.
+    applies_to:
+    - aesthetics
+    - colors
+    - fonts
+    - sound_parameters
+    - layout_constants
+    research:
+      - name: "Operator Sovereignty over Aesthetics"
+        url: "internal:operator_decision_log"
 engineering_fit:
   classify: 'For every problem, decide: under-engineered, over-engineered, or perfectly
     engineered — and say why.'
@@ -93,6 +105,11 @@ conduct:
     principle: self_apply
     mandate: "Systematically interrogate every project rule/law. Accuse self of violation, propose multiple remediations, cherry-pick the robust solution, and commit. No filler."
     trigger: "significant_change, architectural_shift, or explicit request"
+  NO_FILLER:
+    priority: 2
+    principle: anti_simulation
+    mandate: "Conversational filler ('Got it', 'Sure', 'I will now...') is simulation noise. Lead immediately with the action or the result."
+    trigger: "every_reply"
 beauty:
   typography_bringhurst:
   - choose_appropriate_typeface_for_function
