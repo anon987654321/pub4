@@ -35,10 +35,10 @@ module Master
 
   RuleDSL.rule :NO_PUTS,
     severity: :warning, tags: %i[CLEAN_CODE], applies_to: %i[ruby],
-    fires: "  puts(\"ready\")\n",
+    fires: "  puts(\"ready\")\\n",
     # A local named p is not Kernel#p: assignment, a method call on it, and a
     # bare p (which prints nothing) all stay quiet.
-    does_not_fire: "  @bus.publish(\"ready\")\n  p = point\n  p.x\n  p == q\n  p\n",
+    does_not_fire: "  @bus.publish(\"ready\")\\n  p = point\\n  p.x\\n  p == q\\n  p\\n",
     description: "no puts, p or pp in library code" do |src, path:|
     # The REPL prints for a living, so the path it lives at is exempt. This
     # exemption carries the whole of lib/cli/session/ -- 100 deliberate puts --
@@ -60,9 +60,20 @@ module Master
     # guard, a rake task, a seed file or a test — where `puts "ok: synced"` is
     # the line the operator reads and a logger would hide it.
     next [] if src.start_with?("#!") || src.match?(PROGRAM_GUARD) || path.to_s.match?(PROGRAM_PATH)
-    # Parenthesised or not: puts("x") prints exactly as puts "x" does.
-    scan_lines(src, /^\s*(?:puts\s*$|(?:puts|pp?)(?:\(|[ \t]+["':@$A-Za-z0-9_\[({%]))/,
-               message: "puts/p/pp — use event bus or logger")
+    
+    parsed = Prism.parse(src)
+    next [] if parsed.failure?
+    
+    findings = []
+    walk(parsed.value) do |node|
+      if node.is_a?(Prism::CallNode) && node.name.to_s.match?(/^(puts|p|pp)$/)
+        # Ensure it's a top-level call (no receiver) to avoid matching @bus.publish or similar
+        if node.receiver.nil?
+          findings << finding(line: node.location.start_line, message: "debug output: #{node.name} — use event bus or logger")
+        end
+      end
+    end
+    findings
   end
 
   RuleDSL.rule :FROZEN_LITERAL,
@@ -129,17 +140,32 @@ module Master
     # A rule's worked example is the one place its own forbidden shape is
     # legitimately spelled, and FAIL_VISIBLY reads this file like any other. The
     # marker has to sit on the matching line, not above it.
-    fires: "rescue Exception => e\n", # scan: intentional
+    fires: "rescue Exception => e\\n", # scan: intentional
     # A comment naming the shape is prose about it. The paragraph below
     # explaining which rescue each rule owns was a finding against itself, and
     # this line spells the shape twice, so it carries the marker the way the
     # positive example above does.
-    does_not_fire: "# rescue Exception belongs to this rule\nrescue StandardError => e\n", # scan: intentional
+    does_not_fire: "# rescue Exception belongs to this rule\\nrescue StandardError => e\\n", # scan: intentional
     description: "rescue StandardError not Exception" do |src, path:|
     # Comment lines blanked, not the directory skipped: a real `rescue
     # Exception` in a scanner rule is worth catching, and SILENT_RESCUE's note
     # below says why this population carries no path exemption.
-    scan_lines(without_comment_lines(src), /rescue\s+Exception\b/, message: "catches signals — use StandardError")
+    parsed = Prism.parse(src)
+    next [] if parsed.failure?
+    
+    findings = []
+    walk(parsed.value) do |node|
+      if node.is_a?(Prism::RescueNode)
+        # Prism::RescueNode usually has a list of handled exceptions.
+        # We check if any of the handled exceptions are 'Exception'.
+        # Note: a bare 'rescue' usually handles StandardError.
+        handled = node.handled_exceptions
+        if handled && handled.any? { |ex| ex.slice.to_s == "Exception" }
+          findings << finding(line: node.location.start_line, message: "catches signals — use StandardError")
+        end
+      end
+    end
+    findings
   end
 
   RuleDSL.rule :SILENT_RESCUE,
