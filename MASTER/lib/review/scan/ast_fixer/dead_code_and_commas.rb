@@ -154,6 +154,29 @@ module Master
             lines.join
           end
 
+          def fix_hash_fetch(src)
+            # Transition: hash[:key] || default -> hash.fetch(:key, default)
+            # This is a structural rewrite. We use a regex here because modifying 
+            # a string while preserving layout is easier with groups than with
+            # a full AST reconstruction for a simple token swap.
+            #
+            # Pattern: variable[:symbol] || default
+            # Group 1: Variable/receiver
+            # Group 2: Symbol key
+            # Group 3: Default value
+            
+            out = src.gsub(/([a-z_]\w*(?:\[[^\]]*\])?)\s*\[:([a-z_]\w*)\]\s*\|\|\s*([^#\n]+?)(?=\s*[\n,;]|$)/) do |match|
+              receiver, key, default = $1, $2, $3
+              # Guard against common false positives: memoization (||=) or dual-key fallback
+              next match if default.start_with?(" #{receiver}") || default.include?("#{receiver}[:")
+              
+              "#{receiver}.fetch(:#{key}, #{default})"
+            end
+            
+            @transforms << :fix_hash_fetch if out != src
+            out
+          end
+
           def block_close?(lines, close_index)
             depth = 0
             close_index.downto(0) do |index|

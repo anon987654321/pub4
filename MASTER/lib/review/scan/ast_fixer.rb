@@ -28,7 +28,7 @@ module Master
         Result = Struct.new(:path, :changed, :transforms, :content, keyword_init: true)
         Strategy = Struct.new(:predicate, :transforms, keyword_init: true)
         STRATEGIES = [
-          Strategy.new(predicate: :ruby?, transforms: %i[add_frozen_header fix_bare_rescue freeze_mutable_constants remove_immediate_dead_code add_trailing_commas]),
+          Strategy.new(predicate: :ruby?, transforms: %i[add_frozen_header fix_bare_rescue freeze_mutable_constants remove_immediate_dead_code add_trailing_commas fix_hash_fetch]),
           Strategy.new(predicate: :sql_context?, transforms: %i[normalise_null_comparison]),
           Strategy.new(predicate: :shell?, transforms: %i[add_strict_mode]),
           Strategy.new(predicate: :html?, transforms: %i[add_html_lang add_meta_charset add_viewport_fit add_skip_to_main add_lazy_loading]),
