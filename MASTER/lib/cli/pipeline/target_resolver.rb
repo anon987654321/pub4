@@ -2,7 +2,7 @@
 
 module Master
   module CLI
-    module Pipeline
+    class Pipeline
       module TargetResolver
         def resolve_target(raw)
           text = raw.to_s.strip

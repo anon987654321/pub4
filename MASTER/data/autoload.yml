@@ -32,7 +32,6 @@ autoload:
     - cli/command_registry/model.rb
     - cli/command_registry/review.rb
     - cli/command_registry/rules.rb
-    - cli/command_registry/scan.rb
     - cli/command_registry/status.rb
     - cli/command_registry/workspace.rb
     # Master::Review::Scan::Rules -- each file is RuleDSL.rule calls into the

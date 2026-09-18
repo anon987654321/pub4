@@ -42,8 +42,8 @@ module Master
         #
         # Only `module`, and only when its body is exactly one module or class.
         # A module holding a constant, a method, or two children is doing work
-        # and counts. A `class` wrapping a class is a design choice nothing
-        # forced, and counts too.
+        # and counts. A `class` wrapping exactly one module or class is
+        # Zeitwerk ceremony: the path already implies the wrapper.
         def namespace_lines(source)
           require "prism"
           result = Prism.parse(source.to_s)
@@ -61,9 +61,10 @@ module Master
 
         # Two lines: the `module` and its `end`.
         def pure_namespace?(node)
-          return false unless node.is_a?(Prism::ModuleNode)
+          # A class wrapper is also pure ceremony when it has one child.
+          return false unless node.is_a?(Prism::ModuleNode) || node.is_a?(Prism::ClassNode)
 
-          statements = node.body
+          statements = node.body || node
           return false unless statements.is_a?(Prism::StatementsNode)
           return false unless statements.body.size == 1
 

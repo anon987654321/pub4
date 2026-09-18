@@ -6,13 +6,10 @@ require_relative "target_resolver"
 
 module Master
   module CLI
-    module Pipeline
+    class Pipeline
       class Pass
         include TargetResolver
-        # Result is defined in pass_result.rb
-        # 
-        # Reduction: extracted Result and helper methods to reduce line count.
-
+        # PassResult defines this pass's Result and keeps this file small.
 
         def initialize(scanner:, fix_loop:, root:, deliberation: nil, bus: nil, review_crew: nil, swarm: nil)
           @failed_stages = []
@@ -51,6 +48,8 @@ module Master
         # half stays with the ladder, which already reaches the deploy host's
         # browser.
         STAGES = %w[fix critique map].freeze
+        # A NameError or TypeError is a MASTER defect, not a target finding; formatting it into the report hid live crashes.
+        DEFECT_ERRORS = [NameError, TypeError].freeze
         STAGE_ALIASES = { "converge" => "fix", "council" => "critique" }.freeze
 
         def call(target: nil, apply: nil, critique: nil, aesthetic: true, only: nil)
