@@ -22,8 +22,10 @@ module Master
       # /fix, and it owns the repair.
       def dispatch_review(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, review_crew: nil, swarm: nil, **_legacy)
         apply, critique, aesthetic, only, target = parse_pass_flags(arg_for(ctx).to_s.strip)
-        run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, review_crew:, swarm: },
-                 target:, apply: apply || false, critique:, aesthetic:, only: only || "critique,map")
+        
+        run_pass({ 
+          scanner:, fix_loop:, root:, deliberation:, bus:, review_crew:, swarm: 
+        }, target:, apply: apply || false, critique:, aesthetic:, only: only || "critique,map")
       end
 
       # /fix — the convergence lifecycle, and the only operation that writes.
@@ -33,8 +35,10 @@ module Master
       # stops after the reading and says what it would take on.
       def dispatch_fix(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, review_crew: nil, swarm: nil, **_legacy)
         apply, _critique, aesthetic, _only, target = parse_pass_flags(arg_for(ctx).to_s.strip)
-        run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, review_crew:, swarm: },
-                 target:, apply: apply.nil? || apply, critique: false, aesthetic:, only: "fix")
+        
+        run_pass({ 
+          scanner:, fix_loop:, root:, deliberation:, bus:, review_crew:, swarm: 
+        }, target:, apply: apply.nil? || apply, critique: false, aesthetic:, only: "fix")
       end
 
       def run_pass(deps, **call_args)
@@ -56,7 +60,7 @@ module Master
         "--apply" => [:apply, true], "apply" => [:apply, true], "fix" => [:apply, true],
         "--no-critique" => [:critique, false], "no-critique" => [:critique, false],
         "--critique" => [:critique, true], "critique" => [:critique, true],
-        "--no-aesthetic" => [:aesthetic, false], "no-aesthetic" => [:aesthetic, false],
+        "--no-aesthetic" => [:aesthetic, false], "no-aesthetic" => [:aesthetic, false]
       }.freeze
 
       # A bare `--only` captures nothing and leaves the stage unset, which is what
