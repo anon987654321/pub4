@@ -142,6 +142,11 @@ model_defs:
     id: google/gemma-2-27b-it
     <<: *model_defaults
     score: { quality: 0.82, speed: 0.78, cost: 0.92 }
+  gemma_4_31b: &gemma_4_31b
+    id: ollama:gemma4:31b-cloud
+    <<: *model_defaults
+    context_window: 128000
+    score: { quality: 0.94, speed: 0.82, cost: 1.0 }
   command_r_plus: &command_r_plus
     id: cohere/command-r-plus-08-2024
     <<: *model_defaults
@@ -205,6 +210,7 @@ models:
     - *gpt_4o
     - *gemini_flash
     - *command_r_plus
+    - *gemma_4_31b
   vision:
     - *gemini_flash
     - *claude_sonnet
@@ -232,6 +238,7 @@ models:
     - *ollama_qwen
     - *ollama_granite
     - *ollama_gemma
+    - *gemma_4_31b
 
 routes:
   detect_lexical: free
@@ -355,7 +362,7 @@ three_mirror_redundancy:
   # Three models vote; ship only on >= 2 agreement for critical fixes.
   # Source: cross-cutting reunification (#95).
   enabled_for:   [tier1_critical, security_relevant, irreversible]
-  pool:          ["anthropic/claude-sonnet-4", "z-ai/glm-4.5-air", "moonshotai/kimi-k2"]
+  pool:          ["anthropic/claude-sonnet-4", "ollama:gemma4:31b-cloud", "moonshotai/kimi-k2"]
   quorum:        2
   on_disagreement: "fall back to council vote with all dissent recorded"
 
