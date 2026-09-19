@@ -40,8 +40,10 @@ slowed = File.join(SCRATCH, "slowed_master.wav")
 fx master, slowed, "atempo=#{SLOW}"
 
 # 2. Demux the slowed master through dilla's own separation pipeline.
-sh! RUBY34, "dilla.rb", "demux", slowed
-stem_dir = File.join(DILLA, "samples", "demux", "demux", "htdemucs_6s", "slowed_master")
+# Demux output is samples/demux/<model>/<basename> (demux_six joins DEMUX_DIR,
+# "demux" -- DEMUX_DIR is already samples/demux). Skip if stems are cached.
+stem_dir = File.join(DILLA, "samples", "demux", "htdemucs_6s", "slowed_master")
+sh! RUBY34, "dilla.rb", "demux", slowed unless Dir.exist?(stem_dir)
 abort "demux produced no stems at #{stem_dir}" unless Dir.exist?(stem_dir)
 
 # 3. Per-stem effects. `grade` runs dilla's own grade_filter code, so the
@@ -82,7 +84,7 @@ treated["bass"] = bass_out
 vocals_out = File.join(SCRATCH, "vocals_final.wav")
 fx treated["vocals"], vocals_out,
     "acompressor=threshold=-18dB:ratio=3:attack=5:release=120:makeup=2," \
-    "aecho=0.8:0.25:120:0.3,chorus=0.5:0.9:2|3:0.4:0.5:2|3"
+    "aecho=0.8:0.25:120:0.3,chorus=0.5:0.9:50|60:0.4|0.32:0.25|0.4:2|1.3"
 treated["vocals"] = vocals_out
 
 # 5. Dust: the record surface the slowed aesthetic lives on.
