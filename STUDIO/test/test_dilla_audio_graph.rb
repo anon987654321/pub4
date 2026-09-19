@@ -176,13 +176,39 @@ class TestAudioGraph < Minitest::Test
 
       body = at + 6
       body += 6 if source[body, 6] == "exprs="
-      stop = source[body] == "'" ? source.index("'", body + 1) + 1 : source.index(/[,\[\]"\n;]/, body)
-      # A quoted expression is followed by its options; an unquoted one carries them.
-      pinned = source[body] == "'" ? source[stop, 16].match?(/\A:(?:c|channel_layout)=/) : source[body...stop].match?(/:(?:c|channel_layout)=/)
+      pinned = if source[body] == "'"
+                 options_after_quote(source, body).match?(/\A:(?:c|channel_layout)=/)
+               else
+                 stop = source.index(/[,\[\]"\n;]/, body)
+                 source[body...stop].match?(/:(?:c|channel_layout)=/)
+               end
       next if pinned
 
       lines << (source[0, at].count("\n") + 1)
     end
     lines
+  end
+
+  # The characters after a quoted expression, as ffmpeg reads them: past the
+  # closing quote (stepping over #{...} spans so TAPE['drive'] does not end the
+  # expression early), then across any Ruby string-continuation to the options,
+  # which may open the next source line, as tape_chain's do.
+  def options_after_quote(source, body)
+    depth = 0
+    i = body + 1
+    while i < source.bytesize
+      if source[i, 2] == "\#{"
+        depth += 1
+        i += 2
+      elsif depth.positive? && source[i] == "}"
+        depth -= 1
+        i += 1
+      elsif depth.zero? && source[i] == "'"
+        return source[(i + 1)..].to_s.sub(/\A"(?:[ \t]*\\\n[ \t]*)?"/, "")
+      else
+        i += 1
+      end
+    end
+    ""
   end
 end

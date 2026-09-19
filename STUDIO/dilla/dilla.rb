@@ -15839,6 +15839,122 @@ def grade_list
 end
 
 # --------------------------------------------------------------------------
+# engine part: remix
+# --------------------------------------------------------------------------
+#
+# The operator's own records through the engine's own racks: slowed, demuxed,
+# graded stem by stem, transient-recovered and mastered. Proved as a one-off
+# driver for FUCK_YOUR_XBOX on 2026-09-19 (b3ab80355) and folded in because
+# the crate deserves a real command and a root-level driver is sprawl. The
+# golden rule holds here as everywhere: atempo stretches time, pitch is never
+# varispeeded. Renders land in samples/own/ — the crate, not the engine root.
+REMIX_SLOW = ENV.fetch("REMIX_SLOW", "0.80").to_f
+REMIX_GRADES = {
+  "drums" => :sp1200, "bass" => :tape_hot, "vocals" => :tape_warm,
+  "guitar" => :sonitex, "piano" => :vinyl_lab, "other" => :dub_chamber,
+}.freeze
+REMIX_WEIGHTS = {
+  "drums" => 1.0, "bass" => 1.0, "vocals" => 1.15,
+  "guitar" => 0.75, "piano" => 0.85, "other" => 0.7,
+}.freeze
+
+# demux_six writes samples/demux/<model>/<basename> (DEMUX_DIR is samples
+# itself, so the demux level is joined here, not implied by the constant).
+def remix_stem_dir(slowed) = File.join(DEMUX_DIR, "demux", DEMUX_MODEL, File.basename(slowed, ".*"))
+
+def remix!(src = nil, dest = nil)
+  src ||= prompt("master to remix")
+  abort "remix: no such file #{src}" unless File.file?(src)
+  tag = File.basename(src, ".*")
+  dest ||= File.join(SAMPLE_DIR, "own", "#{tag}_slowed_remix.wav")
+  abort "remix: #{dest} exists — move it, or pass another dest" if File.exist?(dest)
+  scratch = scratch_path("remix_#{tag}")
+  FileUtils.mkdir_p(scratch)
+  slowed = File.join(scratch, "slowed.wav")
+  mix_render "slowed master x#{REMIX_SLOW} (atempo, pitch preserved)", slowed,
+             inputs: ["-i", src], map: "[out]", filter: "[0:a]atempo=#{REMIX_SLOW}[out]"
+  stem_dir = Dir.exist?(remix_stem_dir(slowed)) ? remix_stem_dir(slowed) : demux_six(slowed)
+  stems = REMIX_GRADES.keys.to_h { |stem| [stem, remix_treat!(stem, stem_dir, scratch)] }
+  stems["dust"] = remix_dust!(FfmpegProbe.duration(slowed), scratch)
+  remix_mix!(stems, dest)
+  sh! "ffmpeg", "-y", "-i", dest, "-c:a", "libmp3lame", "-b:a", "320k", dest.sub(/\.wav\z/, ".mp3")
+  remix_into_demo!(dest, tag)
+  puts "ok: #{dest}"
+end
+
+# One stem through its grade rack, then the finishing the preset cannot carry:
+# drums get their attack back (recover_slowed_transients!, the engine's own
+# Render-Measure-Refine loop), bass its fundamental, vocals their slapback.
+def remix_treat!(stem, stem_dir, scratch)
+  src = File.join(stem_dir, "#{stem}.wav")
+  abort "remix: demux lost the #{stem} stem" unless File.file?(src)
+  graded = remix_grade!(stem, src, scratch)
+  case stem
+  when "drums" then recover_slowed_transients!(graded, destination: graded.sub("_graded", "_final"))
+  when "bass" then remix_finish!(graded, "lowshelf=f=90:g=4dB,highpass=f=35")
+  when "vocals"
+    remix_finish!(graded, "acompressor=threshold=-18dB:ratio=3:attack=5:release=120:makeup=2," \
+                         "aecho=0.8:0.25:120:0.3,chorus=0.5:0.9:50|60:0.4|0.32:0.25|0.4:2|1.3")
+  else graded
+  end
+end
+
+def remix_grade!(stem, src, scratch)
+  preset = GRADE_PRESETS.fetch(REMIX_GRADES.fetch(stem))
+  stock = AUDIO_STOCKS.fetch(preset[:stock])
+  fx = preset[:fx].map { |f| grade_filter(f, stock) }.compact
+  out = File.join(scratch, "#{stem}_graded.wav")
+  mix_render "grade #{stem} #{REMIX_GRADES.fetch(stem)}", out, inputs: ["-i", src], map: "[out]",
+             filter: "[0:a]#{fx.join(",")},lowpass=f=#{stock[:rolloff_hz]}[out]"
+  out
+end
+
+def remix_finish!(graded, chain)
+  out = graded.sub("_graded", "_final")
+  mix_render "finish #{File.basename(graded, ".*")}", out, inputs: ["-i", graded], map: "[out]",
+             filter: "[0:a]#{chain}[out]"
+  out
+end
+
+# The record surface the slowed aesthetic lives on: a pink-noise bed at -32dB,
+# faded in and out so it never clicks at either end.
+def remix_dust!(seconds, scratch)
+  out = File.join(scratch, "dust.wav")
+  sh! "ffmpeg", "-y", "-f", "lavfi",
+      "-i", "anoisesrc=color=pink:amplitude=0.004:duration=#{seconds.round}",
+      "-af", "highpass=f=300,lowpass=f=3500,volume=-32dB,afade=t=in:d=3," \
+             "afade=t=out:st=#{(seconds - 4).round}:d=4",
+      "-c:a", "pcm_s16le", out
+  out
+end
+
+# The mix: stems at their weights, a glue bus, then the master target the
+# engine's own records shoot for (-14 LUFS, -1 dBTP).
+def remix_mix!(stems, dest)
+  order = REMIX_WEIGHTS.keys + ["dust"]
+  weights = order.map { |s| format("%.2f", s == "dust" ? 0.04 : REMIX_WEIGHTS.fetch(s)) }
+  filter = "#{order.map.with_index { |_, i| "[#{i}:a]" }.join}" \
+           "amix=inputs=#{order.size}:weights=#{weights.join(" ")}:normalize=0:duration=longest," \
+           "acompressor=threshold=-18dB:ratio=2:attack=8:release=120:makeup=2," \
+           "loudnorm=I=-14:TP=-1.0:LRA=11,alimiter=limit=0.98[out]"
+  mix_render "remix master", dest, inputs: order.flat_map { |s| ["-i", stems.fetch(s)] },
+             map: "[out]", filter:, args: ["-c:a", "pcm_s16le"]
+end
+
+# The combine the operator asked for: the remix bleeding into a fresh catalogue
+# demo. A missing demo.wav skips, not aborts — the remix stands on its own.
+def remix_into_demo!(remix, tag)
+  demo = File.join(ROOT, "demo.wav")
+  return unless File.file?(demo)
+
+  out = File.join(SAMPLE_DIR, "own", "#{tag}_remix_into_demo.wav")
+  mix_render "crossfade into demo.wav", out, inputs: ["-i", remix, "-i", demo], map: "[out]",
+             filter: "acrossfade=d=2:c1=tri:c2=tri[out]", args: ["-c:a", "pcm_s16le"]
+  sh! "ffmpeg", "-y", "-i", out, "-c:a", "libmp3lame", "-b:a", "320k", out.sub(/\.wav\z/, ".mp3")
+  puts "ok: #{out}"
+end
+
+# --------------------------------------------------------------------------
 # engine part: setlist
 # --------------------------------------------------------------------------
 #
@@ -28380,6 +28496,7 @@ def command_help
       ["verify-fx", "", "Check every effect does what it claims"],
       ["phone-preview", "[path]", "The laptop-speaker check, applied to a file"],
       ["grade", "<in> [out] [preset]", "A file through one of the grade presets"],
+      ["remix", "<master> [out.wav] [REMIX_SLOW=0.80]", "The operator's own record: slowed, demuxed, graded per stem, mastered, into samples/own/"],
       ["grade_list", "", "The grade presets and their chains"],
       ["sonitex_list", "", "The STX-1260 subset presets"],
       ["analog_list", "", "The analog chain variants"],
@@ -38285,6 +38402,7 @@ DISPATCH = {
   "listen_loop" => -> { composition_listen_loop((ARGV.shift || 16).to_i) },
   "bass" => -> { bass((ARGV.shift || 55.0).to_f) },
   "grade" => -> { grade(ARGV.shift, ARGV.shift, ARGV.shift) },
+  "remix" => -> { remix!(ARGV.shift, ARGV.shift) },
   "fetch-assets" => -> { fetch_assets! },
   "dig" => -> { crate_dig!(ARGV.shift, (ARGV.shift || 8).to_i) },
   "dig-seams" => -> { crate_seams },
