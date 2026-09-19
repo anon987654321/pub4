@@ -815,15 +815,6 @@ operator's:
 
 859. **The crate on main disagrees with `data/assets.json`.** `DillaAssets.verify` there: `samples/{kembara_rindu,lo_borges,semua_untuk_mu}/loop.wav` missing, and seven one-shots under `samples/drums/` changed hash at the same size. Restore them, or `dilla assets record` to accept the new drums as the inputs.
 
-
-1063. **The bed piece render times out inside `SpaceFx.reverb`** — `rake
-test:dilla:bed` dies deterministically (`Timeout::ExitException`,
-`lib/sound.rb`'s pure-Ruby Schroeder), on HEAD and on a clean worktree, so it
-is committed debt from the catalogue-grit work (d5b6e96f1), not local load.
-The suite cannot run green until either the comb/allpass loops leave Ruby for
-an ffmpeg chain — the engine already uses ffmpeg rooms everywhere else — or
-the test's timeout is measured against a machine that can carry them.
-
 ### STUDIO — postpro, preprompt, lora
 
 907. **Chains are ungraded by default.** `generate` applies `HOUSE_POSTPRO` (`portrait`); `chain` grades its final frame only when `--postpro` is given. Whether chains share the house grade is a graded-look call.
