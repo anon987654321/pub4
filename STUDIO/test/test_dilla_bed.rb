@@ -14,6 +14,15 @@ class TestDillaBed < Minitest::Test
   # data/bed.yml declares the bed and the piece, and module Composition reads the piece.
   READERS = BED_SOURCE + DILLA_SOURCE[/^module Composition\n.*?^end\n/m]
 
+  # One piece through the bed is a real render -- oscillator synthesis, the
+  # SpaceFx rooms, the grit chain, a loudnorm pass -- and the render's cost is
+  # the test's, not the harness's: about 35s on a quiet machine and two and a
+  # half minutes with another session rendering on the same box, both measured
+  # on 2026-09-19. The 30s Studio bound is for a hung ffmpeg; this budget
+  # covers the loaded case and still bounds a hang, on the same terms as the
+  # engine probes' PROBE_TIMEOUT.
+  TIMEOUT = Integer(ENV.fetch("DILLA_BED_TIMEOUT", "300"))
+
   # The catalogue is seven recordings and twelve improvisations, and a bare
   # invoke plays exactly that. A cut to four was made once and reversed.
   def test_the_catalogue_is_seven_verified_and_twelve_improvised

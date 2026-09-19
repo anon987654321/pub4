@@ -142,12 +142,26 @@ Minitest::Test.class_eval do
   include Studio::EnvSandbox
 
   alias_method :run_without_timeout, :run
+
+  # A test class that does real work -- a bed piece render, an engine probe --
+  # declares its own budget as a TIMEOUT constant; everything else takes the
+  # 30s Studio::TIMEOUT, which exists for a hung ffmpeg, not for a render.
+  #
+  # The exception class and message are passed explicitly because of what the
+  # default delivered on this Ruby: the stdlib's ExitException-to-Error
+  # conversion lives in Error.handle_timeout, which the block's Proc-frame
+  # non-local return skips on the unwind, so the ExitException sailed past
+  # every rescue on the stack and surfaced as an error deep inside whatever
+  # DSP loop the interrupt happened to land in, naming code that was never the
+  # defect. Raising Timeout::Error itself, with the budget in the message,
+  # means the error a breach produces reads "timed out after 30s" wherever
+  # minitest catches it, instead of "execution expired" over a backtrace into
+  # the test's own body.
   def run(*args)
-    Timeout.timeout(Studio::TIMEOUT) { run_without_timeout(*args) }
+    budget = self.class.const_defined?(:TIMEOUT, false) ? self.class::TIMEOUT : Studio::TIMEOUT
+    Timeout.timeout(budget, Timeout::Error, "timed out after #{budget}s") { run_without_timeout(*args) }
   rescue Timeout::Error
-    failures << Minitest::UnexpectedError.new(
-      Timeout::Error.new("timed out after #{Studio::TIMEOUT}s")
-    )
+    failures << Minitest::UnexpectedError.new(Timeout::Error.new("timed out after #{budget}s"))
     self
   end
 end
