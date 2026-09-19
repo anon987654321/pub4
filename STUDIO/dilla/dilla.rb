@@ -269,10 +269,6 @@ def recover_slowed_transients!(path, destination:)
 
   destination
 end
-    warn "transient recovery failed: #{e.message}"
-    src
-  end
-end
 
 # --------------------------------------------------------------------------
 # engine part: audio_graph
