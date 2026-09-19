@@ -16,13 +16,16 @@ module Master
         bus = Trace::EventBus.new(event_log:, evidence_log:)
         Ground::Swallow.event_bus = bus
         subscribe_interrupt(bus)
+        
         ring = Trace::RingBuffer.new(RING_SIZE)
         logging = Trace::Logging.new(ring_buffer: ring, event_bus: bus)
         session = Trace::Session.new(root: @root, budget_max: @config.budget_max, req_max: @config.req_max)
         undo = Trace::Undo.new(session:, event_bus: bus, root: @root)
         metrics = Trace::Metrics.new(root: @root, event_bus: bus)
+        
         Trace::Log::Audit.new(root: @root, event_bus: bus)
         Trace::Ledger::Swallow.new(event_bus: bus, root: @root).attach
+        
         # soul.yml declares seven hooks and this is what fires them: it turns
         # five bus events the tree already publishes into the on_* names the
         # constitution uses, then runs what soul.yml declared for each. It was
@@ -30,9 +33,11 @@ module Master
         # carrying scan:complete, and .constitutional_violations.jsonl, which
         # the constitution says a violation is appended to, was never written.
         Trace::Hooks.new(root: @root, event_bus: bus, budget_max: @config.budget_max).attach
+        
         recorder = Trace::Recorder.new(root: @root, event_bus: bus)
         write_tracker = Trace::WriteTracker.new(event_bus: bus)
         Trace::WriteTracker.current = write_tracker
+        
         { event_log:, bus:, ring:, logging:, session:, undo:, metrics:, trace: recorder,
           write_tracker: }
       end
