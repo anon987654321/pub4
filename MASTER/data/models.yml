@@ -147,6 +147,11 @@ model_defs:
     <<: *model_defaults
     context_window: 128000
     score: { quality: 0.94, speed: 0.82, cost: 1.0 }
+  glm_5_3: &glm_5_3
+    id: ollama:glm4:latest
+    <<: *model_defaults
+    context_window: 128000
+    score: { quality: 0.96, speed: 0.85, cost: 1.0 }
   command_r_plus: &command_r_plus
     id: cohere/command-r-plus-08-2024
     <<: *model_defaults
@@ -186,6 +191,7 @@ ollama_gemma: &ollama_gemma
 
 models:
   grok_primary:
+    - *glm_5_3
     - *nemotron_super
   keyless:
     - *web_chat_grok
@@ -193,11 +199,13 @@ models:
     - *web_chat_kimi
     - *web_chat_gemini
   default:
+    - *glm_5_3
     - *nemotron_super
     - *gemini_flash_openrouter
   primary:
     - *claude_cli_opus
     - *claude_opus_api
+    - *glm_5_3
     - *nemotron_super
   strong:
     - *claude_cli_opus
