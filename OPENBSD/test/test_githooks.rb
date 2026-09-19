@@ -188,6 +188,45 @@ class TestGitHooks < Minitest::Test
     assert status.success?, "the owning session was refused its own tree:\n#{out}"
   end
 
+  # --- 4b. the dilla engine must parse before it lands ----------------------
+  #
+  # A syntax error in dilla.rb or lib/ stops every render at load; one shipped
+  # on 2026-09-19 and nothing noticed until renders died at boot. The hook
+  # parses staged engine files, so the same incident cannot land again unseen.
+
+  def test_a_staged_engine_file_that_does_not_parse_is_refused
+    write("STUDIO/dilla/dilla.rb", "def broken\nend\nend\n")
+    git!("add", "STUDIO/dilla/dilla.rb")
+    out, status = commit("break the engine")
+
+    refute_committed out, status, /REFUSED — .*dilla\.rb does not parse/
+    assert_match(/PUB4_PARSE_SKIP=1/, out)
+  end
+
+  def test_a_staged_engine_file_that_parses_commits
+    write("STUDIO/dilla/lib/knob.rb", "# frozen_string_literal: true\n\n# a knob\n")
+    git!("add", "STUDIO/dilla/lib/knob.rb")
+    out, status = commit("a knob that parses")
+
+    assert status.success?, "a parsing engine file was refused:\n#{out}"
+  end
+
+  def test_a_staged_non_engine_ruby_file_needs_no_parse
+    write("STUDIO/scratch.rb", "# not the engine\n")
+    git!("add", "STUDIO/scratch.rb")
+    out, status = commit("ruby outside the engine")
+
+    assert status.success?, "a Ruby file outside the engine was refused a parse:\n#{out}"
+  end
+
+  def test_the_parse_override_is_honoured
+    write("STUDIO/dilla/dilla.rb", "end\n")
+    git!("add", "STUDIO/dilla/dilla.rb")
+    out, status = commit("broken, deliberately", env: { "PUB4_PARSE_SKIP" => "1" })
+
+    assert status.success?, "PUB4_PARSE_SKIP=1 did not let the commit through:\n#{out}"
+  end
+
   # --- 5. pre-push: a push carries everything beneath it -------------------
 
   def push_setup

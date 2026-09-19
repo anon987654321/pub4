@@ -133,6 +133,34 @@ if staged_trees.size > 1 && ENV["PUB4_CROSS_TREE"] != "1"
   exit 1
 end
 
+# The dilla engine is one program: dilla.rb plus lib/*.rb. A syntax error
+# anywhere in it stops every render — bed, demux, mix — at load, and one
+# shipped on 2026-09-19: four orphaned lines a rewrite left behind, caught
+# only when renders died with a SyntaxError at boot. `ruby -c` costs
+# milliseconds against that, so a staged engine file must parse before it
+# lands. Scoped to STUDIO/dilla deliberately: that is the measured incident,
+# and no broader parse gate has been proved against the rest of the repo.
+engine_staged = staged.select do |path|
+  path == "STUDIO/dilla/dilla.rb" ||
+    (path.start_with?("STUDIO/dilla/lib/") && path.end_with?(".rb"))
+end
+unless engine_staged.empty? || ENV["PUB4_PARSE_SKIP"] == "1"
+  require "open3"
+  engine_staged.each do |path|
+    out, status = Open3.capture2e(RbConfig.ruby, "-c", path)
+    next if status.success?
+
+    warn ""
+    warn "pre-commit: REFUSED — #{path} does not parse:"
+    warn "  #{out.lines.first(4).join.strip}"
+    warn ""
+    warn "  A syntax error in the engine stops every render at load. Fix it,"
+    warn "  or bypass this one commit: PUB4_PARSE_SKIP=1 git commit -- <paths>"
+    warn ""
+    exit 1
+  end
+end
+
 # The constitution, applied to what is about to land. Opt-in because building the
 # scanner boots the runtime and this hook fires on every commit in a shared tree:
 # LINT=1 makes the rules MASTER documents for coding agents something git
