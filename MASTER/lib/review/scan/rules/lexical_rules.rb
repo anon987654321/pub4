@@ -281,6 +281,20 @@ module Master
     findings
   end
 
+  RuleDSL.rule :OMIT_NEEDLESS_WORDS,
+    severity: :info, tags: %i[BE_CONCISE],
+    description: "Strunk & White: omit needless words in comments" do |src, path:|
+    src.lines.each_with_index.flat_map do |line, n|
+      next unless line.strip.start_with?("#")
+      next if line.match?(/scan:\s*intentional\b/)
+
+      # a wordy comment usually starts with "This is a", "Here we", "This function"
+      if line.match?(/\b(?:This is a|Here we|This function|Note that)\b/i)
+        finding(line: n + 1, message: "wordy comment — omit needless words")
+      end
+    end
+  end
+
   RuleDSL.rule :TRAILING_COMMENT,
     severity: :info, tags: %i[BE_CONCISE],
     fires: "value = 1 # why one\n",

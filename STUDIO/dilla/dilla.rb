@@ -102,6 +102,7 @@ require_relative "lib/ledger"
 require_relative "lib/groove"
 require_relative "lib/listen"
 require_relative "lib/dsp_recovery"
+require_relative "lib/spectral_analyzer"
 
 # Terse OpenBSD-style console log (see lib/ledger.rb). Prefer dmesg over
 # decorative banners; set DILLA_DMESG=0 to silence, =2 for verbose argv.
@@ -217,36 +218,57 @@ DEMUX_VOCAL_MODEL = "htdemucs_ft"
 # what provenance, the parse check and the wiring ratchets read.
 
 def recover_slowed_transients!(path, destination:)
-  # Transient recovery and spectral excitation for slowed audio.
-  # 1. High-pass the source to isolate the 'snap' range (2kHz - 8kHz).
-  # 2. Apply a fast-attack compressor/limiter to flatten peaks.
-  # 3. Use a subtle high-shelf or spectral tilt to add brilliance.
-  # 4. Blend the recovered transients back into the original slowed signal.
+  # Render-Measure-Refine Loop for transient recovery.
+  # We iterate on the recovery chain until the spectral tilt matches the target.
   
-  src = path
-  recovered = "#{path}.transients.wav"
+  analyzer = SpectralAnalyzer.new
+  # Target tilt derived from dilla_reference.yml (ideally) or a known good constant
+  target_tilt = 0.45 
   
-  # Recovery chain: highpass -> compressor (fast) -> highshelf (excitation)
-  # highpass=f=2000: remove mud
-  # compressor: attack=1ms, release=50ms, ratio=4: squash the transients into a consistent 'click'
-  # highshelf: f=5000, g=6dB: excitation
-  recovery_chain = "highpass=f=2000,acompressor=attack=1:release=50:ratio=4:threshold=-20dB,highshelf=f=5000:g=6"
+  # Initial guestimate parameters
+  hp_freq = 2000
+  hs_gain = 6.0
   
-  # Mix chain: [0:a] is original, [1:a] is recovered transients.
-  # We use amix to blend them. Recovered transients are kept subtle (gain 0.3).
-  mix_chain = "[0:a][1:a]amix=inputs=2:weights=1.0 0.3:normalize=0"
+  max_iterations = 3
+  current_iter = 0
   
-  begin
-    # Step 1: Extract and process transients
-    sh! "ffmpeg", "-y", "-i", src, "-af", recovery_chain, "-c:a", "pcm_s16le", recovered
+  loop do
+    current_iter += 1
     
-    # Step 2: Mix recovered transients back into original
-    sh! "ffmpeg", "-y", "-i", src, "-i", recovered, "-filter_complex", mix_chain, 
-        "-c:a", "pcm_s16le", destination
-        
-    File.unlink(recovered) if File.file?(recovered)
-    destination
-  rescue StandardError => e
+    # 1. Render with current parameters
+    recovery_chain = "highpass=f=#{hp_freq},acompressor=attack=1:release=50:ratio=4:threshold=-20dB,highshelf=f=5000:g=#{hs_gain}"
+    mix_chain = "[0:a][1:a]amix=inputs=2:weights=1.0 0.3:normalize=0"
+    
+    recovered_tmp = "#{path}.iter#{current_iter}.wav"
+    begin
+      sh! "ffmpeg", "-y", "-i", path, "-af", recovery_chain, "-c:a", "pcm_s16le", recovered_tmp
+      sh! "ffmpeg", "-y", "-i", path, "-i", recovered_tmp, "-filter_complex", mix_chain, "-c:a", "pcm_s16le", destination
+    rescue StandardError => e
+      warn "recovery render failed: #{e.message}"
+      return path
+    ensure
+      File.unlink(recovered_tmp) if File.file?(recovered_tmp)
+    end
+
+    # 2. Measure
+    metrics = analyzer.analyze(destination)
+    
+    # 3. Refine
+    delta = metrics[:tilt] - target_tilt
+    break if delta.abs < 0.05 || current_iter >= max_iterations
+    
+    # If tilt is too low (too muddy), increase high-shelf gain and raise high-pass
+    if delta < 0
+      hs_gain += 2.0
+      hp_freq += 100
+    else
+      hs_gain -= 2.0
+      hp_freq -= 100
+    end
+  end
+
+  destination
+end
     warn "transient recovery failed: #{e.message}"
     src
   end

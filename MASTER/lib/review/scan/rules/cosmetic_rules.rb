@@ -297,6 +297,63 @@ module Master
           end
         end
 
+        RuleDSL.rule :VERTICAL_BREATH,
+          severity: :info, tags: %i[BEAUTY], applies_to: %i[ruby javascript],
+          description: "vertical breath — avoid dense blocks of 10+ lines without a blank line" do |src, path:|
+          next [] if path.to_s.include?("/review/scan/rules/")
+          findings = []
+          lines = src.lines
+          dense_count = 0
+          start_line = 1
+
+          lines.each_with_index do |line, n|
+            if line.strip.empty?
+              if dense_count >= 10
+                findings << finding(line: start_line, message: "suffocated block — add a blank line for breath")
+              end
+              dense_count = 0
+              start_line = n + 2
+            else
+              dense_count += 1
+            end
+          end
+          findings
+        end
+
+        RuleDSL.rule :CODE_SYMMETRY,
+          severity: :info, tags: %i[BEAUTY], applies_to: %i[ruby javascript],
+          description: "source symmetry — avoid jagged indentation shifts" do |src, path:|
+          next [] if path.to_s.include?("/review/scan/rules/")
+          findings = []
+          lines = src.lines
+          lines.each_with_index.each_slice(2) do |pair|
+            next unless pair.size == 2
+            l1, l2 = pair[0], pair[1]
+            # a jagged shift is a sudden jump of 4+ spaces for a single line
+            indent1 = l1[/\A\s*/].size
+            indent2 = l2[/\A\s*/].size
+            if (indent1 - indent2).abs >= 4 && l2.strip.size < 40 && l2.match?(/^(?:return|break|next|raise)/)
+              findings << finding(line: pair[1][1] + 1, message: "jagged symmetry — align this line with its block")
+            end
+          end
+          findings
+        end
+
+        RuleDSL.rule :TYPOGRAPHIC_GRID,
+          severity: :info, tags: %i[TYPOGRAPHY], applies_to: %i[markdown html],
+          description: "typographic grid — maintain line length and vertical rhythm" do |src, path:|
+          next [] if path.to_s.include?("/review/scan/rules/")
+          findings = []
+          lines = src.lines
+          lines.each_with_index do |line, n|
+            # Bringhurst's ideal measure is ~66 characters; we allow 100 for technical prose
+            if line.size > 100 && !line.match?(/\A\s*`.*`\s*\z/)
+              findings << finding(line: n + 1, message: "line too long — break for typographic measure")
+            end
+          end
+          findings
+        end
+
         RuleDSL.rule :README_PROSE,
           severity: :info, tags: %i[TYPOGRAPHY DOMAIN_LANGUAGE], applies_to: %i[markdown],
           example_path: "/repo/README.md",
