@@ -243,10 +243,10 @@ models:
     - *claude_cli_sonnet
     - *claude_cli_opus
   local:
-    - *ollama_qwen
-    - *ollama_granite
-    - *ollama_gemma
     - *gemma_4_31b
+    - *ollama_qwen
+    - *ollama_gemma
+    - *ollama_granite
 
 routes:
   detect_lexical: free
