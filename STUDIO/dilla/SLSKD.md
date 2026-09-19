@@ -1,12 +1,13 @@
 # slskd sample digging
 
-`demo.rb` can use a local [slskd](https://github.com/slskd/slskd) instance as
-an optional sample source. slskd exposes search and transfer APIs under
-`/api/v0`; the adapter uses those APIs rather than embedding Soulseek in Dilla.
+`ruby dilla.rb slskd "<query>"` can use a local
+[slskd](https://github.com/slskd/slskd) instance as an optional sample source.
+slskd exposes search and transfer APIs under `/api/v0`; the adapter uses those
+APIs rather than embedding Soulseek in Dilla.
 
 Run:
 
-`SLSKD_API_KEY=... SLSKD_DOWNLOAD_DIR=/path/to/slskd/completed ruby demo.rb`
+`SLSKD_API_KEY=... SLSKD_DOWNLOAD_DIR=/path/to/slskd/completed ruby dilla.rb slskd "j dilla break"`
 
 The adapter prefers FLAC/WAV/AIFF over lossy formats and prefers peers with an
 available upload slot and shorter queues. It copies the selected file into

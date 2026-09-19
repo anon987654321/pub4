@@ -8,6 +8,11 @@ require "securerandom"
 require "time"
 require "uri"
 
+# ToolRun, which ffprobe goes through below. The crate is loadable on its own
+# -- the engine does not require it, because the crate is a hand-run tool and
+# not a render step -- so it brings the runner with it.
+require_relative "listen"
+
 # Optional Soulseek material provider.
 #
 # slskd is deliberately kept outside the renderer. It is a local HTTP service
@@ -228,19 +233,21 @@ module SlskdCrate
     File.write(REGISTRY, JSON.pretty_generate(data) + "\n")
   end
 
+  # Through ToolRun like every tool the engine starts, so a read has a deadline:
+  # slskd material can be a broken file, and ffprobe on one must not outlive it.
   def ffprobe_duration(path)
-    stdout = IO.popen(["ffprobe", "-v", "error", "-show_entries", "format=duration",
-                       "-of", "default=nokey=1:noprint_wrappers=1", path], &:read)
-    Float(stdout)
-  rescue ArgumentError
+    out, = ToolRun.capture2(["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                             "-of", "default=nokey=1:noprint_wrappers=1", path])
+    Float(out)
+  rescue ArgumentError, TypeError
     0.0
   end
 
   def ffprobe_field(path, field)
-    stdout = IO.popen(["ffprobe", "-v", "error", "-select_streams", "a:0",
-                       "-show_entries", field,
-                       "-of", "default=nokey=1:noprint_wrappers=1", path], &:read)
-    stdout.to_s.strip
+    out, = ToolRun.capture2(["ffprobe", "-v", "error", "-select_streams", "a:0",
+                             "-show_entries", field,
+                             "-of", "default=nokey=1:noprint_wrappers=1", path])
+    out.to_s.strip
   end
 
   def request(path, method:, body: nil)

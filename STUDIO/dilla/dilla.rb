@@ -23342,6 +23342,31 @@ def cc_dig!(seam, count)
   puts "these require credit — `ruby dilla.rb credits` prints it" if taken.positive?
 end
 
+# Soulseek material through a local slskd — the only dig whose source is other
+# people's records rather than an archive, so it is the only one whose rights
+# state is `unknown` until the operator says otherwise. The rights gate lives in
+# SlskdCrate.import!, not here: this command only searches, ranks and hands
+# over, and the crate stays outside the render path (SLSKD.md).
+def slskd_dig!(query, count)
+  require_relative "lib/slskd_crate"
+  abort "usage: slskd <query> [n]" unless query
+  abort "slskd not reachable — set SLSKD_URL / SLSKD_API_KEY (see SLSKD.md)" unless SlskdCrate.available?
+
+  puts "searching slskd for #{query.inspect}..."
+  ranked = SlskdCrate.rank(SlskdCrate.audio_results(SlskdCrate.search(query)))
+  abort "no audio results for #{query.inspect}" if ranked.empty?
+
+  ranked.first(count).each do |result|
+    print "  #{File.basename(result['filename'])} — #{result['username']} ... "
+    row = SlskdCrate.import!(result, query: query)
+    puts format("%ss %sHz %sch [%s]", row["duration_sec"], row["sample_rate"], row["channels"], row["rights"])
+  rescue StandardError => e
+    puts "skip (#{e.class}: #{e.message.to_s[0, 60]})"
+  end
+
+  puts "registered in samples/chopped/loops.json — the renderer reads it as a normal loop"
+end
+
 # CC-BY is free to use and not free of obligation. This is the list you owe.
 def crate_credits
   rows = CrateDig.manifest["items"].select { |i| i["attribution"] }
@@ -38407,6 +38432,7 @@ DISPATCH = {
   "dig" => -> { crate_dig!(ARGV.shift, (ARGV.shift || 8).to_i) },
   "dig-seams" => -> { crate_seams },
   "dig-cc" => -> { cc_dig!(ARGV.shift, (ARGV.shift || 6).to_i) },
+  "slskd" => -> { slskd_dig!(ARGV.shift, (ARGV.shift || 1).to_i) },
   "credits" => -> { crate_credits },
   "dug" => -> { dug_list },
   "use-external-kit" => -> { use_external_kit!(ARGV.shift || abort("usage: use-external-kit <01-hard-trap|02-bounce|03-soulful-vintage>")) },
