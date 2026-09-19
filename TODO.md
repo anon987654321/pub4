@@ -815,6 +815,15 @@ operator's:
 
 859. **The crate on main disagrees with `data/assets.json`.** `DillaAssets.verify` there: `samples/{kembara_rindu,lo_borges,semua_untuk_mu}/loop.wav` missing, and seven one-shots under `samples/drums/` changed hash at the same size. Restore them, or `dilla assets record` to accept the new drums as the inputs.
 
+
+1063. **The bed piece render times out inside `SpaceFx.reverb`** — `rake
+test:dilla:bed` dies deterministically (`Timeout::ExitException`,
+`lib/sound.rb`'s pure-Ruby Schroeder), on HEAD and on a clean worktree, so it
+is committed debt from the catalogue-grit work (d5b6e96f1), not local load.
+The suite cannot run green until either the comb/allpass loops leave Ruby for
+an ffmpeg chain — the engine already uses ffmpeg rooms everywhere else — or
+the test's timeout is measured against a machine that can carry them.
+
 ### STUDIO — postpro, preprompt, lora
 
 907. **Chains are ungraded by default.** `generate` applies `HOUSE_POSTPRO` (`portrait`); `chain` grades its final frame only when `--postpro` is given. Whether chains share the house grade is a graded-look call.
@@ -1268,7 +1277,7 @@ in `MEMORY` as inert config and dead wiring.
 rather than work. **[risk]** changes a rendered sound and so is not mine to
 choose. Numbers are for citation, not for order.
 
-### A · The catalogue: sets to build (1–20)
+### A · The catalogue: sets to build (1–19)
 
 1. **`vocal_chop_beats.als.rb`** [cheap] — `lib/sampling.rb` already separates
    a vocal stem and refuses any rack that cannot name its source. Thirteen racks
@@ -1289,49 +1298,46 @@ choose. Numbers are for citation, not for order.
 5. **`beat_tape.als.rb`** [deep] — one render containing six linked pieces with
    transitions between them: a side of a tape rather than a track. The unit the
    lost sets probably were.
-6. **`remix.als.rb`** [cheap] — `samples/own/` holds nine finished recordings by
-   the operator and named collaborators. Every set so far plays other people's
-   records. One that plays ours is a different thing to own.
-7. **`spoken_word.als.rb`** [deep] — `lib/sampling.rb` exists. A bed under speech
+6. **`spoken_word.als.rb`** [deep] — `lib/sampling.rb` exists. A bed under speech
    is the oldest form in the tradition and the one the crate is best suited to.
-8. **`jazz_trio.als.rb`** [deep] — `chord_based_beats` voices its chords as
+7. **`jazz_trio.als.rb`** [deep] — `chord_based_beats` voices its chords as
    detuned sines because that was the cheapest honest thing. `lib/harmony.rb`
    and `lib/sound.rb` and the four cached soundfonts exist. The same
    progressions through a real instrument is a second set, not a change to the
    first.
-9. **`tape_loop.als.rb`** [deep] — a physical loop degrading each pass:
+8. **`tape_loop.als.rb`** [deep] — a physical loop degrading each pass:
    `lib/sound.rb` is already written and the set would be the first
    caller that makes its behaviour audible over time rather than statically.
-10. **`long_form.als.rb`** [cheap] — twenty minutes rather than three. The pad
+9. **`long_form.als.rb`** [cheap] — twenty minutes rather than three. The pad
     set is already the shape; only `TOTAL` and the swell period stand in the way,
     and a set you can leave running is a different use than a set you audition.
-11. **`playlist.als.rb`** [deep] — never ends. `dilla.rb live broadcast` rotates four
+10. **`playlist.als.rb`** [deep] — never ends. `dilla.rb live broadcast` rotates four
     processes with hard cuts between them; a set that crossfades its own
     successor is the thing that was actually wanted.
-12. **`field.als.rb`** [yours] — a bed that is a place rather than a record.
+11. **`field.als.rb`** [yours] — a bed that is a place rather than a record.
     Needs recordings that do not exist yet, and making them is a day out with a
     recorder, which is the cheapest new material this project could get.
-13. **`minimal.als.rb`** [cheap] — one voice, no kit, no bed, no console stack.
+12. **`minimal.als.rb`** [cheap] — one voice, no kit, no bed, no console stack.
     Useful mostly as a control: everything else in the room is additive and
     nothing measures what each addition is worth.
-14. **`flip.als.rb`** [cheap] — `lib/sampling.rb` chops against chords and is
+13. **`flip.als.rb`** [cheap] — `lib/sampling.rb` chops against chords and is
     one of the engine's better ideas. No set reaches it.
-15. **`dfam.als.rb`** [cheap] — `lib/sound.rb` models a semi-modular drum
+14. **`dfam.als.rb`** [cheap] — `lib/sound.rb` models a semi-modular drum
     voice and is likewise unreached from the livesets.
-16. **`gospel.als.rb`** [cheap] — the eight-bar climb specialised: slower harmonic
+15. **`gospel.als.rb`** [cheap] — the eight-bar climb specialised: slower harmonic
     rhythm, the climb as the whole arrangement rather than a row sampled out of a
     table of four hundred.
-17. **`techno.als.rb`** [yours] [risk] — the crate rules exclude industrial
+16. **`techno.als.rb`** [yours] [risk] — the crate rules exclude industrial
     techno and the standing goal is a genre-agnostic engine where techno, soul
     and jazz are parameters rather than forks. Those two are in tension and only
     the operator can resolve it.
-18. **B-side sets** [cheap] — the same seed through a deliberately different
+17. **B-side sets** [cheap] — the same seed through a deliberately different
     room. Costs one environment variable if the console parameters become data;
     see 31.
-19. **Tempo families** [cheap] — the beat sets both sit at 82–104 because that
+18. **Tempo families** [cheap] — the beat sets both sit at 82–104 because that
     is where the crate lands after drag. A set at 60 and a set at 140 would say
     whether the room survives outside its comfortable octave.
-20. **A set per crate region** [deep] — `project/sample_worth.json` scores every
+19. **A set per crate region** [deep] — `project/sample_worth.json` scores every
     rack on seven terms. The sets use only the aggregate. Sets keyed to *voicing
     density* or *chord-register presence* would each sound like a different
     record collection, which is what a shelf of Ableton sets actually was.
