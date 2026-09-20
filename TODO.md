@@ -283,8 +283,10 @@ symbol names over line numbers.
 
 ### Open from 2026-09-17 session
 
-`dilla.rb` stays the engine. `demo.rb`, `demo2.rb` and `demo3.rb` are the takes.
-Do not triplicate the engine file.
+`dilla.rb` stays the engine. The takes are named doors into it: `demo2` and
+`demo3` are Bed methods reached as `ruby dilla.rb demo2` / `demo3` (the take
+scripts became them on 2026-09-20), and the old demo.rb shim is gone because
+a bare invoke is what it ran. Do not triplicate the engine file.
 
 - **README.mp4 split.** Half face, half a zsh prompt that launches
   `bundle exec ruby bin/cli`. Face take is at `/tmp/new_takes/face.mp4`,
