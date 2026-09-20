@@ -85,6 +85,7 @@ module Master::Io
 
       payload = fetch_json(source_url, token:)
       upsert_snapshot(source: source_name, kind: source.fetch(:kind), url: source_url, payload:)
+
       rows = normalize(source.fetch(:normalizer), payload)
       replace_models(source_name, rows)
       rows.size
@@ -102,22 +103,27 @@ module Master::Io
     def search(query = nil, source: nil, limit: 50)
       clauses = []
       params = []
+
       if source
         clauses << "source = ?"
         params << source
       end
+
       if query && !query.empty?
         clauses << "(id LIKE ? OR name LIKE ? OR description LIKE ? OR tags LIKE ?)"
         4.times { params << "%#{query}%" }
       end
+
       sql = <<~SQL.chomp
         SELECT source, id, name, description, context_length, input_modalities,
                output_modalities, price_prompt, price_completion, tags, updated_at
         FROM provider_models
       SQL
+
       sql += " WHERE #{clauses.join(" AND ")}" unless clauses.empty?
       sql += " ORDER BY source, id LIMIT ?"
       params << limit
+
       db.execute(sql, params)
     end
 
@@ -184,6 +190,7 @@ module Master::Io
       request["Authorization"] = "Bearer #{token}" if token && !token.empty?
       request["Accept"] = "application/json"
       request["User-Agent"] = "MASTER provider catalog index"
+
       # Bounded so a slow or unreachable catalog endpoint can't hang the caller
       # (ROBUSTNESS: no unbounded HTTP). Tunable via env for slow networks.
       response = Net::HTTP.start(uri.host, uri.port,
@@ -192,6 +199,7 @@ module Master::Io
                                  read_timeout: Integer(ENV.fetch("MASTER_HTTP_READ_TIMEOUT", "30"))) do |http|
         http.request(request)
       end
+
       raise "#{url} returned #{response.code}: #{response.body[0, 200]}" unless response.is_a?(Net::HTTPSuccess)
       JSON.parse(response.body)
     end
@@ -209,19 +217,24 @@ module Master::Io
     def replace_models(source, rows)
       db.transaction do
         db.execute("DELETE FROM provider_models WHERE source = ?", [source])
+
         rows.each do |row|
-          db.execute(<<~SQL, [
+          sql = <<~SQL
             INSERT INTO provider_models(
               source, id, name, description, context_length,
               input_modalities, output_modalities,
               price_prompt, price_completion, tags, raw_json, updated_at
             ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           SQL
+
+          args = [
             source, row.fetch(:id), row[:name], row[:description],
             row[:context_length], row[:input_modalities], row[:output_modalities],
             row[:price_prompt], row[:price_completion], row[:tags],
             JSON.generate(row[:raw]), Time.now.utc.iso8601
-          ])
+          ]
+
+          db.execute(sql, args)
         end
       end
     end

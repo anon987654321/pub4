@@ -19,9 +19,11 @@ module Master
       # Connect to all configured MCP servers. Non-fatal on failure.
       def connect_all
         servers = load_servers
+
         servers.each do |name, cfg|
           connect(name, cfg)
         end
+
         @bus&.publish("mcp:connected", count: @clients.size)
       rescue StandardError => e
         @bus&.publish("mcp:error", error: e.message)
@@ -53,6 +55,7 @@ module Master
 
         client = build_mcp_client(name, transport, mcp_config)
         client.start
+
         @clients[name] = client
         @bus&.publish("mcp:server_connected", name:, transport: transport.to_s)
       rescue StandardError => e
@@ -83,8 +86,10 @@ module Master
       def load_servers
         path = File.join(@root, CONFIG_PATH)
         return {} unless File.exist?(path)
+
         require "yaml"
         data = Master.load_yaml(path) || {}
+
         data.fetch("servers", {})
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "mcp_coordinator.load_servers", event_bus: @bus, path:)

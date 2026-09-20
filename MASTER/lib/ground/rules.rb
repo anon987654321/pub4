@@ -27,12 +27,11 @@ module Master
         def constitution
           @constitution ||= begin
             absolute = soul_data["absolute"] || {}
+
             {
               "golden_rule" => absolute["golden_rule"] || @data["golden_rule"],
               "protection" => absolute["protection_tiers"] || @data["protection"],
               "banned_output" => voice["banned_output"],
-              # soul is the one source; the voice.yml shadow copy is deleted, so
-              # a fallback arm here would read a key that no longer exists.
               "anti_simulation" => absolute["anti_simulation"],
               "communication_style" => voice["style"],
             }.freeze
@@ -44,7 +43,9 @@ module Master
         def rules
           @rules ||= begin
             require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
+
             ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
+
             ::Law.rules.values.to_h { |r| [r.id.to_s, (r.practice || r.fix).to_s.gsub(/\s+/, " ").strip] }.freeze
           rescue StandardError
             {}.freeze
@@ -91,8 +92,10 @@ module Master
         @data_dir = File.join(@root, "data")
         @soul_path = File.join(@data_dir, "soul.yml")
         @voice_path = Master.data_file("voice.yml")
+
         @data = Master.load_rules(root: @root) || {}
         @voice_data = load_yaml(@voice_path) || {}
+
         # limits.yml is no longer parsed here. It was loaded on every Rules
         # construction purely to back two accessors nobody called; the callers that
         # do want it (scan/request, fix_loop, mode_posture) each read it themselves,
@@ -118,6 +121,7 @@ module Master
       def kernel
         @kernel ||= begin
           all_rules = Master.flatten_rules(@data["rules"])
+
           all_rules
             .select { |r| r["tier"] == "kernel" }
             .each_with_object({}) { |r, h| h[r["id"]] = r["name"] }
@@ -128,6 +132,7 @@ module Master
       def philosophy(limit: nil)
         @philosophy ||= begin
           all_rules = Master.flatten_rules(@data["rules"])
+
           all_rules
             .reject { |r| r["tier"] == "kernel" }
             .map { |h| h.transform_keys(&:to_s) }

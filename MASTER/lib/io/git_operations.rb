@@ -86,6 +86,7 @@ module Master
       def status_lines(path = nil)
         args = ["git", "-C", @root_path, "status", "--porcelain"]
         args << path if path
+
         out, = Master::Io::Exec.capture2e(*args)
         out.lines.map(&:chomp)
       end
@@ -97,6 +98,7 @@ module Master
       def changed_paths
         out, _, status = Master::Io::Exec.capture3("git", "-C", @root_path, "ls-files", "--modified", "--others",
                                                    "--exclude-standard")
+
         status.success? ? out.lines.map(&:chomp).uniq : []
       end
 

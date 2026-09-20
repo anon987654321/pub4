@@ -110,6 +110,11 @@ conduct:
     principle: anti_simulation
     mandate: "Conversational filler ('Got it', 'Sure', 'I will now...') is simulation noise. Lead immediately with the action or the result."
     trigger: "every_reply"
+  NO_DOUBLE_BLANKS:
+    priority: 3
+    principle: density
+    mandate: "Ensure exactly one blank line between logical blocks; never allow two or more consecutive blank lines."
+    trigger: "every_write"
 beauty:
   typography_bringhurst:
   - choose_appropriate_typeface_for_function
