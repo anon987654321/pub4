@@ -101,8 +101,6 @@ require_relative "lib/harmony"
 require_relative "lib/ledger"
 require_relative "lib/groove"
 require_relative "lib/listen"
-require_relative "lib/dsp_recovery"
-require_relative "lib/spectral_analyzer"
 
 # Terse OpenBSD-style console log (see lib/ledger.rb). Prefer dmesg over
 # decorative banners; set DILLA_DMESG=0 to silence, =2 for verbose argv.
@@ -220,25 +218,24 @@ DEMUX_VOCAL_MODEL = "htdemucs_ft"
 def recover_slowed_transients!(path, destination:)
   # Render-Measure-Refine Loop for transient recovery.
   # We iterate on the recovery chain until the spectral tilt matches the target.
-  
-  analyzer = SpectralAnalyzer.new
+
   # Target tilt derived from dilla_reference.yml (ideally) or a known good constant
-  target_tilt = 0.45 
-  
+  target_tilt = 0.45
+
   # Initial guestimate parameters
   hp_freq = 2000
   hs_gain = 6.0
-  
+
   max_iterations = 3
   current_iter = 0
-  
+
   loop do
     current_iter += 1
-    
+
     # 1. Render with current parameters
     recovery_chain = "highpass=f=#{hp_freq},acompressor=attack=1:release=50:ratio=4:threshold=-20dB,highshelf=f=5000:g=#{hs_gain}"
     mix_chain = "[0:a][1:a]amix=inputs=2:weights=1.0 0.3:normalize=0"
-    
+
     recovered_tmp = "#{path}.iter#{current_iter}.wav"
     begin
       sh! "ffmpeg", "-y", "-i", path, "-af", recovery_chain, "-c:a", "pcm_s16le", recovered_tmp
@@ -250,13 +247,18 @@ def recover_slowed_transients!(path, destination:)
       File.unlink(recovered_tmp) if File.file?(recovered_tmp)
     end
 
-    # 2. Measure
-    metrics = analyzer.analyze(destination)
-    
+    # 2. Measure. Tilt is the air band's energy against the mud band's, as a
+    # linear ratio -- the scale target_tilt lives on. MixScore.band reads
+    # through FfmpegProbe, so the measure has a deadline and no shell; mud is
+    # floored at -60 dB, where a quieter band is measuring noise.
+    mud_db = MixScore.band(destination, 60, 250)
+    air_db = MixScore.band(destination, 5000, 20_000)
+    tilt = 10**((air_db - [mud_db, -60].max) / 20.0)
+
     # 3. Refine
-    delta = metrics[:tilt] - target_tilt
+    delta = tilt - target_tilt
     break if delta.abs < 0.05 || current_iter >= max_iterations
-    
+
     # If tilt is too low (too muddy), increase high-shelf gain and raise high-pass
     if delta < 0
       hs_gain += 2.0
@@ -8134,7 +8136,7 @@ def melt_master!(path)
 end
 
 def normalise_master!(path, cfg)
-  return path if ENV["MASTER_NORMALISE"] == "0" || !File.file?(path)
+  return path if !File.file?(path) || ENV["MASTER_NORMALISE"] == "0"
 
   widen_master!(path)
 
@@ -8151,6 +8153,19 @@ def normalise_master!(path, cfg)
            else
              env_lufs.to_f
            end
+  apply_loudness_gain!(path, target)
+end
+
+# Measure the finished file, apply one static gain, bounded. The half of
+# normalise_master! that is not the widen, shared with grit_catalogue!: the
+# dirt stage is the last thing that touches a joined take, its saturators
+# leave measured level on the floor -- hedd_tape alone costs 5.8 dB at the
+# drive the chain runs -- and nothing measured after it, so a join of
+# mastered pieces shipped 5 LU under its target while the log said it was
+# mastered.
+def apply_loudness_gain!(path, target)
+  return path if ENV["MASTER_NORMALISE"] == "0" || !File.file?(path)
+
   out, err, status = capture("ffmpeg", "-nostdin", "-hide_banner", "-i", path,
                              "-af", "loudnorm=I=#{target}:TP=#{TRUE_PEAK_CEILING_DB}:print_format=json",
                              "-f", "null", "-")
@@ -23367,6 +23382,224 @@ def slskd_dig!(query, count)
   puts "registered in samples/chopped/loops.json — the renderer reads it as a normal loop"
 end
 
+# Sweep Ableton .als (gzip XML) and write Type-0 MIDI of every KeyTrack into
+# livesets_midi/, keyed by set. KeyTrack Id is the MIDI pitch; Time/Duration are
+# in beats. This is the melodic side of the liveset corpus -- import-als write
+# covers the drum grids and the profiles -- and play-liveset is what listens to
+# what it wrote. ALS_ROOT names the folder of sets.
+def extract_als_midi!(source = ENV.fetch("ALS_ROOT", "/Users/mac/Downloads/livesets"))
+  out = File.join(ROOT, "livesets_midi")
+  FileUtils.mkdir_p(out)
+  written = 0
+  skipped = 0
+  Dir.glob(File.join(source, "**", "*.als")).each do |als|
+    next if als.include?("/Backup/")
+
+    tempo, notes = als_midi_notes(als)
+    if notes.empty?
+      skipped += 1
+      next
+    end
+    rel = als.delete_prefix(source + "/").sub(/\.als\z/, ".mid")
+    dest = File.join(out, rel.tr("/", "_"))
+    File.binwrite(dest, als_midi_file(notes, tempo))
+    written += 1
+    warn format("%4d notes  tempo=%5.1f  %s", notes.size, tempo, File.basename(dest))
+  end
+  warn "wrote #{written} midi files to #{out} (#{skipped} als had no notes)"
+end
+
+# VLQ packing and the Type-0 file, shared by the extract above.
+ALS_MIDI_PPQ = 480
+
+def als_vlq(n)
+  bytes = [n & 0x7f]
+  n >>= 7
+  while n.positive?
+    bytes.unshift((n & 0x7f) | 0x80)
+    n >>= 7
+  end
+  bytes.pack("C*").b
+end
+
+def als_midi_file(notes, tempo_bpm)
+  usec = (60_000_000 / [tempo_bpm, 1].max).to_i
+  events = []
+  notes.each do |n|
+    on = (n[:beat] * ALS_MIDI_PPQ).round
+    off = ((n[:beat] + n[:dur]) * ALS_MIDI_PPQ).round
+    off = on + 1 if off <= on
+    events << [on, 0x90, n[:pitch], n[:vel]]
+    events << [off, 0x80, n[:pitch], 0]
+  end
+  events.sort_by! { |e| [e[0], e[1]] }
+  track = String.new(encoding: Encoding::BINARY)
+  track << "\x00\xFF\x51\x03".b << [usec].pack("N")[1, 3]
+  last = 0
+  events.each do |tick, status, pitch, vel|
+    delta = [tick - last, 0].max
+    track << als_vlq(delta) << [status, pitch, vel].pack("C*")
+    last = tick
+  end
+  track << als_vlq(0) << "\xFF\x2F\x00".b
+  header = "MThd".b + [6].pack("N") + [0, 1, ALS_MIDI_PPQ].pack("n*")
+  header + "MTrk".b + [track.bytesize].pack("N") + track
+end
+
+def als_midi_notes(als)
+  require "zlib"
+  xml = Zlib::GzipReader.open(als, &:read)
+  tempo = xml[%r{<Tempo>.*?<Manual Value="([0-9.]+)" }m, 1].to_f
+  tempo = 120.0 if tempo < 20 || tempo > 300
+  notes = []
+  xml.scan(%r{<KeyTrack Id="\d+">(.*?)</KeyTrack>}m) do |*caps|
+    body = caps.flatten.first.to_s
+    key = body[%r{<MidiKey Value="(\d+)" />}, 1]
+    next unless key
+
+    p = key.to_i
+    next if p.negative? || p > 127
+
+    body.scan(/<MidiNoteEvent Time="([^"]+)" Duration="([^"]+)" Velocity="([^"]+)"/) do |t, d, v|
+      notes << { pitch: p, beat: t.to_f, dur: [d.to_f, 0.05].max, vel: [[v.to_i, 1].max, 127].min }
+    end
+  end
+  [tempo, notes]
+end
+
+# Play a liveset's extracted MIDI two ways at once: fluidsynth (GM) and
+# AnalogSynth (Moog ladder). Notes in the GM drum range (35-59) are copied into
+# the hiphop midi crate, not voiced as pitches.
+LIVESET_DRUM_LO = 35
+LIVESET_DRUM_HI = 59
+LIVESET_SF = "/opt/homebrew/Cellar/fluid-synth/2.5.6/share/fluid-synth/sf2/VintageDreamsWaves-v2.sf2"
+
+def play_liveset_midi!(name = "home_improvement Project_home_improvement.mid")
+  mid = File.join(ROOT, "livesets_midi", name)
+  abort "missing #{mid}" unless File.file?(mid)
+  song = liveset_mid_parse(mid)
+  drums, pitched = song[:notes].partition { |n| n[:pitch].between?(LIVESET_DRUM_LO, LIVESET_DRUM_HI) }
+  warn "#{name}: #{pitched.size} pitched, #{drums.size} drum-range"
+
+  if drums.any?
+    crate = File.join(SAMPLE_DIR, "midi")
+    FileUtils.mkdir_p(crate)
+    dest = File.join(crate, "hiphop_#{File.basename(name)}")
+    FileUtils.cp(mid, dest)
+    warn "drums copied to #{dest}"
+  end
+
+  tmp = "/tmp/liveset_play"
+  FileUtils.mkdir_p(tmp)
+  analog = File.join(tmp, "dilla.wav")
+  fluid = File.join(tmp, "fluid.wav")
+  mix = File.join(tmp, "mix.wav")
+  write_liveset_wav(analog, liveset_analog_render(pitched, song[:ppq], song[:bpm], seconds: 40))
+  system("fluidsynth", "-ni", LIVESET_SF, mid, "-F", fluid, "-r", "44100", "-g", "0.6") or warn "fluidsynth failed"
+  if File.file?(fluid)
+    ToolRun.system("ffmpeg", "-y", "-loglevel", "error", "-i", analog, "-i", fluid,
+                   "-filter_complex", "[0:a][1:a]amix=inputs=2:weights=1 0.7:duration=shortest,alimiter=limit=0.95",
+                   mix)
+    exec("afplay", mix)
+  else
+    exec("afplay", analog)
+  end
+end
+
+def liveset_read_vlq(io)
+  n = 0
+  loop do
+    b = io.readbyte
+    n = (n << 7) | (b & 0x7f)
+    break if b < 0x80
+  end
+  n
+end
+
+def liveset_mid_parse(path)
+  require "stringio"
+  io = StringIO.new(File.binread(path))
+  io.read(4)
+  io.read(4)
+  _fmt, _ntr, ppq = io.read(6).unpack("n*")
+  io.read(4)
+  tlen = io.read(4).unpack1("N")
+  track = StringIO.new(io.read(tlen))
+  tempo = 500_000
+  tick = 0
+  notes = []
+  ons = {}
+  until track.eof?
+    tick += liveset_read_vlq(track)
+    status = track.readbyte
+    if status == 0xFF
+      typ = track.readbyte
+      len = liveset_read_vlq(track)
+      body = track.read(len)
+      tempo = ("\x00" + body).unpack1("N") if typ == 0x51 && body.bytesize == 3
+      break if typ == 0x2F
+    elsif status & 0xF0 == 0x90
+      pitch = track.readbyte
+      vel = track.readbyte
+      if vel.zero?
+        on = ons.delete(pitch)
+        notes << { pitch: pitch, start: on[:tick], dur: tick - on[:tick], vel: on[:vel] } if on
+      else
+        ons[pitch] = { tick: tick, vel: vel }
+      end
+    elsif status & 0xF0 == 0x80
+      pitch = track.readbyte
+      track.readbyte
+      on = ons.delete(pitch)
+      notes << { pitch: pitch, start: on[:tick], dur: tick - on[:tick], vel: on[:vel] } if on
+    end
+  end
+  bpm = 60_000_000.0 / tempo
+  { notes: notes, ppq: ppq, bpm: bpm }
+end
+
+def liveset_analog_render(notes, ppq, bpm, seconds: 45)
+  rate = 44_100
+  samples = Array.new((rate * seconds).ceil, 0.0)
+  ladder = AnalogSynth::Ladder.new(rate: rate)
+  notes.each do |n|
+    next if n[:pitch].between?(LIVESET_DRUM_LO, LIVESET_DRUM_HI)
+
+    hz = 440.0 * (2.0**((n[:pitch] - 69) / 12.0))
+    t0 = n[:start].to_f / ppq * 60.0 / bpm
+    t1 = t0 + (n[:dur].to_f / ppq * 60.0 / bpm)
+    next if t0 >= seconds
+
+    t1 = [t1, seconds].min
+    i0 = (t0 * rate).floor
+    i1 = (t1 * rate).floor
+    gain = n[:vel] / 127.0 * 0.15
+    phase = 0.0
+    (i0...i1).each do |i|
+      break if i >= samples.length
+
+      phase += hz / rate
+      phase -= 1.0 while phase >= 1.0
+      env = 1.0 - ((i - i0).to_f / (i1 - i0 + 1))
+      s = AnalogSynth.wave(:saw, phase)
+      samples[i] += ladder.process(s * gain * env, [hz * 4, 2400].min, 0.35)
+    end
+  end
+  peak = samples.map(&:abs).max
+  peak = 1.0 if peak < 1e-6
+  scale = 0.85 / peak
+  samples.map { |s| (s * scale * 32_767).round.clamp(-32_767, 32_767) }
+end
+
+def write_liveset_wav(path, pcm)
+  rate = 44_100
+  data = pcm.pack("s*")
+  hdr = "RIFF#{[36 + data.bytesize].pack('V')}WAVEfmt "
+  hdr << [16, 1, 1, rate, rate * 2, 2, 16].pack("VvvVVvv")
+  hdr << "data#{[data.bytesize].pack('V')}"
+  File.binwrite(path, hdr + data)
+end
+
 # CC-BY is free to use and not free of obligation. This is the list you owe.
 def crate_credits
   rows = CrateDig.manifest["items"].select { |i| i["attribution"] }
@@ -27014,7 +27247,7 @@ def copy_machine_loop_entry(loop_entry, duration)
     family: ENV.fetch("COPY_MACHINE_FAMILY", "harmonic").to_sym,
     reverse: ENV.fetch("COPY_MACHINE_REVERSE", "0.25").to_f,
     width: ENV.fetch("COPY_MACHINE_WIDTH", "0.8").to_f,
-    drift: ENV.fetch("COPY_MACHINE_DRIFT", "220").to_f,
+    drift: ENV.fetch("COPY_MACHINE_DRIFT", "320").to_f,
     seed: seed_for("copymachine"),
     duration:, rate: SAMPLE_RATE
   )
@@ -28420,6 +28653,12 @@ def command_help
     ]],
     ["demo", "DEMO AND TAKES", [
       ["catalogue", "", "The catalogue through the bed -> demo.wav + demo.mp3"],
+      ["pieces", "", "The showcase order of the catalogue pieces, rendered one process each -> demo.wav + demo.mp3"],
+      ["catalogue-full", "", "Every piece at its written length, thirty-one and eighteen minutes -> demo.wav + demo.mp3"],
+      ["piece", "<name> [out.wav]", "One piece of the catalogue; its recipe rides the environment (DILLA_PIECE)"],
+      ["pieces-list", "", "The catalogue rows: names, progressions, bpm, pad families, drum banks"],
+      ["demo2", "[DEMO2_OUT=wav]", "The industrial take: four_floor, detroit, hate_rumble through the bed -> demo2.wav"],
+      ["demo3", "", "The Dilla-pocket take: leads off, dry snare and 4/4 kick over the join -> demo3.wav"],
       ["demo-all", "[bars] [out.wav]", "The older engine's catalogue: #{sizes[:verified]} verified + #{sizes[:improvised]} improvised -> demo.wav + demo.mp3"],
       ["demo-each", "[bars]", "The same catalogue, one mp3 per track, no concat"],
       ["demo-quick", "[bars]", "An evenly spaced sample of the catalogue, for judging a change"],
@@ -28468,8 +28707,12 @@ def command_help
       ["dig", "<seam> [n]", "Dig n public-domain sides into samples/dug/ (lib/sampling.rb, material that clears)"],
       ["dig-seams", "", "The seams there are to dig"],
       ["dig-cc", "<seam> [n]", "Dig CC-BY stems from ccMixter"],
+      ["slskd", "<query> [n]", "Soulseek material through a local slskd into the chopped-loop registry (SLSKD.md; rights-gated)"],
       ["dug", "", "What has been dug, and under what terms"],
       ["credits", "", "Attribution owed for CC-BY material in the crate"],
+      ["extract-als", "[ALS_ROOT=dir]", "Sweep Ableton sets and write Type-0 MIDI of every KeyTrack into livesets_midi/"],
+      ["play-liveset", "[name]", "A liveset's extracted MIDI through fluidsynth and AnalogSynth at once; drum-range notes go to the crate"],
+      ["import-als", "<file.als|dir> [write]", "Read Ableton sets in full (write: profiles, MIDI and a census into project/imported)"],
     ]],
     ["learn", "LEARNING FROM RECORDS", [
       ["learn", "<url|path> [apply] [deep]", "Download -> demucs -> harmony and rhythm analysis -> engine hints"],
@@ -28488,6 +28731,7 @@ def command_help
     ]],
     ["compose", "COMPOSITION (session in #{DillaComposition::PROJECT_DIR})", [
       ["jam", "[bars]", "Render and play with a fresh session: motifs, performers, arrangement"],
+      ["compose", "", "The six-minute piece whose parts answer each other (Composition.demo!)"],
       ["evolve", "[bars] [generations]", "Mutate motifs, performer and groove, score, keep the best"],
       ["critique", "[path]", "Producer scores and recommendations on the last render"],
       ["crit", "[path]", "Objective mix meters on demo.wav, for MASTER to judge"],
@@ -37071,11 +37315,98 @@ pads = chop(played, bars, scratch("pads"))
     end
     dest = File.join(ROOT, "demo.wav")
     join_catalogue(parts, dest, fade)
-    grit_catalogue!(dest)
+    grit_catalogue!(dest, lufs: MASTER_LUFS_BY_STYLE[:default])
     mp3 = demo_encode_mp3(dest)
     puts "ok: #{dest} (#{parts.size} pieces, seed #{base})"
     puts "ok: #{mp3}" if mp3
     dest
+  end
+
+  # demo2.wav — industrial / classic techno from the catalogue rows that
+  # already sit on the floor: four_floor, detroit, hate_rumble. The operator
+  # prefers this take to demo.wav. DEMO2_OUT names the wav; a piece already
+  # rendered into scratch/pieces is reused rather than rendered again.
+  def demo2!
+    ENV["DILLA_OVERWRITE"] = "1"
+    dest = ENV["DEMO2_OUT"] || File.join(ROOT, "demo2.wav")
+    scratch = File.join(ROOT, "scratch", "demo2")
+    FileUtils.mkdir_p(scratch)
+    parts = %w[four_floor detroit hate_rumble].each_with_index.map do |name, i|
+      path = File.join(scratch, format("%02d_%s.wav", i, name))
+      existing = File.join(ROOT, "scratch", "pieces", format("%02d_%s.wav", i + 2, name))
+      if File.file?(existing)
+        FileUtils.cp(existing, path)
+      else
+        spawn_piece!(name, path, (ENV["RENDER_SEED"] || Time.now.to_i).to_i + i, seconds: 16)
+      end
+      path
+    end
+    join_catalogue(parts, dest, 0.5)
+    grit_catalogue!(dest, lufs: MASTER_LUFS_BY_STYLE[:techno])
+    mp3 = demo_encode_mp3(dest)
+    warn "ok: #{dest}"
+    warn "ok: #{mp3}" if mp3
+  end
+
+  # demo3.wav — Dilla pocket from the engine, not from an ffmpeg wash. Leads
+  # off, documented progressions, and a dry 8-bit snare and a 4/4 kick mixed on
+  # top of the join so the catalogue grit does not squash them. The outer ENV
+  # the take script once set before boot reached nothing: Bed's numbers settle
+  # at load from data/bed.yml, and each piece carries its own worker env.
+  def demo3!
+    ENV["DILLA_OVERWRITE"] = "1"
+    dest = File.join(ROOT, "demo3.wav")
+    seed = (ENV["RENDER_SEED"] || Time.now.to_i).to_i
+    worker = {
+      "BPM" => "92",
+      "LEAD_DENSITY" => "0",
+      "KICK_GAIN" => "1.35",
+      "KICK_SAMPLE_GAIN" => "1.2",
+      "DRUM_BUS_VOL" => "1.2",
+      "DILLA_SHOWCASE_SECONDS" => "16",
+      "RENDER_MODE" => "dillatime",
+      "DRUM_PRESET" => "dillatime"
+    }
+    scratch = File.join(ROOT, "scratch", "demo3")
+    FileUtils.mkdir_p(scratch)
+    parts = %w[fall_in_love quartal_mediants get_dis_money detroit so_what two_moons].each_with_index.map do |name, i|
+      path = File.join(scratch, format("%02d_%s.wav", i, name))
+      env = worker.merge("DILLA_PIECE" => name, "RENDER_SEED" => (seed + i).to_s)
+      ok = system(env, RbConfig.ruby, File.join(ROOT, "dilla.rb"), "piece", name, path)
+      abort "demo3: #{name} failed" unless ok && File.file?(path)
+      path
+    end
+    join_catalogue(parts, dest, 0.4)
+    grit_catalogue!(dest, lufs: MASTER_LUFS_BY_STYLE[:default])
+
+    dur = wav_seconds(dest)
+    tmp = File.join(Dir.tmpdir, "demo3_#{Process.pid}")
+    FileUtils.mkdir_p(tmp)
+    kick = File.join(tmp, "kick.wav")
+    snare = File.join(tmp, "snare.wav")
+    out = File.join(tmp, "out.wav")
+
+    # 4/4 kick with a click. Mixed last so grit does not squash it.
+    ToolRun.system("ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-t", format("%.3f", dur),
+                   "-i", "aevalsrc='0.5*(random(0)-0.5)*exp(-90*mod(t,0.652))+0.95*sin(2*PI*(55+80*exp(-60*mod(t,0.652)))*t)*exp(-11*mod(t,0.652))':s=44100:d=#{dur}",
+                   "-af", "asoftclip=type=tanh:threshold=0.5:oversample=4,highpass=f=20,lowpass=f=220,volume=6dB,alimiter=limit=0.97",
+                   kick) or abort "demo3: kick failed"
+
+    # 8-bit phaser snare on 2 and 4, also last in the chain.
+    ToolRun.system("ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-t", format("%.3f", dur),
+                   "-i", "aevalsrc='0.7*(random(0)-0.5)*exp(-16*mod(t+0.326,0.652))*gt(mod(t,0.652),0.30)*lt(mod(t,0.652),0.42)':s=44100:d=#{dur}",
+                   "-af", "acrusher=bits=8:mode=log:mix=0.7,aphaser=in_gain=0.5:out_gain=0.8:delay=3:decay=0.4:speed=0.4,asoftclip=type=tanh:threshold=0.55:oversample=4,highpass=f=200,lowpass=f=4000,volume=3dB",
+                   snare) or abort "demo3: snare failed"
+
+    ToolRun.system("ffmpeg", "-y", "-loglevel", "error", "-i", dest, "-i", kick, "-i", snare,
+                   "-filter_complex",
+                   "[0:a][1:a][2:a]amix=inputs=3:weights=1 1.2 0.7:duration=first:normalize=0,highpass=f=30,lowpass=f=6000,alimiter=limit=0.94[out]",
+                   "-map", "[out]", "-c:a", "pcm_s16le", out) or abort "demo3: mix failed"
+    FileUtils.mv(out, dest)
+    FileUtils.rm_rf(tmp)
+    mp3 = demo_encode_mp3(dest)
+    warn "ok: #{dest}"
+    warn "ok: #{mp3}" if mp3
   end
 
   def spawn_piece!(name, path, seed, seconds: nil)
@@ -37102,7 +37433,11 @@ pads = chop(played, bars, scratch("pads"))
   # Dirt that belongs on the joined showcase, not on the bed under speech.
   # 7.5 ips tape, a mild triode, 11-bit crush, and a gated square chip that
   # is the console-game layer — all after the pieces have already met.
-  def grit_catalogue!(path)
+  # The take's own target, because a join crosses families and each part was
+  # mastered to its own: pieces! and demo3! are the mixed catalogue, demo2! is
+  # the techno take the operator asked for at techno's level. MASTER_LUFS
+  # outranks it here as everywhere else.
+  def grit_catalogue!(path, lufs:)
     seconds = wav_seconds(path)
     chip = scratch("catalogue_chip")
     grit = scratch("catalogue_grit")
@@ -37123,6 +37458,8 @@ pads = chop(played, bars, scratch("pads"))
             "-c:a", "pcm_s16le", "-ac", "2", grit, what: "catalogue grit")
     FileUtils.mv(grit, path)
     FileUtils.rm_f(chip)
+    pinned = ENV["MASTER_LUFS"].to_s.strip
+    apply_loudness_gain!(path, pinned.empty? ? Float(lufs) : pinned.to_f)
     path
   end
 
@@ -38275,6 +38612,9 @@ DISPATCH = {
   # this file is loading, so a name arriving as an argument arrives too late.
   # DILLA_PIECE already matching is what stops the second exec.
   "pieces" => -> { Bed.pieces! },
+  # The two other takes, named doors for the recipes Bed owns.
+  "demo2" => -> { Bed.demo2! },
+  "demo3" => -> { Bed.demo3! },
   # Every piece at its written length, which is thirty-one and eighteen minutes.
   "catalogue-full" => -> { Bed.pieces!(showcase: nil) },
   # Old Ableton sets, read back.
@@ -38433,6 +38773,8 @@ DISPATCH = {
   "dig-seams" => -> { crate_seams },
   "dig-cc" => -> { cc_dig!(ARGV.shift, (ARGV.shift || 6).to_i) },
   "slskd" => -> { slskd_dig!(ARGV.shift, (ARGV.shift || 1).to_i) },
+  "extract-als" => -> { extract_als_midi!(ARGV.shift) },
+  "play-liveset" => -> { play_liveset_midi!(ARGV.shift) },
   "credits" => -> { crate_credits },
   "dug" => -> { dug_list },
   "use-external-kit" => -> { use_external_kit!(ARGV.shift || abort("usage: use-external-kit <01-hard-trap|02-bounce|03-soulful-vintage>")) },

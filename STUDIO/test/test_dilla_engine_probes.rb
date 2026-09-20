@@ -1256,7 +1256,9 @@ class TestDilla < Minitest::Test
         techno_is_explicit: MASTER_LUFS_BY_STYLE.key?(:techno),
         # The normalise pass re-encodes the file it levels. Hardcoding a bitrate
         # there downgraded every 320k mp3 to 192k as a side effect of a gain.
-        reencodes_with_codec_for: !!(body.call("normalise_master!") =~ /codec_for\\(path\\)/)
+        # The pass is normalise_master! plus the gain helper it shares with
+        # grit_catalogue! -- assert the re-encode, not which of the two holds it.
+        reencodes_with_codec_for: !!(body.call("normalise_master!") + " " + body.call("apply_loudness_gain!") =~ /codec_for\\(path\\)/)
       )
     RUBY
 

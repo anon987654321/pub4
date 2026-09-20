@@ -106,7 +106,17 @@ module Deploy
     # counts every tracked file in STUDIO. This one counts dilla's Ruby beside
     # the engine and nothing else.
     DILLA_SUPPORT = %r{/dilla/(?:lib/.+|(?!dilla\.rb\z)[^/]+\.rb)\z}
-    DILLA_SUPPORT_CEILING = 10
+    # Eleven, and each is its own subject or carries a contract that forbids the
+    # fold: the six the 09-14 campaign settled (groove, harmony, ledger, listen,
+    # sampling, sound), the live side the engine never requires (livesets,
+    # sine_stream), the crate kept outside the renderer on purpose (slskd_crate),
+    # the third-party gem boundary (music_gems), and engine_sources, whose
+    # standalone-load contract is why it cannot fold into a file with
+    # dependencies. Every one of those was a real module with readers, not
+    # sprawl; the two that were not -- dsp_recovery, a shadowed duplicate, and
+    # spectral_analyzer, a backtick-shell duplicate of DillaMaster's band
+    # measurement -- were deleted rather than counted.
+    DILLA_SUPPORT_CEILING = 11
     # Directories dilla has left. Support code went to lib/, and each of those
     # coming back is the sprawl coming back, whatever its file count; renders/
     # went because every render lands beside dilla.rb, on the operator's "stop
