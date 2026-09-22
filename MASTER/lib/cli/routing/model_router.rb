@@ -139,14 +139,14 @@ module Master
 
         def weighted_score(score)
           weights = @rules.fetch("weights", {})
-                qw = [weights.fetch("quality", 1.0).to_f, 0.01].max
-                sw = [weights.fetch("speed", 1.0).to_f, 0.01].max
-                cw = [weights.fetch("cost", 1.0).to_f, 0.01].max
-                q = score.fetch("quality", 0.5).to_f * qw
-                s = [score.fetch("speed", 1.0).to_f * sw, 0.01].max
-                c = [score.fetch("cost", 0.5).to_f * cw, 0.001].max
-                q * s * c
-              end
+          qw = [weights.fetch("quality", 1.0).to_f, 0.01].max
+          sw = [weights.fetch("speed", 1.0).to_f, 0.01].max
+          cw = [weights.fetch("cost", 1.0).to_f, 0.01].max
+          q = score.fetch("quality", 0.5).to_f * qw
+          s = [score.fetch("speed", 1.0).to_f * sw, 0.01].max
+          c = [score.fetch("cost", 0.5).to_f * cw, 0.001].max
+          q * s * c
+        end
 
         def load_rules
           path = File.join(@root, "data", "models.yml")
