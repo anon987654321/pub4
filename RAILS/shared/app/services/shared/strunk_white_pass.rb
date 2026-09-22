@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Shared
-  # Deterministic Strunk & White prose strip — ported from MASTER/lib/now/stages/prune.rb.
+  # Deterministic Strunk & White prose strip.
   # Removes hedges, preambles, markdown noise, and sycophancy without touching code fences.
   class StrunkWhitePass
     FENCE_RE = /(```.*?```)/m.freeze
