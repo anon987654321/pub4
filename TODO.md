@@ -445,9 +445,7 @@ slices. Each is a hypothesis with its seam.
 
 ### RAILS
 
-- **`reveal` is registered and mounted by no app view,** only by the snippet
-  library, and the reverse Stimulus contract exempts it with that reason.
-  Drag-only reorder (amber outfits, marketplace variants) has no keyboard path
+- **Drag-only reorder** (amber outfits, marketplace variants) has no keyboard path
   (WCAG 2.5.7), and a keyboard path means visible controls: the operator's.
 - **42 `needs_id` guest pages get no live probe;** `page_inventory` names them
   now, and giving them record ids needs a booted triangle.
