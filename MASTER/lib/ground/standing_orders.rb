@@ -22,13 +22,11 @@ module Master
         def upsert(name:, command: nil, **fields)
           existing = @orders.find { |o| o["name"] == name.to_s }
           definition = order_definition(name, command, **fields)
-
           if existing
             existing.merge!(definition)
           else
             @orders << definition.merge("state" => "pending", "last_run_at" => 0, "runtime" => true)
           end
-
           persist
           "standing order '#{name}' saved"
         end
@@ -39,7 +37,6 @@ module Master
         def reset(name)
           order = @orders.find { |x| x["name"] == name.to_s }
           return "no order named '#{name}'" unless order
-
           order["state"] = "pending"
           order.delete("last_error")
           persist
@@ -56,14 +53,12 @@ module Master
           flag = o["enabled"] ? "on" : "off"
           last = o["last_run_at"].to_i > 0 ? Time.at(o["last_run_at"].to_i).strftime("%Y-%m-%d") : "never"
           err = o["last_error"] ? "  !! #{o["last_error"][0, 60]}" : ""
-
           seen = Array(o["evidence"]).last
           proof = if seen
-            "  #{seen["kind"]} #{seen["ok"] ? "ok" : "failed"}: #{seen["output"].to_s[0, 60]}"
-          else
-            ""
-          end
-
+"  #{seen["kind"]} #{seen["ok"] ? "ok" : "failed"}: #{seen["output"].to_s[0, 60]}"
+else
+""
+end
           "#{o['name']} [#{flag}|#{st}|#{domain_of(o)}] - #{o['description']} (last: #{last})#{err}#{proof}"
         end
 
@@ -72,15 +67,9 @@ module Master
         def order_definition(name, command, description: "", trigger: "scheduled", interval_s: DAILY_INTERVAL,
                              enabled: true, domain: Tool::Domain::DEFAULT, owner: "operator", verify: nil)
           {
-            "name" => name.to_s,
-            "description" => description.to_s,
-            "trigger" => trigger.to_s,
-            "interval_s" => interval_s.to_i,
-            "command" => command.to_s,
-            "enabled" => enabled,
-            "domain" => domain.to_s,
-            "owner" => owner.to_s,
-            "verify" => verify&.to_s
+            "name" => name.to_s, "description" => description.to_s, "trigger" => trigger.to_s,
+            "interval_s" => interval_s.to_i, "command" => command.to_s, "enabled" => enabled,
+            "domain" => domain.to_s, "owner" => owner.to_s, "verify" => verify&.to_s
           }.compact
         end
       end
@@ -116,11 +105,9 @@ module Master
         @pipeline = pipeline
         @bus = event_bus
         @container = container
-
         @orders = load_orders
         @mutex = Mutex.new
         @running = Set.new
-
         subscribe_events!
       end
 
@@ -128,6 +115,8 @@ module Master
         @container = container
       end
 
+      # A verified objective is met and stops waking; an errored one waits for
+      # /orders reset.
       def due
         now = Time.now.to_i
         @orders.select do |o|
@@ -140,7 +129,6 @@ module Master
 
       def run_due!
         results = due.map { |order| run_one_order(order) }
-
         persist if results.any?
         results
       end
@@ -153,15 +141,16 @@ module Master
 
         result = execute_order(order)
         settle(order, result)
-
         @bus&.publish("standing_order:ran", name: order["name"], ok: result.ok?, state: order["state"])
         { name: order["name"], result: }
       end
 
+      # The run is evidence either way. A run that worked and has a verify is
+      # checked: a passing check meets the objective, a failing one leaves it
+      # waking. Only a run that failed is an error.
       def settle(order, result)
         order["last_run_at"] = Time.now.to_i
         witness(order, kind: "run", result:)
-
         if result.err?
           order["state"] = "error"
           order["last_error"] = result.message.to_s[0, ERROR_TRUNCATE]
@@ -177,7 +166,6 @@ module Master
         ok = result.ok?
         said = (ok ? result.value : result.message).to_s
         entry = { "at" => Time.now.to_i, "kind" => kind, "ok" => ok, "output" => said[0, ERROR_TRUNCATE] }
-
         order["evidence"] = [*Array(order["evidence"]), entry].last(EVIDENCE_KEEP)
         result
       end
@@ -190,7 +178,6 @@ module Master
 
         argv = Shellwords.split(order["verify"].to_s)
         out, status = Master::Io::Exec.capture2e(*argv, chdir: Master::ROOT, timeout: VERIFY_TIMEOUT_S)
-
         status.success? ? Result.ok(out.strip) : Result.err(out.strip)
       rescue StandardError => e
         Result.err("verify: #{e.message}")
@@ -209,7 +196,6 @@ module Master
           next unless event_match?(order, event_name, payload)
           next if debounced?(order)
           next unless @mutex.synchronize { @running.add?(order["name"]) }
-
           Thread.new { run_event_order(order, payload) }.tap { |t| t.abort_on_exception = false }
         end
       end
@@ -261,13 +247,11 @@ module Master
 
       def execute_order(order, event: nil)
         return execute_callable(order, event:) if order["callable"]
-
         # An objective with nothing to do between checks: the verify is the work.
         return Result.ok("nothing to run; the verify decides") if order["command"].to_s.empty? && order["verify"]
 
         refusal = domain_refusal(order, "commands") || unattended_refusal(order["command"])
         return refusal if refusal
-
         return Master::CLI::TurnRouter.call(message: order["command"].to_s, container: @container) if @container[:commands]
 
         return @pipeline.call(Result.ok(user_message: order["command"].to_s)) if @pipeline
@@ -321,10 +305,8 @@ module Master
       def load_orders
         state = read_state
         defs = read_defs
-
         added = state.reject { |name, _| defs.any? { |order| order["name"] == name } }
                      .filter_map { |_, carry| carry["definition"]&.merge("runtime" => true) }
-
         (defs + added).each { |order| restore(order, state[order["name"]] || {}) }
       end
 
@@ -372,13 +354,11 @@ module Master
 
       def persist
         return unless @orders.is_a?(Array)
-
         state = @orders.each_with_object({}) do |order, acc|
           row = STATE_KEYS.each_with_object({}) { |k, h| h[k] = order[k] if order.key?(k) }
           row["definition"] = order.slice(*DEFINITION_KEYS) if order["runtime"]
           acc[order["name"]] = row
         end
-
         FileUtils.mkdir_p(File.dirname(STATE_PATH))
         write_atomic(STATE_PATH, state.to_yaml)
       end

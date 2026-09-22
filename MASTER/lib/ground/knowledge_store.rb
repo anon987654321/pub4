@@ -21,7 +21,6 @@ module Master
 
         def provider_errors(model: nil, limit: 20)
           where, args = provider_errors_query(model, limit)
-
           @db.execute(<<~SQL, args).map { |row| provider_error_row(row) }
             SELECT ts, dimension, value, metadata
             FROM feedback_events
@@ -34,18 +33,17 @@ module Master
         def opportunities
           cutoff = Time.now.to_i - RSI_WINDOW_DAYS * 86_400
           recent = @db.execute("SELECT event_type, dimension FROM feedback_events WHERE ts >= ?", [cutoff])
-
           tool_failure_opportunities(recent) +
             event_count_opportunities(recent, "user_correction", :repeated_correction, RSI_CORRECTION_MIN) +
             event_count_opportunities(recent, "provider_error", :provider_errors, RSI_PROVIDER_MIN)
         end
       end
-
+      # Strategy-reuse tracking (trigger -> strategy -> outcome/confidence) —
+      # separate from KnowledgeStore's fix-outcome and feedback-event concerns.
       module StrategyOutcomes
         def record_strategy(trigger:, strategy:, outcome:)
           ts = Time.now.to_i
           existing = existing_strategy(trigger, strategy)
-
           existing ? update_strategy(existing, outcome, ts) : insert_strategy(trigger, strategy, outcome, ts)
         rescue SQLite3::Exception => e
           warn "knowledge_store: #{e.message}"
@@ -53,13 +51,12 @@ module Master
 
         def search(trigger_fragment, limit: 3)
           fragment = "%#{trigger_fragment.to_s.downcase}%"
-
           @db.execute(<<~SQL, [fragment, limit])
-            SELECT trigger, strategy, outcome, confidence
-            FROM strategy_outcomes
-            WHERE LOWER(trigger) LIKE ? AND outcome != 'failed'
-            ORDER BY confidence DESC LIMIT ?
-          SQL
+          SELECT trigger, strategy, outcome, confidence
+          FROM strategy_outcomes
+          WHERE LOWER(trigger) LIKE ? AND outcome != 'failed'
+          ORDER BY confidence DESC LIMIT ?
+        SQL
         end
       end
 
@@ -120,7 +117,6 @@ module Master
       def initialize(root:)
         @db = open_db(root)
         @db.results_as_hash = true
-
         ensure_schema
       end
 
@@ -150,7 +146,6 @@ module Master
       def fix_quality(rule:, file_type: nil)
         cutoff = Time.now.to_i - QUALITY_WINDOW_DAYS * 86_400
         rows = fix_quality_rows(rule, file_type, cutoff)
-
         tally = rows.each_with_object(Hash.new(0)) { |r, h| h[r["outcome"]] = r["n"].to_i }
         total = tally["fixed"] + tally["stuck"]
         return 0.5 if total.zero?
@@ -160,17 +155,16 @@ module Master
 
       def top_rules(limit: 20, min_attempts: 3)
         cutoff = Time.now.to_i - QUALITY_WINDOW_DAYS * 86_400
-
         @db.execute(<<~SQL, [cutoff, min_attempts, limit])
-          SELECT rule,
-                 SUM(CASE WHEN outcome = 'fixed' THEN 1 ELSE 0 END) AS fixed,
-                 SUM(CASE WHEN outcome IN ('fixed', 'stuck') THEN 1 ELSE 0 END) AS total,
-                 CAST(SUM(CASE WHEN outcome = 'fixed' THEN 1 ELSE 0 END) AS REAL)
-                   / NULLIF(SUM(CASE WHEN outcome IN ('fixed', 'stuck') THEN 1 ELSE 0 END), 0) AS quality
-          FROM fix_outcomes WHERE ts >= ?
-          GROUP BY rule HAVING total >= ?
-          ORDER BY quality DESC LIMIT ?
-        SQL
+        SELECT rule,
+               SUM(CASE WHEN outcome = 'fixed' THEN 1 ELSE 0 END) AS fixed,
+               SUM(CASE WHEN outcome IN ('fixed', 'stuck') THEN 1 ELSE 0 END) AS total,
+               CAST(SUM(CASE WHEN outcome = 'fixed' THEN 1 ELSE 0 END) AS REAL)
+                 / NULLIF(SUM(CASE WHEN outcome IN ('fixed', 'stuck') THEN 1 ELSE 0 END), 0) AS quality
+        FROM fix_outcomes WHERE ts >= ?
+        GROUP BY rule HAVING total >= ?
+        ORDER BY quality DESC LIMIT ?
+      SQL
       end
 
       def close
@@ -217,7 +211,6 @@ module Master
 
       def update_strategy(existing, outcome, timestamp)
         confidence = [existing["confidence"].to_f + 0.05, 1.0].min
-
         sql = "UPDATE strategy_outcomes SET reuse_count = reuse_count + 1, " \
               "confidence = ?, outcome = ?, ts = ? WHERE id = ?"
         @db.execute(sql, [confidence, outcome.to_s, timestamp, existing["id"]])
@@ -225,7 +218,6 @@ module Master
 
       def insert_strategy(trigger, strategy, outcome, timestamp)
         confidence = outcome.to_s == "fixed" ? 0.7 : 0.4
-
         sql = "INSERT INTO strategy_outcomes " \
               "(ts, trigger, strategy, outcome, confidence, reuse_count) VALUES (?, ?, ?, ?, ?, 0)"
         @db.execute(sql, [timestamp, trigger.to_s, strategy.to_s, outcome.to_s, confidence])
@@ -236,7 +228,6 @@ module Master
           total = rows.size
           failures = rows.count { |row| row["event_type"] == "tool_failure" }
           rate = total.zero? ? 0.0 : failures.to_f / total
-
           next unless rate >= RSI_FAIL_THRESHOLD && total >= 3
 
           { category: :high_failure, dimension: tool, fail_rate: rate.round(3), total: }
@@ -293,9 +284,7 @@ module Master
         @db.execute_batch(<<~SQL)
           ALTER TABLE fix_outcomes RENAME TO fix_outcomes_pre_skipped;
         SQL
-
         SCHEMA_STATEMENTS.first.then { |statement| @db.execute_batch(statement) }
-
         @db.execute_batch(<<~SQL)
           INSERT INTO fix_outcomes (id, ts, rule, file_type, outcome)
             SELECT id, ts, rule, file_type, outcome FROM fix_outcomes_pre_skipped;

@@ -50,7 +50,6 @@ module Master
         @governor = governor
         @bus = event_bus
         @library_verify = library_verify || Ground::LibraryVerify.new(root:)
-
         @cmd = TTY::Command.new(printer: :null)
         @recent = []
         @mutex = Mutex.new
@@ -129,14 +128,12 @@ module Master
       def capture_output(command)
         executable = strip_force_sentinel(command)
         publish_before(command)
-
         # run! returns a result that destructures to [out, err], so `output, =`
         # took the stdout string and reading its exit status raised whenever a
         # bus was wired, which is every call the runtime makes. A non-zero exit
         # read as success with stderr dropped. TTY::Command's own timeout kills
         # the child, where Timeout.timeout around it left zsh running.
         result = @cmd.run!("zsh", input: wrapped_command(executable), timeout: TIMEOUT)
-
         @bus&.publish("tool:after", tool: NAME, exit_code: result.exit_status)
         return failed_result("exit #{result.exit_status}: #{tail(result)}") unless result.success?
 
@@ -150,7 +147,6 @@ module Master
 
       def wrapped_command(command)
         dot_directory = File.writable?("/tmp") ? "/tmp" : Dir.home
-
         "#!/usr/bin/env zsh\nset -euo pipefail\nsetopt nullglob extendedglob\n" \
           "export ZDOTDIR=#{Shellwords.escape(dot_directory)}\nexport LC_ALL=C.UTF-8\n" \
           "cd #{Shellwords.escape(@root)}\n#{command}\n"
@@ -179,7 +175,6 @@ module Master
           result = @library_verify.verify_binary!(binary)
           return result if result.err?
         end
-
         nil
       end
 

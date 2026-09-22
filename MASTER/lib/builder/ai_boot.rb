@@ -13,10 +13,8 @@ module Master
       services = wire_agent_services(root:, infra:, agent:, tools:, bus:)
       scanner = services[:scanner]
       council = services[:council]
-
       autonomous = boot_autonomous(root:, infra:, agent:, scanner:, axioms: council[:axioms])
         .merge(learnings: infra[:learnings], skills: boot_skills(root, bus))
-
       finalize_ai_boot(bus:, root:, infra:, agent:, autonomous:, scanner:, lean_boot: services[:lean_boot])
 
       { agent:, soul: bundle[:soul], scanner:, ecology: infra[:ecology], swarm: services[:swarm],
@@ -29,18 +27,14 @@ module Master
     def wire_agent_services(root:, infra:, agent:, tools:, bus:)
       Ground::ActivePlan.attach(bus, root)
       agent.wire_constitution(Ground::Constitution.new)
-
       scanner = build_scanner(root:, agent:, bus:, ecology: infra[:ecology])
       lean_boot = ENV["MASTER_FULL_BOOT"] != "1"
-
       swarm = lean_boot ? nil : Review::Swarm::Coordinator.new(agent:, event_bus: bus, parent_tools: tools)
       council = build_council(agent:, bus:, root:)
-
       # Permissive for user chat (CLI + web). This used to add "strict guard
       # remains in Tool::Contract for shell/git", which is not true: Tool::Contract
       # validates nothing anywhere — see data/proposals.yml.
       guard = Review::Security::InjectionGuard.new(mode: :permissive)
-
       { scanner:, lean_boot:, swarm:, council:, guard: }
     end
 
@@ -64,20 +58,15 @@ module Master
         memory: infra[:memory], personality: infra[:personality],
         code_index: infra[:code_index], homeostat: infra[:homeostat]
       )
-
       agent = Review::Agent.new(deps:)
       soul_doc = Voice::Soul.new(root:, agent:)
-
       tools << Io::AskLlm.new(agent:, governor: infra[:governor],
         circuit_breaker: infra[:breaker], cache: infra[:cache], event_bus: bus)
-
       ctx = CLI::ContextWindow.new(session: infra[:session], agent:, model_context: Master.context_window(agent.model),
         event_bus: bus, root:)
       ctx.check_and_compact!
       agent.wire_context_window(ctx)
-
       agent_pool = Review::AgentPool.new(governor: infra[:governor], tools:, event_bus: bus)
-
       { agent:, tools:, soul: soul_doc, context_window: ctx, agent_pool: }
     end
 
@@ -142,14 +131,11 @@ module Master
     def build_autonomous_core(root:, infra:, agent:, scanner:, axioms:, bus:)
       standing = Ground::StandingOrders.new(pipeline: nil, event_bus: bus)
       git = Io::GitOperations.new(root)
-
       rules = scanner.instance_variable_get(:@rules)
       learnings = infra[:learnings]
-
       rollback = Fix::Rollback.new(root:, bus:)
       fix_loop = build_fix_loop(root:, infra:, agent:, scanner:, axioms:, rules:, learnings:, rollback:, bus:, git:)
       watch_loop = build_watch_loop(rules:, agent:, scanner:, root:, bus:, learnings:, fix_loop:)
-
       { standing:, git:, rollback:, fix_loop:, watch_loop: }
     end
 
@@ -219,7 +205,6 @@ module Master
 
     def subscribe_fix_loop_events(bus:, propose_tree:, rollback:, fix_loop:, lean_boot:)
       subscribe_single_proposer(bus:, propose_tree:) unless lean_boot
-
       bus.subscribe("fix_loop:oscillation") { |payload| rollback.call(Master::Result.err("fix loop oscillation", category: :policy)) }
       bus.subscribe("fix_loop:cycle_detected") { |payload| rollback.call(Master::Result.err("fix loop cycle detected", category: :policy)) }
       bus.subscribe("system:crit") do
