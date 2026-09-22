@@ -299,6 +299,8 @@ module Master
 
         RuleDSL.rule :VERTICAL_BREATH,
           severity: :info, tags: %i[BEAUTY], applies_to: %i[ruby javascript],
+          fires: (1..10).map { |i| "line#{i} = 1\n" }.join,
+          does_not_fire: "a = 1\n\nb = 2\n",
           description: "vertical breath — avoid dense blocks of 10+ lines without a blank line" do |src, path:|
           next [] if path.to_s.include?("/review/scan/rules/")
           findings = []
@@ -317,23 +319,33 @@ module Master
               dense_count += 1
             end
           end
+          # A dense block that runs to end of file, with no trailing blank
+          # line to close it, never hit the check above — every file that
+          # simply ends mid-block (the common case) went unreported.
+          if dense_count >= 10
+            findings << finding(line: start_line, message: "suffocated block — add a blank line for breath")
+          end
           findings
         end
 
         RuleDSL.rule :CODE_SYMMETRY,
           severity: :info, tags: %i[BEAUTY], applies_to: %i[ruby javascript],
+          fires: "def foo\n        return true\nend\n",
+          does_not_fire: "def foo\n  return true\nend\n",
           description: "source symmetry — avoid jagged indentation shifts" do |src, path:|
           next [] if path.to_s.include?("/review/scan/rules/")
           findings = []
           lines = src.lines
           lines.each_with_index.each_slice(2) do |pair|
             next unless pair.size == 2
-            l1, l2 = pair[0], pair[1]
+            l1, l2 = pair[0][0], pair[1][0]
+            line2_number = pair[1][1]
             # a jagged shift is a sudden jump of 4+ spaces for a single line
             indent1 = l1[/\A\s*/].size
             indent2 = l2[/\A\s*/].size
-            if (indent1 - indent2).abs >= 4 && l2.strip.size < 40 && l2.match?(/^(?:return|break|next|raise)/)
-              findings << finding(line: pair[1][1] + 1, message: "jagged symmetry — align this line with its block")
+            l2_stripped = l2.strip
+            if (indent1 - indent2).abs >= 4 && l2_stripped.size < 40 && l2_stripped.match?(/^(?:return|break|next|raise)/)
+              findings << finding(line: line2_number + 1, message: "jagged symmetry — align this line with its block")
             end
           end
           findings
@@ -341,6 +353,9 @@ module Master
 
         RuleDSL.rule :TYPOGRAPHIC_GRID,
           severity: :info, tags: %i[TYPOGRAPHY], applies_to: %i[markdown html],
+          fires: "#{"x" * 105}\n",
+          does_not_fire: "short line\n",
+          example_path: "/repo/README.md",
           description: "typographic grid — maintain line length and vertical rhythm" do |src, path:|
           next [] if path.to_s.include?("/review/scan/rules/")
           findings = []

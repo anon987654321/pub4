@@ -357,7 +357,7 @@ end
   end
 
   def test_rescue_exception_still_fires_on_a_real_rescue
-    refute_empty findings(:RESCUE_EXCEPTION, %(  rescue Exception => e\n))
+    refute_empty findings(:RESCUE_EXCEPTION, %(def call\nrescue Exception => e\nend\n))
   end
 
   # --- TODO_FIXME ---------------------------------------------------------

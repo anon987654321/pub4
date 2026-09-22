@@ -11,8 +11,8 @@ module Master
 
   RuleDSL.rule :NO_DEBUG,
     severity: :error, tags: %i[CLEAN_CODE], applies_to: %i[ruby],
-    fires: "  binding.pry\\n",
-    does_not_fire: "debugger_enabled = false\\n",
+    fires: "  binding.pry\n",
+    does_not_fire: "debugger_enabled = false\n",
     description: "no debug breakpoints in committed code" do |src, path:|
     next [] if path.to_s.include?("/review/scan/rules/")
 
@@ -35,10 +35,10 @@ module Master
 
   RuleDSL.rule :NO_PUTS,
     severity: :warning, tags: %i[CLEAN_CODE], applies_to: %i[ruby],
-    fires: "  puts(\"ready\")\\n",
+    fires: "  puts(\"ready\")\n",
     # A local named p is not Kernel#p: assignment, a method call on it, and a
     # bare p (which prints nothing) all stay quiet.
-    does_not_fire: "  @bus.publish(\"ready\")\\n  p = point\\n  p.x\\n  p == q\\n  p\\n",
+    does_not_fire: "  @bus.publish(\"ready\")\n  p = point\n  p.x\n  p == q\n  p\n",
     description: "no puts, p or pp in library code" do |src, path:|
     # The REPL prints for a living, so the path it lives at is exempt. This
     # exemption carries the whole of lib/cli/session/ -- 100 deliberate puts --
@@ -140,12 +140,12 @@ module Master
     # A rule's worked example is the one place its own forbidden shape is
     # legitimately spelled, and FAIL_VISIBLY reads this file like any other. The
     # marker has to sit on the matching line, not above it.
-    fires: "rescue Exception => e\\n", # scan: intentional
+    fires: "begin\nrescue Exception => e\nend\n", # scan: intentional
     # A comment naming the shape is prose about it. The paragraph below
     # explaining which rescue each rule owns was a finding against itself, and
     # this line spells the shape twice, so it carries the marker the way the
     # positive example above does.
-    does_not_fire: "# rescue Exception belongs to this rule\\nrescue StandardError => e\\n", # scan: intentional
+    does_not_fire: "begin\n  # rescue Exception belongs to this rule\nrescue StandardError => e\nend\n", # scan: intentional
     description: "rescue StandardError not Exception" do |src, path:|
     # Comment lines blanked, not the directory skipped: a real `rescue
     # Exception` in a scanner rule is worth catching, and SILENT_RESCUE's note
@@ -282,8 +282,10 @@ module Master
 
   RuleDSL.rule :OMIT_NEEDLESS_WORDS,
     severity: :info, tags: %i[BE_CONCISE],
+    fires: "# This is a helper for totals\n",
+    does_not_fire: "# Sums the line items\n",
     description: "Strunk & White: omit needless words in comments" do |src, path:|
-    src.lines.each_with_index.flat_map do |line, n|
+    src.lines.each_with_index.filter_map do |line, n|
       next unless line.strip.start_with?("#")
       next if line.match?(/scan:\s*intentional\b/)
 
