@@ -59,6 +59,13 @@ class Marketplace::Listing < ApplicationRecord
   # null for every bicycle.
   KINDS = %w[goods job housing gig].freeze
   STATUSES = %w[active sold reserved removed].freeze
+  # Set only when the create action enqueues PostproJob (photos attached and a
+  # preset chosen); nil means postpro was never requested, which stays the
+  # common case since a preset is optional. skipped covers PostproProcessor
+  # finding no postpro script on this box -- the vm23 caveat -- as well as an
+  # attachment that vanished before the job ran; failed is the script running
+  # and erroring.
+  PHOTO_STATUSES = %w[pending done skipped failed].freeze
   DEFAULT_RADIUS_KM = 5.0
   MAX_RADIUS_KM = 50.0
 
@@ -71,6 +78,7 @@ class Marketplace::Listing < ApplicationRecord
   validates :price_cents, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true, unless: :goods?
   validates :condition, inclusion: { in: CONDITIONS }, allow_nil: true
   validates :status, inclusion: { in: STATUSES }
+  validates :photo_status, inclusion: { in: PHOTO_STATUSES }, allow_nil: true
   validates :latitude, :longitude, numericality: true, allow_nil: true
 
   before_validation do
@@ -178,6 +186,11 @@ class Marketplace::Listing < ApplicationRecord
   end
 
   def mark_sold! = update_columns(status: "sold", updated_at: Time.current)
+
+  # updated_at with it, same as mark_sold! -- the [listing] fragment cache
+  # would otherwise keep serving whichever photo_status it had at render time.
+  def mark_photo_status!(status) = update_columns(photo_status: status, updated_at: Time.current)
+  def photo_processing? = photo_status == "pending"
 
   def expired? = expires_at.present? && expires_at <= Time.current
   def expires_in_days = expires_at.nil? ? nil : ((expires_at - Time.current) / 1.day).ceil

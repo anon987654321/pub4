@@ -10,6 +10,9 @@
       <%= button_to t("marketplace.renew"), renew_listing_path(@listing), method: :post, class: "btn btn-primary btn-sm" %>
     <% end %>
   <% end %>
+  <% if @listing.photo_processing? %>
+    <p class="listing-status listing-status--muted"><%= t("marketplace.photo_processing_notice") %></p>
+  <% end %>
   <p><%= [(@listing.condition.present? ? t("marketplace.conditions.#{@listing.condition}", default: @listing.condition) : nil), @listing.location].compact.join(" · ") %></p>
   <p><%= tag.strong(@listing.user&.display_name || t("chat.anon")) %>
     <% if @listing.reviews_count.to_i.positive? %> · <%= t("marketplace.seller_rating", rating: number_with_precision(@listing.rating, precision: 1)) %><% end %></p>

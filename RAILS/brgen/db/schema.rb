@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_15_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_22_090000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -738,6 +738,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_15_130000) do
     t.decimal "latitude", precision: 10, scale: 7
     t.string "location"
     t.decimal "longitude", precision: 10, scale: 7
+    t.string "photo_status"
     t.integer "price_cents"
     t.decimal "rating", precision: 3, scale: 2, default: "0.0", null: false
     t.datetime "renewal_notice_sent_at"

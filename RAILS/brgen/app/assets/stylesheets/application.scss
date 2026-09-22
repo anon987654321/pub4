@@ -5754,6 +5754,11 @@ body.vertical-marketplace .listing-status {
   font-weight: var(--weight-bold);
 }
 
+body.vertical-marketplace .listing-status--muted {
+  color: var(--text-secondary);
+  font-weight: var(--weight-normal);
+}
+
 @media (min-width: 768px) {
   .store-hero {
     padding: 32px;

@@ -79,7 +79,10 @@ class Marketplace::ListingsController < Marketplace::BaseController
     @listing = Current.user.marketplace_listings.build(listing_params_for_kind(listing_params[:kind].presence || "goods"))
     if @listing.save
       preset = params[:listing][:preset].presence
-      PostproJob.perform_later(@listing.to_gid.to_s, preset, "photos") if preset && @listing.photos.attached?
+      if preset && @listing.photos.attached?
+        @listing.mark_photo_status!("pending")
+        PostproJob.perform_later(@listing.to_gid.to_s, preset, "photos")
+      end
       Shared::DomainEvent.record!(
         actor: Current.user, action: "listing.created", subject: @listing,
         source_vertical: "marketplace", locality: @listing.location

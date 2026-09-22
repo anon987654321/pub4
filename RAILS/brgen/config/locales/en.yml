@@ -1205,6 +1205,7 @@ en:
     offer: Offer
     sold_notice: This listing has been sold.
     expired_notice: This listing has expired.
+    photo_processing_notice: Photos are still processing.
     renew: Renew listing
     distance_km: "%{km} km away"
     no_reviews_body: Buyers can review after an order.

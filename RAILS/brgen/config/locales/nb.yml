@@ -1212,6 +1212,7 @@ nb:
     offer: Bud
     sold_notice: Denne annonsen er solgt.
     expired_notice: Denne annonsen har utløpt.
+    photo_processing_notice: Bildene behandles fortsatt.
     renew: Forny annonsen
     distance_km: "%{km} km unna"
     no_reviews_body: Kjøpere kan omtale etter en ordre.
