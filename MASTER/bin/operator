@@ -45,7 +45,7 @@ def usage
 end
 
 def ssh_host
-  ENV.fetch("PUB4_SSH_HOST", "dev@46.23.89.226")
+  ENV.fetch("PUB4_SSH_HOST", "dev@brgen.no")
 end
 
 def ssh_key
