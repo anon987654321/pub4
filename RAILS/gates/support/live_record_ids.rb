@@ -213,8 +213,16 @@ module Deploy
       slug && { channel_slug: slug }
     end
 
+    # Tv::Video has no city_id of its own -- it is TenantedThrough :channel
+    # (see Tv::ChannelTenanted) -- so the city has to come through a join
+    # rather than a column this table carries.
     def tv_video(app)
-      id = scalar(app, "SELECT id FROM tv_videos WHERE city_id = ? ORDER BY id LIMIT 1", BERGEN_CITY_ID)
+      id = scalar(app, <<~SQL, BERGEN_CITY_ID)
+        SELECT tv_videos.id FROM tv_videos
+        JOIN tv_channels ON tv_channels.id = tv_videos.tv_channel_id
+        WHERE tv_channels.city_id = ?
+        ORDER BY tv_videos.id LIMIT 1
+      SQL
       id && { id: id }
     end
 
