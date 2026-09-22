@@ -9,8 +9,6 @@ Rails.application.routes.draw do
   get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
   # Browsers often request the .js suffix; 422/HTML here breaks SW registration.
   get "service-worker.js" => "rails/pwa#service_worker"
-  get "privacy" => "pages#privacy", as: :privacy
-  get "service-worker" => "rails/pwa#service_worker"
   post "share" => "posts#share", as: :share_post
   # Loopback-only in practice (see InternalController's shared-secret gate);
   # not subdomain-constrained since MASTER calls it directly by IP:port.
