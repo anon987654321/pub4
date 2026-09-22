@@ -57,6 +57,7 @@ module Master
         FileUtils.mkdir_p(output_dir)
         ext = File.extname(source)
         output = File.join(output_dir, "#{File.basename(source, ext)}-#{preset}#{ext}")
+
         args = ["--input", source, "--output", output, "--preset", preset]
         result = ScriptDispatch.run(root:, tool: "postpro", arg: args.map { |value| Shellwords.escape(value) }.join(" "))
         result.ok? ? Result.ok({ output: result.value!, rendered: result.value!, media: :postpro, path: output }) : result
@@ -111,33 +112,37 @@ module Master
 
       DEFAULT_BEAT_BARS = 12
 
+      BEAT_STYLES = [
+        [/\bbach|baroque\b/i, "baroque"],
+        [/\bneo[ -]?soul\b/i, "neo-soul"],
+        [/\bjazz\b/i, "jazz"],
+        [/fly(?:ing)?\s+lotus/i, "flylo"],
+      ].freeze
+
+      def beat_style_for(text)
+        BEAT_STYLES.find { |pattern, _style| text.match?(pattern) }&.last || "dilla"
+      end
+
       def generate_beat(text, root:)
         # Use ConstraintDSL to resolve intent before rendering
         constraints = ConstraintDSL.parse_intent(text)
         resolved_params = ConstraintDSL.resolve(constraints)
-        
-        style = if text.match?(/\bbach|baroque\b/i)
-                  "baroque"
-                elsif text.match?(/\bneo[ -]?soul\b/i)
-                  "neo-soul"
-                elsif text.match?(/\bjazz\b/i)
-                  "jazz"
-                elsif text.match?(/fly(?:ing)?\s+lotus/i)
-                  "flylo"
-                else
-                  "dilla"
-                end
+        style = beat_style_for(text)
+
         output_dir = MEDIA_OUTPUT_DIR
         FileUtils.mkdir_p(output_dir)
         output = File.join(output_dir, "#{style}-#{Time.now.utc.strftime('%Y%m%dT%H%M%SZ')}.mp3")
+
         # Mirror Shared::DillaProcessor#run_script: the engine's CLI is
         # `dilla.rb dilla <output> <bars>` — style/track selection happens via
         # TRACK/PROGRESSION ENV, and resolved constraints now drive the renders.
         track = style.tr("-", "_")
         env = { "RENDER_MODE" => "dilla", "SPEAK" => "0" }
+
         # Merge resolved constraints into the environment for the dilla engine
         resolved_params.each { |k, v| env[k.to_s.upcase] = v.to_s }
         env.merge!("TRACK" => track, "PROGRESSION" => track) unless track == "dilla"
+
         args = ["dilla", output, DEFAULT_BEAT_BARS.to_s]
         result = ScriptDispatch.run(root:, tool: "dilla", arg: args.map { |v| Shellwords.escape(v) }.join(" "), env:)
         result.ok? ? Result.ok({ output: result.value!, rendered: result.value!, media: :dilla, path: output }) : result

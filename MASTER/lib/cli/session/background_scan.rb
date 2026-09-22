@@ -43,8 +43,18 @@ module Master
         @boot_scan_thread = Thread.new { @scan_gate.synchronize { Master::Trace::Dmesg.under("scan0") { boot_scan } } }
       end
 
+      # Rules that call the model (AdversarialRule, SemanticRule, CommentDriftRule
+      # — anything mixing in Rules::NeedsModel) share the one local ollama process
+      # with the interactive turn. Running them here queued a plain "hey" behind
+      # 8 sequential model calls the operator never asked for — /review and /fix
+      # still run the full rule set, deliberately, when a person asks for it.
+      def mechanical_scanner_rules
+        @refs.scanner.rules.reject { |rule| rule.respond_to?(:agent?) }
+      end
+
       def boot_scan
-        result = Master::Review::Scan::SelfScan.new(scanner: @refs.scanner, root: @refs.root, event_bus: @refs.bus).call(autofix: false)
+        result = Master::Review::Scan::SelfScan.new(scanner: @refs.scanner, root: @refs.root, event_bus: @refs.bus,
+          rules: mechanical_scanner_rules).call(autofix: false)
         return unless result.ok?
 
         summary = result.value!
@@ -96,7 +106,7 @@ module Master
 
       def background_cycle!
         lib_dir = File.join(@refs.root, "lib")
-        result = @refs.scanner.scan_dir(lib_dir, depth: :deep)
+        result = @refs.scanner.scan_dir(lib_dir, depth: :deep, rules: mechanical_scanner_rules)
         return unless result.ok?
         n = count_violations(result.value!)
         prev = violations_count

@@ -15,10 +15,10 @@ module Master
     does_not_fire: "debugger_enabled = false\\n",
     description: "no debug breakpoints in committed code" do |src, path:|
     next [] if path.to_s.include?("/review/scan/rules/")
-    
+
     parsed = Prism.parse(src)
     next [] if parsed.failure?
-    
+
     findings = []
     walk(parsed.value) do |node|
       if node.is_a?(Prism::CallNode) && node.name.to_s.match?(/^(pry|debugger|byebug|irb)$/)
@@ -60,10 +60,10 @@ module Master
     # guard, a rake task, a seed file or a test — where `puts "ok: synced"` is
     # the line the operator reads and a logger would hide it.
     next [] if src.start_with?("#!") || src.match?(PROGRAM_GUARD) || path.to_s.match?(PROGRAM_PATH)
-    
+
     parsed = Prism.parse(src)
     next [] if parsed.failure?
-    
+
     findings = []
     walk(parsed.value) do |node|
       if node.is_a?(Prism::CallNode) && node.name.to_s.match?(/^(puts|p|pp)$/)
@@ -152,18 +152,17 @@ module Master
     # below says why this population carries no path exemption.
     parsed = Prism.parse(src)
     next [] if parsed.failure?
-    
+
     findings = []
     walk(parsed.value) do |node|
-      if node.is_a?(Prism::RescueNode)
-        # Prism::RescueNode usually has a list of handled exceptions.
-        # We check if any of the handled exceptions are 'Exception'.
-        # Note: a bare 'rescue' usually handles StandardError.
-        handled = node.handled_exceptions
-        if handled && handled.any? { |ex| ex.slice.to_s == "Exception" }
-          findings << finding(line: node.location.start_line, message: "catches signals — use StandardError")
-        end
-      end
+      next unless node.is_a?(Prism::RescueNode)
+
+      # Prism::RescueNode#exceptions is the list of classes named on the
+      # `rescue` line. A bare 'rescue' has none and defaults to StandardError.
+      handled = node.exceptions
+      next unless handled&.any? { |ex| ex.slice.to_s == "Exception" }
+
+      findings << finding(line: node.location.start_line, message: "catches signals — use StandardError")
     end
     findings
   end

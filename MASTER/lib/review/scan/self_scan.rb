@@ -15,11 +15,12 @@ module Master
           end
         end
 
-        def initialize(scanner:, root:, event_bus: nil, targets: DEFAULT_TARGETS)
+        def initialize(scanner:, root:, event_bus: nil, targets: DEFAULT_TARGETS, rules: nil)
           @scanner = scanner
           @root = root
           @bus = event_bus
           @targets = targets
+          @rules = rules
         end
 
         def call(stream: false, autofix: false)
@@ -45,7 +46,7 @@ module Master
 
         def scan_target(target, stream:)
           path = File.join(@root, target)
-          result = @scanner.scan_dir(path, depth: :deep, stream:)
+          result = @scanner.scan_dir(path, depth: :deep, stream:, rules: @rules)
           Result.wrap(result).ok? ? result.value! : []
         end
 
@@ -66,6 +67,7 @@ module Master
         end
 
         def rule_count
+          return @rules.size if @rules
           return @scanner.rules.size if @scanner.respond_to?(:rules)
 
           Array(@scanner.instance_variable_get(:@rules)).size
