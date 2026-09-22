@@ -50,11 +50,19 @@ module Playlist
       }
     end
 
+    # Hosts compared whole, never by substring — matching Shared::LinkEmbed's
+    # rule, so a lookalike host (youtube.com.evil.test, notyoutube.com) files
+    # as "direct" rather than as the provider it merely names.
+    YOUTUBE_HOSTS = %w[youtube.com www.youtube.com m.youtube.com youtu.be].freeze
+    SPOTIFY_HOSTS = %w[open.spotify.com spotify.com].freeze
+    SOUNDCLOUD_HOSTS = %w[soundcloud.com www.soundcloud.com m.soundcloud.com].freeze
+    WHYP_HOSTS = %w[whyp.it].freeze
+
     def source_type_for(host)
-      return "youtube" if host.include?("youtube.com") || host.include?("youtu.be")
-      return "spotify" if host.include?("spotify.com")
-      return "soundcloud" if host.include?("soundcloud.com")
-      return "whyp" if host.include?("whyp.it")
+      return "youtube" if YOUTUBE_HOSTS.include?(host)
+      return "spotify" if SPOTIFY_HOSTS.include?(host)
+      return "soundcloud" if SOUNDCLOUD_HOSTS.include?(host)
+      return "whyp" if WHYP_HOSTS.include?(host)
 
       "direct"
     end
