@@ -28,6 +28,7 @@ class PageSimulationGateTest < Minitest::Test
   GATE = Deploy::PageSimulationGate
   INVENTORY = Deploy::PageInventory
   CRAWL = CrawlSupport
+  IDS = Deploy::LiveRecordIds
 
   Response = Struct.new(:code, :body)
 
@@ -49,8 +50,12 @@ class PageSimulationGateTest < Minitest::Test
   end
 
   # Everything the gate reaches the world through: the inventory it walks, the
-  # ports it probes, and the two files it writes.
-  def simulate(pages, live: [], needing_id: [], open: false, response: Response.new("200", LIVE_HTML))
+  # ports it probes, and the two files it writes. LiveRecordIds defaults to
+  # resolving nothing, so a page listed under needing_id stays unprobed unless
+  # a test hands its own resolve: stub — the real one reads triangle's sqlite
+  # files, which this suite must not depend on.
+  def simulate(pages, live: [], needing_id: [], open: false, response: Response.new("200", LIVE_HTML),
+               resolve: proc { |*, **| nil })
     Dir.mktmpdir("page-sim") do |out|
       with_const(GATE, :REPORT_PATH, File.join(out, "report.yml")) do
         with_const(GATE, :SNAPSHOT_PATH, File.join(out, "inventory.yml")) do
@@ -64,7 +69,9 @@ class PageSimulationGateTest < Minitest::Test
             write_snapshot!: proc { |*, **| nil }
           ) do
             with_methods(CRAWL, port_open?: proc { |*, **| open },
-                                fetch: proc { |*, **| response }) { GATE.run }
+                                fetch: proc { |*, **| response }) do
+              with_methods(IDS, resolve: resolve) { GATE.run }
+            end
           end
         end
       end
@@ -164,6 +171,21 @@ class PageSimulationGateTest < Minitest::Test
       assert_equal :passed, result.outcome, result.failures.join(" | ")
       assert_equal 0, result.live_skips
       assert_match(%r{brgen 1 guest page\(s\) need a record id and got no live probe — /posts/:id}, result.warnings.join(" | "))
+    end
+  end
+
+  # LiveRecordIds resolving a page takes it out of the unprobed list entirely:
+  # it gets a real live probe against the id it resolved to, not a warning.
+  def test_a_guest_page_needing_an_id_is_probed_live_once_liverecordids_resolves_it
+    Dir.mktmpdir("page-sim-view") do |root|
+      row = page(root)
+      post = page(root, path: "/posts/:id").merge(id: "brgen/posts/show", needs_id: true)
+      resolve = proc { |page, **| page[:id] == "brgen/posts/show" ? "/posts/42" : nil }
+      result = simulate([row, post], live: [row], needing_id: [post], open: true, resolve: resolve)
+
+      assert_equal :passed, result.outcome, result.failures.join(" | ")
+      assert_match(/live HTTP on 2 guest surfaces/, result.warnings.join(" | "), "the resolved page must count toward the live walk")
+      refute_match(/need a record id and got no live probe/, result.warnings.join(" | "))
     end
   end
 

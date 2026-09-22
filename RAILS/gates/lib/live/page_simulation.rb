@@ -6,6 +6,7 @@ require_relative "../../../../OPENBSD/lib/deploy_inventory"
 require_relative "../../../../OPENBSD/lib/gate_result"
 require_relative "../../../tools/crawl_support"
 require_relative "../../support/page_inventory"
+require_relative "../../support/live_record_ids"
 
 module Deploy
   # UI/UX user simulation across every full-page Rails surface.
@@ -81,13 +82,19 @@ module Deploy
         simulate_live(page, port)
       end
 
+      resolved, unprobed = resolve_pages_needing_an_id(ports_open)
+      resolved.each do |page, resolved_path|
+        live_count += 1
+        simulate_live(page.merge(path: resolved_path), PORTS[page[:app]])
+      end
+
       if live_count.zero?
         @result.warn("page_simulation: live HTTP skipped (no triangle app listening) — source checks still ran")
       else
         @result.warn("page_simulation: live HTTP on #{live_count} guest surfaces")
       end
 
-      unprobed = name_pages_needing_an_id(ports_open)
+      name_unprobed_pages(unprobed)
       write_report!(pages, ports_open, live_count, unprobed)
       @result.checked!(pages.size)
       @result
@@ -355,17 +362,32 @@ module Deploy
       entry["findings"] = [msg]
     end
 
-    # A guest page whose path names a record is walked as source only. It is a
-    # warning rather than skipped_live: GATE_REQUIRE_LIVE fails a skip, and no
-    # port opening would let this walk find an id. Named per open app, so a green
-    # live run says which pages it did not load.
-    def name_pages_needing_an_id(ports_open)
-      unprobed = PageInventory.guest_needing_id.select { |page| ports_open[page[:app]] }
+    # A guest page whose path names a record: LiveRecordIds resolves it against
+    # a real row from the app's own seeded database when it can, and hands back
+    # [[page, resolved_path], ...] for those and the plain page rows for what is
+    # left. What is left is either a route no seed script covers yet or the
+    # password-reset token, which no probe can ever hold a live one of.
+    def resolve_pages_needing_an_id(ports_open)
+      resolved = []
+      unprobed = []
+      PageInventory.guest_needing_id.each do |page|
+        next unless ports_open[page[:app]]
+
+        resolved_path = LiveRecordIds.resolve(page)
+        resolved_path ? resolved << [ page, resolved_path ] : unprobed << page
+      end
+      [ resolved, unprobed ]
+    end
+
+    # What resolve_pages_needing_an_id could not fill in. A warning rather than
+    # skipped_live: GATE_REQUIRE_LIVE fails a skip, and no port opening would let
+    # this walk find an id LiveRecordIds does not have. Named per open app, so a
+    # green live run still says which pages it did not load.
+    def name_unprobed_pages(unprobed)
       unprobed.group_by { |page| page[:app] }.each do |app, rows|
         paths = rows.map { |page| page[:path] }.uniq
         @result.warn("page_simulation: #{app} #{paths.size} guest page(s) need a record id and got no live probe — #{paths.join(", ")}")
       end
-      unprobed
     end
 
     def write_report!(pages, ports_open, live_count, unprobed = [])
