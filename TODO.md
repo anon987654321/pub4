@@ -743,11 +743,6 @@ sitting.
 
 **vm23.**
 
-- **Two recurring schedules that could never fire now have a cron line.**
-  `declutter-hygiene.sh` and `ports-import.sh` (`OPENBSD/usr/local/bin/`) run
-  each job directly via `rails runner`, load-gated like `prune-guests.sh`, on
-  vm23's tracked crontab — committed, not yet installed on the box. Needs
-  `install_tracked_crontab` (or a hand copy) run during a quiet window.
 - **After the next deploy, check:** a signed Stripe test event returns 200 at
   both `https://<city>/webhooks/stripe` and the markedsplass host; a Vipps
   checkout redirect lands on `*.vipps.no`; `/deals` with a badged deal; a kitchen
