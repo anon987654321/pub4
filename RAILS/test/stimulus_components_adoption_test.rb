@@ -14,10 +14,14 @@ class StimulusComponentsAdoptionTest < Minitest::Test
   end
 
   def test_boot_registers_password_visibility_and_nested_form
+    # password-visibility is universal; nested-form is amber-only — only
+    # amber's views mount it (RailsNestedForm), so it registers in
+    # stimulus_boot_amber.js rather than the file every app imports.
     boot = File.read(File.join(ROOT, "shared/frontend/stimulus_boot.js"))
-    %w[password-visibility nested-form].each do |name|
-      assert_includes boot, %("#{name}")
-    end
+    assert_includes boot, %("password-visibility")
+
+    amber_boot = File.read(File.join(ROOT, "shared/frontend/stimulus_boot_amber.js"))
+    assert_includes amber_boot, %("nested-form")
   end
 
   def test_shared_vendor_has_core_packages

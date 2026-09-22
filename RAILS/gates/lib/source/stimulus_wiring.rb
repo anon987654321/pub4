@@ -17,10 +17,11 @@ module Deploy
   # Two things are checked, and the second is the one that needs care:
   #
   #   1. Every identifier in data-controller resolves to a registration — either
-  #      an application.register("name", …) in stimulus_boot.js, a
-  #      @stimulus-components entry in its table, or a file in the app's own
-  #      controllers/ directory (eagerLoadControllersFrom derives the identifier
-  #      from the filename).
+  #      an application.register("name", …) or a @stimulus-components table
+  #      entry in one of the boot files the app's own index.js imports
+  #      (stimulus_boot.js plus whichever of _social/_brgen/_amber apply), or
+  #      a file in the app's own controllers/ directory (eagerLoadControllersFrom
+  #      derives the identifier from the filename).
   #
   #   2. Every `event->identifier#method` names a method that exists — but only
   #      when the identifier maps to a first-party file we can read. Vendored
@@ -34,7 +35,23 @@ module Deploy
     RAILS_ROOT = File.join(ROOT, "RAILS")
     APPS = %w[amber brgen bsdports].freeze
 
-    BOOT = "shared/frontend/stimulus_boot.js"
+    # stimulus_boot.js holds what every app registers. stimulus_boot_social.js
+    # (brgen + amber, not bsdports), stimulus_boot_brgen.js and
+    # stimulus_boot_amber.js hold what only some apps mount — split out so an
+    # app that doesn't use a controller never imports its module. Each app's
+    # true registration set is the union of the files its own index.js calls.
+    BOOT_FILES = {
+      universal: "stimulus_boot.js",
+      social: "stimulus_boot_social.js",
+      brgen: "stimulus_boot_brgen.js",
+      amber: "stimulus_boot_amber.js",
+    }.freeze
+
+    APP_BOOT_FILES = {
+      "amber" => %i[universal social amber],
+      "brgen" => %i[universal social brgen],
+      "bsdports" => %i[universal],
+    }.freeze
 
     # ERB interpolation inside an identifier list means that part of the value is
     # decided at render time; nothing static can resolve it.
@@ -78,7 +95,7 @@ module Deploy
       @rails_root = root
       @unmounted_allowed = unmounted_allowed
       @shadowed_allowed = shadowed_allowed
-      @boot_text = File.read(File.join(@rails_root, BOOT))
+      @boot_texts = BOOT_FILES.transform_values { |f| File.read(File.join(@rails_root, "shared/frontend", f)) }
     end
 
     def run
@@ -90,12 +107,12 @@ module Deploy
     end
 
     def audit_shadows(result)
-      shadowed = APPS.flat_map { |app| (app_identifiers(app) & shared_identifiers).map { |id| [app, id] } }
+      shadowed = APPS.flat_map { |app| (app_identifiers(app) & shared_identifiers_for(app)).map { |id| [app, id] } }
       shadowed.each do |app, id|
         result.checked!
         next if @shadowed_allowed.key?(id)
 
-        result.fail("#{app}: controller #{id.inspect} never loads — stimulus_boot.js registers that identifier first")
+        result.fail("#{app}: controller #{id.inspect} never loads — a shared boot file registers that identifier first")
       end
 
       (@shadowed_allowed.keys - shadowed.map(&:last)).each do |id|
@@ -108,23 +125,28 @@ module Deploy
     # left behind when a view moved to something else.
     def audit_mounts(result)
       mounted = APPS.to_h { |app| [app, mounted_identifiers(mount_sources(app))] }
-      everywhere = mounted.values.reduce(:|)
 
-      registrations = shared_identifiers.map { |id| [id, nil] } +
-                      APPS.flat_map { |app| app_identifiers(app).map { |id| [id, app] } }
-      registrations.uniq.each do |id, app|
+      # Which apps register each identifier — one for an app-owned controller,
+      # up to three for a shared one, never zero (registrations comes from the
+      # same boot files and app_identifiers used everywhere else in this gate).
+      registrations = Hash.new { |h, k| h[k] = [] }
+      APPS.each do |app|
+        (shared_identifiers_for(app) + app_identifiers(app)).uniq.each { |id| registrations[id] << app }
+      end
+
+      registrations.each do |id, apps|
         result.checked!
-        live = app ? mounted.fetch(app).include?(id) : everywhere.include?(id)
+        live = apps.any? { |app| mounted.fetch(app).include?(id) }
         next if live || @unmounted_allowed.key?(id)
 
-        result.fail("#{app || "stimulus_boot"}: controller #{id.inspect} is registered and no view, helper or script mounts it")
+        result.fail("#{apps.join(",")}: controller #{id.inspect} is registered and no view, helper or script mounts it")
       end
 
       @unmounted_allowed.each_key do |id|
-        registered = registrations.any? { |candidate, _| candidate == id }
-        if !registered
+        apps = registrations[id]
+        if apps.empty?
           result.fail("UNMOUNTED_ALLOWED names #{id.inspect}, which nothing registers any more — delete the entry")
-        elsif everywhere.include?(id)
+        elsif apps.any? { |app| mounted.fetch(app).include?(id) }
           result.fail("UNMOUNTED_ALLOWED names #{id.inspect}, which is mounted now — delete the entry")
         end
       end
@@ -143,12 +165,18 @@ module Deploy
         Dir.glob(File.join(@rails_root, "shared/frontend/**/*.js"))
     end
 
-    # Identifiers stimulus_boot registers for every app that calls it.
-    def shared_identifiers
-      @shared_identifiers ||= (
-        @boot_text.scan(/application\.register\("([a-z0-9-]+)"/).flatten +
-        @boot_text.scan(/^\s*\["([a-z0-9-]+)",/).flatten
-      ).uniq
+    # Identifiers registered by the boot files a given app's index.js calls —
+    # stimulus_boot.js for every app, plus whichever of _social/_brgen/_amber
+    # that app also imports.
+    def shared_identifiers_for(app)
+      @shared_identifiers_for ||= {}
+      @shared_identifiers_for[app] ||= APP_BOOT_FILES.fetch(app)
+        .flat_map { |key| identifiers_in(@boot_texts.fetch(key)) }.uniq
+    end
+
+    def identifiers_in(text)
+      (text.scan(/application\.register\("([a-z0-9-]+)"/).flatten +
+       text.scan(/^\s*\["([a-z0-9-]+)",/).flatten).uniq
     end
 
     # eagerLoadControllersFrom("controllers") turns foo_bar_controller.js into
@@ -166,7 +194,7 @@ module Deploy
     private
 
     def audit_app(app, result)
-      registered = (shared_identifiers + app_identifiers(app)).uniq
+      registered = (shared_identifiers_for(app) + app_identifiers(app)).uniq
       views(app).each do |path|
         text = File.read(path)
         rel = path.sub("#{@rails_root}/", "")
@@ -317,7 +345,7 @@ module Deploy
     end
 
     def registered_prefixes
-      @registered_prefixes ||= (shared_identifiers + APPS.flat_map { |a| app_identifiers(a) })
+      @registered_prefixes ||= (APPS.flat_map { |a| shared_identifiers_for(a) + app_identifiers(a) })
                               .uniq.sort_by { |id| -id.length }
     end
 

@@ -36,14 +36,18 @@ module Deploy
     def run
       result = GateResult.new
       baseline = File.join(RAILS_ROOT, "shared/config/importmap_baseline.rb")
-      boot = File.join(RAILS_ROOT, "shared/frontend/stimulus_boot.js")
+      # autosave, draft-store, media-picker and feed-compose register in
+      # stimulus_boot_social.js, not stimulus_boot.js — brgen and amber
+      # mount them, bsdports does not, so they moved out of the file every
+      # app imports. The two texts are checked together below.
+      boot_files = %w[stimulus_boot.js stimulus_boot_social.js].map { |f| File.join(RAILS_ROOT, "shared/frontend", f) }
 
       result.fail("missing shared importmap baseline") unless File.file?(baseline)
-      result.fail("missing stimulus_boot.js") unless File.file?(boot)
+      boot_files.each { |f| result.fail("missing #{File.basename(f)}") unless File.file?(f) }
 
       baseline_text = File.read(baseline)
-      boot_text = File.read(boot)
-      result.checked!(2)
+      boot_text = boot_files.select { |f| File.file?(f) }.map { |f| File.read(f) }.join("\n")
+      result.checked!(1 + boot_files.size)
       %w[
         pub4/autosave pub4/draft_store pub4/media_picker pub4/feed_compose pub4/scroll_reveal
         pub4/offline_feed pub4/pwa_standalone

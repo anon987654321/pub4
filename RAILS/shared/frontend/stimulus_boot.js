@@ -1,18 +1,20 @@
-// Registers @stimulus-components baseline + StimulusReflex (+ optional Futurism).
+// Registers the controllers every app uses, plus @stimulus-components
+// baseline entries and StimulusReflex. App-specific controllers live in
+// stimulus_boot_social.js (brgen + amber), stimulus_boot_brgen.js and
+// stimulus_boot_amber.js — each app's index.js calls only the boot
+// functions it needs, so a controller with no view in an app is never
+// imported there. Splitting these out is what makes that true: gating the
+// application.register() call alone would not have, because a static
+// `import` at the top of this file is fetched by every app that imports
+// this module regardless of which registrations run.
 import AutoSubmit from "@stimulus-components/auto-submit"
-import CheckboxSelectAll from "@stimulus-components/checkbox-select-all"
 import Clipboard from "@stimulus-components/clipboard"
-import Dropdown from "@stimulus-components/dropdown"
-import Lightbox from "@stimulus-components/lightbox"
 import Notification from "@stimulus-components/notification"
 import ReadMore from "@stimulus-components/read-more"
 import Reveal from "@stimulus-components/reveal"
-import Sortable from "@stimulus-components/sortable"
 import TextareaAutogrow from "@stimulus-components/textarea-autogrow"
-import AnimatedNumber from "@stimulus-components/animated-number"
 import PasswordVisibility from "@stimulus-components/password-visibility"
 import Popover from "@stimulus-components/popover"
-import RailsNestedForm from "@stimulus-components/rails-nested-form"
 import StimulusReflex from "stimulus_reflex"
 import ApplicationController from "controllers/application_controller"
 import LiveSearch from "pub4/live_search"
@@ -22,64 +24,41 @@ import InstallPrompt from "pub4/install_prompt"
 import { noteSession } from "pub4/onboarding"
 import ThemeToggle from "pub4/theme_toggle"
 import InfiniteScroll from "pub4/infinite_scroll"
-import BrowserFingerprint from "pub4/browser_fingerprint"
-import DirectUpload from "pub4/direct_upload"
-import OutboundClick from "pub4/outbound_click"
 import CharacterCounter from "pub4/character_counter"
-import LuxuryProduct from "pub4/luxury_product"
 import ParallaxTilt from "pub4/parallax_tilt"
 import ScrollReveal from "pub4/scroll_reveal"
-import ScrollChrome from "pub4/scroll_chrome"
-import BrgenShell from "pub4/brgen_shell"
 import NavAutohide from "pub4/nav_autohide"
 import ActionController from "pub4/action"
-import BottomSheet from "pub4/bottom_sheet"
-import Dismiss from "pub4/dismiss"
-import Autosave from "pub4/autosave"
-import DraftStore from "pub4/draft_store"
-import MediaPicker from "pub4/media_picker"
-import FeedCompose from "pub4/feed_compose"
 import TiptapEditor from "pub4/tiptap_editor"
 import FeedHotkey from "pub4/feed_hotkey"
-import EdgeSwiper from "pub4/edge_swiper"
-import SearchPalette from "pub4/search_palette"
 import NearbyChat from "pub4/nearby_chat"
-import ConversationLog from "pub4/conversation_log"
-import OptimisticSend from "pub4/optimistic_send"
-import Presence from "pub4/presence"
 import OfflineFeed from "pub4/offline_feed"
 import PwaStandalone from "pub4/pwa_standalone"
 import BatteryAware from "pub4/battery_aware"
 import NetworkAware from "pub4/network_aware"
-import MediaExclusive from "pub4/media_exclusive"
+import ViewportAware from "pub4/viewport_aware"
 import Haptics from "pub4/haptics"
 import Geolocation from "pub4/geolocation"
-import ViewportAware from "pub4/viewport_aware"
+import BottomSheet from "pub4/bottom_sheet"
 
 const COMPONENT_REGISTRATIONS = [
   ["auto-submit", AutoSubmit],
   ["character-counter", CharacterCounter],
-  ["checkbox-select-all", CheckboxSelectAll],
   ["clipboard", Clipboard],
   // content-loader retired 2026-08-21, the timeago precedent: zero call
   // sites, and a turbo-frame stack does its job natively — a lazy frame
   // shows its skeleton children until the fetch lands.
-  ["dropdown", Dropdown],
-  ["lightbox", Lightbox],
   ["toast", Notification],
   ["read-more", ReadMore],
   // No view mounts reveal. It stays because shared/frontend/examples.html.erb
   // offers it as a snippet, and SharedStimulusComponentsTest holds every
   // snippet to this table: a copied snippet must name a live controller.
   ["reveal", Reveal],
-  ["sortable", Sortable],
   ["textarea-autogrow", TextareaAutogrow],
-  ["animated-number", AnimatedNumber],
   ["password-visibility", PasswordVisibility],
   // Vendored since the 2014 tooltip port, never registered — the feed-action
   // tooltips (_popover_tooltip.scss) waited for this line.
   ["popover", Popover],
-  ["nested-form", RailsNestedForm],
 ]
 
 export function bootPub4Stimulus(application) {
@@ -94,37 +73,26 @@ export function bootPub4Stimulus(application) {
   application.register("install-prompt", InstallPrompt)
   application.register("theme-toggle", ThemeToggle)
   application.register("infinite-scroll", InfiniteScroll)
-  application.register("media-exclusive", MediaExclusive)
-  application.register("browser-fingerprint", BrowserFingerprint)
-  application.register("direct-upload", DirectUpload)
-  application.register("outbound-click", OutboundClick)
-  application.register("luxury-product", LuxuryProduct)
   application.register("scroll-reveal", ScrollReveal)
-  application.register("scroll-chrome", ScrollChrome)
-  application.register("brgen-shell", BrgenShell)
   application.register("nav-autohide", NavAutohide)
   application.register("action", ActionController)
-  application.register("bottom-sheet", BottomSheet)
-  application.register("dismiss", Dismiss)
-  application.register("autosave", Autosave)
-  application.register("draft-store", DraftStore)
-  application.register("media-picker", MediaPicker)
-  application.register("feed-compose", FeedCompose)
   application.register("tiptap-editor", TiptapEditor)
   application.register("feed-hotkey", FeedHotkey)
-  application.register("edge-swiper", EdgeSwiper)
-  application.register("search-palette", SearchPalette)
   application.register("nearby-chat", NearbyChat)
-  application.register("conversation-log", ConversationLog)
-  application.register("optimistic-send", OptimisticSend)
-  application.register("presence", Presence)
   application.register("offline-feed", OfflineFeed)
   application.register("pwa-standalone", PwaStandalone)
   application.register("battery-aware", BatteryAware)
   application.register("network-aware", NetworkAware)
+  application.register("viewport-aware", ViewportAware)
+  // Device-awareness controllers register as one set (DeviceAwarenessTest):
+  // only brgen's views mount haptics and geolocation today, but they are
+  // shared infrastructure alongside battery/network/viewport-aware, not
+  // brgen-specific like search-palette or presence.
   application.register("haptics", Haptics)
   application.register("geolocation", Geolocation)
-  application.register("viewport-aware", ViewportAware)
+  // Only brgen's views mount the mobile sheet today; kept shared because it
+  // is documented as shared infrastructure (design_contract_test.rb).
+  application.register("bottom-sheet", BottomSheet)
   // The in-feed affiliate band tilts under the pointer. Registered here rather
   // than in one app since the band itself is shared now.
   application.register("parallax-tilt", ParallaxTilt)

@@ -26,6 +26,13 @@ end
 
 eval(File.read(Shared::Engine.root.join("config/importmap_baseline.rb")), binding)
 
+# stimulus_boot_social.js (shared with amber, not bsdports) and
+# stimulus_boot_brgen.js (brgen only). Pinned per app rather than in
+# importmap_baseline.rb, which bsdports also evals — bsdports imports
+# neither, so its importmap carries no pin for them.
+pin "pub4/stimulus_boot_social", to: "stimulus_boot_social.js"
+pin "pub4/stimulus_boot_brgen", to: "stimulus_boot_brgen.js"
+
 pin "radio_brgen_tunnel", to: "radio_brgen_tunnel.js"
 # The tunnel imports this on its first track change. A preload would fetch the
 # seven renderers on every brgen page, not only on the radio.

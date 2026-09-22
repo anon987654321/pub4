@@ -627,7 +627,11 @@ assert_includes haystack, "turbo_prefetch: false",
     refute_includes show, "post_show"
     refute_includes app_js, "brgen_shell"
     refute_includes read_brgen("config/importmap.rb"), "brgen_shell"
-    assert_includes read_source(File.join(ROOT, "shared/frontend/stimulus_boot.js")), "pub4/brgen_shell"
+    # brgen-shell is brgen-only, so it registers in stimulus_boot_brgen.js
+    # rather than the file every app imports; the pin still lives in the
+    # baseline all three apps eval (a pin resolving does not force a fetch —
+    # only brgen's own index.js imports the module that uses it).
+    assert_includes read_source(File.join(ROOT, "shared/frontend/stimulus_boot_brgen.js")), "pub4/brgen_shell"
     assert_includes read_source(File.join(ROOT, "shared/config/importmap_baseline.rb")), "pub4/brgen_shell"
     # The token is declared, not what it is set to. design_tokens.yml
     # system.radius_card is the authority for the value, and pinning the pixels

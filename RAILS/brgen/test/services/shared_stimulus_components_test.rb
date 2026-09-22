@@ -17,8 +17,18 @@ require_relative "../source_reader"
 class SharedStimulusComponentsTest < Minitest::Test
   include SourceReader
 
+  # stimulus_boot.js holds what every app registers; stimulus_boot_social.js,
+  # _brgen.js and _amber.js hold what only some apps mount, split out so an
+  # app that doesn't use a controller never imports its module. Together
+  # they are the registry these tests hold the snippet library and views to.
+  BOOT_FILES = %w[stimulus_boot.js stimulus_boot_social.js stimulus_boot_brgen.js stimulus_boot_amber.js].freeze
+
+  def registry_source
+    BOOT_FILES.map { |f| read_source(File.join(ROOT, "shared/frontend", f)) }.join("\n")
+  end
+
   def test_shared_stimulus_components_are_registered
-    source = read_source(File.join(ROOT, "shared/frontend/stimulus_boot.js"))
+    source = registry_source
     %w[
       Clipboard
       Dropdown
@@ -101,8 +111,7 @@ class SharedStimulusComponentsTest < Minitest::Test
   # offering it for three weeks. The registry is the authority; this asks only
   # that the documentation stay inside it.
   def test_every_controller_the_snippet_library_offers_is_registered
-    registry = read_source(File.join(ROOT, "shared/frontend/stimulus_boot.js"))
-    registered = registry.scan(/\["([a-z-]+)",/).flatten.to_set
+    registered = registry_source.scan(/\["([a-z-]+)",/).flatten.to_set
 
     refute_empty registered, "no registrations parsed — the scan broke, not the tree"
 

@@ -36,20 +36,14 @@ Tiptap pair from esm.sh at `preload: false`.
 
 ## Registration
 
-`shared/frontend/stimulus_boot.js` registers the controllers. The gate requires
-these names to appear in it: `password-visibility`, `nested-form`,
-`rails-nested-form`, `character-counter`, `checkbox-select-all`,
-`dialog`, `read-more`, `textarea-autogrow`.
-
-**The gate fails on two of those today, for different reasons.** It looks for
-the quoted string `"rails-nested-form"`; the boot file imports
-`@stimulus-components/rails-nested-form` and registers it under the short name
-`nested-form` (`stimulus_boot.js:17`, `:66`), so the package is wired and the
-check still misses it — an instrument fault, not a wiring gap. `dialog` is a
-real gap: nothing is vendored under that name and nothing registers it.
-Resolving these means either vendoring `dialog` and matching the gate to the
-registered spelling, or narrowing `REQUIRED_BOOT`. Until then this gate is red,
-and a red gate that nobody can make green gets ignored.
+`shared/frontend/stimulus_boot.js` registers the controllers every app uses.
+`stimulus_boot_social.js` (brgen + amber, not bsdports), `stimulus_boot_brgen.js`
+and `stimulus_boot_amber.js` register the rest — split out so an app whose
+views never mount a controller never imports its module either. `nested-form`
+(the short name `@stimulus-components/rails-nested-form` registers under) is
+amber-only, in `stimulus_boot_amber.js`; `checkbox-select-all` is brgen-only,
+in `stimulus_boot_brgen.js`. `gates/lib/source/stimulus_components.rb` reads
+all four files together as one registry.
 
 `shared/frontend/stimulus_components.js` is deprecated and the gate fails if the
 file reappears. The old document pointed at it as the ESM bootstrap for

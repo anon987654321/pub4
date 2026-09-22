@@ -136,14 +136,17 @@ class StimulusWiringGateTest < Minitest::Test
   end
 
   # An app controller named after a shared registration is never loaded, so the
-  # element it was written for runs the shared component instead.
+  # element it was written for runs the shared component instead. clipboard is
+  # in stimulus_boot.js, the file every app imports, so it shadows in all
+  # three — dropdown lives in stimulus_boot_brgen.js now (brgen only), so it
+  # no longer shadows a same-named controller bsdports writes for itself.
   def test_reports_an_app_controller_a_shared_registration_shadows
-    failures = with_file("bsdports/app/javascript/controllers/dropdown_controller.js",
+    failures = with_file("bsdports/app/javascript/controllers/clipboard_controller.js",
                          %(import { Controller } from "@hotwired/stimulus"\nexport default class extends Controller {}\n)) do
       Deploy::StimulusWiringGate.run.failures.select { |f| f.include?("never loads") }
     end
 
-    assert_equal [%(bsdports: controller "dropdown" never loads — stimulus_boot.js registers that identifier first)], failures
+    assert_equal [%(bsdports: controller "clipboard" never loads — a shared boot file registers that identifier first)], failures
   end
 
   def test_a_shadow_exemption_fails_once_nothing_is_shadowed

@@ -6,15 +6,20 @@ module Deploy
   class StimulusComponentsGate
     ROOT = File.expand_path("../../../..", __dir__)
     RAILS_ROOT = File.join(ROOT, "RAILS")
-    BOOT = File.join(RAILS_ROOT, "shared/frontend/stimulus_boot.js")
+    # nested-form (amber only) and checkbox-select-all (brgen only) register
+    # in their app-scoped boot files rather than stimulus_boot.js, so every
+    # app that doesn't mount them never imports the module. The three files
+    # together are this gate's "boot" vocabulary.
+    BOOT_FILES = %w[stimulus_boot.js stimulus_boot_social.js stimulus_boot_brgen.js stimulus_boot_amber.js]
+      .map { |f| File.join(RAILS_ROOT, "shared/frontend", f) }.freeze
     BASELINE = File.join(RAILS_ROOT, "shared/config/importmap_baseline.rb")
     VENDOR = File.join(RAILS_ROOT, "shared/vendor/javascript")
 
-    # Controller names stimulus_boot.js must register, and package names the
-    # importmap must pin. These are two different vocabularies and the one list
-    # that held both could not pass: it demanded "rails-nested-form" as a
-    # registration, but boot imports that package and registers it under the
-    # short name "nested-form" (stimulus_boot.js:17, :66), so the check missed
+    # Controller names the boot files must register between them, and package
+    # names the importmap must pin. These are two different vocabularies and
+    # the one list that held both could not pass: it demanded
+    # "rails-nested-form" as a registration, but boot imports that package and
+    # registers it under the short name "nested-form", so the check missed
     # wiring that was there. It also demanded "dialog", which is vendored
     # nowhere, imported nowhere, and asked for by no view -- vendoring a package
     # nothing consumes is the futurism shape removed at 3415d7ab7, where a pin
@@ -43,10 +48,11 @@ module Deploy
     def self.run
       result = GateResult.new
 
-      unless File.file?(BOOT)
-        result.fail("missing stimulus_boot.js")
+      missing_boot = BOOT_FILES.reject { |f| File.file?(f) }
+      if missing_boot.any?
+        missing_boot.each { |f| result.fail("missing #{f.sub(ROOT + '/', '')}") }
       else
-        boot = File.read(BOOT)
+        boot = BOOT_FILES.map { |f| File.read(f) }.join("\n")
         result.checked!(REQUIRED_CONTROLLERS.size + 1)
         REQUIRED_CONTROLLERS.each do |name|
           result.fail("pub4_stimulus_boot must register #{name}") unless boot.include?(%("#{name}"))
