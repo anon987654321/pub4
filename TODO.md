@@ -769,9 +769,6 @@ sitting.
 
 **vm23.**
 
-- **Zombie amber jobs.** `RemoveBackgroundJob` and `SegmentGarmentImageJob` have
-  no enqueuer; count their rows in amber's production queue, then delete both
-  classes (their headers state the precondition).
 - **Two recurring schedules never fire.** amber's `declutter_hygiene` (6am) and
   bsdports' nightly import (3am) sit in `recurring.yml`, but those apps have no
   resident worker and `drain-jobs.sh` runs three minutes at :05 only when jobs
