@@ -55,7 +55,24 @@ module Master
 
         private
 
+        # ModelRouter#preferred and #fallback_chain both call score per
+        # candidate, and a single turn's routing touches a dozen or more
+        # candidates — each used to re-read and re-parse the whole ndjson
+        # log from scratch. Cached here per file mtime, so a turn pays for
+        # one read no matter how many models it scores.
         def events_for(model_id)
+          all_events.select { |event| event["model"].to_s == model_id }
+        end
+
+        def all_events
+          mtime = File.file?(path) ? File.mtime(path) : nil
+          return @events if @events && @events_mtime == mtime
+
+          @events_mtime = mtime
+          @events = load_events
+        end
+
+        def load_events
           return [] unless File.file?(path)
           File.readlines(path, chomp: true).filter_map do |line|
             next if line.strip.empty?
@@ -63,7 +80,7 @@ module Master
           rescue JSON::ParserError => e
             Master::Ground::Swallow.log(e, context: "ProviderHealth.events_for")
             nil
-          end.select { |event| event["model"].to_s == model_id }
+          end
         end
       end
     end
