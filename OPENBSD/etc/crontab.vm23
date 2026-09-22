@@ -88,6 +88,16 @@ PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
 # load. amber and bsdports stay on the hourly drain.
 5 * * * * /usr/local/bin/drain-jobs.sh >> /var/log/drain-jobs.log 2>&1
 
+# declutter-hygiene / ports-import — the two recurring.yml schedules that can
+# never fire on their own recurring trigger. drain-jobs.sh only starts a
+# worker for an app whose queue already has due rows, so a job whose sole
+# trigger is a recurring schedule (nothing else ever enqueues it) can never
+# get the worker it needs in order to be enqueued in the first place. Same
+# shape as prune-guests.sh: a direct `rails runner` call, load-gated, no
+# Solid Queue scheduler required.
+0 6 * * * /usr/local/bin/declutter-hygiene.sh >> /var/log/declutter-hygiene.log 2>&1
+0 3 * * * /usr/local/bin/ports-import.sh >> /var/log/ports-import.log 2>&1
+
 # weekly-integrity — integrity_gate plus a public health pass, once a week.
 #
 # No redirect: the script writes /var/log/pub4/weekly_integrity.log itself, so

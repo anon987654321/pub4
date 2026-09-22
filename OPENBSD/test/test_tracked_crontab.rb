@@ -227,6 +227,30 @@ class ScheduledJobsTest < Minitest::Test
     assert_match(/skipped: load stayed over 0/, out)
   end
 
+  def test_declutter_hygiene_waits_every_tick_then_skips
+    env = { "DECLUTTER_HYGIENE_LOAD_CEILING" => "0", "DECLUTTER_HYGIENE_WAIT_TICKS" => "2",
+            "DECLUTTER_HYGIENE_TICK_SECONDS" => "1" }
+    started = Time.now
+    out, status = Open3.capture2e(env, "sh", File.join(BIN, "declutter-hygiene.sh"))
+
+    assert status.success?, out
+    assert_operator Time.now - started, :>=, 2, "the wait loop did not sleep once per tick"
+    assert_match(/skipped: load stayed over 0 for 0 minutes/, out)
+    refute_match(/FAILED|expired_challenges=/, out)
+  end
+
+  def test_ports_import_waits_every_tick_then_skips
+    env = { "PORTS_IMPORT_LOAD_CEILING" => "0", "PORTS_IMPORT_WAIT_TICKS" => "2",
+            "PORTS_IMPORT_TICK_SECONDS" => "1" }
+    started = Time.now
+    out, status = Open3.capture2e(env, "sh", File.join(BIN, "ports-import.sh"))
+
+    assert status.success?, out
+    assert_operator Time.now - started, :>=, 2, "the wait loop did not sleep once per tick"
+    assert_match(/skipped: load stayed over 0 for 0 minutes/, out)
+    refute_match(/FAILED|ports_count=/, out)
+  end
+
   # A shed app is left shed: nothing listening is skipped silently, not warmed
   # and not logged as a failure every ten minutes.
   def test_keep_warm_skips_a_target_that_is_not_listening
