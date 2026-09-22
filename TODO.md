@@ -74,28 +74,6 @@ Forward work is the last section of this file.
   and adds the foreign key. `nsd-resign` now reads `NSD_ZONES_DIR` and
   `renew-certs.sh` reads `RENEW_CERTS_ACME_CONF` and `RENEW_CERTS_SSL_DIR`, each
   defaulting to today's path, from the next `OPERATOR.sh` install.
-- **brgen's job queue does not drain.** `/var/log/drain-jobs.log` reads brgen
-  due 347 -> 347, 348 -> 348, 349 -> 349, 350 -> 350 hour after hour (ahead
-  ~57–66, failed=10), with nothing due for amber or bsdports, while brgen_jobs'
-  resident supervisor, dispatcher, worker and scheduler have been up about four
-  hours and the worker is "waiting for job". Two facts narrow it. First,
-  `drain-jobs.sh` skips brgen when `rcctl check brgen_jobs` passes, yet it ran
-  brgen every hour, so `rcctl check` reports brgen_jobs down while its
-  processes live — the pexp `ruby34.*solid[-_]queue.*` against titles like
-  `ruby34: solid-queue-supervisor(1.2.4): supervising`; check the `-xf` match —
-  and a second Solid Queue starts beside the resident one each hour. Second,
-  "due" means unfinished, `scheduled_at <= now` and no failed execution, so a
-  waiting worker with 350 due means those jobs sit in no ready execution: most
-  likely `solid_queue_blocked_executions` (10 brgen jobs use
-  `limits_concurrency`), or claimed executions held by processes killed at
-  deploy. It needs brgen or root on vm23, since dev cannot `doas -u brgen`; run
-  the query below, then group the jobs by `class_name` where `finished_at` is
-  null.
-
-  ```zsh
-  sqlite3 /home/brgen/app/storage/production_queue.sqlite3 "select 'ready',count(*) from solid_queue_ready_executions union all select 'scheduled',count(*) from solid_queue_scheduled_executions union all select 'claimed',count(*) from solid_queue_claimed_executions union all select 'blocked',count(*) from solid_queue_blocked_executions union all select 'semaphores',count(*) from solid_queue_semaphores union all select 'processes',count(*) from solid_queue_processes;"
-  ```
-
 ### The face's mood, and TTS on the box — operator-owned
 
 - **The face's `mood` tint has a listener and no producer.** Nothing publishes
@@ -447,15 +425,13 @@ slices. Each is a hypothesis with its seam.
 
 - **Drag-only reorder** (amber outfits, marketplace variants) has no keyboard path
   (WCAG 2.5.7), and a keyboard path means visible controls: the operator's.
-- **42 `needs_id` guest pages get no live probe;** `page_inventory` names them
-  now, and giving them record ids needs a booted triangle.
-- **A stale path after the rename.**
-  `RAILS/shared/app/services/shared/strunk_white_pass.rb` says it was ported
-  from the pre-rename `MASTER/lib/now/stages/prune.rb`.
-- **Playlist links match hosts by substring.** `Playlist::TrackImport` files a
-  link as YouTube or SoundCloud when its host merely includes `youtube.com` or
-  `soundcloud.com`, so a lookalike host passes; `Shared::LinkEmbed` compares
-  hosts whole and could carry the playlist's links.
+- **17 of the 42 `needs_id` guest pages still get no live probe.** 25 were wired to
+  a real seeded record via `Deploy::LiveRecordIds` and are curl-verified live.
+  The rest need seed data nothing in the repo writes yet (events, stories,
+  hashtags, partner programs/memberships, marketplace deals, community wiki
+  pages, tv shows/episodes/live_streams/sounds), or are structurally unprobeable
+  (password-reset tokens; conversations and listening-party rows a stateless
+  guest probe can never pre-seed). Seams: `RAILS/gates/support/live_record_ids.rb`.
 - **A post's link embed loads the provider's thumbnail before a tap.**
   `shared/_link_embed` renders the facade image straight from the provider's
   image host, so the reader's browser asks the provider before pressing play.
@@ -767,11 +743,11 @@ sitting.
 
 **vm23.**
 
-- **Two recurring schedules never fire.** amber's `declutter_hygiene` (6am) and
-  bsdports' nightly import (3am) sit in `recurring.yml`, but those apps have no
-  resident worker and `drain-jobs.sh` runs three minutes at :05 only when jobs
-  are due, so the scheduler is never up at that minute. Choose: an hourly
-  schedule, or a cron line on the box that enqueues them.
+- **Two recurring schedules that could never fire now have a cron line.**
+  `declutter-hygiene.sh` and `ports-import.sh` (`OPENBSD/usr/local/bin/`) run
+  each job directly via `rails runner`, load-gated like `prune-guests.sh`, on
+  vm23's tracked crontab — committed, not yet installed on the box. Needs
+  `install_tracked_crontab` (or a hand copy) run during a quiet window.
 - **After the next deploy, check:** a signed Stripe test event returns 200 at
   both `https://<city>/webhooks/stripe` and the markedsplass host; a Vipps
   checkout redirect lands on `*.vipps.no`; `/deals` with a badged deal; a kitchen
@@ -783,9 +759,6 @@ sitting.
 
 **Needs a browser or triangle.**
 
-- **`stimulus_boot.js` boots all 56 imports, 14 of them `@stimulus-components`,
-  in every app.** Register each component only in the apps whose views mount
-  it; verify on a booted triangle, because a missed registration fails silently.
 - **Signed-in personas** (`GATE_ADEQUACY.md` gap 1) need a seeded fixture user
   in triangle.
 - **A listing's postpro photo has no status.** `PostproJob` adds the processed
