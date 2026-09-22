@@ -27,7 +27,16 @@ module Deploy
   #     into (bsdports maintainers) -- only a full tree/tarball import would;
   #   - the record is a single-use, expiring credential a guest can only ever
   #     hold one of at a time (passwords/:token/edit) -- there is no seeded
-  #     token that is still both unused and unexpired to point at.
+  #     token that is still both unused and unexpired to point at;
+  #   - the record is scoped to whichever identity is asking rather than to
+  #     the app: Shared::Authentication#resume_session mints a fresh guest
+  #     user on every unauthenticated request, and ConversationsController
+  #     scopes #show through `Conversation.for_user(Current.user)` -- that new
+  #     guest is never a participant of a conversation seeded ahead of time,
+  #     so any id 404s (conversations/:id). The same is true one level down:
+  #     ListeningPartiesController#show requires @set.listening_party to
+  #     already exist, and no seed script creates one, so
+  #     sets/:set_id/listening_party has nothing to resolve to yet either.
   module LiveRecordIds
     ROOT = File.expand_path("../../..", __dir__)
 
@@ -47,7 +56,6 @@ module Deploy
       "brgen/communities/moderation/index" => :community_id,
       "brgen/communities/moderators/index" => :community_id,
       "brgen/communities/wiki/index" => :community_id,
-      "brgen/conversations/show" => :conversation,
       "brgen/posts/show" => :post,
       "brgen/users/show" => :user,
       "brgen/maps/places/show" => :place,
@@ -57,7 +65,6 @@ module Deploy
       "brgen/marketplace/stores/show" => :marketplace_store,
       "brgen/playlist/hosted_tracks/show" => :hosted_track,
       "brgen/playlist/sets/show" => :playlist_set,
-      "brgen/playlist/listening_parties/show" => :playlist_set_id,
       "brgen/playlist/playlists/show" => :playlist,
       "brgen/playlist/playlists/embed" => :playlist,
       "brgen/takeaway/delivery_drivers/show" => :delivery_driver,
@@ -109,13 +116,6 @@ module Deploy
     def community_id(app)
       id = scalar(app, "SELECT id FROM communities WHERE city_id = ? ORDER BY id LIMIT 1", BERGEN_CITY_ID)
       id && { community_id: id }
-    end
-
-    # Not tenant-scoped: DMs and channel rooms alike are readable across
-    # cities, so any seeded row will do.
-    def conversation(app)
-      id = scalar(app, "SELECT id FROM conversations ORDER BY id LIMIT 1")
-      id && { id: id }
     end
 
     def post(app)
@@ -175,21 +175,11 @@ module Deploy
       id && { id: id }
     end
 
-    # Same visibility floor for a set: SetsController#show and
-    # ListeningPartiesController#set_visible_to_viewer? both read private as
-    # "owner or collaborator only", which a guest probe is neither.
-    def playlist_set_row(app)
-      scalar(app, "SELECT id FROM playlist_sets WHERE privacy = 'public' ORDER BY id LIMIT 1")
-    end
-
+    # SetsController#show reads private as "owner or collaborator only", which
+    # a guest probe is neither.
     def playlist_set(app)
-      id = playlist_set_row(app)
+      id = scalar(app, "SELECT id FROM playlist_sets WHERE privacy = 'public' ORDER BY id LIMIT 1")
       id && { id: id }
-    end
-
-    def playlist_set_id(app)
-      id = playlist_set_row(app)
-      id && { set_id: id }
     end
 
     def playlist(app)
@@ -247,9 +237,11 @@ module Deploy
 
     # -- bsdports ------------------------------------------------------------
 
+    # CategoriesController#show is `find_by!(slug: params[:id])`, slug-only
+    # like its brgen marketplace counterpart.
     def bsdports_category(app)
-      id = scalar(app, "SELECT id FROM categories ORDER BY id LIMIT 1")
-      id && { id: id }
+      slug = scalar(app, "SELECT slug FROM categories WHERE slug IS NOT NULL ORDER BY id LIMIT 1")
+      slug && { id: slug }
     end
 
     def bsdports_port(app)
