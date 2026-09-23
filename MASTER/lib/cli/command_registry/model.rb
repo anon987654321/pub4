@@ -71,6 +71,15 @@ module Master
         footer.empty? ? "" : "\n#{footer.join("\n")}"
       end
 
+      def compute_models(agent:, root:)
+        router = model_router_of(agent)
+        return "compute: router unavailable" unless router
+
+        ids = router.pool(wait: true)
+        ranked = router.compute_pool.rank(ids, task_type: :code_generation)
+        ranked.map.with_index { |id, index| "#{index + 1}. #{id}  #{router.lane_label(id)}" }.join("\n")
+      end
+
       def model_tiers_by_id(root)
         yml_path = File.join(root, "data", "models.yml")
         rows = File.exist?(yml_path) ? (Master.load_yaml(yml_path)["models"] || {}) : {}
