@@ -30,8 +30,7 @@ module Master
 
       def self.normalize_id(id)
         value = id.to_s
-        raise ArgumentError, "transaction id is unsafe" unless value.match?(%r{\A[a-zA-Z0-9_-]+\z}) &&
-          !value.include?("..")
+        raise ArgumentError, "transaction id is unsafe" unless value.match?(%r{\A[a-zA-Z0-9_-]+\z})
 
         value
       end
@@ -148,7 +147,11 @@ module Master
 
       def rollback!
         raise "transaction not active" unless @active || persisted?
-        return preserve_delivery! if @state == "delivering"
+        if @state == "delivering" && delivery_pending?
+          return preserve_delivery!
+        end
+        @state = "open" if @state == "delivering"
+        @delivery_head_before = nil if @state == "open"
 
         conflicts = conflicts()
         unless conflicts.empty?
