@@ -53,13 +53,15 @@ class TestRuleRegistryAudit < Minitest::Test
                  "have converged, say so rather than deleting the guard"
   end
 
-  # A rule with a semantic prompt beside a law detector belongs to both
-  # populations, which is why the subtraction was wrong in the first place.
+  # A layered Law can carry both deterministic and semantic enforcement without
+  # becoming two catalogue rules.
   def test_a_rule_can_be_semantic_and_mechanical_at_once
     report = audit.call
+    law = Master::Review::Scan::Rules::SemanticRule.new(agent: nil)
 
-    assert_includes report.semantic_only, "FAIL_VISIBLY"
     assert_includes report.mechanical, "FAIL_VISIBLY"
+    refute_includes report.semantic_only, "FAIL_VISIBLY"
+    assert_includes law.send(:load_semantic_rules).keys, "FAIL_VISIBLY"
   end
 
   def test_ungraphed_rules_is_enumerable
