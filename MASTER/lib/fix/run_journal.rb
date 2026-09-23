@@ -22,6 +22,7 @@ module Master
       PATH = ".master/fix_runs.json"
       LOCK = ".master/fix_runs.lock"
       MAX_RUNS = 24
+      RESUMABLE_STATES = %w[active crashed delivery_failed].freeze
 
       def initialize(root:, bus: nil)
         @root = root
@@ -31,24 +32,24 @@ module Master
       def start_or_resume(target:, files:, max_passes:, budget_seconds:)
         with_lock do
           data = load
-          active = data["runs"].reverse.find { |run| %w[active crashed delivery_failed].include?(run["state"].to_s) }
-          if active
-            unless active["target"] == relative(target)
-              raise "another fix run is active: #{active["id"]} for #{active["target"]}"
+          resumable = data["runs"].reverse.find { |run| RESUMABLE_STATES.include?(run["state"].to_s) }
+          if resumable
+            unless resumable["target"] == relative(target)
+              raise "another fix run is active: #{resumable["id"]} for #{resumable["target"]}"
             end
-            if active["state"] == "active" && process_alive?(active["pid"])
-              raise "another fix process is active: #{active["id"]} pid=#{active["pid"]}"
+            if resumable["state"] == "active" && process_alive?(resumable["pid"])
+              raise "another fix process is active: #{resumable["id"]} pid=#{resumable["pid"]}"
             end
-            previous_state = active["state"]
-            active["state"] = "active"
-            active["resumed_from"] = previous_state unless previous_state == "active"
-            active["resumed_at"] = Time.now.utc.iso8601
-            active["resume_count"] = active.fetch("resume_count", 0).to_i + 1
-            remaining = remaining_seconds(active)
+            previous_state = resumable["state"]
+            resumable["state"] = "active"
+            resumable["resumed_from"] = previous_state unless previous_state == "active"
+            resumable["resumed_at"] = Time.now.utc.iso8601
+            resumable["resume_count"] = resumable.fetch("resume_count", 0).to_i + 1
+            remaining = remaining_seconds(resumable)
             persist(data)
-            emit("fix:resume", run_id: active["id"], pass: next_pass(active),
-                          resume_count: active["resume_count"], remaining_seconds: remaining)
-            return active.merge("resumed" => true, "remaining_seconds" => remaining)
+            emit("fix:resume", run_id: resumable["id"], pass: next_pass(resumable),
+                          resume_count: resumable["resume_count"], remaining_seconds: remaining)
+            return resumable.merge("resumed" => true, "remaining_seconds" => remaining)
           end
 
           now = Time.now.utc
