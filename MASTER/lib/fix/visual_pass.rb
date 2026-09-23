@@ -274,7 +274,8 @@ module Master
           "type sizes=#{type["distinct_font_sizes"]&.first(8)}, body median=#{type["body_median_px"]}, ",
           "leading=#{type["line_height_min_px"]}-#{type["line_height_max_px"]}",
           "scroll/client=#{payload["scroll_width"]}/#{payload["client_width"]}",
-          "mobile-states=#{Array(capture[:journeys]).map { |j| "#{j["kind"]}:#{j["label"]}" }.join(", ")}\n          "web-platform=#{capture[:platform].reject { |key, _| key == "viewport" }.map { |key, value| "#{key}=#{value}" }.join(", ")}",",
+          "mobile-states=#{Array(capture[:journeys]).map { |j| "#{j["kind"]}:#{j["label"]}" }.join(", ")}",
+          "web-platform=#{capture[:platform].reject { |key, _| key == "viewport" }.map { |key, value| "#{key}=#{value}" }.join(", ")}",
         ].join(" ")
       end
 
