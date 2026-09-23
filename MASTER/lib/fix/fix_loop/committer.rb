@@ -71,9 +71,15 @@ module Master
             transaction = @transaction
             return Result.err("no active fix transaction", category: :infrastructure) unless transaction
 
-            transaction.observe!
             paths = own_changes(owned_paths)
             return finish_empty_transaction(transaction) if paths.empty?
+
+            conflicts = transaction.conflicts
+            unless conflicts.empty?
+              @transaction = nil
+              transaction.rollback!
+              return Result.err("fix transaction detected concurrent changes in #{conflicts.join(", ")}", category: :policy)
+            end
 
             prepared = validate_paths(message, paths)
             unless prepared
