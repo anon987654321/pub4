@@ -208,32 +208,11 @@ module Master
             [path, code.bytesize, @rules_mtime].join(":")
           end
 
-          # Two sources while the rule populations are being collapsed into one.
-          #
-          # law/ takes precedence: a rule migrated there is defined once, with its
-          # severity and its worked examples in the same block, and the yaml entry
-          # left behind is the stale half. Merging in that order means a migration
-          # is a one-file move rather than a move plus a deletion that has to land
-          # in the same commit to avoid a duplicate prompt.
+          # One source: semantic review is populated from executable Law definitions.
+          # The YAML catalogue retains naming, provenance, scope, and other operator
+          # metadata, but it no longer carries a second semantic implementation.
           def load_semantic_rules
-            from_yaml.merge(from_law)
-          end
-
-          def from_yaml
-            data = Master.load_rules
-            Master.flatten_rules(data["rules"])
-              .select { |r| r["detect_semantic"] }
-              .reject { |r| r["severity"] == "info" && r["mode"] != "opportunity" && r["tier"] != "kernel" }
-              .each_with_object({}) do |r, h|
-                h[r["id"]] = {
-                  prompt: r["detect_semantic"],
-                  severity: (r["severity"] || "warning").to_sym,
-                  mode: (r["mode"] || "violation").to_sym,
-                  reversibility: r["reversibility"],
-                  blast_radius: r["blast_radius"],
-                  languages: Array(r["languages"]).map(&:to_s),
-                }
-              end
+            from_law
           end
 
           # A law's bad/good are its worked examples. Carrying them into the
@@ -248,7 +227,7 @@ module Master
               h[rule.id.to_s] = {
                 prompt: "#{rule.ask}\nViolates: #{rule.bad.strip}\nSatisfies: #{rule.good.strip}",
                 severity: rule.severity,
-                mode: :violation,
+                mode: rule.mode,
                 reversibility: nil,
                 blast_radius: nil,
                 languages: rule.languages.map(&:to_s),
