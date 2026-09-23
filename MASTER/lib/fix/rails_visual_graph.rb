@@ -93,7 +93,7 @@ module Master
         command = File.join(root, "bin", "rails")
         return unless File.executable?(command)
 
-        output, status = Open3.capture2e(command, "routes", "--expanded", chdir: root)
+        output, status = Timeout.timeout(15) { Open3.capture2e(command, "routes", chdir: root) }
         return unless status.success?
 
         output.each_line do |line|
@@ -160,7 +160,18 @@ module Master
         wanted = normalize_path(path)
         Array(@routes[app]).find do |route|
           route_path = route[:path]
-          route_path == wanted || route_path.gsub(/:[^\/]+/, "[^/]+") =~ /\A#{Regexp.escape(wanted)}\z/
+          next true if route_path == wanted
+
+          pattern = route_path.split("/").map do |segment|
+            if segment.start_with?(":")
+              "[^/]+"
+            elsif segment.start_with?("*")
+              ".*"
+            else
+              Regexp.escape(segment)
+            end
+          end.join("/")
+          /\A#{pattern}\z/ =~ wanted
         end
       end
 
