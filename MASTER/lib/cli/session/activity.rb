@@ -3,44 +3,88 @@
 module Master
   module CLI
     class Activity
-      LIMIT = 9
-
       def initialize
         reset!
       end
 
       def reset!
-        @counts = Hash.new(0)
-        @last = nil
+        @pass = nil
+        @stage = nil
+        @files = nil
+        @violations = nil
+        @changes = 0
+        @council = nil
+        @terminal = nil
+        @started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       end
 
       def record(event, payload = {})
         name = event.to_s
         return if name.empty?
 
-        @last = case name
-                when /\A(?:fix|review):/ then name.split(":").last
-                when /\A(?:llm|tool):/ then name.split(":").last
-                end
         case name
-        when /\Afix:change/ then @counts[:changes] += 1
-        when /\Afix:pass/ then @counts[:passes] += 1
-        when /\A(?:tool:call|tool:start)/ then @counts[:tools] += 1
-        when /\A(?:llm:send|llm:call)/ then @counts[:models] += 1
-        when /\A(?:council:pass|council:veto)/ then @counts[:council] += 1
+        when "pipeline:stage_start"
+          @stage = payload[:stage].to_s.downcase
+        when "fix_loop:pass_start"
+          @pass = payload[:pass]
+          @files = payload[:file_count]
+          @stage = "observe"
+        when "fix_loop:scan_progress"
+          @stage = "scan"
+          @violations = payload[:count] if payload.key?(:count)
+        when "fix_loop:ast_fixed", "rule_loop:fix_applied"
+          @stage = "repair"
+          @changes += 1
+        when "council:start", "council:deliberation"
+          @stage = "council"
+          @council = "reviewing"
+        when "council:pass"
+          @stage = "council"
+          @council = "pass"
+        when "council:veto"
+          @stage = "council"
+          @council = "veto"
+        when "fix_loop:clean"
+          @stage = "validate"
+          @terminal = "clean"
+        when "fix_loop:plateau"
+          @stage = "plateau"
+          @violations = payload[:violations] if payload.key?(:violations)
+          @terminal = "plateau"
+        when "fix_loop:validation_failed"
+          @stage = "validation"
+          @terminal = "validation failed"
+        when "fix_loop:pass_timeout", "fix_loop:timeout"
+          @stage = "timeout"
+          @terminal = "timeout"
         end
         self
       rescue StandardError
         self
       end
 
-      def label(stage:, elapsed:)
-        parts = [stage.to_s.empty? ? "working" : stage.to_s]
-        parts << "#{@counts[:changes]} changes" if @counts[:changes].positive?
-        parts << "#{@counts[:tools]} tools" if @counts[:tools].positive?
-        parts << "#{@counts[:models]} model calls" if @counts[:models].positive?
-        parts << "#{elapsed}s"
+      def label(stage: nil, elapsed: nil)
+        current = @stage.to_s.empty? ? stage.to_s : @stage
+        current = "working" if current.empty?
+
+        parts = [current]
+        parts << "pass #{@pass}" if @pass
+        parts << "#{@files} files" if @files
+        parts << "#{@violations} violations" if @violations
+        parts << "#{@changes} changes" if @changes.positive?
+        parts << "council #{@council}" if @council && @stage == "council"
+        parts << "#{elapsed}s" unless elapsed.nil?
         parts.join(" · ")
+      end
+
+      def fix_summary
+        parts = []
+        parts << "pass #{@pass}" if @pass
+        parts << "#{@files} files" if @files
+        parts << "#{@violations} violations" unless @violations.nil?
+        parts << "#{@changes} changes" if @changes.positive?
+        parts << @terminal if @terminal
+        parts.empty? ? nil : parts.join(" · ")
       end
     end
   end
