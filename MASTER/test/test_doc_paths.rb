@@ -120,7 +120,7 @@ class TestDocPaths < Minitest::Test
     head = candidate.split("/").first
     return true if TREES.include?(head) || File.exist?(File.join(REPO, head))
 
-    # A head that exists beside the document. MASTER/START_HERE.md writes
+    # A head that exists beside the document. MASTER/README.md writes
     # `data/rules.yml` and means MASTER's, which resolves against the repo root
     # as a `data` tree that does not exist — so without this every citation a
     # MASTER or OPENBSD document makes of its own subdirectory is dropped before
@@ -236,11 +236,11 @@ class TestDocPaths < Minitest::Test
   # Both directions, because a predicate that answered true for everything would
   # switch this gate off while reading exactly like a fix.
   def test_only_an_ignored_path_counts_as_generated
-    assert generated?("web/storage/", "MASTER/START_HERE.md"),
+    assert generated?("web/storage/", "MASTER/README.md"),
            "MASTER/web/.gitignore names storage, so a clean checkout cannot be asked for it"
-    refute generated?("web/nowhere/", "MASTER/START_HERE.md"),
+    refute generated?("web/nowhere/", "MASTER/README.md"),
            "a path nothing ignores is a citation this gate must still check"
-    refute generated?("priv/ssh/id_ed25519_brgen.pub", "OPENBSD/SSH_ACCESS.md"),
+    refute generated?("priv/ssh/id_ed25519_brgen.pub", "OPENBSD/RUNBOOK.md"),
            "the root reading of that path is ignored and the document's reading is not"
   end
 
