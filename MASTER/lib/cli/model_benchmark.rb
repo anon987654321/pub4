@@ -4,8 +4,8 @@ module Master
   module CLI
     class ModelBenchmark
       TASKS = {
-        reasoning: "Explain why a Ruby hash with a default proc can accidentally share mutable state between unrelated keys, and give one minimal safe pattern.",
-        coding: "Write a Ruby method named normalize_name that strips surrounding whitespace, collapses internal whitespace to one space, and returns nil for blank input. State the edge case it handles.",
+        explanation: "Explain why a Ruby hash with a default proc can accidentally share mutable state between unrelated keys, and give one minimal safe pattern.",
+        code_generation: "Write a Ruby method named normalize_name that strips surrounding whitespace, collapses internal whitespace to one space, and returns nil for blank input. State the edge case it handles.",
         architecture: "MASTER routes work across multiple model providers. Name three signals that should affect model selection without hard-coding a permanent leaderboard."
       }.freeze
 
@@ -50,8 +50,15 @@ module Master
         TASKS.each do |name, prompt|
           begin
             answer = @agent.ask_once(prompt, model:, law: false, failover: false)
-            passed += 1 unless answer.to_s.strip.empty?
+            success = !answer.to_s.strip.empty?
+            passed += 1 if success
+            @router&.record_capability_outcome(
+              model:, task_type: name, success:, metrics: { benchmark: true }
+            )
           rescue StandardError => e
+            @router&.record_capability_outcome(
+              model:, task_type: name, success: false, metrics: { benchmark: true }
+            )
             errors << "#{name}: #{e.message}"
           end
         end
