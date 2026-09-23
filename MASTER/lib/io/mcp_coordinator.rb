@@ -140,27 +140,20 @@ module Master
           started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
           @bus&.publish("mcp:tool_before", server: @mcp_name, tool: @mcp_tool.name, tier: @tier)
           result = Timeout.timeout(@timeout, Timeout::Error) { @mcp_client.call_tool(@mcp_tool.name, params) }
-          @bus&.publish(
-            "mcp:tool_after",
-            server: @mcp_name,
-            tool: @mcp_tool.name,
-            ok: true,
-            latency_ms: elapsed_ms(started),
-          )
+          publish_after(started, ok: true)
           result.respond_to?(:content) ? result.content : result.to_s
         rescue StandardError => e
-          @bus&.publish(
-            "mcp:tool_after",
-            server: @mcp_name,
-            tool: @mcp_tool.name,
-            ok: false,
-            error: e.message,
-            latency_ms: started ? elapsed_ms(started) : nil,
-          )
+          publish_after(started, ok: false, error: e.message)
           "MCP tool error: #{e.class}: #{e.message}"
         end
 
         private
+
+        def publish_after(started, ok:, error: nil)
+          payload = { server: @mcp_name, tool: @mcp_tool.name, ok:, latency_ms: started ? elapsed_ms(started) : nil }
+          payload[:error] = error if error
+          @bus&.publish("mcp:tool_after", **payload)
+        end
 
         def elapsed_ms(started)
           ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1_000).round
