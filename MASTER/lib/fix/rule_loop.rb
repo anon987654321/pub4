@@ -94,6 +94,8 @@ module Master
         @bus = options[:bus]
         @learnings = options[:learnings]
         @committer = options[:committer]
+        @stage_commit = options.fetch(:stage_commit, false)
+        @visual_image = nil
         @conflicts = ConflictResolver.new(root:, bus: @bus)
       end
 
@@ -102,8 +104,12 @@ module Master
       end
 
       # One pass: scan → fix each violating file once → return { fixed:, status: }.
-      def run_once(files)
-        violations = scan_files(files)
+      # External findings are used by rendered and convergence evidence, which
+      # has already measured the artifact and therefore must not be rescanned
+      # through a registry rule that knows nothing about that evidence.
+      def run_once(files, external_violations: nil, image: nil)
+        @visual_image = image
+        violations = external_violations ? external_violations.map { |finding| Violation.from_finding(finding, file: finding[:file], ext: File.extname(finding[:file].to_s).downcase) } : scan_files(files)
         return { fixed: 0, status: :clean, breakdown: {} } if violations.empty?
 
         fixed = fix_batch(violations)
@@ -117,6 +123,8 @@ module Master
         # quiet one in the dmesg stream the operator actually reads.
         Master::Trace::Dmesg.status("fix0", "#{@rule.id}: #{e.class}: #{e.message[0, 90]}")
         { fixed: 0, status: :error, breakdown: { error: 1 } }
+      ensure
+        @visual_image = nil
       end
 
       private
@@ -176,7 +184,7 @@ module Master
       end
 
       def stage_commit_mode?
-        ENV["MASTER_FIX_COMMIT_STAGE"] == "1"
+        @stage_commit || ENV["MASTER_FIX_COMMIT_STAGE"] == "1"
       end
 
       # Review::Consensus fans a candidate fix out to three models and requires
