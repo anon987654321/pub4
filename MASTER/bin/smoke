@@ -16,18 +16,17 @@ require "net/http"
 require "uri"
 require "tmpdir"
 require "yaml"
+require_relative "../lib/trace/dmesg"
 
 RUBY = RbConfig.ruby
 
 PIPE_TIMEOUT_SECONDS = Integer(ENV.fetch("MASTER_SMOKE_PIPE_TIMEOUT", ENV["MASTER_LOW_RESOURCE"] ? "90" : "30"))
 
 def step(name)
-  print "smoke: #{name.ljust(28)} "
-  $stdout.flush
   t0 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
   ok, msg = yield
   dt = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0) * 1000).round
-  puts ok ? "ok (#{dt}ms)" : "fail (#{dt}ms) — #{msg}"
+  Master::Trace::Dmesg.status("test0", "smoke=#{name} state=#{ok ? "ok" : "failed"} ms=#{dt}#{msg ? " error=#{msg}" : ""}")
   ok
 end
 
@@ -134,9 +133,9 @@ if ARGV.include?("--web")
 end
 
 if failures.empty?
-  puts "smoke: clean"
+  Master::Trace::Dmesg.status("test0", "smoke state=clean")
   exit 0
 else
-  puts "smoke: #{failures.size} failure(s): #{failures.join(", ")}"
+  Master::Trace::Dmesg.status("test0", "smoke state=failed failures=#{failures.join(",")}")
   exit 1
 end
