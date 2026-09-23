@@ -89,7 +89,7 @@ module Operator
       end
     end
 
-    # A test is a file under a test/ or spec/ directory, not every file whose
+    # A test is a file under a test/ directory, not every file whose
     # name reads like one. The name alone was the first instrument and it was
     # wrong in both directions: law/ rules are named for what they detect, so
     # squint_test.rb read as a test (exempted by hand), MASTER/tools/test_naming.rb
@@ -100,10 +100,10 @@ module Operator
     # hand was the move this replaces, because the exemptions were describing a
     # rule the directory already states.
     #
-    # 726 of the 729 files named like tests are under test/ or spec/; the three
+    # 726 of the 729 files named like tests are under test/; the three
     # that are not are those three. HELPERS stays: test_helper.rb IS under test/,
     # and a runner loads it rather than running it.
-    TEST_DIR = %r{(\A|/)(test|spec)/}
+    TEST_DIR = %r{(?:\A|/)test/
 
     def self.test_files
       @test_files ||= Dir[File.join(ROOT, "{MASTER,RAILS,OPENBSD,STUDIO}/**/*.rb")]
