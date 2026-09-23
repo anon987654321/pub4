@@ -13,6 +13,10 @@ module Master
     module Performance
       MAX_RATE_DELTA = 5
       MAX_PITCH_DELTA_HZ = 12
+      MIN_RATE = -20
+      MAX_RATE = 20
+      MIN_PITCH_HZ = -60
+      MAX_PITCH_HZ = 60
       MIN_PAUSE_MS = 70
       MAX_PAUSE_MS = 420
       DEFAULT_PAUSE_MS = 130
@@ -50,8 +54,8 @@ module Master
         plan(text, emotion:, style:).map do |part|
           {
             **part,
-            rate: format("%+d%%", base_rate_value + part[:rate_delta]),
-            pitch: format("%+dHz", base_pitch_value + part[:pitch_delta_hz]),
+            rate: format("%+d%%", (base_rate_value + part[:rate_delta]).clamp(MIN_RATE, MAX_RATE)),
+            pitch: format("%+dHz", (base_pitch_value + part[:pitch_delta_hz]).clamp(MIN_PITCH_HZ, MAX_PITCH_HZ)),
           }
         end
       end
