@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require_relative "../io/atomic_write"
 
 module Master
   module Cognition
@@ -43,6 +44,7 @@ module Master
     # whichever comes first. Idle costs nothing, because an idle bus makes no
     # observations to be due for.
     class Mind
+      include Master::Io::AtomicWrite
       STATE_PATH = ".master/cognition/state.yml"
       TICK_EVERY_S = 60
       TICK_EVERY_OBSERVATIONS = 256
@@ -189,7 +191,7 @@ module Master
         return unless @dirty || @state.ticks.to_i.positive?
 
         FileUtils.mkdir_p(File.dirname(@path))
-        File.write(@path, @state.data.to_yaml, encoding: "UTF-8")
+        write_atomic(@path, @state.data.to_yaml, mode: 0o600)
         @dirty = false
       end
     end
