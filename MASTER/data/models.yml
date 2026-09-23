@@ -124,12 +124,20 @@ model_defs:
     <<: *model_defaults
     score: { quality: 0.93, speed: 0.80, cost: 0.55 }
   claude_cli_sonnet: &claude_cli_sonnet
-    id: claude-cli:claude-sonnet-4-6
+    id: claude-cli:claude-sonnet-5
     <<: *model_defaults
     context_window: 200000
-    score: { quality: 0.95, speed: 0.70, cost: 0.60 }
+    # 2026-09-16's "hangs from inside a session" finding does not reproduce
+    # (verified 2026-09-23: direct arg, piped stdin, and a detached background
+    # process all returned correctly). speed and cost were still scored for
+    # that stale state — 0.70/0.60 assumed subprocess overhead and per-call
+    # billing neither applies to a browser-authenticated subscription lane.
+    # Re-measured: ~8s for a ~30KB prompt (comparable to gemini-2.5-flash's
+    # observed per-call latency), and cost is 1.0 like claude_cli_opus below,
+    # since there is no marginal charge per call.
+    score: { quality: 0.95, speed: 0.85, cost: 1.0 }
   claude_cli_opus: &claude_cli_opus
-    id: claude-cli:claude-opus-4-8
+    id: claude-cli:claude-opus-5
     <<: *model_defaults
     context_window: 200000
     score: { quality: 0.99, speed: 0.55, cost: 1.0 }
@@ -199,6 +207,7 @@ models:
     - *web_chat_kimi
     - *web_chat_gemini
   default:
+    - *claude_cli_sonnet
     - *glm_5_3
     - *nemotron_super
     - *gemini_flash_openrouter
@@ -209,6 +218,7 @@ models:
     - *nemotron_super
   strong:
     - *claude_cli_opus
+    - *claude_cli_sonnet
     - *claude_opus_api
     - *deepseek_reasoner
     - *deepseek_chat

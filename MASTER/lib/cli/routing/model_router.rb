@@ -131,6 +131,13 @@ module Master
 
         def unhealthy?(model_id)
           return true if Io::ModelQuota.over_quota?(model_id)
+          # llm_dispatcher.rb writes every failed call here regardless of which
+          # path selected the model, but constrained_for (scan_semantic,
+          # council, code_generation, ...) only ever consulted @provider_health,
+          # which nothing in this codebase constructs — it is always nil. A
+          # model that just failed kept winning the same weighted comparison on
+          # the very next file, forever, since it never saw its own failure.
+          return true if Io::ModelSkipCache.skipped?(model_id)
           @provider_health&.unhealthy?(model_id)
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "ModelRouter.unhealthy?")
