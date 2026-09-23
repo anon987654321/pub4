@@ -123,7 +123,7 @@ class TestReliabilitySecondTranche < Minitest::Test
         healthy: -> { healthy },
         max_restarts: 2,
         window_seconds: 60,
-        wait_seconds: 0,
+        wait_seconds: 1,
       )
 
       assert first.ok?
