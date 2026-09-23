@@ -149,19 +149,19 @@ module Master
         end.map { |token| token.to_s[/#[\w-]+|\.[\w-]+/] }.compact.uniq.first(50)
 
         anchors = {}
-        tokens.each { |token| anchors[token] = grep_source(token) }
+        tokens.each { |token| anchors[token] = grep_source(token, allowed: candidates) }
         candidates = (candidates + anchors.values).compact.uniq.first(MAX_FILES)
         candidates = fallback_sources(target) if candidates.empty?
         [candidates.first(MAX_FILES), anchors]
       end
 
-      def grep_source(token)
+      def grep_source(token, allowed:)
         out, status = Open3.capture2("git", "-C", repo_root, "grep", "-l", "--fixed-strings", token,
                                      "--", "RAILS", "MASTER/web")
         return unless status.success?
 
         out.lines.map(&:strip).map { |rel| File.join(repo_root, rel) }
-           .find { |path| source_file?(path) }
+           .find { |path| source_file?(path) && allowed.include?(path) }
       rescue StandardError
         nil
       end
