@@ -82,13 +82,14 @@ module Master
       end
 
       def silence_profile(path)
-        out, _err, status = Open3.capture3(
+        out, err, status = Open3.capture3(
           "ffmpeg", "-hide_banner", "-i", path.to_s, "-af",
           "silencedetect=noise=-42dB:d=0.07", "-f", "null", "-"
         )
-        return { count: 0, mean_ms: 0.0, max_ms: 0.0 } unless status.success? || out
+        trace = "#{out}\n#{err}"
+        return { count: 0, mean_ms: 0.0, max_ms: 0.0 } unless status.success? || !trace.empty?
 
-        durations = out.to_s.scan(/silence_duration:\s*([0-9.]+)/).flatten.map { |v| v.to_f * 1000 }
+        durations = trace.scan(/silence_duration:\s*([0-9.]+)/).flatten.map { |v| v.to_f * 1000 }
         {
           count: durations.length,
           mean_ms: durations.empty? ? 0.0 : durations.sum / durations.length,
@@ -99,12 +100,13 @@ module Master
       end
 
       def rms_profile(path)
-        out, _err, _status = Open3.capture3(
+        out, err, _status = Open3.capture3(
           "ffmpeg", "-hide_banner", "-i", path.to_s,
           "-af", "volumedetect", "-f", "null", "-"
         )
-        peak = out.to_s[/max_volume:\s*(-?[0-9.]+) dB/, 1].to_f
-        rms = out.to_s[/mean_volume:\s*(-?[0-9.]+) dB/, 1].to_f
+        trace = "#{out}\n#{err}"
+        peak = trace[/max_volume:\s*(-?[0-9.]+) dB/, 1].to_f
+        rms = trace[/mean_volume:\s*(-?[0-9.]+) dB/, 1].to_f
         { peak_db: peak, rms_db: rms }
       rescue StandardError
         { peak_db: -99.0, rms_db: -99.0 }
