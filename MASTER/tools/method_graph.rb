@@ -11,8 +11,7 @@
 #   ruby MASTER/tools/method_graph.rb
 #
 # This is the closure. Every method is a node; every identifier in its body is
-# an edge. The roots are the names something outside `lib/` uses — bin/, test/,
-# spec/, tools/, the Rakefile, the other three trees — plus the names `lib/`
+# an edge. The roots are the names something outside `lib/` uses — bin/, test/, tools/, the Rakefile, the other three trees — plus the names `lib/`
 # uses at file scope, where a registration lives. Anything the roots cannot
 # reach is unreachable no matter how many layers deep it sits.
 #
