@@ -98,6 +98,13 @@ module Master
                    "/soul propose <rationale> then /soul approve or /soul reject;",
                    "/soul rollback undoes the last amendment. Absolute sections do not move."],
         },
+        "law" => {
+          summary: "the portable enforcement contract",
+          detail: ["/law or /law contract — generated contract for MASTER and external LLMs.",
+                   "/law full — complete law questions, fixes and proof examples.",
+                   "/law digest — current executable-law identity.",
+                   "/law protocol — the mandatory enforcement sequence."],
+        },
         "rules" => {
           summary: "the declared rules, one line each",
           detail: ["/rules [filter] — id, tier, severity and kind from data/rules.yml.",
