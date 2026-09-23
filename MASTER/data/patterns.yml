@@ -738,16 +738,33 @@ auth_profiles:
         - agy:gemini-2.5-pro
         - agy:gemini-2.5-flash
         - agy:gemini-3.7-flash-thinking
-    - id: claude_cli
+    - id: claude_subscription
+      name: claude
+      auth: subscription
       kind: cli
       command: claude
+      login_args: [auth, login]
+      status_args: [auth, status]
       priority: 1
       models:
         - claude-cli:claude-opus-4-8
-    - id: codex_cli
+    - id: codex_subscription
+      name: chatgpt
+      auth: subscription
       kind: cli
       command: codex
+      login_args: [--login]
+      status_args: []
       priority: 2
+      models: []
+    - id: grok_subscription
+      name: grok
+      auth: subscription
+      kind: cli
+      command: grok
+      login_args: [login]
+      status_args: []
+      priority: 3
       models: []
     - id: copilot_oauth
       kind: oauth
