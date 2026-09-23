@@ -389,6 +389,47 @@ class TestReliabilitySecondTranche < Minitest::Test
     assert_includes measurement[:reasons].first, "load_avg_1m"
   end
 
+
+  def test_transaction_exposes_interrupted_delivery_without_discarding_it
+    Dir.mktmpdir("master-tx") do |root|
+      path = File.join(root, "a.rb")
+      File.write(path, "before\n")
+      tx = Master::Fix::Transaction.new(root:, paths: [path], id: "delivery-pass")
+      tx.begin!
+      File.write(path, "committed-locally\n")
+      tx.observe!
+      tx.begin_delivery!(head_before: "before")
+      tx.record_commit!(head_after: "after")
+
+      recovery = Master::Fix::Transaction.recover!(root:, id: tx.id)
+
+      assert recovery.ok?
+      assert_equal :delivery_pending, recovery.value![:state]
+      assert_equal "after", recovery.value![:commit]
+      assert_equal "committed-locally\n", File.read(path)
+    end
+  end
+
+  def test_transaction_can_finalize_a_recovered_delivery
+    Dir.mktmpdir("master-tx") do |root|
+      path = File.join(root, "a.rb")
+      File.write(path, "before\n")
+      tx = Master::Fix::Transaction.new(root:, paths: [path], id: "delivery-finalize")
+      tx.begin!
+      File.write(path, "after\n")
+      tx.observe!
+      tx.begin_delivery!(head_before: "before")
+      tx.record_commit!(head_after: "commit-1")
+
+      recovered = Master::Fix::Transaction.load_persisted(root:, id: tx.id)
+      assert recovered.delivery_pending?
+      result = recovered.finalize_delivery!(head: "commit-1")
+
+      assert result.ok?
+      refute Master::Fix::Transaction.persisted?(root:, id: tx.id)
+    end
+  end
+
   private
 
   def init_git(root)
