@@ -23,7 +23,8 @@ module Master
 
         def initialize(bus:, committer:, loop_scanner:, llm_router:, rollback:, root:,
                        rules:, agent:, scanner:, learnings:, preamble:,
-                       clean_runs_required:, plateau_window:, ground_truth: nil, homeostat: nil, council: nil)
+                       clean_runs_required:, plateau_window:, ground_truth: nil, homeostat: nil, council: nil,
+                       visual_pass: nil)
           @bus = bus
           @committer = committer
           @loop_scanner = loop_scanner
@@ -48,6 +49,7 @@ module Master
           @ground_truth = ground_truth
           @homeostat = homeostat
           @council = council
+          @visual_pass = visual_pass
           @ground_truth_failures = 0
         end
 
@@ -61,19 +63,60 @@ module Master
 
           run_fast_stage(files, pass)
           found = run_observation_stage(files, target)
+
+          visual = run_visual_pass(target:, files:, pass:)
+          if visual&.err? && found.empty?
+            return PassResult.new(status: :plateau, consecutive_clean: 0, message: visual.message)
+          end
+          found += Array(visual&.value!&.fetch(:findings, []))
+
           return handle_clean_pass(files, pass_mtimes, pass, consecutive_clean) if found.empty?
           return PassResult.new(status: :plateau, consecutive_clean: 0) if stagnant?(history, seen_snapshots, recurring_violations, found, pass)
 
           @homeostat&.observe(:llm_call)
-          # The council argues about the files this pass found violations in,
-          # and its picks ride into the repair as context. A critique that ends
-          # in prose changes nothing, which is why it sits inside the loop.
-          council = @council&.run(files: files_with_violations(found, files), pass:, deadline:)
-          run_llm_stage(found, files, pass, deadline, council:)
+          source_found, visual_found = found.partition { |v| v[:rule].to_s != VisualPass::RULE_ID }
+          council = @council&.run(files: files_with_violations(source_found, files), pass:, deadline:) if source_found.any?
+          run_llm_stage(source_found, files, pass, deadline, council:) if source_found.any?
+          run_visual_stage(visual_found, visual:, files:, pass:, deadline:) if visual_found.any?
           PassResult.new(status: :continue, consecutive_clean: 0)
         end
 
         private
+
+        def run_visual_pass(target:, files:, pass:)
+          return unless @visual_pass&.applicable?(target)
+
+          @visual_pass.run(target:, files:, pass:)
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "pass_runner.visual_pass", event_bus: @bus)
+          Result.err("rendered visual review: INCONCLUSIVE — #{e.class}: #{e.message}", category: :inconclusive)
+        end
+
+        def run_visual_stage(findings, visual:, files:, pass:, deadline:)
+          return 0 if Time.now >= deadline || findings.empty?
+
+          image = visual&.value!&.fetch(:image, nil)
+          return 0 unless image
+
+          rule_class = Data.define(:id) do
+            def severity = :warning
+          end
+          loop = RuleLoop.new(
+            rule: rule_class.new(VisualPass::RULE_ID),
+            agent: @agent,
+            scanner: @scanner,
+            root: @root,
+            bus: @bus,
+            learnings: @learnings,
+            committer: @committer,
+          )
+          result = loop.run_once(files, external_violations: findings, image:)
+          @bus&.publish("fix_loop:visual_fix", pass:, findings: findings.size, fixed: result[:fixed].to_i)
+          result[:fixed].to_i
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "pass_runner.visual_stage", event_bus: @bus)
+          0
+        end
 
         def run_fast_stage(files, pass)
           fixed = fast_pass(files)
