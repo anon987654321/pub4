@@ -69,7 +69,14 @@ module Master
         return Result.err("rendered visual review: INCONCLUSIVE — #{critique.message}", category: :inconclusive) if critique.err?
 
         picks = Array(critique.value![:cherry_picks]).map(&:to_s).reject(&:empty?)
-        findings = picks.filter_map { |pick| finding_for(pick, source_files, anchors, manifest) }
+        feedback = Array(critique.value![:feedback])
+        findings = picks.filter_map { |pick| finding_for(pick, feedback, source_files, anchors, manifest) }
+        if findings.empty? && !feedback.any? { |entry| entry[:feedback].to_s.match?(/\bVISUAL_CLEAN\b/i) }
+          return Result.err(
+            "rendered visual review: INCONCLUSIVE — council returned no anchored visual verdict",
+            category: :inconclusive,
+          )
+        end
         state = findings.empty? ? :clean : :findings
         @bus&.publish("fix_loop:visual_review", target:, pass:, surfaces: manifest["entries"].size,
                                                findings: findings.size)
