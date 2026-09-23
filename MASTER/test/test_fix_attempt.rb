@@ -6,8 +6,9 @@ require_relative "test_helper"
 # the source is not a fix, an error is retried or ends the run as on_error says,
 # and the wait hook runs before every attempt.
 class TestFixAttempt < Minitest::Test
-  FakeAgent = Struct.new(:replies) do
-    def ask(_prompt)
+  FakeAgent = Struct.new(:replies, :images) do
+    def ask(_prompt, image: nil)
+      images << image
       reply = replies.shift
       raise reply if reply.is_a?(Exception)
 
@@ -17,7 +18,7 @@ class TestFixAttempt < Minitest::Test
 
   def attempt(replies, attempts: 3, on_error: ->(_e) { :retry }, waits: [])
     Master::Fix::FixAttempt.new(
-      agent: FakeAgent.new(replies), attempts:, wait: ->(n, ctx) { waits << [n, ctx] },
+      agent: FakeAgent.new(replies, []), attempts:, wait: ->(n, ctx) { waits << [n, ctx] },
       extractor: ->(text, _ext) { text.empty? ? nil : text }, on_error:,
     )
   end
@@ -26,6 +27,20 @@ class TestFixAttempt < Minitest::Test
     codes = attempt(["same\n", "", "better"]).codes(prompt: "p", ext: ".rb", source: "same", wait_context: :ctx)
 
     assert_equal ["better"], codes
+  end
+
+  def test_image_is_forwarded_without_changing_the_no_image_contract
+    images = []
+    agent = FakeAgent.new(["fixed"], images)
+    fixer = Master::Fix::FixAttempt.new(
+      agent:, attempts: 1, wait: ->(*) {},
+      extractor: ->(text, _ext) { text }, on_error: ->(_) { :stop },
+    )
+
+    image = { path: "/tmp/visual.png", mime: "image/png" }
+    fixer.first_code(prompt: "p", ext: ".rb", source: "x", wait_context: nil, image:)
+
+    assert_equal [image], images
   end
 
   def test_wait_runs_before_every_attempt_with_its_index
