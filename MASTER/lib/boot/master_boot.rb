@@ -40,6 +40,8 @@ module Master
       # booting is also what restores continuity across restarts.
       container[:cognition] = Cognition::Mind.new(root:, bus: container[:bus], memory: container[:memory])
       container[:cognition].tick!
+      container[:device_perception] = Device::Perception.new(bus: container[:bus])
+      container[:device_perception].start!
       container[:heartbeat]&.start!
     end
 
@@ -87,7 +89,10 @@ module Master
     def boot_fast(root: Dir.pwd)
       prepare_runtime!
       emit_device_status
-      CLI::Session.new(container: Builder.build_fast(root:))
+      container = Builder.build_fast(root:)
+      container[:device_perception] = Device::Perception.new(bus: container[:bus])
+      container[:device_perception].start!
+      CLI::Session.new(container:)
     end
   end
 end
