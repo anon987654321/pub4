@@ -37,6 +37,30 @@ class TestReliabilitySecondTranche < Minitest::Test
     end
   end
 
+  def test_transaction_preserves_tree_when_delivery_was_already_started
+    Dir.mktmpdir("master-tx") do |root|
+      path = File.join(root, "a.rb")
+      File.write(path, "before\n")
+      tx = Master::Fix::Transaction.new(root:, paths: [path], id: "delivery-pass")
+      tx.begin!
+      File.write(path, "committed-locally\n")
+      tx.observe!
+      tx.begin_delivery!
+
+      recovered = Master::Fix::Transaction.recover!(root:, id: tx.id)
+
+      assert recovered.ok?
+      assert_equal :preserved_delivery, recovered.value!
+      assert_equal "committed-locally\n", File.read(path)
+    end
+  end
+
+  def test_transaction_rejects_path_traversal_ids
+    assert_raises(ArgumentError) do
+      Master::Fix::Transaction.new(root: Dir.mktmpdir, paths: [], id: "../escape")
+    end
+  end
+
   def test_transaction_refuses_unobserved_concurrent_change
     Dir.mktmpdir("master-tx") do |root|
       path = File.join(root, "a.rb")
@@ -196,6 +220,25 @@ class TestReliabilitySecondTranche < Minitest::Test
       assert first.value!.healthy?
       assert_equal 1, starts
       assert_empty supervisor.state("tts")["attempts"]
+    end
+  end
+
+  def test_service_supervisor_surfaces_start_failure_without_retrying_forever
+    Dir.mktmpdir("master-service") do |root|
+      supervisor = Master::Ground::ServiceSupervisor.new(root:)
+      attempts = 0
+      result = supervisor.ensure(
+        name: "tts",
+        start: -> { attempts += 1; raise "start failed" },
+        healthy: -> { false },
+        max_restarts: 3,
+        window_seconds: 60,
+        wait_seconds: 1,
+      )
+
+      assert result.err?
+      assert_equal :infrastructure, result.category
+      assert_equal 1, attempts
     end
   end
 
