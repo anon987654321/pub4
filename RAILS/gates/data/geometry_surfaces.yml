@@ -21,6 +21,11 @@ include_brgen_verticals: true
 brgen_vertical_viewports: [mobile, desktop]
 
 surfaces:
+  - app: master
+    label: chat
+    path: /
+    viewports: [mobile, desktop]
+    snapshot: true
   - app: amber
     label: home
     path: /
