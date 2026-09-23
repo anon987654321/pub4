@@ -94,8 +94,10 @@ module Master
                     "not installed"
                   elsif row[:authenticated]
                     "connected"
-                  else
+                  elsif row[:authentication_known]
                     "not connected"
+                  else
+                    "installed"
                   end
           "auth: #{row[:name]} #{state}"
         end.join("\n") if arg.empty? || arg == "status"
