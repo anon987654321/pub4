@@ -40,8 +40,12 @@ module Master
         # The operator's declared principles and soul's absolute and kernel
         # tiers: the part of static_prompt that binds whatever role is asked for.
         def law_prompt
+          require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
+          ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
+
           parts = []
-          parts << "MASTER enforcement contract (executable law digest=#{Law::Contract.digest}):\n"                    "#{Law::Contract::PROTOCOL.join("\n")}"
+          parts << "MASTER enforcement contract (executable law digest=#{Law::Contract.digest}):\n" \
+                    "#{Law::Contract::PROTOCOL.join("\n")}"
           parts << @constitution.system_prompt if @constitution && !@constitution.empty?
           parts << @personality.system_prompt(context: :law) if @personality
           parts.compact.join("\n\n").then { |s| s.empty? ? nil : s }

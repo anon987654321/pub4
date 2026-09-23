@@ -119,6 +119,9 @@ module Master
       end
 
       def dispatch_law(ctx: nil)
+        require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
+        ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
+
         arg = arg_for(ctx)
         case arg
         when "", "contract" then Law::Contract.render

@@ -12,9 +12,19 @@ module Master
         def accepted? = accepted == true
       end
 
+      # law/law.rb proves ~118 rule fixtures at load, so it is required lazily
+      # by whoever first needs Law::Contract rather than eagerly at boot — the
+      # same idiom lib/ground/rules.rb and every other Law caller in this tree
+      # already follows.
+      def self.ensure_law!
+        require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
+        ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
+      end
+
       module Admission
         module_function
         def enable!
+          LawHandshake.ensure_law!
           @digest = Law::Contract.digest
           @enabled = true
           @digest
@@ -34,6 +44,7 @@ module Master
       end
 
       def self.current
+        ensure_law!
         new.verify(
           contract_version: PROTOCOL_VERSION,
           law_digest: Law::Contract.digest,
@@ -42,24 +53,14 @@ module Master
       end
 
       def verify(contract_version:, law_digest:, protocol:)
-        expected = Law::Contract.render
-        data = JSON.parse(expected)
+        self.class.ensure_law!
+        data = JSON.parse(Law::Contract.render)
         version_ok = Integer(contract_version) == PROTOCOL_VERSION
         digest_ok = law_digest.to_s == data.fetch("law_digest")
         protocol_ok = Array(protocol).map(&:to_s) == data.fetch("protocol")
-        reason =
-          if !version_ok
-            "contract version mismatch"
-          elsif !digest_ok
-            "law digest mismatch"
-          elsif !protocol_ok
-            "enforcement protocol mismatch"
-          else
-            "admitted"
-          end
         Verdict.new(
           accepted: version_ok && digest_ok && protocol_ok,
-          reason:,
+          reason: handshake_reason(version_ok, digest_ok, protocol_ok),
           digest: data.fetch("law_digest"),
           protocol_version: PROTOCOL_VERSION
         )
@@ -68,7 +69,16 @@ module Master
                     protocol_version: PROTOCOL_VERSION)
       end
 
+      def handshake_reason(version_ok, digest_ok, protocol_ok)
+        return "contract version mismatch" unless version_ok
+        return "law digest mismatch" unless digest_ok
+        return "enforcement protocol mismatch" unless protocol_ok
+
+        "admitted"
+      end
+
       def export
+        self.class.ensure_law!
         JSON.parse(Law::Contract.render).merge(
           "handshake" => {
             "required" => true,
