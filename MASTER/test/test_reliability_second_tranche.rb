@@ -72,8 +72,9 @@ class TestReliabilitySecondTranche < Minitest::Test
       assert_equal "before\n", File.read(path)
       refute Master::Fix::Transaction.persisted?(root:, id: tx.id)
     end
+  end
 
-    def test_transaction_preserves_tree_when_commit_was_recorded
+  def test_transaction_preserves_tree_when_commit_was_recorded
       Dir.mktmpdir("master-tx") do |root|
         path = File.join(root, "a.rb")
         File.write(path, "before\n")
@@ -380,6 +381,32 @@ class TestReliabilitySecondTranche < Minitest::Test
   end
 
   def test_fix_journal_resumes_delivery_failed_runs
+    Dir.mktmpdir("master-journal") do |root|
+      journal = Master::Fix::RunJournal.new(root:)
+      first = journal.start_or_resume(target: root, files: [], max_passes: 2, budget_seconds: 10)
+      journal.send(:persist, {
+        "version" => 1,
+        "runs" => [first.merge(
+          "state" => "delivery_failed",
+          "passes" => [{
+            "pass" => 1,
+            "state" => "delivery_failed",
+            "transaction_id" => "delivery-pass",
+          }],
+        )],
+      })
+
+      resumed = Master::Fix::RunJournal.new(root:).start_or_resume(
+        target: root, files: [], max_passes: 2, budget_seconds: 10,
+      )
+
+      assert resumed["resumed"]
+      assert_equal "delivery_failed", resumed["resumed_from"]
+      assert_equal 2, Master::Fix::RunJournal.new(root:).next_pass(resumed)
+    end
+  end
+
+  def test_fix_journal_refuses_a_live_active_process
     Dir.mktmpdir("master-journal") do |root|
       journal = Master::Fix::RunJournal.new(root:)
       first = journal.start_or_resume(target: root, files: [], max_passes: 2, budget_seconds: 10)
