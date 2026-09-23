@@ -20,7 +20,7 @@ class CoreSmokeSpec < Minitest::Test
   # A scripted model: a fixed list of effects, proposed in order.
   class ScriptedModel
     def initialize(script) = @script = script
-    def propose(_context, verbs:) = @script.shift || Master::Core::Effect.done("script empty")
+    def propose(_context, verbs:, **) = @script.shift || Master::Core::Effect.done("script empty")
   end
 
   def test_a_session_admits_safe_effects_blocks_dangerous_ones_and_commits_on_evidence
