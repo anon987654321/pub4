@@ -146,6 +146,7 @@ module Master
       end
 
       def run!(*argv)
+        Ground::LawHandshake::Admission.require!
         raise Error, "device: unavailable outside Android/Termux" unless android?
         raise Error, "device: #{argv.first} unavailable" unless executable?(argv.first)
 
