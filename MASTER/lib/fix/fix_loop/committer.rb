@@ -141,7 +141,7 @@ module Master
           @git.push
           verify_push!(paths)
           promote_known_good(@git.head, paths)
-          :committed
+          Result.ok(:committed)
         end
 
         def promote_known_good(commit, paths)
