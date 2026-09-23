@@ -75,6 +75,7 @@ module Master
             ext: File.extname(path).downcase,
             source: src,
             wait_context: { rule: @rule.id, file: path, mode: :council },
+            image: @visual_image,
           )
         end
 
@@ -93,7 +94,7 @@ module Master
           prompt = build_prompt_for(violation:, src:, path:, style: :diff)
           MAX_FIX_RETRIES.times do |attempt|
             wait_before_retry(attempt, rule: @rule.id, file: path, mode: :diff)
-            response = @agent.ask(prompt).to_s
+            response = @visual_image ? @agent.ask(prompt, image: @visual_image).to_s : @agent.ask(prompt).to_s
             next if response.strip == "UNCHANGED"
             result = PatchApplier.apply(src, response)
             return result.source if result.is_a?(PatchApplier::Success)
@@ -130,7 +131,11 @@ module Master
             path:,
             style: :file,
           ) + "\n\nArchitecture plan:\n#{plan}"
-          response = fast_model ? @agent.ask_once(prompt, model: fast_model) : @agent.ask_once(prompt)
+          response = if fast_model
+                       @visual_image ? @agent.ask_once(prompt, model: fast_model, image: @visual_image) : @agent.ask_once(prompt, model: fast_model)
+                     else
+                       @visual_image ? @agent.ask_once(prompt, image: @visual_image) : @agent.ask_once(prompt)
+                     end
           response = extract_code(response.to_s, File.extname(path).downcase)
           return whole_file_fallback(violation:, src:, path:, reason: "no code returned") if response.to_s.strip.empty?
 
@@ -192,7 +197,11 @@ module Master
           @bus&.publish("rule_loop:edit_format_fallback", rule: @rule.id, file: path, reason: reason.to_s[0, 160])
           prompt = build_prompt_for(violation:, src:, path:, style: :file)
           model = routing_model_ids[:fast]
-          raw = model ? @agent.ask_once(prompt, model:).to_s : @agent.ask_once(prompt).to_s
+          raw = if model
+                  @visual_image ? @agent.ask_once(prompt, model:, image: @visual_image).to_s : @agent.ask_once(prompt, model:).to_s
+                else
+                  @visual_image ? @agent.ask_once(prompt, image: @visual_image).to_s : @agent.ask_once(prompt).to_s
+                end
           # The reply, not the file: a fenced block, a sentence around it, or
           # UNCHANGED would otherwise be written over the source.
           extract_code(raw, File.extname(path).downcase)
@@ -200,7 +209,11 @@ module Master
 
         def architecture_plan(violation:, src:, path:, model:)
           prompt = architecture_plan_prompt(violation, src, path)
-          raw = model ? @agent.ask_once(prompt, model:) : @agent.ask_once(prompt)
+          raw = if model
+                  @visual_image ? @agent.ask_once(prompt, model:, image: @visual_image) : @agent.ask_once(prompt, model:)
+                else
+                  @visual_image ? @agent.ask_once(prompt, image: @visual_image) : @agent.ask_once(prompt)
+                end
           raw.to_s
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "RuleLoop.architecture_plan", rule: @rule.id)
