@@ -20,13 +20,19 @@ module Master
       def codes(prompt:, ext:, source:, wait_context:, image: nil)
         @attempts.times.filter_map do |attempt|
           @wait.call(attempt, wait_context)
-          code = @extractor.call(@agent.ask(prompt, image:).to_s, ext)
+          code = @extractor.call(ask_agent(prompt, image:).to_s, ext)
           code if code && code.strip != source.strip
         rescue StandardError => e
           action = @on_error.call(e)
           next if action == :retry
           break nil
         end
+      end
+
+      private
+
+      def ask_agent(prompt, image:)
+        image ? @agent.ask(prompt, image:) : @agent.ask(prompt)
       end
     end
   end
