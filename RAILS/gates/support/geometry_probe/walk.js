@@ -423,6 +423,12 @@
   const leading = textBlocks
     .map((el) => el.line_height)
     .filter((px) => px > 0);
+  const median = (values) => {
+    const sorted = [...values].sort((a, b) => a - b);
+    if (!sorted.length) return null;
+    const middle = Math.floor(sorted.length / 2);
+    return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
+  };
   const primary = [...interactive].sort(
     (a, b) => (b.rect.w * b.rect.h) - (a.rect.w * a.rect.h),
   ).slice(0, 8);
@@ -449,6 +455,7 @@
     typography: {
       distinct_font_sizes: distinctFontSizes,
       body_min_px: bodySizes.length ? Math.min(...bodySizes) : null,
+      body_median_px: median(bodySizes),
       body_max_px: bodySizes.length ? Math.max(...bodySizes) : null,
       line_height_min_px: leading.length ? Math.min(...leading) : null,
       line_height_max_px: leading.length ? Math.max(...leading) : null,
