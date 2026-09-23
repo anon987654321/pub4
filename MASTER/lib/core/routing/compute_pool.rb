@@ -4,6 +4,7 @@ require "yaml"
 require_relative "../../io/atomic_write"
 require_relative "../../io/model_quota"
 require_relative "../../io/quota_gate"
+require_relative "../../io/catalog_index"
 
 module Master
   module Core
@@ -34,6 +35,7 @@ module Master
           @root = root
           @rules = load_rules
           @stats = load_stats
+          @catalog = nil
           @mutex = Mutex.new
         end
 
@@ -47,25 +49,20 @@ module Master
           rank(ids, task_type:, empirical_best:).first
         end
 
-        # Re-probe provider inventory after an operator installs a model, signs
-        # into a CLI, changes a key, or starts a local server without restarting
-        # MASTER. Discovery is live; telemetry remains durable.
         def refresh!
           @router.refresh_pool! if @router.respond_to?(:refresh_pool!)
+          @catalog = nil
           self
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "compute_pool.refresh")
           self
         end
 
-        # A safe, machine-readable view of the compute market. Unknown quota is
-        # represented as nil, never guessed. No keys or account identifiers leave
-        # this object.
         def inventory(task_type: :exploration, refresh: false)
           refresh! if refresh
           ids = @router.pool(wait: false)
           ranked = rank(ids, task_type:)
-          ranked.map { |id| inventory_row(id, rank: ranked.index(id) + 1, task_type:) }
+          ranked.each_with_index.map { |id, index| inventory_row(id, rank: index + 1, task_type:) }
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "compute_pool.inventory")
           []
@@ -175,8 +172,62 @@ module Master
         end
 
         def model_row(id)
+          static_model_row(id) || catalog_model_row(id) || dynamic_model_row(id)
+        end
+
+        def static_model_row(id)
           @rules.fetch("models", {}).values.flatten.find { |row| row.is_a?(Hash) && row["id"].to_s == id.to_s } ||
             @rules.fetch("model_defs", {}).values.find { |row| row.is_a?(Hash) && row["id"].to_s == id.to_s }
+        end
+
+        def catalog_model_row(id)
+          source = id.to_s.include?("/") ? "openrouter" : nil
+          return unless source
+          return unless File.file?(Master::Io::CatalogIndex::DEFAULT_DB)
+
+          @catalog ||= Master::Io::CatalogIndex.new(db_path: Master::Io::CatalogIndex::DEFAULT_DB)
+          row = @catalog.search(id.to_s, source:, limit: 5).find { |candidate| candidate["id"].to_s == id.to_s }
+          return unless row
+
+          {
+            "context_window" => row["context_length"].to_i.nonzero? || DEFAULTS[:context_window],
+            "score" => catalog_score(row),
+          }
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "compute_pool.catalog_model", model: id)
+          nil
+        end
+
+        def dynamic_model_row(id)
+          {
+            "context_window" => DEFAULTS[:context_window],
+            "score" => { "quality" => DEFAULTS[:quality], "speed" => DEFAULTS[:speed], "cost" => DEFAULTS[:cost] },
+          } if id.to_s.start_with?("ollama:", "local:")
+        end
+
+        def catalog_score(row)
+          prompt = row["price_prompt"].to_f
+          completion = row["price_completion"].to_f
+          price = [prompt, completion].max
+          {
+            "quality" => catalog_quality(row),
+            "speed" => catalog_speed(row),
+            "cost" => price.zero? ? 1.0 : 1.0 / (1.0 + Math.log10(1.0 + price * 1_000_000)),
+          }
+        end
+
+        def catalog_quality(row)
+          text = "#{row['id']} #{row['name']} #{row['description']} #{row['tags']}".downcase
+          return 0.88 if text.match?(/reason|thinking|opus|pro|ultra|large|70b|72b|120b|235b/)
+          return 0.82 if text.match?(/coder|code|qwen|deepseek|gemini|claude|gpt|grok/)
+          0.68
+        end
+
+        def catalog_speed(row)
+          text = "#{row['id']} #{row['name']} #{row['description']} #{row['tags']}".downcase
+          return 0.92 if text.match?(/flash|fast|mini|small|nano|lightning/)
+          return 0.65 if text.match?(/large|70b|72b|120b|235b|opus/)
+          0.75
         end
 
         def stats_path
@@ -237,10 +288,6 @@ module Master
         end
 
         def persist_stats
-          # String keys, not Symbol: Master.load_yaml reads with
-          # permitted_classes: [Date, Time], so a dumped Symbol tag fails to
-          # load back on the next boot -- load_stats already expects strings,
-          # transform_keys(&:to_sym) is its half of this round trip.
           plain = @stats.transform_values { |stat| stat.transform_keys(&:to_s) }
           write_atomic(stats_path, YAML.dump(plain), fsync: false, fsync_dir: false, mode: 0o600)
         rescue StandardError => e
