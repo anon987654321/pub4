@@ -1,20 +1,19 @@
 # frozen_string_literal: true
 
 # A full agent session on the real data/, with a scripted model and real git.
-#   ruby -IMASTER/lib MASTER/spec/core_smoke_spec.rb
+#   ruby -IMASTER/lib MASTER/test/test_core_smoke.rb
 # Proves the whole spine in one run: effects proposed, the Constitution
 # blocking the dangerous ones and admitting the safe ones, the World writing
 # through backup, explicit git commit after evidence, and an evidence-gated finish.
 #
-# A Minitest file named *_spec.rb, so `rake spec` reaches it as well as
-# `rake core_smoke`, bin/ci and bin/probe core.
+# The smoke test is part of `rake core_smoke`, `bin/ci` and the core probe.
 
 require "minitest/autorun"
 require "master"
 require "open3"
 require "tmpdir"
 
-class CoreSmokeSpec < Minitest::Test
+class CoreSmokeTest < Minitest::Test
   DATA = File.expand_path("../data", __dir__)
 
   # A scripted model: a fixed list of effects, proposed in order.
