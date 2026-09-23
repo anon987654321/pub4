@@ -257,3 +257,18 @@ From `MASTER/`, `rake test:all_trees` discovers the repository's top-level trees
 ## Snapshots
 
 Run `/snapshot` to write one source snapshot per governed tree: `snapshot_MASTER.md`, `snapshot_OPENBSD.md`, `snapshot_RAILS.md`, and `snapshot_STUDIO.md`. Snapshots include meaningful text source only: dot files and directories, temporary/generated/dependency trees, and binary/media files are excluded. The command is deterministic apart from files that change while it runs. Generated snapshots are artifacts, not a second source of truth.
+
+
+## Aegis and cognition
+
+Aegis remains a design horizon, not a scaffold. The buildable part today is the drift model: a pure function from entry position, sea state, current and elapsed time to a probable-position ellipse, testable against published search-and-rescue drift data. Marine sensing stays deferred until there is real hardware and a reader for every proposed sensor; placeholder sensing would violate anti-simulation.
+
+The cognition layer observes EventBus activity, scores surprise and salience, keeps a bounded working set, maintains bounded affect and self-model state, learns first-order event transitions, and periodically writes reflections to long-term memory. These are engineering proxies, not evidence of consciousness. The self-model records phenomenal consciousness as unknown. Perception stays in memory; tick! is the writer and publisher, persistence is bounded, and state lives under .master/cognition/state.yml.
+
+## Contract examples
+
+A good MASTER change reads the target and nearby tests first, changes one concern, keeps existing naming and error style, adds the smallest relevant proof, and reports exact checks run. A bad change renames registries merely because they look alike, moves a live directory without tracing readers, skips checks because the change is called documentation, or marks backlog work complete without evidence.
+
+A finished TODO entry is deleted rather than ticked; evidence belongs in the commit and remaining work stays in the repo-root TODO.md. A proposed refactor is refused when its consumer graph or evidence argues against it. Scanner findings distinguish real violations from false positives instead of editing code merely to make a pattern disappear.
+
+The command and file surface is deliberately smaller than the implementation. When a detail becomes operationally important, put it in executable configuration, a test, or the nearest living README rather than creating another Markdown file.
