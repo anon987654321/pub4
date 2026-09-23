@@ -56,6 +56,7 @@ module Master
           "doctor" => command(:dispatch_doctor, root),
           "rules" => command(:dispatch_rules, root),
           "law" => command(:dispatch_law),
+          "snapshot" => command(:dispatch_snapshot, d[:root]),
           "why" => command(:dispatch_why, d[:agent], d[:root]),
           "help" => command(:help_text, nil),
         ).merge(control_commands(ai[:standing], ai[:soul]))
@@ -128,6 +129,15 @@ module Master
         else
           "law  law contract  law full  law digest  law protocol  law handshake"
         end
+      end
+
+      def dispatch_snapshot(root, ctx: nil)
+        arg = arg_for(ctx)
+        return "usage: /snapshot [output]" if arg.split.size > 1
+        output = arg.empty? ? File.join(Master.repo_root, "snapshot_MASTER.md") : File.expand_path(arg, Master.repo_root)
+        Master::Snapshot.new(root: Master.repo_root, output:).write!
+      rescue StandardError => e
+        "snapshot0: failed — #{e.class}: #{e.message}"
       end
 
       def dispatch_device(root, ctx: nil)
