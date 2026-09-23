@@ -171,41 +171,64 @@ module Master
 
       def evidence_context(manifest, anchors)
         entries = Array(manifest["entries"]).map do |entry|
-          "surface #{entry["index"]}: #{entry["surface"]}, #{entry["viewport"]}, "             "#{entry["path"]}, #{entry["elements"]} visible measured elements, "             "#{entry["gaps"]} stacked gaps, #{entry["colors"]} text colors, "             "scroll/client width #{entry["scroll_width"]}/#{entry["client_width"]}"
+          composition = entry["first_screen"]
+          facts = Array(composition && composition["facts"])
+          "surface #{entry["index"]}: #{entry["surface"]}, #{entry["viewport"]}, #{entry["path"]}, " \
+            "#{entry["elements"]} visible elements, #{entry["gaps"]} stacked gaps, " \
+            "#{entry["colors"]} text colors, scroll/client width #{entry["scroll_width"]}/#{entry["client_width"]}, " \
+            "first-screen #{composition&.fetch("visible_elements", 0)} elements / " \
+            "#{composition&.fetch("interactive_elements", 0)} actions, " \
+            "largest box ratio #{composition&.fetch("largest_area_ratio", 0)}, " \
+            "facts: #{facts.empty? ? "none" : facts.join(", ")}"
         end
         mapped = anchors.values.compact.uniq.first(12)
         <<~TEXT
           RENDERED EVIDENCE
           The attached image is a real browser capture, not an illustration or mockup.
-          Contact-sheet order is the numbered surface order below. Judge what is visibly
-          rendered first; source is supporting evidence. Do not invent problems that the
-          screenshot or geometry cannot support. Every actionable finding must name the
-          surface/viewport and a stable DOM selector or visible text anchor.
+          Contact-sheet order is the numbered surface order below. Judge the rendered
+          composition first; geometry is measured evidence and source is supporting evidence.
+          Do not invent problems the screenshot or geometry cannot support. Every actionable
+          finding must name the surface, viewport, and stable DOM selector or visible text anchor.
 
-          #{entries.join("
-")}
+          #{entries.join("\n")}
           Candidate source anchors: #{mapped.join(", ")}
         TEXT
       end
 
-      def finding_for(pick, source_files, anchors, manifest)
-        selector = pick[SELECTOR_RE, 0]
+      def finding_for(pick, feedback, source_files, anchors, _manifest)
+        issue = pick[/\b(?:issue|critique|finding)\s+(\d+)\b/i, 1]&.to_i
+        council_text = issue && issue.positive? ? Array(feedback)[issue - 1].to_h[:feedback].to_s : ""
+        evidence = [council_text, pick].reject(&:empty?).join("\n")
+        selector = evidence[SELECTOR_RE, 0]
         file = selector && anchors[selector]
-        file ||= source_files.find { |path| pick.downcase.split(/\W+/).any? { |word| word.length > 4 && File.read(path, encoding: "UTF-8").downcase.include?(word) } }
+        file ||= source_files.find do |path|
+          words = evidence.downcase.split(/\W+/).select { |word| word.length > 4 }.uniq.first(12)
+          words.any? { |word| File.read(path, encoding: "UTF-8").downcase.include?(word) }
+        end
         file ||= source_files.first
         return unless file
 
-        surface = pick[/surface\s+[^,;]+/i, 0]
-        selector_line = selector && source_line(file, selector)
+        surface = evidence[/surface\s+([^,;\n]+)/i, 1]&.strip
+        viewport = evidence[/viewport\s+([a-z0-9_-]+)/i, 1]&.strip
+        return if surface.nil? || viewport.nil? || selector.nil?
+
+        selector_line = source_line(file, selector)
         {
           rule: RULE_ID,
           file: file,
           line: selector_line || 1,
           severity: :warning,
-          confidence: 1.0,
-          message: "Rendered visual finding: #{pick}#{surface ? "" : " — anchor this to the attached rendered evidence"}",
-          fix: "Use the attached browser screenshot and geometry evidence as ground truth. "                "Make the smallest source change that improves the cited visual issue without "                "inventing a new design system or regressing accessibility, semantics, or responsiveness.",
+          confidence: issue ? 1.0 : 0.6,
+          message: "Rendered visual finding: #{pick} — #{surface} / #{viewport} / #{selector}",
+          fix: "Use the attached browser screenshot and measured geometry as ground truth. " \
+            "Make the smallest source change that improves the cited visual issue without " \
+            "inventing a new design system or regressing accessibility, semantics, or responsiveness.",
         }
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "rendered_review.finding", event_bus: @bus)
+        nil
+      end
+
       def source_line(path, selector)
         File.foreach(path).with_index(1) { |line, index| return index if line.include?(selector) }
       rescue StandardError
