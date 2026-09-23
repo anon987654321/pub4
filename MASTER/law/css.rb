@@ -111,6 +111,7 @@ end
 Law.define(:NO_MULTIPLE_LANGUAGES) do
   source "MASTER-native (one language per file)"
   severity :warn
+  ask "Does this file embed multiple languages or notations, or does the artifact mix incompatible frameworks or media layers?"
   languages %i[ruby javascript css scss zsh]
   # Three places where speaking a second language is the job rather than the
   # defect, and the rule is about a document mixing them — the shape
