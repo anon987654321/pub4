@@ -35,6 +35,24 @@ jobs:
         working-directory: MASTER
         run: bundle exec bin/ci
 
+  reliability:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+          working-directory: MASTER
+
+      - name: Run reliability kernel tests
+        working-directory: MASTER
+        run: |
+          bundle exec ruby -Itest -Ilib test/test_reliability_kernel.rb
+          bundle exec ruby -Itest -Ilib test/test_runtime_hardening.rb
+
   browser:
     runs-on: ubuntu-latest
     steps:
