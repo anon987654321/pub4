@@ -1,11 +1,13 @@
 # frozen_string_literal: true
 
 require "yaml"
+require "json"
 require_relative "../../support/design_metrics/contrast_checks"
 require_relative "../../support/design_metrics/type_checks"
 require_relative "../../../../OPENBSD/lib/gate_result"
 require_relative "../../../../OPENBSD/lib/deploy_inventory"
 require_relative "../../../tools/crawl_support"
+require_relative "../../support/geometry_probe"
 require_relative "../../support/design_metrics"
 require_relative "../../../shared/lib/operator/master_design"
 require_relative "../../../shared/lib/operator/scss_rules"
@@ -351,13 +353,6 @@ module Deploy
     def optional_browser_hit_targets
       return unless %w[1 true yes on].include?(ENV["DESIGN_METRICS_BROWSER"].to_s.strip.downcase)
 
-      begin
-        require "selenium-webdriver"
-      rescue LoadError
-        @result.warn("design_metrics browser: selenium-webdriver not loaded — skip live hit targets")
-        return
-      end
-
       inventory = Inventory.new(root: ROOT).apps.find { |a| a.name == "brgen" }
       unless inventory && CrawlSupport.port_open?("127.0.0.1", inventory.port)
         @result.skipped_live("design_metrics browser: brgen port closed — skip live hit targets")
@@ -366,52 +361,51 @@ module Deploy
 
       min_px = @rules.dig("layout_rules", "touch", "target_min_px").to_i
       probes = [
-        { host: "brgen.no", path: "/", selector: ".tab-item, .compose-btn, a.tab-item" },
-        { host: "markedsplass.brgen.no", path: "/", selector: "#navBar a, .deal-fav, .btn" },
-        { host: "brgen.no", path: "/nearby", selector: ".btn, .nearby-locate-actions button" },
+        { label: "core", path: "/", selector: ".tab-item, .compose-btn, a.tab-item" },
+        { label: "marketplace", path: "/", selector: "#navBar a, .deal-fav, .btn" },
+        { label: "nearby", path: "/nearby", selector: ".btn, .nearby-locate-actions button" },
       ]
+      surfaces = probes.filter_map do |probe|
+        GeometryProbe.surfaces(root: ROOT).find do |surface|
+          surface.app == "brgen" && surface.label == probe[:label] && surface.path == probe[:path] && surface.viewport == "mobile"
+        end.then { |surface| surface && [surface, probe] }
+      end
+      if surfaces.empty?
+        @result.skipped_live("design_metrics browser: no matching brgen GeometryProbe surfaces")
+        return
+      end
 
-      options = Selenium::WebDriver::Chrome::Options.new
-      options.add_argument("--headless=new")
-      options.add_argument("--disable-gpu")
-      options.add_argument("--window-size=390,844")
-      driver = nil
-      begin
-        driver = Selenium::WebDriver.for(:chrome, options: options)
-        probes.each do |probe|
+      GeometryProbe.with_browser(root: ROOT, warm: surfaces.map(&:first)) do |cdp|
+        surfaces.each do |surface, probe|
           @result.checked!
-          # selenium can't set Host easily — probe apex paths only.
-          next if probe[:host].to_s.include?("markedsplass")
+          cdp.viewport(surface.width, surface.height, mobile: surface.width < 500)
+          cdp.headers(GeometryProbe::PROBE_HEADERS)
+          cdp.clear_cookies
+          cdp.navigate(surface.url)
+          rows = cdp.evaluate(
+            "Array.from(document.querySelectorAll(#{probe[:selector].to_json})).slice(0,5).map(el => { const r = el.getBoundingClientRect(); return { width: r.width, height: r.height }; })"
+          )
+          unless rows.is_a?(Array) && rows.any?
+            @result.fail("design_metrics browser: no elements for #{probe[:selector]} on #{probe[:path]}", severity: :soft)
+            next
+          end
+          rows.each do |row|
+            next unless row.is_a?(Hash)
+            h = row["height"].to_f
+            w = row["width"].to_f
+            next if h < 1 || w < 1
+            next unless [h, w].min + 0.5 < min_px
 
-          begin
-            driver.navigate.to("http://127.0.0.1:#{inventory.port}#{probe[:path]}")
-            els = driver.find_elements(css: probe[:selector])
-            if els.empty?
-              @result.fail("design_metrics browser: no elements for #{probe[:selector]} on #{probe[:path]}", severity: :soft)
-              next
-            end
-            els.first(5).each do |el|
-              box = el.size
-              h = box.height.to_f
-              w = box.width.to_f
-              next if h < 1 || w < 1
-
-              next unless [h, w].min + 0.5 < min_px
-
-              @result.fail(
-                "design_metrics browser: #{probe[:path]} element ~#{w.to_i}×#{h.to_i} < #{min_px}px (principle=fitts_law)",
-                severity: :hard
-              )
-            end
-          rescue Selenium::WebDriver::Error::WebDriverError => e
-            @result.warn("design_metrics browser: #{probe[:path]} #{e.class}: #{e.message}")
+            @result.fail(
+              "design_metrics browser: #{probe[:path]} element ~#{w.to_i}×#{h.to_i} < #{min_px}px (principle=fitts_law)",
+              severity: :hard
+            )
           end
         end
-      ensure
-        driver&.quit
       end
+    rescue StandardError => e
+      @result.warn("design_metrics browser: #{e.class}: #{e.message}")
     end
-
     def read_css(path)
       File.file?(path) ? File.read(path) : ""
     end

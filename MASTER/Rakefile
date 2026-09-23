@@ -1,12 +1,14 @@
 # frozen_string_literal: true
 
-# One file on purpose. tools/runs.rb, tools/data_reach.rb, tools/method_graph.rb,
-# test_readme_env_names.rb and test_limits_split.rb read this path to learn who
-# runs a test, who reads a data key and which ENV names are live. Split into
-# tasks/*.rake, each of them stays green and goes blind.
+# Keep the task registry here; reusable implementations live in lib/ and tools/.
+# Tests such as tools/runs.rb read this file to discover the actual entrypoints.
 
 require "rake/testtask"
 require "timeout"
+
+def run_tool(path, *args)
+  sh RbConfig.ruby, File.join(__dir__, path), *args
+end
 
 Rake::TestTask.new(:test) do |t|
   t.libs << "test"
@@ -25,18 +27,10 @@ Rake::TestTask.new(:test) do |t|
   t.warning = false
 end
 
-desc "Run spec/ — Minitest specs organized by subsystem instead of one flat test/ dir"
-Rake::TestTask.new(:spec) do |t|
-  t.libs << "test"
-  t.libs << "lib"
-  t.ruby_opts << "-r./test/test_helper"
-  t.test_files = FileList["spec/**/*_spec.rb"]
-  t.warning = false
-end
 
 desc "Scan for tracked secrets and validate the quarantine/virus_museum structure"
 task :security_sweep do
-  sh RbConfig.ruby, "tools/security_sweep.rb"
+  run_tool("tools/security_sweep.rb")
 end
 
 desc "STUDIO parses, has no orphans, its entry points boot, and its suite is green"
@@ -207,7 +201,7 @@ task :autoload do
   puts "autoload: clean"
 end
 
-desc "Run spec/core_smoke_spec.rb — Effect → Constitution → World loop"
+desc "Run test/test_core_smoke.rb — Effect → Constitution → World loop"
 task :core_smoke do
   sh RbConfig.ruby, "-I#{File.join(__dir__, "lib")}", File.join(__dir__, "test", "test_core_smoke.rb")
 end
@@ -490,11 +484,6 @@ end
     abort "lint:rule_reach: a rule reaches no detector" unless ok
   end
 
-  desc "every model data/models.yml names is one the provider still serves (needs network)"
-  task :models do
-    ok = system(RbConfig.ruby, File.join(__dir__, "tools", "model_catalog_check.rb"))
-    abort "lint:models: a fallback chain has no live model left" unless ok
-  end
 
   desc "Ratchet: lib/ may shrink or hold, never grow past data/spine.yml's ceiling"
   task :spine do
@@ -646,6 +635,30 @@ end
     end
   end
 
+  TOOL_LINT_TASKS = {
+    scan_coverage: ["Every Ruby-bearing tree in MASTER is scanned by its own law or exempt with a written reason", "tools/scan_coverage.rb"],
+    capability: ["Named capabilities must not disappear vs origin/main", "tools/capability_inventory.rb"],
+    reader_singularity: ["One loader per data file — a second direct reader is a second implementation", "tools/reader_singularity.rb"],
+    doc_citations: ["Prose citing a number that data/ owns must cite the value data/ currently holds", "tools/doc_citations.rb"],
+    do_not_touch: ["Every Do Not Touch entry names the gate that fails when its claim stops being true", "tools/do_not_touch.rb"],
+    instruments: ["The repo's own measuring code agrees with test/fixtures, whose answers are declared", "tools/instruments.rb"],
+    swallowed: ["Load-bearing errors that were swallowed and never looked at", "tools/swallowed_errors.rb"],
+    rule_audit: ["Rules that cannot see their own subject, or fire on nearly everything", "tools/rule_audit.rb"],
+    autofix_reach: ["Rules whose autofix names code that does not exist, or names nothing at all", "tools/autofix_reach.rb"],
+    rule_hygiene: ["Rule ids, aliases and metadata: collisions, unfinished folds, missing tier/severity", "tools/rule_hygiene.rb"],
+    word_boundary: ["Flag \\b adjacent to punctuation in rule regexes — a word boundary that can never fire", "tools/word_boundary_lint.rb"],
+    test_naming: ["MASTER test files are test_<subject>.rb, not <subject>_test.rb", "tools/test_naming.rb"],
+    constant_collisions: ["No two files loadable into one process define the same top-level constant", "tools/constant_collisions.rb"],
+    models: ["every model data/models.yml names is one the provider still serves (needs network)", "tools/model_catalog_check.rb"],
+  }.freeze
+
+  TOOL_LINT_TASKS.each do |name, (description, tool)|
+    desc description
+    task name do
+      run_tool(tool)
+    end
+  end
+
   desc "Check top-level YAML registry keys are singular"
   task :data_singularity do
     $LOAD_PATH.unshift(File.join(__dir__, "lib"))
@@ -660,83 +673,6 @@ end
       check.findings.each { |finding| puts "  #{finding[:path]}:#{finding[:line]}: #{finding[:message]}" }
       abort "lint:data_singularity: #{check.findings.size} violation(s)"
     end
-  end
-
-  desc "Every Ruby-bearing tree in MASTER is scanned by its own law or exempt with a written reason"
-  task :scan_coverage do
-    sh RbConfig.ruby, File.join(__dir__, "tools", "scan_coverage.rb")
-  end
-
-  desc "Named capabilities must not disappear vs origin/main"
-  task :capability do
-    sh RbConfig.ruby, File.join(__dir__, "tools", "capability_inventory.rb")
-  end
-
-  desc "One loader per data file — a second direct reader is a second implementation"
-  task :reader_singularity do
-    sh RbConfig.ruby, File.join(__dir__, "tools", "reader_singularity.rb")
-  end
-
-  desc "Prose citing a number that data/ owns must cite the value data/ currently holds"
-  task :doc_citations do
-    sh RbConfig.ruby, File.join(__dir__, "tools", "doc_citations.rb")
-  end
-
-  desc "Every Do Not Touch entry names the gate that fails when its claim stops being true"
-  task :do_not_touch do
-    sh RbConfig.ruby, File.join(__dir__, "tools", "do_not_touch.rb")
-  end
-
-  desc "The repo's own measuring code agrees with tools/fixtures, whose answers are declared"
-  task :instruments do
-    sh RbConfig.ruby, File.join(__dir__, "tools", "instruments.rb")
-  end
-
-  # Ground::Swallow classifies what it swallows and writes it down; until
-  # 2026-08-25 nothing ever read the file back. Its own header says the severity
-  # exists "so the next diagnostic hunt can filter for :load_bearing" — this is
-  # that hunt, and the first run found 4,663 load-bearing swallows from a single
-  # rule that had been failing silently through every scan it belonged to.
-  #
-  # Reads local runtime state, so it reports rather than ratchets: the honest
-  # number depends on how much has run since the log was last cleared.
-  desc "Load-bearing errors that were swallowed and never looked at"
-  task :swallowed do
-    sh RbConfig.ruby, File.join(__dir__, "tools", "swallowed_errors.rb")
-  end
-
-  # Audits the rules rather than the tree. Fails on a rule whose fixtures only
-  # pass because a fixture is read differently from a real file, and on one that
-  # flags most of what it reads. Both are how a broken detector looks from the
-  # inside — prove! green, findings meaningless.
-  desc "Rules that cannot see their own subject, or fire on nearly everything"
-  task :rule_audit do
-    sh RbConfig.ruby, File.join(__dir__, "tools", "rule_audit.rb")
-  end
-
-  desc "Rules whose autofix names code that does not exist, or names nothing at all"
-  task :autofix_reach do
-    sh RbConfig.ruby, File.join(__dir__, "tools", "autofix_reach.rb")
-  end
-
-  desc "Rule ids, aliases and metadata: collisions, unfinished folds, missing tier/severity"
-  task :rule_hygiene do
-    sh RbConfig.ruby, File.join(__dir__, "tools", "rule_hygiene.rb")
-  end
-
-  desc "Flag \\b adjacent to punctuation in rule regexes — a word boundary that can never fire"
-  task :word_boundary do
-    sh RbConfig.ruby, File.join(__dir__, "tools", "word_boundary_lint.rb")
-  end
-
-  desc "MASTER test files are test_<subject>.rb, not <subject>_test.rb"
-  task :test_naming do
-    sh RbConfig.ruby, File.join(__dir__, "tools", "test_naming.rb")
-  end
-
-  desc "No two files loadable into one process define the same top-level constant"
-  task :constant_collisions do
-    sh RbConfig.ruby, File.join(__dir__, "tools", "constant_collisions.rb")
   end
 
   desc "No fact declared identically in two data files without a named reason"
@@ -977,7 +913,7 @@ end
 
 desc "Every law/ rule flags its bad fixture and spares its good one, then every law judges law/ itself"
 task :dogfood do
-  ruby "-Ilib", "spec/dogfood_spec.rb"
+  ruby "-Ilib", "test/test_dogfood.rb"
 end
 
 desc "Mutate a source and watch its test fail. Usage: rake mutate[lib/foo.rb,test/test_foo.rb]"

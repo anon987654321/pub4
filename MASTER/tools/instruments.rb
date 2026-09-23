@@ -14,7 +14,7 @@
 # Neither was caught by a test. Both would have been caught in ten seconds by a
 # file whose correct answers were already written down.
 #
-# So: tools/fixtures/*.rb each carry a header naming what they contain,
+# So: test/fixtures/*.rb each carry a header naming what they contain,
 #
 #     # instrument: code_lines=8 longest_method=1 public_methods=4
 #
@@ -34,7 +34,7 @@ require "json"
 module Operator
   class Instruments
     MASTER = File.expand_path("..", __dir__)
-    FIXTURES = File.join(MASTER, "tools", "fixtures")
+    FIXTURES = File.join(MASTER, "test", "fixtures")
     HEADER = /^#\s*instrument:\s*(.+)$/
 
     def self.metrics

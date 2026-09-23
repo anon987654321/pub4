@@ -43,11 +43,12 @@ directly so nested master gates do not run twice under `--all`;
 
 The source gates read text. The rendered suite measures what Chrome actually laid
 out, over the DevTools Protocol through `gates/support/cdp_session.rb`, which
-speaks the protocol over a WebSocket built from stdlib alone — ferrum and
-selenium exist only inside app bundles and gates run under bare `ruby`. Chrome is
-found through `CHROME_PATH` or the usual locations, and without it every rendered
-gate degrades to a warning, so a green run is not by itself evidence that
-anything was measured.
+speaks the protocol over a WebSocket built from stdlib alone. `visual_contract`
+uses that same session for its route matrix, screenshots, runtime errors and
+accessibility probes; there is one browser transport, not a Selenium side path.
+Chrome is found through `CHROME_PATH` or the usual locations, and without it
+every rendered gate degrades to a warning, so a green run is not by itself
+evidence that anything was measured.
 
 That distinction is the whole argument for the suite. A source gate asserts
 `_nav.scss` contains the string `min-height: 44px`. `geometry` asserts the box is
@@ -55,17 +56,14 @@ That distinction is the whole argument for the suite. A source gate asserts
 pixel, and that its text clears WCAG AA against its composited background — with
 `var()`, `oklch` and `color-mix` resolved, which parsing hex out of a stylesheet
 structurally cannot do. Chrome launches with `--host-resolver-rules`, so
-`markedsplass.brgen.no` and the other verticals are probed as verticals; Selenium
-could not set a `Host` header, which is why the older optional probe skipped
-markedsplass entirely.
+``markedsplass.brgen.no` and the other verticals are probed as verticals; the
+canonical CDP session can carry the required host mapping.
 
-Baselines are committed as geometry, not as pictures. `visual_contract` reads its
-baseline from whatever PNG sits at the destination path and then overwrites it,
-and those PNGs are gitignored — so a regression is reported once, becomes the new
-baseline, and does not exist at all on a fresh checkout. `layout_snapshot` writes
-rect and style JSON instead: tracked, reviewable, immune to antialiasing and GPU
-differences, and its diffs read `nav.tab-bar: h 48→32` rather than "8,214 pixels
-changed". New baselines are accepted only under `GATE_SNAPSHOT_UPDATE=1`, and
+`layout_snapshot` is the durable visual baseline: committed geometry and style JSON,
+immune to antialiasing and GPU differences, with diffs that read `nav.tab-bar:
+h 48→32`. `visual_contract` remains the compatibility route matrix and optional
+pixel-diff capture; its PNGs are deliberately disposable. New structural
+baselines are accepted only under `GATE_SNAPSHOT_UPDATE=1`. New baselines are accepted only under `GATE_SNAPSHOT_UPDATE=1`, and
 deliberately not under `GATE_AUTOFIX`, because blessing a regression is the
 behaviour this replaces.
 

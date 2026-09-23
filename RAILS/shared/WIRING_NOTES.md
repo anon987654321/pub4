@@ -597,7 +597,7 @@ Thirteen of the twenty file names there end in `_lint` and the cohesion census
 proposes a `pub4/lint/` shelf. Decided against. The shelf is already spelled in
 the filenames; the file count does not move, so no ratchet is paid either way;
 and the cost is renaming thirteen constants and following them through
-`MASTER/tools/ratchets.rb` — which derives each constant from the basename —
+`MASTER/lib/operator/ratchets.rb` — which derives each constant from the basename —
 plus `shared/config/ci.rb`, `gates/lib/source/scale_ratchet.rb` and nine tests.
 That is a cross-tree rename of a ratchet table bought for one path segment, on a
 checkout where the commit hook refuses a cross-tree commit for good reason.

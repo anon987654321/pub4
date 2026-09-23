@@ -23,7 +23,7 @@ module Master
               ],
               quality_kind: :design,
               ideation_prompt: "Generate concrete multi-solution improvements for this web UI. " \
-                               "Produce 3 distinct solution directions per issue found.",
+                               "For each issue, propose materially different repair directions before selecting the strongest one.",
               cycles_default: 1,
               start_event: :ui_critique_start,
               done_event: :ui_critique_done,
@@ -35,6 +35,12 @@ module Master
                 "use Ruby QualityFramework design rules from Deliberation",
                 "use Master::Design::PlatformProfiles for content-first and profile-specific critique",
                 "distinguish measurable violations from subjective taste",
+                "treat the attached rendered screenshot as the visual ground truth",
+                "format every actionable UI issue as surface=<id> viewport=<name> selector=<stable-selector> or surface=<id> viewport=<name> visible text=\"<exact visible text>\"",
+                "start each actionable UI issue with its issue number so ideation can preserve the council anchor",
+                "use first-screen composition facts as evidence, but do not confuse a metric threshold with visual quality",
+                "when the render has no actionable defect or evidence-backed improvement, state VISUAL_CLEAN explicitly",
+                "judge typography, hierarchy, spacing, alignment, density and composition in the render, not only in CSS",
               ],
             },
             sound: {
@@ -130,6 +136,9 @@ module Master
                 "surgical, minimal changes that fit existing conventions in the file",
                 "distinguish measurable violations from subjective taste",
                 "no speculative abstractions or unrequested refactors",
+                "prefer evidence-backed micro-smell correction, simplification, clearer naming, and duplication removal over redesign",
+                "for every actionable issue or improvement, name the repository-relative file and stable line or symbol; unanchored observations are not repairs",
+                "a clean deterministic scan means no registered detector fired, not that the artifact is beyond improvement",
               ],
             },
           }.freeze

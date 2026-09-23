@@ -43,10 +43,12 @@ sentence. The slash set is `/review` `/status` `/undo` `/commit` `/model`
   `bin/operator lint --staged --changed-lines`.
 - Recovery: `/runtime status` shows the last known-good commit, `/runtime promote` records the current committed HEAD, and ``/runtime rollback --confirm` restores that commit only when the checkout is clean.
 - Work: say the path. `/fix [path]` is the operation that changes the tree —
-  observe, critique, repair, observe again, until it converges or says why it
-  stopped. `/review [path]` reads and argues without writing, and its stages are
-  `--only critique` and `--only map`. `/fix --dry-run` stops after the reading
-  and says what it would take on. There is no `/scan`.
+  observe, render when the target supports it, critique, repair, and observe
+  again. A clean deterministic scan is not proof of quality: the first clean
+  streak pass also asks the Council for anchored, evidence-backed micro-
+  improvements, then the same RuleLoop verifies them. `/review [path]` reads and
+  argues without writing, and `/fix --dry-run` reports what the convergence pass
+  would take on. There is no `/scan`.
 
 ## Runtime Map
 

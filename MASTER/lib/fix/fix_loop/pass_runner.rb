@@ -25,7 +25,8 @@ module Master
 
         def initialize(bus:, committer:, loop_scanner:, llm_router:, rollback:, root:,
                        rules:, agent:, scanner:, learnings:, preamble:,
-                       clean_runs_required:, plateau_window:, ground_truth: nil, homeostat: nil, council: nil)
+                       clean_runs_required:, plateau_window:, ground_truth: nil, homeostat: nil, council: nil,
+                       visual_pass: nil)
           @bus = bus
           @committer = committer
           @loop_scanner = loop_scanner
@@ -38,12 +39,12 @@ module Master
           @learnings = learnings
           @preamble = preamble
           @rule_order = RuleOrder.new(rules:, learnings:, bus:, root:)
-          take_limits(clean_runs_required:, plateau_window:, ground_truth:, homeostat:, council:)
+          take_limits(clean_runs_required:, plateau_window:, ground_truth:, homeostat:, council:, visual_pass:)
         end
 
         # What a pass is judged by, apart from the collaborators it runs through:
         # when it may stop, when it has stopped moving, and who else gets a say.
-        def take_limits(clean_runs_required:, plateau_window:, ground_truth:, homeostat:, council:)
+        def take_limits(clean_runs_required:, plateau_window:, ground_truth:, homeostat:, council:, visual_pass:)
           @clean_runs_required = clean_runs_required
           @plateau_window = plateau_window
           @violation_counts = Hash.new(0)
@@ -51,6 +52,7 @@ module Master
           @ground_truth = ground_truth
           @homeostat = homeostat
           @council = council
+          @visual_pass = visual_pass
           @ground_truth_failures = 0
         end
 
@@ -63,6 +65,13 @@ module Master
 
           run_fast_stage(files, pass)
           found = run_observation_stage(files, target)
+
+          visual = run_visual_pass(target:, files:, pass:)
+          return visual_abort_result(visual) if visual&.err? && found.empty?
+          found += Array(visual&.value!&.fetch(:findings, []))
+
+          found, shed = supplement_with_improvements(found, pass:, files:, deadline:)
+          return shed if shed
           return clean_pass_result(files, pass_mtimes, pass, consecutive_clean) if found.empty?
 
           if stagnant?(history, seen_snapshots, recurring_violations, found, pass)
@@ -70,7 +79,7 @@ module Master
             return PassResult.new(status: :plateau, consecutive_clean: 0)
           end
 
-          run_or_shed_llm_stage(found, files, pass, deadline)
+          dispatch_llm_stages(found, files, pass, deadline, visual)
           delivery = @committer.finish_transaction("fix_loop: pass #{pass}", findings: found, owned_paths: files)
           return PassResult.new(status: :delivery_failed, consecutive_clean: 0, message: delivery.message) if delivery.err?
 
@@ -108,18 +117,102 @@ module Master
           @bus&.publish("fix_loop:pass_start", pass:, target:, file_count: files.size)
         end
 
-        def run_or_shed_llm_stage(found, files, pass, deadline)
+        def visual_abort_result(visual)
+          @committer.abort_transaction!
+          PassResult.new(status: :plateau, consecutive_clean: 0, message: visual.message)
+        end
+
+        # found is already empty when this is called (run_pass only calls it
+        # then), so the only question is whether the improvement council runs
+        # at all, and under what resource state. Returns [found, early] --
+        # early is the shed-resources PassResult to return immediately, or
+        # nil to keep going with the (possibly still empty) found.
+        def supplement_with_improvements(found, pass:, files:, deadline:)
+          return [found, nil] unless found.empty?
+
           resources = @resource_budget.measure
           if @resource_budget.critical?(resources)
-            @bus&.publish("fix_loop:model_work_shed", pass:, reasons: resources[:reasons],
-                          values: resources[:values])
+            @committer.abort_transaction!
+            @bus&.publish("fix_loop:model_work_shed", pass:, reasons: resources[:reasons], values: resources[:values])
+            Master::Trace::Dmesg.status("fix0", "pass #{pass}, improvement review shed: #{resources[:reasons].join("; ")}")
+            shed = PassResult.new(status: :plateau, consecutive_clean: 0, message: "model work shed: #{resources[:reasons].join("; ")}")
+            return [found, shed]
+          end
+
+          [found + Array(@council&.improve(files:, pass:, deadline:)), nil]
+        end
+
+        # found may now hold three kinds of finding -- ordinary rule
+        # violations, council-selected improvements, and rendered-visual
+        # findings -- each routed to the stage that knows how to fix it. A
+        # shed here (unlike supplement_with_improvements above) does not
+        # abort: found is non-empty, so the transaction still delivers
+        # whatever the fast/observation stages already produced.
+        def dispatch_llm_stages(found, files, pass, deadline, visual)
+          resources = @resource_budget.measure
+          if @resource_budget.critical?(resources)
+            @bus&.publish("fix_loop:model_work_shed", pass:, reasons: resources[:reasons], values: resources[:values])
             Master::Trace::Dmesg.status("fix0", "pass #{pass}, model work shed: #{resources[:reasons].join("; ")}")
             return
           end
 
           @homeostat&.observe(:llm_call)
-          council = @council&.run(files: files_with_violations(found, files), pass:, deadline:)
-          run_llm_stage(found, files, pass, deadline, council:)
+          source_found = found.reject { |v| [VisualPass::RULE_ID, CouncilRound::IMPROVEMENT_RULE_ID].include?(v[:rule].to_s) }
+          improvement_found = found.select { |v| v[:rule].to_s == CouncilRound::IMPROVEMENT_RULE_ID }
+          visual_found = found.select { |v| v[:rule].to_s == VisualPass::RULE_ID }
+          council = @council&.run(files: files_with_violations(source_found, files), pass:, deadline:) if source_found.any?
+          run_llm_stage(source_found, files, pass, deadline, council:) if source_found.any?
+          run_improvement_stage(improvement_found, pass:, files:, deadline:) if improvement_found.any?
+          run_visual_stage(visual_found, pass:, image: visual&.value!&.fetch(:image, nil), files:, deadline:) if visual_found.any?
+        end
+
+        def run_visual_pass(target:, files:, pass:)
+          return unless @visual_pass&.applicable?(target)
+
+          @visual_pass.run(target:, files:, pass:)
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "pass_runner.visual_pass", event_bus: @bus)
+          Result.err("rendered visual review: INCONCLUSIVE — #{e.class}: #{e.message}", category: :inconclusive)
+        end
+
+        def run_improvement_stage(findings, pass:, files:, deadline:)
+          return 0 if findings.empty? || Time.now >= deadline
+
+          rule = CouncilRound::IMPROVEMENT_RULE.new(CouncilRound::IMPROVEMENT_RULE_ID)
+          loop = RuleLoop.new(
+            rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus,
+            learnings: @learnings, committer: @committer,
+          )
+          loop.injected_preamble = [
+            @preamble,
+            "Council-selected, anchored micro-improvement. Preserve behavior and make the smallest evidence-backed repair.",
+          ].join("\n\n")
+          result = loop.run_once(files, external_violations: findings)
+          @bus&.publish("fix_loop:improvement_fix", pass:, findings: findings.size, fixed: result[:fixed].to_i)
+          result[:fixed].to_i
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "pass_runner.improvement_stage", event_bus: @bus)
+          0
+        end
+
+        def run_visual_stage(findings, pass:, image:, files:, deadline:)
+          return 0 if Time.now >= deadline || findings.empty? || image.nil?
+
+          loop = RuleLoop.new(
+            rule: VisualPass::Rule.new(VisualPass::RULE_ID),
+            agent: @agent, scanner: @scanner, root: @root, bus: @bus,
+            learnings: @learnings, committer: @committer,
+          )
+          loop.injected_preamble = [
+            @preamble,
+            "The following findings came from the real rendered browser. Use the attached screenshot as evidence. Preserve accessibility, semantics and responsive behavior.",
+          ].join("\n\n")
+          result = loop.run_once(files, external_violations: findings, image:)
+          @bus&.publish("fix_loop:visual_fix", pass:, findings: findings.size, fixed: result[:fixed].to_i)
+          result[:fixed].to_i
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "pass_runner.visual_stage", event_bus: @bus)
+          0
         end
 
         def run_fast_stage(files, pass)
@@ -255,8 +348,6 @@ module Master
 
         def circuit_open? = @llm_router.circuit_open?
         def open_breakers = @llm_router.open_breakers
-
-
       end
     end
   end

@@ -30,7 +30,13 @@ module Master
             return ideation_result.to_s unless ideation_result.respond_to?(:value)
 
             value = ideation_result.value
-            value.is_a?(Hash) ? value.fetch(:final, "").to_s : value.to_s
+            if value.is_a?(Hash)
+              ideas = Array(value[:ideas]).map(&:to_s)
+              final = value[:final].to_s
+              (ideas + [final]).reject(&:empty?).join("\n")
+            else
+              value.to_s
+            end
           end
 
           # An errored ideation contributes nothing rather than leaking its

@@ -11,12 +11,14 @@ module Master
       class Critique
         MODES = Modes::TABLE
 
-        def initialize(mode:, agent:, event_bus: nil, audio_path: nil, files: nil)
+        def initialize(mode:, agent:, event_bus: nil, audio_path: nil, files: nil, visual_image: nil, visual_context: nil)
           @mode = MODES.fetch(mode) { raise ArgumentError, "unknown critique mode: #{mode}" }
           @agent = agent
           @bus = event_bus
           @audio_path = audio_path
           @files_override = files
+          @visual_image = visual_image
+          @visual_context = visual_context
         end
 
         def run
@@ -29,12 +31,16 @@ module Master
           return result unless result.ok?
 
           feedback = result.value!
+          issues = panel_issue_entries(feedback)
           ideation_result = ideate(preset, feedback:)
           cherry = CherryPick.call(feedback, ideation_result)
-          @bus&.publish(@mode[:done_event], cherry_picks: cherry.size)
+          visual_clean = @mode[:preset_key] == "ui_critique" && issues.empty? && cherry.empty?
+          @bus&.publish(@mode[:done_event], cherry_picks: cherry.size, visual_clean:)
           harvest = harvest_path(payload:, feedback:, ideation_result:, cherry:)
           Master::Result.ok({
             feedback:,
+            issues:,
+            visual_clean:,
             ideas: CherryPick.ideation_value(ideation_result),
             cherry_picks: cherry,
             metrics: payload[:metrics],
@@ -47,7 +53,7 @@ module Master
 
         def deliberate(panel, payload)
           delib = Deliberation.new(personas: panel, agent: @agent, event_bus: @bus, judge_enabled: true)
-          delib.review(payload[:combined], context: build_context)
+          delib.review(payload[:combined], context: build_context, image: payload[:visual_image])
         end
 
         def ideate(preset, feedback: nil)
@@ -69,7 +75,9 @@ module Master
 
         def ideation_prompt(feedback)
           issues = panel_issues(feedback)
-          return @mode[:ideation_prompt] if issues.empty?
+          if issues.empty?
+            return "#{@mode[:ideation_prompt]}\n\nNo registered violation was found. Conduct a clean-tree improvement review: find real, evidence-backed micro-improvements in simplification, naming, duplication, complexity, prose, accessibility, layout or maintainability. Generate 5 to 20 materially different candidates, and anchor every actionable candidate to a repository-relative file and stable line or symbol. Do not invent defects, redesign working systems, or use taste as evidence."
+          end
 
           <<~PROMPT
             #{@mode[:ideation_prompt]}
@@ -85,8 +93,22 @@ module Master
 
         # The first line of each critique: the issue, without the argument for it.
         def panel_issues(feedback)
-          Array(feedback).filter_map { |entry| entry[:feedback].to_s.lines.first&.strip }
-                         .reject(&:empty?).uniq.first(12)
+          panel_issue_entries(feedback).map { |entry| entry[:summary] }
+        end
+
+        def panel_issue_entries(feedback)
+          seen = {}
+          Array(feedback).reject { |entry| entry[:persona].to_s == "Judge" }.filter_map do |entry|
+            summary = entry[:feedback].to_s.lines.map(&:strip).find { |line| !line.empty? }.to_s
+            next if summary.empty? || seen.key?(summary)
+
+            seen[summary] = true
+            {
+              persona: entry[:persona].to_s,
+              summary: summary,
+              feedback: entry[:feedback].to_s,
+            }
+          end.first(12)
         end
 
         def harvest_path(payload:, feedback:, ideation_result:, cherry:)
@@ -147,7 +169,8 @@ module Master
           combined = files.filter_map { |rel| read_truncated(rel) }.join("\n\n")
           metrics = mix_metrics_block if @mode[:include_mix_metrics]
           combined = [metrics, combined].compact.join("\n\n") if metrics
-          { combined:, files:, metrics: }
+          combined = [@visual_context, combined].compact.join("\n\n") if @visual_context
+          { combined:, files:, metrics:, visual_image: @visual_image }
         end
 
         def mix_metrics_block

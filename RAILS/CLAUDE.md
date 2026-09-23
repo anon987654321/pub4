@@ -87,10 +87,9 @@ and `/fix` mutates the working tree. `MASTER_GATE_SCAN_ONLY=1` for preflight.
 - **Stale fragment caches:** `update_column` skips `updated_at`, so `[record,
   …]` cache keys do not bust and a page keeps rendering the old value while the
   console shows the new one.
-- **`visual_contract` baselines are gitignored** and overwritten on read — a
-  regression reports once and becomes the baseline. `layout_snapshot` commits
-  reviewable rect/style JSON instead; accept new baselines only under
-  `GATE_SNAPSHOT_UPDATE=1`.
+- **`visual_contract` is a compatibility route matrix over the canonical CDP
+  browser session.** `layout_snapshot` is the durable committed visual baseline;
+  accept new structural baselines only under `GATE_SNAPSHOT_UPDATE=1`.
 - **Deploy sheds amber and bsdports**, and TLS keeps answering, so the outage
   looks like `curl 000` rather than a 5xx. Check ports 61352 and 47312 directly.
 - **In a worktree, live gates measure main.** The local fleet serves the main

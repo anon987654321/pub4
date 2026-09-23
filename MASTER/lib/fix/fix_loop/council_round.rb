@@ -15,6 +15,14 @@ module Master
       # repair nobody applies.
       class CouncilRound
         FILES_PER_ROUND = 12
+        IMPROVEMENT_RULE_ID = "COUNCIL_IMPROVEMENT"
+        IMPROVEMENT_RULE = Data.define(:id) do
+          def severity = :warning
+        end
+        IMPROVEMENT_SEVERITY = :warning
+        DESTRUCTIVE_IMPROVEMENT = /\b(?:delete|remove|drop|erase|discard)\b/i.freeze
+        LINE_RE = /\b(?:line|ln)\s*#?\s*(\d+)\b|:(\d+)\b/i.freeze
+        SYMBOL_RE = /\b(class|module|def)\s+([A-Za-z_]\w*[!?=]?)/i.freeze
 
         def initialize(agent:, root:, bus: nil)
           @agent = agent
@@ -37,6 +45,36 @@ module Master
           value
         end
 
+        # A clean deterministic scan is not a proof of design quality or code quality.
+        # One exploratory council pass gives /fix the same opportunity we use when
+        # reviewing a change by hand: find a real micro-smell, simplify it, and then
+        # let RuleLoop apply the repair under the normal verification gates.
+        # Only the first clean streak pass asks, so the next pass can confirm the
+        # result without paying for the same exploratory review twice.
+        def improve(files:, pass:, deadline:)
+          return if @agent.nil? || files.empty? || Time.now >= deadline
+
+          selected = rotating_files(files, pass)
+          result = critique(selected)
+          return unless result&.ok?
+
+          value = result.value!
+          findings = improvement_findings(value, selected)
+          @bus&.publish(
+            "fix_loop:improvement_council",
+            pass:, files: selected.size, critiques: Array(value[:feedback]).size,
+            cherry_picks: Array(value[:cherry_picks]).size, anchored: findings.size,
+          )
+          Master::Trace::Dmesg.status(
+            "fix0",
+            "pass #{pass}, improvement council #{Master::Trace::Dmesg.counted(findings.size, "candidate")}",
+          ) if findings.any?
+          findings
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "fix_loop.improvement_council", event_bus: @bus)
+          nil
+        end
+
         private
 
         def critique(files)
@@ -44,6 +82,86 @@ module Master
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "fix_loop.council_round", event_bus: @bus)
           nil
+        end
+
+        def improvement_findings(value, files)
+          Array(value[:cherry_picks]).filter_map do |pick|
+            build_improvement_finding(pick.to_s, files)
+          end.uniq { |finding| [finding[:file], finding[:line], finding[:message]] }
+        end
+
+        def build_improvement_finding(pick, files)
+          return if pick.strip.empty?
+          return if destructive_pick?(pick) && ENV["MASTER_AUTOFIX"] != "1"
+
+          file = file_anchor(pick, files)
+          return unless file
+
+          line = line_anchor(pick) || symbol_line(pick, file)
+          return unless line
+
+          {
+            rule: IMPROVEMENT_RULE_ID,
+            kind: :improvement,
+            file:,
+            line:,
+            severity: IMPROVEMENT_SEVERITY,
+            confidence: 0.85,
+            message: "Council improvement: #{pick.strip}",
+            fix: "Make the smallest evidence-backed improvement at the anchored file and line. " \
+                 "Preserve behavior, accessibility, semantics, responsiveness and public interfaces. " \
+                 "Do not rewrite the file or introduce a new abstraction without evidence.",
+          }
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "fix_loop.improvement_finding", event_bus: @bus)
+          nil
+        end
+
+        def destructive_pick?(pick)
+          pick.match?(DESTRUCTIVE_IMPROVEMENT)
+        end
+
+        def rotating_files(files, pass)
+          rows = Array(files).select { |path| File.file?(path) }.uniq.sort
+          return rows.first(FILES_PER_ROUND) if rows.empty? || rows.size <= FILES_PER_ROUND
+
+          offset = ((pass.to_i - 1) * FILES_PER_ROUND) % rows.size
+          rows.rotate(offset).first(FILES_PER_ROUND)
+        end
+
+        def file_anchor(pick, files)
+          rows = Array(files).map { |path| [path, repo_relative(path), File.basename(path)] }
+          paths = rows.select { |_, relative, _| pick.include?(relative) }
+          return paths.first[0] if paths.size == 1
+
+          basenames = rows.select do |_, _, basename|
+            pick.match?(%r{(?<![\w.-])#{Regexp.escape(basename)}(?![\w.-])})
+          end
+          basenames.first[0] if basenames.size == 1
+        end
+
+        def line_anchor(pick)
+          match = pick.match(LINE_RE)
+          return unless match
+
+          line = (match[1] || match[2]).to_i
+          line.positive? ? line : nil
+        end
+
+        def symbol_line(pick, file)
+          match = pick.match(SYMBOL_RE)
+          return unless match
+
+          kind, name = match.captures
+          File.foreach(file, encoding: "UTF-8").with_index(1) do |line, number|
+            return number if line.match?(/\b#{Regexp.escape(kind)}\s+#{Regexp.escape(name)}\b/)
+          end
+          nil
+        end
+
+        def repo_relative(path)
+          repo = File.expand_path("..", @root)
+          File.expand_path(path).delete_prefix("#{repo}/")
         end
 
         def publish(value, pass:, files:)

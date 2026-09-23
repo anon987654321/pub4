@@ -102,21 +102,23 @@ module Master
       end
 
       # One pass: scan → fix each violating file once → return { fixed:, status: }.
-      def run_once(files)
-        violations = scan_files(files)
+      def run_once(files, external_violations: nil, image: nil)
+        @visual_image = image
+        violations = external_violations || scan_files(files)
         return { fixed: 0, status: :clean, breakdown: {} } if violations.empty?
 
         fixed = fix_batch(violations)
         status = pass_outcome(fixed)
         record_outcomes(files, status)
         @bus&.publish("rule_loop:pass", rule: @rule.id, violations: violations.size, fixed:, status:)
-        { fixed:, status:, breakdown: @batch_breakdown || {} }
       rescue StandardError => e
         @bus&.publish("rule_loop:error", rule: @rule.id, error: e.message)
         # Bus-only meant a crashed rule pass was indistinguishable from a
         # quiet one in the dmesg stream the operator actually reads.
         Master::Trace::Dmesg.status("fix0", "#{@rule.id}: #{e.class}: #{e.message[0, 90]}")
         { fixed: 0, status: :error, breakdown: { error: 1 } }
+      ensure
+        @visual_image = nil
       end
 
       private
@@ -269,6 +271,7 @@ module Master
         Rule violated: #{violation[:rule]}
         Line #{violation[:line]}: #{violation[:message]}
         #{ctx[:fix_line]}
+        #{visual_fix_context}
 
         #{SEMANTIC_PASS_CHECKLIST}
 
@@ -278,6 +281,12 @@ module Master
         #{src}
         ```
       PROMPT
+      end
+
+      def visual_fix_context
+        return "" unless @visual_image
+
+        "Rendered evidence is attached to this request. Treat the screenshot as ground truth for the visual finding; "           "do not invent geometry, typography, or composition that the capture does not support."
       end
 
       def prompt_context_for(violation:, path:, style:)

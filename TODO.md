@@ -404,11 +404,6 @@ not built, each on purpose.
   HUMAN_DECISION_REQUIRED terminal state; `FixLoop::TERMINAL_STATES` deliberately
   has no such state while nothing detects one. Seams:
   `lib/fix/fix_loop/pass_runner.rb`, `data/rules.yml` severities.
-- **Nothing converges on the rendered artifact.** For a standalone page, `/fix`
-  reads source; typography, hierarchy, keyboard reachability and runtime errors
-  are measured by `RAILS/gates/lib/rendered/*` on the deploy host and never come
-  back into the loop. A repair that satisfies a rule and breaks the page reads
-  as progress.
 - **The council's cost inside a pass is unmeasured.** It asks one panel per pass
   over up to twelve files. On a spent OpenRouter balance the free lanes answer,
   but nobody has run a full `/fix` against a real target and priced it. Measure

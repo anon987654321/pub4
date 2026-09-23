@@ -398,6 +398,71 @@
     }
   }
 
+  // One compact rendered composition payload. The geometry gates own hard
+  // accessibility/layout facts; these measurements give the visual council the
+  // same browser-grounded context without inventing a second design scanner.
+  const firstScreen = out.filter((el) =>
+    el.visible && el.onscreen && el.rect.y < vh && el.rect.y + el.rect.h > 0
+  );
+  const textBlocks = firstScreen.filter((el) =>
+    el.text && !el.inline_in_text && !/^img$/i.test(el.tag)
+  );
+  const headingSizes = firstScreen
+    .filter((el) => /^h[1-3]$/.test(el.tag) && el.font_size > 0)
+    .map((el) => ({ tag: el.tag, px: el.font_size, lines: el.text_lines, text: el.text }));
+  const bodySizes = textBlocks
+    .filter((el) => !/^h[1-3]$/.test(el.tag) && el.font_size >= 10)
+    .map((el) => el.font_size);
+  const interactive = firstScreen.filter((el) => el.interactive && !el.inline_in_text);
+  const areas = firstScreen.map((el) => Math.max(0, el.rect.w * el.rect.h));
+  const paintedApprox = areas.reduce((sum, area) => sum + area, 0);
+  const viewportArea = Math.max(1, vw * vh);
+  const distinctFontSizes = [...new Set(firstScreen
+    .map((el) => el.font_size)
+    .filter((px) => px > 0))].sort((a, b) => a - b);
+  const leading = textBlocks
+    .map((el) => el.line_height)
+    .filter((px) => px > 0);
+  const median = (values) => {
+    const sorted = [...values].sort((a, b) => a - b);
+    if (!sorted.length) return null;
+    const middle = Math.floor(sorted.length / 2);
+    return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
+  };
+  const primary = [...interactive].sort(
+    (a, b) => (b.rect.w * b.rect.h) - (a.rect.w * a.rect.h),
+  ).slice(0, 8);
+  const visual = {
+    first_screen: {
+      text_blocks: textBlocks.length,
+      interactive: interactive.length,
+      headings: headingSizes,
+      largest_element_area_ratio: Number(
+        (Math.max(0, ...areas) / viewportArea).toFixed(4),
+      ),
+      painted_area_ratio_approx: Number(
+        Math.min(2, paintedApprox / viewportArea).toFixed(4),
+      ),
+      centered_long_text: textBlocks.filter(
+        (el) => el.text_align === "center" && el.text_lines > 3,
+      ).length,
+      small_text: textBlocks.filter((el) => el.font_size > 0 && el.font_size < 16).length,
+      primary_candidates: primary.map((el) => ({
+        key: el.key, tag: el.tag, text: el.text, aria: el.aria,
+        rect: el.rect, font_size: el.font_size,
+      })),
+    },
+    typography: {
+      distinct_font_sizes: distinctFontSizes,
+      body_min_px: bodySizes.length ? Math.min(...bodySizes) : null,
+      body_median_px: median(bodySizes),
+      body_max_px: bodySizes.length ? Math.max(...bodySizes) : null,
+      line_height_min_px: leading.length ? Math.min(...leading) : null,
+      line_height_max_px: leading.length ? Math.max(...leading) : null,
+      heading_sizes: headingSizes,
+    },
+  };
+
   return {
     vw: vw, vh: vh,
     title: document.title,
@@ -414,6 +479,7 @@
     elements: out,
     colors: colors,
     overflow: overflow,
-    gaps: gaps
+    gaps: gaps,
+    visual: visual,
   };
 })()

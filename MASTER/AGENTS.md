@@ -48,9 +48,11 @@ output.
 Inside the runtime there is one verb and three words for its parts. `/review
 [path]` runs the whole pass — scan, critique, principle map — and reads without
 writing. `/scan` is the detectors alone. `/critique` is the council. `/fix` is
-the scan **with writing on**, which is the only word here that changes the tree:
-a finding is cheapest to repair where it is found, so the fixing and the scanning
-are one stage, and the verb says which you asked for.
+the convergence operation: it scans, renders when applicable, repairs findings,
+and — even when deterministic checks are clean — asks the council for anchored
+micro-improvements. It then verifies the result and repeats until the tree
+converges, stops improving, or reaches a state MASTER may not settle alone.
+
 
 Five things that will bite you, in order:
 

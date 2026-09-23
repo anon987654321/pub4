@@ -102,6 +102,12 @@ class TestFixConvergence < Minitest::Test
     assert_instance_of Master::Fix::FixLoop::CouncilRound, runner.instance_variable_get(:@council)
   end
 
+  def test_a_fix_loop_builds_a_visual_pass
+    runner = build_loop([]).instance_variable_get(:@pass_runner)
+
+    assert_instance_of Master::Fix::VisualPass, runner.instance_variable_get(:@visual_pass)
+  end
+
   # 9. The council argues inside the loop, and 11: its pick reaches the repair.
   def test_the_council_runs_inside_the_pass_and_its_picks_reach_the_repair
     council = Object.new
@@ -123,6 +129,51 @@ class TestFixConvergence < Minitest::Test
   end
 
   # 6. A clean tree the ground truth agrees with is the one state that says DONE.
+  def test_a_clean_pass_asks_council_for_improvements
+    asked = []
+    council = Object.new
+    council.define_singleton_method(:improve) do |files:, pass:, deadline:|
+      asked << { files:, pass: }
+      []
+    end
+    result = build_loop([], council:).run(@root, max_passes: 2)
+
+    assert result.ok?
+    assert_match(/\ADONE: /, result.value!)
+    assert_equal 1, asked.size, "the first clean streak pass should invoke proactive review once"
+    refute_empty asked.first[:files]
+  end
+
+  def test_council_improvements_require_a_file_and_line_or_symbol_anchor
+    file = File.join(@root, "dummy.yml")
+    round = Master::Fix::FixLoop::CouncilRound.new(agent: nil, root: @root, bus: @bus)
+    anchored = round.send(
+      :improvement_findings,
+      { cherry_picks: ["dummy.yml line 1: simplify the redundant empty declaration"] },
+      [file],
+    )
+    unanchored = round.send(
+      :improvement_findings,
+      { cherry_picks: ["simplify the redundant empty declaration"] },
+      [file],
+    )
+
+    assert_equal 1, anchored.size
+    assert_equal file, anchored.first[:file]
+    assert_equal 1, anchored.first[:line]
+    assert_empty unanchored
+    assert_equal :improvement, anchored.first[:kind]
+  end
+
+  def test_clean_tree_ideation_demands_anchored_candidates
+    critique = Master::Review::Council::Critique.new(mode: :general, agent: nil)
+    prompt = critique.send(:ideation_prompt, [])
+
+    assert_includes prompt, "5 to 20 materially different candidates"
+    assert_includes prompt, "repository-relative file and stable line or symbol"
+    assert_includes prompt, "Do not invent defects"
+  end
+
   def test_a_converged_run_is_done
     result = build_loop([]).run(@root)
 
@@ -175,6 +226,20 @@ class TestFixConvergence < Minitest::Test
     assert_operator picks.size, :<=, Master::Review::Council::Critique::CherryPick::LIMIT
     assert(picks.any? { |pick| pick.include?("cap the retry") }, "the second issue lost its only proposal")
     refute_includes picks, "Solutions:"
+  end
+
+  def test_cherry_pick_reads_brainstorm_ideas_not_only_the_final_synthesis
+    result = Master::Result.ok(
+      ideas: ["issue 1 small repair", "issue 2 distinct repair"],
+      critiques: [],
+      final: "synthesis",
+    )
+
+    text = Master::Review::Council::Critique::CherryPick.ideas_text(result)
+
+    assert_includes text, "issue 1 small repair"
+    assert_includes text, "issue 2 distinct repair"
+    assert_includes text, "synthesis"
   end
 
   # The preview printed two Ruby hashes through #inspect: one line past the

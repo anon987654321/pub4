@@ -38,7 +38,7 @@ class TestInstruments < Minitest::Test
   # The endless-def case specifically, because that is the one that was got
   # wrong for real. Four methods, none of them long.
   def test_an_endless_def_is_not_a_long_method
-    source = File.read(File.expand_path("../tools/fixtures/endless_defs.rb", __dir__))
+    source = File.read(File.expand_path("fixtures/endless_defs.rb", __dir__))
     measured = Operator::Instruments.measured(source)
 
     assert_equal 4, measured["public_methods"]
@@ -49,7 +49,7 @@ class TestInstruments < Minitest::Test
   # Comments are not length — the 2026-08-10 decision that made lint:spine and
   # [DENSITY] agree. If this flips, one of the two gates has drifted back.
   def test_comments_do_not_count_as_length
-    source = File.read(File.expand_path("../tools/fixtures/documented_method.rb", __dir__))
+    source = File.read(File.expand_path("fixtures/documented_method.rb", __dir__))
 
     assert_equal 2, Operator::Instruments.measured(source)["longest_method"]
   end
