@@ -370,6 +370,54 @@
   // answers it wrongly: a hero with 40px above and below its content and
   // 48px to the next section reported "80 > 48" and was flagged, when its
   // children sit 32px apart inside a 48px separation, which is right.
+  const firstScreen = (() => {
+    const visible = out.filter(el => el.visible && el.onscreen && el.rect.w > 4 && el.rect.h > 4);
+    const interactive = visible.filter(el => el.interactive);
+    const text = visible.filter(el => el.text && !el.interactive);
+    const headings = visible.filter(el => /^h[1-3]$/.test(el.tag));
+    const area = visible.map(el => el.rect.w * el.rect.h);
+    const largest = area.length ? Math.max(...area) : 0;
+    const viewport = Math.max(vw * vh, 1);
+    const bodyText = visible.filter(el => el.text && el.font_size >= 16 && el.rect.w > 0);
+    const sizeCounts = Object.create(null);
+    bodyText.forEach(el => {
+      const key = String(el.font_size);
+      sizeCounts[key] = (sizeCounts[key] || 0) + 1;
+    });
+    const bodySize = Object.entries(sizeCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
+    const headingSize = headings.find(el => el.tag === 'h1')?.font_size || null;
+    const measures = bodyText.map(el => Math.round((el.rect.w / Math.max(el.font_size, 1)) * 10) / 10);
+    const leading = bodyText.filter(el => el.line_height).map(el =>
+      Math.round((el.line_height / Math.max(el.font_size, 1)) * 100) / 100
+    );
+    const candidates = headings.slice(0, 4).map(el => ({
+      selector: el.key, tag: el.tag, text: el.text, area: el.rect.w * el.rect.h,
+      x: el.rect.x, y: el.rect.y, w: el.rect.w, h: el.rect.h
+    }));
+    const facts = [];
+    if (headings.length === 0) facts.push('no-visible-heading');
+    if (interactive.length > 7) facts.push('many-first-screen-actions');
+    if (bodyText.some(el => el.font_size < 16)) facts.push('small-first-screen-text');
+    if (measures.some(ch => ch > 75)) facts.push('wide-first-screen-measure');
+    if (measures.some(ch => ch < 35)) facts.push('narrow-first-screen-measure');
+    if (leading.some(ratio => ratio < 1.3 || ratio > 1.8)) facts.push('irregular-first-screen-leading');
+    if (headingSize && bodySize && Number(headingSize) < Number(bodySize) * 1.5) facts.push('weak-heading-scale');
+    if (largest / viewport > 0.72) facts.push('dominant-first-screen-box');
+    return {
+      visible_elements: visible.length,
+      interactive_elements: interactive.length,
+      text_elements: text.length,
+      headings: headings.length,
+      largest_area_ratio: Math.round((largest / viewport) * 1000) / 1000,
+      body_font_size: bodySize ? Number(bodySize) : null,
+      h1_font_size: headingSize,
+      text_measures_ch_approx: measures.slice(0, 40),
+      leading_ratios: leading.slice(0, 40),
+      candidates,
+      facts
+    };
+  })();
+
   const proximity = [];
   const measuredGap = (a, b) => Math.round(b.getBoundingClientRect().top - a.getBoundingClientRect().bottom);
   const laidOut = el => {
