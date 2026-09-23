@@ -102,10 +102,10 @@ class TestFixConvergence < Minitest::Test
     assert_instance_of Master::Fix::FixLoop::CouncilRound, runner.instance_variable_get(:@council)
   end
 
-  def test_a_fix_loop_builds_a_rendered_reviewer
+  def test_a_fix_loop_builds_a_visual_pass
     runner = build_loop([]).instance_variable_get(:@pass_runner)
 
-    assert_instance_of Master::Fix::RenderedReview, runner.instance_variable_get(:@rendered_review)
+    assert_instance_of Master::Fix::VisualPass, runner.instance_variable_get(:@visual_pass)
   end
 
   # 9. The council argues inside the loop, and 11: its pick reaches the repair.
