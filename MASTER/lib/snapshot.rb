@@ -4,6 +4,7 @@ require "fileutils"
 
 module Master
   class Snapshot
+    DEFAULT_TREES = %w[MASTER OPENBSD RAILS STUDIO].freeze
     DEFAULT_OUTPUT = File.join(REPO_ROOT, "snapshot_MASTER.md")
     SKIP = %w[.git .bundle node_modules vendor tmp log coverage storage cache dist build].freeze
     TEXT_EXTENSIONS = %w[.rb .rake .gemspec .ru .yml .yaml .json .js .mjs .ts .tsx .jsx .css .scss .html .erb .sh .zsh .md .txt].freeze
@@ -15,8 +16,22 @@ module Master
     end
 
     def write!
+      paths = DEFAULT_TREES.map do |name|
+        tree_root = File.join(@root, name)
+        next unless File.directory?(tree_root)
+
+        output = File.join(@root, "snapshot_#{name}.md")
+        Snapshot.new(root: tree_root, output:).write_tree!
+        output
+      end.compact
+      return paths.first if paths.one?
+
+      paths
+    end
+
+    def write_tree!
       files = source_files
-      body = ["# MASTER snapshot", "", "Generated from #{@root}.", "", "## Tree", "", tree(files), "", "## Source", ""]
+      body = ["# #{File.basename(@root)} snapshot", "", "Generated from #{@root}.", "", "## Tree", "", tree(files), "", "## Source", ""]
       files.each do |path|
         relative = path.delete_prefix(@root + File::SEPARATOR)
         language = Master.language_for(path) || "text"
