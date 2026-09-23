@@ -6,6 +6,7 @@ require "fileutils"
 require "monitor"
 require "yaml"
 require_relative "semantic_index"
+require_relative "atomic_write"
 
 module Master
   module Io
@@ -13,6 +14,7 @@ module Master
     # the other two: an exact prompt+model key on disk under .master/cache, then
     # SemanticIndex for a near-hit, which embeds through Review::Embeddings.
     class SemanticCache
+      include Master::Io::AtomicWrite
       MAX_ENTRIES = 1000
       DEFAULT_TTL = 300
       BYTES_PER_KB = 1024.0
@@ -174,7 +176,7 @@ module Master
         payload = serialize_value(value)
         ts = Time.now.to_i
         evict_lru while @lru.size >= MAX_ENTRIES
-        File.write(path, JSON.generate({ ts:, value: payload }))
+        write_atomic(path, JSON.generate({ ts:, value: payload }) + "\n", fsync: false, fsync_dir: false, mode: 0o600)
         write_manifest_entry(key, ts:, value: payload)
         promote_lru(path)
         @bus&.publish("cache:write", key:)
@@ -200,7 +202,7 @@ module Master
         FileUtils.mkdir_p(@master_root)
         entries = manifest
         entries[key] = { "ts" => ts, "value" => stringify_for_yaml(value) }
-        File.write(@manifest_path, entries.to_yaml)
+        write_atomic(@manifest_path, entries.to_yaml, fsync: false, fsync_dir: false, mode: 0o600)
       end
 
       def delete_manifest_entry(key)
@@ -210,7 +212,7 @@ module Master
         if entries.empty?
           File.delete(@manifest_path) if File.exist?(@manifest_path)
         else
-          File.write(@manifest_path, entries.to_yaml)
+          write_atomic(@manifest_path, entries.to_yaml, fsync: false, fsync_dir: false, mode: 0o600)
         end
       end
 
