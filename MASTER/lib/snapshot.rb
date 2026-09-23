@@ -16,6 +16,8 @@ module Master
     end
 
     def write!
+      return write_tree! unless File.expand_path(@root) == File.expand_path(REPO_ROOT)
+
       paths = DEFAULT_TREES.map do |name|
         tree_root = File.join(@root, name)
         next unless File.directory?(tree_root)
@@ -24,8 +26,7 @@ module Master
         Snapshot.new(root: tree_root, output:).write_tree!
         output
       end.compact
-      return paths.first if paths.one?
-
+      paths.first if paths.one?
       paths
     end
 
@@ -82,7 +83,6 @@ module Master
         lines << ("  " * depth) + name
         render_tree(node.fetch(name), lines, depth + 1) unless node.fetch(name).empty?
       end
-    end
     end
   end
 end
