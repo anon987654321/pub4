@@ -3,7 +3,6 @@
 require "fileutils"
 require "open3"
 require "tmpdir"
-require_relative "../../../RAILS/gates/support/geometry_probe"
 require_relative "../review/council/critique"
 
 module Master
@@ -37,6 +36,8 @@ module Master
       def run(target:, files:, pass:)
         return Result.ok(state: :not_applicable) unless applicable?(target)
         raise "visual review has no agent" unless @agent
+
+        require File.expand_path("../../../RAILS/gates/support/geometry_probe", __dir__)
 
         @dir = Dir.mktmpdir("master-visual")
         surfaces = selected_surfaces(target:, pass:)
