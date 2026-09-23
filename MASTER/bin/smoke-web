@@ -39,7 +39,9 @@ def step(name)
       [false, "#{e.class}: #{e.message}"]
     end
   ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0) * 1000).round
-  puts ok ? "ok (#{ms}ms)" : "fail (#{ms}ms) — #{detail}"
+  state = ok ? "ok" : "failed"
+  detail_text = detail ? " detail=#{detail}" : ""
+  Master::Trace::Dmesg.status("web0", "smoke=#{name} state=#{state} ms=#{ms}#{detail_text}")
   Check.new(name:, ok:, detail:, ms:)
 end
 
@@ -97,7 +99,7 @@ end
 # local dev machine with no server up gets the clean skip.
 ON_VPS = File.file?("/etc/relayd.conf")
 if !ON_VPS && !server_listening?
-  puts "smoke-web: skip — #{BASE} not listening (start the MASTER web face or set MASTER_WEB_URL)"
+  Master::Trace::Dmesg.status("web0", "smoke state=skipped reason=not_listening url=#{BASE}")
   exit 0
 end
 
@@ -193,9 +195,9 @@ end
 
 failed = checks.reject(&:ok)
 if failed.empty?
-  puts "smoke-web: clean (#{checks.size} checks)"
+  Master::Trace::Dmesg.status("web0", "smoke state=clean checks=#{checks.size} url=#{BASE}")
   exit 0
 end
 
-puts "smoke-web: #{failed.size} failure(s): #{failed.map(&:name).join(", ")}"
+Master::Trace::Dmesg.status("web0", "smoke state=failed failures=#{failed.map(&:name).join(",")} url=#{BASE}")
 exit 1
