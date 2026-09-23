@@ -10,6 +10,8 @@ require_relative "pass_runner/llm_stage"
 require_relative "pass_runner/stagnation_detection"
 require_relative "transaction"
 require_relative "resource_budget"
+require_relative "../visual_pass"
+require_relative "../opportunity_pass"
 
 module Master
   module Fix
@@ -25,7 +27,8 @@ module Master
 
         def initialize(bus:, committer:, loop_scanner:, llm_router:, rollback:, root:,
                        rules:, agent:, scanner:, learnings:, preamble:,
-                       clean_runs_required:, plateau_window:, ground_truth: nil, homeostat: nil, council: nil)
+                       clean_runs_required:, plateau_window:, ground_truth: nil, homeostat: nil, council: nil,
+                       visual_pass: nil, opportunity_pass: nil)
           @bus = bus
           @committer = committer
           @loop_scanner = loop_scanner
@@ -38,12 +41,12 @@ module Master
           @learnings = learnings
           @preamble = preamble
           @rule_order = RuleOrder.new(rules:, learnings:, bus:, root:)
-          take_limits(clean_runs_required:, plateau_window:, ground_truth:, homeostat:, council:)
+          take_limits(clean_runs_required:, plateau_window:, ground_truth:, homeostat:, council:, visual_pass:, opportunity_pass:)
         end
 
         # What a pass is judged by, apart from the collaborators it runs through:
         # when it may stop, when it has stopped moving, and who else gets a say.
-        def take_limits(clean_runs_required:, plateau_window:, ground_truth:, homeostat:, council:)
+        def take_limits(clean_runs_required:, plateau_window:, ground_truth:, homeostat:, council:, visual_pass:, opportunity_pass:)
           @clean_runs_required = clean_runs_required
           @plateau_window = plateau_window
           @violation_counts = Hash.new(0)
@@ -51,6 +54,8 @@ module Master
           @ground_truth = ground_truth
           @homeostat = homeostat
           @council = council
+          @visual_pass = visual_pass
+          @opportunity_pass = opportunity_pass
           @ground_truth_failures = 0
         end
 
@@ -66,6 +71,21 @@ module Master
 
           run_fast_stage(files, pass)
           found = run_observation_stage(files, target)
+          visual = run_visual_pass(target:, files:, pass:)
+          opportunities = run_opportunity_pass(target:, files:)
+          evidence_findings = Array(visual&.value!&.fetch(:findings, [])) +
+                              Array(opportunities&.value!&.fetch(:findings, []))
+          if visual&.err? || opportunities&.err?
+            return abort_transaction(
+              PassResult.new(
+                status: :plateau,
+                consecutive_clean: 0,
+                message: [visual, opportunities].filter { |result| result&.err? }.map(&:message).join(" / "),
+              ),
+            ) if found.empty? && evidence_findings.empty?
+          end
+          found += evidence_findings
+
           if found.empty?
             result = handle_clean_pass(files, pass_mtimes, pass, consecutive_clean)
             return abort_transaction(result) if result.status == :validation_failed
@@ -85,8 +105,12 @@ module Master
             Master::Trace::Dmesg.status("fix0", "pass #{pass}, model work shed: #{resources[:reasons].join("; ")}")
           else
             @homeostat&.observe(:llm_call)
-            council = @council&.run(files: files_with_violations(found, files), pass:, deadline:)
-            run_llm_stage(found, files, pass, deadline, council:)
+            source_found, visual_found, opportunity_found = partition_findings(found)
+            council_input = source_found + opportunity_found
+            council = @council&.run(files: files_with_violations(council_input, files), pass:, deadline:)
+            run_llm_stage(source_found, files, pass, deadline, council:) if source_found.any?
+            run_opportunity_stage(opportunity_found, files, pass, deadline, council:) if opportunity_found.any?
+            run_visual_stage(visual_found, visual:, files:, pass:, deadline:) if visual_found.any?
           end
           delivery = @committer.finish_transaction("fix_loop: pass #{pass}", findings: found, owned_paths: files)
           return PassResult.new(status: :delivery_failed, consecutive_clean: 0, message: delivery.message) if delivery.err?
@@ -95,6 +119,76 @@ module Master
         rescue StandardError
           @committer.abort_transaction!
           raise
+        end
+
+        def run_visual_pass(target:, files:, pass:)
+          return unless @visual_pass&.applicable?(target)
+
+          @visual_pass.run(target:, files:, pass:)
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "pass_runner.visual_pass", event_bus: @bus)
+          Result.err("rendered visual review: INCONCLUSIVE — #{e.class}: #{e.message}", category: :inconclusive)
+        end
+
+        def run_opportunity_pass(target:, files:)
+          return unless @opportunity_pass&.applicable?(target)
+
+          @opportunity_pass.run(target:, files:)
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "pass_runner.opportunity_pass", event_bus: @bus)
+          Result.err("convergence opportunities: INCONCLUSIVE — #{e.class}: #{e.message}", category: :inconclusive)
+        end
+
+        def partition_findings(found)
+          found.partition { |v| v[:rule].to_s != VisualPass::RULE_ID }
+              .then { |source, rest| rest.partition { |v| v[:rule].to_s == VisualPass::RULE_ID }.then { |visual, opportunity| [source, visual, opportunity] } }
+        end
+
+        def run_opportunity_stage(findings, files, pass, deadline, council: nil)
+          return 0 if Time.now >= deadline || findings.empty?
+
+          loop = RuleLoop.new(
+            rule: OpportunityPass::Rule.new(OpportunityPass::RULE_ID),
+            agent: @agent,
+            scanner: @scanner,
+            root: @root,
+            bus: @bus,
+            learnings: @learnings,
+            committer: @committer,
+            stage_commit: true,
+          )
+          loop.injected_preamble = [@preamble, council_preamble(council)].compact.join("\n\n")
+          result = loop.run_once(files, external_violations: findings)
+          @bus&.publish("fix_loop:opportunity_fix", pass:, findings: findings.size, fixed: result[:fixed].to_i)
+          result[:fixed].to_i
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "pass_runner.opportunity_stage", event_bus: @bus)
+          0
+        end
+
+        def run_visual_stage(findings, visual:, files:, pass:, deadline:)
+          return 0 if Time.now >= deadline || findings.empty?
+
+          image = visual&.value!&.fetch(:image, nil)
+          return 0 unless image
+
+          loop = RuleLoop.new(
+            rule: VisualPass::Rule.new(VisualPass::RULE_ID),
+            agent: @agent,
+            scanner: @scanner,
+            root: @root,
+            bus: @bus,
+            learnings: @learnings,
+            committer: @committer,
+            stage_commit: true,
+          )
+          loop.injected_preamble = [@preamble, council_preamble(nil)].compact.join("\n\n")
+          result = loop.run_once(files, external_violations: findings, image:)
+          @bus&.publish("fix_loop:visual_fix", pass:, findings: findings.size, fixed: result[:fixed].to_i)
+          result[:fixed].to_i
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "pass_runner.visual_stage", event_bus: @bus)
+          0
         end
 
         def finish_transaction(files, pass, result)
