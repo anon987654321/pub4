@@ -179,6 +179,7 @@ module Deploy
         "scroll_width" => payload["scroll_width"],
         "h1_count" => payload["h1_count"],
         "landmarks" => payload["landmarks"],
+        "first_screen" => payload["first_screen"],
         "elements" => rows.map do |el|
           {
             "key" => el["key"],
