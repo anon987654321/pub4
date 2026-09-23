@@ -47,7 +47,7 @@ module Master
             active["resume_count"] = active.fetch("resume_count", 0).to_i + 1
             remaining = remaining_seconds(active)
             persist(data)
-            @bus&.publish("fix:resume", run_id: active["id"], pass: next_pass(active),
+            emit("fix:resume", run_id: active["id"], pass: next_pass(active),
                           resume_count: active["resume_count"], remaining_seconds: remaining)
             return active.merge("resumed" => true, "remaining_seconds" => remaining)
           end
@@ -69,11 +69,11 @@ module Master
           data["runs"] << run
           data["runs"] = data["runs"].last(MAX_RUNS)
           persist(data)
-          @bus&.publish("fix:start", run_id: run["id"], target: run["target"])
+          emit("fix:start", run_id: run["id"], target: run["target"])
           run.merge("resumed" => false, "remaining_seconds" => Integer(budget_seconds).to_f)
         end
       rescue StandardError => e
-        @bus&.publish("fix:journal_error", operation: "start", error: e.message)
+        emit("fix:journal_error", operation: "start", error: e.message)
         raise
       end
 
@@ -146,6 +146,13 @@ module Master
       end
 
       private
+      def emit(event, **payload)
+        @bus&.publish(event, **payload)
+      rescue StandardError => e
+        warn("trace0: #{e.class}: #{e.message}") if ENV["MASTER_TRACE_STRICT"] == "1"
+        nil
+      end
+
 
       def process_alive?(pid)
         value = pid.to_i
@@ -182,7 +189,7 @@ module Master
 
         { "version" => VERSION, "runs" => runs }
       rescue JSON::ParserError => e
-        @bus&.publish("fix:journal_corrupt", error: e.message)
+        emit("fix:journal_corrupt", error: e.message)
         raise "fix journal is corrupt: #{e.message}"
       end
 
