@@ -32,18 +32,19 @@ class TestRenderedVisualConvergence < Minitest::Test
   end
 
   def test_rendered_repairs_require_a_stable_anchor
-    source = read("lib/fix/rendered_review.rb")
+    source = read("lib/fix/visual_pass.rb")
+    assert_includes source, "SELECTOR_RE"
     assert_includes source, "TEXT_ANCHOR_RE"
-    assert_includes source, "surface"
-    assert_includes source, "viewport"
-    assert_includes source, "anchor = selector || text_anchor"
-    assert_includes source, "VISUAL_CLEAN"
+    assert_includes source, "SURFACE_RE"
+    assert_includes source, "VIEWPORT_RE"
+    assert_includes source, "return unless surface && viewport"
   end
 
-  def test_rendered_review_cannot_guess_an_unanchored_source_file
-    source = read("lib/fix/rendered_review.rb")
-    refute_includes source, "file ||= source_files.first"
-    assert_includes source, "return unless file"
+  def test_visual_pass_cannot_guess_an_unanchored_source_file
+    source = read("lib/fix/visual_pass.rb")
+    refute_includes source, "file ||= sources.first"
+    assert_includes source, "return unless surface && viewport"
+    assert_includes source, "return unless line"
   end
 
   def test_cdp_console_evidence_can_be_reset_between_pages
