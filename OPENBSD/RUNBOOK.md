@@ -1,7 +1,6 @@
 # Operator
 
-Production runbook for pub4. Read `START_HERE.md` and this file before live
-work. Read `MASTER/START_HERE.md` for the agent runtime; this file covers the
+Production runbook for pub4. Read this file before live work. Read `MASTER/README.md` for the agent runtime; this file covers the
 VPS and deploy surface, the agent contract, and live-operation safety in one
 place.
 
@@ -51,7 +50,7 @@ One session at a time. Rapid reconnects trip pf bruteforce.
 | VMM host | `ssh -p 31415 -i ~/.ssh/id_ed25519_brgen dev@server4.openbsd.amsterdam` |
 | Console | `vmctl console vm23` then `doas pfctl -t bruteforce -T flush` |
 
-Full aliases, GitHub keys and the network map: `OPENBSD/SSH_ACCESS.md`.
+SSH aliases, host topology and provider access are kept in this runbook so live-operation guidance has one source.
 
 ## Domains
 
