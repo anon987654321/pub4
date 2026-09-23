@@ -32,13 +32,9 @@ module Master
 
           feedback = result.value!
           issues = panel_issue_entries(feedback)
-          visual_clean = @mode[:preset_key] == "ui_critique" && issues.empty?
-          ideation_result = if visual_clean
-                              Master::Result.ok(ideas: [], critiques: [], final: "VISUAL_CLEAN")
-                            else
-                              ideate(preset, feedback:)
-                            end
-          cherry = visual_clean ? [] : CherryPick.call(feedback, ideation_result)
+          ideation_result = ideate(preset, feedback:)
+          cherry = CherryPick.call(feedback, ideation_result)
+          visual_clean = @mode[:preset_key] == "ui_critique" && issues.empty? && cherry.empty?
           @bus&.publish(@mode[:done_event], cherry_picks: cherry.size, visual_clean:)
           harvest = harvest_path(payload:, feedback:, ideation_result:, cherry:)
           Master::Result.ok({
