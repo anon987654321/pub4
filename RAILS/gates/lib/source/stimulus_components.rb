@@ -32,6 +32,17 @@ module Deploy
 
     REQUIRED_PACKAGES = %w[password-visibility rails-nested-form].freeze
 
+    # Current upstream catalogue, verified against stimulus-components.com.
+    # This is an inventory for /fix, not a requirement to install everything.
+    UPSTREAM_COMPONENTS = %w[
+      animated-number auto-submit carousel character-counter chartjs
+      checkbox-select-all clipboard color-picker confirmation content-loader
+      dialog dropdown glow hotkey lightbox notification password-visibility
+      places-autocomplete popover prefetch rails-nested-form read-more
+      remote-rails reveal-controller scroll-progress scroll-reveal scroll-to
+      sortable sound speech-recognition textarea-autogrow timeago
+    ].freeze
+
     COMPONENT_OPPORTUNITIES = {
       "clipboard" => /navigator\.clipboard|writeText\(/,
       "password-visibility" => /type\s*=\s*["']password|password.*visibility/i,
@@ -40,7 +51,13 @@ module Deploy
       "popover" => /getBoundingClientRect\(\)|style\.(top|left|right|bottom)\s*=|position\s*[:=]\s*["']absolute/i,
       "dropdown" => /aria-expanded|aria-haspopup|classList\.(add|remove).*?(open|active|expanded)/i,
       "auto-submit" => /form\.requestSubmit\(\)|form\.submit\(\)|requestSubmit\(/,
-      "textarea-autogrow" => /scrollHeight.*?(style\.height|height\s*=)|clientHeight.*?scrollHeight/i
+      "textarea-autogrow" => /scrollHeight.*?(style\.height|height\s*=)|clientHeight.*?scrollHeight/i,
+      "dialog" => /showModal\(\)|<dialog|aria-modal/i,
+      "content-loader" => /fetch\(|Turbo\.visit|turbo-frame/i,
+      "confirmation" => /confirm\(|data-confirm|confirmation/i,
+      "reveal-controller" => /IntersectionObserver|intersection.*reveal/i,
+      "scroll-to" => /scrollIntoView\(|window\.scrollTo\(/,
+      "scroll-progress" => /scrollY|scrollTop.*scrollHeight/i
     }.freeze
 
     FORBIDDEN_VIEW_PATTERNS = [
@@ -58,6 +75,9 @@ module Deploy
 
     def self.run
       result = GateResult.new
+      result.checked!
+      missing_inventory = COMPONENT_OPPORTUNITIES.keys.reject { |name| UPSTREAM_COMPONENTS.include?(name) }
+      missing_inventory.each { |name| result.fail("Stimulus Components opportunity #{name} is absent from upstream inventory") }
 
       missing_boot = BOOT_FILES.reject { |f| File.file?(f) }
       if missing_boot.any?
