@@ -243,6 +243,7 @@ GEM
 PLATFORMS
   arm-linux-androideabi
   arm64-darwin-25
+  x86_64-linux
   x86_64-openbsd
 
 DEPENDENCIES
