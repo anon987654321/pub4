@@ -380,16 +380,11 @@ pub4_source_ceilings:
   # the count drops now that it asks git instead of a regex. Nothing was added to
   # MASTER to earn these three; the number is what the tree has measured all
   # along, and a ceiling below the true count is slack in the other direction.
-  # 1050 -> 1053 for tools/code_reach.rb, data/code_reach.yml and
-  # test/test_code_reach.rb. The fourth reach census, and the one that asks the
-  # question a file level up from data_reach: under Zeitwerk a file runs when
-  # its constant is named, so a constant nothing names is a file nothing runs.
-  # It reads 0, which is the point of recording it -- and it is also the answer
-  # to whether spine.lib_body_ceiling can be paid by deletion. It cannot.
-  # The test is the reason for the third file: this census was written wrong
-  # twice, once with an extension whitelist that could not see bin/cli, once
-  # with a lookbehind excluding ":" that hid every qualified use and reported
-  # the whole tree dead. Both are fixtures, and both go red under mutation.
+  # 2026-09-23: the file-level reach census was retired. Method-level reach
+  # already sees the same closure at finer granularity, while Zeitwerk load and
+  # the entrypoint path test catch missing files directly. Keeping both counted
+  # the same population through different implementations without adding a
+  # distinct failure mode.
   # 1053 -> 1055 for lib/cli/propose/candidate_sources.rb and
   # lib/review/repo_ecology/co_change_graph.rb, and the raise is a consequence
   # of a rule learning to see. NO_GOD_CLASS counted methods per class *node*,
