@@ -200,4 +200,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_14_120000) do
   add_foreign_key "sessions", "users"
   add_foreign_key "watches", "ports"
   add_foreign_key "watches", "users"
+
+  # Virtual tables defined in this database.
+  # Note that virtual tables may not work with other database engines. Be careful if changing database.
+  create_virtual_table "ports_fts", "fts5", [" name", "comment", "content='ports'", "content_rowid='id'", "tokenize='unicode61' "]
 end
