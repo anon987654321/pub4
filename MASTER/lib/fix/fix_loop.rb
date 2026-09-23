@@ -88,7 +88,8 @@ module Master
         start_pass = @run_journal.next_pass(journal)
         @bus&.publish("fix_loop:recovered", run_id:, start_pass:, target:) if journal["resumed"]
 
-        if (active_pass = @run_journal.active_pass(journal))
+        if (active_pass = @run_journal.active_pass(journal)) &&
+           Transaction.persisted?(root: @root, id: active_pass.fetch("transaction_id"))
           recovery = Transaction.recover!(root: @root, id: active_pass.fetch("transaction_id"), bus: @bus)
           if recovery.err?
             @run_journal.terminal(run_id, :failed, message: recovery.message)
