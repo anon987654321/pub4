@@ -110,7 +110,8 @@ module Master
       # patterns.yml infers words no handler takes, and a sentence that merely
       # named one died there: "read the dmesg module" answered "unknown command:
       # /dmesg". An inferred word becomes a command only when the registry answers
-      # it; the pipeline words rewrite to /review, the pass this router runs.
+      # it; writing aliases rewrite to /fix, and critique aliases rewrite to
+      # /review --only critique.
       def answered?(command, container)
         commands = container[:commands]
         PIPELINE_WORDS.include?(command) || !commands.respond_to?(:key?) || commands.key?(command)
@@ -125,11 +126,10 @@ module Master
         value.intent == :command ? value : nil
       end
 
-      # "fix" keeps its word: read as "review" it lost the write, and "can you
-      # fix and commit all these violations?" ran a read-only pass and changed
-      # nothing. A sentence that asks to scan asks to be told what is wrong,
-      # which is where /fix starts, so it reaches the same engine — the command
-      # is gone, the word people use for it is not.
+      # "fix" keeps its word: rewriting it to review would lose the write.
+      # A model that says "scan" gets /fix as well, because scan was absorbed:
+      # observation is the first step of the writing lifecycle, not a separate
+      # command.
       def normalize_inferred_command(command, text)
         return "review" if text.match?(/--dry-run|--no-autofix|\bpreview\b/i) && !WRITING_SLASH.include?(command)
         return command if WRITING_SLASH.include?(command)
