@@ -2,6 +2,7 @@
 
 require "fileutils"
 require "json"
+require "time"
 require_relative "../lib/master"
 require_relative "../lib/voice/benchmark"
 
@@ -36,6 +37,8 @@ report = {
 
 File.write(File.join(out_dir, "report.json"), JSON.pretty_generate(report))
 puts JSON.pretty_generate(report)
+
+abort "voice_benchmark: no samples synthesized" if results.empty?
 
 threshold = Master::Voice::Benchmark.config["min_score"].to_f
 if results.any? && report[:summary][:mean_score] < threshold
