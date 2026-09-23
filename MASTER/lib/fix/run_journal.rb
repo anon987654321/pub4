@@ -37,8 +37,9 @@ module Master
             unless active["target"] == relative(target) && Array(active["files"]).sort == requested_files
               raise "another fix run is active: #{active["id"]} for #{active["target"]}"
             end
+            previous_state = active["state"]
             active["state"] = "active"
-            active["resumed_from"] = active["state"] unless active["state"] == "active"
+            active["resumed_from"] = previous_state unless previous_state == "active"
             active["resumed_at"] = Time.now.utc.iso8601
             active["resume_count"] = active.fetch("resume_count", 0).to_i + 1
             persist(data)
