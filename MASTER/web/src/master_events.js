@@ -17,7 +17,15 @@
     "tts:viseme:plan": { targets: ["face"], fields: ["frames", "visemes", "duration"] },
     "tts:job_cancelled": { targets: ["face"], fields: ["job_id", "reason"] },
     "user:expression": { targets: ["face", "ecology"], fields: ["expression", "blendshapes", "source"] },
-    "self_violation": { targets: ["face"], fields: [] }
+    "self_violation": { targets: ["face"], fields: [] },
+    "device:battery": { targets: ["face", "ecology"], fields: ["percentage", "status", "health"] },
+    "device:network": { targets: ["face", "ecology"], fields: ["connection", "ssid", "ip"] },
+    "device:sensors": { targets: ["face"], fields: ["names", "sensors"] },
+    "device:accelerometer": { targets: ["face"], fields: [] },
+    "device:gyroscope": { targets: ["face"], fields: [] },
+    "device:magnetometer": { targets: ["face"], fields: [] },
+    "device:light": { targets: ["face"], fields: [] },
+    "device:proximity": { targets: ["face"], fields: [] }
   };
 
   const PROVIDER_PALETTES = {
