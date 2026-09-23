@@ -2,8 +2,8 @@
 
 require_relative "test_helper"
 require_relative "../tools/rule_hygiene"
-require_relative "../tools/autofix_reach"
-require_relative "../tools/rule_reach"
+require_relative "../lib/operator/autofix_reach"
+require_relative "../lib/operator/rule_reach"
 
 # The two gates over the rule catalogue itself — tools/rule_hygiene.rb on its
 # ids, aliases and metadata, tools/autofix_reach.rb on whether a rule fix
