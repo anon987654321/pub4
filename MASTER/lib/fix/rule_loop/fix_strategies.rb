@@ -26,7 +26,7 @@ module Master
 
           original_src = File.read(path, encoding: "UTF-8") rescue (return proposed_src)
           prompt = reflexion_prompt(violation, original_src, proposed_src)
-          response = @agent.ask_once(prompt).to_s.strip
+          response = ask_once_agent(prompt, image: @visual_image).to_s.strip
           handle_reflexion_response(response, path, proposed_src)
         rescue StandardError => e
           # A check that could not run approves nothing, as a broken quorum
