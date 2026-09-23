@@ -56,7 +56,7 @@ module Master
         image = { path: image_path, name: "visual-contact-sheet.png", mime: "image/png" }
 
         source_files, anchors = candidate_sources(target:, files:, manifest:)
-      source_files = source_files.select { |path| path.start_with?(File.join(repo_root, "MASTER"), File.join(repo_root, "RAILS")) }
+        source_files = source_files.select { |path| path.start_with?(File.join(repo_root, "MASTER"), File.join(repo_root, "RAILS")) }
         return Result.err("rendered visual review: INCONCLUSIVE — screenshot has no source anchor", category: :inconclusive) if source_files.empty?
 
         context = evidence_context(manifest, anchors)
@@ -70,10 +70,11 @@ module Master
         ).run
         return Result.err("rendered visual review: INCONCLUSIVE — #{critique.message}", category: :inconclusive) if critique.err?
 
-        picks = Array(critique.value![:cherry_picks]).map(&:to_s).reject(&:empty?)
-        feedback = Array(critique.value![:feedback])
-        findings = picks.filter_map { |pick| finding_for(pick, feedback, source_files, anchors, manifest) }
-        if findings.empty? && !feedback.any? { |entry| entry[:feedback].to_s.match?(/\bVISUAL_CLEAN\b/i) }
+        value = critique.value!
+        picks = Array(value[:cherry_picks]).map(&:to_s).reject(&:empty?)
+        issues = Array(value[:issues])
+        findings = picks.filter_map { |pick| finding_for(pick, issues, source_files, anchors, manifest) }
+        unless value[:visual_clean] || findings.any?
           return Result.err(
             "rendered visual review: INCONCLUSIVE — council returned no anchored visual verdict",
             category: :inconclusive,
@@ -205,10 +206,9 @@ module Master
         TEXT
       end
 
-      def finding_for(pick, feedback, source_files, anchors, _manifest)
+      def finding_for(pick, issues, source_files, anchors, _manifest)
         issue = pick[/\b(?:issue|critique|finding)\s+(\d+)\b/i, 1]&.to_i
-        council_feedback = Array(feedback).reject { |entry| entry[:persona].to_s == "Judge" }
-        council_text = issue && issue.positive? ? council_feedback[issue - 1].to_h[:feedback].to_s : ""
+        council_text = issue && issue.positive? ? Array(issues)[issue - 1].to_h[:feedback].to_s : ""
         evidence = [council_text, pick].reject(&:empty?).join("\n")
         selector = evidence[SELECTOR_RE, 0]
         text_anchor = evidence[TEXT_ANCHOR_RE, 1]&.strip
