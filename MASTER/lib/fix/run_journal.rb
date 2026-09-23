@@ -31,7 +31,7 @@ module Master
       def start_or_resume(target:, files:, max_passes:, budget_seconds:)
         with_lock do
           data = load
-          active = data["runs"].reverse.find { |run| %w[active crashed].include?(run["state"].to_s) }
+          active = data["runs"].reverse.find { |run| %w[active crashed delivery_failed].include?(run["state"].to_s) }
           if active
             unless active["target"] == relative(target)
               raise "another fix run is active: #{active["id"]} for #{active["target"]}"
@@ -128,7 +128,7 @@ module Master
       end
 
       def active_pass(run)
-        Array(run["passes"]).reverse.find { |row| row["state"].to_s == "active" }
+        Array(run["passes"]).reverse.find { |row| %w[active delivery_failed].include?(row["state"].to_s) }
       end
 
       def next_pass(run)
