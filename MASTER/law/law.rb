@@ -379,7 +379,7 @@ module Law
           next "#\n"
         end
 
-        fence = line[/^\s*(?:bad|good|ask|practice)\s+<<~(\w+)/, 1]
+        fence = line[/^\s*(?:bad|good|ask|practice)\s+<<~["']?(\w+)["']?/, 1]
         line.match?(/^\s*(?:source|detect|ask|practice|fix|bad|good)\b/) ? "#\n" : line
       end.join
     end
