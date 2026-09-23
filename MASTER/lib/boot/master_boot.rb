@@ -1,4 +1,4 @@
-# frozen_string_literal: true
+<sub># frozen_string_literal: true
 
 require_relative "../ground/service_supervisor"
 
@@ -65,6 +65,7 @@ module Master
       return boot_fast(root:) if ENV["MASTER_FAST"] == "1"
 
       prepare_runtime!
+      emit_device_status
       Ground::Pledge.stage1_boot!(root)
       service_ok = ensure_services!(root:)
       warn("master0: continuing in degraded presentation mode") unless service_ok
@@ -77,7 +78,9 @@ module Master
 
     def boot_fast(root: Dir.pwd)
       prepare_runtime!
+      emit_device_status
       CLI::Session.new(container: Builder.build_fast(root:))
     end
   end
 end
+</sub>
