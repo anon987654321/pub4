@@ -17,6 +17,7 @@ module Master
         path_ownership(key) ||
           design_law(key) ||
           law(key) ||
+          executable_law(key) ||
           registry_rule(key) ||
           soul_rule(key) ||
           scan_rule(key) ||
@@ -104,6 +105,27 @@ module Master
         @style ||= Master.law("style", root: @root)
       end
 
+      def executable_law(key)
+        slug = key.upcase.tr("-", "_")
+        require File.join(@root, "law", "law") unless defined?(::Law)
+        ::Law.load_all(File.join(@root, "law")) if ::Law.rules.empty?
+        hit = ::Law.rules[slug.to_sym]
+        return unless hit
+
+        [
+          "executable law: #{slug}",
+          ("  source: #{hit.source}" if hit.source),
+          "  severity: #{hit.severity}",
+          ("  mode: #{hit.mode}" if hit.mode),
+          ("  practice: #{hit.practice}" if hit.practice),
+          ("  ask: #{hit.ask}" if hit.ask),
+          "  fix: #{hit.fix}",
+        ].compact.join("\n")
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "WhyExplainer.executable_law", severity: :cosmetic)
+        nil
+      end
+
       def registry_rule(key)
         slug = key.upcase.tr("-", "_")
         hit = Master.flatten_rules(rules.fetch("rules", {})).find { |r| r["id"].to_s.upcase == slug }
@@ -114,7 +136,10 @@ module Master
           ("  tier: #{hit['tier']}" if hit["tier"]),
           ("  name: #{hit['name']}" if hit["name"]),
           ("  source: #{hit['source']}" if hit["source"]),
-          ("  fix: #{hit['fix']}" if hit["fix"]),
+          ("  fix: #{hit["fix"]}" if hit["fix"] || begin
+            executable = ::Law.rules[slug.to_sym] if defined?(::Law)
+            executable&.fix
+          end),
         ].compact.join("\n")
       end
 
