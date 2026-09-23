@@ -19,14 +19,21 @@ module Master
       }.freeze
 
       attr_reader :root
+      MEASURE_TTL_S = 2
 
       def initialize(root:, config: nil, clock: Process::CLOCK_MONOTONIC)
         @root = root
         @config = config || Master::Ops::ProcessBudget.config
         @clock = clock
+        @last_measurement_at = nil
+        @last_measurement = nil
       end
 
       def measure
+        now = Process.clock_gettime(@clock)
+        return @last_measurement if @last_measurement && @last_measurement_at &&
+          now - @last_measurement_at < MEASURE_TTL_S
+
         values = {
           load_avg_1m: load_average,
           rss_mb: rss_mb,
@@ -37,7 +44,9 @@ module Master
           network: network_available,
           llm_quota_exhausted: llm_quota_exhausted,
         }
-        classify(values).merge(measured_at: Process.clock_gettime(@clock), values:)
+        @last_measurement = classify(values).merge(measured_at: now, values:)
+        @last_measurement_at = now
+        @last_measurement
       rescue StandardError => e
         { state: :degraded, reasons: ["resource measurement failed: #{e.message}"], values: {} }
       end
