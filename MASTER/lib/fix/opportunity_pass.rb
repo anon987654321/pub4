@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "pathname"
-
 module Master
   module Fix
     # Finds high-confidence maintenance opportunities that a syntax/rule scan
