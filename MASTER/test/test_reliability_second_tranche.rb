@@ -67,6 +67,57 @@ class TestReliabilitySecondTranche < Minitest::Test
     end
   end
 
+  def test_committer_defers_commit_until_transaction_finishes
+    Dir.mktmpdir("master-committer") do |root|
+      path = File.join(root, "a.rb")
+      File.write(path, "one\n")
+      init_git(root)
+      git(root, "add", "a.rb")
+      git(root, "commit", "-m", "seed")
+
+      fake_git = Class.new do
+        attr_reader :commits
+
+        def initialize(root)
+          @root = root
+          @commits = []
+          @head = "seed"
+        end
+
+        def changed_paths
+          out, status = Open3.capture2e("git", "-C", @root, "status", "--porcelain")
+          status.success? ? out.lines.map { |line| line[3..].to_s.strip } : []
+        end
+
+        def commit(message, paths:)
+          @commits << [message, paths]
+          system("git", "-C", @root, "add", "--", *paths)
+          ok = system("git", "-C", @root, "commit", "-q", "-m", message)
+          raise "fake commit failed" unless ok
+          @head = Digest::SHA1.hexdigest(message)[0, 12]
+        end
+
+        def push = true
+        def head = @head
+        def ahead_behind = [0, 0]
+      end.new(root)
+
+      committer = Master::Fix::FixLoop::Committer.new(git: fake_git, root:)
+      committer.baseline!
+      tx = Master::Fix::Transaction.new(root:, paths: [path])
+      committer.begin_transaction!(tx)
+      File.write(path, "two\n")
+
+      assert_equal :staged, committer.commit_if_dirty("fix")
+      assert_empty fake_git.commits
+      result = committer.finish_transaction("fix", owned_paths: [path])
+
+      assert result.ok?
+      assert_equal 1, fake_git.commits.size
+      assert_equal "two\n", File.read(path)
+    end
+  end
+
   def test_known_good_promotes_only_explicit_commit
     Dir.mktmpdir("master-known-good") do |root|
       init_git(root)
