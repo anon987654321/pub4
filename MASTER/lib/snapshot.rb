@@ -50,17 +50,24 @@ module Master
     end
 
     def tree(files)
-      dirs = files.map { |path| path.delete_prefix(@root + File::SEPARATOR).split(File::SEPARATOR) }
-      lines = ["."]
-      dirs.each do |parts|
-        parts.each_with_index do |part, index|
-          prefix = "  " * index
-          marker = index == parts.length - 1 ? part : part
-          next if lines.last == prefix + marker
-          lines << prefix + marker unless lines.include?(prefix + marker)
+      root = {}
+      files.each do |path|
+        node = root
+        path.delete_prefix(@root + File::SEPARATOR).split(File::SEPARATOR).each do |part|
+          node = (node[part] ||= {})
         end
       end
+      lines = ["."]
+      render_tree(root, lines, 0)
       lines.join("\n")
+    end
+
+    def render_tree(node, lines, depth)
+      node.keys.sort.each do |name|
+        lines << ("  " * depth) + name
+        render_tree(node.fetch(name), lines, depth + 1) unless node.fetch(name).empty?
+      end
+    end
     end
   end
 end
