@@ -31,12 +31,14 @@ module Master
       def start_or_resume(target:, files:, max_passes:, budget_seconds:)
         with_lock do
           data = load
-          active = data["runs"].reverse.find { |run| run["state"] == "active" }
+          active = data["runs"].reverse.find { |run| %w[active crashed].include?(run["state"].to_s) }
           if active
             requested_files = Array(files).map { |path| relative(path) }.compact.uniq.sort
             unless active["target"] == relative(target) && Array(active["files"]).sort == requested_files
               raise "another fix run is active: #{active["id"]} for #{active["target"]}"
             end
+            active["state"] = "active"
+            active["resumed_from"] = active["state"] unless active["state"] == "active"
             active["resumed_at"] = Time.now.utc.iso8601
             active["resume_count"] = active.fetch("resume_count", 0).to_i + 1
             persist(data)
