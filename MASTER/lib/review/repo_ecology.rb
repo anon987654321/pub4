@@ -296,7 +296,7 @@ module Master
 
       def protected_path?(path)
         path == "README.md" || path == "AGENTS.md" || path.start_with?(".github/") ||
-          path.include?("/test/") || path.include?("/spec/") || path.end_with?("Gemfile")
+          path.include?("/test/") || path.end_with?("Gemfile")
       end
 
       def duplicate_basenames(records)
