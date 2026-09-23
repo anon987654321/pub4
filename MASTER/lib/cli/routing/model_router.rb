@@ -34,7 +34,7 @@ module Master
           @root = root
           @provider_health = provider_health
           @rules = load_rules
-          @capability_map = Master::Core::Routing::CapabilityMap.new
+          @capability_map = Master::Core::Routing::CapabilityMap.new(path: File.join(@root, "runtime", "telemetry", "model_capabilities.json"))
           start_pool_probes
         end
 
