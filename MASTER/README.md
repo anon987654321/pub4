@@ -130,7 +130,7 @@ without turning a resource emergency into a restart storm.
 ## Rendered convergence
 
 Source-clean is not improvement-clean. Every `/fix` pass starts with deterministic
-observation and, for `RAILS/` or `MASTER/web`, a real rendered observation. or `MASTER/web`, MASTER captures real browser surfaces through the existing
+observation and, for `RAILS/` or `MASTER/web`, a real rendered observation. MASTER captures real browser surfaces through the existing
 GeometryProbe/CDP gates, gives the screenshot and measured geometry to the UI
 council, turns the council's selected repairs into ordinary fix-loop findings,
 and renders again on the next pass. Typography, hierarchy, spacing,
