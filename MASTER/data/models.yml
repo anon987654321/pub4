@@ -79,10 +79,6 @@ model_defs:
     id: gemini-2.5-flash
     <<: *model_defaults
     score: { quality: 0.88, speed: 0.90, cost: 0.95 }
-  gemini_pro: &gemini_pro
-    id: gemini-2.5-pro
-    <<: *model_defaults
-    score: { quality: 0.95, speed: 0.70, cost: 0.80 }
   mistral_large: &mistral_large
     id: mistralai/mistral-large
     <<: *model_defaults
@@ -206,12 +202,12 @@ ollama_qwen_large: &ollama_qwen_large
   context_window: 256000
   score: { quality: 0.95, speed: 0.62, cost: 1.0 }
 ollama_glm_flash: &ollama_glm_flash
-  id: ollama:glm-5.3-flash
+  id: ollama:glm-5.3-flash:cloud
   <<: *model_defaults
   context_window: 128000
   score: { quality: 0.96, speed: 0.86, cost: 1.0 }
 ollama_gemma: &ollama_gemma
-  id: ollama:gemma4:26b
+  id: ollama:gemma3:4b
   <<: *model_defaults
   context_window: 128000
   score: { quality: 0.90, speed: 0.76, cost: 1.0 }
@@ -258,7 +254,6 @@ models:
     - *claude_opus_api
     - *deepseek_reasoner
     - *deepseek_chat
-    - *gemini_pro
     - *mistral_large
     - *claude_sonnet
     - *gpt_4o
@@ -284,6 +279,7 @@ models:
     - *gemini_flash
     - *gemini_flash_openrouter
   free:
+    - *ollama_glm_flash
     - *nemotron_super
   claude_code:
     - *claude_cli_sonnet
