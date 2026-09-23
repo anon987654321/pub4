@@ -63,7 +63,7 @@ canonical CDP session can carry the required host mapping.
 immune to antialiasing and GPU differences, with diffs that read `nav.tab-bar:
 h 48→32`. `visual_contract` remains the compatibility route matrix and optional
 pixel-diff capture; its PNGs are deliberately disposable. New structural
-baselines are accepted only under `GATE_SNAPSHOT_UPDATE=1`. New baselines are accepted only under `GATE_SNAPSHOT_UPDATE=1`, and
+baselines are accepted only under `GATE_SNAPSHOT_UPDATE=1`, and
 deliberately not under `GATE_AUTOFIX`, because blessing a regression is the
 behaviour this replaces.
 
