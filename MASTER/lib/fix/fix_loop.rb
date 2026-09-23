@@ -12,6 +12,8 @@ require_relative "fix_loop/rule_order"
 require_relative "fix_loop/pass_runner"
 require_relative "fix_loop/convergence_config"
 require_relative "fix_loop/background_runner"
+require_relative "visual_pass"
+require_relative "opportunity_pass"
 require_relative "severity"
 require_relative "violation"
 
@@ -177,12 +179,14 @@ module Master
         council = CouncilRound.new(agent:, root:, bus:)
         preamble = self.class.preamble_from_soul
 
+        visual_pass = VisualPass.new(agent:, root:, bus:)
+        opportunity_pass = OpportunityPass.new(root:, bus:)
         PassRunner.new(
           bus:, committer:, loop_scanner:, llm_router:, rollback:, root:,
           rules:, agent:, scanner:, learnings:, preamble:,
           clean_runs_required:,
           plateau_window:,
-          ground_truth:, homeostat:, council:
+          ground_truth:, homeostat:, council:, visual_pass:, opportunity_pass:
         )
       end
 
