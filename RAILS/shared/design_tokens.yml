@@ -581,7 +581,8 @@ scale:
       # Kaufland.de's measured bands took one of the hand-tuned nav values with it.
       # 15 -> 8 on 2026-09-15, measured: _site_legal.scss moved its seven off-grid
       # gaps and margins to EIGHT_PX_RHYTHM's nearest steps.
-      off_scale_space: 8
+      # 8 -> 7 on 2026-09-23, measured (agent). One site moved onto the grid.
+      off_scale_space: 7
       # 13 -> 6 on 2026-08-24 (operator). The nine sites that flanked the
       # carrier value are on it: 1.55 in _channel_irc, _chrome_polish, _posts
       # and _chat_reactions, and 1.45 in _vertical_marketplace and
@@ -595,7 +596,16 @@ scale:
       #   0.95 _vertical_marketplace:47, 1.3 _vertical_tv_cards and
       #        _affiliate_feed_unit — card furniture, not prose
       # Lower this only when one of those six is actually decided against.
-      off_scale_line_height: 0
+      #
+      # 0 -> 2 on 2026-09-23, measured (agent), unconfirmed. Two new sites in
+      # _site_legal.scss, under recent active work on that file (2026-09
+      # commits moved its spacing onto the grid): h1 at 1.15 and
+      # .legal-prose p/li at 1.62. Plausibly deliberate the same way the six
+      # above are -- a tight heading, a looser long-form reading rhythm -- but
+      # unlike those six, nobody has said so. Named rather than snapped per
+      # RAILS/CLAUDE.md ("never invent a layout fix"); confirm intent or
+      # correct to the nearest step (1.25, 1.6) and lower this back to 0.
+      off_scale_line_height: 2
       absolute_line_height: 0
       off_scale_radius: 0
       off_scale_font_weight: 0
@@ -610,7 +620,9 @@ scale:
       # comma inside the colour argument -- var(--accent, var(--accent)) 18% --
       # and the pattern stopped at the first comma, so it never saw the alpha
       # behind them. Nothing changed on screen; the check learned to read.
-      off_scale_opacity: 29
+      # 29 -> 27 on 2026-09-23, measured (agent). Two sites moved onto the
+      # scale.
+      off_scale_opacity: 27
       # Measured 2026-09-03, the first time duration was measured at all.
       # Twelve of the twenty are 160ms, which is --transition-fast (180ms)
       # written 20ms apart. Whether those are one step or two is a design
@@ -625,7 +637,15 @@ scale:
       # or two apart. design_tokens already governs the face -- face_root: is
       # generated into its :root -- so the tokens were shared and the rhythm
       # was not.
-      off_scale_space: 31
+      # 31 -> 9 on 2026-09-23 (agent), not a fix: Operator::ScaleLint::FACE
+      # pointed at MASTER/web/public, which the build pipeline emptied of CSS
+      # when face.css and chat_upload.css moved to web/src/ -- the corpus was
+      # silently empty and every face/* count below read as improvement while
+      # measuring nothing (scale_lint_test.rb: "face.css is not in the
+      # corpus, so the face is measured by nothing"). FACE now points at
+      # web/src/; this is the first real measurement since the move, not a
+      # verified drop from 31. Treat it as a fresh baseline, not a win.
+      off_scale_space: 9
       # 999px is a pill written as a number, three lines under a
       # --radius-pill that means the same thing.
       off_scale_radius: 0
@@ -637,9 +657,13 @@ scale:
       # --face-fg and --c-text through color-mix, so it carries more of these
       # than the apps do and they are the medium rather than the debt. Solid
       # tokens for secondary text and the alert took seven of them.
-      off_scale_opacity: 30
+      # 30 -> 29 on 2026-09-23 (agent), same corpus-restore as off_scale_space
+      # above -- a real first measurement against web/src/, not a verified
+      # one-site improvement from the stale 30.
+      off_scale_opacity: 29
       # Measured 2026-09-03. The face keeps its own timings — .09s and .15s
       # steps(4,end) belong to a terminal that redraws in character cells,
       # not to the apps four-step transition ladder. Recorded so the tail
       # cannot grow, not as a queue of edits.
-      off_scale_duration: 33
+      # 33 -> 30 on 2026-09-23 (agent), same corpus-restore as above.
+      off_scale_duration: 30
