@@ -88,8 +88,22 @@ module Master
         start_pass = @run_journal.next_pass(journal)
         @bus&.publish("fix_loop:recovered", run_id:, start_pass:, target:) if journal["resumed"]
 
+        if (active_pass = @run_journal.active_pass(journal))
+          recovery = Transaction.recover!(root: @root, id: active_pass.fetch("transaction_id"), bus: @bus)
+          if recovery.err?
+            @run_journal.terminal(run_id, :failed, message: recovery.message)
+            return recovery
+          end
+        end
+
         result = run_passes(files:, target:, max_passes:, deadline:, budget_seconds:, start_pass:, run_id:)
-        terminal_state = result.ok? ? result.value!.to_s[/\A[A-Z_]+/].to_s.downcase.to_sym : :failed
+        terminal_state = if result.err? && result.category == :timeout
+          :timeout
+        elsif result.ok?
+          result.value!.to_s[/\A[A-Z_]+/].to_s.downcase.to_sym
+        else
+          :failed
+        end
         @run_journal.terminal(run_id, terminal_state, message: result.to_s)
         result
       rescue StandardError => e
@@ -166,7 +180,9 @@ module Master
 
       def run_one_pass(i, files:, target:, deadline:, budget_seconds:, state:, run_id:)
         pass = i + 1
-        @run_journal.pass_start(run_id, pass)
+        transaction_id = "#{run_id}-pass-#{pass}"
+        @run_journal.pass_start(run_id, pass, transaction_id:)
+
         @homeostat&.observe(:tool_call) # a pass is loop overhead distinct from the LLM call inside it
         if deadline.expired?
           @bus&.publish("fix_loop:timeout", pass:, budget_seconds:)
@@ -185,7 +201,7 @@ module Master
         end
 
         result = @pass_runner.run_pass(
-          files:, target:, pass:, deadline: deadline.at,
+          files:, target:, pass:, deadline: deadline.at, transaction_id:,
           history: state[:history], seen_snapshots: state[:seen_snapshots],
           recurring_violations: state[:recurring_violations],
           consecutive_clean: state[:consecutive_clean]
