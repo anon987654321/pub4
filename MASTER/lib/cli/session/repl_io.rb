@@ -47,7 +47,7 @@ module Master
           elsif line.match?(%r{\A/\S*\z})
             SLASH_COMMANDS.select { |cmd| cmd.start_with?(target.to_s) }
           elsif line.strip.empty?
-            ["/fix ", "/review ", "/status ", "/undo ", "/diff ", "/help "]
+            ["/fix ", "/review ", "/status ", "/undo ", "/runtime ", "/help "]
           else
             []
           end
