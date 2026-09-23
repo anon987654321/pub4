@@ -25,14 +25,6 @@ Rake::TestTask.new(:test) do |t|
   t.warning = false
 end
 
-desc "Run spec/ — Minitest specs organized by subsystem instead of one flat test/ dir"
-Rake::TestTask.new(:spec) do |t|
-  t.libs << "test"
-  t.libs << "lib"
-  t.ruby_opts << "-r./test/test_helper"
-  t.test_files = FileList["spec/**/*_spec.rb"]
-  t.warning = false
-end
 
 desc "Scan for tracked secrets and validate the quarantine/virus_museum structure"
 task :security_sweep do
@@ -207,7 +199,7 @@ task :autoload do
   puts "autoload: clean"
 end
 
-desc "Run spec/core_smoke_spec.rb — Effect → Constitution → World loop"
+desc "Run test/test_core_smoke.rb — Effect → Constitution → World loop"
 task :core_smoke do
   sh RbConfig.ruby, "-I#{File.join(__dir__, "lib")}", File.join(__dir__, "test", "test_core_smoke.rb")
 end
