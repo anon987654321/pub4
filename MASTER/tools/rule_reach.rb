@@ -44,10 +44,20 @@ module Operator
       Master::Review::Scan::RuleRegistryAudit.new(root: MASTER_DIR).mechanical(all)
     end
 
-    # Mirrors SemanticRule#load_semantic_rules. Kept in step by test_rule_reach.
+    # Semantic reach comes from executable Law definitions. The YAML entry still
+    # contributes catalogue metadata such as tier while the law owns the question,
+    # severity, and enforcement mode.
     def prompted(all)
-      all.select { |rule| rule["detect_semantic"] }
-         .reject { |rule| rule["severity"] == "info" && rule["mode"] != "opportunity" && rule["tier"] != "kernel" }
+      require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
+      ::Law.load_all(File.join(MASTER_DIR, "law")) if ::Law.rules.empty?
+      semantic = ::Law.rules.values.select(&:semantic?).to_h { |law| [law.id.to_s, law] }
+
+      all.select do |rule|
+        law = semantic[rule["id"].to_s]
+        next false unless law
+
+        !(law.severity == :info && law.mode != :opportunity && rule["tier"] != "kernel")
+      end
     end
 
     def unreachable(all = rules) = all - mechanical(all) - prompted(all)
