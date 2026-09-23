@@ -59,8 +59,8 @@ module Master
       def rollback!
         record = current
         return Result.err("no known-good runtime", category: :validation) unless record
-        return Result.ok("already at known-good #{record["commit"]}") if matches_head?
         return Result.err("rollback refused: working tree is dirty", category: :policy) if dirty?
+        return Result.ok("already at known-good #{record["commit"]}") if matches_head?
 
         sha = record.fetch("commit")
         run("git", "-C", @root, "reset", "--hard", sha)
