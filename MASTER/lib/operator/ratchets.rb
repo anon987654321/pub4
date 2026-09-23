@@ -50,7 +50,7 @@ require "yaml"
 
 module Operator
   module Ratchets
-    ROOT = File.expand_path("../..", __dir__)
+    ROOT = File.expand_path("../../..", __dir__)
     RAILS = File.join(ROOT, "RAILS")
     RUBY = RbConfig.ruby
     MASTER = File.join(ROOT, "MASTER")
@@ -222,13 +222,13 @@ module Operator
          [unreached.size, Operator::CodeReach.ceiling, unreached]
        end,
        master_row("namespace", "data/spine.yml", "files declaring no module or class") do
-         require File.join(MASTER, "tools/namespace_ratchet")
+         require File.join(MASTER, "lib/operator/namespace_ratchet")
          flat = Operator::NamespaceRatchet.ceilings.keys.flat_map { |dir| Operator::NamespaceRatchet.flat_files(dir) }
          [flat.size, Operator::NamespaceRatchet.ceilings.values.sum, flat]
        end,
        *%w[lone_dirs stutter vague_names].map do |kind|
          master_row("sprawl.#{kind}", "data/sprawl_census.yml", "the shape of the tree, in all four of them") do
-           require File.join(MASTER, "tools/sprawl_census")
+           require File.join(MASTER, "lib/operator/sprawl_census")
            [Operator::SprawlCensus.counts.fetch(kind), Operator::SprawlCensus.ceilings.fetch(kind),
             Array(Operator::SprawlCensus.public_send(kind))]
          end

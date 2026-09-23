@@ -27,7 +27,7 @@ require "yaml"
 
 module Operator
   module SprawlCensus
-    ROOT = File.expand_path("../..", __dir__)
+    ROOT = File.expand_path("../../..", __dir__)
     CEILINGS = File.join(ROOT, "MASTER", "data", "sprawl_census.yml")
 
     MANDATED = [

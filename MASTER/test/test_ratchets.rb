@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../tools/ratchets"
+require_relative "../lib/operator/ratchets"
 
 # Wish-list items 1 and 2, made executable.
 #
@@ -90,7 +90,7 @@ class TestRatchets < Minitest::Test
 
     assert_equal before, Operator::Ratchets.tree_source_files("MASTER").size,
                  "an untracked file is somebody's work in progress, not this tree's growth"
-    assert_includes Operator::Ratchets.tracked_source_files, "MASTER/tools/ratchets.rb",
+    assert_includes Operator::Ratchets.tracked_source_files, "MASTER/lib/operator/ratchets.rb",
                     "a tracked source file must still be counted"
   ensure
     File.delete(intruder) if intruder && File.exist?(intruder)
@@ -101,7 +101,7 @@ class TestRatchets < Minitest::Test
   def test_growth_counts_source_and_not_tests
     master = Operator::Ratchets.pub4_growth_rows.find { |row| row.name == "growth.master" }
 
-    assert_includes master.members, "MASTER/tools/ratchets.rb", "a source file must still be counted" # source-assertion: ok — a census result, not a source file
+    assert_includes master.members, "MASTER/lib/operator/ratchets.rb", "a source file must still be counted" # source-assertion: ok — a census result, not a source file
     refute_includes master.members, "MASTER/test/test_ratchets.rb", "a test is coverage, not sprawl"
     refute_includes master.members, "MASTER/web/test/test_helper.rb", "a nested test directory is still tests"
   end

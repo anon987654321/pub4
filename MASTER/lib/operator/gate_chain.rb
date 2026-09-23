@@ -257,7 +257,7 @@ module Operator
     # records a fall so the ground cannot be given back. Moving a file to drop one
     # of those is a namespace judgement and not a tool's to make.
     def sprawl(scan_only:)
-      census = [RUBY, File.join(MASTER, "tools", "sprawl_census.rb")]
+      census = [RUBY, File.join(MASTER, "lib", "operator", "sprawl_census.rb")]
       census << "--ratchet" unless scan_only
       ok, body = capture(*census)
       dup_ok, dup_body = capture(RUBY, File.join(MASTER, "tools", "dup_census.rb"))

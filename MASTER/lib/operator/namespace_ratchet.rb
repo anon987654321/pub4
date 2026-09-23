@@ -20,8 +20,8 @@ require "json"
 
 module Operator
   module NamespaceRatchet
-    SPINE = File.expand_path("../data/spine.yml", __dir__)
-    ROOT = File.expand_path("../..", __dir__)
+    SPINE = File.expand_path("../../data/spine.yml", __dir__)
+    ROOT = File.expand_path("../../..", __dir__)
 
     module_function
 

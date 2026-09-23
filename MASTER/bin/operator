@@ -93,7 +93,7 @@ when "measure"
   # --why names the files behind a number and --since names the ceilings that
   # moved, because neither question can be answered from the table: "OVER +826"
   # is not something a session can act on or disclaim.
-  require_relative "../tools/ratchets"
+  require_relative "../lib/operator/ratchets"
   deep = !ARGV.delete("--deep").nil?
   why = ARGV.filter_map { |arg| arg[/\A--why(?:=(.*))?\z/, 1] }.first
   why ||= ARGV[ARGV.index("--why") + 1].to_s if ARGV.include?("--why")
