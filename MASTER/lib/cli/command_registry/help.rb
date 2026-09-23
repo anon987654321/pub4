@@ -102,7 +102,8 @@ module Master
           summary: "the portable enforcement contract",
           detail: ["/law or /law contract — generated contract for MASTER and external LLMs.",
                    "/law full — complete law questions, fixes and proof examples.",
-                   "/law digest — current executable-law identity.",
+                   "/law digest — current executable-law identity.
+                   "/law handshake — export the exact contract an external agent must present before admission."",
                    "/law protocol — the mandatory enforcement sequence."],
         },
         "rules" => {
