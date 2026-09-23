@@ -41,6 +41,23 @@ class TestReliabilityKernel < Minitest::Test
     end
   end
 
+  def test_fix_journal_replays_an_active_pass_after_crash
+    Dir.mktmpdir("master-reliability") do |root|
+      journal = Master::Fix::RunJournal.new(root:)
+      first = journal.start_or_resume(target: root, files: [], max_passes: 5, budget_seconds: 30)
+      journal.pass_start(first["id"], 1)
+      journal.crash(first["id"], "killed during pass")
+
+      resumed = Master::Fix::RunJournal.new(root:).start_or_resume(
+        target: root, files: [], max_passes: 5, budget_seconds: 30,
+      )
+
+      assert resumed["resumed"]
+      assert_equal "active", resumed["state"]
+      assert_equal 1, Master::Fix::RunJournal.new(root:).next_pass(resumed)
+    end
+  end
+
   def test_fix_journal_marks_terminal_runs_and_starts_the_next_run
     Dir.mktmpdir("master-reliability") do |root|
       journal = Master::Fix::RunJournal.new(root:)
