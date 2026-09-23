@@ -291,6 +291,10 @@ when "rule"
   declared = declarations_in(YAML.safe_load_file(File.join(master_root, "data/rules.yml"), aliases: true))
              .find { |row| row["id"].to_s.casecmp?(id) }
 
+  require File.join(master_root, "law", "law")
+  Law.load_all(File.join(master_root, "law")) if Law.rules.empty?
+  executable_law = Law.rules[id.to_sym]
+
   # Where it is written. Every ruby file under law/ and the scan registry is
   # searched for the id, and the enclosing block plus its leading comment is the
   # answer — that comment is where the exemption's reason lives.
@@ -351,6 +355,12 @@ when "rule"
       %w[name source tier severity autofix fix detect detect_semantic detect_structural].each do |key|
         puts "  #{key}: #{declared[key]}" if declared[key]
       end
+    end
+    if executable_law
+      surfaces = [("detector" if executable_law.detect), ("semantic" if executable_law.ask), ("practice" if executable_law.practice)].compact
+      puts "  enforcement: #{surfaces.join("+")}" unless surfaces.empty?
+      puts "  mode: #{executable_law.mode}" if executable_law.mode
+      puts "  fix: #{executable_law.fix}" if !declared || declared["fix"].nil?
     end
     puts "  detector: #{card[:detector]}" if card[:detector]
     if card[:definition]
