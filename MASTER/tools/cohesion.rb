@@ -224,7 +224,7 @@ return if collisions.any?
         check: [
           "every reference to the old constant updated — Zeitwerk resolves by path, so a stale one is a NameError at first use",
           "data/autoload.yml entries repointed if the file is listed there",
-          "data/namespace_ceilings.yml counts a new namespace",
+          "data/spine.yml#namespace_ceilings counts a new namespace",
           "no member reads a sibling at load time under its old constant",
         ],
       }
@@ -338,7 +338,7 @@ return if collisions.any?
     # One directory at a time answers "what should I merge here"; it does not
     # answer "is the tree getting neater". This does, and it is the half that
     # makes the tool convergent instead of advisory: a number with a recorded
-    # low, in the shape data/dup_census.yml and data/namespace_ceilings.yml
+    # low, in the shape data/dup_census.yml and data/spine.yml#namespace_ceilings
     # already use. `lint:cohesion` printed proposals and exited 0 for its whole
     # life, and it was not in `rake audit` either, so nothing ever read them.
     CENSUS = File.expand_path("../data/cohesion_census.yml", __dir__)
