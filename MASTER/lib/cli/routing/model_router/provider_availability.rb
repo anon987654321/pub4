@@ -106,9 +106,10 @@ module Master
 
           def web_chat_model?(model_id) = model_id.to_s.start_with?("web-chat:")
 
-          # A daemon named by OLLAMA_BASE_URL is one the operator vouches for, so
-          # when it cannot be asked what it holds the configured local list
-          # stands. With the variable unset, a silent daemon offers nothing.
+          # Ollama is a first-class local lane. localhost:11434 is the default daemon;
+          # OLLAMA_BASE_URL can point elsewhere, and MASTER_NO_OLLAMA is the
+          # explicit opt-out. When discovery cannot answer, the configured list
+          # still provides a deterministic fallback.
           def ollama_enabled?
             return false if ENV["MASTER_NO_OLLAMA"] == "1"
             true
