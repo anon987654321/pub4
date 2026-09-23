@@ -34,6 +34,33 @@
     [/rule_loop:pass/i, { topology: "codebase", entropy: 0.20, confidence: 0.82, mode: "converged" }]
   ];
 
+  function classifyDevice(type, payload = {}) {
+    const data = payload?.data && typeof payload.data === "object" ? payload.data : payload;
+    const key = (type || "").toString();
+    if (key === "device:battery") {
+      const pct = Number(data?.percentage ?? data?.percent ?? data?.level);
+      const value = Number.isFinite(pct) ? Math.max(0, Math.min(100, pct)) : null;
+      return {
+        topology: "sphere",
+        entropy: value == null ? 0.22 : Math.max(0.10, Math.min(0.62, (100 - value) / 160)),
+        confidence: value == null ? 0.68 : 0.94,
+        mode: "device-battery",
+        battery: value
+      };
+    }
+    if (key === "device:network") {
+      const connected = data?.connection || data?.connected || data?.ssid || data?.ip;
+      return { topology: "neural", entropy: connected ? 0.18 : 0.48, confidence: connected ? 0.92 : 0.58, mode: connected ? "device-network" : "device-network-quiet" };
+    }
+    if (/^device:(accelerometer|gyroscope|magnetometer|light|proximity)$/.test(key)) {
+      return { topology: "papua-mask", entropy: 0.28, confidence: 0.86, mode: key.slice(7), deviceSensor: key.slice(7) };
+    }
+    if (key === "device:sensors") {
+      return { topology: "neural", entropy: 0.20, confidence: 0.90, mode: "device-sensors" };
+    }
+    return null;
+  }
+
   function classify(type, payload = {}) {
     const text = `${type} ${JSON.stringify(payload)}`;
     const matched = FALLBACK_CLASSIFIER.find(([pattern]) => pattern.test(text));
@@ -148,10 +175,21 @@
     const type = event?.type || event?.event || event?.data?.event || "runtime:event";
     // EventsController sends { t, type, data: busEvent }; listeners read the bus event.
     const payload = event?.data || event;
-    const mapped = (window.MASTERTopology && typeof window.MASTERTopology.classifyEvent === "function")
+    const deviceVisual = /^device:/.test(type) ? classifyDevice(type, payload) : null;
+    const mapped = deviceVisual || ((window.MASTERTopology && typeof window.MASTERTopology.classifyEvent === "function")
       ? window.MASTERTopology.classifyEvent(type, payload)
-      : classify(type, payload);
+      : classify(type, payload));
     mapped.raw = event;
+    if (deviceVisual?.battery != null) {
+      document.documentElement.style.setProperty("--master-battery", String(deviceVisual.battery / 100));
+      document.documentElement.dataset.deviceBattery = String(Math.round(deviceVisual.battery));
+    }
+    if (deviceVisual?.deviceSensor) {
+      document.documentElement.dataset.deviceSensor = deviceVisual.deviceSensor;
+    }
+    if (/^device:(?:accelerometer|gyroscope|magnetometer|light|proximity)$/.test(type)) {
+      window.dispatchEvent(new CustomEvent("master:device", { detail: { type, payload, visual: deviceVisual } }));
+    }
     emitVisual(type, mapped);
     // Architecture #15: forward codebase topology to particle system.
     if (/codebase:topology/i.test(type) && payload.modules) {
