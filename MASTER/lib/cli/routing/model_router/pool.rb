@@ -294,6 +294,8 @@ module Master
             index = Master::Io::CatalogIndex.new(db_path: Master::Io::CatalogIndex::DEFAULT_DB)
 
             catalog_credentials.each do |source, token|
+              next unless index.stale?(source, max_age: CATALOG_MAX_AGE_S)
+
               begin
                 index.refresh(source, token:)
               rescue StandardError => e
