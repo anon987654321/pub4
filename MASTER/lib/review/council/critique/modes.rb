@@ -37,6 +37,7 @@ module Master
                 "distinguish measurable violations from subjective taste",
                 "treat the attached rendered screenshot as visual ground truth",
                 "name the surface, viewport, and stable selector or visible text anchor for every actionable issue",
+                "format every actionable UI proposal with \`surface=<surface-id> viewport=<viewport> selector=<stable-css-selector>\` or \`visible text=<literal>\`",
                 "judge typography, hierarchy, spacing, alignment, density, grouping and composition in the render, not only in CSS",
               ],
             },
