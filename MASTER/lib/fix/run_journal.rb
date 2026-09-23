@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "fileutils"
 require "json"
 require "securerandom"
 require "time"
@@ -32,6 +33,10 @@ module Master
           data = load
           active = data["runs"].reverse.find { |run| run["state"] == "active" }
           if active
+            requested_files = Array(files).map { |path| relative(path) }.compact.uniq.sort
+            unless active["target"] == relative(target) && Array(active["files"]).sort == requested_files
+              raise "another fix run is active: #{active["id"]} for #{active["target"]}"
+            end
             active["resumed_at"] = Time.now.utc.iso8601
             active["resume_count"] = active.fetch("resume_count", 0).to_i + 1
             persist(data)
@@ -100,7 +105,8 @@ module Master
       end
 
       def next_pass(run)
-        Array(run["passes"]).map { |row| row["pass"].to_i }.max.to_i + 1
+        completed = Array(run["passes"]).reject { |row| row["state"].to_s == "active" }
+        completed.map { |row| row["pass"].to_i }.max.to_i + 1
       end
 
       def active
