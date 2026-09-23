@@ -36,6 +36,8 @@ module Master
 
       def promote!(commit:, paths: [])
         sha = normalize_commit(commit)
+        raise ArgumentError, "known-good commit is not present in repository" unless resolve_commit(sha)
+
         record = {
           "version" => VERSION,
           "commit" => sha,
@@ -57,9 +59,12 @@ module Master
         record = current
         return false unless record
 
+        commit = normalize_commit(record.fetch("commit"))
         current = resolve_commit("HEAD")
-        expected = resolve_commit(record["commit"])
+        expected = resolve_commit(commit)
         current && expected && current == expected
+      rescue KeyError, ArgumentError
+        false
       end
 
       def rollback!
@@ -68,7 +73,7 @@ module Master
         return Result.err("rollback refused: working tree is dirty", category: :policy) if dirty?
         return Result.ok("already at known-good #{record["commit"]}") if matches_head?
 
-        sha = record.fetch("commit")
+        sha = normalize_commit(record.fetch("commit"))
         run("git", "-C", @root, "reset", "--hard", sha)
         emit("runtime:rollback", commit: sha)
         Result.ok("rolled back to known-good #{sha}")
