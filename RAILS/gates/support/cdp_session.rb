@@ -233,8 +233,8 @@ module Deploy
     # clip crops in Chrome, in CSS pixels, which is cheaper than encoding a full
     # frame and cropping it afterwards — and jpeg matters when the caller is
     # taking thousands of these rather than one.
-    def screenshot(path, format: "png", quality: nil, clip: nil)
-      params = { format: format, captureBeyondViewport: false }
+    def screenshot(path, format: "png", quality: nil, clip: nil, capture_beyond_viewport: false)
+      params = { format: format, captureBeyondViewport: capture_beyond_viewport }
       params[:quality] = quality if quality && format == "jpeg"
       params[:clip] = clip.merge(scale: clip.fetch(:scale, 1)) if clip
       res = send_cmd("Page.captureScreenshot", **params)
