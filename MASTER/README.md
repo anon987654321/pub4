@@ -218,7 +218,7 @@ it, and the open work lives in [one backlog](../TODO.md). Licensed MIT.
 
 MASTER detects Android/Termux at boot and exposes a truthful device capability layer through `Master::Device`. When the official Termux:API app and the `termux-api` package are installed, the runtime can query battery, camera information, sensors, audio information and location, and can explicitly capture a camera photo or microphone recording. The hardware layer never claims permission or hardware access merely because a command exists; failures are reported as unavailable instead of simulated success.
 
-Install both the Termux:API application and the `termux-api` package before expecting Android hardware access. The official Termux project documents the add-on and its command-line package separately. citeturn0search0turn1search0
+Install both the Termux:API application and the `termux-api` package before expecting Android hardware access. The official Termux project documents the add-on and its command-line package separately.
 
 From Termux:
 

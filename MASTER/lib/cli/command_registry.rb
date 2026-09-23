@@ -124,6 +124,11 @@ module Master
         when "camera" then Master::Device.camera_info.to_json
         when "sensors" then Master::Device.sensors.to_json
         when "audio" then Master::Device.audio_info.to_json
+        when /\Aphoto\s+(.+)\z/
+          Master::Device.camera_photo($1.strip).to_s
+        when /\Arecord\s+(.+?)(?:\s+(\d+))?\z/
+          Master::Device.microphone_record($1.strip, limit: $2 && Integer($2)).to_s
+        when "record stop" then Master::Device.microphone_stop.to_s
         when /\Alocation(?:\s+(gps|network|passive))?\z/
           Master::Device.location(provider: $1).to_json
         else
