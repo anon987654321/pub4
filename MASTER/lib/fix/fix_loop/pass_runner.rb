@@ -140,8 +140,9 @@ module Master
         end
 
         def partition_findings(found)
-          found.partition { |v| v[:rule].to_s != VisualPass::RULE_ID }
-              .then { |source, rest| rest.partition { |v| v[:rule].to_s == VisualPass::RULE_ID }.then { |visual, opportunity| [source, visual, opportunity] } }
+          visual, rest = found.partition { |v| v[:rule].to_s == VisualPass::RULE_ID }
+          opportunity, source = rest.partition { |v| v[:rule].to_s == OpportunityPass::RULE_ID }
+          [source, visual, opportunity]
         end
 
         def run_opportunity_stage(findings, files, pass, deadline, council: nil)
@@ -182,7 +183,7 @@ module Master
             committer: @committer,
             stage_commit: true,
           )
-          loop.injected_preamble = [@preamble, council_preamble(nil)].compact.join("\n\n")
+          loop.injected_preamble = [@preamble, council_preamble(visual && visual.value![:council])].compact.join("\n\n")
           result = loop.run_once(files, external_violations: findings, image:)
           @bus&.publish("fix_loop:visual_fix", pass:, findings: findings.size, fixed: result[:fixed].to_i)
           result[:fixed].to_i
