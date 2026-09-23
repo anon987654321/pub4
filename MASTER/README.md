@@ -209,7 +209,7 @@ person. Allow applies the effect against a checkpoint it undoes the moment the
 effect errs. A fourth verdict, Revise, rewrites the effect inside admit and
 never reaches the loop. Everything past that is detail.
 
-Read [START_HERE](START_HERE.md), then [AGENTS](AGENTS.md), which closes on what
+Read [AGENTS](AGENTS.md), which routes into the governing law and closes on what
 MASTER refuses and why. Anything strange on purpose says so in a comment beside
 it, and the open work lives in [one backlog](../TODO.md). Licensed MIT.
 
