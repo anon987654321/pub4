@@ -105,7 +105,7 @@ module Master
         def panel_issue_entries(feedback)
           seen = {}
           Array(feedback).reject { |entry| entry[:persona].to_s == "Judge" }.filter_map do |entry|
-            summary = entry[:feedback].to_s.lines.first&.strip.to_s
+            summary = entry[:feedback].to_s.lines.map(&:strip).find { |line| !line.empty? }.to_s
             next if summary.empty? || seen.key?(summary)
 
             seen[summary] = true
