@@ -31,7 +31,7 @@ module Master
           return result unless result.ok?
 
           feedback = result.value!
-          issues = panel_issues(feedback)
+          issues = panel_issue_entries(feedback)
           visual_clean = @mode[:preset_key] == "ui_critique" && issues.empty?
           ideation_result = if visual_clean
                               Master::Result.ok(ideas: [], critiques: [], final: "VISUAL_CLEAN")
@@ -99,9 +99,22 @@ module Master
 
         # The first line of each critique: the issue, without the argument for it.
         def panel_issues(feedback)
-          Array(feedback).reject { |entry| entry[:persona].to_s == "Judge" }
-                         .filter_map { |entry| entry[:feedback].to_s.lines.first&.strip }
-                         .reject(&:empty?).uniq.first(12)
+          panel_issue_entries(feedback).map { |entry| entry[:summary] }
+        end
+
+        def panel_issue_entries(feedback)
+          seen = {}
+          Array(feedback).reject { |entry| entry[:persona].to_s == "Judge" }.filter_map do |entry|
+            summary = entry[:feedback].to_s.lines.first&.strip.to_s
+            next if summary.empty? || seen.key?(summary)
+
+            seen[summary] = true
+            {
+              persona: entry[:persona].to_s,
+              summary: summary,
+              feedback: entry[:feedback].to_s,
+            }
+          end.first(12)
         end
 
         def harvest_path(payload:, feedback:, ideation_result:, cherry:)
