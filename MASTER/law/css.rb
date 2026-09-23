@@ -180,3 +180,106 @@ Law.define(:FIXED_HEIGHT) do
   bad  ".card { height: 300px; }"
   good ".card { min-height: 300px; }"
 end
+
+
+# Modern web-platform laws are review laws: the rendered tree, browser support,
+# and component context decide whether a platform primitive is appropriate.
+
+Law.define(:INTRINSIC_LAYOUT) do
+  source "Modern CSS intrinsic layout — web.dev Learn CSS"
+  severity :warning
+  languages %i[css scss]
+  ask "Does the layout solve content and component sizing with fixed dimensions or breakpoint patches where intrinsic sizing could express the relationship?"
+  fix "Prefer min/max-content, fit-content, auto, flex/grid, clamp(), and content-sized controls before adding fixed dimensions or breakpoint overrides."
+  bad "card { width: 420px; }"
+  good "card { width: min(100%, 28rem); }"
+end
+
+Law.define(:CONTAINER_RESPONSIVENESS) do
+  source "CSS Container Queries — web.dev Learn CSS"
+  severity :info
+  languages %i[css scss]
+  ask "Does a reusable component respond to the viewport even though its actual constraint is the size of its containing component?"
+  fix "Use a named or nearest container query when the component's behavior depends on container size."
+  bad "@media (max-width: 700px) { .card { ... } }"
+  good "@container (max-width: 30rem) { .card { ... } }"
+end
+
+Law.define(:MODERN_FORMS) do
+  source "CSS field-sizing — Baseline 2026"
+  severity :info
+  languages %i[css scss]
+  ask "Does a form control use brittle fixed sizing where its content, label, validation state, or user input should determine its size?"
+  fix "Prefer intrinsic form sizing and field-sizing when it improves the control without harming predictability."
+  bad "textarea { height: 96px; }"
+  good "textarea { field-sizing: content; }"
+end
+
+Law.define(:NATIVE_DISCLOSURE) do
+  source "Popover and dialog — web.dev Learn CSS"
+  severity :info
+  languages %i[css scss]
+  ask "Does the interface recreate a disclosure, popover, or dialog primitive with unnecessary custom state and positioning?"
+  fix "Prefer semantic dialog, popover, details, and native open-state behavior when their contracts match the interaction."
+  bad ".menu.is-open { display: block; }"
+  good "[popover]:popover-open { ... }"
+end
+
+Law.define(:ANCHOR_RELATIONSHIPS) do
+  source "CSS Anchor Positioning — web.dev Learn CSS"
+  severity :info
+  languages %i[css scss]
+  ask "Is a floating element positioned relative to another element through brittle coordinates or JavaScript when their spatial relationship is stable?"
+  fix "Prefer declarative anchor positioning where browser support and the interaction contract permit it."
+  bad ".menu { left: 183px; top: 72px; }"
+  good ".menu { position-anchor: --trigger; position-area: block-end span-inline-end; }"
+end
+
+Law.define(:SCOPED_CSS) do
+  source "CSS @scope — Baseline 2026"
+  severity :info
+  languages %i[css scss]
+  ask "Can a component's styles leak across unrelated DOM regions because its selectors are broader than its ownership boundary?"
+  fix "Prefer component-local selectors or @scope where it removes selector leakage without adding unnecessary abstraction."
+  bad ".card h2 { ... }"
+  good "@scope (.card) { h2 { ... } }"
+end
+
+Law.define(:MOBILE_VIEWPORT) do
+  source "Modern viewport units — web platform"
+  severity :warning
+  languages %i[css scss]
+  ask "Does a mobile layout assume a stable viewport height when browser chrome, safe areas, or the virtual keyboard can change the available space?"
+  fix "Use svh, dvh, lvh, env(safe-area-inset-*), and intrinsic layout according to the actual interaction requirement."
+  bad ".screen { height: 100vh; }"
+  good ".screen { min-height: 100dvh; }"
+end
+
+Law.define(:SCROLL_INTEGRITY) do
+  source "CSS overflow and modern scroll containers — web.dev Learn CSS"
+  severity :warning
+  languages %i[css scss]
+  ask "Does the layout create accidental page overflow, nested scroll traps, or a scroll container that breaks sticky or touch interaction?"
+  fix "Give each scroll container one intentional axis and verify the rendered scroll and sticky behavior at mobile widths."
+  bad ".shell { overflow: auto; }"
+  good ".shell { overflow-x: clip; overflow-y: auto; }"
+end
+
+Law.define(:MOTION_ACCESSIBILITY) do
+  source "Web accessibility and reduced motion — web.dev"
+  severity :warning
+  languages %i[css scss]
+  ask "Does motion ignore the user's reduced-motion preference or animate a state whose continuity can be communicated without motion?"
+  fix "Respect prefers-reduced-motion and keep transitions short, purposeful, and nonessential."
+  bad ".page { animation: zoom 2s infinite; }"
+  good "@media (prefers-reduced-motion: reduce) { * { animation-duration: 1ms; } }"
+end
+
+Law.define(:NAVIGATION_CONTINUITY) do
+  source "View Transitions and Navigation API — Baseline 2026"
+  severity :info
+  ask "Does a same-origin navigation or state transition unnecessarily destroy context when continuity would make the relationship between states clearer?"
+  fix "Preserve scroll, focus, state, and visual continuity first; use View Transitions or the Navigation API only when they simplify a real transition."
+  bad "navigate_to(result); reset_all_page_state"
+  good "navigate_to(result); preserve_context"
+end
