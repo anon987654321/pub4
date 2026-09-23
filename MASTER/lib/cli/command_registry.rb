@@ -102,7 +102,7 @@ module Master
           head, status = Master::Io::Exec.capture2e("git", "-C", root, "rev-parse", "--short", "HEAD")
           return "runtime promote: git unavailable" unless status.success?
 
-          result = runtime.promote!(commit: head.strip, paths: [root])
+          result = runtime.promote!(commit: head.strip, paths: [])
           result.ok? ? "known-good: promoted #{head.strip}" : result.message
         when "rollback"
           result = runtime.rollback!
