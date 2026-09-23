@@ -37,6 +37,7 @@ report = {
 File.write(File.join(out_dir, "report.json"), JSON.pretty_generate(report))
 puts JSON.pretty_generate(report)
 
-if results.any? && report[:summary][:mean_score] < Master::Voice::Benchmark::PROMPTS.length * 0 + 75
-  abort "voice_benchmark: mean score below 75"
+threshold = Master::Voice::Benchmark.config["min_score"].to_f
+if results.any? && report[:summary][:mean_score] < threshold
+  abort "voice_benchmark: mean score #{report[:summary][:mean_score]} below #{threshold}"
 end
