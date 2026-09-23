@@ -1,47 +1,13 @@
 ---
 doc_numbers:
-
   RAILS/shared/reference/affiliate_banner/README.md:
   - value: 44px
-    why: 'Not prescribed — criticised. The line reads "Comic Sans MS at 44px, against
-      a two-family type rule", in a list of what is wrong with a third-party reference
-      banner we chose not to copy. Naming --tap-min here would say the opposite of
-      what the sentence says, and there is no token that owns a font size we rejected.
-      Permanent while the file stays a critique; if it ever prescribes anything, the
-      numbers come out.
+    why: 'Not prescribed — criticised. The line reads "Comic Sans MS at 44px, against a two-family type rule", in a list of what is wrong with a third-party reference banner we chose not to copy. Naming --tap-min here would say the opposite of what the sentence says, and there is no token that owns a font size we rejected. Permanent while the file stays a critique; if it ever prescribes anything, the numbers come out.'
 
-      '
 doc_paths:
   CLAUDE.md:
   - path: WISHLIST.md
-    why: 'The sentence is the deletion record: WISHLIST.md folded into TODO.md on
-      2026-09-06 and this file says so. Naming it is the point.
-
-      '
-
-
+    why: 'The sentence is the deletion record: WISHLIST.md folded into TODO.md on 2026-09-06 and this file says so. Naming it is the point.'
   OPENBSD/RUNBOOK.md:
   - path: db/seeds/launch.rb
-    why: 'Prescriptive, not stale. The line asks for a launch seed to be written that
-      week; the file is meant not to exist yet. It comes out of this list the day
-      someone writes it.
-
-      '
-
-
-      '
-  - path: shared/_minimal.scss
-    why: 'Shorthand for RAILS/shared/app/assets/stylesheets/_minimal.scss, which exists.
-      The document writes engine paths from the engine''s own root throughout; spelling
-      every one in full would make it unreadable.
-
-      '
-  - path: shared/_tokens.scss
-    why: 'Shorthand for RAILS/shared/app/assets/stylesheets/_tokens.scss, which exists.
-
-      '
-  - path: style.yml
-    why: 'A record of the fold that took style.yml into data/rules.yml; the path is
-      meant to be gone.
-
-      '
+    why: 'Prescriptive, not stale. The line asks for a launch seed to be written that week; the file is meant not to exist yet. It comes out of this list the day someone writes it.'
