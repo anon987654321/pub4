@@ -78,9 +78,16 @@ module Master
             return PassResult.new(status: :plateau, consecutive_clean: 0)
           end
 
-          @homeostat&.observe(:llm_call)
-          council = @council&.run(files: files_with_violations(found, files), pass:, deadline:)
-          run_llm_stage(found, files, pass, deadline, council:)
+          resources = @resource_budget.measure
+          if @resource_budget.critical?(resources)
+            @bus&.publish("fix_loop:model_work_shed", pass:, reasons: resources[:reasons],
+                          values: resources[:values])
+            Master::Trace::Dmesg.status("fix0", "pass #{pass}, model work shed: #{resources[:reasons].join("; ")}")
+          else
+            @homeostat&.observe(:llm_call)
+            council = @council&.run(files: files_with_violations(found, files), pass:, deadline:)
+            run_llm_stage(found, files, pass, deadline, council:)
+          end
           delivery = @committer.finish_transaction("fix_loop: pass #{pass}", findings: found, owned_paths: files)
           return PassResult.new(status: :delivery_failed, consecutive_clean: 0, message: delivery.message) if delivery.err?
 
