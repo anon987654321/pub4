@@ -46,8 +46,13 @@ module Master
         end
 
         manifest = capture[:manifest]
-        image = manifest["sheet"]
-        return Result.err("rendered visual review: INCONCLUSIVE — no screenshot evidence", category: :inconclusive) unless image && File.file?(image)
+        image_path = manifest["sheet"]
+        return Result.err(
+          "rendered visual review: INCONCLUSIVE — no screenshot evidence",
+          category: :inconclusive,
+        ) unless image_path && File.file?(image_path)
+
+        image = { path: image_path, name: "visual-contact-sheet.png", mime: "image/png" }
 
         source_files, anchors = candidate_sources(target:, files:, manifest:)
         return Result.err("rendered visual review: INCONCLUSIVE — screenshot has no source anchor", category: :inconclusive) if source_files.empty?
@@ -193,15 +198,20 @@ module Master
         return unless file
 
         surface = pick[/surface\s+[^,;]+/i, 0]
+        selector_line = selector && source_line(file, selector)
         {
           rule: RULE_ID,
           file: file,
-          line: 1,
+          line: selector_line || 1,
           severity: :warning,
           confidence: 1.0,
           message: "Rendered visual finding: #{pick}#{surface ? "" : " — anchor this to the attached rendered evidence"}",
           fix: "Use the attached browser screenshot and geometry evidence as ground truth. "                "Make the smallest source change that improves the cited visual issue without "                "inventing a new design system or regressing accessibility, semantics, or responsiveness.",
         }
+      def source_line(path, selector)
+        File.foreach(path).with_index(1) { |line, index| return index if line.include?(selector) }
+      rescue StandardError
+        nil
       end
     end
   end
