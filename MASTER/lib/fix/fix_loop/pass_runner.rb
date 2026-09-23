@@ -24,7 +24,7 @@ module Master
         def initialize(bus:, committer:, loop_scanner:, llm_router:, rollback:, root:,
                        rules:, agent:, scanner:, learnings:, preamble:,
                        clean_runs_required:, plateau_window:, ground_truth: nil, homeostat: nil, council: nil,
-                       rendered_review: nil)
+                       visual_pass: nil)
           @bus = bus
           @committer = committer
           @loop_scanner = loop_scanner
@@ -36,12 +36,12 @@ module Master
           @learnings = learnings
           @preamble = preamble
           @rule_order = RuleOrder.new(rules:, learnings:, bus:, root:)
-          take_limits(clean_runs_required:, plateau_window:, ground_truth:, homeostat:, council:, rendered_review:)
+          take_limits(clean_runs_required:, plateau_window:, ground_truth:, homeostat:, council:, visual_pass:)
         end
 
         # What a pass is judged by, apart from the collaborators it runs through:
         # when it may stop, when it has stopped moving, and who else gets a say.
-        def take_limits(clean_runs_required:, plateau_window:, ground_truth:, homeostat:, council:, rendered_review:)
+        def take_limits(clean_runs_required:, plateau_window:, ground_truth:, homeostat:, council:, visual_pass:)
           @clean_runs_required = clean_runs_required
           @plateau_window = plateau_window
           @violation_counts = Hash.new(0)
@@ -49,7 +49,7 @@ module Master
           @ground_truth = ground_truth
           @homeostat = homeostat
           @council = council
-          @rendered_review = rendered_review
+          @visual_pass = visual_pass
           @ground_truth_failures = 0
         end
 
@@ -64,7 +64,7 @@ module Master
           run_fast_stage(files, pass)
           found = run_observation_stage(files, target)
 
-          visual = run_rendered_review(target:, files:, pass:)
+          visual = run_visual_pass(target:, files:, pass:)
           if visual&.err?
             return PassResult.new(
               status: :plateau,
@@ -91,16 +91,16 @@ module Master
           # Source findings use the registered rule path. Improvement and rendered findings
           # already came through their respective Councils and therefore go straight into the
           # same RuleLoop without convening a second council for the same pass.
-          source_found = found.reject { |v| [RenderedReview::RULE_ID, CouncilRound::IMPROVEMENT_RULE_ID].include?(v[:rule].to_s) }
+          source_found = found.reject { |v| [VisualPass::RULE_ID, CouncilRound::IMPROVEMENT_RULE_ID].include?(v[:rule].to_s) }
           improvement_found = found.select { |v| v[:rule].to_s == CouncilRound::IMPROVEMENT_RULE_ID }
-          rendered_found = found.select { |v| v[:rule].to_s == RenderedReview::RULE_ID }
+          rendered_found = found.select { |v| v[:rule].to_s == VisualPass::RULE_ID }
           council = @council&.run(files: files_with_violations(source_found, files), pass:, deadline:) if source_found.any?
           run_llm_stage(source_found, files, pass, deadline, council:) if source_found.any?
           run_improvement_stage(improvement_found, pass:, files:, deadline:) if improvement_found.any?
-          run_rendered_stage(rendered_found, pass:, image: visual.value![:image], files:, deadline:) if rendered_found.any?
+          run_visual_stage(rendered_found, pass:, image: visual.value![:image], files:, deadline:) if rendered_found.any?
           PassResult.new(status: :continue, consecutive_clean: 0)
         ensure
-          @rendered_review&.cleanup
+          @visual_pass&.cleanup
         end
 
         private
@@ -130,20 +130,20 @@ module Master
           0
         end
 
-        def run_rendered_review(target:, files:, pass:)
-          return unless @rendered_review
-          return unless @rendered_review.applicable?(target)
+        def run_visual_pass(target:, files:, pass:)
+          return unless @visual_pass
+          return unless @visual_pass.applicable?(target)
 
-          @rendered_review.run(target:, files:, pass:)
+          @visual_pass.run(target:, files:, pass:)
         rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "pass_runner.rendered_review", event_bus: @bus)
+          Master::Ground::Swallow.log(e, context: "pass_runner.visual_pass", event_bus: @bus)
           Result.err("rendered visual review: INCONCLUSIVE — #{e.class}: #{e.message}", category: :inconclusive)
         end
 
-        def run_rendered_stage(findings, pass:, image:, files:, deadline:)
+        def run_visual_stage(findings, pass:, image:, files:, deadline:)
           return 0 if Time.now >= deadline
 
-          rule = RenderedReview::RULE.new(RenderedReview::RULE_ID)
+          rule = VisualPass::Rule.new(VisualPass::RULE_ID)
           loop = RuleLoop.new(
             rule:,
             agent: @agent,
@@ -159,10 +159,10 @@ module Master
               "Use the attached screenshot as evidence. Preserve accessibility, semantics and responsive behavior.",
           ].join("\n\n")
           result = loop.run_once(files, external_violations: findings, image:)
-          @bus&.publish("fix_loop:rendered_fix", pass:, findings: findings.size, fixed: result[:fixed].to_i)
+          @bus&.publish("fix_loop:visual_fix", pass:, findings: findings.size, fixed: result[:fixed].to_i)
           result[:fixed].to_i
         rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "pass_runner.rendered_stage", event_bus: @bus)
+          Master::Ground::Swallow.log(e, context: "pass_runner.visual_stage", event_bus: @bus)
           0
         end
 
