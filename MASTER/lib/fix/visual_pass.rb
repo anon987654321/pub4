@@ -13,7 +13,7 @@ module Master
     class VisualPass
       RULE_ID = "RENDERED_VISUAL_REFINEMENT"
       SOURCE_EXTENSIONS = %w[.css .scss .erb .html .htm .js .ts].freeze
-      MAX_SURFACES = Integer(ENV.fetch("MASTER_VISUAL_SURFACES_PER_PASS", "4"))
+      MAX_SURFACES = Integer(ENV.fetch("MASTER_VISUAL_SURFACES_PER_PASS", "8"))
       MAX_FILES = 12
       Rule = Data.define(:id) do
         def severity = :warning
@@ -107,11 +107,19 @@ module Master
         rows = Deploy::GeometryProbe.surfaces(root: repo_root)
         master = repo_relative(target).start_with?("MASTER/web")
         rows = rows.select { |s| master ? s.app == "master" : s.app != "master" }
-        rows = rows.sort_by { |s| [s.snapshot ? 0 : 1, s.app, s.label, s.viewport] }
-        return rows.first(MAX_SURFACES) if rows.size <= MAX_SURFACES
 
-        offset = ((pass.to_i - 1) * MAX_SURFACES) % rows.size
-        rows.rotate(offset).first(MAX_SURFACES)
+        core = rows.group_by(&:app).keys.sort.flat_map do |app|
+          group = rows.group_by(&:app).fetch(app)
+          mobile = group.find { |s| s.viewport == "mobile" }
+          desktop = group.find { |s| s.viewport == "desktop" }
+          [mobile || group.first, desktop || group.find { |s| s != mobile }]
+        end.compact.uniq
+
+        extras = rows.reject { |s| core.include?(s) }.sort_by { |s| [s.app, s.label, s.viewport] }
+        return (core + extras).first(MAX_SURFACES) if core.size >= MAX_SURFACES
+
+        offset = ((pass.to_i - 1) * MAX_SURFACES) % [extras.size, 1].max
+        (core + extras.rotate(offset)).first(MAX_SURFACES)
       end
 
       def visual_signal(payload)
