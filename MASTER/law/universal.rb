@@ -1458,3 +1458,215 @@ Law.define(:ONE_ABSTRACTION_LEVEL) do
   X
 end
 end
+
+
+# Constitutional migration batch 6b: design, functional, and refactoring laws.
+
+Law.define(:STEPDOWN) do
+  source "Clean Code — Stepdown Rule"
+  severity :info
+  ask "Does the code fail to read top-down from high-level intent into progressively smaller details?"
+  fix "Arrange definitions so each step introduces the detail used by the next."
+  bad <<~X
+    def helper; end; def main; helper; end
+  X
+  good <<~X
+    def main; helper; end; def helper; end
+  X
+end
+
+Law.define(:BOUNDARY_ISOLATION) do
+  source "Boundaries (Gary Bernhardt) / Clean Architecture"
+  severity :warning
+  ask "Does third-party API or framework surface leak directly into core logic?"
+  fix "Translate external contracts at a boundary and keep the core independent."
+  bad <<~X
+    status = Stripe::Charge.create(amount: cents).status
+  X
+  good <<~X
+    status = Payments::Authorization.new(gateway: stripe).call(amount)
+  X
+end
+
+Law.define(:NO_MAGIC) do
+  source "Clean Code — no magic numbers"
+  severity :warning
+  ask "Are unexplained numeric literals or booleans carrying domain meaning instead of named concepts?"
+  fix "Name the domain meaning and keep the value in one source."
+  bad <<~X
+    sleep 37; if retries > 4; end
+  X
+  good <<~X
+    BACKOFF_SECONDS = 37; MAX_RETRIES = 4
+  X
+end
+
+Law.define(:FAIL_FAST) do
+  source "Fail Fast (Jim Shore)"
+  severity :warning
+  ask "Does the system defer reporting a known invalid state instead of stopping at the point it is detected?"
+  fix "Reject invalid state immediately with actionable context."
+  bad <<~X
+    result = parse(input); use(result) if result.valid?
+  X
+  good <<~X
+    raise InvalidInput, result.error unless parse(input).ok?
+  X
+end
+
+Law.define(:IDEMPOTENT) do
+  source "REST / distributed systems idempotency"
+  severity :info
+  ask "Would repeating the same operation with the same intended input produce an unintended different result?"
+  fix "Make repeat calls converge to the same state or use an idempotency key."
+  bad <<~X
+    POST /payments creates another charge every retry
+  X
+  good <<~X
+    PUT /payments/123 with idempotency key
+  X
+end
+
+Law.define(:DEFENSIVE_INPUT) do
+  source "Defensive programming / safe boundaries"
+  severity :warning
+  ask "Is external or untrusted input used without checking its shape, range, encoding, or allowed values?"
+  fix "Validate or parse input at the boundary before it reaches trusted logic."
+  bad <<~X
+    File.read(params[:path])
+  X
+  good <<~X
+    path = SafePath.parse(params.fetch(:path)); File.read(path)
+  X
+end
+
+Law.define(:GRACEFUL_DEGRADATION) do
+  source "Release It! graceful degradation"
+  severity :warning
+  ask "Does one component failure bring down the whole operation when a bounded degraded mode is available?"
+  fix "Isolate failures and provide a safe fallback or partial result."
+  bad <<~X
+    profile = ProfileAPI.fetch!; render(profile)
+  X
+  good <<~X
+    profile = ProfileAPI.fetch(timeout: 2) || Profile.empty
+  X
+end
+
+Law.define(:NO_SIDE_EFFECTS) do
+  source "Functional programming / Clean Code"
+  severity :info
+  ask "Does this function silently modify external state in addition to returning its conceptual result?"
+  fix "Separate side effects from pure transformation where practical."
+  bad <<~X
+    def normalize(x); DB.write(x.strip); x.strip; end
+  X
+  good <<~X
+    def normalize(x); x.strip; end
+  X
+end
+
+Law.define(:PURE_FUNCTIONS) do
+  source "Functional programming — referential transparency"
+  severity :info
+  ask "Does this function depend on hidden mutable state or ambient inputs that callers cannot see?"
+  fix "Pass dependencies explicitly and keep deterministic logic pure."
+  bad <<~X
+    def total(items); items.sum + Time.now.to_i; end
+  X
+  good <<~X
+    def total(items, tax_rate:); items.sum * tax_rate; end
+  X
+end
+
+Law.define(:PRIMITIVE_OBSESSION) do
+  source "Refactoring — Primitive Obsession (Fowler)"
+  severity :info
+  ask "Are primitives carrying domain rules that would be clearer and safer as a value object?"
+  fix "Create a focused value object when the primitive has behavior or invariants."
+  bad <<~X
+    email = "a@b.com"; Email.send(email)
+  X
+  good <<~X
+    email = EmailAddress.parse(raw); Mailer.send(email)
+  X
+end
+
+Law.define(:FEATURE_ENVY) do
+  source "Refactoring — Feature Envy (Fowler)"
+  severity :warning
+  ask "Is this method more interested in another object's data than its own?"
+  fix "Move the behavior toward the data it operates on or extract a suitable collaborator."
+  bad <<~X
+    def total(order); order.items.sum { |i| i.price * i.qty }; end
+  X
+  good <<~X
+    class Order; def total; items.sum { |i| i.price * i.qty }; end; end
+  X
+end
+
+Law.define(:MIDDLE_MAN) do
+  source "Refactoring — Middle Man (Fowler)"
+  severity :info
+  ask "Does this class mostly delegate methods to another object without adding meaningful policy?"
+  fix "Remove the unnecessary middle layer or give it a real abstraction."
+  bad <<~X
+    def name; @user.name; end; def email; @user.email; end
+  X
+  good <<~X
+    attr_reader :user
+  X
+end
+
+Law.define(:LAZY_CLASS) do
+  source "Refactoring — Lazy Class (Fowler)"
+  severity :info
+  ask "Is this class too small or trivial to justify a separate abstraction boundary?"
+  fix "Inline or merge it unless the boundary provides independent value."
+  bad <<~X
+    class NameHelper; def call(x); x.name; end; end
+  X
+  good <<~X
+    user.name
+  X
+end
+
+Law.define(:DIVERGENT_CHANGE) do
+  source "Refactoring — Divergent Change (Fowler)"
+  severity :warning
+  ask "Is one class repeatedly changed for several unrelated causes?"
+  fix "Separate the responsibilities so each has a focused reason to change."
+  bad <<~X
+    class Report; def html; end; def csv; end; def tax; end; def mail; end; end
+  X
+  good <<~X
+    class Report; end; class ReportTax; end; class ReportMailer; end
+  X
+end
+
+Law.define(:SPECULATIVE_GENERALITY) do
+  source "Refactoring — Speculative Generality; YAGNI"
+  severity :info
+  ask "Is code generalized for a future requirement that has no present evidence or consumer?"
+  fix "Remove speculative hooks and add abstraction when a real use case arrives."
+  bad <<~X
+    supports_five_future_formats = true
+  X
+  good <<~X
+    format = :json
+  X
+end
+
+Law.define(:INAPPROPRIATE_INTIMACY) do
+  source "Refactoring — Inappropriate Intimacy (Fowler)"
+  severity :warning
+  ask "Does one class access another class's internals instead of using its public contract?"
+  fix "Expose the needed behavior through the owner's interface."
+  bad <<~X
+    user.instance_variable_get(:@roles).include?(:admin)
+  X
+  good <<~X
+    user.admin?
+  X
+end
+end
