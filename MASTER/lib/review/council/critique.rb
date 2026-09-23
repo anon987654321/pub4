@@ -71,7 +71,11 @@ module Master
 
         def ideation_prompt(feedback)
           issues = panel_issues(feedback)
-          return @mode[:ideation_prompt] if issues.empty?
+          if issues.empty?
+            return @mode[:ideation_prompt] unless @mode[:preset_key] == "ui_critique"
+
+            return "#{@mode[:ideation_prompt]}\n\nNo actionable visual defect remains: output VISUAL_CLEAN exactly."
+          end
 
           <<~PROMPT
             #{@mode[:ideation_prompt]}
@@ -87,7 +91,8 @@ module Master
 
         # The first line of each critique: the issue, without the argument for it.
         def panel_issues(feedback)
-          Array(feedback).filter_map { |entry| entry[:feedback].to_s.lines.first&.strip }
+          Array(feedback).reject { |entry| entry[:persona].to_s == "Judge" }
+                         .filter_map { |entry| entry[:feedback].to_s.lines.first&.strip }
                          .reject(&:empty?).uniq.first(12)
         end
 
