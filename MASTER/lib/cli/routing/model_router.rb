@@ -44,6 +44,10 @@ module Master
           @compute_pool
         end
 
+        def api_provider_for(model_id)
+          api_provider(model_id)
+        end
+
         # ComputePool asks the router whether a model supports tool calls;
         # the same TOOL_CAPABLE_RE the dispatcher already builds from
         # data/models.yml#tool_capable_prefixes, not a second copy of it.
