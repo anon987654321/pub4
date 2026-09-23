@@ -4,6 +4,7 @@ require "fileutils"
 require "json"
 require "time"
 require "securerandom"
+require_relative "../io/atomic_write"
 
 module Master
   module Fix
