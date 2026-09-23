@@ -4,6 +4,7 @@ require "fileutils"
 require "json"
 require "securerandom"
 require "yaml"
+require_relative "performance"
 
 module Master
   module Voice
@@ -70,6 +71,7 @@ module Master
 
         emotion = Emotion.analyze(clean)
         melody = Melody.plan(clean, emotion, melodic: melodic_contour?(cfg, emotion), languages: phrase_languages(cfg))
+        melody = apply_spoken_performance(melody, clean, emotion, style)
         resolved_voice, resolved_rate, resolved_pitch = resolve_voice_and_prosody(
           clean, cfg, voice:, style:, rate:, pitch:, voice_locked:, style_locked:
         )
@@ -79,6 +81,29 @@ module Master
         return unless played && File.size?(out_path)
 
         out_path
+      end
+
+      def apply_spoken_performance(melody, clean, emotion, style)
+        return melody if melody[:melodic]
+
+        performance = Performance.apply(
+          base_rate: "-5%",
+          base_pitch: "-18Hz",
+          text: clean,
+          emotion:,
+          style:,
+        )
+        phrases = melody[:phrases].each_with_index.map do |phrase, index|
+          variation = performance[index] || {}
+          phrase.merge(
+            rate: variation[:rate] || phrase[:rate],
+            pitch: variation[:pitch] || phrase[:pitch],
+            pause_ms: variation[:pause_ms] || phrase[:pause_ms],
+            performance_role: variation[:role],
+            emphasis: variation[:emphasis],
+          )
+        end
+        melody.merge(phrases:)
       end
 
       def synthesize_via_chain(clean, cfg, emotion, melody, resolved_voice, resolved_rate, resolved_pitch, out_path)
