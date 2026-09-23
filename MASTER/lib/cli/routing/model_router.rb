@@ -48,6 +48,13 @@ module Master
           api_provider(model_id)
         end
 
+        def capability_score(model_id, task_type: :exploration)
+          @capability_map.score_for(model_id, task_type)
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "model_router.capability_score", model: model_id)
+          0.5
+        end
+
         # ComputePool asks the router whether a model supports tool calls;
         # the same TOOL_CAPABLE_RE the dispatcher already builds from
         # data/models.yml#tool_capable_prefixes, not a second copy of it.
