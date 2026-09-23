@@ -31,6 +31,11 @@ module Master::Io
         kind: "llm_router",
         normalizer: "openrouter",
       },
+      "openai" => { url: "https://api.openai.com/v1/models", kind: "provider", normalizer: "openai" },
+      "gemini" => { url: "https://generativelanguage.googleapis.com/v1beta/openai/models", kind: "provider", normalizer: "openai" },
+      "deepseek" => { url: "https://api.deepseek.com/models", kind: "provider", normalizer: "openai" },
+      "xai" => { url: "https://api.x.ai/v1/language-models", kind: "provider", normalizer: "xai" },
+      "mistral" => { url: "https://api.mistral.ai/v1/models", kind: "provider", normalizer: "mistral" },
       "replicate" => {
         url: "https://api.replicate.com/v1/models",
         kind: "model_marketplace",
@@ -230,6 +235,12 @@ module Master::Io
       case kind
       when "openrouter"
         Array(payload["data"]).map { |model| normalize_openrouter(model) }
+      when "openai"
+        Array(payload["data"]).map { |model| normalize_openai(model) }
+      when "xai"
+        Array(payload["models"] || payload["data"]).map { |model| normalize_xai(model) }
+      when "mistral"
+        Array(payload["data"]).map { |model| normalize_mistral(model) }
       when "replicate"
         replicate_items(payload).map { |model| normalize_replicate(model) }
       else
@@ -245,6 +256,40 @@ module Master::Io
       else
         []
       end
+    end
+
+    def normalize_openai(model)
+      id = model["id"].to_s
+      return if id.empty?
+
+      {
+        id:,
+        name: model["name"] || id,
+        description: model["description"],
+        context_length: model["context_length"] || model["max_context_length"],
+        input_modalities: Array(model["input_modalities"]).join(","),
+        output_modalities: Array(model["output_modalities"]).join(","),
+        price_prompt: model["prompt_text_token_price"] || model.dig("pricing", "prompt"),
+        price_completion: model["completion_text_token_price"] || model.dig("pricing", "completion"),
+        tags: [model["owned_by"], model["object"]].compact.join(","),
+        raw: model,
+      }
+    end
+
+    def normalize_xai(model)
+      normalize_openai(model).merge(
+        input_modalities: Array(model["input_modalities"]).join(","),
+        output_modalities: Array(model["output_modalities"]).join(",")
+      )
+    end
+
+    def normalize_mistral(model)
+      normalize_openai(model).merge(
+        context_length: model["max_context_length"],
+        tags: [model["owned_by"], model.dig("capabilities", "completion_chat") ? "chat" : nil,
+               model.dig("capabilities", "function_calling") ? "tools" : nil,
+               model.dig("capabilities", "vision") ? "vision" : nil].compact.join(",")
+      )
     end
 
     def normalize_openrouter(model)
