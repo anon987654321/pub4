@@ -439,6 +439,8 @@ module Master
       def transcendent_streaming_enabled?(opts)
         return false if opts[:transcendent] == false
         return true if opts[:transcendent] == true
+
+        require_relative "transcendent"
         Transcendent.enabled?
       rescue StandardError
         false
