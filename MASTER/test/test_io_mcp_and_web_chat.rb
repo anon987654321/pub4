@@ -59,6 +59,77 @@ class TestIoMcpAndWebChat < Minitest::Test
     assert_empty coordinator.tools
   end
 
+  FakeMcpTool = Struct.new(:name, :description)
+
+  class Permit
+    attr_reader :message
+
+    def initialize(ok:, message: "")
+      @ok = ok
+      @message = message
+    end
+
+    def ok? = @ok
+  end
+
+  class Governor
+    attr_reader :calls
+
+    def initialize(permit = true)
+      @permit = permit
+      @calls = []
+    end
+
+    def permit?(tool, tier, description)
+      @calls << [tool, tier, description]
+      Permit.new(ok: @permit, message: "denied")
+    end
+  end
+
+  def test_mcp_tool_runs_through_the_governor
+    client = Struct.new(:calls) do
+      def call_tool(name, params)
+        calls << [name, params]
+        "ok"
+      end
+    end.new([])
+    governor = Governor.new
+    tool = Master::Io::McpToolWrapper.new(
+      name: "filesystem",
+      client:,
+      tool: FakeMcpTool.new("read_file", "read a file"),
+      governor:,
+      event_bus: Bus.new([]),
+      timeout: 2,
+      tier: :dangerous,
+    )
+
+    assert_equal "ok", tool.execute(path: "README.md")
+    assert_equal [["filesystem__read_file", :dangerous, tool.description]], governor.calls
+    assert_equal [["read_file", { path: "README.md" }]], client.calls
+  end
+
+  def test_mcp_tool_refuses_before_calling_the_server
+    client = Struct.new(:calls) do
+      def call_tool(*args)
+        calls << args
+        raise "must not run"
+      end
+    end.new([])
+    governor = Governor.new(false)
+    tool = Master::Io::McpToolWrapper.new(
+      name: "filesystem",
+      client:,
+      tool: FakeMcpTool.new("write_file", "write a file"),
+      governor:,
+      event_bus: Bus.new([]),
+      timeout: 2,
+    )
+
+    assert_equal "MCP tool refused: denied", tool.execute(path: "README.md")
+    assert_empty client.calls
+  end
+
   def test_web_chat_is_off_without_an_opt_in
     chat = Master::Io::WebChat.new(provider: "grok")
     with_env("MASTER_WEB_CHAT" => nil, "MASTER_KEYLESS" => nil) do
