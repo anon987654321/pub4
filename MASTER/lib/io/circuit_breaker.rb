@@ -3,10 +3,12 @@
 require "monitor"
 require "fileutils"
 require "yaml"
+require_relative "atomic_write"
 
 module Master
   module Io
     class CircuitBreaker
+      include Master::Io::AtomicWrite
       include MonitorMixin
 
       FAILURE_THRESHOLD = 8
@@ -175,7 +177,7 @@ module Master
           "failures" => @failures,
           "opened_wall_at" => @opened_wall_at,
         }
-        File.write(@state_path, YAML.dump(data))
+        write_atomic(@state_path, YAML.dump(data), mode: 0o600)
       rescue StandardError => e
         @bus&.publish("circuit:state_persist_error", key: @state_key, error: e.message)
       end
