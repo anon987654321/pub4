@@ -181,10 +181,32 @@ module Deploy
     # whenever no load is *currently pending* — including before a lazily
     # triggered load has started — so polling it returned immediately and
     # changed nothing. The promise is the actual settle signal.
+    def wait_for_ready
+      deadline = monotonic + @timeout
+      loop do
+        state = evaluate("document.readyState")
+        return if state == "complete"
+        raise Timeout, "document ready timeout" if monotonic > deadline
+        sleep 0.05
+      end
+    end
+
     def await_webfonts
       evaluate(WEBFONT_PROBE, await_promise: true)
     rescue JsError, Timeout
       nil
+    end
+
+    def back(settle: 0.2)
+      send_cmd("Page.goBack")
+      wait_for_ready
+      sleep settle if settle.positive?
+    end
+
+    def forward(settle: 0.2)
+      send_cmd("Page.goForward")
+      wait_for_ready
+      sleep settle if settle.positive?
     end
 
     def status
