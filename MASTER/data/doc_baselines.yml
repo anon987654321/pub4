@@ -1,13 +1,6 @@
 ---
 doc_numbers:
-  RAILS/UI_REFINEMENTS.md:
-  - value: 44px
-    why: 'A record of refinements already made. Rewriting a historical note to name
-      today''s token would change what the record says happened. Permanent exemption
-      while the file stays a changelog; if it becomes prescriptive, the numbers come
-      out.
 
-      '
   RAILS/shared/reference/affiliate_banner/README.md:
   - value: 44px
     why: 'Not prescribed — criticised. The line reads "Comic Sans MS at 44px, against
@@ -25,49 +18,8 @@ doc_paths:
       2026-09-06 and this file says so. Naming it is the point.
 
       '
-  MASTER/EXAMPLES.md:
-  - path: data/design_rules.yml
-    why: 'The worked example of this judgement: it names the file whose fold it
-      teaches, so the path is meant to be gone.
 
-      '
-  - path: style.yml
-    why: 'A worked example of a past fold, written in the first person as the reasoning
-      that led to it. Rewriting it to name today''s file would change what the example
-      teaches.
 
-      '
-  MASTER/START_HERE.md:
-  - path: GITHUB_WATCH.md
-    why: 'Deleted with docs/ in 3e2f32f76, with no successor and no section in the
-      runtime catalog.
-
-      '
-  - path: REPAIR_PLAYBOOKS.md
-    why: 'The sentence is the deletion record: docs/ was codified into data/runtime.yml
-      and its last four files went in 3e2f32f76, a commit about a deploy gate that
-      swept them up. A reader sent to a missing playbook needs to be told it is missing.
-
-      '
-  - path: SEVERANCE.md
-    why: 'Deleted with docs/ in 3e2f32f76. Named because two governing documents cited
-      it as a source of truth for weeks while it did not exist.
-
-      '
-  - path: UI_POLISH_PLAYBOOK.md
-    why: 'Deleted with docs/ in 3e2f32f76; the sentence says so and points at RAILS/shared/WIRING_NOTES.md,
-      which is maintained.
-
-      '
-  - path: mobile_web_opportunities.yml
-    why: 'Deleted 2026-08-11 with visual_clusters.yml, in the same sentence.
-
-      '
-  - path: visual_clusters.yml
-    why: 'The sentence ends ''Both files deleted 2026-08-11'' and explains what was
-      checked before cutting them.
-
-      '
   OPENBSD/RUNBOOK.md:
   - path: db/seeds/launch.rb
     why: 'Prescriptive, not stale. The line asks for a launch seed to be written that
@@ -75,16 +27,7 @@ doc_paths:
       someone writes it.
 
       '
-  OPENBSD/SSH_ACCESS.md:
-  - path: priv/ssh/id_ed25519_brgen.pub
-    why: |
-      Deliberate, and load-bearing. Permanent exemption.
-      Corrected 2026-08-12: this reason used to read "Keys are never committed; the document names where the operator keeps one locally", and on that reading the sentence was rewritten to send the reader to the VM instead. That was wrong and has been reverted. .gitignore lines 42-43 are `priv/ssh/` followed by `!priv/ssh/*.pub` -- public keys are explicitly un-ignored, so `priv/ssh/id_ed25519_brgen.pub` is where the public half is MEANT to live and "in repo" is accurate about the design. The file is simply not there yet.
-      So this is not a dead reference to repair. It is a path waiting for its file, and the fix is to add the public key, not to reword the document.
-  RAILS/shared/WIRING_NOTES.md:
-  - path: _appname.scss
-    why: 'A pattern, not a path: the line warns against creating per-app stylesheets
-      named after their app. There is no file to resolve and there should not be.
+
 
       '
   - path: shared/_minimal.scss
