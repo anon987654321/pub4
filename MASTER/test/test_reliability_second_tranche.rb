@@ -160,12 +160,28 @@ class TestReliabilitySecondTranche < Minitest::Test
       first = journal.start_or_resume(target: root, files: [], max_passes: 5, budget_seconds: 1)
       journal.send(:persist, {
         "version" => 1,
-        "runs" => [first.merge("deadline_at" => (Time.now.utc - 1).iso8601)],
+        "runs" => [first.merge("state" => "crashed", "pid" => 0, "deadline_at" => (Time.now.utc - 1).iso8601)],
       })
       resumed = journal.start_or_resume(target: root, files: [], max_passes: 5, budget_seconds: 1)
 
       assert resumed["resumed"]
       assert_operator resumed["remaining_seconds"], :<=, 0
+    end
+  end
+
+  def test_fix_journal_refuses_a_live_active_process
+    Dir.mktmpdir("master-journal") do |root|
+      journal = Master::Fix::RunJournal.new(root:)
+      first = journal.start_or_resume(target: root, files: [], max_passes: 2, budget_seconds: 10)
+      journal.send(:persist, { "version" => 1, "runs" => [first] })
+
+      error = assert_raises(RuntimeError) do
+        Master::Fix::RunJournal.new(root:).start_or_resume(
+          target: root, files: [], max_passes: 2, budget_seconds: 10,
+        )
+      end
+
+      assert_match(/another fix process is active/, error.message)
     end
   end
 
