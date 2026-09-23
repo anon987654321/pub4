@@ -14,6 +14,7 @@
 Law.define(:FAIL_VISIBLY) do
   source "Fail Fast (Jim Shore, IEEE Software 2004)"
   severity :error
+  ask "Does this code swallow exceptions or fail silently instead of surfacing the error with useful context?"
   # Ruby only: `rescue` at a line end in Markdown is the English word, as in
   # "search-and-rescue" closing a sentence in AEGIS.md.
   languages %i[ruby]
@@ -27,6 +28,7 @@ end
 Law.define(:FULL_BY_DEFAULT) do
   source "MASTER-native (no shallow/lite tiers by default)"
   severity :warn
+  ask "Does this API expose a do-less tier such as shallow, standard, quick, lite, basic, or light alongside a full tier where users routinely need the full behavior? If the cost tradeoff is real, name the cost rather than the quality."
   # Both words have to be list items, not two adjectives that happen to meet.
   # "sculpted soft key light, deep muted tones" is a prompt describing a
   # photograph and "blue-hour ambient light, deep shadow tones" is a colour
@@ -49,6 +51,7 @@ end
 Law.define(:GUARD_EXPENSIVE_OPS) do
   source "MASTER-native (guard expensive operations); Nielsen heuristic 5, error prevention"
   severity :error
+  ask "Does this execute an expensive or destructive operation without confirmation, bounds, or relevant preconditions?"
   path_exclude %r{/test/|/spec/|/db/seeds|/db/migrate/|seeder|demo_seed|_seed\b}
   # `rm -rf` left for NEVER_BATCH_DELETE, which already owned file deletion and
   # already knew a scoped path from an unbounded one. Both laws claiming it was
@@ -203,6 +206,7 @@ end
 Law.define(:SQUINT_TEST) do
   source "Squint Test readability heuristic (Sandi Metz)"
   severity :info
+  ask "Does this file have dense blocks with no visual breaks, or ragged indentation?"
   scope :file
   # Comment lines are content for this law, not noise. considered_text replaces
   # each one with a bare newline, so any four consecutive comment lines became
