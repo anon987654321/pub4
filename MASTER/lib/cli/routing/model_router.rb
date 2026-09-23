@@ -6,6 +6,7 @@ require_relative "model_router/intent_classification"
 require_relative "model_router/failover_config"
 require_relative "model_router/diagnostics"
 require_relative "model_router/pool"
+require_relative "../../core/routing/compute_pool"
 
 module Master
   module CLI
@@ -35,22 +36,30 @@ module Master
           @provider_health = provider_health
           @rules = load_rules
           @capability_map = Master::Core::Routing::CapabilityMap.new(path: File.join(@root, "runtime", "telemetry", "model_capabilities.json"))
+          @compute_pool = Master::Core::Routing::ComputePool.new(router: self, root: @root)
           start_pool_probes
+        end
+
+        def compute_pool
+          @compute_pool
+        end
+
+        def record_provider_outcome(model:, status:, latency_ms: nil, error: nil)
+          @compute_pool&.record(model:, status:, latency_ms:, error:)
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "model_router.record_provider_outcome")
         end
 
         def preferred(task_type: :exploration)
           return @config.model unless enabled?
 
-          # Empirical override: check if we have a proven winner for this task class
           empirical_best = @capability_map.best_model_for(task_type)
-          return empirical_best if empirical_best && reachable?(empirical_best)
-
           candidates = reachable_candidates(task_type)
           return @config.model if candidates.empty?
 
-          best = healthy(candidates).max_by { |m| effective_score(m) } ||
-                 candidates.max_by { |m| effective_score(m) }
-          best["id"] || @config.model
+          ids = healthy(candidates).filter_map { |model| model["id"] }
+          ids = candidates.filter_map { |model| model["id"] } if ids.empty?
+          @compute_pool.select(ids, task_type:, empirical_best:) || @config.model
         end
 
         # Only models the pool can reach. Free cloud lanes follow the tiers, paid
