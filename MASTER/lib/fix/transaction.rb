@@ -21,6 +21,10 @@ module Master
       LOCK = ".master/fix_transaction.lock"
       MANIFEST = "manifest.json"
 
+      def self.persisted?(root:, id:)
+        File.file?(File.join(File.expand_path(root), ROOT_DIR, id.to_s, MANIFEST))
+      end
+
       def self.recover!(root:, id:, bus: nil)
         transaction = new(root:, paths: [], id:, bus:)
         transaction.recover!
