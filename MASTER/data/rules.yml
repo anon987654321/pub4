@@ -3234,7 +3234,7 @@ prose:
 style:
   # Ruby, shell, and git style rules enforced by MASTER.
   # Scan rules reference these; Personality injects them into every LLM system prompt.
-  # Authoritative upstream clones: script/clone_style_guides.sh → knowledge/style_guides/
+  # Authoritative upstream clones: tools/clone_style_guides.sh → knowledge/style_guides/
   # Codified index: data/runtime.yml#style_guides (ruby/rails/js/css/seo gates)
 
   # Rules that are not about any one medium. line_order declares

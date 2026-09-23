@@ -2535,7 +2535,7 @@ runtime:
       steps: 2
       monospace: 1.0
       phosphor: 0.4
-# What MASTER reads with no network. script/clone_style_guides.sh clones every
+# What MASTER reads with no network. tools/clone_style_guides.sh clones every
 # repo here into knowledge/<topic>/<local> and saves every paper's ar5iv page
 # into knowledge/research/, and SearchKnowledge searches both by topic. Chosen
 # 2026-09-14 for the local tier: each repo was live that week, and each paper
@@ -2545,7 +2545,7 @@ offline_knowledge:
   tier: reference
   area: local_models
   status: active
-  clone_script: script/clone_style_guides.sh
+  clone_script: tools/clone_style_guides.sh
   knowledge_dir: knowledge
   sources:
   - { topic: ollama, repo: https://github.com/ollama/ollama, local: ollama, use: "api.md, modelfile, structured outputs, keep_alive" }
@@ -2586,7 +2586,7 @@ style_guides:
   tier: policy
   area: engineering
   status: active
-  clone_script: script/clone_style_guides.sh
+  clone_script: tools/clone_style_guides.sh
   knowledge_dir: knowledge/style_guides
   sources:
   - id: ruby
@@ -2675,7 +2675,7 @@ style_guides:
     a11y: wcag_2_2_aaa_target
     seo: shared/seo_kit_json_ld_canonical
   gates:
-  - script/style_gate.rb
+  - tools/style_gate.rb
   - bundle exec rubocop
   - RAILS/shared/bin/rubocop
 tts_phrases:

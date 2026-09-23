@@ -9,7 +9,7 @@ class TestStyleGuides < Minitest::Test
     assert data["sources"].is_a?(Array)
     assert data["sources"].any? { |row| row["id"] == "ruby" }
     assert data["sources"].any? { |row| row["id"] == "rails" }
-    assert_includes data.dig("gates") || [], "script/style_gate.rb"
+    assert_includes data.dig("gates") || [], "tools/style_gate.rb"
   end
 
   # The local tier's references: each repo is a GitHub clone under a topic
@@ -30,7 +30,7 @@ class TestStyleGuides < Minitest::Test
   end
 
   def test_clone_style_guides_script_exists
-    path = File.join(Master::ROOT, "script/clone_style_guides.sh")
+    path = File.join(Master::ROOT, "tools/clone_style_guides.sh")
     assert File.file?(path)
     assert_predicate File.stat(path).mode & 0o111, :positive?, "clone_style_guides.sh should be executable"
   end
