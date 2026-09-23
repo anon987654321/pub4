@@ -113,6 +113,13 @@ Forward work is the last section of this file.
 - **vm23, after the next deploy:** re-probe the one-shot Edge fallback
   (`synthesize_edge_oneshot`) with a real MP3 write, and `test -S
   .master/tts.sock`; `/health` alone is a capability check.
+- **`Performance.plan`'s phrase split and `test_roles_are_semantic` disagree.**
+  `plan`'s regex splits on `,;:` as well as `.!?` (`lib/voice/performance.rb:27`),
+  so "However, there is a risk." becomes two phrases and the second one hits
+  the `:warning` regex before role index math ever reaches `:question`/`:closing`
+  the test expects (`test/test_voice_performance.rb:42`). Decide whether
+  sub-clause pause granularity or one-role-per-sentence is the intent, then fix
+  whichever side is wrong.
 
 ### Tag legend
 

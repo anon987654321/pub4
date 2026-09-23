@@ -405,22 +405,8 @@ module Master
         # one flat Edge utterance while the CLI already had emotion, phrase
         # rhythm and engine fallback. Use the same expressive path when enabled;
         # short lines or unavailable engines fall through to the proven Edge path.
-        if transcendent_streaming_enabled?(opts)
-          transcendent_path = synthesize_transcendent_stream(text_str, voice:, opts:)
-          if transcendent_path
-            FileUtils.cp(transcendent_path, output_path)
-            File.delete(transcendent_path) rescue nil
-            on_chunk&.call(File.size(output_path))
-            return true
-          end
-        end
-
-        if edge_tts_available?
-          TtsSupervisor.ensure_daemon!
-          voice_name = VOICES.fetch(voice.to_sym, VOICES[default_voice])
-          return true if attempt_socket_synthesis(text_str, voice_name, style_config, output_path, on_chunk)
-          return true if attempt_oneshot_synthesis(text_str, voice_name, style_config, output_path, on_chunk)
-        end
+        return true if transcendent_stream_written?(text_str, voice, opts, output_path, on_chunk)
+        return true if edge_stream_written?(text_str, voice, style_config, output_path, on_chunk)
 
         # Edge TTS is a third-party network call (Microsoft) that can time out
         # or be unreachable independent of anything local; without this, a
@@ -434,6 +420,27 @@ module Master
       rescue StandardError => e
         @last_error = "#{e.class}: #{e.message}"
         false
+      end
+
+      def transcendent_stream_written?(text_str, voice, opts, output_path, on_chunk)
+        return false unless transcendent_streaming_enabled?(opts)
+
+        transcendent_path = synthesize_transcendent_stream(text_str, voice:, opts:)
+        return false unless transcendent_path
+
+        FileUtils.cp(transcendent_path, output_path)
+        File.delete(transcendent_path) rescue nil
+        on_chunk&.call(File.size(output_path))
+        true
+      end
+
+      def edge_stream_written?(text_str, voice, style_config, output_path, on_chunk)
+        return false unless edge_tts_available?
+
+        TtsSupervisor.ensure_daemon!
+        voice_name = VOICES.fetch(voice.to_sym, VOICES[default_voice])
+        attempt_socket_synthesis(text_str, voice_name, style_config, output_path, on_chunk) ||
+          attempt_oneshot_synthesis(text_str, voice_name, style_config, output_path, on_chunk)
       end
 
       def transcendent_streaming_enabled?(opts)
