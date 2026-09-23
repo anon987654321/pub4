@@ -6,7 +6,7 @@ module Master
   class Snapshot
     DEFAULT_TREES = %w[MASTER OPENBSD RAILS STUDIO].freeze
     DEFAULT_OUTPUT = File.join(REPO_ROOT, "snapshot_MASTER.md")
-    SKIP = %w[.git .bundle node_modules vendor tmp log coverage storage cache dist build].freeze
+    SKIP = %w[.git .bundle node_modules vendor tmp temp log logs coverage storage cache dist build output generated].freeze
     BINARY_EXTENSIONS = %w[
       .7z .aac .avi .bin .bmp .class .db .db3 .dll .dmg .doc .docx .eot .exe .flac
       .gif .gz .ico .jpeg .jpg .m4a .mov .mp3 .mp4 .ogg .otf .pdf .png .ppt .pptx
@@ -71,7 +71,12 @@ module Master
 
     def skipped?(path)
       relative = path.delete_prefix(@root + File::SEPARATOR)
-      SKIP.any? { |segment| relative.split(File::SEPARATOR).include?(segment) }
+      parts = relative.split(File::SEPARATOR)
+      return true if parts.any? { |part| SKIP.include?(part) }
+      return true if relative.start_with?("public/assets#{File::SEPARATOR}")
+      return true if File.basename(path).start_with?("snapshot_") && File.extname(path).downcase == ".md"
+
+      false
     end
 
     def tree(files)
