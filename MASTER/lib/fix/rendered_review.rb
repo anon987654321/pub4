@@ -55,7 +55,7 @@ module Master
 
         context = evidence_context(manifest, anchors)
         critique = Master::Review::Council::Critique.new(
-          mode: :ui_critique,
+          mode: :ui,
           agent: @agent,
           event_bus: @bus,
           files: source_files,
