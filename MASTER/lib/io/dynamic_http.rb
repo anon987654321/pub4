@@ -19,6 +19,7 @@ module Master
       end
 
       def call(name:, params: {})
+        Master::Ground::LawHandshake::Admission.require!
         defn = Io::DynamicTools.lookup(name)
         return Result.err("dynamic_http: unknown tool #{name}", category: :validation) unless defn
         if DynamicTools.elevated?(defn) && !Fiber[:master_elevated]
