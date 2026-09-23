@@ -89,6 +89,12 @@ that clear orbital debris or microplastic from the sea. The saucer was never the
 goal, only a distant phenotype. What we ask Norway to fund is the first rung —
 the mind, and the clean ground it stands on.
 
+## Executable constitution
+
+`data/rules.yml` is the declarative catalogue: names, provenance, scope, severity, compatibility metadata, and semantic prompts. `law/` is the executable constitutional layer: the question or detector, remedy, and worked examples that can be proved offline. During staged migration, both populations remain temporarily; `SemanticRule#from_law` gives an executable Law definition precedence over the same catalogue id.
+
+Migration is being done in batches so each rule remains reversible and auditable. Batch 1 migrated foundational constitutional semantics; batches 2–4 migrate architecture, design, and security principles. The intended end state is one authoritative rule definition, with the catalogue describing the rule and `law/` carrying its executable contract.
+
 ## Under the hood
 
 Wake it with one line and it comes up like an old Unix machine, telling you what
