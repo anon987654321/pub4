@@ -1778,3 +1778,124 @@ Law.define(:HELP_AND_DOCUMENTATION) do
   X
 end
 end
+
+
+# Constitutional migration batch 7b: interface, LLM, and reliability laws.
+
+Law.define(:CONSISTENCY) do
+  source "Nielsen Heuristic #4 — consistency and standards"
+  severity :warning
+  ask "Are the same concepts, actions, or states named or presented differently in different places?"
+  fix "Choose one vocabulary and interaction pattern and reuse it."
+  bad <<~X
+    button "Remove"; link "Delete"
+  X
+  good <<~X
+    button "Delete"; link "Delete"
+  X
+end
+
+Law.define(:COST_TRANSPARENCY) do
+  source "MASTER-native — surface LLM token cost"
+  severity :warning
+  ask "Are LLM calls made without exposing enough token or cost information to the operator when that information is available?"
+  fix "Surface measured input, output, and cost data at the appropriate operator boundary."
+  bad <<~X
+    llm.complete(prompt)
+  X
+  good <<~X
+    llm.complete(prompt) # reports usage tokens=1240 cost=$0.0021
+  X
+end
+
+Law.define(:CACHE_LLM) do
+  source "MASTER-native — cache repeat LLM work"
+  severity :info
+  ask "Is the same expensive LLM request repeated when the input and relevant context are unchanged?"
+  fix "Cache deterministic or safely repeatable requests with an explicit invalidation boundary."
+  bad <<~X
+    3.times { llm.complete(prompt) }
+  X
+  good <<~X
+    response = cache.fetch(prompt_key) { llm.complete(prompt) }
+  X
+end
+
+Law.define(:NO_FLAG_ARGUMENTS) do
+  source "Clean Code — no flag arguments"
+  severity :warning
+  ask "Does a boolean argument make one function perform two different jobs or select unrelated behavior?"
+  fix "Split the responsibilities into named operations or objects."
+  bad <<~X
+    render(document, true)
+  X
+  good <<~X
+    render_full(document)
+  X
+end
+
+Law.define(:NO_OUTPUT_ARGUMENTS) do
+  source "Clean Code — no output arguments"
+  severity :warning
+  ask "Does this function mutate an input argument to return a result indirectly?"
+  fix "Return the result explicitly instead of using output parameters."
+  bad <<~X
+    def normalize!(input); input.replace(input.strip); end
+  X
+  good <<~X
+    def normalize(input); input.strip; end
+  X
+end
+
+Law.define(:NO_SELECTOR_ARGUMENTS) do
+  source "Flag arguments / selector arguments"
+  severity :warning
+  ask "Is an argument used mainly as a switch between distinct behaviors rather than as data?"
+  fix "Expose distinct operations or strategy objects instead of hiding a dispatch behind a flag."
+  bad <<~X
+    save(record, mode: :json)
+  X
+  good <<~X
+    JsonSaver.new.save(record)
+  X
+end
+
+Law.define(:DESIGN_BY_CONTRACT) do
+  source "Design by Contract (Bertrand Meyer)"
+  severity :info
+  ask "Are important preconditions, postconditions, and invariants left implicit at an interface?"
+  fix "State and enforce the contract at the boundary."
+  bad <<~X
+    def divide(a, b); a / b; end
+  X
+  good <<~X
+    def divide(a, b); raise ArgumentError if b.zero?; a / b; end
+  X
+end
+
+Law.define(:CRASH_EARLY) do
+  source "The Pragmatic Programmer — Crash Early"
+  severity :warning
+  ask "Does the system limp along after detecting a state that makes continued work unsafe or misleading?"
+  fix "Stop at the detection point with a clear failure rather than propagating bad state."
+  bad <<~X
+    value = parse(input); use(value) despite parse_error
+  X
+  good <<~X
+    raise ParseError, parse_error if parse_error
+  X
+end
+
+Law.define(:DEFINE_ERRORS_OUT) do
+  source "A Philosophy of Software Design — define errors out of existence"
+  severity :info
+  ask "Is the interface handling errors that could instead be prevented by making invalid states unrepresentable or normalizing inputs earlier?"
+  fix "Redesign the interface so the problematic state cannot arise on the normal path."
+  bad <<~X
+    if config[:timeout].nil?; config[:timeout] = 30; end
+  X
+  good <<~X
+    timeout = TimeoutValue.default(config[:timeout])
+  X
+end
+end
