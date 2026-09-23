@@ -118,13 +118,15 @@ module Master
       end
 
       def dispatch_law(ctx: nil)
-        case arg_for(ctx)
+        arg = arg_for(ctx)
+        case arg
         when "", "contract" then Law::Contract.render
         when "full" then Law::Contract.render(full: true)
         when "digest" then Law::Contract.digest
         when "protocol" then Law::Contract::PROTOCOL.join("\n")
+        when "handshake" then JSON.generate(Master::Ground::LawHandshake.new.export)
         else
-          "law  law contract  law full  law digest  law protocol"
+          "law  law contract  law full  law digest  law protocol  law handshake"
         end
       end
 
