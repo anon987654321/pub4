@@ -9,6 +9,7 @@ require_relative "../review/council/critique"
 require_relative "rails_visual_graph"
 require_relative "visual_usability"
 require_relative "../../../RAILS/gates/support/mobile_journey_probe"
+require_relative "../../../RAILS/gates/support/web_platform_probe"
 
 module Master
   module Fix
@@ -95,7 +96,8 @@ module Master
             shot = File.join(@dir, "#{safe_slug(surface.id)}.png")
             cdp.screenshot(shot, capture_beyond_viewport: true)
             journeys = Deploy::MobileJourneyProbe.run(cdp, surface, @dir)
-            captures << { surface:, payload:, screenshot: shot, journeys: }
+            platform = Deploy::WebPlatformProbe.run(cdp, surface)
+            captures << { surface:, payload:, screenshot: shot, journeys:, platform: }
           end
         end
         captures
@@ -272,7 +274,7 @@ module Master
           "type sizes=#{type["distinct_font_sizes"]&.first(8)}, body median=#{type["body_median_px"]}, ",
           "leading=#{type["line_height_min_px"]}-#{type["line_height_max_px"]}",
           "scroll/client=#{payload["scroll_width"]}/#{payload["client_width"]}",
-          "mobile-states=#{Array(capture[:journeys]).map { |j| "#{j["kind"]}:#{j["label"]}" }.join(", ")}",
+          "mobile-states=#{Array(capture[:journeys]).map { |j| "#{j["kind"]}:#{j["label"]}" }.join(", ")}\n          "web-platform=#{capture[:platform].reject { |key, _| key == "viewport" }.map { |key, value| "#{key}=#{value}" }.join(", ")}",",
         ].join(" ")
       end
 
@@ -283,7 +285,7 @@ module Master
           RENDERED EVIDENCE
           The attached image is a contact sheet containing every captured surface in this pass. Compare surfaces against each other as well as against their own viewport. The measurements below were
           collected from the same browser session across the listed surfaces.
-          Mobile is the primary composition: every mobile surface is exercised through safe, non-destructive focus, validation, and disclosure states when those states exist. Journey screenshots are evidence, not a score.
+          Mobile is the primary composition: every mobile surface is exercised through safe, non-destructive focus, validation, and disclosure states when those states exist. Journey screenshots are evidence, not a score. Treat web-platform probe findings as evidence about layout primitives, not automatic prescriptions; choose the smallest modern primitive that fits the rendered behavior and browser support.
           Judge the render first. Source is supporting evidence.
           Apply the executable MASTER design/usability constitution below. These are laws, not a scoring checklist. Identify only laws supported by rendered evidence.
           #{Master::Fix::VisualUsability.context}
