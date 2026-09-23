@@ -9,6 +9,12 @@
 # enqueued in the first place.
 #
 # Fed to `bin/rails runner` by declutter-hygiene.sh, which is what cron calls.
+#
+# Pub4::LoadAverage lives in shared/lib, which no app autoloads (only app/* is
+# on config.autoload_paths — see shared/lib/shared/engine.rb). prune_guests.rb
+# gets it for free because PruneGuestUsersJob happens to require it; nothing
+# here does that incidentally, so it needs its own require.
+require "operator/load_average"
 
 started = Time.now
 overdue_before = DeclutterChallenge.overdue.count
