@@ -21,8 +21,10 @@ class TestRenderedVisualConvergence < Minitest::Test
     source = read("../RAILS/gates/visual_contract.rb")
     assert_includes source, 'require_relative "support/geometry_probe"'
     assert_includes source, "GeometryProbe.with_browser"
+    assert_includes source, "ROOT = File.expand_path(\"../..\", __dir__).freeze"
     refute_includes source, 'require "selenium-webdriver"'
     refute_includes source, "Selenium::WebDriver"
+    refute_includes source, "ACCESSIBILITY_PROBE = <<~JS\n    return ["
   end
 
   def test_rendered_repairs_require_a_stable_anchor
