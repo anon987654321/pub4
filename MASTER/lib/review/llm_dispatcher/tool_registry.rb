@@ -39,10 +39,9 @@ module Master
           []
         end
 
-        # McpCoordinator hands over tools that are already RubyLLM tools. Each
-        # calls its server directly, past the Governor, undo and paths.immutable,
-        # so it goes out only as an unclassified tool does: to an elevated session
-        # with no restricting profile, on a tier above cheap.
+        # MCP wrappers now carry their own Governor boundary. They still require
+        # an elevated session here, because the server's capabilities are
+        # operator-defined and are not represented in data/tools.yml.
         def mcp_tool(tool, allowed:, tier:)
           return if allowed || !Fiber[:master_elevated] || tier == "cheap"
 

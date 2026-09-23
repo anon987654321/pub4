@@ -1,5 +1,6 @@
 # MCP server definitions for MASTER.
-# Transport options: stdio | sse
+# Transport options: stdio | sse.
+# Every external MCP capability is governed before execution.
 # Disabled by default on resource-constrained VPS.
 # Enable individual servers with enabled: true when needed.
 
@@ -7,6 +8,8 @@ defaults: &defaults
   transport: stdio
   command: npx
   enabled: false
+  tier: dangerous
+  timeout_seconds: 60
 
 servers:
   filesystem:
@@ -28,6 +31,7 @@ servers:
 
   brave_search:
     <<: *defaults
+    tier: guarded
     args:
       - -y
       - "@modelcontextprotocol/server-brave-search"
@@ -35,6 +39,7 @@ servers:
 
   sequential_thinking:
     <<: *defaults
+    tier: safe
     args:
       - -y
       - "@modelcontextprotocol/server-sequential-thinking"
