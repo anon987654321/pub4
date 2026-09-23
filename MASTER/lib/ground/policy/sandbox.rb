@@ -42,7 +42,7 @@ module Master
           /\bshutdown\b|\breboot\b/,
           /\b(?:curl|wget)\b.*\|\s*(?:sh|bash|zsh)/,
           FORK_BOMB,
-          DEVICE_REDIRECT,
+          DEVICE_REDIRECT
         ].freeze
 
         ASK_PATTERNS = [

@@ -82,11 +82,13 @@ module Master
         Result.err(e.message, category: :validation)
       rescue StandardError => e
         error_message = e.message.to_s
+
         # Config errors aren't backend failures — don't penalize the breaker.
         if !Master.keyless_llm_enabled? &&
            (error_message.match?(/missing configuration/i) || !Master.any_api_key_present?)
           return Result.err(Master.no_api_key_message, category: :no_api_key)
         end
+
         on_failure
         Result.err(error_message, category: :provider_error)
       end

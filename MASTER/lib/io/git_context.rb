@@ -27,6 +27,7 @@ module Master
           else
             return Result.err("git_context: unknown operation: #{operation}", category: :validation)
           end
+
         bounded(result, operation)
       rescue StandardError => e
         Result.err("git_context: #{e.message}", category: :unknown)

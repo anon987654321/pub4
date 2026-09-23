@@ -29,7 +29,7 @@ module Master
     ["voice", "data/voice.yml"], ["limits", "data/limits.yml"], ["orders", "data/state.yml"],
     ["playbook", "data/patterns.yml"],
     ["skills", "data/patterns.yml"], ["context", "data/project_context.yml"],
-    ["operator", "../OPENBSD/RUNBOOK.md"],
+    ["operator", "../OPENBSD/RUNBOOK.md"]
   ].freeze
 
   BUNDLE_BIN = RUBY_PLATFORM.include?("openbsd") ? "bundle34" : "bundle"
@@ -53,7 +53,7 @@ module Master
     ".jsx" => "javascript", ".tsx" => "javascript",
     ".sh" => "zsh", ".zsh" => "zsh", ".bash" => "zsh", ".ksh" => "zsh", ".md" => "markdown",
     ".html" => "html", ".htm" => "html", ".erb" => "html", ".css" => "css",
-    ".scss" => "scss", ".sass" => "scss",
+    ".scss" => "scss", ".sass" => "scss"
   }.freeze
 
   # A Ruby file need not end in .rb, and an extension-only map calls every one
@@ -62,7 +62,7 @@ module Master
   NAMED_LANGUAGES = {
     "Gemfile" => "ruby", "Rakefile" => "ruby", "Guardfile" => "ruby",
     "Capfile" => "ruby", "Brewfile" => "ruby", "Podfile" => "ruby",
-    "Vagrantfile" => "ruby", "config.ru" => "ruby",
+    "Vagrantfile" => "ruby", "config.ru" => "ruby"
   }.freeze
 
   SHEBANG_LANGUAGES = { /\bruby\b/ => "ruby", /\b(?:zsh|bash|ksh|sh)\b/ => "zsh" }.freeze

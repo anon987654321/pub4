@@ -268,6 +268,7 @@ end
 # --apply in full-fix mode and --no-autofix in scan-only. Making both
 # explicit is the point — a caller that wants a write now says so, and
 # nothing arrives at one by being misread.
+
 def default_apply?(*) = false
 
   # MASTER_SCAN_DETERMINISTIC=1 means "no model in this pass", and the
@@ -276,6 +277,7 @@ def default_apply?(*) = false
   # of a /scan was a critique the caller had not asked for. `bin/gate` then
   # runs /critique again as its own separate stage, which is the tier that
   # is supposed to own it.
+
   def default_critique?(*) = ENV["MASTER_SCAN_DETERMINISTIC"] != "1"
 
         def run_observation(arg, unit:)

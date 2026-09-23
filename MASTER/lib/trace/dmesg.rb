@@ -67,7 +67,7 @@ module Master
 
       def emit(line)
         return unless enabled?
-        
+
         # Suppress "at unit0" lines by default if we are just in a top-level conversational turn (master0).
         # This prevents dmesg flood during chitchat without requiring a flag.
         if Fiber[:master_unit] == "master0" && line.match?(/at \w+0|llm\d+:/)
@@ -109,7 +109,7 @@ module Master
           "search_knowledge" => %w[grep io0], "symbol_lookup" => %w[grep io0], "write_file" => %w[write io0],
           "str_replace" => %w[edit io0], "replace" => %w[edit io0], "ast_edit" => %w[edit io0],
           "zsh" => %w[exec io0], "git_context" => %w[git io0], "web_fetch" => %w[fetch net0],
-          "web_search" => %w[search net0], "dynamic_http" => %w[http net0], "ask_llm" => %w[ask io0],
+          "web_search" => %w[search net0], "dynamic_http" => %w[http net0], "ask_llm" => %w[ask io0]
         }.freeze
         FOLD_UNITS = { "read" => "read", "write" => "write", "exec" => "exec", "git" => "git",
                        "ask" => "ask", "critique" => "crit" }.freeze

@@ -28,11 +28,11 @@ module Master
       }.freeze
 
       PROGRESSIONS = {
-        dilla_love: ["i7", "iv7", "bVII7", "bVI7"],
-        neo_soul_loop: ["i7", "iv7", "bVII7", "bVI7"],
-        techno_pulse: ["i", "i", "bVI", "bVII"],
-        jazz_loop: ["ii7", "V7", "I7", "vi7"],
-        modal_drift: ["i7", "III7", "bVII7", "iv7"],
+        dilla_love: %w[i7 iv7 bVII7 bVI7],
+        neo_soul_loop: %w[i7 iv7 bVII7 bVI7],
+        techno_pulse: %w[i i bVI bVII],
+        jazz_loop: %w[ii7 V7 I7 vi7],
+        modal_drift: %w[i7 III7 bVII7 iv7],
       }.freeze
 
       module_function

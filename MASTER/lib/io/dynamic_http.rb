@@ -58,9 +58,11 @@ module Master
         Timeout.timeout(TIMEOUT * 2) do
           address = SsrfGuard.pinned_address(uri) or raise SocketError, "#{uri.host} no longer resolves to a public address"
           pinned = SsrfGuard.http_for(uri, address)
+
           pinned.open_timeout = TIMEOUT
           pinned.read_timeout = TIMEOUT
           pinned.write_timeout = TIMEOUT
+
           pinned.start do |http|
             case method
             when "POST", "PUT", "PATCH"
