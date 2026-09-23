@@ -1,5 +1,7 @@
 # Rails apps
 
+This README is the human entry point for the whole Rails tree. App-specific README files live only at real app or engine boundaries; shared implementation detail belongs beside the consumer or in executable configuration.
+
 **Three production apps, one shared engine, and one process that answers to a
 hundred hostnames.** brgen is the city network, amber is wardrobe intelligence,
 bsdports is ports search — 3 active production Rails apps, matching `apps.yml`.
