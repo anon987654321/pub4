@@ -6,6 +6,8 @@
 require_relative "../../OPENBSD/lib/utf8"
 require "json"
 require "digest"
+require_relative "support/cdp_session"
+require_relative "support/geometry_probe"
 require "fileutils"
 require "uri"
 require "time"
@@ -116,211 +118,51 @@ module VisualContractGate
     { pixel_diff_count: diff_count, pixel_diff_ratio: (diff_count.to_f / baseline_pixels.length).round(6), pixel_diff_image: diff_count.positive? ? diff_path : nil }
   end
 
-  # Capture console output through a shim installed before page scripts run.
-  #
-  # The previous implementation guarded on `driver.manage.respond_to?(:logs)` and
-  # returned [] otherwise, which reads as careful degradation. It was not: the
-  # installed selenium-webdriver is 4.46.0 and `Manager#logs` does not exist in
-  # any of the three app bundles — grepped, not assumed. So the guard was always
-  # false, this always returned [], and the console-error count in every capture
-  # has been a structural zero. A gate that counts console errors and can never
-  # see one reports clean forever.
-  #
-  # BiDi is the supported replacement and it is a large dependency to take on for
-  # one number. execute_cdp is already available on the Chrome driver, so the shim
-  # goes in through Page.addScriptToEvaluateOnNewDocument — which runs before any
-  # page script, and is the only reason load-time messages are catchable at all.
-  # Reading it back after load is then an ordinary execute_script.
-  #
-  # window.onerror is included because an uncaught exception never passes through
-  # console.error, and it is the failure most worth catching.
-  CONSOLE_SHIM = <<~JS
-    (function () {
-      if (window.__pub4_console) return;
-      window.__pub4_console = [];
-      var record = function (level, parts) {
-        try {
-          window.__pub4_console.push({
-            level: level,
-            text: Array.prototype.map.call(parts, function (p) {
-              if (typeof p === "string") return p;
-              try { return JSON.stringify(p); } catch (e) { return String(p); }
-            }).join(" ")
-          });
-        } catch (e) { /* a broken shim must never break the page under test */ }
-      };
-      ["log", "info", "warn", "error"].forEach(function (level) {
-        var original = console[level];
-        console[level] = function () {
-          record(level === "warn" ? "warning" : level, arguments);
-          if (original) return original.apply(console, arguments);
-        };
-      });
-      window.addEventListener("error", function (e) {
-        record("error", [(e.error && e.error.stack) || e.message]);
-      });
-      window.addEventListener("unhandledrejection", function (e) {
-        record("error", ["unhandled rejection: " + (e.reason && e.reason.message || e.reason)]);
-      });
-    })();
-  JS
-
-  def install_console_shim(driver)
-    return false unless driver.respond_to?(:execute_cdp)
-
-    driver.execute_cdp("Page.addScriptToEvaluateOnNewDocument", source: CONSOLE_SHIM)
-    true
-  rescue StandardError => e
-    # Non-fatal, but it must say so — a silent failure here is what produced the
-    # permanent zero this replaced.
-    warn "warn: console capture unavailable (#{e.class}: #{e.message}); counts will read 0"
-    false
-  end
-
-  def browser_console_errors(driver)
-    captured = driver.execute_script("return window.__pub4_console || null")
-    return [] unless captured
-
-    captured.select { |row| row["level"] == "error" }.map { |row| row["text"].to_s }.uniq
-  rescue StandardError => e
-    # No console errors is what a clean page looks like, so a failed read here
-    # passes the check it was meant to perform.
-    warn "visual_contract: console read failed (#{e.class}: #{e.message.lines.first.to_s.strip}) — reporting no errors"
-    []
-  end
-
-  # Grades a capture. Extracted from the script body so the three severities are
-  # assertable without Chrome and a running app — the reason the old version
-  # never failed on anything was that nothing could see what it decided.
-  #
-  #   hard  — blocks. A contract route answering 5xx, or drift past an explicit
-  #           VISUAL_DRIFT_MAX_RATIO.
-  #   soft  — real defects whose live counts have never been measured from this
-  #           tree, so they block only under strict:. Same shape as
-  #           GateResult's soft failures.
-  #   drift — reported always; a rolling baseline makes any intended change drift.
-  def grade(results, strict: false, drift_max: nil)
-    hard = []
-    soft = []
-
-    results.each do |row|
-      status = row[:status].to_i
-      next if status.zero? # navigation timing unavailable — nothing measured
-      next if row[:state].to_s == "error" && status == 404 # this cell asks for a 404
-      next if status < 500
-
-      hard << "#{row[:state]}/#{row[:viewport]} #{row[:route]} returned #{status}"
-    end
-
-    a11y = results.sum { |row| row[:accessibility_violations].to_a.length }
-    console = results.sum { |row| row[:console_errors].to_a.length }
-    soft << "#{a11y} accessibility violation(s)" if a11y.positive?
-    soft << "#{console} severe console error(s)" if console.positive?
-
-    drifted = results.select { |row| row[:pixel_diff_count].to_i.positive? }
-    worst = drifted.map { |row| row[:pixel_diff_ratio].to_f }.max || 0.0
-    if drift_max && worst > drift_max
-      hard << "pixel drift ratio #{worst.round(6)} exceeds VISUAL_DRIFT_MAX_RATIO=#{drift_max}"
-    end
-
-    hard += soft.map { |message| "[strict] #{message}" } if strict
-
-    {
-      hard:, soft: strict ? [] : soft,
-      drift: { states: drifted.length, pixels: drifted.sum { |row| row[:pixel_diff_count].to_i }, worst_ratio: worst },
-    }
-  end
-
-  # States that fetched the same bytes from different routes.
-  #
-  # `grade` answers "did any cell fail"; `measured.zero?` answers "did anything
-  # navigate". Neither answers "did each cell measure its own page", and the
-  # committed manifests say several did not: bsdports carried one screenshot SHA
-  # across all eight of its states, amber across eight of its ten, and brgen's
-  # marketplace lenses recorded the apex routes, because a vertical lives on a
-  # subdomain this crawl cannot reach by port on 127.0.0.1. One live row covered
-  # for seventeen dead ones, and every accessibility and drift number was then
-  # one page counted eighteen times.
-  #
-  # Grouped per viewport, because the same route at two widths is the matrix
-  # doing its job. Two routes and one image is not.
-  def identical_captures(results)
-    results.group_by { |row| [ row[:viewport], row[:screenshot_sha256] ] }
-           .select { |(_, sha), rows| sha && distinct_documents(rows) > 1 }
-  end
-
-  # Two cells whose routes differ only after the "#" asked for the same
-  # document, and a screenshot of one document is the same bytes twice — a
-  # fragment moves the viewport, not the page. bsdports declares three lenses
-  # that way (detail, advisory and dependency all fetch /ports/1), and calling
-  # those a blind cell would be wrong: it is one document, deliberately looked
-  # at three times.
-  #
-  # Worth knowing all the same, because those three states contribute one
-  # measurement between them rather than three, so any count they produce is
-  # tripled. fragment_only_captures reports that, as a warning.
-  def distinct_documents(rows)
-    rows.map { |row| row[:route].to_s.split("#").first }.uniq.length
-  end
-
-  def fragment_only_captures(results)
-    results.group_by { |row| [ row[:viewport], row[:screenshot_sha256] ] }
-           .select { |(_, sha), rows| sha && rows.length > 1 && distinct_documents(rows) == 1 }
-  end
-
-  # Raised, not returned, so the caller decides the exit code. A missing driver
-  # gem or an unreachable Chrome is a precondition this machine does not meet —
-  # not a verdict about the tree — and it used to surface as an uncaught
-  # LoadError, which exits 1 and reads as FAILED. Wrong in both directions: it
-  # blocks on nothing, and it hides that nothing was measured.
-  CannotMeasure = Class.new(StandardError)
-
   def capture(base:, app:, output: File.expand_path("../visual_contract", __dir__))
-    begin
-      require "selenium-webdriver"
-    rescue LoadError => e
-      raise CannotMeasure, "selenium-webdriver is not installed (#{e.message})"
-    end
     FileUtils.mkdir_p(output)
-    options = Selenium::WebDriver::Chrome::Options.new
-    options.add_argument("--headless=new")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    options.add_option("goog:loggingPrefs", { browser: "ALL" })
-    driver = begin
-      Selenium::WebDriver.for(:chrome, options:)
-    rescue StandardError => e
-      # No Chrome on PATH, or a driver that will not start. Same category as the
-      # gem being absent: a precondition, not a finding.
-      raise CannotMeasure, "could not start Chrome (#{e.class}: #{e.message})"
+    results = []
+
+    CdpSession.open(timeout: Integer(ENV.fetch("GATE_BROWSER_TIMEOUT", "20"))) do |cdp|
+      cdp.on_new_document(GeometryProbe::DETERMINISM)
+      cdp.headers(GeometryProbe::PROBE_HEADERS)
+
+      matrix(app).each do |cell|
+        width, height = cell[:dimensions]
+        cdp.viewport(width, height, mobile: width < 500)
+        cdp.clear_cookies
+        cdp.navigate(URI.join(base, cell[:route]).to_s, settle: 0.15)
+
+        slug = [cell[:app], cell[:state], cell[:viewport]].join("-")
+        screenshot = File.join(output, "#{slug}.png")
+        baseline_bytes = File.binread(screenshot) if File.file?(screenshot)
+        cdp.evaluate(mask_script)
+        cdp.screenshot(screenshot)
+
+        diff = baseline_bytes ? pixel_diff(
+          baseline_bytes:,
+          screenshot_path: screenshot,
+          diff_path: File.join(output, "#{slug}-diff.png"),
+        ) : { pixel_diff_count: nil, pixel_diff_ratio: nil, pixel_diff_image: nil }
+
+        results << {
+          app: cell[:app], state: cell[:state], viewport: cell[:viewport], route: cell[:route],
+          status: cdp.status,
+          title: cdp.evaluate("document.title"),
+          screenshot: screenshot,
+          screenshot_sha256: Digest::SHA256.file(screenshot).hexdigest,
+          **diff,
+          console_errors: cdp.console_errors,
+          accessibility_violations: cdp.evaluate(ACCESSIBILITY_PROBE),
+          lenses: LENSES,
+        }
+      end
     end
-    # Before the first navigate, because the shim only sees what happens after it
-    # is installed and the messages worth catching happen during page load.
-    install_console_shim(driver)
-    matrix(app).map do |cell|
-      width, height = cell[:dimensions]
-      driver.manage.window.resize_to(width, height)
-      driver.navigate.to(URI.join(base, cell[:route]).to_s)
-      sleep 0.15
-      slug = [cell[:app], cell[:state], cell[:viewport]].join("-")
-      screenshot = File.join(output, "#{slug}.png")
-      baseline_bytes = File.binread(screenshot) if File.file?(screenshot)
-      driver.execute_script(mask_script)
-      driver.save_screenshot(screenshot)
-      diff = baseline_bytes ? pixel_diff(baseline_bytes:, screenshot_path: screenshot, diff_path: File.join(output, "#{slug}-diff.png")) : { pixel_diff_count: nil, pixel_diff_ratio: nil, pixel_diff_image: nil }
-      {
-        app: cell[:app], state: cell[:state], viewport: cell[:viewport], route: cell[:route],
-        status: driver.execute_script("return performance.getEntriesByType('navigation')[0]?.responseStatus || null"),
-        title: driver.title, screenshot: screenshot,
-        screenshot_sha256: Digest::SHA256.file(screenshot).hexdigest,
-        **diff,
-        console_errors: browser_console_errors(driver),
-        accessibility_violations: accessibility_violations(driver), lenses: LENSES
-      }
-    end
-  ensure
-    driver&.quit
+
+    results
+  rescue CdpSession::Error, SystemCallError => e
+    raise CannotMeasure, "CDP capture failed (#{e.class}: #{e.message})"
   end
+
 end
 
 # The tests require this file to exercise grade, identical_captures and
