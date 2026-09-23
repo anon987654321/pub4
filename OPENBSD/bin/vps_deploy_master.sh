@@ -63,7 +63,7 @@ else
   BUNDLE_WITHOUT=development:test bundle34 exec ruby -e '
     require ARGV[0]
     Deploy::MasterWebAssetsGate.run.report!("master web assets ok")
-  ' "$ROOT/MASTER/gates.rb"
+  ' "$ROOT/MASTER/lib/operator/gates.rb"
 fi
 
 echo "==> sync rc.d master"
