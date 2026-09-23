@@ -42,6 +42,7 @@ end
 Law.define(:SIMPLEST_WORKS) do
   source "MASTER constitution (soul.yml absolute.rules)"
   severity :error
+  ask "Does this unit introduce unnecessary complexity?"
   # The god-class clause this used to hold is NO_GOD_CLASS's subject, and
   # NO_GOD_CLASS detects it structurally. A practice named after one rule and
   # stating another is how a rule's findings and its prompt come apart.
@@ -58,6 +59,7 @@ end
 Law.define(:PRESERVE_FIRST) do
   source "MASTER constitution (soul.yml absolute.rules)"
   severity :error
+  ask "Does this change modify working code without reading it first?"
   practice <<~TEXT
     never rewrite working code from scratch. read before write, preserve
     behavior and intent, and take a larger change only when it is justified and
@@ -71,6 +73,7 @@ end
 Law.define(:BE_CONCISE) do
   source "MASTER constitution (soul.yml absolute.rules)"
   severity :warn
+  ask "Does this unit contain unnecessary verbosity in words, tokens, structure, or output?"
   # One rule, both halves: the catalogue's name is "avoid unnecessary words,
   # tokens, or lines", so the reply and the source are the same subject.
   practice <<~TEXT
