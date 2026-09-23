@@ -90,7 +90,7 @@ module Master
       def capture_evidence(target:, pass:)
         kind = File.expand_path(target.to_s, @root).delete_prefix("#{@root}/").start_with?("web") ? "MASTER" : "RAILS"
         command = [
-          ruby_command,
+          *ruby_command,
           File.join(@root, "..", "RAILS", "gates", "visual_evidence.rb"),
           "--target", kind,
           "--out", @dir,
@@ -104,9 +104,9 @@ module Master
       end
 
       def ruby_command
-        return "rbenv" if system("command", "-v", "rbenv", out: File::NULL, err: File::NULL)
+        return %w[rbenv exec ruby] if system("command", "-v", "rbenv", out: File::NULL, err: File::NULL)
 
-        RbConfig.ruby
+        [RbConfig.ruby]
       end
 
       def candidate_sources(target:, files:, manifest:)
@@ -158,19 +158,20 @@ module Master
 
       def evidence_context(manifest, anchors)
         entries = Array(manifest["entries"]).map do |entry|
-          mapped = anchors.values_at(*anchors.keys).compact.uniq.first(8)
           "surface #{entry["index"]}: #{entry["surface"]}, #{entry["viewport"]}, "             "#{entry["path"]}, #{entry["elements"]} visible measured elements, "             "#{entry["gaps"]} stacked gaps, #{entry["colors"]} text colors, "             "scroll/client width #{entry["scroll_width"]}/#{entry["client_width"]}"
         end
+        mapped = anchors.values.compact.uniq.first(12)
         <<~TEXT
           RENDERED EVIDENCE
           The attached image is a real browser capture, not an illustration or mockup.
           Contact-sheet order is the numbered surface order below. Judge what is visibly
           rendered first; source is supporting evidence. Do not invent problems that the
-          screenshot or geometry cannot support.
+          screenshot or geometry cannot support. Every actionable finding must name the
+          surface/viewport and a stable DOM selector or visible text anchor.
 
           #{entries.join("
 ")}
-          Candidate source anchors: #{mapped&.join(", ")}
+          Candidate source anchors: #{mapped.join(", ")}
         TEXT
       end
 
