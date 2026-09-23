@@ -29,9 +29,8 @@ module Master
       end
 
       def applicable?(target)
-        path = File.expand_path(target.to_s, @root)
-        relative = path.delete_prefix("#{@root}/")
-        relative == "web" || relative.start_with?("web/") ||
+        relative = repo_relative(target)
+        relative == "MASTER/web" || relative.start_with?("MASTER/web/") ||
           relative == "RAILS" || relative.start_with?("RAILS/")
       end
 
@@ -88,15 +87,15 @@ module Master
       private
 
       def capture_evidence(target:, pass:)
-        kind = File.expand_path(target.to_s, @root).delete_prefix("#{@root}/").start_with?("web") ? "MASTER" : "RAILS"
+        kind = repo_relative(target).start_with?("MASTER/web") ? "MASTER" : "RAILS"
         command = [
           *ruby_command,
-          File.join(@root, "..", "RAILS", "gates", "visual_evidence.rb"),
+          File.join(repo_root, "RAILS", "gates", "visual_evidence.rb"),
           "--target", kind,
           "--out", @dir,
           "--pass", pass.to_i.to_s,
         ]
-        stdout, stderr, status = Open3.capture3(*command, chdir: @root)
+        stdout, stderr, status = Open3.capture3(*command, chdir: repo_root)
         manifest_path = File.join(@dir, "manifest.json")
         return { ok: false, message: stderr.strip.lines.last.to_s } unless status.success? && File.file?(manifest_path)
 
@@ -127,6 +126,20 @@ module Master
         [candidates.first(MAX_FILES), anchors]
       end
 
+      def repo_root = File.expand_path("../..", @root)
+
+      def repo_relative(target)
+        raw = target.to_s
+        absolute = if raw.start_with?("/")
+                     File.expand_path(raw)
+                   elsif raw.start_with?("MASTER", "RAILS")
+                     File.expand_path(raw, repo_root)
+                   else
+                     File.expand_path(raw, @root)
+                   end
+        absolute.delete_prefix("#{repo_root}/")
+      end
+
       def source_file?(path)
         File.file?(path) && SOURCE_EXTENSIONS.include?(File.extname(path).downcase)
       end
@@ -145,12 +158,9 @@ module Master
       end
 
       def fallback_sources(target)
-        base = File.expand_path(target.to_s, @root)
-        paths = if File.basename(base) == "web" || base.start_with?(File.join(@root, "web"))
-                  Dir.glob(File.join(@root, "web", "**", "*"))
-                else
-                  Dir.glob(File.join(@root, "RAILS", "**", "*"))
-                end
+        base = repo_relative(target)
+        root = base.start_with?("MASTER/web") ? File.join(repo_root, "MASTER", "web") : File.join(repo_root, "RAILS")
+        paths = Dir.glob(File.join(root, "**", "*"))
         paths.select { |path| source_file?(path) }
              .sort_by { |path| [path.include?("stylesheets") ? 0 : 1, path.length, path] }
              .first(MAX_FILES)
