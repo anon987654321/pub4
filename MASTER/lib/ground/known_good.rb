@@ -46,10 +46,10 @@ module Master
         path = File.join(@root, PATH)
         FileUtils.mkdir_p(File.dirname(path))
         write_atomic(path, JSON.pretty_generate(record) + "\n", mode: 0o600)
-        @bus&.publish("runtime:promoted", commit: record["commit"], paths: record["paths"])
+        emit("runtime:promoted", commit: record["commit"], paths: record["paths"])
         Result.ok(record)
       rescue StandardError => e
-        @bus&.publish("runtime:promotion_failed", error: e.message)
+        emit("runtime:promotion_failed", error: e.message)
         Result.err("known-good promotion: #{e.message}", category: :infrastructure)
       end
 
@@ -70,14 +70,21 @@ module Master
 
         sha = record.fetch("commit")
         run("git", "-C", @root, "reset", "--hard", sha)
-        @bus&.publish("runtime:rollback", commit: sha)
+        emit("runtime:rollback", commit: sha)
         Result.ok("rolled back to known-good #{sha}")
       rescue StandardError => e
-        @bus&.publish("runtime:rollback_failed", error: e.message)
+        emit("runtime:rollback_failed", error: e.message)
         Result.err("known-good rollback: #{e.message}", category: :infrastructure)
       end
 
       private
+      def emit(event, **payload)
+        @bus&.publish(event, **payload)
+      rescue StandardError => e
+        warn("trace0: #{e.class}: #{e.message}") if ENV["MASTER_TRACE_STRICT"] == "1"
+        nil
+      end
+
 
       def normalize_commit(value)
         commit = value.to_s
