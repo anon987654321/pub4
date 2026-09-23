@@ -8,6 +8,8 @@ require "time"
 require_relative "pass_runner/fast_stage"
 require_relative "pass_runner/llm_stage"
 require_relative "pass_runner/stagnation_detection"
+require_relative "transaction"
+require_relative "resource_budget"
 
 module Master
   module Fix
@@ -31,6 +33,7 @@ module Master
           @llm_router = llm_router
           @rollback = rollback
           @root = root
+          @resource_budget = ResourceBudget.new(root:)
           @agent = agent
           @scanner = scanner
           @learnings = learnings
@@ -41,7 +44,7 @@ module Master
 
         # What a pass is judged by, apart from the collaborators it runs through:
         # when it may stop, when it has stopped moving, and who else gets a say.
-        def take_limits(clean_runs_required:, plateau_window:, ground_truth:, homeostat:, council:, visual_pass:)
+        def take_limits(clean_runs_required:, plateau_window:, ground_truth:, homeostat:, council:)
           @clean_runs_required = clean_runs_required
           @plateau_window = plateau_window
           @violation_counts = Hash.new(0)
@@ -55,72 +58,105 @@ module Master
 
         def violations(files) = @loop_scanner.violations(files)
 
-        def run_pass(files:, target:, pass:, deadline:, history:, seen_snapshots:,
+        def run_pass(files:, target:, pass:, deadline:, transaction_id:, history:, seen_snapshots:,
                      recurring_violations:, consecutive_clean:)
           pass_mtimes = mtimes(files)
           @committer.baseline!
+          transaction = Transaction.new(root: @root, paths: files, id: transaction_id, bus: @bus)
+          @committer.begin_transaction!(transaction)
           @bus&.publish("fix_loop:pass_start", pass:, target:, file_count: files.size)
 
           run_fast_stage(files, pass)
           found = run_observation_stage(files, target)
 
           visual = run_visual_pass(target:, files:, pass:)
-          if visual&.err?
-            return PassResult.new(
-              status: :plateau,
-              consecutive_clean: 0,
-              message: visual.message,
-            ) if found.empty?
+          if visual&.err? && found.empty?
+            @committer.abort_transaction!
+            return PassResult.new(status: :plateau, consecutive_clean: 0, message: visual.message)
           end
+          found += Array(visual&.value!&.fetch(:findings, []))
 
-          visual_findings = visual&.ok? ? Array(visual.value![:findings]) : []
-          found = found + visual_findings
+          if found.empty?
+            resources = @resource_budget.measure
+            if @resource_budget.critical?(resources)
+              @committer.abort_transaction!
+              @bus&.publish("fix_loop:model_work_shed", pass:, reasons: resources[:reasons], values: resources[:values])
+              Master::Trace::Dmesg.status("fix0", "pass #{pass}, improvement review shed: #{resources[:reasons].join("; ")}")
+              return PassResult.new(status: :plateau, consecutive_clean: 0, message: "model work shed: #{resources[:reasons].join("; ")}")
+            end
 
-          # A clean deterministic/rendered read is an absence of findings, not proof that
-          # the artifact cannot be improved. Ask the same Council used during a manual review
-          # once at the start of a clean streak; the following pass verifies whatever changed.
-          if found.empty? && consecutive_clean.zero?
             improvements = @council&.improve(files:, pass:, deadline:)
             found.concat(Array(improvements))
           end
 
-          return handle_clean_pass(files, pass_mtimes, pass, consecutive_clean) if found.empty?
-          return PassResult.new(status: :plateau, consecutive_clean: 0) if stagnant?(history, seen_snapshots, recurring_violations, found, pass)
+          if found.empty?
+            result = handle_clean_pass(files, pass_mtimes, pass, consecutive_clean)
+            return abort_transaction(result) if result.status == :validation_failed
 
-          @homeostat&.observe(:llm_call)
-          # Source findings use the registered rule path. Improvement and rendered findings
-          # already came through their respective Councils and therefore go straight into the
-          # same RuleLoop without convening a second council for the same pass.
-          source_found = found.reject { |v| [VisualPass::RULE_ID, CouncilRound::IMPROVEMENT_RULE_ID].include?(v[:rule].to_s) }
-          improvement_found = found.select { |v| v[:rule].to_s == CouncilRound::IMPROVEMENT_RULE_ID }
-          rendered_found = found.select { |v| v[:rule].to_s == VisualPass::RULE_ID }
-          council = @council&.run(files: files_with_violations(source_found, files), pass:, deadline:) if source_found.any?
-          run_llm_stage(source_found, files, pass, deadline, council:) if source_found.any?
-          run_improvement_stage(improvement_found, pass:, files:, deadline:) if improvement_found.any?
-          run_visual_stage(rendered_found, pass:, image: visual.value![:image], files:, deadline:) if rendered_found.any?
+            return finish_transaction(files, pass, result)
+          end
+
+          if stagnant?(history, seen_snapshots, recurring_violations, found, pass)
+            abort_transaction
+            return PassResult.new(status: :plateau, consecutive_clean: 0)
+          end
+
+          resources = @resource_budget.measure
+          if @resource_budget.critical?(resources)
+            @bus&.publish("fix_loop:model_work_shed", pass:, reasons: resources[:reasons], values: resources[:values])
+            Master::Trace::Dmesg.status("fix0", "pass #{pass}, model work shed: #{resources[:reasons].join("; ")}")
+          else
+            @homeostat&.observe(:llm_call)
+            source_found = found.reject { |v| [VisualPass::RULE_ID, CouncilRound::IMPROVEMENT_RULE_ID].include?(v[:rule].to_s) }
+            improvement_found = found.select { |v| v[:rule].to_s == CouncilRound::IMPROVEMENT_RULE_ID }
+            visual_found = found.select { |v| v[:rule].to_s == VisualPass::RULE_ID }
+            council = @council&.run(files: files_with_violations(source_found, files), pass:, deadline:) if source_found.any?
+            run_llm_stage(source_found, files, pass, deadline, council:) if source_found.any?
+            run_improvement_stage(improvement_found, pass:, files:, deadline:) if improvement_found.any?
+            run_visual_stage(visual_found, pass:, image: visual&.value!&.fetch(:image, nil), files:, deadline:) if visual_found.any?
+          end
+          delivery = @committer.finish_transaction("fix_loop: pass #{pass}", findings: found, owned_paths: files)
+          return PassResult.new(status: :delivery_failed, consecutive_clean: 0, message: delivery.message) if delivery.err?
+
           PassResult.new(status: :continue, consecutive_clean: 0)
-        ensure
-          @visual_pass&.cleanup
+        rescue StandardError
+          @committer.abort_transaction!
+          raise
+        end
+        def finish_transaction(files, pass, result)
+          delivery = @committer.finish_transaction("fix_loop: clean [pass #{pass}]", owned_paths: files)
+          return PassResult.new(status: :delivery_failed, consecutive_clean: 0, message: delivery.message) if delivery.err?
+
+          result
+        end
+
+        def abort_transaction(result = nil)
+          @committer.abort_transaction!
+          result
         end
 
         private
+
+        def run_visual_pass(target:, files:, pass:)
+          return unless @visual_pass&.applicable?(target)
+
+          @visual_pass.run(target:, files:, pass:)
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "pass_runner.visual_pass", event_bus: @bus)
+          Result.err("rendered visual review: INCONCLUSIVE — #{e.class}: #{e.message}", category: :inconclusive)
+        end
 
         def run_improvement_stage(findings, pass:, files:, deadline:)
           return 0 if findings.empty? || Time.now >= deadline
 
           rule = CouncilRound::IMPROVEMENT_RULE.new(CouncilRound::IMPROVEMENT_RULE_ID)
           loop = RuleLoop.new(
-            rule:,
-            agent: @agent,
-            scanner: @scanner,
-            root: @root,
-            bus: @bus,
-            learnings: @learnings,
-            committer: @committer,
+            rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus,
+            learnings: @learnings, committer: @committer,
           )
           loop.injected_preamble = [
             @preamble,
-            "These changes were selected by the Council as anchored improvement opportunities. Preserve behavior and make the smallest evidence-backed repair.",
+            "Council-selected, anchored micro-improvement. Preserve behavior and make the smallest evidence-backed repair.",
           ].join("\n\n")
           result = loop.run_once(files, external_violations: findings)
           @bus&.publish("fix_loop:improvement_fix", pass:, findings: findings.size, fixed: result[:fixed].to_i)
@@ -130,33 +166,17 @@ module Master
           0
         end
 
-        def run_visual_pass(target:, files:, pass:)
-          return unless @visual_pass
-          return unless @visual_pass.applicable?(target)
-
-          @visual_pass.run(target:, files:, pass:)
-        rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "pass_runner.visual_pass", event_bus: @bus)
-          Result.err("rendered visual review: INCONCLUSIVE — #{e.class}: #{e.message}", category: :inconclusive)
-        end
-
         def run_visual_stage(findings, pass:, image:, files:, deadline:)
-          return 0 if Time.now >= deadline
+          return 0 if Time.now >= deadline || findings.empty? || image.nil?
 
-          rule = VisualPass::Rule.new(VisualPass::RULE_ID)
           loop = RuleLoop.new(
-            rule:,
-            agent: @agent,
-            scanner: @scanner,
-            root: @root,
-            bus: @bus,
-            learnings: @learnings,
-            committer: @committer,
+            rule: VisualPass::Rule.new(VisualPass::RULE_ID),
+            agent: @agent, scanner: @scanner, root: @root, bus: @bus,
+            learnings: @learnings, committer: @committer,
           )
           loop.injected_preamble = [
             @preamble,
-            "The following findings came from the real rendered browser. " \
-              "Use the attached screenshot as evidence. Preserve accessibility, semantics and responsive behavior.",
+            "The following findings came from the real rendered browser. Use the attached screenshot as evidence. Preserve accessibility, semantics and responsive behavior.",
           ].join("\n\n")
           result = loop.run_once(files, external_violations: findings, image:)
           @bus&.publish("fix_loop:visual_fix", pass:, findings: findings.size, fixed: result[:fixed].to_i)
@@ -165,7 +185,6 @@ module Master
           Master::Ground::Swallow.log(e, context: "pass_runner.visual_stage", event_bus: @bus)
           0
         end
-
         def run_fast_stage(files, pass)
           fixed = fast_pass(files)
           @committer.commit_if_dirty("fix_loop: fast-fix [pass #{pass}]", owned_paths: files) if fixed > 0
@@ -188,12 +207,18 @@ module Master
             Master::Trace::Dmesg.status("fix0", "pass #{pass}, model fixes skipped, circuit open for #{open_breakers.join(", ")}")
             return 0
           end
-          if (avg = system_load_avg) && avg > Ops::ProcessBudget.config.dig("load", "load_avg_1m", "crit").to_f
-            @bus&.publish("fix_loop:llm_skipped", pass:, reason: "load_shed", load: avg)
-            Master::Trace::Dmesg.status("fix0", "pass #{pass}, model fixes skipped, load #{avg}")
-            sleep 60
+
+          resources = @resource_budget.measure
+          if @resource_budget.critical?(resources)
+            @bus&.publish("fix_loop:llm_skipped", pass:, reason: "resource_critical",
+                          reasons: resources[:reasons], values: resources[:values])
+            Master::Trace::Dmesg.status("fix0", "pass #{pass}, model fixes shed: #{resources[:reasons].join("; ")}")
             return 0
           end
+          if @resource_budget.warning?(resources)
+            @bus&.publish("fix_loop:resource_warning", pass:, reasons: resources[:reasons])
+          end
+
           pass_deadline = [Time.now + PASS_BUDGET_SECONDS, deadline].min
           llm_fixed = llm_pass(violations: found, files:, pass:, deadline: pass_deadline, council:)
           Master::Trace::Dmesg.status("fix0", "pass #{pass}, #{llm_fixed} of #{Master::Trace::Dmesg.counted(found.size, "violation")} fixed")
@@ -292,14 +317,7 @@ module Master
         def circuit_open? = @llm_router.circuit_open?
         def open_breakers = @llm_router.open_breakers
 
-        def system_load_avg
-          out, _, st = Master::Io::Exec.capture3("/sbin/sysctl", "-n", "vm.loadavg")
-          return unless st.success?
-          out.to_s[/\d+(?:\.\d+)?/]&.to_f
-        rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "PassRunner.system_load_avg")
-          nil
-        end
+
       end
     end
   end
