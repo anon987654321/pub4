@@ -104,6 +104,19 @@ module Master
 
         private
 
+        def executable_semantic_ids
+          require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
+          ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
+          ::Law.rules.values.select(&:semantic?).map { |law| law.id.to_s.downcase }.to_set
+        end
+
+        def law_detector?(id)
+          require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
+          ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
+          law = ::Law.rules[id.to_sym]
+          law && law.detect
+        end
+
         def detected?(laws, registry, id)
           key = id.to_s.downcase
           !key.empty? && (laws.include?(key) || registry.include?(key))
@@ -139,7 +152,13 @@ module Master
         def classify_yaml_entries(yaml_entries, registry)
           lexical_wired, lexical_unwired = yaml_entries.select { |r| r["detect_lexical"] }
                                                        .partition { |r| registry.include?(key_of(r)) }
-          semantic_only = yaml_entries.select { |r| r["detect_semantic"] && !r["detect_lexical"] && !r["detect_structural"] }
+          semantic_laws = executable_semantic_ids
+          semantic_only = yaml_entries.select do |r|
+            semantic_laws.include?(key_of(r)) &&
+              !r["detect_lexical"] &&
+              !r["detect_structural"] &&
+              !law_detector?(r["id"])
+          end
           structural_unwired = yaml_entries.select { |r| r["detect_structural"] }
                                            .reject { |r| registry.include?(key_of(r)) }
 
