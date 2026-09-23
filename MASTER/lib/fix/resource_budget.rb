@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "open3"
+require "socket"
 
 module Master
   module Fix
@@ -17,6 +18,8 @@ module Master
         fd_crit: 1024,
         threads_warn: 32,
         threads_crit: 64,
+        process_warn: 256,
+        process_crit: 512,
         disk_free_warn_pct: 15,
         disk_free_crit_pct: 5,
       }.freeze
@@ -35,7 +38,10 @@ module Master
           rss_mb: rss_mb,
           fd_count: fd_count,
           thread_count: Thread.list.size,
+          process_count: process_count,
           disk_free_pct: disk_free_pct,
+          network: network_available,
+          llm_quota_exhausted: llm_quota_exhausted,
         }
         classify(values).merge(measured_at: Process.clock_gettime(@clock), values:)
       rescue StandardError => e
@@ -57,6 +63,7 @@ module Master
            limit("master_rss_mb", "crit", DEFAULTS[:rss_mb_crit])],
           [:fd_count, DEFAULTS[:fd_warn], DEFAULTS[:fd_crit]],
           [:thread_count, DEFAULTS[:threads_warn], DEFAULTS[:threads_crit]],
+          [:process_count, DEFAULTS[:process_warn], DEFAULTS[:process_crit]],
         ]
         checks.each do |name, warn_at, crit_at|
           value = values[name]
@@ -78,6 +85,17 @@ module Master
         elsif disk && disk <= DEFAULTS[:disk_free_warn_pct] && state == :ok
           state = :warning
           reasons << "disk_free_pct=#{disk} <= #{DEFAULTS[:disk_free_warn_pct]}"
+        end
+
+        if values[:network] == false && state == :ok
+          state = :warning
+          reasons << "network=offline"
+        end
+
+        exhausted = values[:llm_quota_exhausted].to_i
+        if exhausted.positive? && state == :ok
+          state = :warning
+          reasons << "llm_quota_exhausted=#{exhausted}"
         end
         { state:, reasons: }
       end
@@ -122,6 +140,27 @@ module Master
         return Dir.children(fd_dir).size if Dir.exist?(fd_dir)
 
         nil
+      rescue StandardError
+        nil
+      end
+
+      def process_count
+        out, status = Open3.capture2e("ps", "-axo", "pid=")
+        status.success? ? out.lines.size : nil
+      rescue StandardError
+        nil
+      end
+
+      def network_available
+        Socket.tcp("1.1.1.1", 53, connect_timeout: 0.5) { true }
+      rescue StandardError
+        false
+      end
+
+      def llm_quota_exhausted
+        return 0 unless defined?(Master::Io::ModelQuota)
+
+        Master::Io::ModelQuota.exhausted_models.size
       rescue StandardError
         nil
       end
