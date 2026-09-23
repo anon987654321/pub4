@@ -25,7 +25,7 @@ surfaces:
     label: chat
     path: /
     viewports: [mobile, desktop]
-    snapshot: true
+    snapshot: false
   - app: amber
     label: home
     path: /

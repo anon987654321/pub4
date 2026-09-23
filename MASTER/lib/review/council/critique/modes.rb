@@ -40,7 +40,7 @@ module Master
                 "start each actionable UI issue with its issue number so ideation can preserve the council anchor",
                 "use first-screen composition facts as evidence, but do not confuse a metric threshold with visual quality",
                 "when the render has no actionable defect or evidence-backed improvement, state VISUAL_CLEAN explicitly",
-                "judge typography, hierarchy, spacing, alignment, density and composition in the render, not only in CSS",
+                "judge typography, hierarchy, spacing, alignment, density, grouping and composition in the render, not only in CSS",
               ],
             },
             sound: {

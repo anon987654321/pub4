@@ -94,6 +94,8 @@ module Master
         @bus = options[:bus]
         @learnings = options[:learnings]
         @committer = options[:committer]
+        @stage_commit = options.fetch(:stage_commit, false)
+        @visual_image = nil
         @conflicts = ConflictResolver.new(root:, bus: @bus)
       end
 
@@ -102,6 +104,9 @@ module Master
       end
 
       # One pass: scan → fix each violating file once → return { fixed:, status: }.
+      # External findings are used by rendered and convergence evidence, which
+      # has already measured the artifact and therefore must not be rescanned
+      # through a registry rule that knows nothing about that evidence.
       def run_once(files, external_violations: nil, image: nil)
         @visual_image = image
         violations = external_violations || scan_files(files)
@@ -178,7 +183,7 @@ module Master
       end
 
       def stage_commit_mode?
-        ENV["MASTER_FIX_COMMIT_STAGE"] == "1"
+        @stage_commit || ENV["MASTER_FIX_COMMIT_STAGE"] == "1"
       end
 
       # Review::Consensus fans a candidate fix out to three models and requires
@@ -394,7 +399,7 @@ module Master
         end
         return true unless @scanner.respond_to?(:should_autofix?, true)
 
-        confidence = violation[:confidence] || violation["confidence"] || 1.0
+        confidence = violation.fetch(:confidence, violation["confidence"] || 1.0)
         allowed = @scanner.__send__(:should_autofix?, violation[:rule], confidence,
                                     allow_deletions: deletions_allowed?)
         unless allowed

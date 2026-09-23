@@ -36,7 +36,7 @@ module VisualContractGate
       ...[...document.querySelectorAll('img:not([alt])')].map(() => 'image_without_alt'),
       ...[...document.querySelectorAll('button')].filter((el) => !(el.innerText.trim() || el.getAttribute('aria-label'))).map(() => 'button_without_name'),
       ...(document.querySelectorAll('h1').length !== 1 ? ['heading_one_count'] : []),
-      ...[...document.querySelectorAll('input:not([type=hidden]), textarea, select')].filter((el) => !(el.labels?.length || el.getAttribute('aria-label'))).map(() => 'field_without_label')
+      ...[...document.querySelectorAll('input:not([type=hidden]), textarea, select')].filter((el) => !(el.labels?.length || el.getAttribute('aria-label'))).map(() => 'field_without_label'),
     ];
   JS
 

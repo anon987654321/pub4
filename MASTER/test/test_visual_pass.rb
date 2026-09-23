@@ -27,4 +27,11 @@ class VisualPassContractTest < Minitest::Test
     assert_includes source, 'relative == "RAILS"'
     assert_includes source, 'relative == "MASTER/web"'
   end
+
+  def test_visual_findings_must_be_addressable
+    assert_includes source, "surface = pick[SURFACE_RE"
+    assert_includes source, "viewport = pick[VIEWPORT_RE"
+    assert_includes source, "source_text_line"
+    assert_includes source, "return unless surface && viewport && (selector || text_anchor)"
+  end
 end

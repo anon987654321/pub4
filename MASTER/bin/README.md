@@ -17,6 +17,8 @@ completes every one of them in zsh. `bin/master "<instruction>"` boots the
 runtime around a single instruction; bare `bin/master` opens a session, and
 `cli` is the interactive runtime it boots, so the two share one completion file.
 
+`bin/operator gate` and `/fix` share the same convergence principle: source evidence is not the whole artifact. Rendered web surfaces are measured through GeometryProbe/CDP, the existing Graphic Designer/Web Designer Council judges the render, and only addressable findings become RuleLoop repairs. This deliberately avoids a second beauty scanner or a second browser implementation.
+
 Three scripts are stages of the gate rather than things to run alone. `gate`
 scans, fixes, scans again, then critiques and reviews across the four trees;
 run it by hand only to debug the scanner, because `bin/operator gate` is the

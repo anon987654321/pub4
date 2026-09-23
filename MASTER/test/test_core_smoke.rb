@@ -6,7 +6,7 @@
 # blocking the dangerous ones and admitting the safe ones, the World writing
 # through backup, explicit git commit after evidence, and an evidence-gated finish.
 #
-# The smoke test is part of `rake core_smoke`, `bin/ci` and the core probe.
+# This Minitest file is reached by `rake core_smoke`, the default suite, bin/ci and bin/probe core.
 
 require "minitest/autorun"
 require "master"
