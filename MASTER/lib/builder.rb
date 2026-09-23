@@ -133,7 +133,7 @@ module Master
       boot_config = config.freeze_boot
       trace = boot_trace(root:, config:)
       loop_c = boot_loop(root:, config:, bus: trace[:bus])
-      reach = boot_reach(root:, config:, bus: trace[:bus])
+      reach = boot_reach(root:, config:, bus: trace[:bus], governor: loop_c[:governor])
       ground = boot_ground(root:, config:, homeostat: loop_c[:homeostat])
       services = build_analysis_services(root:, config:, trace:, loop_c:, reach:)
 
@@ -173,8 +173,8 @@ module Master
       LoopBoot.new(root:, config:, bus:).call
     end
 
-    def boot_reach(root:, config:, bus:)
-      ReachBoot.new(root:, config:, bus:).call
+    def boot_reach(root:, config:, bus:, governor:)
+      ReachBoot.new(root:, config:, bus:, governor:).call
     end
 
     def boot_ground(root:, config:, homeostat:)
