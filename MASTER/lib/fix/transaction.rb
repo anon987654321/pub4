@@ -54,7 +54,7 @@ module Master
         @active = true
         persist!
         observe!
-        @bus&.publish("fix:transaction_start", id: @id, paths: @paths)
+        emit("fix:transaction_start", id: @id, paths: @paths)
         self
       rescue StandardError
         release_lock
@@ -76,7 +76,7 @@ module Master
 
         @state = "delivering"
         persist!
-        @bus&.publish("fix:transaction_delivery_start", id: @id, paths: @paths)
+        emit("fix:transaction_delivery_start", id: @id, paths: @paths)
         true
       end
 
@@ -87,10 +87,10 @@ module Master
         persist!
         cleanup!
         release_lock
-        @bus&.publish("fix:transaction_commit", id: @id, paths: @paths)
+        emit("fix:transaction_commit", id: @id, paths: @paths)
         Result.ok(@paths)
       rescue StandardError => e
-        @bus&.publish("fix:transaction_commit_failed", id: @id, error: e.message)
+        emit("fix:transaction_commit_failed", id: @id, error: e.message)
         @active = false
         release_lock
         Result.err("transaction finalize: #{e.message}", category: :infrastructure)
@@ -106,7 +106,7 @@ module Master
           persist!
           @active = false
           release_lock
-          @bus&.publish("fix:transaction_conflict", id: @id, paths: conflicts)
+          emit("fix:transaction_conflict", id: @id, paths: conflicts)
           return Result.err("rollback refused: concurrent changes in #{conflicts.join(", ")}", category: :policy)
         end
 
@@ -116,10 +116,10 @@ module Master
         cleanup!
         @active = false
         release_lock
-        @bus&.publish("fix:transaction_rollback", id: @id, paths: @paths)
+        emit("fix:transaction_rollback", id: @id, paths: @paths)
         Result.ok(@paths)
       rescue StandardError => e
-        @bus&.publish("fix:transaction_rollback_failed", id: @id, error: e.message)
+        emit("fix:transaction_rollback_failed", id: @id, error: e.message)
         @active = false
         release_lock
         Result.err("transaction rollback: #{e.message}", category: :infrastructure)
@@ -131,10 +131,10 @@ module Master
         when "open"
           @active = true
           result = rollback!
-          @bus&.publish("fix:transaction_recovered", id: @id, result: result.to_s)
+          emit("fix:transaction_recovered", id: @id, result: result.to_s)
           result
         when "delivering"
-          @bus&.publish("fix:transaction_delivery_recovered", id: @id,
+          emit("fix:transaction_delivery_recovered", id: @id,
                         reason: "delivery had started; preserve tree and re-observe")
           @active = false
           cleanup!
@@ -147,7 +147,7 @@ module Master
           Result.err("unknown transaction state: #{@state}", category: :infrastructure)
         end
       rescue StandardError => e
-        @bus&.publish("fix:transaction_recovery_failed", id: @id, error: e.message)
+        emit("fix:transaction_recovery_failed", id: @id, error: e.message)
         Result.err("transaction recovery: #{e.message}", category: :infrastructure)
       ensure
         release_lock
@@ -158,6 +158,13 @@ module Master
       def state = @state
 
       private
+      def emit(event, **payload)
+        @bus&.publish(event, **payload)
+      rescue StandardError => e
+        warn("trace0: #{e.class}: #{e.message}") if ENV["MASTER_TRACE_STRICT"] == "1"
+        nil
+      end
+
 
       def persisted? = File.file?(File.join(@dir, MANIFEST))
 
