@@ -14,7 +14,7 @@ module Master
           Result.err("council: veto from #{veto[:persona]}\n#{veto[:feedback]}", category: :validation)
         end
 
-        def append_judge_synthesis(feedback:, code:, context:, image:)
+        def append_judge_synthesis(feedback:, code:, context:, image: nil)
           synthesis = @judge_enabled ? judge(feedback:, code:, context:, image:) : nil
           return unless synthesis
 
@@ -55,7 +55,8 @@ module Master
         end
 
         def judge(feedback:, code:, context:, image: nil)
-          @agent.ask(build_judge_prompt(feedback:, code:, context:))
+          prompt = build_judge_prompt(feedback:, code:, context:)
+          image ? @agent.ask(prompt, image:) : @agent.ask(prompt)
         rescue StandardError => e
           @bus&.publish(:council_judge_error, error: e.message)
           nil
