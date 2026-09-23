@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../../../MASTER/gates/constitutional_scan"
+require_relative "../../../MASTER/lib/operator/gates"
 
 # The gate is four full MASTER scans, ~11 minutes end to end (brgen alone is
 # ~4.5). These cover which targets it picks, which is the part worth changing
