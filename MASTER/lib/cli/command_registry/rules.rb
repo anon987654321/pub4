@@ -26,8 +26,17 @@ module Master
         end
         return "rules: nothing matches #{filter.inspect} in #{rules.size} declared" if rows.empty?
 
+        require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
+        ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
+
         lines = rows.map do |rule|
-          kind = rule["detect_semantic"] ? "semantic" : "detector"
+          law = ::Law.rules[rule["id"].to_s.to_sym]
+          kind = if law
+                   [("detector" if law.detect), ("semantic" if law.ask), ("practice" if law.practice)].compact.join("+")
+                 else
+                   "detector"
+                 end
+          kind = "declared" if kind.empty?
           format("%-28s %-10s %-8s %s", rule["id"], rule["tier"], rule["severity"], kind)
         end
         ["#{rows.size} of #{rules.size} rules — bin/operator rule <ID> for one in full", *lines].join("\n")
