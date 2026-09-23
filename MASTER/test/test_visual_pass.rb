@@ -20,6 +20,7 @@ class VisualPassContractTest < Minitest::Test
     assert_includes source, "visual_image:"
     assert_includes source, "visual_context:"
     assert_includes source, "RULE_ID = \"RENDERED_VISUAL_REFINEMENT\""
+    assert_includes File.read(File.expand_path("../../RAILS/gates/data/geometry_surfaces.yml", __dir__)), "app: master"
   end
 
   def test_visual_targets_are_limited_to_web_surfaces
