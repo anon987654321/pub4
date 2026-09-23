@@ -335,6 +335,7 @@ BOOTSTRAP = PostproBootstrap.run
 # budget it is held to; a path that cannot do those is not worth having back.
 POSTPRO_USAGE = <<~TXT
   usage: postpro.rb [flags]           with no flags, asks what to grade
+  usage: postpro.rb IMAGE | DIR       three to five random chains of it, beside the source
 
     --input FILE --output FILE --preset NAME   grade one image
     --reference FILE                  add a quality report against a reference
@@ -4564,6 +4565,21 @@ def random_mode?
   ARGV.include?("--random")
 end
 
+# A bare path names the subject: `postpro.rb photo.png` grades that one
+# photograph, `postpro.rb ~/Pictures` a few random picks from the folder. Flag
+# values are not paths (`--count 3` is not a file called 3), so every
+# value-taking flag's token is set aside before the hunt.
+VALUE_FLAGS = %w[
+  --input --output --preset --reference --count -n --watch --describe-preset
+  --css-filter --export-lut --size --stock-sheet --random --rescue --measure
+  --against --set --fit-grain
+].freeze
+
+def positional_subject
+  flag_values = VALUE_FLAGS.filter_map { |flag| argv_flag(flag) }
+  ARGV.find { |token| !token.start_with?("-") && !flag_values.include?(token) }
+end
+
 # Resolve the best available downloads directory on Android/Termux or desktop.
 def downloads_dir
   candidates = [
@@ -4576,19 +4592,25 @@ def downloads_dir
   candidates.compact.find { |d| File.directory?(d) }
 end
 
-# --random [DIR] [uplift] [--count N]
+# --random [DIR] [uplift] [--count N], or a bare positional IMAGE | DIR
 #
 # Three to five pictures per run, each through its own chain, written beside
-# the source — Downloads if there is one, the working directory otherwise.
+# the source — Downloads if there is one, the working directory otherwise, or
+# beside the one path the caller named.
 #
 # The default used to be a pair of stacked presets applied to every image in
 # the folder, which for a folder of two hundred is a long afternoon and two
 # hundred near neighbours. A run is now a handful of genuinely different
 # attempts, which is what random is for. `uplift` still stacks presets.
-def run_random
-  dir = downloads_dir
-  files = Dir.glob(File.join(dir, "**", "*.{jpg,jpeg,JPG,JPEG,png,PNG,webp,WEBP}"))
-             .reject { |f| File.basename(f).match?(/processed|masterpiece|postpro|_v\d+_/) }
+def run_random(subject = nil)
+  dir = subject || downloads_dir
+  files =
+    if subject && File.file?(subject)
+      [subject]
+    else
+      Dir.glob(File.join(dir, "**", "*.{jpg,jpeg,JPG,JPEG,png,PNG,webp,WEBP}"))
+         .reject { |f| File.basename(f).match?(/processed|masterpiece|postpro|_v\d+_/) }
+    end
   if files.empty?
     $cli_logger.error "No images in #{dir}"
     return
@@ -4602,7 +4624,7 @@ def run_random
   $postpro_seed = Random.new_seed % 2_147_483_647 unless ENV.key?("POSTPRO_SEED")
   rng = Random.new(postpro_seed)
   count = (argv_flag("--count") || argv_flag("-n"))&.to_i || rng.rand(RANDOM_OUTPUTS)
-  PostproBootstrap.dmesg "random dir=#{dir} pool=#{files.count} outputs=#{count} seed=#{$postpro_seed}"
+  PostproBootstrap.dmesg "random subject=#{subject || dir} pool=#{files.count} outputs=#{count} seed=#{$postpro_seed}"
 
   # Every chain is drawn against the ones already made this run, and so is every
   # source: five near-identical pictures of one face is the other way to waste
@@ -4704,6 +4726,21 @@ def auto_launch
   return run_watch       if watch_mode?
   return run_one_shot    if one_shot_mode?
   return run_random      if random_mode?
+  # A bare path is a subject, not a typo the menu swallows: one image gets the
+  # chains --random would draw for it, a directory a few picks from it. A path
+  # that is neither file nor directory is named and refused, because a menu
+  # opened on a typo reads as a hang.
+  subject = positional_subject
+  if subject
+    if !File.exist?(subject)
+      $cli_logger.error "No such file or directory: #{subject}"
+      exit 1
+    elsif File.file?(subject) && !subject.match?(/\.(jpe?g|png|webp)\z/i)
+      $cli_logger.error "Not an image: #{subject}"
+      exit 1
+    end
+    return run_random(subject)
+  end
   if ARGV.include?("--auto") || (!$stdin.tty? && ARGV.include?("--from-preprompt"))
     input = auto_mode
   elsif ARGV.include?("--from-preprompt") && PREPROMPT_PRESENT

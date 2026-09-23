@@ -9,8 +9,11 @@ entry point is `STUDIO/postpro/postpro.rb`.
 
 Give it `--input`, `--output` and `--preset` and it runs headless. Give it
 nothing and it opens the interactive menu — presets, random chains, or a custom
-JSON recipe. Call it positionally and you get the menu too, which in a script
-reads as a hang, so the three flags are not optional in anything automated.
+JSON recipe. Give it a bare path and the path is the subject: an image goes
+through three to five random chains written beside it, a directory gives a few
+random picks from it, and a path that is neither file nor directory is named
+and refused. A preset grade in a script still wants the three flags; a random
+one wants only the path.
 
 Check the path before you trust it. This file once named a script location five
 days out of date, and the script's own `require_relative` pointed at a directory
@@ -175,7 +178,9 @@ with `tonemap:` and gets the ACES 2 scale if it says nothing.
 `--random` renders three to five pictures per run, each through its own chain,
 written beside the source — Downloads if there is one, the working directory
 otherwise, with a JSON sidecar naming every effect and the seed, because a chain
-nobody wrote down is a chain nobody can render again.
+nobody wrote down is a chain nobody can render again. A bare path reaches the
+same draw with the subject named: `postpro.rb photo.jpg` is `--random` on that
+one photograph.
 
 A chain is grown, not sampled. A random subset of seventy-three effects is the
 Photoshop filter menu and it looks like one: tilt-shift and selenium toning and
@@ -352,6 +357,8 @@ instead of hardcoding the file location.
 ## Running it
 
 ```sh
+ruby STUDIO/postpro/postpro.rb photo.jpg        # three to five random chains, beside it
+ruby STUDIO/postpro/postpro.rb ~/Pictures      # the same draw, a few picks from that directory
 ruby STUDIO/postpro/postpro.rb --input in.jpg --output out.jpg --preset portrait
 ruby STUDIO/postpro/postpro.rb --random              # three to five chains, into Downloads
 ruby STUDIO/postpro/postpro.rb --random --rough      # the same, with the wear shelf in
