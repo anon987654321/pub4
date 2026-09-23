@@ -35,6 +35,9 @@ module Master
                 "use Ruby QualityFramework design rules from Deliberation",
                 "use Master::Design::PlatformProfiles for content-first and profile-specific critique",
                 "distinguish measurable violations from subjective taste",
+                "treat the attached rendered screenshot as visual ground truth",
+                "name the surface, viewport, and stable selector or visible text anchor for every actionable issue",
+                "judge typography, hierarchy, spacing, alignment, density, grouping and composition in the render, not only in CSS",
               ],
             },
             sound: {
