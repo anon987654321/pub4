@@ -10,10 +10,11 @@
 #
 # Fed to `bin/rails runner` by declutter-hygiene.sh, which is what cron calls.
 #
-# Pub4::LoadAverage lives in shared/lib, which no app autoloads (only app/* is
-# on config.autoload_paths — see shared/lib/shared/engine.rb). prune_guests.rb
-# gets it for free because PruneGuestUsersJob happens to require it; nothing
-# here does that incidentally, so it needs its own require.
+# Operator::LoadAverage lives in shared/lib, which no app autoloads (only
+# app/* is on config.autoload_paths — see shared/lib/shared/engine.rb).
+# prune_guests.rb gets it for free because PruneGuestUsersJob happens to
+# require it; nothing here does that incidentally, so it needs its own
+# require.
 require "operator/load_average"
 
 started = Time.now
@@ -26,5 +27,5 @@ nudges = Recommendation.declutter.where(created_at: started..).count
 
 puts format(
   "expired_challenges=%d box_nudges=%d in %.1fs load=%s",
-  overdue_before - overdue_after, nudges, Time.now - started, Pub4::LoadAverage.one.inspect
+  overdue_before - overdue_after, nudges, Time.now - started, Operator::LoadAverage.one.inspect
 )
