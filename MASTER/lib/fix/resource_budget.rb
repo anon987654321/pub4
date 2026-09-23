@@ -56,10 +56,20 @@ module Master
 
       private
 
+      # state only ever escalates within one classify call (:ok -> :warning ->
+      # :critical), never downgrades -- each helper below takes the
+      # accumulated [state, reasons] and returns the same or an escalated
+      # pair, in the exact same check order the single method used to run
+      # inline, so a later warn-level check can never undo an earlier
+      # critical the way `state == :ok` guards already prevented.
       def classify(values)
-        reasons = []
-        state = :ok
-        checks = [
+        state, reasons = classify_resource_checks(values)
+        state, reasons = classify_disk(values, state, reasons)
+        classify_network_and_quota(values, state, reasons)
+      end
+
+      def resource_checks_table
+        [
           [:load_avg_1m, limit("load_avg_1m", "warn", DEFAULTS[:load_avg_1m][:warn]),
            limit("load_avg_1m", "crit", DEFAULTS[:load_avg_1m][:crit])],
           [:rss_mb, limit("master_rss_mb", "warn", DEFAULTS[:master_rss_mb][:warn]),
@@ -68,37 +78,53 @@ module Master
           [:thread_count, resource_limit("thread_count", "warn"), resource_limit("thread_count", "crit")],
           [:process_count, resource_limit("process_count", "warn"), resource_limit("process_count", "crit")],
         ]
-        checks.each do |name, warn_at, crit_at|
+      end
+
+      def classify_resource_checks(values)
+        reasons = []
+        state = :ok
+        resource_checks_table.each do |name, warn_at, crit_at|
           value = values[name]
           next unless value
 
-          if value >= crit_at
-            state = :critical
-            reasons << "#{name}=#{value} >= #{crit_at}"
-          elsif value >= warn_at && state == :ok
-            state = :warning
-            reasons << "#{name}=#{value} >= #{warn_at}"
-          end
+          state, note = classify_one_check(state, name, value, warn_at, crit_at)
+          reasons << note if note
         end
+        [state, reasons]
+      end
 
+      def classify_one_check(state, name, value, warn_at, crit_at)
+        if value >= crit_at
+          [:critical, "#{name}=#{value} >= #{crit_at}"]
+        elsif value >= warn_at && state == :ok
+          [:warning, "#{name}=#{value} >= #{warn_at}"]
+        else
+          [state, nil]
+        end
+      end
+
+      def classify_disk(values, state, reasons)
         disk = values[:disk_free_pct]
         if disk && disk <= resource_limit("disk_free_pct", "crit")
           state = :critical
-          reasons << "disk_free_pct=#{disk} <= #{resource_limit("disk_free_pct", "crit")}"
+          reasons += ["disk_free_pct=#{disk} <= #{resource_limit("disk_free_pct", "crit")}"]
         elsif disk && disk <= resource_limit("disk_free_pct", "warn") && state == :ok
           state = :warning
-          reasons << "disk_free_pct=#{disk} <= #{resource_limit("disk_free_pct", "warn")}"
+          reasons += ["disk_free_pct=#{disk} <= #{resource_limit("disk_free_pct", "warn")}"]
         end
+        [state, reasons]
+      end
 
+      def classify_network_and_quota(values, state, reasons)
         if values[:network] == false && state == :ok
           state = :warning
-          reasons << "network=offline"
+          reasons += ["network=offline"]
         end
 
         exhausted = values[:llm_quota_exhausted].to_i
         if exhausted.positive? && state == :ok
           state = :warning
-          reasons << "llm_quota_exhausted=#{exhausted}"
+          reasons += ["llm_quota_exhausted=#{exhausted}"]
         end
         { state:, reasons: }
       end

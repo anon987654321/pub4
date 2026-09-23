@@ -59,35 +59,18 @@ module Master
         def run_pass(files:, target:, pass:, deadline:, transaction_id:, history:, seen_snapshots:,
                      recurring_violations:, consecutive_clean:)
           pass_mtimes = mtimes(files)
-          @committer.baseline!
-          transaction = Transaction.new(root: @root, paths: files, id: transaction_id, bus: @bus)
-          @committer.begin_transaction!(transaction)
-          @bus&.publish("fix_loop:pass_start", pass:, target:, file_count: files.size)
+          start_pass_transaction(files:, target:, pass:, transaction_id:)
 
           run_fast_stage(files, pass)
           found = run_observation_stage(files, target)
-          if found.empty?
-            result = handle_clean_pass(files, pass_mtimes, pass, consecutive_clean)
-            return abort_transaction(result) if result.status == :validation_failed
-
-            return finish_transaction(files, pass, result)
-          end
+          return clean_pass_result(files, pass_mtimes, pass, consecutive_clean) if found.empty?
 
           if stagnant?(history, seen_snapshots, recurring_violations, found, pass)
             abort_transaction
             return PassResult.new(status: :plateau, consecutive_clean: 0)
           end
 
-          resources = @resource_budget.measure
-          if @resource_budget.critical?(resources)
-            @bus&.publish("fix_loop:model_work_shed", pass:, reasons: resources[:reasons],
-                          values: resources[:values])
-            Master::Trace::Dmesg.status("fix0", "pass #{pass}, model work shed: #{resources[:reasons].join("; ")}")
-          else
-            @homeostat&.observe(:llm_call)
-            council = @council&.run(files: files_with_violations(found, files), pass:, deadline:)
-            run_llm_stage(found, files, pass, deadline, council:)
-          end
+          run_or_shed_llm_stage(found, files, pass, deadline)
           delivery = @committer.finish_transaction("fix_loop: pass #{pass}", findings: found, owned_paths: files)
           return PassResult.new(status: :delivery_failed, consecutive_clean: 0, message: delivery.message) if delivery.err?
 
@@ -111,6 +94,34 @@ module Master
 
         private
 
+        def clean_pass_result(files, pass_mtimes, pass, consecutive_clean)
+          result = handle_clean_pass(files, pass_mtimes, pass, consecutive_clean)
+          return abort_transaction(result) if result.status == :validation_failed
+
+          finish_transaction(files, pass, result)
+        end
+
+        def start_pass_transaction(files:, target:, pass:, transaction_id:)
+          @committer.baseline!
+          transaction = Transaction.new(root: @root, paths: files, id: transaction_id, bus: @bus)
+          @committer.begin_transaction!(transaction)
+          @bus&.publish("fix_loop:pass_start", pass:, target:, file_count: files.size)
+        end
+
+        def run_or_shed_llm_stage(found, files, pass, deadline)
+          resources = @resource_budget.measure
+          if @resource_budget.critical?(resources)
+            @bus&.publish("fix_loop:model_work_shed", pass:, reasons: resources[:reasons],
+                          values: resources[:values])
+            Master::Trace::Dmesg.status("fix0", "pass #{pass}, model work shed: #{resources[:reasons].join("; ")}")
+            return
+          end
+
+          @homeostat&.observe(:llm_call)
+          council = @council&.run(files: files_with_violations(found, files), pass:, deadline:)
+          run_llm_stage(found, files, pass, deadline, council:)
+        end
+
         def run_fast_stage(files, pass)
           fixed = fast_pass(files)
           @committer.commit_if_dirty("fix_loop: fast-fix [pass #{pass}]", owned_paths: files) if fixed > 0
@@ -133,17 +144,7 @@ module Master
             Master::Trace::Dmesg.status("fix0", "pass #{pass}, model fixes skipped, circuit open for #{open_breakers.join(", ")}")
             return 0
           end
-
-          resources = @resource_budget.measure
-          if @resource_budget.critical?(resources)
-            @bus&.publish("fix_loop:llm_skipped", pass:, reason: "resource_critical",
-                          reasons: resources[:reasons], values: resources[:values])
-            Master::Trace::Dmesg.status("fix0", "pass #{pass}, model fixes shed: #{resources[:reasons].join("; ")}")
-            return 0
-          end
-          if @resource_budget.warning?(resources)
-            @bus&.publish("fix_loop:resource_warning", pass:, reasons: resources[:reasons])
-          end
+          return 0 unless llm_stage_resources_ok?(pass)
 
           pass_deadline = [Time.now + PASS_BUDGET_SECONDS, deadline].min
           llm_fixed = llm_pass(violations: found, files:, pass:, deadline: pass_deadline, council:)
@@ -151,6 +152,18 @@ module Master
           @committer.commit_if_dirty("fix_loop: llm-fix [pass #{pass}]", findings: found, owned_paths: files) if llm_fixed > 0
           track_recurrence(found)
           llm_fixed
+        end
+
+        def llm_stage_resources_ok?(pass)
+          resources = @resource_budget.measure
+          if @resource_budget.critical?(resources)
+            @bus&.publish("fix_loop:llm_skipped", pass:, reason: "resource_critical",
+                          reasons: resources[:reasons], values: resources[:values])
+            Master::Trace::Dmesg.status("fix0", "pass #{pass}, model fixes shed: #{resources[:reasons].join("; ")}")
+            return false
+          end
+          @bus&.publish("fix_loop:resource_warning", pass:, reasons: resources[:reasons]) if @resource_budget.warning?(resources)
+          true
         end
 
         # A reading with no violations is not a finished tree: the ground truth

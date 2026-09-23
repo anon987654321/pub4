@@ -31,31 +31,7 @@ module Master
 
           entry = state["services"][name.to_s] ||= {}
           prune_attempts(entry, window_seconds)
-          starts = 0
-
-          while starts < max_restarts
-            if Array(entry["attempts"]).size >= max_restarts
-              return degraded(name, "restart budget exhausted", entry)
-            end
-
-            starts += 1
-            entry["attempts"] << Time.now.utc.to_f
-            entry["last_start_at"] = Time.now.utc.iso8601
-            persist(state)
-            emit("service:restart", service: name, attempt: entry["attempts"].size)
-
-            start.call
-            deadline = Process.clock_gettime(@clock) + wait_seconds
-            until Process.clock_gettime(@clock) >= deadline
-              if healthy.call
-                reset_after_recovery(state, name)
-                return healthy_status(name)
-              end
-              sleep 0.1
-            end
-          end
-
-          degraded(name, "service did not become healthy after #{starts} restart attempt(s)", entry)
+          attempt_restarts(state:, name:, entry:, start:, healthy:, max_restarts:, wait_seconds:)
         end
       rescue StandardError => e
         emit("service:failure", service: name, error: e.message)
@@ -67,6 +43,48 @@ module Master
       end
 
       private
+
+      # Same loop as before the split, just spread across three names: try up
+      # to max_restarts times, each attempt recorded before it runs (so a
+      # crash mid-start still counts against the budget), each followed by
+      # the same wait-for-healthy poll. Returns the first real Result (from
+      # either the budget-exhausted early return or a healthy recovery); nil
+      # from wait_for_healthy means "still not healthy, try again" and falls
+      # through to the next loop iteration exactly as the inline until did.
+      def attempt_restarts(state:, name:, entry:, start:, healthy:, max_restarts:, wait_seconds:)
+        starts = 0
+        while starts < max_restarts
+          return degraded(name, "restart budget exhausted", entry) if Array(entry["attempts"]).size >= max_restarts
+
+          starts += 1
+          record_restart_attempt(state, name, entry)
+          start.call
+          result = wait_for_healthy(state, name, healthy, wait_seconds)
+          return result if result
+        end
+
+        degraded(name, "service did not become healthy after #{starts} restart attempt(s)", entry)
+      end
+
+      def record_restart_attempt(state, name, entry)
+        entry["attempts"] << Time.now.utc.to_f
+        entry["last_start_at"] = Time.now.utc.iso8601
+        persist(state)
+        emit("service:restart", service: name, attempt: entry["attempts"].size)
+      end
+
+      def wait_for_healthy(state, name, healthy, wait_seconds)
+        deadline = Process.clock_gettime(@clock) + wait_seconds
+        until Process.clock_gettime(@clock) >= deadline
+          if healthy.call
+            reset_after_recovery(state, name)
+            return healthy_status(name)
+          end
+          sleep 0.1
+        end
+        nil
+      end
+
       def emit(event, **payload)
         @bus&.publish(event, **payload)
       rescue StandardError => e

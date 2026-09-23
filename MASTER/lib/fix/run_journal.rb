@@ -32,44 +32,9 @@ module Master
         with_lock do
           data = load
           active = data["runs"].reverse.find { |run| %w[active crashed].include?(run["state"].to_s) }
-          if active
-            unless active["target"] == relative(target)
-              raise "another fix run is active: #{active["id"]} for #{active["target"]}"
-            end
-            if active["state"] == "active" && process_alive?(active["pid"])
-              raise "another fix process is active: #{active["id"]} pid=#{active["pid"]}"
-            end
-            previous_state = active["state"]
-            active["state"] = "active"
-            active["resumed_from"] = previous_state unless previous_state == "active"
-            active["resumed_at"] = Time.now.utc.iso8601
-            active["resume_count"] = active.fetch("resume_count", 0).to_i + 1
-            remaining = remaining_seconds(active)
-            persist(data)
-            emit("fix:resume", run_id: active["id"], pass: next_pass(active),
-                          resume_count: active["resume_count"], remaining_seconds: remaining)
-            return active.merge("resumed" => true, "remaining_seconds" => remaining)
-          end
+          next resume_existing_run(active, target, data) if active
 
-          now = Time.now.utc
-          run = {
-            "id" => SecureRandom.hex(10),
-            "state" => "active",
-            "target" => relative(target),
-            "files" => Array(files).map { |path| relative(path) }.compact.uniq.sort,
-            "max_passes" => Integer(max_passes),
-            "budget_seconds" => Integer(budget_seconds),
-            "started_at" => now.iso8601,
-            "deadline_at" => (now + Integer(budget_seconds)).iso8601,
-            "last_seen_at" => now.iso8601,
-            "pid" => Process.pid,
-            "passes" => [],
-          }
-          data["runs"] << run
-          data["runs"] = data["runs"].last(MAX_RUNS)
-          persist(data)
-          emit("fix:start", run_id: run["id"], target: run["target"])
-          run.merge("resumed" => false, "remaining_seconds" => Integer(budget_seconds).to_f)
+          create_new_run(target:, files:, max_passes:, budget_seconds:, data:)
         end
       rescue StandardError => e
         emit("fix:journal_error", operation: "start", error: e.message)
@@ -114,19 +79,6 @@ module Master
         end
       end
 
-      def remaining_seconds(run)
-        deadline = Time.iso8601(run["deadline_at"].to_s)
-        now = Time.now.utc
-        last = run["last_seen_at"] && Time.iso8601(run["last_seen_at"].to_s)
-        return 0.0 if last && now < last
-
-        remaining = [deadline - now, 0.0].max
-        run["last_seen_at"] = now.iso8601
-        remaining
-      rescue ArgumentError
-        0.0
-      end
-
       def active_pass(run)
         Array(run["passes"]).reverse.find { |row| row["state"].to_s == "active" }
       end
@@ -145,6 +97,63 @@ module Master
       end
 
       private
+
+      def resume_existing_run(active, target, data)
+        unless active["target"] == relative(target)
+          raise "another fix run is active: #{active["id"]} for #{active["target"]}"
+        end
+        if active["state"] == "active" && process_alive?(active["pid"])
+          raise "another fix process is active: #{active["id"]} pid=#{active["pid"]}"
+        end
+        previous_state = active["state"]
+        active["state"] = "active"
+        active["resumed_from"] = previous_state unless previous_state == "active"
+        active["resumed_at"] = Time.now.utc.iso8601
+        active["resume_count"] = active.fetch("resume_count", 0).to_i + 1
+        remaining = remaining_seconds(active)
+        persist(data)
+        emit("fix:resume", run_id: active["id"], pass: next_pass(active),
+                      resume_count: active["resume_count"], remaining_seconds: remaining)
+        active.merge("resumed" => true, "remaining_seconds" => remaining)
+      end
+
+      def create_new_run(target:, files:, max_passes:, budget_seconds:, data:)
+        now = Time.now.utc
+        run = {
+          "id" => SecureRandom.hex(10),
+          "state" => "active",
+          "target" => relative(target),
+          "files" => Array(files).map { |path| relative(path) }.compact.uniq.sort,
+          "max_passes" => Integer(max_passes),
+          "budget_seconds" => Integer(budget_seconds),
+          "started_at" => now.iso8601,
+          "deadline_at" => (now + Integer(budget_seconds)).iso8601,
+          "last_seen_at" => now.iso8601,
+          "pid" => Process.pid,
+          "passes" => [],
+        }
+        data["runs"] << run
+        data["runs"] = data["runs"].last(MAX_RUNS)
+        persist(data)
+        emit("fix:start", run_id: run["id"], target: run["target"])
+        run.merge("resumed" => false, "remaining_seconds" => Integer(budget_seconds).to_f)
+      end
+
+      # No external caller (checked: only start_or_resume calls this, without
+      # an explicit receiver, which private allows).
+      def remaining_seconds(run)
+        deadline = Time.iso8601(run["deadline_at"].to_s)
+        now = Time.now.utc
+        last = run["last_seen_at"] && Time.iso8601(run["last_seen_at"].to_s)
+        return 0.0 if last && now < last
+
+        remaining = [deadline - now, 0.0].max
+        run["last_seen_at"] = now.iso8601
+        remaining
+      rescue ArgumentError
+        0.0
+      end
+
       def emit(event, **payload)
         @bus&.publish(event, **payload)
       rescue StandardError => e

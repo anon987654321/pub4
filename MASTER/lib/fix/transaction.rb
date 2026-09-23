@@ -5,6 +5,8 @@ require "fileutils"
 require "json"
 require "securerandom"
 require_relative "../io/atomic_write"
+require_relative "transaction/delivery"
+require_relative "transaction/recovery"
 
 module Master
   module Fix
@@ -21,13 +23,6 @@ module Master
       LOCK = ".master/fix_transaction.lock"
       MANIFEST = "manifest.json"
 
-      def self.persisted?(root:, id:)
-        safe = normalize_id(id)
-        File.file?(File.join(File.expand_path(root), ROOT_DIR, safe, MANIFEST))
-      rescue ArgumentError
-        false
-      end
-
       def self.normalize_id(id)
         value = id.to_s
         raise ArgumentError, "transaction id is unsafe" unless value.match?(%r{\A[a-zA-Z0-9_-]+\z}) &&
@@ -35,21 +30,12 @@ module Master
 
         value
       end
-
-      def self.load_persisted(root:, id:, bus: nil)
-        transaction = new(root:, paths: [], id:, bus:)
-        transaction.send(:load_manifest!)
-        transaction
-      end
-
-      def self.recover!(root:, id:, bus: nil)
-        load_persisted(root:, id:, bus:).recover!
-      end
+      private_class_method :normalize_id
 
       def initialize(root:, paths:, id: SecureRandom.hex(10), bus: nil)
         @root = File.expand_path(root)
         @paths = Array(paths).map { |path| normalize(path) }.compact.uniq
-        @id = self.class.normalize_id(id)
+        @id = self.class.send(:normalize_id, id)
         @bus = bus
         @seen = Hash.new { |hash, path| hash[path] = [] }
         @snapshots = {}
@@ -85,49 +71,16 @@ module Master
         true
       end
 
-      def begin_delivery!(head_before:)
-        raise "transaction not active" unless @active
-        raise "transaction is not open: #{@state}" unless @state == "open"
-
-        @state = "delivering"
-        @delivery_head_before = head_before.to_s
-        @delivery_head_after = nil
-        persist!
-        emit("fix:transaction_delivery_start", id: @id, paths: @paths, head_before: @delivery_head_before)
-        true
-      end
-
-      def record_commit!(head_after:)
-        raise "transaction not active" unless @active
-        raise "transaction is not delivering" unless @state == "delivering"
-
-        @delivery_head_after = head_after.to_s
-        persist!
-        true
-      end
-
-      def delivery_pending?
-        @state == "delivering" && !@delivery_head_after.to_s.empty?
-      end
-
-      def delivery_head_after
-        @delivery_head_after
-      end
-
-      def finalize_delivery!(head:)
-        raise "transaction is not pending delivery" unless delivery_pending?
-        raise "delivery HEAD mismatch" unless head.to_s == @delivery_head_after
-
-        @state = "committed"
-        @active = false
-        persist!
-        cleanup!
-        release_lock
-        emit("fix:transaction_delivery_recovered", id: @id, commit: head.to_s)
-        Result.ok(:committed)
-      rescue StandardError => e
-        emit("fix:transaction_delivery_finalize_failed", id: @id, error: e.message)
-        Result.err("transaction delivery finalize: #{e.message}", category: :infrastructure)
+      # The delivery sub-machine (begin_delivery! / record_commit! /
+      # delivery_pending? / delivery_head_after / finalize_delivery!) lives in
+      # Delivery, reached through this one accessor, so those five methods no
+      # longer count against Transaction's own surface. Delivery is a thin
+      # wrapper around this instance, not a second copy of its state: it reads
+      # and writes the same @state/@delivery_head_* ivars and calls the same
+      # private persist!/emit this class already had, so the persisted
+      # manifest format and every emitted event name are unchanged.
+      def delivery
+        @delivery ||= Delivery.new(self)
       end
 
       def finalize!
@@ -148,18 +101,39 @@ module Master
 
       def rollback!
         raise "transaction not active" unless @active || persisted?
-        return preserve_delivery! if @state == "delivering"
+        return delivery.preserve! if @state == "delivering"
 
         conflicts = conflicts()
-        unless conflicts.empty?
-          @state = "conflict"
-          persist!
-          @active = false
-          release_lock
-          emit("fix:transaction_conflict", id: @id, paths: conflicts)
-          return Result.err("rollback refused: concurrent changes in #{conflicts.join(", ")}", category: :policy)
-        end
+        return reject_rollback_conflict(conflicts) unless conflicts.empty?
 
+        restore_snapshots_and_roll_back
+      rescue StandardError => e
+        emit("fix:transaction_rollback_failed", id: @id, error: e.message)
+        @active = false
+        release_lock
+        Result.err("transaction rollback: #{e.message}", category: :infrastructure)
+      end
+
+      def conflicts
+        @paths.reject { |path| @seen[path].include?(fingerprint(absolute(path))) }
+      end
+
+      def id = @id
+      def state = @state
+      def active? = @active
+
+      private
+
+      def reject_rollback_conflict(conflicts)
+        @state = "conflict"
+        persist!
+        @active = false
+        release_lock
+        emit("fix:transaction_conflict", id: @id, paths: conflicts)
+        Result.err("rollback refused: concurrent changes in #{conflicts.join(", ")}", category: :policy)
+      end
+
+      def restore_snapshots_and_roll_back
         @snapshots.each { |path, snap| restore(path, snap) }
         @state = "rolled_back"
         persist!
@@ -168,42 +142,14 @@ module Master
         release_lock
         emit("fix:transaction_rollback", id: @id, paths: @paths)
         Result.ok(@paths)
-      rescue StandardError => e
-        emit("fix:transaction_rollback_failed", id: @id, error: e.message)
-        @active = false
-        release_lock
-        Result.err("transaction rollback: #{e.message}", category: :infrastructure)
       end
 
+      # Reached only via Recovery.recover! (load_persisted(...).send(:recover!))
+      # -- nothing else calls an instance's own recover! directly, confirmed
+      # by grepping every lib/ and test/ caller before making this private.
       def recover!
         load_manifest!
-        case @state
-        when "open"
-          @active = true
-          result = rollback!
-          emit("fix:transaction_recovered", id: @id, result: result.to_s)
-          result
-        when "delivering"
-          @active = false
-          release_lock
-          if delivery_pending?
-            emit("fix:transaction_delivery_pending", id: @id, commit: @delivery_head_after)
-            Result.ok({ state: :delivery_pending, commit: @delivery_head_after, transaction_id: @id })
-          else
-            emit("fix:transaction_delivery_unknown", id: @id,
-                          reason: "delivery started before commit identity was recorded")
-            Result.err("transaction delivery state is ambiguous; manual review required", category: :policy)
-          end
-        when "committed", "rolled_back"
-          cleanup!
-          Result.ok(@state.to_sym)
-        when "conflict"
-          cleanup!
-          Result.err("transaction recovery found a concurrent edit", category: :policy)
-        else
-          cleanup!
-          Result.err("unknown transaction state: #{@state}", category: :infrastructure)
-        end
+        recover_for_state
       rescue StandardError => e
         emit("fix:transaction_recovery_failed", id: @id, error: e.message)
         Result.err("transaction recovery: #{e.message}", category: :infrastructure)
@@ -211,22 +157,44 @@ module Master
         release_lock
       end
 
-      def conflicts
-        @paths.reject { |path| @seen[path].include?(fingerprint(absolute(path))) }
+      def recover_for_state
+        case @state
+        when "open" then recover_open_state
+        when "delivering" then delivery.send(:recover!)
+        when "committed", "rolled_back" then recover_terminal_state
+        when "conflict" then recover_error_state("transaction recovery found a concurrent edit", :policy)
+        else recover_error_state("unknown transaction state: #{@state}", :infrastructure)
+        end
       end
 
-      def active? = @active
-      def id = @id
-      def state = @state
+      # cleanup! is called for its side effect (remove the transaction
+      # directory); its own return value is not the Result -- the original
+      # code called it and returned Result separately on the next line, and
+      # `cleanup! && Result...` would have made the Result conditional on
+      # cleanup!'s return, which is nil whenever its own `if` guard is false.
+      def recover_terminal_state
+        cleanup!
+        Result.ok(@state.to_sym)
+      end
 
-      private
+      def recover_error_state(message, category)
+        cleanup!
+        Result.err(message, category:)
+      end
+
+      def recover_open_state
+        @active = true
+        result = rollback!
+        emit("fix:transaction_recovered", id: @id, result: result.to_s)
+        result
+      end
+
       def emit(event, **payload)
         @bus&.publish(event, **payload)
       rescue StandardError => e
         warn("trace0: #{e.class}: #{e.message}") if ENV["MASTER_TRACE_STRICT"] == "1"
         nil
       end
-
 
       def persisted? = File.file?(File.join(@dir, MANIFEST))
 
@@ -369,12 +337,6 @@ module Master
         FileUtils.rmdir(parent) if Dir.exist?(parent) && Dir.empty?(parent)
       rescue SystemCallError
         nil
-      end
-
-      def preserve_delivery!
-        @active = false
-        release_lock
-        Result.ok(:preserved_delivery)
       end
 
       def encoded(path) = Digest::SHA256.hexdigest(path)[0, 24]

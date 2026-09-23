@@ -78,48 +78,19 @@ module Master
         files = incremental ? @file_collector.collect_changed(target) : @file_collector.collect(target)
         journal = @run_journal.start_or_resume(target:, files:, max_passes:, budget_seconds:)
         run_id = journal["id"]
-        remaining = journal["remaining_seconds"].to_f
-        if remaining <= 0
-          result = Result.err("fix budget exhausted before resume", category: :timeout)
-          @run_journal.terminal(run_id, :timeout, message: result.message)
-          return result
-        end
-        deadline = Ground::Reliability::Deadline.new(remaining)
+        budget_error = exhausted_budget(journal:, run_id:)
+        return budget_error if budget_error
+
+        deadline = Ground::Reliability::Deadline.new(journal["remaining_seconds"].to_f)
         start_pass = @run_journal.next_pass(journal)
         @bus&.publish("fix_loop:recovered", run_id:, start_pass:, target:) if journal["resumed"]
 
-        active_pass = @run_journal.active_pass(journal)
-        if active_pass && Transaction.persisted?(root: @root, id: active_pass.fetch("transaction_id"))
-          recovery = Transaction.recover!(root: @root, id: active_pass.fetch("transaction_id"), bus: @bus)
-          if recovery.err?
-            @run_journal.terminal(run_id, :failed, message: recovery.message)
-            return recovery
-          end
-
-          if recovery.value!.is_a?(Hash) && recovery.value![:state] == :delivery_pending
-            recovery_result = retry_delivery(
-              transaction_id: active_pass.fetch("transaction_id"),
-              expected_head: recovery.value!.fetch(:commit),
-            )
-            if recovery_result.err?
-              @run_journal.terminal(run_id, :failed, message: recovery_result.message)
-              return recovery_result
-            end
-            @run_journal.pass_finish(run_id, active_pass.fetch("pass"), status: :committed,
-                                     message: "recovered Git delivery")
-            start_pass = active_pass.fetch("pass").to_i + 1
-          end
-        end
+        resumed = resume_active_transaction(journal:, run_id:, start_pass:)
+        return resumed if resumed.err?
+        start_pass = resumed.value!
 
         result = run_passes(files:, target:, max_passes:, deadline:, budget_seconds:, start_pass:, run_id:)
-        terminal_state = if result.err? && result.category == :timeout
-          :timeout
-        elsif result.ok?
-          result.value!.to_s[/\A[A-Z_]+/].to_s.downcase.to_sym
-        else
-          :failed
-        end
-        @run_journal.terminal(run_id, terminal_state, message: result.to_s)
+        @run_journal.terminal(run_id, terminal_state_for(result), message: result.to_s)
         result
       rescue StandardError => e
         @bus&.publish("fix_loop:crash", error: e.message, backtrace: e.backtrace&.first(8))
@@ -135,8 +106,8 @@ module Master
         ahead, = @git.ahead_behind
         return Result.err("delivery recovery left #{ahead} unpushed commit(s)", category: :infrastructure) unless ahead.zero?
 
-        transaction = Transaction.load_persisted(root: @root, id: transaction_id, bus: @bus)
-        result = transaction.finalize_delivery!(head: actual_head)
+        transaction = Transaction::Recovery.load_persisted(root: @root, id: transaction_id, bus: @bus)
+        result = transaction.delivery.finalize!(head: actual_head)
         return result if result.err?
 
         Result.ok(:delivery_recovered)
@@ -166,6 +137,48 @@ module Master
       def self.preamble_from_soul = RuleLoop.soul_preamble
 
       private
+
+      def exhausted_budget(journal:, run_id:)
+        return if journal["remaining_seconds"].to_f > 0
+
+        result = Result.err("fix budget exhausted before resume", category: :timeout)
+        @run_journal.terminal(run_id, :timeout, message: result.message)
+        result
+      end
+
+      def resume_active_transaction(journal:, run_id:, start_pass:)
+        active_pass = @run_journal.active_pass(journal)
+        unless active_pass && Transaction::Recovery.persisted?(root: @root, id: active_pass.fetch("transaction_id"))
+          return Result.ok(start_pass)
+        end
+
+        recovery = Transaction::Recovery.recover!(root: @root, id: active_pass.fetch("transaction_id"), bus: @bus)
+        if recovery.err?
+          @run_journal.terminal(run_id, :failed, message: recovery.message)
+          return recovery
+        end
+        return Result.ok(start_pass) unless recovery.value!.is_a?(Hash) && recovery.value![:state] == :delivery_pending
+
+        recover_pending_delivery(active_pass:, run_id:, commit: recovery.value!.fetch(:commit))
+      end
+
+      def recover_pending_delivery(active_pass:, run_id:, commit:)
+        recovery_result = retry_delivery(transaction_id: active_pass.fetch("transaction_id"), expected_head: commit)
+        if recovery_result.err?
+          @run_journal.terminal(run_id, :failed, message: recovery_result.message)
+          return recovery_result
+        end
+        @run_journal.pass_finish(run_id, active_pass.fetch("pass"), status: :committed,
+                                 message: "recovered Git delivery")
+        Result.ok(active_pass.fetch("pass").to_i + 1)
+      end
+
+      def terminal_state_for(result)
+        return :timeout if result.err? && result.category == :timeout
+        return result.value!.to_s[/\A[A-Z_]+/].to_s.downcase.to_sym if result.ok?
+
+        :failed
+      end
 
       def build_pass_runner(rules:, agent:, scanner:, root:, bus:, learnings:, rollback:,
         ground_truth:, preserve_user_intent:, law_resolver:, homeostat: nil)

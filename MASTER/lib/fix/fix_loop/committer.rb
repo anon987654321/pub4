@@ -72,47 +72,24 @@ module Master
             paths = own_changes(owned_paths)
             return finish_empty_transaction(transaction) if paths.empty?
 
-            conflicts = transaction.conflicts
-            unless conflicts.empty?
-              @transaction = nil
-              transaction.rollback!
-              return Result.err("fix transaction detected concurrent changes in #{conflicts.join(", ")}", category: :policy)
-            end
+            prepared, blocked = prepare_for_delivery(transaction, message, paths)
+            return blocked if blocked
 
-            prepared = validate_paths(message, paths)
-            unless prepared
-              @transaction = nil
-              transaction.rollback!
-              return Result.err("fix transaction blocked before delivery", category: :policy)
-            end
-
-            head_before = @git.head
-            transaction.begin_delivery!(head_before:)
-            @transaction = nil
-            begin
-              result = commit_paths(message, findings, prepared, transaction:)
-              transaction.finalize!
-              result
-            rescue StandardError => e
-              committed = head_changed?(head_before)
-              committed ? Result.err(
-                "fix transaction delivery pending: #{e.message}",
-                category: :infrastructure,
-              ) : transaction.rollback!
-              @bus&.publish("fix_loop:commit_error", error: e.message, committed:)
-              committed ? Result.err(
-                "fix transaction delivery pending: #{e.message}",
-                category: :infrastructure,
-              ) : Result.err("fix transaction delivery: #{e.message}", category: :infrastructure)
-            end
+            deliver_and_commit(transaction:, message:, findings:, prepared:)
           rescue StandardError => e
             @bus&.publish("fix_loop:commit_error", error: e.message)
             @transaction = nil
-            transaction&.preserve_delivery! if transaction&.active?
+            transaction&.delivery&.preserve! if transaction&.active?
             Result.err("fix transaction delivery: #{e.message}", category: :infrastructure)
           end
         end
 
+        # Runs the two checks that can block delivery -- concurrent changes,
+        # then the same validate_paths finish_transaction always ran here --
+        # exactly once each, in the same order, with the same rollback on
+        # either failure. Returns [prepared, nil] to proceed or [nil, Result]
+        # to stop, so the caller never re-runs validate_paths (which lints
+        # and re-checks intent, not a free call to repeat).
         def commit_if_dirty(message, findings: [], owned_paths: nil)
           @commit_mutex.synchronize do
             if @transaction
@@ -127,6 +104,50 @@ module Master
         end
 
         private
+
+        # Runs the two checks that can block delivery -- concurrent changes,
+        # then the same validate_paths finish_transaction always ran here --
+        # exactly once each, in the same order, with the same rollback on
+        # either failure. Returns [prepared, nil] to proceed or [nil, Result]
+        # to stop, so the caller never re-runs validate_paths (which lints
+        # and re-checks intent, not a free call to repeat).
+        def prepare_for_delivery(transaction, message, paths)
+          conflicts = transaction.conflicts
+          unless conflicts.empty?
+            @transaction = nil
+            transaction.rollback!
+            return [nil, Result.err("fix transaction detected concurrent changes in #{conflicts.join(", ")}", category: :policy)]
+          end
+
+          prepared = validate_paths(message, paths)
+          return [prepared, nil] if prepared
+
+          @transaction = nil
+          transaction.rollback!
+          [nil, Result.err("fix transaction blocked before delivery", category: :policy)]
+        end
+
+        def deliver_and_commit(transaction:, message:, findings:, prepared:)
+          head_before = @git.head
+          transaction.delivery.begin!(head_before:)
+          @transaction = nil
+          begin
+            result = commit_paths(message, findings, prepared, transaction:)
+            transaction.finalize!
+            result
+          rescue StandardError => e
+            committed = head_changed?(head_before)
+            committed ? Result.err(
+              "fix transaction delivery pending: #{e.message}",
+              category: :infrastructure,
+            ) : transaction.rollback!
+            @bus&.publish("fix_loop:commit_error", error: e.message, committed:)
+            committed ? Result.err(
+              "fix transaction delivery pending: #{e.message}",
+              category: :infrastructure,
+            ) : Result.err("fix transaction delivery: #{e.message}", category: :infrastructure)
+          end
+        end
 
         def commit_if_dirty!(message, findings: [], owned_paths: nil)
           paths = own_changes(owned_paths)
@@ -170,7 +191,7 @@ module Master
         def commit_paths(message, findings, paths, transaction:)
           @git.commit(with_finding_ids(message, findings, paths), paths:)
           head_after = @git.head
-          transaction.record_commit!(head_after:)
+          transaction.delivery.record_commit!(head_after:)
           @bus&.publish("ops:commit", message: message.to_s[0, 120], head: head_after, paths:)
           @git.push
           verify_push!(paths)
