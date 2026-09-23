@@ -106,12 +106,13 @@ module Master
 
           def web_chat_model?(model_id) = model_id.to_s.start_with?("web-chat:")
 
-          # A daemon named by OLLAMA_BASE_URL is one the operator vouches for, so
-          # when it cannot be asked what it holds the configured local list
-          # stands. With the variable unset, a silent daemon offers nothing.
+          # Ollama is a first-class local lane. localhost:11434 is the default daemon;
+          # OLLAMA_BASE_URL can point elsewhere, and MASTER_NO_OLLAMA is the
+          # explicit opt-out. When discovery cannot answer, the configured list
+          # still provides a deterministic fallback.
           def ollama_enabled?
-            gate = @rules.dig("ollama", "enabled_when_env").to_s
-            gate.empty? ? false : ENV[gate].to_s != ""
+            return false if ENV["MASTER_NO_OLLAMA"] == "1"
+            true
           end
 
 def ollama_model?(model_id) = model_id.to_s.start_with?("ollama:", "ollama/")
@@ -122,6 +123,7 @@ def ollama_model?(model_id) = model_id.to_s.start_with?("ollama:", "ollama/")
 # When the daemon cannot say — down, slow, or answering nonsense — the
 # configured list stands and the dispatcher names the failure per call.
 def ollama_pulled?(model_id)
+  return true if ollama_cloud_model?(model_id) && ollama_cloud_catalog.include?(model_id)
   installed = ollama_installed_models
   return true if installed.nil?
 
@@ -135,6 +137,18 @@ def ollama_installed_models
   return @ollama_installed_models if defined?(@ollama_installed_models)
 
   @ollama_installed_models = fetch_ollama_tags
+end
+
+def ollama_cloud_model?(model_id)
+  name = model_id.to_s.sub(%r{\Aollama[:/]}, "")
+  name.end_with?(":cloud", "-cloud")
+end
+
+# Cloud models are remotely executed by Ollama, so they must not depend on
+# /api/tags. Keep this list in models.yml so the operator can update it without
+# changing Ruby; local discovery remains fully dynamic through /api/tags.
+def ollama_cloud_catalog
+  Array(@rules.dig("ollama", "cloud_models"))
 end
 
 # The local tier as the daemon holds it, best first: the models.yml chain in

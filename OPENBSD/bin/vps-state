@@ -5,6 +5,7 @@ require "json"
 require "net/http"
 require "open3"
 require "yaml"
+require_relative "../../RAILS/shared/lib/operator/dmesg"
 
 ROOT = File.expand_path("../..", __dir__)
 $LOAD_PATH.unshift(File.join(ROOT, "MASTER", "lib"))
@@ -163,22 +164,28 @@ payload = {
 if ARGV.include?("--json")
   puts JSON.pretty_generate(payload)
 else
-  puts "vps-state: #{payload[:host]}"
-  puts "dev: #{payload[:dev_repo]} @ #{payload[:dev_sha]}"
-  puts
+  puts Operator::Dmesg.line("vps0", "host", "name=#{payload[:host]}")
+  puts Operator::Dmesg.line("git0", "repo", "path=#{payload[:dev_repo]} sha=#{payload[:dev_sha]}")
   m = payload[:master]
-  puts format("master%-10s service=%-8s port :%-5s %-9s tts_socket=%s", "", m[:service], m[:port], m[:port_state], m[:tts_socket])
-  print_deploy_in_progress(m[:deploy_in_progress])
-  puts
-  payload[:apps].each do |row|
-    drift = row[:drift] ? "DRIFT" : "sync"
-    puts format("%-10s dev=%s deployed=%s %-5s svc=%-8s :%-5s %-9s",
-      row[:app], row[:dev_sha], row[:deployed_sha], drift, row[:service], row[:port], row[:port_state])
-    if row[:last_deploy]
-      puts "           last_deploy: #{row[:last_deploy]['sha']} @ #{row[:last_deploy]['at']}"
-    end
-    print_deploy_in_progress(row[:deploy_in_progress])
+  puts Operator::Dmesg.line("service0", "master", "state=#{m[:service]} port=#{m[:port]} port_state=#{m[:port_state]} tts=#{m[:tts_socket]}")
+  if m[:deploy_in_progress]
+    status = m[:deploy_in_progress]
+    state = status["stale"] ? "stale" : "running"
+    puts Operator::Dmesg.line("deploy0", "master", "state=#{state} step=#{status['step']} pid=#{status['pid']}")
   end
-  puts
-  puts "note: dev SHA != deployed SHA until zsh OPENBSD/bin/vps_ci.sh <app> runs"
+  payload[:apps].each do |row|
+    drift = row[:drift] ? "drift" : "sync"
+    puts Operator::Dmesg.line("service0", row[:app],
+      "state=#{row[:service]} port=#{row[:port]} port_state=#{row[:port_state]} deployment=#{drift}")
+    if row[:last_deploy]
+      puts Operator::Dmesg.line("deploy0", row[:app],
+        "sha=#{row[:last_deploy]['sha']} at=#{row[:last_deploy]['at']}")
+    end
+    if row[:deploy_in_progress]
+      status = row[:deploy_in_progress]
+      state = status["stale"] ? "stale" : "running"
+      puts Operator::Dmesg.line("deploy0", row[:app],
+        "state=#{state} step=#{status['step']} pid=#{status['pid']}")
+    end
+  end
 end

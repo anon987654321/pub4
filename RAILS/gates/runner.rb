@@ -79,18 +79,14 @@ def say(detail)
   puts Operator::Dmesg.line(GATE_UNIT, GATE_PARENT, detail)
 end
 
-# One repainting line at a terminal, so a long gate is not silence; nothing
-# anywhere else. It is written to the real stdout, outside any capture.
+# Gates use the same append-only dmesg stream as the rest of pub4.
+# A gate never repaints a terminal line: scrollback is the record.
 def progress(detail)
-  return unless Operator::Dmesg.escapes?(STDOUT)
-
-  STDOUT.print "\r\e[K#{Operator::Dmesg.line(GATE_UNIT, GATE_PARENT, detail)}"
-  @progress = true
+  say(detail)
 end
 
 def clear_progress
-  STDOUT.print "\r\e[K" if @progress
-  @progress = false
+  nil
 end
 
 def clock = Process.clock_gettime(Process::CLOCK_MONOTONIC)

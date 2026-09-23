@@ -127,18 +127,13 @@ module Operator
         say("step output in #{File.expand_path(@log_path)}") if @log && !failed.empty?
       end
 
-      # One repainting line at a terminal, so a six-minute test step is not
-      # silence; nothing at all anywhere else.
+      # CI uses the same append-only dmesg stream as every other operator
+      # surface. Scrollback is the record; never repaint a line.
       def progress(text)
-        return unless @log && Dmesg.escapes?(@out)
-
-        @out.print "\r\e[K#{Dmesg.line(UNIT, @app, text)}"
-        @progress = true
+        say(text)
       end
 
       def say(text)
-        @out.print "\r\e[K" if @progress
-        @progress = false
         @out.puts Dmesg.line(UNIT, @app, text)
       end
 

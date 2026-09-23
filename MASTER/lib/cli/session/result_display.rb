@@ -49,6 +49,7 @@ module Master
         # the prompt. A routine success returns above and stays silent: "ok" is
         # not worth a synthesis.
         Master::Voice::Playback.speak(spoken_form(text))
+        print_fix_activity_footer
         print_parallel_errors_footer(ok)
         puts
       end
@@ -72,6 +73,17 @@ module Master
         [Master::Voice::Renderer::MEASURE, TTY::Screen.width - 1].min
       rescue StandardError
         Master::Voice::Renderer::MEASURE
+      end
+
+      def print_fix_activity_footer
+        return unless @last_input.to_s.lstrip.start_with?("/fix", "fix ")
+
+        summary = @activity&.fix_summary
+        return if summary.to_s.empty?
+
+        puts @refs.renderer.render(summary, mode: :dim)
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "cli.fix_activity_footer", event_bus: @refs.bus)
       end
 
       def print_parallel_errors_footer(ok)

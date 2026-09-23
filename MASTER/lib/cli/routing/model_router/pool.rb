@@ -44,7 +44,7 @@ module Master
           def pool(wait: false)
             start_pool_probes
             lanes = [primary_models, cli_lane_models(wait:), tier_ids, continuity_models,
-                     ollama_cloud_models, local_server_models, replicate_models, local_models]
+                     ollama_cloud_catalog, ollama_cloud_models, local_server_models, replicate_models, local_models]
             lanes.flatten.uniq.select { |id| unreachable_reason(id, wait:).nil? }
           end
 
@@ -83,6 +83,19 @@ module Master
               "openrouter_credits" => Thread.new { probe_openrouter_credits },
               "openrouter_catalog" => Thread.new { refresh_free_catalog },
             )
+          end
+
+          # Invalidate discovery caches without forgetting durable telemetry.
+          def refresh_pool!
+            @ollama_installed_models = nil
+            @local_server_index = nil
+            @api_providers = nil
+            @provider_rows = nil
+            start_pool_probes
+            self
+          rescue StandardError => e
+            Master::Ground::Swallow.log(e, context: "model_router.pool.refresh")
+            self
           end
 
           private

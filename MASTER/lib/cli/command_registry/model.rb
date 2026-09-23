@@ -9,6 +9,11 @@ module Master
       def dispatch_model(agent:, config:, metrics:, root:, ctx: nil, arg: nil)
         arg = arg || arg_for(ctx)
         return list_models(root:, metrics:, agent:) if arg == "list"
+        return compute_models(agent:, root:) if arg == "compute"
+        if arg == "benchmark" || arg.start_with?("benchmark ")
+          benchmark_args = arg.delete_prefix("benchmark").strip
+          return ModelBenchmark.new(agent:, router: model_router_of(agent), metrics:, root:).run(benchmark_args)
+        end
         return "model: #{agent.model}; /model list names the others" if arg.empty?
 
         chosen, note = reachable_choice(agent, arg)
@@ -66,6 +71,20 @@ module Master
         footer.empty? ? "" : "\n#{footer.join("\n")}"
       end
 
+      def compute_models(agent:, root:)
+        router = model_router_of(agent)
+        return "compute: router unavailable" unless router
+
+        rows = router.compute_pool.inventory(task_type: :code_generation)
+        return "compute: no reachable models" if rows.empty?
+
+        rows.map do |row|
+          quota = row[:quota_remaining].nil? ? row[:quota_state] : "quota=#{row[:quota_remaining]}"
+          rate = row[:success_rate].nil? ? "unmeasured" : "success=#{(row[:success_rate] * 100).round}%"
+          "#{row[:rank]}. #{row[:id]}  #{row[:lane]}  #{quota}  #{rate}"
+        end.join("\n")
+      end
+
       def model_tiers_by_id(root)
         yml_path = File.join(root, "data", "models.yml")
         rows = File.exist?(yml_path) ? (Master.load_yaml(yml_path)["models"] || {}) : {}
@@ -81,3 +100,4 @@ module Master
     end
   end
 end
+

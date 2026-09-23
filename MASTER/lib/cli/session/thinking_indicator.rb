@@ -22,13 +22,14 @@ module Master
       # one /review publishes about 28,700 of them.
       def print_thinking_indicator
         init_thinking_state!
-        @spin_thread = spawn_spinner_thread if $stdout.isatty
+        # Event lines are the progress indicator; no repainting spinner.
       end
 
       def init_thinking_state!
         @think_mutex = Mutex.new
         @think_t0 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         @think_stage = "intake"
+        @activity&.reset!
         # `**`: a single star is colon-free names only, and every stage event has one.
         @think_sub = @refs.bus&.subscribe("**") { |payload| update_think_stage(payload) }
         @unit_sub = @refs.logging.listen { |line| print_unit_line(line) } if units_console?
@@ -40,7 +41,8 @@ module Master
             @think_mutex.synchronize do
               next if @think_paused
 
-              print "\r\e[K#{@refs.renderer.render(one_row("thinking #{elapsed_seconds}s, #{@think_stage}"), mode: :dim)}"
+              label = @activity&.label(stage: @think_stage, elapsed: elapsed_seconds) || "thinking #{elapsed_seconds}s"
+              print "\r\e[K#{@refs.renderer.render(one_row(label), mode: :dim)}"
               $stdout.flush
             end
             sleep TICK_SECONDS
@@ -106,6 +108,7 @@ module Master
 
       def update_think_stage(payload)
         ev = payload[:event].to_s
+        @activity&.record(ev, payload)
         stage = if ev.start_with?("stage:") then ev.delete_prefix("stage:")
                 elsif ev == "pipeline:stage_start" then payload[:stage]&.to_s&.downcase
                 else STAGE_EVENTS[ev]

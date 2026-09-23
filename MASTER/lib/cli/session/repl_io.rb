@@ -42,12 +42,40 @@ module Master
       def setup_completion
         Reline.completion_proc = proc do |target|
           line = Reline.line_buffer.to_s
-          if line.match?(%r{\A/(scan|fix|critique)\s+})
-            complete_paths(target)
-          else
+          if line.match?(%r{\A/(?:fix|review|status|undo|commit|model|pair|doctor|rules|why|orders|soul|clear|help)\s+})
+            complete_command_argument(line, target)
+          elsif line.match?(%r{\A/\S*\z})
             SLASH_COMMANDS.select { |cmd| cmd.start_with?(target.to_s) }
+          elsif line.strip.empty?
+            ["/fix ", "/review ", "/status ", "/undo ", "/runtime ", "/help "]
+          else
+            []
           end
         end
+      end
+
+      def complete_command_argument(line, target)
+        command = line.split.first.to_s
+        case command
+        when "/model"
+          model_completion(target)
+        when "/help"
+          SLASH_COMMANDS.map { |name| name.delete_prefix("/") }.select { |name| name.start_with?(target.to_s) }
+        else
+          complete_paths(target)
+        end
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "CLI.complete_argument")
+        []
+      end
+
+      def model_completion(target)
+        pool = @refs.agent.respond_to?(:model_router) && @refs.agent.model_router
+        models = pool&.pool(wait: false)
+        Array(models).map(&:to_s).select { |model| model.start_with?(target.to_s) }.first(50)
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "CLI.complete_model")
+        []
       end
 
       def complete_paths(target)
