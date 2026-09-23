@@ -3943,16 +3943,12 @@ rule_ratchets:
     alias_shadows_live_rule: 0
     missing_metadata: 0
 
-    # cross_population_duplicates: one id with two things that can fire. It read 20
-    # on 2026-09-06 and one of them was a duplicate; the other nineteen were the
-    # architecture. rules.yml is the catalogue and law/ and the registry are the
-    # implementations, so an id appears in both by construction — and thirteen of
-    # the nineteen were a `detect_semantic` prompt beside a lexical detector, which
-    # is one rule at two depths. FAIL_VISIBLY is the shape: same source, same
-    # severity, same fix, word for word, in both files. Counting it asked for one of
-    # the two to be deleted, and either deletion loses a tier of a kernel rule.
+    # cross_population_duplicates: one id with two independent detector homes.
+    # The catalogue is metadata; executable Law and RuleDSL are implementations.
+    # A law may deliberately have both detect and ask surfaces, but that is one
+    # executable home rather than a catalogue-vs-law duplicate.
     #
-    # A home is now a population that detects: a law with a `detect` (not a
+    # A home is a population that detects: a law with a `detect` (not a
     # practice, which cannot fire on a line), a registry rule, or a catalogue entry
     # carrying detect_lexical, which the YamlDeclarativeRule bridge runs. There are
     # no lexical entries today; the hatch is idle, not the check.
@@ -3961,10 +3957,10 @@ rule_ratchets:
     # guard against a second detector regrowing under a live id.
     cross_population_duplicates: 0
 
-    # statement_conflicts: what the old count was reaching for and could not say —
-    # not that an id lives in two files, but that the two tell a reader different
-    # things. Fourteen on 2026-09-06. Eleven were a catalogue `fix` carrying an
-    # older draft of the instruction its own law enforces (MEANINGFUL_NAMES said
+    # statement_conflicts protects remaining catalogue metadata from drifting away
+    # from executable implementations. A migrated Law rule may legitimately omit
+    # `fix` from the catalogue; in that case Law is the authority and no conflict exists.
+    # Before retirement, this caught catalogue `fix` fields carrying older drafts (MEANINGFUL_NAMES said
     # "use domain-specific names" where the law says "name it after what the
     # right-hand side already calls it"), and those are rewritten to the law's
     # wording: whichever population holds the detector owns it. Severity is the
