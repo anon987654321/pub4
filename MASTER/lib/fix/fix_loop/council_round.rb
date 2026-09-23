@@ -131,10 +131,13 @@ module Master
 
         def file_anchor(pick, files)
           rows = Array(files).map { |path| [path, repo_relative(path), File.basename(path)] }
-          exact = rows.select do |_, relative, basename|
-            pick.include?(relative) || pick.match?(%r{(?<![\w.-])#{Regexp.escape(basename)}(?![\w.-])})
+          paths = rows.select { |_, relative, _| pick.include?(relative) }
+          return paths.first[0] if paths.size == 1
+
+          basenames = rows.select do |_, _, basename|
+            pick.match?(%r{(?<![\w.-])#{Regexp.escape(basename)}(?![\w.-])})
           end
-          exact.sort_by { |_, relative, basename| pick.include?(relative) ? 0 : (basename ? 1 : 2) }.first&.first
+          basenames.first[0] if basenames.size == 1
         end
 
         def line_anchor(pick)
