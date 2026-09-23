@@ -3,7 +3,7 @@
 require_relative "test_helper"
 require "yaml"
 require "tmpdir"
-require_relative "../tools/self_findings"
+require_relative "../lib/operator/self_findings"
 
 # The third census in this tree to record a bare integer, after data_reach and
 # rule_audit. self_findings was 167 against a baseline of 154 and the number

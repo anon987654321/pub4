@@ -2,8 +2,8 @@
 
 require "minitest/autorun"
 require "tmpdir"
-require_relative "../../lib/master"
-require_relative "../../lib/ops"
+require_relative "../lib/master"
+require_relative "../lib/ops"
 
 # RuntimeLoopGuards.install! monkey-patches the *real* Master::Fix::Heartbeat
 # via class_eval (see lib/ops.rb) — it is not designed to

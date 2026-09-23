@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../../lib/master"
-require_relative "../../lib/voice/speech"
+require_relative "../lib/master"
+require_relative "../lib/voice/speech"
 
 class SpeechContractSpec < Minitest::Test
   def test_clean_text_removes_code_and_links

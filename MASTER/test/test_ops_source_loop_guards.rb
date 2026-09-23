@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../../lib/master"
+require_relative "../lib/master"
 
 # MASTER never starts a background loop unless explicitly asked.
 #

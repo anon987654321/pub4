@@ -113,7 +113,7 @@ class GateContractSpec < Minitest::Test
   # consulted MASTER_AUTOFIX nowhere. Every key was present and the tree was
   # still written to. So this one asks the consumer instead of the spelling.
   def test_gate_safe_env_actually_disables_scan_autofix
-    require_relative "../../lib/review/scan/mechanical_autofix"
+    require_relative "../lib/review/scan/mechanical_autofix"
 
     env = safe_env_from_source
     assert_includes env.keys, "MASTER_SCAN_AUTOFIX",

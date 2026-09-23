@@ -94,11 +94,8 @@ module Master
           return if pick.strip.empty?
           return if destructive_pick?(pick) && ENV["MASTER_AUTOFIX"] != "1"
 
-          file = file_anchor(pick, files)
-          return unless file
-
-          line = line_anchor(pick) || symbol_line(pick, file)
-          return unless line
+          file, line = anchor_for(pick, files)
+          return unless file && line
 
           {
             rule: IMPROVEMENT_RULE_ID,
@@ -119,6 +116,13 @@ module Master
 
         def destructive_pick?(pick)
           pick.match?(DESTRUCTIVE_IMPROVEMENT)
+        end
+
+        def anchor_for(pick, files)
+          file = file_anchor(pick, files)
+          return [nil, nil] unless file
+
+          [file, line_anchor(pick) || symbol_line(pick, file)]
         end
 
         def rotating_files(files, pass)

@@ -30,7 +30,12 @@ module Master
           result = deliberate(panel, payload)
           return result unless result.ok?
 
-          feedback = result.value!
+          build_run_result(preset, payload, result.value!)
+        end
+
+        private
+
+        def build_run_result(preset, payload, feedback)
           issues = panel_issue_entries(feedback)
           ideation_result = ideate(preset, feedback:)
           cherry = CherryPick.call(feedback, ideation_result)
@@ -48,8 +53,6 @@ module Master
             harvest:,
           })
         end
-
-        private
 
         def deliberate(panel, payload)
           delib = Deliberation.new(personas: panel, agent: @agent, event_bus: @bus, judge_enabled: true)

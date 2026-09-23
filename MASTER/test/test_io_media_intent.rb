@@ -2,8 +2,8 @@
 
 require "minitest/autorun"
 require "tmpdir"
-require_relative "../../lib/boot/paths"
-require_relative "../../lib/io/media_intent"
+require_relative "../lib/boot/paths"
+require_relative "../lib/io/media_intent"
 
 class MediaIntentSpec < Minitest::Test
   MediaIntent = Master::Io::MediaIntent

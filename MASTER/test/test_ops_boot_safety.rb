@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../../lib/master"
+require_relative "../lib/master"
 
 class BootSafetySpec < Minitest::Test
   ROOT = File.expand_path("../..", __dir__)

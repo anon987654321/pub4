@@ -8,8 +8,8 @@ require "time"
 require_relative "pass_runner/fast_stage"
 require_relative "pass_runner/llm_stage"
 require_relative "pass_runner/stagnation_detection"
-require_relative "transaction"
-require_relative "resource_budget"
+require_relative "../transaction"
+require_relative "../resource_budget"
 
 module Master
   module Fix
@@ -66,18 +66,13 @@ module Master
           run_fast_stage(files, pass)
           found = run_observation_stage(files, target)
 
-          visual = run_visual_pass(target:, files:, pass:)
+          visual, found = merge_visual_findings(target:, files:, pass:, found:)
           return visual_abort_result(visual) if visual&.err? && found.empty?
-          found += Array(visual&.value!&.fetch(:findings, []))
 
           found, shed = supplement_with_improvements(found, pass:, files:, deadline:)
           return shed if shed
           return clean_pass_result(files, pass_mtimes, pass, consecutive_clean) if found.empty?
-
-          if stagnant?(history, seen_snapshots, recurring_violations, found, pass)
-            abort_transaction
-            return PassResult.new(status: :plateau, consecutive_clean: 0)
-          end
+          return plateau_result if stagnant?(history, seen_snapshots, recurring_violations, found, pass)
 
           dispatch_llm_stages(found, files, pass, deadline, visual)
           delivery = @committer.finish_transaction("fix_loop: pass #{pass}", findings: found, owned_paths: files)
@@ -117,9 +112,26 @@ module Master
           @bus&.publish("fix_loop:pass_start", pass:, target:, file_count: files.size)
         end
 
+        # Fixes a real bug from the branch this was merged from: it called
+        # visual&.value! unconditionally whenever found was non-empty, even
+        # when visual was an Err -- and Err#value! raises UnwrapError, not
+        # nil. Guarding on visual&.ok? means an errored visual pass with
+        # other findings already present now correctly contributes zero
+        # visual findings instead of raising.
+        def merge_visual_findings(target:, files:, pass:, found:)
+          visual = run_visual_pass(target:, files:, pass:)
+          found += Array(visual.value!&.fetch(:findings, [])) if visual&.ok?
+          [visual, found]
+        end
+
         def visual_abort_result(visual)
           @committer.abort_transaction!
           PassResult.new(status: :plateau, consecutive_clean: 0, message: visual.message)
+        end
+
+        def plateau_result
+          abort_transaction
+          PassResult.new(status: :plateau, consecutive_clean: 0)
         end
 
         # found is already empty when this is called (run_pass only calls it

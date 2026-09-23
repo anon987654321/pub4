@@ -16,7 +16,11 @@ module Master
       MAX_FILES = 12
       SELECTOR_RE = /#[A-Za-z][\w-]*|\.[A-Za-z_][\w-]*(?:[-_][\w-]*)*/.freeze
       TEXT_ANCHOR_RE = /\b(?:visible\s+text(?:\s+anchor)?|text\s+anchor)\s*[:=]\s*["“]([^"”\n]+)["”]/i.freeze
-      SURFACE_RE = /\bsurface\s*[:=]\s*([A-Za-z0-9_./-]+)\b/i.freeze
+      # %r{} delimiters, not /.../ -- the character class needs a literal /
+      # (surface ids are paths, e.g. brgen/dating), which /.../ regex literals
+      # cannot hold unescaped. This is why the file has never actually
+      # parsed since it was written; found while merging, not introduced now.
+      SURFACE_RE = %r{\bsurface\s*[:=]\s*([A-Za-z0-9_./-]+)\b}i.freeze
       VIEWPORT_RE = /\bviewport\s*[:=]\s*([A-Za-z0-9_-]+)\b/i.freeze
       Rule = Data.define(:id) do
         def severity = :warning
@@ -47,50 +51,13 @@ module Master
         surfaces = selected_surfaces(target:, pass:)
         return Result.err("rendered visual review: INCONCLUSIVE — no declared surfaces", category: :inconclusive) if surfaces.empty?
 
-        captures = []
-        Deploy::GeometryProbe.with_browser(root: repo_root, warm: surfaces) do |cdp|
-          surfaces.each do |surface|
-            payload = Deploy::GeometryProbe.walk(cdp, surface)
-            next unless Deploy::GeometryProbe.ok?(payload)
-
-            shot = File.join(@dir, "#{safe_slug(surface.id)}.png")
-            cdp.screenshot(shot)
-            captures << { surface:, payload:, screenshot: shot }
-          end
-        end
-
+        captures = capture_surfaces(surfaces)
         return Result.err("rendered visual review: INCONCLUSIVE — no surface was measured", category: :inconclusive) if captures.empty?
 
-        representative = captures.max_by { |capture| visual_signal(capture[:payload]) }
         sources, anchors = candidate_sources(target:, files:, captures:)
         return Result.err("rendered visual review: INCONCLUSIVE — no frontend source anchor", category: :inconclusive) if sources.empty?
 
-        context = build_context(captures, anchors)
-        image = { path: representative[:screenshot], name: "rendered-ui.png", mime: "image/png" }
-        critique = Master::Review::Council::Critique.new(
-          mode: :ui,
-          agent: @agent,
-          event_bus: @bus,
-          files: sources,
-          visual_image: image,
-          visual_context: context,
-        ).run
-        return Result.err("rendered visual review: INCONCLUSIVE — #{critique.message}", category: :inconclusive) if critique.err?
-
-        picks = Array(critique.value![:cherry_picks]).map(&:to_s).reject(&:empty?)
-        findings = picks.filter_map { |pick| finding_for(pick, sources, anchors) }
-        @bus&.publish(
-          "fix_loop:visual_review",
-          pass:,
-          surfaces: captures.map { |c| c[:surface].id },
-          findings: findings.size,
-        )
-        Result.ok(
-          state: findings.empty? ? :clean : :findings,
-          findings:,
-          image:,
-          coverage: captures.map { |c| c[:surface].id },
-        )
+        review_captures(captures, sources, anchors, pass)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "fix.visual_pass", event_bus: @bus)
         Result.err("rendered visual review: INCONCLUSIVE — #{e.class}: #{e.message}", category: :inconclusive)
@@ -107,6 +74,51 @@ module Master
       end
 
       private
+
+      def capture_surfaces(surfaces)
+        captures = []
+        Deploy::GeometryProbe.with_browser(root: repo_root, warm: surfaces) do |cdp|
+          surfaces.each do |surface|
+            payload = Deploy::GeometryProbe.walk(cdp, surface)
+            next unless Deploy::GeometryProbe.ok?(payload)
+
+            shot = File.join(@dir, "#{safe_slug(surface.id)}.png")
+            cdp.screenshot(shot)
+            captures << { surface:, payload:, screenshot: shot }
+          end
+        end
+        captures
+      end
+
+      def run_critique(captures, sources, anchors)
+        representative = captures.max_by { |capture| visual_signal(capture[:payload]) }
+        context = build_context(captures, anchors)
+        image = { path: representative[:screenshot], name: "rendered-ui.png", mime: "image/png" }
+        critique = Master::Review::Council::Critique.new(
+          mode: :ui,
+          agent: @agent,
+          event_bus: @bus,
+          files: sources,
+          visual_image: image,
+          visual_context: context,
+        ).run
+        [critique, image]
+      end
+
+      def review_captures(captures, sources, anchors, pass)
+        critique, image = run_critique(captures, sources, anchors)
+        return Result.err("rendered visual review: INCONCLUSIVE — #{critique.message}", category: :inconclusive) if critique.err?
+
+        picks = Array(critique.value![:cherry_picks]).map(&:to_s).reject(&:empty?)
+        findings = picks.filter_map { |pick| finding_for(pick, sources, anchors) }
+        @bus&.publish("fix_loop:visual_review", pass:, surfaces: captures.map { |c| c[:surface].id }, findings: findings.size)
+        Result.ok(
+          state: findings.empty? ? :clean : :findings,
+          findings:,
+          image:,
+          coverage: captures.map { |c| c[:surface].id },
+        )
+      end
 
       def selected_surfaces(target:, pass:)
         rows = Deploy::GeometryProbe.surfaces(root: repo_root)
@@ -172,23 +184,25 @@ module Master
            .first(MAX_FILES)
       end
 
+      def context_row(capture)
+        surface = capture[:surface]
+        payload = capture[:payload]
+        visual = payload["visual"] || {}
+        first = visual["first_screen"] || {}
+        type = visual["typography"] || {}
+        [
+          "surface #{surface.id}: #{surface.url}",
+          "first-screen text=#{first["text_blocks"]}, interactive=#{first["interactive"]}, ",
+          "largest_area=#{first["largest_element_area_ratio"]}, small_text=#{first["small_text"]}, ",
+          "centered_long_text=#{first["centered_long_text"]}",
+          "type sizes=#{type["distinct_font_sizes"]&.first(8)}, body median=#{type["body_median_px"]}, ",
+          "leading=#{type["line_height_min_px"]}-#{type["line_height_max_px"]}",
+          "scroll/client=#{payload["scroll_width"]}/#{payload["client_width"]}",
+        ].join(" ")
+      end
+
       def build_context(captures, anchors)
-        rows = captures.map do |capture|
-          surface = capture[:surface]
-          payload = capture[:payload]
-          visual = payload["visual"] || {}
-          first = visual["first_screen"] || {}
-          type = visual["typography"] || {}
-          [
-            "surface #{surface.id}: #{surface.url}",
-            "first-screen text=#{first["text_blocks"]}, interactive=#{first["interactive"]}, ",
-            "largest_area=#{first["largest_element_area_ratio"]}, small_text=#{first["small_text"]}, ",
-            "centered_long_text=#{first["centered_long_text"]}",
-            "type sizes=#{type["distinct_font_sizes"]&.first(8)}, body median=#{type["body_median_px"]}, ",
-            "leading=#{type["line_height_min_px"]}-#{type["line_height_max_px"]}",
-            "scroll/client=#{payload["scroll_width"]}/#{payload["client_width"]}",
-          ].join(" ")
-        end
+        rows = captures.map { |capture| context_row(capture) }
         mapped = anchors.values.compact.uniq.first(12)
         <<~TEXT
           RENDERED EVIDENCE
@@ -206,6 +220,14 @@ module Master
         TEXT
       end
 
+      def file_and_line_for(selector, text_anchor, sources, anchors)
+        file = selector && anchors[selector]
+        file ||= source_file_for_text(text_anchor, sources)
+        return [nil, nil] unless file && sources.include?(file)
+
+        [file, selector ? source_line(file, selector) : source_text_line(file, text_anchor)]
+      end
+
       def finding_for(pick, sources, anchors)
         surface = pick[SURFACE_RE, 1]&.strip
         viewport = pick[VIEWPORT_RE, 1]&.strip
@@ -213,12 +235,8 @@ module Master
         text_anchor = pick[TEXT_ANCHOR_RE, 1]&.strip
         return unless surface && viewport && (selector || text_anchor)
 
-        file = selector && anchors[selector]
-        file ||= source_file_for_text(text_anchor, sources)
-        return unless file && sources.include?(file)
-
-        line = selector ? source_line(file, selector) : source_text_line(file, text_anchor)
-        return unless line
+        file, line = file_and_line_for(selector, text_anchor, sources, anchors)
+        return unless file && line
 
         {
           rule: RULE_ID,

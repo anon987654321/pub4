@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../../lib/master"
-require_relative "../../lib/ops"
+require_relative "../lib/master"
+require_relative "../lib/ops"
 
 class ProcessBudgetSpec < Minitest::Test
   LOOP_ENVS = %w[MASTER_AUTOFIX MASTER_WATCH MASTER_WATCHER MASTER_BACKGROUND MASTER_HEARTBEAT].freeze

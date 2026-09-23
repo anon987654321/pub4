@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "face_manifest_helper"
+require_relative "support/face_manifest_helper"
 
 class VisualGovernorSpec < Minitest::Test
   include FaceManifestHelper

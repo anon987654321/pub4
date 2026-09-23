@@ -3,7 +3,7 @@
 require "json"
 require "minitest/autorun"
 require "tmpdir"
-require_relative "../../lib/io/catalog_index"
+require_relative "../lib/io/catalog_index"
 
 class ProviderCatalogIndexSpec < Minitest::Test
   def with_index
