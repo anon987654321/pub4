@@ -95,9 +95,9 @@ module Master
         captures
       end
 
-      def run_critique(captures, sources, anchors)
+      def run_critique(captures, sources, anchors, graph:)
         representative = captures.max_by { |capture| visual_signal(capture[:payload]) }
-        context = build_context(captures, anchors)
+        context = build_context(captures, anchors, graph:)
         image = { path: representative[:screenshot], name: "rendered-ui.png", mime: "image/png" }
         critique = Master::Review::Council::Critique.new(
           mode: :ui,
@@ -111,7 +111,7 @@ module Master
       end
 
       def review_captures(captures, sources, anchors, pass, graph:, coverage:)
-        critique, image = run_critique(captures, sources, anchors)
+        critique, image = run_critique(captures, sources, anchors, graph:)
         return Result.err("rendered visual review: INCONCLUSIVE — #{critique.message}", category: :inconclusive) if critique.err?
 
         picks = Array(critique.value![:cherry_picks]).map(&:to_s).reject(&:empty?)
@@ -169,7 +169,7 @@ module Master
 
         anchors = {}
         tokens.each { |token| anchors[token] = grep_source(token, allowed: candidates) }
-        candidates = (candidates + anchors.values).compact.uniq.first(MAX_FILES)
+        candidates = (anchors.values.compact + candidates).uniq.first(MAX_FILES)
         candidates = fallback_sources(target) if candidates.empty?
         [candidates.first(MAX_FILES), anchors]
       end
@@ -214,7 +214,7 @@ module Master
         ].join(" ")
       end
 
-      def build_context(captures, anchors)
+      def build_context(captures, anchors, graph:)
         rows = captures.map { |capture| context_row(capture) }
         mapped = anchors.values.compact.uniq.first(12)
         <<~TEXT
@@ -229,6 +229,7 @@ module Master
           visible text anchor.
 
           #{rows.join("\n")}
+          #{graph&.context}
           Source anchors: #{mapped.join(", ")}
         TEXT
       end
