@@ -20,7 +20,7 @@ module Master::Core::Routing
       @scores[model_id] ||= {}
       @scores[model_id][task_class] ||= { successes: 0, attempts: 0, metrics: {} }
 
-      stats = @scores[model_id][task_class]
+      stats = @scores[model_id][task_class.to_s]
       stats[:attempts] += 1
       stats[:successes] += 1 if success
 
@@ -36,7 +36,7 @@ module Master::Core::Routing
     end
 
     def success_rate(model_id, task_class)
-      stats = @scores.dig(model_id, task_class)
+      stats = @scores.dig(model_id, task_class.to_s)
       return 0.0 unless stats
       return 0.0 if stats[:attempts].to_i.zero?
 
