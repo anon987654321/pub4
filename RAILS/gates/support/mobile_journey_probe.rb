@@ -55,6 +55,16 @@ module Deploy
           const sel = selector(first);
           if (sel) out.push({kind: "focus", selector: sel, label: label(first)});
         }
+        const search = document.querySelector("input[type='search'], input[name*='search' i], input[placeholder*='search' i]");
+        if (search && visible(search)) {
+          const sel = selector(search);
+          if (sel) out.push({kind: "search", selector: sel, label: label(search)});
+        }
+        for (const control of document.querySelectorAll("select, input[type='checkbox'], input[type='radio']")) {
+          if (!visible(control) || control.disabled) continue;
+          const sel = selector(control);
+          if (sel) { out.push({kind: "filter", selector: sel, label: label(control)}); break; }
+        }
         const origin = location.origin;
         let navigation_count = 0;
         for (const link of document.querySelectorAll("a[href]")) {
@@ -87,9 +97,21 @@ module Deploy
           const valid = el.reportValidity();
           return JSON.stringify({ok: true, state: valid ? "valid" : "invalid", active: document.activeElement === el});
         }
-        if (%<kind>s === "focus") {
+        if (%<kind>s === "focus" || %<kind>s === "search") {
           el.focus();
-          return JSON.stringify({ok: true, state: "focused", active: document.activeElement === el});
+          return JSON.stringify({ok: true, state: %<kind>s === "search" ? "search_ready" : "focused", active: document.activeElement === el});
+        }
+        if (%<kind>s === "filter") {
+          el.focus();
+          if (el.tagName === "SELECT") {
+            const option = [...el.options].find(option => !option.disabled && option.value !== el.value);
+            if (option) el.value = option.value;
+          } else {
+            el.click();
+          }
+          el.dispatchEvent(new Event("input", {bubbles: true}));
+          el.dispatchEvent(new Event("change", {bubbles: true}));
+          return JSON.stringify({ok: true, state: "filter_changed"});
         }
         if (%<kind>s === "navigation") {
           el.click();
@@ -139,7 +161,14 @@ module Deploy
         baseline = state_signature(cdp)
         result = cdp.evaluate(format(ACTION, selector: action.fetch("selector").to_json,
                                       kind: action.fetch("kind").to_json))
-        sleep 0.2
+        sleep 0.35
+        if action["kind"] == "navigation"
+          deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 3
+          while Process.clock_gettime(Process::CLOCK_MONOTONIC) < deadline
+            break if cdp.evaluate("document.readyState").to_s == "complete"
+            sleep 0.05
+          end
+        end
         after = state_signature(cdp)
         slug = surface.id.gsub(/[^a-zA-Z0-9]+/, "-").downcase
         path = File.join(dir, "journey-#{slug}-#{index}.png")
@@ -147,12 +176,16 @@ module Deploy
         states << action.merge("result" => JSON.parse(result.to_s), "changed" => baseline != after,
                                "from" => surface.url, "to" => action["href"], "screenshot" => path)
         if action["kind"] == "navigation" && after["url"] != baseline["url"]
-          cdp.navigate(surface.url)
-          sleep 0.1
+          cdp.back
           back = state_signature(cdp)
-          states << action.merge("kind" => "navigation_return", "result" => {"ok" => true},
+          states << action.merge("kind" => "navigation_back", "result" => {"ok" => true},
                                  "changed" => back != baseline, "from" => after["url"],
                                  "to" => surface.url)
+          cdp.forward
+          forward = state_signature(cdp)
+          states << action.merge("kind" => "navigation_forward", "result" => {"ok" => true},
+                                 "changed" => forward != after, "from" => surface.url,
+                                 "to" => after["url"])
         end
       end
       states
