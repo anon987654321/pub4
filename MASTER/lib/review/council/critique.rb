@@ -149,6 +149,7 @@ module Master
           combined = files.filter_map { |rel| read_truncated(rel) }.join("\n\n")
           metrics = mix_metrics_block if @mode[:include_mix_metrics]
           combined = [metrics, combined].compact.join("\n\n") if metrics
+          combined = [@visual_context, combined].compact.join("\n\n") if @visual_context
           { combined:, files:, metrics:, visual_image: @visual_image }
         end
 
