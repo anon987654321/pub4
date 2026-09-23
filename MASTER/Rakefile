@@ -28,6 +28,11 @@ Rake::TestTask.new(:test) do |t|
 end
 
 
+desc "Generate and objectively inspect a TTS torture suite"
+task :voice_benchmark do
+  run_tool("tools/voice_benchmark.rb")
+end
+
 desc "Scan for tracked secrets and validate the quarantine/virus_museum structure"
 task :security_sweep do
   run_tool("tools/security_sweep.rb")
