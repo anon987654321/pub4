@@ -51,6 +51,7 @@ end
 Law.define(:GUARD_EXPENSIVE_OPS) do
   source "MASTER-native (guard expensive operations); Nielsen heuristic 5, error prevention"
   severity :error
+  languages %i[ruby zsh]
   ask "Does this execute an expensive or destructive operation without confirmation, bounds, or relevant preconditions?"
   path_exclude %r{/test/|/spec/|/db/seeds|/db/migrate/|seeder|demo_seed|_seed\b}
   # `rm -rf` left for NEVER_BATCH_DELETE, which already owned file deletion and
@@ -371,6 +372,7 @@ end
 Law.define(:CONVENTION_OVER_CONFIG) do
   source "Convention over Configuration (Rails Doctrine, DHH)"
   severity :info
+  languages %i[ruby]
   ask "Does this require explicit configuration where an established local convention already provides the correct behavior?"
   fix "Use the existing convention; add configuration only when it changes a real requirement."
   bad <<~'X'
@@ -384,6 +386,7 @@ end
 Law.define(:PROGRAMMER_HAPPINESS) do
   source "Optimize for Programmer Happiness (Rails Doctrine, DHH)"
   severity :info
+  languages %i[ruby]
   ask "Does this design impose ceremony or friction that does not buy meaningful safety or clarity?"
   fix "Remove unnecessary ceremony and keep the common path expressive."
   bad <<~'X'
@@ -397,6 +400,7 @@ end
 Law.define(:OMAKASE) do
   source "The Menu Is Omakase (Rails Doctrine, DHH)"
   severity :info
+  languages %i[ruby]
   ask "Does this introduce a competing tool when the application already has a suitable integrated default?"
   fix "Use the existing integrated default unless a concrete requirement justifies deviation."
   bad <<~'X'
@@ -410,6 +414,7 @@ end
 Law.define(:NO_ONE_PARADIGM) do
   source "No One Paradigm (Rails Doctrine, DHH)"
   severity :info
+  languages %i[ruby]
   ask "Does this force one programming paradigm where a pragmatic combination would make the design clearer?"
   fix "Mix paradigms where each fits the problem; do not enforce uniformity for ideology's sake."
   bad <<~'X'
@@ -423,6 +428,7 @@ end
 Law.define(:BEAUTIFUL_CODE) do
   source "Exalt Beautiful Code (Rails Doctrine, DHH)"
   severity :info
+  languages %i[ruby]
   ask "Would a reader find this merely correct rather than clear, coherent, and aesthetically deliberate?"
   fix "Rewrite for structural and aesthetic clarity, not merely passing tests."
   bad <<~'X'
@@ -436,6 +442,7 @@ end
 Law.define(:SHARP_KNIVES) do
   source "Provide Sharp Knives (Rails Doctrine, DHH)"
   severity :info
+  languages %i[ruby]
   ask "Does this restrict a capable operator's legitimate power mainly to guard against a rare misuse?"
   fix "Preserve useful capability; document dangerous edges and require deliberate use."
   bad <<~'X'
@@ -449,6 +456,7 @@ end
 Law.define(:INTEGRATED_SYSTEMS) do
   source "Value Integrated Systems (Rails Doctrine, DHH)"
   severity :info
+  languages %i[ruby]
   ask "Does this fragment a cohesive concern into separate services or gems without a concrete boundary that justifies it?"
   fix "Keep the concern integrated until an actual boundary, ownership, or scaling need requires extraction."
   bad <<~'X'
@@ -462,6 +470,7 @@ end
 Law.define(:PROGRESS_OVER_STABILITY) do
   source "Progress Over Stability (Rails Doctrine, DHH)"
   severity :info
+  languages %i[ruby]
   ask "Is a beneficial breaking change being avoided solely to preserve compatibility when a clear upgrade path exists?"
   fix "Take the justified breaking change and provide an explicit migration path."
   bad <<~'X'
@@ -475,6 +484,7 @@ end
 Law.define(:BIG_TENT) do
   source "Push Up a Big Tent (Rails Doctrine, DHH)"
   severity :info
+  languages %i[ruby]
   ask "Does this unnecessarily exclude contributors through needless cleverness, jargon, or unexplained conventions?"
   fix "Prefer clear language and approachable structure without lowering technical rigor."
   bad <<~'X'
@@ -1120,6 +1130,7 @@ end
 Law.define(:TRAILING_COMMAS) do
   source "Ruby/JS style — trailing commas in multiline literals"
   severity :info
+  languages %i[ruby javascript]
   ask "Does a multiline collection or argument list omit a trailing comma that stabilizes diffs?"
   fix "Add the trailing comma to multiline collections and argument lists."
   bad <<~'X'
