@@ -42,16 +42,7 @@ module Master
       def build(infra:, ai:, root:)
         d = command_deps(ai:, root:, infra:)
         undo = infra[:undo]
-        {
-          # Positional, and the order is load-bearing: Command#dependency_kwargs
-          # zips these against dispatch_review's keyword names in declaration
-          # order, so swarm goes last in both places.
-          "review" => command(:dispatch_review, d[:scanner], d[:fix_loop], d[:deliberation], d[:root], d[:bus],
-            d[:review_crew], d[:swarm]),
-          # The one verb that writes. Same dependencies as /review, because it
-          # is the same pipeline with the repair turned on.
-          "fix" => command(:dispatch_fix, d[:scanner], d[:fix_loop], d[:deliberation], d[:root], d[:bus],
-            d[:review_crew], d[:swarm]),
+        review_verbs(d).merge(
           "status" => command(:dispatch_status, d[:root], d[:fix_loop], d[:bus], d[:git], d[:trace], d[:learnings]),
           "undo" => command(:dispatch_undo, undo),
           "rollback" => command(:dispatch_undo, undo),
@@ -65,7 +56,21 @@ module Master
           "rules" => command(:dispatch_rules, root),
           "why" => command(:dispatch_why, d[:agent], d[:root]),
           "help" => command(:help_text, nil),
-        }.merge(control_commands(ai[:standing], ai[:soul]))
+        ).merge(control_commands(ai[:standing], ai[:soul]))
+      end
+
+      # Positional, and the order is load-bearing: Command#dependency_kwargs
+      # zips these against dispatch_review's keyword names in declaration
+      # order, so swarm goes last in both places. /fix takes the same
+      # dependencies as /review because it is the same pipeline with the
+      # repair turned on -- the one verb that writes.
+      def review_verbs(d)
+        {
+          "review" => command(:dispatch_review, d[:scanner], d[:fix_loop], d[:deliberation], d[:root], d[:bus],
+            d[:review_crew], d[:swarm]),
+          "fix" => command(:dispatch_fix, d[:scanner], d[:fix_loop], d[:deliberation], d[:root], d[:bus],
+            d[:review_crew], d[:swarm]),
+        }
       end
 
       def command_deps(ai:, root:, infra:)
@@ -89,24 +94,25 @@ module Master
 
       def dispatch_auth(ctx: nil)
         arg = arg_for(ctx)
-        return Ground::SubscriptionAuth.status.map do |row|
-          state = if !row[:installed]
-                    "not installed"
-                  elsif row[:authenticated]
-                    "connected"
-                  elsif row[:authentication_known]
-                    "not connected"
-                  else
-                    "installed"
-                  end
-          "auth: #{row[:name]} #{state}"
-        end.join("\n") if arg.empty? || arg == "status"
+        return auth_status_lines if arg.empty? || arg == "status"
 
         name = arg.delete_prefix("login").strip if arg.start_with?("login")
         return Ground::SubscriptionAuth.login(name) if name && !name.empty?
 
         return Ground::SubscriptionAuth.login(arg) unless arg.include?(" ")
         "auth  auth status  auth login <claude|chatgpt|grok>"
+      end
+
+      def auth_status_lines
+        Ground::SubscriptionAuth.status.map { |row| "auth: #{row[:name]} #{auth_state_label(row)}" }.join("\n")
+      end
+
+      def auth_state_label(row)
+        return "not installed" unless row[:installed]
+        return "connected" if row[:authenticated]
+        return "not connected" if row[:authentication_known]
+
+        "installed"
       end
 
       def dispatch_clear(session, ctx: nil)
