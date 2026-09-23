@@ -85,9 +85,44 @@ module Master
         raise "transaction is not open: #{@state}" unless @state == "open"
 
         @state = "delivering"
+        @delivery_head_before = head_before.to_s
+        @delivery_head_after = nil
         persist!
-        emit("fix:transaction_delivery_start", id: @id, paths: @paths)
+        emit("fix:transaction_delivery_start", id: @id, paths: @paths, head_before: @delivery_head_before)
         true
+      end
+
+      def record_commit!(head_after:)
+        raise "transaction not active" unless @active
+        raise "transaction is not delivering" unless @state == "delivering"
+
+        @delivery_head_after = head_after.to_s
+        persist!
+        true
+      end
+
+      def delivery_pending?
+        @state == "delivering" && !@delivery_head_after.to_s.empty?
+      end
+
+      def delivery_head_after
+        @delivery_head_after
+      end
+
+      def finalize_delivery!(head:)
+        raise "transaction is not pending delivery" unless delivery_pending?
+        raise "delivery HEAD mismatch" unless head.to_s == @delivery_head_after
+
+        @state = "committed"
+        @active = false
+        persist!
+        cleanup!
+        release_lock
+        emit("fix:transaction_delivery_recovered", id: @id, commit: head.to_s)
+        Result.ok(:committed)
+      rescue StandardError => e
+        emit("fix:transaction_delivery_finalize_failed", id: @id, error: e.message)
+        Result.err("transaction delivery finalize: #{e.message}", category: :infrastructure)
       end
 
       def finalize!
@@ -144,11 +179,16 @@ module Master
           emit("fix:transaction_recovered", id: @id, result: result.to_s)
           result
         when "delivering"
-          emit("fix:transaction_delivery_recovered", id: @id,
-                        reason: "delivery had started; preserve tree and re-observe")
           @active = false
-          cleanup!
-          Result.ok(:preserved_delivery)
+          release_lock
+          if delivery_pending?
+            emit("fix:transaction_delivery_pending", id: @id, commit: @delivery_head_after)
+            Result.ok({ state: :delivery_pending, commit: @delivery_head_after })
+          else
+            emit("fix:transaction_delivery_unknown", id: @id,
+                          reason: "delivery started before commit identity was recorded")
+            Result.err("transaction delivery state is ambiguous; manual review required", category: :policy)
+          end
         when "committed", "rolled_back"
           cleanup!
           Result.ok(@state.to_sym)
@@ -263,6 +303,8 @@ module Master
           "version" => 1,
           "id" => @id,
           "state" => @state,
+          "delivery_head_before" => @delivery_head_before,
+          "delivery_head_after" => @delivery_head_after,
           "paths" => @paths,
           "seen" => @seen,
           "snapshots" => @snapshots.transform_values(&:to_h),
@@ -279,6 +321,8 @@ module Master
         raise "transaction manifest malformed" unless data["snapshots"].is_a?(Hash)
 
         @state = data.fetch("state")
+        @delivery_head_before = data["delivery_head_before"]
+        @delivery_head_after = data["delivery_head_after"]
         @paths = Array(data["paths"])
         @seen = Hash.new { |hash, key| hash[key] = [] }
         data.fetch("seen", {}).each { |key, values| @seen[key] = Array(values) }
