@@ -4,7 +4,8 @@ require "json"
 
 module Deploy
   class MobileJourneyProbe
-    MAX_ACTIONS = 4
+    MAX_ACTIONS = 6
+    MAX_NAVIGATIONS = 2
 
     ACTION_DISCOVERY = <<~JS
       (() => {
@@ -54,6 +55,25 @@ module Deploy
           const sel = selector(first);
           if (sel) out.push({kind: "focus", selector: sel, label: label(first)});
         }
+        const origin = location.origin;
+        let navigation_count = 0;
+        for (const link of document.querySelectorAll("a[href]")) {
+          if (navigation_count >= #{MAX_NAVIGATIONS}) break;
+          if (!visible(link)) continue;
+          const raw = link.getAttribute("href");
+          if (!raw || raw.startsWith("#") || /^(mailto|tel|javascript):/i.test(raw)) continue;
+          let url;
+          try { url = new URL(raw, location.href); } catch (_) { continue; }
+          if (url.origin !== origin || url.pathname === location.pathname && url.search === location.search) continue;
+          if (/\b(logout|signout|delete|destroy|remove|unsubscribe)\b/i.test(
+            [link.textContent, link.getAttribute("aria-label"), url.pathname].filter(Boolean).join(" ")
+          )) continue;
+          if (link.hasAttribute("data-method") || link.hasAttribute("data-turbo-method")) continue;
+          const sel = selector(link);
+          if (!sel) continue;
+          out.push({kind: "navigation", selector: sel, label: label(link), href: url.href});
+          navigation_count++;
+        }
         return JSON.stringify(out.slice(0, #{MAX_ACTIONS}));
       })()
     JS
@@ -71,6 +91,10 @@ module Deploy
           el.focus();
           return JSON.stringify({ok: true, state: "focused", active: document.activeElement === el});
         }
+        if (%<kind>s === "navigation") {
+          el.click();
+          return JSON.stringify({ok: true, state: "navigation_started", href: el.href || el.getAttribute("href")});
+        }
         el.click();
         return JSON.stringify({
           ok: true,
@@ -78,6 +102,26 @@ module Deploy
         });
       })()
     JS
+
+    def self.state_signature(cdp)
+      JSON.parse(cdp.evaluate(<<~JS).to_s)
+        (() => {
+          const visible = el => {
+            const r = el.getBoundingClientRect();
+            return r.width > 0 && r.height > 0;
+          };
+          return JSON.stringify({
+            url: location.href,
+            active: document.activeElement?.id || document.activeElement?.tagName || "",
+            text: document.body?.innerText?.slice(0, 4000) || "",
+            expanded: [...document.querySelectorAll("[aria-expanded]")].filter(visible).map(el => [el.id, el.getAttribute("aria-expanded")]),
+            open: [...document.querySelectorAll("details, dialog, [popover]")].filter(visible).map(el => [el.id, el.matches("dialog") ? el.open : el.hasAttribute("open") || el.matches(":popover-open")])
+          });
+        })()
+      JS
+    rescue StandardError
+      {}
+    end
 
     def self.discover(cdp)
       JSON.parse(cdp.evaluate(ACTION_DISCOVERY).to_s)
@@ -88,19 +132,28 @@ module Deploy
     def self.run(cdp, surface, dir)
       return [] unless surface.viewport == "mobile"
 
-      baseline = cdp.evaluate("document.body ? document.body.innerText.slice(0, 4000) : ''").to_s
       states = []
       discover(cdp).each_with_index do |action, index|
         cdp.navigate(surface.url)
+        sleep 0.1
+        baseline = state_signature(cdp)
         result = cdp.evaluate(format(ACTION, selector: action.fetch("selector").to_json,
                                       kind: action.fetch("kind").to_json))
-        sleep 0.15
+        sleep 0.2
+        after = state_signature(cdp)
         slug = surface.id.gsub(/[^a-zA-Z0-9]+/, "-").downcase
         path = File.join(dir, "journey-#{slug}-#{index}.png")
         cdp.screenshot(path, capture_beyond_viewport: true)
-        after = cdp.evaluate("document.body ? document.body.innerText.slice(0, 4000) : ''").to_s
         states << action.merge("result" => JSON.parse(result.to_s), "changed" => baseline != after,
-                               "screenshot" => path)
+                               "from" => surface.url, "to" => action["href"], "screenshot" => path)
+        if action["kind"] == "navigation" && after["url"] != baseline["url"]
+          cdp.navigate(surface.url)
+          sleep 0.1
+          back = state_signature(cdp)
+          states << action.merge("kind" => "navigation_return", "result" => {"ok" => true},
+                                 "changed" => back != baseline, "from" => after["url"],
+                                 "to" => surface.url)
+        end
       end
       states
     rescue StandardError
