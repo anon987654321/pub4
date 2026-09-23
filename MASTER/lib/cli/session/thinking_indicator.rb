@@ -22,7 +22,7 @@ module Master
       # one /review publishes about 28,700 of them.
       def print_thinking_indicator
         init_thinking_state!
-        @spin_thread = spawn_spinner_thread if $stdout.isatty
+        # Event lines are the progress indicator; no repainting spinner.
       end
 
       def init_thinking_state!

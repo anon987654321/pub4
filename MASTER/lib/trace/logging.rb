@@ -53,9 +53,32 @@ module Master
         rest = Master::Ground::Redactor.payload(payload.except(:event, :ts))
         component, action = event.split(":", 2)
         action ||= "ready"
+        unit = DmesgUnit.name(component)
         details = rest.map { |k, v| "#{k}=#{v}" }.join(" ")
         details = Master::Ground::Redactor.text(details)
-        details.empty? ? "#{component}: #{action}" : "#{component}: #{action} #{details}"
+        details.empty? ? "#{unit}: #{action}" : "#{unit}: #{action} #{details}"
+      end
+    module DmesgUnit
+      MAP = {
+        "llm" => "model0",
+        "route" => "model0",
+        "infer" => "model0",
+        "tool" => "tool0",
+        "scan" => "scan0",
+        "rule_loop" => "scan0",
+        "council" => "council0",
+        "git" => "git0",
+        "test" => "test0",
+        "validation" => "test0",
+        "runtime" => "runtime0",
+        "pipeline" => "pipeline0",
+        "fix_loop" => "fix0"
+      }.freeze
+
+      module_function
+
+      def name(component)
+        MAP.fetch(component.to_s, "#{component}0")
       end
     end
   end
