@@ -141,9 +141,7 @@ module Master
         def load_age
           @age_cache ||= begin
             path = File.join(@root, AGE_PATH)
-            next {} unless File.file?(path)
-
-            Master.load_yaml(path) || {}
+            File.file?(path) ? (Master.load_yaml(path) || {}) : {}
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "fix_loop.load_age", event_bus: @bus)
             {}
