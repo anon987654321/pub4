@@ -129,6 +129,7 @@ module Master
           Master::Ground::Swallow.log(e, context: "pass_runner.improvement_stage", event_bus: @bus)
           0
         end
+
         def run_rendered_review(target:, files:, pass:)
           return unless @rendered_review
           return unless @rendered_review.applicable?(target)
