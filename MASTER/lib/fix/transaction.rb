@@ -36,9 +36,14 @@ module Master
         value
       end
 
-      def self.recover!(root:, id:, bus: nil)
+      def self.load_persisted(root:, id:, bus: nil)
         transaction = new(root:, paths: [], id:, bus:)
-        transaction.recover!
+        transaction.send(:load_manifest!)
+        transaction
+      end
+
+      def self.recover!(root:, id:, bus: nil)
+        load_persisted(root:, id:, bus:).recover!
       end
 
       def initialize(root:, paths:, id: SecureRandom.hex(10), bus: nil)
@@ -183,7 +188,7 @@ module Master
           release_lock
           if delivery_pending?
             emit("fix:transaction_delivery_pending", id: @id, commit: @delivery_head_after)
-            Result.ok({ state: :delivery_pending, commit: @delivery_head_after })
+            Result.ok({ state: :delivery_pending, commit: @delivery_head_after, transaction_id: @id })
           else
             emit("fix:transaction_delivery_unknown", id: @id,
                           reason: "delivery started before commit identity was recorded")
