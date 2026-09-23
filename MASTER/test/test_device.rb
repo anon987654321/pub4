@@ -26,6 +26,18 @@ class TestDevice < Minitest::Test
     ENV.delete("PREFIX")
   end
 
+  def test_termux_detection_uses_client_commands_not_helper_binary
+    stub_const = RbConfig::CONFIG["host_os"]
+    RbConfig::CONFIG["host_os"] = "linux-android"
+    ENV["PREFIX"] = "/data/data/com.termux/files/usr"
+    Dir.stub(:[]) { ["/data/data/com.termux/files/usr/bin/termux-battery-status"] } do
+      assert Device.termux?
+    end
+  ensure
+    RbConfig::CONFIG["host_os"] = stub_const
+    ENV.delete("PREFIX")
+  end
+
   def test_missing_api_is_truthful
     stub_const = RbConfig::CONFIG["host_os"]
     RbConfig::CONFIG["host_os"] = "linux-android"
