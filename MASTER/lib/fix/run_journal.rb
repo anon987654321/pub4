@@ -33,8 +33,7 @@ module Master
           data = load
           active = data["runs"].reverse.find { |run| %w[active crashed].include?(run["state"].to_s) }
           if active
-            requested_files = Array(files).map { |path| relative(path) }.compact.uniq.sort
-            unless active["target"] == relative(target) && Array(active["files"]).sort == requested_files
+            unless active["target"] == relative(target)
               raise "another fix run is active: #{active["id"]} for #{active["target"]}"
             end
             if active["state"] == "active" && process_alive?(active["pid"])
