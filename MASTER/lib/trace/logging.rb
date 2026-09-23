@@ -58,6 +58,8 @@ module Master
         details = Master::Ground::Redactor.text(details)
         details.empty? ? "#{unit}: #{action}" : "#{unit}: #{action} #{details}"
       end
+    end
+
     module DmesgUnit
       MAP = {
         "llm" => "model0",
