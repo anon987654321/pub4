@@ -1,5 +1,5 @@
 ---
-# Ceilings for tools/autofix_reach.rb.
+# Ceilings for lib/operator/autofix_reach.rb.
 #
 # dangling: a rule naming a transform that no code implements — a field
 # promising an edit that cannot happen. It was 7 of 8, and it is 0. All seven
