@@ -20,7 +20,7 @@ require "json"
 
 module Operator
   module NamespaceRatchet
-    CEILINGS = File.expand_path("../data/namespace_ceilings.yml", __dir__)
+    SPINE = File.expand_path("../data/spine.yml", __dir__)
     ROOT = File.expand_path("../..", __dir__)
 
     module_function
@@ -31,7 +31,11 @@ module Operator
          .reject { |path| File.read(path).match?(/^\s*(module|class)\s+[A-Z]/) }
     end
 
-    def ceilings = File.exist?(CEILINGS) ? YAML.safe_load_file(CEILINGS) : {}
+    def ceilings
+      return {} unless File.exist?(SPINE)
+
+      YAML.safe_load_file(SPINE).fetch("spine").fetch("namespace_ceilings", {})
+    end
 
     def measure = ceilings.keys.to_h { |dir| [dir, flat_files(dir).size] }
 
@@ -50,7 +54,15 @@ module Operator
     end
 
     def record(actual)
-      File.write(CEILINGS, actual.to_yaml)
+      source = File.read(SPINE)
+      block = "  namespace_ceilings:\n" + actual.sort_by(&:first).map { |dir, count| "    #{dir}: #{count}\n" }.join
+      replacement = "#{block}\n"
+      if source.match?(/^  namespace_ceilings:\n/)
+        source = source.sub(/^  namespace_ceilings:\n(?:    [^\n]+\n)*/, replacement)
+      else
+        source = source.sub(/^spine:\n/, "spine:\n#{replacement}")
+      end
+      File.write(SPINE, source)
       puts "namespace_ratchet: recorded #{actual.values.sum} as the new low"
       0
     end
