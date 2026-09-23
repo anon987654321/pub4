@@ -110,8 +110,8 @@ module Master
           # when it cannot be asked what it holds the configured local list
           # stands. With the variable unset, a silent daemon offers nothing.
           def ollama_enabled?
-            gate = @rules.dig("ollama", "enabled_when_env").to_s
-            gate.empty? ? false : ENV[gate].to_s != ""
+            return false if ENV["MASTER_NO_OLLAMA"] == "1"
+            true
           end
 
 def ollama_model?(model_id) = model_id.to_s.start_with?("ollama:", "ollama/")
