@@ -48,7 +48,7 @@ module Master
         @last_measurement_at = now
         @last_measurement
       rescue StandardError => e
-        { state: :degraded, reasons: ["resource measurement failed: #{e.message}"], values: {} }
+        { state: :critical, reasons: ["resource measurement failed: #{e.message}"], values: {} }
       end
 
       def critical?(measurement) = measurement[:state] == :critical

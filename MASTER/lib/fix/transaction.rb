@@ -17,6 +17,8 @@ module Master
     # on the next invocation; "delivering" means Git delivery may already have
     # started, so recovery preserves the tree and lets /fix re-observe it.
     class Transaction
+      include Master::Io::AtomicWrite
+
       Snapshot = Data.define(:path, :exists, :kind, :mode, :link, :store)
 
       ROOT_DIR = ".master/fix_transactions"
@@ -25,8 +27,7 @@ module Master
 
       def self.normalize_id(id)
         value = id.to_s
-        raise ArgumentError, "transaction id is unsafe" unless value.match?(%r{\A[a-zA-Z0-9_-]+\z}) &&
-          !value.include?("..")
+        raise ArgumentError, "transaction id is unsafe" unless value.match?(%r{\A[a-zA-Z0-9_-]+\z})
 
         value
       end
@@ -101,7 +102,9 @@ module Master
 
       def rollback!
         raise "transaction not active" unless @active || persisted?
-        return delivery.preserve! if @state == "delivering"
+        return delivery.preserve! if @state == "delivering" && delivery.pending?
+        @state = "open" if @state == "delivering"
+        @delivery_head_before = nil if @state == "open"
 
         conflicts = conflicts()
         return reject_rollback_conflict(conflicts) unless conflicts.empty?

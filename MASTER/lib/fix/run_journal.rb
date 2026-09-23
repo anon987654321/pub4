@@ -22,6 +22,7 @@ module Master
       PATH = ".master/fix_runs.json"
       LOCK = ".master/fix_runs.lock"
       MAX_RUNS = 24
+      RESUMABLE_STATES = %w[active crashed delivery_failed].freeze
 
       def initialize(root:, bus: nil)
         @root = root
@@ -31,8 +32,8 @@ module Master
       def start_or_resume(target:, files:, max_passes:, budget_seconds:)
         with_lock do
           data = load
-          active = data["runs"].reverse.find { |run| %w[active crashed].include?(run["state"].to_s) }
-          next resume_existing_run(active, target, data) if active
+          resumable = data["runs"].reverse.find { |run| RESUMABLE_STATES.include?(run["state"].to_s) }
+          next resume_existing_run(resumable, target, data) if resumable
 
           create_new_run(target:, files:, max_passes:, budget_seconds:, data:)
         end
@@ -80,7 +81,7 @@ module Master
       end
 
       def active_pass(run)
-        Array(run["passes"]).reverse.find { |row| row["state"].to_s == "active" }
+        Array(run["passes"]).reverse.find { |row| %w[active delivery_failed].include?(row["state"].to_s) }
       end
 
       def next_pass(run)
@@ -102,7 +103,7 @@ module Master
         unless active["target"] == relative(target)
           raise "another fix run is active: #{active["id"]} for #{active["target"]}"
         end
-        if active["state"] == "active" && process_alive?(active["pid"])
+        if active["state"] == "active" && active["pid"].to_i != Process.pid && process_alive?(active["pid"])
           raise "another fix process is active: #{active["id"]} pid=#{active["pid"]}"
         end
         previous_state = active["state"]

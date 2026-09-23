@@ -56,7 +56,25 @@ class TestReliabilitySecondTranche < Minitest::Test
     end
   end
 
-  def test_transaction_preserves_tree_when_delivery_was_already_started
+  def test_transaction_rolls_back_when_delivery_started_before_commit
+    Dir.mktmpdir("master-tx") do |root|
+      path = File.join(root, "a.rb")
+      File.write(path, "before\n")
+      tx = Master::Fix::Transaction.new(root:, paths: [path], id: "delivery-pass")
+      tx.begin!
+      File.write(path, "committed-locally\n")
+      tx.observe!
+      tx.begin_delivery!(head_before: "before")
+
+      result = tx.rollback!
+
+      assert result.ok?
+      assert_equal "before\n", File.read(path)
+      refute Master::Fix::Transaction.persisted?(root:, id: tx.id)
+    end
+  end
+
+  def test_transaction_preserves_tree_when_commit_was_recorded
     Dir.mktmpdir("master-tx") do |root|
       path = File.join(root, "a.rb")
       File.write(path, "before\n")
@@ -362,6 +380,32 @@ class TestReliabilitySecondTranche < Minitest::Test
     end
   end
 
+  def test_fix_journal_resumes_delivery_failed_runs
+    Dir.mktmpdir("master-journal") do |root|
+      journal = Master::Fix::RunJournal.new(root:)
+      first = journal.start_or_resume(target: root, files: [], max_passes: 2, budget_seconds: 10)
+      journal.send(:persist, {
+        "version" => 1,
+        "runs" => [first.merge(
+          "state" => "delivery_failed",
+          "passes" => [{
+            "pass" => 1,
+            "state" => "delivery_failed",
+            "transaction_id" => "delivery-pass",
+          }],
+        )],
+      })
+
+      resumed = Master::Fix::RunJournal.new(root:).start_or_resume(
+        target: root, files: [], max_passes: 2, budget_seconds: 10,
+      )
+
+      assert resumed["resumed"]
+      assert_equal "delivery_failed", resumed["resumed_from"]
+      assert_equal 2, Master::Fix::RunJournal.new(root:).next_pass(resumed)
+    end
+  end
+
   def test_fix_journal_refuses_a_live_active_process
     Dir.mktmpdir("master-journal") do |root|
       journal = Master::Fix::RunJournal.new(root:)
@@ -376,6 +420,18 @@ class TestReliabilitySecondTranche < Minitest::Test
 
       assert_match(/another fix process is active/, error.message)
     end
+  end
+
+  def test_resource_budget_fails_closed_when_measurement_breaks
+    budget = Master::Fix::ResourceBudget.new(root: Dir.pwd)
+    def budget.classify(_values)
+      raise "probe failure"
+    end
+
+    measurement = budget.measure
+
+    assert budget.critical?(measurement)
+    assert_includes measurement[:reasons].first, "resource measurement failed"
   end
 
   def test_resource_budget_sheds_critical_load

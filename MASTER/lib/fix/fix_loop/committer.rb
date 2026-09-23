@@ -137,15 +137,14 @@ module Master
             result
           rescue StandardError => e
             committed = head_changed?(head_before)
-            committed ? Result.err(
-              "fix transaction delivery pending: #{e.message}",
-              category: :infrastructure,
-            ) : transaction.rollback!
-            @bus&.publish("fix_loop:commit_error", error: e.message, committed:)
-            committed ? Result.err(
-              "fix transaction delivery pending: #{e.message}",
-              category: :infrastructure,
-            ) : Result.err("fix transaction delivery: #{e.message}", category: :infrastructure)
+            if committed
+              @bus&.publish("fix_loop:commit_error", error: e.message, committed: true)
+              Result.err("fix transaction delivery pending: #{e.message}", category: :infrastructure)
+            else
+              rollback = transaction.rollback!
+              @bus&.publish("fix_loop:commit_error", error: e.message, committed: false)
+              rollback.err? ? rollback : Result.err("fix transaction delivery: #{e.message}", category: :infrastructure)
+            end
           end
         end
 
