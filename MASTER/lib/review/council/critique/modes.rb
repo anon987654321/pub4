@@ -36,7 +36,7 @@ module Master
                 "use Master::Design::PlatformProfiles for content-first and profile-specific critique",
                 "distinguish measurable violations from subjective taste",
                 "treat the attached rendered screenshot as the visual ground truth",
-                "format every actionable UI issue as surface=<id> viewport=<name> selector=<stable-selector> or surface=<id> viewport=<name> visible text=<exact visible text>",
+                "format every actionable UI issue as surface=<id> viewport=<name> selector=<stable-selector> or surface=<id> viewport=<name> visible text=\"<exact visible text>\"",
                 "start each actionable UI issue with its issue number so ideation can preserve the council anchor",
                 "use first-screen composition facts as evidence, but do not confuse a metric threshold with visual quality",
                 "when the render has no actionable defect or evidence-backed improvement, state VISUAL_CLEAN explicitly",
