@@ -12,6 +12,7 @@ require_relative "transaction"
 require_relative "resource_budget"
 require_relative "../visual_pass"
 require_relative "../opportunity_pass"
+require_relative "../rule_loop"
 
 module Master
   module Fix
