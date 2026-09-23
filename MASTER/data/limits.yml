@@ -620,10 +620,10 @@ guidance:
       production_ops:
         required:
         - data/patterns.yml#operator_playbook
-        note: VPS friction, relayd, recovery — run bin/playbook when signals match.
+        note: VPS friction, relayd, recovery — run bin/operator playbook when signals match.
     mandatory_reads:
     - See reading_tiers — START_HERE.md first; full constitution only for structural edits.
-    playbook_command: bin/playbook — print codified operator lessons when signals match production friction
+    playbook_command: bin/operator playbook — print codified operator lessons when signals match production friction
     check_standing_orders: Verify FSM state before any mutation -- UNCHANGE blocks refactoring
     scan_before_analysis: Use /scan deep via MASTER, not external agents, for code analysis
     ssh_edit_pattern: Write to /tmp, run ruby /tmp/patch.rb -- never ruby -i with heredoc
