@@ -241,7 +241,7 @@ module Master
   end.join
 end
 
-# Also a module method: tools/self_findings.rb needs it without being a
+# Also a module method: lib/operator/self_findings.rb needs it without being a
 # Rule, and every other mask here is only ever reached through one.
 module_function :without_foreign_heredocs
 public :without_foreign_heredocs
