@@ -21,6 +21,24 @@ class TestReliabilitySecondTranche < Minitest::Test
     end
   end
 
+  def test_transaction_recovery_fails_closed_on_a_conflict
+    Dir.mktmpdir("master-tx") do |root|
+      path = File.join(root, "a.rb")
+      File.write(path, "before\n")
+      tx = Master::Fix::Transaction.new(root:, paths: [path], id: "conflict-pass")
+      tx.begin!
+      File.write(path, "master-change\n")
+      tx.observe!
+      File.write(path, "human-change\n")
+      git_state = tx.rollback!
+
+      assert git_state.err?
+      assert_equal :policy, git_state.category
+      assert_equal "human-change\n", File.read(path)
+      assert tx.state.to_sym == :conflict
+    end
+  end
+
   def test_transaction_recovers_a_crashed_open_pass_from_disk
     Dir.mktmpdir("master-tx") do |root|
       path = File.join(root, "a.rb")
@@ -178,6 +196,16 @@ class TestReliabilitySecondTranche < Minitest::Test
     end
   end
 
+  def test_known_good_refuses_invalid_commit_records
+    Dir.mktmpdir("master-known-good") do |root|
+      error = assert_raises(ArgumentError) do
+        Master::Ground::KnownGood.new(root:).promote!(commit: "--hard")
+      end
+
+      assert_match(/not a Git SHA/, error.message)
+    end
+  end
+
   def test_known_good_promotes_only_explicit_commit
     Dir.mktmpdir("master-known-good") do |root|
       init_git(root)
@@ -235,6 +263,23 @@ class TestReliabilitySecondTranche < Minitest::Test
       assert result.err?
       assert_equal :policy, result.category
       assert_equal "dirty\n", File.read(path)
+    end
+  end
+
+  def test_service_supervisor_tolerates_broken_telemetry
+    bus = Object.new
+    def bus.publish(*) = raise "telemetry failed"
+
+    Dir.mktmpdir("master-service") do |root|
+      supervisor = Master::Ground::ServiceSupervisor.new(root:, bus:)
+      result = supervisor.ensure(
+        name: "tts",
+        start: -> {},
+        healthy: -> { true },
+      )
+
+      assert result.ok?
+      assert result.value!.healthy?
     end
   end
 
