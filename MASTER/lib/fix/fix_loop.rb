@@ -11,7 +11,7 @@ require_relative "fix_loop/rule_order"
 require_relative "fix_loop/pass_runner"
 require_relative "fix_loop/convergence_config"
 require_relative "fix_loop/background_runner"
-require_relative "rendered_review"
+require_relative "visual_pass"
 require_relative "severity"
 require_relative "violation"
 
@@ -114,7 +114,7 @@ module Master
         loop_scanner = Scanner.new(scanner:, root:, bus:, conflict_resolver:)
         llm_router = LlmRouter.new(agent)
         council = CouncilRound.new(agent:, root:, bus:)
-        rendered_review = RenderedReview.new(agent:, root:, bus:)
+        visual_pass = VisualPass.new(agent:, root:, bus:)
         preamble = self.class.preamble_from_soul
 
         PassRunner.new(
@@ -122,7 +122,7 @@ module Master
           rules:, agent:, scanner:, learnings:, preamble:,
           clean_runs_required:,
           plateau_window:,
-          ground_truth:, homeostat:, council:, rendered_review:
+          ground_truth:, homeostat:, council:, visual_pass:
         )
       end
 
