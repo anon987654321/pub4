@@ -199,7 +199,7 @@ module Master
           [mobile || group.first, desktop || group.find { |s| s != mobile }]
         end.compact.uniq
 
-        extras = rows.reject { |s| core.include?(s) }.sort_by { |s| [s.app, s.label, s.viewport] }
+        extras = rows.reject { |s| core.include?(s) }.sort_by { |s| [s.app, s.label, s.viewport == "mobile" ? 0 : 1, s.viewport] }
         return core + extras if MAX_SURFACES <= 0
 
         return (core + extras).first(MAX_SURFACES) if core.size >= MAX_SURFACES
