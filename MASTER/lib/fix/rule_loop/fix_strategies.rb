@@ -115,6 +115,7 @@ module Master
             ext:,
             source: src,
             wait_context: { rule: @rule.id, file: path, mode: :genetic },
+            image: @visual_image,
           )
           best_candidate(Array(candidates), path)
         end
