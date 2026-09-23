@@ -1670,3 +1670,111 @@ Law.define(:INAPPROPRIATE_INTIMACY) do
   X
 end
 end
+
+
+# Constitutional migration batch 7a: user experience laws.
+
+Law.define(:SYSTEM_STATUS) do
+  source "Nielsen Heuristic #1 — Visibility of system status"
+  severity :info
+  ask "Does a long-running operation provide enough timely feedback for the user to know what is happening?"
+  fix "Show meaningful progress, current state, or the last completed checkpoint."
+  bad <<~X
+    export_all_records # runs for minutes with no output
+  X
+  good <<~X
+    export_all_records { |n| progress.report(n) }
+  X
+end
+
+Law.define(:USER_CONTROL) do
+  source "Nielsen Heuristic #3 — User control and freedom"
+  severity :info
+  ask "Can the user cancel or undo a consequential operation when doing so is technically feasible?"
+  fix "Provide an explicit cancel, undo, or rollback path."
+  bad <<~X
+    publish! # irreversible and no cancel path
+  X
+  good <<~X
+    publish_with_undo_window
+  X
+end
+
+Law.define(:ERROR_RECOVERY) do
+  source "Nielsen Heuristic #9 — help users recover from errors"
+  severity :warning
+  ask "Does an error explain what happened and what the user can do next?"
+  fix "State the failed operation, relevant cause, and concrete recovery action."
+  bad <<~X
+    raise Error, "invalid"
+  X
+  good <<~X
+    raise Error, "invoice 42: payment declined; update card and retry"
+  X
+end
+
+Law.define(:AESTHETIC_MINIMALISM) do
+  source "Nielsen Heuristic #8 — aesthetic and minimalist design"
+  severity :info
+  ask "Does this output contain information that does not earn its place for the current task?"
+  fix "Remove redundant status, decoration, and secondary detail from the primary path."
+  bad <<~X
+    render title: title, debug: true, metadata: metadata, raw: raw
+  X
+  good <<~X
+    render title: title
+  X
+end
+
+Law.define(:MATCH_REAL_WORLD) do
+  source "Nielsen Heuristic #2 — match between system and real world"
+  severity :info
+  ask "Does the interface expose implementation jargon where a familiar real-world term would be clearer?"
+  fix "Use the user's domain vocabulary for labels, actions, and concepts."
+  bad <<~X
+    button "invoke_job_executor"
+  X
+  good <<~X
+    button "Run job"
+  X
+end
+
+Law.define(:RECOGNITION_OVER_RECALL) do
+  source "Nielsen Heuristic #6 — recognition rather than recall"
+  severity :info
+  ask "Does the user need to remember information across steps that could be shown at the point of use?"
+  fix "Keep relevant context, choices, and state visible where decisions happen."
+  bad <<~X
+    form.step(4) # requires remembering which file was selected
+  X
+  good <<~X
+    form.step(4, file: selected_file)
+  X
+end
+
+Law.define(:FLEXIBILITY_EFFICIENCY) do
+  source "Nielsen Heuristic #7 — flexibility and efficiency"
+  severity :info
+  ask "Does the interface serve only novices or only experts when defaults and accelerators could coexist?"
+  fix "Provide a sensible default plus efficient shortcuts for experienced users."
+  bad <<~X
+    editor = Editor.new(mode: :advanced)
+  X
+  good <<~X
+    editor = Editor.new; editor.bind(:advanced, "A")
+  X
+end
+
+Law.define(:HELP_AND_DOCUMENTATION) do
+  source "Nielsen Heuristic #10 — help and documentation"
+  severity :info
+  ask "When the user gets stuck, is concrete, searchable, task-focused help available near the action?"
+  fix "Provide focused guidance where the question arises, with an actionable next step."
+  bad <<~X
+    button "Deploy" # no explanation or error guidance
+  X
+  good <<~X
+    button "Deploy"; help "Build and release the current revision"
+  X
+end
+end
