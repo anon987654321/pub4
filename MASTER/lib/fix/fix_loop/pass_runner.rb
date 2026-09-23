@@ -36,12 +36,12 @@ module Master
           @learnings = learnings
           @preamble = preamble
           @rule_order = RuleOrder.new(rules:, learnings:, bus:, root:)
-          take_limits(clean_runs_required:, plateau_window:, ground_truth:, homeostat:, council:)
+          take_limits(clean_runs_required:, plateau_window:, ground_truth:, homeostat:, council:, visual_pass:)
         end
 
         # What a pass is judged by, apart from the collaborators it runs through:
         # when it may stop, when it has stopped moving, and who else gets a say.
-        def take_limits(clean_runs_required:, plateau_window:, ground_truth:, homeostat:, council:)
+        def take_limits(clean_runs_required:, plateau_window:, ground_truth:, homeostat:, council:, visual_pass:)
           @clean_runs_required = clean_runs_required
           @plateau_window = plateau_window
           @violation_counts = Hash.new(0)
@@ -79,6 +79,8 @@ module Master
           run_llm_stage(source_found, files, pass, deadline, council:) if source_found.any?
           run_visual_stage(visual_found, visual:, files:, pass:, deadline:) if visual_found.any?
           PassResult.new(status: :continue, consecutive_clean: 0)
+        ensure
+          @visual_pass&.cleanup
         end
 
         private
