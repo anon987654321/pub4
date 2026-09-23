@@ -81,7 +81,7 @@ module Master
         summary = @activity&.fix_summary
         return if summary.to_s.empty?
 
-        puts @refs.renderer.render("fix: #{summary}", mode: :dim)
+        puts @refs.renderer.render(summary, mode: :dim)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "cli.fix_activity_footer", event_bus: @refs.bus)
       end

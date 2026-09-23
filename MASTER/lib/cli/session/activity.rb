@@ -67,24 +67,24 @@ module Master
         current = @stage.to_s.empty? ? stage.to_s : @stage
         current = "working" if current.empty?
 
-        parts = [current]
-        parts << "pass #{@pass}" if @pass
-        parts << "#{@files} files" if @files
-        parts << "#{@violations} violations" if @violations
-        parts << "#{@changes} changes" if @changes.positive?
-        parts << "council #{@council}" if @council && @stage == "council"
-        parts << "#{elapsed}s" unless elapsed.nil?
-        parts.join(" · ")
+        parts = ["fix0:", current]
+        parts << "pass=#{@pass}" if @pass
+        parts << "files=#{@files}" if @files
+        parts << "violations=#{@violations}" unless @violations.nil?
+        parts << "changes=#{@changes}" if @changes.positive?
+        parts << "council=#{@council}" if @council && @stage == "council"
+        parts << "elapsed=#{elapsed}s" unless elapsed.nil?
+        parts.join(" ")
       end
 
       def fix_summary
-        parts = []
-        parts << "pass #{@pass}" if @pass
-        parts << "#{@files} files" if @files
-        parts << "#{@violations} violations" unless @violations.nil?
-        parts << "#{@changes} changes" if @changes.positive?
-        parts << @terminal if @terminal
-        parts.empty? ? nil : parts.join(" · ")
+        parts = ["fix0:"]
+        parts << "pass=#{@pass}" if @pass
+        parts << "files=#{@files}" if @files
+        parts << "violations=#{@violations}" unless @violations.nil?
+        parts << "changes=#{@changes}" if @changes.positive?
+        parts << "state=#{@terminal}" if @terminal
+        parts.length == 1 ? nil : parts.join(" ")
       end
     end
   end

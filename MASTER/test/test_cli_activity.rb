@@ -13,7 +13,7 @@ class TestCliActivity < Minitest::Test
     @activity.record("fix_loop:scan_progress", count: 7)
     @activity.record("rule_loop:fix_applied", rule: "NO_PUTS")
 
-    assert_equal "scan · pass 2 · 184 files · 7 violations · 1 changes",
+    assert_equal "fix0: scan pass=2 files=184 violations=7 changes=1",
                  @activity.label
   end
 
@@ -29,7 +29,7 @@ class TestCliActivity < Minitest::Test
     @activity.record("rule_loop:fix_applied", rule: "NO_PUTS")
     @activity.record("fix_loop:clean", pass: 2, consecutive_clean: 2)
 
-    assert_equal "pass 2 · 10 files · 0 violations · 1 changes · clean",
+    assert_equal "fix0: pass=2 files=10 violations=0 changes=1 state=clean",
                  @activity.fix_summary
   end
 end
