@@ -213,7 +213,6 @@ Read [START_HERE](START_HERE.md), then [AGENTS](AGENTS.md), which closes on what
 MASTER refuses and why. Anything strange on purpose says so in a comment beside
 it, and the open work lives in [one backlog](../TODO.md). Licensed MIT.
 
-
 ## Android and Termux
 
 MASTER detects Android/Termux at boot and exposes a truthful device capability layer through `Master::Device`. When the official Termux:API app and the `termux-api` package are installed, the runtime can query battery, camera information, sensors, audio information and location, and can explicitly capture a camera photo or microphone recording. The hardware layer never claims permission or hardware access merely because a command exists; failures are reported as unavailable instead of simulated success.
@@ -250,7 +249,6 @@ Location is explicit rather than a boot probe because it is a user-sensitive cap
 On Android/Termux, MASTER can continuously publish normalized device observations onto the same EventBus consumed by cognition. The stream includes battery, Wi-Fi/network state, the available sensor inventory, and one-shot readings for accelerometer, gyroscope, magnetometer, light, and proximity when those sensors exist. Events are namespaced as `device:battery`, `device:network`, `device:sensors`, `device:accelerometer`, `device:gyroscope`, `device:magnetometer`, `device:light`, and `device:proximity`.
 
 The perception loop is bounded and stoppable. It does not automatically activate the camera, microphone, or location. Those remain explicit operations. Set `MASTER_DEVICE=0` to disable Android perception for a process.
-
 
 ## Whole-tree verification
 
