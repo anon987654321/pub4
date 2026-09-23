@@ -42,7 +42,7 @@ module Master
             entry["attempts"] << Time.now.utc.to_f
             entry["last_start_at"] = Time.now.utc.iso8601
             persist(state)
-            @bus&.publish("service:restart", service: name, attempt: entry["attempts"].size)
+            emit("service:restart", service: name, attempt: entry["attempts"].size)
 
             start.call
             deadline = Process.clock_gettime(@clock) + wait_seconds
@@ -58,7 +58,7 @@ module Master
           degraded(name, "service did not become healthy after #{starts} restart attempt(s)", entry)
         end
       rescue StandardError => e
-        @bus&.publish("service:failure", service: name, error: e.message)
+        emit("service:failure", service: name, error: e.message)
         Result.err("service #{name}: #{e.message}", category: :infrastructure)
       end
 
@@ -67,14 +67,21 @@ module Master
       end
 
       private
+      def emit(event, **payload)
+        @bus&.publish(event, **payload)
+      rescue StandardError => e
+        warn("trace0: #{e.class}: #{e.message}") if ENV["MASTER_TRACE_STRICT"] == "1"
+        nil
+      end
+
 
       def healthy_status(name)
-        @bus&.publish("service:healthy", service: name)
+        emit("service:healthy", service: name)
         Result.ok(Reliability::Status.healthy("#{name} healthy"))
       end
 
       def degraded(name, message, entry)
-        @bus&.publish("service:degraded", service: name, reason: message,
+        emit("service:degraded", service: name, reason: message,
                       attempts: Array(entry["attempts"]).size)
         Result.ok(Reliability::Status.degraded(message, code: :service_unhealthy,
                                                details: { service: name, attempts: entry["attempts"] }))
