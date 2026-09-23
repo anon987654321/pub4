@@ -10,21 +10,12 @@ module Master
     # still finish and report truthfully.
     class ResourceBudget
       DEFAULTS = {
-        load_avg_warn: 1.5,
-        load_avg_crit: 2.5,
-        rss_mb_warn: 512,
-        rss_mb_crit: 768,
-        fd_warn: 512,
-        fd_crit: 1024,
-        threads_warn: 32,
-        threads_crit: 64,
-        process_warn: 256,
-        process_crit: 512,
-        disk_free_warn_pct: 15,
-        disk_free_crit_pct: 5,
+        fd_count: { warn: 512, crit: 1024 },
+        thread_count: { warn: 32, crit: 64 },
+        process_count: { warn: 256, crit: 512 },
+        disk_free_pct: { warn: 15, crit: 5 },
       }.freeze
-
-      attr_reader :root
+ attr_reader :root
 
       def initialize(root:, config: nil, clock: Process::CLOCK_MONOTONIC)
         @root = root
@@ -61,9 +52,9 @@ module Master
            limit("load_avg_1m", "crit", DEFAULTS[:load_avg_crit])],
           [:rss_mb, limit("master_rss_mb", "warn", DEFAULTS[:rss_mb_warn]),
            limit("master_rss_mb", "crit", DEFAULTS[:rss_mb_crit])],
-          [:fd_count, DEFAULTS[:fd_warn], DEFAULTS[:fd_crit]],
-          [:thread_count, DEFAULTS[:threads_warn], DEFAULTS[:threads_crit]],
-          [:process_count, DEFAULTS[:process_warn], DEFAULTS[:process_crit]],
+          [:fd_count, resource_limit("fd_count", "warn"), resource_limit("fd_count", "crit")],
+          [:thread_count, resource_limit("thread_count", "warn"), resource_limit("thread_count", "crit")],
+          [:process_count, resource_limit("process_count", "warn"), resource_limit("process_count", "crit")],
         ]
         checks.each do |name, warn_at, crit_at|
           value = values[name]
@@ -79,12 +70,12 @@ module Master
         end
 
         disk = values[:disk_free_pct]
-        if disk && disk <= DEFAULTS[:disk_free_crit_pct]
+        if disk && disk <= resource_limit("disk_free_pct", "crit")
           state = :critical
-          reasons << "disk_free_pct=#{disk} <= #{DEFAULTS[:disk_free_crit_pct]}"
-        elsif disk && disk <= DEFAULTS[:disk_free_warn_pct] && state == :ok
+          reasons << "disk_free_pct=#{disk} <= #{resource_limit("disk_free_pct", "crit")}"
+        elsif disk && disk <= resource_limit("disk_free_pct", "warn") && state == :ok
           state = :warning
-          reasons << "disk_free_pct=#{disk} <= #{DEFAULTS[:disk_free_warn_pct]}"
+          reasons << "disk_free_pct=#{disk} <= #{resource_limit("disk_free_pct", "warn")}"
         end
 
         if values[:network] == false && state == :ok
@@ -98,6 +89,13 @@ module Master
           reasons << "llm_quota_exhausted=#{exhausted}"
         end
         { state:, reasons: }
+      end
+
+      def resource_limit(name, level)
+        configured = @config.dig("resources", name, level).to_f
+        return configured if configured.positive?
+
+        DEFAULTS.fetch(name).fetch(level)
       end
 
       def limit(section, key, fallback)
