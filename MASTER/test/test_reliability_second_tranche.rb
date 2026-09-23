@@ -142,6 +142,42 @@ class TestReliabilitySecondTranche < Minitest::Test
     end
   end
 
+  def test_committer_refuses_a_change_not_observed_by_master
+    Dir.mktmpdir("master-committer") do |root|
+      path = File.join(root, "a.rb")
+      File.write(path, "one\n")
+      init_git(root)
+      git(root, "add", "a.rb")
+      git(root, "commit", "-m", "seed")
+
+      fake_git = Class.new do
+        def initialize(root) = @root = root
+        def changed_paths
+          out, status = Open3.capture2e("git", "-C", @root, "status", "--porcelain")
+          status.success? ? out.lines.map { |line| line[3..].to_s.strip } : []
+        end
+        def head = "head"
+        def push = true
+        def ahead_behind = [0, 0]
+        def commit(*) = raise "must not commit a concurrent edit"
+      end.new(root)
+
+      committer = Master::Fix::FixLoop::Committer.new(git: fake_git, root:)
+      committer.baseline!
+      tx = Master::Fix::Transaction.new(root:, paths: [path])
+      committer.begin_transaction!(tx)
+      File.write(path, "master-change\n")
+      committer.commit_if_dirty("fix")
+      File.write(path, "human-change\n")
+
+      result = committer.finish_transaction("fix", owned_paths: [path])
+
+      assert result.err?
+      assert_equal :policy, result.category
+      assert_equal "human-change\n", File.read(path)
+    end
+  end
+
   def test_known_good_promotes_only_explicit_commit
     Dir.mktmpdir("master-known-good") do |root|
       init_git(root)
