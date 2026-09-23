@@ -641,7 +641,7 @@ end
     reader_singularity: ["One loader per data file — a second direct reader is a second implementation", "tools/reader_singularity.rb"],
     doc_citations: ["Prose citing a number that data/ owns must cite the value data/ currently holds", "tools/doc_citations.rb"],
     do_not_touch: ["Every Do Not Touch entry names the gate that fails when its claim stops being true", "tools/do_not_touch.rb"],
-    instruments: ["The repo's own measuring code agrees with tools/fixtures, whose answers are declared", "tools/instruments.rb"],
+    instruments: ["The repo's own measuring code agrees with test/fixtures, whose answers are declared", "tools/instruments.rb"],
     swallowed: ["Load-bearing errors that were swallowed and never looked at", "tools/swallowed_errors.rb"],
     rule_audit: ["Rules that cannot see their own subject, or fire on nearly everything", "tools/rule_audit.rb"],
     autofix_reach: ["Rules whose autofix names code that does not exist, or names nothing at all", "tools/autofix_reach.rb"],
