@@ -52,6 +52,7 @@ module Master
         def refresh!
           @router.refresh_pool! if @router.respond_to?(:refresh_pool!)
           @catalog = nil
+          @catalog_rows = nil
           self
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "compute_pool.refresh")
@@ -181,16 +182,14 @@ module Master
         end
 
         def catalog_model_row(id)
-          source = id.to_s.include?("/") ? "openrouter" : nil
+          source = catalog_source_for(id)
           return unless source
-          return unless File.file?(Master::Io::CatalogIndex::DEFAULT_DB)
-
-          @catalog ||= Master::Io::CatalogIndex.new(db_path: Master::Io::CatalogIndex::DEFAULT_DB)
-          row = @catalog.search(id.to_s, source:, limit: 5).find { |candidate| candidate["id"].to_s == id.to_s }
+          rows = catalog_rows_for(source)
+          row = rows[id.to_s]
           return unless row
 
           {
-            "context_window" => row["context_length"].to_i.nonzero? || DEFAULTS[:context_window],
+            "context_window" => row.fetch("context_length", 0).to_i.nonzero? || DEFAULTS[:context_window],
             "score" => catalog_score(row),
           }
         rescue StandardError => e
@@ -198,11 +197,39 @@ module Master
           nil
         end
 
+        def catalog_source_for(id)
+          text = id.to_s
+          return "openrouter" if text.include?("/")
+
+          provider = @router.respond_to?(:api_provider_for) ? @router.api_provider_for(text) : provider_for(text)
+          {
+            "openai" => "openai",
+            "gemini" => "gemini",
+            "deepseek" => "deepseek",
+            "xai" => "xai",
+            "mistral" => "mistral",
+          }[provider.to_s]
+        rescue StandardError
+          nil
+        end
+
+        def catalog_rows_for(source)
+          @catalog_rows ||= {}
+          return @catalog_rows[source] if @catalog_rows.key?(source)
+          @catalog_rows[source] = if File.file?(Master::Io::CatalogIndex::DEFAULT_DB)
+            catalog = (@catalog ||= Master::Io::CatalogIndex.new(db_path: Master::Io::CatalogIndex::DEFAULT_DB))
+            catalog.search(nil, source:, limit: 5_000).each_with_object({}) { |row, index| index[row["id"].to_s] = row }
+          else
+            {}
+          end
+        end
+
         def dynamic_model_row(id)
+          return unless id.to_s.start_with?("ollama:", "local:")
           {
             "context_window" => DEFAULTS[:context_window],
-            "score" => { "quality" => DEFAULTS[:quality], "speed" => DEFAULTS[:speed], "cost" => DEFAULTS[:cost] },
-          } if id.to_s.start_with?("ollama:", "local:")
+            "score" => { "quality" => DEFAULTS[:quality], "speed" => DEFAULTS[:speed], "cost" => 1.0 },
+          }
         end
 
         def catalog_score(row)
