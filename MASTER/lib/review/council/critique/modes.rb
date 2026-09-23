@@ -23,7 +23,7 @@ module Master
               ],
               quality_kind: :design,
               ideation_prompt: "Generate concrete multi-solution improvements for this web UI. " \
-                               "Produce 3 distinct solution directions per issue found.",
+                               "For each issue, propose materially different repair directions before selecting the strongest one.",
               cycles_default: 1,
               start_event: :ui_critique_start,
               done_event: :ui_critique_done,
@@ -35,6 +35,9 @@ module Master
                 "use Ruby QualityFramework design rules from Deliberation",
                 "use Master::Design::PlatformProfiles for content-first and profile-specific critique",
                 "distinguish measurable violations from subjective taste",
+                "treat the attached rendered screenshot as the visual ground truth",
+                "name a surface, viewport, and stable DOM selector or visible text anchor for every actionable issue",
+                "judge typography, hierarchy, spacing, alignment, density and composition in the render, not only in CSS",
               ],
             },
             sound: {
