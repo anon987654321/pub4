@@ -8,13 +8,12 @@
 # -> Playback.synthesize -> Speech.synthesize, so it runs on every spoken reply.
 # bin/tts-speak takes the same door directly, exporting MASTER_TTS_MODE=transcendent.
 #
-# The web half does not: health_controller, tts_controller and TtsJob all enter
-# through synthesize_streaming_to_file, which goes socket -> oneshot -> espeak and
-# never reaches Transcendent; the comment on Speech.synthesize_streaming_to_file
-# says why it is not wired up. On OpenBSD, enabled alone forces transcendent mode and `engine_chain`
-# here is overridden by MASTER_TTS_ENGINE_CHAIN or Engines::OPENBSD_CHAIN, so the
-# chain below is the Mac's. MASTER_TTS_MODE is read at speech.rb's synthesis_mode
-# and offered, commented out, in OPENBSD/etc/master.env.sample; rc.d sets none.
+# The web path now enters the same Transcendent door through
+# Speech.synthesize_streaming_to_file. It keeps the TtsJob contract and falls
+# back to the proven Edge/espeak path when Transcendent cannot produce audio.
+# On OpenBSD, enabled alone forces transcendent mode and engine_chain here is
+# overridden by MASTER_TTS_ENGINE_CHAIN or Engines::OPENBSD_CHAIN, so the chain
+# below is the Mac's. MASTER_TTS_MODE remains the explicit operator override.
 transcendent:
   enabled: true
   default_mode: transcendent
