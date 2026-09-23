@@ -117,6 +117,8 @@ module Master
         # quiet one in the dmesg stream the operator actually reads.
         Master::Trace::Dmesg.status("fix0", "#{@rule.id}: #{e.class}: #{e.message[0, 90]}")
         { fixed: 0, status: :error, breakdown: { error: 1 } }
+      ensure
+        @visual_image = nil
       end
 
       private
