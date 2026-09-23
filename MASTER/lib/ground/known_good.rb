@@ -26,15 +26,19 @@ module Master
         path = File.join(@root, PATH)
         return nil unless File.file?(path)
 
-        JSON.parse(File.read(path, encoding: "UTF-8"))
+        record = JSON.parse(File.read(path, encoding: "UTF-8"))
+        raise "known-good version #{record["version"]} unsupported" unless record["version"].to_i == VERSION
+
+        record
       rescue JSON::ParserError => e
         raise "known-good record is corrupt: #{e.message}"
       end
 
       def promote!(commit:, paths: [])
+        sha = normalize_commit(commit)
         record = {
           "version" => VERSION,
-          "commit" => commit.to_s,
+          "commit" => sha,
           "paths" => Array(paths).map { |path| relative(path) }.compact.uniq.sort,
           "constitution" => safe_digest,
           "promoted_at" => Time.now.utc.iso8601,
@@ -74,6 +78,13 @@ module Master
       end
 
       private
+
+      def normalize_commit(value)
+        commit = value.to_s
+        raise ArgumentError, "known-good commit is not a Git SHA" unless commit.match?(/\A[0-9a-f]{7,64}\z/i)
+
+        commit
+      end
 
       def safe_digest
         BootReceipt.digest(root: @root)
