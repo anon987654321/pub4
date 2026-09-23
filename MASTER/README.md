@@ -258,4 +258,4 @@ From `MASTER/`, `rake test:all_trees` discovers the repository's top-level trees
 
 ## Snapshots
 
-Run `/snapshot` to write `pub4/snapshot_MASTER.md`. The artifact contains the current MASTER source tree followed by the complete text source selected by the snapshot policy. The command is deterministic apart from files that change while it runs. Generated snapshots are artifacts, not a second source of truth.
+Run `/snapshot` to write one source snapshot per governed tree: `snapshot_MASTER.md`, `snapshot_OPENBSD.md`, `snapshot_RAILS.md`, and `snapshot_STUDIO.md`. Snapshots include meaningful text source only: dot files and directories, temporary/generated/dependency trees, and binary/media files are excluded. The command is deterministic apart from files that change while it runs. Generated snapshots are artifacts, not a second source of truth.
