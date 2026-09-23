@@ -612,3 +612,386 @@ Law.define(:DEEP_MODULES) do
 end
 
 end
+
+
+# Constitutional migration batch 3: kernel and foundational principles.
+
+Law.define(:ONE_SOURCE) do
+  source "DRY — The Pragmatic Programmer (Hunt & Thomas, 1999)"
+  severity :error
+  ask "Is the same logic or data defined in multiple authoritative places?"
+  fix "Extract one authoritative representation and make all consumers reference it."
+  bad <<~X
+    MAX_RETRIES = 3; Config::MAX_RETRIES = 3
+  X
+  good <<~X
+    MAX_RETRIES = Config::MAX_RETRIES
+  X
+end
+
+Law.define(:DECOUPLE) do
+  source "The Pragmatic Programmer — decoupling"
+  severity :error
+  ask "Are there implicit couplings between modules that should be explicit dependencies?"
+  fix "Inject dependencies through explicit boundaries; avoid hidden global state."
+  bad <<~X
+    Mailer.send(UserStore.fetch(id))
+  X
+  good <<~X
+    def initialize(mailer:, user_store:)
+  X
+end
+
+Law.define(:DEGRADE_GRACEFULLY) do
+  source "Release It! — graceful degradation (Michael Nygard)"
+  severity :error
+  ask "Does a partial dependency failure crash the whole operation when a bounded fallback is possible?"
+  fix "Use timeouts, circuit breakers, bounded retries, or a safe fallback."
+  bad <<~X
+    weather = WeatherAPI.fetch!; render(weather)
+  X
+  good <<~X
+    weather = WeatherAPI.fetch(timeout: 2) || cached_weather
+  X
+end
+
+Law.define(:GALLS_LAW) do
+  source "Gall's Law — Systemantics (John Gall, 1975)"
+  severity :info
+  ask "Is a complex system being built from scratch without first proving a smaller working system?"
+  fix "Start with the simplest working system, prove it, then extend."
+  bad <<~X
+    class Platform; def initialize; @services = 27.times.map { Service.new }; end; end
+  X
+  good <<~X
+    class Platform; def call(input); MinimalPath.call(input); end; end
+  X
+end
+
+Law.define(:CHESTERTONS_FENCE) do
+  source "Chesterton's Fence (G.K. Chesterton, 1929)"
+  severity :warning
+  ask "Is existing code being removed or changed without first understanding why it exists?"
+  fix "Read history, tests, callers, and rationale before removing it."
+  bad <<~X
+    delete_legacy_authentication
+  X
+  good <<~X
+    git blame lib/authentication.rb
+  X
+end
+
+Law.define(:UNIX_PHILOSOPHY) do
+  source "Unix philosophy — do one thing well (Doug McIlroy)"
+  severity :info
+  ask "Does one module perform several unrelated jobs that could compose through a clear boundary?"
+  fix "Split unrelated responsibilities into focused components and compose them."
+  bad <<~X
+    class Report; def query; end; def render; end; def email; end; end
+  X
+  good <<~X
+    report = Report.new(data); Email.deliver(report.render)
+  X
+end
+
+Law.define(:DRY) do
+  source "DRY — Don't Repeat Yourself"
+  severity :warning
+  ask "Are two units expressing the same knowledge independently rather than sharing one authoritative source?"
+  fix "Merge the duplicated knowledge or make one representation authoritative."
+  bad <<~X
+    timeout = 30; other_timeout = 30
+  X
+  good <<~X
+    timeout = DEFAULT_TIMEOUT
+  X
+end
+
+Law.define(:KISS) do
+  source "KISS — Keep It Simple"
+  severity :warning
+  ask "Does this introduce complexity the problem does not require?"
+  fix "Flatten the design to the simplest structure that solves the actual problem."
+  bad <<~X
+    result = strategies.fetch(mode).call(input).then { |x| wrap(x) }.then { |x| audit(x) }
+  X
+  good <<~X
+    result = process(input)
+  X
+end
+
+Law.define(:LEAST_ASTONISHMENT) do
+  source "Principle of Least Astonishment"
+  severity :info
+  ask "Do names, APIs, or behavior contradict what a reasonable reader would expect?"
+  fix "Rename or reshape the interface so behavior matches its apparent meaning."
+  bad <<~X
+    users.empty? # returns true when users exist
+  X
+  good <<~X
+    users.present?
+  X
+end
+
+# Constitutional migration batch 4: architecture and security principles.
+
+Law.define(:NO_GOD_CLASS) do
+  source "Refactoring code smell: Large Class / God Object (Fowler)"
+  severity :error
+  ask "Does one class accumulate unrelated responsibilities that should have separate owners?"
+  fix "Decompose into focused objects with explicit responsibilities."
+  bad <<~X
+    class Application; def users; end; def billing; end; def render; end; def mail; end; end
+  X
+  good <<~X
+    class Users; end; class Billing; end
+  X
+end
+
+Law.define(:FILE_SPRAWL) do
+  source "MASTER-native — collapse before adding; flat hierarchy"
+  severity :warning
+  ask "Are tiny files or one-file directories adding structure without carrying meaningful independent responsibility?"
+  fix "Absorb tiny artifacts into their natural owner before creating another boundary."
+  bad <<~X
+    lib/foo/bar.rb
+  X
+  good <<~X
+    lib/foo.rb
+  X
+end
+
+Law.define(:INFORMATION_HIDING) do
+  source "Information hiding (David Parnas; Ousterhout)"
+  severity :warning
+  ask "Do implementation details leak across a module boundary so changing one decision forces unrelated callers to change?"
+  fix "Encapsulate the decision behind a stable interface."
+  bad <<~X
+    renderer.backend = :cairo; renderer.options[:cairo][:antialias] = true
+  X
+  good <<~X
+    renderer.render(document, quality: :high)
+  X
+end
+
+Law.define(:DIFFERENT_LAYER_DIFFERENT_ABSTRACTION) do
+  source "A Philosophy of Software Design — different layers, different abstractions"
+  severity :warning
+  ask "Do adjacent layers merely relay the same abstraction without transforming it?"
+  fix "Make each layer add a meaningful abstraction or remove the layer."
+  bad <<~X
+    Controller.call(Service.call(Model.find(id)))
+  X
+  good <<~X
+    controller = UsersController.new; controller.show(id)
+  X
+end
+
+Law.define(:STRUCTURAL_HONESTY) do
+  source "MASTER-native — structure mirrors intent"
+  severity :warning
+  ask "Does the artifact's structure contradict the conceptual shape of the problem?"
+  fix "Align modules, sections, layout, and boundaries with the actual domain."
+  bad <<~X
+    misc/helpers/user_and_audio_and_css.rb
+  X
+  good <<~X
+    users/user.rb; audio/track.rb; ui/theme.css
+  X
+end
+
+Law.define(:GRACEFUL_BOUNDARIES) do
+  source "Boundaries (Gary Bernhardt) — values at the edges"
+  severity :info
+  ask "Does a boundary assume perfect fidelity or that the other side will never change?"
+  fix "Translate and validate at boundaries; define safe degradation."
+  bad <<~X
+    JSON.parse(remote_body).fetch("user")
+  X
+  good <<~X
+    payload = JSON.parse(remote_body); UserPayload.parse(payload)
+  X
+end
+
+Law.define(:PULL_COMPLEXITY_DOWN) do
+  source "A Philosophy of Software Design — complexity belongs behind the interface"
+  severity :info
+  ask "Is complexity being pushed onto callers instead of absorbed by the implementation?"
+  fix "Move complexity behind a small, stable interface."
+  bad <<~X
+    client.retry && client.timeout && client.auth && client.parse(response)
+  X
+  good <<~X
+    client.fetch(request)
+  X
+end
+
+Law.define(:ETC) do
+  source "The Pragmatic Programmer — Easier To Change"
+  severity :info
+  ask "Does this decision unnecessarily close future options or make change expensive?"
+  fix "Prefer decoupled, replaceable, reversible choices where costs are comparable."
+  bad <<~X
+    class Report < VendorSpecificReportBase; end
+  X
+  good <<~X
+    class Report; def render(formatter); formatter.render(self); end; end
+  X
+end
+
+Law.define(:BROKEN_WINDOWS) do
+  source "The Pragmatic Programmer — broken windows"
+  severity :warning
+  ask "Is visible decay being left in place: dead code, stale references, broken links, or contradictory documentation?"
+  fix "Fix visible decay when encountered instead of normalizing it."
+  bad <<~X
+    TODO: remove this dead branch
+  X
+  good <<~X
+    return value unless value.nil?
+  X
+end
+
+Law.define(:ENTROPY_RESISTANCE) do
+  source "The Pragmatic Programmer — software entropy"
+  severity :warning
+  ask "Is disorder accumulating through inconsistent names, exceptions, stale conventions, or abandoned paths?"
+  fix "Remove drift and consolidate exceptions before they become a second system."
+  bad <<~X
+    foo_name = user_name; usr = account.name
+  X
+  good <<~X
+    account_name = account.name
+  X
+end
+
+Law.define(:DONT_OUTRUN_HEADLIGHTS) do
+  source "The Pragmatic Programmer — don't outrun your headlights"
+  severity :info
+  ask "Is the design specifying distant hypothetical scenarios more precisely than current evidence allows?"
+  fix "Take small deliberate steps and reassess after each measured result."
+  bad <<~X
+    design_for_1000000_users = FutureArchitecture.new
+  X
+  good <<~X
+    serve_current_users = SimpleApp.new
+  X
+end
+
+Law.define(:REVERSIBILITY) do
+  source "The Pragmatic Programmer — reversibility"
+  severity :info
+  ask "Is a hard-to-reverse decision being made when a reversible option provides the same present value?"
+  fix "Prefer rollback paths, replaceable boundaries, and staged changes."
+  bad <<~X
+    DROP TABLE users
+  X
+  good <<~X
+    rename_table :users, :users_archive
+  X
+end
+
+Law.define(:DESIGN_IT_TWICE) do
+  source "A Philosophy of Software Design — Design it Twice"
+  severity :info
+  ask "Was a consequential design committed without considering at least one materially different approach?"
+  fix "Sketch and compare alternatives before committing."
+  bad <<~X
+    solution = first_design
+  X
+  good <<~X
+    options = [design_a, design_b]; solution = choose(options)
+  X
+end
+
+Law.define(:PROPERTY_BASED_TESTING) do
+  source "Property-based testing — QuickCheck"
+  severity :info
+  ask "Do tests check only a few examples when the important invariant can be stated as a property?"
+  fix "State the invariant and exercise many generated cases."
+  bad <<~X
+    assert_equal 3, normalize("abc").length
+  X
+  good <<~X
+    assert normalize(x).length <= x.length
+  X
+end
+
+Law.define(:EXPLICIT_TRADEOFF) do
+  source "Polished Ruby Programming — contextual trade-offs"
+  severity :info
+  ask "Where several valid implementations exist, is the chosen one presented as universally correct instead of justified by context?"
+  fix "State the access pattern, failure mode, or constraint that makes the choice fit."
+  bad <<~X
+    ALWAYS_USE_ASYNC = true
+  X
+  good <<~X
+    # sync: bounded local workload; async would add coordination cost
+  X
+end
+
+Law.define(:LEAST_PRIVILEGE) do
+  source "Saltzer & Schroeder — least privilege"
+  severity :error
+  ask "Does a component hold broader authority than its task requires?"
+  fix "Grant exactly the required scope for exactly the required duration."
+  bad <<~X
+    client = AdminClient.new; client.delete_all
+  X
+  good <<~X
+    client = UserReadClient.new
+  X
+end
+
+Law.define(:FAIL_SAFE_DEFAULTS) do
+  source "Saltzer & Schroeder — fail-safe defaults"
+  severity :error
+  ask "Does the default path permit access when no explicit rule granted it?"
+  fix "Default to denial and require an explicit grant."
+  bad <<~X
+    allowed = rules[user] != false
+  X
+  good <<~X
+    allowed = rules.fetch(user, false)
+  X
+end
+
+Law.define(:COMPLETE_MEDIATION) do
+  source "Saltzer & Schroeder — complete mediation"
+  severity :error
+  ask "Is authority checked once and then trusted across later accesses whose state may have changed?"
+  fix "Re-check authority at each access boundary."
+  bad <<~X
+    authorized = policy.allow?(user); 100.times { perform if authorized }
+  X
+  good <<~X
+    100.times { perform if policy.allow?(user) }
+  X
+end
+
+Law.define(:ECONOMY_OF_MECHANISM) do
+  source "Saltzer & Schroeder — economy of mechanism"
+  severity :warning
+  ask "Is the security-critical path too large or branchy to inspect and verify as a small mechanism?"
+  fix "Shrink and isolate the trusted path."
+  bad <<~X
+    def authorize; 1200 lines of mixed parsing, IO and policy; end
+  X
+  good <<~X
+    def authorize(request); policy.allow?(request); end
+  X
+end
+
+Law.define(:PSYCHOLOGICAL_ACCEPTABILITY) do
+  source "Saltzer & Schroeder — psychological acceptability"
+  severity :warning
+  ask "Does the secure path impose enough friction that users are pushed toward an unsafe shortcut?"
+  fix "Make the safe path the easy path and remove unnecessary security ceremony."
+  bad <<~X
+    unsafe_url = params[:url] # easier than validating
+  X
+  good <<~X
+    url = Url.parse(params[:url]); fetch(url)
+  X
+end
+end
