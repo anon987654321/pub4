@@ -8,11 +8,16 @@ module Master
     def start_constitution_drift(container)
       return unless ENV["MASTER_DRIFT"] == "1"
 
-      Thread.new do
-        Ground::Orders::ConstitutionDrift.new(container:).call
+      thread = Thread.new do
+        result = Ground::Orders::ConstitutionDrift.new(container:).call
+        unless result.ok?
+          container[:bus]&.publish("constitution_drift:error", error: result.message)
+        end
       rescue StandardError => e
-        warn("constitution_drift: #{e.message}")
+        container[:bus]&.publish("constitution_drift:error", error: e.message)
       end
+      thread.report_on_exception = false
+      thread
     end
 
     def bootstrap_container(root: Dir.pwd)

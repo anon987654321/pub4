@@ -87,17 +87,23 @@ module Master
             end
 
             head_before = @git.head
-            transaction.begin_delivery!
+            transaction.begin_delivery!(head_before:)
             @transaction = nil
             begin
-              result = commit_paths(message, findings, prepared)
+              result = commit_paths(message, findings, prepared, transaction:)
               transaction.finalize!
               result
             rescue StandardError => e
               committed = head_changed?(head_before)
-              committed ? transaction.finalize! : transaction.rollback!
+              committed ? Result.err(
+                "fix transaction delivery pending: #{e.message}",
+                category: :infrastructure,
+              ) : transaction.rollback!
               @bus&.publish("fix_loop:commit_error", error: e.message, committed:)
-              Result.err("fix transaction delivery: #{e.message}", category: :infrastructure)
+              committed ? Result.err(
+                "fix transaction delivery pending: #{e.message}",
+                category: :infrastructure,
+              ) : Result.err("fix transaction delivery: #{e.message}", category: :infrastructure)
             end
           rescue StandardError => e
             @bus&.publish("fix_loop:commit_error", error: e.message)
@@ -127,7 +133,12 @@ module Master
           return :noop if paths.empty?
           return :blocked unless validate_paths(message, paths)
 
-          commit_paths(message, findings, paths)
+          @git.commit(with_finding_ids(message, findings, paths), paths:)
+          @bus&.publish("ops:commit", message: message.to_s[0, 120], head: @git.head, paths:)
+          @git.push
+          verify_push!(paths)
+          promote_known_good(@git.head, paths)
+          Result.ok(:committed)
         rescue StandardError => e
           @bus&.publish("fix_loop:commit_error", error: e.message)
           raise
@@ -156,12 +167,14 @@ module Master
           false
         end
 
-        def commit_paths(message, findings, paths)
+        def commit_paths(message, findings, paths, transaction:)
           @git.commit(with_finding_ids(message, findings, paths), paths:)
-          @bus&.publish("ops:commit", message: message.to_s[0, 120], head: @git.head, paths:)
+          head_after = @git.head
+          transaction.record_commit!(head_after:)
+          @bus&.publish("ops:commit", message: message.to_s[0, 120], head: head_after, paths:)
           @git.push
           verify_push!(paths)
-          promote_known_good(@git.head, paths)
+          promote_known_good(head_after, paths)
           Result.ok(:committed)
         end
 

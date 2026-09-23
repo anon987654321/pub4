@@ -16,7 +16,7 @@ on:
 jobs:
   master-gate:
     name: Full-history inventory, valuables audit, MASTER gate
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 120
     steps:
       - name: Checkout complete pub4 history
