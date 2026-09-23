@@ -44,7 +44,7 @@ module Master
 
         # What a pass is judged by, apart from the collaborators it runs through:
         # when it may stop, when it has stopped moving, and who else gets a say.
-        def take_limits(clean_runs_required:, plateau_window:, ground_truth:, homeostat:, council:)
+        def take_limits(clean_runs_required:, plateau_window:, ground_truth:, homeostat:, council:, visual_pass:)
           @clean_runs_required = clean_runs_required
           @plateau_window = plateau_window
           @violation_counts = Hash.new(0)
@@ -123,6 +123,7 @@ module Master
           @committer.abort_transaction!
           raise
         end
+
         def finish_transaction(files, pass, result)
           delivery = @committer.finish_transaction("fix_loop: clean [pass #{pass}]", owned_paths: files)
           return PassResult.new(status: :delivery_failed, consecutive_clean: 0, message: delivery.message) if delivery.err?
@@ -185,6 +186,7 @@ module Master
           Master::Ground::Swallow.log(e, context: "pass_runner.visual_stage", event_bus: @bus)
           0
         end
+
         def run_fast_stage(files, pass)
           fixed = fast_pass(files)
           @committer.commit_if_dirty("fix_loop: fast-fix [pass #{pass}]", owned_paths: files) if fixed > 0
@@ -316,8 +318,6 @@ module Master
 
         def circuit_open? = @llm_router.circuit_open?
         def open_breakers = @llm_router.open_breakers
-
-
       end
     end
   end
