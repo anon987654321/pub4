@@ -58,6 +58,7 @@ module Master
           category: :validation) unless to.match?(/\A[a-z_][a-zA-Z0-9_]*[?!]?\z/)
 
         Master::Ground::LawHandshake::Admission.require!
+        Master::Ground::LawHandshake::Admission.require!
         perm = @governor&.permit?(NAME, TIER, fp)
         return perm if perm&.err?
 
