@@ -31,24 +31,31 @@ module Master
 
           entry = state["services"][name.to_s] ||= {}
           prune_attempts(entry, window_seconds)
+          starts = 0
 
-          if Array(entry["attempts"]).size >= max_restarts
-            return degraded(name, "restart budget exhausted", entry)
+          while starts < max_restarts
+            if Array(entry["attempts"]).size >= max_restarts
+              return degraded(name, "restart budget exhausted", entry)
+            end
+
+            starts += 1
+            entry["attempts"] << Time.now.utc.to_f
+            entry["last_start_at"] = Time.now.utc.iso8601
+            persist(state)
+            @bus&.publish("service:restart", service: name, attempt: entry["attempts"].size)
+
+            start.call
+            deadline = Process.clock_gettime(@clock) + wait_seconds
+            until Process.clock_gettime(@clock) >= deadline
+              if healthy.call
+                reset_after_recovery(state, name)
+                return healthy_status(name)
+              end
+              sleep 0.1
+            end
           end
 
-          entry["attempts"] << Time.now.utc.to_f
-          entry["last_start_at"] = Time.now.utc.iso8601
-          persist(state)
-
-          @bus&.publish("service:restart", service: name, attempt: entry["attempts"].size)
-          start.call
-          deadline = Process.clock_gettime(@clock) + wait_seconds
-          until Process.clock_gettime(@clock) >= deadline
-            return healthy_status(name) if healthy.call
-            sleep 0.1
-          end
-
-          degraded(name, "service did not become healthy after #{wait_seconds}s", entry)
+          degraded(name, "service did not become healthy after #{starts} restart attempt(s)", entry)
         end
       rescue StandardError => e
         @bus&.publish("service:failure", service: name, error: e.message)
