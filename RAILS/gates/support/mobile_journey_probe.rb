@@ -62,6 +62,8 @@ module Deploy
         }
         for (const control of document.querySelectorAll("select, input[type='checkbox'], input[type='radio']")) {
           if (!visible(control) || control.disabled) continue;
+          const form = control.closest("form");
+          if (form && (form.getAttribute("method") || "get").toLowerCase() !== "get") continue;
           const sel = selector(control);
           if (sel) { out.push({kind: "filter", selector: sel, label: label(control)}); break; }
         }
