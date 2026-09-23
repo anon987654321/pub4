@@ -97,7 +97,6 @@ module Master
       end
 
       def run_critique(captures, sources, anchors, graph:)
-        representative = captures.max_by { |capture| visual_signal(capture[:payload]) }
         context = build_context(captures, anchors, graph:)
         contact_sheet = build_contact_sheet(captures)
         image = { path: contact_sheet, name: "rendered-ui-contact-sheet.png", mime: "image/png" }
@@ -135,7 +134,7 @@ module Master
         Deploy::GeometryProbe.with_browser(root: repo_root, warm: []) do |cdp|
           cdp.viewport(1800, 1400, mobile: false)
           cdp.navigate("file://#{html_path}")
-          cdp.screenshot(screenshot)
+          cdp.screenshot(screenshot, capture_beyond_viewport: true)
         end
         screenshot
       end
