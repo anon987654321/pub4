@@ -9,6 +9,10 @@ module Master
       def dispatch_model(agent:, config:, metrics:, root:, ctx: nil, arg: nil)
         arg = arg || arg_for(ctx)
         return list_models(root:, metrics:, agent:) if arg == "list"
+        if arg == "benchmark" || arg.start_with?("benchmark ")
+          benchmark_args = arg.delete_prefix("benchmark").strip
+          return ModelBenchmark.new(agent:, router: model_router_of(agent), metrics:, root:).run(benchmark_args)
+        end
         return "model: #{agent.model}; /model list names the others" if arg.empty?
 
         chosen, note = reachable_choice(agent, arg)
