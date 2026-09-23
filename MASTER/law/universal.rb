@@ -610,3 +610,5 @@ Law.define(:DEEP_MODULES) do
     service.call(request)
   X
 end
+
+end
