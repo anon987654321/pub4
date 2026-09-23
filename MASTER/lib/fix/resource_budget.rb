@@ -10,12 +10,15 @@ module Master
     # still finish and report truthfully.
     class ResourceBudget
       DEFAULTS = {
+        load_avg_1m: { warn: 1.5, crit: 2.5 },
+        master_rss_mb: { warn: 512, crit: 768 },
         fd_count: { warn: 512, crit: 1024 },
         thread_count: { warn: 32, crit: 64 },
         process_count: { warn: 256, crit: 512 },
         disk_free_pct: { warn: 15, crit: 5 },
       }.freeze
- attr_reader :root
+
+      attr_reader :root
 
       def initialize(root:, config: nil, clock: Process::CLOCK_MONOTONIC)
         @root = root
@@ -48,10 +51,10 @@ module Master
         reasons = []
         state = :ok
         checks = [
-          [:load_avg_1m, limit("load_avg_1m", "warn", DEFAULTS[:load_avg_warn]),
-           limit("load_avg_1m", "crit", DEFAULTS[:load_avg_crit])],
-          [:rss_mb, limit("master_rss_mb", "warn", DEFAULTS[:rss_mb_warn]),
-           limit("master_rss_mb", "crit", DEFAULTS[:rss_mb_crit])],
+          [:load_avg_1m, limit("load_avg_1m", "warn", DEFAULTS[:load_avg_1m][:warn]),
+           limit("load_avg_1m", "crit", DEFAULTS[:load_avg_1m][:crit])],
+          [:rss_mb, limit("master_rss_mb", "warn", DEFAULTS[:master_rss_mb][:warn]),
+           limit("master_rss_mb", "crit", DEFAULTS[:master_rss_mb][:crit])],
           [:fd_count, resource_limit("fd_count", "warn"), resource_limit("fd_count", "crit")],
           [:thread_count, resource_limit("thread_count", "warn"), resource_limit("thread_count", "crit")],
           [:process_count, resource_limit("process_count", "warn"), resource_limit("process_count", "crit")],
