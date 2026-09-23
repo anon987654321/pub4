@@ -14,6 +14,7 @@ require "json"
 require "net/http"
 require "uri"
 require "yaml"
+require_relative "../lib/trace/dmesg"
 
 BASE = ENV.fetch("MASTER_WEB_URL", "http://127.0.0.1:53187").chomp("/")
 WARM_TIMEOUT_S = Integer(ENV.fetch("MASTER_SMOKE_WEB_WARM_S", "130"))
@@ -28,8 +29,6 @@ WARMING_RE = /Starting up|warming up/i
 Check = Struct.new(:name, :ok, :detail, :ms, keyword_init: true)
 
 def step(name)
-  print "smoke-web: #{name.ljust(22)} "
-  $stdout.flush
   t0 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
   # A raised check (e.g. the server dies mid-run) becomes a clean "fail" line rather
   # than a backtrace that aborts the remaining checks.
@@ -193,7 +192,6 @@ rescue Net::ReadTimeout, Net::OpenTimeout
 end
 
 failed = checks.reject(&:ok)
-puts "smoke-web: #{BASE}"
 if failed.empty?
   puts "smoke-web: clean (#{checks.size} checks)"
   exit 0
