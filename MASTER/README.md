@@ -152,6 +152,8 @@ model nemotron-3-super-120b-a12b, ctx 0/128.0k
 ~/Documents/GitHub/pub4/MASTER main (discover) %
 ```
 
+Every web change has one extra proof: the page is rendered in a real browser and the screenshot plus measured DOM geometry go back through the same council and fix loop. Source-clean is not visual-clean; `/fix RAILS` and `/fix MASTER/web` continue until the rendered surface converges or the run honestly plateaus.
+
 Every change a model wants runs through one loop. It proposes an effect, the
 constitution admits it, and only an admitted effect touches a file.
 
