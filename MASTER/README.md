@@ -116,6 +116,17 @@ The intended invariant is simple: MASTER may be **healthy**, **degraded**, or
 **failed**, but an unavailable model, TTS worker, network path, or other optional
 capability must never be reported as successful execution.
 
+A `/fix` pass is transactional across its owned files: either its validated changes
+are delivered as one unit, or the transaction restores the exact observed pre-pass
+state. A concurrent edit is detected rather than overwritten. Successful delivery
+promotes the resulting Git commit to a durable known-good runtime; `/runtime rollback`
+only operates on a clean checkout and returns to that recorded commit.
+
+Optional services are supervised with a bounded restart budget, and expensive model
+work is shed when measured CPU load, RSS, file-descriptor, thread, or disk pressure
+reaches critical limits. Deterministic work can therefore continue under pressure
+without turning a resource emergency into a restart storm.
+
 ## Under the hood
 
 Wake it with one line and it comes up like an old Unix machine, telling you what
