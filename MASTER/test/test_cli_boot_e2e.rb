@@ -102,7 +102,10 @@ class TestCliReplExit < Minitest::Test
   ).freeze
   READY = /% |\$ /
 
-  def test_timeout = 60
+  # A real model call under rate-limited/failover conditions can run well
+  # past the 30s boot+reply windows below; 150s gives the chitchat test
+  # headroom without loosening the two fast ^C/^D tests.
+  def test_timeout = 150
 
   # One ^C clears the line, as zsh does; the second inside the window closes.
   # The pause is for the prompt to re-arm: a ^C written while Reline is between
@@ -121,7 +124,35 @@ class TestCliReplExit < Minitest::Test
     refute_match(/Error|from .+\.rb:\d+/, output)
   end
 
+  # A real terminal, a real model call: proof the ordinary conversational
+  # path still answers after a routing change, not just that the process
+  # boots. MASTER defaults to Norwegian (CLAUDE.md), so a plain greeting
+  # is the cheapest real round trip through chat -> dispatcher -> a live
+  # model and back to a clean prompt.
+  def test_plain_chitchat_gets_a_reply_and_returns_to_prompt
+    output, status = drive_conversation("hi there")
+
+    assert_equal 0, status.exitstatus, output
+    refute_match(/Error|from .+\.rb:\d+/, output)
+    assert_match(/model [\w:.-]+, ctx \d/, output, "expected a model line after the reply")
+  end
+
   private
+
+  def drive_conversation(message)
+    require "pty"
+    output = +""
+    PTY.spawn(ENV_FOR_PTY, Master::BUNDLE_BIN, "exec", "ruby", "bin/cli", chdir: ROOT) do |reader, writer, pid|
+      read_until(reader, output, READY, 30)
+      sleep 0.5
+      writer.write("#{message}\n")
+      read_until(reader, output, READY, 90)
+      writer.write("\x04")
+      read_until(reader, output, nil, 20)
+      _, status = Process.waitpid2(pid)
+      return [output, status]
+    end
+  end
 
   def drive
     require "pty"

@@ -11,14 +11,12 @@ require_relative "support/face_manifest_helper"
 class MasterNamespaceSpec < Minitest::Test
   include FaceManifestHelper
 
-  ROOT = File.expand_path("../..", __dir__)
-
   def read(path)
-    File.read(File.join(ROOT, path))
+    File.read(File.join(Master::ROOT, path))
   end
 
   def test_master_namespace_exposes_canonical_facade
-    source = read("web/public/master_namespace.js")
+    source = read("web/src/master_namespace.js")
 
     %w[boot face speech speechRuntime speechPlayback events ecology chat container attention].each do |name|
       assert_includes source, %("#{name}")

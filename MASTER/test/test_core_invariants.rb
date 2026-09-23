@@ -29,7 +29,7 @@ class TestCapabilityMap < Minitest::Test
     @map.record_outcome("gemma", :coding, false, { latency: 1.5 })
     
     assert_equal 0.5, @map.success_rate("gemma", :coding)
-    assert_equal 1.35, @map.scores["gemma"][:coding][:metrics][:latency]
+    assert_equal 1.35, @map.scores["gemma"]["coding"][:metrics][:latency]
   end
 
   def test_best_model_selection
@@ -45,7 +45,6 @@ class TestCapabilityMap < Minitest::Test
     2.times { @map.record_outcome("new-model", :coding, false) }
     assert_operator @map.score_for("new-model", :coding), :<, 0.5
     assert_operator @map.score_for("new-model", :coding), :>, 0.0
-  end
   end
 end
 
