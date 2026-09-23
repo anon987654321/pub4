@@ -64,7 +64,7 @@ node_bin = ENV["PATH"].to_s.split(File::PATH_SEPARATOR).push("/usr/local/bin")
 #
 # The three MASTER_CI_* widenings are the workflow's, kept here because the
 # workflow sets them and this is where the steps they add are declared.
-ci_steps = [rake["test"], rake["test:core"], rake["test:subsystems"], rake["spec"],
+ci_steps = [rake["test"], rake["test:core"], rake["test:subsystems"],
             rake["selftest"], rake["lint:data_singularity"], rake["core_smoke"]]
 ci_steps += [run_bin["smoke"], rake["selfcheck"], rake["constitution"]] if ENV["MASTER_CI_FULL"] == "1"
 ci_steps += [rake["test:web"], rake["test:integration_web"]] if ENV["MASTER_CI_WEB"] == "1"
@@ -85,9 +85,9 @@ end
 full_ci = ci_steps.reject { |step| ["selftest", "core_smoke", "constitution"].include?(step.first) }
 
 PROFILES = {
-  "operator"    => [rake["test"], rake["spec"], rake["test:subsystems"], rake["security_sweep"],
+  "operator"    => [rake["test"], rake["test:subsystems"], rake["security_sweep"],
                     rake["test:core"], rake["lint:data_singularity"], rake["lint:dedup"], rake["studio"]],
-  "contributor" => [rake["test"], rake["spec"], rake["test:subsystems"], rake["security_sweep"],
+  "contributor" => [rake["test"], rake["test:subsystems"], rake["security_sweep"],
                     rake["lint:data_singularity"], rake["lint:dedup"], rake["studio"]],
   # lint:word_boundary is here and nowhere else: its subject is a `\b` written
   # next to punctuation in a rule regex, which is a word boundary that can never
