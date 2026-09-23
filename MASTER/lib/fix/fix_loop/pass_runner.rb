@@ -121,6 +121,8 @@ module Master
         rescue StandardError
           @committer.abort_transaction!
           raise
+        ensure
+          @visual_pass&.cleanup
         end
 
         def run_visual_pass(target:, files:, pass:)
