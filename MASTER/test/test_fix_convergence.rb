@@ -129,6 +129,42 @@ class TestFixConvergence < Minitest::Test
   end
 
   # 6. A clean tree the ground truth agrees with is the one state that says DONE.
+  def test_a_clean_pass_asks_council_for_improvements
+    asked = []
+    council = Object.new
+    council.define_singleton_method(:improve) do |files:, pass:, deadline:|
+      asked << { files:, pass: }
+      []
+    end
+    result = build_loop([], council:).run(@root, max_passes: 2)
+
+    assert result.ok?
+    assert_match(/\ADONE: /, result.value!)
+    assert_equal 1, asked.size, "the first clean streak pass should invoke proactive review once"
+    refute_empty asked.first[:files]
+  end
+
+  def test_council_improvements_require_a_file_and_line_or_symbol_anchor
+    file = File.join(@root, "dummy.yml")
+    round = Master::Fix::FixLoop::CouncilRound.new(agent: nil, root: @root, bus: @bus)
+    anchored = round.send(
+      :improvement_findings,
+      { cherry_picks: ["dummy.yml line 1: simplify the redundant empty declaration"] },
+      [file],
+    )
+    unanchored = round.send(
+      :improvement_findings,
+      { cherry_picks: ["simplify the redundant empty declaration"] },
+      [file],
+    )
+
+    assert_equal 1, anchored.size
+    assert_equal file, anchored.first[:file]
+    assert_equal 1, anchored.first[:line]
+    assert_empty unanchored
+    assert_equal :improvement, anchored.first[:kind]
+  end
+
   def test_a_converged_run_is_done
     result = build_loop([]).run(@root)
 
