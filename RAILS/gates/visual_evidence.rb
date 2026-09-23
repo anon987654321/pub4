@@ -96,8 +96,7 @@ Deploy::GeometryProbe.with_browser(root: ROOT, warm: surfaces) do |cdp|
     shot = File.join(options[:out], format("%02d-%s.png", index, slug))
     cdp.screenshot(shot)
     evidence_path = File.join(options[:out], "#{slug}.json")
-    File.write(evidence_path, JSON.pretty_generate(payload) + "
-")
+    File.write(evidence_path, JSON.pretty_generate(payload) + "\n")
 
     entries << {
       "index" => index + 1,
@@ -134,8 +133,7 @@ if entries.any?
 end
 
 manifest_path = File.join(options[:out], "manifest.json")
-File.write(manifest_path, JSON.pretty_generate(manifest) + "
-")
+File.write(manifest_path, JSON.pretty_generate(manifest) + "\n")
 puts JSON.pretty_generate(manifest)
 
 exit(entries.empty? ? 3 : 0)
