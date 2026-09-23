@@ -6,6 +6,7 @@ require "open3"
 require "tmpdir"
 require_relative "../review/council/critique"
 require_relative "rails_visual_graph"
+require_relative "visual_usability"
 
 module Master
   module Fix
@@ -18,6 +19,7 @@ module Master
       MAX_FILES = 12
       SELECTOR_RE = /#[A-Za-z][\w-]*|\.[A-Za-z_][\w-]*(?:[-_][\w-]*)*/.freeze
       TEXT_ANCHOR_RE = /\b(?:visible\s+text(?:\s+anchor)?|text\s+anchor)\s*[:=]\s*["“]([^"”\n]+)["”]/i.freeze
+      LAW_RE = /\blaws?\s*[:=]\s*([A-Z][A-Z0-9_, -]+)/i.freeze
       # %r{} delimiters, not /.../ -- the character class needs a literal /
       # (surface ids are paths, e.g. brgen/dating), which /.../ regex literals
       # cannot hold unescaped. This is why the file has never actually
@@ -264,11 +266,13 @@ module Master
           The attached image is a contact sheet containing every captured surface in this pass. Compare surfaces against each other as well as against their own viewport. The measurements below were
           collected from the same browser session across the listed surfaces.
           Judge the render first. Source is supporting evidence.
+          Apply the executable MASTER design/usability constitution below. These are laws, not a scoring checklist. Identify only laws supported by rendered evidence.
+          #{Master::Fix::VisualUsability.context}
+          Every actionable issue must name the applicable law id(s), surface/viewport, and a stable selector or visible text anchor.
           Look for actual opportunities in hierarchy, typography, measure, leading,
           whitespace, alignment, grouping, density, proportion, responsive composition,
           affordance, and decorative noise. Do not stop at "technically valid".
-          Every actionable issue must name its surface/viewport and a stable selector or
-          visible text anchor. Treat one-pixel alignment drift, inconsistent spacing, typography, component vocabulary, optical centering, baseline rhythm, density, and responsive composition as real defects when the rendered evidence supports it.
+          Treat one-pixel alignment drift, inconsistent spacing, typography, component vocabulary, optical centering, baseline rhythm, density, and responsive composition as real defects when the rendered evidence supports it. Treat one-pixel alignment drift, inconsistent spacing, typography, component vocabulary, optical centering, baseline rhythm, density, and responsive composition as real defects when the rendered evidence supports it.
 
           #{rows.join("\n")}
           #{graph&.context}
@@ -289,7 +293,8 @@ module Master
         viewport = pick[VIEWPORT_RE, 1]&.strip
         selector = pick[SELECTOR_RE]
         text_anchor = pick[TEXT_ANCHOR_RE, 1]&.strip
-        return unless surface && viewport && (selector || text_anchor)
+        laws = pick[LAW_RE, 1]&.split(/[,\s]+/).map(&:strip).reject(&:empty?).select { |id| Master::Fix::VisualUsability.ids.include?(id) }
+        return unless surface && viewport && (selector || text_anchor) && laws.any?
 
         file, line = file_and_line_for(selector, text_anchor, sources, anchors)
         return unless file && line
@@ -300,7 +305,7 @@ module Master
           line:,
           severity: :warning,
           confidence: 1.0,
-          message: "Rendered visual refinement: #{pick} — #{surface} / #{viewport}",
+          message: "Rendered visual refinement: #{pick} — #{surface} / #{viewport} — laws: #{laws.join(", ")}",
           fix: "Use the attached rendered evidence as ground truth. Make the smallest source change that materially improves the cited visual issue while preserving accessibility, semantics and responsive behavior.",
         }
       rescue StandardError
