@@ -183,6 +183,20 @@ class TestFixConvergence < Minitest::Test
     refute_includes picks, "Solutions:"
   end
 
+  def test_cherry_pick_reads_brainstorm_ideas_not_only_the_final_synthesis
+    result = Master::Result.ok(
+      ideas: ["issue 1 small repair", "issue 2 distinct repair"],
+      critiques: [],
+      final: "synthesis",
+    )
+
+    text = Master::Review::Council::Critique::CherryPick.ideas_text(result)
+
+    assert_includes text, "issue 1 small repair"
+    assert_includes text, "issue 2 distinct repair"
+    assert_includes text, "synthesis"
+  end
+
   # The preview printed two Ruby hashes through #inspect: one line past the
   # width of any terminal, with the counts that matter wherever the wrap put
   # them, and every file named by its full path inside a tree the pass has
