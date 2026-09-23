@@ -67,7 +67,7 @@ module Law
     ".html" => "html", ".yml" => "yaml", ".sh" => "zsh", ".md" => "markdown", ".json" => "json"
   }.freeze
 
-  MEMBERS = %i[id source severity languages scope path path_exclude absent detect ask practice fix bad good reads_comments].freeze
+  MEMBERS = %i[id source severity mode languages scope path path_exclude absent detect ask practice fix bad good reads_comments].freeze
   Rule = Data.define(*MEMBERS) do
     # `path` takes a Regexp or a substring; `path_exclude` was already a Regexp,
     # and one member of a pair reading its argument the other way is a trap for
@@ -258,9 +258,9 @@ module Law
   end
 
   class Builder
-    %i[source severity languages scope path path_exclude absent ask practice fix bad good reads_comments].each { |a| define_method(a) { |v| @h[a] = v } }
+    %i[source severity mode languages scope path path_exclude absent ask practice fix bad good reads_comments].each { |a| define_method(a) { |v| @h[a] = v } }
 
-    def initialize(id) = @h = { id:, severity: :warn, languages: [], scope: :line, path: nil, path_exclude: nil, absent: nil, detect: nil, ask: nil, practice: nil, reads_comments: false }
+    def initialize(id) = @h = { id:, severity: :warn, mode: :violation, languages: [], scope: :line, path: nil, path_exclude: nil, absent: nil, detect: nil, ask: nil, practice: nil, reads_comments: false }
     def detect(&block) = @h[:detect] = block
 
     # Exactly one kind, and the fixtures whichever it is.
