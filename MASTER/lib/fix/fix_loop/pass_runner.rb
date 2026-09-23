@@ -100,11 +100,8 @@ module Master
           image = visual&.value!&.fetch(:image, nil)
           return 0 unless image
 
-          rule_class = Data.define(:id) do
-            def severity = :warning
-          end
           loop = RuleLoop.new(
-            rule: rule_class.new(VisualPass::RULE_ID),
+            rule: VisualPass::Rule.new(VisualPass::RULE_ID),
             agent: @agent,
             scanner: @scanner,
             root: @root,
