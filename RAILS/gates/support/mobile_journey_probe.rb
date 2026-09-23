@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "json"
+
 module Deploy
   class MobileJourneyProbe
     MAX_ACTIONS = 4
