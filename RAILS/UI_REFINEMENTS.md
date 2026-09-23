@@ -149,7 +149,7 @@ identical from the outside. Full accounting in `TODO.md`,
 
 | Item | Why residual |
 |------|----------------|
-| Full visual_contract capture matrix | Needs running apps + Ferrum/Chrome on Ruby 3.4/VPS |
+| Full visual_contract capture matrix | Needs running apps + canonical CDP/Chrome on Ruby 3.4/VPS |
 | True ML rembg/segmentation | Postpro bridge only; models are infra |
 | Per-glyph typewriter captions vs fade | Product choice — left as fade-capable CSS |
 | Council multi glyph set | Needs face JS state machine work beyond style |
@@ -166,7 +166,7 @@ identical from the outside. Full accounting in `TODO.md`,
 | Type/pixel alignment: --text-title token, page-header 48px rhythm, font var(--font) | Landed 2026-07-31 |
 | MASTER autonomy: design_rules.ui_polish + chrome_i18n_lint + surface rules | Landed 2026-07-31 — see MASTER/docs/UI_POLISH_PLAYBOOK.md |
 | Exhaustive model/request coverage | Expand when touching domains (Boy Scout) |
-| In-process `release` / `rails_runtime` / `visual_contract` | Still subprocess by design |
+| In-process `release` / `rails_runtime` / `visual_contract` | `visual_contract` remains subprocess for CLI argument forwarding; its browser is the shared CDP substrate |
 | SCSS `_ui_refinements*` merge into domain partials | Next touch Boy Scout |
 | Horizon features (pgvector, live video, Solidus full) | `apps.horizon.yml` agent-ignore |
 
