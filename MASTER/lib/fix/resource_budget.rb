@@ -179,7 +179,7 @@ module Master
 
         row = out.lines.last.to_s.split
         used = row[4].to_s.delete_suffix("%").to_f
-        used.positive? ? (100.0 - used).round(1) : nil
+        (100.0 - used).round(1)
       rescue StandardError
         nil
       end
