@@ -111,7 +111,7 @@ module Master
         raise "transaction not active" unless @active || persisted?
         return preserve_delivery! if @state == "delivering"
 
-        conflicts = @paths.reject { |path| @seen[path].include?(fingerprint(absolute(path))) }
+        conflicts = conflicts()
         unless conflicts.empty?
           @state = "conflict"
           persist!
@@ -162,6 +162,10 @@ module Master
         Result.err("transaction recovery: #{e.message}", category: :infrastructure)
       ensure
         release_lock
+      end
+
+      def conflicts
+        @paths.reject { |path| @seen[path].include?(fingerprint(absolute(path))) }
       end
 
       def active? = @active
