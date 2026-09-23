@@ -41,11 +41,10 @@ module Master
         Master::CLI::Pipeline::Pass.new(**deps).call(**call_args).render
       end
 
-      # `--only scan`, `--only scan,fix`, or `--only=critique`. This is how the
-      # old stage verbs survive: /scan, /fix and /critique are rewritten into
-      # `/review --only <stage>` by TurnRouter, so there is one verb with named
-      # stages instead of four verbs that each ran a different part of the same
-      # pipeline. Without it, typing /scan ran the fix stage too.
+      # `--only critique` and `--only map` select read-only review stages.
+      # /fix is not a review-stage alias: TurnRouter sends it to dispatch_fix,
+      # which owns the complete observe/repair/re-observe lifecycle. There is
+      # no /scan stage; observation is the first step of /fix.
       # Every spelling a flag answers to, and the flag it sets. A table rather
       # than a `case`, because the spellings are data: `--no-autofix` is
       # bin/gate's, and while it was missing it fell through to the path,
