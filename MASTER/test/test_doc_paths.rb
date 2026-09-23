@@ -37,14 +37,25 @@ class TestDocPaths < Minitest::Test
     GEMINI.md
     .cursorrules
     .github/copilot-instructions.md
-    RAILS/CLAUDE.md
-    OPENBSD/CLAUDE.md
-    OPENBSD/RUNBOOK.md
-    OPENBSD/SSH_ACCESS.md
-    MASTER/START_HERE.md
+    MASTER/README.md
     MASTER/AGENTS.md
-    MASTER/EXAMPLES.md
-    RAILS/shared/WIRING_NOTES.md
+    OPENBSD/README.md
+    OPENBSD/RUNBOOK.md
+    RAILS/README.md
+    RAILS/CLAUDE.md
+    RAILS/amber/README.md
+    RAILS/amber/AGENTS.md
+    RAILS/brgen/README.md
+    RAILS/brgen/AGENTS.md
+    RAILS/bsdports/README.md
+    RAILS/bsdports/AGENTS.md
+    RAILS/gates/README.md
+    RAILS/shared/README.md
+    STUDIO/README.md
+    STUDIO/dilla/README.md
+    STUDIO/lora/README.md
+    STUDIO/postpro/README.md
+    STUDIO/preprompt/README.md
   ].freeze
 
   # Every coding agent reads a different file, and pub4 had one of the five.
