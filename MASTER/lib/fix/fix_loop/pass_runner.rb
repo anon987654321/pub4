@@ -119,7 +119,8 @@ module Master
           )
           loop.injected_preamble = [
             @preamble,
-            "The following findings came from the real rendered browser. "               "Use the attached screenshot as evidence. Preserve accessibility, semantics and responsive behavior.",
+            "The following findings came from the real rendered browser. " \
+              "Use the attached screenshot as evidence. Preserve accessibility, semantics and responsive behavior.",
           ].join("\n\n")
           result = loop.run_once(files, external_violations: findings, image:)
           @bus&.publish("fix_loop:rendered_fix", pass:, findings: findings.size, fixed: result[:fixed].to_i)
