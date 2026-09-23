@@ -97,6 +97,25 @@ Migration is being done in batches so each rule remains reversible and auditable
 
 The executable Law layer now contains 140 universal definitions plus four Rails-specific semantic definitions in `law/rails.rb`, with no duplicate `Law.define` IDs across the current law sources. The semantic implementation has been retired from YAML; the remaining catalogue fields describe rules but no longer contain their executable semantic prompts or remedies. The next stage is consolidation of the remaining deterministic and structural registry detectors under Law without losing coverage.
 
+## Reliability kernel
+
+MASTER treats completion and survivability as separate claims.
+
+The constitutional core is designed to keep a truthful runtime alive when optional
+services fail. `/fix` journals its run before the first pass, records each pass
+durably, marks crashes explicitly, and replays an interrupted pass on the next
+invocation instead of silently skipping work. Concurrent fix runs for different
+targets are refused rather than sharing recovery state.
+
+Long-running budgets use a monotonic clock, so an NTP step or manual wall-clock
+change cannot extend a fix beyond its elapsed-time budget. File content still uses
+the existing atomic-write and checkpoint mechanisms; the journal records
+lifecycle state, not a second copy of repository contents.
+
+The intended invariant is simple: MASTER may be **healthy**, **degraded**, or
+**failed**, but an unavailable model, TTS worker, network path, or other optional
+capability must never be reported as successful execution.
+
 ## Under the hood
 
 Wake it with one line and it comes up like an old Unix machine, telling you what
