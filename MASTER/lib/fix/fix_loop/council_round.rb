@@ -16,6 +16,9 @@ module Master
       class CouncilRound
         FILES_PER_ROUND = 12
         IMPROVEMENT_RULE_ID = "COUNCIL_IMPROVEMENT"
+        IMPROVEMENT_RULE = Data.define(:id) do
+          def severity = :warning
+        end
         IMPROVEMENT_SEVERITY = :warning
         DESTRUCTIVE_IMPROVEMENT = /\b(?:delete|remove|drop|erase|discard)\b/i.freeze
         LINE_RE = /\b(?:line|ln)\s*#?\s*(\d+)\b|:(\d+)\b/i.freeze
