@@ -7,6 +7,7 @@
 require "open3"
 require "json"
 require "yaml"
+require_relative "../trace/dmesg"
 require_relative "../../../OPENBSD/lib/gate_result"
 require_relative "../../../RAILS/gates/support/bounded_command"
 require_relative "../../../RAILS/tools/design_tokens"
@@ -131,7 +132,7 @@ module Deploy
     # practice nobody ran it. Progress goes to stderr as it happens; GateResult
     # still collects the summary for the final report.
     def progress(message)
-      warn "[constitutional_scan] #{message}"
+      Master::Trace::Dmesg.status("scan0", message)
     end
 
     def now = Process.clock_gettime(Process::CLOCK_MONOTONIC)

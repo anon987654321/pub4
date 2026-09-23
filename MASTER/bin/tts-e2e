@@ -7,6 +7,7 @@
 
 require "json"
 require "net/http"
+require_relative "../lib/trace/dmesg"
 require "uri"
 
 HOST = ENV.fetch("MASTER_TTS_HOST", "http://127.0.0.1:53187")
@@ -74,8 +75,7 @@ MAX_POLLS.times do |attempt|
   poll = http_get("/chat/tts/status?job=#{URI.encode_www_form_component(job)}", read_timeout: 30)
   case poll.code.to_i
   when 202
-    print "."
-    $stdout.flush
+    Master::Trace::Dmesg.status("tts0", "poll state=waiting")
     next
   when 200
     fail!("empty audio body") if poll.body.to_s.empty?
