@@ -95,12 +95,12 @@ module Master
           Integer(Master.load_yaml(Master::COUNCIL_PATH, default: {}).dig("parameters", "local_panel") || 7)
         end
 
-        def review_convergent(code, context: nil, max_rounds: nil)
+        def review_convergent(code, context: nil, max_rounds: nil, image: nil)
           max_rounds ||= self.class.local_posture? ? 1 : CONVERGENCE_ROUNDS
           history = []
           round_context = context
           max_rounds.times do |index|
-            result = review_round(code, round_context, index + 1, max_rounds)
+            result = review_round(code, round_context, index + 1, max_rounds, image:)
             return result if result.err?
 
             history << result.value!
@@ -118,7 +118,7 @@ module Master
         # because ideation and the semantic rules reach a model without passing
         # through here. This one still refuses early rather than spending
         # TOTAL_BUDGET_S discovering it per persona.
-        def review(code, context: nil, personas: nil)
+        def review(code, context: nil, personas: nil, image: nil)
           active = active_personas(personas)
           return Result.err("council: no personas, or no provider key", category: :validation) if active.empty? || !Master.any_api_key_present?
 
@@ -130,7 +130,7 @@ module Master
           return exhausted_error if Io::QuotaGate.blocked?
 
           context = reflexion_context(context)
-          feedback = collect_feedback(active, code, context)
+          feedback = collect_feedback(active, code, context, image:)
           quorum = quorum_error(feedback)
           return quorum if quorum
 
@@ -147,10 +147,10 @@ module Master
 
         private
 
-        def review_round(code, context, round, maximum)
+        def review_round(code, context, round, maximum, image: nil)
           @bus&.publish(:council_round_start, round:, max: maximum)
           @bus&.publish(:engineering_fit, fit: classify_engineering_fit(code))
-          review(code, context:)
+          review(code, context:, image:)
         end
 
         def active_personas(names)
@@ -171,9 +171,9 @@ module Master
           context
         end
 
-        def collect_feedback(personas, code, context)
+        def collect_feedback(personas, code, context, image: nil)
           method = @mode == :sequential ? :collect_sequential : :collect_parallel
-          send(method, code:, context:, personas:)
+          send(method, code:, context:, personas:, image:)
         end
 
         def quorum_error(feedback)
@@ -263,7 +263,7 @@ module Master
           }
         end
 
-        def collect_parallel(code:, context:, personas: @personas)
+        def collect_parallel(code:, context:, personas: @personas, image: nil)
           return [] if circuit_open? || Io::QuotaGate.blocked?
 
           deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + TOTAL_BUDGET_S
@@ -274,20 +274,20 @@ module Master
             break feedback if Io::QuotaGate.blocked?
 
             threads = batch.map do |persona|
-              Thread.new { ask_persona(persona:, code:, context:) }
+              Thread.new { ask_persona(persona:, code:, context:, image:) }
             end
             feedback.concat(threads.filter_map { |thread| join_or_kill(thread, deadline) })
           end
         end
 
-        def collect_sequential(code:, context:, personas: @personas)
+        def collect_sequential(code:, context:, personas: @personas, image: nil)
           deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + TOTAL_BUDGET_S
           personas.each_with_object([]) do |persona, feedback|
             break feedback if Io::QuotaGate.blocked?
             break feedback if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline || circuit_open?(persona)
 
             turn_context = feedback.empty? ? context : "#{context}\n\nprior turns:\n#{format_prior_turns(feedback)}"
-            entry = ask_persona(persona:, code:, context: turn_context)
+            entry = ask_persona(persona:, code:, context: turn_context, image:)
             feedback << entry if entry
           end
         end
@@ -320,7 +320,7 @@ module Master
           @agent.respond_to?(:model) ? Array(@agent.model) : []
         end
 
-        def ask_persona(persona:, code:, context:)
+        def ask_persona(persona:, code:, context:, image: nil)
           # Checked here as well as per batch: the four threads of a batch
           # queue behind the dispatcher's CLI slots, so the ones still waiting
           # when the first comes back refused can be spared their own refusal.
@@ -330,9 +330,9 @@ module Master
           temperature = persona.respond_to?(:temperature) ? persona.temperature : nil
           prompt = build_prompt(persona:, code:, context:)
           response = if model
-                       @agent.ask_once(prompt, model:, temperature:)
+                       @agent.ask_once(prompt, model:, temperature:, image:)
                      else
-                       @agent.ask(prompt, temperature:)
+                       @agent.ask(prompt, temperature:, image:)
                      end
           entry = persona_entry(persona, response, model)
           @bus&.publish(:council_feedback, entry)
