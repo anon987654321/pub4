@@ -29,6 +29,8 @@ module Master
 
       module_function
 
+      NETWORK_CACHE_TTL = 30
+
       # No memory-store version and no model id. Those fields would let two
       # runs be diffed, and no reader diffs two receipts: bin/doctor prints one.
       # `commit` already names the checkout's HEAD. A field joins with the
@@ -159,11 +161,20 @@ module Master
       # A TCP open, not a DNS lookup: a captive portal answers DNS and nothing
       # else, which is the case that reads as "the model is down".
       def network?
-        require "socket"
-        Socket.tcp("1.1.1.1", 53, connect_timeout: 1, &:close)
-        true
-      rescue StandardError
-        false
+        now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        if defined?(@network_checked_at) && @network_checked_at && now - @network_checked_at < NETWORK_CACHE_TTL
+          return @network_status
+        end
+
+        @network_status = begin
+          require "socket"
+          Socket.tcp("1.1.1.1", 53, connect_timeout: 1, &:close)
+          true
+        rescue StandardError
+          false
+        end
+        @network_checked_at = now
+        @network_status
       end
 
       def tts?
