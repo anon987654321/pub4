@@ -189,7 +189,10 @@ module Operator
       reasons = []
       reasons << "severity: #{normalised(entry["severity"])} declared, #{normalised(severity)} enforced" if
         normalised(severity) != normalised(entry["severity"])
-      reasons << "fix" if fix.to_s.strip != entry["fix"].to_s.strip
+      # Once a semantic law is migrated, absence of a catalogue fix means the
+      # executable law is authoritative. Legacy non-Law entries still compare fixes.
+      reasons << "fix" if entry.key?("fix") && !entry["fix"].nil? &&
+                           fix.to_s.strip != entry["fix"].to_s.strip
       return if reasons.empty?
 
       { rule: id, home:, reasons: }
