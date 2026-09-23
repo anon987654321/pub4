@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "open3"
-require "socket"
+require_relative "../ground/boot_receipt"
 
 module Master
   module Fix
@@ -19,14 +19,11 @@ module Master
       }.freeze
 
       attr_reader :root
-      NETWORK_PROBE_TTL_S = 30
 
       def initialize(root:, config: nil, clock: Process::CLOCK_MONOTONIC)
         @root = root
         @config = config || Master::Ops::ProcessBudget.config
         @clock = clock
-        @network_checked_at = nil
-        @network_result = nil
       end
 
       def measure
@@ -156,15 +153,7 @@ module Master
       end
 
       def network_available
-        now = Process.clock_gettime(@clock)
-        return @network_result if @network_checked_at && now - @network_checked_at < NETWORK_PROBE_TTL_S
-
-        @network_result = Socket.tcp("1.1.1.1", 53, connect_timeout: 0.5) { true }
-        @network_checked_at = now
-        @network_result
-      rescue StandardError
-        @network_checked_at = now if defined?(now)
-        @network_result = false
+        Master::Ground::BootReceipt.network?
       end
 
       def llm_quota_exhausted
