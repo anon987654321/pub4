@@ -44,6 +44,11 @@ module Master
 
       def benchmark_model(model)
         started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        passed, errors = run_tasks(model)
+        build_result(model:, passed:, errors:, started:)
+      end
+
+      def run_tasks(model)
         passed = 0
         errors = []
 
@@ -63,6 +68,10 @@ module Master
           end
         end
 
+        [passed, errors]
+      end
+
+      def build_result(model:, passed:, errors:, started:)
         elapsed = elapsed_ms(started)
         result = {
           model: model,
