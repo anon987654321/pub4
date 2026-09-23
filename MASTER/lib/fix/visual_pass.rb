@@ -1,9 +1,10 @@
 # frozen_string_literal: true
 
 require "json"
+require "fileutils"
 require "open3"
 require "tmpdir"
-require_relative "../../../../../RAILS/gates/support/geometry_probe"
+require_relative "../../../RAILS/gates/support/geometry_probe"
 require_relative "../review/council/critique"
 
 module Master
