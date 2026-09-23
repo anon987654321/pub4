@@ -344,3 +344,269 @@ Law.define(:WHY_NOT_WHAT) do
   bad "# increment counter"
   good "# retries are capped so a flapping host cannot pin the worker"
 end
+
+
+# Constitutional migration batch 2: architecture, design, and verification laws.
+# Semantic laws live here once their executable question, remedy, and worked
+# examples are defined. The YAML catalogue remains temporarily for compatibility;
+# SemanticRule#from_law gives these definitions precedence during the migration.
+
+Law.define(:FUNCTIONAL_CORE) do
+  source "Functional Core, Imperative Shell (Gary Bernhardt)"
+  severity :info
+  ask "Are IO, database, network, filesystem, or process side effects scattered deep inside business logic instead of isolated at the edges?"
+  fix "Return values from the core and move IO to the shell."
+  bad <<~X
+    def calculate_total(items); DB.save(calculate_total(items)); end
+  X
+  good <<~X
+    total = calculate_total(items); DB.save(total)
+  X
+end
+
+Law.define(:CONVENTION_OVER_CONFIG) do
+  source "Convention over Configuration (Rails Doctrine, DHH)"
+  severity :info
+  ask "Does this require explicit configuration where an established local convention already provides the correct behavior?"
+  fix "Use the existing convention; add configuration only when it changes a real requirement."
+  bad <<~X
+    config = { adapter: :default }
+  X
+  good <<~X
+    adapter = default_adapter
+  X
+end
+
+Law.define(:PROGRAMMER_HAPPINESS) do
+  source "Optimize for Programmer Happiness (Rails Doctrine, DHH)"
+  severity :info
+  ask "Does this design impose ceremony or friction that does not buy meaningful safety or clarity?"
+  fix "Remove unnecessary ceremony and keep the common path expressive."
+  bad <<~X
+    builder = RequestBuilder.new; builder.configure { |x| x.timeout = 30 }; builder.build
+  X
+  good <<~X
+    request = Request.new(timeout: 30)
+  X
+end
+
+Law.define(:OMAKASE) do
+  source "The Menu Is Omakase (Rails Doctrine, DHH)"
+  severity :info
+  ask "Does this introduce a competing tool when the application already has a suitable integrated default?"
+  fix "Use the existing integrated default unless a concrete requirement justifies deviation."
+  bad <<~X
+    require "external_queue"
+  X
+  good <<~X
+    Rails.application.config.active_job.queue_adapter = :solid_queue
+  X
+end
+
+Law.define(:NO_ONE_PARADIGM) do
+  source "No One Paradigm (Rails Doctrine, DHH)"
+  severity :info
+  ask "Does this force one programming paradigm where a pragmatic combination would make the design clearer?"
+  fix "Mix paradigms where each fits the problem; do not enforce uniformity for ideology's sake."
+  bad <<~X
+    class Pipeline; def call; steps.inject { |state, step| step.call(state) }; end; end
+  X
+  good <<~X
+    steps.map(&:normalize).each { |step| persist(step) }
+  X
+end
+
+Law.define(:BEAUTIFUL_CODE) do
+  source "Exalt Beautiful Code (Rails Doctrine, DHH)"
+  severity :info
+  ask "Would a reader find this merely correct rather than clear, coherent, and aesthetically deliberate?"
+  fix "Rewrite for structural and aesthetic clarity, not merely passing tests."
+  bad <<~X
+    if a; b; else; c; end
+  X
+  good <<~X
+    value = a ? b : c
+  X
+end
+
+Law.define(:SHARP_KNIVES) do
+  source "Provide Sharp Knives (Rails Doctrine, DHH)"
+  severity :info
+  ask "Does this restrict a capable operator's legitimate power mainly to guard against a rare misuse?"
+  fix "Preserve useful capability; document dangerous edges and require deliberate use."
+  bad <<~X
+    raise "forbidden" if dangerous_operation?
+  X
+  good <<~X
+    dangerous_operation! # explicit operator choice
+  X
+end
+
+Law.define(:INTEGRATED_SYSTEMS) do
+  source "Value Integrated Systems (Rails Doctrine, DHH)"
+  severity :info
+  ask "Does this fragment a cohesive concern into separate services or gems without a concrete boundary that justifies it?"
+  fix "Keep the concern integrated until an actual boundary, ownership, or scaling need requires extraction."
+  bad <<~X
+    HTTP.post(service_url, payload)
+  X
+  good <<~X
+    Orders::Checkout.call(order)
+  X
+end
+
+Law.define(:PROGRESS_OVER_STABILITY) do
+  source "Progress Over Stability (Rails Doctrine, DHH)"
+  severity :info
+  ask "Is a beneficial breaking change being avoided solely to preserve compatibility when a clear upgrade path exists?"
+  fix "Take the justified breaking change and provide an explicit migration path."
+  bad <<~X
+    def old_name(x); new_name(x); end
+  X
+  good <<~X
+    def new_name(x); x; end
+  X
+end
+
+Law.define(:BIG_TENT) do
+  source "Push Up a Big Tent (Rails Doctrine, DHH)"
+  severity :info
+  ask "Does this unnecessarily exclude contributors through needless cleverness, jargon, or unexplained conventions?"
+  fix "Prefer clear language and approachable structure without lowering technical rigor."
+  bad <<~X
+    raise Foo::Bar::Baz unless x && y && z
+  X
+  good <<~X
+    raise InvalidState, "x requires y and z" unless x && y && z
+  X
+end
+
+Law.define(:MONOLITH_FIRST) do
+  source "MonolithFirst (Martin Fowler)"
+  severity :info
+  ask "Is this splitting a cohesive application into services before a concrete extraction boundary or operational need exists?"
+  fix "Keep the feature in the application until extraction is clearly justified."
+  bad <<~X
+    PaymentsServiceClient.call(order)
+  X
+  good <<~X
+    Payments::Charge.call(order)
+  X
+end
+
+Law.define(:CONSISTENT_ERROR_STRATEGY) do
+  source "MASTER-native (uniform error handling)"
+  severity :warning
+  ask "Does this module mix Result objects, exceptions, and nil returns for equivalent failure paths?"
+  fix "Choose one error strategy per module and use it consistently."
+  bad <<~X
+    def find(id); raise NotFound if missing; end
+  X
+  good <<~X
+    def find(id); Result.ok(record) or Result.err(:not_found); end
+  X
+end
+
+Law.define(:DUAL_DETECTION) do
+  source "MASTER-native (lexical + semantic detection)"
+  severity :info
+  ask "Does verification rely only on regex or only on an LLM when the subject can be checked with both deterministic and semantic evidence?"
+  fix "Layer deterministic detection with semantic review where both add independent evidence."
+  bad <<~X
+    rule = /danger/
+  X
+  good <<~X
+    rule = lexical_check + semantic_check
+  X
+end
+
+Law.define(:MASS_GENERATE_CURATE) do
+  source "MASTER-native (generate then curate)"
+  severity :info
+  ask "Is a high-stakes creative or design decision accepting the first plausible draft without exploring alternatives?"
+  fix "Generate several materially different candidates, then curate against explicit constraints."
+  bad <<~X
+    solution = first_candidate
+  X
+  good <<~X
+    solutions = generate(15); solution = curate(solutions)
+  X
+end
+
+Law.define(:NO_SHOTGUN_SURGERY) do
+  source "Refactoring code smell: Shotgun Surgery (Fowler)"
+  severity :warning
+  ask "Does one conceptual change require edits across many unrelated files because the missing abstraction has no single home?"
+  fix "Create the missing abstraction or single source so one conceptual change has one owner."
+  bad <<~X
+    users.each { |u| audit(u) }; admins.each { |u| audit(u) }
+  X
+  good <<~X
+    auditable_users.each { |u| audit(u) }
+  X
+end
+
+Law.define(:NO_HIDDEN_GLOBAL_STATE) do
+  source "Clean Code — avoid global mutable state (R.C. Martin)"
+  severity :error
+  ask "Are global variables or mutable class-level values shared across modules without explicit ownership?"
+  fix "Inject configuration and state through explicit boundaries."
+  bad <<~X
+    $current_user = user
+  X
+  good <<~X
+    Context.new(current_user: user)
+  X
+end
+
+Law.define(:TRACER_BULLETS) do
+  source "The Pragmatic Programmer — tracer bullets"
+  severity :info
+  ask "Is infrastructure being built without first proving the simplest end-to-end path through the real system?"
+  fix "Wire the smallest end-to-end path first, prove it works, then add depth."
+  bad <<~X
+    class Queue; end; class Worker; end; class Adapter; end
+  X
+  good <<~X
+    result = adapter.call(input)
+  X
+end
+
+Law.define(:ORTHOGONALITY) do
+  source "The Pragmatic Programmer — orthogonality"
+  severity :warning
+  ask "Does changing one dimension force unrelated changes in another, such as database details leaking into UI or style changing structure?"
+  fix "Decouple dimensions so changes remain local."
+  bad <<~X
+    view = User.where(active: true).to_a.map { |u| "<b>#{u.name}</b>" }
+  X
+  good <<~X
+    users = User.active; render_users(users)
+  X
+end
+
+Law.define(:TRANSFORMATIONS) do
+  source "Transformation Priority Premise (Robert C. Martin)"
+  severity :info
+  ask "Is the design modeling work as scattered mutable state when it can be expressed as a clear sequence of transformations?"
+  fix "Express the flow as input-to-output transformations with explicit stages."
+  bad <<~X
+    state[:x] = normalize(state[:x]); state[:x] = validate(state[:x])
+  X
+  good <<~X
+    validated = validate(normalize(input))
+  X
+end
+
+Law.define(:DEEP_MODULES) do
+  source "A Philosophy of Software Design (John Ousterhout)"
+  severity :warning
+  ask "Is this module shallow, exposing a complex interface while doing little work behind it?"
+  fix "Absorb complexity behind a small interface that provides substantial capability."
+  bad <<~X
+    service.call(a, b, c, d, e, f, g, h)
+  X
+  good <<~X
+    service.call(request)
+  X
+end
