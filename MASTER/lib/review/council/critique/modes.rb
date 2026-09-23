@@ -136,6 +136,9 @@ module Master
                 "surgical, minimal changes that fit existing conventions in the file",
                 "distinguish measurable violations from subjective taste",
                 "no speculative abstractions or unrequested refactors",
+                "prefer evidence-backed micro-smell correction, simplification, clearer naming, and duplication removal over redesign",
+                "for every actionable issue or improvement, name the repository-relative file and stable line or symbol; unanchored observations are not repairs",
+                "a clean deterministic scan means no registered detector fired, not that the artifact is beyond improvement",
               ],
             },
           }.freeze
