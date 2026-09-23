@@ -2,10 +2,12 @@
 
 require "fileutils"
 require "yaml"
+require_relative "../io/atomic_write"
 
 module Master
   module CLI
     class Skills
+      include Master::Io::AtomicWrite
       attr_reader :loaded
 
       def initialize(root:, event_bus: nil)
@@ -140,7 +142,7 @@ module Master
 
       def persist_usage
         FileUtils.mkdir_p(File.dirname(usage_path))
-        File.write(usage_path, @usage.to_yaml)
+        write_atomic(usage_path, @usage.to_yaml, fsync: false, fsync_dir: false, mode: 0o600)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "skills.persist_usage", event_bus: @bus)
       end
