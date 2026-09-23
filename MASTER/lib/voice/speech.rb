@@ -401,6 +401,20 @@ module Master
 
         voice, style_config = resolve_streaming_style(text_str, opts)
 
+        # The web path used to bypass Transcendent entirely, so the face got
+        # one flat Edge utterance while the CLI already had emotion, phrase
+        # rhythm and engine fallback. Use the same expressive path when enabled;
+        # short lines or unavailable engines fall through to the proven Edge path.
+        if transcendent_streaming_enabled?(opts)
+          transcendent_path = synthesize_transcendent_stream(text_str, voice:, opts:)
+          if transcendent_path
+            FileUtils.cp(transcendent_path, output_path)
+            File.delete(transcendent_path) rescue nil
+            on_chunk&.call(File.size(output_path))
+            return true
+          end
+        end
+
         if edge_tts_available?
           TtsSupervisor.ensure_daemon!
           voice_name = VOICES.fetch(voice.to_sym, VOICES[default_voice])
@@ -420,6 +434,33 @@ module Master
       rescue StandardError => e
         @last_error = "#{e.class}: #{e.message}"
         false
+      end
+
+      def transcendent_streaming_enabled?(opts)
+        return false if opts[:transcendent] == false
+        return true if opts[:transcendent] == true
+        Transcendent.enabled?
+      rescue StandardError
+        false
+      end
+
+      def synthesize_transcendent_stream(text_str, voice:, opts:)
+        require_relative "transcendent"
+        path = Transcendent.synthesize(
+          text_str,
+          voice:,
+          style: opts.fetch(:style) { :auto },
+          rate: opts[:rate],
+          pitch: opts[:pitch],
+          voice_locked: opts[:voice_locked] == true,
+          style_locked: opts[:style_locked] == true,
+        )
+        return unless path && File.size?(path)
+
+        path
+      rescue StandardError => e
+        warn_tts("transcendent web path skipped: #{e.class}: #{e.message}")
+        nil
       end
 
       def resolve_streaming_style(text_str, opts)
