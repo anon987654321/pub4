@@ -14,6 +14,11 @@ module Master
       SOURCE_EXTENSIONS = %w[.css .scss .erb .html .htm .js .ts].freeze
       MAX_SURFACES = Integer(ENV.fetch("MASTER_VISUAL_SURFACES_PER_PASS", "8"))
       MAX_FILES = 12
+      SELECTOR_RE = /#[A-Za-z][\w-]*|\.[A-Za-z_][\w-]*(?:[-_][\w-]*)*/.freeze
+      TEXT_ANCHOR_RE = /\b(?:visible\s+text(?:\s+anchor)?|text\s+anchor)\s*[:=]\s*["“]([^"”\n]+)["”]/i.freeze
+      SURFACE_RE = /\bsurface\s*[:=]\s*([A-Za-z0-9_./-]+)\b/i.freeze
+      VIEWPORT_RE = /\bviewport\s*[:=]\s*([A-Za-z0-9_-]+)\b/i.freeze
+
       Rule = Data.define(:id) do
         def severity = :warning
       end
@@ -73,7 +78,8 @@ module Master
         ).run
         return Result.err("rendered visual review: INCONCLUSIVE — #{critique.message}", category: :inconclusive) if critique.err?
 
-        picks = Array(critique.value![:cherry_picks]).map(&:to_s).reject(&:empty?)
+        council_value = critique.value!
+        picks = Array(council_value[:cherry_picks]).map(&:to_s).reject(&:empty?)
         findings = picks.filter_map { |pick| finding_for(pick, sources, anchors) }
         @bus&.publish(
           "fix_loop:visual_review",
@@ -86,6 +92,7 @@ module Master
           findings:,
           image:,
           coverage: captures.map { |c| c[:surface].id },
+          council: council_value,
         )
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "fix.visual_pass", event_bus: @bus)
@@ -195,25 +202,50 @@ module Master
       end
 
       def finding_for(pick, sources, anchors)
-        selector = pick[/#[\w-]+|\.[\w-]+/]
-        file = selector && anchors[selector]
-        file ||= sources.find do |path|
-          words = pick.downcase.split(/\W+/).select { |word| word.length > 4 }
-          words.any? { |word| File.read(path, encoding: "UTF-8").downcase.include?(word) }
-        end
-        file ||= sources.first
-        return unless file
+        surface = pick[SURFACE_RE, 1]&.strip
+        viewport = pick[VIEWPORT_RE, 1]&.strip
+        selector = pick[SELECTOR_RE]
+        text_anchor = pick[TEXT_ANCHOR_RE, 1]&.strip
+        return unless surface && viewport && (selector || text_anchor)
 
-        line = selector && source_line(file, selector)
+        file = selector && anchors[selector]
+        file ||= source_file_for_text(text_anchor, sources)
+        return unless file && sources.include?(file)
+
+        line = selector ? source_line(file, selector) : source_text_line(file, text_anchor)
+        return unless line
+
         {
           rule: RULE_ID,
           file:,
-          line: line || 1,
+          line:,
           severity: :warning,
           confidence: 1.0,
+          reversibility: "cheap",
+          blast_radius: { files_touched: 1 },
           message: "Rendered visual refinement: #{pick}",
-          fix: "Use the attached rendered evidence as ground truth. Make the smallest change that materially improves the cited visual issue while preserving accessibility, semantics and responsive behavior.",
+          fix: "Use the attached rendered evidence as ground truth. Make the smallest source change that materially improves the cited visual issue while preserving accessibility, semantics and responsive behavior.",
         }
+      rescue StandardError
+        nil
+      end
+
+      def source_file_for_text(text, sources)
+        return unless text && !text.empty?
+
+        sources.find do |path|
+          File.foreach(path, encoding: "UTF-8").any? { |line| line.include?(text) }
+        end
+      rescue StandardError
+        nil
+      end
+
+      def source_text_line(path, text)
+        return unless text && !text.empty?
+
+        File.foreach(path, encoding: "UTF-8").with_index(1) do |line, index|
+          return index if line.include?(text)
+        end
       rescue StandardError
         nil
       end
