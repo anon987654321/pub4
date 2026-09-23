@@ -1,6 +1,8 @@
 # Written by OPENBSD/bin/domain_watch.rb --update. Committed so a domain
 # changing hands is a reviewable diff rather than a surprise outage.
 ---
+amber.fashion:
+  state: available
 amstrdam.nl:
   state: registered
   created: '2026-05-18'
@@ -51,10 +53,7 @@ discordb.org:
 dllas.us:
   state: available
 dnver.us:
-  state: registered
-  created: '2021-07-03T22:55:07Z'
-  expires: '2026-07-03T22:55:07Z'
-  registrar: Domeneshop AS dba domainnameshop.com
+  state: available
 dtroit.us:
   state: available
 edinbrgh.uk:
@@ -95,11 +94,18 @@ lisbon.pt:
   state: unknown
   note: lisbon.pt - Forbiden Name
 lndon.uk:
-  state: available
+  state: registered
+  created: 23-Sep-2026
+  expires: 23-Sep-2027
+  status: Registered until expiry date.
+  registrar: Domeneshop AS t/a Domain Name Shop [Tag = DOMENESHOP-NO]
 longyearbyn.no:
   state: available
 lsangeles.com:
-  state: available
+  state: registered
+  created: '2026-09-23T15:55:03Z'
+  expires: '2027-09-23T15:55:03Z'
+  registrar: Domeneshop AS dba domainnameshop.com
 lverpool.uk:
   state: registered
   created: 25-Jun-2021
@@ -129,8 +135,7 @@ oshlo.no:
 prtland.com:
   state: available
 pub.attorney:
-  state: unknown
-  note: registry referral, not a domain record
+  state: available
 pub.healthcare:
   state: available
 reykjavk.is:
