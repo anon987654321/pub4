@@ -55,6 +55,27 @@ class TestDocPaths < Minitest::Test
     AGENTS.md GEMINI.md .cursorrules .github/copilot-instructions.md
   ].freeze
 
+  # Human documentation has one shape: README.md at the thing it documents.
+  # The deliberate exceptions are machine-facing agent contracts, the constitutional
+  # data mirrors, the root backlog/map, and the OpenBSD live-operation runbook.
+  def test_markdown_stays_at_meaningful_boundaries
+    allowed = [
+      "*.md", # README.md is checked below; this keeps the glob readable.
+    ]
+    tracked_md = tracked.select { |path| path.end_with?(".md") }
+    extras = tracked_md.reject do |path|
+      File.basename(path) == "README.md" ||
+        path == "TODO.md" || path == "TREE.md" ||
+        File.basename(path).match?(/\\A(?:AGENTS|CLAUDE|GEMINI)\\.md\\z/) ||
+        path == ".github/copilot-instructions.md" ||
+        path == "OPENBSD/RUNBOOK.md" ||
+        path.match?(%r{\\AMASTER/data/(?:SOUL|IDENTITY|CANON)\\.md\\z})
+    end
+
+    assert_empty extras,
+                 "non-README Markdown needs a documented exception: #{extras.join(", ")}"
+  end
+
   def test_every_harness_file_points_at_the_law
     missing = HARNESS_FILES.reject { |relative| File.file?(File.join(REPO, relative)) }
 
