@@ -196,17 +196,40 @@ model_defs:
     <<: *model_defaults
     score: { quality: 0.83, speed: 0.35, cost: 1.0 }
 ollama_qwen: &ollama_qwen
-  id: ollama:qwen2.5-coder:3b
+  id: ollama:qwen3.5:27b
   <<: *model_defaults
-  score: { quality: 0.60, speed: 0.90, cost: 1.0 }
-ollama_granite: &ollama_granite
-  id: ollama:granite4.2:3b
+  context_window: 256000
+  score: { quality: 0.92, speed: 0.72, cost: 1.0 }
+ollama_qwen_large: &ollama_qwen_large
+  id: ollama:qwen3.5:35b
   <<: *model_defaults
-  score: { quality: 0.58, speed: 0.90, cost: 1.0 }
+  context_window: 256000
+  score: { quality: 0.95, speed: 0.62, cost: 1.0 }
+ollama_glm_flash: &ollama_glm_flash
+  id: ollama:glm-5.3-flash
+  <<: *model_defaults
+  context_window: 128000
+  score: { quality: 0.96, speed: 0.86, cost: 1.0 }
 ollama_gemma: &ollama_gemma
-  id: ollama:gemma3:4b
+  id: ollama:gemma4:26b
   <<: *model_defaults
-  score: { quality: 0.58, speed: 0.85, cost: 1.0 }
+  context_window: 128000
+  score: { quality: 0.90, speed: 0.76, cost: 1.0 }
+ollama_nemotron: &ollama_nemotron
+  id: ollama:nemotron-3.5-lightning
+  <<: *model_defaults
+  context_window: 128000
+  score: { quality: 0.88, speed: 0.94, cost: 1.0 }
+ollama_laguna_xs: &ollama_laguna_xs
+  id: ollama:laguna-xs-2.1
+  <<: *model_defaults
+  context_window: 128000
+  score: { quality: 0.90, speed: 0.92, cost: 1.0 }
+ollama_lfm: &ollama_lfm
+  id: ollama:lfm2.5
+  <<: *model_defaults
+  context_window: 128000
+  score: { quality: 0.78, speed: 0.98, cost: 1.0 }
 
 models:
   grok_primary:
@@ -266,10 +289,14 @@ models:
     - *claude_cli_sonnet
     - *claude_cli_opus
   local:
-    - *gemma_4_31b
+    - *ollama_glm_flash
+    - *ollama_qwen_large
     - *ollama_qwen
     - *ollama_gemma
-    - *ollama_granite
+    - *ollama_nemotron
+    - *ollama_laguna_xs
+    - *ollama_lfm
+    - *gemma_4_31b
 
 routes:
   detect_lexical: free
@@ -448,10 +475,33 @@ replicate_chat:
 # reloading it for each; max_num_ctx caps the window the sender sizes to each
 # request (ollama_sender.rb).
 ollama:
-  enabled_when_env: OLLAMA_BASE_URL
+  # Ollama is a first-class local provider. It probes localhost by default;
+  # MASTER_NO_OLLAMA=1 disables the lane. OLLAMA_BASE_URL can point at another
+  # Ollama daemon. Installed local models are discovered dynamically, so this
+  # list is a curated fast path rather than a closed catalogue.
   default_base_url: "http://localhost:11434"
   keep_alive: 30m
   max_num_ctx: 16384
+  cloud_models:
+    - ollama:glm-5.3-flash:cloud
+    - ollama:glm-5.3:cloud
+    - ollama:glm-5.2:cloud
+    - ollama:glm-5.1:cloud
+    - ollama:deepseek-v4.1-flash:cloud
+    - ollama:deepseek-v4-flash:cloud
+    - ollama:deepseek-v4-pro:cloud
+    - ollama:kimi-k3:cloud
+    - ollama:kimi-k2.7-code:cloud
+    - ollama:kimi-k2.6:cloud
+    - ollama:minimax-m3:cloud
+    - ollama:minimax-m2.7:cloud
+    - ollama:gemma4:cloud
+    - ollama:qwen3.5:cloud
+    - ollama:nemotron-3-ultra:cloud
+    - ollama:nemotron-3-super:cloud
+    - ollama:nemotron-3-nano:cloud
+    - ollama:mistral-large-3:cloud
+    - ollama:gpt-oss:cloud
 
 # media_providers was deleted here on 2026-08-21: nothing read it. The env
 # vars live in providers.yml replicate.env (ReplicateClient reads ENV
