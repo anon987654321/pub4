@@ -57,8 +57,6 @@ scan_coverage:
       Tests are the instrument, not the subject. Scanning them makes every
       fixture that deliberately contains a violation into a violation, which is
       how a self-scanning gate learns to fail on its own evidence.
-    spec: >-
-      Same as test/. spec/core_smoke_spec.rb asserts on the fold by running it.
     tools: >-
       Standalone scripts run by rake and by hand, outside the Zeitwerk loader and
       outside the runtime. Exempt from SelfCheck only: tools/self_findings.rb
