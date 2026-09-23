@@ -412,7 +412,7 @@ module Master::Core
     # The surface is load, admit, and immutable_paths_rule — which
     # test/test_core_immutable_paths.rb builds directly. The rest are rule
     # factories `default_rules` calls and nothing else does, verified against
-    # lib/, test/, spec/, tools/, bin/ and web/.
+    # lib/, test/, tools/, bin/ and web/.
     #
     # Declared rather than merely true: `private` marks a position in the
     # instance-method stream and class methods never enter it, so this class read
