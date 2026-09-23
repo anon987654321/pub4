@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
-require "open3"
 require "pathname"
-require "timeout"
 require_relative "../../ground/known_good"
 
 module Master
