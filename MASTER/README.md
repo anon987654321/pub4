@@ -212,3 +212,31 @@ never reaches the loop. Everything past that is detail.
 Read [START_HERE](START_HERE.md), then [AGENTS](AGENTS.md), which closes on what
 MASTER refuses and why. Anything strange on purpose says so in a comment beside
 it, and the open work lives in [one backlog](../TODO.md). Licensed MIT.
+
+
+## Android and Termux
+
+MASTER detects Android/Termux at boot and exposes a truthful device capability layer through `Master::Device`. When the official Termux:API app and the `termux-api` package are installed, the runtime can query battery, camera information, sensors, audio information and location, and can explicitly capture a camera photo or microphone recording. The hardware layer never claims permission or hardware access merely because a command exists; failures are reported as unavailable instead of simulated success.
+
+Install both the Termux:API application and the `termux-api` package before expecting Android hardware access. The official Termux project documents the add-on and its command-line package separately. citeturn0search0turn1search0
+
+From Termux:
+
+```console
+pkg install termux-api
+cd ~/path/to/pub4/MASTER
+bin/cli
+```
+
+Then:
+
+```text
+/device
+/device battery
+/device camera
+/device sensors
+/device audio
+/device location gps
+```
+
+Location is explicit rather than a boot probe because it is a user-sensitive capability. Camera and microphone operations are explicit too. Termux:API itself mediates Android permissions; for example, camera access can trigger the Android camera permission flow. citeturn2search4

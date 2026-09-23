@@ -44,6 +44,7 @@ module Master
         undo = infra[:undo]
         review_verbs(d).merge(
           "status" => command(:dispatch_status, d[:root], d[:fix_loop], d[:bus], d[:git], d[:trace], d[:learnings]),
+          "device" => command(:dispatch_device, d[:root]),
           "undo" => command(:dispatch_undo, undo),
           "rollback" => command(:dispatch_undo, undo),
           "clear" => command(:dispatch_clear, infra[:session]),
@@ -113,6 +114,23 @@ module Master
         return "not connected" if row[:authentication_known]
 
         "installed"
+      end
+
+      def dispatch_device(root, ctx: nil)
+        arg = arg_for(ctx)
+        case arg
+        when "", "status" then Master::Device.status_lines.join("\n")
+        when "battery" then Master::Device.battery.to_json
+        when "camera" then Master::Device.camera_info.to_json
+        when "sensors" then Master::Device.sensors.to_json
+        when "audio" then Master::Device.audio_info.to_json
+        when /\Alocation(?:\s+(gps|network|passive))?\z/
+          Master::Device.location(provider: $1).to_json
+        else
+          "device  device status  device battery  device camera  device sensors  device audio  device location [gps|network|passive]"
+        end
+      rescue Master::Device::Error => e
+        "device0: unavailable — #{e.message}"
       end
 
       def dispatch_clear(session, ctx: nil)

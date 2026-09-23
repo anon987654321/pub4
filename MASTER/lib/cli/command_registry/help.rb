@@ -34,6 +34,12 @@ module Master
             "what a repair would take on, without taking it on.",
           ],
         },
+        "device" => {
+          summary: "Android and Termux:API hardware capabilities",
+          detail: ["/device — truthful hardware/API capability report.",
+                   "/device battery|camera|sensors|audio — query the matching Termux:API endpoint.",
+                   "/device location [gps|network|passive] — explicitly request location; never sampled at boot."],
+        },
         "status" => {
           summary: "one-frame health",
           detail: ["/status — mode, git, fix loop, last pipeline stage, recent events."],
