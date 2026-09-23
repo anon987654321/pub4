@@ -272,7 +272,10 @@ task "test:all_trees" do
         ["sh", "-n"]
       end
       unless system(*shell, file, out: File::NULL, err: File::NULL)
-        if system("command", "-v", shell.first, out: File::NULL, err: File::NULL)
+        executable = ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? do |dir|
+          File.executable?(File.join(dir, shell.first))
+        end
+        if executable
           failures << "#{file}: shell syntax"
         else
           warn "test:all_trees: #{file}: #{shell.first} unavailable; syntax not measured"
