@@ -209,7 +209,7 @@ end
 
 desc "Run spec/core_smoke_spec.rb — Effect → Constitution → World loop"
 task :core_smoke do
-  sh RbConfig.ruby, "-I#{File.join(__dir__, "lib")}", File.join(__dir__, "spec", "core_smoke_spec.rb")
+  sh RbConfig.ruby, "-I#{File.join(__dir__, "lib")}", File.join(__dir__, "test", "test_core_smoke.rb")
 end
 
 namespace :test do
