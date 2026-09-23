@@ -42,14 +42,12 @@ sentence. The slash set is `/review` `/status` `/undo` `/commit` `/model`
   as named subprocesses (`quick`, `all`, `deploy`). Staged lines go to
   `bin/operator lint --staged --changed-lines`.
 - Work: say the path. `/fix [path]` is the operation that changes the tree —
-  observe, critique, repair, observe again, until it converges or says why it
-  stopped. For `RAILS/` and `MASTER/web`, convergence includes a real browser
-  render: typography, hierarchy, spacing, alignment and composition are judged
-  from the captured surface, then the same screenshot accompanies the repair.
-  No browser evidence means INCONCLUSIVE, never visually clean. `/review [path]`
-  reads and argues without writing, and its stages are `--only critique` and
-  `--only map`. `/fix --dry-run` stops after the reading and says what it would
-  take on. There is no `/scan`.
+  observe, render when the target supports it, critique, repair, and observe
+  again. A clean deterministic scan is not proof of quality: the first clean
+  streak pass also asks the Council for anchored, evidence-backed micro-
+  improvements, then the same RuleLoop verifies them. `/review [path]` reads and
+  argues without writing, and `/fix --dry-run` reports what the convergence pass
+  would take on. There is no `/scan`.
 
 ## Runtime Map
 
