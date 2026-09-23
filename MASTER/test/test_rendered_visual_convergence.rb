@@ -21,6 +21,8 @@ class TestRenderedVisualConvergence < Minitest::Test
     source = read("../RAILS/gates/visual_contract.rb")
     assert_includes source, 'require_relative "support/geometry_probe"'
     assert_includes source, "GeometryProbe.with_browser"
+    assert_includes source, "Master::Io::Exec.capture3"
+    refute_includes source, "Open3.capture3"
     assert_includes source, "ROOT = File.expand_path(\"../..\", __dir__).freeze"
     refute_includes source, 'require "selenium-webdriver"'
     refute_includes source, "Selenium::WebDriver"
