@@ -271,10 +271,13 @@ task "test:all_trees" do
       else
         ["sh", "-n"]
       end
-      next unless system(*shell, file, out: File::NULL, err: File::NULL)
-      next
-    rescue Errno::ENOENT
-      warn "test:all_trees: #{file}: interpreter unavailable; syntax not measured"
+      unless system(*shell, file, out: File::NULL, err: File::NULL)
+        if system("command", "-v", shell.first, out: File::NULL, err: File::NULL)
+          failures << "#{file}: shell syntax"
+        else
+          warn "test:all_trees: #{file}: #{shell.first} unavailable; syntax not measured"
+        end
+      end
     end
   end
 
