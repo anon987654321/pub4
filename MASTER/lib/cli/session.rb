@@ -4,6 +4,7 @@ require_relative "session/container"
 require_relative "session/signals"
 require_relative "session/command_ops"
 require_relative "session/thinking_indicator"
+require_relative "session/activity"
 require_relative "session/result_display"
 require_relative "session/background_scan"
 require_relative "session/repl_flow"
@@ -110,6 +111,7 @@ module Master
         @focus_mode = false
         @last_input = nil
         @exit_code = 0
+        @activity = Master::CLI::Activity.new
       end
 
       def init_turn_state(input)
