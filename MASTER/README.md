@@ -239,4 +239,4 @@ Then:
 /device location gps
 ```
 
-Location is explicit rather than a boot probe because it is a user-sensitive capability. Camera and microphone operations are explicit too. Termux:API itself mediates Android permissions; for example, camera access can trigger the Android camera permission flow. citeturn2search4
+Location is explicit rather than a boot probe because it is a user-sensitive capability. Camera and microphone operations are explicit too. Termux:API itself mediates Android permissions; for example, camera access can trigger the Android camera permission flow.
