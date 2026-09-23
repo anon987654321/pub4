@@ -44,7 +44,7 @@ require "json"
 
 module Operator
   module RuleAudit
-    MASTER = File.expand_path("..", __dir__)
+    MASTER = File.expand_path("../..", __dir__)
     ROOT = File.expand_path("..", MASTER)
 
     # Enough real files to make a rate meaningful, few enough to stay quick.

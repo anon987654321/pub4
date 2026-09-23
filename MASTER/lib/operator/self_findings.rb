@@ -32,7 +32,7 @@ require "json"
 
 module Operator
   module SelfFindings
-    MASTER_DIR = File.expand_path("..", __dir__)
+    MASTER_DIR = File.expand_path("../..", __dir__)
     ROOT = File.expand_path("..", MASTER_DIR)
     CEILING = File.join(MASTER_DIR, "data", "self_findings.yml")
 

@@ -50,7 +50,7 @@ require "json"
 
 module Operator
   module AutofixReach
-    MASTER = File.expand_path("..", __dir__)
+    MASTER = File.expand_path("../..", __dir__)
     CEILING = File.join(MASTER, "data", "autofix_reach.yml")
 
     # Where a transform could plausibly live. Searched as whole words so a rule
@@ -113,7 +113,7 @@ module Operator
     # loads the laws instead of grepping for a literal `Law.define(:ID)`.
     def detectable_ids
       @detectable_ids ||= begin
-        require File.join(MASTER, "tools/rule_reach")
+        require File.join(MASTER, "lib/operator/rule_reach")
         all = RuleReach.rules
         (RuleReach.mechanical(all) + RuleReach.prompted(all)).map { |r| r["id"].to_s }.to_set
       end

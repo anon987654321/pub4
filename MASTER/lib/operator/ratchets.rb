@@ -105,7 +105,7 @@ module Operator
     # the shape of defect the rest of this file exists to catch.
     def master_yaml_rows
       [master_row("rule_reach", "data/rules.yml", "rules no configuration can run") do
-         require File.join(MASTER, "tools/rule_reach")
+         require File.join(MASTER, "lib/operator/rule_reach")
          unreachable = Operator::RuleReach.unreachable
          [unreachable.size, Operator::RuleReach.ceiling, unreachable]
        end,
@@ -113,29 +113,29 @@ module Operator
        # collapsing them would let a rule go blind while another stops being
        # silent and the total holds still.
        master_row("rule_audit.blind", "data/rules.yml", "rules proved on input their subjects never get") do
-         require File.join(MASTER, "tools/rule_audit")
+         require File.join(MASTER, "lib/operator/rule_audit")
          blind = Operator::RuleAudit.audit[:fixture_blindness]
          [blind.size, Operator::RuleAudit.ceilings.fetch("blind"), blind.map { |row| "#{row[:rule]}: #{row[:detail]}" }]
        end,
        master_row("rule_audit.saturated", "data/rules.yml", "rules flagging most of what they read") do
-         require File.join(MASTER, "tools/rule_audit")
+         require File.join(MASTER, "lib/operator/rule_audit")
          saturated = Operator::RuleAudit.audit[:saturation]
          [saturated.size, Operator::RuleAudit.ceilings.fetch("saturated"),
           saturated.map { |row| format("%s: %d/%d files", row[:rule], row[:hits], row[:applicable]) }]
        end,
        master_row("rule_audit.silent", "data/rules.yml", "rules firing on nothing in the corpus") do
-         require File.join(MASTER, "tools/rule_audit")
+         require File.join(MASTER, "lib/operator/rule_audit")
          silent = Operator::RuleAudit.audit[:silent]
          [silent.size, Operator::RuleAudit.ceilings.fetch("silent"), silent]
        end,
        master_row("autofix_reach.dangling", "data/autofix_reach.yml", "rules naming a transform nothing implements") do
-         require File.join(MASTER, "tools/autofix_reach")
+         require File.join(MASTER, "lib/operator/autofix_reach")
          dangling = Operator::AutofixReach.dangling
          [dangling.size, Operator::AutofixReach.ceilings.fetch("dangling"),
           dangling.map { |row| "#{row[:id]} -> #{row[:transform]}" }]
        end,
        master_row("autofix_reach.bare_true", "data/autofix_reach.yml", "rules claiming a fix without naming it") do
-         require File.join(MASTER, "tools/autofix_reach")
+         require File.join(MASTER, "lib/operator/autofix_reach")
          bare = Operator::AutofixReach.bare_true
          [bare.size, Operator::AutofixReach.ceilings.fetch("bare_true"), bare]
        end,
@@ -187,7 +187,7 @@ module Operator
          [ungraphed.size, Master.law("rule_ratchets", root: MASTER).dig("deps", "ungraphed"), ungraphed.map(&:to_s)]
        end,
        master_row("self_findings.law", "data/self_findings.yml", "what the 122 laws find in our own trees") do
-         require File.join(MASTER, "tools/self_findings")
+         require File.join(MASTER, "lib/operator/self_findings")
          found = Operator::SelfFindings.members
          [found.size, Operator::SelfFindings.ceiling, found]
        end,
@@ -198,7 +198,7 @@ module Operator
        # over all four trees and records nothing.
        master_row("self_findings.registry", "data/self_findings.yml",
                   "what the scanner's own rules find, at error severity") do
-         require File.join(MASTER, "tools/self_findings")
+         require File.join(MASTER, "lib/operator/self_findings")
          found = Operator::SelfFindings.registry_members
          [found.size, Operator::SelfFindings.registry_ceiling, found]
        end,

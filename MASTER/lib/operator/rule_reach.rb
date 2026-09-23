@@ -20,7 +20,7 @@ require "json"
 
 module Operator
   module RuleReach
-    MASTER_DIR = File.expand_path("..", __dir__)
+    MASTER_DIR = File.expand_path("../..", __dir__)
     CEILING = File.join(MASTER_DIR, "data", "rules.yml")
 
     module_function
