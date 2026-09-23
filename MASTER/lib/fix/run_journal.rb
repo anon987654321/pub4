@@ -37,17 +37,22 @@ module Master
             unless active["target"] == relative(target) && Array(active["files"]).sort == requested_files
               raise "another fix run is active: #{active["id"]} for #{active["target"]}"
             end
+            if active["state"] == "active" && process_alive?(active["pid"]) && active["pid"].to_i != Process.pid
+              raise "another fix process is active: #{active["id"]} pid=#{active["pid"]}"
+            end
             previous_state = active["state"]
             active["state"] = "active"
             active["resumed_from"] = previous_state unless previous_state == "active"
             active["resumed_at"] = Time.now.utc.iso8601
             active["resume_count"] = active.fetch("resume_count", 0).to_i + 1
+            remaining = remaining_seconds(active)
             persist(data)
             @bus&.publish("fix:resume", run_id: active["id"], pass: next_pass(active),
-                          resume_count: active["resume_count"])
-            return active.merge("resumed" => true)
+                          resume_count: active["resume_count"], remaining_seconds: remaining)
+            return active.merge("resumed" => true, "remaining_seconds" => remaining)
           end
 
+          now = Time.now.utc
           run = {
             "id" => SecureRandom.hex(10),
             "state" => "active",
@@ -55,7 +60,9 @@ module Master
             "files" => Array(files).map { |path| relative(path) }.compact.uniq.sort,
             "max_passes" => Integer(max_passes),
             "budget_seconds" => Integer(budget_seconds),
-            "started_at" => Time.now.utc.iso8601,
+            "started_at" => now.iso8601,
+            "deadline_at" => (now + Integer(budget_seconds)).iso8601,
+            "last_seen_at" => now.iso8601,
             "pid" => Process.pid,
             "passes" => [],
           }
@@ -63,7 +70,7 @@ module Master
           data["runs"] = data["runs"].last(MAX_RUNS)
           persist(data)
           @bus&.publish("fix:start", run_id: run["id"], target: run["target"])
-          run.merge("resumed" => false)
+          run.merge("resumed" => false, "remaining_seconds" => Integer(budget_seconds).to_f)
         end
       rescue StandardError => e
         @bus&.publish("fix:journal_error", operation: "start", error: e.message)
@@ -107,6 +114,19 @@ module Master
         end
       end
 
+      def remaining_seconds(run)
+        deadline = Time.iso8601(run["deadline_at"].to_s)
+        now = Time.now.utc
+        last = run["last_seen_at"] && Time.iso8601(run["last_seen_at"].to_s)
+        return 0.0 if last && now < last
+
+        remaining = [deadline - now, 0.0].max
+        run["last_seen_at"] = now.iso8601
+        remaining
+      rescue ArgumentError
+        0.0
+      end
+
       def next_pass(run)
         completed = Array(run["passes"]).reject { |row| row["state"].to_s == "active" }
         completed.map { |row| row["pass"].to_i }.max.to_i + 1
@@ -121,6 +141,18 @@ module Master
       end
 
       private
+
+      def process_alive?(pid)
+        value = pid.to_i
+        return false if value <= 0
+
+        Process.kill(0, value)
+        true
+      rescue Errno::ESRCH
+        false
+      rescue Errno::EPERM
+        true
+      end
 
       def update(run_id)
         with_lock do
