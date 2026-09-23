@@ -210,7 +210,7 @@ class TestDocPaths < Minitest::Test
 
   # A path the repo ignores is generated, and a clean checkout is entitled not to
   # have it. `web/storage/` and `web/log/` are Rails' own runtime directories and
-  # START_HERE.md lists them under "Local/generated", which is the citation this
+  # MASTER/README.md lists them under "Local/generated", which is the citation this
   # gate is least able to check and most likely to punish: the prose is correct
   # and the directory only appears after the app has run once.
   #
