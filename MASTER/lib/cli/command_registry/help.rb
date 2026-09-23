@@ -64,7 +64,7 @@ module Master
         "runtime" => {
           summary: "known-good runtime promotion and rollback",
           detail: ["/runtime status", "/runtime promote — record the current committed HEAD as known-good.",
-                   "/runtime rollback — return a clean checkout to the recorded known-good commit."],
+                   "/runtime rollback --confirm — return a clean checkout to the recorded known-good commit."],
         },
         "help" => {
           summary: "this list",
