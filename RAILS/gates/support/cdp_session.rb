@@ -58,6 +58,8 @@ module Deploy
 
     attr_reader :events
 
+    def clear_events = @events.clear
+
     # webgl: opt into SwiftShader for a surface that is made of WebGL. Off by
     # default because software GL is slow and rasterises text differently, which
     # the layout and CSS gates would feel.
