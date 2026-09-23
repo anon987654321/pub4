@@ -202,7 +202,7 @@ module Master
 
         def architecture_plan(violation:, src:, path:, model:)
           prompt = architecture_plan_prompt(violation, src, path)
-          raw = model ? @agent.ask_once(prompt, model:) : @agent.ask_once(prompt)
+          raw = model ? ask_once_agent(prompt, model:, image: @visual_image) : ask_once_agent(prompt, image: @visual_image)
           raw.to_s
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "RuleLoop.architecture_plan", rule: @rule.id)
