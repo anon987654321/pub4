@@ -51,13 +51,43 @@ Forward work is the last section of this file.
 - **One `MASTER/Gemfile.lock` for the Mac and the box, in a watched deploy.**
   `MASTER/Gemfile` guards `rb-kqueue` with a runtime `if RUBY_PLATFORM`, so the
   lock is host-dependent; `install_if -> { RUBY_PLATFORM =~ /bsd|dragonfly/i }`
-  fixes it. The same regenerated lock should fill the 25 empty `CHECKSUMS`
+  fixes it. `rb-inotify`'s Linux guard has the same shape and the same absence:
+  neither appears in `Gemfile.lock`'s `DEPENDENCIES`, so a regenerated lock is
+  the only way either actually installs on its target platform. The same
+  regenerated lock should fill the 25 empty `CHECKSUMS`
   entries and drop `flay` (`MASTER/Gemfile:30`, no caller, no lock dependents).
   It cannot land alone: `BUNDLE_FROZEN=true` fails on a Gemfile the lock does
   not match, and any commit touching the lock conflicts with the box's
   hand-repaired copy, CHECKSUMS deleted, that keeps TTS alive. Apply during a
   deploy and verify with `rcctl restart master` and `vps state --remote`
   reading `tts_socket=true`.
+  - **`rb-edge-tts` (git, `ZPVIP/rb-edge-tts`) pulls EventMachine 1.2.7 into the
+    boot bundle**, a 2018-era reactor, for a gem only `bin/tts-worker` needs.
+    Isolating it into a `:tts` group `bin/tts-worker` alone bundle-execs would
+    keep EventMachine off every other process's boot path; verify
+    `Speech.edge_tts_ready?` still works as a spawn probe rather than a
+    boot-time `require` before landing it.
+  - **`:dilla` pulls `head_music` 15.1, which pulls ActiveSupport 8, i18n,
+    tzinfo and concurrent-ruby into a constitutional CLI's lock** for a
+    music-theory gem nothing in `MASTER/lib/music/` calls —
+    `Music::Synth`/`Realtime` implement sine/square/triangle themselves, and
+    `wavefile` (also in `:dilla`) writes WAVs that live playback does not use.
+    Moving `:dilla` to STUDIO's own Gemfile (or dropping `head_music`
+    specifically) takes ActiveSupport out of MASTER's lock; `AGENTS.md`
+    already asks for `Bundler.with_unbundled_env` when a child process needs
+    STUDIO's bundle, which is the seam to use.
+  - **`ruby_llm-mcp` has no version cap** (`Gemfile:26`) and RuboCop 1.85
+    independently pulls a *different* `mcp` gem (0.8) as a dev dependency —
+    two MCP stacks, unrelated. Decide 1.13 vs a measured upgrade to
+    `ruby_llm` 2.0 in one worktree (`providers.yml`'s `ruby_llm_key` setters
+    need re-checking either way — `apply_api_keys` already warns when
+    RubyLLM has no setter, which is scar tissue from this breaking once), and
+    cap or drop `ruby_llm-mcp` until a named test uses it.
+  - **`opentelemetry-sdk` is `require: false` with no instrumentation gem
+    paired to it** — an SDK that traces nothing. Either add the matching
+    `opentelemetry-instrumentation-*` gem or drop the SDK; a lock entry that
+    can never emit a span is the same inert-config shape as everything else
+    this file has caught this way.
 - **After the next deploy, confirm `.master/tts-worker-*.log` stay
   `master`-owned.** `cable_bridge.rb`, one path a root `assets:precompile` could
   build a container through, is deleted, and `MasterContainerLoader.ensure!`
