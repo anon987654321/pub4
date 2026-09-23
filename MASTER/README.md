@@ -93,9 +93,9 @@ the mind, and the clean ground it stands on.
 
 `data/rules.yml` is the declarative catalogue: names, provenance, scope, severity, compatibility metadata, and semantic prompts. `law/` is the executable constitutional layer: the question or detector, remedy, and worked examples that can be proved offline. During staged migration, both populations remain temporarily; `SemanticRule#from_law` gives an executable Law definition precedence over the same catalogue id.
 
-Migration is being done in batches so each rule remains reversible and auditable. Batch 1 migrated foundational constitutional semantics; batches 2–4 migrate architecture, design, and security principles. The intended end state is one authoritative rule definition, with the catalogue describing the rule and `law/` carrying its executable contract.
+Migration is being done in batches so each rule remains reversible and auditable. Batches 1–7 have migrated the catalogue’s semantic layer into executable Law definitions covering foundational architecture, design, security, refactoring, user experience, LLM operations, and prose. Domain-specific lexical and structural detectors remain in their existing `law/ruby.rb`, `law/javascript.rb`, `law/shell.rb`, `law/css.rb`, and `law/html.rb` homes until those consumers are migrated without losing deterministic coverage.
 
-The migration is staged and reversible. The executable Law layer now contains 60 constitutional definitions across the foundational, architecture, design, and security batches; the remaining catalogue rules stay in YAML until their consumers and fixtures are migrated. The end state is one authoritative executable definition per rule, with `data/rules.yml` retaining catalogue metadata rather than a second implementation.
+The executable Law layer now contains 140 universal definitions and 251 definitions across the full `law/` tree, with no duplicate `Law.define` IDs in the current source. The YAML semantic entries remain temporarily as compatibility metadata because `SemanticRule#from_law` already gives the executable definition precedence; the next migration stage is consumer-by-consumer retirement of those duplicate catalogue bodies, followed by detector consolidation.
 
 ## Under the hood
 
