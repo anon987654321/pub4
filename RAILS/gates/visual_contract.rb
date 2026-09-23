@@ -93,7 +93,7 @@ module VisualContractGate
   end
 
   def accessibility_violations(driver)
-    driver.execute_script(ACCESSIBILITY_PROBE)
+    Array(driver.evaluate(ACCESSIBILITY_PROBE))
   end
 
   # Diffs the prior screenshot at the same path (rolling baseline from the last
@@ -243,7 +243,6 @@ module VisualContractGate
   rescue CdpSession::Unavailable, CdpSession::Error => e
     raise CannotMeasure, "could not measure with Chrome/CDP (#{e.class}: #{e.message})"
   end
-nd
 end
 
 # The tests require this file to exercise grade, identical_captures and
