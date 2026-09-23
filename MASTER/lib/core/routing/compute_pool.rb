@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require "fileutils"
+require "yaml"
+
 module Master
   module Core
     module Routing
@@ -146,7 +149,10 @@ module Master
 
         def load_stats
           return {} unless File.file?(stats_path)
-          Master.load_yaml(stats_path) || {}
+          raw = Master.load_yaml(stats_path) || {}
+          raw.each_with_object({}) do |(model, stat), out|
+            out[model.to_s] = stat.to_h.transform_keys(&:to_sym)
+          end
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "compute_pool.load_stats")
           {}
@@ -155,7 +161,9 @@ module Master
         def persist_stats
           path = stats_path
           FileUtils.mkdir_p(File.dirname(path))
-          Master.write_yaml(path, @stats)
+          tmp = "#{path}.#{$}.tmp"
+          File.write(tmp, YAML.dump(@stats))
+          File.rename(tmp, path)
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "compute_pool.persist_stats")
         end
