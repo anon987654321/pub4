@@ -85,6 +85,19 @@ module Master
             )
           end
 
+          # Invalidate discovery caches without forgetting durable telemetry.
+          def refresh_pool!
+            @ollama_installed_models = nil
+            @local_server_index = nil
+            @api_providers = nil
+            @provider_rows = nil
+            start_pool_probes
+            self
+          rescue StandardError => e
+            Master::Ground::Swallow.log(e, context: "model_router.pool.refresh")
+            self
+          end
+
           private
 
           # The lanes that need a binary, a browser profile or a running server
