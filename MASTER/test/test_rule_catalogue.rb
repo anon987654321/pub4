@@ -17,6 +17,8 @@ require_relative "../tools/rule_reach"
 # check still fires on the thing it exists to find.
 
 class TestRuleCatalogue < Minitest::Test
+  Law = Struct.new(:id, :detect, :fix, :severity, keyword_init: true)
+
   # A design rule with a nested `config:` beside two ordinary rules. Shaped after
   # AUTOMATED_CSS_ANALYSIS, which is where the false positives came from: eight
   # check names under `config.checks`, each with an `id` and — correctly — no
@@ -90,7 +92,7 @@ class TestRuleCatalogue < Minitest::Test
   # descriptive metadata only.
   def test_a_semantic_prompt_beside_a_detector_is_one_rule_at_two_depths
     body = { "rules" => [{ "id" => "FAIL_VISIBLY", "tier" => "kernel", "severity" => "error" }] }
-    laws = { FAIL_VISIBLY: Struct.new(:id, :detect, :fix, :severity).new(:FAIL_VISIBLY, ->(_) { true }, "Catch it.", :error) }
+    laws = { FAIL_VISIBLY: Law.new(id: :FAIL_VISIBLY, detect: ->(_) { true }, fix: "Catch it.", severity: :error) }
     with_body(body) do
       with_populations(laws:) { assert_empty Operator::RuleHygiene.cross_population_duplicates }
     end
