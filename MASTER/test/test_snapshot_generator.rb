@@ -20,6 +20,29 @@ class TestSnapshotGenerator < Minitest::Test
     end
   end
 
+  def test_snapshot_ignores_dot_paths_and_binary_media
+    Dir.mktmpdir do |dir|
+      FileUtils.mkdir_p(File.join(dir, ".hidden"))
+      FileUtils.mkdir_p(File.join(dir, "nested", ".cache"))
+      FileUtils.mkdir_p(File.join(dir, "media"))
+      File.write(File.join(dir, ".hidden", "secret.rb"), "puts :hidden\n")
+      File.write(File.join(dir, "nested", ".cache", "cache.rb"), "puts :cache\n")
+      File.write(File.join(dir, "visible.rb"), "puts :visible\n")
+      File.binwrite(File.join(dir, "media", "cover.png"), "\x89PNG\r\n")
+      File.binwrite(File.join(dir, "media", "take.wav"), "RIFF")
+      output = File.join(dir, "snapshot.md")
+
+      Master::Snapshot.new(root: dir, output:).write!
+
+      text = File.read(output)
+      assert_includes text, "visible.rb"
+      refute_includes text, "secret.rb"
+      refute_includes text, "cache.rb"
+      refute_includes text, "cover.png"
+      refute_includes text, "take.wav"
+    end
+  end
+
   def test_snapshot_does_not_include_its_own_output
     Dir.mktmpdir do |dir|
       output = File.join(dir, "snapshot_MASTER.md")
