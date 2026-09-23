@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "base64"
 require "fileutils"
 require "open3"
 require "tmpdir"
@@ -98,7 +99,8 @@ module Master
       def run_critique(captures, sources, anchors, graph:)
         representative = captures.max_by { |capture| visual_signal(capture[:payload]) }
         context = build_context(captures, anchors, graph:)
-        image = { path: representative[:screenshot], name: "rendered-ui.png", mime: "image/png" }
+        contact_sheet = build_contact_sheet(captures)
+        image = { path: contact_sheet, name: "rendered-ui-contact-sheet.png", mime: "image/png" }
         critique = Master::Review::Council::Critique.new(
           mode: :ui,
           agent: @agent,
@@ -108,6 +110,47 @@ module Master
           visual_context: context,
         ).run
         [critique, image]
+      end
+
+
+      def build_contact_sheet(captures)
+        html_path = File.join(@dir, "rendered-ui-contact-sheet.html")
+        html = <<~HTML
+          <!doctype html>
+          <html><head><meta charset="utf-8"><style>
+          * { box-sizing: border-box; }
+          html, body { margin: 0; background: #fff; color: #111; }
+          body { padding: 24px; font: 16px/1.4 system-ui, sans-serif; }
+          h1 { margin: 0 0 20px; font-size: 24px; }
+          .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+          figure { margin: 0; min-width: 0; } figcaption { margin: 0 0 8px; font-weight: 700; }
+          img { display: block; width: 100%; height: auto; border: 1px solid #bbb; }
+          </style></head><body>
+          <h1>MASTER rendered visual evidence: #{captures.length} surfaces</h1>
+          <div class="grid">#{captures.map { |capture| contact_sheet_item(capture) }.join("\n")}</div>
+          </body></html>
+        HTML
+        File.write(html_path, html)
+        screenshot = File.join(@dir, "rendered-ui-contact-sheet.png")
+        Deploy::GeometryProbe.with_browser(root: repo_root, warm: []) do |cdp|
+          cdp.viewport(1800, 1400, mobile: false)
+          cdp.navigate("file://#{html_path}")
+          cdp.screenshot(screenshot)
+        end
+        screenshot
+      end
+
+      def contact_sheet_item(capture)
+        surface = capture[:surface]
+        encoded = Base64.strict_encode64(File.binread(capture[:screenshot]))
+        label = "#{surface.id} | #{surface.viewport} | #{surface.url}"
+        "<figure><figcaption>#{escape_html(label)}</figcaption><img src=\"data:image/png;base64,#{encoded}\" alt=\"#{escape_html(label)}\"></figure>"
+      rescue StandardError => e
+        "<figure><figcaption>#{escape_html(surface.id)} | contact-sheet error: #{escape_html(e.message)}</figcaption></figure>"
+      end
+
+      def escape_html(value)
+        value.to_s.gsub("&", "&amp;").gsub("<", "&lt;").gsub(">", "&gt;").gsub('"', "&quot;")
       end
 
       def review_captures(captures, sources, anchors, pass, graph:, coverage:)
@@ -219,14 +262,14 @@ module Master
         mapped = anchors.values.compact.uniq.first(12)
         <<~TEXT
           RENDERED EVIDENCE
-          The attached screenshot is a real browser capture. The measurements below were
+          The attached image is a contact sheet containing every captured surface in this pass. Compare surfaces against each other as well as against their own viewport. The measurements below were
           collected from the same browser session across the listed surfaces.
           Judge the render first. Source is supporting evidence.
           Look for actual opportunities in hierarchy, typography, measure, leading,
           whitespace, alignment, grouping, density, proportion, responsive composition,
           affordance, and decorative noise. Do not stop at "technically valid".
           Every actionable issue must name its surface/viewport and a stable selector or
-          visible text anchor.
+          visible text anchor. Treat one-pixel alignment drift, inconsistent spacing, typography, component vocabulary, optical centering, baseline rhythm, density, and responsive composition as real defects when the rendered evidence supports it.
 
           #{rows.join("\n")}
           #{graph&.context}
