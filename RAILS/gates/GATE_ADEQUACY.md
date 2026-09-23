@@ -25,7 +25,7 @@ every browser leaf.
 | Multi-step journeys | **flow_journey** (brgen verticals depth + amber + master) | Strong guest; no auth journeys |
 | Phone UX | **mobile_flow**, reflow, geometry mobile | Good floor; CDP flake → inconclusive |
 | Keyboard | **keyboard_flow** | Good; desktop-first |
-| Pixel / visual | visual_contract, layout_snapshot, visual_quality | Capture matrix exists; not every page |
+| Pixel / visual | visual_contract, layout_snapshot, visual_quality | Canonical CDP capture + committed geometry snapshots; Council now consumes rendered evidence |
 | MASTER web | master_web_assets, production, page_sim face/dashboard | Face OK; static offline soft |
 | Integrity | gate_mutation, calibration, constitutional_scan | Solid |
 
@@ -51,7 +51,9 @@ every browser leaf.
 5. **Auth + :id pages** — page_sim source-only for show/edit; no seeded live
    IDs.
 6. **visual_contract capture** — needs `VISUAL_CAPTURE=1` + running apps;
-   default run only validates matrix shape.
+   it now reuses the canonical CDP session rather than a separate browser driver.
+   `/fix RAILS` additionally captures the declared geometry surfaces and feeds the
+   render to the same MASTER Council/repair loop.
 7. **bsdports** — out of product focus triangle but still a Rails app; must
    appear in family `--all`.
 8. **No server-side perf budget** — `web_vitals_budget` ratchets LCP and CLS
