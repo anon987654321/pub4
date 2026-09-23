@@ -83,6 +83,7 @@ module Master
       end
 
       def torch(enabled = true)
+        Ground::LawHandshake::Admission.require!
         require_android_command!("termux-torch")
         run!("termux-torch", enabled ? "on" : "off")
       end
