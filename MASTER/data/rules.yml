@@ -656,7 +656,7 @@ refusal_templates:
     style: "decline once, propose alternative once, stop"
     forbidden: ["I'm sorry but I cannot", "as an AI", "I'd be happy to", filler_apology]
     example_good: "Out of scope: production push during freeze. Alternative: branch-only commit, deploy after Friday."
-# `autofix:` here is a claim tools/autofix_reach.rb checks and the runtime never
+# `autofix:` here is a claim lib/operator/autofix_reach.rb checks and the runtime never
 # reads: LearnedSmellsRule declares autofix: false for the rule and Finding.build
 # is handed no autofix at all. Seven of the eight named a transform implemented
 # nowhere — rescue_standard_error, add_frozen_string_literal, create_issue,
@@ -3802,7 +3802,7 @@ rule_deps:
 # are read through Master.law and add no second loader.
 rule_ratchets:
   audit:
-    # Ceilings for tools/rule_audit.rb — the audit of the rules, not of the tree.
+    # Ceilings for lib/operator/rule_audit.rb — the audit of the rules, not of the tree.
     #
     # blind and saturated are 0 and must stay 0. They are not a backlog: a rule whose
     # fixtures only pass because a fixture is read differently from a real file, or
