@@ -108,8 +108,6 @@ module Master
       end
 
       def ruby_command
-        return %w[rbenv exec ruby] if system("command", "-v", "rbenv", out: File::NULL, err: File::NULL)
-
         [RbConfig.ruby]
       end
 
