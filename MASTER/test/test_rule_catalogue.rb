@@ -71,8 +71,7 @@ class TestRuleCatalogue < Minitest::Test
     with_body(body) { assert_equal ["C"], Operator::RuleHygiene.missing_metadata }
   end
 
-  # A law double: the four things the two checks below read off one.
-  Law = Struct.new(:id, :detect, :fix, :severity, keyword_init: true)
+  # A law double: the four things the hygiene checks below read off one.
 
   def with_populations(laws: {}, registry: {})
     hygiene = Operator::RuleHygiene
@@ -86,16 +85,12 @@ class TestRuleCatalogue < Minitest::Test
     originals.each { |name, method| hygiene.define_singleton_method(name, method) }
   end
 
-  # The count this check carried until 2026-09-06 was nineteen parts architecture
-  # to one part duplicate. rules.yml is the catalogue and law/ is an
-  # implementation, so an id appears in both by construction, and a
-  # `detect_semantic` prompt is that rule's model tier rather than a second
-  # definition of it — FAIL_VISIBLY declares one beside the law that holds its
-  # lexical detector, with the same source, severity and fix.
+  # Layered enforcement is one Law: its executable definition may contain a
+  # deterministic detector and a semantic question, while the catalogue keeps
+  # descriptive metadata only.
   def test_a_semantic_prompt_beside_a_detector_is_one_rule_at_two_depths
-    body = { "rules" => [{ "id" => "FAIL_VISIBLY", "tier" => "kernel", "severity" => "error",
-                           "fix" => "Catch it.", "detect_semantic" => "Does this swallow errors?" }] }
-    laws = { FAIL_VISIBLY: Law.new(id: :FAIL_VISIBLY, detect: ->(_) { true }, fix: "Catch it.", severity: :error) }
+    body = { "rules" => [{ "id" => "FAIL_VISIBLY", "tier" => "kernel", "severity" => "error" }] }
+    laws = { FAIL_VISIBLY: Struct.new(:id, :detect, :fix, :severity).new(:FAIL_VISIBLY, ->(_) { true }, "Catch it.", :error) }
     with_body(body) do
       with_populations(laws:) { assert_empty Operator::RuleHygiene.cross_population_duplicates }
     end
