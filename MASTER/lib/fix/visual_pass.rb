@@ -147,7 +147,8 @@ module Master
       end
 
       def contact_sheet_items(capture)
-        [contact_sheet_item(capture)] + Array(capture[:journeys]).map do |journey|
+        [contact_sheet_item(capture)] + Array(capture[:journeys]).filter_map do |journey|
+          next if journey["kind"] == "navigation_return"
           contact_sheet_journey_item(capture[:surface], journey)
         end
       end
@@ -284,9 +285,9 @@ module Master
         mapped = anchors.values.compact.uniq.first(12)
         <<~TEXT
           RENDERED EVIDENCE
-          The attached image is a contact sheet containing every captured surface in this pass. Compare surfaces against each other as well as against their own viewport. The measurements below were
+          The attached image is a contact sheet containing every captured surface and exercised mobile state in this pass. Compare surfaces against each other as well as against their own viewport. The measurements below were
           collected from the same browser session across the listed surfaces.
-          Mobile is the primary composition: every mobile surface is exercised through safe, non-destructive focus, validation, and disclosure states when those states exist. Journey screenshots are evidence, not a score. Treat web-platform probe findings as evidence about layout primitives, not automatic prescriptions; choose the smallest modern primitive that fits the rendered behavior and browser support.
+          Mobile is the primary composition: every mobile surface is exercised through safe, non-destructive focus, validation, disclosure, and same-origin navigation journeys when those states exist. Navigation journeys include return-path evidence; journey screenshots are evidence, not a score. Treat web-platform probe findings as evidence about layout primitives, not automatic prescriptions; choose the smallest modern primitive that fits the rendered behavior and browser support.
           Judge the render first. Source is supporting evidence.
           Apply the executable MASTER design/usability constitution below. These are laws, not a scoring checklist. Identify only laws supported by rendered evidence.
           #{Master::Fix::VisualUsability.context}
