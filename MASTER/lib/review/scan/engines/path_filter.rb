@@ -49,7 +49,7 @@ module Master
         # describes. Matching the MASTER-prefixed form too makes the list mean
         # the same thing from both roots.
         # The four generated face bundles are their own constant because
-        # tools/self_findings.rb needs the same four and had its own copy of
+        # lib/operator/self_findings.rb needs the same four and had its own copy of
         # them inside a regex. One fact, one home; the census reads this.
         GENERATED_FACE_BUNDLES = %w[
           web/public/three.face.module.js web/public/face.runtime.js
