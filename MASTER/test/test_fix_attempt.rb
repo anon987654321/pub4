@@ -75,4 +75,23 @@ class TestFixAttempt < Minitest::Test
 
     assert_nil code
   end
+
+  def test_rendered_evidence_is_forwarded_only_when_present
+    images = []
+    agent = FakeAgent.new(["fixed"], images)
+    fixer = Master::Fix::FixAttempt.new(
+      agent:, attempts: 1, wait: ->(*) {},
+      extractor: ->(text, _ext) { text }, on_error: ->(_) { :stop },
+    )
+
+    fixer.codes(
+      prompt: "p",
+      ext: ".css",
+      source: "old",
+      wait_context: nil,
+      image: { path: "/tmp/render.png", mime: "image/png" },
+    )
+
+    assert_equal "/tmp/render.png", images.first[:path]
+  end
 end

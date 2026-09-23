@@ -493,7 +493,7 @@ class TestConstitutionYamlLoading < Minitest::Test
   ].freeze
 
   def test_data_yml_runtime_readers_use_master_loader
-    files = Dir.glob(File.join(Master::ROOT, "{bin,lib,test,spec}/**/*.{rb,rake}"))
+    files = Dir.glob(File.join(Master::ROOT, "{bin,lib,test}/**/*.{rb,rake}"))
     offenders = files.flat_map do |path|
       rel = path.delete_prefix("#{Master::ROOT}/")
       next [] if ALLOWED_DIRECT_LOADS.include?(rel)

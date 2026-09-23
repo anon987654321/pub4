@@ -137,7 +137,7 @@ module Master
           veto = enforce_veto(feedback)
           return veto if veto
 
-          append_judge_synthesis(feedback:, code:, context:)
+          append_judge_synthesis(feedback:, code:, context:, image:)
           publish_confidence(feedback)
           announce_substitution
           Result.ok(feedback)

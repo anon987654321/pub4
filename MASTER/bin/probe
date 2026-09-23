@@ -127,7 +127,7 @@ CHECKS = {
   "core" => {
     desc: "Core integration smoke (Effect → Constitution → World)",
     # -I lib because core_smoke requires "master"; nothing else puts it on the path.
-    cmd: [RUBY, "-I", File.join(MASTER_ROOT, "lib"), File.join(MASTER_ROOT, "spec", "core_smoke_spec.rb")],
+    cmd: [RUBY, "-I", File.join(MASTER_ROOT, "lib"), File.join(MASTER_ROOT, "test", "test_core_smoke.rb")],
     cwd: MASTER_ROOT,
     needs_ruby3: true,
   },

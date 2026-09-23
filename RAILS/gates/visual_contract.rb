@@ -6,6 +6,8 @@
 require_relative "../../OPENBSD/lib/utf8"
 require "json"
 require "digest"
+require_relative "support/cdp_session"
+require_relative "support/geometry_probe"
 require "fileutils"
 require "uri"
 require_relative "support/geometry_probe"
@@ -242,9 +244,10 @@ module VisualContractGate
       end
     end
     results
-  rescue CdpSession::Unavailable, CdpSession::Error => e
+  rescue CdpSession::Unavailable, CdpSession::Error, SystemCallError => e
     raise CannotMeasure, "could not measure with Chrome/CDP (#{e.class}: #{e.message})"
   end
+
 end
 
 # The tests require this file to exercise grade, identical_captures and

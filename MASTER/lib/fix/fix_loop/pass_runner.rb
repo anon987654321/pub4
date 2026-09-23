@@ -82,6 +82,8 @@ module Master
         rescue StandardError
           @committer.abort_transaction!
           raise
+        ensure
+          @visual_pass&.cleanup
         end
 
         def finish_transaction(files, pass, result)

@@ -361,7 +361,7 @@ module Master
           # because that line carries code.
           # CodeMetrics, not a local copy: lint:spine and tools/ratchets.rb each
           # held their own line counter for the same ratchet, and this was the
-          # third. tools/fixtures declares the answers it must give.
+          # third. test/fixtures declares the answers it must give.
           def code_length(node, lines)
             CodeMetrics.method_code_lines(node, lines)
           end

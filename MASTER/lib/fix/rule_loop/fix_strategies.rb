@@ -26,7 +26,7 @@ module Master
 
           original_src = File.read(path, encoding: "UTF-8") rescue (return proposed_src)
           prompt = reflexion_prompt(violation, original_src, proposed_src)
-          response = @agent.ask_once(prompt).to_s.strip
+          response = ask_once_agent(prompt, image: @visual_image).to_s.strip
           handle_reflexion_response(response, path, proposed_src)
         rescue StandardError => e
           # A check that could not run approves nothing, as a broken quorum
@@ -194,7 +194,7 @@ module Master
           @bus&.publish("rule_loop:edit_format_fallback", rule: @rule.id, file: path, reason: reason.to_s[0, 160])
           prompt = build_prompt_for(violation:, src:, path:, style: :file)
           model = routing_model_ids[:fast]
-          raw = model ? ask_once_agent(prompt, model:, image: @visual_image).to_s : @agent.ask_once(prompt, image: @visual_image).to_s
+          raw = model ? ask_once_agent(prompt, model:, image: @visual_image).to_s : ask_once_agent(prompt, image: @visual_image).to_s
           # The reply, not the file: a fenced block, a sentence around it, or
           # UNCHANGED would otherwise be written over the source.
           extract_code(raw, File.extname(path).downcase)

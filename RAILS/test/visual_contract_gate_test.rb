@@ -117,3 +117,13 @@ class VisualContractGateTest < Minitest::Test
     end
   end
 end
+
+class VisualContractBrowserTest < Minitest::Test
+  def test_visual_contract_uses_the_shared_cdp_browser
+    source = File.read(File.expand_path("../gates/visual_contract.rb", __dir__))
+    assert_includes source, 'require_relative "support/cdp_session"'
+    assert_includes source, 'CdpSession.open'
+    refute_includes source, "selenium-webdriver"
+    refute_match(/Selenium::WebDriver/, source)
+  end
+end
