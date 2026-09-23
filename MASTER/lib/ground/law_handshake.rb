@@ -12,6 +12,27 @@ module Master
         def accepted? = accepted == true
       end
 
+      module Admission
+        module_function
+        def enable!
+          @digest = Law::Contract.digest
+          @enabled = true
+          @digest
+        end
+        def disable!
+          @enabled = false
+          @digest = nil
+        end
+        def enabled? = @enabled == true
+        def admitted? = enabled? && @digest == Law::Contract.digest
+        def require!
+          return true unless enabled?
+          return true if admitted?
+          raise SecurityError, "constitutional admission expired — executable law digest changed"
+        end
+        def digest = @digest
+      end
+
       def self.current
         new.verify(
           contract_version: PROTOCOL_VERSION,
