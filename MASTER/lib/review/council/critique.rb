@@ -11,12 +11,14 @@ module Master
       class Critique
         MODES = Modes::TABLE
 
-        def initialize(mode:, agent:, event_bus: nil, audio_path: nil, files: nil)
+        def initialize(mode:, agent:, event_bus: nil, audio_path: nil, files: nil, visual_image: nil, visual_context: nil)
           @mode = MODES.fetch(mode) { raise ArgumentError, "unknown critique mode: #{mode}" }
           @agent = agent
           @bus = event_bus
           @audio_path = audio_path
           @files_override = files
+          @visual_image = visual_image
+          @visual_context = visual_context
         end
 
         def run
@@ -47,7 +49,7 @@ module Master
 
         def deliberate(panel, payload)
           delib = Deliberation.new(personas: panel, agent: @agent, event_bus: @bus, judge_enabled: true)
-          delib.review(payload[:combined], context: build_context)
+          delib.review(payload[:combined], context: build_context, image: payload[:visual_image])
         end
 
         def ideate(preset, feedback: nil)
@@ -147,7 +149,7 @@ module Master
           combined = files.filter_map { |rel| read_truncated(rel) }.join("\n\n")
           metrics = mix_metrics_block if @mode[:include_mix_metrics]
           combined = [metrics, combined].compact.join("\n\n") if metrics
-          { combined:, files:, metrics: }
+          { combined:, files:, metrics:, visual_image: @visual_image }
         end
 
         def mix_metrics_block
