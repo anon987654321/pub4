@@ -4,6 +4,7 @@ require "fileutils"
 require "json"
 require "securerandom"
 require "yaml"
+require_relative "performance"
 
 module Master
   module Voice
@@ -73,12 +74,38 @@ module Master
         resolved_voice, resolved_rate, resolved_pitch = resolve_voice_and_prosody(
           clean, cfg, voice:, style:, rate:, pitch:, voice_locked:, style_locked:
         )
+        melody = apply_spoken_performance(
+          melody, clean, emotion, style, base_rate: resolved_rate, base_pitch: resolved_pitch
+        )
 
         out_path = "/tmp/m_tts_#{SecureRandom.hex(8)}.mp3"
         played = synthesize_via_chain(clean, cfg, emotion, melody, resolved_voice, resolved_rate, resolved_pitch, out_path)
         return unless played && File.size?(out_path)
 
         out_path
+      end
+
+      def apply_spoken_performance(melody, clean, emotion, style, base_rate:, base_pitch:)
+        return melody if melody[:melodic]
+
+        performance = Performance.apply(
+          base_rate:,
+          base_pitch:,
+          text: clean,
+          emotion:,
+          style:,
+        )
+        phrases = melody[:phrases].each_with_index.map do |phrase, index|
+          variation = performance[index] || {}
+          phrase.merge(
+            rate: variation[:rate] || phrase[:rate],
+            pitch: variation[:pitch] || phrase[:pitch],
+            pause_ms: variation[:pause_ms] || phrase[:pause_ms],
+            performance_role: variation[:role],
+            emphasis: variation[:emphasis],
+          )
+        end
+        melody.merge(phrases:)
       end
 
       def synthesize_via_chain(clean, cfg, emotion, melody, resolved_voice, resolved_rate, resolved_pitch, out_path)

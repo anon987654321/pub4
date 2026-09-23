@@ -107,7 +107,11 @@ tts:
   #
   # A reader that cannot run ffmpeg should skip the chain and speak dry. A
   # missing filter must cost the effect, never the sentence.
-  post_chain: "equalizer=f=520:t=q:w=1.1:g=4.5,equalizer=f=1480:t=q:w=1.3:g=3.6,equalizer=f=2520:t=q:w=1.5:g=2.8,chorus=0.5:0.7:19|27:0.3|0.26:0.24|0.2:0.9|1.4,aphaser=type=t:speed=0.12:decay=0.3:delay=2.4,highpass=f=200,lowpass=f=6000,volume=23dB,alimiter=limit=0.98"
+  # Keep the voice organic: prosody supplies movement; the post-chain only
+  # restores speech presence, removes sub-bass rumble and catches peaks.
+  # Chorus/phaser were deliberately removed because modulation makes a neural
+  # voice sound processed rather than alive.
+  post_chain: "equalizer=f=520:t=q:w=1.1:g=4.5,equalizer=f=1480:t=q:w=1.3:g=3.6,equalizer=f=2520:t=q:w=1.5:g=2.8,highpass=f=90,lowpass=f=8500,acompressor=threshold=-18dB:ratio=2.2:attack=8:release=100:makeup=1,volume=23dB,alimiter=limit=0.98"
 
   # The bed under the speech, so a pause is not silence.
   #
