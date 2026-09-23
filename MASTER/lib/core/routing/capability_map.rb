@@ -18,7 +18,7 @@ module Master::Core::Routing
 
     def record_outcome(model_id, task_class, success, metrics = {})
       @scores[model_id] ||= {}
-      @scores[model_id][task_class] ||= { successes: 0, attempts: 0, metrics: {} }
+      @scores[model_id][task_class.to_s] ||= { successes: 0, attempts: 0, metrics: {} }
 
       stats = @scores[model_id][task_class.to_s]
       stats[:attempts] += 1
