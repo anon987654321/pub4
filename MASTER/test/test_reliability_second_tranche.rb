@@ -56,7 +56,7 @@ class TestReliabilitySecondTranche < Minitest::Test
     end
   end
 
-  def test_transaction_preserves_tree_when_delivery_was_already_started
+  def test_transaction_rolls_back_when_delivery_started_before_commit
     Dir.mktmpdir("master-tx") do |root|
       path = File.join(root, "a.rb")
       File.write(path, "before\n")
@@ -65,14 +65,31 @@ class TestReliabilitySecondTranche < Minitest::Test
       File.write(path, "committed-locally\n")
       tx.observe!
       tx.begin_delivery!(head_before: "before")
-      tx.record_commit!(head_after: "commit-1")
 
-      recovered = Master::Fix::Transaction.recover!(root:, id: tx.id)
+      result = tx.rollback!
 
-      assert recovered.ok?
-      assert_equal :delivery_pending, recovered.value![:state]
-      assert_equal "commit-1", recovered.value![:commit]
-      assert_equal "committed-locally\n", File.read(path)
+      assert result.ok?
+      assert_equal "before\n", File.read(path)
+      refute Master::Fix::Transaction.persisted?(root:, id: tx.id)
+    end
+
+    def test_transaction_preserves_tree_when_commit_was_recorded
+      Dir.mktmpdir("master-tx") do |root|
+        path = File.join(root, "a.rb")
+        File.write(path, "before\n")
+        tx = Master::Fix::Transaction.new(root:, paths: [path], id: "delivery-pass")
+        tx.begin!
+        File.write(path, "committed-locally\n")
+        tx.observe!
+        tx.begin_delivery!(head_before: "before")
+        tx.record_commit!(head_after: "commit-1")
+
+        recovered = Master::Fix::Transaction.recover!(root:, id: tx.id)
+
+        assert recovered.ok?
+        assert_equal :delivery_pending, recovered.value![:state]
+        assert_equal "commit-1", recovered.value![:commit]
+        assert_equal "committed-locally\n", File.read(path)
     end
   end
 
@@ -362,7 +379,7 @@ class TestReliabilitySecondTranche < Minitest::Test
     end
   end
 
-  def test_fix_journal_refuses_a_live_active_process
+  def test_fix_journal_resumes_delivery_failed_runs
     Dir.mktmpdir("master-journal") do |root|
       journal = Master::Fix::RunJournal.new(root:)
       first = journal.start_or_resume(target: root, files: [], max_passes: 2, budget_seconds: 10)
