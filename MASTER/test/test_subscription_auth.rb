@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "minitest/autorun"
+require_relative "test_helper"
 
 class TestSubscriptionAuth < Minitest::Test
   def test_profiles_are_subscription_only
