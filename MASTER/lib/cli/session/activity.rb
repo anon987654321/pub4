@@ -57,8 +57,6 @@ module Master
         when "fix_loop:pass_timeout", "fix_loop:timeout"
           @stage = "timeout"
           @terminal = "timeout"
-        when "fix_loop:pass_start"
-          @pass = payload[:pass]
         end
         self
       rescue StandardError
