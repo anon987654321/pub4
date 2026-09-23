@@ -213,6 +213,7 @@ module VisualContractGate
         cdp.viewport(width, height, mobile: width < 500)
         cdp.headers(GeometryProbe::PROBE_HEADERS)
         cdp.clear_cookies
+        cdp.clear_events
         url = URI.join(base, cell[:route]).to_s
         cdp.navigate(url)
         slug = [cell[:app], cell[:state], cell[:viewport]].join("-")
