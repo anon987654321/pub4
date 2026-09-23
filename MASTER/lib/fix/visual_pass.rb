@@ -32,12 +32,6 @@ module Master
         @dir = nil
       end
 
-      def repo_root
-        return @root unless File.basename(@root) == "MASTER"
-
-        File.expand_path("..", @root)
-      end
-
       def applicable?(target)
         relative = repo_relative(target)
         relative == "RAILS" || relative.start_with?("RAILS/") ||
@@ -267,7 +261,11 @@ module Master
       end
 
       def safe_slug(value) = value.to_s.gsub(/[^a-zA-Z0-9._-]+/, "_")
-      def repo_root = File.expand_path("../..", @root)
+      def repo_root
+        return @root unless File.basename(@root) == "MASTER"
+
+        File.expand_path("..", @root)
+      end
 
       def repo_relative(target)
         raw = target.to_s
