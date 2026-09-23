@@ -22,7 +22,18 @@ module Master
       MANIFEST = "manifest.json"
 
       def self.persisted?(root:, id:)
-        File.file?(File.join(File.expand_path(root), ROOT_DIR, id.to_s, MANIFEST))
+        safe = normalize_id(id)
+        File.file?(File.join(File.expand_path(root), ROOT_DIR, safe, MANIFEST))
+      rescue ArgumentError
+        false
+      end
+
+      def self.normalize_id(id)
+        value = id.to_s
+        raise ArgumentError, "transaction id is unsafe" unless value.match?(%r{\A[a-zA-Z0-9_-]+\z}) &&
+          !value.include?("..")
+
+        value
       end
 
       def self.recover!(root:, id:, bus: nil)
@@ -33,7 +44,7 @@ module Master
       def initialize(root:, paths:, id: SecureRandom.hex(10), bus: nil)
         @root = File.expand_path(root)
         @paths = Array(paths).map { |path| normalize(path) }.compact.uniq
-        @id = id.to_s
+        @id = self.class.normalize_id(id)
         @bus = bus
         @seen = Hash.new { |hash, path| hash[path] = [] }
         @snapshots = {}
