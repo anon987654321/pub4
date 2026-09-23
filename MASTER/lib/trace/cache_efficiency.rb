@@ -2,11 +2,13 @@
 
 require "fileutils"
 require "json"
+require_relative "../io/atomic_write"
 
 module Master
   module Trace
     # Prompt-cache hit ratio — OpenCrabs /usage card parity.
     module CacheEfficiency
+      extend Master::Io::AtomicWrite
       @mutex = Mutex.new
       @totals = { input: 0, cached: 0, cache_write: 0, calls: 0 }
 
@@ -62,7 +64,7 @@ module Master
 
       def persist!
         FileUtils.mkdir_p(File.dirname(path))
-        File.write(path, JSON.pretty_generate(@totals))
+        write_atomic(path, JSON.pretty_generate(@totals) + "\n", fsync: false, fsync_dir: false, mode: 0o600)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "CacheEfficiency.persist!")
         nil

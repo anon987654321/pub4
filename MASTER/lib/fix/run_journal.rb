@@ -33,21 +33,25 @@ module Master
           data = load
           active = data["runs"].reverse.find { |run| %w[active crashed].include?(run["state"].to_s) }
           if active
-            requested_files = Array(files).map { |path| relative(path) }.compact.uniq.sort
-            unless active["target"] == relative(target) && Array(active["files"]).sort == requested_files
+            unless active["target"] == relative(target)
               raise "another fix run is active: #{active["id"]} for #{active["target"]}"
+            end
+            if active["state"] == "active" && process_alive?(active["pid"])
+              raise "another fix process is active: #{active["id"]} pid=#{active["pid"]}"
             end
             previous_state = active["state"]
             active["state"] = "active"
             active["resumed_from"] = previous_state unless previous_state == "active"
             active["resumed_at"] = Time.now.utc.iso8601
             active["resume_count"] = active.fetch("resume_count", 0).to_i + 1
+            remaining = remaining_seconds(active)
             persist(data)
-            @bus&.publish("fix:resume", run_id: active["id"], pass: next_pass(active),
-                          resume_count: active["resume_count"])
-            return active.merge("resumed" => true)
+            emit("fix:resume", run_id: active["id"], pass: next_pass(active),
+                          resume_count: active["resume_count"], remaining_seconds: remaining)
+            return active.merge("resumed" => true, "remaining_seconds" => remaining)
           end
 
+          now = Time.now.utc
           run = {
             "id" => SecureRandom.hex(10),
             "state" => "active",
@@ -55,26 +59,29 @@ module Master
             "files" => Array(files).map { |path| relative(path) }.compact.uniq.sort,
             "max_passes" => Integer(max_passes),
             "budget_seconds" => Integer(budget_seconds),
-            "started_at" => Time.now.utc.iso8601,
+            "started_at" => now.iso8601,
+            "deadline_at" => (now + Integer(budget_seconds)).iso8601,
+            "last_seen_at" => now.iso8601,
             "pid" => Process.pid,
             "passes" => [],
           }
           data["runs"] << run
           data["runs"] = data["runs"].last(MAX_RUNS)
           persist(data)
-          @bus&.publish("fix:start", run_id: run["id"], target: run["target"])
-          run.merge("resumed" => false)
+          emit("fix:start", run_id: run["id"], target: run["target"])
+          run.merge("resumed" => false, "remaining_seconds" => Integer(budget_seconds).to_f)
         end
       rescue StandardError => e
-        @bus&.publish("fix:journal_error", operation: "start", error: e.message)
+        emit("fix:journal_error", operation: "start", error: e.message)
         raise
       end
 
-      def pass_start(run_id, pass)
+      def pass_start(run_id, pass, transaction_id:)
         update(run_id) do |run|
           run["passes"] << {
             "pass" => pass.to_i,
             "state" => "active",
+            "transaction_id" => transaction_id.to_s,
             "started_at" => Time.now.utc.iso8601,
           }
         end
@@ -107,6 +114,23 @@ module Master
         end
       end
 
+      def remaining_seconds(run)
+        deadline = Time.iso8601(run["deadline_at"].to_s)
+        now = Time.now.utc
+        last = run["last_seen_at"] && Time.iso8601(run["last_seen_at"].to_s)
+        return 0.0 if last && now < last
+
+        remaining = [deadline - now, 0.0].max
+        run["last_seen_at"] = now.iso8601
+        remaining
+      rescue ArgumentError
+        0.0
+      end
+
+      def active_pass(run)
+        Array(run["passes"]).reverse.find { |row| row["state"].to_s == "active" }
+      end
+
       def next_pass(run)
         completed = Array(run["passes"]).reject { |row| row["state"].to_s == "active" }
         completed.map { |row| row["pass"].to_i }.max.to_i + 1
@@ -121,6 +145,25 @@ module Master
       end
 
       private
+      def emit(event, **payload)
+        @bus&.publish(event, **payload)
+      rescue StandardError => e
+        warn("trace0: #{e.class}: #{e.message}") if ENV["MASTER_TRACE_STRICT"] == "1"
+        nil
+      end
+
+
+      def process_alive?(pid)
+        value = pid.to_i
+        return false if value <= 0
+
+        Process.kill(0, value)
+        true
+      rescue Errno::ESRCH
+        false
+      rescue Errno::EPERM
+        true
+      end
 
       def update(run_id)
         with_lock do
@@ -145,7 +188,7 @@ module Master
 
         { "version" => VERSION, "runs" => runs }
       rescue JSON::ParserError => e
-        @bus&.publish("fix:journal_corrupt", error: e.message)
+        emit("fix:journal_corrupt", error: e.message)
         raise "fix journal is corrupt: #{e.message}"
       end
 

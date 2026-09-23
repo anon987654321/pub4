@@ -3,6 +3,7 @@
 require "fileutils"
 require "json"
 require "time"
+require_relative "atomic_write"
 
 module Master
   module Io
@@ -12,6 +13,8 @@ module Master
     # provider still has credit (test/test_quota_gate.rb); ModelSkipCache
     # parks a model that just failed (test/test_model_skip_cache.rb).
     module ModelQuota
+      extend self
+      include Master::Io::AtomicWrite
       FREE_RE = /:free\z|\Aopenrouter\//.freeze
       DEFAULT_DAILY = 200
 
@@ -98,7 +101,7 @@ module Master
 
       def save_data(data)
         FileUtils.mkdir_p(File.dirname(path))
-        File.write(path, JSON.pretty_generate(data))
+        write_atomic(path, JSON.pretty_generate(data) + "\n", fsync: false, fsync_dir: false, mode: 0o600)
       end
 
       def prune_old_days!(data, keep_day)

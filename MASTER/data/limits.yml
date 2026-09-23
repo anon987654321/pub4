@@ -1079,3 +1079,16 @@ process:
     master_rss_mb:
       warn: 512
       crit: 768
+  resources:
+    fd_count:
+      warn: 512
+      crit: 1024
+    thread_count:
+      warn: 32
+      crit: 64
+    process_count:
+      warn: 256
+      crit: 512
+    disk_free_pct:
+      warn: 15
+      crit: 5

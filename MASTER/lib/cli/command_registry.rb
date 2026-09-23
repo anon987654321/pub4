@@ -58,6 +58,7 @@ module Master
           "commit" => command(:dispatch_commit, ai[:agent], root, review_gate: true),
           "model" => command(:dispatch_model, d[:agent], d[:config], d[:metrics], d[:root]),
           "pair" => command(:dispatch_pair, root),
+          "runtime" => command(:dispatch_runtime, d[:root]),
           "doctor" => command(:dispatch_doctor, root),
           "rules" => command(:dispatch_rules, root),
           "why" => command(:dispatch_why, d[:agent], d[:root]),
@@ -90,6 +91,28 @@ module Master
       end
 
       def dispatch_undo(undo, ctx: nil) = undo_line("reverted", undo.undo!)
+
+      def dispatch_runtime(root, ctx: nil)
+        runtime = Ground::KnownGood.new(root: root)
+        case arg_for(ctx)
+        when "", "status"
+          record = runtime.current
+          record ? "known-good: #{record["commit"]} promoted #{record["promoted_at"]}" : "known-good: none"
+        when "promote"
+          head, status = Master::Io::Exec.capture2e("git", "-C", root, "rev-parse", "--short", "HEAD")
+          return "runtime promote: git unavailable" unless status.success?
+
+          result = runtime.promote!(commit: head.strip, paths: [])
+          result.ok? ? "known-good: promoted #{head.strip}" : result.message
+        when "rollback"
+          "runtime rollback requires --confirm"
+        when "rollback --confirm"
+          result = runtime.rollback!
+          result.ok? ? result.value!.to_s : result.message
+        else
+          "runtime  runtime status  runtime promote  runtime rollback"
+        end
+      end
 
       def undo_line(verb, result) = result.ok? ? "#{verb}: #{result.value!}" : result.message
 

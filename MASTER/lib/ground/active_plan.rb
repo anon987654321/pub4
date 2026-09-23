@@ -1,11 +1,13 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require_relative "../io/atomic_write"
 
 module Master
   module Ground
     # Pinned stepwise plan re-read each turn (opencrabs v0.3.43 plan pinning).
     module ActivePlan
+      extend Master::Io::AtomicWrite
       MAX_BYTES = 4_096
       REL_PATH = "runtime/active_plan.md".freeze
 
@@ -27,7 +29,7 @@ module Master
 
         body = body.byteslice(0, MAX_BYTES)
         FileUtils.mkdir_p(File.dirname(path(root)))
-        File.write(path(root), "#{body}\n")
+        write_atomic(path(root), "#{body}\n", mode: 0o600)
         bus&.publish("plan:pinned", bytes: body.bytesize)
         body
       end

@@ -9,7 +9,7 @@ before durable writes. The Rails face in `web/` mirrors runtime state at
 contract. Law and config live in YAML under `data/`. Prose stubs:
 `data/SOUL.md`, `data/IDENTITY.md`, generated `data/CANON.md`. Work is a
 sentence. The slash set is `/review` `/status` `/undo` `/commit` `/model`
-`/pair` `/doctor` `/rules` `/why` `/orders` `/soul` `/help` `/clear`, with
+`/pair` `/doctor` `/runtime` `/rules` `/why` `/orders` `/soul` `/help` `/clear`, with
 `/rollback` as `/undo` and `/exit` or `/quit` to leave. `/scan`, `/fix`,
 `/critique` and `/council` are not a second set: each is `/review --only
 <stage>`. The router still accepts retired words a model may answer with —
@@ -41,6 +41,7 @@ sentence. The slash set is `/review` `/status` `/undo` `/commit` `/model`
   own fixtures. `bin/probe` runs any of them, and the RAILS and OPENBSD gates,
   as named subprocesses (`quick`, `all`, `deploy`). Staged lines go to
   `bin/operator lint --staged --changed-lines`.
+- Recovery: `/runtime status` shows the last known-good commit, `/runtime promote` records the current committed HEAD, and ``/runtime rollback --confirm` restores that commit only when the checkout is clean.
 - Work: say the path. `/fix [path]` is the operation that changes the tree —
   observe, critique, repair, observe again, until it converges or says why it
   stopped. `/review [path]` reads and argues without writing, and its stages are

@@ -3,10 +3,13 @@
 require "fileutils"
 require "json"
 require "time"
+require "securerandom"
+require_relative "../io/atomic_write"
 
 module Master
   module Fix
     class Checkpoint
+      include Master::Io::AtomicWrite
       attr_reader :root, :dir
 
       def initialize(root: Master::ROOT, dir: File.join(Master::ROOT, ".master", "checkpoints"))
@@ -15,13 +18,13 @@ module Master
       end
 
       def create(label:, files: [])
-        id = "#{Time.now.utc.strftime("%Y%m%d%H%M%S")}-#{slug(label)}"
+        id = "#{Time.now.utc.strftime("%Y%m%d%H%M%S")}-#{slug(label)}-#{SecureRandom.hex(4)}"
         normalized = Array(files).map { |path| normalize_relative(path) }
         target = File.join(dir, id)
         FileUtils.mkdir_p(target)
         copy_files(normalized, from: root, to: target)
         manifest = { id:, label:, files: normalized, created_at: Time.now.utc.iso8601 }
-        File.write(File.join(target, "manifest.json"), JSON.pretty_generate(manifest))
+        write_atomic(File.join(target, "manifest.json"), JSON.pretty_generate(manifest) + "\n", mode: 0o600)
         manifest
       end
 
@@ -77,7 +80,8 @@ module Master
 
           destination = File.join(to, relative)
           FileUtils.mkdir_p(File.dirname(destination))
-          FileUtils.cp(source, destination)
+          mode = File.stat(source).mode & 0o7777
+          write_atomic(destination, File.binread(source), mode:)
         end
       end
     end

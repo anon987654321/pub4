@@ -218,8 +218,8 @@ module Master
       end
 
       def wait_for_socket(path)
-        deadline = Time.now + START_TIMEOUT_S
-        while Time.now < deadline
+        deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + START_TIMEOUT_S
+        while Process.clock_gettime(Process::CLOCK_MONOTONIC) < deadline
           return true if File.socket?(path)
 
           sleep POLL_INTERVAL_S

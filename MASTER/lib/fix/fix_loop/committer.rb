@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
-require "open3"
 require "pathname"
-require "timeout"
+require_relative "../../ground/known_good"
 
 module Master
   module Fix
@@ -34,6 +33,8 @@ module Master
           # fix ride another's staging, which is the sweep this class exists
           # to refuse.
           @commit_mutex = Mutex.new
+          @transaction = nil
+          @known_good = root ? Ground::KnownGood.new(root:, bus:) : nil
         end
 
         def baseline!
@@ -46,8 +47,75 @@ module Master
         # findings are the violations the pass set out to fix; the ones in a
         # committed file are named in the body, so git log says which rule each
         # runtime commit answered.
+        def begin_transaction!(transaction)
+          @commit_mutex.synchronize do
+            raise "fix transaction already active" if @transaction
+
+            transaction.begin!
+            @transaction = transaction
+          end
+        end
+
+        def abort_transaction!
+          @commit_mutex.synchronize do
+            transaction = @transaction
+            @transaction = nil
+            transaction&.rollback!
+          end
+        end
+
+        def finish_transaction(message, findings: [], owned_paths: nil)
+          @commit_mutex.synchronize do
+            transaction = @transaction
+            return Result.err("no active fix transaction", category: :infrastructure) unless transaction
+
+            paths = own_changes(owned_paths)
+            return finish_empty_transaction(transaction) if paths.empty?
+
+            conflicts = transaction.conflicts
+            unless conflicts.empty?
+              @transaction = nil
+              transaction.rollback!
+              return Result.err("fix transaction detected concurrent changes in #{conflicts.join(", ")}", category: :policy)
+            end
+
+            prepared = validate_paths(message, paths)
+            unless prepared
+              @transaction = nil
+              transaction.rollback!
+              return Result.err("fix transaction blocked before delivery", category: :policy)
+            end
+
+            head_before = @git.head
+            transaction.begin_delivery!
+            @transaction = nil
+            begin
+              result = commit_paths(message, findings, prepared)
+              transaction.finalize!
+              result
+            rescue StandardError => e
+              committed = head_changed?(head_before)
+              committed ? transaction.finalize! : transaction.rollback!
+              @bus&.publish("fix_loop:commit_error", error: e.message, committed:)
+              Result.err("fix transaction delivery: #{e.message}", category: :infrastructure)
+            end
+          rescue StandardError => e
+            @bus&.publish("fix_loop:commit_error", error: e.message)
+            @transaction = nil
+            transaction&.preserve_delivery! if transaction&.active?
+            Result.err("fix transaction delivery: #{e.message}", category: :infrastructure)
+          end
+        end
+
         def commit_if_dirty(message, findings: [], owned_paths: nil)
           @commit_mutex.synchronize do
+            if @transaction
+              paths = own_changes(owned_paths)
+              @transaction.observe!
+              @bus&.publish("fix_loop:transaction_changes", paths:) unless paths.empty?
+              return :staged
+            end
+
             commit_if_dirty!(message, findings:, owned_paths:)
           end
         end
@@ -56,21 +124,53 @@ module Master
 
         def commit_if_dirty!(message, findings: [], owned_paths: nil)
           paths = own_changes(owned_paths)
-          return if paths.empty?
+          return :noop if paths.empty?
+          return :blocked unless validate_paths(message, paths)
 
+          commit_paths(message, findings, paths)
+        rescue StandardError => e
+          @bus&.publish("fix_loop:commit_error", error: e.message)
+          raise
+        end
+
+        def validate_paths(message, paths)
           broken = ruby_files(paths).reject { |path| ruby_parses?(path) }
-          return block_commit(broken) unless broken.empty?
-          return block_commit_intent(message) unless intent_preserved?(message, paths)
-          return block_commit_ground_truth unless ground_truth_fresh?(paths)
-          return unless lint_changed_ruby(paths)
+          return block_commit(broken) && false unless broken.empty?
+          return block_commit_intent(message) && false unless intent_preserved?(message, paths)
+          return block_commit_ground_truth && false unless ground_truth_fresh?(paths)
+          return false unless lint_changed_ruby(paths)
 
+          paths
+        end
+
+        def finish_empty_transaction(transaction)
+          @transaction = nil
+          transaction.finalize!
+          Result.ok(:noop)
+        end
+
+        def head_changed?(before)
+          after = @git.head
+          before && after && before != after
+        rescue StandardError
+          false
+        end
+
+        def commit_paths(message, findings, paths)
           @git.commit(with_finding_ids(message, findings, paths), paths:)
           @bus&.publish("ops:commit", message: message.to_s[0, 120], head: @git.head, paths:)
           @git.push
           verify_push!(paths)
-        rescue StandardError => e
-          @bus&.publish("fix_loop:commit_error", error: e.message)
-          raise
+          promote_known_good(@git.head, paths)
+          Result.ok(:committed)
+        end
+
+        def promote_known_good(commit, paths)
+          return unless @known_good
+
+          result = @known_good.promote!(commit:, paths:)
+          @bus&.publish("runtime:promotion_degraded", commit:) if result.err?
+          result
         end
 
         def with_finding_ids(message, findings, paths)

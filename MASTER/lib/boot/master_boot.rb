@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../ground/service_supervisor"
+
 module Master
   # Builder and CLI boot orchestration for Master.*.
   module MasterBoot
@@ -39,11 +41,18 @@ module Master
     def ensure_services!(root: ROOT)
       return true if ENV["MASTER_SKIP_TTS"] == "1"
 
-      Voice::TtsSupervisor.ensure_daemon!(root:)
-    rescue StandardError => e
-      # Optional presentation services may fail without making the constitutional
-      # runtime unusable. Keep boot alive, but make the degradation explicit.
-      warn("tts0: degraded — #{e.class}: #{e.message}")
+      supervisor = Ground::ServiceSupervisor.new(root:)
+      result = supervisor.ensure(
+        name: "tts",
+        start: -> { Voice::TtsSupervisor.ensure_daemon!(root:) },
+        healthy: -> { Voice::Speech.edge_tts_ready? && Voice::TtsSupervisor.socket_alive?(Voice::TtsSupervisor.socket_path(root)) },
+        max_restarts: 2,
+        window_seconds: 300,
+        wait_seconds: 5,
+      )
+      return true if result.ok? && result.value!.healthy?
+      reason = result.ok? ? result.value!.message : result.message
+      warn("tts0: degraded — #{reason}")
       false
     end
 

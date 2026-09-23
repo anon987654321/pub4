@@ -8,6 +8,8 @@ require "time"
 require_relative "pass_runner/fast_stage"
 require_relative "pass_runner/llm_stage"
 require_relative "pass_runner/stagnation_detection"
+require_relative "transaction"
+require_relative "resource_budget"
 
 module Master
   module Fix
@@ -30,6 +32,7 @@ module Master
           @llm_router = llm_router
           @rollback = rollback
           @root = root
+          @resource_budget = ResourceBudget.new(root:)
           @agent = agent
           @scanner = scanner
           @learnings = learnings
@@ -53,24 +56,50 @@ module Master
 
         def violations(files) = @loop_scanner.violations(files)
 
-        def run_pass(files:, target:, pass:, deadline:, history:, seen_snapshots:,
+        def run_pass(files:, target:, pass:, deadline:, transaction_id:, history:, seen_snapshots:,
                      recurring_violations:, consecutive_clean:)
           pass_mtimes = mtimes(files)
           @committer.baseline!
+          transaction = Transaction.new(root: @root, paths: files, id: transaction_id, bus: @bus)
+          @committer.begin_transaction!(transaction)
           @bus&.publish("fix_loop:pass_start", pass:, target:, file_count: files.size)
 
           run_fast_stage(files, pass)
           found = run_observation_stage(files, target)
-          return handle_clean_pass(files, pass_mtimes, pass, consecutive_clean) if found.empty?
-          return PassResult.new(status: :plateau, consecutive_clean: 0) if stagnant?(history, seen_snapshots, recurring_violations, found, pass)
+          if found.empty?
+            result = handle_clean_pass(files, pass_mtimes, pass, consecutive_clean)
+            return abort_transaction(result) if result.status == :validation_failed
+
+            return finish_transaction(files, pass, result)
+          end
+
+          if stagnant?(history, seen_snapshots, recurring_violations, found, pass)
+            abort_transaction
+            return PassResult.new(status: :plateau, consecutive_clean: 0)
+          end
 
           @homeostat&.observe(:llm_call)
-          # The council argues about the files this pass found violations in,
-          # and its picks ride into the repair as context. A critique that ends
-          # in prose changes nothing, which is why it sits inside the loop.
           council = @council&.run(files: files_with_violations(found, files), pass:, deadline:)
           run_llm_stage(found, files, pass, deadline, council:)
+          delivery = @committer.finish_transaction("fix_loop: pass #{pass}", findings: found, owned_paths: files)
+          return PassResult.new(status: :delivery_failed, consecutive_clean: 0, message: delivery.message) if delivery.err?
+
           PassResult.new(status: :continue, consecutive_clean: 0)
+        rescue StandardError
+          @committer.abort_transaction!
+          raise
+        end
+
+        def finish_transaction(files, pass, result)
+          delivery = @committer.finish_transaction("fix_loop: clean [pass #{pass}]", owned_paths: files)
+          return PassResult.new(status: :delivery_failed, consecutive_clean: 0, message: delivery.message) if delivery.err?
+
+          result
+        end
+
+        def abort_transaction(result = nil)
+          @committer.abort_transaction!
+          result
         end
 
         private
@@ -97,12 +126,18 @@ module Master
             Master::Trace::Dmesg.status("fix0", "pass #{pass}, model fixes skipped, circuit open for #{open_breakers.join(", ")}")
             return 0
           end
-          if (avg = system_load_avg) && avg > Ops::ProcessBudget.config.dig("load", "load_avg_1m", "crit").to_f
-            @bus&.publish("fix_loop:llm_skipped", pass:, reason: "load_shed", load: avg)
-            Master::Trace::Dmesg.status("fix0", "pass #{pass}, model fixes skipped, load #{avg}")
-            sleep 60
+
+          resources = @resource_budget.measure
+          if @resource_budget.critical?(resources)
+            @bus&.publish("fix_loop:llm_skipped", pass:, reason: "resource_critical",
+                          reasons: resources[:reasons], values: resources[:values])
+            Master::Trace::Dmesg.status("fix0", "pass #{pass}, model fixes shed: #{resources[:reasons].join("; ")}")
             return 0
           end
+          if @resource_budget.warning?(resources)
+            @bus&.publish("fix_loop:resource_warning", pass:, reasons: resources[:reasons])
+          end
+
           pass_deadline = [Time.now + PASS_BUDGET_SECONDS, deadline].min
           llm_fixed = llm_pass(violations: found, files:, pass:, deadline: pass_deadline, council:)
           Master::Trace::Dmesg.status("fix0", "pass #{pass}, #{llm_fixed} of #{Master::Trace::Dmesg.counted(found.size, "violation")} fixed")
@@ -201,14 +236,7 @@ module Master
         def circuit_open? = @llm_router.circuit_open?
         def open_breakers = @llm_router.open_breakers
 
-        def system_load_avg
-          out, _, st = Master::Io::Exec.capture3("/sbin/sysctl", "-n", "vm.loadavg")
-          return unless st.success?
-          out.to_s[/\d+(?:\.\d+)?/]&.to_f
-        rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "PassRunner.system_load_avg")
-          nil
-        end
+
       end
     end
   end

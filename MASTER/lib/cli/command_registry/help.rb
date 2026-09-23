@@ -61,6 +61,11 @@ module Master
           summary: "host, provider, and exposure health",
           detail: ["/doctor — keys, disk, git, pairing/gateway exposure."],
         },
+        "runtime" => {
+          summary: "known-good runtime promotion and rollback",
+          detail: ["/runtime status", "/runtime promote — record the current committed HEAD as known-good.",
+                   "/runtime rollback --confirm — return a clean checkout to the recorded known-good commit."],
+        },
         "help" => {
           summary: "this list",
           detail: ["/help", "/help <command>"],

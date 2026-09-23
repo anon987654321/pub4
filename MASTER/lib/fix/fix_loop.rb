@@ -35,7 +35,7 @@ module Master
       # There is no state here for "a person must decide": nothing in the loop
       # detects one yet, and a state nothing emits is a promise the report
       # cannot keep.
-      TERMINAL_STATES = %i[done plateau blocked validation_failed].freeze
+      TERMINAL_STATES = %i[done plateau blocked validation_failed delivery_failed timeout failed].freeze
 
       IDLE_SLEEP = 300
       STARTUP_DELAY = 90
@@ -76,14 +76,35 @@ module Master
         return halted_result if halted? && !requested
 
         files = incremental ? @file_collector.collect_changed(target) : @file_collector.collect(target)
-        deadline = Ground::Reliability::Deadline.new(budget_seconds)
         journal = @run_journal.start_or_resume(target:, files:, max_passes:, budget_seconds:)
         run_id = journal["id"]
+        remaining = journal["remaining_seconds"].to_f
+        if remaining <= 0
+          result = Result.err("fix budget exhausted before resume", category: :timeout)
+          @run_journal.terminal(run_id, :timeout, message: result.message)
+          return result
+        end
+        deadline = Ground::Reliability::Deadline.new(remaining)
         start_pass = @run_journal.next_pass(journal)
         @bus&.publish("fix_loop:recovered", run_id:, start_pass:, target:) if journal["resumed"]
 
+        active_pass = @run_journal.active_pass(journal)
+        if active_pass && Transaction.persisted?(root: @root, id: active_pass.fetch("transaction_id"))
+          recovery = Transaction.recover!(root: @root, id: active_pass.fetch("transaction_id"), bus: @bus)
+          if recovery.err?
+            @run_journal.terminal(run_id, :failed, message: recovery.message)
+            return recovery
+          end
+        end
+
         result = run_passes(files:, target:, max_passes:, deadline:, budget_seconds:, start_pass:, run_id:)
-        terminal_state = result.ok? ? result.value!.to_s[/\A[A-Z_]+/].to_s.downcase.to_sym : :failed
+        terminal_state = if result.err? && result.category == :timeout
+          :timeout
+        elsif result.ok?
+          result.value!.to_s[/\A[A-Z_]+/].to_s.downcase.to_sym
+        else
+          :failed
+        end
         @run_journal.terminal(run_id, terminal_state, message: result.to_s)
         result
       rescue StandardError => e
@@ -160,7 +181,9 @@ module Master
 
       def run_one_pass(i, files:, target:, deadline:, budget_seconds:, state:, run_id:)
         pass = i + 1
-        @run_journal.pass_start(run_id, pass)
+        transaction_id = "#{run_id}-pass-#{pass}"
+        @run_journal.pass_start(run_id, pass, transaction_id:)
+
         @homeostat&.observe(:tool_call) # a pass is loop overhead distinct from the LLM call inside it
         if deadline.expired?
           @bus&.publish("fix_loop:timeout", pass:, budget_seconds:)
@@ -179,7 +202,7 @@ module Master
         end
 
         result = @pass_runner.run_pass(
-          files:, target:, pass:, deadline: deadline.at,
+          files:, target:, pass:, deadline: deadline.at, transaction_id:,
           history: state[:history], seen_snapshots: state[:seen_snapshots],
           recurring_violations: state[:recurring_violations],
           consecutive_clean: state[:consecutive_clean]
@@ -188,6 +211,7 @@ module Master
         @run_journal.pass_finish(run_id, pass, status: result.status, message: result.message)
         return terminal(:done, result.message) if result.status == :clean
         return terminal(:validation_failed, result.message) if result.status == :validation_failed
+        return terminal(:delivery_failed, result.message) if result.status == :delivery_failed
 
         result.status == :plateau ? :break : nil
       end

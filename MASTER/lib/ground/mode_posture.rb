@@ -1,12 +1,14 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require_relative "../io/atomic_write"
 
 module Master
   module Ground
     # Session adherence posture restored from fossil master.yml modes.
     # Source of truth: data/limits.yml#session_modes + ENV MASTER_MODE.
     class ModePosture
+      include Master::Io::AtomicWrite
       MODES = %w[loose balanced strict].freeze
       STATE_REL = File.join(".master", "mode").freeze
 
@@ -49,7 +51,7 @@ module Master
 
         path = state_path
         FileUtils.mkdir_p(File.dirname(path))
-        File.write(path, "#{name}\n")
+        write_atomic(path, "#{name}\n", mode: 0o600)
         ENV["MASTER_MODE"] = name
         current
       end
