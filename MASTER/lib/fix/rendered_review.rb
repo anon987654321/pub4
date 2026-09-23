@@ -17,6 +17,7 @@ module Master
       RULE_ID = "RENDERED_VISUAL_REFINEMENT"
       MAX_FILES = 12
       SELECTOR_RE = /#[A-Za-z][\w-]*|\.[A-Za-z_][\w-]*(?:[-_][\w-]+)*/.freeze
+      TEXT_ANCHOR_RE = /(?:visible\s+text\s+anchor|text\s+anchor|visible\s+text)\s*[:=]\s*["“]([^"”]+)["”]/i.freeze
       SOURCE_EXTENSIONS = %w[.css .scss .js .ts .erb .html .htm .rb].freeze
 
       attr_reader :dir
@@ -206,35 +207,55 @@ module Master
 
       def finding_for(pick, feedback, source_files, anchors, _manifest)
         issue = pick[/\b(?:issue|critique|finding)\s+(\d+)\b/i, 1]&.to_i
-        council_text = issue && issue.positive? ? Array(feedback)[issue - 1].to_h[:feedback].to_s : ""
+        council_feedback = Array(feedback).reject { |entry| entry[:persona].to_s == "Judge" }
+        council_text = issue && issue.positive? ? council_feedback[issue - 1].to_h[:feedback].to_s : ""
         evidence = [council_text, pick].reject(&:empty?).join("\n")
         selector = evidence[SELECTOR_RE, 0]
+        text_anchor = evidence[TEXT_ANCHOR_RE, 1]&.strip
         file = selector && anchors[selector]
-        file ||= source_files.find do |path|
-          words = evidence.downcase.split(/\W+/).select { |word| word.length > 4 }.uniq.first(12)
-          words.any? { |word| File.read(path, encoding: "UTF-8").downcase.include?(word) }
-        end
+        file ||= source_file_for_text(text_anchor, source_files)
         file ||= source_files.first
         return unless file
 
         surface = evidence[/surface\s+([^,;\n]+)/i, 1]&.strip
         viewport = evidence[/viewport\s+([a-z0-9_-]+)/i, 1]&.strip
-        return if surface.nil? || viewport.nil? || selector.nil?
+        anchor = selector || text_anchor
+        return if surface.nil? || viewport.nil? || anchor.nil?
 
-        selector_line = source_line(file, selector)
+        anchor_line = selector ? source_line(file, selector) : source_text_line(file, text_anchor)
         {
           rule: RULE_ID,
           file: file,
-          line: selector_line || 1,
+          line: anchor_line || 1,
           severity: :warning,
           confidence: issue ? 1.0 : 0.6,
-          message: "Rendered visual finding: #{pick} — #{surface} / #{viewport} / #{selector}",
+          message: "Rendered visual finding: #{pick} — #{surface} / #{viewport} / #{anchor}",
           fix: "Use the attached browser screenshot and measured geometry as ground truth. " \
             "Make the smallest source change that improves the cited visual issue without " \
             "inventing a new design system or regressing accessibility, semantics, or responsiveness.",
         }
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "rendered_review.finding", event_bus: @bus)
+        nil
+      end
+
+      def source_file_for_text(text, files)
+        return unless text && !text.empty?
+
+        files.find do |path|
+          File.foreach(path, encoding: "UTF-8").any? { |line| line.include?(text) }
+        end
+      rescue StandardError
+        nil
+      end
+
+      def source_text_line(path, text)
+        return unless text && !text.empty?
+
+        File.foreach(path, encoding: "UTF-8").with_index(1) do |line, index|
+          return index if line.include?(text)
+        end
+      rescue StandardError
         nil
       end
 
