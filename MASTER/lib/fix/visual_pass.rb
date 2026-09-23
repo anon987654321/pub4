@@ -15,9 +15,9 @@ module Master
       MAX_SURFACES = Integer(ENV.fetch("MASTER_VISUAL_SURFACES_PER_PASS", "8"))
       MAX_FILES = 12
       SELECTOR_RE = /#[A-Za-z][\w-]*|\.[A-Za-z_][\w-]*(?:[-_][\w-]*)*/.freeze
-      TEXT_ANCHOR_RE = /(?:visible\s+text\s+anchor|text\s+anchor|visible\s+text)\s*[:=]\s*["“]([^"”]+)["”]/i.freeze
-      SURFACE_RE = /\bsurface\s+([A-Za-z0-9_./-]+)\b/i.freeze
-      VIEWPORT_RE = /\bviewport\s+([A-Za-z0-9_-]+)\b/i.freeze
+      TEXT_ANCHOR_RE = /\b(?:visible\s+text(?:\s+anchor)?|text\s+anchor)\s*[:=]\s*["“]([^"”\n]+)["”]/i.freeze
+      SURFACE_RE = /\bsurface\s*[:=]\s*([A-Za-z0-9_./-]+)\b/i.freeze
+      VIEWPORT_RE = /\bviewport\s*[:=]\s*([A-Za-z0-9_-]+)\b/i.freeze
       Rule = Data.define(:id) do
         def severity = :warning
       end
@@ -179,7 +179,15 @@ module Master
           visual = payload["visual"] || {}
           first = visual["first_screen"] || {}
           type = visual["typography"] || {}
-          "surface #{surface.id}: #{surface.url}; first-screen text=#{first["text_blocks"]}, "             "interactive=#{first["interactive"]}, largest_area=#{first["largest_element_area_ratio"]}, "             "small_text=#{first["small_text"]}, centered_long_text=#{first["centered_long_text"]}; "             "type sizes=#{type["distinct_font_sizes"]&.first(8)}, "             "body median=#{type["body_median_px"]}, leading=#{type["line_height_min_px"]}-#{type["line_height_max_px"]}; "             "scroll/client=#{payload["scroll_width"]}/#{payload["client_width"]}"
+          [
+            "surface #{surface.id}: #{surface.url}",
+            "first-screen text=#{first["text_blocks"]}, interactive=#{first["interactive"]}, ",
+            "largest_area=#{first["largest_element_area_ratio"]}, small_text=#{first["small_text"]}, ",
+            "centered_long_text=#{first["centered_long_text"]}",
+            "type sizes=#{type["distinct_font_sizes"]&.first(8)}, body median=#{type["body_median_px"]}, ",
+            "leading=#{type["line_height_min_px"]}-#{type["line_height_max_px"]}",
+            "scroll/client=#{payload["scroll_width"]}/#{payload["client_width"]}",
+          ].join(" ")
         end
         mapped = anchors.values.compact.uniq.first(12)
         <<~TEXT
