@@ -71,9 +71,11 @@ module Master
 
         emotion = Emotion.analyze(clean)
         melody = Melody.plan(clean, emotion, melodic: melodic_contour?(cfg, emotion), languages: phrase_languages(cfg))
-        melody = apply_spoken_performance(melody, clean, emotion, style)
         resolved_voice, resolved_rate, resolved_pitch = resolve_voice_and_prosody(
           clean, cfg, voice:, style:, rate:, pitch:, voice_locked:, style_locked:
+        )
+        melody = apply_spoken_performance(
+          melody, clean, emotion, style, base_rate: resolved_rate, base_pitch: resolved_pitch
         )
 
         out_path = "/tmp/m_tts_#{SecureRandom.hex(8)}.mp3"
@@ -83,12 +85,12 @@ module Master
         out_path
       end
 
-      def apply_spoken_performance(melody, clean, emotion, style)
+      def apply_spoken_performance(melody, clean, emotion, style, base_rate:, base_pitch:)
         return melody if melody[:melodic]
 
         performance = Performance.apply(
-          base_rate: "-5%",
-          base_pitch: "-18Hz",
+          base_rate:,
+          base_pitch:,
           text: clean,
           emotion:,
           style:,
