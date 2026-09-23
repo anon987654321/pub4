@@ -113,7 +113,7 @@ module Master
 
           line.scan(GLOB_RE).each do |body|
             body[0].scan(STRING_RE).map(&:first).select { |glob| glob.include?("*") }.each do |glob|
-              matches = Dir.glob(File.join(@root, "MASTER", glob))
+              matches = Dir.glob(File.join(repo_root, "MASTER", glob))
               next unless matches.empty?
 
               findings << Finding.new(
