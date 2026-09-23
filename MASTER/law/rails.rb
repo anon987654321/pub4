@@ -54,6 +54,7 @@ end
 Law.define(:AESTHETIC_FLAT_SEMANTIC) do
   source "MASTER UI aesthetic — flat 8px-rhythm surfaces"
   severity :info
+  mode :opportunity
   languages %i[css scss html javascript]
   ask "Score the UI surface for flat, pixel-precise design: reject ornamental shadow, blur, or glow; uneven spacing off an 8px rhythm; weak hierarchy; and decorative particles. Propose concrete token, spacing, and type fixes. Return CLEAN when already flat and rhythmic."
   fix "Remove ornamental depth, normalize spacing onto the 8px rhythm, strengthen hierarchy, and make decoration earn its place."
@@ -76,6 +77,7 @@ end
 Law.define(:AESTHETIC_RAMS_SEMANTIC) do
   source "Dieter Rams — useful, understandable, unobtrusive, honest, thorough"
   severity :info
+  mode :opportunity
   languages %i[html css scss]
   ask "Apply useful, understandable, unobtrusive, honest, and thorough to this UI surface. Flag dishonest progress, missing empty or error states, or chrome that competes with content. Return CLEAN when the surface is solid."
   fix "Make the primary state useful and legible, represent progress and failure honestly, cover empty states, and remove chrome that competes with the content."
