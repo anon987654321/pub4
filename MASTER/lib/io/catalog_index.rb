@@ -81,6 +81,15 @@ module Master::Io
       migrate
     end
 
+    def stale?(source_name, max_age: 86_400)
+      snapshot = db.get_first_value("SELECT fetched_at FROM provider_snapshots WHERE source = ?", [source_name])
+      return true unless snapshot
+
+      Time.now - Time.parse(snapshot) >= max_age
+    rescue SQLite3::Exception, ArgumentError
+      true
+    end
+
     def refresh(source_name, token: nil, url: nil)
       source = SOURCES.fetch(source_name)
       source_url = url || source.fetch(:url)
