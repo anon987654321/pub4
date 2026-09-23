@@ -45,6 +45,26 @@ module Master
             nil
           end
 
+          # @capability_map is always constructed (ModelRouter#initialize), unlike
+          # @provider_health above which nothing in this codebase ever passes in —
+          # so this has no equivalent guard to fall silent behind. Until today
+          # nothing called it: preferred(task_type:) already checks
+          # @capability_map.best_model_for(task_type) first, but with zero
+          # recorded outcomes that check always fell through to the static
+          # weights in data/models.yml.
+          def record_capability_outcome(model:, task_type:, success:, metrics: {})
+            return unless task_type
+
+            # preferred(task_type:) passes task_type straight into
+            # best_model_for with no type coercion, so the key written here
+            # must match whatever form the caller used (a bare symbol in
+            # every real call site) or the read side never finds it.
+            @capability_map.record_outcome(model, task_type, success, metrics)
+          rescue StandardError => e
+            Master::Ground::Swallow.log(e, context: "Diagnostics.record_capability_outcome")
+            nil
+          end
+
           # Wrapping the router's own health object rather than a second one, so
           # the score that triggers a quarantine is the score the router routes on.
           def quarantine

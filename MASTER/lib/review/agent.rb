@@ -71,6 +71,7 @@ module Master
         selected_model = live_model(operation ? model_for(operation:) : routed_models.first)
         result = @dispatcher.send_with_cache(selected_model, messages, stream: false, image:, temperature:)
         result = retry_on_broke_lane(result, selected_model, messages, image:, temperature:)
+        record_capability_outcome(operation:, selected_model:, result:)
         raise StandardError, result.message if result.is_a?(Master::Result::Err)
         result.to_s
       end
@@ -118,6 +119,19 @@ SINGLE_CALL_FAILOVER = %i[budget rate_limit timeout no_api_key].freeze
       end
 
       private
+
+      # A hop in retry_on_broke_lane answers with the fallback model, not the
+      # one routed to; Result::Ok#model (settle's with_model) names whichever
+      # one actually produced this result, so recording against selected_model
+      # unconditionally would credit or blame the wrong model after a hop.
+      def record_capability_outcome(operation:, selected_model:, result:)
+        return unless operation && @model_router.respond_to?(:record_capability_outcome)
+
+        effective_model = result.respond_to?(:model) && result.model ? result.model : selected_model
+        @model_router.record_capability_outcome(
+          model: effective_model, task_type: operation, success: result.is_a?(Master::Result::Ok)
+        )
+      end
 
 def single_call_failover_categories
   @single_call_failover_categories ||=
