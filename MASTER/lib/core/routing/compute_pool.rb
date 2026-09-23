@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
-require "fileutils"
 require "yaml"
+require_relative "../../io/atomic_write"
+require_relative "../../io/model_quota"
+require_relative "../../io/quota_gate"
 
 module Master
   module Core
@@ -13,6 +15,7 @@ module Master
       # quality and latency. Free/local lanes are not hard-coded winners: they
       # win when their measured utility is actually better.
       class ComputePool
+        include Master::Io::AtomicWrite
         Candidate = Struct.new(:id, :quality, :speed, :cost, :context_window,
           :availability, :tool_support, :success_rate, :latency_factor, :score,
           keyword_init: true)
@@ -44,6 +47,30 @@ module Master
           rank(ids, task_type:, empirical_best:).first
         end
 
+        # Re-probe provider inventory after an operator installs a model, signs
+        # into a CLI, changes a key, or starts a local server without restarting
+        # MASTER. Discovery is live; telemetry remains durable.
+        def refresh!
+          @router.refresh_pool! if @router.respond_to?(:refresh_pool!)
+          self
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "compute_pool.refresh")
+          self
+        end
+
+        # A safe, machine-readable view of the compute market. Unknown quota is
+        # represented as nil, never guessed. No keys or account identifiers leave
+        # this object.
+        def inventory(task_type: :exploration, refresh: false)
+          refresh! if refresh
+          ids = @router.pool(wait: false)
+          ranked = rank(ids, task_type:)
+          ranked.map { |id| inventory_row(id, rank: ranked.index(id) + 1, task_type:) }
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "compute_pool.inventory")
+          []
+        end
+
         def record(model:, status:, latency_ms: nil, error: nil)
           key = model.to_s
           return if key.empty?
@@ -63,7 +90,11 @@ module Master
         end
 
         def snapshot
-          @mutex.synchronize { Marshal.load(Marshal.dump(@stats)) }
+          @mutex.synchronize do
+            @stats.each_with_object({}) do |(model, stat), copy|
+              copy[model] = stat.dup
+            end
+          end
         end
 
         private
