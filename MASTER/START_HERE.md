@@ -234,6 +234,19 @@ zsh OPENBSD/bin/tree.sh . --pub4-overview
 Far-away visual tree with noise pruned and alignment notes. Do this before
 merging YAML/MD or restructuring folders.
 
+## Music
+
+`Music::Synth.render`/`.play` write a WAV and hand it to afplay/ffplay — one
+buffer, one file, one shot. `Music::Realtime.play(shape:, hz:, seconds:)` and
+`.morph(hz:, seconds:, shapes:)` skip the file: they generate frames in
+1024-sample blocks and stream them straight to a live `AudioSink` (sox or
+ffplay reading raw PCM on stdin), so a long or continuously-changing sound
+never sits on disk. From `bundle exec ruby bin/cli`, call
+`Master::Music::Realtime.morph(hz: 440, seconds: 6)` directly from the
+console rather than through an agent turn — synthesis is cheap and
+immediate, and no model call belongs on the path between a waveform formula
+and the speaker.
+
 ## Source And Local State
 
 - Source: `lib/`, `data/`, `bin/`, `test/`, `spec/`, `web/app/`, `web/public/`.
