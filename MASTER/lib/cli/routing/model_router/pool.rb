@@ -24,6 +24,7 @@ module Master
           PROBE_TIMEOUT_S = 15
           SERVER_TIMEOUT_S = 1
           CATALOG_MAX_AGE_S = 86_400
+          CATALOG_MODEL_LIMIT = 5_000
           CREDITS_URL = "https://openrouter.ai/api/v1/credits"
           KEY_FILES = "~/.config/master/env (or /etc/master.env on OpenBSD)"
 
@@ -44,7 +45,8 @@ module Master
           def pool(wait: false)
             start_pool_probes
             lanes = [primary_models, cli_lane_models(wait:), tier_ids, continuity_models,
-                     ollama_cloud_catalog, ollama_cloud_models, local_server_models, replicate_models, local_models]
+                     ollama_cloud_catalog, ollama_cloud_models, local_server_models,
+                     live_catalog_models, replicate_models, local_models]
             lanes.flatten.uniq.select { |id| unreachable_reason(id, wait:).nil? }
           end
 
@@ -91,6 +93,9 @@ module Master
             @local_server_index = nil
             @api_providers = nil
             @provider_rows = nil
+            @live_catalog_models = nil
+            @catalog_index = nil
+            @pool_probes = nil
             start_pool_probes
             self
           rescue StandardError => e
@@ -137,6 +142,46 @@ module Master
           end
 
           def cli_lane_models(wait: false) = cli_lane_ids.select { |id| cli_lane_problem(id, wait:).nil? }
+
+          # Models discovered from provider-owned catalogs are first-class pool
+          # members. This is the autonomous part: adding a model at a provider
+          # does not require a models.yml edit. Catalog metadata is consumed by
+          # ComputePool; the router only needs a provider credential.
+          def live_catalog_models
+            return @live_catalog_models if defined?(@live_catalog_models)
+            return @live_catalog_models = [] unless Master.api_key_present?("OPENROUTER_API_KEY")
+
+            @live_catalog_models = catalog_rows("openrouter").filter_map do |row|
+              id = row["id"].to_s
+              next if id.empty? || id.end_with?(":free") && Master::Io::ModelQuota.over_quota?(id)
+              next unless chat_catalog_model?(row)
+
+              id
+            end
+          rescue StandardError => e
+            Master::Ground::Swallow.log(e, context: "model_router.live_catalog")
+            @live_catalog_models = []
+          end
+
+          def chat_catalog_model?(row)
+            inputs = row["input_modalities"].to_s.split(",").map(&:strip)
+            outputs = row["output_modalities"].to_s.split(",").map(&:strip)
+            return true if inputs.empty? && outputs.empty?
+
+            outputs.include?("text") && (inputs.empty? || inputs.include?("text"))
+          end
+
+          def catalog_rows(source)
+            require_relative "../../../io/catalog_index"
+            db = Master::Io::CatalogIndex::DEFAULT_DB
+            return [] unless File.file?(db)
+
+            @catalog_index ||= Master::Io::CatalogIndex.new(db_path: db)
+            @catalog_index.search(nil, source:, limit: CATALOG_MODEL_LIMIT)
+          rescue StandardError => e
+            Master::Ground::Swallow.log(e, context: "model_router.catalog_rows", source:)
+            []
+          end
 
           def cli_lane_problem(id, wait:)
             name = id.split(":", 2).first
@@ -263,7 +308,7 @@ module Master
           end
 
           def ollama_problem(id)
-            name = id.sub(%r{\Aollama[:/]}, "")
+            name = id.sub(%r{Aollama[:/]}, "")
             installed = ollama_installed_models
             return (ollama_enabled? ? nil : "start Ollama") if installed.nil?
             return "ollama pull #{name}" unless ollama_pulled?(id)
