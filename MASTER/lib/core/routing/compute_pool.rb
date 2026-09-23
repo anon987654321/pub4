@@ -136,7 +136,8 @@ module Master
           speed = entry.speed * entry.latency_factor
           economic_factor = [entry.cost, 0.1].max
           task_factor = task_factor(entry, task_type)
-          empirical_factor = entry.id == empirical_best.to_s ? 1.05 : 1.0
+          empirical_factor = empirical_capability_factor(entry.id, task_type)
+          empirical_factor *= 1.05 if entry.id == empirical_best.to_s
 
           # models.yml normalizes cost as economic value: 1.0 is free/local
           # compute and smaller values represent increasingly scarce spend.
@@ -162,6 +163,15 @@ module Master
           when "long_context" then text.match?(/gemini|claude|qwen|agy/)
           else false
           end
+        end
+
+        def empirical_capability_factor(id, task_type)
+          return 1.0 unless @router.respond_to?(:capability_score)
+
+          score = @router.capability_score(id, task_type:)
+          0.8 + (score.to_f * 0.4)
+        rescue StandardError
+          1.0
         end
 
         def provider_for(id)
