@@ -25,4 +25,16 @@ class TestLawHandshake < Minitest::Test
     refute verdict.accepted?
     assert_equal "enforcement protocol mismatch", verdict.reason
   end
+
+  def test_admission_expires_when_laws_change
+    original = Law::Contract.method(:digest)
+    Law::Contract.define_singleton_method(:digest) { "changed" }
+    Master::Ground::LawHandshake::Admission.enable!
+    Law::Contract.define_singleton_method(:digest) { "different" }
+    refute Master::Ground::LawHandshake::Admission.admitted?
+    assert_raises(SecurityError) { Master::Ground::LawHandshake::Admission.require! }
+  ensure
+    Law::Contract.define_singleton_method(:digest, original)
+    Master::Ground::LawHandshake::Admission.disable!
+  end
 end
