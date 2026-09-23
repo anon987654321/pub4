@@ -27,7 +27,7 @@ module Master
           @router = router
           @root = root
           @rules = load_rules
-          @stats = {}
+          @stats = load_stats
           @mutex = Mutex.new
         end
 
@@ -55,6 +55,7 @@ module Master
               stat[:failures] += 1
               stat[:last_error] = error.to_s unless error.to_s.empty?
             end
+            persist_stats
           end
         end
 
@@ -96,15 +97,14 @@ module Master
 
           quality = entry.quality * entry.success_rate
           speed = entry.speed * entry.latency_factor
-          cost = [entry.cost, 0.01].max
+          economic_factor = [entry.cost, 0.1].max
           task_factor = task_factor(entry, task_type)
           empirical_factor = entry.id == empirical_best.to_s ? 1.05 : 1.0
 
-          # The three multiplicative terms deliberately mirror MASTER's
-          # quality × availability × speed × context × tool support ÷ cost
-          # objective while retaining the repository's normalized cost score.
+          # models.yml normalizes cost as economic value: 1.0 is free/local
+          # compute and smaller values represent increasingly scarce spend.
           quality * entry.availability * speed * task_factor * empirical_factor *
-            [entry.tool_support, 0.1].max * context_factor(entry.context_window) * cost
+            [entry.tool_support, 0.1].max * context_factor(entry.context_window) * economic_factor
         end
 
         def task_factor(entry, task_type)
@@ -138,6 +138,26 @@ module Master
         def model_row(id)
           @rules.fetch("models", {}).values.flatten.find { |row| row.is_a?(Hash) && row["id"].to_s == id.to_s } ||
             @rules.fetch("model_defs", {}).values.find { |row| row.is_a?(Hash) && row["id"].to_s == id.to_s }
+        end
+
+        def stats_path
+          File.join(@root, "runtime", "telemetry", "compute_pool.yml")
+        end
+
+        def load_stats
+          return {} unless File.file?(stats_path)
+          Master.load_yaml(stats_path) || {}
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "compute_pool.load_stats")
+          {}
+        end
+
+        def persist_stats
+          path = stats_path
+          FileUtils.mkdir_p(File.dirname(path))
+          Master.write_yaml(path, @stats)
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "compute_pool.persist_stats")
         end
 
         def rolling_average(previous, value, count)
