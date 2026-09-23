@@ -75,22 +75,22 @@ class TestReliabilitySecondTranche < Minitest::Test
   end
 
   def test_transaction_preserves_tree_when_commit_was_recorded
-      Dir.mktmpdir("master-tx") do |root|
-        path = File.join(root, "a.rb")
-        File.write(path, "before\n")
-        tx = Master::Fix::Transaction.new(root:, paths: [path], id: "delivery-pass")
-        tx.begin!
-        File.write(path, "committed-locally\n")
-        tx.observe!
-        tx.begin_delivery!(head_before: "before")
-        tx.record_commit!(head_after: "commit-1")
+    Dir.mktmpdir("master-tx") do |root|
+      path = File.join(root, "a.rb")
+      File.write(path, "before\n")
+      tx = Master::Fix::Transaction.new(root:, paths: [path], id: "delivery-pass")
+      tx.begin!
+      File.write(path, "committed-locally\n")
+      tx.observe!
+      tx.begin_delivery!(head_before: "before")
+      tx.record_commit!(head_after: "commit-1")
 
-        recovered = Master::Fix::Transaction.recover!(root:, id: tx.id)
+      recovered = Master::Fix::Transaction.recover!(root:, id: tx.id)
 
-        assert recovered.ok?
-        assert_equal :delivery_pending, recovered.value![:state]
-        assert_equal "commit-1", recovered.value![:commit]
-        assert_equal "committed-locally\n", File.read(path)
+      assert recovered.ok?
+      assert_equal :delivery_pending, recovered.value![:state]
+      assert_equal "commit-1", recovered.value![:commit]
+      assert_equal "committed-locally\n", File.read(path)
     end
   end
 
