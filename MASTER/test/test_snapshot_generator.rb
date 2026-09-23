@@ -43,6 +43,27 @@ class TestSnapshotGenerator < Minitest::Test
     end
   end
 
+  def test_snapshot_ignores_temp_generated_and_precompiled_assets
+    Dir.mktmpdir do |dir|
+      FileUtils.mkdir_p(File.join(dir, "temp"))
+      FileUtils.mkdir_p(File.join(dir, "generated"))
+      FileUtils.mkdir_p(File.join(dir, "public", "assets"))
+      File.write(File.join(dir, "temp", "scratch.rb"), "puts :scratch\n")
+      File.write(File.join(dir, "generated", "output.rb"), "puts :generated\n")
+      File.write(File.join(dir, "public", "assets", "bundle.js"), "console.log('built')\n")
+      File.write(File.join(dir, "kept.md"), "# kept\n")
+      output = File.join(dir, "snapshot.md")
+
+      Master::Snapshot.new(root: dir, output:).write!
+
+      text = File.read(output)
+      assert_includes text, "kept.md"
+      refute_includes text, "scratch.rb"
+      refute_includes text, "output.rb"
+      refute_includes text, "bundle.js"
+    end
+  end
+
   def test_snapshot_does_not_include_its_own_output
     Dir.mktmpdir do |dir|
       output = File.join(dir, "snapshot_MASTER.md")
