@@ -236,6 +236,9 @@ Then:
 /device camera
 /device sensors
 /device audio
+/device wifi
+/device volume
+/device torch on
 /device location gps
 ```
 
