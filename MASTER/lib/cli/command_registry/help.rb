@@ -51,7 +51,7 @@ module Master
         },
         "model" => {
           summary: "show or switch the active model",
-          detail: ["/model", "/model <name> — routing from data/models.yml."],
+          detail: ["/model", "/model <name> — routing from data/models.yml.", "/model benchmark — benchmark reachable Ollama models; /model benchmark all includes every reachable lane."],
         },
         "pair" => {
           summary: "issue or redeem a pairing code",
