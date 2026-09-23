@@ -440,8 +440,8 @@ function enterDegradedTextUI(reason) {
   rootBody.dataset.errorBoundary = '1';
   rootBody.dataset.runtimeProfile = 'text';
   rootBody.dataset.runtimeVisible = 'true';
-  try { if (renderer && renderer.dispose) renderer.dispose(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:degraded_dispose", err); }
-  if (cv && cv.style) cv.style.display = 'none';
+  try { if (renderer?.dispose) renderer.dispose(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:degraded_dispose", err); }
+  if (cv?.style) cv.style.display = 'none';
   let banner = document.getElementById('face-error-banner');
   if (!banner) {
     banner = document.createElement('div');
@@ -4264,7 +4264,7 @@ function handleFaceNamedEvent(event, data) {
     if (m === 'curious') State.surpriseY = 0.7;
     if (TINT[m]) fadeColorTo(TINT[m]);
     const live = document.getElementById('mood-live');
-    if (live) live.textContent = 'mood: ' + m;
+    if (live) live.textContent = `mood: ${m}`;
     syncShareStateUrl();
     return true;
   }
@@ -4338,7 +4338,7 @@ function handleFaceNamedEvent(event, data) {
       }
       setTimeout(() => {
         if (rootBody.dataset.councilPersona === persona) delete rootBody.dataset.councilPersona;
-        if (uiStatus && uiStatus.textContent && uiStatus.textContent.startsWith('council: ')) uiStatus.textContent = '';
+        if (uiStatus?.textContent?.startsWith('council: ')) uiStatus.textContent = '';
       }, 8000);
     } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:council_speech_event", err); }
     return true;
@@ -4488,7 +4488,7 @@ async function sendMessage(text) {
     if (raw.length < 200 && raw.startsWith('{')) {
       try {
         const parsed = JSON.parse(raw);
-        if (parsed && parsed.type === 'trace') return;
+        if (parsed?.type === 'trace') return;
       } catch (_) { /* not JSON, fall through to normal content handling */ }
     }
     if (raw === '[DONE]') {
@@ -4729,7 +4729,7 @@ function startEverything() {
   window.MASTER?.boot?.transition?.('VOICE', { source: 'initAudio' });
   window.MASTER?.boot?.signal?.('voice_ready', { source: 'initAudio' });
   prefetchTtsPhraseBank?.();
-  if (window.MASTER_FACE?.actx && window.MASTER_FACE.actx.state === 'suspended') window.MASTER_FACE.actx.resume();
+  if (window.MASTER_FACE?.actx?.state === 'suspended') window.MASTER_FACE.actx.resume();
   if (primer) { primer.style.transition = 'opacity 160ms ease, transform 160ms ease'; primer.style.opacity = '0'; primer.style.transform = 'scale(0.93)'; setTimeout(() => primer?.remove(), 200); }
   zshBar.classList.add('live');
   const logo = document.querySelector('.top-left-logo');
