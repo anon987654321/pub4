@@ -39,10 +39,38 @@ module Master
         args = Array(lane["login_args"])
         _output, process = Master::Io::Exec.capture2e(lane["command"], *args, timeout: LOGIN_TIMEOUT)
         if process.success?
-          "auth: #{lane["name"] || name} connected; compute pool refreshes on next route"
+          refresh_compute_pool
+          "#{connected_message(lane, name)}\n#{pool_message(lane)}"
         else
           "auth: #{lane["name"] || name} login failed"
         end
+      end
+
+      def refresh_compute_pool
+        router = Master::CLI::Routing::ModelRouter.new(root: Master::ROOT)
+        router.compute_pool.refresh!
+      rescue StandardError => e
+        Swallow.log(e, context: "subscription_auth.refresh")
+        nil
+      end
+
+      def connected_message(lane, name)
+        "auth: #{lane["name"] || name} connected"
+      end
+
+      def pool_message(lane)
+        router = Master::CLI::Routing::ModelRouter.new(root: Master::ROOT)
+        ids = router.pool(wait: false)
+        prefix = "#{lane["command"]}:"
+        discovered = ids.grep(/\A#{Regexp.escape(prefix)}/)
+        if discovered.empty?
+          "compute: #{lane["name"] || lane["command"]} subscription lane pending discovery"
+        else
+          "compute: #{discovered.join(", ")} available"
+        end
+      rescue StandardError => e
+        Swallow.log(e, context: "subscription_auth.pool_message")
+        "compute: subscription lane refresh failed"
       end
 
       def find(name)
