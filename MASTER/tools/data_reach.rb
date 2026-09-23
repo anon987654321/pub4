@@ -42,7 +42,7 @@ module Operator
     CEILING = File.join(MASTER_DIR, "data", "data_reach.yml")
 
     CODE_GLOBS = %w[lib/**/*.rb core/**/*.rb web/app/**/*.rb web/config/**/*.rb
-                    bin/* tools/**/*.rb test/**/*.rb spec/**/*.rb law/*.rb Rakefile].freeze
+                    bin/* tools/**/*.rb test/**/*.rb law/*.rb Rakefile].freeze
 
     module_function
 
