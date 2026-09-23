@@ -8,7 +8,7 @@ require "json"
 # and stops being harmless the moment two of them load together: Ruby warns
 # "already initialized constant", lets the second assignment win, and the loser
 # reads the wrong tree with no further complaint. Made the spec that reads this
-# file's constants collide with spec/dogfood_spec.rb's ROOT on the first run.
+# file's constants collide with test/test_dogfood.rb's ROOT on the first run.
 # tools/security_sweep.rb is SWEEP_ROOT for the same reason.
 INVENTORY_ROOT = File.expand_path("../..", __dir__)
 # Both lists had gone stale in both directions at once, which is the worst state
@@ -21,7 +21,7 @@ INVENTORY_ROOT = File.expand_path("../..", __dir__)
 # CLAUDE.md says what belongs at the root: itself, TODO.md, TREE.md, and nothing
 # else. The three harness files beside it are generated from MASTER/AGENTS.md by
 # `rake docs:agent_contracts` and have to sit where their agent reads them.
-# spec/lifecycle_tools_spec.rb holds both lists to the tree in both directions.
+# test/test_lifecycle_tools.rb holds both lists to the tree in both directions.
 ALLOWED_ROOT_FILES = %w[
   .cursorrules
   .gitattributes
