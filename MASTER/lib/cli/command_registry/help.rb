@@ -53,6 +53,12 @@ module Master
           summary: "show or switch the active model",
           detail: ["/model", "/model <name> — routing from data/models.yml.", "/model benchmark — benchmark reachable Ollama models; /model benchmark all includes every reachable lane."],
         },
+        "auth" => {
+          summary: "connect subscription compute through the provider's official CLI",
+          detail: ["/auth — show subscription lanes.", "/auth status — show installed and known authentication state.",
+                   "/auth login claude|chatgpt|grok — run the provider's official browser sign-in flow.",
+                   "MASTER never receives or stores your password, OAuth code, cookies or session credentials."],
+        },
         "pair" => {
           summary: "issue or redeem a pairing code",
           detail: ["/pair issue [label]", "/pair <code>", "/pair status"],
