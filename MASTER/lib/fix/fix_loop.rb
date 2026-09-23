@@ -2,6 +2,7 @@
 
 require "set"
 require "time"
+require_relative "run_journal"
 require_relative "fix_loop/committer"
 require_relative "fix_loop/council_round"
 require_relative "fix_loop/llm_router"
@@ -56,6 +57,7 @@ module Master
         @halted = false
         @halt_reason = nil
         @git = git || Io::GitOperations.new(root)
+        @run_journal = RunJournal.new(root:, bus:)
 
         @file_collector = FileCollector.new(root:, bus:)
         @rule_order = RuleOrder.new(rules:, learnings:, bus:, root:)
@@ -74,11 +76,19 @@ module Master
         return halted_result if halted? && !requested
 
         files = incremental ? @file_collector.collect_changed(target) : @file_collector.collect(target)
-        deadline = Time.now + budget_seconds
+        deadline = Ground::Reliability::Deadline.new(budget_seconds)
+        journal = @run_journal.start_or_resume(target:, files:, max_passes:, budget_seconds:)
+        run_id = journal["id"]
+        start_pass = @run_journal.next_pass(journal)
+        @bus&.publish("fix_loop:recovered", run_id:, start_pass:, target:) if journal["resumed"]
 
-        run_passes(files:, target:, max_passes:, deadline:, budget_seconds:)
+        result = run_passes(files:, target:, max_passes:, deadline:, budget_seconds:, start_pass:, run_id:)
+        terminal_state = result.ok? ? result.value!.to_s[/\A[A-Z_]+/].to_s.downcase.to_sym : :failed
+        @run_journal.terminal(run_id, terminal_state, message: result.to_s)
+        result
       rescue StandardError => e
         @bus&.publish("fix_loop:crash", error: e.message, backtrace: e.backtrace&.first(8))
+        @run_journal&.crash(run_id, e.message) if defined?(run_id) && run_id
         Result.err("fix_loop: #{e.message} @ #{e.backtrace&.first(3)&.join(" | ")}", category: :unknown)
       end
 
@@ -124,11 +134,12 @@ module Master
         )
       end
 
-      def run_passes(files:, target:, max_passes:, deadline:, budget_seconds:)
+      def run_passes(files:, target:, max_passes:, deadline:, budget_seconds:, start_pass: 0, run_id:)
         state = { history: [], seen_snapshots: Set.new, recurring_violations: Hash.new(0), consecutive_clean: 0 }
 
-        max_passes.times do |i|
-          outcome = run_one_pass(i, files:, target:, deadline:, budget_seconds:, state:)
+        max_passes.times do |offset|
+          i = start_pass + offset
+          outcome = run_one_pass(i, files:, target:, deadline:, budget_seconds:, state:, run_id:)
           return terminal(:plateau, "no further improvement after #{i + 1} pass(es)") if outcome == :break
           return outcome if outcome
         end
@@ -146,10 +157,11 @@ module Master
         Result.ok("#{state.to_s.upcase}: #{message}")
       end
 
-      def run_one_pass(i, files:, target:, deadline:, budget_seconds:, state:)
+      def run_one_pass(i, files:, target:, deadline:, budget_seconds:, state:, run_id:)
         pass = i + 1
+        @run_journal.pass_start(run_id, pass)
         @homeostat&.observe(:tool_call) # a pass is loop overhead distinct from the LLM call inside it
-        if Time.now >= deadline
+        if deadline.expired?
           @bus&.publish("fix_loop:timeout", pass:, budget_seconds:)
           # Err, not ok. A run that stopped because the clock ran out did not
           # finish fixing, and saying "ok" here is how the 2026-07-31 gate
@@ -166,12 +178,13 @@ module Master
         end
 
         result = @pass_runner.run_pass(
-          files:, target:, pass:, deadline:,
+          files:, target:, pass:, deadline: deadline.at,
           history: state[:history], seen_snapshots: state[:seen_snapshots],
           recurring_violations: state[:recurring_violations],
           consecutive_clean: state[:consecutive_clean]
         )
         state[:consecutive_clean] = result.consecutive_clean
+        @run_journal.pass_finish(run_id, pass, status: result.status, message: result.message)
         return terminal(:done, result.message) if result.status == :clean
         return terminal(:validation_failed, result.message) if result.status == :validation_failed
 
