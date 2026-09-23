@@ -386,7 +386,10 @@
     });
     const bodySize = Object.entries(sizeCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
     const headingSize = headings.find(el => el.tag === 'h1')?.font_size || null;
-    const measures = bodyText.map(el => Math.round((el.rect.w / Math.max(el.font_size, 1)) * 10) / 10);
+    // Width divided by font size is an em-like box width, not a true ch count.
+    // Keep it descriptive so visual evidence never claims a precision the probe
+    // did not actually measure.
+    const textBoxEm = bodyText.map(el => Math.round((el.rect.w / Math.max(el.font_size, 1)) * 10) / 10);
     const leading = bodyText.filter(el => el.line_height).map(el =>
       Math.round((el.line_height / Math.max(el.font_size, 1)) * 100) / 100
     );
@@ -398,8 +401,6 @@
     if (headings.length === 0) facts.push('no-visible-heading');
     if (interactive.length > 7) facts.push('many-first-screen-actions');
     if (bodyText.some(el => el.font_size < 16)) facts.push('small-first-screen-text');
-    if (measures.some(ch => ch > 75)) facts.push('wide-first-screen-measure');
-    if (measures.some(ch => ch < 35)) facts.push('narrow-first-screen-measure');
     if (leading.some(ratio => ratio < 1.3 || ratio > 1.8)) facts.push('irregular-first-screen-leading');
     if (headingSize && bodySize && Number(headingSize) < Number(bodySize) * 1.5) facts.push('weak-heading-scale');
     if (largest / viewport > 0.72) facts.push('dominant-first-screen-box');
@@ -411,7 +412,7 @@
       largest_area_ratio: Math.round((largest / viewport) * 1000) / 1000,
       body_font_size: bodySize ? Number(bodySize) : null,
       h1_font_size: headingSize,
-      text_measures_ch_approx: measures.slice(0, 40),
+      text_box_width_em_approx: textBoxEm.slice(0, 40),
       leading_ratios: leading.slice(0, 40),
       candidates,
       facts
