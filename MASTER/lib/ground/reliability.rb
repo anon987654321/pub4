@@ -11,7 +11,7 @@ module Master
         attr_reader :seconds, :started_at
 
         def initialize(seconds, clock: Process::CLOCK_MONOTONIC)
-          @seconds = Integer(seconds)
+          @seconds = Float(seconds)
           raise ArgumentError, "deadline must be positive" unless @seconds.positive?
 
           @clock = clock
