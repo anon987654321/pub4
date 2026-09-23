@@ -536,7 +536,7 @@ Law.define(:MONKEY_PATCH_CORE) do
   source "Polished Ruby Programming (Jeremy Evans) — core class hygiene"
   severity :warn
   languages %i[ruby]
-  path_exclude %r{/test/|/spec/}
+  path_exclude %r{/test/}
   detect { |line| line.match?(/\A\s*class\s+(?:String|Array|Hash|Integer|Float|Symbol|Object|Kernel|NilClass|Numeric|Range|Time|Comparable|Enumerable)\s*\z/) }
   fix "Use a refinement, a helper module, or a wrapping method instead of reopening the core class."
   bad  "class String"
@@ -554,7 +554,7 @@ Law.define(:NOISE_NAME) do
   source "Clean Code — class names are domain nouns, not noise words"
   severity :info
   languages %i[ruby]
-  path_exclude %r{/test/|/spec/|/fixtures/}
+  path_exclude %r{/test/|/fixtures/}
   detect do |line|
     line.match?(/\A\s*(?:class|module)\s+(?:[A-Z]\w*::)*(?:Manager|Utils?|Utilit(?:y|ies)|Misc|Stuff|Things?|Handlers|Foo|Bar|Baz|Te?mp)\b\s*(?:<.*)?\z/)
   end
