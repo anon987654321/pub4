@@ -56,6 +56,7 @@ module Master
       end
 
       def call(command:)
+        Master::Ground::LawHandshake::Admission.require!
         error = preflight_error(command)
         return error if error
 
