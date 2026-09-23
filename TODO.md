@@ -134,13 +134,20 @@ Forward work is the last section of this file.
 - **ruby_llm is one major version behind its only fix, and the ignore in
   `shared/config/bundler-audit.yml` is what stands in for it.**
   CVE-2026-67991 (ReDoS in `RubyLLM::Utils.underscore`, High) has no patched
-  1.x: the advisory says `>= 2.0.0.rc1`, and 2.0.0 is still a release
-  candidate as of 2026-09-17. It blocked every app deploy on 2026-09-16 until
-  the ignore landed. The entry argues the advisory cannot reach this tree —
+  1.x: the advisory says `>= 2.0.0.rc1`, and 2.0.0 final shipped 2026-09-18 —
+  the entry's own trigger has fired. It blocked every app deploy on 2026-09-16
+  until the ignore landed. The entry argues the advisory cannot reach this tree —
   it is scoped to Ruby 3.1.x, we pin 3.4.9, and no user-supplied string ever
   becomes a class, agent or tool name here — but an ignore is a standing
-  claim, not a fix. Upgrade MASTER (`~> 1.3`), brgen and amber to 2.0.0 when
-  it ships, then delete the ignore. `ruby_llm-mcp` comes with it.
+  claim, not a fix. The upgrade stages by fragility: brgen and amber first
+  (unpinned, `RubyLLM.chat().ask` is their whole surface, service tests prove
+  them, then delete the ignore); web second (its `ruby_llm-mcp` 1.0.x must
+  accept 2.x); MASTER last and alone — `lib/io/ruby_llm_patch.rb`
+  monkey-patches `RubyLLM::Models` internals and carries 16 Tool classes, so
+  it wants its own worktree run of `test_ruby_llm_patch.rb` and the
+  dispatcher suite. Note the ignore's prose names only brgen and amber at
+  1.16.0 while MASTER root (1.13.2) and web (1.15.0) are equally unpatched
+  1.x — the argument covers them; the comment does not say so.
 
 - **`constitutional_scan` is over shared's ceiling, and what is left is a
   design value or the scanner's reach.** On the aesthetic profile the budget
@@ -427,20 +434,24 @@ slices. Each is a hypothesis with its seam.
 
 ### MASTER
 
-- **The face reads event fields where the stream does not put them.**
-  `/events/stream` nests each event's fields under `data`, and
-  `visual_bridge.js` reads `event.pct`, `event.modules` and `event.spirit_radius`
-  from the top level, so they arrive undefined. Fixing it changes what the face
-  shows: the operator's.
-- **`test_ratchets` is red on rows nobody moved on purpose.** Over the ceiling
-  on 2026-09-16, measured after the day's merges: `spine.lib_body_ceiling`,
-  `growth.master`, `growth.rails`, `growth.openbsd`, `growth.studio`,
-  `self_findings.law` (231 against a ceiling another session had just lowered to
-  230) and `namespace`. The numbers move every few hours while
-  four sessions write, so read them from `bin/operator measure` rather than from
-  here. Each row wants its fall recorded or its raise named, never absorbed —
-  and the growth is several sessions' at once, which is why no one session has
-  been willing to own the raise.
+- **`test_ratchets` is red on rows nobody moved on purpose.** Measured
+  2026-09-23 in the analysis worktree: 13 rows over, 5 slack, none a spelling
+  defect — the counters are unchanged and the growth is real, 623 commits
+  since 2026-09-16 with no ceiling moves. `namespace` has healed. The
+  per-row path: the four `growth.*` rows and `self_findings.law`/`.registry`
+  want their new members enumerated (`bin/operator measure --why <row>`),
+  what folds folded, and one sponsored raise naming what the rest buy;
+  `spine.lib_body_ceiling` (41049/35302) has no raise left — two consecutive
+  `raised:` entries spent `consecutive_raises_allowed: 2`, so it is paid by
+  a deletion fall first, and that is the operator's; the slack rows want
+  their falls locked with a comment naming what paid, and two of them
+  (`rule_reach` 14/70, `rule_audit.silent` 42/43) sit in immutable
+  `data/rules.yml`, so their locks are the operator's too. The numbers move
+  every few hours while four sessions write, so read them from
+  `bin/operator measure` rather than from here. Each row wants its fall
+  recorded or its raise named, never absorbed — and the growth is several
+  sessions' at once, which is why no one session has been willing to own
+  the raise.
 - **The CLI's last seams.** Rotate the web token printed at boot on 2026-09-13;
   it sits in two saved terminal transcripts in `~/Downloads` (operator). With
   `CLI::Propose` gone, `Ground::BiasGuard` has no runtime caller and the
@@ -1662,4 +1673,53 @@ The work, in `STUDIO/postpro/postpro.rb` unless noted:
   three-to-five `*_v1_*` outputs and a chain sidecar; nothing today covers
   ARGV dispatch. Callers in `MASTER/lib/io/` use `--input/--output/--preset`
   only and are unaffected.
+
+## Semantics pass — opportunities opened 2026-09-23
+
+The four-tree analysis found the same shapes recurring across trees. Each
+entry below is the shape, the evidence, and the seam it wants.
+
+- **Every tree has one fail-open seam where absence reads as success.**
+  OPENBSD's sync.rb redaction was one (fixed 2026-09-23: fail-closed residue
+  audit, `OPENBSD/lib/secret_redaction.rb`); the RAILS rendered gates
+  degrading to warnings without Chrome are another; MASTER's unread config
+  was a third, and STUDIO's 26 SipHash sites were a fourth. The seam to look
+  for is "nothing happened" indistinguishable from "nothing found". Next
+  candidates: make rendered gates fail in CI and warn only on live hosts;
+  and a publisher/listener census for MASTER's event bus in the shape of
+  `tools/data_reach.rb`, so an event nothing publishes or nothing hears is
+  counted rather than silent.
+- **A restated value drifts; a derived one cannot.** `voice.yml` vs
+  `Policy::FALLBACK`, preprompt's `MODEL_CAPABILITIES` vs live provider
+  schemas, rules.yml's ids vs `law/` vs the registry, brgen's inline social
+  routes vs `shared/config/routes/social.rb`, relayd's keypair list deciding
+  which city domains live vs `apps.yml`. The seam: one generator from the
+  primary source, in the shape `rake docs:agent_contracts` already sets —
+  or a check that reads both and refuses disagreement, like
+  `test_yaml_registries.rb` could do for the fallback rates.
+- **Ratchets have no owner, so red stays red.** A ceiling lowered by one
+  session while other sessions grow is `test_ratchets`'s standing state. The
+  seam: `bin/operator measure` naming the TODO entry that owns each ceiling,
+  so a red row points at its decision record instead of at nobody.
+- **The top of the gate ladder is dark.** The council answers "Insufficient
+  credits" and `bin/operator gate` exits 3 skipping it, every run. A
+  deterministic checklist critic as the bottom tier of the council would
+  keep the ladder's top honest while the provider is unreachable — a design
+  decision, the operator's.
+- **lora and preprompt check nothing they cannot reach.** lora's ~4.8k LOC is
+  parse-checked only; preprompt's `schema_audit` needs network and token, so
+  it never runs in rake. The seam: a recorded-schema snapshot committed under
+  `STUDIO/preprompt/data/` so the audit diffs offline, and one loaded-module
+  smoke test for lora's toolkits that does not need a provider.
+- **Engines are namespaces pretending at detachability.** Sixteen engine
+  views call `main_app.`, every engine model names host `User` by
+  `class_name:`, fourteen host reflexes reach into engine scopes. The seam
+  is not the refactor: a RAILS gate asserting engine-to-host references are
+  counted and budgeted, in the shape of `app_duplication_test.rb`, so the
+  boundary's real size is measured before anyone moves it.
+- **One box, one disk, no second copy anywhere.** vm23's SQLite backups land
+  on the operator Mac; litestream never worked. The seam is money — a second
+  VPS or object storage for `VACUUM INTO` output — the operator's to buy,
+  and until then the runbook should say plainly that production's only
+  second copy lives on one laptop disk.
 

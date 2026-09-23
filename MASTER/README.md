@@ -204,9 +204,10 @@ def run(goal)
 end
 ```
 
-Three verdicts, only three. Block refuses with a reason. Request stops to ask a
+Three verdicts cross the loop, only three. Block refuses with a reason. Request stops to ask a
 person. Allow applies the effect against a checkpoint it undoes the moment the
-effect errs. Everything past that is detail.
+effect errs. A fourth verdict, Revise, rewrites the effect inside admit and
+never reaches the loop. Everything past that is detail.
 
 Read [START_HERE](START_HERE.md), then [AGENTS](AGENTS.md), which closes on what
 MASTER refuses and why. Anything strange on purpose says so in a comment beside

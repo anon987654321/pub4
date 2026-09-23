@@ -259,7 +259,11 @@ module Operator
       # -> 82 (2026-09-13). The backlog sweep across marketplace, dating, tv,
       # playlist, maps, amber's wardrobe and brgen's profile, post and chrome
       # views dropped the fallbacks of keys that exist in en and nb.
-      "translate_default" => 80,
+      # -> 78 (2026-09-23, locked). The home feed's chip nav lost its last two
+      # fallbacks — home.feed_sort's aria label and home.feed_hot — with the
+      # nav's rebuild in 497c1df03; both keys exist in en and nb, so the
+      # defaults could never fire.
+      "translate_default" => 78,
       # 0, and a ratchet at zero is a ban. Every finding was a sentence written
       # in English inside a view option — an empty state's body, an action's
       # label, a title that does not open with "No" — on apps that default to

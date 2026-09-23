@@ -5,6 +5,7 @@
 
 require "fileutils"
 require_relative "gates/config_drift_gate"
+require_relative "lib/secret_redaction"
 
 # The files come from the drift gate, so the return leg copies exactly what the
 # gate compares plus what it skips as templated. A file the gate reports drifted
@@ -26,17 +27,8 @@ SOURCES = (
   [["var/nsd/etc/nsd.conf", "/var/nsd/etc/nsd.conf"], ["etc/.zshrc", "/home/dev/.zshrc"]]
 ).freeze
 
-SECRET_PATTERNS = [
-  /(_API_KEY=)\S+/,
-  /(_KEY=)sk-\S+/,
-  /(SECRET_KEY_BASE=)[a-f0-9]{32,}/,
-  /(_TOKEN=)\S+/,
-  /(_PASSWORD=)\S+/,
-  /(_SECRET=)\S+/,
-].freeze
-
 def redact(body)
-  SECRET_PATTERNS.inject(body) { |acc, pat| acc.gsub(pat, '\1__REDACTED__') }
+  SecretRedaction.redact(body)
 end
 
 # A Mac has its own /etc/pf.conf and /etc/ssh/sshd_config, and copying those
@@ -48,12 +40,23 @@ end
 
 mirrored = []
 skipped = []
+refused = []
 SOURCES.each do |repo_rel, live_path|
   unless File.exist?(live_path)
     skipped << live_path
     next
   end
   body = File.read(live_path, encoding: "UTF-8", invalid: :replace, undef: :replace)
+  # Refuse before writing: a mirrored file is the drift gate's comparison
+  # source, so a secret the patterns never learned would sit in git until
+  # someone reads it. A refusal surfaces the line here instead.
+  if (left = SecretRedaction.residue(body)).any?
+    refused << live_path
+    warn "sync: refused #{live_path} - secret-shaped lines survived redaction:"
+    left.each { |line| warn "  #{line}" }
+    warn "  extend lib/secret_redaction.rb patterns if these are benign"
+    next
+  end
   dest = File.join(MIRROR, repo_rel)
   FileUtils.mkdir_p(File.dirname(dest))
   File.write(dest, redact(body))
@@ -66,3 +69,4 @@ if skipped.any?
   puts "skipped (not present): #{skipped.size}"
   skipped.each { |p| puts "  #{p}" }
 end
+exit 3 if refused.any?

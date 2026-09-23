@@ -1073,8 +1073,23 @@ name_candidates: 23
 # Still only those two levels. An app's generated bin/rails, a tool's own bin/
 # and OPENBSD/usr/local/bin — a mirror of what is installed on vm23 rather than
 # anything run from the checkout — are not surfaces the tree offers.
+#
+# MASTER 26 -> 20, locked 2026-09-23. Seven doors folded by their own commits
+# since the 26 lock: audit (52b2fd940, /commit takes paths and bin tests run
+# processes), handoff, onboard, playbook, reset-costs, sync-env and
+# tts-bootstrap, each commit naming its fold and most of them unused wrappers.
+# pub4 became operator on the two-surface decision (b9daa7fd1) — a rename, not
+# a fall — and loops joined for the boot film (3959c382e). Net -6, read from
+# the census, not from the fold count.
+#
+# OPENBSD 46 -> 45, locked 2026-09-23. 7452c9837 collapsed the deploy gates
+# into one file and bin/vps_deploy_master.sh lost its executable bit — no
+# caller ever typed it as a door; every one reaches it through `zsh <path>`
+# (agent_map.yml, ssh_vm23.sh), and a script run through another shell is not
+# a surface the tree offers. The only net door change since f754501d1 set the
+# post-move census at 46.
 pub4_entrypoint_ceilings:
-  MASTER: 26
+  MASTER: 20
   RAILS: 3
-  OPENBSD: 46
+  OPENBSD: 45
   STUDIO: 0
