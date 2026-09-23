@@ -80,9 +80,7 @@ module Master
         def ideation_prompt(feedback)
           issues = panel_issues(feedback)
           if issues.empty?
-            return @mode[:ideation_prompt] unless @mode[:preset_key] == "ui_critique"
-
-            return "#{@mode[:ideation_prompt]}\n\nNo actionable visual defect remains: output VISUAL_CLEAN exactly."
+            return "#{@mode[:ideation_prompt]}\n\nNo registered violation was found. Conduct a clean-tree improvement review: find real, evidence-backed micro-improvements in simplification, naming, duplication, complexity, prose, accessibility, layout or maintainability. Generate 5 to 20 materially different candidates, and anchor every actionable candidate to a repository-relative file and stable line or symbol. Do not invent defects, redesign working systems, or use taste as evidence."
           end
 
           <<~PROMPT
