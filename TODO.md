@@ -414,8 +414,6 @@ slices. Each is a hypothesis with its seam.
   `CLI::Propose` gone, `Ground::BiasGuard` has no runtime caller and the
   `biases` and `principle_priorities` blocks in `data/rules.yml` are unread;
   wiring or deleting them edits an immutable file, so it is the operator's.
-- **The bare IP lingers in `MASTER/bin/operator`,** whose `ssh_host` defaults
-  `PUB4_SSH_HOST` to `dev@46.23.89.226` where the contract names `dev@brgen.no`.
 - **`solid_queue` and `solid_cache` sit in the web Gemfile with nothing loading
   them.** Dropping them is a lockfile change, so it lands with a watched deploy.
 - **`Policy::FALLBACK` speaks at `+0%` where `voice.yml` says `-18%`,** a sound
