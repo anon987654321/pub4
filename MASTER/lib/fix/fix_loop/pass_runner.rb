@@ -73,8 +73,9 @@ module Master
           found = run_observation_stage(files, target)
           visual = run_visual_pass(target:, files:, pass:)
           opportunities = run_opportunity_pass(target:, files:)
-          evidence_findings = Array(visual&.value!&.fetch(:findings, [])) +
-                              Array(opportunities&.value!&.fetch(:findings, []))
+          evidence_findings = []
+          evidence_findings.concat(Array(visual.value!.fetch(:findings, []))) if visual&.ok?
+          evidence_findings.concat(Array(opportunities.value!.fetch(:findings, []))) if opportunities&.ok?
           if visual&.err? || opportunities&.err?
             return abort_transaction(
               PassResult.new(
