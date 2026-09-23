@@ -464,13 +464,12 @@ replicate_chat:
   - google/gemini-2.5-flash
   - moonshotai/kimi-k2.5
 
-# Tier-D (local ollama). Every pulled model that fits in memory joins the
-# pool's tail, and a :cloud tag the daemon holds joins the free lanes, since
-# Ollama Cloud answers it for a signed-in account at no charge. Offline the
-# session starts on the local tier. OLLAMA_BASE_URL names a daemon elsewhere,
-# and with it set the configured list stands when that daemon cannot be asked
-# what it holds. The sender speaks Ollama's own /api/chat at the host root,
-# so a /v1 suffix here is read past.
+# Tier-D (Ollama). Ollama is probed at localhost by default; every pulled model
+# that fits in memory joins the pool dynamically. Cloud models come from the
+# explicit cloud_models catalogue and therefore do not need to appear in
+# /api/tags. OLLAMA_BASE_URL names another daemon. MASTER_NO_OLLAMA disables
+# the lane. The sender speaks Ollama's own /api/chat at the host root, so a
+# /v1 suffix here is read past.
 # keep_alive holds a model in memory between the turns of one fold instead of
 # reloading it for each; max_num_ctx caps the window the sender sizes to each
 # request (ollama_sender.rb).
