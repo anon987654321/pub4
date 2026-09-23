@@ -64,12 +64,14 @@ class TestReliabilitySecondTranche < Minitest::Test
       tx.begin!
       File.write(path, "committed-locally\n")
       tx.observe!
-      tx.begin_delivery!
+      tx.begin_delivery!(head_before: "before")
+      tx.record_commit!(head_after: "commit-1")
 
       recovered = Master::Fix::Transaction.recover!(root:, id: tx.id)
 
       assert recovered.ok?
-      assert_equal :preserved_delivery, recovered.value!
+      assert_equal :delivery_pending, recovered.value![:state]
+      assert_equal "commit-1", recovered.value![:commit]
       assert_equal "committed-locally\n", File.read(path)
     end
   end
