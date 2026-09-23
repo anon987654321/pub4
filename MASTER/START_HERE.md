@@ -41,7 +41,9 @@ sentence. The slash set is `/review` `/status` `/undo` `/commit` `/model`
   own fixtures. `bin/probe` runs any of them, and the RAILS and OPENBSD gates,
   as named subprocesses (`quick`, `all`, `deploy`). Staged lines go to
   `bin/operator lint --staged --changed-lines`.
-- Recovery: `/runtime status` shows the last known-good commit, `/runtime promote` records the current committed HEAD, and ``/runtime rollback --confirm` restores that commit only when the checkout is clean.
+- `/fix [path]` observes, critiques, repairs, and observes again until it converges or says why it stopped. For `RAILS` and `MASTER/web`, each pass also measures the rendered browser surface and feeds the real screenshot plus geometry to the existing UI Council. It can therefore correct visual hierarchy, typography, spacing, alignment, density and composition even when source rules already pass. The same pass detects high-confidence maintenance opportunities such as stale paths, dead task globs, duplicate mechanisms and coordinator sprawl, then sends them through the same guarded repair path. `/scan` does not exist.
+
+Recovery: `/runtime status` shows the last known-good commit, `/runtime promote` records the current committed HEAD, and ``/runtime rollback --confirm` restores that commit only when the checkout is clean.
 - Work: say the path. `/fix [path]` is the operation that changes the tree —
   observe, critique, repair, observe again, until it converges or says why it
   stopped. `/review [path]` reads and argues without writing, and its stages are
