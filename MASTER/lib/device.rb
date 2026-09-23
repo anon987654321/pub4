@@ -16,6 +16,9 @@ module Master
       location: "termux-location",
       sensors: "termux-sensor",
       audio: "termux-audio-info",
+      wifi: "termux-wifi-connectioninfo",
+      volume: "termux-volume",
+      torch: "termux-torch",
     }.freeze
 
     COMMAND_TIMEOUT = 3
@@ -31,7 +34,7 @@ module Master
       end
 
       def termux?
-        android? && executable?("termux-api")
+        android? && API_COMMANDS.values.any? { |command| executable?(command) }
       end
 
       def capabilities
@@ -69,6 +72,19 @@ module Master
 
       def audio_info
         json("termux-audio-info")
+      end
+
+      def wifi_info
+        json("termux-wifi-connectioninfo")
+      end
+
+      def volume
+        json("termux-volume")
+      end
+
+      def torch(enabled = true)
+        require_android_command!("termux-torch")
+        run!("termux-torch", enabled ? "on" : "off")
       end
 
       def location(provider: nil, request: "once")
