@@ -31,12 +31,20 @@ module Master
           return result unless result.ok?
 
           feedback = result.value!
-          ideation_result = ideate(preset, feedback:)
-          cherry = CherryPick.call(feedback, ideation_result)
-          @bus&.publish(@mode[:done_event], cherry_picks: cherry.size)
+          issues = panel_issues(feedback)
+          visual_clean = @mode[:preset_key] == "ui_critique" && issues.empty?
+          ideation_result = if visual_clean
+                              Master::Result.ok(ideas: [], critiques: [], final: "VISUAL_CLEAN")
+                            else
+                              ideate(preset, feedback:)
+                            end
+          cherry = visual_clean ? [] : CherryPick.call(feedback, ideation_result)
+          @bus&.publish(@mode[:done_event], cherry_picks: cherry.size, visual_clean:)
           harvest = harvest_path(payload:, feedback:, ideation_result:, cherry:)
           Master::Result.ok({
             feedback:,
+            issues:,
+            visual_clean:,
             ideas: CherryPick.ideation_value(ideation_result),
             cherry_picks: cherry,
             metrics: payload[:metrics],
