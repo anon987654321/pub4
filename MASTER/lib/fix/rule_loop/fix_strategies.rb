@@ -94,7 +94,7 @@ module Master
           prompt = build_prompt_for(violation:, src:, path:, style: :diff)
           MAX_FIX_RETRIES.times do |attempt|
             wait_before_retry(attempt, rule: @rule.id, file: path, mode: :diff)
-            response = @agent.ask(prompt, image: @visual_image).to_s
+            response = ask_agent(prompt, image: @visual_image).to_s
             next if response.strip == "UNCHANGED"
             result = PatchApplier.apply(src, response)
             return result.source if result.is_a?(PatchApplier::Success)
@@ -132,7 +132,7 @@ module Master
             path:,
             style: :file,
           ) + "\n\nArchitecture plan:\n#{plan}"
-          response = fast_model ? @agent.ask_once(prompt, model: fast_model, image: @visual_image) : @agent.ask_once(prompt, image: @visual_image)
+          response = fast_model ? ask_once_agent(prompt, model: fast_model, image: @visual_image) : ask_once_agent(prompt, image: @visual_image)
           response = extract_code(response.to_s, File.extname(path).downcase)
           return whole_file_fallback(violation:, src:, path:, reason: "no code returned") if response.to_s.strip.empty?
 
@@ -194,7 +194,7 @@ module Master
           @bus&.publish("rule_loop:edit_format_fallback", rule: @rule.id, file: path, reason: reason.to_s[0, 160])
           prompt = build_prompt_for(violation:, src:, path:, style: :file)
           model = routing_model_ids[:fast]
-          raw = model ? @agent.ask_once(prompt, model:, image: @visual_image).to_s : @agent.ask_once(prompt, image: @visual_image).to_s
+          raw = model ? ask_once_agent(prompt, model:, image: @visual_image).to_s : @agent.ask_once(prompt, image: @visual_image).to_s
           # The reply, not the file: a fenced block, a sentence around it, or
           # UNCHANGED would otherwise be written over the source.
           extract_code(raw, File.extname(path).downcase)
@@ -224,6 +224,16 @@ module Master
           #{src}
           ```
         PROMPT
+        end
+
+        def ask_agent(prompt, image: nil)
+          image ? @agent.ask(prompt, image:) : @agent.ask(prompt)
+        end
+
+        def ask_once_agent(prompt, image: nil, **options)
+          return @agent.ask_once(prompt, **options) unless image
+
+          @agent.ask_once(prompt, **options, image:)
         end
 
         def routing_model_ids
