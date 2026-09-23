@@ -250,6 +250,7 @@ models:
   strong:
     - *claude_cli_opus
     - *claude_cli_sonnet
+    - *ollama_glm_flash
     - *ollama_gemma
     - *claude_opus_api
     - *deepseek_reasoner
