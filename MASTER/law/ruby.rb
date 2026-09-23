@@ -110,6 +110,7 @@ end
 Law.define(:IMMUTABLE) do
   source "Effective Java — minimize mutability (Joshua Bloch); FP"
   severity :info
+  ask "Are mutable objects shared across threads or scopes where immutable data would be safer?"
   languages %i[ruby]
   detect { |line| line.match?(/^\s*[A-Z][A-Z_]*\s*=\s*(?:\[[^\]\n]*\]|\{[^}\n]*\})\s*$/) }
   fix "Freeze collections. Use frozen/const by default."
@@ -393,6 +394,7 @@ end
 Law.define(:RUBY_SCREAMING_CONST) do
   source "Ruby Style Guide / RuboCop Naming/ConstantName"
   severity :info
+  ask "Is a Ruby value constant named in a case other than SCREAMING_SNAKE_CASE?"
   languages %i[ruby]
   path_exclude %r{/review/scan/rules/}
   detect do |line|
