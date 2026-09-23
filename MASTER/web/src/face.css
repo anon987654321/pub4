@@ -1447,7 +1447,7 @@ canvas#face,
    box spanning the viewport — without them the whole top strip becomes a link
    home and swallows taps on everything up there. */
 /* Film take: the field and the wordmark. The mic is live-session chrome and
-   does not belong on README.mp4. */
+   does not belong in a README media comment. */
 body[data-film="1"] #mic-dot,
 body[data-film="1"] #zsh,
 body[data-film="1"] #chat-log,
