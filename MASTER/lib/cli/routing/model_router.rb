@@ -71,6 +71,7 @@ module Master
           chain = chain_for(task_type).uniq.select { |id| reachable?(id) }
           chain = Io::ModelSkipCache.filter(chain)
           ranked = @provider_health ? @provider_health.rank(chain) : chain
+          ranked = @compute_pool.rank(ranked, task_type:)
           Io::ModelSkipCache.filter(ranked)
         end
 
@@ -96,7 +97,8 @@ module Master
           qualified = healthy(candidates).select { |m| m.dig("score", "quality").to_f >= min_quality }
           return preferred if qualified.empty?
 
-          qualified.max_by { |m| effective_score(m) }&.dig("id") || preferred
+          ids = qualified.filter_map { |m| m["id"] }
+          @compute_pool.select(ids, task_type: operation) || preferred
         end
 
         INTENT_PATTERNS = {
