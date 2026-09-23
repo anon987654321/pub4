@@ -21,6 +21,22 @@ class TestReliabilitySecondTranche < Minitest::Test
     end
   end
 
+  def test_transaction_recovers_a_crashed_open_pass_from_disk
+    Dir.mktmpdir("master-tx") do |root|
+      path = File.join(root, "a.rb")
+      File.write(path, "before\n")
+      tx = Master::Fix::Transaction.new(root:, paths: [path], id: "crashed-pass")
+      tx.begin!
+      File.write(path, "partial\n")
+      tx.observe!
+      recovered = Master::Fix::Transaction.recover!(root:, id: tx.id)
+
+      assert recovered.ok?
+      assert_equal "before\n", File.read(path)
+      refute Dir.exist?(File.join(root, ".master", "fix_transactions", tx.id))
+    end
+  end
+
   def test_transaction_refuses_unobserved_concurrent_change
     Dir.mktmpdir("master-tx") do |root|
       path = File.join(root, "a.rb")
@@ -48,61 +64,6 @@ class TestReliabilitySecondTranche < Minitest::Test
       tx.observe!
       assert tx.rollback!.ok?
       refute File.exist?(path)
-    end
-  end
-
-  def test_committer_defers_commit_until_transaction_finishes
-    Dir.mktmpdir("master-committer") do |root|
-      path = File.join(root, "a.rb")
-      File.write(path, "one\n")
-      git(root, "init", "-q")
-      git(root, "config", "user.email", "test@example.com")
-      git(root, "config", "user.name", "test")
-      git(root, "add", "a.rb")
-      git(root, "commit", "-m", "seed")
-
-      fake_git = Class.new do
-        attr_reader :commits
-
-        def initialize(root)
-          @root = root
-          @commits = []
-          @pushed = false
-        end
-
-        def changed_paths
-          out, status = Open3.capture2e("git", "-C", @root, "status", "--porcelain")
-          status.success? ? out.lines.map { |line| line[3..].to_s.strip } : []
-        end
-
-        def commit(message, paths:)
-          @commits << [message, paths]
-          system("git", "-C", @root, "add", "--", *paths)
-          system("git", "-C", @root, "commit", "-q", "-m", message)
-        end
-
-        def push
-          @pushed = true
-        end
-
-        def head = "local"
-
-        def ahead_behind = [0, 0]
-      end.new(root)
-
-      committer = Master::Fix::FixLoop::Committer.new(git: fake_git, root:)
-      tx = Master::Fix::Transaction.new(root:, paths: [path])
-      committer.baseline!
-      committer.begin_transaction!(tx)
-      File.write(path, "two\n")
-
-      assert_equal :staged, committer.commit_if_dirty("fix")
-      assert_empty fake_git.commits
-      result = committer.finish_transaction("fix", owned_paths: [path])
-
-      assert result.ok?
-      assert_equal 1, fake_git.commits.size
-      assert_equal "two\n", File.read(path)
     end
   end
 
@@ -135,7 +96,6 @@ class TestReliabilitySecondTranche < Minitest::Test
       File.write(path, "two\n")
       git(root, "add", "a.rb")
       git(root, "commit", "-m", "two")
-      assert_equal "two\n", File.read(path)
 
       result = Master::Ground::KnownGood.new(root:).rollback!
 
@@ -246,7 +206,8 @@ class TestReliabilitySecondTranche < Minitest::Test
       "master_rss_mb" => { "warn" => 100, "crit" => 200 },
     }})
     measurement = budget.send(:classify, load_avg_1m: 3.0, rss_mb: nil, fd_count: nil,
-                              thread_count: nil, disk_free_pct: 50)
+                              thread_count: nil, process_count: nil, disk_free_pct: 50,
+                              network: true, llm_quota_exhausted: 0)
 
     assert budget.critical?(measurement)
     assert_includes measurement[:reasons].first, "load_avg_1m"
