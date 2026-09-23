@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "digest"
 require_relative "test_helper"
 require "open3"
 
