@@ -13,7 +13,7 @@ module Master
       # Counting is also where a throwaway script is most likely to be quietly
       # wrong. A hand-rolled method-length counter that treats `def x = expr`
       # as running to the next `end` reports a tightly-factored file as sprawling,
-      # and the number looks plausible enough to reason from. tools/fixtures/
+      # and the number looks plausible enough to reason from. test/fixtures/
       # declares the right answers for cases like that and `rake lint:instruments`
       # holds this module to them.
       module CodeMetrics
