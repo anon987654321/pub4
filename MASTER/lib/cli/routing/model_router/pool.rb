@@ -44,7 +44,7 @@ module Master
           def pool(wait: false)
             start_pool_probes
             lanes = [primary_models, cli_lane_models(wait:), tier_ids, continuity_models,
-                     ollama_cloud_models, local_server_models, replicate_models, local_models]
+                     ollama_cloud_catalog, ollama_cloud_models, local_server_models, replicate_models, local_models]
             lanes.flatten.uniq.select { |id| unreachable_reason(id, wait:).nil? }
           end
 
