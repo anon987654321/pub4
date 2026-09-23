@@ -36,7 +36,7 @@ module Master
       # There is no state here for "a person must decide": nothing in the loop
       # detects one yet, and a state nothing emits is a promise the report
       # cannot keep.
-      TERMINAL_STATES = %i[done plateau blocked validation_failed].freeze
+      TERMINAL_STATES = %i[done plateau blocked validation_failed delivery_failed timeout failed].freeze
 
       IDLE_SLEEP = 300
       STARTUP_DELAY = 90
@@ -77,20 +77,72 @@ module Master
         return halted_result if halted? && !requested
 
         files = incremental ? @file_collector.collect_changed(target) : @file_collector.collect(target)
-        deadline = Ground::Reliability::Deadline.new(budget_seconds)
         journal = @run_journal.start_or_resume(target:, files:, max_passes:, budget_seconds:)
         run_id = journal["id"]
+        remaining = journal["remaining_seconds"].to_f
+        if remaining <= 0
+          result = Result.err("fix budget exhausted before resume", category: :timeout)
+          @run_journal.terminal(run_id, :timeout, message: result.message)
+          return result
+        end
+        deadline = Ground::Reliability::Deadline.new(remaining)
         start_pass = @run_journal.next_pass(journal)
         @bus&.publish("fix_loop:recovered", run_id:, start_pass:, target:) if journal["resumed"]
 
+        active_pass = @run_journal.active_pass(journal)
+        if active_pass && Transaction.persisted?(root: @root, id: active_pass.fetch("transaction_id"))
+          recovery = Transaction.recover!(root: @root, id: active_pass.fetch("transaction_id"), bus: @bus)
+          if recovery.err?
+            @run_journal.terminal(run_id, :failed, message: recovery.message)
+            return recovery
+          end
+
+          if recovery.value!.is_a?(Hash) && recovery.value![:state] == :delivery_pending
+            recovery_result = retry_delivery(
+              transaction_id: active_pass.fetch("transaction_id"),
+              expected_head: recovery.value!.fetch(:commit),
+            )
+            if recovery_result.err?
+              @run_journal.terminal(run_id, :failed, message: recovery_result.message)
+              return recovery_result
+            end
+            @run_journal.pass_finish(run_id, active_pass.fetch("pass"), status: :committed,
+                                     message: "recovered Git delivery")
+            start_pass = active_pass.fetch("pass").to_i + 1
+          end
+        end
+
         result = run_passes(files:, target:, max_passes:, deadline:, budget_seconds:, start_pass:, run_id:)
-        terminal_state = result.ok? ? result.value!.to_s[/\A[A-Z_]+/].to_s.downcase.to_sym : :failed
+        terminal_state = if result.err? && result.category == :timeout
+          :timeout
+        elsif result.ok?
+          result.value!.to_s[/\A[A-Z_]+/].to_s.downcase.to_sym
+        else
+          :failed
+        end
         @run_journal.terminal(run_id, terminal_state, message: result.to_s)
         result
       rescue StandardError => e
         @bus&.publish("fix_loop:crash", error: e.message, backtrace: e.backtrace&.first(8))
         @run_journal&.crash(run_id, e.message) if defined?(run_id) && run_id
         Result.err("fix_loop: #{e.message} @ #{e.backtrace&.first(3)&.join(" | ")}", category: :unknown)
+      end
+
+      def retry_delivery(transaction_id:, expected_head:)
+        actual_head = @git.head
+        return Result.err("delivery recovery HEAD mismatch", category: :policy) unless actual_head == expected_head
+
+        @git.push
+        ahead, = @git.ahead_behind
+        return Result.err("delivery recovery left #{ahead} unpushed commit(s)", category: :infrastructure) unless ahead.zero?
+
+        transaction = Transaction.load_persisted(root: @root, id: transaction_id, bus: @bus)
+        result = transaction.finalize_delivery!(head: actual_head)
+        return result if result.err?
+
+        Result.ok(:delivery_recovered)
+      rescue StandardError => e
+        Result.err("delivery recovery: #{e.message}", category: :infrastructure)
       end
 
       def preview(target = @root)
@@ -162,7 +214,9 @@ module Master
 
       def run_one_pass(i, files:, target:, deadline:, budget_seconds:, state:, run_id:)
         pass = i + 1
-        @run_journal.pass_start(run_id, pass)
+        transaction_id = "#{run_id}-pass-#{pass}"
+        @run_journal.pass_start(run_id, pass, transaction_id:)
+
         @homeostat&.observe(:tool_call) # a pass is loop overhead distinct from the LLM call inside it
         if deadline.expired?
           @bus&.publish("fix_loop:timeout", pass:, budget_seconds:)
@@ -181,7 +235,7 @@ module Master
         end
 
         result = @pass_runner.run_pass(
-          files:, target:, pass:, deadline: deadline.at,
+          files:, target:, pass:, deadline: deadline.at, transaction_id:,
           history: state[:history], seen_snapshots: state[:seen_snapshots],
           recurring_violations: state[:recurring_violations],
           consecutive_clean: state[:consecutive_clean]
@@ -190,6 +244,7 @@ module Master
         @run_journal.pass_finish(run_id, pass, status: result.status, message: result.message)
         return terminal(:done, result.message) if result.status == :clean
         return terminal(:validation_failed, result.message) if result.status == :validation_failed
+        return terminal(:delivery_failed, result.message) if result.status == :delivery_failed
 
         result.status == :plateau ? :break : nil
       end
