@@ -211,6 +211,36 @@ task :core_smoke do
   sh RbConfig.ruby, "-I#{File.join(__dir__, "lib")}", File.join(__dir__, "test", "test_core_smoke.rb")
 end
 
+desc "Run every discovered tree's native tests plus source/config smoke checks"
+task "test:all_trees" do
+  root = File.expand_path("..", __dir__)
+  trees = Dir.children(root).select { |name| File.directory?(File.join(root, name)) && !name.start_with?(".") }.sort
+  failures = []
+
+  trees.each do |tree|
+    path = File.join(root, tree)
+    ruby_files = Dir.glob(File.join(path, "**", "*.rb")).reject { |f| f.include?("/vendor/") || f.include?("/node_modules/") }
+    ruby_files.each do |file|
+      result = system(RbConfig.ruby, "-c", file, out: File::NULL, err: File::NULL)
+      failures << "#{file}: Ruby syntax" unless result
+    end
+
+    Dir.glob(File.join(path, "**", "test", "test_*.rb")).sort.each do |test|
+      failures << "#{test}: test process" unless system(RbConfig.ruby, "-I#{File.join(path, "lib")}", "-I#{File.join(path, "test")}", test)
+    end
+  end
+
+  %w[yml yaml json].each do |ext|
+    Dir.glob(File.join(root, "**", "*.#{ext}")).reject { |f| f.include?("/vendor/") || f.include?("/node_modules/") }.each do |file|
+      loader = ext == "json" ? "require 'json'; JSON.parse(File.read(ARGV.fetch(0)))" : "require 'yaml'; YAML.safe_load_file(ARGV.fetch(0), permitted_classes: [Symbol], aliases: true)"
+      failures << "#{file}: #{ext} parse" unless system(RbConfig.ruby, "-e", loader, file, out: File::NULL, err: File::NULL)
+    end
+  end
+
+  abort "test:all_trees: #{failures.size} failure(s)\n#{failures.join("\n")}" unless failures.empty?
+  puts "test:all_trees: #{trees.join(", ")} clean"
+end
+
 namespace :test do
   desc "Fold spine tests (lib/core.rb + lib/core/)"
   task :core do
