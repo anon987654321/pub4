@@ -291,7 +291,7 @@ spine:
 # a finer per-part guard in STUDIO/gate.rb. On-disk source files (code, style,
 # markup, config, docs), vendored/generated excluded.
 pub4_source_ceilings:
-  # UNIT CHANGED 2026-09-13: source files only. A path under a test/ or spec/
+  # UNIT CHANGED 2026-09-13: source files only. A path under a test/
   # directory no longer counts, so a new test is not charged as sprawl and
   # coverage grows without an argument. Each ceiling fell by exactly the tracked
   # test files its tree held at the change -- MASTER 373, RAILS 413, OPENBSD 16,
@@ -1024,7 +1024,7 @@ pub4_source_ceilings:
 #
 # 28 -> 27 folds bin/test-safety away. It ran 21 hand-picked spec files from no
 # caller anywhere in the repo, 20 of them already inside `rake spec`'s FileList
-# and the 21st naming spec/providers/catalog_index_spec.rb, which moved to
+# and the 21st naming test/test_io_catalog_index.rb, which moved to
 # spec/io/ in the lib rename — so every invocation aborted, and nothing noticed
 # because nothing invoked it. Its one reader was a bin/doctor check asserting
 # the file exists, which went with it.
