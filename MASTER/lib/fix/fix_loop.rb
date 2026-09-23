@@ -137,7 +137,8 @@ module Master
       def run_passes(files:, target:, max_passes:, deadline:, budget_seconds:, start_pass: 0, run_id:)
         state = { history: [], seen_snapshots: Set.new, recurring_violations: Hash.new(0), consecutive_clean: 0 }
 
-        max_passes.times do |offset|
+        remaining_passes = [max_passes - start_pass, 0].max
+        remaining_passes.times do |offset|
           i = start_pass + offset
           outcome = run_one_pass(i, files:, target:, deadline:, budget_seconds:, state:, run_id:)
           return terminal(:plateau, "no further improvement after #{i + 1} pass(es)") if outcome == :break
