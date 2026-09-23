@@ -2,12 +2,22 @@
 
 require "json"
 require "open3"
+require "yaml"
 
 module Master
   module Voice
     # Audio-side regression checks. No ML dependency is required: ffprobe/ffmpeg
     # provide stable waveform facts, while optional aubio adds F0 when installed.
     module Benchmark
+      CONFIG_PATH = Master.data_path("tts_benchmark.yml")
+      DEFAULT_CONFIG = {
+        "min_score" => 75,
+        "speech_rate_wpm" => { "min" => 105, "max" => 220 },
+        "dynamic_range_db" => { "min" => 6 },
+        "clipping_peak_db" => { "max" => -0.1 },
+        "pause_ms" => { "min" => 70, "max" => 700 },
+      }.freeze
+
       PROMPTS = [
         "Good morning. The answer is simple, but the interesting part comes next.",
         "Wait, really? Yes. That small detail changes everything.",
@@ -22,6 +32,13 @@ module Master
       ].freeze
 
       module_function
+
+      def config
+        raw = File.exist?(CONFIG_PATH) ? YAML.safe_load(File.read(CONFIG_PATH)) : {}
+        DEFAULT_CONFIG.merge(raw.is_a?(Hash) ? raw.fetch("benchmark", {}) : {})
+      rescue StandardError
+        DEFAULT_CONFIG
+      end
 
       def available?
         executable?("ffprobe") && executable?("ffmpeg")
@@ -53,12 +70,12 @@ module Master
         checks = []
         checks << [:audio_present, metrics[:duration_s].to_f > 0.25]
         checks << [:not_clipped, !metrics[:clipped]]
-        checks << [:dynamic_range, metrics[:dynamic_range_db].to_f >= 6.0]
-        checks << [:rhythm, metrics.dig(:silence, :count).to_i.zero? || metrics.dig(:silence, :mean_ms).to_f.between?(70, 700)]
+        checks << [:dynamic_range, metrics[:dynamic_range_db].to_f >= config.dig("dynamic_range_db", "min").to_f]
+        checks << [:rhythm, metrics.dig(:silence, :count).to_i.zero? || metrics.dig(:silence, :mean_ms).to_f.between?(config.dig("pause_ms", "min").to_f, config.dig("pause_ms", "max").to_f)]
 
         words = text.to_s.split.size
         rate = metrics[:speech_rate_wpm].to_f
-        checks << [:speech_rate, rate.zero? || rate.between?(105, 220)]
+        checks << [:speech_rate, rate.zero? || rate.between?(config.dig("speech_rate_wpm", "min").to_f, config.dig("speech_rate_wpm", "max").to_f)]
 
         passed = checks.count { |_, ok| ok }
         {
