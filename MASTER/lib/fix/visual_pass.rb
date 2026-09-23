@@ -4,6 +4,7 @@ require "fileutils"
 require "open3"
 require "tmpdir"
 require_relative "../review/council/critique"
+require_relative "rails_visual_graph"
 
 module Master
   module Fix
@@ -12,7 +13,7 @@ module Master
     class VisualPass
       RULE_ID = "RENDERED_VISUAL_REFINEMENT"
       SOURCE_EXTENSIONS = %w[.css .scss .erb .html .htm .js .ts].freeze
-      MAX_SURFACES = Integer(ENV.fetch("MASTER_VISUAL_SURFACES_PER_PASS", "8"))
+      MAX_SURFACES = Integer(ENV.fetch("MASTER_VISUAL_SURFACES_PER_PASS", "0"))
       MAX_FILES = 12
       SELECTOR_RE = /#[A-Za-z][\w-]*|\.[A-Za-z_][\w-]*(?:[-_][\w-]*)*/.freeze
       TEXT_ANCHOR_RE = /\b(?:visible\s+text(?:\s+anchor)?|text\s+anchor)\s*[:=]\s*["“]([^"”\n]+)["”]/i.freeze
@@ -48,16 +49,20 @@ module Master
         require File.expand_path("../../../RAILS/gates/support/geometry_probe", __dir__)
 
         @dir = Dir.mktmpdir("master-visual")
+        graph = RailsVisualGraph.new(root: repo_root).build if rails_target?(target)
         surfaces = selected_surfaces(target:, pass:)
         return Result.err("rendered visual review: INCONCLUSIVE — no declared surfaces", category: :inconclusive) if surfaces.empty?
 
         captures = capture_surfaces(surfaces)
         return Result.err("rendered visual review: INCONCLUSIVE — no surface was measured", category: :inconclusive) if captures.empty?
 
-        sources, anchors = candidate_sources(target:, files:, captures:)
+        coverage = graph_coverage(surfaces, captures)
+        return Result.err("rendered visual review: INCONCLUSIVE — missing rendered surfaces: #{coverage[:missing].join(", ")}", category: :inconclusive) if coverage[:missing].any?
+
+        sources, anchors = candidate_sources(target:, files:, captures:, graph:)
         return Result.err("rendered visual review: INCONCLUSIVE — no frontend source anchor", category: :inconclusive) if sources.empty?
 
-        review_captures(captures, sources, anchors, pass)
+        review_captures(captures, sources, anchors, pass, graph:, coverage:)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "fix.visual_pass", event_bus: @bus)
         Result.err("rendered visual review: INCONCLUSIVE — #{e.class}: #{e.message}", category: :inconclusive)
@@ -105,18 +110,18 @@ module Master
         [critique, image]
       end
 
-      def review_captures(captures, sources, anchors, pass)
+      def review_captures(captures, sources, anchors, pass, graph:, coverage:)
         critique, image = run_critique(captures, sources, anchors)
         return Result.err("rendered visual review: INCONCLUSIVE — #{critique.message}", category: :inconclusive) if critique.err?
 
         picks = Array(critique.value![:cherry_picks]).map(&:to_s).reject(&:empty?)
         findings = picks.filter_map { |pick| finding_for(pick, sources, anchors) }
-        @bus&.publish("fix_loop:visual_review", pass:, surfaces: captures.map { |c| c[:surface].id }, findings: findings.size)
+        @bus&.publish("fix_loop:visual_review", pass:, surfaces: captures.map { |c| c[:surface].id }, findings: findings.size, coverage: coverage[:ratio], graph: graph&.context)
         Result.ok(
           state: findings.empty? ? :clean : :findings,
           findings:,
           image:,
-          coverage: captures.map { |c| c[:surface].id },
+          coverage: coverage.merge(captured: captures.map { |c| c[:surface].id }),
         )
       end
 
@@ -134,6 +139,8 @@ module Master
         end.compact.uniq
 
         extras = rows.reject { |s| core.include?(s) }.sort_by { |s| [s.app, s.label, s.viewport] }
+        return core + extras if MAX_SURFACES <= 0
+
         return (core + extras).first(MAX_SURFACES) if core.size >= MAX_SURFACES
 
         offset = ((pass.to_i - 1) * MAX_SURFACES) % [extras.size, 1].max
@@ -149,8 +156,11 @@ module Master
           first["largest_element_area_ratio"].to_f
       end
 
-      def candidate_sources(target:, files:, captures:)
+      def candidate_sources(target:, files:, captures:, graph:)
         candidates = Array(files).select { |path| source_file?(path) }.uniq
+        if graph
+          candidates = (candidates + captures.flat_map { |capture| graph.sources_for(capture[:surface]) }).uniq
+        end
         tokens = captures.flat_map do |capture|
           Array(capture[:payload]["elements"]).flat_map do |element|
             [element["key"], element["aria"]].compact
@@ -287,6 +297,17 @@ module Master
       end
 
       def safe_slug(value) = value.to_s.gsub(/[^a-zA-Z0-9._-]+/, "_")
+      def graph_coverage(surfaces, captures)
+        expected = Array(surfaces).map(&:id)
+        actual = captures.map { |capture| capture[:surface].id }
+        { expected:, captured: actual, missing: expected - actual, ratio: expected.empty? ? 1.0 : actual.uniq.length.to_f / expected.uniq.length }
+      end
+
+      def rails_target?(target)
+        relative = repo_relative(target)
+        relative == "RAILS" || relative.start_with?("RAILS/")
+      end
+
       def repo_root = File.expand_path("../..", @root)
 
       def repo_relative(target)
