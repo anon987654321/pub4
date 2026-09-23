@@ -187,7 +187,7 @@
     if (deviceVisual?.deviceSensor) {
       document.documentElement.dataset.deviceSensor = deviceVisual.deviceSensor;
     }
-    if (/^device:(?:accelerometer|gyroscope|magnetometer|light|proximity)$/.test(type)) {
+    if (/^device:(?:battery|network|sensors|accelerometer|gyroscope|magnetometer|light|proximity)$/.test(type)) {
       window.dispatchEvent(new CustomEvent("master:device", { detail: { type, payload, visual: deviceVisual } }));
     }
     emitVisual(type, mapped);
