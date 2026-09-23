@@ -95,6 +95,8 @@ the mind, and the clean ground it stands on.
 
 Migration is being done in batches so each rule remains reversible and auditable. Batch 1 migrated foundational constitutional semantics; batches 2–4 migrate architecture, design, and security principles. The intended end state is one authoritative rule definition, with the catalogue describing the rule and `law/` carrying its executable contract.
 
+The migration is staged and reversible. The executable Law layer now contains 60 constitutional definitions across the foundational, architecture, design, and security batches; the remaining catalogue rules stay in YAML until their consumers and fixtures are migrated. The end state is one authoritative executable definition per rule, with `data/rules.yml` retaining catalogue metadata rather than a second implementation.
+
 ## Under the hood
 
 Wake it with one line and it comes up like an old Unix machine, telling you what
