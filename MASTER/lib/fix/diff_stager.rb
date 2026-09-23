@@ -76,7 +76,6 @@ module Master
           next if Master::Ground::Immutability.blocked?(entry.path, root: @root)
 
           FileUtils.mkdir_p(File.dirname(entry.path))
-          tmp_path = "#{entry.path}.tmp.#{Process.pid}"
           write_atomic(entry.path, entry.new_content)
           @mutex.synchronize { @pending.delete(entry) }
           remove_persisted(entry)
