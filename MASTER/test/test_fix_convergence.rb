@@ -165,6 +165,15 @@ class TestFixConvergence < Minitest::Test
     assert_equal :improvement, anchored.first[:kind]
   end
 
+  def test_clean_tree_ideation_demands_anchored_candidates
+    critique = Master::Review::Council::Critique.new(mode: :general, agent: nil)
+    prompt = critique.send(:ideation_prompt, [])
+
+    assert_includes prompt, "5 to 20 materially different candidates"
+    assert_includes prompt, "repository-relative file and stable line or symbol"
+    assert_includes prompt, "Do not invent defects"
+  end
+
   def test_a_converged_run_is_done
     result = build_loop([]).run(@root)
 
