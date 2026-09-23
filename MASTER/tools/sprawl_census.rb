@@ -4,7 +4,7 @@
 # conduct: a directory bought for one file, a name that repeats its parent, a
 # name that says nothing, and a path deeper than its neighbours all cost a
 # reader something. FILE_SPRAWL in the scan registry measures the first two for
-# MASTER's .rb files only, and skips law/, core/, test/ and spec/ besides. This
+# MASTER's .rb files only, and skips law/, core/ and test/ besides. This
 # is the same law over the whole repo and every file type.
 #
 #   ruby MASTER/tools/sprawl_census.rb            # counts against the ceilings
