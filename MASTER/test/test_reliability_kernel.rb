@@ -27,7 +27,7 @@ class TestReliabilityKernel < Minitest::Test
       journal = Master::Fix::RunJournal.new(root:)
       first = journal.start_or_resume(target: root, files: [File.join(root, "a.rb")],
                                       max_passes: 15, budget_seconds: 60)
-      journal.pass_start(first["id"], 1)
+      journal.pass_start(first["id"], 1, transaction_id: "test-pass")
       journal.pass_finish(first["id"], 1, status: :continue, message: "still fixing")
 
       resumed = Master::Fix::RunJournal.new(root:).start_or_resume(
