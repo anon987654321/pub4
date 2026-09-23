@@ -936,7 +936,7 @@ end
 
 desc "Every law/ rule flags its bad fixture and spares its good one, then every law judges law/ itself"
 task :dogfood do
-  ruby "-Ilib", "spec/dogfood_spec.rb"
+  ruby "-Ilib", "test/test_dogfood.rb"
 end
 
 desc "Mutate a source and watch its test fail. Usage: rake mutate[lib/foo.rb,test/test_foo.rb]"
