@@ -124,6 +124,9 @@ module Master
         when "camera" then Master::Device.camera_info.to_json
         when "sensors" then Master::Device.sensors.to_json
         when "audio" then Master::Device.audio_info.to_json
+        when "wifi" then Master::Device.wifi_info.to_json
+        when "volume" then Master::Device.volume.to_json
+        when /\Atorch\s+(on|off)\z/ then Master::Device.torch($1 == "on").to_s
         when /\Aphoto\s+(.+)\z/
           Master::Device.camera_photo($1.strip).to_s
         when /\Arecord\s+(.+?)(?:\s+(\d+))?\z/
@@ -132,7 +135,7 @@ module Master
         when /\Alocation(?:\s+(gps|network|passive))?\z/
           Master::Device.location(provider: $1).to_json
         else
-          "device  device status  device battery  device camera  device sensors  device audio  device location [gps|network|passive]"
+          "device  device status  device battery  device camera  device sensors  device audio  device wifi  device volume  device torch [on|off]  device location [gps|network|passive]"
         end
       rescue Master::Device::Error => e
         "device0: unavailable — #{e.message}"
