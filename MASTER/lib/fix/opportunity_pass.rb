@@ -84,7 +84,7 @@ module Master
         files_for_root(root).each do |path|
           File.foreach(path, encoding: "UTF-8").with_index(1) do |line, number|
             line.scan(PATH_RE).uniq.each do |ref|
-              next if File.exist?(File.join(@root, ref))
+              next if File.exist?(File.join(repo_root, ref))
               next if historical_reference?(line)
 
               findings << Finding.new(
@@ -105,7 +105,7 @@ module Master
       end
 
       def collect_dead_rake_globs(findings)
-        path = File.join(@root, "MASTER", "Rakefile")
+        path = File.join(repo_root, "MASTER", "Rakefile")
         return unless File.file?(path)
 
         File.foreach(path, encoding: "UTF-8").with_index(1) do |line, number|
@@ -128,8 +128,8 @@ module Master
       end
 
       def collect_duplicate_tool_names(findings)
-        tools = Dir.glob(File.join(@root, "MASTER", "tools", "*.rb"))
-        operators = Dir.glob(File.join(@root, "MASTER", "lib", "operator", "**", "*.rb"))
+        tools = Dir.glob(File.join(repo_root, "MASTER", "tools", "*.rb"))
+        operators = Dir.glob(File.join(repo_root, "MASTER", "lib", "operator", "**", "*.rb"))
         operator_names = operators.to_h { |path| [File.basename(path, ".rb"), path] }
 
         tools.each do |path|
@@ -147,11 +147,11 @@ module Master
       end
 
       def collect_visual_duplicates(findings)
-        path = File.join(@root, "RAILS", "gates", "visual_contract.rb")
+        path = File.join(repo_root, "RAILS", "gates", "visual_contract.rb")
         return unless File.file?(path)
         return unless File.read(path, encoding: "UTF-8").include?("selenium-webdriver")
 
-        probe = File.join(@root, "RAILS", "gates", "support", "geometry_probe.rb")
+        probe = File.join(repo_root, "RAILS", "gates", "support", "geometry_probe.rb")
         return unless File.file?(probe)
 
         findings << Finding.new(
@@ -165,7 +165,7 @@ module Master
       def collect_sprawl(findings, roots)
         SPRAWL_LIMITS.each do |relative, limit|
           next unless roots.include?(relative.split("/", 2).first)
-          path = File.join(@root, relative)
+          path = File.join(repo_root, relative)
           next unless File.file?(path)
 
           body_lines = File.readlines(path, encoding: "UTF-8").count do |line|
@@ -183,14 +183,20 @@ module Master
       end
 
       def files_for_root(root)
-        Dir.glob(File.join(@root, root, "**", "*"))
+        Dir.glob(File.join(repo_root, root, "**", "*"))
            .select { |path| File.file?(path) && TEXT_FILES.include?(File.extname(path).downcase) }
+      end
+
+      def repo_root
+        return @root unless File.basename(@root) == "MASTER"
+
+        File.expand_path("..", @root)
       end
 
       def repo_relative(target)
         raw = target.to_s
-        absolute = raw.start_with?("/") ? File.expand_path(raw) : File.expand_path(raw, @root)
-        absolute.delete_prefix("#{@root}/")
+        absolute = raw.start_with?("/") ? File.expand_path(raw) : File.expand_path(raw, repo_root)
+        absolute.delete_prefix("#{repo_root}/")
       end
     end
   end
