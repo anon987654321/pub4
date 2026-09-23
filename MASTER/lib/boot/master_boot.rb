@@ -61,6 +61,14 @@ module Master
       false
     end
 
+    def emit_device_status
+      return unless Device.android?
+
+      Device.status_lines.each { |line| warn(line) }
+    rescue StandardError => e
+      warn("device0: capability discovery failed — #{e.class}: #{e.message}")
+    end
+
     def boot(root: Dir.pwd)
       return boot_fast(root:) if ENV["MASTER_FAST"] == "1"
 
