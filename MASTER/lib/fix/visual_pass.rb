@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "json"
 require "fileutils"
 require "open3"
 require "tmpdir"
@@ -16,6 +15,9 @@ module Master
       SOURCE_EXTENSIONS = %w[.css .scss .erb .html .htm .js .ts].freeze
       MAX_SURFACES = Integer(ENV.fetch("MASTER_VISUAL_SURFACES_PER_PASS", "4"))
       MAX_FILES = 12
+      Rule = Data.define(:id) do
+        def severity = :warning
+      end
 
       attr_reader :dir
 
