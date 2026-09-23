@@ -22,7 +22,7 @@ class TestComputePool < Minitest::Test
   end
 
   def setup
-    @pool = Master::Core::Routing::ComputePool.new(router: Router.new)
+    @pool = Master::Core::Routing::ComputePool.new(router: Router.new, root: Dir.mktmpdir)
   end
 
   def test_ranks_reachable_models
@@ -38,7 +38,6 @@ class TestComputePool < Minitest::Test
     assert_equal 1, stat[:successes]
     assert_equal 1, stat[:failures]
   end
-end
 
   def test_snapshot_is_independent
     @pool.record(model: "ollama:qwen3.5:27b", status: :success, latency_ms: 100)
@@ -60,3 +59,4 @@ end
     assert_equal 100.0, row[:latency_ms]
     assert_equal :available, row[:quota_state]
   end
+end
