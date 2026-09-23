@@ -19,6 +19,7 @@ module Master
       end
 
       def call(old_str:, new_str:, dir: nil, rename_files: false)
+        Master::Ground::LawHandshake::Admission.require!
         permission = @governor.permit?(NAME, TIER, "#{old_str} → #{new_str}")
         return permission if permission.err?
 
