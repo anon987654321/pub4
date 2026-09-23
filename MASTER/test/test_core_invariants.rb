@@ -33,10 +33,19 @@ class TestCapabilityMap < Minitest::Test
   end
 
   def test_best_model_selection
-    @map.record_outcome("gemma", :coding, true)
-    @map.record_outcome("qwen", :coding, false)
-    
+    3.times { @map.record_outcome("gemma", :coding, true) }
+    3.times { @map.record_outcome("qwen", :coding, false) }
+
     assert_equal "gemma", @map.best_model_for(:coding)
+  end
+
+  def test_unmeasured_and_sparse_models_stay_near_neutral
+    assert_equal 0.5, @map.score_for("new-model", :coding)
+
+    2.times { @map.record_outcome("new-model", :coding, false) }
+    assert_operator @map.score_for("new-model", :coding), :>, 0.5
+    assert_operator @map.score_for("new-model", :coding), :<, 0.0 + 0.5
+  end
   end
 end
 
