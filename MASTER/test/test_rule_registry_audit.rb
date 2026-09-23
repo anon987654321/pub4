@@ -2,7 +2,7 @@
 
 require_relative "test_helper"
 require "review/scan/rule_dsl"
-require_relative "../tools/rule_reach"
+require_relative "../lib/operator/rule_reach"
 
 class TestRuleRegistryAudit < Minitest::Test
   # Defined here on purpose: Rule.inherited registers every subclass in the
@@ -38,7 +38,7 @@ class TestRuleRegistryAudit < Minitest::Test
     assert_in_delta 0.0, empty.adherence_pct
   end
 
-  # Three gate banners and tools/rule_reach.rb print a count of one population,
+  # Three gate banners and lib/operator/rule_reach.rb print a count of one population,
   # and they read 107 and 115 for as long as one of them subtracted rather than
   # counted. Both directions: the shared answer, and that it is not the
   # subtraction that used to stand in for it.
