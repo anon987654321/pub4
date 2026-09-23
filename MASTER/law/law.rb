@@ -271,7 +271,6 @@ module Law
     def build
       kinds = %i[detect ask practice].select { |k| @h[k] }
       raise ArgumentError, "#{@h[:id]}: needs detect, ask or practice" if kinds.empty?
-      raise ArgumentError, "#{@h[:id]}: has #{kinds.join(' and ')} — one rule, one kind" if kinds.size > 1
 
       # `fix` is in this list because Data requires it and Builder does not
       # default it, so a rule that omitted it died with "missing keyword: :fix"
