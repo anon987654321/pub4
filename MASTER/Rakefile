@@ -1,12 +1,14 @@
 # frozen_string_literal: true
 
-# One file on purpose. tools/runs.rb, tools/data_reach.rb, tools/method_graph.rb,
-# test_readme_env_names.rb and test_limits_split.rb read this path to learn who
-# runs a test, who reads a data key and which ENV names are live. Split into
-# tasks/*.rake, each of them stays green and goes blind.
+# Keep the task registry here; reusable implementations live in lib/ and tools/.
+# Tests such as tools/runs.rb read this file to discover the actual entrypoints.
 
 require "rake/testtask"
 require "timeout"
+
+def run_tool(path, *args)
+  sh RbConfig.ruby, File.join(__dir__, path), *args
+end
 
 Rake::TestTask.new(:test) do |t|
   t.libs << "test"
@@ -28,7 +30,7 @@ end
 
 desc "Scan for tracked secrets and validate the quarantine/virus_museum structure"
 task :security_sweep do
-  sh RbConfig.ruby, "tools/security_sweep.rb"
+  run_tool("tools/security_sweep.rb")
 end
 
 desc "STUDIO parses, has no orphans, its entry points boot, and its suite is green"
