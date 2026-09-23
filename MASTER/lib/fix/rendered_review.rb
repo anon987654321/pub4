@@ -117,7 +117,7 @@ module Master
 
         anchors = {}
         tokens.each do |token|
-          grep_sources(token).each { |path| anchors[token] = path }
+          anchors[token] = grep_sources(token).first
         end
 
         mapped = anchors.values.compact.uniq
@@ -150,7 +150,7 @@ module Master
         )
         return [] unless status.success?
 
-        out.lines.map { |line| File.join(@root, line.strip) }
+        out.lines.map { |line| File.join(repo_root, line.strip) }
              .select { |path| source_file?(path) }
              .first(4)
       rescue StandardError
@@ -188,7 +188,7 @@ module Master
       def finding_for(pick, source_files, anchors, manifest)
         selector = pick[SELECTOR_RE, 0]
         file = selector && anchors[selector]
-        file ||= source_files.find { |path| pick.downcase.split(/W+/).any? { |word| word.length > 4 && File.read(path, encoding: "UTF-8").downcase.include?(word) } }
+        file ||= source_files.find { |path| pick.downcase.split(/\W+/).any? { |word| word.length > 4 && File.read(path, encoding: "UTF-8").downcase.include?(word) } }
         file ||= source_files.first
         return unless file
 
