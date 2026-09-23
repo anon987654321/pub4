@@ -221,7 +221,7 @@ module Operator
          unreached = Operator::CodeReach.unreached
          [unreached.size, Operator::CodeReach.ceiling, unreached]
        end,
-       master_row("namespace", "data/namespace_ceilings.yml", "files declaring no module or class") do
+       master_row("namespace", "data/spine.yml", "files declaring no module or class") do
          require File.join(MASTER, "tools/namespace_ratchet")
          flat = Operator::NamespaceRatchet.ceilings.keys.flat_map { |dir| Operator::NamespaceRatchet.flat_files(dir) }
          [flat.size, Operator::NamespaceRatchet.ceilings.values.sum, flat]
