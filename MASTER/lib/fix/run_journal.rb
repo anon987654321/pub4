@@ -152,8 +152,7 @@ module Master
       def persist(data)
         path = File.join(@root, PATH)
         FileUtils.mkdir_p(File.dirname(path))
-        write_atomic(path, JSON.pretty_generate(data) + "
-", mode: 0o600)
+        write_atomic(path, JSON.pretty_generate(data) + "\\n", mode: 0o600)
       end
 
       def with_lock
