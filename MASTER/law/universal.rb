@@ -1899,3 +1899,163 @@ Law.define(:DEFINE_ERRORS_OUT) do
   X
 end
 end
+
+
+# Constitutional migration batch 7c: public surface, refactoring, and prose laws.
+
+Law.define(:SURFACE_AREA) do
+  source "API design — minimize public surface area"
+  severity :warning
+  ask "Is the public interface larger than necessary, exposing entry points or exceptions callers do not need?"
+  fix "Reduce the public contract to the smallest useful surface and keep internals private."
+  bad <<~X
+    class Client; def fetch; end; def retry; end; def parse; end; def raw_response; end; end
+  X
+  good <<~X
+    class Client; def fetch; end; end
+  X
+end
+
+Law.define(:PROGRESSIVE_DISCLOSURE) do
+  source "Progressive disclosure (Jakob Nielsen, NN/g)"
+  severity :info
+  ask "Does this present all complexity at once instead of revealing detail as the user's task requires it?"
+  fix "Lead with the common path and reveal advanced controls when they become relevant."
+  bad <<~X
+    settings.show_all_advanced_controls
+  X
+  good <<~X
+    settings.show_basic; settings.reveal_advanced
+  X
+end
+
+Law.define(:FEEDBACK_LOOPS) do
+  source "Nielsen feedback / checkpoint principle"
+  severity :warning
+  ask "Does this perform substantial work without reporting progress, checkpoints, or a recoverable state?"
+  fix "Add meaningful progress or checkpoints proportional to operation duration and risk."
+  bad <<~X
+    backup.run # 20 minutes, no checkpoints
+  X
+  good <<~X
+    backup.run { |checkpoint| emit(checkpoint) }
+  X
+end
+
+Law.define(:DATA_CLASS) do
+  source "Refactoring — Data Class (Fowler)"
+  severity :info
+  ask "Does this class mainly hold data while behavior that belongs with that data is scattered across other modules?"
+  fix "Move cohesive behavior toward the data owner or replace the holder with a meaningful domain abstraction."
+  bad <<~X
+    class Money; attr_reader :cents; end; Tax.total(money)
+  X
+  good <<~X
+    class Money; attr_reader :cents; def taxed(rate); cents * rate; end; end
+  X
+end
+
+Law.define(:PARALLEL_INHERITANCE) do
+  source "Refactoring — Parallel Inheritance Hierarchies (Fowler)"
+  severity :warning
+  ask "Does adding a type in one hierarchy require adding a corresponding type in another hierarchy?"
+  fix "Collapse the parallel hierarchies or compose the varying dimensions."
+  bad <<~X
+    JsonReport + JsonExporter; CsvReport + CsvExporter
+  X
+  good <<~X
+    Report.new(formatter: JsonExporter.new)
+  X
+end
+
+Law.define(:REFUSED_BEQUEST) do
+  source "Refactoring — Refused Bequest (Fowler)"
+  severity :info
+  ask "Does a subtype or variant inherit capabilities it cannot honor and then reject or ignore most of them?"
+  fix "Choose an abstraction that matches the subtype's real contract or use composition."
+  bad <<~X
+    class ReadOnly < Writable; def write; raise NotImplementedError; end; end
+  X
+  good <<~X
+    class ReadOnly < Readable; end
+  X
+end
+
+Law.define(:PROSE_ACTIVE_VOICE) do
+  source "Strunk, Elements of Style — use the active voice"
+  severity :info
+  ask "Does this sentence use passive voice where an active construction would be shorter and clearer?"
+  fix "Put the actor before the verb when the actor matters and active voice improves clarity."
+  bad <<~X
+    The file was deleted by the worker.
+  X
+  good <<~X
+    The worker deleted the file.
+  X
+end
+
+Law.define(:PROSE_POSITIVE_FORM) do
+  source "Strunk, Elements of Style — put statements in positive form"
+  severity :info
+  ask "Is a statement phrased as a negation when a direct positive verb or construction says the same thing more clearly?"
+  fix "Prefer the direct positive form when it preserves meaning."
+  bad <<~X
+    He did not remember the password.
+  X
+  good <<~X
+    He forgot the password.
+  X
+end
+
+Law.define(:PROSE_PARALLEL_FORM) do
+  source "Strunk, Elements of Style — coordinate ideas in similar form"
+  severity :info
+  ask "Do items in a list or series mix grammatical forms where parallel structure would make the relationship clearer?"
+  fix "Use the same grammatical form for coordinated items."
+  bad <<~X
+    The system must read files, validation, and to report errors.
+  X
+  good <<~X
+    The system must read files, validate input, and report errors.
+  X
+end
+
+Law.define(:PROSE_RELATED_WORDS) do
+  source "Strunk, Elements of Style — keep related words together"
+  severity :info
+  ask "Is a modifier or subject separated from its referent so the sentence misreads on the first pass?"
+  fix "Keep words that belong together close enough that the intended relation is immediate."
+  bad <<~X
+    The operator, after checking the logs carefully, restarted the service.
+  X
+  good <<~X
+    After checking the logs carefully, the operator restarted the service.
+  X
+end
+
+Law.define(:PROSE_ONE_TOPIC_PARAGRAPH) do
+  source "Strunk, Elements of Style — paragraph as the unit"
+  severity :info
+  ask "Does a paragraph mix unrelated topics or bury its main point below secondary detail?"
+  fix "Give each paragraph one controlling topic and state its point early."
+  bad <<~X
+    The paragraph opens with deployment history, then discusses pricing, then explains the test failure.
+  X
+  good <<~X
+    The paragraph opens with the test failure and explains its cause and fix.
+  X
+end
+
+Law.define(:GRICE_COOPERATIVE) do
+  source "Grice — cooperative principle (quantity, quality, relation, manner)"
+  severity :info
+  ask "Does this communication say too much or too little, assert what is unverified, drift off-topic, or obscure the point through needless complexity?"
+  fix "Provide the needed information, qualify uncertain claims, stay relevant, and make the path clear."
+  bad <<~X
+    The system is definitely perfect and, by the way, here are unrelated implementation details.
+  X
+  good <<~X
+    The test passed locally; CI has not run yet.
+  X
+end
+end
