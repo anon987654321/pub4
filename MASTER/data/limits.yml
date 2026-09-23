@@ -452,7 +452,7 @@ guidance:
     notes:
       nielsen: puts is NOT debug output in a CLI. Only p, pp, binding.pry, debugger are.
       prune: Loads patterns from data/voice.yml (voice.strunk); legacy fallback in rules.yml.
-      semantic: Loads detect_semantic prompts from data/rules.yml scan corpus.
+      semantic: Loads semantic questions from executable Law definitions.
       deep_caution: deep adds 2 LLM calls per file. With 90 files at 8 req/min free tier = 22+ minutes.
   frontend_protection:
     statement: Only application.scss is protected — each app's one stylesheet, which loads the shared stack
