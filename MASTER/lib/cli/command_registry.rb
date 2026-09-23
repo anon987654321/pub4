@@ -58,6 +58,7 @@ module Master
           "clear" => command(:dispatch_clear, infra[:session]),
           "commit" => command(:dispatch_commit, ai[:agent], root, review_gate: true),
           "model" => command(:dispatch_model, d[:agent], d[:config], d[:metrics], d[:root]),
+          "auth" => command(:dispatch_auth),
           "pair" => command(:dispatch_pair, root),
           "runtime" => command(:dispatch_runtime, d[:root]),
           "doctor" => command(:dispatch_doctor, root),
@@ -84,6 +85,26 @@ module Master
           trace: infra[:trace],
           learnings: infra[:learnings],
         }
+      end
+
+      def dispatch_auth(ctx: nil)
+        arg = arg_for(ctx)
+        return Ground::SubscriptionAuth.status.map do |row|
+          state = if !row[:installed]
+                    "not installed"
+                  elsif row[:authenticated]
+                    "connected"
+                  else
+                    "not connected"
+                  end
+          "auth: #{row[:name]} #{state}"
+        end.join("\n") if arg.empty? || arg == "status"
+
+        name = arg.delete_prefix("login").strip if arg.start_with?("login")
+        return Ground::SubscriptionAuth.login(name) if name && !name.empty?
+
+        return Ground::SubscriptionAuth.login(arg) unless arg.include?(" ")
+        "auth  auth status  auth login <claude|chatgpt|grok>"
       end
 
       def dispatch_clear(session, ctx: nil)
