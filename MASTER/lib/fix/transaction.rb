@@ -63,7 +63,6 @@ module Master
         @paths.each { |path| @snapshots[path] = snapshot(path) }
         @state = "open"
         @active = true
-        persist!
         observe!
         emit("fix:transaction_start", id: @id, paths: @paths)
         self
