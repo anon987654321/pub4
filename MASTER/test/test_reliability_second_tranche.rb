@@ -422,6 +422,18 @@ class TestReliabilitySecondTranche < Minitest::Test
     end
   end
 
+  def test_resource_budget_fails_closed_when_measurement_breaks
+    budget = Master::Fix::ResourceBudget.new(root: Dir.pwd)
+    def budget.classify(_values)
+      raise "probe failure"
+    end
+
+    measurement = budget.measure
+
+    assert budget.critical?(measurement)
+    assert_includes measurement[:reasons].first, "resource measurement failed"
+  end
+
   def test_resource_budget_sheds_critical_load
     budget = Master::Fix::ResourceBudget.new(root: Dir.pwd, config: { "load" => {
       "load_avg_1m" => { "warn" => 1, "crit" => 2 },
