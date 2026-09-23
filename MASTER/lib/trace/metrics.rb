@@ -57,6 +57,19 @@ module Master
         end.sort_by { |_, v| -v[:fail_rate] }.to_h
       end
 
+      def record_model_benchmark(model:, tasks:, passed:, failed:, success_rate:, elapsed_ms:, avg_ms:, errors:)
+        append(model_benchmark: {
+          model: model.to_s,
+          tasks: tasks.to_i,
+          passed: passed.to_i,
+          failed: failed.to_i,
+          success_rate: success_rate.to_f,
+          elapsed_ms: elapsed_ms.to_i,
+          avg_ms: avg_ms.to_i,
+          errors: Array(errors).map(&:to_s),
+        })
+      end
+
       private
 
       def subscribe_to_bus(bus)
