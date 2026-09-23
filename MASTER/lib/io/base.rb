@@ -10,6 +10,7 @@ module Master
       include AtomicWrite
 
       def permit(ctx = nil)
+        Master::Ground::LawHandshake::Admission.require!
         @governor.permit?(self.class::NAME, self.class::TIER, ctx)
       end
 
