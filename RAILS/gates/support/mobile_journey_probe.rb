@@ -18,7 +18,7 @@ module Deploy
         const out = [];
         for (const el of document.querySelectorAll("button, summary, [aria-expanded='false'], details > summary")) {
           if (!visible(el)) continue;
-          if (el.matches("button[type='submit'], button[type='reset']")) continue;
+          if (el.tagName === "BUTTON" && (el.getAttribute("type") || "submit").toLowerCase() !== "button") continue;
           const sel = selector(el);
           if (!sel) continue;
           out.push({kind: "toggle", selector: sel, label: label(el)});
