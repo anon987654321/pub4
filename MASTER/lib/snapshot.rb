@@ -9,7 +9,7 @@ module Master
     TEXT_EXTENSIONS = %w[.rb .rake .gemspec .ru .yml .yaml .json .js .mjs .ts .tsx .jsx .css .scss .html .erb .sh .zsh .md .txt].freeze
     NAMED_TEXT = %w[Gemfile Rakefile Guardfile Capfile Brewfile Vagrantfile config.ru].freeze
 
-    def initialize(root: REPO_ROOT, output: DEFAULT_OUTPUT)
+    def initialize(root: ROOT, output: DEFAULT_OUTPUT)
       @root = File.realpath(root)
       @output = File.expand_path(output, @root)
     end
