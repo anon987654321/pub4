@@ -21,19 +21,19 @@ def run_step(name, env, *cmd, stdin_data: nil, chdir: MASTER_ROOT)
   end
   bad_line = out.lines.find { |line| line.match?(BAD_OUTPUT) }
   if status.success? && bad_line.nil?
-    puts "ok"
+    Master::Trace::Dmesg.status("test0", "dogfood=#{name} state=ok")
     true
   else
-    puts "fail"
+    Master::Trace::Dmesg.status("test0", "dogfood=#{name} state=failed")
     warn out.lines.last(120).join
     false
   end
 rescue Timeout::Error
-  puts "fail"
+  Master::Trace::Dmesg.status("test0", "dogfood=#{name} state=timeout seconds=#{TIMEOUT_SECONDS}")
   warn "timeout after #{TIMEOUT_SECONDS}s"
   false
 rescue StandardError => e
-  puts "fail"
+  Master::Trace::Dmesg.status("test0", "dogfood=#{name} state=failed error=#{e.class}")
   warn "#{e.class}: #{e.message}"
   false
 end
@@ -61,9 +61,10 @@ failures << "cli" unless run_step("bundle exec ruby bin/cli", env, BUNDLE, "exec
 failures << "kernel" unless run_step("ruby bin/master-core", env, RUBY, "bin/master-core", "dogfood noop")
 
 if failures.empty?
-  puts "dogfood: clean"
+  Master::Trace::Dmesg.status("test0", "dogfood state=clean")
   exit 0
 end
 
-warn "dogfood: #{failures.size} failure(s): #{failures.join(", ")}"
+Master::Trace::Dmesg.status("test0", "dogfood state=failed failures=#{failures.join(",")}")
+warn "dogfood failures: #{failures.join(", ")}"
 exit 1
