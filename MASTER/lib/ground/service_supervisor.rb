@@ -23,9 +23,12 @@ module Master
 
       def ensure(name:, start:, healthy:, max_restarts: 3, window_seconds: 300, wait_seconds: 10)
         with_lock do
-          return healthy_status(name) if healthy.call
-
           state = load
+          if healthy.call
+            reset_after_recovery(state, name)
+            return healthy_status(name)
+          end
+
           entry = state["services"][name.to_s] ||= {}
           prune_attempts(entry, window_seconds)
 
@@ -68,6 +71,15 @@ module Master
                       attempts: Array(entry["attempts"]).size)
         Result.ok(Reliability::Status.degraded(message, code: :service_unhealthy,
                                                details: { service: name, attempts: entry["attempts"] }))
+      end
+
+      def reset_after_recovery(state, name)
+        entry = state["services"][name.to_s]
+        return unless entry && Array(entry["attempts"]).any?
+
+        entry["attempts"] = []
+        entry["last_healthy_at"] = Time.now.utc.iso8601
+        persist(state)
       end
 
       def prune_attempts(entry, window_seconds)
