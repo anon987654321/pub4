@@ -23,7 +23,8 @@ module Master
 
         def initialize(bus:, committer:, loop_scanner:, llm_router:, rollback:, root:,
                        rules:, agent:, scanner:, learnings:, preamble:,
-                       clean_runs_required:, plateau_window:, ground_truth: nil, homeostat: nil, council: nil)
+                       clean_runs_required:, plateau_window:, ground_truth: nil, homeostat: nil, council: nil,
+                       rendered_review: nil)
           @bus = bus
           @committer = committer
           @loop_scanner = loop_scanner
@@ -48,6 +49,7 @@ module Master
           @ground_truth = ground_truth
           @homeostat = homeostat
           @council = council
+          @rendered_review = rendered_review
           @ground_truth_failures = 0
         end
 
@@ -61,19 +63,70 @@ module Master
 
           run_fast_stage(files, pass)
           found = run_observation_stage(files, target)
+
+          visual = run_rendered_review(target:, files:, pass:)
+          if visual&.err?
+            return PassResult.new(
+              status: :plateau,
+              consecutive_clean: 0,
+              message: visual.message,
+            ) if found.empty?
+          end
+
+          visual_findings = visual&.ok? ? Array(visual.value![:findings]) : []
+          found = found + visual_findings
+
           return handle_clean_pass(files, pass_mtimes, pass, consecutive_clean) if found.empty?
           return PassResult.new(status: :plateau, consecutive_clean: 0) if stagnant?(history, seen_snapshots, recurring_violations, found, pass)
 
           @homeostat&.observe(:llm_call)
-          # The council argues about the files this pass found violations in,
-          # and its picks ride into the repair as context. A critique that ends
-          # in prose changes nothing, which is why it sits inside the loop.
-          council = @council&.run(files: files_with_violations(found, files), pass:, deadline:)
-          run_llm_stage(found, files, pass, deadline, council:)
+          # The council argues about source violations. Rendered findings are
+          # already the result of the UI council and are repaired by the same
+          # RuleLoop below, with the screenshot still attached as evidence.
+          source_found, rendered_found = found.partition { |v| v[:rule].to_s != RenderedReview::RULE_ID }
+          council = @council&.run(files: files_with_violations(source_found, files), pass:, deadline:) if source_found.any?
+          run_llm_stage(source_found, files, pass, deadline, council:) if source_found.any?
+          run_rendered_stage(rendered_found, pass:, image: visual.value![:image], files:, deadline:) if rendered_found.any?
           PassResult.new(status: :continue, consecutive_clean: 0)
+        ensure
+          @rendered_review&.cleanup
         end
 
         private
+
+        def run_rendered_review(target:, files:, pass:)
+          return unless @rendered_review
+          return unless @rendered_review.applicable?(target)
+
+          @rendered_review.run(target:, files:, pass:)
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "pass_runner.rendered_review", event_bus: @bus)
+          Result.err("rendered visual review: INCONCLUSIVE — #{e.class}: #{e.message}", category: :inconclusive)
+        end
+
+        def run_rendered_stage(findings, pass:, image:, files:, deadline:)
+          return 0 if Time.now >= deadline
+
+          rule = RenderedReview::RULE.new(RenderedReview::RULE_ID)
+          loop = RuleLoop.new(
+            rule:,
+            agent: @agent,
+            scanner: @scanner,
+            root: @root,
+            bus: @bus,
+            learnings: @learnings,
+            committer: @committer,
+          )
+          loop.injected_preamble = [@preamble,
+            "The following findings came from the real rendered browser. "             "Use the attached screenshot as evidence. Preserve accessibility, semantics and responsive behavior."
+          ].join("\n\n")
+          result = loop.run_once(files, external_violations: findings, image:)
+          @bus&.publish("fix_loop:rendered_fix", pass:, findings: findings.size, fixed: result[:fixed].to_i)
+          result[:fixed].to_i
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "pass_runner.rendered_stage", event_bus: @bus)
+          0
+        end
 
         def run_fast_stage(files, pass)
           fixed = fast_pass(files)
