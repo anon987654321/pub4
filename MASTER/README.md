@@ -97,6 +97,19 @@ Migration is being done in batches so each rule remains reversible and auditable
 
 The executable Law layer now contains 140 universal definitions plus four Rails-specific semantic definitions in `law/rails.rb`, with no duplicate `Law.define` IDs across the current law sources. The semantic implementation has been retired from YAML; the remaining catalogue fields describe rules but no longer contain their executable semantic prompts or remedies. The next stage is consolidation of the remaining deterministic and structural registry detectors under Law without losing coverage.
 
+## Rendered convergence
+
+Source-clean is not visual-clean. When `/fix` targets `RAILS/` or
+`MASTER/web`, MASTER captures real browser surfaces through the existing
+GeometryProbe/CDP gates, gives the screenshot and measured geometry to the UI
+council, turns the council's selected repairs into ordinary fix-loop findings,
+and renders again on the next pass. Typography, hierarchy, spacing, alignment,
+density, composition and responsive behavior are therefore part of convergence,
+not a final human-afterthought.
+
+The browser is evidence, not decoration: when the capture or visual council
+cannot run, the pass says INCONCLUSIVE rather than claiming DONE.
+
 ## Under the hood
 
 Wake it with one line and it comes up like an old Unix machine, telling you what
