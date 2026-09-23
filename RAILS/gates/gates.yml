@@ -3,7 +3,7 @@
 #
 # One registry, one runner, three trees. A gate's row lives here whatever tree
 # holds its implementation: `require` names the tree when the check belongs to
-# one — MASTER/gates for the gates that measure MASTER's own face and scan
+# one — MASTER/lib/operator/gates for the gates that measure MASTER's own face and scan
 # chain, OPENBSD/gates for the ones that measure the box (DNS, domains, the
 # port inventory), and a bare path for the RAILS gates, which are most of them.
 #
@@ -99,13 +99,13 @@ human_walkthrough:
   pass: "Human walkthrough gate passed for %{apps} Rails apps."
 
 master_tts:
-  require: MASTER/gates
+  require: MASTER/lib/operator/gates
   class: Deploy::MasterTtsGate
   pass: "MASTER TTS gate passed."
   covered_by: production
 
 master_web_assets:
-  require: MASTER/gates
+  require: MASTER/lib/operator/gates
   class: Deploy::MasterWebAssetsGate
   pass: "MASTER/web assets gate passed (%{assets} required assets present)."
   covered_by: production
@@ -279,7 +279,7 @@ locale_shadowing:
 # minutes, which is right for the gate that fronts a release and wrong for every
 # CI run on a 1 vCPU box.
 constitutional_scan:
-  require: MASTER/gates
+  require: MASTER/lib/operator/gates
   class: Deploy::ConstitutionalScanGate
   pass: "Constitutional scan preflight completed."
   covered_by: release
