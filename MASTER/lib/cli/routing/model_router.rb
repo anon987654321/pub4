@@ -44,6 +44,11 @@ module Master
           @compute_pool
         end
 
+        # ComputePool asks the router whether a model supports tool calls;
+        # the same TOOL_CAPABLE_RE the dispatcher already builds from
+        # data/models.yml#tool_capable_prefixes, not a second copy of it.
+        def tool_capable?(model_id) = Review::LLMDispatcher::TOOL_CAPABLE_RE.match?(model_id.to_s.downcase)
+
         def record_provider_outcome(model:, status:, latency_ms: nil, error: nil)
           @compute_pool&.record(model:, status:, latency_ms:, error:)
         rescue StandardError => e

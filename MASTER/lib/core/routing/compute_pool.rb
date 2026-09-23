@@ -73,11 +73,7 @@ module Master
           return unless row
 
           score = row.fetch("score", {})
-          stat = @mutex.synchronize { @stats[id.to_s]&.dup }
-          calls = stat&.fetch(:calls, 0).to_i
-          successes = stat&.fetch(:successes, 0).to_i
-          success_rate = calls.zero? ? 1.0 : successes.fdiv(calls)
-          latency = stat&.fetch(:latency_ms, 0).to_f
+          success_rate, latency_factor = empirical_stats(id)
           Candidate.new(
             id: id.to_s,
             quality: score.fetch("quality", DEFAULTS[:quality]).to_f,
@@ -86,13 +82,22 @@ module Master
             context_window: row.fetch("context_window", DEFAULTS[:context_window]).to_i,
             availability: @router.reachable?(id) ? 1.0 : 0.0,
             tool_support: @router.tool_capable?(id) ? 1.0 : DEFAULTS[:tool_support],
-            success_rate: success_rate,
-            latency_factor: latency.zero? ? 1.0 : [1000.0 / [latency, 1000.0].max, 1.0].min,
-            score: score,
+            success_rate:,
+            latency_factor:,
+            score:,
           )
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "compute_pool.candidate", model: id)
           nil
+        end
+
+        def empirical_stats(id)
+          stat = @mutex.synchronize { @stats[id.to_s]&.dup }
+          calls = stat&.fetch(:calls, 0).to_i
+          successes = stat&.fetch(:successes, 0).to_i
+          success_rate = calls.zero? ? 1.0 : successes.fdiv(calls)
+          latency = stat&.fetch(:latency_ms, 0).to_f
+          [success_rate, latency.zero? ? 1.0 : [1000.0 / [latency, 1000.0].max, 1.0].min]
         end
 
         def utility(entry, task_type:, empirical_best:)
@@ -161,8 +166,13 @@ module Master
         def persist_stats
           path = stats_path
           FileUtils.mkdir_p(File.dirname(path))
-          tmp = "#{path}.#{$}.tmp"
-          File.write(tmp, YAML.dump(@stats))
+          tmp = "#{path}.#{Process.pid}.tmp"
+          # String keys, not Symbol: Master.load_yaml reads with
+          # permitted_classes: [Date, Time], so a dumped Symbol tag fails to
+          # load back on the next boot -- load_stats already expects strings,
+          # transform_keys(&:to_sym) is its half of this round trip.
+          plain = @stats.transform_values { |stat| stat.transform_keys(&:to_s) }
+          File.write(tmp, YAML.dump(plain))
           File.rename(tmp, path)
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "compute_pool.persist_stats")

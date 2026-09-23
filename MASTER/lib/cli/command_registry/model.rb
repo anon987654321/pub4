@@ -1,4 +1,4 @@
-<sub># frozen_string_literal: true
+# frozen_string_literal: true
 
 module Master
   module CLI
@@ -96,4 +96,3 @@ module Master
   end
 end
 
-</sub>
