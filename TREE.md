@@ -37,7 +37,6 @@ pub4/
 │   │   ├── cognition/        perception, affect, reflection (COGNITION.md)
 │   │   ├── operator/         bin/operator and bin/check libraries
 │   │   └── trace/            event bus, logs, session, undo
-│   ├── spec/                 flattened — isolation, smells, lifecycle sit here
 │   ├── test/
 │   ├── tools/
 │   └── web/                  the face
