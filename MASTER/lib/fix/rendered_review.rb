@@ -2,7 +2,7 @@
 
 require "fileutils"
 require "json"
-require "open3"
+require_relative "../io/exec"
 require "tmpdir"
 
 module Master
@@ -16,6 +16,7 @@ module Master
       end
       RULE_ID = "RENDERED_VISUAL_REFINEMENT"
       MAX_FILES = 12
+      CAPTURE_TIMEOUT_SECONDS = 180
       SELECTOR_RE = /#[A-Za-z][\w-]*|\.[A-Za-z_][\w-]*(?:[-_][\w-]+)*/.freeze
       TEXT_ANCHOR_RE = /(?:visible\s+text\s+anchor|text\s+anchor|visible\s+text)\s*[:=]\s*["“]([^"”]+)["”]/i.freeze
       SOURCE_EXTENSIONS = %w[.css .scss .js .ts .erb .html .htm .rb].freeze
@@ -110,7 +111,11 @@ module Master
           "--out", @dir,
           "--pass", pass.to_i.to_s,
         ]
-        stdout, stderr, status = Open3.capture3(*command, chdir: repo_root)
+        _stdout, stderr, status = Master::Io::Exec.capture3(
+          *command,
+          chdir: repo_root,
+          timeout: CAPTURE_TIMEOUT_SECONDS,
+        )
         manifest_path = File.join(@dir, "manifest.json")
         return { ok: false, message: stderr.strip.lines.last.to_s } unless status.success? && File.file?(manifest_path)
 
