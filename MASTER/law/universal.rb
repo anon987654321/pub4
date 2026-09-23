@@ -1324,3 +1324,137 @@ Law.define(:PATTERN_EXTRACTION) do
   X
 end
 end
+
+
+# Constitutional migration batch 6a: SOLID and abstraction laws.
+
+Law.define(:SRP) do
+  source "SOLID — Single Responsibility Principle (Robert C. Martin)"
+  severity :warning
+  ask "Does this class or module have more than one reason to change?"
+  fix "Give each responsibility a distinct owner and boundary."
+  bad <<~X
+    class Invoice; def calculate; end; def render; end; def email; end; end
+  X
+  good <<~X
+    class Invoice; def calculate; end; end; class InvoiceRenderer; end; class InvoiceMailer; end
+  X
+end
+
+Law.define(:OPEN_CLOSED) do
+  source "Open-Closed Principle (Bertrand Meyer; SOLID)"
+  severity :warning
+  ask "Must existing core code be modified whenever a new supported variant is added?"
+  fix "Extend through stable interfaces, registries, or composition where that reduces repeated core edits."
+  bad <<~X
+    case format; when :json; render_json; when :xml; render_xml; end
+  X
+  good <<~X
+    renderers.fetch(format).call(document)
+  X
+end
+
+Law.define(:LISKOV) do
+  source "Liskov Substitution Principle (Barbara Liskov, 1987)"
+  severity :warning
+  ask "Does a subtype violate assumptions or guarantees established by the type it replaces?"
+  fix "Make subtype behavior satisfy the established contract or use a different abstraction."
+  bad <<~X
+    class ReadOnlyStore < Store; def save(x); raise "no"; end; end
+  X
+  good <<~X
+    class ReadOnlyStore < ReadStore; end
+  X
+end
+
+Law.define(:INTERFACE_SEGREGATION) do
+  source "SOLID — Interface Segregation"
+  severity :warning
+  ask "Does an interface force implementations to stub or ignore methods they do not need?"
+  fix "Split broad interfaces into focused contracts."
+  bad <<~X
+    class Printer; def print; end; def scan; raise NotImplementedError; end; end
+  X
+  good <<~X
+    Printable = Data.define; Scannable = Data.define
+  X
+end
+
+Law.define(:DEPENDENCY_INVERSION) do
+  source "SOLID — Dependency Inversion Principle"
+  severity :warning
+  ask "Does high-level policy directly instantiate concrete dependencies that should be replaceable?"
+  fix "Depend on stable abstractions and inject concrete implementations at the boundary."
+  bad <<~X
+    class Checkout; def call; Stripe::Charge.create; end; end
+  X
+  good <<~X
+    class Checkout; def initialize(payments:); @payments = payments; end; end
+  X
+end
+
+Law.define(:ONE_JOB) do
+  source "SRP / Unix philosophy — do one thing"
+  severity :warning
+  ask "Does this module handle unrelated responsibilities instead of one coherent job?"
+  fix "Give the module one job and compose it with neighboring modules."
+  bad <<~X
+    class UserService; def find; end; def email; end; def export; end; end
+  X
+  good <<~X
+    class UserFinder; end; class UserMailer; end; class UserExporter; end
+  X
+end
+
+Law.define(:COMPOSABLE) do
+  source "Unix philosophy / functional composition"
+  severity :info
+  ask "Is this operation monolithic when it could be cleanly composed from smaller independent parts?"
+  fix "Expose small units with explicit inputs and outputs so they can be composed."
+  bad <<~X
+    processor.run_all(input)
+  X
+  good <<~X
+    normalized = normalize(input); validated = validate(normalized)
+  X
+end
+
+Law.define(:LAW_OF_DEMETER) do
+  source "Law of Demeter (Ian Holland)"
+  severity :warning
+  ask "Does this code reach through several objects or expose knowledge of a collaborator's internals?"
+  fix "Talk only to immediate collaborators and encapsulate the traversal."
+  bad <<~X
+    order.customer.address.city
+  X
+  good <<~X
+    order.shipping_city
+  X
+end
+
+Law.define(:COMPOSITION_OVER_INHERITANCE) do
+  source "Design Patterns (Gang of Four)"
+  severity :info
+  ask "Is inheritance being used mainly for code reuse rather than a genuine substitutability relationship?"
+  fix "Prefer composition when behavior can vary independently of type identity."
+  bad <<~X
+    class JsonReport < Report; end
+  X
+  good <<~X
+    class Report; def initialize(formatter:); @formatter = formatter; end; end
+  X
+end
+
+Law.define(:ONE_ABSTRACTION_LEVEL) do
+  source "Clean Code — one level of abstraction per function"
+  severity :info
+  ask "Does this function mix policy-level operations with low-level representation or IO details?"
+  fix "Keep each function at one conceptual level and delegate detail downward."
+  bad <<~X
+    def checkout; authorize_card; db.execute("INSERT INTO..."); render_html; end
+  X
+  good <<~X
+    def checkout; authorize_card; persist_order; render_receipt; end
+  X
+end
+end
