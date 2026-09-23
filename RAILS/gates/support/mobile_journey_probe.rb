@@ -14,8 +14,26 @@ module Deploy
           return r.width > 0 && r.height > 0 && s.display !== "none" &&
             s.visibility !== "hidden" && s.pointerEvents !== "none";
         };
-        const selector = el => el.id ? "#" + CSS.escape(el.id) :
-          el.getAttribute("data-testid") ? "[data-testid='" + el.getAttribute("data-testid") + "']" : null;
+        const selector = el => {
+          if (el.id) return "#" + CSS.escape(el.id);
+          if (el.getAttribute("data-testid")) return "[data-testid='" + el.getAttribute("data-testid") + "']";
+          const parts = [];
+          let node = el;
+          while (node && node.nodeType === 1 && node !== document.body) {
+            let part = node.tagName.toLowerCase();
+            let sibling = node;
+            let index = 1;
+            while ((sibling = sibling.previousElementSibling)) {
+              if (sibling.tagName === node.tagName) index++;
+            }
+            part += ":nth-of-type(" + index + ")";
+            parts.unshift(part);
+            const candidate = parts.join(" > ");
+            if (document.querySelectorAll(candidate).length === 1) return candidate;
+            node = node.parentElement;
+          }
+          return null;
+        };
         const label = el => (el.getAttribute("aria-label") || el.textContent || "").trim().replace(/\s+/g, " ").slice(0, 48);
         const out = [];
         for (const el of document.querySelectorAll("button, summary, [aria-expanded='false'], details > summary")) {
