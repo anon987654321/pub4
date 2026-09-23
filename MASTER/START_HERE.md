@@ -8,13 +8,13 @@ before durable writes. The Rails face in `web/` mirrors runtime state at
 **Orientation:** `AGENTS.md` for task-scoped agent entry; this file for the full
 contract. Law and config live in YAML under `data/`. Prose stubs:
 `data/SOUL.md`, `data/IDENTITY.md`, generated `data/CANON.md`. Work is a
-sentence. The slash set is `/review` `/status` `/undo` `/commit` `/model`
-`/pair` `/doctor` `/runtime` `/rules` `/why` `/orders` `/soul` `/help` `/clear`, with
-`/rollback` as `/undo` and `/exit` or `/quit` to leave. `/scan`, `/fix`,
-`/critique` and `/council` are not a second set: each is `/review --only
-<stage>`. The router still accepts retired words a model may answer with —
-`through`, `workflow`, `triad`, `sweep`, `self` — and reads every one as
-`/review`; only the four stage words are advertised.
+sentence. The slash set is `/review` `/fix` `/status` `/undo` `/commit` `/model`
+`/pair` `/doctor` `/runtime` `/rules` `/why` `/orders` `/soul` `/help` `/clear`,
+with `/rollback` as `/undo` and `/exit` or `/quit` to leave. `/fix` is the only
+writing verb: it runs the complete observe, repair, re-observe and proof lifecycle.
+Retired spellings such as `/scan`, `/sweep`, `/through`, `/workflow`, `/triad`,
+`/self` and `/council` are normalized to the current command surface rather
+than silently falling into conversation.
 
 ## Safe First Commands
 
