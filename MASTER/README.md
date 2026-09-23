@@ -95,7 +95,7 @@ the mind, and the clean ground it stands on.
 
 Migration is being done in batches so each rule remains reversible and auditable. Batches 1–7 have migrated the catalogue’s semantic layer into executable Law definitions covering foundational architecture, design, security, refactoring, user experience, LLM operations, and prose. Domain-specific lexical and structural detectors remain in their existing `law/ruby.rb`, `law/javascript.rb`, `law/shell.rb`, `law/css.rb`, and `law/html.rb` homes until those consumers are migrated without losing deterministic coverage.
 
-The executable Law layer now contains 140 universal definitions and 251 definitions across the full `law/` tree, with no duplicate `Law.define` IDs in the current source. The YAML semantic entries remain temporarily as compatibility metadata because `SemanticRule#from_law` already gives the executable definition precedence; the next migration stage is consumer-by-consumer retirement of those duplicate catalogue bodies, followed by detector consolidation.
+The executable Law layer now contains 140 universal definitions plus the Rails-specific semantic home in `law/rails.rb`, with no duplicate `Law.define` IDs across the current law sources. The YAML semantic entries remain temporarily as compatibility metadata because `SemanticRule#from_law` already gives the executable definition precedence; the next migration stage is consumer-by-consumer retirement of those duplicate catalogue bodies, followed by consolidation of deterministic and structural detectors.
 
 ## Under the hood
 
