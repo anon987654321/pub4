@@ -10,12 +10,10 @@ module Master
           # "clean" over 99 rules and "clean" over 225 are different claims, and
           # until now they printed identically everywhere except rake constitution.
           #
-          # Counted, never subtracted. `yaml_rules - semantic_only.size` treats the
-          # two populations as a partition and they are not: 22 rules carry a
-          # semantic prompt beside a law or registry detector, and 14 design blocks
-          # carry no detector at all. The subtraction claimed both halves as running
-          # without a model, so this sentence read 107 here and 115 from
-          # tools/rule_reach.rb, which the sentence itself sends the reader to.
+          # Counted, never subtracted. A rule may be semantic-only, mechanical-only,
+          # or layered and therefore belong to both populations. The audit reports
+          # those populations independently so a semantic layer can never disappear
+          # merely because its catalogue representation changed.
           def coverage_line = "#{mechanical.size} of #{yaml_rules} rules run without a model " \
                               "(see rake lint:rule_reach for what the rest need)"
 
