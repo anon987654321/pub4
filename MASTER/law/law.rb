@@ -263,23 +263,11 @@ module Law
     def initialize(id) = @h = { id:, severity: :warn, mode: :violation, languages: [], scope: :line, path: nil, path_exclude: nil, absent: nil, detect: nil, ask: nil, practice: nil, reads_comments: false }
     def detect(&block) = @h[:detect] = block
 
-    # Exactly one kind, and the fixtures whichever it is.
-    #
-    #   detect   a regex reads the source. Proved by running it at load.
-    #   ask      a question a model answers about the source. Fixtures ride into
-    #            the prompt as worked examples.
-    #   practice a rule about how to work rather than about source text — sweep
-    #            to convergence, one SSH session, restart after a deploy. No
-    #            detector can exist for one, and that is a property of the
-    #            subject, not a reason to keep them in a second file.
-    #
-    # The third kind is why every rule now lives here. They were in soul.yml
-    # because this builder demanded a detector; a rule about conduct cannot have
-    # one, so the requirement was excluding exactly the rules it could not
-    # describe. Its fixtures are illustrative rather than executable — the
-    # shortest example of following it and of not — and prove! does not scan them.
-    #
-    # Two kinds at once is two rules sharing an id, not a richer rule.
+    # A law can carry more than one enforcement surface without becoming more
+    # than one rule. detect is deterministic evidence, ask is semantic evidence,
+    # and practice is conduct guidance. Their combination is useful: one law may
+    # be cheap to detect mechanically, expensive to understand semantically, and
+    # still impose a working discipline on the operator.
     def build
       kinds = %i[detect ask practice].select { |k| @h[k] }
       raise ArgumentError, "#{@h[:id]}: needs detect, ask or practice" if kinds.empty?
