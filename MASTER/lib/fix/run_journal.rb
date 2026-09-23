@@ -77,11 +77,12 @@ module Master
         raise
       end
 
-      def pass_start(run_id, pass)
+      def pass_start(run_id, pass, transaction_id:)
         update(run_id) do |run|
           run["passes"] << {
             "pass" => pass.to_i,
             "state" => "active",
+            "transaction_id" => transaction_id.to_s,
             "started_at" => Time.now.utc.iso8601,
           }
         end
@@ -125,6 +126,10 @@ module Master
         remaining
       rescue ArgumentError
         0.0
+      end
+
+      def active_pass(run)
+        Array(run["passes"]).reverse.find { |row| row["state"].to_s == "active" }
       end
 
       def next_pass(run)
