@@ -150,9 +150,12 @@ module Master
           @active = false
           cleanup!
           Result.ok(:preserved_delivery)
-        when "committed", "rolled_back", "conflict"
+        when "committed", "rolled_back"
           cleanup!
           Result.ok(@state.to_sym)
+        when "conflict"
+          cleanup!
+          Result.err("transaction recovery found a concurrent edit", category: :policy)
         else
           cleanup!
           Result.err("unknown transaction state: #{@state}", category: :infrastructure)
