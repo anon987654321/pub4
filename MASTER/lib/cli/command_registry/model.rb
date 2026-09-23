@@ -75,9 +75,14 @@ module Master
         router = model_router_of(agent)
         return "compute: router unavailable" unless router
 
-        ids = router.pool(wait: true)
-        ranked = router.compute_pool.rank(ids, task_type: :code_generation)
-        ranked.map.with_index { |id, index| "#{index + 1}. #{id}  #{router.lane_label(id)}" }.join("\n")
+        rows = router.compute_pool.inventory(task_type: :code_generation)
+        return "compute: no reachable models" if rows.empty?
+
+        rows.map do |row|
+          quota = row[:quota_remaining].nil? ? row[:quota_state] : "quota=#{row[:quota_remaining]}"
+          rate = row[:success_rate].nil? ? "unmeasured" : "success=#{(row[:success_rate] * 100).round}%"
+          "#{row[:rank]}. #{row[:id]}  #{row[:lane]}  #{quota}  #{rate}"
+        end.join("\n")
       end
 
       def model_tiers_by_id(root)
