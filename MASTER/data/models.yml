@@ -135,12 +135,23 @@ model_defs:
     # Re-measured: ~8s for a ~30KB prompt (comparable to gemini-2.5-flash's
     # observed per-call latency), and cost is 1.0 like claude_cli_opus below,
     # since there is no marginal charge per call.
-    score: { quality: 0.95, speed: 0.85, cost: 1.0 }
+    #
+    # cost dropped 1.0 -> 0.3 on 2026-09-23 (operator: "my claude credits are
+    # about to run out"). "No marginal API charge" is still true, but cost:
+    # 1.0 conflated that with "unlimited," and a browser-subscription lane
+    # draws on a real, currently-scarce quota this repo has no other way to
+    # express in this scoring model. This is a statement about the account's
+    # remaining headroom right now, not a correction to speed/quality --
+    # raise it back to 1.0 once credits reset, or this quietly starves a
+    # lane that is otherwise the strongest lane available.
+    score: { quality: 0.95, speed: 0.85, cost: 0.3 }
   claude_cli_opus: &claude_cli_opus
     id: claude-cli:claude-opus-5
     <<: *model_defaults
     context_window: 200000
-    score: { quality: 0.99, speed: 0.55, cost: 1.0 }
+    # cost dropped 1.0 -> 0.3 on 2026-09-23, same reason and same reversal
+    # condition as claude_cli_sonnet above -- one account, one quota.
+    score: { quality: 0.99, speed: 0.55, cost: 0.3 }
   claude_opus_api: &claude_opus_api
     id: anthropic/claude-opus-4
     <<: *model_defaults
@@ -208,6 +219,7 @@ models:
     - *web_chat_gemini
   default:
     - *claude_cli_sonnet
+    - *ollama_gemma
     - *glm_5_3
     - *nemotron_super
     - *gemini_flash_openrouter
@@ -219,6 +231,7 @@ models:
   strong:
     - *claude_cli_opus
     - *claude_cli_sonnet
+    - *ollama_gemma
     - *claude_opus_api
     - *deepseek_reasoner
     - *deepseek_chat
