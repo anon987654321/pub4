@@ -82,13 +82,23 @@ module Master
               return Result.err("fix transaction blocked before delivery", category: :policy)
             end
 
+            head_before = @git.head
+            transaction.begin_delivery!
             @transaction = nil
-            transaction.commit!
-            commit_paths(message, findings, prepared)
+            begin
+              result = commit_paths(message, findings, prepared)
+              transaction.finalize!
+              result
+            rescue StandardError => e
+              committed = head_changed?(head_before)
+              committed ? transaction.finalize! : transaction.rollback!
+              @bus&.publish("fix_loop:commit_error", error: e.message, committed:)
+              Result.err("fix transaction delivery: #{e.message}", category: :infrastructure)
+            end
           rescue StandardError => e
             @bus&.publish("fix_loop:commit_error", error: e.message)
             @transaction = nil
-            transaction&.commit! if transaction&.active?
+            transaction&.preserve_delivery! if transaction&.active?
             Result.err("fix transaction delivery: #{e.message}", category: :infrastructure)
           end
         end
@@ -131,8 +141,15 @@ module Master
 
         def finish_empty_transaction(transaction)
           @transaction = nil
-          transaction.commit!
+          transaction.finalize!
           Result.ok(:noop)
+        end
+
+        def head_changed?(before)
+          after = @git.head
+          before && after && before != after
+        rescue StandardError
+          false
         end
 
         def commit_paths(message, findings, paths)
