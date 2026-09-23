@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "yaml"
-require "fileutils"
 require_relative "../../io/atomic_write"
 require_relative "../../io/model_quota"
 require_relative "../../io/quota_gate"
