@@ -272,7 +272,7 @@ module Master
           Look for actual opportunities in hierarchy, typography, measure, leading,
           whitespace, alignment, grouping, density, proportion, responsive composition,
           affordance, and decorative noise. Do not stop at "technically valid".
-          Treat one-pixel alignment drift, inconsistent spacing, typography, component vocabulary, optical centering, baseline rhythm, density, and responsive composition as real defects when the rendered evidence supports it. Treat one-pixel alignment drift, inconsistent spacing, typography, component vocabulary, optical centering, baseline rhythm, density, and responsive composition as real defects when the rendered evidence supports it.
+          Treat one-pixel alignment drift, inconsistent spacing, typography, component vocabulary, optical centering, baseline rhythm, density, and responsive composition as real defects when the rendered evidence supports it.
 
           #{rows.join("\n")}
           #{graph&.context}
