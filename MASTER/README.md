@@ -243,3 +243,10 @@ Then:
 ```
 
 Location is explicit rather than a boot probe because it is a user-sensitive capability. Camera and microphone operations are explicit too. Termux:API itself mediates Android permissions; for example, camera access can trigger the Android camera permission flow.
+
+
+### Android perception
+
+On Android/Termux, MASTER can continuously publish normalized device observations onto the same EventBus consumed by cognition. The stream includes battery, Wi-Fi/network state, the available sensor inventory, and one-shot readings for accelerometer, gyroscope, magnetometer, light, and proximity when those sensors exist. Events are namespaced as `device:battery`, `device:network`, `device:sensors`, `device:accelerometer`, `device:gyroscope`, `device:magnetometer`, `device:light`, and `device:proximity`.
+
+The perception loop is bounded and stoppable. It does not automatically activate the camera, microphone, or location. Those remain explicit operations. Set `MASTER_DEVICE=0` to disable Android perception for a process.
