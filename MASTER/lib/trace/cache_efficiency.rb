@@ -8,7 +8,6 @@ module Master
   module Trace
     # Prompt-cache hit ratio — OpenCrabs /usage card parity.
     module CacheEfficiency
-      include Master::Io::AtomicWrite
       extend Master::Io::AtomicWrite
       @mutex = Mutex.new
       @totals = { input: 0, cached: 0, cache_write: 0, calls: 0 }
