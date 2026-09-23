@@ -39,6 +39,19 @@ module Master
           pid
         end
 
+        # Public: Realtime.morph generates frame-by-frame rather than as one
+        # buffer, so it calls this directly instead of duplicating the four
+        # waveform formulas.
+        def oscillator(shape, hz, t)
+          phase = (hz * t) % 1.0
+          case shape
+          when :square then phase < 0.5 ? 1.0 : -1.0
+          when :triangle then phase < 0.5 ? 4.0 * phase - 1.0 : 3.0 - 4.0 * phase
+          when :saw then 2.0 * phase - 1.0
+          else Math.sin(2 * Math::PI * phase)
+          end
+        end
+
         private
 
         def validate_shape!(shape)
@@ -59,16 +72,6 @@ module Master
           return noise(shape, frames, seed) if %i[white brown].include?(shape)
 
           Array.new(frames) { |i| oscillator(shape, hz, i.to_f / RATE) }
-        end
-
-        def oscillator(shape, hz, t)
-          phase = (hz * t) % 1.0
-          case shape
-          when :square then phase < 0.5 ? 1.0 : -1.0
-          when :triangle then phase < 0.5 ? 4.0 * phase - 1.0 : 3.0 - 4.0 * phase
-          when :saw then 2.0 * phase - 1.0
-          else Math.sin(2 * Math::PI * phase)
-          end
         end
 
         def noise(shape, frames, seed)
