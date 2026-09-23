@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "json"
+
 module Master
   module Ground
     # Protocol-level admission for agents that claim to mirror MASTER.
