@@ -239,8 +239,7 @@ module Master
           "seen" => @seen,
           "snapshots" => @snapshots.transform_values(&:to_h),
         }
-        write_atomic(File.join(@dir, MANIFEST), JSON.pretty_generate(manifest) + "
-", mode: 0o600)
+        write_atomic(File.join(@dir, MANIFEST), JSON.pretty_generate(manifest) + "\n", mode: 0o600)
       end
 
       def load_manifest!
