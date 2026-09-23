@@ -135,7 +135,7 @@ module Master
         arg = arg_for(ctx)
         return "usage: /snapshot [output]" if arg.split.size > 1
         output = arg.empty? ? File.join(Master.repo_root, "snapshot_MASTER.md") : File.expand_path(arg, Master.repo_root)
-        Master::Snapshot.new(root: Master.repo_root, output:).write!
+        Master::Snapshot.new(root: Master::ROOT, output:).write!
       rescue StandardError => e
         "snapshot0: failed — #{e.class}: #{e.message}"
       end
