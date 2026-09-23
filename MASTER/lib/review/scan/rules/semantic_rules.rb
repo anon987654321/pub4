@@ -117,9 +117,9 @@ module Master
 
         require_relative "../finding"
         # LLM review for rules whose violations resist lexical detection.
-        # Each rules.yml entry with a detect_semantic prompt is folded into one LLM
-        # call per file. Rules carry mode: violation (default) or opportunity —
-        # the prompt frame and severity follow from that.
+        # Each executable Law with an ask surface is folded into one LLM call per
+        # file. A law may also have a deterministic detector; that is layered
+        # evidence for one rule, not a second semantic definition.
         class SemanticRule < Rule
           CODE_SNIPPET_LIMIT = 2000
 
@@ -198,7 +198,8 @@ module Master
           end
 
           def rules_mtime
-            File.exist?(Master::RULES_PATH) ? File.mtime(Master::RULES_PATH).to_i : nil
+            paths = [Master::RULES_PATH, *Dir.glob(File.join(Master::ROOT, "law", "*.rb"))]
+            paths.filter_map { |path| File.mtime(path).to_i if File.exist?(path) }.max
           end
 
           def semantic_cache_key(path, code)
