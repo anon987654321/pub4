@@ -104,20 +104,29 @@ module Operator
     # a row whose current IS its ceiling is a row that can never fail, which is
     # the shape of defect the rest of this file exists to catch.
     def master_yaml_rows
+      [*rule_reach_and_blind_rows, *rule_saturation_and_silent_rows, *autofix_rows,
+       *rule_hygiene_rows_a, *rule_hygiene_rows_b, *fixture_and_dep_rows,
+       *self_findings_rows, *reach_rows, *code_and_namespace_rows, *sprawl_rows].compact
+    end
+
+    # Three rows rather than one, because they are three different facts and
+    # collapsing them would let a rule go blind while another stops being
+    # silent and the total holds still.
+    def rule_reach_and_blind_rows
       [master_row("rule_reach", "data/rules.yml", "rules no configuration can run") do
          require File.join(MASTER, "lib/operator/rule_reach")
          unreachable = Operator::RuleReach.unreachable
          [unreachable.size, Operator::RuleReach.ceiling, unreachable]
        end,
-       # Three rows rather than one, because they are three different facts and
-       # collapsing them would let a rule go blind while another stops being
-       # silent and the total holds still.
        master_row("rule_audit.blind", "data/rules.yml", "rules proved on input their subjects never get") do
          require File.join(MASTER, "lib/operator/rule_audit")
          blind = Operator::RuleAudit.audit[:fixture_blindness]
          [blind.size, Operator::RuleAudit.ceilings.fetch("blind"), blind.map { |row| "#{row[:rule]}: #{row[:detail]}" }]
-       end,
-       master_row("rule_audit.saturated", "data/rules.yml", "rules flagging most of what they read") do
+       end]
+    end
+
+    def rule_saturation_and_silent_rows
+      [master_row("rule_audit.saturated", "data/rules.yml", "rules flagging most of what they read") do
          require File.join(MASTER, "lib/operator/rule_audit")
          saturated = Operator::RuleAudit.audit[:saturation]
          [saturated.size, Operator::RuleAudit.ceilings.fetch("saturated"),
@@ -127,8 +136,11 @@ module Operator
          require File.join(MASTER, "lib/operator/rule_audit")
          silent = Operator::RuleAudit.audit[:silent]
          [silent.size, Operator::RuleAudit.ceilings.fetch("silent"), silent]
-       end,
-       master_row("autofix_reach.dangling", "data/autofix_reach.yml", "rules naming a transform nothing implements") do
+       end]
+    end
+
+    def autofix_rows
+      [master_row("autofix_reach.dangling", "data/autofix_reach.yml", "rules naming a transform nothing implements") do
          require File.join(MASTER, "lib/operator/autofix_reach")
          dangling = Operator::AutofixReach.dangling
          [dangling.size, Operator::AutofixReach.ceilings.fetch("dangling"),
@@ -138,8 +150,11 @@ module Operator
          require File.join(MASTER, "lib/operator/autofix_reach")
          bare = Operator::AutofixReach.bare_true
          [bare.size, Operator::AutofixReach.ceilings.fetch("bare_true"), bare]
-       end,
-       master_row("rule_hygiene.id_case_collisions", "data/rules.yml", "ids differing only by case") do
+       end]
+    end
+
+    def rule_hygiene_rows_a
+      [master_row("rule_hygiene.id_case_collisions", "data/rules.yml", "ids differing only by case") do
          require File.join(MASTER, "tools/rule_hygiene")
          collisions = Operator::RuleHygiene.report[:id_case_collisions]
          [collisions.size, Operator::RuleHygiene.ceilings.fetch("id_case_collisions"), collisions.map(&:to_s)]
@@ -148,8 +163,11 @@ module Operator
          require File.join(MASTER, "tools/rule_hygiene")
          shadows = Operator::RuleHygiene.report[:alias_shadows_live_rule]
          [shadows.size, Operator::RuleHygiene.ceilings.fetch("alias_shadows_live_rule"), shadows.map(&:to_s)]
-       end,
-       master_row("rule_hygiene.missing_metadata", "data/rules.yml", "rules with neither tier nor severity") do
+       end]
+    end
+
+    def rule_hygiene_rows_b
+      [master_row("rule_hygiene.missing_metadata", "data/rules.yml", "rules with neither tier nor severity") do
          require File.join(MASTER, "tools/rule_hygiene")
          missing = Operator::RuleHygiene.report[:missing_metadata]
          [missing.size, Operator::RuleHygiene.ceilings.fetch("missing_metadata"), missing.map(&:to_s)]
@@ -163,12 +181,15 @@ module Operator
          require File.join(MASTER, "tools/rule_hygiene")
          conflicts = Operator::RuleHygiene.report[:statement_conflicts]
          [conflicts.size, Operator::RuleHygiene.ceilings.fetch("statement_conflicts"), conflicts.map(&:to_s)]
-       end,
-       # The fourth hygiene check and the dep graph both reported a number that
-       # nothing failed on. rule_hygiene warned on its own ceiling and ratchets
-       # never carried the row; RuleRegistryAudit reported dep_graph_gaps and no
-       # ceiling anywhere read it.
-       master_row("rule_fixture_debt", "data/rules.yml", "registry rules with no worked example") do
+       end]
+    end
+
+    # The fourth hygiene check and the dep graph both reported a number that
+    # nothing failed on. rule_hygiene warned on its own ceiling and ratchets
+    # never carried the row; RuleRegistryAudit reported dep_graph_gaps and no
+    # ceiling anywhere read it.
+    def fixture_and_dep_rows
+      [master_row("rule_fixture_debt", "data/rules.yml", "registry rules with no worked example") do
          $LOAD_PATH.unshift(File.join(MASTER, "lib")) unless $LOAD_PATH.include?(File.join(MASTER, "lib"))
          require "master"
          require "review/scan/rule_dsl"
@@ -185,24 +206,30 @@ module Operator
          audit = Master::Review::Scan::RuleRegistryAudit.new(root: MASTER)
          ungraphed = audit.ungraphed_rule_ids
          [ungraphed.size, Master.law("rule_ratchets", root: MASTER).dig("deps", "ungraphed"), ungraphed.map(&:to_s)]
-       end,
-       master_row("self_findings.law", "data/self_findings.yml", "what the 122 laws find in our own trees") do
+       end]
+    end
+
+    # The row above read "what our own rules find in our own trees" and
+    # counted the law alone, so this second population counts the 145 rules
+    # the scanner builds: rule_audit runs them over a sixth of the tree and
+    # measures blindness, and bin/operator gate runs them over all four trees
+    # and records nothing.
+    def self_findings_rows
+      [master_row("self_findings.law", "data/self_findings.yml", "what the 122 laws find in our own trees") do
          require File.join(MASTER, "lib/operator/self_findings")
          found = Operator::SelfFindings.members
          [found.size, Operator::SelfFindings.ceiling, found]
        end,
-       # The second population. The row above read "what our own rules find in
-       # our own trees" and counted the law alone, so nothing in this repo
-       # counted the 145 rules the scanner builds: rule_audit runs them over a
-       # sixth of the tree and measures blindness, and bin/operator gate runs them
-       # over all four trees and records nothing.
        master_row("self_findings.registry", "data/self_findings.yml",
                   "what the scanner's own rules find, at error severity") do
          require File.join(MASTER, "lib/operator/self_findings")
          found = Operator::SelfFindings.registry_members
          [found.size, Operator::SelfFindings.registry_ceiling, found]
-       end,
-       master_row("dup_census", "data/dup_census.yml", "tracked files existing twice") do
+       end]
+    end
+
+    def reach_rows
+      [master_row("dup_census", "data/dup_census.yml", "tracked files existing twice") do
          require File.join(MASTER, "tools/dup_census")
          sets = Operator::DupCensus.sets
          [sets.size, Operator::DupCensus.ceiling, Operator::DupCensus.members(sets)]
@@ -211,12 +238,15 @@ module Operator
          require File.join(MASTER, "tools/data_reach")
          unnamed = Operator::DataReach.unnamed
          [unnamed.size, Operator::DataReach.ceiling, unnamed]
-       end,
-       # Sibling to data_reach, one level up: that asks whether a declaration
-       # has a reader, this whether a whole file does. It reads 0 and the row
-       # exists to hold it there — an unreached file is how lib/ grows without
-       # anything failing.
-       master_row("code_reach", "data/code_reach.yml", "lib files nothing names") do
+       end]
+    end
+
+    # code_reach is sibling to data_reach, one level up: that asks whether a
+    # declaration has a reader, this whether a whole file does. It reads 0 and
+    # the row exists to hold it there — an unreached file is how lib/ grows
+    # without anything failing.
+    def code_and_namespace_rows
+      [master_row("code_reach", "data/code_reach.yml", "lib files nothing names") do
          require File.join(MASTER, "tools/code_reach")
          unreached = Operator::CodeReach.unreached
          [unreached.size, Operator::CodeReach.ceiling, unreached]
@@ -225,14 +255,17 @@ module Operator
          require File.join(MASTER, "lib/operator/namespace_ratchet")
          flat = Operator::NamespaceRatchet.ceilings.keys.flat_map { |dir| Operator::NamespaceRatchet.flat_files(dir) }
          [flat.size, Operator::NamespaceRatchet.ceilings.values.sum, flat]
-       end,
-       *%w[lone_dirs stutter vague_names].map do |kind|
-         master_row("sprawl.#{kind}", "data/sprawl_census.yml", "the shape of the tree, in all four of them") do
-           require File.join(MASTER, "lib/operator/sprawl_census")
-           [Operator::SprawlCensus.counts.fetch(kind), Operator::SprawlCensus.ceilings.fetch(kind),
-            Array(Operator::SprawlCensus.public_send(kind))]
-         end
-       end].compact
+       end]
+    end
+
+    def sprawl_rows
+      %w[lone_dirs stutter vague_names].map do |kind|
+        master_row("sprawl.#{kind}", "data/sprawl_census.yml", "the shape of the tree, in all four of them") do
+          require File.join(MASTER, "lib/operator/sprawl_census")
+          [Operator::SprawlCensus.counts.fetch(kind), Operator::SprawlCensus.ceilings.fetch(kind),
+           Array(Operator::SprawlCensus.public_send(kind))]
+        end
+      end
     end
 
     # A block may return [current, ceiling] or [current, ceiling, members]; the
@@ -351,6 +384,19 @@ module Operator
 # and ten of them, through workflow triad sweep scan fix self critique council
 # review, are one pipeline. Five slash names resolve to two stages.
 def command_rows
+  names = command_surface_names
+
+  [Row.new(name: "command_surface", current: names.size,
+           ceiling: YAML.safe_load_file(File.join(MASTER, "data/spine.yml")).fetch("command_surface"),
+           direction: :down, source: "MASTER/data/spine.yml",
+           note: "names a person or a model can type; an alias is a name",
+           members: names)]
+rescue StandardError => e
+  [Row.new(name: "command_surface", current: nil, ceiling: nil, direction: :down,
+           source: "MASTER/data/spine.yml", note: "unreadable: #{e.class}")]
+end
+
+def command_surface_names
   cli = File.read(File.join(MASTER, "lib/cli/command_registry.rb"))
   control = begin
     File.read(File.join(MASTER, "lib/cli/command_registry/control_commands.rb"))
@@ -364,16 +410,7 @@ def command_rows
   inferred = router[/PIPELINE_COMMANDS = %w\[([^\]]+)\]/, 1].to_s.split
   slashes = router[/PIPELINE_SLASH = %w\[([^\]]+)\]/, 1].to_s.split
   subcommands = operator.scan(/^when "([a-z_?-]+)"/).flatten
-  names = (verbs + inferred + slashes + subcommands).uniq.sort
-
-  [Row.new(name: "command_surface", current: names.size,
-           ceiling: YAML.safe_load_file(File.join(MASTER, "data/spine.yml")).fetch("command_surface"),
-           direction: :down, source: "MASTER/data/spine.yml",
-           note: "names a person or a model can type; an alias is a name",
-           members: names)]
-rescue StandardError => e
-  [Row.new(name: "command_surface", current: nil, ceiling: nil, direction: :down,
-           source: "MASTER/data/spine.yml", note: "unreadable: #{e.class}")]
+  (verbs + inferred + slashes + subcommands).uniq.sort
 end
 
     def entrypoint_rows
@@ -578,34 +615,36 @@ end
         Open3.capture2e(RUBY, "gates/runner.rb", gate, chdir: RAILS).first
       end.join("\n")
 
-      ceilings.map do |rule, ceiling|
-        # The SUMMARY line, not the first line that happens to name the rule.
-        #
-        # css_constitution prints one line per finding before its total —
-        # "rhythm: brgen/.../_canvas.scss:21 120px" — so matching any line
-        # mentioning the rule picked a file path and read no number from it.
-        # rhythm was the one rule with findings to print, so it was the one rule
-        # this got wrong, which is the shape a looser regex always has.
-        #
-        # Three spellings, all of them the gates' own:
-        #   "rule: 59, under its 66 ceiling (-7)"   passing with slack
-        #   "rule: 91 exceeds ceiling 90 (+1)"      over
-        #   "rule: at its 0 ceiling"                exactly on it
-        name = Regexp.escape(rule)
-        summary = output.lines.find do |candidate|
-          candidate.match?(/#{name}: (?:\d+,? (?:under|exceeds)|at its \d+ ceiling)/)
-        end
-        current = if summary.nil?
-                    nil
-                  elsif summary.match?(/#{name}: at its \d+ ceiling/)
-                    summary[/#{name}: at its (\d+) ceiling/, 1].to_i
-                  else
-                    summary[/#{name}: (\d+)/, 1]&.to_i
-                  end
-        Row.new(name: "css_budget.#{rule}", current:, ceiling:, direction: :down,
-                source: "RAILS: gates/runner.rb css_constitution",
-                note: current.nil? ? "neither gate printed a count for #{rule} (silent when it passes)" : nil)
+      ceilings.map { |rule, ceiling| css_budget_row(rule, ceiling, output) }
+    end
+
+    # The SUMMARY line, not the first line that happens to name the rule.
+    #
+    # css_constitution prints one line per finding before its total —
+    # "rhythm: brgen/.../_canvas.scss:21 120px" — so matching any line
+    # mentioning the rule picked a file path and read no number from it.
+    # rhythm was the one rule with findings to print, so it was the one rule
+    # this got wrong, which is the shape a looser regex always has.
+    #
+    # Three spellings, all of them the gates' own:
+    #   "rule: 59, under its 66 ceiling (-7)"   passing with slack
+    #   "rule: 91 exceeds ceiling 90 (+1)"      over
+    #   "rule: at its 0 ceiling"                exactly on it
+    def css_budget_row(rule, ceiling, output)
+      name = Regexp.escape(rule)
+      summary = output.lines.find do |candidate|
+        candidate.match?(/#{name}: (?:\d+,? (?:under|exceeds)|at its \d+ ceiling)/)
       end
+      current = if summary.nil?
+                  nil
+                elsif summary.match?(/#{name}: at its \d+ ceiling/)
+                  summary[/#{name}: at its (\d+) ceiling/, 1].to_i
+                else
+                  summary[/#{name}: (\d+)/, 1]&.to_i
+                end
+      Row.new(name: "css_budget.#{rule}", current:, ceiling:, direction: :down,
+              source: "RAILS: gates/runner.rb css_constitution",
+              note: current.nil? ? "neither gate printed a count for #{rule} (silent when it passes)" : nil)
     end
 
     def css_budget_ceilings

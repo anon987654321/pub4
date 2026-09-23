@@ -203,29 +203,30 @@ module Deploy
       name = File.basename(path)
       progress "#{index + 1}/#{@targets.size} #{name} #{status.success? ? "ok" : "findings"} in #{elapsed}s"
 
-      # A crash is not a finding count, and `/scan` exits 0 whether it found 0 or
-      # 410 — so the exit status says almost nothing and the count has to come out
-      # of the output.
-      #
-      # Order matters: the marker grep used to run first and swept the whole
-      # output, so a *finding* that quoted "uninitialized constant" or "No such
-      # file" made a completed scan report as a crash. amber failed this gate on
-      # 2026-08-03 having scanned cleanly to 79-plus findings. A run that printed
-      # its violation count did not crash, whatever its findings say.
       count = first_pass_count(stdout)
-      if count.nil?
-        if stdout.to_s.match?(/LoadError|SyntaxError|uninitialized constant|No such file/)
-          @result.fail("constitutional scan crashed for #{path}: #{stdout.lines.last(3).join}")
-        else
-          @result.inconclusive!("#{name}: scan printed no violation count (#{elapsed}s) — output shape changed?")
-        end
-        return
-      end
+      return report_missing_count(path, name, stdout, elapsed) if count.nil?
 
       @result.checked!
       judge_count(name, count)
     rescue StandardError => e
       @result.fail("constitutional scan error for #{path}: #{e.class}: #{e.message}")
+    end
+
+    # A crash is not a finding count, and `/scan` exits 0 whether it found 0 or
+    # 410 — so the exit status says almost nothing and the count has to come out
+    # of the output.
+    #
+    # Order matters: the marker grep used to run first and swept the whole
+    # output, so a *finding* that quoted "uninitialized constant" or "No such
+    # file" made a completed scan report as a crash. amber failed this gate on
+    # 2026-08-03 having scanned cleanly to 79-plus findings. A run that printed
+    # its violation count did not crash, whatever its findings say.
+    def report_missing_count(path, name, stdout, elapsed)
+      if stdout.to_s.match?(/LoadError|SyntaxError|uninitialized constant|No such file/)
+        @result.fail("constitutional scan crashed for #{path}: #{stdout.lines.last(3).join}")
+      else
+        @result.inconclusive!("#{name}: scan printed no violation count (#{elapsed}s) — output shape changed?")
+      end
     end
 
     # The FIRST `scan: done` line and nothing else — the aesthetic pass, which is
@@ -350,7 +351,13 @@ module Deploy
 
     def self.run
       result = GateResult.new
+      check_needles(result)
+      check_tts_worker(result)
+      check_host_backend(result)
+      result
+    end
 
+    def self.check_needles(result)
       CHECKS.each do |relative_path, needles|
         result.checked!(needles.size)
         path = File.join(ROOT, relative_path)
@@ -364,21 +371,26 @@ module Deploy
           result.fail("#{relative_path} missing #{needle.inspect}") unless body.include?(needle)
         end
       end
+    end
+    private_class_method :check_needles
 
+    def self.check_tts_worker(result)
       result.checked!
       worker = File.join(MASTER, "bin", "tts-worker")
       result.fail("MASTER/bin/tts-worker must be executable") unless File.executable?(worker)
-
-      if ENV["MASTER_TTS_REQUIRE_HOST_BACKEND"] == "1"
-        host_backend = system("command", "-v", "edge-tts", out: File::NULL, err: File::NULL) ||
-          system("command", "-v", "espeak", out: File::NULL, err: File::NULL) ||
-          File.executable?("/usr/local/bin/espeak") ||
-          File.executable?("/usr/bin/espeak")
-        result.fail("host missing edge-tts/espeak backend") unless host_backend
-      end
-
-      result
     end
+    private_class_method :check_tts_worker
+
+    def self.check_host_backend(result)
+      return unless ENV["MASTER_TTS_REQUIRE_HOST_BACKEND"] == "1"
+
+      host_backend = system("command", "-v", "edge-tts", out: File::NULL, err: File::NULL) ||
+        system("command", "-v", "espeak", out: File::NULL, err: File::NULL) ||
+        File.executable?("/usr/local/bin/espeak") ||
+        File.executable?("/usr/bin/espeak")
+      result.fail("host missing edge-tts/espeak backend") unless host_backend
+    end
+    private_class_method :check_host_backend
   end
 end
 
@@ -405,7 +417,13 @@ module Deploy
 
     def self.run
       result = GateResult.new
+      check_design_token_drift(result)
+      check_manifest(result)
+      check_deploy_scripts(result)
+      result
+    end
 
+    def self.check_design_token_drift(result)
       result.checked!(2)
       if (drift = DesignTokens.face_root_drift?(FACE_CSS))
         result.fail(drift)
@@ -413,42 +431,54 @@ module Deploy
       if (drift = DesignTokens.scss_anchor_drift?)
         result.fail(drift)
       end
+    end
+    private_class_method :check_design_token_drift
 
-      unless File.file?(MANIFEST)
-        # MASTER/web/public/assets is gitignored — precompile writes it, and only
-        # where something has run precompile. So its absence means two different
-        # things, and this reported the harsher one everywhere: on the deploy host
-        # a missing manifest is a real broken deploy, but in a fresh clone or a
-        # `MASTER/bin/operator worktree` checkout it means nobody has built assets here
-        # yet. That made `production` fail on arrival in any new working copy,
-        # which is a gate people learn to read past — and this one guards the
-        # face's assets.
-        #
-        # Inconclusive off the host, per the same rule the rendered gates follow:
-        # a gate that measured nothing says so rather than picking a verdict.
-        # GATE_STRICT_INCONCLUSIVE=1 still turns it into a failure.
-        if DEPLOY_HOST_MARKERS.any? { |marker| File.exist?(marker) }
-          result.fail("missing #{MANIFEST} — run: cd MASTER/web && RAILS_ENV=production bundle exec rails assets:precompile")
-        else
-          result.inconclusive!("MASTER/web assets not precompiled in this checkout — " \
-                               "gitignored, so nothing to read until `cd MASTER/web && " \
-                               "RAILS_ENV=production bundle exec rails assets:precompile` has run here")
-        end
+    def self.check_manifest(result)
+      return check_manifest_missing(result) unless File.file?(MANIFEST)
+
+      manifest = JSON.parse(File.read(MANIFEST))
+      REQUIRED.each { |logical| check_manifest_entry(result, manifest, logical) }
+    end
+    private_class_method :check_manifest
+
+    # MASTER/web/public/assets is gitignored — precompile writes it, and only
+    # where something has run precompile. So its absence means two different
+    # things, and this reported the harsher one everywhere: on the deploy host
+    # a missing manifest is a real broken deploy, but in a fresh clone or a
+    # `MASTER/bin/operator worktree` checkout it means nobody has built assets here
+    # yet. That made `production` fail on arrival in any new working copy,
+    # which is a gate people learn to read past — and this one guards the
+    # face's assets.
+    #
+    # Inconclusive off the host, per the same rule the rendered gates follow:
+    # a gate that measured nothing says so rather than picking a verdict.
+    # GATE_STRICT_INCONCLUSIVE=1 still turns it into a failure.
+    def self.check_manifest_missing(result)
+      if DEPLOY_HOST_MARKERS.any? { |marker| File.exist?(marker) }
+        result.fail("missing #{MANIFEST} — run: cd MASTER/web && RAILS_ENV=production bundle exec rails assets:precompile")
       else
-        manifest = JSON.parse(File.read(MANIFEST))
-        REQUIRED.each do |logical|
-          result.checked!
-          entry = manifest[logical]
-          result.fail("manifest missing #{logical}") unless entry
-          next unless entry
-
-          digested = entry["digested_path"].to_s
-          result.fail("manifest #{logical} has empty digested_path") if digested.empty?
-          path = File.join(ASSETS_DIR, digested)
-          result.fail("missing digested asset #{digested} for #{logical}") unless File.file?(path)
-        end
+        result.inconclusive!("MASTER/web assets not precompiled in this checkout — " \
+                             "gitignored, so nothing to read until `cd MASTER/web && " \
+                             "RAILS_ENV=production bundle exec rails assets:precompile` has run here")
       end
+    end
+    private_class_method :check_manifest_missing
 
+    def self.check_manifest_entry(result, manifest, logical)
+      result.checked!
+      entry = manifest[logical]
+      result.fail("manifest missing #{logical}") unless entry
+      return unless entry
+
+      digested = entry["digested_path"].to_s
+      result.fail("manifest #{logical} has empty digested_path") if digested.empty?
+      path = File.join(ASSETS_DIR, digested)
+      result.fail("missing digested asset #{digested} for #{logical}") unless File.file?(path)
+    end
+    private_class_method :check_manifest_entry
+
+    def self.check_deploy_scripts(result)
       DEPLOY_SCRIPTS.each do |relative_path, restart_mode|
         result.checked!
         path = File.join(ROOT, relative_path)
@@ -473,8 +503,7 @@ module Deploy
           result.fail("#{relative_path} must start or restart master after precompile")
         end
       end
-
-      result
     end
+    private_class_method :check_deploy_scripts
   end
 end

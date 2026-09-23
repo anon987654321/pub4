@@ -135,6 +135,11 @@ module Operator
       found = report
       return (puts JSON.pretty_generate(found)) || found[:dangling].empty? if json
 
+      print_findings(found)
+      warn_ceilings(found)
+    end
+
+    def print_findings(found)
       puts "autofix_reach: #{found[:named]} rule(s) name a transform, #{found[:bare_true].size} say only `true`"
 
       if found[:dangling].empty?
@@ -146,12 +151,14 @@ module Operator
       end
 
       undetectable = found[:bare_true].reject { |b| b[:detected] }
-      unless undetectable.empty?
-        warn "autofix_reach: #{undetectable.size} rule(s) claim autofix and nothing reports them — " \
-             "no detector in rules.yml, law/ or the registry, or a semantic-only detector the info " \
-             "filter drops: #{undetectable.map { |b| b[:rule] }.join(', ')}"
-      end
+      return if undetectable.empty?
 
+      warn "autofix_reach: #{undetectable.size} rule(s) claim autofix and nothing reports them — " \
+           "no detector in rules.yml, law/ or the registry, or a semantic-only detector the info " \
+           "filter drops: #{undetectable.map { |b| b[:rule] }.join(', ')}"
+    end
+
+    def warn_ceilings(found)
       c = ceilings
       over = []
       over << "dangling #{found[:dangling].size} > #{c['dangling']}" if found[:dangling].size > c["dangling"]

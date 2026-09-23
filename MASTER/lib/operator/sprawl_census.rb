@@ -141,14 +141,7 @@ module Operator
       now = counts
       recorded = ceilings
       now.each { |k, v| puts "sprawl_census: #{k} #{v} (ceiling #{recorded.fetch(k, v)})" }
-
-      if list
-        { "lone_dirs" => lone_dirs, "stutter" => stutter, "vague_names" => vague_names }.each do |kind, files|
-          puts "\n#{kind} (#{files.size})"
-          files.each { |f| puts "  #{f}" }
-        end
-        return 0
-      end
+      return list_members if list
 
       over = now.select { |k, v| v > recorded.fetch(k, v) }
       if ratchet && now.any? { |k, v| v < recorded.fetch(k, v) }
@@ -161,6 +154,14 @@ module Operator
 
       over.each { |k, v| puts "sprawl_census: #{k} rose to #{v} from #{recorded.fetch(k)} — flatten it, name it, or price the ceiling" }
       1
+    end
+
+    def list_members
+      { "lone_dirs" => lone_dirs, "stutter" => stutter, "vague_names" => vague_names }.each do |kind, files|
+        puts "\n#{kind} (#{files.size})"
+        files.each { |f| puts "  #{f}" }
+      end
+      0
     end
   end
 end
