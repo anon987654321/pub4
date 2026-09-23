@@ -7,6 +7,11 @@ module Master
     DEFAULT_TREES = %w[MASTER OPENBSD RAILS STUDIO].freeze
     DEFAULT_OUTPUT = File.join(REPO_ROOT, "snapshot_MASTER.md")
     SKIP = %w[.git .bundle node_modules vendor tmp log coverage storage cache dist build].freeze
+    BINARY_EXTENSIONS = %w[
+      .7z .aac .avi .bin .bmp .class .db .db3 .dll .dmg .doc .docx .eot .exe .flac
+      .gif .gz .ico .jpeg .jpg .m4a .mov .mp3 .mp4 .ogg .otf .pdf .png .ppt .pptx
+      .so .sqlite .sqlite3 .tar .tif .tiff .ttf .wav .webm .webp .woff .woff2 .xls .xlsx .zip
+    ].freeze
     TEXT_EXTENSIONS = %w[.rb .rake .gemspec .ru .yml .yaml .json .js .mjs .ts .tsx .jsx .css .scss .html .erb .sh .zsh .md .txt].freeze
     NAMED_TEXT = %w[Gemfile Rakefile Guardfile Capfile Brewfile Vagrantfile config.ru].freeze
 
@@ -56,6 +61,10 @@ module Master
     end
 
     def text_file?(path)
+      relative = path.delete_prefix(@root + File::SEPARATOR)
+      return false if relative.split(File::SEPARATOR).any? { |part| part.start_with?(".") }
+      return false if BINARY_EXTENSIONS.include?(File.extname(path).downcase)
+
       ext = File.extname(path).downcase
       TEXT_EXTENSIONS.include?(ext) || NAMED_TEXT.include?(File.basename(path))
     end
