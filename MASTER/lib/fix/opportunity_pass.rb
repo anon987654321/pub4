@@ -20,6 +20,10 @@ module Master
         "MASTER/lib/operator/ratchets.rb" => 600,
       }.freeze
 
+      Rule = Data.define(:id) do
+        def severity = :warning
+      end
+
       Finding = Data.define(:file, :line, :message, :fix) do
         def to_h
           {
