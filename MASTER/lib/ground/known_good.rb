@@ -2,6 +2,7 @@
 
 require "json"
 require "fileutils"
+require "time"
 require_relative "boot_receipt"
 require_relative "../io/atomic_write"
 
@@ -52,8 +53,9 @@ module Master
         record = current
         return false unless record
 
-        out, status = Master::Io::Exec.capture2e("git", "-C", @root, "rev-parse", "HEAD")
-        status.success? && out.strip == record["commit"]
+        current = resolve_commit("HEAD")
+        expected = resolve_commit(record["commit"])
+        current && expected && current == expected
       end
 
       def rollback!
@@ -77,6 +79,11 @@ module Master
         BootReceipt.digest(root: @root)
       rescue StandardError
         "unmeasured"
+      end
+
+      def resolve_commit(ref)
+        out, status = Master::Io::Exec.capture2e("git", "-C", @root, "rev-parse", "--verify", "#{ref}^{commit}")
+        status.success? ? out.strip : nil
       end
 
       def dirty?
