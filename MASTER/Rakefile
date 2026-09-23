@@ -215,6 +215,7 @@ desc "Run every discovered tree's native tests plus source/config smoke checks"
 task "test:all_trees" do
   root = File.expand_path("..", __dir__)
   ignored = %w[.git .bundle node_modules vendor tmp log coverage storage cache dist build]
+  ignored_path = ->(path) { ignored.any? { |part| path.split(File::SEPARATOR).include?(part) } }
   trees = Dir.children(root).select do |name|
     path = File.join(root, name)
     File.directory?(path) && !name.start_with?(".") && !ignored.include?(name)
@@ -224,36 +225,61 @@ task "test:all_trees" do
 
   trees.each do |tree|
     path = File.join(root, tree)
+    ruby_files = Dir.glob(File.join(path, "**", "*.rb")).reject { |file| ignored_path.call(file) }
+    test_files = Dir.glob(File.join(path, "**", "*_test.rb")).reject { |file| ignored_path.call(file) }
+    test_files.concat(Dir.glob(File.join(path, "**", "test_*.rb")).reject { |file| ignored_path.call(file) })
+    test_files.uniq!
     inventory[tree] = {
-      ruby: Dir.glob(File.join(path, "**", "*.rb")).count { |f| !ignored.any? { |part| f.split(File::SEPARATOR).include?(part) } },
-      tests: Dir.glob(File.join(path, "**", "test", "test_*.rb")).size,
-      shell: Dir.glob(File.join(path, "**", "*.{sh,zsh,ksh}")).size,
-      javascript: Dir.glob(File.join(path, "**", "*.{js,mjs}")).size
+      ruby: ruby_files.size,
+      tests: test_files.size,
+      shell: Dir.glob(File.join(path, "**", "*.{sh,zsh,ksh}")).count { |file| !ignored_path.call(file) },
+      javascript: Dir.glob(File.join(path, "**", "*.{js,mjs}")).count { |file| !ignored_path.call(file) }
     }
 
-    Dir.glob(File.join(path, "**", "*.rb")).reject { |f| ignored.any? { |part| f.split(File::SEPARATOR).include?(part) } }.each do |file|
+    ruby_files.each do |file|
       failures << "#{file}: Ruby syntax" unless system(RbConfig.ruby, "-c", file, out: File::NULL, err: File::NULL)
     end
 
-    Dir.glob(File.join(path, "**", "test", "test_*.rb")).sort.each do |test|
-      lib = File.join(path, "lib")
-      test_dir = File.join(path, "test")
-      args = ["-I#{lib}", "-I#{test_dir}", test]
+    test_roots = Dir.glob(File.join(path, "**", "Rakefile")).select { |file| !ignored_path.call(file) }
+    test_roots.each do |rakefile|
+      suite = File.dirname(rakefile)
+      next unless File.read(rakefile).match?(/(?:task|Rake::TestTask).*test/)
+      failures << "#{suite}: rake test" unless system(RbConfig.ruby, "-S", "rake", "test", chdir: suite)
+    end
+
+    standalone_tests = test_files.reject do |file|
+      test_roots.any? { |rakefile| file.start_with?(File.dirname(rakefile) + File::SEPARATOR) }
+    end
+    standalone_tests.each do |test|
+      suite_root = File.dirname(test)
+      while suite_root != path && !File.file?(File.join(suite_root, "test_helper.rb"))
+        suite_root = File.dirname(suite_root)
+      end
+      lib = File.join(suite_root, "lib")
+      test_dir = File.join(suite_root, "test")
+      load_paths = [lib, test_dir].select { |dir| File.directory?(dir) }
+      args = load_paths.map { |dir| "-I#{dir}" } + [test]
       failures << "#{test}: test process" unless system(RbConfig.ruby, *args)
     end
 
-    shell = if File.file?("/bin/zsh")
-      ["/bin/zsh", "-n"]
-    else
-      ["sh", "-n"]
-    end
-    Dir.glob(File.join(path, "**", "*.{sh,zsh,ksh}")).reject { |f| ignored.any? { |part| f.split(File::SEPARATOR).include?(part) } }.each do |file|
-      failures << "#{file}: shell syntax" unless system(*shell, file, out: File::NULL, err: File::NULL)
+    Dir.glob(File.join(path, "**", "*.{sh,zsh,ksh}")).reject { |file| ignored_path.call(file) }.each do |file|
+      first = File.foreach(file).first.to_s
+      shell = if first.include?("zsh")
+        ["zsh", "-n"]
+      elsif first.include?("ksh")
+        ["ksh", "-n"]
+      else
+        ["sh", "-n"]
+      end
+      next unless system(*shell, file, out: File::NULL, err: File::NULL)
+      next
+    rescue Errno::ENOENT
+      warn "test:all_trees: #{file}: interpreter unavailable; syntax not measured"
     end
   end
 
   %w[yml yaml json].each do |ext|
-    Dir.glob(File.join(root, "**", "*.#{ext}")).reject { |f| ignored.any? { |part| f.split(File::SEPARATOR).include?(part) } }.each do |file|
+    Dir.glob(File.join(root, "**", "*.#{ext}")).reject { |file| ignored_path.call(file) }.each do |file|
       loader = ext == "json" ? "require 'json'; JSON.parse(File.read(ARGV.fetch(0)))" : "require 'yaml'; YAML.safe_load_file(ARGV.fetch(0), permitted_classes: [Symbol], aliases: true)"
       failures << "#{file}: #{ext} parse" unless system(RbConfig.ruby, "-e", loader, file, out: File::NULL, err: File::NULL)
     end
@@ -262,10 +288,11 @@ task "test:all_trees" do
   inventory.each do |tree, counts|
     next if counts[:ruby].zero? || counts[:tests].positive?
     next if tree == "__bplans"
-    warn "test:all_trees: #{tree}: #{counts[:ruby]} Ruby source file(s), no discovered test/test_*.rb"
+    warn "test:all_trees: #{tree}: #{counts[:ruby]} Ruby source file(s), no discovered *_test.rb/test_*.rb"
   end
 
   abort "test:all_trees: #{failures.size} failure(s)\n#{failures.join("\n")}" unless failures.empty?
+  inventory.each { |tree, counts| puts "test:all_trees: #{tree}: ruby=#{counts[:ruby]} tests=#{counts[:tests]} shell=#{counts[:shell]} javascript=#{counts[:javascript]}" }
   puts "test:all_trees: #{trees.join(", ")} clean"
 end
 
