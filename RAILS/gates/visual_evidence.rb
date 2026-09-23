@@ -4,6 +4,7 @@
 require "fileutils"
 require "json"
 require "optparse"
+require "tmpdir"
 require "chunky_png"
 
 require_relative "support/geometry_probe"
