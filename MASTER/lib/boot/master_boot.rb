@@ -37,7 +37,14 @@ module Master
     end
 
     def ensure_services!(root: ROOT)
-      Voice::TtsSupervisor.ensure_daemon!(root:) unless ENV["MASTER_SKIP_TTS"] == "1"
+      return true if ENV["MASTER_SKIP_TTS"] == "1"
+
+      Voice::TtsSupervisor.ensure_daemon!(root:)
+    rescue StandardError => e
+      # Optional presentation services may fail without making the constitutional
+      # runtime unusable. Keep boot alive, but make the degradation explicit.
+      warn("tts0: degraded — #{e.class}: #{e.message}")
+      false
     end
 
     def boot(root: Dir.pwd)
@@ -45,7 +52,8 @@ module Master
 
       prepare_runtime!
       Ground::Pledge.stage1_boot!(root)
-      ensure_services!(root:)
+      service_ok = ensure_services!(root:)
+      warn("master0: continuing in degraded presentation mode") unless service_ok
       container = bootstrap_container(root:)
       Ground::Pledge.stage2_lock!
       CLI::WebServer.start(container[:config])
