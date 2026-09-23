@@ -146,7 +146,7 @@ module Master
 
       def grep_sources(token)
         out, status = Open3.capture2(
-          "git", "-C", @root, "grep", "-l", "--fixed-strings", token, "--", "RAILS", "web"
+          "git", "-C", repo_root, "grep", "-l", "--fixed-strings", token, "--", "RAILS", "web"
         )
         return [] unless status.success?
 
