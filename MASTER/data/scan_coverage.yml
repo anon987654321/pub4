@@ -53,7 +53,7 @@ scan_coverage:
       how a self-scanning gate learns to fail on its own evidence.
     tools: >-
       Standalone scripts run by rake and by hand, outside the Zeitwerk loader and
-      outside the runtime. Exempt from SelfCheck only: tools/self_findings.rb
+      outside the runtime. Exempt from SelfCheck only: lib/operator/self_findings.rb
       counts MASTER/tools under its ratchet, so a finding here is measured and
       cannot grow silently.
     script: >-
@@ -63,5 +63,5 @@ scan_coverage:
       test:web_ui, test:integration_web). MASTER's scanner law is written for the
       runtime, and applying rules like DENSITY to ERB-adjacent controllers
       produces findings nobody acts on. The face law (FOR_OF, TEMPLATE_LITERALS,
-      NO_JQUERY and the rest) is still counted: tools/self_findings.rb reads
+      NO_JQUERY and the rest) is still counted: lib/operator/self_findings.rb reads
       MASTER/web under its ratchet, skipping only generated bundles.
