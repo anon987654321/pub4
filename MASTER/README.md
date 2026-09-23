@@ -99,13 +99,20 @@ The executable Law layer now contains 140 universal definitions plus four Rails-
 
 ## Rendered convergence
 
-Source-clean is not visual-clean. When `/fix` targets `RAILS/` or
-`MASTER/web`, MASTER captures real browser surfaces through the existing
+Source-clean is not improvement-clean. Every `/fix` pass starts with deterministic
+observation and, for `RAILS/` or `MASTER/web`, a real rendered observation. or `MASTER/web`, MASTER captures real browser surfaces through the existing
 GeometryProbe/CDP gates, gives the screenshot and measured geometry to the UI
 council, turns the council's selected repairs into ordinary fix-loop findings,
-and renders again on the next pass. Typography, hierarchy, spacing, alignment,
-density, composition and responsive behavior are therefore part of convergence,
-not a final human-afterthought.
+and renders again on the next pass. Typography, hierarchy, spacing,
+alignment, density, composition and responsive behavior are therefore part of
+convergence, not a final human-afterthought.
+
+A source-clean non-web target is treated the same way conceptually: MASTER makes
+one anchored Council improvement pass looking for real simplification, naming,
+duplication, complexity, prose, accessibility and layout-adjacent micro-smells,
+then feeds selected repairs through the ordinary RuleLoop. Unanchored taste,
+speculative redesign and hallucinated defects never become automatic fixes.
+
 
 The browser is evidence, not decoration: when the capture or visual council
 cannot run, the pass says INCONCLUSIVE rather than claiming DONE.
