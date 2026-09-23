@@ -15,6 +15,7 @@ module Master
         # work with this message. A refused add or commit raises: a pre-commit
         # hook that said no used to read as a commit.
         def commit(message, paths:)
+          Master::Ground::LawHandshake::Admission.require!
           scoped = Array(paths).map(&:to_s).reject(&:empty?)
           raise ArgumentError, "git commit needs paths: an unscoped commit takes the shared index" if scoped.empty?
 
