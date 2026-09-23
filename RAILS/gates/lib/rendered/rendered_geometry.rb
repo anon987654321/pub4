@@ -135,6 +135,7 @@ module Deploy
       check_edge_alignment(surface, elements)
       check_target_spacing(surface, elements)
       check_centered_prose(surface, elements)
+      check_visual_composition(surface, data)
       check_rhythm(surface, data, GeometryType.check(@result, surface, data))
     end
 
@@ -360,6 +361,38 @@ module Deploy
       @result.fail(
         "geometry centered_prose: #{surface.id} centres #{offenders.size} block(s) past " \
         "#{max_lines} lines — #{offenders.first(3).join('; ')} (principle=alignment)", severity: :soft
+      )
+    end
+
+    def check_visual_composition(surface, data)
+      visual = data["visual"] || {}
+      first = visual["first_screen"] || {}
+      typography = visual["typography"] || {}
+
+      sizes = Array(typography["distinct_font_sizes"]).map(&:to_f).select(&:positive?)
+      max_sizes = @rules.dig("typography", "hierarchy", "max_font_sizes").to_i
+      if max_sizes.positive? && sizes.size > max_sizes
+        @result.fail(
+          "geometry composition: #{surface.id} first screen renders #{sizes.size} type sizes > "           "#{max_sizes} allowed — reduce the visual vocabulary (principle=typography)",
+          severity: :soft
+        )
+      end
+
+      heading = Array(typography["heading_sizes"]).find { |row| row["tag"] == "h1" }&.fetch("px", nil)
+      body = typography["body_median_px"].to_f
+      if heading.to_f.positive? && body.positive? && heading < body * 1.4
+        @result.fail(
+          "geometry composition: #{surface.id} h1 is #{heading}px vs median body #{body.round(1)}px — "           "hierarchy is visually weak (principle=hierarchy)",
+          severity: :soft
+        )
+      end
+
+      long_centered = first["centered_long_text"].to_i
+      return if long_centered.zero?
+
+      @result.fail(
+        "geometry composition: #{surface.id} has #{long_centered} long centered text block(s) "         "in the first screen — prefer a readable measure and directional alignment (principle=alignment)",
+        severity: :soft
       )
     end
 
