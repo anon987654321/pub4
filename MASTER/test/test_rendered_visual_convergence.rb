@@ -15,6 +15,8 @@ class TestRenderedVisualConvergence < Minitest::Test
     assert_includes walk, "largest_area_ratio"
     assert_includes walk, "weak-heading-scale"
     assert_includes walk, "many-first-screen-actions"
+    assert_includes walk, "text_box_width_em_approx"
+    refute_includes walk, "text_measures_ch_approx"
   end
 
   def test_visual_contract_uses_the_canonical_cdp_substrate
@@ -36,6 +38,18 @@ class TestRenderedVisualConvergence < Minitest::Test
     assert_includes source, "viewport"
     assert_includes source, "anchor = selector || text_anchor"
     assert_includes source, "VISUAL_CLEAN"
+  end
+
+  def test_rendered_review_cannot_guess_an_unanchored_source_file
+    source = read("lib/fix/rendered_review.rb")
+    refute_includes source, "file ||= source_files.first"
+    assert_includes source, "return unless file"
+  end
+
+  def test_cdp_console_evidence_can_be_reset_between_pages
+    source = read("../RAILS/gates/support/cdp_session.rb")
+    assert_includes source, "def clear_events = @events.clear"
+    assert_includes read("../RAILS/gates/visual_contract.rb"), "cdp.clear_events"
   end
 
   def test_ui_critique_excludes_judge_from_issue_numbering
