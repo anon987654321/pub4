@@ -102,7 +102,7 @@ module Deploy
     # into a sibling or lowers the count elsewhere; raising the ceiling wants the
     # reason in the commit.
     #
-    # Not the same budget as `growth.studio` in MASTER/tools/ratchets.rb, which
+    # Not the same budget as `growth.studio` in MASTER/lib/operator/ratchets.rb, which
     # counts every tracked file in STUDIO. This one counts dilla's Ruby beside
     # the engine and nothing else.
     DILLA_SUPPORT = %r{/dilla/(?:lib/.+|(?!dilla\.rb\z)[^/]+\.rb)\z}
