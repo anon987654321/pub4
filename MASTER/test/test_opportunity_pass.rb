@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "fileutils"
 require "tmpdir"
 
 class OpportunityPassTest < Minitest::Test
@@ -44,7 +45,7 @@ class OpportunityPassTest < Minitest::Test
       FileUtils.mkdir_p([amber, brgen])
       amber_file = File.join(amber, "view.html.erb")
       brgen_file = File.join(brgen, "view.html.erb")
-      File.write(amber_file, "<p>RAILS/brgen/view.html.erb</p>\n")
+      File.write(amber_file, "<p>RAILS/brgen/missing.html.erb</p>\n")
       File.write(brgen_file, "<p>ok</p>\n")
 
       result = Master::Fix::OpportunityPass.new(root:).run(target: amber, files: [amber_file])
