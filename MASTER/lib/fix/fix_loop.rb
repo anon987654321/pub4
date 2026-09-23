@@ -107,6 +107,7 @@ module Master
             end
             @run_journal.pass_finish(run_id, active_pass.fetch("pass"), status: :committed,
                                      message: "recovered Git delivery")
+            start_pass = active_pass.fetch("pass").to_i + 1
           end
         end
 
