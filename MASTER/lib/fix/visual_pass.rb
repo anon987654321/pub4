@@ -89,7 +89,7 @@ module Master
             next unless Deploy::GeometryProbe.ok?(payload)
 
             shot = File.join(@dir, "#{safe_slug(surface.id)}.png")
-            cdp.screenshot(shot)
+            cdp.screenshot(shot, capture_beyond_viewport: true)
             captures << { surface:, payload:, screenshot: shot }
           end
         end
