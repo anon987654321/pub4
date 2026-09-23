@@ -36,4 +36,23 @@ class OpportunityPassTest < Minitest::Test
       assert findings.any? { |finding| finding[:message].include?("parallel tool/operator") }
     end
   end
+  def test_subtree_fix_does_not_surface_outside_files
+    Dir.mktmpdir do |root|
+      rails = File.join(root, "RAILS")
+      amber = File.join(rails, "amber")
+      brgen = File.join(rails, "brgen")
+      FileUtils.mkdir_p([amber, brgen])
+      amber_file = File.join(amber, "view.html.erb")
+      brgen_file = File.join(brgen, "view.html.erb")
+      File.write(amber_file, "<p>RAILS/brgen/view.html.erb</p>\n")
+      File.write(brgen_file, "<p>ok</p>\n")
+
+      result = Master::Fix::OpportunityPass.new(root:).run(target: amber, files: [amber_file])
+      findings = result.value.fetch(:findings)
+
+      assert findings.all? { |finding| finding[:file] == amber_file }
+      refute findings.any? { |finding| finding[:file] == brgen_file }
+    end
+  end
+
 end
