@@ -9,6 +9,8 @@ module Master::Core::Routing
   class CapabilityMap
     include Master::Io::AtomicWrite
 
+    MIN_SAMPLES = 3
+
     attr_reader :scores, :path
 
     def initialize(path: nil)
@@ -43,12 +45,27 @@ module Master::Core::Routing
       stats[:successes].to_f / stats[:attempts].to_i
     end
 
+    def confidence(model_id, task_class, min_samples: MIN_SAMPLES)
+      attempts = @scores.dig(model_id, task_class.to_s, :attempts).to_i
+      return 0.0 if attempts.zero?
+
+      [attempts.fdiv([min_samples.to_i, 1].max), 1.0].min
+    end
+
+    def score_for(model_id, task_class, min_samples: MIN_SAMPLES)
+      rate = success_rate(model_id, task_class)
+      confidence = confidence(model_id, task_class, min_samples:)
+      0.5 + ((rate - 0.5) * confidence)
+    end
+
     def best_model_for(task_class, _constraints = {})
-      @scores.each_with_object({ best: nil, rate: -1.0 }) do |(model_id, tasks), result|
-        rate = success_rate(model_id, task_class)
-        if rate > result[:rate]
+      @scores.each_with_object({ best: nil, score: -1.0 }) do |(model_id, tasks), result|
+        next unless tasks[task_class.to_s].to_h.fetch(:attempts, 0).to_i >= MIN_SAMPLES
+
+        score = score_for(model_id, task_class)
+        if score > result[:score]
           result[:best] = model_id
-          result[:rate] = rate
+          result[:score] = score
         end
       end[:best]
     end
