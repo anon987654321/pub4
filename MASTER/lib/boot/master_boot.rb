@@ -1,4 +1,4 @@
-<sub># frozen_string_literal: true
+# frozen_string_literal: true
 
 require_relative "../ground/service_supervisor"
 
@@ -99,4 +99,3 @@ module Master
     end
   end
 end
-</sub>

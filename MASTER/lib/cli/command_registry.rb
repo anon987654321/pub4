@@ -141,7 +141,12 @@ module Master
       end
 
       def dispatch_device(root, ctx: nil)
-        arg = arg_for(ctx)
+        device_command(arg_for(ctx))
+      rescue Master::Device::Error => e
+        "device0: unavailable — #{e.message}"
+      end
+
+      def device_command(arg)
         case arg
         when "", "status" then Master::Device.status_lines.join("\n")
         when "battery" then Master::Device.battery.to_json
@@ -161,8 +166,6 @@ module Master
         else
           "device  device status  device battery  device camera  device sensors  device audio  device wifi  device volume  device torch [on|off]  device location [gps|network|passive]"
         end
-      rescue Master::Device::Error => e
-        "device0: unavailable — #{e.message}"
       end
 
       def dispatch_clear(session, ctx: nil)
