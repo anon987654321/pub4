@@ -675,31 +675,6 @@ end
     end
   end
 
-
-
-
-
-
-
-  # Ground::Swallow classifies what it swallows and writes it down; until
-  # 2026-08-25 nothing ever read the file back. Its own header says the severity
-  # exists "so the next diagnostic hunt can filter for :load_bearing" — this is
-  # that hunt, and the first run found 4,663 load-bearing swallows from a single
-  # rule that had been failing silently through every scan it belonged to.
-  #
-  # Reads local runtime state, so it reports rather than ratchets: the honest
-  # number depends on how much has run since the log was last cleared.
-
-  # Audits the rules rather than the tree. Fails on a rule whose fixtures only
-  # pass because a fixture is read differently from a real file, and on one that
-  # flags most of what it reads. Both are how a broken detector looks from the
-  # inside — prove! green, findings meaningless.
-
-
-
-
-
-
   desc "No fact declared identically in two data files without a named reason"
   task :dedup do
     $LOAD_PATH.unshift(File.join(__dir__, "lib"))
