@@ -114,6 +114,7 @@ Deploy::GeometryProbe.with_browser(root: ROOT, warm: surfaces) do |cdp|
       "h1_count" => payload["h1_count"],
       "scroll_width" => payload["scroll_width"],
       "client_width" => payload["client_width"],
+      "first_screen" => payload["first_screen"],
     }
   end
 end
