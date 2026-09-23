@@ -70,12 +70,12 @@ module Master
           sources << @session.topic if @session.respond_to?(:topic)
           sources.concat(Array(@session.respond_to?(:messages) ? @session.messages : nil).map { |msg| msg[:content] || msg["content"] })
           sources.compact.flat_map do |text|
-            text.to_s.split(/\\s+/).filter_map do |token|
+            text.to_s.split(/\s+/).filter_map do |token|
               cleaned = token.to_s.strip.delete_prefix("(").delete_suffix(")").delete_suffix(",").delete_suffix(".")
               next unless cleaned.include?(".")
 
               ext = File.extname(cleaned).downcase
-              next unless ext.match?(/\\A\\.[a-z][a-z0-9]*\\z/i)
+              next unless ext.match?(/\A\.[a-z][a-z0-9]*\z/i)
 
               ext
             end
