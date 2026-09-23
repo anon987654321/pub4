@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "yaml"
+require "fileutils"
 require_relative "../../io/atomic_write"
 require_relative "../../io/model_quota"
 require_relative "../../io/quota_gate"
@@ -189,12 +190,50 @@ module Master
           {}
         end
 
+        def inventory_row(id, rank:, task_type:)
+          stat = @mutex.synchronize { @stats[id.to_s]&.dup || {} }
+          {
+            id: id.to_s,
+            rank:,
+            lane: @router.lane_label(id),
+            reachable: true,
+            task: task_type.to_sym,
+            calls: stat.fetch(:calls, 0).to_i,
+            success_rate: success_rate(stat),
+            latency_ms: stat.fetch(:latency_ms, 0).to_f,
+            quota_remaining: quota_remaining(id),
+            quota_state: quota_state(id),
+          }
+        end
+
+        def success_rate(stat)
+          calls = stat.fetch(:calls, 0).to_i
+          calls.zero? ? nil : stat.fetch(:successes, 0).to_f / calls
+        end
+
+        def quota_remaining(id)
+          Master::Io::ModelQuota.remaining(id)
+        rescue StandardError
+          nil
+        end
+
+        def quota_state(id)
+          return :exhausted if Master::Io::ModelQuota.over_quota?(id)
+          return Master::Io::QuotaGate.state if paid_model?(id)
+
+          :available
+        rescue StandardError
+          :unknown
+        end
+
+        def paid_model?(id)
+          text = id.to_s
+          !text.start_with?("ollama:", "ollama/", "local:", "web-chat:") &&
+            !text.end_with?(":free", ":cloud", "-cloud")
+        end
+
         def persist_stats
-          path = stats_path
-          FileUtils.mkdir_p(File.dirname(path))
-          tmp = "#{path}.#{$}.tmp"
-          File.write(tmp, YAML.dump(@stats))
-          File.rename(tmp, path)
+          write_atomic(stats_path, YAML.dump(@stats), fsync: false, fsync_dir: false, mode: 0o600)
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "compute_pool.persist_stats")
         end
