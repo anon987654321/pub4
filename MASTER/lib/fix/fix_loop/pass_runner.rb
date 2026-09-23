@@ -56,11 +56,11 @@ module Master
 
         def violations(files) = @loop_scanner.violations(files)
 
-        def run_pass(files:, target:, pass:, deadline:, history:, seen_snapshots:,
+        def run_pass(files:, target:, pass:, deadline:, transaction_id:, history:, seen_snapshots:,
                      recurring_violations:, consecutive_clean:)
           pass_mtimes = mtimes(files)
           @committer.baseline!
-          transaction = Transaction.new(root: @root, paths: files, bus: @bus)
+          transaction = Transaction.new(root: @root, paths: files, id: transaction_id, bus: @bus)
           @committer.begin_transaction!(transaction)
           @bus&.publish("fix_loop:pass_start", pass:, target:, file_count: files.size)
 
