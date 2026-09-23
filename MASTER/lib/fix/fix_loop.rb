@@ -35,7 +35,7 @@ module Master
       # There is no state here for "a person must decide": nothing in the loop
       # detects one yet, and a state nothing emits is a promise the report
       # cannot keep.
-      TERMINAL_STATES = %i[done plateau blocked validation_failed].freeze
+      TERMINAL_STATES = %i[done plateau blocked validation_failed delivery_failed timeout failed].freeze
 
       IDLE_SLEEP = 300
       STARTUP_DELAY = 90
@@ -188,6 +188,7 @@ module Master
         @run_journal.pass_finish(run_id, pass, status: result.status, message: result.message)
         return terminal(:done, result.message) if result.status == :clean
         return terminal(:validation_failed, result.message) if result.status == :validation_failed
+        return terminal(:delivery_failed, result.message) if result.status == :delivery_failed
 
         result.status == :plateau ? :break : nil
       end
