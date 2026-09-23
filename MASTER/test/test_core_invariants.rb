@@ -43,8 +43,8 @@ class TestCapabilityMap < Minitest::Test
     assert_equal 0.5, @map.score_for("new-model", :coding)
 
     2.times { @map.record_outcome("new-model", :coding, false) }
-    assert_operator @map.score_for("new-model", :coding), :>, 0.5
-    assert_operator @map.score_for("new-model", :coding), :<, 0.0 + 0.5
+    assert_operator @map.score_for("new-model", :coding), :<, 0.5
+    assert_operator @map.score_for("new-model", :coding), :>, 0.0
   end
   end
 end
