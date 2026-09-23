@@ -1,5 +1,6 @@
-require_relative "../ground/service_supervisor"
 # frozen_string_literal: true
+
+require_relative "../ground/service_supervisor"
 
 module Master
   # Builder and CLI boot orchestration for Master.*.
