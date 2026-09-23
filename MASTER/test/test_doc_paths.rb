@@ -59,9 +59,6 @@ class TestDocPaths < Minitest::Test
   # The deliberate exceptions are machine-facing agent contracts, the constitutional
   # data mirrors, the root backlog/map, and the OpenBSD live-operation runbook.
   def test_markdown_stays_at_meaningful_boundaries
-    allowed = [
-      "*.md", # README.md is checked below; this keeps the glob readable.
-    ]
     tracked_md = tracked.select { |path| path.end_with?(".md") }
     extras = tracked_md.reject do |path|
       File.basename(path) == "README.md" ||
