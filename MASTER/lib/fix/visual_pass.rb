@@ -2,11 +2,13 @@
 
 require "base64"
 require "fileutils"
+require "json"
 require "open3"
 require "tmpdir"
 require_relative "../review/council/critique"
 require_relative "rails_visual_graph"
 require_relative "visual_usability"
+require_relative "../../../RAILS/gates/support/mobile_journey_probe"
 
 module Master
   module Fix
@@ -92,7 +94,8 @@ module Master
 
             shot = File.join(@dir, "#{safe_slug(surface.id)}.png")
             cdp.screenshot(shot, capture_beyond_viewport: true)
-            captures << { surface:, payload:, screenshot: shot }
+            journeys = Deploy::MobileJourneyProbe.run(cdp, surface, @dir)
+            captures << { surface:, payload:, screenshot: shot, journeys: }
           end
         end
         captures
@@ -128,7 +131,7 @@ module Master
           img { display: block; width: 100%; height: auto; border: 1px solid #bbb; }
           </style></head><body>
           <h1>MASTER rendered visual evidence: #{captures.length} surfaces</h1>
-          <div class="grid">#{captures.map { |capture| contact_sheet_item(capture) }.join("\n")}</div>
+          <div class="grid">#{captures.flat_map { |capture| contact_sheet_items(capture) }.join("\n")}</div>
           </body></html>
         HTML
         File.write(html_path, html)
@@ -139,6 +142,20 @@ module Master
           cdp.screenshot(screenshot, capture_beyond_viewport: true)
         end
         screenshot
+      end
+
+      def contact_sheet_items(capture)
+        [contact_sheet_item(capture)] + Array(capture[:journeys]).map do |journey|
+          contact_sheet_journey_item(capture[:surface], journey)
+        end
+      end
+
+      def contact_sheet_journey_item(surface, journey)
+        encoded = Base64.strict_encode64(File.binread(journey.fetch("screenshot")))
+        label = "#{surface.id} | mobile state=#{journey["kind"]} | #{journey["label"]}"
+        "<figure><figcaption>#{escape_html(label)}</figcaption><img src="data:image/png;base64,#{encoded}" alt="#{escape_html(label)}"></figure>"
+      rescue StandardError => e
+        "<figure><figcaption>#{escape_html(surface.id)} | journey evidence error: #{escape_html(e.message)}</figcaption></figure>"
       end
 
       def contact_sheet_item(capture)
@@ -255,6 +272,7 @@ module Master
           "type sizes=#{type["distinct_font_sizes"]&.first(8)}, body median=#{type["body_median_px"]}, ",
           "leading=#{type["line_height_min_px"]}-#{type["line_height_max_px"]}",
           "scroll/client=#{payload["scroll_width"]}/#{payload["client_width"]}",
+          "mobile-states=#{Array(capture[:journeys]).map { |j| "#{j["kind"]}:#{j["label"]}" }.join(", ")}",
         ].join(" ")
       end
 
@@ -265,6 +283,7 @@ module Master
           RENDERED EVIDENCE
           The attached image is a contact sheet containing every captured surface in this pass. Compare surfaces against each other as well as against their own viewport. The measurements below were
           collected from the same browser session across the listed surfaces.
+          Mobile is the primary composition: every mobile surface is exercised through safe, non-destructive focus, validation, and disclosure states when those states exist. Journey screenshots are evidence, not a score.
           Judge the render first. Source is supporting evidence.
           Apply the executable MASTER design/usability constitution below. These are laws, not a scoring checklist. Identify only laws supported by rendered evidence.
           #{Master::Fix::VisualUsability.context}
