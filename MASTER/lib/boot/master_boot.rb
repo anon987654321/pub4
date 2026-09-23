@@ -35,6 +35,7 @@ module Master
 
     def init_loop(root:, container:)
       validate_data!(root:, bus: container[:bus])
+      Ground::LawHandshake::Admission.enable!
       # After validation, so the first tick sees a container that finished
       # building rather than one mid-assembly. The tick is what persists, so
       # booting is also what restores continuity across restarts.
