@@ -28,8 +28,9 @@ DEFAULT_DRIFT_MAX_RATIO = "0.25"
 # under any Rails app bundle:
 #   bundle exec ruby ../visual_contract_gate.rb --capture --base http://127.0.0.1:3000 --app brgen
 module VisualContractGate
+  ROOT = File.expand_path("../..", __dir__).freeze
   ACCESSIBILITY_PROBE = <<~JS
-    return [
+    [
       ...[...document.querySelectorAll('img:not([alt])')].map(() => 'image_without_alt'),
       ...[...document.querySelectorAll('button')].filter((el) => !(el.innerText.trim() || el.getAttribute('aria-label'))).map(() => 'button_without_name'),
       ...(document.querySelectorAll('h1').length !== 1 ? ['heading_one_count'] : []),
