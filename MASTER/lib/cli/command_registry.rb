@@ -112,7 +112,6 @@ module Master
         end
       end
 
-
       def undo_line(verb, result) = result.ok? ? "#{verb}: #{result.value!}" : result.message
 
       # /orders and /soul. data/state.yml describes standing orders running
