@@ -8,6 +8,7 @@ module Master
     # Pinned stepwise plan re-read each turn (opencrabs v0.3.43 plan pinning).
     module ActivePlan
       include Master::Io::AtomicWrite
+      extend Master::Io::AtomicWrite
       MAX_BYTES = 4_096
       REL_PATH = "runtime/active_plan.md".freeze
 
