@@ -63,10 +63,10 @@ class TestDocPaths < Minitest::Test
     extras = tracked_md.reject do |path|
       File.basename(path) == "README.md" ||
         path == "TODO.md" || path == "TREE.md" ||
-        File.basename(path).match?(/\\A(?:AGENTS|CLAUDE|GEMINI)\\.md\\z/) ||
+        File.basename(path).match?(/\A(?:AGENTS|CLAUDE|GEMINI)\.md\z/) ||
         path == ".github/copilot-instructions.md" ||
         path == "OPENBSD/RUNBOOK.md" ||
-        path.match?(%r{\\AMASTER/data/(?:SOUL|IDENTITY|CANON)\\.md\\z})
+        path.match?(%r{\AMASTER/data/(?:SOUL|IDENTITY|CANON)\.md\z})
     end
 
     assert_empty extras,
