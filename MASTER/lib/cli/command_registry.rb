@@ -105,6 +105,8 @@ module Master
           result = runtime.promote!(commit: head.strip, paths: [])
           result.ok? ? "known-good: promoted #{head.strip}" : result.message
         when "rollback"
+          "runtime rollback requires --confirm"
+        when "rollback --confirm"
           result = runtime.rollback!
           result.ok? ? result.value!.to_s : result.message
         else
