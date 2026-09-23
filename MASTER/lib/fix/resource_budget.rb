@@ -1,0 +1,141 @@
+# frozen_string_literal: true
+
+require "open3"
+
+module Master
+  module Fix
+    # Measures cheap host/process signals before expensive optional work.
+    # Critical pressure sheds model work; deterministic scans and file fixes can
+    # still finish and report truthfully.
+    class ResourceBudget
+      DEFAULTS = {
+        load_avg_warn: 1.5,
+        load_avg_crit: 2.5,
+        rss_mb_warn: 512,
+        rss_mb_crit: 768,
+        fd_warn: 512,
+        fd_crit: 1024,
+        threads_warn: 32,
+        threads_crit: 64,
+        disk_free_warn_pct: 15,
+        disk_free_crit_pct: 5,
+      }.freeze
+
+      attr_reader :root
+
+      def initialize(root:, config: nil, clock: Process::CLOCK_MONOTONIC)
+        @root = root
+        @config = config || Master::Ops::ProcessBudget.config
+        @clock = clock
+      end
+
+      def measure
+        values = {
+          load_avg_1m: load_average,
+          rss_mb: rss_mb,
+          fd_count: fd_count,
+          thread_count: Thread.list.size,
+          disk_free_pct: disk_free_pct,
+        }
+        classify(values).merge(measured_at: Process.clock_gettime(@clock), values:)
+      rescue StandardError => e
+        { state: :degraded, reasons: ["resource measurement failed: #{e.message}"], values: {} }
+      end
+
+      def critical?(measurement) = measurement[:state] == :critical
+      def warning?(measurement) = measurement[:state] == :warning
+
+      private
+
+      def classify(values)
+        reasons = []
+        state = :ok
+        checks = [
+          [:load_avg_1m, limit("load_avg_1m", "warn", DEFAULTS[:load_avg_warn]),
+           limit("load_avg_1m", "crit", DEFAULTS[:load_avg_crit])],
+          [:rss_mb, limit("master_rss_mb", "warn", DEFAULTS[:rss_mb_warn]),
+           limit("master_rss_mb", "crit", DEFAULTS[:rss_mb_crit])],
+          [:fd_count, DEFAULTS[:fd_warn], DEFAULTS[:fd_crit]],
+          [:thread_count, DEFAULTS[:threads_warn], DEFAULTS[:threads_crit]],
+        ]
+        checks.each do |name, warn_at, crit_at|
+          value = values[name]
+          next unless value
+
+          if value >= crit_at
+            state = :critical
+            reasons << "#{name}=#{value} >= #{crit_at}"
+          elsif value >= warn_at && state == :ok
+            state = :warning
+            reasons << "#{name}=#{value} >= #{warn_at}"
+          end
+        end
+
+        disk = values[:disk_free_pct]
+        if disk && disk <= DEFAULTS[:disk_free_crit_pct]
+          state = :critical
+          reasons << "disk_free_pct=#{disk} <= #{DEFAULTS[:disk_free_crit_pct]}"
+        elsif disk && disk <= DEFAULTS[:disk_free_warn_pct] && state == :ok
+          state = :warning
+          reasons << "disk_free_pct=#{disk} <= #{DEFAULTS[:disk_free_warn_pct]}"
+        end
+        { state:, reasons: }
+      end
+
+      def limit(section, key, fallback)
+        @config.dig("load", section, key).to_f.then { |value| value.positive? ? value : fallback }
+      end
+
+      def load_average
+        command = if File.executable?("/sbin/sysctl")
+          ["/sbin/sysctl", "-n", "vm.loadavg"]
+        else
+          nil
+        end
+        if command
+          out, status = Open3.capture2e(*command)
+          return out.to_s[/\d+(?:\.\d+)?/]&.to_f if status.success?
+        end
+        return File.read("/proc/loadavg").to_f if File.file?("/proc/loadavg")
+
+        nil
+      rescue StandardError
+        nil
+      end
+
+      def rss_mb
+        if File.file?("/proc/self/status")
+          kb = File.read("/proc/self/status")[/^VmRSS:\s+(\d+) kB$/, 1]
+          return kb.to_i / 1024.0 if kb
+        end
+        out, status = Open3.capture2e("ps", "-o", "rss=", "-p", Process.pid.to_s)
+        status.success? ? out.to_i / 1024.0 : nil
+      rescue StandardError
+        nil
+      end
+
+      def fd_count
+        fd_dir = "/proc/self/fd"
+        return Dir.children(fd_dir).size if Dir.exist?(fd_dir)
+
+        fd_dir = "/dev/fd"
+        return Dir.children(fd_dir).size if Dir.exist?(fd_dir)
+
+        nil
+      rescue StandardError
+        nil
+      end
+
+      def disk_free_pct
+        out, status = Open3.capture2e("df", "-kP", @root)
+        return unless status.success?
+
+        row = out.lines.last.to_s.split
+        used = row[4].to_s.delete_suffix("%").to_f
+        used.positive? ? (100.0 - used).round(1) : nil
+      rescue StandardError
+        nil
+      end
+    end
+  end
+end
