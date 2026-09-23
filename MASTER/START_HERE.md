@@ -249,7 +249,7 @@ and the speaker.
 
 ## Source And Local State
 
-- Source: `lib/`, `data/`, `bin/`, `test/`, `spec/`, `web/app/`, `web/public/`.
+- Source: `lib/`, `data/`, `bin/`, `test/`, `web/app/`, `web/public/`.
 - Local/generated: `.master/`, `knowledge/`, `output/`, `web/public/assets/`,
   `web/storage/`, `web/log/`.
 
