@@ -107,9 +107,10 @@ module Master
         rows = Deploy::GeometryProbe.surfaces(root: repo_root)
         master = repo_relative(target).start_with?("MASTER/web")
         rows = rows.select { |s| master ? s.app == "master" : s.app != "master" }
+        grouped = rows.group_by(&:app)
 
-        core = rows.group_by(&:app).keys.sort.flat_map do |app|
-          group = rows.group_by(&:app).fetch(app)
+        core = grouped.keys.sort.flat_map do |app|
+          group = grouped.fetch(app)
           mobile = group.find { |s| s.viewport == "mobile" }
           desktop = group.find { |s| s.viewport == "desktop" }
           [mobile || group.first, desktop || group.find { |s| s != mobile }]
@@ -173,7 +174,7 @@ module Master
           visual = payload["visual"] || {}
           first = visual["first_screen"] || {}
           type = visual["typography"] || {}
-          "surface #{surface.id}: #{surface.url}; first-screen text=#{first["text_blocks"]}, "             "interactive=#{first["interactive"]}, largest_area=#{first["largest_element_area_ratio"]}, "             "small_text=#{first["small_text"]}, centered_long_text=#{first["centered_long_text"]}; "             "type sizes=#{type["distinct_font_sizes"]&.first(8)}, body=#{type["body_min_px"]}-#{type["body_max_px"]}, "             "leading=#{type["line_height_min_px"]}-#{type["line_height_max_px"]}; "             "scroll/client=#{payload["scroll_width"]}/#{payload["client_width"]}"
+          "surface #{surface.id}: #{surface.url}; first-screen text=#{first["text_blocks"]}, "             "interactive=#{first["interactive"]}, largest_area=#{first["largest_element_area_ratio"]}, "             "small_text=#{first["small_text"]}, centered_long_text=#{first["centered_long_text"]}; "             "type sizes=#{type["distinct_font_sizes"]&.first(8)}, "             "body median=#{type["body_median_px"]}, leading=#{type["line_height_min_px"]}-#{type["line_height_max_px"]}; "             "scroll/client=#{payload["scroll_width"]}/#{payload["client_width"]}"
         end
         mapped = anchors.values.compact.uniq.first(12)
         <<~TEXT
@@ -187,8 +188,7 @@ module Master
           Every actionable issue must name its surface/viewport and a stable selector or
           visible text anchor.
 
-          #{rows.join("
-")}
+          #{rows.join("\n")}
           Source anchors: #{mapped.join(", ")}
         TEXT
       end
