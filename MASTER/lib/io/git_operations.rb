@@ -26,6 +26,7 @@ module Master
         def push = git!("push")
 
         def git!(*args)
+          Master::Ground::LawHandshake::Admission.require!
           output, status = Master::Io::Exec.capture2e("git", "-C", @root_path, *args)
           raise "git #{args.first} failed: #{output.strip}" unless status.success?
 
