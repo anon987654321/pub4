@@ -30,8 +30,15 @@ class TestDevice < Minitest::Test
     stub_const = RbConfig::CONFIG["host_os"]
     RbConfig::CONFIG["host_os"] = "linux-android"
     ENV["PREFIX"] = "/data/data/com.termux/files/usr"
-    Dir.stub(:[]) { ["/data/data/com.termux/files/usr/bin/termux-battery-status"] } do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "termux-battery-status")
+      File.write(path, "#!/bin/sh\n")
+      File.chmod(0o755, path)
+      old_path = ENV["PATH"]
+      ENV["PATH"] = dir
       assert Device.termux?
+    ensure
+      ENV["PATH"] = old_path
     end
   ensure
     RbConfig::CONFIG["host_os"] = stub_const
