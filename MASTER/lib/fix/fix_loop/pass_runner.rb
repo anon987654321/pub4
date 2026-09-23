@@ -76,16 +76,27 @@ module Master
           visual_findings = visual&.ok? ? Array(visual.value![:findings]) : []
           found = found + visual_findings
 
+          # A clean deterministic/rendered read is an absence of findings, not proof that
+          # the artifact cannot be improved. Ask the same Council used during a manual review
+          # once at the start of a clean streak; the following pass verifies whatever changed.
+          if found.empty? && consecutive_clean.zero?
+            improvements = @council&.improve(files:, pass:, deadline:)
+            found.concat(Array(improvements))
+          end
+
           return handle_clean_pass(files, pass_mtimes, pass, consecutive_clean) if found.empty?
           return PassResult.new(status: :plateau, consecutive_clean: 0) if stagnant?(history, seen_snapshots, recurring_violations, found, pass)
 
           @homeostat&.observe(:llm_call)
-          # The council argues about source violations. Rendered findings are
-          # already the result of the UI council and are repaired by the same
-          # RuleLoop below, with the screenshot still attached as evidence.
-          source_found, rendered_found = found.partition { |v| v[:rule].to_s != RenderedReview::RULE_ID }
+          # Source findings use the registered rule path. Improvement and rendered findings
+          # already came through their respective Councils and therefore go straight into the
+          # same RuleLoop without convening a second council for the same pass.
+          source_found = found.reject { |v| [RenderedReview::RULE_ID, CouncilRound::IMPROVEMENT_RULE_ID].include?(v[:rule].to_s) }
+          improvement_found = found.select { |v| v[:rule].to_s == CouncilRound::IMPROVEMENT_RULE_ID }
+          rendered_found = found.select { |v| v[:rule].to_s == RenderedReview::RULE_ID }
           council = @council&.run(files: files_with_violations(source_found, files), pass:, deadline:) if source_found.any?
           run_llm_stage(source_found, files, pass, deadline, council:) if source_found.any?
+          run_improvement_stage(improvement_found, pass:, files:, deadline:) if improvement_found.any?
           run_rendered_stage(rendered_found, pass:, image: visual.value![:image], files:, deadline:) if rendered_found.any?
           PassResult.new(status: :continue, consecutive_clean: 0)
         ensure
@@ -94,6 +105,30 @@ module Master
 
         private
 
+        def run_improvement_stage(findings, pass:, files:, deadline:)
+          return 0 if findings.empty? || Time.now >= deadline
+
+          rule = CouncilRound::IMPROVEMENT_RULE.new(CouncilRound::IMPROVEMENT_RULE_ID)
+          loop = RuleLoop.new(
+            rule:,
+            agent: @agent,
+            scanner: @scanner,
+            root: @root,
+            bus: @bus,
+            learnings: @learnings,
+            committer: @committer,
+          )
+          loop.injected_preamble = [
+            @preamble,
+            "These changes were selected by the Council as anchored improvement opportunities. Preserve behavior and make the smallest evidence-backed repair.",
+          ].join("\n\n")
+          result = loop.run_once(files, external_violations: findings)
+          @bus&.publish("fix_loop:improvement_fix", pass:, findings: findings.size, fixed: result[:fixed].to_i)
+          result[:fixed].to_i
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "pass_runner.improvement_stage", event_bus: @bus)
+          0
+        end
         def run_rendered_review(target:, files:, pass:)
           return unless @rendered_review
           return unless @rendered_review.applicable?(target)
