@@ -80,7 +80,7 @@ module Master
         true
       end
 
-      def begin_delivery!
+      def begin_delivery!(head_before:)
         raise "transaction not active" unless @active
         raise "transaction is not open: #{@state}" unless @state == "open"
 
