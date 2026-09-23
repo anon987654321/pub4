@@ -32,6 +32,17 @@ module Deploy
 
     REQUIRED_PACKAGES = %w[password-visibility rails-nested-form].freeze
 
+    COMPONENT_OPPORTUNITIES = {
+      "clipboard" => /navigator\.clipboard|writeText\(/,
+      "password-visibility" => /type\s*=\s*["']password|password.*visibility/i,
+      "notification" => /classList\.(add|remove).*?(toast|notification|alert)|setTimeout.*?(toast|notification|alert)/i,
+      "read-more" => /(?:show|hide|expand|collapse).*?(text|content)|max-height.*?overflow/i,
+      "popover" => /getBoundingClientRect\(\)|style\.(top|left|right|bottom)\s*=|position\s*[:=]\s*["']absolute/i,
+      "dropdown" => /aria-expanded|aria-haspopup|classList\.(add|remove).*?(open|active|expanded)/i,
+      "auto-submit" => /form\.requestSubmit\(\)|form\.submit\(\)|requestSubmit\(/,
+      "textarea-autogrow" => /scrollHeight.*?(style\.height|height\s*=)|clientHeight.*?scrollHeight/i
+    }.freeze
+
     FORBIDDEN_VIEW_PATTERNS = [
       /data-controller="char-counter"/,
       /controller:\s*["']char-counter/,
@@ -72,6 +83,20 @@ module Deploy
         end
       else
         result.fail("missing shared importmap baseline")
+      end
+
+      controller_paths = Dir.glob(File.join(RAILS_ROOT, "**/*_controller.js")).reject { |path| path.include?("/vendor/") }
+      COMPONENT_OPPORTUNITIES.each do |component, pattern|
+        controller_paths.each do |path|
+          body = File.read(path)
+          next unless body.match?(pattern)
+          next if body.match?(/@stimulus-components[\\/]#{Regexp.escape(component)}/)
+          result.checked!
+          result.fail(
+            "#{path.sub(ROOT + '/', '')}: custom Stimulus behavior overlaps @stimulus-components/#{component}; use the upstream controller when its contract fits",
+            severity: :soft
+          )
+        end
       end
 
       Dir.glob(File.join(RAILS_ROOT, "**", "*.{erb,html}"), File::FNM_DOTMATCH).each do |path|
