@@ -55,6 +55,7 @@ module Master
         image = { path: image_path, name: "visual-contact-sheet.png", mime: "image/png" }
 
         source_files, anchors = candidate_sources(target:, files:, manifest:)
+      source_files = source_files.select { |path| path.start_with?(File.join(repo_root, "MASTER"), File.join(repo_root, "RAILS")) }
         return Result.err("rendered visual review: INCONCLUSIVE — screenshot has no source anchor", category: :inconclusive) if source_files.empty?
 
         context = evidence_context(manifest, anchors)
