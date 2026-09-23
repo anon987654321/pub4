@@ -1,4 +1,4 @@
-# frozen_string_literal: true
+<sub># frozen_string_literal: true
 
 module Master
   module CLI
@@ -9,6 +9,7 @@ module Master
       def dispatch_model(agent:, config:, metrics:, root:, ctx: nil, arg: nil)
         arg = arg || arg_for(ctx)
         return list_models(root:, metrics:, agent:) if arg == "list"
+        return compute_models(agent:, root:) if arg == "compute"
         if arg == "benchmark" || arg.start_with?("benchmark ")
           benchmark_args = arg.delete_prefix("benchmark").strip
           return ModelBenchmark.new(agent:, router: model_router_of(agent), metrics:, root:).run(benchmark_args)
@@ -85,3 +86,5 @@ module Master
     end
   end
 end
+
+</sub>
