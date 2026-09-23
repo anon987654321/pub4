@@ -103,7 +103,7 @@ module Operator
     # 726 of the 729 files named like tests are under test/; the three
     # that are not are those three. HELPERS stays: test_helper.rb IS under test/,
     # and a runner loads it rather than running it.
-    TEST_DIR = %r{(?:\A|/)test/
+    TEST_DIR = %r{(?:\A|/)test/}
 
     def self.test_files
       @test_files ||= Dir[File.join(ROOT, "{MASTER,RAILS,OPENBSD,STUDIO}/**/*.rb")]
