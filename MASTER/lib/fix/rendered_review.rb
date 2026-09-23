@@ -31,7 +31,7 @@ module Master
 
       def applicable?(target)
         relative = repo_relative(target)
-        relative == "MASTER/web" || relative.start_with?("MASTER/web/") ||
+        relative == "MASTER" || relative == "MASTER/web" || relative.start_with?("MASTER/web/") ||
           relative == "RAILS" || relative.start_with?("RAILS/")
       end
 
@@ -102,7 +102,7 @@ module Master
       private
 
       def capture_evidence(target:, pass:)
-        kind = repo_relative(target).start_with?("MASTER/web") ? "MASTER" : "RAILS"
+        kind = repo_relative(target).start_with?("MASTER") ? "MASTER" : "RAILS"
         command = [
           *ruby_command,
           File.join(repo_root, "RAILS", "gates", "visual_evidence.rb"),
