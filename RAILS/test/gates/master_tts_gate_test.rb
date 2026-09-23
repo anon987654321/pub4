@@ -4,7 +4,7 @@ require "fileutils"
 require "minitest/autorun"
 require "tmpdir"
 require_relative "gate_probe_harness"
-require_relative "../../../MASTER/gates/master_tts"
+require_relative "../../../MASTER/lib/operator/gates"
 
 # master_tts moved to MASTER/gates on 2026-09-11 and kept its row in
 # RAILS/gates/gates.yml, so it is reached through `require_gate`, which resolves a
