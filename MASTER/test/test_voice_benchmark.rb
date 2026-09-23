@@ -8,7 +8,7 @@ class TestVoiceBenchmark < Minitest::Test
     prompts = Master::Voice::Benchmark.torture_prompts.join(" ")
 
     assert_operator prompts.length, :>, 500
-    assert_match(/?/, prompts)
+    assert_match(/\?/, prompts)
     assert_match(/careful/i, prompts)
     assert_match(/unexpectedly/i, prompts)
     assert_match(/final point/i, prompts)
