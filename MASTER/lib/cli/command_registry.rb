@@ -55,6 +55,7 @@ module Master
           "runtime" => command(:dispatch_runtime, d[:root]),
           "doctor" => command(:dispatch_doctor, root),
           "rules" => command(:dispatch_rules, root),
+          "law" => command(:dispatch_law),
           "why" => command(:dispatch_why, d[:agent], d[:root]),
           "help" => command(:help_text, nil),
         ).merge(control_commands(ai[:standing], ai[:soul]))
@@ -114,6 +115,17 @@ module Master
         return "not connected" if row[:authentication_known]
 
         "installed"
+      end
+
+      def dispatch_law(ctx: nil)
+        case arg_for(ctx)
+        when "", "contract" then Law::Contract.render
+        when "full" then Law::Contract.render(full: true)
+        when "digest" then Law::Contract.digest
+        when "protocol" then Law::Contract::PROTOCOL.join("\n")
+        else
+          "law  law contract  law full  law digest  law protocol"
+        end
       end
 
       def dispatch_device(root, ctx: nil)
