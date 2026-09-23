@@ -153,7 +153,7 @@ module Master
       def contact_sheet_journey_item(surface, journey)
         encoded = Base64.strict_encode64(File.binread(journey.fetch("screenshot")))
         label = "#{surface.id} | mobile state=#{journey["kind"]} | #{journey["label"]}"
-        "<figure><figcaption>#{escape_html(label)}</figcaption><img src="data:image/png;base64,#{encoded}" alt="#{escape_html(label)}"></figure>"
+        %(<figure><figcaption>#{escape_html(label)}</figcaption><img src="data:image/png;base64,#{encoded}" alt="#{escape_html(label)}"></figure>)
       rescue StandardError => e
         "<figure><figcaption>#{escape_html(surface.id)} | journey evidence error: #{escape_html(e.message)}</figcaption></figure>"
       end
