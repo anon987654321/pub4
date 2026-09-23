@@ -76,9 +76,15 @@ module Master
         return halted_result if halted? && !requested
 
         files = incremental ? @file_collector.collect_changed(target) : @file_collector.collect(target)
-        deadline = Ground::Reliability::Deadline.new(budget_seconds)
         journal = @run_journal.start_or_resume(target:, files:, max_passes:, budget_seconds:)
         run_id = journal["id"]
+        remaining = journal["remaining_seconds"].to_f
+        if remaining <= 0
+          result = Result.err("fix budget exhausted before resume", category: :timeout)
+          @run_journal.terminal(run_id, :timeout, message: result.message)
+          return result
+        end
+        deadline = Ground::Reliability::Deadline.new(remaining)
         start_pass = @run_journal.next_pass(journal)
         @bus&.publish("fix_loop:recovered", run_id:, start_pass:, target:) if journal["resumed"]
 
