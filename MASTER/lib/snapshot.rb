@@ -22,9 +22,9 @@ module Master
         language = Master.language_for(path) || "text"
         body << "### #{relative}"
         body << ""
-        body << "```#{language}"
+        body << "`````#{language}"
         body << File.binread(path).force_encoding("UTF-8").scrub
-        body << "```"
+        body << "`````"
         body << ""
       end
       File.write(@output, body.join("\n"), mode: "w", encoding: "UTF-8")
