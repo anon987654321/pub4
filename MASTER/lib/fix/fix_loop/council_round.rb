@@ -136,7 +136,10 @@ module Master
 
         def line_anchor(pick)
           match = pick.match(LINE_RE)
-          (match && (match[1] || match[2]).to_i).then { |line| line.positive? ? line : nil }
+          return unless match
+
+          line = (match[1] || match[2]).to_i
+          line.positive? ? line : nil
         end
 
         def symbol_line(pick, file)
