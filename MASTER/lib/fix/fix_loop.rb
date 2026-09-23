@@ -95,6 +95,19 @@ module Master
             @run_journal.terminal(run_id, :failed, message: recovery.message)
             return recovery
           end
+
+          if recovery.value!.is_a?(Hash) && recovery.value![:state] == :delivery_pending
+            recovery_result = retry_delivery(
+              transaction_id: active_pass.fetch("transaction_id"),
+              expected_head: recovery.value!.fetch(:commit),
+            )
+            if recovery_result.err?
+              @run_journal.terminal(run_id, :failed, message: recovery_result.message)
+              return recovery_result
+            end
+            @run_journal.pass_finish(run_id, active_pass.fetch("pass"), status: :committed,
+                                     message: "recovered Git delivery")
+          end
         end
 
         result = run_passes(files:, target:, max_passes:, deadline:, budget_seconds:, start_pass:, run_id:)
@@ -111,6 +124,23 @@ module Master
         @bus&.publish("fix_loop:crash", error: e.message, backtrace: e.backtrace&.first(8))
         @run_journal&.crash(run_id, e.message) if defined?(run_id) && run_id
         Result.err("fix_loop: #{e.message} @ #{e.backtrace&.first(3)&.join(" | ")}", category: :unknown)
+      end
+
+      def retry_delivery(transaction_id:, expected_head:)
+        actual_head = @git.head
+        return Result.err("delivery recovery HEAD mismatch", category: :policy) unless actual_head == expected_head
+
+        @git.push
+        ahead, = @git.ahead_behind
+        return Result.err("delivery recovery left #{ahead} unpushed commit(s)", category: :infrastructure) unless ahead.zero?
+
+        transaction = Transaction.load_persisted(root: @root, id: transaction_id, bus: @bus)
+        result = transaction.finalize_delivery!(head: actual_head)
+        return result if result.err?
+
+        Result.ok(:delivery_recovered)
+      rescue StandardError => e
+        Result.err("delivery recovery: #{e.message}", category: :infrastructure)
       end
 
       def preview(target = @root)
