@@ -51,7 +51,6 @@ module Master
         wait_seconds: 5,
       )
       return true if result.ok? && result.value!.healthy?
-      
       reason = result.ok? ? result.value!.message : result.message
       warn("tts0: degraded — #{reason}")
       false
