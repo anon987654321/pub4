@@ -56,7 +56,7 @@ That distinction is the whole argument for the suite. A source gate asserts
 pixel, and that its text clears WCAG AA against its composited background — with
 `var()`, `oklch` and `color-mix` resolved, which parsing hex out of a stylesheet
 structurally cannot do. Chrome launches with `--host-resolver-rules`, so
-``markedsplass.brgen.no` and the other verticals are probed as verticals; the
+`markedsplass.brgen.no` and the other verticals are probed as verticals; the
 canonical CDP session can carry the required host mapping.
 
 `layout_snapshot` is the durable visual baseline: committed geometry and style JSON,
