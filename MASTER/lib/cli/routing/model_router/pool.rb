@@ -83,7 +83,7 @@ module Master
 
             @pool_probes ||= cli_lanes.keys.to_h { |name| [name, Thread.new { probe_cli_lane(name) }] }.merge(
               "openrouter_credits" => Thread.new { probe_openrouter_credits },
-              "openrouter_catalog" => Thread.new { refresh_free_catalog },
+              "provider_catalogs" => Thread.new { refresh_provider_catalogs },
             )
           end
 
@@ -264,6 +264,8 @@ module Master
 
           # The gem's registry is what the sender resolves an id against, so the
           # pool asks the same one rather than keeping a prefix table beside it.
+          def api_provider_for(id) = api_provider(id)
+
           def registry_provider(id)
             require "ruby_llm"
             RubyLLM.models.find(id).provider.to_s
@@ -287,15 +289,29 @@ module Master
           # refreshed by hand once was a month stale, so the free lane offered
           # models that had gone and missed the ones that had come. A day old,
           # it refreshes; live_free_models reads it on the next chain.
-          def refresh_free_catalog
+          def refresh_provider_catalogs
             require_relative "../../../io/catalog_index"
-            db = Master::Io::CatalogIndex::DEFAULT_DB
-            return if File.exist?(db) && Time.now - File.mtime(db) < CATALOG_MAX_AGE_S
+            index = Master::Io::CatalogIndex.new(db_path: Master::Io::CatalogIndex::DEFAULT_DB)
 
-            Master::Io::CatalogIndex.new(db_path: db).refresh("openrouter")
-          rescue StandardError => e
-            Master::Ground::Swallow.log(e, context: "model_router.pool.catalog")
+            catalog_credentials.each do |source, token|
+              begin
+                index.refresh(source, token:)
+              rescue StandardError => e
+                Master::Ground::Swallow.log(e, context: "model_router.pool.catalog", source:)
+              end
+            end
             nil
+          end
+
+          def catalog_credentials
+            {
+              "openrouter" => ENV["OPENROUTER_API_KEY"],
+              "openai" => ENV["OPENAI_API_KEY"],
+              "gemini" => ENV["GEMINI_API_KEY"].to_s.empty? ? ENV["GOOGLE_API_KEY"] : ENV["GEMINI_API_KEY"],
+              "deepseek" => ENV["DEEPSEEK_API_KEY"],
+              "xai" => ENV["XAI_API_KEY"],
+              "mistral" => ENV["MISTRAL_API_KEY"],
+            }.select { |_source, token| token && !token.empty? }
           end
 
           def get_json(url, headers: {}, timeout: PROBE_TIMEOUT_S)
