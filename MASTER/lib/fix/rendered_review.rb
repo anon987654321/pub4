@@ -214,7 +214,6 @@ module Master
         text_anchor = evidence[TEXT_ANCHOR_RE, 1]&.strip
         file = selector && anchors[selector]
         file ||= source_file_for_text(text_anchor, source_files)
-        file ||= source_files.first
         return unless file
 
         surface = evidence[/surface\s+([^,;\n]+)/i, 1]&.strip
