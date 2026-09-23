@@ -37,7 +37,7 @@ module Master
             unless active["target"] == relative(target) && Array(active["files"]).sort == requested_files
               raise "another fix run is active: #{active["id"]} for #{active["target"]}"
             end
-            if active["state"] == "active" && process_alive?(active["pid"]) && active["pid"].to_i != Process.pid
+            if active["state"] == "active" && process_alive?(active["pid"])
               raise "another fix process is active: #{active["id"]} pid=#{active["pid"]}"
             end
             previous_state = active["state"]
