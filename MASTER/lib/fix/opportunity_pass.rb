@@ -52,12 +52,18 @@ module Master
         return Result.ok(findings: []) unless applicable?(target)
 
         findings = []
+        relative = repo_relative(target)
         roots = target_roots(target)
-        roots.each { |root| collect_stale_paths(root, findings) }
-        collect_dead_rake_globs(findings) if roots.include?("MASTER")
-        collect_duplicate_tool_names(findings) if roots.include?("MASTER")
-        collect_visual_duplicates(findings) if roots.include?("RAILS")
-        collect_sprawl(findings, roots)
+        scope_files = Array(files).select { |path| File.file?(path) }
+        roots.each { |root| collect_stale_paths(root, findings, scope_files:) }
+        if roots.include?("MASTER") && relative == "MASTER"
+          collect_dead_rake_globs(findings)
+          collect_duplicate_tool_names(findings)
+          collect_sprawl(findings, roots)
+        elsif roots.include?("RAILS") && relative == "RAILS"
+          collect_visual_duplicates(findings)
+          collect_sprawl(findings, roots)
+        end
         findings = findings.first(MAX_FINDINGS)
 
         @bus&.publish(
@@ -80,8 +86,10 @@ module Master
                     .then { |rows| rows.empty? ? SOURCE_ROOTS : rows }
       end
 
-      def collect_stale_paths(root, findings)
-        files_for_root(root).each do |path|
+      def collect_stale_paths(root, findings, scope_files:)
+        paths = scope_files.empty? ? files_for_root(root) : scope_files
+        paths = paths.select { |path| path.start_with?(File.join(repo_root, root) + "/") }
+        paths.each do |path|
           File.foreach(path, encoding: "UTF-8").with_index(1) do |line, number|
             line.scan(PATH_RE).uniq.each do |ref|
               next if File.exist?(File.join(repo_root, ref))
