@@ -995,3 +995,332 @@ Law.define(:PSYCHOLOGICAL_ACCEPTABILITY) do
   X
 end
 end
+
+
+# Constitutional migration batch 5: foundational architecture, clarity, and runtime behavior.
+
+Law.define(:MAKE_ILLEGAL_STATES_UNREPRESENTABLE) do
+  source "Yaron Minsky — make illegal states unrepresentable"
+  severity :error
+  ask "Can an invalid combination of fields or values be constructed at all, or must every caller remember a runtime check?"
+  fix "Encode the invariant in the data shape, constructor, type, or boundary."
+  bad <<~X
+    User.new(role: :admin, active: false)
+  X
+  good <<~X
+    ActiveAdmin.new
+  X
+end
+
+Law.define(:PARSE_DONT_VALIDATE) do
+  source "Alexis King — parse, don't validate"
+  severity :warning
+  ask "Is the same input re-checked at many call sites instead of being parsed once into a value carrying the guarantee?"
+  fix "Parse once at the boundary and pass the proven value inward."
+  bad <<~X
+    def send(url); raise unless url.start_with?("https:"); fetch(url); end
+  X
+  good <<~X
+    url = HttpsUrl.parse(raw); fetch(url)
+  X
+end
+
+Law.define(:POKA_YOKE) do
+  source "Toyota Production System — poka-yoke"
+  severity :warning
+  ask "Can this API be called in the wrong order, with swappable same-typed arguments, or in a meaningless state?"
+  fix "Make invalid sequences or arguments difficult or impossible to express."
+  bad <<~X
+    client.send(body, token)
+  X
+  good <<~X
+    client.send(token: token, body: body)
+  X
+end
+
+Law.define(:COMPLEX_SYSTEMS_FAIL) do
+  source "Richard Cook — How Complex Systems Fail; resilience engineering"
+  severity :warning
+  ask "Does this path assume the happy case or rely on a single safeguard with no defined degraded mode?"
+  fix "Define independent safeguards and a bounded degraded mode."
+  bad <<~X
+    result = primary.fetch!
+  X
+  good <<~X
+    result = primary.fetch(timeout: 2) || fallback.fetch
+  X
+end
+
+Law.define(:STRONG_CENTERS) do
+  source "Christopher Alexander — strong centers"
+  severity :info
+  ask "Does this artifact have one identifiable center of meaning that its parts reinforce, or is it a flat bag of unrelated pieces?"
+  fix "Strengthen the central purpose and remove or relocate unrelated pieces."
+  bad <<~X
+    README with unrelated sections on finance, CSS, music, and legal notices
+  X
+  good <<~X
+    README whose sections all explain how to use and govern MASTER
+  X
+end
+
+Law.define(:LEVELS_OF_SCALE) do
+  source "Christopher Alexander — levels of scale"
+  severity :info
+  ask "Does the design jump abruptly between granularities without useful intermediate levels?"
+  fix "Introduce meaningful intermediate structure where it clarifies the whole."
+  bad <<~X
+    system with one 500-line method and 2-line helpers
+  X
+  good <<~X
+    system with workflow -> stage -> operation
+  X
+end
+
+Law.define(:GUARD_EXPENSIVE) do
+  source "MASTER-native — guard expensive operations"
+  severity :error
+  ask "Does this file perform expensive operations without checking relevant preconditions or bounds?"
+  fix "Check prerequisites, estimate cost, and bound the operation before executing it."
+  bad <<~X
+    API.delete_all
+  X
+  good <<~X
+    records = API.list(limit: 100); records.each(&:delete)
+  X
+end
+
+Law.define(:ARTIFICIAL_COUPLING) do
+  source "The Pragmatic Programmer — avoid artificial coupling"
+  severity :warning
+  ask "Are unrelated concepts coupled merely because they share a container, proximity, or formatting convention?"
+  fix "Separate unrelated concerns and couple only through meaningful interfaces."
+  bad <<~X
+    settings = { audio: audio, billing: billing, css: css }
+  X
+  good <<~X
+    Audio::Settings.new(audio); Billing::Settings.new(billing)
+  X
+end
+
+Law.define(:SELF_EXPLAINING) do
+  source "Clean Code — self-documenting code"
+  severity :info
+  ask "Does this name clearly reveal intent without requiring a comment to decode it?"
+  fix "Rename around the domain action, value, or invariant."
+  bad <<~X
+    def do_it(x)
+  X
+  good <<~X
+    def refresh_access_token(token)
+  X
+end
+
+Law.define(:TRAILING_COMMAS) do
+  source "Ruby/JS style — trailing commas in multiline literals"
+  severity :info
+  ask "Does a multiline collection or argument list omit a trailing comma that stabilizes diffs?"
+  fix "Add the trailing comma to multiline collections and argument lists."
+  bad <<~X
+    options = {\n  timeout: 2\n}
+  X
+  good <<~X
+    options = {\n  timeout: 2,\n}
+  X
+end
+
+Law.define(:SILENCE_ON_SUCCESS) do
+  source "Unix philosophy — Rule of Silence"
+  severity :info
+  ask "Does a successful operation emit output that the operator does not need?"
+  fix "Report errors and meaningful state; stay quiet on ordinary success."
+  bad <<~X
+    puts "done"
+  X
+  good <<~X
+    return unless error
+  X
+end
+
+Law.define(:PRECOMPUTE_MATH) do
+  source "MASTER-native — precompute constant math"
+  severity :info
+  ask "Are invariant trig, noise, or lookup calculations repeated per frame or per object?"
+  fix "Precompute invariant values once and reuse them."
+  bad <<~X
+    objects.each { |o| angle = Math.sin(Math::PI / 4) * o.scale }
+  X
+  good <<~X
+    sin_quarter = Math.sin(Math::PI / 4); objects.each { |o| angle = sin_quarter * o.scale }
+  X
+end
+
+Law.define(:AUDIO_SMOOTHING) do
+  source "MASTER-native — audio smoothing"
+  severity :info
+  ask "Do visual elements jump erratically because raw audio samples drive motion directly?"
+  fix "Smooth or envelope audio-derived control values before applying visual motion."
+  bad <<~X
+    scale = fft[12]
+  X
+  good <<~X
+    scale = smoothing.update(fft[12])
+  X
+end
+
+Law.define(:GRACEFUL_LOAD) do
+  source "Web performance — progressive loading"
+  severity :warning
+  ask "Does this run at full quality until resource exhaustion instead of degrading in measured stages?"
+  fix "Start with a safe baseline and progressively add quality within resource bounds."
+  bad <<~X
+    renderer.render(quality: :ultra)
+  X
+  good <<~X
+    quality = budget.available? ? :full : :low; renderer.render(quality:)
+  X
+end
+
+Law.define(:ANALOG_WARMTH) do
+  source "MASTER-native — Dilla audio aesthetic"
+  severity :info
+  ask "Is generated audio unnaturally perfect because noise floor, saturation, timing drift, or humanized variation has been eliminated entirely?"
+  fix "Introduce restrained, purposeful imperfection where the aesthetic calls for it."
+  bad <<~X
+    notes.each { |n| synth.play(n, velocity: 127, at: n.beat) }
+  X
+  good <<~X
+    notes.each { |n| synth.play(n, velocity: humanize(n), at: drift(n.beat)) }
+  X
+end
+
+Law.define(:DOMAIN_LANGUAGE) do
+  source "Domain-Driven Design — Ubiquitous Language (Eric Evans)"
+  severity :warning
+  ask "Does this code or document use generic terms where the domain has a clearer established term?"
+  fix "Use the vocabulary the domain actually uses."
+  bad <<~X
+    data = invoice.total
+  X
+  good <<~X
+    invoice_total = invoice.total
+  X
+end
+
+Law.define(:LOAD_BEARING_NAMES) do
+  source "Clean Code — names carry intent"
+  severity :warning
+  ask "Are names vague, generic, or misleading enough that a reader cannot tell what they hold or do?"
+  fix "Choose names that expose role, value, or domain meaning."
+  bad <<~X
+    data = process(input)
+  X
+  good <<~X
+    normalized_invoice = normalize(input)
+  X
+end
+
+Law.define(:ERROR_CONTEXT) do
+  source "Context-rich error handling"
+  severity :warning
+  ask "Does an error or rejection omit the context needed to locate the cause and decide the next action?"
+  fix "Include relevant operation, subject, and cause without leaking secrets."
+  bad <<~X
+    raise Error, "failed"
+  X
+  good <<~X
+    raise Error, "invoice #{invoice.id}: payment authorization failed"
+  X
+end
+
+Law.define(:COMMENTS_AS_DEODORANT) do
+  source "Refactoring — comments as deodorant (Fowler/Beck)"
+  severity :warning
+  ask "Is a comment compensating for code or prose that could instead be rewritten to make the intent obvious?"
+  fix "Refactor the underlying artifact first; keep comments for rationale that cannot be encoded directly."
+  bad <<~X
+    # increment i; i += 1
+  X
+  good <<~X
+    i += 1
+  X
+end
+
+Law.define(:POSTEL) do
+  source "Postel's Law / Robustness Principle"
+  severity :info
+  ask "Does this boundary reject safely normalizable valid variation or emit unnecessarily strict structure that callers do not need?"
+  fix "Normalize harmless variation at the boundary and keep emitted contracts deliberate."
+  bad <<~X
+    raise unless input == input.strip
+  X
+  good <<~X
+    value = input.strip
+  X
+end
+
+Law.define(:HYRUM) do
+  source "Hyrum's Law"
+  severity :warning
+  ask "Is a change removing or altering behavior that callers may already depend on despite it never being formally documented?"
+  fix "Search actual consumers and observed behavior before changing the contract; preserve or version what is relied upon."
+  bad <<~X
+    Logger.write("ok") # side effect removed as "unused"
+  X
+  good <<~X
+    Logger.write("ok") # callers depend on audit output
+  X
+end
+
+Law.define(:LEAKY_ABSTRACTION) do
+  source "Law of Leaky Abstractions (Joel Spolsky)"
+  severity :warning
+  ask "Does an abstraction force callers to know implementation details it was supposed to hide?"
+  fix "Hide protocol, storage, and implementation decisions behind a stable interface."
+  bad <<~X
+    store.sql("SELECT * FROM users")
+  X
+  good <<~X
+    users = store.active_users
+  X
+end
+
+Law.define(:TEMPORAL_COUPLING) do
+  source "The Pragmatic Programmer — temporal coupling"
+  severity :warning
+  ask "Must callers invoke methods in a specific order without the API enforcing that sequence?"
+  fix "Encode required state transitions or provide one operation representing the valid sequence."
+  bad <<~X
+    client.fetch; client.authenticate
+  X
+  good <<~X
+    client = Client.authenticated; client.fetch
+  X
+end
+
+Law.define(:HUMBLE_OBJECT) do
+  source "Humble Object pattern (Gerard Meszaros)"
+  severity :info
+  ask "Is business or decision logic tangled with IO, rendering, or external APIs so isolated tests become difficult?"
+  fix "Move decisions into a testable core and keep the boundary object thin."
+  bad <<~X
+    response = DB.query(sql); HTML.render(response)
+  X
+  good <<~X
+    users = QueryUsers.call; HTML.render(users)
+  X
+end
+
+Law.define(:PATTERN_EXTRACTION) do
+  source "MASTER-native — extract recurring structure"
+  severity :info
+  ask "Is the code close to a known reusable pattern whose extraction would genuinely reduce complexity rather than add ceremony?"
+  fix "Extract a pattern only when recurring structure earns the abstraction."
+  bad <<~X
+    if cache.hit?; cache.read; else; fetch; cache.write; end
+  X
+  good <<~X
+    result = Cache.fetch(key) { fetch }
+  X
+end
+end
