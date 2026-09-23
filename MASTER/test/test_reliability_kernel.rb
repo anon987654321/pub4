@@ -45,7 +45,7 @@ class TestReliabilityKernel < Minitest::Test
     Dir.mktmpdir("master-reliability") do |root|
       journal = Master::Fix::RunJournal.new(root:)
       first = journal.start_or_resume(target: root, files: [], max_passes: 5, budget_seconds: 30)
-      journal.pass_start(first["id"], 1)
+      journal.pass_start(first["id"], 1, transaction_id: "test-pass")
       journal.crash(first["id"], "killed during pass")
 
       resumed = Master::Fix::RunJournal.new(root:).start_or_resume(
