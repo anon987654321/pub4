@@ -4,6 +4,7 @@ require "diffy"
 require "fileutils"
 require "json"
 require "time"
+require_relative "../io/atomic_write"
 
 module Master
   module Fix
@@ -11,6 +12,7 @@ module Master
   # When staging_enabled? in config, tools push here instead of writing directly.
   # CLI commands: /stage (list), /apply [n|all], /discard [n|all]
     class DiffStager
+      include Master::Io::AtomicWrite
       Entry = Struct.new(:id, :path, :old_content, :new_content, :tool, :created_at, keyword_init: true) do
         def diff
           Diffy::Diff.new(old_content.to_s, new_content.to_s, context: 3)
@@ -75,8 +77,7 @@ module Master
 
           FileUtils.mkdir_p(File.dirname(entry.path))
           tmp_path = "#{entry.path}.tmp.#{Process.pid}"
-          File.write(tmp_path, entry.new_content)
-          File.rename(tmp_path, entry.path)
+          write_atomic(entry.path, entry.new_content)
           @mutex.synchronize { @pending.delete(entry) }
           remove_persisted(entry)
           @bus&.publish("stage:applied", id: entry.id, path: entry.path)
@@ -116,14 +117,15 @@ module Master
 
       def persist_entry(entry)
         FileUtils.mkdir_p(stage_dir)
-        File.write(
+        write_atomic(
           File.join(stage_dir, "#{entry.id}.json"),
           JSON.generate({
             id: entry.id, path: entry.path, tool: entry.tool,
             old_content: entry.old_content, new_content: entry.new_content,
             created_at: entry.created_at.iso8601,
             stats: entry.diff_stats
-          }),
+          }) + "\n",
+          mode: 0o600,
         )
       rescue StandardError => e
         @bus&.publish("diff_stager:persist_error", error: e.message)
