@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "digest"
+
 # law/ — the constitution as code.
 #
 # A law exists only as a triple: detector + a fixture it MUST flag + a fixture
@@ -280,6 +282,53 @@ module Law
       raise ArgumentError, "#{@h[:id]}: missing #{missing.join(', ')}" unless missing.empty?
 
       Rule.new(**@h.slice(*MEMBERS)).prove!
+    end
+  end
+
+  # Generated projection of the executable constitution. The laws remain
+  # ONE_SOURCE; this contract gives external models the same procedure and a
+  # portable law identity without maintaining a second rule catalogue.
+  module Contract
+    module_function
+
+    PROTOCOL = [
+      "IDENTIFY: state the task and intended effects before acting.",
+      "READ: load the applicable constitution/rules before deciding.",
+      "EVIDENCE: distinguish observed facts, inference, and proposal.",
+      "CHECK: apply every applicable law; do not stop at the first convenient rule.",
+      "PREFER: resolve conflicts by declared priority and safety constraints.",
+      "SIMULATE: inspect edge cases, security, scope, reversibility, and side effects.",
+      "ADMIT: only execute effects that pass the constitutional gate.",
+      "VERIFY: inspect the actual result; never claim completion without evidence.",
+      "REPAIR: if a law is violated, correct the artifact and re-check from the start.",
+      "REPORT: state what happened, what was verified, and what remains unresolved."
+    ].freeze
+
+    def render(full: false)
+      entries = Law.rules.values.sort_by { |rule| rule.id.to_s }.map do |rule|
+        {
+          "id" => rule.id.to_s,
+          "severity" => rule.severity.to_s,
+          "mode" => rule.mode.to_s,
+          "languages" => rule.languages.map(&:to_s),
+          "question" => rule.ask.to_s,
+          "practice" => rule.practice.to_s,
+          "fix" => rule.fix.to_s,
+          "bad" => rule.bad.to_s,
+          "good" => rule.good.to_s
+        }.reject { |_, value| value.respond_to?(:empty?) && value.empty? }
+      end
+      laws = full ? entries : entries.map { |entry| entry.slice("id", "severity", "mode", "languages", "question") }
+      JSON.pretty_generate(
+        "contract_version" => 1,
+        "law_digest" => Digest::SHA256.hexdigest(JSON.generate(entries)),
+        "protocol" => PROTOCOL,
+        "laws" => laws
+      )
+    end
+
+    def digest
+      JSON.parse(render)["law_digest"]
     end
   end
 
