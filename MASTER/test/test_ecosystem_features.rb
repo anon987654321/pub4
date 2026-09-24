@@ -21,6 +21,24 @@ class TestEcosystemFeatures < Minitest::Test
     FileUtils.rm_rf(dir)
   end
 
+  def test_model_quota_rejects_corrupt_state
+    dir = Dir.mktmpdir("master-quota-")
+    path = File.join(dir, "model_quota.json")
+    File.write(path, "{not-json")
+    Master::Io::ModelQuota.stub(:path, path) do
+      assert_raises(RuntimeError) { Master::Io::ModelQuota.count("qwen/qwen3-coder:free") }
+      assert_raises(RuntimeError) { Master::Io::ModelQuota.exhausted_models }
+    end
+  ensure
+    FileUtils.rm_rf(dir)
+  end
+
+  def test_model_quota_does_not_swallow_accounting_write_failure
+    Master::Io::ModelQuota.stub(:save_data, ->(_) { raise "disk full" }) do
+      assert_raises(RuntimeError) { Master::Io::ModelQuota.record("qwen/qwen3-coder:free") }
+    end
+  end
+
   def test_cache_efficiency_snapshot
     Master::Trace::CacheEfficiency.reset!
     Master::Trace::CacheEfficiency.record(input: 1000, cached: 870)
