@@ -2,6 +2,7 @@
 
 require "yaml"
 require_relative "../../shared/lib/operator/master_design"
+require_relative "../../../../MASTER/lib/design/typography"
 
 module Deploy
   # Worn-type contracts. rules.yml design_rules.worn_type is the law; this module
@@ -68,6 +69,8 @@ module Deploy
       check_empty(result, surface, data, spec)
       check_split(result, surface, data, spec)
       check_hanging(result, surface, data, spec)
+      check_rag(result, surface, data, spec)
+      check_micro_typography(result, surface, data, spec)
       spec
     end
 
@@ -286,6 +289,49 @@ module Deploy
         "#{sample} (principle=tschichold)",
         severity: :soft
       )
+    end
+
+    def check_rag(result, surface, data, spec)
+      rows = Array(data["prose"]).select do |row|
+        row["line_count"].to_i >= 5 &&
+          row["rag_ratio"].to_f.positive? &&
+          row["rag_ratio"].to_f < 0.12 &&
+          !row["text_align"].to_s.match?(/center|justify/)
+      end
+      return if rows.empty?
+
+      sample = rows.first(3).map { |row| "#{row["sel"]} #{row["line_count"]} lines last/max=#{row["rag_ratio"]}" }.join("; ")
+      result.fail(
+        "geometry rag: #{surface.id} has #{rows.size} long prose block(s) ending in an extremely short line — " \
+        "#{sample}; rebalance copy, measure or breaks before tightening the type",
+        severity: :soft
+      )
+    end
+
+    def check_micro_typography(result, surface, data, spec)
+      rows = Array(data.dig("typography", "prose"))
+      return if rows.empty?
+
+      profile = Master::Design::Typography.for_surface(
+        path: surface.path,
+        purpose: surface.label
+      )
+      missing = []
+      rows.each do |row|
+        missing << "wrap" if profile[:text_wrap] == "pretty" && !row["text_wrap"].to_s.match?(/pretty|balance|stable/)
+        missing << "features" if row["font_feature_settings"].to_s.empty? &&
+                                  row["font_kerning"].to_s.empty? &&
+                                  profile[:punctuation] == "hanging"
+      end
+      missing.uniq!
+      return if missing.empty?
+
+      result.fail(
+        "geometry micro_type: #{surface.id} rendered prose lacks #{missing.join(", ")} contract",
+        severity: :soft
+      )
+    rescue StandardError
+      nil
     end
   end
 end
