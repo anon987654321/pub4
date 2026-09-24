@@ -3,6 +3,7 @@
 require "base64"
 require "fileutils"
 require "json"
+require "set"
 
 module Master
   module Fix
@@ -23,6 +24,8 @@ module Master
       def initialize(root:, dir:)
         @root = root
         @dir = dir
+        @run_id = ENV["MASTER_VISUAL_RUN_ID"].to_s.strip
+        @run_id = Time.now.utc.strftime("%Y%m%dT%H%M%S%6N") if @run_id.empty?
       end
 
       def capture(capture, pass:)
@@ -32,13 +35,14 @@ module Master
         history = File.join(@root, "MASTER", ".master", "visual_evidence", key)
         FileUtils.mkdir_p(history)
 
-        shot = File.join(history, format("pass-%06d.png", pass.to_i))
-        payload_path = File.join(history, format("pass-%06d.json", pass.to_i))
+        stem = "#{safe_slug(@run_id)}-pass-#{format("%06d", pass.to_i)}"
+        shot = File.join(history, "#{stem}.png")
+        payload_path = File.join(history, "#{stem}.json")
         FileUtils.cp(capture.fetch(:screenshot), shot)
         File.write(payload_path, JSON.pretty_generate(capture.fetch(:payload)))
         prune(history)
 
-        frames = Dir.glob(File.join(history, "pass-*.png")).sort.last(HISTORY_LIMIT)
+        frames = Dir.glob(File.join(history, "*-pass-*.png")).sort.last(HISTORY_LIMIT)
         ghost = render_stack(surface:, state:, frames:, key:)
         drift = geometry_drift(frames, history)
         {
@@ -181,12 +185,12 @@ module Master
       end
 
       def prune(history)
-        pngs = Dir.glob(File.join(history, "pass-*.png")).sort
+        pngs = Dir.glob(File.join(history, "*-pass-*.png")).sort
         keep = pngs.last(HISTORY_LIMIT)
         (pngs - keep).each { |path| File.delete(path) }
-        Dir.glob(File.join(history, "pass-*.json")).sort.each do |path|
-          pass = File.basename(path)[/pass-(\d+)\.json\z/, 1].to_i
-          File.delete(path) unless keep.any? { |shot| File.basename(shot).include?(format("pass-%06d", pass)) }
+        keep_stems = keep.map { |shot| File.basename(shot, ".png") }.to_set
+        Dir.glob(File.join(history, "*-pass-*.json")).sort.each do |path|
+          File.delete(path) unless keep_stems.include?(File.basename(path, ".json"))
         end
       end
 
