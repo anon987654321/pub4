@@ -21,6 +21,8 @@ class VisualPassContractTest < Minitest::Test
     assert_includes source, "mode: :ui"
     assert_includes source, "visual_image:"
     assert_includes source, "visual_context:"
+    assert_includes source, "VisualLanguage.context"
+    assert_includes source, "design_fingerprint"
     assert_includes source, "RULE_ID = \"RENDERED_VISUAL_REFINEMENT\""
     assert_includes File.read(File.expand_path("../../RAILS/gates/data/geometry_surfaces.yml", __dir__)), "app: master"
   end
