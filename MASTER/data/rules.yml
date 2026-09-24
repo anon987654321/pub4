@@ -3455,6 +3455,11 @@ rules:
           family: Mona Sans
           css: '"Mona Sans", sans-serif'
           classification: industrial_grotesk_variable
+          x_height: high
+          width: variable
+          contrast: low
+          weight_range: [100, 900]
+          optical_sizing: variable
           roles:
           - body
           - display
@@ -3464,6 +3469,11 @@ rules:
           family: Hubot Sans
           css: '"Hubot Sans", sans-serif'
           classification: geometric_variable
+          x_height: high
+          width: variable
+          contrast: low
+          weight_range: [100, 900]
+          optical_sizing: variable
           roles:
           - display
           - playful_accent
