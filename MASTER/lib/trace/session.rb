@@ -135,9 +135,49 @@ module Master
         end
       end
 
+      # Which conversation is active, and forking and switching between
+      # them -- separate from the transcript each conversation holds.
+      module Conversations
+        def name(key = nil) = @mutex.synchronize { conversation(key || current_key)[:name] }
+
+        # Clone a conversation without changing the caller's active conversation.
+        def fork!(source_key: nil, target_key: nil)
+          target_key ||= "fork-#{Time.now.utc.strftime("%Y%m%d%H%M%S")}-#{SecureRandom.hex(4)}"
+          raise ArgumentError, "source and target conversations are identical" if source_key == target_key
+          @mutex.synchronize do
+            raise ArgumentError, "conversation already exists: #{target_key}" if @conversations.key?(target_key)
+            source = conversation(source_key || current_key)
+            @conversations[target_key] = {
+              messages: source[:messages].map(&:dup),
+              token_est: source[:token_est],
+              name: source[:name],
+              input_tokens: source[:input_tokens].to_i,
+            }
+          end
+          target_key
+        end
+
+        def conversation_keys
+          @mutex.synchronize { @conversations.keys.dup }
+        end
+
+        def active_key = @active_key || LOCAL
+
+        def switch!(key)
+          key = key.to_s.strip
+          raise ArgumentError, "conversation is empty" if key.empty?
+          @mutex.synchronize do
+            raise ArgumentError, "conversation not found: #{key}" unless @conversations.key?(key)
+            @active_key = key
+          end
+          key
+        end
+      end
+
       include Persistence
       include Snapshots
       include Compaction
+      include Conversations
 
       # An estimate, on purpose: the exact count needs tiktoken_ruby, a Rust
       # extension, and this repo deploys to OpenBSD.
@@ -196,40 +236,7 @@ module Master
       # copied: callers append to it (test_llm_dispatcher does) and every
       # existing reader expects the same array identity it always got.
       def messages(key = nil) = @mutex.synchronize { conversation(key || current_key)[:messages] }
-      def name(key = nil) = @mutex.synchronize { conversation(key || current_key)[:name] }
 
-      # Clone a conversation without changing the caller's active conversation.
-      def fork!(source_key: nil, target_key: nil)
-        target_key ||= "fork-#{Time.now.utc.strftime("%Y%m%d%H%M%S")}-#{SecureRandom.hex(4)}"
-        raise ArgumentError, "source and target conversations are identical" if source_key == target_key
-        @mutex.synchronize do
-          raise ArgumentError, "conversation already exists: #{target_key}" if @conversations.key?(target_key)
-          source = conversation(source_key || current_key)
-          @conversations[target_key] = {
-            messages: source[:messages].map(&:dup),
-            token_est: source[:token_est],
-            name: source[:name],
-            input_tokens: source[:input_tokens].to_i,
-          }
-        end
-        target_key
-      end
-
-      def conversation_keys
-        @mutex.synchronize { @conversations.keys.dup }
-      end
-
-      def active_key = @active_key || LOCAL
-
-      def switch!(key)
-        key = key.to_s.strip
-        raise ArgumentError, "conversation is empty" if key.empty?
-        @mutex.synchronize do
-          raise ArgumentError, "conversation not found: #{key}" unless @conversations.key?(key)
-          @active_key = key
-        end
-        key
-      end
 
       def add_message(role:, content:)
         msg = { role:, content:, ts: Time.now.to_i }

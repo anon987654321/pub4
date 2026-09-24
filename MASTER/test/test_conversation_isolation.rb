@@ -1,4 +1,4 @@
-<sub># frozen_string_literal: true
+# frozen_string_literal: true
 
 require "minitest/autorun"
 require "tmpdir"
@@ -139,8 +139,6 @@ class ConversationIsolationSpec < Minitest::Test
   end
 
 
-end
-</sub>
   def test_fork_clones_without_sharing_messages_or_switching_parent
     with_session do |session|
       session.add_message(role: :user, content: "parent")

@@ -41,17 +41,9 @@ module Master
       # test_command_registry_dispatch.rb fails on a `*_commands` table it misses.
       def build(infra:, ai:, root:)
         d = command_deps(ai:, root:, infra:)
-        undo = infra[:undo]
-        review_verbs(d).merge(
+        review_verbs(d).merge(session_verbs(infra[:session], infra[:undo])).merge(
           "status" => command(:dispatch_status, d[:root], d[:fix_loop], d[:bus], d[:git], d[:trace], d[:learnings]),
           "device" => command(:dispatch_device, d[:root]),
-          "undo" => command(:dispatch_undo, undo),
-          "rollback" => command(:dispatch_undo, undo),
-          "clear" => command(:dispatch_clear, infra[:session]),
-          "sessions" => command(:dispatch_sessions, infra[:session]),
-          "continue" => command(:dispatch_continue, infra[:session]),
-          "resume" => command(:dispatch_continue, infra[:session]),
-          "fork" => command(:dispatch_fork, infra[:session]),
           "commit" => command(:dispatch_commit, ai[:agent], root, review_gate: true),
           "model" => command(:dispatch_model, d[:agent], d[:config], d[:metrics], d[:root]),
           "auth" => command(:dispatch_auth),
@@ -64,6 +56,20 @@ module Master
           "why" => command(:dispatch_why, d[:agent], d[:root]),
           "help" => command(:help_text, nil),
         ).merge(control_commands(ai[:standing], ai[:soul]))
+      end
+
+      # The verbs that read or rewind the conversation: which one is active,
+      # its forks, and what undo can take back.
+      def session_verbs(session, undo)
+        {
+          "undo" => command(:dispatch_undo, undo),
+          "rollback" => command(:dispatch_undo, undo),
+          "clear" => command(:dispatch_clear, session),
+          "sessions" => command(:dispatch_sessions, session),
+          "continue" => command(:dispatch_continue, session),
+          "resume" => command(:dispatch_continue, session),
+          "fork" => command(:dispatch_fork, session),
+        }
       end
 
       # Positional, and the order is load-bearing: Command#dependency_kwargs

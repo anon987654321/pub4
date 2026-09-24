@@ -305,7 +305,11 @@ end
     rows = Master::CLI::CommandRegistry.list_models(root: Master::ROOT, metrics: nil, agent:).lines
 
     assert_equal rows.size, rows.map { |row| row.split[row.start_with?("→") ? 1 : 0] }.uniq.size
-    assert_match(/\A→ ollama:gemma3:4b +local\n?\z/, rows.find { |row| row.start_with?("→") })
+    # Which tiers list the model is models.yml's to say; the row names the
+    # current model once, marked, with its tiers after it.
+    current = rows.find { |row| row.start_with?("→") }
+    assert_match(/\A→ ollama:gemma3:4b +\S/, current)
+    assert_includes current.split.drop(2).join(" "), "local"
   end
 
   # The pool lists what answers and names what would add more; a model out of
