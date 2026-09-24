@@ -133,8 +133,9 @@ module Master
             prompt_injection: prompt.empty? ? DEFAULTS[:prompt_injection] : prompt.freeze,
             shell_injection: shell ? Regexp.new(shell, Regexp::MULTILINE | Regexp::IGNORECASE) : DEFAULTS[:shell_injection],
           }
-        rescue StandardError
-          DEFAULTS
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "InjectionGuard.load_or_default")
+          raise Master::SecurityError, "injection policy unreadable: #{e.class}: #{e.message}"
         end
 
         def injection_data
