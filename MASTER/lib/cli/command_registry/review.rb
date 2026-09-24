@@ -21,9 +21,12 @@ module Master
       # the principle map; it changes nothing. The verb that changes the tree is
       # /fix, and it owns the repair.
       def dispatch_review(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, review_crew: nil, swarm: nil, **_legacy)
-        apply, critique, aesthetic, only, target = parse_pass_flags(arg_for(ctx).to_s.strip)
-        run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, review_crew:, swarm: },
-                 target:, apply: apply || false, critique:, aesthetic:, only: only || "critique,map")
+        raw = arg_for(ctx).to_s.strip
+        apply, critique, aesthetic, only, target = parse_pass_flags(raw)
+        with_dmesg_verbosity(raw) do
+          run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, review_crew:, swarm: },
+                   target:, apply: apply || false, critique:, aesthetic:, only: only || "critique,map")
+        end
       end
 
       # /fix — the convergence lifecycle, and the only operation that writes.
@@ -32,9 +35,12 @@ module Master
       # improving, or hands back a state only a person can settle. `--dry-run`
       # stops after the reading and says what it would take on.
       def dispatch_fix(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, review_crew: nil, swarm: nil, **_legacy)
-        apply, _critique, aesthetic, _only, target = parse_pass_flags(arg_for(ctx).to_s.strip)
-        run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, review_crew:, swarm: },
-                 target:, apply: apply.nil? || apply, critique: false, aesthetic:, only: "fix")
+        raw = arg_for(ctx).to_s.strip
+        apply, _critique, aesthetic, _only, target = parse_pass_flags(raw)
+        with_dmesg_verbosity(raw) do
+          run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, review_crew:, swarm: },
+                   target:, apply: apply.nil? || apply, critique: false, aesthetic:, only: "fix")
+        end
       end
 
       def run_pass(deps, **call_args)
@@ -49,6 +55,13 @@ module Master
       # than a `case`, because the spellings are data: `--no-autofix` is
       # bin/gate's, and while it was missing it fell through to the path,
       # resolved nowhere, and the scan quietly ran over MASTER instead.
+      DMESG_FLAGS = {
+        "--quiet" => "quiet", "quiet" => "quiet",
+        "--normal" => "normal", "normal" => "normal",
+        "--verbose" => "verbose", "verbose" => "verbose",
+        "--trace" => "trace", "trace" => "trace",
+      }.freeze
+
       PASS_FLAGS = {
         "--dry-run" => [:apply, false], "preview" => [:apply, false], "dry" => [:apply, false],
         "--no-autofix" => [:apply, false], "no-autofix" => [:apply, false],
@@ -68,6 +81,8 @@ module Master
         joined_only(raw.split(/\s+/)).each do |token|
           if (flag = PASS_FLAGS[token.downcase])
             flags[flag.first] = flag.last
+          elsif DMESG_FLAGS.key?(token.downcase)
+            next
           elsif token =~ ONLY_FLAG
             flags[:only] = Regexp.last_match(1)
           else
@@ -84,6 +99,13 @@ module Master
         tokens.each_with_object([]) do |token, out|
           out.last&.casecmp?("--only") ? out[-1] = "--only=#{token}" : out << token
         end
+      end
+
+      def with_dmesg_verbosity(raw)
+        level = raw.to_s.split(/\s+/).filter_map { |token| DMESG_FLAGS[token.downcase] }.last
+        return yield unless level
+
+        Master::Trace::Dmesg.with_verbosity(level) { yield }
       end
 
       def run_deliberation(deliberation:, payload:, context:)
