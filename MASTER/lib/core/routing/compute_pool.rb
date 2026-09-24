@@ -235,11 +235,20 @@ module Master
         end
 
         def dynamic_model_row(id)
-          return unless id.to_s.start_with?("ollama:", "local:") || hosted?(id)
-          {
-            "context_window" => DEFAULTS[:context_window],
-            "score" => { "quality" => DEFAULTS[:quality], "speed" => DEFAULTS[:speed], "cost" => 1.0 },
-          }
+          value = id.to_s
+          return unless value.start_with?("ollama:", "local:") || value.start_with?("agy:") || hosted?(id)
+
+          if value.start_with?("agy:")
+            {
+              "context_window" => 1_000_000,
+              "score" => { "quality" => 0.90, "speed" => 0.82, "cost" => 1.0 },
+            }
+          else
+            {
+              "context_window" => DEFAULTS[:context_window],
+              "score" => { "quality" => DEFAULTS[:quality], "speed" => DEFAULTS[:speed], "cost" => 1.0 },
+            }
+          end
         end
 
         def catalog_score(row)
