@@ -33,12 +33,16 @@
   font-weight: var(--weight-bold);
   text-decoration: none;
   cursor: pointer;
-  transition: opacity var(--transition-fast) var(--ease-out), background 160ms var(--ease-out), border-color 160ms var(--ease-out), color 160ms var(--ease-out);
+  transition: opacity var(--transition-fast) var(--ease-out), background 160ms var(--ease-out), border-color 160ms var(--ease-out), color 160ms var(--ease-out), transform var(--duration-m3-short, 200ms) var(--ease-m3-spring, cubic-bezier(0.34, 1.56, 0.64, 1.0));
 }
 
 .btn:hover {
   opacity: 0.88;
   text-decoration: none;
+}
+
+.btn:active {
+  transform: scale(0.97);
 }
 
 .btn:disabled,
