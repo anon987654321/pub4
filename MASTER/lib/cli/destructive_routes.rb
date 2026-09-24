@@ -35,12 +35,14 @@ module Master
       def load_destructive_commands
         return FALLBACK unless File.exist?(PATTERNS_PATH)
 
-        data = Master.load_yaml(PATTERNS_PATH) || {}
-        list = Array(data.dig("infer", "destructive")).map(&:to_s)
-        list.empty? ? FALLBACK : list
+        data = Master.load_yaml(PATTERNS_PATH)
+        list = Array(data&.dig("infer", "destructive")).map(&:to_s).reject(&:empty?)
+        raise "destructive command policy is empty: #{PATTERNS_PATH}" if list.empty?
+
+        list.freeze
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "destructive_routes.load")
-        FALLBACK
+        raise "destructive command policy unreadable: #{e.class}: #{e.message}"
       end
     end
   end
