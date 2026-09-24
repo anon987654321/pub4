@@ -591,12 +591,14 @@ body[data-mode="speaking"] #mic-dot {
 
 #chat-log:not(:empty) { pointer-events: auto; }
 /* TYPOGRAPHY.line_length: a reply is prose, 45–75ch, whatever the viewport. */
-.message { position:relative; max-inline-size: 66ch; margin-bottom: 8px; white-space: pre-wrap; word-break: break-word; scroll-snap-align: start; animation: msgIn 220ms var(--ease-spring) both; }
+.message { position:relative; max-inline-size: 66ch; margin-bottom: 8px; padding: 4px 12px; white-space: pre-wrap; word-break: break-word; scroll-snap-align: start; animation: msgIn 220ms var(--ease-spring) both; }
+.message.user { border-radius: 12px 12px 2px 12px; background: color-mix(in srgb, var(--c-accent) 10%, transparent); border: 1px solid color-mix(in srgb, var(--c-accent) 22%, transparent); }
+.message.assistant { border-radius: 12px 12px 12px 2px; background: color-mix(in srgb, var(--face-fg) 5%, transparent); border: 1px solid var(--border-faint); }
 .message:focus-visible { outline: 1px solid var(--face-fg); outline-offset: 1px; }
 .msg-prompt { font-weight: 700; margin-inline-end: 0.35em; }
-.message.user .msg-prompt { color: var(--face-fg); }
+.message.user .msg-prompt { color: var(--c-accent, var(--face-fg)); }
 .message.assistant .msg-prompt { color: var(--face-muted); }
-.msg-body { color: color-mix(in srgb, var(--c-text) 82%, transparent); font-feature-settings:'liga' 1,'kern' 1; }
+.msg-body { color: color-mix(in srgb, var(--c-text) 88%, transparent); font-feature-settings:'liga' 1,'kern' 1; }
 .cursor { display:inline-block; width:44px; height:1em; background:currentColor; vertical-align:text-bottom; animation:cursorBlink 900ms steps(2,end) infinite; margin-inline-start:1px; }
 .message.msg-error-flash .msg-body { outline: 1px solid color-mix(in srgb, var(--c-danger) 55%, transparent); outline-offset: 2px; }
 .message.msg-pass-flash { border-bottom: 1px solid var(--face-fg); }
