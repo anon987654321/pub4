@@ -47,4 +47,14 @@ class VisualPassContractTest < Minitest::Test
     assert_includes source, "source_text_line"
     assert_includes source, "return unless surface && viewport && (selector || text_anchor)"
   end
+
+  # /fix constructs the pass with MASTER's own directory as root; RAILS must
+  # still read as RAILS, or the whole rendered review silently skips.
+  def test_rails_is_a_visual_target_when_root_is_master
+    pass = Master::Fix::VisualPass.new(agent: Object.new, root: Master::ROOT)
+    rails = File.expand_path("../RAILS", Master::ROOT)
+
+    assert pass.applicable?(rails)
+    assert_equal File.expand_path("..", Master::ROOT), pass.send(:repo_root)
+  end
 end

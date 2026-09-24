@@ -385,7 +385,15 @@ module Master
         relative == "RAILS" || relative.start_with?("RAILS/")
       end
 
-      def repo_root = File.expand_path("../..", @root)
+      # /fix passes MASTER's own directory, so the repository is its parent.
+      # "../.." climbed out of pub4 altogether: RAILS then read as
+      # "pub4/RAILS", applicable? said no, and the visual pass (composition
+      # probes, ghost stack, contact sheet) never ran inside /fix.
+      def repo_root
+        return @root unless File.basename(@root) == "MASTER"
+
+        File.expand_path("..", @root)
+      end
 
       def repo_relative(target)
         raw = target.to_s
