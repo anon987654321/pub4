@@ -147,7 +147,7 @@ module Master
       # were rejected on re-scan — every non-apply collapsed to `false` before
       # the one line anyone reads. The tally of these symbols is that line.
       def fix_violation(violation)
-        return :skip_confidence unless autofix_allowed?(violation)
+        if needs_a_person?(violation) && !deletions_allowed?\n          @person_required = true\n          @bus&.publish("rule_loop:human_decision_required", rule: violation[:rule], file: violation[:file])\n          return :needs_person\n        end\n        return :skip_confidence unless autofix_allowed?(violation)
         return :skip_fingerprint unless fingerprint_matches?(violation)
 
         note_unverified_fix(violation)
