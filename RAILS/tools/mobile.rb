@@ -2,6 +2,7 @@
 
 require "fileutils"
 require_relative "../shared/lib/shared/mobile_app_registry"
+require_relative "../shared/lib/shared/mobile_ios_project"
 
 module MobileTool
   ROOT = File.expand_path("../..", __dir__)
@@ -48,9 +49,10 @@ module MobileTool
   end
 
   def generate_ios_project
-    spec = File.join(ROOT, "__NATIVE_IOS", "project.yml")
     directory = IOS_ROOT
     FileUtils.mkdir_p(directory)
+    spec = File.join(directory, "project.yml")
+    Shared::MobileIosProject.write(spec)
 
     unless system("xcodegen", "--version", out: File::NULL, err: File::NULL)
       warn "ios: xcodegen is required; install it with brew install xcodegen"
