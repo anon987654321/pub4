@@ -158,11 +158,17 @@ def claude_on_path?
   end
 end
 
+# These two mark the parent as a Claude Code session, and a `claude --print`
+# that inherits them from one hangs until killed; unset, it answers in about
+# five seconds (measured 2026-09-24 from inside a session). Only these two:
+# CLAUDE_CODE_OAUTH_TOKEN and the other CLAUDE_* names can carry the login.
+CLAUDE_SESSION_ENV = { "CLAUDECODE" => nil, "CLAUDE_CODE_ENTRYPOINT" => nil }.freeze
+
 def claude_cli_call(model_alias, messages, sys)
   args = ["claude", "--print", "--model", model_alias]
   args += ["--system-prompt", sys] if sys && !sys.empty?
   timeout_s = claude_cli_timeout_s
-  out, err, status = capture3_with_timeout(timeout_s, *args, stdin_data: text_prompt_for(messages))
+  out, err, status = capture3_with_timeout(timeout_s, *args, stdin_data: text_prompt_for(messages), env: CLAUDE_SESSION_ENV)
   # A CLI that dies with nothing on either stream taught the operator nothing:
   # the 2026-09-16 /fix printed "claude-cli:" and a blank a hundred and
   # seventy-eight times. `claude --print` from inside a session hangs and is
@@ -179,8 +185,8 @@ rescue StandardError => e
   Result.err("claude-cli: #{e.message}", category: :provider_error)
 end
 
-      def capture3_with_timeout(timeout_s, *cmd, stdin_data: nil)
-        Open3.popen3(*cmd) do |stdin, stdout, stderr, wait_thr|
+      def capture3_with_timeout(timeout_s, *cmd, stdin_data: nil, env: {})
+        Open3.popen3(env, *cmd) do |stdin, stdout, stderr, wait_thr|
           stdin.write(stdin_data) if stdin_data
           stdin.close
           out_reader = Thread.new { stdout.read }
