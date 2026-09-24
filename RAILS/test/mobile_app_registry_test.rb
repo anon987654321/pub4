@@ -3,6 +3,7 @@
 require "json"
 require "minitest/autorun"
 require_relative "../shared/lib/shared/mobile_app_registry"
+require_relative "../shared/lib/shared/mobile_ios_project"
 
 class MobileAppRegistryTest < Minitest::Test
   REGISTRY = Shared::MobileAppRegistry
@@ -41,14 +42,21 @@ class MobileAppRegistryTest < Minitest::Test
                  REGISTRY.all.map(&:key)
   end
 
-  def test_ios_project_contains_the_registry_products
-    project = File.read(File.expand_path("../../__NATIVE_IOS/project.yml", __dir__))
+  def test_ios_project_spec_is_generated_from_the_registry
+    spec = Shared::MobileIosProject.spec
+
+    assert_equal REGISTRY.all.map { |app| app.key.to_s.split("_").map(&:capitalize).join },
+                 spec.fetch("configs").keys
 
     REGISTRY.all.each do |app|
-      assert_includes project, "MOBILE_APP_URL: #{app.url}"
-      assert_includes project, "MOBILE_APP_HOST: #{app.host}"
-      assert_includes project, "PRODUCT_BUNDLE_IDENTIFIER: #{app.ios_bundle_id}"
-      assert_includes project, "MOBILE_APP_NAME: #{app.name}"
+      config = spec.fetch("targets").fetch("Pub4Mobile").fetch("settings").fetch("configs").fetch(
+        app.key.to_s.split("_").map(&:capitalize).join
+      )
+
+      assert_equal app.ios_bundle_id, config.fetch("PRODUCT_BUNDLE_IDENTIFIER")
+      assert_equal app.url, config.fetch("MOBILE_APP_URL")
+      assert_equal app.host, config.fetch("MOBILE_APP_HOST")
+      assert_equal app.name, config.fetch("MOBILE_APP_NAME")
     end
   end
 
