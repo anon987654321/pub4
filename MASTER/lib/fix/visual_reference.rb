@@ -55,6 +55,17 @@ module Master
             clean_information_density
           ],
         },
+        "pangram" => {
+          name: "Pangram Pangram type-direction reference",
+          signals: %w[
+            contemporary_grotesk
+            neutral_with_character
+            disciplined_weight_range
+            strong_display_options
+            modernist_rigor
+            typographic_detail
+          ],
+        },
       }.freeze
 
       module_function
