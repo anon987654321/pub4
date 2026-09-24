@@ -11,6 +11,9 @@ require "yaml"
 module Master
   module Plugins
     class SocialBrowser < Master::Plugin::Base
+      # Lexical lookup from Master::Plugins does not reach Master::Plugin.
+      PolicyError = Master::Plugin::PolicyError
+
       Site = Data.define(:id, :hosts, :start_url, :composer, :submit)
 
       SITES = {
