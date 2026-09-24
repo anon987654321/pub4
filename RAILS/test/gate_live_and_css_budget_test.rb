@@ -31,6 +31,12 @@ class GateLiveAndCssBudgetTest < Minitest::Test
     result
   end
 
+  def test_css_budget_failure_is_inconclusive
+    source = File.read(File.expand_path("../gates/lib/source/css_constitution.rb", __dir__))
+    assert_includes source, "CSS ceilings were not measured"
+    assert_includes source, "@result.inconclusive!"
+  end
+
   def test_a_skipped_live_check_is_a_warning_by_default
     result = result_with_skip
 
