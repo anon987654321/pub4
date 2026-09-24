@@ -78,12 +78,14 @@ module Deploy
       Dir.glob(File.join(RAILS_ROOT, "**/*.{erb,html}")).each do |path|
         next if path.include?("/vendor/") || path.include?("/public/assets/") || path.include?("/node_modules/")
 
-        File.foreach(path, encoding: "UTF-8").with_index(1) do |line, number|
-          line.scan(/data-controller\s*=\s*["']([^"']+)["']/).flatten.each do |controllers|
-            controllers.split(/\s+/).each do |controller|
-              next if controller.empty?
-              usages[controller] << "#{path.sub(ROOT + '/', '')}:#{number}" unless usages[controller].include?("#{path.sub(ROOT + '/', '')}:#{number}")
-            end
+        body = File.read(path, encoding: "UTF-8")
+        body.scan(/data-controller\s*=\s*["']([^"']+)["']/).flatten.each do |controllers|
+          controllers.split(/\s+/).each do |controller|
+            next if controller.empty?
+            offset = body.index(%(data-controller), body.index(controller) - 100)
+            line = body[0, offset || 0].count("\n") + 1
+            location = "#{path.sub(ROOT + '/', '')}:#{line}"
+            usages[controller] << location unless usages[controller].include?(location)
           end
         end
       end
