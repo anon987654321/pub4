@@ -12,9 +12,8 @@ class VisualPassContractTest < Minitest::Test
     assert_includes source, "Deploy::GeometryProbe.with_browser"
     assert_includes source, "Deploy::GeometryProbe.walk"
     assert_includes source, "Deploy::GeometryProbe.measure_current"
-    assert_includes source, "capture_brgen_composition"
-    assert_includes source, "composer_open"
-    assert_includes source, "messenger_open"
+    assert_includes source, "Deploy::CompositionProbe.capture"
+    assert_includes source, "MAX_COMPOSITION_STATES"
     refute_includes source, "Selenium::WebDriver"
     refute_includes source, "require \"selenium-webdriver\""
   end
@@ -32,11 +31,12 @@ class VisualPassContractTest < Minitest::Test
     assert_includes source, 'relative == "MASTER/web"'
   end
 
-  def test_brgen_composition_is_page_wide_not_feature_isolated
-    assert_includes source, 'surface.app == "brgen" && surface.label == "core"'
-    assert_includes source, 'co_resident'
-    assert_includes source, "%w[feed posts composer messenger]"
-    assert_includes source, 'measure_current(cdp, state_surface)'
+  def test_composition_probe_is_application_agnostic
+    refute_includes source, "brgen"
+    composition = File.read(File.expand_path("../../RAILS/gates/support/composition_probe.rb", __dir__))
+    assert_includes composition, "button, summary, [role='button']"
+    assert_includes composition, "MASTER visual probe"
+    assert_includes composition, "GeometryProbe.measure_current"
   end
 
   def test_visual_findings_must_be_addressable
