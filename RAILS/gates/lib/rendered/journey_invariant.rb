@@ -98,7 +98,11 @@ module Deploy
     # A fresh load before each journey, because each one leaves the page changed.
     def walk_journeys(cdp, surface)
       SURFACE_JOURNEYS.each do |name, (script, verdict)|
-        next unless GeometryProbe.ok?(GeometryProbe.walk(cdp, surface))
+        walk = GeometryProbe.walk(cdp, surface)
+        unless GeometryProbe.ok?(walk)
+          @result.inconclusive!("journey_invariant #{surface.id} #{name}: surface could not be reloaded for journey measurement")
+          next
+        end
 
         journey(name, verdict, surface.id, TurboJourneys.measure(cdp, script))
       end
