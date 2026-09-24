@@ -100,7 +100,7 @@ module Master
             end
           end
           results.each_with_index.map do |result, index|
-            result || Result.ok(frozen.merge(_parallel_timeout: @stages[index].class.name))
+            result || Result.err("parallel stage timeout: #{@stages[index].class.name}", category: :timeout)
           end
         end
 
