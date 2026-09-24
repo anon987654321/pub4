@@ -25,7 +25,18 @@
         image_url: (@promo_menu_item&.photo&.attached? ? main_app.url_for(@promo_menu_item.photo.variant(:card)) : nil),
         url: restaurant_path(@promo_restaurant) %>
 <% else %>
-  <div class="store-hero store-hero--alone" data-visitor-orientation>
+  <%= render "shared/storefront_promo",
+      vertical: "takeaway",
+      subject: @restaurants.first&.cuisine_type.presence || t("takeaway.order_food"),
+      headline: t("takeaway.order_food"),
+      copy: t("takeaway.intro"),
+      offer: @restaurants.first ? t("takeaway.min_order_delivery", min: @restaurants.first.min_order_display, fee: @restaurants.first.delivery_fee_display) : nil,
+      href: (@restaurants.first ? restaurant_path(@restaurants.first) : new_restaurant_path),
+      cta: (@restaurants.first ? t("takeaway.restaurant_results") : t("storefront.add_restaurant")),
+      image: nil,
+      image_alt: t("takeaway.order_food") %>
+
+<div class="store-hero store-hero--alone" data-visitor-orientation>
     <%= tag.h1 t("takeaway.order_food") %>
     <%= tag.p t("takeaway.intro") %>
   </div>
