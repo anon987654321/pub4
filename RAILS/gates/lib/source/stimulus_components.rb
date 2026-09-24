@@ -79,8 +79,8 @@ module Deploy
         next if path.include?("/vendor/") || path.include?("/public/assets/") || path.include?("/node_modules/")
 
         File.foreach(path, encoding: "UTF-8").with_index(1) do |line, number|
-          line.scan(/data-controller\\s*=\\s*["']([^"']+)["']/).flatten.each do |controllers|
-            controllers.split(/s+/).each do |controller|
+          line.scan(/data-controller\s*=\s*["']([^"']+)["']/).flatten.each do |controllers|
+            controllers.split(/\s+/).each do |controller|
               next if controller.empty?
               usages[controller] << "#{path.sub(ROOT + '/', '')}:#{number}" unless usages[controller].include?("#{path.sub(ROOT + '/', '')}:#{number}")
             end
@@ -88,8 +88,6 @@ module Deploy
         end
       end
       usages
-    rescue StandardError
-      {}
     end
 
     def self.run
