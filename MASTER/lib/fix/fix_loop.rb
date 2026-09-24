@@ -33,12 +33,9 @@ module Master
       # the only one that claims the work is finished: the tree observed clean
       # the required number of times in a row, with the ground truth agreeing.
       # PLATEAU is convergence without that proof — the same findings keep
-      # coming back, or the passes ran out. BLOCKED is a halt outside the
-      # loop's authority, and VALIDATION_FAILED is a repair the tree refused.
-      #
-      # There is no state here for "a person must decide": nothing in the loop
-      # detects one yet, and a state nothing emits is a promise the report
-      # cannot keep.
+      # coming back, or the passes ran out. HUMAN_DECISION is a safe halt when a
+      # proposed fix is irreversible or spans multiple files. BLOCKED is a halt
+      # outside the loop's authority, and VALIDATION_FAILED is a repair the tree refused.
       TERMINAL_STATES = %i[done plateau blocked validation_failed delivery_failed timeout human_decision failed].freeze
 
       IDLE_SLEEP = 300
