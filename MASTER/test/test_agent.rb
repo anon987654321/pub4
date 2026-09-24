@@ -48,6 +48,16 @@ class TestAgent < Minitest::Test
     Fiber[:master_evidence_note] = nil
   end
 
+  def test_evidence_note_is_injected_into_dynamic_prompt
+    agent = @agent
+    Fiber[:master_evidence_note] = "Web research required."
+    prompt = agent.send(:dynamic_prompt)
+
+    assert_match(/Web research required\./, prompt)
+  ensure
+    Fiber[:master_evidence_note] = nil
+  end
+
   def test_current_turn_is_routed_to_web_evidence
     agent = build_agent
     web = Object.new
