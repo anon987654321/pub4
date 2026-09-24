@@ -71,8 +71,12 @@
       const d = await r.json();
       if (d.error) { document.getElementById('status').textContent = d.error; return; }
       const none = L('i18nBreakersNone', 'none');
+      const m = d.mission || {};
       document.getElementById('status').textContent = [
         `${L('labelModel', 'model')}: ${d.model}`,
+        `mission: ${m.id || 'none'}`,
+        `mission state: ${m.state || 'idle'} / ${m.stage || '—'}`,
+        `effort: ${m.effort || '—'}`,
         `${L('labelCtx', 'ctx')}: ${d.tokens} ${L('labelTokens', 'tokens')}`,
         `${L('labelCost', 'cost')}: $${Number(d.cost || 0).toFixed(4)}`,
         `${L('labelAgentPool', 'agent pool')}: ${d.agent_pool} active`,
