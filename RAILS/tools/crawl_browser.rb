@@ -55,8 +55,9 @@ def crawl_target(browser, name, url, browser_spec, failures)
   warmup = Integer(browser_spec.fetch("warmup_s", 2))
   begin
     browser.go_to(url)
-  rescue Ferrum::TimeoutError, Ferrum::PendingConnectionsError
-    nil
+  rescue Ferrum::TimeoutError, Ferrum::PendingConnectionsError => e
+    failures << "#{label}: navigation failed — #{e.class}: #{e.message}"
+    return
   end
   sleep warmup
   run_checks(browser, browser_spec["checks"], label, failures)
