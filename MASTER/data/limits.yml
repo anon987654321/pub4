@@ -1096,6 +1096,8 @@ process:
       darwin:
         warn: 1200
         crit: 1600
-    disk_free_pct:
-      warn: 15
-      crit: 5
+    # Gigabytes free, not a percentage: a run writes a few hundred megabytes,
+    # and 5% of a 228 GB volume is 11 GB.
+    disk_free_gb:
+      warn: 5
+      crit: 2

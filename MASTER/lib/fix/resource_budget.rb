@@ -16,7 +16,7 @@ module Master
         fd_count: { warn: 512, crit: 1024 },
         thread_count: { warn: 32, crit: 64 },
         process_count: { warn: 256, crit: 512 },
-        disk_free_pct: { warn: 15, crit: 5 },
+        disk_free_gb: { warn: 5, crit: 2 },
       }.freeze
 
       attr_reader :root
@@ -43,7 +43,7 @@ module Master
           fd_count:,
           thread_count: Thread.list.size,
           process_count:,
-          disk_free_pct:,
+          disk_free_gb:,
           network: network_available,
           llm_quota_exhausted:,
         }
@@ -108,16 +108,20 @@ module Master
         end
       end
 
+      # Free space in gigabytes, low meaning worse. A percentage of the volume
+      # read 94%-full on a 228 GB Mac as a warning at 14 GB free, when a run
+      # writes a few hundred megabytes.
       def classify_disk(values, state, reasons)
-        disk = values[:disk_free_pct]
-        if disk && disk <= resource_limit("disk_free_pct", "crit")
-          state = :critical
-          reasons += ["disk_free_pct=#{disk} <= #{resource_limit("disk_free_pct", "crit")}"]
-        elsif disk && disk <= resource_limit("disk_free_pct", "warn") && state == :ok
-          state = :warning
-          reasons += ["disk_free_pct=#{disk} <= #{resource_limit("disk_free_pct", "warn")}"]
+        disk = values[:disk_free_gb]
+        crit = resource_limit("disk_free_gb", "crit")
+        warn = resource_limit("disk_free_gb", "warn")
+        if disk && disk <= crit
+          [:critical, reasons + ["disk_free_gb=#{disk} <= #{crit}"]]
+        elsif disk && disk <= warn && state == :ok
+          [:warning, reasons + ["disk_free_gb=#{disk} <= #{warn}"]]
+        else
+          [state, reasons]
         end
-        [state, reasons]
       end
 
       def classify_network_and_quota(values, state, reasons)
@@ -204,13 +208,12 @@ module Master
         nil
       end
 
-      def disk_free_pct
+      # df -kP: the fourth column is the space available to this user, in KiB.
+      def disk_free_gb
         out, status = Open3.capture2e("df", "-kP", @root)
         return unless status.success?
 
-        row = out.lines.last.to_s.split
-        used = row[4].to_s.delete_suffix("%").to_f
-        used.positive? ? (100.0 - used).round(1) : nil
+        (out.lines.last.to_s.split[3].to_f / (1024 * 1024)).round(1)
       rescue StandardError
         nil
       end

@@ -466,7 +466,7 @@ class TestReliabilitySecondTranche < Minitest::Test
       "master_rss_mb" => { "warn" => 100, "crit" => 200 },
     }})
     measurement = budget.send(:classify, load_avg_1m: 3.0, rss_mb: nil, fd_count: nil,
-                              thread_count: nil, process_count: nil, disk_free_pct: 50,
+                              thread_count: nil, process_count: nil, disk_free_gb: 50,
                               network: true, llm_quota_exhausted: 0)
 
     assert budget.critical?(measurement)
@@ -476,7 +476,7 @@ class TestReliabilitySecondTranche < Minitest::Test
   def test_resource_budget_load_limits_are_per_cpu
     config = { "load" => { "load_avg_1m" => { "warn" => 1.5, "crit" => 2.5 } } }
     calm = { rss_mb: nil, fd_count: nil, thread_count: nil, process_count: nil,
-             disk_free_pct: 50, network: true, llm_quota_exhausted: 0 }
+             disk_free_gb: 50, network: true, llm_quota_exhausted: 0 }
 
     one = Master::Fix::ResourceBudget.new(root: Dir.pwd, cpus: 1, config:)
     eight = Master::Fix::ResourceBudget.new(root: Dir.pwd, cpus: 8, config:)
@@ -486,12 +486,22 @@ class TestReliabilitySecondTranche < Minitest::Test
     assert eight.critical?(eight.send(:classify, **calm, load_avg_1m: 21.0))
   end
 
+  def test_resource_budget_disk_floor_is_gigabytes_free
+    budget = Master::Fix::ResourceBudget.new(root: Dir.pwd, cpus: 1, config: {})
+    calm = { load_avg_1m: nil, rss_mb: nil, fd_count: nil, thread_count: nil, process_count: nil,
+             network: true, llm_quota_exhausted: 0 }
+
+    assert_equal :ok, budget.send(:classify, **calm, disk_free_gb: 14.0)[:state], "14 GB free is room"
+    assert budget.warning?(budget.send(:classify, **calm, disk_free_gb: 4.0))
+    assert budget.critical?(budget.send(:classify, **calm, disk_free_gb: 1.5))
+  end
+
   def test_resource_budget_process_limits_follow_the_platform
     config = { "resources" => { "process_count" => {
       "warn" => 256, "crit" => 512, "darwin" => { "warn" => 1200, "crit" => 1600 }
     } } }
     idle_mac = { load_avg_1m: nil, rss_mb: nil, fd_count: nil, thread_count: nil, process_count: 602,
-                 disk_free_pct: 50, network: true, llm_quota_exhausted: 0 }
+                 disk_free_gb: 50, network: true, llm_quota_exhausted: 0 }
 
     mac = Master::Fix::ResourceBudget.new(root: Dir.pwd, cpus: 1, config:, platform: "arm64-darwin25")
     vm23 = Master::Fix::ResourceBudget.new(root: Dir.pwd, cpus: 1, config:, platform: "x86_64-openbsd7.8")
