@@ -73,7 +73,14 @@ module Master
         # not just the first candidate -- callers checking circuit-breaker
         # health need every candidate this dispatch could actually fall
         # back to, not only the one at the front of the chain.
-        def candidate_models(message = nil, task_type: nil) = routed_models(message, task_type:)
+        # MASTER_MODEL replaces every lane at LLMDispatcher#forced_model, so it is
+        # the only candidate. Reporting the routed chain instead let /fix's
+        # circuit check skip every repair because free lanes it would never call
+        # were open, while claude-cli:claude-opus-5-5 stood ready.
+        def candidate_models(message = nil, task_type: nil)
+          forced = ENV["MASTER_MODEL"].to_s.strip
+          forced.empty? ? routed_models(message, task_type:) : [forced]
+        end
 
         private
 

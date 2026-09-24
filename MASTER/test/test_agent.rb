@@ -365,4 +365,15 @@ def test_a_failed_hard_compaction_refuses_the_turn
   assert_empty dispatched, "a turn over the window must not go out"
   assert_empty @agent.instance_variable_get(:@session).messages
 end
+
+  # MASTER_MODEL replaces every lane, so it is the one candidate: /fix read the
+  # routed free chain instead, found it all circuit-open and skipped every repair.
+  def test_candidate_models_is_the_forced_model_under_master_model
+    previous = ENV["MASTER_MODEL"]
+    ENV["MASTER_MODEL"] = "claude-cli:claude-opus-5-5"
+  
+    assert_equal ["claude-cli:claude-opus-5-5"], @agent.candidate_models
+  ensure
+    ENV["MASTER_MODEL"] = previous
+  end
 end
