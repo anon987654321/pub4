@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 require_relative "typography"
+require_relative "authority"
+require_relative "pairing"
+require_relative "composition"
 
 module Master
   module Design
@@ -15,6 +18,8 @@ module Master
 
       DIRECTIONS = {
         conversational: {
+          school: :social,
+          composition: :social_feed,
           match: /master\/chat|ai\.brgen/i,
           density: :focused, warmth: :human, formality: :low, contrast: :high,
           ornament: :restrained, motion: :expressive, materiality: :digital,
@@ -22,6 +27,8 @@ module Master
           memorable: "the response surface and its living face should feel like one instrument",
         },
         utilitarian_terminal: {
+          school: :industrial,
+          composition: :industrial_system,
           match: /bsdports|ports|openbsd|terminal/i,
           density: :high, warmth: :cool, formality: :high, contrast: :high,
           ornament: :minimal, motion: :quiet, materiality: :functional,
@@ -29,6 +36,8 @@ module Master
           memorable: "dense information should remain calm, legible, and obviously actionable",
         },
         editorial_wardrobe: {
+          school: :luxury,
+          composition: :editorial_commerce,
           match: /amber|wardrobe|outfit|garment|fashion/i,
           density: :moderate, warmth: :warm, formality: :editorial, contrast: :controlled,
           ornament: :selective, motion: :subtle, materiality: :tactile,
@@ -36,13 +45,26 @@ module Master
           memorable: "the clothing and its visual texture should carry the page before chrome does",
         },
         marketplace: {
+          school: :commerce_editorial,
+          composition: :marketplace_sale,
           match: /markedsplass|market|listing|shop|order/i,
           density: :high, warmth: :local, formality: :practical, contrast: :clear,
           ornament: :low, motion: :functional, materiality: :physical,
           typographic_voice: :plainspoken, spatial_tension: :compact,
           memorable: "real items, prices, places, and trust signals should dominate the hierarchy",
         },
+        cute_retail: {
+          match: /toy|toys|kids|children|playroom|cute|playful/i,
+          school: :cute,
+          composition: :cute_retail,
+          density: :lively, warmth: :warm, formality: :low, contrast: :clear,
+          ornament: :expressive, motion: :playful, materiality: :tactile,
+          typographic_voice: :friendly, spatial_tension: :open,
+          memorable: "play, product character, and the next action should be obvious together",
+        },
         local_social: {
+          school: :social,
+          composition: :social_feed,
           match: /brgen|community|communities|posts|events|stories|conversations/i,
           density: :lively, warmth: :human, formality: :low, contrast: :clear,
           ornament: :selective, motion: :responsive, materiality: :local,
@@ -50,6 +72,8 @@ module Master
           memorable: "place, people, and fresh activity should feel immediate without becoming noisy",
         },
         media_station: {
+          school: :editorial,
+          composition: :editorial_commerce,
           match: /radio|tv|video|sounds|playlist|sets/i,
           density: :focused, warmth: :immersive, formality: :low, contrast: :dramatic,
           ornament: :deliberate, motion: :rhythmic, materiality: :sonic,
@@ -57,6 +81,8 @@ module Master
           memorable: "media should create the focal field; controls should recede until needed",
         },
         intimate_social: {
+          school: :social,
+          composition: :social_feed,
           match: /dating|likes|users\/new|users\/show/i,
           density: :focused, warmth: :warm, formality: :low, contrast: :gentle,
           ornament: :selective, motion: :responsive, materiality: :human,
@@ -64,6 +90,8 @@ module Master
           memorable: "the person and the decision in front of the user should remain unmistakable",
         },
         transactional_food: {
+          school: :commerce_editorial,
+          composition: :marketplace_sale,
           match: /takeaway|restaurant|delivery|restaurants/i,
           density: :high, warmth: :warm, formality: :practical, contrast: :clear,
           ornament: :appetizing, motion: :functional, materiality: :physical,
@@ -71,6 +99,8 @@ module Master
           memorable: "food, availability, price, and next action should read in one glance",
         },
         cartographic: {
+          school: :swiss,
+          composition: :swiss_poster,
           match: /maps|places/i,
           density: :high, warmth: :neutral, formality: :practical, contrast: :clear,
           ornament: :low, motion: :spatial, materiality: :geographic,
@@ -78,6 +108,8 @@ module Master
           memorable: "location and relationships should dominate decorative interface chrome",
         },
         content_first: {
+          school: :editorial,
+          composition: :editorial_commerce,
           match: /.*/,
           density: :moderate, warmth: :neutral, formality: :calm, contrast: :clear,
           ornament: :low, motion: :restrained, materiality: :honest,
@@ -143,11 +175,16 @@ module Master
           surface=#{surface.id}
           purpose=#{purpose_for(surface)}
           audience_hypothesis=#{AUDIENCES.fetch(direction)}
+          authoritative_design=true
+          authority=#{Master::Design::Authority.brief(path: surface.path, purpose: purpose_for(surface), school: DIRECTIONS.fetch(direction)[:school])}
           aesthetic_direction=#{direction}
+          design_school=#{DIRECTIONS.fetch(direction)[:school]}
           design_coordinates=#{design_coordinates(direction)}
           memorable_element=#{DIRECTIONS.fetch(direction)[:memorable]}
           typography_direction=#{TYPOGRAPHY_HINTS.fetch(direction)}
           typography_contract=#{Master::Design::Typography.brief(path: surface.path, purpose: purpose_for(surface))}
+          font_pairing=#{Master::Design::Pairing.brief(school: DIRECTIONS.fetch(direction)[:school], purpose: purpose_for(surface))}
+          composition=#{Master::Design::Composition.brief(school: DIRECTIONS.fetch(direction)[:school], purpose: purpose_for(surface))}
           primary_action_candidate=#{primary_action(primary)}
           current_palette=#{palette.join(", ")}
           current_component_language=#{fp.dig(:components, :language)}
@@ -168,7 +205,7 @@ module Master
 
         [
           "ART DIRECTION",
-          "Establish what each surface is trying to be before judging a repair. Protect one memorable element and reject generic defaults only when they conflict with the product's purpose or the rendered evidence.",
+          "Authoritative design is priority 1: establish purpose, agency, clarity, hierarchy, trust, consistency, craft, and delight before selecting a visual school. Protect one memorable element and reject generic defaults only when they conflict with the product's purpose or rendered evidence.",
           blocks.join("\n\n"),
         ].join("\n")
       rescue StandardError => e
