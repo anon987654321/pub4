@@ -7,6 +7,16 @@ class TestPreserveUserIntent < Minitest::Test
     @guard = Master::Ground::PreserveUserIntent.new(root: Master::ROOT)
   end
 
+  def test_policy_load_failure_is_not_treated_as_no_restrictions
+    error = assert_raises(RuntimeError) do
+      Master.stub(:load_yaml, ->(*) { raise "rules unreadable" }) do
+        Master::Ground::PreserveUserIntent.new(root: Master::ROOT)
+      end
+    end
+
+    assert_match(/preserve_user_intent configuration unreadable: .*rules unreadable/, error.message)
+  end
+
   def test_allows_non_refactor_commits
     diff = "+def new_method\n"
     result = @guard.assert_preserved!(diff, message: "fix: typo")
