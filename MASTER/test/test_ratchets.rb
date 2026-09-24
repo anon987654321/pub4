@@ -29,6 +29,13 @@ class TestRatchets < Minitest::Test
                  "new debt against a recorded ceiling"
   end
 
+  def test_missing_css_budget_is_not_silently_omitted
+    source = File.read(File.join(Operator::Ratchets::MASTER, "lib/operator/ratchets.rb"))
+    assert_includes source, 'name: "css_budget", current: nil, ceiling: nil'
+    assert_includes source, 'unreadable: budget missing'
+    assert_includes source, 'unreadable: no CSS ceilings available'
+  end
+
   def test_no_ratchet_is_unreadable
     unreadable = rows.reject { |row| row.current && row.ceiling }
 
