@@ -41,6 +41,25 @@ class TestImmutability < Minitest::Test
     end
   end
 
+  def test_missing_sacred_manifest_is_not_clean
+    Dir.mktmpdir do |root|
+      FileUtils.mkdir_p(File.join(root, "data"))
+      assert_raises(Master::Ground::Immutability::Violation) do
+        Master::Ground::Immutability.new(root:).verify!
+      end
+    end
+  end
+
+  def test_empty_sacred_manifest_is_not_clean
+    Dir.mktmpdir do |root|
+      FileUtils.mkdir_p(File.join(root, "data"))
+      File.write(File.join(root, "data", "soul.yml"), "absolute:\n  sacred_paths: []\n")
+      assert_raises(Master::Ground::Immutability::Violation) do
+        Master::Ground::Immutability.new(root:).verify!
+      end
+    end
+  end
+
   def test_missing_checksums_is_explicit
     with_fixture do |root|
       result = Master::Ground::Immutability.new(root:).verify!
