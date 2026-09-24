@@ -74,7 +74,7 @@ module Master
           erase = /(?:border[\w-]*|outline[\w-]*|background|border-radius|padding|animation|transition|box-shadow|display)\s*:\s*(?:none|transparent|0)[^;!]*!\s*important/
           source_text = without_block_comments(without_override_media(src))
           # Markers are consulted on the ORIGINAL lines: the block-comment
-          # stripping above blanks /* scan: intentional */ before scan_lines
+          # stripping above blanks /* scan: intentional-marker */ before scan_lines
           # could see it.
           originals = src.lines
           source_text = source_text.each_line.with_index.map do |l, i|

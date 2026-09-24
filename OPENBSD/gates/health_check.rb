@@ -352,7 +352,7 @@ if on_box
     stat = File.stat(path)
     owner = begin
       Etc.getpwuid(stat.uid).name
-    rescue ArgumentError # scan: intentional — a uid with no passwd entry is reported by number
+    rescue ArgumentError # a uid with no passwd entry is reported by number
       stat.uid.to_s
     end
     { path:, mode: stat.mode, owner: }

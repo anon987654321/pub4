@@ -996,7 +996,7 @@ module Livesets
     FileUtils.mkdir_p(File.dirname(dest))
     partial = dest.sub(/(\.\w+)?\z/, '.partial\1')
     ok = system("/bin/zsh", "-c", "#{cmd} -y #{partial.shellescape}")
-    FileUtils.rm_f(partial) unless ok # scan: intentional — the fragment this call just wrote
+    FileUtils.rm_f(partial) unless ok # the fragment this call just wrote
     abort "render failed" unless ok
 
     File.rename(partial, dest)

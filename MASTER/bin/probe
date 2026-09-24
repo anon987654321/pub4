@@ -108,7 +108,7 @@ CHECKS = {
   },
   "playbook" => {
     desc: "Print operator playbook lessons",
-    cmd: [RUBY, File.join(MASTER_ROOT, "bin", "playbook")],
+    cmd: [RUBY, "-I", File.join(MASTER_ROOT, "lib"), "-e", "require 'master'; puts Master::Ground::OperatorPlaybook.render"],
     cwd: MASTER_ROOT,
   },
   "ci" => {
