@@ -45,6 +45,8 @@ class VisualGhostStackContractTest < Minitest::Test
     assert_includes source, "geometry registration"
     assert_includes source, "render_grid"
     assert_includes source, "render_focus"
+    assert_includes source, "render_squint"
+    assert_includes source, "SQUINT_BLUR_PX = 14"
     assert_includes source, "FOCUS_SCALE = 2"
     assert_includes source, "registration grid"
     assert_includes source, "png_dimensions"
