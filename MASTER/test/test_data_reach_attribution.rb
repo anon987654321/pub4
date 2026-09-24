@@ -20,6 +20,7 @@ require_relative "../tools/data_reach"
 class TestDataReachAttribution < Minitest::Test
   # A file the census cannot parse has no keys, so every key in it used to pass
   # as read — an unread-declaration census reporting an unreadable file clean.
+  # The census now calls itself inconclusive and aborts on any such file.
   # No file in data/ does it today; the fixture below is written to be broken.
   def test_an_unparseable_data_file_says_so_and_yields_nothing
     Dir.mktmpdir("data_reach") do |dir|
@@ -29,7 +30,7 @@ class TestDataReachAttribution < Minitest::Test
       _, err = capture_io { assert_nil Operator::DataReach.document(path) }
 
       assert_match(/broken\.yml does not parse/, err)
-      assert_match(/pass this census unread/, err)
+      assert_match(/census is inconclusive/, err)
     end
   end
 
