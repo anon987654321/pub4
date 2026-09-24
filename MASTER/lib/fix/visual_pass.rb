@@ -54,6 +54,12 @@ module Master
 
         @dir = Dir.mktmpdir("master-visual")
         graph = RailsVisualGraph.new(root: repo_root).build if rails_target?(target)
+        if graph&.errors&.any?
+          return Result.err(
+            "rendered visual review: INCONCLUSIVE — source graph discovery failed: #{graph.errors.first(4).join("; ")}",
+            category: :inconclusive,
+          )
+        end
         surfaces = selected_surfaces(target:, pass:)
         return Result.err("rendered visual review: INCONCLUSIVE — no declared surfaces", category: :inconclusive) if surfaces.empty?
 
