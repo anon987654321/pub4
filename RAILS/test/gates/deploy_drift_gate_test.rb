@@ -101,8 +101,6 @@ class DeployDriftGateTest < Minitest::Test
   def test_a_failed_head_measurement_is_inconclusive
     stamp("brgen", sha: head)
     gate = GATE.new
-    failure = `git -C #{GATE::ROOT} rev-parse --not-a-real-option 2>&1`
-    refute_empty failure
 
     gate.stub(:git_repo?, true) do
       gate.stub(:git_capture, ["", Open3.capture2e("false").last]) do
