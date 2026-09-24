@@ -3480,6 +3480,25 @@ rules:
           - price_visible_without_interaction
           - display_headline
           - neutral_transaction_text
+          variants:
+            kaufland_catalogue:
+              reference: kaufland
+              structure: campaign_plus_category_panel
+              grid: wide_promo_and_catalogue_navigation
+              focal_order: [campaign, categories, products]
+              signature: broad_discovery
+            bol_clean:
+              reference: bol
+              structure: full_width_promo_then_category_and_product_rail
+              grid: single_clean_storefront_column
+              focal_order: [search, campaign, product, service_proof]
+              signature: clean_product_first
+            brgen_hybrid:
+              references: [kaufland, bol]
+              structure: asymmetric_campaign_plus_local_discovery
+              grid: seven_five_split
+              focal_order: [local_context, product, price, categories, action]
+              signature: local_marketplace_identity
         swiss_poster:
           school: swiss
           pairing: swiss_house
