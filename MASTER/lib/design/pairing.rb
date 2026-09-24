@@ -37,11 +37,16 @@ module Master
 
       def for(school:, purpose: nil, root: Master::ROOT)
         key = purpose_key(purpose) || SCHOOL_DEFAULTS.fetch(school.to_sym)
-        spec = fetch(key, root:)
-        return [key, spec] if deployable?(spec, root:)
+        [key, fetch(key, root:)]
+      end
 
-        fallback = fetch("swiss_house", root:)
-        ["swiss_house", fallback]
+      def candidates(school:, root: Master::ROOT)
+        registry.filter_map do |name, spec|
+          next unless spec.fetch("school").to_s == school.to_s
+          next unless deployable?(spec, root:)
+
+          [name, spec]
+        end
       end
 
       def deployable?(spec, root: Master::ROOT)
@@ -64,7 +69,7 @@ module Master
 
       def brief(school:, purpose: nil, root: Master::ROOT)
         key, spec = for(school:, purpose:, root:)
-        "pairing=#{key} strategy=#{spec.fetch("strategy")} reference=#{spec.fetch("reference", "none")} intent=#{spec.fetch("typographic_intent", "functional")} display=#{spec.fetch("display")} body=#{spec.fetch("body")} price=#{spec.fetch("price")} metadata=#{spec.fetch("metadata")}"
+        "pairing=#{key} strategy=#{spec.fetch("strategy")} reference=#{spec.fetch("reference", "none")} intent=#{spec.fetch("typographic_intent", "functional")} display=#{spec.fetch("display")} body=#{spec.fetch("body")} price=#{spec.fetch("price")} metadata=#{spec.fetch("metadata")} deployable=#{deployable?(spec, root:)}"
       end
     end
   end
