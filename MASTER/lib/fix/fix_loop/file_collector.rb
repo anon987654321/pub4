@@ -40,10 +40,11 @@ module Master
         def collect_changed(target)
           changed = changed_since_last_commit(target)
           return collect(target) if changed.empty?
+
           changed
         rescue StandardError => e
-          @bus&.publish("fix_loop:incremental_fallback", error: e.message)
-          collect(target)
+          @bus&.publish("fix_loop:incremental_error", error: e.message)
+          raise "incremental fix scope unavailable: #{e.class}: #{e.message}"
         end
 
         private
@@ -66,7 +67,11 @@ module Master
 
         def changed_since_last_commit(target)
           out, _, status = Master::Io::Exec.capture3("git", "-C", @root, "diff", "--name-only", "HEAD")
-          return [] unless status.success?
+          unless status.success?
+            return [] unless File.exist?(File.join(@root, ".git"))
+
+            raise "git diff failed while determining incremental fix scope"
+          end
 
           out.lines.map(&:strip).reject(&:empty?)
              .map { |rel| File.join(@root, rel) }
