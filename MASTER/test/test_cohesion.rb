@@ -83,6 +83,16 @@ class CohesionTest < Minitest::Test
     assert_equal %w[thing_c.rb thing_a.rb thing_b.rb], plan[:files]
   end
 
+  def test_merge_plan_records_external_dependency_evidence
+    flat_family
+    external = File.join(@tmp, "caller.rb")
+    File.write(external, "ThingA = thing_a_run\n")
+    plan = Operator::Cohesion.merge_plan("thing", Dir.glob(File.join(@tmp, "thing_*.rb")), :prefix, [])
+
+    assert_includes plan[:evidence].keys, :external_references
+    assert plan[:evidence][:external_references].any? { |row| row[:file] == "caller.rb" }
+  end
+
   def test_it_emits_a_plan_rather_than_a_patch
     flat_family
     plan = Operator::Cohesion.merge_plan("thing", Dir.glob(File.join(@tmp, "thing_*.rb")), :prefix, [])
