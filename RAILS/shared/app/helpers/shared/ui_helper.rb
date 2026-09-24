@@ -55,9 +55,10 @@ module Shared
     end
 
     def messenger_path
-      return nil unless respond_to?(:conversations_path)
+      return conversations_path if respond_to?(:conversations_path)
+      return main_app.conversations_path if respond_to?(:main_app) && main_app.respond_to?(:conversations_path)
 
-      conversations_path
+      nil
     end
 
     # Every icon partial in the shared engine, by name. Read once at load; the
