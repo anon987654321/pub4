@@ -1,7 +1,7 @@
 ---
 meta:
   source: runtime authority — edit this file or use MemoryRecord; do not add data/claude/*.md
-  count: 12
+  count: 15
 entries:
 - key: personality_rb_comment_audit
   name: personality rb comment audit
@@ -149,26 +149,6 @@ entries:
     former OpenBSD developer, now Qubes OS core team; blog at dataswamp.org) to create
     the next version of her ports index. Treat bsdports as a first-class, real-world
     OpenBSD-community deliverable, not a demo.
-- key: pub4_reanalysis
-  name: pub4 reanalysis
-  description: Summary of potential issues and recommended actions for pub4 based
-    on code review
-  type: project
-  body: 'Based on the codebase listing, pub4 components include modules and classes
-    under lib/pub4 and tools/audio. No recent changes are visible without version
-    control access. Recommended actions: 1) Run git log to inspect recent commits
-    in pub4 directories for potential regressions or style violations. 2) Execute
-    linting and test suites (e.g., rubocop, minitest) focusing on pub4 files to catch
-    any deviations from constitutional rules such as abbreviation use in identifiers
-    (e.g., Operator, AkmdMasteringChain) or path names (e.g., operator, akmd). 3)
-    Verify that any new files added to pub4 follow Flat Hierarchy naming (lowercase
-    snake_case, no abbreviations, concrete nouns/verbs). 4) Check for god classes
-    or methods exceeding size limits (e.g., >200 lines, >6 methods) in pub4 classes.
-    5) Ensure no hardcoded credentials or banned GNU tools (sed, awk, etc.) appear
-    in pub4 scripts. 6) Confirm that pub4-related changes adhere to One Source principle
-    and avoid duplication. 7) Run full test suite to ensure no regressions. Prioritize
-    checking for any new abbreviations in code or paths, as these violate Naming and
-    Flat Hierarchy rules.'
 - key: semantic_index_comment_audit
   name: semantic index comment audit
   description: Audit of semantic_index.rb comments for drift - all accurate
