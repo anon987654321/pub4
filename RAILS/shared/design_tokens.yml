@@ -105,57 +105,6 @@ system:
   control_pad_inline: "16px"
   control_gap: "8px"
   radius_card: "12px"
-storefront_art:
-  name: "matte_product_promotion"
-  family: "marketplace_takeaway"
-  purpose: "Generate clean promotional product artwork while Rails owns all readable copy and offer data."
-  composition:
-    aspect: "14:5"
-    text_zone: "left 48%"
-    product_zone: "right 44%"
-    safe_gap: "24px"
-    product_max_height: "82%"
-    product_max_width: "42%"
-  typography:
-    headline_lines: 2
-    headline_role: "dominant"
-    support_lines: 2
-    offer_role: "secondary"
-    cta_role: "tertiary"
-    embedded_text: false
-  surface:
-    material: "matte paper"
-    texture: "barely perceptible"
-    lighting: "soft diffuse studio light"
-    contrast: "calm"
-  imagery:
-    product_count: "one hero product or one coherent small group"
-    product_cutout: true
-    perspective: "natural"
-    background_scene: false
-    generic_stock_scene: false
-  palette:
-    marketplace: ["warm white", "stone", "charcoal", "single campaign accent"]
-    takeaway: ["warm white", "cream", "charcoal", "single cuisine accent"]
-  forbidden:
-    - "glow"
-    - "drop_shadow"
-    - "busy_background"
-    - "embedded_typography"
-    - "fake_price"
-    - "fake_rating"
-    - "decorative_lifestyle_scene"
-  prompt_template: "Clean matte promotional artwork for {vertical}: {subject}; isolated product, natural proportions, soft diffuse studio light, quiet paper-like background, generous negative space on the left for real typography, no readable text, no logos, no badges, no price, no interface elements."
-radio:
-  name: "radio"
-  inspirations:
-    - "soundcloud"
-    - "whyp"
-  home: "discovery_first"
-  player: "waveform_first"
-  sharing: "single_track_permalink"
-  privacy: "private_and_unlisted_first"
-  chrome: "dark_audio"
 # amber's wardrobe dialect: the family greyscale, so the garment photographed
 # on it is the only colour on the page. Use in amber + shared product views.
 luxury:
