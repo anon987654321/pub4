@@ -79,7 +79,8 @@ module Deploy
         Dir[File.join(@rails_root, tree, "config/locales/**/*.yml")].sort.each do |path|
           doc = begin
             YAML.safe_load_file(path, aliases: true)
-          rescue StandardError
+          rescue StandardError => e
+            @result.inconclusive!("locale_shadowing #{path}: locale file unreadable (#{e.class}: #{e.message})")
             next
           end
           next unless doc.is_a?(Hash)
@@ -143,7 +144,8 @@ module Deploy
       Dir[glob].sort.each_with_object({}) do |path, acc|
         doc = begin
           YAML.safe_load_file(path, aliases: true)
-        rescue StandardError
+        rescue StandardError => e
+          @result.inconclusive!("locale_shadowing: locale file unreadable #{path} (#{e.class}: #{e.message})")
           next
         end
         next unless doc.is_a?(Hash)
