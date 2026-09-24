@@ -10,7 +10,6 @@ name: RAILS Tests
 # Or via root: OPENBSD/bin/check-rails --profile=contributor
 # Full: ruby RAILS/gates/runner.rb domain_alignment production etc.
 on:
-    branches: [main]
   workflow_dispatch:
 
 jobs:
