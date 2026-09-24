@@ -13,6 +13,7 @@ require_relative "rule_loop/collapse_guard"
 require_relative "rule_loop/fix_strategies"
 require_relative "rule_loop/fix_verification"
 require_relative "rule_loop/outcome_tracking"
+require_relative "rule_loop/autofix_policy"
 
 module Master
   module Fix
@@ -85,6 +86,7 @@ module Master
       include FixStrategies
       include FixVerification
       include OutcomeTracking
+      include AutofixPolicy
 
       def initialize(rule:, agent:, scanner:, root:, **options)
         @rule = rule
@@ -149,7 +151,12 @@ module Master
       # were rejected on re-scan — every non-apply collapsed to `false` before
       # the one line anyone reads. The tally of these symbols is that line.
       def fix_violation(violation)
-        if needs_a_person?(violation) && !deletions_allowed?\n          @person_required = true\n          @bus&.publish("rule_loop:human_decision_required", rule: violation[:rule], file: violation[:file])\n          return :needs_person\n        end\n        return :skip_confidence unless autofix_allowed?(violation)
+        if needs_a_person?(violation) && !deletions_allowed?
+          @person_required = true
+          @bus&.publish("rule_loop:human_decision_required", rule: violation[:rule], file: violation[:file])
+          return :needs_person
+        end
+        return :skip_confidence unless autofix_allowed?(violation)
         return :skip_fingerprint unless fingerprint_matches?(violation)
 
         note_unverified_fix(violation)
@@ -381,42 +388,6 @@ module Master
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "rule_loop.scan_all", event_bus: @bus, path:)
         raise
-      end
-
-      # A deleting transform runs only when a person asked this loop to fix, and
-      # MASTER_AUTOFIX is what a person asking looks like from here: the
-      # background convergence loop and the unattended ladder both leave it off.
-      # An addition is visible in the diff it makes; a deletion is invisible to
-      # anyone who does not already know what stood there.
-      def deletions_allowed?
-        ENV["MASTER_AUTOFIX"] == "1"
-      end
-
-      # A finding may say what undoing its fix costs (rules.yml
-      # schema_metadata: reversibility, blast_radius). A fix nobody can undo, or
-      # one that reaches past the file it was found in, waits for a person the
-      # same way a deletion does.
-      def needs_a_person?(violation)
-        radius = violation[:blast_radius]
-        files_touched = radius.is_a?(Hash) ? (radius["files_touched"] || radius[:files_touched]).to_i : 0
-        violation[:reversibility].to_s == "impossible" || files_touched > 1
-      end
-
-      def autofix_allowed?(violation)
-        if needs_a_person?(violation) && !deletions_allowed?
-          @bus&.publish("rule_loop:autofix_skipped", rule: violation[:rule], reason: :needs_a_person)
-          return false
-        end
-        return true unless @scanner.respond_to?(:should_autofix?, true)
-
-        confidence = violation[:confidence] || violation["confidence"] || 1.0
-        allowed = @scanner.__send__(:should_autofix?, violation[:rule], confidence,
-                                    allow_deletions: deletions_allowed?)
-        unless allowed
-          @bus&.publish("rule_loop:autofix_skipped", rule: violation[:rule], confidence:)
-          Master::Trace::Dmesg.status("fix0", "#{violation[:rule]} autofix skipped, confidence #{confidence}")
-        end
-        allowed
       end
 
       def handle_fix_exception(error, violation, event:)

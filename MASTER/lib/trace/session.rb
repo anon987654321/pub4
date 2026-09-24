@@ -94,6 +94,10 @@ module Master
               next unless value.is_a?(Hash)
               messages = value["messages"]
               raise JSON::ParserError, "conversation messages are not an array" unless messages.is_a?(Array)
+              # Messages read back with symbol keys, as load! reads session.json;
+              # the conversation keys stay strings, which is what fork! and
+              # switch! look them up by.
+              messages = messages.map { |message| message.is_a?(Hash) ? message.transform_keys(&:to_sym) : message }
               @conversations[key] = { messages:, token_est: value["token_est"].to_i, name: value["name"], input_tokens: value["input_tokens"].to_i }
               @persistent_keys << key
             end
@@ -263,6 +267,7 @@ module Master
         @req_max = req_max
         @mutex = Mutex.new
         @conversations = {}
+        @persistent_keys = Set.new
         @snapshots = {}
         @cost = 0.0
         @tokens_billed = 0

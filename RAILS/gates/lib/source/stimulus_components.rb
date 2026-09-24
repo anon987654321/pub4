@@ -130,7 +130,7 @@ module Deploy
         controller_paths.each do |path|
           body = File.read(path)
           next unless body.match?(pattern)
-          next if body.match?(/@stimulus-components[\\/]#{Regexp.escape(component)}/)
+          next if body.match?(%r{@stimulus-components[\/]#{Regexp.escape(component)}})
 
           controller_name = File.basename(path, "_controller.js").tr("_", "-")
           call_sites = view_usages.fetch(controller_name, [])

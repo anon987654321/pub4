@@ -34,7 +34,8 @@ module Master
               break if deadline && Time.now >= deadline
               break if circuit_open?
               results = run_rule_group(group:, files:, pass:, rule_violations:, council:)
-              fixed += tally_rule_results(results, breakdown:, pass:)\n              @human_decision_required ||= results.any? { |_rule, result| result[:status] == :human_decision }
+              fixed += tally_rule_results(results, breakdown:, pass:)
+              @human_decision_required ||= results.any? { |_rule, result| result[:status] == :human_decision }
             end
             report_skip_breakdown(breakdown, pass:)
             fixed

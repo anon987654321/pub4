@@ -62,9 +62,9 @@ class LocaleShadowingGateTest < Minitest::Test
 
   def test_unreadable_locale_file_is_inconclusive
     Dir.mktmpdir do |dir|
-      plant(dir, "RAILS/shared/config/locales/social.nb.yml", "nb:\n  nav:\n    home: "Home"\n")
+      plant(dir, "RAILS/shared/config/locales/social.nb.yml", "nb:\n  nav:\n    home: \"Home\"\n")
       plant(dir, "RAILS/shared/config/locales/broken.yml", "nb: [broken")
-      plant(dir, "RAILS/brgen/config/locales/nb.yml", "nb:\n  nav:\n    home: "Home"\n")
+      plant(dir, "RAILS/brgen/config/locales/nb.yml", "nb:\n  nav:\n    home: \"Home\"\n")
       budget = plant(dir, "locale_shadowing.yml", "brgen: 0\n")
       result = GATE.run(root: dir, apps: %w[brgen], budget:)
       assert_equal :inconclusive, result.outcome

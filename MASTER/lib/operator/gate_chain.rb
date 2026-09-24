@@ -188,7 +188,6 @@ module Operator
     rescue StandardError => e
       raise "council: harvest under #{dir} unreadable: #{e.class}: #{e.message}"
     end
-    end
 
     # Never in scan-only: that mode's promise is a shared checkout untouched.
     # PUB4_GATE_COUNCIL_FIX=0 turns it off in full-fix too, for a run where the
