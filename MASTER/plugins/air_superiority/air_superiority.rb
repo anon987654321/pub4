@@ -262,15 +262,21 @@ module Master
           sleep BLUETOOTH_SCAN_S
           output = run_command("bluetoothctl", "devices", timeout: 5)
           parse_linux_bt(output)
-        ensure
-          Process.kill("TERM", -pid)
-          Process.wait(pid)
         rescue Errno::ESRCH, Errno::ECHILD
+          []
+        rescue Error
+          []
         ensure
-          system("bluetoothctl", "scan", "off", out: File::NULL, err: File::NULL) if executable?("bluetoothctl")
+          begin
+            Process.kill("TERM", -pid)
+          rescue Errno::ESRCH
+          end
+          begin
+            Process.wait(pid)
+          rescue Errno::ECHILD
+          end
+          system("bluetoothctl", "scan", "off", out: File::NULL, err: File::NULL)
         end
-      rescue Error
-        []
       end
 
       def parse_linux_bt(output)
