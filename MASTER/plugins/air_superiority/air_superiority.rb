@@ -208,7 +208,7 @@ module Master
 
       def parse_airport(text)
         text.lines.drop(1).filter_map do |line|
-          fields = line.split(/s{2,}/, 7)
+          fields = line.split(/\s{2,}/, 7)
           next if fields.length < 2
 
           { "ssid" => fields[0].strip, "bssid" => fields[1].strip, "signal" => fields[2].to_s.strip }
@@ -225,7 +225,7 @@ module Master
 
       def parse_bluetoothctl(text)
         text.lines.filter_map do |line|
-          match = line.match(/ADevices+([0-9A-Fa-f:]{17})s+(.+)z/)
+          match = line.match(/\ADevice\s+([0-9A-Fa-f:]{17})\s+(.+)\z/)
           next unless match
 
           { "address" => match[1], "name" => match[2].strip }
