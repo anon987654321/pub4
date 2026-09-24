@@ -73,7 +73,8 @@ module Master
 
         return self unless @checkpoint
 
-        checkpoint = @checkpoint.call(id: @id, root: @root, files: Array(files))
+        # Fix::Checkpoint#create answers with symbol keys; the record is JSON.
+        checkpoint = @checkpoint.call(id: @id, root: @root, files: Array(files)).transform_keys(&:to_s)
         @record["checkpoint"] = checkpoint
         persist!
         emit("mission:checkpoint", id: @id, checkpoint: checkpoint["id"], files: checkpoint["files"].size)
@@ -151,8 +152,11 @@ module Master
         write_atomic(path, JSON.pretty_generate(@record) + "\n", mode: 0o600)
       end
 
-      def emit(event, **payload)
-        @bus&.publish(event, **payload)
+      # Callers hand the payload either way: start! passes the record's slice
+      # as a Hash, the rest pass keywords. Keywords alone raised on start!,
+      # and a raising start aborted every /fix run it wrapped.
+      def emit(event, payload = {}, **fields)
+        @bus&.publish(event, payload.merge(fields))
       rescue StandardError => e
         warn("mission0: #{e.class}: #{e.message}") if ENV["MASTER_TRACE_STRICT"] == "1"
       end

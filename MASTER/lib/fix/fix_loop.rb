@@ -90,22 +90,8 @@ module Master
         budget_error = exhausted_budget(journal:, run_id:)
         return budget_error if budget_error
 
-        mission = mission_for(target:, files:, journal:)
-        mission.transition!(:plan, plan: Ground::ActivePlan.read(@root) || "fix plan: observe, critique, repair, verify")
-        mission.transition!(:execute)
-        deadline = Ground::Reliability::Deadline.new(journal["remaining_seconds"].to_f)
-        start_pass = @run_journal.next_pass(journal)
-        @bus&.publish("fix_loop:recovered", run_id:, start_pass:, target:) if journal["resumed"]
-
-        resumed = resume_active_transaction(journal:, run_id:, start_pass:)
-        if resumed.err?
-          mission.fail!(resumed.message)
-          return resumed
-        end
-        start_pass = resumed.value!
-
-        result = run_passes(files:, target:, max_passes:, deadline:, budget_seconds:, start_pass:, run_id:)
-        finish_run(result, target, run_id, mission:)
+        mission = mission_for(target:)
+        run_journaled(journal, files:, target:, max_passes:, budget_seconds:, mission:)
       rescue StandardError => e
         @bus&.publish("fix_loop:crash", error: e.message, backtrace: e.backtrace&.first(8))
         @run_journal&.crash(run_id, e.message) if defined?(run_id) && run_id
@@ -122,33 +108,6 @@ module Master
         mission&.finish!(state: mission_state, summary: result.to_s)
         @bus&.publish("fix_loop:terminal", state:, message: result.to_s)
         result
-      end
-
-      def mission_for(target:, files:, journal:)
-        checkpoint = lambda do |id:, root:, files:|
-          Checkpoint.new(root:, dir: File.join(root, ".master", "checkpoints")).create(
-            label: "mission-#{id}", files:
-          )
-        end
-        mission = Master::Core::Mission.new(root: @root, bus: @bus, checkpoint:)
-        mission.start!(
-          goal: "fix #{relative_target(target)}",
-          scope: target,
-          model: @agent.respond_to?(:model) ? @agent.model : ENV["MASTER_MODEL"],
-          effort: ENV.fetch("MASTER_EFFORT", "high"),
-          plan: Ground::ActivePlan.read(@root),
-        )
-      rescue StandardError => e
-        @bus&.publish("mission:error", error: e.message, phase: "start")
-        raise
-      end
-
-      def relative_target(path)
-        full = File.expand_path(path, @root)
-        root = File.expand_path(@root)
-        return path.to_s unless full == root || full.start_with?(root + File::SEPARATOR)
-
-        full.delete_prefix(root + File::SEPARATOR)
       end
 
       # After the passes, with no transaction open: a rename moves files the
@@ -199,6 +158,48 @@ module Master
       def self.preamble_from_soul = RuleLoop.soul_preamble
 
       private
+
+      # The run once its journal is open and a mission records it: resume what
+      # an earlier process left, then the passes, then the terminal state.
+      def run_journaled(journal, files:, target:, max_passes:, budget_seconds:, mission:)
+        run_id = journal["id"]
+        deadline = Ground::Reliability::Deadline.new(journal["remaining_seconds"].to_f)
+        start_pass = @run_journal.next_pass(journal)
+        @bus&.publish("fix_loop:recovered", run_id:, start_pass:, target:) if journal["resumed"]
+
+        resumed = resume_active_transaction(journal:, run_id:, start_pass:)
+        return resumed.tap { mission.fail!(resumed.message) } if resumed.err?
+
+        result = run_passes(files:, target:, max_passes:, deadline:, budget_seconds:, start_pass: resumed.value!, run_id:)
+        finish_run(result, target, run_id, mission:)
+      end
+
+      def mission_for(target:)
+        checkpoint = lambda do |id:, root:, files:|
+          Checkpoint.new(root:, dir: File.join(root, ".master", "checkpoints")).create(
+            label: "mission-#{id}", files:
+          )
+        end
+        Master::Core::Mission.new(root: @root, bus: @bus, checkpoint:).start!(
+          goal: "fix #{relative_target(target)}",
+          scope: target,
+          model: @agent.respond_to?(:model) ? @agent.model : ENV["MASTER_MODEL"],
+          effort: ENV.fetch("MASTER_EFFORT", "high"),
+          plan: Ground::ActivePlan.read(@root),
+        ).transition!(:plan, plan: Ground::ActivePlan.read(@root) || "fix plan: observe, critique, repair, verify")
+          .transition!(:execute)
+      rescue StandardError => e
+        @bus&.publish("mission:error", error: e.message, phase: "start")
+        raise
+      end
+
+      def relative_target(path)
+        full = File.expand_path(path, @root)
+        root = File.expand_path(@root)
+        return path.to_s unless full == root || full.start_with?(root + File::SEPARATOR)
+
+        full.delete_prefix(root + File::SEPARATOR)
+      end
 
       def exhausted_budget(journal:, run_id:)
         return if journal["remaining_seconds"].to_f > 0
