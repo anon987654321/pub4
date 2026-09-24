@@ -3,20 +3,20 @@
 # The live synthesiser: AnalogSynth's patches and the Model D panels in
 # model_d.yml, played straight to the sound card as they are generated.
 #
-#   ruby dilla.rb live improvise            endless, until `live stop`
+#   ruby dilla.rb live default              MASTER's main sound, until `live stop`
+#   ruby dilla.rb live improvise            the improviser with drums, dub and FM
 #   ruby dilla.rb live progression [name]   a named progression, looped
 #   ruby dilla.rb live patch <name>         one patch's own phrase
 #   ruby dilla.rb live say "<sentence>"     what MASTER sends
 #
-# MASTER's main sound: what a plain "play", "improvise" or "play something"
-# plays (`ruby dilla.rb live default`), until it is stopped. The operator
-# froze it on 2026-09-24 ("FREEZE -- this becomes the standard default so
-# far"): data/frozen/standard_default.rb.txt, verbatim.
-default: moog_improv
-
-# The operator heard the two modes below on 2026-09-24 and approved them as
-# they are: the patches, the levels, the tanh master at 1.4x and 32 kHz. These
-# numbers are that sound, so they change only on the operator's word.
+# MASTER's main sound -- what a plain "play", "improvise" or "play something"
+# plays -- is not here: it is liveset.rb beside dilla.rb, the live set the
+# operator froze on 2026-09-24, and `live default` runs that file as it is.
+# The takes the operator approved on the way to it are in takes/, and the
+# progressions below reproduce them sample for sample: soul_jazz_six is
+# takes/loved_moog_loop.rb, moog_dfam takes/moog_dfam_loop.rb, and
+# moog_improv takes/liveset_db4ddf1a.rb, each before any ffmpeg console.
+# These numbers are those sounds, so they change only on the operator's word.
 stream:
   rate: 32000
   block_frames: 1024
@@ -72,10 +72,8 @@ progressions:
       pad: { cutoff: [0.35, 1.6], resonance: [0.45, 0.85] }
       bass: { cutoff: [0.7, 0.8], resonance: [0.0, null] }
   # The first sound the operator froze on 2026-09-24 ("FREEZE THAT SOUND"):
-  # soul_jazz_six with a DFAM under it, twice round. The standard default
-  # below grew out of it. data/frozen/default_sound.rb.txt is the script it
-  # was heard from, kept verbatim, and test_dilla_live_synth pins these
-  # numbers to it.
+  # soul_jazz_six with a DFAM under it, twice round, as takes/moog_dfam_loop.rb
+  # plays it. test_dilla_live_synth pins these numbers to that file.
   moog_dfam:
     from: soul_jazz_six
     loops: 2
@@ -107,8 +105,8 @@ progressions:
         cutoff: { floor: 900.0, span: 2600.0, sine_seconds: 43.0, phase: 2.1 }
       # A hit leaves once this many VCA decays have passed.
       life_decays: 8
-  # MASTER's main sound, the standard default the operator froze on
-  # 2026-09-24: data/frozen/standard_default.rb.txt. moog_dfam improvising:
+  # The standard default before liveset.rb, as takes/liveset_db4ddf1a.rb
+  # plays it (the operator froze it on 2026-09-24). moog_dfam improvising:
   # the loved six chords open it, then the chords are walked
   # (improvise.moves) with four-tone rootless voicings nearest the last, and
   # it goes round until stopped. The pad changes every chord, the bass every

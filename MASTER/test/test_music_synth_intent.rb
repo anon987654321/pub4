@@ -86,7 +86,7 @@ class TestMusicSynthIntent < Minitest::Test
   # The live synthesiser is dilla's: MASTER recognises the sentence and hands
   # it over whole.
   def test_live_synth_sentences_go_to_dilla_live_say
-    sentences = ["improvise", "keep playing", "play me something with moog patches", "play a moog bass",
+    sentences = ["play", "play some music", "improvise", "keep playing", "play me something with moog patches", "play a moog bass",
                  "play a lofi pad morphing through dilla_love", "slowly open the filter", "morph to a prophet pad",
                  "play me a chord progression with a few different moog patches", "stop",]
     sentences.each do |sentence|

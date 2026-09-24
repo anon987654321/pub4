@@ -3,6 +3,7 @@
 require_relative "dilla_helper"
 require_relative "../dilla/lib/livesets"
 require "stringio"
+require "digest"
 
 # The live synthesiser without a sound card: the ladder, the Model D panels,
 # the harmony walk, the knobs, the sentences, and a few seconds of each mode
@@ -147,16 +148,23 @@ class TestDillaLiveSynth < Minitest::Test
     assert_raises(ArgumentError) { knobs.turn("volume", clock: 0.0, seconds: 1.0, by: 0.1) }
   end
 
+  # Nothing named is the main sound, and so are the moog patches it is made
+  # of; a named progression, patch, family or part asks for that instead.
   def test_sentences_become_live_commands
     say = LiveSynth::Say
+    ["play", "improvise", "keep playing", "play something", "play me something with moog patches",
+     "play me a chord progression with a few different moog patches",].each do |sentence|
+      assert_equal %w[default], say.play_args(sentence), sentence
+    end
     assert_equal %w[patch fat_bass], say.play_args("play a moog bass")
     assert_equal %w[progression dilla_love pads=lofi_pad], say.play_args("play a lofi pad morphing through dilla_love")
-    assert_equal %w[improvise family=moog], say.play_args("play me something with moog patches")
-    assert_equal %w[progression soul_jazz_six family=moog],
-                 say.play_args("play me a chord progression with a few different moog patches")
     assert_equal %w[progression dilla_love family=rhodes], say.play_args("play a rhodes through dilla_love")
+    assert_equal %w[improvise], say.play_args("improvise with drums")
+    assert_equal %w[improvise family=moog], say.play_args("play it on the minimoog")
     assert_equal({ "knob" => "cutoff", "seconds" => 30, "amount" => "+0.35" }, say.knob_command("cutoff", "slowly open the filter"))
     assert_equal "-0.35", say.knob_command("cutoff", "close the filter")["amount"]
+    assert_equal({ "toggle" => "drums", "on" => false }, say.steering("drums off"))
+    assert_equal({ "lead" => "fm", "preset" => "glass" }, say.steering("fm lead glass"))
   end
 
   def test_steering_with_nothing_playing_says_so
@@ -165,6 +173,95 @@ class TestDillaLiveSynth < Minitest::Test
       assert_equal "nothing is playing", LiveSynth::Say.call("stop")
     end
   end
+
+  # The main sound plays as frozen: a knob asked of it is refused in words,
+  # and stop still ends it.
+  def test_the_frozen_default_cannot_be_steered_and_still_stops
+    with_live_dir do |dir|
+      player = Process.spawn(RbConfig.ruby, "-e", "sleep 30", pgroup: true)
+      File.write(File.join(dir, "player.json"),
+                 JSON.generate("pid" => player, "what" => "the standard default (liveset.rb)", "steerable" => false))
+      assert_match(/plays as frozen/, LiveSynth::Say.call("slowly open the filter"))
+      assert_match(/stopped the standard default/, LiveSynth::Say.call("stop"))
+      Process.wait(player)
+    end
+  end
+
+  # MASTER's main sound is STUDIO/dilla/liveset.rb exactly as the operator
+  # froze it, and the takes before it are kept as they were heard.
+  FROZEN = {
+    "liveset.rb" => "4abbb73e9411",
+    "takes/liveset_db4ddf1a.rb" => "db4ddf1a5549",
+    "takes/moog_dfam_loop.rb" => "9faf0336490e",
+    "takes/loved_moog_loop.rb" => "c5945cf67ed7",
+  }.freeze
+
+  def dilla(path) = File.join(__dir__, "..", "dilla", path)
+
+  def test_the_frozen_files_are_as_frozen
+    FROZEN.each { |path, sha| assert_equal sha, Digest::SHA256.file(dilla(path)).hexdigest[0, 12], path }
+  end
+
+  # The numbers the operator froze, read off the file, so a change to any of
+  # them is a change somebody has to make here too, on purpose.
+  def test_the_main_sound_keeps_its_numbers
+    src = File.read(dilla("liveset.rb"))
+    pins = {
+      /^RATE = 32_000$/ => "32 kHz", /^BLOCK = 1_024$/ => "1024-frame blocks", /^BAR = 3\.9$/ => "a 3.9 s bar",
+      %r{^DFAM_STEP = BAR / 24$} => "the DFAM in 24ths", /^DFAM_LEVEL = 0\.34$/ => "the DFAM at 0.34",
+      /^KICK_LEVEL = 0\.09$/ => "the kick at 0.09", /^ARP_FX = "anull"$/ => "the arp dry",
+      /weights=1 1\.5:normalize=0/ => "the arp at 1.5 against the console",
+      /vcs\(depth: 0\.34, smear: 2\.4\), sonitex\(bits: 12, lo: 40, hi: 13_000, drive: 1\.12\),\s+vcs\(depth: 0\.3, smear: 2\.8\), "alimiter=limit=0\.95"/ => "VCS, Sonitex, VCS, limiter",
+      /def vcs\(depth:, smear:, db: 0\.0\)/ => "level-neutral VCS", /Math\.tanh\(s \* 1\.4\) \* 26_000|tanh\(left\[i\] \* 1\.4\) \* 26_000/ => "the tanh master",
+      /next_chord \+ \(BAR \* 0\.534\), 1\.2, 0\.45/ => "the second bass hit", /step \* 0\.7, 0\.45, bass: :arp/ => "the arp at 0.45",
+      /PADS = %i\[warm_pad poly_strings prophet_five juno_pad prophet_pad vp330_ensemble soft_reed e_piano rhodes_tine glass_bell\]/ => "ten pads",
+      /BASSES = %i\[moog_bass acid sub dub_bass\]/ => "four basses",
+      /%i\[glass_bell e_piano poly_lead vapor_lead soft_reed ringtone_lead acid rhodes_tine\]\.shuffle/ => "eight arp leads",
+    }
+    pins.each { |pattern, what| assert_match pattern, src, what }
+  end
+
+  # A take, seeded and captured before its ffmpeg console, against the
+  # engine's progression of the same name: equal sample for sample.
+  def reference_samples(take, seconds, seed)
+    src = File.read(dilla("takes/#{take}"))
+    lib = File.expand_path(dilla("lib"))
+    src = src.sub(%(File.expand_path("~/Documents/GitHub/pub4/STUDIO/dilla/lib")), lib.inspect)
+    src = src.sub("dfam_rng = Random.new\n", "dfam_rng = Random.new(#{seed})\nDFAM_NOISE = Random.new(#{seed} ^ 0xdfa)\n")
+    src = src.sub("rng = Random.new\n", "rng = Random.new(#{seed})\n").sub("(0.18 * (rand * 2.0 - 1.0))", "(0.18 * (DFAM_NOISE.rand * 2.0 - 1.0))")
+    src = src.sub(/^LOG = .*$/, "LOG = File.open(File::NULL, \"w\")")
+    Dir.mktmpdir do |dir|
+      raw = File.join(dir, "take.raw")
+      src = src.sub(/^sox = IO\.popen\(.*$/, "sox = File.open(#{raw.inspect}, \"wb\")")
+      src = src.sub(/^frames = .*$/) { |line| "#{line}\nframes = [frames, (#{seconds} * RATE).to_i].min" }
+      File.write(File.join(dir, "take.rb"), src)
+      assert system(RbConfig.ruby, "--yjit", File.join(dir, "take.rb"), err: File::NULL), "#{take} ran"
+      File.binread(raw).unpack("s<*")
+    end
+  end
+
+  def engine_samples(progression, seconds, seed)
+    with_live_dir { perform(LiveSynth::Progression.new(progression, rng: Random.new(seed), loops: 0), seconds:) }
+  end
+
+  # Sixty-four blocks each, about two seconds: long enough for every layer
+  # the take has to have sounded, short enough for the suite. Minutes of each
+  # were compared the same way when the engine was written. Whole blocks,
+  # because a take cut mid-block sequences its DFAM against the short block.
+  WINDOW = 64 * 1024 / 32_000.0
+
+  def assert_plays_the_take(take, progression)
+    take_samples = reference_samples(take, WINDOW, 5)
+    ours = engine_samples(progression, WINDOW, 5)
+    assert_operator take_samples.size, :>, 0
+    assert_equal take_samples, ours.first(take_samples.size), "#{progression} is #{take}"
+  end
+
+  def test_soul_jazz_six_is_the_loved_loop = assert_plays_the_take("loved_moog_loop.rb", "soul_jazz_six")
+
+  def test_moog_dfam_is_the_dfam_loop = assert_plays_the_take("moog_dfam_loop.rb", "moog_dfam")
+
+  def test_moog_improv_is_the_standard_before_liveset = assert_plays_the_take("liveset_db4ddf1a.rb", "moog_improv")
 
   # Seeded on pitch and start, the written progression is the same take
   # twice, and it is sound, not silence or a fault.

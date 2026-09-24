@@ -2011,7 +2011,7 @@ end
 # The synthesiser, played live: AnalogSynth's patches and the Model D panels,
 # generated a block at a time and piped to the sound card as they are made.
 #
-#   ruby dilla.rb live default                    MASTER's main sound, improvising until stopped
+#   ruby dilla.rb live default                    MASTER's main sound: liveset.rb, until stopped
 #   ruby dilla.rb live improvise [family=moog] [pad=<patch>] [seconds]
 #   ruby dilla.rb live progression [name] [pads=a,b] [family=moog] [loops=N] [seconds]
 #   ruby dilla.rb live patch <name>               the patch's own phrase
@@ -2054,8 +2054,7 @@ module LiveSynth
     seconds = words.find { |word| word.match?(/\A\d+(\.\d+)?\z/) }&.to_f
     words.delete_if { |word| word.match?(/\A\d+(\.\d+)?\z/) }
     case verb
-    when "default"
-      perform!(Progression.new(config.fetch("default"), rng: rng!, loops: options["loops"]&.to_i), seconds:)
+    when "default" then standard_default!
     when "improvise" then perform!(Improviser.new(rng: rng!, family: options["family"], pad: options["pad"]), seconds:)
     when "progression"
       perform!(Progression.new(words.first || "soul_jazz_six", rng: rng!, pads: options["pads"]&.split(","),
@@ -2075,6 +2074,20 @@ module LiveSynth
     abort USAGE unless name && amount
 
     log(Session.post!("knob" => name, "amount" => amount, "seconds" => seconds&.to_f))
+  end
+
+  # MASTER's main sound is liveset.rb beside dilla.rb, the live set the
+  # operator froze, and it plays as that file and nothing else: it is
+  # recorded as the player and then becomes it, keeping the pid `stop` needs.
+  # Its knobs move by themselves; a sentence cannot turn them.
+  LIVESET = File.join(Livesets::D, "liveset.rb")
+
+  def standard_default!
+    abort "live0: #{LIVESET} is missing" unless File.file?(LIVESET)
+
+    Session.claim!("the standard default (liveset.rb)", steerable: false)
+    log("the standard default -- `ruby dilla.rb live stop` to end")
+    exec(RbConfig.ruby, "--yjit", LIVESET)
   end
 
   # Drawn and printed, so a take somebody liked can be played again with
@@ -3144,12 +3157,15 @@ module LiveSynth
       record ? "playing #{record['what']} (pid #{record['pid']}, since #{record['since']})" : "nothing is playing"
     end
 
-    # One player at a time: whatever was playing stops first.
-    def claim!(what)
+    # One player at a time: whatever was playing stops first. A player that
+    # reads no inbox is recorded as one, so a sentence meant to steer it is
+    # told so rather than dropped.
+    def claim!(what, steerable: true)
       stop! unless playing&.fetch("pid") == Process.pid
       FileUtils.mkdir_p(home)
       File.write(inbox_file, "")
-      File.write(record_file, JSON.generate("pid" => Process.pid, "what" => what, "since" => Time.now.strftime("%H:%M:%S")))
+      File.write(record_file, JSON.generate("pid" => Process.pid, "what" => what, "steerable" => steerable,
+                                            "since" => Time.now.strftime("%H:%M:%S")))
     end
 
     def release!
@@ -3163,7 +3179,7 @@ module LiveSynth
       Process.kill("TERM", pid)
       deadline = Time.now + STOP_WAIT_SECONDS
       sleep 0.05 while alive?(pid) && Time.now < deadline
-      Process.kill("KILL", pid) if alive?(pid)
+      alive?(pid) ? kill_group(pid) : end_group(pid)
       FileUtils.rm_f(record_file)
       "stopped #{record['what']} (pid #{pid})"
     rescue Errno::ESRCH
@@ -3171,8 +3187,26 @@ module LiveSynth
       "stopped"
     end
 
+    # A player that ignored TERM goes with everything it started: a spawned
+    # player leads its own process group, and its ffmpeg and sox are in it.
+    def kill_group(pid)
+      Process.kill("KILL", -pid)
+    rescue Errno::ESRCH, Errno::EPERM
+      Process.kill("KILL", pid)
+    end
+
+    # The player gone, the ffmpeg and sox it started would play out their
+    # buffers for seconds more; a stop is a stop, so they go too. A player run
+    # from a terminal leads no group of its own and has nothing left here.
+    def end_group(pid)
+      Process.kill("TERM", -pid)
+    rescue Errno::ESRCH, Errno::EPERM
+      nil
+    end
+
     def post!(command)
       record = playing or return "nothing is playing"
+      return "#{record['what']} plays as frozen and turns its own knobs; stop it, or ask for another sound to steer" if record["steerable"] == false
 
       File.open(inbox_file, "a") { |file| file.puts(JSON.generate(command.compact)) }
       "sent #{command.compact.map { |key, value| "#{key}=#{value}" }.join(' ')} to pid #{record['pid']}"
