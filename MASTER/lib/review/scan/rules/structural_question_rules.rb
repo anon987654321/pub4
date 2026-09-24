@@ -302,22 +302,27 @@ module Master
           end
         end
 
+        # Message chains are LAW_OF_DEMETER's (universal_rules.rb), which counts
+        # navigation steps. The five-name regex this rule also ran read
+        # transform pipelines as chains: all 72 of its MASTER findings were
+        # shapes like `to_s.strip.lines.first`, and none of them a Demeter
+        # finding. Reflection is `send` with a method name for its first
+        # argument; `client.send(body, token)` is a method that happens to be
+        # called send.
         class CouplerRule < Rule
-          MESSAGE_CHAIN = /\b\w+(?:\.\w+){4,}/
-          INTIMACY = /\.(?:instance_variable_get|instance_variable_set|send|public_send)\s*\(/
+          INTIMACY = /\.(?:instance_variable_get|instance_variable_set)\s*\(|\.(?:public_)?send\s*\(\s*[:"']/
 
           declare id: "COUPLER_SMELLS", severity: :warning, tags: %i[COUPLING DEMETER],
-                  description: "inappropriate intimacy and message chains"
+                  description: "inappropriate intimacy through reflective access"
 
           def check(code, path:)
             return [] unless path.to_s.end_with?(".rb", ".rake")
 
-            findings = []
-            code.lines.each_with_index do |line, index|
-              findings << finding(line: index + 1, message: "message chain #{line[MESSAGE_CHAIN].strip} — introduce a query method") if line.match?(MESSAGE_CHAIN)
-              findings << finding(line: index + 1, message: "inappropriate intimacy via reflective access — expose a real collaboration boundary") if line.match?(INTIMACY)
+            code.lines.each_with_index.filter_map do |line, index|
+              next if line.lstrip.start_with?("#") || !line.match?(INTIMACY)
+
+              finding(line: index + 1, message: "inappropriate intimacy via reflective access — expose a real collaboration boundary")
             end
-            findings
           end
         end
 

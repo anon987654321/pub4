@@ -310,10 +310,13 @@ class TestScanRuleContracts < Minitest::Test
     assert_finding Rules::PrimitiveObsessionRule.new, code, "primitive.rb", "primitive obsession"
   end
 
-  def test_coupler_rule_flags_message_chains
-    code = "def call\n  user.account.profile.address.city.name\nend\n"
+  # Chains are LAW_OF_DEMETER's; this rule is reflection, and a method that is
+  # merely named send is not reflection.
+  def test_coupler_rule_flags_reflective_access_only
+    assert_finding Rules::CouplerRule.new, "def call\n  order.send(:recalculate)\nend\n", "reflect.rb", "reflective access"
+    domain = "def call\n  client.send(body, token)\n  user.account.profile.address.city.name\nend\n"
 
-    assert_finding Rules::CouplerRule.new, code, "chain.rb", "message chain"
+    assert_empty Rules::CouplerRule.new.check(domain, path: "domain.rb")
   end
 
   def test_lazy_class_rule_flags_delegate_only_class
