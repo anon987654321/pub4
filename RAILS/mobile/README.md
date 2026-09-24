@@ -1,7 +1,8 @@
 # Mobile apps
 
-RAILS stays the product. The mobile tree supplies store envelopes and release
-metadata; it does not fork the web application.
+RAILS stays the product. `RAILS/mobile` supplies the store registry and release
+tooling. Native platform source lives separately in `__NATIVE_ANDROID` and
+`__NATIVE_IOS`; it does not fork the web application.
 
 The canonical product matrix is `RAILS/mobile/apps.yml`.
 
