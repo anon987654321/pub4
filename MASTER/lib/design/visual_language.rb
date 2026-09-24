@@ -217,13 +217,13 @@ module Master
         before = before_payload["design_fingerprint"] || fingerprint(before_payload)
         after = after_payload["design_fingerprint"] || fingerprint(after_payload)
         changes = []
-        append_change(changes, "palette changed", before.dig("palette", "top"), after.dig(:palette, :top))
-        append_change(changes, "type sizes changed", before.dig("typography", "sizes"), after.dig(:typography, :sizes))
-        append_change(changes, "font families changed", before.dig("typography", "families"), after.dig(:typography, :families))
-        append_change(changes, "shape language changed", before.dig("shape", "rounded"), after.dig(:shape, :rounded))
-        append_change(changes, "effects changed", before.dig("effects"), after.dig(:effects))
-        before_count = before.dig("composition", "first_screen_interactive").to_f
-        after_count = after.dig(:composition, :first_screen_interactive).to_f
+        append_change(changes, "palette changed", dig_any(before, :palette, :top), dig_any(after, :palette, :top))
+        append_change(changes, "type sizes changed", dig_any(before, :typography, :sizes), dig_any(after, :typography, :sizes))
+        append_change(changes, "font families changed", dig_any(before, :typography, :families), dig_any(after, :typography, :families))
+        append_change(changes, "shape language changed", dig_any(before, :shape, :rounded), dig_any(after, :shape, :rounded))
+        append_change(changes, "effects changed", dig_any(before, :effects), dig_any(after, :effects))
+        before_count = dig_any(before, :composition, :first_screen_interactive).to_f
+        after_count = dig_any(after, :composition, :first_screen_interactive).to_f
         changes << "first-screen interactive count #{before_count.round} -> #{after_count.round}" if (before_count - after_count).abs >= 2
         changes
       rescue StandardError
@@ -341,6 +341,14 @@ module Master
         signals << "pill_overload" if shape[:pills] >= 6
         signals << "centered_hero_pattern" if first["centered_long_text"].to_i.positive? && first["largest_element_area_ratio"].to_f > 0.2
         signals
+      end
+
+      def dig_any(hash, *keys)
+        keys.reduce(hash) do |value, key|
+          break unless value.is_a?(Hash)
+
+          value[key] || value[key.to_s] || value[key.to_sym]
+        end
       end
 
       def append_change(changes, label, before, after)
