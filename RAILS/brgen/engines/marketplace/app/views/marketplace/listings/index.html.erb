@@ -21,27 +21,29 @@
     than a photograph: a marketplace whose stock changes hourly has nothing
     permanent to photograph, so the city's name in --font-ad, the storefront
     promotional face, is the honest campaign. %>
-<section class="store-teasers" aria-labelledby="store-hero-title">
-  <header class="store-hero">
-    <h1 id="store-hero-title"><%= t("marketplace.hero_title", city: city_name) %></h1>
-    <%= tag.p t("marketplace.hero_lede") %>
-    <%# @pagy.count is everything the current filter matches, not the 25 on this
-        page — the number is only worth printing if it is the real one. %>
-    <%= tag.p safe_join([ tag.strong(number_with_delimiter(@pagy&.count.to_i)),
-                          t("marketplace.hero_count_suffix", city: city_name) ], " "),
-              class: "store-hero-count" %>
-    <%# The form for the kind on show: a jobs page offers to post a job. %>
-    <%= link_to t("marketplace.kind_empty_action.#{@kind}"), new_listing_path(kind: @kind), class: "store-cta" %>
-  </header>
+<% promo_offer = @top_offers&.first %>
+<% promo_deal = promo_offer if promo_offer.is_a?(Marketplace::Deal) %>
+<% promo_listing = promo_deal ? promo_deal.listing : promo_offer %>
+<% promo_photo = promo_listing&.photos&.first if promo_listing&.photos&.attached? %>
+<% promo = if promo_listing
+             Shared::PromotionalArt.build(
+               product: promo_listing.title,
+               headline: promo_deal&.headline.presence || t("marketplace.hero_title", city: city_name),
+               body: t("marketplace.hero_lede"),
+               price: promo_listing.headline_amount,
+               badge: promo_deal&.badge.presence || t("marketplace.top"),
+               cta: t("marketplace.promo_cta")
+             )
+           end %>
 
-  <%# Goods, jobs, housing, gigs, in the panel where Kaufland lists its store
-      offers. Separate lists rather than one mixed feed: a bicycle search should
-      not turn up a job, and the filters below mean different things for each.
+<section class="store-teasers" aria-labelledby="listing-kinds-title">
+  <% if promo %>
+    <%= render "shared/promotional_art",
+          art: promo,
+          image_url: (main_app.url_for(promo_photo) if promo_photo),
+          url: (promo_deal ? deal_path(promo_deal) : listing_path(promo_listing)) %>
+  <% end %>
 
-      These four and the search field are the whole of what this page offers at
-      rest. Everything else — who is selling, category, distance, sort, price
-      bounds, condition and the price bands — is one tap in, under Filtre, because
-      UX_LAWS.hick.max_visible_choices is 7. %>
   <nav class="listing-kinds store-panel" aria-labelledby="listing-kinds-title">
     <%= tag.h2 t("marketplace.kinds_label"), id: "listing-kinds-title" %>
     <% Marketplace::Listing::KINDS.each do |kind| %>
@@ -51,7 +53,7 @@
   </nav>
 </section>
 
-<%# A collapsed panel that hides applied state would be worse than the row it
+ would be worse than the row it
     replaces, so it does neither: the count rides on the summary, and the panel
     opens itself whenever anything inside it is set. sort is only a filter when
     it is not the default — "newest first" is the page as it arrives. %>
