@@ -55,7 +55,7 @@ module Maps
       within_bbox(scope).limit(500).map do |place|
         point(place.latitude, place.longitude,
               type: "place", title: place.name,
-              subtitle: [ place_kind_label(place.kind), place.neighborhood&.name ].compact_blank.join(" · "),
+              subtitle: [ place_kind_label(place.kind), place.neighborhood&.name ].compact_blank.join(", "),
               url: place_path(place))
       end
     end
