@@ -338,8 +338,10 @@ module Master
 
         def load_rules
           path = File.join(@root, "data", "models.yml")
+          return {} unless File.file?(path) && File.expand_path(@root) != File.expand_path(Master::ROOT)
+
           rules = Master.load_yaml(path)
-          raise "model routing policy missing: #{path}" unless rules.is_a?(Hash)
+          raise "model routing policy missing or invalid: #{path}" unless rules.is_a?(Hash)
 
           rules
         rescue StandardError => e
