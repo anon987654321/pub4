@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "base64"
 require "fileutils"
 require "json"
 require "open3"
@@ -9,6 +8,7 @@ require_relative "../review/council/critique"
 require_relative "rails_visual_graph"
 require_relative "visual_usability"
 require_relative "visual_reference"
+require_relative "visual_contact_sheet"
 require_relative "../../../RAILS/gates/support/mobile_journey_probe"
 require_relative "../../../RAILS/gates/support/web_platform_probe"
 
@@ -103,7 +103,7 @@ module Master
 
       def run_critique(captures, sources, anchors, graph:)
         context = build_context(captures, anchors, graph:)
-        contact_sheet = build_contact_sheet(captures)
+        contact_sheet = VisualContactSheet.new(dir: @dir, root: repo_root).render(captures)
         image = { path: contact_sheet, name: "rendered-ui-contact-sheet.png", mime: "image/png" }
         critique = Master::Review::Council::Critique.new(
           mode: :ui,
@@ -114,62 +114,6 @@ module Master
           visual_context: context,
         ).run
         [critique, image]
-      end
-
-
-      def build_contact_sheet(captures)
-        html_path = File.join(@dir, "rendered-ui-contact-sheet.html")
-        html = <<~HTML
-          <!doctype html>
-          <html><head><meta charset="utf-8"><style>
-          * { box-sizing: border-box; }
-          html, body { margin: 0; background: #fff; color: #111; }
-          body { padding: 24px; font: 16px/1.4 system-ui, sans-serif; }
-          h1 { margin: 0 0 20px; font-size: 24px; }
-          .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
-          figure { margin: 0; min-width: 0; } figcaption { margin: 0 0 8px; font-weight: 700; }
-          img { display: block; width: 100%; height: auto; border: 1px solid #bbb; }
-          </style></head><body>
-          <h1>MASTER rendered visual evidence: #{captures.length} surfaces</h1>
-          <div class="grid">#{captures.flat_map { |capture| contact_sheet_items(capture) }.join("\n")}</div>
-          </body></html>
-        HTML
-        File.write(html_path, html)
-        screenshot = File.join(@dir, "rendered-ui-contact-sheet.png")
-        Deploy::GeometryProbe.with_browser(root: repo_root, warm: []) do |cdp|
-          cdp.viewport(1800, 1400, mobile: false)
-          cdp.navigate("file://#{html_path}")
-          cdp.screenshot(screenshot, capture_beyond_viewport: true)
-        end
-        screenshot
-      end
-
-      def contact_sheet_items(capture)
-        [contact_sheet_item(capture)] + Array(capture[:journeys]).filter_map do |journey|
-          next if journey["kind"] == "navigation_return"
-          contact_sheet_journey_item(capture[:surface], journey)
-        end
-      end
-
-      def contact_sheet_journey_item(surface, journey)
-        encoded = Base64.strict_encode64(File.binread(journey.fetch("screenshot")))
-        label = "#{surface.id} | mobile state=#{journey["kind"]} | #{journey["label"]}"
-        %(<figure><figcaption>#{escape_html(label)}</figcaption><img src="data:image/png;base64,#{encoded}" alt="#{escape_html(label)}"></figure>)
-      rescue StandardError => e
-        "<figure><figcaption>#{escape_html(surface.id)} | journey evidence error: #{escape_html(e.message)}</figcaption></figure>"
-      end
-
-      def contact_sheet_item(capture)
-        surface = capture[:surface]
-        encoded = Base64.strict_encode64(File.binread(capture[:screenshot]))
-        label = "#{surface.id} | #{surface.viewport} | #{surface.url}"
-        "<figure><figcaption>#{escape_html(label)}</figcaption><img src=\"data:image/png;base64,#{encoded}\" alt=\"#{escape_html(label)}\"></figure>"
-      rescue StandardError => e
-        "<figure><figcaption>#{escape_html(surface.id)} | contact-sheet error: #{escape_html(e.message)}</figcaption></figure>"
-      end
-
-      def escape_html(value)
-        value.to_s.gsub("&", "&amp;").gsub("<", "&lt;").gsub(">", "&gt;").gsub('"', "&quot;")
       end
 
       def review_captures(captures, sources, anchors, pass, graph:, coverage:)
