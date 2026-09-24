@@ -29,7 +29,9 @@ module Master
       end
 
       def capture(capture, pass:, cdp:)
-        state = capture.dig(:payload, "composition", "state").to_s\n        state = "resting" if state.empty?
+        state = "resting"
+        state = capture.dig(:payload, "composition", "state").to_s
+        state = "resting" if state.empty?
         surface = capture.fetch(:surface)
         key = safe_slug("#{surface.id}__#{state}")
         history = File.join(@root, "MASTER", ".master", "visual_evidence", key)
