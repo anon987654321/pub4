@@ -143,7 +143,6 @@ duplication, complexity, prose, accessibility and layout-adjacent micro-smells,
 then feeds selected repairs through the ordinary RuleLoop. Unanchored taste,
 speculative redesign and hallucinated defects never become automatic fixes.
 
-
 The browser is evidence, not decoration: when the capture or visual council
 cannot run, the pass says INCONCLUSIVE rather than claiming DONE.
 
@@ -243,7 +242,6 @@ Then:
 
 Location is explicit rather than a boot probe because it is a user-sensitive capability. Camera and microphone operations are explicit too. Termux:API itself mediates Android permissions; for example, camera access can trigger the Android camera permission flow.
 
-
 ### Android perception
 
 On Android/Termux, MASTER can continuously publish normalized device observations onto the same EventBus consumed by cognition. The stream includes battery, Wi-Fi/network state, the available sensor inventory, and one-shot readings for accelerometer, gyroscope, magnetometer, light, and proximity when those sensors exist. Events are namespaced as `device:battery`, `device:network`, `device:sensors`, `device:accelerometer`, `device:gyroscope`, `device:magnetometer`, `device:light`, and `device:proximity`.
@@ -257,7 +255,6 @@ From `MASTER/`, `rake test:all_trees` discovers the repository's top-level trees
 ## Snapshots
 
 Run `/snapshot` to write one source snapshot per governed tree: `snapshot_MASTER.md`, `snapshot_OPENBSD.md`, `snapshot_RAILS.md`, and `snapshot_STUDIO.md`. Snapshots include meaningful text source only: dot files and directories, temporary/generated/dependency trees, and binary/media files are excluded. The command is deterministic apart from files that change while it runs. Generated snapshots are artifacts, not a second source of truth.
-
 
 ## Aegis and cognition
 

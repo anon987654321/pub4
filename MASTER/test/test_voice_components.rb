@@ -45,4 +45,3 @@ class TestCouncilFace < Minitest::Test
     assert_equal "Pragmatist", face[:label]
   end
 end
-

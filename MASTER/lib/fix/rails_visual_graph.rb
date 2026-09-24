@@ -74,7 +74,7 @@ module Master
         expected = Array(surfaces).map(&:id)
         actual = Array(captures).map { |capture| capture[:surface].id }
         {
-          expected: expected,
+          expected:,
           captured: actual,
           missing: expected - actual,
           ratio: expected.empty? ? 1.0 : actual.uniq.length.to_f / expected.uniq.length,
@@ -115,7 +115,7 @@ module Master
         @errors << "routes #{app}: #{e.class}: #{e.message}"
       end
 
-      def discover_source_edges(app, root)
+      def discover_source_edges(_app, root)
         files = Dir.glob(File.join(root, "**", "*")).select { |path| source_file?(path) }
         files.each do |file|
           source = File.read(file, encoding: "UTF-8")

@@ -288,7 +288,7 @@ module Master::Io
     def normalize_xai(model)
       normalize_openai(model).merge(
         input_modalities: Array(model["input_modalities"]).join(","),
-        output_modalities: Array(model["output_modalities"]).join(",")
+        output_modalities: Array(model["output_modalities"]).join(","),
       )
     end
 
@@ -297,7 +297,7 @@ module Master::Io
         context_length: model["max_context_length"],
         tags: [model["owned_by"], model.dig("capabilities", "completion_chat") ? "chat" : nil,
                model.dig("capabilities", "function_calling") ? "tools" : nil,
-               model.dig("capabilities", "vision") ? "vision" : nil].compact.join(",")
+               model.dig("capabilities", "vision") ? "vision" : nil].compact.join(","),
       )
     end
 

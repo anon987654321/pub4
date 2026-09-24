@@ -6,7 +6,7 @@ module Master
       TASKS = {
         explanation: "Explain why a Ruby hash with a default proc can accidentally share mutable state between unrelated keys, and give one minimal safe pattern.",
         code_generation: "Write a Ruby method named normalize_name that strips surrounding whitespace, collapses internal whitespace to one space, and returns nil for blank input. State the edge case it handles.",
-        architecture: "MASTER routes work across multiple model providers. Name three signals that should affect model selection without hard-coding a permanent leaderboard."
+        architecture: "MASTER routes work across multiple model providers. Name three signals that should affect model selection without hard-coding a permanent leaderboard.",
       }.freeze
 
       DEFAULT_LIMIT = 8
@@ -58,11 +58,11 @@ module Master
             success = !answer.to_s.strip.empty?
             passed += 1 if success
             @router&.record_capability_outcome(
-              model:, task_type: name, success:, metrics: { benchmark: true }
+              model:, task_type: name, success:, metrics: { benchmark: true },
             )
           rescue StandardError => e
             @router&.record_capability_outcome(
-              model:, task_type: name, success: false, metrics: { benchmark: true }
+              model:, task_type: name, success: false, metrics: { benchmark: true },
             )
             errors << "#{name}: #{e.message}"
           end
@@ -74,14 +74,14 @@ module Master
       def build_result(model:, passed:, errors:, started:)
         elapsed = elapsed_ms(started)
         result = {
-          model: model,
+          model:,
           tasks: TASKS.size,
-          passed: passed,
+          passed:,
           failed: TASKS.size - passed,
           success_rate: (passed.to_f / TASKS.size).round(3),
           elapsed_ms: elapsed,
           avg_ms: (elapsed.to_f / TASKS.size).round,
-          errors: errors
+          errors:,
         }
         @metrics&.record_model_benchmark(**result)
         result

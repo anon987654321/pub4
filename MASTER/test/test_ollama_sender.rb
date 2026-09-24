@@ -76,7 +76,7 @@ class TestOllamaSender < Minitest::Test
   def test_a_reply_comes_back_with_its_tokens_recorded
     body = JSON.generate(
       "message" => { "role" => "assistant", "content" => "Deep shade blue." },
-      "done" => true, "prompt_eval_count" => 19, "eval_count" => 5,
+      "done" => true, "prompt_eval_count" => 19, "eval_count" => 5
     )
     with_stub(body:) do |sender, session, bus, stub|
       result = ask(sender, "ollama:llama3:latest", "What colour is the sky?")

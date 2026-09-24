@@ -53,7 +53,6 @@ and — even when deterministic checks are clean — asks the council for anchor
 micro-improvements. It then verifies the result and repeats until the tree
 converges, stops improving, or reaches a state MASTER may not settle alone.
 
-
 Five things that will bite you, in order:
 
 1. The checkout is shared. Commit path-scoped with `git commit -- <paths>`, and

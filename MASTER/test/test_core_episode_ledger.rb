@@ -16,12 +16,12 @@ class TestEpisodeLedger < Minitest::Test
       intent: @intent,
       effect: :write,
       observation: "updated file",
-      evidence: Struct.new(:verified?).new(true)
+      evidence: Struct.new(:verified?).new(true),
     )
-    
+
     @episode.record_trace_entry(entry)
     @episode.finalize(:success)
-    
+
     data = @episode.to_h
     assert_equal "test-id", data[:id]
     assert_equal @intent, data[:intent]

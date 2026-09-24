@@ -31,8 +31,8 @@ report = {
   summary: {
     samples: results.length,
     mean_score: results.empty? ? 0.0 : (results.sum { |r| r[:result][:score] } / results.length).round(1),
-    engines: results.filter_map { |r| r[:metrics][:engine] }.uniq
-  }
+    engines: results.filter_map { |r| r[:metrics][:engine] }.uniq,
+  },
 }
 
 File.write(File.join(out_dir, "report.json"), JSON.pretty_generate(report))

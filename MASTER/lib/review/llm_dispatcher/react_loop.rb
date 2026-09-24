@@ -11,7 +11,7 @@ module Master
         ARG_ALIASES = {
           file_path: :path, filepath: :path, filename: :path, file: :path, dir: :path, directory: :path,
           cmd: :command, old_str: :old_string, old_text: :old_string, new_str: :new_string,
-          new_text: :new_string, regex: :pattern, search: :pattern, q: :query
+          new_text: :new_string, regex: :pattern, search: :pattern, q: :query,
         }.freeze
 
         private

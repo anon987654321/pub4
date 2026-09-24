@@ -45,7 +45,7 @@ class TestAstEditWrites < Minitest::Test
       undo = RecordingUndo.new
       editor = Master::Io::AstEdit.new(root:, undo:)
 
-      result = editor.call(operation: "rename_method", path: path, from: "old_name", to: "new_name")
+      result = editor.call(operation: "rename_method", path:, from: "old_name", to: "new_name")
 
       assert result.ok?, "rename reported: #{result.respond_to?(:message) ? result.message : result.inspect}"
       written = File.read(path)
@@ -59,7 +59,7 @@ class TestAstEditWrites < Minitest::Test
     with_ruby_file do |root, path|
       editor = Master::Io::AstEdit.new(root:, undo: RecordingUndo.new)
 
-      result = editor.call(operation: "add_after", path: path, after: "old_name", code: "def added\n  :new\nend")
+      result = editor.call(operation: "add_after", path:, after: "old_name", code: "def added\n  :new\nend")
 
       assert result.ok?, "add_after reported: #{result.respond_to?(:message) ? result.message : result.inspect}"
       written = File.read(path)
@@ -80,8 +80,8 @@ class TestAstEditWrites < Minitest::Test
       governor = Governor.new(Master::Result.err("refused", category: :policy))
       editor = Master::Io::AstEdit.new(root:, undo:, governor:)
 
-      rename = editor.call(operation: "rename_method", path: path, from: "old_name", to: "new_name")
-      insert = editor.call(operation: "add_after", path: path, after: "old_name", code: "def added; end")
+      rename = editor.call(operation: "rename_method", path:, from: "old_name", to: "new_name")
+      insert = editor.call(operation: "add_after", path:, after: "old_name", code: "def added; end")
 
       refute rename.ok?
       refute insert.ok?
@@ -94,9 +94,9 @@ class TestAstEditWrites < Minitest::Test
     with_ruby_file do |root, path|
       editor = Master::Io::AstEdit.new(root:, undo: RecordingUndo.new)
 
-      refute editor.call(operation: "rename_method", path: path, from: "old_name", to: "Bad Name").ok?
+      refute editor.call(operation: "rename_method", path:, from: "old_name", to: "Bad Name").ok?
       refute editor.call(operation: "find_method", path: "../../etc/hosts", name: "x").ok?
-      assert_equal "old_name: lines 3–5", editor.call(operation: "method_lines", path: path, name: "old_name").value!
+      assert_equal "old_name: lines 3–5", editor.call(operation: "method_lines", path:, name: "old_name").value!
     end
   end
 

@@ -32,7 +32,7 @@ class DynamicHttpTest < Minitest::Test
 
   def call(url, name: "probe", **extra)
     with_tool({ "name" => name, "url" => url, "elevated" => false }.merge(extra)) do
-      @http.call(name: name, params: {})
+      @http.call(name:, params: {})
     end
   end
 

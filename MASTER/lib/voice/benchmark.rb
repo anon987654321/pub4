@@ -28,7 +28,7 @@ module Master
         "Now we move from the practical answer to the deeper idea behind it.",
         "Sometimes a short answer should be short. No theatrical pause is needed.",
         "And then, unexpectedly, the voice should lift a little before landing.",
-        "The final point is this: consistency should feel human, not mechanical."
+        "The final point is this: consistency should feel human, not mechanical.",
       ].freeze
 
       module_function
@@ -81,7 +81,7 @@ module Master
         {
           score: ((passed.to_f / checks.length) * 100).round(1),
           checks: checks.to_h,
-          passed: passed,
+          passed:,
           total: checks.length,
         }
       end

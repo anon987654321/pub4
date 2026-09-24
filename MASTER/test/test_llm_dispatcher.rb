@@ -444,7 +444,6 @@ end
     assert_includes result.message, "no claude on PATH"
   end
 
-
   # A reasoning model sends its working beside its answer. Appended, it was
   # printed at the terminal and every other reader had to strip it.
   def test_a_reasoning_replys_working_stays_out_of_its_answer

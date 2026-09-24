@@ -202,7 +202,7 @@ module Operator
         # same question is how a census and a gate disagree about one file.
         lang = Master.language_for(path)&.to_sym
         relative = path.delete_prefix("#{ROOT}/")
-        
+
         # Pre-filter rules by language to avoid O(files × rules) loop.
         # Reduces from 349k+ rule.applies? checks to ~1 per file.
         applicable = rules.select { |_, rule| !rule.semantic? && rule.applies?(path, lang) }

@@ -53,7 +53,7 @@ class TestFixConvergence < Minitest::Test
       rules: [StubRule.new("TEST_RULE", :warning)],
       agent: OpenCircuitAgent.new,
       scanner: ConstantScanner.new(violations),
-      root: @root, bus: @bus, git: StubGit.new, ground_truth:,
+      root: @root, bus: @bus, git: StubGit.new, ground_truth:
     )
     runner = loop.instance_variable_get(:@pass_runner)
     runner.instance_variable_set(:@council, council) if council
@@ -98,7 +98,7 @@ class TestFixConvergence < Minitest::Test
       Master::CLI::CommandRegistry.stub(:observe, ->(*, **kw) { seen << kw[:ctx][:args]; "clean" }) do
         Master::CLI::CommandRegistry.dispatch_fix(
           scanner:, fix_loop:, deliberation: nil, root: Master::ROOT, bus: nil,
-          ctx: { args: "lib/io --no-aesthetic" },
+          ctx: { args: "lib/io --no-aesthetic" }
         )
       end
     end

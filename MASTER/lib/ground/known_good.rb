@@ -26,7 +26,7 @@ module Master
 
       def current
         path = File.join(@root, PATH)
-        return nil unless File.file?(path)
+        return unless File.file?(path)
         raise "known-good record unreadable: #{path}" unless File.readable?(path)
 
         record = JSON.parse(File.read(path, encoding: "UTF-8"))
@@ -92,7 +92,6 @@ module Master
         warn("trace0: #{e.class}: #{e.message}") if ENV["MASTER_TRACE_STRICT"] == "1"
         nil
       end
-
 
       def normalize_commit(value)
         commit = value.to_s

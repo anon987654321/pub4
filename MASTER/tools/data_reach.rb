@@ -77,7 +77,6 @@ module Operator
       nil
     end
 
-
     # How a file is legitimately named without its own basename. This repo's
     # house rule is that a data file is reached through one accessor rather than
     # opened, and `lint:reader_singularity` enforces it — so a basename-only test

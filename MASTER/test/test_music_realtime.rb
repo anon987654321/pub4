@@ -4,7 +4,7 @@ require_relative "test_helper"
 require "master"
 
 class TestMusicRealtime < Minitest::Test
-  SHAPES = %i[sine square triangle]
+  SHAPES = %i[sine square triangle].freeze
 
   def test_each_shape_stays_in_range_across_a_full_cycle
     SHAPES.each do |shape|

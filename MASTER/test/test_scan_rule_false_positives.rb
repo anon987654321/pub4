@@ -928,7 +928,7 @@ end
   # the marker beside it doing nothing. A call in a view lives in an ERB tag.
 
   def test_html_safe_is_not_excused_by_the_word_sanitize_in_prose
-    %W[<%\#\ we\ cannot\ sanitize\ this\ %>\n <p>we\ sanitize\ nothing</p>\n].each do |prose|
+    ["<%# we cannot sanitize this %>\n", "<p>we sanitize nothing</p>\n"].each do |prose|
       refute_empty findings(:ERB_HTML_SAFE, "#{prose}<%= @x.html_safe %>\n", path: VIEW),
                    "#{prose.strip.inspect} silenced a security rule"
     end

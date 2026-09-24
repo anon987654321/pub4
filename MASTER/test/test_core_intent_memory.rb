@@ -11,7 +11,7 @@ class TestIntentAndMemory < Minitest::Test
       goal: @goal,
       approach: @approach,
       evidence_summary: @evidence,
-      risk: :high
+      risk: :high,
     )
   end
 
@@ -26,7 +26,7 @@ class TestIntentAndMemory < Minitest::Test
   def test_intent_serialization
     hash = @intent.to_h
     assert_equal @goal, hash[:goal]
-    
+
     restored = Master::Core::Execution::Intent.from_h(hash)
     assert_equal @goal, restored.goal
     assert_equal @approach, restored.approach
@@ -36,7 +36,7 @@ class TestIntentAndMemory < Minitest::Test
   def test_memory_seed_from_intent
     memory = Master::Core::Memory.new
     memory.seed_from_intent(@intent)
-    
+
     context = memory.context
     assert context.any? { |e| e.text.include?("goal: #{@goal}") }
     assert context.any? { |e| e.text.include?("approach: #{@approach}") }

@@ -94,7 +94,6 @@ module Master
         nil
       end
 
-
       def healthy_status(name)
         emit("service:healthy", service: name)
         Result.ok(Reliability::Status.healthy("#{name} healthy"))

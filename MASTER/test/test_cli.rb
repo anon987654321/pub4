@@ -320,7 +320,7 @@ end
     def router.unreachable_reason(id, wait: false) = id == "gemini-2.5-flash" || id == "o3" ? "set GEMINI_API_KEY" : nil
     def router.pool(wait: false) = %w[nvidia/nemotron-3-super-120b-a12b:free google/gemini-2.5-flash]
     def router.pool_growth(wait: false) = ["set GEMINI_API_KEY"]
-    def router.lane_label(id) = "free"
+    def router.lane_label(_id) = "free"
     agent = Struct.new(:model, :model_router).new("nvidia/nemotron-3-super-120b-a12b:free", router)
     config = Struct.new(:saved) { def save! = self.saved = true }.new
 
@@ -498,7 +498,7 @@ end
   end
 
   def test_a_paste_arrives_as_one_message
-    lines = ["second", "third"]
+    lines = %w[second third]
     Reline.stub(:readline, ->(*) { lines.shift || "first" }) do
       Reline::IOGate.stub(:in_pasting?, -> { !lines.empty? }) do
         lines.unshift("first")

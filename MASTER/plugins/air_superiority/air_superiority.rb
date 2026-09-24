@@ -37,7 +37,7 @@ module Master
           wifi: wifi_backend,
           bluetooth: bluetooth_backend,
           known_file: KNOWN_FILE,
-          mode: "defensive_observation_only"
+          mode: "defensive_observation_only",
         }
       end
 
@@ -58,8 +58,8 @@ module Master
           counts: {
             wifi: networks.length,
             bluetooth: devices.length,
-            threats: wifi_threats.length + bluetooth_threats.length
-          }
+            threats: wifi_threats.length + bluetooth_threats.length,
+          },
         }
       end
 

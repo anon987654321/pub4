@@ -6,10 +6,10 @@ class TestDevicePerception < Minitest::Test
   def test_sensor_name_discovery_accepts_arrays_and_hashes
     bus = Object.new
     perception = Master::Device::Perception.new(bus:, interval: 1)
-    names = perception.send(:discover_sensor_names, ["Accelerometer", "Light"])
-    assert_equal ["Accelerometer", "Light"], names
+    names = perception.send(:discover_sensor_names, %w[Accelerometer Light])
+    assert_equal %w[Accelerometer Light], names
     names = perception.send(:discover_sensor_names, { "Accelerometer" => {}, "Light" => {} })
-    assert_equal ["Accelerometer", "Light"], names
+    assert_equal %w[Accelerometer Light], names
   end
 
   def test_publish_adds_android_source

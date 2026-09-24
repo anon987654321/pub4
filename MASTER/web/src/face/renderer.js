@@ -20,7 +20,7 @@ export class FaceRenderer {
     // The geometry is derived from the la-mask / homo-futura phenotype
     // Point cloud rendering as per project architecture
     this.geometry = new THREE.BufferGeometry();
-    // Attributes (position, scatter, seed, curvature, boundary, zone) 
+    // Attributes (position, scatter, seed, curvature, boundary, zone)
     // are loaded from the master assets
     this.material = new THREE.ShaderMaterial({
       vertexShader: VERT_SHADER,
@@ -81,11 +81,11 @@ export class FaceRenderer {
   morphTo(duration = 2000) {
     const start = performance.now();
     const startMorph = this.material.uniforms.uMorph.value;
-    
+
     const animate = (now) => {
       const progress = Math.min((now - start) / duration, 1.0);
       this.material.uniforms.uMorph.value = startMorph + (1.0 - startMorph) * progress;
-      
+
       if (progress < 1.0) {
         requestAnimationFrame(animate);
       }
@@ -95,7 +95,7 @@ export class FaceRenderer {
 
   /**
    * Update target positions for phenotype morphing.
-   * @param {Float32Array} positions 
+   * @param {Float32Array} positions
    */
   updateTargetPositions(positions) {
     this.geometry.setAttribute('position_target', new THREE.BufferAttribute(positions, 3));

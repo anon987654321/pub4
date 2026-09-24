@@ -13,7 +13,7 @@ class TestVoicePerformance < Minitest::Test
 
   def test_plan_creates_bounded_variation
     plan = Master::Voice::Performance.plan(
-      "Start here. However, there is a risk. Are you sure? The key is simple."
+      "Start here. However, there is a risk. Are you sure? The key is simple.",
     )
 
     assert_operator plan.length, :>, 1
@@ -28,7 +28,7 @@ class TestVoicePerformance < Minitest::Test
     plan = Master::Voice::Performance.apply(
       base_rate: "+18%",
       base_pitch: "+55Hz",
-      text: "Hello. But be careful."
+      text: "Hello. But be careful.",
     )
 
     plan.each do |part|
@@ -41,7 +41,7 @@ class TestVoicePerformance < Minitest::Test
 
   def test_roles_are_semantic
     plan = Master::Voice::Performance.plan(
-      "The answer starts here. However, there is a risk. Are you sure? The key is this."
+      "The answer starts here. However, there is a risk. Are you sure? The key is this.",
     )
 
     assert_equal :opening, plan[0][:role]

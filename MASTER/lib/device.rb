@@ -42,9 +42,9 @@ module Master
 
         API_COMMANDS.map do |name, command|
           if executable?(command)
-            Capability.new(name, :available, "Termux:API command present; permission not probed", { command: command })
+            Capability.new(name, :available, "Termux:API command present; permission not probed", { command: })
           else
-            Capability.new(name, :unavailable, "install Termux:API and the termux-api package", { command: command })
+            Capability.new(name, :unavailable, "install Termux:API and the termux-api package", { command: })
           end
         end
       end

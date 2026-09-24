@@ -181,7 +181,6 @@ Law.define(:FIXED_HEIGHT) do
   good ".card { min-height: 300px; }"
 end
 
-
 # Modern web-platform laws are review laws: the rendered tree, browser support,
 # and component context decide whether a platform primitive is appropriate.
 

@@ -27,7 +27,6 @@ Rake::TestTask.new(:test) do |t|
   t.warning = false
 end
 
-
 desc "Generate and objectively inspect a TTS torture suite"
 task :voice_benchmark do
   run_tool("tools/voice_benchmark.rb")
@@ -579,7 +578,6 @@ end
     ok = system(RbConfig.ruby, File.join(__dir__, "tools", "rule_reach.rb"))
     abort "lint:rule_reach: a rule reaches no detector" unless ok
   end
-
 
   desc "Ratchet: lib/ may shrink or hold, never grow past data/spine.yml's ceiling"
   task :spine do

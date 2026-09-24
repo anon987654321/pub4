@@ -55,7 +55,7 @@ class WorkflowInferenceTest < Minitest::Test
   def test_fix_renders_observe_repair_and_observe_again
     out = dispatch(critique: false, apply: true)
 
-    ["mode", "observe", "repair", "re-observe"].each do |section|
+    %w[mode observe repair re-observe].each do |section|
       assert_includes out.lines.map(&:chomp), section
     end
     assert_match(/review\d+: complete/, out)
@@ -91,7 +91,7 @@ class WorkflowInferenceTest < Minitest::Test
     out = Master::CLI::CommandRegistry.stub(:observe, ->(*, **) { "clean -- no violations" }) do
       Master::CLI::CommandRegistry.dispatch_review(
         scanner: FakeScanner.new, fix_loop: FakeFixLoop.new, deliberation:,
-        root: File.expand_path("..", __dir__), bus: nil, ctx: { args: ". --critique" },
+        root: File.expand_path("..", __dir__), bus: nil, ctx: { args: ". --critique" }
       )
     end
 
@@ -105,7 +105,7 @@ class WorkflowInferenceTest < Minitest::Test
     out = Master::CLI::CommandRegistry.stub(:observe, ->(*, **) { "clean -- no violations" }) do
       Master::CLI::CommandRegistry.dispatch_review(
         scanner: FakeScanner.new, fix_loop: FakeFixLoop.new, deliberation: FakeDeliberation.new([]),
-        root: File.expand_path("..", __dir__), bus: nil, ctx: { args: ". --apply --no-critique" },
+        root: File.expand_path("..", __dir__), bus: nil, ctx: { args: ". --apply --no-critique" }
       )
     end
 

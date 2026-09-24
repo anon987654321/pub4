@@ -350,7 +350,6 @@ Law.define(:WHY_NOT_WHAT) do
   good "# retries are capped so a flapping host cannot pin the worker"
 end
 
-
 # Constitutional migration batch 2: architecture, design, and verification laws.
 # Semantic laws live here once their executable question, remedy, and worked
 # examples are defined. The YAML catalogue remains temporarily for compatibility;
@@ -638,7 +637,6 @@ Law.define(:DEEP_MODULES) do
     service.call(request)
   X
 end
-
 
 # Constitutional migration batch 3: kernel and foundational principles.
 
@@ -1021,7 +1019,6 @@ Law.define(:PSYCHOLOGICAL_ACCEPTABILITY) do
   X
 end
 
-
 # Constitutional migration batch 5: foundational architecture, clarity, and runtime behavior.
 
 Law.define(:MAKE_ILLEGAL_STATES_UNREPRESENTABLE) do
@@ -1350,7 +1347,6 @@ Law.define(:PATTERN_EXTRACTION) do
   X
 end
 
-
 # Constitutional migration batch 6a: SOLID and abstraction laws.
 
 Law.define(:SRP) do
@@ -1482,7 +1478,6 @@ Law.define(:ONE_ABSTRACTION_LEVEL) do
     def checkout; authorize_card; persist_order; render_receipt; end
   X
 end
-
 
 # Constitutional migration batch 6b: design, functional, and refactoring laws.
 
@@ -1694,7 +1689,6 @@ Law.define(:INAPPROPRIATE_INTIMACY) do
   X
 end
 
-
 # Constitutional migration batch 7a: user experience laws.
 
 Law.define(:SYSTEM_STATUS) do
@@ -1800,7 +1794,6 @@ Law.define(:HELP_AND_DOCUMENTATION) do
     button "Deploy"; help "Build and release the current revision"
   X
 end
-
 
 # Constitutional migration batch 7b: interface, LLM, and reliability laws.
 
@@ -1920,7 +1913,6 @@ Law.define(:DEFINE_ERRORS_OUT) do
     timeout = TimeoutValue.default(config[:timeout])
   X
 end
-
 
 # Constitutional migration batch 7c: public surface, refactoring, and prose laws.
 

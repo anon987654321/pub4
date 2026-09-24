@@ -105,7 +105,7 @@ class CohesionTest < Minitest::Test
     evidence = Operator::Cohesion.structural_evidence(
       Dir.glob(File.join(@tmp, "thing_*.rb")),
       %w[thing_a thing_b thing_c],
-      corpus_root: @tmp
+      corpus_root: @tmp,
     )
 
     assert_equal 6, evidence[:internal_references]

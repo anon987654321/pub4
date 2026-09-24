@@ -100,4 +100,3 @@ module Master
     end
   end
 end
-

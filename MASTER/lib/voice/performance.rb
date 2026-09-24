@@ -37,7 +37,7 @@ module Master
 
           {
             text: phrase,
-            role: role,
+            role:,
             rate_delta: delta,
             pitch_delta_hz: pitch,
             pause_ms: pause_ms_for(role, index, phrases.length, arousal),
@@ -75,7 +75,7 @@ module Master
         { opening: 2, closing: -2, question: 5, warning: -5, contrast: 3, reveal: 4, body: 0 }.fetch(role)
       end
 
-      def pause_ms_for(role, index, total, arousal)
+      def pause_ms_for(role, index, _total, arousal)
         base = case role
                when :opening then 90
                when :question then 150

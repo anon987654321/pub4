@@ -58,7 +58,7 @@ module Master
             loop = RuleLoop.new(
               rule: OpportunityPass::Rule.new(OpportunityPass::RULE_ID),
               agent: @agent, scanner: @scanner, root: @root, bus: @bus,
-              learnings: @learnings, committer: @committer,
+              learnings: @learnings, committer: @committer
             )
             loop.injected_preamble = [@preamble, council_preamble(council)].compact.join("\n\n")
             result = loop.run_once(files, external_violations: findings)
@@ -75,7 +75,7 @@ module Master
             rule = CouncilRound::IMPROVEMENT_RULE.new(CouncilRound::IMPROVEMENT_RULE_ID)
             loop = RuleLoop.new(
               rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus,
-              learnings: @learnings, committer: @committer,
+              learnings: @learnings, committer: @committer
             )
             loop.injected_preamble = [
               @preamble,
@@ -95,7 +95,7 @@ module Master
             loop = RuleLoop.new(
               rule: VisualPass::Rule.new(VisualPass::RULE_ID),
               agent: @agent, scanner: @scanner, root: @root, bus: @bus,
-              learnings: @learnings, committer: @committer,
+              learnings: @learnings, committer: @committer
             )
             loop.injected_preamble = [
               @preamble,

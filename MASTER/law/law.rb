@@ -35,7 +35,7 @@ module Law
     "ruby" => ["#"], "yaml" => ["#"], "zsh" => ["#"],
     "javascript" => ["//", "/*"],
     "css" => ["/*"], "scss" => ["//", "/*"],
-    "html" => ["<!--"],
+    "html" => ["<!--"]
   }.freeze
 
   # ERB is html by language and carries Ruby's comment tag as well, which is the
@@ -301,7 +301,7 @@ module Law
       "ADMIT: only execute effects that pass the constitutional gate.",
       "VERIFY: inspect the actual result; never claim completion without evidence.",
       "REPAIR: if a law is violated, correct the artifact and re-check from the start.",
-      "REPORT: state what happened, what was verified, and what remains unresolved."
+      "REPORT: state what happened, what was verified, and what remains unresolved.",
     ].freeze
 
     def render(full: false)
@@ -315,7 +315,7 @@ module Law
           "practice" => rule.practice.to_s,
           "fix" => rule.fix.to_s,
           "bad" => rule.bad.to_s,
-          "good" => rule.good.to_s
+          "good" => rule.good.to_s,
         }.reject { |_, value| value.respond_to?(:empty?) && value.empty? }
       end
       laws = full ? entries : entries.map { |entry| entry.slice("id", "severity", "mode", "languages", "question") }
@@ -323,7 +323,7 @@ module Law
         "contract_version" => 1,
         "law_digest" => Digest::SHA256.hexdigest(JSON.generate(entries)),
         "protocol" => PROTOCOL,
-        "laws" => laws
+        "laws" => laws,
       )
     end
 

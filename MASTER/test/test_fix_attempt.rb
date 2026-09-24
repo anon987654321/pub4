@@ -19,7 +19,7 @@ class TestFixAttempt < Minitest::Test
   def attempt(replies, attempts: 3, on_error: ->(_e) { :retry }, waits: [])
     Master::Fix::FixAttempt.new(
       agent: FakeAgent.new(replies, []), attempts:, wait: ->(n, ctx) { waits << [n, ctx] },
-      extractor: ->(text, _ext) { text.empty? ? nil : text }, on_error:,
+      extractor: ->(text, _ext) { text.empty? ? nil : text }, on_error:
     )
   end
 
@@ -34,7 +34,7 @@ class TestFixAttempt < Minitest::Test
     agent = FakeAgent.new(["fixed"], images)
     fixer = Master::Fix::FixAttempt.new(
       agent:, attempts: 1, wait: ->(*) {},
-      extractor: ->(text, _ext) { text }, on_error: ->(_) { :stop },
+      extractor: ->(text, _ext) { text }, on_error: ->(_) { :stop }
     )
 
     image = { path: "/tmp/visual.png", mime: "image/png" }
@@ -81,7 +81,7 @@ class TestFixAttempt < Minitest::Test
     agent = FakeAgent.new(["fixed"], images)
     fixer = Master::Fix::FixAttempt.new(
       agent:, attempts: 1, wait: ->(*) {},
-      extractor: ->(text, _ext) { text }, on_error: ->(_) { :stop },
+      extractor: ->(text, _ext) { text }, on_error: ->(_) { :stop }
     )
 
     fixer.codes(

@@ -30,7 +30,7 @@ module Operator
       ".js" => "javascript", ".mjs" => "javascript", ".ts" => "typescript",
       ".css" => "css", ".scss" => "scss", ".html" => "html", ".erb" => "erb",
       ".md" => "markdown", ".sh" => "bash", ".zsh" => "bash", ".ksh" => "bash",
-      ".sql" => "sql", ".conf" => "conf", ".toml" => "toml"
+      ".sql" => "sql", ".conf" => "conf", ".toml" => "toml",
     }.freeze
 
     module_function

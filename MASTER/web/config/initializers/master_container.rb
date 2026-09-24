@@ -82,7 +82,7 @@ module MasterContainerLoader
   # tts-worker as root and leaves .master/tts-worker-*.log root-owned, which
   # the master user then cannot write.
   def ensure!(config = Rails.application.config)
-    return nil if asset_task?
+    return if asset_task?
     return config.x.master_container if config.x.master_container
 
     config.x.master_container_mutex.synchronize do

@@ -84,10 +84,10 @@ void main(){
   float curlAmp=uCurl*0.28*(1.0-uRain*0.18);
   vec3 noise=curlNoise(position*0.5+uTime*0.1+seed)*(1.-m)*curlAmp;
   float jawRgn=smoothstep(0.0,0.15,-position.y-0.12)*smoothstep(0.0,0.14,0.28-abs(position.x));
-  
+
   // Phenotype Morphing: blend between original position and target Homo Futura position
   vec3 morphedPos = mix(position, position_target, m);
-  
+
   vec3 p=mix(scatter,morphedPos,lm)+noise+vec3(0.,-uJaw*0.05*jawRgn,0.);
   p.xy += normalize(cursorFace - p.xy + vec2(0.001)) * curiousPull;
   float tremorf=snoise(position*18.0+uTime*3.2+seed)*uTremor*0.003;

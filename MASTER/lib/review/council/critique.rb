@@ -108,7 +108,7 @@ module Master
             seen[summary] = true
             {
               persona: entry[:persona].to_s,
-              summary: summary,
+              summary:,
               feedback: entry[:feedback].to_s,
             }
           end.first(12)

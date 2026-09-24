@@ -37,7 +37,7 @@ module Master
           start_url: "https://web.snapchat.com",
           composer: ["textarea", "[contenteditable='true']", "[role='textbox']"],
           submit: ["button[type='submit']", "[type='submit']", "button"]
-        )
+        ),
       }.freeze
 
       ACTIONS = %w[status inspect login publish_owned reply_inbound].freeze
@@ -73,7 +73,7 @@ module Master
           plugin: manifest.id,
           runtime: runtime,
           browser: ferrum_available? ? "ferrum" : "unavailable",
-          sites: SITES.keys.map { |id| site_status(id) }
+          sites: SITES.keys.map { |id| site_status(id) },
         }
       end
 
@@ -95,7 +95,7 @@ module Master
             url: page.url.to_s,
             title: page.title.to_s,
             body: body,
-            screenshot: shot
+            screenshot: shot,
           }
         end
       end
@@ -111,7 +111,7 @@ module Master
             account: account.to_s,
             url: page.url.to_s,
             screenshot: shot,
-            note: "Complete login in the visible browser. MASTER never receives passwords, OTPs, cookies or session credentials."
+            note: "Complete login in the visible browser. MASTER never receives passwords, OTPs, cookies or session credentials.",
           }
         end
       end
@@ -171,7 +171,7 @@ module Master
               account: account.to_s,
               url: page.url.to_s,
               screenshots: [before, typed, after],
-              detail: "one explicit outbound write completed"
+              detail: "one explicit outbound write completed",
             }
           end
         end

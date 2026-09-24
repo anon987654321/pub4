@@ -159,13 +159,13 @@ class CoreBridgeTest < Minitest::Test
   end
 
   def test_past_the_largest_local_model_the_cloud_lane_answers_when_online
-    models = ladder_run(["a", "b", "c", "d"], online: true)
+    models = ladder_run(%w[a b c d], online: true)
     assert_equal "ollama:llama3", models[2]
     assert_equal "openrouter/some-cloud", models[4]
   end
 
   def test_offline_past_the_largest_local_model_the_fold_stays_where_it_is
-    models = ladder_run(["a", "b", "c", "d"], online: false)
+    models = ladder_run(%w[a b c d], online: false)
     assert_equal "ollama:llama3", models.last
   end
 

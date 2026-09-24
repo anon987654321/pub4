@@ -285,7 +285,6 @@ module Master
       # existing reader expects the same array identity it always got.
       def messages(key = nil) = @mutex.synchronize { conversation(key || current_key)[:messages] }
 
-
       def add_message(role:, content:)
         msg = { role:, content:, ts: Time.now.to_i }
         @mutex.synchronize do

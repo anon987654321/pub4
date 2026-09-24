@@ -48,7 +48,7 @@ module Master
         new.verify(
           contract_version: PROTOCOL_VERSION,
           law_digest: Law::Contract.digest,
-          protocol: Law::Contract::PROTOCOL
+          protocol: Law::Contract::PROTOCOL,
         )
       end
 
@@ -62,7 +62,7 @@ module Master
           accepted: version_ok && digest_ok && protocol_ok,
           reason: handshake_reason(version_ok, digest_ok, protocol_ok),
           digest: data.fetch("law_digest"),
-          protocol_version: PROTOCOL_VERSION
+          protocol_version: PROTOCOL_VERSION,
         )
       rescue StandardError => e
         Verdict.new(accepted: false, reason: "invalid handshake: #{e.message}", digest: Law::Contract.digest,
@@ -82,8 +82,8 @@ module Master
         JSON.parse(Law::Contract.render).merge(
           "handshake" => {
             "required" => true,
-            "admission" => "present this contract_version, law_digest and protocol verbatim"
-          }
+            "admission" => "present this contract_version, law_digest and protocol verbatim",
+          },
         )
       end
     end

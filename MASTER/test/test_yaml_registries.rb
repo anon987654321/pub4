@@ -31,7 +31,7 @@ DELETED_FILES = %w[
 module BedDeclaration
   def bed_declaration
     pointer = Master::Voice::Policy.bed
-    return nil unless pointer && pointer["source"]
+    return unless pointer && pointer["source"]
 
     file = File.expand_path("../../#{pointer["source"]}", __dir__)
     File.file?(file) ? YAML.load_file(file, aliases: true) : nil
@@ -197,7 +197,6 @@ end
     dilla = File.join(File.dirname(File.expand_path("../../#{pointer["source"]}", __dir__), 2), "dilla.rb")
     assert_match(/^module Bed$/, File.read(dilla), "dilla renders the bed; #{dilla} holds no module Bed")
   end
-
 
   # One instrument per progression, and more than one instrument per pass. A
   # band does not change keyboards every chord, and one timbre all pass is

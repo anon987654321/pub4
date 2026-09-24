@@ -62,7 +62,7 @@ module Law
         source: SOURCE,
         source_url: SOURCE_URL,
         status: :historical,
-        current_successor: CURRENT_SUCCESSOR
+        current_successor: CURRENT_SUCCESSOR,
       }.freeze
     end
   end

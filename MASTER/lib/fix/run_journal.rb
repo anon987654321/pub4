@@ -162,7 +162,6 @@ module Master
         nil
       end
 
-
       def process_alive?(pid)
         value = pid.to_i
         return false if value <= 0

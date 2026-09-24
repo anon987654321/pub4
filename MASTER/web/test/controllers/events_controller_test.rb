@@ -13,8 +13,8 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
   end
 
   def safe?(type, conversation: nil)
-    data = conversation ? { conversation: conversation } : {}
-    controller.send(:visitor_safe_event?, { type: type, data: data }, MINE)
+    data = conversation ? { conversation: } : {}
+    controller.send(:visitor_safe_event?, { type:, data: }, MINE)
   end
 
   test "visitor_safe_event? passes the orb's public signals" do

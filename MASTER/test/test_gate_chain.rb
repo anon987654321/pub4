@@ -45,7 +45,7 @@ class TestGateChain < Minitest::Test
     refute_includes scoped, "source", "the RAILS gate runner says nothing about MASTER"
     assert_includes scoped, "ratchets", "the ratchets are repo-wide by definition and cheap"
     assert_equal ["MASTER"], G.suite_jobs(%w[MASTER]).map(&:first)
-    assert_equal %w[RAILS\ contracts brgen\ suite amber\ suite bsdports\ suite],
+    assert_equal ["RAILS contracts", "brgen suite", "amber suite", "bsdports suite"],
                  G.suite_jobs(%w[RAILS]).map(&:first)
   end
 

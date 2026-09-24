@@ -10,7 +10,7 @@ module Master
         class FileLayoutRule < Rule
           # The three scopes Ruby resets method visibility in, plus the file itself.
           SCOPE_NODES = [
-            Prism::ProgramNode, Prism::ClassNode, Prism::ModuleNode, Prism::SingletonClassNode
+            Prism::ProgramNode, Prism::ClassNode, Prism::ModuleNode, Prism::SingletonClassNode,
           ].freeze
           VISIBILITY_MARKERS = %w[public private protected].freeze
 

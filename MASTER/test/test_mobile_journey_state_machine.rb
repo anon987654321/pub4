@@ -26,6 +26,6 @@ class TestMobileJourneyStateMachine < Minitest::Test
     source = read("../RAILS/gates/support/mobile_journey_probe.rb")
     assert_includes source, "cdp.back"
     assert_includes source, "cdp.forward"
-    refute_includes source, 'el.form.submit()'
+    refute_includes source, "el.form.submit()"
   end
 end

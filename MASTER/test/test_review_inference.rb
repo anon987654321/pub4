@@ -77,7 +77,7 @@ end
   # named "and". A captured word is a path only when it names one.
   def test_a_word_after_the_verb_is_not_a_path_unless_it_names_one
     inferred = Master::CLI::TurnRouter.infer_operator_command(
-      "can you fix and git commit all those violations?", container: { bus: nil, session: nil },
+      "can you fix and git commit all those violations?", container: { bus: nil, session: nil }
     )
     assert_equal "", inferred[:args]
 
@@ -213,7 +213,7 @@ end
   def test_the_footer_names_the_findings_before_and_after_the_fix
     result = Master::CLI::Pipeline::Pass::Result.new(
       target: ".", mode: "balanced", sections: [], ok: true, unit: "review0", failed_stages: [],
-      totals: { before: 567, after: 480 },
+      totals: { before: 567, after: 480 }
     )
     Master::Io::QuotaGate.stub(:report, nil) do
       assert_equal "review0: complete, 567 findings, 480 after the fix", result.footer

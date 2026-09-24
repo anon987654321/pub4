@@ -169,7 +169,7 @@ module Master
         end
       end
 
-      def dispatch_snapshot(root, ctx: nil)
+      def dispatch_snapshot(_root, ctx: nil)
         arg = arg_for(ctx)
         return "usage: /snapshot [output]" if arg.split.size > 1
         # Bare, it is one snapshot per governed tree, which Snapshot#write! does
@@ -181,7 +181,7 @@ module Master
         "snapshot0: failed — #{e.class}: #{e.message}"
       end
 
-      def dispatch_device(root, ctx: nil)
+      def dispatch_device(_root, ctx: nil)
         device_command(arg_for(ctx))
       rescue Master::Device::Error => e
         "device0: unavailable — #{e.message}"
@@ -243,7 +243,7 @@ module Master
       def dispatch_undo(undo, ctx: nil) = undo_line("reverted", undo.undo!)
 
       def dispatch_runtime(root, ctx: nil)
-        runtime = Ground::KnownGood.new(root: root)
+        runtime = Ground::KnownGood.new(root:)
         case arg_for(ctx)
         when "", "status"
           record = runtime.current

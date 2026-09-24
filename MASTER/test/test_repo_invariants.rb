@@ -47,4 +47,3 @@ class TestRepoMap < Minitest::Test
     end
   end
 end
-

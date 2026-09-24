@@ -27,7 +27,7 @@ class TestCapabilityMap < Minitest::Test
   def test_recording_outcomes
     @map.record_outcome("gemma", :coding, true, { latency: 1.2 })
     @map.record_outcome("gemma", :coding, false, { latency: 1.5 })
-    
+
     assert_equal 0.5, @map.success_rate("gemma", :coding)
     assert_equal 1.35, @map.scores["gemma"]["coding"][:metrics][:latency]
   end
@@ -90,4 +90,3 @@ class VerbClosureTest < Minitest::Test
     end
   end
 end
-

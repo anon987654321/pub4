@@ -14,9 +14,9 @@ class TestStructuralTrace < Minitest::Test
       intent: "Fix bug",
       effect: :write,
       observation: "File updated",
-      evidence: evidence
+      evidence:,
     )
-    
+
     assert_equal :implementer, entry.role
     assert_equal evidence, @trace.last_evidence_for(:implementer)
   end

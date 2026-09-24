@@ -57,4 +57,3 @@ class TestPropshaftPaths < Minitest::Test
     assert_includes rc, "assets:precompile"
   end
 end
-

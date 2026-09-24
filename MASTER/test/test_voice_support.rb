@@ -96,7 +96,7 @@ class TestVoiceSupport < Minitest::Test
       end
     end
 
-    assert_equal ["the same sentence", "a different sentence", "the same sentence"], queued.map { |job| job.first }
+    assert_equal ["the same sentence", "a different sentence", "the same sentence"], queued.map(&:first)
   ensure
     PB.instance_variable_set(:@pending, nil)
     PB.instance_variable_set(:@last_said, nil)

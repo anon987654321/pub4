@@ -15,14 +15,14 @@ class TestModelControlPlane < Minitest::Test
     @plane = Master::Core::Routing::ModelControlPlane.new(
       catalog: @catalog,
       capability_map: @cap_map,
-      router: @router
+      router: @router,
     )
   end
 
   def test_route_selection
     reqs = { task_type: :coding, budget: :low }
     route = @plane.select_route(task_requirements: reqs)
-    
+
     assert_equal "gemma-4", route[:primary]
     assert_match(/Selected based on empirical capability/, route[:rationale])
   end
@@ -32,7 +32,7 @@ class TestModelControlPlane < Minitest::Test
       identity: "gemma-4",
       provider: "google",
       execution: :cloud,
-      capabilities: { coding: 0.9 }
+      capabilities: { coding: 0.9 },
     )
     assert_equal :cloud, passport.execution
     assert_equal 0.9, passport.capabilities[:coding]

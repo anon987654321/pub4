@@ -63,7 +63,7 @@ module Master
           @bus&.publish(
             "fix_loop:improvement_council",
             pass:, files: selected.size, critiques: Array(value[:feedback]).size,
-            cherry_picks: Array(value[:cherry_picks]).size, anchored: findings.size,
+            cherry_picks: Array(value[:cherry_picks]).size, anchored: findings.size
           )
           Master::Trace::Dmesg.status(
             "fix0",

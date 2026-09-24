@@ -47,7 +47,6 @@ class TestCommandRegistryDispatch < Minitest::Test
                  "a new command table has to be merged by build, or it is a verb with no route"
   end
 
-
   def test_session_commands_are_registered
     assert Registry::HELP_TOPICS.key?("sessions")
     assert Registry::HELP_TOPICS.key?("continue")

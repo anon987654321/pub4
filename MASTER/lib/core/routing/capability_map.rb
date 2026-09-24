@@ -92,7 +92,7 @@ module Master::Core::Routing
           task_scores[task] = {
             successes: stats["successes"].to_i,
             attempts: stats["attempts"].to_i,
-            metrics: stats["metrics"].is_a?(Hash) ? stats["metrics"] : {}
+            metrics: stats["metrics"].is_a?(Hash) ? stats["metrics"] : {},
           }
         end
       end

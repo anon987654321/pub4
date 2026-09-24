@@ -304,7 +304,7 @@ module Master
         data.fetch("seen", {}).each { |key, values| @seen[key] = Array(values) }
         @snapshots = data["snapshots"].to_h.transform_values do |raw|
           Snapshot.new(
-            raw["path"], raw["exists"], raw["kind"].to_sym, raw["mode"], raw["link"], raw["store"],
+            raw["path"], raw["exists"], raw["kind"].to_sym, raw["mode"], raw["link"], raw["store"]
           )
         end
         true

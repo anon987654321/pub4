@@ -26,7 +26,7 @@ module Master
           logged_in = available && command_ok?(lane, lane["status_args"])
           {
             id: lane["id"], name: lane["name"] || lane["id"], command: lane["command"],
-            installed: available, authenticated: logged_in, authentication_known: !Array(lane["status_args"]).empty?
+            installed: available, authenticated: logged_in, authentication_known: !Array(lane["status_args"]).empty?,
           }
         end
       end

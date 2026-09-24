@@ -25,7 +25,7 @@ class TestVoiceBenchmark < Minitest::Test
       clipped: true,
       dynamic_range_db: 2,
       silence: { count: 2, mean_ms: 900 },
-      speech_rate_wpm: 300
+      speech_rate_wpm: 300,
     }
 
     result = Master::Voice::Benchmark.score(metrics, text: "one two three")
@@ -41,7 +41,7 @@ class TestVoiceBenchmark < Minitest::Test
       clipped: false,
       dynamic_range_db: 12,
       silence: { count: 2, mean_ms: 180 },
-      speech_rate_wpm: 155
+      speech_rate_wpm: 155,
     }
 
     result = Master::Voice::Benchmark.score(metrics, text: "one two three")

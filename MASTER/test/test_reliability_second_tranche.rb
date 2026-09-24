@@ -488,7 +488,7 @@ class TestReliabilitySecondTranche < Minitest::Test
 
   def test_resource_budget_process_limits_follow_the_platform
     config = { "resources" => { "process_count" => {
-      "warn" => 256, "crit" => 512, "darwin" => { "warn" => 1200, "crit" => 1600 },
+      "warn" => 256, "crit" => 512, "darwin" => { "warn" => 1200, "crit" => 1600 }
     } } }
     idle_mac = { load_avg_1m: nil, rss_mb: nil, fd_count: nil, thread_count: nil, process_count: 602,
                  disk_free_pct: 50, network: true, llm_quota_exhausted: 0 }
@@ -508,7 +508,6 @@ class TestReliabilitySecondTranche < Minitest::Test
 
     refute_nil load, "the load guard is silently off when the probe finds nothing"
   end
-
 
   def test_transaction_exposes_interrupted_delivery_without_discarding_it
     Dir.mktmpdir("master-tx") do |root|

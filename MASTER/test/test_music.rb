@@ -53,4 +53,3 @@ class TestMusicSynth < Minitest::Test
     end
   end
 end
-

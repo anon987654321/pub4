@@ -11,9 +11,9 @@ class TestMobileNavigationJourneys < Minitest::Test
 
   def test_discovers_only_safe_same_origin_get_navigation
     code = source
-    assert_includes code, 'url.origin !== origin'
-    assert_includes code, 'data-method'
-    assert_includes code, 'data-turbo-method'
+    assert_includes code, "url.origin !== origin"
+    assert_includes code, "data-method"
+    assert_includes code, "data-turbo-method"
     assert_includes code, '/\\b(logout|signout|delete|destroy|remove|unsubscribe)\\b/i'
   end
 
@@ -24,8 +24,8 @@ class TestMobileNavigationJourneys < Minitest::Test
   end
 
   def test_state_signature_covers_non_text_state
-    assert_includes source, 'aria-expanded'
-    assert_includes source, ':popover-open'
-    assert_includes source, 'document.activeElement'
+    assert_includes source, "aria-expanded"
+    assert_includes source, ":popover-open"
+    assert_includes source, "document.activeElement"
   end
 end

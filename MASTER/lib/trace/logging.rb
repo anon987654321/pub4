@@ -74,7 +74,7 @@ module Master
         "validation" => "test0",
         "runtime" => "runtime0",
         "pipeline" => "pipeline0",
-        "fix_loop" => "fix0"
+        "fix_loop" => "fix0",
       }.freeze
 
       module_function

@@ -21,7 +21,7 @@ export class PixelDiffEngine {
 
     this.captureCanvas.width = width;
     this.captureCanvas.height = height;
-    
+
     // Copy WebGL buffer to 2D canvas
     this.ctx.drawImage(element, 0, 0);
     return this.ctx.getImageData(0, 0, width, height);
@@ -29,8 +29,8 @@ export class PixelDiffEngine {
 
   /**
    * Compares two frames and returns a concrete delta.
-   * @param {ImageData} current 
-   * @param {ImageData} target 
+   * @param {ImageData} current
+   * @param {ImageData} target
    * @returns {Object} { ratio, rmse, diffCount }
    */
   compare(current, target) {

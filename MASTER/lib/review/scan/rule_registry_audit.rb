@@ -112,7 +112,7 @@ module Master
           require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
           ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
           law = ::Law.rules[id.to_sym]
-          law && law.detect
+          law&.detect
         end
 
         def detected?(laws, registry, id)

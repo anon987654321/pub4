@@ -25,20 +25,20 @@ class TestCompletionContract < Minitest::Test
     # Mock a verified test_pass evidence
     evidence = Struct.new(:kind, :verified?).new(:test_pass, true)
     @sm.evidence_ledger << evidence
-    
+
     # Mock a scan_clean evidence
     @sm.evidence_ledger << Struct.new(:kind, :verified?).new(:scan_clean, true)
-    
+
     assert_equal true, @contract.verify(@sm).ok?
   end
 
   def test_fails_on_high_severity_violation
     @sm.evidence_ledger << Struct.new(:kind, :verified?).new(:test_pass, true)
     @sm.evidence_ledger << Struct.new(:kind, :verified?).new(:scan_clean, true)
-    
+
     # Add a high severity violation to the episode
     @sm.episode.events << { type: "violation", severity: :high }
-    
+
     assert_equal false, @contract.verify(@sm).ok?
   end
 end

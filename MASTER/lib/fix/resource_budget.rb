@@ -39,13 +39,13 @@ module Master
 
         values = {
           load_avg_1m: load_average,
-          rss_mb: rss_mb,
-          fd_count: fd_count,
+          rss_mb:,
+          fd_count:,
           thread_count: Thread.list.size,
-          process_count: process_count,
-          disk_free_pct: disk_free_pct,
+          process_count:,
+          disk_free_pct:,
           network: network_available,
-          llm_quota_exhausted: llm_quota_exhausted,
+          llm_quota_exhausted:,
         }
         @last_measurement = classify(values).merge(measured_at: now, values:)
         @last_measurement_at = now
