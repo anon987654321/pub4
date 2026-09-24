@@ -137,7 +137,7 @@ end
       # 2026-08-20 proof run showed CLI calls dying empty-stderr under
       # four-way contention, opening the circuit. Callers block for a slot;
       # waiting beats thrashing.
-      CLI_SLOTS = SizedQueue.new(2).tap { |queue| 2.times { queue << true } }
+      CLI_SLOTS = Integer(ENV.fetch("MASTER_CLI_SLOTS", 2)).then { |n| SizedQueue.new(n).tap { |queue| n.times { queue << true } } }
 
 def send_claude_cli(model_alias, messages, sys:)
   return Result.err("claude-cli: no claude on PATH", category: :no_api_key) unless claude_on_path?

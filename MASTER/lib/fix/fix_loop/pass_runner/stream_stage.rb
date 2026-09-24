@@ -14,6 +14,12 @@ module Master
         # count at all depends on every other file.
         module StreamStage
           STREAM = ENV.fetch("MASTER_FIX_STREAM", "1") != "0"
+          # Files repaired at once. One worker left the machine waiting on one
+          # model call at a time; files are disjoint, so workers never share one.
+          WORKERS = Integer(ENV.fetch("MASTER_FIX_STREAM_WORKERS", 3))
+          # One call per file for every finding it holds (FileRepair); 0 keeps
+          # the older call per rule.
+          FILE_REPAIR = ENV.fetch("MASTER_FIX_FILE_REPAIR", "1") != "0"
           RESOURCE_CHECK_SECONDS = 30
 
           # What one stream carries from file to file.
@@ -29,25 +35,30 @@ module Master
             streamed = Set.new
             queue = Queue.new
             @stream_stopped_at = nil
-            worker = Thread.new { drain_repairs(queue, streamed, pass, [Time.now + PASS_BUDGET_SECONDS, deadline].min) }
+            workers = start_workers(queue, streamed, pass, [Time.now + PASS_BUDGET_SECONDS, deadline].min)
             found = @loop_scanner.violations(files) { |path, rows| queue << [path, rows] }
-            queue << :done
-            finish_stream(worker.value, found, files, pass)
+            WORKERS.times { queue << :done }
+            finish_stream(workers.sum(&:value), found, files, pass)
             StreamCursor.write(@root, target, @stream_stopped_at)
             emit_topology(found, target)
             [found, streamed]
           ensure
-            stop_worker(queue, worker)
+            stop_workers(queue, workers)
+          end
+
+          def start_workers(queue, streamed, pass, budget)
+            Array.new(WORKERS) { Thread.new { drain_repairs(queue, streamed, pass, budget) } }
           end
 
           # A scan that raised leaves the worker mid-queue: it finishes the
           # file in hand and takes no other, so no write is cut in half.
-          def stop_worker(queue, worker)
-            return unless worker&.alive?
+          def stop_workers(queue, workers)
+            live = Array(workers).select(&:alive?)
+            return if live.empty?
 
             queue.clear
-            queue << :done
-            worker.join
+            live.size.times { queue << :done }
+            live.each(&:join)
           end
 
           def finish_stream(fixed, found, files, pass)
@@ -79,9 +90,27 @@ module Master
             return 0 if runnable.empty?
 
             rel = path.delete_prefix("#{@root}/")
-            fixed = run_streamed_rules(runnable, path, rel, stream)
+            fixed = if FILE_REPAIR then repair_file(path, rows, runnable, rel, stream)
+                    else run_streamed_rules(runnable, path, rel, stream)
+                    end
             Master::Trace::Dmesg.status("fix0", "pass #{stream.pass}, #{rel}: #{fixed} of #{rows.size} fixed in stream")
             fixed
+          end
+
+          # Every finding of the runnable rules, in one FileRepair.
+          def repair_file(path, rows, runnable, rel, stream)
+            ids = runnable.map { |rule| rule.id.to_s }
+            ids.each { |id| STREAMED_LOCK.synchronize { stream.streamed << [rel, id] } }
+            repair = FileRepair.new(findings: findings_of(rows, ids, path), rules: runnable, agent: @agent,
+                                    scanner: @scanner, root: @root,
+                                    bus: @bus, learnings: @learnings, committer: @committer)
+            tally_rule_results([[repair.scope, repair.run(path)]], breakdown: stream.breakdown, pass: stream.pass)
+          end
+
+          STREAMED_LOCK = Mutex.new
+
+          def findings_of(rows, ids, path)
+            rows.select { |row| ids.include?(row[:rule].to_s) }.map { |row| row.merge(file: path) }
           end
 
           def run_streamed_rules(runnable, path, rel, stream)

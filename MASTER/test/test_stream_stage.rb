@@ -94,6 +94,8 @@ class StreamStageTest < Minitest::Test
   end
 
   def run_observation_stage(files, _target) = @loop_scanner.violations(files)
+  # These tests pin when repairs start, not how a file is repaired.
+  def repair_file(path, _rows, runnable, rel, stream) = run_streamed_rules(runnable, path, rel, stream)
   def tally_rule_results(results, **) = results.sum { |_rule, result| result[:fixed] }
   def report_skip_breakdown(*, **); end
   def emit_topology(*); end
