@@ -81,6 +81,7 @@ module Master
       # while a single violation stood, so "fix and commit" scanned and stopped.
       def run(target = @root, max_passes: max_passes_default, budget_seconds: RUN_BUDGET_SECONDS,
               incremental: @incremental, requested: false)
+        mission = nil
         return halted_result if halted? && !requested
 
         files = incremental ? @file_collector.collect_changed(target) : @file_collector.collect(target)
@@ -108,6 +109,7 @@ module Master
       rescue StandardError => e
         @bus&.publish("fix_loop:crash", error: e.message, backtrace: e.backtrace&.first(8))
         @run_journal&.crash(run_id, e.message) if defined?(run_id) && run_id
+        mission&.fail!(e)
         Result.err("fix_loop: #{e.message} @ #{e.backtrace&.first(3)&.join(" | ")}", category: :unknown)
       end
 
