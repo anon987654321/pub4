@@ -20,6 +20,9 @@ module Operator
 
     FAMILY_DECLARATIONS = /font-family\s*:\s*([^;]+);/i
     CAPS_DECLARATION = /text-transform\s*:\s*uppercase/i
+    VARIABLE_FONT_DECLARATION = /font-weight\s*:\s*\d+\s+\d+/i
+    VARIABLE_AXIS_DECLARATION = /font-variation-settings\s*:/i
+    OPTICAL_SIZING_DECLARATION = /font-optical-sizing\s*:/i
     TRACKING_DECLARATION = /letter-spacing\s*:/i
     JUSTIFY_DECLARATION = /text-align\s*:\s*justify/i
     NUMERIC_SELECTOR = /(?:price|amount|total|quantity|count|numeric|money|number)/i
@@ -73,6 +76,7 @@ module Operator
       result.concat(justification_hyphenation(path, lines))
       result.concat(font_family_budget(path, lines))
       result.concat(numeric_features(path, lines))
+      result.concat(variable_font_contract(path, lines))
 
       result
     rescue StandardError => e
@@ -139,6 +143,19 @@ module Operator
         1,
         "font_family_budget",
         "#{families.size} font families declared; keep each surface to two functional families unless its profile says otherwise: #{families.join(', ')}",
+      )]
+    end
+
+    def variable_font_contract(path, lines)
+      joined = lines.join
+      return [] unless joined.match?(VARIABLE_FONT_DECLARATION) || joined.match?(VARIABLE_AXIS_DECLARATION)
+      return [] if joined.match?(OPTICAL_SIZING_DECLARATION)
+
+      [Finding.new(
+        relative(path),
+        lines.index { |line| line.match?(VARIABLE_FONT_DECLARATION) || line.match?(VARIABLE_AXIS_DECLARATION) }.to_i + 1,
+        "optical_sizing",
+        "variable font usage should declare font-optical-sizing explicitly so browser optical sizing is a conscious choice",
       )]
     end
 
