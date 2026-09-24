@@ -120,6 +120,17 @@ class TestPrincipleMapRuntime < Minitest::Test
     end
   end
 
+  def test_corrupt_principle_map_does_not_become_an_empty_registry
+    Dir.mktmpdir do |dir|
+      FileUtils.mkdir_p(File.join(dir, "data"))
+      File.write(File.join(dir, "data", "principle_map.yml"), "{broken")
+
+      error = assert_raises(RuntimeError) { Master::Ground::Map::Principle.load(root: dir) }
+
+      assert_match(/data file unreadable: principle_map.yml/, error.message)
+    end
+  end
+
   def test_principle_map_integrity_against_registry
     require_relative "../lib/review/scan/rule_dsl"
     map = Master::Ground::Map::Principle.load(root: @root)
