@@ -8567,6 +8567,7 @@ body.vertical-playlist input[type="range"] {
 // own, as Operator::CssCoverageLint finds them. They load last so they
 // complement the components above rather than compete with them.
 
+@include meta.load-css("promotional_art");
 @include meta.load-css("shared_coverage_fills");
 
 // brgen's own: token-only, no hex, no !important. A class whose element already
