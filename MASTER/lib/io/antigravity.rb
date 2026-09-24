@@ -262,12 +262,12 @@ module Master
             skill_file = File.join(skill_dir, "SKILL.md")
             next unless File.file?(skill_file)
 
-            parsed = parse_skill_file(skill_file, skill_dir, source)
+            parsed = parse_skill_file(skill_file, skill_dir, source:)
             @skills[parsed[:name]] = parsed if parsed
           end
         end
 
-        def parse_skill_file(skill_file, skill_dir, source)
+        def parse_skill_file(skill_file, skill_dir, source:)
           content = File.read(skill_file, encoding: "UTF-8")
           # Load-bearing inside split: `name` comes out of that hash and the caller
           # drops the skill when it is empty, so a typo would silently unregister the

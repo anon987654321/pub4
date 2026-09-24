@@ -34,17 +34,25 @@ module Master
           cutoff = Time.now.to_i - RSI_WINDOW_DAYS * 86_400
           recent = @db.execute("SELECT event_type, dimension FROM feedback_events WHERE ts >= ?", [cutoff])
           tool_failure_opportunities(recent) +
-            event_count_opportunities(recent, "user_correction", :repeated_correction, RSI_CORRECTION_MIN) +
-            event_count_opportunities(recent, "provider_error", :provider_errors, RSI_PROVIDER_MIN)
+            event_count_opportunities(
+              recent, type: "user_correction", category: :repeated_correction, minimum: RSI_CORRECTION_MIN,
+            ) +
+            event_count_opportunities(
+              recent, type: "provider_error", category: :provider_errors, minimum: RSI_PROVIDER_MIN,
+            )
         end
       end
       # Strategy-reuse tracking (trigger -> strategy -> outcome/confidence) —
       # separate from KnowledgeStore's fix-outcome and feedback-event concerns.
       module StrategyOutcomes
         def record_strategy(trigger:, strategy:, outcome:)
-          ts = Time.now.to_i
+          timestamp = Time.now.to_i
           existing = existing_strategy(trigger, strategy)
-          existing ? update_strategy(existing, outcome, ts) : insert_strategy(trigger, strategy, outcome, ts)
+          if existing
+            update_strategy(existing, outcome:, timestamp:)
+          else
+            insert_strategy(trigger:, strategy:, outcome:, timestamp:)
+          end
         rescue SQLite3::Exception => e
           warn "knowledge_store: #{e.message}"
         end
@@ -145,7 +153,7 @@ module Master
       # it's skipped, without it ever having actually failed a fix.
       def fix_quality(rule:, file_type: nil)
         cutoff = Time.now.to_i - QUALITY_WINDOW_DAYS * 86_400
-        rows = fix_quality_rows(rule, file_type, cutoff)
+        rows = fix_quality_rows(rule:, file_type:, cutoff:)
         tally = rows.each_with_object(Hash.new(0)) { |r, h| h[r["outcome"]] = r["n"].to_i }
         total = tally["fixed"] + tally["stuck"]
         return 0.5 if total.zero?
@@ -193,7 +201,7 @@ module Master
         }
       end
 
-      def fix_quality_rows(rule, file_type, cutoff)
+      def fix_quality_rows(rule:, file_type:, cutoff:)
         if file_type
           sql = "SELECT outcome, COUNT(*) AS n FROM fix_outcomes " \
                 "WHERE rule = ? AND file_type = ? AND ts >= ? GROUP BY outcome"
@@ -209,14 +217,14 @@ module Master
         @db.execute(sql, [trigger.to_s, strategy.to_s]).first
       end
 
-      def update_strategy(existing, outcome, timestamp)
+      def update_strategy(existing, outcome:, timestamp:)
         confidence = [existing["confidence"].to_f + 0.05, 1.0].min
         sql = "UPDATE strategy_outcomes SET reuse_count = reuse_count + 1, " \
               "confidence = ?, outcome = ?, ts = ? WHERE id = ?"
         @db.execute(sql, [confidence, outcome.to_s, timestamp, existing["id"]])
       end
 
-      def insert_strategy(trigger, strategy, outcome, timestamp)
+      def insert_strategy(trigger:, strategy:, outcome:, timestamp:)
         confidence = outcome.to_s == "fixed" ? 0.7 : 0.4
         sql = "INSERT INTO strategy_outcomes " \
               "(ts, trigger, strategy, outcome, confidence, reuse_count) VALUES (?, ?, ?, ?, ?, 0)"
@@ -234,7 +242,7 @@ module Master
         end
       end
 
-      def event_count_opportunities(events, type, category, minimum)
+      def event_count_opportunities(events, type:, category:, minimum:)
         grouped_events(events, [type]).filter_map do |dimension, rows|
           { category:, dimension:, count: rows.size } if rows.size >= minimum
         end
