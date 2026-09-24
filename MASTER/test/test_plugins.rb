@@ -1,4 +1,4 @@
-# frozen_string_literal: true
+<sub># frozen_string_literal: true
 
 require_relative "test_helper"
 
@@ -86,3 +86,4 @@ class PluginsTest < Minitest::Test
     assert_equal "low", threats.first.severity
   end
 end
+</sub>
