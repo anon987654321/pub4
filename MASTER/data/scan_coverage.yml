@@ -31,6 +31,7 @@ scan_coverage:
   # each Law.define does trip the security sweep, which is a different gate and
   # is handled where it belongs, in tools/security_sweep.rb.
   - law
+  - plugins
   # Not scanned, and why. A reason is required: the lint fails on a blank one,
   # because "exempt: true" records the exemption without recording the argument,
   # and the argument is the part that rots.

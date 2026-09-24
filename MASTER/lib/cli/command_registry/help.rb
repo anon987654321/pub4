@@ -7,7 +7,7 @@ module Master
 
       # One topic per registered command, and the registry is the whole list:
       # `build` returns clear, commit, doctor, fix, help, model, orders, pair,
-      # review, rollback, rules, soul, status, undo and why, and nothing reaches
+      # plugin, review, rollback, rules, soul, status, undo and why, and nothing reaches
       # Stages::Route. test_command_registry_dispatch holds the two together, so a
       # verb cannot be built without a page or paged without being built.
       HELP_TOPICS = {
@@ -32,6 +32,17 @@ module Master
             "--only <stage> runs one part: --only critique or --only map, and",
             "`council` is a spelling of critique. --only fix gives the reading and",
             "what a repair would take on, without taking it on.",
+          ],
+        },
+        "plugin" => {
+          summary: "list and invoke governed plugins",
+          detail: [
+            "/plugin — list installed plugins.",
+            "/plugin info <id> — show one manifest.",
+            "/plugin run <id> <action> <json> — invoke through the constitutional gate.",
+            "social_browser covers OnlyFans, FetLife and Snapchat on supported desktop or Android/Termux runtimes.",
+            "It permits explicit operator-owned or authorized actions and inbound replies only; no bulk outreach, friendship farming, deception or challenge bypass.",
+            "air_superiority performs defensive Wi-Fi/Bluetooth observation and keeps only a local known-device baseline.",
           ],
         },
         "device" => {

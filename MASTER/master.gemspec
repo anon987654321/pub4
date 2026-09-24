@@ -17,7 +17,7 @@ Gem::Specification.new do |spec|
   # actually builds or installs this gemspec, but a package built from a
   # correct list is worth more than one that quietly ships fewer files than
   # it claims to.
-  spec.files         = Dir["lib/**/*.rb", "bin/*", "data/**/*"]
+  spec.files         = Dir["lib/**/*.rb", "bin/*", "data/**/*", "plugins/**/*"]
   spec.require_paths = ["lib"]
   spec.bindir        = "bin"
   spec.executables   = ["cli", "master-kernel", "status"]
@@ -29,4 +29,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency "tty-prompt", "~> 0.23"
   spec.add_dependency "pastel",     "~> 0.8"
   spec.add_dependency "diffy",      "~> 3.4"
+  spec.add_dependency "ferrum",     "~> 0.15"
 end
