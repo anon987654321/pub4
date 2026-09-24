@@ -22,11 +22,15 @@ module Master
           fires: "def place(north, east, depth)\nend\n",
           does_not_fire: "def place(north:, east:, depth:)\nend\n",
           description: "ideal is zero to two positional arguments" do |src, path:|
-          src.each_line.with_index(1).filter_map do |line, n|
+          lines = src.lines
+          lines.each_with_index.filter_map do |line, index|
             next unless line.match?(/\bdef\s+\w+\(/)
             args = line[/\(([^)]*)\)/, 1].to_s.split(",").map(&:strip)
             positional = args.reject { |arg| arg.empty? || arg.start_with?("*", "&") || arg.include?(":") || arg.include?("=") }
-            finding(line: n, message: "3+ positional args — use keyword arguments or a value object") if positional.size >= 3
+            next unless positional.size >= 3
+
+            finding(line: index + 1, message: "3+ positional args — use keyword arguments or a value object",
+                    blast_radius: signature_radius(lines, index))
           end
         end
 

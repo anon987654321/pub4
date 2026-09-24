@@ -188,12 +188,16 @@ module Master
           def check(code, path:)
             return [] unless path.to_s.end_with?(".rb", ".rake")
 
-            code.lines.each_with_index.filter_map do |line, index|
+            lines = code.lines
+            lines.each_with_index.filter_map do |line, index|
               match = line.match(/\bdef\s+[\w!?=]+\s*\(([^)]*)\)/)
               next unless match
 
               count = match[1].split(",").map(&:strip).reject(&:empty?).size
-              finding(line: index + 1, message: "method has #{count} parameters (max #{LIMIT}) — introduce a value object or keywords") if count > LIMIT
+              next unless count > LIMIT
+
+              finding(line: index + 1, message: "method has #{count} parameters (max #{LIMIT}) — introduce a value object or keywords",
+                      blast_radius: signature_radius(lines, index))
             end
           end
         end

@@ -98,6 +98,16 @@ module Master
         # of costing model calls that can only come back UNCHANGED.
         SPANS_FILES = { files_touched: 2 }.freeze
 
+        # Changing a signature changes every call to it. A private method's
+        # callers are in its own file; a public one's may be anywhere, which
+        # a one-file repair cannot see, so Opus declined every such finding.
+        def signature_radius(lines, index)
+          return nil if lines[index].to_s.match?(/\A\s*(?:private|protected)\s+def\b/)
+
+          visibility = lines.first(index).reverse.find { |line| line.match?(/\A\s*(?:private|protected|public)\s*\z/) }
+          visibility.to_s.strip == "public" || visibility.nil? ? SPANS_FILES : nil
+        end
+
         def finding(line:, message:, fix: nil, confidence: nil, why: nil, genealogy: nil, impact_radius: nil,
                     dedupe_key: nil, blast_radius: nil)
           Finding.build(
