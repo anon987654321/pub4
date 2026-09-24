@@ -4939,15 +4939,14 @@ body.vertical-dating {
   --dating-accent-ink: var(--dating-accent);
 }
 
-/* Full bleed because dating is an immersive vertical, with no column for
-   content to sit in. .layout is display:flex in _shell.scss on every surface,
-   so max-width is all it needs. */
+/* Dating uses the same single content column as the rest of Brgen. The deck is
+   the product; the shell should not become a second canvas around it. */
 body.vertical-dating .layout {
-  max-width: 100%;
+  max-width: var(--feed-max);
 }
 
 body.vertical-dating main {
-  max-width: 100%;
+  max-width: none;
   padding: 0;
   min-height: 100dvh;
 }
@@ -5000,6 +4999,17 @@ body.vertical-dating .match .feed-card-avatar-img {
   flex-wrap: wrap;
   gap: var(--space-2);
   justify-content: flex-end;
+}
+
+@media (max-width: 639px) {
+  .dating-page-intro {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dating-page-intro nav {
+    justify-content: flex-start;
+  }
 }
 
 .dating-discover-panel {
