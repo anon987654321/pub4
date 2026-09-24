@@ -11,6 +11,10 @@ class VisualPassContractTest < Minitest::Test
     assert_includes source, "Deploy::GeometryProbe.surfaces"
     assert_includes source, "Deploy::GeometryProbe.with_browser"
     assert_includes source, "Deploy::GeometryProbe.walk"
+    assert_includes source, "Deploy::GeometryProbe.measure_current"
+    assert_includes source, "capture_brgen_composition"
+    assert_includes source, "composer_open"
+    assert_includes source, "messenger_open"
     refute_includes source, "Selenium::WebDriver"
     refute_includes source, "require \"selenium-webdriver\""
   end
@@ -26,6 +30,13 @@ class VisualPassContractTest < Minitest::Test
   def test_visual_targets_are_limited_to_web_surfaces
     assert_includes source, 'relative == "RAILS"'
     assert_includes source, 'relative == "MASTER/web"'
+  end
+
+  def test_brgen_composition_is_page_wide_not_feature_isolated
+    assert_includes source, 'surface.app == "brgen" && surface.label == "core"'
+    assert_includes source, 'co_resident'
+    assert_includes source, '"feed posts composer messenger"'
+    assert_includes source, 'measure_current(cdp, state_surface)'
   end
 
   def test_visual_findings_must_be_addressable

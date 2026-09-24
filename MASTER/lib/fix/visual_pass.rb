@@ -27,6 +27,18 @@ module Master
       # Surface ids are paths, so %r{} keeps the literal slash readable.
       SURFACE_RE = %r{\bsurface\s*[:=]\s*([A-Za-z0-9_./-]+)\b}i.freeze
       VIEWPORT_RE = /\bviewport\s*[:=]\s*([A-Za-z0-9_-]+)\b/i.freeze
+      # States that visibly coexist with the Brgen front-page feed. They are
+      # measured after activation against the same DOM, not as isolated routes.
+      BRGEN_COMPOSITION = {
+        "composer_open" => {
+          selector: ".compose-trigger",
+          ready: "!!document.querySelector('dialog[open]')",
+        },
+        "messenger_open" => {
+          selector: ".nearby-chat-widget-tab",
+          ready: "!!document.querySelector('.nearby-chat-widget-panel:not([hidden])')",
+        },
+      }.freeze
       Rule = Data.define(:id) do
         def severity = :warning
       end
@@ -99,9 +111,71 @@ module Master
             journeys = Deploy::MobileJourneyProbe.run(cdp, surface, @dir)
             platform = Deploy::WebPlatformProbe.run(cdp, surface)
             captures << { surface:, payload:, screenshot: shot, journeys:, platform: }
+            captures.concat(capture_brgen_composition(cdp, surface))
           end
         end
         captures
+      end
+
+      def capture_brgen_composition(cdp, surface)
+        return [] unless surface.app == "brgen" && surface.label == "core"
+
+        BRGEN_COMPOSITION.filter_map do |state, spec|
+          cdp.navigate(surface.url)
+          raise "brgen composition #{state}: page did not settle" unless wait_until(cdp, "document.readyState === 'complete'")
+          next unless cdp.evaluate("!!document.querySelector(#{spec[:selector].to_json})")
+
+          clicked = cdp.evaluate(<<~JS)
+            (() => {
+              const el = document.querySelector(#{spec[:selector].to_json});
+              if (!el) return false;
+              el.click();
+              return true;
+            })()
+          JS
+          raise "brgen composition #{state}: feature trigger was not clickable" unless clicked
+          raise "brgen composition #{state}: state did not open" unless wait_until(cdp, spec[:ready])
+
+          state_surface = Deploy::GeometryProbe::Surface.new(
+            app: surface.app,
+            label: "#{surface.label}__#{state}",
+            host: surface.host,
+            path: surface.path,
+            viewport: surface.viewport,
+            width: surface.width,
+            height: surface.height,
+            snapshot: false,
+            port: surface.port,
+            profile: surface.profile,
+          )
+          payload = Deploy::GeometryProbe.measure_current(cdp, state_surface)
+          next unless Deploy::GeometryProbe.ok?(payload)
+
+          payload["composition"] = {
+            "base_surface" => surface.id,
+            "feature" => state,
+            "co_resident" => %w[feed posts composer messenger],
+          }
+          shot = File.join(@dir, "#{safe_slug(state_surface.id)}.png")
+          cdp.screenshot(shot, capture_beyond_viewport: true)
+          {
+            surface: state_surface,
+            payload: payload,
+            screenshot: shot,
+            journeys: [],
+            platform: surface.viewport == "mobile" ? Deploy::WebPlatformProbe.run(cdp, state_surface) : {},
+          }
+        end
+      end
+
+      def wait_until(cdp, expression, timeout: 3.0)
+        deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + timeout
+        loop do
+          return true if cdp.evaluate(expression)
+          return false if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+
+          sleep 0.05
+        end
       end
 
       def run_critique(captures, sources, anchors, graph:)
@@ -220,6 +294,7 @@ module Master
         type = visual["typography"] || {}
         [
           "surface #{surface.id}: #{surface.url}",
+          "composition=#{capture.dig(:payload, "composition", "feature") || "resting"} ",
           "first-screen text=#{first["text_blocks"]}, interactive=#{first["interactive"]}, ",
           "largest_area=#{first["largest_element_area_ratio"]}, small_text=#{first["small_text"]}, ",
           "centered_long_text=#{first["centered_long_text"]}",
