@@ -24,7 +24,14 @@ module Master
           path = violation[:file]
           return proposed_src unless File.exist?(path)
 
-          original_src = File.read(path, encoding: "UTF-8") rescue (return proposed_src)
+          original_src = begin
+            File.read(path, encoding: "UTF-8")
+          rescue StandardError => e
+            Master::Ground::Swallow.log(e, context: "RuleLoop.reflexion_source_read", rule: @rule.id)
+            @bus&.publish("rule_loop:reflexion_rejected", rule: @rule.id, file: path,
+              reason: "source read failed: #{e.message[0, 120]}")
+            return
+          end
           prompt = reflexion_prompt(violation, original_src, proposed_src)
           response = ask_once_agent(prompt, image: @visual_image).to_s.strip
           handle_reflexion_response(response, path, proposed_src)
