@@ -83,11 +83,14 @@ module Master
         # a cache that never invalidates.
         def git_head_mtime
           out, status = Master::Io::Exec.capture2e("git", "-C", @root, "rev-parse", "--git-path", "HEAD")
-          return 0 unless status.success?
+          raise "co-change graph git path unavailable: #{out}" unless status.success?
 
-          File.mtime(File.expand_path(out.strip, @root)).to_i
-        rescue StandardError
-          0
+          path = File.expand_path(out.strip, @root)
+          raise "co-change graph HEAD unreadable: #{path}" unless File.file?(path)
+
+          File.mtime(path).to_i
+        rescue StandardError => e
+          raise "co-change graph HEAD timestamp unreadable: #{e.class}: #{e.message}"
         end
       end
     end
