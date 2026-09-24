@@ -23,7 +23,25 @@ module Master
           git!("commit", "-m", message.to_s, "-m", Master::Core::World::COMMIT_TRAILER, "--", *scoped)
         end
 
-        def push = git!("push")
+        # A push since this checkout last fetched rejects ours, and the commit
+        # stays local: /fix's first repair of MASTER sat unpushed while other
+        # sessions pushed around it. Rebase onto what arrived and push once
+        # more. A rebase that conflicts is aborted, and the refusal raised.
+        def push
+          git!("push")
+        rescue RuntimeError => e
+          raise unless e.message.match?(/rejected|non-fast-forward|fetch first/)
+
+          rebase_onto_upstream!
+          git!("push")
+        end
+
+        def rebase_onto_upstream!
+          git!("pull", "--rebase", "--autostash")
+        rescue RuntimeError
+          Master::Io::Exec.capture2e("git", "-C", @root_path, "rebase", "--abort")
+          raise
+        end
 
         def git!(*args)
           Master::Ground::LawHandshake::Admission.require!

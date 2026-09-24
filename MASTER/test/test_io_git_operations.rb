@@ -182,6 +182,42 @@ class GitOperationsTest < Minitest::Test
     assert_includes sh("git", "log", "--oneline", chdir: @remote), "pushes"
   end
 
+  def push_from_another_clone(file, content)
+    other = File.join(@tmp, "other")
+    FileUtils.mkdir_p(other)
+    sh("git", "clone", @remote, ".", chdir: other)
+    sh("git", "config", "user.email", "other@example.invalid", chdir: other)
+    sh("git", "config", "user.name", "Other", chdir: other)
+    File.write(File.join(other, file), content)
+    sh("git", "add", file, chdir: other)
+    sh("git", "commit", "-m", "from other", chdir: other)
+    sh("git", "push", chdir: other)
+  end
+
+  # Another session pushed first: ours lands on top of theirs, and a file
+  # left uncommitted in this checkout is still there afterwards.
+  def test_push_rebases_over_a_commit_pushed_meanwhile
+    push_from_another_clone("other.rb", "# other\n")
+    write("lib/ours.rb", "# ours\n")
+    @git.commit("ours", paths: ["lib/ours.rb"])
+    write("pending.rb", "# not committed\n")
+
+    @git.push
+
+    assert_equal [0, 0], @git.ahead_behind
+    assert_equal %w[ours from], sh("git", "log", "--format=%s", "-2", chdir: @remote).lines.map { _1.split.first }
+    assert File.file?(File.join(@repo, "pending.rb"))
+  end
+
+  def test_push_raises_when_the_rebase_conflicts
+    push_from_another_clone("README.md", "theirs\n")
+    write("README.md", "ours\n")
+    @git.commit("ours", paths: ["README.md"])
+
+    assert_raises(RuntimeError) { @git.push }
+    refute File.directory?(File.join(@repo, ".git", "rebase-merge")), "the conflicted rebase is aborted"
+  end
+
   def test_fetch_sees_a_new_remote_commit
     other = File.join(@tmp, "other")
     FileUtils.mkdir_p(other)
