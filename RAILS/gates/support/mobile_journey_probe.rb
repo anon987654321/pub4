@@ -143,14 +143,10 @@ module Deploy
           });
         })()
       JS
-    rescue StandardError
-      {}
     end
 
     def self.discover(cdp)
       JSON.parse(cdp.evaluate(ACTION_DISCOVERY).to_s)
-    rescue StandardError
-      []
     end
 
     def self.run(cdp, surface, dir)
