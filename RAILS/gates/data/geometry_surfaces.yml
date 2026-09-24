@@ -86,6 +86,87 @@ surfaces:
     path: /privacy
     viewports: [mobile, desktop]
 
+
+  # BEGIN generated view surfaces
+  # Every HTML GET route that rendered for a guest on the local fleet, from
+  # RAILS/tools/view_surfaces/generate.rb. Hand-declared surfaces above win;
+  # routes behind sign-in and routes whose parameters no local record fills
+  # are not here (the probe browses as a guest). Regenerate, do not edit.
+  - { app: amber, label: rails_pwa_offline, path: "/offline", viewports: [mobile, desktop] }
+  - { app: amber, label: registrations_new, path: "/registration/new", viewports: [mobile, desktop] }
+  - { app: amber, label: pages_show, path: "/privacy", viewports: [mobile, desktop] }
+  - { app: amber, label: pages_show_2, path: "/terms", viewports: [mobile, desktop] }
+  - { app: amber, label: pages_show_3, path: "/cookies", viewports: [mobile, desktop] }
+  - { app: amber, label: account_settings_show, path: "/account", viewports: [mobile, desktop] }
+  - { app: amber, label: two_factor_setups_show, path: "/two_factor_setup", viewports: [mobile, desktop] }
+  - { app: amber, label: notifications_index, path: "/notifications", viewports: [mobile, desktop] }
+  - { app: amber, label: passwords_new, path: "/passwords/new", viewports: [mobile, desktop] }
+  - { app: amber, label: messages_index, path: "/messages", viewports: [mobile, desktop] }
+  - { app: amber, label: posts_index, path: "/posts", viewports: [mobile, desktop] }
+  - { app: amber, label: turbo_native_navigation_recede, path: "/recede_historical_location", viewports: [mobile, desktop] }
+  - { app: amber, label: turbo_native_navigation_resume, path: "/resume_historical_location", viewports: [mobile, desktop] }
+  - { app: amber, label: turbo_native_navigation_refresh, path: "/refresh_historical_location", viewports: [mobile, desktop] }
+  - { app: bsdports, label: rails_pwa_offline, path: "/offline", viewports: [mobile, desktop] }
+  - { app: bsdports, label: sessions_new, path: "/session/new", viewports: [mobile, desktop] }
+  - { app: bsdports, label: pages_show, path: "/terms", viewports: [mobile, desktop] }
+  - { app: bsdports, label: pages_show_2, path: "/cookies", viewports: [mobile, desktop] }
+  - { app: bsdports, label: passwords_new, path: "/passwords/new", viewports: [mobile, desktop] }
+  - { app: bsdports, label: categories_index, path: "/categories", viewports: [mobile, desktop] }
+  - { app: bsdports, label: maintainers_index, path: "/maintainers", viewports: [mobile, desktop] }
+  - { app: bsdports, label: turbo_native_navigation_recede, path: "/recede_historical_location", viewports: [mobile, desktop] }
+  - { app: bsdports, label: turbo_native_navigation_resume, path: "/resume_historical_location", viewports: [mobile, desktop] }
+  - { app: bsdports, label: turbo_native_navigation_refresh, path: "/refresh_historical_location", viewports: [mobile, desktop] }
+  - { app: brgen, label: rails_pwa_offline, host: brgen.no, path: "/offline", viewports: [mobile, desktop] }
+  - { app: brgen, label: bookmarks_index, host: brgen.no, path: "/saved", viewports: [mobile, desktop] }
+  - { app: brgen, label: pages_show, host: brgen.no, path: "/privacy", viewports: [mobile, desktop] }
+  - { app: brgen, label: pages_show_2, host: brgen.no, path: "/terms", viewports: [mobile, desktop] }
+  - { app: brgen, label: pages_show_3, host: brgen.no, path: "/cookies", viewports: [mobile, desktop] }
+  - { app: brgen, label: passwords_new, host: brgen.no, path: "/passwords/new", viewports: [mobile, desktop] }
+  - { app: brgen, label: account_settings_show, host: brgen.no, path: "/account", viewports: [mobile, desktop] }
+  - { app: brgen, label: two_factor_setups_show, host: brgen.no, path: "/two_factor_setup", viewports: [mobile, desktop] }
+  - { app: brgen, label: activity_events_index, host: brgen.no, path: "/activity_events", viewports: [mobile, desktop] }
+  - { app: brgen, label: posts_new, host: brgen.no, path: "/posts/new", viewports: [mobile, desktop] }
+  - { app: brgen, label: posts_show, host: brgen.no, path: "/posts/konsertanbefalinger-denne-maneden", viewports: [mobile, desktop] }
+  - { app: brgen, label: fediverse_follows_index, host: brgen.no, path: "/fediverse_follows", viewports: [mobile, desktop] }
+  - { app: brgen, label: stories_index, host: brgen.no, path: "/stories", viewports: [mobile, desktop] }
+  - { app: brgen, label: stories_new, host: brgen.no, path: "/stories/new", viewports: [mobile, desktop] }
+  - { app: brgen, label: events_index, host: brgen.no, path: "/events", viewports: [mobile, desktop] }
+  - { app: brgen, label: communities_wiki_index, host: brgen.no, path: "/communities/30/wiki", viewports: [mobile, desktop] }
+  - { app: brgen, label: posts_index_2, host: brgen.no, path: "/communities/30/posts", viewports: [mobile, desktop] }
+  - { app: brgen, label: posts_new_2, host: brgen.no, path: "/communities/30/posts/new", viewports: [mobile, desktop] }
+  - { app: brgen, label: communities_show, host: brgen.no, path: "/communities/30", viewports: [mobile, desktop] }
+  - { app: brgen, label: users_new, host: brgen.no, path: "/users/new", viewports: [mobile, desktop] }
+  - { app: brgen, label: users_show, host: brgen.no, path: "/users/5512", viewports: [mobile, desktop] }
+  - { app: brgen, label: conversations_search, host: brgen.no, path: "/conversations/search", viewports: [mobile, desktop] }
+  - { app: brgen, label: group_conversations_new, host: brgen.no, path: "/groups/new", viewports: [mobile, desktop] }
+  - { app: brgen, label: tv_tv_feed_index, host: tv.brgen.no, path: "/feed", viewports: [mobile, desktop] }
+  - { app: brgen, label: tv_tv_channels_new, host: tv.brgen.no, path: "/channels/new", viewports: [mobile, desktop] }
+  - { app: brgen, label: tv_tv_sounds_index, host: tv.brgen.no, path: "/sounds", viewports: [mobile, desktop] }
+  - { app: brgen, label: tv_tv_videos_show, host: tv.brgen.no, path: "/videos/slik-pusser-du-opp-gammelt-trehus", viewports: [mobile, desktop] }
+  - { app: brgen, label: dating_dating_home_next, host: dating.brgen.no, path: "/next", viewports: [mobile, desktop] }
+  - { app: brgen, label: dating_dating_likes_index, host: dating.brgen.no, path: "/likes", viewports: [mobile, desktop] }
+  - { app: brgen, label: radio_playlist_playlists_new, host: radio.brgen.no, path: "/playlists/new", viewports: [mobile, desktop] }
+  - { app: brgen, label: radio_playlist_sets_new, host: radio.brgen.no, path: "/sets/new", viewports: [mobile, desktop] }
+  - { app: brgen, label: radio_playlist_sets_show, host: radio.brgen.no, path: "/sets/1", viewports: [mobile, desktop] }
+  - { app: brgen, label: takeaway_takeaway_orders_new, host: takeaway.brgen.no, path: "/restaurants/pizzabakeren/orders/new", viewports: [mobile, desktop] }
+  - { app: brgen, label: takeaway_takeaway_restaurants_show, host: takeaway.brgen.no, path: "/restaurants/pizzabakeren", viewports: [mobile, desktop] }
+  - { app: brgen, label: takeaway_takeaway_delivery_drivers_show, host: takeaway.brgen.no, path: "/delivery_drivers/1", viewports: [mobile, desktop] }
+  - { app: brgen, label: markedsplass_marketplace_stores_show, host: markedsplass.brgen.no, path: "/shops/seed-store-0-minister_ample", viewports: [mobile, desktop] }
+  - { app: brgen, label: markedsplass_marketplace_listings_index, host: markedsplass.brgen.no, path: "/listings", viewports: [mobile, desktop] }
+  - { app: brgen, label: markedsplass_marketplace_listings_show, host: markedsplass.brgen.no, path: "/listings/sovesofa-lite-brukt", viewports: [mobile, desktop] }
+  - { app: brgen, label: markedsplass_marketplace_orders_index, host: markedsplass.brgen.no, path: "/orders", viewports: [mobile, desktop] }
+  - { app: brgen, label: markedsplass_marketplace_addresses_index, host: markedsplass.brgen.no, path: "/addresses", viewports: [mobile, desktop] }
+  - { app: brgen, label: markedsplass_marketplace_categories_show, host: markedsplass.brgen.no, path: "/categories/electronics", viewports: [mobile, desktop] }
+  - { app: brgen, label: markedsplass_marketplace_saved_searches_index, host: markedsplass.brgen.no, path: "/saved_searches", viewports: [mobile, desktop] }
+  - { app: brgen, label: markedsplass_marketplace_favorites_index, host: markedsplass.brgen.no, path: "/wishlist", viewports: [mobile, desktop] }
+  - { app: brgen, label: maps_maps_places_show, host: maps.brgen.no, path: "/places/1", viewports: [mobile, desktop] }
+  - { app: brgen, label: partner_programs_index, host: brgen.no, path: "/partner/programs", viewports: [mobile, desktop] }
+  - { app: brgen, label: nearby_widget, host: brgen.no, path: "/nearby/widget", viewports: [mobile, desktop] }
+  - { app: brgen, label: turbo_native_navigation_recede, host: brgen.no, path: "/recede_historical_location", viewports: [mobile, desktop] }
+  - { app: brgen, label: turbo_native_navigation_resume, host: brgen.no, path: "/resume_historical_location", viewports: [mobile, desktop] }
+  - { app: brgen, label: turbo_native_navigation_refresh, host: brgen.no, path: "/refresh_historical_location", viewports: [mobile, desktop] }
+  # END generated view surfaces
+
 # Content that changes between two captures of an unchanged page: a clock, a
 # relative time, a counter that animates up from zero, a money amount. The
 # visual_contract gate hides these (visibility, so the box keeps its size)
