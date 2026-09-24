@@ -195,30 +195,33 @@ listings = stores.flat_map do |store|
   end
 end
 
-# Live hyperlocal notes (guest demo density on /live)
-live_count = (12 * SEED_SCALE).clamp(8, 80)
-live_count.times do |i|
-  user = users.sample
-  body = [
-    "Noen i nærheten av #{Faker::Address.community}?",
-    "Ledig plass på buss — #{Faker::Lorem.word}",
-    "Gratis #{Faker::Food.dish} utenfor #{Faker::Address.street_name}",
-    Faker::Lorem.sentence(word_count: 8)
-  ].sample
-  next if body.blank?
+# Live hyperlocal notes. BergenDemoSeeder owns the hand-written Bergen set;
+# generated notes remain for the other city/dev seed path.
+unless seed_city&.domain == 'brgen.no'
+  live_count = (12 * SEED_SCALE).clamp(8, 80)
+  live_count.times do |_i|
+    user = users.sample
+    body = [
+      "Noen i nærheten av #{Faker::Address.community}?",
+      "Ledig plass på buss — #{Faker::Lorem.word}",
+      "Gratis #{Faker::Food.dish} utenfor #{Faker::Address.street_name}",
+      Faker::Lorem.sentence(word_count: 8)
+    ].sample
+    next if body.blank?
 
-  post = Post.new(
-    user: user,
-    city: seed_city,
-    content: body.truncate(Post::LIVE_CONTENT_MAX),
-    title: body.truncate(80),
-    created_at: rand(1..48).hours.ago
-  )
-  post.stamp_live_location!(
-    lat: bergen_lat + rand(-0.03..0.03),
-    lng: bergen_lng + rand(-0.04..0.04)
-  )
-  post.save!
+    post = Post.new(
+      user: user,
+      city: seed_city,
+      content: body.truncate(Post::LIVE_CONTENT_MAX),
+      title: body.truncate(80),
+      created_at: rand(1..48).hours.ago
+    )
+    post.stamp_live_location!(
+      lat: bergen_lat + rand(-0.03..0.03),
+      lng: bergen_lng + rand(-0.04..0.04)
+    )
+    post.save!
+  end
 end
 puts "Live: #{Post.live.count} geo-stamped notes"
 
