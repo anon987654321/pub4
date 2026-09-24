@@ -25,7 +25,7 @@
         image_url: (@promo_menu_item&.photo&.attached? ? main_app.url_for(@promo_menu_item.photo.variant(:card)) : nil),
         url: restaurant_path(@promo_restaurant) %>
 <% else %>
-  <div class="store-hero store-hero--alone" data-visitor-orientation>
+  <div class="store-hero store-hero--alone">
     <%= tag.h1 t("takeaway.order_food") %>
     <%= tag.p t("takeaway.intro") %>
   </div>
