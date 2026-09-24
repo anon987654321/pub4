@@ -1648,6 +1648,13 @@ entry below is the shape, the evidence, and the seam it wants.
 
 - **Every tree has one fail-open seam where absence reads as success.**
   OPENBSD's sync.rb redaction was one (fixed 2026-09-23: fail-closed residue
+  audit, `OPENBSD/lib/secret_redaction.rb`); MASTER's unread config was a third,
+  and STUDIO's 26 SipHash sites were a fourth. The rendered RAILS seam is now
+  explicit rather than green: missing Chrome marks browser gates inconclusive
+  and the runner returns exit 3. The remaining seam is a publisher/listener
+  census for MASTER's event bus in the shape of `tools/data_reach.rb`, so an
+  event nothing publishes or nothing hears is counted rather than silent.
+  OPENBSD's sync.rb redaction was one (fixed 2026-09-23: fail-closed residue
   audit, `OPENBSD/lib/secret_redaction.rb`); the RAILS rendered gates
   degrading to warnings without Chrome are another; MASTER's unread config
   was a third, and STUDIO's 26 SipHash sites were a fourth. The seam to look
