@@ -16,7 +16,7 @@ module Master
             Master::Ground::ModePosture.current(root: @root)[:max_fix_passes]
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "ConvergenceConfig.mode_cap")
-            nil
+            raise "fix_loop: mode posture unreadable: #{e.class}: #{e.message}"
           end
           [mode_cap, configured].compact.map(&:to_i).min
         end
