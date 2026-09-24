@@ -338,10 +338,13 @@ module Master
 
         def load_rules
           path = File.join(@root, "data", "models.yml")
-          Master.load_yaml(path) || {}
+          rules = Master.load_yaml(path)
+          raise "model routing policy missing: #{path}" unless rules.is_a?(Hash)
+
+          rules
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "compute_pool.load_rules")
-          {}
+          raise "compute pool routing policy unreadable: #{e.class}: #{e.message}"
         end
       end
     end
