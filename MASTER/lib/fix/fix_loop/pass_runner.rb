@@ -9,7 +9,7 @@ require_relative "pass_runner/fast_stage"
 require_relative "pass_runner/llm_stage"
 require_relative "pass_runner/stagnation_detection"
 require_relative "pass_runner/evidence_stage"
-require_relative "pass_runner/../fix_loop/structural_stage"
+require_relative "fix_loop/structural_stage"
 require_relative "../transaction"
 require_relative "../resource_budget"
 
