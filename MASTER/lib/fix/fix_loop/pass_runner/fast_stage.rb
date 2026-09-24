@@ -49,26 +49,32 @@ module Master
             nil
           end
 
+          # One rubocop run corrects every file and says, per offense, whether it
+          # was corrected. Exit status alone cannot say which files still carry
+          # one, and asking by re-running rubocop on each file cost fifteen
+          # minutes over MASTER's 893 files while correcting nothing further.
           def rubocop_pass(files, root)
             rel_root = root == @root ? "." : root.delete_prefix("#{@root}/")
             Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "rubocop autocorrect, #{Master::Trace::Dmesg.counted(files.size, "file")} in #{rel_root}")
-            _, status = Master::Io::Exec.capture2e(Master::BUNDLE_BIN, "exec", "rubocop", "-A", "--no-color", *files, chdir: root)
-            Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "rubocop #{status.success? ? "ok" : "partial"}, #{Master::Trace::Dmesg.counted(files.size, "file")}")
-            status.success? ? files.size : rubocop_each_file(files, root)
+            out, _err, status = Master::Io::Exec.capture3(Master::BUNDLE_BIN, "exec", "rubocop", "-A", "--no-color",
+                                                          "--format", "json", *files, chdir: root)
+            stuck = status.success? ? [] : uncorrected_files(out, files, root)
+            stuck.each { |path| @bus&.publish("fix_loop:rubocop_file_failed", file: path) }
+            summary = stuck.empty? ? "ok" : "partial, #{Master::Trace::Dmesg.counted(stuck.size, "file")} keep offenses"
+            Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "rubocop #{summary}, #{Master::Trace::Dmesg.counted(files.size, "file")}")
+            files.size - stuck.size
           end
 
-          def rubocop_each_file(files, root)
-            files.count do |path|
-              _, status = Master::Io::Exec.capture2e(Master::BUNDLE_BIN, "exec", "rubocop", "-A", "--no-color", path, chdir: root)
-              rel = path.delete_prefix("#{@root}/")
-              if status.success?
-                Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "rubocop ok, #{rel}")
-              else
-                @bus&.publish("fix_loop:rubocop_file_failed", file: path)
-                Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "rubocop failed, #{rel}")
-              end
-              status.success?
+          # Every file counts as stuck when rubocop itself failed and printed no report.
+          def uncorrected_files(out, files, root)
+            report = JSON.parse(out.to_s)
+            report.fetch("files", []).filter_map do |entry|
+              next if entry.fetch("offenses", []).all? { |offense| offense["corrected"] }
+
+              File.expand_path(entry["path"], root)
             end
+          rescue JSON::ParserError
+            files
           end
 
           def analyze_ruby_file(path)
