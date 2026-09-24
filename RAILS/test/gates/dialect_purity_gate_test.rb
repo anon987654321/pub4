@@ -18,20 +18,22 @@ class DialectPurityGateTest < Minitest::Test
 
   GATE = Deploy::DialectPurityGate
 
-  TOKENS = <<~YAML
-    social:
-      accent: "#1b7f4f"
-    luxury:
-      accent: "#b08d57"
-    openbsd_wscons:
-      fg: "#63c363"
-    face_root:
-      bg: "#17161c"
-    vertical_accents:
-      marketplace:
+  MASTER_RULES = <<~YAML
+    design_system:
+      social:
         accent: "#1b7f4f"
-      dating:
-        accent: "#b3315a"
+      luxury:
+        accent: "#b08d57"
+      openbsd_wscons:
+        fg: "#63c363"
+      face_root:
+        bg: "#17161c"
+      vertical_accents:
+        marketplace:
+          accent: "#1b7f4f"
+        dating:
+          accent: "#b3315a"
+      vertical_accent_ink: "#110f19"
   YAML
 
   WIRING = "Dialects: social, luxury, openbsd_wscons, face_root.\n" \
@@ -51,7 +53,7 @@ class DialectPurityGateTest < Minitest::Test
   BSDPORTS = ":root {\n  color-scheme: light;\n  --radius-pill: 0;\n  --radius-card: 0;\n}\n"
 
   def sound_tree(dir)
-    plant(dir, "RAILS/shared/design_tokens.yml", TOKENS)
+    plant(dir, "MASTER/data/rules.yml", MASTER_RULES)
     plant(dir, "RAILS/shared/WIRING_NOTES.md", WIRING)
     plant(dir, "RAILS/brgen/app/assets/stylesheets/application.scss", BRGEN)
     plant(dir, "RAILS/bsdports/app/assets/stylesheets/application.scss", BSDPORTS)
@@ -127,20 +129,20 @@ class DialectPurityGateTest < Minitest::Test
 
   def test_a_missing_vertical_accent_entry_fails
     result = gate_over do |dir|
-      plant(dir, "RAILS/shared/design_tokens.yml", TOKENS.sub(%(  dating:\n    accent: "#b3315a"\n), ""))
+      plant(dir, "MASTER/data/rules.yml", MASTER_RULES.sub(%(      dating:\n        accent: "#b3315a"\n), ""))
     end
 
     refute result.ok?, "a missing vertical accent passed"
     assert_match(/vertical_accents\.dating missing/, result.failures.first)
   end
 
-  def test_a_dialect_missing_from_the_tokens_fails
+  def test_a_dialect_missing_from_master_design_fails
     result = gate_over do |dir|
-      plant(dir, "RAILS/shared/design_tokens.yml", TOKENS.sub(/luxury:\n  accent: "#b08d57"\n/, ""))
+      plant(dir, "MASTER/data/rules.yml", MASTER_RULES.sub(/      luxury:\n        accent: "#b08d57"\n/, ""))
     end
 
     refute result.ok?, "a missing dialect passed"
-    assert_match(/design_tokens missing luxury/, result.failures.first)
+    assert_match(/MASTER design_system missing luxury/, result.failures.first)
   end
 
   def test_wiring_notes_that_lost_the_flat_rule_fail
@@ -152,12 +154,12 @@ class DialectPurityGateTest < Minitest::Test
     assert_match(/lost Flat rule/, result.failures.first)
   end
 
-  def test_a_missing_tokens_file_fails_rather_than_passing_empty
+  def test_a_missing_master_rules_fails_rather_than_passing_empty
     result = gate_over do |dir|
-      File.delete(File.join(dir, "RAILS/shared/design_tokens.yml"))
+      File.delete(File.join(dir, "MASTER/data/rules.yml"))
     end
 
-    refute result.ok?, "a missing design_tokens.yml passed"
-    assert_match(/missing design_tokens\.yml/, result.failures.first)
+    refute result.ok?, "missing MASTER design rules passed"
+    assert_match(/missing MASTER\/data\/rules\.yml design_system/, result.failures.first)
   end
 end

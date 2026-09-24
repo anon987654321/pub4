@@ -9,6 +9,7 @@ module DesignTokens
   SOURCE = File.join(ROOT, "..", "MASTER", "data", "rules.yml")
   ARTIFACT = File.join(ROOT, "shared", "design_tokens.yml")
   FACE_ORDER = %w[c_text x_text c_accent c_danger c_code].freeze
+  DIALECT_PATH = File.join(ROOT, "shared", "app", "assets", "stylesheets", "_dialect_tokens.scss")
 
   # Explicit yml-key -> css-var maps for the values that have drifted before
   # (--color-warning, 2026-07-21: shared/_tokens.scss said #ffd400 while
@@ -80,11 +81,7 @@ module DesignTokens
     %w[top right bottom left].each do |side|
       lines << "  --safe-#{side}: env(safe-area-inset-#{side}, 0px);"
     end
-    # Read, not restated. This line used to hardcode 0.75rem behind a comment
-    # claiming it matched shared_chrome.chrome_inset — a copy describing itself
-    # as a reference. When the token moved to 12px the face kept the old value
-    # and the two drifted silently, which is the reason the generated projection now comes from MASTER
-    # exists.
+    # Read from the canonical design system; generated projections do not own values.
     lines << "  --chrome-inset: #{root.fetch(%q{shared_chrome}).fetch(%q{chrome_inset})};"
     { "t" => "top", "r" => "right", "b" => "bottom", "l" => "left" }.each do |short, side|
       lines << "  --inset-#{short}: calc(var(--chrome-inset) + var(--safe-#{side}));"
@@ -107,6 +104,30 @@ module DesignTokens
 
     body = YAML.dump(canonical).sub(/\A---\n/, "")
     File.write(path, "# GENERATED from MASTER/data/rules.yml#design_system. Do not edit by hand.\n#{body}")
+    true
+  end
+
+  def vertical_accent_block
+    data = load
+    accents = data.fetch("vertical_accents")
+    ink = data.fetch("vertical_accent_ink")
+    lines = ["/* BEGIN:generated-vertical-accents — ruby RAILS/tools/sync_dialect_tokens.rb */", "$vertical-accents: ("]
+    accents.each do |name, values|
+      lines << "  #{name}: (#{values.fetch('accent')}, #{values.fetch('hover')}, #{values.fetch('light')}),"
+    end
+    lines << ");"
+    lines << "$vertical-accent-ink: #{ink};"
+    lines << "/* END:generated-vertical-accents */"
+    lines.join("\n")
+  end
+
+  def sync_vertical_accents!(path = DIALECT_PATH)
+    body = read_utf8(path)
+    pattern = %r{/\* BEGIN:generated-vertical-accents.*?\*/.*?/\* END:generated-vertical-accents \*/}m
+    updated = body.match?(pattern) ? body.sub(pattern, vertical_accent_block) : "#{vertical_accent_block}\n\n#{body}"
+    return false if updated == body
+
+    File.write(path, updated)
     true
   end
 

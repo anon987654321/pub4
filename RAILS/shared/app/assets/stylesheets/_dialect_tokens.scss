@@ -1,3 +1,16 @@
+/* BEGIN:generated-vertical-accents — ruby RAILS/tools/sync_dialect_tokens.rb */
+$vertical-accents: (
+  marketplace: (#98876e, #8d7e66, #98876e),
+  tv: (#dc635c, #b83a33, #dc635c),
+  dating: (#00d4aa, #00b391, #009579),
+  takeaway: (#e07b39, #c26a30, #c26a30),
+  playlist: (#12b6c4, #0f9aa6, #0e8a94),
+  maps: (#5b8fd4, #4a7ab8, #5585c5),
+  messenger: (#6b7fd7, #5566c4, #6b7fd7),
+);
+$vertical-accent-ink: #110f19;
+/* END:generated-vertical-accents */
+
 // The token scheme every app and every dialect uses. Derived hovers use
 // color-mix over --text, so they follow the ink rather than carrying a value.
 

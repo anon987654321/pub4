@@ -26,7 +26,7 @@ $fs: "https://cdn.jsdelivr.net/npm/@fontsource/instrument-serif@5.3.0/files";
 $latin: "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD";
 
 // The wordmark keeps the platform UI face it has always been set in. Body text
-// takes --font from app-root-tokens, the one typeface design_tokens.yml names.
+// takes --font from app-root-tokens, the one typeface MASTER/data/rules.yml#design_system names.
 $brgen-logo-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 
 /* Per-vertical accent identity. Overriding --accent cascades to --accent,
@@ -34,22 +34,7 @@ $brgen-logo-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
    and active states read as its own place rather than the shared indigo. The
    second selector carries the accent into light mode on browsable verticals
    (immersive ones hide #dark-toggle, so it simply never matches there). */
-/* Single accent map — keep in sync with design_tokens.yml vertical_accents.
-   Do not re-set --accent in ui_refinements or vertical-local sheets. */
-$vertical-accents: (
-  // (dark accent, hover, light accent). Slot 3 exists because the dark-mode
-  // hues are tuned as ink on dark: on white, dating reads 1.91:1, playlist
-  // 2.47:1 and takeaway 2.97:1 (visual_contract_lint low_contrast, WCAG
-  // 1.4.11 wants 3:1), so light mode wears a darkened variant of the same
-  // hue. Verticals whose dark hue already clears 3:1 on white repeat it.
-  marketplace: (#98876e, #8d7e66, #98876e), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
-  tv:          (#dc635c, #b83a33, #dc635c), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
-  dating:      (#00d4aa, #00b391, #009579), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
-  takeaway:    (#e07b39, #c26a30, #c26a30), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
-  playlist:    (#12b6c4, #0f9aa6, #0e8a94), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
-  maps:        (#5b8fd4, #4a7ab8, #5585c5), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
-  messenger:   (#6b7fd7, #5566c4, #6b7fd7), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
-);
+/* Vertical accent identity is generated from MASTER/data/rules.yml#design_system. */
 /* Ink for anything painted ON these accents. Every one of the seven is tuned
    to be legible as ink on a light surface, which makes them all too light to
    carry light ink: against --bg (#f7f6fa) they run 1.77–3.46:1, and
@@ -65,7 +50,7 @@ $vertical-accents: (
    and keeps color: var(--accent-ink); marketplace's hover, the only one wired,
    measures 4.80. tv's 3.34 and maps' 4.31 are under 4.5 and reach no pixel
    until their hover is wired. Moving a colour is the operator's. */
-$vertical-accent-ink: #110f19;
+x.$vertical-accent-ink: #110f19;
 
 @each $style in (normal, italic) {
   @font-face {
@@ -176,17 +161,17 @@ $vertical-accent-ink: #110f19;
   --font-size: var(--text-lg);
   --hue-ink-lightness: 38%;
 }
-@each $v, $c in $vertical-accents {
+@each $v, $c in x.$vertical-accents {
   body.vertical-#{$v} {
     --accent: #{list.nth($c, 1)};
-    --accent-ink: #{$vertical-accent-ink};
+    --accent-ink: #{x.$vertical-accent-ink};
     --vertical-#{$v}-accent: #{list.nth($c, 1)};
     --vertical-#{$v}-accent-hover: #{list.nth($c, 2)};
   }
   /* Light restates rather than carries: the dataset is the one light path. */
   :root[data-theme="light"] body.vertical-#{$v} {
     --accent: #{list.nth($c, 3)};
-    --accent-ink: #{$vertical-accent-ink};
+    --accent-ink: #{x.$vertical-accent-ink};
     --vertical-#{$v}-accent: #{list.nth($c, 3)};
   }
 }
@@ -411,7 +396,7 @@ html, body {
  *
  * Set with the `font` shorthand, which is invisible to the obvious search: grep
  * for `font-size:` on html and brgen appears to set no root size at all. This
- * line is the 18px that comments across the tree, design_tokens.yml and
+ * line is the 18px that comments across the tree, MASTER/data/rules.yml#design_system and
  * ScaleLint all refer to. */
 html {
   font: var(--font-size)/var(--line-height) var(--font);
@@ -2840,7 +2825,7 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 
 /* Six categorical avatar backgrounds, each carrying white ink. A palette, not
    a usage: there is no prior token for these to cite. Local to brgen — unlike
-   $vertical-accents they are not in design_tokens.yml. */
+   x.$vertical-accents they are not in MASTER/data/rules.yml#design_system. */
 .monogram--0 { background: #4b2e83; color: #fff; } // scan: intentional — categorical avatar palette; the colour is the definition
 .monogram--1 { background: #7a3e12; color: #fff; } // scan: intentional — categorical avatar palette; the colour is the definition
 .monogram--2 { background: #075e54; color: #fff; } // scan: intentional — categorical avatar palette; the colour is the definition
@@ -5582,7 +5567,7 @@ body[class*="vertical-"] main > section {
 
 /* The layers besides places. Both read status tokens rather than introducing
    new hex values: --color-success and --color-info are declared on :root in
-   shared/_tokens.scss and pinned to design_tokens.yml shared_chrome, so a
+   shared/_tokens.scss and pinned to MASTER/data/rules.yml#design_system shared_chrome, so a
    literal fallback here would be a second copy of each. Inventing a third and
    fourth palette entry is a design decision, not a wiring one.
 
@@ -8457,7 +8442,7 @@ body.vertical-tv .live-badge::before {
   content: "● ";
 /* No hex fallback: --danger is set by the dialect mixin at :root for every
    dialect, with a different value in each (#e46151, #b24c3f, #a9483c, …).
-   #d1594a is design_tokens.yml's color_danger, a different token, so a
+   #d1594a is MASTER/data/rules.yml#design_system's color_danger, a different token, so a
    literal here would drift from the dialect it sits in. */
 color: var(--danger);
 }

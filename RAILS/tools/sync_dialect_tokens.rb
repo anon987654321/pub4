@@ -3,9 +3,8 @@
 
 require_relative "design_tokens"
 
-changed = DesignTokens.sync_dialect_tokens!
-if changed.empty?
-  puts "dialect tokens already in sync with design_tokens.yml"
-else
-  changed.each { |line| puts line }
-end
+changes = []
+changes << "design_tokens: generated from MASTER/data/rules.yml#design_system" if DesignTokens.sync_design_artifact!
+changes << "dialect tokens: generated vertical accent block" if DesignTokens.sync_vertical_accents!
+changes.concat(DesignTokens.sync_dialect_tokens!)
+puts(changes.empty? ? "dialect tokens already in sync with MASTER/data/rules.yml#design_system" : changes.join("\n"))

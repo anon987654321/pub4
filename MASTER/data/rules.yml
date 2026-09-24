@@ -417,6 +417,7 @@ design_system:
     playlist: { accent: "#12b6c4", hover: "#0f9aa6", light: "#0e8a94" }
     maps: { accent: "#5b8fd4", hover: "#4a7ab8", light: "#5585c5" }
     messenger: { accent: "#6b7fd7", hover: "#5566c4", light: "#6b7fd7" }
+  vertical_accent_ink: "#110f19"
   # The rhythm scale. Every spacing, radius, line-height and weight literal in the
   # family's stylesheets must land on a step below, or on a token that resolves to
   # one. Operator::ScaleLint reads this; scale_lint_test.rb ratchets the findings.
@@ -2804,7 +2805,7 @@ rules:
         feed_max_ch: 55
         action: Flag readable prose blocks outside range. Prefer max-width in ch units. Count worn characters, not the CSS token.
       line_height:
-        # Must match RAILS/shared/design_tokens.yml scale.line_height and ScaleLint.
+        # Must match MASTER/data/rules.yml#design_system.scale.line_height and ScaleLint.
         # Off-scale values (1.45, 1.55, 1.3, …) are debt — do not invent new ones.
         # PRESERVE_THEN_IMPROVE_NEVER_BREAK: absolute px line-heights on :root stay
         # until a measured screenshot pass; unitless steps only for new prose rules.
@@ -2907,8 +2908,8 @@ rules:
         base_unit_px: 8
         # Canonical membership. pixel_perfection.eight_px_rhythm aliases this
         # list; they drifted on 0 and 44 when they were two copies. Source:
-        # RAILS/shared/design_tokens.yml#scale.space_px.
-        source: RAILS/shared/design_tokens.yml#scale.space_px
+        # MASTER/data/rules.yml#design_system.scale.space_px.
+        source: MASTER/data/rules.yml#design_system.scale.space_px
         # The rule is "a hairline at or below 3px, or a multiple of 4", and it is
         # stated and tested at RAILS/test/scale_lint_test.rb:119 as
         # `reject { |px| px <= 3 || (px % 4).zero? }`. This enumeration is that
