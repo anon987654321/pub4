@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "digest"
+
 module Master
   module Review
     module Council
@@ -198,6 +200,20 @@ module Master
           DEFAULT_QUESTIONS.merge(council) { |_key, builtin, custom| (Array(builtin) + Array(custom)).uniq }
         rescue StandardError => e
           raise "council quality framework unreadable: #{e.class}: #{e.message}"
+        end
+
+        # Three red-team questions for this persona, the same three every turn
+        # so a juror's self-test can be compared across passes, and a different
+        # three per persona so the panel does not all attack the same angle.
+        # The offset is a digest of the name, not a random draw.
+        HOSTILE_COUNT = 3
+
+        def self.hostile_questions(persona)
+          pool = Array(questions["red_team"])
+          return [] if pool.empty?
+
+          start = Digest::SHA256.hexdigest(persona.name.to_s)[0, 8].to_i(16) % pool.size
+          pool.rotate(start).first(HOSTILE_COUNT)
         end
 
         def self.domain_for(persona_name)
