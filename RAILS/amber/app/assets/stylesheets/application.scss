@@ -363,43 +363,6 @@ h2 {
   gap: var(--space-3);
 }
 
-/* The guest hero wears the same mark, full-bleed. */
-.amber-guest-hero {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-4);
-  padding: var(--space-8) var(--space-4) var(--space-6);
-  text-align: center;
-}
-
-.amber-guest-hero .logo {
-  width: 100vw;
-  margin-inline: calc(50% - 50vw);
-  line-height: 0;
-  background: var(--surface);
-
-  .amber-instance {
-    width: 100%;
-    height: 33.33vw;
-    max-height: 500px;
-  }
-
-  svg {
-    width: 100%;
-    height: 100%;
-    display: block;
-  }
-}
-
-@media (min-width: 768px) {
-  .amber-guest-hero .logo .amber-instance {
-    width: min(100vw, 1000px);
-    height: 500px; // scan: intentional — a drawn stage: the art has fixed dimensions, not flowing content
-    margin-inline: auto;
-  }
-}
-
 /* main#main-content in front so the layout's page-title rule cannot reach the
    hero sentence, which keeps its own size and weight. */
 main#main-content .amber-guest-hero .title {
