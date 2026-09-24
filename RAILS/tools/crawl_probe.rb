@@ -59,8 +59,14 @@ failures.concat(run_browser_crawl(public: options[:public], skip_closed: options
 
 skips.each { |line| puts "crawl: skip — #{line}" }
 if failures.empty?
-  puts "crawl: clean (#{targets.size} targets, #{skips.size} skipped)"
-  exit 0
+  if skips.empty?
+    puts "crawl: clean (#{targets.size} targets)"
+    exit 0
+  end
+
+  warn "crawl: inconclusive (#{targets.size} targets, #{skips.size} skipped)"
+  skips.each { |line| warn "crawl: #{line}" }
+  exit 3
 end
 
 failures.each { |line| warn "crawl: #{line}" }
