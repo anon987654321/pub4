@@ -111,6 +111,11 @@ ownership:
     purpose: pub4-level (multi-repo) check/status tooling, separate namespace from Master
     risk: medium
     check: MASTER/bin/operator status
+  data/:
+    purpose: runtime-read configuration and generated censuses; the files below
+      carry their own, higher risk
+    risk: high
+    check: bin/check --profile=agent
   data/soul.yml:
     purpose: constitutional identity
     risk: critical
