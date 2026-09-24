@@ -1640,39 +1640,6 @@ does not have; each is opened at the seam it needs, not as a grep.
   (TTS socket, watcher threads) that would fire on every boot; the detector
   needs a liveness model before it can name the leaks.
 
-## postpro positional defaults — opened 2026-09-23
-
-`ruby postpro.rb <image>` ignores the path it is given and opens the
-interactive menu, which the README itself warns "in a script reads as a hang."
-The sensible default, confirmed with the operator after the 2026-09-23
-showcase run: a bare image path grades that image through three to five random
-chains — effects and intensities drawn per chain, outputs written beside the
-source with chain sidecars, exactly what `--random` does to a one-image
-directory — and a bare directory path grades a few random picks from it. No
-argument keeps the menu, and `--random` keeps its meaning.
-
-The work, in `STUDIO/postpro/postpro.rb` unless noted:
-
-- **One random implementation.** `run_random` resolves its subject itself
-  today; give it a files-or-dir parameter so the positional arm feeds it
-  rather than forking a second random loop (`SINGULARITY`). Seed handling,
-  `--count`/`-n`, `rng.rand(RANDOM_OUTPUTS)` and `process_file(file, 1, nil,
-  chain)` all stay as they are.
-- **A dispatch arm in `auto_launch`**, after the `random_mode?` guard and
-  before `get_input`, following dilla's entrypoint precedent. Flag values
-  look like positionals (`--count 3`, `--preset NAME`), so the hunt must
-  exclude the values of the value-taking flags before taking the first
-  non-flag token. An existing file or directory routes to the random path;
-  a path that exists as neither errors and exits 1 rather than hanging in
-  the menu; no positional keeps today's behaviour.
-- **Usage and README.** One line in `POSTPRO_USAGE` for the positional form,
-  and `STUDIO/postpro/README.md`'s positional-hang passage (lines 10–13)
-  rewritten to the new behaviour, keeping the `README_PROSE` shape.
-- **A test** in `STUDIO/test/test_tools_postpro.rb` that loads the tool
-  in-process, drives the new entry against a staged fixture, and asserts the
-  three-to-five `*_v1_*` outputs and a chain sidecar; nothing today covers
-  ARGV dispatch. Callers in `MASTER/lib/io/` use `--input/--output/--preset`
-  only and are unaffected.
 
 ## Semantics pass — opportunities opened 2026-09-23
 
