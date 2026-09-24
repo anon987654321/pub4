@@ -155,8 +155,8 @@ end
 
     def source_checks(result, app)
       files = APP_FILES.fetch(app.name)
-      layout = read_app_file(app.name, files.fetch(:layout))
-      home = read_app_file(app.name, files.fetch(:home))
+      layout = read_required_app_file!(app.name, files.fetch(:layout))
+      home = read_required_app_file!(app.name, files.fetch(:home))
       listed = files.fetch(:nav_partials, [])
       verify_listed_partials!(result, app.name, listed)
       partials = (listed + resolve_rendered_partials(app.name, [layout, home])).uniq
