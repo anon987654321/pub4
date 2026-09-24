@@ -32,9 +32,13 @@ module Operator
     end
 
     def ceilings
-      return {} unless File.exist?(SPINE)
+      raise "namespace ratchet spine missing: #{SPINE}" unless File.file?(SPINE)
 
-      YAML.safe_load_file(SPINE).fetch("spine").fetch("namespace_ceilings", {})
+      spine = YAML.safe_load_file(SPINE).fetch("spine")
+      ceilings = spine.fetch("namespace_ceilings")
+      raise "namespace ratchet ceilings missing or empty" unless ceilings.is_a?(Hash) && !ceilings.empty?
+
+      ceilings
     end
 
     def measure = ceilings.keys.to_h { |dir| [dir, flat_files(dir).size] }
