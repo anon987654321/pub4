@@ -17,6 +17,7 @@ module Master
       INTERVAL = Integer(ENV.fetch("MASTER_FIX_HOT_RELOAD_S", 60))
       PATHS = %w[MASTER/lib MASTER/law MASTER/data MASTER/bin].freeze
 
+      LOCK = Mutex.new
       @checked_at = nil
       @requested = false
 
@@ -26,6 +27,12 @@ module Master
       # not; checked at most once an INTERVAL, and sticky once seen.
       def stale?(root)
         return false unless ENABLED
+
+        # Three stream workers ask at once; one of them asks git.
+        LOCK.synchronize { check(root) }
+      end
+
+      def check(root)
         return true if @requested
         return false if @checked_at && Time.now - @checked_at < INTERVAL
 
