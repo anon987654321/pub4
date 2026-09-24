@@ -19,6 +19,8 @@ module Master
           # [] on every file without recording why is what makes a run of
           # unscanned files read as a clean bill of health, so the skip is
           # named on the gate before it is taken.
+          OFFLINE_ERRORS_PATTERN = /missing configuration|api.?key|unauthorized|no.*provider|no.*claude.*path|no.*on.*path/i.freeze
+
           def quota_paused?
             return false unless Master::Io::QuotaGate.blocked?
 
@@ -107,7 +109,7 @@ module Master
             # Either way the answer is [], never the nil the bare `if` returned.
             # A spend limit is neither: it is a tier-wide pause, recorded once
             # on the gate so the run says the tier did not run.
-            unless note_model_failure(e) || e.message.to_s =~ /missing configuration|api.?key|unauthorized|no.*provider/i
+            unless note_model_failure(e) || e.message.to_s =~ OFFLINE_ERRORS_PATTERN
               Master::Ground::Swallow.log(e, context: "#{self.class}#check", severity: :load_bearing, path:)
             end
             []
@@ -171,7 +173,7 @@ module Master
             # Either way the answer is [], never the nil the bare `if` returned.
             # A spend limit is neither: it is a tier-wide pause, recorded once
             # on the gate so the run says the tier did not run.
-            unless note_model_failure(e) || e.message.to_s =~ /missing configuration|api.?key|unauthorized|no.*provider/i
+            unless note_model_failure(e) || e.message.to_s =~ OFFLINE_ERRORS_PATTERN
               Master::Ground::Swallow.log(e, context: "#{self.class}#check", severity: :load_bearing, path:)
             end
             []
