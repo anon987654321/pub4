@@ -7,7 +7,7 @@ class TestVisualReference < Minitest::Test
   def test_profiles_are_descriptive_lenses
     profiles = Master::Fix::VisualReference.profiles
 
-    assert_equal %w[joi kaufland x], profiles.keys.sort
+    assert_equal %w[bol joi kaufland x], profiles.keys.sort
     profiles.each_value do |profile|
       assert profile[:name]
       assert_operator profile[:signals].length, :>, 0
@@ -22,5 +22,6 @@ class TestVisualReference < Minitest::Test
     assert_includes context, "x:"
     assert_includes context, "joi:"
     assert_includes context, "kaufland:"
+    assert_includes context, "bol:"
   end
 end
