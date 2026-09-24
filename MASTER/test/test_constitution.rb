@@ -25,6 +25,16 @@ class TestConstitution < Minitest::Test
     refute_includes second.system_prompt, "second"
   end
 
+  def test_unreadable_principle_cannot_disappear_from_the_constitution
+    write_principle("first")
+    constitution = Master::Ground::Constitution.new(dir: @dir)
+    File.write(File.join(@dir, "broken.md"), "\u0000")
+
+    error = assert_raises(RuntimeError) { constitution.reload! }
+
+    assert_match(/constitution principle unreadable|constitution unreadable/, error.message)
+  end
+
   def test_reload_invalidates_cache_for_directory
     write_principle("first")
     constitution = Master::Ground::Constitution.new(dir: @dir)
