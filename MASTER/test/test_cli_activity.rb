@@ -13,14 +13,15 @@ class TestCliActivity < Minitest::Test
     @activity.record("fix_loop:scan_progress", count: 7)
     @activity.record("rule_loop:fix_applied", rule: "NO_PUTS")
 
-    assert_equal "fix0: scan pass=2 files=184 violations=7 changes=1",
+    # The last event was an applied fix, so the loop is repairing.
+    assert_equal "fix0: repair pass=2 files=184 violations=7 changes=1",
                  @activity.label
   end
 
   def test_council_state_is_visible
     @activity.record("fix_loop:pass_start", pass: 1, file_count: 20)
     @activity.record("council:start")
-    assert_includes @activity.label(elapsed: 3), "council reviewing"
+    assert_includes @activity.label(elapsed: 3), "council=reviewing"
   end
 
   def test_clean_summary_is_compact
