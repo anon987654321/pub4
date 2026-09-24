@@ -9,6 +9,7 @@ require_relative "rails_visual_graph"
 require_relative "visual_usability"
 require_relative "visual_reference"
 require_relative "visual_contact_sheet"
+require_relative "visual_ghost_stack"
 require_relative "../../../RAILS/gates/support/mobile_journey_probe"
 require_relative "../../../RAILS/gates/support/composition_probe"
 require_relative "../../../RAILS/gates/support/web_platform_probe"
@@ -55,6 +56,7 @@ module Master
         require File.expand_path("../../../RAILS/gates/support/geometry_probe", __dir__)
 
         @dir = Dir.mktmpdir("master-visual")
+        @ghost_stack = VisualGhostStack.new(root: repo_root, dir: @dir)
         graph = RailsVisualGraph.new(root: repo_root).build if rails_target?(target)
         return inconclusive("source graph discovery failed: #{graph.errors.first(4).join("; ")}") if graph&.errors&.any?
         surfaces = selected_surfaces(target:, pass:)
@@ -99,6 +101,9 @@ module Master
             captures << resting
             captures.concat(Deploy::CompositionProbe.capture(cdp, surface, dir: @dir, pass:, limit: MAX_COMPOSITION_STATES))
           end
+        end
+        captures.each do |capture|
+          capture[:visual_evidence] = @ghost_stack.capture(capture, pass:)
         end
         captures
       end
@@ -248,10 +253,22 @@ module Master
 
       def build_context(captures, anchors, graph:)
         rows = captures.map { |capture| context_row(capture) }
+        drift_rows = captures.filter_map do |capture|
+          evidence = capture[:visual_evidence]
+          next unless evidence && Array(evidence[:drift]).any?
+          details = Array(evidence[:drift]).first(8).map do |row|
+            if row["structural"]
+              "structural added=#{row["structural"]["added"]} missing=#{row["structural"]["missing"]}"
+            else
+              "#{row["key"]} #{row["delta"]} #{row["type"]}"
+            end
+          end
+          "#{capture[:surface].id}: #{details.join(" | ")}"
+        end
         mapped = anchors.values.compact.uniq.first(12)
         <<~TEXT
           RENDERED EVIDENCE
-          The attached image is a contact sheet containing every captured surface and exercised mobile state in this pass. Compare surfaces against each other as well as against their own viewport. The measurements below were
+          The attached image is a contact sheet containing every captured surface and exercised mobile state in this pass. Each surface also has a persistent ghost stack: aligned renders from recent /fix passes are layered at low opacity, with a difference view for the newest two. Use these to spot optical drift and one-to-few-pixel misalignment before proposing a source change. The measurements below were
           collected from the same browser session across the listed surfaces.
           Mobile is the primary composition: every mobile surface is exercised through safe, non-destructive focus, validation, disclosure, and same-origin navigation journeys when those states exist. Navigation journeys include return-path evidence; journey screenshots are evidence, not a score. Treat web-platform probe findings as evidence about layout primitives, not automatic prescriptions; choose the smallest modern primitive that fits the rendered behavior and browser support.
           Judge the render first. Source is supporting evidence.
@@ -259,12 +276,13 @@ module Master
           #{Master::Fix::VisualUsability.context}
           #{Master::Fix::VisualReference.context}
           Every actionable issue must name the applicable law id(s), surface/viewport, and a stable selector or visible text anchor.
-          Look for actual opportunities in hierarchy, typography, measure, leading,
+          Use the ghost stack for visual alignment, the difference view for changed pixels, and geometry drift for stable-element movement. A difference image proves change, not that the change is wrong. Look for actual opportunities in hierarchy, typography, measure, leading,
           whitespace, alignment, grouping, density, proportion, responsive composition,
           affordance, and decorative noise. Do not stop at "technically valid".
           Treat one-pixel alignment drift, inconsistent spacing, typography, component vocabulary, optical centering, baseline rhythm, density, and responsive composition as real defects when the rendered evidence supports it.
 
           #{rows.join("\n")}
+          #{drift_rows.join("\n")}
           #{graph&.context}
           Source anchors: #{mapped.join(", ")}
         TEXT
