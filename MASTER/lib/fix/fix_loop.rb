@@ -94,14 +94,18 @@ module Master
         start_pass = resumed.value!
 
         result = run_passes(files:, target:, max_passes:, deadline:, budget_seconds:, start_pass:, run_id:)
-        state = terminal_state_for(result)
-        @run_journal.terminal(run_id, state, message: result.to_s)
-        @bus&.publish("fix_loop:terminal", state:, message: result.to_s)
-        result
+        finish_run(result, target, run_id)
       rescue StandardError => e
         @bus&.publish("fix_loop:crash", error: e.message, backtrace: e.backtrace&.first(8))
         @run_journal&.crash(run_id, e.message) if defined?(run_id) && run_id
         Result.err("fix_loop: #{e.message} @ #{e.backtrace&.first(3)&.join(" | ")}", category: :unknown)
+      end
+
+      def finish_run(result, target, run_id)
+        state = terminal_state_for(result)
+        @run_journal.terminal(run_id, state, message: result.to_s)
+        @bus&.publish("fix_loop:terminal", state:, message: result.to_s)
+        result
       end
 
       def retry_delivery(transaction_id:, expected_head:)

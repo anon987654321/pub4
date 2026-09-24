@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 require "set"
+# DmesgUnit names each event component's unit. It lives in logging.rb, and no
+# autoload reaches it by that name.
+require_relative "logging"
 
 module Master
   module Trace
@@ -249,28 +252,34 @@ module Master
 
 
         def track(payload)
-          case payload[:event].to_s
-          when "fix_loop:pass_start"
-            @ledger[:passes] = [@ledger[:passes].to_i, payload[:pass].to_i].max
-            @ledger[:files] = [@ledger[:files].to_i, payload[:file_count].to_i].max
-          when "fix_loop:scan_progress"
-            @ledger[:finding_files] += 1
-          when "fix_loop:rule_result", "rule_loop:pass"
-            @ledger[:rules] += 1
-            @ledger[:violations] += payload[:violations].to_i
-            @ledger[:fixed] += payload[:fixed].to_i
-          when "rule_loop:fix_applied", "fix_loop:ast_fixed"
-            @ledger[:changes] += 1
-          when "fix_loop:improvement_fix", "fix_loop:opportunity_fix", "fix_loop:visual_fix"
-            @ledger[:model_fixes] += payload[:fixed].to_i
-          when "fix_loop:improvement_council"
-            @ledger[:council] += 1
+          event = payload[:event].to_s
+          event.start_with?("llm:") ? track_model(event, payload) : track_repair(event, payload)
+        end
+
+        def track_model(event, payload)
+          case event
           when "llm:send"
             @ledger[:model_calls] += 1
           when "llm:provider_outcome"
             @ledger[:model_failures] += 1 unless payload[:status].to_s == "success"
-          when "fix_loop:human_decision_required"
-            @ledger[:human_decisions] += 1
+          end
+        end
+
+        def track_repair(event, payload)
+          case event
+          when "fix_loop:pass_start"
+            @ledger[:passes] = [@ledger[:passes].to_i, payload[:pass].to_i].max
+            @ledger[:files] = [@ledger[:files].to_i, payload[:file_count].to_i].max
+          when "fix_loop:scan_progress" then @ledger[:finding_files] += 1
+          when "fix_loop:rule_result", "rule_loop:pass"
+            @ledger[:rules] += 1
+            @ledger[:violations] += payload[:violations].to_i
+            @ledger[:fixed] += payload[:fixed].to_i
+          when "rule_loop:fix_applied", "fix_loop:ast_fixed" then @ledger[:changes] += 1
+          when "fix_loop:improvement_fix", "fix_loop:opportunity_fix", "fix_loop:visual_fix"
+            @ledger[:model_fixes] += payload[:fixed].to_i
+          when "fix_loop:improvement_council" then @ledger[:council] += 1
+          when "fix_loop:human_decision_required" then @ledger[:human_decisions] += 1
           end
         end
 
