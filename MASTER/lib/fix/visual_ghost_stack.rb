@@ -28,7 +28,7 @@ module Master
         @run_id = Time.now.utc.strftime("%Y%m%dT%H%M%S%6N") if @run_id.empty?
       end
 
-      def capture(capture, pass:)
+      def capture(capture, pass:, cdp:)
         state = capture.dig(:payload, "composition", "state").to_s\n        state = "resting" if state.empty?
         surface = capture.fetch(:surface)
         key = safe_slug("#{surface.id}__#{state}")
@@ -43,7 +43,7 @@ module Master
         prune(history)
 
         frames = Dir.glob(File.join(history, "*-pass-*.png")).sort.last(HISTORY_LIMIT)
-        ghost = render_stack(surface:, state:, frames:, key:)
+        ghost = render_stack(surface:, state:, frames:, key:, cdp:)
         drift = geometry_drift(frames, history)
         {
           key:,
@@ -58,37 +58,35 @@ module Master
 
       private
 
-      def render_stack(surface:, state:, frames:, key:)
+      def render_stack(surface:, state:, frames:, key:, cdp:)
         return nil if frames.empty?
 
         html = File.join(@dir, "ghost-#{key}.html")
         png = File.join(@dir, "ghost-#{key}.png")
         File.write(html, stack_page(surface:, state:, frames:))
-        screenshot_file(html, png)
+        screenshot_file(html, png, cdp:)
         {
           screenshot: png,
-          diff: render_pair(surface:, state:, frames:, key:),
+          diff: render_pair(surface:, state:, frames:, key:, cdp:),
           label: "#{surface.id} | #{state} | #{frames.length} aligned passes",
         }
       end
 
-      def render_pair(surface:, state:, frames:, key:)
+      def render_pair(surface:, state:, frames:, key:, cdp:)
         return nil if frames.length < 2
 
         html = File.join(@dir, "diff-#{key}.html")
         png = File.join(@dir, "diff-#{key}.png")
         current, previous = frames.last(2)
         File.write(html, diff_page(surface:, state:, current:, previous:))
-        screenshot_file(html, png)
+        screenshot_file(html, png, cdp:)
         png
       end
 
-      def screenshot_file(html, png)
-        Deploy::GeometryProbe.with_browser(root: repo_root, warm: []) do |cdp|
-          cdp.viewport(1800, 1400, mobile: false)
-          cdp.navigate("file://#{html}")
-          cdp.screenshot(png, capture_beyond_viewport: true)
-        end
+      def screenshot_file(html, png, cdp:)
+        cdp.viewport(1800, 1400, mobile: false)
+        cdp.navigate("file://#{html}")
+        cdp.screenshot(png, capture_beyond_viewport: true)
         png
       end
 
