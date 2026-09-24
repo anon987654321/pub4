@@ -71,8 +71,7 @@ module Master
           ground_truth:, preserve_user_intent:, law_resolver:, homeostat: @homeostat)
         # Wire Ledger::Reflexion for strict self-correction per rules.yml (AK102, self-application)
         @reflexions = Trace::Ledger::Reflexion.new(event_bus: bus, root:) if bus
-        repo_root = File.basename(root) == "MASTER" ? File.expand_path("..", root) : root
-        @rename_sweep = RenameSweep.new(agent:, repo_root:, bus:)
+        @sweeps = build_sweeps(agent:, root:, bus:)
       end
 
       # A halt stops the runs nobody asked for, the background runner and the
@@ -100,7 +99,7 @@ module Master
       end
 
       def finish_run(result, target, run_id, mission: nil)
-        sweep_names(target, run_id)
+        sweep_tree(target, run_id)
         state = terminal_state_for(result)
         @run_journal.terminal(run_id, state, message: result.to_s)
         mission&.transition!(:verify, summary: result.to_s)
@@ -110,13 +109,16 @@ module Master
         result
       end
 
-      # After the passes, with no transaction open: a rename moves files the
-      # pass transactions track by path, so it cannot happen inside one.
-      def sweep_names(target, run_id)
-        @rename_sweep.run(target:, run_id:)
-      rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "fix_loop.rename_sweep", event_bus: @bus)
-        []
+      # After the passes, with no transaction open: a rename or a restructure
+      # moves files the pass transactions track by path, so neither can happen
+      # inside one. Each sweep fails alone.
+      def sweep_tree(target, run_id)
+        @sweeps.flat_map do |sweep|
+          sweep.run(target:, run_id:)
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "fix_loop.#{sweep.class.name.split("::").last}", event_bus: @bus)
+          []
+        end
       end
 
       def retry_delivery(transaction_id:, expected_head:)
@@ -158,6 +160,13 @@ module Master
       def self.preamble_from_soul = RuleLoop.soul_preamble
 
       private
+
+      # The look back over the tree after the repair passes: renames, then
+      # restructures. Both work from the repository root.
+      def build_sweeps(agent:, root:, bus:)
+        repo_root = File.basename(root) == "MASTER" ? File.expand_path("..", root) : root
+        [RenameSweep.new(agent:, repo_root:, bus:), RestructureSweep.new(agent:, repo_root:, bus:)]
+      end
 
       # The run once its journal is open and a mission records it: resume what
       # an earlier process left, then the passes, then the terminal state.
