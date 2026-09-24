@@ -49,6 +49,12 @@ module Master
 
       def wire_constitution(constitution) = @constitution = constitution
 
+      # The per-model breaker registry. /fix's LlmRouter asks it which models
+      # are open before a repair pass, and the council's two callers check it
+      # too; without a reader the router raised, and its rescue reported every
+      # candidate open, so every repair pass was skipped.
+      def circuit_breaker = @circuit_breaker
+
       def chat(message, image: nil, stream: true, escalation_depth: 0, task_type: nil, &blk)
         compaction = prepare_chat_turn(message)
         return compaction if compaction.is_a?(Master::Result::Err)

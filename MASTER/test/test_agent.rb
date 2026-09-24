@@ -376,4 +376,13 @@ end
   ensure
     ENV["MASTER_MODEL"] = previous
   end
+
+  # LlmRouter asks the agent for its breaker registry before every repair pass;
+  # without a reader it raised, and its rescue reported every model open.
+  def test_llm_router_reads_the_agents_breakers
+    router = Master::Fix::FixLoop::LlmRouter.new(@agent)
+  
+    assert_same @agent.instance_variable_get(:@circuit_breaker), @agent.circuit_breaker
+    assert_empty router.open_breakers
+  end
 end
