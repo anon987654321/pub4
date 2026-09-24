@@ -38,13 +38,55 @@
     return slice.length >= 20 ? [...slice].length : null;
   };
 
+  const lineMetrics = (el) => {
+    const range = document.createRange();
+    try { range.selectNodeContents(el); } catch (_) { return null; }
+    const rects = Array.from(range.getClientRects()).filter(r => r.width > 0.5 && r.height > 0.5);
+    const lines = [];
+    rects.sort((a, b) => a.top - b.top || a.left - b.left).forEach(rect => {
+      const top = Math.round(rect.top * 2) / 2;
+      const existing = lines.find(line => Math.abs(line.top - top) < 1);
+      if (existing) {
+        existing.left = Math.min(existing.left, rect.left);
+        existing.right = Math.max(existing.right, rect.right);
+      } else {
+        lines.push({ top, left: rect.left, right: rect.right });
+      }
+    });
+    if (!lines.length) return null;
+    const widths = lines.map(line => Math.max(0, line.right - line.left));
+    const max = Math.max(...widths);
+    return {
+      count: lines.length,
+      max_width: Math.round(max * 10) / 10,
+      last_width: Math.round(widths[widths.length - 1] * 10) / 10,
+      rag_ratio: max > 0 ? Math.round((widths[widths.length - 1] / max) * 1000) / 1000 : null
+    };
+  };
+
   const prose = [];
   document.querySelectorAll('p, .feed-card-text, .legal-prose p, .legal-prose li, article p').forEach(el => {
     const cs = getComputedStyle(el);
     if (cs.display === 'none' || cs.visibility === 'hidden') return;
     const ch = firstLineChars(el);
     if (!ch) return;
-    prose.push({ sel: selFor(el), ch: ch, size: Math.round(parseFloat(cs.fontSize) * 10) / 10 });
+    const lines = lineMetrics(el);
+    prose.push({
+      sel: selFor(el),
+      ch: ch,
+      size: Math.round(parseFloat(cs.fontSize) * 10) / 10,
+      line_count: lines?.count || 1,
+      rag_ratio: lines?.rag_ratio ?? null,
+      text_wrap: String(cs.textWrap || ''),
+      text_align: String(cs.textAlign || ''),
+      letter_spacing: String(cs.letterSpacing || ''),
+      font_family: String(cs.fontFamily || ''),
+      font_kerning: String(cs.fontKerning || ''),
+      font_feature_settings: String(cs.fontFeatureSettings || ''),
+      font_variant_numeric: String(cs.fontVariantNumeric || ''),
+      font_optical_sizing: String(cs.fontOpticalSizing || ''),
+      line_height: cs.lineHeight === 'normal' ? parseFloat(cs.fontSize) * 1.2 : parseFloat(cs.lineHeight)
+    });
   });
 
   const sizes = Object.create(null);
@@ -191,6 +233,10 @@
     empty_ratio: samples ? Math.round((empty / samples) * 1000) / 1000 : null,
     baselines: baselines.slice(0, 80),
     hanging: hanging.slice(0, 30),
-    split: split
+    split: split,
+    typography: {
+      prose_count: prose.length,
+      prose: prose.slice(0, 40)
+    }
   };
 })()
