@@ -17,7 +17,9 @@
       once here and passed down rather than called three times per card. %>
   <% reposted = post.reposted_by?(Current.user) %>
   <% quote = post.quote_comment_by(Current.user) %>
-  <% cache [post, post.voted_by?(Current.user), reposted, quote] do %>
+  <%# The labels inside are translated, so the locale is in the key: without it
+      the first visitor's language was served to every later one. %>
+  <% cache [I18n.locale, post, post.voted_by?(Current.user), reposted, quote] do %>
     <% post_actions = capture do %>
       <%= link_to post_path(post, anchor: "comments-section"),
             class: "feed-action",
