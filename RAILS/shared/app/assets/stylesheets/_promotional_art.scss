@@ -6,7 +6,7 @@
   min-height: clamp(320px, 42vw, 540px);
   overflow: hidden;
   background: var(--promo-matte);
-  color: var(--store-ink);
+  color: var(--promo-ink, var(--store-ink));
   border-radius: var(--radius-sm);
 }
 
@@ -44,7 +44,7 @@
 .store-promo-art-copy h2 {
   max-width: 12ch;
   margin: 0;
-  color: var(--store-ink);
+  color: var(--promo-ink, var(--store-ink));
   font-family: var(--font-ad);
   font-size: clamp(2rem, 5vw, 4rem);
   font-weight: var(--weight-normal);
@@ -62,7 +62,7 @@
 
 .store-promo-art-price {
   margin-top: var(--space-2);
-  color: var(--store-ink);
+  color: var(--promo-ink, var(--store-ink));
   font-size: clamp(2rem, 4vw, 3rem);
   font-weight: var(--weight-heavy);
   line-height: 1;
@@ -132,8 +132,7 @@
 
 .store-promo-art--tile .store-promo-art-copy,
 .store-promo-art--portrait .store-promo-art-copy {
-  color: var(--store-page);
-  background: linear-gradient(to top, color-mix(in srgb, var(--store-page) 90%, transparent), transparent);
+  background: var(--promo-matte);
 }
 
 @media (max-width: 767px) {
@@ -149,18 +148,18 @@
   }
 
   .store-promo-art-media {
-    position: absolute;
-    inset: 0;
+    position: static;
+    min-height: 300px;
   }
 
   .store-promo-art-image {
     max-width: 82%;
-    max-height: 58%;
-    margin: 4% auto auto;
+    max-height: 300px;
+    margin: auto;
   }
 
   .store-promo-art-copy {
-    background: linear-gradient(to top, color-mix(in srgb, var(--promo-matte) 97%, transparent), transparent);
+    background: var(--promo-matte);
   }
 
   .store-promo-art--tile,
