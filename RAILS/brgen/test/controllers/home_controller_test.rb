@@ -132,18 +132,17 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     refute_match(/feed=following/, bar, "the swiper orders no feed — that lives with the feed")
   end
 
-  # And the feed carries them exactly once. `chips` rather than a tab row is
-  # what keeps test_root_offers_the_verticals_once intact: four links that wrap
-  # is not a second horizontal scroller.
-  def test_the_feed_carries_its_orderings_once
+  # Nor does the feed: the ordering chips left the front page by operator
+  # decision on 2026-09-17 (see the comment in home/index.html.erb). Root opens
+  # straight into the feed; communities/show keeps its chips for the same job.
+  def test_the_front_page_carries_no_ordering_chips
     host! "brgen.no"
     sign_in_a_reader
     get root_url
     assert_response :success
 
-    assert_equal 1, response.body.scan(/<nav class="chips"/).size
-    assert_equal 1, response.body.scan(/href="[^"]*\?sort=hot"/).size
-    assert_match(/class="chip active"/, response.body, "the active ordering should be marked")
+    refute_match(/<nav class="chips"/, response.body)
+    refute_match(/href="[^"]*\?sort=hot"/, response.body)
   end
 
   # More is the rest, not everything. AI, Nearby and New post are tab items
@@ -257,18 +256,16 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "auth-form-lead"
     assert_match(new_user_path, response.body)
   end
-  # BRGEN-104: the front page is fresh, and hot is the tab you ask for. It was
-  # the other way round, with newest-first reachable only by typing ?sort=latest
-  # — so the ranking a reader might want was the default and the freshness a
-  # feed is was the option.
-  def test_the_hot_sort_is_reachable_without_typing_a_query_string
+  # BRGEN-104: the front page is fresh, and hot is the ordering you ask for.
+  # With the chips gone (2026-09-17) it is asked for by query string, which the
+  # controller still honours.
+  def test_the_hot_sort_is_still_served_by_query_string
     host! "brgen.no"
     user = User.create!(email_address: "latest-#{SecureRandom.hex(4)}@brgen.no",
                         password: "password12345", username: "lt#{SecureRandom.hex(3)}",
                         city: City.find_by(domain: "brgen.no"))
     post session_url, params: { email_address: user.email_address, password: "password12345" }
-    get root_url
+    get root_url(sort: "hot")
     assert_response :success
-    assert_includes response.body, root_path(sort: "hot")
   end
 end
