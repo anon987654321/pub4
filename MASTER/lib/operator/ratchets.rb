@@ -484,7 +484,7 @@ end
     def rails_lint_rows
       RAILS_LINTS.flat_map do |name, relative|
         path = File.join(RAILS, relative)
-        next [] unless File.file?(path)
+        next [unreadable_row(name, "RAILS/#{relative}", "lint file missing")] unless File.file?(path)
 
         rows_for_lint(name, path)
       end
@@ -493,7 +493,7 @@ end
     def rows_for_lint(name, path)
       require path
       mod = lint_module(path)
-      return [] unless mod
+      raise "Operator lint module missing for #{path}" unless mod
 
       # One scan, then grouped. The count and the member list come from the same
       # findings, so --why can never disagree with the number beside it — and the
