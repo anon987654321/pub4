@@ -16,7 +16,13 @@ def run_command(*args)
   stdout, stderr, status = Open3.capture3(*args)
   return stdout if status.success?
 
-  abort "radio-import: #{args.first} failed: #{stderr.strip.presence || "exit #{status.exitstatus}"}"
+  detail = stderr.to_s.strip
+  abort "radio-import: #{args.first} failed: #{detail.empty? ? "exit #{status.exitstatus}" : detail}"
+end
+
+def present_string(value)
+  text = value.to_s.strip
+  text.empty? ? nil : text
 end
 
 def json_command(*args)
@@ -26,7 +32,7 @@ rescue JSON::ParserError => e
 end
 
 def whyp_track_urls(collection_url)
-  data = json_command(
+  stdout, stderr, status = Open3.capture3(
     "yt-dlp",
     "--flat-playlist",
     "--dump-single-json",
@@ -36,15 +42,17 @@ def whyp_track_urls(collection_url)
     collection_url
   )
 
-  urls = Array(data["entries"]).filter_map do |entry|
-    next unless entry.is_a?(Hash)
+  if status.success?
+    data = JSON.parse(stdout)
+    urls = Array(data["entries"]).filter_map do |entry|
+      next unless entry.is_a?(Hash)
 
-    entry["webpage_url"].presence ||
-      entry["original_url"].presence ||
-      (entry["id"].to_s.match?(/\A\d+\z/) ? "https://whyp.it/tracks/#{entry['id']}" : nil)
+      present_string(entry["webpage_url"]) ||
+        present_string(entry["original_url"]) ||
+        (entry["id"].to_s.match?(/\A\d+\z/) ? "https://whyp.it/tracks/#{entry['id']}" : nil)
+    end
+    return urls.uniq if urls.any?
   end
-
-  return urls.uniq if urls.any?
 
   html = run_command("curl", "-fsSL", "--max-time", "30", collection_url)
   absolute = html.scan(%r{https?://(?:www\.)?whyp\.it/tracks/\d+(?:/[A-Za-z0-9._~-]+)?}).uniq
@@ -109,8 +117,8 @@ FileUtils.mkdir_p(target_root)
 tracks = urls.each_with_index.map do |url, index|
   info = track_metadata(url)
   id = info["id"].to_s.presence || index.to_s
-  title = info["title"].to_s.presence || "Track ##{id}"
-  artist = info["uploader"].to_s.presence || info["artist"].to_s.presence || "Unknown artist"
+  title = present_string(info["title"]) || "Track ##{id}"
+  artist = present_string(info["uploader"]) || present_string(info["artist"]) || "Unknown artist"
   filename = "#{id}-#{slug(title)}.mp3"
   target = target_root.join(filename)
   download_track(url, target)
