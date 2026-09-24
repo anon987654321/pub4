@@ -706,6 +706,7 @@ motd:
     - "engine: pub4-shared across active Rails apps"
     - "deploy: relayd health + OPERATOR.sh gates"
     - "core: 5-file spine smoke in core/"
+    - "synth: say \"improvise\" and it plays, live, until you say \"stop\""
 
 # Merged from former webhooks.yml — webhook ingress: POST /ingress/webhook/:name with
 # JSON body { "message": "..." }. Example entry:
@@ -1003,7 +1004,7 @@ operator_playbook:
 skills_registry:
   meta:
     source: runtime authority — edit this file directly; do not add data/skills/*.md
-    count: 17
+    count: 18
   skills:
   - name: axioms
     description: Summarize constitutional rules and invariant checks.
@@ -1113,6 +1114,14 @@ skills_registry:
       The status skill summarizes session and repository health: branch, dirty files, failing checks, and anything else that affects whether work can proceed safely. It activates on status or when the operator needs a quick health read without a full scan.
 
       Keep status terse, concrete, and tied to the latest verifiable evidence. Prefer commands and paths the operator can re-run over subjective assessments.
+  - name: synth
+    description: Play synthesisers live on the sound card -- Moog, Prophet and Rhodes patches, progressions, endless improvisation -- and steer them by voice.
+    triggers:
+    - "\\b(?:synth\\w*|moog|minimoog|prophet|rhodes|improvi[sz]\\w*|sound\\s*card|play\\s+(?:some\\s+)?music)\\b"
+    body: |-
+      MASTER plays music live through the sound card, generated in pure Ruby as it plays: dilla's analogue patches and nine Minimoog Model D panels (fat bass, funk bass, the Minimoog lead, a Lucky Man glide lead, brass, flute, pluck, strings, a lofi pad), each an oscillator stack into a Moog ladder with its own envelopes. It improvises without end over soul-jazz harmony with a late bass, a kick and leads that come and go; plays a named progression such as soul_jazz_six or dilla_love on one pad or a rotation; or plays one patch's own phrase. The knobs turn slowly while it plays, and a patch change turns the old patch's knobs into the new one's.
+
+      These are sentences, not commands to look up. "improvise", "keep playing", "play me something with moog patches", "play a moog bass", "play a lofi pad through dilla_love" and "play a chord progression on prophet patches" start it; "slowly open the filter", "raise the resonance" and "morph to a prophet pad" steer it; "stop" ends it. "play me a sine wave" plays a raw tone live, and "play it" plays the last file MASTER rendered. Asked what it can do with sound, say this plainly and offer a sentence to try.
   - name: tail
     description: Read recent event history with a small, focused window.
     triggers:

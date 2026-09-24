@@ -8,6 +8,7 @@ module Master
     class Synth
       RATE = 44_100
       SHAPES = %i[sine square triangle saw white brown].freeze
+      NOISES = %i[white brown].freeze
 
       class << self
         def render(shape: :sine, hz: 440.0, seconds: 1.0, destination: nil, seed: 42)
@@ -52,6 +53,10 @@ module Master
           end
         end
 
+        # Public for the same reason: noise has no phase to compute from t, so
+        # Realtime takes the whole run of it from here.
+        def noise_samples(shape, frames, seed: 42) = noise(shape, frames, seed)
+
         private
 
         def validate_shape!(shape)
@@ -69,7 +74,7 @@ module Master
         end
 
         def build_samples(shape, hz, frames, seed)
-          return noise(shape, frames, seed) if %i[white brown].include?(shape)
+          return noise(shape, frames, seed) if NOISES.include?(shape)
 
           Array.new(frames) { |i| oscillator(shape, hz, i.to_f / RATE) }
         end

@@ -15,13 +15,15 @@ module Master
 
       module_function
 
-      # One shape, held for the duration.
+      # One shape, held for the duration. Noise has no pitch to follow, so its
+      # run comes from Synth whole and streams in the same blocks.
       def play(shape: :sine, hz: 440.0, seconds: 3.0, sink: AudioSink.new)
         shape = shape.to_sym
         total_frames = (seconds * RATE).round
+        noise = Synth.noise_samples(shape, total_frames) if Synth::NOISES.include?(shape)
         sink.open do |s|
           each_block(total_frames) do |first_frame, count|
-            s.write(Array.new(count) { |i| Synth.oscillator(shape, hz, (first_frame + i).to_f / RATE) })
+            s.write(noise ? noise[first_frame, count] : Array.new(count) { |i| Synth.oscillator(shape, hz, (first_frame + i).to_f / RATE) })
           end
         end
       end

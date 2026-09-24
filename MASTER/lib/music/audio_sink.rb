@@ -24,7 +24,9 @@ module Master
       # device). ffplay's raw-PCM stdin mode is the fallback, same as
       # Synth.play falls back to it for file playback.
       PLAYERS = {
-        "sox" => %w[-t raw -r 44100 -e signed -b 16 -c 1 - -d],
+        # -q: sox otherwise redraws a progress meter on the terminal MASTER is
+        # talking on.
+        "sox" => %w[-q -t raw -r 44100 -e signed -b 16 -c 1 - -d],
         "ffplay" => %w[-f s16le -ar 44100 -ac 1 -nodisp -autoexit -loglevel quiet -i -],
       }.freeze
 
