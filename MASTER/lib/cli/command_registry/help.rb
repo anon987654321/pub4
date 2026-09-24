@@ -34,6 +34,17 @@ module Master
             "what a repair would take on, without taking it on.",
           ],
         },
+        "plugin" => {
+          summary: "list and invoke governed plugins",
+          detail: [
+            "/plugin — list installed plugins.",
+            "/plugin info <id> — show one manifest.",
+            "/plugin run <id> <action> <json> — invoke through the constitutional gate.",
+            "social_browser covers OnlyFans, FetLife and Snapchat on supported desktop or Android/Termux runtimes.",
+            "It permits explicit operator-owned or authorized actions and inbound replies only; no bulk outreach, friendship farming, deception or challenge bypass.",
+            "air_superiority performs defensive Wi-Fi/Bluetooth observation and keeps only a local known-device baseline.",
+          ],
+        },
         "device" => {
           summary: "Android and Termux:API hardware capabilities",
           detail: ["/device — truthful hardware/API capability report.",
