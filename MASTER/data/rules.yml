@@ -3279,6 +3279,10 @@ rules:
           - decorative_type_in_body_copy
         commerce_editorial:
           inherits_authoritative_design: true
+          references:
+          - kaufland
+          - bol
+          reference_mission: "Kaufland catalogue breadth and campaign entry points; bol cleanliness, service clarity, recommendation rails, product-first imagery, and restrained product chrome."
           layout: product_image_plus_typographic_offer
           typography: display_contrast_plus_neutral_utility
           imagery: product_first
