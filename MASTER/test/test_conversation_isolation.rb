@@ -137,4 +137,6 @@ class ConversationIsolationSpec < Minitest::Test
       assert_equal ["operator turn"], contents(session, Master::Trace::Session::LOCAL)
     end
   end
+
+
 end
