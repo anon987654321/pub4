@@ -59,7 +59,6 @@ curl -fsS http://127.0.0.1:38182/up
 curl -fsS http://127.0.0.1:38182/health
 ```
 
-
 ## Vertical engines
 
 <!-- doc_paths: ignore -->
@@ -201,9 +200,7 @@ only.
 brgen vertical. It is already more separated than an engine; do not fold it into
 brgen.
 
-
 ## IRC bridge
-
 
 A pure-Ruby IRC gateway that maps brgen's city channels onto the real IRC
 protocol, so someone on Libera.Chat / EFnet / Undernet / Newnet can point a
@@ -252,9 +249,7 @@ The gateway binds `127.0.0.1:6667` and starts nothing on its own. To expose it:
 - DMs (`PRIVMSG` to a nick) aren't bridged yet — channels only.
 - Per-nick bridged `User` rows accumulate; add a sweep like guest pruning.
 
-
 ## Marketplace architecture
-
 
 ## Goal
 
@@ -322,9 +317,7 @@ Contract: `ruby RAILS/test/solidus_staging_contract_test.rb` (no gems required).
 hot. Do Solidus schema work on a larger host or during a maintenance window with
 amber stopped (`ALLOW_AMBER_DOWN=1 sh OPENBSD/bin/deploy-smoke.sh` after).
 
-
 ## Amazon Associates setup
-
 
 You already have Associates approval in **Sweden, Netherlands, France** (and others).
 PA-API is dead; we use **tags now** + **Creators API** once you have 10 qualifying sales / 30 days.
@@ -424,9 +417,7 @@ bin/rails affiliate:import          # pulls Amazon + TradeDoubler
 | `affiliate_amazon.rake` | Add as `RAILS/brgen/lib/tasks/affiliate_amazon.rake` |
 | `SETUP.md` | This guide |
 
-
 ## Enhanced conversions
-
 
 ## Why Data Manager API
 
@@ -529,9 +520,7 @@ RAILS/brgen/app/services/google_enhanced_conversions.rb
 RAILS/brgen/app/jobs/google_enhanced_conversions_job.rb
 ```
 
-
 ## Payment webhooks
-
 
 ## Routes
 

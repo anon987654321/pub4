@@ -2,7 +2,6 @@
 
 This README is the living documentation for the Rails gate suite. Executable gate definitions and runner output remain authoritative.
 
-
 Assessment date: 2026-08-01. Scope: RAILS family (brgen + verticals, amber,
 bsdports) + MASTER web UI.
 
@@ -110,9 +109,7 @@ GATE_STRICT_INCONCLUSIVE=1 GATE_STRICT_SOFT=1 \
 | Auth journeys + payment e2e | **Not met** |
 | Zero EN under default_locale :nb | **Approaching** (lints 0; residual secondary chrome remains) |
 
-
 ---
-
 
 Full-matrix user simulation for every full-page Rails surface in the **focus
 triangle** (brgen · amber · MASTER web).

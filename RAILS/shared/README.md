@@ -2,7 +2,6 @@
 
 This README is the single living documentation surface for `RAILS/shared/`. Executable gates, tests, and configuration remain authoritative; the sections below preserve the operational context that is useful to a human reader.
 
-
 MASTER face and all RAILS apps share one **layout chrome** contract. Dialects
 (social / luxury / wscons / face CRT) restyle color, type, and radius. They must
 not invent a second z-scale, skip-link, tap floor, or main landmark pattern.
@@ -92,9 +91,7 @@ ruby RAILS/tools/generate_face_root_css.rb   # face :root sync
 ruby RAILS/tools/build_all_css.rb --check
 ```
 
-
 ---
-
 
 The four surfaces (brgen + verticals, amber, bsdports, the MASTER face) are one
 family in four dialects. This table is where a new surface starts — pick from
@@ -250,9 +247,7 @@ whole face by construction. The app sheets (_chrome_polish 324, _marketplace
 when their surfaces are next open; the auditor keeps counting so none of this
 grows silently.
 
-
 ---
-
 
 **Current model (engine-ize 2026):** `shared/` is a real Rails engine gem
 (`pub4-shared`) loaded via local path in each app Gemfile.
@@ -1029,9 +1024,7 @@ change made on vm23, to save nothing on four tests that already run headless
 Chrome. brgen's `assert_accessible` uses axe through Capybara and works under
 either driver.
 
-
 ---
-
 
 Recovered from `DEPLOY/rails/shared/frontend/STIMULUS_COMPONENTS_BASELINE.md`,
 deleted at `ee3a56e33`. Unlike the amber architecture record, this one did

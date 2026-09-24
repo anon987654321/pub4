@@ -26,6 +26,6 @@
   return {
     found: true, href: link.getAttribute('href'), outcome, same_document: window.__gateDocument === true,
     body, connected: el?.isConnected === true, painted: !!el && (body || shown(el)),
-    sel: el ? el.tagName.toLowerCase() + (el.id ? '#' + el.id : (cls ? '.' + cls : '')) : null
+    sel: el ? el.tagName.toLowerCase() + (el.id ? `#${el.id}` : (cls ? `.${cls}` : '')) : null
   };
 })()

@@ -73,9 +73,7 @@ map. `ARCHITECTURE.md` has the components and layers, the comments on the models
 the shapes that look like bugs and are not, and `RAILS/shared/WIRING_NOTES.md` the shared
 tokens and concerns. The feature matrix is `RAILS/apps.yml` under `amber`.
 
-
 ## Architecture
-
 
 Amber is a wardrobe intelligence graph. Layers 1–4 are restored verbatim from
 `DEPLOY/rails/amber/ARCHITECTURE.md`, deleted at `ee3a56e33` and never replaced;
@@ -212,9 +210,7 @@ restoration.
 `GarmentEmbedding#vector` is a JSON column rather than pgvector, and the comment
 on `app/models/garment_embedding.rb` says why.
 
-
 ## Stewardship
-
 
 Amber is a **social fashion** app (`amber.fashion`) — feed, follows, outfits
 and a wardrobe, sharing the same social stack as brgen. Day-to-day it should run

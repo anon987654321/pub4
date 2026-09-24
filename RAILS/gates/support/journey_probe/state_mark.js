@@ -16,6 +16,6 @@
   return controls.map((el, index) => {
     el.setAttribute('data-gate-state', String(index));
     const cls = String(el.className || '').split(' ').filter(Boolean).slice(0, 2).join('.');
-    return el.tagName.toLowerCase() + (el.id ? '#' + el.id : (cls ? '.' + cls : ''));
+    return el.tagName.toLowerCase() + (el.id ? `#${el.id}` : (cls ? `.${cls}` : ''));
   });
 })()
