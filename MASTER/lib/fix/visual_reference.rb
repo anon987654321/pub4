@@ -33,10 +33,26 @@ module Master
           signals: %w[
             strong_search_discovery
             explicit_category_hierarchy
+            broad_catalogue_navigation
+            campaign_tiles
+            themed_category_entry_points
             dense_product_information
             persistent_purchase_context
             clear_price_quantity_relationships
             responsive_listing_reflow
+          ],
+        },
+        "bol" => {
+          name: "bol-style marketplace surface",
+          signals: %w[
+            clean_white_catalogue
+            prominent_search
+            clear_service_promises
+            restrained_product_card_chrome
+            recommendation_rails
+            product_first_imagery
+            consistent_filtering
+            clean_information_density
           ],
         },
       }.freeze
