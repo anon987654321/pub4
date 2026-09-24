@@ -77,7 +77,7 @@ module Master
           lines.join("\n")
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "rule_loop.golden_rule")
-          "Golden rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK"
+          raise "rule_loop: constitutional preamble unreadable: #{e.class}: #{e.message}"
         end
       end
 
