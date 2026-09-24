@@ -95,6 +95,15 @@ rescue StandardError
   ""
 end
 
+    def read_required_app_file!(app, relative)
+      path = File.join(@rails_root, app, relative)
+      raise "#{app}: required walkthrough file missing: #{relative}" unless File.file?(path)
+
+      File.read(path)
+    rescue StandardError => e
+      raise "#{app}: required walkthrough file unreadable: #{relative}: #{e.class}: #{e.message}"
+    end
+
     def read_app_file(app, relative)
       path = File.join(@rails_root, app, relative)
       File.file?(path) ? File.read(path) : ""
