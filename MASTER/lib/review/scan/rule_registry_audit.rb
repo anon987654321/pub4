@@ -127,8 +127,8 @@ module Master
           require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
           ::Law.load_all(File.join(@root, "law")) if ::Law.rules.empty?
           ::Law.rules.keys.map { |id| id.to_s.downcase }.to_set
-        rescue StandardError
-          Set.new
+        rescue StandardError => e
+          raise "rule registry law census failed: #{e.class}: #{e.message}"
         end
 
         def load_yaml_rules
