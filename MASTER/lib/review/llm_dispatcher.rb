@@ -141,7 +141,7 @@ module Master
 
         @bus&.publish("llm:send", model: selected_model)
         cache_key = cache_key_for(messages.last[:content], messages[0...-1], selected_model, system, temperature)
-        result = breaker_for(selected_model).call(estimate_cost(messages.last[:content])) do
+        result = breaker_for(selected_model).call(estimate_cost(messages.last[:content], selected_model)) do
           @cache.fetch(cache_key, selected_model) do
             send_llm_request(selected_model, messages, system:, stream:, image:, temperature:, format:, &blk)
           end
@@ -335,7 +335,13 @@ module Master
         Digest::SHA256.hexdigest("#{parts}\n#{window}")
       end
 
-      def estimate_cost(prompt)
+      # A subscription CLI lane (claude-cli, codex, grok, agy) is paid for by
+      # the subscription, not by the call. Priced like an API call, a /fix run
+      # forced through claude-cli reached the $10 session budget and refused
+      # every repair after it, though no call had cost anything.
+      def estimate_cost(prompt, model = nil)
+        return 0.0 if model && (claude_cli_model?(model) || cli_lane_model?(model))
+
         Master::Trace::Session.estimate_tokens(prompt) * COST_PER_TOKEN
       end
 
