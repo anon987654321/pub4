@@ -44,7 +44,7 @@ module Master
           # Every reachable model, strongest lanes first: what /model list shows.
           def pool(wait: false)
             start_pool_probes
-            lanes = [primary_models, cli_lane_models(wait:), tier_ids, continuity_models,
+            lanes = [primary_models, cli_lane_models(wait:), agy_catalog_models, tier_ids, continuity_models,
                      ollama_cloud_catalog, ollama_cloud_models, local_server_models, hosted_models,
                      live_catalog_models, replicate_models, local_models]
             lanes.flatten.uniq.select { |id| unreachable_reason(id, wait:).nil? }
@@ -96,6 +96,7 @@ module Master
             @provider_rows = nil
             @live_catalog_models = nil
             @catalog_index = nil
+            @agy_catalog_models = nil
             @pool_probes = nil
             start_pool_probes
             self
@@ -145,6 +146,48 @@ module Master
           end
 
           def cli_lane_models(wait: false) = cli_lane_ids.select { |id| cli_lane_problem(id, wait:).nil? }
+
+          # Antigravity publishes its currently selectable reasoning models through
+          # the `agy models` listing. MASTER turns each returned slug into a real
+          # `agy:<model>` pool member; the dispatcher already sends that form through
+          # `agy --model <model>`. A provider catalogue therefore grows and shrinks
+          # the pool without a models.yml edit.
+          def agy_catalog_models
+            return @agy_catalog_models if defined?(@agy_catalog_models)
+
+            binary = agy_binary
+            return @agy_catalog_models = [] unless agy_binary_available?(binary)
+
+            output = run_probe(binary, "models")
+            @agy_catalog_models = parse_agy_models(output).map { |id| "agy:#{id}" }.uniq
+          rescue StandardError => e
+            Master::Ground::Swallow.log(e, context: "model_router.pool.agy_catalog")
+            @agy_catalog_models = []
+          end
+
+          def agy_binary
+            value = ENV["AGY_BIN"].to_s.strip
+            value = ENV["ANTIGRAVITY_BIN"].to_s.strip if value.empty?
+            value.empty? ? "agy" : value
+          end
+
+          def agy_binary_available?(binary)
+            return File.executable?(binary) if binary.include?(File::SEPARATOR)
+
+            executable_on_path?(binary)
+          end
+
+          # Accept stable slug-shaped first tokens emitted by `agy models`, while
+          # ignoring headings, quota rows, prose and command footers.
+          def parse_agy_models(output)
+            output.to_s.lines.filter_map do |line|
+              token = line.strip.split(/\s+/, 2).first.to_s
+              next unless token.match?(/\A[a-z0-9][a-z0-9._-]{2,}\z/i)
+              next unless token.include?("-")
+              next if %w[model models reasoning additional available usage remaining].include?(token.downcase)
+              token
+            end.uniq
+          end
 
           # Models discovered from provider-owned catalogs are first-class pool
           # members. This is the autonomous part: adding a model at a provider
