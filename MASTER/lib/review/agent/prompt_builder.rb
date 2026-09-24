@@ -71,6 +71,7 @@ module Master
           parts << "Current task: #{@session.topic}" if @session.respond_to?(:topic) && @session.topic
           parts << Ground::ActivePlan.prompt_section(@config["root"] || Master::ROOT)
           parts << Ground::Tool::Profile.session_note
+          parts << Fiber[:master_evidence_note]
           parts << Ground::PersonalWorkspace.prompt_section(@config["root"] || Master::ROOT)
           parts << @code_index.summary if @code_index&.built?
           parts << @memory.context_summary if @memory&.context_summary
