@@ -138,25 +138,37 @@ MAX_MERGED_LINES = 300
     # Load order is load-bearing wherever an ordered manifest exists, so the plan
     # names the latest member as the merge site: everything the earlier members
     # read at load time is still defined by the time they run.
-def mergeable?(files, manifest)
-  cross_references(files) >= 2 &&
-    contiguous_in?(files, manifest) &&
-    files.sum { |f| File.readlines(f).size } <= MAX_MERGED_LINES
-end
+    def mergeable?(files, manifest)
+      cross_references(files) >= 2 &&
+        contiguous_in?(files, manifest) &&
+        files.sum { |f| File.readlines(f).size } <= MAX_MERGED_LINES
+    end
 
-    # A merge moves code, and where an ordered manifest exists the order is the
-    # contract. STUDIO/dilla/lib/engine_sources.rb says so outright: "constants
-    # in these files are computed at load time from ones above them, and
-    # reordering silently changes their values."
-    #
-    # So a family is only mergeable when its members already sit together. Of
-    # dilla's six families, five do not: render spans indices 4 to 65 with 54
-    # foreign files inside it, drum and lead 36 each, tables 21, stream 6.
-    # Merging any of them would move code across other files' load-time
-    # computation, and on a beat engine the failure mode is a different sound —
-    # which renders cannot A/B, because they are not deterministic.
-    #
-    # Nothing to check when there is no manifest: order is then not a contract.
+    # Internal calls prove cohesion; external references prove blast radius.
+    # References are evidence for the structural plan, not an automatic veto:
+    # /fix must repair them and recheck the graph after surgery.
+    def external_references(files)
+      candidates = files.flat_map { |path| [File.basename(path, ".rb"), *symbols(path)] }.uniq
+      corpus = Dir.glob(File.join(REPO, "**/*.rb"))
+                    .uniq
+                    .reject { |path| files.include?(path) || path.match?(SKIP) }
+
+      corpus.filter_map do |path|
+        body = File.read(path, encoding: "UTF-8")
+        hits = candidates.select { |name| body.match?(/\b#{Regexp.escape(name)}\b/) }
+        hits.empty? ? nil : { file: path.sub("#{REPO}/", ""), symbols: hits }
+      end
+    end
+
+    def structural_evidence(files, manifest)
+      {
+        internal_references: cross_references(files),
+        external_references: external_references(files),
+        contiguous: contiguous_in?(files, manifest),
+        lines: files.sum { |f| File.readlines(f).size },
+      }
+    end
+
     def contiguous_in?(files, manifest)
       return true if manifest.empty?
 
@@ -177,10 +189,12 @@ end
         methods: ordered.sum { |f| File.read(f).scan(/^def [a-z_]/).size },
         merge_into: "#{name}.rb",
         take_position_of: File.basename(ordered.last, ".rb"),
+        evidence: structural_evidence(ordered, manifest),
         check: [
           "method and constant sets identical before and after",
           "manifest entry replaced in place, not appended",
           "no earlier member reads a constant at load time that a later one defines",
+          "every recorded external reference is repaired and rechecked",
         ],
       }
     end
@@ -221,11 +235,16 @@ return if collisions.any?
         subdirectory_exists: Dir.exist?(subdir),
         parent: parent ? File.basename(parent) : "none — #{name}.rb must be created to hold the namespace",
         moves: members.map { |f| move_for(f, name, kind) },
+        evidence: {
+          external_references: external_references(files),
+          namespaced_members: files.map { |path| constant(path) }.compact,
+        },
         check: [
           "every reference to the old constant updated — Zeitwerk resolves by path, so a stale one is a NameError at first use",
           "data/autoload.yml entries repointed if the file is listed there",
           "data/spine.yml#namespace_ceilings counts a new namespace",
           "no member reads a sibling at load time under its old constant",
+          "every recorded external reference is repaired and rechecked",
         ],
       }
     end
