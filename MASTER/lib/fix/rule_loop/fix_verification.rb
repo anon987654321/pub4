@@ -41,13 +41,18 @@ module Master
           test = own_test_for(path)
           return unless test
 
-          # Run as the suite runs it: through the bundle, lib/ and test/ on the
-          # load path. Bare `ruby test/test_doctor.rb` could not load
-          # test_helper, so every file with its own test failed here whatever
-          # the fix, including the first fix /fix MASTER's verifier approved.
-          out, status = Master::Io::Exec.capture2e(Master::BUNDLE_BIN, "exec", RbConfig.ruby, "-Ilib", "-Itest", test,
-                                                   chdir: File.dirname(File.dirname(test)))
+          suite = File.dirname(File.dirname(test))
+          out, status = Master::Io::Exec.capture2e(*own_test_command(suite, test), chdir: suite)
           status.success? ? nil : "#{File.basename(test)}: #{out.lines.last(3).join.strip}"
+        end
+
+        # Run as the suite runs it: lib/ and test/ on the load path, so
+        # test_helper loads, and through the bundle when the suite has one.
+        # A suite with no Gemfile has no bundle to run under, and `bundle exec`
+        # there fails with "Could not locate Gemfile" whatever the fix.
+        def own_test_command(suite, test)
+          ruby = [RbConfig.ruby, "-Ilib", "-Itest", test]
+          File.file?(File.join(suite, "Gemfile")) ? [Master::BUNDLE_BIN, "exec", *ruby] : ruby
         end
 
         def own_test_for(path)
