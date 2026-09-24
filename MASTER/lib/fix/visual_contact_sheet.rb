@@ -46,8 +46,10 @@ module Master
       end
 
       def items(capture)
+        # The back/forward return-path states carry no screenshot; they reach
+        # Council as text in the context rows, not as a figure here.
         [item(capture)] + Array(capture[:journeys]).filter_map do |journey|
-          next if journey["kind"] == "navigation_return"
+          next unless journey["screenshot"]
           journey_item(capture[:surface], journey)
         end
       end

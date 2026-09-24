@@ -1,7 +1,10 @@
-<sub># frozen_string_literal: true
+# frozen_string_literal: true
 
 require_relative "test_helper"
-require_relative "../lib/fix/fix_loop/structural_stage"
+# Through FixLoop, as production loads it: structural_stage.rb opens class
+# FixLoop, whose autoload requires pass_runner.rb, which requires the stage
+# back mid-load and finds StructuralStage undefined.
+require_relative "../lib/fix/fix_loop"
 
 class StructuralStageTest < Minitest::Test
   include Master::Fix::FixLoop::StructuralStage
@@ -46,4 +49,3 @@ class StructuralStageTest < Minitest::Test
     end
   end
 end
-</sub>

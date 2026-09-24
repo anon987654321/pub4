@@ -1,4 +1,4 @@
-<sub># frozen_string_literal: true
+# frozen_string_literal: true
 
 require_relative "test_helper"
 require "tmpdir"
@@ -73,4 +73,3 @@ class TestSnapshotGenerator < Minitest::Test
     end
   end
 end
-</sub>

@@ -1,4 +1,4 @@
-<sub># frozen_string_literal: true
+# frozen_string_literal: true
 
 require "minitest/autorun"
 
@@ -18,7 +18,7 @@ class TestMobileNavigationJourneys < Minitest::Test
   end
 
   def test_captures_return_path
-    assert_includes source, 'kind" => "navigation_return"'
+    assert_includes source, 'kind" => "navigation_back"'
     assert_includes source, '"from" => after["url"]'
     assert_includes source, '"to" => surface.url'
   end
@@ -29,4 +29,3 @@ class TestMobileNavigationJourneys < Minitest::Test
     assert_includes source, 'document.activeElement'
   end
 end
-</sub>
