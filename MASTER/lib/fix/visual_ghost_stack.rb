@@ -19,7 +19,10 @@ module Master
     class VisualGhostStack
       HISTORY_LIMIT = 5
       DIFF_TOLERANCE_PX = 0.5
-      GHOST_OPACITIES = [ 0.05, 0.08, 0.12, 0.18, 0.32 ].freeze
+      GHOST_OPACITIES = [ 0.04, 0.06, 0.08, 0.12 ].freeze
+      CURRENT_OPACITY = 1.0
+      REGISTRATION_GRID_PX = 8
+      MAX_GEOMETRY_MARKERS = 24
 
       def initialize(root:, dir:)
         @root = root
@@ -71,6 +74,8 @@ module Master
         {
           screenshot: png,
           diff: render_pair(surface:, state:, frames:, key:, cdp:),
+          geometry: render_geometry(surface:, state:, frames:, key:, cdp:),
+          grid: render_grid(surface:, state:, frames:, key:, cdp:),
           label: "#{surface.id} | #{state} | #{frames.length} aligned passes",
         }
       end
@@ -95,10 +100,12 @@ module Master
 
       def stack_page(surface:, state:, frames:)
         images = frames.each_with_index.map do |path, index|
-          opacity = GHOST_OPACITIES.fetch([index, GHOST_OPACITIES.length - 1].min)
+          current = index == frames.length - 1
+          opacity = current ? CURRENT_OPACITY : GHOST_OPACITIES.fetch([index, GHOST_OPACITIES.length - 1].min)
           encoded = Base64.strict_encode64(File.binread(path))
-          label = "pass #{File.basename(path, ".png").split("-pass-").last.to_i}"
-          %(<img src="data:image/png;base64,#{encoded}" alt="#{escape_html(label)}" style="opacity:#{opacity};">)
+          label = current ? "current" : "pass #{File.basename(path, ".png").split("-pass-").last.to_i}"
+          class_name = current ? "current" : "ghost"
+          %(<img class="#{class_name}" src="data:image/png;base64,#{encoded}" alt="#{escape_html(label)}" style="opacity:#{opacity};">)
         end.join
         <<~HTML
           <!doctype html>
@@ -108,12 +115,137 @@ module Master
           header{margin:0 0 12px;font-weight:700}
           .stage{position:relative;display:inline-block;line-height:0}
           .stage img{position:absolute;inset:0;width:auto;height:auto;max-width:none}
-          .stage img:last-child{position:relative}
+          .stage img.current{position:relative}
           </style></head><body>
           <header>ghost stack · #{escape_html(surface.id)} · #{escape_html(state)}</header>
           <div class="stage">#{images}</div>
           </body></html>
         HTML
+      end
+
+      def render_geometry(surface:, state:, frames:, key:, cdp:)
+        return nil if frames.length < 2
+
+        previous_path, current_path = frames.last(2)
+        previous = JSON.parse(File.read(json_for(previous_path, File.dirname(previous_path))))
+        current = JSON.parse(File.read(json_for(current_path, File.dirname(current_path))))
+        width, height = png_dimensions(current_path)
+        html = File.join(@dir, "geometry-#{key}.html")
+        png = File.join(@dir, "geometry-#{key}.png")
+        File.write(
+          html,
+          geometry_page(surface:, state:, current:, previous:, width:, height:),
+        )
+        screenshot_file(html, png, cdp:)
+        png
+      rescue StandardError
+        nil
+      end
+
+      def render_grid(surface:, state:, frames:, key:, cdp:)
+        return nil if frames.empty?
+
+        current = frames.last
+        width, height = png_dimensions(current)
+        html = File.join(@dir, "grid-#{key}.html")
+        png = File.join(@dir, "grid-#{key}.png")
+        File.write(html, grid_page(surface:, state:, current:, width:, height:))
+        screenshot_file(html, png, cdp:)
+        png
+      rescue StandardError
+        nil
+      end
+
+      def geometry_page(surface:, state:, current:, previous:, width:, height:)
+        before = Array(previous["elements"]).to_h { |element| [element["key"], element] }
+        after = Array(current["elements"]).to_h { |element| [element["key"], element] }
+        rows = (before.keys & after.keys).filter_map do |key|
+          old = before[key]
+          new = after[key]
+          old_rect = old["frect"] || old["rect"] || {}
+          new_rect = new["frect"] || new["rect"] || {}
+          delta = %w[x y w h].to_h { |axis| [axis, new_rect[axis].to_f - old_rect[axis].to_f] }
+          next if delta.values.all? { |value| value.abs <= DIFF_TOLERANCE_PX }
+
+          {
+            old: old_rect,
+            new: new_rect,
+            delta:
+          }
+        end.sort_by { |row| -row[:delta].values.sum { |value| value.abs } }.first(MAX_GEOMETRY_MARKERS)
+
+        encoded = Base64.strict_encode64(File.binread(current_path = frames_current_path(current)))
+        overlays = rows.each_with_index.map do |row, index|
+          old = row[:old]
+          new = row[:new]
+          label_x = new.fetch("x").to_f + new.fetch("w").to_f + 6
+          label_y = new.fetch("y").to_f + 12
+          %(
+            <rect x="#{old.fetch("x")}" y="#{old.fetch("y")}" width="#{old.fetch("w")}" height="#{old.fetch("h")}" fill="none" stroke="#a855f7" stroke-width="1"/>
+            <rect x="#{new.fetch("x")}" y="#{new.fetch("y")}" width="#{new.fetch("w")}" height="#{new.fetch("h")}" fill="none" stroke="#06b6d4" stroke-width="1.5"/>
+            <line x1="#{old.fetch("x")}" y1="#{old.fetch("y")}" x2="#{new.fetch("x")}" y2="#{new.fetch("y")}" stroke="#f59e0b" stroke-width="1"/>
+            <text x="#{label_x}" y="#{label_y}" fill="#111" font-size="10">#{index + 1} Δx=#{row[:delta]["x"].round(1)} Δy=#{row[:delta]["y"].round(1)}</text>
+          )
+        end.join
+
+        <<~HTML
+          <!doctype html>
+          <html><head><meta charset="utf-8"><style>
+          *{box-sizing:border-box}html,body{margin:0;background:#fff;color:#111}
+          body{font:16px/1.4 system-ui,sans-serif;padding:16px}
+          header{margin:0 0 12px;font-weight:700}
+          .legend{margin:0 0 12px;font-size:13px}
+          .stage{position:relative;display:inline-block;line-height:0}
+          .stage img{display:block;position:relative;width:auto;height:auto;max-width:none}
+          .stage svg{position:absolute;inset:0;pointer-events:none}
+          </style></head><body>
+          <header>geometry registration · #{escape_html(surface.id)} · #{escape_html(state)}</header>
+          <p class="legend">purple = previous box · cyan = current box · amber = movement vector</p>
+          <div class="stage">
+            <img src="data:image/png;base64,#{encoded}" alt="current render">
+            <svg width="#{width}" height="#{height}" viewBox="0 0 #{width} #{height}" aria-hidden="true">#{overlays}</svg>
+          </div>
+          </body></html>
+        HTML
+      end
+
+      def frames_current_path(current)
+        current.fetch("__path")
+      end
+
+      def grid_page(surface:, state:, current:, width:, height:)
+        encoded = Base64.strict_encode64(File.binread(width.is_a?(String) ? width : current))
+        step = REGISTRATION_GRID_PX
+        <<~HTML
+          <!doctype html>
+          <html><head><meta charset="utf-8"><style>
+          *{box-sizing:border-box}html,body{margin:0;background:#fff;color:#111}
+          body{font:16px/1.4 system-ui,sans-serif;padding:16px}
+          header{margin:0 0 12px;font-weight:700}
+          .stage{position:relative;display:inline-block;line-height:0}
+          .stage img{display:block;position:relative;width:auto;height:auto;max-width:none}
+          .grid{position:absolute;inset:0;pointer-events:none;
+            background-image:linear-gradient(to right,rgba(17,17,17,.12) 1px,transparent 1px),
+                             linear-gradient(to bottom,rgba(17,17,17,.12) 1px,transparent 1px);
+            background-size:#{step}px #{step}px}
+          .vcenter,.hcenter{position:absolute;background:rgba(220,99,92,.8);pointer-events:none}
+          .vcenter{top:0;bottom:0;width:1px;left:50%}
+          .hcenter{left:0;right:0;height:1px;top:50%}
+          </style></head><body>
+          <header>registration grid · #{escape_html(surface.id)} · #{escape_html(state)} · #{step}px</header>
+          <div class="stage">
+            <img src="data:image/png;base64,#{encoded}" alt="current render">
+            <div class="grid"></div><div class="vcenter"></div><div class="hcenter"></div>
+          </div>
+          </body></html>
+        HTML
+      end
+
+      def png_dimensions(path)
+        bytes = File.binread(path, 24)
+        raise "not a PNG" unless bytes.start_with?("\x89PNG\r\n\x1a\n".b)
+
+        [bytes.byteslice(16, 4).unpack1("N"), bytes.byteslice(20, 4).unpack1("N")]
       end
 
       def diff_page(surface:, state:, current:, previous:)
