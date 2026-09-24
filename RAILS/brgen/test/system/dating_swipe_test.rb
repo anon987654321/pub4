@@ -22,7 +22,6 @@ class DatingSwipeTest < ApplicationSystemTestCase
     sign_in_on_city(@me)
     visit_city("dating", "/")
 
-    find("section.dating-intro").click
     assert_selector "section.dating-discover-panel", visible: true, wait: 5
 
     card = find("article.swipe-card[data-user-id='#{@other.id}']")
