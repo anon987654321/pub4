@@ -57,7 +57,12 @@ class CoreMissionTest < Minitest::Test
   def test_checkpoint_uses_existing_checkpoint_store
     Dir.mktmpdir do |root|
       File.write(File.join(root, "file.txt"), "before")
-      mission = Master::Core::Mission.new(root:).start!(goal: "checkpoint", scope: root)
+      checkpoint = ->(id:, root:, files:) do
+        Master::Fix::Checkpoint.new(root:, dir: File.join(root, ".master", "checkpoints")).create(
+          label: "mission-#{id}", files:
+        )
+      end
+      mission = Master::Core::Mission.new(root:, checkpoint:).start!(goal: "checkpoint", scope: root)
       mission.checkpoint!(files: ["file.txt"])
 
       checkpoint = mission.record["checkpoint"]
