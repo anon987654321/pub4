@@ -154,10 +154,6 @@ module Master
         MS_PER_SECOND = 1000.0
         CENTS_PER_DOLLAR = 100
 
-        VERBOSE_EVENTS = %w[
-          fix_loop rule_loop fix review critique council scan validation pipeline route git
-        ].freeze
-
         def initialize
           @count = Hash.new(0)
           @open = {}
@@ -291,10 +287,19 @@ module Master
           component, action = event.split(":", 2)
           unit = DmesgUnit.name(component)
           detail = event_detail(payload, action:)
+          detail = trace_detail(payload) if Dmesg.trace?
           detail.empty? ? "#{unit}: #{action || "event"}" : "#{unit}: #{action || "event"}, #{detail}"
         end
 
         EVENT_FIELDS = %i[target path file pass file_count count rule status state fixed violations changes stage reason category ms bytes critiques files].freeze
+
+        def trace_detail(payload)
+          data = payload.reject { |key, _| %i[event ts].include?(key.to_sym) }
+          rendered = Master::Ground::Redactor.payload(data).to_s
+          clip(rendered, DETAIL_CHARS)
+        rescue StandardError
+          event_detail(payload)
+        end
 
         def event_detail(payload, action: nil)
           values = EVENT_FIELDS.filter_map do |key|
