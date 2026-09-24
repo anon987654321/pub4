@@ -7,10 +7,8 @@
 
 // ============================================================ tokens
 
-// Instrument Serif, the one promotional face on brgen. Markedsplass and takeaway
-// set it on hero banners, promo headlines and campaign tiles through --font-ad,
-// declared once on body.vertical-marketplace and body.vertical-takeaway; every
-// other line of brgen, prices and cards included, sets the family face, --font.
+// The storefront display face is contextual. Marketplace resolves --font-ad to
+// the house grotesk; takeaway keeps the existing Instrument Serif campaign face.
 //
 // Copyright 2022 The Instrument Serif Project Authors, SIL Open Font Licence 1.1
 // (https://openfontlicense.org), so it ships in the repo rather than per seat.
@@ -5578,10 +5576,9 @@ body[class*="vertical-"] main > section {
 }
 
 /* The teaser banner on both storefronts. Type is the whole design here — see
-   the views for why neither has anything permanent to photograph. Kaufland's
-   first banner is 274px tall at 1440; the headline in --font-ad fills it the
-   way its campaign lettering does. Instrument Serif is drawn at one weight, so
-   it stands at 400; a heavier step would be synthesised. */
+   the views for why neither has anything permanent to photograph. Marketplace
+   uses the house grotesk as an authoritative commerce face; takeaway may use
+   its own campaign face. */
 .store-hero {
   display: flex;
   flex-direction: column;
