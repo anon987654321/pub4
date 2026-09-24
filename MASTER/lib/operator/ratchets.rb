@@ -657,7 +657,7 @@ end
 
     def css_budget_ceilings
       path = File.join(RAILS, "gates/data/css_budget.yml")
-      return {} unless File.file?(path)
+      raise "CSS budget missing: #{path}" unless File.file?(path)
 
       YAML.safe_load_file(path).fetch("rules")
     end
