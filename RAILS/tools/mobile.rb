@@ -20,10 +20,8 @@ module MobileTool
     when "android"
       init_android(registry_app!(argv.shift))
     when "ios"
-      write_ios_target(registry_app!(argv.shift))
-    when "all"
-      Shared::MobileAppRegistry.all.each { |app| write_ios_target(app) }
-      puts "ios: generated #{Shared::MobileAppRegistry.all.size} target configs"
+      registry_app!(argv.shift) if argv.first
+      generate_ios_project
     else
       warn "usage: ruby tools/mobile.rb list | android APP | ios APP | all"
       exit 64
@@ -49,27 +47,24 @@ module MobileTool
     exec(*command)
   end
 
-  def write_ios_target(app)
-    directory = File.join(IOS_ROOT, app.key.to_s)
+  def generate_ios_project
+    spec = File.join(ROOT, "__NATIVE_IOS", "project.yml")
+    directory = IOS_ROOT
     FileUtils.mkdir_p(directory)
-    File.write(File.join(directory, "build.settings.xcconfig"), <<~XC)
-      PRODUCT_BUNDLE_IDENTIFIER = #{app.ios_bundle_id}
-      MOBILE_APP_URL = #{app.url}
-      MOBILE_APP_HOST = #{app.host}
-      MOBILE_APP_NAME = #{app.name}
-      DEVELOPMENT_TEAM = $(#{app.ios_team_id_env})
-    XC
-    File.write(File.join(directory, "README.md"), <<~MD)
-      #{app.name}
 
-      Bundle ID: #{app.ios_bundle_id}
-      Origin: #{app.url}
-      Associated domain: applinks:#{app.host}
+    unless system("xcodegen", "--version", out: File::NULL, err: File::NULL)
+      warn "ios: xcodegen is required; install it with brew install xcodegen"
+      exit 69
+    end
 
-      This target uses the shared source under __NATIVE_IOS/Sources.
-      Keep product identity here; do not fork the shell.
-    MD
-    puts "ios: #{app.key}: #{directory}"
+    ok = system(
+      "xcodegen", "generate",
+      "--spec", spec,
+      "--project", directory
+    )
+    exit 1 unless ok
+
+    puts "ios: generated #{File.join(directory, "Pub4Mobile.xcodeproj")}"
   end
 end
 
