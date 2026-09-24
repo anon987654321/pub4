@@ -1,4 +1,4 @@
-# frozen_string_literal: true
+<sub># frozen_string_literal: true
 
 require_relative "test_helper"
 
@@ -28,3 +28,4 @@ class DesignDirectionTest < Minitest::Test
     assert_equal %w[product price headline proof action], spec.fetch("focal_order")
   end
 end
+</sub>
