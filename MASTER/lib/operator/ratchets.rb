@@ -570,7 +570,7 @@ end
     # listed here as a pointer. Re-implementing it buys a disagreement, not a check.
     def file_length_rows
       path = File.join(RAILS, "test/file_length_ratchet_test.rb")
-      return [] unless File.file?(path)
+      return [unreadable_row("file_length", "RAILS/test/file_length_ratchet_test.rb", "ratchet test missing")] unless File.file?(path)
 
       [Row.new(name: "file_length", current: nil, ceiling: nil, direction: :down,
                source: "RAILS/test/file_length_ratchet_test.rb",
@@ -581,11 +581,15 @@ end
     # up and "slack" means the tree improved without the floor being raised.
     def coverage_rows
       path = File.join(RAILS, "test/coverage_ratchet_test.rb")
-      return [] unless File.file?(path)
+      return [unreadable_row("coverage_ratchet", "RAILS/test/coverage_ratchet_test.rb", "ratchet test missing")] unless File.file?(path)
 
       [Row.new(name: "coverage_ratchet", current: nil, ceiling: nil, direction: :up,
                source: "RAILS/test/coverage_ratchet_test.rb",
                note: "floors, not ceilings — run the test; it fails in both directions already")]
+    end
+
+    def unreadable_row(name, source, note)
+      Row.new(name:, current: nil, ceiling: nil, direction: :down, source:, note: "unreadable: #{note}")
     end
 
     # Deep rows: these shell out to a scanner and cost minutes.
