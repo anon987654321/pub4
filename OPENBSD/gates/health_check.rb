@@ -227,15 +227,20 @@ end
   signed = Dir.glob("#{zone_dir}/*.zone.signed")
   if signed.any?
     soon = signed.filter_map do |path|
-      expiry = begin
-        File.read(path, encoding: "BINARY").scan(/RRSIG\s+\S+\s+\d+\s+\d+\s+\d+\s+(\d{14})/).flatten.min
-      rescue StandardError
-        nil
+      expiry = File.read(path, encoding: "BINARY")
+                               .scan(/RRSIG\s+\S+\s+\d+\s+\d+\s+\d+\s+(\d{14})/)
+                               .flatten
+                               .min
+      unless expiry
+        failures << "dnssec: #{File.basename(path)} contains no readable RRSIG expiry"
+        next
       end
-      next unless expiry
 
       days = (Time.new(expiry[0, 4].to_i, expiry[4, 2].to_i, expiry[6, 2].to_i) - Time.now) / 86_400
       [File.basename(path, ".zone.signed"), days.round] if days < 7
+    rescue StandardError => e
+      failures << "dnssec: #{File.basename(path)} unreadable: #{e.class}: #{e.message}"
+      next
     end
 
     unless soon.empty?
