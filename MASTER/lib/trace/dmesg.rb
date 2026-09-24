@@ -36,7 +36,7 @@ module Master
         return "quiet" if env.empty? && ENV["MASTER_QUIET"] == "1"
         return normalize_verbosity(env) unless env.empty?
 
-        normalize_verbosity(cfg.fetch("verbosity", "normal"))
+        normalize_verbosity(cfg.fetch("verbosity", "verbose"))
       end
 
       def verbose?
