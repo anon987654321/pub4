@@ -65,6 +65,7 @@ module Master
           items << image_item(ghost[:geometry], "#{ghost[:label]} | geometry registration") if ghost[:geometry]
           items << image_item(ghost[:grid], "#{ghost[:label]} | registration grid") if ghost[:grid]
           items << image_item(ghost[:focus], "#{ghost[:label]} | 2x focus registration") if ghost[:focus]
+          items << image_item(ghost[:squint], "#{ghost[:label]} | squint composition") if ghost[:squint]
         end
         items
       end
