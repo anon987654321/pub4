@@ -58,6 +58,7 @@ module Master
             end
           end
           pairs.concat(cross_file_pairs(dir, paths))
+          raise_batch_errors!(pairs, "scan_dir")
           Result.ok(prune_violation_objects(pairs))
         rescue StandardError => e
           Result.err("scan_dir: #{e.message}", category: :infrastructure)
@@ -73,6 +74,7 @@ module Master
 
           paths = scan_since_paths(changed.value!, dir:, repo_root:)
           pairs = parallel_map(paths) { |path, idx| scan_one(dir:, path:, depth:, stream:, index: idx) }
+          raise_batch_errors!(pairs, "scan_since")
           Result.ok(prune_violation_objects(pairs))
         rescue StandardError => e
           Result.err("scan_since: #{e.message}", category: :infrastructure)
@@ -168,6 +170,16 @@ module Master
         rescue StandardError => e
           @bus&.publish("scanner:cross_file_error", path: dir, error: e.message)
           raise "cross-file scan failed for #{dir}: #{e.class}: #{e.message}"
+        end
+
+        def raise_batch_errors!(pairs, label)
+          failures = pairs.filter_map do |path, result|
+            wrapped = Master::Result.wrap(result)
+            wrapped.err? ? "#{path}: #{wrapped.error}" : nil
+          end
+          return if failures.empty?
+
+          raise "#{label}: #{failures.size} file(s) failed measurement — #{failures.first(5).join("; ")}"
         end
 
         def prune_violation_objects(pairs)
