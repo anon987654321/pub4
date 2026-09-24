@@ -128,9 +128,15 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
     end
 
     def budgets
-      @budgets ||= (YAML.safe_load_file(BUDGET_PATH)&.dig("rules") || {})
+      @budgets ||= begin
+        raise "budget missing: #{BUDGET_PATH}" unless File.file?(BUDGET_PATH)
+        data = YAML.safe_load_file(BUDGET_PATH)
+        rules = data&.dig("rules")
+        raise "budget has no rules: #{BUDGET_PATH}" unless rules.is_a?(Hash)
+        rules
+      end
     rescue StandardError => e
-      warn "css_constitution: budget unreadable (#{e.class}) — gate runs unbudgeted"
+      @result.inconclusive!("css_constitution: budget unreadable (#{e.class}: #{e.message}) — CSS ceilings were not measured")
       {}
     end
 
