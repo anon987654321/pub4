@@ -1341,333 +1341,333 @@ rules:
     name: Never break working code
     tier: kernel
     severity: error
-    autofix: false
+    autofix: true
   - id: ONE_SOURCE
     source: DRY — The Pragmatic Programmer (Hunt & Thomas, 1999)
     name: One authoritative representation per concept
     tier: kernel
     severity: error
-    autofix: false
+    autofix: true
   - id: DECOUPLE
     source: The Pragmatic Programmer (decoupling) — Hunt & Thomas
     name: Make hidden dependencies explicit
     tier: kernel
     severity: error
-    autofix: false
+    autofix: true
   - id: DEGRADE_GRACEFULLY
     source: Release It! graceful degradation (Michael Nygard)
     name: Operate under partial failures
     tier: kernel
     severity: error
-    autofix: false
+    autofix: true
   - id: GALLS_LAW
     source: Gall's Law — Systemantics (John Gall, 1975)
     name: Complex systems evolve from simple working systems
     tier: philosophy
     severity: info
-    autofix: false
+    autofix: true
   - id: CHESTERTONS_FENCE
     source: Chesterton's Fence (G.K. Chesterton, 1929)
     name: Understand why something exists before removing it
     tier: philosophy
     severity: warning
-    autofix: false
+    autofix: true
   - id: UNIX_PHILOSOPHY
     source: Unix philosophy — do one thing well (Doug McIlroy)
     name: Do one thing well
     tier: architecture
     severity: info
-    autofix: false
+    autofix: true
   - id: FUNCTIONAL_CORE
     source: Functional Core, Imperative Shell (Gary Bernhardt)
     name: Pure logic in core, side effects at edges
     tier: architecture
     severity: info
-    autofix: false
+    autofix: true
   - id: CONVENTION_OVER_CONFIG
     source: Convention over Configuration (Rails Doctrine, DHH)
     name: Sensible defaults reduce decisions
     tier: productivity
     severity: info
-    autofix: false
+    autofix: true
   - id: PROGRAMMER_HAPPINESS
     source: Optimize for Programmer Happiness (Rails Doctrine, DHH)
     name: Ceremony and friction are costs, not virtues
     tier: philosophy
     severity: info
-    autofix: false
+    autofix: true
   - id: OMAKASE
     source: The Menu Is Omakase (Rails Doctrine, DHH)
     name: Prefer the curated default over a competing tool
     tier: philosophy
     severity: info
-    autofix: false
+    autofix: true
   - id: NO_ONE_PARADIGM
     source: No One Paradigm (Rails Doctrine, DHH)
     name: Mix paradigms pragmatically
     tier: philosophy
     severity: info
-    autofix: false
+    autofix: true
   - id: BEAUTIFUL_CODE
     source: Exalt Beautiful Code (Rails Doctrine, DHH)
     name: Elegance is a requirement, not a bonus
     tier: philosophy
     severity: info
-    autofix: false
+    autofix: true
   - id: SHARP_KNIVES
     source: Provide Sharp Knives (Rails Doctrine, DHH)
     name: Trust the programmer over guarding against misuse
     tier: philosophy
     severity: info
-    autofix: false
+    autofix: true
   - id: INTEGRATED_SYSTEMS
     source: Value Integrated Systems (Rails Doctrine, DHH)
     name: Prefer one cohesive system over fragmentation
     tier: philosophy
     severity: info
-    autofix: false
+    autofix: true
   - id: PROGRESS_OVER_STABILITY
     source: Progress Over Stability (Rails Doctrine, DHH)
     name: A beneficial breaking change beats frozen compatibility
     tier: philosophy
     severity: info
-    autofix: false
+    autofix: true
   - id: BIG_TENT
     source: Push Up a Big Tent (Rails Doctrine, DHH)
     name: Write for contributors of every skill level
     tier: philosophy
     severity: info
-    autofix: false
+    autofix: true
   - id: MONOLITH_FIRST
     source: MonolithFirst (Martin Fowler, bliki)
     name: Start monolith, extract when team exceeds 15
     tier: architecture
     severity: info
-    autofix: false
+    autofix: true
   - id: CONSISTENT_ERROR_STRATEGY
     source: MASTER-native (uniform error handling)
     name: One error handling strategy per module
     tier: design
     severity: warning
-    autofix: false
+    autofix: true
   - id: DUAL_DETECTION
     source: MASTER-native (lexical + semantic detection)
     name: Layer lexical and semantic detection
     tier: verification
     severity: info
-    autofix: false
+    autofix: true
   - id: MASS_GENERATE_CURATE
     source: MASTER-native (generate-then-curate)
     name: Generate many variations, curate ruthlessly
     tier: creative
     severity: info
-    autofix: false
+    autofix: true
   - id: NO_GOD_CLASS
     source: 'Refactoring code smell: Large Class / God Object (Fowler)'
     name: No god classes
     tier: core
     severity: error
-    autofix: false
+    autofix: true
     detect_structural: god_class
   - id: FILE_SPRAWL
     source: soul.yml COLLAPSE_BEFORE_ADDING / FLAT_HIERARCHY — operator standing instruction, clean minimal tree
     name: One-file directories and tiny files merge into their owners
     tier: structure
     severity: warning
-    autofix: false
+    autofix: true
     detect_structural: file_sprawl
   - id: NO_SHOTGUN_SURGERY
     source: 'Refactoring code smell: Shotgun Surgery (Fowler)'
     name: One change should not require edits in many files
     tier: core
     severity: warning
-    autofix: false
+    autofix: true
   - id: NO_HIDDEN_GLOBAL_STATE
     source: Clean Code — avoid global mutable state (R.C. Martin)
     name: No hidden global state
     tier: core
     severity: error
-    autofix: false
+    autofix: true
   - id: TRACER_BULLETS
     source: The Pragmatic Programmer — tracer bullets (Hunt & Thomas)
     name: End-to-end skeleton first, flesh out second
     tier: architecture
     severity: info
-    autofix: false
+    autofix: true
   - id: ORTHOGONALITY
     source: The Pragmatic Programmer — orthogonality (Hunt & Thomas)
     name: Changes in one dimension must not ripple into others
     tier: architecture
     severity: warning
-    autofix: false
+    autofix: true
   - id: TRANSFORMATIONS
     source: Transformation Priority Premise (Robert C. Martin)
     name: 'Think in pipelines: input transforms to output'
     tier: architecture
     severity: info
-    autofix: false
+    autofix: true
   - id: DEEP_MODULES
     source: A Philosophy of Software Design (John Ousterhout, 2018)
     name: Powerful functionality behind simple interfaces
     tier: architecture
     severity: warning
-    autofix: false
+    autofix: true
   - id: INFORMATION_HIDING
     source: Information hiding (David Parnas, 1972; Ousterhout)
     name: Each module encapsulates one design decision
     tier: architecture
     severity: warning
-    autofix: false
+    autofix: true
   - id: DIFFERENT_LAYER_DIFFERENT_ABSTRACTION
     source: A Philosophy of Software Design (Ousterhout)
     name: Each layer speaks a different language than its neighbors
     tier: architecture
     severity: warning
-    autofix: false
+    autofix: true
   - id: STRUCTURAL_HONESTY
     source: MASTER-native (structure mirrors intent)
     name: The shape of the artifact must reflect the shape of the problem
     tier: architecture
     severity: warning
-    autofix: false
+    autofix: true
   - id: GRACEFUL_BOUNDARIES
     source: Boundaries (Gary Bernhardt) — values at the edges
     name: Where systems meet, expect translation and loss
     tier: architecture
     severity: info
-    autofix: false
+    autofix: true
   - id: PULL_COMPLEXITY_DOWN
     source: A Philosophy of Software Design (Ousterhout)
     name: Simple interface matters more than simple implementation
     tier: architecture
     severity: info
-    autofix: false
+    autofix: true
   - id: ETC
     source: ETC 'Easier To Change' — The Pragmatic Programmer (Hunt & Thomas)
     name: Easier To Change — the meta-value behind every principle
     tier: philosophy
     severity: info
-    autofix: false
+    autofix: true
   - id: BROKEN_WINDOWS
     source: The Pragmatic Programmer — software entropy / broken windows
     name: Zero tolerance for visible decay
     tier: philosophy
     severity: warning
-    autofix: false
+    autofix: true
   - id: ENTROPY_RESISTANCE
     source: The Pragmatic Programmer — software entropy (Hunt & Thomas)
     name: Systems decay toward disorder unless actively maintained
     tier: philosophy
     severity: warning
-    autofix: false
+    autofix: true
   - id: DONT_OUTRUN_HEADLIGHTS
     source: The Pragmatic Programmer — don't outrun your headlights
     name: Only plan as far as you can see
     tier: philosophy
     severity: info
-    autofix: false
+    autofix: true
   - id: REVERSIBILITY
     source: The Pragmatic Programmer — reversibility (Hunt & Thomas)
     name: Prefer decisions that are easy to undo
     tier: philosophy
     severity: info
-    autofix: false
+    autofix: true
   - id: DESIGN_IT_TWICE
     source: A Philosophy of Software Design — Design it Twice (Ousterhout)
     name: Consider at least two approaches before committing
     tier: philosophy
     severity: info
-    autofix: false
+    autofix: true
   - id: PROPERTY_BASED_TESTING
     source: Property-based testing — QuickCheck (Claessen & Hughes, 2000)
     name: Test properties and invariants, not just examples
     tier: verification
     severity: info
-    autofix: false
+    autofix: true
   - id: EXPLICIT_TRADEOFF
     source: Polished Ruby Programming (Jeremy Evans, 2021) — trade-offs over absolutes
     name: Justify implementation choices by context, not as universally best
     tier: design
     severity: info
-    autofix: false
+    autofix: true
   - id: LEAST_PRIVILEGE
     source: Saltzer & Schroeder (1975) — principle of least privilege
     name: Grant the minimum authority needed, for the shortest time
     tier: kernel
     severity: error
-    autofix: false
+    autofix: true
   - id: FAIL_SAFE_DEFAULTS
     source: Saltzer & Schroeder (1975) — fail-safe defaults
     name: Default to denial; grant access by explicit decision
     tier: kernel
     severity: error
-    autofix: false
+    autofix: true
   - id: COMPLETE_MEDIATION
     source: Saltzer & Schroeder (1975) — complete mediation
     name: Check authority on every access, not once and cache
     tier: kernel
     severity: error
-    autofix: false
+    autofix: true
   - id: ECONOMY_OF_MECHANISM
     source: Saltzer & Schroeder (1975) — economy of mechanism
     name: Keep the security-critical surface small enough to audit
     tier: design
     severity: warning
-    autofix: false
+    autofix: true
   - id: PSYCHOLOGICAL_ACCEPTABILITY
     source: Saltzer & Schroeder (1975) — psychological acceptability
     name: The secure path must be the easy path
     tier: design
     severity: warning
-    autofix: false
+    autofix: true
   - id: MAKE_ILLEGAL_STATES_UNREPRESENTABLE
     source: Yaron Minsky — make illegal states unrepresentable
     name: Encode invariants in types/shapes so bad states cannot be built
     tier: kernel
     severity: error
-    autofix: false
+    autofix: true
   - id: PARSE_DONT_VALIDATE
     source: Alexis King — parse, don't validate
     name: Convert untrusted input into a trusted shape once, at the boundary
     tier: design
     severity: warning
-    autofix: false
+    autofix: true
   - id: POKA_YOKE
     source: Toyota Production System (Ohno) — poka-yoke (error-proofing)
     name: Design interfaces so misuse is impossible, not merely discouraged
     tier: design
     severity: warning
-    autofix: false
+    autofix: true
   - id: COMPLEX_SYSTEMS_FAIL
     source: Richard Cook — How Complex Systems Fail; Hollnagel — resilience engineering
     name: Assume latent faults; degrade and recover rather than assume success
     tier: kernel
     severity: warning
-    autofix: false
+    autofix: true
   - id: STRONG_CENTERS
     source: Christopher Alexander — The Nature of Order (strong centers)
     name: Each module has one clear center that organises the whole
     tier: aesthetic
     severity: info
-    autofix: false
+    autofix: true
   - id: LEVELS_OF_SCALE
     source: Christopher Alexander — The Nature of Order (levels of scale)
     name: Detail steps smoothly across scales, with no jarring jumps
     tier: aesthetic
     severity: info
-    autofix: false
+    autofix: true
   - id: GUARD_EXPENSIVE
     source: MASTER-native (guard expensive operations)
     name: Check preconditions before costly work
     tier: kernel
     severity: error
-    autofix: false
+    autofix: true
   - id: SMALL_FILES
     source: Clean Code — small classes/files (Robert C. Martin)
     name: Files under 300 lines
     tier: clean_code
     severity: warning
-    autofix: false
+    autofix: true
     detect_structural: file_silhouette
     fix: Split at module boundaries.
   - id: CONSISTENT_FILE_STRUCTURE
@@ -1675,7 +1675,7 @@ rules:
     name: Consistent file structure order
     tier: clarity
     severity: info
-    autofix: false
+    autofix: true
     detect_structural: file_layout
     fix: Reorder to match convention.
     languages:
@@ -1685,21 +1685,21 @@ rules:
     name: frozen_string_literal magic comment required
     tier: core
     severity: warning
-    autofix: false
+    autofix: true
     fix: 'Add ''# frozen_string_literal: true'' as the first line, or the line after a shebang.'
   - id: SINGLE_PRIVATE_SECTION
     source: Ruby Style Guide / RuboCop Style/AccessModifierDeclarations
     name: One private keyword at bottom
     tier: design
     severity: info
-    autofix: false
+    autofix: true
     fix: Use a single 'private' keyword with methods below it.
   - id: STRICT_MODE_ZSH
     source: Shell strict mode set -euo pipefail (Google Shell Style Guide)
     name: set -euo pipefail at script top
     tier: core
     severity: error
-    autofix: false
+    autofix: true
     fix: Add 'set -euo pipefail' after shebang.
   - id: HTML_LANG
     source: WCAG 3.1.1 Language of Page (W3C/WAI)
@@ -1715,28 +1715,28 @@ rules:
     name: Use semantic HTML5 elements
     tier: accessibility
     severity: warning
-    autofix: false
+    autofix: true
     fix: Use <header>, <footer>, <nav>, <main>, <aside>, <article>, <section>.
   - id: MOBILE_FIRST
     source: Mobile First (Luke Wroblewski, 2011)
     name: Mobile-first media queries
     tier: design
     severity: warning
-    autofix: false
+    autofix: true
     fix: Use min-width (mobile-first, progressive enhancement).
   - id: NO_IMPORT_SCSS
     source: Sass best practice — @use over @import (Sass team)
     name: Replace @import with @use/@forward
     tier: design
     severity: warning
-    autofix: false
+    autofix: true
     fix: "@import is deprecated. Use @use/@forward."
   - id: NO_IMPORTANT
     source: CSS best practice — avoid !important (MDN)
     name: No !important
     tier: design
     severity: warning
-    autofix: false
+    autofix: true
     fix: Restructure selectors to avoid specificity bankruptcy.
     languages:
     - css
@@ -1745,13 +1745,13 @@ rules:
     name: Structure evident at a glance
     tier: aesthetic
     severity: info
-    autofix: false
+    autofix: true
   - id: WHITESPACE_PUNCTUATION
     source: Typography / code style — whitespace as punctuation
     name: Whitespace as layout tool
     tier: aesthetic
     severity: info
-    autofix: false
+    autofix: true
     folded_into: SQUINT_TEST # same detector; one law, two ids
     fix: One blank line between sections, never more than two.
   - id: NO_MULTIPLE_LANGUAGES
@@ -1759,75 +1759,75 @@ rules:
     name: One medium per artifact
     tier: clean_code
     severity: warning
-    autofix: false
+    autofix: true
   - id: ARTIFICIAL_COUPLING
     source: The Pragmatic Programmer — avoid artificial coupling
     name: Things that do not depend on each other must not be grouped together
     tier: clean_code
     severity: warning
-    autofix: false
+    autofix: true
   - id: I18N_COVERAGE
     source: Rails i18n best practice (no hardcoded strings)
     name: Wrap user-facing literals in I18n helpers
     tier: design
     severity: warning
-    autofix: false
+    autofix: true
     fix: Replace literal with t('.key').
   - id: STRICT_LOADING_MISSING
     source: Rails strict_loading — N+1 prevention (Rails Guides)
     name: AR model lacks strict_loading_by_default
     tier: design
     severity: info
-    autofix: false
+    autofix: true
     fix: Add `self.strict_loading_by_default = true` to surface missing eager-loads.
   - id: RATE_LIMITING_MISSING
     source: OWASP API Security — rate limiting
     name: Sensitive controller missing rate_limit/throttle
     tier: security
     severity: error
-    autofix: false
+    autofix: true
     fix: Add rate_limit/throttle to sensitive actions.
   - id: MIGRATION_ADD_REFERENCE_NO_FK
     source: 'Rails migrations — foreign_key: true (Strong Migrations)'
     name: 'add_reference without foreign_key:'
     tier: robustness
     severity: error
-    autofix: false
+    autofix: true
     fix: 'Add `foreign_key: true` to enforce referential integrity.'
   - id: MIGRATION_REMOVE_COLUMN
     source: Strong Migrations — safe column removal (Andrew Kane)
     name: remove_column is destructive
     tier: robustness
     severity: error
-    autofix: false
+    autofix: true
     fix: Document safety/backfill path before removing a column.
   - id: MIGRATION_FIND_OR_CREATE_BY
     source: Rails best practice — find_or_create_by races
     name: find_or_create_by needs unique index
     tier: robustness
     severity: warning
-    autofix: false
+    autofix: true
     fix: Back find_or_create_by with a unique index to prevent duplicates.
   - id: NO_JQUERY
     source: RAILS/shared frontend convention
     name: Use a Stimulus controller or the DOM API, not jQuery
     tier: design
     severity: warning
-    autofix: false
+    autofix: true
     fix: Replace the selector call with a Stimulus target or querySelector.
   - id: NO_INLINE_ASSETS_IN_SHELL
     source: RAILS/shared frontend convention
     name: Shell scripts do not carry markup or style
     tier: design
     severity: warning
-    autofix: false
+    autofix: true
     fix: Move the markup into app/views and the style into a tracked stylesheet.
   - id: EXPLICIT
     source: The Zen of Python — explicit is better than implicit (Tim Peters)
     name: Explicit contracts over implicit coupling
     tier: kernel
     severity: warning
-    autofix: false
+    autofix: true
     detect_structural: explicit
     fix: Make it explicit.
   - id: SELF_EXPLAINING
@@ -1835,27 +1835,27 @@ rules:
     name: Names reduce need for comments
     tier: kernel
     severity: info
-    autofix: false
+    autofix: true
   - id: GUARD_CLAUSE
     source: Ruby Style Guide / RuboCop Style/GuardClause
     name: Favor guard clauses over nested conditionals
     tier: clean_code
     severity: info
-    autofix: false
+    autofix: true
     fix: 'Flatten to: return ... unless condition'
   - id: SAFE_NAVIGATION
     source: Ruby Style Guide / RuboCop Style/SafeNavigation
     name: Use &. consistently
     tier: style
     severity: warning
-    autofix: false
+    autofix: true
     fix: Rewrite to x&.foo&.bar
   - id: EACH_WITH_OBJECT
     source: Ruby Style Guide / RuboCop Style/EachWithObject
     name: Prefer each_with_object over inject when seeding a fresh empty collection
     tier: style
     severity: warning
-    autofix: false
+    autofix: true
     # Narrow on purpose, and the narrowing is load-bearing rather than pedantic.
     #
     # The two forms are not interchangeable: each_with_object yields the object
@@ -1883,7 +1883,7 @@ rules:
     name: Keyword arguments for 3+ parameters
     tier: style
     severity: info
-    autofix: false
+    autofix: true
     folded_into: FEW_ARGUMENTS # same parameter-list count; one rule, two ids
     fix: Use keyword arguments for clarity and safety.
     languages:
@@ -1893,21 +1893,21 @@ rules:
     name: Use Array(), Hash(), String() coercions
     tier: style
     severity: info
-    autofix: false
+    autofix: true
     fix: 'Use Array(x) instead of x.nil? ? [] : x'
   - id: PERCENT_LITERAL
     source: Ruby Style Guide — %w/%i array literals
     name: Use %i[] and %w[] for symbol/string arrays
     tier: style
     severity: info
-    autofix: false
+    autofix: true
     fix: Use %i[a b c] for symbol arrays.
   - id: HASH_FETCH
     source: Ruby Style Guide — Hash#fetch over [] for required keys
     name: Prefer Hash#fetch over [] with ||
     tier: style
     severity: info
-    autofix: false
+    autofix: true
     fix: Use hash.fetch(:key, default) for nil-vs-false safety.
     languages:
     - ruby
@@ -1916,28 +1916,28 @@ rules:
     name: Use transform_keys/transform_values
     tier: style
     severity: info
-    autofix: false
+    autofix: true
     fix: Use .transform_values { |v| ... }
   - id: USE_THEN
     source: Ruby idiom — Object#then (yield_self) for pipelines
     name: Use .then for pipeline transforms
     tier: style
     severity: info
-    autofix: false
+    autofix: true
     fix: Chain with .then { |r| next_step(r) }
   - id: RESCUE_ON_DEF
     source: Ruby Style Guide — rescue in method definitions
     name: Move begin/rescue to def line
     tier: style
     severity: info
-    autofix: false
+    autofix: true
     fix: Put rescue directly on the def block.
   - id: BARE_RESCUE
     source: Ruby Style Guide / RuboCop Lint/RescueException — no bare rescue
     name: Never rescue bare or rescue Exception
     tier: safety
     severity: error
-    autofix: false
+    autofix: true
     # (?<![\w:.]) so a symbol or method named :bare_rescue is not a bare rescue.
     # `@transforms << :bare_rescue` in the autofixer that repairs bare rescues had
     # been an error-severity finding against itself, recorded in TODO.md as noise.
@@ -1950,7 +1950,7 @@ rules:
     name: Detect N+1 queries
     tier: performance
     severity: warning
-    autofix: false
+    autofix: true
     fix: Add .includes(:association).
     languages:
     - ruby
@@ -1959,7 +1959,7 @@ rules:
     name: Use find_each for batch processing
     tier: performance
     severity: warning
-    autofix: false
+    autofix: true
     fix: 'Use .find_each(batch_size: 1000).'
     languages:
     - ruby
@@ -1968,7 +1968,7 @@ rules:
     name: Replace update_attribute with update!
     tier: safety
     severity: error
-    autofix: false
+    autofix: true
     fix: update_attribute skips validations. Use update!
     languages:
     - ruby
@@ -1977,7 +1977,7 @@ rules:
     name: Prefer pluck over map for single columns
     tier: performance
     severity: info
-    autofix: false
+    autofix: true
     fix: Use .pluck(:column) to avoid AR object instantiation.
     languages:
     - ruby
@@ -1986,7 +1986,7 @@ rules:
     name: Use const unless reassigned
     tier: style
     severity: warning
-    autofix: false
+    autofix: true
     fix: Use const unless the variable is reassigned.
     languages:
     - javascript
@@ -1995,42 +1995,42 @@ rules:
     name: Use ?. over && chains
     tier: style
     severity: warning
-    autofix: false
+    autofix: true
     fix: Rewrite to obj?.foo?.bar
   - id: NULLISH_COALESCING
     source: ECMAScript 2020 — nullish coalescing (??)
     name: Use ?? over || for defaults
     tier: style
     severity: info
-    autofix: false
+    autofix: true
     fix: Use ?? when 0 or '' are valid values.
   - id: TEMPLATE_LITERALS
     source: Airbnb JS Style Guide — template literals (ES6)
     name: Use template literals over concatenation
     tier: style
     severity: warning
-    autofix: false
+    autofix: true
     fix: Use `Hello ${name}!` template literals.
   - id: ASYNC_AWAIT
     source: ECMAScript 2017 — async/await over raw promises
     name: Prefer async/await over .then chains
     tier: style
     severity: warning
-    autofix: false
+    autofix: true
     fix: Use async/await for readability.
   - id: FOR_OF
     source: Airbnb JS Style Guide — for...of over for...in
     name: Use for...of instead of for...in for arrays
     tier: safety
     severity: error
-    autofix: false
+    autofix: true
     fix: for...in iterates prototype properties. Use for...of.
   - id: QUOTE_VARIABLES
     source: ShellCheck / Google Shell Style Guide — quote variables
     name: Always quote $variables
     tier: safety
     severity: error
-    autofix: false
+    autofix: true
     fix: Use "$VAR" to prevent word splitting.
     languages:
     - zsh
@@ -2039,7 +2039,7 @@ rules:
     name: Use [[ ]] over [ ]
     tier: safety
     severity: warning
-    autofix: false
+    autofix: true
     fix: Use [[ ... ]] for safe conditionals.
     languages:
     - zsh
@@ -2048,14 +2048,14 @@ rules:
     name: Replace backticks with $(command)
     tier: style
     severity: warning
-    autofix: false
+    autofix: true
     fix: Use $(command) — nestable and readable.
   - id: IMG_ALT
     source: WCAG 1.1.1 Non-text Content (W3C/WAI)
     name: Require alt on every <img>
     tier: accessibility
     severity: error
-    autofix: false
+    autofix: true
     fix: Add alt= attribute.
     languages:
     - html
@@ -2064,14 +2064,14 @@ rules:
     name: Use <button> for actions, not <a href="#">
     tier: accessibility
     severity: warning
-    autofix: false
+    autofix: true
     fix: Use <button>. Accessible by default.
   - id: ARIA_INTERACTIVE
     source: WAI-ARIA (W3C) — roles for interactive elements
     name: ARIA on non-semantic interactive elements
     tier: accessibility
     severity: warning
-    autofix: false
+    autofix: true
     fix: Add role= and tabindex= for accessibility.
   - id: LAZY_IMAGES
     source: Web performance — loading="lazy" (web.dev / MDN)
@@ -2087,35 +2087,35 @@ rules:
     name: Replace inline styles with classes
     tier: design
     severity: warning
-    autofix: false
+    autofix: true
     fix: Extract to CSS class; pass dynamic values as custom properties.
   - id: LOGICAL_PROPERTIES
     source: CSS Logical Properties and Values (W3C)
     name: Prefer logical properties for RTL support
     tier: design
     severity: info
-    autofix: false
+    autofix: true
     fix: Use margin-inline-start/end, padding-inline-start/end.
   - id: CLAMP_TYPOGRAPHY
     source: CSS fluid typography — clamp() (web.dev)
     name: Use clamp() for fluid typography
     tier: design
     severity: info
-    autofix: false
+    autofix: true
     fix: 'Use font-size: clamp(1rem, 2.5vw, 1.5rem).'
   - id: MEANINGFUL_NAMES
     source: Clean Code — meaningful names (Robert C. Martin)
     name: Names reveal intent
     tier: clarity
     severity: info
-    autofix: false
+    autofix: true
     fix: Name it after what the right-hand side already calls it, or after the domain.
   - id: WHY_NOT_WHAT
     source: Clean Code / Code Complete — comments explain why, not what
     name: Comments explain why, not what
     tier: clarity
     severity: info
-    autofix: false
+    autofix: true
     fix: Comments should explain intent, not restate the code.
   - id: DEAD_CODE
     source: Refactoring — remove dead code (Fowler) / Clean Code
@@ -2135,45 +2135,45 @@ rules:
     name: Typographic excellence in user-facing text
     tier: aesthetic
     severity: info
-    autofix: false
+    autofix: true
     fix: Use ellipsis, em dash, curly quotes in UI strings.
   - id: SILENCE_ON_SUCCESS
     source: Unix philosophy — Rule of Silence (no news is good news)
     name: Successful operations produce minimal output
     tier: interface
     severity: info
-    autofix: false
+    autofix: true
   - id: TYPOGRAPHY_DISCIPLINE
     source: Butterick's Practical Typography (Matthew Butterick)
     name: Hierarchy via weight and brightness, not decoration
     tier: interface
     severity: info
-    autofix: false
+    autofix: true
     fix: No ASCII separators. No box drawing. Whitespace is the layout tool.
   - id: PRECOMPUTE_MATH
     source: MASTER-native (precompute constant math)
     name: Precompute expensive math
     tier: performance
     severity: info
-    autofix: false
+    autofix: true
   - id: AUDIO_SMOOTHING
     source: MASTER-native (Dilla audio engine)
     name: Smooth audio-reactive visuals
-    tier: aesthetic
+    tier: sound
     severity: info
-    autofix: false
+    autofix: true
   - id: GRACEFUL_LOAD
     source: Web performance — progressive loading
     name: Degrade quality under load, do not crash
     tier: performance
     severity: warning
-    autofix: false
+    autofix: true
   - id: ANALOG_WARMTH
     source: MASTER-native (Dilla audio aesthetic)
     name: Perfect is sterile
-    tier: aesthetic
+    tier: sound
     severity: info
-    autofix: false
+    autofix: true
     # Audio, which is where this rule comes from. For imagery it prescribed lens
     # softness, and softness is the one artefact nothing downstream can undo:
     # simulated defocus on a frame already taken through a lens is invention, not
@@ -2184,68 +2184,68 @@ rules:
     name: Speak in the vocabulary of the problem, not the implementation
     tier: clarity
     severity: warning
-    autofix: false
+    autofix: true
   - id: LOAD_BEARING_NAMES
     source: Clean Code — names carry intent (Robert C. Martin)
     name: Names carry structural weight — choose them to bear it
     tier: clarity
     severity: warning
-    autofix: false
+    autofix: true
   - id: ERROR_CONTEXT
     source: Error handling best practice — context-rich errors
     name: Every error must carry enough context to locate and understand its origin
     tier: reliability
     severity: warning
-    autofix: false
+    autofix: true
   - id: COMMENTS_AS_DEODORANT
     source: Refactoring — comments as deodorant (Fowler/Beck)
     name: Explanations that mask bad structure instead of fixing it
     tier: clean_code
     severity: warning
-    autofix: false
+    autofix: true
   - id: POSTEL
     source: Postel's Law / Robustness Principle (Jon Postel, RFC 760/1122)
     name: Be conservative in what you send, liberal in what you accept
     tier: architecture
     severity: info
-    autofix: false
+    autofix: true
   - id: HYRUM
     source: Hyrum's Law (Hyrum Wright, Google)
     name: All observable behaviors become depended upon at scale
     tier: architecture
     severity: warning
-    autofix: false
+    autofix: true
   - id: LEAKY_ABSTRACTION
     source: Law of Leaky Abstractions (Joel Spolsky, 2002)
     name: All non-trivial abstractions leak
     tier: architecture
     severity: warning
-    autofix: false
+    autofix: true
   - id: TEMPORAL_COUPLING
     source: The Pragmatic Programmer — temporal coupling (Hunt & Thomas)
     name: Hidden sequential dependencies are fragile
     tier: design
     severity: warning
-    autofix: false
+    autofix: true
   - id: HUMBLE_OBJECT
     source: Humble Object pattern (Gerard Meszaros, xUnit Test Patterns)
     name: Separate testable logic from hard-to-test boundaries
     tier: design
     severity: info
-    autofix: false
+    autofix: true
   - id: FULL_BY_DEFAULT
     source: MASTER-native (no shallow/lite tiers by default)
     name: No fake-choice tiers — defaults are maximal correctness
     tier: design
     severity: warning
-    autofix: false
+    autofix: true
   - id: PATTERN_EXTRACTION
     source: MASTER-native (extract recurring structure)
     name: File is 80% of the way to a named design pattern
     tier: design
     severity: info
     mode: opportunity
-    autofix: false
+    autofix: true
     principle: Crystallize emergent shape into a name; the right pattern compresses
       code and makes intent legible.
     languages:
@@ -2255,21 +2255,21 @@ rules:
     name: NULL comparisons must use IS NULL, not = NULL
     tier: safety
     severity: error
-    autofix: false
+    autofix: true
     fix: Use IS NULL / IS NOT NULL in SQL; .nil? in Ruby.
   - id: SECRET_PROXIMITY
     source: OWASP — no hardcoded secrets/credentials
     name: Hardcoded secrets must move to environment variables
     tier: security
     severity: error
-    autofix: false
+    autofix: true
     fix: Move secret to environment variable or secrets manager.
   - id: MAGIC_COLOR
     source: CSS design tokens — no hardcoded color values
     name: Color values must reference design tokens, not raw hex/rgb
     tier: design
     severity: warning
-    autofix: false
+    autofix: true
     fix: Reference a CSS custom property or design token.
     languages:
     - css
@@ -2281,21 +2281,21 @@ rules:
     name: Retry loops must have a max_attempts cap and backoff
     tier: reliability
     severity: error
-    autofix: false
+    autofix: true
     fix: Add max_attempts cap and exponential backoff.
   - id: NO_VAR
     source: Airbnb JS Style Guide — no var (ES6 let/const)
     name: var is function-scoped and hoisted — use const or let
     tier: safety
     severity: error
-    autofix: false
+    autofix: true
     fix: Use const (default) or let (when reassigned).
   - id: JS_MODULE_SIZE
     source: JS module size discipline (style)
     name: JS files over 300 lines — split at module boundaries
     tier: clean_code
     severity: warning
-    autofix: false
+    autofix: true
     detect_structural: file_silhouette
     fix: Extract cohesive modules; keep each file under 300 lines.
     languages:
@@ -2305,14 +2305,14 @@ rules:
     name: HTML must declare charset early in <head>
     tier: correctness
     severity: error
-    autofix: false
+    autofix: true
     fix: Add a UTF-8 charset declaration as the first element in head.
   - id: ARIA_LABELS
     source: WCAG 4.1.2 Name, Role, Value (W3C/WAI)
     name: Interactive controls need accessible names
     tier: accessibility
     severity: warning
-    autofix: false
+    autofix: true
     fix: Add aria-label, aria-labelledby, or id paired with <label for>.
     languages:
     - html
@@ -2321,7 +2321,7 @@ rules:
     name: Avoid styling-only wrappers and semantic div substitutes
     tier: design
     severity: warning
-    autofix: false
+    autofix: true
     folded_into: SEMANTIC_ELEMENTS # same detector; one law, two ids
     fix: Use semantic landmarks; flatten nesting beyond three divs.
     languages:
@@ -2331,35 +2331,35 @@ rules:
     name: No BEM class soup in views
     tier: design
     severity: warning
-    autofix: false
+    autofix: true
     fix: Target bare tags in SCSS; remove __block__element classes from ERB.
   - id: UTILITY_CLASS_SOUP
     source: style.yml html.forbidden.framework_class_explosion
     name: No framework utility class explosion
     tier: design
     severity: warning
-    autofix: false
+    autofix: true
     fix: Move layout to SCSS with bare tag targeting.
   - id: SKIP_TO_MAIN
     source: WCAG 2.4.1 Bypass Blocks / style.yml accessibility
     name: Layouts expose skip link to main content
     tier: accessibility
     severity: warning
-    autofix: false
+    autofix: true
     fix: 'Add a skip link to #main-content in the layout.'
   - id: NO_LONG_TRANSITION
     source: style.yml motion budget / FrontendRuleSet MOTION
     name: UI transitions stay under 300ms
     tier: performance
     severity: warning
-    autofix: false
+    autofix: true
     fix: Keep transitions ≤300ms.
   - id: REDUCED_MOTION
     source: WCAG 2.3.3 Animation from Interactions
     name: Animations respect prefers-reduced-motion
     tier: accessibility
     severity: info
-    autofix: false
+    autofix: true
     fix: 'Add @media (prefers-reduced-motion: reduce) override.'
     languages:
     - css
@@ -2368,7 +2368,7 @@ rules:
     name: Stimulus controllers over 200 lines — split
     tier: density
     severity: warning
-    autofix: false
+    autofix: true
     detect_structural:
       max_lines: 200
       path_pattern: _controller\.js$
@@ -2380,7 +2380,7 @@ rules:
     name: One space before operators — no column padding
     tier: density
     severity: info
-    autofix: false
+    autofix: true
     fix: Remove padding; one space before operators. Column alignment decays and hides
       diffs.
   - id: RUBY_SNAKE_METHODS
@@ -2388,48 +2388,48 @@ rules:
     name: Methods and variables use snake_case, never camelCase
     tier: clean_code
     severity: warning
-    autofix: false
+    autofix: true
     fix: 'Rename to snake_case: def fetchAlbum -> def fetch_album.'
   - id: RUBY_CAMEL_CLASS
     source: Ruby Style Guide / RuboCop Naming/ClassAndModuleCamelCase
     name: Classes and modules use CamelCase, no underscores
     tier: clean_code
     severity: warning
-    autofix: false
+    autofix: true
     fix: 'Rename to CamelCase: class Album_store -> class AlbumStore.'
   - id: RUBY_SCREAMING_CONST
     source: Ruby Style Guide / RuboCop Naming/ConstantName
     name: Value constants use SCREAMING_SNAKE_CASE
     tier: clean_code
     severity: info
-    autofix: false
+    autofix: true
   - id: RUBY_NUMERIC_UNDERSCORE
     source: Ruby Style Guide / RuboCop Style/NumericLiterals
     name: Separate large numeric literals with underscores
     tier: clarity
     severity: info
-    autofix: false
+    autofix: true
     fix: 'Group digits in threes: one million is 1_000_000.'
   - id: RUBY_SYMBOL_TO_PROC
     source: Ruby Style Guide / RuboCop Style/SymbolProc
     name: Use &:method for single-method blocks
     tier: density
     severity: info
-    autofix: false
+    autofix: true
     fix: Collapse { |x| x.name } -> (&:name).
   - id: RUBY_BLOCK_DELIMITER
     source: Ruby Style Guide / RuboCop Style/BlockDelimiters
     name: Braces for single-line blocks, do/end for multi-line
     tier: clarity
     severity: info
-    autofix: false
+    autofix: true
     fix: Single-line block on one line -> use { }. Reserve do/end for multi-line.
   - id: RUBY_TERNARY_NOT_NESTED
     source: Ruby Style Guide / RuboCop Style/NestedTernaryOperator
     name: No nested ternaries; ternary only for simple single conditionals
     tier: clarity
     severity: warning
-    autofix: false
+    autofix: true
     fix: Expand nested ternary to if/elsif/else or a case.
     languages:
     - ruby
@@ -2438,7 +2438,7 @@ rules:
     name: Use an en dash for numeric and date ranges
     tier: aesthetic
     severity: info
-    autofix: false
+    autofix: true
     fix: 'Ranges take an en dash, not a hyphen: 45-75 -> 45–75.'
     languages:
     - markdown
@@ -2447,20 +2447,20 @@ rules:
     name: Cap text measure near 66 characters per line
     tier: aesthetic
     severity: info
-    autofix: false
+    autofix: true
     fix: Bound running-text columns to ~66ch (≈ 33rem), not wide px values.
   - id: SIMPLEST_WORKS
     source: XP — do the simplest thing that could possibly work (Ward Cunningham)
     name: Fewest moving parts that solve the problem
     tier: kernel
     severity: error
-    autofix: false
+    autofix: true
   - id: FAIL_VISIBLY
     source: Fail Fast (Jim Shore, IEEE Software 2004)
     name: Surface errors immediately
     tier: kernel
     severity: error
-    autofix: false
+    autofix: true
     # Same regex as BARE_RESCUE above, deliberately kept in step rather than
     # deduplicated: FAIL_VISIBLY is a soul.yml code_rule and BARE_RESCUE is a style
     # rule, so which one survives is a constitutional question, filed in
@@ -2470,13 +2470,13 @@ rules:
     name: Avoid unnecessary words, tokens, or lines
     tier: kernel
     severity: warning
-    autofix: false
+    autofix: true
   - id: DRY
     source: DRY — The Pragmatic Programmer (Hunt & Thomas, 1999)
     name: Don't Repeat Yourself
     tier: principle
     severity: warning
-    autofix: false
+    autofix: true
     violates_law: SINGULARITY
     # No `duplicate_code` alias: it is a live learned smell with its own findings,
     # so claiming it here made a lookup ambiguous. An alias is a retired id — the
@@ -2488,7 +2488,7 @@ rules:
     name: Keep It Simple
     tier: principle
     severity: warning
-    autofix: false
+    autofix: true
     violates_law: LINEARITY
     aliases:
     - long_method
@@ -2500,7 +2500,7 @@ rules:
     name: Principle of Least Astonishment
     tier: principle
     severity: warning
-    autofix: false
+    autofix: true
     # The id does not repeat "principle": the P in POLA is already that word, and
     # a doubled synonym belongs least of all in the rule against names that
     # surprise their reader. Astonishment over surprise matches the source line
@@ -2515,13 +2515,13 @@ rules:
     name: Single Responsibility
     tier: solid
     severity: warning
-    autofix: false
+    autofix: true
   - id: OPEN_CLOSED
     source: Open-Closed Principle (Bertrand Meyer; SOLID, R.C. Martin)
     name: Open for extension, closed for modification
     tier: solid
     severity: warning
-    autofix: false
+    autofix: true
     detect_structural: case/when or is_a?/instance_of? chain (3+ branches) dispatching
       on a type tag — see OpenClosedRule
   - id: LISKOV
@@ -2529,7 +2529,7 @@ rules:
     name: Subtypes must substitute for base types
     tier: solid
     severity: warning
-    autofix: false
+    autofix: true
     detect_structural: subclass method refuses the parent's contract (raises NotImplementedError/NoMethodError)
       or requires more args than the parent — see LiskovRule
   - id: INTERFACE_SEGREGATION
@@ -2537,7 +2537,7 @@ rules:
     name: No fat interfaces
     tier: solid
     severity: warning
-    autofix: false
+    autofix: true
     detect_structural: module with 8+ public methods included by 2+ classes in the same
       file — see InterfaceSegregationRule (same-file heuristic; cross-file inclusion
       stays semantic-only)
@@ -2546,7 +2546,7 @@ rules:
     name: Depend on abstractions, not concretions
     tier: solid
     severity: warning
-    autofix: false
+    autofix: true
     detect_structural: initialize hardcodes Service/Client/Adapter/Gateway/Repository/Provider.new
       instead of accepting it as a parameter — see DependencyInversionRule
   - id: ONE_JOB
@@ -2554,19 +2554,19 @@ rules:
     name: Each module has one clear reason to change
     tier: philosophy
     severity: warning
-    autofix: false
+    autofix: true
   - id: COMPOSABLE
     source: Unix philosophy / functional composition
     name: Small pieces that combine cleanly
     tier: philosophy
     severity: info
-    autofix: false
+    autofix: true
   - id: CQS
     source: Command-Query Separation (Bertrand Meyer, Eiffel/OOSC)
     name: Separate queries from state mutations
     tier: design
     severity: warning
-    autofix: false
+    autofix: true
     detect_structural: cqs
     fix: 'Split: query() + command(). Never mix.'
     languages:
@@ -2576,19 +2576,19 @@ rules:
     name: Only talk to immediate friends
     tier: design
     severity: warning
-    autofix: false
+    autofix: true
   - id: COMPOSITION_OVER_INHERITANCE
     source: Design Patterns (Gang of Four, 1994)
     name: Favor has_a over is_a
     tier: design
     severity: info
-    autofix: false
+    autofix: true
   - id: SMALL_FUNCTIONS
     source: Clean Code — functions should be small (R.C. Martin)
     name: Methods under 10 lines ideal, max 20
     tier: clean_code
     severity: warning
-    autofix: false
+    autofix: true
     detect_structural: long_method
     fix: 'Extract: validate(), calculate(), persist().'
   - id: FEW_ARGUMENTS
@@ -2596,7 +2596,7 @@ rules:
     name: Ideal is zero to two arguments
     tier: clean_code
     severity: warning
-    autofix: false
+    autofix: true
     fix: Group into keyword arguments or parameter object.
     languages:
     - ruby
@@ -2605,73 +2605,73 @@ rules:
     name: Each function at one abstraction level
     tier: clean_code
     severity: info
-    autofix: false
+    autofix: true
   - id: STEPDOWN
     source: Clean Code — the Stepdown Rule (Robert C. Martin)
     name: Functions call only one level below
     tier: clean_code
     severity: info
-    autofix: false
+    autofix: true
   - id: BOUNDARY_ISOLATION
     source: Boundaries (Gary Bernhardt) / Clean Architecture
     name: Wrap third-party code at the edge
     tier: clean_code
     severity: warning
-    autofix: false
+    autofix: true
   - id: NO_MAGIC
     source: Clean Code — no magic numbers (Robert C. Martin)
     name: No unexplained constants or flags
     tier: clean_code
     severity: warning
-    autofix: false
+    autofix: true
   - id: FAIL_FAST
     source: Fail Fast (Jim Shore, IEEE Software 2004)
     name: Report errors at detection point
     tier: reliability
     severity: warning
-    autofix: false
+    autofix: true
   - id: IDEMPOTENT
     source: Idempotency — REST / distributed systems design
     name: Same operation, same result
     tier: reliability
     severity: info
-    autofix: false
+    autofix: true
   - id: DEFENSIVE_INPUT
     source: Defensive programming / Postel's Law
     name: Never trust input at system boundaries
     tier: reliability
     severity: warning
-    autofix: false
+    autofix: true
   - id: GRACEFUL_DEGRADATION
     source: Release It! graceful degradation (Michael Nygard)
     name: Partial functionality beats total failure
     tier: reliability
     severity: warning
-    autofix: false
+    autofix: true
   - id: NO_SIDE_EFFECTS
     source: Functional programming / Clean Code
     name: Functions should not change state they do not own
     tier: functional
     severity: info
-    autofix: false
+    autofix: true
   - id: IMMUTABLE
     source: Effective Java — minimize mutability (Joshua Bloch); FP
     name: Default to immutable data
     tier: functional
     severity: info
-    autofix: false
+    autofix: true
   - id: PURE_FUNCTIONS
     source: Functional programming — referential transparency
     name: Same input, same output
     tier: functional
     severity: info
-    autofix: false
+    autofix: true
   - id: PRIMITIVE_OBSESSION
     source: 'Refactoring code smell: Primitive Obsession (Fowler)'
     name: Replace repeated primitives with value objects
     tier: refactoring
     severity: info
-    autofix: false
+    autofix: true
     detect_structural: method with 4+ params matching common primitive-hint names (id/name/type/status/count/...)
       — see PrimitiveObsessionRule (single-method heuristic; genuine false-positive
       risk on generic-but-unrelated primitives, semantic check is the real filter)
@@ -2680,7 +2680,7 @@ rules:
     name: A method more interested in another object than its own
     tier: refactoring
     severity: warning
-    autofix: false
+    autofix: true
     detect_structural: method's dominant receiver is called 4+ times, more than local
       (@ivar/self) access — see FeatureEnvyRule (single-method heuristic, same-file
       only)
@@ -2689,7 +2689,7 @@ rules:
     name: Avoid a.b.c.d chains
     tier: refactoring
     severity: warning
-    autofix: false
+    autofix: true
     folded_into: LAW_OF_DEMETER # same detector; one law, two ids
     fix: Talk only to immediate collaborators.
   - id: MIDDLE_MAN
@@ -2697,181 +2697,181 @@ rules:
     name: Eliminate pure-delegation classes
     tier: refactoring
     severity: info
-    autofix: false
+    autofix: true
   - id: LAZY_CLASS
     source: 'Refactoring code smell: Lazy Class (Fowler)'
     name: Remove classes too small to justify existence
     tier: refactoring
     severity: info
-    autofix: false
+    autofix: true
   - id: DIVERGENT_CHANGE
     source: 'Refactoring code smell: Divergent Change (Fowler)'
     name: Split classes changed for unrelated reasons
     tier: refactoring
     severity: warning
-    autofix: false
+    autofix: true
   - id: SPECULATIVE_GENERALITY
     source: 'Refactoring code smell: Speculative Generality (Fowler); YAGNI'
     name: Remove code for hypothetical needs
     tier: refactoring
     severity: info
-    autofix: false
+    autofix: true
   - id: INAPPROPRIATE_INTIMACY
     source: 'Refactoring code smell: Inappropriate Intimacy (Fowler)'
     name: Do not access another class's private data
     tier: refactoring
     severity: warning
-    autofix: false
+    autofix: true
   - id: SYSTEM_STATUS
     source: 'Nielsen Heuristic #1 — Visibility of system status (NN/g)'
     name: Keep users informed of progress
     tier: ux
     severity: info
-    autofix: false
+    autofix: true
   - id: USER_CONTROL
     source: 'Nielsen Heuristic #3 — User control and freedom (NN/g)'
     name: Support undo and emergency exits
     tier: ux
     severity: info
-    autofix: false
+    autofix: true
   - id: ERROR_RECOVERY
     source: 'Nielsen Heuristic #9 — Help users recover from errors (NN/g)'
     name: Error messages must name the problem and suggest a fix
     tier: ux
     severity: warning
-    autofix: false
+    autofix: true
   - id: AESTHETIC_MINIMALISM
     source: 'Nielsen Heuristic #8 — Aesthetic and minimalist design (NN/g)'
     name: Show only relevant information
     tier: ux
     severity: info
-    autofix: false
+    autofix: true
   - id: MATCH_REAL_WORLD
     source: 'Nielsen Heuristic #2 — Match between system and the real world (NN/g)'
     name: Speak the user's language, not system internals
     tier: ux
     severity: info
-    autofix: false
+    autofix: true
   - id: RECOGNITION_OVER_RECALL
     source: 'Nielsen Heuristic #6 — Recognition rather than recall (NN/g)'
     name: Show options instead of requiring the user to remember them
     tier: ux
     severity: info
-    autofix: false
+    autofix: true
   - id: FLEXIBILITY_EFFICIENCY
     source: 'Nielsen Heuristic #7 — Flexibility and efficiency of use (NN/g)'
     name: Provide shortcuts for experts without cluttering novices' path
     tier: ux
     severity: info
-    autofix: false
+    autofix: true
   - id: HELP_AND_DOCUMENTATION
     source: 'Nielsen Heuristic #10 — Help and documentation (NN/g)'
     name: Provide searchable, concrete, task-focused help
     tier: ux
     severity: info
-    autofix: false
+    autofix: true
   - id: CONSISTENCY
     source: 'Nielsen Heuristic #4 — Consistency and standards (NN/g)'
     name: Same term means same thing everywhere
     tier: ux
     severity: warning
-    autofix: false
+    autofix: true
   - id: COST_TRANSPARENCY
     source: MASTER-native (surface LLM token cost)
     name: Show LLM costs in real-time
     tier: llm
     severity: warning
-    autofix: false
+    autofix: true
   - id: CACHE_LLM
     source: MASTER-native (cache LLM responses)
     name: Cache deterministic LLM responses
     tier: llm
     severity: info
-    autofix: false
+    autofix: true
   - id: GUARD_EXPENSIVE_OPS
     source: MASTER-native (guard expensive operations); Nielsen heuristic 5, error prevention
     name: Confirm before costly or destructive operations
     tier: safety
     severity: error
-    autofix: false
+    autofix: true
   - id: NO_FLAG_ARGUMENTS
     source: Clean Code — no flag arguments (Robert C. Martin)
     name: A flag that selects behavior means two things hiding as one
     tier: clean_code
     severity: warning
-    autofix: false
+    autofix: true
   - id: NO_OUTPUT_ARGUMENTS
     source: Clean Code — no output arguments (Robert C. Martin)
     name: Return results, never secretly modify what was passed in
     tier: clean_code
     severity: warning
-    autofix: false
+    autofix: true
   - id: NO_SELECTOR_ARGUMENTS
     source: FlagArgument (Martin Fowler) / Clean Code
     name: Arguments that switch behavior indicate hidden multiplicity
     tier: clean_code
     severity: warning
-    autofix: false
+    autofix: true
   - id: DESIGN_BY_CONTRACT
     source: Design by Contract (Bertrand Meyer, Eiffel/OOSC)
     name: State what you expect, what you promise, what must remain true
     tier: reliability
     severity: info
-    autofix: false
+    autofix: true
   - id: CRASH_EARLY
     source: The Pragmatic Programmer — Crash Early (Hunt & Thomas)
     name: A dead process does less damage than a corrupted one
     tier: reliability
     severity: warning
-    autofix: false
+    autofix: true
   - id: DEFINE_ERRORS_OUT
     source: A Philosophy of Software Design — Define Errors Out of Existence (Ousterhout)
     name: Design so error conditions cannot arise
     tier: design
     severity: info
-    autofix: false
+    autofix: true
   - id: SURFACE_AREA
     source: API design — minimize public surface area
     name: Minimize the boundary between inside and outside
     tier: design
     severity: warning
-    autofix: false
+    autofix: true
   - id: PROGRESSIVE_DISCLOSURE
     source: Progressive disclosure (Jakob Nielsen, NN/g)
     name: Reveal complexity only as needed
     tier: ux
     severity: info
-    autofix: false
+    autofix: true
   - id: FEEDBACK_LOOPS
     source: 'Nielsen Heuristic #1 — feedback (NN/g)'
     name: Every action must produce observable feedback
     tier: ux
     severity: warning
-    autofix: false
+    autofix: true
   - id: DATA_CLASS
     source: 'Refactoring code smell: Data Class (Fowler)'
     name: Data without behavior is a missed abstraction
     tier: refactoring
     severity: info
-    autofix: false
+    autofix: true
   - id: PARALLEL_INHERITANCE
     source: 'Refactoring code smell: Parallel Inheritance Hierarchies (Fowler)'
     name: Two hierarchies that must change in lockstep
     tier: refactoring
     severity: warning
-    autofix: false
+    autofix: true
   - id: REFUSED_BEQUEST
     source: 'Refactoring code smell: Refused Bequest (Fowler)'
     name: Inheriting what you do not use
     tier: refactoring
     severity: info
-    autofix: false
+    autofix: true
   - id: PROSE_ACTIVE_VOICE
     source: Strunk, Elements of Style (1918) Rule 10 — use the active voice
     name: Prefer the active voice in all written output
     tier: density
     severity: info
-    autofix: false
+    autofix: true
     languages:
     - markdown
     - ruby
@@ -2880,7 +2880,7 @@ rules:
     name: State assertions in positive form
     tier: density
     severity: info
-    autofix: false
+    autofix: true
     languages:
     - markdown
     - ruby
@@ -2889,7 +2889,7 @@ rules:
     name: Cut hollow intensifiers and hedges
     tier: density
     severity: warning
-    autofix: false
+    autofix: true
     fix: Delete the qualifier; let the verb or noun carry the weight.
     languages:
     - markdown
@@ -2900,7 +2900,7 @@ rules:
     name: Express parallel ideas in parallel grammatical form
     tier: clarity
     severity: info
-    autofix: false
+    autofix: true
     languages:
     - markdown
   - id: PROSE_RELATED_WORDS
@@ -2908,7 +2908,7 @@ rules:
     name: Keep subject, verb, and modifiers adjacent to what they govern
     tier: clarity
     severity: info
-    autofix: false
+    autofix: true
     languages:
     - markdown
   - id: PROSE_ONE_TOPIC_PARAGRAPH
@@ -2916,7 +2916,7 @@ rules:
     name: One topic per paragraph, opened by a topic sentence
     tier: clarity
     severity: info
-    autofix: false
+    autofix: true
     languages:
     - markdown
   - id: GRICE_COOPERATIVE
@@ -2924,13 +2924,13 @@ rules:
     name: Every message obeys the four conversational maxims
     tier: clarity
     severity: info
-    autofix: false
+    autofix: true
     languages:
     - markdown
     - ruby
   - id: RAILS_THIN_CONTROLLER_SEMANTIC
     name: Controllers delegate business rules to models and services
-    autofix: false
+    autofix: true
     severity: warning
     tier: solid
     mode: violation
@@ -2938,7 +2938,7 @@ rules:
     - ruby
   - id: RAILS_VIEW_PURITY
     name: Views present assigns and hold no business logic
-    autofix: false
+    autofix: true
     severity: warning
     tier: solid
     mode: violation
@@ -2946,7 +2946,7 @@ rules:
     - html
   - id: AESTHETIC_FLAT_SEMANTIC
     name: Flat surfaces on an 8px rhythm, no ornamental depth
-    autofix: false
+    autofix: true
     severity: info
     tier: cosmetic
     mode: opportunity
@@ -2957,7 +2957,7 @@ rules:
     - javascript
   - id: AESTHETIC_RAMS_SEMANTIC
     name: Useful, understandable, unobtrusive, honest, thorough
-    autofix: false
+    autofix: true
     severity: info
     tier: cosmetic
     mode: opportunity
@@ -2969,7 +2969,7 @@ rules:
     name: Typography thresholds every reading surface is measured against
     tier: design
     severity: warning
-    autofix: false
+    autofix: true
     config:
       line_length:
         min_ch: 45
@@ -3080,7 +3080,7 @@ rules:
     name: Grid, spacing, touch and proportion thresholds
     tier: design
     severity: warning
-    autofix: false
+    autofix: true
     config:
       grid:
         columns: 12
@@ -3160,7 +3160,7 @@ rules:
     name: Restraint budget — palette roles, tokens, interaction
     tier: design
     severity: warning
-    autofix: false
+    autofix: true
     config:
       philosophy:
         typography_is_design: true
@@ -3739,7 +3739,7 @@ rules:
     name: Depth comes from motion, never from shaded surfaces
     tier: design
     severity: warning
-    autofix: false
+    autofix: true
     config:
       technique: point_cloud
       principle: >-
@@ -3779,7 +3779,7 @@ rules:
     name: Semantics, syntactics and pragmatics of a surface
     tier: design
     severity: warning
-    autofix: false
+    autofix: true
     config:
       semantics:
         reject_arbitrary_decoration: true
@@ -3815,7 +3815,7 @@ rules:
     name: Motion timing and sonic hierarchy
     tier: design
     severity: warning
-    autofix: false
+    autofix: true
     config:
       timing:
         avoid_quantized_feel: true
@@ -3837,7 +3837,7 @@ rules:
     name: Honest encoding limits for charts
     tier: design
     severity: warning
-    autofix: false
+    autofix: true
     config:
       data_ink_ratio_target: 1.0
       lie_factor_target: 1.0
@@ -3849,7 +3849,7 @@ rules:
     name: What an automated CSS pass must measure
     tier: design
     severity: warning
-    autofix: false
+    autofix: true
     config:
       # Each flag should name an enforcer. Flags without enforce: are guidance only.
       checks:
@@ -3898,7 +3898,7 @@ rules:
     name: Fitts, Hick and progressive disclosure limits
     tier: design
     severity: warning
-    autofix: false
+    autofix: true
     config:
       fitts:
         target_min_px: *touch_min_px
@@ -3924,7 +3924,7 @@ rules:
     name: Per-surface type profiles and their tolerances
     tier: design
     severity: warning
-    autofix: false
+    autofix: true
     config:
       type_scale_ratio: 1.25
       type_scale_tolerance_px: 1.5
@@ -3998,7 +3998,7 @@ rules:
     name: Forbidden CSS, the 8px rhythm and its exception policy
     tier: design
     severity: warning
-    autofix: false
+    autofix: true
     config:
       forbidden_css:
       - box-shadow
@@ -4040,7 +4040,7 @@ rules:
     name: Rams' ten principles as a ship checklist
     tier: design
     severity: warning
-    autofix: false
+    autofix: true
     config:
       useful: Does this control or surface serve a concrete user goal?
       understandable: Is hierarchy and affordance obvious without decoration?
@@ -4055,7 +4055,7 @@ rules:
     name: Locale coverage, empty states and flat-UI vocabulary
     tier: design
     severity: warning
-    autofix: false
+    autofix: true
     config:
       default_locale: nb
       available_locales: [nb, en]
@@ -4108,7 +4108,7 @@ rules:
     name: Offline-first, data agency and native-grade motion
     tier: design
     severity: warning
-    autofix: false
+    autofix: true
     config:
       philosophy:
         performance_is_the_design: true
