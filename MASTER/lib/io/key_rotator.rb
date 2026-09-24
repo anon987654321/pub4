@@ -14,10 +14,14 @@ module Master
       module_function
 
       def env_vars
-        vars = Master.load_yaml(File.join(Master::ROOT, "data", "models.yml")).dig("openrouter", "keys_env")
-        Array(vars).empty? ? %w[OPENROUTER_API_KEY] : Array(vars)
-      rescue StandardError
-        %w[OPENROUTER_API_KEY]
+        models_path = File.join(Master::ROOT, "data", "models.yml")
+        models = Master.load_yaml(models_path)
+        vars = models&.dig("openrouter", "keys_env")
+        configured = Array(vars).map(&:to_s).reject(&:empty?)
+        configured.empty? ? %w[OPENROUTER_API_KEY] : configured
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "KeyRotator.env_vars")
+        raise "key rotation policy unreadable: #{e.class}: #{e.message}"
       end
 
       def keys
