@@ -37,7 +37,10 @@ module Master
       # coming back, or the passes ran out. HUMAN_DECISION is a safe halt when a
       # proposed fix is irreversible or spans multiple files. BLOCKED is a halt
       # outside the loop's authority, and VALIDATION_FAILED is a repair the tree refused.
-      TERMINAL_STATES = %i[done plateau blocked validation_failed delivery_failed timeout human_decision failed].freeze
+      TERMINAL_STATES = %i[done plateau blocked validation_failed delivery_failed timeout human_decision failed reloading].freeze
+      # A pass status that ends the run, and the state it ends in.
+      PASS_ENDINGS = { clean: :done, validation_failed: :validation_failed,
+                       delivery_failed: :delivery_failed, reloading: :reloading }.freeze
 
       IDLE_SLEEP = 300
       STARTUP_DELAY = 90
@@ -99,8 +102,10 @@ module Master
       end
 
       def finish_run(result, target, run_id, mission: nil)
-        sweep_tree(target, run_id)
         state = terminal_state_for(result)
+        # The look back belongs to the run that finishes, not one handing over
+        # to newer code mid-tree.
+        sweep_tree(target, run_id) unless state == :reloading
         @run_journal.terminal(run_id, state, message: result.to_s)
         mission&.transition!(:verify, summary: result.to_s)
         mission_state = state == :done ? "completed" : "interrupted"
@@ -310,9 +315,8 @@ module Master
         )
         state[:consecutive_clean] = result.consecutive_clean
         @run_journal.pass_finish(run_id, pass, status: result.status, message: result.message)
-        return terminal(:done, result.message) if result.status == :clean
-        return terminal(:validation_failed, result.message) if result.status == :validation_failed
-        return terminal(:delivery_failed, result.message) if result.status == :delivery_failed
+        ending = PASS_ENDINGS[result.status]
+        return terminal(ending, result.message) if ending
 
         result.status == :plateau ? :break : nil
       end

@@ -36,6 +36,9 @@ class StreamStageTest < Minitest::Test
     def ordered(violation_counts:) = rules
   end
 
+  # No origin to ask in a unit test.
+  def reload_due? = false
+
   def setup
     @root = "/repo"
     @events = Queue.new
@@ -50,7 +53,8 @@ class StreamStageTest < Minitest::Test
     found, streamed = streaming_observation(%w[/repo/a.rb /repo/b.rb /repo/c.rb], "/repo", 1, Time.now + 60)
 
     assert_equal 6, found.size, "the pass still sees every finding"
-    assert_equal %w[/repo/a.rb /repo/b.rb /repo/c.rb], @log
+    # Three workers finish in any order; what matters is that all three ran.
+    assert_equal %w[/repo/a.rb /repo/b.rb /repo/c.rb], @log.sort
     assert_includes streamed, ["a.rb", "LONG_METHOD"]
     assert_equal ["fix_loop: stream-fix [pass 1]"], @committer.commits
   end

@@ -73,8 +73,9 @@ module Master
             fixed = 0
             while (item = queue.pop) != :done
               unless stream_repairs_allowed?(pass, deadline)
-                # The first file the budget left unrepaired: the next run starts there.
-                @stream_stopped_at ||= item.first if Time.now >= deadline
+                # The first file the budget or a reload left unrepaired: the
+                # next run starts there.
+                @stream_stopped_at ||= item.first if Time.now >= deadline || reload_due?
                 next
               end
 
@@ -115,6 +116,9 @@ module Master
 
           def repair_memory = @repair_memory ||= RepairMemory.new(root: @root)
 
+          # MASTER's own code changed on origin/main: stop taking files.
+          def reload_due? = CodeWatch.stale?(@root)
+
           # The rule stage after the scan asks per rule; it is spared what the
           # model already declined and the rules it has retired, as the stream is.
           def unremembered(found)
@@ -141,7 +145,7 @@ module Master
           # Disk and memory are read at most every thirty seconds; the budget's
           # measure shells out, and a file lands every second or two.
           def stream_repairs_allowed?(pass, deadline)
-            return false if Time.now >= deadline || circuit_open?
+            return false if Time.now >= deadline || circuit_open? || reload_due?
             fresh = @stream_resources_at && Time.now - @stream_resources_at < RESOURCE_CHECK_SECONDS
             return @stream_resources_ok if fresh
 

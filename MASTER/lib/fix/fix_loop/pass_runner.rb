@@ -81,8 +81,13 @@ module Master
           return clean_pass_result(files, pass_mtimes, pass, consecutive_clean) if found.empty?
           return plateau_result if stagnant?(history, seen_snapshots, recurring_violations, found, pass)
 
-          dispatch_llm_stages(unstreamed(found, streamed), files, pass, deadline, visual)
-          deliver_pass(found, files, pass)
+          # A reload skips the rule stage: it would ask the model about the whole
+          # scan on code that is already out of date.
+          dispatch_llm_stages(unstreamed(found, streamed), files, pass, deadline, visual) unless CodeWatch.requested?
+          delivered = deliver_pass(found, files, pass)
+          return delivered unless CodeWatch.requested? && delivered.status == :continue
+
+          PassResult.new(status: :reloading, consecutive_clean: 0, message: "MASTER changed on origin/main")
         rescue StandardError
           @committer.abort_transaction!
           raise
