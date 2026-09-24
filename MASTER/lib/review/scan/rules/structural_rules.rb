@@ -255,9 +255,12 @@ module Master
           #
           # design.rb and ops.rb are each a whole subsystem that is one file with
           # no directory beside it, and each has its own loc_body_budgets key.
+          # device.rb (Termux capabilities), plugin.rb (the plugin manifest
+          # loader) and snapshot.rb (the tree snapshot generator) are the same
+          # shape: one file, one top-level Master constant that autoloads from it.
           ALLOWED_ROOT_FILES = %w[
-            builder.rb core.rb design.rb master.rb ops.rb
-            result.rb security_error.rb unwrap_error.rb
+            builder.rb core.rb design.rb device.rb master.rb ops.rb plugin.rb
+            result.rb security_error.rb snapshot.rb unwrap_error.rb
           ].freeze
 
           def self.auto_build? = false
