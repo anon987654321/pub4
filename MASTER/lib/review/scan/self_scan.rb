@@ -54,10 +54,11 @@ module Master
         end
 
         def singularity_pairs
-          return [] unless File.exist?(File.join(@root, "data", "rules.yml"))
+          rules_path = File.join(@root, "data", "rules.yml")
+          return [] unless File.exist?(rules_path) || File.expand_path(@root) != File.expand_path(Master::ROOT)
 
           result = SelfTest.new(root: @root, event_bus: @bus).call(laws: %w[SINGULARITY])
-          return [] unless result.ok?
+          raise "self-test SINGULARITY failed: #{result.error}" unless result.ok?
 
           check = result.value!.checks.find { |item| item.law == "SINGULARITY" }
           return [] unless check&.findings&.any?
