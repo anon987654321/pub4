@@ -11,6 +11,7 @@ require_relative "visual_reference"
 require_relative "visual_contact_sheet"
 require_relative "visual_ghost_stack"
 require_relative "visual_evidence_rows"
+require_relative "visual_artifact"
 require_relative "../design/visual_language"
 require_relative "../../../RAILS/gates/support/mobile_journey_probe"
 require_relative "../../../RAILS/gates/support/composition_probe"
@@ -163,6 +164,14 @@ module Master
         critique, image = run_critique(captures, sources, anchors, graph:)
         return inconclusive("#{critique.message}") if critique.err?
 
+        artifact = VisualArtifact.new(root: @root).write(
+          target: repo_relative(@root),
+          pass:,
+          captures:,
+          contact_sheet: image[:path]
+        )
+        @bus&.publish("fix_loop:visual_artifact", pass:, dir: artifact&.dig(:dir), files: artifact&.dig(:files))
+
         picks = Array(critique.value![:cherry_picks]).map(&:to_s).reject(&:empty?)
         findings = picks.filter_map { |pick| finding_for(pick, sources, anchors) }
         if picks.any? && findings.empty?
@@ -176,6 +185,7 @@ module Master
           state: findings.empty? ? :clean : :findings,
           findings:,
           image:,
+          artifact:,
           coverage: coverage.merge(captured: captures.map { |c| c[:surface].id }),
         )
       end
