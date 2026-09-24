@@ -6,6 +6,7 @@
     was a visible relabel and made the tab's width unstable -- see
     Shared::UiHelper#ambient_chat_room_label. %>
 <% widget_title = local_assigns.fetch(:title, ambient_chat_room_label || t("chat.title")) %>
+<% messenger_href = messenger_path if respond_to?(:messenger_path) %>
 <div class="nearby-chat-widget"
      data-controller="nearby-chat"
      data-nearby-chat-storage-key-value="pub4:ambient-chat:open"
@@ -26,7 +27,7 @@
           aria-controls="nearby-chat-widget-panel"
           aria-haspopup="dialog">
     <%= icon :messages, size: 16 %>
-    <span data-nearby-chat-target="tabLabel"><%= widget_title %></span>
+    <span data-nearby-chat-target="tabLabel"><%= t("chat.tab_label") %></span>
   </button>
 
   <div id="nearby-chat-widget-panel"
@@ -37,11 +38,20 @@
        aria-label="<%= widget_title %>"
        hidden>
     <header class="nearby-chat-widget-header">
-      <span data-nearby-chat-target="headerLabel"><%= widget_title %></span>
-      <button type="button"
+      <div class="nearby-chat-widget-header-title">
+        <strong data-nearby-chat-target="headerLabel"><%= widget_title %></strong>
+        <span><%= t("chat.local_room") %></span>
+      </div>
+      <nav class="nearby-chat-widget-header-actions" aria-label="<%= t("chat.actions_label") %>">
+        <% if messenger_href %>
+          <%= link_to t("chat.open_messenger"), messenger_href,
+                class: "nearby-chat-widget-messenger", data: { turbo_frame: "_top" } %>
+        <% end %>
+        <button type="button"
               class="nearby-chat-widget-close"
               data-action="nearby-chat#close"
               aria-label="<%= t("chat.close") %>">&times;</button>
+      </nav>
     </header>
 
     <p class="nearby-chat-widget-status" data-nearby-chat-target="status" hidden aria-live="polite"></p>
@@ -53,6 +63,11 @@
       <% if (chat_frame_src = ambient_chat_frame_path) %>
         <%= turbo_frame_tag "nearby-chat-widget-frame", src: chat_frame_src, class: "nearby-chat-widget-frame" do %>
           <div class="nearby-chat-widget-empty">
+            <% if messenger_href %>
+              <%= link_to t("chat.private_messages_lead"), messenger_href,
+                    class: "nearby-chat-widget-messenger nearby-chat-widget-messenger--empty",
+                    data: { turbo_frame: "_top" } %>
+            <% end %>
             <%= tag.strong t("chat.title") %>
             <%= tag.p t("chat.loading") %>
           </div>
