@@ -3109,7 +3109,7 @@ body.vertical-marketplace .search {
 }
 
 :is(body.vertical-marketplace, body.vertical-takeaway) :is(.store-shortcut-well, .store-buybox) {
-  [:eight_px_rhythm, :no_decorative_fx]box-shadow: none;
+  box-shadow: none;
 }
 
 /* zYaJege marketplace banner — exact layout/geometry from source pen.
