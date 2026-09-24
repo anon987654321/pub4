@@ -85,13 +85,15 @@ class TestAstOmissionRule < Minitest::Test
     assert_empty guard.asked, "a non-Ruby file must not cost a git call"
   end
 
-  # Degrading rather than raising is deliberate: a scan that dies on one
-  # unreadable file reports every remaining file as unexamined. The swallow is
-  # logged in the rule.
-  def test_a_failing_guard_degrades_to_no_findings_rather_than_raising
+  # An empty answer from a guard that failed is indistinguishable from a clean
+  # file, so the rule raises as every Scan::Rule does, and the scanner records
+  # that one file as failed measurement and carries on with the rest.
+  def test_a_failing_guard_raises_rather_than_reading_as_clean
     guard = FakeGuard.new(raises: RuntimeError.new("git is unhappy"))
 
-    assert_empty rule_with(guard).check("", path: "#{ROOT}/lib/a.rb")
+    error = assert_raises(RuntimeError) { rule_with(guard).check("", path: "#{ROOT}/lib/a.rb") }
+    assert_includes error.message, "ast_omission"
+    assert_includes error.message, "git is unhappy"
   end
 
   # rule_deps orders by this string and the registry keys on it, so a rename
