@@ -207,12 +207,17 @@ module Deploy
       # visited with a stale locale choice re-answers in that language.
       cdp.clear_cookies
       cdp.navigate(surface.url)
+      measure_current(cdp, surface)
+    rescue CdpSession::Error => e
+      { "error" => "#{e.class.name.split('::').last}: #{e.message}" }
+    end
+
+    # Measure the page already on screen. It never navigates or clears cookies,
+    # so interactive states remain part of the same page composition.
+    def self.measure_current(cdp, surface)
       return { "error" => "chrome error page — nothing answered at #{surface.url}" } if browser_error_page?(cdp)
 
       wait_for_fonts(cdp)
-      # Status first. A 403 host-authorization page or a 500 renders a
-      # perfectly measurable DOM that has nothing to do with the design, and
-      # grading it produces confident nonsense.
       cdp.evaluate(WALK).merge(GeometryType.probe(cdp)).merge(glyph_coverage(cdp)).merge("status" => cdp.status)
     rescue CdpSession::Error => e
       { "error" => "#{e.class.name.split('::').last}: #{e.message}" }

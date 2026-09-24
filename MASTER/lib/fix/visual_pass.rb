@@ -27,6 +27,36 @@ module Master
       # Surface ids are paths, so %r{} keeps the literal slash readable.
       SURFACE_RE = %r{\bsurface\s*[:=]\s*([A-Za-z0-9_./-]+)\b}i.freeze
       VIEWPORT_RE = /\bviewport\s*[:=]\s*([A-Za-z0-9_-]+)\b/i.freeze
+      # Co-resident Brgen features are rendered together on the home surface.
+      # Probe their states on that same DOM instead of judging isolated routes.
+      BRGEN_COMPOSITION = {
+        "composer_open" => {
+          selector: ".compose-trigger",
+          ready: "!!document.querySelector('dialog[open]')",
+        },
+        "composer_draft" => {
+          selector: ".compose-trigger",
+          ready: "!!document.querySelector('dialog[open]')",
+          script: <<~JS,
+            (() => {
+              const field = document.querySelector(".composer textarea, .composer input[type='text']");
+              if (!field) return false;
+              field.focus();
+              field.value = "MASTER rendered-composition probe";
+              field.dispatchEvent(new Event("input", { bubbles: true }));
+              return true;
+            })()
+          JS
+        },
+        "messenger_open" => {
+          selector: ".nearby-chat-widget-tab",
+          ready: "!!document.querySelector('.nearby-chat-widget-panel:not([hidden])')",
+        },
+        "search_open" => {
+          selector: ".search_palette_trigger",
+          ready: "!!document.querySelector('.search_palette.open')",
+        },
+      }.freeze
       Rule = Data.define(:id) do
         def severity = :warning
       end
@@ -93,15 +123,110 @@ module Master
           surfaces.each do |surface|
             payload = Deploy::GeometryProbe.walk(cdp, surface)
             next unless Deploy::GeometryProbe.ok?(payload)
+            payload["composition"] = {
+              "state" => "resting",
+              "base_surface" => surface.id,
+              "co_resident" => composition_features(cdp),
+            }
 
             shot = File.join(@dir, "#{safe_slug(surface.id)}.png")
             cdp.screenshot(shot, capture_beyond_viewport: true)
             journeys = Deploy::MobileJourneyProbe.run(cdp, surface, @dir)
             platform = Deploy::WebPlatformProbe.run(cdp, surface)
             captures << { surface:, payload:, screenshot: shot, journeys:, platform: }
+            captures.concat(capture_brgen_composition(cdp, surface))
           end
         end
         captures
+      end
+
+      def capture_brgen_composition(cdp, surface)
+        return [] unless surface.app == "brgen" && surface.label == "core"
+
+        BRGEN_COMPOSITION.filter_map do |state, spec|
+          cdp.navigate(surface.url)
+          raise "brgen composition #{state}: page did not settle" unless wait_until(cdp, "document.readyState === 'complete'")
+          next unless cdp.evaluate("!!document.querySelector(#{spec[:selector].to_json})")
+
+          clicked = cdp.evaluate(<<~JS)
+            (() => {
+              const el = document.querySelector(#{spec[:selector].to_json});
+              if (!el) return false;
+              el.click();
+              return true;
+            })()
+          JS
+          raise "brgen composition #{state}: feature trigger was not clickable" unless clicked
+          raise "brgen composition #{state}: state did not open" unless wait_until(cdp, spec[:ready])
+
+          if (script = spec[:script])
+            ok = cdp.evaluate(script)
+            raise "brgen composition #{state}: interaction script failed" unless ok
+          end
+
+          state_surface = Deploy::GeometryProbe::Surface.new(
+            app: surface.app,
+            label: "#{surface.label}__#{state}",
+            host: surface.host,
+            path: surface.path,
+            viewport: surface.viewport,
+            width: surface.width,
+            height: surface.height,
+            snapshot: false,
+            port: surface.port,
+            profile: surface.profile,
+          )
+          payload = Deploy::GeometryProbe.measure_current(cdp, state_surface)
+          next unless Deploy::GeometryProbe.ok?(payload)
+
+          payload["composition"] = {
+            "state" => state,
+            "base_surface" => surface.id,
+            "co_resident" => composition_features(cdp),
+          }
+          shot = File.join(@dir, "#{safe_slug(state_surface.id)}.png")
+          cdp.screenshot(shot, capture_beyond_viewport: true)
+          {
+            surface: state_surface,
+            payload: payload,
+            screenshot: shot,
+            journeys: [],
+            platform: surface.viewport == "mobile" ? Deploy::WebPlatformProbe.run(cdp, state_surface) : {},
+          }
+        end
+      end
+
+      def composition_features(cdp)
+        JSON.parse(cdp.evaluate(<<~JS).to_s)
+          (() => {
+            const visible = (selector) => [...document.querySelectorAll(selector)].some((el) => {
+              const r = el.getBoundingClientRect();
+              const s = getComputedStyle(el);
+              return r.width > 0 && r.height > 0 && s.display !== "none" && s.visibility !== "hidden";
+            });
+            return JSON.stringify([
+              ["feed", "#feed-panel, [data-visitor-orientation]"],
+              ["posts", "article, .post-card, [data-post-id]"],
+              ["composer", ".compose-launcher, .composer"],
+              ["messenger", ".nearby-chat-widget, [data-controller~='nearby-chat']"],
+              ["search", ".search_palette, [data-controller~='search-palette']"],
+              ["navigation", ".nav_swiper, #nav_sections"],
+              ["community_widgets", ".sidebar-card, [data-widgets]"]
+            ].filter(([, selector]) => visible(selector)).map(([name]) => name));
+          })()
+        JS
+      rescue JSON::ParserError => e
+        raise "brgen composition inventory invalid JSON: #{e.message}"
+      end
+
+      def wait_until(cdp, expression, timeout: 3.0)
+        deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + timeout
+        loop do
+          return true if cdp.evaluate(expression)
+          return false if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+
+          sleep 0.05
+        end
       end
 
       def run_critique(captures, sources, anchors, graph:)
@@ -220,6 +345,8 @@ module Master
         type = visual["typography"] || {}
         [
           "surface #{surface.id}: #{surface.url}",
+          "composition=#{capture.dig(:payload, "composition", "state") || "resting"} ",
+          "co-resident=#{Array(capture.dig(:payload, "composition", "co_resident")).join("+")}",
           "first-screen text=#{first["text_blocks"]}, interactive=#{first["interactive"]}, ",
           "largest_area=#{first["largest_element_area_ratio"]}, small_text=#{first["small_text"]}, ",
           "centered_long_text=#{first["centered_long_text"]}",
