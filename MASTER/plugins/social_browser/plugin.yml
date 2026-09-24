@@ -3,3 +3,4 @@ id: social_browser
 version: 1.0.0
 description: Governed browser automation for authorized social accounts on desktop or Android/Termux.
 entrypoint: social_browser.rb
+observe_actions: [status, inspect]
