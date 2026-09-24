@@ -169,6 +169,13 @@ scale_ratchet:
   pass: "Spacing, leading, radius and weight are on the declared scale."
   covered_by: layout_suite
 
+# Source-side Bringhurst/Butterick contract. Rendered geometry remains the authority for optical results.
+typography_contract:
+  require: lib/source/typography_contract
+  class: Deploy::TypographyContractGate
+  pass: "Typography contract passed (source declarations match the contextual reading profiles)."
+  covered_by: layout_suite
+
 css_minify_integrity:
   require: lib/source/css_minify_integrity
   class: Deploy::CssMinifyIntegrityGate
