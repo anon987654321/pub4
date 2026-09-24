@@ -73,9 +73,8 @@ module Master
 
           check_ast(Prism.parse(code).value, code, path:)
         rescue StandardError => e
-          # [] is also a clean file's answer, so only this report separates them.
           Master::Ground::Swallow.log(e, context: "#{self.class}#check_ast", severity: :load_bearing, path:)
-          []
+          raise "rule #{@id} AST check failed: #{e.class}: #{e.message}"
         end
 
         def language(path)
