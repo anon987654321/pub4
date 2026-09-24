@@ -356,7 +356,7 @@ class TestRuleLoopPolicy < Minitest::Test
       fenced = build_loop(root:, bus: FakeBus.new, scanner: Scanner.new, agent: ScriptedAgent.new("Here:\n```ruby\nputs :y\n```\n"))
       unchanged = build_loop(root:, bus: FakeBus.new, scanner: Scanner.new, agent: ScriptedAgent.new("UNCHANGED"))
 
-      assert_equal "puts :y", fenced.send(:whole_file_fallback, violation:, src: "puts :x\n", path:, reason: "test")
+      assert_equal "puts :y\n", fenced.send(:whole_file_fallback, violation:, src: "puts :x\n", path:, reason: "test")
       assert_nil unchanged.send(:whole_file_fallback, violation:, src: "puts :x\n", path:, reason: "test")
     end
   end
@@ -367,7 +367,7 @@ class TestRuleLoopPolicy < Minitest::Test
 
       result = loop.__send__(:extract_code, "here is the fix:\n```ruby\nputs 1\n```\n", ".rb")
 
-      assert_equal "puts 1", result
+      assert_equal "puts 1\n", result
     end
   end
 
@@ -377,7 +377,7 @@ class TestRuleLoopPolicy < Minitest::Test
 
       result = loop.__send__(:extract_code, "plain response, no code fence")
 
-      assert_equal "plain response, no code fence", result
+      assert_equal "plain response, no code fence\n", result
     end
   end
 

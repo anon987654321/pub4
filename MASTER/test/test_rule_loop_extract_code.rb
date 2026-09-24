@@ -11,13 +11,18 @@ class TestRuleLoopExtractCode < Minitest::Test
   def extract(text, ext) = Master::Fix::RuleLoop.allocate.send(:extract_code, text, ext)
 
   def test_an_extensionless_script_takes_a_ruby_fence
-    assert_equal "puts 1", extract("Here is the fix:\n```ruby\nputs 1\n```\nDone.", "")
+    assert_equal "puts 1\n", extract("Here is the fix:\n```ruby\nputs 1\n```\nDone.", "")
   end
 
   def test_the_block_in_the_files_language_wins_over_an_earlier_one
     reply = "Before:\n```js\nx\n```\nAfter:\n```ruby\ny = 1\n```\n"
 
-    assert_equal "y = 1", extract(reply, ".rb")
+    assert_equal "y = 1\n", extract(reply, ".rb")
+  end
+
+  # Stripped bare, every proposal deleted the file's final newline.
+  def test_the_extracted_file_ends_in_one_newline
+    assert_equal "x = 1\n", extract("```ruby\nx = 1\n\n\n```\n", ".rb")
   end
 
   def test_a_fenced_refusal_is_no_proposal

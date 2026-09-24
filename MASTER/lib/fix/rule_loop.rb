@@ -355,9 +355,12 @@ module Master
         # nothing.
         return if code && CollapseGuard.sentinel?(code)
 
-        return code.strip if code
+        # A source file ends in one newline. Stripped bare, every proposal
+        # deleted it: the verifier refused a correct rescue fix for exactly
+        # that, and apply refused another for the FINAL_NEWLINE it introduced.
+        return "#{code.strip}\n" if code
 
-        text.strip
+        "#{text.strip}\n"
       end
 
       def converged?(prev, current, threshold: CONVERGE_THRESHOLD)

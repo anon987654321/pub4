@@ -141,7 +141,7 @@ class TestRuleLoopPerFixCommit < Minitest::Test
 
       assert_nil loop.send(:extract_code, "```html\nUNCHANGED\n```", ".html")
       assert_nil loop.send(:extract_code, "UNCHANGED", ".html")
-      assert_equal "puts 1", loop.send(:extract_code, "```ruby\nputs 1\n```", ".rb")
+      assert_equal "puts 1\n", loop.send(:extract_code, "```ruby\nputs 1\n```", ".rb")
     end
   end
 
@@ -191,7 +191,7 @@ class TestRuleLoopPerFixCommit < Minitest::Test
       outcome = loop.send(:fix_violation, violation_in(path))
 
       assert_equal :applied, outcome
-      assert_equal "clean", File.read(path)
+      assert_equal "clean\n", File.read(path)
       message, findings, owned_paths = committer.calls.first
       assert_equal "fix: TEST_RULE in sample.rb", message
       assert_equal [path], owned_paths
@@ -214,7 +214,7 @@ class TestRuleLoopPerFixCommit < Minitest::Test
       outcome = loop.send(:fix_violation, violation_in(path))
 
       assert_equal :commit_refused, outcome
-      assert_equal "clean", File.read(path)
+      assert_equal "clean\n", File.read(path)
       assert_includes bus.events.map(&:first), "rule_loop:commit_refused"
     end
   end
