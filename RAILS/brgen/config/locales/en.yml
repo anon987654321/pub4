@@ -377,7 +377,7 @@ en:
     member_count:
       one: 1 member
       other: "%{count} members"
-    message_action: "Message"
+    private_message_action: "Message privately"
     no_people: "Nobody by that name here yet."
     find_people: "Search for someone"
     username: Username
