@@ -265,6 +265,14 @@ module Master
         path
       end
 
+      def guarded_page_text(text, url)
+        Master::Review::Security::InjectionGuard.new(mode: :permissive).screen(
+          text,
+          tool: "social_browser",
+          source: url
+        )
+      end
+
       def challenge?(page)
         body = page.body.to_s.downcase
         CHALLENGE_MARKERS.any? { |marker| body.include?(marker) }
