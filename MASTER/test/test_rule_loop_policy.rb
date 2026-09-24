@@ -333,6 +333,19 @@ class TestRuleLoopPolicy < Minitest::Test
     assert_nil verdict_for(-> { raise "provider down" })
   end
 
+  # The verifier saw the first 600 characters of each version, so a fix deep
+  # in a file was invisible and every one was refused as byte-identical.
+  def test_reflexion_is_shown_a_change_made_deep_in_the_file
+    original = (1..200).map { |n| "line_#{n} = #{n}\n" }.join
+    proposed = original.sub("line_150 = 150", "line_150 = :fixed")
+    prompt = build_loop(root: Dir.pwd, bus: FakeBus.new, scanner: Scanner.new, agent: ScriptedAgent.new("SAFE"))
+               .send(:reflexion_prompt, { rule: "TEST_RULE", line: 150, message: "fix me" }, original, proposed)
+
+    assert_includes prompt, "-line_150 = 150"
+    assert_includes prompt, "+line_150 = :fixed"
+    refute_includes prompt, "line_1 = 1\n", "unchanged lines far from the fix stay out"
+  end
+
   # The fallback returned the model's raw reply, prose and fences included, or
   # the literal UNCHANGED, and apply wrote that over the source.
   def test_the_whole_file_fallback_returns_code_or_nothing

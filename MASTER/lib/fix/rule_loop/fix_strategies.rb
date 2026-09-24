@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "tmpdir"
+
 module Master
   module Fix
     class RuleLoop
@@ -43,22 +45,40 @@ module Master
           nil
         end
 
+        # The verifier judges the change, so it is shown the change. It used to
+        # see the first 600 characters of each version: a fix at line 113 of
+        # bin/doctor was invisible, both excerpts matched, and the verifier
+        # rightly called the fix byte-identical and refused it. Every repair
+        # below a file's first screen died the same way.
         def reflexion_prompt(violation, original_src, proposed_src)
           <<~PROMPT
             Verify this proposed code fix is correct. Reply ONLY with "SAFE" or "UNSAFE: <reason>".
 
             VIOLATION: #{violation[:rule]} line #{violation[:line]} — #{violation[:message]}
 
-            ORIGINAL:
-            ```
-            #{original_src[0, 600]}
-            ```
-
-            PROPOSED FIX:
-            ```
-            #{proposed_src[0, 600]}
+            The change, as a unified diff of the whole file:
+            ```diff
+            #{change_under_review(original_src, proposed_src)}
             ```
           PROMPT
+        end
+
+        REVIEW_DIFF_LINES = 400
+
+        def change_under_review(original_src, proposed_src)
+          return "(no change: the proposal is identical to the original)" if original_src == proposed_src
+
+          Dir.mktmpdir("reflexion") do |dir|
+            before = File.join(dir, "original")
+            after = File.join(dir, "proposed")
+            File.write(before, original_src)
+            File.write(after, proposed_src)
+            out, = Master::Io::Exec.capture2e("git", "diff", "--no-index", "--no-color", "-U5", before, after)
+            lines = out.lines.drop_while { |line| !line.start_with?("@@") }
+            return lines.join if lines.size <= REVIEW_DIFF_LINES
+
+            "#{lines.first(REVIEW_DIFF_LINES).join}… #{lines.size - REVIEW_DIFF_LINES} more lines of diff\n"
+          end
         end
 
         # Only SAFE approves. A reply that was neither word, a refusal, a rambling
