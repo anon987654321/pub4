@@ -39,7 +39,7 @@ module Master
         Ground::HostBudget.repo_wide_request?(goal.to_s)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "FoldRisk.repo_wide?")
-        false
+        raise "repo-wide risk policy unreadable: #{e.class}: #{e.message}"
       end
     end
   end
