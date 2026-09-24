@@ -7,7 +7,7 @@ module Master
 
       # One topic per registered command, and the registry is the whole list:
       # `build` returns clear, commit, doctor, fix, help, model, orders, pair,
-      # review, rollback, rules, soul, status, undo and why, and nothing reaches
+      # plugin, review, rollback, rules, soul, status, undo and why, and nothing reaches
       # Stages::Route. test_command_registry_dispatch holds the two together, so a
       # verb cannot be built without a page or paged without being built.
       HELP_TOPICS = {
