@@ -8,9 +8,12 @@ class Playlist::PlaylistsController < Playlist::BaseController
   before_action :authorize_owner_or_editor, only: %i[edit update destroy]
 
   def index
-    # Minimal immersive view for radio.brgen.no: the shared .brgen-logo-mark
-    # brand, the warp visualizer, and the tap overlay.
-    # No library, trending, archaeology notes, nav, or now-playing.
+    @tracks = Playlist::Track.publicly_visible.unexpired.recent.includes(:user).limit(24)
+    @radio_playlist = Playlist::Playlist.new(
+      name: t("radio.name"),
+      tracks_count: @tracks.size,
+      plays_count: 0
+    )
   end
 
   def show
