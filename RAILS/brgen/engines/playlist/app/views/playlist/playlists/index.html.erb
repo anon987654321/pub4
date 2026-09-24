@@ -1,3 +1,77 @@
-<% content_for :title, t("radio.page_title") %>
+<% content_for :title, t("playlist.home_title") %>
 
-<%= render "playlist/playlists/radio_tunnel", minimal: false, auto_start: false %>
+<div class="radio-home">
+  <header class="radio-home-header">
+    <div>
+      <p class="radio-home-eyebrow"><%= t("playlist.home_eyebrow") %></p>
+      <h1><%= t("playlist.home_heading") %></h1>
+      <p><%= t("playlist.home_blurb") %></p>
+    </div>
+    <nav aria-label="<%= t("playlist.navigation") %>">
+      <%= link_to t("playlist.browse_tracks"), hosted_tracks_path, class: "radio-home-link" %>
+      <% if authenticated? %>
+        <%= link_to t("playlist.upload_track"), new_hosted_track_path, class: "radio-home-link radio-home-link--primary" %>
+        <%= link_to t("playlist.new_playlist"), new_playlist_path, class: "radio-home-link" %>
+      <% end %>
+    </nav>
+  </header>
+
+  <% if @featured_track %>
+    <section class="radio-featured" aria-labelledby="radio-featured-title">
+      <div class="radio-section-kicker"><%= t("playlist.featured") %></div>
+      <%= render "playlist/playlists/player",
+            playlist: @featured_track,
+            playlist_name: @featured_track.title,
+            tracks_count: 1,
+            plays_count: @featured_track.listens.count,
+            tracks: [@featured_track],
+            active_track: @featured_track,
+            embedded: true,
+            comments: [],
+            track_comments: {} %>
+      <%= link_to t("playlist.open_track"), hosted_track_path(@featured_track), class: "radio-featured-link", id: "radio-featured-title" %>
+    </section>
+  <% else %>
+    <%= render "shared/empty_state",
+          title: t("empty.no_hosted_tracks"),
+          body: t("empty.no_hosted_tracks_body"),
+          action: authenticated? ?
+            { label: t("playlist.upload_track"), path: new_hosted_track_path } :
+            { label: t("playlist.browse_playlists"), path: root_path } %>
+  <% end %>
+
+  <section class="radio-discovery" aria-labelledby="radio-recent-heading">
+    <header class="radio-section-header">
+      <div>
+        <p class="radio-home-eyebrow"><%= t("playlist.recent_eyebrow") %></p>
+        <h2 id="radio-recent-heading"><%= t("playlist.recent_tracks") %></h2>
+      </div>
+      <%= link_to t("playlist.see_all_tracks"), hosted_tracks_path, class: "radio-section-link" %>
+    </header>
+    <div class="radio-track-list">
+      <% @tracks.each do |track| %>
+        <%= render "playlist/playlists/radio_track_card", track: track %>
+      <% end %>
+    </div>
+  </section>
+
+  <% if @playlists.any? %>
+    <section class="radio-discovery" aria-labelledby="radio-playlists-heading">
+      <header class="radio-section-header">
+        <div>
+          <p class="radio-home-eyebrow"><%= t("playlist.city_eyebrow") %></p>
+          <h2 id="radio-playlists-heading"><%= t("playlist.popular_playlists") %></h2>
+        </div>
+      </header>
+      <div class="radio-playlist-list">
+        <% @playlists.each do |playlist| %>
+          <%= link_to playlist_path(playlist), class: "radio-playlist-card" do %>
+            <strong><%= playlist.name %></strong>
+            <span><%= t("playlist.playlist_stats", tracks: playlist.tracks_count, plays: playlist.plays_count) %></span>
+            <small><%= playlist.user&.display_name || t("playlist.unknown_creator") %></small>
+          <% end %>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+</div>
