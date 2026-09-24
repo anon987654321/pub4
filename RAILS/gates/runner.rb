@@ -182,8 +182,8 @@ end
 # argument for saying it out loud: eighteen declared states, three actual pages,
 # and every summary printed above them read PASSED.
 #
-# It never changes an exit code, and a present Chrome is the silent case: a
-# browser gate that ran has its own outcome to report.
+# Missing Chrome is an explicit inconclusive outcome. A present Chrome is the
+# silent case: a browser gate that ran has its own outcome to report.
 def report_browser_precondition(keys)
   wanted = keys.select { |key| needs(key).include?("browser") }
   return [] if wanted.empty?
