@@ -30,6 +30,22 @@ class TestVanguardProtocol < Minitest::Test
     assert Ops::RuntimeLoopGuards.guard_subprocess_context!
   end
 
+  class ExplodingAstRule < Review::Scan::Rule
+    declare id: "exploding_ast", severity: :error
+
+    def check_ast(_ast, _code, path:)
+      raise "fixture AST failure at #{path}"
+    end
+  end
+
+  def test_ast_rule_failure_is_not_clean
+    rule = ExplodingAstRule.new
+    error = assert_raises(RuntimeError) do
+      rule.check("class Broken", path: "broken.rb")
+    end
+    assert_match(/exploding_ast AST check failed/, error.message)
+  end
+
   def test_symbol_visitor_tracks_metrics
     source = <<~RUBY
       module Demo
