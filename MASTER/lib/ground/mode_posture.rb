@@ -91,10 +91,24 @@ module Master
       end
 
       def load_cfg
-        data = Master.load_yaml(Master.limits_path, default: {}) || {}
-        data["session_modes"] || { "default" => "balanced", "modes" => {} }
-      rescue StandardError
-        { "default" => "balanced", "modes" => {} }
+        path = File.join(@root, "data", "limits.yml")
+        path = Master.limits_path unless File.file?(path) && File.expand_path(@root) == File.expand_path(File.join(Master::ROOT, ".."))
+
+        unless File.file?(path)
+          return { "default" => "balanced", "modes" => {} } unless File.expand_path(@root) == File.expand_path(Master::ROOT)
+
+          raise "mode posture configuration missing: #{path}"
+        end
+
+        data = Master.load_yaml(path)
+        modes = data["session_modes"]
+        raise "mode posture configuration missing session_modes: #{path}" unless modes.is_a?(Hash)
+
+        modes
+      rescue StandardError => e
+        raise if e.message.start_with?("mode posture configuration")
+
+        raise "mode posture configuration unreadable: #{e.class}: #{e.message}"
       end
 
       def truthy?(value)
