@@ -47,6 +47,14 @@ class TestToolProfile < Minitest::Test
     assert_match(/paired messaging/, Master::Ground::Tool::Profile.session_note)
   end
 
+  def test_malformed_yaml_profiles_do_not_activate_fallback_allowlists
+    broken = { "tools" => { "profiles" => [] } }
+
+    Master.stub(:load_yaml, ->(*) { broken }) do
+      assert_raises(RuntimeError) { Master::Ground::Tool::Profile.public_names }
+    end
+  end
+
   def test_yaml_profiles_are_the_allowlists
     public = Master::Ground::Tool::Profile.public_names
     messaging = Master::Ground::Tool::Profile.messaging_names
