@@ -1,0 +1,5 @@
+---
+id: social_browser
+version: 1.0.0
+description: Ferrum browser automation for operator-owned social accounts and inbound conversations.
+entrypoint: social_browser.rb
