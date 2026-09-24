@@ -18,7 +18,7 @@ module Master
     class VisualGhostStack
       HISTORY_LIMIT = 5
       DIFF_TOLERANCE_PX = 0.5
-      GHOST_OPACITIES = [ 0.22, 0.12, 0.07, 0.04, 0.025 ].freeze
+      GHOST_OPACITIES = [ 0.05, 0.08, 0.12, 0.18, 0.32 ].freeze
 
       def initialize(root:, dir:)
         @root = root
@@ -26,7 +26,7 @@ module Master
       end
 
       def capture(capture, pass:)
-        state = capture.dig(:payload, "composition", "state").to_s.presence || "resting"
+        state = capture.dig(:payload, "composition", "state").to_s\n        state = "resting" if state.empty?
         surface = capture.fetch(:surface)
         key = safe_slug("#{surface.id}__#{state}")
         history = File.join(@root, "MASTER", ".master", "visual_evidence", key)
