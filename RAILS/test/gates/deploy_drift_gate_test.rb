@@ -2,6 +2,7 @@
 
 require "fileutils"
 require "json"
+require "open3"
 require "minitest/autorun"
 require "tmpdir"
 
@@ -95,5 +96,20 @@ class DeployDriftGateTest < Minitest::Test
 
     assert_match(/deployed 0{40}, which this checkout does not contain/, result.unchecked.join(" | "))
     assert_empty result.failures, "an unfetched commit is not a drift finding"
+  end
+
+  def test_a_failed_head_measurement_is_inconclusive
+    stamp("brgen", sha: head)
+    gate = GATE.new
+    failure = `git -C #{GATE::ROOT} rev-parse --not-a-real-option 2>&1`
+    refute_empty failure
+
+    gate.stub(:git_repo?, true) do
+      gate.stub(:git_capture, ["", Open3.capture2e("false").last]) do
+        result = gate.run
+        assert_equal :inconclusive, result.outcome
+        assert_match(/git rev-parse HEAD failed/, result.unchecked.join(" | "))
+      end
+    end
   end
 end
