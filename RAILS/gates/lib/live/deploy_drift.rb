@@ -116,7 +116,7 @@ module Deploy
       return MASTER_PATHS if app == "master"
 
       root = app_roots[app] || "RAILS/#{app}"
-      @app_roots_error ? [root, *SHARED_PATHS] : [root, *SHARED_PATHS]
+      [root, *SHARED_PATHS]
     end
 
     def read_stamps
