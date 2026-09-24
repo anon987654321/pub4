@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "yaml"
+require_relative "master_design"
 
 module Operator
   # Ratchet: every spacing, line-height, radius and weight literal in the family's
@@ -43,7 +43,6 @@ module Operator
   # on it or the line above.
   module ScaleLint
     RAILS_ROOT = File.expand_path("../../..", __dir__)
-    TOKENS = File.join(RAILS_ROOT, "shared", "design_tokens.yml")
     OPT_OUT = "scale: ok"
 
     SKIP = %r{/(node_modules|vendor|builds|public/assets|tmp)/}
@@ -109,13 +108,13 @@ module Operator
       "#{allowed.min_by { |step| (step - px).abs }.to_i}px"
     end
 
-    def tokens = @tokens ||= YAML.safe_load_file(TOKENS)
+    def tokens = @tokens ||= MasterDesign.design_system
 
     def scale = @scale ||= tokens.fetch("scale")
 
     # rem is normalised at 16, not at brgen's 18. A scale step is a design
     # decision expressed in one unit or the other, and 0.75rem and 12px are the
-    # same decision written twice -- that is exactly what design_tokens.yml says
+    # same decision written twice -- the canonical design system keeps one owner
     # when it explains why chrome_inset is absolute. What brgen's root does to
     # the rendered pixel is a different question from whether the author picked
     # a step off the scale, and only the second one is answerable from source.
@@ -129,7 +128,7 @@ module Operator
     REPO_ROOT = File.expand_path("..", RAILS_ROOT)
 
     # MASTER's web face is the fourth surface of this family and it is governed
-    # from here already: design_tokens.yml carries a `face_root:` section and
+    # from here already: MASTER/data/rules.yml#design_system carries a `face_root:` section and
     # RAILS/tools/generate_face_root_css.rb writes it into face.css's :root. The
     # tokens were shared and the rhythm was not -- face.css sits on a 2px
     # sub-grid (6px x14, 10px x10, 14px x5, 5px x3) while the three apps are on

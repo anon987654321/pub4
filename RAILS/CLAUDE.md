@@ -124,4 +124,4 @@ one, and leave `PROTECTED` sections alone unless the task names them.
 Scanners hold the parts of this that one file can show: `NO_JQUERY`,
 `NO_INLINE_ASSETS_IN_SHELL`, `NO_MULTIPLE_LANGUAGES`, `NO_INLINE_STYLES`,
 `MAGIC_COLOR`. The rest are properties of a diff, so they are checked by reading
-one. Numbers come from `shared/design_tokens.yml`, never from a document.
+one. Design values come from `MASTER/data/rules.yml#design_system`, never from a second token authority.

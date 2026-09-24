@@ -4,6 +4,7 @@
 # Asserts contracts against current main paths (not the obsolete pub4_* renames).
 require "yaml"
 require "minitest/autorun"
+require_relative "../shared/lib/operator/master_design"
 require_relative "../shared/lib/operator/scss_rules"
 
 class DesignContractTest < Minitest::Test
@@ -48,7 +49,7 @@ class DesignContractTest < Minitest::Test
   }.freeze
 
   def test_social_tokens_match_dialect_tokens_defaults
-    social = YAML.safe_load_file(TOKENS_YML).fetch("social")
+    social = Operator::MasterDesign.design_system.fetch("social")
     scss = File.read(DIALECT_TOKENS_SCSS)
     dark_block = mixin_block(scss, "dark-tokens")
 

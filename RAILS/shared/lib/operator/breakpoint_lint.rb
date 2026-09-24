@@ -1,11 +1,10 @@
 # frozen_string_literal: true
 
 require_relative "baseline_ratchet"
-
-require "yaml"
+require_relative "master_design"
 
 module Operator
-  # Ratchet: every media-query width must be one of design_tokens.yml's `viewport`
+  # Ratchet: every media-query width must be one of MASTER's canonical `design_system.viewport`
   # edges, or that edge minus 1px for a max-width bound.
   #
   # Colour, space, motion, elevation and the dialect maps are all single-sourced;
@@ -32,7 +31,6 @@ module Operator
   # `// breakpoint: ok` on it or the line above.
   module BreakpointLint
     RAILS_ROOT = File.expand_path("../../..", __dir__)
-    TOKENS = File.join(RAILS_ROOT, "shared", "design_tokens.yml")
     OPT_OUT = "breakpoint: ok"
 
     # (min-width: 768px) / (max-width: 47.9375rem) / (min-device-width: 480px)
@@ -99,7 +97,7 @@ module Operator
       return true if exceeded.empty?
 
       warn "breakpoint_lint: exceeds baseline — #{exceeded.join("; ")}"
-      warn "breakpoint_lint: use a design_tokens.yml viewport edge (max-width bounds are edge - 1px)"
+      warn "breakpoint_lint: use a MASTER design_system.viewport edge (max-width bounds are edge - 1px)"
       false
     end
 
@@ -185,7 +183,7 @@ module Operator
 
     def edges
       @edges ||= begin
-        viewport = YAML.safe_load_file(TOKENS).fetch("viewport")
+        viewport = MasterDesign.design_system.fetch("viewport")
         viewport.values.map { |value| Integer(value) }.sort
       end
     end

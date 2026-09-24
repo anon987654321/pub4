@@ -35,7 +35,7 @@
   $accent: #efefef,
   $danger: #e46151,
   // The --c-* channel is the MASTER face's, not the apps'. It keeps its chroma
-  // and stays pinned to design_tokens.yml face_root.anchors, which the production
+  // and stays pinned to MASTER/data/rules.yml#design_system face_root.anchors, which the production
   // gate asserts — zeroing it here to match the greyscale broke that link and
   // would have recoloured the face, a surface this scheme does not cover.
   $c-text: oklch(86% 0.02 300),
@@ -171,7 +171,7 @@
   // Every app takes this default; anything that only pins a palette — a
   // vertical, a theme toggle — cannot change the face as a side effect.
   //
-  // One family for every app, from design_tokens.yml shared_chrome.font; the
+  // One family for every app, from MASTER/data/rules.yml#design_system.shared_chrome.font; the
   // sync tool keeps this value equal to it.
   --font: "Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif;
 

@@ -3,7 +3,7 @@
 module Deploy
   class RenderedGeometryGate
     # The palette half of the gate: which text colours the browser actually
-    # painted, against the colours design_tokens.yml sanctions.
+    # painted, against the colours sanctioned by MASTER/data/rules.yml#design_system.
     #
     # A module included back into the gate, so it keeps @result, @tokens and the
     # finding helpers it shares with the other checks. Nothing in here builds a
@@ -17,7 +17,7 @@ module Deploy
 
         top = rogue.sort_by { |_, count| -count }.first(4)
         @result.fail(
-          "geometry tokens: #{surface.id} renders #{rogue.size} text colour(s) outside design_tokens.yml — " \
+          "geometry tokens: #{surface.id} renders #{rogue.size} text colour(s) outside MASTER/data/rules.yml#design_system — " \
           "#{top.map { |hex, count| "#{hex}×#{count}" }.join(', ')} principle=exact_token_use",
           severity: :soft
         )
@@ -25,12 +25,12 @@ module Deploy
 
       # Every colour the design system actually sanctions, plus the achromatic
       # extremes every UI legitimately renders.
-      # Walk the whole tree, not just one level. design_tokens.yml nests
+      # Walk the whole tree, not just one level. MASTER/data/rules.yml#design_system nests
       # vertical_accents as `messenger: { accent: "#6b7fd7", hover: "#5566c4" }`,
       # so a one-level each_value saw a Hash where it expected a hex and skipped
       # every vertical accent in the file. The channel pages were then reported as
-      # painting #6b7fd7 "outside design_tokens.yml" — a colour that is declared
-      # in design_tokens.yml, on the line above its own contrast measurement.
+      # painting #6b7fd7 "outside MASTER/data/rules.yml#design_system" — a colour that is declared
+      # in MASTER/data/rules.yml#design_system, on the line above its own contrast measurement.
       def token_palette
         set = %w[#000000 #ffffff]
         collect_hexes(@tokens, set)

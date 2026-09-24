@@ -7,8 +7,8 @@ MASTER face and all RAILS apps share one **layout chrome** contract. Dialects
 (social / luxury / wscons / face CRT) restyle color, type, and radius. They must
 not invent a second z-scale, skip-link, tap floor, or main landmark pattern.
 
-Source of truth: `shared/design_tokens.yml` → `shared_chrome` +
-`face_root.layout`. CSS: `shared/app/assets/stylesheets/_layout_chrome.scss`
+Source of truth: `../../MASTER/data/rules.yml#design_system`. The committed
+`shared/design_tokens.yml` is a generated projection. CSS: `shared/app/assets/stylesheets/_layout_chrome.scss`
 (RAILS), face `:root` generated into `MASTER/web/public/face.css`.
 
 ## Focus triangle (active product surface)
@@ -53,8 +53,7 @@ Social primitives (shared engine):
 1. `viewport-fit=cover` (safe-area aware)
 2. First focusable: `.skip-link` → primary content
 3. `main` with `id` + `role="main"`
-4. CSS vars present (all defined in `_dialect_tokens.scss`, values from
-   `design_tokens.yml`): `--chrome-inset` (0.75rem), `--tap-min` /
+4. CSS vars present (all defined in `_dialect_tokens.scss`, values from `MASTER/data/rules.yml#design_system`): `--chrome-inset` (0.75rem), `--tap-min` /
    `--bar-height` (44px), `--z-canvas`…`--z-skip` (shared ladder), `--safe-*`
 5. Interactive primary controls ≥ 44px tall
 6. No second box-shadow elevation language (flat UI); face popover exception

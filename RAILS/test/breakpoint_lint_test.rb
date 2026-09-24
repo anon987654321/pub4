@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require "yaml"
 require "tempfile"
 require_relative "../shared/lib/operator/breakpoint_lint"
 
@@ -66,12 +65,12 @@ class BreakpointLintTest < Minitest::Test
                  "#{L.ambiguous_pixels.join(', ')}"
   end
 
-  def test_the_token_list_is_the_source_and_is_not_empty
-    viewport = YAML.safe_load_file(L::TOKENS).fetch("viewport")
+  def test_the_canonical_viewport_scale_is_not_empty
+    viewport = Operator::MasterDesign.design_system.fetch("viewport")
 
-    refute_empty viewport, "design_tokens.yml lost its viewport scale"
+    refute_empty viewport, "MASTER/data/rules.yml#design_system lost its viewport scale"
     assert_equal viewport.values.map { |v| Integer(v) }.sort, L.edges,
-                 "the lint must read the tokens, not carry its own copy"
+                 "the lint must read the canonical design system, not carry its own copy"
   end
 
   # Every media query in the tree resolves to a declared edge or an edge minus one,

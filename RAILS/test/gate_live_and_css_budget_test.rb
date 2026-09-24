@@ -102,7 +102,7 @@ class GateLiveAndCssBudgetTest < Minitest::Test
   end
 
   def design_tokens
-    YAML.safe_load_file(File.expand_path("../shared/design_tokens.yml", __dir__))
+    Operator::MasterDesign.design_system
   end
 
   def budget

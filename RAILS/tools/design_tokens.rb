@@ -2,10 +2,12 @@
 # frozen_string_literal: true
 
 require "yaml"
+require_relative "../shared/lib/operator/master_design"
 
 module DesignTokens
   ROOT = File.expand_path("..", __dir__)
-  SOURCE = File.join(ROOT, "shared", "design_tokens.yml")
+  SOURCE = File.join(ROOT, "..", "MASTER", "data", "rules.yml")
+  ARTIFACT = File.join(ROOT, "shared", "design_tokens.yml")
   FACE_ORDER = %w[c_text x_text c_accent c_danger c_code].freeze
 
   # Explicit yml-key -> css-var maps for the values that have drifted before
@@ -59,7 +61,7 @@ module DesignTokens
   end
 
   def load
-    YAML.safe_load_file(SOURCE) || {}
+    Operator::MasterDesign.design_system(SOURCE)
   end
 
   def face_root_css
@@ -81,7 +83,7 @@ module DesignTokens
     # Read, not restated. This line used to hardcode 0.75rem behind a comment
     # claiming it matched shared_chrome.chrome_inset — a copy describing itself
     # as a reference. When the token moved to 12px the face kept the old value
-    # and the two drifted silently, which is the whole reason design_tokens.yml
+    # and the two drifted silently, which is the reason the generated projection now comes from MASTER
     # exists.
     lines << "  --chrome-inset: #{root.fetch(%q{shared_chrome}).fetch(%q{chrome_inset})};"
     { "t" => "top", "r" => "right", "b" => "bottom", "l" => "left" }.each do |short, side|
@@ -96,6 +98,16 @@ module DesignTokens
     end
     lines << "}"
     lines.join("\n")
+  end
+
+  def sync_design_artifact!(path = ARTIFACT)
+    canonical = load
+    actual = File.file?(path) ? YAML.safe_load_file(path, aliases: true) : nil
+    return false if actual == canonical
+
+    body = YAML.dump(canonical).sub(/\A---\n/, "")
+    File.write(path, "# GENERATED from MASTER/data/rules.yml#design_system. Do not edit by hand.\n#{body}")
+    true
   end
 
   def face_root_block
@@ -140,7 +152,7 @@ module DesignTokens
 
     return nil if drifted.empty?
 
-    "_dialect_tokens.scss defaults drifted from design_tokens.yml anchors: #{drifted.join(', ')}"
+    "_dialect_tokens.scss defaults drifted from MASTER design_system anchors: #{drifted.join(', ')}"
   end
 
   def face_root_drift?(path)
@@ -156,9 +168,8 @@ module DesignTokens
     "face.css :root drift — run: ruby RAILS/tools/generate_face_root_css.rb"
   end
 
-  # Every .scss under RAILS/ -- deliberately broad, since the whole point is
-  # that these values get hand-copied into per-app files (amber/_variables,
-  # both _ui_refinements_pass.scss) rather than living in one place.
+  # Every .scss under RAILS/. Generated CSS is a projection of the canonical
+  # MASTER design system and is never an authority of its own.
   def all_scss_files
     Dir.glob(File.join(ROOT, "*/app/assets/stylesheets/**/*.scss"))
   end
@@ -190,7 +201,7 @@ module DesignTokens
     return nil unless m
     return nil if normalize(m[2]) == normalize(expected_value)
 
-    "#{path.sub("#{ROOT}/", '')}: --#{css_var} is #{m[2].strip}, design_tokens.yml says #{expected_value}"
+    "#{path.sub("#{ROOT}/", '')}: --#{css_var} is #{m[2].strip}, MASTER/data/rules.yml#design_system says #{expected_value}"
   end
 
   # sync: true writes corrections and returns changed paths; sync: false
@@ -222,4 +233,8 @@ module DesignTokens
 
   def sync_dialect_tokens! = reconcile_dialect_maps(sync: true)
   def dialect_token_drift = reconcile_dialect_maps(sync: false)
+end
+
+if $PROGRAM_NAME == __FILE__
+  puts DesignTokens.sync_design_artifact! ? "design_tokens: generated from MASTER/data/rules.yml" : "design_tokens: already in sync"
 end

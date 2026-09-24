@@ -124,7 +124,7 @@ module Master
         raw = dig("typography", "line_height", "allowed", root:)
         return raw.map(&:to_f) if raw.is_a?(Array) && !raw.empty?
 
-        # Same steps as RAILS/shared/design_tokens.yml scale.line_height / ScaleLint
+        # Same steps as rules.yml#design_system.scale.line_height / ScaleLint
         [1.0, 1.25, 1.4, 1.5, 1.6]
       end
 

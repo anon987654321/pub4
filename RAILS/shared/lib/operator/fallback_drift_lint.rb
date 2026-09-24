@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "set"
-require "yaml"
+require_relative "master_design"
 
 module Operator
   # Flags var(--token, #hex) fallbacks whose hex literal matches NO real
@@ -176,10 +176,7 @@ module Operator
     end
 
     def collect_from_yaml(known)
-      path = File.join(rails_root, "shared/design_tokens.yml")
-      return unless File.readable?(path)
-
-      YAML.safe_load_file(path).each_value do |entries|
+      MasterDesign.design_system.each_value do |entries|
         next unless entries.is_a?(Hash)
 
         entries.each do |key, value|

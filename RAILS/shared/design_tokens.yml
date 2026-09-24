@@ -1,3 +1,7 @@
+# GENERATED from MASTER/data/rules.yml#design_system. Do not edit by hand.
+# Regenerate through the RAILS design-token tooling.
+# Canonical material design values. This block is the only machine-readable
+# design-token authority; RAILS/shared/design_tokens.yml is a generated view.
 # Canonical design token anchors — keep in sync with _dialect_tokens.scss defaults and face.css :root.
 # Regenerate face :root: ruby RAILS/tools/generate_face_root_css.rb
 #
@@ -8,8 +12,7 @@
 #   openbsd_wscons → bsdports terminal green (opt-in via body class)
 #   face_root    → MASTER web face.css :root only (CRT-flat, all radii 0)
 # Intent: social = soft radii; face/bsdports = CRT-flat zeros; luxury = calm product.
-# Light social = indigo on cool paper (not Twitter #1d9bf0). Vertical accents: vertical_accents: below.
-
+# Light social = indigo on cool paper (not Twitter
 # The viewport scale. Every other axis in this system is single-sourced; this one
 # was not, so responsive breakpoints were written by hand and drifted: 13 distinct
 # widths across 58 media queries in the three apps plus the engine.
@@ -27,18 +30,12 @@
 # 2026-08-11. New work picks one of these; a new edge is a design decision that
 # goes in this list first.
 viewport:
-  xs: 480    # 10 uses — small phone
-  sm: 576    # 1 use (36rem, amber brand)
-  md: 640    # 5 uses (4 as 640px, 3 as 40rem) — large phone / small tablet
-  lg: 768    # 22 uses (21 as 768px, 1 as 48rem) — tablet; 767 is its max-bound
-  # 1265 is x.com's wide breakpoint and brgen's three-column desktop edge
-  # (_root, _marketplace_cards, _canvas). 1264 is its max-bound and correct.
-  wide: 1265 # 6 uses
-  xl: 1280   # 5 uses, all in shared/_minimal.scss
-  # Both 1265 and 1280 are live, 15px apart, which is itself drift — but they are
-  # in different files with different jobs and collapsing them changes what
-  # renders. Recorded rather than resolved.
-
+  xs: 480
+  sm: 576
+  md: 640
+  lg: 768
+  wide: 1265
+  xl: 1280
 # Shared motion + elevation (borders, never box-shadow) — export via CSS vars in apps.
 # Layout chrome is the family contract across MASTER face + RAILS apps (dialects may
 # restyle surfaces; they must not invent a second z-scale, tap floor, or skip-link).
@@ -65,22 +62,13 @@ shared_chrome:
   font_size_title: "1.25rem"
   font_size_display: "1.75rem"
   measure_body: "66ch"
-  # The one typeface, for every app and every surface: Helvetica Neue Pro where
-  # it is licensed, Helvetica Neue where macOS ships it, Arial where neither is. TYPOGRAPHY hierarchy allows two
-  # families; the second is font_code, for code blocks and the chat logs.
   font: '"Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif'
-  # Code blocks and syntax inside posts and comments, and the live chat logs
-  # (channel rooms, the nearby and anonymous widgets). Nowhere else.
   font_code: '"JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, monospace'
-  # Family layout chrome (12px = face inset-t/r/b/l base; 44px = WCAG + face-bar)
-  # Absolute, not rem: brgen sets its root to 18px, where 0.75rem resolves
-  # to 13.5px and puts every corner-anchored element on a fractional pixel.
   chrome_inset: "12px"
   tap_min: "44px"
   bar_height: "44px"
   page_gutter: "clamp(16px, 5vw, 48px)"
   feed_max: "600px"
-
 # The one geometry. Measured from joi.com on 2026-08-31 at 1440x900 with images
 # and media blocked, then moulded to this repo's law. Structure lives here and
 # is shared by every app; colour stays in the dialect blocks below, which is why
@@ -111,46 +99,28 @@ shared_chrome:
 #                   of 200 — a step you cannot see.
 #   the palette     hot rose on near-black, for a product that is not this one.
 system:
-  # A grid track, not a spacing value, so the rhythm lint does not measure it.
   tile_min: "224px"
   tile_gap_row: "24px"
   tile_gap_col: "8px"
-  # No control_height here: tap_min above is that number, used 126 times. A
-  # control must be tappable, so the touch target IS the control height.
   control_pad_inline: "16px"
   control_gap: "8px"
-  # One card radius for the whole family. 16 (social), 14 and 10 (luxury) were
-  # three answers to one question, and neither 14 nor 10 is on scale.radius_px.
   radius_card: "12px"
-
 # amber's wardrobe dialect: the family greyscale, so the garment photographed
 # on it is the only colour on the page. Use in amber + shared product views.
 luxury:
-  # Light mode (preferred for calm product viewing)
   light_bg: "#efefef"
   light_surface: "#ffffff"
   light_text: "#333333"
-  # Secondary ink at the 7:1 TYPOGRAPHY sets for normal text: 7.35 on light_bg
-  # and 8.45 on light_surface. #666666 measured 4.99 on light_bg.
   light_muted: "#4d4d4d"
-  # A hairline lighter than the ink it separates and still over the 3:1 WCAG
-  # 1.4.11 sets for a boundary: 3.08 on light_bg. At #666666 a rule weighed the
-  # same as secondary text.
   light_border: "#888888"
-  # The one accent is ink; the garment supplies every hue.
   light_accent: "#000000"
-  # The danger tone amber renders, and the one non-grey token: 7.21 on light_bg
-  # and 8.29 on light_surface, the same 7:1 as the rest of the copy.
-  # amber's application.scss paints it; the contrast census reads it here.
   light_danger: "#82372d"
-  # Dark mode (compatible with existing)
   dark_bg: "#000000"
   dark_surface: "#111111"
   dark_text: "#efefef"
   dark_muted: "#999999"
   dark_border: "#666666"
   dark_accent: "#efefef"
-  # Shared luxury scale (more breathing room than minimal); includes 2xs for dense chrome
   space_2xs: "0.25rem"
   space_xs: "0.5rem"
   space_sm: "0.75rem"
@@ -164,9 +134,6 @@ luxury:
   radius_sm: "6px"
   radius_md: "10px"
   radius_lg: "14px"
-  # Typography scale: the major third (1.25) on the 1rem body that TYPOGRAPHY
-  # names as its default ratio. display is the page title, 2.0-2.44x body from
-  # phone to desk; title is a section heading at 1.563x.
   font_size_display: "clamp(1.953rem, 1.5rem + 2vw, 2.441rem)"
   font_size_title: "1.563rem"
   font_size_body: "1rem"
@@ -174,7 +141,6 @@ luxury:
   letter_spacing_tight: "-0.01em"
   line_height_tight: "1.25"
   line_height_relaxed: "1.6"
-
 face_root:
   anchors:
     c_text: "oklch(86% 0.02 300)"
@@ -183,22 +149,13 @@ face_root:
     c_danger: "oklch(60% 0.14 35)"
     c_code: "oklch(74% 0.11 275)"
   font_mono: '"JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace'
-  # Two families on the face, by the owner's rule: font_label is the one sans
-  # for every label, heading, panel and the wordmark; font_mono stays for the
-  # console, meaning the reply log, the prompt and the name$ scrollback.
   font_label: '"Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif'
   face_bg: "black"
   derived:
     face_fg: "var(--c-text)"
-    # Solid, not an alpha over black: TYPOGRAPHY.accessibility asks 7:1 of
-    # secondary text, and 35% alpha gave 2.42:1. 81% lightness of c_text in
-    # oklch measures 7.72:1 on the face ground.
     face_muted: "color-mix(in oklch, var(--c-text) 81%, black)"
     face_dim: "color-mix(in srgb, var(--c-text) 18%, transparent)"
     face_soft: "color-mix(in srgb, var(--c-text) 8%, transparent)"
-    # The prompt name keeps its red (MASTER_PROMPT_AESTHETIC). c_danger is an
-    # anchor shared with _dialect_tokens.scss and measures 5.0:1, so the face
-    # lifts it here to 70% lightness, 7.54:1, without moving the anchor.
     face_alert: "color-mix(in oklch, var(--c-danger) 75%, white)"
     mood_accent: "var(--c-accent)"
     canvas_mood_accent: "var(--c-accent)"
@@ -207,11 +164,6 @@ face_root:
     border_strong: "color-mix(in srgb, var(--face-fg) 24%, transparent)"
     hover_tint: "color-mix(in srgb, var(--face-fg) 8%, transparent)"
   layout:
-    # The face's type scale and tap floor. face.css cannot read the RAILS
-    # --text-* ladder, so these are its ladder under the same names: meta 13px,
-    # body 16px (the root), title 20px, one 1.25 ratio (TYPOGRAPHY.type_scale).
-    # tap-min is an alias of shared_chrome, so the face and the RAILS tab chrome
-    # share one floor; #photo-button cites it.
     tap-min: 44px
     text-meta: "0.8125rem"
     text-title: "1.25rem"
@@ -220,17 +172,10 @@ face_root:
     radius-md: "0"
     radius-lg: "0"
     radius-pill: "0"
-    # More aliases of shared_chrome. chrome-inset is emitted once in
-    # generate_face_root_css, before --inset-*.
     face-bar-height: "44px"
     bar-height: "44px"
     hud-tier-status: "calc(var(--face-bar-height) + var(--safe-bottom) + 8px)"
     hud-tier-caption: "calc(var(--face-bar-height) + var(--safe-bottom) + var(--tap-min))"
-    # Additive-blending budget: ~17k points; raising size/glow/decay together
-    # (the 2026-07-09 "pristine detail tier": 0.024/1.38/0.88) overflows the
-    # framebuffer into a solid white oval. These are the last-known-good values.
-    # Particle size was fixed at one pixel (FACE_POINT_IS_ONE_PIXEL); the
-    # additive glow pass was retired, so neither is a runtime-read token.
     face-phosphor-decay: "0.80"
     transition-fast: "180ms"
     transition-normal: "300ms"
@@ -245,19 +190,16 @@ face_root:
     z-modal: "1000"
     z-toast: "1100"
     z-skip: "2000"
-
 # BRGEN_OLD dark — dark-inverted port of the real 2014 desktop.css/mobile.css
 # from pub/__OLD_BACKUPS/BRGEN_OLD. True neutral grayscale, no accent hue,
 # Arial. chrome_bg is the utility-bar tone (darker than bg), mirroring
-# the original's dark #333 bar against a white page.
+# the original's dark
 brgen_old_dark:
   bg: "#000000"
   surface: "#111111"
   surface_elevated: "#111111"
   search_bg: "#111111"
   text: "#efefef"
-  # 8.33:1 on bg and 7.49:1 on surface: TYPOGRAPHY accessibility asks 7.0 of
-  # normal text, and secondary is set at meta sizes.
   text_secondary: "#a3a3a3"
   border: "#666666"
   accent: "#efefef"
@@ -270,15 +212,12 @@ brgen_old_dark:
   radius_pill: "9999px"
   radius_card: "8px"
   radius_lg: "8px"
-
 brgen_old_light:
   bg: "#efefef"
   surface: "#ffffff"
   surface_elevated: "#ffffff"
   search_bg: "#ffffff"
   text: "#333333"
-  # 7.35:1 on bg and 8.45:1 on surface, the TYPOGRAPHY 7.0 floor for normal
-  # text, and still a visible step under text #333333.
   text_secondary: "#4d4d4d"
   border: "#666666"
   accent: "#000000"
@@ -291,33 +230,12 @@ brgen_old_light:
   radius_pill: "9999px"
   radius_card: "8px"
   radius_lg: "8px"
-
 openbsd_wscons:
   bg: "#000000"
   surface: "#000000"
   surface_elevated: "#0a140a"
   search_bg: "#0f1a0f"
   text: "#63c363"
-  # Resolved from the browser, not from the built stylesheet.
-  #
-  # This has now been wrong three times, each time in a way the previous
-  # correction introduced. It said #3d7a3d (4.05:1, a contrast failure the gate
-  # duly reported). It was then corrected to #63c363 on the reasoning that "a
-  # later :root sets --text-secondary: var(--text), so the painted value is
-  # --text" — and that later :root is inside `@media (prefers-contrast: more)`
-  # at application.scss:506. It is the high-contrast override, not the default.
-  #
-  # What a browser actually paints on bsdports with default settings, measured
-  # 2026-08-26: --text-secondary resolves to #499149 and it colours 45 elements
-  # on the ports index, against #63c363 on 219. So the dialect does have a
-  # secondary tier, the previous note's closing worry about lost hierarchy was
-  # about a value nothing renders, and 5.43:1 is the contrast that ships.
-  #
-  # 5.43:1 clears AA and misses the AAA 7.0 style.yml declares. That is real
-  # debt and it is counted here rather than declared away — the same trade the
-  # css_budget note records for amber's light_danger: a token that names the
-  # painted value makes the pair visible to every measurement, and one that
-  # names an aspiration hides it.
   text_secondary: "#499149"
   border: "#1a3a1a"
   hover: "rgba(99, 195, 99, 0.1)"
@@ -329,7 +247,6 @@ openbsd_wscons:
   line_height: "16px"
   radius_pill: "0"
   radius_card: "0"
-
 # Dark flat SGI-IRIX/8-bit chrome — used by the shared stack social apps (_dialect_tokens.scss), not MASTER face.
 # Flat: no bevels, no box-shadow. Subtle radii for cards and controls. Cool
 # graphite/indigo palette in place of x.com's black/blue.
@@ -343,9 +260,6 @@ social:
   border: "#666666"
   hover: "rgba(216, 214, 224, 0.1)"
   hover_subtle: "rgba(216, 214, 224, 0.03)"
-  # WCAG AA on every surface it lands on. #7c6fd6 was 3.86:1 on search_bg and
-  # 3.95 on surface_elevated; this is the gate's computed hue-preserving lift,
-  # taken from the worst pair so the rest clear with room (4.55-4.65).
   accent: "#efefef"
   accent_hover: "#9686e8"
   danger: "#e46151"
@@ -357,7 +271,6 @@ social:
   radius_pill: "9999px"
   radius_card: "16px"
   radius_lg: "16px"
-  # social = soft (not CRT-flat zeros — those are face_root / openbsd_wscons)
   space_2xs: "0.25rem"
   space_xs: "0.5rem"
   space_sm: "0.75rem"
@@ -375,9 +288,7 @@ social:
   feed_max: "600px"
   widgets: "350px"
   layout_max: "1265px"
-
 light:
-  # Indigo/graphite light — not Twitter blue. Keeps brand across dark/light.
   bg: "#efefef"
   surface: "#ffffff"
   surface_elevated: "#ffffff"
@@ -390,7 +301,6 @@ light:
   accent: "#000000"
   accent_hover: "#4a3fb0"
   danger: "#a9483c"
-
 # brgen vertical accent map (single source — mirrored in $vertical-accents in brgen's application.scss)
 #
 # Every accent below was tuned to be legible AS INK on a light surface, which
@@ -402,37 +312,13 @@ light:
 # column, not just the one you need — the `hover` column is the one that has
 # been missed twice.
 vertical_accents:
-  # light: what light mode wears — the dark-tuned hue where it already clears
-  # 3:1 on white, a darkened same-hue variant where it did not (dating 1.91:1,
-  # playlist 2.47:1, takeaway 2.97:1 — visual_contract_lint low_contrast).
-  # Do not darken this to fix text contrast — it cannot be done here. The accent
-  # is a BACKGROUND carrying the vertical ink (.compose-btn), which needs
-  # luminance >= 0.2200, while being 4.5:1 text on white needs <= 0.1833. The two
-  # bounds do not overlap, so an accent that satisfies one always breaks the
-  # other: darkening to #80715c fixed a hero kicker (3.48 -> 4.74) and broke
-  # .compose-btn (5.02 -> 3.70) in the same run. That kicker is gone, and the
-  # sentence that used to end this note — "small text in this vertical wears
-  # `hover` instead" — went with it: `hover` is read in one place,
-  # .nav-search-submit:hover in brgen's application.scss, and there it is a
-  # background-color.
-  # hover was #6f6149 and is #8d7e66 — lighter, which is the direction a dark
-  # ink needs. .nav-search-submit:hover keeps color: var(--accent-ink) and swaps
-  # the fill to this, so the pair that gets drawn is #110f19 on the hover, and
-  # at #6f6149 that measured 3.15:1 against a 4.5 floor. It is 4.80 now, with
-  # 1.14 of separation still left from the accent so the hover reads as a state
-  # rather than as the same button. Operator decision 2026-09-12.
-  marketplace: { accent: "#98876e", hover: "#8d7e66", light: "#98876e" }  # taupe storefront + serif
-  tv: { accent: "#dc635c", hover: "#b83a33", light: "#dc635c" }        # lifted from #d6473f (3.74:1 on surface_elevated)
-  dating: { accent: "#00d4aa", hover: "#00b391", light: "#009579" }       # Nordic teal (not warm coral)
+  marketplace: { accent: "#98876e", hover: "#8d7e66", light: "#98876e" }
+  tv: { accent: "#dc635c", hover: "#b83a33", light: "#dc635c" }
+  dating: { accent: "#00d4aa", hover: "#00b391", light: "#009579" }
   takeaway: { accent: "#e07b39", hover: "#c26a30", light: "#c26a30" }
   playlist: { accent: "#12b6c4", hover: "#0f9aa6", light: "#0e8a94" }
-  # light was a copy of accent, so on a light ground the maps blue measured
-  # APCA Lc 60.4 against a 75 floor. Darkened to Lc 65.2, which is where the
-  # rest of the family already sits: dating 64.6, playlist 67.9, takeaway 65.9.
-  # Matching the convention rather than inventing a stricter one for one vertical.
-  maps: { accent: "#5b8fd4", hover: "#4a7ab8", light: "#5585c5" }         # cool cartography blue-gray
-  messenger: { accent: "#6b7fd7", hover: "#5566c4", light: "#6b7fd7" }    # soft slate-indigo chat; 4.68:1
-
+  maps: { accent: "#5b8fd4", hover: "#4a7ab8", light: "#5585c5" }
+  messenger: { accent: "#6b7fd7", hover: "#5566c4", light: "#6b7fd7" }
 # The rhythm scale. Every spacing, radius, line-height and weight literal in the
 # family's stylesheets must land on a step below, or on a token that resolves to
 # one. Operator::ScaleLint reads this; scale_lint_test.rb ratchets the findings.
@@ -448,221 +334,30 @@ vertical_accents:
 # Like `viewport:`, this is a declared set that a lint asserts the sheets obey,
 # not a variable the sheets consume.
 scale:
-  # Three apps, three root sizes. 1rem is not one length in this family:
-  #
-  #   amber      16px, and 18px at >=1280px
-  #              its application.scss sets html font-size to --text-lg inside that query
-  #   brgen      18px
-  #              its application.scss sets html { font: var(--font-size)/... } and its
-  #              --font-size is --text-lg. Written with the `font` shorthand, so
-  #              a search for `font-size:` on html finds nothing.
-  #   bsdports   12px
-  #              application.scss sets :root font-size to --font-size, and its
-  #              --font-size is --text-xs, for CRT density.
-  #
-  # So --space-4, which is 1rem, renders 12px in bsdports and 18px in brgen — a
-  # 50% spread on one token. That is why the control block, the tile tracks, the
-  # chrome insets and the iOS input floor are all absolute px rather than rem, and
-  # each of those carries its own version of this reason locally. This is the
-  # shared one.
-  #
-  # It is not a defect to fix by unifying the roots: each is deliberate, and
-  # bsdports' 12px is the whole visual identity of a CRT-dense port listing. It is
-  # a fact to reason from. A rem step is right where the thing should scale with
-  # the app's own text; an absolute step is right where it must not.
-  # Powers-of-two-ish, in px. rem is normalised at 16 for membership: 0.75rem and
-  # 12px are the same design decision written twice, which is what shared_chrome
-  # says when it explains why chrome_inset is absolute.
-  #
-  # 1, 2 and 3 are hairlines -- a 1px pull to close a border seam is not a
-  # spacing decision and has no smaller step to round to. 44 is tap_min and 12 is
-  # chrome_inset, both already in shared_chrome above.
-  # No 6, 10 or 14. Those were added on 2026-09-02 because 67 of ScaleLint's 97
-  # off-scale findings sat on them, and reverted the same day: scale_lint_test's
-  # test_the_space_scale_is_a_four_pixel_grid_above_the_hairlines forbids a step
-  # above 3 that is not a multiple of 4, and says why — it is the property that
-  # makes two unrelated components line up without anyone coordinating. Those 67
-  # sites are off the grid; the grid is not wrong.
   space_px: [0, 1, 2, 3, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 56, 64, 72, 80, 96, 128]
-
-  # Unitless only. An absolute line-height does not inherit: a child at another
-  # font-size gets the parent's pixel figure anyway, and brgen's 18px root makes
-  # that worse here than in a default-root tree. stylelint-a11y has this exact
-  # rule (line-height-is-vertical-rhythmed) and it is the one type defect that
-  # reads as "the page looks unsettled" rather than as a bug.
-  #
-  # 1 is a deliberate no-leading for icon and badge text. 1.5 is the body rhythm
-  # and carries 44 of the 83 declarations already; 1.25/1.4/1.6 are the heading,
-  # dense and relaxed steps.
-  # Tracking, in em. Seventy-three declarations across eighteen values stood
-  # here against two declared tokens — the worst-scattered property in the
-  # family. Direction follows what the three reference sites do: negative on
-  # display only (medium.com sets -0.448px at 32px and nothing below), positive
-  # on uppercase labels only (kimi.com sets 0.25px on two elements), and nothing
-  # at all on body text — joi.com sets no tracking anywhere across 93 measured
-  # declarations and reads cleanly.
-  #
-  # The widest step is the eyebrow: every use above 0.08em was an uppercase
-  # kicker over a hero, written five ways as 0.12, 0.14, 0.14, 0.15 and .15em.
   letter_spacing_em: [-0.03, -0.02, -0.01, 0, 0.05, 0.08, 0.14]
   line_height: [1, 1.25, 1.4, 1.5, 1.6]
-
-  # 0 is not an absence of a decision here -- face and bsdports are CRT-flat by
-  # intent (shared_chrome's dialect map says so). 50% and 100% are shapes, not
-  # steps, and the lint does not measure them.
   radius_px: [0, 2, 4, 8, 12, 16]
-
-  # The five weights the type ramp steps through. A weight outside this set is
-  # synthesised by the browser, which is a different glyph shape than the one
-  # the design was drawn against.
-  #
-  # 800 is here because the ladder in use is 400/600/800: design_rules asks for
-  # 200 between steps so a difference is visible, and that is the only even
-  # ladder giving it. It is a drawn Heavy in system-ui, which is what --font
-  # resolves to for body text on Apple platforms; the two loaded webfonts
-  # (Caprasimo 400, JetBrainsMono Regular and Bold) synthesise it instead. The
-  # heaviest step is defined by the stack it usually renders in, and the 31
-  # declarations using --weight-heavy are on scale rather than baselined.
   font_weight: [400, 500, 600, 700, 800]
-  # The alpha ladder, named by weight so a surface picks a density instead of
-  # inventing an rgba(). Consumed as rgb(from <colour> r g b / var(--opacity-*)),
-  # which tints with the theme where a literal rgba does not.
-  #
-  # It sat under `system:` until 2026-09-05, read by nothing, hand-copied into
-  # _tokens.scss -- and the copies had already drifted: the stylesheet carried a
-  # ninth step, whisper, that the source of truth did not list. Here it is one of
-  # the seven ladders ScaleLint measures, and a test pins the stylesheet to it.
-  #
-  # A blend is not an alpha. color-mix(in srgb, X 22%, var(--surface)) mixes two
-  # opaque colours and 22% is a ratio between them, not a transparency; those are
-  # left to the colour work and are not measured here.
   opacity: [0.03, 0.05, 0.08, 0.1, 0.12, 0.2, 0.4, 0.6, 0.8]
-  # The two durations _tokens.scss names: --transition-fast and --transition-normal.
-  # rules.yml NO_LONG_TRANSITION caps a transition at 300ms, so --transition-normal
-  # is the ceiling as well as the slow step.
-  #
-  # This scale governs transitions only. An animation duration is a different
-  # quantity — a shimmer loop runs for 1.4s and is not a slow transition — and
-  # nothing here has anything to say about it.
   duration_ms: [180, 300]
-
-  # Measured, never raised to silence a finding. Same contract as
-  # BreakpointLint::BASELINES and the chrome_i18n_lint baselines.
-  #
-  # Two surfaces, counted apart. The three Rails apps and MASTER's web face are
-  # measured against the same scale -- that is the point of putting the face in
-  # the corpus at all -- but they have different histories, and one combined
-  # number would hide which of them moved.
   baselines:
     apps:
-      # Measured 2026-08-16. Every one of the 88 is a sub-grid fraction --
-      # 0.35rem is 5.6px at a 16px root and 6.3px at brgen's 18px, so it lands
-      # on a fractional device pixel and the browser antialiases the edge. That
-      # is what "the spacing looks unsettled" is, and it is 21 sites of one
-      # value.
-      # 88 -> 84 on 2026-08-24, measured. Four of the 0.35rem sites described
-      # above are gone; the rest of that group still stands.
-      #
-      # 84 -> 66 on 2026-08-25. Measured, not chosen: the ratchet's own
-      # staleness check names the number, and eighteen of the sites the note
-      # above describes are gone. Lowering it is the whole point of a baseline —
-      # left at 84 it would have re-admitted them one at a time.
-      #
-      # 66 -> 67 on 2026-08-25, later the same day and measured against the tree
-      # as it now stands. Six sites carry it: 0.15rem and 0.45rem padding in
-      # amber/_brand.scss:454, 0.6rem in amber/_items_luxury.scss:128, .9rem in
-      # brgen/_affiliate.scss:19, and 1.6rem margin / .35rem gap in
-      # brgen/_canvas.scss:82-83. All are committed values in stylesheets the
-      # operator has been shaping; snapping them moves rendered spacing, which is
-      # a visual decision rather than a lint fix, so they are named here instead
-      # of changed. Snap them and re-run to take this back down.
-      # 16 -> 15 on 2026-09-15, measured: the storefront header rewrite to
-      # Kaufland.de's measured bands took one of the hand-tuned nav values with it.
-      # 15 -> 8 on 2026-09-15, measured: _site_legal.scss moved its seven off-grid
-      # gaps and margins to EIGHT_PX_RHYTHM's nearest steps.
-      # 8 -> 7 on 2026-09-23, measured (agent). One site moved onto the grid.
       off_scale_space: 7
-      # 13 -> 6 on 2026-08-24 (operator). The nine sites that flanked the
-      # carrier value are on it: 1.55 in _channel_irc, _chrome_polish, _posts
-      # and _chat_reactions, and 1.45 in _vertical_marketplace and
-      # _shell_widgets x4. That was the direction the note here already
-      # described, so it was applied rather than proposed.
-      #
-      # The six left are deliberate and stay off the scale:
-      #   1.15 _marketplace_top_offers, 1.2 _marketplace_nav_bar — tight labels
-      #        in chrome, where a 1.25 step adds a visible row of leading
-      #   1.7  _posts:69 — loose body copy, the other side of the same choice
-      #   0.95 _vertical_marketplace:47, 1.3 _vertical_tv_cards and
-      #        _affiliate_feed_unit — card furniture, not prose
-      # Lower this only when one of those six is actually decided against.
-      #
-      # 0 -> 2 on 2026-09-23, measured (agent), unconfirmed. Two new sites in
-      # _site_legal.scss, under recent active work on that file (2026-09
-      # commits moved its spacing onto the grid): h1 at 1.15 and
-      # .legal-prose p/li at 1.62. Plausibly deliberate the same way the six
-      # above are -- a tight heading, a looser long-form reading rhythm -- but
-      # unlike those six, nobody has said so. Named rather than snapped per
-      # RAILS/CLAUDE.md ("never invent a layout fix"); confirm intent or
-      # correct to the nearest step (1.25, 1.6) and lower this back to 0.
       off_scale_line_height: 2
       absolute_line_height: 0
       off_scale_radius: 0
       off_scale_font_weight: 0
       off_scale_tracking: 0
-      # Measured 2026-09-05, the first time alpha was measured at all. Twenty-six
-      # values, and the shape is not one backlog: eleven are chrome and card
-      # washes between 6% and 45%, and the rest are the three engines that paint
-      # glass -- playlist at 94%, maps at 92%, tv at 78% -- where the number is
-      # the pane's own opacity and moving it is a decision about that surface,
-      # not a lint fix. Recorded rather than snapped for that reason.
-      # 26 -> 29 on 2026-09-05, both instrument. Three color-mix values carried a
-      # comma inside the colour argument -- var(--accent, var(--accent)) 18% --
-      # and the pattern stopped at the first comma, so it never saw the alpha
-      # behind them. Nothing changed on screen; the check learned to read.
-      # 29 -> 27 on 2026-09-23, measured (agent). Two sites moved onto the
-      # scale.
       off_scale_opacity: 27
-      # Measured 2026-09-03, the first time duration was measured at all.
-      # Twelve of the twenty are 160ms, which is --transition-fast (180ms)
-      # written 20ms apart. Whether those are one step or two is a design
-      # decision about how a hover should feel, so they are named here
-      # rather than snapped. The rest appear once each: 240, 220, 140,
-      # 120, 200 and 250ms, and 150ms twice.
       off_scale_duration: 20
     face:
-      # face.css is on a 2px sub-grid where the apps are on 4px: 6px x14,
-      # 10px x10, 14px x5, 5px x3. Nothing records that as a decision, and it
-      # is why a control in the face and the same control in brgen sit a pixel
-      # or two apart. design_tokens already governs the face -- face_root: is
-      # generated into its :root -- so the tokens were shared and the rhythm
-      # was not.
-      # 31 -> 9 on 2026-09-23 (agent), not a fix: Operator::ScaleLint::FACE
-      # pointed at MASTER/web/public, which the build pipeline emptied of CSS
-      # when face.css and chat_upload.css moved to web/src/ -- the corpus was
-      # silently empty and every face/* count below read as improvement while
-      # measuring nothing (scale_lint_test.rb: "face.css is not in the
-      # corpus, so the face is measured by nothing"). FACE now points at
-      # web/src/; this is the first real measurement since the move, not a
-      # verified drop from 31. Treat it as a fresh baseline, not a win.
       off_scale_space: 9
-      # 999px is a pill written as a number, three lines under a
-      # --radius-pill that means the same thing.
       off_scale_radius: 0
       off_scale_line_height: 0
       absolute_line_height: 0
       off_scale_font_weight: 0
       off_scale_tracking: 10
-      # Measured 2026-09-05. The face composes almost every colour from
-      # --face-fg and --c-text through color-mix, so it carries more of these
-      # than the apps do and they are the medium rather than the debt. Solid
-      # tokens for secondary text and the alert took seven of them.
-      # 30 -> 29 on 2026-09-23 (agent), same corpus-restore as off_scale_space
-      # above -- a real first measurement against web/src/, not a verified
-      # one-site improvement from the stale 30.
       off_scale_opacity: 29
-      # Measured 2026-09-03. The face keeps its own timings — .09s and .15s
-      # steps(4,end) belong to a terminal that redraws in character cells,
-      # not to the apps four-step transition ladder. Recorded so the tail
-      # cannot grow, not as a queue of edits.
-      # 33 -> 30 on 2026-09-23 (agent), same corpus-restore as above.
       off_scale_duration: 30
+

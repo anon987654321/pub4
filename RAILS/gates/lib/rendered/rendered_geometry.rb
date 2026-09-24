@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "yaml"
 require_relative "../../support/rendered_contrast_checks"
 require_relative "../../support/rendered_geometry/token_checks"
 require_relative "../../support/rendered_geometry/placement_checks"
@@ -31,7 +30,6 @@ module Deploy
     ROOT = File.expand_path("../../../..", __dir__)
     RAILS_ROOT = File.join(ROOT, "RAILS")
     MASTER_RULES = File.join(ROOT, "MASTER", "data", "rules.yml")
-    TOKENS = File.join(RAILS_ROOT, "shared", "design_tokens.yml")
 
     # Controls whose failure costs the user the interaction outright. Everything
     # else reports soft so one noisy surface cannot wall off the merge.
@@ -62,7 +60,7 @@ module Deploy
     def run
       @result = Result.new
       @rules = Operator::MasterDesign.blocks(MASTER_RULES)
-      @tokens = File.file?(TOKENS) ? YAML.safe_load_file(TOKENS) : {}
+      @tokens = Operator::MasterDesign.design_system
       @min_touch = (@rules.dig("layout_rules", "touch", "target_min_px") || 44).to_f
       @aaa = (@rules.dig("typography", "accessibility", "normal_text_contrast") || 7.0).to_f
       # design_rules states the spacing grid twice and the two disagree:

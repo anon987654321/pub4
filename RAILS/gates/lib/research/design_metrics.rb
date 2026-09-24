@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "yaml"
 require "json"
 require_relative "../../support/design_metrics/contrast_checks"
 require_relative "../../support/design_metrics/type_checks"
@@ -23,7 +22,6 @@ module Deploy
     ROOT = File.expand_path("../../../..", __dir__)
     RAILS = File.join(ROOT, "RAILS")
     MASTER_RULES = File.join(ROOT, "MASTER", "data", "rules.yml")
-    TOKENS = File.join(RAILS, "shared", "design_tokens.yml")
     APPS = %w[brgen amber bsdports shared].freeze
 
     # The component families the sampled checks read, named by the class a
@@ -71,7 +69,7 @@ module Deploy
         return @result
       end
       @rules = Operator::MasterDesign.blocks(MASTER_RULES)
-      @tokens = File.file?(TOKENS) ? YAML.safe_load_file(TOKENS) : {}
+      @tokens = Operator::MasterDesign.design_system
 
       @result.checked!(SOURCE_CHECKS.size)
       SOURCE_CHECKS.each { |check| send(check) }

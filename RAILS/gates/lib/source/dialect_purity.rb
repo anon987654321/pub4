@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "yaml"
+require_relative "../../../shared/lib/operator/master_design"
 require_relative "../../../../OPENBSD/lib/gate_result"
 require_relative "../../../shared/lib/operator/scss_rules"
 
@@ -15,7 +15,6 @@ module Deploy
 
     def initialize(root: ROOT)
       @rails = File.join(root, "RAILS")
-      @tokens = File.join(@rails, "shared", "design_tokens.yml")
       @wiring = File.join(@rails, "shared", "WIRING_NOTES.md")
     end
 
@@ -32,11 +31,11 @@ module Deploy
     private
 
     def check_tokens
-      unless File.file?(@tokens)
-        @result.fail("dialect_purity: missing design_tokens.yml")
+      data = Operator::MasterDesign.design_system
+      if data.empty?
+        @result.fail("dialect_purity: missing MASTER/data/rules.yml design_system")
         return
       end
-      data = YAML.safe_load_file(@tokens)
       @result.checked!(7)
       %w[social luxury openbsd_wscons face_root vertical_accents].each do |key|
         @result.fail("dialect_purity: design_tokens missing #{key}") unless data.key?(key)

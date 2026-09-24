@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
 # A dimension written in prose is a second source of truth for a number the
-# tokens already own.
+# MASTER's canonical design system already owns.
 #
-# A document prescribing an 8px step while design_tokens.yml defines space_sm as
-# 0.75rem gives the tree two spacing scales, and the gates read different ones.
+# A document prescribing an 8px step while the canonical design system defines
+# space_sm as 0.75rem gives the tree two spacing scales, and the gates read different ones.
 #
 # Mentioning a value is fine. Prescribing one without saying where it comes from
 # is what drifts, because the reader has no way to find the value that governs.
-# A paragraph passes when it names the source -- the tokens file, the stylesheet,
+# A paragraph passes when it names the source -- the canonical design system, the stylesheet,
 # or the token key itself.
 #
 #   ruby MASTER/tools/doc_numbers.rb
@@ -20,12 +20,12 @@ require "yaml"
 module Operator
   class DocNumbers
     ROOT = File.expand_path("../..", __dir__)
-    TOKENS = File.join(ROOT, "RAILS/shared/design_tokens.yml")
+    RULES = File.join(ROOT, "MASTER/data/rules.yml")
     TREES = %w[MASTER RAILS OPENBSD].freeze
     SKIP = %r{/(node_modules|vendor|knowledge|output|tmp|\.master)/}
 
     # Naming any of these makes the number traceable.
-    SOURCES = %w[design_tokens.yml _dialect_tokens.scss tokens.css design_tokens].freeze
+    SOURCES = %w[MASTER/data/rules.yml _dialect_tokens.scss tokens.css design_system].freeze
 
     # Values so generic that a match says nothing about design tokens. 8px and
     # 4px are the rhythm itself and appear in prose about the rhythm; 1rem is the
@@ -44,7 +44,8 @@ module Operator
             (values[text] ||= []) << path.join(".") if text.match?(/\A-?[\d.]+(px|rem|em)\z/)
           end
         end
-        walk.call(YAML.safe_load_file(TOKENS), [])
+        document = YAML.safe_load_file(RULES, aliases: true) || {}
+        walk.call(document.fetch("design_system", {}), [])
         values.reject { |value, _| IGNORE.include?(value) }
       end
     end

@@ -2,16 +2,15 @@
 
 require_relative "master_design"
 
-require "yaml"
 require "set"
 
 module Operator
-  # Validates every spacing-tagged token in design_tokens.yml and every --space
+  # Validates every spacing-tagged value in MASTER's design_system and every --space
   # custom property a stylesheet defines, in shared, each app and each engine
   # (a token defined beside the view it serves is still a token), against MASTER's own
   # rules.yml design_rules.pixel_perfection.eight_px_rhythm allowlist. Reads that
   # allowlist from MASTER directly rather than duplicating it, so the two
-  # can never drift apart the way _tokens.scss and design_tokens.yml did
+  # can never drift apart through a second machine-readable authority
   # (the --color-warning bug found 2026-07-21).
   module RhythmLint
     SPACE_KEY = /\Aspace[_-]/i
@@ -52,10 +51,6 @@ module Operator
 
     def load_design_rules = Operator::MasterDesign.blocks
 
-    def design_tokens_path
-      File.expand_path("../../design_tokens.yml", __dir__)
-    end
-
     # The directory holding shared: RAILS/ in a checkout, /home/<app>/ in the
     # copy-tree deploy, where the app and its copy of shared are siblings too.
     def stylesheet_root = File.expand_path("../../..", __dir__)
@@ -69,9 +64,7 @@ module Operator
     end
 
     def scan_tokens_yml(allowed)
-      return [] unless File.readable?(design_tokens_path)
-
-      data = YAML.safe_load_file(design_tokens_path)
+      data = MasterDesign.design_system
       violations = []
       data.each do |dialect, entries|
         next unless entries.is_a?(Hash)
@@ -81,7 +74,7 @@ module Operator
           next unless value.is_a?(String) && value =~ /\A([\d.]+)(rem|px)\z/
 
           px = to_px(Regexp.last_match(1), Regexp.last_match(2))
-          violations << Violation.new("design_tokens.yml:#{dialect}", key, px) unless allowed.include?(px)
+          violations << Violation.new("MASTER/data/rules.yml:design_system.#{dialect}", key, px) unless allowed.include?(px)
         end
       end
       violations
