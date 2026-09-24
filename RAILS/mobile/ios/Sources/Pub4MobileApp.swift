@@ -1,6 +1,5 @@
 import SwiftUI
 import WebKit
-import UniformTypeIdentifiers
 
 @main
 struct Pub4MobileApp: App {
@@ -88,10 +87,11 @@ struct WebAppView: UIViewRepresentable {
 
     final class Coordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
         weak var webView: WKWebView?
+        private var openURLObserver: NSObjectProtocol?
 
         func observe(_ webView: WKWebView) {
             self.webView = webView
-            NotificationCenter.default.addObserver(
+            openURLObserver = NotificationCenter.default.addObserver(
                 forName: .pub4OpenURL,
                 object: nil,
                 queue: .main
@@ -102,7 +102,7 @@ struct WebAppView: UIViewRepresentable {
         }
 
         deinit {
-            NotificationCenter.default.removeObserver(self)
+            if let openURLObserver { NotificationCenter.default.removeObserver(openURLObserver) }
         }
 
         func userContentController(
