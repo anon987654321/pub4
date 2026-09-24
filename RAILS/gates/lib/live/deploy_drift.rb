@@ -51,6 +51,8 @@ module Deploy
       end
 
       stamps = read_stamps
+      @stamp_errors.each { |message| result.inconclusive!(message) }
+      result.inconclusive!(@app_roots_error) if @app_roots_error
       if stamps.empty?
         result.inconclusive!(
           "deploy_drift: no deploy stamps under #{STAMP_DIR} — this gate only has something to " \
@@ -112,19 +114,29 @@ module Deploy
         yaml = YAML.safe_load_file(APPS_YML, aliases: true)
         Hash(yaml["apps"]).to_h { |name, cfg| [name, Hash(cfg)["deploy_root"] || "RAILS/#{name}"] }
       rescue StandardError => e
-        warn "deploy_drift: apps config unreadable (#{e.class})"
+        @app_roots_error = "deploy_drift: apps config unreadable (#{e.class}: #{e.message})"
         {}
       end
     end
 
+    def paths_for(app)
+      return MASTER_PATHS if app == "master"
+
+      root = app_roots[app] || "RAILS/#{app}"
+      @app_roots_error ? [root, *SHARED_PATHS] : [root, *SHARED_PATHS]
+    end
+
     def read_stamps
-      Dir.glob(File.join(STAMP_DIR, "last_deploy_*.json")).filter_map do |path|
+      @stamp_errors = []
+      rows = Dir.glob(File.join(STAMP_DIR, "last_deploy_*.json")).filter_map do |path|
         app = File.basename(path).sub(/\Alast_deploy_/, "").sub(/\.json\z/, "")
         parsed = JSON.parse(File.read(path))
         [app, parsed]
-      rescue StandardError # scan: intentional — one app's unreadable state drops from the drift table; the gate reports the table
+      rescue StandardError => e
+        @stamp_errors << "deploy_drift: unreadable deploy stamp #{path}: #{e.class}: #{e.message}"
         nil
-      end.sort.to_h
+      end
+      rows.sort.to_h
     end
 
     def known_commit?(sha)
