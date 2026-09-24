@@ -29,6 +29,12 @@ class TestRatchets < Minitest::Test
                  "new debt against a recorded ceiling"
   end
 
+  def test_missing_rails_lints_are_not_silently_omitted
+    source = File.read(File.join(Operator::Ratchets::MASTER, "lib/operator/ratchets.rb"))
+    assert_includes source, 'lint file missing'
+    assert_includes source, 'Operator lint module missing'
+  end
+
   def test_missing_css_budget_is_not_silently_omitted
     source = File.read(File.join(Operator::Ratchets::MASTER, "lib/operator/ratchets.rb"))
     assert_includes source, 'name: "css_budget", current: nil, ceiling: nil'
