@@ -58,6 +58,27 @@ class TestReliabilityKernel < Minitest::Test
     end
   end
 
+  # A crashed run on one target, its process gone, blocked /fix on every other
+  # target until someone reran exactly that one.
+  def test_a_dead_run_on_another_target_is_interrupted_not_blocking
+    Dir.mktmpdir("master-reliability") do |root|
+      studio = File.join(root, "STUDIO")
+      rails = File.join(root, "RAILS")
+      journal = Master::Fix::RunJournal.new(root:)
+      stale = journal.start_or_resume(target: studio, files: [], max_passes: 5, budget_seconds: 30)
+      journal.crash(stale["id"], "file too long")
+      path = File.join(root, Master::Fix::RunJournal::PATH)
+      File.write(path, File.read(path).sub(/"pid": ?\d+/, %("pid": 999999999)))
+
+      fresh = Master::Fix::RunJournal.new(root:).start_or_resume(target: rails, files: [], max_passes: 5, budget_seconds: 30)
+
+      refute fresh["resumed"]
+      assert_equal "RAILS", fresh["target"]
+      old = Master::Fix::RunJournal.new(root:).history.find { |run| run["id"] == stale["id"] }
+      assert_equal "interrupted", old["state"]
+    end
+  end
+
   def test_fix_journal_marks_terminal_runs_and_starts_the_next_run
     Dir.mktmpdir("master-reliability") do |root|
       journal = Master::Fix::RunJournal.new(root:)

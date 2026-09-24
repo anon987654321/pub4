@@ -33,6 +33,7 @@ module Master
         with_lock do
           data = load
           resumable = data["runs"].reverse.find { |run| RESUMABLE_STATES.include?(run["state"].to_s) }
+          resumable = nil if resumable && release_elsewhere(resumable, target)
           next resume_existing_run(resumable, target, data) if resumable
 
           create_new_run(target:, files:, max_passes:, budget_seconds:, data:)
@@ -98,6 +99,23 @@ module Master
       end
 
       private
+
+      # A resumable run on another target whose process is gone would block
+      # every other target until someone reran exactly that one: a STUDIO run
+      # that crashed on dilla.rb's length refused /fix RAILS for good. It is
+      # closed as interrupted, with the reason, and a live one still refuses.
+      # True when the run was released.
+      def release_elsewhere(run, target)
+        return false if run["target"] == relative(target)
+        return false if process_alive?(run["pid"])
+
+        previous = run["state"]
+        run["state"] = "interrupted"
+        run["message"] = "left #{previous}; #{relative(target)} started while its process was gone"
+        run["finished_at"] = Time.now.utc.iso8601
+        emit("fix:interrupted", run_id: run["id"], target: run["target"], previous_state: previous)
+        true
+      end
 
       def resume_existing_run(active, target, data)
         unless active["target"] == relative(target)
