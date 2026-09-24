@@ -235,7 +235,7 @@ module Master
         end
 
         def dynamic_model_row(id)
-          return unless id.to_s.start_with?("ollama:", "local:")
+          return unless id.to_s.start_with?("ollama:", "local:") || hosted?(id)
           {
             "context_window" => DEFAULTS[:context_window],
             "score" => { "quality" => DEFAULTS[:quality], "speed" => DEFAULTS[:speed], "cost" => 1.0 },
@@ -318,8 +318,13 @@ module Master
           :unknown
         end
 
+        # A hosted openai_compatible lane is a free tier by that table's definition.
+        def hosted?(id) = @router.respond_to?(:hosted_endpoint_for) && !@router.hosted_endpoint_for(id).nil?
+
         def paid_model?(id)
           text = id.to_s
+          return false if hosted?(id)
+
           !text.start_with?("ollama:", "ollama/", "local:", "web-chat:") &&
             !text.end_with?(":free", ":cloud", "-cloud")
         end

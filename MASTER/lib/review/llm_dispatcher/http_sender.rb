@@ -29,15 +29,29 @@ module Master
           base = @model_router&.local_server_for(selected_model)
           return Result.err("no local server lists #{selected_model}", category: :model_missing) unless base
 
-          rows = ollama_messages(messages, sys)
-          body = { model: selected_model.delete_prefix("local:"), messages: rows, stream: false }
+          openai_chat(base, selected_model.delete_prefix("local:"), messages, sys:, temperature:, lane: "local server")
+        end
+
+        # A hosted OpenAI-compatible endpoint the router listed in models.yml
+        # openai_compatible; the key rides along only when one is set.
+        def hosted_lane?(model_id) = !@model_router&.hosted_endpoint_for(model_id).nil?
+
+        def send_hosted(selected_model, messages, sys:, temperature: nil)
+          endpoint = @model_router.hosted_endpoint_for(selected_model)
+          name, model = selected_model.split(":", 2)
+          headers = endpoint[:key] ? { "Authorization" => "Bearer #{endpoint[:key]}" } : {}
+          openai_chat(endpoint[:base], model, messages, sys:, temperature:, headers:, lane: name)
+        end
+
+        def openai_chat(base, model, messages, sys:, temperature:, lane:, headers: {})
+          body = { model:, messages: ollama_messages(messages, sys), stream: false }
           body[:temperature] = temperature if temperature
-          response = post_json("#{base.chomp('/')}/chat/completions", body, timeout: LOCAL_SERVER_TIMEOUT_S)
-          return http_lane_error("local server", response) unless response.is_a?(Net::HTTPSuccess)
+          response = post_json("#{base.chomp('/')}/chat/completions", body, headers:, timeout: LOCAL_SERVER_TIMEOUT_S)
+          return http_lane_error(lane, response) unless response.is_a?(Net::HTTPSuccess)
 
           Result.ok(JSON.parse(response.body).dig("choices", 0, "message", "content").to_s)
         rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH, SocketError => e
-          Result.err("local server unreachable at #{base}: #{e.message}", category: :provider_error)
+          Result.err("#{lane} unreachable at #{base}: #{e.message}", category: :provider_error)
         end
 
         # Replicate answers inside the wait window or hands back a prediction to

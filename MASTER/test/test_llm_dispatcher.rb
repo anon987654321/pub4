@@ -537,6 +537,40 @@ end
     server&.close
   end
 
+  # A hosted endpoint is asked for the model without its lane prefix, with its
+  # key as a Bearer token; a keyless endpoint sends no Authorization at all.
+  def test_a_hosted_endpoint_answers_with_its_key_and_the_bare_model_name
+    seen = {}
+    server = TCPServer.new("127.0.0.1", 0)
+    thread = Thread.new do
+      socket = server.accept
+      length = 0
+      while (line = socket.gets.to_s.strip) != ""
+        length = line.split(":").last.to_i if line.downcase.start_with?("content-length")
+        seen[:auth] = line if line.downcase.start_with?("authorization")
+      end
+      request = JSON.parse(socket.read(length))
+      body = JSON.generate("choices" => [{ "message" => { "content" => "hello from #{request['model']}" } }])
+      socket.print("HTTP/1.1 200 OK\r\nContent-Length: #{body.bytesize}\r\nConnection: close\r\n\r\n#{body}")
+      socket.close
+    end
+    dispatcher, = build_dispatcher
+    endpoint = { base: "http://127.0.0.1:#{server.addr[1]}/v1", key: "sk-free" }
+    router = Object.new
+    router.define_singleton_method(:hosted_endpoint_for) { |id| endpoint if id.start_with?("freehost:") }
+    dispatcher.instance_variable_set(:@model_router, router)
+
+    assert dispatcher.send(:hosted_lane?, "freehost:GLM-5.3-Flash")
+    refute dispatcher.send(:hosted_lane?, "gpt-4o")
+    result = dispatcher.send(:send_hosted, "freehost:GLM-5.3-Flash", [{ role: "user", content: "hi" }], sys: nil)
+
+    assert_equal "hello from GLM-5.3-Flash", result.value!
+    assert_equal "Authorization: Bearer sk-free", seen[:auth]
+  ensure
+    thread&.kill
+    server&.close
+  end
+
   def test_an_http_lane_names_a_refused_key_and_a_spent_balance
     dispatcher, = build_dispatcher
     response = ->(code) { Struct.new(:code, :body).new(code, "no") }

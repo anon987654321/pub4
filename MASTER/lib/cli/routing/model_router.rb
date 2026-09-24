@@ -6,6 +6,7 @@ require_relative "model_router/intent_classification"
 require_relative "model_router/failover_config"
 require_relative "model_router/diagnostics"
 require_relative "model_router/pool"
+require_relative "model_router/hosted_endpoints"
 require_relative "../../core/routing/compute_pool"
 
 module Master
@@ -18,6 +19,7 @@ module Master
         include FailoverConfig
         include Diagnostics
         include Pool
+        include HostedEndpoints
 
         UNCERTAINTY_PHRASES = [
           "i'm not sure", "i don't know", "cannot determine",
@@ -97,7 +99,7 @@ module Master
         # fallback, but let the task-specific preference lead.
         def chain_for(task_type)
           lanes = { pref: [preferred(task_type:)], tiers: tier_ids.reject { |id| ollama_model?(id) },
-                    free: continuity_models + ollama_cloud_models + local_server_models,
+                    free: continuity_models + ollama_cloud_models + local_server_models + hosted_models,
                     subscription: Ground::AuthProfileLane.models_for_router(self) + primary_models + cli_lane_models }
           order = task_type.to_sym == :chitchat ? %i[pref tiers free subscription] : %i[subscription pref tiers free]
           order.flat_map { |lane| lanes.fetch(lane) } + replicate_models + local_models + [@config.model]

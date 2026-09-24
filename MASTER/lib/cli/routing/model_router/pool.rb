@@ -45,7 +45,7 @@ module Master
           def pool(wait: false)
             start_pool_probes
             lanes = [primary_models, cli_lane_models(wait:), tier_ids, continuity_models,
-                     ollama_cloud_catalog, ollama_cloud_models, local_server_models,
+                     ollama_cloud_catalog, ollama_cloud_models, local_server_models, hosted_models,
                      live_catalog_models, replicate_models, local_models]
             lanes.flatten.uniq.select { |id| unreachable_reason(id, wait:).nil? }
           end
@@ -68,7 +68,7 @@ module Master
             return "free" if id.end_with?(":free", ":cloud", "-cloud") || id.start_with?("web-chat:")
 
             { claude_cli: "subscription", agy: "subscription", cli_lane: "subscription", ollama: "local",
-              local_server: "local", replicate: "paid", api: "paid" }.fetch(lane_of(id))
+              local_server: "local", hosted: "free", replicate: "paid", api: "paid" }.fetch(lane_of(id))
           end
 
           def cli_lane_model?(model_id) = cli_lanes.key?(model_id.to_s.split(":", 2).first)
@@ -91,6 +91,7 @@ module Master
           def refresh_pool!
             @ollama_installed_models = nil
             @local_server_index = nil
+            @hosted_index = nil
             @api_providers = nil
             @provider_rows = nil
             @live_catalog_models = nil
@@ -117,6 +118,7 @@ module Master
                            when :web_chat then [web_chat_enabled?, "browser chat is off; MASTER_WEB_CHAT=1 turns it on"]
                            when :local_server
                              [local_server_for(id), "no local server lists #{id.delete_prefix('local:')}"]
+                           when :hosted then [hosted_endpoint_for(id), "no hosted endpoint lists #{id}"]
                            else [replicate_key?, "set REPLICATE_API_TOKEN in #{KEY_FILES}"]
                            end
             fix unless present
@@ -129,6 +131,7 @@ module Master
             return :ollama if id.start_with?("ollama:", "ollama/")
             return :local_server if id.start_with?("local:")
             return :replicate if id.start_with?("replicate:")
+            return :hosted if hosted_model?(id)
 
             cli_lane_model?(id) ? :cli_lane : :api
           end

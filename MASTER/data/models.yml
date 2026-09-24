@@ -475,6 +475,23 @@ local_servers:
   - http://localhost:1234/v1
   - http://localhost:8080/v1
 
+# Hosted OpenAI-compatible endpoints with a free tier (ModelRouter::
+# HostedEndpoints). Each lists its models at <base>/models, and they join the
+# free lane of every chain as <name>:<model>. key_env is where a key may be set;
+# with none set, only the models whose listing matches `keyless` are offered.
+# LLM7 serves its turbo tier without a key except the usage-based models,
+# measured 2026-09-24: GLM-5.3-Flash, codestral-latest, minimax-m2.7 and
+# mistral-Nemo-Instruct-2407 answered; every other chat model returned 401.
+# Candidates with larger free quotas that need a free signup key: Groq,
+# Cerebras, NVIDIA NIM (awesome-freellm-apis lists them).
+openai_compatible:
+  llm7:
+    base: https://api.llm7.io/v1
+    key_env: [LLM7_API_KEY]
+    keyless:
+      tier: turbo
+      usage_based_only: false
+
 # Language models Replicate hosts, asked as replicate:<owner>/<name> with
 # REPLICATE_API_TOKEN. Paid per call, so they sit behind the free lanes.
 replicate_chat:

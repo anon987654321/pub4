@@ -206,6 +206,56 @@ class TestKeylessRouting < Minitest::Test
   end
 
   # mistral.rs, LM Studio and llama-server all answer the OpenAI /models call.
+  # A hosted OpenAI-compatible endpoint lists more than it serves without a
+  # key; the keyless rule picks what answers, and a key opens the rest.
+  def test_a_hosted_endpoint_offers_its_keyless_models_until_a_key_is_set
+    rows = [
+      { "id" => "open-flash", "model_type" => "chat", "tier" => "turbo", "usage_based_only" => false },
+      { "id" => "metered", "model_type" => "chat", "tier" => "turbo", "usage_based_only" => true },
+      { "id" => "big-pro", "model_type" => "chat", "tier" => "pro", "usage_based_only" => false },
+      { "id" => "painter", "model_type" => "image", "tier" => "turbo", "usage_based_only" => false },
+    ]
+    seen_auth = []
+    server = TCPServer.new("127.0.0.1", 0)
+    body = JSON.generate("data" => rows)
+    thread = Thread.new do
+      2.times do
+        socket = server.accept
+        headers = []
+        headers << socket.gets.to_s.strip until headers.last == ""
+        seen_auth << headers.find { |line| line.downcase.start_with?("authorization:") }
+        socket.print("HTTP/1.1 200 OK\r\nContent-Length: #{body.bytesize}\r\nConnection: close\r\n\r\n#{body}")
+        socket.close
+      end
+    end
+    ENV.delete("MASTER_NO_POOL_PROBES")
+    spec = { "base" => "http://127.0.0.1:#{server.addr[1]}/v1", "key_env" => ["HOSTED_TEST_KEY"],
+             "keyless" => { "tier" => "turbo", "usage_based_only" => false } }
+    build = lambda do
+      router = Master::CLI::Routing::ModelRouter.new(config: FakeConfig.new(model: Master.free_primary_model), root: Master::ROOT)
+      router.instance_variable_get(:@rules)["openai_compatible"] = { "freehost" => spec }
+      router.define_singleton_method(:start_pool_probes) { {} }
+      router
+    end
+
+    keyless = build.call
+    assert_equal ["freehost:open-flash"], keyless.hosted_models
+    assert keyless.reachable?("freehost:open-flash")
+    assert_equal "free", keyless.lane_label("freehost:open-flash")
+
+    ENV["HOSTED_TEST_KEY"] = "sk-test"
+    keyed = build.call
+    assert_equal %w[freehost:open-flash freehost:metered freehost:big-pro], keyed.hosted_models
+    assert_equal "sk-test", keyed.hosted_endpoint_for("freehost:big-pro")[:key]
+    assert_nil seen_auth.first
+    assert_equal "Authorization: Bearer sk-test", seen_auth.last
+  ensure
+    ENV.delete("HOSTED_TEST_KEY")
+    ENV["MASTER_NO_POOL_PROBES"] = "1"
+    thread&.kill
+    server&.close
+  end
+
   def test_a_local_server_puts_the_models_it_lists_in_the_pool
     server = TCPServer.new("127.0.0.1", 0)
     body = JSON.generate("data" => [{ "id" => "Qwen/Qwen3-4B" }])

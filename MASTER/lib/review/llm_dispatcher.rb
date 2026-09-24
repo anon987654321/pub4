@@ -298,6 +298,7 @@ module Master
         return send_web_chat(selected_model.delete_prefix("web-chat:"), messages, sys:) if web_chat_model?(selected_model)
         return send_cli_lane(selected_model, messages, sys:) if cli_lane_model?(selected_model)
         return send_local_server(selected_model, messages, sys:, temperature:) if local_server_model?(selected_model)
+        return send_hosted(selected_model, messages, sys:, temperature:) if hosted_lane?(selected_model)
         return send_replicate_chat(selected_model, messages, sys:) if replicate_chat_model?(selected_model)
         return send_ollama(selected_model, messages, sys:, stream:, temperature:, format:, &blk) if ollama_model?(selected_model)
         # A schema-bound call wants one object back, not a tool conversation,
