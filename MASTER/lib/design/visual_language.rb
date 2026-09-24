@@ -162,6 +162,15 @@ module Master
         content_first: "readable hierarchy whose proportions come from content, not component fashion",
       }.freeze
 
+      # Each drift label and the fingerprint path it compares, in report order.
+      DRIFT_PATHS = {
+        "palette changed" => %i[palette top],
+        "type sizes changed" => %i[typography sizes],
+        "font families changed" => %i[typography families],
+        "shape language changed" => %i[shape rounded],
+        "effects changed" => %i[effects],
+      }.freeze
+
       module_function
 
       def brief(surface:, payload:)
@@ -285,12 +294,11 @@ module Master
       def design_drift(before_payload, after_payload)
         before = before_payload["design_fingerprint"] || fingerprint(before_payload)
         after = after_payload["design_fingerprint"] || fingerprint(after_payload)
-        changes = []
-        append_change(changes, "palette changed", dig_any(before, :palette, :top), dig_any(after, :palette, :top))
-        append_change(changes, "type sizes changed", dig_any(before, :typography, :sizes), dig_any(after, :typography, :sizes))
-        append_change(changes, "font families changed", dig_any(before, :typography, :families), dig_any(after, :typography, :families))
-        append_change(changes, "shape language changed", dig_any(before, :shape, :rounded), dig_any(after, :shape, :rounded))
-        append_change(changes, "effects changed", dig_any(before, :effects), dig_any(after, :effects))
+        changes = DRIFT_PATHS.filter_map do |label, path|
+          from = normalize_hash(dig_any(before, *path))
+          to = normalize_hash(dig_any(after, *path))
+          "#{label}: #{from.inspect} -> #{to.inspect}" unless from == to
+        end
         before_count = dig_any(before, :composition, :first_screen_interactive).to_f
         after_count = dig_any(after, :composition, :first_screen_interactive).to_f
         changes << "first-screen interactive count #{before_count.round} -> #{after_count.round}" if (before_count - after_count).abs >= 2
@@ -418,12 +426,6 @@ module Master
 
           value[key] || value[key.to_s] || value[key.to_sym]
         end
-      end
-
-      def append_change(changes, label, before, after)
-        before = normalize_hash(before)
-        after = normalize_hash(after)
-        changes << "#{label}: #{before.inspect} -> #{after.inspect}" unless before == after
       end
 
       def normalize_hash(value)

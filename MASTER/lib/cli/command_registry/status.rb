@@ -83,12 +83,14 @@ module Master
         ", review #{pay["pass"] ? "pass" : "fail"}#{", score #{pay["score"]}" if pay["score"]}"
       end
 
+      RCCTL = "/usr/sbin/rcctl"
+
       # Only a host with rcctl has a master service to report.
       def service_status
-        _, _, st = Master::Io::Exec.capture3("/usr/sbin/rcctl", "check", "master")
+        return {} unless File.executable?(RCCTL)
+
+        _, _, st = Master::Io::Exec.capture3(RCCTL, "check", "master")
         { state: st.success? ? "ok" : "down" }
-      rescue Errno::ENOENT
-        {}
       rescue StandardError => e
         { state: "unknown, #{e.class}" }
       end

@@ -121,7 +121,7 @@ module Master
         # reading is followed by what a repair would take on rather than by a
         # repair. The council argues inside the repair, not beside it.
         def fix_sections(resolved:, shell:, posture:, aesthetic:)
-          sections = [observe_section("observe", "obs0", shell, aesthetic:)]
+          sections = [observe_section(title: "observe", unit: "obs0", shell:, aesthetic:)]
           unless @apply
             return sections << ["would repair", log_phase("fix0", "preview", "path=#{shell}") { run_fix_preview(resolved) }]
           end
@@ -131,7 +131,7 @@ module Master
             run_fix(resolved)
           end]
           sections << ["changes", changes_section(before)]
-          sections << observe_section("re-observe", "obs1", shell, aesthetic:)
+          sections << observe_section(title: "re-observe", unit: "obs1", shell:, aesthetic:)
           sections << proof_section(resolved)
         end
 
@@ -231,7 +231,7 @@ end
 
         # One reading, aesthetic half first where it applies. Both halves report
         # under one unit, because they are one look at one tree.
-        def observe_section(title, unit, shell, aesthetic:)
+        def observe_section(title:, unit:, shell:, aesthetic:)
           @observe_units << unit
           [title, log_phase(unit, "observe", "path=#{shell}") do
             readings = []

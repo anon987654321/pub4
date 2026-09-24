@@ -10,7 +10,7 @@ module Master
       agent = bundle[:agent]
       tools = bundle[:tools]
 
-      services = wire_agent_services(root:, infra:, agent:, tools:, bus:)
+      services = wire_agent_services(root:, infra:, agent:, tools:)
       scanner = services[:scanner]
       council = services[:council]
       autonomous = boot_autonomous(root:, infra:, agent:, scanner:, axioms: council[:axioms])
@@ -24,16 +24,16 @@ module Master
         context_window: bundle[:context_window], tools: }.merge(autonomous)
     end
 
-    def wire_agent_services(root:, infra:, agent:, tools:, bus:)
+    def wire_agent_services(root:, infra:, agent:, tools:)
+      bus = infra[:bus]
       Ground::ActivePlan.attach(bus, root)
       agent.wire_constitution(Ground::Constitution.new)
       scanner = build_scanner(root:, agent:, bus:, ecology: infra[:ecology])
       lean_boot = ENV["MASTER_FULL_BOOT"] != "1"
       swarm = lean_boot ? nil : Review::Swarm::Coordinator.new(agent:, event_bus: bus, parent_tools: tools)
       council = build_council(agent:, bus:, root:)
-      # Permissive for user chat (CLI + web). This used to add "strict guard
-      # remains in Tool::Contract for shell/git", which is not true: Tool::Contract
-      # validates nothing anywhere — see data/proposals.yml.
+      # Permissive for user chat (CLI + web): Tool::Contract validates nothing,
+      # so no strict guard stands behind this one — see data/proposals.yml.
       guard = Review::Security::InjectionGuard.new(mode: :permissive)
       { scanner:, lean_boot:, swarm:, council:, guard: }
     end

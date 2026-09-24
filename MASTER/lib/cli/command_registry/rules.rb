@@ -30,16 +30,19 @@ module Master
         ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
 
         lines = rows.map do |rule|
-          law = ::Law.rules[rule["id"].to_s.to_sym]
-          kind = if law
-                   [("detector" if law.detect), ("semantic" if law.ask), ("practice" if law.practice)].compact.join("+")
-                 else
-                   "detector"
-                 end
-          kind = "declared" if kind.empty?
+          kind = rule_enforcement(::Law.rules[rule["id"].to_s.to_sym])
           format("%-28s %-10s %-8s %s", rule["id"], rule["tier"], rule["severity"], kind)
         end
         ["#{rows.size} of #{rules.size} rules — bin/operator rule <ID> for one in full", *lines].join("\n")
+      end
+
+      # A rule absent from law/ is enforced by a scan detector in the registry;
+      # a law/ rule with no detect, ask or practice block is declared only.
+      def rule_enforcement(law)
+        return "detector" unless law
+
+        kind = [("detector" if law.detect), ("semantic" if law.ask), ("practice" if law.practice)].compact.join("+")
+        kind.empty? ? "declared" : kind
       end
 
       # /why — one rule explained from law/ and data/rules.yml, and from the

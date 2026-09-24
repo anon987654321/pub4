@@ -85,7 +85,7 @@ module Master
         paste, state, accumulated = init_turn_state(input)
 
         print_thinking_indicator unless paste
-        result = dispatch_turn(input, accumulated, state)
+        result = dispatch_turn(input, accumulated:, state:)
         stop_thinking_indicator
         print_bridge_footer(result.value[:core], state:) if result.ok? && state[:streamed] && result.value[:core]
         display_result(result:, accumulated:, streamed: state[:streamed])
@@ -132,7 +132,7 @@ module Master
         nil
       end
 
-      def dispatch_turn(input, accumulated, state)
+      def dispatch_turn(input, accumulated:, state:)
         on_turn = build_on_turn_handler(accumulated, state)
         @pipeline_thread = spawn_pipeline_thread(input, on_turn)
         fetch_pipeline_result

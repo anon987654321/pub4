@@ -43,7 +43,7 @@ module Master
 
         before = kind == :stylesheet ? @css_rules.call(@root) : nil
         edited = move_and_rewrite(from, to)
-        failure = proof_failure(kind, from, to, before, edited)
+        failure = proof_failure(kind:, from:, to:, before:, edited:)
         return undo(from, to, edited, failure) if failure
 
         commit(from, to, edited, reason)
@@ -70,7 +70,7 @@ module Master
         end
       end
 
-      def proof_failure(kind, from, to, before, edited)
+      def proof_failure(kind:, from:, to:, before:, edited:)
         left = References.remaining(@root, from, to)
         return "still named at #{left.first(3).map { |path| relative(path) }.join(", ")}" unless left.empty?
 

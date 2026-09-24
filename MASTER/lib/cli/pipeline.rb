@@ -71,7 +71,7 @@ module Master
               end
             end
           end
-          collect_pool_results(workers, results, frozen)
+          collect_pool_results(workers, results)
         end
 
         def next_job(jobs)
@@ -88,7 +88,7 @@ module Master
           Result.err("parallel stage #{stage.class.name}: #{e.message}", category: :infrastructure)
         end
 
-        def collect_pool_results(workers, results, _frozen)
+        def collect_pool_results(workers, results)
           deadline = Time.now + PARALLEL_TIMEOUT_S
           workers.each do |worker|
             remaining = [deadline - Time.now, 0].max

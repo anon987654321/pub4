@@ -22,7 +22,10 @@ module Master
         name = event.to_s
         return if name.empty?
 
-        handle_pass_event(name, payload) || handle_council_event(name) || handle_terminal_event(name, payload)
+        # Each handler owns a disjoint set of event names and ignores the rest.
+        handle_pass_event(name, payload)
+        handle_council_event(name)
+        handle_terminal_event(name, payload)
         self
       rescue StandardError
         self
@@ -68,10 +71,7 @@ module Master
         when "fix_loop:ast_fixed", "rule_loop:fix_applied"
           @stage = "repair"
           @changes += 1
-        else
-          return false
         end
-        true
       end
 
       def handle_council_event(name)
@@ -85,10 +85,7 @@ module Master
         when "council:veto"
           @stage = "council"
           @council = "veto"
-        else
-          return false
         end
-        true
       end
 
       def handle_terminal_event(name, payload)
@@ -107,7 +104,6 @@ module Master
           @stage = "timeout"
           @terminal = "timeout"
         end
-        true
       end
     end
   end

@@ -49,11 +49,11 @@ module Master
         current = agent.model.to_s
         ids = router ? router.pool(wait: true) : tiers_by_id.keys
         ids = [current] + ids unless current.empty? || ids.include?(current)
-        rows = model_rows(ids, current, tiers_by_id, router)
+        rows = model_rows(ids:, current:, tiers_by_id:, router:)
         rows.join("\n") + model_list_footer(router, metrics)
       end
 
-      def model_rows(ids, current, tiers_by_id, router)
+      def model_rows(ids:, current:, tiers_by_id:, router:)
         width = ids.map(&:length).max.to_i
         ids.map do |id|
           label = tiers_by_id.fetch(id) { [router&.lane_label(id)].compact }.uniq.join(", ")
