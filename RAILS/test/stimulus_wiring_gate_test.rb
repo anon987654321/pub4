@@ -39,6 +39,15 @@ class StimulusWiringGateTest < Minitest::Test
     assert_includes failures.first, "totally-absent"
   end
 
+  def test_reports_an_unregistered_helper_controller
+    failures = with_helper_probe(%(tag.div(data: { controller: "totally-absent-helper" })))
+
+    assert_equal 1, failures.size, failures.inspect
+    assert_includes failures.first, "totally-absent-helper"
+  ensure
+    FileUtils.rm_f(File.join(ROOT, "amber/app/helpers/stimulus_wiring_probe_helper.rb"))
+  end
+
   def test_reports_a_missing_action_method
     failures = with_probe(%(<button data-action="click->luxury-product#noSuchMethod">x</button>))
 
@@ -176,6 +185,14 @@ class StimulusWiringGateTest < Minitest::Test
 
   # The gate reads the real tree; a probe file is the only way to exercise the
   # failure paths without a second fixture copy of three Rails apps.
+  def with_helper_probe(source)
+    path = File.join(ROOT, "amber/app/helpers/stimulus_wiring_probe_helper.rb")
+    File.write(path, "module StimulusWiringProbeHelper\n  def stimulus_wiring_probe\n    #{source}\n  end\nend\n")
+    Deploy::StimulusWiringGate.run.failures.select { |f| f.include?("stimulus_wiring_probe_helper") }
+  ensure
+    FileUtils.rm_f(path)
+  end
+
   def with_probe(markup)
     path = File.join(ROOT, "amber/app/views/items/_stimulus_wiring_probe.html.erb")
     File.write(path, markup)

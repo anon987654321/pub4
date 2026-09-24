@@ -248,6 +248,20 @@ module Deploy
           result.fail("#{app}: #{rel} sets #{id}:#{value}, absent from static values in #{source.sub("#{@rails_root}/", "")}")
         end
       end
+
+      # Helpers and components can emit data-controller at render time.
+      # They are not views, so checking only views lets a helper-mounted controller
+      # stay unregistered while the HTML itself remains syntactically valid.
+      mount_sources(app).select { |path| helper_or_component?(path) }.each do |path|
+        rel = path.sub("#{@rails_root}/", "")
+        identifiers(File.read(path)).each do |id|
+          result.checked!
+          next if registered.include?(id)
+
+          result.fail("#{app}: #{rel} names controller #{id.inspect}, which nothing registers")
+        end
+      end
+
     end
 
     # Shared partials render inside every app, so each app's registration set has
@@ -263,6 +277,13 @@ module Deploy
       Dir.glob(File.join(@rails_root, app, "app/views/**/*.erb")) +
         Dir.glob(File.join(@rails_root, app, "engines/*/app/views/**/*.erb")) +
         Dir.glob(File.join(@rails_root, "shared/app/views/**/*.erb"))
+    end
+
+    def helper_or_component?(path)
+      normalized = path.delete_prefix("#{@rails_root}/")
+      normalized.start_with?("shared/app/helpers/", "shared/app/components/") ||
+        normalized.start_with?("#{normalized.split("/").first}/app/helpers/") ||
+        normalized.match?(%r{A(?:amber|brgen|bsdports)/engines/[^/]+/app/helpers/})
     end
 
     def identifiers(text)
