@@ -1,6 +1,6 @@
 import "pub4/hotwire"
 import "controllers"
-import "gravity_field"
+import "pub4/gravity_field"
 
 if ("periodicSync" in navigator && "serviceWorker" in navigator) {
   navigator.serviceWorker.ready.then(reg => {
