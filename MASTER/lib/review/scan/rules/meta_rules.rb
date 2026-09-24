@@ -27,8 +27,8 @@ module Master
             omissions = @guard.check(paths: [rel])
             omissions.map { |o| finding(line: 1, message: "#{o.type} #{o.name} dropped (last seen #{o.last_seen_at})") }
           rescue StandardError => e
-            Master::Ground::Swallow.log(e, context: "ast_omission_rule.check", event_bus: nil)
-            []
+            Master::Ground::Swallow.log(e, context: "ast_omission_rule.check", event_bus: nil, severity: :load_bearing)
+            raise "ast_omission scan failed: #{e.class}: #{e.message}"
           end
 
           private
