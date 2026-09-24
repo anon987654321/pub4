@@ -1,0 +1,7 @@
+/* Shared spatial field. Atmosphere, not content. */
+.gravity-field { position: fixed; inset: 0; z-index: var(--z-canvas, 0); pointer-events: none; overflow: hidden; contain: strict; opacity: var(--gravity-opacity, .42); }
+.gravity-field canvas { display: block; inline-size: 100%; block-size: 100%; }
+.gravity-field::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 50% 45%, transparent 0 34%, color-mix(in srgb, var(--bg) 18%, transparent) 100%); pointer-events: none; }
+[data-gravity-state="active"] .gravity-field { opacity: .62; }
+[data-gravity-state="quiet"] .gravity-field { opacity: .30; }
+@media (prefers-reduced-motion: reduce) { .gravity-field { opacity: .16; } }
