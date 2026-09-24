@@ -3261,6 +3261,22 @@ rules:
           - unlimited_colors
           - mascot_competition
           - motion_without_reduced_motion_path
+        editorial:
+          inherits_authoritative_design: true
+          layout: publication_grid
+          typography: high_contrast_reading_hierarchy
+          imagery: content_led
+          color: restrained
+          shape: quiet
+          motion: subtle
+          signatures:
+          - strong_headline
+          - readable_measure
+          - deliberate_captioning
+          - image_text_relationship
+          avoid:
+          - novelty_for_its_own_sake
+          - decorative_type_in_body_copy
         commerce_editorial:
           inherits_authoritative_design: true
           layout: product_image_plus_typographic_offer
