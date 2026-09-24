@@ -39,6 +39,12 @@ def test_the_only_flag_is_parsed_in_both_spellings
   assert_equal [nil, nil, true, "critique", "lib"], registry.parse_pass_flags("--only=critique lib")
   assert_equal [false, nil, true, "fix", "../RAILS/amber"],
                registry.parse_pass_flags("--only fix --no-autofix ../RAILS/amber")
+  assert_equal [nil, nil, true, nil, "MASTER"],
+               registry.parse_pass_flags("--trace MASTER")
+  assert_equal [nil, nil, true, nil, "MASTER"],
+               registry.parse_pass_flags("--verbose MASTER")
+  assert_equal [nil, nil, true, nil, "MASTER"],
+               registry.parse_pass_flags("--quiet MASTER")
 end
 
   def test_infer_promotes_through_master_phrase
