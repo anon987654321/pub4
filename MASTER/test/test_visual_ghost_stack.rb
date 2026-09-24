@@ -4,8 +4,10 @@ require_relative "test_helper"
 
 class VisualGhostStackContractTest < Minitest::Test
   PATH = File.expand_path("../lib/fix/visual_ghost_stack.rb", __dir__)
+  # The pages it screenshots live beside it; the contract is the pair.
+  PAGES = File.expand_path("../lib/fix/visual_ghost_pages.rb", __dir__)
 
-  def source = File.read(PATH)
+  def source = File.read(PATH) + File.read(PAGES)
 
   def test_history_is_persistent_but_bounded
     assert_includes source, 'File.join(@root, "MASTER", ".master", "visual_evidence"'
@@ -22,7 +24,6 @@ class VisualGhostStackContractTest < Minitest::Test
 
   def test_visual_stack_is_aligned_and_uses_low_opacity_history
     assert_includes source, "position:absolute;inset:0"
-    assert_includes source, "GHOST_OPACITIES = [ 0.04, 0.06, 0.08, 0.12 ]"
     assert_includes source, "CURRENT_OPACITY = 0.72"
     assert_includes source, "GHOST_OPACITIES = [ 0.04, 0.06, 0.09, 0.12 ]"
     assert_includes source, 'class="#{class_name}"'

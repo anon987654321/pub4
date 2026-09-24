@@ -27,26 +27,29 @@ module Master
         def prompt_values(persona, code, context)
           axiom = axiom_line(persona)
           question = Deliberation.sample_question(persona)
-          hostile = QualityFramework.hostile_questions(persona)
-          hostile_block = if hostile.empty?
-                            ""
-                          else
-                            <<~TEXT
-                              \nHOSTILE SELF-TEST
-                              Before concluding, attack your own critique. Answer these briefly where applicable:
-                              #{hostile.map { |item| "- #{item}" }.join("\n")}
-                              At least one answer must state what evidence would falsify your criticism.
-                            TEXT
-                          end
           {
             persona_name: persona.name, persona_role: persona.role, persona_bias: persona.bias,
             persona_prompt: persona.prompt, ctx: context ? "\nContext: #{context}\n" : "",
             axiom_block: axiom.empty? ? "" : "#{axiom}\n",
             quality_block: Deliberation.quality_brief(QualityFramework.domain_for(persona.name)),
             question_block: question ? "\nAdversarial question for this turn: #{question}\n" : "",
-            hostile_block:,
+            hostile_block: hostile_block(persona),
             safe_code: truncate_code(code.to_s), veto_hint: veto_hint(persona)
           }
+        end
+
+        # The juror attacks its own critique with three red-team questions; empty
+        # when council.yml declares none.
+        def hostile_block(persona)
+          hostile = QualityFramework.hostile_questions(persona)
+          return "" if hostile.empty?
+
+          <<~TEXT
+            \nHOSTILE SELF-TEST
+            Before concluding, attack your own critique. Answer these briefly where applicable:
+            #{hostile.map { |item| "- #{item}" }.join("\n")}
+            At least one answer must state what evidence would falsify your criticism.
+          TEXT
         end
 
         def format_round(entry)

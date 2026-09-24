@@ -18,6 +18,20 @@ module Master
   module Fix
     # Rendered UI is evidence, not a second scanner. GeometryProbe owns the
     # browser; Council owns visual judgement; RuleLoop owns the edit.
+    # Asked of every visual conclusion before it becomes a finding.
+    HOSTILE_VISUAL_AUDIT = <<~TEXT.freeze
+      HOSTILE VISUAL AUDIT
+      Before proposing a fix, challenge the visual conclusion:
+      - What observation would falsify the claimed visual defect?
+      - Could font loading, locale, dynamic data, viewport state, or animation explain the apparent drift?
+      - What useful interaction or information would a visual cleanup accidentally remove?
+      - Which adjacent state is not represented by this screenshot but could expose a regression?
+      - Is the proposed improvement actually a deletion, alignment correction, or existing-primitives fix rather than new visual machinery?
+      - What would a careless or adversarial user do to reveal a hidden overlap, dead control, misleading affordance, or inaccessible state?
+      - Which part of the page should remain deliberately imperfect because it carries product identity or useful information?
+      Only promote a hostile observation into a finding when rendered evidence or repository evidence supports it.
+    TEXT
+
     class VisualPass
       RULE_ID = "RENDERED_VISUAL_REFINEMENT"
       SOURCE_EXTENSIONS = %w[.css .scss .erb .html .htm .js .ts].freeze
@@ -286,16 +300,7 @@ module Master
           affordance, and decorative noise. Do not stop at "technically valid".
           Treat one-pixel alignment drift, inconsistent spacing, typography, component vocabulary, optical centering, baseline rhythm, density, and responsive composition as real defects when the rendered evidence supports it.
 
-          HOSTILE VISUAL AUDIT
-          Before proposing a fix, challenge the visual conclusion:
-          - What observation would falsify the claimed visual defect?
-          - Could font loading, locale, dynamic data, viewport state, or animation explain the apparent drift?
-          - What useful interaction or information would a visual cleanup accidentally remove?
-          - Which adjacent state is not represented by this screenshot but could expose a regression?
-          - Is the proposed improvement actually a deletion, alignment correction, or existing-primitives fix rather than new visual machinery?
-          - What would a careless or adversarial user do to reveal a hidden overlap, dead control, misleading affordance, or inaccessible state?
-          - Which part of the page should remain deliberately imperfect because it carries product identity or useful information?
-          Only promote a hostile observation into a finding when rendered evidence or repository evidence supports it.
+          #{HOSTILE_VISUAL_AUDIT}
 
           #{rows.join("\n")}
           #{drift_rows.join("\n")}
