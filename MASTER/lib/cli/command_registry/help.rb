@@ -19,6 +19,8 @@ module Master
             "the strongest, validates it and reads the path again, until the tree",
             "converges, stops improving or reaches something only you can settle.",
             "",
+            "Detailed dmesg is the default: every meaningful event is shown as it happens.",
+            "--trace expands the redacted event payload; --normal and --quiet reduce output.",
             "--dry-run stops after the reading and says what it would take on.",
             "There is no /scan: observation is where a fix starts, not a command.",
           ],
