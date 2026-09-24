@@ -153,6 +153,9 @@ surfaces:
   - { app: brgen, label: takeaway_takeaway_delivery_drivers_show, host: takeaway.brgen.no, path: "/delivery_drivers/1", viewports: [mobile, desktop] }
   - { app: brgen, label: markedsplass_marketplace_stores_show, host: markedsplass.brgen.no, path: "/shops/seed-store-0-minister_ample", viewports: [mobile, desktop] }
   - { app: brgen, label: markedsplass_marketplace_listings_index, host: markedsplass.brgen.no, path: "/listings", viewports: [mobile, desktop] }
+  - { app: brgen, label: markedsplass_marketplace_listings_kaufland_catalogue, host: markedsplass.brgen.no, path: "/listings?design_variant=kaufland_catalogue", viewports: [mobile, desktop] }
+  - { app: brgen, label: markedsplass_marketplace_listings_bol_clean, host: markedsplass.brgen.no, path: "/listings?design_variant=bol_clean", viewports: [mobile, desktop] }
+  - { app: brgen, label: markedsplass_marketplace_listings_brgen_hybrid, host: markedsplass.brgen.no, path: "/listings?design_variant=brgen_hybrid", viewports: [mobile, desktop] }
   - { app: brgen, label: markedsplass_marketplace_listings_show, host: markedsplass.brgen.no, path: "/listings/sovesofa-lite-brukt", viewports: [mobile, desktop] }
   - { app: brgen, label: markedsplass_marketplace_orders_index, host: markedsplass.brgen.no, path: "/orders", viewports: [mobile, desktop] }
   - { app: brgen, label: markedsplass_marketplace_addresses_index, host: markedsplass.brgen.no, path: "/addresses", viewports: [mobile, desktop] }
