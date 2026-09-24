@@ -53,10 +53,6 @@
   </nav>
 </section>
 
- would be worse than the row it
-    replaces, so it does neither: the count rides on the summary, and the panel
-    opens itself whenever anything inside it is set. sort is only a filter when
-    it is not the default — "newest first" is the page as it arrives. %>
 <% active_filters = [ params[:from], params[:category_id], params[:condition],
                       params[:min_price], params[:max_price], @search_lat ].count(&:present?) +
                     ((params[:sort].present? && params[:sort] != "recent") ? 1 : 0) %>
