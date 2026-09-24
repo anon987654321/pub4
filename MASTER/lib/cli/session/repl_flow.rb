@@ -173,7 +173,7 @@ module Master
         Master::Ground::HostBudget.refuse_heavy_prompt?(line)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "CLI.host_refusal_for")
-        nil
+        "host budget unavailable: #{e.class}: #{e.message}"
       end
 
     end
