@@ -228,7 +228,7 @@ module Master
         uri = URI(value.to_s)
         raise PolicyError, "social_browser: URL must use HTTPS" unless uri.scheme == "https"
 
-        host = uri.host.to_s.downcase.sub(/Awww./, "")
+        host = uri.host.to_s.downcase.sub(/\Awww\./, "")
         return if site.hosts.include?(host)
 
         raise PolicyError, "social_browser: host #{uri.host.inspect} is not allowed for #{site.id}"
