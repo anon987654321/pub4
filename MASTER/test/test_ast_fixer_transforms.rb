@@ -522,6 +522,31 @@ class TestAstFixerTransforms < Minitest::Test
     assert_includes result[:transforms], :no_decorative_fx
   end
 
+  # The pattern once matched any property ending in width or height, anywhere:
+  # a 20px body line-height became 44px, and so would a 1px border.
+  def test_touch_targets_snap_only_hit_area_dimensions_on_interactive_selectors
+    source = <<~SCSS
+      :root {
+        --line-height: 20px;
+      }
+      .divider {
+        height: 1px;
+      }
+      .icon-btn {
+        width: 24px;
+        border-width: 1px;
+        line-height: 20px;
+      }
+    SCSS
+    result = fix("chrome.scss", source)
+
+    assert_includes result[:content], "--line-height: 20px;"
+    assert_includes result[:content], "height: 1px;"
+    assert_includes result[:content], "width: 44px;"
+    assert_includes result[:content], "border-width: 1px;"
+    assert_includes result[:content], "line-height: 20px;\n}"
+  end
+
   def test_trailing_commas_skip_block_closers
     source = <<~RUBY
       records.map { |rec|

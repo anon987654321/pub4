@@ -208,7 +208,7 @@ module Master
           next [] unless Rules.ui_path?(path)
 
           min = Rules.thresholds.touch_min_px.to_i
-          button_re = /button|\.btn|[-_]btn\b|tap|touch|click|icon-btn|nav__|control/i
+          button_re = AstFixer::WebTransforms::TOUCH_SELECTOR
           findings = []
           current_selector = ""
           src.each_line.with_index(1) do |line, num|
@@ -225,7 +225,7 @@ module Master
             next unless "#{current_selector}\n#{line}".match?(button_re) ||
                         (line.match?(/min-height|height/) && path.to_s.include?("button"))
 
-            line.scan(/(?:min-)?(?:width|height)\s*:\s*(\d+)px/i) do |raw|
+            line.scan(AstFixer::WebTransforms::TOUCH_DIMENSION) do |raw|
               px = raw[0].to_i
               next if px >= min || px.zero?
 

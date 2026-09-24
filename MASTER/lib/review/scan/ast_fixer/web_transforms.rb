@@ -5,6 +5,13 @@ module Master
     module Scan
       class AstFixer
         module WebTransforms
+          # A whole width/height/min-width/min-height property: line-height,
+          # border-width, max-width and --custom-width are not hit areas, and
+          # the unanchored pattern once turned a 20px body line-height into 44px.
+          TOUCH_DIMENSION = /(?<![\w-])(?:min-)?(?:width|height)\s*:\s*(\d+)px/i
+          # Selectors that name an interactive target, shared with TOUCH_TARGET_MIN.
+          TOUCH_SELECTOR = /button|\.btn|[-_]btn\b|tap|touch|click|icon-btn|nav__|control/i
+
           private
 
           def add_html_lang(src)
@@ -288,15 +295,21 @@ module Master
             out
           end
 
+          # Only inside a selector that names an interactive target, the same
+          # scope TOUCH_TARGET_MIN reports on: an icon's or a divider's 16px is
+          # not a hit area.
           def snap_touch_targets(src)
-            changed = false
-            out = src.gsub(/(?:min-)?(?:width|height)\s*:\s*(\d+)px/i) do |match|
-              px = Regexp.last_match(1).to_i
-              next match if px >= 44 || px.zero?
-              changed = true
-              match.sub(/\d+px/, "44px")
-            end
-            @transforms << :touch_target_min if changed
+            selector = ""
+            out = src.each_line.map do |line|
+              selector = line if line.include?("{")
+              next line unless "#{selector}\n#{line}".match?(TOUCH_SELECTOR)
+
+              line.gsub(TOUCH_DIMENSION) do |match|
+                px = Regexp.last_match(1).to_i
+                px >= 44 || px.zero? ? match : match.sub(/\d+px/, "44px")
+              end
+            end.join
+            @transforms << :touch_target_min if out != src
             out
           end
 
