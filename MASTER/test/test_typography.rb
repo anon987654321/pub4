@@ -8,7 +8,7 @@ class TypographyTest < Minitest::Test
     social = Master::Design::Typography.profile(:social)
 
     assert_equal 66, editorial[:measure]
-    assert_equal 50, social[:measure]
+    assert_equal 55, social[:measure]
     assert_equal "hanging", editorial[:punctuation]
   end
 
