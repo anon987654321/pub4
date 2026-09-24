@@ -18,6 +18,8 @@ module Master
             Operator::Cohesion.plans_for(dir).map do |plan|
               {
                 rule: RULE_ID,
+                laws: %w[SINGULARITY ABSTRACTION DENSITY PROXIMITY KISS],
+                source: "cohesion",
                 file: relative_path(plan.fetch(:files).first, dir),
                 line: 1,
                 message: structural_message(dir, plan),
