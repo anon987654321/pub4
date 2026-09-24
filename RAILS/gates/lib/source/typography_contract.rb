@@ -9,7 +9,7 @@ module Deploy
   # the rendered surface unable to honor the declared typographic profile.
   class TypographyContractGate
     def self.run
-      root = File.expand_path("../..", __dir__)
+      root = File.expand_path("../../../..", __dir__)
       lint = Operator::TypographyLint.new(root:)
       result = GateResult.new
 
