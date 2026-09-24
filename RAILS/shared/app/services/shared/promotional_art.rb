@@ -21,7 +21,7 @@ module Shared
     def initialize(product:, headline:, body: nil, price: nil, badge: nil, cta: nil,
                    layout: :hero, background: :chalk)
       @system = Operator::MasterDesign.design_system.fetch("promotional_art")
-      @product = product.to_s.strip
+      @products = Array(product).map { |item| item.to_s.strip }.reject(&:blank?)
       @headline = headline.to_s.strip
       @body = body.to_s.strip.presence
       @price = price.to_s.strip.presence
@@ -40,7 +40,7 @@ module Shared
         @background,
         matte,
         @system.fetch("matte_inks").fetch(@background),
-        @product,
+        @products,
         @headline,
         @body,
         @price,
@@ -57,7 +57,8 @@ module Shared
     private
 
     def validate!
-      raise ArgumentError, "promotional product is required" if @product.blank?
+      raise ArgumentError, "promotional product is required" if @products.empty?
+      raise ArgumentError, "too many promotional products" if @products.size > @system.fetch("product").fetch("max_items")
       raise ArgumentError, "promotional headline is required" if @headline.blank?
       raise ArgumentError, "unknown promotional layout: #{@layout}" unless @system.fetch("layouts").key?(@layout)
       raise ArgumentError, "unknown promotional background: #{@background}" unless @system.fetch("matte_backgrounds").key?(@background)
@@ -72,8 +73,8 @@ module Shared
     def image_prompt(layout, matte)
       [
         "clean ecommerce campaign still life",
-        "product: #{@product}",
-        "single primary product, fully visible, centered in its product zone",
+        "products: #{@products.join(", ")}",
+        "primary product fully visible, with secondary products grouped cleanly if present",
         "product scale #{layout.fetch("product_zone")}",
         "matte background #{matte} with nearly uniform tone",
         "safe copy area #{layout.fetch("copy_zone")} kept visually quiet",
