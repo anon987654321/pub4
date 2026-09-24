@@ -22,13 +22,13 @@ module Shared
           "Pub4Mobile" => {
             "type" => "application",
             "platform" => "iOS",
-            "sources" => [{ "path" => "Sources" }],
+            "sources" => [{ "path" => "../Sources" }],
             "settings" => {
               "base" => {
                 "SWIFT_VERSION" => "5.0",
                 "GENERATE_INFOPLIST_FILE" => "NO",
-                "INFOPLIST_FILE" => "Info.plist",
-                "CODE_SIGN_ENTITLEMENTS" => "Pub4Mobile.entitlements",
+                "INFOPLIST_FILE" => "../Info.plist",
+                "CODE_SIGN_ENTITLEMENTS" => "../Pub4Mobile.entitlements",
                 "CODE_SIGN_STYLE" => "Automatic",
                 "MARKETING_VERSION" => "1.0.0",
                 "CURRENT_PROJECT_VERSION" => "1"
