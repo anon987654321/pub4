@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "tmpdir"
 
 class RadioWhypImportTest < ActiveSupport::TestCase
   setup do
