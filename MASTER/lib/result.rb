@@ -23,7 +23,8 @@ module Master
     module ErrClassification
       # Worth trying again as-is, or after a wait: the failure is in the
       # environment rather than in what was asked.
-      RETRIABLE = %i[infrastructure timeout provider_error llm_failure llm_call_failure rate_limit exhausted offline].freeze
+      RETRIABLE = %i[infrastructure timeout provider_error llm_failure llm_call_failure rate_limit exhausted offline
+                     inconclusive].freeze
 
       # Retrying reproduces it. Either the request is wrong, the answer is no, or
       # the operation is over.
@@ -71,6 +72,7 @@ module Master
       policy: "blocked by policy / kernel rule",
       shutdown: "user quit / shutdown requested",
       abort: "operation aborted",
+      inconclusive: "evidence could not be gathered (browser, surface or reviewer unavailable) — no verdict either way",
     }.freeze
 
     def self.ok(value) = Ok.new(value)
