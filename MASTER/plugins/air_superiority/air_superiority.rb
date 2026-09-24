@@ -13,14 +13,8 @@ module Master
       WIFI_COMMAND_TIMEOUT_S = 12
       BLUETOOTH_SCAN_S = 6
       KNOWN_FILE = File.expand_path("~/.master/plugins/air_superiority/known.yml")
-      BLOCKED_OPERATIONS = %w[
-        deauth
-        disassociate
-        packet_injection
-        credential_capture
-        man_in_the_middle
-        exploit
-      ].freeze
+      Error = Master::Plugin::Error
+      PolicyError = Master::Plugin::PolicyError
 
       Threat = Data.define(:type, :severity, :details, :data)
 
