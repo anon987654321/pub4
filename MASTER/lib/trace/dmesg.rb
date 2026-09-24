@@ -15,11 +15,44 @@ module Master
     module Dmesg
       module_function
 
+      LEVELS = %w[quiet normal verbose trace].freeze
+
       def enabled?
-        env = ENV["MASTER_DMESG"]
-        return env != "0" if env && !env.empty?
+        return false if @verbosity_override == "quiet"
+        return false if ENV["MASTER_QUIET"] == "1"
+
+        env = ENV["MASTER_DMESG"].to_s.downcase
+        return false if env == "0" || env == "quiet"
+        return true if %w[1 normal verbose trace].include?(env)
 
         cfg.fetch("enabled", true) != false
+      end
+
+      def verbosity
+        override = @verbosity_override
+        return override if override
+
+        env = ENV["MASTER_DMESG"].to_s.downcase
+        return "quiet" if env.empty? && ENV["MASTER_QUIET"] == "1"
+        return normalize_verbosity(env) unless env.empty?
+
+        normalize_verbosity(cfg.fetch("verbosity", "normal"))
+      end
+
+      def verbose?
+        %w[verbose trace].include?(verbosity)
+      end
+
+      def trace?
+        verbosity == "trace"
+      end
+
+      def with_verbosity(level)
+        previous = @verbosity_override
+        @verbosity_override = normalize_verbosity(level)
+        yield
+      ensure
+        @verbosity_override = previous
       end
 
       def cfg
@@ -34,6 +67,12 @@ module Master
       def reload!
         @cfg = nil
         cfg
+      end
+
+      def normalize_verbosity(value)
+        value = value.to_s.downcase
+        value = "normal" if value == "1" || value.empty?
+        LEVELS.include?(value) ? value : "normal"
       end
 
       def attach(unit, parent, detail = nil)
@@ -68,14 +107,11 @@ module Master
       def emit(line)
         return unless enabled?
 
-        # Suppress "at unit0" lines by default if we are just in a top-level conversational turn (master0).
-        # This prevents dmesg flood during chitchat without requiring a flag.
-        if Fiber[:master_unit] == "master0" && line.match?(/at \w+0|llm\d+:/)
+        # Normal mode keeps conversational turns quiet. Verbose and trace are
+        # explicit operator modes and therefore expose the top-level work too.
+        if verbosity == "normal" && Fiber[:master_unit] == "master0" && line.match?(/at \w+0|llm\d+:/)
           return
         end
-
-        # Fallback for other contexts if MASTER_QUIET is set.
-        return if ENV["MASTER_QUIET"] == "1" && line.match?(/at \w+0|llm\d+:/)
 
         text = line.to_s.gsub(/\s+/, " ").strip
         # Clears the repainting "thinking" line first, or the unit prints on
@@ -118,6 +154,10 @@ module Master
         MS_PER_SECOND = 1000.0
         CENTS_PER_DOLLAR = 100
 
+        VERBOSE_EVENTS = %w[
+          fix_loop rule_loop fix review critique council scan validation pipeline route git
+        ].freeze
+
         def initialize
           @count = Hash.new(0)
           @open = {}
@@ -125,9 +165,11 @@ module Master
           @usage = nil
           @llm = {}
           @llm_parent = {}
+          @ledger = Hash.new(0)
         end
 
         def lines(payload)
+          track(payload)
           case payload[:event].to_s
           when "llm:send" then llm_send(payload)
           when "llm:call_complete" then remember_usage(payload)
@@ -137,7 +179,9 @@ module Master
           when "fold:risk" then parent("fold0", "master0", "risk #{payload[:risk]}")
           when "core:reason" then ["fold0: #{clip(payload[:why])}"]
           when "core:turn" then fold_turn(payload)
-          else []
+          when "fix_loop:terminal" then terminal(payload)
+          else
+            verbose_event(payload)
           end
         end
 
@@ -168,7 +212,7 @@ module Master
           tally = llm_tally(parent)
           tally[:calls] += 1
           tally[:models] << model_name(payload[:model])
-          return ["#{unit} at #{parent}: #{model_name(payload[:model])}"] if tally[:calls] <= BURST_AFTER
+          return ["#{unit} at #{parent}: #{model_name(payload[:model])}"] if Dmesg.verbose? || tally[:calls] <= BURST_AFTER
 
           rollup(parent, tally)
         end
@@ -182,7 +226,7 @@ module Master
           usage, @usage = @usage, nil
           tally = llm_tally(parent)
           tally[:failed] += 1 unless payload[:status].to_s == "success"
-          return rollup(parent, tally) if tally[:calls] > BURST_AFTER
+          return rollup(parent, tally) if !Dmesg.verbose? && tally[:calls] > BURST_AFTER
 
           return ["#{unit}: #{payload[:status]}, #{clip(payload[:error])}"] unless payload[:status].to_s == "success"
 
@@ -204,6 +248,91 @@ module Master
           tally[:at] = monotonic
           failed = tally[:failed].positive? ? ", #{tally[:failed]} failed" : ""
           ["#{parent}: #{counted(tally[:calls], "model call")}#{failed}, #{counted(tally[:models].size, "lane")}"]
+        end
+
+
+        def track(payload)
+          case payload[:event].to_s
+          when "fix_loop:pass_start"
+            @ledger[:passes] = [@ledger[:passes].to_i, payload[:pass].to_i].max
+            @ledger[:files] = [@ledger[:files].to_i, payload[:file_count].to_i].max
+          when "fix_loop:scan_progress"
+            @ledger[:finding_files] += 1
+            @ledger[:violations] += payload[:count].to_i
+          when "fix_loop:rule_result", "rule_loop:pass"
+            @ledger[:rules] += 1
+            @ledger[:violations] += payload[:violations].to_i
+            @ledger[:fixed] += payload[:fixed].to_i
+          when "rule_loop:fix_applied", "fix_loop:ast_fixed"
+            @ledger[:changes] += 1
+          when "fix_loop:improvement_fix", "fix_loop:opportunity_fix", "fix_loop:visual_fix"
+            @ledger[:model_fixes] += payload[:fixed].to_i
+          when "fix_loop:improvement_council"
+            @ledger[:council] += 1
+          when "llm:send"
+            @ledger[:model_calls] += 1
+          when "llm:provider_outcome"
+            @ledger[:model_failures] += 1 unless payload[:status].to_s == "success"
+          when "fix_loop:human_decision_required"
+            @ledger[:human_decisions] += 1
+          end
+        end
+
+        def verbose_event(payload)
+          return [] unless Dmesg.verbose? || Dmesg.trace?
+
+          event = payload[:event].to_s
+          component = event.split(":", 2).first
+          return [] unless Dmesg.trace? || VERBOSE_EVENTS.include?(component)
+
+          [event_line(payload)]
+        end
+
+        def event_line(payload)
+          event = payload[:event].to_s
+          component, action = event.split(":", 2)
+          unit = DmesgUnit.name(component)
+          detail = event_detail(payload)
+          detail.empty? ? "#{unit}: #{action || "event"}" : "#{unit}: #{action || "event"}, #{detail}"
+        end
+
+        EVENT_FIELDS = %i[target path file pass file_count count rule status state fixed violations changes stage reason category ms bytes critiques files].freeze
+
+        def event_detail(payload)
+          values = EVENT_FIELDS.filter_map do |key|
+            value = payload[key]
+            next if value.nil? || value == ""
+
+            label = key.to_s.tr("_", " ")
+            rendered = case value
+                       when Array then value.first(3).map(&:to_s).join(", ")
+                       else value.to_s
+                       end
+            next if rendered.empty?
+
+            "#{label} #{clip(rendered, 72)}"
+          end
+          values.join(", ")
+        end
+
+        def terminal(payload)
+          state = payload[:state].to_s
+          message = clip(payload[:message], 80)
+          lines = ["fix0: terminal #{state}#{", #{message}" unless message.empty?}"]
+          return lines unless Dmesg.verbose? || Dmesg.trace?
+
+          ledger = []
+          ledger << counted(@ledger[:files].to_i, "file in scope") if @ledger[:files].to_i.positive?
+          ledger << counted(@ledger[:rules].to_i, "rule pass") if @ledger[:rules].to_i.positive?
+          ledger << counted(@ledger[:violations].to_i, "rule finding") if @ledger[:violations].to_i.positive?
+          ledger << counted(@ledger[:fixed].to_i, "fix") if @ledger[:fixed].to_i.positive?
+          ledger << counted(@ledger[:changes].to_i, "change") if @ledger[:changes].to_i.positive?
+          ledger << counted(@ledger[:model_calls].to_i, "model call") if @ledger[:model_calls].to_i.positive?
+          ledger << counted(@ledger[:model_failures].to_i, "model failure") if @ledger[:model_failures].to_i.positive?
+          ledger << counted(@ledger[:council].to_i, "council review") if @ledger[:council].to_i.positive?
+          ledger << counted(@ledger[:human_decisions].to_i, "human decision") if @ledger[:human_decisions].to_i.positive?
+          lines << "fix0: ledger, #{ledger.join(", ")}" unless ledger.empty?
+          lines
         end
 
         def monotonic = Process.clock_gettime(Process::CLOCK_MONOTONIC)
@@ -290,9 +419,9 @@ module Master
 
         def counted(number, noun) = Dmesg.counted(number, noun)
 
-        def clip(text)
+        def clip(text, limit = DETAIL_CHARS)
           flat = text.to_s.gsub(/\s+/, " ").strip
-          flat.length > DETAIL_CHARS ? "#{flat[0, DETAIL_CHARS - 1]}…" : flat
+          flat.length > limit ? "#{flat[0, limit - 1]}…" : flat
         end
       end
     end
