@@ -76,7 +76,7 @@ SPOKEN = {
 # announce something the listener is never shown.
 SILENT = [
   "Read START_HERE", "Under the hood", "Wake it with one line",
-  "Every change a model wants", "Three verdicts",
+  "Every change a model wants", "Three verdicts"
 ].freeze
 
 # The take, by default, is the highlights rather than the file.

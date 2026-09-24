@@ -26,7 +26,7 @@ class TestPlugins < Minitest::Test
         url: "https://onlyfans.com",
         message: "x",
         consent: true,
-        owned_account: false
+        owned_account: false,
       )
     end
   end

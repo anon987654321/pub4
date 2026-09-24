@@ -15,7 +15,7 @@ class ApplicationController < ActionController::Base
   # data/security.yml#web_rate_limits is the source; these literals are the
   # fallback for a checkout without it, as IngressController does for ingress.
   WEB_RATE_LIMIT_DEFAULTS = {
-    chat: [30, 60], tts: [30, 60], tts_poll: [300, 60], read: [120, 60], write: [60, 60],
+    chat: [30, 60], tts: [30, 60], tts_poll: [300, 60], read: [120, 60], write: [60, 60]
   }.freeze
 
   # [per_window, window_seconds] for one budget.

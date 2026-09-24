@@ -45,12 +45,12 @@ module Master
       def start_mission(goal, root:, bus:, model:)
         checkpoint = lambda do |id:, root:, files:|
           Master::Fix::Checkpoint.new(root:, dir: File.join(root, ".master", "checkpoints")).create(
-            label: "mission-#{id}", files:
+            label: "mission-#{id}", files:,
           )
         end
         Master::Core::Mission.new(root:, bus:, checkpoint:).start!(
           goal:, scope: root, model:, effort: ENV.fetch("MASTER_EFFORT", "medium"),
-          plan: Master::Ground::ActivePlan.read(root),
+          plan: Master::Ground::ActivePlan.read(root)
         )
       end
 

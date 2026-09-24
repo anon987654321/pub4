@@ -22,21 +22,21 @@ module Master
           hosts: %w[onlyfans.com],
           start_url: "https://onlyfans.com",
           composer: ["textarea", "[contenteditable='true']", "[role='textbox']"],
-          submit: ["button[type='submit']", "[type='submit']", "button"]
+          submit: ["button[type='submit']", "[type='submit']", "button"],
         ),
         "fetlife" => Site.new(
           id: "fetlife",
           hosts: %w[fetlife.com],
           start_url: "https://fetlife.com",
           composer: ["textarea", "[contenteditable='true']", "[role='textbox']"],
-          submit: ["button[type='submit']", "[type='submit']", "button"]
+          submit: ["button[type='submit']", "[type='submit']", "button"],
         ),
         "snapchat" => Site.new(
           id: "snapchat",
           hosts: %w[snapchat.com web.snapchat.com],
           start_url: "https://web.snapchat.com",
           composer: ["textarea", "[contenteditable='true']", "[role='textbox']"],
-          submit: ["button[type='submit']", "[type='submit']", "button"]
+          submit: ["button[type='submit']", "[type='submit']", "button"],
         ),
       }.freeze
 
@@ -46,7 +46,7 @@ module Master
         "verify you're human",
         "verify you are human",
         "unusual activity",
-        "security challenge"
+        "security challenge",
       ].freeze
       MAX_TEXT_BYTES = 4_000
       MAX_BODY_BYTES = 40_000
@@ -71,7 +71,7 @@ module Master
       def status
         {
           plugin: manifest.id,
-          runtime: runtime,
+          runtime:,
           browser: ferrum_available? ? "ferrum" : "unavailable",
           sites: SITES.keys.map { |id| site_status(id) },
         }
@@ -94,7 +94,7 @@ module Master
             account: account.to_s,
             url: page.url.to_s,
             title: page.title.to_s,
-            body: body,
+            body:,
             screenshot: shot,
           }
         end
@@ -137,7 +137,7 @@ module Master
           headless:,
           runtime:,
           selectors:,
-          operation: "reply_inbound"
+          operation: "reply_inbound",
         )
       end
 
@@ -188,10 +188,10 @@ module Master
         FileUtils.mkdir_p(run_dir, mode: 0o700)
 
         browser = Ferrum::Browser.new(
-          headless: headless,
+          headless:,
           timeout: 20,
           window_size: [1280, 900],
-          browser_options: { "user-data-dir" => account_dir }
+          browser_options: { "user-data-dir" => account_dir },
         )
         page = browser.create_page
         page.go_to(url)
@@ -272,7 +272,7 @@ module Master
         Master::Review::Security::InjectionGuard.new(mode: :permissive).screen(
           text,
           tool: "social_browser",
-          source: url
+          source: url,
         )
       end
 

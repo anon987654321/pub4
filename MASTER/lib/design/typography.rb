@@ -40,7 +40,7 @@ module Master
                   else Master::Design::Thresholds.measure_ideal_ch(root:).to_f
                   end
         CONTEXTUAL.fetch(name).merge(
-          measure: measure,
+          measure:,
           body_leading: line_height.fetch("body_preferred", 1.5).to_f,
           heading_leading: line_height.fetch("heading_preferred", 1.25).to_f,
           minimum_body_px: access.fetch("body_min_px", 16).to_i,
@@ -55,7 +55,7 @@ module Master
         return profile(:legal, root:) if text.match?(/privacy|terms|cookie|legal/)
         return profile(:marketplace, root:) if text.match?(/market|item|deal|order|cart|shop/)
         return profile(:terminal, root:) if text.match?(/terminal|console|cli|shell|bsdports/)
-        return profile(:social, root:)
+        profile(:social, root:)
       end
 
       def self.brief(path:, purpose: nil, root: Master::ROOT)

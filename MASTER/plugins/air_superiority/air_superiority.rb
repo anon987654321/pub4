@@ -33,7 +33,7 @@ module Master
       def status
         {
           plugin: manifest.id,
-          runtime: runtime,
+          runtime:,
           wifi: wifi_backend,
           bluetooth: bluetooth_backend,
           known_file: KNOWN_FILE,
@@ -50,7 +50,7 @@ module Master
 
         {
           plugin: manifest.id,
-          runtime: runtime,
+          runtime:,
           wifi: networks,
           bluetooth: devices,
           errors: [wifi_error, bluetooth_error].compact,
@@ -164,7 +164,7 @@ module Master
             type: "unknown_wifi",
             severity: "advisory",
             details: "Wi-Fi network is not in the local known list",
-            data: row
+            data: row,
           )
         end
       end
@@ -179,7 +179,7 @@ module Master
             type: "unknown_bluetooth",
             severity: "advisory",
             details: "Bluetooth device is not in the local known list",
-            data: row
+            data: row,
           )
         end
       end

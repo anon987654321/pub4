@@ -89,7 +89,7 @@ module Master
         description: raw.fetch("description").to_s.strip,
         entrypoint: raw.fetch("entrypoint").to_s,
         path: File.expand_path(path),
-        observe_actions: Array(raw["observe_actions"]).map(&:to_s).freeze
+        observe_actions: Array(raw["observe_actions"]).map(&:to_s).freeze,
       )
     rescue Psych::Exception => e
       raise ManifestError, "#{path}: invalid YAML: #{e.message}"
@@ -145,7 +145,7 @@ module Master
     end
 
     def plugin_constant(id)
-      "Master::Plugins::#{id.split("_").map { |part| part.capitalize }.join}"
+      "Master::Plugins::#{id.split("_").map(&:capitalize).join}"
     end
   end
 end

@@ -60,7 +60,7 @@ module Operator
     COMMENT_OPENERS = {
       ruby: ["#"], yaml: ["#"], zsh: ["#"], json: ["#"],
       javascript: ["//", "/*"], css: ["//", "/*"], scss: ["//", "/*"],
-      html: ["<%#", "<!--"], markdown: ["<!--"],
+      html: ["<%#", "<!--"], markdown: ["<!--"]
     }.freeze
     CLOSERS = { "/*" => "*/", "<!--" => "-->", "<%#" => "%>" }.freeze # scan: intentional — a census of comment markers has to quote every language it reads
     # The default for a caller that has no path to read a language from.

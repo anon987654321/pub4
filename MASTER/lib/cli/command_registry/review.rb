@@ -59,7 +59,7 @@ module Master
         "--quiet" => "quiet", "quiet" => "quiet",
         "--normal" => "normal", "normal" => "normal",
         "--verbose" => "verbose", "verbose" => "verbose",
-        "--trace" => "trace", "trace" => "trace",
+        "--trace" => "trace", "trace" => "trace"
       }.freeze
 
       PASS_FLAGS = {
@@ -68,7 +68,7 @@ module Master
         "--apply" => [:apply, true], "apply" => [:apply, true], "fix" => [:apply, true],
         "--no-critique" => [:critique, false], "no-critique" => [:critique, false],
         "--critique" => [:critique, true], "critique" => [:critique, true],
-        "--no-aesthetic" => [:aesthetic, false], "no-aesthetic" => [:aesthetic, false],
+        "--no-aesthetic" => [:aesthetic, false], "no-aesthetic" => [:aesthetic, false]
       }.freeze
 
       # A bare `--only` captures nothing and leaves the stage unset, which is what

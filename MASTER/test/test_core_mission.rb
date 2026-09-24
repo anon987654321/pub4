@@ -59,7 +59,7 @@ class CoreMissionTest < Minitest::Test
       File.write(File.join(root, "file.txt"), "before")
       checkpoint = ->(id:, root:, files:) do
         Master::Fix::Checkpoint.new(root:, dir: File.join(root, ".master", "checkpoints")).create(
-          label: "mission-#{id}", files:
+          label: "mission-#{id}", files:,
         )
       end
       mission = Master::Core::Mission.new(root:, checkpoint:).start!(goal: "checkpoint", scope: root)

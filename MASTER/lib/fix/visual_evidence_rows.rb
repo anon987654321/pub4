@@ -20,9 +20,9 @@ module Master
         end.uniq
         return "MARKETPLACE ALTERNATIVES: none captured" if variants.empty?
 
-        rows = variants.map { |variant, reference, structure, signature|
+        rows = variants.map do |variant, reference, structure, signature|
           "#{variant}: reference=#{reference} structure=#{structure} signature=#{signature}"
-        }
+        end
         "MARKETPLACE ALTERNATIVES\nCompare these renders as one experiment set. Do not assume the current layout is correct merely because it is established. #{rows.join("\n")}"
       end
 

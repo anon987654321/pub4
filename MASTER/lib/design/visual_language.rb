@@ -24,7 +24,7 @@ module Master
           density: :focused, warmth: :human, formality: :low, contrast: :high,
           ornament: :restrained, motion: :expressive, materiality: :digital,
           typographic_voice: :conversational, spatial_tension: :open,
-          memorable: "the response surface and its living face should feel like one instrument",
+          memorable: "the response surface and its living face should feel like one instrument"
         },
         utilitarian_terminal: {
           school: :industrial,
@@ -33,7 +33,7 @@ module Master
           density: :high, warmth: :cool, formality: :high, contrast: :high,
           ornament: :minimal, motion: :quiet, materiality: :functional,
           typographic_voice: :mono_forward, spatial_tension: :tight,
-          memorable: "dense information should remain calm, legible, and obviously actionable",
+          memorable: "dense information should remain calm, legible, and obviously actionable"
         },
         editorial_wardrobe: {
           school: :luxury,
@@ -42,7 +42,7 @@ module Master
           density: :moderate, warmth: :warm, formality: :editorial, contrast: :controlled,
           ornament: :selective, motion: :subtle, materiality: :tactile,
           typographic_voice: :editorial, spatial_tension: :relaxed,
-          memorable: "the clothing and its visual texture should carry the page before chrome does",
+          memorable: "the clothing and its visual texture should carry the page before chrome does"
         },
         marketplace: {
           school: :commerce_editorial,
@@ -53,7 +53,7 @@ module Master
           density: :high, warmth: :local, formality: :practical, contrast: :clear,
           ornament: :low, motion: :functional, materiality: :physical,
           typographic_voice: :plainspoken, spatial_tension: :compact,
-          memorable: "real items, prices, places, and trust signals should dominate the hierarchy",
+          memorable: "real items, prices, places, and trust signals should dominate the hierarchy"
         },
         cute_retail: {
           match: /toy|toys|kids|children|playroom|cute|playful/i,
@@ -62,7 +62,7 @@ module Master
           density: :lively, warmth: :warm, formality: :low, contrast: :clear,
           ornament: :expressive, motion: :playful, materiality: :tactile,
           typographic_voice: :friendly, spatial_tension: :open,
-          memorable: "play, product character, and the next action should be obvious together",
+          memorable: "play, product character, and the next action should be obvious together"
         },
         local_social: {
           school: :social,
@@ -71,7 +71,7 @@ module Master
           density: :lively, warmth: :human, formality: :low, contrast: :clear,
           ornament: :selective, motion: :responsive, materiality: :local,
           typographic_voice: :humanist, spatial_tension: :varied,
-          memorable: "place, people, and fresh activity should feel immediate without becoming noisy",
+          memorable: "place, people, and fresh activity should feel immediate without becoming noisy"
         },
         media_station: {
           school: :editorial,
@@ -80,7 +80,7 @@ module Master
           density: :focused, warmth: :immersive, formality: :low, contrast: :dramatic,
           ornament: :deliberate, motion: :rhythmic, materiality: :sonic,
           typographic_voice: :display, spatial_tension: :cinematic,
-          memorable: "media should create the focal field; controls should recede until needed",
+          memorable: "media should create the focal field; controls should recede until needed"
         },
         intimate_social: {
           school: :social,
@@ -89,7 +89,7 @@ module Master
           density: :focused, warmth: :warm, formality: :low, contrast: :gentle,
           ornament: :selective, motion: :responsive, materiality: :human,
           typographic_voice: :friendly, spatial_tension: :intimate,
-          memorable: "the person and the decision in front of the user should remain unmistakable",
+          memorable: "the person and the decision in front of the user should remain unmistakable"
         },
         transactional_food: {
           school: :commerce_editorial,
@@ -98,7 +98,7 @@ module Master
           density: :high, warmth: :warm, formality: :practical, contrast: :clear,
           ornament: :appetizing, motion: :functional, materiality: :physical,
           typographic_voice: :plainspoken, spatial_tension: :compact,
-          memorable: "food, availability, price, and next action should read in one glance",
+          memorable: "food, availability, price, and next action should read in one glance"
         },
         cartographic: {
           school: :swiss,
@@ -107,7 +107,7 @@ module Master
           density: :high, warmth: :neutral, formality: :practical, contrast: :clear,
           ornament: :low, motion: :spatial, materiality: :geographic,
           typographic_voice: :utility, spatial_tension: :layered,
-          memorable: "location and relationships should dominate decorative interface chrome",
+          memorable: "location and relationships should dominate decorative interface chrome"
         },
         content_first: {
           school: :editorial,
@@ -116,7 +116,7 @@ module Master
           density: :moderate, warmth: :neutral, formality: :calm, contrast: :clear,
           ornament: :low, motion: :restrained, materiality: :honest,
           typographic_voice: :readable, spatial_tension: :balanced,
-          memorable: "the content's own structure should be the page's strongest visual idea",
+          memorable: "the content's own structure should be the page's strongest visual idea"
         },
       }.freeze
 

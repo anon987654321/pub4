@@ -88,7 +88,7 @@ class VisualLanguageTest < Minitest::Test
     persisted_after = JSON.parse(JSON.generate(Master::Design::VisualLanguage.fingerprint(after)))
     persisted_drift = Master::Design::VisualLanguage.design_drift(
       {"design_fingerprint" => persisted_before},
-      {"design_fingerprint" => persisted_after}
+      {"design_fingerprint" => persisted_after},
     )
     assert persisted_drift.any? { |row| row.include?("type sizes changed") }
     assert drift.any? { |row| row.include?("shape language changed") }

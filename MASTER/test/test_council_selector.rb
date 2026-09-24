@@ -61,7 +61,7 @@ class TestCouncilSelector < Minitest::Test
   def test_the_maintainer_is_always_in_the_room
     [
       {}, { task: :ui }, { risk: :low }, { task: :docs, risk: :critical },
-      { task: :not_a_task }, { risk: :not_a_risk },
+      { task: :not_a_task }, { risk: :not_a_risk }
     ].each do |arguments|
       assert_includes S.for(**arguments), "Maintainer", "no maintainer for #{arguments.inspect}"
     end

@@ -95,7 +95,7 @@ module Master
           "bytes" => bytes,
           "surface" => surface.to_s,
           "kind" => kind.to_s,
-          "label" => label.to_s
+          "label" => label.to_s,
         }
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "fix.visual_artifact.copy", path: source)

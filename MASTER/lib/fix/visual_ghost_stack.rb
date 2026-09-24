@@ -46,7 +46,7 @@ module Master
         ghost = render_stack(surface:, state:, frames:, key:, cdp:)
         { key:, history: frames, ghost:, drift: geometry_drift(frames), design_drift: design_drift(frames), state: }
       rescue StandardError => e
-        { key: key, history: [], ghost: nil, drift: [], state: state, error: "#{e.class}: #{e.message}" }
+        { key:, history: [], ghost: nil, drift: [], state:, error: "#{e.class}: #{e.message}" }
       end
 
       private
@@ -71,7 +71,7 @@ module Master
       end
 
       def render_stack(surface:, state:, frames:, key:, cdp:)
-        return nil if frames.empty?
+        return if frames.empty?
 
         page = VisualGhostPages.stack(surface:, state:, frames:, ghost_opacities: GHOST_OPACITIES, current_opacity: CURRENT_OPACITY)
         {
@@ -86,7 +86,7 @@ module Master
       end
 
       def render_pair(surface:, state:, frames:, key:, cdp:)
-        return nil if frames.length < 2
+        return if frames.length < 2
 
         previous, current = frames.last(2)
         render_page("diff", key, VisualGhostPages.diff(surface:, state:, current:, previous:), cdp:)
@@ -94,7 +94,7 @@ module Master
 
       # Boxes of the newest frame against the previous one, largest move first.
       def render_geometry(surface:, state:, frames:, key:, cdp:)
-        return nil if frames.length < 2
+        return if frames.length < 2
 
         previous_path, current_path = frames.last(2)
         rows = moved_rects(previous_path, current_path).first(MAX_GEOMETRY_MARKERS)
@@ -107,11 +107,11 @@ module Master
 
       # The element that moved most, cropped and enlarged with the previous frame under it.
       def render_focus(surface:, state:, frames:, key:, cdp:)
-        return nil if frames.length < 2
+        return if frames.length < 2
 
         previous_path, current_path = frames.last(2)
         focus = moved_rects(previous_path, current_path).first
-        return nil unless focus
+        return unless focus
 
         crop = focus_crop(focus, *png_dimensions(current_path))
         page = VisualGhostPages.focus(surface:, state:, previous_path:, current_path:, crop:)
@@ -130,7 +130,7 @@ module Master
       end
 
       def render_squint(surface:, state:, frames:, key:, cdp:)
-        return nil if frames.empty?
+        return if frames.empty?
 
         page = VisualGhostPages.squint(surface:, state:, image_path: frames.last, blur_px: SQUINT_BLUR_PX)
         render_page("squint", key, page, cdp:)
@@ -139,7 +139,7 @@ module Master
       end
 
       def render_grid(surface:, state:, frames:, key:, cdp:)
-        return nil if frames.empty?
+        return if frames.empty?
 
         page = VisualGhostPages.grid(surface:, state:, image_path: frames.last, step: REGISTRATION_GRID_PX)
         render_page("grid", key, page, cdp:)
