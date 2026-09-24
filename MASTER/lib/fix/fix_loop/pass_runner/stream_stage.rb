@@ -102,6 +102,7 @@ module Master
           def repair_file(path, rows, runnable, rel, stream)
             ids = runnable.map { |rule| rule.id.to_s }
             ids.each { |id| STREAMED_LOCK.synchronize { stream.streamed << [rel, id] } }
+            repair_memory.sync_detectors(runnable)
             findings = repair_memory.fresh(path, findings_of(rows, ids, path))
             return 0 if findings.empty?
 

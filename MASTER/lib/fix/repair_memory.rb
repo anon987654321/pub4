@@ -21,6 +21,9 @@ module Master
       APPLIED = %i[applied commit_refused].freeze
       LOCK = Mutex.new
       ANNOUNCED = Set.new
+      # A rule's detector fingerprint, once per process: the code a process
+      # runs does not change under it (a reload is a new process).
+      DETECTORS = {}
 
       def initialize(root:)
         @root = root
@@ -49,6 +52,22 @@ module Master
         true
       end
 
+      # What the model said about a rule describes the detector that found the
+      # findings. Once the detector's source changes (a false positive fixed),
+      # its count starts afresh and the file declines it earned go with it;
+      # otherwise a fixed rule stays retired on the old detector's record. The
+      # fingerprint is the detector's whole source file, so an edit beside it
+      # also resets, which costs only a few asks. A count kept before
+      # fingerprints existed adopts the current one.
+      def sync_detectors(rules)
+        marks = rules.to_h { |rule| [rule.id.to_s, DETECTORS.fetch(rule.id.to_s) { DETECTORS[rule.id.to_s] = detector_digest(rule) }] }
+        LOCK.synchronize do
+          data = load
+          changed = marks.count { |id, digest| digest && refingerprint(data, id, digest) }
+          save(data) if changed.positive?
+        end
+      end
+
       # outcomes is a repair's breakdown, { outcome_symbol => count }. A call the
       # model never answered (quota, no lane) says nothing about the findings,
       # so it counts as neither an ask nor a decline.
@@ -65,6 +84,31 @@ module Master
       end
 
       private
+
+      # True when the stats changed: a first fingerprint, or a new detector.
+      def refingerprint(data, id, digest)
+        stats = data["rules"][id]
+        return false if stats.nil? || stats["detector"] == digest
+
+        unless stats["detector"].nil?
+          data["rules"][id] = { "asked" => 0, "declined" => 0, "applied" => 0 }
+          data["files"].each_value { |entry| entry["declined"] = Array(entry["declined"]) - [id] }
+          ANNOUNCED.delete(id)
+          Master::Trace::Dmesg.status("fix0", "#{id} detector changed; its repair record starts afresh")
+        end
+        data["rules"][id]["detector"] = digest
+        true
+      end
+
+      def detector_digest(rule)
+        klass = rule.class
+        block = klass.respond_to?(:dsl_block) ? klass.dsl_block : nil
+        source = block&.source_location || klass.instance_method(:check).source_location
+        file = source&.first
+        file && File.file?(file) ? Digest::SHA256.file(file).hexdigest[0, 16] : nil
+      rescue NameError
+        nil
+      end
 
       def verdict_for(outcomes)
         keys = Array(outcomes&.keys).map(&:to_sym)

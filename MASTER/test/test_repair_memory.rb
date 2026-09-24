@@ -40,6 +40,33 @@ class TestRepairMemory < Minitest::Test
     end
   end
 
+  # FEATURE_ENVY retired on 20 declines of findings its fixed detector no
+  # longer makes; the fix never reached repair until the record was cleared.
+  def test_a_changed_detector_starts_its_record_afresh
+    Dir.mktmpdir do |root|
+      memory = Memory.new(root:)
+      path = File.join(root, "a.rb")
+      File.write(path, "x = 1\n")
+      detector = File.join(root, "rule.rb")
+      File.write(detector, "old\n")
+      rule = Class.new { define_method(:check) { nil } }
+      rule.define_method(:id) { "ENVY" }
+      instance = rule.new
+      rule.singleton_class.define_method(:instance_method) { |_| Struct.new(:source_location).new([detector, 1]) }
+
+      21.times { memory.record(path, %w[ENVY], { no_proposal: 1 }) }
+      Memory::DETECTORS.delete("ENVY")
+      memory.sync_detectors([instance])
+      assert memory.retired?("ENVY"), "the first fingerprint adopts the record"
+
+      File.write(detector, "new\n")
+      Memory::DETECTORS.delete("ENVY")
+      memory.sync_detectors([instance])
+      refute memory.retired?("ENVY")
+      assert_equal 1, memory.fresh(path, [finding("ENVY")]).size
+    end
+  end
+
   # A session limit on RAILS retired eight rules and marked files declined.
   def test_an_unanswered_call_is_neither_asked_nor_declined
     Dir.mktmpdir do |root|
