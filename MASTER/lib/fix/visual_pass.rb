@@ -254,20 +254,22 @@ module Master
         ].join(" ")
       end
 
+      # One line per surface whose ghost stack measured movement; nil otherwise.
+      def drift_row(capture)
+        drift = Array(capture.dig(:visual_evidence, :drift))
+        return if drift.empty?
+
+        details = drift.first(8).map do |row|
+          next "#{row["key"]} #{row["delta"]} #{row["type"]}" unless row["structural"]
+
+          "structural added=#{row["structural"]["added"]} missing=#{row["structural"]["missing"]}"
+        end
+        "#{capture[:surface].id}: #{details.join(" | ")}"
+      end
+
       def build_context(captures, anchors, graph:)
         rows = captures.map { |capture| context_row(capture) }
-        drift_rows = captures.filter_map do |capture|
-          evidence = capture[:visual_evidence]
-          next unless evidence && Array(evidence[:drift]).any?
-          details = Array(evidence[:drift]).first(8).map do |row|
-            if row["structural"]
-              "structural added=#{row["structural"]["added"]} missing=#{row["structural"]["missing"]}"
-            else
-              "#{row["key"]} #{row["delta"]} #{row["type"]}"
-            end
-          end
-          "#{capture[:surface].id}: #{details.join(" | ")}"
-        end
+        drift_rows = captures.filter_map { |capture| drift_row(capture) }
         mapped = anchors.values.compact.uniq.first(12)
         <<~TEXT
           RENDERED EVIDENCE

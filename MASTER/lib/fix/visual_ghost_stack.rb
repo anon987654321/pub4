@@ -29,36 +29,37 @@ module Master
       end
 
       def capture(capture, pass:, cdp:)
-        state = "resting"
-        state = capture.dig(:payload, "composition", "state").to_s
-        state = "resting" if state.empty?
+        state = state_of(capture)
         surface = capture.fetch(:surface)
         key = safe_slug("#{surface.id}__#{state}")
-        history = File.join(@root, "MASTER", ".master", "visual_evidence", key)
-        FileUtils.mkdir_p(history)
-
-        stem = "#{safe_slug(@run_id)}-pass-#{format("%06d", pass.to_i)}"
-        shot = File.join(history, "#{stem}.png")
-        payload_path = File.join(history, "#{stem}.json")
-        FileUtils.cp(capture.fetch(:screenshot), shot)
-        File.write(payload_path, JSON.pretty_generate(capture.fetch(:payload)))
-        prune(history)
-
-        frames = Dir.glob(File.join(history, "*-pass-*.png")).sort.last(HISTORY_LIMIT)
+        history = history_dir(key)
+        frames = record_frame(history, capture, pass)
         ghost = render_stack(surface:, state:, frames:, key:, cdp:)
-        drift = geometry_drift(frames, history)
-        {
-          key:,
-          history: frames,
-          ghost:,
-          drift:,
-          state:,
-        }
+        { key:, history: frames, ghost:, drift: geometry_drift(frames, history), state: }
       rescue StandardError => e
         { key: key, history: [], ghost: nil, drift: [], state: state, error: "#{e.class}: #{e.message}" }
       end
 
       private
+
+      def state_of(capture)
+        state = capture.dig(:payload, "composition", "state").to_s
+        state.empty? ? "resting" : state
+      end
+
+      def history_dir(key)
+        File.join(@root, "MASTER", ".master", "visual_evidence", key).tap { |dir| FileUtils.mkdir_p(dir) }
+      end
+
+      # Stores this pass's screenshot and payload beside the earlier ones and
+      # returns the newest HISTORY_LIMIT frames, oldest first.
+      def record_frame(history, capture, pass)
+        stem = "#{safe_slug(@run_id)}-pass-#{format("%06d", pass.to_i)}"
+        FileUtils.cp(capture.fetch(:screenshot), File.join(history, "#{stem}.png"))
+        File.write(File.join(history, "#{stem}.json"), JSON.pretty_generate(capture.fetch(:payload)))
+        prune(history)
+        Dir.glob(File.join(history, "*-pass-*.png")).sort.last(HISTORY_LIMIT)
+      end
 
       def render_stack(surface:, state:, frames:, key:, cdp:)
         return nil if frames.empty?
@@ -138,45 +139,45 @@ module Master
         HTML
       end
 
+      # The elements that moved or retyped between the two newest frames, largest
+      # first, then one structural row when elements appeared or disappeared.
       def geometry_drift(frames, history)
         return [] if frames.length < 2
 
-        current_path, previous_path = frames.last(2).map { |path| json_for(path, history) }
-        current = JSON.parse(File.read(current_path))
-        previous = JSON.parse(File.read(previous_path))
-        before = Array(previous["elements"]).to_h { |element| [ element["key"], element ] }
-        after = Array(current["elements"]).to_h { |element| [ element["key"], element ] }
-
-        changed = (before.keys & after.keys).filter_map do |key|
-          old = before[key]
-          new = after[key]
-          old_rect = old["frect"] || old["rect"] || {}
-          new_rect = new["frect"] || new["rect"] || {}
-          delta = %w[x y w h].to_h do |axis|
-            [axis, new_rect[axis].to_f - old_rect[axis].to_f]
-          end
-          type_delta = {
-            "font_size" => new["font_size"].to_f - old["font_size"].to_f,
-            "line_height" => new["line_height"].to_f - old["line_height"].to_f,
-          }.reject { |_axis, value| value.abs <= DIFF_TOLERANCE_PX }
-          next if delta.values.all? { |value| value.abs <= DIFF_TOLERANCE_PX } && type_delta.empty?
-
-          magnitude = delta.values.sum { |value| value.abs } + type_delta.values.sum { |value| value.abs }
-          {
-            "key" => key,
-            "text" => new["text"],
-            "delta" => delta.reject { |_axis, value| value.abs <= DIFF_TOLERANCE_PX },
-            "type" => type_delta,
-            "magnitude" => magnitude.round(2),
-          }
-        end.sort_by { |row| -row["magnitude"] }.first(12)
-
-        missing = before.keys - after.keys
-        added = after.keys - before.keys
-        structural = { "structural" => { "missing" => missing.size, "added" => added.size } }
-        changed + (missing.empty? && added.empty? ? [] : [structural])
+        older, newer = frames.last(2)
+        before = elements_of(json_for(older, history))
+        after = elements_of(json_for(newer, history))
+        changed = (before.keys & after.keys).filter_map { |key| element_drift(key, before[key], after[key]) }
+        changed.sort_by { |row| -row["magnitude"] }.first(12) + structural_drift(before, after)
       rescue StandardError
         []
+      end
+
+      def elements_of(payload_path)
+        Array(JSON.parse(File.read(payload_path))["elements"]).to_h { |element| [ element["key"], element ] }
+      end
+
+      def element_drift(key, old, new)
+        old_rect = old["frect"] || old["rect"] || {}
+        new_rect = new["frect"] || new["rect"] || {}
+        delta = %w[x y w h].to_h { |axis| [axis, new_rect[axis].to_f - old_rect[axis].to_f] }
+        type_delta = {
+          "font_size" => new["font_size"].to_f - old["font_size"].to_f,
+          "line_height" => new["line_height"].to_f - old["line_height"].to_f,
+        }.reject { |_axis, value| value.abs <= DIFF_TOLERANCE_PX }
+        moved = delta.reject { |_axis, value| value.abs <= DIFF_TOLERANCE_PX }
+        return if moved.empty? && type_delta.empty?
+
+        magnitude = delta.values.sum(&:abs) + type_delta.values.sum(&:abs)
+        { "key" => key, "text" => new["text"], "delta" => moved, "type" => type_delta, "magnitude" => magnitude.round(2) }
+      end
+
+      def structural_drift(before, after)
+        missing = before.keys - after.keys
+        added = after.keys - before.keys
+        return [] if missing.empty? && added.empty?
+
+        [{ "structural" => { "missing" => missing.size, "added" => added.size } }]
       end
 
       def json_for(png, history)
