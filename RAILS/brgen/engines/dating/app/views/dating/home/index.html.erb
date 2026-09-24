@@ -1,70 +1,24 @@
 <% content_for :title, t("dating.home_title") %>
 
-<% content_for :head do %>
-  <script src="/vendor/css-doodle.min.js" defer></script>
-<% end %>
-
-<div class="dating-app" data-controller="dating-intro">
-  <section
-    class="dating-intro"
-    data-dating-intro-target="intro"
-    data-action="pointerdown->dating-intro#pointerdown pointermove->dating-intro#pointermove pointerup->dating-intro#pointerup pointercancel->dating-intro#pointercancel"
-    role="dialog"
-    aria-label="<%= t("aria.brgen_dating") %>"
-    aria-modal="true"
-  >
-    <p class="dating-intro-hint"><%= t("dating.swipe_to_start") %></p>
-
-    <%# The gesture, drawn rather than described. The hint above says to swipe;
-        these say which way, at the two edges the thumb travels between.
-        aria-hidden because they are not controls -- pointer events belong to the
-        section, and the hint is the accessible instruction. %>
-    <span class="dating-intro-arrow dating-intro-arrow--start" aria-hidden="true">
-      <%= icon :chevron_left, size: 28 %>
-    </span>
-    <span class="dating-intro-arrow dating-intro-arrow--end" aria-hidden="true">
-      <%= icon :chevron_right, size: 28 %>
-    </span>
-
-    <div class="dating-intro-lede">
-      <%= render "dating/home/heart" %>
-      <p class="dating-intro-title">dating</p>
+<div class="dating-app">
+  <header class="dating-page-intro">
+    <div>
+      <p><%= t("dating.local") %></p>
+      <h1><%= t("dating.discover") %></h1>
+      <p><%= t("dating.home_blurb", default: "Meet people nearby. Swipe to like or pass.") %></p>
     </div>
+    <nav aria-label="<%= t("dating.home_title") %>">
+      <%= button_to t("dating.rewind"), rewind_path, method: :post, class: "btn btn-ghost" %>
+      <%= link_to t("dating.matches"), matches_path, class: "btn btn-ghost" %>
+      <% if Current.user&.dating_profile.present? %>
+        <%= link_to t("dating.edit_profile"), edit_profile_path, class: "btn btn-ghost" %>
+      <% elsif Current.user.present? %>
+        <%= link_to t("dating.create_profile"), new_profile_path, class: "btn btn-primary" %>
+      <% end %>
+    </nav>
+  </header>
 
-    <footer class="dating-intro-trust">
-      <%# Three separate statements, not one sentence. They rendered as a single
-          run-on line at desk width and wrapped into four ragged ones on a phone,
-          with the trust mark orphaned from the words that qualify it. %>
-      <p><%= t("legal.dating_age") %></p>
-      <%# Vipps, not BankID. Same company -- Vipps MobilePay owns BankID -- but a
-          BankID verification is billed per use and Vipps Login is not, and what this
-          line promises is "a real person signed in", which Vipps Login establishes
-          with a verified phone number.
-
-          A wordmark, not a logo file: Vipps' brand terms require their own supplied
-          artwork and nothing here may reach a CDN for it. Drop the official SVG at
-          shared/app/assets/images/vipps.svg and this span can render it instead;
-          until then the name set in their orange is the honest version, and it
-          costs no request.
-
-          The mark this replaces was three CSS dots and an empty <span> -- the
-          stylesheet styled `span` children the markup never had, so the badge beside
-          the word had been drawing nothing. %>
-      <%# One unit: "Beskyttet med Vipps" means nothing if the name wraps away
-          from the phrase that qualifies it, which is what a phone was doing. %>
-      <p class="dating-intro-guarantee">
-        <%= t("dating.protected_with") %>
-        <span class="dating-intro-vipps">Vipps</span>
-      </p>
-      <nav aria-label="<%= t("legal.aria") %>">
-        <%= link_to t("legal.privacy"), main_app.privacy_path %>
-        <%= link_to t("legal.terms"), main_app.terms_path %>
-        <%= link_to t("legal.cookies"), main_app.cookies_path %>
-      </nav>
-    </footer>
-  </section>
-
-  <section class="dating-discover-panel" data-dating-intro-target="discover" hidden aria-hidden="true">
+  <section class="dating-discover-panel">
     <div class="page-header">
       <hgroup>
         <p><%= t("dating.local") %></p>
@@ -107,4 +61,6 @@
       </section>
     </turbo-frame>
   </section>
+</div>
+
 </div>
