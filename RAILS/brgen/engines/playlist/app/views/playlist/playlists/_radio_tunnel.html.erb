@@ -31,14 +31,14 @@
   ></canvas>
 
   <header class="radio-header">
-    <h1 data-radio-tunnel-target="heading">brgen</h1>
+    <h1 data-radio-tunnel-target="heading"><%= t("radio.name") %></h1>
   </header>
 
   <% unless local_assigns.fetch(:minimal, false) %>
-  <nav class="radio-nav" aria-label="<%= t("aria.playlist_navigation") %>">
+  <nav class="radio-nav" aria-label="<%= t("radio.navigation") %>">
     <% if authenticated? %>
-      <%= link_to "New", new_playlist_path %>
-      <%= link_to "Upload", new_hosted_track_path %>
+      <%= link_to t("playlist.new_playlist"), new_playlist_path %>
+      <%= link_to t("radio.upload"), new_hosted_track_path %>
     <% end %>
     <% if local_assigns.fetch(:show_library, false) %>
       <button type="button" class="radio-nav-btn" data-action="click->radio-tunnel#openLibrary"><%= t("playlist.library") %></button>
