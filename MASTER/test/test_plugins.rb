@@ -3,13 +3,8 @@
 require_relative "test_helper"
 
 class PluginsTest < Minitest::Test
-  def setup
-    @plugins_root = File.join(Master::ROOT, "plugins")
-  end
-
   def test_registry_discovers_built_in_plugins
-    ids = Master::Plugin.list.map(&:id)
-    assert_equal %w[air_superiority social_browser], ids
+    assert_equal %w[air_superiority social_browser], Master::Plugin.list.map(&:id)
   end
 
   def test_manifest_entries_are_constrained_and_versioned
@@ -25,7 +20,7 @@ class PluginsTest < Minitest::Test
     assert_instance_of Master::Plugins::SocialBrowser, Master::Plugin.load("social_browser")
   end
 
-  def test_social_browser_policy_rejects_unsolicited_bulk_style_action
+  def test_social_browser_requires_inbound_conversation_for_reply
     error = assert_raises(Master::Plugin::PolicyError) do
       Master::Plugin.run(
         "social_browser",
@@ -44,11 +39,7 @@ class PluginsTest < Minitest::Test
   def test_social_browser_requires_explicit_target_host
     plugin = Master::Plugin.load("social_browser")
     error = assert_raises(Master::Plugin::PolicyError) do
-      plugin.send(
-        :validate_url!,
-        "https://social.example/profile",
-        []
-      )
+      plugin.send(:validate_url!, "https://social.example/profile", [])
     end
     assert_match(/allowed_hosts/, error.message)
   end
@@ -62,13 +53,9 @@ class PluginsTest < Minitest::Test
     assert_includes info, "plugin: air_superiority 1.0.0"
   end
 
-  def test_social_browser_refuses_unknown_bulk_action
+  def test_social_browser_rejects_unknown_action
     error = assert_raises(Master::Plugin::PolicyError) do
-      Master::Plugin.run(
-        "social_browser",
-        action: "bulk_message",
-        account: "brand"
-      )
+      Master::Plugin.run("social_browser", action: "unknown_action")
     end
     assert_match(/unknown action/, error.message)
   end
@@ -85,9 +72,7 @@ class PluginsTest < Minitest::Test
 
     threats = plugin.send(
       :analyze_wifi,
-      [
-        { ssid: "Home", bssid: "11:22:33:44:55:66", security: "WPA2", rssi: -51 }
-      ],
+      [{ ssid: "Home", bssid: "11:22:33:44:55:66", security: "WPA2", rssi: -51 }],
       [{ "ssid" => "Home", "bssid" => "aa:bb:cc:dd:ee:ff" }]
     )
     assert_equal "Unexpected Access Point", threats.first.type
@@ -105,4 +90,3 @@ class PluginsTest < Minitest::Test
     assert_equal "low", threats.first.severity
   end
 end
-</sub>
