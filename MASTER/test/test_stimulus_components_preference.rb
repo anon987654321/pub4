@@ -31,6 +31,14 @@ class TestStimulusComponentsPreference < Minitest::Test
     assert_includes source, "use the upstream controller when its contract fits"
   end
 
+  def test_opportunity_requires_a_concrete_view_call_site
+    source = read("../RAILS/gates/lib/source/stimulus_components.rb")
+    assert_includes source, "view_controller_usages"
+    assert_includes source, "data-controller\\s*=\\s*"
+    assert_includes source, "call_sites.empty?"
+    assert_includes source, "concrete call site"
+  end
+
   def test_shared_boot_remains_the_single_registration_path
     source = read("../RAILS/shared/frontend/stimulus_boot.js")
     assert_includes source, "COMPONENT_REGISTRATIONS"
