@@ -59,21 +59,54 @@ module Master
           end
         end
 
-      # Exclude numeric dot-chains (IP addresses, version numbers) and stdlib
-      # transformation chains (.to_s.strip.empty?) which are idiomatic Ruby.
+      # A chain reaches a stranger when it navigates: order.buyer.profile.address
+      # asks four objects in turn. A step that transforms what the last one
+      # returned is not a new friend, so `files.uniq.sort.reject` and
+      # `text.each_line.with_index.map` talk to one object throughout. Data and
+      # prose have no calls at all: in YAML and Markdown the old line match read
+      # hostnames and file names (pubmed.ncbi.nlm.nih.gov, three.face.module.js)
+      # as chains, and its `.any?` exclusion never matched, because `\b` after
+      # `?` needs a word character to follow. A chain is read from its head
+      # only; one rooted in a constant (Rails.application.config.x) starts at
+      # a global the caller already knows, and is not matched halfway along.
+        DEMETER_TRANSFORMS = %w[
+          map select reject filter filter_map flat_map each each_with_index each_with_object with_index
+          each_line each_char lines chars bytes split uniq sort sort_by min_by max_by group_by partition
+          tally sum count flatten compact reverse first last take drop zip keys values to_a to_h to_s
+          to_i to_f to_sym join strip chomp downcase upcase include? any? all? none? empty? size length
+          find detect slice match? freeze dup tap then gsub sub tr squeeze delete delete_prefix delete_suffix
+          casecmp round abs zero? positive? negative? push merge fetch dig value!
+          forEach filter reduce some every trim toString padStart padEnd toFixed toLowerCase toUpperCase
+          replace startsWith endsWith
+        ].to_set.freeze
+        DEMETER_CHAIN = /(?<![\w.@$])(?:@{1,2}|\$)?\b[a-z_]\w*[?!]?(?:\(\))?(?:\.[a-z_]\w*[?!]?(?:\(\))?){3,}/
+        # Platform globals every caller already knows, as a constant receiver is.
+        DEMETER_GLOBALS = %w[document window globalThis].freeze
+        DEMETER_NOISE = [
+          %r{\w+://\S+},
+          /%[wi]\[[^\]]*\]/,
+          /["'`][^"'`]*["'`]/,
+          /\b[\w-]+(?:\.[\w-]+)*\.(?:rb|js|mjs|ts|css|scss|erb|html|yml|yaml|json|md|txt|png|svg|jpg)\b/,
+          /\d+(?:\.\d+){2,}/,
+        ].freeze
+
         RuleDSL.rule :LAW_OF_DEMETER,
-          severity: :warning, tags: %i[COUPLING],
+          severity: :warning, tags: %i[COUPLING], applies_to: %i[ruby javascript html],
           fires: "city = order.buyer.profile.address\n",
-          does_not_fire: "city = order.buyer.profile.to_s\n",
+          does_not_fire: "names = files.uniq.sort.reject(&:empty?)\n",
           description: "only talk to immediate friends" do |src, path:|
           src.each_line.with_index(1).filter_map do |line, n|
-            next if line.strip.start_with?("#")
-            next unless line.match?(/\b[a-z_]\w*(?:\.[a-z_]\w*){3}/)
-            next if line.match?(/\d+\.\d+\.\d+\.\d+/)
-            next if line.match?(/\.(to_s|to_i|to_f|to_a|to_h|strip|chomp|compact|first|last|join)\b/) ||
-                    line.match?(/\.(empty\?|any\?|size|length)\b/)
-            stripped = line.gsub(/["'][^"']*["']/, '""').gsub(/\(.*?\)/, "()")
-            next unless stripped.match?(/\b[a-z_]\w*(?:\.[a-z_]\w*){3}/)
+            next if line.lstrip.start_with?("#", "//", "*")
+
+            code = DEMETER_NOISE.reduce(line) { |text, noise| text.gsub(noise, '""') }.gsub(/\([^()]*\)/, "()")
+            reach = code.scan(DEMETER_CHAIN).map do |chain|
+              head, *steps = chain.gsub("()", "").split(".")
+              next 0 if DEMETER_GLOBALS.include?(head)
+
+              [head, *steps.reject { |step| DEMETER_TRANSFORMS.include?(step) }].size
+            end
+            next unless reach.any? { |size| size >= 4 }
+
             finding(line: n, message: "4-level chain — introduce a local variable or delegation")
           end
         end
@@ -161,17 +194,31 @@ module Master
           end
         end
 
-      # Bias: SIMULATION — future tense in output implies intent without evidence.
+      # Bias: SIMULATION. soul.yml's anti_simulation forbids will, would, could
+      # and might beside its demand for evidence — a diff for a change, output
+      # for a completion — so the words are forbidden where the program reports
+      # on work: a promise in any file ("I will", "let's"), and a future or
+      # conditional inside a message it prints. A conditional anywhere else
+      # names a hypothetical. "This test would pass having measured nothing"
+      # and "what evidence would falsify your criticism" are both correct, and
+      # every finding sampled over MASTER before this narrowing was that shape.
+        SIMULATION_PROMISE = /\b(?:I|we)\s+(?:will|would)\s+\w+|\blet(?:'s|\s+us)\s+\w+/i
+        SIMULATION_REPORT = /
+          \b(?:puts|print|warn|say|status|info|notice)\b.*["'][^"']*
+          \b(?:will|would|could|might)\s+(?!not\b|have\b)\w+
+        /x
+
         RuleDSL.rule :SIMULATION,
           severity: :warning, tags: %i[ANTI_SIMULATION DENSITY],
           fires: %(warn "the deploy will restart relayd"\n),
-          does_not_fire: %(warn "the deploy restarted relayd"\n),
+          does_not_fire: %(assert ok, "this test would pass having measured nothing"\n),
           description: "future tense implies without evidence — use indicative past" do |src, path:|
           next [] unless path.to_s.end_with?(".rb", ".md", ".txt", ".erb")
           next [] if path.to_s.include?("/review/scan/rules/")
           src.each_line.with_index(1).filter_map do |line, n|
             next if line.strip.start_with?("#")
-            next unless line.match?(/\b(will\s+\w+|would\s+\w+|let('s|\s+us)\s+\w+|I\s+will\s+|we\s+will\s+)/i)
+            next unless line.match?(SIMULATION_PROMISE) || line.match?(SIMULATION_REPORT)
+
             finding(line: n, message: "simulation language — rewrite in indicative past or present tense")
           end
         end

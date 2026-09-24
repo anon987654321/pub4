@@ -730,12 +730,16 @@ end
 
   # limit far above the log's size: at 200 the window saturated after two
   # hundred runs of this very test and before == after forever.
+  # A broken rule raises rather than returning [], because an empty answer is
+  # indistinguishable from a clean file; it is also put on the record first.
   def test_a_rule_that_raises_reports_the_failure_it_swallows
     before = Master::Ground::Swallow.recent(limit: 1_000_000, context: "TestScanRuleFalsePositives::RaisingRule#check_ast").size
-    result = RaisingRule.new.check("x = 1\n", path: File.join(Master::ROOT, "lib/example.rb"))
+    error = assert_raises(RuntimeError) do
+      RaisingRule.new.check("x = 1\n", path: File.join(Master::ROOT, "lib/example.rb"))
+    end
     after = Master::Ground::Swallow.recent(limit: 1_000_000, context: "TestScanRuleFalsePositives::RaisingRule#check_ast")
 
-    assert_empty result, "the scan continues past a broken rule"
+    assert_includes error.message, "PROBE_RAISER", "the failure names the rule, not a clean file"
     assert_operator after.size, :>, before, "and the broken rule is on the record"
     assert_equal "load_bearing", after.last["severity"]
   end
