@@ -162,3 +162,21 @@ class ConversationIsolationSpec < Minitest::Test
     end
   end
 end
+
+  def test_fork_persists_without_persisting_visitors
+    with_session do |session|
+      session.add_message(role: :user, content: "operator turn")
+      session.fork!(target_key: "child")
+      session.switch!("child")
+      session.add_message(role: :user, content: "child turn")
+      say(session, "visitor", "visitor turn")
+      session.save!
+
+      restored = Master::Trace::Session.new(root: session.instance_variable_get(:@root))
+      restored.load!
+      assert_equal ["operator turn"], contents(restored, Master::Trace::Session::LOCAL)
+      assert_equal ["operator turn", "child turn"], contents(restored, "child")
+      assert_empty restored.messages("visitor")
+    end
+  end
+end
