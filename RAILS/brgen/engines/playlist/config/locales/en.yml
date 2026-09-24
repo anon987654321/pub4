@@ -10,6 +10,22 @@
 # Keys the host already carries are NOT copied here. Use them.
 en:
   playlist:
+    home_eyebrow: "Bergen audio"
+    home_heading: "Hear what the city is making"
+    home_blurb: "Discover local tracks, sets and sounds. Upload a track and give people one link to hear it."
+    navigation: "Radio navigation"
+    featured: "Featured track"
+    open_track: "Open track"
+    recent_eyebrow: "Fresh uploads"
+    recent_tracks: "Recent tracks"
+    see_all_tracks: "See all tracks"
+    city_eyebrow: "From Bergen"
+    popular_playlists: "Popular playlists"
+    playlist_stats: "%{tracks} tracks · %{plays} plays"
+    unknown_creator: "Unknown creator"
+    share_track: "Share %{title}"
+    link_copied: "Link copied"
+    share: "Share"
     collaborators: "Collaborators"
     dilla_sketches: "Dilla sketches / beats"
     synced_position: "Synced position:"
