@@ -1,4 +1,4 @@
-# frozen_string_literal: true
+<sub># frozen_string_literal: true
 
 require "minitest/autorun"
 require "tmpdir"
@@ -139,4 +139,28 @@ class ConversationIsolationSpec < Minitest::Test
   end
 
 
+end
+</sub>
+  def test_fork_clones_without_sharing_messages_or_switching_parent
+    with_session do |session|
+      session.add_message(role: :user, content: "parent")
+      assert_equal "child", session.fork!(target_key: "child")
+      assert_equal Master::Trace::Session::LOCAL, session.active_key
+      session.add_message(role: :user, content: "still parent")
+      assert_equal ["parent", "still parent"], contents(session, Master::Trace::Session::LOCAL)
+      assert_equal ["parent"], contents(session, "child")
+    end
+  end
+
+  def test_switch_changes_the_active_conversation
+    with_session do |session|
+      session.add_message(role: :user, content: "parent")
+      session.fork!(target_key: "child")
+      session.switch!("child")
+      session.add_message(role: :user, content: "child turn")
+      assert_equal "child", session.active_key
+      assert_equal ["parent", "child turn"], contents(session, "child")
+      assert_equal ["parent"], contents(session, Master::Trace::Session::LOCAL)
+    end
+  end
 end
