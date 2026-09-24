@@ -281,8 +281,7 @@ module Master
           return [] unless Dmesg.verbose? || Dmesg.trace?
 
           event = payload[:event].to_s
-          component = event.split(":", 2).first
-          return [] unless Dmesg.trace? || VERBOSE_EVENTS.include?(component)
+          return [] if event.empty?
 
           [event_line(payload)]
         end
@@ -291,14 +290,15 @@ module Master
           event = payload[:event].to_s
           component, action = event.split(":", 2)
           unit = DmesgUnit.name(component)
-          detail = event_detail(payload)
+          detail = event_detail(payload, action:)
           detail.empty? ? "#{unit}: #{action || "event"}" : "#{unit}: #{action || "event"}, #{detail}"
         end
 
         EVENT_FIELDS = %i[target path file pass file_count count rule status state fixed violations changes stage reason category ms bytes critiques files].freeze
 
-        def event_detail(payload)
+        def event_detail(payload, action: nil)
           values = EVENT_FIELDS.filter_map do |key|
+            next if key.to_s == action.to_s
             value = payload[key]
             next if value.nil? || value == ""
 
@@ -317,7 +317,8 @@ module Master
         def terminal(payload)
           state = payload[:state].to_s
           message = clip(payload[:message], 80)
-          lines = ["fix0: terminal #{state}#{", #{message}" unless message.empty?}"]
+          lines = ["fix0: terminal #{state}"]
+          lines[0] = "#{lines[0]}, #{message}" unless message.empty?
           return lines unless Dmesg.verbose? || Dmesg.trace?
 
           ledger = []
