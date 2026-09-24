@@ -35,7 +35,7 @@ module Deploy
     def weight_ceilings
       YAML.safe_load_file(CssConstitutionGate::BUDGET_PATH)&.dig("weight_kb") || {}
     rescue StandardError => e
-      warn "css_constitution: weight budget unreadable (#{e.class}) -- weight runs unbudgeted"
+      @result.fail("css_constitution weight: budget unreadable (#{e.class}: #{e.message}) -- weight is not measured")
       {}
     end
 
