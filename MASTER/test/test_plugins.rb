@@ -1,4 +1,4 @@
-<sub># frozen_string_literal: true
+# frozen_string_literal: true
 
 require_relative "test_helper"
 
@@ -51,6 +51,26 @@ class PluginsTest < Minitest::Test
       )
     end
     assert_match(/allowed_hosts/, error.message)
+  end
+
+  def test_plugin_cli_lists_and_describes_plugins
+    listed = Master::CLI::CommandRegistry.dispatch_plugin(ctx: { args: "list" })
+    assert_includes listed, "air_superiority"
+    assert_includes listed, "social_browser"
+
+    info = Master::CLI::CommandRegistry.dispatch_plugin(ctx: { args: "info air_superiority" })
+    assert_includes info, "plugin: air_superiority 1.0.0"
+  end
+
+  def test_social_browser_refuses_unknown_bulk_action
+    error = assert_raises(Master::Plugin::PolicyError) do
+      Master::Plugin.run(
+        "social_browser",
+        action: "bulk_message",
+        account: "brand"
+      )
+    end
+    assert_match(/unknown action/, error.message)
   end
 
   def test_air_superiority_wifi_parser_and_threat_logic
