@@ -26,8 +26,8 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     get root_url
     assert_response :success
     assert_includes response.body, "amber-guest-hero"
-    assert_includes response.body, "amber-logo-banner"
-    assert_includes response.body, "animated-gradient"
+    assert_select ".amber-logo-banner", count: 1
+    assert_select ".amber-guest-hero .amber-logo-banner", count: 0
     # Through the key, so it follows the locale amber resolves to (nb by
     # default) rather than pinning the English copy — same fix as b369c6213
     # made for brgen's home and signup pages.
