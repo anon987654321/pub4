@@ -8,7 +8,6 @@ name: MASTER Tests
 # Or: OPENBSD/bin/check --profile=contributor && cd MASTER && bin/check --profile=agent
 on:
   workflow_dispatch:
-  push:
     paths:
       - "MASTER/**"
       - ".github/workflows/master-tests.yml"
