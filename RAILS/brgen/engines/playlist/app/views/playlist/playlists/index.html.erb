@@ -1,34 +1,3 @@
 <% content_for :title, t("radio.page_title") %>
 
-<header class="radio-home-header">
-  <div>
-    <p class="radio-home-kicker"><%= t("radio.kicker") %></p>
-    <h1><%= t("radio.name") %></h1>
-    <p><%= t("radio.intro") %></p>
-  </div>
-  <nav class="radio-home-actions" aria-label="<%= t("radio.navigation") %>">
-    <%= link_to t("radio.browse_tracks"), hosted_tracks_path, class: "radio-home-link" %>
-    <% if authenticated? %>
-      <%= link_to t("radio.upload"), new_hosted_track_path, class: "radio-home-link radio-home-link--primary" %>
-    <% else %>
-      <%= link_to t("radio.sign_in_to_upload"), main_app.new_session_path, class: "radio-home-link radio-home-link--primary" %>
-    <% end %>
-  </nav>
-</header>
-
-<% if @tracks.any? %>
-  <%= render "playlist/playlists/player",
-        playlist: @radio_playlist,
-        playlist_name: t("radio.name"),
-        tracks_count: @tracks.size,
-        plays_count: 0,
-        tracks: @tracks,
-        active_track: @tracks.first %>
-<% else %>
-  <%= render "shared/empty_state",
-        title: t("radio.empty_title"),
-        body: t("radio.empty_body"),
-        action: authenticated? ?
-          { label: t("radio.upload"), path: new_hosted_track_path } :
-          { label: t("radio.browse_tracks"), path: hosted_tracks_path } %>
-<% end %>
+<%= render "playlist/playlists/radio_tunnel", minimal: false, auto_start: false %>
