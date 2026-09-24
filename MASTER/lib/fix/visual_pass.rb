@@ -101,9 +101,12 @@ module Master
             captures << resting
             captures.concat(Deploy::CompositionProbe.capture(cdp, surface, dir: @dir, pass:, limit: MAX_COMPOSITION_STATES))
           end
-        end
-        captures.each do |capture|
-          capture[:visual_evidence] = @ghost_stack.capture(capture, pass:)
+
+          # All app captures are complete before we navigate this browser to
+          # local evidence pages. One CDP session serves the entire sweep.
+          captures.each do |capture|
+            capture[:visual_evidence] = @ghost_stack.capture(capture, pass:, cdp:)
+          end
         end
         captures
       end
