@@ -44,10 +44,16 @@ module Master
     def load_data_yaml(root, name, fallback, context:)
       path = File.join(root, "data", name)
       path = fallback unless File.file?(path)
-      load_yaml(path, default: {}) || {}
+      raise "data file missing: #{path}" unless File.file?(path)
+
+      data = load_yaml(path)
+      raise "data file #{name} is not a hash: #{path}" unless data.is_a?(Hash)
+
+      data
     rescue StandardError => e
       Master::Ground::Swallow.log(e, context:)
-      {}
+      raise "data file unreadable: #{name}: #{e.class}: #{e.message}"
+    end
     end
 
     def validate_data!(root: ROOT, bus: nil)
