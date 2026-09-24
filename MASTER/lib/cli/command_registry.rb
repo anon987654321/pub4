@@ -48,6 +48,10 @@ module Master
           "undo" => command(:dispatch_undo, undo),
           "rollback" => command(:dispatch_undo, undo),
           "clear" => command(:dispatch_clear, infra[:session]),
+          "sessions" => command(:dispatch_sessions, infra[:session]),
+          "continue" => command(:dispatch_continue, infra[:session]),
+          "resume" => command(:dispatch_continue, infra[:session]),
+          "fork" => command(:dispatch_fork, infra[:session]),
           "commit" => command(:dispatch_commit, ai[:agent], root, review_gate: true),
           "model" => command(:dispatch_model, d[:agent], d[:config], d[:metrics], d[:root]),
           "auth" => command(:dispatch_auth),
@@ -174,6 +178,32 @@ module Master
       def dispatch_clear(session, ctx: nil)
         session.clear!
         "context cleared"
+      end
+
+      def dispatch_sessions(session, ctx: nil)
+        current = session.active_key
+        keys = session.conversation_keys
+        return "sessions0: none" if keys.empty?
+        keys.map { |key| key == current ? "* #{key}" : "  #{key}" }.join("\n")
+      end
+
+      def dispatch_continue(session, ctx: nil)
+        key = arg_for(ctx)
+        key = session.active_key if key.empty?
+        session.switch!(key)
+        "session0: continued #{key}"
+      rescue ArgumentError => e
+        "session0: #{e.message}"
+      end
+
+      def dispatch_fork(session, ctx: nil)
+        target = arg_for(ctx)
+        target = nil if target.empty?
+        key = session.fork!(target_key: target)
+        session.switch!(key)
+        "session0: forked #{key}"
+      rescue ArgumentError => e
+        "session0: #{e.message}"
       end
 
       def dispatch_undo(undo, ctx: nil) = undo_line("reverted", undo.undo!)
