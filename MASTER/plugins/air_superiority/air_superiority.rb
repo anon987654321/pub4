@@ -352,7 +352,7 @@ module Master
               type: "Unexpected Access Point",
               severity: "high",
               details: "Known SSID #{network[:ssid].inspect} appeared with an unrecognized BSSID. This can be benign (mesh/roaming) or an impersonation attempt; verify before trusting it.",
-              data: network.merge(expected_bssid: expected["bssid"], confidence: "medium")
+              data: network.merge(expected_bssids: expected.map { |item| item["bssid"] }, confidence: "medium")
             )
           elsif network[:security].to_s.downcase.include?("open") || network[:security].to_s.empty?
             Threat.new(
