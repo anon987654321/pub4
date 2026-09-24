@@ -23,9 +23,12 @@ module Master
       module_function
 
       def daily_limit
-        cfg = Master.load_yaml(File.join(Master::ROOT, "data", "models.yml")) || {}
-        value = cfg.dig("openrouter", "daily_quota_per_model")
+        cfg = Master.load_yaml(File.join(Master::ROOT, "data", "models.yml"))
+        value = cfg&.dig("openrouter", "daily_quota_per_model")
         value.to_i.positive? ? value.to_i : DEFAULT_DAILY
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "model_quota.daily_limit", severity: :load_bearing)
+        raise "model quota policy unreadable: #{e.class}: #{e.message}"
       end
 
       def trackable?(model) = FREE_RE.match?(model.to_s)
