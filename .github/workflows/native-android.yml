@@ -46,4 +46,3 @@ jobs:
 
       - name: Validate PWA for TWA
         run: bubblewrap validate --url="${{ steps.registry.outputs.url }}"
-          echo "Play release baseline: Android 16 / API 36"
