@@ -8,8 +8,9 @@ class Playlist::PlaylistsController < Playlist::BaseController
   before_action :authorize_owner_or_editor, only: %i[edit update destroy]
 
   def index
-    @featured_track = local_discovery_tracks.first
-    @tracks = local_discovery_tracks.drop(1)
+    tracks = local_discovery_tracks
+    @featured_track = tracks.first
+    @tracks = tracks.drop(1)
     @playlists = Playlist::Playlist.city_trending(Current.city_record).includes(:user).limit(8)
   end
 
