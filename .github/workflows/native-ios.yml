@@ -1,0 +1,44 @@
+name: Native iOS
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "__NATIVE_IOS/**"
+      - "RAILS/mobile/apps.yml"
+      - "RAILS/tools/mobile.rb"
+      - "RAILS/shared/lib/shared/mobile_app_registry.rb"
+  pull_request:
+    paths:
+      - "__NATIVE_IOS/**"
+      - "RAILS/mobile/apps.yml"
+      - "RAILS/tools/mobile.rb"
+      - "RAILS/shared/lib/shared/mobile_app_registry.rb"
+
+jobs:
+  build:
+    runs-on: macos-26
+    strategy:
+      fail-fast: false
+      matrix:
+        scheme: [Brgen, Radio, Dating, TV, Takeaway, Marketplace, Maps, Messenger, Amber]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: ruby RAILS/tools/mobile.rb ios
+
+      - name: Build ${{ matrix.scheme }}
+        run: |
+          xcodebuild \
+            -project __NATIVE_IOS/.build/Pub4Mobile.xcodeproj \
+            -scheme "${{ matrix.scheme }}" \
+            -configuration "${{ matrix.scheme }}" \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            build
