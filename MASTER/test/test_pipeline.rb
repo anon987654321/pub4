@@ -259,15 +259,13 @@ class TestPipeline < Minitest::Test
     end
   end
 
-  def test_parallel_group_merges_successes_and_errors_in_one_pass
+  def test_parallel_group_fails_when_any_stage_errors
     group = Master::CLI::Pipeline::ParallelGroup.new(AddStage.new(:a, 1), ErrStage.new)
 
     result = group.call({ base: true })
 
-    assert result.ok?
-    assert_equal true, result.value![:base]
-    assert_equal 1, result.value![:a]
-    assert_equal ["boom"], result.value![:_parallel_errors]
+    refute result.ok?
+    assert_match(/parallel group failed:.*boom/, result.error)
   end
 
   private
