@@ -18,7 +18,7 @@
 
   <% if @featured_track %>
     <section class="radio-featured" aria-labelledby="radio-featured-title">
-      <div class="radio-section-kicker"><%= t("playlist.featured") %></div>
+      <h2 id="radio-featured-title" class="radio-section-kicker"><%= t("playlist.featured") %></h2>
       <%= render "playlist/playlists/player",
             playlist: @featured_track,
             playlist_name: @featured_track.title,
@@ -29,7 +29,7 @@
             embedded: true,
             comments: [],
             track_comments: {} %>
-      <%= link_to t("playlist.open_track"), hosted_track_path(@featured_track), class: "radio-featured-link", id: "radio-featured-title" %>
+      <%= link_to t("playlist.open_track"), hosted_track_path(@featured_track), class: "radio-featured-link" %>
     </section>
   <% else %>
     <%= render "shared/empty_state",
