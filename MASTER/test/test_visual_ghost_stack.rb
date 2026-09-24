@@ -22,7 +22,9 @@ class VisualGhostStackContractTest < Minitest::Test
 
   def test_visual_stack_is_aligned_and_uses_low_opacity_history
     assert_includes source, "position:absolute;inset:0"
-    assert_includes source, "GHOST_OPACITIES = [ 0.05, 0.08, 0.12, 0.18, 0.32 ]"
+    assert_includes source, "GHOST_OPACITIES = [ 0.04, 0.06, 0.08, 0.12 ]"
+    assert_includes source, "CURRENT_OPACITY = 1.0"
+    assert_includes source, 'class="#{class_name}"'
     assert_includes source, "mix-blend-mode:difference"
   end
 
@@ -34,6 +36,18 @@ class VisualGhostStackContractTest < Minitest::Test
     assert_includes source, '"structural"'
   end
 
+  def test_visual_evidence_has_registration_and_grid_diagnostics
+    assert_includes source, "REGISTRATION_GRID_PX = 8"
+    assert_includes source, "MAX_GEOMETRY_MARKERS = 24"
+    assert_includes source, "render_geometry"
+    assert_includes source, "geometry registration"
+    assert_includes source, "render_grid"
+    assert_includes source, "registration grid"
+    assert_includes source, "png_dimensions"
+    assert_includes source, "previous box"
+    assert_includes source, "current box"
+  end
+
   def test_visual_pass_and_contact_sheet_consume_the_evidence
     visual_pass = File.read(File.expand_path("../lib/fix/visual_pass.rb", __dir__))
     contact_sheet = File.read(File.expand_path("../lib/fix/visual_contact_sheet.rb", __dir__))
@@ -42,5 +56,7 @@ class VisualGhostStackContractTest < Minitest::Test
     assert_includes visual_pass, "persistent ghost stack"
     assert_includes contact_sheet, "visual_evidence_items"
     assert_includes contact_sheet, "newest vs previous difference"
+    assert_includes contact_sheet, "geometry"
+    assert_includes contact_sheet, "grid"
   end
 end
