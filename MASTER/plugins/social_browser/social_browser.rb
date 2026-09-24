@@ -5,6 +5,7 @@ require "json"
 require "securerandom"
 require "shellwords"
 require "time"
+require "yaml"
 require "uri"
 
 module Master
