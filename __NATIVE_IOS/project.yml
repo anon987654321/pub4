@@ -29,6 +29,8 @@ targets:
         INFOPLIST_FILE: Info.plist
         CODE_SIGN_ENTITLEMENTS: Pub4Mobile.entitlements
         CODE_SIGN_STYLE: Automatic
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
       configs:
         Brgen:
           PRODUCT_BUNDLE_IDENTIFIER: no.brgen.brgen
