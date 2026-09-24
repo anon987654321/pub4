@@ -78,6 +78,10 @@ module Master
           return plateau_result if stagnant?(history, seen_snapshots, recurring_violations, found, pass)
 
           dispatch_llm_stages(found, files, pass, deadline, visual)
+          if @human_decision_required
+            @committer.abort_transaction!
+            return PassResult.new(status: :human_decision, consecutive_clean: 0, message: "human decision required before continuing autofix")
+          end
           delivery = @committer.finish_transaction("fix_loop: pass #{pass}", findings: found, owned_paths: files)
           return PassResult.new(status: :delivery_failed, consecutive_clean: 0, message: delivery.message) if delivery.err?
 
