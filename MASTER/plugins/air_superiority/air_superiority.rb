@@ -42,8 +42,8 @@ module Master
       end
 
       def scan
-        networks = scan_wifi
-        devices = scan_bluetooth
+        networks, wifi_error = scan_safely { scan_wifi }
+        devices, bluetooth_error = scan_safely { scan_bluetooth }
         known = load_known
         wifi_threats = analyze_wifi(networks, known.fetch("known_networks", []))
         bluetooth_threats = analyze_bluetooth(devices, known.fetch("known_devices", []))
@@ -53,6 +53,7 @@ module Master
           runtime: runtime,
           wifi: networks,
           bluetooth: devices,
+          errors: [wifi_error, bluetooth_error].compact,
           threats: (wifi_threats + bluetooth_threats).map(&:to_h),
           counts: {
             wifi: networks.length,
@@ -123,7 +124,7 @@ module Master
 
       def bluetooth_backend
         case runtime
-        when "android_termux" then command_available?("termux-bluetooth-scaninfo") ? "termux-api" : "unavailable"
+        when "android_termux" then command_available?("termux-bluetooth-scan") ? "termux-api-optional" : "unavailable"
         when "macos" then command_available?("system_profiler") ? "system_profiler" : "unavailable"
         when "linux" then command_available?("bluetoothctl") ? "bluetoothctl" : "unavailable"
         else "unavailable"
@@ -145,7 +146,7 @@ module Master
       def scan_bluetooth
         backend = bluetooth_backend
         case backend
-        when "termux-api" then parse_json_array(run("termux-bluetooth-scaninfo"))
+        when "termux-api-optional" then parse_optional_termux_bluetooth(run("termux-bluetooth-scan", "info"))
         when "system_profiler" then parse_system_profiler(run("system_profiler", "SPBluetoothDataType", "-json"))
         when "bluetoothctl" then parse_bluetoothctl(run("bluetoothctl", "devices"))
         else
@@ -236,10 +237,21 @@ module Master
       end
 
       def command_available?(command)
-        _out, status = Open3.capture2e("command", "-v", command)
-        status.success?
-      rescue Errno::ENOENT
-        false
+        ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? do |directory|
+          File.executable?(File.join(directory, command))
+        end
+      end
+
+      def scan_safely
+        [yield, nil]
+      rescue Error => e
+        [[], e.message]
+      end
+
+      def parse_optional_termux_bluetooth(text)
+        parse_json_array(text)
+      rescue Error, JSON::ParserError
+        []
       end
 
       def run(*argv)
