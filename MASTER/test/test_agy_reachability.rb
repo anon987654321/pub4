@@ -9,18 +9,14 @@ require_relative "support_fake_config"
 #
 #   1. It is never offered when the binary is not there. An id that can only be
 #      failed over is not a route.
-#   2. It does not outrank a configured API key. A key is a paid, health-checked
-#      lane; the CLI answers "quota reached" when its subscription is spent, and
-#      a dead lane at the head of the chain stalls every LLM-backed rule.
+#   2. When present, it is the primary subscription lane. API/local/free routes
+#      remain available behind it, and observed failures/quota can still move
+#      the router away from agy without changing the configured default.
 #
-# Both were broken at once on 2026-08-31, in opposite directions, and the fixes
-# came from two sessions working in the same hour. The second is held by
-# data/models.yml, which no longer prepends the agy anchors to any tier, and by
-# default_model / primary_models / AuthProfileLane#models_for_router leading
-# with a key. The first now falls out of the same change — measured, not
-# assumed: with every code-side agy filter removed, the two absence assertions
-# below still pass, which is why this file holds the property and no code
-# carries a second guard for it.
+# The absence property remains important, but presence now deliberately makes agy
+# primary. data/models.yml puts agy:auto in default and primary, while the live
+# `agy models` catalogue feeds additional agy:<model> members into the subscription
+# lane. API/local/free routes remain the fallback path.
 #
 # The shape this hid behind: MASTER_NO_AGY_CLI existed and both
 # agy_cli_available? methods honoured it, so the guard looked complete while the
@@ -113,22 +109,23 @@ class TestAgyReachability < Minitest::Test
     end
   end
 
-  def test_a_configured_key_outranks_agy
+  def test_agy_is_primary_even_when_an_api_key_is_configured
     ENV["OPENROUTER_API_KEY"] = OPENROUTER_KEY
     with_agy(true) do
-      refute_match AGY, Master.default_model,
-                   "a paid, health-checked key lost to a CLI whose subscription may be spent"
-      refute_match AGY, chain.first,
-                   "agy led the fallback chain while a configured key was available"
+      assert_match AGY, Master.default_model,
+                   "configured agy should remain MASTER's primary model lane"
+      assert_match AGY, chain.first,
+                   "agy should lead the fallback chain when its binary is present"
     end
   end
 
-  # Behind the key is not the same as gone: a spent key must still fail over to
-  # the CLI that is installed.
-  def test_agy_is_still_offered_behind_the_key
+  # The API route is not deleted merely because agy is primary: fallback still
+  # contains non-agy members so a provider failure can move the turn elsewhere.
+  def test_api_routes_remain_available_behind_agy
     ENV["OPENROUTER_API_KEY"] = OPENROUTER_KEY
     with_agy(true) do
-      refute_empty chain.grep(AGY), "agy was dropped from the chain rather than ranked below the key"
+      refute_empty chain.reject { |id| id.match?(AGY) },
+                   "API/local/free fallbacks disappeared behind agy"
     end
   end
 
@@ -136,6 +133,20 @@ class TestAgyReachability < Minitest::Test
 
   # Every assertion above rests on the stub being taken for a real binary. If
   # that stopped working, the absence half would pass for the wrong reason.
+  def test_parse_agy_models_accepts_official_slug_rows
+    router_instance = router
+    output = <<~TEXT
+      gemini-3.8-flash-high     Gemini 3.8 Flash (High)
+      gemini-3.8-flash-medium   Gemini 3.8 Flash (Medium)
+      gemini-3.1-pro-high       Gemini 3.1 Pro (High)
+      Claude Sonnet 4.6 (Thinking)
+      Weekly Limit Remaining
+    TEXT
+
+    assert_equal %w[gemini-3.8-flash-high gemini-3.8-flash-medium gemini-3.1-pro-high],
+                 router_instance.send(:parse_agy_models, output)
+  end
+
   def test_the_stub_is_actually_detected
     with_agy(true) { assert Master.agy_cli_available?, "the agy stub was not detected as available" }
     with_agy(false) { refute Master.agy_cli_available? }
