@@ -59,6 +59,10 @@ Social primitives (shared engine):
 6. No second box-shadow elevation language (flat UI); face popover exception
    only
 
+## Storefront promotional art
+
+Marketplace and Takeaway share one campaign-art system. The canonical grammar lives at MASTER/data/rules.yml#design_system.promotional_art: clean matte backgrounds, one-to-four products, a bounded copy zone, real HTML typography, and exact prices and CTAs. Shared::PromotionalArt generates the image prompt and returns the copy separately; shared/_promotional_art renders the deterministic HTML composition. Do not ask an image model to typeset campaign copy. Generate the product scene, then place the headline, body, price, badge, and CTA in Rails.
+
 ## Shared primitives
 
 - `.skip-link` — hard-hidden until `:focus-visible`, corner at chrome-inset +
