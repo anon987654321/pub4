@@ -115,6 +115,11 @@ module Master
       raise ManifestError, "#{path}: invalid version" unless version.match?(/\A\d+\.\d+\.\d+\z/)
       raise ManifestError, "#{path}: description is empty" if raw.fetch("description").to_s.strip.empty?
       raise ManifestError, "#{path}: invalid entrypoint" unless entrypoint.match?(/\A[a-z0-9_]+\.rb\z/)
+      invalid_observe_actions = observe_actions && !observe_actions.is_a?(Array) ||
+        observe_actions.is_a?(Array) && observe_actions.any? { |action| !action.to_s.match?(/\A[a-z][a-z0-9_]*\z/) }
+      if invalid_observe_actions
+        raise ManifestError, "#{path}: observe_actions must be an array of simple action names"
+      end
     end
 
     def require_entrypoint!(manifest)
