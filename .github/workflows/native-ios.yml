@@ -2,18 +2,6 @@ name: Native iOS
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - "__NATIVE_IOS/**"
-      - "RAILS/mobile/apps.yml"
-      - "RAILS/tools/mobile.rb"
-      - "RAILS/shared/lib/shared/mobile_app_registry.rb"
-  pull_request:
-    paths:
-      - "__NATIVE_IOS/**"
-      - "RAILS/mobile/apps.yml"
-      - "RAILS/tools/mobile.rb"
-      - "RAILS/shared/lib/shared/mobile_app_registry.rb"
 
 jobs:
   build:
