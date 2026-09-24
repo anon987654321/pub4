@@ -57,7 +57,6 @@ end
 
 failures.concat(run_browser_crawl(public: options[:public], skip_closed: options[:skip_closed])) if options[:browser]
 
-skips.each { |line| puts "crawl: skip — #{line}" }
 if failures.empty?
   if skips.empty?
     puts "crawl: clean (#{targets.size} targets)"
