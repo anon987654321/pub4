@@ -10,6 +10,22 @@
 # Keys the host already carries are NOT copied here. Use them.
 nb:
   playlist:
+    home_eyebrow: "Lyd fra Bergen"
+    home_heading: "Hør hva byen lager"
+    home_blurb: "Oppdag lokale spor, sett og lyder. Last opp et spor og gi folk én lenke å lytte på."
+    navigation: "Radionavigasjon"
+    featured: "Utvalgt spor"
+    open_track: "Åpne spor"
+    recent_eyebrow: "Nylig lastet opp"
+    recent_tracks: "Nye spor"
+    see_all_tracks: "Se alle spor"
+    city_eyebrow: "Fra Bergen"
+    popular_playlists: "Populære spillelister"
+    playlist_stats: "%{tracks} spor · %{plays} avspillinger"
+    unknown_creator: "Ukjent skaper"
+    share_track: "Del %{title}"
+    link_copied: "Lenke kopiert"
+    share: "Del"
     collaborators: "Samarbeidspartnere"
     dilla_sketches: "Dilla-skisser / beats"
     synced_position: "Synkronisert posisjon:"
