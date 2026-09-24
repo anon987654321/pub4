@@ -26,9 +26,10 @@ module Master
 
       attr_reader :root, :id
 
-      def initialize(root: Master::ROOT, bus: nil)
+      def initialize(root: Master::ROOT, bus: nil, checkpoint: nil)
         @root = File.expand_path(root)
         @bus = bus
+        @checkpoint = checkpoint
         @id = nil
       end
 
@@ -70,12 +71,9 @@ module Master
       def checkpoint!(files: [])
         return self unless @record
 
-        checkpoint = Fix::Checkpoint.new(
-          root: @root, dir: File.join(@root, ".master", "checkpoints")
-        ).create(
-          label: "mission-#{@id}",
-          files: Array(files),
-        )
+        return self unless @checkpoint
+
+        checkpoint = @checkpoint.call(id: @id, root: @root, files: Array(files))
         @record["checkpoint"] = checkpoint
         persist!
         emit("mission:checkpoint", id: @id, checkpoint: checkpoint["id"], files: checkpoint["files"].size)
