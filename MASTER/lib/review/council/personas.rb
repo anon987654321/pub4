@@ -56,9 +56,13 @@ module Master
             rows = raw.is_a?(Array) ? raw : Array(raw.fetch(:personas) { raw["personas"] })
             raise "Invalid persona data" unless rows.is_a?(Array) && rows.any?
 
-            @cache[path] = rows.filter_map { |attrs| build_persona(attrs) }.freeze
-          rescue StandardError
-            DEFAULTS
+            personas = rows.filter_map { |attrs| build_persona(attrs) }
+            raise "Invalid persona data: no valid personas" if personas.empty?
+
+            @cache[path] = personas.freeze
+          rescue StandardError => e
+            Master::Ground::Swallow.log(e, context: "Council::Personas.load", path:)
+            raise "council persona policy unreadable: #{e.class}: #{e.message}"
           end
         end
 
