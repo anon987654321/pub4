@@ -3726,6 +3726,28 @@ body.vertical-marketplace .top-offers-rail .sale-ad .deal-price {
   }
 }
 
+@media (max-width: 767px) {
+  .store-teasers--bol-clean .store-promo-art {
+    min-height: 480px;
+  }
+
+  .store-teasers--bol-clean .store-promo-art-media {
+    order: 1;
+  }
+
+  .store-teasers--bol-clean .store-promo-art-copy {
+    order: 2;
+  }
+
+  .store-teasers--brgen-hybrid .store-promo-art {
+    min-height: 560px;
+  }
+
+  .store-teasers--brgen-hybrid .store-promo-art-copy {
+    padding-inline: 20px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .store-cta {
     transition: none;
