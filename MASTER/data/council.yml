@@ -388,6 +388,15 @@ questions:
     - which concept lacks a name and should have one?
     - where does the code lie about what it does?
     - what would a fresh reader misread first?
+  red_team:
+    - what observation would falsify your criticism?
+    - what useful behavior could your proposed fix accidentally damage?
+    - what unmeasured state, viewport, content case, or dependency could reverse your conclusion?
+    - are you reacting to evidence or merely to taste, familiarity, or a preferred pattern?
+    - what is the smallest deletion or existing primitive that could solve the problem?
+    - what regression would your preferred fix create elsewhere in the system?
+    - what happens at the boundary where this solution meets another subsystem?
+    - what would a hostile, careless, offline, or partially informed user do differently?
 
 # Named council presets. Each preset defines a panel and mode for a specific review type.
 presets:
