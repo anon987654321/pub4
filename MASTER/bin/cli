@@ -59,6 +59,7 @@ def parse_initial_message_options(argv)
     end
     opts.on("-m", "--message TEXT") { |text| options[:message] = text }
     opts.on("-c", "--continue [ID]") { |id| options[:message] = id.to_s.empty? ? "/continue" : "/continue #{id}" }
+    opts.on("--resume [ID]") { |id| options[:message] = id.to_s.empty? ? "/resume" : "/resume #{id}" }
     opts.on("-s", "--session ID") { |id| options[:message] = "/continue #{id}" }
     opts.on("--fork [ID]") { |id| options[:message] = id.to_s.empty? ? "/fork" : "/fork #{id}" }
     opts.on("--sessions") { options[:message] = "/sessions" }
