@@ -9,6 +9,7 @@ require_relative "pass_runner/fast_stage"
 require_relative "pass_runner/llm_stage"
 require_relative "pass_runner/stagnation_detection"
 require_relative "pass_runner/evidence_stage"
+require_relative "pass_runner/../fix_loop/structural_stage"
 require_relative "../transaction"
 require_relative "../resource_budget"
 
@@ -24,6 +25,7 @@ module Master
         include LlmStage
         include StagnationDetection
         include EvidenceStage
+        include StructuralStage
 
         def initialize(bus:, committer:, loop_scanner:, llm_router:, rollback:, root:,
                        rules:, agent:, scanner:, learnings:, preamble:,
@@ -68,6 +70,7 @@ module Master
 
           run_fast_stage(files, pass)
           found = run_observation_stage(files, target)
+          found += structural_findings(files:) unless files.empty?
 
           visual, opportunities, found = merge_evidence_findings(target:, files:, pass:, found:)
           return evidence_abort_result(visual, opportunities) if found.empty? && (visual&.err? || opportunities&.err?)
