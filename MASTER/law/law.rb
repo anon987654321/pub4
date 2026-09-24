@@ -110,6 +110,23 @@ module Law
       scope == :file ? scan_file(text, file) : scan_lines(text, file)
     end
 
+    # The rule's published shape for Contract. Key order and the empty filter
+    # feed law_digest, so any change here changes the digest every external
+    # model hands back at the handshake.
+    def contract_entry
+      {
+        "id" => id.to_s,
+        "severity" => severity.to_s,
+        "mode" => mode.to_s,
+        "languages" => languages.map(&:to_s),
+        "question" => ask.to_s,
+        "practice" => practice.to_s,
+        "fix" => fix.to_s,
+        "bad" => bad.to_s,
+        "good" => good.to_s,
+      }.reject { |_, value| value.respond_to?(:empty?) && value.empty? }
+    end
+
     # A rule proves itself before it may judge anything else.
     #
     # The reach half is proved too, because it was the half that broke:
@@ -305,19 +322,7 @@ module Law
     ].freeze
 
     def render(full: false)
-      entries = Law.rules.values.sort_by { |rule| rule.id.to_s }.map do |rule|
-        {
-          "id" => rule.id.to_s,
-          "severity" => rule.severity.to_s,
-          "mode" => rule.mode.to_s,
-          "languages" => rule.languages.map(&:to_s),
-          "question" => rule.ask.to_s,
-          "practice" => rule.practice.to_s,
-          "fix" => rule.fix.to_s,
-          "bad" => rule.bad.to_s,
-          "good" => rule.good.to_s,
-        }.reject { |_, value| value.respond_to?(:empty?) && value.empty? }
-      end
+      entries = Law.rules.values.sort_by { |rule| rule.id.to_s }.map(&:contract_entry)
       laws = full ? entries : entries.map { |entry| entry.slice("id", "severity", "mode", "languages", "question") }
       JSON.pretty_generate(
         "contract_version" => 1,

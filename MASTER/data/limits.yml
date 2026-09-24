@@ -318,7 +318,6 @@ session_modes:
       severity_floor: warning
       description: Full rules, council on, full fix budget
 
-# ---------------------------------------------------------------------------
 # Read by nothing. Reference material for agents, kept
 # because it is worth reading and deleted from no-one's reach — but it does not
 # constrain the runtime, and a rule that constrains nothing must not sit beside
