@@ -6287,6 +6287,136 @@ body.vertical-playlist .playlist-details {
   .radio-track-display { max-width: 350px; }
 }
 
+/* Radio home — discovery-first audio surface. Detail pages keep their
+   narrow reading width; the home gives the queue room to behave like a feed. */
+.radio-home {
+  max-width: 1040px;
+  margin-inline: auto;
+  padding: 0 var(--space-4) var(--space-8);
+}
+
+.radio-home-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-6);
+  padding: var(--space-8) 0 var(--space-6);
+  border-bottom: 1px solid var(--border);
+}
+
+.radio-home-header h1 {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: var(--weight-heavy);
+  line-height: var(--leading-none);
+}
+
+.radio-home-header p {
+  max-width: 58ch;
+  margin: var(--space-2) 0 0;
+  color: var(--text-secondary);
+}
+
+.radio-home-kicker {
+  margin: 0;
+  color: var(--color-accent);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.radio-home-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+
+.radio-home-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min);
+  padding-inline: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.radio-home-link--primary {
+  border-color: var(--text);
+  background: var(--text);
+  color: var(--bg);
+}
+
+.radio-home .playlist-app {
+  max-width: none;
+  padding-inline: 0;
+}
+
+.radio-home .playlist-stage {
+  grid-template-columns: minmax(180px, 320px) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-8);
+  padding-block: var(--space-8);
+}
+
+.radio-home .playlist-artwork-wrap {
+  width: min(100%, 320px);
+  margin: 0;
+}
+
+.radio-home .playlist-now-playing {
+  text-align: left;
+}
+
+.radio-home .playlist-waveform-canvas {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: end;
+}
+
+.radio-home .playlist-now-playing {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: start;
+  padding-top: 132px;
+}
+
+.radio-home .playlist-queue {
+  margin-top: 0;
+}
+
+@media (max-width: 768px) {
+  .radio-home-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .radio-home-actions {
+    justify-content: flex-start;
+  }
+
+  .radio-home .playlist-stage {
+    grid-template-columns: 1fr;
+  }
+
+  .radio-home .playlist-waveform-canvas,
+  .radio-home .playlist-now-playing {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .radio-home .playlist-now-playing {
+    padding-top: 0;
+  }
+
+  .radio-home .playlist-artwork-wrap {
+    margin-inline: auto;
+  }
+}
+
 /* Playlist detail player (library drill-down) */
 .playlist-app {
   max-width: 720px;
