@@ -63,6 +63,10 @@
   // and old-style proportional figures in running text. A face without onum
   // ignores it and keeps its lining figures.
   font-feature-settings: "kern", "liga", "clig", "onum", "pnum";
+  font-kerning: normal;
+  font-optical-sizing: auto;
+  font-synthesis: none;
+  font-variant-numeric: oldstyle-nums proportional-nums;
 
   // norwegian_guillemets: a quotation opens with « in Bokmål.
   &:lang(nb) {
@@ -115,6 +119,17 @@
     max-width: var(--measure);
     line-height: var(--leading-loose);
   }
+}
+
+/* Quantities align; running prose remains optically proportioned. */
+[data-money],
+.deal-price,
+.listing-price,
+.listing-buy-bar-amount,
+.item-subtotal,
+.feed-action-count {
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "kern", "liga", "clig", "lnum", "tnum";
 }
 
 .prose-meta,
