@@ -511,6 +511,17 @@ class TestAstFixerTransforms < Minitest::Test
     assert_equal [7], findings.map(&:line)
   end
 
+  # The replacement once interpolated `@transforms << :no_decorative_fx`, whose
+  # value is the whole transforms array, so the stylesheet received
+  # "[:eight_px_rhythm, :no_decorative_fx]box-shadow: none;" and stopped compiling.
+  def test_decorative_shadow_is_replaced_with_plain_css
+    result = fix("card.scss", ".card {\n  box-shadow: 0 2px 4px rgb(0 0 0 / 20%);\n}\n")
+
+    assert_includes result[:content], "  box-shadow: none;\n"
+    refute_includes result[:content], "[:"
+    assert_includes result[:transforms], :no_decorative_fx
+  end
+
   def test_trailing_commas_skip_block_closers
     source = <<~RUBY
       records.map { |rec|

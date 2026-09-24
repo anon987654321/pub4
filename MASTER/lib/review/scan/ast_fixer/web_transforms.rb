@@ -268,7 +268,7 @@ module Master
             changed = false
             out = src.gsub(/(box-shadow|text-shadow)\s*:\s*(?!none|0(?:\s+0)*)\s*[^;]+;(?!\s*\/\*)/i) do |match|
               changed = true
-              "#{@transforms << :no_decorative_fx}#{match.split(':').first}: none;"
+              "#{match.split(':').first}: none;"
             end
             out = out.gsub(/filter\s*:\s*[^;]*blur\s*\(.*?\)\s*;?|backdrop-filter\s*:\s*[^;]+;?/i) do
               changed = true
