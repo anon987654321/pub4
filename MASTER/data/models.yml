@@ -1,4 +1,4 @@
-# Model routing profile — Grok primary (API or keyless browser), OpenRouter free fallback.
+# Model routing profile — Antigravity primary, with automatic API/local/free fallback.
 
 schema: 1
 routing:
@@ -259,12 +259,14 @@ models:
     - *web_chat_kimi
     - *web_chat_gemini
   default:
+    - *agy_auto
     - *claude_cli_sonnet
     - *ollama_gemma
     - *glm_5_3
     - *nemotron_super
     - *gemini_flash_openrouter
   primary:
+    - *agy_auto
     - *claude_cli_opus
     - *claude_opus_api
     - *glm_5_3
