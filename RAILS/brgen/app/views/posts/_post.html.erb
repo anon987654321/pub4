@@ -19,16 +19,13 @@
   <% quote = post.quote_comment_by(Current.user) %>
   <% cache [post, post.voted_by?(Current.user), reposted, quote] do %>
     <% post_actions = capture do %>
-      <button type="button" class="feed-action"
-              aria-label="<%= t("post.comment_aria", count: post.comment_count, default: "Comment, %{count} comments") %>"
-              data-controller="action"
-              data-action="click->action#toggle"
-              title="<%= t("comments.submit") %>"
-              data-action-url-value="<%= post_comments_path(post) %>"
-              data-action-count-value="<%= post.comment_count %>">
+      <%= link_to post_path(post, anchor: "comments-section"),
+            class: "feed-action",
+            aria: { label: t("post.comment_aria", count: post.comment_count, default: "Comment, %{count} comments") },
+            title: t("comments.submit") do %>
         <%= render "shared/feed_icon", name: "comment" %>
-        <span class="feed-action-count" data-action-target="count"><%= post.comment_count %></span>
-      </button>
+        <span class="feed-action-count"><%= post.comment_count %></span>
+      <% end %>
       <%# This button spent a long time with nothing behind it — first carrying
           data-controller="action" with no URL, so a press added the active
           class, sent nothing, and claimed the repost had landed until the next

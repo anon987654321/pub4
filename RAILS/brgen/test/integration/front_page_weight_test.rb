@@ -95,6 +95,13 @@ class FrontPageWeightTest < ActionDispatch::IntegrationTest
   # the button stayed inert, because for months a press toggled a class and
   # discarded the click. The backend exists now, so the contract inverts —
   # the button must reach it, and must not go back to being decorative.
+  test "the comment action navigates to the comment section instead of posting empty content" do
+    refute_match(/post_comments_path.*data-controller="[^"]*action/, post_partial)
+
+    assert_match(/post_path\(post, anchor: "comments-section"\)/, post_partial)
+    assert_match(/Comment, %\{count\} comments/, post_partial)
+  end
+
   test "the repost button reaches a real endpoint" do
     assert Post.new.respond_to?(:reposted_by?), "Post lost its repost predicate"
     assert defined?(Repost), "the Repost model is gone but the button remains"
