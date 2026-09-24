@@ -132,7 +132,7 @@ SINGLE_CALL_FAILOVER = %i[budget rate_limit timeout no_api_key].freeze
 
         effective_model = result.respond_to?(:model) && result.model ? result.model : selected_model
         @model_router.record_capability_outcome(
-          model: effective_model, task_type: operation, success: result.is_a?(Master::Result::Ok)
+          model: effective_model, task_type: operation, success: result.is_a?(Master::Result::Ok),
         )
       end
 
@@ -249,28 +249,28 @@ end
         return capability_preflight("air_superiority", "scan") if mode == :device
         return if mode == :repository || mode == :conversation
 
-        knowledge = evidence_tool("SearchKnowledge")
-        web = evidence_tool("WebSearch")
-
-        local = knowledge&.call(query: message.to_s)
+        local = evidence_tool("SearchKnowledge")&.call(query: message.to_s)
         local_text = local.respond_to?(:ok?) && local.ok? ? local.value!.to_s : ""
         return "Local knowledge:\n#{local_text[0, 4_000]}" if mode == :unknown && !local_text.empty? && local_text != "(no results)"
 
-        searches = if mode == :deep_research
-                     [message.to_s, "#{message} official documentation"]
-                   else
-                     [message.to_s]
-                   end
-        snippets = searches.filter_map do |query|
-          result = web&.call(query:)
-          result.value!.to_s if result.respond_to?(:ok?) && result.ok?
-        end
+        snippets = web_snippets(message, mode)
         return if snippets.empty? && local_text.empty?
 
         parts = []
         parts << "Local knowledge:\n#{local_text[0, 3_000]}" unless local_text.empty?
         parts << "Web research:\n#{snippets.join("\n\n")[0, 6_000]}" unless snippets.empty?
         parts.join("\n\n")
+      end
+
+      # Deep research also asks for the official documentation.
+      def web_snippets(message, mode)
+        web = evidence_tool("WebSearch")
+        searches = [message.to_s]
+        searches << "#{message} official documentation" if mode == :deep_research
+        searches.filter_map do |query|
+          result = web&.call(query:)
+          result.value!.to_s if result.respond_to?(:ok?) && result.ok?
+        end
       end
 
       def capability_preflight(plugin, action)

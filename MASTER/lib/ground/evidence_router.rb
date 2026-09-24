@@ -7,7 +7,8 @@ module Master
 
       CURRENT = /\b(?:latest|current|today|tonight|now|recent|recently|this\s+(?:week|month|year)|as\s+of|newest|up[-\s]?to[-\s]?date|20\d{2})\b/i
       RESEARCH = /\b(?:research|investigate|deep\s+dive|look\s+into|study|compare\s+(?:sources|options|approaches)|survey|literature|find\s+out)\b/i
-      REPOSITORY = /\b(?:repo(?:sitory)?|codebase|code|file|files|module|class|method|gemfile|rails|master|git|commit|branch|diff|source)\b|(?:^|\s)[\w./-]+\.(?:rb|yml|yaml|json|md|js|mjs|ts|tsx|erb|css|scss|sh|zsh)\b/i
+      # %r{} because the path class holds a literal slash.
+      REPOSITORY = %r{\b(?:repo(?:sitory)?|codebase|code|file|files|module|class|method|gemfile|rails|master|git|commit|branch|diff|source)\b|(?:^|\s)[\w./-]+\.(?:rb|yml|yaml|json|md|js|mjs|ts|tsx|erb|css|scss|sh|zsh)\b}i
       BROWSER = /\b(?:browser|web\s+page|navigate|click|log\s+in|login|open\s+(?:the\s+)?(?:site|website|page)|inspect\s+(?:the\s+)?(?:site|page|account)|onlyfans|fetlife|snapchat\s+account|telegram\s+account|whatsapp\s+account)\b/i
       DEVICE = /\b(?:android|termux|wifi|wi-?fi|bluetooth|sensor|camera|microphone|battery|torch|location|device)\b/i
       CONVERSATION = /\A(?:hi|hello|hey|thanks?|thank\s+you|good\s+(?:morning|evening|night)|how\s+are\s+you)[!?.,\s]*\z/i

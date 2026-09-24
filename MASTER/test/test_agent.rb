@@ -77,10 +77,10 @@ class TestAgent < Minitest::Test
   def test_browser_turn_gets_plugin_observation
     agent = @agent
     observe = Object.new
+    seen = nil
+    # The stub's self is the stub, not the test, so it records and the test asserts.
     observe.define_singleton_method(:call) do |plugin:, action:, args:|
-      assert_equal "social_browser", plugin
-      assert_equal "status", action
-      assert_equal({}, args)
+      seen = [plugin, action, args]
       Master::Result.ok("browser=ferrum sites=snapchat")
     end
     observe.define_singleton_method(:class) { Class.new { def self.name = "Master::Io::PluginObserve" } }
@@ -88,6 +88,7 @@ class TestAgent < Minitest::Test
 
     agent.send(:prepare_evidence, "Open Snapchat and inspect the account page.")
 
+    assert_equal ["social_browser", "status", {}], seen
     assert_equal :browser, Fiber[:master_evidence_mode]
     assert_match(/browser=ferrum/, Fiber[:master_evidence_note])
   ensure
@@ -98,10 +99,9 @@ class TestAgent < Minitest::Test
   def test_device_turn_gets_wireless_observation
     agent = @agent
     observe = Object.new
+    seen = nil
     observe.define_singleton_method(:call) do |plugin:, action:, args:|
-      assert_equal "air_superiority", plugin
-      assert_equal "scan", action
-      assert_equal({}, args)
+      seen = [plugin, action, args]
       Master::Result.ok("wifi=2 bluetooth=1")
     end
     observe.define_singleton_method(:class) { Class.new { def self.name = "Master::Io::PluginObserve" } }
@@ -109,6 +109,7 @@ class TestAgent < Minitest::Test
 
     agent.send(:prepare_evidence, "Scan nearby Wi-Fi and Bluetooth devices on Android.")
 
+    assert_equal ["air_superiority", "scan", {}], seen
     assert_equal :device, Fiber[:master_evidence_mode]
     assert_match(/wifi=2/, Fiber[:master_evidence_note])
   ensure
