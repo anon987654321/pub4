@@ -92,7 +92,7 @@ class BergenDemoSeederTest < ActiveSupport::TestCase
 
     featured_titles = Brgen::BergenDemoData::FEATURED_POSTS.map { |row| row[:title] }
     seeded_titles = Post.where(city: @city).pluck(:title)
-    assert_equal featured_titles, seeded_titles.grep_varying_order(featured_titles)
+    assert_equal featured_titles.sort, seeded_titles.select { |title| featured_titles.include?(title) }.sort
     # Vote weight surfaces the highest-engagement threads. The 2026-08-02 content
     # broadening added higher-vote posts (Brann matchday, rain-day), which now lead
     # the frontpage — the mechanism working, not a regression.
