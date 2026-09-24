@@ -49,4 +49,13 @@ class TestVoicePerformance < Minitest::Test
     assert_equal :question, plan[2][:role]
     assert_equal :closing, plan[3][:role]
   end
+
+  def test_commas_and_clauses_stay_inside_the_sentence
+    plan = Master::Voice::Performance.plan("However, there is a risk; the timing matters: keep it steady. Then continue.")
+
+    assert_equal 2, plan.length
+    assert_equal "However, there is a risk; the timing matters: keep it steady.", plan[0][:text]
+    assert_equal :opening, plan[0][:role]
+    assert_equal :closing, plan[1][:role]
+  end
 end
