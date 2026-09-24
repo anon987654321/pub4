@@ -230,6 +230,27 @@ class TestReliabilitySecondTranche < Minitest::Test
     end
   end
 
+  def test_known_good_refuses_rollback_when_git_status_cannot_be_measured
+    Dir.mktmpdir("master-known-good") do |root|
+      init_git(root)
+      path = File.join(root, "a.rb")
+      File.write(path, "one\n")
+      git(root, "add", "a.rb")
+      git(root, "commit", "-m", "one")
+      good = git(root, "rev-parse", "HEAD")
+      Master::Ground::KnownGood.new(root:).promote!(commit: good)
+
+      status = Struct.new(:success?).new(false)
+      Master::Io::Exec.stub(:capture2, ["", status]) do
+        result = Master::Ground::KnownGood.new(root:).rollback!
+
+        assert result.err?
+        assert_equal :infrastructure, result.category
+        assert_match(/git status failed while checking rollback safety/, result.message)
+      end
+    end
+  end
+
   def test_known_good_promotes_only_explicit_commit
     Dir.mktmpdir("master-known-good") do |root|
       init_git(root)
