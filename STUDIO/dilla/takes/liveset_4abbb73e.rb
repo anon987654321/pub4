@@ -8,7 +8,7 @@ require "sound"
 RATE = 32_000
 BLOCK = 1_024
 S = AnalogSynth
-P = S::PATCHES.dup
+P = S::PATCHES
 
 def hz(midi) = 440.0 * (2.0**((midi - 69) / 12.0))
 
@@ -17,15 +17,6 @@ CHORDS = [
   [41, [56, 60, 63, 67]], [46, [56, 61, 65, 68]], [39, [55, 60, 61, 65]],
   [44, [55, 60, 63, 70]], [37, [60, 65, 67, 72]], [36, [58, 61, 64, 68]],
 ]
-SNAP = { amp: S::Envelope.new(attack: 0.004, decay: 0.3, sustain: 0.35, release: 0.18),
-         filter_env: S::Envelope.new(attack: 0.002, decay: 0.22, sustain: 0.2, release: 0.15) }.freeze
-PROPHET_LEADS = {
-  prophet_five_lead: P[:prophet_five].merge(SNAP),
-  prophet_pad_lead: P[:prophet_pad].merge(SNAP),
-  prophet_poly: P[:poly_lead].merge(SNAP),
-  prophet_bright: P[:prophet_five].merge(SNAP).merge(cutoff: 900.0, resonance: 0.42),
-}.freeze
-P.merge!(PROPHET_LEADS)
 PADS = %i[warm_pad poly_strings prophet_five juno_pad prophet_pad vp330_ensemble soft_reed e_piano rhodes_tine glass_bell]
 BASSES = %i[moog_bass acid sub dub_bass]
 QUALITIES = {
@@ -71,9 +62,6 @@ key = 5 # F minor, where the loved progression sits
 state = [0, :m9]
 voicing = CHORDS.first.last
 chord_i = 0
-recent = []
-next_modulation = 8
-key = rng.rand(12)
 next_chord = 0.0
 LOG = File.open(File.join(__dir__, "moog_improv.log"), "a").tap { |f| f.sync = true }
 total = Float::INFINITY
@@ -99,45 +87,11 @@ pattern_b = { pitch: [78, 64, 88, 70, 92], velocity: [55, 0, 70, 45, 60] }
 # Accents on the eight-step page: the downbeat and the and-of-two lean in.
 ACCENT = [1.35, 0.8, 1.0, 0.85, 1.25, 0.8, 1.1, 0.9].freeze
 KICK_LEVEL = 0.09
-# The lead plays over every chord, at the operator's word.
-LEAD_ALWAYS = true
 kicks = []
-click_lp = 0.0
 DfamHit = Struct.new(:start, :f0, :vel, :ph1, :ph2, :ladder, :pan)
-class DfamKnob
-  attr_reader :value
-
-  def initialize(lo, hi, rng, speed:)
-    @lo, @hi, @rng, @speed = lo, hi, rng, speed
-    @x = 0.5
-    @v = 0.0
-    @push = nil
-  end
-
-  # A gesture: toward `target` (0..1) for `seconds`, then released.
-  def lean(target, seconds, now) = @push = [target, now + seconds]
-
-  def step(dt, now)
-    @push = nil if @push && now > @push[1]
-    pull = @push ? (@push[0] - @x) * 1.5 : (0.5 - @x) * 0.03
-    @v = (@v * 0.992) + (@rng.rand(-1.0..1.0) * @speed * dt) + (pull * dt)
-    @x = (@x + (@v * dt)).clamp(0.0, 1.0)
-    @value = @lo + ((@hi - @lo) * @x)
-  end
-end
-
-knob_rng = Random.new
-DFAM_KNOBS = {
-  vcf_decay: DfamKnob.new(0.03, 0.22, knob_rng, speed: 0.08),
-  vca_decay: DfamKnob.new(0.06, 0.28, knob_rng, speed: 0.07),
-  cutoff: DfamKnob.new(500.0, 4200.0, knob_rng, speed: 0.1),
-  resonance: DfamKnob.new(0.2, 0.85, knob_rng, speed: 0.06),
-  fm: DfamKnob.new(0.0, 1.1, knob_rng, speed: 0.07),
-  noise: DfamKnob.new(0.02, 0.45, knob_rng, speed: 0.05),
-  pitch_amount: DfamKnob.new(0.6, 4.0, knob_rng, speed: 0.06),
-  pitch_decay: DfamKnob.new(0.015, 0.12, knob_rng, speed: 0.05),
-}.freeze
-next_gesture = 8.0
+def vcf_decay_knob(t) = 0.05 + 0.1 * (0.5 + 0.5 * Math.sin(2 * Math::PI * t / 37.0))
+def vca_decay_knob(t) = 0.09 + 0.12 * (0.5 + 0.5 * Math.sin(2 * Math::PI * t / 29.0 + 0.7))
+def dfam_cut_knob(t) = 900.0 + 2600.0 * (0.5 + 0.5 * Math.sin(2 * Math::PI * t / 43.0 + 2.1))
 
 $stderr.puts "improvising: #{PADS.join(" -> ")} over moog_bass, DFAM on top"
 def sonitex(bits:, lo:, hi:, drive:, mix: 0.5, samples: 1)
@@ -155,17 +109,15 @@ end
 
 MASTER = [
   vcs(depth: 0.34, smear: 2.4), sonitex(bits: 12, lo: 40, hi: 13_000, drive: 1.12),
-  vcs(depth: 0.38, smear: 1.7), sonitex(bits: 13, lo: 42, hi: 15_000, drive: 1.04),
-  vcs(depth: 0.26, smear: 3.6), sonitex(bits: 11, lo: 42, hi: 12_000, drive: 1.18),
-  "alimiter=limit=0.95"
+  vcs(depth: 0.3, smear: 2.8), "alimiter=limit=0.95"
 ].join(",")
 def space_echo(head_ms, decays)
   taps = [1, 2, 3].map { |k| (head_ms * k).round }.join("|")
   "highpass=f=160,aecho=0.9:0.9:#{taps}:#{decays},lowpass=f=3200,chorus=0.9:0.9:25:0.35:0.6:1.8"
 end
 HEAD = BAR / 16 * 1000
-ARP_FX = "afreqshift=shift=6:level=1,flanger=delay=3:depth=6:regen=35:speed=0.13:width=80,vibrato=f=4.8:d=0.18,acrusher=bits=9:mix=0.22:mode=log:aa=1,apulsator=hz=0.21:amount=0.7"
-GRAPH = "[0:a]pan=stereo|c0=c0|c1=c1,#{MASTER}[m];[0:a]pan=stereo|c0=c2|c1=c3,#{ARP_FX}[a];[m][a]amix=inputs=2:weights=1 1:normalize=0,alimiter=limit=0.96"
+ARP_FX = "anull"
+GRAPH = "[0:a]pan=stereo|c0=c0|c1=c1,#{MASTER}[m];[0:a]pan=stereo|c0=c2|c1=c3,#{ARP_FX}[a];[m][a]amix=inputs=2:weights=1 1.5:normalize=0,alimiter=limit=0.96"
 sox = IO.popen(["sh", "-c", "ffmpeg -loglevel error -f s16le -ar #{RATE} -ac 4 -i - -filter_complex '#{GRAPH}' -f s16le -ar #{RATE} -ac 2 - | sox -q -t raw -r #{RATE} -e signed -b 16 -c 2 - -d"], "wb")
 frame = 0
 frames = Float::INFINITY
@@ -173,29 +125,21 @@ two_pi = 2 * Math::PI
 while frame < frames
   # The next chord, chosen a second before it sounds.
   while next_chord < (frame.to_f / RATE) + 1.0
-    degree, quality = state
-    voicing = voice_lead(QUALITIES[quality].map { |iv| (key + degree + iv) % 12 }, voicing)
-    bass = 36 + ((key + degree) % 12)
-    bass += 12 if bass < 36
-    name = "#{NAMES[(key + degree) % 12]}#{quality}"
-    recent << [(key + degree) % 12, quality]
-    recent.shift if recent.size > 4
-    options = MOVES.fetch(state).reject { |d, q| recent.include?([(key + d) % 12, q]) }
-    options = MOVES.fetch(state) if options.empty?
-    state = options.sample(random: rng)
-    roll = rng.rand
-    if roll < 0.08 # the tritone substitute: a dominant a flat fifth away
-      key = (key + 6) % 12
-      name += " (tritone sub next)"
-    elsif roll < 0.14 # a chromatic side-step, up or down a semitone
-      key = (key + [1, 11].sample(random: rng)) % 12
-      name += " (side-step next)"
-    end
-    if chord_i >= next_modulation
-      key = (key + [5, 3, 8, 10, 2, 7].sample(random: rng)) % 12
-      state = [0, %i[m9 m11 m6_9].sample(random: rng)]
-      next_modulation = chord_i + rng.rand(8..16)
-      name += " -> #{NAMES[key]} minor"
+    if chord_i < CHORDS.size
+      bass, tones = CHORDS[chord_i]
+      voicing = tones
+      name = "loved #{chord_i + 1}"
+    else
+      degree, quality = state
+      voicing = voice_lead(QUALITIES[quality].map { |iv| (key + degree + iv) % 12 }, voicing)
+      bass = 36 + ((key + degree) % 12)
+      bass += 12 if bass < 36
+      name = "#{NAMES[(key + degree) % 12]}#{quality}"
+      state = MOVES.fetch(state).sample(random: rng)
+      if (chord_i % 24).zero? && state.first.zero?
+        key = (key + [5, 3, 8, 10].sample(random: rng)) % 12
+        state = [0, %i[m9 m11].sample(random: rng)]
+      end
     end
     pad = P.fetch(PADS[chord_i % PADS.size])
     bass_patch = P.fetch(BASSES[(chord_i / 4) % BASSES.size])
@@ -204,21 +148,14 @@ while frame < frames
     voices << voice(bass, bass_patch, next_chord, 1.6, 0.55, bass: true)
     voices << voice(bass, bass_patch, next_chord + (BAR * 0.534), 1.2, 0.45, bass: true)
     LOG.puts "#{Time.now.strftime("%H:%M:%S")} #{name} on #{PADS[chord_i % PADS.size]}, bass #{BASSES[(chord_i / 4) % BASSES.size]}"
-    if LEAD_ALWAYS || rng.rand < 0.3
-ensemble = PROPHET_LEADS.keys.shuffle(random: rng)
-pendulum = [0, 1, 2, 3, 2, 1]
-bag = (voicing + voicing.map { |m| m + 12 }).sort.map { |m| m + 12 }
-pick = rng.rand(bag.size)
-step = BAR / 16
-16.times do |k|
-  next if pattern[:velocity][k % 8].zero? # the bag rests where the DFAM does
-
-  pick = (pick + [-1, 1].sample(random: rng)).clamp(0, bag.size - 1)
-  spec = P.fetch(ensemble[pendulum[k % pendulum.size]]).merge(lpg: 0.8)
-  vel = pattern[:velocity][k % 8] / 100.0
-  voices << voice(bag[pick], spec, next_chord + (k * step), step * 0.7, 0.28 * vel.clamp(0.5, 1.0), bass: :arp)
-end
-      LOG.puts "  arp: bag over the dfam rhythm, hocket across #{ensemble.join(" ")}"
+    if rng.rand < 0.3
+      # A new patch every four notes, across every lead the synth has.
+      arp_patches = %i[glass_bell e_piano poly_lead vapor_lead soft_reed ringtone_lead acid rhodes_tine].shuffle(random: rng)
+      notes = voicing.map { |m| m + 12 }
+      order = [notes, notes.reverse, notes + notes.reverse[1..-2], notes.shuffle(random: rng)].sample(random: rng)
+      step = BAR / 16
+      16.times { |k| voices << voice(order[k % order.size], P.fetch(arp_patches[(k / 4) % arp_patches.size]), next_chord + (k * step), step * 0.7, 0.45, bass: :arp) }
+      LOG.puts "  arp over it"
     end
     chord_i += 1
     next_chord += BAR
@@ -250,9 +187,7 @@ end
       t = tb + (j.to_f / RATE) - v.start
       if t >= 0
         if (j & 15).zero?
-          shape = spec[:filter_env].at(t, v.held)
-          shape = (shape * (1.0 - spec[:lpg])) + (spec[:amp].at(t, v.held) * spec[:lpg]) if spec[:lpg]
-          cut = (base_cut + (spec[:env_amount] * shape)).clamp(30.0, 12_000.0)
+          cut = (base_cut + (spec[:env_amount] * spec[:filter_env].at(t, v.held))).clamp(30.0, 12_000.0)
           ampv = spec[:amp].at(t, v.held) * v.gain
         end
         raw = 0.0
@@ -294,34 +229,22 @@ dfam_step += 1
   end
   dfam_next += DFAM_STEP
 end
-kv = DFAM_KNOBS.transform_values { |k| k.step(n.to_f / RATE, tb) }
-if tb > next_gesture
-  name = DFAM_KNOBS.keys.sample(random: knob_rng)
-  target = knob_rng.rand < 0.5 ? knob_rng.rand(0.0..0.15) : knob_rng.rand(0.85..1.0)
-  DFAM_KNOBS[name].lean(target, BAR * knob_rng.rand(0.5..1.5), tb)
-  LOG.puts "  dfam: #{name} -> #{target > 0.5 ? "up" : "down"}"
-  next_gesture = tb + knob_rng.rand(6.0..16.0)
-end
-vcf = kv[:vcf_decay]
-vca = kv[:vca_decay]
-cut_top = kv[:cutoff]
+vcf = vcf_decay_knob(tb)
+vca = vca_decay_knob(tb)
+cut_top = dfam_cut_knob(tb)
 dfam_hits.each do |h|
-  pitch_env = cut = amp = 0.0
   j = 0
   while j < n
     tt = tb + (j.to_f / RATE) - h.start
     if tt >= 0
-      if (j & 15).zero?
-        pitch_env = 1.0 + (kv[:pitch_amount] * Math.exp(-tt / kv[:pitch_decay]))
-        cut = 120.0 + (cut_top * Math.exp(-tt / vcf))
-        amp = h.vel * Math.exp(-tt / vca) * DFAM_LEVEL
-      end
+      pitch_env = 1.0 + (2.2 * Math.exp(-tt / 0.045))
       h.ph1 = (h.ph1 + (h.f0 * pitch_env / RATE)) % 1.0
       tri = S.wave(:triangle, h.ph1)
-      h.ph2 = (h.ph2 + (h.f0 * 1.5 * pitch_env * (1.0 + (kv[:fm] * tri)) / RATE)) % 1.0
+      h.ph2 = (h.ph2 + (h.f0 * 1.5 * pitch_env * (1.0 + (0.45 * tri)) / RATE)) % 1.0
       sq = h.ph2 < 0.5 ? 1.0 : -1.0
-      mix = (0.55 * tri) + (0.3 * sq) + (kv[:noise] * (rand * 2.0 - 1.0))
-      out = h.ladder.process(mix, cut, kv[:resonance]) * amp
+      mix = (0.55 * tri) + (0.3 * sq) + (0.18 * (rand * 2.0 - 1.0))
+      cut = 120.0 + (cut_top * Math.exp(-tt / vcf))
+      out = h.ladder.process(mix, cut, 0.55) * h.vel * Math.exp(-tt / vca) * DFAM_LEVEL
       left[j] += out * h.pan
       right[j] += out * (1.0 - h.pan)
     end
@@ -337,14 +260,10 @@ while j < n
     tk = now - t
     next if tk.negative? || tk > 0.5
 
-    phase = (50.0 * tk) + (170.0 * 0.012 * (1.0 - Math.exp(-tk / 0.012))) + (30.0 * 0.08 * (1.0 - Math.exp(-tk / 0.08)))
-    bus += Math.sin(2 * Math::PI * phase) * Math.exp(-tk / 0.34)
-    if tk < 0.003
-      click_lp += 0.35 * ((rand * 2.0 - 1.0) - click_lp)
-      bus += (click_lp * 1.2) + (tk < 0.0008 ? 0.6 : 0.0)
-    end
+    bus += Math.sin(2 * Math::PI * ((45.0 * tk) + (105.0 * 0.035 * (1.0 - Math.exp(-tk / 0.035))))) * Math.exp(-tk / 0.32)
+    bus += (tk < 0.005 ? (1.0 - (tk / 0.005)) * 0.5 : 0.0)
   end
-  k = Math.tanh(bus * 1.8) * KICK_LEVEL
+  k = Math.tanh(bus * 2.8) * KICK_LEVEL
   left[j] += k
   right[j] += k
   j += 1
