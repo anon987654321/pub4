@@ -70,7 +70,9 @@ module Master
       def checkpoint!(files: [])
         return self unless @record
 
-        checkpoint = Fix::Checkpoint.new(root: @root).create(
+        checkpoint = Fix::Checkpoint.new(
+          root: @root, dir: File.join(@root, ".master", "checkpoints")
+        ).create(
           label: "mission-#{@id}",
           files: Array(files),
         )
