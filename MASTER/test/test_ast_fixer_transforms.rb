@@ -489,6 +489,28 @@ class TestAstFixerTransforms < Minitest::Test
     end
   end
 
+  # RuboCop's `comma` style removes the comma once two items share a line, so
+  # adding it there made /fix and rubocop -A undo each other every pass.
+  def test_trailing_commas_skip_lists_with_items_sharing_a_line
+    source = <<~RUBY
+      FLAGS = {
+        "watch" => "0", "drift" => "0"
+      }.freeze
+      ONE_PER_LINE = {
+        "watch" => "0",
+        "drift" => "0"
+      }.freeze
+    RUBY
+    result = fix("flags.rb", source)
+
+    shared, own_lines = result[:content].split("ONE_PER_LINE")
+    assert_includes shared, %("watch" => "0", "drift" => "0"\n)
+    assert_includes own_lines, %("drift" => "0",\n)
+
+    findings = rule("TRAILING_COMMAS").check(source, path: "flags.rb")
+    assert_equal [7], findings.map(&:line)
+  end
+
   def test_trailing_commas_skip_block_closers
     source = <<~RUBY
       records.map { |rec|

@@ -65,6 +65,8 @@ module Master
 
             last = node.elements.last.location
             return false unless last.end_line < closing.start_line
+            # RuboCop's `comma` style wants no comma once two items share a line.
+            return false if node.elements.each_cons(2).any? { |left, right| left.location.end_line == right.location.start_line }
 
             gap = src.byteslice(last.end_offset, closing.start_offset - last.end_offset).to_s
             !gap.sub(/#.*/, "").include?(",")

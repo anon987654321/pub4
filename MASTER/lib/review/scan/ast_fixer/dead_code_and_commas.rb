@@ -134,10 +134,12 @@ module Master
             return src if DeadCodeAndCommas.rubocop_forbids_trailing_comma?(@path)
 
             protected_lines = literal_lines(src)
+            crowded = crowded_close_lines(src)
             lines = src.lines
             changed = false
             (1...lines.length).each do |i|
               next if protected_lines.include?(i) || protected_lines.include?(i + 1)
+              next if crowded.include?(i + 1)
 
               current = lines[i].strip
               previous = lines[i - 1]
@@ -152,6 +154,44 @@ module Master
             end
             @transforms << :trailing_commas if changed
             lines.join
+          end
+
+          # Closing-bracket lines of lists where two items share a line. The
+          # comma style this module serves, RuboCop's `comma`, wants the trailing
+          # comma only when every item has a line of its own, and removes it
+          # otherwise. Adding it here anyway put the two fixers in a loop: one
+          # /fix pass added the comma, the next pass's rubocop -A took it out.
+          def crowded_close_lines(src)
+            result = Prism.parse(src)
+            return Set.new if result.failure?
+
+            crowded = Set.new
+            stack = [result.value]
+            until stack.empty?
+              node = stack.pop
+              close_line = crowded_list_close_line(node)
+              crowded << close_line if close_line
+              stack.concat(node.compact_child_nodes)
+            end
+            crowded
+          end
+
+          def crowded_list_close_line(node)
+            items, closing = list_items_and_closing(node)
+            return unless closing && items.size > 1
+
+            shared = items.each_cons(2).any? { |left, right| left.location.end_line == right.location.start_line }
+            closing.start_line if shared
+          end
+
+          def list_items_and_closing(node)
+            case node
+            when Prism::ArrayNode, Prism::HashNode then [node.elements, node.closing_loc]
+            when Prism::CallNode
+              args = Array(node.arguments&.arguments)
+              [args.flat_map { |arg| arg.is_a?(Prism::KeywordHashNode) ? arg.elements : [arg] }, node.closing_loc]
+            else [[], nil]
+            end
           end
 
           def block_close?(lines, close_index)
