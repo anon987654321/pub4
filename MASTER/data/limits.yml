@@ -818,8 +818,8 @@ guidance:
       in the other context.
     tts_worker_process: Process.fork inside a Falcon fiber raises 'Closing scheduler' — EM-based gems and
       subprocess-heavy tools must use Open3.popen or shell out via exe/<name>-worker, never fork.
-  # OpenBSD dmesg-style progress (device at bus: detail). Default on.
-  # ENV MASTER_DMESG=0 disables; MASTER_DMESG=1 forces on.
+  # OpenBSD dmesg-style progress (device at bus: detail). Verbose by default.
+  # ENV MASTER_DMESG accepts 0, quiet, normal, verbose, or trace.
 
 # LOC ratchet budgets — reader: `rake loc_budget` (Rakefile). This key exists
 # because data/limits.yml is the file TODO.md names for having 44 of 94
