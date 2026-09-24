@@ -298,6 +298,12 @@ design_system:
       stone: "#e2ded5"
       sand: "#e9decb"
       charcoal: "#292725"
+    matte_inks:
+      chalk: "#292725"
+      paper: "#292725"
+      stone: "#292725"
+      sand: "#292725"
+      charcoal: "#f7f5ef"
     product:
       max_items: 4
       primary_share: "0.58"
