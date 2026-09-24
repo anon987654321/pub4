@@ -273,14 +273,14 @@ module Master
       # One line per surface whose ghost stack measured movement; nil otherwise.
       def drift_row(capture)
         drift = Array(capture.dig(:visual_evidence, :drift))
-        return if drift.empty?
+        design = Array(capture.dig(:visual_evidence, :design_drift))
+        return if drift.empty? && design.empty?
 
         details = drift.first(8).map do |row|
           next "#{row["key"]} #{row["delta"]} #{row["type"]}" unless row["structural"]
 
           "structural added=#{row["structural"]["added"]} missing=#{row["structural"]["missing"]}"
         end
-        design = Array(capture.dig(:visual_evidence, :design_drift))
         details << "design #{design.join("; ")}" unless design.empty?
         "#{capture[:surface].id}: #{details.join(" | ")}"
       end
