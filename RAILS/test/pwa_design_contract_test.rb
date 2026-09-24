@@ -148,8 +148,8 @@ class PwaDesignContractTest < Minitest::Test
   def test_store_apps_publish_both_platform_association_endpoints
     each_app do |app, root|
       routes = read(root, "config/routes.rb")
-      assert_match(/\\.well-known\\/assetlinks\\.json/, routes)
-      assert_match(/\\.well-known\\/apple-app-site-association/, routes)
+      assert_match(%r{\.well-known/assetlinks\.json}, routes)
+      assert_match(%r{\.well-known/apple-app-site-association}, routes)
       assert_includes routes, "rails/pwa#assetlinks"
       assert_includes routes, "rails/pwa#apple_app_site_association"
     end

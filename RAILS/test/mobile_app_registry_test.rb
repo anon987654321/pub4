@@ -43,7 +43,7 @@ class MobileAppRegistryTest < Minitest::Test
 
   def test_each_product_has_a_web_origin_android_package_and_ios_bundle
     REGISTRY.all.each do |app|
-      assert_match(%r{\\Ahttps://}, app.url)
+      assert_match(%r{\Ahttps://}, app.url)
       refute_empty app.android_package
       refute_empty app.ios_bundle_id
       refute_equal app.host, app.android_package
