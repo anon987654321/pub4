@@ -134,7 +134,7 @@ module Master
         png = File.join(@dir, "geometry-#{key}.png")
         File.write(
           html,
-          geometry_page(surface:, state:, current:, previous:, width:, height:),
+          geometry_page(surface:, state:, current:, previous:, width:, height:, image_path: current_path),
         )
         screenshot_file(html, png, cdp:)
         png
@@ -149,14 +149,14 @@ module Master
         width, height = png_dimensions(current)
         html = File.join(@dir, "grid-#{key}.html")
         png = File.join(@dir, "grid-#{key}.png")
-        File.write(html, grid_page(surface:, state:, current:, width:, height:))
+        File.write(html, grid_page(surface:, state:, current:, width:, height:, image_path: current))
         screenshot_file(html, png, cdp:)
         png
       rescue StandardError
         nil
       end
 
-      def geometry_page(surface:, state:, current:, previous:, width:, height:)
+      def geometry_page(surface:, state:, current:, previous:, width:, height:, image_path:)
         before = Array(previous["elements"]).to_h { |element| [element["key"], element] }
         after = Array(current["elements"]).to_h { |element| [element["key"], element] }
         rows = (before.keys & after.keys).filter_map do |key|
@@ -174,7 +174,7 @@ module Master
           }
         end.sort_by { |row| -row[:delta].values.sum { |value| value.abs } }.first(MAX_GEOMETRY_MARKERS)
 
-        encoded = Base64.strict_encode64(File.binread(current_path = frames_current_path(current)))
+        encoded = Base64.strict_encode64(File.binread(image_path))
         overlays = rows.each_with_index.map do |row, index|
           old = row[:old]
           new = row[:new]
@@ -209,12 +209,8 @@ module Master
         HTML
       end
 
-      def frames_current_path(current)
-        current.fetch("__path")
-      end
-
-      def grid_page(surface:, state:, current:, width:, height:)
-        encoded = Base64.strict_encode64(File.binread(width.is_a?(String) ? width : current))
+      def grid_page(surface:, state:, current:, width:, height:, image_path:)
+        encoded = Base64.strict_encode64(File.binread(image_path))
         step = REGISTRATION_GRID_PX
         <<~HTML
           <!doctype html>
