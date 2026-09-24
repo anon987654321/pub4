@@ -30,8 +30,17 @@ module Master
 
         private
 
+        # The scanner refuses a file it will not read, today one past MAX_LINES.
+        # That is a fact about the file, not a failed scan, so the run goes on.
+        def unreadable(path, result)
+          Master::Trace::Dmesg.once("fix0", "skipped #{path.delete_prefix("#{@root}/")}, #{result.message.split(":").first}")
+          []
+        end
+
         def file_violations(path)
           result = Result.wrap(@scanner.scan(path))
+          return unreadable(path, result) if !result.ok? && result.category == :validation
+
           raise "fix scan failed for #{path}: #{result.message}" unless result.ok?
 
           findings = result.value!

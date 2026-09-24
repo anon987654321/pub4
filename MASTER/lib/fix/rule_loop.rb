@@ -160,8 +160,9 @@ module Master
         return :skip_fingerprint unless fingerprint_matches?(violation)
 
         note_unverified_fix(violation)
+        @model_failed = false
         source = violation[:severity].to_sym == :error ? council_fix(violation) : request_fix(violation)
-        return :no_proposal if source.to_s.strip.empty?
+        return (@model_failed ? :model_failed : :no_proposal) if source.to_s.strip.empty?
 
         verified = reflexion_verify(violation, source)
         return :reflexion_rejected unless verified
@@ -416,6 +417,7 @@ module Master
       def handle_fix_exception(error, violation, event:)
         message = error.message.to_s
         info = (@failure_taxonomy || Ground::FailureTaxonomy.new).handle(error)
+        @model_failed = true
         publish_fix_failure(info[:category], event, violation, message)
         Master::Trace::Dmesg.status(
           "fix0",

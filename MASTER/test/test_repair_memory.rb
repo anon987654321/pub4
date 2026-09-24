@@ -39,6 +39,19 @@ class TestRepairMemory < Minitest::Test
       refute memory.retired?("USEFUL"), "15 of 20 is below the line"
     end
   end
+
+  # A session limit on RAILS retired eight rules and marked files declined.
+  def test_an_unanswered_call_is_neither_asked_nor_declined
+    Dir.mktmpdir do |root|
+      memory = Memory.new(root:)
+      path = File.join(root, "a.rb")
+      File.write(path, "x = 1\n")
+      25.times { memory.record(path, %w[NESTING_DEPTH], { model_failed: 1 }) }
+
+      refute memory.retired?("NESTING_DEPTH")
+      assert_equal 1, memory.fresh(path, [finding("NESTING_DEPTH")]).size
+    end
+  end
 end
 
 # The verdict can come from a cheaper model than the repair, past MASTER_MODEL.

@@ -45,9 +45,13 @@ module Master
         true
       end
 
-      # outcomes is a repair's breakdown, { outcome_symbol => count }.
+      # outcomes is a repair's breakdown, { outcome_symbol => count }. A call the
+      # model never answered (quota, no lane) says nothing about the findings,
+      # so it counts as neither an ask nor a decline.
       def record(path, rule_ids, outcomes)
         verdict = verdict_for(outcomes)
+        return if verdict == :unanswered
+
         LOCK.synchronize do
           data = load
           rule_ids.each { |id| tally(data, id.to_s, verdict) }
@@ -61,6 +65,7 @@ module Master
       def verdict_for(outcomes)
         keys = Array(outcomes&.keys).map(&:to_sym)
         return :applied if keys.intersect?(APPLIED)
+        return :unanswered if keys.include?(:model_failed)
 
         keys.intersect?(DECLINED) ? :declined : :other
       end
