@@ -560,6 +560,14 @@ class TestAstFixerTransforms < Minitest::Test
     assert_includes result[:content], %(NAMES = ["a", "b"].freeze)
   end
 
+  def test_lazy_loading_sees_a_loading_attribute_after_an_erb_tag
+    tagged = %(<img src="<%= embed.thumbnail_url %>" alt="" loading="lazy">\n)
+    bare = %(<img src="<%= embed.thumbnail_url %>" alt="">\n)
+
+    assert_equal tagged, fix("_embed.html.erb", tagged)[:content]
+    assert_equal 1, fix("_bare.html.erb", bare)[:content].scan("loading=").size
+  end
+
   def test_trailing_commas_skip_block_closers
     source = <<~RUBY
       records.map { |rec|

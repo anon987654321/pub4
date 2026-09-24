@@ -22,8 +22,13 @@ module Master
             out
           end
 
+          # An ERB tag inside the attributes (`src="<%= url %>"`) ends a plain
+          # [^>]* at its `%>`, so a loading= after it went unseen and the tag
+          # took a second one; IMG_ATTRS steps over ERB tags.
+          IMG_ATTRS = /(?:<%.*?%>|[^>])*?/m
+
           def add_lazy_loading(src)
-            out = src.gsub(/<img\b(?=[^>]*>)(?![^>]*\bloading=)/) { |match| match.rstrip + ' loading="lazy"' }
+            out = src.gsub(/<img\b(?=#{IMG_ATTRS}>)(?!#{IMG_ATTRS}\bloading=)/) { |match| match.rstrip + ' loading="lazy"' }
             @transforms << :lazy_images if out != src
             out
           end
