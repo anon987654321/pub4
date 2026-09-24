@@ -11,7 +11,8 @@ const FACE_MODULES = window.MASTER_ASSET_PATHS?.faceModulesList || [
   "face_offscreen_ecology.js",
   "face_micro_interactions.js",
   "face_perf_guards.js",
-  "face_brutalist.js"
+  "face_brutalist.js",
+  "gravity_field.js"
 ];
 
 await Promise.all(FACE_MODULES.map(async (modulePath) => {
