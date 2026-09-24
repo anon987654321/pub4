@@ -170,6 +170,12 @@ CLAUDE_SESSION_ENV = { "CLAUDECODE" => nil, "CLAUDE_CODE_ENTRYPOINT" => nil }.fr
 # built-in tool and no MCP server; the dispatcher's caller does the writing.
 CLAUDE_CLI_TEXT_ONLY = ["--tools", "", "--strict-mcp-config"].freeze
 
+# The subscription's own limit answers on stdout and exits 0. Taken as the
+# model's reply, "You've hit your session limit · resets 4:30pm" was proposed
+# as a fix or a verdict two hundred times in one /fix run, until someone read
+# the recordings. It is a quota, and the lane stands down like one.
+CLAUDE_CLI_LIMIT = /\A\s*(?:You've hit your \w*\s*limit|Claude (?:AI )?usage limit reached)/i
+
 def claude_cli_call(model_alias, messages, sys)
   args = ["claude", "--print", "--model", model_alias, *CLAUDE_CLI_TEXT_ONLY]
   args += ["--system-prompt", sys] if sys && !sys.empty?
@@ -183,6 +189,7 @@ def claude_cli_call(model_alias, messages, sys)
     said = cli_lane_complaint(out, err) || "exited #{status.exitstatus} with nothing on either stream"
     return Result.err("claude-cli: #{said}", category: :provider_error)
   end
+  return Result.err("claude-cli: #{out.strip.lines.first.strip}", category: :exhausted) if out.match?(CLAUDE_CLI_LIMIT)
 
   Result.ok(out.strip)
 rescue Timeout::Error

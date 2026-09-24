@@ -301,6 +301,20 @@ end
     assert_includes captured_args, "--strict-mcp-config"
   end
 
+  # Exit 0 and the limit on stdout: /fix took it as the model's answer.
+  def test_a_subscription_limit_is_a_quota_not_an_answer
+    dispatcher, = build_dispatcher
+    ok_status = Struct.new(:success?).new(true)
+    dispatcher.define_singleton_method(:capture3_with_timeout) do |*_a, **_k|
+      ["You've hit your session limit · resets 4:30pm (Europe/Oslo)\n", "", ok_status]
+    end
+    result = dispatcher.send(:claude_cli_call, "claude-opus-5-5", [{ role: "user", content: "fix" }], nil)
+
+    assert result.err?
+    assert_equal :exhausted, result.category
+    assert_equal :quota_exceeded, dispatcher.send(:failure_status, result)
+  end
+
   def test_agy_cli_timeout_reads_env_override
     dispatcher, = build_dispatcher
     old = ENV["MASTER_AGY_CLI_TIMEOUT"]

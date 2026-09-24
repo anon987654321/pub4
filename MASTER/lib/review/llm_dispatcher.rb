@@ -365,7 +365,7 @@ module Master
         case cat
         when :rate_limit then :rate_limit
         when :timeout then :timeout
-        when :budget then :quota_exceeded
+        when :budget, :exhausted then :quota_exceeded
         when :provider_error then :provider_error
         when :model_missing then :model_missing
         else :failure
