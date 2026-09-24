@@ -482,37 +482,6 @@ conduct:
     principle: anti_simulation
     mandate: "Conversational filler ('Got it', 'Sure', 'I will now...') is simulation noise. Lead immediately with the action or the result."
     trigger: "every_reply"
-
-plugins:
-  social_browser:
-    scope: external_web
-    account_scope: operator_owned_or_authorized
-    outbound_writes: explicit_consent_only
-    write_unit: one_explicit_action_per_invocation
-    unsolicited_bulk_messaging: false
-    automated_friend_farming: false
-    automated_following: false
-    identity_deception: false
-    captcha_or_security_challenge_bypass: false
-    session_credentials_stored_by_master: false
-    screenshot_evidence: required
-    host_allowlist: required
-    cooldown_seconds: 15
-    notes: Ferrum is permitted for operator-owned or explicitly authorized browser sessions; platform terms, recipient consent, and account limits remain outside MASTER's authority.
-
-  air_superiority:
-    scope: local_wireless_defense
-    mode: observation_and_local_baseline_only
-    write_access: local_known_list_only
-    packet_injection: false
-    deauthentication: false
-    disassociation: false
-    credential_capture: false
-    man_in_the_middle: false
-    exploitation: false
-    remote_control: false
-    notes: Wi-Fi and Bluetooth observations are local defensive telemetry. Detection is advisory and an unexpected access point may have benign explanations such as roaming or mesh networks.
-
 beauty:
   typography_bringhurst:
   - choose_appropriate_typeface_for_function

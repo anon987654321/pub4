@@ -35,7 +35,7 @@ class VisualPassContractTest < Minitest::Test
   def test_brgen_composition_is_page_wide_not_feature_isolated
     assert_includes source, 'surface.app == "brgen" && surface.label == "core"'
     assert_includes source, 'co_resident'
-    assert_includes source, '"feed posts composer messenger"'
+    assert_includes source, "%w[feed posts composer messenger]"
     assert_includes source, 'measure_current(cdp, state_surface)'
   end
 

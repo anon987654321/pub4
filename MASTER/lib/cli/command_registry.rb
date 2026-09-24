@@ -44,7 +44,6 @@ module Master
         review_verbs(d).merge(session_verbs(infra[:session], infra[:undo])).merge(
           "status" => command(:dispatch_status, d[:root], d[:fix_loop], d[:bus], d[:git], d[:trace], d[:learnings]),
           "device" => command(:dispatch_device, d[:root]),
-          "plugin" => command(:dispatch_plugin),
           "commit" => command(:dispatch_commit, ai[:agent], root, review_gate: true),
           "model" => command(:dispatch_model, d[:agent], d[:config], d[:metrics], d[:root]),
           "auth" => command(:dispatch_auth),
@@ -161,50 +160,6 @@ module Master
         device_command(arg_for(ctx))
       rescue Master::Device::Error => e
         "device0: unavailable — #{e.message}"
-      end
-
-      def dispatch_plugin(ctx: nil)
-        arg = arg_for(ctx)
-        return plugin_list if arg.empty? || arg == "list"
-        if (info_match = arg.match(/\Ainfo\s+([a-z][a-z0-9_]*)\z/))
-          return plugin_info(info_match[1])
-        end
-
-        match = arg.match(/\Arun\s+([a-z][a-z0-9_]*)\s+([a-z][a-z0-9_]*)(?:\s+(.+))?\z/)
-        return plugin_run(match) if match
-
-        "plugin  plugin list  plugin info <id>  plugin run <id> <action> <json>"
-      end
-
-      def plugin_list
-        Master::Plugin.list.map do |manifest|
-          "#{manifest.id} #{manifest.version}  #{manifest.description}"
-        end.join("\n")
-      rescue Master::Plugin::Error => e
-        "plugin0: #{e.message}"
-      end
-
-      def plugin_info(id)
-        manifest = Master::Plugin.info(id)
-        [
-          "plugin: #{manifest.id} #{manifest.version}",
-          "entrypoint: #{manifest.entrypoint}",
-          "description: #{manifest.description}",
-          "path: #{manifest.path}",
-        ].join("\n")
-      rescue Master::Plugin::Error => e
-        "plugin0: #{e.message}"
-      end
-
-      def plugin_run(match)
-        id, action, json = match.captures
-        args = json.to_s.strip.empty? ? {} : JSON.parse(json, symbolize_names: true)
-        result = Master::Plugin.run(id, action:, **args)
-        result.is_a?(String) ? result : JSON.pretty_generate(result)
-      rescue JSON::ParserError => e
-        "plugin0: invalid JSON: #{e.message}"
-      rescue Master::Plugin::Error => e
-        "plugin0: #{e.message}"
       end
 
       def device_command(arg)

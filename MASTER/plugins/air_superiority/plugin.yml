@@ -1,5 +1,0 @@
----
-id: air_superiority
-version: 1.0.0
-description: Defensive Wi-Fi and Bluetooth observation with explainable local threat checks.
-entrypoint: air_superiority.rb
