@@ -92,8 +92,6 @@ module Master
 
       def load_cfg
         path = File.join(@root, "data", "limits.yml")
-        path = Master.limits_path unless File.file?(path) && File.expand_path(@root) == File.expand_path(File.join(Master::ROOT, ".."))
-
         unless File.file?(path)
           return { "default" => "balanced", "modes" => {} } unless File.expand_path(@root) == File.expand_path(Master::ROOT)
 
