@@ -282,11 +282,19 @@ module Master
           end
         end
 
+        # Per-item churn: one line for each file a scan reads, passes or finishes,
+        # each finding a hook sees, each cognition tick. A chat turn that set off
+        # a background self-scan printed 2,657 of these ahead of a one-line
+        # reply. Verbose shows the work; trace shows every item of it.
+        CHURN = %w[scan:file_read scan:pass scan:complete scan:semantic_skipped scan:progress
+                   hook:on_violation_found cognition:tick homeostat:observe conflict:resolved].freeze
+
         def verbose_event(payload)
           return [] unless Dmesg.verbose? || Dmesg.trace?
 
           event = payload[:event].to_s
           return [] if event.empty?
+          return [] if CHURN.include?(event) && !Dmesg.trace?
 
           [event_line(payload)]
         end

@@ -20,6 +20,21 @@ class TestTraceSupport < Minitest::Test
     Master::Trace::Dmesg.reload!
   end
 
+  # A chat turn that set off a background self-scan printed 2,657 per-file
+  # scan and hook lines ahead of a one-line reply. Verbose shows the work;
+  # only trace shows each file of it.
+  def test_verbose_hides_per_file_churn_that_trace_shows
+    console = Master::Trace::Dmesg::Console.new
+    churn = [{ event: "scan:pass", path: "lib/a.rb" }, { event: "hook:on_violation_found", path: "lib/a.rb", count: 2 },
+             { event: "cognition:tick" }]
+
+    verbose = Master::Trace::Dmesg.with_verbosity("verbose") { churn.flat_map { |event| console.lines(**event) } }
+    traced = Master::Trace::Dmesg.with_verbosity("trace") { churn.flat_map { |event| console.lines(**event) } }
+
+    assert_empty verbose
+    assert_equal 3, traced.size
+  end
+
   def test_trace_includes_redacted_payload_context
     console = Master::Trace::Dmesg::Console.new
     lines = Master::Trace::Dmesg.with_verbosity("trace") do
