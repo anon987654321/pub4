@@ -26,7 +26,7 @@ module Master
           models.all? { |m| registry.open?(m) } ? models : []
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "LlmRouter.open_breakers")
-          []
+          candidate_models
         end
 
         private
