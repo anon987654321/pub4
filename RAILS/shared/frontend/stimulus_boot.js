@@ -40,7 +40,6 @@ import ViewportAware from "pub4/viewport_aware"
 import Haptics from "pub4/haptics"
 import Geolocation from "pub4/geolocation"
 import BottomSheet from "pub4/bottom_sheet"
-import NativeShell from "pub4/native_shell"
 
 const COMPONENT_REGISTRATIONS = [
   ["auto-submit", AutoSubmit],
@@ -94,7 +93,6 @@ export function bootPub4Stimulus(application) {
   // Only brgen's views mount the mobile sheet today; kept shared because it
   // is documented as shared infrastructure (design_contract_test.rb).
   application.register("bottom-sheet", BottomSheet)
-  application.register("native-shell", NativeShell)
   // The in-feed affiliate band tilts under the pointer. Registered here rather
   // than in one app since the band itself is shared now.
   application.register("parallax-tilt", ParallaxTilt)
