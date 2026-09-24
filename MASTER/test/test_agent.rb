@@ -30,7 +30,7 @@ class TestAgent < Minitest::Test
   # cache_key_for — must produce bounded, deterministic SHA256 keys.
   # escalation flag — must be per-thread, not per-instance.
   def test_unknown_factual_turn_gets_evidence_preflight
-    agent = build_agent
+    agent = @agent
     knowledge = Object.new
     knowledge.define_singleton_method(:call) { |query:| Master::Result.ok("(no results)") }
     web = Object.new
