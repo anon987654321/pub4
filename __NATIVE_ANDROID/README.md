@@ -37,5 +37,3 @@ deploy the resulting Digital Asset Links data to the matching origin. Bubblewrap
 documents `build` as producing the Play App Bundle and supports environment
 variables for CI signing passwords.
 
-Google Play requires new apps and updates submitted from 31 August 2026 to target
-Android 16/API 36 or higher.
