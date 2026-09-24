@@ -3515,12 +3515,14 @@ rules:
           rationale: Use scale, weight, width, alignment, and whitespace for contrast before adding a second family.
         marketplace_sale:
           school: commerce_editorial
+          reference: pangram
+          typographic_intent: contemporary_grotesk_neutral_with_character
           strategy: single_family_contrast
           display: house_sans
           body: house_sans
           price: house_sans
           metadata: house_sans
-          rationale: Marketplace authority comes from product, price, hierarchy, alignment and trust; do not force a decorative display face into transactional cards.
+          rationale: Marketplace authority comes from product, price, hierarchy, alignment and trust; borrow the character of contemporary grotesk branding without importing a decorative display face.
         ibm_plex_editorial:
           school: editorial
           strategy: matched_family_pair
