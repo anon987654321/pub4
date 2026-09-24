@@ -60,8 +60,10 @@ module Master
 
         items = []
         if (ghost = evidence[:ghost])
-          items << image_item(ghost[:screenshot], "#{ghost[:label]} | ghost stack")
+          items << image_item(ghost[:screenshot], "#{ghost[:label]} | onion stack")
           items << image_item(ghost[:diff], "#{ghost[:label]} | newest vs previous difference") if ghost[:diff]
+          items << image_item(ghost[:geometry], "#{ghost[:label]} | geometry registration") if ghost[:geometry]
+          items << image_item(ghost[:grid], "#{ghost[:label]} | registration grid") if ghost[:grid]
         end
         items
       end
