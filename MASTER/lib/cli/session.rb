@@ -248,7 +248,7 @@ module Master
         Master::Result.err(msg, category: :validation)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "CLI.host_budget_block")
-        nil
+        Master::Result.err("host budget unavailable: #{e.class}: #{e.message}", category: :infrastructure)
       end
 
       def host_oom_message
