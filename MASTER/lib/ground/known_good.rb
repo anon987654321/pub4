@@ -27,6 +27,7 @@ module Master
       def current
         path = File.join(@root, PATH)
         return nil unless File.file?(path)
+        raise "known-good record unreadable: #{path}" unless File.readable?(path)
 
         record = JSON.parse(File.read(path, encoding: "UTF-8"))
         raise "known-good version #{record["version"]} unsupported" unless record["version"].to_i == VERSION
