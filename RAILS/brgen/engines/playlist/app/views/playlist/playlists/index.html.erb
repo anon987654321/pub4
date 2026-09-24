@@ -1,12 +1,34 @@
-<% content_for :title, t("playlist.home_title") %>
+<% content_for :title, t("radio.page_title") %>
 
-<%# Immersive home, but the music waits to be asked for.
-    auto_start was true so the page began playing on load, which is music you
-    did not choose coming out of a tab you may not be looking at. It is hard to
-    stop for the same reason it is hard to find: the transport bar is not on
-    this surface, so the only control is closing the tab, and the operator spent
-    a while hunting a MacBook for the source of a Madlib track.
-    The tunnel still draws, breathes and blinks on load. Only the audio waits,
-    and the controller already starts it on the first pointer or key event, so
-    it costs one gesture rather than a hunt. %>
-<%= render "playlist/playlists/radio_tunnel", minimal: true, auto_start: false %>
+<header class="radio-home-header">
+  <div>
+    <p class="radio-home-kicker"><%= t("radio.kicker") %></p>
+    <h1><%= t("radio.name") %></h1>
+    <p><%= t("radio.intro") %></p>
+  </div>
+  <nav class="radio-home-actions" aria-label="<%= t("radio.navigation") %>">
+    <%= link_to t("radio.browse_tracks"), hosted_tracks_path, class: "radio-home-link" %>
+    <% if authenticated? %>
+      <%= link_to t("radio.upload"), new_hosted_track_path, class: "radio-home-link radio-home-link--primary" %>
+    <% else %>
+      <%= link_to t("radio.sign_in_to_upload"), new_session_path, class: "radio-home-link radio-home-link--primary" %>
+    <% end %>
+  </nav>
+</header>
+
+<% if @tracks.any? %>
+  <%= render "playlist/playlists/player",
+        playlist: @radio_playlist,
+        playlist_name: t("radio.name"),
+        tracks_count: @tracks.size,
+        plays_count: 0,
+        tracks: @tracks,
+        active_track: @tracks.first %>
+<% else %>
+  <%= render "shared/empty_state",
+        title: t("radio.empty_title"),
+        body: t("radio.empty_body"),
+        action: authenticated? ?
+          { label: t("radio.upload"), path: new_hosted_track_path } :
+          { label: t("radio.browse_tracks"), path: hosted_tracks_path } %>
+<% end %>
