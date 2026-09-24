@@ -3168,6 +3168,343 @@ rules:
         remove_until_nothing_left_to_remove: true
         less_but_better: true
         action: Prefer absence, typography, alignment, and whitespace over ornamental UI.
+      authoritative_design:
+        priority: 1
+        role: meta_doctrine
+        purpose: Make every visual decision feel deliberate, credible, legible, and specific to its product and task.
+        order:
+        - purpose
+        - agency
+        - clarity
+        - hierarchy
+        - trust
+        - consistency
+        - craft
+        - delight
+        style_never_overrides:
+        - user_agency
+        - readable_information
+        - recognizable_platform_patterns
+        - accessibility
+        - truthful_content
+        - responsive_continuity
+        require:
+        - one_primary_focal_point
+        - explicit_action_hierarchy
+        - stable_alignment_system
+        - typographic_intent
+        - content_before_chrome
+        - coherent_spacing_rhythm
+        - rendered_evidence
+        - reversible_refinement
+        reject:
+        - decoration_without_a_job
+        - generic_ai_aesthetic
+        - competing_focal_points
+        - arbitrary_type_pairings
+        - novelty_that_hides_status_or_action
+        - style_borrowed_without_context
+        action: Establish authority through purpose, hierarchy, consistency, precision, and craft before selecting an aesthetic school.
+
+      design_schools:
+        swiss:
+          inherits_authoritative_design: true
+          layout: modular_grid_asymmetric
+          typography: grotesk_flush_left_ragged_right
+          imagery: objective_photography
+          color: restrained_one_accent
+          shape: geometric
+          motion: quiet
+          signatures:
+          - mathematical_grid
+          - asymmetric_balance
+          - type_as_structure
+          - active_whitespace
+          avoid:
+          - centered_hero_as_default
+          - ornamental_effects
+          - arbitrary_font_pairing
+        social:
+          inherits_authoritative_design: true
+          layout: identity_content_action_stream
+          typography: humanist_or_neutral_sans
+          imagery: people_identity_and_media
+          color: restrained_identity_accents
+          shape: conversational_containers
+          motion: responsive_micro_feedback
+          signatures:
+          - avatar_or_identity_anchor
+          - content_first_post
+          - compact_action_row
+          - reaction_and_reply_affordance
+          - time_or_freshness_signal
+          avoid:
+          - campaign_like_banner_everywhere
+          - hidden_identity
+          - actionless_decoration
+        cute:
+          inherits_authoritative_design: true
+          layout: friendly_modular_play_space
+          typography: rounded_display_plus_sturdy_text
+          imagery: characters_objects_and_play
+          color: cheerful_bounded_palette
+          shape: soft_geometric_forms
+          motion: playful_but_optional
+          signatures:
+          - friendly_expression
+          - tactile_shape_language
+          - surprising_scale
+          - clear_emotional_cue
+          - joyful_microcopy
+          avoid:
+          - unreadable_display_type
+          - unlimited_colors
+          - mascot_competition
+          - motion_without_reduced_motion_path
+        commerce_editorial:
+          inherits_authoritative_design: true
+          layout: product_image_plus_typographic_offer
+          typography: display_contrast_plus_neutral_utility
+          imagery: product_first
+          color: quiet_base_plus_campaign_accent
+          shape: restrained_storefront_geometry
+          motion: functional
+          signatures:
+          - immediate_price
+          - product_as_hero
+          - display_headline
+          - compact_proof
+          - direct_action
+          avoid:
+          - fake_urgency
+          - fake_reviews
+          - embedded_image_text
+        industrial:
+          inherits_authoritative_design: true
+          layout: explicit_system_grid
+          typography: mono_or_technical_sans
+          imagery: diagrams_and_state
+          color: high_contrast_restrained
+          shape: flat
+          motion: quiet_state_change
+          signatures:
+          - status_visibility
+          - stable_columns
+          - numerical_precision
+          - obvious_failure_state
+          avoid:
+          - ornamental_depth
+          - ambiguous_controls
+        luxury:
+          inherits_authoritative_design: true
+          layout: spacious_editorial_product
+          typography: restrained_high_contrast
+          imagery: material_and_detail
+          color: low_chroma
+          shape: quiet
+          motion: subtle
+          signatures:
+          - generous_measure
+          - deliberate_materiality
+          - sparse_chrome
+          avoid:
+          - discount_carnival
+          - excessive_badges
+
+      typefaces:
+        house_sans:
+          family: house_sans
+          css: "var(--font)"
+          classification: neo_grotesk
+          roles:
+          - body
+          - ui
+          - price
+          - metadata
+          - swiss_display
+          availability: shipped
+        house_promo_serif:
+          family: Instrument Serif
+          css: "var(--font-ad)"
+          classification: display_serif
+          roles:
+          - promotion_display
+          availability: retired
+        ibm_plex_sans:
+          family: IBM Plex Sans
+          css: '"IBM Plex Sans", sans-serif'
+          classification: grotesk
+          roles:
+          - body
+          - ui
+          - technical_display
+          availability: optional_webfont
+        ibm_plex_serif:
+          family: IBM Plex Serif
+          css: '"IBM Plex Serif", serif'
+          classification: serif
+          roles:
+          - editorial_body
+          - editorial_display
+          availability: optional_webfont
+        source_sans_3:
+          family: Source Sans 3
+          css: '"Source Sans 3", sans-serif'
+          classification: humanist_sans
+          roles:
+          - body
+          - ui
+          availability: optional_webfont
+        source_serif_4:
+          family: Source Serif 4
+          css: '"Source Serif 4", serif'
+          classification: transitional_serif
+          roles:
+          - editorial_body
+          - editorial_display
+          availability: optional_webfont
+        mona_sans:
+          family: Mona Sans
+          css: '"Mona Sans", sans-serif'
+          classification: industrial_grotesk_variable
+          roles:
+          - body
+          - display
+          - ui
+          availability: optional_webfont
+        hubot_sans:
+          family: Hubot Sans
+          css: '"Hubot Sans", sans-serif'
+          classification: geometric_variable
+          roles:
+          - display
+          - playful_accent
+          availability: optional_webfont
+        jetbrains_mono:
+          family: JetBrains Mono
+          css: 'var(--font-mono)'
+          classification: monospace
+          roles:
+          - terminal
+          - code
+          - technical
+          availability: shipped
+
+      font_pairings:
+        swiss_house:
+          school: swiss
+          strategy: single_family_contrast
+          display: house_sans
+          body: house_sans
+          price: house_sans
+          metadata: house_sans
+          rationale: Use scale, weight, width, alignment, and whitespace for contrast before adding a second family.
+        marketplace_sale:
+          school: commerce_editorial
+          strategy: single_family_contrast
+          display: house_sans
+          body: house_sans
+          price: house_sans
+          metadata: house_sans
+          rationale: Marketplace authority comes from product, price, hierarchy, alignment and trust; do not force a decorative display face into transactional cards.
+        ibm_plex_editorial:
+          school: editorial
+          strategy: matched_family_pair
+          display: ibm_plex_sans
+          body: ibm_plex_serif
+          price: ibm_plex_sans
+          metadata: ibm_plex_sans
+          rationale: Purpose-designed Plex subfamilies share proportions and a broad language system.
+        source_editorial:
+          school: editorial
+          strategy: matched_family_pair
+          display: source_sans_3
+          body: source_serif_4
+          price: source_sans_3
+          metadata: source_sans_3
+          rationale: Source Sans 3 and Source Serif 4 are designed as a complementary reading system.
+        playful_mona_hubot:
+          school: cute
+          strategy: related_variable_family_pair
+          display: hubot_sans
+          body: mona_sans
+          price: mona_sans
+          metadata: mona_sans
+          rationale: Related variable sans families create play through shape and scale without sacrificing utility.
+        terminal_mono:
+          school: industrial
+          strategy: single_family
+          display: jetbrains_mono
+          body: jetbrains_mono
+          price: jetbrains_mono
+          metadata: jetbrains_mono
+
+      compositions:
+        marketplace_sale:
+          school: commerce_editorial
+          pairing: marketplace_sale
+          grid: storefront_columns
+          focal_order:
+          - product
+          - price
+          - headline
+          - proof
+          - action
+          mobile: stack_image_then_offer_without_changing_priority
+          signatures:
+          - product_identity_preserved
+          - price_visible_without_interaction
+          - display_headline
+          - neutral_transaction_text
+        swiss_poster:
+          school: swiss
+          pairing: swiss_house
+          grid: twelve_column_modular
+          focal_order:
+          - primary_message
+          - image_or_number
+          - supporting_information
+          mobile: collapse_columns_but_preserve_anchor_relationships
+        social_feed:
+          school: social
+          pairing: swiss_house
+          grid: feed_stream
+          focal_order:
+          - identity
+          - content
+          - action
+          - freshness
+          mobile: one_content_column
+        cute_retail:
+          school: cute
+          pairing: playful_mona_hubot
+          grid: friendly_modular
+          focal_order:
+          - product_or_character
+          - playful_headline
+          - benefit
+          - action
+          mobile: preserve_character_and_action_anchor
+        editorial_commerce:
+          school: commerce_editorial
+          pairing: marketplace_sale
+          grid: asymmetric_product_editorial
+          focal_order:
+          - image
+          - display_headline
+          - offer
+          - proof
+          mobile: image_then_copy
+        industrial_system:
+          school: industrial
+          pairing: terminal_mono
+          grid: explicit_system_columns
+          focal_order:
+          - state
+          - primary_value
+          - action
+          - detail
+          mobile: collapse_secondary_columns
       swiss_style:
         left_aligned_ragged_right: true
         sans_serif_default: Inter
