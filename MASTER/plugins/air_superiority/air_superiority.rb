@@ -345,8 +345,9 @@ module Master
 
       def analyze_wifi(networks, known)
         networks.filter_map do |network|
-          expected = known.find { |item| item["ssid"].to_s == network[:ssid].to_s }
-          if expected && expected["bssid"].to_s.downcase != network[:bssid].to_s.downcase
+          expected = known.select { |item| item["ssid"].to_s == network[:ssid].to_s }
+          known_bssid = expected.map { |item| item["bssid"].to_s.downcase }
+          if expected.any? && !known_bssid.include?(network[:bssid].to_s.downcase)
             Threat.new(
               type: "Unexpected Access Point",
               severity: "high",
