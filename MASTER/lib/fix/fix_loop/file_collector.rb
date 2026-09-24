@@ -50,7 +50,11 @@ module Master
 
         def collect_tracked(target)
           out, _, status = Master::Io::Exec.capture3("git", "-C", @root, "ls-files", "-z")
-          return [] unless status.success?
+          unless status.success?
+            return [] unless File.exist?(File.join(@root, ".git"))
+
+            raise "git ls-files failed while collecting #{@root}"
+          end
 
           tracked = out.split("\0").map { |rel| File.join(@root, rel) }
                        .select { |file| File.file?(file) && under_path?(file, target) }
