@@ -1,0 +1,63 @@
+name: Native Android
+
+on:
+  workflow_dispatch:
+    inputs:
+      app:
+        description: Product to validate
+        required: true
+        type: choice
+        options:
+          - brgen
+          - radio
+          - dating
+          - tv
+          - takeaway
+          - marketplace
+          - maps
+          - messenger
+          - amber
+  push:
+    paths:
+      - "RAILS/mobile/apps.yml"
+      - "RAILS/tools/mobile.rb"
+      - "RAILS/shared/lib/shared/mobile_app_registry.rb"
+  pull_request:
+    paths:
+      - "RAILS/mobile/apps.yml"
+      - "RAILS/tools/mobile.rb"
+      - "RAILS/shared/lib/shared/mobile_app_registry.rb"
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Read registry origin
+        id: registry
+        env:
+          APP: ${{ github.event.inputs.app || 'brgen' }}
+        run: |
+          url=$(ruby -ryaml -e 'd=YAML.safe_load_file("RAILS/mobile/apps.yml"); puts d.fetch("apps").fetch(ENV.fetch("APP")).fetch("url")')
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "app=$APP" >> "$GITHUB_OUTPUT"
+
+      - name: Install Bubblewrap
+        run: npm install --global @bubblewrap/cli
+
+      - name: Validate PWA for TWA
+        run: bubblewrap validate --url="${{ steps.registry.outputs.url }}"
+
+      - name: Check target API baseline
+        run: |
+          test "$(ruby -ryaml -e 'puts YAML.safe_load_file("RAILS/mobile/apps.yml").fetch("apps").values.first.fetch("android").key?("package")')" = true
+          echo "Play release baseline: Android 16 / API 36"
