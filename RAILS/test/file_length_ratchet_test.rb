@@ -198,7 +198,7 @@ class FileLengthRatchetTest < Minitest::Test
     # 6486 -> 6479: the inline flash notice went with the markup that wore
     # it — a notice is a toast now, so its four rules styled nothing.
     "brgen/app/assets/stylesheets/application.scss" => 6479,
-    "amber/app/assets/stylesheets/application.scss" => 1736,
+    "amber/app/assets/stylesheets/application.scss" => 1767,
     "bsdports/app/assets/stylesheets/application.scss" => 454,
     # user_flow.rb left this list on 2026-09-09: 308 -> 166, under the 300 rb
     # limit, so a ceiling here would only re-admit it. Its own header admitted
@@ -217,6 +217,27 @@ class FileLengthRatchetTest < Minitest::Test
     # 455 -> 449: the same inline-notice rule, in the sheet amber and
     # bsdports share.
     "shared/app/assets/stylesheets/_minimal.scss" => 449,
+    # 502 -> 454 on 2026-09-10. The button family — .btn, its three states, the
+    # four compound variants and .btn-sm — is _zen_buttons.scss, forwarded
+    # immediately before zen_shell in both stacks so nothing moves relative to
+    # any file outside this one.
+    #
+    # The first stylesheet split this ratchet has taken, and it wanted a
+    # different proof from a Ruby one: a moved partial changes cascade position,
+    # which no test in this tree reads. So it was measured. All three apps were
+    # built expanded before and after, and the two builds hold the same 6,395 /
+    # 3,420 / 1,991 declarations with 59 pairs changing relative order — 35
+    # settled by specificity whatever the order, and the remaining 24 all of the
+    # form `.btn` against a utility (.px-N, .text-primary, .bg-surface,
+    # .visually-hidden, .truncate-N, .min-h-*) that ties it at 0-1-0. Those 24
+    # can only bite on an element wearing both classes, and a scan of 2,030 view,
+    # helper and controller files finds no such element, with the scan proved on
+    # a planted `class="btn px-4"`.
+    #
+    # zen_shell's own `@media (forced-colors: active)` block still names .btn and
+    # ties with it at 0-1-0, which is why the forward goes immediately BEFORE
+    # zen_shell rather than after: the media block has to keep the later word.
+    "shared/app/assets/stylesheets/_zen_shell.scss" => 454,
   }.freeze
 
   COMMENT_STARTS = ["#", "//", "/*", "*", "<%#"].freeze
