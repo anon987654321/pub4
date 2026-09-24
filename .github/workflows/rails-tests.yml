@@ -1,18 +1,17 @@
 name: RAILS Tests
 
-# Runs on every push to main and on pull requests, the same as master-tests.yml.
-# RAILS validated on each push is what makes small frequent pushes safe — the
-# alternative, hoarding a week of work for one mega-push, is how a late failure
-# strands everything.
+# Manual dispatch only.
 #
-# Local equivalent:
+# Local fast path:
 #   cd RAILS/<app> && bundle exec bin/ci
-# Or via root: OPENBSD/bin/check-rails --profile=contributor
-# Full: ruby RAILS/gates/runner.rb domain_alignment production etc.
+#   OPENBSD/bin/check-rails --profile=contributor
+#
+# Full gates:
+#   ruby RAILS/gates/runner.rb domain_alignment production etc.
+#
+# GitHub Actions remains available for deliberate validation without making
+# every push or pull request pay for the full matrix.
 on:
-  push:
-    branches: [main]
-  pull_request:
   workflow_dispatch:
 
 jobs:
@@ -29,7 +28,6 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: .ruby-version
-
           bundler-cache: true
           working-directory: RAILS/${{ matrix.app }}
 
