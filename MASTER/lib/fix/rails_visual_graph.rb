@@ -12,8 +12,11 @@ module Master
     class RailsVisualGraph
       SOURCE_EXTENSIONS = %w[.css .scss .erb .html .htm .js .ts].freeze
       ASSET_EXTENSIONS = %w[.css .scss .js .ts .erb .html .htm .woff .woff2 .ttf .otf .png .jpg .jpeg .webp .svg .gif .ico].freeze
+      PARTIAL_SUFFIXES = %w[.html.erb .turbo_stream.erb .erb .scss .css .js .ts .html].freeze
       APP_NAMES = %w[brgen amber bsdports].freeze
-      ROUTE_RE = /^\s*(GET|POST|PUT|PATCH|DELETE|OPTIONS|HEAD|\*).*?\s(\/[^\s]*)\s+([^\s]+#\S+)/
+      # `rails routes` prints the route name before the verb for every named
+      # route, so the verb is not at the start of the line.
+      ROUTE_RE = /^\s*(?:\S+\s+)?(GET|POST|PUT|PATCH|DELETE|OPTIONS|HEAD)\s+(\/\S*)\s+(\S+#\S+)/
 
       SurfaceMap = Data.define(:surface, :app, :route, :sources) do
         def source_paths = sources
@@ -95,7 +98,7 @@ module Master
         command = File.join(root, "bin", "rails")
         return unless File.executable?(command)
 
-        output, status = Timeout.timeout(15) { Open3.capture2e(command, "routes", chdir: root) }
+        output, status = Timeout.timeout(ROUTES_TIMEOUT_S) { app_capture(command, root) }
         unless status.success?
           @errors << "routes #{app}: rails routes exited #{status.exitstatus}: #{output.lines.last(3).join.strip}"
           return
@@ -106,13 +109,31 @@ module Master
           next unless match
 
           method, path, target = match.captures
-          next if path.include?("(.:format)")
-          @routes[app] << { method:, path: normalize_path(path), target: }
+          # The optional format suffix belongs to nearly every route; drop the
+          # suffix, not the route.
+          @routes[app] << { method:, path: normalize_path(path.delete_suffix("(.:format)")), target: }
         end
       rescue Errno::ENOENT, Timeout::Error, SystemCallError => e
         @errors << "routes #{app}: #{e.class}: #{e.message}"
       rescue StandardError => e
         @errors << "routes #{app}: #{e.class}: #{e.message}"
+      end
+
+      # A cold `rails routes` boots the whole app; 15s timed out under load.
+      ROUTES_TIMEOUT_S = 60
+
+      # The app's own Ruby and bundle, not MASTER's. Run from inside MASTER,
+      # bin/rails inherited BUNDLE_GEMFILE and the Homebrew Ruby, failed on
+      # bootsnap/setup for all three apps, and the visual pass stopped at
+      # "source graph discovery failed" before a browser opened, in every /fix.
+      def app_capture(command, root)
+        env = {}
+        version = File.join(root, ".ruby-version")
+        env["RBENV_VERSION"] = File.read(version).strip if File.file?(version)
+        shims = File.expand_path("~/.rbenv/shims")
+        env["PATH"] = "#{shims}:#{ENV.fetch("PATH", "")}" if File.directory?(shims)
+        run = -> { Open3.capture2e(env, command, "routes", chdir: root) }
+        defined?(Bundler) ? Bundler.with_unbundled_env(&run) : run.call
       end
 
       def discover_source_edges(_app, root)
@@ -142,25 +163,29 @@ module Master
       def resolve_reference(root, source, reference)
         ref = reference.to_s.sub(/\?.*\z/, "")
         return if ref.empty? || ref.start_with?("http", "//", "#")
-
-        candidates = []
-        base = File.dirname(source)
-        candidates << File.expand_path(ref, base)
-        candidates << File.expand_path(ref, root)
-        if ref.start_with?("~")
-          candidates << File.expand_path(ref.delete_prefix("~"), root)
-        end
-
-        candidates.flat_map { |path| asset_variants(path) }.find { |path| File.file?(path) }
+      
+        lookup_dirs(root, source, ref).flat_map { |dir| asset_variants(File.expand_path(ref.delete_prefix("~"), dir)) }
+                                      .find { |path| File.file?(path) }
       end
-
+      
+      # Where Rails and Sass look: beside the source, the app root, the view and
+      # stylesheet load paths, and the shared engine every app mounts.
+      def lookup_dirs(root, source, ref)
+        shared = File.join(@root, "RAILS", "shared")
+        loads = [root, shared].flat_map do |base|
+          [File.join(base, "app", "views"), File.join(base, "app", "assets", "stylesheets")]
+        end
+        [File.dirname(source), root, *loads].uniq.then { |dirs| ref.start_with?("~") ? [root] : dirs }
+      end
+      
+      # A bare name is a partial as often as a file: `shared/pager` is
+      # `shared/_pager.html.erb`, `@use "base"` is `_base.scss`.
       def asset_variants(path)
         ext = File.extname(path)
-        base = ext.empty? ? path : path.delete_suffix(ext)
-        names = [path]
-        names.concat(%w[.scss .css .js .ts .erb .html].map { |suffix| "#{base}#{suffix}" }) if ext.empty?
-        names.concat(["#{File.dirname(path)}/_#{File.basename(path)}#{ext}"]) if ext == ".scss"
-        names
+        return [path, File.join(File.dirname(path), "_#{File.basename(path)}")] unless ext.empty? || ext == ".erb"
+      
+        partial = File.join(File.dirname(path), "_#{File.basename(path)}")
+        [path, partial].flat_map { |base| [base] + PARTIAL_SUFFIXES.map { |suffix| "#{base}#{suffix}" } }
       end
 
       def matching_route(app, path)
