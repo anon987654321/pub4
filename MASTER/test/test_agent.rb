@@ -29,6 +29,41 @@ class TestAgent < Minitest::Test
   # anchored regex rejects garbage-tailed model ids but accepts real ones.
   # cache_key_for — must produce bounded, deterministic SHA256 keys.
   # escalation flag — must be per-thread, not per-instance.
+  def test_unknown_factual_turn_gets_evidence_preflight
+    agent = build_agent
+    knowledge = Object.new
+    knowledge.define_singleton_method(:call) { |query:| Master::Result.ok("(no results)") }
+    web = Object.new
+    web.define_singleton_method(:call) { |query:| Master::Result.ok("fresh evidence for #{query}") }
+    agent.instance_variable_set(:@tools, [knowledge, web])
+    knowledge.define_singleton_method(:class) { Class.new { def self.name = "Master::Io::SearchKnowledge" } }
+    web.define_singleton_method(:class) { Class.new { def self.name = "Master::Io::WebSearch" } }
+
+    agent.send(:prepare_evidence, "How does this obscure protocol work?")
+
+    assert_equal :unknown, Fiber[:master_evidence_mode]
+    assert_match(/fresh evidence/, Fiber[:master_evidence_note])
+  ensure
+    Fiber[:master_evidence_mode] = nil
+    Fiber[:master_evidence_note] = nil
+  end
+
+  def test_current_turn_is_routed_to_web_evidence
+    agent = build_agent
+    web = Object.new
+    web.define_singleton_method(:call) { |query:| Master::Result.ok("current web evidence") }
+    web.define_singleton_method(:class) { Class.new { def self.name = "Master::Io::WebSearch" } }
+    agent.instance_variable_set(:@tools, [web])
+
+    agent.send(:prepare_evidence, "What is the latest Telegram Bot API?")
+
+    assert_equal :web_current, Fiber[:master_evidence_mode]
+    assert_match(/current web evidence/, Fiber[:master_evidence_note])
+  ensure
+    Fiber[:master_evidence_mode] = nil
+    Fiber[:master_evidence_note] = nil
+  end
+
   def test_escalation_flag_is_thread_local
     Thread.current[:master_escalation_done] = nil
     other_thread_saw = nil
