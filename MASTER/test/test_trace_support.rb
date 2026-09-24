@@ -7,6 +7,30 @@ require_relative "test_helper"
 # dmesg from every event, and Triggers runs named handlers without letting one
 # failure stop the rest.
 class TestTraceSupport < Minitest::Test
+  def test_verbose_is_the_default_operator_mode
+    previous = ENV["MASTER_DMESG"]
+    previous_quiet = ENV["MASTER_QUIET"]
+    ENV.delete("MASTER_DMESG")
+    ENV.delete("MASTER_QUIET")
+    Master::Trace::Dmesg.reload!
+    assert_equal "verbose", Master::Trace::Dmesg.verbosity
+  ensure
+    previous.nil? ? ENV.delete("MASTER_DMESG") : ENV["MASTER_DMESG"] = previous
+    previous_quiet.nil? ? ENV.delete("MASTER_QUIET") : ENV["MASTER_QUIET"] = previous_quiet
+    Master::Trace::Dmesg.reload!
+  end
+
+  def test_trace_includes_redacted_payload_context
+    console = Master::Trace::Dmesg::Console.new
+    lines = Master::Trace::Dmesg.with_verbosity("trace") do
+      console.lines(event: "fix_loop:scan_progress", file: "lib/a.rb", count: 2,
+                    api_key: "sk-secret-value")
+    end
+
+    assert_equal 1, lines.size
+    assert_includes lines.first, "fix_loop:scan_progress"
+    refute_includes lines.first, "sk-secret-value"
+  end
   class Bus
     attr_reader :published
 
@@ -162,6 +186,7 @@ class TestTraceSupport < Minitest::Test
       "read1 at fold0: lib/trace/dmesg.rb",
       "read1: 2 bytes, 1 line",
       "fold0: done, 4 turns",
+      "scan0: pass, lexical",
     ], lines
   end
 
