@@ -2,6 +2,7 @@
 
 require "json"
 require "fileutils"
+require "securerandom"
 
 module Master
   module Trace
@@ -196,6 +197,27 @@ module Master
       # existing reader expects the same array identity it always got.
       def messages(key = Session.conversation_key) = @mutex.synchronize { conversation(key)[:messages] }
       def name(key = Session.conversation_key) = @mutex.synchronize { conversation(key)[:name] }
+
+      # Clone a conversation without changing the caller's active conversation.
+      def fork!(source_key: Session.conversation_key, target_key: nil)
+        target_key ||= "fork-#{Time.now.utc.strftime("%Y%m%d%H%M%S")}-#{SecureRandom.hex(4)}"
+        raise ArgumentError, "source and target conversations are identical" if source_key == target_key
+        @mutex.synchronize do
+          raise ArgumentError, "conversation already exists: #{target_key}" if @conversations.key?(target_key)
+          source = conversation(source_key)
+          @conversations[target_key] = {
+            messages: source[:messages].map(&:dup),
+            token_est: source[:token_est],
+            name: source[:name],
+            input_tokens: source[:input_tokens].to_i,
+          }
+        end
+        target_key
+      end
+
+      def conversation_keys
+        @mutex.synchronize { @conversations.keys.dup }
+      end
 
       def add_message(role:, content:)
         msg = { role:, content:, ts: Time.now.to_i }
