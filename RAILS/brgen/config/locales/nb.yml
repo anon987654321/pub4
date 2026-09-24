@@ -1,17 +1,15 @@
-radio:
-  name: Radio
-  page_title: Radio · brgen
-  kicker: Oppdag og del
-  intro: Lytt til lokale lyder, skisser, sett og nye utgivelser.
-  navigation: Radionavigasjon
-  browse_tracks: Bla i spor
-  upload: Last opp
-  sign_in_to_upload: Logg inn for å laste opp
-  empty_title: Ingenting spilles ennå
-  empty_body: Last opp det første sporet og gi Radio noe å oppdage.
-
----
 nb:
+  radio:
+    name: Radio
+    page_title: Radio · brgen
+    kicker: Oppdag og del
+    intro: Lytt til lokale lyder, skisser, sett og nye utgivelser.
+    navigation: Radionavigasjon
+    browse_tracks: Bla i spor
+    upload: Last opp
+    sign_in_to_upload: Logg inn for å laste opp
+    empty_title: Ingenting spilles ennå
+    empty_body: Last opp det første sporet og gi Radio noe å oppdage.
   errors:
     messages:
       attachment_type: må være et lydklipp eller et bilde
@@ -1359,10 +1357,10 @@ nb:
       other: Annet
   takeaway:
     intro: Dette er en meny- og bestillingsdemo, ikke et levende restaurantnett. Betaling
+      avtales med kjøkkenet. Ingen registrering for å legge inn en prøvebestilling.
     promo_headline: "God mat, like i nærheten"
     promo_body: "%{restaurant} har dagens meny klar for bestilling."
     promo_cta: "Se menyen"
-      avtales med kjøkkenet. Ingen registrering for å legge inn en prøvebestilling.
     unsave: Fjern lagring
     save_restaurant: Lagre
     order_food: Menyer i nærheten

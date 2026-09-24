@@ -1,17 +1,15 @@
-radio:
-  name: Radio
-  page_title: Radio · brgen
-  kicker: Discover and share
-  intro: Listen to local sounds, rough mixes, sets and new releases.
-  navigation: Radio navigation
-  browse_tracks: Browse tracks
-  upload: Upload
-  sign_in_to_upload: Sign in to upload
-  empty_title: Nothing is playing yet
-  empty_body: Upload the first track and give Radio something to discover.
-
----
 en:
+  radio:
+    name: Radio
+    page_title: Radio · brgen
+    kicker: Discover and share
+    intro: Listen to local sounds, rough mixes, sets and new releases.
+    navigation: Radio navigation
+    browse_tracks: Browse tracks
+    upload: Upload
+    sign_in_to_upload: Sign in to upload
+    empty_title: Nothing is playing yet
+    empty_body: Upload the first track and give Radio something to discover.
   errors:
     messages:
       attachment_type: must be a voice note or a photo
@@ -1352,10 +1350,10 @@ en:
       other: Other
   takeaway:
     intro: This is a menu and order demo, not a live restaurant network. Payment is
+      arranged with the kitchen. No signup to place a trial order.
     promo_headline: "Fresh finds, close to home"
     promo_body: "%{restaurant} brings today's menu to your door."
     promo_cta: "View menu"
-      arranged with the kitchen. No signup to place a trial order.
     unsave: Unsave
     save_restaurant: Save
     order_food: Menus nearby
