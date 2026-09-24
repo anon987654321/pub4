@@ -22,40 +22,26 @@ require "open3"
 
 ROOT = File.expand_path("..", __dir__)
 REPO = File.expand_path("..", ROOT)
-# MASTER_AUTOFIX gates the background fix *loop* (lib/ops/loop_slot.rb,
-# builder/ai_boot.rb) -- it has never had anything to do with the deterministic
-# AstFixer pass the observation runs. That pass reads MASTER_SCAN_AUTOFIX,
-# defaulting to "1", so for as long as this hash listed only MASTER_AUTOFIX the
-# full chain's first reading wrote to the tree before the repair was reached, and the
-# variable set to prevent it was inert. Scan-only mode was safe by accident,
-# because it passes --no-autofix on the command line instead of trusting the env.
-#
-# Both keys, because they are two different switches and the gate wants both off:
-# no background convergence loop, and no writes from a step whose job is to
-# measure. RAILS/gates/lib/constitutional_scan.rb already carried exactly this
-# pair; this file had drifted from it.
+# Two autofix switches, both off. MASTER_AUTOFIX gates the background fix loop;
+# MASTER_SCAN_AUTOFIX gates the deterministic AstFixer pass, which defaults on
+# and would otherwise write before the repair stage is reached.
+# RAILS/gates/lib/constitutional_scan.rb carries the same pair.
 SAFE_ENV = {
   "MASTER_SAFE_MODE" => "1",
   "MASTER_BACKGROUND" => "0",
   "MASTER_AUTOFIX" => "0",
   "MASTER_SCAN_AUTOFIX" => "0",
-  # The third one, and the reason the lexical stage never reported. The header
-  # above calls this tier deterministic; the runtime hands its scanner an agent,
-  # so AdversarialRule sent a per-file prompt and 46 files projected to ~3200s
-  # against a 1200s stage timeout. Withholding the agent is what "no model"
-  # actually takes.
+  # Withholds the agent from the scanner. With one, AdversarialRule sends a
+  # prompt per file and the lexical stage outruns its timeout.
   "MASTER_SCAN_DETERMINISTIC" => "1",
   "MASTER_WATCH" => "0",
   "MASTER_WATCHER" => "0",
   "MASTER_HEARTBEAT" => "0",
 }.freeze
 
-# An unrecognised argument used to be ignored, and being ignored here means
-# "run everything and write": `bin/gate --explain` was reached for on the
-# strength of the documented flag on `bin/operator gate`, and started a full-fix
-# pass over four trees. The flag that reads as a dry run on one surface must not
-# be the dangerous one on the other, so this surface knows it too — and refuses
-# anything it does not know rather than defaulting to the writing mode.
+# An unknown argument is refused, because ignoring it means "run everything and
+# write". --explain reads as a dry run on `bin/operator gate`, so this surface
+# must never treat it, or any typo, as full-fix.
 KNOWN_FLAGS = %w[--scan-only --lexical-only --semantic-only --explain --help -h].freeze
 unknown = ARGV.reject { |arg| KNOWN_FLAGS.include?(arg) || arg.start_with?("--tree=") }
 unless unknown.empty?
@@ -68,21 +54,17 @@ end
 EXPLAIN = ARGV.include?("--explain") || ARGV.include?("--help") || ARGV.include?("-h")
 
 # The full chain mutates the tree: the scan stage fixes what it finds as it
-# finds it, which is what --scan-only holds back -- see SAFE_ENV above.
-# Prefer SCAN_ONLY=1 in CI/preflight.
+# finds it, which is what --scan-only holds back. Prefer SCAN_ONLY=1 in
+# CI/preflight.
 SCAN_ONLY = ENV["MASTER_GATE_SCAN_ONLY"] == "1" || ARGV.include?("--scan-only")
 
 # Two tiers, selectable, because only one of them can currently reach a verdict.
 #
 # The lexical tier is law/ and the scan registry: deterministic detectors, no
 # model, and the half that autofixes. The semantic tier is the critique stage,
-# which reaches the council and therefore a provider — and the provider answers
-# "Insufficient credits", so every semantic stage is inconclusive.
-#
-# Interleaved, as they were, that dead tier aborted the run and the
-# deterministic half which had just passed went unreported. `bin/operator gate`
-# runs them as separate stages for exactly that reason, and reports an
-# unreachable semantic tier as skipped rather than as a pass or a failure.
+# which reaches the council and therefore a provider, and is inconclusive
+# whenever the provider is unreachable. Run separately, a dead semantic tier
+# cannot hide a lexical pass; `bin/operator gate` reports it as skipped.
 TIER = if ARGV.include?("--lexical-only")
          :lexical
        elsif ARGV.include?("--semantic-only")
@@ -91,18 +73,10 @@ TIER = if ARGV.include?("--lexical-only")
          :both
        end
 
-# One path per invocation: /fix takes a single target, so each tree gets its
-# own pass.
-#
-# One line per tier, since 2026-09-06. The lexical pass used to be
-# `/scan`, `/fix`, `/scan` — three boots of the runtime for a lifecycle that
-# observes, repairs and observes again inside one /fix. Running it three times
-# ran that sequence three times. The semantic pass was `/critique` then
-# `/review`, and both words name the critique stage, so it ran the council
-# twice — the tier that already costs the most.
-#
-# Scan-only mode is `/fix --dry-run`: the reading, and what a repair would take
-# on, with nothing written.
+# One path per invocation, since /fix takes a single target, and one line per
+# tier, since one /fix already observes, repairs and observes again, and
+# /critique is the whole critique stage. Scan-only mode is `/fix --dry-run`:
+# the reading, and what a repair would take on, with nothing written.
 def lines_for(path)
   lexical = SCAN_ONLY ? ["/fix --dry-run #{path}"] : ["/fix #{path}"]
   semantic = ["/critique #{path}"]
@@ -129,23 +103,14 @@ SELECTED_TREES = (named_trees.empty? ? TREE_PATHS.keys : named_trees).freeze
 
 COMMANDS = {
   master: (SELECTED_TREES.include?("MASTER") ? lines_for(".") : []).freeze,
-  # DEPLOY was renamed to RAILS + OPENBSD (OPERATOR was later folded into
-  # OPENBSD).
+  # Every sibling tree, because a gate whose target list is shorter than the
+  # repo reports clean on the part it looked at.
   #
-  # STUDIO added 2026-08-11. CLAUDE.md names four sibling trees and this list
-  # carried two, so dilla, lora, postpro and preprompt -- 57 tracked Ruby files
-  # including the whole beat engine -- were never scanned, fixed or reviewed,
-  # and the gate reported the repo clean on the strength of three quarters of
-  # it. A gate whose target list is shorter than the repo is not a gate.
-  #
-  # Caveat for the FULL pass, not scan-only: /fix writes wherever the scan
-  # walked, so what it cannot reach is Scanner::PathFilter's skip list and
-  # nothing else. `.cache` and `scratch` are on it, which is what keeps /fix
-  # out of STUDIO's generated lora/**/.cache/** copies and out of dilla's
-  # demucs virtualenv; a 2026-08-31 refactor stubbed `skip_path?` to `false`
-  # and that guard was gone with no other sign. Read the printed diff before
-  # committing; do not commit rewrites of generated caches. `bin/operator gate`
-  # names any such path in its own report and refuses to call the run clean.
+  # In full-fix mode /fix writes wherever the scan walked; only
+  # Scanner::PathFilter's skip list keeps it out of STUDIO's generated
+  # lora/**/.cache/** copies and dilla's demucs virtualenv. Read the printed
+  # diff before committing; never commit rewrites of generated caches.
+  # `bin/operator gate` names any such path and refuses to call the run clean.
   deploy: (SELECTED_TREES - ["MASTER"]).map { |tree| TREE_PATHS.fetch(tree) }
                                        .flat_map { |path| lines_for(path) }.freeze,
 }.freeze
@@ -163,55 +128,28 @@ end
 # A stage that could not measure did not pass.
 #
 # bin/cli exits 0 when a command runs to completion, and /critique runs to
-# completion whether or not its council answered. On 2026-07-31 a full
-# scan-only gate printed "ok: MASTER gate scan-only complete" and exited 0 with
-# all three of its critique stages dead: MASTER and OPENBSD reached a quorum of
-# 2 personas out of 26, and RAILS reported "critique failed: claude-cli: timed
-# out after 60s" outright. The scanners had run, so the gate called it green --
-# but a green gate is a claim that the code was reviewed, and nothing had been.
-#
-# This is the rule MASTER/AGENTS.md states for gates in general under
-# "Inconclusive": a gate that measured nothing is neither a pass nor a failure. The exit
-# status is not the only signal a stage emits; when a stage says in its own
-# output that it could not reach a verdict, that is the verdict.
+# completion whether or not its council answered. A green gate claims the code
+# was reviewed, so when a stage says in its own output that it reached no
+# verdict, that is the verdict. MASTER/AGENTS.md states the rule under
+# "Inconclusive": a gate that measured nothing is neither a pass nor a failure.
 INCONCLUSIVE = [
   /quorum not reached/,
   /^critique failed:/,
   /^scan failed:/,
   /^review failed:/,
-  # A fix pass that ran out of clock did not finish fixing. Observed on the
-  # 2026-07-31 full-fix run: /fix prescanned, found 233 cross-file risks,
-  # completed ONE pass, printed "wall-clock timeout (1800s) after 1 pass(es)",
-  # exited 0, and the gate counted the stage as done. The scan on either side of
-  # it reported the identical 110 violations in the identical categories, so the
-  # measure/fix/verify sandwich verified that nothing had moved and called it a
-  # pass.
-  #
-  # This is deliberately not softened to a warning. The whole point of the
-  # stage is that the tree afterwards is better than the tree before; if the
-  # budget ran out mid-pass, nobody knows whether it is, and "nobody knows" is
-  # the state this file exists to refuse.
+  # A fix pass that ran out of clock did not finish fixing, and nobody knows
+  # whether the tree afterwards is better than before. Deliberately not a
+  # warning: "nobody knows" is the state this file exists to refuse.
   /wall-clock timeout/,
 ].freeze
 
-# A stage that never returns is the one shape INCONCLUSIVE cannot catch.
+# A stage that never returns is the one shape INCONCLUSIVE cannot catch: every
+# pattern there is something a stage says on its way out, and a council lane
+# blocked on a call that never returns says nothing and never exits.
 #
-# Every pattern in that list is something a stage SAYS on its way out. A stage
-# that says nothing and does not exit is invisible to all of them, and
-# capture2e has no timeout, so the gate simply stops — no output, no failure,
-# no exit code, indefinitely.
-#
-# Measured 2026-08-11: `/critique ../STUDIO/preprompt` ran 16 minutes at 0% CPU
-# and produced zero bytes before being killed by hand, and `/review` the same,
-# on a runtime where a plain prompt answers in under two seconds. Both go
-# through the council's LLM agent; the ordinary reply lane does not. So this is
-# not "no provider keys" — it is one lane blocking on a call that never
-# returns, and the gate had no way to notice.
-#
-# 20 minutes per stage, which is above the slowest honest /scan measured here
-# (38s for STUDIO/dilla) by a wide margin, and MASTER_GATE_STAGE_TIMEOUT raises
-# it for a genuinely long full-fix pass. A timeout is reported as inconclusive
-# rather than as a failure of the code under test, because that is what it is:
+# 20 minutes per stage sits far above the slowest honest scan;
+# MASTER_GATE_STAGE_TIMEOUT raises it for a genuinely long full-fix pass. A
+# timeout is inconclusive rather than a failure of the code under test, because
 # nothing was measured.
 STAGE_TIMEOUT = Integer(ENV.fetch("MASTER_GATE_STAGE_TIMEOUT", "1200"))
 
@@ -268,20 +206,10 @@ end
 
 # The chain ends with a clean tree or it does not end.
 #
-# This is not a bug in /fix and the message used to imply it was one. A full-fix
-# gate runs /scan, /fix, /scan, /critique, /review and then asserts nothing is
-# left modified — which says "/fix found nothing to do", i.e. the tree was
-# already conformant. A first run after real work SHOULD fail here: /fix changed
-# files, the diff is printed directly above, and the operator reviews it, commits
-# it and runs again. That is the workflow, and nothing recorded it.
-#
-# What made it look broken was run_command's generic abort:
-#
-#   err: command failed: git diff --exit-code -- MASTER
-#
-# which names a git invocation rather than the situation, gives no hint that the
-# diff above is the thing to look at, and reads identically whether /fix wrote
-# something or the tree was dirty before the gate even started.
+# A dirty tree here is not a bug in /fix. After real work the first run should
+# fail: /fix changed files, the diff is printed above, and the operator reviews
+# it, commits it and runs again. The message names that situation rather than
+# the git invocation behind it.
 def assert_clean(*paths)
   _stdout, status = Open3.capture2e("git", "diff", "--exit-code", "--", *paths, chdir: REPO)
   return if status.success?
