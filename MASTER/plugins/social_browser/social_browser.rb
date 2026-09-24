@@ -113,7 +113,7 @@ module Master
             raise Error, "social_browser: submit control not found on #{page.url}" unless submit
 
             submit.click
-            page.network.wait_for_idle(timeout: 8) rescue nil
+            wait_for_idle(page)
             raise PolicyError, "social_browser: challenge detected after write" if challenge?(page)
 
             after = screenshot(page, run_dir, "after")
@@ -219,11 +219,27 @@ module Master
 
       def enforce_write_cooldown!(account)
         state = account_state(account)
-        last = Time.parse(state.fetch("last_write_at")) rescue nil
+        last = parse_time(state["last_write_at"])
         return unless last
         return if Time.now - last >= MIN_WRITE_INTERVAL_S
 
         raise PolicyError, "social_browser: write cooldown active for account #{account}"
+      end
+
+      def wait_for_idle(page)
+        page.network.wait_for_idle(timeout: 8)
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "SocialBrowser.wait_for_idle")
+      end
+
+      def parse_time(value)
+        text = value.to_s
+        return if text.empty?
+
+        Time.parse(text)
+      rescue ArgumentError => e
+        Master::Ground::Swallow.log(e, context: "SocialBrowser.parse_time")
+        nil
       end
 
       def record_write!(account, operation:)
