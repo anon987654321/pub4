@@ -16,8 +16,18 @@ module Master
           @rollback = rollback
         end
 
+        # Set while one dispatcher call runs, once its tool has published its own
+        # tool:after; the bus runs handlers inline, so the call, the tool and the
+        # return are all on this thread.
+        SELF_COUNTED = :master_ledger_tool_self_counted
+
         def attach
-          @bus&.subscribe("tool:after") { |payload| record_tool(payload) }
+          @bus&.subscribe("tool:call") { |_payload| Thread.current[SELF_COUNTED] = nil }
+          @bus&.subscribe("tool:after") do |payload|
+            Thread.current[SELF_COUNTED] = tool_of(payload)
+            record_tool(payload)
+          end
+          @bus&.subscribe("tool:return") { |payload| record_return(payload) }
           @bus&.subscribe("tool:failed") { |payload| record_tool_failure(payload) }
           @bus&.subscribe("llm:call_complete") { |payload| record_llm(payload) }
           @bus&.subscribe("llm:provider_outcome") { |payload| record_provider(payload) }
@@ -38,6 +48,21 @@ module Master
           event_type = exit_code.to_i.nonzero? || status >= 400 ? "tool_failure" : "tool_success"
           record(event_type:, dimension: dim, value: exit_code || status.nonzero?, metadata: payload)
         end
+
+        # read_file, list_dir, search_files and the other tools that publish no
+        # tool:after were counted only when they failed, so /status read them as
+        # failing every call. The dispatcher's tool:return counts their successes;
+        # a tool that counted itself through tool:after is not counted twice.
+        def record_return(payload)
+          self_counted = Thread.current[SELF_COUNTED]
+          Thread.current[SELF_COUNTED] = nil
+          return unless (payload[:ok] || payload["ok"]) == true
+          return if self_counted == tool_of(payload)
+
+          record(event_type: "tool_success", dimension: tool_of(payload), metadata: payload)
+        end
+
+        def tool_of(payload) = payload[:tool] || payload["tool"] || "unknown"
 
         def record_tool_failure(payload)
           dim = payload[:tool] || payload["tool"] || "unknown"

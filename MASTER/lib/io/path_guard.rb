@@ -35,7 +35,9 @@ module Master
         Master::Core::World.secret?(path)
       end
 
-      def resolve(path)
+      # Sacred paths are read-yes, write-never: soul.yml and rules.yml are the
+      # law MASTER must read before it acts. Only a caller that writes asks.
+      def resolve(path, write: true)
         full = File.expand_path(path, @root)
         unless PathGuard.inside_real_root?(full, @root)
           return Result.err("path escapes project root: #{path}", category: :validation)
@@ -43,7 +45,7 @@ module Master
         return Result.err("credential path refused: #{path}", category: :validation) if PathGuard.secret?(full)
 
         rel = full.delete_prefix(@root + "/")
-        if sacred?(rel)
+        if write && sacred?(rel)
           return Result.err("sacred path — writes forbidden: #{rel}", category: :validation)
         end
 

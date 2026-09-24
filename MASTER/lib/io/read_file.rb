@@ -29,7 +29,7 @@ module Master
         offset = [offset.to_i, 0].max
         limit = limit.to_i.clamp(1, MAX_LINES)
         key = [path, offset, limit, hashline]
-        resolved = resolve(path)
+        resolved = resolve(path, write: false)
         return resolved if resolved.err?
 
         full_path = resolved.value!

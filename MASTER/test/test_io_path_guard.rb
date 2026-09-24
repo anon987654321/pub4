@@ -27,6 +27,10 @@ class PathGuardTest < Minitest::Test
   def test_rejects_a_symlink_inside_root_that_points_outside
     Dir.mktmpdir do |dir|
       root = File.realpath(File.join(dir, "root").tap { |r| Dir.mkdir(r) })
+      # Immutability refuses a root with no sacred manifest before the symlink
+      # check under test is reached.
+      FileUtils.mkdir_p(File.join(root, "data"))
+      File.write(File.join(root, "data", "soul.yml"), "absolute:\n  sacred_paths:\n    - data/soul.yml\n")
       outside = File.join(dir, "outside").tap { |o| Dir.mkdir(o) }
       File.symlink(outside, File.join(root, "link"))
       tool = @tool.class.new(root)

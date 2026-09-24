@@ -18,7 +18,7 @@ module Master
       def call(path: nil)
         target = @root
         if path
-          resolved = resolve(path)
+          resolved = resolve(path, write: false)
           return resolved if resolved.err?
 
           target = resolved.value!

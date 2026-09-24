@@ -28,8 +28,17 @@ class TestIoTools < Minitest::Test
   def deny = Governor.new(Master::Result.err("denied", category: :policy))
 
   # realpath, because the tools realpath their root; on macOS /var is a symlink.
-  def with_root
-    Dir.mktmpdir("io_tools") { |raw| yield File.realpath(raw) }
+  # A root that writes carries the smallest sacred manifest MASTER's own root
+  # has: Immutability refuses every write in a root without one.
+  def with_root(manifest: false)
+    Dir.mktmpdir("io_tools") do |raw|
+      root = File.realpath(raw)
+      if manifest
+        FileUtils.mkdir_p(File.join(root, "data"))
+        File.write(File.join(root, "data", "soul.yml"), "absolute:\n  sacred_paths:\n    - data/soul.yml\n")
+      end
+      yield root
+    end
   end
 
   def write(root, rel, text)
@@ -42,7 +51,7 @@ class TestIoTools < Minitest::Test
   # --- BatchReplace -----------------------------------------------------------
 
   def test_batch_replace_rewrites_every_matching_file_under_the_root
-    with_root do |root|
+    with_root(manifest: true) do |root|
       a = write(root, "notes/a.txt", "old words\n")
       b = write(root, "notes/deep/b.md", "the old way\n")
       untouched = write(root, "notes/c.txt", "nothing here\n")
@@ -58,7 +67,7 @@ class TestIoTools < Minitest::Test
   end
 
   def test_batch_replace_writes_nothing_when_the_governor_refuses
-    with_root do |root|
+    with_root(manifest: true) do |root|
       path = write(root, "a.txt", "old\n")
 
       result = Master::Io::BatchReplace.new(root:, governor: deny).call(old_str: "old", new_str: "new")
@@ -69,7 +78,7 @@ class TestIoTools < Minitest::Test
   end
 
   def test_batch_replace_refuses_a_directory_outside_the_root
-    with_root do |root|
+    with_root(manifest: true) do |root|
       result = Master::Io::BatchReplace.new(root:, governor: allow).call(old_str: "a", new_str: "b", dir: "../..")
 
       refute result.ok?
@@ -78,7 +87,7 @@ class TestIoTools < Minitest::Test
   end
 
   def test_batch_replace_leaves_sacred_paths_alone
-    with_root do |root|
+    with_root(manifest: true) do |root|
       sacred = write(root, "data/config.yml", "old: 1\n")
       ordinary = write(root, "lib/x.txt", "old\n")
 
@@ -90,7 +99,7 @@ class TestIoTools < Minitest::Test
   end
 
   def test_batch_replace_renames_files_only_when_asked
-    with_root do |root|
+    with_root(manifest: true) do |root|
       write(root, "old_name.txt", "x\n")
       tool = Master::Io::BatchReplace.new(root:, governor: allow)
 

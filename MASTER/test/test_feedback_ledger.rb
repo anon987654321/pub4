@@ -63,6 +63,36 @@ class TestFeedbackLedger < Minitest::Test
     FileUtils.remove_entry(root) if root && Dir.exist?(root)
   end
 
+  # read_file publishes no tool:after, so the ledger held its failures and none
+  # of its successes, and /status reported it failing 100% of calls. Each call
+  # below is the dispatcher's bracket, and each tool must count exactly once.
+  def test_every_tool_call_counts_once_whether_or_not_the_tool_counts_itself
+    root = Dir.mktmpdir("feedback_calls")
+    bus = FakeBus.new
+    learnings = Master::Ground::KnowledgeStore.new(root:)
+    Master::Trace::Ledger::Feedback.new(event_bus: bus, learnings:).attach
+    call = lambda do |tool, ok:, after: nil, failed: false|
+      bus.publish("tool:call", { tool: })
+      bus.publish("tool:after", { tool: }.merge(after)) if after
+      bus.publish("tool:failed", { tool:, category: :validation }) if failed
+      bus.publish("tool:return", { tool:, ok: })
+    end
+
+    call.("read_file", ok: true)
+    call.("write_file", ok: true, after: { exit_code: 0 })
+    call.("zsh", ok: true, after: { exit_code: 1 })
+    call.("read_file", ok: false, failed: true)
+
+    db = SQLite3::Database.new(File.join(root, ".master", "knowledge.sqlite3"))
+    tally = db.execute("SELECT dimension, event_type FROM feedback_events").tally
+    assert_equal({ %w[read_file tool_success] => 1, %w[read_file tool_failure] => 1,
+                   %w[write_file tool_success] => 1, %w[zsh tool_failure] => 1 }, tally)
+    refute(learnings.opportunities.any? { |row| row[:dimension] == "read_file" })
+  ensure
+    db&.close
+    FileUtils.remove_entry(root) if root && Dir.exist?(root)
+  end
+
   # The fix loop and the ledger both wrote rsi_improvements.md for one
   # recurrence, so the log read every improvement twice.
   def test_a_recurring_rule_is_logged_once
