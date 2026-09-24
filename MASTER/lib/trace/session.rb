@@ -3,6 +3,7 @@
 require "json"
 require "fileutils"
 require "securerandom"
+require "set"
 
 module Master
   module Trace
@@ -34,6 +35,7 @@ module Master
             ts: Time.now.to_i,
           }
           write_atomic(@path, JSON.generate(data))
+          save_forks!
         end
 
         # No schema_version in the file: it has one shape, every field below is
@@ -64,10 +66,49 @@ module Master
           msgs = Array(data.fetch(:messages, []))
           est = msgs.sum { |m| Session.estimate_tokens(m[:content]) }
           @mutex.synchronize { @conversations[Session::LOCAL] = { messages: msgs, token_est: est, name: data[:name] } }
+          load_forks!
           self
         end
 
         private
+
+        def forks_path = File.join(File.dirname(@path), "conversations.json")
+
+        def save_forks!
+          data = @mutex.synchronize do
+            @persistent_keys.filter_map do |key|
+              conversation = @conversations[key]
+              next unless conversation
+              [key.to_s, { messages: conversation[:messages], token_est: conversation[:token_est], name: conversation[:name], input_tokens: conversation[:input_tokens] }]
+            end.to_h
+          end
+          write_atomic(forks_path, JSON.generate(data))
+        end
+
+        def load_forks!
+          return unless File.exist?(forks_path)
+          data = JSON.parse(File.read(forks_path))
+          raise JSON::ParserError, "conversation root is not an object" unless data.is_a?(Hash)
+          @mutex.synchronize do
+            data.each do |key, value|
+              next unless value.is_a?(Hash)
+              messages = Array(value["messages"])
+              @conversations[key] = { messages:, token_est: value["token_est"].to_i, name: value["name"], input_tokens: value["input_tokens"].to_i }
+              @persistent_keys << key
+            end
+          end
+        rescue JSON::ParserError, Errno::ENOENT => e
+          quarantine_forks!(e)
+        end
+
+        def quarantine_forks!(error)
+          stamp = Time.now.utc.strftime("%Y%m%d%H%M%S")
+          target = "#{forks_path}.corrupt.#{stamp}.#{Process.pid}"
+          FileUtils.mv(forks_path, target)
+          File.write("#{target}.reason", "#{error.class}: #{error.message}\n")
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "Session.quarantine_forks", severity: :load_bearing, path: forks_path)
+        end
 
         # A damaged transcript is renamed, never deleted, and never fatal.
         #
@@ -153,6 +194,7 @@ module Master
               name: source[:name],
               input_tokens: source[:input_tokens].to_i,
             }
+            @persistent_keys << target_key
           end
           target_key
         end
