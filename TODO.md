@@ -402,14 +402,6 @@ issue, repairs, and observes again, ending as DONE, PLATEAU, VALIDATION_FAILED
 or BLOCKED — and `/scan` left the vocabulary. Three pieces of the handoff were
 not built, each on purpose.
 
-- **A finding is not classified.** The loop treats every violation the same and
-  orders them by rule and severity. The handoff asks for `mandatory_violation`,
-  `actionable_opportunity`, `human_decision`, `informational` and `blocked`, so
-  an opportunity cannot churn and a decision that is not MASTER's stops the
-  loop. That classification is also the only thing that would emit a
-  HUMAN_DECISION_REQUIRED terminal state; `FixLoop::TERMINAL_STATES` deliberately
-  has no such state while nothing detects one. Seams:
-  `lib/fix/fix_loop/pass_runner.rb`, `data/rules.yml` severities.
 - **The council's cost inside a pass is unmeasured.** It asks one panel per pass
   over up to twelve files. On a spent OpenRouter balance the free lanes answer,
   but nobody has run a full `/fix` against a real target and priced it. Measure
