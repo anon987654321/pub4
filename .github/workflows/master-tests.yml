@@ -51,6 +51,7 @@ jobs:
         run: |
           bundle exec ruby -Itest -Ilib test/test_cohesion.rb
           bundle exec ruby -Itest -Ilib test/test_structural_stage.rb
+          bundle exec ruby -Itest -Ilib test/test_visual_reference.rb
 
   reliability:
     runs-on: ubuntu-24.04
