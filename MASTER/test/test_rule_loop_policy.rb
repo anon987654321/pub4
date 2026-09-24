@@ -382,6 +382,22 @@ class TestRuleLoopPolicy < Minitest::Test
 
   # reversibility and blast_radius travel from the finding to the violation, and
   # an irreversible or multi-file fix waits for a person like a deletion does.
+  def test_an_irreversible_fix_produces_a_human_decision_outcome
+    Dir.mktmpdir do |root|
+      path = File.join(root, "sample.rb")
+      File.write(path, "puts :x\n")
+      bus = FakeBus.new
+      loop = build_loop(root:, bus:, scanner: Scanner.new, agent: Agent.new)
+      violation = Master::Fix::Violation.from_finding(
+        { rule: "TEST_RULE", severity: :warning, line: 1, message: "fix me", reversibility: "impossible" },
+        file: path, ext: ".rb",
+      )
+
+      assert_equal :needs_person, loop.send(:fix_violation, violation)
+      assert_includes bus.events.map(&:first), "rule_loop:human_decision_required"
+    end
+  end
+
   def test_an_irreversible_or_wide_fix_waits_for_a_person
     Dir.mktmpdir do |root|
       loop = build_loop(root:, bus: FakeBus.new, scanner: Scanner.new, agent: Agent.new)
