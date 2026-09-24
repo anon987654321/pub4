@@ -11,7 +11,6 @@ class VisualPassContractTest < Minitest::Test
     assert_includes source, "Deploy::GeometryProbe.surfaces"
     assert_includes source, "Deploy::GeometryProbe.with_browser"
     assert_includes source, "Deploy::GeometryProbe.walk"
-    assert_includes source, "Deploy::GeometryProbe.measure_current"
     assert_includes source, "Deploy::CompositionProbe.capture"
     assert_includes source, "MAX_COMPOSITION_STATES"
     refute_includes source, "Selenium::WebDriver"

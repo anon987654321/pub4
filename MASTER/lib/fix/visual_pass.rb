@@ -93,30 +93,28 @@ module Master
         captures = []
         Deploy::GeometryProbe.with_browser(root: repo_root, warm: surfaces) do |cdp|
           surfaces.each do |surface|
-            payload = Deploy::GeometryProbe.walk(cdp, surface)
-            next unless Deploy::GeometryProbe.ok?(payload)
+            resting = capture_resting(cdp, surface)
+            next unless resting
 
-            payload["composition"] = {
-              "state" => "resting",
-              "base_surface" => surface.id,
-            }
-            shot = File.join(@dir, "#{safe_slug(surface.id)}.png")
-            cdp.screenshot(shot, capture_beyond_viewport: true)
-            journeys = Deploy::MobileJourneyProbe.run(cdp, surface, @dir)
-            platform = Deploy::WebPlatformProbe.run(cdp, surface)
-            captures << { surface:, payload:, screenshot: shot, journeys:, platform: }
-            captures.concat(
-              Deploy::CompositionProbe.capture(
-                cdp,
-                surface,
-                dir: @dir,
-                pass:,
-                limit: MAX_COMPOSITION_STATES,
-              )
-            )
+            captures << resting
+            captures.concat(Deploy::CompositionProbe.capture(cdp, surface, dir: @dir, pass:, limit: MAX_COMPOSITION_STATES))
           end
         end
         captures
+      end
+
+      # The surface as it loads, before any composition state is triggered;
+      # nil when the geometry walk fails.
+      def capture_resting(cdp, surface)
+        payload = Deploy::GeometryProbe.walk(cdp, surface)
+        return unless Deploy::GeometryProbe.ok?(payload)
+
+        payload["composition"] = { "state" => "resting", "base_surface" => surface.id }
+        shot = File.join(@dir, "#{safe_slug(surface.id)}.png")
+        cdp.screenshot(shot, capture_beyond_viewport: true)
+        journeys = Deploy::MobileJourneyProbe.run(cdp, surface, @dir)
+        platform = Deploy::WebPlatformProbe.run(cdp, surface)
+        { surface:, payload:, screenshot: shot, journeys:, platform: }
       end
 
       def run_critique(captures, sources, anchors, graph:)
