@@ -21,7 +21,7 @@
 
   <figure class="store-promo-art-media">
     <% if local_assigns[:image_url].present? %>
-      <%= image_tag local_assigns[:image_url], alt: spec.product, class: "store-promo-art-image", loading: "eager" %>
+      <%= image_tag local_assigns[:image_url], alt: spec.product.join(", "), class: "store-promo-art-image", loading: "eager" %>
     <% else %>
       <div class="store-promo-art-placeholder" aria-hidden="true"></div>
     <% end %>
