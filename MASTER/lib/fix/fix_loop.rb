@@ -39,7 +39,7 @@ module Master
       # There is no state here for "a person must decide": nothing in the loop
       # detects one yet, and a state nothing emits is a promise the report
       # cannot keep.
-      TERMINAL_STATES = %i[done plateau blocked validation_failed delivery_failed timeout failed].freeze
+      TERMINAL_STATES = %i[done plateau blocked validation_failed delivery_failed timeout human_decision failed].freeze
 
       IDLE_SLEEP = 300
       STARTUP_DELAY = 90
