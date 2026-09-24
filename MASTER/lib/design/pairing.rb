@@ -37,7 +37,18 @@ module Master
 
       def for(school:, purpose: nil, root: Master::ROOT)
         key = purpose_key(purpose) || SCHOOL_DEFAULTS.fetch(school.to_sym)
-        [key, fetch(key, root:)]
+        spec = fetch(key, root:)
+        return [key, spec] if deployable?(spec, root:)
+
+        fallback = fetch("swiss_house", root:)
+        ["swiss_house", fallback]
+      end
+
+      def deployable?(spec, root: Master::ROOT)
+        %w[display body price metadata].all? do |role|
+          name = spec.fetch(role)
+          Master::Design::Typeface.available?(name, shipped_only: true, root:)
+        end
       end
 
       def purpose_key(purpose)
