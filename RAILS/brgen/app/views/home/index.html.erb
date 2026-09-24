@@ -18,7 +18,7 @@
   <% trending_tags = Hashtag.trending.where("usage_count > 0").limit(8) %>
   <% if trending_tags.any? %>
     <aside class="sidebar-card">
-      <%= tag.h2 t("nav.trending_tags", default: "Trending tags") %>
+      <%= tag.h2 t("nav.trending_tags") %>
       <ul class="tag-cloud">
         <% trending_tags.each do |tag| %>
           <li><%= link_to "##{tag.name}", hashtag_path(tag.name) %></li>

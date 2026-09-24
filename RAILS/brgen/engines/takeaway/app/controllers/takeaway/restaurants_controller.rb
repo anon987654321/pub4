@@ -107,10 +107,10 @@ class Takeaway::RestaurantsController < Takeaway::BaseController
       .order(rating: :desc, id: :asc)
       .distinct
       .first
-    return [nil, nil] unless restaurant
+    return [ nil, nil ] unless restaurant
 
     item = restaurant.menu_items.find { |menu_item| menu_item.available? && menu_item.photo.attached? }
-    [restaurant, item]
+    [ restaurant, item ]
   end
 
   def load_city_places

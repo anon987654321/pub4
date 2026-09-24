@@ -54,7 +54,7 @@ class RadioWhypImportTest < ActiveSupport::TestCase
       assert_equal 1, first.tracks
       assert_equal first.tracks, second.tracks
 
-      [@bergen, @los_angeles].each do |city|
+      [ @bergen, @los_angeles ].each do |city|
         playlist = Playlist::Playlist.find_by!(city: city, name: "Radio #{city.name}")
         assert playlist.public_access
         assert_equal 1, playlist.tracks.count
