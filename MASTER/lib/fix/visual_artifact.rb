@@ -17,6 +17,13 @@ module Master
         @root = root
       end
 
+      # Writes the pass's evidence and tells the bus where it went.
+      def keep(target:, pass:, captures:, image:, bus:)
+        write(target:, pass:, captures:, contact_sheet: image[:path]).tap do |artifact|
+          bus&.publish("fix_loop:visual_artifact", pass:, dir: artifact&.dig(:dir), files: artifact&.dig(:files))
+        end
+      end
+
       def write(target:, pass:, captures:, contact_sheet:)
         run_id = Time.now.utc.strftime("%Y%m%dT%H%M%S%6N")
         dir = File.join(@root, "MASTER", ".master", "visual_artifacts", run_id)
@@ -24,40 +31,8 @@ module Master
 
         entries = []
         add(entries, contact_sheet, dir, label: "contact-sheet", surface: "all", kind: "contact_sheet")
-        Array(captures).each do |capture|
-          surface = capture[:surface].id.to_s
-          add(entries, capture[:screenshot], dir, label: surface, surface:, kind: "surface")
-          Array(capture[:journeys]).each_with_index do |journey, index|
-            add(entries, journey["screenshot"], dir,
-                label: "#{surface}-journey-#{index + 1}-#{journey["kind"]}", surface:, kind: "journey")
-          end
-          evidence = capture[:visual_evidence]
-          next unless evidence
-
-          ghost = evidence[:ghost]
-          next unless ghost
-
-          {
-            screenshot: "ghost",
-            diff: "difference",
-            geometry: "geometry",
-            grid: "grid",
-            focus: "focus",
-            squint: "squint"
-          }.each do |key, label|
-            add(entries, ghost[key], dir, label: "#{surface}-#{label}", surface:, kind: label) if ghost[key]
-          end
-        end
-
-        manifest = {
-          "schema" => 1,
-          "created_at" => Time.now.utc.iso8601,
-          "target" => target.to_s,
-          "pass" => pass.to_i,
-          "files" => entries
-        }
-        manifest_path = File.join(dir, "manifest.json")
-        File.write(manifest_path, JSON.pretty_generate(manifest) + "\n")
+        Array(captures).each { |capture| add_capture(entries, capture, dir) }
+        manifest_path = write_manifest(dir, target:, pass:, entries:)
         FileUtils.ln_sf(File.basename(dir), File.join(File.dirname(dir), "latest"))
         { dir:, manifest: manifest_path, files: entries.size }
       rescue StandardError => e
@@ -66,6 +41,42 @@ module Master
       end
 
       private
+
+      # The ghost stack's layers, each copied under the label a person reads it by.
+      GHOST_LAYERS = {
+        screenshot: "ghost",
+        diff: "difference",
+        geometry: "geometry",
+        grid: "grid",
+        focus: "focus",
+        squint: "squint",
+      }.freeze
+
+      def add_capture(entries, capture, dir)
+        surface = capture[:surface].id.to_s
+        add(entries, capture[:screenshot], dir, label: surface, surface:, kind: "surface")
+        Array(capture[:journeys]).each_with_index do |journey, index|
+          add(entries, journey["screenshot"], dir,
+              label: "#{surface}-journey-#{index + 1}-#{journey["kind"]}", surface:, kind: "journey")
+        end
+        ghost = capture[:visual_evidence]&.dig(:ghost)
+        return unless ghost
+
+        GHOST_LAYERS.each do |key, label|
+          add(entries, ghost[key], dir, label: "#{surface}-#{label}", surface:, kind: label) if ghost[key]
+        end
+      end
+
+      def write_manifest(dir, target:, pass:, entries:)
+        manifest = {
+          "schema" => 1,
+          "created_at" => Time.now.utc.iso8601,
+          "target" => target.to_s,
+          "pass" => pass.to_i,
+          "files" => entries,
+        }
+        File.join(dir, "manifest.json").tap { |path| File.write(path, JSON.pretty_generate(manifest) + "\n") }
+      end
 
       def add(entries, source, dir, label:, surface:, kind:)
         return if entries.size >= MAX_FILES

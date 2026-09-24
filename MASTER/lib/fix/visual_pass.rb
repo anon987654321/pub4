@@ -164,22 +164,10 @@ module Master
         critique, image = run_critique(captures, sources, anchors, graph:)
         return inconclusive("#{critique.message}") if critique.err?
 
-        artifact = VisualArtifact.new(root: @root).write(
-          target: repo_relative(@root),
-          pass:,
-          captures:,
-          contact_sheet: image[:path]
-        )
-        @bus&.publish("fix_loop:visual_artifact", pass:, dir: artifact&.dig(:dir), files: artifact&.dig(:files))
+        artifact = keep_artifact(captures, image, pass)
+        findings = anchored_findings(critique, sources, anchors)
+        return findings if findings.is_a?(Result)
 
-        picks = Array(critique.value![:cherry_picks]).map(&:to_s).reject(&:empty?)
-        findings = picks.filter_map { |pick| finding_for(pick, sources, anchors) }
-        if picks.any? && findings.empty?
-          return Result.err(
-            "rendered visual review: INCONCLUSIVE — Council returned actionable visual picks, but none could be anchored to source evidence",
-            category: :inconclusive,
-          )
-        end
         @bus&.publish("fix_loop:visual_review", pass:, surfaces: captures.map { |c| c[:surface].id }, findings: findings.size, coverage: coverage[:ratio], graph: graph&.context)
         Result.ok(
           state: findings.empty? ? :clean : :findings,
@@ -187,6 +175,23 @@ module Master
           image:,
           artifact:,
           coverage: coverage.merge(captured: captures.map { |c| c[:surface].id }),
+        )
+      end
+
+      def keep_artifact(captures, image, pass)
+        VisualArtifact.new(root: @root).keep(target: repo_relative(@root), pass:, captures:, image:, bus: @bus)
+      end
+
+      # The council's picks that point at source, or an inconclusive Result
+      # when it picked something and none of it could be anchored.
+      def anchored_findings(critique, sources, anchors)
+        picks = Array(critique.value![:cherry_picks]).map(&:to_s).reject(&:empty?)
+        findings = picks.filter_map { |pick| finding_for(pick, sources, anchors) }
+        return findings unless picks.any? && findings.empty?
+
+        Result.err(
+          "rendered visual review: INCONCLUSIVE — Council returned actionable visual picks, but none could be anchored to source evidence",
+          category: :inconclusive,
         )
       end
 

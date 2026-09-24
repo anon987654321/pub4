@@ -17,22 +17,10 @@ module Master
 
         memory ||= Master::Core::Memory.new(risk:)
         model ||= Master::Core::Model.new(**{ model_id:, chat: agent_chat(container, bus:) }.compact)
-        checkpoint = lambda do |id:, root:, files:|
-          Master::Fix::Checkpoint.new(root:, dir: File.join(root, ".master", "checkpoints")).create(
-            label: "mission-#{id}", files:
-          )
-        end
-        mission = Master::Core::Mission.new(root:, bus:, checkpoint:).start!(
-          goal:, scope: root, model: model_id || model, effort: ENV.fetch("MASTER_EFFORT", "medium"),
-          plan: Master::Ground::ActivePlan.read(root),
-        )
+        mission = start_mission(goal, root:, bus:, model: model_id || model)
         begin
           mission.transition!(:plan, plan: Master::Ground::ActivePlan.read(root) || "fold plan: constitutional turn loop")
-          critique_runner = container ? CouncilCrit.runner_for(container) : nil
-          # Only the interactive session sets an asker; see Session#terminal_ask.
-          world = Master::Core::World.new(root:, ask: Fiber[:master_terminal_ask], critique_runner:,
-                                          undo: container&.fetch(:undo, nil))
-
+          world = build_world(root:, container:)
           mission.transition!(:execute)
           done = build_fold(model:, memory:, world:, max_turns:, observer:).run(goal)
           mission.transition!(:verify, summary: done.summary)
@@ -44,6 +32,26 @@ module Master
           mission.fail!(e)
           raise
         end
+      end
+
+      # Only the interactive session sets an asker; see Session#terminal_ask.
+      def build_world(root:, container:)
+        critique_runner = container ? CouncilCrit.runner_for(container) : nil
+        Master::Core::World.new(root:, ask: Fiber[:master_terminal_ask], critique_runner:,
+                                undo: container&.fetch(:undo, nil))
+      end
+
+      # A mission checkpoints the files it touches before the fold writes them.
+      def start_mission(goal, root:, bus:, model:)
+        checkpoint = lambda do |id:, root:, files:|
+          Master::Fix::Checkpoint.new(root:, dir: File.join(root, ".master", "checkpoints")).create(
+            label: "mission-#{id}", files:
+          )
+        end
+        Master::Core::Mission.new(root:, bus:, checkpoint:).start!(
+          goal:, scope: root, model:, effort: ENV.fetch("MASTER_EFFORT", "medium"),
+          plan: Master::Ground::ActivePlan.read(root),
+        )
       end
 
       # Core::Model speaks RubyLLM's chat shape and, left alone, calls RubyLLM
