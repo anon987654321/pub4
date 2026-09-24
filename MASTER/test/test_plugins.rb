@@ -42,4 +42,33 @@ class TestPlugins < Minitest::Test
     assert result[:wifi]
     assert result[:bluetooth]
   end
+
+  def test_observable_actions_are_declared_by_manifest
+    assert_equal %w[status inspect], Master::Plugin.info("social_browser").observe_actions
+    assert_equal %w[status scan], Master::Plugin.info("air_superiority").observe_actions
+  end
+
+  def test_observe_rejects_mutating_plugin_actions
+    assert_raises(Master::Plugin::PolicyError) do
+      Master::Plugin.observe("social_browser", action: "publish_owned")
+    end
+  end
+
+  def test_plugin_observe_adapter_returns_observation_result
+    governor = Object.new
+    governor.define_singleton_method(:permit?) { |*| Master::Result.ok(true) }
+    tool = Master::Io::PluginObserve.new(governor:, event_bus: nil)
+    result = tool.call(plugin: "air_superiority", action: "status", args: {})
+    assert result.ok?
+    assert_equal "air_superiority", result.value!.fetch(:plugin)
+  end
+
+  def test_plugin_observe_rejects_non_object_arguments
+    governor = Object.new
+    governor.define_singleton_method(:permit?) { |*| Master::Result.ok(true) }
+    tool = Master::Io::PluginObserve.new(governor:, event_bus: nil)
+    result = tool.call(plugin: "air_superiority", action: "status", args: [])
+    refute result.ok?
+    assert_equal :validation, result.category
+  end
 end

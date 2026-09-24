@@ -272,6 +272,22 @@ module Master
         end
       end
 
+      class PluginObserve < RubyLLM::Tool
+        include ToolForwarding
+
+        description "Observe a declared read-only plugin capability. Never grants plugin write authority."
+        param :plugin, desc: "Plugin id, such as social_browser or air_superiority", required: true
+        param :action, desc: "Declared observation action, such as status, inspect or scan", required: true
+        param :args, desc: "JSON object of observation arguments", required: false
+
+        def execute(plugin:, action:, args: "{}")
+          payload = args.is_a?(Hash) ? args : JSON.parse(args.to_s)
+          forward(plugin: plugin.to_s, action: action.to_s, args: payload)
+        rescue JSON::ParserError => e
+          "Error: invalid observation args JSON — #{e.message}"
+        end
+      end
+
       class DynamicHttp < RubyLLM::Tool
         include ToolForwarding
         description "Call a configured HTTP tool from data/tools.dynamic.yml."
