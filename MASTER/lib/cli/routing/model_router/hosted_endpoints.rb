@@ -31,6 +31,10 @@ module Master
 
             @hosted_index ||= hosted_endpoints.each_with_object({}) do |(name, spec), index|
               key = hosted_key(spec)
+              # An endpoint with no keyless rule answers nothing without a key,
+              # so it is not asked until one is set.
+              next if key.nil? && !spec.key?("keyless")
+
               hosted_ids(spec, key).each { |id| index["#{name}:#{id}"] ||= { base: spec["base"], key: } }
             end
           end

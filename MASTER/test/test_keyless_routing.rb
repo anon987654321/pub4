@@ -256,6 +256,29 @@ class TestKeylessRouting < Minitest::Test
     server&.close
   end
 
+  # Groq, Cerebras and NVIDIA wait in models.yml for a key; without one they
+  # are not asked, so a boot does not spend a probe on each.
+  def test_a_key_only_endpoint_is_not_asked_until_its_key_is_set
+    ENV.delete("MASTER_NO_POOL_PROBES")
+    asked = []
+    router = Master::CLI::Routing::ModelRouter.new(config: FakeConfig.new(model: Master.free_primary_model), root: Master::ROOT)
+    router.instance_variable_get(:@rules)["openai_compatible"] = {
+      "keyonly" => { "base" => "https://keyonly.invalid/v1", "key_env" => ["KEYONLY_TEST_KEY"] },
+    }
+    router.define_singleton_method(:get_json) { |url, **| asked << url; JSON.generate("data" => [{ "id" => "m" }]) }
+
+    assert_empty router.hosted_models
+    assert_empty asked
+
+    ENV["KEYONLY_TEST_KEY"] = "sk-x"
+    router.refresh_pool!
+    assert_equal ["keyonly:m"], router.hosted_models
+    assert_equal ["https://keyonly.invalid/v1/models"], asked
+  ensure
+    ENV.delete("KEYONLY_TEST_KEY")
+    ENV["MASTER_NO_POOL_PROBES"] = "1"
+  end
+
   def test_a_local_server_puts_the_models_it_lists_in_the_pool
     server = TCPServer.new("127.0.0.1", 0)
     body = JSON.generate("data" => [{ "id" => "Qwen/Qwen3-4B" }])

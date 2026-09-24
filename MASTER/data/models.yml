@@ -482,8 +482,9 @@ local_servers:
 # LLM7 serves its turbo tier without a key except the usage-based models,
 # measured 2026-09-24: GLM-5.3-Flash, codestral-latest, minimax-m2.7 and
 # mistral-Nemo-Instruct-2407 answered; every other chat model returned 401.
-# Candidates with larger free quotas that need a free signup key: Groq,
-# Cerebras, NVIDIA NIM (awesome-freellm-apis lists them).
+# Groq, Cerebras and NVIDIA NIM carry larger free quotas behind a free signup
+# key (limits as awesome-freellm-apis lists them, 2026-09); with no keyless
+# rule they are not asked until their key is set in ~/.config/master/env.
 openai_compatible:
   llm7:
     base: https://api.llm7.io/v1
@@ -491,6 +492,18 @@ openai_compatible:
     keyless:
       tier: turbo
       usage_based_only: false
+  # 30 requests/min, 14,400/day.
+  groq:
+    base: https://api.groq.com/openai/v1
+    key_env: [GROQ_API_KEY]
+  # 10 requests/min, 100/day, 1M tokens/day.
+  cerebras:
+    base: https://api.cerebras.ai/v1
+    key_env: [CEREBRAS_API_KEY]
+  # Up to 40 requests/min, including GLM-5.3 Flash.
+  nvidia:
+    base: https://integrate.api.nvidia.com/v1
+    key_env: [NVIDIA_API_KEY]
 
 # Language models Replicate hosts, asked as replicate:<owner>/<name> with
 # REPLICATE_API_TOKEN. Paid per call, so they sit behind the free lanes.
