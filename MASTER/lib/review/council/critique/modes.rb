@@ -41,6 +41,9 @@ module Master
                 "use first-screen composition facts as evidence, but do not confuse a metric threshold with visual quality",
                 "when the render has no actionable defect or evidence-backed improvement, state VISUAL_CLEAN explicitly",
                 "judge typography, hierarchy, spacing, alignment, density, grouping and composition in the render, not only in CSS",
+                "establish a purpose-led aesthetic direction before suggesting changes; preserve one memorable element instead of making every region compete",
+                "treat genericity signals such as gradients, rounded-card systems, shadow-card systems, pill overload and centered hero patterns as review prompts, not automatic violations",
+                "for a substantial redesign, compare three structurally different composition directions before choosing a repair: conservative evolution, structural reinterpretation, bold alternative",
               ],
             },
             sound: {
