@@ -41,6 +41,16 @@ class MobileAppRegistryTest < Minitest::Test
                  REGISTRY.all.map(&:key)
   end
 
+  def test_each_product_has_a_web_origin_android_package_and_ios_bundle
+    REGISTRY.all.each do |app|
+      assert_match(%r{\\Ahttps://}, app.url)
+      refute_empty app.android_package
+      refute_empty app.ios_bundle_id
+      refute_equal app.host, app.android_package
+      refute_equal app.host, app.ios_bundle_id
+    end
+  end
+
   def test_assetlinks_is_empty_until_a_real_signing_fingerprint_exists
     previous = ENV.delete("BRGEN_ANDROID_CERT_SHA256")
 
