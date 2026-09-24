@@ -10,6 +10,9 @@ struct Pub4MobileApp: App {
         WindowGroup {
             WebAppView(url: AppConfiguration.url)
                 .ignoresSafeArea(.container, edges: .bottom)
+                .onContinueUserActivity(NSUserActivityTypeBrowsingWeb) { activity in
+                    AppRouter.open(activity.webpageURL)
+                }
         }
     }
 }
@@ -25,6 +28,27 @@ final class AppConfiguration {
         }
         return url
     }
+}
+
+enum AppRouter {
+    static func open(_ url: URL?) {
+        guard let url, let host = url.host?.lowercased(),
+              host == AppConfiguration.host else { return }
+        NotificationCenter.default.post(
+            name: .pub4OpenURL,
+            object: url
+        )
+    }
+}
+
+extension AppConfiguration {
+    static var host: String {
+        url.host!.lowercased()
+    }
+}
+
+extension Notification.Name {
+    static let pub4OpenURL = Notification.Name("pub4.openURL")
 }
 
 final class AppDelegate: NSObject, UIApplicationDelegate {
@@ -51,6 +75,7 @@ struct WebAppView: UIViewRepresentable {
         webView.navigationDelegate = context.coordinator
         webView.allowsBackForwardNavigationGestures = true
         webView.scrollView.contentInsetAdjustmentBehavior = .never
+        context.coordinator.observe(webView)
         webView.load(URLRequest(url: url))
         return webView
     }
@@ -61,6 +86,24 @@ struct WebAppView: UIViewRepresentable {
     }
 
     final class Coordinator: NSObject, WKNavigationDelegate {
+        weak var webView: WKWebView?
+
+        func observe(_ webView: WKWebView) {
+            self.webView = webView
+            NotificationCenter.default.addObserver(
+                forName: .pub4OpenURL,
+                object: nil,
+                queue: .main
+            ) { [weak self] notification in
+                guard let url = notification.object as? URL else { return }
+                self?.webView?.load(URLRequest(url: url))
+            }
+        }
+
+        deinit {
+            NotificationCenter.default.removeObserver(self)
+        }
+
         func webView(
             _ webView: WKWebView,
             decidePolicyFor navigationAction: WKNavigationAction,
@@ -71,7 +114,7 @@ struct WebAppView: UIViewRepresentable {
                 return
             }
 
-            if url.scheme == "http" || url.scheme == "https" {
+            if url.scheme == "https", url.host?.lowercased() == AppConfiguration.host {
                 decisionHandler(.allow)
                 return
             }
