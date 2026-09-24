@@ -536,4 +536,4 @@ verdict = ["#{by_outcome.fetch(:passed, []).size} of #{outcomes.size} passed in 
 end
 verdict << "#{covered.size} covered by composites" unless covered.empty?
 say(verdict.join("; "))
-exit if failed.any? ? 1 : (by_outcome.fetch(:inconclusive, []).any? ? 3 : 0)
+exit(failed.any? ? 1 : (by_outcome.fetch(:inconclusive, []).any? ? 3 : 0))
