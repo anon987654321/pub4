@@ -86,6 +86,11 @@ module Master
           summary: "host, provider, and exposure health",
           detail: ["/doctor — keys, disk, git, pairing/gateway exposure."],
         },
+        "mission" => {
+          summary: "durable autonomous work state",
+          detail: ["/mission — show the current mission contract, stage, model, effort and goal.",
+                   "The mission persists across interruption; artifacts and checkpoints remain separate evidence."],
+        },
         "runtime" => {
           summary: "known-good runtime promotion and rollback",
           detail: ["/runtime status", "/runtime promote — record the current committed HEAD as known-good.",
