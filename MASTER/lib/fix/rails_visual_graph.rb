@@ -19,13 +19,14 @@ module Master
         def source_paths = sources
       end
 
-      attr_reader :apps, :routes, :edges
+      attr_reader :apps, :routes, :edges, :errors
 
       def initialize(root:)
         @root = root
         @apps = {}
         @routes = Hash.new { |h, k| h[k] = [] }
         @edges = Hash.new { |h, k| h[k] = [] }
+        @errors = []
       end
 
       def build
@@ -65,7 +66,8 @@ module Master
         route_count = @routes.values.sum(&:length)
         edge_count = @edges.values.sum(&:length)
         apps = @apps.keys.sort.join(", ")
-        "Rails visual graph: apps=#{apps}; routes=#{route_count}; dependency_edges=#{edge_count}"
+        errors = @errors.empty? ? "" : "; errors=#{@errors.size}"
+        "Rails visual graph: apps=#{apps}; routes=#{route_count}; dependency_edges=#{edge_count}#{errors}"
       end
 
       def coverage(surfaces, captures)
@@ -94,7 +96,10 @@ module Master
         return unless File.executable?(command)
 
         output, status = Timeout.timeout(15) { Open3.capture2e(command, "routes", chdir: root) }
-        return unless status.success?
+        unless status.success?
+          @errors << "routes #{app}: rails routes exited #{status.exitstatus}: #{output.lines.last(3).join.strip}"
+          return
+        end
 
         output.each_line do |line|
           match = line.match(ROUTE_RE)
@@ -104,8 +109,10 @@ module Master
           next if path.include?("(.:format)")
           @routes[app] << { method:, path: normalize_path(path), target: }
         end
-      rescue Errno::ENOENT, Timeout::Error, SystemCallError
-        nil
+      rescue Errno::ENOENT, Timeout::Error, SystemCallError => e
+        @errors << "routes #{app}: #{e.class}: #{e.message}"
+      rescue StandardError => e
+        @errors << "routes #{app}: #{e.class}: #{e.message}"
       end
 
       def discover_source_edges(app, root)
