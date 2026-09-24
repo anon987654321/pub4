@@ -20,6 +20,7 @@ module Master
       DECLINED = %i[no_proposal].freeze
       APPLIED = %i[applied commit_refused].freeze
       LOCK = Mutex.new
+      ANNOUNCED = Set.new
 
       def initialize(root:)
         @root = root
@@ -40,8 +41,11 @@ module Master
 
         return false if (stats["declined"].to_f / stats["asked"]) < RETIRE_RATIO
 
-        Master::Trace::Dmesg.once("fix0", "#{rule_id} retired from model repair: " \
-                                          "declined #{stats["declined"]} of #{stats["asked"]}")
+        # Once per rule: the counts still move while in-flight repairs land, so
+        # the line itself cannot be the key.
+        ANNOUNCED.add?(rule_id.to_s) && Master::Trace::Dmesg.status(
+          "fix0", "#{rule_id} retired from model repair: declined #{stats["declined"]} of #{stats["asked"]}",
+        )
         true
       end
 
