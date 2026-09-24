@@ -8,6 +8,7 @@ require "tmpdir"
 require_relative "../review/council/critique"
 require_relative "rails_visual_graph"
 require_relative "visual_usability"
+require_relative "visual_reference"
 require_relative "../../../RAILS/gates/support/mobile_journey_probe"
 require_relative "../../../RAILS/gates/support/web_platform_probe"
 
@@ -291,6 +292,7 @@ module Master
           Judge the render first. Source is supporting evidence.
           Apply the executable MASTER design/usability constitution below. These are laws, not a scoring checklist. Identify only laws supported by rendered evidence.
           #{Master::Fix::VisualUsability.context}
+          #{Master::Fix::VisualReference.context}
           Every actionable issue must name the applicable law id(s), surface/viewport, and a stable selector or visible text anchor.
           Look for actual opportunities in hierarchy, typography, measure, leading,
           whitespace, alignment, grouping, density, proportion, responsive composition,
