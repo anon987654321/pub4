@@ -4,6 +4,7 @@ require "fileutils"
 require "json"
 require "set"
 require_relative "visual_ghost_pages"
+require_relative "../design/visual_language"
 
 module Master
   module Fix
@@ -22,6 +23,7 @@ module Master
       GHOST_OPACITIES = [ 0.04, 0.06, 0.09, 0.12 ].freeze
       CURRENT_OPACITY = 0.72
       REGISTRATION_GRID_PX = 8
+      SQUINT_BLUR_PX = 14
       MAX_GEOMETRY_MARKERS = 24
       FOCUS_SCALE = 2
       FOCUS_PADDING_PX = 24
@@ -42,7 +44,7 @@ module Master
         history = history_dir(key)
         frames = record_frame(history, capture, pass)
         ghost = render_stack(surface:, state:, frames:, key:, cdp:)
-        { key:, history: frames, ghost:, drift: geometry_drift(frames), state: }
+        { key:, history: frames, ghost:, drift: geometry_drift(frames), design_drift: design_drift(frames), state: }
       rescue StandardError => e
         { key: key, history: [], ghost: nil, drift: [], state: state, error: "#{e.class}: #{e.message}" }
       end
@@ -78,6 +80,7 @@ module Master
           geometry: render_geometry(surface:, state:, frames:, key:, cdp:),
           grid: render_grid(surface:, state:, frames:, key:, cdp:),
           focus: render_focus(surface:, state:, frames:, key:, cdp:),
+          squint: render_squint(surface:, state:, frames:, key:, cdp:),
           label: "#{surface.id} | #{state} | #{frames.length} aligned passes",
         }
       end
@@ -124,6 +127,15 @@ module Master
         x = (rect["x"].to_f + rect["w"].to_f / 2.0 - w / 2.0).clamp(0, [width - w, 0].max)
         y = (rect["y"].to_f + rect["h"].to_f / 2.0 - h / 2.0).clamp(0, [height - h, 0].max)
         { x:, y:, w:, h:, scale: FOCUS_SCALE, label: "#{focus[:key]} · Δ #{focus[:magnitude].round(1)}px" }
+      end
+
+      def render_squint(surface:, state:, frames:, key:, cdp:)
+        return nil if frames.empty?
+
+        page = VisualGhostPages.squint(surface:, state:, image_path: frames.last, blur_px: SQUINT_BLUR_PX)
+        render_page("squint", key, page, cdp:)
+      rescue StandardError
+        nil
       end
 
       def render_grid(surface:, state:, frames:, key:, cdp:)
@@ -173,6 +185,15 @@ module Master
 
       # The elements that moved or retyped between the two newest frames, largest
       # first, then one structural row when elements appeared or disappeared.
+      def design_drift(frames)
+        return [] if frames.length < 2
+
+        older, newer = frames.last(2)
+        Master::Design::VisualLanguage.design_drift(json_for(older), json_for(newer))
+      rescue StandardError
+        []
+      end
+
       def geometry_drift(frames)
         return [] if frames.length < 2
 
