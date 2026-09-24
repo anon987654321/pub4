@@ -344,11 +344,12 @@ module Master
             return [] unless path.to_s.end_with?(".rb", ".rake")
 
             methods(code).filter_map do |start_line, body|
-              receivers = body.scan(/\b([a-z][a-zA-Z0-9_]*)\./).flatten
+              code_only = executable(body)
+              receivers = envied_receivers(code_only)
               next if receivers.size < 5
 
               dominant, count = receivers.tally.max_by { |_receiver, total| total }
-              local = body.scan(/(?:@|\bself\.)/).size
+              local = code_only.scan(/(?:@\w|\bself\.)/).size
               if dominant && count >= 4 && count > local
                 finding(line: start_line, message: "feature envy: method talks to #{dominant} #{count} times — move behavior closer to that object")
               end
@@ -357,7 +358,29 @@ module Master
 
           private
 
+          # Calls a String, Array or Hash answers are the language, not another
+          # object's data: `line.strip` four times is no envy of `line`.
+          CORE_METHODS = [String, Array, Hash, Integer, Float, Symbol, Enumerable, Comparable, Kernel, Object, NilClass]
+                         .flat_map(&:instance_methods).to_set { |name| name.to_s }.freeze
+
           def methods(code) = keyword_blocks(code, "def")
+
+          # The body past its def line, without comments or string contents.
+          def executable(body)
+            body.lines.drop(1).reject { |line| line.lstrip.start_with?("#") }.join
+                .gsub(/"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'/, '""')
+          end
+
+          # A receiver the method built itself, a local or a block variable, is
+          # its own working data. Counting those made 893 findings across MASTER
+          # and RAILS, and Opus returned every file it was sent unchanged.
+          def envied_receivers(code)
+            own = code.scan(/(?<![\w.@])([a-z_]\w*)\s*(?:\|\|)?=(?![=~>])/).flatten |
+                  code.scan(/\|([^|]*)\|/).flatten.flat_map { |params| params.scan(/[a-z_]\w*/) }
+            code.scan(/(?<![\w.@:])([a-z_]\w*)\.(?!\.)([a-z_]\w*[?!]?)/)
+                .reject { |receiver, called| own.include?(receiver) || CORE_METHODS.include?(called) }
+                .map(&:first)
+          end
         end
 
         class LazyClassRule < Rule

@@ -79,6 +79,19 @@ class TestFeatureEnvyRule < Minitest::Test
     RUBY
   end
 
+  # Its own locals and the language's own calls are the method's working
+  # material, not a neighbour's data.
+  def test_it_spares_locals_block_variables_and_core_calls
+    assert_empty flags(<<~RUBY)
+      def summarise(text)
+        row = fetch_row
+        row.total; row.currency; row.customer; row.placed_at; row.status
+        items.each { |item| item.name; item.price; item.qty; item.sku; item.tax }
+        text.strip; text.split; text.downcase; text.upcase; text.length
+      end
+    RUBY
+  end
+
   def test_it_ignores_a_file_that_is_not_ruby
     assert_empty flags(<<~RUBY, path: "lib/thing.txt")
       def summarise
