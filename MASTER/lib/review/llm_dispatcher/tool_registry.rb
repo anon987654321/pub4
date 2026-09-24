@@ -11,8 +11,10 @@ module Master
           return [] unless tool_capable?(selected_model)
 
           profile = Ground::Tool::Profile.current
+          evidence_mode = Fiber[:master_evidence_mode]
           @llm_tools_by_tier ||= {}
-          @llm_tools_by_tier[profile] ||= build_llm_tools(profile:)
+          cache_key = [profile, evidence_mode]
+          @llm_tools_by_tier[cache_key] ||= build_llm_tools(profile:)
         end
 
         def build_llm_tools(visitor: false, profile: nil)
