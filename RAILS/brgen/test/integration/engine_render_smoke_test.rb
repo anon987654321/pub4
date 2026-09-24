@@ -71,6 +71,43 @@ class EngineRenderSmokeTest < ActionDispatch::IntegrationTest
     assert_response :success, "marketplace index 500'd on a photo card: #{@response.body[0, 300]}"
   end
 
+  test "radio home exposes discovery and sharing instead of the tunnel-only shell" do
+    track = Playlist::Track.create!(
+      user: @user,
+      title: "Smoke radio",
+      artist: "Smoke artist",
+      source_type: "direct",
+      source_url: "https://example.com/smoke.mp3",
+      privacy: "public"
+    )
+
+    host! "radio.brgen.no"
+    get "/"
+    assert_response :success
+    assert_includes response.body, "radio-track-card"
+    assert_includes response.body, "Smoke radio"
+    refute_includes response.body, "radio-tunnel"
+    assert_includes response.body, "Share Smoke radio"
+  end
+
+  test "takeaway home renders the canonical promotional art with a photographed menu item" do
+    restaurant = Takeaway::Restaurant.create!(
+      user: @user,
+      name: "Smoke Kitchen",
+      address: "Smoke Street 1",
+      cuisine_type: "Pizza",
+      active: true
+    )
+    item = restaurant.menu_items.create!(name: "Margherita", price_cents: 15900, available: true)
+    attach_pixel(item.photo, "menu.png")
+
+    host! "takeaway.brgen.no"
+    get "/"
+    assert_response :success
+    assert_includes response.body, "store-promo-art"
+    assert_includes response.body, "Smoke Kitchen"
+  end
+
   test "vertical roots render" do
     {
       "tv.brgen.no" => "/",
