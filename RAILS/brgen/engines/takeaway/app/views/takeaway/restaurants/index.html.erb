@@ -8,13 +8,28 @@
     menu and order demo, because that is the true campaign. %>
 <%# A div, not a header: main > header h1 is the page-title rule, and it would
     shrink the campaign line to a page title. %>
-<div class="store-hero store-hero--alone" data-visitor-orientation>
-  <%= tag.h1 t("takeaway.order_food") %>
-  <%= tag.p t("takeaway.intro") %>
-  <%= tag.p safe_join([ tag.strong(number_with_delimiter(@pagy&.count.to_i)), t("takeaway.restaurant_count_suffix", count: @pagy&.count.to_i) ], " "),
-            class: "store-hero-count" %>
-  <%= link_to t("storefront.add_restaurant"), new_restaurant_path, class: "store-cta" if authenticated? %>
-</div>
+<% promo = if @promo_restaurant
+             Shared::PromotionalArt.build(
+               product: @promo_menu_item&.name || @promo_restaurant.name,
+               headline: t("takeaway.promo_headline"),
+               body: t("takeaway.promo_body", restaurant: @promo_restaurant.name),
+               price: @promo_menu_item&.price_display,
+               badge: @promo_restaurant.cuisine_type,
+               cta: t("takeaway.promo_cta")
+             )
+           end %>
+
+<% if promo %>
+  <%= render "shared/promotional_art",
+        art: promo,
+        image_url: (@promo_menu_item&.photo&.attached? ? main_app.url_for(@promo_menu_item.photo.variant(:card)) : nil),
+        url: restaurant_path(@promo_restaurant) %>
+<% else %>
+  <div class="store-hero store-hero--alone" data-visitor-orientation>
+    <%= tag.h1 t("takeaway.order_food") %>
+    <%= tag.p t("takeaway.intro") %>
+  </div>
+<% end %>
 
 <%= live_search_results frame_id: "takeaway-restaurants", results_partial: "takeaway/restaurants/live_search_results",
       label: t("search.restaurants_label"), target: StorefrontSearch::RESULTS, suggestions: StorefrontSearch::SUGGESTIONS %>
