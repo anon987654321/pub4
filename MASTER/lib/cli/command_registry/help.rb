@@ -34,6 +34,16 @@ module Master
             "what a repair would take on, without taking it on.",
           ],
         },
+        "plugin" => {
+          summary: "list and invoke installed MASTER plugins",
+          detail: [
+            "/plugin — list built-in plugins.",
+            "/plugin info <id> — show a plugin manifest.",
+            "/plugin run <id> <action> <json> — invoke a plugin action through the constitutional policy gate.",
+            "The social browser is limited to operator-owned or authorized accounts, explicit outbound consent and inbound replies; it does not bulk-message, farm friendships, bypass challenges or hide identity.",
+            "Air Superiority performs defensive Wi-Fi/Bluetooth observation and maintains only a local known-device baseline.",
+          ],
+        },
         "device" => {
           summary: "Android and Termux:API hardware capabilities",
           detail: ["/device — truthful hardware/API capability report.",

@@ -8,6 +8,8 @@ _master() {
     'fix:observe, critique, repair, observe again until it converges'
     'review:read-only — the council and the principle map'
     'status:one-frame health'
+    'plugin:list and invoke installed MASTER plugins'
+    'device:Android and Termux:API hardware capabilities'
     'undo:revert the last recorded change'
     'rollback:the same as undo'
     'commit:commit the named paths'
