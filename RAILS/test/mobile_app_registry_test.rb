@@ -41,6 +41,17 @@ class MobileAppRegistryTest < Minitest::Test
                  REGISTRY.all.map(&:key)
   end
 
+  def test_ios_project_contains_the_registry_products
+    project = File.read(File.expand_path("../../__NATIVE_IOS/project.yml", __dir__))
+
+    REGISTRY.all.each do |app|
+      assert_includes project, "MOBILE_APP_URL: #{app.url}"
+      assert_includes project, "MOBILE_APP_HOST: #{app.host}"
+      assert_includes project, "PRODUCT_BUNDLE_IDENTIFIER: #{app.ios_bundle_id}"
+      assert_includes project, "MOBILE_APP_NAME: #{app.name}"
+    end
+  end
+
   def test_each_product_has_a_web_origin_android_package_and_ios_bundle
     REGISTRY.all.each do |app|
       assert_match(%r{\Ahttps://}, app.url)
