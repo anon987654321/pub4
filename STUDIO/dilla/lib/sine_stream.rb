@@ -208,7 +208,6 @@ def kit_for(feel, bar)
   }
 end
 
-
 # Hats late, kicks early, against the same grid. Two clocks disagreeing is the
 # whole idea and the offsets are fractions of a sixteenth so they scale with
 # tempo.
@@ -1045,7 +1044,6 @@ def master_chain!(l, r)
   n.times { |i| l[i] = got[0][i]; r[i] = got[1][i] }
   (n...l.length).each { |i| l[i] = 0.0; r[i] = 0.0 }
 end
-
 
 # The vocal chain, which is not the pad chain.
 #

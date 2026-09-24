@@ -20,16 +20,16 @@ class TestChain < Minitest::Test
   # second-source-of-truth failure this tool already documents elsewhere.
   CAPS = {
     "black-forest-labs/flux-kontext-pro" => {
-      input_keys: %w[prompt aspect_ratio output_format safety_tolerance seed input_image]
+      input_keys: %w[prompt aspect_ratio output_format safety_tolerance seed input_image],
     },
     # FLUX 2 takes references as a LIST. A validator that knows only the
     # singular refuses every chain built on the current generation.
     "black-forest-labs/flux-2-max" => {
-      input_keys: %w[prompt input_images aspect_ratio output_format output_quality seed]
+      input_keys: %w[prompt input_images aspect_ratio output_format output_quality seed],
     },
     "black-forest-labs/flux-schnell" => {
-      input_keys: %w[prompt aspect_ratio output_format seed num_inference_steps]
-    }
+      input_keys: %w[prompt aspect_ratio output_format seed num_inference_steps],
+    },
   }.freeze
 
   def capability_for = ->(model) { CAPS.fetch(model, { input_keys: %w[prompt seed] }) }

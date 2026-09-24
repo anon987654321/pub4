@@ -13,10 +13,10 @@ class TestSlskdCrate < Minitest::Test
           "queueLength" => 2,
           "files" => [
             { "filename" => "break.flac", "size" => 10_000 },
-            { "filename" => "cover.jpg", "size" => 20_000 }
-          ]
-        }
-      ]
+            { "filename" => "cover.jpg", "size" => 20_000 },
+          ],
+        },
+      ],
     }
 
     results = SlskdCrate.audio_results(state)
@@ -28,7 +28,7 @@ class TestSlskdCrate < Minitest::Test
     results = [
       { "filename" => "a.mp3", "size" => 20_000, "free_upload_slot" => true, "queue_length" => 0 },
       { "filename" => "b.flac", "size" => 10_000, "free_upload_slot" => false, "queue_length" => 20 },
-      { "filename" => "c.wav", "size" => 10_000, "free_upload_slot" => true, "queue_length" => 1 }
+      { "filename" => "c.wav", "size" => 10_000, "free_upload_slot" => true, "queue_length" => 1 },
     ]
 
     assert_equal "b.flac", SlskdCrate.rank(results).first["filename"]

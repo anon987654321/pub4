@@ -97,7 +97,7 @@ module SlskdCrate
           "filename" => filename,
           "size" => Integer(file["size"] || 0),
           "free_upload_slot" => !!response["hasFreeUploadSlot"],
-          "queue_length" => Integer(response["queueLength"] || 0)
+          "queue_length" => Integer(response["queueLength"] || 0),
         }
       rescue ArgumentError
         nil

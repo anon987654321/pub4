@@ -440,9 +440,7 @@ Four verbs only measure. `beauty` scores a file's harmony and says what to try,
 `separate` splits a file into four stems with demucs, and `bed check` holds the
 bed's band curve against the reference record.
 
-
 ## Environment and rendering
-
 
 **One DNA table, several renderers.** Command aliases (`comfort`, `camel`, `warp`)
 are gone — those are ENV overlays on `RENDER_MODE=dilla`. Genre *renderers*
@@ -778,7 +776,6 @@ ruby dilla.rb ears a.wav --json           # the old metadata report
 Octave bands, LUFS, LRA, true peak, crest, stereo width, sub energy below
 25 Hz and air above 13 kHz, plus a spectrogram per file under `<output>/ears`.
 
-
 ## Full playlist demo
 
 ```sh
@@ -837,9 +834,7 @@ SPEAK=0 BARS=4 ruby -e '
 | `lib/music_gems.rb` | coltrane / head_music / midilib / wavefile |
 | `README.md` | Usage summary |
 
-
 ## Sample acquisition
-
 
 `ruby dilla.rb slskd "<query>"` can use a local
 [slskd](https://github.com/slskd/slskd) instance as an optional sample source.
@@ -871,9 +866,7 @@ copyright bypass.
 The slskd API contract is isolated in `lib/slskd_crate.rb`. If slskd changes,
 the renderer and the existing Dilla sample registry do not need to know.
 
-
 ## Reverse engineering notes
-
 
 This folder is for local analysis only. Audio, stems, and YouTube dumps stay
 gitignored. They are not the catalogue.

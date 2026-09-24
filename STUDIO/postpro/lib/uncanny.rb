@@ -42,7 +42,7 @@ module Postpro
     LAPLACIAN = [
       [0, -1, 0],
       [-1, 4, -1],
-      [0, -1, 0]
+      [0, -1, 0],
     ].freeze
 
     # Above this, in a 0..1 luminance, a pixel is a highlight rather than a
