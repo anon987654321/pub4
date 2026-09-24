@@ -97,6 +97,33 @@ laws:
     research:
       - name: "Operator Sovereignty over Aesthetics"
         url: "internal:operator_decision_log"
+plugins:
+  social_browser:
+    scope: external_web
+    account_scope: operator_owned_or_authorized
+    outbound_writes: explicit_consent_only
+    write_unit: one_explicit_action_per_invocation
+    unsolicited_bulk_messaging: false
+    automated_friend_farming: false
+    automated_following: false
+    identity_deception: false
+    captcha_or_security_challenge_bypass: false
+    session_credentials_stored_by_master: false
+    screenshot_evidence: required
+    host_allowlist: required
+    cooldown_seconds: 15
+  air_superiority:
+    scope: local_wireless_defense
+    mode: observation_and_local_baseline_only
+    write_access: local_known_list_only
+    packet_injection: false
+    deauthentication: false
+    disassociation: false
+    credential_capture: false
+    man_in_the_middle: false
+    exploitation: false
+    remote_control: false
+
 design_system:
   # Canonical material design values. This block is the only machine-readable
   # design-token authority; RAILS/shared/design_tokens.yml is a generated view.
