@@ -182,8 +182,8 @@ module Master
 
         [path] + Dir.glob(File.join(root, "app", "controllers", "**", "*.rb")).select do |candidate|
           File.read(candidate, encoding: "UTF-8").include?("def #{action}")
-        rescue StandardError
-          false
+        rescue StandardError => e
+          raise "visual graph: controller source unreadable #{candidate}: #{e.class}: #{e.message}"
         end
       end
 
