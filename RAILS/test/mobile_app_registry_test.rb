@@ -36,6 +36,11 @@ class MobileAppRegistryTest < Minitest::Test
     assert_equal :amber, REGISTRY.for_host("amber.fashion.").key
   end
 
+  def test_registry_covers_every_brgen_store_product_and_amber
+    assert_equal %i[brgen radio dating tv takeaway marketplace maps messenger amber],
+                 REGISTRY.all.map(&:key)
+  end
+
   def test_assetlinks_is_empty_until_a_real_signing_fingerprint_exists
     previous = ENV.delete("BRGEN_ANDROID_CERT_SHA256")
 
