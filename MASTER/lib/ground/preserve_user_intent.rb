@@ -44,10 +44,14 @@ module Master
       private
 
       def load_config
-        Master.load_yaml(Master::RULES_PATH).fetch("preserve_user_intent", {})
+        config = Master.load_yaml(Master::RULES_PATH)
+        section = config.fetch("preserve_user_intent")
+        raise "preserve_user_intent configuration must be a hash" unless section.is_a?(Hash)
+
+        section
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "PreserveUserIntent.load_config")
-        {}
+        raise "preserve_user_intent configuration unreadable: #{e.class}: #{e.message}"
       end
 
       def signature_change?(lines)
