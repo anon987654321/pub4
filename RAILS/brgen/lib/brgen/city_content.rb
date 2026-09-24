@@ -217,6 +217,27 @@ module Brgen
           [ "Klubben på tirsdag e den ekte varen.", "Enig. Æ slutta å gå i helgene for to år sia." ] ],
         [ "Tyholttårnet snurre fortsatt, eller?", "Sto og så på det i går og klarte itj å avgjøre om det gikk rundt.",
           [ "Restauranten snurre, tårnet står stille. Det e derfor du itj ser det.", "En runde tar en time. Du må stå der lenge for å merke det." ] ]
+      ],
+      # Plain American English. The one Southern California marker worth
+      # keeping is the article on freeways — "the 405", "the 10" — which
+      # nobody outside the region writes.
+      "lsangeles.com" => [
+        [ "Best taco truck east of the river?", "Been working my way through Boyle Heights for a year. I keep going back to the same al pastor spot on Cesar Chavez but I'm open to being proven wrong.",
+          [ "Name the spot or this turns into a fight.", "Go after 10pm. The trompo is at its best and the line is gone." ] ],
+        [ "The 405 at 4pm is a personality test", "Santa Monica to Sherman Oaks took me an hour and ten tonight. Eleven miles. At what point do we just admit the Sepulveda Pass is a parking lot?",
+          [ "Take Sepulveda Blvd and suffer on surface streets instead. Same time, less rage.", "Leave at 7pm or don't leave. That's the whole strategy." ] ],
+        [ "Griffith Observatory at sunset: how do you deal with parking?", "Tried to drive up Saturday and gave up at the Greek. Is there a sane way to get up there on a weekend?",
+          [ "DASH Observatory bus from the Vermont/Sunset Red Line stop. Fifty cents and no parking.", "Hike up from Fern Dell. Forty minutes and you earn the view." ] ],
+        [ "Earthquake kit: what's actually in yours?", "Had a little shaker last night and realized my kit is two water bottles and a flashlight with dead batteries. What do people actually keep?",
+          [ "A gallon of water per person per day, three days minimum. And shoes by the bed.", "Cash. When the power's out, card readers don't work." ] ],
+        [ "Hollywood or Santa Monica farmers market?", "Friends visiting next weekend and I want to take them to one. Which is worth the trip?",
+          [ "Hollywood on Sunday. Bigger, and the prepared food is better.", "Santa Monica on Wednesday if you can swing a weekday. That's where the restaurants buy." ] ],
+        [ "It's 95 in the Valley and 68 in Venice", "Same city, same afternoon, twenty-seven degrees apart. I will never get used to this.",
+          [ "The marine layer is the best thing about this place.", "Moved from Venice to North Hollywood and my AC bill tripled." ] ],
+        [ "Is the D Line out to Wilshire/La Brea worth it yet?", "Rode it for the first time last week. Clean, fast, weirdly empty. Anyone actually using it to commute?",
+          [ "I take it from Koreatown every day. Beats parking on Wilshire by a mile.", "It'll matter once it reaches Westwood. Until then it's a nice ride to the Tar Pits." ] ],
+        [ "Dodger Stadium: Top Deck or the bleachers?", "Going to my first game this season. I want the view but I also want the atmosphere.",
+          [ "Top Deck for the sunset over the hills. Bleachers for the noise.", "Get there early and walk the whole concourse. The view from behind home plate is free." ] ]
       ]
     }.freeze
 
