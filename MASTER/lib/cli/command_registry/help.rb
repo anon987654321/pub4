@@ -86,6 +86,19 @@ module Master
           summary: "clear the session transcript",
           detail: ["/clear — does not undo file changes."],
         },
+        "sessions" => {
+          summary: "list the in-memory conversation sessions",
+          detail: ["/sessions — list sessions; the current one is marked with *.",
+                   "/continue <id> or /resume <id> — switch to an existing session."],
+        },
+        "continue" => {
+          summary: "continue an existing conversation",
+          detail: ["/continue <id> — switch the active conversation.", "/resume <id> is an alias."],
+        },
+        "fork" => {
+          summary: "branch the current conversation",
+          detail: ["/fork [id] — clone the current conversation and continue in the new branch."],
+        },
         "orders" => {
           summary: "the objective ledger — the work that runs without being asked",
           detail: ["/orders", "/orders enable|disable|reset <name>", "/orders run",
@@ -126,7 +139,7 @@ module Master
       # /rollback is /undo registered twice, so help answers for it under the
       # name the user typed. It gets no topic of its own — two entries print the
       # same sentence twice in the summary, and the surface is one command.
-      ALIASES = { "rollback" => "undo" }.freeze
+      ALIASES = { "rollback" => "undo", "resume" => "continue" }.freeze
 
       def help_text(command = nil)
         key = command.to_s.strip.sub(/\A\//, "")
