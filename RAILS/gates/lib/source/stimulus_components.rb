@@ -79,11 +79,11 @@ module Deploy
         next if path.include?("/vendor/") || path.include?("/public/assets/") || path.include?("/node_modules/")
 
         body = File.read(path, encoding: "UTF-8")
-        body.scan(/data-controller\s*=\s*["']([^"']+)["']/).flatten.each do |controllers|
-          controllers.split(/\s+/).each do |controller|
+        body.to_enum(:scan, /data-controller\s*=\s*["']([^"']+)["']/).each do
+          match = Regexp.last_match
+          match[1].split(/\s+/).each do |controller|
             next if controller.empty?
-            offset = body.index(%(data-controller), body.index(controller) - 100)
-            line = body[0, offset || 0].count("\n") + 1
+            line = body[0, match.begin(0)].count("\n") + 1
             location = "#{path.sub(ROOT + '/', '')}:#{line}"
             usages[controller] << location unless usages[controller].include?(location)
           end
