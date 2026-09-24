@@ -64,6 +64,7 @@ module Master
           items << image_item(ghost[:diff], "#{ghost[:label]} | newest vs previous difference") if ghost[:diff]
           items << image_item(ghost[:geometry], "#{ghost[:label]} | geometry registration") if ghost[:geometry]
           items << image_item(ghost[:grid], "#{ghost[:label]} | registration grid") if ghost[:grid]
+          items << image_item(ghost[:focus], "#{ghost[:label]} | 2x focus registration") if ghost[:focus]
         end
         items
       end
