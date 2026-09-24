@@ -91,17 +91,46 @@ class TestFixConvergence < Minitest::Test
     def scanner.scan(*) = Master::Result.ok([])
     def scanner.scan_dir(*) = Master::Result.ok([])
 
-    out = Master::CLI::CommandRegistry.stub(:observe, ->(*, **kw) { seen << kw[:ctx][:args]; "clean" }) do
-      Master::CLI::CommandRegistry.dispatch_fix(
-        scanner:, fix_loop:, deliberation: nil, root: Master::ROOT, bus: nil,
-        ctx: { args: "lib/io --no-aesthetic" },
-      )
+    # The proof after a writing pass is MASTER's whole suite, which holds this
+    # test; stubbed, so the test measures the pass rather than the suite.
+    suites = ->(*) { [true, ["suites: 1/1 green"], 0] }
+    out = Operator::GateChain.stub(:suites, suites) do
+      Master::CLI::CommandRegistry.stub(:observe, ->(*, **kw) { seen << kw[:ctx][:args]; "clean" }) do
+        Master::CLI::CommandRegistry.dispatch_fix(
+          scanner:, fix_loop:, deliberation: nil, root: Master::ROOT, bus: nil,
+          ctx: { args: "lib/io --no-aesthetic" },
+        )
+      end
     end
 
     assert_equal 2, seen.size, "a fix observes before and after the repair"
     assert_equal 1, repaired.size, "the repair runs between the two readings"
     assert_includes out.lines.map(&:chomp), "observe"
     assert_includes out.lines.map(&:chomp), "re-observe"
+  end
+
+  # A suite run as a proof holds tests that run /fix; their proof must not
+  # start the suites again, or each level spawns the next without end.
+  def test_a_proof_started_inside_a_proof_is_skipped
+    pass = Master::CLI::Pipeline::Pass.allocate
+    ran = false
+    ENV["MASTER_IN_PROOF"] = "1"
+    name, body = Operator::GateChain.stub(:suites, ->(*) { ran = true; [true, [], 0] }) do
+      pass.send(:proof_section, Master::ROOT)
+    end
+
+    assert_equal "proof", name
+    assert_match(/already inside a proof run/, body)
+    refute ran, "the nested proof ran the suites"
+  ensure
+    ENV.delete("MASTER_IN_PROOF")
+  end
+
+  def test_a_proof_marks_its_children_and_restores_the_parent
+    pass = Master::CLI::Pipeline::Pass.allocate
+
+    assert_equal "1", pass.send(:inside_proof) { ENV["MASTER_IN_PROOF"] }
+    assert_nil ENV["MASTER_IN_PROOF"]
   end
 
   # The loop builds its own council: the test below injects one, and an

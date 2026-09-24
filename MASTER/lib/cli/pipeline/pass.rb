@@ -163,12 +163,18 @@ module Master
         # what proves each tree and this stage cannot drift from it.
         PROOF_TAIL = 12
 
+        # A proof runs whole suites, and a suite holds tests that run /fix, whose
+        # own proof would start the suites again; the child of a proof skips it.
+        PROOF_ENV = "MASTER_IN_PROOF"
+
         def proof_section(abs)
+          return ["proof", "proof skipped: already inside a proof run"] if ENV[PROOF_ENV] == "1"
+
           name, runner = proof_runner(abs)
           return ["proof", "no proof command for #{shell_target(abs)} — nothing registered"] unless runner
 
           ["proof", log_phase("gate0", "proof", nil) do
-            ok, out = runner.call
+            ok, out = inside_proof { runner.call }
             @failed_stages << "proof" unless ok
             proof_body(ok, out)
           end]
@@ -192,6 +198,14 @@ module Master
           "STUDIO" => File.join(Operator::GateChain::ROOT, "STUDIO"),
           "OPENBSD" => File.join(Operator::GateChain::ROOT, "OPENBSD"),
         }.freeze
+
+        def inside_proof
+          previous = ENV[PROOF_ENV]
+          ENV[PROOF_ENV] = "1"
+          yield
+        ensure
+          ENV[PROOF_ENV] = previous
+        end
 
         def proof_body(ok, out)
           lines = Array(out).map(&:to_s).reject(&:empty?)

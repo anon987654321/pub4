@@ -54,28 +54,23 @@ module Master
 
         @dir = Dir.mktmpdir("master-visual")
         graph = RailsVisualGraph.new(root: repo_root).build if rails_target?(target)
-        if graph&.errors&.any?
-          return Result.err(
-            "rendered visual review: INCONCLUSIVE — source graph discovery failed: #{graph.errors.first(4).join("; ")}",
-            category: :inconclusive,
-          )
-        end
+        return inconclusive("source graph discovery failed: #{graph.errors.first(4).join("; ")}") if graph&.errors&.any?
         surfaces = selected_surfaces(target:, pass:)
-        return Result.err("rendered visual review: INCONCLUSIVE — no declared surfaces", category: :inconclusive) if surfaces.empty?
+        return inconclusive("no declared surfaces") if surfaces.empty?
 
         captures = capture_surfaces(surfaces)
-        return Result.err("rendered visual review: INCONCLUSIVE — no surface was measured", category: :inconclusive) if captures.empty?
+        return inconclusive("no surface was measured") if captures.empty?
 
         coverage = graph_coverage(surfaces, captures)
-        return Result.err("rendered visual review: INCONCLUSIVE — missing rendered surfaces: #{coverage[:missing].join(", ")}", category: :inconclusive) if coverage[:missing].any?
+        return inconclusive("missing rendered surfaces: #{coverage[:missing].join(", ")}") if coverage[:missing].any?
 
         sources, anchors = candidate_sources(target:, files:, captures:, graph:)
-        return Result.err("rendered visual review: INCONCLUSIVE — no frontend source anchor", category: :inconclusive) if sources.empty?
+        return inconclusive("no frontend source anchor") if sources.empty?
 
         review_captures(captures, sources, anchors, pass, graph:, coverage:)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "fix.visual_pass", event_bus: @bus)
-        Result.err("rendered visual review: INCONCLUSIVE — #{e.class}: #{e.message}", category: :inconclusive)
+        inconclusive("#{e.class}: #{e.message}")
       end
 
       def cleanup
@@ -89,6 +84,8 @@ module Master
       end
 
       private
+
+      def inconclusive(reason) = Result.err("rendered visual review: INCONCLUSIVE — #{reason}", category: :inconclusive)
 
       def capture_surfaces(surfaces)
         captures = []
@@ -124,7 +121,7 @@ module Master
 
       def review_captures(captures, sources, anchors, pass, graph:, coverage:)
         critique, image = run_critique(captures, sources, anchors, graph:)
-        return Result.err("rendered visual review: INCONCLUSIVE — #{critique.message}", category: :inconclusive) if critique.err?
+        return inconclusive("#{critique.message}") if critique.err?
 
         picks = Array(critique.value![:cherry_picks]).map(&:to_s).reject(&:empty?)
         findings = picks.filter_map { |pick| finding_for(pick, sources, anchors) }
