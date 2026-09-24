@@ -33,6 +33,20 @@ class TestSelfCheck < Minitest::Test
     end
   end
 
+  class BrokenSelfCheckScanner
+    def scan_dir(*)
+      Master::Result.ok([[File.join(Master::ROOT, "lib", "broken.rb"),
+                          Master::Result.err("inner scanner failed", category: :infrastructure)]])
+    end
+  end
+
+  def test_inner_scan_failure_cannot_become_clean
+    report = Master::Fix::SelfCheck.new(root: Master::ROOT, scanner: BrokenSelfCheckScanner.new).quick
+
+    refute report.clean?
+    assert_match(/selfcheck: failed — .*inner scanner failed/, report.summary)
+  end
+
   def test_report_summary_reflects_a_scan_failure
     report = Master::Fix::SelfCheck::Report.new(total: 0, by_rule: {}, by_severity: {}, error: "boom", findings: [])
 
