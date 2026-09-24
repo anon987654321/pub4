@@ -58,7 +58,8 @@ module Shared
 
     def validate!
       raise ArgumentError, "promotional product is required" if @products.empty?
-      raise ArgumentError, "too many promotional products" if @products.size > @system.fetch("product").fetch("max_items")
+      max_items = @system.fetch("product").fetch("max_items")
+      raise ArgumentError, "too many promotional products" if @products.size > max_items
       raise ArgumentError, "promotional headline is required" if @headline.blank?
       raise ArgumentError, "unknown promotional layout: #{@layout}" unless @system.fetch("layouts").key?(@layout)
       raise ArgumentError, "unknown promotional background: #{@background}" unless @system.fetch("matte_backgrounds").key?(@background)
@@ -79,6 +80,7 @@ module Shared
         "matte background #{matte} with nearly uniform tone",
         "safe copy area #{layout.fetch("copy_zone")} kept visually quiet",
         "large soft studio source, neutral white balance",
+        "no gradient, no glow, no decorative props",
         "soft natural contact shadow only",
         "crisp product silhouette",
         "realistic material texture",
