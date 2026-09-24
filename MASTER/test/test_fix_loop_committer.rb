@@ -179,6 +179,35 @@ class TestFixLoopCommitter < Minitest::Test
     assert blocked?(bus)
   end
 
+  class BrokenBaselineGit < FakeGit
+    def changed_paths
+      raise "git status unavailable"
+    end
+  end
+
+  def test_baseline_failure_blocks_the_transaction
+    git = BrokenBaselineGit.new([], [])
+    committer = Master::Fix::FixLoop::Committer.new(git:, bus: FakeBus.new, root: @dir)
+
+    error = assert_raises(RuntimeError) { committer.baseline! }
+
+    assert_match(/cannot establish fix transaction baseline: .*git status unavailable/, error.message)
+  end
+
+  def test_lint_command_exception_blocks_the_commit
+    write_file("Gemfile", "source 'https://rubygems.org'\n")
+    write_file("lib/ok.rb", "OK = 1\n")
+    git = FakeGit.new([], ["lib/ok.rb"])
+    bus = FakeBus.new
+
+    Master::Io::Exec.stub(:capture3, ->(*) { raise "rubocop unavailable" }) do
+      run_committer(git, bus, "fix: ok")
+    end
+
+    assert_empty git.commits
+    assert blocked?(bus)
+  end
+
   def test_nothing_is_committed_without_a_baseline
     write_file("lib/ok.rb", "OK = 1\n")
     git = FakeGit.new(["lib/ok.rb"], ["lib/ok.rb"])
