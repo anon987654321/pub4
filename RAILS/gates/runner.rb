@@ -186,21 +186,19 @@ end
 # browser gate that ran has its own outcome to report.
 def report_browser_precondition(keys)
   wanted = keys.select { |key| needs(key).include?("browser") }
-  return if wanted.empty?
+  return [] if wanted.empty?
 
   chrome = begin
     require_relative "support/cdp_session"
     Deploy::CdpSession.available?
   rescue StandardError => e
-    # Every browser gate is skipped from here, and a skipped gate reads green.
-    # Which failure it was decides whether that is a missing Chrome or a broken
-    # session file.
     say("CDP unavailable (#{e.class}: #{e.message.lines.first.to_s.strip})")
     false
   end
-  return if chrome
+  return [] if chrome
 
   say("no Chrome, so #{wanted.size} browser gates measured nothing: #{wanted.join(', ')}")
+  wanted
 end
 
 def visual_contract_capture_args
@@ -497,7 +495,11 @@ errored = by_outcome.fetch(:errored, [])
 # you separately know Chrome was there. The committed visual manifests are the
 # argument for saying it out loud: eighteen declared states, three actual
 # pages, and every summary printed above them read passed.
-report_browser_precondition(gates_to_run)
+browser_inconclusive = report_browser_precondition(gates_to_run)
+browser_inconclusive.each { |key| outcomes[key] = :inconclusive }
+by_outcome = outcomes.keys.group_by { |key| outcomes[key] }
+failed = by_outcome.fetch(:failed, [])
+errored = by_outcome.fetch(:errored, [])
 
 # Printed before the verdict and independently of it, because it is the one line
 # that changes what the rest of the summary means. An errored gate blocked
@@ -534,4 +536,4 @@ verdict = ["#{by_outcome.fetch(:passed, []).size} of #{outcomes.size} passed in 
 end
 verdict << "#{covered.size} covered by composites" unless covered.empty?
 say(verdict.join("; "))
-exit failed.any? ? 1 : 0
+exit if failed.any? ? 1 : (by_outcome.fetch(:inconclusive, []).any? ? 3 : 0)
