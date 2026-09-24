@@ -161,7 +161,6 @@ class ConversationIsolationSpec < Minitest::Test
       assert_equal ["parent"], contents(session, Master::Trace::Session::LOCAL)
     end
   end
-end
 
   def test_fork_persists_without_persisting_visitors
     with_session do |session|
