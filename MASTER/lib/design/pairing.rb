@@ -48,7 +48,12 @@ module Master
         %w[display body price metadata].all? do |role|
           name = spec.fetch(role)
           Master::Design::Typeface.available?(name, shipped_only: true, root:)
-        end
+        end && Master::Design::Typeface.compatible?(
+          display: spec.fetch("display"),
+          body: spec.fetch("body"),
+          relationship: spec["strategy"],
+          root:,
+        )
       end
 
       def purpose_key(purpose)
