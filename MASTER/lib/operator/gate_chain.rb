@@ -186,8 +186,8 @@ module Operator
       section = File.read(latest).split("## cherry-picked").last.to_s
       section.lines.filter_map { |line| line.strip[/\A-\s+(.+)\z/, 1] }.reject(&:empty?)
     rescue StandardError => e
-      warn "council: the harvest under #{dir} did not read — #{e.class}: #{e.message}"
-      []
+      raise "council: harvest under #{dir} unreadable: #{e.class}: #{e.message}"
+    end
     end
 
     # Never in scan-only: that mode's promise is a shared checkout untouched.
