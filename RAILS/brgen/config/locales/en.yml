@@ -1,3 +1,15 @@
+radio:
+  name: Radio
+  page_title: Radio · brgen
+  kicker: Discover and share
+  intro: Listen to local sounds, rough mixes, sets and new releases.
+  navigation: Radio navigation
+  browse_tracks: Browse tracks
+  upload: Upload
+  sign_in_to_upload: Sign in to upload
+  empty_title: Nothing is playing yet
+  empty_body: Upload the first track and give Radio something to discover.
+
 ---
 en:
   errors:
