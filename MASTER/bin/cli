@@ -47,7 +47,7 @@ end
 def parse_initial_message_options(argv)
   options = {}
   parser = OptionParser.new do |opts|
-    opts.banner = "Usage: bin/cli [-m MSG] [--fast] [--web|--no-web] [--boot-status]"
+    opts.banner = "Usage: bin/cli [-m MSG] [--continue [ID]|--session ID|--fork [ID]|--sessions] [--fast] [--web|--no-web] [--boot-status]"
     opts.on("-h", "--help") do
       puts opts
       puts ""
@@ -58,6 +58,10 @@ def parse_initial_message_options(argv)
       exit 0
     end
     opts.on("-m", "--message TEXT") { |text| options[:message] = text }
+    opts.on("-c", "--continue [ID]") { |id| options[:message] = id.to_s.empty? ? "/continue" : "/continue #{id}" }
+    opts.on("-s", "--session ID") { |id| options[:message] = "/continue #{id}" }
+    opts.on("--fork [ID]") { |id| options[:message] = id.to_s.empty? ? "/fork" : "/fork #{id}" }
+    opts.on("--sessions") { options[:message] = "/sessions" }
     opts.on("--fold", "run the message through the core Fold, then exit") { ENV["MASTER_FOLD"] = "1" }
     opts.on("--web") { ENV["MASTER_WEB"] = "1" }
     opts.on("--no-web") { ENV["MASTER_WEB"] = "0" }
