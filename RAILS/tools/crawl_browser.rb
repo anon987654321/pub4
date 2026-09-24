@@ -80,8 +80,8 @@ unless chrome || options[:force]
            else
              "no Chrome/Chromium executable"
            end
-  puts "crawl-browser: skip — #{reason}"
-  exit 0
+  puts "crawl-browser: inconclusive — #{reason}"
+  exit 3
 end
 
 begin
