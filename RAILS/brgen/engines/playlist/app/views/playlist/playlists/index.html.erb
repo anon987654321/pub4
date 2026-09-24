@@ -11,7 +11,7 @@
     <% if authenticated? %>
       <%= link_to t("radio.upload"), new_hosted_track_path, class: "radio-home-link radio-home-link--primary" %>
     <% else %>
-      <%= link_to t("radio.sign_in_to_upload"), new_session_path, class: "radio-home-link radio-home-link--primary" %>
+      <%= link_to t("radio.sign_in_to_upload"), main_app.new_session_path, class: "radio-home-link radio-home-link--primary" %>
     <% end %>
   </nav>
 </header>
