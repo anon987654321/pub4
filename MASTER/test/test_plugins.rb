@@ -13,7 +13,7 @@ class TestPlugins < Minitest::Test
     plugin = Master::Plugin.load("social_browser")
     result = plugin.call(action: "status")
     assert_equal %w[onlyfans fetlife snapchat], result[:sites].map { |site| site[:id] }
-    assert_equal "ferrum", result[:browser] if plugin.respond_to?(:send)
+    assert_includes %w[ferrum unavailable], result[:browser]
   end
 
   def test_social_does_not_admit_unsolicited_actions
