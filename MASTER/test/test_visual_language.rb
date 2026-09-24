@@ -84,6 +84,13 @@ class VisualLanguageTest < Minitest::Test
     after["elements"][1]["border_radius"] = "4px"
     drift = Master::Design::VisualLanguage.design_drift(before, after)
     assert drift.any? { |row| row.include?("type sizes changed") }
+    persisted_before = JSON.parse(JSON.generate(Master::Design::VisualLanguage.fingerprint(before)))
+    persisted_after = JSON.parse(JSON.generate(Master::Design::VisualLanguage.fingerprint(after)))
+    persisted_drift = Master::Design::VisualLanguage.design_drift(
+      {"design_fingerprint" => persisted_before},
+      {"design_fingerprint" => persisted_after}
+    )
+    assert persisted_drift.any? { |row| row.include?("type sizes changed") }
     assert drift.any? { |row| row.include?("shape language changed") }
   end
 end
