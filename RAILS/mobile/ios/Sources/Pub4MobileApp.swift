@@ -70,6 +70,7 @@ struct WebAppView: UIViewRepresentable {
     func makeUIView(context: Context) -> WKWebView {
         let configuration = WKWebViewConfiguration()
         configuration.defaultWebpagePreferences.allowsContentJavaScript = true
+        configuration.userContentController.add(context.coordinator, name: "pub4Share")
 
         let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = context.coordinator
@@ -85,7 +86,7 @@ struct WebAppView: UIViewRepresentable {
         webView.load(URLRequest(url: url))
     }
 
-    final class Coordinator: NSObject, WKNavigationDelegate {
+    final class Coordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
         weak var webView: WKWebView?
 
         func observe(_ webView: WKWebView) {
@@ -102,6 +103,43 @@ struct WebAppView: UIViewRepresentable {
 
         deinit {
             NotificationCenter.default.removeObserver(self)
+        }
+
+        func userContentController(
+            _ userContentController: WKUserContentController,
+            didReceive message: WKScriptMessage
+        ) {
+            guard message.name == "pub4Share",
+                  let payload = message.body as? [String: Any] else { return }
+
+            let title = payload["title"] as? String ?? ""
+            let text = payload["text"] as? String ?? ""
+            let url = payload["url"] as? String ?? ""
+            let shareItems = [title, text, url].filter { !$0.isEmpty }
+            guard !shareItems.isEmpty else { return }
+
+            let controller = UIActivityViewController(
+                activityItems: shareItems,
+                applicationActivities: nil
+            )
+
+            guard let presenter = UIApplication.shared.connectedScenes
+                .compactMap({ $0 as? UIWindowScene })
+                .flatMap({ $0.windows })
+                .first(where: { $0.isKeyWindow })?.rootViewController else { return }
+
+            var top = presenter
+            while let next = top.presentedViewController { top = next }
+            if let popover = controller.popoverPresentationController {
+                popover.sourceView = top.view
+                popover.sourceRect = CGRect(
+                    x: top.view.bounds.midX,
+                    y: top.view.bounds.maxY - 1,
+                    width: 1,
+                    height: 1
+                )
+            }
+            top.present(controller, animated: true)
         }
 
         func webView(
