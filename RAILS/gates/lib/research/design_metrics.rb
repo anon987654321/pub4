@@ -404,7 +404,7 @@ module Deploy
         end
       end
     rescue StandardError => e
-      @result.warn("design_metrics browser: #{e.class}: #{e.message}")
+      @result.inconclusive!("design_metrics browser: #{e.class}: #{e.message}")
     end
     def read_css(path)
       File.file?(path) ? File.read(path) : ""
