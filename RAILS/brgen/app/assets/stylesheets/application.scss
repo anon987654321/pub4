@@ -779,8 +779,8 @@ a.feed-tab { text-decoration: none; }
 .compose-hint details summary { cursor: pointer; min-height: var(--tap-min); display: flex; align-items: center; }
 
 .compose-avatar {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   border-radius: var(--radius-pill);
   background: var(--hover);
   flex-shrink: 0;
@@ -1493,7 +1493,7 @@ label.compose-action:hover { color: var(--text); }
 }
 
 .messenger-typing {
-  min-height: 44px;
+  min-height: 16px;
   margin: 0;
   color: var(--text-secondary);
   font-size: var(--text-xs);
@@ -1757,8 +1757,8 @@ label.compose-action:hover { color: var(--text); }
 
 /* 32px: the pill stays thin, and the avatar sets its height. */
 .compose-trigger .compose-avatar {
-  width: 44px;
-  height: 44px;
+  width: 32px;
+  height: 32px;
   font-size: var(--text-sm, 0.875rem);
 }
 
@@ -2063,8 +2063,8 @@ body[class*="vertical-"] .compose-launcher {
 }
 
 .mobile-sheet-handle {
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 4px;
   border-radius: var(--radius-pill);
   background: var(--border);
   justify-self: center;
@@ -2462,8 +2462,8 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 .feed-card:hover { background: var(--hover-subtle); }
 
 .feed-card-avatar {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: var(--surface-elevated);
   flex: 0 0 40px;
@@ -3182,7 +3182,7 @@ body.vertical-marketplace .search {
   position: absolute;
   transform: scale(3);
   width: 56px;
-  height: 44px;
+  height: 38px;
   margin-inline-start: -20px;
 }
 
@@ -3370,7 +3370,7 @@ a.deal-card,
   inset-inline-start: 4px;
   display: inline-flex;
   align-items: center;
-  min-height: 44px;
+  min-height: 24px;
   padding-inline: 8px;
   border-radius: var(--radius-xs);
   background: var(--store-red);
@@ -3489,7 +3489,7 @@ a.deal-card,
   display: inline-flex;
   align-items: center;
   max-width: 100%;
-  min-height: 44px;
+  min-height: 24px;
   padding-inline: 8px;
   overflow: hidden;
   border-radius: var(--radius-xs);
@@ -4166,8 +4166,8 @@ a.deal-card,
 .nearby-alert-body { display: flex; align-items: center; gap: 8px; flex: 1; font-size: var(--text-base); }
 
 .nearby-alert-dot {
-  width: 44px;
-  height: 44px;
+  width: 8px;
+  height: 8px;
   border-radius: var(--radius-sm);
   background: var(--text-secondary);
   flex-shrink: 0;
@@ -4425,8 +4425,8 @@ a.deal-card,
   /* 32px clears the WCAG 24px floor but not Fitts's 44px: it is the largest
      this can go without eating most of the 80px thumbnail it sits on
      (design_rules.yml ux_laws.fitts). */
-  width: 44px;
-  height: 44px;
+  width: 32px;
+  height: 32px;
   font-size: var(--text-xs);
   line-height: 1.5;
   cursor: pointer;
@@ -4559,7 +4559,7 @@ a.deal-card,
 
 .field-error {
   border-color: var(--color-danger);
-  border-width: 44px;
+  border-width: 2px;
 }
 
 /* Layout utilities */
@@ -5430,8 +5430,8 @@ body[class*="vertical-"] main > section {
 }
 
 .map-marker {
-  width: 44px;
-  height: 44px;
+  width: 16px;
+  height: 16px;
   display: grid;
   place-items: center;
   cursor: pointer;
@@ -6120,8 +6120,8 @@ font-size: clamp(12px, 3vw, var(--text-sm));
   position: fixed;
   inset-block-start: -1000px;
   inset-inline-start: -1000px;
-  width: 44px;
-  height: 44px;
+  width: 1px;
+  height: 1px;
   opacity: 0;
   pointer-events: none;
   z-index: -1;
@@ -6330,7 +6330,7 @@ body.vertical-playlist .playlist-details {
 }
 
 .playlist-scrub {
-  height: 44px;
+  height: 6px;
   border-radius: var(--radius-pill);
   background: var(--edge-strong);
   overflow: hidden;
@@ -6737,7 +6737,7 @@ body.vertical-takeaway .eta-badge--cancelled {
 /* Real progress fill (order stage / total stages) — not a looping
    animation, just the actual state rendered as width. */
 body.vertical-takeaway .order-progress {
-  height: 44px;
+  height: 4px;
   margin-block: var(--space-3);
   border-radius: var(--radius-pill);
   background: var(--surface-elevated);
@@ -7637,8 +7637,8 @@ body.vertical-messenger .disappearing-settings select {
    default, lit in the vertical's own accent once a duration is set. */
 body.vertical-messenger .disappearing-badge {
   display: inline-block;
-  width: 44px;
-  height: 44px;
+  width: 6px;
+  height: 6px;
   margin-inline-end: var(--space-2);
   border-radius: 50%;
   background: var(--msg-border);
@@ -7780,7 +7780,7 @@ body.vertical-messenger #typing-indicator[data-active="true"]::before {
   content: "";
   display: inline-block;
   width: 2rem;
-  height: 44px;
+  height: 2px;
   margin-inline-end: 4px;
   vertical-align: middle;
   background: var(--msg-accent);
