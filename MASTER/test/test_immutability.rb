@@ -60,6 +60,23 @@ class TestImmutability < Minitest::Test
     end
   end
 
+  def test_unreadable_checksums_are_not_treated_as_missing
+    with_fixture do |root|
+      path = File.join(root, "data", "checksums.yml")
+      File.write(path, "data/: bad
+")
+      File.chmod(0o000, path) unless Process.uid.zero?
+
+      skip "root can still read chmod 000" if File.readable?(path)
+
+      assert_raises(Master::Ground::Immutability::Violation) do
+        Master::Ground::Immutability.new(root:).verify!
+      end
+    ensure
+      File.chmod(0o600, path) if defined?(path) && File.file?(path)
+    end
+  end
+
   def test_missing_checksums_is_explicit
     with_fixture do |root|
       result = Master::Ground::Immutability.new(root:).verify!
