@@ -8,7 +8,7 @@ module Master
         Array(data.dig("absolute", "sacred_paths")).freeze
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "path_guard.sacred_paths")
-        %w[data/ data/SOUL.md lib/review/scan/ bin/cli].freeze
+        raise "path guard: sacred-path policy unreadable: #{e.class}: #{e.message}"
       end
 
       def self.inside_root?(full, root)
