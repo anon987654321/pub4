@@ -237,6 +237,20 @@ class TestRuleLoopPolicy < Minitest::Test
     end
   end
 
+  def test_best_candidate_requires_rescanning_even_for_one_candidate
+    Dir.mktmpdir do |root|
+      path = File.join(root, "sample.rb")
+      File.write(path, "violation\n")
+      scanner = RecordingScanner.new
+      loop = build_loop(root:, bus: FakeBus.new, scanner:, agent: Agent.new)
+
+      best = loop.__send__(:best_candidate, ["clean\n"], path)
+
+      assert_equal "clean\n", best
+      assert_operator scanner.paths.size, :>=, 2, "baseline and candidate must both be measured"
+    end
+  end
+
   def test_best_candidate_rejects_candidates_that_increase_violations
     Dir.mktmpdir do |root|
       path = File.join(root, "sample.rb")
@@ -247,6 +261,23 @@ class TestRuleLoopPolicy < Minitest::Test
       best = loop.__send__(:best_candidate, %W[violation\nviolation\n clean\n], path)
 
       assert_equal "clean\n", best
+    end
+  end
+
+  class BrokenRescanScanner < RecordingScanner
+    def scan(path, rules: nil)
+      @paths << path
+      Master::Result.err("rescan unavailable", category: :infrastructure)
+    end
+  end
+
+  def test_best_candidate_rejects_all_candidates_when_rescan_fails
+    Dir.mktmpdir do |root|
+      path = File.join(root, "sample.rb")
+      File.write(path, "violation\n")
+      loop = build_loop(root:, bus: FakeBus.new, scanner: BrokenRescanScanner.new, agent: Agent.new)
+
+      assert_nil loop.__send__(:best_candidate, ["clean\n"], path)
     end
   end
 
