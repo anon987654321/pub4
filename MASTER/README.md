@@ -250,6 +250,27 @@ On Android/Termux, MASTER can continuously publish normalized device observation
 
 The perception loop is bounded and stoppable. It does not automatically activate the camera, microphone, or location. Those remain explicit operations. Set `MASTER_DEVICE=0` to disable Android perception for a process.
 
+## Plugins
+
+MASTER loads small plugins from `plugins/*/plugin.yml`. The manifest names the plugin and its entrypoint; behavior remains ordinary Ruby, and external plugin directories are disabled unless `MASTER_ALLOW_EXTERNAL_PLUGINS=1` is set.
+
+Two built-in plugins ship with the runtime.
+
+`social_browser` uses Ferrum and real browser screenshots. It can inspect an allowed HTTPS host, open a visible login session, publish to an operator-owned or explicitly authorized account, and reply to an inbound conversation. Each outbound write requires explicit consent, runs against one named account, records before/typed/after screenshots, enforces a per-account cooldown, and stops on CAPTCHA or security challenges. It deliberately does not implement unsolicited bulk messaging, automated friend farming, automated following, identity deception, challenge bypass or credential collection.
+
+`air_superiority` is the wireless-defense plugin. It observes local Wi-Fi and Bluetooth state on macOS, Linux and OpenBSD, compares observations with a local known-device baseline, and reports explainable anomalies. Its write surface is limited to that local baseline; packet injection, deauthentication, disassociation, credential capture, man-in-the-middle behavior and exploitation are not plugin operations.
+
+The CLI stays one small surface:
+
+```text
+/plugin
+/plugin list
+/plugin info <id>
+/plugin run <id> <action> <json>
+```
+
+Plugin admission goes through the same constitutional handshake as the rest of MASTER, and the plugin policy is declared in `data/rules.yml`. This keeps plugin code extensible without making each plugin a second constitution.
+
 ## Whole-tree verification
 
 From `MASTER/`, `rake test:all_trees` discovers the repository's top-level trees, checks Ruby syntax, parses YAML and JSON, and runs every discovered Ruby test file under a tree's `test/` directory. It is a smoke-and-contract gate across MASTER, OPENBSD, RAILS, STUDIO and any future top-level tree; it does not pretend that syntax or smoke tests replace application-specific integration tests.
