@@ -266,6 +266,101 @@ design_system:
     letter_spacing_tight: "-0.01em"
     line_height_tight: "1.25"
     line_height_relaxed: "1.6"
+
+  # Storefront promotional-art system for Marketplace and Takeaway. The image is
+  # generated without typography; Rails places real copy over it. This keeps
+  # product art reusable across campaigns and keeps prices/headlines exact.
+  promotional_art:
+    layouts:
+      hero:
+        aspect_ratio: "16:9"
+        copy_zone: "42%"
+        product_zone: "58%"
+        safe_inset: "32px"
+      campaign:
+        aspect_ratio: "3:2"
+        copy_zone: "40%"
+        product_zone: "60%"
+        safe_inset: "28px"
+      tile:
+        aspect_ratio: "1:1"
+        copy_zone: "100%"
+        product_zone: "100%"
+        safe_inset: "20px"
+      portrait:
+        aspect_ratio: "4:5"
+        copy_zone: "44%"
+        product_zone: "56%"
+        safe_inset: "24px"
+    matte_backgrounds:
+      chalk: "#f7f5ef"
+      paper: "#efede8"
+      stone: "#e2ded5"
+      sand: "#e9decb"
+      charcoal: "#292725"
+    product:
+      max_items: 4
+      primary_share: "0.58"
+      secondary_share: "0.30"
+      edge_clearance: "8%"
+      object_fit: "contain"
+      lighting: "large soft studio source, neutral white balance"
+      shadow: "soft natural contact shadow only"
+    typography:
+      eyebrow:
+        size: "0.8125rem"
+        weight: 600
+        leading: "1.25"
+      headline:
+        size: "clamp(2rem, 5vw, 4rem)"
+        weight: 400
+        leading: "1"
+        max_lines: 2
+      body:
+        size: "1rem"
+        weight: 400
+        leading: "1.5"
+        max_lines: 3
+      price:
+        size: "clamp(2rem, 4vw, 3rem)"
+        weight: 800
+        leading: "1"
+      cta:
+        max_words: 4
+    copy:
+      max_headline_characters: 54
+      max_body_characters: 120
+      max_badge_words: 4
+      max_cta_words: 4
+    generation:
+      image_only: true
+      preserve_product_identity: true
+      background: "clean matte studio paper, nearly uniform tone"
+      composition: "product separated from copy zone with generous negative space"
+      typography_in_image: false
+      fake_logo_in_image: false
+      fake_badge_in_image: false
+      watermark_in_image: false
+      gradients: false
+      glow: false
+      decorative_props: false
+      busy_background: false
+      hard_crop: false
+      product_reflection: false
+      prompt_negative:
+        - "text"
+        - "typography"
+        - "headline"
+        - "price text"
+        - "sale badge"
+        - "watermark"
+        - "busy background"
+        - "decorative props"
+        - "dramatic glow"
+        - "lens flare"
+        - "hard crop"
+        - "cut-off product"
+
   face_root:
     anchors:
       c_text: "oklch(86% 0.02 300)"
