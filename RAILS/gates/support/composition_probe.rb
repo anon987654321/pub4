@@ -173,7 +173,7 @@ module Deploy
               "trigger" => candidate.fetch("label"),
               "trigger_selector" => candidate.fetch("selector"),
               "field" => field,
-              "state_signature" => state_signature(cdp),
+              "state_signature" => state_signature(cdp, candidate.fetch("selector"))
             }
             shot = File.join(dir, "#{safe_slug(draft_surface.id)}.png")
             cdp.screenshot(shot, capture_beyond_viewport: true)
@@ -193,15 +193,16 @@ module Deploy
       end
 
       def state_signature(cdp, selector)
-        JSON.parse(cdp.evaluate(<<~JS, selector: selector.to_json).to_s)
+        selector_json = selector.to_json
+        JSON.parse(cdp.evaluate(<<~JS).to_s)
           (() => {
             const visible = (el) => {
               const r = el.getBoundingClientRect();
               const s = getComputedStyle(el);
               return r.width > 1 && r.height > 1 && s.display !== "none" && s.visibility !== "hidden";
             };
-            const candidate = document.querySelector(#{selector});
-            const controlled = candidate?.getAttribute("aria-controls")?.split(/s+/).filter(Boolean).map((id) => {
+            const candidate = document.querySelector(#{selector_json});
+            const controlled = candidate?.getAttribute("aria-controls")?.split(/\s+/).filter(Boolean).map((id) => {
               const el = document.getElementById(id);
               return el ? {
                 id,
