@@ -51,6 +51,7 @@ module Master
           "plugin" => command(:dispatch_plugin),
           "pair" => command(:dispatch_pair, root),
           "runtime" => command(:dispatch_runtime, d[:root]),
+          "mission" => command(:dispatch_mission, d[:root]),
           "doctor" => command(:dispatch_doctor, root),
           "rules" => command(:dispatch_rules, root),
           "law" => command(:dispatch_law),
@@ -241,6 +242,28 @@ module Master
       end
 
       def dispatch_undo(undo, ctx: nil) = undo_line("reverted", undo.undo!)
+
+      def dispatch_mission(root, ctx: nil)
+        record = Master::Core::Mission.current(root:)
+        arg = arg_for(ctx)
+        return "mission0: none" unless record
+
+        case arg
+        when "", "status"
+          [
+            "mission: #{record["id"]}",
+            "state: #{record["state"]}",
+            "stage: #{record["stage"]}",
+            "model: #{record["model"]}",
+            "effort: #{record["effort"]}",
+            "goal: #{record["goal"]}",
+          ].join("\n")
+        else
+          "mission  mission status"
+        end
+      rescue StandardError => e
+        "mission0: #{e.class}: #{e.message}"
+      end
 
       def dispatch_runtime(root, ctx: nil)
         runtime = Ground::KnownGood.new(root:)
