@@ -54,7 +54,6 @@ module Master
       Master::Ground::Swallow.log(e, context:)
       raise "data file unreadable: #{name}: #{e.class}: #{e.message}"
     end
-    end
 
     def validate_data!(root: ROOT, bus: nil)
       paths = Dir.glob(File.join(root, "data", "**/*.yml")).sort

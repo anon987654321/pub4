@@ -74,7 +74,6 @@ module Master
           Master::Ground::Swallow.log(e, context: "rule_loop.test_file_for", event_bus: @bus, path:)
           raise "rule_loop: test discovery failed for #{path}: #{e.class}: #{e.message}"
         end
-        end
       end
     end
   end
