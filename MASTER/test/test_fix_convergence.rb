@@ -57,7 +57,17 @@ class TestFixConvergence < Minitest::Test
     )
     runner = loop.instance_variable_get(:@pass_runner)
     runner.instance_variable_set(:@council, council) if council
+    runner.instance_variable_set(:@resource_budget, calm_budget)
     loop
+  end
+
+  # ResourceBudget counts every process on the host, and a macOS desktop idles
+  # above its process_count limit, so an unstubbed budget sheds model work and
+  # these runs plateau on the machine rather than on the loop.
+  def calm_budget
+    budget = Master::Fix::ResourceBudget.new(root: @root)
+    def budget.measure = { state: :ok, reasons: [] }
+    budget
   end
 
   # 1. /scan is not a public command, in the registry or in the router.

@@ -184,12 +184,15 @@ module Master
         :failed
       end
 
-      def run_passes(files:, target:, max_passes:, deadline:, budget_seconds:, start_pass: 0, run_id:)
+      # start_pass is the number of the first pass to run, 1-based like the
+      # journal's next_pass; run_one_pass takes the 0-based index.
+      def run_passes(files:, target:, max_passes:, deadline:, budget_seconds:, start_pass: 1, run_id:)
         state = { history: [], seen_snapshots: Set.new, recurring_violations: Hash.new(0), consecutive_clean: 0 }
 
-        remaining_passes = [max_passes - start_pass, 0].max
+        first_index = start_pass - 1
+        remaining_passes = [max_passes - first_index, 0].max
         remaining_passes.times do |offset|
-          i = start_pass + offset
+          i = first_index + offset
           outcome = run_one_pass(i, files:, target:, deadline:, budget_seconds:, state:, run_id:)
           return terminal(:plateau, "no further improvement after #{i + 1} pass(es)") if outcome == :break
           return outcome if outcome

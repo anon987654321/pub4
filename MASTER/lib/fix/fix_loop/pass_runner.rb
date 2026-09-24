@@ -9,7 +9,7 @@ require_relative "pass_runner/fast_stage"
 require_relative "pass_runner/llm_stage"
 require_relative "pass_runner/stagnation_detection"
 require_relative "pass_runner/evidence_stage"
-require_relative "fix_loop/structural_stage"
+require_relative "structural_stage"
 require_relative "../transaction"
 require_relative "../resource_budget"
 
@@ -67,15 +67,12 @@ module Master
                      recurring_violations:, consecutive_clean:)
           pass_mtimes = mtimes(files)
           start_pass_transaction(files:, target:, pass:, transaction_id:)
-
-          run_fast_stage(files, pass)
-          found = run_observation_stage(files, target)
-          found += structural_findings(files:) unless files.empty?
+          found = observe_pass(files, target, pass)
 
           visual, opportunities, found = merge_evidence_findings(target:, files:, pass:, found:)
           return evidence_abort_result(visual, opportunities) if found.empty? && (visual&.err? || opportunities&.err?)
 
-          found, shed = supplement_with_improvements(found, pass:, files:, deadline:)
+          found, shed = supplement_with_improvements(found, pass:, files:, deadline:, consecutive_clean:)
           return shed if shed
           return clean_pass_result(files, pass_mtimes, pass, consecutive_clean) if found.empty?
           return plateau_result if stagnant?(history, seen_snapshots, recurring_violations, found, pass)
@@ -125,13 +122,13 @@ module Master
           PassResult.new(status: :plateau, consecutive_clean: 0)
         end
 
-        # found is already empty when this is called (run_pass only calls it
-        # then), so the only question is whether the improvement council runs
-        # at all, and under what resource state. Returns [found, early] --
-        # early is the shed-resources PassResult to return immediately, or
-        # nil to keep going with the (possibly still empty) found.
-        def supplement_with_improvements(found, pass:, files:, deadline:)
-          return [found, nil] unless found.empty?
+        # The council is asked once per clean streak, on its first pass; a
+        # confirming pass after it found nothing would ask the same question
+        # again. Returns [found, early] -- early is the shed-resources
+        # PassResult to return immediately, or nil to keep going with the
+        # (possibly still empty) found.
+        def supplement_with_improvements(found, pass:, files:, deadline:, consecutive_clean:)
+          return [found, nil] unless found.empty? && consecutive_clean.zero?
 
           resources = @resource_budget.measure
           if @resource_budget.critical?(resources)
@@ -176,6 +173,12 @@ module Master
           fixed = fast_pass(files)
           @committer.commit_if_dirty("fix_loop: fast-fix [pass #{pass}]", owned_paths: files) if fixed > 0
           fixed
+        end
+
+        def observe_pass(files, target, pass)
+          run_fast_stage(files, pass)
+          found = run_observation_stage(files, target)
+          files.empty? ? found : found + structural_findings(files:)
         end
 
         def run_observation_stage(files, target)
