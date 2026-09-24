@@ -196,8 +196,8 @@ module Master
                       {}
                     end
           DEFAULT_QUESTIONS.merge(council) { |_key, builtin, custom| (Array(builtin) + Array(custom)).uniq }
-        rescue StandardError
-          DEFAULT_QUESTIONS
+        rescue StandardError => e
+          raise "council quality framework unreadable: #{e.class}: #{e.message}"
         end
 
         def self.domain_for(persona_name)
