@@ -108,7 +108,8 @@ class CohesionTest < Minitest::Test
       corpus_root: @tmp,
     )
 
-    assert_equal 6, evidence[:internal_references]
+    # Ordered member pairs where one names the other: a->b, b->a, b->c, c->a.
+    assert_equal 4, evidence[:internal_references]
     assert_equal true, evidence[:contiguous]
     assert_operator evidence[:lines], :>, 0
   end

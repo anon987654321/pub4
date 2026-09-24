@@ -156,7 +156,7 @@ MAX_MERGED_LINES = 300
       corpus.filter_map do |path|
         body = File.read(path, encoding: "UTF-8")
         hits = candidates.select { |name| body.match?(/\b#{Regexp.escape(name)}\b/) }
-        hits.empty? ? nil : { file: path.sub("#{REPO}/", ""), symbols: hits }
+        hits.empty? ? nil : { file: path.delete_prefix("#{corpus_root}/"), symbols: hits }
       end
     end
 
