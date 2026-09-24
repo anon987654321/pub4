@@ -49,9 +49,12 @@ module Master
         def call(ctx)
           frozen = ctx.freeze
           results = run_stage_pool(frozen)
+          failures = results.reject(&:ok?)
+          return Result.err("parallel group failed: #{failures.map(&:message).join("; ")}", category: :infrastructure) if failures.any?
+
           Result.ok(merge_results(ctx, results))
         rescue StandardError => e
-          Result.ok(ctx.merge(_parallel_errors: [e.message]))
+          Result.err("parallel group failed: #{e.message}", category: :infrastructure)
         end
 
         private
