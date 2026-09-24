@@ -72,7 +72,8 @@ module Master
 
       def load_store
         path = absolute(STORE_REL)
-        return {} unless File.readable?(path)
+        return {} unless File.exist?(path)
+        raise Violation, "immutability: checksum store unreadable: #{path}" unless File.readable?(path)
 
         data = Master.load_yaml(path)
         raise Violation, "immutability: malformed checksum store" unless data.is_a?(Hash)
