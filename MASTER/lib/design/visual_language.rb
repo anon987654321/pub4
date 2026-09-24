@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "typography"
+
 module Master
   module Design
     # A compact design-direction and fingerprint layer for rendered /fix work.
@@ -145,6 +147,7 @@ module Master
           design_coordinates=#{design_coordinates(direction)}
           memorable_element=#{DIRECTIONS.fetch(direction)[:memorable]}
           typography_direction=#{TYPOGRAPHY_HINTS.fetch(direction)}
+          typography_contract=#{Master::Design::Typography.brief(path: surface.path, purpose: purpose_for(surface))}
           primary_action_candidate=#{primary_action(primary)}
           current_palette=#{palette.join(", ")}
           current_component_language=#{fp.dig(:components, :language)}
