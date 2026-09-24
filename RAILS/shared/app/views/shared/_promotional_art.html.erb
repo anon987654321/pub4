@@ -1,0 +1,29 @@
+<% art = local_assigns.fetch(:art) %>
+<% spec = art.respond_to?(:layout) ? art : Shared::PromotionalArt.build(**art) %>
+<article class="store-promo-art store-promo-art--<%= spec.layout %>"
+         data-promotional-art="<%= spec.layout %>"
+         style="--promo-safe-inset: <%= spec.safe_inset %>; --promo-copy-zone: <%= spec.copy_zone %>;">
+  <div class="store-promo-art-copy">
+    <% if spec.badge %>
+      <span class="store-promo-art-badge"><%= spec.badge %></span>
+    <% end %>
+    <h2><%= spec.headline %></h2>
+    <% if spec.body %>
+      <p><%= spec.body %></p>
+    <% end %>
+    <% if spec.price %>
+      <strong class="store-promo-art-price"><%= spec.price %></strong>
+    <% end %>
+    <% if spec.cta && local_assigns[:url].present? %>
+      <%= link_to spec.cta, local_assigns[:url], class: "store-promo-art-cta" %>
+    <% end %>
+  </div>
+
+  <figure class="store-promo-art-media">
+    <% if local_assigns[:image_url].present? %>
+      <%= image_tag local_assigns[:image_url], alt: spec.respond_to?(:product) ? spec.product : spec.headline, class: "store-promo-art-image", loading: "eager" %>
+    <% else %>
+      <div class="store-promo-art-placeholder" aria-hidden="true"></div>
+    <% end %>
+  </figure>
+</article>
