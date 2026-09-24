@@ -30,10 +30,13 @@ autoload:
     - cli/command_registry/help.rb
     - cli/command_registry/host.rb
     - cli/command_registry/model.rb
+    - cli/command_registry/observe.rb
     - cli/command_registry/review.rb
     - cli/command_registry/rules.rb
     - cli/command_registry/status.rb
     - cli/command_registry/workspace.rb
+    # Master::CLI::Pipeline::Pass -- pass_result.rb holds its Result value type.
+    - cli/pipeline/pass_result.rb
     # Master::Review::Scan::Rules -- each file is RuleDSL.rule calls into the
     # shared registry, not a constant of its own. The structural_rules
     # DIRECTORY beside structural_rules.rb does autoload.

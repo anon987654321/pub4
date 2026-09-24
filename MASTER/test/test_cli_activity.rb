@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require_relative "../lib/cli/session/activity"
+require_relative "../lib/cli/activity"
 
 class TestCliActivity < Minitest::Test
   def setup
