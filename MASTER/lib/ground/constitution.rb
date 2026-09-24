@@ -77,7 +77,9 @@ module Master
 
         def parse(path, max_body_chars:)
           fm = Master::Ground::Frontmatter.parse_file(path)
-          return if fm[:meta].empty?
+          # Every .md here is a principle; one whose frontmatter does not read
+          # would drop out of the prompt with nothing said.
+          raise ArgumentError, "no frontmatter" if fm[:meta].empty?
 
           meta = fm[:meta]
           body_limit = max_body_chars || MAX_BODY_CHARS
