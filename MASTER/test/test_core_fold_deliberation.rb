@@ -99,6 +99,14 @@ class FoldDeliberationTest < Minitest::Test
     assert memory.context.any? { |entry| entry.text.include?("sha256=") }
   end
 
+  def test_fold_risk_classifier_failure_is_critical
+    Master::Ground::HostBudget.stub(:repo_wide_request?, ->(*) { raise "classifier unavailable" }) do
+      assessment = Master::CLI::FoldRisk.assess("fix the whole repository")
+      assert_equal :critical, assessment[:risk]
+      assert_equal :unknown, assessment[:intent]
+    end
+  end
+
   def test_fold_risk_assess_bumps_ship_to_high
     assessment = Master::CLI::FoldRisk.assess("commit the auth fix")
     assert_equal :high, assessment[:risk]
