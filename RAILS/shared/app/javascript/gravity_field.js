@@ -18,4 +18,8 @@ addEventListener("resize",()=>{resize();seed();},{passive:true});
 document.addEventListener("pointermove",e=>{attractX=e.clientX/Math.max(1,width);attractY=e.clientY/Math.max(1,height);},{passive:true});
 addEventListener("master:visual",e=>signal(e.detail||{}));
 addEventListener("gravity:signal",e=>signal(e.detail||{}));
+document.addEventListener("turbo:load", () => signal({ activity: .34 }), { passive: true });
+document.addEventListener("turbo:frame-load", () => signal({ activity: .28 }), { passive: true });
+document.addEventListener("click", e => { if (e.target.closest("a,button,[role=button]")) signal({ activity: .42, x: e.clientX / Math.max(1,width), y: e.clientY / Math.max(1,height) }); }, { passive: true });
+document.addEventListener("input", () => signal({ activity: .26 }), { passive: true });
 resize();seed();if(reduced) field.hidden=true;else requestAnimationFrame(frame);
