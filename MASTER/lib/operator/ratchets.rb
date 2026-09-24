@@ -539,13 +539,21 @@ end
     # deep-only.
     def css_budget_rows
       path = File.join(RAILS, "gates/data/css_budget.yml")
-      return [] unless File.file?(path)
+      unless File.file?(path)
+        return [Row.new(name: "css_budget", current: nil, ceiling: nil, direction: :down,
+                        source: "RAILS/gates/data/css_budget.yml",
+                        note: "unreadable: budget missing")]
+      end
 
       YAML.safe_load_file(path).fetch("rules").map do |rule, ceiling|
         Row.new(name: "css_budget.#{rule}", current: nil, ceiling:, direction: :down,
                 source: "RAILS/gates/data/css_budget.yml",
                 note: "current value is --deep (runs css_constitution)")
       end
+    rescue StandardError => e
+      [Row.new(name: "css_budget", current: nil, ceiling: nil, direction: :down,
+              source: "RAILS/gates/data/css_budget.yml",
+              note: "unreadable: #{e.class}")]
     end
 
     # Ceilings a test file owns.
