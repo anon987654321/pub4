@@ -116,6 +116,7 @@ module Deploy
     # than no manifest: it resolves confidently and wrongly. page_simulation
     # reports this so regenerating stays a step someone takes, not one they forget.
     def stale_route_manifests
+      return ["route_manifest: manifest missing at #{MANIFEST_PATH} — run route manifest generator"] unless File.file?(MANIFEST_PATH)
       (manifest["apps"] || {}).filter_map do |app, row|
         live = RouteManifest.digest(app)
         next if live == row["digest"]
