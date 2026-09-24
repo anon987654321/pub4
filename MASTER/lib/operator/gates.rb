@@ -18,7 +18,8 @@ module Deploy
   # Scan-only constitutional preflight: MASTER /scan on RAILS (+ optional OPENBSD).
   # Does not run /fix (no autonomous edits). Full chain: `cd MASTER && ruby bin/gate`.
   class ConstitutionalScanGate
-    ROOT = File.expand_path("../..", __dir__)
+    # The repository root: this file is MASTER/lib/operator/gates.rb.
+    ROOT = File.expand_path("../../..", __dir__)
     MASTER = File.join(ROOT, "MASTER")
     SAFE_ENV = {
       "MASTER_SAFE_MODE" => "1",
@@ -322,7 +323,8 @@ end
 
 module Deploy
   class MasterTtsGate
-    ROOT = File.expand_path("../..", __dir__)
+    # The repository root: this file is MASTER/lib/operator/gates.rb.
+    ROOT = File.expand_path("../../..", __dir__)
     MASTER = File.join(ROOT, "MASTER")
 
     CHECKS = {
@@ -402,7 +404,8 @@ end
 
 module Deploy
   class MasterWebAssetsGate
-    ROOT = File.expand_path("../..", __dir__)
+    # The repository root: this file is MASTER/lib/operator/gates.rb.
+    ROOT = File.expand_path("../../..", __dir__)
     FACE_CSS = File.join(ROOT, "MASTER", "web", "public", "face.css")
     WEB_ROOT = File.join(ROOT, "MASTER", "web")
     ASSETS_DIR = File.join(WEB_ROOT, "public", "assets")
