@@ -76,6 +76,28 @@ class TestSelfScan < Minitest::Test
     end
   end
 
+  class BrokenScanner
+    attr_reader :rules
+
+    def initialize
+      @rules = []
+    end
+
+    def scan_dir(*)
+      Master::Result.err("fixture scan exploded", category: :infrastructure)
+    end
+  end
+
+  def test_self_scan_does_not_turn_a_failed_target_into_zero_findings
+    result = Master::Review::Scan::SelfScan.new(
+      scanner: BrokenScanner.new,
+      root: "/tmp/master",
+    ).call
+
+    refute result.ok?
+    assert_match(/self-scan target failed: lib: fixture scan exploded/, result.error)
+  end
+
   def test_self_scan_counts_data_yml_singularity_findings
     Dir.mktmpdir do |root|
       FileUtils.mkdir_p(File.join(root, "data"))
