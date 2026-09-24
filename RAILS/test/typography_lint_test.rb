@@ -60,6 +60,28 @@ class TypographyLintTest < Minitest::Test
     end
   end
 
+  def test_variable_fonts_require_explicit_optical_sizing
+    Dir.mktmpdir do |dir|
+      file = File.join(dir, "variable.scss")
+      File.write(file, "@font-face { font-family: Test; font-weight: 100 900; src: url(test.woff2); }\n")
+
+      lint = Operator::TypographyLint.new(root: dir)
+      lint.instance_variable_set(:@findings, lint.send(:inspect_file, file))
+      assert lint.findings.any? { |finding| finding.kind == "optical_sizing" }
+    end
+  end
+
+  def test_variable_fonts_with_optical_sizing_are_clean
+    Dir.mktmpdir do |dir|
+      file = File.join(dir, "variable.scss")
+      File.write(file, "@font-face { font-family: Test; font-weight: 100 900; src: url(test.woff2); } .prose { font-optical-sizing: auto; }\n")
+
+      lint = Operator::TypographyLint.new(root: dir)
+      lint.instance_variable_set(:@findings, lint.send(:inspect_file, file))
+      refute lint.findings.any? { |finding| finding.kind == "optical_sizing" }
+    end
+  end
+
   def test_numeric_surfaces_need_open_type_direction
     Dir.mktmpdir do |dir|
       file = File.join(dir, "catalog.scss")
