@@ -136,10 +136,15 @@ begin
     browser.quit
   end
 
-  skips.each { |line| puts "crawl-browser: skip — #{line}" }
   if failures.empty?
-    puts "crawl-browser: clean (#{targets.size} targets, #{skips.size} skipped)"
-    exit 0
+    if skips.empty?
+      puts "crawl-browser: clean (#{targets.size} targets)"
+      exit 0
+    end
+
+    warn "crawl-browser: inconclusive (#{targets.size} targets, #{skips.size} skipped)"
+    skips.each { |line| warn "crawl-browser: #{line}" }
+    exit 3
   end
 
   failures.each { |line| warn "crawl-browser: #{line}" }
@@ -150,5 +155,5 @@ rescue Timeout::Error
   exit 1
 rescue Ferrum::ProcessTimeoutError, Ferrum::DeadBrowserError => e
   warn "crawl-browser: browser unavailable — #{e.class}"
-  exit options[:skip_closed] ? 0 : 1
+  exit 3
 end
