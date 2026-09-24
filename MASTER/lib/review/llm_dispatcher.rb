@@ -6,6 +6,7 @@ require "json"
 require "open3"
 require "timeout"
 require_relative "llm_dispatcher/cli_sender"
+require_relative "llm_dispatcher/model_pin"
 require_relative "llm_dispatcher/react_loop"
 require_relative "llm_dispatcher/ollama_sender"
 require_relative "llm_dispatcher/ruby_llm_sender"
@@ -177,7 +178,7 @@ module Master
 
       # MASTER_MODEL first, then a vision model when an image rides along.
       def answering_model(selected_model, image)
-        model = forced_model || selected_model
+        model = ModelPin.current || forced_model || selected_model
         image_present?(image) ? vision_model_for(model) : model
       end
 

@@ -101,10 +101,24 @@ module Master
           def repair_file(path, rows, runnable, rel, stream)
             ids = runnable.map { |rule| rule.id.to_s }
             ids.each { |id| STREAMED_LOCK.synchronize { stream.streamed << [rel, id] } }
-            repair = FileRepair.new(findings: findings_of(rows, ids, path), rules: runnable, agent: @agent,
-                                    scanner: @scanner, root: @root,
+            findings = repair_memory.fresh(path, findings_of(rows, ids, path))
+            return 0 if findings.empty?
+
+            repair = FileRepair.new(findings:, rules: runnable, agent: @agent, scanner: @scanner, root: @root,
                                     bus: @bus, learnings: @learnings, committer: @committer)
-            tally_rule_results([[repair.scope, repair.run(path)]], breakdown: stream.breakdown, pass: stream.pass)
+            result = repair.run(path)
+            repair_memory.record(path, findings.map { |finding| finding[:rule] }.uniq, result[:breakdown])
+            tally_rule_results([[repair.scope, result]], breakdown: stream.breakdown, pass: stream.pass)
+          end
+
+          def repair_memory = @repair_memory ||= RepairMemory.new(root: @root)
+
+          # The rule stage after the scan asks per rule; it is spared what the
+          # model already declined and the rules it has retired, as the stream is.
+          def unremembered(found)
+            found.group_by { |violation| violation[:file].to_s }.flat_map do |file, violations|
+              repair_memory.fresh(File.expand_path(file, @root), violations)
+            end
           end
 
           STREAMED_LOCK = Mutex.new

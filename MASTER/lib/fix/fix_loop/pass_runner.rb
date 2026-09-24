@@ -172,7 +172,7 @@ module Master
 
           @homeostat&.observe(:llm_call)
           excluded = [VisualPass::RULE_ID, OpportunityPass::RULE_ID, CouncilRound::IMPROVEMENT_RULE_ID]
-          source_found = found.reject { |v| excluded.include?(v[:rule].to_s) }
+          source_found = unremembered(found.reject { |v| excluded.include?(v[:rule].to_s) })
           improvement_found = found.select { |v| v[:rule].to_s == CouncilRound::IMPROVEMENT_RULE_ID }
           visual_found = found.select { |v| v[:rule].to_s == VisualPass::RULE_ID }
           opportunity_found = found.select { |v| v[:rule].to_s == OpportunityPass::RULE_ID }

@@ -35,7 +35,11 @@ module Master
             return
           end
           prompt = reflexion_prompt(violation, original_src, proposed_src)
-          response = ask_once_agent(prompt, image: @visual_image).to_s.strip
+          # The verdict reads a diff and answers SAFE or UNSAFE; a cheaper model
+          # (MASTER_FIX_VERIFIER_MODEL) can give it, and Opus keeps the repairs.
+          response = Master::Review::LLMDispatcher::ModelPin.with(ENV.fetch("MASTER_FIX_VERIFIER_MODEL", "")) do
+            ask_once_agent(prompt, image: @visual_image).to_s.strip
+          end
           handle_reflexion_response(response, path, proposed_src)
         rescue StandardError => e
           # A check that could not run approves nothing, as a broken quorum
