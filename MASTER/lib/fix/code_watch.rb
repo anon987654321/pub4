@@ -50,14 +50,16 @@ module Master
       def requested? = @requested
 
       # Brings the checkout up to origin/main and execs the same command again.
-      # A dirty tree is left as it is and the run simply ends: rebasing over
-      # someone's uncommitted work is not this module's call.
+      # Work the pass could not deliver (a red proof leaves it in the tree) is
+      # carried across the rebase by autostash, not refused: refusing ended the
+      # run, and the chain moved to the next tree with MASTER unfinished. A
+      # rebase that conflicts is the one case left to a person.
       def reexec!(root, command)
         repo = git(root, "rev-parse", "--show-toplevel")
-        if git(repo, "status", "--porcelain", "--untracked-files=no").to_s.strip != ""
-          return Master::Trace::Dmesg.status("fix0", "reload: checkout has uncommitted changes; not restarting")
+        unless git(repo, "rebase", "-q", "--autostash", "origin/main")
+          git(repo, "rebase", "--abort")
+          return Master::Trace::Dmesg.status("fix0", "reload: rebase onto origin/main conflicted; not restarting")
         end
-        return Master::Trace::Dmesg.status("fix0", "reload: rebase onto origin/main failed") unless git(repo, "rebase", "-q", "origin/main")
 
         script = File.join(root, ".master", "fix_reload_command")
         File.write(script, "#{command}\n")
