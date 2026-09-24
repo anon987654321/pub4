@@ -21,19 +21,24 @@ module Master
           goal:, scope: root, model: model_id || model, effort: ENV.fetch("MASTER_EFFORT", "medium"),
           plan: Master::Ground::ActivePlan.read(root),
         )
-        mission.transition!(:plan, plan: Master::Ground::ActivePlan.read(root) || "fold plan: constitutional turn loop")
-        critique_runner = container ? CouncilCrit.runner_for(container) : nil
-        # Only the interactive session sets an asker; see Session#terminal_ask.
-        world = Master::Core::World.new(root:, ask: Fiber[:master_terminal_ask], critique_runner:,
-                                        undo: container&.fetch(:undo, nil))
+        begin
+          mission.transition!(:plan, plan: Master::Ground::ActivePlan.read(root) || "fold plan: constitutional turn loop")
+          critique_runner = container ? CouncilCrit.runner_for(container) : nil
+          # Only the interactive session sets an asker; see Session#terminal_ask.
+          world = Master::Core::World.new(root:, ask: Fiber[:master_terminal_ask], critique_runner:,
+                                          undo: container&.fetch(:undo, nil))
 
-        mission.transition!(:execute)
-        done = build_fold(model:, memory:, world:, max_turns:, observer:).run(goal)
-        mission.transition!(:verify, summary: done.summary)
-        mission.finish!(state: done.reason == :complete ? "completed" : "interrupted", summary: done.summary)
+          mission.transition!(:execute)
+          done = build_fold(model:, memory:, world:, max_turns:, observer:).run(goal)
+          mission.transition!(:verify, summary: done.summary)
+          mission.finish!(state: done.reason == :complete ? "completed" : "interrupted", summary: done.summary)
 
-        { mission: mission.record, reason: done.reason, turns: done.turns, summary: done.summary,
-          transcript:, risk: memory.proof.risk }
+          { mission: mission.record, reason: done.reason, turns: done.turns, summary: done.summary,
+            transcript:, risk: memory.proof.risk }
+        rescue StandardError => e
+          mission.fail!(e)
+          raise
+        end
       end
 
       # Core::Model speaks RubyLLM's chat shape and, left alone, calls RubyLLM
