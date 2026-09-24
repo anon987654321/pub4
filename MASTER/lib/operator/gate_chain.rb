@@ -283,7 +283,7 @@ module Operator
     # changed the tree, and much of the damage this chain attributes arrives so.
     def dirty
       out, status = Open3.capture2e("git", "status", "--porcelain", "-z", chdir: ROOT)
-      return [] unless status.success?
+      raise "gate: git status failed: #{out.to_s.strip}" unless status.success?
 
       out.split("\0").filter_map { |entry| entry[3..] }.reject(&:empty?)
     end
