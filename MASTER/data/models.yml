@@ -153,6 +153,28 @@ model_defs:
     <<: *model_defaults
     context_window: 200000
     score: { quality: 0.99, speed: 0.50, cost: 0.20 }
+  # codex-cli and grok-cli were already fully wired in cli_sender.rb (the
+  # generic cli_lanes dispatch every claude-cli call already goes through) but
+  # named in no tier, so the router could never select either -- 2026-09-24.
+  #
+  # grok-cli: verified directly, twice, with the exact `grok --single
+  # "%{prompt}"` invocation this file's cli_lanes.grok-cli.ask declares --
+  # ~27-29s for a trivial prompt, real replies both times. Scored like the
+  # claude-cli lanes above: a subscription, not a metered API, so cost draws
+  # on real but unmeasured headroom rather than 1.0's implied "free."
+  grok_cli_auto: &grok_cli_auto
+    id: grok-cli:auto
+    <<: *model_defaults
+    score: { quality: 0.90, speed: 0.50, cost: 0.3 }
+  # codex-cli: NOT added below. `codex login status` succeeds instantly, but
+  # `codex exec` -- the cli_lanes.codex-cli.ask invocation this file declares
+  # -- hung past its own configured metadata (250s+, no reply) on five
+  # separate attempts tonight: with and without --sandbox/--ephemeral, with
+  # an explicit --model, and with this session's CLAUDECODE env vars
+  # stripped (so it is not the claude-cli nested-session hang; something
+  # about `codex exec` itself is currently broken on this account/version).
+  # Wiring it in would just reproduce the 300s-per-call tax this same change
+  # removed for claude-cli. Revisit once `codex exec` genuinely replies.
   gemma_2_27b: &gemma_2_27b
     id: google/gemma-2-27b-it
     <<: *model_defaults
@@ -261,6 +283,7 @@ models:
     - *gemini_flash
     - *command_r_plus
     - *gemma_4_31b
+    - *grok_cli_auto
   vision:
     - *gemini_flash
     - *claude_sonnet

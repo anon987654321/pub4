@@ -203,9 +203,11 @@ def test_ask_once_carries_the_law_ahead_of_a_role
   @agent.ask_once("plain")
 
   role, child, bare, persona = systems
-  assert_equal "LAW\n\nAnswer in JSON.", role
+  contract = "MASTER enforcement contract (executable law digest=#{Law::Contract.digest}):\n" \
+             "#{Law::Contract::PROTOCOL.join("\n")}"
+  assert_equal "#{contract}\n\nLAW\n\nAnswer in JSON.", role
   brief = Master::Ground::Policy::Subagent.brief(:verify, %w[shell])
-  assert_equal ["LAW", brief, "Report pass or fail."].join("\n\n"), child
+  assert_equal [contract, "LAW", brief, "Report pass or fail."].join("\n\n"), child
   assert_equal "Rewrite the message.", bare
   assert_nil persona, "no role leaves the dispatcher on the full persona prompt"
 end
