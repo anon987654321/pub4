@@ -30,6 +30,10 @@ class TestAstEditWrites < Minitest::Test
       # root as given. On macOS /var is a symlink to /private/var, so a bare
       # mktmpdir root makes every path under it look like an escape.
       root = File.realpath(raw)
+      # Immutability refuses every edit in a root with no sacred manifest, so
+      # the fixture root carries the smallest one MASTER's own root has.
+      FileUtils.mkdir_p(File.join(root, "data"))
+      File.write(File.join(root, "data", "soul.yml"), "absolute:\n  sacred_paths:\n    - data/soul.yml\n")
       path = File.join(root, "subject.rb")
       File.write(path, "# frozen_string_literal: true\n\ndef old_name\n  :value\nend\n")
       yield root, path
@@ -43,7 +47,7 @@ class TestAstEditWrites < Minitest::Test
 
       result = editor.call(operation: "rename_method", path: path, from: "old_name", to: "new_name")
 
-      assert result.ok?, "rename reported: #{result.respond_to?(:error) ? result.error : result.inspect}"
+      assert result.ok?, "rename reported: #{result.respond_to?(:message) ? result.message : result.inspect}"
       written = File.read(path)
       assert_includes written, "def new_name"
       refute_includes written, "def old_name"
@@ -57,7 +61,7 @@ class TestAstEditWrites < Minitest::Test
 
       result = editor.call(operation: "add_after", path: path, after: "old_name", code: "def added\n  :new\nend")
 
-      assert result.ok?, "add_after reported: #{result.respond_to?(:error) ? result.error : result.inspect}"
+      assert result.ok?, "add_after reported: #{result.respond_to?(:message) ? result.message : result.inspect}"
       written = File.read(path)
       assert_includes written, "def added"
     end

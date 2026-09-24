@@ -167,7 +167,7 @@ class WorkflowInferenceTest < Minitest::Test
   class FakeScanner
     def scan(_path) = Master::Result.ok([])
 
-    def scan_dir(_dir, depth: :deep, glob: nil, stream: false)
+    def scan_dir(_dir, depth: :deep, glob: nil, stream: false, rules: nil)
       Master::Result.ok([])
     end
   end

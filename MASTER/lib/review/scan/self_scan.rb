@@ -48,7 +48,7 @@ module Master
           path = File.join(@root, target)
           result = @scanner.scan_dir(path, depth: :deep, stream:, rules: @rules)
           wrapped = Result.wrap(result)
-          raise "self-scan target failed: #{target}: #{wrapped.error}" unless wrapped.ok?
+          raise "self-scan target failed: #{target}: #{wrapped.message}" unless wrapped.ok?
 
           wrapped.value!
         end
@@ -58,7 +58,7 @@ module Master
           return [] unless File.exist?(rules_path) || File.expand_path(@root) != File.expand_path(Master::ROOT)
 
           result = SelfTest.new(root: @root, event_bus: @bus).call(laws: %w[SINGULARITY])
-          raise "self-test SINGULARITY failed: #{result.error}" unless result.ok?
+          raise "self-test SINGULARITY failed: #{result.message}" unless result.ok?
 
           check = result.value!.checks.find { |item| item.law == "SINGULARITY" }
           return [] unless check&.findings&.any?

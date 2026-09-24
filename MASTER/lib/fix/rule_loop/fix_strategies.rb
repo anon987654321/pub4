@@ -190,7 +190,7 @@ module Master
           Tempfile.open(["rl_score", File.extname(path)]) do |f|
             f.write(candidate); f.flush
             result = Master::Result.wrap(@scanner.scan(f.path, rules: [@rule]))
-            raise "candidate rescan failed: #{result.error}" unless result.ok?
+            raise "candidate rescan failed: #{result.message}" unless result.ok?
 
             result.value!.size
           end

@@ -19,7 +19,7 @@ module Master
             next [] unless File.exist?(path)
 
             result = Result.wrap(@scanner.scan(path))
-            raise "fix scan failed for #{path}: #{result.error}" unless result.ok?
+            raise "fix scan failed for #{path}: #{result.message}" unless result.ok?
 
             findings = result.value!
             stream_scan_progress(path, findings)

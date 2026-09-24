@@ -46,7 +46,7 @@ class TestPipeline < Minitest::Test
       @rules = [FakeRule.new("SELF_RULE", false)]
     end
 
-    def scan_dir(path, depth:, stream: false)
+    def scan_dir(path, depth:, stream: false, rules: nil)
       Master::Result.ok([[File.join(path, "example.rb"), Master::Result.ok(@findings)]])
     end
   end
@@ -265,7 +265,7 @@ class TestPipeline < Minitest::Test
     result = group.call({ base: true })
 
     refute result.ok?
-    assert_match(/parallel group failed:.*boom/, result.error)
+    assert_match(/parallel group failed:.*boom/, result.message)
   end
 
   private

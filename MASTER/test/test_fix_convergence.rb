@@ -114,6 +114,7 @@ class TestFixConvergence < Minitest::Test
   def test_a_proof_started_inside_a_proof_is_skipped
     pass = Master::CLI::Pipeline::Pass.allocate
     ran = false
+    saved = ENV["MASTER_IN_PROOF"]
     ENV["MASTER_IN_PROOF"] = "1"
     name, body = Operator::GateChain.stub(:suites, ->(*) { ran = true; [true, [], 0] }) do
       pass.send(:proof_section, Master::ROOT)
@@ -123,14 +124,17 @@ class TestFixConvergence < Minitest::Test
     assert_match(/already inside a proof run/, body)
     refute ran, "the nested proof ran the suites"
   ensure
-    ENV.delete("MASTER_IN_PROOF")
+    ENV["MASTER_IN_PROOF"] = saved
   end
 
   def test_a_proof_marks_its_children_and_restores_the_parent
     pass = Master::CLI::Pipeline::Pass.allocate
+    saved = ENV.delete("MASTER_IN_PROOF")
 
     assert_equal "1", pass.send(:inside_proof) { ENV["MASTER_IN_PROOF"] }
     assert_nil ENV["MASTER_IN_PROOF"]
+  ensure
+    ENV["MASTER_IN_PROOF"] = saved
   end
 
   # The loop builds its own council: the test below injects one, and an

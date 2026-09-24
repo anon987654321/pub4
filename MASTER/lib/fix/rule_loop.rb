@@ -136,7 +136,7 @@ module Master
           next [] unless File.exist?(path)
 
           result = Master::Result.wrap(@scanner.scan(path, rules: [@rule]))
-          raise "rule scan failed for #{path}: #{result.error}" unless result.ok?
+          raise "rule scan failed for #{path}: #{result.message}" unless result.ok?
 
           ext = File.extname(path).downcase
           result.value!
@@ -382,7 +382,7 @@ module Master
 
       def scan_all(path)
         result = Master::Result.wrap(@scanner.scan(path))
-        raise "rule scan failed for #{path}: #{result.error}" unless result.ok?
+        raise "rule scan failed for #{path}: #{result.message}" unless result.ok?
 
         result.value!
       rescue StandardError => e

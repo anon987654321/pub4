@@ -102,7 +102,7 @@ class TestScanner < Minitest::Test
       result = scanner.scan_dir(dir)
 
       refute result.ok?
-      assert_match(/1 file\(s\) failed measurement/, result.error)
+      assert_match(/1 file\(s\) failed measurement/, result.message)
       assert bus.events.any? { |name, payload| name == "scanner:thread_error" && payload[:path] == path }
     end
   end

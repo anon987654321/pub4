@@ -13,7 +13,7 @@ class TestSelfScan < Minitest::Test
       @rules = rules.empty? ? [Object.new, Object.new] : rules
     end
 
-    def scan_dir(path, depth:, stream: false)
+    def scan_dir(path, depth:, stream: false, rules: nil)
       Master::Result.ok([[File.join(path, "example.rb"), Master::Result.ok(@findings)]])
     end
   end
@@ -95,7 +95,7 @@ class TestSelfScan < Minitest::Test
     ).call
 
     refute result.ok?
-    assert_match(/self-scan target failed: lib: fixture scan exploded/, result.error)
+    assert_match(/self-scan target failed: lib: fixture scan exploded/, result.message)
   end
 
   def test_self_scan_counts_data_yml_singularity_findings

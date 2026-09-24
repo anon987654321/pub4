@@ -118,7 +118,7 @@ module Master
           return result.value! if result.respond_to?(:ok?) && result.ok?
           return result unless result.respond_to?(:ok?)
 
-          raise "scanner result failed: #{result.error}"
+          raise "scanner result failed: #{result.message}"
         end
 
         def scannable_path?(path, root)
@@ -175,7 +175,7 @@ module Master
         def raise_batch_errors!(pairs, label)
           failures = pairs.filter_map do |path, result|
             wrapped = Master::Result.wrap(result)
-            wrapped.err? ? "#{path}: #{wrapped.error}" : nil
+            wrapped.err? ? "#{path}: #{wrapped.message}" : nil
           end
           return if failures.empty?
 

@@ -130,7 +130,7 @@ module Master
         def raw_violations
           pairs.flat_map do |(file, file_result)|
             result = Result.wrap(file_result)
-            raise "scan report cannot render failed result for #{file}: #{result.error}" unless result.ok?
+            raise "scan report cannot render failed result for #{file}: #{result.message}" unless result.ok?
 
             result.value!.map { |violation| violation.merge(file:) }
           end

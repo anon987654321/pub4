@@ -99,7 +99,7 @@ class TestDestructiveReview < Minitest::Test
 
     refute result.ok?
     assert_equal :infrastructure, result.category
-    assert_match(/destructive review failed: provider unavailable/, result.error)
+    assert_match(/destructive review failed: provider unavailable/, result.message)
   end
 
   def test_skips_non_destructive_commands
