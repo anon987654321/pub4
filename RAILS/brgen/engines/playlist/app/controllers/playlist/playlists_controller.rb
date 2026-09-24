@@ -7,7 +7,19 @@ class Playlist::PlaylistsController < Playlist::BaseController
   before_action :set_playlist, only: %i[show embed edit update destroy]
   before_action :authorize_owner_or_editor, only: %i[edit update destroy]
 
-  def index; end
+  def index
+    @featured_track = local_discovery_tracks.first
+    @tracks = local_discovery_tracks.drop(1)
+    @playlists = Playlist::Playlist.city_trending(Current.city_record).includes(:user).limit(8)
+  end
+
+  def local_discovery_tracks
+    scope = Playlist::Track.publicly_visible.unexpired
+      .includes(:user, :audio_file_attachment, :artwork_attachment)
+      .joins(:user)
+    scope = scope.where(users: { city_id: Current.city_record.id }) if Current.city_record
+    scope.recent.limit(24).to_a
+  end
 
   def show
     return if redirect_id_to_slug(@playlist)
