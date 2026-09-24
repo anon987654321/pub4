@@ -7,14 +7,7 @@ class Playlist::PlaylistsController < Playlist::BaseController
   before_action :set_playlist, only: %i[show embed edit update destroy]
   before_action :authorize_owner_or_editor, only: %i[edit update destroy]
 
-  def index
-    @tracks = Playlist::Track.publicly_visible.unexpired.recent.includes(:user).limit(24)
-    @radio_playlist = Playlist::Playlist.new(
-      name: t("radio.name"),
-      tracks_count: @tracks.size,
-      plays_count: 0
-    )
-  end
+  def index; end
 
   def show
     return if redirect_id_to_slug(@playlist)
