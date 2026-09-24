@@ -1306,6 +1306,7 @@ nb:
       job: Jobb
       housing: Bolig
       gig: Oppdrag
+    promo_cta: "Se tilbudet"
     kind_empty:
       goods: Ingen ting til salgs i %{city} ennå
       job: Ingen jobber i %{city} ennå
@@ -1346,6 +1347,9 @@ nb:
       other: Annet
   takeaway:
     intro: Dette er en meny- og bestillingsdemo, ikke et levende restaurantnett. Betaling
+    promo_headline: "God mat, like i nærheten"
+    promo_body: "%{restaurant} har dagens meny klar for bestilling."
+    promo_cta: "Se menyen"
       avtales med kjøkkenet. Ingen registrering for å legge inn en prøvebestilling.
     unsave: Fjern lagring
     save_restaurant: Lagre
