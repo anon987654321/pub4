@@ -322,8 +322,13 @@ module Master
     description: "bare Time.now/Date.today bypasses Rails Time.zone",
     example_path: "/repo/app/models/example.rb",
     fires: "stamp = Time.now.beginning_of_day\n",
-    does_not_fire: "generated_at: Time.now.utc.iso8601, exp: Time.now.to_i\n" do |src, path:|
+    does_not_fire: "generated_at: Time.now.utc.iso8601, exp: Time.now.to_i\n# Date.today is the server's day\n" do |src, path:|
     next [] unless path.match?(%r{/app/|/spec/|/test/})
+
+    # A comment explaining why the code avoids Date.today names it; amber's
+    # PlannedOutfit did, and the rule sent it for repair. Blanking comment
+    # lines keeps every line number.
+    src = src.gsub(/^\s*#.*$/, "")
     # Time.now.utc and Time.now.to_i do not read Time.zone: one converts to UTC
     # explicitly, the other is epoch seconds. Every RAILS finding this rule
     # produced was one of those two forms — JWT exp/iat, a tmpfile suffix, and
