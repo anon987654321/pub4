@@ -99,11 +99,7 @@ module Deploy
       sheet = File.join(rails_root, "brgen/app/assets/stylesheets/application.scss")
       File.read(sheet)[/\$vertical-accent-ink:\s*(#[0-9a-fA-F]{3,8})/, 1]
     rescue StandardError => e
-      # Same posture as contrast_budget below: say so and drop the pairs this ink
-      # would have made, rather than reporting a clean hover column the gate
-      # never measured.
-      warn "design_metrics: vertical accent ink unreadable (#{e.class}) — hover fills unmeasured"
-      nil
+      raise "design_metrics: vertical accent ink unreadable (#{e.class}: #{e.message})"
     end
 
     # `accent` and `hover` are not the same kind of colour and were paired as
