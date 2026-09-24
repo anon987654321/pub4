@@ -103,7 +103,25 @@ export class VisualizerDeck {
     renderer.resize(width, height, 1)
   }
 
-  frame(mode, audioData) { this.renderers[mode]?.frame(audioData) }
+  frame(mode, audioData) {
+    const p = audioData?.parallax || NO_PARALLAX
+    const energy = Math.max(0, Math.min(1, audioData?.average || 0))
+    const beat = Math.max(0, Math.min(1, audioData?.beat || 0))
+    const reduced = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches
+    const factor = reduced ? 0.18 : 1
+    const x = p.x * 0.42 * factor
+    const y = p.y * 0.42 * factor
+    const tiltX = -p.y * 0.006 * factor
+    const tiltY = p.x * 0.006 * factor
+    const scale = 1 + (energy * 0.012 + beat * 0.026) * factor
 
-  destroy() { this.canvas.remove() }
+    this.canvas.style.transform =
+      `translate3d(${x}px, ${y}px, 0) scale(${scale}) rotateX(${tiltX}deg) rotateY(${tiltY}deg)`
+    this.renderers[mode]?.frame(audioData)
+  }
+
+  destroy() {
+    this.canvas.style.transform = ""
+    this.canvas.remove()
+  }
 }
