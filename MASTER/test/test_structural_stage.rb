@@ -1,4 +1,4 @@
-# frozen_string_literal: true
+<sub># frozen_string_literal: true
 
 require_relative "test_helper"
 require_relative "../lib/fix/fix_loop/structural_stage"
@@ -18,6 +18,21 @@ class StructuralStageTest < Minitest::Test
     end
   end
 
+  def test_structural_findings_carry_laws_and_source
+    Dir.mktmpdir("structural") do |dir|
+      File.write(File.join(dir, "thing_a.rb"), "def thing_a = thing_b\n")
+      File.write(File.join(dir, "thing_b.rb"), "def thing_b = thing_c\n")
+      File.write(File.join(dir, "thing_c.rb"), "def thing_c = thing_a\n")
+
+      finding = structural_findings(files: Dir.glob(File.join(dir, "*.rb"))).first
+
+      assert_equal "cohesion", finding[:source]
+      assert_equal %w[SINGULARITY ABSTRACTION DENSITY PROXIMITY KISS], finding[:laws]
+      assert finding[:evidence].key?(:internal_references)
+      assert finding[:evidence].key?(:external_references)
+    end
+  end
+
   def test_structural_findings_carry_external_reference_evidence
     Dir.mktmpdir("structural") do |dir|
       File.write(File.join(dir, "thing_a.rb"), "def thing_a = thing_b\n")
@@ -31,3 +46,4 @@ class StructuralStageTest < Minitest::Test
     end
   end
 end
+</sub>
