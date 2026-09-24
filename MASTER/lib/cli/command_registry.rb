@@ -11,6 +11,7 @@ require_relative "command_registry/rules"
 require_relative "command_registry/host"
 require_relative "command_registry/workspace"
 require_relative "../review/review_crew"
+require_relative "../plugin"
 
 module Master
   module CLI
@@ -47,6 +48,7 @@ module Master
           "commit" => command(:dispatch_commit, ai[:agent], root, review_gate: true),
           "model" => command(:dispatch_model, d[:agent], d[:config], d[:metrics], d[:root]),
           "auth" => command(:dispatch_auth),
+          "plugin" => command(:dispatch_plugin),
           "pair" => command(:dispatch_pair, root),
           "runtime" => command(:dispatch_runtime, d[:root]),
           "doctor" => command(:dispatch_doctor, root),
@@ -103,6 +105,29 @@ module Master
           trace: infra[:trace],
           learnings: infra[:learnings],
         }
+      end
+
+      def dispatch_plugin(ctx: nil)
+        arg = arg_for(ctx)
+        case arg
+        when "", "list"
+          Master::Plugin.list.map { |manifest| "#{manifest.id}: #{manifest.description}" }.join("\n")
+        when /\Ainfo\s+([a-z][a-z0-9_]*)\z/
+          manifest = Master::Plugin.info($1)
+          "#{manifest.id} #{manifest.version} — #{manifest.description}"
+        when /\Arun\s+([a-z][a-z0-9_]*)\s+([a-z][a-z0-9_]*)\s*(.*)\z/
+          args = $3.to_s.strip
+          payload = args.empty? ? {} : JSON.parse(args)
+          raise ArgumentError, "plugin arguments must be a JSON object" unless payload.is_a?(Hash)
+
+          Master::Plugin.run($1, action: $2, **payload.transform_keys(&:to_sym)).to_json
+        else
+          "plugin  plugin list  plugin info <id>  plugin run <id> <action> <json>"
+        end
+      rescue JSON::ParserError => e
+        "plugin0: invalid JSON — #{e.message}"
+      rescue Master::Plugin::Error, ArgumentError => e
+        "plugin0: #{e.message}"
       end
 
       def dispatch_auth(ctx: nil)
