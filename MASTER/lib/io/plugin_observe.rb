@@ -23,7 +23,6 @@ module Master
         permitted = @governor.permit?(NAME, TIER, subject)
         return permitted if permitted.err?
 
-        @bus&.publish("tool:call", tool: NAME, subject:)
         value = Master::Plugin.observe(plugin.to_s, action: action.to_s, **payload)
         @bus&.publish("tool:after", tool: NAME, subject:)
         Result.ok(value)
