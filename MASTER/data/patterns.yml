@@ -1004,7 +1004,7 @@ operator_playbook:
 skills_registry:
   meta:
     source: runtime authority — edit this file directly; do not add data/skills/*.md
-    count: 16
+    count: 17
   skills:
   - name: axioms
     description: Summarize constitutional rules and invariant checks.
@@ -1039,6 +1039,15 @@ skills_registry:
       The growth skill audits pub4's public growth surfaces as one system: search and local discovery, permission marketing, partner and affiliate measurement, and the conversion path. Use current code and runtime evidence first: shared SEO and schema helpers, consent and newsletter jobs, outbound-click and partner-marketing models, and the existing frontend and production gates.
 
       Separate observed instrumentation from inferred opportunity. Preserve consent, disclosure, local relevance, and first-party measurement; never invent traffic, conversions, or attribution. Prefer one small measurable experiment over broad promotional machinery. End with concrete file-backed gaps and the smallest next change.
+
+  - name: frontend
+    description: Run browser-first frontend verification across responsive composition, interaction states, and rendered evidence.
+    triggers:
+    - "\\b(?:frontend|ui|ux|visual|responsive|browser)\\b"
+    body: |-
+      The frontend skill treats the browser render as evidence. Use GeometryProbe, mobile journeys, composition probes, web-platform probes, and the visual ghost/difference stack before proposing source changes. Trace every actionable observation to a stable selector or visible text anchor and the applicable visual law.
+
+      Prefer deletion, alignment, typography, spacing, and existing primitives over new decorative machinery. Preserve semantics, accessibility, performance, and low-end fallbacks. When the evidence changes, feed the smallest correction back through /fix and verify the rendered result again.
 
   - name: model
     description: Switch or inspect the active model for the current session.
