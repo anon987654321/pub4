@@ -168,13 +168,16 @@ module Deploy
     end
 
     def read_budget
-      return {} unless File.file?(@budget)
+      unless File.file?(@budget)
+        @result.inconclusive!("locale_shadowing: budget missing at #{@budget} — shadowing ceilings were not measured")
+        return {}
+      end
 
       YAML.safe_load_file(@budget).to_h { |k, v| [k.to_s, Integer(v)] }
     rescue StandardError => e
-      # An empty budget is every ceiling at zero, which reads as a gate that
-      # found nothing rather than one that could not read its own limits.
-      warn "locale_shadowing: #{File.basename(@budget)} unreadable (#{e.class}: #{e.message.lines.first.to_s.strip}) — no budgets applied"
+      # No budget means no ceiling. Keep the per-app loop useful for diagnostics,
+      # but make the gate outcome explicitly incomplete rather than clean.
+      @result.inconclusive!("locale_shadowing: budget unreadable (#{e.class}: #{e.message}) — shadowing ceilings were not measured")
       {}
     end
 
