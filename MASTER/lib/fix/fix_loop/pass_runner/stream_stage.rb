@@ -28,10 +28,12 @@ module Master
 
             streamed = Set.new
             queue = Queue.new
+            @stream_stopped_at = nil
             worker = Thread.new { drain_repairs(queue, streamed, pass, [Time.now + PASS_BUDGET_SECONDS, deadline].min) }
             found = @loop_scanner.violations(files) { |path, rows| queue << [path, rows] }
             queue << :done
             finish_stream(worker.value, found, files, pass)
+            StreamCursor.write(@root, target, @stream_stopped_at)
             emit_topology(found, target)
             [found, streamed]
           ensure
@@ -59,7 +61,11 @@ module Master
             stream = Stream.new(streamed, pass, Hash.new(0))
             fixed = 0
             while (item = queue.pop) != :done
-              next unless stream_repairs_allowed?(pass, deadline)
+              unless stream_repairs_allowed?(pass, deadline)
+                # The first file the budget left unrepaired: the next run starts there.
+                @stream_stopped_at ||= item.first if Time.now >= deadline
+                next
+              end
 
               fixed += repair_scanned_file(*item, rules, stream)
             end

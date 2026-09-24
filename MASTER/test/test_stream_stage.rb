@@ -72,6 +72,19 @@ class StreamStageTest < Minitest::Test
     assert_empty @committer.commits
   end
 
+  # The next run starts at the first file this one's budget left unrepaired.
+  def test_the_stream_marks_where_its_budget_ran_out
+    Dir.mktmpdir do |root|
+      @root = root
+      @events << :go
+      @events << :go
+      files = %w[a.rb b.rb c.rb].map { |name| File.join(root, name) }
+      streaming_observation(files, root, 1, Time.now - 1)
+
+      assert_equal files, Master::Fix::FixLoop::StreamCursor.order(root, root, files.rotate(1))
+    end
+  end
+
   private
 
   def run_rule_once(rule, files, _pass)

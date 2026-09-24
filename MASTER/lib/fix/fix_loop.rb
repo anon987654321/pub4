@@ -172,6 +172,7 @@ module Master
       # an earlier process left, then the passes, then the terminal state.
       def run_journaled(journal, files:, target:, max_passes:, budget_seconds:, mission:)
         run_id = journal["id"]
+        files = StreamCursor.order(@root, target, files)
         deadline = Ground::Reliability::Deadline.new(journal["remaining_seconds"].to_f)
         start_pass = @run_journal.next_pass(journal)
         @bus&.publish("fix_loop:recovered", run_id:, start_pass:, target:) if journal["resumed"]
