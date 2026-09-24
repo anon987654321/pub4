@@ -11,6 +11,7 @@ module Master
     include Master::Io::AtomicWrite
 
       STORE_REL = "data/checksums.yml"
+      MANIFEST_REL = "data/soul.yml"
       SHA256 = /\A[0-9a-f]{64}\z/.freeze
       Violation = Class.new(StandardError)
 
@@ -22,7 +23,10 @@ module Master
         @root = File.expand_path(root)
       end
 
+      # Verification is of this root's own manifest, so a root without one
+      # cannot read as clean.
       def verify!
+        declarations_in(absolute(MANIFEST_REL))
         store = load_store
         return Result.ok(:no_checksums) if store.empty?
 
@@ -81,8 +85,18 @@ module Master
         data.transform_keys(&:to_s)
       end
 
-      def sacred_declarations
-        path = absolute("data/soul.yml")
+      def sacred_declarations = declarations_in(manifest_path)
+
+      # A root with no manifest of its own (a scratch tree, a test's tmpdir) is
+      # held to MASTER's, so a missing file never makes a sacred path writable
+      # and never refuses every write either. A manifest that exists and cannot
+      # be read, or declares nothing, still fails closed.
+      def manifest_path
+        own = absolute(MANIFEST_REL)
+        File.exist?(own) ? own : Master.data_path("soul.yml")
+      end
+
+      def declarations_in(path)
         raise Violation, "immutability: sacred manifest missing or unreadable: #{path}" unless File.readable?(path)
 
         soul = Master.load_yaml(path)
