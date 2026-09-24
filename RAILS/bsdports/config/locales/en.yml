@@ -164,10 +164,20 @@ en:
   flash:
     cve_cross_reference_complete: "CVE cross-reference complete."
     review_issues: "MASTER review: %{issues}"
-    review_clean: "MASTER review: clean (no issues found in demo scan)"
+    review_clean: "MASTER review: no issues found in the indexed record or local port source."
+    review_source_unavailable: "MASTER review: no local ports tree is available; indexed metadata was checked only."
+    review_source_missing: "MASTER review: the indexed port has no local port source; indexed metadata was checked only."
     review_issue:
       missing_homepage: "missing HOMEPAGE"
       weak_comment: "weak COMMENT"
+      missing_port_directory: "missing port directory"
+      missing_makefile: "missing Makefile"
+      unreadable_makefile: "Makefile could not be parsed"
+      empty_patch: "empty patch file"
+      source_comment_mismatch: "indexed COMMENT differs from Makefile"
+      source_homepage_mismatch: "indexed HOMEPAGE differs from Makefile"
+      source_maintainer_mismatch: "indexed MAINTAINER differs from Makefile"
+      source_version_mismatch: "indexed version differs from Makefile"
   # Shared::PlaceHelper renders these wherever a record carries coordinates.
   place:
     within_a_km: "less than 1 km away"

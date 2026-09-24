@@ -105,17 +105,28 @@ class PortsController < ApplicationController
   end
 
   def review
-    # MASTER port review: scans Makefile/patches for quality (demo using metadata;
-    # real impl would load from ports tree import + Master::Judge::Scan::Scanner)
-    issues = []
-    issues << "missing_homepage" if @port.homepage.blank?
-    issues << "weak_comment" if @port.comment.to_s.length < 20
-    notice = if issues.any?
-      t("flash.review_issues", issues: issues.map { |issue| t(issue, scope: "flash.review_issue") }.join(", "))
+    result = Ports::Review.call(port: @port)
+
+    issue_labels = result.issues.map { |issue| t(issue, scope: "flash.review_issue", default: issue.to_s.humanize) }
+    notice = if issue_labels.any?
+      t("flash.review_issues", issues: issue_labels.join(", "))
+    elsif result.source_status == :unavailable
+      t("flash.review_source_unavailable")
+    elsif result.source_status == :missing
+      t("flash.review_source_missing")
     else
       t("flash.review_clean")
     end
-    @port.record_activity!("PortReviewed", source_vertical: "bsdports", metadata: { issues: issues })
+
+    @port.record_activity!(
+      "PortReviewed",
+      source_vertical: "bsdports",
+      metadata: {
+        issues: result.issues.map(&:to_s),
+        source_status: result.source_status.to_s,
+        source_path: result.source_path
+      }
+    )
     redirect_to @port, notice: notice
   end
 

@@ -162,10 +162,20 @@ nb:
   flash:
     cve_cross_reference_complete: "CVE-kryssreferansen er fullført."
     review_issues: "MASTER-gjennomgang: %{issues}"
-    review_clean: "MASTER-gjennomgang: ingen problemer funnet i demoskanningen"
+    review_clean: "MASTER-gjennomgang: ingen problemer funnet i den indekserte posten eller den lokale portkilden."
+    review_source_unavailable: "MASTER-gjennomgang: ingen lokal portssamling er tilgjengelig; bare indekserte metadata ble kontrollert."
+    review_source_missing: "MASTER-gjennomgang: den indekserte porten har ingen lokal kilde; bare indekserte metadata ble kontrollert."
     review_issue:
       missing_homepage: "mangler HOMEPAGE"
       weak_comment: "svak COMMENT"
+      missing_port_directory: "mangler portkatalog"
+      missing_makefile: "mangler Makefile"
+      unreadable_makefile: "Makefile kunne ikke tolkes"
+      empty_patch: "tom patchfil"
+      source_comment_mismatch: "indeksert COMMENT avviker fra Makefile"
+      source_homepage_mismatch: "indeksert HOMEPAGE avviker fra Makefile"
+      source_maintainer_mismatch: "indeksert MAINTAINER avviker fra Makefile"
+      source_version_mismatch: "indeksert versjon avviker fra Makefile"
   # Shared::PlaceHelper renders these wherever a record carries coordinates.
   place:
     within_a_km: "under 1 km unna"
