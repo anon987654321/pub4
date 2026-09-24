@@ -98,10 +98,10 @@ module Master
       unless directory == id
         raise ManifestError, "#{path}: id #{id.inspect} does not match directory #{directory.inspect}"
       end
-      raise ManifestError, "#{path}: invalid id" unless id.match?(/A[a-z][a-z0-9_]*z/)
-      raise ManifestError, "#{path}: invalid version" unless version.match?(/Ad+.d+.d+z/)
+      raise ManifestError, "#{path}: invalid id" unless id.match?(/\A[a-z][a-z0-9_]*\z/)
+      raise ManifestError, "#{path}: invalid version" unless version.match?(/\A\d+\.\d+\.\d+\z/)
       raise ManifestError, "#{path}: description is empty" if raw.fetch("description").to_s.strip.empty?
-      raise ManifestError, "#{path}: invalid entrypoint" unless entrypoint.match?(/A[a-z0-9_]+.rbz/)
+      raise ManifestError, "#{path}: invalid entrypoint" unless entrypoint.match?(/\A[a-z0-9_]+\.rb\z/)
     end
 
     def require_entrypoint!(manifest)
