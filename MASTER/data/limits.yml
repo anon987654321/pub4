@@ -469,7 +469,7 @@ guidance:
     policy: ALL_PRINCIPLES_ALL_FILES
     statement: 'All axioms, principles, and philosophies apply to every file in the codebase regardless
       of file type: Ruby, YAML, Zsh, HTML, CSS, JavaScript, Markdown. Language-specific rules apply only
-      to their target language; universal rules (SQUINT_TEST, TYPOGRAPHY_DISCIPLINE, MEANINGFUL_NAMES, etc.)
+      to their target language; universal rules such as SQUINT_TEST, TYPOGRAPHY_DISCIPLINE and MEANINGFUL_NAMES
       apply everywhere.
 
       '
