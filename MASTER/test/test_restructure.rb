@@ -140,6 +140,9 @@ class TestRestructure < Minitest::Test
 
   def test_the_kernel_and_other_trees_are_refused
     kernel = Restructure::Plan.parse("=== WRITE MASTER/data/soul.yml\nx\n=== END\n")
+    spine = Restructure::Plan.parse("=== WRITE MASTER/lib/core/mission.rb\nx\n=== END\n")
+
+    assert_includes restructure.call(spine, message: "x", review: ->(_d) {}).message, "immutable"
     outside = Restructure::Plan.parse("=== WRITE RAILS/app.rb\nx\n=== END\n")
 
     assert_includes restructure.call(kernel, message: "x", review: ->(_d) {}).message, "immutable"

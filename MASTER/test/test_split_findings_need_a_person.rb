@@ -21,6 +21,13 @@ class TestSplitFindingsNeedAPerson < Minitest::Test
     assert needs_a_person?(finding)
   end
 
+  def test_flattening_a_data_file_is_a_person_s_change
+    deep = "a:\n  b:\n    c:\n      d:\n        e:\n          f: 1\n"
+    finding = Rules::ConfigHierarchyRule.new.check(deep, path: "/repo/data/deep.yml").first
+
+    assert needs_a_person?(finding)
+  end
+
   def test_a_one_file_repair_still_goes_to_the_model
     finding = Rules::CouplerRule.new.check("order.send(:recalculate)\n", path: "/repo/lib/a.rb").first
 

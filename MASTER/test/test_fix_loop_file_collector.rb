@@ -85,4 +85,15 @@ class TestFixLoopFileCollector < Minitest::Test
       refute collector(dir).__send__(:skipped?, path)
     end
   end
+
+  # rules.yml paths.immutable binds every effect, and /fix is one: it asked
+  # the model to repair data/rules.yml and rubocop rewrote a lib/core file.
+  def test_the_law_s_immutable_paths_are_never_collected
+    files = collector(Master::ROOT).collect(Master::ROOT).map { |f| f.delete_prefix("#{Master::ROOT}/") }
+
+    refute_includes files, "data/rules.yml"
+    refute_includes files, "data/soul.yml"
+    refute(files.any? { |f| f.start_with?("lib/core/") })
+    assert_includes files, "lib/fix/fix_loop.rb"
+  end
 end

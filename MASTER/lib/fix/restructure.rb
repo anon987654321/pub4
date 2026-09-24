@@ -21,8 +21,11 @@ module Master
     # per answer, and a split answered as one file came back UNCHANGED.
     class Restructure
       MAX_FILES = 12
-      # The kernel and the rule catalogue are read, never written by an effect.
-      IMMUTABLE = %w[MASTER/data/rules.yml MASTER/data/soul.yml].freeze
+      # What rules.yml paths.immutable names (the catalogue, the soul, the core
+      # spine), from the repository root. An effect reads them and never writes.
+      def self.immutable
+        @immutable ||= Array((Master.load_rules || {}).dig("paths", "immutable")).map { |entry| "MASTER/#{entry}" }
+      end
       REVIEW_DIFF_LINES = 800
       # Paths that mean something outside the tree. OPENBSD/etc, var, usr, home
       # and dotfiles mirror the box file for file; RAILS migrations and schema
@@ -84,8 +87,12 @@ module Master
       end
 
       def inside_tree?(path)
-        path.start_with?("#{@tree}/") && !path.split("/").include?("..") && !IMMUTABLE.include?(path) &&
+        path.start_with?("#{@tree}/") && !path.split("/").include?("..") && !immutable?(path) &&
           !path.match?(OFF_LIMITS)
+      end
+
+      def immutable?(path)
+        Restructure.immutable.any? { |entry| entry.end_with?("/") ? path.start_with?(entry) : path == entry }
       end
 
       def changed_paths

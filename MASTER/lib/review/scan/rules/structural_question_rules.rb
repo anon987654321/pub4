@@ -20,6 +20,11 @@ module Master
           # lockfile. Grouping or flattening any of them breaks the reader.
           FOREIGN_SCHEMA = %r{/config/locales/|(?:\A|/)\.github/workflows/|package-lock\.json\z}
 
+          # MASTER's own data files have readers too, so regrouping or flattening
+          # one is a change to every file that reads it: past the one-file repair
+          # loop, which answered UNCHANGED on each one it was sent.
+          def finding(**) = super(**, blast_radius: SPANS_FILES)
+
           def check(code, path:)
             return [] if path.to_s.match?(FOREIGN_SCHEMA)
 
