@@ -93,7 +93,13 @@ module Master
 
         protected
 
-        def finding(line:, message:, fix: nil, confidence: nil, why: nil, genealogy: nil, impact_radius: nil, dedupe_key: nil)
+        # A repair that creates or merges files. RuleLoop returns one file per
+        # answer, so such a finding goes to a person (needs_a_person?) instead
+        # of costing model calls that can only come back UNCHANGED.
+        SPANS_FILES = { files_touched: 2 }.freeze
+
+        def finding(line:, message:, fix: nil, confidence: nil, why: nil, genealogy: nil, impact_radius: nil,
+                    dedupe_key: nil, blast_radius: nil)
           Finding.build(
             rule: @id,
             message:,
@@ -106,6 +112,7 @@ module Master
             genealogy: genealogy || default_genealogy(message),
             dedupe_key: dedupe_key || default_dedupe_key(message),
             impact_radius:,
+            blast_radius:,
           )
         end
 

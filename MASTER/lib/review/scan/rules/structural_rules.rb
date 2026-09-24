@@ -312,7 +312,8 @@ module Master
 
             count = code.lines.size
             return [] if count <= LIMIT
-            [finding(line: 1, message: "file #{count} lines (limit #{LIMIT}) — split at module boundaries")]
+            [finding(line: 1, message: "file #{count} lines (limit #{LIMIT}) — split at module boundaries",
+                     blast_radius: SPANS_FILES)]
           end
         end
 
@@ -385,7 +386,7 @@ module Master
             lines = code.to_s.lines
             classes(ast).filter_map do |name, nodes|
               breach = class_breach(name.split("::").last, nodes, lines)
-              finding(line: nodes.first.location.start_line, message: breach) if breach
+              finding(line: nodes.first.location.start_line, message: breach, blast_radius: SPANS_FILES) if breach
             end
           end
 

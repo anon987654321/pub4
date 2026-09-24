@@ -379,6 +379,7 @@ module Master
               line: 1,
               message: "FILE_SPRAWL: only file in #{relative(dir)}/ — hoist into #{relative(File.dirname(dir))}/ " \
                        "or merge into #{File.basename(dir)}.rb (flatten before adding)",
+              blast_radius: SPANS_FILES,
             )
           end
 
@@ -389,6 +390,7 @@ module Master
             finding(
               line: 1,
               message: "FILE_SPRAWL: #{lines} code lines — absorb into its closest owner in #{relative(dir)}/ (merge)",
+              blast_radius: SPANS_FILES,
             )
           end
 
