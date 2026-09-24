@@ -47,7 +47,8 @@ class TestFileRepair < Minitest::Test
       File.write(path, (["x = :bad"] + (["y = 1"] * 250)).join("\n") + "\n")
       agent = Agent.new("```ruby\nx = :good\n#{(["y = 1"] * 250).join("\n")}\n```")
 
-      result = repair(root, path, agent).run(path)
+      subject = repair(root, path, agent)
+      result = subject.run(path)
 
       fixes = agent.prompts.reject { |prompt| prompt.include?("Verify this proposed") }
       assert_equal 1, fixes.size, "one fix call, no architecture plan, one candidate"
@@ -57,6 +58,7 @@ class TestFileRepair < Minitest::Test
       assert_operator fixes.first.bytesize, :<, 12_000, "the rules named, not the 30 KB constitution"
       assert_equal 1, result[:fixed]
       assert_equal "x = :good\n", File.readlines(path).first
+      assert_equal %w[FEW_ARGUMENTS CQS], subject.asked_rules, "a split filtered out is not asked"
     end
   end
 end

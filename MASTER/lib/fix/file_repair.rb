@@ -30,6 +30,10 @@ module Master
 
       def scope = @rule
 
+      # The rules this repair put to the model, once run has filtered out what
+      # waits for a person or fails the confidence gate.
+      def asked_rules = @findings.map { |finding| finding[:rule].to_s }.uniq
+
       def run(path)
         @findings = repairable
         return { fixed: 0, status: :skipped, breakdown: { skip_confidence: 1 } } if @findings.empty?

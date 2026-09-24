@@ -107,7 +107,9 @@ module Master
             repair = FileRepair.new(findings:, rules: runnable, agent: @agent, scanner: @scanner, root: @root,
                                     bus: @bus, learnings: @learnings, committer: @committer)
             result = repair.run(path)
-            repair_memory.record(path, findings.map { |finding| finding[:rule] }.uniq, result[:breakdown])
+            # Only what the model was asked counts: a split filtered out before the
+            # call is no decline, and counting it kept those rules from retiring.
+            repair_memory.record(path, repair.asked_rules, result[:breakdown])
             tally_rule_results([[repair.scope, result]], breakdown: stream.breakdown, pass: stream.pass)
           end
 
