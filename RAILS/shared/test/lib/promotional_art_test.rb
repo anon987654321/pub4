@@ -20,6 +20,7 @@ class PromotionalArtTest < ActiveSupport::TestCase
     assert_equal ["blue commuter bicycle", "helmet"], art.product
     assert_equal "2 490 kr", art.price
     assert_equal "32px", art.safe_inset
+    assert_includes art.image_prompt, "no gradient, no glow, no decorative props"
   end
 
   test "rejects overlong campaign copy" do
@@ -37,6 +38,14 @@ class PromotionalArtTest < ActiveSupport::TestCase
     end
     assert_raises(ArgumentError) do
       Shared::PromotionalArt.build(product: "pizza", headline: "Tonight", background: :neon)
+    end
+  end
+  test "caps a campaign at the canonical product count" do
+    assert_raises(ArgumentError) do
+      Shared::PromotionalArt.build(
+        product: %w[a b c d e],
+        headline: "Five is too many"
+      )
     end
   end
 end
