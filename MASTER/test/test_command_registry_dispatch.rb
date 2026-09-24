@@ -46,4 +46,6 @@ class TestCommandRegistryDispatch < Minitest::Test
     assert_equal %w[control_commands], tables.sort,
                  "a new command table has to be merged by build, or it is a verb with no route"
   end
+
+
 end
