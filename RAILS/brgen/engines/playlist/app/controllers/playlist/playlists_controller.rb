@@ -14,14 +14,6 @@ class Playlist::PlaylistsController < Playlist::BaseController
     @playlists = Playlist::Playlist.city_trending(Current.city_record).includes(:user).limit(8)
   end
 
-  def local_discovery_tracks
-    scope = Playlist::Track.publicly_visible.unexpired
-      .includes(:user, :audio_file_attachment, :artwork_attachment)
-      .joins(:user)
-    scope = scope.where(users: { city_id: Current.city_record.id }) if Current.city_record
-    scope.recent.limit(24).to_a
-  end
-
   def show
     return if redirect_id_to_slug(@playlist)
 
@@ -72,6 +64,14 @@ class Playlist::PlaylistsController < Playlist::BaseController
   end
 
   private
+
+  def local_discovery_tracks
+    scope = Playlist::Track.publicly_visible.unexpired
+      .includes(:user, :audio_file_attachment, :artwork_attachment)
+      .joins(:user)
+    scope = scope.where(users: { city_id: Current.city_record.id }) if Current.city_record
+    scope.recent.limit(24).to_a
+  end
 
   def set_playlist
     @playlist = find_by_slug_or_id(Playlist::Playlist.includes(:user), params[:id])
