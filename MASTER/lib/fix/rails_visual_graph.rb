@@ -163,11 +163,11 @@ module Master
       def resolve_reference(root, source, reference)
         ref = reference.to_s.sub(/\?.*\z/, "")
         return if ref.empty? || ref.start_with?("http", "//", "#")
-      
+
         lookup_dirs(root, source, ref).flat_map { |dir| asset_variants(File.expand_path(ref.delete_prefix("~"), dir)) }
                                       .find { |path| File.file?(path) }
       end
-      
+
       # Where Rails and Sass look: beside the source, the app root, the view and
       # stylesheet load paths, and the shared engine every app mounts.
       def lookup_dirs(root, source, ref)
@@ -177,13 +177,13 @@ module Master
         end
         [File.dirname(source), root, *loads].uniq.then { |dirs| ref.start_with?("~") ? [root] : dirs }
       end
-      
+
       # A bare name is a partial as often as a file: `shared/pager` is
       # `shared/_pager.html.erb`, `@use "base"` is `_base.scss`.
       def asset_variants(path)
         ext = File.extname(path)
         return [path, File.join(File.dirname(path), "_#{File.basename(path)}")] unless ext.empty? || ext == ".erb"
-      
+
         partial = File.join(File.dirname(path), "_#{File.basename(path)}")
         [path, partial].flat_map { |base| [base] + PARTIAL_SUFFIXES.map { |suffix| "#{base}#{suffix}" } }
       end

@@ -371,7 +371,7 @@ end
   def test_candidate_models_is_the_forced_model_under_master_model
     previous = ENV["MASTER_MODEL"]
     ENV["MASTER_MODEL"] = "claude-cli:claude-opus-5-5"
-  
+
     assert_equal ["claude-cli:claude-opus-5-5"], @agent.candidate_models
   ensure
     ENV["MASTER_MODEL"] = previous
@@ -381,7 +381,7 @@ end
   # without a reader it raised, and its rescue reported every model open.
   def test_llm_router_reads_the_agents_breakers
     router = Master::Fix::FixLoop::LlmRouter.new(@agent)
-  
+
     assert_same @agent.instance_variable_get(:@circuit_breaker), @agent.circuit_breaker
     assert_empty router.open_breakers
   end

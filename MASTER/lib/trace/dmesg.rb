@@ -250,7 +250,6 @@ module Master
           ["#{parent}: #{counted(tally[:calls], "model call")}#{failed}, #{counted(tally[:models].size, "lane")}"]
         end
 
-
         def track(payload)
           event = payload[:event].to_s
           event.start_with?("llm:") ? track_model(event, payload) : track_repair(event, payload)
