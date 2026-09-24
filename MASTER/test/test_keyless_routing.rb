@@ -24,11 +24,13 @@ class TestKeylessRouting < Minitest::Test
     # The Ollama daemon too: this Mac serves granite and qwen models that no
     # tier names, and they led chains these tests grade. Ollama tests opt in.
     ENV["MASTER_NO_OLLAMA"] = "1"
+    @restore_routing = Master::TestSupport::RoutingIsolation.install
   end
 
   def local_ollama! = ENV.delete("MASTER_NO_OLLAMA")
 
   def teardown
+    @restore_routing&.call
     @saved_env.each { |key, val| val.nil? ? ENV.delete(key) : ENV[key] = val }
   end
 
@@ -67,8 +69,10 @@ class TestKeylessRouting < Minitest::Test
   end
 
   # The local tier is whatever the daemon holds, with or without
-  # OLLAMA_BASE_URL: a pulled model closes the chain, and a machine whose daemon
-  # is silent offers no ollama id at all, so none can answer "no model".
+  # OLLAMA_BASE_URL, and a pulled model closes the chain. Ollama is on unless
+  # MASTER_NO_OLLAMA says otherwise (8b29ed46d), so a daemon that cannot list
+  # its models leaves the configured local chain standing, as it does with the
+  # variable set.
   def test_local_tier_is_what_the_daemon_lists_and_closes_the_chain
     local_ollama!
     ENV["OPENROUTER_API_KEY"] = "sk-or-v1-#{'a' * 64}"
@@ -77,7 +81,7 @@ class TestKeylessRouting < Minitest::Test
       config: FakeConfig.new(model: Master.free_primary_model), root: Master::ROOT,
     )
     router.define_singleton_method(:ollama_installed_models) { nil }
-    assert_empty router.fallback_chain(task_type: :exploration).grep(/\Aollama[:\/]/)
+    assert_includes router.fallback_chain(task_type: :exploration), "ollama:gemma3:4b"
 
     router.define_singleton_method(:ollama_installed_models) { ["gemma3:4b"] }
     chain = router.fallback_chain(task_type: :exploration)
@@ -115,6 +119,7 @@ class TestKeylessRouting < Minitest::Test
     router.define_singleton_method(:ollama_installed_models) { ["llama3.2:3b", "nomic-embed-text:latest"] }
 
     local = router.fallback_chain(task_type: :exploration).grep(/\Aollama[:\/]/)
+                  .reject { |id| id.end_with?(":cloud", "-cloud") }
 
     assert_equal ["ollama:llama3.2:3b"], local
   ensure
@@ -172,13 +177,18 @@ class TestKeylessRouting < Minitest::Test
       config: FakeConfig.new(model: Master.free_primary_model), root: Master::ROOT,
     )
     router.define_singleton_method(:ollama_installed_models) do
-      ["mistral:latest", "qwen2.5-coder:3b", "nomic-embed-text:latest"]
+      ["mistral:latest", "gemma3:4b", "nomic-embed-text:latest"]
     end
 
     assert_equal "http://localhost:11434", router.ollama_tags_base_url
-    assert_equal ["ollama:qwen2.5-coder:3b", "ollama:mistral"], router.local_models
+    # The configured model first, then what else the daemon holds.
+    assert_equal ["ollama:gemma3:4b", "ollama:mistral"], router.local_models
 
     router.define_singleton_method(:ollama_installed_models) { nil }
+    # The tier is on without the variable (8b29ed46d), so a silent daemon leaves
+    # the configured list standing; MASTER_NO_OLLAMA is what turns it off.
+    assert_includes router.local_models, "ollama:gemma3:4b"
+    ENV["MASTER_NO_OLLAMA"] = "1"
     assert_empty router.local_models, "a silent daemon offered models while the tier is off"
   end
 
