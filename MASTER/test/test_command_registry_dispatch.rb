@@ -1,4 +1,4 @@
-# frozen_string_literal: true
+<sub># frozen_string_literal: true
 
 require_relative "test_helper"
 
@@ -48,4 +48,15 @@ class TestCommandRegistryDispatch < Minitest::Test
   end
 
 
+end
+</sub>
+  def test_session_commands_are_registered
+    assert Registry::HELP_TOPICS.key?("sessions")
+    assert Registry::HELP_TOPICS.key?("continue")
+    assert Registry::HELP_TOPICS.key?("fork")
+    assert_equal "continue", Registry::ALIASES["resume"]
+    assert Registry.respond_to?(:dispatch_sessions)
+    assert Registry.respond_to?(:dispatch_continue)
+    assert Registry.respond_to?(:dispatch_fork)
+  end
 end
