@@ -23,7 +23,8 @@ class VisualGhostStackContractTest < Minitest::Test
   def test_visual_stack_is_aligned_and_uses_low_opacity_history
     assert_includes source, "position:absolute;inset:0"
     assert_includes source, "GHOST_OPACITIES = [ 0.04, 0.06, 0.08, 0.12 ]"
-    assert_includes source, "CURRENT_OPACITY = 1.0"
+    assert_includes source, "CURRENT_OPACITY = 0.72"
+    assert_includes source, "GHOST_OPACITIES = [ 0.04, 0.06, 0.09, 0.12 ]"
     assert_includes source, 'class="#{class_name}"'
     assert_includes source, "mix-blend-mode:difference"
   end
@@ -42,6 +43,8 @@ class VisualGhostStackContractTest < Minitest::Test
     assert_includes source, "render_geometry"
     assert_includes source, "geometry registration"
     assert_includes source, "render_grid"
+    assert_includes source, "render_focus"
+    assert_includes source, "FOCUS_SCALE = 2"
     assert_includes source, "registration grid"
     assert_includes source, "png_dimensions"
     assert_includes source, "previous box"
