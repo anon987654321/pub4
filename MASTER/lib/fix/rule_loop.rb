@@ -247,9 +247,17 @@ module Master
       # changed: no violation may appear there that was not there before. A
       # whole-file boyscout would command the refactors PRESERVE_FIRST forbids;
       # this is the half of the rule that is compatible with it.
+      #
+      # "New" is counted per rule, not matched by message. Messages carry the
+      # numbers they measure ("talks to manifest 5 times", "ABC size 43.0"), so
+      # a refactor that moved or eased a finding made it read as a new one, and
+      # every file repair that did not clear the file outright was refused. A
+      # rule whose findings did not grow landed nothing; a swap to another rule
+      # still grows that rule and is still refused.
       def boyscout_violations(before, after, old_src, new_src)
-        before_keys = before.map { |v| [v[:rule].to_s, v[:message].to_s] }
-        landed = after.reject { |v| before_keys.include?([v[:rule].to_s, v[:message].to_s]) }
+        had = before.map { |v| v[:rule].to_s }.tally
+        grown = after.map { |v| v[:rule].to_s }.tally.select { |rule, count| count > had.fetch(rule, 0) }.keys
+        landed = after.select { |v| grown.include?(v[:rule].to_s) }
         return [] if landed.empty?
 
         lo, hi = changed_region(old_src, new_src)

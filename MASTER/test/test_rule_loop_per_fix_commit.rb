@@ -164,6 +164,22 @@ class TestRuleLoopPerFixCommit < Minitest::Test
     end
   end
 
+  # A refactor that eases a finding changes its message ("ABC size 43" to
+  # "ABC size 31"); matched by message, that read as a new finding and the
+  # repair was refused. The rule's count did not grow, so nothing landed.
+  def test_a_finding_whose_numbers_changed_is_not_new
+    Dir.mktmpdir do |root|
+      path = File.join(root, "sample.rb")
+      File.write(path, "violation\n")
+      before = [{ rule: "ABC_SIZE", severity: :warning, line: 1, message: "ABC size 43.0 for #build" },
+                { rule: "TEST_RULE", severity: :warning, line: 1, message: "fix me" }]
+      after = [{ rule: "ABC_SIZE", severity: :warning, line: 1, message: "ABC size 31.0 for #build" }]
+      loop = build_loop(root:, bus: FakeBus.new, scanner: SequenceScanner.new(before, after), agent: FixingAgent.new)
+
+      assert loop.send(:apply, path, "eased\n", violation_in(path))
+    end
+  end
+
   # A violation the file already carried elsewhere is not the scout's business:
   # the golden rule forbids touching lines the fix did not need.
   def test_apply_keeps_a_preexisting_violation_on_an_untouched_line
