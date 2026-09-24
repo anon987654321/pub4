@@ -3,7 +3,11 @@
 require "fileutils"
 require "tmpdir"
 require_relative "restructure/plan"
+require_relative "restructure/syntax"
 require_relative "restructure/proof"
+require_relative "restructure/master_proof"
+require_relative "restructure/rails_proof"
+require_relative "restructure/script_proof"
 
 module Master
   module Fix
@@ -20,12 +24,18 @@ module Master
       # The kernel and the rule catalogue are read, never written by an effect.
       IMMUTABLE = %w[MASTER/data/rules.yml MASTER/data/soul.yml].freeze
       REVIEW_DIFF_LINES = 800
+      # Paths that mean something outside the tree. OPENBSD/etc, var, usr, home
+      # and dotfiles mirror the box file for file; RAILS migrations and schema
+      # are history the database has already run; STUDIO data and LoRA sets are
+      # read by name and trained on.
+      OFF_LIMITS = %r{\A(?:OPENBSD/(?:etc|var|usr|home|dotfiles)/|RAILS/.+/db/(?:migrate|schema)|
+                     STUDIO/(?:lora|dilla/data)/)}x
 
       # Master and the directory modules open nearly every file, so a search for
       # what names a moved file leaves them out or finds the whole tree.
-      def self.namespaces(master_root)
+      def self.namespaces(tree_root)
         @namespaces ||= {}
-        @namespaces[master_root] ||= ["Master", *Dir.glob(File.join(master_root, "lib", "**", "*/")).map do |dir|
+        @namespaces[tree_root] ||= ["Master", *Dir.glob(File.join(tree_root, "lib", "**", "*/")).map do |dir|
           File.basename(dir).split("_").map(&:capitalize).join
         end].uniq
       end
@@ -34,7 +44,7 @@ module Master
         @root = repo_root
         @tree = tree
         @git = git || Io::GitOperations.new(repo_root)
-        @proof = proof || Proof.new(master_root: File.join(repo_root, tree))
+        @proof = proof || Proof.for(tree, repo_root)
       end
 
       # review takes the applied diff and answers nil to approve, or a reason.
@@ -64,7 +74,7 @@ module Master
 
       def path_refusal(plan)
         outside = plan.paths.reject { |path| inside_tree?(path) }
-        return "outside #{@tree}/ or immutable: #{outside.first(3).join(", ")}" unless outside.empty?
+        return "outside #{@tree}/, immutable or off limits: #{outside.first(3).join(", ")}" unless outside.empty?
 
         missing = plan.deletes.reject { |path| File.file?(File.join(@root, path)) }
         return "deletes what does not exist: #{missing.join(", ")}" unless missing.empty?
@@ -74,7 +84,8 @@ module Master
       end
 
       def inside_tree?(path)
-        path.start_with?("#{@tree}/") && !path.split("/").include?("..") && !IMMUTABLE.include?(path)
+        path.start_with?("#{@tree}/") && !path.split("/").include?("..") && !IMMUTABLE.include?(path) &&
+          !path.match?(OFF_LIMITS)
       end
 
       def changed_paths

@@ -122,19 +122,7 @@ module Master
       # A cold `rails routes` boots the whole app; 15s timed out under load.
       ROUTES_TIMEOUT_S = 60
 
-      # The app's own Ruby and bundle, not MASTER's. Run from inside MASTER,
-      # bin/rails inherited BUNDLE_GEMFILE and the Homebrew Ruby, failed on
-      # bootsnap/setup for all three apps, and the visual pass stopped at
-      # "source graph discovery failed" before a browser opened, in every /fix.
-      def app_capture(command, root)
-        env = {}
-        version = File.join(root, ".ruby-version")
-        env["RBENV_VERSION"] = File.read(version).strip if File.file?(version)
-        shims = File.expand_path("~/.rbenv/shims")
-        env["PATH"] = "#{shims}:#{ENV.fetch("PATH", "")}" if File.directory?(shims)
-        run = -> { Open3.capture2e(env, command, "routes", chdir: root) }
-        defined?(Bundler) ? Bundler.with_unbundled_env(&run) : run.call
-      end
+      def app_capture(command, root) = RailsApp.capture(root, command, "routes", timeout: ROUTES_TIMEOUT_S)
 
       def discover_source_edges(_app, root)
         files = Dir.glob(File.join(root, "**", "*")).select { |path| source_file?(path) }

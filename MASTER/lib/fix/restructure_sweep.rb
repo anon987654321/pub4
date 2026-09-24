@@ -3,6 +3,7 @@
 require "digest"
 require_relative "restructure"
 require_relative "restructure_sweep/context"
+require_relative "restructure_sweep/contracts"
 
 module Master
   module Fix
@@ -20,10 +21,10 @@ module Master
       ATTEMPTS = Integer(ENV.fetch("MASTER_FIX_RESTRUCTURE_ATTEMPTS", 4))
       KEEPS = 3
       ORDER = %w[FILE_SPRAWL NO_GOD_CLASS SMALL_FILES JS_MODULE_SIZE].freeze
-      TREES = %w[MASTER].freeze
+      TREES = Contracts::BY_TREE.keys.freeze
 
       PROPOSE = <<~TEXT
-        Restructure part of MASTER, a Ruby runtime, to remove one structural finding.
+        Restructure part of this tree to remove one structural finding.
 
         Finding: %<rule>s at %<path>s: %<message>s
 
@@ -32,15 +33,8 @@ module Master
         gather related code that has scattered across files; decouple a class from
         another's internals. Behaviour must not change.
 
-        Keep these contracts:
-        - MASTER/lib/ loads through Zeitwerk under Master: lib/a/b_c.rb defines
-          Master::A::BC, one constant per file, path and constant always agreeing.
-          Inflections: cli->CLI, llm->LLM, llm_dispatcher->LLMDispatcher, tts->TTS.
-        - Every require and require_relative that names a moved file is updated.
-        - Methods stay within 20 code lines and classes within 300.
-        - A comment states the present-tense reason; keep the ones that still hold.
-        - MASTER/data/rules.yml and MASTER/data/soul.yml are never written.
-        - At most 12 files.
+        The tree, and the contracts to keep:
+        %<contracts>s
 
         If no restructure is both sound and clearly better, answer exactly: KEEP
         The context below numbers each line for reference; never copy the numbers.
@@ -55,7 +49,7 @@ module Master
       TEXT
 
       ATTACK = <<~TEXT
-        A restructure of MASTER, proposed to remove %<rule>s at %<path>s:
+        A restructure, proposed to remove %<rule>s at %<path>s:
         %<summary>s
 
         Attack it. Does it change behaviour, break a caller, a require, load order,
@@ -73,7 +67,7 @@ module Master
         @agent = agent
         @root = repo_root
         @bus = bus
-        @restructure = restructure || Restructure.new(repo_root:)
+        @restructures = Hash.new { |cache, tree| cache[tree] = restructure || Restructure.new(repo_root:, tree:) }
       end
 
       def run(target:, run_id:)
@@ -104,14 +98,20 @@ module Master
 
       def attempt(finding)
         path, rule, message = finding
-        answer = ask(format(PROPOSE, rule:, path: relative(path), message:, context: Context.new(@root, path).to_s))
+        tree = relative(path).split("/").first
+        answer = ask(proposal(tree, rule, path, message))
         return if answer.strip == "KEEP"
 
         plan = Restructure::Plan.parse(answer)
         return report(finding, nil, "the answer held no plan") if plan.empty?
 
         review = ->(diff) { verdict(rule, path, plan, diff) }
-        report(finding, plan, @restructure.call(plan, message: commit_message(rule, path, plan), review:))
+        report(finding, plan, @restructures[tree].call(plan, message: commit_message(rule, path, plan), review:))
+      end
+
+      def proposal(tree, rule, path, message)
+        format(PROPOSE, contracts: Contracts.for(tree).strip, rule:, path: relative(path), message:,
+                        context: Context.new(@root, path).to_s)
       end
 
       def verdict(rule, path, plan, diff)

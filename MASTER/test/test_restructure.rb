@@ -108,6 +108,36 @@ class TestRestructure < Minitest::Test
     assert_equal "TINY = 1\n", read("MASTER/lib/tiny.rb")
   end
 
+  def test_each_tree_is_proved_its_own_way
+    assert_instance_of Restructure::MasterProof, Restructure::Proof.for("MASTER", @repo)
+    assert_instance_of Restructure::RailsProof, Restructure::Proof.for("RAILS", @repo)
+    assert_instance_of Restructure::ScriptProof, Restructure::Proof.for("OPENBSD", @repo)
+    assert_instance_of Restructure::ScriptProof, Restructure::Proof.for("STUDIO", @repo)
+  end
+
+  def test_a_written_file_must_still_parse_as_what_it_is
+    { "a.rb" => "def x\n", "a.yml" => "a: [1\n", "a.json" => "{", "a.sh" => "if true; then\n" }.each do |name, text|
+      write(name, text)
+
+      refute Restructure::Syntax.valid?(File.join(@repo, name)), name
+    end
+    write("ok.yml", "a: 1\n")
+
+    assert Restructure::Syntax.valid?(File.join(@repo, "ok.yml"))
+  end
+
+  # The box's mirrored paths and the database's history mean something outside
+  # the tree, so no restructure moves them.
+  def test_paths_that_mirror_the_box_or_the_database_are_refused
+    box = Restructure::Plan.parse("=== WRITE OPENBSD/etc/relayd.conf\nx\n=== END\n")
+    migration = Restructure::Plan.parse("=== DELETE RAILS/brgen/db/migrate/1_x.rb\n=== END\n")
+
+    assert_includes Restructure.new(repo_root: @repo, tree: "OPENBSD", proof: Proof.new)
+                               .call(box, message: "x", review: ->(_d) {}).message, "off limits"
+    assert_includes Restructure.new(repo_root: @repo, tree: "RAILS", proof: Proof.new)
+                               .call(migration, message: "x", review: ->(_d) {}).message, "off limits"
+  end
+
   def test_the_kernel_and_other_trees_are_refused
     kernel = Restructure::Plan.parse("=== WRITE MASTER/data/soul.yml\nx\n=== END\n")
     outside = Restructure::Plan.parse("=== WRITE RAILS/app.rb\nx\n=== END\n")
