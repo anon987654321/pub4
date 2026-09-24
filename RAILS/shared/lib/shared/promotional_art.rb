@@ -9,7 +9,7 @@ module Shared
   # separately so Rails can render exact prices, headlines and CTAs.
   class PromotionalArt
     Result = Data.define(
-      :layout, :background, :headline, :body, :price, :badge, :cta,
+      :layout, :background, :background_color, :background_ink, :product, :headline, :body, :price, :badge, :cta,
       :image_prompt, :negative_prompt, :safe_inset, :copy_zone, :product_zone
     )
 
@@ -41,6 +41,9 @@ module Shared
       Result.new(
         @layout,
         @background,
+        matte,
+        @system.fetch("matte_inks").fetch(@background),
+        @product,
         @headline,
         @body,
         @price,
