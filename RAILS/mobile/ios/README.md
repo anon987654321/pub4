@@ -24,3 +24,16 @@ App Store Connect. citeturn829489search2turn829489search7
 
 The Apple association endpoint is populated only after `APPLE_TEAM_ID` is
 configured, which keeps deep-link claims honest during development.
+
+## Native shell controller
+
+The shared Stimulus controller exposes one browser-safe boundary. A page can ask
+the native shell to share content through the pub4Share message handler; in a
+normal browser it falls back to Web Share when available.
+
+Native APIs stay behind capability detection. Rails views and controllers do not
+branch on iOS or Android, which keeps the web product identical across browser,
+PWA, TWA, and the iOS shell.
+
+The iOS shell owns the native share sheet. Android TWA continues to use the Web
+Share API supplied by the browser.
