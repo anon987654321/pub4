@@ -61,7 +61,13 @@ module Deploy
         return result
       end
 
-      head = capture("git", "rev-parse", "HEAD").strip
+      head, head_status = git_capture("rev-parse", "HEAD")
+      unless BoundedCommand.success?(head_status)
+        result.inconclusive!("deploy_drift: git rev-parse HEAD failed — cannot establish the comparison baseline")
+        return result
+      end
+
+      head = head.strip
       stamps.each { |app, stamp| check_app(result, app, stamp, head) }
       # Say what was compared, so the pass line is backed by a visible claim
       # rather than by the absence of failures.
@@ -91,7 +97,13 @@ module Deploy
       end
 
       paths = paths_for(app)
-      commits = capture("git", "log", "--oneline", "#{sha}..#{head}", "--", *paths).lines.map(&:strip).reject(&:empty?)
+      commits_output, commits_status = git_capture("log", "--oneline", "#{sha}..#{head}", "--", *paths)
+      unless BoundedCommand.success?(commits_status)
+        result.inconclusive!("deploy_drift: git log failed for #{app} — cannot establish whether deployed #{sha} has drift")
+        return
+      end
+
+      commits = commits_output.lines.map(&:strip).reject(&:empty?)
       return if commits.empty?
 
       subjects = commits.first(3).map { |c| c.sub(/\A\h+\s/, "") }
@@ -142,9 +154,8 @@ module Deploy
       BoundedCommand.success?(status)
     end
 
-    def capture(*args)
-      out, status = BoundedCommand.capture2e("git", "-C", ROOT, *args[1..])
-      BoundedCommand.success?(status) ? out : ""
+    def git_capture(*args)
+      BoundedCommand.capture2e("git", "-C", ROOT, *args)
     end
   end
 end
