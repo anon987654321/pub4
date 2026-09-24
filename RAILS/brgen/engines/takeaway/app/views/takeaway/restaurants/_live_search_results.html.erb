@@ -4,7 +4,7 @@
 <nav class="deal-cats" aria-label="<%= t("actions.all_cuisines") %>">
   <%= link_to restaurants_path, class: "deal-cat#{" active" if params[:cuisine].blank?}", aria: { current: (params[:cuisine].blank? ? "page" : nil) } do %>
     <span class="store-shortcut-well" aria-hidden="true"><%= icon :layers, size: 32 %></span>
-    <%= t("marketplace.all_categories") %>
+    <%= t("actions.all_cuisines") %>
   <% end %>
   <% Takeaway::Restaurant::CUISINE_TYPES.each do |cuisine| %>
     <%= link_to restaurants_path(cuisine:), class: "deal-cat#{" active" if params[:cuisine] == cuisine}", aria: { current: (params[:cuisine] == cuisine ? "page" : nil) } do %>
