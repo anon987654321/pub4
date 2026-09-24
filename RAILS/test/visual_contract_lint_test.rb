@@ -44,7 +44,7 @@ class VisualContractLintTest < Minitest::Test
 
     assert_empty old_glob.map { |p| File.expand_path(p) } - sources,
                  "the resolver lost a file the directory glob had"
-    assert_includes sources, File.expand_path(File.join(L::RAILS_ROOT, "shared/app/assets/stylesheets/_zen_shell.scss")),
+    assert_includes sources, File.expand_path(File.join(L::RAILS_ROOT, "shared/app/assets/stylesheets/_components.scss")),
                     "a partial _stack_brgen forwards must be in the bundle"
     assert_includes sources, File.expand_path(File.join(L::RAILS_ROOT, "shared/app/assets/stylesheets/_shell.scss")),
                     "a shared partial application.scss @uses by bare name must be in the bundle"

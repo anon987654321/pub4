@@ -373,7 +373,7 @@ html.palette-open {
   min-height: 100dvh;
 }
 
-/* The universal border-box/zero-margin reset is shared/_zen_shell.scss's first
+/* The universal border-box/zero-margin reset is shared/_components.scss's first
    rule and reaches every app, so brgen does not restate it. */
 
 html, body {
@@ -2365,7 +2365,7 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
   min-height: var(--tap-min);
 }
 
-/* No .btn:hover here: shared/_zen_buttons.scss sets the same opacity .88 and
+/* No .btn:hover here: shared/_buttons.scss sets the same opacity .88 and
    the same text-decoration none, and it is the sheet that owns .btn. */
 /* Fill instead of outline. A transparent button with a 1px edge is a line;
    a subtle surface is a button. */
@@ -3913,7 +3913,7 @@ body.vertical-marketplace .top-offers-rail .sale-ad .deal-price {
 
 // The order page's chat heading: an h2 inside <section class="order-chat">, one
 // level under the order h1. As a plain h2 it would render at 30.375px, and
-// inside a <section> _zen_shell's `section h2` takes it to --text-xs (13.5px).
+// inside a <section> __components's `section h2` takes it to --text-xs (13.5px).
 // The class (0,1,1) outranks that pair (0,0,2), and 1.17em is the UA h3 ratio,
 // the size the heading reads at.
 .order-chat h2 {
@@ -6278,7 +6278,7 @@ font-size: clamp(12px, 3vw, var(--text-sm));
   .dating-intro-arrow { transition: none; }
 }
 
-/* No .visually-hidden here. shared/_zen_shell.scss declares it identically for
+/* No .visually-hidden here. shared/_components.scss declares it identically for
    all three apps and compiles into the same application.css; a second copy is
    a utility that can drift out from under a screen reader. */
 
@@ -8569,7 +8569,7 @@ body.vertical-messenger .roster-nick {
 }
 
 // The id matters here beyond habit. #comments-section is a <section>, and
-// _zen_shell's `section h2 { font-size: var(--text-xs) }` would otherwise catch
+// __components's `section h2 { font-size: var(--text-xs) }` would otherwise catch
 // this heading. An id (1,0,1) outranks that element pair (0,0,2), so it stays
 // at --text-base.
 #comments-section h2 {

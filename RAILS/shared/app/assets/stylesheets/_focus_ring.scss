@@ -1,7 +1,7 @@
 /* Keyboard focus indicator — one owner for the whole design system.
  *
  * Before this file there was no active global :focus-visible rule in any app.
- * _zen_shell.scss has one, but no application.scss imports it, so every visible
+ * _components.scss has one, but no application.scss imports it, so every visible
  * focus ring in brgen/amber/bsdports was Chrome's *default* ring — and the only
  * stops that lost it were the ones whose CSS explicitly said `outline: none`.
  * keyboard_flow reported 3/25 stops on brgen/core and brgen/marketplace and

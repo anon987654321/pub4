@@ -137,7 +137,7 @@ consistency campaign; enforcement lives in `visual_contract_lint`,
 
 ## Component families (closed sets)
 
-- **Buttons** — dash-spelled, one family in `_zen_buttons.scss`: `btn` base +
+- **Buttons** — dash-spelled, one family in `_buttons.scss`: `btn` base +
   compound variants `.btn.btn-primary/-ghost/-danger/-sm`, plus `btn-link`,
   `btn-block`, `btn-share`. Variants are compound (`0-2-0`) so an app's later
   `.btn` base is a dialect skin that can never beat them; ghost ink is `inherit`
@@ -229,13 +229,13 @@ Verdicts, recorded not forced:
 
 ## Stylesheet size budget (auditor css_file_size, 200 lines) — stance 2026-08-22
 
-Ten sheets exceed it. Not one queue: _zen_shell (593) and _minimal (459) are
+Ten sheets exceed it. Not one queue: _components (593) and _minimal (459) are
 BASE LAYERS — one file is their design, splitting them scatters the cascade
 story; _dialect_tokens (200+) holds tokens AND theme mixins and is the one with
 a real seam (tokens vs mixins) if anyone splits anything.
 
 "Splitting scatters the cascade story" held until it was measured. The button
-family came out of _zen_shell on 2026-09-10 into `_zen_buttons.scss`, forwarded
+family came out of _components on 2026-09-10 into `_buttons.scss`, forwarded
 immediately before it, and the three built bundles hold the same declarations in
 an order no element can tell apart — the 24 pairs that changed relative order
 all pit `.btn` against a utility that ties it at 0-1-0, and no element in the
@@ -281,10 +281,10 @@ above every rule. A shared partial the stack already loaded is not loaded again.
 @use "stack" as *;
 ```
 
-`stack` forwards: `_minimal`, `_tokens`, `_animations`, `_zen_buttons`,
-`_zen_shell` (offline page, install prompt, x.com-shell primitives). The button
+`stack` forwards: `_minimal`, `_tokens`, `_animations`, `_buttons`,
+`_components` (offline page, install prompt, x.com-shell primitives). The button
 partial's position is a cascade contract, not an ordering convenience:
-zen_shell's `@media (forced-colors: active)` block names `.btn` and ties with it
+_components's `@media (forced-colors: active)` block names `.btn` and ties with it
 at 0-1-0, so it has to keep the later word.
 
 Every app writes its own rules below the `@use` lines.

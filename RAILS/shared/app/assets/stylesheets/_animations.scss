@@ -1,7 +1,7 @@
 // The .animate-* utility classes were deleted 2026-08-22: zero markup ever
 // applied one (css_coverage census) — the flat contract made them dead on
 // arrival. What remains is what other sheets actually cite: slideInRight and
-// expandLayout (zen_shell), shimmer (chrome_surfaces, empty_state), the
+// expandLayout (_components), shimmer (chrome_surfaces, empty_state), the
 // --delay stagger hook, and the reduced-motion guarantee.
 
 @keyframes slideInRight {

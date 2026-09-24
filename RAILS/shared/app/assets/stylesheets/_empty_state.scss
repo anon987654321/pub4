@@ -130,7 +130,7 @@ body[data-theme="wscons"] .empty-state,
 .search-skeleton-line--short { width: 40%; }
 .search-skeleton-line--mid { width: 70%; }
 
-/* .visually-hidden is _zen_shell.scss's, alongside the other resets, and every
+/* .visually-hidden is _components.scss's, alongside the other resets, and every
    app reaches that sheet through its stack. It was declared here identically
    too — an accessibility utility with two definitions is one that can be
    half-fixed. */

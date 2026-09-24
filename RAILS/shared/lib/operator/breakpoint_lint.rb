@@ -52,7 +52,7 @@ module Operator
     #
     # unknown_edge is 0 as of 2026-08-15, down from 3. The three that were "design
     # decisions rather than typos" — 700px in brgen/_marketplace_nav_bar, 400px and
-    # 600px in shared/_zen_shell — are gone from the sheets, so the tolerance that
+    # 600px in shared/_components — are gone from the sheets, so the tolerance that
     # existed for them is gone too. The next unrecognised width is a new one.
     #
     # A fourth, 769px in brgen/_root, was a genuine gap and is fixed: the compose
@@ -64,7 +64,7 @@ module Operator
     #
     # The note above said all three were gone from the sheets. Two of them never
     # were findings: `@container grid (min-width: 400px)` and `(min-width: 600px)`
-    # in shared/_zen_shell are container queries, and a container query measures
+    # in shared/_components are container queries, and a container query measures
     # the element's own container rather than the viewport, so neither number
     # means anything on this scale. QUERY matched them because the eight
     # characters are identical in both at-rules. See CONTAINER below.
@@ -118,7 +118,7 @@ module Operator
     # nothing on the viewport scale and there is no edge for them to be wrong
     # against. QUERY matched them anyway, because `(min-width: 400px)` is the
     # same eight characters in both, and the lint reported two correct container
-    # queries in _zen_shell as unrecognised viewport widths.
+    # queries in _components as unrecognised viewport widths.
     #
     # That is the shape this repo's own TODO.md calls Scanner Convention 1 and
     # breakpoint_lint already learned once with comments: a check that reports

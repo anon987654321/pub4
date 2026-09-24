@@ -26,15 +26,15 @@ class BreakpointLintTest < Minitest::Test
   # so the number means nothing on the viewport scale and there is no edge for it
   # to be wrong against. QUERY matches both at-rules because the eight characters
   # are identical, and the lint reported two correct container queries in
-  # _zen_shell as unrecognised widths -- which is the shape that gets correct
+  # _components as unrecognised widths -- which is the shape that gets correct
   # code changed to satisfy a check.
   def test_a_container_query_is_not_a_viewport_bound
     assert_match Operator::BreakpointLint::CONTAINER, "@container grid (min-width: 400px) {"
     refute_match Operator::BreakpointLint::CONTAINER, "@media (min-width: 768px) {"
 
     container_widths = Operator::BreakpointLint.bounds.select { |_, _, _, px, _| [400, 600].include?(px) }
-    assert_empty container_widths.select { |file, _, _, _, _| file.include?("_zen_shell") },
-                 "_zen_shell's container queries are being counted as viewport breakpoints again"
+    assert_empty container_widths.select { |file, _, _, _, _| file.include?("_components") },
+                 "_components's container queries are being counted as viewport breakpoints again"
   end
 
   # The other direction: the filter must not swallow a real media query that
@@ -78,7 +78,7 @@ class BreakpointLintTest < Minitest::Test
   # of the three is not a failure.
   def test_findings_are_a_subset_of_the_recorded_exceptions
     recorded = [
-      "shared/app/assets/stylesheets/_zen_shell.scss",
+      "shared/app/assets/stylesheets/_components.scss",
     ]
     unexpected = L.scan.map(&:file).uniq - recorded
 

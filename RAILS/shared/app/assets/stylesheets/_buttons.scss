@@ -1,14 +1,14 @@
 /* The one button family, shared by all three apps.
  *
- * Forwarded immediately before `zen_shell` in both `_stack.scss` and
+ * Forwarded immediately before `components` in both `_stack.scss` and
  * `_stack_brgen.scss`, and that position is the contract rather than a
  * convenience. It has to stay after `layout_chrome` and `minimal`, whose own
- * comment records that zen_shell's position is the one that wins, and before
- * zen_shell's `@media (forced-colors: active)` block, which ties with `.btn` at
+ * comment records that _components's position is the one that wins, and before
+ * _components's `@media (forced-colors: active)` block, which ties with `.btn` at
  * 0-1-0 and must keep the later word. Move this line and a button changes
  * colour on Windows High Contrast.
  *
- * Nothing else in zen_shell's head can beat these rules: `*` and `:focus-visible`
+ * Nothing else in _components's head can beat these rules: `*` and `:focus-visible`
  * are 0-0-0 and 0-1-0 over properties `.btn` does not set, `input, button,
  * textarea, select { font: inherit }` is 0-0-1 against `.btn`'s 0-1-0, and no
  * element in the tree wears `.btn` beside a `.px-*`, `.text-primary`,
