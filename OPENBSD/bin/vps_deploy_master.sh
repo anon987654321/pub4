@@ -37,19 +37,23 @@ export SECRET_KEY_BASE_DUMMY=1
 #
 # db:prepare is idempotent: it creates the database when absent, loads the
 # schema when empty, and otherwise applies only pending migrations.
-echo "==> db prepare"
+# Gems first: db:prepare is the first `bundle34 exec`, and a gem the pull just
+# added (ferrum-0.17.2, 2026-09-24) stopped the deploy there with GemNotFound
+# while the install that would have fixed it waited two steps later.
+echo "==> bundle"
 bundle34 config set --local without 'development:test' 2>/dev/null || true
+BUNDLE_WITHOUT=development:test bundle34 check 2>/dev/null || BUNDLE_WITHOUT=development:test bundle34 install
+# The tts-worker and media tools boot from MASTER/Gemfile, not web's. rc.d/master
+# only checks it now, because it runs as root; installing belongs here, as dev.
+(cd "$ROOT/MASTER" && BUNDLE_GEMFILE=Gemfile bundle34 check >/dev/null 2>&1 || BUNDLE_GEMFILE=Gemfile bundle34 install)
+
+echo "==> db prepare"
 BUNDLE_WITHOUT=development:test bundle34 exec rails db:prepare
 
 echo "==> assets precompile"
 # rc.d master precompiles as root; dev cannot rewrite root-owned public/assets/assets.
 doas rm -rf public/assets
 doas chown -R dev:dev public
-bundle34 config set --local without 'development:test' 2>/dev/null || true
-BUNDLE_WITHOUT=development:test bundle34 check 2>/dev/null || BUNDLE_WITHOUT=development:test bundle34 install
-# The tts-worker and media tools boot from MASTER/Gemfile, not web's. rc.d/master
-# only checks it now, because it runs as root; installing belongs here, as dev.
-(cd "$ROOT/MASTER" && BUNDLE_GEMFILE=Gemfile bundle34 check >/dev/null 2>&1 || BUNDLE_GEMFILE=Gemfile bundle34 install)
 BUNDLE_WITHOUT=development:test bundle34 exec rails assets:build_face_runtime assets:build_face_modules_bundle assets:build_face_vision_bundle 2>/dev/null || true
 BUNDLE_WITHOUT=development:test bundle34 exec rails assets:precompile
 # The asset gate, through whichever door exists. RAILS/gates/runner.rb was
