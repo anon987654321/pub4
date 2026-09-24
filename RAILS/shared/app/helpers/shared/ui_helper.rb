@@ -54,6 +54,12 @@ module Shared
       located ? "nearby" : LOBBY_CHANNEL
     end
 
+    def messenger_path
+      return nil unless respond_to?(:conversations_path)
+
+      conversations_path
+    end
+
     # Every icon partial in the shared engine, by name. Read once at load; the
     # sprite partial and the unknown-name guard below both work off this list, so
     # dropping a file in shared/app/views/shared/icons/ is all it takes to add one.
