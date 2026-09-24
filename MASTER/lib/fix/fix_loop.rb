@@ -88,6 +88,9 @@ module Master
         budget_error = exhausted_budget(journal:, run_id:)
         return budget_error if budget_error
 
+        mission = mission_for(target:, files:, journal:)
+        mission.transition!(:plan, plan: Ground::ActivePlan.read(@root) || "fix plan: observe, critique, repair, verify")
+        mission.transition!(:execute)
         deadline = Ground::Reliability::Deadline.new(journal["remaining_seconds"].to_f)
         start_pass = @run_journal.next_pass(journal)
         @bus&.publish("fix_loop:recovered", run_id:, start_pass:, target:) if journal["resumed"]
@@ -97,19 +100,50 @@ module Master
         start_pass = resumed.value!
 
         result = run_passes(files:, target:, max_passes:, deadline:, budget_seconds:, start_pass:, run_id:)
-        finish_run(result, target, run_id)
+        finish_run(result, target, run_id, mission:)
       rescue StandardError => e
         @bus&.publish("fix_loop:crash", error: e.message, backtrace: e.backtrace&.first(8))
         @run_journal&.crash(run_id, e.message) if defined?(run_id) && run_id
         Result.err("fix_loop: #{e.message} @ #{e.backtrace&.first(3)&.join(" | ")}", category: :unknown)
       end
 
-      def finish_run(result, target, run_id)
+      def finish_run(result, target, run_id, mission: nil)
         sweep_names(target, run_id)
         state = terminal_state_for(result)
         @run_journal.terminal(run_id, state, message: result.to_s)
+        mission&.transition!(:verify, summary: result.to_s)
+        mission_state = state == :done ? "completed" : "interrupted"
+        mission&.finish!(state: mission_state, summary: result.to_s)
         @bus&.publish("fix_loop:terminal", state:, message: result.to_s)
         result
+      end
+
+      def mission_for(target:, files:, journal:)
+        checkpoint = lambda do |id:, root:, files:|
+          Checkpoint.new(root:, dir: File.join(root, ".master", "checkpoints")).create(
+            label: "mission-#{id}", files:
+          )
+        end
+        Mission = Master::Core::Mission unless defined?(Mission)
+        mission = Master::Core::Mission.new(root: @root, bus: @bus, checkpoint:)
+        mission.start!(
+          goal: "fix #{relative_target(target)}",
+          scope: target,
+          model: @pass_runner.respond_to?(:agent) ? @pass_runner.agent : ENV["MASTER_MODEL"],
+          effort: ENV.fetch("MASTER_EFFORT", "high"),
+          plan: Ground::ActivePlan.read(@root),
+        )
+      rescue StandardError => e
+        @bus&.publish("mission:error", error: e.message, phase: "start")
+        raise
+      end
+
+      def relative_target(path)
+        full = File.expand_path(path, @root)
+        root = File.expand_path(@root)
+        return path.to_s unless full == root || full.start_with?(root + File::SEPARATOR)
+
+        full.delete_prefix(root + File::SEPARATOR)
       end
 
       # After the passes, with no transaction open: a rename moves files the
