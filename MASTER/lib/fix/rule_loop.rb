@@ -132,8 +132,10 @@ module Master
       def scan_files(files)
         files.flat_map do |path|
           next [] unless File.exist?(path)
-          result = @scanner.scan(path, rules: [@rule])
-          next [] unless result.ok?
+
+          result = Master::Result.wrap(@scanner.scan(path, rules: [@rule]))
+          raise "rule scan failed for #{path}: #{result.error}" unless result.ok?
+
           ext = File.extname(path).downcase
           result.value!
                 .select { |f| Severity.at_least?(f[:severity], MIN_SEVERITY) }
