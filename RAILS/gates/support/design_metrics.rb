@@ -85,8 +85,8 @@ module Deploy
               light_only[token] = true unless light_only.key?(token)
             end
           end
-        rescue StandardError
-          next
+        rescue StandardError => e
+          raise "design_metrics: unreadable stylesheet #{path}: #{e.class}: #{e.message}"
         end
       end
       light_only.select { |_, only| only }.keys
