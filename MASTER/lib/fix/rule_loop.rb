@@ -372,11 +372,13 @@ module Master
       end
 
       def scan_all(path)
-        result = @scanner.scan(path)
-        result.ok? ? result.value! : []
+        result = Master::Result.wrap(@scanner.scan(path))
+        raise "rule scan failed for #{path}: #{result.error}" unless result.ok?
+
+        result.value!
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "rule_loop.scan_all", event_bus: @bus, path:)
-        []
+        raise
       end
 
       # A deleting transform runs only when a person asked this loop to fix, and
