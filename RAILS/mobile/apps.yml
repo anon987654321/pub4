@@ -1,0 +1,111 @@
+# Mobile distribution matrix.
+# One source of truth for the installable products that get native store envelopes.
+# Secrets and signing fingerprints stay in environment variables.
+
+apps:
+  brgen:
+    name: Brgen
+    host: brgen.no
+    url: https://brgen.no/
+    kind: core
+    android:
+      package: no.brgen.brgen
+      certificate_env: BRGEN_ANDROID_CERT_SHA256
+    ios:
+      bundle_id: no.brgen.brgen
+      team_id_env: APPLE_TEAM_ID
+  radio:
+    name: Brgen Radio
+    host: radio.brgen.no
+    url: https://radio.brgen.no/
+    kind: vertical
+    vertical: playlist
+    android:
+      package: no.brgen.radio
+      certificate_env: BRGEN_RADIO_ANDROID_CERT_SHA256
+    ios:
+      bundle_id: no.brgen.radio
+      team_id_env: APPLE_TEAM_ID
+  dating:
+    name: Brgen Dating
+    host: dating.brgen.no
+    url: https://dating.brgen.no/
+    kind: vertical
+    vertical: dating
+    android:
+      package: no.brgen.dating
+      certificate_env: BRGEN_DATING_ANDROID_CERT_SHA256
+    ios:
+      bundle_id: no.brgen.dating
+      team_id_env: APPLE_TEAM_ID
+  tv:
+    name: Brgen TV
+    host: tv.brgen.no
+    url: https://tv.brgen.no/
+    kind: vertical
+    vertical: tv
+    android:
+      package: no.brgen.tv
+      certificate_env: BRGEN_TV_ANDROID_CERT_SHA256
+    ios:
+      bundle_id: no.brgen.tv
+      team_id_env: APPLE_TEAM_ID
+  takeaway:
+    name: Brgen Takeaway
+    host: takeaway.brgen.no
+    url: https://takeaway.brgen.no/
+    kind: vertical
+    vertical: takeaway
+    android:
+      package: no.brgen.takeaway
+      certificate_env: BRGEN_TAKEAWAY_ANDROID_CERT_SHA256
+    ios:
+      bundle_id: no.brgen.takeaway
+      team_id_env: APPLE_TEAM_ID
+  marketplace:
+    name: Brgen Marketplace
+    host: markedsplass.brgen.no
+    url: https://markedsplass.brgen.no/
+    kind: vertical
+    vertical: marketplace
+    android:
+      package: no.brgen.marketplace
+      certificate_env: BRGEN_MARKETPLACE_ANDROID_CERT_SHA256
+    ios:
+      bundle_id: no.brgen.marketplace
+      team_id_env: APPLE_TEAM_ID
+  maps:
+    name: Brgen Maps
+    host: maps.brgen.no
+    url: https://maps.brgen.no/
+    kind: vertical
+    vertical: maps
+    android:
+      package: no.brgen.maps
+      certificate_env: BRGEN_MAPS_ANDROID_CERT_SHA256
+    ios:
+      bundle_id: no.brgen.maps
+      team_id_env: APPLE_TEAM_ID
+  messenger:
+    name: Brgen Messenger
+    host: messenger.brgen.no
+    url: https://messenger.brgen.no/
+    kind: vertical
+    vertical: messenger
+    android:
+      package: no.brgen.messenger
+      certificate_env: BRGEN_MESSENGER_ANDROID_CERT_SHA256
+    ios:
+      bundle_id: no.brgen.messenger
+      team_id_env: APPLE_TEAM_ID
+  amber:
+    name: Amber
+    host: amber.fashion
+    url: https://amber.fashion/
+    kind: standalone
+    android:
+      package: fashion.amber.app
+      certificate_env: AMBER_ANDROID_CERT_SHA256
+    ios:
+      bundle_id: fashion.amber.app
+      team_id_env: APPLE_TEAM_ID
