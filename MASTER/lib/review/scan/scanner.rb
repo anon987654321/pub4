@@ -191,10 +191,16 @@ module Master
         end
 
         def prediction_thresholds
-          @prediction_thresholds ||= (Master.load_yaml(Master::RULES_PATH)["prediction_engine"] || {})
+          @prediction_thresholds ||= begin
+            rules = Master.load_yaml(Master::RULES_PATH)
+            prediction = rules["prediction_engine"]
+            raise "prediction_engine configuration missing" unless prediction.is_a?(Hash)
+
+            prediction
+          end
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "Scanner.prediction_thresholds")
-          {}
+          raise "scanner: prediction policy unreadable: #{e.class}: #{e.message}"
         end
 
         # An autofix that takes code out is a different risk from one that puts an
