@@ -102,13 +102,6 @@ module Deploy
       )
     end
 
-    def paths_for(app)
-      return MASTER_PATHS if app == "master"
-
-      root = app_roots[app] || "RAILS/#{app}"
-      [root, *SHARED_PATHS]
-    end
-
     def app_roots
       @app_roots ||= begin
         yaml = YAML.safe_load_file(APPS_YML, aliases: true)
