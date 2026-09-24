@@ -142,9 +142,8 @@ if ENV["MASTER_FOLD"] == "1"
   if ENV["MASTER_HEADLESS"] == "1"
     puts JSON.generate(result.merge(status: result[:reason] == :complete ? "SUCCESS" : "INCONCLUSIVE"))
   else
-    puts Master::CLI::CoreBridge.run_string(
-      goal, root: Dir.pwd, bus: container[:bus], model_id: container[:agent]&.model
-    )
+    header = "core: #{result[:reason]} turns=#{result[:turns]}"
+    puts [header, *result[:transcript], result[:summary]].compact.join("\n")
   end
   save_cli_session_safely(cli)
   exit!(result[:reason] == :complete ? 0 : 1)
