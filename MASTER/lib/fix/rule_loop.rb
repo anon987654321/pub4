@@ -356,10 +356,15 @@ module Master
       end
 
       def convergence_cfg
-        @convergence_cfg ||= Master.load_yaml(Master::RULES_PATH).dig("thresholds", "convergence") || {}
+        @convergence_cfg ||= begin
+          rules = Master.load_yaml(Master::RULES_PATH)
+          convergence = rules&.dig("thresholds", "convergence")
+          raise "convergence thresholds missing: #{Master::RULES_PATH}" unless convergence.is_a?(Hash)
+          convergence
+        end
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "rule_loop.convergence_cfg", event_bus: @bus)
-        {}
+        raise "rule_loop: convergence configuration unreadable: #{e.class}: #{e.message}"
       end
 
       def genetic_autofix_candidates
