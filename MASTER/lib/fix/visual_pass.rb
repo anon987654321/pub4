@@ -286,6 +286,17 @@ module Master
           affordance, and decorative noise. Do not stop at "technically valid".
           Treat one-pixel alignment drift, inconsistent spacing, typography, component vocabulary, optical centering, baseline rhythm, density, and responsive composition as real defects when the rendered evidence supports it.
 
+          HOSTILE VISUAL AUDIT
+          Before proposing a fix, challenge the visual conclusion:
+          - What observation would falsify the claimed visual defect?
+          - Could font loading, locale, dynamic data, viewport state, or animation explain the apparent drift?
+          - What useful interaction or information would a visual cleanup accidentally remove?
+          - Which adjacent state is not represented by this screenshot but could expose a regression?
+          - Is the proposed improvement actually a deletion, alignment correction, or existing-primitives fix rather than new visual machinery?
+          - What would a careless or adversarial user do to reveal a hidden overlap, dead control, misleading affordance, or inaccessible state?
+          - Which part of the page should remain deliberately imperfect because it carries product identity or useful information?
+          Only promote a hostile observation into a finding when rendered evidence or repository evidence supports it.
+
           #{rows.join("\n")}
           #{drift_rows.join("\n")}
           #{graph&.context}
