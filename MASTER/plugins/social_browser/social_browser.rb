@@ -83,7 +83,7 @@ module Master
         target = url || site!(site).start_url
         with_browser(site:, account:, url: target, headless:, runtime:) do |page, run_dir|
           shot = screenshot(page, run_dir, "before")
-          body = page.body.to_s.byteslice(0, MAX_BODY_BYTES).to_s
+          body = guarded_page_text(page.body.to_s.byteslice(0, MAX_BODY_BYTES).to_s, page.url.to_s)
           {
             action: "inspect",
             site: site.to_s,
