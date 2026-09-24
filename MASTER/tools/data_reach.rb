@@ -69,14 +69,14 @@ module Operator
       @documents ||= {}
       return @documents[path] if @documents.key?(path)
 
-      @documents[path] = begin
-        YAML.safe_load_file(path, aliases: true)
-      rescue StandardError => e
-        warn "data_reach: #{File.basename(path)} does not parse " \
-             "(#{e.class}: #{e.message.lines.first.to_s.strip}) — its keys pass this census unread"
-        nil
-      end
+      @documents[path] = YAML.safe_load_file(path, aliases: true)
+    rescue StandardError => e
+      @document_errors ||= {}
+      @document_errors[path] = e
+      warn "data_reach: #{File.basename(path)} does not parse "            "(#{e.class}: #{e.message.lines.first.to_s.strip}) — census is inconclusive"
+      nil
     end
+
 
     # How a file is legitimately named without its own basename. This repo's
     # house rule is that a data file is reached through one accessor rather than
@@ -158,6 +158,12 @@ module Operator
     def check_corpus!(data_files)
       abort("data_reach: no data/*.yml found -- a report of zero unnamed keys read nothing") if data_files.empty?
       abort("data_reach: the code corpus is empty, so every key reads as unnamed") if code.empty?
+
+      data_files.each { |path| document(path) }
+      if @document_errors&.any?
+        details = @document_errors.map { |path, error| "#{path}: #{error.class}: #{error.message.lines.first.to_s.strip}" }
+        abort("data_reach: #{details.join("; ")}")
+      end
 
       data_files
     end
