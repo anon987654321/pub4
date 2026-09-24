@@ -84,6 +84,15 @@ module Master
           %(<text x="#{label_x}" y="#{label_y}" fill="#111" font-size="10">#{index + 1} Δx=#{row[:delta]["x"].round(1)} Δy=#{row[:delta]["y"].round(1)}</text>)
       end
 
+      def squint(surface:, state:, image_path:, blur_px:)
+        css = "#{BASE_IMAGE_CSS}.stage{overflow:visible}"               ".stage img{filter:grayscale(1) blur(#{blur_px}px);transform:scale(1.01)}"
+        document(css, "squint composition · #{escape_html(surface.id)} · #{escape_html(state)}", <<~HTML)
+          <div class="stage">
+            <img src="#{data_uri(image_path)}" alt="blurred composition for squint review">
+          </div>
+        HTML
+      end
+
       def grid(surface:, state:, image_path:, step:)
         css = "#{BASE_IMAGE_CSS}.grid{position:absolute;inset:0;pointer-events:none;" \
               "background-image:linear-gradient(to right,rgba(17,17,17,.12) 1px,transparent 1px)," \
