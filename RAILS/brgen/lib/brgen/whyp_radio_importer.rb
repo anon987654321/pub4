@@ -1,0 +1,171 @@
+# frozen_string_literal: true
+
+require "digest"
+require "json"
+require "open3"
+require "uri"
+require "timeout"
+require "yaml"
+
+module Brgen
+  class WhypRadioImporter
+    DEFAULT_AUDIO_ROOT = Rails.root.join("public/audio/whyp")
+    DEFAULT_MANIFEST_ROOT = Rails.root.join("config/radio_whyp")
+    DEFAULT_TIMEOUT = 1_800
+
+    Result = Data.define(:manifest_path, :track_count, :audio_root)
+
+    def initialize(collection_url:, audio_root: DEFAULT_AUDIO_ROOT, manifest_root: DEFAULT_MANIFEST_ROOT)
+      @collection_url = validate_url(collection_url)
+      @collection_slug = collection_slug(@collection_url)
+      @audio_root = Pathname.new(audio_root).join(@collection_slug)
+      @manifest_root = Pathname.new(manifest_root)
+    end
+
+    def call
+      require_commands!
+      @audio_root.mkpath
+      @manifest_root.mkpath
+      download_collection
+
+      manifest = build_manifest
+      manifest_path = @manifest_root.join("#{@collection_slug}.yml")
+      write_manifest(manifest, manifest_path)
+
+      Result.new(manifest_path, manifest.fetch("tracks").size, @audio_root)
+    end
+
+    private
+
+    attr_reader :collection_url, :collection_slug, :audio_root, :manifest_root
+
+    def validate_url(value)
+      uri = URI.parse(value.to_s)
+      abort "radio: collection must be a Whyp URL" unless %w[whyp.it www.whyp.it].include?(uri.host.to_s.downcase)
+
+      value.to_s
+    rescue URI::InvalidURIError
+      abort "radio: invalid collection URL"
+    end
+
+    def collection_slug(url)
+      value = URI.parse(url).path.split("/").reject(&:blank?).last.to_s
+      value = "collection-#{Digest::SHA256.hexdigest(url)[0, 12]}" if value.blank?
+      value.gsub(/[^0-9A-Za-z_-]+/, "-").sub(/\A-+|-+\z/, "")[0, 80]
+    end
+
+    def require_commands!
+      %w[yt-dlp ffmpeg].each do |command|
+        available = ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? do |dir|
+          File.executable?(File.join(dir, command))
+        end
+        abort "radio: #{command} is required" unless available
+      end
+    end
+
+    def download_collection
+      args = [
+        "yt-dlp",
+        "--yes-playlist",
+        "--ignore-errors",
+        "--no-warnings",
+        "--write-info-json",
+        "--write-thumbnail",
+        "--extract-audio",
+        "--audio-format", "mp3",
+        "--audio-quality", "128K",
+        "--output", audio_root.join("%(id)s.%(ext)s").to_s,
+        collection_url
+      ]
+
+      stdout, stderr, status = with_timeout { Open3.capture3(*args) }
+      return if status.success?
+
+      detail = [stderr, stdout].compact_blank.join("\n").lines.last(20).join
+      abort "radio: yt-dlp failed\n#{detail}"
+    rescue Timeout::Error
+      abort "radio: yt-dlp exceeded #{timeout_seconds}s"
+    end
+
+    def build_manifest
+      infos = Dir.glob(audio_root.join("*.info.json").to_s).filter_map do |path|
+        JSON.parse(File.read(path, encoding: "UTF-8"))
+      rescue JSON::ParserError => error
+        abort "radio: invalid yt-dlp metadata #{path}: #{error.message}"
+      end
+
+      tracks = infos.filter_map { |info| manifest_track(info) }.uniq { |row| row["source_url"] }
+      abort "radio: yt-dlp produced no usable tracks" if tracks.empty?
+
+      {
+        "meta" => {
+          "source" => "Whyp",
+          "collection_url" => collection_url,
+          "collection_id" => collection_slug,
+          "audio_format" => "mp3",
+          "audio_quality" => "128k",
+          "privacy" => "public",
+          "purpose" => "Radio seed media",
+          "generated_at" => Time.current.iso8601,
+          "rights_note" => "Imported from the operator-provided Whyp collection; verify publication rights before production redistribution."
+        },
+        "tracks" => tracks
+      }
+    end
+
+    def manifest_track(info)
+      id = info["id"].to_s.presence
+      title = info["title"].to_s.presence
+      source_url = info["webpage_url"].presence || info["original_url"].presence
+      return unless id && title && source_url
+
+      audio_path = audio_file_for(id)
+      return unless audio_path
+
+      artwork_path = artwork_file_for(id)
+
+      {
+        "id" => id,
+        "title" => title,
+        "artist" => info["artist"].presence || info["creator"].presence || info["uploader"].presence || "Brgen Radio",
+        "duration_seconds" => info["duration"]&.to_f&.round,
+        "source_type" => "whyp",
+        "source_url" => source_url,
+        "audio" => relative_public_path(audio_path),
+        "artwork" => artwork_path ? relative_public_path(artwork_path) : nil
+      }.compact
+    end
+
+    def audio_file_for(id)
+      candidate = audio_root.join("#{id}.mp3")
+      candidate.file? && candidate.size.positive? ? candidate : nil
+    end
+
+    def artwork_file_for(id)
+      %w[jpg jpeg png webp].map { |ext| audio_root.join("#{id}.#{ext}") }.find(&:file?)
+    end
+
+    def relative_public_path(path)
+      path.relative_path_from(Rails.root).to_s
+    end
+
+    def write_manifest(manifest, path)
+      File.write(
+        path,
+        "# GENERATED by COLLECTION=... bin/rails radio:import_whyp.\n" \
+        "# Source media is operator-supplied; do not edit track rows by hand.\n" \
+        YAML.dump(manifest).sub(/\A---\n/, "")
+      )
+    end
+
+    def timeout_seconds
+      Integer(ENV.fetch("YTDLP_TIMEOUT", DEFAULT_TIMEOUT))
+    rescue ArgumentError
+      DEFAULT_TIMEOUT
+    end
+
+    def with_timeout(&block)
+      Timeout.timeout(timeout_seconds, &block)
+    end
+  end
+end
