@@ -19,10 +19,14 @@ module Master
     class VisualGhostStack
       HISTORY_LIMIT = 5
       DIFF_TOLERANCE_PX = 0.5
-      GHOST_OPACITIES = [ 0.04, 0.06, 0.08, 0.12 ].freeze
-      CURRENT_OPACITY = 1.0
+      GHOST_OPACITIES = [ 0.04, 0.06, 0.09, 0.12 ].freeze
+      CURRENT_OPACITY = 0.72
       REGISTRATION_GRID_PX = 8
       MAX_GEOMETRY_MARKERS = 24
+      FOCUS_SCALE = 2
+      FOCUS_PADDING_PX = 24
+      FOCUS_MIN_SIZE_PX = 160
+      FOCUS_MAX_SIZE_PX = 480
 
       def initialize(root:, dir:)
         @root = root
@@ -76,6 +80,7 @@ module Master
           diff: render_pair(surface:, state:, frames:, key:, cdp:),
           geometry: render_geometry(surface:, state:, frames:, key:, cdp:),
           grid: render_grid(surface:, state:, frames:, key:, cdp:),
+          focus: render_focus(surface:, state:, frames:, key:, cdp:),
           label: "#{surface.id} | #{state} | #{frames.length} aligned passes",
         }
       end
@@ -140,6 +145,86 @@ module Master
         png
       rescue StandardError
         nil
+      end
+
+      def render_focus(surface:, state:, frames:, key:, cdp:)
+        return nil if frames.length < 2
+
+        previous_path, current_path = frames.last(2)
+        previous = JSON.parse(File.read(json_for(previous_path, File.dirname(previous_path))))
+        current = JSON.parse(File.read(json_for(current_path, File.dirname(current_path))))
+        width, height = png_dimensions(current_path)
+        focus = largest_drift_rect(previous, current, width, height)
+        return nil unless focus
+
+        crop_w = [focus[:w] + FOCUS_PADDING_PX * 2, FOCUS_MIN_SIZE_PX].max.clamp(FOCUS_MIN_SIZE_PX, FOCUS_MAX_SIZE_PX)
+        crop_h = [focus[:h] + FOCUS_PADDING_PX * 2, FOCUS_MIN_SIZE_PX].max.clamp(FOCUS_MIN_SIZE_PX, FOCUS_MAX_SIZE_PX)
+        x = [focus[:cx] - crop_w / 2.0, 0].max
+        y = [focus[:cy] - crop_h / 2.0, 0].max
+        x = [x, width - crop_w].min
+        y = [y, height - crop_h].min
+
+        html = File.join(@dir, "focus-#{key}.html")
+        png = File.join(@dir, "focus-#{key}.png")
+        File.write(html, focus_page(surface:, state:, previous_path:, current_path:, focus:, x:, y:, crop_w:, crop_h:))
+        screenshot_file(html, png, cdp:)
+        png
+      rescue StandardError
+        nil
+      end
+
+      def largest_drift_rect(previous, current, width, height)
+        before = Array(previous["elements"]).to_h { |element| [element["key"], element] }
+        after = Array(current["elements"]).to_h { |element| [element["key"], element] }
+        candidates = (before.keys & after.keys).filter_map do |key|
+          old = before[key]
+          new = after[key]
+          old_rect = old["frect"] || old["rect"] || {}
+          new_rect = new["frect"] || new["rect"] || {}
+          delta = %w[x y w h].to_h { |axis| [axis, new_rect[axis].to_f - old_rect[axis].to_f] }
+          magnitude = delta.values.sum { |value| value.abs }
+          next if magnitude <= DIFF_TOLERANCE_PX
+
+          rect = {
+            key:,
+            x: new_rect.fetch("x").to_f,
+            y: new_rect.fetch("y").to_f,
+            w: new_rect.fetch("w").to_f,
+            h: new_rect.fetch("h").to_f,
+            magnitude:
+          }
+          rect[:cx] = rect[:x] + rect[:w] / 2.0
+          rect[:cy] = rect[:y] + rect[:h] / 2.0
+          rect
+        end
+        candidates.max_by { |row| row[:magnitude] }
+      end
+
+      def focus_page(surface:, state:, previous_path:, current_path:, focus:, x:, y:, crop_w:, crop_h:)
+        previous64 = Base64.strict_encode64(File.binread(previous_path))
+        current64 = Base64.strict_encode64(File.binread(current_path))
+        scale = FOCUS_SCALE
+        label = "#{focus[:key]} · Δ #{focus[:magnitude].round(1)}px"
+        <<~HTML
+          <!doctype html>
+          <html><head><meta charset="utf-8"><style>
+          *{box-sizing:border-box}html,body{margin:0;background:#fff;color:#111}
+          body{font:16px/1.4 system-ui,sans-serif;padding:16px}
+          header{margin:0 0 12px;font-weight:700}
+          p{margin:0 0 12px;color:#555;font-size:13px}
+          .stage{position:relative;width:#{(crop_w * scale).round}px;height:#{(crop_h * scale).round}px;overflow:hidden;border:1px solid #bbb;background:#fff}
+          .stage img{position:absolute;width:auto;height:auto;max-width:none;left:-#{(x * scale).round}px;top:-#{(y * scale).round}px}
+          .stage img.previous{opacity:.42;mix-blend-mode:multiply}
+          .stage img.current{opacity:.72}
+          </style></head><body>
+          <header>focus registration · #{escape_html(surface.id)} · #{escape_html(state)}</header>
+          <p>#{escape_html(label)} · current over previous at #{scale}×</p>
+          <div class="stage">
+            <img class="previous" src="data:image/png;base64,#{previous64}" alt="previous render focus">
+            <img class="current" src="data:image/png;base64,#{current64}" alt="current render focus">
+          </div>
+          </body></html>
+        HTML
       end
 
       def render_grid(surface:, state:, frames:, key:, cdp:)
