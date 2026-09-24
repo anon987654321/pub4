@@ -13,12 +13,13 @@ and one iOS bundle identifier.
 
 Android uses a Trusted Web Activity generated from the deployed Web App
 Manifest. Bubblewrap creates a normal Android project and an App Bundle; the
-domain must publish Digital Asset Links for the signed package. citeturn284937search0
+domain must publish Digital Asset Links for the signed package.
+Source: GoogleChromeLabs Bubblewrap documentation.
 
 iOS uses a native application shell around the Rails PWA. The shell must add
-real app utility rather than being only a repackaged website, because App Store
-Review Guideline 4.2 requires features, content, and UI that elevate the app
-beyond a website wrapper. citeturn829489search0
+real app utility rather than being only a repackaged website. Apple App Review
+Guideline 4.2 requires features, content, and UI that elevate an app beyond a
+repackaged website.
 
 The Rails backend already exposes PWA manifests and service workers. It now also
 serves:
@@ -45,4 +46,4 @@ Do not create eight copies of the Rails frontend. Do not put signing keys,
 App Store credentials, or store metadata secrets in this repository.
 
 Apple requires an App Store Connect app record before the first upload; TestFlight
-is the normal beta path. citeturn829489search2turn829489search7
+is the normal beta path.
