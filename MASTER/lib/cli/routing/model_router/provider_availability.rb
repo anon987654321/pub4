@@ -168,9 +168,11 @@ end
 LOCAL_FIT = 0.6
 
 def local_models
+  return [] unless ollama_enabled?
+
   configured = Array(@rules.dig("models", "local")).filter_map { |row| row["id"] }
   installed = ollama_installed_models
-  return ollama_enabled? ? configured : [] if installed.nil?
+  return configured if installed.nil?
 
   pulled = configured.select { |id| ollama_pulled?(id) }
   extra = installed.reject { |name| name.match?(/embed/i) }

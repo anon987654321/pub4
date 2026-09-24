@@ -326,9 +326,11 @@ module Master
           end
 
           def ollama_problem(id)
-            name = id.sub(%r{Aollama[:/]}, "")
+            return "ollama switched off (MASTER_NO_OLLAMA=1)" unless ollama_enabled?
+
+            name = id.sub(%r{\Aollama[:/]}, "")
             installed = ollama_installed_models
-            return (ollama_enabled? ? nil : "start Ollama") if installed.nil?
+            return if installed.nil?
             return "ollama pull #{name}" unless ollama_pulled?(id)
             return if name.end_with?(":cloud", "-cloud")
 
@@ -336,6 +338,8 @@ module Master
           end
 
           def ollama_cloud_models
+            return [] unless ollama_enabled?
+
             Array(ollama_installed_models).select { |name| name.end_with?(":cloud", "-cloud") }
                                           .map { |name| "ollama:#{name}" }
           end

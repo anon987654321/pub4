@@ -12,7 +12,7 @@ class TestKeylessRouting < Minitest::Test
     @saved_env = %w[
       XAI_API_KEY OPENROUTER_API_KEY ANTHROPIC_API_KEY OPENAI_API_KEY
       DEEPSEEK_API_KEY GOOGLE_API_KEY GEMINI_API_KEY MISTRAL_API_KEY
-      MASTER_KEYLESS MASTER_WEB_CHAT MASTER_NO_CLAUDE_CLI MASTER_NO_AGY_CLI
+      MASTER_KEYLESS MASTER_WEB_CHAT MASTER_NO_CLAUDE_CLI MASTER_NO_AGY_CLI MASTER_NO_OLLAMA
     ].to_h { |key| [key, ENV[key]] }
     @saved_env.each_key { |key| ENV.delete(key) }
     # Neutralize both local subscription CLIs so these tests grade keyless and
@@ -21,7 +21,12 @@ class TestKeylessRouting < Minitest::Test
     # test_agy_reachability.
     ENV["MASTER_NO_CLAUDE_CLI"] = "1"
     ENV["MASTER_NO_AGY_CLI"] = "1"
+    # The Ollama daemon too: this Mac serves granite and qwen models that no
+    # tier names, and they led chains these tests grade. Ollama tests opt in.
+    ENV["MASTER_NO_OLLAMA"] = "1"
   end
+
+  def local_ollama! = ENV.delete("MASTER_NO_OLLAMA")
 
   def teardown
     @saved_env.each { |key, val| val.nil? ? ENV.delete(key) : ENV[key] = val }
@@ -65,6 +70,7 @@ class TestKeylessRouting < Minitest::Test
   # OLLAMA_BASE_URL: a pulled model closes the chain, and a machine whose daemon
   # is silent offers no ollama id at all, so none can answer "no model".
   def test_local_tier_is_what_the_daemon_lists_and_closes_the_chain
+    local_ollama!
     ENV["OPENROUTER_API_KEY"] = "sk-or-v1-#{'a' * 64}"
     ENV.delete("OLLAMA_BASE_URL")
     router = Master::CLI::Routing::ModelRouter.new(
@@ -81,6 +87,7 @@ class TestKeylessRouting < Minitest::Test
   end
 
   def test_local_tier_is_offered_once_ollama_base_url_is_set
+    local_ollama!
     ENV["OPENROUTER_API_KEY"] = "sk-or-v1-#{'a' * 64}"
     ENV["OLLAMA_BASE_URL"] = "http://localhost:11434/v1"
     router = Master::CLI::Routing::ModelRouter.new(
@@ -99,6 +106,7 @@ class TestKeylessRouting < Minitest::Test
   # models.yml names three local models and nothing checked any was pulled; a
   # missing one answered "no model" and the chain fell through to a paid lane.
   def test_local_tier_offers_only_the_models_the_daemon_holds
+    local_ollama!
     ENV["OPENROUTER_API_KEY"] = "sk-or-v1-#{'a' * 64}"
     ENV["OLLAMA_BASE_URL"] = "http://localhost:11434"
     router = Master::CLI::Routing::ModelRouter.new(
@@ -113,11 +121,38 @@ class TestKeylessRouting < Minitest::Test
     ENV.delete("OLLAMA_BASE_URL")
   end
 
+  # MASTER_NO_OLLAMA used to count only while the daemon was silent: with it
+  # running, every pulled model joined the chain, and qwen2.5-coder:3b timed
+  # out 1,046 times on this Mac while switched off.
+  def test_ollama_switched_off_offers_no_ollama_lane_while_the_daemon_answers
+    router = Master::CLI::Routing::ModelRouter.new(
+      config: FakeConfig.new(model: Master.free_primary_model), root: Master::ROOT,
+    )
+    router.define_singleton_method(:ollama_installed_models) { ["granite4.2:3b", "qwen2.5-coder:3b", "glm-5.3-flash:cloud"] }
+
+    assert_empty router.fallback_chain(task_type: :chitchat).grep(/\Aollama[:\/]/)
+    refute router.reachable?("ollama:granite4.2:3b")
+  end
+
+  # The hint is a command the operator runs, so it names the Ollama tag, not
+  # MASTER's lane id: `ollama pull ollama:qwen3.5:35b` pulls nothing.
+  def test_an_unpulled_model_hint_names_the_ollama_tag
+    local_ollama!
+    router = Master::CLI::Routing::ModelRouter.new(
+      config: FakeConfig.new(model: Master.free_primary_model), root: Master::ROOT,
+    )
+    router.define_singleton_method(:ollama_installed_models) { ["gemma3:4b"] }
+    router.define_singleton_method(:ollama_enabled?) { true }
+
+    assert_equal "ollama pull qwen3.5:35b", router.send(:ollama_problem, "ollama:qwen3.5:35b")
+  end
+
   # Offline with no OLLAMA_BASE_URL the daemon is still asked, and a model
   # pulled outside models.yml ranks after the configured ones it holds.
   # Offline, a :cloud tag needs the network the session found missing, and a
   # model larger than the machine pages for every token.
   def test_local_models_offer_only_what_runs_on_this_machine
+    local_ollama!
     router = Master::CLI::Routing::ModelRouter.new(config: FakeConfig.new(model: Master.free_primary_model), root: Master::ROOT)
     router.define_singleton_method(:ollama_installed_models) { %w[glm-5.3-flash:cloud gemma3:4b gemma4:26b llama3:latest] }
     router.instance_variable_set(:@ollama_sizes, { "glm-5.3-flash:cloud" => 317, "gemma3:4b" => 3_338_801_804,
@@ -131,6 +166,7 @@ class TestKeylessRouting < Minitest::Test
   end
 
   def test_local_models_rank_what_the_daemon_holds_without_the_env_gate
+    local_ollama!
     ENV.delete("OLLAMA_BASE_URL")
     router = Master::CLI::Routing::ModelRouter.new(
       config: FakeConfig.new(model: Master.free_primary_model), root: Master::ROOT,
@@ -148,6 +184,7 @@ class TestKeylessRouting < Minitest::Test
 
   # The daemon's own answer, read over a real socket.
   def test_ollama_tags_are_read_from_the_daemon
+    local_ollama!
     server = TCPServer.new("127.0.0.1", 0)
     body = JSON.generate("models" => [{ "name" => "phi4:mini" }, { "name" => "qwen2.5-coder:7b" }])
     thread = Thread.new do
