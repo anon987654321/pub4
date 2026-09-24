@@ -122,6 +122,12 @@ module Master
 
         picks = Array(critique.value![:cherry_picks]).map(&:to_s).reject(&:empty?)
         findings = picks.filter_map { |pick| finding_for(pick, sources, anchors) }
+        if picks.any? && findings.empty?
+          return Result.err(
+            "rendered visual review: INCONCLUSIVE — Council returned actionable visual picks, but none could be anchored to source evidence",
+            category: :inconclusive,
+          )
+        end
         @bus&.publish("fix_loop:visual_review", pass:, surfaces: captures.map { |c| c[:surface].id }, findings: findings.size, coverage: coverage[:ratio], graph: graph&.context)
         Result.ok(
           state: findings.empty? ? :clean : :findings,
