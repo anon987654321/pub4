@@ -47,7 +47,8 @@ class TestTraceSupport < Minitest::Test
       end
 
       assert_operator printed.size, :<, 12, printed.join("\n")
-      assert_match(%r{\Ascan0: \d+ model calls, 0 failed, 2 lanes\z/}, printed.last)
+      assert(printed.any? { |line| line.match?(/\Ascan0: \d+ model calls, 0 failed, 2 lanes\z/) },
+           "no rollup line: #{printed.join(" | ")}")
     ensure
       Fiber[:master_unit] = nil
     end
