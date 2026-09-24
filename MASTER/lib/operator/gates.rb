@@ -79,7 +79,7 @@ module Deploy
     def budget
       @budget ||= (YAML.safe_load_file(BUDGET_PATH)&.dig("targets") || {})
     rescue StandardError => e
-      warn "constitutional_scan: budget unreadable (#{e.class}) — running unbudgeted"
+      @result.inconclusive!("constitutional_scan: budget unreadable (#{e.class}: #{e.message}) — budget was not measured")
       {}
     end
 
@@ -181,11 +181,14 @@ module Deploy
 
     def changed_paths
       out, status = BoundedCommand.capture2e("git", "diff", "--name-only", "HEAD", chdir: ROOT)
-      return [] unless BoundedCommand.success?(status)
+      unless BoundedCommand.success?(status)
+        @result.inconclusive!("constitutional_scan: git diff output unavailable — changed-file scope was not measured")
+        return []
+      end
 
       out.lines.map(&:strip).reject(&:empty?)
     rescue StandardError => e
-      warn "constitutional_scan: scan output unreadable (#{e.class})"
+      @result.inconclusive!("constitutional_scan: scan output unreadable (#{e.class}: #{e.message})")
       []
     end
 
