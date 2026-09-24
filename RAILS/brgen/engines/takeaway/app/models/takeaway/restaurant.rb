@@ -32,7 +32,7 @@ class Takeaway::Restaurant < ApplicationRecord
             numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
 
   scope :active, -> { where(active: true) }
-  scope :popular, -> { order(rating: :desc) }
+  scope :popular, -> { order(rating: :desc, updated_at: :desc, id: :desc) }
   scope :near, ->(lat, lng, radius_km = 5) { nearby(lat, lng, radius_km) }
 
   # What a search engine may be told about. A demo restaurant — `demo` is set by
