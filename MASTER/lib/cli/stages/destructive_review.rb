@@ -32,7 +32,7 @@ module Master
           Result.ok(ctx.merge(council_feedback: feedback, review_preapproved: true))
         rescue StandardError => e
           @bus&.publish("review:error", message: e.message, phase: "pre_execute")
-          Result.ok(ctx.merge(review_error: e.message))
+          Result.err("destructive review failed: #{e.message}", category: :infrastructure)
         end
 
         private
