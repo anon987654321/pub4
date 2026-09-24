@@ -21,24 +21,36 @@ class TestTraceSupport < Minitest::Test
     def emit(pattern, payload) = @handlers[pattern].each { |h| h.call(payload) }
   end
 
-  # A scan asks a model per file per rule. One line per send and one per
-  # outcome printed some two thousand lines in the 2026-09-16 /fix, every one
-  # of them a lane failing over to the next, and no report at the end.
-  def test_a_burst_of_model_calls_collapses_into_rollups
+  # Verbose is the operator default: every model send/outcome is visible.
+  def test_verbose_model_calls_are_visible_by_default
     console = Master::Trace::Dmesg::Console.new
     Fiber[:master_unit] = "scan0"
-    printed = 60.times.flat_map do |i|
+    printed = 8.times.flat_map do |i|
       console.lines(event: "llm:send", model: i.even? ? "claude-cli:claude-opus-4-8" : "ollama:gemma3:4b") +
-        console.lines(event: "llm:provider_outcome", model: "x", status: i.zero? ? :success : :provider_error,
-                      error: "claude-cli: ", latency_ms: 10)
+        console.lines(event: "llm:provider_outcome", model: "x", status: :success, latency_ms: 10)
     end
 
-    assert_operator printed.size, :<, 12, printed.join("\n")
-    assert_match(%r{\Allm0 at scan0: }, printed.first)
-    assert(printed.any? { |line| line.match?(/\Ascan0: \d+ model calls, \d+ failed, 2 lanes\z/) },
-           "no rollup line: #{printed.join(" | ")}")
+    assert_equal 16, printed.size
+    assert_equal "llm0 at scan0: claude-cli:claude-opus-4-8", printed.first
+    assert_match(/llm0: .*0\.0s/, printed[1])
   ensure
     Fiber[:master_unit] = nil
+  end
+
+  def test_normal_model_calls_roll_up_after_the_burst
+    Master::Trace::Dmesg.with_verbosity("normal") do
+      console = Master::Trace::Dmesg::Console.new
+      Fiber[:master_unit] = "scan0"
+      printed = 60.times.flat_map do |i|
+        console.lines(event: "llm:send", model: i.even? ? "claude-cli:claude-opus-4-8" : "ollama:gemma3:4b") +
+          console.lines(event: "llm:provider_outcome", model: "x", status: :success, latency_ms: 10)
+      end
+
+      assert_operator printed.size, :<, 12, printed.join("\n")
+      assert_match(%r{\Ascan0: \d+ model calls, 0 failed, 2 lanes\z/}, printed.last)
+    ensure
+      Fiber[:master_unit] = nil
+    end
   end
 
   def test_a_span_runs_its_block_once_when_tracing_is_off
