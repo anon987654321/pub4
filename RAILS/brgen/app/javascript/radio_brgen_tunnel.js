@@ -1013,10 +1013,14 @@ export class RadioBrgen {
       try {
         const audioData = this.audioEngine.getAudioData()
         this.visualEngine.update(audioData)
+        const visualInput = {
+          ...audioData,
+          parallax: this.visualEngine.parallaxOffset(audioData)
+        }
         // The tunnel keeps its state moving underneath a 2D renderer, so it
         // resumes mid-flight rather than from a cold start when the cycle returns.
         if (this.vizMode === 0 || !this.deck) this.visualEngine.render()
-        else this.deck.frame(this.vizMode, audioData)
+        else this.deck.frame(this.vizMode, visualInput)
       } catch (error) {
         if (typeof console !== "undefined" && console.warn) {
           console.warn("radio_brgen_tunnel: animation frame failed, continuing", error)
