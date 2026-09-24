@@ -11,15 +11,12 @@ module Master
           return [] unless tool_capable?(selected_model)
 
           profile = Ground::Tool::Profile.current
-          evidence_mode = Fiber[:master_evidence_mode]
           @llm_tools_by_tier ||= {}
-          cache_key = [profile, evidence_mode]
-          @llm_tools_by_tier[cache_key] ||= build_llm_tools(profile:)
+          @llm_tools_by_tier[profile] ||= build_llm_tools(profile:)
         end
 
         def build_llm_tools(visitor: false, profile: nil)
           profile ||= visitor ? :public : Ground::Tool::Profile.current
-          evidence_mode = Fiber[:master_evidence_mode]
           allowed = Ground::Tool::Profile.allowlist(profile)
           tier = @model_router&.tier_for_model(@config.model).to_s
           @tools.filter_map do |tool|
@@ -35,7 +32,6 @@ module Master
             next unless tool_available_for_context?(meta)
             next if allowed && !allowed.include?(name)
             next if allowed.nil? && !Fiber[:master_elevated] && elevated
-            next unless evidence_tool_admitted?(name, evidence_mode)
             next if tier == "cheap" && elevated
             wrapper.new(tool, bus: @bus)
           end
@@ -58,23 +54,6 @@ module Master
           rows = Master.load_yaml(path)
           base = rows.is_a?(Array) ? rows.select { |row| row.is_a?(Hash) } : []
           base.to_h { |row| [row["name"].to_s, row] }
-        end
-
-        EVIDENCE_TOOL_MAP = {
-          repository: %w[ReadFile ListDir SearchFiles SearchKnowledge SymbolLookup Tree GitContext],
-          web_current: %w[WebSearch WebFetch SearchKnowledge],
-          deep_research: %w[SearchKnowledge WebSearch WebFetch AskLlm],
-          browser: %w[WebFetch PluginCall WebSearch],
-          device: %w[PluginCall],
-          unknown: %w[SearchKnowledge WebSearch WebFetch AskLlm],
-        }.freeze
-
-        def evidence_tool_admitted?(name, mode)
-          return true unless mode
-          names = EVIDENCE_TOOL_MAP[mode.to_sym]
-          return true unless names
-          return true if names.include?(name.to_s)
-          !%w[WriteFile StrReplace BatchReplace AstEdit Shell Clean DynamicHttp].include?(name.to_s)
         end
 
         def tool_available_for_context?(meta)
