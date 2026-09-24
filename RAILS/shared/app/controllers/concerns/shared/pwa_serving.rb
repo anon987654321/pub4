@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../../../../lib/shared/mobile_app_registry"
+
 module Shared
   # Serving the three files a PWA installs from: the manifest, the service
   # worker, and the offline page the worker shows when there is no connection.
@@ -34,6 +36,18 @@ module Shared
     def manifest
       response.headers["Cache-Control"] = "public, max-age=300"
       render template: "pwa/manifest", formats: :json, content_type: "application/manifest+json"
+    end
+
+    def assetlinks
+      response.headers["Cache-Control"] = "public, max-age=300"
+      render plain: Shared::MobileAppRegistry.assetlinks_json(request.host),
+             content_type: "application/json"
+    end
+
+    def apple_app_site_association
+      response.headers["Cache-Control"] = "public, max-age=300"
+      render plain: Shared::MobileAppRegistry.apple_app_site_association(request.host),
+             content_type: "application/json"
     end
 
     def service_worker
