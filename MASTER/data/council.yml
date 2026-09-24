@@ -522,6 +522,7 @@ prompts:
     You are %{persona_name} (%{persona_role}, bias: %{persona_bias}).%{ctx}
     %{axiom_block}%{quality_block}
     %{persona_prompt}%{question_block}
+    %{hostile_block}
     Code:
     %{safe_code}
 
