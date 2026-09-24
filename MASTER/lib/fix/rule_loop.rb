@@ -305,7 +305,10 @@ module Master
       end
 
       def prompt_context_for(violation:, path:, style:)
-        lang = Master::Review::Scan::Rule::EXT_LANG.fetch(File.extname(path).downcase, "text")
+        # bin/doctor has no extension; its shebang says ruby, and so does
+        # language_for. Labelled "text", the model answered in ruby anyway.
+        lang = Master::Review::Scan::Rule::EXT_LANG.fetch(File.extname(path).downcase, nil) ||
+               Master.language_for(path) || "text"
         fix_hint = violation[:fix].to_s.strip
         fix_line = fix_hint.empty? ? "" : "How to fix: #{fix_hint}"
         { lang:, fix_line:, action: prompt_action(style) }
@@ -339,15 +342,20 @@ module Master
         return if text.nil? || text.strip.empty? || CollapseGuard.sentinel?(text)
 
         lang = ext ? ext_language(ext) : "text"
-        langs_re = Regexp.union(lang, "text", "")
-        match = text.match(/```(?:#{langs_re})?\n(.*?)```/m)
+        # A file of no known language (an extensionless script) takes the
+        # fence whatever it is tagged: requiring `text` or a bare fence missed
+        # every ```ruby answer and handed on the whole reply, prose included.
+        # Blocks are read whole, opening and closing fence together; matching
+        # a lone fence paired one block's close with the next one's open.
+        blocks = text.scan(/^```([\w+-]*)[ \t]*\n(.*?)^```[ \t]*$/m)
+        code = blocks.find { |tag, _body| lang == "text" || [lang, "text", ""].include?(tag) }&.last
         # A fence can carry the refusal too: the 2026-09-17 RAILS run wrote a
         # fenced UNCHANGED over a live view because only the bare spelling
         # was refused. The content inside the fence is the file, or it is
         # nothing.
-        return if match && CollapseGuard.sentinel?(match[1])
+        return if code && CollapseGuard.sentinel?(code)
 
-        return match[1].strip if match
+        return code.strip if code
 
         text.strip
       end
