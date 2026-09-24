@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "etc"
 require "open3"
 require_relative "../ground/boot_receipt"
 
@@ -21,10 +22,12 @@ module Master
       attr_reader :root
       MEASURE_TTL_S = 2
 
-      def initialize(root:, config: nil, clock: Process::CLOCK_MONOTONIC)
+      def initialize(root:, config: nil, clock: Process::CLOCK_MONOTONIC, cpus: Etc.nprocessors, platform: RUBY_PLATFORM)
         @root = root
         @config = config || Master::Ops::ProcessBudget.config
         @clock = clock
+        @cpus = [cpus.to_i, 1].max
+        @platform = platform.to_s[/darwin|openbsd|linux/]
         @last_measurement_at = nil
         @last_measurement = nil
       end
@@ -70,8 +73,10 @@ module Master
 
       def resource_checks_table
         [
-          [:load_avg_1m, limit("load_avg_1m", "warn", DEFAULTS[:load_avg_1m][:warn]),
-           limit("load_avg_1m", "crit", DEFAULTS[:load_avg_1m][:crit])],
+          # Load average counts runnable work across every CPU, so the limits
+          # are per CPU: vm23's one vCPU reads them as written.
+          [:load_avg_1m, limit("load_avg_1m", "warn", DEFAULTS[:load_avg_1m][:warn]) * @cpus,
+           limit("load_avg_1m", "crit", DEFAULTS[:load_avg_1m][:crit]) * @cpus],
           [:rss_mb, limit("master_rss_mb", "warn", DEFAULTS[:master_rss_mb][:warn]),
            limit("master_rss_mb", "crit", DEFAULTS[:master_rss_mb][:crit])],
           [:fd_count, resource_limit("fd_count", "warn"), resource_limit("fd_count", "crit")],
@@ -130,6 +135,9 @@ module Master
       end
 
       def resource_limit(name, level)
+        platform = @platform && @config.dig("resources", name, @platform, level).to_f
+        return platform if platform&.positive?
+
         configured = @config.dig("resources", name, level).to_f
         return configured if configured.positive?
 
@@ -141,13 +149,10 @@ module Master
       end
 
       def load_average
-        command = if File.executable?("/sbin/sysctl")
-          ["/sbin/sysctl", "-n", "vm.loadavg"]
-        else
-          nil
-        end
-        if command
-          out, status = Open3.capture2e(*command)
+        # OpenBSD keeps sysctl in /sbin, macOS in /usr/sbin.
+        sysctl = ["/sbin/sysctl", "/usr/sbin/sysctl"].find { |path| File.executable?(path) }
+        if sysctl
+          out, status = Open3.capture2e(sysctl, "-n", "vm.loadavg")
           return out.to_s[/\d+(?:\.\d+)?/]&.to_f if status.success?
         end
         return File.read("/proc/loadavg").to_f if File.file?("/proc/loadavg")

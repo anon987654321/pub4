@@ -1089,6 +1089,13 @@ process:
     process_count:
       warn: 256
       crit: 512
+      # The count is host-wide. A macOS desktop idles at 570-600 processes
+      # (launchd agents, XPC services), past the server limits above, so it
+      # read as critical before MASTER did anything. warn is twice that idle;
+      # crit is 80% of kern.maxproc (2000 on the operator's Mac).
+      darwin:
+        warn: 1200
+        crit: 1600
     disk_free_pct:
       warn: 15
       crit: 5

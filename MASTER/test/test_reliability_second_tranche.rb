@@ -440,7 +440,7 @@ class TestReliabilitySecondTranche < Minitest::Test
   end
 
   def test_resource_budget_sheds_critical_load
-    budget = Master::Fix::ResourceBudget.new(root: Dir.pwd, config: { "load" => {
+    budget = Master::Fix::ResourceBudget.new(root: Dir.pwd, cpus: 1, config: { "load" => {
       "load_avg_1m" => { "warn" => 1, "crit" => 2 },
       "master_rss_mb" => { "warn" => 100, "crit" => 200 },
     }})
@@ -450,6 +450,42 @@ class TestReliabilitySecondTranche < Minitest::Test
 
     assert budget.critical?(measurement)
     assert_includes measurement[:reasons].first, "load_avg_1m"
+  end
+
+  def test_resource_budget_load_limits_are_per_cpu
+    config = { "load" => { "load_avg_1m" => { "warn" => 1.5, "crit" => 2.5 } } }
+    calm = { rss_mb: nil, fd_count: nil, thread_count: nil, process_count: nil,
+             disk_free_pct: 50, network: true, llm_quota_exhausted: 0 }
+
+    one = Master::Fix::ResourceBudget.new(root: Dir.pwd, cpus: 1, config:)
+    eight = Master::Fix::ResourceBudget.new(root: Dir.pwd, cpus: 8, config:)
+
+    assert one.critical?(one.send(:classify, **calm, load_avg_1m: 3.0))
+    refute eight.critical?(eight.send(:classify, **calm, load_avg_1m: 3.0))
+    assert eight.critical?(eight.send(:classify, **calm, load_avg_1m: 21.0))
+  end
+
+  def test_resource_budget_process_limits_follow_the_platform
+    config = { "resources" => { "process_count" => {
+      "warn" => 256, "crit" => 512, "darwin" => { "warn" => 1200, "crit" => 1600 },
+    } } }
+    idle_mac = { load_avg_1m: nil, rss_mb: nil, fd_count: nil, thread_count: nil, process_count: 602,
+                 disk_free_pct: 50, network: true, llm_quota_exhausted: 0 }
+
+    mac = Master::Fix::ResourceBudget.new(root: Dir.pwd, cpus: 1, config:, platform: "arm64-darwin25")
+    vm23 = Master::Fix::ResourceBudget.new(root: Dir.pwd, cpus: 1, config:, platform: "x86_64-openbsd7.8")
+
+    assert_equal :ok, mac.send(:classify, **idle_mac)[:state]
+    assert vm23.critical?(vm23.send(:classify, **idle_mac))
+    assert mac.critical?(mac.send(:classify, **idle_mac, process_count: 1700))
+  end
+
+  def test_resource_budget_reads_load_on_this_host
+    skip "no sysctl or /proc/loadavg here" unless ["/sbin/sysctl", "/usr/sbin/sysctl", "/proc/loadavg"].any? { |p| File.exist?(p) }
+
+    load = Master::Fix::ResourceBudget.new(root: Dir.pwd).send(:load_average)
+
+    refute_nil load, "the load guard is silently off when the probe finds nothing"
   end
 
 
