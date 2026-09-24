@@ -41,7 +41,12 @@ module Master
           test = own_test_for(path)
           return unless test
 
-          out, status = Master::Io::Exec.capture2e(RbConfig.ruby, test, chdir: File.dirname(File.dirname(test)))
+          # Run as the suite runs it: through the bundle, lib/ and test/ on the
+          # load path. Bare `ruby test/test_doctor.rb` could not load
+          # test_helper, so every file with its own test failed here whatever
+          # the fix, including the first fix /fix MASTER's verifier approved.
+          out, status = Master::Io::Exec.capture2e(Master::BUNDLE_BIN, "exec", RbConfig.ruby, "-Ilib", "-Itest", test,
+                                                   chdir: File.dirname(File.dirname(test)))
           status.success? ? nil : "#{File.basename(test)}: #{out.lines.last(3).join.strip}"
         end
 
