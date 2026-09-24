@@ -24,10 +24,7 @@ module Master
       SELECTOR_RE = /#[A-Za-z][\w-]*|\.[A-Za-z_][\w-]*(?:[-_][\w-]*)*/.freeze
       TEXT_ANCHOR_RE = /\b(?:visible\s+text(?:\s+anchor)?|text\s+anchor)\s*[:=]\s*["“]([^"”\n]+)["”]/i.freeze
       LAW_RE = /\blaws?\s*[:=]\s*([A-Z][A-Z0-9_, -]+)/i.freeze
-      # %r{} delimiters, not /.../ -- the character class needs a literal /
-      # (surface ids are paths, e.g. brgen/dating), which /.../ regex literals
-      # cannot hold unescaped. This is why the file has never actually
-      # parsed since it was written; found while merging, not introduced now.
+      # Surface ids are paths, so %r{} keeps the literal slash readable.
       SURFACE_RE = %r{\bsurface\s*[:=]\s*([A-Za-z0-9_./-]+)\b}i.freeze
       VIEWPORT_RE = /\bviewport\s*[:=]\s*([A-Za-z0-9_-]+)\b/i.freeze
       Rule = Data.define(:id) do
