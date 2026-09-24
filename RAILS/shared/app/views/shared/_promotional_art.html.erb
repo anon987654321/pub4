@@ -2,7 +2,7 @@
 <% spec = art.respond_to?(:layout) ? art : Shared::PromotionalArt.build(**art) %>
 <article class="store-promo-art store-promo-art--<%= spec.layout %>"
          data-promotional-art="<%= spec.layout %>"
-         style="--promo-safe-inset: <%= spec.safe_inset %>; --promo-copy-zone: <%= spec.copy_zone %>;">
+         style="--promo-safe-inset: <%= spec.safe_inset %>; --promo-copy-zone: <%= spec.copy_zone %>; --promo-matte: <%= spec.background_color %>; --promo-ink: <%= spec.background_ink %>;">
   <div class="store-promo-art-copy">
     <% if spec.badge %>
       <span class="store-promo-art-badge"><%= spec.badge %></span>
@@ -21,7 +21,7 @@
 
   <figure class="store-promo-art-media">
     <% if local_assigns[:image_url].present? %>
-      <%= image_tag local_assigns[:image_url], alt: spec.respond_to?(:product) ? spec.product : spec.headline, class: "store-promo-art-image", loading: "eager" %>
+      <%= image_tag local_assigns[:image_url], alt: spec.product, class: "store-promo-art-image", loading: "eager" %>
     <% else %>
       <div class="store-promo-art-placeholder" aria-hidden="true"></div>
     <% end %>
