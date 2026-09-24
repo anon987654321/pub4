@@ -11,7 +11,7 @@ leave the shell for the system browser.
 The target also enables Apple's Associated Domains capability through
 `Pub4MobileApp.entitlements`. `MOBILE_APP_HOST` is the same host recorded in the
 mobile registry. Apple uses that entitlement together with the site's AASA file
-to establish the universal-link association. citeturn828476search0turn828476search4
+to establish the universal-link association.
 Rails remains responsible for product UI and server state.
 
 Each entry in `RAILS/mobile/apps.yml` gets its own bundle identifier and App
@@ -20,7 +20,7 @@ identity, origin, icons, entitlements, and native capabilities.
 
 Before the first upload, create the app record in App Store Connect. TestFlight
 is the beta path; the final build is uploaded from Xcode and submitted through
-App Store Connect. citeturn829489search2turn829489search7
+App Store Connect.
 
 The Apple association endpoint is populated only after `APPLE_TEAM_ID` is
 configured, which keeps deep-link claims honest during development.
@@ -44,7 +44,7 @@ The native source is deliberately not accompanied by a checked-in `.xcodeproj`.
 `project.yml` is the source for the Xcode project and XcodeGen generates the
 project on demand. XcodeGen supports YAML project specifications, per-target
 build settings, configurations, entitlements, and generated schemes.
-citeturn130769search0turn788467search0
+
 
 Generate it with:
 
