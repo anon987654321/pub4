@@ -67,8 +67,8 @@ module Brgen
       args = [
         "yt-dlp",
         "--yes-playlist",
-        "--ignore-errors",
         "--no-warnings",
+        "--no-overwrites",
         "--write-info-json",
         "--write-thumbnail",
         "--extract-audio",
