@@ -27,7 +27,7 @@
 <% else %>
   <%= render "shared/storefront_promo",
       vertical: "takeaway",
-      subject: @restaurants.first&.cuisine_type.presence || t("takeaway.order_food"),
+      subject: @restaurants.first&.name.presence || t("takeaway.order_food"),
       headline: t("takeaway.order_food"),
       copy: t("takeaway.intro"),
       offer: @restaurants.first ? t("takeaway.min_order_delivery", min: @restaurants.first.min_order_display, fee: @restaurants.first.delivery_fee_display) : nil,
