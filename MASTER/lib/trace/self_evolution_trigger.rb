@@ -38,7 +38,7 @@ module Master
 
       def changed_master_lib_lines
         out, status = Master::Io::Exec.capture2e("git", "-C", root, "diff", "--numstat", "HEAD", "--", "MASTER/lib")
-        return 0 unless status.success?
+        raise "self-evolution: git diff unavailable" unless status.success?
 
         out.lines.sum do |line|
           added, deleted, = line.split(/\s+/, 3)
