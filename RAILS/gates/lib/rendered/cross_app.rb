@@ -48,6 +48,11 @@ module Deploy
 
     def run
       @result = GateResult.new
+      unless File.directory?(SHARED_FRONTEND)
+        @result.inconclusive!("cross_app: shared/frontend is missing — shared chrome contract cannot be measured")
+        return @result
+      end
+
       unless GeometryProbe.available?
         @result.inconclusive!("cross_app: no Chrome/Chromium — shared chrome not compared")
         return @result
