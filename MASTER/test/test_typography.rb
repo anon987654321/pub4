@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "test_helper"
+require_relative "test_helper"\nrequire_relative "../lib/design/typography"
 
 class TypographyTest < Minitest::Test
   def test_profiles_are_contextual
@@ -16,7 +16,7 @@ class TypographyTest < Minitest::Test
     legal = Master::Design::Typography.for_surface(path: "/privacy")
     market = Master::Design::Typography.for_surface(path: "/items/new")
 
-    assert_equal :oldstyle_nums, legal[:numerals]
+    assert_equal "oldstyle-nums", legal[:numerals]
     assert_equal 55, market[:measure]
   end
 
