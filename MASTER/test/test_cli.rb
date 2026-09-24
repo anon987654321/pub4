@@ -446,10 +446,14 @@ def test_a_turn_prints_its_units_and_nothing_else
   renderer.define_singleton_method(:render) { |text, mode:| text }
   cli = Master::CLI::Session.new(container: @container.merge(bus:, renderer:, logging:, root: Dir.mktmpdir))
 
+  # Normal verbosity: verbose, the default since 8e84df63b, is the operator mode
+  # that shows every other event too, a swallowed error among them.
   out, err = capture_io do
-    cli.send(:init_thinking_state!)
-    publish_a_call_and_a_fetch(bus)
-    cli.send(:close_unit_console)
+    Master::Trace::Dmesg.with_verbosity("normal") do
+      cli.send(:init_thinking_state!)
+      publish_a_call_and_a_fetch(bus)
+      cli.send(:close_unit_console)
+    end
   end
 
   lines = (out + err).split(/[\r\n]/).map { |line| line.delete_prefix("\e[K") }.reject(&:empty?)
