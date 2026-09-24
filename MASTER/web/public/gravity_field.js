@@ -54,4 +54,4 @@ addEventListener("master:visual",e=>signal(e.detail||{}));
 addEventListener("gravity:signal",e=>signal(e.detail||{}));
 resize();seed();if(!reduced)requestAnimationFrame(frame);
 })();
-\nfunction clamp(v,f){const n=Number(v);return Number.isFinite(n)?Math.max(0,Math.min(1,n)):f}\n
+function clamp(v,f){const n=Number(v);return Number.isFinite(n)?Math.max(0,Math.min(1,n)):f}
