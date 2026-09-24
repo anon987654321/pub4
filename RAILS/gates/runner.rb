@@ -9,7 +9,9 @@
 #   ruby RAILS/gates/runner.rb --list
 #   ruby RAILS/gates/runner.rb --explain
 #
-# Every gate is declared in gates.yml and nowhere else. Most run in-process via
+# Every Rails probe is declared in gates.yml and nowhere else. MASTER owns
+# orchestration and completion policy; this file is the Rails probe registry
+# and compatibility adapter for callers that still invoke it directly. Most run in-process via
 # a Deploy::* class returning a GateResult; three keep a subprocess because they
 # shell out or forward arguments. Composite gates already run their leaves, so
 # --all drops a leaf whose composite is also selected.
@@ -183,7 +185,7 @@ end
 # and every summary printed above them read PASSED.
 #
 # Missing Chrome is an explicit inconclusive outcome. A present Chrome is the
-# silent case: a browser gate that ran has its own outcome to report.
+# normal case: a browser gate that ran has its own measured outcome to report.
 def report_browser_precondition(keys)
   wanted = keys.select { |key| needs(key).include?("browser") }
   return [] if wanted.empty?
