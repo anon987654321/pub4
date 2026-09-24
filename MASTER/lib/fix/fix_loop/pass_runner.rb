@@ -9,6 +9,7 @@ require_relative "pass_runner/fast_stage"
 require_relative "pass_runner/llm_stage"
 require_relative "pass_runner/stagnation_detection"
 require_relative "pass_runner/evidence_stage"
+require_relative "pass_runner/stream_stage"
 require_relative "structural_stage"
 require_relative "../transaction"
 require_relative "../resource_budget"
@@ -27,6 +28,7 @@ module Master
         include LlmStage
         include StagnationDetection
         include EvidenceStage
+        include StreamStage
         include StructuralStage
 
         def initialize(bus:, committer:, loop_scanner:, llm_router:, rollback:, root:,
@@ -69,7 +71,7 @@ module Master
                      recurring_violations:, consecutive_clean:)
           pass_mtimes = mtimes(files)
           start_pass_transaction(files:, target:, pass:, transaction_id:)
-          found = observe_pass(files, target, pass)
+          found, streamed = observe_pass(files, target, pass, deadline)
 
           visual, opportunities, found = merge_evidence_findings(target:, files:, pass:, found:)
           return evidence_abort_result(visual, opportunities) if found.empty? && (visual&.err? || opportunities&.err?)
@@ -79,7 +81,7 @@ module Master
           return clean_pass_result(files, pass_mtimes, pass, consecutive_clean) if found.empty?
           return plateau_result if stagnant?(history, seen_snapshots, recurring_violations, found, pass)
 
-          dispatch_llm_stages(found, files, pass, deadline, visual)
+          dispatch_llm_stages(unstreamed(found, streamed), files, pass, deadline, visual)
           deliver_pass(found, files, pass)
         rescue StandardError
           @committer.abort_transaction!
@@ -187,10 +189,10 @@ module Master
           fixed
         end
 
-        def observe_pass(files, target, pass)
+        def observe_pass(files, target, pass, deadline)
           run_fast_stage(files, pass)
-          found = run_observation_stage(files, target)
-          files.empty? ? found : found + structural_findings(files:)
+          found, streamed = streaming_observation(files, target, pass, deadline)
+          [files.empty? ? found : found + structural_findings(files:), streamed]
         end
 
         def run_observation_stage(files, target)
