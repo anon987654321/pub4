@@ -164,8 +164,14 @@ end
 # CLAUDE_CODE_OAUTH_TOKEN and the other CLAUDE_* names can carry the login.
 CLAUDE_SESSION_ENV = { "CLAUDECODE" => nil, "CLAUDE_CODE_ENTRYPOINT" => nil }.freeze
 
+# A lane answers in text and nothing else. Left its tools, `claude --print`
+# edited files and ran git inside the /fix worktree on its own: it committed
+# twice there, past the verifier, the proof and the pass transaction. No
+# built-in tool and no MCP server; the dispatcher's caller does the writing.
+CLAUDE_CLI_TEXT_ONLY = ["--tools", "", "--strict-mcp-config"].freeze
+
 def claude_cli_call(model_alias, messages, sys)
-  args = ["claude", "--print", "--model", model_alias]
+  args = ["claude", "--print", "--model", model_alias, *CLAUDE_CLI_TEXT_ONLY]
   args += ["--system-prompt", sys] if sys && !sys.empty?
   timeout_s = claude_cli_timeout_s
   out, err, status = capture3_with_timeout(timeout_s, *args, stdin_data: text_prompt_for(messages), env: CLAUDE_SESSION_ENV)

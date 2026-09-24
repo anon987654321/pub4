@@ -283,6 +283,24 @@ end
     assert_includes captured_args, "gemini-2.5-pro"
   end
 
+  # With its tools, `claude --print` committed twice inside the /fix worktree,
+  # past every check /fix makes. The lane answers in text only.
+  def test_the_claude_cli_lane_runs_without_tools
+    dispatcher, = build_dispatcher
+    ok_status = Struct.new(:success?).new(true)
+    captured_args = nil
+    dispatcher.define_singleton_method(:capture3_with_timeout) do |_t, *args, **|
+      captured_args = args
+      ["pong", "", ok_status]
+    end
+    dispatcher.send(:claude_cli_call, "claude-opus-5-5", [{ role: "user", content: "ping" }], nil)
+
+    tools = captured_args.index("--tools")
+    refute_nil tools, "the lane must pass --tools"
+    assert_equal "", captured_args[tools + 1], "and pass it no tool"
+    assert_includes captured_args, "--strict-mcp-config"
+  end
+
   def test_agy_cli_timeout_reads_env_override
     dispatcher, = build_dispatcher
     old = ENV["MASTER_AGY_CLI_TIMEOUT"]
