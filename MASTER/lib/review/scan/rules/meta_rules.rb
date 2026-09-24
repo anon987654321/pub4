@@ -483,8 +483,11 @@ module Master
             # rather than every level beneath it: web/ once, not web/app/,
             # web/app/models/ and eleven more under it.
             top = shallowest_gap(dir)
+            # The repair is an entry in PATH_OWNERSHIP.yml, never an edit to the
+            # file the finding lands on, so the one-file repair loop hands it on.
             [finding(line: 1, message: "PATH_PURPOSE: #{top}/ has no entry in PATH_OWNERSHIP.yml — " \
-                                       "declare its purpose and risk, or put these files under a path that has one")]
+                                       "declare its purpose and risk, or put these files under a path that has one",
+                     blast_radius: SPANS_FILES)]
           end
 
           private

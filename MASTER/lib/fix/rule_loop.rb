@@ -340,6 +340,10 @@ module Master
 
       def extract_code(text, ext = nil)
         return if text.nil? || text.strip.empty? || CollapseGuard.sentinel?(text)
+        # A refusal with its reasons: "UNCHANGED" and then why. Taken whole, it
+        # was proposed as data/CANON.md, data/lexicon.yml and five other files,
+        # and only the verifier stood between the prose and the tree.
+        return if CollapseGuard.sentinel?(text.strip.lines.first)
 
         lang = ext ? ext_language(ext) : "text"
         # A file of no known language (an extensionless script) takes the

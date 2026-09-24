@@ -25,6 +25,10 @@ class TestRuleLoopExtractCode < Minitest::Test
     assert_equal "x = 1\n", extract("```ruby\nx = 1\n\n\n```\n", ".rb")
   end
 
+  def test_a_refusal_with_reasons_is_no_proposal
+    assert_nil extract("UNCHANGED\n\nThe finding belongs in PATH_OWNERSHIP.yml, not here.\n", ".md")
+  end
+
   def test_a_fenced_refusal_is_no_proposal
     assert_nil extract("```ruby\nUNCHANGED\n```\n", ".rb")
   end
