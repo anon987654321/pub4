@@ -40,9 +40,9 @@ Share API supplied by the browser.
 
 ## Project generation
 
-The native source is deliberately not accompanied by a checked-in `.xcodeproj`.
-`project.yml` is the source for the Xcode project and XcodeGen generates the
-project on demand. XcodeGen supports YAML project specifications, per-target
+The native source is deliberately not accompanied by a checked-in `.xcodeproj` or
+project spec. `RAILS/tools/mobile.rb ios` generates the XcodeGen project spec from
+`RAILS/mobile/apps.yml`, then XcodeGen generates the project on demand. XcodeGen supports YAML project specifications, per-target
 build settings, configurations, entitlements, and generated schemes.
 
 
