@@ -55,6 +55,7 @@ module Master
                      law_resolver: nil, homeostat: nil)
         @rules = rules
         @axioms = axioms
+        @agent = agent
         @root = root
         @bus = bus
         @homeostat = homeostat
@@ -96,7 +97,10 @@ module Master
         @bus&.publish("fix_loop:recovered", run_id:, start_pass:, target:) if journal["resumed"]
 
         resumed = resume_active_transaction(journal:, run_id:, start_pass:)
-        return resumed if resumed.err?
+        if resumed.err?
+          mission.fail!(resumed.message)
+          return resumed
+        end
         start_pass = resumed.value!
 
         result = run_passes(files:, target:, max_passes:, deadline:, budget_seconds:, start_pass:, run_id:)
@@ -124,12 +128,11 @@ module Master
             label: "mission-#{id}", files:
           )
         end
-        Mission = Master::Core::Mission unless defined?(Mission)
         mission = Master::Core::Mission.new(root: @root, bus: @bus, checkpoint:)
         mission.start!(
           goal: "fix #{relative_target(target)}",
           scope: target,
-          model: @pass_runner.respond_to?(:agent) ? @pass_runner.agent : ENV["MASTER_MODEL"],
+          model: @agent.respond_to?(:model) ? @agent.model : ENV["MASTER_MODEL"],
           effort: ENV.fetch("MASTER_EFFORT", "high"),
           plan: Ground::ActivePlan.read(@root),
         )
