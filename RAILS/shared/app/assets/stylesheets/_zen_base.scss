@@ -1,0 +1,95 @@
+/* Ultra-minimal shared UI for all apps — synced from MASTER web */
+// The head of zen_shell: the cascade layer order, the reset, the input font
+// floor, the focus ring and the utility classes. _zen_shell.scss @uses it
+// before its own first rule, so it compiles exactly where it stood.
+@layer reset, base, layout, components, utilities, overrides;
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+img, video {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+input, button, textarea, select {
+  font: inherit;
+}
+
+/* `font: inherit` above hands every field its container's size, which is how a
+   search input ends up at 12px inside a small-type shell without any rule ever
+   naming it. iOS Safari zooms the viewport when a text field under 16px takes
+   focus and does not zoom back, so the floor is enforced here rather than
+   chased per component: max() keeps any larger size the design asks for.
+   Buttons, radios and checkboxes are excluded — they take no caret. */
+input:not([type="radio"], [type="checkbox"], [type="range"], [type="color"],
+          [type="file"], [type="submit"], [type="button"], [type="image"]),
+textarea,
+select {
+  font-size: max(16px, 1em);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+// Only the steps _tokens.scss actually declares. The loop ran 1 through 16 and
+// emitted .mt-7/.mt-9/.mt-11/.mt-13/.mt-14/.mt-15 (and their .px- twins) long
+// after those six tokens were deleted for sitting off the 8px rhythm, so twelve
+// utility classes shipped resolving var(--space-N) to nothing — present in the
+// stylesheet, inert on the element.
+@each $step in (1, 2, 3, 4, 5, 6, 8, 10, 12, 16) {
+  .mt-#{$step} { margin-top: var(--space-#{$step}); }
+  .px-#{$step} { padding-inline: var(--space-#{$step}); }
+}
+
+.text-sm { font-size: var(--text-sm); line-height: 1.5; }
+.text-base { font-size: var(--text-base); line-height: 1.5; }
+.text-lg { font-size: var(--text-lg); line-height: 1.5; }
+
+.text-primary { color: var(--color-primary); }
+.bg-surface { background: var(--color-surface); }
+.full-bleed {
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
+}
+
+.truncate-2,
+.truncate-3 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+}
+
+.truncate-2 {
+  -webkit-line-clamp: 2;
+}
+
+.truncate-3 {
+  -webkit-line-clamp: 3;
+}
+
+.h-dvh { height: 100dvh; }
+.min-h-dvh { min-height: 100dvh; }
+.h-svh { height: 100svh; }
+.min-h-svh { min-height: 100svh; }
+.w-fit { width: fit-content; }
+.w-min { width: min-content; }
+.w-max { width: max-content; }
