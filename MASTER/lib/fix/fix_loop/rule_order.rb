@@ -119,23 +119,28 @@ module Master
         end
 
         def load_deps
-          @deps_cache ||=
-            begin
-              Master.law("rule_deps").transform_values { |v| Array(v["after"] || []) }
-            rescue StandardError => e
-              Master::Ground::Swallow.log(e, context: "fix_loop.load_deps", event_bus: @bus)
-              {}
-            end
+          @deps_cache ||= begin
+            raw = Master.law("rule_deps")
+            raise "rule_deps registry unreadable" unless raw.is_a?(Hash)
+
+            raw.transform_values { |v| Array(v["after"] || []) }
+          end
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "fix_loop.load_deps", event_bus: @bus)
+          raise "fix_loop: rule dependencies unreadable: #{e.class}: #{e.message}"
         end
 
         def load_priors
-          @priors_cache ||=
-            begin
-              (Master.load_yaml(PRIORS_PATH) || {})["violation_priors"] || {}
-            rescue StandardError => e
-              Master::Ground::Swallow.log(e, context: "fix_loop.load_priors", event_bus: @bus)
-              {}
-            end
+          @priors_cache ||= begin
+            data = Master.load_yaml(PRIORS_PATH)
+            priors = data["violation_priors"]
+            raise "violation_priors configuration missing" unless priors.is_a?(Hash)
+
+            priors
+          end
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "fix_loop.load_priors", event_bus: @bus)
+          raise "fix_loop: violation priors unreadable: #{e.class}: #{e.message}"
         end
 
         def load_age
