@@ -3283,6 +3283,10 @@ rules:
           - kaufland
           - bol
           reference_mission: "Kaufland catalogue breadth and campaign entry points; bol cleanliness, service clarity, recommendation rails, product-first imagery, and restrained product chrome."
+          sources:
+          - "https://www.kaufland.de/"
+          - "https://retailmedia.bol.com/en/onsite-display/"
+          - "https://techlab.bol.com/en/blog/shaping-the-future-of-bol-our-design-system-helps-speed-up-innovation/"
           layout: product_image_plus_typographic_offer
           typography: display_contrast_plus_neutral_utility
           imagery: product_first
