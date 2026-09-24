@@ -91,7 +91,7 @@ module Operator
 
     def all(deep: false)
       rows = spine_rows + master_yaml_rows + rails_lint_rows + pub4_growth_rows +
-             entrypoint_rows + command_rows + file_length_rows + coverage_rows
+             entrypoint_rows + command_rows + name_rows + file_length_rows + coverage_rows
       # The placeholders only when the real numbers are not being fetched, or
       # every css_budget rule would appear twice under --deep.
       rows += deep ? css_constitution_rows : css_budget_rows
@@ -398,11 +398,7 @@ end
 
 def command_surface_names
   cli = File.read(File.join(MASTER, "lib/cli/command_registry.rb"))
-  control = begin
-    File.read(File.join(MASTER, "lib/cli/command_registry/control_commands.rb"))
-  rescue StandardError
-    ""
-  end
+  control = File.read(File.join(MASTER, "lib/cli/command_registry/control_commands.rb"))
   router = File.read(File.join(MASTER, "lib/cli/turn_router.rb"))
   operator = File.read(File.join(MASTER, "bin/operator"))
 
