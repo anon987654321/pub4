@@ -310,6 +310,7 @@ uniform vec2 uCenter;
 uniform float uBass;
 uniform float uMid;
 uniform float uHigh;
+uniform float uBeat;
 uniform float uBreath;
 // Posture. Each weight is eased on the CPU toward a named target, and they
 // compose rather than exclude — a dormant tunnel still swallows, just slower.
@@ -349,7 +350,8 @@ void main() {
   // so no AnalyserNode could see it, and the numbers driving this were a sine
   // wave. They are now real FFT bands.
   float shimmer = sin(aSeed * 6.2831 + uTime * 7.0) * uHigh * 0.05;
-  float radius = uRadius * (1.0 + uBass * 0.18 + uMid * 0.06 + shimmer) * uBreath;
+  float beatKick = uBeat * (0.16 - 0.06 * near);
+  float radius = uRadius * (1.0 + uBass * 0.22 + uMid * 0.08 + beatKick + shimmer) * uBreath;
 
   // Peristalsis — a travelling constriction, keyed to z rather than to ring
   // index so the wave moves through the tube instead of riding along with it.
@@ -675,7 +677,7 @@ class VisualEngine {
     // Classic: hold = reverse (fly out), release = fly forward into the tunnel.
     const isPressed = this.mouse.down
     const beat = 1 + this.heart * 0.9
-    const speed = this.config.speed * this.posture.speedScale * beat
+    const speed = this.config.speed * this.posture.speedScale * beat * (1 + this.bass * 0.18)
     this.zOffset += isPressed ? speed : -speed
 
     const interactionX = this.touch.active ? this.touch.x : this.mouse.x
@@ -751,6 +753,7 @@ class VisualEngine {
     gl.uniform1f(u.uBass, this.bass || 0)
     gl.uniform1f(u.uMid, this.mid || 0)
     gl.uniform1f(u.uHigh, this.high || 0)
+    gl.uniform1f(u.uBeat, this.beat || 0)
     gl.uniform1f(u.uBreath, this.breath || 1)
     const post = this.posture
     gl.uniform1f(u.uPeristalsis, post.peristalsis)
