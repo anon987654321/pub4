@@ -38,8 +38,6 @@ module Master
           return unless count.positive?
 
           rel = path.delete_prefix("#{@root}/")
-          $stdout.puts "scan: #{rel} #{count} violation(s)"
-          $stdout.flush
           @bus&.publish("fix_loop:scan_progress", file: rel, count:)
         end
       end
