@@ -113,7 +113,9 @@ module Master
 
       def dirty?
         out, status = Master::Io::Exec.capture2("git", "-C", @root, "status", "--porcelain")
-        status.success? && !out.strip.empty?
+        raise "git status failed while checking rollback safety" unless status.success?
+
+        !out.strip.empty?
       end
 
       def run(*argv)
