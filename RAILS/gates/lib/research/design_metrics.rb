@@ -407,7 +407,11 @@ module Deploy
       @result.inconclusive!("design_metrics browser: #{e.class}: #{e.message}")
     end
     def read_css(path)
-      File.file?(path) ? File.read(path) : ""
+      raise "design_metrics: required stylesheet missing: #{path}" unless File.file?(path)
+
+      File.read(path)
+    rescue StandardError => e
+      raise "design_metrics: required stylesheet unreadable: #{path}: #{e.class}: #{e.message}"
     end
   end
 end
