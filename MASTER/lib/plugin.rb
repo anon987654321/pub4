@@ -5,7 +5,7 @@ require "yaml"
 module Master
   module Plugin
     VERSION = 1
-    Manifest = Data.define(:id, :version, :description, :entrypoint, :path)
+    Manifest = Data.define(:id, :version, :description, :entrypoint, :path, :observe_actions)
 
     class Error < StandardError; end
     class ManifestError < Error; end
@@ -56,6 +56,17 @@ module Master
       load(id).call(action:, **args)
     end
 
+    def observe(id, action:, **args)
+      Ground::LawHandshake::Admission.require!
+      plugin = load(id)
+      action_name = action.to_s
+      unless plugin.manifest.observe_actions.include?(action_name)
+        raise PolicyError, "#{id}: action #{action_name} is not declared observable"
+      end
+
+      plugin.call(action: action_name, **args)
+    end
+
     def policy(id)
       Master.law("plugins").fetch(id.to_s) do
         raise PolicyError, "data/rules.yml has no plugin policy for #{id}"
@@ -77,7 +88,8 @@ module Master
         version: raw.fetch("version").to_s,
         description: raw.fetch("description").to_s.strip,
         entrypoint: raw.fetch("entrypoint").to_s,
-        path: File.expand_path(path)
+        path: File.expand_path(path),
+        observe_actions: Array(raw["observe_actions"]).map(&:to_s).freeze
       )
     rescue Psych::Exception => e
       raise ManifestError, "#{path}: invalid YAML: #{e.message}"
@@ -93,6 +105,7 @@ module Master
       id = raw.fetch("id").to_s
       version = raw.fetch("version").to_s
       entrypoint = raw.fetch("entrypoint").to_s
+      observe_actions = raw["observe_actions"]
       directory = File.basename(File.dirname(path))
 
       unless directory == id
