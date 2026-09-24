@@ -60,7 +60,7 @@ module Master
 
       def self.brief(path:, purpose: nil, root: Master::ROOT)
         values = for_surface(path:, purpose:, root:)
-        "measure=#{values[:measure]}ch body_leading=#{values[:body_leading]} heading_leading=#{values[:heading_leading]} "           "min_body=#{values[:minimum_body_px]}px wrap=#{values[:text_wrap]} numerals=#{values[:numerals]} "           "tables=#{values[:tables]} punctuation=#{values[:punctuation]} justification=#{values[:justification]}"
+        "measure=#{format("%g", values[:measure])}ch body_leading=#{values[:body_leading]} heading_leading=#{values[:heading_leading]} "           "min_body=#{values[:minimum_body_px]}px wrap=#{values[:text_wrap]} numerals=#{values[:numerals]} "           "tables=#{values[:tables]} punctuation=#{values[:punctuation]} justification=#{values[:justification]}"
       end
     end
   end

@@ -41,7 +41,7 @@ module Master
       end
 
       def brief(school:, purpose: nil, root: Master::ROOT)
-        key, spec = for(school:, purpose:, root:)
+        key, spec = Composition.for(school:, purpose:, root:)
         variants = spec.fetch("variants", {})
         summary = variants.map { |name, value| "#{name}:#{value.fetch("reference")}/#{value.fetch("structure")}" }
         suffix = summary.empty? ? "" : " variants=#{summary.join(",")}"

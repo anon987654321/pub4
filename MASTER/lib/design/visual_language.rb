@@ -165,35 +165,44 @@ module Master
       module_function
 
       def brief(surface:, payload:)
-        direction = direction_for(surface)
-        fp = fingerprint(payload)
-        first = payload.dig("visual", "first_screen") || {}
-        primary = Array(first["primary_candidates"]).first
-        palette = Array(fp.dig(:palette, :top)).first(5)
-        preserve = preserve_signals(fp)
-        genericity = fp[:genericity_signals]
+        direction_lines(surface, direction_for(surface)) + evidence_lines(payload)
+      end
 
+      # What the surface is for and which school, type, pairing and references
+      # that implies: the intent half of the brief.
+      def direction_lines(surface, direction)
+        purpose = purpose_for(surface)
+        school = DIRECTIONS.fetch(direction)[:school]
         <<~TEXT
           surface=#{surface.id}
-          purpose=#{purpose_for(surface)}
+          purpose=#{purpose}
           audience_hypothesis=#{AUDIENCES.fetch(direction)}
           authoritative_design=true
-          authority=#{Master::Design::Authority.brief(path: surface.path, purpose: purpose_for(surface), school: DIRECTIONS.fetch(direction)[:school])}
+          authority=#{Master::Design::Authority.brief(path: surface.path, purpose:, school:)}
           aesthetic_direction=#{direction}
-          design_school=#{DIRECTIONS.fetch(direction)[:school]}
+          design_school=#{school}
           design_coordinates=#{design_coordinates(direction)}
           memorable_element=#{DIRECTIONS.fetch(direction)[:memorable]}
           typography_direction=#{TYPOGRAPHY_HINTS.fetch(direction)}
-          typography_contract=#{Master::Design::Typography.brief(path: surface.path, purpose: purpose_for(surface))}
-          font_pairing=#{Master::Design::Pairing.brief(school: DIRECTIONS.fetch(direction)[:school], purpose: purpose_for(surface))}
-          composition=#{Master::Design::Composition.brief(school: DIRECTIONS.fetch(direction)[:school], purpose: purpose_for(surface))}
+          typography_contract=#{Master::Design::Typography.brief(path: surface.path, purpose:)}
+          font_pairing=#{Master::Design::Pairing.brief(school:, purpose:)}
+          composition=#{Master::Design::Composition.brief(school:, purpose:)}
           reference_lenses=#{Array(DIRECTIONS.fetch(direction)[:references]).join(",")}
           reference_mission=#{DIRECTIONS.fetch(direction)[:reference_mission]}
+        TEXT
+      end
+
+      # What the render actually shows: the evidence half of the brief.
+      def evidence_lines(payload)
+        fp = fingerprint(payload)
+        primary = Array(payload.dig("visual", "first_screen", "primary_candidates")).first
+        genericity = fp[:genericity_signals]
+        <<~TEXT
           primary_action_candidate=#{primary_action(primary)}
-          current_palette=#{palette.join(", ")}
+          current_palette=#{Array(fp.dig(:palette, :top)).first(5).join(", ")}
           current_component_language=#{fp.dig(:components, :language)}
           responsive_strategy=mobile-first composition, then preserve the same hierarchy as width expands
-          preserve=#{preserve.join("; ")}
+          preserve=#{preserve_signals(fp).join("; ")}
           genericity_signals=#{genericity.empty? ? "none observed" : genericity.join(", ")}
           Direction is an intent hypothesis, not a verdict. The rendered page remains ground truth; change the direction when repository evidence contradicts it.
         TEXT
@@ -219,41 +228,57 @@ module Master
       def fingerprint(payload)
         elements = Array(payload["elements"])
         visual = payload["visual"] || {}
-        first = visual["first_screen"] || {}
         {
           palette: { top: Hash(payload["colors"] || {}).sort_by { |_, count| -count.to_i }.map(&:first).first(8) },
-          typography: {
-            families: counts(elements.filter_map { |e| font_family(e["font_family"]) }).first(6),
-            sizes: Array(visual.dig("typography", "distinct_font_sizes")).map(&:to_f).uniq.sort,
-            body_median: visual.dig("typography", "body_median_px").to_f,
-            heading_sizes: Array(visual.dig("typography", "heading_sizes")).map { |h| h["px"].to_f }.uniq.sort,
-          },
-          spacing: {
-            gaps: counts(Array(payload["gaps"]).filter_map { |row| row["gap"].to_i if row["gap"].to_i > 0 }).first(8),
-            proximity: Array(payload["proximity"]).filter_map do |row|
-              inner = row["pad"].to_f
-              outer = row["gap"].to_f
-              next if inner <= 0 || outer < 0
-              (outer / inner).round(2)
-            end.first(8),
-          },
+          typography: typography_fingerprint(elements, visual),
+          spacing: spacing_fingerprint(payload),
           shape: shape_fingerprint(elements),
-          effects: {
-            shadows: elements.count { |e| e["box_shadow"] == true },
-            gradients: elements.count { |e| e["background_gradient"] == true },
-            filters: elements.count { |e| e["visual_filter"] == true },
-          },
-          composition: {
-            first_screen_text: first["text_blocks"].to_i,
-            first_screen_interactive: first["interactive"].to_i,
-            largest_area_ratio: first["largest_element_area_ratio"].to_f,
-            painted_area_ratio: first["painted_area_ratio_approx"].to_f,
-            centered_long_text: first["centered_long_text"].to_i,
-            small_text: first["small_text"].to_i,
-            dominant_alignment: dominant_alignment(elements),
-          },
+          effects: effects_fingerprint(elements),
+          composition: composition_fingerprint(visual["first_screen"] || {}, elements),
           components: component_language(elements),
           genericity_signals: genericity_signals(elements, visual),
+        }
+      end
+
+      def typography_fingerprint(elements, visual)
+        {
+          families: counts(elements.filter_map { |e| font_family(e["font_family"]) }).first(6),
+          sizes: Array(visual.dig("typography", "distinct_font_sizes")).map(&:to_f).uniq.sort,
+          body_median: visual.dig("typography", "body_median_px").to_f,
+          heading_sizes: Array(visual.dig("typography", "heading_sizes")).map { |h| h["px"].to_f }.uniq.sort,
+        }
+      end
+
+      # Gap sizes by frequency, and each group's outer gap over its inner padding.
+      def spacing_fingerprint(payload)
+        proximity = Array(payload["proximity"]).filter_map do |row|
+          inner = row["pad"].to_f
+          outer = row["gap"].to_f
+          next if inner <= 0 || outer < 0
+
+          (outer / inner).round(2)
+        end
+        { gaps: counts(Array(payload["gaps"]).filter_map { |row| row["gap"].to_i if row["gap"].to_i > 0 }).first(8),
+          proximity: proximity.first(8) }
+      end
+
+      def effects_fingerprint(elements)
+        {
+          shadows: elements.count { |e| e["box_shadow"] == true },
+          gradients: elements.count { |e| e["background_gradient"] == true },
+          filters: elements.count { |e| e["visual_filter"] == true },
+        }
+      end
+
+      def composition_fingerprint(first, elements)
+        {
+          first_screen_text: first["text_blocks"].to_i,
+          first_screen_interactive: first["interactive"].to_i,
+          largest_area_ratio: first["largest_element_area_ratio"].to_f,
+          painted_area_ratio: first["painted_area_ratio_approx"].to_f,
+          centered_long_text: first["centered_long_text"].to_i,
+          small_text: first["small_text"].to_i,
+          dominant_alignment: dominant_alignment(elements),
         }
       end
 

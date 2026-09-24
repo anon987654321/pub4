@@ -10,6 +10,7 @@ require_relative "visual_usability"
 require_relative "visual_reference"
 require_relative "visual_contact_sheet"
 require_relative "visual_ghost_stack"
+require_relative "visual_evidence_rows"
 require_relative "../design/visual_language"
 require_relative "../../../RAILS/gates/support/mobile_journey_probe"
 require_relative "../../../RAILS/gates/support/composition_probe"
@@ -34,6 +35,8 @@ module Master
     TEXT
 
     class VisualPass
+      include VisualEvidenceRows
+
       RULE_ID = "RENDERED_VISUAL_REFINEMENT"
       SOURCE_EXTENSIONS = %w[.css .scss .erb .html .htm .js .ts].freeze
       MAX_SURFACES = Integer(ENV.fetch("MASTER_VISUAL_SURFACES_PER_PASS", "0"))
@@ -249,24 +252,6 @@ module Master
            .first(MAX_FILES)
       end
 
-      def composition_variant_context(captures)
-        variants = Array(captures).filter_map do |capture|
-          surface = capture[:surface]
-          match = surface.path.to_s.match(/[?&]design_variant=([^&]+)/)
-          next unless match
-
-          variant = match[1]
-          spec = Master::Design::Composition.variant(name: "marketplace_sale", variant:)
-          [variant, spec.fetch("reference"), spec.fetch("structure"), spec.fetch("signature")]
-        end.uniq
-        return "MARKETPLACE ALTERNATIVES: none captured" if variants.empty?
-
-        rows = variants.map { |variant, reference, structure, signature|
-          "#{variant}: reference=#{reference} structure=#{structure} signature=#{signature}"
-        }
-        "MARKETPLACE ALTERNATIVES\nCompare these renders as one experiment set. Do not assume the current layout is correct merely because it is established. #{rows.join("\n")}"
-      end
-
       def context_row(capture)
         surface = capture[:surface]
         payload = capture[:payload]
@@ -286,21 +271,6 @@ module Master
           "mobile-states=#{Array(capture[:journeys]).map { |j| "#{j["kind"]}:#{j["label"]}" }.join(", ")}",
           "web-platform=#{capture[:platform].reject { |key, _| key == "viewport" }.map { |key, value| "#{key}=#{value}" }.join(", ")}",
         ].join(" ")
-      end
-
-      # One line per surface whose ghost stack measured movement; nil otherwise.
-      def drift_row(capture)
-        drift = Array(capture.dig(:visual_evidence, :drift))
-        design = Array(capture.dig(:visual_evidence, :design_drift))
-        return if drift.empty? && design.empty?
-
-        details = drift.first(8).map do |row|
-          next "#{row["key"]} #{row["delta"]} #{row["type"]}" unless row["structural"]
-
-          "structural added=#{row["structural"]["added"]} missing=#{row["structural"]["missing"]}"
-        end
-        details << "design #{design.join("; ")}" unless design.empty?
-        "#{capture[:surface].id}: #{details.join(" | ")}"
       end
 
       def decorate_design(captures)
