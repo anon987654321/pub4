@@ -79,7 +79,7 @@ module Brgen
     end
 
     def seed_posts(communities)
-      (POSTS + Shared::LinkEmbed.demo_posts(:brgen)).each do |row|
+      (FEATURED_POSTS + POSTS + Shared::LinkEmbed.demo_posts(:brgen)).each do |row|
         next if Post.exists?(city: @city, title: row[:title])
 
         user = @users_by_username.fetch(row[:user])
