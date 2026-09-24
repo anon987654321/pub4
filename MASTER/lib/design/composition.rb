@@ -42,8 +42,9 @@ module Master
 
       def brief(school:, purpose: nil, root: Master::ROOT)
         key, spec = for(school:, purpose:, root:)
-        variants = Array(spec.fetch("variants", {}).keys)
-        suffix = variants.empty? ? "" : " variants=#{variants.join(",")}"
+        variants = spec.fetch("variants", {})
+        summary = variants.map { |name, value| "#{name}:#{value.fetch("reference")}/#{value.fetch("structure")}" }
+        suffix = summary.empty? ? "" : " variants=#{summary.join(",")}"
         "composition=#{key} grid=#{spec.fetch("grid")} mobile=#{spec.fetch("mobile")} focal_order=#{Array(spec.fetch("focal_order")).join(">")}#{suffix}"
       end
 
