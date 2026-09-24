@@ -82,10 +82,13 @@ module Master
 
       def sacred_declarations
         path = absolute("data/soul.yml")
-        return [] unless File.readable?(path)
+        raise Violation, "immutability: sacred manifest missing or unreadable: #{path}" unless File.readable?(path)
 
         soul = Master.load_yaml(path)
-        Array(soul.dig("absolute", "sacred_paths")).map { |path| normalize_relative(path) }.uniq
+        paths = Array(soul&.dig("absolute", "sacred_paths"))
+        raise Violation, "immutability: sacred manifest has no sacred_paths: #{path}" if paths.empty?
+
+        paths.map { |path| normalize_relative(path) }.uniq
       end
 
       def sacred_files
