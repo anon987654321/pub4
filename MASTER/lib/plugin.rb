@@ -42,6 +42,7 @@ module Master
       manifest = find_manifest(id.to_s)
       enforce_external_policy!(manifest.path)
       require_entrypoint!(manifest)
+      policy(manifest.id)
 
       constant = plugin_constant(manifest.id)
       klass = constant.split("::").reduce(Object) { |scope, name| scope.const_get(name) }
@@ -97,6 +98,9 @@ module Master
       id = raw.fetch("id").to_s
       version = raw.fetch("version").to_s
       entrypoint = raw.fetch("entrypoint").to_s
+      directory = File.basename(File.dirname(path))
+
+      raise ManifestError, "#{path}: id #{id.inspect} does not match directory #{directory.inspect}" unless directory == id
 
       raise ManifestError, "#{path}: invalid id" unless id.match?(/\A[a-z][a-z0-9_]*\z/)
       raise ManifestError, "#{path}: invalid version" unless version.match?(/\A\d+\.\d+\.\d+\z/)
