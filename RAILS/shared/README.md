@@ -79,9 +79,9 @@ Marketplace and Takeaway share one campaign-art system. The canonical grammar li
   `design_tokens.yml` ("Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif).
   Monospace (`shared_chrome.font_code`, `--font-mono`) is for code blocks inside
   posts and comments, brgen's live chat logs and MASTER's web chat. brgen keeps
-  its wordmark's own stack, and marketplace and takeaway share one promotional
-  face, `--font-ad` (Instrument Serif), on hero banners, promo headlines and
-  campaign tiles.
+  its wordmark's own stack. Marketplace resolves `--font-ad` to the house
+  grotesk; takeaway retains its separate promotional face until rendered review
+  replaces it.
 
 ## Verify
 
