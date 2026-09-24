@@ -3206,6 +3206,15 @@ rules:
         - style_borrowed_without_context
         action: Establish authority through purpose, hierarchy, consistency, precision, and craft before selecting an aesthetic school.
 
+        sources:
+        - "https://designsystem.digital.gov/design-principles/"
+        - "https://www.w3.org/WAI/WCAG2/supplemental/patterns/o1p02-familiar-design/"
+        - "https://www.w3.org/WAI/WCAG2/supplemental/patterns/o1p03-consistent-design/"
+        - "https://design-system.w3.org/styles/typography.html"
+        - "https://techlab.bol.com/en/blog/shaping-the-future-of-bol-our-design-system-helps-speed-up-innovation/"
+        - "https://over.bol.com/en/news/why-do-i-see-these-specific-products-when-i-search-on-bol/"
+        - "https://www.kaufland.de/"
+        - "https://pangrampangram.com/blogs/journal/pairing-fonts"
       design_schools:
         swiss:
           inherits_authoritative_design: true
@@ -3335,11 +3344,36 @@ rules:
           - discount_carnival
           - excessive_badges
 
+      typeface_rules:
+        role_specific: true
+        prefer_one_family_first: true
+        max_families_per_surface: 2
+        max_display_faces: 1
+        require_role_definition: true
+        require_deployable_assets: true
+        avoid_same_voice_pairing: true
+        inspect:
+        - classification
+        - x_height
+        - width
+        - contrast
+        - weight_range
+        - optical_sizing
+        - glyph_coverage
+        - licence
+        action: Pair by function and measured characteristics, then verify in the rendered surface; never pair by popularity alone.
+
       typefaces:
         house_sans:
           family: house_sans
           css: "var(--font)"
           classification: neo_grotesk
+          x_height: high
+          width: normal
+          contrast: low
+          weight_range: [400, 800]
+          optical_sizing: inherited
+          glyph_coverage: site_default
           roles:
           - body
           - ui
@@ -3351,6 +3385,12 @@ rules:
           family: Instrument Serif
           css: "var(--font-ad)"
           classification: display_serif
+          x_height: low
+          width: expressive
+          contrast: moderate
+          weight_range: [400, 400]
+          optical_sizing: fixed
+          glyph_coverage: latin
           roles:
           - promotion_display
           availability: retired
@@ -3358,6 +3398,12 @@ rules:
           family: IBM Plex Sans
           css: '"IBM Plex Sans", sans-serif'
           classification: grotesk
+          x_height: high
+          width: normal
+          contrast: low
+          weight_range: [100, 700]
+          optical_sizing: variable
+
           roles:
           - body
           - ui
@@ -3367,6 +3413,12 @@ rules:
           family: IBM Plex Serif
           css: '"IBM Plex Serif", serif'
           classification: serif
+          x_height: medium
+          width: normal
+          contrast: moderate
+          weight_range: [100, 700]
+          optical_sizing: variable
+
           roles:
           - editorial_body
           - editorial_display
@@ -3375,6 +3427,12 @@ rules:
           family: Source Sans 3
           css: '"Source Sans 3", sans-serif'
           classification: humanist_sans
+          x_height: high
+          width: normal
+          contrast: low
+          weight_range: [200, 900]
+          optical_sizing: variable
+
           roles:
           - body
           - ui
@@ -3383,6 +3441,12 @@ rules:
           family: Source Serif 4
           css: '"Source Serif 4", serif'
           classification: transitional_serif
+          x_height: medium
+          width: normal
+          contrast: moderate
+          weight_range: [200, 900]
+          optical_sizing: variable
+
           roles:
           - editorial_body
           - editorial_display
@@ -3404,6 +3468,22 @@ rules:
           - display
           - playful_accent
           availability: optional_webfont
+        pp_neue_montreal:
+          family: PP Neue Montreal
+          css: '"PP Neue Montreal", var(--font)'
+          classification: contemporary_neo_grotesk
+          x_height: high
+          width: variable
+          contrast: low
+          weight_range: [100, 900]
+          optical_sizing: variable
+          roles:
+          - display
+          - body
+          - ui
+          availability: licensed_external
+          licence: "Pangram Pangram Foundry commercial licence required"
+
         jetbrains_mono:
           family: JetBrains Mono
           css: 'var(--font-mono)'
