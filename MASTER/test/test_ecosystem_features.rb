@@ -63,7 +63,11 @@ class TestEcosystemFeatures < Minitest::Test
     # /orders and /soul joined on the same grounds: both handlers, both
     # subjects and both help entries existed, and control_commands was merged
     # into the table by nothing.
-    assert_equal %w[clear commit doctor fix help model orders pair review rollback rules soul status undo why],
+    # /plugin, /runtime, /device, /auth, /mission, /law, /snapshot and the
+    # session commands (/sessions, /continue with /resume, /fork) each landed
+    # with a handler and a help entry.
+    assert_equal %w[auth clear commit continue device doctor fix fork help law mission model orders pair plugin
+                    resume review rollback rules runtime sessions snapshot soul status undo why],
                  registry.keys.sort
   end
 end
