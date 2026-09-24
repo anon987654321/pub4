@@ -49,6 +49,15 @@ class PatchApplierTest < Minitest::Test
     assert_match(/hunk|fail|reject/i, result.reason)
   end
 
+  # A failed hunk left Oops.rej in the MASTER tree /fix ran in.
+  def test_a_failed_hunk_leaves_nothing_in_the_working_directory
+    Dir.mktmpdir do |dir|
+      Dir.chdir(dir) { Applier.apply(ORIGINAL, diff(from: "line seventeen", to: "line SEVENTEEN")) }
+
+      assert_empty Dir.children(dir)
+    end
+  end
+
   def test_rejects_garbage_that_is_not_a_diff
     result = Applier.apply(ORIGINAL, "this is not a patch at all\n")
 

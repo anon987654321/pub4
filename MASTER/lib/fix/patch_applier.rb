@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "fileutils"
 require "open3"
 require "tempfile"
 
@@ -43,7 +44,13 @@ module Master
         Tempfile.open(["master_patch", ".src"]) do |f|
           f.write(@original)
           f.flush
-          out, err, status = Master::Io::Exec.capture3("patch", "--no-backup-if-mismatch", "-s", f.path, stdin_data: @diff)
+          # A hunk that does not apply is written to a reject file, and patch(1)
+          # left it as Oops.rej in the MASTER tree /fix was running in. It goes
+          # beside the temp copy instead, and so does any other stray output.
+          rejects = "#{f.path}.rej"
+          out, err, status = Master::Io::Exec.capture3("patch", "--no-backup-if-mismatch", "-s", "-r", rejects, f.path,
+                                                       stdin_data: @diff, chdir: File.dirname(f.path))
+          FileUtils.rm_f(rejects)
           # patch(1) reports a failed hunk on stdout, so err alone gave reason: "".
           return Failure.new(reason: failure_reason(out, err)) unless status.success?
 
