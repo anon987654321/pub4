@@ -81,7 +81,7 @@ checks:
   - {id: auth.verified_email_gate, in: brgen/app/controllers/application_controller.rb, has: ["def require_verified_email", guest?]}
   - {id: auth.passwords, in: shared/app/views/passwords/new.html.erb, has: [email]}
   # --- dating ---
-  - {id: dating.intro_swipe, in: brgen/engines/dating/app/views/dating/home/index.html.erb, has: [dating-intro, swipe, likes_path, dislikes_path]}
+  - {id: dating.home_deck, in: brgen/engines/dating/app/views/dating/home/index.html.erb, has: [dating-page-intro, dating-discover-panel, swipe, likes_path, dislikes_path]}
   - {id: dating.keyboard, in: brgen/engines/dating/app/views/dating/home/index.html.erb, has: [keydown.left, keydown.right]}
   - {id: dating.profile_new, in: brgen/engines/dating/app/views/dating/profiles/new.html.erb, has: [profile]}
   - {id: dating.matches, in: brgen/engines/dating/app/views/dating/matches/index.html.erb, has: [match]}
