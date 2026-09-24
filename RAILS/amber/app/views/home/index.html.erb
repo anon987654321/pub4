@@ -141,12 +141,4 @@
     <noscript><%= render "shared/pager", pagy: @pagy %></noscript>
   </section>
 
-  <% if @demo_items&.any? %>
-    <section>
-      <%= tag.h2 t("home.demo_capsule") %>
-      <p><%= t("home.demo_counts", pieces: t("items.pieces", count: @demo_items.size), outfits: t("outfits.count", count: @demo_outfits&.size.to_i)) %></p>
-      <div class="item-grid"><%= render partial: "demo_wardrobe/item", collection: @demo_items %></div>
-      <p><%= link_to t("demo.full_wardrobe"), demo_wardrobe_path, class: "more_link" %></p>
-    </section>
-  <% end %>
 <% end %>
