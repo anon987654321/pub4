@@ -46,8 +46,9 @@ module Master
             require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
             ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
             ::Law.rules.values.to_h { |r| [r.id.to_s, (r.practice || r.fix).to_s.gsub(/\s+/, " ").strip] }.freeze
-          rescue StandardError
-            {}.freeze
+          rescue StandardError => e
+            Master::Ground::Swallow.log(e, context: "rules.rules", path: File.join(Master::ROOT, "law"))
+            raise "rules registry unreadable: #{e.class}: #{e.message}"
           end
         end
         def thresholds = @thresholds ||= (@data["thresholds"] || {}).freeze
