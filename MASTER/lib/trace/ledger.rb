@@ -169,10 +169,10 @@ module Master
 
         def append(entry)
           FileUtils.mkdir_p(File.dirname(@path))
-          # Write in append mode to avoid re-reading entire file.
-          # Cleanup happens via .last(MAX_REFLECTIONS) on next recent() call.
-          line = JSON.generate(entry) + "\n"
-          File.open(@path, "a") { |io| io.write(line) }
+          # The file is the history and nothing else trims it, so each write
+          # keeps the newest MAX_REFLECTIONS. Fifty short lines are cheap to reread.
+          kept = File.exist?(@path) ? File.readlines(@path).last(MAX_REFLECTIONS - 1) : []
+          File.write(@path, (kept << "#{JSON.generate(entry)}\n").join)
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "Ledger::Reflexion.append", event_bus: @bus)
         end
