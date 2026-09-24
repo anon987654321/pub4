@@ -255,7 +255,7 @@ module Master
         return node if node
 
         page.css("button").find do |button|
-          button.text.to_s.strip.match?(/A(?:send|post|publish|reply)z/i)
+          button.text.to_s.strip.match?(/\A(?:send|post|publish|reply)\z/i)
         end
       end
 
@@ -330,7 +330,7 @@ module Master
 
       def safe_account_name(account)
         name = account.to_s
-        raise PolicyError, "social_browser: account name is required" unless name.match?(/A[a-z0-9][a-z0-9_-]{0,63}z/i)
+        raise PolicyError, "social_browser: account name is required" unless name.match?(/\A[a-z0-9][a-z0-9_-]{0,63}\z/i)
 
         name
       end
