@@ -74,7 +74,7 @@ module Master
         ::Law.rules.keys.map { |id| id.to_s.upcase }.to_set
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "PrincipleMapRepair.law_rule_ids", severity: :load_bearing)
-        Set.new
+        raise "principle-map law registry unreadable: #{e.class}: #{e.message}"
       end
 
       def remove_rule_id_line(text, principle_id, rule_id)
