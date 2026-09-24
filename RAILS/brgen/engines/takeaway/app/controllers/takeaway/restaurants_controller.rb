@@ -13,7 +13,7 @@ class Takeaway::RestaurantsController < Takeaway::BaseController
   def index
     # :city as well as :user — the card renders restaurant.city, which was one
     # query per restaurant (14 on a full page).
-    scope = Takeaway::Restaurant.active.includes(:user, :city)
+    scope = Takeaway::Restaurant.indexable.includes(:user, :city)
     scope = scope.where(cuisine_type: params[:cuisine]) if params[:cuisine].present?
     scope = apply_live_search(scope, columns: %w[name city cuisine_type description], vertical: "takeaway") if live_search_query.present?
     if params[:lat].present? && params[:lng].present?
