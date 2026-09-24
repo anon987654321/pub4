@@ -173,28 +173,30 @@ module Master
 
         def best_candidate(candidates, path)
           return if candidates.empty?
-          return candidates.first if candidates.size == 1
-          orig = File.read(path, encoding: "UTF-8") rescue nil
-          baseline = orig ? (rescan_candidate(orig, path) rescue nil) : nil
+
+          original = File.read(path, encoding: "UTF-8")
+          baseline = rescan_candidate(original, path)
           scored = candidates.filter_map do |candidate|
             count = rescan_candidate(candidate, path)
-            [count, candidate] unless baseline && count > baseline
+            [count, candidate] if count <= baseline
           end
           scored.empty? ? nil : scored.min_by(&:first).last
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "RuleLoop.best_candidate", rule: @rule.id)
-          candidates.first
+          nil
         end
 
         def rescan_candidate(candidate, path)
           Tempfile.open(["rl_score", File.extname(path)]) do |f|
             f.write(candidate); f.flush
-            result = @scanner.scan(f.path, rules: [@rule])
-            result.ok? ? result.value!.size : 99
+            result = Master::Result.wrap(@scanner.scan(f.path, rules: [@rule]))
+            raise "candidate rescan failed: #{result.error}" unless result.ok?
+
+            result.value!.size
           end
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "RuleLoop.rescan_candidate", rule: @rule.id)
-          99
+          raise
         end
 
         def whole_file_fallback(violation:, src:, path:, reason:)
