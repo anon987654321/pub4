@@ -3449,6 +3449,22 @@ a.deal-card,
   -webkit-box-orient: vertical;
 }
 
+/* Marketplace sale ads use one authoritative grotesk family. Character comes
+   from scale, weight, measure and alignment rather than an unrelated serif. */
+body.vertical-marketplace .top-offers-rail .sale-ad .deal-card-title {
+  font-family: var(--font);
+  font-size: var(--text-title);
+  font-weight: var(--weight-heavy);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  text-wrap: balance;
+}
+
+body.vertical-marketplace .top-offers-rail .sale-ad .deal-price {
+  font-family: var(--font);
+  letter-spacing: var(--tracking-tightest);
+}
+
 .deal-card-subtitle,
 .deal-meta {
   margin: 0;
@@ -5179,11 +5195,12 @@ body[class*="vertical-"] .compose-box {
   display: none;
 }
 
-/* The storefront promotional face, in one line so it can be swapped in one line.
-   Markedsplass and takeaway set it on hero banners, promo headlines and campaign
-   tiles and nowhere else; body, prices and cards keep --font. Instrument Serif
-   is vendored by the @font-face rules among the tokens. */
-body.vertical-marketplace,
+/* The storefront display slot is used only by promotional surfaces. Marketplace
+   resolves it to the house grotesk; takeaway still resolves the legacy display face. */
+body.vertical-marketplace {
+  --font-ad: var(--font);
+}
+
 body.vertical-takeaway {
   --font-ad: "Instrument Serif", var(--font);
   /* Kaufland.de's storefront system, measured from its archived home, category
@@ -5590,6 +5607,15 @@ body[class*="vertical-"] main > section {
   font-weight: var(--weight-normal);
   line-height: var(--leading-none);
   text-wrap: balance;
+}
+
+/* A marketplace hero is authoritative commerce, not decorative editorial type:
+   one grotesk, emphatic weight, tight tracking and a short measure. */
+body.vertical-marketplace .store-hero h1 {
+  font-family: var(--font);
+  font-weight: var(--weight-heavy);
+  letter-spacing: var(--tracking-tightest);
+  max-width: 12ch;
 }
 
 .store-hero p {
