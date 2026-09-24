@@ -143,8 +143,12 @@ class TestSelfFindingsDrift < Minitest::Test
   # census that kept those ids would move both ratchets on one fix — fifteen
   # findings on the day the row was written. Asserted against the recorded
   # baseline rather than a live scan, which is a minute of measurement.
+  #
+  # Only laws the law row scans can put a finding in it. A semantic law with no
+  # detector (NO_GOD_CLASS's model question, beside the registry's structural
+  # NO_GOD_CLASS) counts nothing there, so sharing its id moves no ratchet.
   def test_the_two_populations_share_no_rule
-    law_ids = Tool.law.keys.map(&:to_s)
+    law_ids = Tool.law.select { |_, rule| !rule.semantic? && rule.scannable? }.keys.map(&:to_s)
     registry_ids = Tool.recorded_by_rule("registry").keys
 
     refute_empty registry_ids, "the registry baseline records no rules"
