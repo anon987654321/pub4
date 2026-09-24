@@ -17,7 +17,12 @@ module Master
 
         memory ||= Master::Core::Memory.new(risk:)
         model ||= Master::Core::Model.new(**{ model_id:, chat: agent_chat(container, bus:) }.compact)
-        mission = Master::Core::Mission.new(root:, bus:).start!(
+        checkpoint = lambda do |id:, root:, files:|
+          Master::Fix::Checkpoint.new(root:, dir: File.join(root, ".master", "checkpoints")).create(
+            label: "mission-#{id}", files:
+          )
+        end
+        mission = Master::Core::Mission.new(root:, bus:, checkpoint:).start!(
           goal:, scope: root, model: model_id || model, effort: ENV.fetch("MASTER_EFFORT", "medium"),
           plan: Master::Ground::ActivePlan.read(root),
         )
