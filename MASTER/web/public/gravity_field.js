@@ -1,0 +1,11 @@
+(() => {
+"use strict";
+const root=document.documentElement,canvas=document.createElement("canvas");
+canvas.id="master-gravity-field";canvas.setAttribute("aria-hidden","true");canvas.style.cssText="position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:1;opacity:.28";document.body.appendChild(canvas);
+const ctx=canvas.getContext("2d",{alpha:true}),reduced=matchMedia("(prefers-reduced-motion: reduce)").matches,points=[],count=reduced?80:220;let w=1,h=1,activity=.08,ax=.5,ay=.45,last=performance.now();
+function resize(){const d=Math.min(devicePixelRatio||1,1.5);w=innerWidth;h=innerHeight;canvas.width=w*d;canvas.height=h*d;ctx.setTransform(d,0,0,d,0,0)}
+function seed(){points.length=0;for(let i=0;i<count;i++)points.push({x:Math.random()*w,y:Math.random()*h,vx:0,vy:0,p:Math.random()*6.28,z:.2+Math.random()*.8})}
+function signal(d={}){activity=Math.max(activity,Math.min(1,Number(d.activity??.7)));ax=Number.isFinite(d.x)?d.x:.5;ay=Number.isFinite(d.y)?d.y:.45;root.dataset.gravityState="active";clearTimeout(signal.t);signal.t=setTimeout(()=>{root.dataset.gravityState="quiet"},900)}
+function frame(now){const dt=Math.min(.04,(now-last)/1000);last=now;activity+=(.08-activity)*dt*.8;ctx.clearRect(0,0,w,h);const tx=w*ax,ty=h*ay,ink=getComputedStyle(root).getPropertyValue("--text")||"#fff";for(const p of points){const dx=tx-p.x,dy=ty-p.y,dist=Math.max(80,Math.hypot(dx,dy)),pull=(.3+activity*2)*p.z/dist;p.vx+=dx*pull*dt;p.vy+=dy*pull*dt;const drift=Math.sin(now*.00035+p.p)*(1+activity*2);p.vx+=-dy/dist*drift*dt;p.vy+=dx/dist*drift*dt;p.vx*=.985;p.vy*=.985;p.x+=p.vx*60*dt;p.y+=p.vy*60*dt;if(p.x<0)p.x=w;if(p.x>w)p.x=0;if(p.y<0)p.y=h;if(p.y>h)p.y=0;ctx.globalAlpha=(.035+activity*.16)*p.z;ctx.fillStyle=ink;const s=p.z>.7?1.5:1;ctx.fillRect(Math.round(p.x),Math.round(p.y),s,s)}ctx.globalAlpha=1;requestAnimationFrame(frame)}
+addEventListener("resize",()=>{resize();seed()},{passive:true});addEventListener("master:visual",e=>signal(e.detail||{}));addEventListener("gravity:signal",e=>signal(e.detail||{}));resize();seed();if(!reduced)requestAnimationFrame(frame);
+})();
