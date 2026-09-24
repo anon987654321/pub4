@@ -86,7 +86,7 @@ module Master
 
       def squint(surface:, state:, image_path:, blur_px:)
         css = "#{BASE_IMAGE_CSS}.stage{overflow:visible}"               ".stage img{filter:grayscale(1) blur(#{blur_px}px);transform:scale(1.01)}"
-        document(css, "squint composition · #{escape_html(surface.id)} · #{escape_html(state)}", <<~HTML)
+        document(css, "squint composition | #{escape_html(surface.id)} | #{escape_html(state)}", <<~HTML)
           <div class="stage">
             <img src="#{data_uri(image_path)}" alt="blurred composition for squint review">
           </div>
