@@ -521,6 +521,20 @@ Law.define(:CONSISTENT_ERROR_STRATEGY) do
   X
 end
 
+Law.define(:EVIDENCE_BY_INTENT) do
+  source "MASTER-native (intent-to-evidence routing)"
+  severity :warning
+  ask "Does an answer depend on current, niche, uncertain, repository, browser, device, or externally verifiable facts without first selecting the evidence surface that can actually observe them?"
+  fix "Route the turn by evidence need: read/search the repository for repository facts, use device capability for local hardware, use browser capability for page state, and use local knowledge or current web sources for unfamiliar or time-sensitive facts; never substitute memory for available evidence."
+  bad <<~'X'
+    answer = model_memory(topic)
+  X
+  good <<~'X'
+    evidence = web_search(topic)
+    answer = synthesize(evidence)
+  X
+end
+
 Law.define(:DUAL_DETECTION) do
   source "MASTER-native (lexical + semantic detection)"
   severity :info
