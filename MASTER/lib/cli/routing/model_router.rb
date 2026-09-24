@@ -100,7 +100,7 @@ module Master
         def chain_for(task_type)
           lanes = { pref: [preferred(task_type:)], tiers: tier_ids.reject { |id| ollama_model?(id) },
                     free: continuity_models + ollama_cloud_models + local_server_models + hosted_models,
-                    subscription: Ground::AuthProfileLane.models_for_router(self) + primary_models + cli_lane_models }
+                    subscription: agy_catalog_models + Ground::AuthProfileLane.models_for_router(self) + primary_models + cli_lane_models }
           order = task_type.to_sym == :chitchat ? %i[pref tiers free subscription] : %i[subscription pref tiers free]
           order.flat_map { |lane| lanes.fetch(lane) } + replicate_models + local_models + [@config.model]
         end
