@@ -608,7 +608,11 @@ end
     # running it per rule would turn a slow command into an unusable one.
     def css_constitution_rows
       ceilings = css_budget_ceilings
-      return [] if ceilings.empty?
+      if ceilings.empty?
+        return [Row.new(name: "css_budget", current: nil, ceiling: nil, direction: :down,
+                        source: "RAILS/gates/data/css_budget.yml",
+                        note: "unreadable: no CSS ceilings available")]
+      end
 
       # Both gates, because the seven rules are split across them: rhythm,
       # important, magic_hex, type_scale and weight_ladder come from
