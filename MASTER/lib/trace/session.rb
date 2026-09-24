@@ -92,7 +92,8 @@ module Master
           @mutex.synchronize do
             data.each do |key, value|
               next unless value.is_a?(Hash)
-              messages = Array(value["messages"])
+              messages = value["messages"]
+              raise JSON::ParserError, "conversation messages are not an array" unless messages.is_a?(Array)
               @conversations[key] = { messages:, token_est: value["token_est"].to_i, name: value["name"], input_tokens: value["input_tokens"].to_i }
               @persistent_keys << key
             end
