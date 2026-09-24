@@ -77,7 +77,7 @@ module Master
 
         html = File.join(@dir, "diff-#{key}.html")
         png = File.join(@dir, "diff-#{key}.png")
-        current, previous = frames.last(2)
+        previous, current = frames.last(2)
         File.write(html, diff_page(surface:, state:, current:, previous:))
         screenshot_file(html, png, cdp:)
         png
@@ -94,7 +94,7 @@ module Master
         images = frames.each_with_index.map do |path, index|
           opacity = GHOST_OPACITIES.fetch([index, GHOST_OPACITIES.length - 1].min)
           encoded = Base64.strict_encode64(File.binread(path))
-          label = "pass #{File.basename(path, ".png").delete_prefix("pass-").to_i}"
+          label = "pass #{File.basename(path, ".png").split("-pass-").last.to_i}"
           %(<img src="data:image/png;base64,#{encoded}" alt="#{escape_html(label)}" style="opacity:#{opacity};">)
         end.join
         <<~HTML
@@ -171,9 +171,8 @@ module Master
 
         missing = before.keys - after.keys
         added = after.keys - before.keys
-        changed + [
-          { "structural" => { "missing" => missing.size, "added" => added.size } }
-        ]
+        structural = { "structural" => { "missing" => missing.size, "added" => added.size } }
+        changed + (missing.empty? && added.empty? ? [] : [structural])
       rescue StandardError
         []
       end
