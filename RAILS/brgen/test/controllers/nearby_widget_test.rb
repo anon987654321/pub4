@@ -32,9 +32,11 @@ class NearbyWidgetTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_includes response.body, "#brgen"
+    assert_select "[data-nearby-chat-target=tabLabel]", text: "Chat", count: 1
     assert_select "form#nearby_widget_message"
     assert_select "form textarea, form input[type=text]"
     assert_match(/nearby-chat#locate/, response.body)
+    assert_select "a.nearby-chat-widget-messenger", text: "Open Messenger", count: 1
     assert_select "input[name=origin][value=widget]"
     refute_match(/>\s*(Loading the room|Laster rommet)…?\s*</, response.body)
   end
