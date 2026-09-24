@@ -65,8 +65,8 @@
   /* 100% of the positioned containing block, not 100vw: vw includes the
      scrollbar gutter, so the panel is wider than the viewport on a desktop
      with a classic scrollbar. */
-  width: min(360px, 100%);
-  height: min(460px, calc(100dvh - 48px));
+  width: min(420px, calc(100vw - 24px));
+  height: min(600px, calc(100dvh - 48px));
   display: flex;
   flex-direction: column;
   background: var(--surface-elevated);
@@ -146,6 +146,10 @@
   to { transform: none; }
 }
 
+@media (min-width: 1280px) {
+  .nearby-chat-widget { bottom: var(--safe-bottom, 0px); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .nearby-chat-widget-panel { animation: none; }
 }
@@ -153,12 +157,62 @@
 .nearby-chat-widget-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: var(--space-2);
   padding: 0.625rem 0.875rem;
   border-bottom: 1px solid var(--border);
-  font: var(--weight-bold) var(--text-xs)/1 var(--font-mono, ui-monospace, monospace);
-  color: var(--text-secondary);
+  color: var(--text);
   flex-shrink: 0;
+}
+
+.nearby-chat-widget-header-title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  min-width: 0;
+  margin-inline-end: auto;
+}
+
+.nearby-chat-widget-header-title strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nearby-chat-widget-header-title span {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
+.nearby-chat-widget-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.nearby-chat-widget-messenger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap-min);
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font: var(--weight-bold) var(--text-xs)/1 var(--font);
+  white-space: nowrap;
+}
+
+.nearby-chat-widget-messenger:hover,
+.nearby-chat-widget-messenger:focus-visible {
+  border-color: var(--accent);
+  text-decoration: none;
+}
+
+.nearby-chat-widget-messenger--empty {
+  width: fit-content;
+  margin-top: var(--space-2);
+  color: var(--accent);
+  border-color: var(--accent);
 }
 
 .nearby-chat-widget-close {
