@@ -24,7 +24,7 @@ module Master
       module_function
 
       def plan(text, emotion: {}, style: :normal)
-        phrases = text.to_s.split(/(?<=[.!?,;:])\s+/).map(&:strip).reject(&:empty?)
+        phrases = text.to_s.split(/(?<=[.!?])\s+/).map(&:strip).reject(&:empty?)
         phrases = [text.to_s.strip] if phrases.empty?
 
         phrases.each_with_index.map do |phrase, index|
