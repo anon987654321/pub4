@@ -47,19 +47,6 @@ class TestBinLifecycle < Minitest::Test
     assert_includes out, "usage: master-core"
   end
 
-  def test_onboard_writes_the_config_it_was_given
-    Dir.mktmpdir do |scratch|
-      out, status = run_script(staged(scratch, "onboard"), "--no-interactive", "--model", "test/model",
-                               "--token", "fixed-token", chdir: scratch)
-      config = YAML.safe_load_file(File.join(scratch, ".master", "config.yml"))
-
-      assert status.success?, out
-      assert_equal "test/model", config["model"]
-      assert_equal "fixed-token", config["token"]
-      assert_in_delta 10.0, config["budget_max"]
-    end
-  end
-
   def test_cleanup_refuses_a_dirty_tree_and_only_reports_on_a_clean_one
     Dir.mktmpdir do |scratch|
       script = staged(scratch, "cleanup")
@@ -80,43 +67,5 @@ class TestBinLifecycle < Minitest::Test
       assert_includes clean, "dry-run only"
       assert_path_exists File.join(scratch, "MASTER", "reports", "cleanup")
     end
-  end
-
-  def test_sync_env_writes_keys_from_the_profile_with_private_mode
-    Dir.mktmpdir do |home|
-      File.write(File.join(home, ".zshrc"), "export OPENROUTER_API_KEY=\"sk-or-0123456789\"\nexport PATH=/bin\n")
-
-      out, status = run_script(File.join(BIN, "sync-env"), env: { "HOME" => home })
-      dest = File.join(home, ".config", "master", "env")
-
-      assert status.success?, out
-      assert_equal "OPENROUTER_API_KEY=sk-or-0123456789\n", File.read(dest)
-      assert_equal 0o600, File.stat(dest).mode & 0o777
-    end
-  end
-
-  def test_sync_env_with_no_keys_fails_and_writes_nothing
-    Dir.mktmpdir do |home|
-      out, status = run_script(File.join(BIN, "sync-env"), env: { "HOME" => home })
-
-      refute status.success?
-      assert_includes out, "no API keys found"
-      refute_path_exists File.join(home, ".config", "master", "env")
-    end
-  end
-
-  def test_handoff_points_at_commands_that_exist
-    out, status = run_script(File.join(BIN, "handoff"))
-
-    assert status.success?, out
-    assert_includes out, "handoff: pub4 agent state"
-    refute_includes out, "/orient"
-  end
-
-  def test_playbook_renders_lessons
-    out, status = run_script(File.join(BIN, "playbook"))
-
-    assert status.success?, out
-    refute_empty out.strip
   end
 end

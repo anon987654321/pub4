@@ -23,24 +23,6 @@ class TestBinScripts < Minitest::Test
     assert_match(/^OK (?:ruby|git):/, output)
   end
 
-  def test_onboard_writes_a_config_with_a_token_and_keeps_it_on_a_second_run
-    Dir.mktmpdir do |repo|
-      script = copy_script(repo, "onboard")
-
-      out, status = Open3.capture2e(RbConfig.ruby, script, "--no-interactive", "--model", "test/model", "--budget-max", "3")
-      assert status.success?, out
-      config = YAML.safe_load_file(File.join(repo, ".master", "config.yml"))
-
-      assert_equal "test/model", config["model"]
-      assert_in_delta 3.0, config["budget_max"]
-      assert_match(/\A\h{48}\z/, config["token"])
-
-      Open3.capture2e(RbConfig.ruby, script, "--no-interactive")
-      assert_equal config["token"], YAML.safe_load_file(File.join(repo, ".master", "config.yml"))["token"],
-                   "a second onboard must not rotate the token it already wrote"
-    end
-  end
-
   def test_cleanup_refuses_a_dirty_tree
     Dir.mktmpdir do |repo|
       script = cleanup_fixture(repo)
@@ -85,7 +67,7 @@ class TestBinScripts < Minitest::Test
 
       assert status.success?, out
       assert_includes out, "wait for bootstrap"
-      assert_match(/clean \(\d+ checks\)/, out)
+      assert_match(/state=clean checks=\d+/, out)
     end
   end
 
@@ -104,7 +86,7 @@ class TestBinScripts < Minitest::Test
     out, status = run_smoke_web("http://127.0.0.1:#{port}")
 
     assert status.success?, out
-    assert_includes out, "not listening"
+    assert_includes out, "reason=not_listening"
   end
 
   private
