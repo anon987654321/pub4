@@ -167,7 +167,7 @@ module Master
           CrossFileAnalysis.new(root: dir).call(paths)
         rescue StandardError => e
           @bus&.publish("scanner:cross_file_error", path: dir, error: e.message)
-          []
+          raise "cross-file scan failed for #{dir}: #{e.class}: #{e.message}"
         end
 
         def prune_violation_objects(pairs)
