@@ -60,9 +60,14 @@ module Deploy
     def self.run(cdp, surface)
       return {} unless surface.viewport == "mobile"
 
-      JSON.parse(cdp.evaluate(SCRIPT).to_s)
+      payload = JSON.parse(cdp.evaluate(SCRIPT).to_s)
+      raise "web_platform: browser returned a non-object payload" unless payload.is_a?(Hash)
+
+      payload
+    rescue JSON::ParserError => e
+      raise "web_platform: browser returned invalid JSON (#{e.message})"
     rescue StandardError => e
-      { "error" => "#{e.class}: #{e.message}" }
+      raise "web_platform: runtime probe failed (#{e.class}: #{e.message})"
     end
   end
 end
