@@ -36,6 +36,30 @@ class LocaleShadowingGateTest < Minitest::Test
     "nb:\n  nav:\n    brand_home: #{value}\n"
   end
 
+  def test_missing_budget_is_inconclusive
+    result = gate_with_budget(shared: locale('"Home"'), app: locale('"Brgen home"'), budget: nil)
+    assert_equal :inconclusive, result.outcome
+  end
+
+  def test_unreadable_budget_is_inconclusive
+    Dir.mktmpdir do |dir|
+      plant(dir, "RAILS/shared/config/locales/social.nb.yml", locale('"Home"'))
+      plant(dir, "RAILS/brgen/config/locales/nb.yml", locale('"Brgen home"'))
+      budget = plant(dir, "locale_shadowing.yml", "not: [valid")
+      result = GATE.run(root: dir, apps: %w[brgen], budget:)
+      assert_equal :inconclusive, result.outcome
+    end
+  end
+
+  def gate_with_budget(shared:, app:, budget:)
+    Dir.mktmpdir do |dir|
+      plant(dir, "RAILS/shared/config/locales/social.nb.yml", shared)
+      plant(dir, "RAILS/brgen/config/locales/nb.yml", app)
+      budget_path = budget && plant(dir, "locale_shadowing.yml", budget)
+      GATE.run(root: dir, apps: %w[brgen], budget: budget_path || File.join(dir, "missing.yml"))
+    end
+  end
+
   def test_an_app_override_of_a_shared_key_fails_against_a_zero_ceiling
     result = gate_over(shared: locale('"Home"'), app: locale('"Brgen home"'))
 
