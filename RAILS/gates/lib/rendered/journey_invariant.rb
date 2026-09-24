@@ -138,7 +138,7 @@ module Deploy
         label = "#{surface.app}/#{surface.label}"
         journeys["pager"] += 1 if TurboJourneys.judge_pager(label, fetch_raw(surface), @result, follow: follow)
       rescue StandardError => e
-        @result.warn("journey_invariant noscript: #{surface.app}/#{surface.label} fetch failed — #{e.class}")
+        @result.inconclusive!("journey_invariant noscript: #{surface.app}/#{surface.label} fetch failed — #{e.class}: #{e.message}")
       end
     end
 
