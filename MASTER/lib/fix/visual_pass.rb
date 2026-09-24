@@ -126,10 +126,7 @@ module Master
             next unless Deploy::GeometryProbe.ok?(payload)
             features = composition_features(cdp)
             missing = BRGEN_REQUIRED_FEATURES - features
-            return_result = missing.empty? ? nil : inconclusive(
-              "brgen composition: #{surface.id} is missing co-resident feature(s): #{missing.join(", ")}"
-            )
-            return return_result if return_result
+            raise "brgen composition: #{surface.id} is missing co-resident feature(s): #{missing.join(", ")}" if missing.any?
 
             payload["composition"] = {
               "state" => "resting",
