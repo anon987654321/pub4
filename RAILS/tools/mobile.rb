@@ -5,8 +5,8 @@ require_relative "../shared/lib/shared/mobile_app_registry"
 
 module MobileTool
   ROOT = File.expand_path("../..", __dir__)
-  ANDROID_ROOT = ENV.fetch("MOBILE_ANDROID_BUILD_ROOT", File.join(ROOT, "mobile", ".build", "android"))
-  IOS_ROOT = ENV.fetch("MOBILE_IOS_BUILD_ROOT", File.join(ROOT, "mobile", ".build", "ios"))
+  ANDROID_ROOT = ENV.fetch("MOBILE_ANDROID_BUILD_ROOT", File.join(ROOT, "__NATIVE_ANDROID", ".build"))
+  IOS_ROOT = ENV.fetch("MOBILE_IOS_BUILD_ROOT", File.join(ROOT, "__NATIVE_IOS", ".build"))
 
   module_function
 
@@ -66,7 +66,7 @@ module MobileTool
       Origin: #{app.url}
       Associated domain: applinks:#{app.host}
 
-      This target uses the shared source under RAILS/mobile/ios/Sources.
+      This target uses the shared source under __NATIVE_IOS/Sources.
       Keep product identity here; do not fork the shell.
     MD
     puts "ios: #{app.key}: #{directory}"
