@@ -301,7 +301,8 @@ module Master
             false
           end
         rescue Errno::ENOENT, StandardError => e
-          skip_lint(e.message)
+          @bus&.publish("fix_loop:commit_blocked", reason: "rubocop_unavailable", error: e.message)
+          false
         end
 
         def skip_lint(error)
