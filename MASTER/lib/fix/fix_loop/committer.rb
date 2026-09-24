@@ -40,8 +40,8 @@ module Master
         def baseline!
           @baseline = @git.changed_paths
         rescue StandardError => e
-          @baseline = nil
           @bus&.publish("fix_loop:commit_error", error: e.message)
+          raise "cannot establish fix transaction baseline: #{e.class}: #{e.message}"
         end
 
         # findings are the violations the pass set out to fix; the ones in a
