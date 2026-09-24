@@ -7,7 +7,8 @@ module Master
     # OpenBSD dmesg-style kernel lines for operator progress.
     # Shape: "unitN at parent: detail" / "unitN: status". Prose, not key=value:
     # "scan0: 3 violations in 2 files", as the kernel says "sd0: 244198MB".
-    # Config: data/limits.yml#dmesg (enabled: true). ENV MASTER_DMESG=0|1 overrides.
+    # Config: data/limits.yml#dmesg (enabled: true). Default verbosity is verbose;
+    # ENV MASTER_DMESG accepts 0, quiet, normal, verbose, or trace.
     #
     # This shape is the CLI's whole style guide: append-only, one line per fact,
     # no banner. The machine-readable form of the same facts is the event bus
