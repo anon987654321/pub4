@@ -4970,175 +4970,46 @@ body.vertical-dating .match .feed-card-avatar-img {
   object-fit: cover;
 }
 
-// The dating immersive splash is a bare swipe surface. Two host elements would
-// float over "sveip for å begynne": the feed keyboard-hotkey coach (a desktop
-// hint, meaningless on a touch swipe surface) and the nearby chat widget, so both
-// hide here. The .brgen-logo-mark is deliberately KEPT — it is the one fleet-wide
-// brand mark; removing it on dating is a product decision for the architect, not
-// a cleanup.
-body.vertical-dating .hotkey-coach,
-body.vertical-dating .nearby-chat-widget {
-  display: none !important;
-}
-
-.dating-intro {
-  position: fixed;
-  inset: 0;
-  z-index: var(--z-splash);
+.dating-page-intro {
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-  padding:
-    max(var(--space-8), env(safe-area-inset-top))
-    var(--space-5)
-    max(var(--space-10), env(safe-area-inset-bottom));
-  background: var(--dating-bg);
-  color: var(--dating-ink);
-  text-align: center;
-  cursor: grab;
-  touch-action: pan-y;
-  user-select: none;
-  transition: opacity var(--transition-normal) var(--ease-out), transform var(--transition-normal) var(--ease-spring);
+  gap: var(--space-6);
+  max-width: var(--feed-max);
+  margin: 0 auto var(--space-6);
+  padding: var(--space-6) var(--space-3) 0;
 }
 
-.dating-intro:active {
-  cursor: grabbing;
+.dating-page-intro > div {
+  min-width: 0;
 }
 
-.dating-intro--dismissed {
-  opacity: 0;
-  transform: translateY(calc(-1 * var(--space-3)));
-  pointer-events: none;
-}
-
-.dating-intro[hidden] {
-  display: none;
-}
-
-/* Left-aligned text in a centred block. The splash keeps its composition —
-   the paragraph is still centred on the page — but six centred lines give the
-   reader a ragged left edge to re-find on every line, which is the case
-   design_rules names when it flags centred prose past three lines. */
-.dating-intro-hint {
-  margin: 0 auto;
-  text-align: start;
-  max-width: var(--measure-narrow);
-  padding-top: clamp(48px, 12vh, 96px);
-  font-family: var(--font);
-  font-size: clamp(1rem, 3.8vw, 1.125rem);
-  font-weight: var(--weight-bold);
-  letter-spacing: var(--tracking-tight);
-  color: var(--dating-ink);
-}
-
-.dating-intro-lede {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  width: 100%;
-  gap: clamp(var(--space-3), 3vh, var(--space-8));
-}
-
-.dating-heart-stage {
-  position: relative;
-  width: min(92vw, 520px);
-  height: min(58vh, 480px);
-  display: grid;
-  place-items: center;
-  overflow: visible;
-}
-
-.dating-heart-doodle {
-  width: 100%;
-  height: 100%;
-  display: block;
-  /* No CSS filter — flat UI rule. */
-}
-
-.dating-intro-title {
+.dating-page-intro h1 {
   margin: 0;
-  font-family: var(--font);
-  font-size: clamp(2.75rem, 12vw, 4.5rem);
-  font-weight: var(--weight-bold);
-  letter-spacing: var(--tracking-tightest);
-  line-height: 1.5;
-  text-transform: lowercase;
-  color: var(--dating-ink);
+  font-size: clamp(1.5rem, 5vw, 2rem);
 }
 
-/* Three statements stacked, not one line wrapping: the age text, the trust mark
-   and a three-link nav. In one row they read as a run-on sentence with no
-   boundary between "Beskyttet med Vipps" and "Personvern Vilkår
-   Informasjonskapsler", and on a phone they break into ragged lines.
+.dating-page-intro p {
+  margin: var(--space-1) 0 0;
+  max-width: 52ch;
+  color: var(--text-secondary);
+}
 
-   Column by default because a phone has one column; the row only appears when
-   there is width for the whole of it. */
-.dating-intro-trust {
-  margin: 0;
+.dating-page-intro nav {
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  flex-wrap: wrap;
   gap: var(--space-2);
-  font-family: var(--font);
-  font-size: var(--text-sm);
-  color: var(--dating-muted);
-  text-align: center;
+  justify-content: flex-end;
 }
 
-.dating-intro-trust p {
-  margin: 0;
+.dating-discover-panel {
+  min-height: 100dvh;
+  padding: 0 var(--space-3) var(--space-16);
 }
 
-/* The phrase and the name are one thing and never break apart. */
-.dating-intro-guarantee {
-  display: inline-flex;
-  align-items: baseline;
-  gap: var(--space-1);
-  white-space: nowrap;
-}
-
-/* The trust mark is Vipps: the same company as BankID, and a Vipps Login is not
-   billed per use the way a BankID verification is. */
-.dating-intro-vipps {
-  font-weight: var(--weight-bold);
-  letter-spacing: var(--tracking-tighter);
-  /* In ink, not Vipps orange: #ff5b24 measures 2.7:1 on the light ground, and a
-     trademark colour does not exempt a word from TYPOGRAPHY's 7.0. */
-  color: var(--text);
-}
-
-/* Which way to swipe, at the two edges the thumb travels between. Dark grey and
-   low-contrast on purpose: the heart is the subject and these are a hint, so
-   they sit just above the background rather than competing with it.
-
-   Vertically centred on the viewport, not on the lede, so they stay level with
-   the heart whatever the hint above wraps to. */
-.dating-intro-arrow {
-  position: absolute;
-  inset-block-start: 50%;
-  transform: translateY(-50%);
-  display: grid;
-  place-items: center;
-  color: var(--dating-muted);
-  opacity: 0.45;
-  pointer-events: none;
-}
-
-.dating-intro-arrow--start { inset-inline-start: var(--space-2); }
-.dating-intro-arrow--end { inset-inline-end: var(--space-2); }
-
-@media (min-width: 40rem) {
-  .dating-intro-arrow--start { inset-inline-start: var(--space-5); }
-  .dating-intro-arrow--end { inset-inline-end: var(--space-5); }
-}
-
-/* A hint that never resolves is noise on a machine that cannot take the
-   gesture; the swipe still works, and the pointer user has the panel below. */
-@media (hover: hover) and (pointer: fine) {
-  .dating-intro-arrow { opacity: 0.28; }
+body.vertical-dating .nearby-chat-widget,
+body.vertical-dating .hotkey-coach {
+  display: block;
 }
 
 /* Progressive profile form — essentials first, optional under details. */
