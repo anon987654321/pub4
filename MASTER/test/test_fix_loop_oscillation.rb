@@ -139,7 +139,7 @@ class TestFixLoopOscillation < Minitest::Test
       bus: @bus,
       git: StubGit.new,
       rollback:,
-    )
+    ).tap { |loop| calm(loop) }
   end
 
   def build_loop_with_scanner(scanner)
@@ -150,7 +150,16 @@ class TestFixLoopOscillation < Minitest::Test
       root: @root,
       bus: @bus,
       git: StubGit.new,
-    )
+    ).tap { |loop| calm(loop) }
+  end
+
+  # ResourceBudget counts every process on the host, and a macOS desktop idles
+  # above its process_count limit, so an unstubbed budget sheds model work and
+  # the loop ends on the machine rather than on the violations.
+  def calm(loop)
+    budget = Master::Fix::ResourceBudget.new(root: @root)
+    def budget.measure = { state: :ok, reasons: [] }
+    loop.instance_variable_get(:@pass_runner).instance_variable_set(:@resource_budget, budget)
   end
 
   def test_oscillation_fires_when_violation_set_repeats

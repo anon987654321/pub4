@@ -14,6 +14,8 @@ module Master
     # Rollback is deliberately explicit, refuses a dirty checkout, and moves
     # the checkout to the recorded commit rather than silently deleting work.
     class KnownGood
+      include Master::Io::AtomicWrite
+
       PATH = ".master/known_good.json"
       VERSION = 1
 
@@ -110,7 +112,7 @@ module Master
       end
 
       def dirty?
-        out, status = Master::Io::Exec.capture3("git", "-C", @root, "status", "--porcelain")
+        out, status = Master::Io::Exec.capture2("git", "-C", @root, "status", "--porcelain")
         status.success? && !out.strip.empty?
       end
 

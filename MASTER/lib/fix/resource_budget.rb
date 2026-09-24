@@ -133,7 +133,7 @@ module Master
         configured = @config.dig("resources", name, level).to_f
         return configured if configured.positive?
 
-        DEFAULTS.fetch(name).fetch(level)
+        DEFAULTS.fetch(name.to_sym).fetch(level.to_sym)
       end
 
       def limit(section, key, fallback)

@@ -48,7 +48,7 @@ class TestReliabilitySecondTranche < Minitest::Test
       tx.begin!
       File.write(path, "partial\n")
       tx.observe!
-      recovered = Master::Fix::Transaction.recover!(root:, id: tx.id)
+      recovered = Master::Fix::Transaction::Recovery.recover!(root:, id: tx.id)
 
       assert recovered.ok?
       assert_equal "before\n", File.read(path)
@@ -64,13 +64,13 @@ class TestReliabilitySecondTranche < Minitest::Test
       tx.begin!
       File.write(path, "committed-locally\n")
       tx.observe!
-      tx.begin_delivery!(head_before: "before")
+      tx.delivery.begin!(head_before: "before")
 
       result = tx.rollback!
 
       assert result.ok?
       assert_equal "before\n", File.read(path)
-      refute Master::Fix::Transaction.persisted?(root:, id: tx.id)
+      refute Master::Fix::Transaction::Recovery.persisted?(root:, id: tx.id)
     end
   end
 
@@ -82,10 +82,10 @@ class TestReliabilitySecondTranche < Minitest::Test
       tx.begin!
       File.write(path, "committed-locally\n")
       tx.observe!
-      tx.begin_delivery!(head_before: "before")
-      tx.record_commit!(head_after: "commit-1")
+      tx.delivery.begin!(head_before: "before")
+      tx.delivery.record_commit!(head_after: "commit-1")
 
-      recovered = Master::Fix::Transaction.recover!(root:, id: tx.id)
+      recovered = Master::Fix::Transaction::Recovery.recover!(root:, id: tx.id)
 
       assert recovered.ok?
       assert_equal :delivery_pending, recovered.value![:state]
@@ -217,13 +217,16 @@ class TestReliabilitySecondTranche < Minitest::Test
     end
   end
 
+  # promote! answers with a Result, which /runtime promote reads without a
+  # rescue; what matters is that an option-shaped "commit" is refused before
+  # it reaches git and that nothing is recorded.
   def test_known_good_refuses_invalid_commit_records
     Dir.mktmpdir("master-known-good") do |root|
-      error = assert_raises(ArgumentError) do
-        Master::Ground::KnownGood.new(root:).promote!(commit: "--hard")
-      end
+      result = Master::Ground::KnownGood.new(root:).promote!(commit: "--hard")
 
-      assert_match(/not a Git SHA/, error.message)
+      assert result.err?
+      assert_match(/not a Git SHA/, result.message)
+      refute File.exist?(File.join(root, Master::Ground::KnownGood::PATH))
     end
   end
 
@@ -410,7 +413,9 @@ class TestReliabilitySecondTranche < Minitest::Test
     Dir.mktmpdir("master-journal") do |root|
       journal = Master::Fix::RunJournal.new(root:)
       first = journal.start_or_resume(target: root, files: [], max_passes: 2, budget_seconds: 10)
-      journal.send(:persist, { "version" => 1, "runs" => [first] })
+      # The journal lets a process resume its own run, so "another" process
+      # has to be a different live pid: the parent is one.
+      journal.send(:persist, { "version" => 1, "runs" => [first.merge("pid" => Process.ppid)] })
 
       error = assert_raises(RuntimeError) do
         Master::Fix::RunJournal.new(root:).start_or_resume(
@@ -456,10 +461,10 @@ class TestReliabilitySecondTranche < Minitest::Test
       tx.begin!
       File.write(path, "committed-locally\n")
       tx.observe!
-      tx.begin_delivery!(head_before: "before")
-      tx.record_commit!(head_after: "after")
+      tx.delivery.begin!(head_before: "before")
+      tx.delivery.record_commit!(head_after: "after")
 
-      recovery = Master::Fix::Transaction.recover!(root:, id: tx.id)
+      recovery = Master::Fix::Transaction::Recovery.recover!(root:, id: tx.id)
 
       assert recovery.ok?
       assert_equal :delivery_pending, recovery.value![:state]
@@ -476,24 +481,27 @@ class TestReliabilitySecondTranche < Minitest::Test
       tx.begin!
       File.write(path, "after\n")
       tx.observe!
-      tx.begin_delivery!(head_before: "before")
-      tx.record_commit!(head_after: "commit-1")
+      tx.delivery.begin!(head_before: "before")
+      tx.delivery.record_commit!(head_after: "commit-1")
 
-      recovered = Master::Fix::Transaction.load_persisted(root:, id: tx.id)
-      assert recovered.delivery_pending?
-      result = recovered.finalize_delivery!(head: "commit-1")
+      recovered = Master::Fix::Transaction::Recovery.load_persisted(root:, id: tx.id)
+      assert recovered.delivery.pending?
+      result = recovered.delivery.finalize!(head: "commit-1")
 
       assert result.ok?
-      refute Master::Fix::Transaction.persisted?(root:, id: tx.id)
+      refute Master::Fix::Transaction::Recovery.persisted?(root:, id: tx.id)
     end
   end
 
   private
 
+  # pub4 ignores MASTER's state directory, so a fixture repo does too; without
+  # it the known-good record promote! writes reads as a dirty tree.
   def init_git(root)
     git(root, "init", "-q")
     git(root, "config", "user.email", "test@example.com")
     git(root, "config", "user.name", "test")
+    File.write(File.join(root, ".git", "info", "exclude"), ".master/\n")
   end
 
   def git(root, *args)

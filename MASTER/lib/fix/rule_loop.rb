@@ -116,6 +116,7 @@ module Master
         status = pass_outcome(fixed)
         record_outcomes(files, status)
         @bus&.publish("rule_loop:pass", rule: @rule.id, violations: violations.size, fixed:, status:)
+        { fixed:, status:, breakdown: @batch_breakdown }
       rescue StandardError => e
         @bus&.publish("rule_loop:error", rule: @rule.id, error: e.message)
         # Bus-only meant a crashed rule pass was indistinguishable from a
@@ -399,7 +400,7 @@ module Master
         end
         return true unless @scanner.respond_to?(:should_autofix?, true)
 
-        confidence = violation.fetch(:confidence, violation["confidence"] || 1.0)
+        confidence = violation[:confidence] || violation["confidence"] || 1.0
         allowed = @scanner.__send__(:should_autofix?, violation[:rule], confidence,
                                     allow_deletions: deletions_allowed?)
         unless allowed

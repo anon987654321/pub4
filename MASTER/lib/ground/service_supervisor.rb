@@ -11,6 +11,8 @@ module Master
     # A service may recover automatically, but repeated failures become a
     # measured degraded state instead of an unbounded restart storm.
     class ServiceSupervisor
+      include Master::Io::AtomicWrite
+
       PATH = ".master/services.json"
       LOCK = ".master/services.lock"
       VERSION = 1
