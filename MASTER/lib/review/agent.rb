@@ -245,7 +245,9 @@ end
       end
 
       def evidence_preflight(message, mode)
-        return if mode == :repository || mode == :browser || mode == :device || mode == :conversation
+        return capability_preflight("social_browser", "status") if mode == :browser
+        return capability_preflight("air_superiority", "scan") if mode == :device
+        return if mode == :repository || mode == :conversation
 
         knowledge = evidence_tool("SearchKnowledge")
         web = evidence_tool("WebSearch")
@@ -269,6 +271,19 @@ end
         parts << "Local knowledge:\n#{local_text[0, 3_000]}" unless local_text.empty?
         parts << "Web research:\n#{snippets.join("\n\n")[0, 6_000]}" unless snippets.empty?
         parts.join("\n\n")
+      end
+
+      def capability_preflight(plugin, action)
+        tool = evidence_tool("PluginObserve")
+        return unless tool
+
+        result = tool.call(plugin:, action:, args: {})
+        return unless result.respond_to?(:ok?) && result.ok?
+
+        value = result.value!.to_s
+        "Capability observation (#{plugin}/#{action}):\n#{value[0, 6_000]}"
+      rescue StandardError => e
+        "Capability observation unavailable: #{e.message}"
       end
 
       def evidence_tool(name)
