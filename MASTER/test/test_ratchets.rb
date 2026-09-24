@@ -29,6 +29,20 @@ class TestRatchets < Minitest::Test
                  "new debt against a recorded ceiling"
   end
 
+  def test_no_ratchet_is_unreadable
+    unreadable = rows.reject { |row| row.current && row.ceiling }
+
+    assert_empty unreadable.map { |row| "#{row.name}: #{row.note}" },
+                 "an unreadable ratchet is evidence that measurement failed, not a pass"
+  end
+
+  def test_command_and_name_ratchets_are_in_the_register
+    names = rows.map(&:name)
+
+    assert_includes names, "command_surface"
+    assert_includes names, "name_candidates"
+  end
+
   # The half that had one owner and now has all of them.
   #
   # Skipped when the measured trees are dirty, and that is not a loophole. This
