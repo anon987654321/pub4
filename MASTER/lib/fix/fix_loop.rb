@@ -15,6 +15,7 @@ require_relative "fix_loop/background_runner"
 require_relative "fix_loop/pass_runner_builder"
 require_relative "visual_pass"
 require_relative "opportunity_pass"
+require_relative "rename_sweep"
 require_relative "severity"
 require_relative "violation"
 
@@ -69,6 +70,8 @@ module Master
           ground_truth:, preserve_user_intent:, law_resolver:, homeostat: @homeostat)
         # Wire Ledger::Reflexion for strict self-correction per rules.yml (AK102, self-application)
         @reflexions = Trace::Ledger::Reflexion.new(event_bus: bus, root:) if bus
+        repo_root = File.basename(root) == "MASTER" ? File.expand_path("..", root) : root
+        @rename_sweep = RenameSweep.new(agent:, repo_root:, bus:)
       end
 
       # A halt stops the runs nobody asked for, the background runner and the
@@ -102,10 +105,20 @@ module Master
       end
 
       def finish_run(result, target, run_id)
+        sweep_names(target, run_id)
         state = terminal_state_for(result)
         @run_journal.terminal(run_id, state, message: result.to_s)
         @bus&.publish("fix_loop:terminal", state:, message: result.to_s)
         result
+      end
+
+      # After the passes, with no transaction open: a rename moves files the
+      # pass transactions track by path, so it cannot happen inside one.
+      def sweep_names(target, run_id)
+        @rename_sweep.run(target:, run_id:)
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "fix_loop.rename_sweep", event_bus: @bus)
+        []
       end
 
       def retry_delivery(transaction_id:, expected_head:)
