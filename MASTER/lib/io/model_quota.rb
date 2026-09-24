@@ -24,10 +24,8 @@ module Master
 
       def daily_limit
         cfg = Master.load_yaml(File.join(Master::ROOT, "data", "models.yml")) || {}
-        cfg.dig("openrouter", "daily_quota_per_model").to_i.positive? ?
-          cfg.dig("openrouter", "daily_quota_per_model").to_i : DEFAULT_DAILY
-      rescue StandardError
-        DEFAULT_DAILY
+        value = cfg.dig("openrouter", "daily_quota_per_model")
+        value.to_i.positive? ? value.to_i : DEFAULT_DAILY
       end
 
       def trackable?(model) = FREE_RE.match?(model.to_s)
@@ -46,12 +44,11 @@ module Master
         end
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "model_quota.record", model: model.to_s)
+        raise "model quota accounting failed: #{e.class}: #{e.message}"
       end
 
       def count(model, day: today_key)
         load_data.dig(day, model.to_s).to_i
-      rescue StandardError
-        0
       end
 
       def over_quota?(model, day: today_key)
@@ -71,7 +68,7 @@ module Master
         data.select { |model, used| trackable?(model) && used.to_i >= daily_limit }.keys
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "ModelQuota.exhausted_models")
-        []
+        raise "model quota state unreadable: #{e.class}: #{e.message}"
       end
 
       def snapshot(day: today_key)
@@ -96,7 +93,7 @@ module Master
         JSON.parse(File.read(path))
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "ModelQuota.load_data")
-        {}
+        raise "model quota state unreadable: #{e.class}: #{e.message}"
       end
 
       def save_data(data)
