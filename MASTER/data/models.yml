@@ -213,41 +213,41 @@ model_defs:
     id: web-chat:gemini
     <<: *model_defaults
     score: { quality: 0.83, speed: 0.35, cost: 1.0 }
-ollama_qwen: &ollama_qwen
-  id: ollama:qwen3.5:27b
-  <<: *model_defaults
-  context_window: 256000
-  score: { quality: 0.92, speed: 0.72, cost: 1.0 }
-ollama_qwen_large: &ollama_qwen_large
-  id: ollama:qwen3.5:35b
-  <<: *model_defaults
-  context_window: 256000
-  score: { quality: 0.95, speed: 0.62, cost: 1.0 }
-ollama_glm_flash: &ollama_glm_flash
-  id: ollama:glm-5.3-flash:cloud
-  <<: *model_defaults
-  context_window: 128000
-  score: { quality: 0.96, speed: 0.86, cost: 1.0 }
-ollama_gemma: &ollama_gemma
-  id: ollama:gemma3:4b
-  <<: *model_defaults
-  context_window: 128000
-  score: { quality: 0.90, speed: 0.76, cost: 1.0 }
-ollama_nemotron: &ollama_nemotron
-  id: ollama:nemotron-3.5-lightning
-  <<: *model_defaults
-  context_window: 128000
-  score: { quality: 0.88, speed: 0.94, cost: 1.0 }
-ollama_laguna_xs: &ollama_laguna_xs
-  id: ollama:laguna-xs-2.1
-  <<: *model_defaults
-  context_window: 128000
-  score: { quality: 0.90, speed: 0.92, cost: 1.0 }
-ollama_lfm: &ollama_lfm
-  id: ollama:lfm2.5
-  <<: *model_defaults
-  context_window: 128000
-  score: { quality: 0.78, speed: 0.98, cost: 1.0 }
+  ollama_qwen: &ollama_qwen
+    id: ollama:qwen3.5:27b
+    <<: *model_defaults
+    context_window: 256000
+    score: { quality: 0.92, speed: 0.72, cost: 1.0 }
+  ollama_qwen_large: &ollama_qwen_large
+    id: ollama:qwen3.5:35b
+    <<: *model_defaults
+    context_window: 256000
+    score: { quality: 0.95, speed: 0.62, cost: 1.0 }
+  ollama_glm_flash: &ollama_glm_flash
+    id: ollama:glm-5.3-flash:cloud
+    <<: *model_defaults
+    context_window: 128000
+    score: { quality: 0.96, speed: 0.86, cost: 1.0 }
+  ollama_gemma: &ollama_gemma
+    id: ollama:gemma3:4b
+    <<: *model_defaults
+    context_window: 128000
+    score: { quality: 0.90, speed: 0.76, cost: 1.0 }
+  ollama_nemotron: &ollama_nemotron
+    id: ollama:nemotron-3.5-lightning
+    <<: *model_defaults
+    context_window: 128000
+    score: { quality: 0.88, speed: 0.94, cost: 1.0 }
+  ollama_laguna_xs: &ollama_laguna_xs
+    id: ollama:laguna-xs-2.1
+    <<: *model_defaults
+    context_window: 128000
+    score: { quality: 0.90, speed: 0.92, cost: 1.0 }
+  ollama_lfm: &ollama_lfm
+    id: ollama:lfm2.5
+    <<: *model_defaults
+    context_window: 128000
+    score: { quality: 0.78, speed: 0.98, cost: 1.0 }
 
 models:
   grok_primary:

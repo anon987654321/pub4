@@ -290,8 +290,8 @@ if ARGV[0] == "--daemon"
   cleanup = proc do
     begin
       File.unlink(sock_path) if bound_ino && File.stat(sock_path).ino == bound_ino
-    rescue StandardError
-      nil
+    rescue StandardError => e
+      warn "tts-worker: could not remove #{sock_path}: #{e.class}: #{e.message}"
     end
     exit 0
   end

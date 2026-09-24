@@ -374,24 +374,24 @@ guidance:
     - Re-read from disk immediately before writing
     - One-hop callers/tests for any public method or constant you change
     tiers:
-      local_fix:
-        when: single-file bugfix or comment; no signature change
-        read:
-        - target file
-        - matching test file
-        - direct callers
-      module_change:
-        when: new class, renamed constant, or cross-file behavior in one lib/ module
-        read:
-        - module entrypoint
-        - one-hop dependents (bin/operator readers)
-        - affected tests
-      structural_change:
-        when: pipeline stage, scan rule, constitution data, or OPERATOR topology
-        read:
-        - data/soul.yml ABSOLUTE sections
-        - limits.yml scan_profiles
-        - /scan deep on affected tree
+    - name: local_fix
+      when: single-file bugfix or comment; no signature change
+      read:
+      - target file
+      - matching test file
+      - direct callers
+    - name: module_change
+      when: new class, renamed constant, or cross-file behavior in one lib/ module
+      read:
+      - module entrypoint
+      - one-hop dependents (bin/operator readers)
+      - affected tests
+    - name: structural_change
+      when: pipeline stage, scan rule, constitution data, or OPERATOR topology
+      read:
+      - data/soul.yml ABSOLUTE sections
+      - limits.yml scan_profiles
+      - /scan deep on affected tree
     forbidden:
     - Edit from grep snippets, partial reads, or conversation memory
     - Claim a fix without reading the file being changed
@@ -453,7 +453,7 @@ guidance:
       nielsen: puts is NOT debug output in a CLI. Only p, pp, binding.pry, debugger are.
       prune: Loads patterns from data/voice.yml (voice.strunk); legacy fallback in rules.yml.
       semantic: Loads semantic questions from executable Law definitions.
-      deep_caution: deep adds 2 LLM calls per file. With 90 files at 8 req/min free tier = 22+ minutes.
+      deep_caution: deep adds 2 LLM calls per file. With 90 files at 8 req/min free tier = 22+ minutes.
   frontend_protection:
     statement: Only application.scss is protected — each app's one stylesheet, which loads the shared stack
       and adds no partial of its own.
