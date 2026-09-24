@@ -3515,6 +3515,9 @@ rules:
           empty_min_pct: 20
           empty_max_pct: 80
           accents_max: 2
+      rag:
+        inspect_from_lines: 5
+        extreme_last_line_ratio: 0.12
       action: >
         Judge each surface under its profile. Count worn characters, computed
         sizes, baselines, tabular figures, accent hues, empty ratio, and
