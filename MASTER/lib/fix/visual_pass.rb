@@ -236,6 +236,7 @@ module Master
         [
           "surface #{surface.id}: #{surface.url}",
           "composition=#{capture.dig(:payload, "composition", "state") || "resting"} ",
+          "trigger=#{Array(capture.dig(:payload, "composition", "triggers") || capture.dig(:payload, "composition", "trigger")).join(" + ")}",
           "first-screen text=#{first["text_blocks"]}, interactive=#{first["interactive"]}, ",
           "largest_area=#{first["largest_element_area_ratio"]}, small_text=#{first["small_text"]}, ",
           "centered_long_text=#{first["centered_long_text"]}",
