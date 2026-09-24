@@ -47,6 +47,11 @@ module DesignTokens
     "line_height_relaxed" => "luxury-line-relaxed",
   }.freeze
 
+  TOKEN_MAPS = {
+    "shared_chrome" => SHARED_CHROME_MAP,
+    "luxury" => LUXURY_MAP,
+  }.freeze
+
   module_function
 
   def read_utf8(path)
@@ -197,16 +202,18 @@ module DesignTokens
     findings = []
 
     all_scss_files.each do |path|
-      SHARED_CHROME_MAP.merge(LUXURY_MAP.transform_keys { |k| k }).each do |yml_key, css_var|
-        source = SHARED_CHROME_MAP.key?(yml_key) ? shared_chrome : luxury
-        next unless source.key?(yml_key)
+      TOKEN_MAPS.each do |section, mappings|
+        source = section == "shared_chrome" ? shared_chrome : luxury
+        mappings.each do |yml_key, css_var|
+          next unless source.key?(yml_key)
 
-        expected = source[yml_key]
-        if sync
-          findings << "#{path.sub("#{ROOT}/", '')}: synced --#{css_var} -> #{expected}" if sync_property!(path, css_var, expected)
-        else
-          drift = property_drift(path, css_var, expected)
-          findings << drift if drift
+          expected = source[yml_key]
+          if sync
+            findings << "#{path.sub("#{ROOT}/", '')}: synced --#{css_var} -> #{expected}" if sync_property!(path, css_var, expected)
+          else
+            drift = property_drift(path, css_var, expected)
+            findings << drift if drift
+          end
         end
       end
     end
