@@ -64,9 +64,13 @@
       control anywhere in the tree, so none of them could be reached from a
       page. Plain forms and links rather than a Stimulus controller: the state
       each one needs lives in the URL, and a message list is long. %>
-  <% unless in_channel || message.deleted? %>
-    <details class="msg-actions">
-      <summary><%= t("messages.actions") %></summary>
+  <details class="msg-actions">
+    <summary><%= t("messages.actions") %></summary>
+    <% if in_channel && !message.deleted? && message.sender_id != Current.user&.id && Current.user.present? && message.sender.username.present? %>
+      <%= button_to t("messages.message_action"), user_conversations_path(message.sender),
+            method: :post, class: "msg-action" %>
+    <% end %>
+    <% unless in_channel || message.deleted? %>
       <%= link_to t("messages.reply"), conversation_path(message.conversation, reply_to: message.id) %>
       <% if message.editable_by?(Current.user) %>
         <%= link_to t("actions.edit"), conversation_path(message.conversation, edit: message.id) %>
@@ -83,6 +87,7 @@
         <% end %>
       <% end %>
     </details>
+  </details>
   <% end %>
   <% if message.attachment.attached? %>
     <% if message.message_type == "image" %>
