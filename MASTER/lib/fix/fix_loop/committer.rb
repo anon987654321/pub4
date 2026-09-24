@@ -277,10 +277,10 @@ module Master
         end
 
         def git_diff(paths)
-          out, = Master::Io::Exec.capture2e("git", "-C", @root, "diff", "HEAD", "--", *paths)
+          out, status = Master::Io::Exec.capture2e("git", "-C", @root, "diff", "HEAD", "--", *paths)
+          raise "git diff failed while validating user intent" unless status.success?
+
           out.to_s
-        rescue StandardError
-          ""
         end
 
         def lint_changed_ruby(paths)
