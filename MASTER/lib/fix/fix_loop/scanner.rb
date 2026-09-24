@@ -18,8 +18,10 @@ module Master
           raw = files.flat_map do |path|
             next [] unless File.exist?(path)
 
-            result = @scanner.scan(path)
-            findings = Result.wrap(result).value_or([])
+            result = Result.wrap(@scanner.scan(path))
+            raise "fix scan failed for #{path}: #{result.error}" unless result.ok?
+
+            findings = result.value!
             stream_scan_progress(path, findings)
             findings
               .select { |finding| Severity.at_least?(finding.fetch(:severity, :warning), :warning) }
