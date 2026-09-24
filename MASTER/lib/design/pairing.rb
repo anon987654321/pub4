@@ -64,7 +64,7 @@ module Master
 
       def brief(school:, purpose: nil, root: Master::ROOT)
         key, spec = for(school:, purpose:, root:)
-        "pairing=#{key} strategy=#{spec.fetch("strategy")} display=#{spec.fetch("display")} body=#{spec.fetch("body")} price=#{spec.fetch("price")} metadata=#{spec.fetch("metadata")}"
+        "pairing=#{key} strategy=#{spec.fetch("strategy")} reference=#{spec.fetch("reference", "none")} intent=#{spec.fetch("typographic_intent", "functional")} display=#{spec.fetch("display")} body=#{spec.fetch("body")} price=#{spec.fetch("price")} metadata=#{spec.fetch("metadata")}"
       end
     end
   end
