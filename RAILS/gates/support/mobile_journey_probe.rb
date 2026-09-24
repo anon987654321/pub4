@@ -187,8 +187,8 @@ module Deploy
         end
       end
       states
-    rescue StandardError
-      []
+    rescue StandardError => e
+      raise "mobile journey probe failed: #{e.class}: #{e.message}"
     end
   end
 end
