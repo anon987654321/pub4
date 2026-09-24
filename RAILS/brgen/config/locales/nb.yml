@@ -1,3 +1,15 @@
+radio:
+  name: Radio
+  page_title: Radio · brgen
+  kicker: Oppdag og del
+  intro: Lytt til lokale lyder, skisser, sett og nye utgivelser.
+  navigation: Radionavigasjon
+  browse_tracks: Bla i spor
+  upload: Last opp
+  sign_in_to_upload: Logg inn for å laste opp
+  empty_title: Ingenting spilles ennå
+  empty_body: Last opp det første sporet og gi Radio noe å oppdage.
+
 ---
 nb:
   errors:
