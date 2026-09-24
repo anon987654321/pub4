@@ -53,6 +53,7 @@ module Master
         compaction = prepare_chat_turn(message)
         return compaction if compaction.is_a?(Master::Result::Err)
 
+        prepare_evidence(message)
         dispatch = prepare_chat_dispatch(message, task_type)
 
         rate_err = check_rate_limit(dispatch[:selected_model])
@@ -112,6 +113,8 @@ SINGLE_CALL_FAILOVER = %i[budget rate_limit timeout no_api_key].freeze
         end
       ensure
         @felt_sense = nil
+        Fiber[:master_evidence_mode] = nil
+        Fiber[:master_evidence_note] = nil
       end
 
       def wire_context_window(ctx_window)
@@ -230,6 +233,46 @@ end
         @tools.each { |t| t.reset! if t.respond_to?(:reset!) }
         Fiber[:master_tool_streak] = nil
         @session.add_message(role: :user, content: message)
+      end
+
+      def prepare_evidence(message)
+        mode = Ground::EvidenceRouter.classify(message)
+        Fiber[:master_evidence_mode] = mode
+        note = Ground::EvidenceRouter.prompt_for(mode)
+        evidence = evidence_preflight(message, mode)
+        Fiber[:master_evidence_note] = [note, evidence].compact.join("\n\n")
+        @bus&.publish("evidence:routed", mode:, web_required: Ground::EvidenceRouter.web_required?(mode))
+      end
+
+      def evidence_preflight(message, mode)
+        return if mode == :repository || mode == :browser || mode == :device || mode == :conversation
+
+        knowledge = evidence_tool("SearchKnowledge")
+        web = evidence_tool("WebSearch")
+
+        local = knowledge&.call(query: message.to_s)
+        local_text = local.respond_to?(:ok?) && local.ok? ? local.value!.to_s : ""
+        return "Local knowledge:\n#{local_text[0, 4_000]}" if mode == :unknown && !local_text.empty? && local_text != "(no results)"
+
+        searches = if mode == :deep_research
+                     [message.to_s, "#{message} official documentation"]
+                   else
+                     [message.to_s]
+                   end
+        snippets = searches.filter_map do |query|
+          result = web&.call(query:)
+          result.value!.to_s if result.respond_to?(:ok?) && result.ok?
+        end
+        return if snippets.empty? && local_text.empty?
+
+        parts = []
+        parts << "Local knowledge:\n#{local_text[0, 3_000]}" unless local_text.empty?
+        parts << "Web research:\n#{snippets.join("\n\n")[0, 6_000]}" unless snippets.empty?
+        parts.join("\n\n")
+      end
+
+      def evidence_tool(name)
+        @tools.find { |tool| tool.class.name.to_s.split("::").last == name }
       end
 
       def check_rate_limit(model_id = nil)
