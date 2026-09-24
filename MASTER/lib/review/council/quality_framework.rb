@@ -154,10 +154,11 @@ module Master
             "quality targets: complexity <= 10, nesting <= 4, duplication <= 3%, coverage >= 80%",
           ].freeze,
           design: [
-            "typography is design: 45-75ch lines, 1.4-1.6 body leading, 16px minimum body text",
+            "authoritative design is priority 1: purpose, agency, clarity, hierarchy, trust, consistency, craft, then delight; schools are subordinate",
             "use an 8px spacing rhythm, 12-column structure, 44px touch minimum, and visible focus",
             "ultraminimalism: remove ornament until only hierarchy, alignment, type, and whitespace remain",
             "limit palette and type variety; reject non-token visual values and arbitrary decoration",
+            "font pairing must be role-specific and available: prefer one family with scale/weight contrast before adding a second",
           ].freeze,
           sound: [
             "sound is feedback, not surprise: no autoplay without intent and mute must exist",
