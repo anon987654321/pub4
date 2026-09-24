@@ -1,0 +1,28 @@
+<% track = local_assigns.fetch(:track) %>
+<article class="radio-track-card">
+  <%= link_to hosted_track_path(track), class: "radio-track-card-main" do %>
+    <div class="radio-track-card-art" aria-hidden="true">
+      <% if track.artwork.attached? %>
+        <%= image_tag main_app.url_for(track.artwork.variant(:thumb)), alt: "", width: 64, height: 64 %>
+      <% else %>
+        <span><%= track.title.to_s.first&.upcase || "R" %></span>
+      <% end %>
+    </div>
+    <div class="radio-track-card-copy">
+      <strong><%= track.title %></strong>
+      <span><%= track.artist.presence || t("playlist.unknown_artist") %></span>
+      <small><%= track.duration_formatted %></small>
+    </div>
+  <% end %>
+  <button
+    type="button"
+    class="radio-track-card-share"
+    data-controller="share"
+    data-share-title-value="<%= track.title %>"
+    data-share-url-value="<%= hosted_track_url(track) %>"
+    data-share-copied-value="<%= t("playlist.link_copied") %>"
+    data-action="share#share"
+    aria-label="<%= t("playlist.share_track", title: track.title) %>">
+    <%= t("playlist.share") %>
+  </button>
+</article>
