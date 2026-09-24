@@ -17,6 +17,7 @@ module Master
         @prompt = $stdout.isatty ? TTY::Prompt.new : nil
         @auto = config.auto?
         @approve_all = false
+        @decisions = {}
         @rate_windows = Hash.new { |h, k| h[k] = [] }
         @rate_mutex = Mutex.new
       end
@@ -28,6 +29,10 @@ module Master
           @bus&.publish("tool:rate_limited", tool: tool_name, tier:)
           return rate_err
         end
+
+        decision = @decisions[decision_key(tool_name, description)]
+        return Result.err("denied by policy", category: :validation) if decision == :deny
+        return Result.ok(true) if decision == :allow
 
         case tier
         when :safe then return Result.ok(true)
@@ -47,7 +52,18 @@ module Master
       def approve_all! = @approve_all = true
       def reset_approve! = @approve_all = false
 
+      # Decisions are exact to the tool and request description. "Always" never
+      # becomes a blanket approval for the whole tier, which keeps an interactive
+      # session frictionless without silently widening what the operator approved.
+      def allow!(tool_name, description = nil) = @decisions[decision_key(tool_name, description)] = :allow
+      def deny!(tool_name, description = nil) = @decisions[decision_key(tool_name, description)] = :deny
+      def clear_decisions! = @decisions.clear
+
       private
+
+      def decision_key(tool_name, description)
+        [tool_name.to_s, description.to_s]
+      end
 
       PRIVILEGE_RE = /\b(?:doas|sudo|su)\b/.freeze
 
@@ -75,14 +91,19 @@ module Master
 
         label = description ? "#{tool_name}: #{description}" : tool_name
         choice = @prompt.select("#{tier_icon(tier)} #{label}", [
-          { name: "approve", value: :approve },
-          { name: "deny", value: :deny },
+          { name: "approve once", value: :approve },
+          { name: "always allow this request", value: :allow },
+          { name: "deny this request", value: :deny },
           { name: "quit", value: :quit },
         ])
 
         case choice
         when :approve then Result.ok(true)
+        when :allow
+          allow!(tool_name, description)
+          Result.ok(true)
         when :deny
+          deny!(tool_name, description)
           @bus&.publish("tool:denied", tool: tool_name)
           Result.err("denied by user", category: :validation)
         when :quit then Result.err("quit", category: :shutdown)
