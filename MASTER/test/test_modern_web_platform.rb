@@ -24,6 +24,13 @@ class TestModernWebPlatformEvidence < Minitest::Test
     assert_includes source, 'web-platform=#{capture[:platform]'
   end
 
+  def test_unanchored_council_picks_cannot_be_reported_as_clean
+    source = read("lib/fix/visual_pass.rb")
+    assert_includes source, "picks.any? && findings.empty?"
+    assert_includes source, "none could be anchored to source evidence"
+    assert_includes source, "category: :inconclusive"
+  end
+
   def test_modern_web_laws_are_part_of_visual_constitution
     laws = read("law/css.rb")
     visual = read("lib/fix/visual_usability.rb")
