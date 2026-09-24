@@ -78,11 +78,15 @@ module Master
 
   RuleDSL.rule :FROZEN_LITERAL,
     severity: :warning, tags: %i[PERFORMANCE], applies_to: %i[ruby],
-    fires: "value = 1\n",
-    # First line only: the magic comment binds the file and Ruby reads it there.
-    does_not_fire: "# frozen_string_literal: true\n\nvalue = 1\n",
+    fires: "value = 1\n# frozen_string_literal: true\n",
+    # Ruby reads the magic comment anywhere in the leading comments, and a
+    # script's first line is its shebang: reading line one alone flagged every
+    # bin/ executable that carries the comment on line two, and /fix asked a
+    # model to add what was already there.
+    does_not_fire: "#!/usr/bin/env ruby\n# frozen_string_literal: true\n\nvalue = 1\n",
     description: "missing frozen_string_literal magic comment" do |src, path:|
-    next [] if src.lines.first&.include?("frozen_string_literal")
+    leading = src.each_line.take_while { |line| line.strip.empty? || line.lstrip.start_with?("#") }
+    next [] if leading.any? { |line| line.include?("frozen_string_literal") }
     magic = "# frozen_string_literal: true"
     [finding(line: 1, message: "add #{magic}")]
   end
