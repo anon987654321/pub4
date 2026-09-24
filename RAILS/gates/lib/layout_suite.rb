@@ -17,6 +17,7 @@ require_relative "research/visual_quality"
 require_relative "research/calibration"
 require_relative "source/frontend_auditor"
 require_relative "source/stimulus_wiring"
+require_relative "source/typography_contract"
 
 module Deploy
   # Composite: every layout/CSS professional gate. CSS must pass constitution + auditor + dialect.
@@ -35,6 +36,7 @@ module Deploy
       UserFlowGate,
       SurfaceSchemaGate,
       DesignMetricsGate,
+      TypographyContractGate,
       VisualQualityGate,
       CalibrationGate,
       FrontendAuditorGate,
