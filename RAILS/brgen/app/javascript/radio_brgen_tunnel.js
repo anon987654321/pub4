@@ -55,6 +55,9 @@ class AudioEngine {
     this.midLevel = 0
     this.highLevel = 0
     this.audioLevel = 0
+    this.beat = 0
+    this._previousBins = null
+    this._previousBass = 0
     this.startTime = 0
     this.audio = null
     this.analyser = null
@@ -87,7 +90,7 @@ class AudioEngine {
       const source = this.audioContext.createMediaElementSource(this.audio)
       this.analyser = this.audioContext.createAnalyser()
       this.analyser.fftSize = 2048
-      this.analyser.smoothingTimeConstant = 0.72
+      this.analyser.smoothingTimeConstant = 0.58
       source.connect(this.analyser)
       // Through the analyser to the speakers, not in parallel: a
       // MediaElementSource is *moved* into the graph, so skipping this leaves
@@ -183,7 +186,10 @@ class AudioEngine {
   }
 
   getAudioData() {
-    if (!this.isPlaying) return { bass: 0, mid: 0, high: 0, average: 0 }
+    if (!this.isPlaying) {
+      this.beat *= 0.72
+      return { bass: 0, mid: 0, high: 0, average: 0, beat: this.beat, flux: 0 }
+    }
 
     // Real spectrum when we are serving the file ourselves. The sine wave this
     // replaced was not a placeholder for a missing feature — it was the only
@@ -197,19 +203,32 @@ class AudioEngine {
       let b = 0
       let m = 0
       let h = 0
-      for (let i = 0; i < bassEnd; i++) b += this.bins[i]
-      for (let i = bassEnd; i < midEnd; i++) m += this.bins[i]
-      for (let i = midEnd; i < len; i++) h += this.bins[i]
+      let flux = 0
+      this._previousBins ||= new Uint8Array(len)
+      for (let i = 0; i < len; i++) {
+        const value = this.bins[i]
+        flux += Math.max(0, value - this._previousBins[i])
+        this._previousBins[i] = value
+        if (i < bassEnd) b += value
+        else if (i < midEnd) m += value
+        else h += value
+      }
       const bass = Math.min(1, (b / bassEnd / 255) * this.bassInfluence)
       const mid = Math.min(1, (m / (midEnd - bassEnd) / 255) * this.midInfluence)
       // Highs are quiet in absolute terms in most mixes, so a flat normalise
       // leaves the shimmer term permanently near zero.
       const high = Math.min(1, (h / (len - midEnd) / 255) * 2.6 * this.highInfluence)
+      const average = (bass + mid + high) / 3
+      const spectralFlux = Math.min(1, (flux / len / 255) * 5)
+      const bassRise = Math.max(0, bass - this._previousBass)
+      const transient = Math.min(1, Math.max(spectralFlux * 1.8, bassRise * 4.5))
+      this.beat = Math.max(transient, this.beat * 0.72)
+      this._previousBass = bass
       this.bassLevel = bass
       this.midLevel = mid
       this.highLevel = high
-      this.audioLevel = (bass + mid + high) / 3
-      return { bass, mid, high, average: this.audioLevel }
+      this.audioLevel = average
+      return { bass, mid, high, average, beat: this.beat, flux: spectralFlux }
     }
 
     // A YouTube embed cannot be analysed. Rather than invent a spectrum for it,
@@ -219,8 +238,9 @@ class AudioEngine {
     this.bassLevel = level
     this.midLevel = level
     this.highLevel = level * 0.5
+    this.beat *= 0.72
     this.audioLevel = level
-    return { bass: level, mid: level, high: level * 0.5, average: level }
+    return { bass: level, mid: level, high: level * 0.5, average: level, beat: this.beat, flux: 0 }
   }
 
   updateTrackDisplay() {
