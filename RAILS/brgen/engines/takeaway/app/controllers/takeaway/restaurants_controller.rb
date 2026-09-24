@@ -20,8 +20,7 @@ class Takeaway::RestaurantsController < Takeaway::BaseController
       scope = scope.near(params[:lat], params[:lng], params[:radius_km] || 5) if scope.respond_to?(:near)
     end
     @pagy, @restaurants = pagy(live_search_query.present? ? scope : scope.popular)
-    @promo_restaurant = @restaurants.first
-    @promo_menu_item = @promo_restaurant&.menu_items&.available&.with_attached_photo&.first
+    @promo_restaurant, @promo_menu_item = promotional_menu_feature if live_search_query.blank? && params[:cuisine].blank?
     finish_storefront_search(partial: "takeaway/restaurants/live_search_results")
   end
 
@@ -98,6 +97,20 @@ class Takeaway::RestaurantsController < Takeaway::BaseController
 
   def can_leave_review?
     authenticated? && Current.user.takeaway_orders.where(restaurant: @restaurant, status: "delivered").exists?
+  end
+
+  def promotional_menu_feature
+    restaurant = Takeaway::Restaurant.active
+      .joins(menu_items: :photo_attachment)
+      .merge(Takeaway::MenuItem.available)
+      .includes(menu_items: { photo_attachment: :blob })
+      .order(rating: :desc, id: :asc)
+      .distinct
+      .first
+    return [nil, nil] unless restaurant
+
+    item = restaurant.menu_items.find { |menu_item| menu_item.available? && menu_item.photo.attached? }
+    [restaurant, item]
   end
 
   def load_city_places
