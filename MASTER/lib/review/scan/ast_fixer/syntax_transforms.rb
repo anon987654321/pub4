@@ -104,8 +104,12 @@ module Master
           def freeze_mutable_constants(src)
             changed = false
             lines = src.lines
+            # A heredoc's body is another language's text: Python's
+            # `RATIOS = {...}` inside a Colab heredoc took a .freeze it cannot run.
+            protected_lines = literal_lines(src)
             out = lines.each_with_index.map do |line, index|
               next line unless line.match?(SINGLE_LINE_MUTABLE_CONST_RE)
+              next line if protected_lines.include?(index + 1)
               # A leading-dot continuation below means the literal heads a
               # method chain — .freeze there freezes a temporary the chain
               # immediately replaces (OPENBSD/gates/health_check.rb CURL).

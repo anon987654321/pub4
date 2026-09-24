@@ -95,15 +95,28 @@ module Master
             until stack.empty?
               node = stack.pop
               next unless node
-              loc = node.location
-              if loc.start_line != loc.end_line && LITERAL_NODES.any? { |klass| node.is_a?(klass) }
-                (loc.start_line..loc.end_line).each { |line| lines << line }
-              end
+              span = literal_span(node)
+              span&.each { |line| lines << line }
               stack.concat(node.compact_child_nodes) if node.respond_to?(:compact_child_nodes)
             end
             lines
           rescue StandardError
             Set.new
+          end
+
+          # A heredoc's location is its opener alone (`<<~PY` on one line), so the
+          # body and terminator come from closing_loc; any other literal spans
+          # its own location. Nil for a node that is not a multi-line literal.
+          def literal_span(node)
+            return unless LITERAL_NODES.any? { |klass| node.is_a?(klass) }
+
+            loc = node.location
+            opening = node.respond_to?(:opening_loc) ? node.opening_loc : nil
+            if opening&.slice&.start_with?("<<") && node.closing_loc
+              # closing_loc takes the terminator's newline, so its end_line is the next line.
+              return (opening.start_line..node.closing_loc.start_line)
+            end
+            (loc.start_line..loc.end_line) if loc.start_line != loc.end_line
           end
 
           def open_collection?(line)

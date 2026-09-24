@@ -547,6 +547,19 @@ class TestAstFixerTransforms < Minitest::Test
     assert_includes result[:content], "line-height: 20px;\n}"
   end
 
+  def test_freeze_constants_leaves_heredoc_text_alone
+    source = <<~RUBY
+      SCRIPT = <<~PY
+        RATIOS = {"3:2": (1216, 832), "1:1": (1024, 1024)}
+      PY
+      NAMES = ["a", "b"]
+    RUBY
+    result = fix("colab.rb", source)
+
+    assert_includes result[:content], %(RATIOS = {"3:2": (1216, 832), "1:1": (1024, 1024)}\n)
+    assert_includes result[:content], %(NAMES = ["a", "b"].freeze)
+  end
+
   def test_trailing_commas_skip_block_closers
     source = <<~RUBY
       records.map { |rec|
