@@ -223,12 +223,15 @@ module Master
 
         def rule_transforms
           @rule_transforms ||= begin
-            declared = Master.load_yaml(Master::RULES_PATH)["rules"] || []
+            rules = Master.load_yaml(Master::RULES_PATH)
+            declared = rules["rules"]
+            raise "rules configuration missing" unless declared.is_a?(Array)
+
             declared.to_h { |rule| [rule["id"].to_s, rule["autofix"]] }
           end
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "Scanner.rule_transforms")
-          {}
+          raise "scanner: autofix transform policy unreadable: #{e.class}: #{e.message}"
         end
 
         # Confidence answers "did it find the thing", never "is fixing it safe".
