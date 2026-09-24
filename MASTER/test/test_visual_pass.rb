@@ -37,6 +37,9 @@ class VisualPassContractTest < Minitest::Test
     assert_includes composition, "button, summary, [role='button']"
     assert_includes composition, "MASTER visual probe"
     assert_includes composition, "GeometryProbe.measure_current"
+    assert_includes composition, "data-master-composition-ignore"
+    assert_includes composition, "MASTER_VISUAL_COMPOSITION_PAIRS"
+    refute_includes composition, "rescue StandardError"
   end
 
   def test_visual_findings_must_be_addressable

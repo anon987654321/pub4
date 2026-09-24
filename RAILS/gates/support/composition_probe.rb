@@ -47,8 +47,7 @@ module Deploy
               el.getAttribute("title") ||
               el.textContent ||
               el.getAttribute("name") ||
-              el.id ||
-              el.tagName
+              ""
             ).replace(/\s+/g, " ").trim().slice(0, 100);
             const dangerous = (el) => #{DANGEROUS_TEXT.inspect}.test([
               label(el),
@@ -88,7 +87,7 @@ module Deploy
                   el.hasAttribute("aria-pressed") ||
                   el.hasAttribute("aria-selected") ||
                   el.hasAttribute("aria-controls") ||
-                  el.matches("summary, [popover-target]")
+                  el.matches("summary, [popovertarget]")
                 )
               })));
           })()
@@ -188,8 +187,6 @@ module Deploy
         end
 
         captures
-      rescue StandardError
-        nil
       end
 
       def state_signature(cdp, selector)
@@ -294,8 +291,6 @@ module Deploy
           journeys: [],
           platform: surface.viewport == "mobile" ? WebPlatformProbe.run(cdp, state_surface) : {}
         }]
-      rescue StandardError
-        []
       end
 
       def click_and_wait(cdp, candidate)
