@@ -249,6 +249,24 @@ module Master
            .first(MAX_FILES)
       end
 
+      def composition_variant_context(captures)
+        variants = Array(captures).filter_map do |capture|
+          surface = capture[:surface]
+          match = surface.path.to_s.match(/[?&]design_variant=([^&]+)/)
+          next unless match
+
+          variant = match[1]
+          spec = Master::Design::Composition.variant(name: "marketplace_sale", variant:)
+          [variant, spec.fetch("reference"), spec.fetch("structure"), spec.fetch("signature")]
+        end.uniq
+        return "MARKETPLACE ALTERNATIVES: none captured" if variants.empty?
+
+        rows = variants.map { |variant, reference, structure, signature|
+          "#{variant}: reference=#{reference} structure=#{structure} signature=#{signature}"
+        }
+        "MARKETPLACE ALTERNATIVES\nCompare these renders as one experiment set. Do not assume the current layout is correct merely because it is established. #{rows.join("\n")}"
+      end
+
       def context_row(capture)
         surface = capture[:surface]
         payload = capture[:payload]
@@ -316,6 +334,8 @@ module Master
           #{HOSTILE_VISUAL_AUDIT}
 
           #{Master::Design::VisualLanguage.context(captures)}
+
+          #{composition_variant_context(captures)}
 
           #{rows.join("\n")}
           #{drift_rows.join("\n")}
