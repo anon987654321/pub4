@@ -576,7 +576,10 @@ class TestAstFixerTransforms < Minitest::Test
     assert_includes result[:transforms], :skip_to_main
   end
 
-  def test_logical_properties
+  # LOGICAL_PROPERTIES is autofix: false in data/rules.yml: physical-to-logical
+  # rewrites wait on values the operator decides, so the finding is reported
+  # and the stylesheet is left as written.
+  def test_logical_properties_are_reported_not_rewritten
     result = fix("styles.css", <<~CSS)
       .panel {
         margin-left: 1rem;
@@ -584,9 +587,9 @@ class TestAstFixerTransforms < Minitest::Test
       }
     CSS
 
-    assert_includes result[:content], "margin-inline-start: 1rem;"
-    assert_includes result[:content], "padding-inline-end: 2rem;"
-    assert_includes result[:transforms], :logical_properties
+    assert_includes result[:content], "margin-left: 1rem;"
+    assert_includes result[:content], "padding-right: 2rem;"
+    refute_includes result[:content], "inline-"
   end
 
   def test_scan_fix_scan_is_idempotent

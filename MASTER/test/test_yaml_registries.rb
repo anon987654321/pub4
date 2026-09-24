@@ -130,8 +130,7 @@ class TestRulesYamlRegistry < Minitest::Test
 
     assert_equal "PRESERVE_THEN_IMPROVE_NEVER_BREAK", soul.dig("absolute", "golden_rule")
     assert_equal "kernel", preserve_rule.fetch("tier")
-    assert_match(/Preserve behavior and intent/, preserve_rule.fetch("fix"))
-    # The wording lives in law/, not in soul. This asserted soul.absolute.rules
+    # The wording lives in law/, not in soul or rules.yml. This asserted soul.absolute.rules
     # still carried it, which test_soul.rb asserts soul must not — one of the
     # two had to be reading the tree as it is.
     refute soul.dig("absolute", "rules"), "soul must not hold rules; law/ is the registry"
@@ -139,6 +138,7 @@ class TestRulesYamlRegistry < Minitest::Test
     require File.join(law_dir, "law")
     ::Law.load_all(law_dir) if ::Law.rules.empty?
     assert_match(/never rewrite working code/i, ::Law.rules.fetch(:PRESERVE_FIRST).practice)
+    assert_match(/Preserve behavior and intent/, ::Law.rules.fetch(:PRESERVE_FIRST).fix)
   end
 
   def test_patterns_do_not_reference_unknown_rules_yml_ids
@@ -379,7 +379,7 @@ end
       assert_equal neural, voices.fetch(name.to_s), "the face cannot resolve #{name}, which the server speaks"
     end
     refute(voices.keys.any? { |name| name.end_with?("Neural") }, "the aliases are short names only")
-    face = File.read(File.expand_path("../web/public/face.part1.txt", __dir__))
+    face = File.read(File.expand_path("../web/assets/face.part1.txt", __dir__))
     refute_match(/christopher:\s*'en-US-ChristopherNeural'/, face,
                  "a second name table in the face is the drift this payload replaced")
   end
