@@ -166,7 +166,9 @@ module Master
       def dispatch_plugin(ctx: nil)
         arg = arg_for(ctx)
         return plugin_list if arg.empty? || arg == "list"
-        return plugin_info($1) if arg.match?(/\Ainfo\s+([a-z][a-z0-9_]*)\z/)
+        if (info_match = arg.match(/\Ainfo\s+([a-z][a-z0-9_]*)\z/))
+          return plugin_info(info_match[1])
+        end
 
         match = arg.match(/\Arun\s+([a-z][a-z0-9_]*)\s+([a-z][a-z0-9_]*)(?:\s+(.+))?\z/)
         return plugin_run(match) if match
