@@ -87,10 +87,30 @@ class CohesionTest < Minitest::Test
     flat_family
     external = File.join(@tmp, "caller.rb")
     File.write(external, "ThingA = thing_a_run\n")
-    plan = Operator::Cohesion.merge_plan("thing", Dir.glob(File.join(@tmp, "thing_*.rb")), :prefix, [])
+    plan = Operator::Cohesion.merge_plan("thing", Dir.glob(File.join(@tmp, "thing_*.rb")), :prefix, [], corpus_root: @tmp)
 
     assert_includes plan[:evidence].keys, :external_references
     assert plan[:evidence][:external_references].any? { |row| row[:file] == "caller.rb" }
+  end
+
+  def test_external_reference_evidence_ignores_the_family_itself
+    flat_family
+    plan = Operator::Cohesion.merge_plan("thing", Dir.glob(File.join(@tmp, "thing_*.rb")), :prefix, [], corpus_root: @tmp)
+
+    refute plan[:evidence][:external_references].any? { |row| row[:file].start_with?("thing_") }
+  end
+
+  def test_structural_evidence_records_load_order_and_line_footprint
+    flat_family
+    evidence = Operator::Cohesion.structural_evidence(
+      Dir.glob(File.join(@tmp, "thing_*.rb")),
+      %w[thing_a thing_b thing_c],
+      corpus_root: @tmp
+    )
+
+    assert_equal 6, evidence[:internal_references]
+    assert_equal true, evidence[:contiguous]
+    assert_operator evidence[:lines], :>, 0
   end
 
   def test_it_emits_a_plan_rather_than_a_patch
