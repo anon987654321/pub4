@@ -17,9 +17,12 @@ module Master
         path_ownership(key) ||
           design_law(key) ||
           law(key) ||
-          executable_law(key) ||
+          # The declared rule first: it carries tier and name, and registry_rule
+          # borrows the executable law's fix when the declaration has none. An
+          # executable law answers for the ids nothing declared.
           registry_rule(key) ||
           soul_rule(key) ||
+          executable_law(key) ||
           scan_rule(key) ||
           anti_pattern(key) ||
           style_key(key)
