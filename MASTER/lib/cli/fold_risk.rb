@@ -22,7 +22,7 @@ module Master
         { risk:, intent: route[:intent] }
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "FoldRisk.assess")
-        { risk: :medium, intent: :unknown }
+        { risk: :critical, intent: :unknown }
       end
 
       def ideation_required?(risk) = %i[medium high critical].include?(risk.to_sym)
