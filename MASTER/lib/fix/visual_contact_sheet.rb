@@ -48,10 +48,29 @@ module Master
       def items(capture)
         # The back/forward return-path states carry no screenshot; they reach
         # Council as text in the context rows, not as a figure here.
-        [item(capture)] + Array(capture[:journeys]).filter_map do |journey|
+        [item(capture), *visual_evidence_items(capture)] + Array(capture[:journeys]).filter_map do |journey|
           next unless journey["screenshot"]
           journey_item(capture[:surface], journey)
         end
+      end
+
+      def visual_evidence_items(capture)
+        evidence = capture[:visual_evidence]
+        return [] unless evidence
+
+        items = []
+        if (ghost = evidence[:ghost])
+          items << image_item(ghost[:screenshot], "#{ghost[:label]} | ghost stack")
+          items << image_item(ghost[:diff], "#{ghost[:label]} | newest vs previous difference") if ghost[:diff]
+        end
+        items
+      end
+
+      def image_item(path, label)
+        encoded = Base64.strict_encode64(File.binread(path))
+        %(<figure><figcaption>#{escape_html(label)}</figcaption><img src="data:image/png;base64,#{encoded}" alt="#{escape_html(label)}"></figure>)
+      rescue StandardError => e
+        "<figure><figcaption>#{escape_html(label)} | evidence error: #{escape_html(e.message)}</figcaption></figure>"
       end
 
       def journey_item(surface, journey)
