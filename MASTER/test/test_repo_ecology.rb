@@ -2,6 +2,7 @@
 
 require_relative "test_helper"
 require "master"
+require "open3"
 
 class TestRepoEcology < Minitest::Test
   class CountingEcology < Master::Review::RepoEcology
@@ -57,8 +58,11 @@ class TestRepoEcology < Minitest::Test
 
   def test_co_change_graph_persists_between_instances
     Dir.mktmpdir("repo_ecology_cache") do |dir|
-      FileUtils.mkdir_p(File.join(dir, ".git"))
-      File.write(File.join(dir, ".git", "HEAD"), "ref: refs/heads/main\n")
+      # A real repository: the cache key is HEAD's mtime, found through
+      # `git rev-parse --git-path`, and a hand-made .git/HEAD is not a repository
+      # git will answer for, so no key and no cache.
+      _, status = Open3.capture2e("git", "init", "-q", dir)
+      assert status.success?, "git init failed in the fixture"
 
       first = CountingEcology.new(root: dir)
       first.snapshot
