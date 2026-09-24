@@ -6,7 +6,7 @@ require_relative "support/face_manifest_helper"
 class FaceStateSpec < Minitest::Test
   include FaceManifestHelper
 
-  ROOT = File.expand_path("../..", __dir__)
+  ROOT = File.expand_path("..", __dir__)
 
   def read(path)
     File.read(File.join(ROOT, path))

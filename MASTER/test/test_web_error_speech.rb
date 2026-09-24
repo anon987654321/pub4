@@ -20,7 +20,7 @@ require "minitest/autorun"
 # while the client stopped honouring the prefix, and vice versa — and that is
 # the shape of a check that measures nothing.
 class ErrorSpeechSpec < Minitest::Test
-  ROOT = File.expand_path("../..", __dir__)
+  ROOT = File.expand_path("..", __dir__)
 
   def read(path) = File.read(File.join(ROOT, path))
 
@@ -36,7 +36,9 @@ class ErrorSpeechSpec < Minitest::Test
   # The point of the lane: it says something short of its own rather than
   # reading the error text out.
   def test_the_error_lane_speaks_a_short_failure_not_the_message
-    branch = face[/if \(raw\.startsWith\('ERROR:'\)\) \{.*?\n      \}/m]
+    # Up to the brace at the if's own indent, whatever that indent is; a fixed
+    # count of spaces ran past the branch into the chunk handler below it.
+    branch = face[/^( *)if \(raw\.startsWith\('ERROR:'\)\) \{.*?\n\1\}/m]
 
     refute_nil branch, "the ERROR: branch moved or changed shape"
     assert_includes branch, "speakFailure(", "the error lane no longer speaks a short failure line"

@@ -3,7 +3,7 @@
 require "minitest/autorun"
 
 class FaceSpeechRuntimeSpec < Minitest::Test
-  ROOT = File.expand_path("../..", __dir__)
+  ROOT = File.expand_path("..", __dir__)
 
   def read(path)
     File.read(File.join(ROOT, path))

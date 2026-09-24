@@ -4,7 +4,7 @@ require "minitest/autorun"
 require_relative "../lib/master"
 
 class BootSafetySpec < Minitest::Test
-  ROOT = File.expand_path("../..", __dir__)
+  ROOT = File.expand_path("..", __dir__)
   # apply_process_defaults!/install_process_guards! moved out of master.rb into
   # these focused modules (extend MasterRuntime / extend MasterBoot in master.rb).
   MASTER_RUNTIME = File.join(ROOT, "lib", "boot", "runtime.rb")

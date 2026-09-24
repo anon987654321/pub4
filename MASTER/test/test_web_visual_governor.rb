@@ -6,7 +6,7 @@ require_relative "support/face_manifest_helper"
 class VisualGovernorSpec < Minitest::Test
   include FaceManifestHelper
 
-  ROOT = File.expand_path("../..", __dir__)
+  ROOT = File.expand_path("..", __dir__)
   # layouts/application.html.erb is dead for this purpose — ChatController#index
   # renders `layout: false` (web/CLAUDE.md); chat/index.html.erb is the real page.
   ENTRYPOINT = File.join(ROOT, "web", "app", "views", "chat", "index.html.erb")

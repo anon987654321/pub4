@@ -5,7 +5,7 @@ require "open3"
 require "rbconfig"
 
 class GateContractSpec < Minitest::Test
-  ROOT = File.expand_path("../..", __dir__)
+  ROOT = File.expand_path("..", __dir__)
   GATE = File.join(ROOT, "bin", "gate")
 
   # The command reaches bin/cli on stdin, and the gate does not wait forever for
