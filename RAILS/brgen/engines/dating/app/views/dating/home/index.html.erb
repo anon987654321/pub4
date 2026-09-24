@@ -19,22 +19,6 @@
   </header>
 
   <section class="dating-discover-panel">
-    <div class="page-header">
-      <hgroup>
-        <p><%= t("dating.local") %></p>
-        <%= tag.h1 t("dating.discover") %>
-      </hgroup>
-      <nav aria-label="<%= t("dating.home_title") %>">
-        <%= button_to t("dating.rewind"), rewind_path, method: :post, class: "btn btn-ghost" %>
-        <%= link_to t("dating.matches"), matches_path, class: "btn btn-ghost" %>
-        <% if Current.user&.dating_profile.present? %>
-          <%= link_to t("dating.edit_profile"), edit_profile_path, class: "btn btn-ghost" %>
-        <% elsif Current.user.present? %>
-          <%= link_to t("dating.create_profile"), new_profile_path, class: "btn btn-ghost" %>
-        <% end %>
-      </nav>
-    </div>
-
     <turbo-frame id="dating-discover" data-turbo-action="replace">
       <section
         data-controller="swipe"
@@ -61,6 +45,4 @@
       </section>
     </turbo-frame>
   </section>
-</div>
-
 </div>
