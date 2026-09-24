@@ -47,6 +47,8 @@ module Master
         marketplace: {
           school: :commerce_editorial,
           composition: :marketplace_sale,
+          references: %i[kaufland bol],
+          reference_mission: "Kaufland catalogue breadth and campaign entry points; bol cleanliness, service clarity, recommendation rails, and restrained product chrome",
           match: /markedsplass|market|listing|shop|order/i,
           density: :high, warmth: :local, formality: :practical, contrast: :clear,
           ornament: :low, motion: :functional, materiality: :physical,
@@ -185,6 +187,8 @@ module Master
           typography_contract=#{Master::Design::Typography.brief(path: surface.path, purpose: purpose_for(surface))}
           font_pairing=#{Master::Design::Pairing.brief(school: DIRECTIONS.fetch(direction)[:school], purpose: purpose_for(surface))}
           composition=#{Master::Design::Composition.brief(school: DIRECTIONS.fetch(direction)[:school], purpose: purpose_for(surface))}
+          reference_lenses=#{Array(DIRECTIONS.fetch(direction)[:references]).join(",")}
+          reference_mission=#{DIRECTIONS.fetch(direction)[:reference_mission]}
           primary_action_candidate=#{primary_action(primary)}
           current_palette=#{palette.join(", ")}
           current_component_language=#{fp.dig(:components, :language)}
