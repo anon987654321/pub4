@@ -66,13 +66,13 @@ module Master
         def load_dir(dir, max_principles:, max_body_chars:)
           return [].freeze unless File.directory?(dir)
 
-          Dir.glob(File.join(dir, "*.md")).sort.filter_map { |path| parse(path, max_body_chars:) }
+          Dir.glob(File.join(dir, "*.md")).sort.map { |path| parse(path, max_body_chars:) }
              .first(max_principles)
              .map(&:freeze)
              .freeze
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "constitution.load", dir:)
-          [].freeze
+          raise "constitution unreadable: #{e.class}: #{e.message}"
         end
 
         def parse(path, max_body_chars:)
@@ -89,7 +89,7 @@ module Master
           }
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "constitution.parse", path:)
-          nil
+          raise "constitution principle unreadable: #{path}: #{e.class}: #{e.message}"
         end
       end
 
