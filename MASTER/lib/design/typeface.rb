@@ -25,6 +25,40 @@ module Master
       def roles(name, root: Master::ROOT)
         Array(fetch(name, root:)["roles"]).map(&:to_s)
       end
+
+      def classification(name, root: Master::ROOT)
+        fetch(name, root:).fetch("classification").to_s
+      end
+
+      def x_height(name, root: Master::ROOT)
+        fetch(name, root:).fetch("x_height").to_s
+      end
+
+      def compatible?(display:, body:, relationship: nil, root: Master::ROOT)
+        return true if display.to_s == body.to_s
+        return false unless available?(display, root:) && available?(body, root:)
+
+        display_class = classification(display, root:)
+        body_class = classification(body, root:)
+        return true if relationship.to_s == "related_variable_family_pair"
+        return false if display_class == body_class && x_height(display, root:) == x_height(body, root:)
+
+        true
+      end
+
+      def metric_snapshot(name, root: Master::ROOT)
+        spec = fetch(name, root:)
+        {
+          family: spec.fetch("family"),
+          classification: spec.fetch("classification"),
+          x_height: spec["x_height"],
+          width: spec["width"],
+          contrast: spec["contrast"],
+          weight_range: spec["weight_range"],
+          optical_sizing: spec["optical_sizing"],
+          availability: spec.fetch("availability"),
+        }
+      end
     end
   end
 end
