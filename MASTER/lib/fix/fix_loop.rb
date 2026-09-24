@@ -94,7 +94,9 @@ module Master
         start_pass = resumed.value!
 
         result = run_passes(files:, target:, max_passes:, deadline:, budget_seconds:, start_pass:, run_id:)
-        @run_journal.terminal(run_id, terminal_state_for(result), message: result.to_s)
+        state = terminal_state_for(result)
+        @run_journal.terminal(run_id, state, message: result.to_s)
+        @bus&.publish("fix_loop:terminal", state:, message: result.to_s)
         result
       rescue StandardError => e
         @bus&.publish("fix_loop:crash", error: e.message, backtrace: e.backtrace&.first(8))
