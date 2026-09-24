@@ -86,8 +86,7 @@ module Master
       end
 
       def model_tiers_by_id(root)
-        yml_path = File.join(root, "data", "models.yml")
-        rows = File.exist?(yml_path) ? (Master.load_yaml(yml_path)["models"] || {}) : {}
+        rows = Master.model_tiers(root:) || {}
         rows.each_with_object(Hash.new { |h, k| h[k] = [] }) do |(tier, entries), out|
           entries.to_a.each { |row| out[row["id"].to_s] << tier }
         end
