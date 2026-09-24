@@ -96,20 +96,24 @@ communities = %w[news tech bergen norge kultur food music film].map do |slug|
   end
 end
 
-# Core posts + activity — scale for popular impression (high views/likes)
-posts_per = (4 * SEED_SCALE).clamp(1, 20)
+# Core posts + activity. Bergen's feed is authored by BergenDemoSeeder, which
+# owns the hand-written stories, comments, engagement and vertical discovery.
+# Other city seeds retain the generated/localized pool below.
 city_display_name = seed_city&.name.presence || 'Bergen'
-posts = users.sample([ 30, users.size ].min).flat_map do |user|
-  posts_per.times.map do
-    Post.create!(
-      user: user,
-      community: communities.sample,
-      # Was Faker::Lorem — Latin filler in a Norwegian city feed is the single
-      # most obvious tell that a feed is seeded. See Brgen::PlausibleContent.
-      title: Brgen::PlausibleContent.post_title(city_display_name),
-      content: Brgen::PlausibleContent.post_body,
-      created_at: rand(1..90).days.ago
-    )
+posts = if seed_city&.domain == 'brgen.no'
+  []
+else
+  posts_per = (4 * SEED_SCALE).clamp(1, 20)
+  users.sample([ 30, users.size ].min).flat_map do |user|
+    posts_per.times.map do
+      Post.create!(
+        user: user,
+        community: communities.sample,
+        title: Brgen::PlausibleContent.post_title(city_display_name),
+        content: Brgen::PlausibleContent.post_body,
+        created_at: rand(1..90).days.ago
+      )
+    end
   end
 end
 
@@ -119,7 +123,8 @@ posts.each do |post|
   post.votes.find_or_create_by!(user: users.sample) { |v| v.value = [ 1, -1 ].sample }
 end
 
-puts "Created #{posts.size} posts + reactions"
+puts seed_city&.domain == 'brgen.no' ? "Core generated posts: skipped; BergenDemoSeeder owns the feed." :
+  "Created #{posts.size} posts + reactions"
 
 # --- Marketplace subapp ---
 categories = {
