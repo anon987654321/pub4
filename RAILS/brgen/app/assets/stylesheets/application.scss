@@ -3670,6 +3670,42 @@ body.vertical-marketplace .top-offers-rail .sale-ad .deal-price {
 }
 
 @media (min-width: 768px) {
+  .store-teasers--kaufland-catalogue {
+    grid-template-columns: minmax(0, 826fr) minmax(0, 510fr);
+  }
+
+  .store-teasers--bol-clean {
+    grid-template-columns: 1fr;
+  }
+
+  .store-teasers--bol-clean .store-promo-art {
+    grid-template-columns: minmax(0, 58fr) minmax(0, 42fr);
+  }
+
+  .store-teasers--bol-clean .store-promo-art-media {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .store-teasers--bol-clean .store-promo-art-copy {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .store-teasers--brgen-hybrid {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  }
+
+  .store-teasers--brgen-hybrid .store-promo-art {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  }
+
+  .store-teasers--brgen-hybrid .store-promo-art-copy {
+    padding-inline-end: 32px;
+  }
+}
+
+@media (min-width: 768px) {
   .deal-cats .deal-cat {
     flex-basis: 110px;
     font-size: 16px;
