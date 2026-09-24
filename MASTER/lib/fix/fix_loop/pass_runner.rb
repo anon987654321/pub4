@@ -17,7 +17,9 @@ module Master
   module Fix
     class FixLoop
       class PassRunner
-        PASS_BUDGET_SECONDS = 8 * 60
+        # The model-repair stage's share of one pass; MASTER_FIX_PASS_BUDGET_S
+        # widens it for slow lanes, as MASTER_FIX_RUN_BUDGET_S does the run.
+        PASS_BUDGET_SECONDS = Integer(ENV.fetch("MASTER_FIX_PASS_BUDGET_S", 8 * 60))
 
         PassResult = Struct.new(:status, :message, :consecutive_clean, keyword_init: true)
 

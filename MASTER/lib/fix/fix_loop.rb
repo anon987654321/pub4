@@ -43,7 +43,10 @@ module Master
       MAX_PASSES = 15
       CLEAN_RUNS = 2
       PLATEAU_WINDOW = 3
-      RUN_BUDGET_SECONDS = 30 * 60
+      # Thirty minutes suits API lanes. A run whose every call goes through a
+      # subscription CLI (MASTER_MODEL=claude-cli:...) spends that on one
+      # council, so the run can be given more.
+      RUN_BUDGET_SECONDS = Integer(ENV.fetch("MASTER_FIX_RUN_BUDGET_S", 30 * 60))
       WORKFLOW_PATH = Master.limits_path.freeze
 
       def initialize(rules:, agent:, scanner:, root:, axioms: nil, bus: nil, git: nil, learnings: nil,
