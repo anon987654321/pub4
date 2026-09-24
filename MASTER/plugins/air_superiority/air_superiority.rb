@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "fileutils"
 require "json"
 require "open3"
 require "rbconfig"
@@ -23,11 +24,6 @@ module Master
 
       Threat = Data.define(:type, :severity, :details, :data)
 
-      module_function
-
-      def call(*)
-        raise NotImplementedError
-      end
 
       def initialize(manifest:)
         super
@@ -161,7 +157,7 @@ module Master
           match = line.match(/^\s*(.*?)\s+([0-9a-f:]{17})\s+(-\d+)\s+(\S+)/i)
           next unless match
 
-          security = line.split(/s{2,}/).last.to_s.strip
+          security = line.split(/\s{2,}/).last.to_s.strip
           {
             ssid: match[1].strip,
             bssid: match[2].downcase,
@@ -262,15 +258,17 @@ module Master
         return [] unless executable?("bluetoothctl")
 
         pid = Process.spawn("bluetoothctl", "scan", "on", out: File::NULL, err: File::NULL, pgroup: true)
-        sleep BLUETOOTH_SCAN_S
-        Process.kill("TERM", -pid)
-        Process.wait(pid)
-      rescue Errno::ESRCH, Errno::ECHILD
-      ensure
-        system("bluetoothctl", "scan", "off", out: File::NULL, err: File::NULL) if executable?("bluetoothctl")
-      end.tap do
-        output = run_command("bluetoothctl", "devices", timeout: 5)
-        break parse_linux_bt(output)
+        begin
+          sleep BLUETOOTH_SCAN_S
+          output = run_command("bluetoothctl", "devices", timeout: 5)
+          parse_linux_bt(output)
+        ensure
+          Process.kill("TERM", -pid)
+          Process.wait(pid)
+        rescue Errno::ESRCH, Errno::ECHILD
+        ensure
+          system("bluetoothctl", "scan", "off", out: File::NULL, err: File::NULL) if executable?("bluetoothctl")
+        end
       rescue Error
         []
       end
