@@ -292,10 +292,13 @@ module Deploy
     end
 
     def check_rag(result, surface, data, spec)
+      rag = rules.dig("typography", "rag") || {}
+      minimum_lines = rag.fetch("inspect_from_lines", 5).to_i
+      extreme_ratio = rag.fetch("extreme_last_line_ratio", 0.12).to_f
       rows = Array(data["prose"]).select do |row|
-        row["line_count"].to_i >= 5 &&
+        row["line_count"].to_i >= minimum_lines &&
           row["rag_ratio"].to_f.positive? &&
-          row["rag_ratio"].to_f < 0.12 &&
+          row["rag_ratio"].to_f < extreme_ratio &&
           !row["text_align"].to_s.match?(/center|justify/)
       end
       return if rows.empty?
