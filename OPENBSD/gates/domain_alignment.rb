@@ -156,14 +156,11 @@ module Deploy
     # MASTER face, which is not a Rails app and so lives in deploy_inventory.json's
     # master_face rather than apps.yml.
     def live_apexes(master)
-      apps = begin
-        Inventory.new(root: ROOT.to_s).apps.map(&:domain)
-      rescue StandardError => e
-        warn "domain_alignment: inventory unreadable (#{e.class}) — gate measures nothing"
-        []
-      end
+      apps = Inventory.new(root: ROOT.to_s).apps.map(&:domain)
       face = master.dig(:master, "domain")
       (apps + [face]).compact.uniq
+    rescue StandardError => e
+      raise "domain_alignment: inventory unreadable: #{e.class}: #{e.message}"
     end
 
     def parse_registry_entries
