@@ -3,7 +3,6 @@
 require "fileutils"
 require "json"
 require "securerandom"
-require "shellwords"
 require "time"
 require "yaml"
 require "uri"
@@ -11,6 +10,9 @@ require "uri"
 module Master
   module Plugins
     class SocialBrowser < Master::Plugin::Base
+      Error = Master::Plugin::Error
+      PolicyError = Master::Plugin::PolicyError
+
       ACTIONS = %w[inspect login publish_owned reply_inbound].freeze
       DEFAULT_SELECTORS = {
         composer: [
@@ -53,7 +55,6 @@ module Master
         with_browser(account:, url:, allowed_hosts:, headless:) do |browser, page, run_dir|
           before = screenshot(page, run_dir, "before")
           result = page_result(page, before)
-          browser.quit
           result
         end
       end
@@ -61,7 +62,6 @@ module Master
       def login(account:, url:, allowed_hosts:, headless: false, **)
         with_browser(account:, url:, allowed_hosts:, headless:) do |browser, page, run_dir|
           screenshot_path = screenshot(page, run_dir, "login")
-          browser.quit
           {
             action: "login",
             account: account.to_s,
@@ -118,8 +118,6 @@ module Master
 
             after = screenshot(page, run_dir, "after")
             record_write!(account, operation:)
-            browser.quit
-
             {
               action: operation,
               account: account.to_s,
