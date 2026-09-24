@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../../lib/operator/storefront_art"
+
 module Shared
   # Cross-app x.com UI rendering helpers (icons, nav items, feed tabs).
   module UiHelper
@@ -59,6 +61,10 @@ module Shared
       return main_app.conversations_path if respond_to?(:main_app) && main_app.respond_to?(:conversations_path)
 
       nil
+    end
+
+    def storefront_art_prompt(vertical:, subject:)
+      Operator::StorefrontArt.prompt(vertical:, subject:)
     end
 
     # Every icon partial in the shared engine, by name. Read once at load; the
