@@ -35,13 +35,7 @@
       browser bar takes each ground's own --bg. %>
   <%= tag.meta name: "color-scheme", content: surface_theme %>
   <%= tag.meta name: "theme-color", content: "#efefef", data: { light_color: "#efefef", dark_color: "#000000" } %>
-  <%# Must run before first paint and before any stylesheet, which is why it is a
-      blocking inline script here rather than a Stimulus controller: theme-toggle
-      is mounted on <body> and only reaches the DOM after Stimulus boots, so a
-      visitor with "light" saved was served a dark first frame on every load.
-      WIRING_NOTES.md has described this partial as the FOUC guard the whole time
-      nothing rendered it. %>
-  <%= render "shared/theme_bootstrap", storage_key: "brgen-theme" %>
+    <%= render "shared/theme_bootstrap", storage_key: "brgen-theme" %>
   <%# content_for(:x) with no block is the read form: it already returns nil when unset,
       so content_for?(:x) ? yield(:x) : … was two lookups and the key named twice. %>
   <% page_title = content_for(:title).presence %>
