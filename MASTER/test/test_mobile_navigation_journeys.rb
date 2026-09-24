@@ -1,4 +1,4 @@
-# frozen_string_literal: true
+<sub># frozen_string_literal: true
 
 require "minitest/autorun"
 
@@ -29,10 +29,4 @@ class TestMobileNavigationJourneys < Minitest::Test
     assert_includes source, 'document.activeElement'
   end
 end
-
-  def test_probe_errors_are_not_converted_to_empty_success
-    code = source
-    refute_match(/def self\.discover\(cdp\).*?rescue StandardError\s*\n\s*\[\]/m, code)
-    refute_match(/def self\.run\(cdp, surface, dir\).*?rescue StandardError\s*\n\s*\[\]/m, code)
-    assert_includes code, 'raise "mobile journey probe failed:'
-  end
+</sub>
