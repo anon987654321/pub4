@@ -83,6 +83,25 @@ class TestDestructiveReview < Minitest::Test
     assert_includes bus.events.map(&:first), "review:verdict"
   end
 
+  class BrokenDeliberation
+    def review(_payload, context:)
+      raise "provider unavailable"
+    end
+  end
+
+  def test_pre_execute_fails_closed_when_council_review_errors
+    stage = Master::CLI::Stages::DestructiveReview.new(
+      deliberation: BrokenDeliberation.new,
+      event_bus: FakeBus.new,
+    )
+
+    result = stage.call(build_ctx)
+
+    refute result.ok?
+    assert_equal :infrastructure, result.category
+    assert_match(/destructive review failed: provider unavailable/, result.error)
+  end
+
   def test_skips_non_destructive_commands
     deliberation = FakeDeliberation.new
     stage = Master::CLI::Stages::DestructiveReview.new(
