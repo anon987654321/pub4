@@ -68,8 +68,9 @@ module Master
           out = `git -C #{Shellwords.escape(@root)} status --porcelain -- #{Shellwords.escape(path.to_s)} 2>/dev/null`
           # XY porcelain codes: skip tracked-modified (" M", "MM", "AM", "RM").
           out.to_s.lines.any? { |line| line =~ /\A(\sM|MM|AM|RM)/ }
-        rescue StandardError
-          false
+        rescue StandardError => e
+          @bus&.publish("scan_autofix:git_status_unavailable", path: relative_path(path), error: e.message)
+          true
         end
 
         # Built once and lazily: WriteGuard.default constructs a scanner over the
