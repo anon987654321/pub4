@@ -113,7 +113,10 @@ module Master
         # answers the pairs for the outer Result and the rows for an inner one,
         # which is the same question asked at two depths.
         def rows_of(result)
-          result.respond_to?(:ok?) && result.ok? ? result.value! : []
+          return result.value! if result.respond_to?(:ok?) && result.ok?
+          return result unless result.respond_to?(:ok?)
+
+          raise "scanner result failed: #{result.error}"
         end
 
         def scannable_path?(path, root)
