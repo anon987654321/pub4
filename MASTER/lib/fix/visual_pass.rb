@@ -10,6 +10,7 @@ require_relative "visual_usability"
 require_relative "visual_reference"
 require_relative "visual_contact_sheet"
 require_relative "visual_ghost_stack"
+require_relative "../design/visual_language"
 require_relative "../../../RAILS/gates/support/mobile_journey_probe"
 require_relative "../../../RAILS/gates/support/composition_probe"
 require_relative "../../../RAILS/gates/support/web_platform_probe"
@@ -79,6 +80,7 @@ module Master
         captures = capture_surfaces(surfaces, pass:)
         return inconclusive("no surface was measured") if captures.empty?
 
+        decorate_design(captures)
         coverage = graph_coverage(surfaces, captures)
         return inconclusive("missing rendered surfaces: #{coverage[:missing].join(", ")}") if coverage[:missing].any?
 
@@ -278,7 +280,18 @@ module Master
 
           "structural added=#{row["structural"]["added"]} missing=#{row["structural"]["missing"]}"
         end
+        design = Array(capture.dig(:visual_evidence, :design_drift))
+        details << "design #{design.join("; ")}" unless design.empty?
         "#{capture[:surface].id}: #{details.join(" | ")}"
+      end
+
+      def decorate_design(captures)
+        Array(captures).each do |capture|
+          payload = capture[:payload]
+          next unless payload.is_a?(Hash)
+
+          payload["design_fingerprint"] = Master::Design::VisualLanguage.fingerprint(payload)
+        end
       end
 
       def build_context(captures, anchors, graph:)
@@ -301,6 +314,8 @@ module Master
           Treat one-pixel alignment drift, inconsistent spacing, typography, component vocabulary, optical centering, baseline rhythm, density, and responsive composition as real defects when the rendered evidence supports it.
 
           #{HOSTILE_VISUAL_AUDIT}
+
+          #{Master::Design::VisualLanguage.context(captures)}
 
           #{rows.join("\n")}
           #{drift_rows.join("\n")}
