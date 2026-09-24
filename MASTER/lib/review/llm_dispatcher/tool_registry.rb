@@ -7,6 +7,7 @@ module Master
         private
 
         def llm_tools(selected_model)
+          return [] if Fiber[:master_no_tools]
           return [] unless tool_capable?(selected_model)
 
           profile = Ground::Tool::Profile.current

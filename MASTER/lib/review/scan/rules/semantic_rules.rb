@@ -33,6 +33,18 @@ module Master
           def note_model_failure(error)
             Master::Io::QuotaGate.trip_if_limited(source: "semantic rule #{@id}", message: error.message)
           end
+
+          # The file is already in the prompt and the reply is a list of lines,
+          # so tools only let the model wander the repo: offered them, a free
+          # model spent up to eight rounds grepping per file and then failed on
+          # the round cap, a third of every call during a 1,199-file scan.
+          def ask_without_tools(prompt, operation:)
+            previous = Fiber[:master_no_tools]
+            Fiber[:master_no_tools] = true
+            @agent.ask(prompt, operation:).to_s
+          ensure
+            Fiber[:master_no_tools] = previous
+          end
         end
 
         # Steelman-first red-team: the model must defend the code before it can attack it.
@@ -87,7 +99,7 @@ module Master
             prompt = format(PROMPT_TEMPLATE, path: File.basename(path),
                                              lang:,
                                              code: code[0, 3_000])
-            response = @agent.ask(prompt, operation: :scan_adversarial).to_s
+            response = ask_without_tools(prompt, operation: :scan_adversarial)
             parse_findings(response)
           rescue StandardError => e
             # A missing key is the offline case and stays quiet; any other error
@@ -149,7 +161,7 @@ module Master
             cache_key = semantic_cache_key(path, code)
             return @cache[cache_key] if @cache.key?(cache_key)
 
-            response = @agent.ask(build_prompt(code, path, scoped), operation: :scan_semantic).to_s
+            response = ask_without_tools(build_prompt(code, path, scoped), operation: :scan_semantic)
             findings = parse_findings(response, scoped)
             @cache[cache_key] = findings
             findings

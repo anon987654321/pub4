@@ -302,8 +302,9 @@ module Master
         return send_replicate_chat(selected_model, messages, sys:) if replicate_chat_model?(selected_model)
         return send_ollama(selected_model, messages, sys:, stream:, temperature:, format:, &blk) if ollama_model?(selected_model)
         # A schema-bound call wants one object back, not a tool conversation,
-        # which is also all the local tier ever sends.
-        if format.nil? && !tool_capable?(selected_model) && @tools.any?
+        # which is also all the local tier ever sends. A call made under
+        # Fiber[:master_no_tools] wants the same: an answer about the text it sent.
+        if format.nil? && !Fiber[:master_no_tools] && !tool_capable?(selected_model) && @tools.any?
           return react_tool_loop(selected_model, messages, sys:, stream:, image:, &blk)
         end
         send_ruby_llm(selected_model, messages, sys:, stream:, image:, temperature:, format:, &blk)

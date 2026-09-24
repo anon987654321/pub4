@@ -22,4 +22,22 @@ class TestAdversarialRule < Minitest::Test
     result = @rule.check("def foo; end", path: "foo.rb")
     assert_kind_of Array, result
   end
+
+  # The file is in the prompt, so the call is made with tools withheld, and
+  # the withholding ends with the call.
+  def test_the_model_call_is_made_without_tools
+    seen = nil
+    agent = Object.new
+    agent.define_singleton_method(:ask) do |_prompt, operation:|
+      seen = [operation, Fiber[:master_no_tools]]
+      "ISSUE:1:unused method"
+    end
+    rule = Master::Review::Scan::Rules::AdversarialRule.new(agent:)
+
+    findings = rule.check("def foo; end", path: "foo.rb")
+
+    assert_equal [:scan_adversarial, true], seen
+    assert_equal 1, findings.size
+    assert_nil Fiber[:master_no_tools]
+  end
 end

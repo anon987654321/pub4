@@ -45,6 +45,15 @@ class ToolRegistryElevationTest < Minitest::Test
     Fiber[:master_paired] = nil
   end
 
+  def test_no_tools_are_offered_under_master_no_tools
+    harness = RegistryHarness.new
+    Fiber[:master_no_tools] = true
+
+    assert_empty harness.send(:llm_tools, "test/model")
+  ensure
+    Fiber[:master_no_tools] = nil
+  end
+
   def test_an_unclassified_tool_is_withheld_until_elevated
     harness = RegistryHarness.new
     harness.tools << Master::Io::WebFetch.allocate
