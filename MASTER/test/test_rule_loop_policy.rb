@@ -111,6 +111,25 @@ class TestRuleLoopPolicy < Minitest::Test
     end
   end
 
+  class BrokenRuleScanner
+    def scan(_path, rules: nil)
+      Master::Result.err("scanner unavailable", category: :infrastructure)
+    end
+  end
+
+  def test_rule_loop_scan_failure_is_not_clean
+    Dir.mktmpdir do |root|
+      path = File.join(root, "sample.rb")
+      File.write(path, "puts :x\n")
+      loop = build_loop(root:, bus: FakeBus.new, scanner: BrokenRuleScanner.new, agent: Agent.new)
+
+      result = loop.run_once([path])
+
+      assert_equal :error, result[:status]
+      assert_equal 1, result[:breakdown][:error]
+    end
+  end
+
   def test_prediction_engine_can_skip_autofix
     Dir.mktmpdir do |root|
       path = File.join(root, "sample.rb")
