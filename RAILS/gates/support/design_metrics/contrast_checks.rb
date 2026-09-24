@@ -144,9 +144,13 @@ module Deploy
       # module is included into, so the path holds wherever the file sits.
       def contrast_budget
         path = File.join(RAILS, "gates", "data", "css_budget.yml")
-        (YAML.safe_load_file(path)&.dig("rules") || {}).slice("contrast_below_aa", "contrast_below_aaa")
+        data = YAML.safe_load_file(path)
+        rules = data&.dig("rules")
+        raise "contrast budget has no rules: #{path}" unless rules.is_a?(Hash)
+
+        rules.slice("contrast_below_aa", "contrast_below_aaa")
       rescue StandardError => e
-        warn "design_metrics: rules unreadable (#{e.class}) — gate runs unbudgeted"
+        @result.inconclusive!("design_metrics: contrast budget unreadable (#{e.class}: #{e.message}) — contrast ceilings were not measured")
         {}
       end
     end
