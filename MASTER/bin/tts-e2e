@@ -35,8 +35,9 @@ def wait_for_up
     begin
       res = http_get("/up", read_timeout: 5)
       return true if res.code.to_i.between?(200, 399)
-    rescue StandardError
-      nil
+    rescue StandardError => e
+      # A booting server refuses or resets; name each cause once and keep waiting.
+      Master::Trace::Dmesg.once("tts0", "up wait #{e.class}")
     end
     sleep 2
   end

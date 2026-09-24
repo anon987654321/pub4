@@ -301,27 +301,43 @@ when "rule"
   def definition_at(root, id)
     Dir.glob(File.join(root, "{law/*.rb,lib/review/scan/rules/*.rb}")).sort.each do |path|
       lines = File.readlines(path)
-      index = lines.index { |line| line.match?(/(?:Law\.define\(:|declare\s+id:\s*["']|declare\s+:)#{Regexp.escape(id)}\b/i) }
-      index ||= lines.index { |line| line.include?(id) }
+      index = rule_anchor(lines, id)
       next unless index
 
-      # The block is the enclosing definition, so back up past the comment that
-      # explains it — and take the indent from the code, not the comment, or a
-      # comment indented one step deeper runs the block on to the file's end.
-      first = index
-      first -= 1 while first.positive? && lines[first - 1].strip.start_with?("#")
-      opener = (first..index).find { |i| !lines[i].strip.start_with?("#") && !lines[i].strip.empty? } || index
-      opener = (index.downto(0).find do |i|
-        lines[i].match?(/\A\s*(class|module|Law\.define)\b/)
-      end || opener)
-      indent = lines[opener][/\A\s*/].length
-      last = opener
-      last += 1 while last + 1 < lines.length && lines[last].rstrip != "#{' ' * indent}end"
-      body = lines[first..last]
-      body = body.first(80) + ["    … #{body.size - 80} more line(s); open #{path} to read the rest\n"] if body.size > 80
-      return { path: path.sub("#{root}/", "MASTER/"), line: first + 1, body: body.join }
+      span = enclosing_span(lines, index)
+      return { path: path.sub("#{root}/", "MASTER/"), line: span.first + 1, body: clipped(lines[span], path) }
     end
     nil
+  end
+
+  # The declaration first; a bare mention of the id only when nothing declares it.
+  def rule_anchor(lines, id)
+    declaration = /(?:Law\.define\(:|declare\s+id:\s*["']|declare\s+:)#{Regexp.escape(id)}\b/i
+    lines.index { |line| line.match?(declaration) } || lines.index { |line| line.include?(id) }
+  end
+
+  # The block is the enclosing definition, so back up past the comment that
+  # explains it — and take the indent from the code, not the comment, or a
+  # comment indented one step deeper runs the block on to the file's end.
+  def enclosing_span(lines, index)
+    first = index
+    first -= 1 while first.positive? && lines[first - 1].strip.start_with?("#")
+    opener = (first..index).find { |i| !lines[i].strip.start_with?("#") && !lines[i].strip.empty? } || index
+    opener = index.downto(0).find { |i| lines[i].match?(/\A\s*(class|module|Law\.define)\b/) } || opener
+    first..block_end(lines, opener)
+  end
+
+  def block_end(lines, opener)
+    closer = "#{' ' * lines[opener][/\A\s*/].length}end"
+    last = opener
+    last += 1 while last + 1 < lines.length && lines[last].rstrip != closer
+    last
+  end
+
+  def clipped(body, path)
+    return body.join if body.size <= 80
+
+    (body.first(80) + ["    … #{body.size - 80} more line(s); open #{path} to read the rest\n"]).join
   end
 
   scanner = Master::Review::Scan::InfraHelpers.build_scanner(root: master_root, agent: nil)

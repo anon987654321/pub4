@@ -66,6 +66,10 @@ require "securerandom"
 require "openssl"
 require "uri"
 
+# The daemon's JSON request and the one-shot argv-plus-stdin contract carry the
+# same four values; out_path stays apart because it names the destination.
+SynthRequest = Data.define(:voice, :rate, :pitch, :text)
+
 # Connect over IPv4 when the host has an IPv4 address.
 #
 # EventMachine connects to the first address the resolver returns and never
@@ -158,8 +162,8 @@ Faye::WebSocket::SslVerifier.prepend(Module.new do
   end
 end)
 
-def synth(voice, rate, pitch, text, out_path)
-  RbEdgeTTS::Communicate.new(text, voice, rate: rate, pitch: pitch).save_sync(out_path)
+def synth(request, out_path)
+  RbEdgeTTS::Communicate.new(request.text, request.voice, rate: request.rate, pitch: request.pitch).save_sync(out_path)
   File.exist?(out_path) && File.size(out_path) > 0
 end
 
@@ -177,11 +181,12 @@ def worker_env
   )
 end
 
-def synth_subprocess(voice, rate, pitch, text, out_path)
+# The argv order VOICE RATE PITCH OUT_PATH is the one-shot wire contract.
+def synth_subprocess(request, out_path)
   script = File.expand_path(__FILE__)
   _out, err, status = Open3.capture3(
-    worker_env, Gem.ruby, script, voice, rate, pitch, out_path,
-    stdin_data: text.to_s
+    worker_env, Gem.ruby, script, request.voice, request.rate, request.pitch, out_path,
+    stdin_data: request.text.to_s
   )
   unless status.success?
     warn "tts-worker: one-shot failed: #{err.to_s.strip}" unless err.to_s.strip.empty?
@@ -200,7 +205,7 @@ end
 # per-request isolation via a copy-on-write child that skips bundler/require
 # entirely, so it inherits the already-loaded interpreter instead of
 # re-booting one.
-def synth_forked(voice, rate, pitch, text, out_path)
+def synth_forked(request, out_path)
   if ENV["SSL_CERT_FILE"].to_s.empty?
     cert = %w[/etc/ssl/cert.pem /etc/ssl/certs/ca-certificates.crt].find { |p| File.file?(p) }
     ENV["SSL_CERT_FILE"] = cert if cert
@@ -208,11 +213,11 @@ def synth_forked(voice, rate, pitch, text, out_path)
   pid = Process.fork do
     begin
       Process.setproctitle("tts-worker: synth")
-    rescue StandardError
-      nil
+    rescue StandardError => e
+      warn "tts-worker: setproctitle failed: #{e.class}: #{e.message}"
     end
     begin
-      ok = synth(voice, rate, pitch, text, out_path)
+      ok = synth(request, out_path)
       exit!(ok ? 0 : 1)
     rescue StandardError => e
       warn "tts-worker: fork child error: #{e.class}: #{e.message}"
@@ -223,7 +228,7 @@ def synth_forked(voice, rate, pitch, text, out_path)
   status.success? && File.exist?(out_path) && File.size(out_path) > 0
 rescue NotImplementedError, StandardError => e
   warn "tts-worker: fork unavailable, falling back to subprocess: #{e.class}: #{e.message}"
-  synth_subprocess(voice, rate, pitch, text, out_path)
+  synth_subprocess(request, out_path)
 end
 
 def require_eventmachine_ssl!
@@ -322,13 +327,15 @@ if ARGV[0] == "--daemon"
         client.write("ok\n")
         next
       end
-      voice = req["voice"].to_s
-      rate  = req["rate"].to_s
-      pitch = req["pitch"].to_s
-      text  = req["text"].to_s
-      next if voice.empty? || text.empty?
+      request = SynthRequest.new(
+        voice: req["voice"].to_s,
+        rate: req["rate"].to_s,
+        pitch: req["pitch"].to_s,
+        text: req["text"].to_s,
+      )
+      next if request.voice.empty? || request.text.empty?
       out = "/tmp/m_tts_#{SecureRandom.hex(8)}.mp3"
-      ok = synth_forked(voice, rate, pitch, text, out)
+      ok = synth_forked(request, out)
       if ok
         begin
           File.open(out, "rb") { |f| IO.copy_stream(f, client) }
@@ -361,7 +368,7 @@ end
 require_eventmachine_ssl!
 
 begin
-  ok = synth_forked(voice, rate, pitch, text, out_path)
+  ok = synth_forked(SynthRequest.new(voice:, rate:, pitch:, text:), out_path)
   exit(ok ? 0 : 1)
 rescue StandardError => e
   warn "tts-worker: #{e.class}: #{e.message}"
