@@ -2,6 +2,7 @@
 
 require "minitest/autorun"
 require_relative "../../gates/support/geometry_type"
+require_relative "../../../OPENBSD/lib/gate_result"
 
 class GeometryTypographyTest < Minitest::Test
   Surface = Data.define(:id, :label, :path, :width)
@@ -36,7 +37,7 @@ class GeometryTypographyTest < Minitest::Test
           "prose" => [
             {
               "text_wrap" => "pretty",
-              "font_feature_settings" => ""kern", "liga"",
+              "font_feature_settings" => %("kern", "liga"),
               "font_kerning" => "normal",
             },
           ],

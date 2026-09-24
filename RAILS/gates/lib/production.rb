@@ -8,8 +8,8 @@ require_relative "../lib/source/apps_yml"
 # MASTER/gates, because these two measure MASTER rather than a Rails app. They
 # were siblings here until 2026-09-11 and the composite still folds their
 # verdicts into the production gate, which is why the path reaches across.
-require_relative "../../../MASTER/gates/master_web_assets"
-require_relative "../../../MASTER/gates/master_tts"
+# Both gate classes live in MASTER/lib/operator/gates.rb.
+require_relative "../../../MASTER/lib/operator/gates"
 
 module Deploy
   class ProductionGate
