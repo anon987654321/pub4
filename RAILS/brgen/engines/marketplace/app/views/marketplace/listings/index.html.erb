@@ -1,3 +1,4 @@
+<% design_variant = Master::Design::Composition.requested_variant("marketplace_sale", params[:design_variant]) %>
 <% market_title = t("marketplace.home_title", city: city_name) %>
 <% content_for :title, market_title %>
 <% content_for :json_ld, json_ld_script(item_list_schema(@listings, title: market_title)) if @listings.any? %>
@@ -36,7 +37,7 @@
              )
            end %>
 
-<section class="store-teasers" aria-labelledby="listing-kinds-title">
+<section class="store-teasers store-teasers--<%= design_variant.tr("_", "-") %>" data-design-variant="<%= design_variant %>" aria-labelledby="listing-kinds-title">
   <% if promo %>
     <%= render "shared/promotional_art",
           art: promo,
