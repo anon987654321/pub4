@@ -61,5 +61,6 @@ class VisualGhostStackContractTest < Minitest::Test
     assert_includes contact_sheet, "newest vs previous difference"
     assert_includes contact_sheet, "geometry"
     assert_includes contact_sheet, "grid"
+    assert_includes contact_sheet, "focus registration"
   end
 end
