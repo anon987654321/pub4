@@ -9773,26 +9773,33 @@ def warm_dilla_pad_post(path, cfg: nil, sonic: nil)
            ]
          else
            patch_fx = @render_warm_patch&.dig(:fx) || @render_ep_patch&.dig(:fx)
-           [
-             "aformat=channel_layouts=stereo",
-             "lowpass=f=#{lp}:width_type=q:width=0.88",
-             "equalizer=f=260:t=o:w=1.0:g=#{pad_mud_db}",
-             "equalizer=f=520:t=h:w=700:g=#{pad_mud_db(0.9)}",
-             "equalizer=f=1100:t=o:w=0.9:g=-0.6",
-             "equalizer=f=3200:t=h:w=1600:g=1.0",
-             ("tremolo=f=3.2:d=0.06" if cfg[:style_family] == :dilla),
-             # Same in_gain:out_gain fix as the fluidsynth branch above.
-             "aecho=0.9:0.85:100|180:0.2|0.1",
-             "chorus=0.9:0.85:30|40:0.16|0.12:0.2|0.18:0.95|1.2",
-             patch_fx,
-             "acompressor=threshold=-24dB:ratio=1.6:attack=60:release=260:makeup=1.6",
-             "volume=1.12",
-             "alimiter=limit=0.96:level_out=0.98",
-           ]
+           warm_dilla_pad_synth_filters(lowpass: lp, mud_db: pad_mud_db, upper_mud_db: pad_mud_db(0.9),
+                                        tremolo: cfg[:style_family] == :dilla, patch_fx:)
          end
   sh! "ffmpeg", "-y", "-i", path, "-af", filt.compact.join(","), "-c:a", "pcm_s16le", tmp
   FileUtils.mv(tmp, path)
   path
+end
+
+# warm_dilla_pad_post's synth branch as a filter list. The live improviser runs
+# the stream through it too (data/live.yml), so both play one chain.
+def warm_dilla_pad_synth_filters(lowpass:, mud_db:, upper_mud_db:, tremolo:, patch_fx: nil)
+  [
+    "aformat=channel_layouts=stereo",
+    "lowpass=f=#{lowpass}:width_type=q:width=0.88",
+    "equalizer=f=260:t=o:w=1.0:g=#{mud_db}",
+    "equalizer=f=520:t=h:w=700:g=#{upper_mud_db}",
+    "equalizer=f=1100:t=o:w=0.9:g=-0.6",
+    "equalizer=f=3200:t=h:w=1600:g=1.0",
+    ("tremolo=f=3.2:d=0.06" if tremolo),
+    # Same in_gain:out_gain fix as the fluidsynth branch above.
+    "aecho=0.9:0.85:100|180:0.2|0.1",
+    "chorus=0.9:0.85:30|40:0.16|0.12:0.2|0.18:0.95|1.2",
+    patch_fx,
+    "acompressor=threshold=-24dB:ratio=1.6:attack=60:release=260:makeup=1.6",
+    "volume=1.12",
+    "alimiter=limit=0.96:level_out=0.98",
+  ]
 end
 
 # --------------------------------------------------------------------------
@@ -28678,7 +28685,8 @@ def command_help
       ["stream", "[bars]", "Non-stop rotation, rendered and played (#{STREAM_BARS_COUNT} bars default)"],
       ["play", "[preset] [bars]", "Render one preset and play it (default dilla, 8 bars)"],
       ["bed", "[render [seed N] [out.wav] | check [seeds 1,2,3] | stop]", "The bed under the narration: passes rendered and played, ducking under speech"],
-      ["live", "[passes] [out.wav] | set|recall|broadcast|dig|ab|knobs|cue|star|tap|catalogue", "The catalogue played as generated; the livesets (live dig rips YouTube, unlicensed)"],
+      ["live", "[passes] [out.wav] | set|recall|broadcast|dig|ab|knobs|cue|star|tap|catalogue | default|improvise|progression [name]|patch <name>|knob|morph|stop|status|say \"...\"",
+       "The catalogue played as generated; the livesets (live dig rips YouTube, unlicensed); the synthesiser played and steered live"],
       ["sines", "[play | demo | beat]", "The continuous stream through the engine's pads, queued and played; demo and beat render the two kept 08-28 takes' rows -> sines_demo.mp3, sines_beat.wav"],
       ["regenerate", "[bars]", "Fresh render and harmony-forward mix, looped"],
       ["live_now", "", "Loop the cached harmony or full render, no render wait"],
@@ -38177,12 +38185,12 @@ module DillaLive
     # stereo invocation of it dies on "Option not found" with the pipe already
     # open, which surfaces as a broken pipe seconds later and looks like
     # anything but a bad argument.
-    def player_command
+    def player_command(rate = RATE)
       if (play = which("play"))
-        [play, "-q", "-t", "raw", "-r", RATE.to_s, "-e", "signed", "-b", "16", "-c", "2", "-"]
+        [play, "-q", "-t", "raw", "-r", rate.to_s, "-e", "signed", "-b", "16", "-c", "2", "-"]
       elsif (ffplay = which("ffplay"))
         [ffplay, "-hide_banner", "-loglevel", "error", "-nodisp", "-autoexit",
-         "-f", "s16le", "-ar", RATE.to_s, "-ch_layout", "stereo", "-i", "-"]
+         "-f", "s16le", "-ar", rate.to_s, "-ch_layout", "stereo", "-i", "-"]
       end
     end
 
@@ -38198,10 +38206,10 @@ module DillaLive
     # renders -- different lines, different instruments, an effect chain drawn
     # per progression -- so without this there is no way to keep a pass you
     # liked. Same samples, one pipe further.
-    def writer_command(dest)
+    def writer_command(dest, rate = RATE)
       ffmpeg = which("ffmpeg") or abort "dilla live: rendering needs ffmpeg"
       FileUtils.mkdir_p(File.dirname(dest))
-      [ffmpeg, "-y", "-loglevel", "error", "-f", "s16le", "-ar", RATE.to_s,
+      [ffmpeg, "-y", "-loglevel", "error", "-f", "s16le", "-ar", rate.to_s,
        "-ac", "2", "-i", "-", "-c:a", "pcm_s16le", dest]
     end
 
@@ -38268,6 +38276,8 @@ module DillaLive
   end
 end
 
+LIVE_SYNTH_VERBS = %w[default improvise progression patch knob morph stop status say].freeze
+
 # The live entry. It runs before the defaults tables, the provenance recipe and
 # the asset check, all of which belong to a render that writes a file: the live
 # side reads the caller's environment exactly as it was typed.
@@ -38290,6 +38300,13 @@ def live!(argv)
     when "tap" then Livesets.tap!
     when "catalogue" then Livesets.catalogue_show!
     end
+    return
+  end
+  # The synthesiser played live: improvise, a progression, one patch, and the
+  # verbs that steer whichever of them is playing (lib/livesets.rb, LiveSynth).
+  if LIVE_SYNTH_VERBS.include?(argv.first)
+    require_relative "lib/livesets"
+    LiveSynth.main(argv)
     return
   end
   dest = argv.find { |arg| render_output_path?(arg) }

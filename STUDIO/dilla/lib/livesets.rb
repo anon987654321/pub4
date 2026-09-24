@@ -1683,6 +1683,7 @@ module Livesets
   # fails the suite.
   KNOB_DOCS = {
     "LIVE_SEED" => "the pass: every drawn choice, replayed",
+    "LIVE_OUT" => "live improvise|progression|patch: write the stream to this file instead of the sound card",
     "LIVE_LENGTH" => "the block in seconds (96 for the beat sets, 180 for the pads)",
     "LIVE_ROOM" => "the console: #{ROOMS.join('|')}",
     "LIVE_FORM" => "a FORM_PRESETS name, arranged across the block by the engine's layers",
@@ -2004,5 +2005,1362 @@ module Livesets
       puts "  done #{slug}  racks=#{Dir.glob('samples/chopped/*/').size}"
     end
     puts "dig complete: racks=#{Dir.glob('samples/chopped/*/').size}"
+  end
+end
+
+# The synthesiser, played live: AnalogSynth's patches and the Model D panels,
+# generated a block at a time and piped to the sound card as they are made.
+#
+#   ruby dilla.rb live default                    MASTER's main sound, improvising until stopped
+#   ruby dilla.rb live improvise [family=moog] [pad=<patch>] [seconds]
+#   ruby dilla.rb live progression [name] [pads=a,b] [family=moog] [loops=N] [seconds]
+#   ruby dilla.rb live patch <name>               the patch's own phrase
+#   ruby dilla.rb live knob <name> <+0.3|-0.3|0.8> [seconds]
+#   ruby dilla.rb live morph <patch> [seconds]
+#   ruby dilla.rb live stop | status
+#   ruby dilla.rb live say "slowly open the filter"
+#
+# Two modes are the sound the operator approved on 2026-09-24 and are played
+# here as they were heard: `progression soul_jazz_six` (a pad changing every
+# two chords over moog_bass, cutoff breathing on a 23 s sine and resonance on
+# 31 s) and `improvise` (a walk over soul-jazz harmony with a late bass, leads
+# that come and go, pad changes every three to six chords, and cutoff,
+# resonance and detune as slow random walks). data/live.yml holds all of it.
+#
+# One player at a time. It writes its pid where `stop`, `knob`, `morph` and
+# `say` find it, reads the commands they append while it plays, and removes
+# the record when it stops, so MASTER can start, steer and stop it from a
+# sentence without holding a process of its own.
+module LiveSynth
+  DATA_FILE = File.join(Livesets::D, "data", "live.yml")
+  ENGINE = File.join(Livesets::D, "dilla.rb")
+  USAGE = "usage: ruby dilla.rb live improvise|progression [name]|patch <name>|knob <name> <amount> [seconds]|" \
+          "morph <patch> [seconds]|stop|status|say \"<sentence>\""
+
+  module_function
+
+  def config = @config ||= YAML.load_file(DATA_FILE)
+
+  def stream = config.fetch("stream")
+
+  def log(message) = $stdout.puts("live0: #{message}")
+
+  def main(argv)
+    verb = argv.shift
+    options = argv.select { |arg| arg.include?("=") }.to_h { |arg| arg.split("=", 2) }
+    words = argv.reject { |arg| arg.include?("=") }
+    return knob!(*words) if verb == "knob"
+
+    seconds = words.find { |word| word.match?(/\A\d+(\.\d+)?\z/) }&.to_f
+    words.delete_if { |word| word.match?(/\A\d+(\.\d+)?\z/) }
+    case verb
+    when "default"
+      perform!(Progression.new(config.fetch("default"), rng: rng!, loops: options["loops"]&.to_i), seconds:)
+    when "improvise" then perform!(Improviser.new(rng: rng!, family: options["family"], pad: options["pad"]), seconds:)
+    when "progression"
+      perform!(Progression.new(words.first || "soul_jazz_six", rng: rng!, pads: options["pads"]&.split(","),
+                               family: options["family"], loops: options["loops"]&.to_i), seconds:)
+    when "patch" then perform!(Demo.new(Patches.name!(words.first.to_s), rng: rng!), seconds:)
+    when "morph" then log(Session.post!("patch" => Patches.name!(words.first.to_s), "seconds" => seconds))
+    when "stop" then log(Session.stop!)
+    when "status" then log(Session.status)
+    when "say" then log(Say.call(words.join(" ")))
+    else abort USAGE
+    end
+  end
+
+  # `knob cutoff +0.3 20` moves by, `knob cutoff 0.8 20` moves to; the last
+  # number is how many seconds the knob takes to get there.
+  def knob!(name = nil, amount = nil, seconds = nil)
+    abort USAGE unless name && amount
+
+    log(Session.post!("knob" => name, "amount" => amount, "seconds" => seconds&.to_f))
+  end
+
+  # Drawn and printed, so a take somebody liked can be played again with
+  # LIVE_SEED -- the rule every render here follows.
+  def rng!
+    seed = (ENV["LIVE_SEED"] || Random.new_seed % 1_000_000_000).to_i
+    log("seed #{seed}")
+    Random.new(seed)
+  end
+
+  def perform!(score, seconds: nil)
+    rate = stream.fetch("rate")
+    # A score with a console of its own brings its command; the rest play
+    # through the tanh master straight to the player, or to LIVE_OUT.
+    command = score.player_command(rate, ENV["LIVE_OUT"]) if score.respond_to?(:player_command)
+    command ||= ENV["LIVE_OUT"] ? DillaLive.writer_command(ENV["LIVE_OUT"], rate) : DillaLive.player_command(rate)
+    abort "live0: no player -- install sox (brew install sox) and ffmpeg" unless command
+
+    Session.claim!(score.describe)
+    DillaLive.accelerate!
+    stage = Stage.new(rate:, rng: score.rng)
+    %w[TERM INT].each { |signal| Signal.trap(signal) { stage.stop! } }
+    log("#{score.describe} at #{rate} Hz -- `ruby dilla.rb live stop` to end")
+    IO.popen(command, "wb") { |sink| stage.run(score, sink, seconds:) }
+    log("stopped, #{stage.meter}")
+  rescue Errno::EPIPE
+    log("the player closed")
+  ensure
+    Session.release!
+  end
+
+  # The stream through ffmpeg on its way out: `filter` is ["-af", chain] or
+  # ["-filter_complex", graph], and what leaves is stereo, to the player or,
+  # with dest, to a file. Nil when ffmpeg or a player is missing.
+  def through_ffmpeg(channels:, filter:, rate:, dest: nil)
+    ffmpeg = DillaLive.which("ffmpeg") or return nil
+    input = [ffmpeg, "-loglevel", "error", "-f", "s16le", "-ar", rate.to_s, "-ac", channels.to_s, "-i", "-", *filter]
+    return input + ["-y", "-c:a", "pcm_s16le", dest] if dest
+
+    player = DillaLive.player_command(rate) or return nil
+    ["sh", "-c", "#{Shellwords.join(input + ['-f', 's16le', '-ar', rate.to_s, '-ac', '2', '-'])} | #{Shellwords.join(player)}"]
+  end
+
+  # One stage of a `master` console: a Nasty VCS or a Sonitex STX-1260 built
+  # by the livesets' own formulas, or a filter written out.
+  def console_stage(stage)
+    kind, params = stage.first
+    return params if kind == "filter"
+
+    Livesets.public_send(kind.to_sym, **params.transform_keys(&:to_sym))
+  end
+
+  # The patches the live side can name: every AnalogSynth patch and every
+  # Model D panel, found in a sentence by name or alias.
+  module Patches
+    module_function
+
+    def names = AnalogSynth::PATCHES.keys.map(&:to_s) + AnalogSynth::ModelD.names
+
+    def name!(name)
+      return name if names.include?(name)
+
+      found = find(name.tr("_", " "))
+      found.first || abort("live0: no patch #{name} (#{names.join(' ')})")
+    end
+
+    def spec(name)
+      AnalogSynth::PATCHES[name.to_sym] || AnalogSynth::ModelD.patch(name)
+    end
+
+    # What a patch plays when it is given a line to itself.
+    def role(name)
+      spec = spec(name)
+      return :bass if name.match?(/bass|sub/)
+      return :lead if spec[:legato] || name.match?(/lead|bell|reed|flute|pluck|lucky/)
+
+      :pad
+    end
+
+    def demo(name)
+      own = AnalogSynth::ModelD.names.include?(name) && AnalogSynth::ModelD.panel(name)["demo"]
+      own || LiveSynth.config.fetch("demos").fetch(role(name).to_s)
+    end
+
+    # Phrase => patch, longest phrases first, so "moog bass" is heard before
+    # "bass". Model D aliases come first: "moog bass" asks for the panel.
+    def phrases
+      @phrases ||= begin
+        panels = AnalogSynth::ModelD.panels.flat_map do |name, panel|
+          [[name.tr("_", " "), name], *Array(panel["aliases"]).map { |word| [word, name] }]
+        end
+        patches = AnalogSynth::PATCHES.keys.map { |key| [key.to_s.tr("_", " "), key.to_s] }
+        (panels + patches).uniq(&:first).sort_by { |phrase, _| -phrase.length }
+      end
+    end
+
+    # Patches named in the sentence, in the order they are named.
+    def find(text)
+      text = text.downcase.tr("_", " ")
+      taken = []
+      hits = phrases.filter_map do |phrase, name|
+        at = text =~ /\b#{Regexp.escape(phrase)}\b/
+        next unless at && taken.none? { |range| range.cover?(at) }
+
+        taken << (at...(at + phrase.length))
+        [at, name]
+      end
+      hits.sort.map(&:last).uniq
+    end
+  end
+
+  # The knobs. Each has a base that moves on its own -- a slow sine in a
+  # progression, a mean-reverting random walk while improvising -- and an
+  # offset a person sets by asking, which travels to where it was asked over
+  # the seconds it was given. Values run 0 to 1; a knob nothing moves sits at
+  # 0.5, which is where a role's response leaves its patch unchanged in pitch
+  # spread and envelope.
+  class Knobs
+    NAMES = %w[cutoff resonance detune contour dub].freeze
+    NEUTRAL = 0.5
+    # Detune's reach when a mode's response does not name one: the spread the
+    # improviser was approved with.
+    DETUNE_SPAN = 0.004
+
+    def initialize(motion, response:, rng:, damping: 0.995, pull: 0.02)
+      @motion = motion
+      @response = response
+      @rng = rng
+      @damping = damping
+      @pull = pull
+      @walks = motion.to_h { |name, how| [name, [how.fetch("start", NEUTRAL).to_f, 0.0]] }
+      @offsets = {}
+      @pan = LiveSynth.stream.fetch("pan")
+    end
+
+    # The knob values for this block. Walks step in the order data/live.yml
+    # lists them, which is the order their random draws were approved in.
+    def step(dt, clock)
+      base = NAMES.to_h { |name| [name, NEUTRAL] }
+      @motion.each { |name, how| base[name] = moved(name, how, dt, clock) }
+      base.to_h { |name, value| [name, (value + offset(name, clock)).clamp(0.0, 1.0)] }
+    end
+
+    # Moves a knob's offset by `by`, or to put the knob at `to`, over seconds.
+    def turn(name, clock:, seconds:, by: nil, to: nil)
+      raise ArgumentError, "no knob #{name} (#{NAMES.join(' ')})" unless NAMES.include?(name)
+
+      now = offset(name, clock)
+      target = to ? now + (to - current(name, clock)) : now + by.to_f
+      @offsets[name] = [now, target, clock, [seconds.to_f, 0.001].max]
+    end
+
+    # How the knobs bend one voice: its role's cutoff scale and resonance, the
+    # detune spread, its side of the stereo field, and the contour amount.
+    def shape(voice, knobs)
+      response = @response.fetch(voice.role.to_s) { @response.fetch("pad") }
+      spec = voice.spec
+      base, span = response.fetch("cutoff")
+      reach, ceiling = response.fetch("resonance")
+      resonance = spec[:resonance] + (knobs["resonance"] * reach)
+      { cutoff: spec[:cutoff] * (base + (knobs["cutoff"] * span)),
+        resonance: ceiling ? [resonance, ceiling].min : resonance,
+        spread: 1.0 + ((knobs["detune"] - 0.5) * response.fetch("detune", DETUNE_SPAN)),
+        pan: @pan.fetch(voice.role.to_s), contour: 2.0 * knobs["contour"], }
+    end
+
+    private
+
+    # A sine, a walk, or a knob left where it was set.
+    def moved(name, how, dt, clock)
+      return sine(how, clock) if how.key?("sine_seconds")
+      return walk(name, how, dt) if how.key?("speed")
+
+      how.fetch("start", NEUTRAL).to_f
+    end
+
+    def sine(how, clock)
+      how["centre"] + (how["depth"] * Math.sin((2 * Math::PI * clock / how["sine_seconds"]) + how["phase"]))
+    end
+
+    def walk(name, how, dt)
+      value, velocity = @walks.fetch(name)
+      velocity = (velocity * @damping) + (@rng.rand(-1.0..1.0) * how["speed"] * dt) + ((0.5 - value) * @pull * dt)
+      value = (value + (velocity * dt)).clamp(0.0, 1.0)
+      @walks[name] = [value, velocity]
+      value
+    end
+
+    def current(name, clock)
+      how = @motion[name]
+      base = if how.nil? then NEUTRAL
+             elsif how.key?("sine_seconds") then sine(how, clock)
+             elsif how.key?("speed") then @walks.fetch(name).first
+             else how.fetch("start", NEUTRAL).to_f
+             end
+      base + offset(name, clock)
+    end
+
+    def offset(name, clock)
+      from, to, at, seconds = @offsets[name]
+      return 0.0 unless from
+
+      from + ((to - from) * ((clock - at) / seconds).clamp(0.0, 1.0))
+    end
+  end
+
+  # Where the notes come from, the knobs and the clock go through here. It
+  # holds the sounding voices, renders each block and hands it to the pipe.
+  class Stage
+    attr_reader :rate, :rng
+
+    def initialize(rate:, rng:)
+      config = LiveSynth.stream
+      @rate = rate
+      @rng = rng
+      @block = config.fetch("block_frames")
+      @drive = config.fetch("master_drive")
+      @scale = config.fetch("master_scale")
+      @drift = config.fetch("note_drift_cents")
+      @tail = config.fetch("tail_seconds")
+      @fade = config.fetch("stop_fade_seconds")
+      @voices = []
+      @inbox = Session::Inbox.new
+      @spent = 0.0
+      @played = 0.0
+    end
+
+    # One note. `rng` is the stage's own unless a mode seeds its notes itself.
+    def note(midi, spec, start, held, gain, role, rng: @rng, **line)
+      @voices << AnalogSynth::LiveVoice.new(midi:, spec:, start:, held:, gain:, role:, rng:, rate: @rate,
+                                            drift_cents: @drift, **line)
+    end
+
+    # One FM note (AnalogSynth::FmVoice) from a preset.
+    def fm(midi, preset, start, held, gain)
+      @voices << AnalogSynth::FmVoice.new(midi:, preset:, start:, held:, gain:, rng: @rng, rate: @rate)
+    end
+
+    def stop! = @stopping = true
+
+    def run(score, sink, seconds: nil)
+      frame = 0
+      ending = nil
+      loop do
+        clock = frame.to_f / @rate
+        @inbox.each(clock) { |command| command["stop"] ? stop! : score.command(command, clock) }
+        ending ||= clock if @stopping || score.finished?(clock) || (seconds && clock >= seconds)
+        @stopped_at ||= clock if @stopping
+        score.schedule(self, clock) unless ending
+        break if ending && clock - ending > @tail
+        break if @stopped_at && clock - @stopped_at > @fade
+
+        sink.write(block(score, clock))
+        frame += @block
+      end
+    end
+
+    def block(score, clock)
+      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      left = Array.new(@block, 0.0)
+      right = Array.new(@block, 0.0)
+      knobs = score.knobs.step(@block.to_f / @rate, clock)
+      @voices.each { |voice| voice.render!(left, right, clock, **shape(score, voice, knobs)) }
+      extra = score.respond_to?(:overdub!) ? score.overdub!(left, right, clock, @rate) : nil
+      [left, right, extra].compact.each { |channel| fade!(channel, clock) } if @stopped_at
+      @voices.reject! { |voice| voice.done?(clock) }
+      pcm = if score.respond_to?(:pcm) then score.pcm(left, right, extra, knobs)
+            else AnalogSynth.live_pcm(left, right, drive: @drive, scale: @scale)
+            end
+      account(Process.clock_gettime(Process::CLOCK_MONOTONIC) - started)
+      pcm
+    end
+
+    # How much of one core the sound costs: seconds spent rendering per second
+    # rendered. Past 1.0 the pipe starves and the sound stutters.
+    def meter = format("%.2f of a core at %d Hz", @played.zero? ? 0.0 : @spent / @played, @rate)
+
+    private
+
+    # A straight line down from where the stop landed, so the last block ends
+    # at silence instead of on whatever sample it was cut at.
+    def fade!(channel, clock)
+      j = 0
+      while j < channel.length
+        channel[j] *= (1.0 - ((clock + (j.to_f / @rate) - @stopped_at) / @fade)).clamp(0.0, 1.0)
+        j += 1
+      end
+    end
+
+    # An FM voice bends on the raw knobs; a patch voice takes its role's shape.
+    def shape(score, voice, knobs)
+      voice.is_a?(AnalogSynth::FmVoice) ? { knobs: } : score.knobs.shape(voice, knobs)
+    end
+
+    def account(spent)
+      @spent += spent
+      @played += @block.to_f / @rate
+      LiveSynth.log(meter) if (@played % 60.0) < (@block.to_f / @rate)
+    end
+  end
+
+  # The chord that plays after the one playing, chosen as it goes, with the
+  # kit under it and the whole stream sent out through dilla's pad chain and
+  # a dub send.
+  class Improviser
+    attr_reader :rng, :knobs
+
+    NAMES = DillaImprovisation::PITCH_NAMES
+
+    def initialize(rng:, family: nil, pad: nil)
+      @c = LiveSynth.config.fetch("improvise")
+      @rng = rng
+      fam = family ? @c.fetch("families").fetch(family) { abort "live0: no family #{family}" } : {}
+      @pads = fam.fetch("pads", @c["pads"])
+      @leads = fam.fetch("leads", @c["leads"])
+      @bass = fam.fetch("bass_patch", @c["bass_patch"])
+      @moves = @c.fetch("moves").to_h { |row| [row["from"], row["to"]] }
+      @beat = 60.0 / (@c["bpm"] + rng.rand(-@c["bpm_spread"].to_f..@c["bpm_spread"].to_f))
+      @knobs = Knobs.new(@c.fetch("knobs"), response: @c.fetch("response"), rng:,
+                         damping: @c["walk_damping"], pull: @c["walk_pull"])
+      @key = @c.fetch("keys").sample(random: rng)
+      @state = @c.fetch("start")
+      @voicing = []
+      @pad = pad ? Patches.name!(pad) : @pads.sample(random: rng)
+      @lead = @leads.sample(random: rng)
+      @family = family
+      @chords_on_pad = 0
+      @chords = 0
+      @next_at = @c["first_chord_at"]
+      @lead_on = false
+      @lead_enabled = @c["lead_enabled"]
+      @drums = @c["drums"]
+      @fade = nil
+      @kit = Kit.new(@c, beat: @beat, rng:)
+    end
+
+    def describe = "improvising, #{(60.0 / @beat).round} bpm in #{NAMES[@key]} minor#{" on #{@family}" if @family}"
+
+    def finished?(_clock) = false
+
+    # The next chord is written a second ahead of the playhead.
+    def schedule(stage, clock)
+      chord!(stage) while @next_at < clock + @c["lookahead_seconds"]
+    end
+
+    # The kit into the block after the voices; the kick comes back on its own.
+    def overdub!(left, right, clock, rate) = @kit.render!(left, right, clock, rate)
+
+    def player_command(rate, dest)
+      Dub.command(@c["post"], rate:, beat: @beat, dest:) ||
+        abort("live0: improvising leaves through ffmpeg -- install ffmpeg and sox (brew install ffmpeg sox)")
+    end
+
+    def pcm(left, right, kick, knobs) = Dub.pcm(left, right, kick, knobs["dub"])
+
+    # What a sentence can change while it plays: a patch, a knob, the drums,
+    # the lead, and which engine plays the lead.
+    def command(command, clock)
+      if command["patch"] then take_patch(command["patch"])
+      elsif command["knob"] then LiveSynth::Say.turn!(@knobs, command, clock)
+      elsif command["toggle"] == "drums" then drums!(command["on"])
+      elsif command["toggle"] == "lead" then lead_switch!(command["on"])
+      elsif command["lead"] == "fm" then fm_lead!(command["preset"])
+      end
+    end
+
+    private
+
+    def take_patch(name)
+      return change_pad(name) if Patches.role(name) == :pad
+
+      @lead = name
+      lead_switch!(true)
+    end
+
+    def drums!(on)
+      @drums = on
+      LiveSynth.log("drums #{on ? 'in' : 'out'}")
+    end
+
+    def lead_switch!(on)
+      @lead_enabled = on
+      @lead_on = on
+      LiveSynth.log(on ? "lead in: #{@lead}" : "lead out")
+    end
+
+    def fm_lead!(preset)
+      @leads = @c.fetch("fm").keys
+      @lead = @leads.include?(preset) ? preset : @leads.sample(random: @rng)
+      lead_switch!(true)
+    end
+
+    def chord!(stage)
+      bars = @rng.rand < @c["two_bar_odds"] ? 2 : 1
+      length = bars * 4 * @beat
+      degree, quality = @state
+      @voicing = DillaImprovisation.nearest_voicing(DillaImprovisation.pitch_classes(@key, degree, quality), @voicing,
+                                                    range: Range.new(*@c["voicing_range"]), first: @c["first_voicing"])
+      pad = pad_spec
+      @voicing.each { |midi| stage.note(midi, pad, @next_at, length - 0.05, @c["pad_gain"], :pad) }
+      bass!(stage, (36 + ((@key + degree) % 12)).then { |root| root < 38 ? root + 12 : root }, bars)
+      @kit.write!(@next_at, length) if @drums
+      lead!(stage, length) if @lead_on
+      @chords += 1
+      @chords_on_pad += 1
+      LiveSynth.log("#{NAMES[(@key + degree) % 12]}#{quality} (#{bars} bar#{'s' if bars > 1}) on #{@pad}" \
+                    "#{" + #{@lead}" if @lead_on}")
+      @next_at += length
+      move!
+    end
+
+    # Dilla: the root on the one, then late pushes and a fifth or an octave.
+    def bass!(stage, root, bars)
+      spec = Patches.spec(@bass)
+      late = @c["bass_late_seconds"]
+      at = @next_at
+      stage.note(root, spec, at + 0.01, 1.3 * @beat, 0.5, :bass)
+      stage.note(root, spec, at + (1.5 * @beat) + late, 0.45 * @beat, 0.38, :bass) if @rng.rand < 0.7
+      if @rng.rand < 0.5
+        stage.note(root + [7, 12, 10].sample(random: @rng), spec, at + (2.5 * @beat) + late, 0.4 * @beat, 0.32, :bass)
+      end
+      return unless bars == 2
+
+      stage.note(root, spec, at + (4 * @beat) + 0.01, 1.2 * @beat, 0.46, :bass)
+      stage.note(root + 7, spec, at + (5.5 * @beat) + late, 0.5 * @beat, 0.34, :bass) if @rng.rand < 0.6
+    end
+
+    def lead!(stage, length)
+      @c.fetch("fm").key?(@lead) ? fm_phrase!(stage, length) : patch_phrase!(stage, length)
+    end
+
+    # FM: wider leaps over three octaves of chord tones, uneven lengths, and
+    # each note its own bent spectrum.
+    def fm_phrase!(stage, length)
+      phrase = @c.fetch("fm_phrase")
+      preset = @c.fetch("fm").fetch(@lead).transform_keys(&:to_sym)
+      tones = @voicing + @voicing.map { |m| m + 12 } + @voicing.map { |m| m + 24 }
+      spot = @next_at + ((@rng.rand < 0.5 ? 0.5 : 1.0) * @beat)
+      last = tones.sample(random: @rng)
+      reach = phrase["reach"]
+      while spot < @next_at + length - 0.4
+        last = tones.min_by { |m| (m - last - @rng.rand(-reach..reach)).abs }
+        duration = phrase["steps"].sample(random: @rng) * @beat
+        if @rng.rand < phrase["odds"]
+          stage.fm(last.clamp(*phrase["range"]), preset, spot, duration * phrase["held"], phrase["gain"])
+        end
+        spot += duration
+      end
+    end
+
+    # A patch lead: stepwise toward chord tones an octave or two up, swung,
+    # with rests. A Model D lead glides in from its last note.
+    def patch_phrase!(stage, length)
+      tones = @voicing.map { |m| m + 12 } + @voicing.map { |m| m + 24 }
+      spot = @next_at + ((@rng.rand < 0.5 ? 0.5 : 1.0) * @beat)
+      last = tones.sample(random: @rng)
+      spec = Patches.spec(@lead)
+      while spot < @next_at + length - 0.4
+        last = tones.min_by { |m| (m - last - @rng.rand(-5..5)).abs }
+        duration = [0.5, 0.5, 1.0, 1.5].sample(random: @rng) * @beat
+        swing = ((spot - @next_at) / (@beat / 2)).round.odd? ? @c["lead_swing_seconds"] : 0.0
+        if @rng.rand < @c["lead_odds"]
+          note = last.clamp(*@c["lead_range"])
+          stage.note(note, spec, spot + swing, duration * 0.9, @c["lead_gain"], :lead, from_midi: @last_lead)
+          @last_lead = note
+        end
+        spot += duration
+      end
+    end
+
+    def move!
+      @state = DillaImprovisation.walk(@moves, @state, @rng)
+      change_pad((@pads - [@pad]).sample(random: @rng)) if @chords_on_pad >= @rng.rand(Range.new(*@c["pad_chords"]))
+      toggle_lead! if @lead_enabled && @rng.rand < @c["lead_toggle_odds"]
+      modulate! if (@chords % @c["modulate_every"]).zero? && @state.first.zero?
+    end
+
+    def change_pad(name)
+      @fade = [Patches.spec(@pad), 0]
+      @pad = name
+      @chords_on_pad = 0
+      LiveSynth.log("patch -> #{@pad}")
+    end
+
+    # The first chords on a new pad play it with the old one's knobs turning
+    # into its own, a step a chord.
+    def pad_spec
+      spec = Patches.spec(@pad)
+      steps = LiveSynth.config.dig("automation", "crossfade_chords").to_i
+      return spec unless @fade && @fade[1] < steps
+
+      from, done = @fade
+      @fade = [from, done + 1]
+      AnalogSynth.blend(from, spec, (done + 1).to_f / (steps + 1))
+    end
+
+    def toggle_lead!
+      @lead_on = !@lead_on
+      @lead = @leads.sample(random: @rng) if @lead_on
+      LiveSynth.log(@lead_on ? "lead in: #{@lead}" : "lead out")
+    end
+
+    def modulate!
+      @key = (@key + @c["modulate_by"].sample(random: @rng)) % 12
+      @state = [0, %w[m9 m11].sample(random: @rng)]
+      LiveSynth.log("modulate -> #{NAMES[@key]} minor")
+    end
+  end
+
+  # The improviser's drums, written a chord ahead and rendered in the block:
+  # the kick and its doubles on a bus of their own, the clap into the music.
+  class Kit
+    # The clap's noise is its own stream, seeded off the take's, so the drums
+    # never shift a draw the harmony makes.
+    NOISE_SEED = 0x5eed
+    # The clap's band and body into its saturator.
+    BAND_GAIN = 1.6
+    BODY_GAIN = 0.5
+    # A roll is the last beat of the chord: a beat of sixteenths, then half a
+    # beat of 32nds, each hit a little harder than the one before.
+    ROLL = [[0.0, 4], [0.5, 8]].freeze
+    SILENT_BAND = 1e-6
+
+    def initialize(config, beat:, rng:)
+      @kick = config.fetch("kick")
+      @snare = config.fetch("snare")
+      @beat = beat
+      @rng = rng
+      @noise = Random.new(rng.seed ^ NOISE_SEED)
+      @kicks = []
+      @snares = []
+      @low = 0.0
+      @band = 0.0
+    end
+
+    def write!(start, length)
+      @kicks.concat(kick_hits(start, length))
+      @snares.concat(snare_hits(start, length))
+    end
+
+    # Adds the clap into left and right; returns the kick for its own channels.
+    def render!(left, right, clock, rate)
+      span = left.length.to_f / rate
+      kicks = @kicks.select { |t, _| t < clock + span && t > clock - @kick["length_seconds"] }
+      snares = @snares.select { |t, _| t < clock + span && t > clock - @snare["length_seconds"] }
+      kick = Array.new(left.length, 0.0)
+      j = 0
+      while j < left.length
+        now = clock + (j.to_f / rate)
+        bus = kick_bus(kicks, now)
+        clap!(left, right, j, now, snares)
+        kick[j] = Math.tanh(bus * @kick["bus_drive"]) * @kick["bus_gain"] * @kick["level"]
+        j += 1
+      end
+      @kicks.reject! { |t, _| t < clock - @kick["length_seconds"] }
+      @snares.reject! { |t, _| t < clock - @snare["length_seconds"] }
+      kick
+    end
+
+    private
+
+    def kick_hits(start, length)
+      hits = []
+      (length / @beat).round.times do |b|
+        t = start + (b * @beat)
+        hits << [t, 1.0]
+        @kick["ghosts"].each { |odds, at, gain| hits << [t + (@beat * at), gain] if @rng.rand < odds }
+      end
+      roll!(hits, start + length - @beat) if @rng.rand < @kick["roll_odds"]
+      hits.uniq { |t, _| (t * 1000).round }
+    end
+
+    def roll!(hits, from)
+      ROLL.zip(@kick["roll_gains"]).each do |(offset, division), (gain, rise)|
+        4.times { |i| hits << [from + (@beat * offset) + (i * @beat / division), gain + (i * rise)] }
+      end
+    end
+
+    def snare_hits(start, length)
+      hits = []
+      (length / @beat).round.times do |b|
+        t = start + (b * @beat)
+        hits << [t + @snare["late_seconds"], 1.0] if b.odd?
+        @snare["ghosts"].each do |ghost|
+          next if ghost["even_beats"] && !b.even?
+
+          hits << [t + (@beat * ghost["at"]), ghost["gain"]] if @rng.rand < ghost["odds"]
+        end
+      end
+      hits
+    end
+
+    # Summed hit by hit, in the order they were written.
+    def kick_bus(kicks, now)
+      bus = 0.0
+      kicks.each do |t, gain|
+        tk = now - t
+        next if tk.negative? || tk > @kick["length_seconds"]
+
+        bus += kick_sample(tk) * gain
+      end
+      bus
+    end
+
+    def kick_sample(tk)
+      drop = @kick["drop_seconds"]
+      phase = 2 * Math::PI * ((@kick["base_hz"] * tk) + (@kick["drop_hz"] * drop * (1.0 - Math.exp(-tk / drop))))
+      click = tk < @kick["click_seconds"] ? (1.0 - (tk / @kick["click_seconds"])) * @kick["click"] : 0.0
+      (Math.sin(phase) * Math.exp(-tk / @kick["decay_seconds"])) + click
+    end
+
+    # Three noise bursts a few milliseconds apart and a tail, through a
+    # state-variable band-pass, over a short sine body, saturated.
+    def clap!(left, right, j, now, snares)
+      s = @snare
+      clap = 0.0
+      body = 0.0
+      snares.each do |t, gain|
+        ts = now - t
+        next if ts.negative? || ts > s["length_seconds"]
+
+        bursts = (0..2).sum { |k| (d = ts - (k * s["burst_gap_seconds"])).negative? ? 0.0 : Math.exp(-d / s["burst_seconds"]) }
+        clap += (bursts + (Math.exp(-ts / s["tail_seconds"]) * s["tail_gain"])) * gain
+        body += Math.sin(2 * Math::PI * s["body_hz"] * ts) * Math.exp(-ts / s["body_seconds"]) * gain
+      end
+      return if clap.zero? && body.zero? && @band.abs < SILENT_BAND
+
+      x = clap * ((@noise.rand * 2.0) - 1.0)
+      @low += s["filter_f"] * @band
+      @band += s["filter_f"] * (x - @low - (s["filter_damping"] * @band))
+      snare = Math.tanh(((@band * BAND_GAIN) + (body * BODY_GAIN)) * s["drive"]) * s["level"]
+      left[j] += snare * s["pan"]
+      right[j] += snare * (1.0 - s["pan"])
+    end
+  end
+
+  # The way out for the improviser: ffmpeg splits the music into dilla's pad
+  # chain and a dub send and mixes the kick back in dry, then the player.
+  # Six channels go in -- the music, the music at the dub knob's level for the
+  # send, and the kick -- so turning the dub knob needs no restart.
+  module Dub
+    SCALE = 26_000
+    DRIVE = 1.4
+
+    module_function
+
+    def graph(post, beat)
+      chain = warm_dilla_pad_synth_filters(**post.fetch("chain").transform_keys(&:to_sym)).compact.join(",")
+      send = post.fetch("dub").gsub(/<(\d+)>/) { (beat * Regexp.last_match(1).to_i).round.to_s }
+      "[0:a]pan=stereo|c0=c0|c1=c1[dry];[0:a]pan=stereo|c0=c2|c1=c3[wet];[0:a]pan=stereo|c0=c4|c1=c5[k];" \
+        "[dry]#{chain}[d];[wet]#{send}[w];[d][w][k]amix=inputs=3:weights=1 1 1:normalize=0,alimiter=limit=#{post['limit']}"
+    end
+
+    def command(post, rate:, beat:, dest: nil)
+      LiveSynth.through_ffmpeg(channels: 6, filter: ["-filter_complex", graph(post, beat)], rate:, dest:)
+    end
+
+    # The music through the tanh master, the same again scaled for the send,
+    # and the kick, already saturated on its bus, as it is.
+    def pcm(left, right, kick, dub)
+      out = Array.new(left.length * 6)
+      i = 0
+      while i < left.length
+        l = (Math.tanh(left[i] * DRIVE) * SCALE).round
+        r = (Math.tanh(right[i] * DRIVE) * SCALE).round
+        k = (kick[i] * SCALE).round
+        out[i * 6, 6] = [l, r, (l * dub).round, (r * dub).round, k, k]
+        i += 1
+      end
+      out.pack("s<*")
+    end
+  end
+
+  # A named progression, looped: written voicings from data/live.yml, or any
+  # chord list voiced nearest-note. An entry with a `walk` opens on its chords
+  # and then chooses the rest as it goes; one with a `dfam` plays a DFAM under
+  # it; one with a `master` leaves through that console. MASTER's main sound
+  # is two of these, moog_dfam and moog_improv.
+  class Progression
+    attr_reader :rng, :knobs
+
+    # loops: how many times round; nil takes the entry's own, 0 goes round
+    # until stopped.
+    def initialize(name, rng:, pads: nil, family: nil, loops: nil)
+      table = LiveSynth.config.fetch("progressions")
+      defaults = table.fetch("soul_jazz_six").except("chords")
+      @name = name
+      @p = defaults.merge(resolve(table, table.fetch(name) { { "names" => catalogue(name) } }))
+      @chords = @p["chords"] || voiced(@p.fetch("names"))
+      @pads = pads&.map { |pad| Patches.name!(pad) } ||
+              (family && LiveSynth.config.dig("improvise", "families", family, "pads")) || @p["pads"]
+      @rng = rng
+      @loops = (loops || @p["loops"]).then { |n| n.to_i.positive? ? n.to_i : nil }
+      @knobs = Knobs.new(@p.fetch("knobs"), response: @p.fetch("response"), rng:)
+      @walk = @p["walk"] && Walk.new(@p["walk"], opening: @chords)
+      @dfam = @p["dfam"] && Dfam.new(@p["dfam"], step: @p["bar_seconds"] / @p["dfam"]["steps_per_bar"], seed: rng.seed)
+      @count = 0
+      @at = 0.0
+      @override = nil
+    end
+
+    def describe
+      "#{@name}, #{@walk ? 'walking from' : ''} #{@chords.size} chords on #{@pads.join(' -> ')}" \
+        "#{' over a DFAM' if @dfam}".squeeze(" ")
+    end
+
+    def overdub!(left, right, clock, rate)
+      @dfam&.render!(left, right, clock, rate)
+      nil
+    end
+
+    # The console the entry names, or nil for the plain tanh master.
+    def player_command(rate, dest)
+      return nil unless @p["master"]
+
+      chain = @p["master"].map { |stage| LiveSynth.console_stage(stage) }.join(",")
+      LiveSynth.through_ffmpeg(channels: 2, filter: ["-af", chain], rate:, dest:) ||
+        abort("live0: #{@name} leaves through ffmpeg -- install ffmpeg and sox (brew install ffmpeg sox)")
+    end
+
+    def finished?(clock) = @loops && !@walk && @count >= @loops * @chords.size && clock >= @at
+
+    def schedule(stage, clock)
+      chord!(stage) while @at < clock + 1.0 && !(@loops && !@walk && @count >= @loops * @chords.size)
+    end
+
+    def command(command, clock)
+      if command["patch"]
+        @override = [Patches.spec(pad_name), Patches.name!(command["patch"]), 0]
+        LiveSynth.log("pad -> #{command['patch']}")
+      elsif command["knob"]
+        LiveSynth::Say.turn!(@knobs, command, clock)
+      end
+    end
+
+    private
+
+    def pad_name = @override ? @override[1] : @pads[(@count / @p["pad_every"]) % @pads.size]
+
+    def bass_name
+      basses = @p["basses"] or return @p["bass_patch"]
+
+      basses[(@count / @p["bass_every"]) % basses.size]
+    end
+
+    # Each note seeded on its pitch and its start, so a progression played
+    # twice is the same take.
+    def note(stage, midi, spec, start, held, gain, role)
+      stage.note(midi, spec, start, held, gain, role, rng: Random.new((midi * 7) + (start * 10).to_i))
+    end
+
+    def chord!(stage)
+      chord = @walk ? @walk.next(@count, @rng) : @chords[@count % @chords.size]
+      pad = pad_spec
+      chord["tones"].each { |midi| note(stage, midi, pad, @at, @p["bar_seconds"] - 0.1, @p["pad_gain"], :pad) }
+      bass = Patches.spec(bass_name)
+      @p["bass_hits"].each { |offset, length, gain| note(stage, chord["bass"], bass, @at + offset, length, gain, :bass) }
+      LiveSynth.log("#{chord['name']} on #{pad_name}#{", bass #{bass_name}" if @p['basses']}")
+      arpeggio!(stage, chord["tones"]) if @p["arp"] && @rng.rand < @p["arp"]["odds"]
+      @count += 1
+      @at += @p["bar_seconds"]
+    end
+
+    # Sixteenths across the bar an octave over the voicing: up, down,
+    # up-and-down, or shuffled.
+    def arpeggio!(stage, tones)
+      arp = @p["arp"]
+      patch = arp["patches"].sample(random: @rng)
+      notes = tones.map { |m| m + arp["octave"] }
+      order = [notes, notes.reverse, notes + notes.reverse[1..-2], notes.shuffle(random: @rng)].sample(random: @rng)
+      step = @p["bar_seconds"] / arp["steps"]
+      spec = Patches.spec(patch)
+      arp["steps"].times { |k| note(stage, order[k % order.size], spec, @at + (k * step), step * arp["held"], arp["gain"], :pad) }
+      LiveSynth.log("  arp on #{patch}")
+    end
+
+    def pad_spec
+      spec = Patches.spec(pad_name)
+      return spec unless @override && @override[2] < LiveSynth.config.dig("automation", "crossfade_chords").to_i
+
+      from, name, done = @override
+      steps = LiveSynth.config.dig("automation", "crossfade_chords").to_i
+      @override = [from, name, done + 1]
+      AnalogSynth.blend(from, spec, (done + 1).to_f / (steps + 1))
+    end
+
+    def catalogue(name) = CHORD_PROGRESSIONS[name.to_sym] || abort("live0: no progression #{name}")
+
+    # An entry `from:` another is that one with its own keys laid over it,
+    # nested tables merged key by key, as far back as the chain goes.
+    def resolve(table, entry)
+      return entry unless entry["from"]
+
+      deep_merge(resolve(table, table.fetch(entry["from"])), entry.except("from"))
+    end
+
+    def deep_merge(base, over)
+      base.merge(over) { |_, a, b| a.is_a?(Hash) && b.is_a?(Hash) ? deep_merge(a, b) : b }
+    end
+
+    # Named chords to written ones: tones nearest the chord before, the root
+    # an octave or two under them for the bass.
+    def voiced(names)
+      previous = []
+      names.filter_map do |name|
+        chord = resolve_pad_chord_symbol(name) or next
+        midis = chord[:hz].map { |hz| (69 + (12 * Math.log2(hz / 440.0))).round }
+        tones = DillaImprovisation.nearest_voicing(midis.map { |m| m % 12 }, previous, range: 48..76,
+                                                   first: [55, 60, 63, 67, 70])
+        previous = tones
+        root = midis.first % 12
+        { "name" => name, "bass" => 36 + root, "tones" => tones }
+      end
+    end
+  end
+
+  # The chords the main sound improvises: the opening chords as written, then
+  # a walk over improvise.moves, each chord four rootless tones voiced nearest
+  # the last, the key moving now and then.
+  class Walk
+    NAMES = DillaImprovisation::PITCH_NAMES
+
+    def initialize(config, opening:)
+      @c = config
+      @opening = opening
+      @moves = LiveSynth.config.dig("improvise", "moves").to_h { |row| [row["from"], row["to"]] }
+      @key = config["key"]
+      @state = config["start"]
+      @voicing = []
+    end
+
+    def next(count, rng)
+      return (@opening[count].tap { |chord| @voicing = chord["tones"] }) if count < @opening.size
+
+      degree, quality = @state
+      tones = DillaImprovisation.pitch_classes(@key, degree, quality).drop(1)
+      @voicing = DillaImprovisation.nearest_voicing(tones, @voicing, range: Range.new(*@c["voicing_range"]), first: @voicing)
+      chord = { "name" => "#{NAMES[(@key + degree) % 12]}#{quality}", "bass" => 36 + ((@key + degree) % 12), "tones" => @voicing }
+      @state = DillaImprovisation.walk(@moves, @state, rng)
+      modulate!(rng) if (count % @c["modulate_every"]).zero? && @state.first.zero?
+      chord
+    end
+
+    private
+
+    def modulate!(rng)
+      @key = (@key + @c["modulate_by"].sample(random: rng)) % 12
+      @state = [0, %w[m9 m11].sample(random: rng)]
+      LiveSynth.log("modulate -> #{NAMES[@key]} minor")
+    end
+  end
+
+  # The DFAM under the main sound: an 8-step sequencer in sixteenths of the
+  # bar, sequenced a block ahead, each hit its own two oscillators, noise,
+  # ladder and decays; improvising, it gains accents, a five-step sequence
+  # against the eight, and a kick. The entry's `dfam` carries every number,
+  # and the arithmetic below is the reference scripts', in their order.
+  class Dfam
+    STEPS = DfamEngine::STEPS
+    # The mutation draws and the noise are streams of their own, seeded off
+    # the take's, so neither moves the other.
+    NOISE_SEED = 0xdfa
+    Hit = Struct.new(:start, :f0, :vel, :ph1, :ph2, :ladder, :pan)
+
+    def initialize(config, step:, seed:)
+      @c = config
+      @step_seconds = step
+      @pattern = DfamEngine::DEFAULT_PATTERN.transform_values(&:dup)
+      @mutate = Random.new(seed)
+      @noise = Random.new(seed ^ NOISE_SEED)
+      @hits = []
+      @kicks = []
+      @next = 0.0
+      @step = 0
+    end
+
+    def render!(left, right, clock, rate)
+      sequence!(clock + (left.length.to_f / rate), rate)
+      vcf = knob("vcf_decay", clock)
+      vca = knob("vca_decay", clock)
+      top = knob("cutoff", clock)
+      @hits.each { |hit| sound!(hit, left, right, clock, rate, vcf:, vca:, top:) }
+      @hits.reject! { |hit| clock - hit.start > vca * @c["life_decays"] }
+      kick!(left, right, clock, rate) if @c["kick"]
+    end
+
+    private
+
+    def sequence!(until_time, rate)
+      while @next < until_time
+        step = @step % STEPS
+        velocity = @pattern[:velocity][step] / 100.0
+        velocity *= @c["accent"][step] if @c["accent"]
+        @hits << hit(@next, @pattern[:pitch][step], velocity, pan(step), rate) if velocity.positive?
+        second!(rate) if @c["second"]
+        @kicks << @next if @c["kick"] && (@step % @c["kick"]["every"]).zero?
+        @step += 1
+        mutate! if (@step % @c["mutate_every"]).zero?
+        @next += @step_seconds
+      end
+    end
+
+    def hit(start, pitch, velocity, pan, rate)
+      Hit.new(start, @c["base_hz"] * (2.0**(pitch / 100.0 * @c["octaves"])), velocity, 0.0, 0.0,
+              AnalogSynth::Ladder.new(rate:), pan)
+    end
+
+    def pan(step)
+      centre, swing = @c["pan"]
+      centre + (swing * (step % 2))
+    end
+
+    # The five-step page, a hair behind the eight, quieter, panned wide.
+    def second!(rate)
+      s = @c["second"]
+      b = @step % s["pitch"].size
+      return unless s["velocity"][b].positive?
+
+      @hits << hit(@next + s["late_seconds"], s["pitch"][b], s["velocity"][b] / 100.0 * s["gain"], b.even? ? s["pan"][0] : s["pan"][1], rate)
+    end
+
+    # One step moves: its pitch by up to pitch_reach, and its velocity by up
+    # to velocity_reach, or to silence.
+    def mutate!
+      m = @c["mutate"]
+      k = @mutate.rand(STEPS)
+      @pattern[:pitch][k] = (@pattern[:pitch][k] + @mutate.rand(-m["pitch_reach"]..m["pitch_reach"])).clamp(*m["pitch_range"])
+      @pattern[:velocity][k] = if @mutate.rand < m["mute_odds"] then 0
+                               else (@pattern[:velocity][k] + @mutate.rand(-m["velocity_reach"]..m["velocity_reach"])).clamp(*m["velocity_range"])
+                               end
+    end
+
+    def knob(name, clock)
+      k = @c.fetch("knobs").fetch(name)
+      k["floor"] + (k["span"] * (0.5 + (0.5 * Math.sin((2 * Math::PI * clock / k["sine_seconds"]) + k["phase"]))))
+    end
+
+    def sound!(hit, left, right, clock, rate, vcf:, vca:, top:)
+      c = @c
+      j = 0
+      while j < left.length
+        tt = clock + (j.to_f / rate) - hit.start
+        if tt >= 0
+          pitch_env = 1.0 + (c["pitch_env"]["depth"] * Math.exp(-tt / c["pitch_env"]["seconds"]))
+          hit.ph1 = (hit.ph1 + (hit.f0 * pitch_env / rate)) % 1.0
+          tri = AnalogSynth.wave(:triangle, hit.ph1)
+          hit.ph2 = (hit.ph2 + (hit.f0 * c["vco2_ratio"] * pitch_env * (1.0 + (c["fm"] * tri)) / rate)) % 1.0
+          square = hit.ph2 < 0.5 ? 1.0 : -1.0
+          mix = (c["mix"]["triangle"] * tri) + (c["mix"]["square"] * square) + (c["mix"]["noise"] * ((@noise.rand * 2.0) - 1.0))
+          cut = c["cutoff_floor"] + (top * Math.exp(-tt / vcf))
+          out = hit.ladder.process(mix, cut, c["resonance"]) * hit.vel * Math.exp(-tt / vca) * c["level"]
+          left[j] += out * hit.pan
+          right[j] += out * (1.0 - hit.pan)
+        end
+        j += 1
+      end
+    end
+
+    # The kick, summed from every hit still sounding, into tanh, into both
+    # channels of the music.
+    def kick!(left, right, clock, rate)
+      k = @c["kick"]
+      j = 0
+      while j < left.length
+        now = clock + (j.to_f / rate)
+        bus = 0.0
+        @kicks.each do |t|
+          tk = now - t
+          next if tk.negative? || tk > k["length_seconds"]
+
+          bus += Math.sin(2 * Math::PI * ((k["base_hz"] * tk) + (k["drop_hz"] * k["drop_seconds"] * (1.0 - Math.exp(-tk / k["drop_seconds"]))))) * Math.exp(-tk / k["decay_seconds"])
+          bus += (tk < k["click_seconds"] ? (1.0 - (tk / k["click_seconds"])) * k["click"] : 0.0)
+        end
+        level = Math.tanh(bus * k["drive"]) * k["level"]
+        left[j] += level
+        right[j] += level
+        j += 1
+      end
+      @kicks.reject! { |t| clock - t > k["length_seconds"] }
+    end
+  end
+
+  # One patch playing its own phrase: the panel's demo for a Model D patch, a
+  # line for its part otherwise. A legato patch plays it as one gliding voice.
+  class Demo
+    attr_reader :rng, :knobs
+
+    # The patch as written: a knob at rest leaves cutoff and resonance alone,
+    # and asking still opens or closes it.
+    RESPONSE = %w[pad bass lead].to_h { |role| [role, { "cutoff" => [0.5, 1.0], "resonance" => [0.0, nil] }] }.freeze
+
+    def initialize(name, rng:)
+      @name = name
+      @spec = Patches.spec(name)
+      @demo = Patches.demo(name)
+      @role = Patches.role(name)
+      @rng = rng
+      @knobs = Knobs.new({}, response: RESPONSE, rng:)
+      @done = false
+    end
+
+    def describe = "#{@name}, #{@demo['notes'].size} steps"
+
+    def length = @demo["notes"].size * @demo["step"]
+
+    def finished?(clock) = clock >= length
+
+    def command(command, clock)
+      LiveSynth::Say.turn!(@knobs, command, clock) if command["knob"]
+    end
+
+    def schedule(stage, _clock)
+      return if @done
+
+      @done = true
+      @spec[:legato] ? line!(stage) : steps!(stage)
+    end
+
+    private
+
+    def gain = @demo.fetch("gain", { pad: 0.22, bass: 0.55, lead: 0.3 }.fetch(@role))
+
+    def steps!(stage)
+      @demo["notes"].each_with_index do |step, index|
+        Array(step).each do |note|
+          stage.note(Say.note_midi(note), @spec, index * @demo["step"], @demo["step"] * @demo["gate"], gain, @role)
+        end
+      end
+    end
+
+    def line!(stage)
+      notes = @demo["notes"].map { |note| Say.note_midi(note) }
+      path = notes.each_with_index.drop(1).map { |midi, index| [index * @demo["step"], midi] }
+      stage.note(notes.first, @spec, 0.0, length, gain, @role, path:)
+    end
+  end
+
+  # The player's record and its inbox, in a directory both the player and the
+  # commands that steer it can find without being told.
+  module Session
+    STOP_WAIT_SECONDS = 5.0
+
+    module_function
+
+    def home = ENV.fetch("DILLA_LIVE_DIR") { File.join(Dir.tmpdir, "dilla-live-#{Process.uid}") }
+
+    def record_file = File.join(home, "player.json")
+
+    def inbox_file = File.join(home, "inbox.jsonl")
+
+    def log_file = File.join(home, "player.log")
+
+    # The playing record, or nil. A record whose process is gone is removed.
+    def playing
+      record = File.file?(record_file) && JSON.parse(File.read(record_file))
+      return nil unless record
+      return record if alive?(record["pid"])
+
+      FileUtils.rm_f(record_file)
+      nil
+    rescue JSON::ParserError
+      nil
+    end
+
+    def status
+      record = playing
+      record ? "playing #{record['what']} (pid #{record['pid']}, since #{record['since']})" : "nothing is playing"
+    end
+
+    # One player at a time: whatever was playing stops first.
+    def claim!(what)
+      stop! unless playing&.fetch("pid") == Process.pid
+      FileUtils.mkdir_p(home)
+      File.write(inbox_file, "")
+      File.write(record_file, JSON.generate("pid" => Process.pid, "what" => what, "since" => Time.now.strftime("%H:%M:%S")))
+    end
+
+    def release!
+      FileUtils.rm_f(record_file) if playing&.fetch("pid") == Process.pid
+    end
+
+    def stop!
+      record = playing or return "nothing is playing"
+
+      pid = record["pid"]
+      Process.kill("TERM", pid)
+      deadline = Time.now + STOP_WAIT_SECONDS
+      sleep 0.05 while alive?(pid) && Time.now < deadline
+      Process.kill("KILL", pid) if alive?(pid)
+      FileUtils.rm_f(record_file)
+      "stopped #{record['what']} (pid #{pid})"
+    rescue Errno::ESRCH
+      FileUtils.rm_f(record_file)
+      "stopped"
+    end
+
+    def post!(command)
+      record = playing or return "nothing is playing"
+
+      File.open(inbox_file, "a") { |file| file.puts(JSON.generate(command.compact)) }
+      "sent #{command.compact.map { |key, value| "#{key}=#{value}" }.join(' ')} to pid #{record['pid']}"
+    end
+
+    # A player of its own, detached, so the sentence that started it returns
+    # at once and the sound outlives it.
+    def spawn!(args)
+      stop!
+      FileUtils.mkdir_p(home)
+      pid = Process.spawn(RbConfig.ruby, ENGINE, "live", *args, chdir: Livesets::D, in: File::NULL,
+                                                                out: [log_file, "a"], err: [:child, :out], pgroup: true)
+      Process.detach(pid)
+      pid
+    end
+
+    def alive?(pid)
+      Process.kill(0, pid.to_i)
+      true
+    rescue Errno::ESRCH
+      false
+    rescue Errno::EPERM
+      true
+    end
+
+    # Commands appended while the player runs, read a few times a second of
+    # sound so a knob asked for moves within the block after.
+    class Inbox
+      POLL_SECONDS = 0.25
+
+      def initialize
+        @offset = File.size?(Session.inbox_file) || 0
+        @next = 0.0
+      end
+
+      def each(clock)
+        return if clock < @next
+
+        @next = clock + POLL_SECONDS
+        return unless File.file?(Session.inbox_file)
+
+        File.open(Session.inbox_file) do |file|
+          file.seek(@offset)
+          file.each_line do |line|
+            command = JSON.parse(line)
+          rescue JSON::ParserError
+            next
+          else
+            yield command
+          end
+          @offset = file.pos
+        end
+      end
+    end
+  end
+
+  # A sentence to a live command. MASTER hands over what the operator said;
+  # the instrument's vocabulary -- its patches, progressions, knobs -- lives
+  # here with the instrument.
+  module Say
+    STOP = /\A\s*(?:stop|silence|quiet|enough|shh+)\b|\b(?:stop|end|kill)\s+(?:the\s+)?(?:music|playing|synth\w*|improvi\w*|jam|sound|it|that)\b/.freeze
+    MORPH = /\b(?:morph|switch|change|fade|move|turn|go)\w*\s+(?:it\s+|over\s+|across\s+|slowly\s+)?(?:to|into)\b/.freeze
+    # The improviser with drums, dub and FM is asked for by those parts.
+    JAM = /\b(?:drums?|dub|fm|industrial|jam\w*|kick|snare|beat)\b/.freeze
+    MODEL_D = /\b(?:model\s*d|minimoog)\b/.freeze
+    PROGRESSION = /\bchords?\b|\bprogressions?\b|\bchanges\b/.freeze
+    KNOBS = {
+      "cutoff" => /\b(?:filter|cutoff|cut-off|brighter|darker|brightness)\b/,
+      "resonance" => /\b(?:resonan\w*|emphasis|squelch\w*|peak)\b/,
+      "detune" => /\b(?:detun\w*|chorus\w*|wider|width|spread)\b/,
+      "contour" => /\b(?:contour|envelope)\b/,
+      "dub" => /\b(?:dub|echo|delay|space)\b/,
+    }.freeze
+    # Parts that come and go by name: "drums off", "bring the lead in".
+    TOGGLES = { "drums" => /\b(?:drums?|kit|kick|snare|beat)\b/, "lead" => /\b(?:lead|melody|solo)\b/ }.freeze
+    ON = /\b(?:on|in|back|bring|start|add)\b/.freeze
+    OFF = /\b(?:off|out|mute|kill|drop|stop|without|remove|lose)\b/.freeze
+    FM_LEAD = /\bfm\b/.freeze
+    UP = /\b(?:open\w*|up|raise|more|brighter|increase|wider|boost|lift|push)\b/.freeze
+    DOWN = /\b(?:clos\w*|down|lower|less|darker|decrease|narrow\w*|cut|reduce|shut|tame)\b/.freeze
+    ALL_THE_WAY = /\b(?:all\s+the\s+way|fully|completely|max\w*)\b/.freeze
+    FAMILIES = %w[moog prophet rhodes].freeze
+    NOTE = /\A([A-G]#?)(-?\d)\z/.freeze
+
+    module_function
+
+    def call(text)
+      words = text.downcase
+      steer = steering(words)
+      return Session.post!(steer) if steer
+      return Session.stop! if words.match?(STOP)
+
+      knob = KNOBS.find { |_, pattern| words.match?(pattern) }&.first
+      return Session.post!(knob_command(knob, words)) if knob && !play?(words)
+      return morph(words) if words.match?(MORPH)
+
+      args = play_args(words)
+      "#{args.join(' ')} (pid #{Session.spawn!(args)}, log #{Session.log_file})"
+    end
+
+    def play?(words) = words.match?(/\bplay\b/) && !words.match?(MORPH)
+
+    # "fm lead [preset]", or a part switched on or off -- a command for the
+    # player, or nil when the sentence asks for neither.
+    def steering(words)
+      if words.match?(FM_LEAD)
+        preset = LiveSynth.config.dig("improvise", "fm").keys.find { |name| words.match?(/\b#{name}\b/) }
+        return { "lead" => "fm", "preset" => preset }
+      end
+      part = TOGGLES.find { |_, pattern| words.match?(pattern) }&.first
+      return nil unless part && (words.match?(ON) || words.match?(OFF))
+
+      { "toggle" => part, "on" => !words.match?(OFF) }
+    end
+
+    def morph(words)
+      patch = Patches.find(words).last || family_default(words)
+      return "no patch named in \"#{words}\"" unless patch
+
+      command = { "patch" => patch, "seconds" => seconds(words) }
+      Session.playing ? Session.post!(command) : "improvise pad=#{patch} (pid #{Session.spawn!(['improvise', "pad=#{patch}"])})"
+    end
+
+    # Nothing named plays the main sound, which is soul_jazz_six's moog
+    # patches over a DFAM, so "moog patches" asks for it too. A named
+    # progression, patch, or other family, or one of the improviser's parts,
+    # asks for that instead.
+    def play_args(words)
+      patches = Patches.find(words)
+      family = FAMILIES.find { |name| words.match?(/\b#{name}\b/) }
+      progression = progression_in(words)
+      return ["progression", progression, *with(patches, family)] if progression
+      return ["improvise", *(family ? ["family=#{family}"] : []), *(patches.any? ? ["pad=#{patches.first}"] : [])] if words.match?(JAM)
+      return patches.size > 1 || words.match?(PROGRESSION) ? ["progression", "soul_jazz_six", *with(patches, nil)] : ["patch", patches.first] if patches.any?
+      return %w[improvise family=moog] if words.match?(MODEL_D)
+      return ["progression", "soul_jazz_six", "family=#{family}"] if family && family != "moog"
+
+      ["default"]
+    end
+
+    def with(patches, family)
+      return ["pads=#{patches.join(',')}"] if patches.any?
+
+      family ? ["family=#{family}"] : []
+    end
+
+    def family_default(words)
+      family = FAMILIES.find { |name| words.match?(/\b#{name}\b/) } or return nil
+      LiveSynth.config.dig("improvise", "families", family, "pads").first
+    end
+
+    def progression_in(words)
+      names = LiveSynth.config.fetch("progressions").keys + CHORD_PROGRESSIONS.keys.map(&:to_s)
+      names.sort_by { |name| -name.length }.find { |name| words.match?(/\b#{Regexp.escape(name)}\b|\b#{Regexp.escape(name.tr('_', ' '))}\b/) }
+    end
+
+    def knob_command(knob, words)
+      step = LiveSynth.config.dig("automation", "step")
+      down = words.match?(DOWN) && !words.match?(/\b(?:up|open\w*|brighter|more)\b/)
+      command = { "knob" => knob, "seconds" => seconds(words) }
+      return command.merge("to" => down ? 0.0 : 1.0) if words.match?(ALL_THE_WAY)
+      return command.merge("to" => 0.0) if words.match?(/\b(?:no|dry)\b/)
+
+      command.merge("amount" => format("%+.2f", down ? -step : step))
+    end
+
+    def seconds(words)
+      speeds = LiveSynth.config.dig("automation", "speeds")
+      speeds.find { |word, _| words.match?(/\b#{word}\b/) }&.last || LiveSynth.config.dig("automation", "default_seconds")
+    end
+
+    # A knob command, from the inbox or the command line, applied at clock.
+    def turn!(knobs, command, clock)
+      amount = command["amount"].to_s
+      seconds = (command["seconds"] || LiveSynth.config.dig("automation", "default_seconds")).to_f
+      if command.key?("to") || !amount.match?(/\A[+-]/)
+        knobs.turn(command["knob"], clock:, seconds:, to: (command["to"] || amount).to_f)
+      else
+        knobs.turn(command["knob"], clock:, seconds:, by: amount.to_f)
+      end
+      LiveSynth.log("knob #{command['knob']} #{command['to'] || amount} over #{seconds.round(1)}s")
+    rescue ArgumentError => e
+      LiveSynth.log(e.message)
+    end
+
+    def note_midi(name)
+      match = name.to_s.match(NOTE) or raise ArgumentError, "not a note: #{name}"
+      Livesets::NOTE_PC.fetch(match[1][0]) + (match[1].length == 2 ? 1 : 0) + ((match[2].to_i + 1) * 12)
+    end
   end
 end

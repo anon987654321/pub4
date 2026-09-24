@@ -1,0 +1,298 @@
+# reader: LiveSynth (lib/livesets.rb)
+#
+# The live synthesiser: AnalogSynth's patches and the Model D panels in
+# model_d.yml, played straight to the sound card as they are generated.
+#
+#   ruby dilla.rb live improvise            endless, until `live stop`
+#   ruby dilla.rb live progression [name]   a named progression, looped
+#   ruby dilla.rb live patch <name>         one patch's own phrase
+#   ruby dilla.rb live say "<sentence>"     what MASTER sends
+#
+# MASTER's main sound: what a plain "play", "improvise" or "play something"
+# plays (`ruby dilla.rb live default`), until it is stopped. The operator
+# froze it on 2026-09-24 ("FREEZE -- this becomes the standard default so
+# far"): data/frozen/standard_default.rb.txt, verbatim.
+default: moog_improv
+
+# The operator heard the two modes below on 2026-09-24 and approved them as
+# they are: the patches, the levels, the tanh master at 1.4x and 32 kHz. These
+# numbers are that sound, so they change only on the operator's word.
+stream:
+  rate: 32000
+  block_frames: 1024
+  # Every sample leaves through tanh(s * drive), scaled under full scale.
+  master_drive: 1.4
+  master_scale: 26000
+  # Each note sits this many cents off concert pitch, drawn per note, so a
+  # chord beats like a played instrument rather than a printed one.
+  note_drift_cents: 0.7
+  cutoff_clamp: [30, 12000]
+  # A left-channel share per role; the rest goes right.
+  pan: { pad: 0.52, bass: 0.52, lead: 0.42 }
+  # How long the last notes ring after the music ends on its own.
+  tail_seconds: 2.5
+  # Asked to stop, it fades out over this instead of ringing on.
+  stop_fade_seconds: 0.4
+
+# Knob changes asked for by name, and how long "slowly" is.
+automation:
+  speeds: { slowly: 30, gradually: 20, gently: 15, quickly: 3, suddenly: 0.5 }
+  default_seconds: 10
+  # One word of "open the filter" moves a knob this far on its 0-1 travel.
+  step: 0.35
+  # A patch change arrives over this many chords instead of on one, so the
+  # knobs of the old patch turn into the new one's.
+  crossfade_chords: 2
+
+progressions:
+  # The first progression the operator heard live: soul-jazz in F minor, the
+  # bass on the root and each voicing written out, played on a pad that
+  # changes every two chords.
+  soul_jazz_six:
+    bar_seconds: 4.4
+    pad_every: 2
+    pads: [warm_pad, poly_strings, prophet_five, juno_pad]
+    bass_patch: moog_bass
+    pad_gain: 0.22
+    # [offset in the bar, held, gain]: the root, then again a little late.
+    bass_hits: [[0.0, 1.6, 0.55], [2.35, 1.2, 0.45]]
+    chords:
+      - { name: Fm9, bass: 41, tones: [56, 60, 63, 67] }
+      - { name: Bbm9, bass: 46, tones: [56, 61, 65, 68] }
+      - { name: Eb13, bass: 39, tones: [55, 60, 61, 65] }
+      - { name: Abmaj9, bass: 44, tones: [55, 60, 63, 70] }
+      - { name: Dbmaj7#11, bass: 37, tones: [60, 65, 67, 72] }
+      - { name: C7alt, bass: 36, tones: [58, 61, 64, 68] }
+    knobs:
+      cutoff: { sine_seconds: 23, phase: 0.0, centre: 0.55, depth: 0.45 }
+      resonance: { sine_seconds: 31, phase: 1.3, centre: 0.5, depth: 0.5 }
+    # How a knob at 0-1 bends each role's patch: cutoff is scaled by
+    # base + knob * span; resonance gains knob * span, held under ceiling.
+    response:
+      pad: { cutoff: [0.35, 1.6], resonance: [0.45, 0.85] }
+      bass: { cutoff: [0.7, 0.8], resonance: [0.0, null] }
+  # The first sound the operator froze on 2026-09-24 ("FREEZE THAT SOUND"):
+  # soul_jazz_six with a DFAM under it, twice round. The standard default
+  # below grew out of it. data/frozen/default_sound.rb.txt is the script it
+  # was heard from, kept verbatim, and test_dilla_live_synth pins these
+  # numbers to it.
+  moog_dfam:
+    from: soul_jazz_six
+    loops: 2
+    # The DFAM as the Moog is built: an 8-step sequencer running in
+    # sixteenths of the bar, each step its own pitch and velocity, starting
+    # from DfamEngine::DEFAULT_PATTERN, one step mutating every mutate_every
+    # steps. VCO 1, a triangle, frequency-modulates VCO 2, a square; both
+    # fall from pitch_env.depth + 1 times their pitch over pitch_env.seconds;
+    # noise is mixed in; a ladder low-pass with its own decay, then the VCA's.
+    # Decays and cutoff drift on slow sines, like the pads' knobs.
+    dfam:
+      level: 0.34
+      steps_per_bar: 16
+      mutate_every: 32
+      mutate: { pitch_reach: 18, pitch_range: [5, 95], mute_odds: 0.15, velocity_reach: 20, velocity_range: [35, 100] }
+      base_hz: 40.0
+      octaves: 3.0
+      pan: [0.35, 0.3]
+      pitch_env: { depth: 2.2, seconds: 0.045 }
+      vco2_ratio: 1.5
+      fm: 0.45
+      mix: { triangle: 0.55, square: 0.3, noise: 0.18 }
+      cutoff_floor: 120.0
+      resonance: 0.55
+      # floor + span * (0.5 + 0.5 * sin(2 pi t / sine_seconds + phase))
+      knobs:
+        vcf_decay: { floor: 0.05, span: 0.1, sine_seconds: 37.0, phase: 0.0 }
+        vca_decay: { floor: 0.09, span: 0.12, sine_seconds: 29.0, phase: 0.7 }
+        cutoff: { floor: 900.0, span: 2600.0, sine_seconds: 43.0, phase: 2.1 }
+      # A hit leaves once this many VCA decays have passed.
+      life_decays: 8
+  # MASTER's main sound, the standard default the operator froze on
+  # 2026-09-24: data/frozen/standard_default.rb.txt. moog_dfam improvising:
+  # the loved six chords open it, then the chords are walked
+  # (improvise.moves) with four-tone rootless voicings nearest the last, and
+  # it goes round until stopped. The pad changes every chord, the bass every
+  # bass_every chords, an arpeggio rides some chords, the DFAM runs at 1.5x
+  # the groove with accents, a five-step sequence against its eight, and a
+  # kick, and the whole stream leaves through the console named in `master`.
+  moog_improv:
+    from: moog_dfam
+    loops: 0
+    walk:
+      key: 5
+      start: [0, m9]
+      voicing_range: [53, 74]
+      modulate_every: 24
+      modulate_by: [5, 3, 8, 10]
+    pads: [warm_pad, poly_strings, prophet_five, juno_pad, prophet_pad, vp330_ensemble, soft_reed, e_piano, rhodes_tine, glass_bell]
+    pad_every: 1
+    basses: [moog_bass, acid, sub, dub_bass]
+    bass_every: 4
+    # Sixteenths an octave above the voicing, up, down, up-down or shuffled.
+    arp: { odds: 0.3, patches: [glass_bell, e_piano, poly_lead, vapor_lead], steps: 16, octave: 12, held: 0.7, gain: 0.1 }
+    # moog_dfam's DFAM, in 24ths of the bar where it ran in 16ths -- the
+    # groove at one and a half times, the chords where they were -- with
+    # these added.
+    dfam:
+      steps_per_bar: 24
+      # The downbeat and the and-of-two lean in.
+      accent: [1.35, 0.8, 1.0, 0.85, 1.25, 0.8, 1.1, 0.9]
+      # Five steps against eight, a hair behind, quieter, panned wide.
+      second: { pitch: [78, 64, 88, 70, 92], velocity: [55, 0, 70, 45, 60], late_seconds: 0.004, gain: 0.55, pan: [0.25, 0.75] }
+      # A sub on every beat -- four steps of the sequencer -- falling from
+      # base_hz + drop_hz to base_hz, into tanh.
+      kick: { every: 4, level: 0.34, drive: 2.8, base_hz: 45.0, drop_hz: 105.0, drop_seconds: 0.035, decay_seconds: 0.32, click: 0.5, click_seconds: 0.005, length_seconds: 0.5 }
+    # A Nasty VCS, a Sonitex STX-1260 and a second VCS, built by Livesets.vcs
+    # and Livesets.sonitex, then a limiter. The VCS stages are level-neutral
+    # (db 0.0): at the livesets' -7.5 dB, five of them sank the pads 37 dB
+    # under the kick. The colour stays; the loss does not.
+    master:
+      - { vcs: { depth: 0.34, smear: 2.4, db: 0.0 } }
+      - { sonitex: { bits: 12, lo: 40, hi: 13000, drive: 1.12 } }
+      - { vcs: { depth: 0.3, smear: 2.8, db: 0.0 } }
+      - { filter: "alimiter=limit=0.95" }
+  # MASTER's Theory calls i7 iv7 bVII7 bVI7 dilla_love; these are its chords
+  # in C with the ninths and the thirteenth dilla voices them with. A
+  # progression that names its chords instead of writing voicings is voiced
+  # nearest-note, and takes everything else from soul_jazz_six.
+  dilla_love:
+    names: [Cm9, Fm9, Bb13, Abmaj9]
+# Any name in CHORD_PROGRESSIONS plays too, voiced the same way.
+
+# What `live patch <name>` plays for a patch that carries no phrase of its
+# own, by the part the patch plays.
+demos:
+  bass: { step: 0.26, gate: 0.75, gain: 0.55, notes: [C2, C2, C3, D#2, F2, F2, G2, A#1, C2, C2, C3, D#2, G2, F2, D#2, A#1] }
+  lead: { step: 0.34, gate: 0.9, gain: 0.3, notes: [C5, D#5, G5, A#5, G5, F5, D#5, F5, G5, C6, A#5, G5] }
+  pad: { step: 4.4, gate: 0.95, gain: 0.22, notes: [[G#3, C4, D#4, G4], [G#3, C#4, F4, G#4], [G3, C4, C#4, F4], [G3, C4, D#4, A#4]] }
+
+improvise:
+  bpm: 96
+  bpm_spread: 3
+  # The kit, written a chord at a time with the chord. "drums off" stops it.
+  drums: true
+  # The kick on every beat, doubled with ghost hits between beats, and now
+  # and then a roll into the next chord that tightens from sixteenths to
+  # 32nds. Each hit is a sine falling from base_hz + drop_hz to base_hz over
+  # drop_seconds, dying over decay_seconds, with a click on top, in closed
+  # form so every hit is the same hit. The hits sum on a bus driven hard into
+  # tanh, and the kick rides its own channels past every effect.
+  kick:
+    level: 0.55
+    base_hz: 48.0
+    drop_hz: 110.0
+    drop_seconds: 0.04
+    decay_seconds: 0.26
+    click: 0.3
+    click_seconds: 0.004
+    length_seconds: 0.6
+    bus_drive: 3.2
+    bus_gain: 0.62
+    # [odds, fraction of a beat after it, gain]
+    ghosts: [[0.55, 0.5, 0.62], [0.35, 0.75, 0.5], [0.2, 0.25, 0.4]]
+    roll_odds: 0.45
+    roll_gains: [[0.45, 0.08], [0.6, 0.08]]
+  # A clap on two and four, a hair late as a hand plays it, with ghosts:
+  # three band-passed noise bursts 11 ms apart, a tail, and a 185 Hz body.
+  snare:
+    level: 0.5
+    late_seconds: 0.012
+    # A ghost on the "and-a" of any beat, and one on the "e" of one and three.
+    ghosts:
+      - { odds: 0.3, at: 0.75, gain: 0.28 }
+      - { odds: 0.2, at: 0.25, gain: 0.22, even_beats: true }
+    burst_gap_seconds: 0.011
+    burst_seconds: 0.006
+    tail_seconds: 0.13
+    tail_gain: 0.6
+    body_hz: 185.0
+    body_seconds: 0.05
+    length_seconds: 0.4
+    # The band-pass: a state-variable filter at about 1.4 kHz.
+    filter_f: 0.26
+    filter_damping: 0.55
+    drive: 1.5
+    pan: 0.48
+  # The whole stream goes out through ffmpeg: the music twice, once through
+  # dilla's warm_dilla_pad_post synth chain (warm_dilla_pad_synth_filters at
+  # these values) and once through a dub send -- highpass, three tape heads at
+  # the beat fractions, an eighth echo, chorus, lowpass -- mixed with the dry
+  # kick. <N> in the send is N ms per beat. "more dub" turns the dub knob.
+  post:
+    chain: { lowpass: 3400, mud_db: 0.0, upper_mud_db: 0.0, tremolo: true }
+    dub: "highpass=f=180,lowpass=f=2600,aecho=0.85:0.9:<750>|<1000>|<1500>:0.55|0.45|0.35,aecho=0.8:0.85:<375>:0.5,chorus=0.8:0.9:45:0.4:0.3:1.5,lowpass=f=2200,volume=0.9"
+    limit: 0.96
+  # Keys the walk starts in, as semitones above C; every one is minor.
+  keys: [5, 0, 3, 10, 8]
+  start: [0, m9]
+  # The walk: from [degree, quality], where it tends to go next. Degrees are
+  # semitones above the key; qualities are DillaImprovisation::QUALITIES.
+  moves:
+    - { from: [0, m9], to: [[5, m9], [10, "13"], [8, maj9], [5, m11], [3, maj9]] }
+    - { from: [0, m11], to: [[5, m9], [8, "maj7#11"], [10, 13sus]] }
+    - { from: [5, m9], to: [[10, "13"], [7, 7alt], [3, maj9], [0, m6/9]] }
+    - { from: [5, m11], to: [[10, "13"], [7, 7alt]] }
+    - { from: [10, "13"], to: [[3, maj9], [8, maj9], [0, m9]] }
+    - { from: [10, 13sus], to: [[10, "13"], [3, maj9]] }
+    - { from: [3, maj9], to: [[8, maj9], [5, m9], [1, "maj7#11"]] }
+    - { from: [8, maj9], to: [[1, "maj7#11"], [7, 7alt], [5, m9]] }
+    - { from: [8, "maj7#11"], to: [[7, 7alt], [1, "maj7#11"]] }
+    - { from: [1, "maj7#11"], to: [[7, 7alt], [0, m9], [0, m11]] }
+    - { from: [7, 7alt], to: [[0, m9], [0, m11], [8, maj9]] }
+    - { from: [0, m6/9], to: [[5, m9], [10, "13"]] }
+  # Voicings stay between F3 and D5, each voice moving to the nearest tone.
+  voicing_range: [48, 76]
+  first_voicing: [55, 60, 63, 67, 70]
+  # The next chord is written this far ahead of the playhead.
+  lookahead_seconds: 1.0
+  first_chord_at: 0.3
+  two_bar_odds: 0.35
+  pads: [warm_pad, poly_strings, prophet_five, juno_pad, prophet_pad, vp330_ensemble, rhodes_tine, surreal_wash]
+  # Leads are off until asked for ("lead on", "fm lead"); on, they come and go
+  # by themselves. A lead is an FM preset below or any patch by name.
+  lead_enabled: false
+  leads: [bell, metal, growl, glass, chaos, drone]
+  # Two-operator FM (AnalogSynth::FmVoice): the modulator's ratio to the note,
+  # the index and how fast it falls, the modulator's feedback, and the
+  # envelope. The order is the order a lead is drawn from.
+  fm:
+    bell: { ratio: 3.5, index: 6.0, index_decay: 0.7, fb: 0.0, attack: 0.002, decay: 1.6 }
+    metal: { ratio: 1.414, index: 4.5, index_decay: 1.2, fb: 0.55, attack: 0.004, decay: 0.9 }
+    growl: { ratio: 0.5, index: 3.2, index_decay: 3.0, fb: 0.3, attack: 0.08, decay: 1.4 }
+    glass: { ratio: 7.02, index: 2.4, index_decay: 0.25, fb: 0.0, attack: 0.001, decay: 0.7 }
+    chaos: { ratio: 2.76, index: 8.0, index_decay: 0.4, fb: 0.9, attack: 0.003, decay: 0.5 }
+    drone: { ratio: 1.001, index: 1.8, index_decay: 6.0, fb: 0.2, attack: 0.6, decay: 3.0 }
+  fm_phrase: { odds: 0.6, gain: 0.12, range: [48, 90], reach: 9, steps: [0.25, 0.5, 0.5, 1.0, 2.0], held: 0.8 }
+  bass_patch: moog_bass
+  # "Play it on moog patches": the same walk with one family's instruments.
+  # moog is the Model D panels in model_d.yml; prophet and rhodes are the
+  # AnalogSynth patches bed.yml plays those families on.
+  families:
+    moog: { pads: [moog_strings, moog_brass, lofi_pad], leads: [minimoog_lead, lucky_man, moog_flute, moog_pluck], bass_patch: fat_bass }
+    prophet: { pads: [prophet_five, prophet_pad, juno_pad, vp330_ensemble], leads: [poly_lead, vapor_lead], bass_patch: moog_bass }
+    rhodes: { pads: [rhodes_tine, e_piano], leads: [glass_bell, soft_reed], bass_patch: dub_bass }
+  pad_gain: 0.2
+  pad_chords: [3, 6]
+  lead_toggle_odds: 0.18
+  lead_gain: 0.14
+  lead_odds: 0.72
+  lead_range: [64, 88]
+  lead_swing_seconds: 0.06
+  modulate_every: 16
+  modulate_by: [5, 3, 8, 10]
+  # Dilla: the bass sits behind the beat.
+  bass_late_seconds: 0.035
+  knobs:
+    cutoff: { start: 0.5, speed: 0.05 }
+    resonance: { start: 0.4, speed: 0.04 }
+    detune: { start: 0.5, speed: 0.03 }
+    # How much of the music reaches the dub send; it holds still until asked.
+    dub: { start: 0.7 }
+  # A walk keeps its velocity by this much a block and is pulled toward the
+  # middle by this much, so it wanders for tens of seconds and comes back.
+  walk_damping: 0.995
+  walk_pull: 0.02
+  response:
+    pad: { cutoff: [0.35, 1.7], resonance: [0.5, 0.88], detune: 0.004 }
+    bass: { cutoff: [0.7, 0.9], resonance: [0.15, null], detune: 0.004 }
+    lead: { cutoff: [0.8, 0.8], resonance: [0.15, null], detune: 0.004 }

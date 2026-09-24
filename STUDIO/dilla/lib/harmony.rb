@@ -46,6 +46,14 @@ module DillaImprovisation
     # the reason a Flying Lotus chord can sit under any bass note at all.
     "q4" => [0, 5, 10, 15],
     "q4b" => [0, 5, 10, 15, 20],
+    # The soul-jazz colours the live improviser walks between (data/live.yml):
+    # the raised eleventh, the thirteenth, the altered dominant, the six-nine
+    # and the suspended thirteenth.
+    "maj7#11" => [0, 4, 7, 11, 18],
+    "13" => [0, 4, 10, 14, 21],
+    "7alt" => [0, 4, 10, 13, 15],
+    "m6/9" => [0, 3, 7, 9, 14],
+    "13sus" => [0, 5, 10, 14, 21],
   }.freeze
 
   # Where the chords sit. Low enough to be a bed, high enough that a four-note
@@ -200,6 +208,27 @@ module DillaImprovisation
     end
 
     def names = languages.keys
+
+    # --- the live walk ------------------------------------------------------
+    #
+    # The live improviser does not play a progression, it chooses one chord at
+    # a time: from [degree, quality] to one of the places data/live.yml says
+    # that chord tends to go. A Markov walk, so it never repeats a loop and it
+    # never leaves the language.
+    def walk(moves, state, rng) = moves.fetch(state).sample(random: rng)
+
+    def pitch_classes(key, degree, quality) = QUALITIES.fetch(quality).map { |i| (key + degree + i) % 12 }
+
+    # Each tone of the next chord goes to the note nearest the voice that sat
+    # at its index in the last one, inside the range, so the chords move by
+    # the smallest steps they can and the pad never jumps register.
+    def nearest_voicing(pitch_classes, previous, range:, first:)
+      target = previous.empty? ? first : previous
+      pitch_classes.each_with_index.map do |pc, index|
+        centre = target[index] || target.last
+        range.select { |m| m % 12 == pc }.min_by { |m| (m - centre).abs }
+      end.sort.uniq
+    end
 
     # One line an operator can read back, and the seed that reproduces it.
     def report

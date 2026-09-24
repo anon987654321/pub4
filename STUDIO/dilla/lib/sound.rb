@@ -98,11 +98,18 @@ module AnalogSynth
   # `phase` runs 0 to 1 across one cycle. Everything below is that cycle drawn
   # as arithmetic rather than looked up in a table, which costs a little speed
   # and buys exactness.
-  def wave(shape, phase)
+  #
+  # PULSE, REVERSE_SAW and TRI_SAW are the Model D's other shapes: a rectangle
+  # of any width (the wide and narrow pulses), OSC 3's falling ramp, and the
+  # shark tooth between a triangle and a saw that OSC 1 and 2 carry.
+  def wave(shape, phase, width = 0.5)
     case shape
     when :saw then (2.0 * phase) - 1.0
     when :square then phase < 0.5 ? 1.0 : -1.0
     when :triangle then phase < 0.5 ? (4.0 * phase) - 1.0 : 3.0 - (4.0 * phase)
+    when :pulse then phase < width ? 1.0 : -1.0
+    when :reverse_saw then 1.0 - (2.0 * phase)
+    when :tri_saw then (wave(:triangle, phase) + wave(:saw, phase)) * 0.5
     else Math.sin(2.0 * Math::PI * phase)
     end
   end
@@ -690,6 +697,456 @@ module AnalogSynth
     ToolRun.capture3(["ffmpeg", "-y", "-v", "quiet", "-f", "s16le", "-ar", RATE.to_s,
                       "-ac", "2", "-i", "-", "-c:a", "pcm_s16le", dest], stdin_data: inter.pack("s<*"), binmode: true)
     dest
+  end
+end
+
+require "yaml"
+
+# The Minimoog Model D, and the voice that plays AnalogSynth live.
+#
+# render_note! renders a whole note into a buffer that is finished before
+# anybody hears it, so a patch is fixed for the note's life. Playing live, the
+# knobs turn while notes sound: LiveVoice renders one block at a time and takes
+# its cutoff, resonance and detune fresh on every block. It plays the same
+# PATCHES through the same Ladder and the same Envelope, so a patch sounds the
+# same live as rendered.
+module AnalogSynth
+  # The Model D front panel, read into a patch this engine plays. Patches are
+  # written as knob positions (data/model_d.yml) because that is how the sound
+  # charts write them; every conversion from a dial to hertz, seconds, octaves
+  # or gain happens in this module and nowhere else. What comes out is a
+  # PATCHES-shaped hash with the Model D's extra controls beside it, and
+  # LiveVoice plays those extras only when a patch carries them.
+  module ModelD
+    DATA_FILE = File.expand_path("../data/model_d.yml", __dir__)
+    # Footage to octaves from 8'. LO is sub-audio: the oscillator becomes a
+    # sweep, which is how OSC 3 serves as the Model D's only LFO.
+    RANGES = { "LO" => nil, "32'" => -2, "16'" => -1, "8'" => 0, "4'" => 1, "2'" => 2 }.freeze
+    OSC_WAVES = %i[triangle tri_saw saw square wide_pulse narrow_pulse].freeze
+    OSC3_WAVES = %i[triangle reverse_saw saw square wide_pulse narrow_pulse].freeze
+    WIDTHS = { square: 0.5, wide_pulse: 0.3, narrow_pulse: 0.15 }.freeze
+    # OSC 3 in LO sits at 2 Hz with its dial centred, and in LO the dial reaches
+    # three and a half octaves either way (0.18 to 22 Hz); in an audio range the
+    # same dial moves seven semitones.
+    LO_HZ = 2.0
+    LO_OCTAVES_PER_DIAL = 3.5 / 7.0
+    # A keyboard-off oscillator in an audio range holds the pitch middle C gives.
+    MIDDLE_C_HZ = 261.63
+    # The cutoff dial reads -5..+5, one octave a unit, with 0 at C5: its ends
+    # are 16 Hz and 16.7 kHz.
+    CUTOFF_CENTRE_HZ = 523.25
+    # Emphasis 10 is past the ladder's self-oscillation at 1.0, as on the
+    # instrument: the top of the dial sings.
+    EMPHASIS_FULL = 1.08
+    # Contour amount 10 opens the filter five octaves above its cutoff.
+    CONTOUR_OCTAVES = 5.0
+    # Contour dials are logarithmic: attack 1 ms to 10 s, decay 4 ms to 35 s.
+    ATTACK_RANGE = [0.001, 10.0].freeze
+    DECAY_RANGE = [0.004, 35.0].freeze
+    GLIDE_RANGE = [0.002, 10.0].freeze
+    # With the decay switch off, a released key stops this fast: short, and long
+    # enough not to click.
+    SWITCH_OFF_RELEASE = 0.008
+    # Mixer dials are audio taper. At 5 a source sits inside the filter; three
+    # at 10 drive its input hard, which is the fat Moog sound.
+    MIXER_FULL = 1.4
+    # The output patched back into the external input: past 5 it growls.
+    FEEDBACK_FULL = 1.6
+    KEYBOARD_CONTROL = { "keyboard_control_1" => 1.0 / 3.0, "keyboard_control_2" => 2.0 / 3.0 }.freeze
+    # The mod wheel's reach at 10, squared on the way so the first half of its
+    # travel is vibrato and the second half is a siren.
+    WHEEL_PITCH_SEMITONES = 12.0
+    WHEEL_CUTOFF_OCTAVES = 3.0
+    DIAL_MAX = 10.0
+
+    module_function
+
+    def panels = @panels ||= YAML.load_file(DATA_FILE).fetch("patches").freeze
+
+    def names = panels.keys
+
+    def panel(name) = panels.fetch(name.to_s) { raise ArgumentError, "no Model D patch #{name} (#{names.join(', ')})" }
+
+    def patch(name)
+      (@patches ||= {})[name.to_s] ||= build(name.to_s, panel(name)).freeze
+    end
+
+    def build(name, panel)
+      controls = panel.fetch("controllers", {})
+      voices = oscillators(name, panel.fetch("oscillators"), panel.fetch("mixer"))
+      {
+        name:, model_d: true, legato: panel.fetch("legato", false), voices: panel.fetch("voices", 1),
+        **voices, drive: 1.0, **filter(panel.fetch("filter")), **mixer(panel.fetch("mixer")),
+        filter_env: contour(panel.fetch("filter"), controls), amp: contour(panel.fetch("loudness"), controls),
+        glide: controls.fetch("glide", 0).to_f.positive? ? taper(controls["glide"], GLIDE_RANGE) : 0.0,
+        mod: modulation(panel.fetch("oscillators").fetch("osc3"), controls),
+        drift_cents: panel.dig("condition", "drift_cents"), volume: dial(panel.fetch("volume", 8)),
+      }
+    end
+
+    # The audible oscillators, as PATCHES spells them. A source the mixer has
+    # at zero is left out rather than computed and multiplied by nothing.
+    def oscillators(name, oscs, mixer)
+      audible = %w[osc1 osc2 osc3].filter_map do |key|
+        level = mixer_gain(mixer.fetch(key, 0))
+        [oscillator(name, key, oscs.fetch(key)), level] if level.positive?
+      end
+      raise ArgumentError, "Model D patch #{name}: every oscillator is off in the mixer" if audible.empty?
+
+      shapes = audible.map(&:first)
+      { waves: shapes.map { _1[:wave] }, widths: shapes.map { _1[:width] }, octaves: shapes.map { _1[:octave] },
+        detune: shapes.map { _1[:cents] }, fixed_hz: shapes.map { _1[:fixed_hz] }, levels: audible.map(&:last) }
+    end
+
+    def oscillator(name, key, osc)
+      shape = osc.fetch("wave").to_sym
+      allowed = key == "osc3" ? OSC3_WAVES : OSC_WAVES
+      raise ArgumentError, "Model D patch #{name}: #{key} has no #{shape}" unless allowed.include?(shape)
+
+      range = RANGES.fetch(osc.fetch("range").to_s) { raise ArgumentError, "Model D patch #{name}: #{key} range #{osc['range']}" }
+      frequency = osc.fetch("frequency", 0).to_f
+      free = osc.fetch("keyboard_control", true) == false || range.nil?
+      { wave: WIDTHS.key?(shape) ? :pulse : shape, width: WIDTHS.fetch(shape, 0.5), octave: range.to_f,
+        cents: frequency * 100.0, fixed_hz: free ? fixed_hz(range, frequency) : nil, }
+    end
+
+    def fixed_hz(range, frequency)
+      return LO_HZ * (2.0**(frequency * LO_OCTAVES_PER_DIAL)) if range.nil?
+
+      MIDDLE_C_HZ * (2.0**(range + (frequency / 12.0)))
+    end
+
+    # PATCHES add their envelope to the cutoff in hertz. The Model D's contour
+    # is in octaves over the cutoff, so it arrives here as the hertz that reach
+    # the same peak.
+    def filter(filter)
+      cutoff = CUTOFF_CENTRE_HZ * (2.0**filter.fetch("cutoff", 0).to_f)
+      octaves = dial(filter.fetch("contour_amount", 0)) * CONTOUR_OCTAVES
+      { cutoff:, env_amount: cutoff * ((2.0**octaves) - 1.0),
+        resonance: dial(filter.fetch("emphasis", 0)) * EMPHASIS_FULL,
+        keytrack: KEYBOARD_CONTROL.sum { |switch, share| filter.fetch(switch, false) == true ? share : 0.0 }, }
+    end
+
+    def mixer(mixer)
+      { noise: mixer_gain(mixer.fetch("noise", 0)), noise_color: mixer.fetch("noise_color", "white").to_sym,
+        feedback: (dial(mixer.fetch("external", 0))**2) * FEEDBACK_FULL, }
+    end
+
+    # One decay switch serves both contours: on, a released key falls at the
+    # decay rate; off, it stops.
+    def contour(dials, controls)
+      decay = taper(dials.fetch("decay", 0), DECAY_RANGE)
+      Envelope.new(attack: taper(dials.fetch("attack", 0), ATTACK_RANGE), decay:,
+                   sustain: dial(dials.fetch("sustain", 10)),
+                   release: controls.fetch("decay_switch", false) == true ? decay : SWITCH_OFF_RELEASE)
+    end
+
+    # OSC 3 and noise on the mod wheel, mixed by the mod mix dial, each route
+    # behind its own switch. Nil when the wheel reaches nothing.
+    def modulation(osc3, controls)
+      wheel = dial(controls.fetch("wheel", 0))**2
+      pitch = controls.fetch("osc_mod", false) == true ? wheel * WHEEL_PITCH_SEMITONES : 0.0
+      cutoff = controls.fetch("filter_mod", false) == true ? wheel * WHEEL_CUTOFF_OCTAVES : 0.0
+      return nil if pitch.zero? && cutoff.zero?
+
+      shape = osc3.fetch("wave").to_sym
+      range = RANGES.fetch(osc3.fetch("range").to_s)
+      { hz: fixed_hz(range, osc3.fetch("frequency", 0).to_f), wave: WIDTHS.key?(shape) ? :pulse : shape,
+        width: WIDTHS.fetch(shape, 0.5), noise_mix: dial(controls.fetch("mod_mix", 0)),
+        pitch_semitones: pitch, cutoff_octaves: cutoff, }
+    end
+
+    # Where Ladder starts to sing, as a multiple of resonance 1.0: it rises
+    # with the cutoff, because the unit delay in the feedback adds phase the
+    # higher the cutoff sits (measured at 32 and 44.1 kHz: 1.02 at 100 Hz, 1.18
+    # at 800, 1.54 at 2 kHz, within 0.03 of 1 + f + 2f^2 for the stage
+    # coefficient f). The Model D's threshold does not move, so its emphasis is
+    # read against this: 10 sings from the bass through 2 kHz, as the
+    # instrument's does. Near 5 kHz at 32 kHz nothing makes this ladder ring.
+    def self_oscillation(cutoff, rate)
+      f = 1.0 - Math.exp(-2.0 * Math::PI * cutoff.clamp(20.0, rate * 0.45) / rate)
+      1.0 + f + (2.0 * f * f)
+    end
+
+    def mixer_gain(value) = (dial(value)**2) * MIXER_FULL
+
+    def dial(value) = (value.to_f / DIAL_MAX).clamp(0.0, 1.0)
+
+    # A logarithmic pot: 0 is the short end of the range, 10 the long end.
+    def taper(value, range)
+      low, high = range
+      low * ((high / low)**dial(value))
+    end
+  end
+
+  # One note, rendered a block at a time.
+  #
+  # The per-sample arithmetic for a PATCHES entry is render_note!'s: the same
+  # oscillators summed at 1/n, the same Ladder, the same Envelope. What changes
+  # per block is what the caller hands in -- cutoff, resonance, detune spread,
+  # pan -- which is what lets the knobs turn under a held chord. A Model D
+  # patch adds pulse widths, mixer levels, noise, feedback, keyboard tracking,
+  # glide and the mod wheel, and takes the longer loop that computes them.
+  class LiveVoice
+    # Glide and the mod wheel move every this many frames, not every sample: at
+    # 32 kHz that is 2 ms, below what the ear resolves as a step.
+    SUBSTEP = 64
+    # An RC glide covers 95% of the interval in three time constants.
+    GLIDE_TAUS = 3.0
+    REFERENCE_HZ = 261.63
+    TWO_PI = 2.0 * Math::PI
+
+    attr_reader :spec, :start, :held, :role, :hz
+
+    def self.midi_hz(midi) = 440.0 * (2.0**((midi - 69) / 12.0))
+
+    # The draws from rng come in the order render_note! has always taken them:
+    # the note's drift, then each oscillator's starting phase.
+    #
+    # A Model D line played legato is one voice: `path` holds the later notes
+    # as [seconds into the voice, midi], and the voice glides to each without
+    # retriggering its contours, which is the Minimoog's single trigger.
+    # from_midi is where the first note glides in from.
+    def initialize(midi:, spec:, start:, held:, gain:, role:, rng:, rate:, drift_cents: 0.7, from_midi: nil, path: [])
+      # A PATCHES entry's own drift_cents belongs to render_note!'s lines; live,
+      # every note takes the stream's, as the approved takes did. A Model D
+      # panel's condition is its own and wins.
+      spread = ((spec[:model_d] && spec[:drift_cents]) || drift_cents).to_f
+      @hz = self.class.midi_hz(midi) * (2.0**(rng.rand(-spread..spread) / 1200.0))
+      @spec = spec
+      @start = start
+      @held = held
+      @gain = gain * (spec[:volume] || 1.0)
+      @role = role
+      @rate = rate.to_f
+      @freqs = spec[:waves].each_index.map { |k| (spec[:fixed_hz]&.[](k)) || osc_hz(k) }
+      @phases = spec[:waves].map { rng.rand }
+      @ladder = Ladder.new(rate:)
+      return unless spec[:model_d]
+
+      @path = pitch_path(midi, from_midi, path)
+      @segment = 0
+      @noise_rng = Random.new(rng.rand(1 << 30))
+      @pink = [0.0, 0.0, 0.0]
+      @last = 0.0
+    end
+
+    def silent_at = @start + @held + @spec[:amp].release
+
+    def done?(time) = time > silent_at
+
+    # Adds this note's share of the block into left and right. cutoff is the
+    # patch's cutoff after the knobs; spread multiplies every odd oscillator,
+    # which is the detune knob; contour scales the filter envelope.
+    #
+    # Past its release window a note is silent by definition, even where its
+    # envelope is not: a sustain of zero under a decay longer than the note
+    # (e_piano) is still falling when the window closes, and the approved
+    # takes cut it there.
+    def render!(left, right, block_start, cutoff:, resonance:, spread:, pan:, contour: 1.0)
+      return if block_start + (left.length / @rate) < @start || block_start > silent_at
+
+      freqs = spread == 1.0 ? @freqs : @freqs.each_with_index.map { |f, k| k.odd? ? f * spread : f }
+      if @spec[:model_d]
+        render_model_d!(left, right, block_start, freqs, cutoff, resonance, pan, contour)
+      else
+        render_patch!(left, right, block_start, freqs, cutoff, resonance, pan, contour)
+      end
+    end
+
+    private
+
+    def osc_hz(k) = @hz * (2.0**@spec[:octaves][k]) * (2.0**(@spec[:detune][k] / 1200.0))
+
+    # [seconds, pitch it glides from, pitch it glides to], each as a ratio to
+    # the first note. Every glide starts where the one before it was headed.
+    def pitch_path(midi, from_midi, notes)
+      ratio = ->(other) { self.class.midi_hz(other) / self.class.midi_hz(midi) }
+      path = [[0.0, from_midi ? ratio.call(from_midi) : 1.0, 1.0]]
+      notes.each { |at, other| path << [at.to_f, path.last[2], ratio.call(other)] }
+      path
+    end
+
+    def render_patch!(left, right, block_start, freqs, cutoff, resonance, pan, contour)
+      spec = @spec
+      waves = spec[:waves]
+      level = 1.0 / waves.size
+      env_amount = spec[:env_amount] * contour
+      drive = spec[:drive]
+      n = left.length
+      j = 0
+      while j < n
+        t = block_start + (j.to_f / @rate) - @start
+        if t >= 0
+          raw = 0.0
+          k = 0
+          while k < freqs.size
+            @phases[k] = (@phases[k] + (freqs[k] / @rate)) % 1.0
+            raw += AnalogSynth.wave(waves[k], @phases[k]) * level
+            k += 1
+          end
+          cut = cutoff + (env_amount * spec[:filter_env].at(t, @held))
+          out = @ladder.process(raw * drive, cut.clamp(30.0, 12_000.0), resonance) * spec[:amp].at(t, @held) * @gain
+          left[j] += out * pan
+          right[j] += out * (1.0 - pan)
+        end
+        j += 1
+      end
+    end
+
+    def render_model_d!(left, right, block_start, freqs, cutoff, resonance, pan, contour)
+      spec = @spec
+      env_amount = spec[:env_amount] * contour
+      key = (@hz / REFERENCE_HZ)**spec[:keytrack]
+      n = left.length
+      bend = 1.0
+      lift = 1.0
+      emphasis = resonance
+      j = 0
+      while j < n
+        t = block_start + (j.to_f / @rate) - @start
+        if t >= 0
+          substep = (j % SUBSTEP).zero?
+          bend, lift = controls(t, block_start + (j.to_f / @rate)) if substep
+          raw = oscillators(freqs, bend) + noise + (spec[:feedback] * @last)
+          cut = ((cutoff + (env_amount * spec[:filter_env].at(t, @held))) * key * lift).clamp(30.0, 12_000.0)
+          emphasis = resonance * ModelD.self_oscillation(cut, @rate) if substep
+          @last = @ladder.process(raw, cut, emphasis) * spec[:amp].at(t, @held) * @gain
+          left[j] += @last * pan
+          right[j] += @last * (1.0 - pan)
+        end
+        j += 1
+      end
+    end
+
+    def oscillators(freqs, bend)
+      spec = @spec
+      raw = 0.0
+      k = 0
+      while k < freqs.size
+        step = spec[:fixed_hz][k] ? freqs[k] : freqs[k] * bend
+        @phases[k] = (@phases[k] + (step / @rate)) % 1.0
+        raw += AnalogSynth.wave(spec[:waves][k], @phases[k], spec[:widths][k]) * spec[:levels][k]
+        k += 1
+      end
+      raw
+    end
+
+    # Pitch multiplier (glide, then the wheel) and cutoff multiplier (the wheel)
+    # at note time t. OSC 3 runs free on the clock, not from the key, as the
+    # instrument's does.
+    def controls(t, clock)
+      @segment += 1 while @path[@segment + 1] && @path[@segment + 1][0] <= t
+      at, from, to = @path[@segment]
+      glide = @spec[:glide]
+      bend = glide.positive? ? to * ((from / to)**Math.exp(-(t - at) * GLIDE_TAUS / glide)) : to
+      mod = @spec[:mod] or return [bend, 1.0]
+
+      sweep = AnalogSynth.wave(mod[:wave], (mod[:hz] * clock) % 1.0, mod[:width])
+      value = (sweep * (1.0 - mod[:noise_mix])) + (((@noise_rng.rand * 2.0) - 1.0) * mod[:noise_mix])
+      [bend * (2.0**(value * mod[:pitch_semitones] / 12.0)), 2.0**(value * mod[:cutoff_octaves])]
+    end
+
+    # White, or pink through Paul Kellet's three-pole economy filter, which is
+    # within a decibel of -3 dB per octave across the audio band.
+    def noise
+      level = @spec[:noise]
+      return 0.0 unless level.positive?
+
+      white = (@noise_rng.rand * 2.0) - 1.0
+      return white * level unless @spec[:noise_color] == :pink
+
+      @pink[0] = (0.99765 * @pink[0]) + (white * 0.0990460)
+      @pink[1] = (0.96300 * @pink[1]) + (white * 0.2965164)
+      @pink[2] = (0.57000 * @pink[2]) + (white * 1.0526913)
+      (@pink[0] + @pink[1] + @pink[2] + (white * 0.1848)) * 0.25 * level
+    end
+  end
+
+  # Two-operator FM, for leads that are not a filtered oscillator: a sine
+  # carrier at the note, a sine modulator at an inharmonic ratio of it with
+  # feedback into itself, and a modulation index that sweeps down as the note
+  # speaks. Each note nudges its preset's ratio and index, so no two land on
+  # the same spectrum. The cutoff knob opens the index and the resonance knob
+  # feeds the modulator back harder: the same two knobs, bending FM instead.
+  class FmVoice
+    TWO_PI = 2.0 * Math::PI
+    # A held note closes over this long once its key is up.
+    RELEASE_SECONDS = 0.08
+    # How long past its held time the voice stays in the stage.
+    TAIL_SECONDS = 0.5
+
+    attr_reader :start, :held, :role
+
+    def initialize(midi:, preset:, start:, held:, gain:, rng:, rate:)
+      @fm = preset.merge(ratio: preset[:ratio] * (1.0 + rng.rand(-0.03..0.03)), index: preset[:index] * rng.rand(0.6..1.4))
+      @hz = LiveVoice.midi_hz(midi)
+      @start = start
+      @held = held + @fm[:decay]
+      @gain = gain
+      @phases = [rng.rand, rng.rand, 0.0]
+      @pan = rng.rand(0.2..0.8)
+      @rate = rate
+      @role = :lead
+    end
+
+    def done?(time) = time > @start + @held + TAIL_SECONDS
+
+    def render!(left, right, block_start, knobs:)
+      return if block_start + (left.length.to_f / @rate) < @start
+
+      fm = @fm
+      open = knobs["cutoff"]
+      feed = fm[:fb] * (0.5 + knobs["resonance"])
+      j = 0
+      while j < left.length
+        t = block_start + (j.to_f / @rate) - @start
+        if t >= 0
+          env = (t < fm[:attack] ? t / fm[:attack] : Math.exp(-(t - fm[:attack]) / (fm[:decay] * 0.5)))
+          env *= t > @held ? Math.exp(-(t - @held) / RELEASE_SECONDS) : 1.0
+          index = (fm[:index] * Math.exp(-t / fm[:index_decay])) + (fm[:index] * 0.25 * open)
+          @phases[1] = (@phases[1] + (@hz * fm[:ratio] / @rate)) % 1.0
+          mod = Math.sin((TWO_PI * @phases[1]) + (feed * @phases[2]))
+          @phases[2] = mod
+          @phases[0] = (@phases[0] + (@hz / @rate)) % 1.0
+          out = Math.sin((TWO_PI * @phases[0]) + (index * mod)) * env * @gain
+          left[j] += out * @pan
+          right[j] += out * (1.0 - @pan)
+        end
+        j += 1
+      end
+    end
+  end
+
+  # A patch change played as knobs turning: `to` with its cutoff, envelope
+  # amount, resonance, drive and both envelopes part of the way back toward
+  # `from`. The oscillators are `to`'s -- a new chord starts new notes, and
+  # the ear hears the change there as the filter and the contours travel.
+  def self.blend(from, to, weight)
+    return to if weight >= 1.0 || from.equal?(to)
+
+    mix = ->(a, b) { a + ((b - a) * weight) }
+    envelope = lambda do |a, b|
+      Envelope.new(attack: mix.call(a.attack, b.attack), decay: mix.call(a.decay, b.decay),
+                   sustain: mix.call(a.sustain, b.sustain), release: mix.call(a.release, b.release))
+    end
+    to.merge(cutoff: from[:cutoff] * ((to[:cutoff] / from[:cutoff])**weight),
+             env_amount: mix.call(from[:env_amount], to[:env_amount]), resonance: mix.call(from[:resonance], to[:resonance]),
+             drive: mix.call(from[:drive], to[:drive]), amp: envelope.call(from[:amp], to[:amp]),
+             filter_env: envelope.call(from[:filter_env], to[:filter_env]))
+  end
+
+  # A block of stereo floats to 16-bit PCM through the tanh master the live
+  # sound was approved with: tanh(s * drive) scaled under full scale.
+  def self.live_pcm(left, right, drive:, scale:)
+    out = Array.new(left.length * 2)
+    i = 0
+    while i < left.length
+      out[i * 2] = (Math.tanh(left[i] * drive) * scale).round
+      out[(i * 2) + 1] = (Math.tanh(right[i] * drive) * scale).round
+      i += 1
+    end
+    out.pack("s<*")
   end
 end
 
