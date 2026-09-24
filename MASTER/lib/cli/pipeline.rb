@@ -85,7 +85,7 @@ module Master
           stage.call(frozen)
         rescue StandardError => e
           @bus&.publish("pipeline:stage_error", stage: stage.class.name, error: e.message)
-          Result.ok(frozen.merge(_stage_error: e.message))
+          Result.err("parallel stage #{stage.class.name}: #{e.message}", category: :infrastructure)
         end
 
         def collect_pool_results(workers, results, frozen)
