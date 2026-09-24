@@ -1299,6 +1299,7 @@ en:
       job: Jobs
       housing: Housing
       gig: Gigs
+    promo_cta: "View offer"
     kind_empty:
       goods: Nothing for sale in %{city} yet
       job: No jobs in %{city} yet
@@ -1339,6 +1340,9 @@ en:
       other: Other
   takeaway:
     intro: This is a menu and order demo, not a live restaurant network. Payment is
+    promo_headline: "Fresh finds, close to home"
+    promo_body: "%{restaurant} brings today's menu to your door."
+    promo_cta: "View menu"
       arranged with the kitchen. No signup to place a trial order.
     unsave: Unsave
     save_restaurant: Save
