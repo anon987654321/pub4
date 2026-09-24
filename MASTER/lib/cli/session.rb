@@ -21,7 +21,6 @@ module Master
     class Session
       CONFIG = (Master.load_yaml(Master.data_path("patterns.yml")) || {}).fetch("cli", {}).freeze
       IDLE_SLEEP_DEFAULT = CONFIG.fetch("idle_sleep_seconds", 60)
-      REPLAY_TURNS = CONFIG.fetch("replay_turns", 5)
       DMESG_BUFFER_LINES = CONFIG.fetch("dmesg_buffer_lines", 80)
       MULTILINE_MAX_LINES = CONFIG.fetch("multiline_max_lines", 500)
       HISTORY_LIMIT = CONFIG.fetch("history_limit", 2_000)
@@ -58,9 +57,11 @@ module Master
         # a blank line before each block that follows and before the prompt.
         puts @refs.renderer.splash(@refs.agent.model)
         start_boot_scan unless skip_boot_scan?
-        puts @refs.renderer.session_line(@refs.session.name) if @refs.session.name
+        # One line for a resumed session. Replaying its last turns printed an old
+        # reply above the prompt, which read as a canned answer to a message not
+        # yet typed.
+        puts @refs.renderer.session_line(@refs.session.name, @refs.session.messages.size) if @refs.session.name
         print_repo_tree unless booted_before?
-        replay_recent_turns if @refs.session.messages.any?
         puts
         run_input(initial_message) if initial_message
         @running = true

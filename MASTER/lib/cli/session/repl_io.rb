@@ -133,20 +133,6 @@ module Master
         lines.join("\n")
       end
 
-      def replay_recent_turns
-        tail = @refs.session.messages.last(REPLAY_TURNS * 2)
-        return if tail.empty?
-
-        puts
-        puts @refs.renderer.render("resume0: last #{tail.size} messages", mode: :dim)
-        tail.each do |msg|
-          # A loaded transcript holds the role as a string.
-          tag = msg[:role].to_s == "user" ? "you" : "master"
-          snippet = msg[:content].to_s.gsub(TERMINAL_REPLY, "").lines.first.to_s.strip[0, 100]
-          puts @refs.renderer.render("  #{tag}: #{snippet}", mode: :dim) unless snippet.empty?
-        end
-      end
-
       def print_repo_tree
         lines = Master::CLI::CommandRegistry.dispatch_tree(@refs.root).to_s.split("\n")
         return if lines.empty?
