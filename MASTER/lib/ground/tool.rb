@@ -75,12 +75,17 @@ module Master
         def group(name) = Array(groups[name.to_s])
 
         def profiles_config
-          data = Master.load_yaml(CONFIG_PATH) || {}
-          hash = data.dig("tools", "profiles")
-          hash.is_a?(Hash) ? hash : {}
+          path = CONFIG_PATH
+          return {} unless File.file?(path)
+
+          data = Master.load_yaml(path)
+          hash = data&.dig("tools", "profiles")
+          raise "tool profile policy missing or invalid: #{path}" unless hash.is_a?(Hash)
+
+          hash
         rescue StandardError => e
           Swallow.log(e, context: "ToolProfile.profiles")
-          {}
+          raise "tool profile policy unreadable: #{e.class}: #{e.message}"
         end
       end
 
