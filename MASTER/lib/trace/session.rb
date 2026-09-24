@@ -106,16 +106,16 @@ module Master
       # Token accounting and compaction of one conversation, which ContextWindow
       # drives — separate from Session's transcript, cost and save-load concerns.
       module Compaction
-        def token_est(key = Session.conversation_key) = @mutex.synchronize { conversation(key)[:token_est] }
+        def token_est(key = nil) = @mutex.synchronize { conversation(key || current_key)[:token_est] }
 
         # The provider counts the system prompt, tools and the messages it was
         # sent, which the character estimate never sees, so pressure takes the
         # larger of the two.
-        def record_input_tokens(count) = @mutex.synchronize { conversation[:input_tokens] = count.to_i }
+        def record_input_tokens(count) = @mutex.synchronize { conversation(current_key)[:input_tokens] = count.to_i }
 
-        def token_pressure(key = Session.conversation_key)
+        def token_pressure(key = nil)
           @mutex.synchronize do
-            convo = conversation(key)
+            convo = conversation(key || current_key)
             [convo[:token_est].to_i, convo[:input_tokens].to_i].max
           end
         end
@@ -124,7 +124,7 @@ module Master
         # so turns appended while the summary was being written survive it.
         def compact_prefix!(count, summary)
           @mutex.synchronize do
-            convo = conversation
+            convo = conversation(current_key)
             kept = convo[:messages].drop(count)
             head = { role: :assistant, content: summary, ts: Time.now.to_i }
             convo[:messages].replace([head] + kept)
@@ -195,16 +195,16 @@ module Master
       # The current conversation's transcript. Returned by reference, not
       # copied: callers append to it (test_llm_dispatcher does) and every
       # existing reader expects the same array identity it always got.
-      def messages(key = Session.conversation_key) = @mutex.synchronize { conversation(key)[:messages] }
-      def name(key = Session.conversation_key) = @mutex.synchronize { conversation(key)[:name] }
+      def messages(key = nil) = @mutex.synchronize { conversation(key || current_key)[:messages] }
+      def name(key = nil) = @mutex.synchronize { conversation(key || current_key)[:name] }
 
       # Clone a conversation without changing the caller's active conversation.
-      def fork!(source_key: Session.conversation_key, target_key: nil)
+      def fork!(source_key: nil, target_key: nil)
         target_key ||= "fork-#{Time.now.utc.strftime("%Y%m%d%H%M%S")}-#{SecureRandom.hex(4)}"
         raise ArgumentError, "source and target conversations are identical" if source_key == target_key
         @mutex.synchronize do
           raise ArgumentError, "conversation already exists: #{target_key}" if @conversations.key?(target_key)
-          source = conversation(source_key)
+          source = conversation(source_key || current_key)
           @conversations[target_key] = {
             messages: source[:messages].map(&:dup),
             token_est: source[:token_est],
@@ -234,9 +234,9 @@ module Master
       def add_message(role:, content:)
         msg = { role:, content:, ts: Time.now.to_i }
         @mutex.synchronize do
-          conversation[:messages] << msg
-          conversation[:token_est] += Session.estimate_tokens(content)
-          conversation[:name] ||= auto_name(content) if role == :user
+          conversation(current_key)[:messages] << msg
+          conversation(current_key)[:token_est] += Session.estimate_tokens(content)
+          conversation(current_key)[:name] ||= auto_name(content) if role == :user
         end
         msg
       end
@@ -265,7 +265,7 @@ module Master
       # still global — it is money spent by the process, and no visitor's /clear
       # should zero the operator's spend.
       def clear!
-        @mutex.synchronize { @conversations[Session.conversation_key] = blank_conversation; @topic = nil }
+        @mutex.synchronize { @conversations[current_key] = blank_conversation; @topic = nil }
         self
       end
 
@@ -273,13 +273,15 @@ module Master
 
       # Always call inside @mutex. Created on read rather than up front, so a key
       # that has never spoken costs nothing.
-      def conversation(key = Session.conversation_key) = @conversations[key] ||= blank_conversation
+      def current_key = Fiber[:master_conversation] || @active_key || LOCAL
+
+      def conversation(key = nil) = @conversations[key || current_key] ||= blank_conversation
 
       def blank_conversation = { messages: [], token_est: 0, name: nil }
 
-      def pruned_messages(key = Session.conversation_key)
+      def pruned_messages(key = nil)
         @mutex.synchronize do
-          msgs = conversation(key)[:messages]
+          msgs = conversation(key || current_key)[:messages]
           return msgs if msgs.size <= FULL_MESSAGE_WINDOW
 
           older = msgs[0...-FULL_MESSAGE_WINDOW]
