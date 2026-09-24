@@ -56,6 +56,15 @@ class TestDataReachAttribution < Minitest::Test
     end
   end
 
+  def test_unreadable_data_file_cannot_look_clean
+    Dir.mktmpdir do |dir|
+      FileUtils.mkdir_p(File.join(dir, "data"))
+      File.write(File.join(dir, "data", "broken.yml"), "broken: [yaml")
+      File.write(File.join(dir, "broken.rb"), "puts :broken")
+      assert_raises(SystemExit) { Tool.send(:check_corpus!, [File.join(dir, "data", "broken.yml")]) }
+    end
+  end
+
   def test_the_ceiling_is_still_read_from_the_count
     in_tmp_ceiling({ "unnamed" => 12 }) { assert_equal 12, Tool.ceiling }
   end
