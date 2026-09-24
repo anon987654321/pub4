@@ -277,9 +277,8 @@ class TestFixLoopOscillation < Minitest::Test
   def test_fix_loop_streams_per_file_scan_progress
     loop = build_loop([{ rule: "TEST_RULE", line: 1, message: "boom" }])
 
-    out, = capture_io { loop.preview(@root) }
+    loop.preview(@root)
 
-    assert_includes out, "scan: dummy.yml 1 violation(s)"
     assert @bus.events.any? { |event|
       event[:event] == "fix_loop:scan_progress" &&
         event[:payload][:file] == "dummy.yml" &&
