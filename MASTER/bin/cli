@@ -47,7 +47,7 @@ end
 def parse_initial_message_options(argv)
   options = {}
   parser = OptionParser.new do |opts|
-    opts.banner = "Usage: bin/cli [-m MSG] [--continue [ID]|--session ID|--fork [ID]|--sessions] [--fast] [--web|--no-web] [--boot-status]"
+    opts.banner = "Usage: bin/cli [-p PROMPT|-m MSG] [--continue [ID]|--session ID|--fork [ID]|--sessions] [--effort low|medium|high] [--headless] [--fast] [--web|--no-web] [--boot-status]"
     opts.on("-h", "--help") do
       puts opts
       puts ""
@@ -58,6 +58,16 @@ def parse_initial_message_options(argv)
       exit 0
     end
     opts.on("-m", "--message TEXT") { |text| options[:message] = text }
+    opts.on("-p", "--prompt TEXT") { |text| options[:message] = text }
+    opts.on("--effort LEVEL", %w[low medium high]) { |level| ENV["MASTER_EFFORT"] = level }
+    opts.on("--headless", "run one autonomous goal and emit one JSON mission receipt") do
+      ENV["MASTER_HEADLESS"] = "1"
+      ENV["MASTER_FOLD"] = "1"
+      ENV["MASTER_FAST"] = "1"
+      ENV["MASTER_SKIP_BOOT_SCAN"] = "1"
+      ENV["MASTER_SKIP_TTS"] = "1"
+      ENV["MASTER_WEB"] = "0"
+    end
     opts.on("-c", "--continue [ID]") { |id| options[:message] = id.to_s.empty? ? "/continue" : "/continue #{id}" }
     opts.on("--resume [ID]") { |id| options[:message] = id.to_s.empty? ? "/resume" : "/resume #{id}" }
     opts.on("-s", "--session ID") { |id| options[:message] = "/continue #{id}" }
@@ -126,11 +136,18 @@ Master::Ops::RuntimeLoopGuards.install!
 if ENV["MASTER_FOLD"] == "1"
   goal = initial_message_from_argv(ARGV)
   container = cli.container
-  puts Master::CLI::CoreBridge.run_string(
+  result = Master::CLI::CoreBridge.run(
     goal, root: Dir.pwd, bus: container[:bus], model_id: container[:agent]&.model
   )
+  if ENV["MASTER_HEADLESS"] == "1"
+    puts JSON.generate(result.merge(status: result[:reason] == :complete ? "SUCCESS" : "INCONCLUSIVE"))
+  else
+    puts Master::CLI::CoreBridge.run_string(
+      goal, root: Dir.pwd, bus: container[:bus], model_id: container[:agent]&.model
+    )
+  end
   save_cli_session_safely(cli)
-  exit!(0)
+  exit!(result[:reason] == :complete ? 0 : 1)
 end
 
 if $stdin.tty?
