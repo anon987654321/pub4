@@ -77,8 +77,7 @@ class PluginsTest < Minitest::Test
     plugin = Master::Plugin.load("air_superiority")
     networks = plugin.send(
       :parse_openbsd_scan,
-      'nwid "Home" chan 44 bssid aa:bb:cc:dd:ee:ff rssi -52',
-      root: nil
+      'nwid "Home" chan 44 bssid aa:bb:cc:dd:ee:ff rssi -52'
     )
     assert_equal 1, networks.length
     assert_equal "Home", networks.first[:ssid]
