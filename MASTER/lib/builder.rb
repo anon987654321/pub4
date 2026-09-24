@@ -40,6 +40,7 @@ module Master
       "GitContext" => ->(r, i) { Io::GitContext.new(root: r, event_bus: i[:bus]) },
       "WebFetch" => ->(r, i) { Io::WebFetch.new(governor: i[:governor], event_bus: i[:bus]) },
       "WebSearch" => ->(r, i) { Io::WebSearch.new(governor: i[:governor], event_bus: i[:bus]) },
+      "PluginObserve" => ->(_r, i) { Io::PluginObserve.new(governor: i[:governor], event_bus: i[:bus]) },
       "Clean" => ->(r, i) { Io::Clean.new(root: r, governor: i[:governor], event_bus: i[:bus]) },
       "FeedbackRecord" => ->(r, i) { Io::FeedbackRecord.new(learnings: i[:learnings]) },
       "SubdomainOrchestrator" => ->(r, i) {
