@@ -258,7 +258,6 @@ module Master
             @ledger[:files] = [@ledger[:files].to_i, payload[:file_count].to_i].max
           when "fix_loop:scan_progress"
             @ledger[:finding_files] += 1
-            @ledger[:violations] += payload[:count].to_i
           when "fix_loop:rule_result", "rule_loop:pass"
             @ledger[:rules] += 1
             @ledger[:violations] += payload[:violations].to_i
@@ -332,6 +331,7 @@ module Master
           ledger << counted(@ledger[:council].to_i, "council review") if @ledger[:council].to_i.positive?
           ledger << counted(@ledger[:human_decisions].to_i, "human decision") if @ledger[:human_decisions].to_i.positive?
           lines << "fix0: ledger, #{ledger.join(", ")}" unless ledger.empty?
+          @ledger = Hash.new(0)
           lines
         end
 
