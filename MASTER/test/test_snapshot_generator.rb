@@ -72,4 +72,18 @@ class TestSnapshotGenerator < Minitest::Test
       refute_includes File.read(output), "snapshot_MASTER.md"
     end
   end
+
+  # The README promises one snapshot per governed tree from a bare /snapshot;
+  # Snapshot#write! gives that only when rooted at the repository.
+  def test_bare_snapshot_command_roots_at_the_repository
+    roots = []
+    fake = Object.new
+    def fake.write! = %w[snapshot_MASTER.md snapshot_RAILS.md]
+    capture = ->(root:, **) { roots << root; fake }
+
+    out = Master::Snapshot.stub(:new, capture) { Master::CLI::CommandRegistry.dispatch_snapshot(nil, ctx: { args: "" }) }
+
+    assert_equal [Master.repo_root], roots
+    assert_equal "snapshot_MASTER.md\nsnapshot_RAILS.md", out
+  end
 end
