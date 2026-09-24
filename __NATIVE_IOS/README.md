@@ -37,3 +37,29 @@ PWA, TWA, and the iOS shell.
 
 The iOS shell owns the native share sheet. Android TWA continues to use the Web
 Share API supplied by the browser.
+
+## Project generation
+
+The native source is deliberately not accompanied by a checked-in `.xcodeproj`.
+`project.yml` is the source for the Xcode project and XcodeGen generates the
+project on demand. XcodeGen supports YAML project specifications, per-target
+build settings, configurations, entitlements, and generated schemes.
+citeturn130769search0turn788467search0
+
+Generate it with:
+
+    brew install xcodegen
+    ruby RAILS/tools/mobile.rb ios
+    open __NATIVE_IOS/.build/Pub4Mobile.xcodeproj
+
+The project has one native target and separate configurations/schemes for
+Brgen, Radio, Dating, TV, Takeaway, Marketplace, Maps, Messenger, and Amber.
+The bundle IDs, origins, and product names mirror the mobile registry.
+
+For a local unsigned simulator build:
+
+    xcodebuild -project __NATIVE_IOS/.build/Pub4Mobile.xcodeproj \
+      -scheme Brgen -configuration Brgen \
+      -sdk iphonesimulator \
+      -destination 'generic/platform=iOS Simulator' \
+      CODE_SIGNING_ALLOWED=NO build
