@@ -2,6 +2,7 @@
 
 require "fileutils"
 require "json"
+require "rbconfig"
 require "securerandom"
 require "time"
 require "uri"
