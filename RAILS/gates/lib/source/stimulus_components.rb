@@ -73,6 +73,25 @@ module Deploy
       stimulus_rails_nested_form_controller.js
     ].freeze
 
+    def self.view_controller_usages
+      usages = Hash.new { |hash, key| hash[key] = [] }
+      Dir.glob(File.join(RAILS_ROOT, "**/*.{erb,html}")).each do |path|
+        next if path.include?("/vendor/") || path.include?("/public/assets/") || path.include?("/node_modules/")
+
+        File.foreach(path, encoding: "UTF-8").with_index(1) do |line, number|
+          line.scan(/data-controller\\s*=\\s*["']([^"']+)["']/).flatten.each do |controllers|
+            controllers.split(/s+/).each do |controller|
+              next if controller.empty?
+              usages[controller] << "#{path.sub(ROOT + '/', '')}:#{number}" unless usages[controller].include?("#{path.sub(ROOT + '/', '')}:#{number}")
+            end
+          end
+        end
+      end
+      usages
+    rescue StandardError
+      {}
+    end
+
     def self.run
       result = GateResult.new
       result.checked!
@@ -106,16 +125,26 @@ module Deploy
       end
 
       controller_paths = Dir.glob(File.join(RAILS_ROOT, "**/*_controller.js")).reject { |path| path.include?("/vendor/") }
+      view_usages = view_controller_usages
       COMPONENT_OPPORTUNITIES.each do |component, pattern|
         controller_paths.each do |path|
           body = File.read(path)
           next unless body.match?(pattern)
           next if body.match?(/@stimulus-components[\\/]#{Regexp.escape(component)}/)
+
+          controller_name = File.basename(path, "_controller.js").tr("_", "-")
+          call_sites = view_usages.fetch(controller_name, [])
+          # Source-only similarity is not enough. A custom controller must have
+          # a concrete rendered call site before /fix suggests replacing it.
+          next if call_sites.empty?
+
           result.checked!
-          result.fail(
-            "#{path.sub(ROOT + '/', '')}: custom Stimulus behavior overlaps @stimulus-components/#{component}; use the upstream controller when its contract fits",
-            severity: :soft
-          )
+          call_sites.first(3).each do |call_site|
+            result.fail(
+              "#{path.sub(ROOT + '/', '')}: custom Stimulus behavior overlaps @stimulus-components/#{component} at #{call_site}; inspect this concrete call site before replacing the controller",
+              severity: :soft
+            )
+          end
         end
       end
 
