@@ -92,8 +92,10 @@ module Master
 
       def flatten_violations(results)
         results.flat_map do |path, scan_result|
-          rows = scan_result.respond_to?(:ok?) && scan_result.ok? ? scan_result.value! : []
-          rows.map { |item| item.merge(path:) }
+          result = Master::Result.wrap(scan_result)
+          raise "selfcheck scan failed for #{path}: #{result.error}" unless result.ok?
+
+          result.value!.map { |item| item.merge(path:) }
         end
       end
 
