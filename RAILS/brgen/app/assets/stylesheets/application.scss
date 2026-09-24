@@ -6201,6 +6201,275 @@ font-size: clamp(12px, 3vw, var(--text-sm));
    all three apps and compiles into the same application.css; a second copy is
    a utility that can drift out from under a screen reader. */
 
+
+.radio-home {
+  width: min(100% - 32px, 960px);
+  margin-inline: auto;
+  padding-block: 24px 96px;
+  color: var(--text);
+}
+
+.radio-home-header,
+.radio-section-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.radio-home-header {
+  padding-block: 24px 40px;
+  border-block-end: 1px solid var(--border);
+}
+
+.radio-home-eyebrow,
+.radio-section-kicker {
+  margin: 0 0 8px;
+  color: var(--accent);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.radio-home-header h1,
+.radio-section-header h2 {
+  margin: 0;
+  color: var(--text);
+  font-weight: var(--weight-heavy);
+  line-height: var(--leading-tight);
+}
+
+.radio-home-header h1 {
+  font-size: clamp(2rem, 5vw, 4rem);
+}
+
+.radio-home-header p:not(.radio-home-eyebrow) {
+  max-width: 52ch;
+  margin: 12px 0 0;
+  color: var(--text-secondary);
+}
+
+.radio-home-header nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.radio-home-link,
+.radio-section-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min);
+  padding-inline: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  color: var(--text);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.radio-home-link--primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.radio-featured {
+  margin-block: 32px 48px;
+}
+
+.radio-featured > .playlist-app {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.radio-featured > .playlist-app .playlist-stage {
+  grid-template-columns: minmax(180px, 320px) minmax(0, 1fr);
+  align-items: center;
+  gap: 24px;
+  padding: 24px;
+}
+
+.radio-featured > .playlist-app .playlist-artwork-wrap {
+  width: 100%;
+  max-width: 320px;
+}
+
+.radio-featured > .playlist-app .playlist-now-playing {
+  text-align: left;
+}
+
+.radio-featured > .playlist-app .playlist-waveform-canvas {
+  grid-column: 1 / -1;
+}
+
+.radio-featured > .playlist-app .playlist-queue,
+.radio-featured > .playlist-app .playlist-comments,
+.radio-featured > .playlist-app .playlist-comment-form {
+  display: none;
+}
+
+.radio-featured-link {
+  display: inline-flex;
+  margin-block-start: 12px;
+  color: var(--accent);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+}
+
+.radio-discovery {
+  margin-block-start: 48px;
+}
+
+.radio-track-list,
+.radio-playlist-list {
+  display: grid;
+  gap: 1px;
+  margin-block-start: 16px;
+  border-block-start: 1px solid var(--border);
+  background: var(--border);
+}
+
+.radio-track-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 12px;
+  background: var(--surface);
+}
+
+.radio-track-card-main {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.radio-track-card-art {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--accent);
+  font-weight: var(--weight-heavy);
+}
+
+.radio-track-card-art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.radio-track-card-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.radio-track-card-copy strong,
+.radio-track-card-copy span,
+.radio-track-card-copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.radio-track-card-copy strong {
+  font-size: var(--text-base);
+}
+
+.radio-track-card-copy span,
+.radio-track-card-copy small,
+.radio-playlist-card span,
+.radio-playlist-card small {
+  color: var(--text-secondary);
+}
+
+.radio-track-card-share {
+  min-height: var(--tap-min);
+  padding-inline: 12px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--accent);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.radio-track-card-share:hover,
+.radio-track-card-share:focus-visible {
+  background: var(--hover-subtle);
+}
+
+.radio-playlist-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.radio-playlist-card {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 16px;
+  background: var(--surface);
+  color: inherit;
+  text-decoration: none;
+}
+
+.radio-playlist-card strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .radio-home {
+    width: min(100% - 24px, 960px);
+    padding-block-end: 88px;
+  }
+
+  .radio-home-header,
+  .radio-section-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .radio-home-header nav {
+    justify-content: flex-start;
+  }
+
+  .radio-featured > .playlist-app .playlist-stage {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+
+  .radio-featured > .playlist-app .playlist-artwork-wrap {
+    margin-inline: auto;
+  }
+
+  .radio-featured > .playlist-app .playlist-now-playing {
+    text-align: center;
+  }
+
+  .radio-playlist-list {
+    grid-template-columns: 1fr;
+  }
+}
+
 body.vertical-playlist {
   /* The immersive dark-glass idiom: near-black panes with white-alpha
      hairlines, worn regardless of theme — the player is a stage, not a page.
