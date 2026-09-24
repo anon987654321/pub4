@@ -219,6 +219,18 @@ module Master
         @mutex.synchronize { @conversations.keys.dup }
       end
 
+      def active_key = @active_key || LOCAL
+
+      def switch!(key)
+        key = key.to_s.strip
+        raise ArgumentError, "conversation is empty" if key.empty?
+        @mutex.synchronize do
+          raise ArgumentError, "conversation not found: #{key}" unless @conversations.key?(key)
+          @active_key = key
+        end
+        key
+      end
+
       def add_message(role:, content:)
         msg = { role:, content:, ts: Time.now.to_i }
         @mutex.synchronize do
