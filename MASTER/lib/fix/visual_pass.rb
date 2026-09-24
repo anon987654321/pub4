@@ -29,6 +29,7 @@ module Master
       VIEWPORT_RE = /\bviewport\s*[:=]\s*([A-Za-z0-9_-]+)\b/i.freeze
       # Co-resident Brgen features are rendered together on the home surface.
       # Probe their states on that same DOM instead of judging isolated routes.
+      BRGEN_REQUIRED_FEATURES = %w[feed composer messenger search navigation].freeze
       BRGEN_COMPOSITION = {
         "composer_open" => {
           selector: ".compose-trigger",
@@ -123,10 +124,17 @@ module Master
           surfaces.each do |surface|
             payload = Deploy::GeometryProbe.walk(cdp, surface)
             next unless Deploy::GeometryProbe.ok?(payload)
+            features = composition_features(cdp)
+            missing = BRGEN_REQUIRED_FEATURES - features
+            return_result = missing.empty? ? nil : inconclusive(
+              "brgen composition: #{surface.id} is missing co-resident feature(s): #{missing.join(", ")}"
+            )
+            return return_result if return_result
+
             payload["composition"] = {
               "state" => "resting",
               "base_surface" => surface.id,
-              "co_resident" => composition_features(cdp),
+              "co_resident" => features,
             }
 
             shot = File.join(@dir, "#{safe_slug(surface.id)}.png")
