@@ -4850,7 +4850,7 @@ label.field--check-label > input { min-height: var(--tap-min); min-width: var(--
 }
 
 .swipe-action--like {
-  background: linear-gradient(135deg, rgb(from var(--dating-accent) r g b / var(--opacity-medium)), rgb(from var(--dating-accent-warm) r g b / var(--opacity-medium)));
+  background: color-mix(in srgb, var(--dating-accent) 18%, var(--surface-elevated));
   border-color: color-mix(in srgb, var(--dating-accent) 55%, transparent);
   color: var(--dating-accent);
 }
@@ -5132,8 +5132,8 @@ body.vertical-dating .swipe-card {
 body.vertical-dating .btn,
 body.vertical-dating .btn-primary,
 body.vertical-dating .swipe-signin {
-  background: linear-gradient(90deg, var(--dating-accent), var(--dating-accent-warm));
-  color: var(--text);
+  background: var(--dating-accent);
+  color: var(--dating-accent-ink);
   border: none;
   border-radius: var(--radius-pill);
   font-weight: var(--weight-bold);
@@ -6853,7 +6853,8 @@ body.vertical-tv {
 }
 
 body.vertical-tv main {
-  max-width: var(--container-max);
+  max-width: var(--feed-max);
+  margin-inline: auto;
 }
 
 body.vertical-tv .page-header h1 {
