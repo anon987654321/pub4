@@ -147,9 +147,9 @@ MAX_MERGED_LINES = 300
     # Internal calls prove cohesion; external references prove blast radius.
     # References are evidence for the structural plan, not an automatic veto:
     # /fix must repair them and recheck the graph after surgery.
-    def external_references(files)
+    def external_references(files, corpus_root: REPO)
       candidates = files.flat_map { |path| [File.basename(path, ".rb"), *symbols(path)] }.uniq
-      corpus = Dir.glob(File.join(REPO, "**/*.rb"))
+      corpus = Dir.glob(File.join(corpus_root, "**/*.rb"))
                     .uniq
                     .reject { |path| files.include?(path) || path.match?(SKIP) }
 
@@ -160,10 +160,10 @@ MAX_MERGED_LINES = 300
       end
     end
 
-    def structural_evidence(files, manifest)
+    def structural_evidence(files, manifest, corpus_root: REPO)
       {
         internal_references: cross_references(files),
-        external_references: external_references(files),
+        external_references: external_references(files, corpus_root:),
         contiguous: contiguous_in?(files, manifest),
         lines: files.sum { |f| File.readlines(f).size },
       }
@@ -178,7 +178,7 @@ MAX_MERGED_LINES = 300
       idx.sort.each_cons(2).all? { |a, b| b == a + 1 }
     end
 
-    def merge_plan(name, files, kind, manifest)
+    def merge_plan(name, files, kind, manifest, corpus_root: REPO)
       ordered = manifest.empty? ? files : files.sort_by { |f| manifest.index(File.basename(f, ".rb")) || Float::INFINITY }
       {
         plan: "merge",
@@ -189,7 +189,7 @@ MAX_MERGED_LINES = 300
         methods: ordered.sum { |f| File.read(f).scan(/^def [a-z_]/).size },
         merge_into: "#{name}.rb",
         take_position_of: File.basename(ordered.last, ".rb"),
-        evidence: structural_evidence(ordered, manifest),
+        evidence: structural_evidence(ordered, manifest, corpus_root:),
         check: [
           "method and constant sets identical before and after",
           "manifest entry replaced in place, not appended",
@@ -203,7 +203,7 @@ MAX_MERGED_LINES = 300
     # policy.rb already defines Ground::Policy, so the shelf it needs is its own
     # name and the rename costs nothing. Without one the regroup has to create
     # the parent module, which is a real edit and the plan says so.
-    def regroup_plan(name, files, kind, dir)
+    def regroup_plan(name, files, kind, dir, corpus_root: REPO)
       return if reopens_one_constant?(files)
 
       parent = files.find { |f| File.basename(f, ".rb") == name }
@@ -236,7 +236,7 @@ return if collisions.any?
         parent: parent ? File.basename(parent) : "none — #{name}.rb must be created to hold the namespace",
         moves: members.map { |f| move_for(f, name, kind) },
         evidence: {
-          external_references: external_references(files),
+          external_references: external_references(files, corpus_root:),
           namespaced_members: files.map { |path| constant(path) }.compact,
         },
         check: [
