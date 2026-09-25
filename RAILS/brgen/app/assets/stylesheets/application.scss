@@ -2307,7 +2307,10 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
   font-size: var(--text-sm);
 }
 
-.community-list {
+/* A column of filled cards keeps a gutter of its own: .layout gives main
+   none, and a filled card on the screen edge reads as a bleed. */
+.community-list,
+.card-list {
   list-style: none;
   padding: 16px;
   margin: 0;
@@ -8663,7 +8666,7 @@ aside:not([class]) > h2 {
 /* A live search index sits straight in main, which carries no gutter inside
    .layout, so it starts on the page header's edge rather than the screen's. */
 .layout > main > .search {
-  max-width: calc(100% - 2 * var(--space-4));
+  width: auto;
   margin-inline: var(--space-4);
 }
 

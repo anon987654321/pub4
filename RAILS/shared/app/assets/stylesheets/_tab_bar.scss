@@ -12,8 +12,13 @@
 // selector these files share keeps its relative order.
 
 /* Progressive disclosure: bar starts closed (html.chrome-hidden). Content and
-   bottom-pinned chrome reclaim the space via --tab-bar-h → 0. */
-html.chrome-hidden {
+   bottom-pinned chrome reclaim the space via --tab-bar-h → 0. The [data-theme]
+   twin outranks a theme root that restates app-root-tokens: brgen's
+   :root[data-theme="light"] (0-2-0) set the 44px back over html.chrome-hidden
+   (0-1-1), so with the bar closed the chat tab and the install prompt still
+   stood 44px clear of a bar that was not there. */
+html.chrome-hidden,
+html[data-theme].chrome-hidden {
   --tab-bar-h: 0px;
 }
 

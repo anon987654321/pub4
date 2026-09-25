@@ -32,18 +32,19 @@ module Deploy
     # light is its design rather than a bug, and asserting dark there would be
     # this gate telling the truth about the wrong intent.
     # theme: here is the product decision, mirroring ApplicationHelper's
-    # LIGHT_VERTICALS (marketplace, maps, takeaway read light — operator,
-    # 2026-08-24). It is duplicated rather than read because this gate runs under
-    # bare ruby with no app booted; check_theme compares it to what the page
-    # actually declares, so the two drifting apart fails here rather than going
-    # quiet the way it did when this list still called both storefronts dark.
+    # DEFAULT_SURFACE_THEME, which is light on every surface: a white page with
+    # #efefef panels (operator, 2026-09-25). It is duplicated rather than read
+    # because this gate runs under bare ruby with no app booted; check_theme
+    # compares it to what the page actually declares, so the two drifting apart
+    # fails here rather than going quiet, as it did while this list still called
+    # four light surfaces dark.
     SURFACES = [
-      { host: "brgen.no", theme: :dark },
-      { host: "radio.brgen.no", theme: :dark },
+      { host: "brgen.no", theme: :light },
+      { host: "radio.brgen.no", theme: :light },
       { host: "markedsplass.brgen.no", theme: :light },
       { host: "takeaway.brgen.no", theme: :light },
-      { host: "dating.brgen.no", theme: :dark },
-      { host: "tv.brgen.no", theme: :dark },
+      { host: "dating.brgen.no", theme: :light },
+      { host: "tv.brgen.no", theme: :light },
     ].freeze
 
     # Surfaces where the chat tab legitimately is not in the bottom-right corner,
@@ -59,13 +60,8 @@ module Deploy
       # --tab-bar-h. Sitting flush would put it under a bar that intercepts the
       # click.
       "radio.brgen.no" => :raised,
-      # Same mechanism, same reason: both storefronts set bottom: var(--tab-bar-h)
-      # and clear their tab bar by its own declared height (44px here, 60px on
-      # playlist). Measured rather than assumed — at rest the bar is translated
-      # off-screen with pointer-events:none, so a snapshot taken while the chrome
-      # is hidden makes the lift look gratuitous. It is not: the bar comes back.
-      "markedsplass.brgen.no" => :raised,
-      "takeaway.brgen.no" => :raised,
+      # The storefronts are not here: a closed or undrawn tab bar publishes no
+      # height, so their tab sits in the corner like every other surface.
     }.freeze
 
     # A background this light cannot be a dark theme, whatever the tokens say.
@@ -78,7 +74,20 @@ module Deploy
     # screen edge, 12px) instead of from the bar. Three pixels reads as
     # sloppiness rather than as a bug, which is why it survived review and why it
     # wants a number rather than an eye.
-    TOP_BAND = %w[.nav_link .brgen-logo-mark .theme-toggle].freeze
+    #
+    # The search glyph and the sign-in link joined on 2026-09-25: the glyph took
+    # its top from --chrome-inset while the corner took it from the bar (12 vs
+    # 11), and it cleared only the toggle, so it sat 28px over the sign-in link.
+    TOP_BAND = %w[.nav_link .brgen-logo-mark .theme-toggle .search_palette_trigger .chrome-auth].freeze
+
+    # The fixed controls in the band, which must not overlap each other. The nav
+    # links are left out: they scroll under a fade by design.
+    BAND_CONTROLS = %w[.brgen-logo-mark .theme-toggle .search_palette_trigger .chrome-auth].freeze
+
+    # The phone pass: the install prompt spans the width above the bottom chrome,
+    # and on 2026-09-25 the nearby chat tab covered the lower 32px of its Install
+    # button at 390px because the prompt cleared the peel handle and not the tab.
+    PHONE = { width: 390, height: 844, host: "brgen.no" }.freeze
 
     # Sub-pixel differences are rounding, not misalignment.
     ALIGN_TOLERANCE_PX = 1
@@ -115,6 +124,7 @@ module Deploy
         session.viewport(1280, 800)
         SURFACES.each { |surface| check_surface(session, surface) }
         check_amber_home_looks(session)
+        check_phone_bottom_chrome(session)
       end
       @result
     rescue CdpSession::Unavailable => e
@@ -135,7 +145,7 @@ module Deploy
         session.press("Escape")
         sleep 0.5
       end
-      measured = session.evaluate(PROBE)
+      measured = session.evaluate(format(PROBE, band: JSON.generate(TOP_BAND)))
       return @result.skipped_live("rendered_invariants: #{host} unreadable") unless measured
 
       data = JSON.parse(measured)
@@ -143,6 +153,8 @@ module Deploy
       check_theme(host, surface[:theme], data)
       check_chat_corner(host, data)
       check_top_band_alignment(host, data)
+      check_band_overlap(host, data)
+      check_mark_label(host, data)
     rescue StandardError => e
       @result.skipped_live("rendered_invariants: #{host} #{e.class}")
     end
@@ -240,6 +252,56 @@ module Deploy
       )
     end
 
+    # Two fixed controls sharing any horizontal span means one of them takes the
+    # other's taps; fixed chrome cannot be scrolled out from under a blocker.
+    def check_band_overlap(host, data)
+      boxes = (data["band"] || {}).slice(*BAND_CONTROLS).reject { |_, box| box.nil? || box["l"].nil? }
+      boxes.to_a.combination(2).each do |(a, box_a), (b, box_b)|
+        overlap = [box_a["r"], box_b["r"]].min - [box_a["l"], box_b["l"]].max
+        next if overlap <= ALIGN_TOLERANCE_PX
+
+        @result.fail("#{host} top chrome: #{a} and #{b} overlap by #{overlap}px, so one takes the " \
+                     "other's taps. A control that joins the corner has to be cleared by the ones beside it.")
+      end
+    end
+
+    # The mark is the city name alone (operator, 2026-09-25); a dot means a TLD.
+    def check_mark_label(host, data)
+      label = data["mark"].to_s
+      return if label.empty? || !label.include?(".")
+
+      @result.fail("#{host} brand mark reads \"#{label}\"; it is the city name without its TLD " \
+                   "(brand_mark_fragments)")
+    end
+
+    # At phone width the install prompt and the chat tab are both fixed to the
+    # bottom edge. A prompt the page never showed is not measured.
+    def check_phone_bottom_chrome(session)
+      session.viewport(PHONE[:width], PHONE[:height], mobile: true)
+      session.navigate("https://#{PHONE[:host]}/", settle: 1.5)
+      measured = session.evaluate(BOTTOM_PROBE)
+      return @result.skipped_live("rendered_invariants: #{PHONE[:host]} phone unreadable") unless measured
+
+      check_bottom_overlap(JSON.parse(measured))
+    rescue StandardError => e
+      @result.skipped_live("rendered_invariants: #{PHONE[:host]} phone #{e.class}")
+    end
+
+    # prompt / chat: { "t", "b", "l", "r" } in viewport px, or nil when not shown.
+    def check_bottom_overlap(boxes)
+      prompt = boxes["prompt"]
+      chat = boxes["chat"]
+      return if prompt.nil? || chat.nil?
+
+      @result.checked!
+      across = [prompt["r"], chat["r"]].min - [prompt["l"], chat["l"]].max
+      down = [prompt["b"], chat["b"]].min - [prompt["t"], chat["t"]].max
+      return if across <= ALIGN_TOLERANCE_PX || down <= ALIGN_TOLERANCE_PX
+
+      @result.fail("#{PHONE[:host]} at #{PHONE[:width]}px: the chat tab covers #{down}px of the install " \
+                   "prompt. The prompt clears the bottom chrome by --tab-bar-h plus one tap row.")
+    end
+
     # A fresh profile is a signed-out visitor, which is who the page is for.
     def check_amber_home_looks(session)
       session.navigate(AMBER_HOME, settle: 1.5)
@@ -298,17 +360,30 @@ module Deploy
           }
         }
         const band = {};
-        for (const sel of [".nav_link", ".brgen-logo-mark", ".theme-toggle"]) {
+        for (const sel of %<band>s) {
           const t = document.querySelector(sel);
           const tr = t?.getBoundingClientRect();
           band[sel] = (tr && tr.width > 0 && tr.height > 0)
-            ? { cy: Math.round(tr.top + tr.height / 2) }
+            ? { cy: Math.round(tr.top + tr.height / 2), l: Math.round(tr.left), r: Math.round(tr.right) }
             : null;
         }
+        const mark = document.querySelector(".brgen-logo-mark .brand-text")?.textContent.trim() ?? "";
         // What the page says it is serving. surface_theme writes this per
         // surface, so it is the app's own answer rather than the gate's guess.
         const declared = document.documentElement.getAttribute("data-theme");
-        return JSON.stringify({ bg, luma, chat, band, declared });
+        return JSON.stringify({ bg, luma, chat, band, declared, mark });
+      })()
+    JS
+
+    BOTTOM_PROBE = <<~JS
+      (() => {
+        const box = (sel) => {
+          const e = document.querySelector(sel);
+          if (!e || e.hidden || getComputedStyle(e).display === "none") return null;
+          const r = e.getBoundingClientRect();
+          return r.width > 0 && r.height > 0 ? { t: r.top, b: r.bottom, l: r.left, r: r.right } : null;
+        };
+        return JSON.stringify({ prompt: box(".install-prompt"), chat: box(".nearby-chat-widget") });
       })()
     JS
   end

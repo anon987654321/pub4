@@ -212,6 +212,16 @@ main[role="main"] {
     display: none;
   }
 
+  /* A bar that is not drawn publishes no height, so the chat tab and the
+     install prompt sit on the bottom edge rather than 44px above nothing.
+     html:root outranks a theme root that restates app-root-tokens (brgen's
+     :root[data-theme="light"], 0-2-0); a vertical that pins its own bar, as
+     playlist's transport does on its body, keeps it. */
+  html:root,
+  html:root[data-theme] {
+    --tab-bar-h: 0px;
+  }
+
   /* The gutter is wide, not infinite: hold each rail off the feed by one step
      so the column keeps its own edge rather than gaining a neighbour. */
   .sidebar {

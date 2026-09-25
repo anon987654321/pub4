@@ -4,7 +4,7 @@
 <%= render "shared/feed_card",
   avatar_url: (channel.avatar.attached? ? main_app.url_for(channel.avatar) : nil),
   name: channel.name,
-  meta: "#{channel.subscribers_count} subscribers",
+  meta: t("tv.subscribers", count: channel.subscribers_count.to_i),
   content: channel_content.presence,
   url: channel_path(channel),
   class: "tv" %>

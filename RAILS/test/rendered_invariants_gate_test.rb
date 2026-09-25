@@ -171,6 +171,49 @@ class RenderedInvariantsGateTest < Minitest::Test
     assert_empty check(:check_top_band_alignment, "brgen.no", payload(band: band)).failures
   end
 
+  # The measured case: brgen.no at 1440px, signed out. The search glyph cleared
+  # only the toggle, so it sat over the sign-in link from 1352 to 1380.
+  def test_a_search_glyph_over_the_sign_in_link_fails_and_says_by_how_much
+    band = { ".search_palette_trigger" => { "cy" => 34, "l" => 1336, "r" => 1380 },
+             ".chrome-auth" => { "cy" => 33, "l" => 1352, "r" => 1396 },
+             ".theme-toggle" => { "cy" => 33, "l" => 1396, "r" => 1440 } }
+    result = check(:check_band_overlap, "brgen.no", payload(band: band))
+
+    assert_names result, /\.search_palette_trigger and \.chrome-auth overlap by 28px/
+  end
+
+  def test_band_controls_that_merely_touch_pass
+    band = { ".chrome-auth" => { "cy" => 33, "l" => 1352, "r" => 1396 },
+             ".theme-toggle" => { "cy" => 33, "l" => 1396, "r" => 1440 } }
+
+    assert_empty check(:check_band_overlap, "brgen.no", payload(band: band)).failures
+  end
+
+  def test_a_mark_that_shows_its_tld_fails
+    result = check(:check_mark_label, "lsangeles.com", payload.merge("mark" => "lsangeles.com"))
+
+    assert_names result, /brand mark reads "lsangeles\.com"/
+  end
+
+  def test_a_mark_that_is_the_city_name_alone_passes
+    assert_empty check(:check_mark_label, "brgen.no", payload.merge("mark" => "brgen")).failures
+  end
+
+  # The measured case: brgen.no at 390px, the chat tab over the Install button.
+  def test_a_chat_tab_over_the_install_prompt_fails_and_says_by_how_much
+    boxes = { "prompt" => { "t" => 632, "b" => 788, "l" => 12, "r" => 378 },
+              "chat" => { "t" => 756, "b" => 800, "l" => 290, "r" => 391 } }
+
+    assert_names check(:check_bottom_overlap, boxes), /chat tab covers 32px of the install prompt/
+  end
+
+  def test_an_install_prompt_clear_of_the_chat_tab_passes
+    boxes = { "prompt" => { "t" => 588, "b" => 744, "l" => 12, "r" => 378 },
+              "chat" => { "t" => 756, "b" => 800, "l" => 290, "r" => 391 } }
+
+    assert_empty check(:check_bottom_overlap, boxes).failures
+  end
+
   def look(scroll: 0, inset: 0) = { "scroll" => scroll, "inset" => inset }
 
   def test_four_looks_that_open_on_their_first_slide_pass
