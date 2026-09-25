@@ -218,10 +218,12 @@ module Master
       end
 
       def voice_for_text(text)
+        chosen = Policy.voice_for_text(text)
+        return chosen if Language.detect(text) == :nb
+
         named = ENV["MASTER_TTS_VOICE"].to_s.strip
         return default_voice unless named.empty?
 
-        chosen = Policy.voice_for_text(text)
         VOICES.key?(chosen) ? chosen : DEFAULT_VOICE
       end
 
