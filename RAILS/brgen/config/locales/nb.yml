@@ -1183,6 +1183,7 @@ nb:
     accept: Godta
     decline: Avslå
     add_to_cart: Legg i handlekurv
+    pay_dintero: Betal med Dintero
     pay_vipps: Betal med Vipps
     pay_stripe: Betal med Stripe
     send_all_offers: Send alle bud
@@ -1667,6 +1668,7 @@ nb:
       cart_empty: Handlekurven er tom.
       cart_not_payable: Ingenting i handlekurven kan betales.
       unknown_provider: Ukjent betalingsleverandør.
+      dintero_seller_not_ready: Dintero-betaling er ikke tilgjengelig for denne selgeren ennå.
       payment_recorded: Betaling %{status} via %{provider}.
       listing_saved: Annonsen er lagret.
       listing_unsaved: Annonsen er fjernet fra lagrede.
