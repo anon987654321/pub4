@@ -7,8 +7,8 @@ require "uri"
 module Marketplace
   module Payments
     class DinteroClient
-      AUTH_HOST = "https://api.dintero.com"
-      CHECKOUT_HOST = "https://checkout.dintero.com"
+      LIVE_API_HOST = "https://api.dintero.com"
+      TEST_API_HOST = "https://test.dintero.com"
       TOKEN_TTL_SKEW = 60
 
       class Error < StandardError
@@ -22,12 +22,14 @@ module Marketplace
       end
 
       class << self
-        def get(path, checkout: false)
-          request(Net::HTTP::Get.new(uri(path, checkout: checkout)))
+        def get(path, idempotency_key: nil)
+          req = Net::HTTP::Get.new(uri(path))
+          req["Idempotency-Key"] = idempotency_key if idempotency_key.present?
+          request(req)
         end
 
-        def post(path, payload = nil, checkout: false, idempotency_key: nil)
-          req = Net::HTTP::Post.new(uri(path, checkout: checkout))
+        def post(path, payload = nil, idempotency_key: nil)
+          req = Net::HTTP::Post.new(uri(path))
           req["Idempotency-Key"] = idempotency_key if idempotency_key.present?
           req.body = JSON.generate(payload) if payload
           request(req)
@@ -57,10 +59,35 @@ module Marketplace
         end
 
         def configured?
+          checkout_configured?
+        end
+
+        def checkout_configured?
           %w[DINTERO_ACCOUNT_ID DINTERO_CLIENT_ID DINTERO_CLIENT_SECRET DINTERO_PROFILE_ID
              DINTERO_CALLBACK_SECRET].all? do |name|
             ENV[name].to_s.strip.present?
           end
+        end
+
+        def hooks_configured?
+          %w[DINTERO_ACCOUNT_ID DINTERO_CLIENT_ID DINTERO_CLIENT_SECRET DINTERO_HOOK_SECRET].all? do |name|
+            ENV[name].to_s.strip.present?
+          end
+        end
+
+        def api_host
+          explicit = ENV["DINTERO_API_BASE"].to_s.strip
+          return explicit if explicit.present?
+
+          production? && !test_mode? ? LIVE_API_HOST : TEST_API_HOST
+        end
+
+        def test_mode?
+          ENV["DINTERO_TEST_MODE"].to_s.strip.present?
+        end
+
+        def production?
+          defined?(Rails) && Rails.respond_to?(:env) ? Rails.env.production? : false
         end
 
         def account_id = ENV.fetch("DINTERO_ACCOUNT_ID").strip
@@ -70,14 +97,11 @@ module Marketplace
 
         def authenticate
           account = account_id
-          uri = URI("#{AUTH_HOST}/v1/accounts/#{account}/auth/token")
+          uri = URI("#{api_host}/v1/accounts/#{account}/auth/token")
           req = Net::HTTP::Post.new(uri)
           req.basic_auth(ENV.fetch("DINTERO_CLIENT_ID"), ENV.fetch("DINTERO_CLIENT_SECRET"))
           req["Content-Type"] = "application/json"
-          req.body = JSON.generate(
-            grant_type: "client_credentials",
-            audience: "#{AUTH_HOST}/v1/accounts/#{account}"
-          )
+          req.body = JSON.generate(grant_type: "client_credentials")
 
           response = request_raw(req)
           parse_response(response, uri)
@@ -118,9 +142,8 @@ module Marketplace
           raise Error.new("Dintero #{uri.path} returned invalid JSON", status: response.code.to_i, body: body)
         end
 
-        def uri(path, checkout:)
-          base = checkout ? CHECKOUT_HOST : AUTH_HOST
-          URI("#{base}#{path}")
+        def uri(path)
+          URI("#{api_host}#{path}")
         end
       end
     end
