@@ -17,24 +17,10 @@ tts:
   # rather than naming the voice.
   single_voice: jenny
   neural: en-US-JennyNeural
-  # Two mouths, one script, on the operator's ask.
-  #
-  # single_voice stays the contract and stays jenny: every reader agrees with
-  # it, an absent or single-entry rotation changes nothing downstream, so
-  # deleting these lines reverts the rotation whole, and
-  # the browser payload carries both so the face rotates with the server rather
-  # than drifting from it.
-  #
-  # This is NOT a persona list. personas.yml affects LLM text only, and
-  # persona_affects_text_only above is still true; a rotation changes which
-  # mouth says the same sentence and nothing about what the sentence is.
-  #
-  # Chosen at random per utterance rather than round-robin. A session is not a
-  # sequence anybody counts, and strict alternation makes the pattern audible,
-  # which draws attention to the mechanism instead of the words.
+  # One voice, one continuous speaker. Naturalness comes from prosody and
+  # sentence rhythm, not from changing identity between clauses.
   rotation:
     - jenny
-    - christopher
   persona_affects_text_only: true
   # ON as of 2026-08-14. pushLiveStreamTts (face.part1.txt) pulls each finished
   # sentence off the model's stream and speaks it while the rest is still being
@@ -66,14 +52,10 @@ tts:
   # from neutral and is retuned by ear. Roughly ±15% rate and ±50Hz is where
   # Azure neural voices stay natural.
   #
-  # A little slower than edge-tts ships, and no more than that.
-  #
-  # Past about -30% the synthesiser stretches vowels without stretching the
-  # pauses, so prosody flattens and a long sentence gets harder to follow rather
-  # than easier — the plus-or-minus fifteen percent above is the natural range.
-  # What gives a listener time is silence between sentences, which belongs in
-  # post_chain, not here.
-  default_rate: "-18%"
+  # Small negative rate gives the neural voice room for sentence rhythm without
+  # stretching vowels into an artificial drawl. Pitch stays neutral; sentence
+  # roles add only a few hertz where useful.
+  default_rate: "-7%"
   default_pitch: "+0Hz"
 
   # What the voice is put through after synthesis, chosen by the operator by ear.
