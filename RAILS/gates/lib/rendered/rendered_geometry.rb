@@ -3,6 +3,7 @@
 require_relative "../../support/rendered_contrast_checks"
 require_relative "../../support/rendered_geometry/token_checks"
 require_relative "../../support/rendered_geometry/placement_checks"
+require_relative "../../support/rendered_geometry/composition_checks"
 require_relative "../../../../OPENBSD/lib/gate_result"
 require_relative "../../support/geometry_probe"
 require_relative "../../support/geometry_autofix"
@@ -26,6 +27,7 @@ module Deploy
     include ContrastChecks
     include TokenChecks
     include PlacementChecks
+    include CompositionChecks
 
     ROOT = File.expand_path("../../../..", __dir__)
     RAILS_ROOT = File.join(ROOT, "RAILS")
@@ -59,24 +61,7 @@ module Deploy
 
     def run
       @result = Result.new
-      @rules = Operator::MasterDesign.blocks(MASTER_RULES)
-      @tokens = Operator::MasterDesign.design_system
-      @min_touch = (@rules.dig("layout_rules", "touch", "target_min_px") || 44).to_f
-      @aaa = (@rules.dig("typography", "accessibility", "normal_text_contrast") || 7.0).to_f
-      # design_rules states the spacing grid twice and the two disagree:
-      # pixel_perfection.eight_px_rhythm allows 12 and 20, layout_rules.grid.
-      # allowed_spacing_px does not. css_constitution, rhythm_lint and
-      # design_metrics all read the first; only this gate read the second, so a
-      # 12px gap was simultaneously compliant and a violation depending on which
-      # gate you asked. It is also the value --space-3 declares, which settles
-      # which list is real. Same precedence as design_metrics: rhythm first,
-      # grid as the fallback.
-      @allowed_spacing = Array(@rules.dig("pixel_perfection", "eight_px_rhythm")).map(&:to_i)
-      if @allowed_spacing.empty?
-        @allowed_spacing = Array(@rules.dig("layout_rules", "grid", "allowed_spacing_px")).map(&:to_i)
-      end
-      @allowed_spacing = [4, 8, 16, 24, 32, 48, 64] if @allowed_spacing.empty?
-      @palette = token_palette
+      load_design_rules
 
       unless GeometryProbe.available?
         @result.inconclusive!("geometry: no Chrome/Chromium — rendered geometry not measured (set CHROME_PATH)")
@@ -110,6 +95,27 @@ module Deploy
     end
 
     private
+
+    def load_design_rules
+      @rules = Operator::MasterDesign.blocks(MASTER_RULES)
+      @tokens = Operator::MasterDesign.design_system
+      @min_touch = (@rules.dig("layout_rules", "touch", "target_min_px") || 44).to_f
+      @aaa = (@rules.dig("typography", "accessibility", "normal_text_contrast") || 7.0).to_f
+      # design_rules states the spacing grid twice and the two disagree:
+      # pixel_perfection.eight_px_rhythm allows 12 and 20, layout_rules.grid.
+      # allowed_spacing_px does not. css_constitution, rhythm_lint and
+      # design_metrics all read the first; only this gate read the second, so a
+      # 12px gap was simultaneously compliant and a violation depending on which
+      # gate you asked. It is also the value --space-3 declares, which settles
+      # which list is real. Same precedence as design_metrics: rhythm first,
+      # grid as the fallback.
+      @allowed_spacing = Array(@rules.dig("pixel_perfection", "eight_px_rhythm")).map(&:to_i)
+      if @allowed_spacing.empty?
+        @allowed_spacing = Array(@rules.dig("layout_rules", "grid", "allowed_spacing_px")).map(&:to_i)
+      end
+      @allowed_spacing = [4, 8, 16, 24, 32, 48, 64] if @allowed_spacing.empty?
+      @palette = token_palette
+    end
 
     def check_surface(surface, data)
       status = data["status"].to_i
@@ -326,71 +332,6 @@ module Deploy
       return nil if dx.negative? && dy.negative?
 
       [dx, dy].reject(&:negative?).min
-    end
-
-    # layout_rules.alignment.center_text_max_lines. Centred text gives the eye no
-    # fixed left edge to return to, so every line after the third costs the
-    # reader a hunt for where it starts. Only measurable once rendered, because
-    # the line count depends on the box the text landed in.
-    def check_centered_prose(surface, elements)
-      max_lines = @rules.dig("layout_rules", "alignment", "center_text_max_lines").to_i
-      return if max_lines <= 0
-
-      offenders = elements.filter_map do |el|
-        next unless el["visible"] && el["onscreen"]
-        next unless el["text_align"].to_s == "center"
-        # Own text only. Dividing a *container's* height by its line-height
-        # counts its icon, heading, button and padding as prose: the shared
-        # empty state reported 12 lines where the sentence is two. A block that
-        # holds no text of its own is a layout box, and centring it is not the
-        # thing this rule is about.
-        next if el["text"].to_s.strip.empty?
-
-        lh = el["line_height"].to_f
-        next if lh <= 0
-
-        lines = (el["frect"]&.dig("h").to_f / lh).round
-        next if lines <= max_lines
-
-        "#{el["key"]} (#{lines} lines)"
-      end
-      return if offenders.empty?
-
-      @result.fail(
-        "geometry centered_prose: #{surface.id} centres #{offenders.size} block(s) past " \
-        "#{max_lines} lines — #{offenders.first(3).join('; ')} (principle=alignment)", severity: :soft
-      )
-    end
-
-    def check_visual_composition(surface, data)
-      visual = data["visual"] || {}
-      first = visual["first_screen"] || {}
-      typography = visual["typography"] || {}
-      sizes = Array(typography["distinct_font_sizes"]).map(&:to_f).select(&:positive?)
-      max_sizes = @rules.dig("typography", "hierarchy", "max_font_sizes").to_i
-      if max_sizes.positive? && sizes.size > max_sizes
-        @result.fail(
-          "geometry composition: #{surface.id} first screen renders #{sizes.size} type sizes > "           "#{max_sizes} allowed — reduce the visual vocabulary (principle=typography)",
-          severity: :soft
-        )
-      end
-
-      heading = Array(typography["heading_sizes"]).find { |row| row["tag"] == "h1" }&.fetch("px", nil)
-      body = typography["body_median_px"].to_f
-      if heading.to_f.positive? && body.positive? && heading < body * 1.4
-        @result.fail(
-          "geometry composition: #{surface.id} h1 is #{heading}px vs median body #{body.round(1)}px — "           "hierarchy is visually weak (principle=hierarchy)",
-          severity: :soft
-        )
-      end
-
-      long_centered = first["centered_long_text"].to_i
-      return if long_centered.zero?
-
-      @result.fail(
-        "geometry composition: #{surface.id} has #{long_centered} long centered text block(s) "         "in the first screen — prefer a readable measure and directional alignment (principle=alignment)",
-        severity: :soft
-      )
     end
 
     def check_landmarks(surface, data)

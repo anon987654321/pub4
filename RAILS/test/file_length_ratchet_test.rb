@@ -146,7 +146,11 @@ class FileLengthRatchetTest < Minitest::Test
 # there from gates/lib/ to join it: deploy_gates_contract_test asserts gates/lib/
 # holds exactly the gates gates.yml declares, and a check module is not a gate.
 # That test had been red on token_checks.rb since it was split out.
-"gates/lib/rendered/rendered_geometry.rb" => 341, # type checks live in geometry_type.rb
+#
+# 341 -> 326 on 2026-09-25. 8dd5f4d34 added check_visual_composition and took
+# the file to 367; it and check_centered_prose ask how text sits on the screen
+# rather than whether a box is the right size, and they are composition_checks.rb.
+"gates/lib/rendered/rendered_geometry.rb" => 326, # type checks live in geometry_type.rb
     # +6 in cf6e56a52 — an error template is not a route, so the manifest stopped
     # being hand-edited and the inventory learned to tell the two apart.
     # page_inventory.rb left this list on 2026-09-06: 444 -> 288 when the five
