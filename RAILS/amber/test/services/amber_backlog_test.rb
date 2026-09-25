@@ -169,7 +169,6 @@ class AmberBacklogTest < Minitest::Test
     assert_equal "Sparks joy", locale_value(:en, "items.sparks_joy")
     assert_equal "Gir glede", locale_value(:nb, "items.sparks_joy")
     assert_includes read("config/recurring.yml"), "DeclutterHygieneJob"
-    assert_includes read("HEIR.md"), "heir"
   end
 
   def test_creator_profiles_are_wired

@@ -47,7 +47,7 @@ class TurboBroadcastContractTest < Minitest::Test
     roots = { File.join(ROOT, app, "app/models") => nil, File.join(ROOT, "shared/app/models") => "shared engine" }
     # Verticals extracted to mountable engines (engines/*/app/models) carry their
     # own models now — scan them too, or a broadcast that moves with tv/playlist
-    # would slip the net. See ENGINES.md.
+    # would slip the net. See brgen/README.md.
     Dir.glob(File.join(ROOT, app, "engines/*/app/models")).each { |dir| roots[dir] = "engine" }
     roots.flat_map do |root, _label|
       Dir.glob(File.join(root, "**", "*.rb")).flat_map do |path|

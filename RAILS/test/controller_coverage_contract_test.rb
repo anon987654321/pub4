@@ -164,11 +164,10 @@ class ControllerCoverageContractTest < Minitest::Test
                  "render shared/pager instead — these helpers exist in one pagy major and not the other"
   end
 
-  # ENGINES.md and the marketplace README both said brgen main kept "the
+  # brgen/README.md and the marketplace README both said brgen main kept "the
   # craigslist/airbnb-style personal classifieds", with the engine as the
-  # transactional storefront. There is no listing model in the host app --
-  # app/models/marketplace.rb is a table-name-prefix module and nothing else --
-  # so both docs sent a reader looking for a tier that was never built. Same
+  # transactional storefront. There is no listing model in the host app, so
+  # both docs sent a reader looking for a tier that was never built. Same
   # shape as the shared/README.md dialect table that sent CSS work at the palette
   # brgen had left.
   #
@@ -180,7 +179,7 @@ class ControllerCoverageContractTest < Minitest::Test
     host_has_listings = host_models.any? { |m| m =~ /\A(listing|classified|advert)/ }
 
     docs = {
-      "brgen/ENGINES.md" => File.read(File.join(ROOT, "brgen", "ENGINES.md")),
+      "brgen/README.md" => File.read(File.join(ROOT, "brgen", "README.md")),
       "brgen/engines/marketplace/README.md" =>
         File.read(File.join(ROOT, "brgen", "engines", "marketplace", "README.md")),
     }

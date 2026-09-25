@@ -68,23 +68,6 @@ class FileLengthRatchetTest < Minitest::Test
     # worth doing. Splitting it further would be splitting a list of restaurants
     # from a list of neighbourhoods, which buys two files and no clarity.
     "brgen/lib/brgen/bergen_demo_data.rb" => 507,
-    # 746 -> 618 on 2026-08-26. The eight infinite-scroll wiring assertions are
-    # infinite_scroll_wiring_test.rb — one subject, and the one most likely to
-    # keep growing, rather than eight more entries in a bundle of forty
-    # unrelated deploy contracts. ROOT and the two source readers went to
-    # test/source_reader.rb so both files answer "where is the tree"
-    # the same way; copying them would have made two answers that drift, which
-    # is the failure ROOT's own comment records from 2026-07-10.
-    #
-    # 618 -> 557 on 2026-09-08, the same surgery on the next subject to have
-    # grown one. Playlist import, track ownership, hosted tracks and set likes
-    # are playlist_wiring_test.rb: four tests that arrived one at a time and
-    # read as one contract. It reads its tree through the same SourceReader.
-    #
-    # 566 -> 510 on 2026-09-13. The shared Stimulus components — what
-    # stimulus_boot.js registers, the views wired to them, and the snippet
-    # library held to the registry — are shared_stimulus_components_test.rb.
-    "brgen/test/services/deploy_backlog_test.rb" => 502,
 # 522 -> 442 on 2026-08-26. Token contrast and the budget that judges it —
 # check_token_contrast, judge_contrast_budget, contrast_budget — are
 # design_metrics/contrast_checks.rb. One subject, and the maths it calls

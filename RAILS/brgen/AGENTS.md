@@ -42,7 +42,7 @@ messenger, playlist are the same English token on every city.
 **Not a brgen subapp.** `ai.brgen.no` is MASTER (`MASTER/web`), different rc.d.
 `amberapp.art` is a separate Rails app. Do not mount either here.
 
-Recipe for engines: `ENGINES.md`. Feature inventory: `RAILS/apps.yml`. Local
+Recipe for engines: `README.md`. Feature inventory: `RAILS/apps.yml`. Local
 verticals need `Host: dating.brgen.no` (etc.); `dating.localhost` 404s because
 the registry keys off city apexes, not localhost.
 

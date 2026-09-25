@@ -5,7 +5,7 @@ require "shared/vertical_engine"
 module Playlist
   # brgen's playlist vertical as a mountable engine. The boot shape — autoload
   # paths, db/migrate, view and asset paths — is Shared::VerticalEngine, which is
-  # the recipe in brgen/ENGINES.md; that file also carries the two gotchas
+  # the recipe in brgen/README.md; that file also carries the two gotchas
   # (require:, top-level mount) that live outside this class.
   class Engine < ::Rails::Engine
     isolate_namespace Playlist

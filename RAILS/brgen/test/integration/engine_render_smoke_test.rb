@@ -16,7 +16,7 @@ require "test_helper"
 #     render. Fixed by `helper PlaylistHelper` in the engine base controller.
 #
 # This test renders the pages that broke, WITH an attachment, so neither class can
-# slip through green again. See brgen/ENGINES.md.
+# slip through green again. See brgen/README.md.
 class EngineRenderSmokeTest < ActionDispatch::IntegrationTest
   # 1x1 transparent PNG.
   PIXEL_PNG = Base64.decode64(

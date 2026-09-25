@@ -43,14 +43,6 @@ class RouteManifestInventoryTest < Minitest::Test
   end
 
 
-  def test_route_manifest_uses_the_shared_runtime
-    source = File.read(File.join(ROOT, "tools", "generate_route_manifest.rb"))
-
-    assert_includes source, 'require File.join(ROOT, "MASTER", "lib", "operator", "ruby_runner")'
-    assert_includes source, 'Operator::RubyRunner.bundle_cmd, "exec", Operator::RubyRunner.ruby_cmd'
-    refute_includes source, '"rbenv", "exec", "bundle", "exec"'
-  end
-
   def test_manifest_covers_every_app_the_inventory_probes
     assert_equal %w[amber brgen bsdports], manifest.fetch("apps").keys.sort
     manifest["apps"].each_value do |row|

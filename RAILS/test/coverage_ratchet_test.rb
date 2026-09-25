@@ -70,7 +70,7 @@ class CoverageRatchetTest < Minitest::Test
 # controllers 21 -> 23 and models 55 -> 56: the verified-business review
 # arrived with its own controller and model tests, and the fleet health
 # controller with the test for the 503 it used to answer.
-    "brgen" => { "controllers" => 23, "models" => 56 },
+    "brgen" => { "controllers" => 23, "models" => 57 },
     # models 1 -> 8 on 2026-08-16. bsdports had one model test (user) against
     # thirteen models, and it was the smallest tree in the repo — Port, the record
     # everything else hangs off, had nothing naming it. Writing them found two
@@ -84,7 +84,7 @@ class CoverageRatchetTest < Minitest::Test
   # The app's own app/ dir, plus any mounted vertical engines (engines/*/app).
   # A vertical extracted to an engine keeps its controllers/models under
   # engines/<name>/app, so counting only app/ would silently drop them and read
-  # the extraction as a coverage regression. See ENGINES.md.
+  # the extraction as a coverage regression. See brgen/README.md.
   def source_roots(app, kind)
     [File.join(ROOT, app, "app", kind)] + Dir.glob(File.join(ROOT, app, "engines/*/app", kind))
   end

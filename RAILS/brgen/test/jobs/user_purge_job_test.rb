@@ -145,9 +145,9 @@ class UserPurgeJobTest < ActiveJob::TestCase
   # "/home/brgen/test/erasure_coverage_test" on every VPS deploy. It failed the
   # whole Rails suite at 0 failures, 1 error and halted the pass.
   #
-  # Same candidate order and the same readability test as DeployBacklogTest, whose
-  # comment records why the canonical checkout comes before the per-app pub4-rails
-  # copy: those copies go stale without anything noticing.
+  # Same candidate order as test/source_reader.rb, whose comment records why the
+  # canonical checkout comes before the per-app pub4-rails copy: those copies go
+  # stale without anything noticing.
   ERASURE_COVERAGE_ROOTS = [
     ENV["PUB4_RAILS_ROOT"],
     "/home/dev/pub4/RAILS",

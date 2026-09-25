@@ -2,7 +2,7 @@
 
 **Music is better when someone is listening with you.** playlist is a mountable
 Rails engine served at `playlist.<city>` — `radio.brgen.no`,
-`radio.lsangeles.com`. `../../ENGINES.md` is the recipe; `../../AGENTS.md` is
+`radio.lsangeles.com`. `../../README.md` is the recipe; `../../AGENTS.md` is
 the topology.
 
 Users build playlists and sets, import hosted tracks, and collaborate on them.

@@ -72,7 +72,7 @@ group :test do
 end
 # Engine-ize spike: shared as local path gem (relative from rails/brgen)
 gem "pub4-shared", path: "../shared"
-# TV vertical as a mountable engine (vertical-as-engine pilot; see ENGINES.md).
+# TV vertical as a mountable engine (vertical-as-engine pilot; see README.md).
 gem "brgen-tv", path: "engines/tv", require: "tv"
 gem "brgen-marketplace", path: "engines/marketplace", require: "marketplace"
 gem "brgen-playlist", path: "engines/playlist", require: "playlist"

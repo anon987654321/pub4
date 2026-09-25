@@ -3,7 +3,7 @@
 require "minitest/autorun"
 
 # isolate_namespace drops the vertical prefix from the engine's own helpers.
-# ENGINES.md step 4: rewrite every v_X_(path|url) → X_\2 inside engines/v/app.
+# Step 4 of the recipe in brgen/README.md: rewrite every v_X_(path|url) → X_\2 inside engines/v/app.
 # The marketplace cart already lost send_offers_marketplace_cart_path that way.
 # playlist/show kept embed_playlist_playlist_url after the same extraction, so
 # the owner section 500'd — the embed feature the page itself advertises.

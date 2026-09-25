@@ -8,12 +8,7 @@ require_relative "../source_reader"
 # registers and keeps out, the views that use the components, and the snippet
 # library held to the registry.
 #
-# These three tests were spread through deploy_backlog_test.rb, which bundles
-# forty unrelated deploy contracts and had grown past its file-length ceiling
-# again. The components are one subject, so they get a file.
-#
-# Reads source as text, like the file it came from: this asserts the wiring
-# exists, not that it works.
+# Reads source as text: this asserts the wiring exists, not that it works.
 class SharedStimulusComponentsTest < Minitest::Test
   include SourceReader
 

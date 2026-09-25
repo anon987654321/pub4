@@ -2,7 +2,7 @@
 
 **Dinner, from the restaurant three streets over.** takeaway is a mountable Rails
 engine served at `takeaway.<city>` — `takeaway.brgen.no`,
-`takeaway.lsangeles.com`. `../../ENGINES.md` is the recipe; `../../AGENTS.md` is
+`takeaway.lsangeles.com`. `../../README.md` is the recipe; `../../AGENTS.md` is
 the topology.
 
 Local restaurants list menus, diners build orders and favourite the places they

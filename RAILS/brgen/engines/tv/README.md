@@ -2,7 +2,7 @@
 
 **A television channel anyone in the city can start.** tv is a mountable Rails
 engine served at `tv.<city>` — `tv.brgen.no`, `tv.lsangeles.com`.
-`../../ENGINES.md` is the recipe; `../../AGENTS.md` is the topology.
+`../../README.md` is the recipe; `../../AGENTS.md` is the topology.
 
 Channels publish videos, live streams and multi-episode shows. Viewers comment,
 take timestamped notes against a video, and chat in real time while a stream

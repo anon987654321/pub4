@@ -5,10 +5,8 @@
 # <app>/app/** stops seeing engine code, and a check that stops looking still
 # passes, so a falling finding count reads as improvement rather than blindness.
 #
-# These assertions were in brgen/test/services/deploy_backlog_test.rb, which is
-# at its length ceiling. That file's ratchet asks for a split rather than a
-# raise, and a per-engine contract is a better home than a shared backlog:
-# the next vertical to move gets a file to copy instead of a method to append.
+# A per-engine contract rather than a shared backlog: the next vertical to
+# move gets a file to copy instead of a method to append.
 #
 # Source-text assertions, under bare ruby with no app bundle.
 

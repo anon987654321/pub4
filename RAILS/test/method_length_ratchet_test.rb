@@ -42,8 +42,7 @@ class MethodLengthRatchetTest < Minitest::Test
   #
   # Measured 2026-08-10, after splitting page_inventory's
   # brgen_route_by_convention (75 -> 24, behaviour proved identical over 585
-  # route inputs) and deploy_backlog_test's 102-line bundle of six unrelated
-  # contracts. Lower a number when you split something; never raise one.
+  # route inputs). Lower a number when you split something; never raise one.
   #
   # gates is by far the worst and that is the honest shape of it: these are
   # audit routines that walk a tree and accumulate findings, and several want

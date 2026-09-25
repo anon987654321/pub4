@@ -274,7 +274,7 @@ module Shared
     #
     # The two URL hooks are the point of the parameterisation, not decoration.
     # brgen renders these inside isolated engines (marketplace, tv, takeaway and
-    # the rest are mounted engines — see brgen/ENGINES.md), so it has to resolve
+    # the rest are mounted engines — see brgen/README.md), so it has to resolve
     # every variant through main_app: engine routes do not own ActiveStorage and
     # to_model on a VariantWithRecord fails there. amber has no engines and
     # resolves through the ambient url_for, handing image_tag the variant object

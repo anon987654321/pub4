@@ -196,37 +196,37 @@ get "i/:token" => "invites#show", as: :invite
   # TV vertical, extracted to a mountable engine (engines/tv). Routes now live in
   # the engine's config/routes.rb; the host mounts it under the same subdomain
   # constraint. Host references to its helpers are tv.* (see application_helper,
-  # sitemaps_controller). The pilot for the vertical-as-engine split — see ENGINES.md.
+  # sitemaps_controller). The pilot for the vertical-as-engine split — see README.md.
   # Mount at the top level with constraints: as a keyword — NOT inside a
   # `constraints(subdomain:) do … end` block. A mount nested in a constraints
   # block still routes, but Rails only registers the `as:` mounted-helper proxy
   # (tv.channel_url, used by application_helper and sitemaps_controller) for a
-  # top-level mount. Nesting it silently drops the helper. See ENGINES.md.
+  # top-level mount. Nesting it silently drops the helper. See README.md.
   mount Tv::Engine, at: "/", as: "tv", constraints: { subdomain: TV_SUBDOMAINS }
 
   # dating vertical extracted to engines/dating (mountable engine). Top-level mount with
   # constraints: keyword — NOT a constraints(subdomain:) block, which would drop the
-  # dating.* mounted helper. See brgen/ENGINES.md.
+  # dating.* mounted helper. See brgen/README.md.
   mount Dating::Engine, at: "/", as: "dating", constraints: { subdomain: DATING_SUBDOMAINS }
 
   # playlist vertical extracted to engines/playlist (mountable engine). Top-level mount with
   # constraints: keyword — NOT a constraints(subdomain:) block, which would drop the
-  # playlist.* mounted helper. See brgen/ENGINES.md.
+  # playlist.* mounted helper. See brgen/README.md.
   mount Playlist::Engine, at: "/", as: "playlist", constraints: { subdomain: RADIO_SUBDOMAINS }
 
   # takeaway vertical extracted to engines/takeaway (mountable engine). Top-level mount with
   # constraints: keyword — NOT a constraints(subdomain:) block, which would drop the
-  # takeaway.* mounted helper. See brgen/ENGINES.md.
+  # takeaway.* mounted helper. See brgen/README.md.
   mount Takeaway::Engine, at: "/", as: "takeaway", constraints: { subdomain: TAKEAWAY_SUBDOMAINS }
 
   # marketplace vertical extracted to engines/marketplace (mountable engine). Top-level mount with
   # constraints: keyword — NOT a constraints(subdomain:) block, which would drop the
-  # marketplace.* mounted helper. See brgen/ENGINES.md.
+  # marketplace.* mounted helper. See brgen/README.md.
   mount Marketplace::Engine, at: "/", as: "marketplace", constraints: { subdomain: MARKETPLACE_SUBDOMAINS }
 
   # maps vertical extracted to engines/maps. Place stays a host model.
   # Top-level mount with constraints: keyword — NOT a constraints(subdomain:)
-  # block, which would drop the maps.* mounted helper. See brgen/ENGINES.md.
+  # block, which would drop the maps.* mounted helper. See brgen/README.md.
   mount Maps::Engine, at: "/", as: "maps", constraints: { subdomain: MAPS_SUBDOMAINS }
 
   constraints(subdomain: MESSENGER_SUBDOMAINS) do

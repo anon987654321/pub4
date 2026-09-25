@@ -5,7 +5,7 @@ require "active_support/core_ext/string/inflections"
 
 module Shared
   # The boot shape every brgen vertical engine shares: autoload paths, its own
-  # db/migrate, its views and its javascript. brgen/ENGINES.md calls
+  # db/migrate, its views and its javascript. brgen/README.md calls
   # this the recipe and says to mirror Shared::Engine exactly; six engines
   # mirrored it by hand and the bodies were byte-identical but for the module
   # name, so the recipe lives here and each engine includes it.

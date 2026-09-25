@@ -2,11 +2,9 @@
 
 # Where a source-reading contract test finds its source.
 #
-# ROOT, read_brgen and read_source were private to deploy_backlog_test.rb.
-# Splitting the infinite-scroll assertions out of that file needed all three,
-# and copying them would have made two answers to "where is the tree" that can
-# drift — which is the exact failure ROOT's own comment records from 2026-07-10,
-# when a stale /home/<app>/pub4-rails/RAILS had every assertion silently checking
+# On the box the suite runs from /home/brgen/app, where the RAILS tree is not
+# the parent directory, so ROOT is found rather than assumed. A stale
+# /home/<app>/pub4-rails/RAILS once had every assertion silently checking
 # month-old file contents instead of failing.
 module SourceReader
     ROOT = ENV.fetch("PUB4_RAILS_ROOT") do
@@ -15,8 +13,7 @@ module SourceReader
         # Canonical checkout first: per-app "pub4-rails" copies are leftovers from
         # older deploy schemes and can go stale relative to the real monorepo
         # without anything noticing (confirmed 2026-07-10: a stale
-        # /home/<app>/pub4-rails/RAILS caused every DeployBacklogTest assertion to
-        # silently check month-old file contents instead of failing loudly).
+        # /home/<app>/pub4-rails/RAILS read month-old file contents).
         "/home/dev/pub4/RAILS",
         "/home/#{app}/pub4-rails/RAILS",
         # This file is RAILS/brgen/test/source_reader.rb, so RAILS is two levels
@@ -34,7 +31,7 @@ module SourceReader
   # The five verticals moved to mountable engines (engines/<v>/app/...), so a path
   # like app/models/tv/channel.rb now lives at engines/tv/app/models/tv/channel.rb.
   # Resolve the host path first, then the engine location, then a flat basename
-  # match for assets that moved without a namespace dir. See brgen/ENGINES.md.
+  # match for assets that moved without a namespace dir. See brgen/README.md.
   def read_brgen(relative)
     read_source(File.join(ROOT, "brgen", relative))
   end
@@ -42,7 +39,7 @@ module SourceReader
   # Resolve a ROOT-based source path, falling back to the mountable engines the
   # five verticals moved into (engines/<v>/app/...), then a flat basename match
   # for assets moved without a namespace dir. Migrations stayed in the host and
-  # resolve directly. See brgen/ENGINES.md.
+  # resolve directly. See brgen/README.md.
   def read_source(abs)
     # brgen's routes now span the host plus every vertical engine — read them as one
     # so "is this route wired" assertions find engine-owned routes too.
