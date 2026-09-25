@@ -9,19 +9,6 @@ class WardrobeAi
 
   MODEL = Shared::Llm::DEFAULT_MODEL
 
-  # The only part of this service that knows a vendor exists.
-  #
-  # WardrobeAi used to hold an OpenAI::Client directly, so `chat` reached into
-  # `response.dig("choices", 0, "message", "content")` — the service's entire
-  # knowledge of AI was one vendor's HTTP response shape, and the test double
-  # existed to reproduce that shape rather than the behaviour. The seam is now
-  # `ask(prompt) -> String`, which is what the caller actually wants, and the
-  # double is three lines.
-  #
-  # ruby_llm rather than ruby-openai because brgen already uses ruby_llm and
-  # two LLM clients in one repo is one more than the number of them anybody
-  # keeps current. It speaks OpenRouter natively — openrouter_api_key is a
-  # first-class setting, so the uri_base override this used to need is gone.
   def self.configured?
     Shared::Llm.configured?
   end
