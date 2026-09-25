@@ -142,6 +142,14 @@ class TestSpeech < Minitest::Test
     assert_equal text, Master::Voice::Speech.clean_text(text)
   end
 
+  def test_norwegian_voice_cannot_be_overridden
+    original = ENV["MASTER_TTS_VOICE"]
+    ENV["MASTER_TTS_VOICE"] = "christopher"
+    assert_equal :pernille, Master::Voice::Speech.voice_for_text("Det ser faktisk riktig ut.")
+  ensure
+    ENV["MASTER_TTS_VOICE"] = original
+  end
+
   def test_norwegian_text_resolves_to_pernille
     assert_equal :pernille, Master::Voice::Speech.voice_for_text("Det ser faktisk riktig ut.")
     assert_equal :jenny, Master::Voice::Speech.voice_for_text("The system is ready.")
