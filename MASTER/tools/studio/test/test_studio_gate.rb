@@ -64,10 +64,10 @@ class TestStudioGate < Minitest::Test
 
   def test_vendored_directories_are_excluded
     %w[
-      /STUDIO/dilla/scratch/venv-demucs/lib/python3.14/site-packages/x.rb
-      /STUDIO/dilla/renders/x.rb
-      /STUDIO/dilla/samples/x.rb
-      /STUDIO/postpro/node_modules/x.rb
+      /dilla/scratch/venv-demucs/lib/python3.14/site-packages/x.rb
+      /dilla/renders/x.rb
+      /dilla/samples/x.rb
+      /postpro/node_modules/x.rb
     ].each { |path| assert_match GATE::VENDORED, path, "#{path} is not first-party and would be parsed" }
   end
 
@@ -75,11 +75,11 @@ class TestStudioGate < Minitest::Test
   # name merely contains one of those words would vanish from every check.
   def test_first_party_source_survives_the_filter
     %w[
-      /STUDIO/dilla/dilla.rb
-      /STUDIO/dilla/lib/engine/chord_theory.rb
-      /STUDIO/postpro/postpro.rb
-      /STUDIO/preprompt/preprompt.rb
-      /STUDIO/gate.rb
+      /dilla/dilla.rb
+      /dilla/lib/engine/chord_theory.rb
+      /postpro/postpro.rb
+      /preprompt/preprompt.rb
+      /gate.rb
     ].each { |path| refute_match GATE::VENDORED, path, "#{path} is first-party and is being skipped" }
   end
 
