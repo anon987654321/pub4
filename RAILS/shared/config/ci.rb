@@ -101,8 +101,13 @@ Operator::CiGuard.run! do
     # git, so the next sync restores the offence and the next deploy fixes it
     # again. That is fine for shipping and useless as a record, which is why each
     # corrected file is a `warn:` line, the one thing a passing step prints.
+    #
+    # The transcript goes to the app's own log/. A shared /tmp path is owned by
+    # whichever app user wrote it first, so on vm23 the next app's redirect
+    # failed with "Permission denied" and the shell never ran RuboCop at all.
     dirs = '$(for d in app lib config db/migrate test engines; do [ -d "$d" ] && printf "%s " "$d"; done)'
-    autocorrect = "bundle exec rubocop --autocorrect --format quiet #{dirs} > /tmp/rubocop-autocorrect.out 2>&1; " \
+    autocorrect = "mkdir -p log; " \
+                  "bundle exec rubocop --autocorrect --format quiet #{dirs} > log/rubocop-autocorrect.log 2>&1; " \
                   "git diff --name-only -- #{dirs} 2>/dev/null | " \
                   "while read -r f; do echo \"warn: rubocop autocorrected $f, not in git\"; done; true"
     step "rubocop_autocorrect", autocorrect
