@@ -73,6 +73,21 @@ class StimulusWiringGateTest < Minitest::Test
     refute gate.send(:shared_helper_unused_by?, "amber", File.join(ROOT, "amber/app/helpers/x.rb"), called, "lazy-image")
   end
 
+  def test_reports_a_missing_engine_action_method
+    with_file("brgen/engines/playlist/app/javascript/controllers/stimulus_mount_probe_controller.js",
+              %(import { Controller } from "@hotwired/stimulus"
+export default class extends Controller {}
+)) do
+      failures = with_file("brgen/engines/playlist/app/views/stimulus_wiring_probe.html.erb",
+                           %(<button data-action="click->stimulus-mount-probe#noSuchMethod">x</button>)) do
+        Deploy::StimulusWiringGate.run.failures.select { |f| f.include?("stimulus_mount_probe") }
+      end
+
+      assert_equal 1, failures.size, failures.inspect
+      assert_includes failures.first, "stimulus-mount-probe#noSuchMethod"
+    end
+  end
+
   def test_reports_a_missing_action_method
     failures = with_probe(%(<button data-action="click->luxury-product#noSuchMethod">x</button>))
 

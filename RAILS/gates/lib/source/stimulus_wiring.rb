@@ -458,6 +458,7 @@ module Deploy
       file = "#{id.tr("-", "_")}_controller.js"
       [
         File.join(@rails_root, app, "app/javascript/controllers", file),
+        *Dir.glob(File.join(@rails_root, app, "engines/*/app/javascript/controllers", file)),
         File.join(@rails_root, "shared/frontend", file),
       ].find { |path| File.file?(path) }
     end
