@@ -215,12 +215,18 @@ export default class extends Controller {}
               %(import { Controller } from "@hotwired/stimulus"\nexport default class extends Controller {}\n), &)
   end
 
+  # The maps engine has no app/helpers of its own, so the probe makes the
+  # directory it needs and takes away only what it made.
   def with_file(relative, text)
     path = File.join(ROOT, relative)
+    dir = File.dirname(path)
+    made = File.directory?(dir) ? nil : dir
+    FileUtils.mkdir_p(dir)
     File.write(path, text)
     yield
   ensure
     FileUtils.rm_f(path)
+    FileUtils.rmdir(made) if made && Dir.empty?(made)
   end
 
   # The gate reads the real tree; a probe file is the only way to exercise the
