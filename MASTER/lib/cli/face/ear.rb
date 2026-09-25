@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "open3"
 require "tmpdir"
 
 module Master
@@ -56,8 +57,12 @@ module Master
           system("command", "-v", "sox", out: File::NULL, err: File::NULL)
         end
 
+        # termux-speech-to-text prints the phrase and exits. Device has no
+        # speech helper; the command is the recogniser.
         def termux_listen(stop:, on_partial:)
-          stdout, wait_thr = @device.speech_to_text_start
+          stdin = stdout = nil
+          stdin, stdout, wait_thr = Open3.popen2("termux-speech-to-text")
+          stdin.close
           heard = []
           reader = Thread.new { read_matches(stdout, heard, on_partial) }
           sleep 0.05 while wait_thr.alive? && !stop.call
@@ -66,6 +71,7 @@ module Master
           heard.last
         ensure
           stdout&.close unless stdout&.closed?
+          stdin&.close unless stdin&.closed?
         end
 
         # sox ends the take on silence. The words are the transcription of

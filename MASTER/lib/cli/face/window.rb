@@ -189,6 +189,9 @@ module Master
           heard = @ear.listen(stop: -> { @halt_ear || @closing }, on_partial: ->(text) { show(["heard: #{text}"]) })
           set(:idle, ["heard nothing"]) unless heard
           heard
+        rescue StandardError => e
+          set(:idle, ["mic0: #{e.message}"])
+          nil
         end
 
         def answer(text)
