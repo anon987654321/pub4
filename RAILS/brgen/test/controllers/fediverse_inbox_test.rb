@@ -172,4 +172,24 @@ class FediverseInboxTest < ActionDispatch::IntegrationTest
     end
     assert_response :accepted
   end
+
+  test "Delete cannot cross an actor URI prefix" do
+    target_uri = "#{@actor_uri}-other/posts/1"
+    FediActivity.create!(
+      uri: target_uri,
+      activity_type: "Create",
+      fedi_actor: @actor,
+      received_at: Time.current
+    )
+
+    activity = {
+      "id" => "https://remote.example/activities/#{SecureRandom.uuid}",
+      "type" => "Delete",
+      "actor" => @actor_uri,
+      "object" => { "id" => target_uri }
+    }
+
+    assert_equal :not_ours, Fediverse::InboxProcessor.new(activity, @actor).call
+    assert FediActivity.exists?(uri: target_uri)
+  end
 end

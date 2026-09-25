@@ -107,10 +107,23 @@ module Fediverse
     def handle_delete
       object_uri = @activity.dig("object", "id") || @activity["object"]
       return :ignored unless object_uri.is_a?(String)
-      return :not_ours unless object_uri.start_with?(@actor.uri)
+      return :not_ours unless actor_owned_uri?(object_uri)
 
       FediActivity.where(uri: object_uri).destroy_all
       :deleted
+    end
+
+    def actor_owned_uri?(object_uri)
+      actor = URI(@actor.uri.to_s)
+      object = URI(object_uri)
+      return false unless actor.scheme == object.scheme
+      return false unless actor.host == object.host
+      return false unless actor.port == object.port
+
+      actor_path = actor.path.delete_suffix("/")
+      object.path.start_with?("#{actor_path}/")
+    rescue URI::InvalidURIError
+      false
     end
 
     # Accepts either a bare URI or an embedded object, because both are sent in
