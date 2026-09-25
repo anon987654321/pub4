@@ -234,7 +234,7 @@ end
 # the apps running. The row stays here either way: one registry, one
 # declaration per gate.
 def require_gate(path)
-  return require File.join(REPO_ROOT, path) if path.start_with?("MASTER/", "OPENBSD/", "STUDIO/")
+  return require File.join(REPO_ROOT, path) if path.start_with?("MASTER/", "OPENBSD/", "MASTER/tools/")
 
   require_relative path
 end
