@@ -55,7 +55,7 @@ class Marketplace::WebhooksController < ActionController::Base
     return head(:bad_request) unless payload
 
     delivery = begin_delivery(event_delivery:, event:)
-    return head(:ok) if delivery.succeeded? || delivery.active?
+    return head(:ok) unless delivery
 
     status = process_dintero_event(delivery, event, payload)
     return head(status) unless status == :finish
@@ -113,15 +113,20 @@ class Marketplace::WebhooksController < ActionController::Base
     return if request.headers["event"].present? && request.headers["event"] != event
     return if payload["account_id"].present? && payload["account_id"] != ENV["DINTERO_ACCOUNT_ID"].to_s
 
-    [payload, event_delivery, event]
+    [ payload, event_delivery, event ]
   end
 
+  # Nil when another request already owns this delivery: it succeeded, or it is
+  # being processed right now. The row this request creates is itself
+  # "processing" with no attempts, so the duplicate test belongs here, before
+  # the create, and not on whatever this method returns.
   def begin_delivery(event_delivery:, event:)
     delivery = Marketplace::WebhookDelivery.find_by(
       provider: "dintero",
       event_delivery: event_delivery
     )
-    return delivery if delivery&.succeeded? || delivery&.status == "failed" || delivery&.active?
+    return if delivery&.succeeded? || delivery&.active?
+    return delivery if delivery&.status == "failed"
 
     if delivery
       delivery.update!(
@@ -140,10 +145,7 @@ class Marketplace::WebhooksController < ActionController::Base
       received_at: Time.current
     )
   rescue ActiveRecord::RecordNotUnique
-    Marketplace::WebhookDelivery.find_by!(
-      provider: "dintero",
-      event_delivery: event_delivery
-    )
+    nil
   end
 
   def process_event(event, payload)

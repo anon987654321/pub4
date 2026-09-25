@@ -1,22 +1,30 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "minitest/mock"
 
 class DinteroCheckoutTest < ActiveSupport::TestCase
   Store = Struct.new(
     :dintero_payout_destination_id,
     :dintero_payout_destination_status,
     keyword_init: true
-  )
+  ) do
+    # Same rule as Marketplace::Store#dintero_ready?, which the service asks.
+    def dintero_ready?
+      dintero_payout_destination_id.present? && dintero_payout_destination_status == "ACTIVE"
+    end
+  end
 
   Listing = Struct.new(:id, :title, :store, keyword_init: true)
 
   FakeOrder = Struct.new(
     :id, :listing, :quantity, :total_cents, :payment_currency, :payment_description,
     :payment_reference, :payment_provider, :payment_status, :dintero_order_id, :dintero_split_json,
-    :dintero_session_id, :dintero_transaction_id, keyword_init: true
+    :dintero_session_id, :dintero_transaction_id, :updated_at, keyword_init: true
   ) do
     def startable? = true
+
+    def listing_id = listing&.id
 
     def update_columns(values)
       values.each { |key, value| public_send("#{key}=", value) }

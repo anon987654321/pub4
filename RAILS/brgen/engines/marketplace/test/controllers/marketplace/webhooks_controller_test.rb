@@ -139,7 +139,11 @@ class Marketplace::WebhooksControllerTest < ActionDispatch::IntegrationTest
   test "dintero stores raw delivery identity and authorizes the order" do
     secret = "dintero_hook"
     prior = ENV["DINTERO_HOOK_SECRET"]
+    prior_account = ENV["DINTERO_ACCOUNT_ID"]
     ENV["DINTERO_HOOK_SECRET"] = secret
+    # The controller drops a delivery whose account_id is not ours, so the
+    # accepting case must name the account it signs for.
+    ENV["DINTERO_ACCOUNT_ID"] = "P12345678"
     delivery_id = SecureRandom.uuid
     body = {
       account_id: "P12345678",
@@ -178,6 +182,7 @@ class Marketplace::WebhooksControllerTest < ActionDispatch::IntegrationTest
     assert_equal 1, Marketplace::WebhookDelivery.where(event_delivery: delivery_id).count
   ensure
     ENV["DINTERO_HOOK_SECRET"] = prior
+    ENV["DINTERO_ACCOUNT_ID"] = prior_account
   end
 
 

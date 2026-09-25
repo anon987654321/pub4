@@ -399,7 +399,6 @@ module Marketplace
         def platform_fee_cents(order)
           ((order.total_cents.to_i * platform_fee_bps) + 5_000) / 10_000
         end
-
       end
     end
   end
