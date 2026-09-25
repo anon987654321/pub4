@@ -106,7 +106,7 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
     end
 
     order = Current.user.marketplace_orders.find_by(id: params[:order_id])
-    if order&.payment_status == "pending" && params[:provider].present?
+    if order && params[:provider].present? && order.payment_status.in?(%w[pending authorized paid failed refunded])
       redirect_to order_path(order),
                   notice: t("flash.marketplace.payment_recorded",
                             status: t("flash.marketplace.payment_statuses.#{order.payment_status}"),
