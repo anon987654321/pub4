@@ -70,40 +70,25 @@ module Marketplace
         end
 
         def authorize!(payable, transaction_id:)
-          reference = payable.payment_reference
-          payable.update!(
-            payment_status: "authorized",
-            dintero_transaction_id: transaction_id,
-            status: payable.is_a?(Marketplace::Checkout) ? "pending_payment" : payable.status
-          )
-          if payable.is_a?(Marketplace::Checkout)
-            payable.order_lines.each do |order|
-              order.update_columns(
-                payment_status: "authorized",
-                dintero_transaction_id: transaction_id,
-                updated_at: Time.current
-              )
+          payable.transaction do
+            payable.update!(
+              payment_status: "authorized",
+              dintero_transaction_id: transaction_id,
+              status: payable.is_a?(Marketplace::Checkout) ? "pending_payment" : payable.status
+            )
+            if payable.is_a?(Marketplace::Checkout)
+              payable.order_lines.each { |order| order.authorize_payment!(transaction_id: transaction_id) }
             end
           end
           payable
         end
 
         def captured!(payable, transaction_id:)
-          if payable.is_a?(Marketplace::Checkout)
-            payable.update_columns(
-              dintero_transaction_id: transaction_id,
-              status: "paid",
-              paid_at: Time.current,
-              updated_at: Time.current
-            )
-            payable.order_lines.each { |order| order.mark_paid!(reference: payable.payment_reference) }
-          else
-            payable.update_columns(
-              dintero_transaction_id: transaction_id,
-              updated_at: Time.current
-            )
-            payable.mark_paid!(reference: payable.payment_reference)
-          end
+          payable.update_columns(
+            dintero_transaction_id: transaction_id,
+            updated_at: Time.current
+          )
+          payable.mark_paid!(reference: payable.payment_reference)
           payable
         end
 
