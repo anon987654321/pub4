@@ -1176,6 +1176,7 @@ en:
     accept: Accept
     decline: Decline
     add_to_cart: Add to cart
+    pay_dintero: Pay with Dintero
     pay_vipps: Pay with Vipps
     pay_stripe: Pay with Stripe
     send_all_offers: Send all offers
@@ -1658,6 +1659,7 @@ en:
       cart_empty: Your cart is empty.
       cart_not_payable: Nothing in the cart can be paid for.
       unknown_provider: Unknown payment provider.
+      dintero_seller_not_ready: Dintero checkout is not available for this seller yet.
       payment_recorded: Payment %{status} via %{provider}.
       listing_saved: Listing saved.
       listing_unsaved: Listing removed from saved.
