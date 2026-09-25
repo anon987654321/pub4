@@ -35,6 +35,25 @@ class MarketplacePayoutTest < ActiveSupport::TestCase
     end
   end
 
+
+  test "delivering a Dintero order does not create a legacy payout" do
+    order = @listing.orders.create!(
+      buyer: @buyer,
+      price_cents: @listing.price_cents,
+      quantity: 1
+    )
+    order.update!(
+      payment_status: "paid",
+      status: "paid",
+      payment_provider: "dintero",
+      payment_reference: "brgen-dintero-order-1"
+    )
+
+    assert_no_difference -> { Marketplace::Payout.count } do
+      order.mark_delivered!
+    end
+  end
+
   test "delivery of a shop order enqueues one pending payout" do
     order = paid_order
     assert_difference -> { Marketplace::Payout.count }, 1 do
