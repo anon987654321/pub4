@@ -9,7 +9,7 @@
 # always changing; air on top from an exciter. Now and then a hand on the
 # record: a tape stop, a spinback, a dub throw. Kicks sit off (KICKS_ON),
 # and the turntablist's crossfader waits behind CUTS_ON.
-$LOAD_PATH.unshift File.expand_path("~/Documents/GitHub/pub4/STUDIO/dilla/lib")
+$LOAD_PATH.unshift File.expand_path("~/Documents/GitHub/pub4/MASTER/tools/studio/dilla/lib")
 require "sound"
 
 RATE = 32_000
