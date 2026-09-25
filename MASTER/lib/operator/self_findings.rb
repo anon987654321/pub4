@@ -50,7 +50,7 @@ module Operator
     # nowhere else, so five laws written for the face were enforced against no
     # file at all.
     TREES = %w[
-      MASTER/lib MASTER/law MASTER/tools MASTER/web RAILS/shared/lib RAILS/gates OPENBSD STUDIO
+      MASTER/lib MASTER/law MASTER/tools MASTER/web RAILS/shared/lib RAILS/gates OPENBSD
       RAILS/amber RAILS/brgen RAILS/bsdports RAILS/shared/app RAILS/shared/config
     ].freeze
 
@@ -114,7 +114,7 @@ module Operator
     # Asked of git rather than of the filesystem. The corpus is what the repo
     # tracks plus what it has not ignored, which is what this tool has always
     # claimed to measure -- and git prunes an ignored directory instead of
-    # descending it. Dir.glob could not: STUDIO carries a sample library, a
+    # descending it. Dir.glob could not: MASTER/tools/dilla carries a sample library, a
     # scratch directory and gigabytes of renders, all gitignored, and walking
     # them once per declared extension to throw them away took every one of
     # TestRatchets' four questions past its 300s timeout. The same list comes
