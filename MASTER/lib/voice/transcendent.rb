@@ -116,7 +116,11 @@ module Master
       end
 
       def resolve_voice_and_prosody(clean, cfg, voice:, style:, rate:, pitch:, voice_locked:, style_locked:)
-        resolved_voice = voice || Speech.default_voice
+        resolved_voice = if Language.detect(clean) == :nb
+                             Speech.voice_for_text(clean)
+                           else
+                             voice || Speech.default_voice
+                           end
         resolved_rate = rate
         resolved_pitch = pitch
         personality = cfg["personality"].to_s
