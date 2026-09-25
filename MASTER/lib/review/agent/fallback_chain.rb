@@ -17,9 +17,11 @@ module Master
           queue = mode_chain_for(candidate_models)
           last_response = nil
           timed_out_models = Set.new
+          attempted_models = Set.new
 
           until queue.empty?
             attempt = queue.shift
+            attempted_models << attempt.fetch(:model)
             response = try_fallback_attempt(attempt, timed_out_models:, stage_warnings:, prompt:, context:, stream:, image:, &blk)
             next unless response
 
@@ -31,7 +33,7 @@ module Master
               return response.with_model(answered)
             end
             last_response = response
-            queue = offline_queue(attempt.fetch(:model), queue) if offline?(response)
+            queue = refresh_fallback_queue(queue, attempted_models)
           end
 
           @bus&.publish("agent:all_fallbacks_exhausted", warnings: stage_warnings)
@@ -143,16 +145,20 @@ module Master
           response.is_a?(Master::Result::Err) && response.category == :offline
         end
 
-        # With no network every remote lane fails the same way, and each one
-        # tried costs a resolver timeout, so what is left of the chain becomes
-        # the local tier the daemon holds, in its ranked order. The failed
-        # models are not parked in the skip cache: they come back with the
-        # network. With no local model there is nothing left worth trying.
-        def offline_queue(failed_model, queue)
-          local = @model_router.respond_to?(:local_models) ? Array(@model_router.local_models) : []
-          local = local.reject { |id| id == failed_model }
-          @bus&.publish("llm:offline_failover", from: failed_model, to: local, dropped: queue.size)
-          local.map { |id| { model: id, mode: "direct" } }
+        # Re-read the live route after a failed provider. A model may disappear
+        # or recover while the turn is running; newly reachable lanes join the
+        # queue without asking a previously attempted lane twice.
+        def refresh_fallback_queue(queue, attempted_models)
+          return queue unless @model_router
+
+          task_type = @config.task_type.to_s.empty? ? :exploration : @config.task_type.to_sym
+          live = @model_router.fallback_chain(task_type:)
+          fresh = Array(live).reject { |model| attempted_models.include?(model) }
+          current = queue.map { |attempt| [attempt[:model], attempt[:mode]] }.to_set
+          queue + mode_chain_for(fresh).reject { |attempt| current.include?([attempt[:model], attempt[:mode]]) }
+        rescue StandardError => e
+          @bus&.publish("llm:dynamic_route_error", error: e.message)
+          queue
         end
 
         def skip_categories
