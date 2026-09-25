@@ -115,7 +115,6 @@ module Marketplace
               )
               mark_return_refunded!(order, transaction_id)
             end
-            payable.sync_payment_status!
           else
             payable.update!(
               payment_status: "refunded",
