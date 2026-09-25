@@ -29,7 +29,7 @@ module Marketplace
           session_id = response.fetch("id")
           checkout_url = response.fetch("url")
 
-          persist_session!(order, dintero_order_id, session_id, reference)
+          persist_session!(order, session_id, reference)
           order.define_singleton_method(:dintero_checkout_url) { checkout_url }
           checkout_url
         rescue DinteroClient::Error => e
@@ -114,12 +114,11 @@ module Marketplace
 
         private
 
-        def persist_session!(payable, dintero_order_id, session_id, reference)
+        def persist_session!(payable, session_id, reference)
           payable.update!(
             payment_provider: "dintero",
             payment_status: "pending",
             payment_reference: reference,
-            dintero_order_id: dintero_order_id,
             dintero_session_id: session_id
           )
           if payable.is_a?(Marketplace::Checkout)
@@ -128,7 +127,6 @@ module Marketplace
                 payment_provider: "dintero",
                 payment_status: "pending",
                 payment_reference: reference,
-                dintero_order_id: dintero_order_id,
                 dintero_session_id: session_id,
                 updated_at: Time.current
               )
@@ -146,33 +144,6 @@ module Marketplace
               callback_url: callback_url
             },
             profile_id: DinteroClient.profile_id
-          }
-        end
-
-        def create_shopping_order!(payable, reference)
-          orders = payable.is_a?(Marketplace::Checkout) ? payable.order_lines.to_a : [ payable ]
-          response = DinteroClient.post(
-            "/v1/accounts/#{DinteroClient.account_id}/shopping/draft_orders",
-            {
-              merchant_reference: reference,
-              currency: payable.payment_currency,
-              items: orders.map { |order| draft_item(order) }
-            },
-            idempotency_key: "brgen-draft-#{reference}"
-          )
-          response.fetch("id")
-        rescue DinteroClient::Error => e
-          raise ProviderError, e.message
-        end
-
-        def draft_item(order)
-          {
-            id: order.id.to_s,
-            external_id: order.listing_id.to_s,
-            description: order.listing.title.to_s.truncate(120),
-            quantity: (order.quantity.presence || 1).to_i,
-            unit_price: order.unit_price_cents,
-            gross_amount: order.total_cents
           }
         end
 
