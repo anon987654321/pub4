@@ -242,7 +242,7 @@ fi
 # rc_pre touched the deploy flag; it comes off here, after the /up, ping and TTS
 # warmup, so bundle, the Falcon bind and the cold boot are all inside the window
 # resource_guard reads it for.
-if [ "$1" = "start" ] || [ "$1" = "restart" ]; then
+if [[ "$1" = "start" ]] || [[ "$1" = "restart" ]]; then
   rm -f /home/dev/pub4/.deploying 2>/dev/null || true
 fi
-exit $rc
+exit "$rc"
