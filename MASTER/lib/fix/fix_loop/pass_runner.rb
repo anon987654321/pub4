@@ -31,13 +31,13 @@ module Master
         include StreamStage
         include StructuralStage
 
-        def initialize(bus:, committer:, loop_scanner:, llm_router:, rollback:, root:,
+        def initialize(bus:, committer:, conflict_resolver:, llm_router:, rollback:, root:,
                        rules:, agent:, scanner:, learnings:, preamble:,
                        clean_runs_required:, plateau_window:, ground_truth: nil, homeostat: nil, council: nil,
                        visual_pass: nil, opportunity_pass: nil)
           @bus = bus
           @committer = committer
-          @loop_scanner = loop_scanner
+          @conflict_resolver = conflict_resolver
           @llm_router = llm_router
           @rollback = rollback
           @root = root
@@ -65,7 +65,29 @@ module Master
           @ground_truth_failures = 0
         end
 
-        def violations(files) = @loop_scanner.violations(files)
+        def violations(files) = resolve_violations(files.flat_map { |path| violations_for(path) })
+
+        def violations_for(path)
+          return [] unless File.exist?(path)
+
+          result = Master::Result.wrap(@scanner.scan(path))
+          return skip_unreadable(path, result) if !result.ok? && result.category == :validation
+          raise "fix scan failed for #{path}: #{result.message}" unless result.ok?
+
+          findings = result.value!
+          @bus&.publish("fix_loop:scan_progress", file: path.delete_prefix("#{@root}/"), count: findings.size) if findings.any?
+          findings.select { |finding| Severity.at_least?(finding.fetch(:severity, :warning), :warning) }
+                  .map { |finding| Violation.from_finding(finding, file: path.delete_prefix("#{@root}/")) }
+        end
+
+        def resolve_violations(raw)
+          @conflict_resolver.filter_findings(raw.map(&:to_h)).map { |row| row.transform_keys(&:to_sym) }
+        end
+
+        def skip_unreadable(path, result)
+          Master::Trace::Dmesg.once("fix0", "skipped #{path.delete_prefix("#{@root}/")}, #{result.message.split(":").first}")
+          []
+        end
 
         def run_pass(files:, target:, pass:, deadline:, transaction_id:, history:, seen_snapshots:,
                      recurring_violations:, consecutive_clean:)
