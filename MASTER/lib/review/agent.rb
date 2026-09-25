@@ -83,13 +83,6 @@ module Master
         result.to_s
       end
 
-# A category a retry cannot cure but a different lane can. chat/call
-# walk the full fallback chain; the single-shot doors (ask, ask_once)
-# take exactly one hop to the claude_code chain head instead — and the
-# categories that qualify come from the same models.yml
-# fallback_policy.on the chain reads, so the two lists cannot drift.
-SINGLE_CALL_FAILOVER = %i[budget rate_limit timeout no_api_key].freeze
-
       def ask_once(prompt, system: nil, law: true, model: nil, image: nil, temperature: nil, format: nil, failover: true)
         messages = [{ role: "user", content: prompt }]
         chosen = live_model(model || self.model)
@@ -153,7 +146,7 @@ end
       # retry cannot cure; the 2026-08-20 proof runs showed the error-severity
       # rules die in ask (via FixAttempt) after ask_once was fixed alone.
       def retry_on_broke_lane(result, chosen, messages, system: nil, image: nil, temperature: nil)
-        return result unless result.is_a?(Master::Result::Err) && single_call_failover_categories.include?(result.category)
+        return result unless result.is_a?(Master::Result::Err)
 
         last = result
         single_call_fallback_models(chosen).each do |fallback|
@@ -162,51 +155,31 @@ end
           return record_single_call_substitution(chosen, fallback, hopped) if hopped.is_a?(Master::Result::Ok)
 
           last = hopped
-          break unless last.is_a?(Master::Result::Err) && single_call_failover_categories.include?(last.category)
+          break unless last.is_a?(Master::Result::Err)
         end
 
-        Io::QuotaGate.trip_if_limited(source: "agent single-shot", message: last.message, model: chosen)
         last
       end
 
       def single_call_fallback_models(chosen)
-        if @model_router.respond_to?(:fallback_chain)
-          task_type = @config.task_type.to_s.empty? ? :exploration : @config.task_type.to_sym
-          return Array(@model_router.fallback_chain(task_type:)).uniq.reject { |model| model == chosen }
-        end
+        return [] unless @model_router.respond_to?(:fallback_chain)
 
-        fallback = single_call_fallback_model
-        fallback && fallback != chosen ? [fallback] : []
+        task_type = @config.task_type.to_s.empty? ? :exploration : @config.task_type.to_sym
+        Array(@model_router.fallback_chain(task_type:)).uniq.reject { |model| model == chosen }
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Agent.single_call_fallback_models")
         []
       end
 
       def record_single_call_substitution(from, to, result)
-        if result.is_a?(Master::Result::Ok)
-          Io::QuotaGate.substituted(from:, to:)
-        else
-          Io::QuotaGate.trip_if_limited(source: "agent single-shot", message: result.message, model: to)
-        end
+        Io::QuotaGate.substituted(from:, to:) if result.is_a?(Master::Result::Ok)
         result
       end
 
-      # The claude_code chain's head remains the compatibility fallback for
-      # routers that do not expose a live chain. Real routing uses the full
-      # dynamic ModelRouter chain above.
-      def single_call_fallback_model
-        @single_call_fallback_model ||= (@model_router.single_call_fallback_model if @model_router.respond_to?(:single_call_fallback_model))
-      rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "Agent.single_call_fallback_model")
-        nil
-      end
-
       # Every single-shot call also follows the live route when its selected
-      # lane is parked by a recent budget/auth failure.
-      DIVERT_CATEGORIES = %i[budget quota_exceeded auth_error no_api_key].freeze
-
+      # lane is parked by a recent provider failure.
       def live_model(selected)
-        return selected unless DIVERT_CATEGORIES.include?(Io::ModelSkipCache.skip_category(selected))
+        return selected unless Io::ModelSkipCache.skipped?(selected)
 
         fallback = single_call_fallback_models(selected).first
         return selected unless fallback && fallback != selected
