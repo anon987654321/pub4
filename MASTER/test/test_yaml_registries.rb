@@ -149,6 +149,13 @@ class TestRulesYamlRegistry < Minitest::Test
     assert unknown.empty?, "patterns.yml references unknown rules.yml ids: #{unknown.join(', ')}"
   end
 
+  def test_voice_yml_declares_language_specific_voices
+    tts = Master.load_yaml(File.join(DATA, "voice.yml")).fetch("tts")
+    assert_equal "jenny", tts.fetch("language_voices").fetch("en")
+    assert_equal "pernille", tts.fetch("language_voices").fetch("nb")
+    assert_equal "jenny", tts.fetch("single_voice")
+  end
+
   def test_voice_yml_loads_strunk
     voice = Master.load_yaml(File.join(DATA, "voice.yml"))
     strunk = voice.dig("voice", "strunk")
