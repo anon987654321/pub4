@@ -10,6 +10,18 @@ Internet -> PF -> relayd -> Falcon/Rails -> SQLite
 
 The Rails application makes outbound registry calls through an explicitly configured adapter. No inbound registry administration port is exposed by this package.
 
+## Secret boundary
+
+Runtime secrets belong in /etc/eritel.env or another protected store selected by the deployment owner.
+
+The reference environment uses:
+- root:eritel ownership;
+- mode 0640;
+- no credentials in git;
+- no credentials in process arguments.
+
+The committed .env.example contains placeholders only.
+
 ## OpenBSD responsibilities
 
 - PF: packet filtering and narrow ingress/egress policy;
