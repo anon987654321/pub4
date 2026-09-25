@@ -97,7 +97,7 @@ class TestFaceEarGate < Minitest::Test
     assert_equal "recogniser", phone_ear(:whisper, room_then_speech, parec: false).listen(stop: -> { false })
   end
 
-  # parec that gives no sound at all is a microphone Termux could not open.
+  # parec that gives no sound at all is a microphone Termux failed to open.
   def test_a_mute_microphone_falls_back_and_stays_back
     ear = phone_ear(:whisper, StringIO.new(""))
     assert_equal "recogniser", ear.listen(stop: -> { false })

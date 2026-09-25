@@ -91,7 +91,7 @@ module Master
 
         # A phone streams through whisper once the Termux setup has put
         # whisper-cli, a model and parec in place, and until parec once gives
-        # no sound at all, which is a microphone Termux could not open.
+        # no sound at all, which is a microphone Termux failed to open.
         def streaming?
           !@mute && @words.lane == :whisper && on_path?("parec")
         end
@@ -140,31 +140,18 @@ module Master
         end
 
         # Reads 20 ms frames until speech has started and then paused, or the
-        # caller stops. A quarter second before the start is kept, so the
-        # first syllable is not clipped by the gate that found it.
+        # caller stops.
         def capture_take(stream, stop:, on_partial:)
           gate = gate_percent * 327.68
           @finished = false
-          preroll = []
-          take = nil
-          loud = quiet = 0
-          last_partial = 0
-          until stop.call
+          take = await_speech(stream, gate, stop)
+          quiet = last_partial = 0
+          until take.nil? || stop.call
             frame = stream.read(FRAME_BYTES)
-            @mute = true if (frame.nil? || frame.empty?) && preroll.empty? && take.nil?
             break if frame.nil? || frame.empty?
 
-            peak = frame.unpack("s<*").map(&:abs).max.to_i
-            if take.nil?
-              preroll << frame
-              preroll.shift while preroll.size > PREROLL_FRAMES
-              loud = peak > gate ? loud + 1 : 0
-              take = preroll.join if loud >= START_FRAMES
-              next
-            end
-
             take << frame
-            quiet = peak < gate / 2 ? quiet + 1 : 0
+            quiet = peak(frame) < gate / 2 ? quiet + 1 : 0
             break if quiet >= END_FRAMES || take.bytesize >= MAX_TAKE_S * RATE_HZ * 2
 
             # A second more of speech since the last interim, counted in the
@@ -176,6 +163,27 @@ module Master
           end
           take
         end
+
+        # The start of a take, or nil when the caller stops or the stream
+        # ends first. A quarter second before the start is kept, so the first
+        # syllable is not clipped by the gate that found it. A stream with no
+        # first frame at all marks the ear mute.
+        def await_speech(stream, gate, stop)
+          preroll = []
+          loud = 0
+          until stop.call
+            frame = stream.read(FRAME_BYTES)
+            @mute = true if preroll.empty? && (frame.nil? || frame.empty?)
+            return if frame.nil? || frame.empty?
+
+            preroll << frame
+            preroll.shift while preroll.size > PREROLL_FRAMES
+            loud = peak(frame) > gate ? loud + 1 : 0
+            return preroll.join if loud >= START_FRAMES
+          end
+        end
+
+        def peak(frame) = frame.unpack("s<*").map(&:abs).max.to_i
 
         # One interim transcript, off the reading thread. Once the final one is
         # under way a late interim is dropped, so the words never step back.
