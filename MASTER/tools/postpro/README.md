@@ -1,5 +1,56 @@
 # postpro
 
+## Canonical contract
+
+### Purpose
+
+Grade and transform image media through named, measurable processing chains while
+preserving provenance and keeping media handling bounded.
+
+### Inputs
+
+Local images or directories, named presets/stocks/lenses, optional camera
+metadata, and explicit output destinations.
+
+### Outputs
+
+Processed images, measurements, exported LUT/CSS data where requested, and
+diagnostic/provenance output. No transformation is considered successful merely
+because the process exited zero.
+
+### Invocation
+
+Use `ruby MASTER/tools/postpro/postpro.rb <options>`.
+
+### Architecture
+
+`postpro.rb` is the orchestration boundary. `lib/` contains the image
+processing and analysis machinery, while the camera profile data remains
+declarative beside the tool.
+
+### Data and state
+
+Input media is external data. Temporary files are disposable; validated outputs
+are written atomically. Presets and camera profiles are tracked source.
+
+### Security boundary
+
+Treat images, EXIF, LUTs, profiles, and filenames as untrusted. Use structured
+subprocess arguments, bound dimensions/time/frame counts, validate output paths,
+avoid arbitrary deserialization, and keep remote fetching behind an explicit
+SSRF-safe boundary.
+
+### Validation
+
+Use vocabulary, measurement, and preset checks before trusting a result.
+Failures in media decoding, processing, or output replacement remain explicit.
+
+### MASTER integration
+
+Postpro is a canonical MASTER tool and the standard image-processing boundary
+for MASTER and the RAILS applications.
+
+
 **Film is a physical process, and postpro models the process rather than
 imitating the result.** A filter is a lookup table with an opinion. This is an
 emulsion: crystals with a size and a statistics, a base that reflects light back
@@ -407,4 +458,4 @@ ruby MASTER/tools/postpro/postpro.rb --capabilities
 ruby MASTER/tools/postpro/postpro.rb --list-presets
 ruby MASTER/tools/postpro/postpro.rb --measure photo.jpg
 
-New documentation and automation should use MASTER/tools/postpro, not the retired STUDIO/postpro path.
+New documentation and automation should use MASTER/tools/postpro, not the retired MASTER/tools/postpro path.
