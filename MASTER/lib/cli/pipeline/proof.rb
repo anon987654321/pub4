@@ -38,7 +38,7 @@ module Master
 
         PROOF_ROOTS = {
           "MASTER" => Operator::GateChain::MASTER,
-          "STUDIO" => File.join(Operator::GateChain::ROOT, "STUDIO"),
+          "STUDIO" => File.join(Operator::GateChain::ROOT, "MASTER", "tools", "studio"),
           "OPENBSD" => File.join(Operator::GateChain::ROOT, "OPENBSD"),
         }.freeze
 
