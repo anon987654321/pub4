@@ -1,7 +1,7 @@
 # Live: a progression through dilla's own oscillators and Moog ladder, a
 # different moog patch every two chords, cutoff and resonance swept slowly while
 # it plays. Streams raw PCM to sox, so nothing is written to disk.
-$LOAD_PATH.unshift File.expand_path("~/Documents/GitHub/pub4/STUDIO/dilla/lib")
+$LOAD_PATH.unshift File.expand_path("~/Documents/GitHub/pub4/MASTER/tools/studio/dilla/lib")
 require "sound"
 
 RATE = 32_000
