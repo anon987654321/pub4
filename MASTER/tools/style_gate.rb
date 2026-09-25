@@ -1,12 +1,14 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
-# frozen_string_literal: true
 
 require "open3"
+require_relative "../lib/operator/ruby_runner"
 
 ROOT = File.expand_path("..", __dir__)
 REPO = File.expand_path("../..", ROOT)
 RAILS_ROOT = File.join(REPO, "RAILS")
+RUBY = Operator::RubyRunner.ruby_cmd
+BUNDLE = Operator::RubyRunner.bundle_cmd
 
 def run(label, command, chdir: ROOT)
   out, err, status = Open3.capture3(*command, chdir:)
@@ -15,17 +17,13 @@ def run(label, command, chdir: ROOT)
 end
 
 def bundle_exec_rubocop(shared_rubocop, _app_dir)
-  if system("which ruby34 >/dev/null 2>&1")
-    %w[ruby34 bundle exec] + [shared_rubocop]
-  else
-    ["bundle", "exec", shared_rubocop]
-  end
+  [BUNDLE, "exec", RUBY, shared_rubocop]
 end
 
 results = []
 results << run(
   "MASTER rubocop (lib test script bin)",
-  %w[bundle exec rubocop --format simple lib test script bin],
+  [BUNDLE, "exec", RUBY, "-S", "rubocop", "--format", "simple", "lib", "test", "script", "bin"],
   chdir: ROOT,
 )
 
