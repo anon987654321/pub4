@@ -20,7 +20,9 @@ module Master
     # The single-file repair loop cannot do this: it returns one corrected file
     # per answer, and a split answered as one file came back UNCHANGED.
     class Restructure
-      MAX_FILES = 12
+      MAX_FILES = 48
+      MAX_DELETES = 32
+      MAX_WRITES = 24
       # What rules.yml paths.immutable names (the catalogue, the soul, the core
       # spine), from the repository root. An effect reads them and never writes.
       def self.immutable
@@ -52,6 +54,7 @@ module Master
 
       # review takes the applied diff and answers nil to approve, or a reason.
       def call(plan, message:, review:)
+        plan = ratcheted_plan(plan)
         refusal = refusal_for(plan)
         return Result.err("restructure refused: #{refusal}", category: :policy) if refusal
 
@@ -71,8 +74,37 @@ module Master
       def refusal_for(plan)
         return "the plan names no files" if plan.empty?
         return "#{plan.paths.size} files, more than #{MAX_FILES}" if plan.paths.size > MAX_FILES
+        return "#{plan.deletes.size} deletions, more than #{MAX_DELETES}" if plan.deletes.size > MAX_DELETES
+        return "#{plan.writes.size} writes, more than #{MAX_WRITES}" if plan.writes.size > MAX_WRITES
 
         path_refusal(plan)
+      end
+
+      def ratcheted_plan(plan)
+        return plan unless @tree == "MASTER"
+
+        path = "MASTER/data/spine.yml"
+        body = read(path)
+        return plan unless body
+
+        ceiling = body[/^  core_recursive_files: (\d+)$/, 1]&.to_i
+        return plan unless ceiling
+
+        predicted = core_recursive_files - plan.deletes.count { |entry| core_recursive_path?(entry) } +
+                    plan.writes.count { |entry, _| core_recursive_path?(entry) && !File.exist?(full(entry)) }
+        return plan unless predicted < ceiling
+
+        writes = plan.writes.dup
+        writes[path] = body.sub(/^  core_recursive_files: \d+$/, "  core_recursive_files: #{predicted}")
+        Restructure::Plan.new(summary: plan.summary, writes:, deletes: plan.deletes)
+      end
+
+      def core_recursive_files
+        Dir.glob(File.join(@root, "MASTER", "lib", "core", "**", "*.rb")).size
+      end
+
+      def core_recursive_path?(path)
+        path.start_with?("MASTER/lib/core/") && path.end_with?(".rb")
       end
 
       def path_refusal(plan)
