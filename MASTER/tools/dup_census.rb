@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Exact-duplicate census over every tracked file outside STUDIO, whose two
+# Exact-duplicate census over every tracked file outside generated/runtime state, whose two
 # permanent sets are explained at the exclusion. The lightgallery defect —
 # one file vendored twice, diverging silently, amber shipping 404 icons for
 # months — is a CLASS, and the 2026-08-22 sitting found 65 sets of it worth
