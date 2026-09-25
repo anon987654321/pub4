@@ -41,7 +41,7 @@ module Marketplace
         def ensure_sellers_ready!(orders)
           Array(orders).each do |order|
             listing = order.listing
-            store = listing&.store
+            store = store_for_listing(listing)
             unless store&.dintero_ready?
               raise SellerNotReady,
                     "Dintero seller payout destination is not ACTIVE for listing #{order.listing_id}"
@@ -51,7 +51,7 @@ module Marketplace
         end
 
         def supported_listing?(listing)
-          listing&.store&.dintero_ready? == true
+          store_for_listing(listing)&.dintero_ready? == true
         end
 
         def capture!(order:)
@@ -170,6 +170,19 @@ module Marketplace
         end
 
         private
+
+        def store_for_listing(listing)
+          return if listing.blank?
+
+          if listing.respond_to?(:association) && listing.association(:store).loaded?
+            return listing.store
+          end
+
+          store_id = listing.respond_to?(:store_id) ? listing.store_id : nil
+          return listing.store if store_id.blank? && listing.respond_to?(:store)
+
+          Marketplace::Store.strict_loading(false).find_by(id: store_id)
+        end
 
         def mark_return_refunded!(order, reference)
           return unless order.respond_to?(:id)
@@ -294,7 +307,7 @@ module Marketplace
         end
 
         def split_for(order)
-          store = order.listing.store
+          store = store_for_listing(order.listing)
           seller_destination = store&.dintero_payout_destination_id.to_s
           seller_status = store&.dintero_payout_destination_status.to_s
           unless seller_destination.present? && seller_status == "ACTIVE"
