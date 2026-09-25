@@ -180,6 +180,49 @@ class Marketplace::WebhooksControllerTest < ActionDispatch::IntegrationTest
     ENV["DINTERO_HOOK_SECRET"] = prior
   end
 
+
+  test "dintero retries only until the provider's fifth delivery" do
+    secret = "dintero_hook"
+    prior_secret = ENV["DINTERO_HOOK_SECRET"]
+    ENV["DINTERO_HOOK_SECRET"] = secret
+
+    delivery_id = SecureRandom.uuid
+    body = {
+      event: "checkout_transaction",
+      event_delivery: delivery_id,
+      transaction: {
+        id: "txn-fifth",
+        merchant_reference: "ref_probe",
+        status: "CAPTURED",
+        items: [{ "line_id" => @order.id.to_s, "amount" => @order.total_cents }]
+      }
+    }.to_json
+    signature = OpenSSL::HMAC.hexdigest("SHA1", secret, body)
+
+    delivery = Marketplace::WebhookDelivery.create!(
+      provider: "dintero",
+      event_delivery: delivery_id,
+      event: "checkout_transaction",
+      received_at: 121.seconds.ago,
+      attempts: 4
+    )
+
+    Marketplace::WebhookDelivery.any_instance.stubs(:retryable!).raises(RuntimeError, "boom")
+    Marketplace::WebhookDelivery.any_instance.stubs(:finish!).raises(RuntimeError, "boom")
+    post "/webhooks/dintero", params: body,
+         headers: {
+           "CONTENT_TYPE" => "application/json",
+           "event" => "checkout_transaction",
+           "event-delivery" => delivery_id,
+           "event-signature" => signature
+         }
+
+    assert_response :ok
+    assert_equal "processing", delivery.reload.status
+  ensure
+    ENV["DINTERO_HOOK_SECRET"] = prior_secret
+  end
+
   private
 
   def with_secret
