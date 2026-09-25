@@ -160,6 +160,12 @@ class DesignContractTest < Minitest::Test
     assert_includes modal, ".dialog"
   end
 
+  def test_brgen_emoji_actions_use_the_shared_local_token
+    source = File.read(File.join(ROOT, "brgen", "app", "assets", "stylesheets", "application.scss"))
+    assert_includes source, '--font-emoji: "Twemoji Mozilla", "Apple Color Emoji", "Segoe UI Emoji", sans-serif;'
+    assert_includes source, ".compose-actions span { font-family: var(--font-emoji); }"
+  end
+
   def test_action_controller_posts_body
     js = File.read(ACTION_JS)
     bar = File.read(ACTION_BAR)

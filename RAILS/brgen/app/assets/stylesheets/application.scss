@@ -139,6 +139,7 @@ x.$vertical-accent-ink: #110f19;
   --nav-badge-ink: #ffffff;
   /* --logo-detail: the animated mark's micro-stroke — logo art, not text. */
   --logo-detail: 3px;
+  --font-emoji: "Twemoji Mozilla", "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
   /* Hue-carrying ink: the live signal and every nick keep their hue and take one
      lightness per theme, because a single oklch lightness cannot clear TYPOGRAPHY's
      7.0 on both grounds. 38% is 7.49:1 on #efefef at the worst hue, 78% is 9.89:1
@@ -2876,7 +2877,7 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 .monogram--3 { background: #7b1e3a; color: #fff; } // scan: intentional — categorical avatar palette; the colour is the definition
 .monogram--4 { background: #184e77; color: #fff; } // scan: intentional — categorical avatar palette; the colour is the definition
 .monogram--5 { background: #5f4b32; color: #fff; } // scan: intentional — categorical avatar palette; the colour is the definition
-.compose-actions span { font-family: "Twemoji Mozilla", "Apple Color Emoji", "Segoe UI Emoji", sans-serif; }
+.compose-actions span { font-family: var(--font-emoji); }
 article h2 { font-size: var(--text-base); font-weight: var(--weight-bold); margin-bottom: 4px; }
 article p { color: var(--text-secondary); font-size: var(--text-base); }
 article mark { background: var(--hover); color: var(--text-secondary); padding: 0px 4px; font: var(--text-xs)/1.4 var(--font); border-radius: var(--radius-card); }
