@@ -68,23 +68,27 @@ class Marketplace::Checkout < ApplicationRecord
   # a half-paid basket — some orders paid, some not, one card charged — is the
   # state nobody has a way to resolve.
   def authorize_payment!(transaction_id:)
-    update!(
-      payment_provider: "dintero",
-      dintero_transaction_id: transaction_id,
-      status: "pending_payment"
-    )
-    order_lines.each do |order|
-      order.authorize_payment!(transaction_id: transaction_id)
+    transaction do
+      update!(
+        payment_provider: "dintero",
+        dintero_transaction_id: transaction_id,
+        status: "pending_payment"
+      )
+      order_lines.each do |order|
+        order.authorize_payment!(transaction_id: transaction_id)
+      end
     end
   end
 
   def fail_payment!(transaction_id: nil)
-    update!(
-      payment_provider: "dintero",
-      dintero_transaction_id: transaction_id.presence || dintero_transaction_id,
-      status: "open"
-    )
-    order_lines.each { |order| order.fail_payment!(transaction_id: transaction_id) }
+    transaction do
+      update!(
+        payment_provider: "dintero",
+        dintero_transaction_id: transaction_id.presence || dintero_transaction_id,
+        status: "open"
+      )
+      order_lines.each { |order| order.fail_payment!(transaction_id: transaction_id) }
+    end
   end
 
   def sync_payment_status!
