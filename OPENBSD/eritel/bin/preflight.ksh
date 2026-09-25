@@ -14,30 +14,28 @@ check_command() {
   }
 }
 
-check_optional_file() {
+check_file() {
   command=$1
-  shift
-  for file in "$@"; do
-    if [[ -f "$file" ]]; then
-      check_command "$command" || continue
-      print "eritel: checking $file"
-      case "$command" in
-        relayd) relayd -n -f "$file" ;;
-        nsd-checkconf) nsd-checkconf "$file" ;;
-        acme-client) acme-client -n -f "$file" ;;
-      esac
-    else
-      print "eritel: skip absent $file"
-    fi
-  done
+  file=$2
+
+  [[ -f "$file" ]] || {
+    print "eritel: skip absent $file"
+    return
+  }
+
+  check_command "$command" || return
+
+  print "eritel: checking $file"
+  case "$command" in
+    relayd) relayd -n -f "$file" ;;
+    nsd-checkconf) nsd-checkconf "$file" ;;
+    acme-client) acme-client -n -f "$file" ;;
+  esac
 }
 
-check_optional_file relayd "$ROOT/etc/relayd.conf"
-check_optional_file relayd "$ROOT/etc/relayd.conf.example"
-check_optional_file nsd-checkconf "$ROOT/etc/nsd.conf"
-check_optional_file nsd-checkconf "$ROOT/etc/nsd.conf.example"
-check_optional_file acme-client "$ROOT/etc/acme-client.conf"
-check_optional_file acme-client "$ROOT/etc/acme-client.conf.example"
+check_file relayd "$ROOT/etc/relayd.conf"
+check_file nsd-checkconf "$ROOT/etc/nsd.conf"
+check_file acme-client "$ROOT/etc/acme-client.conf"
 
 if [[ "$failures" -ne 0 ]]; then
   print -u2 "eritel: preflight failed: $failures missing prerequisites"
