@@ -106,6 +106,16 @@ class GateContractSpec < Minitest::Test
     assert_includes source, "Open3.popen2e(SAFE_ENV, RUBY, BUNDLE, \"exec\", RUBY, \"bin/cli\""
   end
 
+
+  def test_operator_app_suites_use_the_shared_runtime
+    source = File.read(File.join(ROOT, "bin", "operator"))
+
+    assert_includes source, 'require "operator/ruby_runner"'
+    assert_includes source, "[RUBY, BUNDLE, \"exec\", RUBY, \"bin/rails\", \"test\"]"
+    refute_includes source, "%w[rbenv exec bundle exec bin/rails test]"
+    refute_includes source, '{ "RBENV_VERSION" => "3.4.9" }'
+  end
+
   def test_gate_forces_safe_env
     source = File.read(GATE)
     assert_includes source, "SAFE_ENV"

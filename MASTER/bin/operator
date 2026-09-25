@@ -11,7 +11,11 @@ OPENBSD_OPS = File.join(ROOT, "OPENBSD")
 $LOAD_PATH.unshift(File.join(ROOT, "MASTER", "lib")) unless $LOAD_PATH.include?(File.join(ROOT, "MASTER", "lib"))
 
 require "operator/environment"
+require "operator/ruby_runner"
 require "operator/status_report"
+
+RUBY = Operator::RubyRunner.ruby_cmd
+BUNDLE = Operator::RubyRunner.bundle_cmd
 
 def usage
   <<~HELP
@@ -492,11 +496,11 @@ when "test"
   end
   app_suites = rails_parts.include?("shared") ? %w[brgen amber bsdports] : (rails_parts & %w[brgen amber bsdports])
   app_suites.each do |app|
-    jobs << ["#{app} suite", %w[rbenv exec bundle exec bin/rails test],
-             File.join(ROOT, "RAILS", app), { "RBENV_VERSION" => "3.4.9" }]
+    jobs << ["#{app} suite", [RUBY, BUNDLE, "exec", RUBY, "bin/rails", "test"],
+             File.join(ROOT, "RAILS", app), {}]
   end
   if rails_parts.any? { |part| %w[gates test].include?(part) } || !app_suites.empty?
-    jobs << ["RAILS contracts", %w[ruby test/run_all.rb], File.join(ROOT, "RAILS"), {}]
+    jobs << ["RAILS contracts", [RUBY, "test/run_all.rb"], File.join(ROOT, "RAILS"), {}]
   end
   if trees.any? { |t| t.first == "OPENBSD" }
     runner = 'Dir["test/test_*.rb"].sort.each { |f| system(RbConfig.ruby, f) || abort(f) }'
