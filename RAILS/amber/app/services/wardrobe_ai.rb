@@ -73,7 +73,7 @@ class WardrobeAi
     attachments = vision_items.filter_map { |item| item.photos.first if item.photos.attached? }
     outfits = chat(prompt, with: attachments.presence)["outfits"] || []
     outfits = rule_based_outfits(items, occasion:, season:) if outfits.blank?
-    Array(outfits).each { |o| o["source"] ||= @client ? "openrouter" : "rule" if o.is_a?(Hash) }
+    Array(outfits).each { |o| o["source"] ||= @client ? PROVIDER_SOURCE : "rule" if o.is_a?(Hash) }
     outfits
   end
 
