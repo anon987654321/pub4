@@ -69,4 +69,38 @@ class TestFaceEarGate < Minitest::Test
     quiet = StringIO.new(hiss(32_000).pack("s<*"))
     assert_nil listen(ear_with(quiet, ->(_) { flunk "transcribed a silent room" }))
   end
+
+  Phone = Struct.new(:android?)
+  Words = Struct.new(:lane) do
+    def final(_) = "heard"
+    def interim(_) = "so far"
+  end
+
+  # A phone with whisper and parec streams; the recogniser app is the fallback.
+  def phone_ear(lane, stream, parec: true)
+    ear = Ear.new(device: Phone.new(true), capture: -> { stream }, words: Words.new(lane))
+    ear.instance_variable_set(:@room, 0.4)
+    ear.instance_variable_set(:@room_at, Process.clock_gettime(Process::CLOCK_MONOTONIC))
+    ear.define_singleton_method(:termux_listen) { |**| "recogniser" }
+    ear.define_singleton_method(:on_path?) { |cmd| cmd == "parec" ? parec : true }
+    ear
+  end
+
+  def test_a_phone_with_whisper_streams
+    ear = phone_ear(:whisper, room_then_speech)
+    assert_nil ear.missing
+    assert_equal "heard", ear.listen(stop: -> { false })
+  end
+
+  def test_a_phone_without_whisper_asks_the_recogniser
+    assert_equal "recogniser", phone_ear(:gemini, room_then_speech).listen(stop: -> { false })
+    assert_equal "recogniser", phone_ear(:whisper, room_then_speech, parec: false).listen(stop: -> { false })
+  end
+
+  # parec that gives no sound at all is a microphone Termux could not open.
+  def test_a_mute_microphone_falls_back_and_stays_back
+    ear = phone_ear(:whisper, StringIO.new(""))
+    assert_equal "recogniser", ear.listen(stop: -> { false })
+    refute ear.send(:streaming?)
+  end
 end

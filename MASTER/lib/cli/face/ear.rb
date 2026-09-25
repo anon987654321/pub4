@@ -1,20 +1,26 @@
 # frozen_string_literal: true
 
 require "open3"
-require "tmpdir"
 
 module Master
   module CLI
     module Face
-      # The face's microphone. On Android, Termux:API's termux-speech-to-text
-      # is the recogniser. On a host with sox, a take ends on silence and
-      # Gemini transcribes that file. The words then go through the session,
-      # which is what the next turn remembers. A typed line is the fallback.
+      # The face's microphone. It streams raw samples from sox, or from parec
+      # on a phone, finds the start and end of speech itself, and hands the
+      # take to a Transcriber: whisper.cpp where it is installed, Gemini where
+      # it is not. A phone without whisper uses Termux:API's
+      # termux-speech-to-text instead. The words then go through the session,
+      # which is what the next turn remembers.
       #
-      # Without it the ear says what is missing and hears nothing. A typed
-      # line is the fallback; a guessed transcription never is.
+      # Without a recogniser the ear says what is missing and hears nothing. A
+      # typed line is the fallback; a guessed transcription never is.
       class Ear
         HINT = "install the Termux:API app, then pkg install termux-api"
+        # Termux has no sox audio driver. PulseAudio's OpenSL ES source reads
+        # the phone's microphone, and parec streams it as raw samples.
+        PULSE = %w[pulseaudio --start --load=module-sles-source --exit-idle-time=-1].freeze
+        PAREC = %w[parec --raw --format=s16le --rate=16000 --channels=1 --latency-msec=20].freeze
+        SOX = %w[sox -q -d -r 16000 -c 1 -b 16 -e signed -t raw -].freeze
         # The gate sits above the room, not at a fixed level: a fixed 1%
         # never opened in a quiet room, and a fixed 0.05% opened on a
         # laptop's own noise, which peaks near 0.4%, so every take was a
@@ -40,16 +46,21 @@ module Master
         # The start gate, in percent of full scale, for a room at room_percent.
         def self.gate_for(room_percent) = (room_percent * GATE_OVER_ROOM).clamp(GATE_FLOOR, GATE_CEILING)
 
-        def initialize(device: Master::Device, capture: nil, transcriber: nil)
+        # transcriber takes the whole take and interim the take so far; both
+        # default to words, which picks whisper or Gemini.
+        def initialize(device: Master::Device, capture: nil, transcriber: nil, interim: nil, words: Transcriber.new)
           @device = device
+          @words = words
           @capture = capture || -> { open_stream }
-          @transcriber = transcriber || ->(pcm) { transcribe(pcm) }
+          @transcriber = transcriber || words.method(:final)
+          @interim = interim || transcriber || words.method(:interim)
         end
 
         # Nil when the ear can listen, otherwise the sentence that says why not.
         def missing
-          return termux_missing if @device.android?
-          return "mic0: sox missing — type instead" unless sox?
+          return (streaming? ? nil : termux_missing) if @device.android?
+          return "mic0: sox missing — type instead" unless on_path?("sox")
+          return "mic0: #{@words.describe} — type instead" unless @words.lane
 
           nil
         end
@@ -60,9 +71,12 @@ module Master
         # handing each partial match to on_partial as it arrives. Returns the
         # last match, which is the fullest, or nil when nothing was heard.
         def listen(stop:, on_partial: nil)
-          return termux_listen(stop:, on_partial:) if @device.android?
+          return termux_listen(stop:, on_partial:) if @device.android? && !streaming?
 
-          host_listen(stop:, on_partial:)
+          heard = host_listen(stop:, on_partial:)
+          return heard unless @mute && @device.android?
+
+          termux_listen(stop:, on_partial:)
         end
 
         private
@@ -73,9 +87,16 @@ module Master
           "mic0: termux-speech-to-text missing — #{HINT}; type instead"
         end
 
-        def sox?
-          system("command", "-v", "sox", out: File::NULL, err: File::NULL)
+        def on_path?(cmd) = Master::Voice::Playback.which(cmd)
+
+        # A phone streams through whisper once the Termux setup has put
+        # whisper-cli, a model and parec in place, and until parec once gives
+        # no sound at all, which is a microphone Termux could not open.
+        def streaming?
+          !@mute && @words.lane == :whisper && on_path?("parec")
         end
+
+        def record_argv = @device.android? ? PAREC : SOX
 
         # termux-speech-to-text prints the phrase and exits. Device has no
         # speech helper; the command is the recogniser.
@@ -98,15 +119,13 @@ module Master
           stdin&.close unless stdin&.closed?
         end
 
-        # sox ends the take on silence. The words are the transcription of
-        # that file, not a guess, and the reply itself still goes through the
-        # session so the next turn can hear this one.
-        # The host ear streams: sox hands raw 16 kHz samples to Ruby, which
+        # The ear streams: sox or parec hands raw 16 kHz samples to Ruby, which
         # finds the start and end of speech itself, so the words can be
         # transcribed while the take is still going. Once a second the take so
-        # far goes to Gemini and its words are shown, the way the web face
-        # shows the browser's interim results; the pause that ends the take
-        # sends the whole of it once more, and that transcript is the one kept.
+        # far goes to the fast model and its words are shown, the way the web
+        # face shows the browser's interim results; the pause that ends the
+        # take sends the whole of it to the accurate one, and that transcript
+        # is the one kept.
         def host_listen(stop:, on_partial:)
           stream = @capture.call
           take = capture_take(stream, stop:, on_partial:)
@@ -132,6 +151,7 @@ module Master
           last_partial = 0
           until stop.call
             frame = stream.read(FRAME_BYTES)
+            @mute = true if (frame.nil? || frame.empty?) && preroll.empty? && take.nil?
             break if frame.nil? || frame.empty?
 
             peak = frame.unpack("s<*").map(&:abs).max.to_i
@@ -163,13 +183,14 @@ module Master
           return unless on_partial
 
           Thread.new do
-            text = @transcriber.call(pcm)
+            text = @interim.call(pcm)
             on_partial.call(text) if text && !text.empty? && !@finished
           end
         end
 
         def open_stream
-          IO.popen(%w[sox -q -d -r 16000 -c 1 -b 16 -e signed -t raw -], "rb", err: File::NULL)
+          system(*PULSE, out: File::NULL, err: File::NULL) if @device.android?
+          IO.popen(record_argv, "rb", err: File::NULL)
         end
 
         def close_stream(stream)
@@ -196,53 +217,14 @@ module Master
         # knock does not raise the gate, taken after the first 150 ms, where
         # opening the device clicks at up to 5%.
         def room_peak_percent
-          raw, = Open3.capture2("sox", "-q", "-d", "-r", "16000", "-c", "1", "-b", "16", "-e", "signed",
-                                "-t", "raw", "-", "trim", "0", (ROOM_S + 0.15).to_s, binmode: true, err: File::NULL)
+          stream = open_stream
+          raw = stream.read(((ROOM_S + 0.15) * RATE_HZ * 2).to_i).to_s
           samples = raw.unpack("s<*").drop(2_400).map(&:abs).sort
           samples.empty? ? 0.0 : samples[(samples.size * 0.99).floor] * 100.0 / 32_768
         rescue StandardError
           0.0
-        end
-
-        def transcribe(pcm)
-          key = gemini_key
-          return unless key
-
-          require "net/http"
-          require "json"
-          require "base64"
-          uri = URI("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=#{key}")
-          body = {
-            contents: [{ parts: [
-              { text: 'Transcribe the speech. Reply as JSON: {"heard":"..."} . Empty heard when there is no speech.' },
-              { inline_data: { mime_type: "audio/wav", data: Base64.strict_encode64(wav_bytes(pcm)) } },
-            ] }],
-            generationConfig: { responseMimeType: "application/json", thinkingConfig: { thinkingBudget: 0 } },
-          }
-          res = Net::HTTP.post(uri, body.to_json, "Content-Type" => "application/json")
-          text = JSON.parse(res.body).dig("candidates", 0, "content", "parts", 0, "text")
-          JSON.parse(text.to_s)["heard"].to_s.strip
-        rescue StandardError
-          nil
-        end
-
-        # A 16 kHz mono 16-bit wav around raw samples.
-        def wav_bytes(pcm)
-          ["RIFF", 36 + pcm.bytesize, "WAVE", "fmt ", 16, 1, 1, RATE_HZ, RATE_HZ * 2, 2, 16, "data", pcm.bytesize]
-            .pack("a4Va4a4VvvVVvva4V") + pcm
-        end
-
-        def gemini_key
-          return ENV["GEMINI_API_KEY"] unless ENV["GEMINI_API_KEY"].to_s.empty?
-
-          path = File.expand_path("~/.config/master/env")
-          return unless File.file?(path)
-
-          File.foreach(path) do |line|
-            key, value = line.strip.sub(/\Aexport\s+/, "").split("=", 2)
-            return value.to_s.delete(%("')) if key == "GEMINI_API_KEY"
-          end
-          nil
+        ensure
+          close_stream(stream)
         end
 
         def read_matches(stdout, heard, on_partial)
