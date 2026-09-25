@@ -46,7 +46,7 @@ module Master
             - Each tool defines its constants at top level; two tools must never
               define the same name.
             - dilla's sound defaults and postpro's graded look never change, and
-              nothing here may render. STUDIO/lora and STUDIO/dilla/data never move.
+              nothing here may render. MASTER/tools/lora and MASTER/tools/dilla/data never move.
           TEXT
         }.freeze
 
