@@ -188,7 +188,11 @@ module Master
       def dispatch_face(_ctx = nil)
         return "face0: needs a terminal" unless $stdin.tty?
 
-        turn = Face::Window.turn { Fiber[:master_cli_container] }
+        container = Fiber[:master_cli_container]
+        session = container[:session] if container
+        return "face0: no session" unless session
+
+        turn = Face::Talk.for_session(session)
         Face::Window.new(turn:).run
       end
 
