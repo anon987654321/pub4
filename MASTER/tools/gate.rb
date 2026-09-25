@@ -4,7 +4,7 @@
 require "open3"
 require "rbconfig"
 require "timeout"
-require_relative "../../../OPENBSD/lib/gate_result"
+require_relative "../../OPENBSD/lib/gate_result"
 require_relative "dilla/lib/engine_sources"
 
 module Deploy
