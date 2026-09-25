@@ -137,6 +137,16 @@ class TestSpeech < Minitest::Test
     assert_nil Master::Voice::Speech.synthesize("   ")
   end
 
+  def test_clean_text_does_not_cut_the_tail
+    text = ("Norwegian tail stays present. " * 220).strip
+    assert_equal text, Master::Voice::Speech.clean_text(text)
+  end
+
+  def test_norwegian_text_resolves_to_pernille
+    assert_equal :pernille, Master::Voice::Speech.voice_for_text("Det ser faktisk riktig ut.")
+    assert_equal :jenny, Master::Voice::Speech.voice_for_text("The system is ready.")
+  end
+
   def test_synthesize_bytes_returns_nil_for_empty
     assert_nil Master::Voice::Speech.synthesize_bytes("")
   end
@@ -291,7 +301,7 @@ class TestSpeech < Minitest::Test
 
   def test_worker_timeout_scales_with_text_length
     base = Master::Voice::Speech.send(:worker_timeout, 0)
-    long = Master::Voice::Speech.send(:worker_timeout, Master::Voice::Speech::MAX_CHARS)
+    long = Master::Voice::Speech.send(:worker_timeout, 4000)
     assert_equal Master::Voice::Speech::WORKER_TIMEOUT, base
     assert long > base, "a full MAX_CHARS utterance should get more time than an empty one"
     assert long <= Master::Voice::Speech::WORKER_TIMEOUT_MAX
