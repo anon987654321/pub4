@@ -159,8 +159,11 @@ module Operator
       abort("data_reach: the code corpus is empty, so every key reads as unnamed") if code.empty?
 
       data_files.each { |path| document(path) }
-      if @document_errors&.any?
-        details = @document_errors.map { |path, error| "#{path}: #{error.class}: #{error.message.lines.first.to_s.strip}" }
+      # Only this corpus's files. The error table lives as long as the process,
+      # and a file some earlier caller asked about is not in this census.
+      broken = (@document_errors || {}).slice(*data_files)
+      if broken.any?
+        details = broken.map { |path, error| "#{path}: #{error.class}: #{error.message.lines.first.to_s.strip}" }
         abort("data_reach: #{details.join("; ")}")
       end
 
