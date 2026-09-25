@@ -125,6 +125,10 @@ module Operator
            Stage.new(name: "source", purpose: "every RAILS gate, source and rendered, fix + remeasure",
                      mutates: !scan_only, run: -> { rails_gates(scan_only:) })
          end),
+        (if trees.include?("OPENBSD")
+           Stage.new(name: "openbsd", purpose: "every OpenBSD config, shell and deploy gate",
+                     mutates: false, run: -> { openbsd_gates })
+         end),
         Stage.new(name: "suites", purpose: suite_purpose(trees),
                   mutates: false, run: -> { suites(trees) }),
         Stage.new(name: "ratchets", purpose: "every recorded ceiling, current beside it", mutates: false,
@@ -212,6 +216,10 @@ module Operator
       capture(RUBY, "gates/runner.rb", "--all",
               chdir: File.join(ROOT, "RAILS"),
               env: { "GATE_AUTOFIX" => scan_only ? "0" : "1" })
+    end
+
+    def openbsd_gates
+      capture(RUBY, File.join(ROOT, "OPENBSD", "bin", "check-openbsd"), chdir: ROOT)
     end
 
     # Every file runs, then the run fails once with all of them named. Aborting
