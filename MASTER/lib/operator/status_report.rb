@@ -94,7 +94,7 @@ module Operator
     # Porcelain is `XY <path>`, and <path> is not always a bare path.
     #
     # git QUOTES it whenever it holds a space or a non-ASCII byte, so a dirty
-    # `STUDIO/dilla/før.wav` was tallied under the tree `"STUDIO` — a quote
+    # `MASTER/tools/dilla/før.wav` was tallied under the tree `"STUDIO` — a quote
     # character in the name of a tree, in the line whose whole job is telling one
     # session which trees hold another session's work. A rename reports
     # `<old> -> <new>`, and the tree that matters is where the file landed.
