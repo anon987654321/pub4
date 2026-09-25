@@ -1176,6 +1176,7 @@ en:
     accept: Accept
     decline: Decline
     add_to_cart: Add to cart
+    capture_order: Capture payment
     pay_dintero: Pay with Dintero
     pay_vipps: Pay with Vipps
     pay_stripe: Pay with Stripe
@@ -1673,12 +1674,16 @@ en:
         one: Sent 1 offer to the seller.
         other: Sent %{count} offers to sellers.
       offer_failed: Could not send the offer.
+      capture_started: Capture sent to Dintero.
+      capture_failed: Dintero could not capture this order.
+      capture_unavailable: This order cannot be captured yet.
       review_saved: Review saved.
       search_saved: Search saved.
       search_deleted: Saved search deleted.
       payment_statuses:
         unpaid: unpaid
         pending: pending
+        authorized: authorized
         paid: paid
         failed: failed
         refunded: refunded
