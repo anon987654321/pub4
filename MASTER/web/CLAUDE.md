@@ -110,6 +110,8 @@ code read.
 6. Confirm console errors do not indicate eager WebGL or THREE.js boot before tap.
 
 ## Runtime contract (chat, face, TTS)
+Fullscreen invariant: the face surface owns the entire dynamic viewport. `canvas#face` and the face shell must remain edge-to-edge at `100dvw` × `100dvh`; the installed PWA manifest prefers `fullscreen`. Do not reintroduce a viewport-sized frame, card, inset canvas, or `min-height: 44vh` face root.
+Safe-area insets belong to the chrome controls, not to the face canvas. The renderer remains fixed at the viewport origin while prompt, captions, microphone state, and other controls consume `env(safe-area-inset-*)` through the existing inset tokens.
 
 `chat_actions.js` owns the preferred POST streaming transport and SSE block
 parser. `face.part5.txt` / `face.runtime.js` own the face-specific reaction
