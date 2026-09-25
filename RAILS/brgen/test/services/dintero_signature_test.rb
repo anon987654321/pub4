@@ -49,12 +49,6 @@ class DinteroSignatureTest < ActiveSupport::TestCase
     assert_not Marketplace::Payments::DinteroSignature.valid_callback?(header:, request:)
 
     ENV["DINTERO_CALLBACK_SECRET"] = "wrong"
-    fresh = Time.current.to_i
-    header = Marketplace::Payments::DinteroSignature.callback_header(
-      timestamp: fresh,
-      method: request.request_method,
-      url: request.url
-    )
     assert_not Marketplace::Payments::DinteroSignature.valid_callback?(header:, request:)
   end
 
