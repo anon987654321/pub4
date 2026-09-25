@@ -20,11 +20,11 @@ module Master
       # /review — the read-only pass. It observes, asks the council and prints
       # the principle map; it changes nothing. The verb that changes the tree is
       # /fix, and it owns the repair.
-      def dispatch_review(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, review_crew: nil, swarm: nil, **_legacy)
+      def dispatch_review(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, swarm: nil, **_legacy)
         raw = arg_for(ctx).to_s.strip
         apply, critique, aesthetic, only, target = parse_pass_flags(raw)
         with_dmesg_verbosity(raw) do
-          run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, review_crew:, swarm: },
+          run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
                    target:, apply: apply || false, critique:, aesthetic:, only: only || "critique,map")
         end
       end
@@ -35,7 +35,7 @@ module Master
       # improving, or hands back a state only a person can settle. `--dry-run`
       # stops after the reading and says what it would take on.
       # /critique — the council stage only. It observes and argues, but does not write.
-      def dispatch_critique(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, review_crew: nil, swarm: nil, **_legacy)
+      def dispatch_critique(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, swarm: nil, **_legacy)
         raw = arg_for(ctx).to_s.strip
         _apply, _critique, aesthetic, _only, target = parse_pass_flags(raw)
         with_dmesg_verbosity(raw) do
@@ -44,7 +44,7 @@ module Master
         end
       end
 
-      def dispatch_fix(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, review_crew: nil, swarm: nil, **_legacy)
+      def dispatch_fix(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, swarm: nil, **_legacy)
         raw = arg_for(ctx).to_s.strip
         apply, _critique, aesthetic, _only, target = parse_pass_flags(raw)
         rendered = with_dmesg_verbosity(raw) do
