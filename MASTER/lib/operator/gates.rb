@@ -148,10 +148,10 @@ module Deploy
       progress "skipped #{@skipped.size} unchanged target(s): #{@skipped.map { |t| File.basename(t) }.join(", ")}"
     end
 
-    # All four trees, not the Rails half. MASTER judges every effect against its
-    # constitution and the other three trees are effects; scanning only RAILS
-    # left a law that never opens MASTER/tools' 155 source files or OPENBSD's 107 to
-    # govern them anyway. Each target carries its own ceiling in
+    # The full repository surface, not the Rails half. MASTER judges every effect
+    # against its constitution; MASTER/tools is part of MASTER, while OPENBSD is a
+    # sibling deployment tree. Scanning only RAILS left laws that never opened the
+        # govern them anyway. Each target carries its own ceiling in
     # constitutional_budget.yml, so a tree can be over without hiding another.
     #
     # MASTER is here too, and it is not a duplicate of `rake selfcheck`: that
@@ -162,8 +162,8 @@ module Deploy
       ../OPENBSD ../MASTER
     ].freeze
 
-    # RAILS/brgen for an app, MASTER/tools for a tree — the prefix a changed path must
-    # carry to select its target.
+    # RAILS/brgen for an app, MASTER and OPENBSD for their repository trees — the
+    # prefix a changed path must carry to select its target.
     def repo_prefix(target)
       relative = target.sub(%r{\A\.\./}, "")
       "#{relative}/"
