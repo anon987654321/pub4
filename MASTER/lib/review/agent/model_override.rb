@@ -33,32 +33,17 @@ module Master
           end
         end
 
-        # The session's model at boot. /model saves its choice to config, so an
-        # online boot puts that choice first again; a config still holding the
-        # default chose nothing and leaves the routed chain in charge. A saved
-        # model the pool cannot reach any more — a key removed, a model deleted —
-        # is passed over with one line, as OpenCode passes over a stale recent
-        # model, rather than pinned to fail every call of the session.
+        # /model may save a provider that later disappears. Keep an explicit
+        # choice while it remains reachable; otherwise leave selection to the
+        # live router instead of pinning a dead lane.
         def pin_boot_model!
-          start_on_local_tier_when_offline!
           saved = @config["model"].to_s
           return if @pinned_model || saved.empty? || saved == Ground::Config::DEFAULTS["model"]
 
           reason = @model_router.unreachable_reason(saved, wait: true) if @model_router.respond_to?(:unreachable_reason)
           return @pinned_model = saved unless reason
 
-          Trace::Dmesg.once("model0", "#{saved} passed over, #{reason}")
-        end
-
-        # Offline, every remote lane costs a resolver timeout before
-        # FallbackChain reaches the local tier, so a session that starts with
-        # no network starts there. Not saved to config: the network coming
-        # back gives the routed chain back on the next boot.
-        def start_on_local_tier_when_offline!
-          return if @pinned_model || Ground::BootReceipt.network?
-
-          local = @model_router.respond_to?(:local_models) ? Array(@model_router.local_models).first : nil
-          @pinned_model = local if local
+          Trace::Dmesg.once("model0", "#{saved} unavailable; dynamic routing (#{reason})")
         end
 
         # A pinned model that just failed is parked in the skip cache, and the
