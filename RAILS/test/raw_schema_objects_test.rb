@@ -4,9 +4,9 @@ require "minitest/autorun"
 
 # Schema objects that `schema_format = :ruby` cannot express.
 #
-# Rails' Ruby schema dumper writes tables, columns and indexes. It cannot write
-# a virtual table, a trigger, or a view -- those exist only as raw `execute` in
-# a migration. All three apps are on the default :ruby format, and two of them
+# Rails' Ruby schema dumper writes tables, columns and indexes, and since 8.1 an
+# SQLite virtual table as create_virtual_table. It cannot write a trigger or a
+# view -- those exist only as raw `execute` in a migration. All three apps are on the default :ruby format, and two of them
 # create exactly that kind of object:
 #
 #   brgen     posts_fts (fts5) + posts_ai/au/ad triggers
@@ -120,11 +120,17 @@ class RawSchemaObjectsTest < Minitest::Test
     end
   end
 
+  # Triggers and views only. Rails 8.1's dumper writes an SQLite virtual table as
+  # create_virtual_table, and bsdports' schema.rb carries ports_fts that way
+  # since 06fc40aae, so a virtual table in the dump is the dumper working.
   def test_the_schema_dump_really_does_not_contain_them
     APPS.each do |app|
       dump = schema(app) or next
+      undumpable = raw_objects(app).reject { |_, kind, _| kind == "virtual table" }.map(&:first)
 
       KNOWN.fetch(app).each_key do |name|
+        next unless undumpable.include?(name)
+
         refute_includes dump, name,
                         "#{app}/db/schema.rb mentions #{name} after all — the premise here is wrong"
       end
