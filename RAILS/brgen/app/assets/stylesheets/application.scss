@@ -9306,7 +9306,7 @@ body.vertical-marketplace .bol-primary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 44px;
+  min-height: var(--tap-min);
   min-width: 180px;
   padding: 0 24px;
   border-radius: 4px;
@@ -9421,7 +9421,7 @@ body.vertical-marketplace .listing-filter-controls .deal-cat.active {
 body.vertical-marketplace .listing-filter-controls select,
 body.vertical-marketplace .listing-filter-controls input {
   width: 100%;
-  min-height: 44px;
+  min-height: var(--tap-min);
   border: 1px solid var(--bol-rule);
   border-radius: var(--radius-md);
   background: #fff;
@@ -9690,7 +9690,7 @@ body.vertical-marketplace .store-buybox .price {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    min-height: 44px;
+    min-height: var(--tap-min);
     padding: 0 12px;
     border: 1px solid var(--bol-rule);
     border-radius: 4px;
@@ -9842,7 +9842,7 @@ body.vertical-marketplace .storefront-bol-deliver {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  min-height: 44px;
+  min-height: var(--tap-min);
   color: #fff;
   font-size: 14px;
   font-weight: 600;
@@ -9896,8 +9896,8 @@ body.vertical-marketplace .storefront-bol-account .nav-block {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  min-width: 44px;
-  min-height: 44px;
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
   color: #fff;
   font-size: 14px;
   font-weight: 600;
@@ -10102,7 +10102,7 @@ body.vertical-marketplace .storefront-bol-mega h3 a:hover {
    their type and the offer's taller target. */
 body.vertical-marketplace #marketplace-listings .deal-card-buy {
   width: 100%;
-  min-height: 44px;
+  min-height: var(--tap-min);
   background: var(--bol-blue);
   color: var(--accent-ink);
 }
@@ -10145,7 +10145,7 @@ body.vertical-marketplace #marketplace-listings .deal-card-offer {
   }
 
   body.vertical-marketplace #marketplace-listings .deal-card-offer {
-    min-height: 44px;
+    min-height: var(--tap-min);
     font-size: 14px;
     font-weight: 600;
   }
