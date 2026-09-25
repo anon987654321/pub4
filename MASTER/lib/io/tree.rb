@@ -1,14 +1,15 @@
 # frozen_string_literal: true
 
 require "open3"
+require "rbconfig"
 
 module Master
   module Io
-    # Tree — lists directory structure via OPENBSD/bin/tree.sh.
+    # Tree — lists directory structure via OPENBSD/tools/tree.rb.
     # Safe: read-only, no writes.
     class Tree
       include PathGuard
-      SCRIPT = File.expand_path("../../../OPENBSD/bin/tree.sh", __dir__).freeze
+      SCRIPT = File.expand_path("../../../OPENBSD/tools/tree.rb", __dir__).freeze
 
       def initialize(root:, event_bus: nil)
         @bus = event_bus
@@ -25,7 +26,7 @@ module Master
         end
         return Result.err("path not found: #{target}", category: :validation) unless Dir.exist?(target)
 
-        out, err, status = Master::Io::Exec.capture3("zsh", SCRIPT, target)
+        out, err, status = Master::Io::Exec.capture3(RbConfig.ruby, SCRIPT, target)
         return Result.err("tree failed: #{err.strip}", category: :unknown) unless status.success?
 
         lines = out.lines.map(&:chomp).reject(&:empty?)
