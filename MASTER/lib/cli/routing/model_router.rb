@@ -93,17 +93,6 @@ module Master
           Io::ModelSkipCache.filter(chitchat_head(ranked, task_type))
         end
 
-        # The pool ranks the whole chain by measured utility, and on a machine
-        # with a subscription CLI that put the strongest lane ahead of the free
-        # tier for "hello", which chain_for exists to prevent. For chitchat the
-        # free and keyless lanes stay in front, in the pool's order.
-        def chitchat_head(chain, task_type)
-          return chain unless task_type.to_sym == :chitchat
-
-          head = Array(@rules.dig("models", "free")).filter_map { |row| row["id"] } +
-                 Array(@rules.dig("ferrum_web_chat", "free_latest"))
-          chain.partition { |id| head.include?(id) }.flatten
-        end
 
         # Greetings are explicitly routed to the free tier. A locally installed
         # subscription CLI used to jump ahead of `pref`, contradicting the route
@@ -146,6 +135,18 @@ module Master
         CHITCHAT_MAX_LENGTH = 80
 
         private
+
+        # The pool ranks the whole chain by measured utility, and on a machine
+        # with a subscription CLI that put the strongest lane ahead of the free
+        # tier for "hello", which chain_for exists to prevent. For chitchat the
+        # free and keyless lanes stay in front, in the pool's order.
+        def chitchat_head(chain, task_type)
+          return chain unless task_type.to_sym == :chitchat
+
+          head = Array(@rules.dig("models", "free")).filter_map { |row| row["id"] } +
+                 Array(@rules.dig("ferrum_web_chat", "free_latest"))
+          chain.partition { |id| head.include?(id) }.flatten
+        end
 
         def enabled?
           @rules.dig("routing", "enabled") != false
