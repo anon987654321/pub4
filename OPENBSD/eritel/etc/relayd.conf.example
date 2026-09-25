@@ -1,0 +1,24 @@
+# Example only. Replace the hostname and certificate names with approved values.
+
+table <eritel> { 127.0.0.1 }
+
+http protocol "eritel_https" {
+  tls keypair "eritel.example.invalid"
+
+  match request header set "X-Forwarded-Proto" value "https"
+  match request header set "X-Forwarded-For" value "$REMOTE_ADDR"
+  match response header set "Strict-Transport-Security" value "max-age=31536000; includeSubDomains"
+  match response header set "X-Content-Type-Options" value "nosniff"
+  match response header set "Referrer-Policy" value "strict-origin"
+  match response header remove "Server"
+
+  match request header "Host" value "eritel.example.invalid" forward to <eritel>
+
+  pass
+}
+
+relay "eritel_https_in" {
+  listen on 0.0.0.0 port 443 tls
+  protocol "eritel_https"
+  forward to <eritel> port 49173 check http "/up" code 200
+}
