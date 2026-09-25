@@ -1,5 +1,60 @@
 # Dilla
 
+## Canonical contract
+
+### Purpose
+
+Generate deterministic music from declarative musical material, with synthesis,
+sampling, arrangement, mix, master, measurement, and provenance kept behind one
+tool boundary.
+
+### Inputs
+
+Ruby/YAML configuration, an optional local sample crate, deterministic seeds,
+and explicit command-line or environment overrides.
+
+### Outputs
+
+Audio renders, MIDI/project material, measurements, provenance records, and
+diagnostic reports. No output is considered valid merely because a file exists.
+
+### Invocation
+
+Use `ruby MASTER/tools/dilla/dilla.rb <command>`. The entrypoint is
+standalone-loadable and does not depend on the MASTER process already being
+booted.
+
+### Architecture
+
+`dilla.rb` is the orchestration boundary. `lib/` contains synthesis, groove,
+harmony, sampling, rendering, and analysis machinery. `data/` contains the
+declarative musical source.
+
+### Data and state
+
+Tracked recipes and measurements are source. Audio/sample crates, temporary
+work, and machine-local caches remain untracked unless explicitly promoted as
+provenance.
+
+### Security boundary
+
+Treat samples, archives, paths, and media metadata as untrusted. Use argument
+arrays for subprocesses, bound resource use, avoid arbitrary deserialization,
+and keep network access out of rendering unless an explicitly governed fetcher
+is introduced.
+
+### Validation
+
+Run the tool's own audit/measurement commands and MASTER's tool gates. A render
+must be reproducible from its declared inputs, and missing material must be
+reported rather than silently replaced.
+
+### MASTER integration
+
+Dilla is a canonical MASTER tool. MASTER governs dispatch and lifecycle; Dilla
+owns music-specific generation and measurement.
+
+
 **A beat engine that never phones home.** `dilla.rb` and the helpers under
 `lib/` generate harmony, program drums, play sampled loops against them, mix,
 master, and write an mp3 or a wav. Every instrument is synthesised by the engine
@@ -7,8 +62,8 @@ and shaped through `ffmpeg`; the records it samples and the rap takes it fits ar
 material, not instruments. Nothing is uploaded, and nothing is fetched at render
 time.
 
-The suite is `STUDIO/test/test_dilla_*.rb`, which is the glob `rake test:dilla`
-expands in `STUDIO/Rakefile`; bare `rake` runs the gate and every suite. Check
+The suite is `MASTER/tools/test/test_dilla_*.rb`, which is the glob `rake test:dilla`
+expands in `MASTER/tools/Rakefile`; bare `rake` runs the gate and every suite. Check
 the path you are given before you trust a green run. This line has been wrong
 twice — once naming a file that had not existed for months, once naming a
 directory that has never existed — and both times it sent an operator to
@@ -693,4 +748,4 @@ ruby MASTER/tools/dilla/dilla.rb ears demo.wav
 ruby MASTER/tools/dilla/dilla.rb config-provenance
 ruby MASTER/tools/dilla/dilla.rb audit
 
-The canonical path is now MASTER/tools/dilla. Retired STUDIO/dilla references should not be copied into new automation.
+The canonical path is now MASTER/tools/dilla. Retired MASTER/tools/dilla references should not be copied into new automation.
