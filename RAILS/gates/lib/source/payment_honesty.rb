@@ -24,9 +24,12 @@ module Deploy
       "brgen/app/services/marketplace/payments/stripe_refund.rb" => /NotConfigured|StripeCheckout\.ensure!/,
       "brgen/app/services/marketplace/payments/stripe_transfer.rb" => /NotConfigured|StripeCheckout\.ensure!/,
       "brgen/app/services/marketplace/payments/vipps_checkout.rb" => /NotConfigured|configured\?/,
+      "brgen/app/services/marketplace/payments/dintero_client.rb" => /DinteroClient|configured\?/,
+      "brgen/app/services/marketplace/payments/dintero_checkout.rb" => /NotConfigured|DinteroClient|splits/,
+      "brgen/app/services/marketplace/payments/dintero_signature.rb" => /HMAC|SHA1|SHA256/,
       "#{ENGINE}/app/controllers/marketplace/checkouts_controller.rb" => /NotConfigured|provider/,
       # i18n keys or EN fallbacks after cart polish
-      "#{ENGINE}/app/views/marketplace/carts/show.html.erb" => /pay_vipps|pay_stripe|Pay with Vipps|Pay with Stripe|not configured|cart_honest_pay|marketplace\.pay_/i,
+      "#{ENGINE}/app/views/marketplace/carts/show.html.erb" => /pay_dintero|pay_vipps|pay_stripe|not configured|cart_honest_pay|marketplace\.pay_/i,
       # Checkout + PSP webhook routes are drawn on the engine now. The host
       # routes.rb still matches /webhooks/ via webhooks/tradedoubler, so keeping
       # the assertion there would have passed on an unrelated route forever.
@@ -54,10 +57,12 @@ module Deploy
       @result.fail("payment_honesty: StripeCheckout must raise NotConfigured") unless stripe.match?(/raise NotConfigured/)
       vipps = read("brgen/app/services/marketplace/payments/vipps_checkout.rb")
       @result.fail("payment_honesty: VippsCheckout must raise NotConfigured") unless vipps.match?(/raise NotConfigured/)
+      dintero = read("brgen/app/services/marketplace/payments/dintero_checkout.rb")
+      @result.fail("payment_honesty: DinteroCheckout must raise NotConfigured") unless dintero.match?(/raise NotConfigured/)
       # The source contract above is the bulk of this gate and does not need a
       # booted app; only the cart probe does. Counting it stops a closed brgen port
       # from reporting the whole gate as having measured nothing.
-      @result.checked!(REQUIRED.size + 2)
+      @result.checked!(REQUIRED.size + 3)
 
       live_cart_probe
       @result
