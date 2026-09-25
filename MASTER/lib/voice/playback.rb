@@ -26,10 +26,6 @@ module Master
         "aucat" => %w[-i],
       }.freeze
 
-      # Past this a reply is a document, not an utterance, and reading it aloud
-      # outlasts the user's patience by minutes.
-      MAX_SPOKEN_CHARS = 3_000
-
       # A line already waiting to be spoken, or spoken a moment ago, is not
       # spoken again: two paths reach this door with one reply — the result
       # display and the bridge summary — and a retried synthesis said it a
@@ -79,7 +75,7 @@ module Master
 
       def speak(text)
         str = text.to_s.strip
-        return if str.empty? || str.length > MAX_SPOKEN_CHARS
+        return if str.empty?
         return unless enabled?
 
         unless available?
