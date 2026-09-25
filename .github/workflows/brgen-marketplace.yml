@@ -41,6 +41,7 @@ jobs:
           bundle exec ruby -Itest test/services/dintero_hooks_test.rb
           bundle exec ruby -Itest test/services/dintero_schema_contract_test.rb
           bundle exec ruby -Itest test/services/dintero_webhook_delivery_test.rb
+          bundle exec ruby -Itest engines/marketplace/test/controllers/marketplace/webhooks_controller_test.rb
           bundle exec ruby -Itest test/controllers/marketplace_returns_test.rb
 
       - name: Marketplace payout isolation
