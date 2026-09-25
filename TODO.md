@@ -439,7 +439,7 @@ svgload operators.
 <!-- open-debt -->
 
 One purchase, an off-host object store, closes three gaps. `OPENBSD/bin/dr-pull`
-keeps seven verified pulls, but on the operator Mac. `STUDIO/dilla/samples/`
+keeps seven verified pulls, but on the operator Mac. `MASTER/tools/dilla/samples/`
 (84 MB, 75 MB of it `own/` recordings) is gitignored and on one disk, and dr-pull
 cannot help because the crate is already on that disk. `Shared::DatabaseSnapshotJob`
 writes `VACUUM INTO` copies beside the database, and `restore_litestream.sh` restores from
@@ -526,7 +526,7 @@ a bare invoke is what it ran. Do not triplicate the engine file.
   `?film=1` hides the mic; `face.css` film rules are still mixed with another
   session's 44px autofix and were not committed.
 - **postpro on the MASTER web UI.** Not started. The face already has
-  upload; the grader is `STUDIO/postpro/postpro.rb --preset cinematic`.
+  upload; the grader is `MASTER/tools/postpro/postpro.rb --preset cinematic`.
 - **Papua masks as a light 3D field.** Eligible: frontal masks with two eye
   holes (`yam_mask_papua_new_guinea`, `highlands_mask`, `malangan_mask`).
   Not eligible: the Vanuatu figure, sulka headdress, gulf full-body, profile
@@ -545,7 +545,7 @@ a bare invoke is what it ran. Do not triplicate the engine file.
   through `RadioChop.registered_loops`; `lib/sampling.rb` writes `samples/dug/`
   from public-domain archives; `ruby dilla.rb live dig` (`lib/livesets.rb`) rips
   YouTube into `samples/chopped/` and warns on every run. Those two are the crate.
-- **`ruby STUDIO/dilla/dilla.rb assets` exits 1**: three loops missing, seven files
+- **`ruby MASTER/tools/dilla/dilla.rb assets` exits 1**: three loops missing, seven files
   changed (re-synthesised one-shots).
   `dilla assets record` blesses whatever is on disk, so it is the operator's.
 - **Two staging directories outside the repo.** `~/dilla-crate-incoming` holds two
@@ -573,7 +573,7 @@ a bare invoke is what it ran. Do not triplicate the engine file.
 - The eight `sheger_*` rows are half alive: the preset rows are live and tuned,
   the bed aliases point at a cleared chop. A test pins both halves; delete
   neither.
-- The monolith stays. `DILLA_SUPPORT_CEILING` (11, in `STUDIO/gate.rb`) leaves no room for a
+- The monolith stays. `DILLA_SUPPORT_CEILING` (11, in `MASTER/tools/gate.rb`) leaves no room for a
   destination file, so any split starts by folding support code, and 14 support
   files use `__dir__`/`__FILE__`. `dilla parts` indexes the engine.
 - Not worth chasing, each measured: merging the three techno renderers (three
@@ -1141,7 +1141,7 @@ under other names, so grep for the mechanism, never the proposal's word.
   pass, and `/health` `deploy.git_sha` must name the booted commit. No reboot of
   vm23 has been verified end to end; do one in a window the operator picks.
 
-## STUDIO/dilla mix and reference research — ChatGPT intake 2026-09-11
+## MASTER/tools/dilla mix and reference research — ChatGPT intake 2026-09-11
 
 Closed 2026-09-13. The measuring half was built or refused, and the refusal is in
 `MASTER/AGENTS.md`, Refused.
@@ -1216,7 +1216,7 @@ the MASTER sections above. One item survives.
 ## dilla — measured defects, blocked on `dilla.rb`
 
 Measured 2026-09-13 against the committed engine. Each fix is an edit to
-`STUDIO/dilla/dilla.rb`, which another session holds dirty; none changes a sound
+`MASTER/tools/dilla/dilla.rb`, which another session holds dirty; none changes a sound
 default unless marked.
 
 - **Hocket voices all play one patch.** `render_hocket_lead!` calls
@@ -1310,7 +1310,7 @@ all these"). Landed and deleted from this list: 3 (lib/ in six subjects), 11
 (root YAML in data/), 14 (`sh!` for render steps, `ToolRun` for every other
 tool call, each with a deadline), 33 (help from the command table), 18 (all
 randomness through `seed_for`), 37 (live/ gone), 38 (scripts/ gone). Every change here must leave a snapshot identical, which the
-harness in `STUDIO/test/support/dilla_snapshot/` proves; a row that changes
+harness in `MASTER/tools/test/support/dilla_snapshot/` proves; a row that changes
 sound says so. Delete a row when it lands.
 
 - **1. Build tables on first use**, so section order stops mattering. Unblocks
@@ -1654,7 +1654,7 @@ choose. Numbers are for citation, not for order.
 79. **Loudness for the destination** [cheap] — every set ends in `dynaudnorm` and
     a limiter at a hand-picked `volume=`. Integrated LUFS is a solved measurement
     and lies about speech over music, which matters for 7.
-80. **A sleeve** [yours] — `STUDIO/postpro` grades images and `preprompt` generates
+80. **A sleeve** [yours] — `MASTER/tools/postpro` grades images and `preprompt` generates
     them. A catalogue with covers is a release.
 81. **Publish the tracklist** [yours] — `radio.brgen.no` exists and is empty of
     this.
@@ -1805,7 +1805,7 @@ entry below is the shape, the evidence, and the seam it wants.
 - **lora and preprompt check nothing they cannot reach.** lora's ~4.8k LOC is
   parse-checked only; preprompt's `schema_audit` needs network and token, so
   it never runs in rake. The seam: a recorded-schema snapshot committed under
-  `STUDIO/preprompt/data/` so the audit diffs offline, and one loaded-module
+  `MASTER/tools/preprompt/data/` so the audit diffs offline, and one loaded-module
   smoke test for lora's toolkits that does not need a provider.
 - **Engines are namespaces pretending at detachability.** Sixteen engine
   views call `main_app.`, every engine model names host `User` by
