@@ -22,7 +22,7 @@
 <% if promo %>
   <%= render "shared/promotional_art",
         art: promo,
-        image_url: (@promo_menu_item&.photo&.attached? ? main_app.url_for(@promo_menu_item.photo.variant(:card)) : nil),
+        image_url: (@promo_menu_item&.photo&.attached? ? main_app.url_for(@promo_menu_item.media_variant(:photo, :card)) : nil),
         url: restaurant_path(@promo_restaurant) %>
 <% else %>
   <div class="store-hero store-hero--alone">

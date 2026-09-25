@@ -17,6 +17,15 @@ module Shared
       end
     end
 
+    # The variants declared here are plain transformation hashes, not Active
+    # Storage named variants, so `photo.variant(:card)` raises. This resolves
+    # the name to the transformation the processing job pre-builds.
+    def media_variant(attachment_name, name)
+      public_send(attachment_name).variant(
+        media_variant_definitions.fetch(attachment_name.to_s).fetch(name.to_sym),
+      )
+    end
+
     private
 
     def enqueue_media_variant_processing
