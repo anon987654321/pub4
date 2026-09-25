@@ -39,6 +39,16 @@ class StimulusWiringGateTest < Minitest::Test
     assert_includes failures.first, "totally-absent"
   end
 
+  def test_reports_an_unregistered_engine_helper_controller
+    failures = with_file("brgen/engines/maps/app/helpers/stimulus_wiring_probe_helper.rb",
+                         %(tag.div(data: { controller: "totally-absent-engine-helper" }))) do
+      Deploy::StimulusWiringGate.run.failures.select { |f| f.include?("stimulus_wiring_probe_helper") }
+    end
+
+    assert_equal 1, failures.size, failures.inspect
+    assert_includes failures.first, "totally-absent-engine-helper"
+  end
+
   def test_reports_an_unregistered_helper_controller
     failures = with_helper_probe(%(tag.div(data: { controller: "totally-absent-helper" })))
 
