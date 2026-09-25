@@ -65,7 +65,7 @@ pub4/
 │   ├── RUNBOOK.md
 │   └── dotfiles/             sketchybar, skhd — priced OS paths
 │
-└── MASTER/tools/studio/                   media tools
+└── MASTER/tools/MASTER/tools/                   media tools
     ├── dilla/                beats — renders land beside dilla.rb
     ├── postpro/              grade; camera_profiles.json is every body, by vendor
     ├── preprompt/
