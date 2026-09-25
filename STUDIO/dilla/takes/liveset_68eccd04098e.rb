@@ -1,11 +1,10 @@
 # MASTER's main sound, improvising live and endless: soul-jazz harmony chosen
 # chord by chord, each voiced nearest the last, the key moving on its own.
-# The chords play only Moog presets on dilla's ladder, morphing over four
-# chords, on two decks at once, and a turntablist's sharp-curve crossfader
-# cuts between the decks on the thirty-second grid: transformer, crab,
-# chirp, orbit, flare, tear, a new cut every bar. Under them the rolling Moog
-# bass, an industrial grid at 128 BPM and the DFAM, always changing. Kicks
-# and leads sit switched off at the operator's word: KICKS_ON and LEADS_ON.
+# The chords play only Moog presets on dilla's ladder, morphing from one to
+# the next over four chords. Under them the rolling Moog bass, an industrial
+# grid at 128 BPM (offbeat hats crushed to 12 bits, a noise snare on two and
+# four) and the DFAM, drawing a new groove and rate every few bars. Kicks and
+# leads sit switched off at the operator's word: KICKS_ON and LEADS_ON.
 $LOAD_PATH.unshift File.expand_path("~/Documents/GitHub/pub4/STUDIO/dilla/lib")
 require "sound"
 
@@ -169,25 +168,6 @@ LEAD_ALWAYS = true
 LEADS_ON = false
 kicks = []
 click_lp = 0.0
-# Turntablism on the pads: a scratch DJ's sharp-curve crossfader, two decks
-# (the two Moog layers) cut hard on the thirty-second grid. Each pattern is
-# 32 steps, one bar: A is deck A open, B deck B, - the fader closed. The
-# fader moves in half a millisecond, so every cut is a cut, not a blend.
-CUTS = {
-  transformer: "A-A-A-A-A-A-A-A-A-A-A-A-A-A-A-A-",
-  slow_transformer: "AA--AA--AA--AA--BB--BB--BB--BB--",
-  crab: "A-A-A-A-AAAAAAAAB-B-B-B-BBBBBBBB",
-  chirp: "AAA-----AAA-----BBB-----BBB-----",
-  orbit: "A--AA--AA--AA--AB--BB--BB--BB--B",
-  flare: "AAAA-AAA-AAAAAAAAAAA-AAA-AAAAAAA",
-  ab_chop: "AAAABBBBAAAABBBB--AABB--AABBAB--",
-  tear: "AAAAAAAA--------A-A-AAAA--------",
-}.freeze
-cut_name = :transformer
-cut_bar = -1
-gain_a = 1.0
-gain_b = 0.0
-CUT_GLIDE = 1.0 - Math.exp(-1.0 / (0.0005 * RATE))
 # The Crystallizer, after Soundtoys: reversed grains of the lead, pitched up
 # an octave or a fifth, a quarter second late, fed back into themselves.
 # Two readers half a grain apart, Hann-windowed, crossfade into a shimmer.
@@ -355,10 +335,6 @@ while frame < frames
     pad_name = "#{moog_order[(chord_i / MORPH_CHORDS) % moog_order.size]} -> #{moog_order[((chord_i / MORPH_CHORDS) + 1) % moog_order.size]} #{(chord_i % MORPH_CHORDS) * 100 / MORPH_CHORDS}%"
     bass_patch = P.fetch(BASSES[(chord_i / 4) % BASSES.size])
     voicing.each { |m| voices << voice(m, pad, next_chord, CHORD_LEN - 0.1, 0.3, bass: :pad) }
-    # The second layer, crossfaded against the first on a rhythm: the preset
-    # two stops further round the Moog wheel, so the two never sound alike.
-    pad_b = MOOG_CHORDS.fetch(moog_order[((chord_i / MORPH_CHORDS) + 2) % moog_order.size])
-    voicing.each { |m| voices << voice(m, pad_b, next_chord, CHORD_LEN - 0.1, 0.3, bass: :pad_b) }
     # The rolling bass: the root on the three sixteenths after every kick,
     # short and even, the octave up on the last of each beat now and then.
     (CHORD_LEN / (BAR / 8)).round.times do |beat|
@@ -388,8 +364,6 @@ while frame < frames
   arp_r = Array.new(n, 0.0)
   right = Array.new(n, 0.0)
   pad_l = Array.new(n, 0.0)
-  padb_l = Array.new(n, 0.0)
-  padb_r = Array.new(n, 0.0)
   pad_r = Array.new(n, 0.0)
   tb = frame.to_f / RATE
   ck = cutoff_knob(tb)
@@ -409,7 +383,6 @@ while frame < frames
     out_l, out_r = case v.bass
                    when :arp then [arp_l, arp_r]
                    when :pad then [pad_l, pad_r]
-                   when :pad_b then [padb_l, padb_r]
                    else [left, right]
                    end
     cut = ampv = 0.0
@@ -526,13 +499,6 @@ dfam_hits.each do |h|
   end
 end
 dfam_hits.reject! { |h| tb - h.start > vca * 8 }
-  bar = (tb / (BAR / 2)).floor
-if bar != cut_bar
-  cut_bar = bar
-  cut_name = CUTS.keys.sample(random: rng)
-  LOG.puts "  pads cut -> #{cut_name}"
-end
-cut = CUTS[cut_name]
 j = 0
 while j < n
   now = tb + (j.to_f / RATE)
@@ -591,13 +557,8 @@ while j < n
   drums += Math.tanh(drums * 12.0) * 0.025
   # The pads pump against the kick.
   pump = 1.0 - (0.25 * duck)
-deck = cut[(now / (DFAM_STEP / 2)).floor % 32]
-gain_a += CUT_GLIDE * ((deck == "A" ? 1.0 : 0.0) - gain_a)
-gain_b += CUT_GLIDE * ((deck == "B" ? 1.0 : 0.0) - gain_b)
-pl = (pad_l[j] * gain_a) + (padb_l[j] * gain_b)
-pr = (pad_r[j] * gain_a) + (padb_r[j] * gain_b)
-left[j] += (pl * pump) + drums + rumble
-right[j] += (pr * pump) + drums + rumble
+  left[j] += (pad_l[j] * pump) + drums + rumble
+right[j] += (pad_r[j] * pump) + drums + rumble
 # The Crystallizer on the lead.
 cl = crys_out_l = 0.0
 cr = crys_out_r = 0.0
