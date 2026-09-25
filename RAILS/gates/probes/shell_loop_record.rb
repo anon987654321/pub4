@@ -4,7 +4,7 @@
 # shell_loop_record — record a terminal session as a video, frame by frame.
 #
 #   ruby RAILS/gates/probes/shell_loop_record.rb --out ../MASTER/loop2.mp4 \
-#        --audio ../STUDIO/dilla/demo.wav --fps 20
+#        --audio ../MASTER/tools/dilla/demo.wav --fps 20
 #
 # The companion to face_loop_record, which records the face; this one records a
 # shell. Same three ideas, for the same reason: the clock is ours, the crop is
@@ -31,7 +31,7 @@ require "cdp_session"
 
 options = {
   out: File.expand_path("../../MASTER/loop2.mp4", GATES),
-  audio: File.expand_path("../../STUDIO/dilla/demo.wav", GATES),
+  audio: File.expand_path("../../MASTER/tools/dilla/demo.wav", GATES),
   fps: 20,
   # Cropped to the boot message and the prompt, nothing else — the frame is the
   # content, so the type reads large without scaling the video up afterwards.
