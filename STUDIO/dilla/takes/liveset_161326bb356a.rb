@@ -1,8 +1,7 @@
 # MASTER's main sound, improvising live and endless: soul-jazz harmony chosen
 # chord by chord, each voiced nearest the last, the key moving on its own.
-# The chords play only Moog presets on dilla's ladder -- strings, stabs,
-# organ, a filter sweep and a choir, each with its own contour -- morphing
-# over four chords, whole and uncut, through a Juno-60 chorus, breathing on every beat
+# The chords play only Moog presets on dilla's ladder, morphing over four
+# chords, whole and uncut, through a Juno-60 chorus, breathing on every beat
 # the way a sidechain would. Over them quiet Moog arpeggios, each note on its
 # own chance and its own point on a glide through four lead patches. Under
 # them the rolling Moog bass, an industrial grid at 128 BPM and the DFAM,
@@ -51,30 +50,14 @@ P.merge!(MOOG_LEADS)
 # Moog chord presets, on dilla's ladder: the chords play only these, the
 # patch morphing from one to the next without a seam -- cutoff, resonance,
 # envelope depth, drive and detune all glide; the waves change at halfway.
-# Each preset keeps its own contour, since a shared slow envelope made five
-# different oscillator mixes swell and fade as one pad.
+MOOG_ENV = { amp: P[:warm_pad][:amp], filter_env: P[:warm_pad][:filter_env] }.freeze
 MOOG_CHORDS = {
-  # Opus 3 strings: three wide saws, an octave stacked, a slow swell that
-  # takes most of a second to arrive and lingers after the chord.
-  opus3_strings: { waves: %i[saw saw saw], detune: [-18.0, 0.0, 17.0], octaves: [0, 1, 0], cutoff: 2200.0, env_amount: 400.0, resonance: 0.12, drive: 0.85,
-                   amp: S::Envelope.new(attack: 0.9, decay: 1.2, sustain: 0.85, release: 1.6), filter_env: S::Envelope.new(attack: 1.2, decay: 1.5, sustain: 0.6, release: 1.5) },
-  # Matriarch stabs: triangles and a square an octave up, plucked -- the filter
-  # snaps shut and the resonance rings, a struck chord rather than a held one.
-  matriarch_stabs: { waves: %i[triangle square triangle], detune: [0.0, 5.0, 0.0], octaves: [0, 1, 0], cutoff: 300.0, env_amount: 4200.0, resonance: 0.7, drive: 1.1,
-                     amp: S::Envelope.new(attack: 0.004, decay: 0.55, sustain: 0.15, release: 0.35), filter_env: S::Envelope.new(attack: 0.002, decay: 0.3, sustain: 0.05, release: 0.3) },
-  # Memorymoog organ: two squares and a saw, full on at once and held flat,
-  # the round middle of the old polysynth with no swell at all.
-  memorymoog_organ: { waves: %i[square square saw], detune: [-6.0, 6.0, 0.0], octaves: [0, 0, -1], cutoff: 900.0, env_amount: 0.0, resonance: 0.3, drive: 1.2,
-                      amp: S::Envelope.new(attack: 0.01, decay: 0.1, sustain: 1.0, release: 0.12), filter_env: S::Envelope.new(attack: 0.01, decay: 0.1, sustain: 1.0, release: 0.1) },
-  # Grandmother sweep: a saw and a square, the ladder starting almost shut and
-  # opening over two seconds, the chord rising out of the dark.
-  grandmother_sweep: { waves: %i[saw square saw], detune: [0.0, 702.0, -6.0], octaves: [0, 0, -1], cutoff: 180.0, env_amount: 5200.0, resonance: 0.5, drive: 1.3,
-                       amp: S::Envelope.new(attack: 0.2, decay: 0.5, sustain: 0.9, release: 0.8), filter_env: S::Envelope.new(attack: 2.2, decay: 1.0, sustain: 0.8, release: 0.8) },
-  # Vox humana: sines and a triangle, a breathy choir, nearly no filter, the
-  # soft and airy one.
-  vox_humana: { waves: %i[sine sine triangle], detune: [0.0, -9.0, 10.0], octaves: [0, 1, 0], cutoff: 4000.0, env_amount: 0.0, resonance: 0.1, drive: 0.8,
-                amp: S::Envelope.new(attack: 0.35, decay: 0.8, sustain: 0.8, release: 1.0), filter_env: S::Envelope.new(attack: 0.3, decay: 0.5, sustain: 1.0, release: 0.5) },
-}.freeze
+  minimoog_pad: { waves: %i[saw square triangle], detune: [0.0, -6.0, 7.0], octaves: [0, 0, -1], cutoff: 620.0, env_amount: 1400.0, resonance: 0.42, drive: 1.1 },
+  memorymoog_brass: { waves: %i[saw saw saw], detune: [-9.0, 0.0, 9.0], octaves: [0, 0, 0], cutoff: 760.0, env_amount: 1900.0, resonance: 0.3, drive: 1.2 },
+  polymoog_vox: { waves: %i[square square saw], detune: [-4.0, 5.0, 0.0], octaves: [0, 1, 0], cutoff: 900.0, env_amount: 700.0, resonance: 0.24, drive: 0.95 },
+  moog_one_strings: { waves: %i[saw saw saw], detune: [-14.0, 0.0, 13.0], octaves: [0, 0, 1], cutoff: 1150.0, env_amount: 800.0, resonance: 0.2, drive: 0.9 },
+  sub37_warm: { waves: %i[saw square saw], detune: [0.0, 4.0, -5.0], octaves: [0, -1, 0], cutoff: 480.0, env_amount: 1600.0, resonance: 0.55, drive: 1.3 },
+}.transform_values { |p| p.merge(MOOG_ENV) }.freeze
 # Four chords to travel from one preset to the next, in a fresh order each lap.
 MORPH_CHORDS = 4
 # The leads rotate continuously: every note's patch is where a glide through
