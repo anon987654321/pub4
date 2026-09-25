@@ -53,7 +53,7 @@ class TestPlugins < Minitest::Test
   end
 
   def test_air_analysis_uses_normalized_findings
-    analyzer = Master::Plugins::AirSuperiority::Analyzer.new(observed_at: Time.at(0).utc)
+    analyzer = Master::Plugins::AirSuperioritySupport::Analyzer.new(observed_at: Time.at(0).utc)
     findings = analyzer.wifi([{ "bssid" => "AA:BB:CC:DD:EE:FF", "ssid" => "test" }], [])
     assert_equal "unknown_wifi", findings.first.kind
     assert_equal "advisory", findings.first.severity
