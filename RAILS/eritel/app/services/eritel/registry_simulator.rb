@@ -4,6 +4,10 @@ module Eritel
   class RegistrySimulator
     RESERVED = %w[admin dns mail ns registry www].freeze
 
+    def initialize(endpoint: nil)
+      @endpoint = endpoint
+    end
+
     def check(domain)
       name = domain.to_s.downcase
       available = valid?(name) && !RESERVED.include?(name.split(".").first)
