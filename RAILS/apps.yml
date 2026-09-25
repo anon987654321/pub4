@@ -123,7 +123,7 @@ apps:
         - { name: seller payouts, status: done, notes: "pending payout on mark_delivered! for shop orders; release! is owner-initiated Stripe Transfer to stripe_connect_id, held until Return::WINDOW after delivery. Without STRIPE_SECRET_KEY or a Connect id the row stays pending. Solidus payouts remain a Postgres-first question." }
         - { name: solidus core mount (catalog/cart/checkout/admin),         status: planned, notes: "Gemfile + initializer + /solidus mount stub ready; solidus:install on staging only (SOLIDUS_MARKETPLACE=1). BLOCKER: database.yml is sqlite3 in all four environments incl. production, and Solidus supports Postgres/MySQL — not SQLite — for production. So this is a Postgres migration first, not a gem install. Secondary: initializer itself says never run solidus:install on the hot 1GB VPS, and solidus_marketplace is pinned at 0.1.0 (legacy) against Solidus 4.7." }
         - { name: solidus_starter_frontend storefront,                     status: planned, notes: "Amazon-like PDP/cart/checkout UI after solidus:install" }
-        - { name: solidus_marketplace multi-seller,                        status: planned, notes: "3P sellers; gem 0.1.0 legacy — validate on Solidus 4.7" }
+        - { name: Solidus native marketplace features,                   status: planned, notes: "Evaluate against BRGEN seller/order domain; do not install the legacy solidus_marketplace gem." }
         - { name: Amazon feature parity map,                               status: planned, notes: "PDP, search facets, cart, multi-seller, reviews, order history — see SOLIDUS_MARKETPLACE.md" }
         - { name: AI recommendations,                                       status: planned, agent: ignore }
       subapp_playlist:
