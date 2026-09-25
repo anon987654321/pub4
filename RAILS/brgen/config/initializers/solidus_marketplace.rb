@@ -1,9 +1,7 @@
 # frozen_string_literal: true
 
-# Solidus Amazon-parity path (docs/SOLIDUS_MARKETPLACE.md).
-# Default: native Marketplace::* only. Enable gems with SOLIDUS_MARKETPLACE=1
-# before bundle install, then run solidus:install on staging — never on a hot 1GB VPS
-# with master+brgen+amber resident.
+# Optional Solidus commerce kernel. Native Marketplace::* remains the seller/order
+# runtime until a deliberate dual-write and cutover on a non-1GB Postgres host.
 
 module Brgen
   module SolidusMarketplace
