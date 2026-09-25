@@ -286,6 +286,30 @@ class TestAgent < Minitest::Test
     assert_equal %w[first-model second-model final-model], calls
   end
 
+  def test_ask_once_rechecks_the_router_after_each_failure
+    calls = []
+    fake = Object.new
+    fake.define_singleton_method(:send_with_cache) do |model, *_args, **|
+      calls << model
+      Master::Result.err("provider failed", category: :provider_error)
+    end
+    @agent.instance_variable_set(:@dispatcher, fake)
+
+    router = Object.new
+    checks = 0
+    router.define_singleton_method(:fallback_chain) do |task_type:|
+      checks += 1
+      checks == 1 ? %w[first-model second-model] : %w[first-model recovered-model]
+    end
+    @agent.instance_variable_set(:@model_router, router)
+
+    error = assert_raises(StandardError) { @agent.ask_once("hi", model: "first-model") }
+
+    assert_match(/provider failed/, error.message)
+    assert_equal %w[first-model second-model recovered-model], calls
+    assert_operator checks, :>=, 2
+  end
+
 # A caller's system prompt names a role, and the dispatcher sends it in place of
 # the persona prompt, so a role sent bare carries none of the law. The law goes
 # first and the role last.
