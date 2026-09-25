@@ -57,8 +57,8 @@ it. A line leaves when its entry closes; re-order rather than append.
    up` in a new worktree boots all four surfaces within a few minutes and one
    rendered gate reports a count rather than inconclusive.
 5. **Stop /fix crying wolf and stop it stalling.** Entry: "/fix's own
-   weaknesses" (MASTER). After 2. Done when `CQS` spares memoisation and a pass
-   delivers on a suite that was red before it and is no redder after.
+   weaknesses" (MASTER). After 2. Done when `CQS` spares memoisation and an
+   oscillation keeps the repairs that moved.
 
 ### MASTER
 
@@ -180,13 +180,14 @@ the "One chrome", ad system and layout sections bring back for a decision.
   (`lib/review/scan/rules/structural_rules.rb`) flags any method that writes
   an instance variable and has an explicit `return`, so guard-then-assign
   memoisation fires while `||=` does not; sample five findings per noisy rule
-  and fix the rule, as the refinement section says. And delivery stops
-  whenever a proof suite is red, whether or not the pass made it redder;
-  `Restructure::Proof` already measures a baseline and fails only on tests
-  newly failing, which is the shape delivery should borrow. Locate the check
-  that refuses before editing it. Done when `CQS` passes a memoised reader in
-  its must-not-flag example and a pass on a pre-red tree delivers when it
-  adds no failure.
+  and fix the rule, as the refinement section says. And the 2026-09-25 RAILS
+  run lost its one applied repair to stagnation detection, not to the proof:
+  `fix0: oscillation, pass 2` fired after the stream stage had applied it,
+  and the rollback took it back. The oscillation snapshot is of findings
+  before the streamed repairs, so a pass that changed something can read as
+  a repeat (`pass_runner/stagnation_detection.rb`). Done when `CQS` passes a
+  memoised reader in its must-not-flag example and a pass whose stream
+  applied a repair is not rolled back as an oscillation.
 
 ### Operator decisions
 
