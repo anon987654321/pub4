@@ -2,10 +2,14 @@
 schema: 1
 apps:
   brgen:
-    digest: b3b01f146142dddf
+    digest: 1de39725b26c7c31
     routes:
       rails/pwa#offline:
       - "/offline"
+      rails/pwa#assetlinks:
+      - "/.well-known/assetlinks.json"
+      rails/pwa#apple_app_site_association:
+      - "/.well-known/apple-app-site-association"
       rails/pwa#manifest:
       - "/manifest"
       - "/manifest.json"
@@ -347,10 +351,14 @@ apps:
       maps/places#show:
       - "/places/:id"
   amber:
-    digest: 2cd6698375001789
+    digest: b2efa2f79f18d709
     routes:
       rails/pwa#offline:
       - "/offline"
+      rails/pwa#assetlinks:
+      - "/.well-known/assetlinks.json"
+      rails/pwa#apple_app_site_association:
+      - "/.well-known/apple-app-site-association"
       internal#status:
       - "/internal/status"
       sso#from_master:
@@ -520,10 +528,14 @@ apps:
       active_storage/disk#show:
       - "/rails/active_storage/disk/:encoded_key/*filename"
   bsdports:
-    digest: 2d9c014474836a38
+    digest: 4c65f8269967a038
     routes:
       rails/pwa#offline:
       - "/offline"
+      rails/pwa#assetlinks:
+      - "/.well-known/assetlinks.json"
+      rails/pwa#apple_app_site_association:
+      - "/.well-known/apple-app-site-association"
       internal#status:
       - "/internal/status"
       sso#from_master:
