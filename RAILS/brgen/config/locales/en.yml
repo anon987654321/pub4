@@ -1068,6 +1068,7 @@ en:
       blockbuster: Blockbuster
   marketplace:
     buy_now_vipps: Buy with Vipps
+    buy_now_dintero: Buy with Dintero
     order_number: "Order #%{id}"
     order_for: For
     order_status: Status
