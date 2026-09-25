@@ -92,11 +92,11 @@ module Master
       # dependencies as /review because it is the same pipeline with the
       # repair turned on -- the one verb that writes.
       def review_verbs(d)
+        deps = [d[:scanner], d[:fix_loop], d[:deliberation], d[:root], d[:bus], d[:review_crew], d[:swarm]]
         {
-          "review" => command(:dispatch_review, d[:scanner], d[:fix_loop], d[:deliberation], d[:root], d[:bus],
-            d[:review_crew], d[:swarm]),
-          "fix" => command(:dispatch_fix, d[:scanner], d[:fix_loop], d[:deliberation], d[:root], d[:bus],
-            d[:review_crew], d[:swarm]),
+          "review" => command(:dispatch_review, *deps),
+          "critique" => command(:dispatch_critique, *deps),
+          "fix" => command(:dispatch_fix, *deps),
         }
       end
 
