@@ -149,7 +149,12 @@ end
         return result unless result.is_a?(Master::Result::Err)
 
         last = result
-        single_call_fallback_models(chosen).each do |fallback|
+        attempted = [chosen]
+        loop do
+          fallback = single_call_fallback_models.reject { |model| attempted.include?(model) }.first
+          break unless fallback
+
+          attempted << fallback
           @bus&.publish("llm:ask_failover", from: chosen, to: fallback, category: last.category)
           hopped = @dispatcher.send_with_cache(fallback, messages, system:, stream: false, image:, temperature:)
           return record_single_call_substitution(chosen, fallback, hopped) if hopped.is_a?(Master::Result::Ok)
@@ -161,11 +166,11 @@ end
         last
       end
 
-      def single_call_fallback_models(chosen)
+      def single_call_fallback_models
         return [] unless @model_router.respond_to?(:fallback_chain)
 
         task_type = @config.task_type.to_s.empty? ? :exploration : @config.task_type.to_sym
-        Array(@model_router.fallback_chain(task_type:)).uniq.reject { |model| model == chosen }
+        Array(@model_router.fallback_chain(task_type:)).uniq
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Agent.single_call_fallback_models")
         []
