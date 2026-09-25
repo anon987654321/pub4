@@ -187,13 +187,20 @@ class TestDillaLiveSynth < Minitest::Test
     end
   end
 
-  # MASTER's main sound is STUDIO/dilla/liveset.rb exactly as the operator
-  # froze it, and the takes before it are kept as they were heard.
+  # MASTER's main sound is STUDIO/dilla/liveset.rb as the operator last made it
+  # the default, and every take before it is kept as it was heard.
   FROZEN = {
-    "liveset.rb" => "4abbb73e9411",
+    "liveset.rb" => "b6bc89197082",
+    "takes/liveset_161326bb356a.rb" => "161326bb356a",
+    "takes/liveset_4abbb73e.rb" => "4abbb73e9411",
+    "takes/liveset_5613fe64b642.rb" => "5613fe64b642",
+    "takes/liveset_5aa16356c296.rb" => "5aa16356c296",
+    "takes/liveset_68eccd04098e.rb" => "68eccd04098e",
+    "takes/liveset_7b5069a1bf3b.rb" => "7b5069a1bf3b",
+    "takes/liveset_864969335d0f.rb" => "864969335d0f",
     "takes/liveset_db4ddf1a.rb" => "db4ddf1a5549",
-    "takes/moog_dfam_loop.rb" => "9faf0336490e",
     "takes/loved_moog_loop.rb" => "c5945cf67ed7",
+    "takes/moog_dfam_loop.rb" => "9faf0336490e",
   }.freeze
 
   def dilla(path) = File.join(__dir__, "..", "dilla", path)
@@ -207,16 +214,15 @@ class TestDillaLiveSynth < Minitest::Test
   def test_the_main_sound_keeps_its_numbers
     src = File.read(dilla("liveset.rb"))
     pins = {
-      /^RATE = 32_000$/ => "32 kHz", /^BLOCK = 1_024$/ => "1024-frame blocks", /^BAR = 3\.9$/ => "a 3.9 s bar",
-      %r{^DFAM_STEP = BAR / 24$} => "the DFAM in 24ths", /^DFAM_LEVEL = 0\.34$/ => "the DFAM at 0.34",
-      /^KICK_LEVEL = 0\.09$/ => "the kick at 0.09", /^ARP_FX = "anull"$/ => "the arp dry",
-      /weights=1 1\.5:normalize=0/ => "the arp at 1.5 against the console",
-      /vcs\(depth: 0\.34, smear: 2\.4\), sonitex\(bits: 12, lo: 40, hi: 13_000, drive: 1\.12\),\s+vcs\(depth: 0\.3, smear: 2\.8\), "alimiter=limit=0\.95"/ => "VCS, Sonitex, VCS, limiter",
-      /def vcs\(depth:, smear:, db: 0\.0\)/ => "level-neutral VCS", /Math\.tanh\(s \* 1\.4\) \* 26_000|tanh\(left\[i\] \* 1\.4\) \* 26_000/ => "the tanh master",
-      /next_chord \+ \(BAR \* 0\.534\), 1\.2, 0\.45/ => "the second bass hit", /step \* 0\.7, 0\.45, bass: :arp/ => "the arp at 0.45",
-      /PADS = %i\[warm_pad poly_strings prophet_five juno_pad prophet_pad vp330_ensemble soft_reed e_piano rhodes_tine glass_bell\]/ => "ten pads",
-      /BASSES = %i\[moog_bass acid sub dub_bass\]/ => "four basses",
-      /%i\[glass_bell e_piano poly_lead vapor_lead soft_reed ringtone_lead acid rhodes_tine\]\.shuffle/ => "eight arp leads",
+      /^RATE = 32_000$/ => "32 kHz", /^BLOCK = 1_024$/ => "1024-frame blocks", /^BPM = 118$/ => "118 BPM",
+      %r{^BAR = 8 \* 60\.0 / BPM$} => "two bars to a chord", %r{^DFAM_STEP = BAR / 32} => "the DFAM in sixteenths",
+      /^DFAM_LEVEL = 0\.16$/ => "the DFAM at 0.16", /^KICKS_ON = false$/ => "the kicks off", /^CUTS_ON = false$/ => "the crossfader off",
+      /^LEADS_ON = true$/ => "the leads on", /step \* 0\.7, 0\.08, bass: :arp/ => "the arp at 0.08",
+      /^MORPH_CHORDS = 4$/ => "a new pad every four chords", /^LEAD_GLIDE_S = 6\.0$/ => "a lead glide every six seconds",
+      /^BREATH_DEPTH = 0\.3$/ => "the chords breathing 30%", /aexciter=amount=1\.2:drive=5:freq=3500:ceil=16000/ => "the air",
+      /def vcs\(depth:, smear:, db: 0\.0\)/ => "level-neutral VCS",
+      /opus3_strings:/ => "the Opus strings", /matriarch_stabs:/ => "the Matriarch stabs", /memorymoog_organ:/ => "the Memorymoog organ",
+      /grandmother_sweep:/ => "the Grandmother sweep", /vox_humana:/ => "the vox humana",
     }
     pins.each { |pattern, what| assert_match pattern, src, what }
   end
