@@ -590,11 +590,11 @@ Law.define(:MASTER_PROMPT_AESTHETIC) do
   source "MASTER constitution (soul.yml absolute.rules)"
   severity :warn
   practice <<~TEXT
-    Renderer prompt_line is fixed: bold-red master, dim branch and phase, dim
-    token bar, dollar terminator. New ornamentation belongs in reply tags,
-    status rows or dmesg.
+    Renderer prompt_line uses typographic hierarchy: quiet path and clean Git
+    state, restrained phase, and a strong terminal token. Dirty Git state may
+    carry the warning color; decoration does not.
   TEXT
-  fix "Renderer prompt_line is fixed: bold-red master, dim branch and phase, dim token bar, dollar terminator."
+  fix "Renderer prompt_line uses typographic hierarchy: quiet path and clean Git state, restrained phase, and a strong terminal token."
   bad  "recolours the prompt line"
   good "leaves the prompt line, adds a status row"
 end
