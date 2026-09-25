@@ -127,8 +127,8 @@ x.$vertical-accent-ink: #110f19;
      themes, the operator's choice: a 3px band is not text, so it needs only the
      3:1 a boundary does, and it clears that on either ground.
 
-     The "nytt!" badge is white bold type on a red fill with no padding, the
-     operator's specification. The fill is #cc2424, the red the tree already
+     The "nytt!" badge is white bold type on a red pill, the operator's
+     specification (a small superscript pill, 2026-09-25). The fill is #cc2424, the red the tree already
      carries a step under the rule, and white on it measures 5.46:1, which clears
      WCAG 1.4.3's 4.5 for small bold text on either ground because the badge
      brings its own. It stays under TYPOGRAPHY's 7.0 for normal text; #991b1b
@@ -1000,17 +1000,29 @@ label.compose-action:hover { color: var(--text); }
 
    <sup> rather than a ::after because it is content: a reader who cannot see
    the colour is still told the surface is new. Sized in em so it tracks the
-   link's own type, and superscripted so it does not stretch the link's box
-   and cost the run its height. */
+   link's own type.
+
+   A pill that never touches its word. The link is an inline-flex box, which
+   makes the <sup> a flex item, and a flex item ignores vertical-align: the
+   unpadded badge sat centred on the word 2px after its last letter and read
+   as a red block struck through "AI". It is a flex item on purpose now: it
+   takes its own width inside the link, so the gap before it and the link's
+   padding after it hold at every width and the separator hangs clear of it.
+   align-self pins it to the word's top edge and translate lifts it by part of
+   its own height, which moves the paint and not the box, so the run's height
+   does not change. */
 .nav_link_badge {
-  margin-inline-start: var(--space-0-5);
+  align-self: flex-start;
+  translate: 0 -35%;
+  margin-inline-start: var(--space-1);
+  padding: var(--space-0-5) var(--space-1);
+  border-radius: var(--radius-pill);
   font-size: 0.6em;
-  padding: 0;
+  line-height: var(--leading-none);
   font-weight: var(--weight-bold);
   color: var(--nav-badge-ink);
   background: var(--nav-badge-fill);
   letter-spacing: 0;
-  vertical-align: super;
 }
 
 /* From md the bar shares its row with the wordmark and the toggle again, so the
