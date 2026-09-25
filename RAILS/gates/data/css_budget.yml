@@ -361,8 +361,20 @@ weight_kb:
   # authorised: the gated sale red, pill CTAs, the accent retint. 195 bytes of
   # it were paid back by folding the listing row's two duplicated action
   # rules into one; the rest is the layer.
-  brgen: 236
-  amber: 110
+  #
+  # 236 -> 215, amber 110 -> 102 and bsdports 66 -> 61 on 2026-09-25, paid for
+  # without touching a painted value: rules no template, engine, shared partial,
+  # helper or script names; brgen's second copy of the promotional art;
+  # var(--token, fallback) where the token is always declared; declarations a
+  # later same-selector rule always outranks; unread custom properties; the
+  # layered palette, luxury tokens, drawer chrome and .btn base brgen outranks
+  # or never renders (switches in _tokens, _shell and _buttons, off only in
+  # brgen); and prefixes allow_browser :modern does not need. Proven by nine
+  # pages at 390 and 1440 screenshotting identically and by computed custom
+  # properties matching in eight theme states. The badge pill and main's
+  # unbuilt SCSS came in after and fit: brgen is 219,871B, 289B of room.
+  brgen: 215
+  amber: 102
 # 64 -> 65 on 2026-09-12. Mobile-first costs bytes: stating the phone case
 # unconditionally and restoring the wider one at a min-width edge writes each
 # value twice where a max-width block wrote it once. Seventeen queries were
@@ -373,4 +385,4 @@ weight_kb:
 # rather than of new features. brgen and amber absorbed the same change inside
 # their existing ceilings. 64 -> 66 on 2026-09-25 is the shared promotional art
 # and chat styles, named with brgen's raise above.
-  bsdports: 66
+  bsdports: 61
