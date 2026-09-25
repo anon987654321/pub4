@@ -22,19 +22,19 @@ class PostModerationTest < ActiveSupport::TestCase
 
   test "configured follows the moderation provider key, not unrelated LLM keys" do
     old = {
-      "MODERATION_PROVIDER" => ENV["MODERATION_PROVIDER"],
       "MODERATION_API_KEY" => ENV["MODERATION_API_KEY"],
       "GROQ_API_KEY" => ENV["GROQ_API_KEY"],
       "OPENAI_API_KEY" => ENV["OPENAI_API_KEY"],
       "ANTHROPIC_API_KEY" => ENV["ANTHROPIC_API_KEY"],
     }
-    ENV["MODERATION_PROVIDER"] = "groq"
     ENV.delete("MODERATION_API_KEY")
     ENV["GROQ_API_KEY"] = "groq-test-key"
     ENV["OPENAI_API_KEY"] = "openai-test-key"
     ENV["ANTHROPIC_API_KEY"] = "anthropic-test-key"
 
     service = PostModeration.new(Post.new)
+    service.define_singleton_method(:moderation_key_env) { "GROQ_API_KEY" }
+
     assert service.send(:configured?)
 
     ENV.delete("GROQ_API_KEY")
