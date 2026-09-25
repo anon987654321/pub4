@@ -58,7 +58,8 @@ class RadioWhypImportTest < ActiveSupport::TestCase
         playlist = Playlist::Playlist.find_by!(city: city, name: "Radio #{city.name}")
         assert playlist.public_access
         assert_equal 1, playlist.tracks.count
-        track = playlist.tracks.first
+        # strict_loading is on everywhere; ask for the track as its own query.
+        track = playlist.tracks.strict_loading(false).first
         assert_equal "whyp", track.source_type
         assert track.audio_file.attached?
         assert_equal 42, track.duration_seconds

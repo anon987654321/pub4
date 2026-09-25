@@ -80,6 +80,13 @@ class EngineRenderSmokeTest < ActionDispatch::IntegrationTest
       source_url: "https://example.com/smoke.mp3",
       privacy: "public"
     )
+    # The newest track is the featured player; the rest are the cards below it.
+    travel 1.minute do
+      Playlist::Track.create!(
+        user: @user, title: "Featured radio", artist: "Smoke artist",
+        source_type: "direct", source_url: "https://example.com/featured.mp3", privacy: "public"
+      )
+    end
 
     host! "radio.brgen.no"
     get "/"
@@ -87,7 +94,7 @@ class EngineRenderSmokeTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "radio-track-card"
     assert_includes response.body, "Smoke radio"
     refute_includes response.body, "radio-tunnel"
-    assert_includes response.body, "Share Smoke radio"
+    assert_includes response.body, ERB::Util.html_escape(I18n.t("playlist.share_track", title: track.title))
   end
 
   test "takeaway home renders the canonical promotional art with a photographed menu item" do

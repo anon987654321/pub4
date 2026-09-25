@@ -51,13 +51,14 @@ module Brgen
       )
       track.save!
 
-      attach_media!(track, row, :audio, "audio/mpeg")
-      attach_media!(track, row, :artwork, artwork_content_type(row))
+      attach_media!(track.audio_file, row, :audio, "audio/mpeg")
+      attach_media!(track.artwork, row, :artwork, artwork_content_type(row))
       track
     end
 
-    def attach_media!(track, row, field, fallback_content_type)
-      attachment = track.public_send("#{field}_file")
+    # The manifest names the field; the model names the attachment, and the two
+    # differ (audio -> audio_file, artwork -> artwork), so the caller passes it.
+    def attach_media!(attachment, row, field, fallback_content_type)
       relative = row[field.to_s].presence
       return unless relative
 
