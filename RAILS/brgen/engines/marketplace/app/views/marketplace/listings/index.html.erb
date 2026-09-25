@@ -1,4 +1,4 @@
-<% design_variant = Master::Design::Composition.requested_variant("marketplace_sale", params[:design_variant]) %>
+<% design_variant = Shared::PromotionalArt.composition_variant(params[:design_variant]) %>
 <% market_title = t("marketplace.home_title", city: city_name) %>
 <% content_for :title, market_title %>
 <% content_for :json_ld, json_ld_script(item_list_schema(@listings, title: market_title)) if @listings.any? %>
@@ -36,6 +36,10 @@
                cta: t("marketplace.promo_cta")
              )
            end %>
+
+<%# The promotional art carries the visible headline as an h2, and only when
+    there is an offer to promote, so the page's one h1 names it for the outline. %>
+<h1 class="visually-hidden"><%= market_title %></h1>
 
 <section class="store-teasers store-teasers--<%= design_variant.tr("_", "-") %>" data-design-variant="<%= design_variant %>" aria-labelledby="listing-kinds-title">
   <% if promo %>

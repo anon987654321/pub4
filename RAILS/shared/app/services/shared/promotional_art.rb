@@ -10,6 +10,14 @@ module Shared
       :safe_inset, :copy_zone, :product_zone
     )
 
+    # The storefront's composition variants live in MASTER's design rules, read
+    # through the shared reader because MASTER's own Ruby is not loaded in the
+    # apps. A preview names one with ?design_variant=; anything else gets the first.
+    def self.composition_variant(requested, name: "marketplace_sale")
+      variants = Operator::MasterDesign.dig("ultraminimalism", "compositions", name, "variants").to_h
+      variants.key?(requested.to_s) ? requested.to_s : variants.keys.first.to_s
+    end
+
     def self.build(product:, headline:, body: nil, price: nil, badge: nil, cta: nil,
                    layout: :hero, background: :chalk)
       new(
