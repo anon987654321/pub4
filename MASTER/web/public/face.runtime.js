@@ -904,12 +904,11 @@ function sampleDepthMapGrid(canvas, cols, rows) {
       const idx = (positions.length / 3) | 0;
       cell[row * cols + col] = idx;
       // Antigravity-inspired breathing room: keep the face topology, but
-      // break the rigid lattice with a small deterministic cell jitter. The
-      // result is a field of distinct floating particles rather than a packed
-      // raster. Jitter is bounded so the silhouette and semantic zones remain
-      // stable across builds.
-      const seed = Math.random() * 6.28318;
-      const jitter = 0.22;
+      // break the rigid lattice with a bounded, coordinate-derived jitter.
+      // The field is repeatable, so reloads do not silently reshuffle the face.
+      const hash = Math.sin((row + 1) * 127.1 + (col + 1) * 311.7) * 43758.5453;
+      const seed = (hash - Math.floor(hash)) * 6.28318;
+      const jitter = 0.32;
       const ju = Math.sin(seed * 1.7 + row * 0.31 + col * 0.17) * jitter / cols;
       const jv = Math.cos(seed * 1.3 + row * 0.19 + col * 0.23) * jitter / rows;
       const pxu = u + ju;
@@ -1011,8 +1010,8 @@ function particleScale() {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   return Math.max(0.7, Math.min(1.35, Math.sqrt((area * dpr) / (1280 * 720))));
 }
-const FACE_GRID_COLS = Math.round((State.coarsePointer ? 28 : 44) * particleScale());
-const FACE_GRID_ROWS = Math.round((State.coarsePointer ? 34 : 56) * particleScale());
+const FACE_GRID_COLS = Math.round((State.coarsePointer ? 26 : 40) * particleScale());
+const FACE_GRID_ROWS = Math.round((State.coarsePointer ? 32 : 52) * particleScale());
 const FACE_N_2D = Math.round(480 * particleScale());
 let faceHome, faceScatter, faceSeeds, faceCurvature, faceBoundary, faceZone;
 ({ home: faceHome, scatter: faceScatter, seeds: faceSeeds,
