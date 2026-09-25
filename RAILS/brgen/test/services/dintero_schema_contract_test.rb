@@ -18,8 +18,8 @@ class DinteroSchemaContractTest < ActiveSupport::TestCase
     stores = table("marketplace_stores")
     deliveries = table("marketplace_webhook_deliveries")
 
-    assert_equal 1, checkout.scan(/t\.string "dintero_(order_id|session_id|transaction_id)"/).length
-    assert_equal 1, orders.scan(/t\.string "dintero_(order_id|session_id|transaction_id)"/).length
+    assert_equal 3, checkout.scan(/t\.string "dintero_(order_id|session_id|transaction_id)"/).length
+    assert_equal 3, orders.scan(/t\.string "dintero_(order_id|session_id|transaction_id)"/).length
     assert_equal 1, stores.scan(/t\.string "dintero_payout_destination_id"/).length
     assert_equal 1, deliveries.scan(/create_table "marketplace_webhook_deliveries"/).length
 
