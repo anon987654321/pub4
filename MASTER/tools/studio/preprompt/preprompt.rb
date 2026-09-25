@@ -11,10 +11,10 @@ require "securerandom"
 # Paths into MASTER are spelled from this file up to the repo root. A relative
 # ../lib/ would resolve to STUDIO/lib/, which does not exist, and abort the
 # whole file on its first require.
-require_relative "../../MASTER/lib/io/replicate_client"
-require_relative "../../MASTER/lib/io/script_dispatch"
-require_relative "../../MASTER/lib/io/analog_capabilities"
-require_relative "../../MASTER/lib/boot/paths"
+require_relative "../../../lib/io/replicate_client"
+require_relative "../../../lib/io/script_dispatch"
+require_relative "../../../lib/io/analog_capabilities"
+require_relative "../../../lib/boot/paths"
 # Shellwords.escape is called in maybe_handoff_postpro; without this require
 # --postpro reaches a NameError instead of a handoff.
 require "shellwords"
