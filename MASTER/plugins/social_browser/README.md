@@ -1,5 +1,8 @@
 # Social Browser
 
+## Canonical contract
+
+
 ## Purpose
 
 Social Browser is a governed browser-automation plugin for authorized social
