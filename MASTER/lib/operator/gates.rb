@@ -66,7 +66,7 @@ module Deploy
     # the clean line and matched the NEXT `scan: done`, which is the deep pass —
     # so a target whose aesthetic pass is clean was judged on a different
     # profile's number than a target whose aesthetic pass found something.
-    # STUDIO read 317 and OPENBSD 72 against ceilings measured at 0 in the same
+    # MASTER/tools read 317 and OPENBSD 72 against ceilings measured at 0 in the same
     # run that printed "clean".
     CLEAN_LINE = /^scan\d*: done\b[^\n]*\bclean\b/
 
@@ -150,7 +150,7 @@ module Deploy
 
     # All four trees, not the Rails half. MASTER judges every effect against its
     # constitution and the other three trees are effects; scanning only RAILS
-    # left a law that never opens STUDIO's 155 source files or OPENBSD's 107 to
+    # left a law that never opens MASTER/tools' 155 source files or OPENBSD's 107 to
     # govern them anyway. Each target carries its own ceiling in
     # constitutional_budget.yml, so a tree can be over without hiding another.
     #
@@ -159,10 +159,10 @@ module Deploy
     # whole registry over the whole tree, against a recorded number.
     DEFAULT_TARGETS = %w[
       ../RAILS/brgen ../RAILS/amber ../RAILS/bsdports ../RAILS/shared
-      ../STUDIO ../OPENBSD ../MASTER
+      MASTER/tools ../OPENBSD ../MASTER
     ].freeze
 
-    # RAILS/brgen for an app, STUDIO for a tree — the prefix a changed path must
+    # RAILS/brgen for an app, MASTER/tools for a tree — the prefix a changed path must
     # carry to select its target.
     def repo_prefix(target)
       relative = target.sub(%r{\A\.\./}, "")
