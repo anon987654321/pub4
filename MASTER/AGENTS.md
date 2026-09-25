@@ -33,15 +33,15 @@ file including this one. A harness file (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`,
 a second copy of it: the copy is always the one being read, and it is always the
 one that drifted.
 
-The four trees, and how each is entered:
+The three top-level trees, and how each is entered:
 
 - `MASTER/` — a constitutional AI runtime in pure Ruby. `MASTER/bin/master "<instruction>"`.
 - `RAILS/` — brgen (a city social network, verticals as mounted engines), amber, bsdports. `RAILS/bin/triangle up`.
 - `OPENBSD/` — the deploy pipeline and the VPS runbook. Production is one box, vm23.
-- `MASTER/tools/` — dilla makes beats, postpro grades images, preprompt and lora generate.
+- `MASTER/tools/` — the canonical tool plane inside MASTER: dilla, postpro, preprompt, lora and bplans.
 
 Two commands cover most work. `MASTER/bin/operator gate` runs the whole ladder over
-all four trees; `MASTER/bin/operator measure` prints every ratchet with its ceiling.
+all three top-level trees; `MASTER/bin/operator measure` prints every ratchet with its ceiling.
 Run the smallest check that proves the work, and never report done without its
 output.
 
