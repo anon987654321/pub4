@@ -106,7 +106,11 @@ class TestSpeech < Minitest::Test
     Master::Voice::Speech.stub(:edge_tts_available?, false) do
       Master::Voice::Speech.stub(:espeak_path, nil) do
         Master::Voice::Speech.stub(:say_available?, false) do
-          refute Master::Voice::Speech.available?
+          # Replicate is the fourth backend; a token on the machine or left in
+          # ENV by another test made this pass or fail by who ran first.
+          Master::Voice::Engines.stub(:replicate_token?, false) do
+            refute Master::Voice::Speech.available?
+          end
         end
       end
     end
