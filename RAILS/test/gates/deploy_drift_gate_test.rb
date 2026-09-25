@@ -101,13 +101,14 @@ class DeployDriftGateTest < Minitest::Test
   def test_a_failed_head_measurement_is_inconclusive
     stamp("brgen", sha: head)
     gate = GATE.new
+    # Singleton overrides rather than Object#stub, which Minitest 6 moved out
+    # into the separate minitest-mock gem that the bare-ruby suite does not load.
+    failed = Open3.capture2e("false").last
+    gate.define_singleton_method(:git_repo?) { true }
+    gate.define_singleton_method(:git_capture) { |*| ["", failed] }
 
-    gate.stub(:git_repo?, true) do
-      gate.stub(:git_capture, ["", Open3.capture2e("false").last]) do
-        result = gate.run
-        assert_equal :inconclusive, result.outcome
-        assert_match(/git rev-parse HEAD failed/, result.unchecked.join(" | "))
-      end
-    end
+    result = gate.run
+    assert_equal :inconclusive, result.outcome
+    assert_match(/git rev-parse HEAD failed/, result.unchecked.join(" | "))
   end
 end
