@@ -47,9 +47,9 @@ module Master
         end
 
         def state_line(model, **options)
-          bits = ["model #{short_model(model)}", "ctx #{context_label(options[:tokens])}"]
+          bits = ["model0: #{short_model(model)}", "ctx #{context_label(options[:tokens])}"]
           violations = options.fetch(:violations, 0).to_i
-          bits << "#{violations} #{violations == 1 ? 'violation' : 'violations'}" if violations.positive?
+          bits << "scan0: #{violations} violations" if violations.positive?
           cost = cost_label(options[:cost])
           bits << cost unless cost.empty?
           d(bits.join(", "))
