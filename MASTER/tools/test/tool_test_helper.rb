@@ -51,7 +51,7 @@ module ToolTest
   # somebody else's `git commit -a`.
   #
   # This lives in the shared helper rather than in test/dilla_helper.rb, where it
-  # started, because test_studio_gate.rb dirties them too: the gate's load probe
+  # started, because test_tools_gate.rb dirties them too: the gate's load probe
   # boots dilla in a subprocess of its own. With the guard only on the dilla
   # suite, `rake test` came out clean solely because test:dilla runs after
   # test:gate and restored what the gate had written — and `rake test:gate` alone
@@ -118,11 +118,11 @@ module ToolTest
   module EnvSandbox
     def before_setup
       super
-      @studio_env = ENV.to_h
+      @tool_env = ENV.to_h
     end
 
     def after_teardown
-      ENV.replace(@studio_env) if @studio_env
+      ENV.replace(@tool_env) if @tool_env
       super
     end
 
