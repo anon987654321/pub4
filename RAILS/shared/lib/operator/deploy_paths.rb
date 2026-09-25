@@ -98,7 +98,7 @@ module Operator
       # Derived from rails_root, not from deploy_root. deploy_root is already
       # rails_root/.. (the repo), so going up again landed one level *above* the
       # checkout: with rails_root = /home/dev/pub4/RAILS this returned /home/dev,
-      # and repo_join("STUDIO/…") pointed at /home/dev/studio. That is why every
+      # and repo_join("MASTER/tools/…") pointed at /home/dev/studio. That is why every
       # candidate list needed the hardcoded DEFAULT_REPO entry to work at all —
       # the derived one had always been wrong, on the server too.
       rails_root.join("..").expand_path
