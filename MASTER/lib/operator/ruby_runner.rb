@@ -11,6 +11,7 @@ module Operator
       return ENV["PUB4_RUBY"] if ENV["PUB4_RUBY"].to_s != ""
       return "ruby34" if executable?("ruby34")
       return "ruby3.4" if executable?("ruby3.4")
+      return path if (path = rbenv_path("ruby"))
 
       RbConfig.ruby
     end
@@ -19,8 +20,32 @@ module Operator
       return ENV["PUB4_BUNDLE"] if ENV["PUB4_BUNDLE"].to_s != ""
       return "bundle34" if executable?("bundle34")
       return "bundle3.4" if executable?("bundle3.4")
+      return path if (path = rbenv_path("bundle"))
 
       "bundle"
+    end
+
+    # Resolve the executable from the repo's pinned Ruby instead of trusting the
+    # shell's current Ruby. This is the common seam between macOS rbenv and
+    # OpenBSD's ruby34/bundle34 binaries: callers receive one executable path,
+    # so they do not need to reproduce rbenv's selection logic themselves.
+    def rbenv_path(name, root: Environment.repo_root)
+      version = pinned_version(root)
+      return if version.empty? || !executable?("rbenv")
+
+      output, status = Open3.capture2e(
+        { "RBENV_VERSION" => version },
+        "rbenv", "which", name
+      )
+      path = output.to_s.strip
+      return unless status.success? && File.executable?(path)
+
+      path
+    end
+
+    def pinned_version(root)
+      path = File.join(root, ".ruby-version")
+      File.file?(path) ? File.read(path).strip : ""
     end
 
     def gate_ruby
