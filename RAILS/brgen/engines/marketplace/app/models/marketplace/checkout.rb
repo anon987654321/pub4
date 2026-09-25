@@ -87,6 +87,20 @@ class Marketplace::Checkout < ApplicationRecord
     order_lines.each { |order| order.fail_payment!(transaction_id: transaction_id) }
   end
 
+  def sync_payment_status!
+    return unless order_lines.any?
+
+    if order_lines.all? { |order| order.payment_status == "paid" }
+      update!(
+        status: "paid",
+        paid_at: Time.current,
+        payment_reference: payment_reference
+      )
+    else
+      update!(status: "pending_payment")
+    end
+  end
+
   def mark_paid!(reference: payment_reference)
     transaction do
       update!(status: "paid", paid_at: Time.current, payment_reference: reference.presence || payment_reference)
