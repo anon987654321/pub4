@@ -24,25 +24,25 @@ module Operator
 
     def postpro_candidates
       [
-        repo_join("STUDIO/postpro/postpro.rb"),
-        Pathname.new("#{DEFAULT_REPO}/STUDIO/postpro/postpro.rb"),
-        rails_root.join("../../STUDIO/postpro/postpro.rb"),
+        repo_join("MASTER/tools/postpro/postpro.rb"),
+        Pathname.new("#{DEFAULT_REPO}/MASTER/tools/postpro/postpro.rb"),
+        rails_root.join("../../MASTER/tools/postpro/postpro.rb"),
       ]
     end
 
     def preprompt_candidates
       [
-        repo_join("STUDIO/preprompt/preprompt.rb"),
-        Pathname.new("#{DEFAULT_REPO}/STUDIO/preprompt/preprompt.rb"),
-        rails_root.join("../../STUDIO/preprompt/preprompt.rb"),
+        repo_join("MASTER/tools/preprompt/preprompt.rb"),
+        Pathname.new("#{DEFAULT_REPO}/MASTER/tools/preprompt/preprompt.rb"),
+        rails_root.join("../../MASTER/tools/preprompt/preprompt.rb"),
       ]
     end
 
     def dilla_candidates
       [
-        repo_join("STUDIO/dilla/dilla.rb"),
-        Pathname.new("#{DEFAULT_REPO}/STUDIO/dilla/dilla.rb"),
-        rails_root.join("../../STUDIO/dilla/dilla.rb"),
+        repo_join("MASTER/tools/dilla/dilla.rb"),
+        Pathname.new("#{DEFAULT_REPO}/MASTER/tools/dilla/dilla.rb"),
+        rails_root.join("../../MASTER/tools/dilla/dilla.rb"),
       ]
     end
 
