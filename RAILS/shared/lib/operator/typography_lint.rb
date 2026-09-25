@@ -129,12 +129,11 @@ module Operator
     end
 
     def font_family_budget(path, lines)
-      families = lines.filter_map do |line|
-        match = line.match(FAMILY_DECLARATIONS)
-        next unless match
-
-        normalize_family_list(match[1])
-      end.flatten.uniq
+      # Every declaration on the line, not the first: a compact or built sheet
+      # puts several rules on one line, and matching once counted one family.
+      families = lines.flat_map do |line|
+        line.scan(FAMILY_DECLARATIONS).flat_map { |(value)| normalize_family_list(value) }
+      end.uniq
 
       return [] if families.size <= 2
 
@@ -171,9 +170,13 @@ module Operator
       )]
     end
 
+    # A var() is a token that names a family elsewhere, and inherit and its kin
+    # name none, so neither is a family of its own. Counting them read
+    # `var(--font)` as the two families "var" and "font".
     def normalize_family_list(value)
-      value.scan(/(?:["'][^"']+["']|[A-Za-z][\w -]*)/).map { |item| item.strip.delete_prefix("'").delete_suffix("'").delete_prefix('"').delete_suffix('"') }.reject do |item|
-        item.empty? || %w[serif sans-serif monospace cursive fantasy system-ui ui-sans-serif ui-monospace].include?(item.downcase)
+      value.gsub(/var\([^)]*\)/, "").scan(/(?:["'][^"']+["']|[A-Za-z][\w -]*)/).map { |item| item.strip.delete_prefix("'").delete_suffix("'").delete_prefix('"').delete_suffix('"') }.reject do |item|
+        item.empty? || %w[serif sans-serif monospace cursive fantasy system-ui ui-sans-serif ui-monospace
+                          inherit initial unset revert revert-layer].include?(item.downcase)
       end
     end
 
