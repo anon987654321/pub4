@@ -62,6 +62,9 @@ class Marketplace::WebhooksController < ActionController::Base
     event = payload["event"].presence || request.headers["event"].presence
     return head(:bad_request) if event_delivery.blank? || event.blank?
     return head(:bad_request) if payload["event_delivery"].present? && payload["event_delivery"] != event_delivery
+    return head(:bad_request) if payload["event"].present? && payload["event"] != event
+    return head(:bad_request) if payload["account_id"].present? &&
+      payload["account_id"] != ENV["DINTERO_ACCOUNT_ID"].to_s
 
     delivery = begin_delivery(event_delivery:, event:)
     return head(:ok) if delivery.succeeded? || delivery.active?
