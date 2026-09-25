@@ -305,19 +305,14 @@ the "One chrome", ad system and layout sections bring back for a decision.
 
 ### Instruments — found 2026-09-25
 
-- **The RAILS contract suite is red in 30 of 130 files.** `RBENV_VERSION=3.4.9
-  ruby RAILS/test/run_all.rb` on 2026-09-25: 1025 runs, 30 files red. Under
-  PATH Ruby 4.0.5 it reads 33, because `run_all.rb` spawns `RbConfig.ruby` and
-  so inherits whatever Ruby launched it; `gate_failopen_test.rb`,
-  `runner_explain_test.rb` and `visual_contract_blindness_test.rb` fail only
-  there, the last on the gate runner refusing the unpinned Ruby. Always count under 3.4.9.
-  Three of the real failures:
-  `solidus_staging_contract_test.rb` calls `assert_not_match`, which is
-  ActiveSupport's and absent under bare Minitest; `vertical_consistency_test.rb`
-  names verticals that hardcode their width instead of `--container-max`,
-  which is the "One chrome" content column; `typography_lint_test.rb` holds a
-  two-family budget. Done when the suite exits 0 under 3.4.9, each fix
-  measuring behaviour rather than restoring a spelling.
+- **Contract-suite baseline recorded 2026-09-25; three named source failures resolved.**
+  The historical run was 30 red files of 130 under Ruby 3.4.9 (33 under the
+  unrelated PATH Ruby 4.0.5). Current source fixes are in place for the three
+  concrete failures called out there: Solidus uses bare-Minitest assertions,
+  vertical content widths use the shared/container contract, and brgen's emoji
+  fallback stack is behind one typography token. The suite now contains 131
+  contract files. A fresh `RBENV_VERSION=3.4.9 ruby RAILS/test/run_all.rb` has
+  not been executed in this environment, so green status remains unproven.
 - **Rendered gates measure nothing on a fresh checkout.** `RAILS/bin/triangle`
   runs brgen's `db:prepare` (`Triangle.migrate`, unbounded) before it boots
   the server and waits `BOOT_TIMEOUT` (180 s) for `/up`. On a new worktree
