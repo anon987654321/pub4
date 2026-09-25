@@ -133,9 +133,9 @@ OPENBSD/var/nsd/zones/master/*
 # including acapellas from commercially released records. Untracking fixes the tip
 # only: the blobs remain reachable in history exactly as MASTER/web/config/master.key
 # does, so treat a clone as still carrying them until someone purges it.
-STUDIO/dilla/project/learnings/vocals/**/*.wav
-STUDIO/dilla/project/learnings/vocals/**/*.flac
-STUDIO/dilla/project/learnings/vocals/**/*.raw
+MASTER/tools/dilla/project/learnings/vocals/**/*.wav
+MASTER/tools/dilla/project/learnings/vocals/**/*.flac
+MASTER/tools/dilla/project/learnings/vocals/**/*.raw
 
 # Engine output. Every renderer writes beside dilla.rb, and the audio is NOT
 # tracked -- a render reproduces from its seed and the repo is not where 15MB
@@ -147,8 +147,8 @@ STUDIO/dilla/project/learnings/vocals/**/*.raw
 # A full session sat at the repo root until 2026-08-31, which is how the
 # root-invariant rule in CLAUDE.md learned about renders at all: dilla writes to
 # $PWD unless DILLA_OUTPUT_DIR says otherwise.
-STUDIO/dilla/demo*.wav
-STUDIO/dilla/demo*.mp3
+MASTER/tools/dilla/demo*.wav
+MASTER/tools/dilla/demo*.mp3
 # No rendered audio is tracked, demo.mp3 and RELEASE.mp3 included (operator,
 # 2026-08-24). demo.mp3 carried an exception here for a while on the argument
 # that a demo which exists on one machine is not a demo; that argument lost to
@@ -160,7 +160,7 @@ STUDIO/dilla/demo*.mp3
 # Untracked, not deleted: both files stay on disk. A dilla render is not
 # reproducible — the seed and performer rotate per run — so deleting one loses a
 # take for good, whatever its current state.
-STUDIO/dilla/RELEASE.mp3
+MASTER/tools/dilla/RELEASE.mp3
 # `demo-each` writes the catalogue one mp3 per track into the dilla root as
 # NN_title.mp3. These are TRACKED, against the rule above that generated audio
 # is not, and the exception is deliberate: this set IS the current demo -- the
@@ -175,40 +175,40 @@ STUDIO/dilla/RELEASE.mp3
 #
 # Prune freely: re-running demo-each replaces them, and demo_manifest.tsv beside
 # them records the seed, the engine and the settings behind each take.
-STUDIO/dilla/check_*.wav
-STUDIO/dilla/dilla_beat_live*.mp3
+MASTER/tools/dilla/check_*.wav
+MASTER/tools/dilla/dilla_beat_live*.mp3
 # Round renders (rN_title.mp3) and their pre-master intermediates. Unlike the
 # NN_title.mp3 demo set above these are per-session takes, not the current demo,
 # so nobody is sent them and nothing is compared against them -- they are the
 # reproducible output the rule at the top of this section describes. 22 MB was
 # sitting untracked here because no pattern named them.
-STUDIO/dilla/r[0-9]_*.mp3
-STUDIO/dilla/*.pre.raw
+MASTER/tools/dilla/r[0-9]_*.mp3
+MASTER/tools/dilla/*.pre.raw
 # Full-length liveset bounces pulled from a YouTube source rip.
-STUDIO/dilla/liveset_yt_*.wav
+MASTER/tools/dilla/liveset_yt_*.wav
 
 # Engine scratch. scratch/ is one visible folder instead of a dozen dot-entries
 # at the project root; the dot-patterns catch strays from pre-scratch versions,
 # and .dilla_progressions_log.txt is unanchored because old code wrote it into
 # whatever directory it ran from.
-STUDIO/dilla/scratch/
-STUDIO/dilla/.cache/
-STUDIO/dilla/.dilla_*
-STUDIO/dilla/.harmony_*.wav
-STUDIO/dilla/.live_tmp.wav
-STUDIO/dilla/.all_tracks_demo/
-STUDIO/dilla/analysis/
+MASTER/tools/dilla/scratch/
+MASTER/tools/dilla/.cache/
+MASTER/tools/dilla/.dilla_*
+MASTER/tools/dilla/.harmony_*.wav
+MASTER/tools/dilla/.live_tmp.wav
+MASTER/tools/dilla/.all_tracks_demo/
+MASTER/tools/dilla/analysis/
 .dilla_progressions_log.txt
 
 # Machine-produced sample subtrees: demux/ is demucs stem output, yt_*.wav are
 # downloaded source rips, dug/ audio is public domain and re-fetchable from the
 # provenance manifest beside it.
-STUDIO/dilla/samples/demux/
-STUDIO/dilla/samples/yt_*.wav
-STUDIO/dilla/samples/crate/
-STUDIO/dilla/samples/dug/**/*.mp3
-STUDIO/dilla/samples/dug/**/*.flac
-STUDIO/dilla/samples/dug/**/*.wav
+MASTER/tools/dilla/samples/demux/
+MASTER/tools/dilla/samples/yt_*.wav
+MASTER/tools/dilla/samples/crate/
+MASTER/tools/dilla/samples/dug/**/*.mp3
+MASTER/tools/dilla/samples/dug/**/*.flac
+MASTER/tools/dilla/samples/dug/**/*.wav
 
 # "ikke dele" is the operator saying do not share, in the filename, and this repo
 # is public. Three such files were sitting untracked in
@@ -231,27 +231,27 @@ STUDIO/dilla/samples/dug/**/*.wav
 
 # Python venvs the audio tools shell out to (demucs stem separation, librosa
 # analysis) — rebuilt locally, never shipped.
-STUDIO/dilla/.venv-demucs/
-STUDIO/dilla/venv-librosa/
+MASTER/tools/dilla/.venv-demucs/
+MASTER/tools/dilla/venv-librosa/
 
 # --- studio/lora ------------------------------------------------------------
 
 # Training caches, extracted frames, staging copies, and reproducible bundles.
 # <subject>/.cache/ is every lane's scratch: dataset zips, downloaded trainer
 # tars, staged Kaggle payloads.
-STUDIO/lora/**/.cache/
-STUDIO/lora/**/_frames/
-STUDIO/lora/**/_latent_cache/
-STUDIO/lora/**/.aitk_size.json
-STUDIO/lora/**/raw/
-STUDIO/lora/**/*.zip
-STUDIO/lora/**/*.pid
+MASTER/tools/lora/**/.cache/
+MASTER/tools/lora/**/_frames/
+MASTER/tools/lora/**/_latent_cache/
+MASTER/tools/lora/**/.aitk_size.json
+MASTER/tools/lora/**/raw/
+MASTER/tools/lora/**/*.zip
+MASTER/tools/lora/**/*.pid
 
 # ai-toolkit run artifacts: it writes samples and a copy of the config it was
 # handed into the training folder on every run.
-STUDIO/lora/*/train_run.log
-STUDIO/lora/*/weights/*/samples/
-STUDIO/lora/*/weights/*/config.yaml
+MASTER/tools/lora/*/train_run.log
+MASTER/tools/lora/*/weights/*/samples/
+MASTER/tools/lora/*/weights/*/config.yaml
 
 # Photographs of people, and everything derived from them.
 #
@@ -267,13 +267,13 @@ STUDIO/lora/*/weights/*/config.yaml
 #
 # Deliberate publication is still possible with `git add -f`, which is the point:
 # it should take a decision rather than a reflex.
-STUDIO/lora/*/sources/
-STUDIO/lora/*/dataset/
-STUDIO/lora/*/dataset_*/
-STUDIO/lora/*/retouched/
-STUDIO/lora/*/out/
-STUDIO/lora/*/weights/
-STUDIO/lora/*/contact_sheet.jpg
+MASTER/tools/lora/*/sources/
+MASTER/tools/lora/*/dataset/
+MASTER/tools/lora/*/dataset_*/
+MASTER/tools/lora/*/retouched/
+MASTER/tools/lora/*/out/
+MASTER/tools/lora/*/weights/
+MASTER/tools/lora/*/contact_sheet.jpg
 
 # Claude Code per-machine permission allowlist. settings.json is the shared
 # one; this file names local paths and belongs to the checkout, not the repo.
