@@ -43,7 +43,7 @@ class HonestyGatesTest < Minitest::Test
     "#{ENGINE}/app/controllers/marketplace/checkouts_controller.rb" =>
       "def provider = params[:provider]\n",
     "#{ENGINE}/app/views/marketplace/carts/show.html.erb" =>
-      "<%= t(\"marketplace.pay_vipps\") %>\n",
+      "<%= t(\"marketplace.pay_dintero\") %>\n",
     "#{ENGINE}/config/routes.rb" =>
       "post \"checkout\"\npost \"webhooks/tradedoubler\"\n",
   }.freeze
