@@ -5,7 +5,6 @@ module Marketplace
     class DinteroCheckout
       class SellerNotReady < ProviderError; end
 
-      COMMISSION_ENV = "DINTERO_PLATFORM_COMMISSION_BPS"
 
       class << self
         def configured?
