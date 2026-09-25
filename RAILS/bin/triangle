@@ -21,11 +21,14 @@ require "fileutils"
 require "net/http"
 require "open3"
 require "yaml"
+require_relative "../../MASTER/lib/operator/ruby_runner"
 
 module Deploy
   module Triangle
     ROOT = File.expand_path("../..", __dir__)
     RAILS_ROOT = File.join(ROOT, "RAILS")
+    RUBY = Operator::RubyRunner.ruby_cmd
+    BUNDLE = Operator::RubyRunner.bundle_cmd
     RUN_DIR = File.join(RAILS_ROOT, "tmp", "triangle")
     BOOT_TIMEOUT = Integer(ENV.fetch("TRIANGLE_BOOT_TIMEOUT", "180"))
 
@@ -61,7 +64,7 @@ module Deploy
     def self.log_file(app) = File.join(RUN_DIR, "#{app[:name]}.log")
 
     def self.migrate(app)
-      out, status = Open3.capture2e(env_for(app), "rbenv", "exec", "bundle", "exec", "bin/rails", "db:prepare", chdir: app[:dir])
+      out, status = Open3.capture2e(env_for(app), BUNDLE, "exec", RUBY, "bin/rails", "db:prepare", chdir: app[:dir])
       return true if status.success?
 
       warn "triangle: #{app[:name]} db:prepare failed\n#{out.lines.last(8).join}"
@@ -93,7 +96,7 @@ module Deploy
       log = File.open(log_file(app), "w")
       pid = Process.spawn(
         env_for(app),
-        "rbenv", "exec", "bundle", "exec", "bin/rails", "server", "-p", app[:port].to_s, "-b", "127.0.0.1",
+        BUNDLE, "exec", RUBY, "bin/rails", "server", "-p", app[:port].to_s, "-b", "127.0.0.1",
         chdir: app[:dir], out: log, err: log, pgroup: true
       )
       Process.detach(pid)
