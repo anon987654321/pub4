@@ -1,4 +1,4 @@
-# STUDIO
+# MASTER tools
 
 **A claim about an image or a sound is worth nothing until something measures
 it.** Four media tools share that conviction. `dilla/` builds beats, Detroit in
@@ -218,7 +218,7 @@ set. The first line below is the whole suite, the second one tool, and the third
 finds the tests that pass only in company.
 
 ```zsh
-cd STUDIO && rbenv exec rake test
-cd STUDIO && rbenv exec rake test:postpro
-cd STUDIO && rbenv exec rake isolation
+cd MASTER/tools && rbenv exec rake test
+cd MASTER/tools && rbenv exec rake test:postpro
+cd MASTER/tools && rbenv exec rake isolation
 ```
