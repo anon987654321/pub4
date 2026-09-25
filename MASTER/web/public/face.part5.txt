@@ -1002,8 +1002,8 @@ async function acquireWakeLock() {
 }
 
 function guardVoice(v, opts = {}) {
-  void v;
-  void opts;
+  const text = String(opts.text || '').trim();
+  if (text && typeof speechVoiceForText === 'function') return speechVoiceForText(text);
   return TTS_DEFAULT_VOICE;
 }
 
@@ -1055,7 +1055,7 @@ function wireTtsStyleChips() {
 }
 function playDuo(lines, onDone, style, councilOpts = {}) {
   if (!lines.length) { onDone?.(); return; }
-  const [voiceRaw, text] = lines[0]; const voice = guardVoice(voiceRaw);
+  const [voiceRaw, text] = lines[0]; const voice = guardVoice(voiceRaw, { text });
   const rest = lines.slice(1);
   const useStyle = style || _nextTtsStyle(voice);
   if (councilOpts.persona && uiStatus) uiStatus.textContent = `council: ${councilOpts.persona}`;
