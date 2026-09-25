@@ -55,6 +55,10 @@ module Master
       # candidate open, so every repair pass was skipped.
       def circuit_breaker = @circuit_breaker
 
+      # The container holds no router of its own; /model, model completion and
+      # the face's Talk reach the pool through the agent that routes with it.
+      def model_router = @model_router
+
       def chat(message, image: nil, stream: true, escalation_depth: 0, task_type: nil, &blk)
         compaction = prepare_chat_turn(message)
         return compaction if compaction.is_a?(Master::Result::Err)
