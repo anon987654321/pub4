@@ -1183,6 +1183,7 @@ nb:
     accept: Godta
     decline: Avslå
     add_to_cart: Legg i handlekurv
+    capture_order: Gjennomfør betaling
     pay_dintero: Betal med Dintero
     pay_vipps: Betal med Vipps
     pay_stripe: Betal med Stripe
@@ -1682,12 +1683,16 @@ nb:
         one: 1 bud er sendt til selgeren.
         other: "%{count} bud er sendt til selgerne."
       offer_failed: Kunne ikke sende budet.
+      capture_started: Gjennomføring er sendt til Dintero.
+      capture_failed: Dintero kunne ikke gjennomføre denne ordren.
+      capture_unavailable: Denne ordren kan ikke gjennomføres ennå.
       review_saved: Vurderingen er lagret.
       search_saved: Søket er lagret.
       search_deleted: Det lagrede søket er slettet.
       payment_statuses:
         unpaid: ubetalt
         pending: under behandling
+        authorized: reservert
         paid: gjennomført
         failed: mislyktes
         refunded: refundert
