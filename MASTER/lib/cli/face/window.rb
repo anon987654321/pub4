@@ -133,7 +133,7 @@ module Master
         # character stops that take; the keys stay on this thread.
         def arm_ear
           return unless @ear.available?
-          return if @hearing
+          return if @hearing?
           return if @ear_after && Process.clock_gettime(Process::CLOCK_MONOTONIC) < @ear_after
           return unless @lock.synchronize { @state == :idle && @draft.empty? }
 
@@ -202,7 +202,18 @@ module Master
 
         def answer(text)
           set(:thinking, ["you: #{text}"])
-          reply = think(text)
+          result = think(text)
+          if result.is_a?(Master::Result) && result.err?
+            set(:idle, [result.message])
+            return
+          end
+
+          reply = reply_text(result).to_s.strip
+          if reply.empty?
+            set(:idle, ["talk0: empty reply"])
+            return
+          end
+
           if @mouth.available?
             set(:speaking, [reply])
             @mouth.say(reply, on_level: ->(level) { change { @level = level } },
@@ -213,14 +224,14 @@ module Master
           picture(text) if text.to_s.split.size >= 4
         end
 
-        # Her sentence is the sitting. The reply is already spoken; this
-        # writes the still and the clip under ~/ideas and names the clip.
+        # The still is created only after a real reply, so a failed model turn
+        # cannot fall through into media work.
         def picture(text)
-          set(:thinking, ["making the picture"])
+          set(:thinking, ["picture0: rendering"])
           paths = Master::Io::IdeaPicture.new.write(text)
-          set(:idle, ["saved #{paths[:clip]}"])
+          set(:idle, ["picture0: saved #{paths[:clip]}"])
         rescue StandardError => e
-          set(:idle, ["picture failed: #{e.message.to_s[0, 140]}"])
+          set(:idle, ["picture0: failed — #{e.message.to_s[0, 140]}"])
         end
 
         # The turn runs beside the window so ^C can abandon it. It carries no
@@ -231,15 +242,15 @@ module Master
           worker = Thread.new do
             Fiber[:master_terminal_ask] = nil
             Fiber[:master_face_open] = true
-            reply_text(@turn.call(text))
+            @turn.call(text)
           rescue StandardError => e
-            "error: #{e.class}: #{e.message}"
+            Master::Result.err("face0: turn failed — #{e.class}: #{e.message}", category: :infrastructure)
           end
           sleep 0.05 while worker.alive? && !cancel_key?
           return worker.value unless worker.alive?
 
           worker.kill
-          "cancelled"
+          Master::Result.err("face0: turn cancelled", category: :timeout)
         end
 
         # turn answers with a Result, or with the text it streamed.
