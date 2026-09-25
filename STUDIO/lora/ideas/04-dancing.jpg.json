@@ -1,0 +1,137 @@
+{
+  "schema": "postpro.grade.v2",
+  "generated_at": "2026-09-25T04:26:14Z",
+  "input": "/Users/mac/.grok/sessions/%2FUsers%2Fmac%2FDocuments%2FGitHub%2Fpub4/01a0d678-6779-7ed0-a76b-3a06b4422341/images/4.jpg",
+  "output": "/tmp/ideas-graded/04-dancing.jpg",
+  "preset": "neon_night",
+  "recipe": [
+    {
+      "fx": [
+        "optical_blur",
+        "spectral_temp",
+        "push_pull",
+        "reciprocity_failure",
+        "film_curve",
+        "orange_mask",
+        "halation",
+        "bloom_pro",
+        "grain"
+      ],
+      "stock": "cinestill_800t",
+      "temp": 3200,
+      "intensity": 0.9,
+      "stops": 0.5,
+      "exposure_secs": 30.0
+    }
+  ],
+  "grade_version": "f23a38996d55",
+  "seed": 0,
+  "output_sha256": "0866cac0b8ae91c5c7b70a58ba15254ee572345afb038a522a93cf4265768051",
+  "quality": {
+    "dimensions": [
+      832,
+      1248
+    ],
+    "mean_rgb_before": [
+      62.628,
+      51.749,
+      29.666
+    ],
+    "mean_rgb_after": [
+      145.89,
+      113.02,
+      135.902
+    ],
+    "clipped_highlights_percent": 3.767,
+    "crushed_blacks_percent": 0.0,
+    "warnings": [
+      "highlight clipping exceeds 0.5%"
+    ]
+  },
+  "uncanny": {
+    "before": {
+      "texture": 0.02565313592831767,
+      "specular_spread": 0.15908441628685852,
+      "clipping": 0.0,
+      "tonal_range": 0.24161484941818479
+    },
+    "after": {
+      "texture": 0.026932940966414316,
+      "specular_spread": 0.25279979346375747,
+      "clipping": 1.1944110576923077,
+      "tonal_range": 0.16693573953850943
+    }
+  },
+  "capabilities": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57,
+    58,
+    59,
+    60,
+    61,
+    62,
+    63,
+    64,
+    65,
+    66,
+    67,
+    68,
+    69,
+    70
+  ]
+}
