@@ -1192,7 +1192,7 @@ nb:
     cart_empty_body: Bla i annonser og send bud — gjester kan handle uten registrering.
     browse_marketplace: Bla i markedsplassen
     cart_total: 'Totalt: %{amount}'
-    cart_pay_hint: Betal med Vipps (NO) eller Stripe (kort), eller send klassiske
+    cart_pay_hint: Betal med Dintero, Vipps eller kort, eller send klassiske
       bud selgere godtar/avslår.
     cart_honest_pay: Hvis en betalingsleverandør er utilgjengelig, sier vi det. Vi
       tar aldri betaling vi ikke kan behandle.
@@ -1669,6 +1669,9 @@ nb:
       cart_not_payable: Ingenting i handlekurven kan betales.
       unknown_provider: Ukjent betalingsleverandør.
       dintero_seller_not_ready: Dintero-betaling er ikke tilgjengelig for denne selgeren ennå.
+      capture_unavailable: Denne ordren kan ikke gjennomføres ennå.
+      capture_started: Gjennomføring er sendt til Dintero.
+      capture_failed: Dintero kunne ikke gjennomføre denne ordren.
       payment_recorded: Betaling %{status} via %{provider}.
       listing_saved: Annonsen er lagret.
       listing_unsaved: Annonsen er fjernet fra lagrede.
