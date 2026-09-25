@@ -129,8 +129,10 @@ class Marketplace::WebhooksController < ActionController::Base
       process_authorization(payload)
     when "checkout_transaction", "checkout_transaction_update"
       process_transaction(payload["transaction"] || payload)
-    when "approval_payout_destination_update", "approval_payout_destination_delete"
+    when "approval_payout_destination_update"
       process_payout_destination_case(payload["payout_destination_case"] || {})
+    when "approval_payout_destination_delete"
+      process_payout_destination_case(payload["payout_destination_case"] || {}, deleted: true)
     when "account_payout_destination_add", "account_payout_destination_update", "account_payout_destination_delete"
       process_payout_destination(payload["payout_destination"] || {})
     when "settlement_add"
@@ -174,7 +176,7 @@ class Marketplace::WebhooksController < ActionController::Base
     end
   end
 
-  def process_payout_destination_case(data)
+  def process_payout_destination_case(data, deleted: false)
     destination = data["payout_destination_id"].to_s
     return if destination.empty?
 
@@ -182,7 +184,7 @@ class Marketplace::WebhooksController < ActionController::Base
     return unless store
 
     store.update!(
-      dintero_payout_destination_status: data["case_status"].presence || "UNKNOWN"
+      dintero_payout_destination_status: deleted ? "DELETED" : data["case_status"].presence || "UNKNOWN"
     )
   end
 
@@ -194,8 +196,8 @@ class Marketplace::WebhooksController < ActionController::Base
     return unless store
 
     store.update!(
-      dintero_payout_destination_status: data["status"].presence ||
-        data["state"].presence || "UNKNOWN"
+      dintero_payout_destination_status: data["case_status"].presence ||
+        data["status"].presence || data["state"].presence || "UNKNOWN"
     )
   end
 
