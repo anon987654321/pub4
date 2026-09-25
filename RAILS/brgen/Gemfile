@@ -41,7 +41,7 @@ gem "ruby-vips"
 gem "webpush"
 gem "quilt" # BRGEN_OLD's identicon avatars (pub/__OLD_BACKUPS/BRGEN_OLD)
 
-gem "ruby_llm"
+gem "ruby_llm", "~> 2.0"
 
 gem "bootsnap", require: false
 gem "faker", require: false

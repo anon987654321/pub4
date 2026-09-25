@@ -22,5 +22,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency "omniauth-github", ">= 2.0"
   spec.add_dependency "omniauth-rails_csrf_protection", ">= 1.0"
   spec.add_dependency "webpush", ">= 1.1"
-  spec.add_dependency "ruby_llm", ">= 1.16"
+  spec.add_dependency "ruby_llm", ">= 2.0", "< 3"
 end

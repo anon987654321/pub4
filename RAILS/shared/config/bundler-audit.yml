@@ -10,15 +10,4 @@
 # An entry here is an argument, not a silence. Write why the advisory cannot
 # reach this tree, and delete the entry the moment that stops being true.
 
-ignore:
-  # ruby_llm 1.16.0, CVE-2026-67991 / GHSA-42r3-x6vx-x49x: polynomial-time ReDoS
-  # in RubyLLM::Utils.underscore. The advisory scopes the condition to Ruby 3.1.x
-  # and names the input as "a very long crafted class, agent, or tool name".
-  # This tree pins 3.4.9 and vm23 runs 3.4.9; brgen and amber call RubyLLM.chat
-  # with a model constant and pass user text as the prompt, and neither declares
-  # a RubyLLM tool or agent, so no user-supplied string reaches that method.
-  #
-  # The fix is ruby_llm >= 2.0.0.rc1 and there is no patched 1.x. Moving MASTER
-  # and two apps onto a release candidate of a major version is the upgrade in
-  # TODO.md, not a line in this file. Delete this entry when 2.0.0 ships.
-  - CVE-2026-67991
+ignore: []

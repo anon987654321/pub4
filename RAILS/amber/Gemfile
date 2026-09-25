@@ -86,7 +86,7 @@ end
 gem "pagy"
 # Shared::Llm is the single RubyLLM/OpenRouter provider boundary used by Amber
 # and the shared seed scraper. Replaced ruby-openai on 2026-08-25.
-gem "ruby_llm"
+gem "ruby_llm", "~> 2.0"
 gem "ruby-vips"
 gem "falcon"
 gem "ferrum"
