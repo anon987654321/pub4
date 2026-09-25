@@ -190,8 +190,7 @@ module Marketplace
           )
           draft_id = draft.fetch("id")
 
-          completed = DinteroClient.request(
-            :put,
+          completed = DinteroClient.put(
             "/v1/accounts/#{DinteroClient.account_id}/shopping/draft_orders/#{ERB::Util.url_encode(draft_id)}/complete"
           )
           completed["order_id"] || completed.dig("order", "order_id") || completed.fetch("id")
