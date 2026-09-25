@@ -746,7 +746,7 @@ end
 
 Law.define(:LEAST_ASTONISHMENT) do
   source "Principle of Least Astonishment"
-  severity :info
+  severity :warning
   ask "Do names, APIs, or behavior contradict what a reasonable reader would expect?"
   fix "Rename or reshape the interface so behavior matches its apparent meaning."
   bad <<~'X'
