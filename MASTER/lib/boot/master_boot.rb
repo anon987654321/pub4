@@ -74,11 +74,20 @@ module Master
       warn("device0: capability discovery failed — #{e.class}: #{e.message}")
     end
 
+    # A new phone gets the face's ear in the background, so the session
+    # opens at once; Device::Setup says what it does as it goes.
+    def set_up_device
+      Device::Setup.start!
+    rescue StandardError => e
+      warn("ear0: setup did not start — #{e.class}: #{e.message}")
+    end
+
     def boot(root: Dir.pwd)
       return boot_fast(root:) if ENV["MASTER_FAST"] == "1"
 
       prepare_runtime!
       emit_device_status
+      set_up_device
       Ground::Pledge.stage1_boot!(root)
       service_ok = ensure_services!(root:)
       warn("master0: continuing in degraded presentation mode") unless service_ok
@@ -92,6 +101,7 @@ module Master
     def boot_fast(root: Dir.pwd)
       prepare_runtime!
       emit_device_status
+      set_up_device
       container = Builder.build_fast(root:)
       container[:device_perception] = Device::Perception.new(bus: container[:bus])
       container[:device_perception].start!
