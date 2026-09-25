@@ -1067,6 +1067,9 @@ en:
       street: Street
       blockbuster: Blockbuster
   marketplace:
+    navigation_label: Marketplace navigation
+    navigation_categories: Categories
+    payment_status: Payment status
     buy_now_vipps: Buy with Vipps
     buy_now_dintero: Buy with Dintero
     order_number: "Order #%{id}"

@@ -1073,6 +1073,9 @@ nb:
       street: Gate
       blockbuster: Storfilm
   marketplace:
+    navigation_label: Markedsplassnavigasjon
+    navigation_categories: Kategorier
+    payment_status: Betalingsstatus
     buy_now_vipps: Kjøp med Vipps
     buy_now_dintero: Kjøp med Dintero
     order_number: "Ordre #%{id}"

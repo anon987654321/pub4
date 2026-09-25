@@ -30,5 +30,4 @@ class Marketplace::WebhookDeliveryTest < ActiveSupport::TestCase
 
     assert_not delivery.active?
   end
-  end
 end
