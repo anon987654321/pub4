@@ -79,7 +79,7 @@ module Operator
           source = File.read(path)
           (source.scan(GLOB).flatten + source.scan(EXACT).flatten).uniq.each do |glob|
             # Globs are written relative to the tree the runner lives in.
-            found[runner] << (glob.start_with?("MASTER/", "RAILS/", "OPENBSD/", "MASTER/tools/MASTER/tools/") ? glob : "#{base}/#{glob}")
+            found[runner] << (glob.start_with?("MASTER/", "RAILS/", "OPENBSD/", "MASTER/tools/") ? glob : "#{base}/#{glob}")
           end
         end
 
