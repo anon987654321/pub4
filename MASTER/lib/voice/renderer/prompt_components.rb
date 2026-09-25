@@ -210,12 +210,14 @@ module Master
 
         def git_prompt_segments
           ahead, behind = git_ahead_behind
+          dirty = git_dirty?
           branch = git_branch || "detached"
-          parts = [git_dirty? ? "#{branch}*" : branch]
+          parts = [dirty ? "#{branch}*" : branch]
           parts << "+#{ahead}" if ahead.positive?
           parts << "-#{behind}" if behind.positive?
           label = parts.join(" ")
-          Aesthetic.wscons? ? d(label) : @p.red(label)
+          return d(label) if Aesthetic.wscons?
+          dirty ? @p.red(label) : @p.dim(label)
         end
 
         def phase_label(phase)
