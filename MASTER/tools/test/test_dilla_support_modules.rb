@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "studio_helper"
+require_relative "tool_test_helper"
 require_relative "../dilla/lib/sampling"
 
 # Arithmetic in the support modules that render nothing, so a suite without
