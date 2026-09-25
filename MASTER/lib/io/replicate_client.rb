@@ -160,6 +160,19 @@ module Master
 
         return JSON.parse(File.read(CONFIG_PATH))["api_token"].to_s.strip if File.exist?(CONFIG_PATH)
 
+        token_from_env_file
+      rescue StandardError
+        ""
+      end
+
+      def self.token_from_env_file
+        path = File.expand_path("~/.config/master/env")
+        return "" unless File.file?(path)
+
+        File.foreach(path) do |line|
+          key, value = line.strip.sub(/\Aexport\s+/, "").split("=", 2)
+          return value.to_s.delete(%("')) if %w[REPLICATE_API_TOKEN REPLICATE_API_KEY].include?(key) && !value.to_s.empty?
+        end
         ""
       rescue StandardError
         ""
