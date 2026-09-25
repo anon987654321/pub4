@@ -149,6 +149,23 @@ class IntegrityRunTest < Minitest::Test
     assert_equal ["soft: boom"], report[:warnings]
   end
 
+  # crawl_probe exits 3 when no app is listening. That is neither a pass nor a
+  # failure, so the chain lists it as skipped unless strict mode asks it to block.
+  def test_a_gate_that_measured_nothing_is_skipped_unless_strict
+    gates = [Gate.new(name: "crawl", path: "pass.rb")]
+    execute = ->(_cmd) { ["crawl: inconclusive (4 targets, 4 skipped)\n", :inconclusive] }
+
+    report = integrity_run(gates, root: @root, on_vps: false, execute:, io: StringIO.new)
+    assert_empty report[:failures]
+    assert_equal ["crawl: measured nothing — crawl: inconclusive (4 targets, 4 skipped)"], report[:skipped]
+
+    ENV["GATE_STRICT_INCONCLUSIVE"] = "1"
+    strict = integrity_run(gates, root: @root, on_vps: false, execute:, io: StringIO.new)
+    assert_equal ["crawl"], strict[:failures]
+  ensure
+    ENV.delete("GATE_STRICT_INCONCLUSIVE")
+  end
+
   def test_a_gate_whose_script_is_gone_is_a_warning_not_a_pass
     report = run_chain([Gate.new(name: "ghost", path: "nowhere.rb")], on_vps: true)
 

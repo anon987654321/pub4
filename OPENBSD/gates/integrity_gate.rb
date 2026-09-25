@@ -9,10 +9,15 @@ require_relative "../lib/gate_environment"
 
 INTEGRITY_ROOT = File.expand_path("../..", __dir__)
 
-# The gate's own command, run from the repo root. Returns [output, success].
+# Exit 3 is how a subprocess gate says it measured nothing: crawl_probe with no
+# app listening, as RAILS/gates/runner.rb's SUBPROCESS_INCONCLUSIVE reads it.
+INTEGRITY_INCONCLUSIVE = 3
+
+# The gate's own command, run from the repo root. Returns [output, verdict],
+# the verdict true, false or :inconclusive.
 RUN_GATE = lambda do |cmd|
   out, status = Open3.capture2e(*cmd, chdir: INTEGRITY_ROOT)
-  [out, status.success?]
+  [out, status.exitstatus == INTEGRITY_INCONCLUSIVE ? :inconclusive : status.success?]
 end
 
 # Every gate in order, sorted into failures, warnings and skips. skip_reason
@@ -35,7 +40,13 @@ def integrity_run(gates, root: INTEGRITY_ROOT, on_vps: Operator::Environment.on_
     end
 
     out, ok = execute.call([Operator::RubyRunner.gate_ruby, script, *Array(gate.args)])
-    if ok
+    # A gate that measured nothing is neither a pass nor a failure. It is listed
+    # as skipped with its own reason, and blocks only under
+    # GATE_STRICT_INCONCLUSIVE=1, the same policy the RAILS runner applies.
+    if ok == :inconclusive && !%w[1 true yes on].include?(ENV["GATE_STRICT_INCONCLUSIVE"].to_s.downcase)
+      report[:skipped] << "#{gate.name}: measured nothing — #{out.lines.first.to_s.strip}"
+      io.puts "#{label} inconclusive"
+    elsif ok == true
       io.puts "#{label} ok"
     elsif gate.optional
       report[:warnings] << "#{gate.name}: #{out.lines.last(3).join.strip}"
