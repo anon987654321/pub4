@@ -14,7 +14,7 @@ INVENTORY_ROOT = File.expand_path("../..", __dir__)
 # Both lists had gone stale in both directions at once, which is the worst state
 # an allowlist can be in: five of seven files and four of six directories named
 # subjects that no longer exist, while the four canonical trees, TODO.md and
-# TREE.md were absent — so this tool reported MASTER, RAILS, OPENBSD and STUDIO
+# TREE.md were absent — so this tool reported MASTER, RAILS and OPENBSD
 # as non-canonical top-level directories. A report that names the repo's own
 # trees as sprawl is one nobody acts on, and that is how it stayed wrong.
 #
@@ -39,7 +39,6 @@ ALLOWED_ROOT_DIRS = %w[
   MASTER
   OPENBSD
   RAILS
-  STUDIO
 ].freeze
 SKIP_DIRS = %w[
   .git
