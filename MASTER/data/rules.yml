@@ -2177,7 +2177,7 @@ rules:
     # Audio, which is where this rule comes from. For imagery it prescribed lens
     # softness, and softness is the one artefact nothing downstream can undo:
     # simulated defocus on a frame already taken through a lens is invention, not
-    # emulation. STUDIO/postpro carries a measured account of what film did to
+    # emulation. MASTER/tools/postpro carries a measured account of what film did to
     # light and answers to that instead.
   - id: DOMAIN_LANGUAGE
     source: Domain-Driven Design — Ubiquitous Language (Eric Evans, 2003)
@@ -4189,7 +4189,7 @@ prose:
       # sense, and an auxiliary in front of `just` is what marks it.
       - '(?:had|has|have|was|were)\s+just\s+(?:been\s+)?\w+'
       - '(?:the|this|that|its) very'               # a determiner picking a thing out
-      # Measured against STUDIO's 138. `just` before a position or a quantity
+      # Measured against Dilla's 138-file historical corpus. `just` before a position or a quantity
       # measures rather than minimises — "pads land just under the kit", "just
       # enough to stop the DC step popping", "harmonics from the content just
       # below the cliff".
@@ -4866,7 +4866,7 @@ rule_ratchets:
     # broken detector reads identically from here: it still fires on `class Manager`
     # and `module Utils`, and stays correctly quiet on `class PaymentHelper` and
     # `class SubscriptionBilling`, which is the domain-qualifier exemption the law
-    # documents. A grep for its pattern over MASTER, RAILS, OPENBSD and STUDIO finds
+    # documents. A grep for its pattern over MASTER, RAILS and OPENBSD finds
     # no match in ordinary source at this commit or at b81baea1c.
     #
     # What is NOT established: which file it last fired on. The corpus moved 696 ->
