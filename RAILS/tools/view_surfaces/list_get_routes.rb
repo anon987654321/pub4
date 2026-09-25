@@ -5,7 +5,10 @@
 # bin/rails runner from the app directory.
 require "json"
 
-SKIP = %r{\A/(rails|assets|cable|up|health|service-worker|manifest|recede|resume|refresh|active_storage|api|admin/jobs|letter_opener|jobs)\b}
+# Turbo's native-navigation routes are named in full: they render a bare
+# "Going back…" for Hotwire Native, not a page, and a bare `recede\b` never
+# matched them because the underscore that follows is a word character.
+SKIP = %r{\A/(rails|assets|cable|up|health|service-worker|manifest|(?:recede|resume|refresh)_historical_location|active_storage|api|admin/jobs|letter_opener|jobs)\b}
 
 def walk(routes, prefix = "", constraint = nil, &blk)
   routes.each do |route|

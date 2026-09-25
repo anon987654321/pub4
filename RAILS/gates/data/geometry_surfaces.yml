@@ -103,9 +103,6 @@ surfaces:
   - { app: amber, label: passwords_new, path: "/passwords/new", viewports: [mobile, desktop] }
   - { app: amber, label: messages_index, path: "/messages", viewports: [mobile, desktop] }
   - { app: amber, label: posts_index, path: "/posts", viewports: [mobile, desktop] }
-  - { app: amber, label: turbo_native_navigation_recede, path: "/recede_historical_location", viewports: [mobile, desktop] }
-  - { app: amber, label: turbo_native_navigation_resume, path: "/resume_historical_location", viewports: [mobile, desktop] }
-  - { app: amber, label: turbo_native_navigation_refresh, path: "/refresh_historical_location", viewports: [mobile, desktop] }
   - { app: bsdports, label: rails_pwa_offline, path: "/offline", viewports: [mobile, desktop] }
   - { app: bsdports, label: sessions_new, path: "/session/new", viewports: [mobile, desktop] }
   - { app: bsdports, label: pages_show, path: "/terms", viewports: [mobile, desktop] }
@@ -113,9 +110,6 @@ surfaces:
   - { app: bsdports, label: passwords_new, path: "/passwords/new", viewports: [mobile, desktop] }
   - { app: bsdports, label: categories_index, path: "/categories", viewports: [mobile, desktop] }
   - { app: bsdports, label: maintainers_index, path: "/maintainers", viewports: [mobile, desktop] }
-  - { app: bsdports, label: turbo_native_navigation_recede, path: "/recede_historical_location", viewports: [mobile, desktop] }
-  - { app: bsdports, label: turbo_native_navigation_resume, path: "/resume_historical_location", viewports: [mobile, desktop] }
-  - { app: bsdports, label: turbo_native_navigation_refresh, path: "/refresh_historical_location", viewports: [mobile, desktop] }
   - { app: brgen, label: rails_pwa_offline, host: brgen.no, path: "/offline", viewports: [mobile, desktop] }
   - { app: brgen, label: bookmarks_index, host: brgen.no, path: "/saved", viewports: [mobile, desktop] }
   - { app: brgen, label: pages_show, host: brgen.no, path: "/privacy", viewports: [mobile, desktop] }
@@ -165,9 +159,6 @@ surfaces:
   - { app: brgen, label: maps_maps_places_show, host: maps.brgen.no, path: "/places/1", viewports: [mobile, desktop] }
   - { app: brgen, label: partner_programs_index, host: brgen.no, path: "/partner/programs", viewports: [mobile, desktop] }
   - { app: brgen, label: nearby_widget, host: brgen.no, path: "/nearby/widget", viewports: [mobile, desktop] }
-  - { app: brgen, label: turbo_native_navigation_recede, host: brgen.no, path: "/recede_historical_location", viewports: [mobile, desktop] }
-  - { app: brgen, label: turbo_native_navigation_resume, host: brgen.no, path: "/resume_historical_location", viewports: [mobile, desktop] }
-  - { app: brgen, label: turbo_native_navigation_refresh, host: brgen.no, path: "/refresh_historical_location", viewports: [mobile, desktop] }
   # END generated view surfaces
 
 # Content that changes between two captures of an unchanged page: a clock, a
