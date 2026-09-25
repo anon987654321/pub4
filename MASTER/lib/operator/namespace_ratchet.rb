@@ -2,7 +2,7 @@
 
 # Files that declare no module or class, counted, and allowed only to fall.
 #
-# STUDIO/dilla/lib/engine is 76 of 79 files with no namespace — 863 methods on
+# MASTER/tools/dilla/lib/engine is 76 of 79 files with no namespace — 863 methods on
 # Object. In a flat namespace a call and its definition need not share a file,
 # or live in any committed file, and nothing fails at load, because there is no
 # import to fail. A module boundary answers for free the question that tree
