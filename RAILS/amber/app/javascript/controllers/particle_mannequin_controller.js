@@ -27,7 +27,7 @@ export default class extends Controller {
       this.canvas.height = Math.max(1, Math.round(this.height * d))
       this.ctx.setTransform(d, 0, 0, d, 0, 0)
       this.points = this.seed()
-      this.draw(performance.now())
+      if (this.reducedMotion) this.draw(performance.now())
     }
 
     this.pointerMove = (event) => {
@@ -45,6 +45,7 @@ export default class extends Controller {
     this.element.addEventListener("amber:wardrobe-change", this.wardrobeChange)
     window.addEventListener("resize", this.resize, { passive: true })
     this.resize()
+    this.draw(performance.now())
   }
 
   disconnect() {
