@@ -27,16 +27,19 @@ class Marketplace::WebhooksController < ActionController::Base
       request: request
     )
 
-    transaction_id = params[:transaction_id].presence
-    session_id = params[:session_id].presence
-    transaction = if transaction_id
-      Marketplace::Payments::DinteroCheckout.transaction(transaction_id)
-    elsif session_id
-      Marketplace::Payments::DinteroCheckout.session_transaction(session_id)
-    end
-    return head(:bad_request) unless transaction.is_a?(Hash)
+    reference = params[:merchant_reference].presence ||
+      params.dig(:authorization, :merchant_reference).presence
+    transaction_id = params[:transaction_id].presence ||
+      params.dig(:authorization, :transaction_id).presence
+    status = params[:status].presence || params[:state].presence
 
-    process_transaction(transaction)
+    return head(:bad_request) if reference.blank? || transaction_id.blank?
+
+    process_transaction(
+      "merchant_reference" => reference,
+      "id" => transaction_id,
+      "status" => status
+    )
     head :ok
   rescue Marketplace::Payments::ProviderError
     head :bad_gateway
