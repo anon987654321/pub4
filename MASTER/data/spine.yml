@@ -295,7 +295,7 @@ spine:
   core_files: 7
   core_recursive_files: 7
 
-# The coarse sprawl net over all four trees: one source-file ceiling each, so a
+# The coarse sprawl net over the three top-level trees: one source-file ceiling each, so a
 # new file anywhere fails `bin/operator measure` until it folds into an existing one
 # or the ceiling is raised here with the reason in the commit. dilla's engine has
 # a finer per-part guard in MASTER/tools/gate.rb. On-disk source files (code, style,
@@ -1010,7 +1010,9 @@ pub4_source_ceilings:
   # wrapper round a command dilla.rb already had, is gone.
   # 70 -> 69: dilla_live.rb is `ruby dilla.rb live`, and the old live command,
   # which looped a cached render, gave its name to it.
-  STUDIO: 69
+  # 2026-09-25: STUDIO was consolidated into MASTER/tools. Its historical 69-file
+  # baseline is retired rather than transferred; MASTER keeps its existing ceiling
+  # until a clean run measures the merged tree and a deliberate ratchet records why.
 
 # Executable files directly under each tree's own bin/ — the number CLAUDE.md's
 # "two surfaces, no third" makes a claim about while nothing counted it. MASTER
@@ -1020,9 +1022,9 @@ pub4_source_ceilings:
 # until it folded into `bin/check --profile=ci`'s superset.
 #
 # Directly under bin/, so an app's generated bin/rails and a tool's own bin/
-# scripts are not counted as surfaces of the tree. STUDIO has no bin/ of its own
-# and records 0, which is the true number rather than a blind one — every STUDIO
-# tool is invoked as `ruby MASTER/tools/<tool>/<tool>.rb`.
+# scripts are not counted as surfaces of the tree. The canonical tools now live
+# under MASTER/tools and are exercised through MASTER's tool suite rather than
+# counted as top-level entrypoint surfaces.
 #
 # A ceiling at the honest count rather than at the two the prose asks for: a
 # target nobody can reach is a ratchet everyone learns to override. It falls as
