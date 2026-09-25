@@ -13,6 +13,11 @@ en:
     inspire_heading: "New in %{city}"
     browse_categories: "Browse categories"
     seller_badge: "Seller: %{name}"
+    utility:
+      label: "Shopper service information"
+      delivery: "Free delivery from 20"
+      fast_delivery: "Fast delivery, including evenings"
+      returns: "Free returns"
     precise_coordinates: "Precise coordinates (optional)"
     top: "Top"
     verified: "Verified"
