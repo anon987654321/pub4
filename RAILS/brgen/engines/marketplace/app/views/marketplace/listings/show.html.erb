@@ -9,9 +9,10 @@
     ])) %>
 
 <%= render "marketplace/nav_bar",
-      cart_count: (Current.user.present? ? Current.user.marketplace_orders.where(status: "pending").count : 0) %>
+      cart_count: (Current.user.present? ? Current.user.marketplace_orders.where(status: "pending").count : 0),
+      categories: @categories %>
 
-<%# Kaufland.de's product page, measured at 1440 and 400: a 13px breadcrumb, then
+<%# Bol-style product page, measured at 1440 and 400: a 13px breadcrumb, then
     the picture on the left seven twelfths and, on the right, the title, the
     stars and a white buy box holding price, facts and the actions. On a phone
     the two columns stack, picture first. %>
