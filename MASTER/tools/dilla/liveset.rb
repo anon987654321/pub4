@@ -9,7 +9,8 @@
 # always changing; air on top from an exciter. Now and then a hand on the
 # record: a tape stop, a spinback, a dub throw. Kicks sit off (KICKS_ON),
 # and the turntablist's crossfader waits behind CUTS_ON.
-$LOAD_PATH.unshift File.expand_path("~/Documents/GitHub/pub4/MASTER/tools/dilla/lib")
+$LOAD_PATH.unshift File.expand_path("lib", __dir__)
+require "shellwords"
 require "sound"
 
 RATE = 32_000
@@ -160,6 +161,26 @@ next_modulation = 8
 key = rng.rand(12)
 next_chord = 0.0
 LOG = File.open(File.join(__dir__, "moog_improv.log"), "a").tap { |f| f.sync = true }
+
+def local_audio_tool(name)
+  candidates = [
+    "/opt/homebrew/bin/#{name}",
+    "/usr/local/bin/#{name}",
+  ]
+  candidates.each { |path| return path if File.executable?(path) }
+  ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).each do |dir|
+    path = File.join(dir, name)
+    return path if File.executable?(path) && !File.directory?(path)
+  end
+  nil
+end
+
+FFMPEG = local_audio_tool("ffmpeg")
+SOX = local_audio_tool("sox")
+FFPLAY = local_audio_tool("ffplay")
+abort "liveset: ffmpeg is required" unless FFMPEG
+abort "liveset: no local soundcard player — install sox or ffplay" unless SOX || FFPLAY
+
 total = Float::INFINITY
 
 # The knobs: cutoff breathes over 23 s, resonance over 31 s, out of phase.
@@ -410,7 +431,15 @@ ARPS_ON_ARPS = "asplit=3[ad][ax][ay];[ax]#{pitched(1.5, EIGHTH, EIGHTH * 2, 0.45
 # The leads sit lower in the sum, at the operator's word: 0.9 against the
 # main's 1 where they were 1.5.
 GRAPH = "[0:a]pan=stereo|c0=c0|c1=c1,#{MASTER}[m];[0:a]pan=stereo|c0=c2|c1=c3,#{ARPS_ON_ARPS}[a];[m][a]amix=inputs=2:weights=1 0.9:normalize=0,#{TAPE},alimiter=limit=0.96"
-sox = IO.popen(["sh", "-c", "ffmpeg -loglevel error -f s16le -ar #{RATE} -ac 4 -i - -filter_complex '#{GRAPH}' -f s16le -ar #{RATE} -ac 2 - | sox -q -t raw -r #{RATE} -e signed -b 16 -c 2 - -d"], "wb")
+ffmpeg_command = [FFMPEG, "-loglevel", "error", "-f", "s16le", "-ar", RATE.to_s, "-ac", "4", "-i", "-", "-filter_complex", GRAPH,
+                   "-f", "s16le", "-ar", RATE.to_s, "-ac", "2", "-"]
+player_command = if SOX
+                   [SOX, "-q", "-t", "raw", "-r", RATE.to_s, "-e", "signed", "-b", "16", "-c", "2", "-", "-d"]
+                 else
+                   [FFPLAY, "-f", "s16le", "-ar", RATE.to_s, "-ac", "2", "-nodisp", "-autoexit", "-loglevel", "quiet", "-i", "-"]
+                 end
+pipeline = "#{Shellwords.join(ffmpeg_command)} | #{Shellwords.join(player_command)}"
+sox = IO.popen(["/bin/sh", "-c", pipeline], "wb")
 frame = 0
 frames = Float::INFINITY
 two_pi = 2 * Math::PI
