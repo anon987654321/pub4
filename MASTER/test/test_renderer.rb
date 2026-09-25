@@ -41,12 +41,24 @@ class TestRenderer < Minitest::Test
   def test_prompt_line_state_shows_context_usage
     state, prompt = FakeRenderer.new(config: {}).prompt_line("model", "idle", tokens: 45_000)
 
-    assert_includes strip_ansi(state), "ctx 45.0k/128.0k"
+    assert_includes strip_ansi(state), "ctx0: 45.0k/128.0k"
     assert_match(/[%$] \z/, strip_ansi(prompt))
   end
 
   # A dmesg is legible on a serial console: no box drawing, no arrows, no
   # check marks, nothing that a pipe or a 7-bit terminal turns into gibberish.
+  def test_shell_prompt_has_quiet_typographic_hierarchy
+    renderer = FakeRenderer.new(config: {})
+    state, prompt = renderer.prompt_line("model", "discover", tokens: 45_000)
+
+    clean = strip_ansi(prompt)
+    assert_match(%r{\A(?:~|…|/|[A-Za-z0-9_])}, clean)
+    refute_includes clean, "(discover)"
+    refute_includes clean, "  "
+    assert_match(/(?:discover )?[%$] \z/, clean)
+    assert_operator clean.length, :<=, 67
+  end
+
   def test_splash_is_plain_ascii_in_dmesg_shape
     lines = FakeRenderer.new(config: {}).splash("model").lines.map { |l| strip_ansi(l).chomp }
     filled = lines.reject(&:empty?)
