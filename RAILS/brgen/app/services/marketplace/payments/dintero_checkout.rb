@@ -66,6 +66,7 @@ module Marketplace
           raise ArgumentError, "order has no Dintero order id" if dintero_order_id.empty?
 
           contract = stored_split_contract!(order)
+          ensure_capture_destination!(order, contract)
           DinteroClient.post(
             "/v1/accounts/#{DinteroClient.account_id}/shopping/orders/#{ERB::Util.url_encode(dintero_order_id)}/captures",
             {
@@ -324,6 +325,18 @@ module Marketplace
           orders.each do |order|
             contract = { splits: split_for(order), fee_split: fee_split }.compact
             order.update_columns(dintero_split_json: JSON.generate(contract))
+          end
+        end
+
+        def ensure_capture_destination!(order, contract)
+          store = store_for_listing(order.listing)
+          seller_destination = contract[:splits].filter_map do |split|
+            split[:payout_destination_id]
+          end.first
+          unless store&.dintero_ready? &&
+                 store.dintero_payout_destination_id.to_s == seller_destination.to_s
+            raise SellerNotReady,
+                  "Dintero seller payout destination changed or is no longer ACTIVE"
           end
         end
 
