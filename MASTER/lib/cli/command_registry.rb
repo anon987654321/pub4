@@ -10,7 +10,6 @@ require_relative "model_benchmark"
 require_relative "command_registry/rules"
 require_relative "command_registry/host"
 require_relative "command_registry/workspace"
-require_relative "../review/review_crew"
 require_relative "../plugin"
 
 module Master
@@ -92,7 +91,7 @@ module Master
       # dependencies as /review because it is the same pipeline with the
       # repair turned on -- the one verb that writes.
       def review_verbs(d)
-        deps = [d[:scanner], d[:fix_loop], d[:deliberation], d[:root], d[:bus], d[:review_crew], d[:swarm]]
+        deps = [d[:scanner], d[:fix_loop], d[:deliberation], d[:root], d[:bus], d[:swarm]]
         {
           "review" => command(:dispatch_review, *deps),
           "critique" => command(:dispatch_critique, *deps),
@@ -107,8 +106,6 @@ module Master
           fix_loop: ai[:fix_loop],
           deliberation: ai[:deliberation],
           agent: ai[:agent],
-          review_crew: Review::ReviewCrew.new(agent: ai[:agent], event_bus: infra[:bus], root:,
-                                             code_index: ai[:code_index], reference_graph: ai[:reference_graph]),
           git: ai.fetch(:git) { Io::GitOperations.new(File.expand_path("..", root)) },
           swarm: ai[:swarm],
           bus: infra[:bus],
