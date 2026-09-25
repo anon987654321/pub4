@@ -40,7 +40,7 @@ module Operator
       # lies only mid-merge is worse than one that always does: the run right
       # after a merge is when somebody reads it.
       files = check_corpus!(`git -C #{ROOT} ls-files -z`.split("\0").uniq)
-              .reject { |f| f.start_with?("STUDIO/") }
+              .reject { |f| f.start_with?("MASTER/tools/") }
       by = Hash.new { |h, k| h[k] = [] }
       files.each do |f|
         path = File.join(ROOT, f)
