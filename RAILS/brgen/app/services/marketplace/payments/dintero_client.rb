@@ -8,9 +8,7 @@ module Marketplace
   module Payments
     class DinteroClient
       LIVE_API_HOST = "https://api.dintero.com"
-      LIVE_CHECKOUT_HOST = "https://checkout.dintero.com"
       TEST_API_HOST = "https://test.dintero.com"
-      TEST_CHECKOUT_HOST = "https://test.dintero.com"
       TOKEN_TTL_SKEW = 60
 
       class Error < StandardError
@@ -24,21 +22,21 @@ module Marketplace
       end
 
       class << self
-        def get(path, checkout: false, idempotency_key: nil)
-          req = Net::HTTP::Get.new(uri(path, checkout: checkout))
+        def get(path, idempotency_key: nil)
+          req = Net::HTTP::Get.new(uri(path))
           req["Idempotency-Key"] = idempotency_key if idempotency_key.present?
           request(req)
         end
 
-        def post(path, payload = nil, checkout: false, idempotency_key: nil)
-          req = Net::HTTP::Post.new(uri(path, checkout: checkout))
+        def post(path, payload = nil, idempotency_key: nil)
+          req = Net::HTTP::Post.new(uri(path))
           req["Idempotency-Key"] = idempotency_key if idempotency_key.present?
           req.body = JSON.generate(payload) if payload
           request(req)
         end
 
-        def put(path, payload = nil, checkout: false, idempotency_key: nil)
-          req = Net::HTTP::Put.new(uri(path, checkout: checkout))
+        def put(path, payload = nil, idempotency_key: nil)
+          req = Net::HTTP::Put.new(uri(path))
           req["Idempotency-Key"] = idempotency_key if idempotency_key.present?
           req.body = JSON.generate(payload) if payload
           request(req)
@@ -95,14 +93,6 @@ module Marketplace
             ENV["DINTERO_API_BASE"],
             live: LIVE_API_HOST,
             test: TEST_API_HOST
-          )
-        end
-
-        def checkout_host
-          configured_host(
-            ENV["DINTERO_CHECKOUT_BASE"],
-            live: LIVE_CHECKOUT_HOST,
-            test: TEST_CHECKOUT_HOST
           )
         end
 
@@ -205,9 +195,8 @@ module Marketplace
           )
         end
 
-        def uri(path, checkout:)
-          base = checkout ? checkout_host : api_host
-          URI("#{base}#{path}")
+        def uri(path)
+          URI("#{api_host}#{path}")
         end
       end
     end
