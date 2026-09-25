@@ -27,6 +27,6 @@ family_members:
 - RAILS/shared/app/models/shared#affiliate
 - RAILS/shared/lib/operator#lint
 - RAILS/shared/lib/shared#examples
-- STUDIO/dilla/lib#engine
-- STUDIO/dilla/lib#harmony
-- STUDIO/dilla/lib#score
+- MASTER/tools/dilla/lib#engine
+- MASTER/tools/dilla/lib#harmony
+- MASTER/tools/dilla/lib#score
