@@ -15,7 +15,9 @@ class Marketplace::WebhookDelivery < ApplicationRecord
   def succeeded? = status == "succeeded"
 
   def active?
-    status == "processing" && received_at > 120.seconds.ago
+    status == "processing" &&
+      attempts.to_i.zero? &&
+      received_at > 120.seconds.ago
   end
 
   def provider_attempts_exhausted?
