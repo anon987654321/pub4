@@ -39,8 +39,8 @@ end
 
 desc "Run the canonical MASTER/tools gate and suite"
 task :tools do
-  tools_rakefile = File.expand_path("tools/Rakefile", __dir__)
-  unbundled { sh RbConfig.ruby, "-S", "rake", "-f", tools_rakefile }
+  tools_root = File.expand_path("tools", __dir__)
+  unbundled { Dir.chdir(tools_root) { sh RbConfig.ruby, "-S", "rake" } }
 end
 
 desc "Deep scan lib/ — triage scanner self-findings separately from actionable violations"
