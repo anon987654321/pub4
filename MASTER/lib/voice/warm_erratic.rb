@@ -22,19 +22,19 @@ module Master
       LONG_WORD_COUNT = 40
 
       STYLES = {
-        calm: { rate: "-3%", pitch: "-10Hz" },
-        intimate: { rate: "+2%", pitch: "-6Hz" },
-        storyteller: { rate: "+4%", pitch: "+2Hz" },
-        brief: { rate: "+14%", pitch: "+10Hz" },
-        energetic: { rate: "+18%", pitch: "+24Hz" },
-        question: { rate: "+10%", pitch: "+18Hz" },
-        clear: { rate: "+12%", pitch: "+8Hz" },
-        amused: { rate: "+15%", pitch: "+16Hz" },
-        deadpan: { rate: "+6%", pitch: "+4Hz" },
-        chipper: { rate: "+20%", pitch: "+28Hz" },
+        calm: { rate: "-6%", pitch: "-4Hz" },
+        intimate: { rate: "-4%", pitch: "-2Hz" },
+        storyteller: { rate: "-5%", pitch: "+1Hz" },
+        brief: { rate: "+1%", pitch: "+2Hz" },
+        energetic: { rate: "+5%", pitch: "+6Hz" },
+        question: { rate: "+1%", pitch: "+6Hz" },
+        clear: { rate: "-2%", pitch: "+2Hz" },
+        amused: { rate: "+2%", pitch: "+4Hz" },
+        deadpan: { rate: "-1%", pitch: "+1Hz" },
+        chipper: { rate: "+6%", pitch: "+7Hz" },
       }.freeze
 
-      FAST_STYLES = %i[chipper energetic brief amused clear question].freeze
+      FAST_STYLES = %i[brief clear question amused energetic].freeze
 
       HUMOR_RE = /\b(lol|haha|heh|anyway|plot twist|whoops|oops|wild|chaos|honestly|fair enough|not gonna lie|for what it'?s worth)\b/i
       GOOD_NEWS_RE = /\b(done|complete|success|great|perfect|nice|queued|ready|finished|works|fixed|all set|sorted|boom)\b/i
@@ -109,19 +109,15 @@ module Master
       end
 
       def jitter_rate(rate)
-        sign = rate.start_with?("+") ? 1 : -1
-        val = rate.delete("%+").to_i
-        val = [0, val.abs + rand(0..4)].max
-        boosted = sign * val
-        boosted = [boosted, 6].max unless sign.negative?
-        format("%+d%%", boosted)
+        base = rate.to_s.delete("%").to_i
+        value = (base + rand(-2..2)).clamp(-10, 8)
+        format("%+d%%", value)
       end
 
       def jitter_pitch(pitch)
-        sign = pitch.start_with?("+") ? 1 : -1
-        val = pitch.delete("Hz+").to_i
-        val = [0, val.abs + rand(-2..8)].max
-        format("%+dHz", sign * val)
+        base = pitch.to_s.delete("Hz").to_i
+        value = (base + rand(-3..3)).clamp(-14, 14)
+        format("%+dHz", value)
       end
 
       def prosody_for(voice, style)
