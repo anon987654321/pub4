@@ -13,7 +13,7 @@ module Marketplace
       def valid_callback?(header:, request:, now: Time.current)
         timestamp, signature = parse(header)
         return false if timestamp.nil? || signature.blank?
-        return false if now.to_i - timestamp > MAX_AGE.to_i
+        return false if timestamp > now.to_i || now.to_i - timestamp > MAX_AGE.to_i
 
         expected = callback_header(
           timestamp: timestamp,
