@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "studio_helper"
+require_relative "tools_helper"
 require "open3"
 require "rbconfig"
 require "digest"
@@ -8,13 +8,13 @@ require "tmpdir"
 require_relative "../gate.rb"
 
 # The gate is the only thing standing between MASTER's fix loop and a broken
-# STUDIO, and it has one property nothing else in this repo has: it checks
+# tools, and it has one property nothing else in this repo has: it checks
 # itself, by running a second instance over a tree broken on purpose. What it
 # does not check is its own configuration -- TREES, VENDORED and the entry list
 # are data, and a glob that matches nothing passes every check in the file
 # while covering nothing.
-class TestStudioGate < Minitest::Test
-  GATE = Deploy::StudioGate
+class TestToolsGate < Minitest::Test
+  GATE = Deploy::ToolsGate
 
   def gate = @gate ||= GATE.new
 
@@ -106,7 +106,7 @@ class TestStudioGate < Minitest::Test
   # --- the self-check -----------------------------------------------------
 
   def test_the_self_check_predicts_each_class_of_finding
-    assert_equal %w[studio\ growth: studio\ inventory: studio\ load: studio\ parse:].sort,
+    assert_equal %w[tools\ growth: tools\ inventory: tools\ load: tools\ parse:].sort,
                  GATE::PREDICTED_FINDINGS.keys.sort,
                  "a prediction was added or dropped without the fixture that produces it"
     GATE::PREDICTED_FINDINGS.each_value { |why| refute_empty why.to_s.strip }
@@ -132,7 +132,7 @@ class TestStudioGate < Minitest::Test
         File.write(File.join(dir, "dilla", name), "")
       end
       result = GATE.new(root: dir, trees: [], dilla: nil).send(:run_without_self_check)
-      reported = result.soft_failures.grep(/studio layout: .* is audio in the dilla root/)
+      reported = result.soft_failures.grep(/tools layout: .* is audio in the dilla root/)
 
       assert_equal ["dilla/Loop.WAV", "dilla/beat.mp3"], reported.map { |finding| finding[%r{dilla/\S+}] }
     end
@@ -161,7 +161,7 @@ class TestStudioGate < Minitest::Test
   def test_the_real_tree_passes_its_own_gate
     result = GATE.new.run
 
-    assert_empty result.failures, "STUDIO is broken:\n  #{result.failures.join("\n  ")}"
+    assert_empty result.failures, "tools is broken:\n  #{result.failures.join("\n  ")}"
     # A gate that measured nothing and a gate that passed print the same line
     # unless the count is asserted; GateResult carries it for exactly this.
     assert_operator result.checks_ran, :>, 0, "a gate that checked nothing cannot have passed"
@@ -174,7 +174,7 @@ class TestStudioGate < Minitest::Test
 # it broke was invisible to every other kind of check. The restoration existed,
 # was correct, was called, and ran at the wrong moment:
 #
-#   test/studio_helper.rb requires minitest/autorun, which registers an at_exit that
+#   test/tools_helper.rb requires minitest/autorun, which registers an at_exit that
 #   RUNS THE SUITE. `at_exit` handlers run LIFO, so an at_exit registered after
 #   that one fires FIRST -- before any test has run. The restore was therefore
 #   putting back files nothing had touched yet, every run, for its whole life,
@@ -199,12 +199,12 @@ class TestStudioGate < Minitest::Test
 
     original = File.binread(TARGET)
     Dir.mktmpdir do |dir|
-      # A minimal suite that loads STUDIO's helper -- which is what installs the
+      # A minimal suite that loads tools's helper -- which is what installs the
       # restoration -- and then writes rubbish into a tracked state file from
       # inside a test, which is exactly what loading the engine does.
       probe = File.join(dir, "test_dirty.rb")
       File.write(probe, <<~RUBY)
-        require #{File.expand_path("studio_helper.rb", __dir__).inspect}
+        require #{File.expand_path("tools_helper.rb", __dir__).inspect}
         class TestDirty < Minitest::Test
           def test_writes_engine_state
             File.binwrite(#{TARGET.inspect}, "{\\"dirtied_by\\": \\"the restoration guard\\"}")
@@ -217,7 +217,7 @@ class TestStudioGate < Minitest::Test
       assert status.success?, "the probe suite failed: #{err}#{out}"
       assert_equal original, File.binread(TARGET),
                    "a test run dirtied #{File.basename(TARGET)} and the suite did not put it back — " \
-                   "check that test/studio_helper.rb registers restore_engine_state! with Minitest.after_run " \
+                   "check that test/tools_helper.rb registers restore_engine_state! with Minitest.after_run " \
                    "and not with a bare at_exit, which runs BEFORE the tests"
     end
   ensure
@@ -229,7 +229,7 @@ class TestStudioGate < Minitest::Test
   # real guard; this one names the cause, so a failure says what to fix rather
   # than only that something is wrong.
   def test_the_restore_is_registered_where_it_runs_after_the_suite
-    source = File.read(File.expand_path("studio_helper.rb", __dir__))
+    source = File.read(File.expand_path("tools_helper.rb", __dir__))
 
     assert_match(/Minitest\.after_run\s*\{\s*Studio\.restore_engine_state!/, source,
                  "restore_engine_state! must be registered with Minitest.after_run — a bare at_exit " \
@@ -250,7 +250,7 @@ class TestStudioGate < Minitest::Test
     end
 
     assert_empty duplicates.map { |p| File.basename(p) },
-                 "a second state-restoration hook has come back; test/studio_helper.rb owns this"
+                 "a second state-restoration hook has come back; test/tools_helper.rb owns this"
   end
 
 end
