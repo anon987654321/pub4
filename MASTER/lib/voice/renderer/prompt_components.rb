@@ -11,11 +11,11 @@ module Master
       # The splash is a dmesg: a version line, the builder line, memory, then
       # one attach line per device, and "root on" last. The prompt is a zsh
       # prompt: where you are, what branch, and the percent sign. Both are plain
-      # ASCII, so a serial console and a pipe read the same as a terminal.
+      # Splash text is plain ASCII; the interactive prompt may use one Unicode
+      # ellipsis where a long path needs it, while the wscons path stays ASCII.
       module PromptComponents
         TOKEN_KILO_THRESHOLD = 1000
         PROMPT_PATH_MAX = 44
-        PROMPT_PATH_MIN = 10
         def splash(model)
           context = splash_context(model)
           lines = [*identity_lines(context), *splash_dmesg_lines, *device_lines_for(context),
