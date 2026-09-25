@@ -31,7 +31,162 @@ Forward work is the last section of this file.
 
 ---
 
+## The plan — ordered 2026-09-25
+
+What to do next, and in what order. Each line names the entry that carries the
+detail, what done looks like, what it waits on ("after"), and where the
+operator is needed ("Operator:"). Order is value against effort within each
+group, and the first group comes first because every later check reads through
+it. A line leaves when its entry closes; re-order rather than append.
+
+### First: the instruments
+
+1. **Pin the Ruby every runner uses.** Entry: "`bin/operator` broke on a
+   one-line lookup" (MASTER). Done when `test_bin_ruby.rb` is green on this
+   Mac and `bin/operator test` refuses to run under a Ruby that is not 3.4.9.
+2. **Turn the RAILS contract suite green, 30 files.** Entry: "The RAILS
+   contract suite is red" (RAILS). After 1. Done when `ruby
+   RAILS/test/run_all.rb` exits 0 under the pinned Ruby.
+3. **Give every ratchet row an owner and a decision.** Entry: "21 ratchet rows
+   are off" (MASTER). After 2, since three rows are RAILS contract tests. Done
+   when `bin/operator measure` prints no OVER and no SLACK row without a named
+   raise or a locked fall. Operator: `spine.lib_body_ceiling`, and every row
+   whose ceiling sits in `data/rules.yml`.
+4. **Make rendered gates measure on a fresh checkout.** Entry: "Rendered gates
+   measure nothing on a fresh checkout" (RAILS). Done when `RAILS/bin/triangle
+   up` in a new worktree boots all four surfaces within a few minutes and one
+   rendered gate reports a count rather than inconclusive.
+5. **Stop /fix crying wolf and stop it stalling.** Entry: "/fix's own
+   weaknesses" (MASTER). After 2. Done when `CQS` spares memoisation and a pass
+   delivers on a suite that was red before it and is no redder after.
+
+### MASTER
+
+1. **The ruby_llm 2.0 upgrade, staged.** Entry: RAILS "Audit findings". Done
+   when the CVE ignore is gone from `bundler-audit.yml`. After the brgen and
+   amber suites are green.
+2. **The event-bus census.** Entry: "Every tree has one fail-open seam". Done
+   when it names the three known orphan topics unprompted; then the face regex
+   renames (Wiring 2) and the mood producer become one decision for the
+   operator.
+3. **The /face ear on a real phone.** Entry: "The /face ear is unproven on a
+   phone". Done when a Termux session transcribes one Norwegian and one
+   English phrase through pulseaudio and a source-built whisper.cpp.
+   Operator: the phone.
+4. **The two faces at parity, behaviour first.** Entry: "The web and terminal
+   faces differ". The terminal's missing echo guard comes first, because a
+   face that hears itself answers itself. Done when each gap is closed or
+   argued beside the code. Operator: anything that changes how either face
+   looks.
+5. **The Gemfile lock for both hosts.** Entry: "One `MASTER/Gemfile.lock`".
+   After the next watched deploy. Operator: a console on vm23.
+
+### RAILS
+
+1. **Green contract suite** (instruments, 2), then **the CSS budget review**.
+   Entry: "CSS budgets raised on 2026-09-25". Operator: whether 215/110/66 KB
+   stand.
+2. **The content column across the verticals.** Entry: "One chrome". Done when
+   `vertical_consistency_test.rb` passes and a 1440px screenshot of tv shows one
+   left edge. Operator: the screenshots before merge.
+3. **Seed data for the 17 unprobed guest pages.** Entry: "17 of the 42
+   `needs_id` guest pages". Done when `Deploy::LiveRecordIds` resolves each or
+   names why it cannot.
+4. **Marketplace money.** Entry: "Seller payouts need money". Operator: money.
+
+### OPENBSD and vm23
+
+Lines 1 to 4 need a console on vm23, so they batch into one watched session:
+the operator opens it, and an agent reads the man pages there first. Lines 5
+and 6 need the registrar or money.
+
+1. **One `doas zsh OPENBSD/OPERATOR.sh` run.** Entry: "Waiting for the box".
+   Done when `config_drift_gate.rb --remote` reports no drift.
+2. **nsd back to one process, the old `nsd-resign` gone, amber.brgen.no's
+   leftovers removed.** Entry: "vm23 carries three leftovers". After 1, which
+   installs the repo's `nsd-resign`.
+3. **bsdports survives its own deploy three times.** Entry: Deploy blocker 3.
+4. **relayd restarts once per deploy, not five times.** Entry: "relayd
+   restarts five times".
+5. **bsdports.org delegation** before the certificate lapses on 2026-11-10.
+   Entry: `bsdports_org_delegated_to_parking`. Operator: the registrar.
+6. **Off-host backups and 2 GB of RAM.** Entries: `off_host_dr`,
+   `multi_app_ram`. Operator: money.
+
+### STUDIO
+
+1. **dilla's demo run tells the truth.** Entry: "The demo run lies about
+   success". Done when a held lock, an unknown command and a missing part each
+   exit non-zero. No sound changes, so it needs no ear.
+2. **The no-arg smoke test.** Entry: "No smoke test for the no-arg path".
+   After 1.
+3. **Restructuring rows 1, 6 and 15.** Entry: "dilla — restructuring". Each
+   must leave the snapshot identical.
+4. **Everything marked [risk], [yours] or "operator"** waits for his ear, and
+   the crate backup waits for money (`off_host_dr`).
+
+### The operator's queue
+
+Only he can close these, and each is small once he sits down to it:
+the rules.yml trim draft (MASTER); the CSS budget ceilings (RAILS);
+`spine.lib_body_ceiling` and the rules.yml ratchet rows (MASTER); the two
+`soul.yml` edits (refinement 8); the vm23 session above; the bsdports.org
+delegation; the Replicate key or retiring preprompt; and the rendered values
+the "One chrome", ad system and layout sections bring back for a decision.
+
+---
+
 ## MASTER
+
+### Instruments and /fix — found 2026-09-25
+
+- **`bin/operator` broke on a one-line lookup, and the test that would have
+  caught it was not run.** `return path if (path = rbenv_path("ruby"))` in
+  `lib/operator/ruby_runner.rb` read `path` before the modifier assigned it,
+  so every `bin/operator` command raised `NameError` until `feae0a1ef`.
+  `test_bin_ruby.rb` exercises that branch — it landed the same day in
+  `9fa0f70d8` — and is still red on this Mac under both PATH Ruby (4.0.5)
+  and 3.4.9, in `test_rbenv_path_uses_the_repo_pinned_version`. Done when that
+  test is green, the source-text assertions on `RubyRunner` in
+  `test_ops_gate_contract.rb` and `test_runtime_one_source.rb` measure
+  behaviour instead, and a push cannot leave with `test_bin_ruby.rb` red.
+- **21 ratchet rows are off.** `bin/operator measure` on 2026-09-25: 19 OVER
+  and 2 SLACK, and `file_length` and `coverage_ratchet` unreadable. The
+  largest are `spine.lib_body_ceiling` 47837/35302, `autofix_reach.bare_true`
+  238/0, `growth.master` 749/646, `self_findings.law` 300/230,
+  `growth.rails` 1986/1932 and `growth.studio` 100/69; the slack rows are
+  `rule_reach` 14/70 and `rule_audit.silent` 39/43. None has been shown to be
+  a spelling defect; the growth is several sessions' at once, which is why no
+  one session has owned the raise. Per row: `bin/operator measure --why
+  <row>`, fold what folds, then one sponsored raise naming what the rest buy.
+  `spine.lib_body_ceiling` has no raise left (`consecutive_raises_allowed: 2`
+  is spent), so a deletion pays for it first, and that is the operator's; so
+  are the two slack locks, which sit in `data/rules.yml`. Read the numbers
+  from `measure`, not from here — they move every few hours. Done when
+  `measure` exits clean or each off row names its decision. A second seam
+  from the 2026-09-23 pass belongs with it: `measure` could print the entry
+  that owns each ceiling, so a red row points at a record instead of at
+  nobody.
+- **The rules.yml trim draft was lost, and it can be rebuilt.** A draft that
+  retired rules which fire on nothing, reach no configuration or misread
+  their subject never reached a commit. Rebuild it as a diff from
+  `bin/operator measure --why rule_reach` and `--why rule_audit.silent`, plus
+  `duplicate_code` (0 of 25 samples were duplicated code) and the unread
+  `biases` and `principle_priorities` blocks. Done when the diff sits in the
+  operator's hands with one line of evidence per removed rule. Operator:
+  `data/rules.yml` is immutable to agents, so he applies it.
+- **/fix's own weaknesses.** Two surfaced on 2026-09-25. Detectors with high
+  false-positive rates cost every pass: `CQS`
+  (`lib/review/scan/rules/structural_rules.rb`) flags any method that writes
+  an instance variable and has an explicit `return`, so guard-then-assign
+  memoisation fires while `||=` does not; sample five findings per noisy rule
+  and fix the rule, as the refinement section says. And delivery stops
+  whenever a proof suite is red, whether or not the pass made it redder;
+  `Restructure::Proof` already measures a baseline and fails only on tests
+  newly failing, which is the shape delivery should borrow. Locate the check
+  that refuses before editing it. Done when `CQS` passes a memoised reader in
+  its must-not-flag example and a pass on a pre-red tree delivers when it
+  adds no failure.
 
 ### Operator decisions
 
@@ -104,12 +259,38 @@ Forward work is the last section of this file.
   and adds the foreign key. `nsd-resign` now reads `NSD_ZONES_DIR` and
   `renew-certs.sh` reads `RENEW_CERTS_ACME_CONF` and `RENEW_CERTS_SSL_DIR`, each
   defaulting to today's path, from the next `OPERATOR.sh` install.
-### The face's mood, and TTS on the box — operator-owned
+### The faces, the ear, and TTS on the box
 
 - **The face's `mood` tint has a listener and no producer.** Nothing publishes
-  `agent:mood`, so `face.part5.txt`'s tint never fires. Decide: wire a producer
+  `agent:mood`; `web/app/services/chat_service.rb` relays it as `mood`, which
+  `face.part5.txt` hears, so the tint never fires. Decide: wire a producer
   from `voice/emotion.rb`'s state (the face starts changing colour on its own)
   or delete the listener. The seam is recorded in `MASTER/web/CLAUDE.md`.
+- **The /face ear is unproven on a phone.** `lib/cli/face/ear.rb` streams a
+  Termux microphone through PulseAudio's OpenSL ES source into whisper.cpp,
+  and `lib/device/setup.rb` installs `termux-api sox ffmpeg pulseaudio` and
+  builds whisper from source; `termux-speech-to-text` is the fallback. None of
+  that has run on a real phone. Done when one Termux session hears a
+  Norwegian and an English phrase through the streaming path, and the setup
+  either builds whisper.cpp on the device or names the step that failed.
+  Operator: the phone.
+- **The web and terminal faces differ, and only the terminal says they
+  should not.** `lib/cli/face.rb` calls itself "the web face itself", and
+  `face/depth_map.rb` copies `generateFaceDepthMap` by hand; nothing on the web
+  side points back, and nothing checks the copy. Measured 2026-09-25, in the
+  order to close them. Behaviour first, no look involved: the terminal listens
+  while it speaks, with no echo guard where the web face turns its mic down
+  (`window.rb:134`, `face.runtime.js`); it never subscribes to the bus, so
+  `phantom:*`, `pipeline:*`, `llm:*` and `council:*` move only the web face;
+  its idle motion ignores `VOICE_IDLE_SIGNATURES`; a failed turn is lost where
+  the web queues it offline; and the web face lacks the terminal's
+  `IdeaPicture` after a reply. Neither face plays the voice bed that
+  `Voice::Policy#bed` declares. Then a test that paints both depth maps from
+  one seed and compares them. What changes the look waits for the operator:
+  state tint and mood colour, visemes beyond one mouth value, the provider
+  chip, council lanes. Photo upload and camera vision are the browser's by
+  nature and stay there. Done when each gap is closed or argued beside the
+  code, and the depth-map test holds the copy.
 - **vm23, after the next deploy:** re-probe the one-shot Edge fallback
   (`synthesize_edge_oneshot`) with a real MP3 write, and `test -S
   .master/tts.sock`; `/health` alone is a capability check.
@@ -120,6 +301,38 @@ Forward work is the last section of this file.
 - **operator-priority** — humans should fix before declaring deploy healthy.
 
 ## RAILS
+
+### Instruments — found 2026-09-25
+
+- **The RAILS contract suite is red in 30 of 130 files.** `RBENV_VERSION=3.4.9
+  ruby RAILS/test/run_all.rb` on 2026-09-25: 1025 runs, 30 files red. Under
+  PATH Ruby 4.0.5 it reads 33, because `run_all.rb` spawns `RbConfig.ruby` and
+  so inherits whatever Ruby launched it; `gate_failopen_test.rb`,
+  `runner_explain_test.rb` and `visual_contract_blindness_test.rb` fail only
+  there, the last on the gate runner refusing the unpinned Ruby. Always count under 3.4.9.
+  Three of the real failures:
+  `solidus_staging_contract_test.rb` calls `assert_not_match`, which is
+  ActiveSupport's and absent under bare Minitest; `vertical_consistency_test.rb`
+  names verticals that hardcode their width instead of `--container-max`,
+  which is the "One chrome" content column; `typography_lint_test.rb` holds a
+  two-family budget. Done when the suite exits 0 under 3.4.9, each fix
+  measuring behaviour rather than restoring a spelling.
+- **Rendered gates measure nothing on a fresh checkout.** `RAILS/bin/triangle`
+  runs brgen's `db:prepare` (`Triangle.migrate`, unbounded) before it boots
+  the server and waits `BOOT_TIMEOUT` (180 s) for `/up`. On a new worktree
+  the prepare is too slow to finish in any session's patience, so brgen never
+  answers and every rendered gate reports inconclusive. Inconclusive is honest — `runner.rb`
+  exits 3 — but it means no layout claim from a worktree has been measured.
+  Done when a fresh worktree boots all four surfaces within a few minutes,
+  whether by loading `schema.rb` instead of migrating or by a prepared
+  database the worktree copies, and one rendered gate returns a count.
+- **CSS budgets raised on 2026-09-25, for the operator to review.**
+  `RAILS/gates/data/css_budget.yml` moved brgen 203→215 KB, amber 108→110 and
+  bsdports 64→66, naming the design work each raise pays for: Radio
+  discovery, the storefront promotional art, three marketplace layouts, the
+  ambient chat desktop and the Material 3 bubbles. The raise was named rather
+  than absorbed, but it is a raise. Operator: keep the ceilings, or say which
+  surface gives bytes back.
 
 ### Audit findings — 2026-09-12
 
@@ -284,6 +497,15 @@ only the box can take.
   `relayctl poll` is the documented alternative, and `relayctl table
   disable|enable` brackets one app; neither touches the listener. Read
   relayd.conf(5) and relayctl(8) on vm23 and bracket one app by hand first.
+- **vm23 carries three leftovers the repo no longer has.** Two `nsd`
+  processes run where `var/nsd/etc/nsd.conf` asks for `server-count: 1`; an
+  older `/usr/local/bin/nsd-resign` sits where the repo's copy (which reads
+  `NSD_ZONES_DIR`) should be; and amber.brgen.no keeps a zone, its signing
+  keys and a certificate although nothing in `OPENBSD/` names that host any
+  more. Read nsd.conf(5), nsd(8) and acme-client(1) on the box first. Done
+  when `pgrep nsd` shows one server, `/usr/local/bin/nsd-resign` matches the
+  repo, and no amber.brgen.no file remains under `/var/nsd` or `/etc/ssl`.
+  Operator: a console on vm23.
 - **The `rails` login.conf class caps datasize at 4096M on a 1 GB box**, and
   `openfiles-cur` inherits 128. Set per-app `datasize-cur` from each app's
   steady-state VSZ measured on vm23, not RSS: brgen reads 869 MB VSZ, and a
@@ -303,13 +525,10 @@ scripts became them on 2026-09-20), and the old demo.rb shim is gone because
 a bare invoke is what it ran. Do not triplicate the engine file.
 
 - **README.mp4 split.** Half face, half a zsh prompt that launches
-  `bundle exec ruby bin/cli`. Face take is at `/tmp/new_takes/face.mp4`,
-  zsh take at `/tmp/new_takes/zsh_cli.mp4`. Mux with `demo.wav` under
-  `README.wav`. `?film=1` hides the mic; `face.css` film rules are still
-  mixed with another session's 44px autofix and were not committed.
-- **TTS of findings through dilla's chain.** `reverse_engineering/NOTES.md`
-  read by Jenny/Christopher, then tape / space echo / triode, layered with
-  demo2 and demo3.
+  `bundle exec ruby bin/cli`, muxed with `demo.wav` under `README.wav`. Both
+  takes lived in `/tmp/new_takes/` and are gone, so they are shot again first.
+  `?film=1` hides the mic; `face.css` film rules are still mixed with another
+  session's 44px autofix and were not committed.
 - **postpro on the MASTER web UI.** Not started. The face already has
   upload; the grader is `STUDIO/postpro/postpro.rb --preset cinematic`.
 - **Papua masks as a light 3D field.** Eligible: frontal masks with two eye
@@ -317,8 +536,6 @@ a bare invoke is what it ran. Do not triplicate the engine file.
   Not eligible: the Vanuatu figure, sulka headdress, gulf full-body, profile
   bird-beaks, yam helmets without a face. No LoRAs. Same anchor space as
   `face_2d_fallback.js`, sparse.
-- **HATE YouTube channel.** Refused: commercial mixes, not a drum analysis.
-  Notes live in `STUDIO/dilla/reverse_engineering/`.
 - **CLI eyes and ears.** The browser already has getUserMedia. The TTY does
   not. `Master::Io::Sense` was not written.
 
@@ -360,7 +577,7 @@ a bare invoke is what it ran. Do not triplicate the engine file.
 - The eight `sheger_*` rows are half alive: the preset rows are live and tuned,
   the bed aliases point at a cleared chop. A test pins both halves; delete
   neither.
-- The monolith stays. `DILLA_SUPPORT_CEILING` (56, any depth) leaves no room for a
+- The monolith stays. `DILLA_SUPPORT_CEILING` (11, in `STUDIO/gate.rb`) leaves no room for a
   destination file, so any split starts by folding support code, and 14 support
   files use `__dir__`/`__FILE__`. `dilla parts` indexes the engine.
 - Not worth chasing, each measured: merging the three techno renderers (three
@@ -418,24 +635,6 @@ slices. Each is a hypothesis with its seam.
 
 ### MASTER
 
-- **`test_ratchets` is red on rows nobody moved on purpose.** Measured
-  2026-09-23 in the analysis worktree: 13 rows over, 5 slack, none a spelling
-  defect — the counters are unchanged and the growth is real, 623 commits
-  since 2026-09-16 with no ceiling moves. `namespace` has healed. The
-  per-row path: the four `growth.*` rows and `self_findings.law`/`.registry`
-  want their new members enumerated (`bin/operator measure --why <row>`),
-  what folds folded, and one sponsored raise naming what the rest buy;
-  `spine.lib_body_ceiling` (41049/35302) has no raise left — two consecutive
-  `raised:` entries spent `consecutive_raises_allowed: 2`, so it is paid by
-  a deletion fall first, and that is the operator's; the slack rows want
-  their falls locked with a comment naming what paid, and two of them
-  (`rule_reach` 14/70, `rule_audit.silent` 42/43) sit in immutable
-  `data/rules.yml`, so their locks are the operator's too. The numbers move
-  every few hours while four sessions write, so read them from
-  `bin/operator measure` rather than from here. Each row wants its fall
-  recorded or its raise named, never absorbed — and the growth is several
-  sessions' at once, which is why no one session has been willing to own
-  the raise.
 - **The CLI's last seams.** Rotate the web token printed at boot on 2026-09-13;
   it sits in two saved terminal transcripts in `~/Downloads` (operator). With
   `CLI::Propose` gone, `Ground::BiasGuard` has no runtime caller and the
@@ -443,8 +642,6 @@ slices. Each is a hypothesis with its seam.
   wiring or deleting them edits an immutable file, so it is the operator's.
 - **`solid_queue` and `solid_cache` sit in the web Gemfile with nothing loading
   them.** Dropping them is a lockfile change, so it lands with a watched deploy.
-- **`Policy::FALLBACK` speaks at `+0%` where `voice.yml` says `-18%`,** a sound
-  value and the operator's.
 
 ### RAILS
 
@@ -664,7 +861,7 @@ the intent is that content takes the space and the peel floats above it, which
 is exactly the overlap the gate is reporting. Either the peel floats and this
 finding is exempt, or bottom-reaching content clears it and the clearance
 wants a token of its own — the peel's height is `--tap-min` and nothing
-publishes it. `#install-prompt` needed the same clearance and now spells
+publishes it. `.install-prompt` needed the same clearance and now spells
 `max(var(--tab-bar-h, 0px), var(--tap-min, 44px))` inline; if a token is
 wanted, that is its first caller.
 
@@ -762,7 +959,7 @@ sitting.
 - **`.page-header` is five different elements across the verticals.** Measured
   at 1440px on 2026-09-12: absent on markedsplass and playlist, 0px wide on
   dating, 747px on takeaway, 600px on tv, and brgen's front page uses
-  `.feed-header`. The contract in `shared/LAYOUT.md` describes an element four
+  `.feed-header`. The contract in `shared/README.md` describes an element four
   of seven surfaces do not render. Whether the contract or the verticals are
   wrong is a layout call.
 
@@ -781,11 +978,6 @@ sitting.
 
 - **Signed-in personas** (`GATE_ADEQUACY.md` gap 1) need a seeded fixture user
   in triangle.
-- **A listing's postpro photo has no status.** `PostproJob` adds the processed
-  photo after create; a busy worker leaves the listing with originals only and
-  nothing says so. A status column needs a reader on the listing page, and
-  whether "pending" ever resolves depends on the postpro script being present
-  on vm23.
 
 ### OPENBSD
 
@@ -807,7 +999,7 @@ operator's:
 
 ### STUDIO — postpro, preprompt, lora
 
-907. **Chains are ungraded by default.** `generate` applies `HOUSE_POSTPRO` (`portrait`); `chain` grades its final frame only when `--postpro` is given. Whether chains share the house grade is a graded-look call.
+907. **Chains are ungraded by default.** `generate` applies `HOUSE_POSTPRO` (`portrait`); `chain` grades its final frame only when `--postpro` is given or the last stage names a `postpro`. Whether chains share the house grade is a graded-look call.
 926. **`lora/guides/*.m4a` are tracked TTS output** beside their `.txt` scripts. Keep them in git or untrack them; either is the operator's.
 931. **`lora/_toolkit/judge_thresholds.yml` was calibrated on seven images;** `ragnhild/dataset/` now holds six. Recalibrating moves the quality floors.
 932. **What the photography triage left open.**
@@ -833,8 +1025,8 @@ Selenium").
 ### The operator's — behaviour the face or a page shows
 
 2. **Face regexes name topics nothing publishes.** `phantom:retry` (`face_semantics.js:162`, `topology_registry.js:22`, `data/topologies.yml:7`) where the bus publishes `phantom:recovery|occurrence|halt`; `pipeline:start` (`face_semantics.js:192`, `face_perf_guards.js:68`, `topologies.yml:13`) where it publishes `pipeline:stage_start`; `council:deliberation` in `face_semantics.js`, `face_council_multi.js`, `cognition_ecology.js`. Renaming makes the face flinch and tint on events it ignores today, so the operator should see it once; the bundle rebuilds at `assets:precompile`.
-29. **Identity, reputation, neighbourhoods and mentions are models without an inlet or a page.** `IdentityAssurer` is called only by a test; `IdentityAssurance` and `ReputationScore` have no reader outside their model files; `Neighborhood` is read by dating profiles and the demo seeder; `Mention` rows are written by `Shared::Mentionable` and shown nowhere. Every one has a table behind it, so each is a product call per model.
-R12. **Dating prompt order.** Prompts have routes and a model, but no view creates or lists them, so there is nothing to order until one does.
+29. **Identity, reputation, neighbourhoods and mentions are models without an inlet or a page.** `IdentityAssurer` is called only by a test; `IdentityAssurance` has no reader outside its model file, and `ReputationScore` is written by `content_score.rb` and `trust_score.rb` and read by nothing but tests; `Neighborhood` is read by dating profiles and the demo seeder; `Mention` rows are written by `Shared::Mentionable` and shown nowhere. Every one has a table behind it, so each is a product call per model.
+R12. **Dating prompt order.** Prompts have a model, create and destroy routes, and a list on the card and the likes page, but no view creates one, so there is nothing to order until one does.
 R23. **Native `<dialog>` for confirms.** The dating match overlay is a celebration card rather than a confirm. The report confirm, the takeaway cancel and amber's "let go" would each put a new modal surface on screen, and how it looks is the operator's.
 
 ### The operator's — each changes how a page looks
@@ -925,25 +1117,11 @@ no named reader, and an intent-to-deliver pipeline that renames stages
   `aria-busy` over CDP and measuring them waits on "Motion is a rendered value"
   and the feedback items in the RAILS section. Seam:
   `RAILS/gates/lib/rendered/keyboard_flow.rb`.
-- **Escalate a local model that cannot hold the fold.** After two parse errors
-  or refusals in a row, ask the next larger local model, or the cloud lane when
-  online. Seams: `CoreBridge::AgentChat`, `ModelRouter#local_models`.
-- **Offer only the verbs that are legal this turn.** Build
-  `Core::Model::SCHEMA` per turn from `Proof#scope`, leaving `done`, commit and
-  write out until their preconditions hold, so an early `done` cannot be
-  generated at all. Measure against gemma3:4b first; a worked example in the
-  prompt made it worse.
-
-## OpenCrabs borrow list — ChatGPT intake 2026-09-13
-
-Worked 2026-09-13 and 2026-09-14: items 2 to 8 landed with a test each, and the
-refusals are in `MASTER/AGENTS.md`, Refused. One stays open.
-
-1. **The interactive CLI can never approve a Request.** `CoreBridge.build_fold`
-   builds `World.new` without `ask:`, so the push, hard reset and deploy the
-   sandbox routes to a person are refused at a terminal as they are in the
-   daemon. Needs a TTY surface that does not fight the thinking indicator, and
-   the operator's word that approval belongs there at all.
+- **Offer only the verbs that are legal this turn.** `Core::Model.offer` builds
+  the schema from `Proof#scope`, but `lib/cli/core_bridge.rb:76` still defaults
+  to the static `SCHEMA`, so an early `done` can still be generated. Done when
+  the bridge asks through `offer` and a gemma3:4b run shows fewer premature
+  `done`s than the static schema; a worked example in the prompt made it worse.
 
 ## ChatGPT proposed forward work — intake 2026-09-11
 
@@ -1002,29 +1180,6 @@ operator's.
   deployed face paints, speaks one phrase with moving visemes, and falls back to
   2D with WebGL off. Needs a browser on vm23, where rendered gates belong.
 
-## Subtraction and refinement intakes
-
-Three ChatGPT intakes of 2026-09-11 closed on 2026-09-13. Layout
-micro-refinement (264 items) is `RAILS/shared/WIRING_NOTES.md` "The layout
-micro-refinement intake"; the CLI dmesg model (160) is the comment on `Trace::Dmesg`;
-subtraction and entropy (254) is "No audit without a path" in `MASTER/AGENTS.md`,
-Refused. What stays open:
-
-- **`shared/_toast.html.erb` is rendered by no view.** `stimulus_boot.js`
-  registers the controller, so the component is wired at one end only. Where a
-  toast appears is the operator's call.
-- **`codebase.js` is built and unreached.** It is the Repository Body renderer
-  that `topologies.yml:95` names, but `face_assets.yml` does not load it, so the
-  topology is never drawn. Delete, gate or load it; a product call.
-- **`ListeningLoop.converge` targets -14.5..-10.5 LUFS** (`harmony.rb`)
-  while the critique scores against the house -20..-16. The loop levels a quiet
-  pass to the window's middle through `MASTER_LUFS`, so aligning the window
-  changes how loud its renders land, and it waits for the operator's ear.
-- **`core-reclaim.sh` parses `swapctl -l` and `vm.loadavg` with head, tail and
-  awk** in five places. Four are field splits `set --` can do; the fifth is a
-  float comparison OpenBSD ksh cannot make, and a careless replacement moves
-  when the box sheds memory. Check each form on vm23 before changing it.
-
 ## performance
 
 Both 2026-09-11 performance intakes (980 items) closed on 2026-09-13: six
@@ -1050,14 +1205,13 @@ The grammar itself is written in `TREE.md`; the Rakefile split and a MASTER
 `docs/` move are refused in `MASTER/AGENTS.md`, Refused. The `MASTER/bin/` fold lives in
 the MASTER sections above. One item survives.
 
-- **The OPENBSD root holds ~60 loose files in three layouts.** Gates at the root
-  (`integrity_gate.rb`, `health_check.rb`, `config_drift_gate.rb`, …) beside
-  `OPENBSD/gates/`; operator shell (`deploy_all.sh`, `vps_*.sh`,
-  `start_all_apps.sh`, `resource_guard.sh`) beside `bin/` and `usr/local/bin/`.
-  vm23 procedures and the resource_guard cron call several by path, so the move
-  needs the box:
-  grep `/home/dev/pub4/OPENBSD/` on vm23 first, then move gates under `gates/` and
-  verbs under `bin/` in one commit with `PATH_OWNERSHIP.yml`.
+- **Seven loose files remain at the OPENBSD root:** `OPERATOR.sh`, `_net.sh`,
+  `backup_priv.sh`, `emergency_cpu.sh`, `ptr_openbsd_amsterdam.rb`,
+  `relayd_prune_keypairs.rb` and `sync.rb`. The gates and most verbs already
+  moved. vm23 procedures and `resource_guard.sh`'s crisis tier call some by
+  path, so grep `/home/dev/pub4/OPENBSD/` on vm23 first, then move the verbs
+  under `bin/` in one commit with `PATH_OWNERSHIP.yml`; `OPERATOR.sh` may stay
+  as the documented door.
 
 ## dilla — measured defects, blocked on `dilla.rb`
 
@@ -1090,17 +1244,17 @@ default unless marked.
 - **Logs and provenance print load-time device ENV.** `ringtone_layer_describe`
   and the sidecar can report `COPY_MACHINE=6` on a slot `apply_album_slot!`
   forced to 0. Snapshot after the last `force_env!`.
-- **Names.** `demo-all` is the catalogue, `demo` is `generate_demo`'s crate matrix,
-  `showcase` is a third medley. Rename to `demo` / `demo-crate`, alias `demo-all`
-  one release. No MASTER or RAILS caller.
+- **Names.** `demo-all` and `catalogue` both play the catalogue, `showcase` is a
+  third medley, and `demo` names only a help section. Settle on one door per
+  job and alias the old names one release. No MASTER or RAILS caller.
 - **A bed pass does not repeat at one seed.** `bed render seed 4242` twice on
   the same code differs by about 0.1 s in length and in the order its parallel
   renders start, so the snapshot harness cannot hold the bed to identical
   commands; its loudness and a bit-identical run are the only evidence.
   `each_parallel` seeds each item, so the drift is elsewhere: find it before
   trusting a bed snapshot.
-- **No smoke test for the no-arg path.** `test_dilla_bed` renders one catalogue
-  piece through the bed; nothing yet runs `Bed.catalogue!` end to end with a
+- **No smoke test for the no-arg path.** `test_dilla_bed` checks the bed's
+  source text; nothing yet runs `Bed.catalogue!` end to end with a
   two-piece order into a tmpdir and asserts demo.wav, demo.mp3 and the join's
   length. It needs a render, so it runs on a quiet machine.
 
@@ -1356,8 +1510,8 @@ choose. Numbers are for citation, not for order.
 30. **`FROZEN_STATE` / `DILLA_FROZEN`** [cheap] — the engine's own A/B pin. The
     sets grew a parallel seed mechanism because nobody checked whether one
     existed.
-31. **Make the console parameters data, not call sites** [cheap] — `Rack.sonitex`
-    and `Rack.vcs` are invoked eleven times across three files with literal
+31. **Make the console parameters data, not call sites** [cheap] — `Livesets.sonitex`
+    and `Livesets.vcs` are invoked eleven times across three files with literal
     numbers. A named table (`warm`, `dry`, `blown`, `phasy`) turns "which room"
     into a knob, which is what 18 and most of section G need.
 32. **`lib/sound.rb`** [cheap] — eight emulations, four of which measuring
@@ -1510,7 +1664,7 @@ choose. Numbers are for citation, not for order.
 
 ### G · The master chain, against the one that was lost (83–92)
 
-83. **Verify `vcs` against the plugin** [yours] — `Rack.vcs` is `aphaser` into
+83. **Verify `vcs` against the plugin** [yours] — `Livesets.vcs` is `aphaser` into
     `aecho` and was written toward *summing phasy* from description alone. Nobody
     has A/B'd it against the real thing, and the operator is the only person who
     can say whether it is close.
@@ -1525,10 +1679,9 @@ choose. Numbers are for citation, not for order.
 87. **Gain staging as a measurement, not a constant** [cheap] — `vcs` carries a
     `volume=1.9` makeup that exists because three instances were throwing away
     22 dB. That is the right fix and the wrong form: it should be derived.
-88. **`sonitex` runs its crusher at half strength** [cheap] — `acrusher` defaults
-    `mix=0.5` and `Rack.sonitex` never sets it, so all eleven stages are fifty per
-    cent dry. Whether full strength is better is an ear question; that the knob
-    was never turned is a fact.
+88. **`sonitex` runs its crusher at half strength** [cheap] — `Livesets.sonitex`
+    takes `mix: 0.5` as its default and no caller passes another, so every stage
+    is fifty per cent dry. Whether full strength is better is an ear question.
 89. **The 1260 is a sample rate as much as a bit depth** [deep] — `acrusher` also
     carries `samples` (1 to 250, currently 1, meaning off) and an `lfo`. Bit
     reduction alone is the cheapest third of what a 12-bit sampler does.
@@ -1541,8 +1694,6 @@ choose. Numbers are for citation, not for order.
 
 ### H · Instruments before findings (93–100)
 
-93. **Nothing in the suite covers `lib/livesets.rb`** [cheap] — three sets, a shared rack and
-    a recall tool, and `grep` over `STUDIO/test` finds no reference to any of it.
 94. **A graph that builds is not a graph that sounds** [cheap] — two defects this
     session were empty filter strings from Ruby comments inside line continuations,
     which ffmpeg reported as `No such filter: ''`. A lint over the built graph
@@ -1630,23 +1781,14 @@ does not have; each is opened at the seam it needs, not as a grep.
 The four-tree analysis found the same shapes recurring across trees. Each
 entry below is the shape, the evidence, and the seam it wants.
 
-- **Every tree has one fail-open seam where absence reads as success.**
-  OPENBSD's sync.rb redaction was one (fixed 2026-09-23: fail-closed residue
-  audit, `OPENBSD/lib/secret_redaction.rb`); MASTER's unread config was a third,
-  and STUDIO's 26 SipHash sites were a fourth. The rendered RAILS seam is now
-  explicit rather than green: missing Chrome marks browser gates inconclusive
-  and the runner returns exit 3. The remaining seam is a publisher/listener
-  census for MASTER's event bus in the shape of `tools/data_reach.rb`, so an
-  event nothing publishes or nothing hears is counted rather than silent.
-  OPENBSD's sync.rb redaction was one (fixed 2026-09-23: fail-closed residue
-  audit, `OPENBSD/lib/secret_redaction.rb`); the RAILS rendered gates
-  degrading to warnings without Chrome are another; MASTER's unread config
-  was a third, and STUDIO's 26 SipHash sites were a fourth. The seam to look
-  for is "nothing happened" indistinguishable from "nothing found". Next
-  candidates: make rendered gates fail in CI and warn only on live hosts;
-  and a publisher/listener census for MASTER's event bus in the shape of
-  `tools/data_reach.rb`, so an event nothing publishes or nothing hears is
-  counted rather than silent.
+- **Every tree has one fail-open seam where absence reads as success.** The
+  rendered RAILS seam is now explicit: missing Chrome marks browser gates
+  inconclusive and `runner.rb` exits 3. The remaining seam is a
+  publisher/listener census for MASTER's event bus in the shape of
+  `tools/data_reach.rb` (`tools/snapshot.rb` maps JS event names to
+  subscribers, and nothing maps Ruby publishers). Done when the census names
+  `agent:mood`, `phantom:retry` and `pipeline:start` without being told, since
+  those three are known orphans.
 - **A restated value drifts; a derived one cannot.** `voice.yml` vs
   `Policy::FALLBACK`, preprompt's `MODEL_CAPABILITIES` vs live provider
   schemas, rules.yml's ids vs `law/` vs the registry, brgen's inline social
@@ -1655,10 +1797,6 @@ entry below is the shape, the evidence, and the seam it wants.
   primary source, in the shape `rake docs:agent_contracts` already sets —
   or a check that reads both and refuses disagreement, like
   `test_yaml_registries.rb` could do for the fallback rates.
-- **Ratchets have no owner, so red stays red.** A ceiling lowered by one
-  session while other sessions grow is `test_ratchets`'s standing state. The
-  seam: `bin/operator measure` naming the TODO entry that owns each ceiling,
-  so a red row points at its decision record instead of at nobody.
 - **The top of the gate ladder is dark.** The council answers "Insufficient
   credits" and `bin/operator gate` exits 3 skipping it, every run. A
   deterministic checklist critic as the bottom tier of the council would
