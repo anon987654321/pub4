@@ -29,7 +29,7 @@ module Master
 
         # A reason the restructure fails, or nil.
         def failure(plan, before)
-          syntax_failure(plan) || deletion_reference_failure(plan) || tree_failure(plan, before[:tree]) || test_failure(before)
+          syntax_failure(plan) || deletion_reference_failure(plan, before) || tree_failure(plan, before[:tree]) || test_failure(before)
         end
 
         private
