@@ -4,21 +4,21 @@ module Master
   module CLI
     module Face
       # Everything about the face that moves, and never stops moving: a slow
-      # breath, a weightless bob, a spin or a settle by state, glances and
-      # blinks at irregular times, and a sparse field of particles that orbit
-      # the head, drift upward and keep clear of it. Events push it: a key
-      # twitches the head toward the input line and scatters the particles
-      # near it, listening draws them in and leans the head forward, a
-      # finished reply nods.
+      # breath, a weightless bob, a restrained turn or a settle by state,
+      # glances and blinks at irregular times, and a sparse field of particles
+      # that orbit the head, drift upward and keep clear of it. Events push it:
+      # a key twitches the head toward the input line and scatters the particles
+      # near it, listening draws them in and leans the head forward, a finished
+      # reply nods.
       #
       # All of it is springs and noise over real time, so no two seconds look
       # alike and nothing snaps. This is the one mutable part of the face: the
       # window keeps one Motion and hands it to Face.frame with each tick.
       class Motion
         TAU = 2 * Math::PI
-        # Radians a second: the operator's approved spin at rest, and faster
-        # in thought. Listening and speaking face the viewer instead.
-        SPIN = { idle: 0.9, thinking: 2.2 }.freeze
+        # Radians a second: the face turns only a little at rest and in thought.
+        # Full rotation made the Braille head collapse into a narrow silhouette.
+        YAW = { idle: [0.20, 0.32], thinking: [0.28, 0.55] }.freeze
         EVENTS = %i[key listen nod].freeze
 
         # A critically damped spring, stepped implicitly so a long frame can
@@ -77,25 +77,21 @@ module Master
           end
         end
 
-        # The head spins about the vertical at rest and faster in thought,
-        # rolling and nodding as it goes; listening slows the spin and turns
-        # the face to the viewer by the shorter way round, and speaking keeps
-        # it there with a small sway.
+        # The face stays readable in front view. State changes alter the
+        # amount and speed of the turn, but never enough to hide the features.
         def turn(state, t, dt)
-          if SPIN.key?(state)
-            @yaw.v += (SPIN.fetch(state) - @yaw.v) * (1 - Math.exp(-2.0 * dt))
-            @yaw.x += @yaw.v * dt
+          if (sway = YAW[state])
+            amount, speed = sway
+            @yaw.toward(amount * Math.sin(t * speed), 3.5, dt)
           else
             sway = state == :speaking ? 0.2 * noise(t * 0.4, 1) : 0.05 * noise(t * 0.3, 2)
-            @yaw.toward(facing + sway, 2.5, dt)
+            @yaw.toward(sway, 2.5, dt)
           end
           @pitch.toward(pitch_for(state, t), 6.0, dt)
           @roll.toward(state == :listening ? 0.13 : 0.18 * Math.sin(t * 0.7), 4.0, dt)
           @lean.toward(state == :listening ? 0.1 : 0.0, 4.0, dt)
           @dip.toward(0.0, 7.0, dt)
         end
-
-        def facing = (@yaw.x / TAU).round * TAU
 
         def pitch_for(state, t)
           nod = 0.12 * Math.sin(t * 0.43)
