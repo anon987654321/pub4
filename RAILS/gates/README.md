@@ -120,8 +120,7 @@ triangle** (brgen · amber · MASTER web).
 # Source checks always; live HTTP when apps listen
 ruby RAILS/gates/runner.rb page_simulation
 
-# With Falcon up (guest GET matrix)
-# brgen :38182  amber :61352  MASTER web :53187
+# With the apps up (guest GET matrix): RAILS/bin/triangle up, ports from apps.yml
 ruby RAILS/gates/runner.rb page_simulation
 
 # Multi-step journeys (postconditions, redirect honesty)

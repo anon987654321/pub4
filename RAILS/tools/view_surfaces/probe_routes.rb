@@ -5,8 +5,11 @@
 # error (4xx/5xx). Writes probed_<app>.jsonl beside the input.
 require "json"
 require "net/http"
+require "yaml"
 
-PORTS = { "amber" => 61352, "bsdports" => 47312, "brgen" => 38182 }.freeze
+# apps.yml owns the ports; a literal map here would be a second inventory.
+APPS_YML = File.expand_path("../../apps.yml", __dir__)
+PORTS = YAML.safe_load_file(APPS_YML).fetch("apps").transform_values { |row| row.fetch("port") }.freeze
 SIGN_IN = %r{/(session|sessions|sign_in|login|users/sign_in|auth)\b}
 
 app, input = ARGV
