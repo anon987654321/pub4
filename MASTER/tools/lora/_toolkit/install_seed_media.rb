@@ -3,8 +3,8 @@
 
 # Rendered frames in, graded catalogue entries out.
 #
-#   ruby STUDIO/lora/_toolkit/install_seed_media.rb ~/Downloads/seed_render
-#   ruby STUDIO/lora/_toolkit/install_seed_media.rb <dir> --dry-run
+#   ruby MASTER/tools/lora/_toolkit/install_seed_media.rb ~/Downloads/seed_render
+#   ruby MASTER/tools/lora/_toolkit/install_seed_media.rb <dir> --dry-run
 #
 # This is the half of the pipeline that runs on the Mac. The GPU half happens on
 # Colab against seed_media.yml; this takes what comes back, puts each frame
@@ -29,8 +29,8 @@ require "json"
 require "optparse"
 
 ROOT = File.expand_path("../../..", __dir__)
-SPEC = File.join(ROOT, "STUDIO/lora/seed_media.yml")
-POSTPRO = File.join(ROOT, "STUDIO/postpro/postpro.rb")
+SPEC = File.join(ROOT, "MASTER/tools/lora/seed_media.yml")
+POSTPRO = File.join(ROOT, "MASTER/tools/postpro/postpro.rb")
 
 # Which app owns a key, and where that app keeps its catalogue. brgen's is the
 # city file the seeders already read; amber's is default.yml, which the shared
