@@ -47,16 +47,26 @@
 #       matching RAILS/shared/bin/setup. MASTER/web/Rakefile did the same and
 #       left the Rakefile set, which still has its other three members.
 #   +1  add_link_embed_to_posts, written identically into amber and brgen.
-duplicate_sets: 25
+#
+# 25 -> 26 on 2026-09-25, measured from the live main tree after the shared
+# Rails application scaffolding was deleted and the vertical schemas settled.
+#   -1  the three-way app index.js set is no longer byte-identical.
+#   -2  shared/Rakefile and shared/config/boot.rb disappeared with the shared
+#       application stubs, leaving the two-app Rakefile and three-app boot sets.
+#   +2  brgen and bsdports carry byte-identical generated cache_schema.rb and
+#       cable_schema.rb; they are app database structure, so the census prices
+#       the repetition instead of pretending the files have a common owner.
+#   -1/+1  the remaining app-local Rakefile and boot sets are the measured
+#       survivors of that scaffolding collapse.
+duplicate_sets: 26
 duplicate_members:
 - MASTER/web/config/initializers/inflections.rb | RAILS/shared/config/initializers/inflections.rb
 - MASTER/web/public/icon.png | RAILS/shared/public/icon.png
 - RAILS/amber/.rubocop.yml | RAILS/brgen/.rubocop.yml | RAILS/bsdports/.rubocop.yml
-- RAILS/amber/Rakefile | RAILS/bsdports/Rakefile | RAILS/shared/Rakefile
-- RAILS/amber/app/javascript/controllers/index.js | RAILS/brgen/app/javascript/controllers/index.js | RAILS/bsdports/app/javascript/controllers/index.js
+- RAILS/amber/Rakefile | RAILS/bsdports/Rakefile
 - RAILS/amber/bin/setup | RAILS/bsdports/bin/setup
 - RAILS/amber/config.ru | RAILS/bsdports/config.ru
-- RAILS/amber/config/boot.rb | RAILS/brgen/config/boot.rb | RAILS/bsdports/config/boot.rb | RAILS/shared/config/boot.rb
+- RAILS/amber/config/boot.rb | RAILS/brgen/config/boot.rb | RAILS/bsdports/config/boot.rb
 - RAILS/amber/config/cable.yml | RAILS/brgen/config/cable.yml
 - RAILS/amber/config/cache.yml | RAILS/brgen/config/cache.yml
 - RAILS/amber/config/storage.yml | RAILS/brgen/config/storage.yml | RAILS/bsdports/config/storage.yml | RAILS/shared/config/storage.yml
@@ -70,6 +80,8 @@ duplicate_members:
 - RAILS/amber/test/models/destroy_cascade_test.rb | RAILS/bsdports/test/models/destroy_cascade_test.rb
 - RAILS/amber/test/models/user_test.rb | RAILS/bsdports/test/models/user_test.rb
 - RAILS/brgen/app/javascript/controllers/application.js | RAILS/bsdports/app/javascript/controllers/application.js
+- RAILS/brgen/db/cable_schema.rb | RAILS/bsdports/db/cable_schema.rb
+- RAILS/brgen/db/cache_schema.rb | RAILS/bsdports/db/cache_schema.rb
 - RAILS/brgen/db/migrate/20260625140000_create_anonymous_post_quotas.rb | RAILS/shared/db/migrate/20260625140000_create_anonymous_post_quotas.rb
 - RAILS/gates/data/layout_snapshots/brgen-conversations-desktop.json | RAILS/gates/data/layout_snapshots/brgen-messenger-desktop.json
 - RAILS/gates/data/layout_snapshots/bsdports-home-desktop.json | RAILS/gates/data/layout_snapshots/bsdports-ports_index-desktop.json
