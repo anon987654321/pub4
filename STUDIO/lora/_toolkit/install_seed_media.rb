@@ -38,13 +38,16 @@ POSTPRO = File.join(ROOT, "STUDIO/postpro/postpro.rb")
 # not in.
 DESTINATIONS = {
   /\Aamber-/ => { app: "amber", catalog: "config/demo_media/default.yml" },
-  /\Abergen-/ => { app: "brgen", catalog: "config/demo_media/bergen.yml" },
+  /\A(bergen|dating-pool|listing)-/ => { app: "brgen", catalog: "config/demo_media/bergen.yml" },
 }.freeze
 
-options = { dry_run: false }
+options = { dry_run: false, graded: false }
 OptionParser.new do |o|
   o.banner = "usage: install_seed_media.rb <render-dir> [--dry-run]"
   o.on("--dry-run", "Report what would be installed and change nothing") { options[:dry_run] = true }
+  # The Replicate lane grades as it renders, so its graded/ folder arrives
+  # finished. Grading it again would stack a second grain field on the first.
+  o.on("--graded", "Frames are already graded: resize and file them, no postpro") { options[:graded] = true }
 end.parse!
 
 render_dir = ARGV.shift
@@ -58,8 +61,8 @@ spec = YAML.safe_load_file(SPEC)
 # meta default — so the lookup is built once here rather than branched on at
 # every use.
 presets = {}
-spec.dig("dating", "profiles").each_key { |k| presets[k] = spec["dating"]["postpro"] }
-spec.dig("amber", "garments").each_key { |k| presets[k] = spec["amber"]["postpro"] }
+spec["dating"]["profiles"].merge(spec["dating"]["pool"] || {}).each_key { |k| presets[k] = spec["dating"]["postpro"] }
+spec["amber"]["garments"].merge(spec["amber"]["outfits"] || {}).each_key { |k| presets[k] = spec["amber"]["postpro"] }
 spec["scenes"].each { |k, v| presets[k] = v["postpro"] || spec["meta"]["postpro"] }
 
 frames = Dir.glob(File.join(render_dir, "*.{png,jpg,jpeg,webp}")).sort
@@ -92,6 +95,26 @@ known.each do |frame|
   end
 
   FileUtils.mkdir_p(media_dir)
+  if File.exist?(out)
+    # A filed frame is a kept take. Replacing it is a decision, made by
+    # deleting the file first, never a side effect of a rerun.
+    puts format("  %-32s kept (already filed)", key)
+    installed[catalog_path][key] = true
+    next
+  end
+
+  if options[:graded]
+    # 1280 px on the long edge at quality 82: the largest variant the apps
+    # serve, and what keeps a hundred committed frames to a few megabytes
+    # rather than the full renders' tens.
+    ok = system("vips", "thumbnail", frame, "#{out}[Q=82,strip]", "1280", "--size", "down",
+                out: File::NULL, err: File::NULL) && File.size?(out)
+    FileUtils.cp(frame, out) unless ok
+    installed[catalog_path][key] = true
+    puts format("  %-32s -> %s [graded upstream]", key, out.sub("#{ROOT}/", ""))
+    next
+  end
+
   # --input/--output, the same invocation Shared::PostproProcessor uses, because
   # that one is known to work headlessly. Passing the file positionally drops
   # postpro into its interactive picker, which in a script means it hangs or
@@ -122,7 +145,8 @@ installed.each do |catalog_path, keys|
     # the catalogue's own directory, so the app carries its own photographs and
     # a seed run needs no network — which is the difference between seeding on
     # the VPS and seeding on the VPS successfully.
-    existing["images"][key] = { "file" => "images/#{key}.jpg" }
+    # graded: true tells Shared::DemoMedia not to run postpro a second time.
+    existing["images"][key] = { "file" => "images/#{key}.jpg", "graded" => true }
   end
 
   next puts("  would write #{keys.size} row(s) to #{catalog_path.sub("#{ROOT}/", '')}") if options[:dry_run]

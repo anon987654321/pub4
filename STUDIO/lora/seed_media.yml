@@ -5,19 +5,22 @@
 # diffusion model can act on. "Beautiful lighting" gets the average of
 # everything it has seen.
 #
-# The seeds already know how to use these. Shared::DemoMedia tries
-# DemoMedia::Catalog first and only falls through to picsum when a key is
-# missing, and attach_remote_postpro! grades whatever it gets. So the pipeline
-# is: render here, postpro, write the file into config/demo_media/<city>.yml as
-# a `file:` entry, and the seeders pick it up with no change at all.
+# Two lanes render it. _toolkit/run_seed_media_replicate.rb pays per frame on
+# Replicate and needs nothing else; _toolkit/run_seed_media_colab.rb writes a
+# notebook for a free GPU session. Both write <key>.jpg, and
+# _toolkit/install_seed_media.rb files the graded frame where the app looks.
+# Shared::DemoMedia tries the catalogue before picsum, so a key that has a file
+# is seeded from it with no change to the seeders.
 #
 # Three populations, three rules, and they do not mix:
 #
-#   dating   Ragnhild, every one of them, from her own adapter. Operator's call
-#            2026-08-29 -- the joke is that the whole app is obviously her, and
-#            these are the selfies she has been promised for years.
-#   amber    No face anywhere. One mannequin, every garment, so seventeen items
-#            are comparable rather than seventeen unrelated stock photographs.
+#   dating   General-model strangers, every one an adult with a stated age and
+#            matched to the bio it illustrates. No subject adapter: the seeds
+#            publish on public hosts, and ragnhild and johann are real people
+#            whose likeness is theirs to publish, not a seed's.
+#   amber    No face anywhere. Each garment alone on one backdrop, so
+#            seventeen items are comparable rather than seventeen unrelated
+#            stock photographs.
 #   scene    No adapter. The picture comes from what the post actually says --
 #            a thread about fog over Vagen gets fog over Vagen, not "Norway".
 #
@@ -32,6 +35,9 @@
 
 meta:
   base: flux1-dev
+  # The Replicate lane. A general photoreal model with no adapter slot, which is
+  # the point for a public seed.
+  replicate_model: black-forest-labs/flux-1.1-pro
   # nf4 on a free Colab T4: 16 GB of Turing with no bf16 cannot hold FLUX.1-dev's
   # 23.8 GB fp16, which is the whole reason colab_render.ipynb fell back to SDXL.
   # Quantised it fits, renders slower, and is still FLUX and still her adapter.
@@ -42,94 +48,171 @@ meta:
   aspect_ratio: "3:2"
   postpro: landscape
 
-# One mannequin for the whole wardrobe, stated once.
+# One backdrop for the whole wardrobe, stated once and appended to every
+# garment, so the clothes are the only thing that changes between frames.
 #
-# Operator direction 2026-08-29: neutral and faceless. Not a headless dress form
-# and not a person -- a light grey humanoid robot, Tesla-bot proportions, matte
-# and featureless, standing in real sunshine. The garment is refitted onto it.
-#
-# Faceless is the point rather than a limitation. A wardrobe app comparing
-# seventeen garments needs the garment to be the only variable, and a model's
-# face is the first thing an eye goes to. It also means amber ships no
-# likeness at all, which is the honest default for someone else's clothes.
-# Kept short on purpose. It is prepended to all seventeen garments, so every
-# token it spends is spent seventeen times -- and at its first length the amber
-# prompts ran to 101 tokens. FLUX carries the full text on T5 and would not
-# have truncated, but the SDXL fallback lane is CLIP-only at 77 and would have
-# silently dropped the tail, which is where the camera and the aperture are.
-mannequin: >-
-  A faceless light grey #C8C9CC matte humanoid robot mannequin, Tesla-bot
-  proportions, standing in hard morning sun against a warm off-white #F2EFE9
-  backdrop, shadow thrown camera-right, Hasselblad X2D 90mm at f/5.6 from three
-  metres, full length
+# A flat lay rather than a figure. It shows the garment and nothing else, and it
+# means amber ships no likeness at all, which is the honest default for someone
+# else's clothes. Kept short because it is spent on every garment.
+backdrop: >-
+  laid flat and neatly styled on a warm off-white #F2EFE9 linen backdrop, shot
+  from directly above, soft north window light from camera-left, true colour,
+  Hasselblad X2D 90mm at f/8, no person, no text
 
-# The dating app, and it is Ragnhild all the way down.
+# The dating app. Each profile is written against its bio in
+# RAILS/brgen/lib/brgen/bergen_demo_data.rb -- the age, the job and the part of
+# town -- so the picture and the words describe one person.
 #
-# TRIGGER comes from ragnhild/subject.env and the adapter is
-# weights/ragnhild/ragnhild.safetensors, already on disk at 218 MB. Each entry
-# changes styling, setting and light and nothing else, which is exactly what a
-# subject LoRA is for -- one face held across twelve situations.
+# Two to three metres on every one. A dating profile shot at arm's length reads
+# as a phone selfie because it IS one, and that is a projection rather than a
+# rendering -- no grade reaches it.
 #
-# The bios these attach to were written for twelve different people, several of
-# them men. That mismatch is deliberate and is the joke; it is not a defect to
-# be tidied up later.
+# `pool` is the set the bulk Faker seed draws from by gender, so a generated
+# profile gets a photograph of a person rather than a picsum landscape.
 dating:
-  lora: ragnhild
-  lora_weight: 0.85
   aspect_ratio: "4:5"
   postpro: portrait
-  # Two to three metres on every one. A dating profile shot at arm's length
-  # reads as a phone selfie because it IS one, and that is a projection rather
-  # than a rendering -- no grade reaches it.
   profiles:
-    bergen-dating-anders: >-
-      TRIGGER standing in a school corridor at the end of the day, holding a
-      stack of exercise books, half-smiling at the camera, overcast north light
-      through tall windows, 50mm at f/2.8 from two and a half metres
     bergen-dating-emilie: >-
-      TRIGGER on a wooden dock in a thick #1B3A5C wool sweater, wet hair, laughing
-      with her eyes closed, flat grey Bergen overcast, sea behind her out of
-      focus, 85mm at f/2 from three metres
-    bergen-dating-hanne: >-
-      TRIGGER in work overalls and a headtorch, leaning on a van door, deadpan
-      straight to camera, low sun raking from camera-right, 50mm at f/2.8 from
-      two and a half metres
-    bergen-dating-henrik: >-
-      TRIGGER in a rain shell on the Ulriken trail, hood down, wind in her hair,
-      mid-laugh, thin cloud diffusing a low sun behind her, city far below and
-      soft, 85mm at f/2.2 from three metres
-    bergen-dating-ingrid: >-
-      TRIGGER in a concert hall foyer in a black polo neck, holding a programme,
-      warm #E8C87A tungsten spill from above and behind, calm and amused,
-      85mm at f/1.8 from two and a half metres
-    bergen-dating-jonas: >-
-      TRIGGER in a yellow #F2C230 oilskin on a boat deck, one hand on the rail,
-      squinting into salt spray, hard overcast, harbour cranes soft behind,
-      50mm at f/4 from three metres
-    bergen-dating-live: >-
-      TRIGGER on a Bybanen platform at dusk, denim jacket, holding a paper
-      transit map upside down, deliberately unimpressed, cool #7FA6C9 platform
-      light with warm carriage windows behind, 50mm at f/2 from three metres
+      A 28-year-old Norwegian woman with auburn hair in a loose braid, an editor,
+      sitting on a bench at the Fløyen viewpoint before breakfast with a paperback
+      and a thermos cup, quiet smile, early overcast light, Bergen harbour soft
+      far below, 85mm at f/2 from three metres, natural skin texture
     bergen-dating-magnus: >-
-      TRIGGER in telemark ski gear on a snowfield, goggles pushed up, sunburnt
-      nose, grinning, flat bright overcast on snow, 85mm at f/2.8 from three
-      metres
-    bergen-dating-marte: >-
-      TRIGGER at a standing desk covered in sticky notes, hoodie, one eyebrow
-      raised at the camera, cool north window light from camera-left, two
-      monitors dark behind, 50mm at f/2 from two and a half metres
-    bergen-dating-per: >-
-      TRIGGER backstage against a flight case, leather jacket, arms folded, half
-      lit by a warm #E0A458 practical from camera-right, deep shadow to the left,
-      85mm at f/1.8 from two and a half metres
+      A 24-year-old man of Eritrean-Norwegian heritage with short twists, a
+      psychology student, sitting on stone steps outside a university building
+      with an acoustic guitar across his knees, laughing mid-strum, flat grey
+      Bergen daylight, 50mm at f/2.8 from two and a half metres
+    # Adopted from a flux-schnell render (see `adopted` below); the prompt is
+    # the one that render was made from, kept verbatim so the row describes it.
     bergen-dating-silje: >-
-      TRIGGER on a forest trail in running kit, hands on knees, laughing while
-      out of breath, dappled low sun through pine, 85mm at f/2.2 from three
-      metres
+      candid portrait photo of a smiling woman in her thirties with a knitted
+      sweater, standing on a wooden pier by a Norwegian fjord, soft overcast
+      light, natural skin, 35mm film look
+    bergen-dating-jonas: >-
+      A 33-year-old man with a short brown beard in trail-running kit on a rocky
+      mountain path above Bergen, hands on hips, sweaty and grinning, fjord and
+      islands far below, low evening sun from camera-right, 85mm at f/2.8 from
+      three metres
+    bergen-dating-henrik: >-
+      A 30-year-old Filipino-Norwegian man in a navy sailing jacket at the tiller
+      of a small sailboat in Bergen harbour, wind in his hair, relaxed half-smile,
+      grey overcast with bright water, wooden quayside houses soft behind, 50mm at
+      f/4 from three metres
+    bergen-dating-ingrid: >-
+      A 26-year-old Somali-Norwegian woman in a light grey hijab and a red rain
+      shell, a nurse, at the summit of Ulriken with a small backpack, laughing in
+      the wind, thin cloud diffusing a low sun, the city far below and soft, 85mm
+      at f/2.2 from three metres
     bergen-dating-sofie: >-
-      TRIGGER in chef whites in a stainless kitchen before service, arms crossed,
-      tired and pleased, hard overhead fluorescent softened by steam, 50mm at
+      A 29-year-old woman with dark curly shoulder-length hair in a black polo
+      neck, in a concert hall foyer holding a programme, calm and amused, warm
+      #E8C87A tungsten spill from above and behind, 85mm at f/1.8 from two and a
+      half metres
+    bergen-dating-anders: >-
+      A 35-year-old man with tattooed forearms and a trimmed dark beard in chef
+      whites, in a small stainless restaurant kitchen before service, arms
+      crossed, tired and pleased, hard overhead light softened by steam, 50mm at
       f/2.8 from three metres
+    bergen-dating-hanne: >-
+      A 32-year-old woman with shoulder-length blonde hair in a knitted cardigan,
+      a primary school teacher, sitting on the edge of a desk in an empty
+      classroom after school, warm open smile, cool north window light from
+      camera-left, 50mm at f/2 from two and a half metres
+    bergen-dating-per: >-
+      A 37-year-old man with greying stubble in a flannel shirt and work
+      trousers, an electrician, on the porch of a red wooden cabin above a
+      Hardanger fjord holding a coffee mug, direct friendly gaze, soft afternoon
+      overcast, 50mm at f/4 from three metres
+    bergen-dating-live: >-
+      A 27-year-old Korean-Norwegian woman with a blunt black fringe and small
+      silver hoops, a concert booker, in a leather jacket leaning on a flight case
+      backstage, half lit by a warm #E0A458 practical from camera-right, playful
+      look, 85mm at f/1.8 from two and a half metres
+    bergen-dating-marte: >-
+      A 25-year-old woman with a red ponytail in a grey hoodie, a software
+      developer, on a light-rail platform at dusk holding a phone, one eyebrow
+      raised in amusement, cool #7FA6C9 platform light with warm tram windows
+      behind, 50mm at f/2 from three metres
+  pool:
+    dating-pool-woman-01: >-
+      A 41-year-old Norwegian woman with short grey-streaked hair in a yellow
+      raincoat on a wet Bergen street, laughing at something off camera,
+      overcast light, 50mm at f/2.8 from three metres, natural skin texture
+    dating-pool-woman-02: >-
+      A 23-year-old Pakistani-Norwegian woman with long dark hair in a camel coat
+      outside a café window, warm smile, soft late afternoon light, 85mm at f/2
+      from three metres
+    dating-pool-woman-03: >-
+      A 34-year-old woman with freckles and copper hair in a wool sweater on a
+      fjord ferry deck, wind in her hair, squinting into the light, 50mm at f/4
+      from three metres
+    dating-pool-woman-04: >-
+      A 38-year-old Ghanaian-Norwegian woman with natural hair in a green knit,
+      sitting in a sunny park with a coffee, relaxed and direct, dappled light,
+      85mm at f/2.2 from three metres
+    dating-pool-woman-05: >-
+      A 29-year-old Polish-Norwegian woman with a dark blonde bob in a denim shirt
+      in a plant-filled flat, leaning on a windowsill, amused look, north window
+      light, 50mm at f/2 from two and a half metres
+    dating-pool-woman-06: >-
+      A 45-year-old woman with silver hair in a navy anorak on a mountain trail,
+      trekking poles, broad smile, hazy valley behind, 50mm at f/5.6 from three
+      metres
+    dating-pool-woman-07: >-
+      A 26-year-old Vietnamese-Norwegian woman with a high ponytail in a white
+      tee and overshirt at a bookshop, holding a novel, candid laugh, warm
+      interior light, 50mm at f/2 from two and a half metres
+    dating-pool-woman-08: >-
+      A 36-year-old woman with brown hair tied back in cycling gear beside a city
+      bike on a harbour promenade, cheerful, cool overcast light, 50mm at f/4 from
+      three metres
+    dating-pool-man-01: >-
+      A 42-year-old Norwegian man with a salt-and-pepper beard in a navy wool
+      sweater on a wooden quay, hands in pockets, calm smile, flat overcast light,
+      85mm at f/2.8 from three metres, natural skin texture
+    dating-pool-man-02: >-
+      A 27-year-old Iranian-Norwegian man with dark curly hair in a grey
+      overshirt in a café, cup in hand, warm grin, soft window light, 50mm at f/2
+      from two and a half metres
+    dating-pool-man-03: >-
+      A 31-year-old man with a ginger beard in a hiking shell at a mountain cabin
+      doorway, laughing, cool morning light, 50mm at f/4 from three metres
+    dating-pool-man-04: >-
+      A 39-year-old Nigerian-Norwegian man with close-cropped hair in a camel
+      overcoat on a city street after rain, confident smile, soft reflected light,
+      85mm at f/2 from three metres
+    dating-pool-man-05: >-
+      A 24-year-old Norwegian man with shaggy blond hair in a flannel shirt
+      holding a skateboard by a harbour wall, easy grin, late sun from behind,
+      50mm at f/2.8 from three metres
+    dating-pool-man-06: >-
+      A 48-year-old man with glasses and a grey beard in a linen shirt at a
+      kitchen counter chopping vegetables, looking up amused, warm window light,
+      50mm at f/2.8 from two and a half metres
+    dating-pool-man-07: >-
+      A 33-year-old Chinese-Norwegian man in a black rain jacket under a
+      streetlight in light rain, gentle smile, cool dusk light with warm shop
+      windows, 85mm at f/1.8 from three metres
+    dating-pool-man-08: >-
+      A 29-year-old man with a short beard in a rowing club jacket on a lake
+      jetty at dawn, relaxed, mist on the water, 85mm at f/2.8 from three metres
+    dating-pool-nonbinary-01: >-
+      A 28-year-old nonbinary person with a shaved undercut and silver septum
+      ring in an oversized corduroy jacket at a record shop, easy smile, warm
+      interior light, 50mm at f/2 from two and a half metres
+    dating-pool-nonbinary-02: >-
+      A 34-year-old androgynous person with shoulder-length dark hair in a
+      black turtleneck by a rainy window, thoughtful half-smile, cool north
+      light, 85mm at f/2 from three metres
+    dating-pool-other-01: >-
+      A 31-year-old person with short bleached hair in a green bomber jacket on a
+      harbour promenade, laughing, bright overcast, 50mm at f/2.8 from three
+      metres
+    dating-pool-other-02: >-
+      A 40-year-old person with a buzz cut and round glasses in a knitted
+      cardigan on a park bench with a dog, warm expression, soft afternoon light,
+      85mm at f/2.8 from three metres
 
 # Everything else. No adapter, no face where a face is not the subject.
 #
@@ -387,30 +470,270 @@ scenes:
       photographed for a classified listing, cool daylight through an open door,
       35mm at f/5.6
 
-# The wardrobe. Every garment on the one mannequin above, so the clothes are the
-# only thing that changes between seventeen photographs.
+  bergen-tv-live-avatar:
+    from: "TV: Bergen Live, kanalikon"
+    aspect_ratio: "1:1"
+    prompt: >-
+      A vintage chrome stage microphone on a stand in a single warm spotlight
+      against a deep oxblood #4A1E1E curtain, centred, symmetrical, 85mm at f/2.8
+      from two metres, dust in the beam
+  bergen-tv-live-banner:
+    from: "TV: Bergen Live, banner"
+    aspect_ratio: "16:9"
+    prompt: >-
+      A small Bergen music venue from the back of a packed room, band lit in warm
+      amber and magenta on a low stage, raised hands in silhouette, haze in the
+      light, 35mm at f/2, wide and deep
+  bergen-tv-kultur-avatar:
+    from: "TV: Bergen Kultur, kanalikon"
+    aspect_ratio: "1:1"
+    prompt: >-
+      A violin resting on an open music score on a dark wooden stand, warm
+      #E4C88F stage light from above, centred and symmetrical, 85mm macro at f/4
+      from sixty centimetres
+  bergen-tv-kultur-banner:
+    from: "TV: Bergen Kultur, banner"
+    aspect_ratio: "16:9"
+    prompt: >-
+      A symphony orchestra on a wood-panelled concert stage seen from the upper
+      balcony, musicians small and focused, warm stage light against a dark hall,
+      35mm at f/4, wide
+  bergen-tv-bybanen-avatar:
+    from: "TV: Bybanen Bergen, kanalikon"
+    aspect_ratio: "1:1"
+    prompt: >-
+      The rounded nose of a modern red-and-white light-rail tram at a platform,
+      headlights on, rain on the glass, centred straight on, blue dusk light,
+      50mm at f/4 from four metres
+  bergen-takeaway-pepperoni:
+    from: "Menu: Pepperoni, klassisk, litt chili"
+    aspect_ratio: "1:1"
+    postpro: portrait
+    prompt: >-
+      A pepperoni pizza from a wood oven on a dark steel peel, cupped curled
+      pepperoni with crisp edges, chilli flakes, blistered crust, hard warm light
+      from the oven mouth, 50mm at f/4 from 45 degrees
+  bergen-takeaway-quattro-formaggi:
+    from: "Menu: Quattro formaggi, fire oster, hvitløkolje"
+    aspect_ratio: "1:1"
+    postpro: portrait
+    prompt: >-
+      A quattro formaggi pizza on a wooden board, four melted cheeses in pools of
+      cream and gold, torn basil, glossy garlic oil, soft window light from
+      camera-left, 50mm at f/4 from 45 degrees
+  bergen-takeaway-pinnekjott:
+    from: "Menu: Pinnekjøtt, sesong"
+    aspect_ratio: "1:1"
+    postpro: portrait
+    prompt: >-
+      A plate of Norwegian pinnekjøtt, cured lamb ribs with swede mash, boiled
+      potatoes and a small jug of gravy, on a white plate on a dark oak table,
+      warm candle and window light, 50mm at f/4 from above at 45 degrees
+  bergen-takeaway-blaskjell:
+    from: "Menu: Blåskjell i hvitvin"
+    aspect_ratio: "1:1"
+    postpro: portrait
+    prompt: >-
+      A black pot of steamed blue mussels in white wine with parsley and shallot,
+      bread on the side, steam rising, soft daylight from a window, 50mm at f/4
+      from above at 45 degrees
+  bergen-takeaway-fisk-og-chips:
+    from: "Menu: Fisk og chips, torsk, remoulade og pommes"
+    aspect_ratio: "1:1"
+    postpro: portrait
+    prompt: >-
+      Battered cod and thick chips in a paper-lined takeaway box with a pot of
+      remoulade and a lemon wedge, on a harbour-side wooden bench, flat overcast
+      daylight, 50mm at f/4 from above at 45 degrees
+  bergen-takeaway-fiskesuppe:
+    from: "Menu: Fiskesuppe, dagens fangst, brød og smør"
+    aspect_ratio: "1:1"
+    postpro: portrait
+    prompt: >-
+      A bowl of clear Norwegian fish soup with chunks of white fish, carrot and
+      leek, a slice of bread and butter beside it, rustic table, soft window
+      light, 50mm macro at f/4 from fifty centimetres
+
+  # Marketplace listings from the bulk seed, one photograph per leaf category.
+  # The titles within a leaf name different products, so each picture names
+  # none of them: an honest classified photograph of the kind of thing.
+  listing-electronics-phones:
+    aspect_ratio: "4:3"
+    postpro: portrait
+    prompt: >-
+      A used smartphone with a slightly scuffed case lying on a light oak table
+      beside its charging cable, screen dark, photographed plainly for a private
+      classified listing, soft window light, 50mm at f/5.6 from sixty centimetres
+  listing-electronics-computers:
+    aspect_ratio: "4:3"
+    postpro: portrait
+    prompt: >-
+      A used laptop open on a tidy desk beside a wireless mouse, screen showing a
+      plain grey desktop, photographed for a private classified listing, soft
+      daylight from camera-left, 35mm at f/5.6 from one metre
+  listing-electronics-audio:
+    aspect_ratio: "4:3"
+    postpro: portrait
+    prompt: >-
+      A pair of black over-ear headphones resting on a small wooden speaker on a
+      sideboard, photographed for a private classified listing, soft window light,
+      50mm at f/5.6 from eighty centimetres
+  listing-electronics-gaming:
+    aspect_ratio: "4:3"
+    postpro: portrait
+    prompt: >-
+      A white game console with two controllers on a living-room rug, cables
+      coiled beside them, photographed for a private classified listing, even
+      daylight, 35mm at f/5.6 from one metre
+  listing-clothing-shirts:
+    aspect_ratio: "4:3"
+    postpro: portrait
+    prompt: >-
+      A folded Norwegian patterned wool sweater and a checked shirt on a made bed,
+      photographed for a private classified listing, soft window light, 35mm at
+      f/5.6 from one metre
+  listing-clothing-trousers:
+    aspect_ratio: "4:3"
+    postpro: portrait
+    prompt: >-
+      A pair of dark hiking trousers folded on a wooden bench, label visible,
+      photographed for a private classified listing, flat daylight, 50mm at f/5.6
+      from one metre
+  listing-clothing-shoes:
+    aspect_ratio: "4:3"
+    postpro: portrait
+    prompt: >-
+      A pair of brown leather hiking boots on a hallway floor, laces loose, light
+      wear on the toes, photographed for a private classified listing, daylight
+      from a glazed door, 50mm at f/5.6 from one metre
+  listing-clothing-outerwear:
+    aspect_ratio: "4:3"
+    postpro: portrait
+    prompt: >-
+      A red technical rain jacket hanging on a wooden hanger against a white
+      painted wall, hood up, photographed for a private classified listing, soft
+      daylight, 50mm at f/5.6 from one and a half metres
+  listing-furniture-sofas:
+    aspect_ratio: "4:3"
+    postpro: portrait
+    prompt: >-
+      A beige corner sofa in a bright living room with a folded throw on one arm,
+      photographed for a private classified listing, daylight from a window out of
+      frame, 28mm at f/5.6
+  listing-furniture-tables:
+    aspect_ratio: "4:3"
+    postpro: portrait
+    prompt: >-
+      An oak dining table with visible grain in an empty dining room, chairs
+      pushed in, photographed for a private classified listing, soft window light,
+      28mm at f/5.6
+  listing-furniture-chairs:
+    aspect_ratio: "4:3"
+    postpro: portrait
+    prompt: >-
+      Four mid-century teak dining chairs lined up against a white wall on a
+      wooden floor, photographed for a private classified listing, even daylight,
+      35mm at f/5.6 from two metres
+  listing-furniture-storage:
+    aspect_ratio: "4:3"
+    postpro: portrait
+    prompt: >-
+      A white chest of four drawers against a pale wall with a small plant on top,
+      photographed for a private classified listing, soft daylight, 35mm at f/5.6
+      from two metres
+  listing-vehicles-cars:
+    aspect_ratio: "4:3"
+    postpro: portrait
+    prompt: >-
+      A black roof box and a folded child car seat on the concrete floor of a
+      tidy garage, photographed for a private classified listing, cool daylight
+      through an open door, 28mm at f/5.6
+  listing-vehicles-bikes:
+    aspect_ratio: "4:3"
+    postpro: portrait
+    prompt: >-
+      A used mountain bike leaning on its stand in front of a garage door, tyres
+      muddy, photographed square on for a private classified listing, flat
+      overcast light, 35mm at f/5.6 from two metres
+  listing-vehicles-motorcycles:
+    aspect_ratio: "4:3"
+    postpro: portrait
+    prompt: >-
+      A small grey moped parked on a residential street after rain, photographed
+      side on for a private classified listing, soft overcast light, 35mm at f/5.6
+      from three metres
+  listing-vehicles-parts:
+    aspect_ratio: "4:3"
+    postpro: portrait
+    prompt: >-
+      A stack of four winter tyres on steel rims against a garage wall, tread
+      visible, photographed for a private classified listing, cool daylight, 35mm
+      at f/5.6 from two metres
+  listing-services-repair:
+    aspect_ratio: "4:3"
+    postpro: portrait
+    prompt: >-
+      A workbench with a bicycle wheel in a truing stand and neat hand tools on a
+      pegboard, no person, warm workshop light, 35mm at f/4 from one and a half
+      metres
+  listing-services-moving:
+    aspect_ratio: "4:3"
+    postpro: portrait
+    prompt: >-
+      Labelled cardboard moving boxes stacked in an empty flat with bare wooden
+      floors, a rolled rug beside them, no person, soft window light, 28mm at
+      f/5.6
+  listing-services-cleaning:
+    aspect_ratio: "4:3"
+    postpro: portrait
+    prompt: >-
+      A spotless bright kitchen with a folded cloth and a spray bottle on the
+      counter, no person, morning window light, 28mm at f/5.6
+  listing-services-tutoring:
+    aspect_ratio: "4:3"
+    postpro: portrait
+    prompt: >-
+      A kitchen table with an open maths exercise book, a pencil, a calculator
+      and two cups of tea, no person, warm lamp light, 35mm at f/4 from one metre
+
+# The wardrobe. Every garment alone on the one backdrop above, so the clothes
+# are the only thing that changes between seventeen photographs.
 #
-# `garment` is appended to the mannequin clause at render time rather than
-# written out seventeen times, because the mannequin is the constant and
+# `garment` is prepended to the backdrop clause at render time rather than
+# written out seventeen times, because the backdrop is the constant and
 # restating it is how two of the seventeen would end up subtly different.
 amber:
   aspect_ratio: "4:5"
   postpro: portrait
   garments:
-    amber-ivory-silk-dress: "wearing an ivory #F3EDE2 silk slip dress on the bias, thin straps, hem to mid-calf, fabric catching the sun with a soft sheen"
-    amber-camel-wrap-coat: "wearing a camel #B08556 wool wrap coat, belted at the waist, wide notch lapel, hem below the knee"
-    amber-black-ankle-boots: "wearing black #1A1A1A leather pointed-toe ankle boots with a block heel, shot as a three-quarter length crop from the knee down"
-    amber-oatmeal-cashmere: "wearing an oatmeal #D8CDBB cashmere crew neck, slightly oversized, sleeves pushed to the forearm"
-    amber-charcoal-trousers: "wearing charcoal #3A3B3F wide-leg wool trousers with a pressed centre crease, breaking once over the shoe"
-    amber-navy-blazer: "wearing a navy #23304A oversized single-breasted blazer, shoulders dropped, one button fastened"
-    amber-white-trainers: "wearing white #F2F2EF leather trainers, gum sole, shot as a crop from the knee down"
-    amber-breton-tee: "wearing a Breton tee, #F0EDE6 and #23304A horizontal stripes, boat neck, three-quarter sleeve"
-    amber-indigo-jeans: "wearing indigo #2C3E5C straight-leg jeans, full length, visible selvedge at the cuff"
-    amber-rust-shirtdress: "wearing a rust #A85A32 linen shirtdress, belted, sleeves rolled, hem mid-calf, linen visibly creased"
-    amber-sage-midi-skirt: "wearing a sage #A8B49A pleated midi skirt, knife pleats falling straight, hem mid-calf"
-    amber-blush-satin-blouse: "wearing a blush #E6C9C1 satin blouse, soft drape, hidden placket, the sheen breaking across the folds"
-    amber-oatmeal-beanie: "wearing an oatmeal #D8CDBB ribbed wool beanie, shot as a head-and-shoulders crop"
-    amber-tan-crossbody: "wearing a tan #A97B4F structured leather crossbody bag on a thin strap, bag square to camera at the hip"
-    amber-gold-hoops: "wearing slim gold #C9A227 hoop earrings, shot as a tight head crop, hoops catching the sun"
-    amber-cateye-sunglasses: "wearing black #1A1A1A acetate cat-eye sunglasses, shot as a tight head crop, sun reflected in the lenses"
-    amber-sage-shorts: "wearing sage #A8B49A linen shorts, mid-thigh, turned-up cuff, linen visibly creased"
+    amber-ivory-silk-dress: "An ivory #F3EDE2 silk slip dress cut on the bias with thin straps, the fabric holding a soft sheen"
+    amber-camel-wrap-coat: "A camel #B08556 wool wrap coat with a wide notch lapel and its belt laid beside it"
+    amber-black-ankle-boots: "A pair of black #1A1A1A leather pointed-toe ankle boots with a block heel"
+    amber-oatmeal-cashmere: "An oatmeal #D8CDBB cashmere crew neck sweater, slightly oversized, sleeves folded in"
+    amber-charcoal-trousers: "A pair of charcoal #3A3B3F wide-leg wool trousers with a pressed centre crease"
+    amber-navy-blazer: "A navy #23304A oversized single-breasted blazer, one button, shoulders relaxed"
+    amber-white-trainers: "A pair of white #F2F2EF leather trainers with a gum sole"
+    amber-breton-tee: "A Breton tee in #F0EDE6 and #23304A horizontal stripes with a boat neck and three-quarter sleeves"
+    amber-indigo-jeans: "A pair of indigo #2C3E5C straight-leg jeans with the selvedge cuff turned up"
+    amber-rust-shirtdress: "A rust #A85A32 linen shirtdress with a tie belt, the linen visibly creased"
+    amber-sage-midi-skirt: "A sage #A8B49A pleated midi skirt with knife pleats laid straight"
+    amber-blush-satin-blouse: "A blush #E6C9C1 satin blouse with a hidden placket, the sheen breaking across the folds"
+    amber-oatmeal-beanie: "An oatmeal #D8CDBB ribbed wool beanie with a folded cuff"
+    amber-tan-crossbody: "A tan #A97B4F structured leather crossbody bag with a thin strap looped beside it"
+    amber-gold-hoops: "A pair of slim gold #C9A227 hoop earrings on a small linen square, catching the light"
+    amber-cateye-sunglasses: "A pair of black #1A1A1A acetate cat-eye sunglasses, arms folded"
+    amber-sage-shorts: "A pair of sage #A8B49A linen shorts with turned-up cuffs, the linen visibly creased"
+  # The three demo outfits, each as one flat lay of the garments it names in
+  # RAILS/amber/lib/amber/amber_demo_seeder.rb.
+  outfits:
+    amber-outfit-gallery-opening: "A blush satin blouse, charcoal wide-leg trousers, black pointed ankle boots and small gold hoop earrings arranged together as one outfit"
+    amber-outfit-coffee-date: "An oatmeal cashmere crew neck, indigo straight-leg jeans and a tan leather crossbody bag arranged together as one outfit"
+    amber-outfit-office-chic: "A navy oversized blazer, charcoal wide-leg trousers, black pointed ankle boots and a camel wool wrap coat arranged together as one outfit"
+
+# Frames made before this lane existed, adopted rather than rendered again: a
+# render costs money and is never the same twice. Each names the prediction it
+# came from, and the lane downloads that output instead of asking for a new one.
+adopted:
+  bergen-dating-silje: frcd0qn7psrzw0d0ty1r9bfzfg
+  bergen-bryggen-rain: xj682fx7nnrzr0d0ty1tv2p640
+  amber-camel-wrap-coat: h1aewv58psrzr0d0ty1tvvpkg0

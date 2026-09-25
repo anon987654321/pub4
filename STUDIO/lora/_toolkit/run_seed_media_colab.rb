@@ -16,8 +16,8 @@
 # The render cell is self-contained diffusers rather than a call into the
 # ai-toolkit render path, and that is deliberate. That path composes a prompt
 # from the shoots schema — trigger, descriptor, scene, key, distance, lens,
-# stock — and prepends the subject to every one. Two of these three populations
-# must have no subject in front of them, and all sixty-one must land on an exact
+# stock — and prepends the subject to every one. None of these populations
+# has a subject in front of it, and every frame must land on an exact
 # filename the seeds already look up. Bending the shoots renderer into that shape
 # would leave neither job legible.
 
@@ -34,9 +34,9 @@ BRANCH = ENV.fetch("PUB4_BRANCH", "main")
 abort "warn: no #{SPEC}" unless SPEC.file?
 spec = YAML.safe_load_file(SPEC)
 counts = {
-  dating: spec.dig("dating", "profiles").size,
+  dating: spec.dig("dating", "profiles").size + spec.dig("dating", "pool").to_h.size,
   scenes: spec["scenes"].size,
-  amber: spec.dig("amber", "garments").size,
+  amber: spec.dig("amber", "garments").size + spec.dig("amber", "outfits").to_h.size,
 }
 total = counts.values.sum
 
@@ -64,25 +64,12 @@ markdown = <<~MARKDOWN
   has to exist before it can be made smaller. `colab_session.rb:136` records
   the same two deaths from the training lane.
 
-  Ragnhild's adapter is SDXL anyway (`ss_base_model_version: sdxl_1.0`), for
-  exactly the same reason one step earlier, so the dating pass was never going
-  to be FLUX.
-
-  1. **dating** — #{counts[:dating]} frames, her adapter at weight
-     #{spec.dig('dating', 'lora_weight')}
-  2. **scenes** — #{counts[:scenes]} frames, adapter detached
-  3. **amber** — #{counts[:amber]} frames, the one mannequin
-
-  One pipeline for all three: the adapter is detached between passes rather
-  than the model reloaded.
+  1. **dating** — #{counts[:dating]} frames, general-model strangers, no adapter
+  2. **scenes** — #{counts[:scenes]} frames
+  3. **amber** — #{counts[:amber]} frames, each on the one backdrop
 
   `SEED_MEDIA_BASE=flux` switches to FLUX on a high-RAM runtime, where the
   load actually fits. On free Colab it will be killed.
-
-  The adapter is **not in the clone** and never will be:
-  `STUDIO/lora/*/weights/` is gitignored, because a 218 MB likeness does not
-  belong in a public repo. Put `ragnhild.safetensors` anywhere in your Drive —
-  the render cell searches for it.
 
   Roughly 20–40 s a frame on a T4 at nf4, so about half an hour of GPU plus the
   model download. Output goes to Drive; a disconnect costs the frames since the
@@ -142,10 +129,10 @@ PYTHON
 
 setup_cell = <<~PYTHON
   import subprocess, os
-  # bitsandbytes for nf4, peft for the adapter, sentencepiece for T5's tokenizer.
+  # bitsandbytes for nf4, sentencepiece for T5's tokenizer.
   subprocess.run(
       "pip -q install -U diffusers transformers accelerate safetensors "
-      "bitsandbytes peft sentencepiece protobuf",
+      "bitsandbytes sentencepiece protobuf",
       shell=True, check=True)
 
   if not os.path.isdir("/content/pub4/.git"):
@@ -211,36 +198,6 @@ render_cell = <<~PYTHON
       img.save(path)
       print("ok", key, f"{w}x{h}")
 
-  def adapter_base(path):
-      with open(path, "rb") as f:
-          n = int.from_bytes(f.read(8), "little")
-          meta = json.loads(f.read(n)).get("__metadata__", {})
-      return meta.get("ss_base_model_version", "unknown"), meta.get("training_info", "")
-
-  # ------------------------------------------------------------- the adapter
-  dating = spec["dating"]
-  SUBJECT = dating["lora"]
-  # Looked for by path, then by search. The mount is authenticated as the
-  # operator, so walking their own Drive finds a file they uploaded by hand
-  # without anyone having to say where it went. The share link is deliberately
-  # not hardcoded: a Drive file ID in a public repo discloses her likeness as
-  # surely as committing the weights would.
-  CANDIDATES = [
-      f"/content/drive/MyDrive/lora/{SUBJECT}/{SUBJECT}.safetensors",
-      f"/content/drive/MyDrive/{SUBJECT}.safetensors",
-  ]
-  CANDIDATES += sorted(glob.glob(f"/content/drive/MyDrive/lora/{SUBJECT}/*.safetensors"))
-  ADAPTER = next((p for p in CANDIDATES if os.path.exists(p)), None)
-  if not ADAPTER:
-      print("searching MyDrive for *.safetensors …")
-      found = glob.glob("/content/drive/MyDrive/**/*.safetensors", recursive=True)
-      named = [p for p in found if SUBJECT.lower() in p.lower()]
-      pool = named or found
-      if pool:
-          ADAPTER = max(pool, key=os.path.getsize)
-          print(f"found {len(found)}; using {ADAPTER}")
-          if not named:
-              print(f"warn: none named '{SUBJECT}' — largest wins, check the face")
 
   # --------------------------------------------------------------- the model
   from diffusers import StableDiffusionXLPipeline, AutoencoderKL
@@ -256,53 +213,23 @@ render_cell = <<~PYTHON
   print("ok: SDXL loaded")
 
   # ------------------------------------------------------------------ pass 1
-  if ADAPTER:
-      base, steps = adapter_base(ADAPTER)
-      print(f"ok: adapter base={base} {steps}")
-      if "sdxl" not in base.lower():
-          print(f"warn: adapter is {base}, this pipeline is SDXL — the face will not attach")
-      pipe.load_lora_weights(ADAPTER, adapter_name="subject")
-      pipe.set_adapters(["subject"], adapter_weights=[dating["lora_weight"]])
-
-      env_path = f"/content/pub4/STUDIO/lora/{SUBJECT}/subject.env"
-      trigger, descriptor = SUBJECT, ""
-      if os.path.exists(env_path):
-          for line in open(env_path):
-              if line.startswith("TRIGGER="):
-                  trigger = line.split("=", 1)[1].strip().strip('"').strip("'")
-              if line.startswith("DESCRIPTOR="):
-                  descriptor = line.split("=", 1)[1].strip().strip('"').strip("'")
-      # trigger then descriptor, the order shoots.rb composes: the trigger
-      # carries the face and the descriptor anchors age and colouring, which with
-      # a light adapter is most of the likeness.
-      who = f"{trigger}, {descriptor}" if descriptor else trigger
-      print("ok: adapter attached, subject =", who)
-
-      for i, (key, prompt) in enumerate(dating["profiles"].items()):
-          render(pipe, key, prompt.replace("TRIGGER", who), dating["aspect_ratio"], 1000 + i, **KW)
-
-      # Unloaded, not torn down. The scenes and garments must have no subject in
-      # them, but they can share this pipeline -- reloading SDXL to drop one
-      # adapter would cost minutes for nothing.
-      pipe.delete_adapters("subject")
-      gc.collect(); torch.cuda.empty_cache()
-      print("ok: dating done, adapter detached")
-  else:
-      print("SKIPPED dating — no adapter found. Looked in:")
-      for p in CANDIDATES:
-          print("   ", p)
-      print("")
-      print(f"  Put {SUBJECT}.safetensors anywhere in MyDrive and rerun.")
+  # No subject adapter: the seeded people are general-model strangers, because
+  # the seeds publish on public hosts.
+  dating = spec["dating"]
+  people = {**dating["profiles"], **(dating.get("pool") or {})}
+  for i, (key, prompt) in enumerate(people.items()):
+      render(pipe, key, prompt, dating["aspect_ratio"], 1000 + i, **KW)
 
   # ------------------------------------------------------------ passes 2 & 3
   for i, (key, entry) in enumerate(spec["scenes"].items()):
       render(pipe, key, entry["prompt"], entry.get("aspect_ratio"), 2000 + i, **KW)
 
-  # The mannequin clause is prepended rather than repeated per entry, so all
-  # seventeen garments share one mannequin instead of seventeen near-misses.
+  # The backdrop clause is appended rather than repeated per entry, so every
+  # garment shares one backdrop instead of seventeen near-misses.
   amber = spec["amber"]
-  for i, (key, garment) in enumerate(amber["garments"].items()):
-      render(pipe, key, spec["mannequin"] + ", " + garment, amber["aspect_ratio"], 3000 + i, **KW)
+  garments = {**amber["garments"], **(amber.get("outfits") or {})}
+  for i, (key, garment) in enumerate(garments.items()):
+      render(pipe, key, garment + ", " + spec["backdrop"], amber["aspect_ratio"], 3000 + i, **KW)
 
   made = len([f for f in os.listdir(OUT) if f.endswith(".png")])
   print("")

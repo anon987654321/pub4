@@ -1,0 +1,927 @@
+# Every seed frame rendered, one row per key: prompt, model, version, seed,
+# the Replicate prediction it came from, the postpro preset it was graded with
+# and the published per-image price. Written by
+# _toolkit/run_seed_media_replicate.rb; the renders themselves stay off git.
+---
+images:
+  bergen-dating-emilie:
+    group: dating
+    prompt: A 28-year-old Norwegian woman with auburn hair in a loose braid, an editor,
+      sitting on a bench at the Fløyen viewpoint before breakfast with a paperback
+      and a thermos cup, quiet smile, early overcast light, Bergen harbour soft far
+      below, 85mm at f/2 from three metres, natural skin texture
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 1198479586
+    aspect_ratio: '4:5'
+    postpro: portrait
+    prediction: yr1m0qk3zhrmt0d0v1cv3gpa1c
+    predict_time: 2.7216674100000002
+    price_usd: 0.04
+    created_at: '2026-09-25T11:35:32.092Z'
+  bergen-bryggen-rain:
+    group: adopted
+    prompt:
+    model: black-forest-labs/flux-schnell
+    version: hidden
+    seed:
+    aspect_ratio:
+    postpro: landscape
+    prediction: xj682fx7nnrzr0d0ty1tv2p640
+    predict_time: 3.701933
+    price_usd: 0.003
+    created_at: '2026-09-25T07:42:04.717Z'
+  bergen-dating-silje:
+    group: adopted
+    prompt:
+    model: black-forest-labs/flux-schnell
+    version: hidden
+    seed:
+    aspect_ratio:
+    postpro: portrait
+    prediction: frcd0qn7psrzw0d0ty1r9bfzfg
+    predict_time: 3.52272
+    price_usd: 0.003
+    created_at: '2026-09-25T07:42:04.726Z'
+  amber-camel-wrap-coat:
+    group: adopted
+    prompt:
+    model: black-forest-labs/flux-schnell
+    version: hidden
+    seed:
+    aspect_ratio:
+    postpro: portrait
+    prediction: h1aewv58psrzr0d0ty1tvvpkg0
+    predict_time: 3.303428
+    price_usd: 0.003
+    created_at: '2026-09-25T07:42:04.982Z'
+  bergen-dating-magnus:
+    group: dating
+    prompt: A 24-year-old man of Eritrean-Norwegian heritage with short twists, a
+      psychology student, sitting on stone steps outside a university building with
+      an acoustic guitar across his knees, laughing mid-strum, flat grey Bergen daylight,
+      50mm at f/2.8 from two and a half metres
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 8140158
+    aspect_ratio: '4:5'
+    postpro: portrait
+    prediction: f2rcgjn20drmt0d0v1d8rrfbsg
+    predict_time: 2.720459907
+    price_usd: 0.04
+    created_at: '2026-09-25T11:36:53.507Z'
+  bergen-dating-jonas:
+    group: dating
+    prompt: A 33-year-old man with a short brown beard in trail-running kit on a rocky
+      mountain path above Bergen, hands on hips, sweaty and grinning, fjord and islands
+      far below, low evening sun from camera-right, 85mm at f/2.8 from three metres
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 873044301
+    aspect_ratio: '4:5'
+    postpro: portrait
+    prediction: krwmmw6j65rmt0d0v1dbwkzp7r
+    predict_time: 2.846692826
+    price_usd: 0.04
+    created_at: '2026-09-25T11:37:05.841Z'
+  bergen-dating-henrik:
+    group: dating
+    prompt: A 30-year-old Filipino-Norwegian man in a navy sailing jacket at the tiller
+      of a small sailboat in Bergen harbour, wind in his hair, relaxed half-smile,
+      grey overcast with bright water, wooden quayside houses soft behind, 50mm at
+      f/4 from three metres
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 1436688105
+    aspect_ratio: '4:5'
+    postpro: portrait
+    prediction: ryjv28qzpdrmt0d0v1d9100jam
+    predict_time: 3.680062113
+    price_usd: 0.04
+    created_at: '2026-09-25T11:37:17.491Z'
+  bergen-dating-ingrid:
+    group: dating
+    prompt: A 26-year-old Somali-Norwegian woman in a light grey hijab and a red rain
+      shell, a nurse, at the summit of Ulriken with a small backpack, laughing in
+      the wind, thin cloud diffusing a low sun, the city far below and soft, 85mm
+      at f/2.2 from three metres
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 561984981
+    aspect_ratio: '4:5'
+    postpro: portrait
+    prediction: 9mjzj36g69rmt0d0v1dt13qxz8
+    predict_time: 2.772570389
+    price_usd: 0.04
+    created_at: '2026-09-25T11:38:10.866Z'
+  bergen-dating-sofie:
+    group: dating
+    prompt: 'A 29-year-old woman with dark curly shoulder-length hair in a black polo
+      neck, in a concert hall foyer holding a programme, calm and amused, warm #E8C87A
+      tungsten spill from above and behind, 85mm at f/1.8 from two and a half metres'
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 887273137
+    aspect_ratio: '4:5'
+    postpro: portrait
+    prediction: za4bb7zy3srmt0d0v1dvtksnbc
+    predict_time: 4.190794879
+    price_usd: 0.04
+    created_at: '2026-09-25T11:38:22.622Z'
+  bergen-dating-anders:
+    group: dating
+    prompt: A 35-year-old man with tattooed forearms and a trimmed dark beard in chef
+      whites, in a small stainless restaurant kitchen before service, arms crossed,
+      tired and pleased, hard overhead light softened by steam, 50mm at f/2.8 from
+      three metres
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 570341900
+    aspect_ratio: '4:5'
+    postpro: portrait
+    prediction: p8x98xsg6drmr0d0v1eajww2xr
+    predict_time: 3.980436974
+    price_usd: 0.04
+    created_at: '2026-09-25T11:38:35.443Z'
+  bergen-dating-hanne:
+    group: dating
+    prompt: A 32-year-old woman with shoulder-length blonde hair in a knitted cardigan,
+      a primary school teacher, sitting on the edge of a desk in an empty classroom
+      after school, warm open smile, cool north window light from camera-left, 50mm
+      at f/2 from two and a half metres
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 859458314
+    aspect_ratio: '4:5'
+    postpro: portrait
+    prediction: 85cc8ktxh5rmr0d0v1e8s6ncq8
+    predict_time: 2.7164909809999997
+    price_usd: 0.04
+    created_at: '2026-09-25T11:38:47.049Z'
+  bergen-dating-per:
+    group: dating
+    prompt: A 37-year-old man with greying stubble in a flannel shirt and work trousers,
+      an electrician, on the porch of a red wooden cabin above a Hardanger fjord holding
+      a coffee mug, direct friendly gaze, soft afternoon overcast, 50mm at f/4 from
+      three metres
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 201222246
+    aspect_ratio: '4:5'
+    postpro: portrait
+    prediction: fm4e8a4cq1rmw0d0v1e8hgeck0
+    predict_time: 3.671874739
+    price_usd: 0.04
+    created_at: '2026-09-25T11:38:59.128Z'
+  bergen-dating-live:
+    group: dating
+    prompt: 'A 27-year-old Korean-Norwegian woman with a blunt black fringe and small
+      silver hoops, a concert booker, in a leather jacket leaning on a flight case
+      backstage, half lit by a warm #E0A458 practical from camera-right, playful look,
+      85mm at f/1.8 from two and a half metres'
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 71016687
+    aspect_ratio: '4:5'
+    postpro: portrait
+    prediction: h75gkzdwy9rmt0d0v1ebjab1zr
+    predict_time: 2.676235294
+    price_usd: 0.04
+    created_at: '2026-09-25T11:39:11.474Z'
+  bergen-dating-marte:
+    group: dating
+    prompt: 'A 25-year-old woman with a red ponytail in a grey hoodie, a software
+      developer, on a light-rail platform at dusk holding a phone, one eyebrow raised
+      in amusement, cool #7FA6C9 platform light with warm tram windows behind, 50mm
+      at f/2 from three metres'
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 1389576296
+    aspect_ratio: '4:5'
+    postpro: portrait
+    prediction: wc75s40331rmy0d0v1evn7qb24
+    predict_time: 3.647462814
+    price_usd: 0.04
+    created_at: '2026-09-25T11:39:29.432Z'
+  dating-pool-woman-01:
+    group: dating
+    prompt: A 41-year-old Norwegian woman with short grey-streaked hair in a yellow
+      raincoat on a wet Bergen street, laughing at something off camera, overcast
+      light, 50mm at f/2.8 from three metres, natural skin texture
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 1976923980
+    aspect_ratio: '4:5'
+    postpro: portrait
+    prediction: 732zgnhp6srmw0d0v1ev69r86c
+    predict_time: 2.689768149
+    price_usd: 0.04
+    created_at: '2026-09-25T11:39:42.518Z'
+  dating-pool-woman-02:
+    group: dating
+    prompt: A 23-year-old Pakistani-Norwegian woman with long dark hair in a camel
+      coat outside a café window, warm smile, soft late afternoon light, 85mm at f/2
+      from three metres
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 400922852
+    aspect_ratio: '4:5'
+    postpro: portrait
+    prediction: n8kgx7c1whrmw0d0v1et047e1w
+    predict_time: 2.217510807
+    price_usd: 0.04
+    created_at: '2026-09-25T11:40:01.892Z'
+  dating-pool-woman-03:
+    group: dating
+    prompt: A 34-year-old woman with freckles and copper hair in a wool sweater on
+      a fjord ferry deck, wind in her hair, squinting into the light, 50mm at f/4
+      from three metres
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 255243232
+    aspect_ratio: '4:5'
+    postpro: portrait
+    prediction: mc91015asdrmt0d0v1ev20jny8
+    predict_time: 3.948453336
+    price_usd: 0.04
+    created_at: '2026-09-25T11:40:12.363Z'
+  dating-pool-woman-04:
+    group: dating
+    prompt: A 38-year-old Ghanaian-Norwegian woman with natural hair in a green knit,
+      sitting in a sunny park with a coffee, relaxed and direct, dappled light, 85mm
+      at f/2.2 from three metres
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 896928957
+    aspect_ratio: '4:5'
+    postpro: portrait
+    prediction: szgynar179rmt0d0v1f92ka180
+    predict_time: 2.81343873
+    price_usd: 0.04
+    created_at: '2026-09-25T11:40:34.49Z'
+  dating-pool-woman-05:
+    group: dating
+    prompt: A 29-year-old Polish-Norwegian woman with a dark blonde bob in a denim
+      shirt in a plant-filled flat, leaning on a windowsill, amused look, north window
+      light, 50mm at f/2 from two and a half metres
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 1837489414
+    aspect_ratio: '4:5'
+    postpro: portrait
+    prediction: prnw801g9hrmy0d0v1fb87erjw
+    predict_time: 2.616808167
+    price_usd: 0.04
+    created_at: '2026-09-25T11:40:46.54Z'
+  dating-pool-woman-06:
+    group: dating
+    prompt: A 45-year-old woman with silver hair in a navy anorak on a mountain trail,
+      trekking poles, broad smile, hazy valley behind, 50mm at f/5.6 from three metres
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 1701207560
+    aspect_ratio: '4:5'
+    postpro: portrait
+    prediction: dpn0xmjzs1rmw0d0v1fafe33cw
+    predict_time: 3.673858199
+    price_usd: 0.04
+    created_at: '2026-09-25T11:40:58.696Z'
+  dating-pool-woman-07:
+    group: dating
+    prompt: A 26-year-old Vietnamese-Norwegian woman with a high ponytail in a white
+      tee and overshirt at a bookshop, holding a novel, candid laugh, warm interior
+      light, 50mm at f/2 from two and a half metres
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 1863442589
+    aspect_ratio: '4:5'
+    postpro: portrait
+    prediction: p1jeb1ca9hrmr0d0v1fb5nm24r
+    predict_time: 2.931119135
+    price_usd: 0.04
+    created_at: '2026-09-25T11:41:09.58Z'
+  dating-pool-woman-08:
+    group: dating
+    prompt: A 36-year-old woman with brown hair tied back in cycling gear beside a
+      city bike on a harbour promenade, cheerful, cool overcast light, 50mm at f/4
+      from three metres
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 654969639
+    aspect_ratio: '4:5'
+    postpro: portrait
+    prediction: j81js2ee0hrmt0d0v1f9y9sz2g
+    predict_time: 2.6363958309999997
+    price_usd: 0.04
+    created_at: '2026-09-25T11:41:26.916Z'
+  dating-pool-man-01:
+    group: dating
+    prompt: A 42-year-old Norwegian man with a salt-and-pepper beard in a navy wool
+      sweater on a wooden quay, hands in pockets, calm smile, flat overcast light,
+      85mm at f/2.8 from three metres, natural skin texture
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 1471742244
+    aspect_ratio: '4:5'
+    postpro: portrait
+    prediction: j16hgrqys9rmr0d0v1fag82dm8
+    predict_time: 3.6524237360000003
+    price_usd: 0.04
+    created_at: '2026-09-25T11:41:39.402Z'
+  dating-pool-man-02:
+    group: dating
+    prompt: A 27-year-old Iranian-Norwegian man with dark curly hair in a grey overshirt
+      in a café, cup in hand, warm grin, soft window light, 50mm at f/2 from two and
+      a half metres
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 746539325
+    aspect_ratio: '4:5'
+    postpro: portrait
+    prediction: wyfydpjqf9rmy0d0v1fvbxan98
+    predict_time: 3.647628977
+    price_usd: 0.04
+    created_at: '2026-09-25T11:42:02.106Z'
+  dating-pool-man-03:
+    group: dating
+    prompt: A 31-year-old man with a ginger beard in a hiking shell at a mountain
+      cabin doorway, laughing, cool morning light, 50mm at f/4 from three metres
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 1664901862
+    aspect_ratio: '4:5'
+    postpro: portrait
+    prediction: 1xts2gmqaxrmy0d0v1ftkab1k4
+    predict_time: 2.7548153060000002
+    price_usd: 0.04
+    created_at: '2026-09-25T11:42:18.455Z'
+  dating-pool-man-04:
+    group: dating
+    prompt: A 39-year-old Nigerian-Norwegian man with close-cropped hair in a camel
+      overcoat on a city street after rain, confident smile, soft reflected light,
+      85mm at f/2 from three metres
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 35156657
+    aspect_ratio: '4:5'
+    postpro: portrait
+    prediction: c4bmy38et5rmw0d0v1gajse9b4
+    predict_time: 3.855933169
+    price_usd: 0.04
+    created_at: '2026-09-25T11:42:49.041Z'
+  dating-pool-man-05:
+    group: dating
+    prompt: A 24-year-old Norwegian man with shaggy blond hair in a flannel shirt
+      holding a skateboard by a harbour wall, easy grin, late sun from behind, 50mm
+      at f/2.8 from three metres
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 138934837
+    aspect_ratio: '4:5'
+    postpro: portrait
+    prediction: d0wxec1xg9rmt0d0v1gbd4r4xr
+    predict_time: 2.772867828
+    price_usd: 0.04
+    created_at: '2026-09-25T11:43:00.994Z'
+  dating-pool-man-06:
+    group: dating
+    prompt: A 48-year-old man with glasses and a grey beard in a linen shirt at a
+      kitchen counter chopping vegetables, looking up amused, warm window light, 50mm
+      at f/2.8 from two and a half metres
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 219765002
+    aspect_ratio: '4:5'
+    postpro: portrait
+    prediction: w6wem83brdrmy0d0v1gbq0mf74
+    predict_time: 3.567273518
+    price_usd: 0.04
+    created_at: '2026-09-25T11:43:12.835Z'
+  dating-pool-man-07:
+    group: dating
+    prompt: A 33-year-old Chinese-Norwegian man in a black rain jacket under a streetlight
+      in light rain, gentle smile, cool dusk light with warm shop windows, 85mm at
+      f/1.8 from three metres
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 834324830
+    aspect_ratio: '4:5'
+    postpro: portrait
+    prediction: 7n48z6wpjxrmr0d0v1gaae9800
+    predict_time: 2.809791578
+    price_usd: 0.04
+    created_at: '2026-09-25T11:43:23.799Z'
+  dating-pool-man-08:
+    group: dating
+    prompt: A 29-year-old man with a short beard in a rowing club jacket on a lake
+      jetty at dawn, relaxed, mist on the water, 85mm at f/2.8 from three metres
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 1451032251
+    aspect_ratio: '4:5'
+    postpro: portrait
+    prediction: vh0qjy7x6srmt0d0v1g9jgzg2c
+    predict_time: 3.691653478
+    price_usd: 0.04
+    created_at: '2026-09-25T11:43:50.07Z'
+  dating-pool-nonbinary-01:
+    group: dating
+    prompt: A 28-year-old nonbinary person with a shaved undercut and silver septum
+      ring in an oversized corduroy jacket at a record shop, easy smile, warm interior
+      light, 50mm at f/2 from two and a half metres
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 24680971
+    aspect_ratio: '4:5'
+    postpro: portrait
+    prediction: 2vnp9rvq0xrmw0d0v1gr5yhd2r
+    predict_time: 3.875339172
+    price_usd: 0.04
+    created_at: '2026-09-25T11:44:21.255Z'
+  dating-pool-nonbinary-02:
+    group: dating
+    prompt: A 34-year-old androgynous person with shoulder-length dark hair in a black
+      turtleneck by a rainy window, thoughtful half-smile, cool north light, 85mm
+      at f/2 from three metres
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 286170682
+    aspect_ratio: '4:5'
+    postpro: portrait
+    prediction: pz7wra99rhrmy0d0v1h9s4f9ym
+    predict_time: 3.800708736
+    price_usd: 0.04
+    created_at: '2026-09-25T11:45:07.012Z'
+  dating-pool-other-01:
+    group: dating
+    prompt: A 31-year-old person with short bleached hair in a green bomber jacket
+      on a harbour promenade, laughing, bright overcast, 50mm at f/2.8 from three
+      metres
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 1764745005
+    aspect_ratio: '4:5'
+    postpro: portrait
+    prediction: 5xx3bmewxxrmy0d0v1h9bzqgyr
+    predict_time: 3.069160222
+    price_usd: 0.04
+    created_at: '2026-09-25T11:45:52.879Z'
+  dating-pool-other-02:
+    group: dating
+    prompt: A 40-year-old person with a buzz cut and round glasses in a knitted cardigan
+      on a park bench with a dog, warm expression, soft afternoon light, 85mm at f/2.8
+      from three metres
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 1237839947
+    aspect_ratio: '4:5'
+    postpro: portrait
+    prediction: nj9vyvaka9rmw0d0v1hv4rych8
+    predict_time: 3.109454908
+    price_usd: 0.04
+    created_at: '2026-09-25T11:46:23.186Z'
+  bergen-floyen-morning:
+    group: scene
+    prompt: The view over Vågen harbour from Fløyen at 8am, low September sun coming
+      in almost level from the east, wooden rooftops and white hulls catching it,
+      long blue shadows still on the water, one bench in the near foreground, shot
+      on a Nikon Z8 with 35mm at f/8, clear cold air
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 916026872
+    aspect_ratio: '3:2'
+    postpro: landscape
+    prediction: k71r09zkanrmt0d0v1hr3839b0
+    predict_time: 2.255133987
+    price_usd: 0.04
+    created_at: '2026-09-25T11:47:04.149Z'
+  bergen-fog-vagen:
+    group: scene
+    prompt: 'Thick sea fog sitting on Vågen so the far shore is gone entirely, masts
+      and a crane emerging as grey silhouettes, water flat and colourless, a single
+      warm #E8B54A quayside lamp burning through it, shot on a Nikon Z8 with 85mm
+      at f/4, almost monochrome'
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 780250915
+    aspect_ratio: '3:2'
+    postpro: landscape
+    prediction: qpvf383ahdrmy0d0v1jb9tpnfr
+    predict_time: 3.538855475
+    price_usd: 0.04
+    created_at: '2026-09-25T11:47:34.667Z'
+  bergen-damsgardsfjellet:
+    group: scene
+    prompt: 'The ridge of Damsgårdsfjellet at sunset looking down over Puddefjorden,
+      the whole fjord surface beaten copper #C4703A, city grid coming on in the valley
+      below, heather and wet rock in the near foreground, 35mm at f/8, strong side
+      light from a sun already touching the horizon'
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 1561301760
+    aspect_ratio: '3:2'
+    postpro: landscape
+    prediction: 6fppqb1s7xrmt0d0v1jvsgv3fm
+    predict_time: 4.183364169
+    price_usd: 0.04
+    created_at: '2026-09-25T11:48:27.583Z'
+  bergen-ulriken-trail:
+    group: scene
+    prompt: A worn stone-and-root path climbing Ulriken in evening light, two walkers
+      small and far up the trail, Bergen laid out below through thin haze, low sun
+      behind the ridge rimming the grass, 35mm at f/5.6, warm on the rock and cool
+      in the shadow
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 1036263997
+    aspect_ratio: '3:2'
+    postpro: landscape
+    prediction: wxmqm3czpdrmt0d0v1jv41ayvg
+    predict_time: 3.71705395
+    price_usd: 0.04
+    created_at: '2026-09-25T11:48:53.811Z'
+  bergen-hiking:
+    group: scene
+    prompt: A high bare ridge between two of Bergen's seven mountains, cairn in the
+      middle distance, fjord visible on both sides, low cloud crossing below the path,
+      a rucksack set down on rock in the foreground, 28mm at f/8, wide overcast light
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 182343320
+    aspect_ratio: '3:2'
+    postpro: landscape
+    prediction: xxq63v8y4xrmw0d0v1ka0ab9c4
+    predict_time: 4.040767165
+    price_usd: 0.04
+    created_at: '2026-09-25T11:49:26.183Z'
+  bergen-lungegaardsvann:
+    group: scene
+    prompt: 'A new asphalt cycle path curving along Store Lungegårdsvann at blue hour,
+      fresh white line markings, new lamp standards throwing overlapping pools of
+      #F0D9A8 light, still black water reflecting them, one cyclist blurred by a long
+      exposure, 35mm at f/4'
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 1838580659
+    aspect_ratio: '3:2'
+    postpro: landscape
+    prediction: tsex5ztkmsrmy0d0v1kb3pwmr0
+    predict_time: 3.140406732
+    price_usd: 0.04
+    created_at: '2026-09-25T11:49:39.878Z'
+  bergen-fish-market:
+    group: scene
+    prompt: A Fisketorget stall on a Saturday, crushed ice banked up with prawns,
+      blue-black mussels and a cut side of salmon, price cards handwritten, the vendor's
+      hands in frame reaching for a scoop, overcast daylight under a canvas canopy,
+      50mm at f/4 from two metres
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 246192057
+    aspect_ratio: '3:2'
+    postpro: landscape
+    prediction: xbj21we0z9rmy0d0v1k87gjrxw
+    predict_time: 3.060946579
+    price_usd: 0.04
+    created_at: '2026-09-25T11:50:07.866Z'
+  bergen-bakery:
+    group: scene
+    prompt: A tray of Norwegian cinnamon buns just out of the oven on a bakery counter,
+      pearl sugar and dark caramelised edges, one broken open showing the spiral,
+      warm side light from a shop window, marble surface, 50mm macro at f/2.8 from
+      half a metre
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 887765044
+    aspect_ratio: '3:2'
+    postpro: landscape
+    prediction: qkmzhc8fvdrmr0d0v1ksqcrrbc
+    predict_time: 2.8102023860000003
+    price_usd: 0.04
+    created_at: '2026-09-25T11:50:28.059Z'
+  bergen-brunch:
+    group: scene
+    prompt: A Sunday brunch table from above, scrambled eggs with cured ham, sourdough,
+      coffee in heavy ceramic, two hands reaching in from opposite sides, linen napkin,
+      soft north window light, 35mm at f/4 shot straight down
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 1582474824
+    aspect_ratio: '3:2'
+    postpro: landscape
+    prediction: bneva3jmbnrmw0d0v1ktygem3w
+    predict_time: 4.8194242339999995
+    price_usd: 0.04
+    created_at: '2026-09-25T11:50:45.597Z'
+  bergen-concert-hall:
+    group: scene
+    prompt: 'The interior of a modernist concert hall before a symphony concert, warm
+      wood panelling and rows of empty red seats, stage lit and set with music stands
+      and a grand piano, house lights still up, 24mm at f/5.6 from the rear stalls,
+      warm #E4C88F pools against cool shadow'
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 1250154865
+    aspect_ratio: '3:2'
+    postpro: landscape
+    prediction: 7tsxtk4751rmt0d0v1ktk54hmr
+    predict_time: 3.096036503
+    price_usd: 0.04
+    created_at: '2026-09-25T11:50:58.6Z'
+  bergen-logen:
+    group: scene
+    prompt: A single microphone on a stand in a hard spotlight on a small ornate theatre
+      stage, brick back wall, the room beyond entirely dark, dust visible in the beam,
+      85mm at f/2 from six metres, one hard key and nothing else
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 1877403796
+    aspect_ratio: '3:2'
+    postpro: landscape
+    prediction: 8phkdyen11rmw0d0v1krtg16gc
+    predict_time: 3.342961243
+    price_usd: 0.04
+    created_at: '2026-09-25T11:51:18.536Z'
+  bergen-radio-night:
+    group: scene
+    prompt: 'The window of a night bus running through Bergen, city lights streaked
+      by motion outside, a phone showing a paused playlist reflected faintly in the
+      glass, interior lit only by cold #9FB8CF ceiling strips, 35mm at f/2, rain beading
+      on the outside of the pane'
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 1860033110
+    aspect_ratio: '3:2'
+    postpro: landscape
+    prediction: jhv8c7g4v1rmr0d0v1mbh65hdg
+    predict_time: 3.883328825
+    price_usd: 0.04
+    created_at: '2026-09-25T11:51:30.776Z'
+  bergen-pepperkakebyen:
+    group: scene
+    prompt: 'A miniature gingerbread town in a darkened hall, dozens of small illuminated
+      houses on a low table, warm #FFB870 light glowing out of every tiny window,
+      a child''s silhouette leaning in from the left, 35mm at f/2.8, the light source
+      entirely inside the models'
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 248104229
+    aspect_ratio: '3:2'
+    postpro: landscape
+    prediction: sxben79k7srmr0d0v1m9re1gpm
+    predict_time: 2.8317612519999997
+    price_usd: 0.04
+    created_at: '2026-09-25T11:51:42.654Z'
+  bergen-dog-park:
+    group: scene
+    prompt: A fenced dog run on a wet autumn morning, two dogs mid-run across churned
+      grass, owners talking under the trees at the far end, low flat light and bare
+      branches, 85mm at f/2.8 from eight metres, motion in the near dog
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 773405475
+    aspect_ratio: '3:2'
+    postpro: landscape
+    prediction: wbecewb3a9rmr0d0v1mb1d0abm
+    predict_time: 2.660166473
+    price_usd: 0.04
+    created_at: '2026-09-25T11:51:54.962Z'
+  bergen-place-bryggen:
+    group: scene
+    prompt: The Bryggen wharf frontage straight on in even daylight, the full run
+      of pointed gables in ochre, oxblood and cream, cobbled quay empty in the foreground,
+      35mm at f/8 from across the water, clean architectural framing
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 1098770355
+    aspect_ratio: '3:2'
+    postpro: landscape
+    prediction: m0q9bbwmnsrmw0d0v1mayyjx4m
+    predict_time: 3.151699591
+    price_usd: 0.04
+    created_at: '2026-09-25T11:52:07.598Z'
+  bergen-place-fisketorget:
+    group: scene
+    prompt: The Fisketorget market square from the quay, red and white stall canopies
+      in a row, harbour water on the left, low mountains behind the rooftops, overcast
+      even light, 35mm at f/8
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 383574078
+    aspect_ratio: '3:2'
+    postpro: landscape
+    prediction: fxfkv0y95nrmy0d0v1mbwkawm4
+    predict_time: 2.758966258
+    price_usd: 0.04
+    created_at: '2026-09-25T11:52:21.037Z'
+  bergen-place-floybanen:
+    group: scene
+    prompt: A blue funicular carriage climbing its track through pine and rock, steel
+      rails converging up the slope, the harbour visible far below through the trees,
+      overcast, 50mm at f/5.6 from beside the track
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 50116024
+    aspect_ratio: '3:2'
+    postpro: landscape
+    prediction: kj3r1dh8pdrmt0d0v1mt7snnsr
+    predict_time: 4.326924005
+    price_usd: 0.04
+    created_at: '2026-09-25T11:52:45.491Z'
+  bergen-place-grieghallen:
+    group: scene
+    prompt: 'A large modernist concert hall exterior at dusk, angular glass and pale
+      stone, interior lights warm #F0CE94 behind the full-height glazing, wet forecourt
+      reflecting them, 24mm at f/8, deep blue sky'
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 182828400
+    aspect_ratio: '3:2'
+    postpro: landscape
+    prediction: zh09p8ba2drmy0d0v1ms8bfr8g
+    predict_time: 2.759036183
+    price_usd: 0.04
+    created_at: '2026-09-25T11:53:02.227Z'
+  bergen-place-lungegaardsvann:
+    group: scene
+    prompt: A rectangular city lake on a still morning, the water a flat mirror holding
+      the buildings on its far bank, a fountain plume in the middle, park path curving
+      along the near edge, 35mm at f/8, soft even light
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 122303685
+    aspect_ratio: '3:2'
+    postpro: landscape
+    prediction: qtccr8n6w5rmr0d0v1mv89engc
+    predict_time: 2.772500451
+    price_usd: 0.04
+    created_at: '2026-09-25T11:53:17.793Z'
+  bergen-place-nordnesparken:
+    group: scene
+    prompt: A headland park with mown grass running to a low sea wall, mature trees
+      on the right, open fjord and a passing ferry beyond, benches facing the water,
+      late afternoon side light, 35mm at f/8
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 1019122747
+    aspect_ratio: '3:2'
+    postpro: landscape
+    prediction: rnw9qdztc9rmw0d0v1mtgtz4hc
+    predict_time: 2.574000266
+    price_usd: 0.04
+    created_at: '2026-09-25T11:53:39.17Z'
+  bergen-place-ulriken:
+    group: scene
+    prompt: The summit of Ulriken with its mast and cable-car station, bare rock and
+      low scrub, the city and fjord system spread out far below under broken cloud,
+      24mm at f/8, hard high light with fast-moving shadow
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 1421362613
+    aspect_ratio: '3:2'
+    postpro: landscape
+    prediction: syk5w69jc5rmw0d0v1n91m0m28
+    predict_time: 2.851466705
+    price_usd: 0.04
+    created_at: '2026-09-25T11:53:53.505Z'
+  bergen-place-vilvite:
+    group: scene
+    prompt: A bright modern science centre interior, primary-coloured interactive
+      exhibits, a child's hand on a large brass wheel, glass roof throwing even daylight
+      down, 24mm at f/4, clean and busy
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 702478985
+    aspect_ratio: '3:2'
+    postpro: landscape
+    prediction: k827tt4kssrmt0d0v1n93necz8
+    predict_time: 2.279044011
+    price_usd: 0.04
+    created_at: '2026-09-25T11:54:18.446Z'
+  bergen-takeaway-fishme:
+    group: scene
+    prompt: Fresh cold-water prawns piled on a wooden board with lemon halves and
+      a bowl of aioli, brown bread and butter at the edge, hard daylight from camera-left,
+      50mm macro at f/4 from 60 cm, shells wet and specular
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 476539395
+    aspect_ratio: '1:1'
+    postpro: landscape
+    prediction: j8bdb2y3hxrmr0d0v1naymf1tc
+    predict_time: 2.736229457
+    price_usd: 0.04
+    created_at: '2026-09-25T11:54:30.671Z'
+  bergen-takeaway-potetkjelleren:
+    group: scene
+    prompt: A margherita pizza straight from a wood oven on a steel peel, blistered
+      leopard-spotted crust, fior di latte pooling, whole basil leaves, hard light
+      from the oven mouth at camera-right, 50mm at f/4 shot from 45 degrees
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 1638408056
+    aspect_ratio: '1:1'
+    postpro: landscape
+    prediction: x5f3cx7zv9rmw0d0v1na22y6h4
+    predict_time: 2.730746158
+    price_usd: 0.04
+    created_at: '2026-09-25T11:54:46.106Z'
+  bergen-takeaway-dyvekes:
+    group: scene
+    prompt: 'A bowl of creamy Bergen fish soup, pale #F0E4CE broth with prawns, carrot
+      julienne and dill on top, heavy stoneware bowl on a dark oak table, warm window
+      light from behind, 50mm macro at f/4 from 50 cm, steam visible'
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 1224656104
+    aspect_ratio: '1:1'
+    postpro: landscape
+    prediction: x4xz94sjknrmt0d0v1nse1ph00
+    predict_time: 3.9073650669999997
+    price_usd: 0.04
+    created_at: '2026-09-25T11:54:59.101Z'
+  bergen-takeaway-colonialen:
+    group: scene
+    prompt: A bowl of Norwegian sour cream porridge, a well of melted butter in the
+      centre, cinnamon and sugar dusted across the surface, worn silver spoon, dark
+      wood, soft side light from a north window, 50mm macro at f/4 from 50 cm
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 1471974569
+    aspect_ratio: '1:1'
+    postpro: landscape
+    prediction: ae1t8yb7ahrmr0d0v1nv9q4qew
+    predict_time: 2.229676542
+    price_usd: 0.04
+    created_at: '2026-09-25T11:55:12.596Z'
+  bergen-macbook:
+    group: scene
+    prompt: A used silver laptop closed on a plain light oak desk, lid showing faint
+      handling marks under raking light, charger coiled beside it, shot honestly for
+      a private classified listing, soft window light from camera-left, 50mm at f/5.6
+      from one metre
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 946076719
+    aspect_ratio: '4:3'
+    postpro: landscape
+    prediction: wxrbw1dda5rmr0d0v1ntpzex8c
+    predict_time: 3.815076022
+    price_usd: 0.04
+    created_at: '2026-09-25T11:55:30.513Z'
+  bergen-bike-sale:
+    group: scene
+    prompt: A used city bicycle leaning against a painted wooden wall, worn saddle
+      and scuffed frame, rear rack and mudguards, photographed square on for a classified
+      listing, flat overcast daylight, 35mm at f/5.6 from two metres
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 526343308
+    aspect_ratio: '4:3'
+    postpro: landscape
+    prediction: 8gjx4w7bx9rmt0d0v1nvg11bbr
+    predict_time: 3.213827595
+    price_usd: 0.04
+    created_at: '2026-09-25T11:55:46.538Z'
+  bergen-sofa:
+    group: scene
+    prompt: A grey three-seat fabric sofa in a lived-in living room, cushions slightly
+      compressed, a folded blanket on one arm, photographed for a private listing,
+      daylight from a window out of frame to the right, 28mm at f/5.6
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 1970931478
+    aspect_ratio: '4:3'
+    postpro: landscape
+    prediction: 2jmdtt2nehrmy0d0v1p9ja47r0
+    predict_time: 4.243335117
+    price_usd: 0.04
+    created_at: '2026-09-25T11:56:13.556Z'
+  bergen-stroller:
+    group: scene
+    prompt: A navy pram standing in a bright hallway, hood up, wheels clean, small
+      scuffs on the frame visible, photographed plainly for a private listing, even
+      daylight from a glazed door, 35mm at f/5.6 from two metres
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 464726315
+    aspect_ratio: '4:3'
+    postpro: landscape
+    prediction: 8t4cq1m6pxrmy0d0v1p8w6xyv0
+    predict_time: 4.044150501
+    price_usd: 0.04
+    created_at: '2026-09-25T11:56:26.167Z'
+  bergen-skis:
+    group: scene
+    prompt: A pair of telemark skis stood upright against a garage wall with the boots
+      on the concrete beside them, bases showing use, bindings visible, photographed
+      for a classified listing, cool daylight through an open door, 35mm at f/5.6
+    model: black-forest-labs/flux-1.1-pro
+    version: hidden
+    seed: 1841383766
+    aspect_ratio: '4:3'
+    postpro: landscape
+    prediction: 4gc49zgwtxrmy0d0v1pv2tcdkc
+    predict_time: 2.8356989329999998
+    price_usd: 0.04
+    created_at: '2026-09-25T11:57:04.599Z'
