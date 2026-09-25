@@ -6,9 +6,12 @@ its lean and genre-agnostic in intent. `postpro/` is the house grade, analog
 photographic emulation for stills. `preprompt/` generates images, and
 chains radically different models to do it. `lora/` trains person-specific
 fine-tunes, so a name survives across worlds. `bplans/` holds the business
-plans as YAML and the brief for the generator that will set them as HTML and
-PDF; it has no code yet. Each keeps its own contract in its
-own README, and the reasons behind a setting sit in a comment beside it.
+plans as YAML, waiting for a generator that has not been written. When it is,
+it sets them as HTML and PDF in Norwegian, on the layout of the HTU letters,
+under MASTER's law, Bringhurst and Strunk & White, and the plans lost from
+the older pub, pub2 and pub3 repositories come back from there. Each tool keeps
+its own contract in its own README, and the reasons behind a setting sit in a
+comment beside it.
 
 ## Read this part first
 
@@ -110,13 +113,11 @@ relative to the stock's *own* box speed — rating a film faster than it is, whi
 is what pushing means and what pushing costs.
 
 **DIR couplers.** Development byproducts from one dye layer inhibit its
-neighbours. This desaturates pure hues and *sharpens* edges — the acutance
-effect. Getting this right matters more than it sounds: the implementation built
-every output band from a blurred copy of the image, which inverted the sign of
-the whole effect and cost 52% of a photograph's micro-detail in one step. The
-diffusion belongs to the inhibitor, not to the picture. A layer's own density is
-sharp; what reaches it from its neighbours has diffused. Written that way, the
-edge effect falls out of the physics instead of being bolted on afterwards.
+neighbours, which desaturates pure hues and *sharpens* edges: the acutance
+effect. Only the inhibitor diffuses. A layer keeps its own density sharp and
+receives a blurred signal from its neighbours, so the edge effect falls out of
+the physics. Blurring the picture instead inverts the effect, and once cost 52%
+of a photograph's micro-detail in a single step.
 
 **Halation runs before the curve**, because it happens in the emulsion — light
 passes the dye layers, reflects off the base, and re-exposes from behind.
@@ -211,11 +212,13 @@ is not measurable from pixels, and a guessed caption teaches the wrong word.
 
 ## Checks
 
-```zsh
-cd STUDIO && rbenv exec rake test            # the whole suite
-cd STUDIO && rbenv exec rake test:postpro    # one tool
-cd STUDIO && rbenv exec rake isolation       # tests that only pass in company
-```
-
 Run the smallest check that proves the work, and do not report done without its
-output. A guard green over hand-picked tests is unmeasured — run the whole set.
+output. A guard green over hand-picked tests is unmeasured, so run the whole
+set. The first line below is the whole suite, the second one tool, and the third
+finds the tests that pass only in company.
+
+```zsh
+cd STUDIO && rbenv exec rake test
+cd STUDIO && rbenv exec rake test:postpro
+cd STUDIO && rbenv exec rake isolation
+```

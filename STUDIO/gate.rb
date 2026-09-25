@@ -71,12 +71,6 @@ module Deploy
         owner: "operator scripts, run by hand — parse-checked only",
       },
       {
-        name: "bplans",
-        glob: "bplans/**/*.rb",
-        entry: nil,
-        owner: "the business-plan generator's brief, no code yet — parse-checked only",
-      },
-      {
         name: "gate",
         glob: "*.rb",
         entry: nil,

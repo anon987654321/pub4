@@ -92,8 +92,9 @@ triangle an octave above and a little resonance, the electric piano a triangle
 and a square, struck and never held. The bed plays its own oscillator families,
 declared in `data/bed.yml`.
 
-ENV knobs, the switch reference and the render path in detail are in
-`ENV_AND_RENDER.md`. There are three ways to hear the engine without rendering a
+Every knob the engine reads, with its current default, comes from
+`ruby dilla.rb knobs`, and `config-provenance` after a render names what that
+render resolved. There are three ways to hear the engine without rendering a
 file: the Dilla Lab page brgen serves from `RAILS/brgen/public/dilla/dilla.html`,
 `ruby dilla.rb live`, which plays the catalogue and, as `live set`, the livesets
 in `lib/livesets.rb`, and `ruby dilla.rb sines`, which runs the sine stream.
@@ -117,8 +118,7 @@ becomes pads, bass and leads. A sampled loop is varispeeded, chopped, varied and
 EQd alongside it. The drum grid gets its microtiming, swing, dirt and ducking.
 Those three meet at the analog bus, which saturates each channel separately, and
 the sum goes through sonitex tape, the analog chain, loudness normalisation, tape
-hysteresis, tilt, dropout and mono bass, in that order. `ENV_AND_RENDER.md` draws
-it.
+hysteresis, tilt, dropout and mono bass, in that order.
 
 Four things about that order are worth knowing.
 
@@ -301,20 +301,22 @@ were all silent — the code ran, returned success, and did nothing.
 - **Concat lists need absolute paths.** The demuxer resolves relative entries
   against the list file's directory, so a relative output path silently produced
   no effect at all.
-- **`GROOVE_FEEL` defaults to `boom_bap`.** The Dilla microtiming this engine is
-  named for is off unless asked. `dilla_drag` puts the snare behind while the
-  hats hold the grid; `camel` drags further and pulls the hats early. Every
-  render that never set it got straight-ahead timing.
+- **`GROOVE_FEEL` is the microtiming table, and it defaults to `dilla_drag`**:
+  the snare sits behind while the hats hold the grid. `boom_bap` is straight
+  ahead and `camel` drags further and pulls the hats early. It defaulted to
+  `boom_bap` for months, so a render from before that change was straight
+  whether or not anyone meant it.
 - **The fugue arranger is gated on the track's *name*.** `arrange_fugue_progression`
   builds exposition / development / recapitulation, and `theory_runtime` only
   reaches for it when `TRACK` matches `/bach|baroque|circle|fugue/i`. Of the
   whole catalogue only `circle_fifths_descent` does, so asking for "a fugue
   concept" on any other track silently gets none.
-- **Presence is boosted twice and cut once.** `HARM_PRESENCE_DB` (+1.6) and
-  `DRUM_PRESENCE_DB` (+1.5) both push the same region that `MASTER_SMOOTH_DB`
-  takes 2 dB out of at 3.2 kHz. Net is still a boost into the band
-  `master_smooth!` itself calls "where distortion and harshness actually live".
-  The de-harsher is no longer switched off, but it is outnumbered.
+- **Presence is boosted twice and cut once.** `HARM_PRESENCE_DB` and
+  `DRUM_PRESENCE_DB` both push the region `MASTER_SMOOTH_DB` cuts at 3.2 kHz,
+  and together they add more than it takes out, so the net is a boost into the
+  band `master_smooth!` itself calls "where distortion and harshness actually
+  live". If a render is rough on the ears, this arithmetic is the first place to
+  look; `ruby dilla.rb knobs` prints the three current values.
 - **`analyze_harshness` is a three-band meter.** Presence (2–4 kHz) minus body
   (180 Hz–2 kHz). The old two-band split at 3.5 kHz put the roughness people
   complain about inside `mid`, where it cancelled — a render measured −24.5
@@ -355,7 +357,7 @@ were all silent — the code ran, returned success, and did nothing.
   preset removes the thing that makes the arrival legible. `dilla ab
   SONITEX=donuts_soul bars=8` measures the swap in one command.
 
-## Five findings that keep recurring
+## Findings that keep recurring
 
 **When you find a bug here, count the other sites before fixing the one in front
 of you.** This engine's characteristic failure is a correct diagnosis applied
@@ -420,14 +422,216 @@ every draw after it, so a seed journalled last week reproduces a different take
 and the journal quietly stops meaning anything. Append draws at the end of a
 path, or accept that the old seeds are gone and say so where they are recorded.
 
+## How the environment is layered
+
+One table of Dilla DNA drives several renderers. `comfort`, `camel` and `warp`
+are not commands; they are environment overlays on `RENDER_MODE=dilla`. The
+genre renderers, `techno`, `hate`, `industrial`, `analog` and `loose_pocket`,
+are real dispatch keys with arrangements of their own. There is no product
+wrapper: `Shared::DillaProcessor` in `RAILS/shared` shells straight out to
+`dilla.rb` with `RENDER_MODE=dilla` and the requested track, and attaches the
+file through Active Storage.
+
+Lower layers only soft-fill, setting a knob when it is empty, and later layers
+force. A one-shot render takes the caller's environment first, then the engine's
+best defaults for the render mode, then the style DNA, and only then renders.
+The stream adds its own layer between those: listenability defaults, then the
+comfort mix unless `STREAM_PUNCH=1` or `STREAM_COMFORT=0`, then extra stream
+defaults for speech, kit gains, vocals and loudness, and finally the style DNA
+forced in full. Comfort on top is the sofa mix; punch puts the creative-maximum
+kit and vocal layer on instead. `DILLA_COMFORT=1` gives a one-shot the sofa mix,
+and `DILLA_RAW=1` skips every soft default so only the operator's environment
+applies.
+
+The tables behind those layers are `RENDER_MODE_DEFAULTS` for the sketch,
+record, perform, long-soul, golden and warp modes; `DILLA_BEST_DEFAULTS` as the
+baseline; `DILLA_DEEP_DEFAULTS` for quality gates and pocket jitter;
+`DILLA_STYLE_DEFAULTS` as the one canonical style; `DILLA_COMFORT_DEFAULTS`;
+and the stream's extra, soul and fast tables. `RENDER_MODE=warp` switches on
+creative knobs that already exist: spectral arps and stacks, drum chops, the
+cosmogramma groove, quartal voicing and the dub chamber chain.
+
+Defaults are not restated here, because every table of them this file kept
+went stale. `ruby dilla.rb knobs` lists every knob the engine reads with its
+current default, `knobs conflicts` names the ones with two defaults, and
+`config-provenance` after a render names what that render resolved.
+
+## The knobs, by what they touch
+
+The knobs a session reaches for first choose the material: `TRACK` or
+`PROGRESSION` picks the progression, `BARS` or `STREAM_BARS` the length,
+`POCKET_SET` the pocket family, `DRUM_PRESET` any drum grid, and `RAP_VOCAL` a
+vocal slug or `0`. `RENDER_SEED` pins the whole render, and `DILLA_OVERWRITE`
+lets a render replace a named take instead of refusing. `DEMO_TRACKS` names an
+explicit catalogue order, `DEMO_CATALOG` chooses the stream rotation or the
+wide curated catalogue, and `DEMO_FX=ringtone` puts the catalogue post-chain
+on. `RENDER_BEAUTY_MIN` is the harmony floor a render must clear to be kept.
+
+Sample handling has its own family. `HARMONIC_KEEP` moves generated pads onto
+the loop's detected key and `HARMONIC_SHUFFLE` orders chords so the top voice
+traces one arc. `ORGANIC_VARY` rebuilds the bed as passes that differ, since
+looping a file is bit-identical and nothing acoustic is. `LOOP_CHOP_SLICES`
+cuts each pass into slices and rotates them, so the loop becomes material rather
+than a part. Varispeed makes pitch follow tempo as a record does, while
+`SAMPLE_LOOP_SEMITONES` shifts pitch alone. `SAMPLE_FM` adds audio-rate
+vibrato floored at 700 Hz so chord tones stay untouched, `SAMPLE_SCALE` layers
+the loop at degrees of its own key, `LOOP_WOW_CENTS` puts tape instability on
+the loop and never the kit, `LOOP_DELAY_BEATS` adds a tempo-synced echo, and
+`SAMPLE_START_MS` moves the loop against the kit without moving the drums. With
+`DILLA_XSAMPLE` naming a partner, `DILLA_XCONVOLVE` makes one loop the room the
+other plays in and `DILLA_XGATE` drives one loop's harmony with the other's
+rhythm.
+
+The drums answer to `NO_QUANTIZE`, `SWING_ROLE_SPREAD` and `SHIFT_TIMING`,
+which is the MPC's shift timing, such as `snare:-6,hat:4`, on top of the pocket.
+`WONKY_DRUM_OVERLAY` is the Camel dual bus, with `WONKY_TOP_DIRT` putting
+phaser, flanger and crush on the cymbals and `WONKY_HAT_DUCK` ducking the top
+by the kick. `DRUM_FIELD_LAYER` puts room tone under the kit. `FM_DRUMS` is the
+FM kit that replaces the sampled one, and `DFAM=0` turns off the dual-oscillator
+percussion voice. `BASS_FEEL` lets the bass take the groove's offset.
+
+The master stages are on by default, because each shipped built and set to
+zero and nothing rendered went through them for a long time. `BUS_ANALOG` is
+per-channel saturation with small phase offsets so buses do not sum coherently,
+`CONSOLE_STRIP` a per-channel desk whose left and right run one seed apart,
+`TAPE_HYSTERESIS` the Jiles-Atherton model with `TAPE_BIAS` and `TAPE_LOSS_HZ`
+beside it, and `TAPE_WOW_MS` Ornstein-Uhlenbeck flutter. `MASTER_SMOOTH_DB`
+answers "harsh", `SMOOTH_ANALOG` drops patches on metallic General MIDI
+programs, `MASTER_TILT_DB` darkens as it goes negative, `MONO_BASS_HZ` sums the
+low end to mono, and `ORGANIC_BREATH` and `ORGANIC_SWELL` move loudness and
+brightness together. `DILLA_DROPOUT_EVERY`, `DILLA_DRONE` and `DILLA_TAPE_STOP`
+are effects rather than stages. Set any stage to `0` for the older, drier
+render. `SONITEX` and `SONITEX_PRESET` choose the tape character; the six
+section names beside them have no reader.
+
+`NO_ARP` holds chords and gives the lead phrases, and it covers three separate
+arp paths, `pad_arp_mode`, `lead_true_arp_mode?` and `lead_events_scale_arp`.
+It was first written against one of them, so pads went quiet while leads kept
+arpeggiating, and the stream set `LEAD_FORCE_ARP` per track and won every time.
+`SCALE_LEAD` needs `NO_ARP=0` beside it and says so on stderr when it lacks it.
+`LA_BEAT_PROGRESSION` is off on purpose: forced on Camel it injected planing
+chords and made streams sound broken, and with the fugue arranger it would be
+two arrangers fighting over the same chords.
+
+Vocals snap sung lines to the grid with `RAP_VOCAL_SNAP`, drag each line behind
+the beat with `RAP_VOCAL_LEAN_MS`, and swell into each line with
+`RAP_VOCAL_SWELL`. Snapping exists because a freely sung take has no tempo to
+stretch onto. Against a 92 beat, stretching one take landed between 14 and 31
+percent of its onsets on the grid, against a random baseline near 20; placing
+lines instead put 87 percent of line starts on the grid at a five millisecond
+median.
+
+The timeouts are `DILLA_SH_TIMEOUT` for a render step, `DILLA_TOOL_TIMEOUT`
+for measurements and decodes, and `DILLA_PROBE_TIMEOUT` for one ffmpeg probe.
+`DILLA_FS_DRY` turns off fluidsynth's own chorus and reverb, which costs the
+pad its side channel.
+
+## The stream, the catalogue and old sets
+
+The stream plays the whole progression pack, the priority ones first, and
+rotates only through soulful kits. It has no style sequence: one DNA every
+slot, with the mix knobs as the only difference, and the creative-maximum
+layer only under `STREAM_CREATIVE=1` or `STREAM_PUNCH=1`.
+
+The catalogue is thirty-one rows of `data/pieces.yml`. `module Pieces` in
+`dilla.rb` lays a row over `data/bed.yml` before `module Bed` reads a number, so
+a row may set anything the bed has: tempo, pad families, the lead rack, the drum
+arrangement and samples, the master console and the overtones.
+`DILLA_PIECE=<name>` chooses the overlay at load, so anything that boots
+`dilla.rb` with it set is that piece. `piece` sets it and re-executes when typed
+by hand, because a name that arrives in the arguments arrives after `Bed` has
+settled its constants.
+
+`import-als` tries three tempo spellings, because sixteen years of Live sit in
+one archive: Live 12 renamed `MasterTrack` to `MainTrack`, and Live 8 and 9 keep
+the tempo as an automation event rather than a manual value. With `write` a set
+leaves its profile in `project/imported/`, its grids and melodic clips in
+`samples/midi/`, and a census of the folder in `project/imported/_census.yml`.
+
+`demo-all` resumes, skipping parts already rendered; `DEMO_FORCE=1` renders
+them all again, `DEMO_TRACK_TIMEOUT` bounds one part and `DEMO_ALBUM_NORM=1`
+levels the album.
+
+## Provenance
+
+Every run writes a `<file>.provenance.json` beside each audio file it produced,
+through `lib/ledger.rb`, hooked at the command entry before anything reads a
+seed. It carries the render seed, the arguments, the knobs that change the
+output, the engine commit, whether the tree was clean, and a sha256. `replay`
+turns one back into the command that makes the take again.
+
+`RENDER_SEED` is drawn and recorded when unset rather than left to chance, so
+an unpinned render runs through the pinned code paths and its noise comes from
+`seed_for(tag)` rather than ffmpeg's random seed. Two unpinned renders still
+differ; each is now a draw that can be replayed. `DILLA_NO_PROVENANCE=1`
+restores the old behaviour, seed and all. Nothing before 2026-08-11 is
+reproducible: the 616 audio files in the tree then, `su_tunnel_choir.wav` among
+them, have no recorded seed.
+
+## Sample acquisition
+
+`ruby dilla.rb slskd "<query>"` can use a local slskd instance as an optional
+sample source through its search and transfer API, rather than embedding
+Soulseek. It prefers lossless files and peers with a free slot and a short
+queue, copies the chosen file into the ignored local cache, and registers it
+in the chopped-loop registry, so the renderer sees an ordinary sample loop. The
+registry keeps the peer, the filename and size, the query, the audio's sha256,
+its duration, rate and channels, the rights state, the verification state and
+the download time. The slskd contract is isolated in `lib/slskd_crate.rb`, so a
+change there reaches nothing else.
+
+Soulseek availability is not a licence. The default rights state is unknown,
+and an unknown result is blocked unless `SLSKD_ALLOW_UNKNOWN=1`, which exists
+for private research and is not a copyright bypass. For material whose rights
+are established, set `SLSKD_RIGHTS` to owned, public domain, CC0 or CC BY, and
+keep the unknown mode off for anything released.
+
+## The records the engine already knows
+
+The operator named three records, and the engine already held them.
+`data/dilla_reference.yml` keeps documented progressions for Slum Village's
+*Fantastic Vol. 2*, the Intro and Players, and for Flying Lotus's *Los
+Angeles*, Beginners Falafel and Camel. `lib/groove.rb` has a `dillatime` pocket
+at swing 58, and `DfamEngine` in `lib/sound.rb` is the Moog DFAM's shape: two
+oscillators, FM, noise, a resonant decay and an eight-step pitch and velocity
+sequencer. Techno pieces point at the industrial kit and the hardgroove feel,
+and HATE is a named drum profile in `bed.yml`. The HATE channel itself is a
+commercial techno promotion archive; dumping it into the tree would be a
+copyrighted mix archive rather than drum analysis, so neither `yt-dlp` nor
+`demucs` is run against it from here.
+
+*Fantastic Vol. 2* was finished in 1998 and released in 2000, and Questlove and
+Robert Glasper both credit it with changing where a chord sits against the
+beat. Its documented flips, from published track analyses rather than stems,
+are Little Beaver's "A Tribute To Wes" under Conant Gardens, Baden Powell's "É
+Isso Aí" under I Don't Know, the Bill Evans Trio's electric piano under
+Jealousy, Gap Mangione's "Diana in the Autumn Wind" under Fall In Love, Herbie
+Hancock's "Come Running to Me" under Get Dis Money, the Singers Unlimited's
+"Claire" under Untitled, and Roy Ayers Ubiquity's "Love from the Sun" under
+World Full of Sadness. The harmonic habit is rootless ninths and thirteenths
+that do not cadence, Cm9, Fm9, Bb13, Ebmaj7 for the Intro and Players. The
+swing is independent clocks rather than one MPC percentage, and the crackle is
+the medium rather than a plugin.
+
+Beginners Falafel and Camel are ii, V, I, IV in C with ninths and a lydian
+sharp eleven on the IV, and the engine stores those voicings. The FlyLo feel
+here is stagger, FM and the `flylo` drum bank. For techno kicks the useful public
+work is TR-909 circuit analysis rather than another lookup table, and no DFAM
+emulator on GitHub is worth vendoring.
+
+The last write on the showcase was `grit_catalogue!`: 7.5 ips tape, a mild
+triode, an 11-bit crush and a gated chip voice with space echo, after the
+pieces join. It made the joined file sound like a cassette; it did not make the
+drums more 909, the chords more Dilla or the textures more FlyLo.
+
 ## Running it
 
 Run everything from `STUDIO/dilla`. `ruby dilla.rb out.wav 18` renders one
-track of eighteen bars, and naming `TRACK=kembara_rindu` in front of it picks
-the track. Bare `ruby dilla.rb` renders the sixteen-piece catalogue into `demo.wav`,
-`ruby dilla.rb piece <name>` renders one of them, `ruby dilla.rb compose` renders
-the six-minute piece, `ruby dilla.rb stream` plays without end, and `ruby dilla.rb help`
-prints every command from the table the dispatcher reads.
+track of eighteen bars, and `TRACK=kembara_rindu` in front of it picks the
+track. Bare `ruby dilla.rb` renders the ten-piece showcase into `demo.wav`,
+`piece <name>` renders one row, `compose` the six-minute piece, `stream` plays
+without end, and `help` prints every command from the table the dispatcher
+reads.
 
 The crate has its own verbs. `chop` cuts a long recording into beds, reading
 `samples/ubrukte_samples.mp3` when given no path, and `chop list` shows the
@@ -438,506 +642,26 @@ and `import-midi` reads drum clips back into sixteen-step grids.
 Four verbs only measure. `beauty` scores a file's harmony and says what to try,
 `quality` reports loudness, true peak, harshness and the sub against the kick,
 `separate` splits a file into four stems with demucs, and `bed check` holds the
-bed's band curve against the reference record.
+bed's band curve against the reference record. `ears` describes a render, two
+files as deltas, and with `stems` separates both first.
 
-## Environment and rendering
-
-**One DNA table, several renderers.** Command aliases (`comfort`, `camel`, `warp`)
-are gone — those are ENV overlays on `RENDER_MODE=dilla`. Genre *renderers*
-(`techno`, `hate`, `industrial`, `analog`, `loose_pocket`) are real DISPATCH
-keys with their own arrangement. Optional ENV knobs only; `config-provenance`
-after a render beats memorizing the table.
-
-Sources of truth:
-
-| Path | Role |
-|------|------|
-| `dilla.rb` | Engine: `DILLA_STYLE_DEFAULTS`, `DILLA_BEST_DEFAULTS`, stream tables, render, DISPATCH |
-| `lib/harmony.rb` | Bach + Dilla voicing operators (not styles) |
-| `lib/groove.rb` | Sparse pocket phrases + micro-timing |
-
-There is no separate product wrapper — `RAILS/shared/app/services/shared/dilla_processor.rb`
-shells straight out to this file with `RENDER_MODE=dilla` and `TRACK`/`PROGRESSION`
-set from the requested style (see `Shared::DillaProcessor#run_script`).
-
-Inspect after a path that records provenance:
+The commands below, in order: the showcase, the catalogue table, one piece,
+the same take again, the six-minute piece, an Ableton set, a folder of them
+written out, a render described, two compared, a one-shot through the product
+path, the older catalogue, and a replay from a provenance sidecar.
 
 ```sh
-ruby dilla.rb config-provenance
-```
-
-## ENV layer order
-
-Lower layers only **soft-fill** (set if empty). Later **force** overwrites.
-
-### Product one-shot (`Shared::DillaProcessor` → `ruby dilla.rb dilla <out> <bars>`)
-
-```
-1. process ENV overrides     DillaProcessor sets RENDER_MODE=dilla, TRACK/PROGRESSION, RAP_VOCAL, …
-2. engine boot
-3. apply_best_defaults!      soft: RENDER_MODE table → DILLA_BEST → optional DILLA_DEEP
-4. apply_dilla_style!        soft STYLE DNA
-5. render_dilla
-```
-
-### Stream (`ruby dilla.rb` / `ruby dilla.rb stream`)
-
-```
-1. apply_stream_listenability_defaults!
-     apply_best_defaults!              soft best (+ deep if STREAM deep)
-     STREAM_COMFORT soft default         unless STREAM_PUNCH=1 or STREAM_COMFORT=0
-     STREAM_EXTRA_DEFAULTS             soft (SPEAK, kit gains, RAP_VOCAL, LUFS, …)
-     STREAM_FAST or DILLA_DEEP         soft
-     STREAM_SOUL_DEFAULTS              soft when STREAM_SOUL≠0 or comfort
-     apply_dilla_style!(force:true)    force full STYLE DNA
-     if comfort_mode?
-       DILLA_COMFORT_DEFAULTS          force sofa mix (SPEAK excluded from wipe)
-     else
-       STREAM_CREATIVE_MAX             force kit/vox layer after style
-2. stream_rotate_drums! + track order  progressions + DRUM_PRESET/POCKET_SET
-3. play("dilla", bars) → render_dilla
-```
-
-**Comfort vs punch:** stream defaults to sofa when comfort is on. Opt out with
-`STREAM_PUNCH=1` or `STREAM_COMFORT=0`. One-shot comfort: `DILLA_COMFORT=1`.
-
-**`DILLA_RAW=1`:** skip `apply_best_defaults!` soft fills — operator ENV only.
-
-## Table map
-
-| Table | Verb | Role |
-|-------|------|------|
-| `RENDER_MODE_DEFAULTS` | soft | sketch/record/perform/long_soul/golden/**warp** |
-| `DILLA_BEST_DEFAULTS` | soft | Baseline knobs aligned with STYLE (no soft-fill conflicts) |
-| `DILLA_DEEP_DEFAULTS` | soft | Quality gates + pocket jitter when deep |
-| `DILLA_STYLE_DEFAULTS` | fill/force | **Canonical dilla DNA** (the only style) |
-| `DILLA_COMFORT_DEFAULTS` | force when comfort | Sofa: calmer mix, no SPEAK wipe of user SPEAK |
-| `STREAM_EXTRA_DEFAULTS` | soft then force as creative max (punch) | Stream kit/vox/normalize |
-| `STREAM_SOUL_DEFAULTS` / `STREAM_FAST_DEFAULTS` | soft | Soul vs fast tradeoffs |
-
-### `RENDER_MODE=warp` (opt-in knob, not a style)
-
-Turns on already-built creative knobs: spectral arp/stack, `ARP_IDM_BIAS`,
-drum chops, `GROOVE_DNA=cosmogramma`, quartal voicing, dub_chamber chain.
-
-### Operator knobs (common)
-
-| ENV | Role |
-|-----|------|
-| `TRACK` / `PROGRESSION` | Progression id (e.g. `pedal_e_descent`, `neo_soul`) |
-| `BARS` / `STREAM_BARS` | Length |
-| `STREAM_COMFORT` / `STREAM_PUNCH` | Sofa vs kit-forward stream |
-| `DILLA_COMFORT` | Sofa overlay on one-shot |
-| `RENDER_MODE` | `dilla` (default) or `warp` / sketch modes |
-| `POCKET_SET` | `neo_soul` (default), `classic`, `dusty`, `industrial` |
-| `KICK_GAIN` / `DRUM_BUS_VOL` | Kit bus (`0.88` / `0.95` in `DILLA_STYLE_DEFAULTS`) |
-| `CHOIR_VOX` / `CHOIR_VOX_GAIN` | Soft ooh/aah (`0` / `0.16` default; `CHOIR_VOX=1` re-enables) |
-| `STREAM_CREATIVE` / `STREAM_PUNCH` | Opt-in wild layer (LA_BEAT/vinyl/hot LUFS) — **off** by default |
-| `DILLA_SH_TIMEOUT` | Kill a hung render step run through `sh!` (default 900s) |
-| `DILLA_TOOL_TIMEOUT` | Kill a hung tool run through `ToolRun`: measurements, decodes, quiet conversions (default 900s) |
-| `DILLA_PROBE_TIMEOUT` | Deadline for one `FfmpegProbe` measurement (default 300s) |
-| `DILLA_FS_DRY` | Fluidsynth with its own chorus/reverb off — **off** by default; costs 12.6 dB of pad side-channel |
-| `THEORY_RUNTIME` / `THEORY_DILLA` / `THEORY_BACH` | Voicing operators |
-| `PAD_VOICE` / `PAD_VOL` / `PAD_LAYERS` | Pad bed |
-| `LEAD_ARP` / `HARMONY_LEAD` / `SCALE_LEAD` | Lead layers — `SCALE_LEAD=1` needs `NO_ARP=0` beside it, and says so on stderr when it does not have it |
-| `RAP_VOCAL` | Vocal slug or `0` |
-| `SONITEX` / `ANALOG_CHAIN` | Master character |
-| `STREAM_NORMALIZE` / `STREAM_LUFS` | Loudnorm target |
-| `SPEAK` | TTS over beat (`0` product default) |
-| `STREAM_DRUM_ROTATE` | Cycle drum preset/pocket each stream slot |
-| `WONKY_DRUM_OVERLAY` / `DRUM_CHOPS` | Off by default (sparse soul kit) |
-| `FM_DRUMS` | On (`1`) — FM kit is the default replacement |
-| `DILLA_RAW` | Skip best soft defaults |
-| `GROOVE_ENGINE` / `POCKET_DNA` | Pocket humanize (default on) |
-| `GROOVE_FEEL` | `boom_bap` (**default**), `dilla_drag`, `camel` — the microtiming table |
-| `LA_BEAT_PROGRESSION` | LA-beat arranger — **off**; see the Camel warning below |
-| `MASTER_SMOOTH_DB` / `MASTER_SMOOTH_HZ` | De-harsher: 2 dB out at 3200 Hz by default |
-| `HARM_PRESENCE_DB` / `DRUM_PRESENCE_DB` | Presence boosts, +1.6 and +1.5 — same band the de-harsher cuts |
-| `RENDER_SEED` | Pins the whole render. Drawn and recorded when unset — see Provenance |
-| `DILLA_OVERWRITE` | Replace an existing named take. Unset, `render_dilla` refuses rather than overwrite |
-| `DEMO_TRACKS` | Explicit comma-separated order; beats every other rule in `demo_all_order` |
-| `DEMO_CATALOG` | `stream` plays the stream rotation; `curated` plays the wide catalogue — records on disk, the stream rotation, the generated styles and the artist-verified progressions |
-| `DEMO_FX` | Catalogue post-chain, off by default; `ringtone` adds tremolo, chorus, crusher and stereo widening, and the phaser and echo under `HATE_TUNNEL=1` |
-| `RENDER_BEAUTY_MIN` | Harmony floor before a render is kept (55–78 across profiles) |
-
-Three of these are worth stating outright because each one is a documented
-capability that is off, or a default that surprises:
-
-- **`GROOVE_FEEL` defaults to `boom_bap`**, so the Dilla microtiming this engine
-  is named for is not applied unless asked. `dilla_drag` is the snare-behind
-  table; `camel` drags further and pulls the hats early, which is what reads as
-  broken rather than swung.
-- **`LA_BEAT_PROGRESSION` is off on purpose**, and the reason is specific:
-  forcing it on Camel injected random planing-style chords and made streams
-  sound broken. It and the fugue arranger both rewrite the progression, so
-  running both means two arrangers fighting over the same chords.
-- **Presence is boosted twice and cut once.** `HARM_PRESENCE_DB` adds 1.6 dB
-  and `DRUM_PRESENCE_DB` 1.5 dB around the presence band; `MASTER_SMOOTH_DB`
-  takes 2 dB back out at 3.2 kHz. Net is still a boost into the band the comment
-  at `master_smooth!` calls "where distortion and harshness actually live". If a
-  render is rough on the ears, this arithmetic is the first place to look, not
-  the tape stage.
-
-Full DNA is large (mix bus dB, harmonic stem weights). Prefer
-`config-provenance` after a render over memorizing every key.
-
-## Switches, by what they touch
-
-Sample handling:
-
-| switch | what |
-|---|---|
-| `HARMONIC_KEEP=1` | transpose generated pads onto the loop's detected key |
-| `HARMONIC_SHUFFLE=1` | order chords so the top voice traces one arc |
-| `ORGANIC_VARY=1` | rebuild the bed as N differing passes — `-stream_loop` is bit-identical, and nothing acoustic is |
-| `LOOP_CHOP_SLICES=8` | cut each pass into slices and rotate them; the loop becomes material rather than a part |
-| `SAMPLE_LOOP_VARISPEED` | pitch follows tempo, as a record does (default on) |
-| `SAMPLE_LOOP_SEMITONES` | pitch **without** changing tempo |
-| `SAMPLE_FM=1` | audio-rate vibrato = real FM sidebands, floored at 700 Hz so chord tones are untouched |
-| `SAMPLE_SCALE=1` | layer the loop at degrees of its own key |
-| `LOOP_WOW_CENTS` | tape instability on the loop only, never the kit |
-| `LOOP_DELAY_BEATS` | tempo-synced echo (1.5 = dotted-8th) |
-| `SAMPLE_START_MS` | the loop lands this many ms behind the kit, or ahead of it when negative; the drums do not move |
-
-Two loops as one instrument — `DILLA_XSAMPLE` names the partner:
-
-| switch | what |
-|---|---|
-| `DILLA_XCONVOLVE=1` | one loop becomes the room the other plays in |
-| `DILLA_XGATE=1` | one loop's harmony driven by the other's rhythm (`amultiply`, not a gate) |
-
-Drums:
-
-| switch | what |
-|---|---|
-| `DRUM_PRESET` | any drum preset key (`ruby -e` / `DRUM_PRESET=boom_bap`) |
-| `NO_QUANTIZE=1` | quantise off entirely |
-| `SWING_ROLE_SPREAD` | how far the per-voice lean spreads |
-| `SHIFT_TIMING=snare:-6,hat:4` | the MPC's shift timing: one role early or late by a fixed ms, on top of the pocket (`kick` and `hat` name both their roles) |
-| `WONKY_DRUM_OVERLAY=1` | Camel dual-bus: sub at 55/110/180, top at 3.5k/6.5k/9k |
-| `WONKY_TOP_DIRT` | phaser/flanger/crush on cymbals, kick untouched |
-| `WONKY_HAT_DUCK` | duck the top bus by the kick bus |
-| `DRUM_FIELD_LAYER` | room tone under the kit, ducked by it |
-
-Movement and master. The analog stages are **on by default**. Every one of them
-shipped built and set to `0`, so for a long time nothing this engine rendered had
-ever been through them. Set a switch to `0` for that older, drier behaviour.
-
-| switch | default | what |
-|---|---|---|
-| `BUS_ANALOG` | `0.3` | per-channel saturation plus small phase offsets, so buses don't sum coherently |
-| `CONSOLE_STRIP` | `0.35` | per-channel desk model; L and R run one seed apart, which is the point |
-| `TAPE_HYSTERESIS` | `0.25` | Jiles-Atherton, RK4 — path-dependent, unlike every other stage |
-| `TAPE_BIAS` | `1.0` | 1 = original loop; lower = less bias, wider hysteresis (ChowTape) |
-| `TAPE_LOSS_HZ` | `0` | spacing/loss lowpass into JA; 0 is off, 14000 is the analog start |
-| `TAPE_WOW_MS` | `0.6` | Ornstein-Uhlenbeck flutter |
-| `SONITEX_MIX` / `_DISTORTION` / `_VINYL` / `_TONE` / `_NOISE` / `_SAMPLING` | — | Documented but unread. Setting these changes nothing; use `SONITEX` / `SONITEX_PRESET` |
-| `MASTER_SMOOTH_DB` | `2.0` | takes 2 dB out of the presence band; the stage that answers "harsh" |
-| `SMOOTH_ANALOG` | `1` | drop patches on metallic GM programs (chromatic percussion, 94, 98, 99, 103) |
-| `MASTER_TILT_DB` | `0` | negative = darker; lows up as highs come down |
-| `MONO_BASS_HZ` | — | sum below N to mono |
-| `ORGANIC_BREATH` / `ORGANIC_SWELL` | `0` | correlated loudness+brightness; phrase swell |
-| `DILLA_DROPOUT_EVERY` | — | silence just before every Nth downbeat |
-| `DILLA_DRONE` / `DILLA_TAPE_STOP` | `0` | stretched bed; platter brake |
-
-Arps and groove:
-
-| switch | default | what |
-|---|---|---|
-| `NO_ARP` | `1` | held chords and melodic lead phrases; covers **three** separate arp paths |
-| `GROOVE_FEEL` | `boom_bap` | `boom_bap` / `dilla_drag` / `camel` — per-voice tick offsets at 96 PPQ |
-| `BASS_FEEL` | `1` | let the bass take the feel's offset instead of sitting on the grid |
-
-`NO_ARP` reaches `pad_arp_mode`, `lead_true_arp_mode?` and `lead_events_scale_arp`.
-It was added covering only the first, which meant pads went quiet and the leads
-kept arpeggiating — and `STREAM_STYLE_SAFE` and `stream_iterate` both set
-`LEAD_FORCE_ARP=1` per track, so the forced flag won every time.
-
-Vocals (`RAP_VOCAL=<slug>`, `0` to disable):
-
-| switch | what |
-|---|---|
-| `RAP_VOCAL_SNAP` | place sung lines on the grid instead of stretching |
-| `RAP_VOCAL_LEAN_MS` | drag each line behind the beat, plus a fixed walk |
-| `RAP_VOCAL_SWELL` | reverse pre-swell arriving on each line's downbeat |
-
-Snapping exists because a freely-sung take has no tempo to stretch onto. Across
-source BPMs 96–128 against a 92 beat, one take landed 31/20/19/18/25/14% of its
-onsets on the grid against a ~20% random baseline — slowing it made alignment
-*worse*. Placing lines instead took line starts to 87% on grid at a 5 ms median.
-
-## One-shot render path
-
-```sh
-cd STUDIO/dilla
-TRACK=pedal_e_descent PROGRESSION=pedal_e_descent ruby dilla.rb dilla /tmp/beat.wav 12
-```
-
-### 1. Engine CLI (`DISPATCH["dilla"]`)
-
-1. Destination + bars
-2. Best defaults (unless `DILLA_RAW`) + style DNA
-3. `render_dilla(dest, bars)`
-
-### The shape of a render
-
-```
-progression  ──►  theory refine  ──►  pads · bass · leads ──┐
-                                                            │
-sampled loop ──►  varispeed · chop · vary · EQ ─────────────┤
-                                                            ├──►  bus analog
-drum grid    ──►  microtiming · swing · dirt · duck ────────┘      (saturation
-                                                                    per channel)
-                                                                        │
-        sonitex tape ──► analog chain ──► loudnorm ──► tape hysteresis
-                                       ──► tilt ──► dropout ──► mono bass
-```
-
-### 2. `render_dilla` (core)
-
-```
-require ffmpeg · cleanup · pick_render_seed!
-ensure_drum_kit!
-cfg = dilla_resolve_config
-composition_session! if COMPOSITION=1
-pick_synth_patches!
-pads = dilla_progression(cfg)
-arrange + beautify (harmony)
-theory_runtime refine (Bach/Dilla operators)
-events = dilla_schedule(...)   # sparse pocket + groove_engine
-render_sample_bus_wav → drums
-render_harmonic_wav:
-  pads (stack_soul layers)
-  + CHOIR_VOX chord-tone ooh/aah (soft)
-  + tones / leads / pluck
-sidechain amix → sonitex → analog → heuristics → loudnorm
-```
-
-### 3. Product attach (RAILS)
-
-`Shared::DillaProcessor.render_to_file!` → engine → Active Storage.
-
-## Stream rotation
-
-- **Progressions:** full pack (priority first: `pedal_e_descent`, neo-soul, untitled, …)
-- **Drums:** `STREAM_DRUM_ROTATION` — soulful kits only (`dilla_slight`, `mpc3000`, …)
-- **No style sequence** — one DNA every slot; mix knobs only (`STREAM_COMFORT`, etc.)
-- **Style DNA wins** after force; `STREAM_CREATIVE_MAX` only when `STREAM_CREATIVE=1` or `STREAM_PUNCH=1`
-
-## The catalogue demo.wav plays
-
-Sixteen rows in `data/pieces.yml`. Each is laid over `data/bed.yml` by
-`lib/pieces.rb` before `module Bed` reads a number, so a row may set anything
-the bed has — tempo, `pad_families`, `lead.rack_names`, `drums.arrangement`,
-`drums.samples`, `master_bus.console`, `overtones`.
-
-```sh
-cd STUDIO/dilla
-ruby dilla.rb                      # the catalogue -> demo.wav + demo.mp3
-ruby dilla.rb pieces-list          # the table, one line each
+ruby dilla.rb
+ruby dilla.rb pieces-list
 ruby dilla.rb piece still_water out.wav
-RENDER_SEED=42 ruby dilla.rb       # the same take again
-ruby dilla.rb compose              # the six-minute piece instead
-```
-
-`DILLA_PIECE=<name>` is the knob under all of it: it chooses the overlay at
-load, so anything that boots `dilla.rb` with it set is that piece. `piece`
-sets it and re-execs when it was typed by hand, because a name that arrives in
-`ARGV` arrives after `Bed` has already settled its constants.
-
-## Reading old Ableton sets
-
-```sh
-ruby dilla.rb import-als "~/Downloads/kp Project/kp.als"   # one set
-ruby dilla.rb import-als ~/Downloads/livesets              # every set under it
-ruby dilla.rb import-als ~/Downloads/livesets write        # and write it all out
-```
-
-Reads tempo, every track's devices with their parameters, plugin names and
-paths, fader/pan/sends, all notes, harmony per chord track, grid per drum
-track, and every sample reference. `write` puts a profile per set in
-`project/imported/<slug>.yml`, drum grids and melodic clips in
-`samples/midi/<slug>/`, and `project/imported/_census.yml` across the folder.
-
-Three tempo spellings are tried, because sixteen years of Live are in one
-archive: Live 12 renamed `MasterTrack` to `MainTrack`, and Live 8 and 9 keep
-the tempo as an automation event rather than a manual value.
-
-## What a render measures like
-
-```sh
-ruby dilla.rb ears                        # demo.wav
-ruby dilla.rb ears a.wav b.wav            # both, with band deltas
-ruby dilla.rb ears a.wav b.wav stems      # demucs first
-ruby dilla.rb ears a.wav --json           # the old metadata report
-```
-
-Octave bands, LUFS, LRA, true peak, crest, stereo width, sub energy below
-25 Hz and air above 13 kHz, plus a spectrogram per file under `<output>/ears`.
-
-## Full playlist demo
-
-```sh
-cd STUDIO/dilla
+RENDER_SEED=42 ruby dilla.rb
+ruby dilla.rb compose
+ruby dilla.rb import-als "~/Downloads/kp Project/kp.als"
+ruby dilla.rb import-als ~/Downloads/livesets write
+ruby dilla.rb ears
+ruby dilla.rb ears a.wav b.wav stems
+TRACK=pedal_e_descent ruby dilla.rb dilla /tmp/beat.wav 12
 SPEAK=0 ruby dilla.rb demo-all 12 demo.wav
-# resume skips existing parts; DEMO_FORCE=1 re-renders all
-# DEMO_TRACK_TIMEOUT=150 DEMO_ALBUM_NORM=1
-```
-
-## Provenance debugging
-
-Every run writes a `<file>.provenance.json` beside each audio file it produced —
-`lib/ledger.rb`, hooked at the CLI entry before anything reads a seed. It
-carries the render seed, argv, the env knobs that change the output, the engine
-commit, whether the working tree was clean, and a sha256.
-
-```sh
 ruby dilla.rb replay direction_v4.wav.provenance.json
-# RENDER_SEED=1505395575 TRACK=circle_fifths_descent … ruby dilla.rb dilla …
+ruby dilla.rb knobs
 ```
-
-`RENDER_SEED` is drawn and recorded when unset rather than left to chance. The
-consequence is worth knowing: an unpinned render now runs through the *pinned*
-code paths, so noise comes from `seed_for(tag)` rather than ffmpeg's `seed=-1`.
-Two unpinned renders still differ from each other exactly as before; each is now
-a draw that can be replayed instead of one that cannot. `DILLA_NO_PROVENANCE=1`
-restores the old behaviour, seed and all.
-
-Nothing before 2026-08-11 is reproducible. The 616 audio files in the tree at
-that point, `su_tunnel_choir.wav` among them, have no recorded seed and cannot
-be made again.
-
-For the resolved ENV rather than the render:
-
-```sh
-cd STUDIO/dilla
-SPEAK=0 BARS=4 ruby -e '
-  load "dilla.rb"
-  apply_best_defaults!
-  apply_dilla_style!(force: true)
-  print_config_provenance
-'
-```
-
-## Related files
-
-| Path | Role |
-|------|------|
-| `dilla.rb` | Monolith + DISPATCH + ENV tables |
-| `lib/groove.rb` | Chords, timing DNA |
-| `lib/groove.rb` | Pocket phrases, Gaussian jitter, phrase drift |
-| `lib/harmony.rb` | Beautify / insight |
-| `lib/harmony.rb` | Bach + Dilla voicing refine |
-| `lib/harmony.rb` | Form, performers |
-| `lib/listen.rb` | Master FX + loss gates |
-| `lib/music_gems.rb` | coltrane / head_music / midilib / wavefile |
-| `README.md` | Usage summary |
-
-## Sample acquisition
-
-`ruby dilla.rb slskd "<query>"` can use a local
-[slskd](https://github.com/slskd/slskd) instance as an optional sample source.
-slskd exposes search and transfer APIs under `/api/v0`; the adapter uses those
-APIs rather than embedding Soulseek in Dilla.
-
-Run:
-
-`SLSKD_API_KEY=... SLSKD_DOWNLOAD_DIR=/path/to/slskd/completed ruby dilla.rb slskd "j dilla break"`
-
-The adapter prefers FLAC/WAV/AIFF over lossy formats and prefers peers with an
-available upload slot and shorter queues. It copies the selected file into
-Dilla's ignored local cache and registers it in the existing chopped-loop
-registry, so the ordinary renderer sees it as a normal sample loop.
-
-Soulseek availability is not a licence. The default rights state is `unknown`,
-and an unknown result is blocked unless `SLSKD_ALLOW_UNKNOWN=1` is set. For
-material whose rights you have actually established, set
-`SLSKD_RIGHTS=owned`, `public_domain`, `cc0`, or `cc_by`.
-
-The registry preserves the Soulseek peer, exact filename and byte size, search
-query, SHA-256 of the downloaded audio, duration, sample rate, channel count,
-rights state, verification state and download timestamp.
-
-For production/release work, keep `SLSKD_ALLOW_UNKNOWN` off. The explicit
-unknown mode exists for private experimentation and research; it is not a
-copyright bypass.
-
-The slskd API contract is isolated in `lib/slskd_crate.rb`. If slskd changes,
-the renderer and the existing Dilla sample registry do not need to know.
-
-## Reverse engineering notes
-
-This folder is for local analysis only. Audio, stems, and YouTube dumps stay
-gitignored. They are not the catalogue.
-
-## What demo.wav actually carries
-
-The last write on the take was `grit_catalogue!`: 7.5 ips tape, a mild triode,
-11-bit crush, and a gated square/noise chip with space echo, applied after the
-pieces join. That is dirt on the showcase, not a new arrangement.
-
-The engine already knew the three records the operator named. `data/dilla_reference.yml`
-holds documented progressions for Slum Village *Fantastic Vol. 2* (Players,
-Intro) and Flying Lotus *Los Angeles* (Beginners Falafel, Camel). `lib/groove.rb`
-has a `dillatime` pocket at swing 58. `DfamEngine` is the dual-osc FM percussion
-voice, on unless `DFAM=0`. Techno pieces already point at `*kit_industrial` and
-`feel_hardgroove`. HATE is a named drum profile in `bed.yml`.
-
-The grit chain did not make the drums more 909, the chords more Dilla, or the
-textures more FlyLo. It made the joined file sound like a cassette.
-
-## HATE channel
-
-https://www.youtube.com/channel/UC6qQOTx9LuKMC5p2dbjmSRg is HATE, a commercial
-techno promotion channel (hour-long mixes: Ben Klock Podcast 500, Marie
-Montexier 499). Dumping that catalogue into the tree is a copyrighted mix
-archive, not a drum analysis. `yt-dlp` and `demucs` are on the machine. They
-are not run against the whole channel from here.
-
-## Dilla, Fantastic Vol. 2, neo-soul Detroit
-
-James Yancey, Conant Gardens. Slum Village with T3 and Baatin. *Fantastic Vol. 2*
-finished 1998, released 2000. Questlove and Robert Glasper both credit it with
-changing where a chord sits relative to the beat.
-
-Documented flips on that record (from published track analyses, not from
-stems we do not have):
-
-- Conant Gardens — Little Beaver "A Tribute To Wes"; Tribe "Award Tour" vocal
-- I Don't Know — Baden Powell "É Isso Aí"; James Brown chops
-- Jealousy — Bill Evans Trio electric piano, last minute of the cut
-- Fall In Love — Gap Mangione "Diana in the Autumn Wind" (1976)
-- Get Dis Money — Herbie Hancock "Come Running to Me" (1978) Rhodes
-- Untitled/Fantastic — Singers Unlimited "Claire" (the one people still argue)
-- World Full of Sadness — Roy Ayers Ubiquity "Love from the Sun"
-
-The people behind those records: Gap Mangione (Chuck's brother, jazz fusion),
-Herbie Hancock (Head Hunters / Sunlight vocoder era), Bill Evans, Baden
-Powell, Roy Ayers, Motown bass (Jamerson) as the city's low-end grammar, Amp
-Fiddler as the Detroit neo-soul hinge Dilla actually sat with.
-
-The harmonic habit is rootless ninths and thirteenths that do not cadence:
-Cm9–Fm9–Bb13–Ebmaj7 is the Intro/Players colour. Swing is independent clocks,
-not a single MPC percentage. Vinyl crackle is the medium, not a plugin.
-
-## Flying Lotus, Los Angeles
-
-Steven Ellison, 2008, Warp. Beginners Falafel and Camel are ii–V–I–IV in C
-with ninths and a lydian #11 on the IV. The engine already stores those
-voicings. The FlyLo feel in this tree is stagger, FM, and the `flylo` drum
-bank, not a new sample pack.
-
-## DFAM and 909
-
-`lib/sound.rb` `DfamEngine`: two oscillators, FM, noise, resonant decay, an
-8-step pitch/velocity sequencer. That is the Moog DFAM shape already. GitHub
-does not have a DFAM emulator worth vendoring; what exists is Arduino MIDI
-sync for the hardware (`dllmkdir/Moog-DFAM-MIDI-sync`) and Minimoog clones
-(`t2techno/Faug`, `giorgiogamba/MinimoogEmulator`). For techno kicks the
-useful public circuit work is TR-909 firmware analysis (`Jacquot-SFE/tr-909-analysis`)
-and analog 909 kick studies, not another LUT.
-
-## What would actually move the take
-
-Point the showcase at Fall In Love first (done). Re-render `demo.wav` so the
-file matches the table. Keep DFAM on. Do not ingest HATE.

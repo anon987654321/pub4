@@ -177,24 +177,18 @@ module PostproBootstrap
     end
   end
 
+  # One file keyed by vendor, each vendor's bodies keyed by EXIF model.
   def self.load_camera_profiles(profiles_path)
-    profiles = {}
-
-    unless Dir.exist?(profiles_path)
-      dmesg "WARN camera profiles directory not found: #{profiles_path}"
-      return profiles
+    unless File.file?(profiles_path)
+      dmesg "WARN camera profiles not found: #{profiles_path}"
+      return {}
     end
 
-    Dir.glob(File.join(profiles_path, "*.json")).each do |file|
-      begin
-        data = JSON.parse(File.read(file))
-        vendor = data["vendor"]
-        if vendor && data["profiles"]
-          profiles[vendor] = data["profiles"]
-        end
-      rescue StandardError => e
-        dmesg "WARN failed to load profile #{File.basename(file)}: #{e.message}"
-      end
+    profiles = begin
+      JSON.parse(File.read(profiles_path))
+    rescue StandardError => e
+      dmesg "WARN failed to load #{File.basename(profiles_path)}: #{e.message}"
+      {}
     end
 
     brands = profiles.keys.join(",")
@@ -245,12 +239,9 @@ module PostproBootstrap
     end
 
     # Anchored to this file, not to the shell's working directory, for the same
-    # reason as PREPROMPT_PATH below: a relative path here meant the profiles
-    # were "not found" from every directory except one nobody runs from. The
-    # directory does not exist in the repo at all today, so this changes a
-    # warning that was wrong in principle into one that is merely accurate --
-    # but it means dropping the profiles in will now be enough to load them.
-    profiles_path = File.expand_path("multimedia/camera_profiles", __dir__)
+    # reason as PREPROMPT_PATH below: a relative path finds the profiles only
+    # from the one directory nobody runs from.
+    profiles_path = File.expand_path("camera_profiles.json", __dir__)
     camera_profiles = load_camera_profiles(profiles_path)
     config = load_master_config
 
@@ -3889,7 +3880,7 @@ def process_file(file, variations, preset_name = nil, recipe_data = nil, random_
   # has ever had — fifty lines of matching and matrix application that had never
   # run, aimed at a profiles directory that had never existed.
   #
-  # Both halves are real now: multimedia/camera_profiles holds 121 bodies across
+  # Both halves are real now: camera_profiles.json holds 121 bodies across
   # six vendors, recovered from a VSCO DCP archive. A default of off would have
   # kept them as decorative as the code that reads them.
   #

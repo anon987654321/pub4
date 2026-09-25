@@ -318,7 +318,7 @@ defaults. There is no `master.json` in the repo, so `CONFIG` is empty and every
 read of it takes a built-in fallback. `--vocab-check` reports that as a note
 rather than a problem.
 
-Camera profiles load from `STUDIO/postpro/multimedia/camera_profiles`, and they
+Camera profiles load from `STUDIO/postpro/camera_profiles.json`, and they
 exist: 121 bodies across Canon, Sony, Nikon, Fujifilm, Leica and Olympus, each a
 3×3 sensor matrix recovered from a VSCO DCP archive. The pass matches on EXIF
 Make and Model and applies the body's own colour response before anything else
@@ -356,17 +356,24 @@ instead of hardcoding the file location.
 
 ## Running it
 
+A bare photograph gets three to five random chains beside it, and a directory
+gives a few picks from it. `--input`, `--output` and `--preset` grade headless.
+`--random` draws into Downloads, and `--rough` lets the wear shelf in. The
+checks and readings follow: vocabulary, grain in a scan, texture and squint,
+then repeats and exposure spread across a set. The listing and export flags
+process no image.
+
 ```sh
-ruby STUDIO/postpro/postpro.rb photo.jpg        # three to five random chains, beside it
-ruby STUDIO/postpro/postpro.rb ~/Pictures      # the same draw, a few picks from that directory
+ruby STUDIO/postpro/postpro.rb photo.jpg
+ruby STUDIO/postpro/postpro.rb ~/Pictures
 ruby STUDIO/postpro/postpro.rb --input in.jpg --output out.jpg --preset portrait
-ruby STUDIO/postpro/postpro.rb --random              # three to five chains, into Downloads
-ruby STUDIO/postpro/postpro.rb --random --rough      # the same, with the wear shelf in
-ruby STUDIO/postpro/postpro.rb --vocab-check         # are the tables consistent?
-ruby STUDIO/postpro/postpro.rb --fit-grain scan.tif  # what grain does this scan carry?
-ruby STUDIO/postpro/postpro.rb --measure photo.jpg   # texture, finest octave, squint
-ruby STUDIO/postpro/postpro.rb --set ~/Pictures/trip # repeats, and exposure spread in stops
-ruby STUDIO/postpro/postpro.rb --list-presets        # every preset and its chain
+ruby STUDIO/postpro/postpro.rb --random
+ruby STUDIO/postpro/postpro.rb --random --rough
+ruby STUDIO/postpro/postpro.rb --vocab-check
+ruby STUDIO/postpro/postpro.rb --fit-grain scan.tif
+ruby STUDIO/postpro/postpro.rb --measure photo.jpg
+ruby STUDIO/postpro/postpro.rb --set ~/Pictures/trip
+ruby STUDIO/postpro/postpro.rb --list-presets
 ruby STUDIO/postpro/postpro.rb --list-stocks
 ruby STUDIO/postpro/postpro.rb --list-lenses
 ruby STUDIO/postpro/postpro.rb --describe-preset noir

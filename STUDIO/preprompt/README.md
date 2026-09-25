@@ -189,8 +189,12 @@ makes the table worth keeping.
 
 ## Running it
 
+The last two commands, run from `STUDIO`, hold the model table against the live
+schemas and print an entry to paste for a model the table does not have.
+
 ```sh
-ruby STUDIO/preprompt/preprompt.rb generate --prompt "Bergen rain, 35mm documentary photograph" --output .master/media/bergen.webp
+ruby STUDIO/preprompt/preprompt.rb generate \
+  --prompt "Bergen rain, 35mm documentary photograph" --output .master/media/bergen.webp
 ruby STUDIO/preprompt/preprompt.rb search flux --limit 100
 ruby STUDIO/preprompt/preprompt.rb sync --limit 250
 ruby STUDIO/preprompt/preprompt.rb stats
@@ -204,6 +208,6 @@ ruby STUDIO/preprompt/preprompt.rb generate \
   --batch 6 --dry-run
 
 cd STUDIO
-rake preprompt:schema_audit                                        # table vs. live schemas
-rake preprompt:schema_suggest MODEL=black-forest-labs/flux-2-max   # an entry to paste
+rake preprompt:schema_audit
+rake preprompt:schema_suggest MODEL=black-forest-labs/flux-2-max
 ```

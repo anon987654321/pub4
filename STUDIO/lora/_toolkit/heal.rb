@@ -9,7 +9,7 @@ require "vips"
 # spot is rebuilt from both halves: the tone is filled in from the skin around
 # the mark (a blur that ignores the pixels inside it), and the texture is copied
 # from a nearby clean patch so the result keeps pores and grain. Blurring or
-# cloning alone gives the smooth plastic skin STUDIO/PHOTOGRAPHY.md warns about.
+# cloning alone gives the smooth plastic skin STUDIO/README.md warns about.
 #
 # Only skin feeds a repair. A mark near the silhouette sits beside a wall, and a
 # fill that averages the wall in leaves a pale halo, so every weight is scaled by

@@ -130,9 +130,10 @@ narrow it with `--only`.
 
 A prompt set is what a subject is rendered as. Every written sitting lives in
 `ideas.yml`, tagged with its brief: `shoots` is fifty sittings of light, `warp`
-is the press shoot, and `best` is twenty-four of those named by reference. `scenarios`, `selfies` and `distance`
-are drawn by `preprompt/lib/craft.rb` from its vocabularies, numbered so a
-sitting is the same on every run, and each fits CLIP's 77 tokens.
+is the press shoot, and `best` is twenty-four of those named by reference.
+`scenarios`, `selfies` and `distance` are drawn by `preprompt/lib/craft.rb`
+from its vocabularies, numbered so a sitting is the same on every run, and
+each fits CLIP's 77 tokens.
 
 `selfies` keeps what makes a selfie read as one — the framing, the held gaze,
 an arm in frame or not — and refuses the geometry. The camera stands two or
@@ -255,126 +256,79 @@ exists to prevent is making them by not noticing they were being made.
 Sources: replicate.com/collections/flux, /docs/guides/extend/working-with-loras,
 /docs/get-started/fine-tune-with-flux, /blog/fine-tune-flux-with-faces.
 
-## Reference
+## Layout
 
-### Layout
+A directory at this root is either a subject or starts with `_` and is shared
+by all of them. `_toolkit/` is the pipeline, and every subject uses the one.
+`curate.rb` decides which photographs earn a place and prepares them, and
+`heal.rb` removes a mark from skin in the ungraded original before anything
+grades it. `render_config.rb` writes the training YAML for the machine in use.
+`run_generate.sh` is the dispatcher every `./lora` flag lands in, and
+`toolkit.sh` holds the shell helpers it shares. `run_train.sh` trains locally or
+on RunPod, which `setup_runpod.sh` provisions. `run_train_colab.rb` writes the
+Colab notebook and `colab_session.rb` is what that notebook runs;
+`run_train_kaggle.rb` and `kaggle_session.rb` are the same pair for Kaggle.
+`run_train_replicate.rb` trains on Replicate and `run_generate_replicate.rb`
+renders a prompt set on what it trained. `run_ai_toolkit.rb` is the one place
+Python is invoked. `check_hf_flux_access.rb` asks whether the Hugging Face
+token is good and the licence accepted. `shoots.rb` picks the sittings,
+`judge.rb` refuses a frame worse than a real photograph of the subject against
+the numbers in `judge_thresholds.yml`, `contact_sheet.rb` lays frames out as
+one sheet, and `postpro_samples.rb` grades generated portraits.
 
-Two kinds of thing live here and the rule is one line: **a directory at this
-root is either a subject, or it starts with `_` and is shared by all of them.**
+The seed-media lane lives beside the subjects because it has none.
+`seed_media.yml` is every photograph the three RAILS apps seed with, as a
+prompt. `run_seed_media_colab.rb` generates `seed_media.ipynb`,
+`run_seed_media_replicate.rb` is the paid lane that renders each frame once,
+grades it and records it in `seed_media_manifest.yml`, and
+`install_seed_media.rb` turns rendered frames into graded catalogue entries.
 
-```
-lora/
-├── README.md — this file, the only documentation
-├── _toolkit/ — the pipeline. One copy; every subject uses it.
-│   ├── curate.rb — decides which photographs earn a place, and prepares them
-│   ├── render_config.rb — writes the training YAML for the machine you are on
-│   ├── run_generate.sh — the dispatcher. Every `./lora --flag` lands here.
-│   ├── toolkit.sh — shared shell helpers: paths, config rendering
-│   ├── run_train.sh — local and RunPod training
-│   ├── run_train_colab.rb — writes the Colab notebook
-│   ├── colab_session.rb — what that notebook runs once it is on Colab
-│   ├── run_train_kaggle.rb — pushes a Kaggle notebook, polls, pulls weights back
-│   ├── kaggle_session.rb — what THAT notebook runs once it is on Kaggle
-│   ├── run_train_replicate.rb — uploads the dataset, trains on Replicate, pulls weights
-│   ├── run_generate_replicate.rb — renders a prompt set on the LoRA Replicate trained
-│   ├── run_ai_toolkit.rb — the one place Python is invoked: ai-toolkit’s run.py
-│   ├── run_seed_media_colab.rb — writes seed_media.ipynb for the seed-media lane
-│   ├── run_seed_media_replicate.rb — the paid seed-media lane: render once, grade, record
-│   ├── install_seed_media.rb — rendered frames in, graded catalogue entries out
-│   ├── setup_runpod.sh — provisions a rented GPU box
-│   ├── check_hf_flux_access.rb — is the HF token good and the licence accepted?
-│   ├── shoots.rb — picks the sittings, written or drawn by preprompt, for a subject
-│   ├── judge.rb — refuses a frame worse than a real photograph of the subject
-│   ├── judge_thresholds.yml — the numbers judge.rb refuses against
-│   ├── contact_sheet.rb — lays a directory of frames out as one sheet
-│   └── postpro_samples.rb — grades generated portraits through STUDIO/postpro
-│
-├── guides/ — narrated m4a walkthroughs. STALE: they describe a 17-image
-│             dataset that no longer exists and two lanes, RunPod and local
-│             MPS, that are ruled out. Kept, not trusted. It is also the one
-│             directory here that is neither a subject nor `_`-prefixed.
-│
-├── ideas.yml — seventy-four written sittings, subject-agnostic: fifty in the
-│               shoots brief, sequenced in eight sides, twenty-four in warp,
-│               and the twenty-four best named by reference
-├── seed_media.yml — every photograph the three RAILS apps seed with, as a prompt
-├── seed_media.ipynb — GENERATED by run_seed_media_colab.rb
-├── seed_media_manifest.yml — every seed frame rendered: prompt, model, seed,
-│                             prediction, postpro preset and price
-│
-├── ragnhild/ — a subject
-└── johann/ — a subject, with no photographs yet
-```
+`ideas.yml` holds seventy-four written sittings: fifty in the shoots brief,
+sequenced in eight sides, twenty-four in warp, and the best twenty-four named
+by reference. `ideas/` keeps five of them rendered and graded. `guides/` holds
+narrated walkthroughs that describe a dataset that no longer exists and two
+lanes that are ruled out, kept as recordings and not trusted as instructions.
 
-#### Inside a subject
+Inside a subject, `lora` is the entry point: a seven-line script that names the
+subject and hands to `_toolkit`. `subject.env` says who, in three lines naming
+the subject, the model and the trigger. `train.yaml` says how, with the rank,
+learning rate, steps and twelve validation prompts; it is edited by hand, and
+`render_config.rb` writes a per-machine version without touching it. `dataset/`
+is what the model learns from, images with one caption file each under the same
+stem. `colab.ipynb` and `contact_sheet.jpg` are generated, so edit their
+generators rather than them. Runs leave checkpoints in `weights/`, portraits in
+`out/`, scratch in `.cache/` and ai-toolkit's working files in
+`dataset/_latent_cache/`, and git ignores all four.
 
-```
-ragnhild/
-├── lora* — THE ENTRY POINT. Run this, nothing else. Named after the directory
-│           two levels up, which reads as confusing the first time: it is a
-│           seven-line shell script that names the subject and hands to
-│           _toolkit. Usage: ./lora --train-colab --steps 1000
-├── subject.env — WHO. Three lines: SUBJECT, MODEL, TRIGGER.
-├── train.yaml — HOW. Rank, learning rate, steps, the 12 validation prompts.
-│                Edited by hand; render_config.rb rewrites a copy of it per
-│                machine and never touches this one.
-├── dataset/ — WHAT IT LEARNS FROM. Images plus one .txt caption each, same
-│              filename stem. This is the whole training input.
-├── colab.ipynb — GENERATED by run_train_colab.rb. Do not edit; regenerating
-│                 overwrites it. Edit the generator.
-└── contact_sheet.jpg — GENERATED. The dataset, graded, for showing people.
-```
+`dataset/` and `out/` must never merge. A graded photograph of Ragnhild is not
+the model saying her name back, and if both lived in one directory the first
+real generate run would look like success before it was one. The same reason
+keeps `train.yaml` authored and `colab.ipynb` generated: editing the notebook
+feels faster and is thrown away the next time anything regenerates it.
 
-Four more appear once you have run something, and none are committed
-(`.gitignore` excludes them):
+**`dataset/` is ignored by git, and this repository is public.** A photograph
+committed here is published to anyone, and removing it later leaves it in the
+history, so no subject's photographs are tracked. The training lanes read the
+set from the machine or from Drive instead.
 
-```
-```
-weights/<MODEL>/ — checkpoints: the .safetensors that IS the LoRA
-out/ — generated portraits, and nothing else
-.cache/ — scratch: staged notebooks, packed datasets
-dataset/_latent_cache/ — ai-toolkit’s own working files, written mid-training
-```
+Everything but the three `subject.env` values is shared. Environment knobs are
+`LORA_*` for every subject, such as `LORA_DEVICE`, `LORA_LR`, `LORA_STEPS`,
+`LORA_PROMPT` and `LORA_FLUX_MODEL`, because the directory already chose the
+subject and a knob named after one is not a knob. A `_toolkit/` script run
+directly refuses, since it cannot know which subject was meant.
 
-#### The distinction the project turns on
+## Commands
 
-`dataset/` and `out/` must never merge. A graded photograph OF Ragnhild is not
-the model saying her name back — and if both lived in one directory, the first
-real generate run would look like it had succeeded before it had.
-
-Same reason `train.yaml` is authored and `colab.ipynb` is generated: editing the
-notebook feels faster and is silently thrown away the next time anything
-regenerates it. Every generated file above says so on the line that names it.
-
-**`dataset/` is ignored by git, and this repo's origin is public.** A
-photograph committed here would be published to anyone, and removing it later
-would leave it in the history, so no subject's photographs are tracked. The
-training lanes read the set from the machine or from Drive instead.
-
-`subject.env` names the three things that differ between one subject and the
-next:
+One entry point per subject, and `./lora --help` lists the rest. In order
+below: the Hugging Face gate, toolkit and dataset check; local or RunPod
+training; a sample from the newest checkpoint; check, generate and grade in one
+pass; and two Replicate renders, the second a dry run.
 
 ```sh
-SUBJECT=johann
-MODEL=johann_v1
-TRIGGER=johann
-```
-
-Everything else is shared. Environment knobs are `LORA_*` for every subject
-(`LORA_DEVICE`, `LORA_LR`, `LORA_STEPS`, `LORA_PROMPT`, `LORA_FLUX_MODEL`, …):
-a knob named after the subject is not a knob, since the subject is already
-chosen by which directory you are in. Run a `_toolkit/` script directly and it
-refuses, because it cannot know which subject you meant.
-
-### Commands
-
-One entry point per subject. `./lora --help` lists the rest.
-
-```sh
-STUDIO/lora/ragnhild/lora --check      # HF gate, toolkit, dataset
-STUDIO/lora/ragnhild/lora --train      # local MPS or a RunPod pod
-STUDIO/lora/ragnhild/lora --generate   # sample from the newest checkpoint
-STUDIO/lora/ragnhild/lora --all        # check, generate, postpro
+STUDIO/lora/ragnhild/lora --check
+STUDIO/lora/ragnhild/lora --train
+STUDIO/lora/ragnhild/lora --generate
+STUDIO/lora/ragnhild/lora --all
 STUDIO/lora/ragnhild/lora --generate-replicate --set selfies
 STUDIO/lora/ragnhild/lora --generate-replicate --set distance --dry-run
 ```
