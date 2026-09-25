@@ -73,6 +73,14 @@ module Deploy
       stimulus_rails_nested_form_controller.js
     ].freeze
 
+    # The baseline pins components two ways: names in a %w[] list handed to
+    # sc_pin, and single `pin "@stimulus-components/x", to: ...` lines.
+    def self.pinned_components(baseline)
+      listed = baseline.scan(/%w\[([^\]]*)\]\s*\.each\s*\{\s*\|\w+\|\s*sc_pin/).flatten.flat_map(&:split)
+      single = baseline.scan(%r{pin\s+"@stimulus-components/([\w-]+)"}).flatten
+      (listed + single).uniq
+    end
+
     def self.view_controller_usages
       usages = Hash.new { |hash, key| hash[key] = [] }
       Dir.glob(File.join(RAILS_ROOT, "**/*.{erb,html}")).each do |path|
@@ -113,7 +121,13 @@ module Deploy
       if File.file?(BASELINE)
         baseline = File.read(BASELINE)
         result.checked!(1 + (REQUIRED_PACKAGES.size * 2))
-        result.fail("importmap must pin shared vendor stimulus-components") unless baseline.include?("vendor/javascript")
+        # Vendored means every @stimulus-components pin resolves to a file in
+        # shared/vendor/javascript, not that the baseline mentions the path.
+        pinned = pinned_components(baseline)
+        result.fail("importmap pins no @stimulus-components at all") if pinned.empty?
+        pinned.reject { |pkg| File.file?(File.join(VENDOR, "@stimulus-components--#{pkg}.js")) }.each do |pkg|
+          result.fail("importmap pins @stimulus-components/#{pkg} with no vendored file in shared/vendor/javascript")
+        end
         REQUIRED_PACKAGES.each do |pkg|
           result.fail("importmap missing #{pkg}") unless baseline.include?(pkg)
           # A pin resolves at boot, so a pinned name with no file on disk fails
