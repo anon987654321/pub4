@@ -52,9 +52,6 @@
       const connected = data?.connection || data?.connected || data?.ssid || data?.ip;
       return { topology: "neural", entropy: connected ? 0.18 : 0.48, confidence: connected ? 0.92 : 0.58, mode: connected ? "device-network" : "device-network-quiet" };
     }
-    if (/^device:(accelerometer|gyroscope|magnetometer|light|proximity)$/.test(key)) {
-      return { topology: "papua-mask", entropy: 0.28, confidence: 0.86, mode: key.slice(7), deviceSensor: key.slice(7) };
-    }
     if (key === "device:sensors") {
       return { topology: "neural", entropy: 0.20, confidence: 0.90, mode: "device-sensors" };
     }
@@ -184,10 +181,7 @@
       document.documentElement.style.setProperty("--master-battery", String(deviceVisual.battery / 100));
       document.documentElement.dataset.deviceBattery = String(Math.round(deviceVisual.battery));
     }
-    if (deviceVisual?.deviceSensor) {
-      document.documentElement.dataset.deviceSensor = deviceVisual.deviceSensor;
-    }
-    if (/^device:(?:battery|network|sensors|accelerometer|gyroscope|magnetometer|light|proximity)$/.test(type)) {
+    if (/^device:(?:battery|network|sensors)$/.test(type)) {
       window.dispatchEvent(new CustomEvent("master:device", { detail: { type, payload, visual: deviceVisual } }));
     }
     emitVisual(type, mapped);

@@ -79,10 +79,24 @@ test("the formant peaks carry the declared frequencies and gains", () => {
   assert.deepEqual(peaks.map((p) => p.Q.value), [1.1, 1.3, 1.5]);
 });
 
+// The expected band is read from the declaration, so the test holds the face
+// to voice.yml rather than to whatever numbers voice.yml carried once.
 test("the band is the declared highpass and lowpass", () => {
   const { ctx } = build(declaredChain);
   const band = ctx.created.filter((n) => n.kind === "biquad" && ["highpass", "lowpass"].includes(n.type));
-  assert.deepEqual(band.map((n) => [n.type, n.frequency.value]), [["highpass", 200], ["lowpass", 6000]]);
+  const declared = [...declaredChain.matchAll(/(highpass|lowpass)=f=([\d.]+)/g)].map((m) => [m[1], parseFloat(m[2])]);
+  assert.ok(declared.length > 0, "voice.yml declares no band");
+  assert.deepEqual(band.map((n) => [n.type, n.frequency.value]), declared);
+});
+
+test("the compressor carries the declared threshold, ratio and times", () => {
+  const { ctx } = build("acompressor=threshold=-18dB:ratio=2.2:attack=8:release=100:makeup=1");
+  const comp = ctx.created.find((n) => n.kind === "compressor");
+  assert.ok(comp, "acompressor built no compressor");
+  assert.equal(comp.threshold.value, -18);
+  assert.equal(comp.ratio.value, 2.2);
+  assert.equal(comp.attack.value, 0.008);
+  assert.equal(comp.release.value, 0.1);
 });
 
 // volume=23dB is a level, not a number to be copied: read as a plain float it

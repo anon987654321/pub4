@@ -653,6 +653,23 @@ function buildChainNode(ctx, name, args) {
     node.release.value = 0.08;
     return { input: node, output: node };
   }
+  if (name === 'acompressor') {
+    // ffmpeg writes the threshold in dB or as a linear level, attack and
+    // release in milliseconds, and makeup as a linear gain; WebAudio wants dB
+    // and seconds. makeup rides a gain node after the compressor.
+    const node = ctx.createDynamicsCompressor();
+    const threshold = String(args.threshold || '0.125');
+    node.threshold.value = /db$/i.test(threshold) ? parseFloat(threshold) : 20 * Math.log10(parseFloat(threshold) || 0.125);
+    node.ratio.value = parseFloat(args.ratio) || 2;
+    node.attack.value = (parseFloat(args.attack) || 20) / 1000;
+    node.release.value = (parseFloat(args.release) || 250) / 1000;
+    const makeup = parseFloat(args.makeup) || 1;
+    if (makeup === 1) return { input: node, output: node };
+    const gain = ctx.createGain();
+    gain.gain.value = makeup;
+    node.connect(gain);
+    return { input: node, output: gain };
+  }
   if (name === 'chorus') return buildChorus(ctx, args);
   if (name === 'aphaser') return buildPhaser(ctx, args);
   return null;
