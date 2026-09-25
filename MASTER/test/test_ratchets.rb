@@ -226,4 +226,11 @@ class TestRatchets < Minitest::Test
     refute_nil core
     assert_equal :fixed, core.direction
   end
+
+  def test_the_recursive_spine_invariant_is_marked_as_one
+    core = rows.find { |row| row.name == "spine.core_recursive_files" }
+
+    refute_nil core
+    assert_equal :fixed, core.direction
+  end
 end
