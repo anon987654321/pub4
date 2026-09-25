@@ -53,7 +53,7 @@ if Rails.env.development? || Rails.env.test?
   end
 end
 
-# --- Core: Users, Communities, Posts ---
+# Core: Users, Communities, Posts
 admin = User.find_or_create_by!(email_address: 'admin@brgen.no') do |u|
   u.username = 'admin'
   u.password = u.password_confirmation = 'password123'
@@ -126,7 +126,7 @@ end
 puts seed_city&.domain == 'brgen.no' ? "Core generated posts: skipped; BergenDemoSeeder owns the feed." :
   "Created #{posts.size} posts + reactions"
 
-# --- Marketplace subapp ---
+# Marketplace subapp
 categories = {
   'electronics' => %w[phones computers audio gaming],
   'clothing' => %w[shirts trousers shoes outerwear],
@@ -243,7 +243,7 @@ end
 
 puts "Marketplace: #{stores.size} stores, #{listings.size} listings, some orders"
 
-# --- Dating subapp ---
+# Dating subapp
 num_dating = (35 * SEED_SCALE).clamp(10, 1000)
 # Frames per gender in MASTER/tools/lora/seed_media.yml, under dating.pool.
 DATING_POOL = { "woman" => 8, "man" => 8, "nonbinary" => 2, "other" => 2 }.freeze
@@ -284,7 +284,7 @@ end
 
 puts "Dating: #{dating_profiles.size} profiles, #{Dating::Like.count} likes, #{Dating::Match.count} matches"
 
-# --- Playlist subapp ---
+# Playlist subapp
 num_play = (15 * SEED_SCALE).clamp(5, 200)
 playlists = users.sample(num_play).map do |user|
   Playlist::Playlist.create!(
@@ -322,7 +322,7 @@ end
 
 puts "Playlist: #{playlists.size} playlists, tracks, sets"
 
-# --- Takeaway subapp ---
+# Takeaway subapp
 # CityTenantable adds belongs_to :city; string column :city is display label only (not the association).
 ActsAsTenant.current_tenant = seed_city if seed_city
 city_label = seed_city&.name.presence || "Bergen"
@@ -436,7 +436,7 @@ end
 
 puts "Takeaway: #{restaurants.size} restaurants, menu items, orders, reviews, drivers"
 
-# --- TV subapp ---
+# TV subapp
 num_ch = (8 * SEED_SCALE).clamp(3, 50)
 channel_names = Brgen::PlausibleContent::TV_CHANNEL_NAMES.shuffle
 channels = num_ch.times.map do |i|
@@ -475,7 +475,7 @@ end
 
 puts "TV: #{channels.size} channels, #{videos.size} videos, broadcasts"
 
-# --- Maps subapp ---
+# Maps subapp
 places = []
 if ActiveRecord::Base.connection.table_exists?(:places)
   city = City.first
@@ -500,7 +500,7 @@ else
   puts 'Maps: skipped (places table not migrated)'
 end
 
-# --- Messages subapp ---
+# Messages subapp
 users.sample(12).each do |u1|
   u2 = users.sample
   next if u1 == u2
@@ -527,7 +527,7 @@ end
 
 puts 'Messages: conversations and messages seeded'
 
-# --- Affiliate inventory ---
+# Affiliate inventory
 # Real TradeDoubler products need an approved publisher account (see
 # app/services/tradedoubler.rb). Until TRADEDOUBLER_TOKEN exists, seed flagged
 # placeholders so the deals sidebar and the weekly_deals newsletter have
@@ -543,7 +543,7 @@ if defined?(Shared::AffiliateProduct) && Shared::AffiliateProduct.table_exists?
   end
 end
 
-# --- Final activity/notifications for feed ---
+# Final activity/notifications for feed
 if places.any?
   users.sample(20).each do |u|
     next unless u.respond_to?(:activity_events)

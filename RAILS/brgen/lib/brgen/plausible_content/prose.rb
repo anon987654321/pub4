@@ -8,7 +8,7 @@ module Brgen
     # 344 ceiling. These pools are the bulk of it and only post_title/post_body
     # read them, so they move as a unit.
     module Prose
-      # --- Posts -------------------------------------------------------------
+      # Posts
 
       # Interpolate %{city} so these work for any Norwegian city domain.
       #

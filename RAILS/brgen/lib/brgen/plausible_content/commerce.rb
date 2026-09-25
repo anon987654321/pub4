@@ -7,7 +7,7 @@ module Brgen
     # Split out for the same reason as Prose: data tables, two thirds of a file
     # whose ceiling is about how much lives in one place.
     module Commerce
-      # --- Marketplace -------------------------------------------------------
+      # Marketplace
 
       # Norwegian small-business naming patterns, assembled rather than listed so
       # the pool scales to hundreds of stores without visible repetition.
@@ -124,7 +124,7 @@ module Brgen
       "Alt originalt utstyr følger med. Røykfritt og dyrefritt hjem."
       ].freeze
 
-      # --- Takeaway ----------------------------------------------------------
+      # Takeaway
 
       # [name, cuisine] pairs. Names carry no place suffix of their own so that a
       # bydel can be appended as a branch ("Peppes Pizza Laksevåg") once the pool

@@ -113,16 +113,25 @@ module Amber
     # box is generous rather than tight, which costs a little margin and never
     # clips an edge.
     def extent(body)
-      points = body.scan(/\bd="([^"]+)"/).flatten.flat_map { |d| d.scan(/-?\d+(?:\.\d+)?/).map(&:to_f).each_slice(2).to_a }
-      body.scan(/<rect x="([\d.]+)" y="([\d.]+)" width="([\d.]+)" height="([\d.]+)"/).each do |x, y, w, h|
-        points << [ x.to_f, y.to_f ] << [ x.to_f + w.to_f, y.to_f + h.to_f ]
-      end
-      body.scan(/<circle cx="([\d.]+)" cy="([\d.]+)" r="([\d.]+)"/).each do |cx, cy, r|
-        points << [ cx.to_f - r.to_f, cy.to_f - r.to_f ] << [ cx.to_f + r.to_f, cy.to_f + r.to_f ]
-      end
-      xs, ys = points.transpose
+      xs, ys = (path_points(body) + rect_points(body) + circle_points(body)).transpose
       pad = 8
       [ xs.min - pad, ys.min - pad, xs.max - xs.min + (2 * pad), ys.max - ys.min + (2 * pad) ].map(&:round)
+    end
+
+    def path_points(body)
+      body.scan(/\bd="([^"]+)"/).flatten.flat_map { |d| d.scan(/-?\d+(?:\.\d+)?/).map(&:to_f).each_slice(2).to_a }
+    end
+
+    def rect_points(body)
+      body.scan(/<rect x="([\d.]+)" y="([\d.]+)" width="([\d.]+)" height="([\d.]+)"/).flat_map do |x, y, w, h|
+        [ [ x.to_f, y.to_f ], [ x.to_f + w.to_f, y.to_f + h.to_f ] ]
+      end
+    end
+
+    def circle_points(body)
+      body.scan(/<circle cx="([\d.]+)" cy="([\d.]+)" r="([\d.]+)"/).flat_map do |cx, cy, r|
+        [ [ cx.to_f - r.to_f, cy.to_f - r.to_f ], [ cx.to_f + r.to_f, cy.to_f + r.to_f ] ]
+      end
     end
 
     def svg_for(shape, fill)

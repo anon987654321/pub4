@@ -38,7 +38,7 @@ class Marketplace::ListingsController < Marketplace::BaseController
     scope = scope.where("price_cents <= ?", (params[:max_price].to_f * 100).to_i) if params[:max_price].present?
     @sort = Marketplace::Listing::SORTS.include?(params[:sort]) ? params[:sort] : "recent"
     @pagy, @listings = pagy(scope.sorted_by(@sort))
-    @listing_distances = listing_distances(@listings, @search_lat, @search_lng)
+    @listing_distances = listing_distances(@listings, lat: @search_lat, lng: @search_lng)
     @categories = Marketplace::Category.roots.includes(:children)
     @top_offers = top_offers_for_index(@kind)
     @favorited_listing_ids = favorited_listing_ids_for(@listings, @top_offers)
@@ -171,7 +171,7 @@ class Marketplace::ListingsController < Marketplace::BaseController
       .limit(6)
   end
 
-  def listing_distances(listings, lat, lng)
+  def listing_distances(listings, lat:, lng:)
     return {} if lat.blank? || lng.blank?
 
     listings.each_with_object({}) do |listing, distances|
