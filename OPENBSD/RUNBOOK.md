@@ -100,12 +100,6 @@ every site relayd serves, not just the new one.
 6. **Verify**: `curl -sS -o /dev/null -w '%{http_code}' https://glasgw.uk/` is
    200, and the page title names the city.
 
-`amberapp.art` is amber's one name. It is in `ALL_DOMAINS`, nsd serves its
-zone, `acme-client.conf` has its block and relayd has its Host matches; step 1
-is at Domeneshop, and the certificate and the `tls keypair` line follow it.
-amber answers on no other name, so it is unreachable from outside until step 5
-lands.
-
 The stack serves three Rails apps (brgen, amber, bsdports) plus MASTER. `baibl`,
 `blognet` and `hjerterom` are retired; on 2026-08-12 their users, home
 directories (1.6 GB between them), rc.d scripts, `/etc/*.env` files, login
