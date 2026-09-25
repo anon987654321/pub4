@@ -8,7 +8,7 @@ marketplace subdomain, localised per country — `markedsplass.brgen.no`,
 `../../AGENTS.md` is the topology.
 
 Store owners post product listings across categories, buyers add them to a cart
-and check out through Stripe or Vipps, and both sides leave reviews. Deals and
+and check out through Dintero, Vipps or Stripe when configured, and both sides leave reviews. Deals and
 saved searches aid discovery, and `favorite` bookmarks a listing.
 
 The two tiers are one model rather than two places. `Listing belongs_to :store,
