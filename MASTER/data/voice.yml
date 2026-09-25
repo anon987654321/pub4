@@ -64,7 +64,7 @@ tts:
   #
   # Edge returns a bare neural voice at roughly broadcast level and no shaping
   # of its own, so everything below is post. The chain is dilla's, borrowed
-  # rather than invented: `STUDIO/dilla/dilla.rb:2719` carries a vocoder wash
+  # rather than invented: `MASTER/tools/dilla/dilla.rb:2719` carries a vocoder wash
   # built as three resonant peaks near the vowel formants — 520, 1480 and 2520
   # Hz — and its own comment says it is only the formant HALF of a vocoder,
   # "because a real vocoder needs a modulator the renderer does not have".
@@ -97,13 +97,13 @@ tts:
 
   # The bed under the speech, so a pause is not silence.
   #
-  # dilla renders it: module Bed in STUDIO/dilla/dilla.rb, declared in
-  # STUDIO/dilla/data/bed.yml, played by `ruby STUDIO/dilla/dilla.rb bed`. It was
+  # dilla renders it: module Bed in MASTER/tools/dilla/dilla.rb, declared in
+  # MASTER/tools/dilla/data/bed.yml, played by `ruby MASTER/tools/dilla/dilla.rb bed`. It was
   # a renderer of its own beside the hooks until the operator made it dilla's
   # (2026-09-14), so the whole declaration moved with it and only the level
   # under the voice stays here.
   bed:
-    source: STUDIO/dilla/data/bed.yml
+    source: MASTER/tools/dilla/data/bed.yml
     gain_db: -14
   # No default_volume. The daemon protocol is {voice,rate,pitch,text} and
   # RbEdgeTTS::Communicate takes rate: and pitch: only, so a volume here was
