@@ -23,7 +23,7 @@ class Marketplace::Order < ApplicationRecord
   # them into one column is why "where is my parcel" goes unanswered.
   FULFILMENT_STATUSES = %w[unfulfilled shipped delivered cancelled returned].freeze
   PAYMENT_STATUSES = %w[unpaid pending authorized paid failed refunded].freeze
-  PAYMENT_PROVIDERS = %w[stripe vipps].freeze
+  PAYMENT_PROVIDERS = %w[stripe vipps dintero].freeze
 
   validates :status, inclusion: { in: STATUSES }
   validates :fulfilment_status, inclusion: { in: FULFILMENT_STATUSES }
