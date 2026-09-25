@@ -5,9 +5,14 @@
   scan: intentional-colors — a brand mark is painted in its own fixed values;
   a logo that followed the theme would stop being the logo.
 %>
+<%#
+  view_box: the whole 1000x500 stage by default. A caller that sets the mark in a
+  small box passes the region the word's ink occupies, so the word fills the box.
+%>
 <% id_prefix = local_assigns.fetch(:id_prefix, "amber-logo") %>
+<% view_box = local_assigns.fetch(:view_box, "0 0 1000 500") %>
 <div class="amber-instance">
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 500" role="img" aria-label="<%= t("amber.logo_aria") %>" class="amber-logo-svg">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="<%= view_box %>" preserveAspectRatio="xMinYMid meet" role="img" aria-label="<%= t("amber.logo_aria") %>" class="amber-logo-svg">
     <title><%= t("amber.logo_aria") %></title>
     <defs>
       <path id="<%= id_prefix %>-swoosh-path" d="M50,220 C250,180 750,180 950,220"/>

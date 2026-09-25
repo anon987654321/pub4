@@ -83,6 +83,21 @@ module Deploy
     # Sub-pixel differences are rounding, not misalignment.
     ALIGN_TOLERANCE_PX = 1
 
+    # amber's signed-out hero: the sentence, the paragraph, the first button and
+    # the first secondary link, which must start on one left edge. Each is
+    # narrower than the hero, so a rule that centres or insets any one of them
+    # sends it to its own x. Measured on amberapp.art on 2026-09-25 before the
+    # fix: 468, 523, 512 and 420 at 1440px wide. The first button and link are
+    # measured rather than their rows, because a row spans the column whatever
+    # its contents do.
+    AMBER_HOME = "https://amberapp.art/"
+    AMBER_HERO_COLUMN = [
+      ".amber-guest-hero .title",
+      ".amber-guest-hero .body",
+      ".amber-guest-hero .actions > :first-child",
+      ".amber-guest-secondary > a",
+    ].freeze
+
     # runner.rb and gate_environment.rb both invoke a gate as `Class.run`. This
     # gate shipped with only the instance method, so it was a row in gates.yml
     # that nothing could call — registered, listed, and never once executed. The
@@ -107,6 +122,7 @@ module Deploy
       CdpSession.open do |session|
         session.viewport(1280, 800)
         SURFACES.each { |surface| check_surface(session, surface) }
+        check_amber_hero_column(session)
       end
       @result
     rescue CdpSession::Unavailable => e
@@ -231,6 +247,47 @@ module Deploy
         "distance from the screen edge.",
       )
     end
+
+    # A fresh profile is a signed-out visitor, which is who the hero is for.
+    def check_amber_hero_column(session)
+      session.navigate(AMBER_HOME, settle: 1.5)
+      measured = session.evaluate(format(HERO_PROBE, selectors: JSON.generate(AMBER_HERO_COLUMN)))
+      return @result.skipped_live("rendered_invariants: #{AMBER_HOME} unreadable") unless measured
+
+      check_hero_column(JSON.parse(measured))
+    rescue StandardError => e
+      @result.skipped_live("rendered_invariants: #{AMBER_HOME} #{e.class}")
+    end
+
+    # lefts: selector => the x its box starts at, or nil when it did not render.
+    def check_hero_column(lefts)
+      missing = lefts.select { |_, left| left.nil? }.keys
+      unless missing.empty?
+        return @result.fail("#{AMBER_HOME} hero is missing #{missing.join(', ')}; the column check " \
+                            "cannot measure a hero it cannot find")
+      end
+
+      @result.checked!
+      spread = lefts.values.max - lefts.values.min
+      return if spread <= ALIGN_TOLERANCE_PX
+
+      @result.fail(
+        "#{AMBER_HOME} hero is #{spread.round(1)}px off one left edge " \
+        "(left: #{lefts.map { |sel, left| "#{sel} #{left.round(1)}" }.join(', ')}). " \
+        "The hero is one column: look for a centring rule or an auto margin on one of its lines.",
+      )
+    end
+
+    HERO_PROBE = <<~JS
+      (() => {
+        const lefts = {};
+        for (const sel of %<selectors>s) {
+          const r = document.querySelector(sel)?.getBoundingClientRect();
+          lefts[sel] = (r && r.width > 0) ? r.left : null;
+        }
+        return JSON.stringify(lefts);
+      })()
+    JS
 
     PROBE = <<~JS
       (() => {

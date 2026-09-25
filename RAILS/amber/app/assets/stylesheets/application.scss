@@ -7,6 +7,7 @@
 @use "affiliate_feed_unit";
 @use "dialect_tokens" as x;
 @use "sass:meta";
+@use "sass:math";
 
 // ============================================================ tokens
 
@@ -47,12 +48,14 @@
   --font-size-base: var(--font-size);
   --color-badge: var(--accent);
   --tint-success: color-mix(in srgb, var(--color-success) 20%, var(--surface-elevated));
-  /* The Caprasimo brand ramp. Display type reads no step of the body ladder;
-     these four steps are the mark's own scale. */
-  --brand-mark: 200px;
+  /* The Caprasimo word's size in the logo's own viewBox units. Display type
+     reads no step of the body ladder; this is the mark's own scale. */
   --brand-hero: 120px;
-  --brand-title: 60px;
-  --brand-footer: 40px;
+  /* The top bar is the mark plus its block padding, and the shared shell reads
+     --top-band-block to start the open rails below the bar. Its default is
+     brgen's 56px band, which put amber's search pill under a 70px bar. */
+  --amber-mark-block: 52px;
+  --top-band-block: calc(var(--amber-mark-block) + 2 * var(--space-2));
   /* Amber luxury refinements (UI_REFINEMENTS §D) */
   --line-height-relaxed: 1.6;
   --letter-display: 0.04em;
@@ -219,39 +222,26 @@ h2 {
   max-width: var(--measure-wide);
 }
 
-@keyframes wardrobe_showcase_drift {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
-}
-
 // ============================================================ chrome: mark, hero, footer
 
-/* Mobile-first type sizes, in viewBox user units — NOT document type.
-   _logo.html.erb draws into viewBox="0 0 1000 500", so a length here is a
-   fraction of the logotype's own 1000x500 grid: 60 means "60/500 of the logo's
-   height", and the whole mark scales with the <svg> box. The document's modular
-   scale has no say in it, which is why these are px and must stay px.
+/* Type sizes in viewBox user units — NOT document type. _logo.html.erb draws
+   into the 1000x500 grid, so 120 means "120/500 of the logo's height", and the
+   whole mark scales with the <svg> box. The document's modular scale has no say
+   in it, which is why these are px and must stay px.
+
+   One size at every width: the nav crops its viewBox to the word's ink at this
+   size, so a word that changed size by breakpoint would outgrow its crop.
 
    A rem token would not hold: rem in an SVG resolves against the root
    font-size, which _minimal.scss raises from 16px to 21px at 1280px, so the (r)
    would grow 31% against a word that stays put. */
 .amber-logo-svg .amber-logo-word {
   font-family: "Caprasimo", Arial, sans-serif;
-  font-size: var(--brand-title);
+  font-size: var(--brand-hero);
 }
 
 .amber-logo-svg .amber-logo-mark {
-  font-size: 12px;
-}
-
-@media (min-width: 768px) {
-  .amber-logo-svg .amber-logo-word {
-    font-size: var(--brand-hero);
-  }
-
-  .amber-logo-svg .amber-logo-mark {
-    font-size: 24px;
-  }
+  font-size: 24px;
 }
 
 .animated-gradient {
@@ -275,103 +265,72 @@ h2 {
   }
 }
 
-/* Banner: full-bleed, proportional height like logo HTML (#container) */
+/* The sticky top bar: the Caprasimo mark at the start, the account link at the
+   end, and the theme toggle fixed in the inline-end padding. Its block size is
+   --top-band-block (set on :root above), so the open rails start below it. */
 .amber-logo-banner {
-  width: 100vw;
-  margin-inline: calc(50% - 50vw);
-  line-height: 0; // intentional: collapses inline-SVG descender gap
-  background: var(--surface);
   position: sticky;
   top: 0;
   z-index: calc(var(--z-nav) + 1);
   display: flex;
-  justify-content: center;
-  align-items: center;
-
-  a {
-    display: block;
-    width: 100%;
-    max-width: 1000px; // scan: intentional — the brand mark's layout bound, not a text measure
-    text-decoration: none;
-    line-height: 0;
-  }
-
-  .amber-instance {
-    width: 100%;
-    height: 33.33vw; /* mobile: height = width/3 */
-    max-height: 500px;
-    overflow: hidden;
-  }
-
-  .amber-logo-svg {
-    width: 100%;
-    height: 100%;
-    display: block;
-  }
-}
-
-@media (min-width: 768px) {
-  .amber-logo-banner .amber-instance {
-    width: min(100vw, 1000px);
-    height: 500px; // scan: intentional — a drawn stage: the art has fixed dimensions, not flowing content
-    max-height: 500px;
-    margin-inline: auto;
-  }
-}
-
-/* Persistent top-nav instance of the Caprasimo mark. Hero sizing above is
-   500px tall; chrome has to sit in a bar. The home link is width:auto so it
-   does not inherit the hero's `a { width: 100% }`. Word size is in viewBox
-   units and is raised here so "amber®" still reads at 52px tall. */
-.amber-logo-banner--nav {
   justify-content: space-between;
   align-items: center;
+  background: var(--surface);
   padding-inline: var(--space-3) var(--chrome-toggle-inline);
-  /* The mark is 52px and --bar-height is 44. min-height is a floor rather than
-     a height, so the block padding insets the mark and lets the bar grow to
-     hold it, keeping the ascenders off the viewport edge. */
   padding-block: var(--space-2);
-  min-height: var(--bar-height, 44px);
 }
 
-.amber-logo-banner--nav .amber-logo-home {
+/* The mark gives way on a narrow phone and the account link does not, so at
+   320px "Sign in" stays on one line and the word scales down beside it. */
+.amber-logo-home {
   display: block;
-  width: auto;
-  max-width: 220px;
   flex: 0 1 auto;
-  line-height: 0;
+  min-width: 0;
+  line-height: 0; // intentional: collapses the inline-SVG descender gap
 }
 
-.amber-logo-banner--nav .amber-instance {
+/* 200px is the mark footprint the bar has always given it. The nav passes
+   _logo a viewBox cropped to the word, so the word fills this box instead of
+   sitting a tenth of its size in the middle of the 1000x500 stage. */
+.amber-logo-banner .amber-instance {
   width: 200px;
-  height: 52px;
-  max-height: 52px;
-  margin-inline: 0;
+  max-width: 100%;
+  height: var(--amber-mark-block);
 }
 
-.amber-logo-banner--nav .amber-logo-svg .amber-logo-word {
-  font-size: var(--brand-mark);
-}
-
-.amber-logo-banner--nav .amber-logo-svg .amber-logo-mark {
-  font-size: var(--brand-footer);
+.amber-logo-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 .amber-nav-actions {
   display: flex;
+  flex: none;
   align-items: center;
   gap: var(--space-3);
+}
+
+/* One left edge. The title, the paragraph and the two rows of links are each
+   narrower than the hero, and each centred itself at its own width, so all four
+   started at a different x. A page here reads from the column's left edge (see
+   .layout > main#main-content), and the alignment law in rules.yml keeps body
+   text left and centred text to three lines. */
+.amber-guest-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
 }
 
 /* main#main-content in front so the layout's page-title rule cannot reach the
    hero sentence, which keeps its own size and weight. */
 main#main-content .amber-guest-hero .title {
   max-width: 28rem;
-  margin-inline: auto;
+  margin: 0;
   font-family: var(--font);
   font-size: clamp(1.35rem, 3vw, 1.75rem);
   font-weight: var(--weight-normal);
-  margin-block: 0;
   letter-spacing: var(--tracking-tight);
 }
 
@@ -381,9 +340,8 @@ main#main-content .amber-guest-hero .title {
    absolute 20px, which would set the 15.75px paragraph at 1.27. */
 .amber-guest-hero .body {
   max-width: var(--measure-narrow);
-  margin-inline: auto;
+  margin: 0;
   color: var(--text-secondary);
-  margin-block: 0;
   font-size: var(--text-sm);
   line-height: var(--leading-normal);
 }
@@ -392,7 +350,6 @@ main#main-content .amber-guest-hero .title {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3);
-  justify-content: center;
   margin: 0;
 }
 
@@ -413,7 +370,14 @@ main#main-content .amber-guest-hero .title {
   text-decoration: underline;
 }
 
+/* The feed's column, not the viewport: from 1280px the fixed rails stand in
+   the gutters and a full-width footer ran its first and last columns under
+   them. A block, not _minimal's footer row: in a row the link grid refused to
+   shrink below three columns and ran off both sides of a phone. */
 .amber-footer {
+  display: block;
+  max-width: var(--feed-max);
+  margin-inline: auto;
   margin-block-start: var(--luxury-space-xl);
   padding: var(--luxury-space-xl) var(--luxury-space-md) var(--luxury-space-lg);
 }
@@ -773,6 +737,17 @@ main#main-content header > nav {
 main#main-content header > nav .btn,
 main#main-content header > nav form {
   flex: 0 0 auto;
+}
+
+/* From 1280px both rails stand open beside the column. They open on the line
+   the column's first block starts on, rather than flush under the bar, so the
+   three columns share one top: main's own block padding and its first child's
+   margin, one --space-8 each. */
+@media (min-width: 1280px) {
+  .sidebar,
+  .widgets {
+    padding-block-start: calc(var(--top-band-block) + var(--safe-top, 0px) + 2 * var(--space-8));
+  }
 }
 
 @media (min-width: 640px) {
@@ -1908,14 +1883,47 @@ main#main-content header > nav form {
    They render from home/index alone, and a row is a fixed, small height rather
    than whatever its contents come to.
 
-   Motion is two transforms and no JavaScript. The track holds the slide list
-   twice and travels exactly half its width, so the copy under the cursor at the
-   reset is identical to the one leaving and the loop has no seam. Direction
-   alternates by row, which is the whole point of the arrangement: adjacent
-   zones drift opposite ways, so the same two garments never stay paired. */
+   Motion is transforms and no JavaScript. The track holds the slide list twice
+   and travels exactly half its width, so the copy under the cursor at the reset
+   is identical to the one leaving and the loop has no seam. Direction alternates
+   by row, which is the whole point of the arrangement: adjacent zones drift
+   opposite ways, so the same two garments never stay paired.
+
+   It steps rather than crawls: a garment slides in over 0.7s and the row holds
+   for 3.6s, the pace these rows kept as a Swiper carousel. A continuous drift
+   is always cut mid-garment at both edges, so a still frame of it showed half a
+   tile at each end. Holding on whole tiles needs two numbers to agree: the
+   visible count, which sizes each tile to fill the row exactly, and the slide
+   count, which Amber::WardrobeShowcase::SLIDES_PER_ROW fixes so one step is
+   always one tile. */
+
+$showcase_slides: 12;
+$showcase_hold: 3.6;
+$showcase_move: 0.7;
+
+// Two decimals of a percent: Sass writes ten, and 24 stops of them cost the
+// sheet more than its weight ceiling allows.
+@function showcase_round($value, $places) {
+  $scale: math.pow(10, $places);
+
+  @return math.div(math.round($value * $scale), $scale);
+}
+
+@keyframes wardrobe_showcase_step {
+  @for $k from 0 through $showcase_slides - 1 {
+    $at: $k * ($showcase_hold + $showcase_move);
+    $total: $showcase_slides * ($showcase_hold + $showcase_move);
+
+    #{showcase_round(math.div($at, $total) * 100%, 2)},
+    #{showcase_round(math.div($at + $showcase_hold, $total) * 100%, 2)} {
+      transform: translateX(showcase_round(math.div(-50% * $k, $showcase_slides), 3));
+    }
+  }
+
+  100% { transform: translateX(-50%); }
+}
 
 .wardrobe_showcase {
-  --slide_size: 104px;
   --row_gap: var(--space-3);
 
   border-block: 1px solid var(--border);
@@ -1944,7 +1952,6 @@ main#main-content header > nav form {
   align-items: baseline;
   flex-wrap: wrap;
   gap: var(--space-3);
-  padding-inline: var(--space-6);
   padding-bottom: var(--space-2);
 }
 
@@ -1968,25 +1975,36 @@ main#main-content header > nav form {
    construction, and a scrollbar under every row would be four scrollbars. */
 .wardrobe_showcase_viewport {
   overflow: hidden;
+  container: wardrobe_row / inline-size;
 }
 
 .wardrobe_showcase_track {
+  --slides_visible: 3;
+
   display: flex;
   width: max-content;
-/* --ease-linear is a true linear written as a bezier, which is what _tokens
-   keeps it for: a marquee runs continuously, so any curve puts a visible
-   stutter at each cycle boundary. */
-animation: wardrobe_showcase_drift 46s var(--ease-linear) infinite;
+  /* The timing function eases each slide between two holds; the holds are
+     keyframe pairs at one value, so no curve moves them. */
+  animation: wardrobe_showcase_step #{$showcase_slides * ($showcase_hold + $showcase_move)}s var(--ease-in-out) infinite;
+}
+
+@container wardrobe_row (min-width: 480px) {
+  .wardrobe_showcase_track {
+    --slides_visible: 5;
+  }
 }
 
 .wardrobe_showcase_row_reverse .wardrobe_showcase_track {
   animation-direction: reverse;
 }
 
+/* The trailing padding is the gap between the two copies, and it sits after a
+   tile rather than before one, so the first garment starts on the column's
+   left edge with the label and the hero above it. */
 .wardrobe_showcase_group {
   display: flex;
   gap: var(--row_gap);
-  padding-inline: calc(var(--row_gap) / 2);
+  padding-inline-end: var(--row_gap);
 }
 
 /* A rotation that moves under the cursor mid-click picks the wrong garment. */
@@ -1995,9 +2013,11 @@ animation: wardrobe_showcase_drift 46s var(--ease-linear) infinite;
   animation-play-state: paused;
 }
 
+/* Each tile and its gap take an exact share of the row, so a row at rest
+   shows whole garments edge to edge. */
 .wardrobe_slide {
-  width: var(--slide_size);
-  flex: 0 0 var(--slide_size);
+  flex: 0 0 calc(100cqi / var(--slides_visible) - var(--row_gap));
+  min-width: 0;
 }
 
 .wardrobe_slide_media {

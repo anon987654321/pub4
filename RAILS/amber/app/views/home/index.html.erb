@@ -96,13 +96,19 @@
   <section class="amber-guest-hero" data-visitor-orientation>
     <h1 class="title"><%= t("home.guest_title") %></h1>
     <p class="body"><%= t("home.guest_body") %></p>
+    <%# The demo link only when there is a demo: /demo redirects back here when
+        the demo wardrobe is not seeded, so a primary button pointing at it would
+        reload this page under an alert. Sign in is not repeated here; the bar
+        above carries it on every page. %>
     <p class="actions">
-      <%= link_to t("home.browse_demo"), demo_wardrobe_path, class: "btn btn-primary" %>
-      <%= link_to t("auth.create_account"), new_registration_path, class: "btn btn-ghost" %>
+      <% if @demo_items&.any? %>
+        <%= link_to t("home.browse_demo"), demo_wardrobe_path, class: "btn btn-primary" %>
+        <%= link_to t("auth.create_account"), new_registration_path, class: "btn btn-ghost" %>
+      <% else %>
+        <%= link_to t("auth.create_account"), new_registration_path, class: "btn btn-primary" %>
+      <% end %>
     </p>
     <p class="amber-guest-secondary">
-      <%= link_to t("nav.sign_in"), new_session_path %>
-      <span aria-hidden="true"> · </span>
       <%# A full load: master=1 renders the MASTER embed layout, whose head differs
           from this one, and a Turbo visit keeps the old head. %>
       <%= link_to t("home.ask_ai"), root_path(master: 1), data: { turbo: false } %>

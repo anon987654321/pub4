@@ -7,6 +7,9 @@ module Amber
 
     Zone = Data.define(:key, :label, :hint, :items, :reverse)
 
+    # $showcase_slides in application.scss carries the same number.
+    SLIDES_PER_ROW = 12
+
     HEADWEAR_PATTERN = /beanie|scarf|earring|sunglass|hat|cap|headband|barrette|clip|hoop/i.freeze
     OUTERWEAR_EXCLUDE_PATTERN = /coat|shell|parka|trench|wrap coat/i.freeze
 
@@ -62,36 +65,6 @@ module Amber
         end
       end
 
-      # One garment at a time, per operator instruction 2026-08-11.
-      #
-      # slidesPerView: "auto" sizes each slide from its own CSS, and the slide
-      # card is 4.5rem wide, so a viewport fits a dozen at once and the row read
-      # as a filmstrip rather than a carousel. The width lives in
-      # _guest_showcase.scss and the count lives here; changing only the CSS
-      # would leave "auto" still deciding, and changing only this would leave a
-      # 4.5rem card centred in an empty row. Both move together.
-      #
-      # speed drops with the count. 9000 ms was a continuous crawl for a
-      # marquee of many small slides; the same speed on a single full-width
-      # slide is one garment sliding for nine seconds. A discrete step with a
-      # pause between reads as a carousel.
-      def carousel_options(reverse:)
-        {
-          slidesPerView: 1,
-          spaceBetween: 0,
-          loop: true,
-          speed: 700,
-          grabCursor: true,
-          allowTouchMove: true,
-          autoplay: {
-            delay: 3_600,
-            disableOnInteraction: false,
-            reverseDirection: reverse,
-            pauseOnMouseEnter: true
-          }
-        }
-      end
-
       private
 
       def items_for(key, categories, filter: nil)
@@ -119,12 +92,15 @@ module Amber
         end
       end
 
+      # Exactly SLIDES_PER_ROW, repeating a short zone and trimming a long one.
+      # The row steps one tile at a time and the stylesheet derives a tile's
+      # share of the track from this count, so a row of any other length would
+      # come to rest between two garments.
       def loop_slides(items)
         list = items.to_a
         return list if list.empty?
-        return list if list.size >= 8
 
-        (list * ((8.0 / list.size).ceil)).first(12)
+        Array.new(SLIDES_PER_ROW) { |index| list[index % list.size] }
       end
     end
   end

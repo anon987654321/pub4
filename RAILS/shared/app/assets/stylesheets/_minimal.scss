@@ -84,7 +84,12 @@ video {
   height: auto;
 }
 
-nav {
+/* The scroll-away top bar is the primary nav's, and only its. hotwire.js marks
+   that one element with data-pwa-primary-nav and shows it with .nav-visible.
+   A bare `nav` here made every other nav a fixed bar parked above the viewport:
+   amber's open sidebar rail, its footer columns and its page action rows, and
+   bsdports' sort chips, all rendered off screen. */
+nav[data-pwa-primary-nav] {
   position: fixed;
   inset-block-start: 0;
   inset-inline: 0;
@@ -98,7 +103,7 @@ nav {
   transition: transform var(--transition-normal) cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-nav.nav-visible {
+nav[data-pwa-primary-nav].nav-visible {
   transform: translateY(0);
 }
 

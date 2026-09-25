@@ -170,4 +170,27 @@ class RenderedInvariantsGateTest < Minitest::Test
 
     assert_empty check(:check_top_band_alignment, "brgen.no", payload(band: band)).failures
   end
+
+  def hero(title:, body:, button:, link:)
+    G::AMBER_HERO_COLUMN.zip([title, body, button, link]).to_h
+  end
+
+  # The measured case: amberapp.art at 1440px on 2026-09-25, each line of the
+  # hero centred at its own width.
+  def test_an_amber_hero_whose_lines_start_at_four_x_fails_and_says_by_how_much
+    result = check(:check_hero_column, hero(title: 468.0, body: 523.0, button: 512.0, link: 420.0))
+
+    assert_names result, /hero is 103\.0px off one left edge/
+  end
+
+  def test_an_amber_hero_on_one_left_edge_passes
+    assert_empty check(:check_hero_column, hero(title: 420.0, body: 420.0, button: 420.4, link: 420.0)).failures
+  end
+
+  # A line that did not render is a hero that changed shape, not an aligned one.
+  def test_an_amber_hero_missing_a_line_fails
+    result = check(:check_hero_column, hero(title: 420.0, body: nil, button: 420.0, link: 420.0))
+
+    assert_names result, /hero is missing \.amber-guest-hero \.body/
+  end
 end
