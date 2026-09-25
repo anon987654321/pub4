@@ -43,12 +43,12 @@ class MarketplaceCartContractTest < Minitest::Test
     maps = brgen_read("app/views/maps/home/index.html.erb")
     amber = File.read(File.join(ROOT, "amber/app/views/layouts/application.html.erb"))
 
-    assert_includes dating, "/vendor/css-doodle.min.js"
+    # The dating landing loads css-doodle no longer (05f97fdd3 made discover the
+    # landing page and dropped the heart), so only the CDN ban is left to hold.
     refute_includes dating, "cdn.jsdelivr.net/npm/css-doodle"
     assert_includes maps, "/vendor/maplibre-gl.js"
     refute_includes maps, "cdn.jsdelivr.net/npm/maplibre"
     refute_includes amber, "fonts.googleapis.com"
-    assert File.file?(File.join(BRGEN, "public/vendor/css-doodle.min.js"))
     assert File.file?(File.join(BRGEN, "public/vendor/maplibre-gl.js"))
     assert File.file?(File.join(ROOT, "amber/public/fonts/caprasimo-latin-400-normal.woff2"))
   end
