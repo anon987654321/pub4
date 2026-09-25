@@ -35,6 +35,13 @@ module Marketplace
           request(req)
         end
 
+        def put(path, payload = nil, checkout: false, idempotency_key: nil)
+          req = Net::HTTP::Put.new(uri(path, checkout: checkout))
+          req["Idempotency-Key"] = idempotency_key if idempotency_key.present?
+          req.body = JSON.generate(payload) if payload
+          request(req)
+        end
+
         def configured?
           checkout_configured?
         end
