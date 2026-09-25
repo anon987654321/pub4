@@ -45,7 +45,7 @@ module Master
         end
 
         def state_line(model, **options)
-          bits = ["model0: #{short_model(model)}", "ctx0: #{context_label(options[:tokens])}"]
+          bits = ["model0: #{short_model(model)}", "ctx0: #{context_label(options[:tokens], model)}"]
           violations = options.fetch(:violations, 0).to_i
           bits << "scan0: #{violations} violations" if violations.positive?
           cost = cost_label(options[:cost])
@@ -86,8 +86,8 @@ module Master
           value >= TOKEN_KILO_THRESHOLD ? format("%.1fk", value / 1000.0) : value.to_s
         end
 
-        def context_label(tokens)
-          "#{token_label(tokens)}/#{token_label(Master.context_window(@config['model']))}"
+        def context_label(tokens, model = @config["model"])
+          "#{token_label(tokens)}/#{token_label(Master.context_window(model))}"
         end
 
         private
