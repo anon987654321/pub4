@@ -40,6 +40,12 @@ class HonestyGatesTest < Minitest::Test
       "StripeCheckout.ensure!\n",
     "brgen/app/services/marketplace/payments/vipps_checkout.rb" =>
       "def call\n  raise NotConfigured unless configured?\nend\n",
+    "brgen/app/services/marketplace/payments/dintero_client.rb" =>
+      "class DinteroClient; end\n",
+    "brgen/app/services/marketplace/payments/dintero_checkout.rb" =>
+      "def call\n  raise NotConfigured unless configured?\nend\n",
+    "brgen/app/services/marketplace/payments/dintero_signature.rb" =>
+      "OpenSSL::HMAC\n",
     "#{ENGINE}/app/controllers/marketplace/checkouts_controller.rb" =>
       "def provider = params[:provider]\n",
     "#{ENGINE}/app/views/marketplace/carts/show.html.erb" =>
