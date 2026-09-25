@@ -246,11 +246,15 @@ module Master
           rescue StandardError => e
             Master::Result.err("face0: turn failed — #{e.class}: #{e.message}", category: :infrastructure)
           end
-          sleep 0.05 while worker.alive? && !cancel_key?
-          return worker.value unless worker.alive?
+          # The worker is asked before the keyboard, so a turn that has already
+          # answered is kept even when input has ended.
+          until worker.join(0.05)
+            next unless cancel_key?
 
-          worker.kill
-          Master::Result.err("face0: turn cancelled", category: :timeout)
+            worker.kill
+            return Master::Result.err("face0: turn cancelled", category: :timeout)
+          end
+          worker.value
         end
 
         # turn answers with a Result, or with the text it streamed.
@@ -259,7 +263,8 @@ module Master
           return "error: #{result.message}" if result.err?
 
           value = result.value
-          text = value.respond_to?(:[]) ? (value[:rendered] || value[:output]) : nil
+          # Talk answers with a String, which also answers [] and would raise on a Symbol.
+          text = value.is_a?(Hash) ? (value[:rendered] || value[:output]) : nil
           (text || value).to_s.strip
         end
 
