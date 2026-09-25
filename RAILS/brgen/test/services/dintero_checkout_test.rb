@@ -13,7 +13,7 @@ class DinteroCheckoutTest < ActiveSupport::TestCase
 
   FakeOrder = Struct.new(
     :id, :listing, :quantity, :total_cents, :payment_currency, :payment_description,
-    :payment_reference, :payment_provider, :payment_status, :dintero_order_id,
+    :payment_reference, :payment_provider, :payment_status, :dintero_order_id, :dintero_split_json,
     :dintero_session_id, :dintero_transaction_id, keyword_init: true
   ) do
     def startable? = true
@@ -65,6 +65,7 @@ class DinteroCheckoutTest < ActiveSupport::TestCase
       payment_provider: nil,
       payment_status: "unpaid",
       dintero_order_id: dintero_order_id,
+      dintero_split_json: nil,
       dintero_session_id: nil,
       dintero_transaction_id: nil
     )
@@ -138,6 +139,40 @@ class DinteroCheckoutTest < ActiveSupport::TestCase
   end
 
 
+  test "refund reuses the persisted split contract" do
+    seller = Store.new(
+      dintero_payout_destination_id: "seller-1",
+      dintero_payout_destination_status: "ACTIVE"
+    )
+    payable = order(store: seller, dintero_order_id: "order-1")
+    payable.payment_provider = "dintero"
+    payable.payment_status = "paid"
+    payable.payment_reference = "brgen-dintero-order-42"
+    payable.dintero_split_json = JSON.generate(
+      splits: [
+        { payout_destination_id: "seller-1", amount: 9_500 },
+        { payout_destination_id: "platform-1", amount: 500 }
+      ],
+      fee_split: { type: "proportional", destinations: [ "platform-1" ] }
+    )
+    ENV["DINTERO_PLATFORM_COMMISSION_BPS"] = "2000"
+
+    seen = nil
+    Marketplace::Payments::DinteroClient.stub(:post, ->(path, payload, **options) {
+      seen = { path:, payload:, options: }
+      {}
+    }) do
+      Marketplace::Payments::DinteroCheckout.refund!(order: payable)
+    end
+
+    assert_equal [
+      { payout_destination_id: "seller-1", amount: 9_500 },
+      { payout_destination_id: "platform-1", amount: 500 }
+    ], seen[:payload][:items].first[:splits]
+    assert_equal "proportional", seen[:payload][:fee_split][:type]
+    assert_equal "platform-1", seen[:payload][:fee_split][:destinations].first
+  end
+
   test "refund sends Dintero refund and leaves local order paid until webhook confirmation" do
     seller = Store.new(
       dintero_payout_destination_id: "seller-1",
@@ -147,6 +182,13 @@ class DinteroCheckoutTest < ActiveSupport::TestCase
     payable.payment_provider = "dintero"
     payable.payment_status = "paid"
     payable.payment_reference = "brgen-dintero-order-42"
+    payable.dintero_split_json = JSON.generate(
+      splits: [
+        { payout_destination_id: "seller-1", amount: 9_500 },
+        { payout_destination_id: "platform-1", amount: 500 }
+      ],
+      fee_split: { type: "proportional", destinations: [ "platform-1" ] }
+    )
 
     seen = nil
     Marketplace::Payments::DinteroClient.stub(:post, ->(path, payload, **options) {
@@ -176,6 +218,13 @@ class DinteroCheckoutTest < ActiveSupport::TestCase
     payable.payment_status = "authorized"
     payable.payment_reference = "brgen-dintero-order-42"
     payable.dintero_transaction_id = "transaction-1"
+    payable.dintero_split_json = JSON.generate(
+      splits: [
+        { payout_destination_id: "seller-1", amount: 9_500 },
+        { payout_destination_id: "platform-1", amount: 500 }
+      ],
+      fee_split: { type: "proportional", destinations: [ "platform-1" ] }
+    )
 
     seen = nil
     Marketplace::Payments::DinteroClient.stub(:post, ->(path, payload, **options) {
