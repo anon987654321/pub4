@@ -84,7 +84,7 @@ end
 # has stopped being valid Ruby. They cannot catch a swing offset applied to the
 # wrong role, a seed that reads as pinned and is not, or a chord template that
 # voices a ninth as a second -- all of which parse, boot, and have shipped.
-# MASTER/tools/studio/test is that half. Same subprocess reasoning as above.
+# MASTER/tools/MASTER/tools/test is that half. Same subprocess reasoning as above.
 desc "STUDIO's own suite — engine arithmetic, the single-file tools, the gate"
 task :studio_test do
   studio = File.expand_path("tools", __dir__)
