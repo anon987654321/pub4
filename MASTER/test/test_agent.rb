@@ -267,35 +267,25 @@ class TestAgent < Minitest::Test
     refute_match(/\b(will|would|could|might)\b/i, prose)
     assert_includes code, "will = :kept"
   end
-# One empty OpenRouter balance killed every single-shot call: ask_once had
-# no chain, so the first broke model raised with claude-cli unconsulted.
-# A :budget/:rate_limit/:timeout Err now takes one hop to the claude_code
-# chain head before raising.
-def test_ask_once_fails_over_to_the_cli_lane_on_budget_errors
-  fake = Class.new do
-    attr_reader :models
-    def initialize = @models = []
-    def send_with_cache(model, *_args, **_kwargs)
-      @models << model
-      if model.to_s.start_with?("claude-cli:")
-        Master::Result.ok("cli answer")
-      else
-        Master::Result.err("Insufficient credits", category: :budget)
-      end
+  # Single-shot calls use the same live chain as chat. A provider error must
+  # not strand the turn on one lane.
+  def test_ask_once_walks_the_live_fallback_chain
+    calls = []
+    fake = Object.new
+    fake.define_singleton_method(:send_with_cache) do |model, *_args, **|
+      calls << model
+      model == "final-model" ? Master::Result.ok("answer") : Master::Result.err("provider failed", category: :provider_error)
     end
-  end.new
-  @agent.instance_variable_set(:@dispatcher, fake)
-  # the hop reads the chain head through ModelRouter, the one models.yml reader
-  router = Object.new
-  def router.single_call_fallback_model = "claude-cli:sonnet"
-  @agent.instance_variable_set(:@model_router, router)
+    @agent.instance_variable_set(:@dispatcher, fake)
 
-  out = @agent.ask_once("hi", model: "openrouter/broke")
+    router = Object.new
+    def router.fallback_chain(task_type:) = %w[first-model second-model final-model]
+    @agent.instance_variable_set(:@model_router, router)
 
-  assert_equal "cli answer", out
-  assert_equal 2, fake.models.size, "expected exactly one failover hop"
-  assert fake.models.last.to_s.start_with?("claude-cli:"), "hop must land on the claude_code chain head"
-end
+    assert_equal "answer", @agent.ask_once("hi", model: "first-model")
+    assert_equal %w[first-model second-model final-model], calls
+  end
+
 # A caller's system prompt names a role, and the dispatcher sends it in place of
 # the persona prompt, so a role sent bare carries none of the law. The law goes
 # first and the role last.
@@ -347,29 +337,23 @@ def law_persona
   persona
 end
 
-def test_ask_also_takes_the_hop_on_budget_errors
-  fake = Class.new do
-    attr_reader :models
-    def initialize = @models = []
-    def send_with_cache(model, *_args, **_kwargs)
-      @models << model
-      if model.to_s.start_with?("claude-cli:")
-        Master::Result.ok("cli answer")
-      else
-        Master::Result.err("Insufficient credits", category: :budget)
-      end
+  def test_ask_walks_the_live_fallback_chain
+    calls = []
+    fake = Object.new
+    fake.define_singleton_method(:send_with_cache) do |model, *_args, **|
+      calls << model
+      model == "final-model" ? Master::Result.ok("answer") : Master::Result.err("provider failed", category: :provider_error)
     end
-  end.new
-  @agent.instance_variable_set(:@dispatcher, fake)
-  # the hop reads the chain head through ModelRouter, the one models.yml reader
-  router = Object.new
-  def router.single_call_fallback_model = "claude-cli:sonnet"
-  @agent.instance_variable_set(:@model_router, router)
-  def @agent.routed_models(*_args, **_kwargs) = ["openrouter/broke"]
+    @agent.instance_variable_set(:@dispatcher, fake)
+    @agent.define_singleton_method(:routed_models) { |*| ["first-model"] }
 
-  assert_equal "cli answer", @agent.ask("hi")
-  assert fake.models.last.to_s.start_with?("claude-cli:"), "ask must land on the claude_code chain head"
-end
+    router = Object.new
+    def router.fallback_chain(task_type:) = %w[first-model second-model final-model]
+    @agent.instance_variable_set(:@model_router, router)
+
+    assert_equal "answer", @agent.ask("hi")
+    assert_equal %w[first-model second-model final-model], calls
+  end
 
 def test_a_failed_hard_compaction_refuses_the_turn
   window = Object.new
