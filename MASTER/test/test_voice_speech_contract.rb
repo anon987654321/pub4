@@ -5,11 +5,13 @@ require_relative "../lib/master"
 require_relative "../lib/voice/speech"
 
 class SpeechContractSpec < Minitest::Test
-  def test_clean_text_removes_code_and_links
+  def test_clean_text_preserves_spoken_content_while_removing_markup
     cleaned = Master::Voice::Speech.clean_text("hello `code` https://example.com ```ruby\nx\n```")
-    refute_includes cleaned, "https://"
+    assert_includes cleaned, "https://example.com"
+    assert_includes cleaned, "code"
+    assert_includes cleaned, "x"
     refute_includes cleaned, "```"
-    assert_includes cleaned, "code omitted"
+    refute_includes cleaned, "`"
   end
 
   def test_chunks_respect_sentence_boundaries
