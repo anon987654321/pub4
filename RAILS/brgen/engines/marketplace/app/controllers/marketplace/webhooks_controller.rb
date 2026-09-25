@@ -71,44 +71,9 @@ class Marketplace::WebhooksController < ActionController::Base
     delivery = begin_delivery(event_delivery:, event:)
     return head(:ok) if delivery.succeeded? || delivery.active?
 
-    attempts = 0
-    loop do
-      attempts += 1
-      begin
-        process_event(event, payload)
-        break
-      rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotFound, ArgumentError, KeyError => error
-        delivery.fail!(error)
-        return head(:ok)
-      rescue ActiveRecord::Deadlocked, ActiveRecord::LockWaitTimeout, ActiveRecord::StatementInvalid => error
-        if attempts < 3
-          sleep(attempts == 1 ? 0.25 : 1.0)
-          next
-        end
+    status = process_dintero_event(delivery, event, payload)
+    return head(status) unless status == :finish
 
-        if delivery.provider_attempts_exhausted?
-          delivery.fail!(error)
-          return head(:ok)
-        end
-
-        delivery.retryable!(error)
-        return head(:internal_server_error)
-      rescue StandardError => error
-        if attempts < 3
-          sleep(attempts == 1 ? 0.25 : 1.0)
-          next
-        end
-
-        if delivery.provider_attempts_exhausted?
-          delivery.fail!(error)
-          return head(:ok)
-        end
-
-        delivery.retryable!(error)
-        return head(:internal_server_error)
-      end
-    end
-    delivery.finish!
     head :ok
   rescue JSON::ParserError => error
     if defined?(delivery) && delivery
@@ -121,6 +86,30 @@ class Marketplace::WebhooksController < ActionController::Base
   end
 
   private
+
+  def process_dintero_event(delivery, event, payload)
+    attempts = 0
+    loop do
+      attempts += 1
+      process_event(event, payload)
+      delivery.finish!
+      return :finish
+    rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotFound, ArgumentError, KeyError => error
+      delivery.fail!(error)
+      return :ok
+    rescue ActiveRecord::Deadlocked, ActiveRecord::LockWaitTimeout, ActiveRecord::StatementInvalid, StandardError => error
+      return finalize_dintero_retry(delivery, attempts, error) if attempts >= 3
+
+      sleep(attempts == 1 ? 0.25 : 1.0)
+    end
+  end
+
+  def finalize_dintero_retry(delivery, _attempts, error)
+    return delivery.fail!(error) || :ok if delivery.provider_attempts_exhausted?
+
+    delivery.retryable!(error)
+    :internal_server_error
+  end
 
   def begin_delivery(event_delivery:, event:)
     delivery = Marketplace::WebhookDelivery.find_by(
