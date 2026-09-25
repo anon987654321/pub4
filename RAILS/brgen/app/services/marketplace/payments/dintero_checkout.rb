@@ -72,27 +72,6 @@ module Marketplace
         rescue DinteroClient::Error => error
           raise ProviderError, error.message
         end
-
-        def authorize!(payable, transaction_id:)
-          if payable.is_a?(Marketplace::Checkout)
-            payable.update!(
-              payment_provider: "dintero",
-              dintero_transaction_id: transaction_id,
-              status: "pending_payment"
-            )
-            payable.order_lines.each do |order|
-              order.authorize_payment!(transaction_id: transaction_id)
-            end
-          else
-            payable.update!(
-              payment_provider: "dintero",
-              payment_status: "authorized",
-              dintero_transaction_id: transaction_id
-            )
-          end
-          payable
-        end
-
         def captured!(payable, transaction_id:, items: [])
           payable.update_columns(
             dintero_transaction_id: transaction_id,
@@ -201,7 +180,7 @@ module Marketplace
         def draft_item(order)
           {
             id: order.id.to_s,
-            external_id: order.listing_id.to_s,
+            external_id: order.id.to_s,
             description: order.listing.title.to_s.truncate(120),
             quantity: (order.quantity.presence || 1).to_i,
             unit_price: order.unit_price_cents,
@@ -227,6 +206,7 @@ module Marketplace
           item = {
             id: listing.id.to_s,
             line_id: order.id.to_s,
+            external_id: order.id.to_s,
             description: listing.title.to_s.truncate(120),
             quantity: (order.quantity.presence || 1).to_i,
             amount: order.total_cents
