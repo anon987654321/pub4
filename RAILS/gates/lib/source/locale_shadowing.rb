@@ -52,10 +52,7 @@ module Deploy
       end
 
       budgets = read_budget
-      @apps.each do |app|
-        judge(app, shared, budgets)
-        @result.checked!
-      end
+      @apps.each { |app| judge(app, shared, budgets) }
       judge_orphans
       @result
     end
@@ -116,14 +113,22 @@ module Deploy
     def judge(app, shared, budgets)
       own = load_locales(File.join(@rails_root, app, "config/locales/**/*.yml"))
       return @result.inconclusive!("locale_shadowing #{app}: no locale files") if own.empty?
+      # A count taken with a locale file unread is not a count, so the app is
+      # not counted as checked; load_locales has already named the file.
+      return if @unreadable
 
       shadowed = own.keys.select { |key| shared.key?(key) && own[key] != shared[key] }
       ceiling = budgets[app]
 
+      # Without a ceiling there is nothing to hold the count against, so this
+      # app is reported and not counted as checked. A missing budget therefore
+      # leaves the gate inconclusive rather than passed.
       if ceiling.nil?
         @result.warn("locale_shadowing #{app}: #{shadowed.size} shadowed with no ceiling in locale_shadowing.yml")
         return
       end
+
+      @result.checked!
 
       if shadowed.size > ceiling
         examples = shadowed.sort.first(3)
@@ -145,6 +150,7 @@ module Deploy
         doc = begin
           YAML.safe_load_file(path, aliases: true)
         rescue StandardError => e
+          @unreadable = true
           @result.inconclusive!("locale_shadowing: locale file unreadable #{path} (#{e.class}: #{e.message})")
           next
         end
