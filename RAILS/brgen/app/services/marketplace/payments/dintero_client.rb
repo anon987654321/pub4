@@ -113,7 +113,7 @@ module Marketplace
           return data if response.is_a?(Net::HTTPSuccess)
 
           message = data.dig("error", "message") || data["message"] || response.code
-          raise Error, "Dintero #{uri.path} failed: #{message}"
+          raise Error.new("Dintero #{uri.path} failed: #{message}", status: response.code.to_i, body: body)
         rescue JSON::ParserError
           raise Error.new("Dintero #{uri.path} returned invalid JSON", status: response.code.to_i, body: body)
         end
