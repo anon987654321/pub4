@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require "digest"
+require "uri"
+
 module Marketplace
   module Payments
     class DinteroHooks
