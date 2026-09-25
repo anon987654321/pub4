@@ -263,7 +263,9 @@ module Operator
       # fallbacks — home.feed_sort's aria label and home.feed_hot — with the
       # nav's rebuild in 497c1df03; both keys exist in en and nb, so the
       # defaults could never fire.
-      "translate_default" => 78,
+      # -> 77 (2026-09-25). dating's home blurb gained nb and en keys in the
+      # engine's locales, so its English default went with them.
+      "translate_default" => 77,
       # 0, and a ratchet at zero is a ban. Every finding was a sentence written
       # in English inside a view option — an empty state's body, an action's
       # label, a title that does not open with "No" — on apps that default to
