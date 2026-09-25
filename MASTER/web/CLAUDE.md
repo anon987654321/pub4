@@ -40,6 +40,8 @@ here as provisional until it survives a real-browser tap test, not just a
 code read.
 
 **Invariants:**
+- The face surface is the fullscreen UI: `#face` owns the entire dynamic viewport (`100dvw` × `100dvh`) from `inset: 0`; do not reintroduce a viewport-sized stage, card, or `vh`-limited face canvas.
+- The installed PWA uses `display: fullscreen` and the document viewport keeps `viewport-fit=cover`; preserve safe-area insets for controls without shrinking the face surface.
 - The page must render the primer before heavy face work starts.
 - No WebGL context may be created before `_primerFired` is true.
 - `three.face.module.js` must not be compiled during initial page load.
