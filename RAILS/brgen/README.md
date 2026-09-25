@@ -524,7 +524,21 @@ In `config/routes.rb` (alongside TradeDoubler):
 post "webhooks/tradedoubler" => "webhooks/tradedoubler#create", as: :webhooks_tradedoubler
 post "webhooks/stripe" => "webhooks/stripe#create",       as: :webhooks_stripe
 post "webhooks/vipps" => "webhooks/vipps#create",        as: :webhooks_vipps
+post "webhooks/dintero" => "webhooks/dintero#create",    as: :webhooks_dintero
 ```
+
+## Dintero
+
+| Item | Value |
+|------|-------|
+| Checkout | signed session callback + server-side transaction state |
+| Webhook | `POST /webhooks/dintero` |
+| Webhook secret | `DINTERO_HOOK_SECRET` (HMAC-SHA1 over raw body) |
+| Seller payout | `DINTERO_HOOK_URL` subscription + payout destination reported `ACTIVE` |
+
+Create checkout sessions with an explicit `merchant_reference`. Keep the browser
+return separate from the signed callback. Dintero is the source of truth for
+authorization and capture; the app only marks an order paid after capture.
 
 ## Stripe
 
