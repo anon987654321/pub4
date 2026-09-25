@@ -1,5 +1,8 @@
 # Business plans
 
+## Canonical contract
+
+
 ## Purpose
 
 Bplans is MASTER's small declarative home for business-plan seeds and named
