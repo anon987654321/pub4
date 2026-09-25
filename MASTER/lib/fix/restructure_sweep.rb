@@ -21,7 +21,7 @@ module Master
       ATTEMPTS = Integer(ENV.fetch("MASTER_FIX_RESTRUCTURE_ATTEMPTS", 4))
       ROUNDS = Integer(ENV.fetch("MASTER_FIX_RESTRUCTURE_ROUNDS", 4))
       KEEPS = 3
-      ORDER = %w[PARALLEL_HIERARCHY CYCLIC_DEPENDENCY FILE_SPRAWL NO_GOD_CLASS SMALL_FILES JS_MODULE_SIZE].freeze
+      ORDER = %w[DEAD_SUBTREE PARALLEL_HIERARCHY CYCLIC_DEPENDENCY FILE_SPRAWL NO_GOD_CLASS SMALL_FILES JS_MODULE_SIZE].freeze
       TREES = Contracts::BY_TREE.keys.freeze
 
       PROPOSE = <<~TEXT
@@ -98,8 +98,10 @@ module Master
         kept
       end
 
-      # [path, rule, message] for each structural finding, smallest moves first;
-      # within a rule the order rotates by run, so every finding comes up.
+      # [path, rule, message, related_paths] for each structural finding, smallest moves first;
+      # within a rule the order rotates by run, so every finding comes up. Dead
+      # subtrees and cross-file architecture defects carry their evidence paths
+      # into the proposal rather than collapsing to one filename.
       def candidates(target, run_id)
         found = Context.structural_findings(target)
         seed = Digest::SHA256.hexdigest(run_id.to_s)[0, 8].to_i(16)
