@@ -58,7 +58,37 @@ module Brgen
       "Kulturnatt — høydepunkter", "Slik pusser du opp gammelt trehus"
     ].freeze
 
+    # --- Communities ---------------------------------------------------------
+
+    # A name and a description for each community slug the seeders write.
+    # The bulk seed wrote "Kultur community for Hoppeton": English copy and a
+    # Faker town on a Norwegian page. %{city} is the seeded city's own name, so
+    # a row reads true in Oslo and Tromsø as well; the bergen slug names Bergen's
+    # own places. The bulk seed's English slugs (news, food, music) share a row
+    # with their Norwegian twins.
+    COMMUNITIES = {
+      "bergen" => [ "Bergen", "Byliv i Bergen: vær, trafikk og hverdag fra Bryggen og Nordnes til Åsane og Fana." ],
+      "norge" => [ "Norge", "Nyheter og samtaler fra hele landet, sett fra %{city}." ],
+      "kultur" => [ "Kultur", "Kulturfellesskap for %{city} sentrum: konserter, teater, utstillinger og festivaler." ],
+      "mat" => [ "Mat", "Mat og drikke i %{city}: kafeer, restauranter, torgdager og oppskrifter." ],
+      "musikk" => [ "Musikk", "Musikk i %{city}: konserter, band, klubbkvelder og nye utgivelser." ],
+      "news" => [ "Nyheter", "Lokale nyheter og debatt fra %{city} og omegn." ],
+      "tech" => [ "Teknologi", "Teknologi og oppstart i %{city}: meetups, jobber og prosjekter." ],
+      "film" => [ "Film", "Film i %{city}: kinopremierer, filmfestivaler og filmklubber." ],
+      "food" => [ "Mat", "Mat og drikke i %{city}: kafeer, restauranter, torgdager og oppskrifter." ],
+      "music" => [ "Musikk", "Musikk i %{city}: konserter, band, klubbkvelder og nye utgivelser." ]
+    }.freeze
+
     module_function
+
+    # [name, description] for a seeded community, or nil for a slug the table
+    # does not carry (the other countries' slugs keep their seeders' copy).
+    def community(slug, city_name)
+      name, description = COMMUNITIES[slug.to_s]
+      return unless name
+
+      [ name, format_with(description, city: city_name) ]
+    end
 
     def store_name
       base = "#{Commerce::STORE_PREFIXES.sample} #{Commerce::STORE_KINDS.sample}"

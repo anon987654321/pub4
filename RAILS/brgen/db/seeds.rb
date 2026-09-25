@@ -89,9 +89,12 @@ ActsAsTenant.current_tenant = seed_city if seed_city
 puts "Created #{users.size + 1} users (incl admin)"
 
 communities = %w[news tech bergen norge kultur food music film].map do |slug|
+  # Norwegian copy naming the seeded city. This wrote "#{slug} community for
+  # #{Faker::Address.city}", which put invented English towns on a Bergen page.
+  name, description = Brgen::PlausibleContent.community(slug, seed_city&.name.presence || 'Bergen')
   Community.find_or_create_by!(slug: slug) do |c|
-    c.name = slug.capitalize
-    c.description = "#{slug.capitalize} community for #{Faker::Address.city}"
+    c.name = name
+    c.description = description
     c.user = admin
   end
 end
