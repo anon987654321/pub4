@@ -129,7 +129,13 @@ class TestCliReplExit < Minitest::Test
   # boots. MASTER defaults to Norwegian (CLAUDE.md), so a plain greeting
   # is the cheapest real round trip through chat -> dispatcher -> a live
   # model and back to a clean prompt.
+  #
+  # A live model is the network and a provider's quota, so this runs under
+  # `rake test:cli_e2e` (MASTER_CLI_E2E=1) with the other subprocess tests; in
+  # the default suite a provider that is slow or out of credit failed CI.
   def test_plain_chitchat_gets_a_reply_and_returns_to_prompt
+    skip "set MASTER_CLI_E2E=1 to drive a live model turn" unless ENV["MASTER_CLI_E2E"] == "1"
+
     output, status = drive_conversation("hi there")
 
     assert_equal 0, status.exitstatus, output
