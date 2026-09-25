@@ -27,4 +27,12 @@ class DomainLifecycleTest < ActiveSupport::TestCase
     assert_equal "pending", @domain.reload.state
     assert_empty AuditEvent.all
   end
-end
+
+  test "audit events cannot be edited or deleted" do
+    Eritel::DomainLifecycle.transition!(@domain, to: "active", actor: "test")
+    event = AuditEvent.order(:id).last
+
+    assert_not event.update(data: { tampered: true })
+    assert_not event.destroy
+    assert_equal "active", @domain.reload.state
+  end
