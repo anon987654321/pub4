@@ -116,6 +116,70 @@ class Marketplace::WebhooksControllerTest < ActionDispatch::IntegrationTest
     ENV["VIPPS_WEBHOOK_SECRET"] = prior
   end
 
+
+  test "dintero rejects an unsigned delivery before storing it" do
+    body = {
+      account_id: "P12345678",
+      event: "checkout_transaction",
+      event_delivery: SecureRandom.uuid,
+      transaction: {
+        id: "P12345678.txn1",
+        merchant_reference: "ref_probe",
+        status: "AUTHORIZED"
+      }
+    }.to_json
+
+    post "/webhooks/dintero", params: body,
+         headers: { "CONTENT_TYPE" => "application/json" }
+
+    assert_response :bad_request
+    assert_equal 0, Marketplace::WebhookDelivery.count
+  end
+
+  test "dintero stores raw delivery identity and authorizes the order" do
+    secret = "dintero_hook"
+    prior = ENV["DINTERO_HOOK_SECRET"]
+    ENV["DINTERO_HOOK_SECRET"] = secret
+    delivery_id = SecureRandom.uuid
+    body = {
+      account_id: "P12345678",
+      event: "checkout_transaction",
+      event_delivery: delivery_id,
+      transaction: {
+        id: "P12345678.txn1",
+        merchant_reference: "ref_probe",
+        status: "AUTHORIZED"
+      }
+    }.to_json
+    signature = OpenSSL::HMAC.hexdigest("SHA1", secret, body)
+
+    post "/webhooks/dintero", params: body,
+         headers: {
+           "CONTENT_TYPE" => "application/json",
+           "event" => "checkout_transaction",
+           "event-delivery" => delivery_id,
+           "event-signature" => signature
+         }
+
+    assert_response :ok
+    assert_equal "authorized", @order.reload.payment_status
+    assert_equal 1, Marketplace::WebhookDelivery.where(event_delivery: delivery_id).count
+    assert_equal "succeeded", Marketplace::WebhookDelivery.find_by!(event_delivery: delivery_id).status
+
+    post "/webhooks/dintero", params: body,
+         headers: {
+           "CONTENT_TYPE" => "application/json",
+           "event" => "checkout_transaction",
+           "event-delivery" => delivery_id,
+           "event-signature" => signature
+         }
+
+    assert_response :ok
+    assert_equal 1, Marketplace::WebhookDelivery.where(event_delivery: delivery_id).count
+  ensure
+    ENV["DINTERO_HOOK_SECRET"] = prior
+  end
+
   private
 
   def with_secret
