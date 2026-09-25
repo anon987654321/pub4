@@ -4,8 +4,8 @@ require_relative "test_helper"
 require_relative "../lib/cli/face"
 require_relative "../lib/cli/face/window"
 
-# The terminal face keeps its head in the top third of the window and the
-# last three jobs under it. Motion stays within a readable front-facing turn.
+# The terminal face owns the whole viewport; recent jobs, status and input
+# overlay its bottom four rows. Motion stays within a readable front-facing turn.
 class TestFaceWindowLayout < Minitest::Test
   Quiet = Struct.new(:missing) do
     def available? = missing.nil?
@@ -22,11 +22,11 @@ class TestFaceWindowLayout < Minitest::Test
     screen.scan(/\e\[(\d+);1H(.*?)\e\[K/).to_h { |row, text| [row.to_i, text.gsub(/\e\[[0-9;?]*[A-Za-z]/, "")] }
   end
 
-  def test_the_head_stays_in_the_top_third
+  def test_the_face_uses_the_full_viewport
     painted = rows_of(window.screen(30, 60, 2.0))
     head_rows = painted.select { |_, text| text.match?(BRAILLE) }.keys
     refute_empty head_rows, "the head drew nothing"
-    assert_operator head_rows.max, :<=, 10, "the head reached below the top third"
+    assert_operator head_rows.max, :>, 10, "the face is still confined to the top third"
   end
 
   def test_the_column_under_the_head_keeps_three_jobs
