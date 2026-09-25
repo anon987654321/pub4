@@ -48,7 +48,7 @@ if ARGV.first == "--help" || ARGV.first == "-h"
 
     Slash commands (/review, /status, /commit, /help, …) work as they do
     in MASTER/bin/cli — this is the same runtime, booted from MASTER/ so that
-    data/soul.yml and the sibling RAILS, OPENBSD and STUDIO trees all resolve.
+    data/soul.yml and the sibling RAILS, OPENBSD and MASTER/tools trees all resolve.
 
     Repo operator surface (unchanged): bin/operator status | vps | post-pull
     Gate chain over the whole tree:    bin/operator gate
