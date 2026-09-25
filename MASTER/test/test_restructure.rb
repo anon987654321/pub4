@@ -156,23 +156,23 @@ class TestRestructure < Minitest::Test
 
     refute_nil finding
     assert_equal 3, finding.fetch(3).size
-    assert_includes finding.fetch(3), File.join(@repo, "MASTER/lib/alpha_service.rb")
+    assert_includes finding.fetch(3), File.join(@repo, "MASTER/lib/user_controller.rb")
   end
 
   def test_context_shows_related_architecture_files
     context = Master::Fix::RestructureSweep::Context.new(
       @repo,
-      File.join(@repo, "MASTER/lib/alpha_service.rb"),
+      File.join(@repo, "MASTER/lib/user_controller.rb"),
       related: [
-        File.join(@repo, "MASTER/lib/beta_service.rb"),
-        File.join(@repo, "MASTER/lib/gamma_service.rb"),
+        File.join(@repo, "MASTER/lib/user_service.rb"),
+        File.join(@repo, "MASTER/lib/user_policy.rb"),
       ],
     )
 
     text = context.to_s
     assert_includes text, "Related architecture evidence:"
-    assert_includes text, "MASTER/lib/beta_service.rb"
-    assert_includes text, "MASTER/lib/gamma_service.rb"
+    assert_includes text, "MASTER/lib/user_service.rb"
+    assert_includes text, "MASTER/lib/user_policy.rb"
   end
 
   def test_each_tree_is_proved_its_own_way
