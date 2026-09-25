@@ -9,14 +9,14 @@ module Master
     # A spoken idea becomes a still of Ragnhild and a short film of that still.
     #
     # The still is her Flux LoRA, anon987654321/ragnhild-flux, the weights in
-    # MASTER/tools/studio/lora/ragnhild/weights. The film is prunaai/p-video-2-pro. Before
+    # MASTER/tools/MASTER/tools/lora/ragnhild/weights. The film is prunaai/p-video-2-pro. Before
     # the film, postpro draws one heavy random chain, wear included, so the
     # clip is the graded frame and not the raw render.
     class IdeaPicture
       FILM = "prunaai/p-video-2-pro"
       DIR = File.expand_path("~/ideas")
       ROOT = File.expand_path("../../..", __dir__)
-      SUBJECT = File.join(ROOT, "MASTER/tools/studio/lora/ragnhild")
+      SUBJECT = File.join(ROOT, "MASTER/tools/MASTER/tools/lora/ragnhild")
 
       def initialize(client: nil)
         @client = client
@@ -93,7 +93,7 @@ module Master
       # One heavy chain, wear included. The new file sits beside the raw still.
       def grade(path)
         before = Dir[File.join(File.dirname(path), "*.jpg")]
-        script = File.join(ROOT, "MASTER/tools/studio/postpro/postpro.rb")
+        script = File.join(ROOT, "MASTER/tools/MASTER/tools/postpro/postpro.rb")
         ok = system(RbConfig.ruby, script, "--rough", "--count", "1", path, out: File::NULL, err: File::NULL)
         raise "postpro failed" unless ok
 
