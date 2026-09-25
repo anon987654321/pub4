@@ -47,9 +47,9 @@ node_bin = ENV["PATH"].to_s.split(File::PATH_SEPARATOR).push("/usr/local/bin")
 # is in the operator and contributor profiles and the ci list so a break there
 # is caught by the gates contributors actually run, not only under full.
 # 17s, measured 2026-08-01.
-# rake["studio"] is in agent as well as the two heavy profiles, and it is the
+# rake["tools"] is in agent as well as the two heavy profiles, and it is the
 # only step that is. The agent profile is what runs around law and fix-loop work,
-# which is exactly the work that has silently broken STUDIO before — `bin/gate`'s
+# which is exactly the work that has silently broken tools before — `bin/gate`'s
 # /fix step rewrites the whole shared worktree, and until MASTER/tools/MASTER/tools/gate.rb there
 # was nothing in any profile that noticed. It costs ~3s: parse is in-process AST
 # and the two load probes are about a second each.
@@ -86,9 +86,9 @@ full_ci = ci_steps.reject { |step| ["selftest", "core_smoke", "constitution"].in
 
 PROFILES = {
   "operator"    => [rake["test"], rake["test:subsystems"], rake["security_sweep"],
-                    rake["test:core"], rake["lint:data_singularity"], rake["lint:dedup"], rake["studio"]],
+                    rake["test:core"], rake["lint:data_singularity"], rake["lint:dedup"], rake["tools"]],
   "contributor" => [rake["test"], rake["test:subsystems"], rake["security_sweep"],
-                    rake["lint:data_singularity"], rake["lint:dedup"], rake["studio"]],
+                    rake["lint:data_singularity"], rake["lint:dedup"], rake["tools"]],
   # lint:word_boundary is here and nowhere else: its subject is a `\b` written
   # next to punctuation in a rule regex, which is a word boundary that can never
   # fire, and the agent profile is the one that runs around rule work. It has
@@ -97,7 +97,7 @@ PROFILES = {
   # existed for weeks in no profile at all, which is the defect it detects,
   # wearing the other coat. 0.2s.
   "agent"       => [rake["selftest"], rake["lint:data_singularity"], rake["lint:dedup"],
-                    rake["lint:word_boundary"], rake["studio"]],
+                    rake["lint:word_boundary"], rake["tools"]],
   # Face tests keep three homes because they need three runtimes: web/test/*_test.rb boots
   # Rails, test/test_web_*.rb runs in MASTER's bundle, and web/test/*.test.mjs runs under node.
   #
