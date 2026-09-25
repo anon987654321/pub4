@@ -91,17 +91,19 @@ module Marketplace
         end
 
         def api_host
-          configured = ENV["DINTERO_API_BASE"].to_s.strip
-          return configured if configured.present? && safe_host?(configured)
-
-          production? && !test_mode? ? LIVE_API_HOST : TEST_API_HOST
+          configured_host(
+            ENV["DINTERO_API_BASE"],
+            live: LIVE_API_HOST,
+            test: TEST_API_HOST
+          )
         end
 
         def checkout_host
-          configured = ENV["DINTERO_CHECKOUT_BASE"].to_s.strip
-          return configured if configured.present? && safe_host?(configured)
-
-          production? && !test_mode? ? LIVE_CHECKOUT_HOST : TEST_CHECKOUT_HOST
+          configured_host(
+            ENV["DINTERO_CHECKOUT_BASE"],
+            live: LIVE_CHECKOUT_HOST,
+            test: TEST_CHECKOUT_HOST
+          )
         end
 
         def test_mode?
@@ -121,15 +123,25 @@ module Marketplace
           names.all? { |name| ENV[name].to_s.strip.present? }
         end
 
-        def safe_host?(value)
-          uri = URI(value)
-          return false unless uri.is_a?(URI::HTTPS)
+        def configured_host(value, live:, test:)
+          configured = value.to_s.strip
+          return (production? && !test_mode?) ? live : test if configured.empty?
 
-          return false if production? && !test_mode? && uri.host == URI(LIVE_API_HOST).host
-          return true
+          uri = URI(configured)
+          raise ArgumentError, "Dintero host must use HTTPS" unless uri.is_a?(URI::HTTPS)
+
+          allowed = [ URI(live).host, URI(test).host ]
+          raise ArgumentError, "Dintero host is not approved" unless allowed.include?(uri.host)
+
+          if production? && !test_mode? && uri.host == URI(test).host
+            raise ArgumentError, "Dintero test host is disabled in production"
+          end
+
+          configured
         rescue URI::InvalidURIError
-          false
+          raise ArgumentError, "Dintero host is invalid"
         end
+
 
         def authenticate
           account = account_id
