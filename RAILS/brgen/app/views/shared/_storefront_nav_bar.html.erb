@@ -14,8 +14,21 @@
     back to its root, so a logotype here would put two wordmarks on one page. %>
 <% deliver_to = local_assigns.fetch(:deliver_to, Current.city_record&.name.presence || Current.city_name) %>
 <% cart = local_assigns[:cart] %>
+<% variant = local_assigns.fetch(:variant, :default).to_sym %>
 
-<div id="navBar">
+<% if variant == :bol %>
+  <div class="storefront-utility storefront-utility--bol" aria-label="Shopper service information">
+    <span>Free delivery from 20</span>
+    <span>Fast delivery, including evenings</span>
+    <span>Free returns</span>
+  </div>
+<% end %>
+
+<div id="navBar" class="#{"storefront-nav--bol" if variant == :bol}">
+  <% if variant == :bol %>
+    <%= render "shared/brand_mark", **brand_mark_fragments, href: brand_mark_href, class_name: "storefront-bol-brand" %>
+  <% end %>
+
   <div id="topHalf">
     <div id="sections">
       <%= yield %>
@@ -76,4 +89,13 @@
       <% end %>
     </div>
   </div>
+
+  <% if variant == :bol %>
+    <nav class="storefront-bol-subnav" aria-label="Marketplace shortcuts">
+      <%= link_to t("storefront.sell"), new_listing_path %>
+      <%= link_to t("storefront.saved_searches"), saved_searches_path if authenticated? %>
+      <%= link_to t("storefront.orders"), orders_path if authenticated? %>
+      <%= link_to t("storefront.account"), authenticated? ? main_app.user_path(Current.user) : main_app.new_session_path %>
+    </nav>
+  <% end %>
 </div>
