@@ -8,7 +8,9 @@ module Marketplace
   module Payments
     class DinteroClient
       LIVE_API_HOST = "https://api.dintero.com"
+      LIVE_CHECKOUT_HOST = "https://checkout.dintero.com"
       TEST_API_HOST = "https://test.dintero.com"
+      TEST_CHECKOUT_HOST = "https://test.dintero.com"
       TOKEN_TTL_SKEW = 60
 
       class Error < StandardError
@@ -22,17 +24,40 @@ module Marketplace
       end
 
       class << self
-        def get(path, idempotency_key: nil)
-          req = Net::HTTP::Get.new(uri(path))
+        def get(path, checkout: false, idempotency_key: nil)
+          req = Net::HTTP::Get.new(uri(path, checkout: checkout))
           req["Idempotency-Key"] = idempotency_key if idempotency_key.present?
           request(req)
         end
 
-        def post(path, payload = nil, idempotency_key: nil)
-          req = Net::HTTP::Post.new(uri(path))
+        def post(path, payload = nil, checkout: false, idempotency_key: nil)
+          req = Net::HTTP::Post.new(uri(path, checkout: checkout))
           req["Idempotency-Key"] = idempotency_key if idempotency_key.present?
           req.body = JSON.generate(payload) if payload
           request(req)
+        end
+
+        def configured?
+          checkout_configured?
+        end
+
+        def checkout_configured?
+          required?(
+            "DINTERO_ACCOUNT_ID",
+            "DINTERO_CLIENT_ID",
+            "DINTERO_CLIENT_SECRET",
+            "DINTERO_PROFILE_ID",
+            "DINTERO_CALLBACK_SECRET"
+          )
+        end
+
+        def hooks_configured?
+          required?(
+            "DINTERO_ACCOUNT_ID",
+            "DINTERO_CLIENT_ID",
+            "DINTERO_CLIENT_SECRET",
+            "DINTERO_HOOK_SECRET"
+          )
         end
 
         def token
@@ -58,28 +83,18 @@ module Marketplace
           @token_mutex.synchronize { @token = nil }
         end
 
-        def configured?
-          checkout_configured?
-        end
-
-        def checkout_configured?
-          %w[DINTERO_ACCOUNT_ID DINTERO_CLIENT_ID DINTERO_CLIENT_SECRET DINTERO_PROFILE_ID
-             DINTERO_CALLBACK_SECRET].all? do |name|
-            ENV[name].to_s.strip.present?
-          end
-        end
-
-        def hooks_configured?
-          %w[DINTERO_ACCOUNT_ID DINTERO_CLIENT_ID DINTERO_CLIENT_SECRET DINTERO_HOOK_SECRET].all? do |name|
-            ENV[name].to_s.strip.present?
-          end
-        end
-
         def api_host
           explicit = ENV["DINTERO_API_BASE"].to_s.strip
           return explicit if explicit.present?
 
           production? && !test_mode? ? LIVE_API_HOST : TEST_API_HOST
+        end
+
+        def checkout_host
+          explicit = ENV["DINTERO_CHECKOUT_BASE"].to_s.strip
+          return explicit if explicit.present?
+
+          production? && !test_mode? ? LIVE_CHECKOUT_HOST : TEST_CHECKOUT_HOST
         end
 
         def test_mode?
@@ -95,13 +110,21 @@ module Marketplace
 
         private
 
+        def required?(*names)
+          names.all? { |name| ENV[name].to_s.strip.present? }
+        end
+
         def authenticate
           account = account_id
           uri = URI("#{api_host}/v1/accounts/#{account}/auth/token")
           req = Net::HTTP::Post.new(uri)
           req.basic_auth(ENV.fetch("DINTERO_CLIENT_ID"), ENV.fetch("DINTERO_CLIENT_SECRET"))
           req["Content-Type"] = "application/json"
-          req.body = JSON.generate(grant_type: "client_credentials")
+          req["Accept"] = "application/json"
+          req.body = JSON.generate(
+            grant_type: "client_credentials",
+            audience: "#{api_host}/v1/accounts/#{account}"
+          )
 
           response = request_raw(req)
           parse_response(response, uri)
@@ -113,9 +136,13 @@ module Marketplace
           req["Accept"] = "application/json"
           response = request_raw(req)
           parse_response(response, req.uri)
-        rescue Error => e
-          reset_token! if e.status == 401
-          raise
+        rescue Error => error
+          raise unless error.status == 401
+
+          reset_token!
+          req["Authorization"] = "Bearer #{token}"
+          response = request_raw(req)
+          parse_response(response, req.uri)
         end
 
         def request_raw(req)
@@ -126,7 +153,6 @@ module Marketplace
             open_timeout: 8,
             read_timeout: 20
           ) do |http|
-            req.body ||= nil
             http.request(req)
           end
         end
@@ -137,13 +163,22 @@ module Marketplace
           return data if response.is_a?(Net::HTTPSuccess)
 
           message = data.dig("error", "message") || data["message"] || response.code
-          raise Error.new("Dintero #{uri.path} failed: #{message}", status: response.code.to_i, body: body)
+          raise Error.new(
+            "Dintero #{uri.path} failed: #{message}",
+            status: response.code.to_i,
+            body: body
+          )
         rescue JSON::ParserError
-          raise Error.new("Dintero #{uri.path} returned invalid JSON", status: response.code.to_i, body: body)
+          raise Error.new(
+            "Dintero #{uri.path} returned invalid JSON",
+            status: response.code.to_i,
+            body: body
+          )
         end
 
-        def uri(path)
-          URI("#{api_host}#{path}")
+        def uri(path, checkout:)
+          base = checkout ? checkout_host : api_host
+          URI("#{base}#{path}")
         end
       end
     end
