@@ -133,7 +133,7 @@ module Master
         # character stops that take; the keys stay on this thread.
         def arm_ear
           return unless @ear.available?
-          return if @hearing?
+          return if @hearing
           return if @ear_after && Process.clock_gettime(Process::CLOCK_MONOTONIC) < @ear_after
           return unless @lock.synchronize { @state == :idle && @draft.empty? }
 
