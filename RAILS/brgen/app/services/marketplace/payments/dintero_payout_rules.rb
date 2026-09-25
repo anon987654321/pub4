@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "json"
 require "uri"
 
 module Marketplace
@@ -110,7 +111,22 @@ module Marketplace
         end
 
         def same_destinations?(actual, expected)
-          actual.to_json == expected.to_json
+          canonical(actual) == canonical(expected)
+        end
+
+        def canonical(value)
+          case value
+          when Hash
+            value.each_with_object({}) do |(key, item), normalized|
+              normalized[key.to_s] = canonical(item)
+            end.sort.to_h
+          when Array
+            value.map { |item| canonical(item) }
+          when Numeric
+            value.to_f
+          else
+            value
+          end
         end
       end
     end
