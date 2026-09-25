@@ -108,6 +108,25 @@ class TestRestructure < Minitest::Test
     assert_equal "TINY = 1\n", read("MASTER/lib/tiny.rb")
   end
 
+  def test_deletion_proof_refuses_a_live_production_reference
+    write("MASTER/lib/consumer.rb", "require_relative \"producer\"\n")
+    write("MASTER/lib/producer.rb", "class Producer; end\n")
+    sh("git", "add", "-A", chdir: @repo)
+    sh("git", "commit", "-m", "consumer", chdir: @repo)
+
+    plan = Restructure::Plan.parse(<<~TEXT)
+      SUMMARY: remove producer
+      === DELETE MASTER/lib/producer.rb
+      === END
+    TEXT
+    proof = Restructure::Proof.new(repo_root: @repo, tree: "MASTER")
+    baseline = proof.baseline(plan)
+
+    File.delete(File.join(@repo, "MASTER/lib/producer.rb"))
+
+    assert_match(/production references/, proof.failure(plan, baseline))
+  end
+
   def test_each_tree_is_proved_its_own_way
     assert_instance_of Restructure::MasterProof, Restructure::Proof.for("MASTER", @repo)
     assert_instance_of Restructure::RailsProof, Restructure::Proof.for("RAILS", @repo)
