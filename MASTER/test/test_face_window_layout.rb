@@ -29,6 +29,20 @@ class TestFaceWindowLayout < Minitest::Test
     assert_operator head_rows.max, :>, 10, "the face is still confined to the top third"
   end
 
+  def test_the_renderer_receives_the_full_terminal_height
+    seen_rows = nil
+    renderer = ->(**kwargs) do
+      seen_rows = kwargs.fetch(:rows)
+      Array.new(seen_rows, " ").join("\n")
+    end
+
+    Master::CLI::Face.stub(:frame, renderer) do
+      window.screen(30, 60, 2.0)
+    end
+
+    assert_equal 30, seen_rows
+  end
+
   def test_the_column_under_the_head_keeps_three_jobs
     face = window
     5.times { |i| face.send(:note_job, ["job #{i}"]) }
