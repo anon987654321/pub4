@@ -28,9 +28,9 @@ function partSources() {
 test("face surface owns the full viewport", () => {
   const css = readFileSync(join(publicDir, "face.css"), "utf8");
   const view = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
-  assert.match(css, /#face\s*\{[\\s\\S]*?inset:\s*0;/);
-  assert.match(css, /#face\s*\{[\\s\\S]*?width:\s*100dvw;/);
-  assert.match(css, /#face\s*\{[\\s\\S]*?height:\s*100dvh;/);
+  assert.match(css, /#face\s*\{[\s\S]*?inset:\s*0;/);
+  assert.match(css, /#face\s*\{[\s\S]*?width:\s*100dvw;/);
+  assert.match(css, /#face\s*\{[\s\S]*?height:\s*100dvh;/);
   assert.doesNotMatch(css, /#face\s*\{[^}]*min-height:\s*44vh/);
   assert.match(view, /<canvas id="face"/);
 });
