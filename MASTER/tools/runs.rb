@@ -26,7 +26,7 @@ module Operator
     # Files that orchestrate other files. Each is read for glob literals.
     RUNNERS = %w[
       MASTER/Rakefile
-      MASTER/tools/MASTER/tools/Rakefile
+      MASTER/tools/Rakefile
       MASTER/bin/check
       MASTER/bin/ci
       MASTER/bin/gate
