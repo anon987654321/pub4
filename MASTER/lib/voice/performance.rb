@@ -11,15 +11,15 @@ module Master
     # every TTS backend can receive the same intent. It deliberately stays
     # conservative: continuity beats theatrical randomness.
     module Performance
-      MAX_RATE_DELTA = 5
-      MAX_PITCH_DELTA_HZ = 12
-      MIN_RATE = -20
-      MAX_RATE = 20
-      MIN_PITCH_HZ = -60
-      MAX_PITCH_HZ = 60
-      MIN_PAUSE_MS = 70
-      MAX_PAUSE_MS = 420
-      DEFAULT_PAUSE_MS = 130
+      MAX_RATE_DELTA = 3
+      MAX_PITCH_DELTA_HZ = 8
+      MIN_RATE = -12
+      MAX_RATE = 10
+      MIN_PITCH_HZ = -24
+      MAX_PITCH_HZ = 24
+      MIN_PAUSE_MS = 85
+      MAX_PAUSE_MS = 320
+      DEFAULT_PAUSE_MS = 135
 
       module_function
 
@@ -32,7 +32,7 @@ module Master
           seed = Digest::SHA256.hexdigest(phrase)[0, 4].to_i(16)
           variation = ((seed % 11) - 5)
           arousal = emotion.dig(:scores, :arousal).to_f.clamp(0.0, 1.0)
-          delta = ((variation * (0.55 + arousal * 0.35)).round).clamp(-MAX_RATE_DELTA, MAX_RATE_DELTA)
+          delta = ((variation * (0.42 + arousal * 0.22)).round).clamp(-MAX_RATE_DELTA, MAX_RATE_DELTA)
           pitch = ((variation * 2.0) + role_pitch(role)).round.clamp(-MAX_PITCH_DELTA_HZ, MAX_PITCH_DELTA_HZ)
 
           {
