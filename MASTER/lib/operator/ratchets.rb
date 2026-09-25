@@ -212,7 +212,7 @@ module Operator
     # The row above read "what our own rules find in our own trees" and
     # counted the law alone, so this second population counts the 145 rules
     # the scanner builds: rule_audit runs them over a sixth of the tree and
-    # measures blindness, and bin/operator gate runs them over all four trees
+    # measures blindness, and bin/operator gate runs them over all three top-level trees
     # and records nothing.
     def self_findings_rows
       [master_row("self_findings.law", "data/self_findings.yml", "what the 122 laws find in our own trees") do
@@ -251,7 +251,7 @@ module Operator
 
     def sprawl_rows
       %w[lone_dirs stutter vague_names].map do |kind|
-        master_row("sprawl.#{kind}", "data/sprawl_census.yml", "the shape of the tree, in all four of them") do
+        master_row("sprawl.#{kind}", "data/sprawl_census.yml", "the shape of the tree, in all three top-level trees") do
           require File.join(MASTER, "lib/operator/sprawl_census")
           [Operator::SprawlCensus.counts.fetch(kind), Operator::SprawlCensus.ceilings.fetch(kind),
            Array(Operator::SprawlCensus.public_send(kind))]
@@ -321,7 +321,7 @@ module Operator
     # The population is what git tracks, not what is on disk. This checkout is
     # shared and a working-tree walk charged one session for another's
     # uncommitted files — an untracked stems render raised growth.studio against
-    # a session that had never opened STUDIO. Tracking is also the honest moment
+    # a session that had never opened MASTER/tools. Tracking is also the honest moment
     # for this row: a file joins the tree when it is committed. entrypoint_count
     # has asked git all along, and this is the same question.
     # TREE_EXCLUDE keeps what git tracks that is still not ours to count --
@@ -355,7 +355,7 @@ module Operator
     # The count CLAUDE.md's "two surfaces, no third" asserts. It was prose, so it
     # rotted from 2 to 28 in silence; this is the reader that makes it fail.
     # Executables directly under a tree's own bin/, so a Rails app's generated
-    # bin/rails and a STUDIO tool's private bin/ are not mistaken for surfaces.
+    # bin/rails and a MASTER/tools tool's private bin/ are not mistaken for surfaces.
     # Names that carry a category or repeat their namespace. The register is
     # where this belongs rather than the scanner: the detector can say a name is
     # wrong and even propose a free shorter one, and it cannot say the proposal
@@ -450,7 +450,7 @@ end
       tracked_source_files.select { |path| path.start_with?("#{tree}/") }
     end
 
-    # One call for all four trees, so this stays fast enough for a hook. Nothing
+    # One call for all three top-level trees, so this stays fast enough for a hook. Nothing
     # is rescued: a growth row measured without asking git what it tracks is the
     # blind instrument this file exists to catch, and pub4_growth_rows turns the
     # raise into an unreadable row, which fails.
@@ -668,7 +668,7 @@ end
 
 def deep_rows
   [
-    # Deep because it parses every tracked Ruby file in four trees with Prism.
+    # Deep because it parses every tracked Ruby file in three top-level trees with Prism.
     # Fast means "reads files" in this register and name_candidates reads 2,500
     # of them through a parser, which is the line the header draws.
     *name_rows,
