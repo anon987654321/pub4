@@ -82,6 +82,9 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
     end
 
     redirect_to url, allow_other_host: true
+  rescue Marketplace::Payments::DinteroCheckout::SellerNotReady
+    target = params[:listing_id].present? ? listing_path(params[:listing_id]) : cart_path
+    redirect_to target, alert: t("flash.marketplace.dintero_seller_not_ready")
   rescue Marketplace::Payments::NotConfigured
     redirect_to cart_path, alert: t("marketplace.checkout_errors.not_configured", provider: provider_name(provider))
   # The buyer is told which provider failed and that nothing was charged. The
