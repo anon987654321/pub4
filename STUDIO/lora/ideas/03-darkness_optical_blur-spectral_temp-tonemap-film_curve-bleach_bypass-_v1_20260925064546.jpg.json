@@ -1,0 +1,43 @@
+{
+  "schema": "postpro.chain.v1",
+  "generated_at": "2026-09-25T04:45:47Z",
+  "input": "/Users/mac/Documents/GitHub/pub4/STUDIO/lora/ideas/03-darkness.jpg",
+  "output": "/Users/mac/Documents/GitHub/pub4/STUDIO/lora/ideas/03-darkness_optical_blur-spectral_temp-tonemap-film_curve-bleach_bypass-_v1_20260925064546.jpg",
+  "grade_version": "f23a38996d55",
+  "seed": 1011557601,
+  "chain": [
+    {
+      "optical_blur": 0.15
+    },
+    {
+      "spectral_temp": 0.14
+    },
+    {
+      "tonemap": 0.06
+    },
+    {
+      "film_curve": 0.06
+    },
+    {
+      "bleach_bypass": 0.15
+    },
+    {
+      "kodachrome_sim": 0.14
+    },
+    {
+      "split_grade": 0.05
+    },
+    {
+      "highlight_roll": 0.08
+    },
+    {
+      "aerial_depth": 0.64
+    },
+    {
+      "grain": {
+        "intensity": 0.55,
+        "stock": "cinestill_800t"
+      }
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "schema": "postpro.chain.v1",
+  "generated_at": "2026-09-25T04:45:20Z",
+  "input": "/Users/mac/Documents/GitHub/pub4/STUDIO/lora/ideas/01-north-window.jpg",
+  "output": "/Users/mac/Documents/GitHub/pub4/STUDIO/lora/ideas/01-north-window_adaptive_contrast-spectral_temp-film_shoulder-edge_aware_nr-_v1_20260925064520.jpg",
+  "grade_version": "f23a38996d55",
+  "seed": 1011557601,
+  "chain": [
+    {
+      "adaptive_contrast": 0.07
+    },
+    {
+      "spectral_temp": 0.11
+    },
+    {
+      "film_shoulder": 0.39
+    },
+    {
+      "edge_aware_nr": 0.13
+    },
+    {
+      "selective_sharpen": 0.06
+    },
+    {
+      "aerial_depth": 0.55
+    },
+    {
+      "grain": {
+        "intensity": 0.57,
+        "stock": "kodak_vision3_50d"
+      }
+    }
+  ]
+}
