@@ -25,6 +25,7 @@ module Master
         PLAIN = "\e[0m"
 
         WORDS = %w[/face face].freeze
+        CONTROL_ROWS = 4
         MESSAGE_FLAGS = %w[-m -p --message --prompt].freeze
 
         # Whether a command line asks for the face and nothing else: `face`,
@@ -94,7 +95,7 @@ module Master
           # control strip: recent jobs, status and input replace the face there,
           # while the renderer still receives every row and can size the head to
           # the real terminal rather than an arbitrary top third.
-          overlay_rows = [rows, 4].min
+          overlay_rows = [rows, CONTROL_ROWS].min
           job_rows = [overlay_rows - 2, 1].max
           face = Face.frame(state:, rows:, cols:, t:, level:, events:, motion: @motion).split("\n")
           overlay = tail(column(jobs, words), job_rows, cols)
