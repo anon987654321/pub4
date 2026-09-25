@@ -10,6 +10,7 @@
 # Keys the host already carries are NOT copied here. Use them.
 en:
   dating:
+    home_blurb: "Meet people nearby. Swipe to like or pass."
     bio: "Bio"
     gender: "Gender"
     location: "Location"

@@ -10,6 +10,7 @@
 # Keys the host already carries are NOT copied here. Use them.
 nb:
   dating:
+    home_blurb: "Møt folk i nærheten. Sveip for å like eller gå videre."
     bio: "Bio"
     gender: "Kjønn"
     location: "Sted"

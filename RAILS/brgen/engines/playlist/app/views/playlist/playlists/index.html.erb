@@ -8,7 +8,7 @@
       <p><%= t("playlist.home_blurb") %></p>
     </div>
     <nav aria-label="<%= t("playlist.navigation") %>">
-      <%= link_to t("playlist.browse_tracks"), hosted_tracks_path, class: "radio-home-link" %>
+      <%= link_to t("radio.browse_tracks"), hosted_tracks_path, class: "radio-home-link" %>
       <% if authenticated? %>
         <%= link_to t("playlist.upload_track"), new_hosted_track_path, class: "radio-home-link radio-home-link--primary" %>
         <%= link_to t("playlist.new_playlist"), new_playlist_path, class: "radio-home-link" %>
