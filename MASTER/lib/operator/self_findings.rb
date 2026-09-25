@@ -65,7 +65,7 @@ module Operator
       ::Law.rules
     end
 
-    # Code we did not write and will not fix. STUDIO/dilla/tools/venv-demucs is
+    # Code we did not write and will not fix. MASTER/tools/dilla/tools/venv-demucs is
     # a Python virtualenv with pip, torch and urllib3 vendored inside it, and
     # its JavaScript and HTML were being graded against this repo's rules —
     # `var headers = []` in urllib3's emscripten worker is not our debt.
@@ -184,7 +184,7 @@ module Operator
         # The file list and the reads are two moments, and this is a shared
         # checkout: a file listed a second ago can be gone by the time it is
         # opened. That crashed the whole census on
-        # STUDIO/dilla/demo.mp3.quality.json while another session was deleting
+        # MASTER/tools/dilla/demo.mp3.quality.json while another session was deleting
         # it -- a tool that reports a number for the tree dying because the tree
         # moved. Skipped rather than rescued blind: a file that is gone
         # contributes no findings, which is the right answer, and anything else
