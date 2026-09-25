@@ -16,15 +16,6 @@ module Master
         TOKEN_KILO_THRESHOLD = 1000
         PROMPT_PATH_MAX = 44
         PROMPT_PATH_MIN = 10
-        PHASE_COLORS = {
-          "discover" => :yellow,
-          "implement" => :cyan,
-          "audit" => :red,
-          "grind" => :magenta,
-          "polish" => :magenta,
-          "watch" => :blue,
-        }.freeze
-
         def splash(model)
           context = splash_context(model)
           lines = [*identity_lines(context), *splash_dmesg_lines, *device_lines_for(context),
@@ -47,16 +38,11 @@ module Master
           bits = ["model0: #{short_model(model)}", "ctx0: #{context_label(options[:tokens], model)}"]
           violations = options.fetch(:violations, 0).to_i
           bits << "scan0: #{violations} violations" if violations.positive?
-          cost = cost_label(options[:cost])
-          bits << cost unless cost.empty?
           d(bits.join(", "))
         end
 
-        def phase_tinted(text, phase)
-          return @p.dim(text) if Aesthetic.wscons?
-
-          color = PHASE_COLORS[phase.to_s]
-          color ? @p.dim.public_send(color, text) : @p.dim(text)
+        def phase_tinted(text, _phase)
+          d(text)
         end
 
         def prompt_token
@@ -69,13 +55,6 @@ module Master
 
           color = PHASE_COLORS.fetch(phase.to_s, :red)
           @p.bold.public_send(color, prompt_token)
-        end
-
-        def cost_label(cost)
-          amount = cost.to_f
-          return "" if amount.round(4).zero?
-
-          "cost $#{format('%.4f', amount)}"
         end
 
         def token_label(tokens)
