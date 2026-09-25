@@ -22,7 +22,7 @@ elsewhere):
 | **MASTER web** | Face + mission control at `ai.brgen.no` — embeddable AI |
 
 Shared glue: `pub4-shared` (layout chrome, comments form/row, social locales,
-`master_embed`, empty states). bsdports / studio remain maintenance-only unless
+`master_embed`, empty states). bsdports / tools remain maintenance-only unless
 named in a task.
 
 Bridge contract: RAILS hosts embed MASTER via `shared/master_embed` +
@@ -704,7 +704,7 @@ Social dark-tokens is worn intentionally in exactly one brgen place —
 and `shared/_tokens.scss` themselves.
 
 **Focus triangle:** brgen + amber + MASTER web. Shared engine glue (layout,
-social locales, comments form/row, master_embed). bsdports/studio
+social locales, comments form/row, master_embed). bsdports/tools
 maintenance-only unless named.
 
 **Layout:** single-column feed (`--feed-max: 600px`) with edge-swiper
