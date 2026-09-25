@@ -164,15 +164,12 @@ class TestAgent < Minitest::Test
     assert_match(/no local model pulled/, error.message)
   end
 
-  def test_an_offline_session_starts_on_the_local_tier
+  def test_offline_boot_does_not_auto_pin_a_local_tier
     agent = agent_routed_by(LocalRouter.new(%w[ollama:phi4:mini]))
 
-    Master::Ground::BootReceipt.stub(:network?, false) { agent.start_on_local_tier_when_offline! }
-    assert_equal "ollama:phi4:mini", agent.model
+    Master::Ground::BootReceipt.stub(:network?, false) { agent.pin_boot_model! }
 
-    online = agent_routed_by(LocalRouter.new(%w[ollama:phi4:mini])).tap { |a| a.instance_variable_set(:@pinned_model, nil) }
-    Master::Ground::BootReceipt.stub(:network?, true) { online.start_on_local_tier_when_offline! }
-    assert_equal "agy:auto", online.model
+    assert_equal "claude-sonnet-4-6", agent.model
   end
 
   # /model saves its choice to config, and the next boot left it at the tail of
@@ -198,6 +195,23 @@ class TestAgent < Minitest::Test
     assert_equal "agy:auto", agent.model
   end
 
+  def test_single_shot_walks_the_live_fallback_chain
+    calls = []
+    fake = Object.new
+    fake.define_singleton_method(:send_with_cache) do |model, *_args, **|
+      calls << model
+      model == "final-model" ? Master::Result.ok("answer") : Master::Result.err("quota", category: :budget)
+    end
+    @agent.instance_variable_set(:@dispatcher, fake)
+
+    router = Object.new
+    def router.fallback_chain(task_type:) = %w[first-model second-model final-model]
+    @agent.instance_variable_set(:@model_router, router)
+
+    assert_equal "answer", @agent.ask_once("hi", model: "first-model")
+    assert_equal %w[first-model second-model final-model], calls
+  end
+
   # The scan's model rules each ask model_for; a pinned model that just failed
   # must not be asked by every one of them in turn.
   def test_a_pinned_model_that_just_failed_is_routed_around
@@ -219,12 +233,18 @@ class TestAgent < Minitest::Test
     assert_equal "agy:auto", agent.model
   end
 
-  def test_an_offline_boot_starts_local_even_with_a_saved_choice
-    agent = agent_routed_by(LocalRouter.new(%w[ollama:phi4:mini]))
+  def test_unreachable_saved_web_chat_model_uses_dynamic_routing
+    router = LocalRouter.new(%w[ollama:phi4:mini])
+    router.define_singleton_method(:fallback_chain) { |task_type:| %w[agy:auto ollama:phi4:mini] }
+    router.define_singleton_method(:unreachable_reason) do |id, wait: false|
+      "browser chat is off; MASTER_WEB_CHAT=1 turns it on" if id == "web-chat:chatgpt"
+    end
+    agent = agent_routed_by(router)
+    agent.instance_variable_get(:@config).model = "web-chat:chatgpt"
 
-    Master::Ground::BootReceipt.stub(:network?, false) { agent.pin_boot_model! }
+    agent.pin_boot_model!
 
-    assert_equal "ollama:phi4:mini", agent.model
+    assert_equal "agy:auto", agent.model
   end
 
   # The filter ran on the operator's own message, so "what would happen if"
