@@ -52,6 +52,28 @@ class DinteroSignatureTest < ActiveSupport::TestCase
     assert_not Marketplace::Payments::DinteroSignature.valid_callback?(header:, request:)
   end
 
+
+  test "callback canonicalization sorts duplicate query keys by value" do
+    request = Struct.new(:request_method, :url).new(
+      "GET",
+      "https://markedsplass.brgen.no/webhooks/dintero/callback?foo=2&foo=1"
+    )
+    canonical = Struct.new(:request_method, :url).new(
+      "GET",
+      "https://markedsplass.brgen.no/webhooks/dintero/callback?foo=1&foo=2"
+    )
+    header = Marketplace::Payments::DinteroSignature.callback_header(
+      timestamp: Time.current.to_i,
+      method: canonical.request_method,
+      url: canonical.url
+    )
+
+    assert Marketplace::Payments::DinteroSignature.valid_callback?(
+      header:,
+      request: request
+    )
+  end
+
   test "webhook signature covers raw bytes" do
     body = '{"event":"checkout_transaction","x":1}'
     signature = OpenSSL::HMAC.hexdigest("SHA1", "hook-secret", body)
