@@ -653,7 +653,7 @@ pub4_source_ceilings:
   # (cable_bridge, MasterChannel, ApplicationCable channel and connection) that
   # went when /events/stream became the face's one pipe. cable.yml leaves too
   # and a drop migration arrives, which nets to zero.
-  MASTER: 646
+  MASTER: 715
 
   # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:
@@ -1010,9 +1010,10 @@ pub4_source_ceilings:
   # wrapper round a command dilla.rb already had, is gone.
   # 70 -> 69: dilla_live.rb is `ruby dilla.rb live`, and the old live command,
   # which looped a cached render, gave its name to it.
-  # 2026-09-25: STUDIO was consolidated into MASTER/tools. Its historical 69-file
-  # baseline is retired rather than transferred; MASTER keeps its existing ceiling
-  # until a clean run measures the merged tree and a deliberate ratchet records why.
+  # 2026-09-25: STUDIO was consolidated into MASTER/tools. Transfer exactly its
+  # 69-file allowance into MASTER (646 + 69 = 715); do not absorb any additional
+  # growth into this migration. The merged tree currently measures above that
+  # ceiling, so the unexplained remainder stays visible to the next /fix pass.
 
 # Executable files directly under each tree's own bin/ — the number CLAUDE.md's
 # "two surfaces, no third" makes a claim about while nothing counted it. MASTER
