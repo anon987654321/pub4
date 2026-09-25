@@ -7,7 +7,7 @@
 # three are one thing", so no scan proposes a merge, and one concept spread over
 # three files that reference each other in both directions stays that way.
 #
-#   ruby MASTER/tools/cohesion.rb STUDIO/dilla/lib/engine
+#   ruby MASTER/tools/cohesion.rb MASTER/tools/dilla/lib/engine
 #   ruby MASTER/tools/cohesion.rb --json RAILS/shared/lib
 #
 # It emits a plan rather than a patch. Moving code between files is not a
@@ -50,7 +50,7 @@ MIN_FAMILY = 3
 # INTEGRATED_SYSTEMS all say split further. None says these three are one
 # thing." A counterbalance with no upper bound is not a counterbalance.
 #
-# It had none. Run against STUDIO/dilla it proposed six merges producing
+# It had none. Run against MASTER/tools/dilla it proposed six merges producing
 # files of 1076 to 2925 lines — up to ten times the threshold the same tree
 # enforces — and the three dilla_* files say in their own headers that they
 # were "split out of dilla.rb". The proposal was to undo a deliberate split
@@ -371,7 +371,7 @@ return if collisions.any?
       RAILS/shared/app RAILS/shared/lib RAILS/gates
       RAILS/brgen/app RAILS/brgen/lib RAILS/amber/app RAILS/amber/lib
       RAILS/bsdports/app RAILS/bsdports/lib
-      STUDIO/dilla/lib STUDIO/lora STUDIO/postpro STUDIO/preprompt
+      MASTER/tools/dilla/lib MASTER/tools/lora MASTER/tools/postpro MASTER/tools/preprompt
       OPENBSD/lib
     ].freeze
 
