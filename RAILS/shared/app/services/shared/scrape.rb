@@ -9,9 +9,8 @@ begin
 rescue LoadError
   nil
 end
-require "net/http"
 require "json"
-require "base64"
+require "stringio"
 
 module Shared
   # Namespaced rather than bare: this sits at an engine autoload root, and a
@@ -28,15 +27,20 @@ module Shared
 
       browser = Ferrum::Browser.new(headless: true, timeout: 30,
                                     browser_options: { "no-sandbox": nil })
-      browser.go_to(url)
-      browser.network.wait_for_idle(timeout: 10)
-      html = browser.body
-      png = Base64.strict_encode64(browser.screenshot(encoding: :binary, full: true))
-      browser.quit
-      reason(url:, html:, png:, schema:, hint:)
+      begin
+        browser.go_to(url)
+        browser.network.wait_for_idle(timeout: 10)
+        html = browser.body
+        png = browser.screenshot(encoding: :binary, full: true)
+        reason(url:, html:, png:, schema:, hint:)
+      ensure
+        browser.quit
+      end
     end
 
     def self.reason(url:, html:, png:, schema:, hint:)
+      require "ruby_llm"
+
       prompt = <<~TXT
         Source: #{url}
         Extract every listed item on the page as JSON. Use the screenshot to read visual layout (cards, sponsored banners, hidden overlays); use the HTML for exact text and links.
@@ -45,23 +49,11 @@ module Shared
         HTML (truncated to #{HTML_MAX} bytes):
         #{html.byteslice(0, HTML_MAX)}
       TXT
-      payload = {
-        model: MODEL,
-        messages: [ {
-          role: "user",
-          content: [
-            { type: "text",      text: prompt },
-            { type: "image_url", image_url: { url: "data:image/png;base64,#{png}" } },
-          ],
-        } ],
-        response_format: { type: "json_object" },
-      }
-      req = Net::HTTP::Post.new(ENDPOINT,
-                                "Content-Type" => "application/json",
-                                "Authorization" => "Bearer #{ENV.fetch('OPENROUTER_API_KEY')}")
-      req.body = payload.to_json
-      res = Net::HTTP.start(ENDPOINT.hostname, ENDPOINT.port, use_ssl: true, read_timeout: 60) { |h| h.request(req) }
-      JSON.parse(JSON.parse(res.body).dig("choices", 0, "message", "content")).fetch("items", [])
+      attachment = RubyLLM::Attachment.new(StringIO.new(png), filename: "page.png")
+      response = RubyLLM.context { |config| config.openrouter_api_key = ENV.fetch("OPENROUTER_API_KEY") }
+                         .chat(model: MODEL, provider: :openrouter, assume_model_exists: true)
+                         .with_params(response_format: { type: "json_object" })
+                         .ask(prompt, with: attachment)
+      JSON.parse(response.content).fetch("items", [])
     end
-  end
-end
+
