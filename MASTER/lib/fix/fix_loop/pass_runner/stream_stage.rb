@@ -36,7 +36,7 @@ module Master
             queue = Queue.new
             @stream_stopped_at = nil
             workers = start_workers(queue, streamed, pass, [Time.now + PASS_BUDGET_SECONDS, deadline].min)
-            found = @loop_scanner.violations(files) { |path, rows| queue << [path, rows] }
+            found = stream_violations(files, queue)
             WORKERS.times { queue << :done }
             finish_stream(workers.sum(&:value), found, files, pass)
             StreamCursor.write(@root, target, @stream_stopped_at)
@@ -44,6 +44,18 @@ module Master
             [found, streamed]
           ensure
             stop_workers(queue, workers)
+          end
+
+          def stream_violations(files, queue)
+            raw = []
+            files.each do |path|
+              rows = violations_for(path)
+              raw.concat(rows)
+              next if rows.empty?
+
+              queue << [path, resolve_violations(rows)]
+            end
+            resolve_violations(raw)
           end
 
           def start_workers(queue, streamed, pass, budget)
