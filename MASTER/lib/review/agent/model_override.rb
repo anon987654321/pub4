@@ -14,7 +14,7 @@ module Master
         # A model the operator chose leads every chain until another is chosen.
         # config["model"] alone sits at the tail of the routed chain, where no
         # turn reaches it while an earlier lane answers.
-        def model = @pinned_model || routed_models.first
+        def model = routed_models.first
 
         def model=(val)
           chosen = resolve_model_name(val.to_s)
@@ -50,7 +50,8 @@ module Master
         # scan's model rules ask here one after another; they route around it
         # until it comes back instead of each failing on it in turn.
         def model_for(operation:)
-          pinned = @pinned_model unless @pinned_model && Io::ModelSkipCache.skipped?(@pinned_model)
+          pinned = @pinned_model if @pinned_model && !Io::ModelSkipCache.skipped?(@pinned_model) &&
+                                   pinned_model_reachable?
           pinned || @model_router&.constrained_for(operation:) || model
         end
 
