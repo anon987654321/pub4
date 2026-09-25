@@ -36,7 +36,7 @@ module Marketplace
 
       def callback_header(timestamp:, method:, url:)
         parsed = URI.parse(url)
-        query = URI.decode_www_form(parsed.query.to_s).sort_by(&:first)
+        query = URI.decode_www_form(parsed.query.to_s).sort
         query_string = URI.encode_www_form(query)
         payload = [
           timestamp,
