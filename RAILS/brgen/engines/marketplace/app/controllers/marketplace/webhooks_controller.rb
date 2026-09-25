@@ -172,7 +172,10 @@ class Marketplace::WebhooksController < ActionController::Base
     when "FAILED", "VOIDED"
       payable.fail_payment!(transaction_id: transaction_id)
     when "REFUNDED"
-      payable.update!(payment_status: "refunded", dintero_transaction_id: transaction_id)
+      Marketplace::Payments::DinteroCheckout.refunded!(
+        payable,
+        transaction_id: transaction_id
+      )
     end
   end
 
