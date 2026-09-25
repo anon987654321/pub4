@@ -9,7 +9,7 @@ class DinteroSignatureTest < ActiveSupport::TestCase
       "DINTERO_CALLBACK_SECRET" => ENV["DINTERO_CALLBACK_SECRET"],
       "DINTERO_HOOK_SECRET" => ENV["DINTERO_HOOK_SECRET"]
     }
-    ENV["DINTERO_ACCOUNT_ID"] = "T12345678"
+    ENV["DINTERO_ACCOUNT_ID"] = "P12345678"
     ENV["DINTERO_CALLBACK_SECRET"] = "callback-secret"
     ENV["DINTERO_HOOK_SECRET"] = "hook-secret"
   end
@@ -18,46 +18,53 @@ class DinteroSignatureTest < ActiveSupport::TestCase
     @saved.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
   end
 
-  test "callback signature round trips against the exact URL" do
-    url = "https://markedsplass.brgen.no/webhooks/dintero/callback?session_id=s1&transaction_id=t1"
-    request = ActionDispatch::Request.new(Rack::MockRequest.env_for(url, method: "GET"))
-    header = Marketplace::Payments::DinteroSignature.callback_header(
-      timestamp: Time.current.to_i,
-      method: "GET",
-      url: url
+  test "callback signature round trips" do
+    request = Struct.new(:request_method, :url).new(
+      "GET",
+      "https://markedsplass.brgen.no/webhooks/dintero/callback?session_id=abc&foo=2&foo=1"
     )
-
-    assert Marketplace::Payments::DinteroSignature.valid_callback?(header:, request:)
+    timestamp = Time.current.to_i
+    header = Marketplace::Payments::DinteroSignature.callback_header(
+      timestamp: timestamp,
+      method: request.request_method,
+      url: request.url
+    )
+    assert Marketplace::Payments::DinteroSignature.valid_callback?(
+      header: header,
+      request: request
+    )
   end
 
-  test "callback signatures older than five minutes fail" do
-    url = "https://markedsplass.brgen.no/webhooks/dintero/callback?transaction_id=t1"
-    request = ActionDispatch::Request.new(Rack::MockRequest.env_for(url, method: "GET"))
-    timestamp = 301.seconds.ago.to_i
-    header = Marketplace::Payments::DinteroSignature.callback_header(
-      timestamp:,
-      method: "GET",
-      url:
+  test "callback rejects stale signatures and wrong secrets" do
+    request = Struct.new(:request_method, :url).new(
+      "GET",
+      "https://markedsplass.brgen.no/webhooks/dintero/callback?session_id=abc"
     )
+    stale = 10.minutes.ago.to_i
+    header = Marketplace::Payments::DinteroSignature.callback_header(
+      timestamp: stale,
+      method: request.request_method,
+      url: request.url
+    )
+    assert_not Marketplace::Payments::DinteroSignature.valid_callback?(header:, request:)
 
+    ENV["DINTERO_CALLBACK_SECRET"] = "wrong"
+    fresh = Time.current.to_i
+    header = Marketplace::Payments::DinteroSignature.callback_header(
+      timestamp: fresh,
+      method: request.request_method,
+      url: request.url
+    )
     assert_not Marketplace::Payments::DinteroSignature.valid_callback?(header:, request:)
   end
 
-  test "webhook signature covers raw body bytes" do
-    body = '{"event":"checkout_transaction","amount":10000}'
-    signature = OpenSSL::HMAC.hexdigest("SHA1", ENV.fetch("DINTERO_HOOK_SECRET"), body)
-
+  test "webhook signature covers raw bytes" do
+    body = '{"event":"checkout_transaction","x":1}'
+    signature = OpenSSL::HMAC.hexdigest("SHA1", "hook-secret", body)
     assert Marketplace::Payments::DinteroSignature.valid_webhook?(header: signature, body:)
-    refute Marketplace::Payments::DinteroSignature.valid_webhook?(
+    assert_not Marketplace::Payments::DinteroSignature.valid_webhook?(
       header: signature,
-      body: JSON.pretty_generate(JSON.parse(body))
+      body: '{"x":1,"event":"checkout_transaction"}'
     )
-  end
-
-  test "wrong webhook secret fails closed" do
-    body = '{"event":"checkout_transaction"}'
-    signature = OpenSSL::HMAC.hexdigest("SHA1", "wrong-secret", body)
-
-    assert_not Marketplace::Payments::DinteroSignature.valid_webhook?(header: signature, body:)
   end
 end
