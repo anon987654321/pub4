@@ -5,6 +5,7 @@
 # probes, so the live half of the suite measures something.
 #
 #   RAILS/bin/triangle up      boot, migrate, wait for /up, print status
+#   RAILS/bin/triangle up bsdports   the same, for the named surfaces only
 #   RAILS/bin/triangle status  which ports answer
 #   RAILS/bin/triangle down    stop what this script started
 #
@@ -113,9 +114,20 @@ module Deploy
       false
     end
 
-    def self.up
+    # Named surfaces only, when names are given. One app with a prepared
+    # database boots in about a minute, where all four wait on brgen's
+    # db:prepare, so a rendered gate can measure one app cheaply.
+    def self.selected(names)
+      return apps if names.empty?
+
+      unknown = names - apps.map { |app| app[:name] }
+      abort "triangle: no surface named #{unknown.join(', ')}" unless unknown.empty?
+      apps.select { |app| names.include?(app[:name]) }
+    end
+
+    def self.up(names = [])
       failed = []
-      apps.each do |app|
+      selected(names).each do |app|
         if listening?(app[:port])
           puts "triangle: #{app[:name]} already up on #{app[:port]}"
           next
@@ -146,8 +158,8 @@ module Deploy
       end
     end
 
-    def self.down
-      apps.each do |app|
+    def self.down(names = [])
+      selected(names).each do |app|
         path = pid_file(app)
         next unless File.file?(path)
 
@@ -166,13 +178,13 @@ end
 
 case ARGV[0]
 when nil, "up"
-  failed = Deploy::Triangle.up
+  failed = Deploy::Triangle.up(ARGV.drop(1))
   exit(failed.empty? ? 0 : 1)
 when "status"
   exit(Deploy::Triangle.status.all? ? 0 : 1)
 when "down"
-  Deploy::Triangle.down
+  Deploy::Triangle.down(ARGV.drop(1))
 else
-  warn "usage: RAILS/bin/triangle [up|status|down]"
+  warn "usage: RAILS/bin/triangle [up|status|down] [surface ...]"
   exit 2
 end
