@@ -27,7 +27,7 @@ module Deploy
   #
   # The third is the one that earns its keep. A rename or a deleted constant
   # passes `ruby -c` on every file and dies at load, which is exactly the shape
-  # an autofix produces — and STUDIO/dilla/lib/engine_sources.rb says so in its
+  # an autofix produces — and MASTER/tools/dilla/lib/engine_sources.rb says so in its
   # own header: "the parse check reported 'ruby syntax: ok' over a set that
   # excluded all thirty lib/*.rb files, which is the check MASTER's autofix has
   # already broken this engine past."
@@ -50,7 +50,7 @@ module Deploy
         name: "dilla",
         glob: "dilla/**/*.rb",
         entry: "dilla/dilla.rb",
-        owner: "DillaSources — see STUDIO/dilla/lib/engine_sources.rb",
+        owner: "DillaSources — see MASTER/tools/dilla/lib/engine_sources.rb",
       },
       {
         name: "postpro",
@@ -74,13 +74,13 @@ module Deploy
         name: "gate",
         glob: "*.rb",
         entry: nil,
-        owner: "this file and isolation.rb — pinned by STUDIO/test/test_studio_gate.rb",
+        owner: "this file and isolation.rb — pinned by MASTER/tools/test/test_studio_gate.rb",
       },
       {
         name: "test",
         glob: "test/**/*.rb",
         entry: nil,
-        owner: "STUDIO/Rakefile — isolated test suite",
+        owner: "MASTER/tools/Rakefile — isolated test suite",
       },
     ].freeze
 
