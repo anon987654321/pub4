@@ -64,12 +64,12 @@ module Operator
 # stopped agreeing.
 Probe.new(unit: "obsdreach", trees: %w[OPENBSD],
           run: -> { sibling("OPENBSD", "tools/reach.rb") }),
-# STUDIO's coverage was never thin, only unreported here: gate.rb parses
+# MASTER/tools's coverage was never thin, only unreported here: gate.rb parses
 # every first-party file, checks dilla's manifest against the disk, and
-# boots the guarded entry points. `rake studio` already runs it; this is
+# boots the guarded entry points. `rake tools` already runs it; this is
 # what makes its result visible in a sweep.
-Probe.new(unit: "studiogate", trees: %w[STUDIO],
-          run: -> { sibling("STUDIO", "gate.rb") }),
+Probe.new(unit: "toolsgate", trees: %w[MASTER],
+          run: -> { tool("gate.rb") }),
         Probe.new(unit: "instruments", trees: %w[MASTER], run: -> { tool("instruments.rb") }),
         Probe.new(unit: "constcoll", trees: %w[MASTER], run: -> { tool("constant_collisions.rb") }),
         Probe.new(unit: "secsweep", trees: %w[MASTER], run: -> { tool("security_sweep.rb") }),
@@ -82,7 +82,7 @@ Probe.new(unit: "studiogate", trees: %w[STUDIO],
 
 # Run from the sibling's own directory. MASTER requires nothing from the
 # other trees and they resolve their own relative paths; a probe is a
-# subprocess for the same reason rake studio_gate is one.
+# subprocess for the same reason rake tools gate is one.
 def sibling(tree, script, *args)
   dir = File.join(ROOT, tree)
   capture(RbConfig.ruby, File.join(dir, script), *args, chdir: dir)
