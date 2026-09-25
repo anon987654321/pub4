@@ -181,6 +181,38 @@ class Marketplace::WebhooksControllerTest < ActionDispatch::IntegrationTest
   end
 
 
+
+  test "dintero rejects mismatched unsigned identity headers" do
+    secret = "dintero_hook"
+    prior = ENV["DINTERO_HOOK_SECRET"]
+    ENV["DINTERO_HOOK_SECRET"] = secret
+    delivery_id = SecureRandom.uuid
+    body = {
+      account_id: "P12345678",
+      event: "checkout_transaction",
+      event_delivery: delivery_id,
+      transaction: {
+        id: "txn-header",
+        merchant_reference: "ref_probe",
+        status: "AUTHORIZED"
+      }
+    }.to_json
+    signature = OpenSSL::HMAC.hexdigest("SHA1", secret, body)
+
+    post "/webhooks/dintero", params: body,
+         headers: {
+           "CONTENT_TYPE" => "application/json",
+           "event" => "checkout_authorization",
+           "event-delivery" => SecureRandom.uuid,
+           "event-signature" => signature
+         }
+
+    assert_response :bad_request
+    assert_equal 0, Marketplace::WebhookDelivery.where(event_delivery: delivery_id).count
+  ensure
+    ENV["DINTERO_HOOK_SECRET"] = prior
+  end
+
   private
 
   def with_secret
