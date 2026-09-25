@@ -1176,6 +1176,7 @@ en:
     accept: Accept
     decline: Decline
     add_to_cart: Add to cart
+    buy_now_dintero: Buy now with Dintero
     capture_order: Capture payment
     pay_dintero: Pay with Dintero
     pay_vipps: Pay with Vipps
