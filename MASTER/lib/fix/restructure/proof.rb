@@ -28,7 +28,7 @@ module Master
 
         # A reason the restructure fails, or nil.
         def failure(plan, before)
-          syntax_failure(plan) || tree_failure(plan, before[:tree]) || test_failure(before)
+          syntax_failure(plan) || deletion_reference_failure(plan) || tree_failure(plan, before[:tree]) || test_failure(before)
         end
 
         private
@@ -39,6 +39,43 @@ module Master
         def syntax_failure(plan)
           broken = plan.writes.keys.reject { |path| Syntax.valid?(File.join(@repo_root, path)) }
           "does not parse: #{broken.join(", ")}" unless broken.empty?
+        end
+
+        def deletion_reference_failure(plan)
+          plan.deletes.filter_map do |path|
+            next unless production_source?(path)
+
+            needles = names_in(path, nil)
+            hits = production_files(plan).filter_map do |file|
+              lines = File.foreach(file).with_index(1).select do |text, _line|
+                needles.any? { |needle| text.match?(needle) }
+              end
+              [file, lines] if lines.any?
+            end
+            next if hits.empty?
+
+            refs = hits.first(3).flat_map do |file, lines|
+              lines.first(4).map { |line, text| "#{file}:#{line}: #{text.strip[0, 100]}" }
+            end
+            "#{path} still has production references: #{refs.join("; ")}"
+          end.first
+        end
+
+        def production_files(plan)
+          out, status = Master::Io::Exec.capture2e("git", "-C", @tree_root, "ls-files")
+          return [] unless status.success?
+
+          out.lines.map { |line| File.join(@tree_root, line.strip) }.select do |file|
+            File.file?(file) && !plan.paths.include?(file.delete_prefix("#{@repo_root}/")) && !test_path?(file)
+          end
+        end
+
+        def production_source?(path)
+          path.end_with?(".rb", ".rake", ".js", ".mjs") && !test_path?(path)
+        end
+
+        def test_path?(path)
+          path.to_s.split("/").any? { |part| %w[test spec fixtures].include?(part) }
         end
 
         def test_failure(before)
