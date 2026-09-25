@@ -67,6 +67,7 @@
 
 /* One variant: a toast carries a confirmation, and an error stays in the page. */
 .toast--success { border-inline-start: 3px solid var(--color-success); }
+.toast--error { border-inline-start: 3px solid var(--color-danger); }
 
 .overflow-menu {
   overflow-x: auto;

@@ -375,9 +375,9 @@ is left changes how a surface looks, or needs vm23.
   `shared/frontend/hotwire.js` against Turbo's 500 ms default; feed skeletons
   shown only past ~200 ms; `:active` states; and `transition_normal`, 300 ms in
   `shared/design_tokens.yml`, against a proposed 200 ms ceiling.
-- **Two failures a reader cannot see.** `action_controller.js#_rollback` reverts
-  a rejected like or vote with no message, and nothing shows when the cable
-  socket is down. Each needs a visible element and its copy.
+- **Resolved 2026-09-25:** rejected optimistic like/vote actions now roll back
+  and show the localized shared error toast. Cable disconnect feedback remains
+  a separate open item for the client connection surface.
 - **The feed card paints no blurhash.** `lazy_image_tag` carries the
   placeholder; `posts/_post` renders `responsive_image_tag`, which does not.
 - **Needs vm23.** A p95 server-time ceiling per route means something only when

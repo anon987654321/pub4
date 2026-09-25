@@ -4,6 +4,7 @@ en:
   actions:
     copy: "Copy"
     copied: "Copied"
+    action_failed: "That action could not be saved. Please try again."
     views:
       one: "1 view"
       other: "%{count} views"

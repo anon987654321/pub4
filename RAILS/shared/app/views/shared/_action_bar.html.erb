@@ -49,6 +49,7 @@
           data-action-target-gid-value="<%= record.to_signed_global_id %>"
           data-action-kind-value="like"
           data-action-count-value="<%= like_count %>"
+          data-action-error-message-value="<%= t("actions.action_failed") %>"
           aria-label="<%= t("actions.like") %>">
     <template data-popover-target="content"><div data-popover-target="card"><%= t("actions.like") %></div></template>
     <%= icon(:like, size: 18) %>

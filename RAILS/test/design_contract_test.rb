@@ -162,7 +162,11 @@ class DesignContractTest < Minitest::Test
 
   def test_action_controller_posts_body
     js = File.read(ACTION_JS)
+    bar = File.read(ACTION_BAR)
     assert_includes js, "URLSearchParams"
+    assert_includes js, "_notify(this.errorMessageValue)"
+    assert_includes js, 'toast.dataset.controller = "toast"'
+    assert_includes bar, 'data-action-error-message-value="<%= t("actions.action_failed") %>"'
   end
 
   def test_shared_ui_helper_initializer_registered

@@ -19,7 +19,8 @@ export default class extends Controller {
     // every like optimistically toggled, got rejected, and _rollback reverted
     // it. The button could not work.
     targetGid: { type: String, default: "" },
-    kind: { type: String, default: "" }
+    kind: { type: String, default: "" },
+    errorMessage: { type: String, default: "That action could not be saved. Please try again." }
   }
 
   connect() {
@@ -54,9 +55,14 @@ export default class extends Controller {
         init.body = body.toString()
       }
       fetch(this.urlValue, init).then(res => {
-        if (!res.ok) this._rollback(btn, isActive)
-      }).catch(() => this._rollback(btn, isActive))
+        if (!res.ok) this._failed(btn, isActive)
+      }).catch(() => this._failed(btn, isActive))
     }
+  }
+
+  _failed(btn, wasActive) {
+    this._rollback(btn, wasActive)
+    this._notify(this.errorMessageValue)
   }
 
   _rollback(btn, wasActive) {
@@ -65,5 +71,25 @@ export default class extends Controller {
       this.countValue = this.originalCount
       this.countTarget.textContent = this.originalCount
     }
+  }
+
+  _notify(message) {
+    const stack = document.querySelector(".toast-stack") || this._createToastStack()
+    const toast = document.createElement("div")
+    toast.className = "toast toast--error"
+    toast.setAttribute("role", "alert")
+    toast.setAttribute("aria-live", "assertive")
+    toast.dataset.controller = "toast"
+    toast.dataset.toastDelayValue = "4000"
+    toast.setAttribute("data-turbo-temporary", "")
+    toast.textContent = message
+    stack.append(toast)
+  }
+
+  _createToastStack() {
+    const stack = document.createElement("div")
+    stack.className = "toast-stack"
+    document.body.append(stack)
+    return stack
   }
 }

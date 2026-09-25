@@ -2,6 +2,7 @@ nb:
   actions:
     copy: "Kopier"
     copied: "Kopiert"
+    action_failed: "Handlingen kunne ikke lagres. Prøv igjen."
     views:
       one: "1 visning"
       other: "%{count} visninger"
