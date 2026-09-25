@@ -103,9 +103,6 @@ module Master
 
       def finish_run(result, target, run_id, mission: nil)
         state = terminal_state_for(result)
-        # The look back belongs to the run that finishes, not one handing over
-        # to newer code mid-tree.
-        sweep_tree(target, run_id) unless state == :reloading
         @run_journal.terminal(run_id, state, message: result.to_s)
         mission&.transition!(:verify, summary: result.to_s)
         mission_state = state == :done ? "completed" : "interrupted"
@@ -314,6 +311,21 @@ module Master
           consecutive_clean: state[:consecutive_clean]
         )
         state[:consecutive_clean] = result.consecutive_clean
+        structural = if %i[clean plateau].include?(result.status)
+                       sweep_tree(target, run_id)
+                     else
+                       []
+                     end
+        if structural.any?
+          state[:consecutive_clean] = 0
+          files.replace(@file_collector.collect(target))
+          message = "structural surgery kept #{structural.size}; re-entering repair"
+          @run_journal.pass_finish(run_id, pass, status: :structural_repair, message:)
+          @bus&.publish("fix_loop:structural_repair", pass:, changes: structural.size)
+          Master::Trace::Dmesg.status("fix0", "pass #{pass}, #{message}")
+          return nil
+        end
+
         @run_journal.pass_finish(run_id, pass, status: result.status, message: result.message)
         ending = PASS_ENDINGS[result.status]
         return terminal(ending, result.message) if ending
