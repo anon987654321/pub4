@@ -288,10 +288,12 @@ spine:
   - { date: "2026-09-15", from: 35087, to: 35123, for: "small-model fold legibility, review counts, shell and rollback honesty" }
   - { date: "2026-09-16", from: 35123, to: 35302, for: "the per-turn verb offer, the model ladder, the terminal's approval, and the objective ledger with its domain boundary" }
   consecutive_raises_allowed: 2
-  # A tripwire on new top-level concepts in the fold, not on line count. Counted
-  # as lib/{core.rb,core/*.rb} — the entrypoint plus the directory — so the glob
-  # cannot hand out a free concept by reading one fewer than the ceiling.
+  # The direct-child invariant remains the seven-file concept budget. A second
+  # recursive tripwire closes the loophole where complexity could hide below
+  # lib/core/ without changing the direct count.
+  # The original direct-child count remains the concept invariant.
   core_files: 7
+  core_recursive_files: 12
 
 # The coarse sprawl net over all four trees: one source-file ceiling each, so a
 # new file anywhere fails `bin/operator measure` until it folds into an existing one
