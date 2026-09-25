@@ -387,18 +387,20 @@ body[data-council-persona]::after {
   position: fixed;
   top: calc(var(--inset-t) + 2px);
   inset-inline-end: calc(var(--inset-r) + 2px);
-  width: 44px;
-  height: 44px;
+  width: 32px;
+  height: 32px;
   color: var(--c-mic-off, #6b6b6b);
   opacity: 1;
   pointer-events: none;
   z-index: var(--z-ui);
+  display: grid;
+  place-items: center;
   transition: color 160ms var(--ease-out), opacity 160ms var(--ease-out);
 }
 
 #mic-dot svg {
-  width: 100%;
-  height: 100%;
+  width: 20px;
+  height: 20px;
   display: block;
   fill: currentColor;
 }
