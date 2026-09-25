@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# Resolve pub4's preferred Ruby (~> 3.4) and exec the remainder of the command line.
+# Resolve pub4's exact pinned Ruby where rbenv is available; OpenBSD falls back
 set -eu
 
 ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
