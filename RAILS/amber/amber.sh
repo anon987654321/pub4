@@ -5,7 +5,7 @@ set -euo pipefail
 APP_NAME=amber
 APP_DIR=/home/${APP_NAME}/app
 APP_PORT=61352
-APP_DOMAIN=amber.fashion
+APP_DOMAIN=amberapp.art
 SCRIPT_DIR=${0:a:h}
 SRC_DIR=${SCRIPT_DIR}
 SHARED_BUNDLE_CACHE=${SHARED_BUNDLE_CACHE:-/var/cache/pub4/bundle/ruby34}

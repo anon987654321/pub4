@@ -5,10 +5,9 @@ require File.expand_path("../../../shared/config/environments/production_baselin
 
 Rails.application.configure do
   apply_production_baseline(config,
-    # amber.fashion is amber's own name, registered 2026-09-16, and the only one
-    # it answers on: amber.brgen.no ceased to exist the same day, so nothing here
-    # accepts it and the relay has no match for it either.
-    hosts: [ "amber.fashion", "www.amber.fashion" ],
-    mailer_host: "amber.fashion",
+    # amberapp.art is amber's one name, so it is the only host accepted here and
+    # the only one relayd routes to amber.
+    hosts: [ "amberapp.art", "www.amberapp.art" ],
+    mailer_host: "amberapp.art",
     vapid_note: "AN106: VAPID keys in /etc/master.env when enabling push")
 end

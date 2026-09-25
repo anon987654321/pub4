@@ -23,7 +23,7 @@ class AmberScriptTest < ActiveSupport::TestCase
 
     assert_includes content, "APP_NAME=amber"
     refute_includes content, "%APP_NAME%"
-    assert_includes content, "APP_DOMAIN=amber.fashion"
+    assert_includes content, "APP_DOMAIN=amberapp.art"
   end
 
   test "deploy script avoids self-copying an amber bundle cache" do

@@ -38,7 +38,7 @@ module Operator
     # copy of its own, so it was served `shared/public/lightgallery.css` — whose
     # icon font and spinner live at `../fonts/lg.*` and `../images/loading.gif`,
     # present in `brgen/public` and in no root amber can see. Verified against
-    # production before and after: `amber.fashion/fonts/lg.woff2` was 404 while
+    # production before and after: amber's `/fonts/lg.woff2` was 404 while
     # the stylesheet asking for it was 200, so every lightbox control in amber
     # rendered as a missing glyph. Four files copied into `shared/public`, which
     # the engine's static middleware serves to all three apps.

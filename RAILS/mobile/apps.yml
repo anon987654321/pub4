@@ -100,8 +100,8 @@ apps:
       team_id_env: APPLE_TEAM_ID
   amber:
     name: Amber
-    host: amber.fashion
-    url: https://amber.fashion/
+    host: amberapp.art
+    url: https://amberapp.art/
     kind: standalone
     android:
       package: fashion.amber.app

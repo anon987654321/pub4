@@ -197,7 +197,7 @@ which is why services are enumerated here and controllers are not.
 `amber.sh` sources the shared `_deploy.sh` contract and copies the tracked tree
 at `RAILS/amber` into `/home/amber/app`, with the `pub4-shared` engine copied
 alongside at `/home/amber/shared` — a sibling of `app/`, not inside it. Port
-61352, `amber.fashion`, Falcon behind relayd. Deploy matrix: `RAILS/apps.yml`.
+61352, `amberapp.art`, Falcon behind relayd. Deploy matrix: `RAILS/apps.yml`.
 
 The original document described `DEPLOY/rails/@shared_functions.sh` and a
 `/var/cache/pub4/bundle/ruby34` bundle cache. The `DEPLOY/` tree no longer
@@ -212,13 +212,13 @@ on `app/models/garment_embedding.rb` says why.
 
 ## Stewardship
 
-Amber is a **social fashion** app (`amber.fashion`) — feed, follows, outfits
+Amber is a **social fashion** app (`amberapp.art`) — feed, follows, outfits
 and a wardrobe, sharing the same social stack as brgen. Day-to-day it should run
 without engineering. This page is for the person who inherits stewardship.
 
 ## What you do
 
-1. Open https://amber.fashion and watch wardrobes grow.
+1. Open https://amberapp.art and watch wardrobes grow.
 2. Help the occasional user (password, “what is declutter?”, content concern).
 3. Keep bills paid: VPS + domain.
 4. If the site is down, tell a technical contact (see below).
@@ -231,7 +231,7 @@ servers on a normal week.
 | Piece | Behaviour |
 |--------|-----------|
 | OpenBSD service | `rc.d/amber` starts Falcon + Solid Queue on port 61352 |
-| TLS | relayd + cert renew scripts for `amber.fashion` |
+| TLS | relayd + cert renew scripts for `amberapp.art` |
 | Photo upload | Variants, colour extract, one portrait polish, local fingerprint, sustainability score |
 | Declutter hygiene | Daily job: expire overdue wear challenges; nudge 30-day box items |
 | Queue cleanup | Hourly clear of finished Solid Queue jobs |
@@ -240,7 +240,7 @@ servers on a normal week.
 ## Health checks (tech or laptop)
 
 ```sh
-curl -fsS https://amber.fashion/up
+curl -fsS https://amberapp.art/up
 # or full stack:
 sh OPENBSD/bin/uptime-check.sh
 ```

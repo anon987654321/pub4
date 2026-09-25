@@ -146,10 +146,12 @@ apps:
 
   amber:
     title: Amber
-    # amber.fashion, and amberapp.com is not ours: it is a for-sale lander at
-    # another registrar, so read whois before calling a domain ours. A move off
-    # brgen.no ends cross-app sign-in, because the session cookie is domain: :all.
-    domain: amber.fashion
+    # amberapp.art is amber's one name. amberapp.com is not ours: it is a
+    # for-sale lander at another registrar, so read whois before calling a
+    # domain ours. The session cookie is domain: :all, which scopes it to the
+    # registrable domain, so a brgen.no sign-in never reaches amber; the
+    # MASTER-signed token at /sso/from_master is the one door between them.
+    domain: amberapp.art
     port: 61352
     stack_now: SQLite3, Rails 8, Hotwire, Falcon, Active Storage, OpenBSD, relayd
     stack_later: PostgreSQL, pgvector, multimodal retrieval, richer PWA/offline features

@@ -1,6 +1,6 @@
 # amber — agent notes
 
-- **Domain:** amber.fashion. **Port:** 61352. **Deploy root:** `RAILS/amber`.
+- **Domain:** amberapp.art. **Port:** 61352. **Deploy root:** `RAILS/amber`.
 - **Shared engine:** `RAILS/shared`.
 - **Inventory:** `apps.yml` (active); wardrobe horizon items in
   `apps.horizon.yml` (ignore).

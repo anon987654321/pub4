@@ -29,12 +29,12 @@ class MobileAppRegistryTest < Minitest::Test
     assert_equal "brgen.no", REGISTRY.fetch(:brgen).host
     assert_equal "radio.brgen.no", REGISTRY.fetch(:radio).host
     assert_equal "markedsplass.brgen.no", REGISTRY.fetch(:marketplace).host
-    assert_equal "amber.fashion", REGISTRY.fetch(:amber).host
+    assert_equal "amberapp.art", REGISTRY.fetch(:amber).host
   end
 
   def test_host_lookup_ignores_port_and_trailing_dot
     assert_equal :brgen, REGISTRY.for_host("BRGEN.NO:443").key
-    assert_equal :amber, REGISTRY.for_host("amber.fashion.").key
+    assert_equal :amber, REGISTRY.for_host("amberapp.art.").key
   end
 
   def test_registry_covers_every_brgen_store_product_and_amber
@@ -105,7 +105,7 @@ class MobileAppRegistryTest < Minitest::Test
     previous = ENV.delete("APPLE_TEAM_ID")
 
     begin
-      body = JSON.parse(REGISTRY.apple_app_site_association("amber.fashion"))
+      body = JSON.parse(REGISTRY.apple_app_site_association("amberapp.art"))
 
       assert_equal [], body.fetch("applinks").fetch("details")
     ensure
@@ -118,7 +118,7 @@ class MobileAppRegistryTest < Minitest::Test
     ENV["APPLE_TEAM_ID"] = "TEAM123"
 
     begin
-      body = JSON.parse(REGISTRY.apple_app_site_association("amber.fashion"))
+      body = JSON.parse(REGISTRY.apple_app_site_association("amberapp.art"))
       detail = body.fetch("applinks").fetch("details").fetch(0)
 
       assert_equal "TEAM123.fashion.amber.app", detail.fetch("appID")

@@ -14,7 +14,7 @@ class DeploySmokeContractTest < Minitest::Test
   ENDPOINTS = {
     "master" => ["http://127.0.0.1:53187/up", "https://ai.brgen.no/up"],
     "brgen" => ["http://127.0.0.1:38182/up", "https://brgen.no/up"],
-    "amber" => ["http://127.0.0.1:61352/up", "https://amber.fashion/up"],
+    "amber" => ["http://127.0.0.1:61352/up", "https://amberapp.art/up"],
     "bsdports" => ["http://127.0.0.1:47312/up", "https://bsdports.org/up"],
   }.freeze
 
