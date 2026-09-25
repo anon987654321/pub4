@@ -68,6 +68,7 @@ nb:
     payment_providers:
       stripe: Stripe
       vipps: Vipps
+      dintero: Dintero
     checkout_errors:
       not_configured: Betaling med %{provider} er ikke satt opp her ennå.
       provider_failed: "%{provider} svarte ikke som ventet. Ingenting er trukket — prøv igjen om litt."
