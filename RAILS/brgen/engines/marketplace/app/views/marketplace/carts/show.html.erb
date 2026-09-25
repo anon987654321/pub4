@@ -70,7 +70,7 @@
     </div>
 
     <% dintero_ready = Marketplace::Payments::DinteroCheckout.configured? &&
-         @cart_items.all? { |item| item.listing.store&.dintero_ready? } %>
+         @cart_items.all? { |item| Marketplace::Payments::DinteroCheckout.supported_listing?(item.listing) } %>
     <% vipps_ready = Marketplace::Payments::VippsCheckout.configured? %>
     <% stripe_ready = Marketplace::Payments::StripeCheckout.configured? &&
          !(Rails.env.production? && Marketplace::Payments::StripeCheckout.test_key?) %>
