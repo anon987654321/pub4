@@ -5,7 +5,7 @@
 # constant in css_constitution.rb with no call site. eight_px_rhythm was checked
 # by shared/lib/operator/rhythm_lint.rb against design_tokens.yml and the two token
 # stylesheets only -- the definitions, never the use sites -- which matters
-# because WIRING_NOTES' 2026-07-28 decision made spacing, not borders, the thing
+# because shared/README.md's 2026-07-28 decision made spacing, not borders, the thing
 # that separates elements. magic_color_hex_ban_inline had no reader anywhere.
 #
 # Zero is not the target. These are three shipping apps' accumulated craft debt;
@@ -337,8 +337,18 @@ weight_kb:
   # not spendable without reading them: the census counts `woff2`, `type`,
   # `nth` and `ProseMirror` among them, and the last is applied by the editor
   # at runtime.
-  brgen: 203
-  amber: 108
+  #
+  # 203 -> 215, 108 -> 110 and 64 -> 66 on 2026-09-25, named rather than
+  # absorbed. The committed builds were Sass error pages from 2026-09-23 to
+  # 09657e7c9, so nothing weighed the design work that landed meanwhile: the
+  # Radio discovery surface (51c257ec7, 269 lines, brgen), the storefront
+  # promotional art system (2e0b2ad3d, shared, so all three apps), the three
+  # marketplace layout variants (b954ac84f, 5abc353b9), the ambient chat's
+  # desktop surface (c4801541a) and the Material 3 message bubbles and typing
+  # pulse (80be5eb12). Each was a deliberate design change, so cutting it would
+  # undo the work; the rebuild is the first measurement of it.
+  brgen: 215
+  amber: 110
 # 64 -> 65 on 2026-09-12. Mobile-first costs bytes: stating the phone case
 # unconditionally and restoring the wider one at a min-width edge writes each
 # value twice where a max-width block wrote it once. Seventeen queries were
@@ -347,5 +357,6 @@ weight_kb:
 #
 # It is a real raise, not a rounding one, and it is the price of the directive
 # rather than of new features. brgen and amber absorbed the same change inside
-# their existing ceilings.
-  bsdports: 64
+# their existing ceilings. 64 -> 66 on 2026-09-25 is the shared promotional art
+# and chat styles, named with brgen's raise above.
+  bsdports: 66
