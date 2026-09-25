@@ -39,4 +39,4 @@
 - { name: SubdomainOrchestrator, elevated: false, visitor: true, default: true, description: "Inspect or synchronize a pub4 subdomain cluster (marketplace, maps, amber, bsdports, etc.)" }
 - { name: PluginObserve, elevated: false, visitor: false, default: true, description: "Observe declared read-only plugin capabilities without granting plugin write authority", required_context: "Plugin id, declared observation action, and optional JSON arguments.", usage_rules: ["Use for browser or local-device observation when the evidence router identifies that capability.", "Never treat it as permission to send, post, remember, or otherwise mutate external state."], error_recovery: "Use status first when capability or runtime is unclear." }
 - { name: DynamicHttp, elevated: false, visitor: false, default: true, description: Call HTTP endpoints declared in data/tools.dynamic.yml (name + params) }
-# Postpro and Preprompt are not adapters: Io::MediaIntent shells STUDIO for them.
+# Postpro and Preprompt are not adapters: Io::MediaIntent routes them through MASTER/tools.
