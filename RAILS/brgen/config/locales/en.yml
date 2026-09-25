@@ -91,7 +91,8 @@ en:
     mobile_nav: Mobile navigation
     primary_nav: Primary navigation
     quick_actions: Quick actions
-    brand_home: Brgen home
+    # English hosts are other cities (lsangeles.com), so the label names no host.
+    brand_home: Home
     main: Main content
     takeaway: takeaway
     marketplace: marketplace
