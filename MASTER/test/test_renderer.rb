@@ -47,6 +47,20 @@ class TestRenderer < Minitest::Test
 
   # A dmesg is legible on a serial console: no box drawing, no arrows, no
   # check marks, nothing that a pipe or a 7-bit terminal turns into gibberish.
+  def test_shell_prompt_measures_visible_cells_not_ansi_bytes
+    renderer = FakeRenderer.new(config: {})
+
+    assert_equal 4, renderer.send(:visible_length, "\e[31mmain\e[0m")
+  end
+
+  def test_shell_prompt_truncates_a_long_path_to_the_available_measure
+    renderer = FakeRenderer.new(config: {})
+
+    truncated = renderer.send(:prompt_path, suffix_length: 60)
+    assert_operator truncated.length, :<=, renderer.send(:prompt_path_budget, suffix_length: 60)
+    refute_empty truncated
+  end
+
   def test_shell_prompt_has_quiet_typographic_hierarchy
     renderer = FakeRenderer.new(config: {})
     state, prompt = renderer.prompt_line("model", "discover", tokens: 45_000)
