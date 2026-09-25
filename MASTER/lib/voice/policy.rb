@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "yaml"
+require_relative "language"
 
 module Master
   module Voice
@@ -19,6 +20,7 @@ module Master
         "default_rate" => "-7%",
         "default_pitch" => "+0Hz",
         "rotation" => %w[jenny],
+        "language_voices" => { "en" => "jenny", "nb" => "pernille" },
         "post_chain" => nil,
         "bed" => nil,
       }.freeze
@@ -57,6 +59,27 @@ module Master
       end
 
       def rotating? = rotation_keys.size > 1
+
+      def language_voices
+        value = data["language_voices"]
+        return {} unless value.is_a?(Hash)
+
+        value.each_with_object({}) do |(language, voice), result|
+          key = voice.to_s.strip.downcase
+          result[language.to_s.strip.downcase] = key.to_sym unless key.empty?
+        end
+      end
+
+      def voice_for_language(language)
+        voice = language_voices[language.to_s.strip.downcase]
+        return single_voice_key if voice.nil?
+
+        Speech::VOICES.key?(voice) ? voice : single_voice_key
+      end
+
+      def voice_for_text(text)
+        voice_for_language(Language.detect(text))
+      end
 
       # A voice for one utterance. Round-robin for reading paragraphs:
       # alternates between available voices to create a dual-narrator effect.
@@ -122,6 +145,7 @@ module Master
           single_voice: single_voice_key.to_s,
           neural: neural_voice,
           rotation: rotation_keys.map(&:to_s),
+          language_voices: language_voices.transform_values(&:to_s),
           voices: voice_aliases,
           post_chain:,
           bed:,
