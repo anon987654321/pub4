@@ -263,8 +263,7 @@ module Marketplace
             external_id: order.id.to_s,
             description: order.listing.title.to_s.truncate(120),
             quantity: (order.quantity.presence || 1).to_i,
-            unit_price: order.unit_price_cents,
-            gross_amount: order.total_cents
+            amount: order.total_cents
           }
         end
 
