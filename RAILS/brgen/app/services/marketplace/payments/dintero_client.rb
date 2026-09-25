@@ -58,7 +58,7 @@ module Marketplace
 
         def configured?
           %w[DINTERO_ACCOUNT_ID DINTERO_CLIENT_ID DINTERO_CLIENT_SECRET DINTERO_PROFILE_ID
-             DINTERO_CALLBACK_SECRET DINTERO_HOOK_SECRET].all? do |name|
+             DINTERO_CALLBACK_SECRET].all? do |name|
             ENV[name].to_s.strip.present?
           end
         end
