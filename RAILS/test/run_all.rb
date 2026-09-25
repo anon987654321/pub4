@@ -7,8 +7,8 @@
 #
 #   Dir["RAILS/test/**/*_test.rb"].sort.each { |f| require File.expand_path(f) }
 #
-# which loads sixty-nine top-level Minitest files into a single process. It
-# works today, and the two reasons it works are luck:
+# which loads every contract test into a single process. There are 131 contract
+# files today. It works, but the two reasons it works are accidental:
 #
 #   Constants. Nearly every file declares ROOT, and several declare APPS, GATES,
 #   LINT and SKIP at class scope. They happen not to collide because they happen
@@ -54,9 +54,8 @@ module Operator
     end
 
     def files
-      # Recursive: test/gates/ holds nine more, and check-full has always
-      # globbed **/*_test.rb. A narrower glob here would run 401 of the 496 and
-      # print a green line about it.
+      # Recursive: test/gates/ is part of the contract suite. This currently
+      # selects all 131 files; a narrower glob would make a green result dishonest.
       # Written from the repository root so MASTER/tools/runs.rb reads the glob
       # and counts every file it selects as run.
       all = Dir.glob(File.join(RAILS_ROOT, "..", "RAILS/test/**/*_test.rb")).map { |path| File.expand_path(path) }.sort

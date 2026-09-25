@@ -44,7 +44,7 @@ it. A line leaves when its entry closes; re-order rather than append.
 1. **Pin the Ruby every runner uses.** Entry: "`bin/operator` broke on a
    one-line lookup" (MASTER). Done when `test_bin_ruby.rb` is green on this
    Mac and `bin/operator test` refuses to run under a Ruby that is not 3.4.9.
-2. **Turn the RAILS contract suite green, 30 files.** Entry: "The RAILS
+2. **Turn the RAILS contract suite green, 131 files.** Entry: "The RAILS
    contract suite is red" (RAILS). After 1. Done when `ruby
    RAILS/test/run_all.rb` exits 0 under the pinned Ruby.
 3. **Give every ratchet row an owner and a decision.** Entry: "21 ratchet rows
