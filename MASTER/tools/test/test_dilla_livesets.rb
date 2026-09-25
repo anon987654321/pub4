@@ -532,21 +532,15 @@ class TestDillaLivesets < Minitest::Test
   # it turns the JIT on for itself. Answers for the interpreter it is running
   # under rather than assuming one: 3.4.9 here is built without YJIT.
   def test_player_command_targets_the_local_soundcard
-    Dir.mktmpdir do |dir|
-      sox = File.join(dir, "sox")
-      File.write(sox, "#!/bin/sh\n")
-      File.chmod(0o755, sox)
-      old_path = ENV["PATH"]
-      ENV["PATH"] = dir
+    command = nil
+    stubbing(audio_tool: ->(name) { name == "sox" ? "/tmp/sox" : nil }) do
       command = Livesets.player_command(32_000)
-      assert_equal sox, command.first
-      assert_includes command, "-t"
-      assert_includes command, "raw"
-      assert_includes command, "-d"
-      assert_includes command, "2"
-    ensure
-      ENV["PATH"] = old_path
     end
+    assert_equal "/tmp/sox", command.first
+    assert_includes command, "-t"
+    assert_includes command, "raw"
+    assert_includes command, "-d"
+    assert_includes command, "2"
   end
 
   def test_the_live_catalogue_asks_for_the_jit_and_says_what_it_got
