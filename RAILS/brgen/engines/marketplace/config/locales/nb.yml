@@ -13,6 +13,11 @@ nb:
     inspire_heading: "Nytt i %{city}"
     browse_categories: "Utforsk kategorier"
     seller_badge: "Selger: %{name}"
+    utility:
+      label: "Kundeservice og levering"
+      delivery: "Fri levering fra 20"
+      fast_delivery: "Rask levering, også på kvelden"
+      returns: "Fri retur"
     precise_coordinates: "Nøyaktige koordinater (valgfritt)"
     top: "Topp"
     verified: "Verifisert"
