@@ -1,6 +1,6 @@
 # Agents
 
-Task-scoped entry for coding agents (Cursor, Codex, Grok, Claude Code). Full contract: `START_HERE.md`.
+Task-scoped entry for coding agents (Cursor, Codex, Grok, Claude Code). This file is the contract; `README.md` is the tour.
 
 **Read the repo-root `CLAUDE.md` first.** It is the authority above this file —
 the order is `MASTER/data/soul.yml` > `MASTER/data/rules.yml` > `CLAUDE.md` >
@@ -461,7 +461,7 @@ to edit it by hand. Editing the build is a fix that survives until the next
 | TTS / speech / visemes | `topics.tts` |
 | Deploy / VPS / rc.d | `topics.deploy` |
 | Persona / voice policy | `topics.persona` |
-| Law / scanners / loop | `START_HERE.md` → Data File Budget; all scanner law is `data/rules.yml` |
+| Law / scanners / loop | all scanner law is `data/rules.yml`; the executable law is `law/` |
 | Extend runtime behavior | `data/spine.yml` header and `test/test_core_no_lib_backedges.rb`. New ability in the fold = one Effect verb in `lib/core/world.rb`; new constraint = one rule in `lib/core/constitution.rb`; anything else is ordinary `lib/` and must not grow it (`rake lint:spine`) |
 | Worn type / layout gates | `data/rules.yml` `design_rules.worn_type` + `RAILS/gates/support/geometry_type.rb`. Feed is a short measure; legal/prose is 66ch. |
 | brgen city network / verticals | `RAILS/brgen/AGENTS.md` — one process, city apex + subdomain engines |
@@ -470,17 +470,62 @@ Touch-map: `data/agent_map.yml`. Law sections live in `data/rules.yml`. Work is 
 
 ## Checks
 
-Run the smallest proof in `START_HERE.md` "Checks by change type". On failure: `bin/check --profile=agent --format=brief`.
+Run the smallest proof: `bin/check` for ordinary code, `bin/check --profile=agent` for law, scanners and the loop, `bin/check --profile=web` for the face, `OPENBSD/bin/check-rails --profile=contributor` for deploy and Rails, and `MASTER/bin/operator gate` for the whole ladder. On failure: `bin/check --profile=agent --format=brief`.
 
 `--profile=agent` may fail on known debt tagged `agent-ignore` in the repo-root `TODO.md`. Do not chase scan noise on unrelated patches.
 
-## Do not touch
+## Do Not Touch
 
-`START_HERE.md` "Do Not Touch". Isolated checkout if more than one agent is in the repo: `MASTER/bin/operator worktree <name>` → work in `../pub4-<name>`. The shared tree has one git index; `git commit -a` sweeps other sessions into your commit. Path-scoped commits (`git commit -- <paths>`) are the minimum if you must share a tree.
+Every entry names the gate that fails when its claim stops being true, or says
+why no gate can hold it. This is not decoration: item 2 of this list used to be
+"rule data stays split, because each shard sits near its consumers", and that
+reason had been false since the day the shards were created — the four of them
+had one consumer between them. A conclusion does not rot loudly. A test does.
+`rake lint:do_not_touch` checks that every entry below carries one and that the
+gates it names exist.
+
+1. `lib/core.rb` and `lib/core/` are the fold spine, and they must not require
+   the rest of `lib/`. The two-spine *directory* split ended 2026-08-12
+   (the record of it went with `docs/`); the dependency direction it was
+   protecting did not, and is now a test rather than a folder boundary. `core_files: 7` in
+   `data/spine.yml` makes a new concept a design decision — raised from 6 on
+   2026-08-12 for `Proof`, the first raise since the spine was written. — gate:
+   `test/test_core_no_lib_backedges.rb`, `rake lint:spine`
+2. `knowledge/` is local-only — do not commit without updating
+   `SearchKnowledge`. — gate: `rake security_sweep`
+3. WebGL / face boot stays deferred until primer tap. — gate: `rake
+   test:web_ui`, `test/test_web_ui.rb`
+4. `RAILS/apps.horizon.yml` is agent-ignore horizon — do not implement
+   unprompted. — no gate: a horizon file is a list of things deliberately not
+   built, so there is no artefact to assert on; the failure mode is an agent
+   building one, which only a reader of the diff can catch.
+5. VPS: one app CI/deploy at a time on vm23. — no gate: concurrency on a remote
+   host, enforced by the deploy lock on vm23 rather than by anything in this
+   repo; a local check would assert against state it cannot see.
+6. Secrets in `/etc/*.env` on VPS — never commit keys or generated assets. —
+   gate: `rake security_sweep`, `RAILS/test/tracked_secrets_test.rb`
+7. After `git pull` on vm23, run `vps-deploy` before expecting live health. — no
+   gate: an ordering rule for two commands run on the VPS; nothing in the repo
+   observes whether the box was deployed after its last pull.
+8. Feature truth: `RAILS/apps.yml`; backlog and debt: repo-root `TODO.md`. —
+   gate: `RAILS/gates/lib/source/apps_yml.rb`
+9. Never autonomously run `vmctl console/stop/start` or kill `cu` on server4 —
+   see `OPENBSD/RUNBOOK.md`. — no gate: a prohibition on an action, not a
+   property of the tree; the guard is the human-only env var in item 11.
+10. Production VM is vm23 only (`dev@brgen.no`). — no gate: a deployment fact
+    about the world; the repo cannot assert which host is production, only which
+    one its scripts name.
+11. `I_UNDERSTAND_CONSOLE_RISK=1` and `I_UNDERSTAND_DNS_WIPE=1` are human-only
+    gates. — gate: `OPENBSD/gates/vps_safety_gate.rb`
+12. Dmesg every file op — see `OPENBSD/RUNBOOK.md`. — no gate: a habit for the
+    operator's own audit trail, checkable only against a session transcript,
+    which is not an artefact this repo keeps.
+
+Isolated checkout if more than one agent is in the repo: `MASTER/bin/operator worktree <name>` → work in `../pub4-<name>`. The shared tree has one git index; `git commit -a` sweeps other sessions into your commit. Path-scoped commits (`git commit -- <paths>`) are the minimum if you must share a tree.
 
 ## Patch closeout
 
-Match `EXAMPLES.md`: what changed, exact checks run, known debt called out explicitly.
+Match the contract examples closing `README.md`: what changed, exact checks run, known debt called out explicitly.
 
 ## Refused, and why
 
@@ -535,7 +580,7 @@ in `OPENBSD/CLAUDE.md`.
   fall the same way: `MixScore` takes targets from takes kept after listening,
   never from a threshold picked in advance. The face's look and dilla's sound
   are the operator's.
-- **Nothing restored from `master.yml` because the fossil declared it.** The
+- **Nothing restored from `master.yml@30dad7ead` because the fossil declared it.** The
   2026-09-16 `codify-master-gaps` patch added `analysis_depth` (practical /
   analytical / extreme, with depth limits and time budgets) and
   `version_control` (`message_format: "v{version}: {change_summary}
@@ -580,9 +625,9 @@ in `OPENBSD/CLAUDE.md`.
   `law` names `law/`. `Ground::Policy` is authorisation, a different concept.
   Whether `gate`, `lint`, `probe`, `audit` and `verify` name one act is
   unmeasured.
-- **No docs/ directory.** `AEGIS.md`, `COGNITION.md` and `EXAMPLES.md` stay at
-  MASTER's root, where `START_HERE.md`, `PATH_OWNERSHIP.yml`, `lib/cognition/`
-  and the doc tests name them by path.
+- **No docs/ directory.** Human documentation is one `README.md` per boundary,
+  held by `test/test_doc_paths.rb`; Aegis, cognition and the contract examples
+  live in `README.md`, and the Do Not Touch list lives here.
 - **No media generation in MASTER.** STUDIO's preprompt and lora keep it. A
   generation need is a `lib/core/world.rb` handler, never the deleted LoRA
   pipeline and video chain restored from history.

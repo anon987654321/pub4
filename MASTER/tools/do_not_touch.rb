@@ -5,7 +5,7 @@ require "open3"
 # A "Do Not Touch" entry must name the gate that fails when its claim stops
 # being true — or say plainly that no gate can hold it, and why.
 #
-# START_HERE.md's item 2 said the rule shards stayed split because they sat near
+# The list's item 2 once said the rule shards stayed split because they sat near
 # their consumers. That was false, and had been false for as long as the shards
 # existed: the four of them had one consumer between them, `load_rules`, which
 # concatenated them back into a single hash before any scanner saw them. Nobody
@@ -36,7 +36,7 @@ module Operator
   class DoNotTouch
     MASTER = File.expand_path("..", __dir__)
     ROOT = File.expand_path("..", MASTER)
-    DOC = File.join(MASTER, "START_HERE.md")
+    DOC = File.join(MASTER, "AGENTS.md")
 
     HEADING = /^##\s+Do Not Touch/
     ENTRY = /^(\d+)\.\s+(.*)$/
@@ -59,7 +59,7 @@ module Operator
     # so a test can hand it a wrapped list instead of the live document.
     def self.parse(lines)
       start = lines.index { |line| line.match?(HEADING) }
-      raise "START_HERE.md has no 'Do Not Touch' heading" unless start
+      raise "AGENTS.md has no 'Do Not Touch' heading" unless start
 
       rest = lines[(start + 1)..]
       stop = rest.index { |line| line.start_with?("## ") } || rest.size
