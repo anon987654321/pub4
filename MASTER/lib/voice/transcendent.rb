@@ -10,7 +10,6 @@ module Master
   module Voice
     # Transcendent orchestrator — emotion, melody, multi-engine chain.
     module Transcendent
-      MIN_SYNTHESIZABLE_CHARS = 20
       DEFAULTS = {
         "personality" => "warm_erratic",
         "engine_chain" => "mlx,chatterbox,edge_melodic,edge,say",
