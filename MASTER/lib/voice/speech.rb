@@ -100,8 +100,6 @@ module Master
 
       DEFAULT_VOICE = Policy.single_voice_key
       DEFAULT_STYLE = :calm
-      # generous MAX; historical truncation lost tail of replies; queue bounds cost
-      MAX_CHARS = 4000
       CHUNK_CHARS = 220
 
       extend SpeechWorker
@@ -219,6 +217,14 @@ module Master
         VOICES.key?(chosen) ? chosen : DEFAULT_VOICE
       end
 
+      def voice_for_text(text)
+        named = ENV["MASTER_TTS_VOICE"].to_s.strip
+        return default_voice unless named.empty?
+
+        chosen = Policy.voice_for_text(text)
+        VOICES.key?(chosen) ? chosen : DEFAULT_VOICE
+      end
+
       def default_style
         ENV.fetch("MASTER_TTS_STYLE", DEFAULT_STYLE.to_s).to_sym.tap do |style|
           return STYLES.key?(style) ? style : DEFAULT_STYLE
@@ -257,7 +263,7 @@ module Master
         )
           .gsub(/\.{3,}/, ".")
           .strip
-          .then { |t| Lexicon.apply(t) }[0, MAX_CHARS]
+          .then { |t| Lexicon.apply(t) }
       end
 
       def chunks(text, max: CHUNK_CHARS)
@@ -289,14 +295,15 @@ module Master
         cfg["default_mode"].to_s == "transcendent" && Transcendent.enabled? ? "transcendent" : "classic"
       end
 
-      def synthesize(text, voice: default_voice, style: default_style, rate: nil, pitch: nil, mode: nil, voice_locked: false, style_locked: false)
+      def synthesize(text, voice: nil, style: default_style, rate: nil, pitch: nil, mode: nil, voice_locked: false, style_locked: false)
         text_str = clean_text(text)
         return if text_str.empty?
 
+        voice ||= voice_for_text(text_str)
         attempted, result = try_transcendent_synthesis(
           text_str, mode, voice:, style:, rate:, pitch:, voice_locked:, style_locked:
         )
-        return result if attempted
+        return result if attempted && result
 
         return unless available?
 
