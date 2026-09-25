@@ -4500,7 +4500,7 @@ async function sendMessage(text) {
   }
   const imageToken = window._imageToken || null;
   window._imageToken = null;
-  let pending = '', totalTTSChars = 0, ttsSuppressed = false, ttsFirst = true, ttsStreamSpokenLen = 0;
+  let pending = '', ttsSuppressed = false, ttsFirst = true, ttsStreamSpokenLen = 0;
   window._streamContentKind = '';
   const stallTimer = setTimeout(() => {
     rootBody.dataset.networkStall = '1';
@@ -4545,10 +4545,9 @@ async function sendMessage(text) {
     if (uiStatus && uiStatus.textContent !== "speaking…") showStage("speaking…", 900);
     window._chatOnChunk?.(chunk);
     pending += chunk;
-    totalTTSChars += chunk.length;
     State.pulse = Math.min(0.6, State.pulse + 0.05);
     if (window._streamContentKind === 'listing') ttsSuppressed = true;
-    if (!ttsSuppressed && (looksLikeListingStream(pending) || totalTTSChars >= TTS_STREAM_CHAR_CAP)) ttsSuppressed = true;
+    if (!ttsSuppressed && looksLikeListingStream(pending)) ttsSuppressed = true;
     if (!ttsSuppressed) ttsStreamSpokenLen = pushLiveStreamTts(pending, ttsStreamSpokenLen);
   };
   const onError = () => {
