@@ -12,7 +12,8 @@ class PwaControllerTest < ActionDispatch::IntegrationTest
     assert_equal "application/json", response.media_type
     body = JSON.parse(response.body)
     assert_equal "/", body["start_url"]
-    assert_equal "standalone", body["display"]
+    assert_equal "fullscreen", body["display"]
+    assert_includes body["display_override"], "fullscreen"
     assert body["icons"].any? { |icon| icon["sizes"] == "512x512" }
   end
 
