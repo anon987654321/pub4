@@ -49,6 +49,29 @@ module Livesets
     brew = "/opt/homebrew/bin/#{name}"
     File.executable?(brew) ? brew : name
   end
+
+  def self.audio_tool(name)
+    home = "/opt/homebrew/bin/#{name}"
+    intel = "/usr/local/bin/#{name}"
+    return home if File.executable?(home)
+    return intel if File.executable?(intel)
+    ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).each do |dir|
+      path = File.join(dir, name)
+      return path if File.executable?(path) && !File.directory?(path)
+    end
+    nil
+  end
+
+  def self.player_command(rate)
+    sox = audio_tool("sox")
+    return [sox, "-q", "-t", "raw", "-r", rate.to_s, "-e", "signed", "-b", "16", "-c", "2", "-", "-d"] if sox
+
+    ffplay = audio_tool("ffplay")
+    return [ffplay, "-f", "s16le", "-ar", rate.to_s, "-ac", "2", "-nodisp", "-autoexit", "-loglevel", "quiet", "-i", "-"] if ffplay
+
+    nil
+  end
+
   FF = tool("ffmpeg")
   FFPLAY = tool("ffplay")
   FFPROBE = tool("ffprobe")
@@ -2103,8 +2126,8 @@ module LiveSynth
     # A score with a console of its own brings its command; the rest play
     # through the tanh master straight to the player, or to LIVE_OUT.
     command = score.player_command(rate, ENV["LIVE_OUT"]) if score.respond_to?(:player_command)
-    command ||= ENV["LIVE_OUT"] ? DillaLive.writer_command(ENV["LIVE_OUT"], rate) : DillaLive.player_command(rate)
-    abort "live0: no player -- install sox (brew install sox) and ffmpeg" unless command
+    command ||= ENV["LIVE_OUT"] ? DillaLive.writer_command(ENV["LIVE_OUT"], rate) : (DillaLive.player_command(rate) || Livesets.player_command(rate))
+    abort "live0: no audio output -- install sox or ffplay (and ffmpeg for the live stream)" unless command
 
     Session.claim!(score.describe)
     DillaLive.accelerate!
@@ -2127,7 +2150,7 @@ module LiveSynth
     input = [ffmpeg, "-loglevel", "error", "-f", "s16le", "-ar", rate.to_s, "-ac", channels.to_s, "-i", "-", *filter]
     return input + ["-y", "-c:a", "pcm_s16le", dest] if dest
 
-    player = DillaLive.player_command(rate) or return nil
+    player = (DillaLive.player_command(rate) || Livesets.player_command(rate)) or return nil
     ["sh", "-c", "#{Shellwords.join(input + ['-f', 's16le', '-ar', rate.to_s, '-ac', '2', '-'])} | #{Shellwords.join(player)}"]
   end
 
