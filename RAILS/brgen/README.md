@@ -46,7 +46,7 @@ offline. A placeholder row carries `placeholder: true`, is excluded from `.real`
 and is labelled in the UI. It is never payable inventory.
 
 `bin/rails test` needs no environment variables. `Operator::DeployPaths` resolves the
-`studio/` and `MASTER/` scripts from the checkout it lives in, through
+`MASTER/tools/` and `MASTER/` scripts from the checkout it lives in, through
 `Rails.root` and then its own `__dir__`, falling back to the deployed
 `/home/dev/pub4` layout last. Set `PUB4_ROOT` or `PUB4_RAILS_ROOT` only to point
 at a different tree than the one the code was loaded from.
