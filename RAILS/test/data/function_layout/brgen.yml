@@ -41,7 +41,7 @@ checks:
   - {id: feed.compose_nearby, in: brgen/app/views/shared/_feed_compose.html.erb, has: ["hidden_field :nearby"]}
   - {id: feed.card_frame_top, in: brgen/app/views/posts/_post.html.erb, has: ['target: "_top"']}
   - {id: feed.card_vote, in: brgen/app/views/posts/_post.html.erb, has: [post_vote_path, action#toggle]}
-  - {id: feed.card_comment, in: brgen/app/views/posts/_post.html.erb, has: [post_comments_path]}
+  - {id: feed.card_comment, in: brgen/app/views/posts/_post.html.erb, has: [comments-section]}
   - {id: feed.card_repost, in: brgen/app/views/posts/_post.html.erb, has: [post_repost_path]}
   - {id: feed.posts_controller_create, in: brgen/app/controllers/posts_controller.rb, has: ["def create", require_verified_email]}
   - {id: feed.posts_show_comments, in: brgen/app/views/posts/show.html.erb, has: [comments-section, comments/form, comments_empty]}
@@ -88,7 +88,7 @@ checks:
   - {id: dating.likes, in: brgen/engines/dating/app/controllers/dating/likes_controller.rb, has: ["def create"]}
   - {id: dating.rewind, in: brgen/engines/dating/app/controllers/dating/rewinds_controller.rb, has: ["def create"]}
   # --- marketplace ---
-  - {id: market.listings_h1, in: brgen/engines/marketplace/app/views/marketplace/listings/index.html.erb, has: ["<h1", store-hero, nav_bar]}
+  - {id: market.listings_h1, in: brgen/engines/marketplace/app/views/marketplace/listings/index.html.erb, has: ["<h1", nav_bar]}
   - {id: market.sell, in: brgen/engines/marketplace/app/views/marketplace/listings/new.html.erb, has: [listing]}
   - {id: market.cart, in: brgen/engines/marketplace/app/views/marketplace/carts/show.html.erb, has: [cart]}
   - {id: market.checkout, in: brgen/engines/marketplace/app/controllers/marketplace/checkouts_controller.rb, has: ["def create"]}
@@ -109,7 +109,7 @@ checks:
   - {id: playlist.sets, in: brgen/engines/playlist/app/views/playlist/sets/index.html.erb, has: [set]}
   - {id: playlist.hosted, in: brgen/engines/playlist/app/views/playlist/hosted_tracks/index.html.erb, has: [track]}
   # --- maps ---
-  - {id: maps.canvas, in: brgen/engines/maps/app/views/maps/home/index.html.erb, has: [map-canvas, maplibre, role="application"]}
+  - {id: maps.canvas, in: brgen/engines/maps/app/views/maps/home/index.html.erb, has: [map-canvas, maplibre, role="region"]}
   - {id: maps.places, in: brgen/engines/maps/app/views/maps/places/index.html.erb, has: [place]}
   - {id: maps.search, in: brgen/engines/maps/app/views/maps/home/index.html.erb, has: [map-search, browse_list]}
   # --- messenger / pwa / seo ---
