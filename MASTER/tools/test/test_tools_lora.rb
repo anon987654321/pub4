@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-require_relative "studio_helper"
+require_relative "tool_test_helper"
 require "open3"
 require "yaml"
 
 # lora trains on GPUs this suite never has, so what it can check is the part
 # that goes wrong without one: the files a run reads, and what gets committed.
 class TestLora < Minitest::Test
-  LORA = File.join(Studio::ROOT, "lora")
+  LORA = File.join(ToolTest::ROOT, "lora")
 
   # The origin is public, so a tracked photograph of a subject is a published
   # one. None is tracked, and publishing one is a consent decision that has to
@@ -15,7 +15,7 @@ class TestLora < Minitest::Test
   PUBLISHED_PHOTOGRAPHS = [].freeze
 
   def test_no_photograph_is_committed_without_being_named_here
-    tracked, status = Open3.capture2("git", "-C", Studio::ROOT, "ls-files", "--", "lora")
+    tracked, status = Open3.capture2("git", "-C", ToolTest::ROOT, "ls-files", "--", "lora")
     skip "not a git checkout" unless status.success?
 
     photos = tracked.lines.map(&:strip).grep(/\.(jpe?g|png|heic|webp)\z/i)
@@ -86,12 +86,12 @@ class TestLora < Minitest::Test
   end
 
   def test_no_tracked_notebook_or_subject_file_carries_a_credential
-    tracked, status = Open3.capture2("git", "-C", Studio::ROOT, "ls-files", "--", "lora")
+    tracked, status = Open3.capture2("git", "-C", ToolTest::ROOT, "ls-files", "--", "lora")
     skip "not a git checkout" unless status.success?
 
     files = tracked.lines.map(&:strip).grep(/\.(?:ipynb|env|ya?ml|json|sh)\z|\/lora\z/).reject { |f| f.include?("/dataset/") }
     assert_operator files.length, :>=, 5, "the glob found too few files to have checked anything"
-    leaks = files.flat_map { |file| secrets_in(File.read(File.join(Studio::ROOT, file))).map { |hit| "#{file}: #{hit}" } }
+    leaks = files.flat_map { |file| secrets_in(File.read(File.join(ToolTest::ROOT, file))).map { |hit| "#{file}: #{hit}" } }
     assert_empty leaks
   end
 
@@ -142,7 +142,7 @@ class TestLora < Minitest::Test
   # STUDIO/gate.rb parses Ruby only, so a shell script breaks unnoticed.
   def test_every_committed_shell_script_parses
     scripts = (Dir[File.join(LORA, "_toolkit", "*.sh")] + Dir[File.join(LORA, "*", "lora")] +
-               Dir[File.join(Studio::ROOT, "dilla", "live", "*.sh")]).sort
+               Dir[File.join(ToolTest::ROOT, "dilla", "live", "*.sh")]).sort
     refute_empty scripts
 
     scripts.each do |path|
