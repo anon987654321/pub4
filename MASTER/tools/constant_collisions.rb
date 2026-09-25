@@ -30,7 +30,7 @@ require "json"
 module Operator
   class ConstantCollisions
     ROOT = File.expand_path("../..", __dir__)
-    TREES = %w[MASTER OPENBSD RAILS STUDIO].freeze
+    TREES = %w[MASTER OPENBSD RAILS].freeze
     SKIP = %r{/(vendor|node_modules|tmp|log|knowledge|output|\.master|\.git)/}
 
     # A constant assigned at column zero. Indented ones are inside a module or
