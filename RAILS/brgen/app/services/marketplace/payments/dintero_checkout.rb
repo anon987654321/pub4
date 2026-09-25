@@ -139,6 +139,7 @@ module Marketplace
             end.map(&:to_s)
             return payable if line_ids.empty?
 
+            paid_orders = []
             payable.transaction do
               payable.order_lines.where(id: line_ids).find_each do |order|
                 order.update_columns(
@@ -146,10 +147,11 @@ module Marketplace
                   updated_at: Time.current
                 )
                 order.mark_paid!(reference: payable.payment_reference)
-                Webhooks::PaymentPaid.enqueue_google_conversion(order)
+                paid_orders << order
               end
               payable.sync_payment_status!
             end
+            paid_orders.each { |order| Webhooks::PaymentPaid.enqueue_google_conversion(order) }
           else
             payable.mark_paid!(reference: payable.payment_reference)
             Webhooks::PaymentPaid.enqueue_google_conversion(payable)
