@@ -79,7 +79,9 @@ module Marketplace
           )
 
           if payable.is_a?(Marketplace::Checkout)
-            line_ids = Array(items).filter_map { |item| item["line_id"].presence }.map(&:to_s)
+            line_ids = Array(items).filter_map do |item|
+              item["line_id"].presence || item["external_id"].presence
+            end.map(&:to_s)
             return payable if line_ids.empty?
 
             payable.order_lines.where(id: line_ids).find_each do |order|
