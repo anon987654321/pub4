@@ -25,32 +25,50 @@ module Master
 
         def reply(session, text)
           session.add_message(role: :user, content: text)
-          said = ask(session)
-          session.add_message(role: :assistant, content: said)
-          said
+          result = ask(session)
+          return result if result.err?
+
+          session.add_message(role: :assistant, content: result.value!)
+          result
         end
 
-        def ask(session)
-          key = gemini_key
-          return "I have no speech key, so I cannot answer." unless key
+        def ask(session, api_key: nil, http_class: Net::HTTP)
+          key = api_key || gemini_key
+          return Master::Result.err("talk0: GEMINI_API_KEY missing", category: :validation) unless key
 
           uri = URI("https://generativelanguage.googleapis.com/v1beta/models/#{MODEL}:generateContent?key=#{key}")
-          http = Net::HTTP.new(uri.host, uri.port)
+          http = http_class.new(uri.host, uri.port)
           http.use_ssl = true
           http.open_timeout = 5
           http.read_timeout = WAIT_S
           req = Net::HTTP::Post.new(uri)
           req["Content-Type"] = "application/json"
           req.body = body(session).to_json
-          res = http.request(req)
-          text = JSON.parse(res.body).dig("candidates", 0, "content", "parts", 0, "text").to_s.strip
-          return "I heard you, and the reply came back empty." if text.empty?
-
-          text
+          parse_response(http.request(req))
         rescue Net::OpenTimeout, Net::ReadTimeout
-          "I heard you. The reply took too long."
+          Master::Result.err("talk0: request timed out", category: :timeout)
         rescue StandardError => e
-          "I heard you, and the reply failed: #{e.message}"
+          Master::Result.err("talk0: request failed — #{e.class}: #{e.message}", category: :infrastructure)
+        end
+
+        def parse_response(response)
+          status = response.code.to_i
+          payload = JSON.parse(response.body.to_s)
+          unless status.between?(200, 299)
+            detail = payload.dig("error", "message").to_s.strip
+            detail = "HTTP #{status}" if detail.empty?
+            return Master::Result.err("talk0: #{detail}", category: :provider_error)
+          end
+
+          text = payload.dig("candidates", 0, "content", "parts", 0, "text").to_s.strip
+          return Master::Result.ok(text) unless text.empty?
+
+          reason = payload.dig("promptFeedback", "blockReason").to_s.strip
+          reason = payload.dig("candidates", 0, "finishReason").to_s.strip if reason.empty?
+          detail = reason.empty? ? "empty response" : "empty response (#{reason.downcase})"
+          Master::Result.err("talk0: #{detail}", category: :provider_error)
+        rescue JSON::ParserError => e
+          Master::Result.err("talk0: invalid JSON — #{e.message}", category: :provider_error)
         end
 
         def body(session)
