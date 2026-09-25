@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+# McpToolWrapper is not an autoloaded name: it lives in mcp_coordinator.rb, so a
+# test that reaches it before anything touches McpCoordinator needs the file.
+require_relative "../lib/io/mcp_coordinator"
 
 # Two provider bridges that must fail soft. McpCoordinator connects only the
 # servers data/mcp_servers.yml enables, and a server that will not start is an
