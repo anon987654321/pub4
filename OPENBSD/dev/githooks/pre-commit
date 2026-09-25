@@ -27,7 +27,7 @@
 # Installed by `bin/operator hooks`, which sets core.hooksPath to this directory.
 # The real fix is still `bin/operator worktree <name>`.
 
-TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
+TREES = %w[MASTER RAILS OPENBSD].freeze
 
 def tree_of(path)
   head = path.split("/").first
@@ -98,15 +98,14 @@ if !same_tree_untracked.empty? && ENV["PUB4_UNTRACKED"] != "1"
   exit 1
 end
 
-# STUDIO belongs to whoever wrote MASTER/tools/.session (one line: a session name).
-# With the file present, committing STUDIO paths requires PUB4_SESSION to
-# match — lore ("never touch dilla's renders") becomes something git enforces.
+# MASTER/tools ownership is guarded through its session file. Tool work remains inside MASTER's tree
+# but a live session can still reserve media-heavy changes explicitly.
 session_file = "MASTER/tools/.session"
-if staged_trees.include?("STUDIO") && File.file?(session_file)
+if staged.any? { |path| path.start_with?("MASTER/tools/") } && File.file?(session_file)
   owner = File.read(session_file).strip
   unless owner.empty? || ENV["PUB4_SESSION"].to_s == owner
     warn ""
-    warn "pre-commit: REFUSED — STUDIO is owned by session '#{owner}' (MASTER/tools/.session)."
+    warn "pre-commit: REFUSED — MASTER/tools is owned by session '#{owner}' (MASTER/tools/.session)."
     warn "  If you are that session: PUB4_SESSION=#{owner} git commit -- <paths>"
     warn ""
     exit 1
