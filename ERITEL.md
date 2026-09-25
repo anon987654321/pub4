@@ -168,6 +168,28 @@ The same study observed that international registrars listed `.er` domains but s
 
 This historical evidence should be used as background, not as a statement of current policy.
 
+## Lessons from .no and .is
+
+Norid and ISNIC provide two useful reference models rather than one template.
+
+Norid demonstrates an accredited-registrar ecosystem: registrars are intermediaries between the registry and subscribers, enter an agreement, pass a registrar test, and integrate through documented registry services including EPP. Norid also operates technical testing and publishes registry services such as RDAP and domain availability lookup.
+
+ISNIC demonstrates a simpler direct-access model: it has no official registrars, permits sufficiently capable registrants and DNS providers to work directly with the registry, and offers EPP access after competency is demonstrated in a sandbox.
+
+The EriTel reference architecture should therefore support three policy-controlled operating modes:
+
+1. Direct: an eligible registrant uses an EriTel-operated registration interface.
+2. Registrar: an accredited international registrar acts as the customer-facing intermediary.
+3. Technical partner: an approved DNS or service provider receives only the registry access required for its documented role.
+
+Common machinery should remain in the registry core: explicit policy, authentication, EPP/API access, DNS validation, DNSSEC support where available, audit events, abuse workflows, lifecycle state transitions, reporting, and a sandbox/test environment.
+
+The software should make these modes configurable policy choices rather than hard-coded assumptions. EriTel decides which modes exist and who may use them.
+
+Norid's current public statistics show 887,043 .no domains and 263 registrars, illustrating the scalability of an intermediary model. ISNIC's current EPP documentation shows a production EPP service, a sandbox, and competency requirements, illustrating how a smaller registry can expose a controlled automation path without creating a conventional registrar hierarchy.
+
+These are reference architectures, not claims about what EriTel should adopt or what .er currently permits. Current .er policy must come from EriTel and the relevant Eritrean authorities.
+
 ## Technical architecture
 
 Preferred conceptual architecture:
