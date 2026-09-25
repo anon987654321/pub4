@@ -58,11 +58,13 @@ class Marketplace::WebhooksController < ActionController::Base
     )
 
     payload = JSON.parse(body)
-    event_delivery = request.headers["event-delivery"].presence || payload["event_delivery"].presence
-    event = payload["event"].presence || request.headers["event"].presence
+    event_delivery = payload["event_delivery"].presence
+    event = payload["event"].presence
     return head(:bad_request) if event_delivery.blank? || event.blank?
-    return head(:bad_request) if payload["event_delivery"].present? && payload["event_delivery"] != event_delivery
-    return head(:bad_request) if payload["event"].present? && payload["event"] != event
+    return head(:bad_request) if request.headers["event-delivery"].present? &&
+      request.headers["event-delivery"] != event_delivery
+    return head(:bad_request) if request.headers["event"].present? &&
+      request.headers["event"] != event
     return head(:bad_request) if payload["account_id"].present? &&
       payload["account_id"] != ENV["DINTERO_ACCOUNT_ID"].to_s
 
