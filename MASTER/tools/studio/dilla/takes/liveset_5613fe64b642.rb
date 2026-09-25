@@ -6,7 +6,7 @@
 # spinback at the end of some phrases, a dub delay throw. Over it, quiet dry
 # Rhodes arpeggios; under it the rolling Moog bass, an industrial grid at
 # 128 BPM and the DFAM, always changing. Kicks sit off: KICKS_ON.
-$LOAD_PATH.unshift File.expand_path("~/Documents/GitHub/pub4/STUDIO/dilla/lib")
+$LOAD_PATH.unshift File.expand_path("~/Documents/GitHub/pub4/MASTER/tools/studio/dilla/lib")
 require "sound"
 
 RATE = 32_000
