@@ -1,7 +1,7 @@
 # Android
 
-Android uses Bubblewrap Trusted Web Activity projects generated from the deployed
-PWA manifest. Bubblewrap creates a normal Android project and can build the
+**Android uses Bubblewrap Trusted Web Activity projects generated from the
+deployed PWA manifest.** Bubblewrap creates a normal Android project and can build the
 signed App Bundle used for Play submission. It also generates the information
 needed for Digital Asset Links.
 
@@ -25,7 +25,7 @@ target Android 16 (API 36) or higher. Verify the generated project targets API
 
 Bubblewrap's `init` is intentionally interactive because its first run confirms
 the web manifest and collects signing-key details. The generated Android project
-belongs in `__NATIVE_ANDROID/.build/<app>` and is ignored by Git.
+belongs in `RAILS/mobile/android/.build/<app>` and is ignored by Git.
 
 
 Use:

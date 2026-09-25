@@ -1,8 +1,9 @@
 # Mobile apps
 
-RAILS stays the product. `RAILS/mobile` supplies the store registry and release
-tooling. Native platform source lives separately in `__NATIVE_ANDROID` and
-`__NATIVE_IOS`; it does not fork the web application.
+**RAILS stays the product; the phone apps are doors into it, never a fork of
+it.** `RAILS/mobile` supplies the store registry and release tooling, and the
+native platform source sits beside it in `RAILS/mobile/android` and
+`RAILS/mobile/ios`.
 
 The canonical product matrix is `RAILS/mobile/apps.yml`.
 

@@ -1,6 +1,6 @@
 # iOS
 
-The iOS side is a native shell, not a second Rails frontend.
+**The iOS side is a native shell, not a second Rails frontend.**
 
 The shell loads the configured origin in WKWebView and owns the native boundary:
 push registration, share integration, camera/photo access where the product
@@ -9,7 +9,7 @@ Internal HTTPS navigation is restricted to the registered origin; external links
 leave the shell for the system browser.
 
 The target also enables Apple's Associated Domains capability through
-`Pub4MobileApp.entitlements`. `MOBILE_APP_HOST` is the same host recorded in the
+`Pub4Mobile.entitlements`. `MOBILE_APP_HOST` is the same host recorded in the
 mobile registry. Apple uses that entitlement together with the site's AASA file
 to establish the universal-link association.
 Rails remains responsible for product UI and server state.
@@ -50,7 +50,7 @@ Generate it with:
 
     brew install xcodegen
     ruby RAILS/tools/mobile.rb ios
-    open __NATIVE_IOS/.build/Pub4Mobile.xcodeproj
+    open RAILS/mobile/ios/.build/Pub4Mobile.xcodeproj
 
 The project has one native target and separate configurations/schemes for
 Brgen, Radio, Dating, TV, Takeaway, Marketplace, Maps, Messenger, and Amber.
@@ -58,7 +58,7 @@ The bundle IDs, origins, and product names mirror the mobile registry.
 
 For a local unsigned simulator build:
 
-    xcodebuild -project __NATIVE_IOS/.build/Pub4Mobile.xcodeproj \
+    xcodebuild -project RAILS/mobile/ios/.build/Pub4Mobile.xcodeproj \
       -scheme Brgen -configuration Brgen \
       -sdk iphonesimulator \
       -destination 'generic/platform=iOS Simulator' \

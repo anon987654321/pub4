@@ -54,6 +54,7 @@ pub4/
 │   ├── gates/                design and deploy measurements
 │   │   ├── gates.yml         one row per gate: class, pass line, preconditions
 │   │   └── support/design_metrics/   contrast, contrast_checks, type_checks
+│   ├── mobile/               store registry; android/ and ios/ native shells
 │   ├── apps.yml              feature truth
 │   └── bin/triangle          bring the three up
 │
@@ -67,6 +68,7 @@ pub4/
     ├── dilla/                beats — renders land beside dilla.rb
     ├── postpro/              grade
     ├── preprompt/
+    ├── bplans/               business plans as YAML, the generator still a brief
     ├── lora/
     │   └── _toolkit/toolkit.sh              renamed from lib.sh
     ├── isolation.rb          hoisted from tools/

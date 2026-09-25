@@ -47,7 +47,7 @@ class MobileAppRegistryTest < Minitest::Test
 
     assert_equal REGISTRY.all.map { |app| app.key.to_s.split("_").map(&:capitalize).join },
                  spec.fetch("configs").keys
-    assert_equal [{ "path" => "../Sources" }], spec.fetch("targets").fetch("Pub4Mobile").fetch("sources")
+    assert_equal [{ "path" => "../Pub4MobileApp.swift" }], spec.fetch("targets").fetch("Pub4Mobile").fetch("sources")
     settings = spec.fetch("targets").fetch("Pub4Mobile").fetch("settings").fetch("base")
     assert_equal "../Info.plist", settings.fetch("INFOPLIST_FILE")
     assert_equal "../Pub4Mobile.entitlements", settings.fetch("CODE_SIGN_ENTITLEMENTS")

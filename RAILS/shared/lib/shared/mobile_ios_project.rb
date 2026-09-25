@@ -22,7 +22,7 @@ module Shared
           "Pub4Mobile" => {
             "type" => "application",
             "platform" => "iOS",
-            "sources" => [{ "path" => "../Sources" }],
+            "sources" => [{ "path" => "../Pub4MobileApp.swift" }],
             "settings" => {
               "base" => {
                 "SWIFT_VERSION" => "5.0",

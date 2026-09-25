@@ -5,7 +5,9 @@ it.** Four media tools share that conviction. `dilla/` builds beats, Detroit in
 its lean and genre-agnostic in intent. `postpro/` is the house grade, analog
 photographic emulation for stills. `preprompt/` generates images, and
 chains radically different models to do it. `lora/` trains person-specific
-fine-tunes, so a name survives across worlds. Each keeps its own contract in its
+fine-tunes, so a name survives across worlds. `bplans/` holds the business
+plans as YAML and the brief for the generator that will set them as HTML and
+PDF; it has no code yet. Each keeps its own contract in its
 own README, and the reasons behind a setting sit in a comment beside it.
 
 ## Read this part first

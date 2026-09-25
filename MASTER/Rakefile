@@ -292,7 +292,6 @@ task "test:all_trees" do
 
   inventory.each do |tree, counts|
     next if counts[:ruby].zero? || counts[:tests].positive?
-    next if tree == "__bplans"
     warn "test:all_trees: #{tree}: #{counts[:ruby]} Ruby source file(s), no discovered *_test.rb/test_*.rb"
   end
 
