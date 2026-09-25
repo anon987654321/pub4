@@ -1,6 +1,6 @@
 # pub4
 
-A map of the four trees after the 2026-09-05 sprawl pass, not a census.
+A map of the three top-level trees after the 2026-09-05 sprawl pass, not a census.
 Live counts live in `MASTER/data/sprawl_census.yml`. One-file directories
 that remain are priced: OS install paths, Zeitwerk, Rails `test/system`,
 ports fixtures, OmniAuth, PWA, and dilla vocal/render takes.
@@ -38,7 +38,14 @@ pub4/
 │   │   ├── operator/         bin/operator and bin/check libraries
 │   │   └── trace/            event bus, logs, session, undo
 │   ├── test/
-│   ├── tools/
+│   ├── tools/                canonical tool plane
+│   │   ├── dilla/            beats
+│   │   ├── postpro/          image grading
+│   │   ├── preprompt/        image generation
+│   │   ├── bplans/           business-plan source
+│   │   ├── lora/             training/media workflows
+│   │   ├── isolation.rb      tool isolation runner
+│   │   └── test/             tool suites
 │   └── web/                  the face
 │       └── test/master_auth_config.yml      hoisted from fixtures/
 │
@@ -65,15 +72,6 @@ pub4/
 │   ├── RUNBOOK.md
 │   └── dotfiles/             sketchybar, skhd — priced OS paths
 │
-└── MASTER/tools/                   media tools
-    ├── dilla/                beats — renders land beside dilla.rb
-    ├── postpro/              grade; camera_profiles.json is every body, by vendor
-    ├── preprompt/
-    ├── bplans/               business plans as YAML; the generator is unwritten
-    ├── lora/
-    │   └── _toolkit/toolkit.sh              renamed from lib.sh
-    ├── isolation.rb          hoisted from tools/
-    └── test/
 ```
 
 Nineteen one-file directories remain, all mandated or priced. Stutter is
