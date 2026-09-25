@@ -45,6 +45,19 @@ The final production profile should include:
 - tested restoration;
 - centralized incident and abuse runbooks.
 
+## Resource profile
+
+The production target should assume a small OpenBSD host unless EriTel specifies otherwise.
+
+Keep the first deployment deliberately boring:
+- one Rails process group;
+- one SQLite database with tested backups;
+- Solid Queue for background work only where required;
+- outbound registry connections from the application;
+- relayd as the only public application listener.
+
+Scale horizontally only when measured load or availability requirements justify it.
+
 ## Deployment gate
 
 The service moves from reference to production only when all of the following exist:
