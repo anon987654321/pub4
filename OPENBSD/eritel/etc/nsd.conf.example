@@ -1,0 +1,12 @@
+# Example only. Do not publish an .er zone until EriTel has authorized
+# the exact delegation, nameservers, DNSSEC keys, and operational procedure.
+
+server:
+  hide-identity: yes
+  hide-version: yes
+  verbosity: 1
+
+# zone:
+#   name: "AUTHORIZED_ZONE"
+#   zonefile: "/var/nsd/zones/master/AUTHORIZED_ZONE.zone"
+#   provide-xfr: 192.0.2.10 NOKEY
