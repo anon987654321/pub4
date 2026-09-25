@@ -8,6 +8,7 @@ class WardrobeAi
   include Offline
 
   MODEL = Shared::Llm::DEFAULT_MODEL
+  PROVIDER_SOURCE = Shared::Llm::PROVIDER.to_s
 
   def self.configured?
     Shared::Llm.configured?
@@ -50,7 +51,7 @@ class WardrobeAi
       r["sparks_joy"] = nil unless r.key?("sparks_joy")
       r["reason"]     ||= "Analysis unavailable"
       r["suggestion"] ||= "Trust your instincts"
-      r["source"]     ||= @client ? "openrouter" : "heuristic"
+      r["source"]     ||= @client ? PROVIDER_SOURCE : "heuristic"
     end
   end
 
@@ -106,7 +107,7 @@ class WardrobeAi
         Items: #{items_desc}
       P
       result = chat(prompt)
-      return result.merge("source" => "openrouter") if result["palette"].present?
+      return result.merge("source" => PROVIDER_SOURCE) if result["palette"].present?
     end
 
     offline_palette
