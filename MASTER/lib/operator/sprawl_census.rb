@@ -102,7 +102,7 @@ module Operator
       # lib/cli/session.rb comes to hold Master::CLI::Session. Said once, it is a module
       # root and how Ruby finds the namespace at all -- law/law.rb declares Law.
       # Said not at all, the file is a script and its folder is named after the
-      # tool, which is `ruby STUDIO/dilla/dilla.rb` reading correctly.
+      # tool, which is `ruby MASTER/tools/dilla/dilla.rb` reading correctly.
       name = File.basename(path, File.extname(path))
       File.read(full).scan(/^\s*(?:module|class)\s+#{Regexp.escape(name)}\b/i).size < 2
     rescue ArgumentError
