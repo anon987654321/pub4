@@ -37,63 +37,10 @@ task :security_sweep do
   run_tool("tools/security_sweep.rb")
 end
 
-desc "STUDIO parses, has no orphans, its entry points boot, and its suite is green"
-task studio: %i[studio_gate studio_test]
-
-# Outside MASTER's bundle. tools tools resolve their own gems — postpro needs
-# ruby-vips and dilla needs coltrane/midilib/wavefile, none of which are in
-# MASTER's Gemfile and none of which should be: the trees are independent and
-# that is the point of the subprocess. A child inherits BUNDLE_GEMFILE and
-# RUBYOPT, so bundler refuses every one of them and the gate reads "postpro is
-# broken" when the gem is installed and visible to a plain ruby.
-#
-# Both STUDIO tasks, not one. studio_test cleared five variables by hand and
-# studio_gate cleared none, so `rake studio` passed on a bare shell and failed
-# under `bin/check`, which runs rake through bundle exec — the same task, two
-# answers, decided by how the parent was started.
-#
-# Bundler's own API, not a list of names — the same conclusion `test:web` below
-# reaches in its own paragraph. Bundler 4 sets BUNDLER_SETUP as well, and a child
-# ruby loads bundler/setup off it with RUBYOPT already cleared, so the
-# hand-rolled five left the grandchild inside MASTER's bundle and `require
-# "vips"` failed anyway.
-def unbundled(&block)
-  defined?(Bundler) ? Bundler.with_unbundled_env(&block) : block.call
-end
-
-desc "STUDIO parses, has no orphans, and its entry points still boot"
-task :studio_gate do
-  # A subprocess, not a require. `bin/gate`'s /fix step mutates the whole shared
-  # worktree, and STUDIO was the only tree with nothing that fails when it
-  # breaks -- dilla and postpro have each been broken by it silently. Running it
-  # from here is what makes the fix loop's own damage visible to the fix loop.
-  #
-  # Subprocess specifically, because MASTER requires nothing from the sibling
-  # trees and the gate requires OPENBSD/lib/gate_result. That independence is
-  # deliberate (TODO.md: gate_result_is_a_shared_kernel_filed_
-  # under_deploy) and a rake task is not a reason to spend it.
-  gate = File.expand_path("tools/gate.rb", __dir__)
-  if File.file?(gate)
-    unbundled { sh RbConfig.ruby, gate }
-  else
-    warn "studio: #{gate} not found — skipping (STUDIO tree absent?)"
-  end
-end
-
-# The gate's three checks are parse, inventory and load: they catch a tree that
-# has stopped being valid Ruby. They cannot catch a swing offset applied to the
-# wrong role, a seed that reads as pinned and is not, or a chord template that
-# voices a ninth as a second -- all of which parse, boot, and have shipped.
-# MASTER/tools/MASTER/tools/test is that half. Same subprocess reasoning as above.
-desc "STUDIO's own suite — engine arithmetic, the single-file tools, the gate"
-task :studio_test do
-  studio = File.expand_path("tools", __dir__)
-  unless File.file?(File.join(studio, "Rakefile"))
-    warn "studio: no suite at #{studio} — skipping (STUDIO tree absent?)"
-    next
-  end
-
-  unbundled { Dir.chdir(studio) { sh RbConfig.ruby, "-S", "rake", "test" } }
+desc "Run the canonical MASTER/tools gate and suite"
+task :tools do
+  tools_rakefile = File.expand_path("tools/Rakefile", __dir__)
+  unbundled { sh RbConfig.ruby, "-S", "rake", "-f", tools_rakefile }
 end
 
 desc "Deep scan lib/ — triage scanner self-findings separately from actionable violations"
@@ -324,14 +271,14 @@ namespace :test do
     %w[test/test_web_http.rb test/test_browser.rb].each { |file| ruby "-Itest", file }
   end
 
-  # Outside MASTER's bundle, for the reason studio_test carries a paragraph
+  # Outside MASTER's bundle, for the reason tools carries a paragraph
   # about: `sh` inherits BUNDLE_GEMFILE, so `bundle exec rails test` inside web/
   # resolved against MASTER's Gemfile, which has no railties. It failed with
   # "can't find executable rails for gem railties ... perhaps you meant to add it
   # to your Gemfile", which reads as a broken web app and is a broken invocation.
   # web/ has its own Gemfile and its own suite; run it from there and it is green.
   #
-  # The same fix was applied to studio_test and this task was not revisited,
+  # The same fix was applied to tools and this task was not revisited,
   # which is how one bug survives in a file that already documents it.
   desc "Rails web integration tests (MASTER/web)"
   task :web do
