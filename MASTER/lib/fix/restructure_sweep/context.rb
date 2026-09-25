@@ -52,6 +52,25 @@ module Master
 
         private
 
+        def inventory_section
+          rows = Context.tracked(@tree)
+          counts = rows.group_by { |path| relative(path).split("/").first }.transform_values(&:size)
+          "Tree census: #{rows.size} tracked source files; #{counts.map { |tree, count| "#{tree}=#{count}" }.join(", ")}"
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "restructure.inventory")
+          nil
+        end
+
+        def history_section
+          out, status = Master::Io::Exec.capture2e("git", "-C", @root, "log", "--format=%h %s", "-8", "--", relative(@path))
+          return if !status.success? || out.to_s.strip.empty?
+
+          "Recent history for #{relative(@path)}:\n#{out.strip}"
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "restructure.history", path: @path)
+          nil
+        end
+
         def file_section
           "The file, #{relative(@path)}:\n#{numbered(@path)}"
         end
