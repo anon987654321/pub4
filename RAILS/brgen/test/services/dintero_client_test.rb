@@ -21,24 +21,21 @@ class DinteroClientTest < ActiveSupport::TestCase
   end
 
   test "production defaults to live hosts" do
-    original = Rails.env
-    Rails.instance_variable_set(:@_env, ActiveSupport::EnvironmentInquirer.new("production"))
-    assert_equal Marketplace::Payments::DinteroClient::LIVE_API_HOST,
-                 Marketplace::Payments::DinteroClient.api_host
-  ensure
-    Rails.instance_variable_set(:@_env, original)
+    Rails.env.stub(:production?, true) do
+      assert_equal Marketplace::Payments::DinteroClient::LIVE_API_HOST,
+                   Marketplace::Payments::DinteroClient.api_host
+    end
   end
 
   test "production rejects an explicit test host unless test mode is enabled" do
     ENV["DINTERO_API_BASE"] = Marketplace::Payments::DinteroClient::TEST_API_HOST
-    original = Rails.env
-    Rails.instance_variable_set(:@_env, ActiveSupport::EnvironmentInquirer.new("production"))
-    assert_raises(ArgumentError) { Marketplace::Payments::DinteroClient.api_host }
-    ENV["DINTERO_TEST_MODE"] = "1"
-    assert_equal Marketplace::Payments::DinteroClient::TEST_API_HOST,
-                 Marketplace::Payments::DinteroClient.api_host
-  ensure
-    Rails.instance_variable_set(:@_env, original)
+
+    Rails.env.stub(:production?, true) do
+      assert_raises(ArgumentError) { Marketplace::Payments::DinteroClient.api_host }
+      ENV["DINTERO_TEST_MODE"] = "1"
+      assert_equal Marketplace::Payments::DinteroClient::TEST_API_HOST,
+                   Marketplace::Payments::DinteroClient.api_host
+    end
   end
 
   test "arbitrary API hosts are refused" do
