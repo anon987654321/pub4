@@ -29,13 +29,14 @@ class DinteroCheckoutTest < ActiveSupport::TestCase
   setup do
     @saved = %w[
       DINTERO_ACCOUNT_ID DINTERO_CLIENT_ID DINTERO_CLIENT_SECRET
-      DINTERO_PROFILE_ID DINTERO_CALLBACK_SECRET DINTERO_HOOK_SECRET
+      DINTERO_PROFILE_ID DINTERO_CALLBACK_SECRET DINTERO_HOOK_SECRET DINTERO_CHECKOUT_ENABLED
       DINTERO_PLATFORM_PAYOUT_DESTINATION_ID DINTERO_PLATFORM_COMMISSION_BPS
     ].to_h { |key| [ key, ENV[key] ] }
     ENV["DINTERO_ACCOUNT_ID"] = "T12345678"
     ENV["DINTERO_CLIENT_ID"] = "client"
     ENV["DINTERO_CLIENT_SECRET"] = "secret"
     ENV["DINTERO_PROFILE_ID"] = "profile"
+    ENV["DINTERO_CHECKOUT_ENABLED"] = "1"
     ENV["DINTERO_CALLBACK_SECRET"] = "callback"
     ENV["DINTERO_HOOK_SECRET"] = "hook"
     ENV.delete("DINTERO_PLATFORM_PAYOUT_DESTINATION_ID")
@@ -123,7 +124,7 @@ class DinteroCheckoutTest < ActiveSupport::TestCase
     end
 
     assert_equal "/v1/transactions/transaction-1/capture", seen[:path]
-    assert_equal 10_000, seen[:payload][:amount]
+    assert_equal 10_000, seen[:payload][:items].first[:amount]
     assert_equal "brgen-capture-order-42", seen[:options][:idempotency_key]
     assert_equal "paid", payable.payment_status
   end
