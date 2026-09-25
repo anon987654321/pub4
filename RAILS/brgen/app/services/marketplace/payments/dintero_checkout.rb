@@ -95,13 +95,19 @@ module Marketplace
           raise ProviderError, error.message
         end
 
-        def refunded!(payable, transaction_id:)
+        def refunded!(payable, transaction_id:, items: [])
+          payable.update_columns(
+            dintero_transaction_id: transaction_id,
+            updated_at: Time.current
+          )
+
           if payable.is_a?(Marketplace::Checkout)
-            payable.update_columns(
-              dintero_transaction_id: transaction_id,
-              updated_at: Time.current
-            )
-            payable.order_lines.where(payment_status: "paid").find_each do |order|
+            line_ids = Array(items).filter_map do |item|
+              item["line_id"].presence || item["external_id"].presence
+            end.map(&:to_s)
+            return payable if line_ids.empty?
+
+            payable.order_lines.where(id: line_ids).where(payment_status: "paid").find_each do |order|
               order.update_columns(
                 payment_status: "refunded",
                 dintero_transaction_id: transaction_id,
@@ -109,6 +115,7 @@ module Marketplace
               )
               mark_return_refunded!(order, transaction_id)
             end
+            payable.sync_payment_status!
           else
             payable.update!(
               payment_status: "refunded",
@@ -249,7 +256,6 @@ module Marketplace
           {
             id: order.id.to_s,
             external_id: order.id.to_s,
-            store: { id: order.listing.store_id.to_s },
             description: order.listing.title.to_s.truncate(120),
             quantity: (order.quantity.presence || 1).to_i,
             unit_price: order.unit_price_cents,
