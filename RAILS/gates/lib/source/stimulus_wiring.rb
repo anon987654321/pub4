@@ -254,9 +254,11 @@ module Deploy
       # stay unregistered while the HTML itself remains syntactically valid.
       mount_sources(app).select { |path| helper_or_component?(path) }.each do |path|
         rel = path.sub("#{@rails_root}/", "")
-        identifiers(File.read(path)).each do |id|
+        text = File.read(path)
+        identifiers(text).each do |id|
           result.checked!
           next if registered.include?(id)
+          next if shared_helper_unused_by?(app, path, text, id)
 
           result.fail("#{app}: #{rel} names controller #{id.inspect}, which nothing registers")
         end
@@ -284,6 +286,24 @@ module Deploy
       normalized.start_with?("shared/app/helpers/", "shared/app/components/") ||
         normalized.start_with?("#{normalized.split("/").first}/app/helpers/") ||
         normalized.match?(%r{A(?:amber|brgen|bsdports)/engines/[^/]+/app/helpers/})
+    end
+
+    # A shared helper is a method every app could call, but its markup reaches
+    # a page only when a view calls it. lazy_image_tag lives in Shared::UiHelper
+    # because the dating engine renders it, and only brgen's views call it; its
+    # controller is brgen's own. So a shared helper's identifier binds an app
+    # when that app's views (its own, its engines', shared's) or its helpers
+    # call the method that emits it. When the enclosing method cannot be named,
+    # the identifier binds every app, as before.
+    def shared_helper_unused_by?(app, path, text, id)
+      return false unless path.start_with?(File.join(@rails_root, "shared/app/helpers/"))
+
+      at = text.index(/(?:controller:\s*|data-controller=)"[^"]*\b#{Regexp.escape(id)}\b/)
+      method = at && text[0, at].scan(/^\s*def\s+(?:self\.)?([a-z_]\w*[?!]?)/).flatten.last
+      return false unless method
+
+      callers = views(app) + Dir.glob(File.join(@rails_root, "{#{app},#{app}/engines/*}/app/helpers/**/*.rb"))
+      callers.none? { |caller| File.read(caller).match?(/\b#{Regexp.escape(method)}\b/) }
     end
 
     def identifiers(text)

@@ -48,6 +48,21 @@ class StimulusWiringGateTest < Minitest::Test
     FileUtils.rm_f(File.join(ROOT, "amber/app/helpers/stimulus_wiring_probe_helper.rb"))
   end
 
+  # A shared helper's controller binds the apps whose views call the helper:
+  # brgen calls lazy_image_tag, amber does not, and a method nobody calls or
+  # cannot be named binds every app.
+  def test_a_shared_helper_binds_the_apps_that_call_it
+    gate = Deploy::StimulusWiringGate.new
+    path = File.join(ROOT, "shared/app/helpers/shared/probe_helper.rb")
+    called = %(def lazy_image_tag(source)\n  tag.img(data: { controller: "lazy-image" })\nend\n)
+    unnamed = %(tag.img(data: { controller: "lazy-image" })\n)
+
+    refute gate.send(:shared_helper_unused_by?, "brgen", path, called, "lazy-image")
+    assert gate.send(:shared_helper_unused_by?, "amber", path, called, "lazy-image")
+    refute gate.send(:shared_helper_unused_by?, "amber", path, unnamed, "lazy-image")
+    refute gate.send(:shared_helper_unused_by?, "amber", File.join(ROOT, "amber/app/helpers/x.rb"), called, "lazy-image")
+  end
+
   def test_reports_a_missing_action_method
     failures = with_probe(%(<button data-action="click->luxury-product#noSuchMethod">x</button>))
 

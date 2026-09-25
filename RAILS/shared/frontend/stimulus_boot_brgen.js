@@ -12,7 +12,6 @@ import SearchPalette from "pub4/search_palette"
 import ConversationLog from "pub4/conversation_log"
 import OptimisticSend from "pub4/optimistic_send"
 import Presence from "pub4/presence"
-import LazyImage from "controllers/lazy_image_controller"
 
 // @stimulus-components packages, matching stimulus_boot.js's own table
 // convention — see its COMPONENT_REGISTRATIONS for why these stay separate
@@ -34,7 +33,6 @@ export function bootBrgenStimulus(application) {
   application.register("conversation-log", ConversationLog)
   application.register("optimistic-send", OptimisticSend)
   application.register("presence", Presence)
-  application.register("lazy-image", LazyImage)
 
   COMPONENT_REGISTRATIONS.forEach(([name, component]) => application.register(name, component))
 }
