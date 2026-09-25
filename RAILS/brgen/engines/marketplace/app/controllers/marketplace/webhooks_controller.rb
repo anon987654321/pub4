@@ -31,7 +31,9 @@ class Marketplace::WebhooksController < ActionController::Base
       params.dig(:authorization, :merchant_reference).presence
     transaction_id = params[:transaction_id].presence ||
       params.dig(:authorization, :transaction_id).presence
-    status = params[:status].presence || params[:state].presence
+    error = params[:error].presence || params.dig(:authorization, :error).presence
+    status = params[:status].presence || params[:state].presence ||
+      (error.present? ? "FAILED" : "AUTHORIZED")
 
     return head(:bad_request) if reference.blank? || transaction_id.blank?
 
@@ -188,13 +190,12 @@ class Marketplace::WebhooksController < ActionController::Base
     destination = data["payout_destination_id"].to_s
     return if destination.empty?
 
-    store = Marketplace::Store.find_or_initialize_by(
-      dintero_payout_destination_id: destination
-    )
-    return unless store.persisted?
+    store = Marketplace::Store.find_by(dintero_payout_destination_id: destination)
+    return unless store
 
     store.update!(
-      dintero_payout_destination_status: data["case_status"].presence || data["status"].presence || "UNKNOWN"
+      dintero_payout_destination_status: data["status"].presence ||
+        data["state"].presence || "UNKNOWN"
     )
   end
 
