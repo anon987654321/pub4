@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "studio_helper"
+require_relative "tool_test_helper"
 require "json"
 require "tmpdir"
 require File.expand_path("../dilla/lib/ledger", __dir__)
