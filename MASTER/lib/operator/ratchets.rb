@@ -293,7 +293,11 @@ module Operator
         Row.new(name: "spine.core_files",
                 current: core_files.size, members: core_files,
                 ceiling: spine["core_files"], direction: :fixed, source: "MASTER/data/spine.yml",
-                note: "the actual invariant: a new top-level concept is a design change"),
+                note: "the direct invariant: a new top-level concept is a design change"),
+        Row.new(name: "spine.core_recursive_files",
+                current: core_recursive_files.size, members: core_recursive_files,
+                ceiling: spine["core_recursive_files"], direction: :fixed, source: "MASTER/data/spine.yml",
+                note: "the recursive invariant: nested core structure is not free"),
       ]
     rescue StandardError => e
       [Row.new(name: "spine", current: nil, ceiling: nil, direction: :down,
@@ -302,6 +306,10 @@ module Operator
 
     def core_files
       Dir.glob(File.join(MASTER, "lib/{core.rb,core/*.rb}")).map { |path| relative_to_root(path) }.sort
+    end
+
+    def core_recursive_files
+      Dir.glob(File.join(MASTER, "lib/core/**/*.rb")).map { |path| relative_to_root(path) }.sort
     end
 
     # Same definition as the Rakefile's lint:spine: non-blank, non-comment.
