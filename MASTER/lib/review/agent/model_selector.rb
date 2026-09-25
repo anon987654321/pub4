@@ -17,6 +17,7 @@ module Master
         def routed_models(message = nil, task_type: nil)
           chain = routed_chain(message, task_type:)
           return chain unless @pinned_model
+          return chain if Io::ModelSkipCache.skipped?(@pinned_model)
           return chain unless pinned_model_reachable?
 
           ([@pinned_model] + chain).uniq
