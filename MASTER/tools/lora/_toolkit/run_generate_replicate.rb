@@ -93,7 +93,7 @@ def render(client, model, input, attempts: 4)
   end
 end
 
-POSTPRO = REPO_ROOT.join("STUDIO/postpro/postpro.rb")
+POSTPRO = REPO_ROOT.join("MASTER/tools/postpro/postpro.rb")
 
 # A different real chain per frame rather than one house look over the set.
 #
