@@ -208,6 +208,30 @@ class DinteroCheckoutTest < ActiveSupport::TestCase
     assert_equal "paid", payable.payment_status
   end
 
+
+  test "capture refuses when seller payout destination changes after authorization" do
+    seller = Store.new(
+      dintero_payout_destination_id: "seller-2",
+      dintero_payout_destination_status: "ACTIVE"
+    )
+    payable = order(store: seller, dintero_order_id: "order-1")
+    payable.payment_provider = "dintero"
+    payable.payment_status = "authorized"
+    payable.payment_reference = "brgen-dintero-order-42"
+    payable.dintero_transaction_id = "transaction-1"
+    payable.dintero_split_json = JSON.generate(
+      splits: [
+        { payout_destination_id: "seller-1", amount: 9_500 },
+        { payout_destination_id: "platform-1", amount: 500 }
+      ],
+      fee_split: { type: "proportional", destinations: [ "platform-1" ] }
+    )
+
+    assert_raises(Marketplace::Payments::DinteroCheckout::SellerNotReady) do
+      Marketplace::Payments::DinteroCheckout.capture!(order: payable)
+    end
+  end
+
   test "capture sends the operation and leaves the local order authorized until webhook confirmation" do
     seller = Store.new(
       dintero_payout_destination_id: "seller-1",
