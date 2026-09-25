@@ -162,8 +162,8 @@ so; this line used to name all three after the word `doas`.
 
 **Rules:**
 
-- Run `MASTER/bin/operator status` before starting work; use `OPENBSD/RECIPES.md`
-  for copy-paste paths.
+- Run `MASTER/bin/operator status` before starting work; the copy-paste paths
+  are in `OPENBSD/data/operator.yml`.
 - Treat `RAILS/apps.yml` and `OPENBSD/deploy_inventory.json` as inventories, not
   suggestions.
 - Any `/etc` change made on vm23 must be copied back to `OPENBSD/etc/`.
