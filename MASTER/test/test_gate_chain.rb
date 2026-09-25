@@ -18,6 +18,7 @@ class TestGateChain < Minitest::Test
     missing = %w[bin/gate bin/operator bin/check bin/master lib/operator/sprawl_census.rb tools/dup_census.rb]
               .reject { |path| File.file?(File.join(G::MASTER, path)) }
     missing << "RAILS/gates/runner.rb" unless File.file?(File.join(G::ROOT, "RAILS", "gates", "runner.rb"))
+    missing << "OPENBSD/bin/check-openbsd" unless File.file?(File.join(G::ROOT, "OPENBSD", "bin", "check-openbsd"))
 
     assert_empty missing, "the chain invokes these and they are not on disk"
   end
@@ -43,10 +44,19 @@ class TestGateChain < Minitest::Test
     scoped = G.stages(scan_only: true, trees: %w[MASTER]).map(&:name)
 
     refute_includes scoped, "source", "the RAILS gate runner says nothing about MASTER"
+    refute_includes scoped, "openbsd", "the OpenBSD gate runner says nothing about MASTER"
     assert_includes scoped, "ratchets", "the ratchets are repo-wide by definition and cheap"
     assert_equal ["MASTER", "tools"], G.suite_jobs(%w[MASTER]).map(&:first)
     assert_equal ["RAILS contracts", "brgen suite", "amber suite", "bsdports suite"],
                  G.suite_jobs(%w[RAILS]).map(&:first)
+  end
+
+  def test_openbsd_scope_has_a_gate_stage
+    scoped = G.stages(scan_only: true, trees: %w[OPENBSD]).map(&:name)
+
+    assert_includes scoped, "openbsd"
+    refute_includes scoped, "source"
+    assert_equal ["openbsd", "suites", "ratchets", "sprawl", "council"], scoped
   end
 
   def test_every_runtime_stage_uses_the_shared_ruby_selection
