@@ -293,7 +293,7 @@ spine:
   # lib/core/ without changing the direct count.
   # The original direct-child count remains the concept invariant.
   core_files: 7
-  core_recursive_files: 11
+  core_recursive_files: 7
 
 # The coarse sprawl net over all four trees: one source-file ceiling each, so a
 # new file anywhere fails `bin/operator measure` until it folds into an existing one
