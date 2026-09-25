@@ -143,7 +143,7 @@ module Master
         end
 
         def history_section
-          out, status = Master::Io::Exec.capture2e("git", "-C", @root, "log", "--format=%h %s", "-8", "--", relative(@path))
+          out, status = Master::Io::Exec.capture2e("git", "-C", @root, "log", "--all", "--follow", "--format=%h %s", "-12", "--", relative(@path))
           return if !status.success? || out.to_s.strip.empty?
 
           "Recent history for #{relative(@path)}:\n#{out.strip}"
