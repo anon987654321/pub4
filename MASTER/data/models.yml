@@ -557,5 +557,5 @@ ollama:
 # media_providers was deleted here on 2026-08-21: nothing read it. The env
 # vars live in providers.yml replicate.env (ReplicateClient reads ENV
 # directly), the TTS slug in voice/engines.rb, and preprompt carries its own
-# image models in STUDIO — this block was a declaration with no reader,
+# image models in MASTER/tools/preprompt — this block was a declaration with no reader,
 # claiming a routing that never existed.
