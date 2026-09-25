@@ -180,17 +180,32 @@ module Master
           end]
         end
 
-        # RAILS proves by its source gates (GATE_AUTOFIX=0: the fix loop owns
+        # RAILS proves by `runner.rb --all` (GATE_AUTOFIX=0: the fix loop owns
         # the writes, the proof measures); the other trees prove by their whole
         # suites, which is `bin/operator test`'s mapping, unchanged.
         def proof_runner(abs)
           chain = Operator::GateChain
           if abs == Master::RAILS_ROOT || abs.start_with?("#{Master::RAILS_ROOT}/")
-            return ["rails gates", -> { chain.rails_gates(scan_only: true).values_at(0, 1) }]
+            return ["rails gates", -> { rails_proof(*chain.rails_gates(scan_only: true)) }]
           end
 
           tree = PROOF_ROOTS.find { |_name, root| abs == root || abs.start_with?("#{root}/") }&.first
           [tree, -> { chain.suites([tree]).values_at(0, 1) }] if tree
+        end
+
+        # runner.rb exits 3 when no gate failed and some measured nothing — off
+        # the deploy host that is deploy_drift's stamps, and the rendered half
+        # when Chrome or the apps are absent. GateResult's standing decision is
+        # that "could not measure" blocks only under GATE_STRICT_INCONCLUSIVE,
+        # which the runner itself turns into exit 1, so the proof passes on 3
+        # and says what it did not see rather than failing every local repair.
+        RUNNER_INCONCLUSIVE = 3
+
+        def rails_proof(ok, out, status)
+          return [ok, out] unless !ok && status == RUNNER_INCONCLUSIVE
+
+          [true, Array(out) + ["proof: no gate failed; the inconclusive gates above measured nothing here " \
+                               "(GATE_STRICT_INCONCLUSIVE=1 blocks on them)"]]
         end
 
         PROOF_ROOTS = {
