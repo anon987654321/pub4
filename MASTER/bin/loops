@@ -10,7 +10,7 @@
 # loop1 is the MASTER face reading the README aloud, with the ai.brgen.no
 # wordmark in the corner. loop2 is a shell booting bin/cli on vm23.
 #
-# Both carry STUDIO/dilla/demo.wav. loop1 MIXES it under the narration rather
+# Both carry MASTER/tools/studio/dilla/demo.wav. loop1 MIXES it under the narration rather
 # than replacing it — the face's mouth is driven by that narration and swapping
 # the track would leave it lip-syncing to nothing. loop2 has no voice, so the
 # music is its whole soundtrack.
@@ -29,7 +29,7 @@ require "fileutils"
 
 ROOT = File.expand_path("../..", __dir__)
 MASTER = File.join(ROOT, "MASTER")
-DEMO = File.join(ROOT, "STUDIO", "dilla", "demo.wav")
+DEMO = File.join(ROOT, "MASTER", "tools", "studio", "dilla", "demo.wav")
 SOURCE = File.join(MASTER, "loop.mp4")
 
 def sh(*args)
