@@ -845,7 +845,7 @@ function enqueueSpeech(text, opts = {}) {
     .trim();
   if (!clean) return;
   if (!shouldEnqueueTtsChunk(clean, opts)) return;
-  const _v = _nextTtsVoice();
+  const _v = speechVoiceForText(decorated);
   const decorated = _quirkifyTts(clean, opts);
   applyParalinguisticState(decorated);
   if (tts.meta.size > 32) tts.meta.clear();
@@ -1116,6 +1116,7 @@ function ttsTick() {
   const text = dequeueTtsLane();
   if (!text) { resumeSttAfterSpeech(); return; }
   tts.current = text;
+  tts.lang = detectLang(text);
   tts.playing = true;
   // Duck the mic while we speak: continuous SpeechRecognition has no echo
   // cancellation against this page's own audio output, so an open mic during
