@@ -776,6 +776,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_25_130000) do
     t.string "dintero_order_id", limit: 128
     t.string "dintero_session_id", limit: 128
     t.string "dintero_transaction_id", limit: 128
+    t.text "dintero_split_json"
     t.string "fulfilment_status", default: "unfulfilled", null: false
     t.string "gclid"
     t.datetime "google_conversion_uploaded_at"
