@@ -8,7 +8,6 @@ family_members:
 - MASTER/lib/io#web
 - MASTER/lib/rails#audit
 - MASTER/lib/review/council#deliberation
-- MASTER/lib/review/review_crew#agent
 - MASTER/lib/review/scan#rule
 - MASTER/tools#rule
 - OPENBSD/lib#gate
