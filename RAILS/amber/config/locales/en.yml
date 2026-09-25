@@ -129,7 +129,6 @@ en:
     first_item: "Add your first item"
     browse_demo: "Browse demo wardrobe"
     demo_capsule: "Demo capsule"
-    demo_counts: "%{pieces} · %{outfits} — no account required"
     wear_layers: "Wear layers"
     light_fabrics: "Light fabrics"
   empty:
@@ -604,7 +603,6 @@ en:
     index_tagline: "Browse a realistic capsule before you sign in — cost-per-wear, categories, and outfit combos."
     capsule_kicker: "Capsule demo · %{name}"
     create_hint: "Create an account to track wears, declutter scores, and outfit suggestions on your own wardrobe."
-    full_wardrobe: "Full demo wardrobe →"
     back_to_wardrobe: "← Demo wardrobe"
   users:
     recent_items: "Recent pieces"

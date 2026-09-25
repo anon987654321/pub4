@@ -128,7 +128,6 @@ nb:
     first_item: "Legg til første plagg"
     browse_demo: "Se demogarderobe"
     demo_capsule: "Demo-kapsel"
-    demo_counts: "%{pieces} · %{outfits} — ingen konto nødvendig"
     wear_layers: "Bruk lag"
     light_fabrics: "Lette stoffer"
   empty:
@@ -603,7 +602,6 @@ nb:
     index_tagline: "Bla gjennom en realistisk kapsel før du logger inn — kostnad per bruk, kategorier og antrekkskombinasjoner."
     capsule_kicker: "Kapseldemo · %{name}"
     create_hint: "Opprett konto for å følge bruk, ryddescore og antrekksforslag i din egen garderobe."
-    full_wardrobe: "Hele demogarderoben →"
     back_to_wardrobe: "← Demogarderobe"
   users:
     recent_items: "Nylige plagg"

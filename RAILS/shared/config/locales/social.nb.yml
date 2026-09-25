@@ -54,7 +54,6 @@ nb:
     status_server: "Kunne ikke lagre posisjonen — prøv igjen."
     status_network: "Nettverksfeil da posisjonen skulle lagres — prøv igjen."
     title: "chat"
-    tab_label: "Chat"
     local_room: "lokalt rom"
     actions_label: "Chatthandlinger"
     open_messenger: "Åpne Messenger"

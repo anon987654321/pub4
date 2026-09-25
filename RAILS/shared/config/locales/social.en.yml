@@ -56,7 +56,6 @@ en:
     status_server: "Could not save location — try again."
     status_network: "Network error saving location — try again."
     title: "chat"
-    tab_label: "Chat"
     local_room: "local room"
     actions_label: "Chat actions"
     open_messenger: "Open Messenger"

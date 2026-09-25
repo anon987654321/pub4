@@ -99,11 +99,6 @@ en:
     opens_new_tab: "%{label} (opens in a new tab)"
   skip_to_content: Skip to main content
   home:
-    feed_communities: Communities
-    feed_following: Following
-    feed_hot: Hot
-    feed_latest: New
-    feed_sort: Feed
     new_posts:
       one: 1 new post
       other: "%{count} new posts"
@@ -837,7 +832,6 @@ en:
     deliver_to: Deliver to
     sign_in: sign in
     account: Account
-    orders: Orders
     cart: Cart
     listings: Listings
     todays_deals: Today's Deals
@@ -847,7 +841,6 @@ en:
     your_orders: Your orders
     drivers: Drivers
     add_restaurant: Add restaurant
-    saved_searches: Saved searches
     rating_of_five: "%{rating} of 5"
     breadcrumb: Breadcrumb
   dating:
@@ -892,7 +885,6 @@ en:
     open_messages: Open messages
     current_photos: Current photos
     more_details: More details
-    protected_with: Protected with
     vipps_required: Joining dating needs a Vipps sign-in, so everyone here is a real person.
     age: Age
     edit_profile_blurb: Photos and about you matter most — other details stay optional.
@@ -919,7 +911,6 @@ en:
       older: Last seen a while ago
     empty_nearby_body: Widen the radius, come back later, or finish your profile so
       others can find you.
-    swipe_to_start: swipe to start
     verify_title: Get verified
     verify_body: "Take a selfie in the pose below. A person checks it against your photos — no face matching, because that fails on exactly the people it should not."
     verify_selfie: Your selfie
@@ -1072,7 +1063,6 @@ en:
     navigation_categories: Categories
     payment_status: Payment status
     buy_now_vipps: Buy with Vipps
-    buy_now_dintero: Buy with Dintero
     order_number: "Order #%{id}"
     order_for: For
     order_status: Status
@@ -1090,7 +1080,6 @@ en:
       completed: Completed
     hero_title: "Marketplace %{city}"
     hero_lede: "Things from people who live nearby. No nationwide shipping, no middlemen — just what is a few streets away."
-    hero_count_suffix: "listings in %{city} right now"
     expiry_notice:
       title: "%{title} expires soon"
       body: This listing leaves the marketplace in %{days} days. Renew it if you still
@@ -1423,9 +1412,6 @@ en:
     delivery_details: Delivery details
     delivery_heading: Delivery
     delivery_label: Delivery
-    restaurant_count_suffix:
-      one: restaurant
-      other: restaurants
     restaurant_results: Restaurant results
     top_rated_heading: "Top rated in %{city}"
     restaurant_actions: Restaurant actions
@@ -1680,9 +1666,6 @@ en:
         one: Sent 1 offer to the seller.
         other: Sent %{count} offers to sellers.
       offer_failed: Could not send the offer.
-      capture_started: Capture sent to Dintero.
-      capture_failed: Dintero could not capture this order.
-      capture_unavailable: This order cannot be captured yet.
       review_saved: Review saved.
       search_saved: Search saved.
       search_deleted: Saved search deleted.
@@ -1936,7 +1919,6 @@ en:
     channel: Channel
     conversations: Conversations
     react: React
-    brgen_dating: Brgen dating
     profile_sections: Profile sections
     places: Places
     place_navigation: Place navigation
@@ -1954,7 +1936,6 @@ en:
     playlist_library: Playlist library
     close_library: Close library
     timestamped_comments: Timestamped comments
-    playlist_navigation: Playlist navigation
     git_archaeology_log: Git archaeology log
     playlist_set_actions: Playlist set actions
     collaborators: Collaborators

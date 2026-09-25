@@ -102,11 +102,6 @@ nb:
     opens_new_tab: "%{label} (åpnes i ny fane)"
   skip_to_content: Hopp til hovedinnhold
   home:
-    feed_communities: Fellesskap
-    feed_following: Følger
-    feed_hot: Hot
-    feed_latest: Nytt
-    feed_sort: Strøm
     new_posts:
       one: 1 nytt innlegg
       other: "%{count} nye innlegg"
@@ -842,7 +837,6 @@ nb:
     deliver_to: Leveres til
     sign_in: logg inn
     account: Konto
-    orders: Ordrer
     cart: Kurv
     listings: Annonser
     todays_deals: Dagens tilbud
@@ -852,7 +846,6 @@ nb:
     your_orders: Dine ordrer
     drivers: Sjåfører
     add_restaurant: Legg til restaurant
-    saved_searches: Lagrede søk
     rating_of_five: "%{rating} av 5"
     breadcrumb: Brødsmulesti
   dating:
@@ -896,7 +889,6 @@ nb:
     open_messages: Åpne meldinger
     current_photos: Bilder du har nå
     more_details: Flere detaljer
-    protected_with: Beskyttet med
     vipps_required: For å bli med på dating må du logge inn med Vipps, slik at alle her er ekte personer.
     age: Alder
     edit_profile_blurb: Bilder og «om deg» betyr mest — resten er valgfritt.
@@ -923,7 +915,6 @@ nb:
       older: Sist sett for en stund siden
     empty_nearby_body: Utvid radius, kom tilbake senere, eller fullfør profilen din
       så andre finner deg.
-    swipe_to_start: sveip for å begynne
     verify_title: Bli verifisert
     verify_body: "Ta en selfie i posituren under. Et menneske sammenligner den med bildene dine — ingen ansiktsgjenkjenning, for den svikter nettopp dem den ikke burde."
     verify_selfie: Selfien din
@@ -1095,7 +1086,6 @@ nb:
       completed: Fullført
     hero_title: "Markedsplass %{city}"
     hero_lede: "Ting fra folk som bor i nærheten. Ingen frakt over hele landet, ingen mellomledd — bare det som finnes noen gater unna."
-    hero_count_suffix: "annonser i %{city} akkurat nå"
     expiry_notice:
       title: "«%{title}» utløper snart"
       body: Annonsen forsvinner fra markedsplassen om %{days} dager. Forny den hvis
@@ -1428,9 +1418,6 @@ nb:
     delivery_details: Leveringsdetaljer
     delivery_heading: Levering
     delivery_label: Levering
-    restaurant_count_suffix:
-      one: restaurant
-      other: restauranter
     restaurant_results: Restauranttreff
     top_rated_heading: "Best vurdert i %{city}"
     restaurant_actions: Restauranthandlinger
@@ -1687,9 +1674,6 @@ nb:
         one: 1 bud er sendt til selgeren.
         other: "%{count} bud er sendt til selgerne."
       offer_failed: Kunne ikke sende budet.
-      capture_started: Gjennomføring er sendt til Dintero.
-      capture_failed: Dintero kunne ikke gjennomføre denne ordren.
-      capture_unavailable: Denne ordren kan ikke gjennomføres ennå.
       review_saved: Vurderingen er lagret.
       search_saved: Søket er lagret.
       search_deleted: Det lagrede søket er slettet.
@@ -1944,7 +1928,6 @@ nb:
     channel: Kanal
     conversations: Samtaler
     react: Reager
-    brgen_dating: Brgen dating
     profile_sections: Profilseksjoner
     places: Steder
     place_navigation: Stedsnavigasjon
@@ -1962,7 +1945,6 @@ nb:
     playlist_library: Spillelistebibliotek
     close_library: Lukk bibliotek
     timestamped_comments: Kommentarer med tidsstempel
-    playlist_navigation: Spillelistenavigasjon
     git_archaeology_log: Git-arkeologilogg
     playlist_set_actions: Handlinger for settet
     collaborators: Medskapere
