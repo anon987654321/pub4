@@ -173,7 +173,7 @@ module Marketplace
         end
 
         def create_shopping_order!(payable, reference)
-          orders = payable.is_a?(Marketplace::Checkout) ? payable.order_lines.to_a : [ payable ]
+          orders = payable.is_a?(Marketplace::Checkout) ? payable.order_lines.includes(listing: :store).to_a : [ payable ]
           response = DinteroClient.post(
             "/v1/accounts/#{DinteroClient.account_id}/shopping/draft_orders",
             {
@@ -200,7 +200,7 @@ module Marketplace
         end
 
         def session_payload(payable, return_url:, callback_url:)
-          orders = payable.is_a?(Marketplace::Checkout) ? payable.order_lines.to_a : [ payable ]
+          orders = payable.is_a?(Marketplace::Checkout) ? payable.order_lines.includes(listing: :store).to_a : [ payable ]
           {
             merchant_reference: merchant_reference(payable),
             items: orders.map { |order| session_item(order) },
