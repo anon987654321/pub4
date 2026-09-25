@@ -37,7 +37,7 @@ module Master
           @root = root
           @provider_health = provider_health
           @rules = load_rules
-          @capability_map = Master::Core::Routing::CapabilityMap.new(path: File.join(@root, "runtime", "telemetry", "model_capabilities.json"),
+          @capability_map = Master::CLI::Routing::CapabilityMap.new(path: File.join(@root, "runtime", "telemetry", "model_capabilities.json"),
                                                                     write: Object.new.extend(Io::AtomicWrite).method(:write_atomic))
           @compute_pool = ComputePool.new(router: self, root: @root)
           start_pool_probes
