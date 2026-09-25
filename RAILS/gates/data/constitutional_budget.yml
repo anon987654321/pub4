@@ -60,7 +60,7 @@ targets:
   #
   # Every number in this file is the AESTHETIC profile, which is the first
   # `scan: done` line the gate reads. The full profile in the same run is much
-  # larger — STUDIO 317, OPENBSD 72, MASTER 532 — and re-basing against it is a
+  # larger — the former media/tool corpus was measured separately before its consolidation; OPENBSD 72, MASTER 532 — and re-basing against it is a
   # separate decision with seven new ceilings in it.
   #
   # Measured 2026-09-06 with MASTER_SCAN_DETERMINISTIC=1:
