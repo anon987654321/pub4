@@ -19,9 +19,12 @@
 # includes MASTER alongside whatever was named.
 
 require "open3"
+require_relative "../lib/operator/ruby_runner"
 
 ROOT = File.expand_path("..", __dir__)
 REPO = File.expand_path("..", ROOT)
+RUBY = Operator::RubyRunner.ruby_cmd
+BUNDLE = Operator::RubyRunner.bundle_cmd
 # Two autofix switches, both off. MASTER_AUTOFIX gates the background fix loop;
 # MASTER_SCAN_AUTOFIX gates the deterministic AstFixer pass, which defaults on
 # and would otherwise write before the repair stage is reached.
@@ -182,7 +185,7 @@ end
 # deadline still shows whatever it managed to say.
 def capture_with_timeout(line)
   buffer = +""
-  Open3.popen2e(SAFE_ENV, "bundle", "exec", "ruby", "bin/cli", chdir: ROOT) do |stdin, out, wait|
+  Open3.popen2e(SAFE_ENV, RUBY, BUNDLE, "exec", RUBY, "bin/cli", chdir: ROOT) do |stdin, out, wait|
     stdin.puts(line)
     stdin.close
     reader = Thread.new { out.each_line { |l| buffer << l } }
