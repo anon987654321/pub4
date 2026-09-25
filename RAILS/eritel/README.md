@@ -71,7 +71,7 @@ Before any external launch:
 - docs/DEMO.md — registry-free demonstration path.
 - docs/TESTING.md — test layers.
 
-See ERITEL.md for the partnership plan and evidence rules.
+See docs/partnership.md for the partnership plan and evidence rules.
 
 ## Reference registry models
 
