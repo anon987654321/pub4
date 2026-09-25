@@ -116,7 +116,6 @@ class GateContractSpec < Minitest::Test
     assert_includes source, "Open3.popen2e(SAFE_ENV, RUBY, BUNDLE, \"exec\", RUBY, \"bin/cli\""
   end
 
-
   def test_operator_app_suites_use_the_shared_runtime
     source = File.read(File.join(ROOT, "bin", "operator"))
 
