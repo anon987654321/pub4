@@ -142,7 +142,7 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
       redirect_to(listing ? listing_path(listing) : cart_path, alert: t("flash.marketplace.offer_failed"))
       return nil
     end
-    if provider == "dintero" && !Marketplace::Payments::DinteroCheckout.supported_listing?(listing)
+    if params[:provider].to_s == "dintero" && !Marketplace::Payments::DinteroCheckout.supported_listing?(listing)
       redirect_to listing_path(listing), alert: t("flash.marketplace.dintero_seller_not_ready")
       return nil
     end
