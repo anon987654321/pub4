@@ -21,7 +21,7 @@ module Master
       ATTEMPTS = Integer(ENV.fetch("MASTER_FIX_RESTRUCTURE_ATTEMPTS", 4))
       ROUNDS = Integer(ENV.fetch("MASTER_FIX_RESTRUCTURE_ROUNDS", 4))
       KEEPS = 3
-      ORDER = %w[FILE_SPRAWL NO_GOD_CLASS SMALL_FILES JS_MODULE_SIZE].freeze
+      ORDER = %w[PARALLEL_HIERARCHY CYCLIC_DEPENDENCY FILE_SPRAWL NO_GOD_CLASS SMALL_FILES JS_MODULE_SIZE].freeze
       TREES = Contracts::BY_TREE.keys.freeze
 
       PROPOSE = <<~TEXT
@@ -112,9 +112,9 @@ module Master
       private
 
       def attempt(finding)
-        path, rule, message = finding
+        path, rule, message, related = finding
         tree = relative(path).split("/").first
-        answer = ask(proposal(tree, rule, path, message))
+        answer = ask(proposal(tree, rule, path, message, related:))
         return if answer.strip == "KEEP"
 
         plan = Restructure::Plan.parse(answer)
@@ -124,9 +124,9 @@ module Master
         report(finding, plan, @restructures[tree].call(plan, message: commit_message(rule, path, plan), review:))
       end
 
-      def proposal(tree, rule, path, message)
+      def proposal(tree, rule, path, message, related: [])
         format(PROPOSE, contracts: Contracts.for(tree).strip, rule:, path: relative(path), message:,
-                        context: Context.new(@root, path).to_s)
+                        context: Context.new(@root, path, related:).to_s)
       end
 
       def verdict(rule, path, plan, diff)
