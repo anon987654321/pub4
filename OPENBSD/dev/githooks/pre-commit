@@ -98,15 +98,15 @@ if !same_tree_untracked.empty? && ENV["PUB4_UNTRACKED"] != "1"
   exit 1
 end
 
-# STUDIO belongs to whoever wrote MASTER/tools/studio/.session (one line: a session name).
+# STUDIO belongs to whoever wrote MASTER/tools/MASTER/tools/.session (one line: a session name).
 # With the file present, committing STUDIO paths requires PUB4_SESSION to
 # match — lore ("never touch dilla's renders") becomes something git enforces.
-session_file = "MASTER/tools/studio/.session"
+session_file = "MASTER/tools/MASTER/tools/.session"
 if staged_trees.include?("STUDIO") && File.file?(session_file)
   owner = File.read(session_file).strip
   unless owner.empty? || ENV["PUB4_SESSION"].to_s == owner
     warn ""
-    warn "pre-commit: REFUSED — STUDIO is owned by session '#{owner}' (MASTER/tools/studio/.session)."
+    warn "pre-commit: REFUSED — STUDIO is owned by session '#{owner}' (MASTER/tools/MASTER/tools/.session)."
     warn "  If you are that session: PUB4_SESSION=#{owner} git commit -- <paths>"
     warn ""
     exit 1
@@ -138,11 +138,11 @@ end
 # shipped on 2026-09-19: four orphaned lines a rewrite left behind, caught
 # only when renders died with a SyntaxError at boot. `ruby -c` costs
 # milliseconds against that, so a staged engine file must parse before it
-# lands. Scoped to MASTER/tools/studio/dilla deliberately: that is the measured incident,
+# lands. Scoped to MASTER/tools/MASTER/tools/dilla deliberately: that is the measured incident,
 # and no broader parse gate has been proved against the rest of the repo.
 engine_staged = staged.select do |path|
-  path == "MASTER/tools/studio/dilla/dilla.rb" ||
-    (path.start_with?("MASTER/tools/studio/dilla/lib/") && path.end_with?(".rb"))
+  path == "MASTER/tools/MASTER/tools/dilla/dilla.rb" ||
+    (path.start_with?("MASTER/tools/MASTER/tools/dilla/lib/") && path.end_with?(".rb"))
 end
 unless engine_staged.empty? || ENV["PUB4_PARSE_SKIP"] == "1"
   require "open3"
