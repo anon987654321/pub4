@@ -652,6 +652,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_25_130000) do
   create_table "marketplace_checkouts", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "currency", default: "NOK", null: false
+    t.string "dintero_order_id", limit: 128
+    t.string "dintero_session_id", limit: 128
     t.integer "marketplace_address_id"
     t.datetime "paid_at"
     t.string "payment_provider"
@@ -664,6 +666,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_25_130000) do
     t.string "dintero_transaction_id", limit: 128
     t.index ["dintero_session_id"], name: "index_marketplace_checkouts_on_dintero_session_id"
     t.index ["dintero_transaction_id"], name: "index_marketplace_checkouts_on_dintero_transaction_id"
+    t.index ["dintero_order_id"], name: "index_marketplace_checkouts_on_dintero_order_id", unique: true
+    t.index ["dintero_session_id"], name: "index_marketplace_checkouts_on_dintero_session_id"
     t.index ["marketplace_address_id"], name: "index_marketplace_checkouts_on_marketplace_address_id"
     t.index ["user_id", "status"], name: "index_marketplace_checkouts_on_user_id_and_status"
     t.index ["user_id"], name: "index_marketplace_checkouts_on_user_id"
@@ -773,6 +777,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_25_130000) do
     t.string "dintero_transaction_id", limit: 128
     t.datetime "created_at", null: false
     t.datetime "delivered_at"
+    t.string "dintero_order_id", limit: 128
+    t.string "dintero_session_id", limit: 128
+    t.string "dintero_transaction_id", limit: 128
     t.string "fulfilment_status", default: "unfulfilled", null: false
     t.string "gclid"
     t.datetime "google_conversion_uploaded_at"
