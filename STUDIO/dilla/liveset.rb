@@ -1,7 +1,10 @@
-# MASTER's main sound, improvising: the frozen default (default_sound.rb),
-# with the chords chosen live instead of looped. It opens on the loved
-# progression, then walks soul-jazz harmony, each chord voiced nearest the
-# last, a new moog patch every two chords, the DFAM on top. Endless.
+# MASTER's main sound, improvising live and endless: soul-jazz harmony chosen
+# chord by chord, each voiced nearest the last, the key moving on its own.
+# The chords play only Moog presets on dilla's ladder, morphing from one to
+# the next over four chords. Under them the rolling Moog bass, an industrial
+# grid at 128 BPM (offbeat hats crushed to 12 bits, a noise snare on two and
+# four) and the DFAM, drawing a new groove and rate every few bars. Kicks and
+# leads sit switched off at the operator's word: KICKS_ON and LEADS_ON.
 $LOAD_PATH.unshift File.expand_path("~/Documents/GitHub/pub4/STUDIO/dilla/lib")
 require "sound"
 
@@ -26,6 +29,36 @@ PROPHET_LEADS = {
   prophet_bright: P[:prophet_five].merge(SNAP).merge(cutoff: 900.0, resonance: 0.42),
 }.freeze
 P.merge!(PROPHET_LEADS)
+# The Rhodes leads: dilla's two electric pianos, and each a shade brighter
+# and darker.
+RHODES_LEADS = {
+  rhodes_tine: P[:rhodes_tine], e_piano: P[:e_piano],
+  rhodes_bright: P[:rhodes_tine].merge(cutoff: P[:rhodes_tine][:cutoff] * 1.6),
+  e_piano_dark: P[:e_piano].merge(cutoff: P[:e_piano][:cutoff] * 0.65),
+}.freeze
+P.merge!(RHODES_LEADS)
+# Moog chord presets, on dilla's ladder: the chords play only these, the
+# patch morphing from one to the next without a seam -- cutoff, resonance,
+# envelope depth, drive and detune all glide; the waves change at halfway.
+MOOG_ENV = { amp: P[:warm_pad][:amp], filter_env: P[:warm_pad][:filter_env] }.freeze
+MOOG_CHORDS = {
+  minimoog_pad: { waves: %i[saw square triangle], detune: [0.0, -6.0, 7.0], octaves: [0, 0, -1], cutoff: 620.0, env_amount: 1400.0, resonance: 0.42, drive: 1.1 },
+  memorymoog_brass: { waves: %i[saw saw saw], detune: [-9.0, 0.0, 9.0], octaves: [0, 0, 0], cutoff: 760.0, env_amount: 1900.0, resonance: 0.3, drive: 1.2 },
+  polymoog_vox: { waves: %i[square square saw], detune: [-4.0, 5.0, 0.0], octaves: [0, 1, 0], cutoff: 900.0, env_amount: 700.0, resonance: 0.24, drive: 0.95 },
+  moog_one_strings: { waves: %i[saw saw saw], detune: [-14.0, 0.0, 13.0], octaves: [0, 0, 1], cutoff: 1150.0, env_amount: 800.0, resonance: 0.2, drive: 0.9 },
+  sub37_warm: { waves: %i[saw square saw], detune: [0.0, 4.0, -5.0], octaves: [0, -1, 0], cutoff: 480.0, env_amount: 1600.0, resonance: 0.55, drive: 1.3 },
+}.transform_values { |p| p.merge(MOOG_ENV) }.freeze
+# Four chords to travel from one preset to the next, in a fresh order each lap.
+MORPH_CHORDS = 4
+def moog_morph(order, chord_i)
+  pos = chord_i.to_f / MORPH_CHORDS
+  a = MOOG_CHORDS.fetch(order[pos.floor % order.size])
+  b = MOOG_CHORDS.fetch(order[(pos.floor + 1) % order.size])
+  x = pos - pos.floor
+  lerp = ->(k) { a[k] + ((b[k] - a[k]) * x) }
+  (x < 0.5 ? a : b).merge(cutoff: lerp.(:cutoff), env_amount: lerp.(:env_amount), resonance: lerp.(:resonance),
+                           drive: lerp.(:drive), detune: a[:detune].each_index.map { |i| a[:detune][i] + ((b[:detune][i] - a[:detune][i]) * x) })
+end
 PADS = %i[warm_pad poly_strings prophet_five juno_pad prophet_pad vp330_ensemble soft_reed e_piano rhodes_tine glass_bell]
 BASSES = %i[moog_bass acid sub dub_bass]
 QUALITIES = {
@@ -54,7 +87,11 @@ def voice_lead(pcs, previous)
     (53..74).select { |m| m % 12 == pc }.min_by { |m| (m - centre).abs }
   end.sort.uniq
 end
-BAR = 3.9
+# Industrial techno, ten below the 128 BPM it started at (Attack Magazine:
+# 126-130), at the operator's word. BAR is two bars, eight beats.
+BPM = 118
+BAR = 8 * 60.0 / BPM
+CHORD_LEN = BAR
 LOOPS = (ARGV[0] || 2).to_i
 
 Voice = Struct.new(:hz, :spec, :start, :held, :gain, :phases, :ladder, :bass)
@@ -71,6 +108,7 @@ key = 5 # F minor, where the loved progression sits
 state = [0, :m9]
 voicing = CHORDS.first.last
 chord_i = 0
+moog_order = nil
 recent = []
 next_modulation = 8
 key = rng.rand(12)
@@ -88,8 +126,8 @@ def res_knob(t) = 0.5 + 0.5 * Math.sin(2 * Math::PI * t / 31.0 + 1.3)
 # of it through a ladder low-pass with its own decay, then the VCA's decay.
 # The pattern starts from dilla's DfamEngine and one step mutates every two
 # bars; decay and cutoff drift slowly, like the pads' knobs.
-DFAM_STEP = BAR / 24
-DFAM_LEVEL = 0.34
+DFAM_STEP = BAR / 32 # sixteenths
+DFAM_LEVEL = 0.16
 pattern = { pitch: [50, 30, 60, 20, 55, 35, 65, 25], velocity: [80, 60, 90, 50, 85, 65, 95, 55] }
 dfam_rng = Random.new
 dfam_hits = []
@@ -97,12 +135,81 @@ dfam_next = 0.0
 dfam_step = 0
 pattern_b = { pitch: [78, 64, 88, 70, 92], velocity: [55, 0, 70, 45, 60] }
 # Accents on the eight-step page: the downbeat and the and-of-two lean in.
+DFAM_SCENES = %i[euclid ratchet broken tribal].freeze
+# Each groove brings its own kick, as [cycle length, steps that hit].
+SCENE_KICKS = { euclid: [16, [0, 6, 10]], ratchet: [12, [0, 7]], broken: [16, [0, 3, 10, 11]], tribal: [12, [0, 5, 8]] }.freeze
+dfam_scene = nil
+next_scene_at = 0.0
+grid_next = 0.0
+grid_step = 0
+DFAM_RATES = { 1.0 => "16ths", (2.0 / 3) => "triplets", 0.5 => "32nds", 1.5 => "dotted 16ths", 2.0 => "8ths" }.freeze
+# A Euclidean rhythm: k hits spread as evenly as n steps allow.
+def euclid(k, n) = (@euclid ||= {})[[k, n]] ||= Array.new(n) { |i| ((i * k) % n) < k }
+# And its own lead rhythm, on sixteen steps.
+SCENE_LEAD = { euclid: euclid(5, 16), ratchet: euclid(6, 16), broken: Array.new(16) { |i| [0, 3, 6, 10, 12].include?(i) }, tribal: euclid(7, 16) }.freeze
+# A new groove, never the kind just played: its kind, its rate, and for a
+# generated one a Euclidean pattern of 2 to n-1 hits over 5 to 16 steps.
+new_scene = lambda do |last|
+  kind = (DFAM_SCENES + %i[generated generated]).reject { |k| k == last && k != :generated }.sample(random: dfam_rng)
+  rate, rate_name = DFAM_RATES.to_a.sample(random: dfam_rng)
+  steps = dfam_rng.rand(5..16)
+  hits = dfam_rng.rand(2..(steps - 1))
+  label = kind == :generated ? "E(#{hits},#{steps}) in #{rate_name}" : "#{kind} in #{rate_name}"
+  { kind:, rate:, label:, hits: euclid(hits, steps).rotate(dfam_rng.rand(steps)),
+    pitches: Array.new(dfam_rng.rand(3..8)) { dfam_rng.rand(5..45) } }
+end
 ACCENT = [1.35, 0.8, 1.0, 0.85, 1.25, 0.8, 1.1, 0.9].freeze
-KICK_LEVEL = 0.09
+KICK_LEVEL = 0.06
+# Off at the operator's word, and with them the rumble and the pump.
+KICKS_ON = false
 # The lead plays over every chord, at the operator's word.
 LEAD_ALWAYS = true
+# Muted at the operator's word; true brings the leads back.
+LEADS_ON = false
 kicks = []
 click_lp = 0.0
+# The Crystallizer, after Soundtoys: reversed grains of the lead, pitched up
+# an octave or a fifth, a quarter second late, fed back into themselves.
+# Two readers half a grain apart, Hann-windowed, crossfade into a shimmer.
+CRYS_LEN = RATE * 2
+CRYS_GRAIN = (RATE * 0.16).round
+CRYS_DELAY = (RATE * 0.25).round
+CRYS_FEEDBACK = 0.45
+CRYS_MIX = 0.5
+crys_l = Array.new(CRYS_LEN, 0.0)
+crys_r = Array.new(CRYS_LEN, 0.0)
+crys_w = 0
+crys_p = 0
+crys_pitch = 2.0
+crys_out_l = crys_out_r = 0.0
+hats = []
+claps = []
+# The 909's hat: six detuned square waves, high-passed, then crushed to 12
+# bits the way an SP-1200 resample crunches it.
+HAT_HZ = [205.3, 304.4, 369.6, 522.7, 540.0, 800.0].freeze
+HAT_LEVEL = 0.011
+# Rendered once: the squares, noise under them for grit, and the decay.
+hat_table = lambda do |len, decay|
+  Array.new((len * RATE).to_i) do |i|
+    th = i.to_f / RATE
+    sq = HAT_HZ.sum { |f| ((th * f * 7.0) % 1.0) < 0.5 ? 1.0 : -1.0 }
+    (sq + (((rand * 2.0) - 1.0) * 3.0)) * Math.exp(-th / decay)
+  end.freeze
+end
+HAT_OPEN = hat_table.(0.3, 0.07)
+HAT_CLOSED = hat_table.(0.06, 0.015)
+# The shaker: noise alone, short, high-passed with the hats.
+SHAKER = Array.new((0.08 * RATE).to_i) { |i| ((rand * 2.0) - 1.0) * 2.0 * Math.exp(-i.to_f / RATE / 0.025) }.freeze
+CLAP_LEVEL = 0.08
+hat_lp = clap_lp = clap_hp = 0.0
+# The rumble: the kick sent into a dark reverb (three combs), distorted,
+# low-passed to 150 Hz, mono, and ducked by the kick itself.
+RUMBLE_LEVEL = 0.05
+COMBS = [1123, 1409, 1693].map { |len| Array.new(len, 0.0) }
+comb_i = [0, 0, 0]
+rum_lp1 = rum_lp2 = 0.0
+RUM_A = 1.0 - Math.exp(-2 * Math::PI * 150.0 / RATE)
+HAT_A = 1.0 - Math.exp(-2 * Math::PI * 7000.0 / RATE)
 DfamHit = Struct.new(:start, :f0, :vel, :ph1, :ph2, :ladder, :pan)
 class DfamKnob
   attr_reader :value
@@ -164,8 +271,34 @@ def space_echo(head_ms, decays)
   "highpass=f=160,aecho=0.9:0.9:#{taps}:#{decays},lowpass=f=3200,chorus=0.9:0.9:25:0.35:0.6:1.8"
 end
 HEAD = BAR / 16 * 1000
-ARP_FX = "afreqshift=shift=6:level=1,flanger=delay=3:depth=6:regen=35:speed=0.13:width=80,vibrato=f=4.8:d=0.18,acrusher=bits=9:mix=0.22:mode=log:aa=1,apulsator=hz=0.21:amount=0.7"
-GRAPH = "[0:a]pan=stereo|c0=c0|c1=c1,#{MASTER}[m];[0:a]pan=stereo|c0=c2|c1=c3,#{ARP_FX}[a];[m][a]amix=inputs=2:weights=1 1:normalize=0,alimiter=limit=0.96"
+ARP_FX = "anull"
+# Extreme analog tape on the master channel, the whole sum: the head bump near
+# 60 Hz, the drive into tanh that tape saturation is (undone after, so it
+# colours rather than raises), the capstan's wow and flutter worn deep, the top
+# the tape cannot hold, and its hiss.
+def tape(drive:, wow:, flutter:, top:, hiss:)
+  "equalizer=f=60:t=q:w=1.1:g=4.5,volume=#{drive},asoftclip=type=tanh,volume=#{(1.0 / drive).round(3)}," \
+    "vibrato=f=0.42:d=#{wow},vibrato=f=6.8:d=#{flutter},lowpass=f=#{top},highpass=f=28," \
+    "aeval=exprs=val(0)+#{hiss}*(2*random(0)-1)|val(1)+#{hiss}*(2*random(1)-1):c=same"
+end
+TAPE = tape(drive: 3.2, wow: 0.22, flutter: 0.07, top: 9_500, hiss: 0.004)
+# Arps on the arps, at the operator's word: the lead is split three ways. One
+# stays dry; one goes up a fifth and comes back an eighth late, the other up
+# an octave a dotted eighth late, so the echoes arpeggiate over the arpeggio.
+# Each pitched copy feeds back through its own echo the way a crystallizer
+# does, and the sum is sharpened with ffmpeg's crystalizer. The pitch shift is
+# asetrate then atempo, a resample and a time-stretch, which grains the copies.
+def pitched(ratio, delay_ms, echo_ms, decay)
+  "asetrate=#{(RATE * ratio).round},aresample=#{RATE},atempo=#{(1.0 / ratio).round(4)}," \
+    "adelay=#{delay_ms}|#{delay_ms},aecho=0.8:0.7:#{echo_ms}:#{decay}"
+end
+EIGHTH = (BAR / 16 * 1000).round
+ARPS_ON_ARPS = "asplit=3[ad][ax][ay];[ax]#{pitched(1.5, EIGHTH, EIGHTH * 2, 0.45)}[af];" \
+               "[ay]#{pitched(2.0, (EIGHTH * 1.5).round, EIGHTH * 3, 0.4)},highpass=f=900[ao];" \
+               "[ad][af][ao]amix=inputs=3:weights=1 0.5 0.35:normalize=0,crystalizer=i=1.5"
+# The leads sit lower in the sum, at the operator's word: 0.9 against the
+# main's 1 where they were 1.5.
+GRAPH = "[0:a]pan=stereo|c0=c0|c1=c1,#{MASTER}[m];[0:a]pan=stereo|c0=c2|c1=c3,#{ARPS_ON_ARPS}[a];[m][a]amix=inputs=2:weights=1 0.9:normalize=0,#{TAPE},alimiter=limit=0.96"
 sox = IO.popen(["sh", "-c", "ffmpeg -loglevel error -f s16le -ar #{RATE} -ac 4 -i - -filter_complex '#{GRAPH}' -f s16le -ar #{RATE} -ac 2 - | sox -q -t raw -r #{RATE} -e signed -b 16 -c 2 - -d"], "wb")
 frame = 0
 frames = Float::INFINITY
@@ -197,37 +330,41 @@ while frame < frames
       next_modulation = chord_i + rng.rand(8..16)
       name += " -> #{NAMES[key]} minor"
     end
-    pad = P.fetch(PADS[chord_i % PADS.size])
+    moog_order = MOOG_CHORDS.keys.shuffle(random: rng) if (chord_i % (MORPH_CHORDS * MOOG_CHORDS.size)).zero?
+    pad = moog_morph(moog_order, chord_i)
+    pad_name = "#{moog_order[(chord_i / MORPH_CHORDS) % moog_order.size]} -> #{moog_order[((chord_i / MORPH_CHORDS) + 1) % moog_order.size]} #{(chord_i % MORPH_CHORDS) * 100 / MORPH_CHORDS}%"
     bass_patch = P.fetch(BASSES[(chord_i / 4) % BASSES.size])
-    voicing.each { |m| voices << voice(m, pad, next_chord, BAR - 0.1, 0.22) }
-    # Moog bass: the chord root twice a bar, the second a little late.
-    voices << voice(bass, bass_patch, next_chord, 1.6, 0.55, bass: true)
-    voices << voice(bass, bass_patch, next_chord + (BAR * 0.534), 1.2, 0.45, bass: true)
-    LOG.puts "#{Time.now.strftime("%H:%M:%S")} #{name} on #{PADS[chord_i % PADS.size]}, bass #{BASSES[(chord_i / 4) % BASSES.size]}"
-    if LEAD_ALWAYS || rng.rand < 0.3
-ensemble = PROPHET_LEADS.keys.shuffle(random: rng)
-pendulum = [0, 1, 2, 3, 2, 1]
-bag = (voicing + voicing.map { |m| m + 12 }).sort.map { |m| m + 12 }
-pick = rng.rand(bag.size)
-step = BAR / 16
-16.times do |k|
-  next if pattern[:velocity][k % 8].zero? # the bag rests where the DFAM does
-
-  pick = (pick + [-1, 1].sample(random: rng)).clamp(0, bag.size - 1)
-  spec = P.fetch(ensemble[pendulum[k % pendulum.size]]).merge(lpg: 0.8)
-  vel = pattern[:velocity][k % 8] / 100.0
-  voices << voice(bag[pick], spec, next_chord + (k * step), step * 0.7, 0.28 * vel.clamp(0.5, 1.0), bass: :arp)
-end
-      LOG.puts "  arp: bag over the dfam rhythm, hocket across #{ensemble.join(" ")}"
+    voicing.each { |m| voices << voice(m, pad, next_chord, CHORD_LEN - 0.1, 0.3, bass: :pad) }
+    # The rolling bass: the root on the three sixteenths after every kick,
+    # short and even, the octave up on the last of each beat now and then.
+    (CHORD_LEN / (BAR / 8)).round.times do |beat|
+      [1, 2, 3].each do |sixteenth|
+        up = sixteenth == 3 && rng.rand < 0.25 ? 12 : 0
+        voices << voice(bass + up, bass_patch, next_chord + (beat * BAR / 8) + (sixteenth * DFAM_STEP), DFAM_STEP * 0.6, 0.4, bass: true)
+      end
+    end
+    LOG.puts "#{Time.now.strftime("%H:%M:%S")} #{name} on #{pad_name}, bass #{BASSES[(chord_i / 4) % BASSES.size]}"
+    if LEADS_ON && (LEAD_ALWAYS || rng.rand < 0.3)
+      # The loved lead, dry: an arpeggio over the chord an octave up, its shape
+      # drawn fresh, a new patch every four notes across every lead the synth has.
+      arp_patches = RHODES_LEADS.keys.shuffle(random: rng)
+      # An octave lower than before, and always climbing: the chord, then the
+      # chord an octave up, arped upward.
+      order = (voicing + voicing.map { |m| m + 12 }).sort
+      step = BAR / 16
+      16.times { |k| voices << voice(order[k % order.size], P.fetch(arp_patches[(k / 4) % arp_patches.size]), next_chord + (k * step), step * 0.7, 0.45, bass: :arp) }
+      LOG.puts "  arp over it"
     end
     chord_i += 1
-    next_chord += BAR
+    next_chord += CHORD_LEN
   end
   n = BLOCK
   left = Array.new(n, 0.0)
   arp_l = Array.new(n, 0.0)
   arp_r = Array.new(n, 0.0)
   right = Array.new(n, 0.0)
+  pad_l = Array.new(n, 0.0)
+  pad_r = Array.new(n, 0.0)
   tb = frame.to_f / RATE
   ck = cutoff_knob(tb)
   rk = res_knob(tb)
@@ -243,7 +380,11 @@ end
     # cost that had the player at 100% of a core and dropping blocks.
     waves = spec[:waves]
     nw = waves.size
-    out_l, out_r = v.bass == :arp ? [arp_l, arp_r] : [left, right]
+    out_l, out_r = case v.bass
+                   when :arp then [arp_l, arp_r]
+                   when :pad then [pad_l, pad_r]
+                   else [left, right]
+                   end
     cut = ampv = 0.0
     j = 0
     while j < n
@@ -271,28 +412,57 @@ end
   end
 voices.reject! { |v| tb > v.start + v.held + v.spec[:amp].release }
 
-# Sequence the DFAM a block ahead.
+# Sequence the DFAM a block ahead, on its own clock. Every two to six bars
+# a new groove is drawn: one of the four named ones or a fresh Euclidean
+# pattern, at a rate of its own against the steady kick -- sixteenths,
+# triplets, thirty-seconds, dotted sixteenths or eighths. While it plays,
+# its pitches and its rotation keep mutating.
 while dfam_next < tb + (n.to_f / RATE)
-  step = dfam_step % 8
-  vel = pattern[:velocity][step] / 100.0 * ACCENT[step]
-  if vel.positive?
-    f0 = 40.0 * (2.0**(pattern[:pitch][step] / 100.0 * 3.0))
-    dfam_hits << DfamHit.new(dfam_next, f0, vel, 0.0, 0.0, S::Ladder.new(rate: RATE), 0.35 + (0.3 * (step % 2)))
+  if dfam_scene.nil? || dfam_next >= next_scene_at
+    dfam_scene = new_scene.(dfam_scene && dfam_scene[:kind])
+    next_scene_at = dfam_next + ((BAR / 2) * dfam_rng.rand(2..6))
+    LOG.puts "  dfam groove -> #{dfam_scene[:label]}"
   end
-b = dfam_step % 5
-if pattern_b[:velocity][b].positive?
-  fb = 40.0 * (2.0**(pattern_b[:pitch][b] / 100.0 * 3.0))
-  dfam_hits << DfamHit.new(dfam_next + 0.004, fb, pattern_b[:velocity][b] / 100.0 * 0.55, 0.0, 0.0, S::Ladder.new(rate: RATE), b.even? ? 0.25 : 0.75)
+  step_len = DFAM_STEP * dfam_scene[:rate]
+  hz = ->(p) { 32.0 * (2.0**(p / 100.0 * 4.0)) }
+  add = ->(at, p, vel, pan) { dfam_hits << DfamHit.new(at, hz.(p), vel, 0.0, 0.0, S::Ladder.new(rate: RATE), pan) }
+  pitches = dfam_scene[:pitches]
+  case dfam_scene[:kind]
+  when :generated
+    if dfam_scene[:hits][dfam_step % dfam_scene[:hits].size]
+      add.(dfam_next, pitches[dfam_step % pitches.size], dfam_rng.rand < 0.25 ? 1.1 : dfam_rng.rand(0.5..0.85), dfam_rng.rand(0.25..0.75))
+    end
+  when :euclid
+    add.(dfam_next, pitches[dfam_step % pitches.size], 1.0, 0.45) if euclid(5, 16)[dfam_step % 16]
+  when :ratchet
+    if (dfam_step % 6).zero? || dfam_rng.rand < 0.12
+      reps = dfam_rng.rand(2..4)
+      p0 = dfam_rng.rand(25..45)
+      reps.times { |r| add.(dfam_next + (r * step_len / 2), p0 - (r * 12), 0.9 - (r * 0.15), 0.3 + (0.4 * (r % 2))) }
+    end
+  when :broken
+    add.(dfam_next, pitches[6 - (dfam_step % 7)] || pitches.first, dfam_rng.rand(0.4..1.0), dfam_rng.rand(0.2..0.8)) if dfam_rng.rand < 0.6
+  when :tribal
+    t12 = dfam_step % 12
+    add.(dfam_next, pitches[t12 % pitches.size], [0, 3, 6].include?(t12) ? 1.1 : 0.6, 0.35 + (0.3 * (t12 % 2))) if euclid(7, 12)[t12]
+  end
+  # The mutation: now and then a pitch redrawn, the pattern turned a step.
+  pitches[dfam_rng.rand(pitches.size)] = dfam_rng.rand(5..45) if dfam_rng.rand < 0.07
+  dfam_scene[:hits] = dfam_scene[:hits].rotate(1) if dfam_rng.rand < 0.03
+  dfam_step += 1
+  dfam_next += step_len
 end
-# The kick on every beat: four steps of the sequencer.
-kicks << dfam_next if (dfam_step % 4).zero?
-dfam_step += 1
-  if (dfam_step % 32).zero?
-    k = dfam_rng.rand(8)
-    pattern[:pitch][k] = (pattern[:pitch][k] + dfam_rng.rand(-18..18)).clamp(5, 95)
-    pattern[:velocity][k] = dfam_rng.rand < 0.15 ? 0 : (pattern[:velocity][k] + dfam_rng.rand(-20..20)).clamp(35, 100)
-  end
-  dfam_next += DFAM_STEP
+# The industrial grid, after Attack Magazine's dissection: the kick four
+# on the floor, a closed hat on each offbeat, a shaker on every second
+# offbeat, a noise snare on two and four. The DFAM is the syncopated low tom.
+while grid_next < tb + (n.to_f / RATE)
+  s16 = grid_step % 16
+  kicks << grid_next if KICKS_ON && (s16 % 4).zero?
+  hats << [grid_next, HAT_CLOSED, 0.9] if s16 % 4 == 2
+  hats << [grid_next + 0.004, SHAKER, 0.6] if [6, 14].include?(s16)
+  claps << grid_next if [4, 12].include?(s16)
+  grid_step += 1
+  grid_next += DFAM_STEP
 end
 kv = DFAM_KNOBS.transform_values { |k| k.step(n.to_f / RATE, tb) }
 if tb > next_gesture
@@ -333,10 +503,13 @@ j = 0
 while j < n
   now = tb + (j.to_f / RATE)
   bus = 0.0
+  duck = 0.0
   kicks.each do |t|
     tk = now - t
     next if tk.negative? || tk > 0.5
 
+    d = Math.exp(-tk / 0.12)
+    duck = d if d > duck
     phase = (50.0 * tk) + (170.0 * 0.012 * (1.0 - Math.exp(-tk / 0.012))) + (30.0 * 0.08 * (1.0 - Math.exp(-tk / 0.08)))
     bus += Math.sin(2 * Math::PI * phase) * Math.exp(-tk / 0.34)
     if tk < 0.003
@@ -344,16 +517,77 @@ while j < n
       bus += (click_lp * 1.2) + (tk < 0.0008 ? 0.6 : 0.0)
     end
   end
-  k = Math.tanh(bus * 1.8) * KICK_LEVEL
-  left[j] += k
-  right[j] += k
-  j += 1
+  # Driven into hard clipping and back: the distorted industrial kick.
+  k = Math.tanh(Math.tanh(bus * 7.0) * 2.5)
+  k = (k * 256).round / 256.0 * KICK_LEVEL # a bitcrusher for the crisp attack
+  wet = 0.0
+  c = 0
+  while c < 3
+    buf = COMBS[c]
+    y = buf[comb_i[c]]
+    buf[comb_i[c]] = k + (y * 0.8)
+    comb_i[c] = (comb_i[c] + 1) % buf.size
+    wet += y
+    c += 1
+  end
+  rum_lp1 += RUM_A * (Math.tanh(wet * 12.0) - rum_lp1)
+  rum_lp2 += RUM_A * (rum_lp1 - rum_lp2)
+  rumble = rum_lp2 * RUMBLE_LEVEL * (1.0 - (0.9 * duck))
+  metal = 0.0
+  hats.each do |t, open, vel|
+    idx = ((now - t) * RATE).to_i
+    table = open
+    metal += table[idx] * vel if idx >= 0 && idx < table.size
+  end
+  hat_lp += HAT_A * (metal - hat_lp)
+  # Crushed to 12 bits and overdriven, the SP-1200 resample.
+  hat = Math.tanh(((metal - hat_lp) * 32).round / 32.0 * 0.5) * 2.0 * HAT_LEVEL
+  clap = 0.0
+  claps.each do |t|
+    tc = now - t
+    next if tc.negative? || tc > 0.35
+
+    burst = (1.0 - Math.exp(-tc / 0.004)) * Math.exp(-tc / 0.11)
+    clap += ((rand * 2.0) - 1.0) * burst
+  end
+  clap_lp += 0.18 * (Math.tanh(clap * 2.5) - clap_lp)
+  clap_hp += 0.05 * (clap_lp - clap_hp)
+  drums = k + hat + ((clap_lp - clap_hp) * CLAP_LEVEL)
+  # Parallel distortion on the drum bus: grit blended under the clean hits.
+  drums += Math.tanh(drums * 12.0) * 0.025
+  # The pads pump against the kick.
+  pump = 1.0 - (0.25 * duck)
+  left[j] += (pad_l[j] * pump) + drums + rumble
+right[j] += (pad_r[j] * pump) + drums + rumble
+# The Crystallizer on the lead.
+cl = crys_out_l = 0.0
+cr = crys_out_r = 0.0
+2.times do |g|
+  ph = (crys_p + (g * CRYS_GRAIN / 2)) % CRYS_GRAIN
+  win = 0.5 - (0.5 * Math.cos(2 * Math::PI * ph / CRYS_GRAIN))
+  at = (crys_w - CRYS_DELAY - ((CRYS_GRAIN - ph) * crys_pitch).to_i) % CRYS_LEN
+  cl += crys_l[at] * win
+  cr += crys_r[at] * win
+end
+crys_l[crys_w] = arp_l[j] + (cr * CRYS_FEEDBACK) # crossed, so the shimmer walks the field
+crys_r[crys_w] = arp_r[j] + (cl * CRYS_FEEDBACK)
+crys_w = (crys_w + 1) % CRYS_LEN
+crys_p += 1
+if crys_p >= CRYS_GRAIN * 24 # every few seconds, a fifth or an octave
+  crys_p = 0
+  crys_pitch = [2.0, 1.5, 2.0].sample(random: rng)
+end
+arp_l[j] += cl * CRYS_MIX
+arp_r[j] += cr * CRYS_MIX
+j += 1
 end
 kicks.reject! { |t| tb - t > 0.5 }
+hats.reject! { |t, _, _| tb - t > 0.1 }
+claps.reject! { |t| tb - t > 0.35 }
 pcm = Array.new(n * 4)
 n.times do |i|
-  pcm[i * 4] = (Math.tanh(left[i] * 1.4) * 26_000).round
-  pcm[(i * 4) + 1] = (Math.tanh(right[i] * 1.4) * 26_000).round
+  pcm[i * 4] = (Math.tanh(left[i]) * 29_000).round
+  pcm[(i * 4) + 1] = (Math.tanh(right[i]) * 29_000).round
   pcm[(i * 4) + 2] = (Math.tanh(arp_l[i] * 1.4) * 26_000).round
   pcm[(i * 4) + 3] = (Math.tanh(arp_r[i] * 1.4) * 26_000).round
 end
