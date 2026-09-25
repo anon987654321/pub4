@@ -9398,8 +9398,9 @@ img[data-controller="lazy-image"].lazy-fade-in {
    the rest of brgen keeps its own visual language. */
 
 body.vertical-marketplace {
-  --bol-blue: #0000a3;
-  --bol-blue-dark: #000078;
+  /* The blue is the vertical accent, not bol's navy (operator, 2026-09-25). */
+  --bol-blue: var(--accent);
+  --bol-blue-dark: var(--vertical-marketplace-accent-hover);
   --bol-blue-soft: #eef5ff;
   --bol-page: #ffffff;
   --bol-ink: #111111;
@@ -9677,11 +9678,12 @@ body.vertical-marketplace .listing-filter-controls input {
   width: 100%;
   min-height: 44px;
   border: 1px solid var(--bol-rule);
-  border-radius: 4px;
+  border-radius: var(--radius-md);
   background: #fff;
   padding: 0 12px;
   color: var(--bol-ink);
-  font-size: 14px;
+  /* 16px: below it iOS Safari zooms the page on focus. */
+  font-size: 16px;
 }
 
 body.vertical-marketplace .bol-results-column {
@@ -9709,11 +9711,55 @@ body.vertical-marketplace .deal-card-img {
   background: #f5f5f5;
 }
 
+/* The commercial layer (operator, 2026-09-25), bol's roles in the house face.
+   White ink on the blue accent. A sale red of its own, never --danger, and
+   gated: only a badge that marks a real discount or an active deal wears it,
+   so "sold" and a seller's own label stay neutral. The Kaufland store chrome
+   takes the accent, and its red points at the sale red. :root[data-theme]
+   matches the accent loop's light rule, which sets a dark --accent-ink here.
+   White on #F91906 is 4.06:1, AA for large text only; the hover is 5.17:1. */
+:root[data-theme] body.vertical-marketplace {
+  --accent-ink: #fff;
+  --sale: #F91906;
+  --sale-hover: #D91505;
+  --sale-ink: #fff;
+  --store-green: var(--accent);
+  --store-focus: var(--accent);
+  --store-red: var(--sale);
+}
+
 body.vertical-marketplace .deal-card-img .deal-badge {
   inset-block-start: 8px;
   inset-inline-start: 8px;
-  background: var(--bol-price);
+  background: var(--bol-ink);
+  color: var(--bol-page);
   border-radius: 2px;
+}
+
+body.vertical-marketplace .deal-card-img .deal-badge--sale {
+  background: var(--sale);
+  color: var(--sale-ink);
+}
+
+/* One button style in the marketplace: pills, in the accent. The buy box's
+   primary read --store-red, which is the sale red now, and a buy button is
+   not a discount. */
+body.vertical-marketplace :is(.deal-card-buy, .listing-buy-bar-cta, .chip, .store-buybox .btn) {
+  border-radius: var(--radius-pill);
+}
+
+body.vertical-marketplace .store-buybox .btn-primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+body.vertical-marketplace .store-buybox .btn-primary:hover {
+  background: var(--bol-blue-dark);
+}
+
+body.vertical-marketplace .search-form input[type="search"] {
+  border-radius: var(--radius-md);
 }
 
 body.vertical-marketplace .deal-fav svg {
@@ -10095,7 +10141,7 @@ body.vertical-marketplace .storefront-bol-search .nav-search-input {
   min-width: 0;
   height: 44px;
   border: 0;
-  border-radius: 4px 0 0 4px;
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
   background: #fff;
   color: var(--bol-ink);
   padding-inline: 16px;
@@ -10106,7 +10152,7 @@ body.vertical-marketplace .storefront-bol-search .nav-search-submit {
   flex: 0 0 52px;
   width: 52px;
   border: 0;
-  border-radius: 0 4px 4px 0;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
   background: var(--bol-blue-dark);
   color: #fff;
 }
@@ -10323,6 +10369,28 @@ body.vertical-marketplace .storefront-bol-mega h3 a:hover {
 }
 
 
+/* The listing row's two actions at every width; the md block below sets
+   their type and the offer's taller target. */
+body.vertical-marketplace #marketplace-listings .deal-card-buy {
+  width: 100%;
+  min-height: 44px;
+  background: var(--bol-blue);
+  color: var(--accent-ink);
+}
+
+body.vertical-marketplace #marketplace-listings .deal-card-buy:hover {
+  background: var(--bol-blue-dark);
+}
+
+body.vertical-marketplace #marketplace-listings .deal-card-offer {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--bol-blue);
+  text-decoration: underline;
+}
+
 @media (min-width: 768px) {
   body.vertical-marketplace #marketplace-listings .deal-card {
     grid-template-columns: 220px minmax(0, 1fr) 190px;
@@ -10343,28 +10411,14 @@ body.vertical-marketplace .storefront-bol-mega h3 a:hover {
   }
 
   body.vertical-marketplace #marketplace-listings .deal-card-buy {
-    min-height: 44px;
-    width: 100%;
-    border-radius: 4px;
-    background: var(--bol-blue);
-    color: #fff;
     font-size: 15px;
     font-weight: 700;
   }
 
-  body.vertical-marketplace #marketplace-listings .deal-card-buy:hover {
-    background: var(--bol-blue-dark);
-  }
-
   body.vertical-marketplace #marketplace-listings .deal-card-offer {
     min-height: 44px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--bol-blue);
     font-size: 14px;
     font-weight: 600;
-    text-decoration: underline;
   }
 }
 
@@ -10375,19 +10429,4 @@ body.vertical-marketplace .storefront-bol-mega h3 a:hover {
     padding: 8px 0 0;
   }
 
-  body.vertical-marketplace #marketplace-listings .deal-card-buy {
-    width: 100%;
-    min-height: 44px;
-    background: var(--bol-blue);
-    color: #fff;
-  }
-
-  body.vertical-marketplace #marketplace-listings .deal-card-offer {
-    min-height: 36px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--bol-blue);
-    text-decoration: underline;
-  }
 }

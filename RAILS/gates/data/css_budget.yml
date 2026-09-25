@@ -356,7 +356,12 @@ weight_kb:
   # the antigravity.google treatment the operator asked for the same day: the
   # display page header, the black sign-in pill, the quiet footer and the
   # section rhythm. Each is a deliberate design change.
-  brgen: 235
+  #
+  # 235 -> 236 the same day for the marketplace commercial layer the operator
+  # authorised: the gated sale red, pill CTAs, the accent retint. 195 bytes of
+  # it were paid back by folding the listing row's two duplicated action
+  # rules into one; the rest is the layer.
+  brgen: 236
   amber: 110
 # 64 -> 65 on 2026-09-12. Mobile-first costs bytes: stating the phone case
 # unconditionally and restoring the wider one at a min-width edge writes each

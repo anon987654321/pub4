@@ -4,7 +4,7 @@
 <%= link_to deal_path(deal),
       class: "deal-card deal",
       aria: { label: deal.headline } do %>
-  <%= render "marketplace/card_media", photo:, fallback_char: deal.headline.to_s.first&.upcase || "%", badge: %>
+  <%= render "marketplace/card_media", photo:, fallback_char: deal.headline.to_s.first&.upcase || "%", badge:, badge_sale: true %>
 
   <div class="deal-card-body">
     <% if listing %>

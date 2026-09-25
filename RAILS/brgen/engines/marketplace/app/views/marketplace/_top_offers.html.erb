@@ -24,7 +24,7 @@
                    t("marketplace.top")
                  end %>
       <%= link_to (deal ? deal_path(deal) : listing_path(listing)), class: "deal-card sale-ad", role: "listitem", data: { design_school: "commerce_editorial", design_composition: "marketplace_sale", font_pairing: "marketplace_sale" } do %>
-        <%= render "marketplace/card_media", photo:, fallback_char: title.to_s.first&.upcase || "%", badge:, badge_soft: deal.nil? %>
+        <%= render "marketplace/card_media", photo:, fallback_char: title.to_s.first&.upcase || "%", badge:, badge_soft: deal.nil?, badge_sale: deal.present? %>
         <div class="deal-card-body">
           <% if listing %><div class="deal-price"><%= listing.price_display %></div><% end %>
           <%= tag.h3 title, class: "deal-card-title" %>

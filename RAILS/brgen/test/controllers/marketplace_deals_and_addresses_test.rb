@@ -44,6 +44,18 @@ class MarketplaceDealsAndAddressesTest < ActionDispatch::IntegrationTest
     assert_includes response.body, @listing.title
   end
 
+# The sale red is gated: a deal's discount wears it, a sold listing does not.
+test "only a deal badge wears the sale red" do
+  host! "markedsplass.brgen.no"
+
+  get marketplace.deals_path
+  assert_select ".deal-badge.deal-badge--sale", text: I18n.t("marketplace.percent_off", percent: 50)
+
+  @listing.update!(status: "sold")
+  get marketplace.listings_path
+  assert_select ".deal-badge--sale", count: 0
+end
+
   test "a deal is found by its headline or by the title of what it sells" do
     host! "markedsplass.brgen.no"
 

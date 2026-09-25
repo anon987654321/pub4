@@ -1,4 +1,6 @@
-<%# locals: photo, fallback_char, badge: nil, badge_soft: false %>
+<%# locals: photo, fallback_char, badge: nil, badge_soft: false, badge_sale: false
+    badge_sale is the gate on the sale red: a caller passes it only for a
+    real discount or an active deal, never for sold or a seller's label. %>
 <%# The one shared anatomy the card family actually has: the image slot.
     deals/_card and listings/_card carried this block byte-similar — same
     class family, same responsive widths — and only the badge text and its
@@ -15,6 +17,6 @@
     <div class="deal-card-placeholder" aria-hidden="true"><%= fallback_char %></div>
   <% end %>
   <% if badge.present? %>
-    <span class="deal-badge<%= " deal-badge--soft" if local_assigns[:badge_soft] %>"><%= badge %></span>
+    <span class="deal-badge<%= " deal-badge--soft" if local_assigns[:badge_soft] %><%= " deal-badge--sale" if local_assigns[:badge_sale] %>"><%= badge %></span>
   <% end %>
 </div>
