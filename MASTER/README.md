@@ -206,6 +206,8 @@ cannot run, the pass says INCONCLUSIVE rather than claiming DONE.
 
 Install both the Termux:API application and the `termux-api` package before expecting Android hardware access. The official Termux project documents the add-on and its command-line package separately.
 
+**The phone sets itself up to listen.** The terminal face hears speech through whisper.cpp running on the device itself, in Norwegian or English without being told which. On a new Termux install MASTER notices what the face's ear lacks and fetches it in the background while the session opens: the Termux packages for the microphone and sound, whisper.cpp built from source until Termux packages it, and the small multilingual model a phone's memory can hold. Each step prints one line as the boot does, a finished step is never repeated, and a failed build waits hours before it tries again and gives up after five tries. Until whisper is in place the face listens through Termux's own speech recogniser, and `bin/doctor` says where the setup stands. A laptop needs only whisper.cpp and a model on disk; Gemini transcribes only where neither exists.
+
 From Termux:
 
 ```console
