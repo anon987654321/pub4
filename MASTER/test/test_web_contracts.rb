@@ -16,7 +16,7 @@ class MasterNamespaceSpec < Minitest::Test
   end
 
   def test_master_namespace_exposes_canonical_facade
-    source = read("web/src/master_namespace.js")
+    source = read("web/public/master_namespace.js")
 
     %w[boot face speech speechRuntime speechPlayback events ecology chat container attention].each do |name|
       assert_includes source, %("#{name}")

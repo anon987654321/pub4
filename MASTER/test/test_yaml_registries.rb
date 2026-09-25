@@ -378,7 +378,7 @@ end
       assert_equal neural, voices.fetch(name.to_s), "the face cannot resolve #{name}, which the server speaks"
     end
     refute(voices.keys.any? { |name| name.end_with?("Neural") }, "the aliases are short names only")
-    face = File.read(File.expand_path("../web/assets/face.part1.txt", __dir__))
+    face = File.read(File.expand_path("../web/public/face.part1.txt", __dir__))
     refute_match(/christopher:\s*'en-US-ChristopherNeural'/, face,
                  "a second name table in the face is the drift this payload replaced")
   end
