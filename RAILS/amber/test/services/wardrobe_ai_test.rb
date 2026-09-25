@@ -73,6 +73,16 @@ class WardrobeAiTest < ActiveSupport::TestCase
     assert_equal [ :photo ], client.with
   end
 
+  test "chat omits attachments when none were supplied" do
+    client = FakeClient.new(content: '{"ok":true}')
+    service = WardrobeAi.new(User.new, client: client)
+
+    result = service.send(:chat, "text only")
+
+    assert_equal true, result["ok"]
+    assert_nil client.with
+  end
+
   test "fingerprint_for is deterministic and not claimed as embedding provider" do
     item = Item.new(title: "Coat", category: "Outerwear", color: "navy")
     a = WardrobeAi.new(User.new).fingerprint_for(item)

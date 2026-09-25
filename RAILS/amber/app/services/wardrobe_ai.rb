@@ -101,7 +101,7 @@ class WardrobeAi
     PROMPT
     vision_items = items.select { |i| i.photos.attached? }.first(5)
     attachments = vision_items.filter_map { |item| item.photos.first if item.photos.attached? }
-    outfits = chat(prompt, with: attachments)["outfits"] || []
+    outfits = chat(prompt, with: attachments.presence)["outfits"] || []
     outfits = rule_based_outfits(items, occasion:, season:) if outfits.blank?
     Array(outfits).each { |o| o["source"] ||= @client ? "openrouter" : "rule" if o.is_a?(Hash) }
     outfits
@@ -256,7 +256,7 @@ class WardrobeAi
   def chat(prompt, with: nil)
     return fallback_response(prompt) unless @client
 
-    content = with ? @client.ask(prompt, with:) : @client.ask(prompt)
+    content = @client.ask(prompt, with:)
     return fallback_response(prompt) if content.blank?
 
     JSON.parse(content)
