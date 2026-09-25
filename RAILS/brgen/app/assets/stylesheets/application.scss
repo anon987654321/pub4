@@ -9390,10 +9390,9 @@ body.vertical-marketplace .storefront-bol-brand .brand-text {
 }
 
 body.vertical-marketplace #navBar.storefront-nav--bol #topHalf {
-  display: grid;
-  grid-template-columns: minmax(140px, 200px) minmax(0, 1fr) auto;
+  display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 24px;
   min-height: var(--bol-header-height);
   max-width: var(--bol-max);
   margin-inline: auto;
@@ -9401,7 +9400,12 @@ body.vertical-marketplace #navBar.storefront-nav--bol #topHalf {
 }
 
 body.vertical-marketplace #navBar.storefront-nav--bol #sections {
-  display: contents;
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 4px;
+  margin-inline-start: 176px;
 }
 
 body.vertical-marketplace #navBar.storefront-nav--bol #sections .section {
@@ -9413,11 +9417,6 @@ body.vertical-marketplace #navBar.storefront-nav--bol #sections .section {
   background: transparent;
   font-size: 14px;
   font-weight: 600;
-}
-
-body.vertical-marketplace #navBar.storefront-nav--bol #sections .section:first-child {
-  grid-column: 1;
-  visibility: hidden;
 }
 
 body.vertical-marketplace #navBar.storefront-nav--bol #accountStuff {
