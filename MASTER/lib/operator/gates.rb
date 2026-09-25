@@ -159,7 +159,7 @@ module Deploy
     # whole registry over the whole tree, against a recorded number.
     DEFAULT_TARGETS = %w[
       ../RAILS/brgen ../RAILS/amber ../RAILS/bsdports ../RAILS/shared
-      MASTER/tools ../OPENBSD ../MASTER
+      ../OPENBSD ../MASTER
     ].freeze
 
     # RAILS/brgen for an app, MASTER/tools for a tree — the prefix a changed path must
