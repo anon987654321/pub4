@@ -24,7 +24,7 @@ fail=0
 PUB4_ROOT=${PUB4_ROOT:-/home/dev/pub4}
 FALLBACK='brgen,https://brgen.no/up
 master,https://ai.brgen.no/up
-amber,https://amber.fashion/up
+amber,https://amberapp.art/up
 bsdports,https://bsdports.org/up'
 
 # name,url per line. The master face is not in apps.yml — it is not a Rails app

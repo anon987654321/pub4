@@ -432,7 +432,7 @@ validate_ip "$HYP_IP"   || { log ERROR "Invalid HYP_IP: $HYP_IP"; exit 1 }
 
 ALL_APPS=(
   brgen:brgen.no
-  amber:amber.fashion
+  amber:amberapp.art
   bsdports:bsdports.org
 )
 
@@ -491,7 +491,7 @@ ALL_DOMAINS=(
   discordb.org
   stacyspassion.com
   foball.no
-  amber.fashion
+  amberapp.art
 )
 
 # ── Stage 1: DNS, DNSSEC, TLS certificates ────────────────────────────────────

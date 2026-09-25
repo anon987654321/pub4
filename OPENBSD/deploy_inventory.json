@@ -4,7 +4,7 @@
   "apps": [
     {
       "name": "amber",
-      "domain": "amber.fashion",
+      "domain": "amberapp.art",
       "port": 61352
     },
     {

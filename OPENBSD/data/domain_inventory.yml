@@ -1,8 +1,11 @@
 # Written by OPENBSD/bin/domain_watch.rb --update. Committed so a domain
 # changing hands is a reviewable diff rather than a surprise outage.
 ---
-amber.fashion:
-  state: available
+amberapp.art:
+  state: registered
+  created: '2026-09-25T05:35:06.0Z'
+  expires: '2027-09-25T23:59:59.0Z'
+  registrar: Domeneshop AS dba domainnameshop.com
 amstrdam.nl:
   state: registered
   created: '2026-05-18'
