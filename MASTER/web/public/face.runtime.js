@@ -377,8 +377,17 @@ function flushStreamTts(pending, opts = {}) {
   if (rest.trim()) enqueueSpeech((first ? tsPrefix : '') + rest.trim(), speakOpts);
 }
 function detectLang(text) {
-  if (/[æøåÆØÅ]/.test(text) || /\b(ikke|jeg|deg|seg|eller|dette|disse|skal|dette|vil|kan)\b/i.test(text)) return 'nb';
+  if (/[æøåÆØÅ]/.test(text) || /\b(og|ikke|jeg|deg|seg|eller|dette|disse|skal|vil|kan|må|har|er|fordi|hvis|når|noen|veldig|riktig|ferdig)\b/i.test(text)) return 'nb';
   return 'en';
+}
+function speechVoiceForText(text) {
+  const language = detectLang(text);
+  const configured = window.MASTER_VOICE_POLICY?.language_voices?.[language];
+  if (configured) {
+    const alias = String(configured).toLowerCase();
+    return VOICE_ALIASES[alias] || String(configured);
+  }
+  return window.MASTER_VOICE_POLICY?.neural || 'en-US-JennyNeural';
 }
 
 const State = {
@@ -3048,8 +3057,8 @@ function enqueueSpeech(text, opts = {}) {
     .trim();
   if (!clean) return;
   if (!shouldEnqueueTtsChunk(clean, opts)) return;
-  const _v = _nextTtsVoice();
   const decorated = _quirkifyTts(clean, opts);
+  const _v = speechVoiceForText(decorated);
   applyParalinguisticState(decorated);
   if (tts.meta.size > 32) tts.meta.clear();
   tts.meta.set(decorated, {
@@ -3319,6 +3328,7 @@ function ttsTick() {
   const text = dequeueTtsLane();
   if (!text) { resumeSttAfterSpeech(); return; }
   tts.current = text;
+  tts.lang = detectLang(text);
   tts.playing = true;
   // Duck the mic while we speak: continuous SpeechRecognition has no echo
   // cancellation against this page's own audio output, so an open mic during
@@ -4608,8 +4618,8 @@ async function acquireWakeLock() {
 }
 
 function guardVoice(v, opts = {}) {
-  void v;
-  void opts;
+  const text = String(opts.text || '').trim();
+  if (text && typeof speechVoiceForText === 'function') return speechVoiceForText(text);
   return TTS_DEFAULT_VOICE;
 }
 
@@ -4661,7 +4671,7 @@ function wireTtsStyleChips() {
 }
 function playDuo(lines, onDone, style, councilOpts = {}) {
   if (!lines.length) { onDone?.(); return; }
-  const [voiceRaw, text] = lines[0]; const voice = guardVoice(voiceRaw);
+  const [voiceRaw, text] = lines[0]; const voice = guardVoice(voiceRaw, { text });
   const rest = lines.slice(1);
   const useStyle = style || _nextTtsStyle(voice);
   if (councilOpts.persona && uiStatus) uiStatus.textContent = `council: ${councilOpts.persona}`;
