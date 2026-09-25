@@ -101,7 +101,7 @@ module Master
       private
 
       # A resumable run on another target whose process is gone would block
-      # every other target until someone reran exactly that one: a STUDIO run
+      # every other target until someone reran exactly that one: a MASTER/tools run
       # that crashed on dilla.rb's length refused /fix RAILS for good. It is
       # closed as interrupted, with the reason, and a live one still refuses.
       # True when the run was released.
