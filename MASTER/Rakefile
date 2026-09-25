@@ -619,11 +619,16 @@ end
     # (Effect, VERBS, Secret), and globbing only the directory would have relaxed
     # a 6-file invariant to 5 the moment the spine moved, without saying so.
     core_files = Dir.glob(File.join(__dir__, "lib", "{core.rb,core/*.rb}")).size
+    core_recursive_files = Dir.glob(File.join(__dir__, "lib", "core", "**", "*.rb")).size
 
     if core_files > config.fetch("core_files")
       abort "lint:spine: the fold spine has #{core_files} files, ceiling is #{config['core_files']} — " \
             "a new ability is a verb in world.rb and a new constraint is a rule in constitution.rb, " \
             "not a new concept"
+    end
+
+    if core_recursive_files > config.fetch("core_recursive_files")
+      abort "lint:spine: the fold spine has #{core_recursive_files} recursive files, ceiling is #{config['core_recursive_files']} — "             "nested core structure cannot grow behind the direct-file invariant"
     end
 
     if lines > ceiling
