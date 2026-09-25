@@ -28,9 +28,9 @@ module Operator
     ROOT = File.expand_path("../..", __dir__)
     TODO = File.join(ROOT, "TODO.md")
 
-    # A path we could own: one of the four trees, or a bare filename with an
+    # A path we could own: one of the three top-level trees, or a bare filename with an
     # extension this repo writes.
-    TREE_PATH = %r{\b((?:MASTER|RAILS|OPENBSD|STUDIO)/[\w./-]+\.\w+)}
+    TREE_PATH = %r{\b((?:MASTER|RAILS|OPENBSD)/[\w./-]+\.\w+)}
     BACKTICKED = /`([^`\n]{3,80})`/
 
     OWNED_EXTENSIONS = %w[.rb .erb .scss .css .js .mjs .yml .yaml .sh .ksh .md .json .html].freeze
