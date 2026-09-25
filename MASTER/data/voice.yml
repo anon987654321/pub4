@@ -15,12 +15,16 @@ tts:
   # because the constitution describes the speaker. A voice change moves every
   # one of those together, and test_yaml_registries asserts the readers agree
   # rather than naming the voice.
+  # English is the default voice. Norwegian is always spoken by Pernille.
+  # The language map takes precedence over single_voice; single_voice is the
+  # fallback for text whose language cannot be determined.
   single_voice: jenny
   neural: en-US-JennyNeural
-  # One voice, one continuous speaker. Naturalness comes from prosody and
-  # sentence rhythm, not from changing identity between clauses.
   rotation:
     - jenny
+  language_voices:
+    en: jenny
+    nb: pernille
   persona_affects_text_only: true
   # ON as of 2026-08-14. pushLiveStreamTts (face.part1.txt) pulls each finished
   # sentence off the model's stream and speaks it while the rest is still being
