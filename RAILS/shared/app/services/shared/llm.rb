@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "stringio"
+
 module Shared
   class Llm
     DEFAULT_MODEL = "google/gemini-2.0-flash-001"
@@ -11,6 +13,12 @@ module Shared
 
     def initialize(model: DEFAULT_MODEL)
       @model = model
+    end
+
+    def attachment(content, filename:)
+      require "ruby_llm"
+
+      RubyLLM::Attachment.new(StringIO.new(content), filename:)
     end
 
     def ask(prompt, with: nil)

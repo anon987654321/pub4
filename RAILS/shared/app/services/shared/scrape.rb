@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "json"
-require "stringio"
 
 begin
   require "ferrum"
@@ -31,8 +30,6 @@ module Shared
     end
 
     def self.reason(url:, html:, png:, schema:, hint:)
-      require "ruby_llm"
-
       prompt = <<~TXT
         Source: #{url}
         Extract every listed item on the page as JSON. Use the screenshot to read visual layout (cards, sponsored banners, hidden overlays); use the HTML for exact text and links.
@@ -41,8 +38,8 @@ module Shared
         HTML (truncated to #{HTML_MAX} bytes):
         #{html.byteslice(0, HTML_MAX)}
       TXT
-      attachment = RubyLLM::Attachment.new(StringIO.new(png), filename: "page.png")
-      content = Shared::Llm.new(model: MODEL).ask(prompt, with: attachment)
+      llm = Shared::Llm.new(model: MODEL)
+      content = llm.ask(prompt, with: llm.attachment(png, filename: "page.png"))
       JSON.parse(content).fetch("items", [])
     end
   end
