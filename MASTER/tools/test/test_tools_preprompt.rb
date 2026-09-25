@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "tools_helper"
-Studio::Tools.load_tool("preprompt/preprompt.rb")
+ToolTest::Tools.load_tool("preprompt/preprompt.rb")
 
 # preprompt builds an API request out of seven controlled vocabularies and a
 # per-model capability table. Everything below the network call is pure, and
@@ -369,7 +369,7 @@ class TestPreprompt < Minitest::Test
 
   # lora's longest descriptor, read from the subjects, so the budget is measured
   # against the subject that spends the most of it as that subject stands today.
-  DESCRIPTOR = Dir[File.join(Studio::ROOT, "lora", "*", "subject.env")]
+  DESCRIPTOR = Dir[File.join(ToolTest::ROOT, "lora", "*", "subject.env")]
                .filter_map { |path| File.read(path)[/^DESCRIPTOR="(.*)"$/, 1] }
                .max_by(&:length)
 
