@@ -289,7 +289,6 @@ function dayNightTint() {
 const SENT_BREAK = /([.!?…]+["'\u201D]?\s+|[\n]{2,})/;
 const TTS_CHUNK_MAX = 220;
 const TTS_MIN_CHUNK = 48;
-const TTS_STREAM_CHAR_CAP = 12000;
 function pullStreamingTtsChunk(pending) {
   if (!pending) return { chunk: '', rest: '' };
   const sentBreak = pending.match(SENT_BREAK);
