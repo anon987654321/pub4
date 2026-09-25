@@ -28,13 +28,7 @@ The `marketplace_` tables, prefixed by `isolate_namespace Marketplace`, are
 `Store`, `Listing`, `Category`, `Order`, `Review`, `Deal`, `ListingFavorite` and
 `SavedSearch`.
 
-Routes are drawn on `Marketplace::Engine` and mounted under
-`constraints(subdomain: MARKETPLACE_SUBDOMAINS)`. Listings nest orders, reviews
-and a favourite toggle; `cart` and `checkout` drive the purchase flow; and
 `webhooks/dintero`, `webhooks/stripe` and `webhooks/vipps` receive payment callbacks; Dintero uses signed raw-body webhooks and a separate signed session callback. The Solidus
-commerce engine mounts at `/solidus` only when `SOLIDUS_MARKETPLACE=1` and the
-gem is installed — native `Marketplace::*` stays the public storefront until an
-explicit cutover.
 
 The engine depends on `pub4-shared` for `User`, authentication, tenancy and the
 design system. The host reaches its helpers as `marketplace.listing_url(…,
