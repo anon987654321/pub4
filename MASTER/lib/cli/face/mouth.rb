@@ -78,9 +78,8 @@ module Master
         end
 
         def chunks(text)
-          clipped = text.to_s[0, Master::Voice::Playback::MAX_SPOKEN_CHARS]
-          parts = Master::Voice::Speech.chunks(clipped)
-          parts.empty? ? [clipped].reject { |part| part.strip.empty? } : parts
+          parts = Master::Voice::Speech.chunks(text)
+          parts.empty? ? [text.to_s.strip].reject { |part| part.empty? } : parts
         end
 
         def levels(samples)
