@@ -1,25 +1,17 @@
 # frozen_string_literal: true
 
-# Shared Ferrum + vision-LLM scraper for fictive data generation (Reddit, X, Amazon, fashion etc.).
-# Used by brgen and amber rake tasks for seed augmentation.
-# Requires OPENROUTER_API_KEY (or configure MODEL/ENDPOINT).
+require "json"
+require "stringio"
 
 begin
   require "ferrum"
 rescue LoadError
   nil
 end
-require "json"
-require "stringio"
 
 module Shared
-  # Namespaced rather than bare: this sits at an engine autoload root, and a
-  # host app defining its own top-level Scrape would shadow the engine copy
-  # silently — which is how three apps ran without the engine ApplicationHelper
-  # for months.
   class Scrape
-    MODEL = ENV.fetch("SCRAPE_MODEL", "google/gemini-2.0-flash-001")
-    ENDPOINT = URI("https://openrouter.ai/api/v1/chat/completions")
+    MODEL = ENV.fetch("SCRAPE_MODEL", Shared::Llm::DEFAULT_MODEL)
     HTML_MAX = 60_000
 
     def self.call(url, schema:, hint: nil)
@@ -50,10 +42,8 @@ module Shared
         #{html.byteslice(0, HTML_MAX)}
       TXT
       attachment = RubyLLM::Attachment.new(StringIO.new(png), filename: "page.png")
-      response = RubyLLM.context { |config| config.openrouter_api_key = ENV.fetch("OPENROUTER_API_KEY") }
-                         .chat(model: MODEL, provider: :openrouter, assume_model_exists: true)
-                         .with_params(response_format: { type: "json_object" })
-                         .ask(prompt, with: attachment)
-      JSON.parse(response.content).fetch("items", [])
+      content = Shared::Llm.new(model: MODEL).ask(prompt, with: attachment)
+      JSON.parse(content).fetch("items", [])
     end
-
+  end
+end

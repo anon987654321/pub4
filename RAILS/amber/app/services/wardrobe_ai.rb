@@ -7,7 +7,7 @@ class WardrobeAi
   # by default have no OPENROUTER_API_KEY, so that path is the common one.
   include Offline
 
-  MODEL = "google/gemini-2.0-flash-001"
+  MODEL = Shared::Llm::DEFAULT_MODEL
 
   # The only part of this service that knows a vendor exists.
   #
@@ -22,26 +22,8 @@ class WardrobeAi
   # two LLM clients in one repo is one more than the number of them anybody
   # keeps current. It speaks OpenRouter natively — openrouter_api_key is a
   # first-class setting, so the uri_base override this used to need is gone.
-  class OpenRouter
-    def initialize(token)
-      @token = token
-    end
-
-    # assume_model_exists: the model id is OpenRouter's, not one from
-    # ruby_llm's bundled registry, and the registry is a snapshot that goes
-    # stale. Refusing to call a model because a shipped list has not heard of
-    # it is the wrong failure.
-    def ask(prompt, with: nil)
-      RubyLLM.context { |config| config.openrouter_api_key = @token }
-             .chat(model: MODEL, provider: :openrouter, assume_model_exists: true)
-             .with_params(response_format: { type: "json_object" })
-             .ask(prompt, with:)
-             .content
-    end
-  end
-
   def self.configured?
-    ENV["OPENROUTER_API_KEY"].to_s.strip.present?
+    Shared::Llm.configured?
   end
 
   def self.master_photograph_available?
@@ -247,10 +229,9 @@ class WardrobeAi
   private
 
   def build_client
-    token = ENV["OPENROUTER_API_KEY"].to_s.strip
-    return nil if token.empty?
+    return nil unless Shared::Llm.configured?
 
-    OpenRouter.new(token)
+    Shared::Llm.new(model: MODEL)
   end
 
   def chat(prompt, with: nil)
