@@ -74,6 +74,28 @@ class DinteroSignatureTest < ActiveSupport::TestCase
     )
   end
 
+
+  test "missing webhook secret rejects even with a validly shaped digest" do
+    ENV.delete("DINTERO_HOOK_SECRET")
+    body = '{"event":"checkout_transaction"}'
+    header = OpenSSL::HMAC.hexdigest("SHA1", "", body)
+
+    assert_not Marketplace::Payments::DinteroSignature.valid_webhook?(header:, body:)
+  end
+
+  test "missing callback secret rejects without raising" do
+    ENV.delete("DINTERO_CALLBACK_SECRET")
+    request = Struct.new(:request_method, :url).new(
+      "GET",
+      "https://markedsplass.brgen.no/webhooks/dintero/callback?session_id=abc"
+    )
+
+    assert_not Marketplace::Payments::DinteroSignature.valid_callback?(
+      header: "t=#{Time.current.to_i},v0-hmac-sha256=deadbeef",
+      request:
+    )
+  end
+
   test "webhook signature covers raw bytes" do
     body = '{"event":"checkout_transaction","x":1}'
     signature = OpenSSL::HMAC.hexdigest("SHA1", "hook-secret", body)
