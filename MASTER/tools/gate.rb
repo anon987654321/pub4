@@ -8,20 +8,20 @@ require_relative "../../OPENBSD/lib/gate_result"
 require_relative "dilla/lib/engine_sources"
 
 module Deploy
-  # The gate STUDIO did not have.
+  # The gate MASTER/tools did not have.
   #
   # MASTER, RAILS and OPENBSD each have a suite that fails when their tree
-  # breaks. STUDIO had nothing — and it is the tree most exposed, because
+  # breaks. MASTER/tools had nothing — and it is the tree most exposed, because
   # `MASTER/bin/gate`'s /fix step mutates the whole shared worktree and has
   # silently broken dilla and postpro before. The only thing standing between
   # that and a broken engine was `dilla debug`, which nobody runs after a fix
-  # and which covers dilla alone: the other 13 Ruby files in STUDIO — postpro,
+  # and which covers dilla alone: the other 13 Ruby files in MASTER/tools — postpro,
   # preprompt, the nine lora toolkit scripts — had nothing checking them at all.
   #
   # Three checks, in increasing order of what they can catch:
   #
-  #   parse     every first-party Ruby file in STUDIO is syntactically valid.
-  #   inventory nothing in STUDIO is orphaned, and dilla's file list still
+  #   parse     every first-party Ruby file in MASTER/tools is syntactically valid.
+  #   inventory nothing in MASTER/tools is orphaned, and dilla's file list still
   #             matches the disk.
   #   load      the guarded entry points actually boot.
   #
@@ -36,10 +36,10 @@ module Deploy
   # about a second each. No render, no audio, no gems beyond what the entry
   # points already require, so this can run in a routine check profile rather
   # than being the thing someone remembers to run.
-  class StudioGate
+  class ToolsGate
     ROOT = File.expand_path(__dir__)
 
-    # Every Ruby-bearing corner of STUDIO and what owns it. A file that matches
+    # Every Ruby-bearing corner of MASTER/tools and what owns it. A file that matches
     # no entry here is a file nothing loads and nothing checks, which is how
     # dead code accumulates in a tree with no suite.
     #
@@ -74,7 +74,7 @@ module Deploy
         name: "gate",
         glob: "*.rb",
         entry: nil,
-        owner: "this file and isolation.rb — pinned by MASTER/tools/test/test_studio_gate.rb",
+        owner: "this file and isolation.rb — pinned by MASTER/tools/test/test_tools_gate.rb",
       },
       {
         name: "test",
@@ -92,7 +92,7 @@ module Deploy
     # a Ruby file dropped there is not parsed either.
     VENDORED = %r{/(scratch|renders|stems|samples|project|tmp|node_modules|venv|\.venv|site-packages)/}
 
-    PROBE_TIMEOUT = Integer(ENV.fetch("STUDIO_PROBE_TIMEOUT", "60"))
+    PROBE_TIMEOUT = Integer(ENV.fetch("MASTER/tools_PROBE_TIMEOUT", "60"))
 
     # dilla's support files are the one place file count can still grow. The
     # engine is dilla.rb; everything else dilla carries is support, counted at any
@@ -102,8 +102,8 @@ module Deploy
     # into a sibling or lowers the count elsewhere; raising the ceiling wants the
     # reason in the commit.
     #
-    # Not the same budget as `growth.studio` in MASTER/lib/operator/ratchets.rb, which
-    # counts every tracked file in STUDIO. This one counts dilla's Ruby beside
+    # Not the same budget as `growth.tools` in MASTER/lib/operator/ratchets.rb, which
+    # counts every tracked file in MASTER/tools. This one counts dilla's Ruby beside
     # the engine and nothing else.
     DILLA_SUPPORT = %r{/dilla/(?:lib/.+|(?!dilla\.rb\z)[^/]+\.rb)\z}
     # Eleven, and each is its own subject or carries a contract that forbids the
@@ -123,7 +123,7 @@ module Deploy
     # creating subdirs nest our renders willy nilly".
     DILLA_RETIRED_DIRS = %w[lib/engine bin live scripts renders].freeze
 
-    # VENDORED is matched against the path inside STUDIO, never the absolute
+    # VENDORED is matched against the path inside MASTER/tools, never the absolute
     # one. Matched absolutely it excluded every file in a checkout living under
     # a directory named tmp or project -- a worktree under /private/tmp emptied
     # the corpus, and the gate reported on nothing. One owner for the question,
@@ -159,7 +159,7 @@ module Deploy
       @result
     end
 
-    # Every first-party Ruby file in STUDIO, absolute, sorted.
+    # Every first-party Ruby file in MASTER/tools, absolute, sorted.
     #
     # An executable with a ruby shebang and no extension is Ruby too, and
     # A tool written that way is checked by nothing while the corpus is `*.rb`
@@ -168,21 +168,21 @@ module Deploy
     def source_files
       rb = Dir[File.join(@root, "**", "*.rb")]
       scripts = Dir[File.join(@root, "**", "*")].select { |path| ruby_shebang?(path) }
-      (rb + scripts).reject { |path| StudioGate.vendored?(path, root: @root) }.uniq.sort
+      (rb + scripts).reject { |path| ToolsGate.vendored?(path, root: @root) }.uniq.sort
     end
 
     RUBY_SHEBANG = /\A#!.*\bruby\b/
 
     def ruby_shebang?(path)
       return false unless File.extname(path).empty?
-      return false if StudioGate.vendored?(path, root: @root)
+      return false if ToolsGate.vendored?(path, root: @root)
       return false unless File.file?(path)
 
       File.open(path, "rb") { |file| file.readline(256).match?(RUBY_SHEBANG) }
     rescue EOFError
       false # an empty file has no shebang
     rescue SystemCallError => e
-      warn "studio gate: cannot read #{path} (#{e.class}), so it is not parsed"
+      warn "tools gate: cannot read #{path} (#{e.class}), so it is not parsed"
       false
     end
 
@@ -195,7 +195,7 @@ module Deploy
         RubyVM::AbstractSyntaxTree.parse_file(path)
         @result.checked!
       rescue SyntaxError => e
-        @result.fail("studio parse: #{rel(path)} — #{e.message.lines.first.to_s.strip}")
+        @result.fail("tools parse: #{rel(path)} — #{e.message.lines.first.to_s.strip}")
       end
     end
 
@@ -205,7 +205,7 @@ def check_frozen_literals(files)
   files.each do |path|
     next if File.foreach(path).first(3).any? { |line| line.include?("frozen_string_literal: true") }
 
-    @result.fail("studio frozen: #{rel(path)} has no frozen_string_literal magic comment", severity: :soft)
+    @result.fail("tools frozen: #{rel(path)} has no frozen_string_literal magic comment", severity: :soft)
   end
   @result.checked!(1)
 end
@@ -218,7 +218,7 @@ end
       return check_orphans(files) unless @dilla
 
       @dilla.all.reject { |path| File.file?(path) }.each do |path|
-        @result.fail("studio inventory: DillaSources names #{rel(path)}, which is not on disk")
+        @result.fail("tools inventory: DillaSources names #{rel(path)}, which is not on disk")
       end
       @result.checked!(1)
       check_orphans(files)
@@ -235,7 +235,7 @@ end
         next unless Dir.exist?(File.join(@root, "dilla", dir))
 
         @result.fail(
-          "studio growth: dilla/#{dir}/ is back — the engine is dilla.rb and its support " \
+          "tools growth: dilla/#{dir}/ is back — the engine is dilla.rb and its support " \
           "lives in lib/, so a new file folds into a sibling there"
         )
       end
@@ -245,7 +245,7 @@ end
       return if support <= DILLA_SUPPORT_CEILING
 
       @result.fail(
-        "studio growth: dilla has #{support} support files against a ceiling of " \
+        "tools growth: dilla has #{support} support files against a ceiling of " \
         "#{DILLA_SUPPORT_CEILING} — fold the new one into a sibling, or raise " \
         "DILLA_SUPPORT_CEILING in gate.rb with why in the commit"
       )
@@ -259,7 +259,7 @@ end
     def check_layout(files)
       LAID_OUT_TOOLS.each do |tool|
         beside = files.select { |path| File.dirname(path) == File.join(@root, tool) && File.basename(path) != "#{tool}.rb" }
-        beside.each { |path| @result.fail("studio layout: #{rel(path)} sits beside #{tool}.rb — support belongs in #{tool}/lib/") }
+        beside.each { |path| @result.fail("tools layout: #{rel(path)} sits beside #{tool}.rb — support belongs in #{tool}/lib/") }
       end
       check_dilla_root_audio
     end
@@ -277,7 +277,7 @@ end
 
       stray = Dir.children(dir).select { |name| name.match?(AUDIO) && File.file?(File.join(dir, name)) } - DILLA_ROOT_AUDIO
       stray.sort.each do |name|
-        @result.fail("studio layout: dilla/#{name} is audio in the dilla root, which holds only demo.wav and demo.mp3",
+        @result.fail("tools layout: dilla/#{name} is audio in the dilla root, which holds only demo.wav and demo.mp3",
                      severity: :soft)
       end
     end
@@ -287,8 +287,8 @@ end
       return if orphans.empty?
 
       @result.fail(
-        "studio inventory: #{orphans.size} file(s) belong to no declared tree " \
-        "(#{orphans.map { |p| rel(p) }.join(', ')}) — add them to StudioGate::TREES or delete them",
+        "tools inventory: #{orphans.size} file(s) belong to no declared tree " \
+        "(#{orphans.map { |p| rel(p) }.join(', ')}) — add them to ToolsGate::TREES or delete them",
         severity: :soft
       )
     end
@@ -314,7 +314,7 @@ end
 
         path = File.join(@root, entry)
         unless File.file?(path)
-          @result.fail("studio load: #{tree[:name]} entry #{entry} does not exist")
+          @result.fail("tools load: #{tree[:name]} entry #{entry} does not exist")
           next
         end
 
@@ -331,7 +331,7 @@ end
 
     def report_unguarded(name, entry)
       @result.fail(
-        "studio load: #{entry} runs its CLI at top level (no `__FILE__ == $PROGRAM_NAME` guard), " \
+        "tools load: #{entry} runs its CLI at top level (no `__FILE__ == $PROGRAM_NAME` guard), " \
         "so loading it executes a command and #{name} can never be checked past parsing",
         severity: :soft
       )
@@ -342,7 +342,7 @@ end
     # is to observe a clean boot rather than to inherit one. $PROGRAM_NAME is set
     # away from the script's own path so the guard stays shut.
     def probe_load(name, path)
-      script = "$PROGRAM_NAME = \"studio_gate_probe\"\nload #{path.dump}\n"
+      script = "$PROGRAM_NAME = \"tools_gate_probe\"\nload #{path.dump}\n"
       out, status = capture_with_timeout(script)
 
       if status.nil?
@@ -355,12 +355,12 @@ end
 
       first = out.to_s.lines.grep_v(/^\s*from /).first(4).map(&:strip).reject(&:empty?)
       if missing_gem?(out)
-        # Not a defect in STUDIO: this host is missing something the tool needs.
+        # Not a defect in MASTER/tools: this host is missing something the tool needs.
         # Saying "cannot check" is the honest answer and GATE_STRICT_INCONCLUSIVE
         # is what makes it blocking where the gems are supposed to be present.
         @result.inconclusive!("#{name} load — missing gem on this host: #{first.first}")
       else
-        @result.fail("studio load: #{rel(path)} does not boot — #{first.join(' | ')}")
+        @result.fail("tools load: #{rel(path)} does not boot — #{first.join(' | ')}")
       end
     end
 
@@ -379,20 +379,20 @@ end
     # regex loosens, and the gate goes on printing "passed" over a tree it can
     # no longer read. This is three temporary files and about 40ms, on every run.
     #
-    # A green pass therefore means two things now: STUDIO is intact, and the
+    # A green pass therefore means two things now: MASTER/tools is intact, and the
     # instrument that says so still works.
     PREDICTED_FINDINGS = {
-      "studio parse:" => "a file that does not parse",
-      "studio load:" => "an entry point that raises at load",
-      "studio inventory:" => "a file belonging to no declared tree",
-      "studio growth:" => "dilla/lib/engine/ coming back",
+      "tools parse:" => "a file that does not parse",
+      "tools load:" => "an entry point that raises at load",
+      "tools inventory:" => "a file belonging to no declared tree",
+      "tools growth:" => "dilla/lib/engine/ coming back",
     }.freeze
 
     def self_check
-      return if ENV["STUDIO_GATE_SELFCHECK"].to_s.downcase == "off"
+      return if ENV["MASTER/tools_GATE_SELFCHECK"].to_s.downcase == "off"
 
       observed = broken_tree_findings
-      # include?, not start_with?: a soft failure is rendered as "[soft] studio
+      # include?, not start_with?: a soft failure is rendered as "[soft] tools
       # inventory: ..." and an anchored match silently missed both soft
       # predictions — the first thing this self-check caught was itself.
       missed = PREDICTED_FINDINGS.reject { |marker, _| observed.any? { |f| f.include?(marker) } }
@@ -401,12 +401,12 @@ end
 
       missed.each_value do |defect|
         @result.fail(
-          "studio self-check: this gate no longer reports #{defect} — its pass line is decoration " \
-          "until that is fixed (STUDIO_GATE_SELFCHECK=off to skip)"
+          "tools self-check: this gate no longer reports #{defect} — its pass line is decoration " \
+          "until that is fixed (MASTER/tools_GATE_SELFCHECK=off to skip)"
         )
       end
     rescue StandardError => e
-      # The self-check is an instrument check, not a finding about STUDIO. If it
+      # The self-check is an instrument check, not a finding about MASTER/tools. If it
       # cannot run, say the gate is unverified rather than that the tree is bad.
       @result.inconclusive!("self-check could not run (#{e.class}: #{e.message})")
     end
@@ -415,7 +415,7 @@ end
     def broken_tree_findings
       require "tmpdir"
       require "fileutils"
-      Dir.mktmpdir("studio-gate-selfcheck") do |dir|
+      Dir.mktmpdir("tools-gate-selfcheck") do |dir|
         Dir.mkdir(File.join(dir, "postpro"))
         File.write(File.join(dir, "postpro", "postpro.rb"), <<~RUBY)
           return unless __FILE__ == $PROGRAM_NAME
@@ -493,7 +493,7 @@ end
 end
 
 if __FILE__ == $PROGRAM_NAME
-  Deploy::StudioGate.run.report!(
-    "STUDIO gate passed (#{Deploy::StudioGate.new.source_files.size} Ruby files parsed, entry points boot)"
+  Deploy::ToolsGate.run.report!(
+    "MASTER/tools gate passed (#{Deploy::ToolsGate.new.source_files.size} Ruby files parsed, entry points boot)"
   )
 end
