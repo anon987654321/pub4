@@ -7,10 +7,11 @@
       search_placeholder: local_assigns.fetch(:search_placeholder, t("search.marketplace")),
       search_label: t("search.marketplace_label"),
       **local_assigns.slice(:deliver_to, :live, :hidden_fields),
+      variant: :bol,
       cart: { path: cart_path, count: local_assigns[:cart_count], active: active == "cart" }
     } do %>
   <%= link_to t("storefront.listings"), listings_path, class: "section nav-hover#{" section--active" if active == "listings"}" %>
   <%= link_to t("storefront.todays_deals"), deals_path, class: "section nav-hover#{" section--active" if active == "deals"}" %>
   <%= link_to t("storefront.stores"), shops_path, class: "section nav-hover#{" section--active" if active == "stores"}" %>
   <%= link_to t("storefront.sell"), new_listing_path, class: "section nav-hover" %>
-
+<% end %>
