@@ -119,7 +119,7 @@ class DinteroCheckoutTest < ActiveSupport::TestCase
     ], session[:payload][:items].first[:splits]
     assert_equal(
       { type: "proportional", destinations: [ "platform-1" ] },
-      session[:payload][:items].first[:fee_split]
+      session[:payload][:fee_split]
     )
   end
 
@@ -156,6 +156,10 @@ class DinteroCheckoutTest < ActiveSupport::TestCase
     assert_equal "/v1/accounts/T12345678/shopping/orders/order-1/refunds", seen[:path]
     assert_equal 10_000, seen[:payload][:items].first[:amount]
     assert_equal "brgen-refund-order-42", seen[:options][:idempotency_key]
+    assert_equal(
+      { type: "proportional", destinations: [ "platform-1" ] },
+      seen[:payload][:fee_split]
+    )
     assert_equal "paid", payable.payment_status
   end
 
@@ -181,6 +185,10 @@ class DinteroCheckoutTest < ActiveSupport::TestCase
     assert_equal "/v1/accounts/T12345678/shopping/orders/order-1/captures", seen[:path]
     assert_equal 10_000, seen[:payload][:items].first[:amount]
     assert_equal "brgen-capture-order-42", seen[:options][:idempotency_key]
+    assert_equal(
+      { type: "proportional", destinations: [ "platform-1" ] },
+      seen[:payload][:fee_split]
+    )
     assert_equal "authorized", payable.payment_status
   end
 end
