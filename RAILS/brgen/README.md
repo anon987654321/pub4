@@ -534,7 +534,7 @@ post "webhooks/dintero" => "webhooks/dintero#create",    as: :webhooks_dintero
 | Checkout | signed session callback + server-side transaction state |
 | Webhook | `POST /webhooks/dintero` |
 | Webhook secret | `DINTERO_HOOK_SECRET` (HMAC-SHA1 over raw body) |
-| Seller payout | `DINTERO_HOOK_URL` subscription + payout destination reported `ACTIVE` |
+| Seller payout | `DINTERO_HOOK_URL` subscription + payout destination reported `ACTIVE` + inline split allocation |
 
 Create checkout sessions with an explicit `merchant_reference`. Keep the browser
 return separate from the signed callback. Dintero is the source of truth for
