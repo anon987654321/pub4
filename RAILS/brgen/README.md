@@ -250,9 +250,9 @@ The gateway binds `127.0.0.1:6667` and starts nothing on its own. To expose it:
 - Per-nick bridged `User` rows accumulate; add a sweep like guest pruning.
 ## Goal
 
-Markedsplass (`marketplace.*` / `markedsplass.brgen.no`) should run on **Solidus**
-with storefront + multi-vendor marketplace capabilities that track core Amazon.com
-flows, while keeping city multi-tenancy (DomainRegistry / acts_as_tenant).
+Markedsplass (`marketplace.*` / `markedsplass.brgen.no`) keeps its seller and order
+domain in `Marketplace::*`. Solidus is an optional commerce kernel for catalog,
+cart and fulfillment, introduced by staged dual-write on a larger Postgres host.
 
 ## Gems
 
@@ -280,7 +280,7 @@ Native `Marketplace::*` remains the public seller/order domain. Solidus is optio
 
 ## Mount plan (no big-bang)
 
-1. Add gems (feature flag `SOLIDUS_MARKETPLACE=1`).
+1. Add Solidus gems behind `SOLIDUS_MARKETPLACE=1` on the staging host.
 2. `bin/rails g solidus:install` offline / staging only (creates spree_* tables).
 3. Mount engines **only** under marketplace subdomain constraints.
 4. Keep native listings controllers until cutover; dual-write optional.
