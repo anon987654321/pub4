@@ -5,7 +5,7 @@
 # in a separate process from dilla (see Rakefile) because all three define
 # top-level constants and several names collide.
 
-require_relative "studio_helper"
+require_relative "tool_test_helper"
 
 module Studio
   module Tools
@@ -15,7 +15,7 @@ module Studio
     def self.load_tool(relative)
       original = $PROGRAM_NAME
       $PROGRAM_NAME = "studio_test_probe"
-      load File.join(Studio::ROOT, relative)
+      load File.join(ToolTest::ROOT, relative)
     ensure
       $PROGRAM_NAME = original
     end
