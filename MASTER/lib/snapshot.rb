@@ -4,7 +4,7 @@ require "fileutils"
 
 module Master
   class Snapshot
-    DEFAULT_TREES = %w[MASTER OPENBSD RAILS MASTER/tools/studio].freeze
+    DEFAULT_TREES = %w[MASTER OPENBSD RAILS].freeze
     DEFAULT_OUTPUT = File.join(REPO_ROOT, "snapshot_MASTER.md")
     SKIP = %w[.git .bundle node_modules vendor tmp temp log logs coverage storage cache dist build output generated].freeze
     BINARY_EXTENSIONS = %w[
