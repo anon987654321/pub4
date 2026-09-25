@@ -64,16 +64,22 @@ class MethodLengthRatchetTest < Minitest::Test
     # and the two media engines. A sentinel separates "no branch claimed this
     # class" from "the branch claimed it and there is no link", because only the
     # first may fall through to polymorphic_path and both are nil.
-    "brgen" => [9, 48],
+    # 9/48 -> 5/37 on 2026-09-25, measured rather than split: long methods
+    # shortened or deleted since 2026-08-23 left without the ceiling following.
+    "brgen" => [5, 37],
 # 3/34 -> 2/32 on 2026-08-25. The 48 was css_coverage_lint's used_names:
 # five copies of the same three lines, one per way of applying a class,
 # which is why it grew past this ratchet on every new way found. Split
 # into four extractors and one recorder, with each reason kept next to
 # its own pattern. css_coverage_lint_test passes on the same baselines,
 # so the counts it reports are unchanged.
-"shared" => [2, 32],
-    "amber" => [1, 35],
-    "bsdports" => [1, 46],
+# 2/32 -> 1/31 on 2026-09-25: MobileIosProject.spec (51) built its target
+# and schemes in helpers, byte-identical YAML out.
+"shared" => [1, 31],
+    # 1/35 -> 1/31 on 2026-09-25, measured: ai_controller#suggest_outfits is the one.
+    "amber" => [1, 31],
+    # 1/46 -> 0/0 on 2026-09-25: NvdCve#crossref (48) is a fetch and a record.
+    "bsdports" => [0, 0],
   }.freeze
 
   def ruby_files
