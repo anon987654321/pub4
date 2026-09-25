@@ -288,7 +288,7 @@ namespace :test do
     # gems web/ does not vendor. An empty BUNDLE_PATH separately overrides
     # web/.bundle/config, which says vendor/bundle.
     #
-    # The STUDIO tasks used the hash-of-nils idiom under the same exemption — no
+    # The tool tasks used the hash-of-nils idiom under the same exemption — no
     # .bundle/config, no parent Gemfile — and it was wrong for a third reason the
     # exemption did not cover. Bundler 4 sets BUNDLER_SETUP, and a child ruby
     # loads bundler/setup off it with RUBYOPT already cleared, so `require "vips"`
@@ -764,7 +764,7 @@ end
 # called it. A gate defined and uncalled is a gate that has stopped measuring
 # without anyone deciding it should.
 AUDIT_GATES = %w[
-  dogfood constitution selftest studio core_smoke security_sweep
+  dogfood constitution selftest tools core_smoke security_sweep
   lint:frozen lint:data_singularity lint:spine lint:autoload
   lint:principle_trace lint:scan_coverage lint:reader_singularity lint:doc_citations
   lint:do_not_touch lint:instruments lint:constant_collisions
