@@ -37,7 +37,7 @@ module Operator
     MASTER = File.join(ROOT, "MASTER")
     LEDGER = File.join(MASTER, "data", "proposals.yml")
 
-    TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
+    TREES = %w[MASTER RAILS OPENBSD].freeze
 
     # unit name, the tree(s) it speaks for, and how to run it. Each returns
     # [ok, detail] — detail is the dmesg line body, ok is whether the instrument
