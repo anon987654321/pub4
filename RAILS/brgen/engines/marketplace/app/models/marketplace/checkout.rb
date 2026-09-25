@@ -81,8 +81,9 @@ class Marketplace::Checkout < ApplicationRecord
 
   def fail_payment!(transaction_id: nil)
     update!(
-      payment_status: "failed",
-      dintero_transaction_id: transaction_id.presence || dintero_transaction_id
+      payment_provider: "dintero",
+      dintero_transaction_id: transaction_id.presence || dintero_transaction_id,
+      status: "open"
     )
     order_lines.each { |order| order.fail_payment!(transaction_id: transaction_id) }
   end
