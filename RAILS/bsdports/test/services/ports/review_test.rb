@@ -7,16 +7,19 @@ class PortsReviewTest < ActiveSupport::TestCase
   setup do
     @platform = platforms(:openbsd)
     @category = Category.create!(platform: @platform, name: "devel", slug: "devel-review")
-    @port = Port.create!(
+    @port = Port.new(
       platform: @platform,
       category: @category,
       name: "git",
       pkgpath: "devel/git",
       comment: "distributed version control",
       homepage: "https://old.example.test/",
-      version: "2.43.0",
-      maintainer: "Old Maintainer <old@example.test>"
+      version: "2.43.0"
     )
+    # `maintainer` is both a string column and a belongs_to, and the keyword
+    # form reaches the association writer. Review reads the column.
+    @port[:maintainer] = "Old Maintainer <old@example.test>"
+    @port.save!
   end
 
   test "checks indexed metadata when the source tree is unavailable" do

@@ -21,18 +21,18 @@ module Ports
       return Result.new(issues:, source_status: :unavailable, source_path: nil, mismatches: []) unless root
 
       port_dir = port_directory(root)
-      return Result.new(issues: issues + [:missing_port_directory], source_status: :missing, source_path: port_dir.to_s, mismatches: []) unless port_dir&.directory?
+      return Result.new(issues: issues + [ :missing_port_directory ], source_status: :missing, source_path: port_dir.to_s, mismatches: []) unless port_dir&.directory?
 
       makefile = port_dir.join("Makefile")
       return Result.new(
-        issues: issues + [:missing_makefile],
+        issues: issues + [ :missing_makefile ],
         source_status: :missing,
         source_path: makefile.to_s,
         mismatches: []
       ) unless makefile.file?
 
       source = Openbsd::MakefileParser.parse(makefile)
-      return Result.new(issues: issues + [:unreadable_makefile], source_status: :invalid, source_path: makefile.to_s, mismatches: []) unless source
+      return Result.new(issues: issues + [ :unreadable_makefile ], source_status: :invalid, source_path: makefile.to_s, mismatches: []) unless source
 
       mismatches = metadata_mismatches(source)
       issues.concat(mismatch_issue_keys(mismatches))
@@ -70,10 +70,10 @@ module Ports
 
     def metadata_mismatches(source)
       {
-        comment: [@port.comment.to_s.strip, source[:comment].to_s.strip],
-        homepage: [@port.homepage.to_s.strip, source[:homepage].to_s.strip],
-        maintainer: [@port[:maintainer].to_s.strip, source[:maintainer].to_s.strip],
-        version: [normalized_version(@port.version), normalized_version(source[:version])]
+        comment: [ @port.comment.to_s.strip, source[:comment].to_s.strip ],
+        homepage: [ @port.homepage.to_s.strip, source[:homepage].to_s.strip ],
+        maintainer: [ @port[:maintainer].to_s.strip, source[:maintainer].to_s.strip ],
+        version: [ normalized_version(@port.version), normalized_version(source[:version]) ]
       }.select do |_field, (indexed, source_value)|
         indexed.present? && source_value.present? && indexed != source_value
       end
@@ -92,7 +92,7 @@ module Ports
       return [] unless files.directory?
 
       empty = Dir.glob(files.join("patch-*").to_s).select { |path| File.file?(path) && File.zero?(path) }
-      empty.empty? ? [] : [:empty_patch]
+      empty.empty? ? [] : [ :empty_patch ]
     end
   end
 end

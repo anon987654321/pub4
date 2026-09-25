@@ -84,6 +84,9 @@ class PortsControllerTest < ActionDispatch::IntegrationTest
 
   def test_the_review_notice_is_translated
     port = seed_port
+    # The fixture points at /usr/ports, which exists on vm23, so the review
+    # would compare against a real Makefile there and add a version mismatch.
+    port.platform.update!(tree_path: "/does/not/exist")
     user = User.strict_loading(false).create!(email_address: "rev-#{SecureRandom.hex(4)}@bsdports.test", password: "password")
     post session_path, params: { email_address: user.email_address, password: "password" }
 
