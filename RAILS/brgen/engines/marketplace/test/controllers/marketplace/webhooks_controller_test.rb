@@ -207,8 +207,7 @@ class Marketplace::WebhooksControllerTest < ActionDispatch::IntegrationTest
       attempts: 4
     )
 
-    Marketplace::WebhookDelivery.any_instance.stubs(:retryable!).raises(RuntimeError, "boom")
-    Marketplace::WebhookDelivery.any_instance.stubs(:finish!).raises(RuntimeError, "boom")
+    Marketplace::WebhooksController.any_instance.stubs(:process_event).raises(RuntimeError, "boom")
     post "/webhooks/dintero", params: body,
          headers: {
            "CONTENT_TYPE" => "application/json",
@@ -218,7 +217,8 @@ class Marketplace::WebhooksControllerTest < ActionDispatch::IntegrationTest
          }
 
     assert_response :ok
-    assert_equal "processing", delivery.reload.status
+    assert_equal "failed", delivery.reload.status
+    assert_equal 5, delivery.reload.attempts
   ensure
     ENV["DINTERO_HOOK_SECRET"] = prior_secret
   end
