@@ -1,18 +1,10 @@
 # frozen_string_literal: true
 
-# Vipps callbacks on the marketplace host. Stripe has no action here: the engine
-# routes webhooks/stripe to the host's Webhooks::StripeController, the one
-# Stripe handler.
 class Marketplace::WebhooksController < ActionController::Base
-  # Standalone — no session; PSP webhooks only.
   skip_forgery_protection
   include Shared::WriteThrottle
-  # A payment provider retries in bursts from a handful of addresses.
   self.write_throttle_limit = 300
 
-  # FAILS CLOSED: an unverified POST marks nothing paid. Order ids are
-  # sequential and this route is public with skip_forgery_protection, so the
-  # signature is the only thing standing between a guess and a paid order.
   def vipps
     body = request.body.read
     return head(:unauthorized) unless verified_vipps?(body)
@@ -29,13 +21,180 @@ class Marketplace::WebhooksController < ActionController::Base
     head :bad_request
   end
 
+  def dintero_callback
+    return head(:bad_request) unless Marketplace::Payments::DinteroSignature.valid_callback?(
+      header: request.headers["Dintero-Signature"],
+      request: request
+    )
+
+    transaction_id = params[:transaction_id].presence
+    session_id = params[:session_id].presence
+    transaction = if transaction_id
+      Marketplace::Payments::DinteroCheckout.transaction(transaction_id)
+    elsif session_id
+      Marketplace::Payments::DinteroCheckout.session_transaction(session_id)
+    end
+    return head(:bad_request) unless transaction.is_a?(Hash)
+
+    process_transaction(transaction)
+    head :ok
+  rescue Marketplace::Payments::ProviderError
+    head :bad_gateway
+  rescue StandardError => error
+    Rails.logger.warn("[dintero] callback: #{error.class}: #{error.message}")
+    head :internal_server_error
+  end
+
+  def dintero
+    body = request.body.read
+    return head(:bad_request) unless Marketplace::Payments::DinteroSignature.valid_webhook?(
+      header: request.headers["event-signature"],
+      body: body
+    )
+
+    payload = JSON.parse(body)
+    event_delivery = request.headers["event-delivery"].presence || payload["event_delivery"].presence
+    event = payload["event"].presence || request.headers["event"].presence
+    return head(:bad_request) if event_delivery.blank? || event.blank?
+    return head(:bad_request) if payload["event_delivery"].present? && payload["event_delivery"] != event_delivery
+
+    delivery = begin_delivery(event_delivery:, event:)
+    return head(:ok) if delivery.succeeded? || delivery.active?
+
+    attempts = 0
+    begin
+      attempts += 1
+      process_event(event, payload)
+    rescue StandardError => error
+      if attempts < 3
+        sleep(attempts == 1 ? 0.25 : 1.0)
+        retry
+      end
+      delivery.retryable!(error)
+      return head(:internal_server_error)
+    end
+
+    delivery.finish!
+    head :ok
+  rescue JSON::ParserError => error
+    if defined?(delivery) && delivery
+      delivery.fail!(error)
+    end
+    head :bad_request
+  rescue StandardError => error
+    Rails.logger.warn("[dintero] webhook: #{error.class}: #{error.message}")
+    head :internal_server_error
+  end
+
   private
 
-  # NOTE: confirm against the current Vipps MobilePay webhook docs before
-  # enabling in production — the header name and signed string differ between
-  # their API generations. Until VIPPS_WEBHOOK_SECRET is set this rejects
-  # everything, which is the safe default and strictly better than the previous
-  # unconditional trust.
+  def begin_delivery(event_delivery:, event:)
+    delivery = Marketplace::WebhookDelivery.find_by(
+      provider: "dintero",
+      event_delivery: event_delivery
+    )
+    return delivery if delivery&.succeeded? || delivery&.active?
+
+    if delivery
+      delivery.update!(
+        status: "processing",
+        event: event,
+        received_at: Time.current,
+        last_error: nil
+      )
+      return delivery
+    end
+
+    Marketplace::WebhookDelivery.create!(
+      provider: "dintero",
+      event_delivery: event_delivery,
+      event: event,
+      received_at: Time.current
+    )
+  rescue ActiveRecord::RecordNotUnique
+    Marketplace::WebhookDelivery.find_by!(
+      provider: "dintero",
+      event_delivery: event_delivery
+    )
+  end
+
+  def process_event(event, payload)
+    case event
+    when "checkout_authorization", "checkout_authorization_update"
+      process_authorization(payload)
+    when "checkout_transaction", "checkout_transaction_update"
+      process_transaction(payload["transaction"] || payload)
+    when "approval_payout_destination_update", "approval_payout_destination_delete"
+      process_payout_destination_case(payload["payout_destination_case"] || {})
+    when "account_payout_destination_add", "account_payout_destination_update", "account_payout_destination_delete"
+      process_payout_destination(payload["payout_destination"] || {})
+    when "settlement_add"
+      true
+    else
+      true
+    end
+  end
+
+  def process_authorization(payload)
+    authorization = payload["authorization"] || {}
+    transaction = payload["transaction"]
+    if transaction.is_a?(Hash)
+      process_transaction(transaction)
+    elsif authorization["error"].present?
+      ref = authorization["merchant_reference"]
+      payable = Marketplace::Payments::DinteroCheckout.payable_for_reference(ref)
+      payable&.fail_payment!(transaction_id: authorization["transaction_id"])
+    end
+  end
+
+  def process_transaction(transaction)
+    return if transaction.blank?
+
+    reference = transaction["merchant_reference"].presence
+    transaction_id = transaction["id"].presence || transaction["transaction_id"].presence
+    return if reference.blank? || transaction_id.blank?
+
+    payable = Marketplace::Payments::DinteroCheckout.payable_for_reference(reference)
+    return unless payable
+
+    case transaction["status"].to_s.upcase
+    when "AUTHORIZED"
+      payable.authorize_payment!(transaction_id: transaction_id)
+    when "CAPTURED"
+      Marketplace::Payments::DinteroCheckout.captured!(payable, transaction_id: transaction_id)
+    when "FAILED", "VOIDED"
+      payable.fail_payment!(transaction_id: transaction_id)
+    when "REFUNDED"
+      payable.update!(payment_status: "refunded", dintero_transaction_id: transaction_id)
+    end
+  end
+
+  def process_payout_destination_case(data)
+    destination = data["payout_destination_id"].to_s
+    return if destination.empty?
+
+    store = Marketplace::Store.find_by(dintero_payout_destination_id: destination)
+    return unless store
+
+    store.update!(
+      dintero_payout_destination_status: data["case_status"].presence || "UNKNOWN"
+    )
+  end
+
+  def process_payout_destination(data)
+    destination = data["payout_destination_id"].to_s
+    return if destination.empty?
+
+    store = Marketplace::Store.find_or_initialize_by(
+      dintero_payout_destination_id: destination
+    )
+    return unless store.persisted?
+
+    store.update!(
+      dintero_payout_destination_status: data["case_status"].presence || data["status"].presence || "UNKNOWN"
+    )
+  end
+
   def verified_vipps?(payload)
     secret = ENV["VIPPS_WEBHOOK_SECRET"].to_s
     return false if secret.empty?
