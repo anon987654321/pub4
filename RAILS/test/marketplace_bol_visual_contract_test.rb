@@ -31,13 +31,17 @@ class MarketplaceBolVisualContractTest < Minitest::Test
     assert_includes index, "bol-results-column"
   end
 
+  # The buy box is the listings/_buybox partial the page renders, so the page
+  # is read together with it.
   def test_product_page_keeps_the_same_navigation_and_buy_box_anatomy
     show = File.read(SHOW)
+    buybox = File.read(File.join(File.dirname(SHOW), "_buybox.html.erb"))
 
     assert_includes show, "categories: @categories"
     assert_includes show, "store-breadcrumb"
     assert_includes show, "store-pdp"
-    assert_includes show, "store-buybox"
+    assert_includes show, %(render "marketplace/listings/buybox")
+    assert_includes buybox, "store-buybox"
   end
 
   def test_bol_geometry_tokens_are_explicit
