@@ -4,10 +4,11 @@ require "test_helper"
 
 class RegistryCommandTest < ActiveSupport::TestCase
   setup do
+    AuditEvent.delete_all
+    RegistryOperation.delete_all
+    Order.delete_all
     Domain.delete_all
     Registrant.delete_all
-    Order.delete_all
-    RegistryOperation.delete_all
 
     domain = Domain.create!(name: "example.er", state: "pending")
     registrant = Registrant.create!(
@@ -32,5 +33,14 @@ class RegistryCommandTest < ActiveSupport::TestCase
     assert_equal first.id, second.id
     assert_equal 1, RegistryOperation.count
     assert_equal "succeeded", second.state
+  end
+
+  test "successful creation activates the order and domain" do
+    Eritel::RegistryCommand.call(order: @order)
+
+    assert_equal "active", @order.reload.state
+    assert_equal "active", @order.domain.reload.state
+    assert_equal 2, AuditEvent.count
+    assert_equal "registry_operation", AuditEvent.order(:id).last.event_type
   end
 end
