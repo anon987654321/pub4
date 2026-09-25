@@ -146,11 +146,13 @@ module Marketplace
                   updated_at: Time.current
                 )
                 order.mark_paid!(reference: payable.payment_reference)
+                Webhooks::PaymentPaid.enqueue_google_conversion(order)
               end
               payable.sync_payment_status!
             end
           else
             payable.mark_paid!(reference: payable.payment_reference)
+            Webhooks::PaymentPaid.enqueue_google_conversion(payable)
           end
           payable
         end
