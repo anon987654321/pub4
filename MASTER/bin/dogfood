@@ -4,13 +4,13 @@
 # Drives the CLI end to end. test/test_dogfood.rb, which `rake dogfood` runs, proves the laws
 # against their fixtures; the two are different checks.
 require "open3"
-require "rbconfig"
+require_relative "../lib/operator/ruby_runner"
 require "timeout"
 require_relative "../lib/trace/dmesg"
 
 MASTER_ROOT = File.expand_path("..", __dir__)
-RUBY = RbConfig.ruby
-BUNDLE = ENV.fetch("MASTER_BUNDLE", RUBY_PLATFORM.include?("openbsd") ? "bundle34" : "bundle")
+RUBY = Operator::RubyRunner.ruby_cmd
+BUNDLE = ENV.fetch("MASTER_BUNDLE", Operator::RubyRunner.bundle_cmd)
 TIMEOUT_SECONDS = Integer(ENV.fetch("MASTER_DOGFOOD_TIMEOUT", "90"))
 BAD_OUTPUT = /\b(NameError|NoMethodError|LoadError|SyntaxError|ArgumentError|uninitialized constant|unknown category|aborted)\b/i
 
