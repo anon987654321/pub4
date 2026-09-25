@@ -140,26 +140,7 @@ class TestCouncilSelector < Minitest::Test
     end
   end
 
-  # Every name in either table must be a persona the council actually has, or
-  # the selector seats someone who cannot speak.
-  # There are two populations of reviewer in this tree and the selector must draw
-  # from only one of them.
-  #
-  # data/council.yml holds the personas; lib/review/review_crew/ holds a separate
-  # set of reviewers as agent classes — architecture, chaos, minimalist,
-  # performance, security, style. "Chaos" and "Minimalist" were in the second and
-  # not the first, so `Selector.for(task: :architecture)` and every critical-risk
-  # selection named two reviewers the council could not seat. Both are gone from
-  # these tables now, replaced by Pragmatist, which is a real persona.
-  #
-  # A crew agent's name reappearing here is that defect returning, so it is
-  # asserted from both directions: every name must be a persona, and no name may
-  # be a crew agent that is not also one.
-  def crew_agents
-    Dir.glob(File.expand_path("../lib/review/review_crew/*_agent.rb", __dir__))
-       .map { |path| File.basename(path, "_agent.rb").capitalize }
-  end
-
+  # Every name in the selector tables must exist in the one council persona registry.
   def selector_names
     (S::TASK_PERSONAS.values + S::RISK_PERSONAS.values).flatten.uniq + S::ALWAYS_INCLUDED
   end
@@ -169,17 +150,6 @@ class TestCouncilSelector < Minitest::Test
     refute_empty known, "the persona registry loaded nothing, so this test proves nothing"
 
     missing = selector_names.uniq - known
-
-    assert_empty missing,
-                 "the selector seats reviewers data/council.yml does not have. If these are " \
-                 "review_crew agent classes, they belong to the other registry: #{missing.inspect}"
-  end
-
-  def test_no_review_crew_agent_is_named_as_a_persona
-    known = Master::Review::Council::Personas.load.map(&:name)
-    borrowed = (selector_names.uniq & crew_agents) - known
-
-    assert_empty borrowed,
-                 "a review_crew agent name is back in the persona tables: #{borrowed.inspect}"
+    assert_empty missing, "selector references unknown council personas: #{missing.inspect}"
   end
 end
