@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_22_090000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_25_130000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -660,6 +660,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_22_090000) do
     t.integer "total_cents", default: 0, null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.string "dintero_session_id", limit: 128
+    t.string "dintero_transaction_id", limit: 128
+    t.index ["dintero_session_id"], name: "index_marketplace_checkouts_on_dintero_session_id"
+    t.index ["dintero_transaction_id"], name: "index_marketplace_checkouts_on_dintero_transaction_id"
     t.index ["marketplace_address_id"], name: "index_marketplace_checkouts_on_marketplace_address_id"
     t.index ["user_id", "status"], name: "index_marketplace_checkouts_on_user_id_and_status"
     t.index ["user_id"], name: "index_marketplace_checkouts_on_user_id"
@@ -765,6 +769,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_22_090000) do
   create_table "marketplace_orders", force: :cascade do |t|
     t.integer "buyer_id", null: false
     t.string "carrier"
+    t.string "dintero_session_id", limit: 128
+    t.string "dintero_transaction_id", limit: 128
     t.datetime "created_at", null: false
     t.datetime "delivered_at"
     t.string "fulfilment_status", default: "unfulfilled", null: false
@@ -785,12 +791,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_22_090000) do
     t.datetime "updated_at", null: false
     t.integer "variant_id"
     t.index ["buyer_id"], name: "index_marketplace_orders_on_buyer_id"
+    t.index ["dintero_session_id"], name: "index_marketplace_orders_on_dintero_session_id"
+    t.index ["dintero_transaction_id"], name: "index_marketplace_orders_on_dintero_transaction_id"
     t.index ["fulfilment_status"], name: "index_marketplace_orders_on_fulfilment_status"
     t.index ["listing_id"], name: "index_marketplace_orders_on_listing_id"
     t.index ["marketplace_checkout_id"], name: "index_marketplace_orders_on_marketplace_checkout_id"
     t.index ["payment_reference"], name: "index_marketplace_orders_on_payment_reference"
     t.index ["payment_status"], name: "index_marketplace_orders_on_payment_status"
     t.index ["variant_id"], name: "index_marketplace_orders_on_variant_id"
+  end
+
+  create_table "marketplace_webhook_deliveries", force: :cascade do |t|
+    t.integer "attempts", default: 0, null: false
+    t.string "event", limit: 128, null: false
+    t.string "event_delivery", limit: 128, null: false
+    t.string "last_error", limit: 500
+    t.string "provider", limit: 32, null: false
+    t.datetime "received_at", null: false
+    t.datetime "succeeded_at"
+    t.string "status", default: "processing", limit: 32, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["provider", "event_delivery"], name: "index_marketplace_webhook_deliveries_identity", unique: true
+    t.index ["status"], name: "index_marketplace_webhook_deliveries_on_status"
   end
 
   create_table "marketplace_payouts", force: :cascade do |t|
@@ -880,10 +903,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_22_090000) do
     t.integer "place_id"
     t.string "slug", null: false
     t.string "stripe_connect_id", limit: 128
+    t.string "dintero_payout_destination_id", limit: 128
+    t.string "dintero_payout_destination_status", limit: 64
     t.datetime "updated_at", null: false
     t.boolean "verified", default: false, null: false
     t.string "vertical"
     t.index ["city_id"], name: "index_marketplace_stores_on_city_id"
+    t.index ["dintero_payout_destination_id"], name: "index_marketplace_stores_on_dintero_payout_destination_id", unique: true
     t.index ["owner_id"], name: "index_marketplace_stores_on_owner_id"
     t.index ["place_id"], name: "index_marketplace_stores_on_place_id"
     t.index ["slug"], name: "index_marketplace_stores_on_slug", unique: true
