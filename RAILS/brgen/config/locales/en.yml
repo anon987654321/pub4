@@ -1185,7 +1185,7 @@ en:
     cart_empty_body: Browse listings and send offers — guests can shop without signup.
     browse_marketplace: Browse marketplace
     cart_total: 'Total: %{amount}'
-    cart_pay_hint: Pay with Vipps (NO) or Stripe (cards), or send classic offers sellers
+    cart_pay_hint: Pay with Dintero, Vipps, or card checkout, or send classic offers sellers
       accept/decline.
     cart_honest_pay: If a payment provider is unavailable we say so. We never take
       a payment we cannot process.
@@ -1660,6 +1660,9 @@ en:
       cart_not_payable: Nothing in the cart can be paid for.
       unknown_provider: Unknown payment provider.
       dintero_seller_not_ready: Dintero checkout is not available for this seller yet.
+      capture_unavailable: This order cannot be captured yet.
+      capture_started: Capture sent to Dintero.
+      capture_failed: Dintero could not capture this order.
       payment_recorded: Payment %{status} via %{provider}.
       listing_saved: Listing saved.
       listing_unsaved: Listing removed from saved.
