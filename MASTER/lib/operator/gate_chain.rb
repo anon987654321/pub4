@@ -3,6 +3,7 @@
 require "open3"
 require "rbconfig"
 require "operator/ruby_runner"
+require "bundler"
 
 module Operator
   # Every gate in the repo, in one order, fixing as it goes.
@@ -237,13 +238,13 @@ module Operator
            File.join(ROOT, "RAILS", app), {}, "RAILS"]
         end,
         ["OPENBSD", [RUBY, "-e", OPENBSD_SUITE], File.join(ROOT, "OPENBSD"), {}, "OPENBSD"],
-        ["tools", [RUBY, BUNDLE, "exec", RUBY, "-S", "rake"], File.join(MASTER, "tools"), {}, "MASTER"],
+        ["tools", [RUBY, "-S", "rake"], File.join(MASTER, "tools"), {}, "MASTER", true],
       ].select { |job| trees.include?(job.last) }
     end
 
     def suites(trees = TREES)
-      results = suite_jobs(trees).map do |name, cmd, dir, env, _tree|
-        ok, out = capture(*cmd, chdir: dir, env:)
+      results = suite_jobs(trees).map do |name, cmd, dir, env, _tree, unbundled|
+        ok, out = capture(*cmd, chdir: dir, env:, unbundled:)
         [name, ok, out]
       end
       failed = results.reject { |_, ok, _| ok }
@@ -274,8 +275,13 @@ module Operator
     # gives a stage its own exit status, bin/gate's stage timeouts and a window
     # for attributing changed files; running stages in-process saves boot time
     # and loses all three.
-    def capture(*cmd, chdir: MASTER, env: {})
-      out, status = Open3.capture2e(ENV.to_h.merge(env), *cmd, chdir:)
+    def capture(*cmd, chdir: MASTER, env: {}, unbundled: false)
+      runner = -> { Open3.capture2e(ENV.to_h.merge(env), *cmd, chdir:) }
+      out, status = if unbundled && defined?(Bundler)
+                      Bundler.with_unbundled_env { runner.call }
+                    else
+                      runner.call
+                    end
       [status.success?, out.lines.map(&:rstrip).reject(&:empty?), status.exitstatus]
     rescue StandardError => e
       [false, ["#{e.class}: #{e.message}"], 1]
