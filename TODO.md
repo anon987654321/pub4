@@ -305,23 +305,41 @@ the "One chrome", ad system and layout sections bring back for a decision.
 
 ### Instruments — found 2026-09-25
 
-- **Contract-suite baseline recorded 2026-09-25; three named source failures resolved.**
-  The historical run was 30 red files of 130 under Ruby 3.4.9 (33 under the
-  unrelated PATH Ruby 4.0.5). Current source fixes are in place for the three
-  concrete failures called out there: Solidus uses bare-Minitest assertions,
-  vertical content widths use the shared/container contract, and brgen's emoji
-  fallback stack is behind one typography token. The suite now contains 131
-  contract files. A fresh `RBENV_VERSION=3.4.9 ruby RAILS/test/run_all.rb` has
-  not been executed in this environment, so green status remains unproven.
+- **The RAILS contract suite is red in 7 of 132 files, all rendered values.**
+  Measured under 3.4.9 on 2026-09-26, down from 23. Every remaining failure is
+  a CSS value or a stylesheet's size, so each is the operator's or the brgen
+  CSS pass's: `breakpoint_lint` (a 1024px edge in brgen), `css_coverage_lint`
+  (13 classes the markup asks for and no sheet defines — store-promo-*,
+  author, msg-action, amber-look, dating-heart-* — and 22 more unused
+  selectors), `gate_live_and_css_budget` (css_constitution over its magic_hex,
+  type_scale, weight_ladder, child_margin, leading and flat_ui ceilings in
+  brgen's marketplace block), `scale_lint` (off-scale spacing, leading and
+  opacity in brgen, amber's 1.05 display leading, face opacity 30 against
+  29), `vertical_consistency` (dating and tv widths), the `--bol-blue` literal
+  in `marketplace_bol_visual_contract`, and `file_length_ratchet` (brgen's
+  and amber's application.scss, seeds.rb, bergen_demo_data.rb, and
+  dintero_checkout.rb with no ceiling). Two orphans feed css_coverage:
+  `shared/_storefront_promo` (301184080) and `dating/home/_heart` (unrendered
+  since 05f97fdd3) render nowhere. Done when `ruby RAILS/test/run_all.rb`
+  exits 0.
 - **Rendered gates measure nothing on a fresh checkout.** `RAILS/bin/triangle`
   runs brgen's `db:prepare` (`Triangle.migrate`, unbounded) before it boots
   the server and waits `BOOT_TIMEOUT` (180 s) for `/up`. On a new worktree
   the prepare is too slow to finish in any session's patience, so brgen never
   answers and every rendered gate reports inconclusive. Inconclusive is honest — `runner.rb`
   exits 3 — but it means no layout claim from a worktree has been measured.
-  Done when a fresh worktree boots all four surfaces within a few minutes,
-  whether by loading `schema.rb` instead of migrating or by a prepared
-  database the worktree copies, and one rendered gate returns a count.
+  Half done 2026-09-26: `RAILS/bin/triangle up bsdports` boots one app, 120 s
+  on a fresh worktree, and then `flow_journey` runs 3 of 26 journeys and
+  `rendered_suite` measures 29 bsdports cells. What stays inconclusive, and why:
+  `web_vitals_budget` reads only brgen; `visual_contract` navigated none of 24
+  states even with `VISUAL_CAPTURE=1` and bsdports up, and its run rewrote the
+  tracked `visual_contract/brgen-manifest.json` while measuring nothing;
+  `deploy_drift` compares deploy stamps under `/var/db/pub4`, which exist only
+  on vm23, so it is inconclusive off the box by design. What bsdports alone
+  showed: the sign-in and password fields render at 9px on a phone, so iOS
+  zooms on focus (a rendered value, the operator's), and the home snapshot
+  drifts because the baseline was taken on an empty database and db:prepare
+  seeds ports. Done when brgen boots the same way within a few minutes.
 - **CSS budgets raised on 2026-09-25, for the operator to review.**
   `RAILS/gates/data/css_budget.yml` moved brgen 203→215 KB, amber 108→110 and
   bsdports 64→66, naming the design work each raise pays for: Radio
@@ -468,12 +486,29 @@ re-clone in the same hour and every session quiescent. Not pressure: /home was
 
 <!-- open-debt -->
 
-At Domeneshop, set bsdports.org's nameservers to ns.hyp.net and ns.brgen.no; the
+Half done, measured 2026-09-26: the .org registry now delegates to ns.hyp.net
+and ns.brgen.no, and ns.brgen.no answers 46.23.89.226. But ns.hyp.net itself
+still serves Domeneshop's parked zone — NS ns1-3.expireddomain.hyp.net with a
+six-hour TTL, A 185.134.245.114 — so resolvers that ask it cache the parking
+page and this does not clear with time. At Domeneshop, make ns.hyp.net serve
+the real zone (secondary from ns.brgen.no) or drop its parked copy; the
 registration is paid to 2027-08-08. The deadline is the certificate
 (`notAfter=Nov 10 2026`), because acme-client's HTTP-01 needs the name to resolve
 here. Done when `ruby RAILS/gates/runner.rb dns_zones` passes. `ALLOW_BSDPORTS_DOWN=1`
 on the uptime-check crontab line comes off the same day; `bin/deploy-smoke.sh`
 names the delegation until then.
+
+#### Four lapsed .uk cities — tag: operator-priority
+
+Nominet reads brmingham.uk, glasgw.uk, lverpool.uk and mnchester.uk as
+"Renewal required", expired 24–25 June 2026 and unrenewed three months on,
+which is past Nominet's usual 90-day window, so treat them as abandoned. They
+cost dns_zones nothing (it reads LIVE_DOMAINS, not ALL_DOMAINS) but still carry
+nsd zones and acme-client blocks. Operator: renew them, or drop them from the
+DNS source. `OPENBSD/RUNBOOK.md` says none has NS records at its registrar;
+Nominet lists ns.brgen.no and ns.hyp.net for all four. lndon.uk was newly
+registered at Domeneshop on 2026-09-23, delegated to both, and is not yet in
+LIVE_DOMAINS.
 
 ### Waiting for the box
 
