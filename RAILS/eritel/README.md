@@ -52,3 +52,35 @@ Before any external launch:
 7. add the service to production inventory only after the above are complete.
 
 See ERITEL.md for the partnership plan and evidence rules.
+
+## Reference registry models
+
+The design deliberately combines lessons from the Norwegian and Icelandic ccTLD operating models.
+
+Norid pattern:
+- accredited registrars;
+- registrar agreement and competency testing;
+- EPP integration;
+- DNS and DNSSEC validation;
+- public RDAP and availability services;
+- registry remains neutral while registrars handle customer-facing work.
+
+ISNIC pattern:
+- direct registrant access is possible;
+- no conventional official registrar layer;
+- DNS service providers can receive a defined technical role;
+- EPP access follows demonstrated competency;
+- sandbox and production environments are separated.
+
+The EriTel implementation supports all three as policy modes rather than assuming that one model is correct:
+- direct;
+- accredited registrar;
+- technical partner.
+
+See docs/REGISTRY_MODEL.md, docs/POLICY.md and docs/EPP.md.
+
+## Safety boundary
+
+The reference application never guesses a registry protocol. The adapter is intentionally incomplete until EriTel supplies an authorized interface specification, endpoint, credentials, and operating agreement.
+
+A simulator is acceptable for product development. Production registry writes are not.
