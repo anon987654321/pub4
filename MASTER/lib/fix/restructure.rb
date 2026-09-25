@@ -31,7 +31,7 @@ module Master
       REVIEW_DIFF_LINES = 800
       # Paths that mean something outside the tree. OPENBSD/etc, var, usr, home
       # and dotfiles mirror the box file for file; RAILS migrations and schema
-      # are history the database has already run; STUDIO data and LoRA sets are
+      # are history the database has already run; MASTER/tools data and LoRA sets are
       # read by name and trained on.
       OFF_LIMITS = %r{\A(?:OPENBSD/(?:etc|var|usr|home|dotfiles)/|RAILS/.+/db/(?:migrate|schema)|
                      MASTER/tools/(?:lora|dilla/data)/)}x
