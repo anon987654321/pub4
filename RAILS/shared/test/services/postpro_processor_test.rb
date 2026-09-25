@@ -5,13 +5,12 @@ $LOAD_PATH.unshift(File.expand_path("../../lib", __dir__))
 require_relative "../../app/services/shared/postpro_processor"
 
 class PostproProcessorTest < Minitest::Test
-  def test_script_resolves_to_studio_postpro
+  def test_script_resolves_to_master_tools_postpro
     with_env("PUB4_ROOT" => repo_root, "PUB4_RAILS_ROOT" => rails_root) do
       script = Shared::PostproProcessor.script
       assert script, "postpro script not found"
-      # STUDIO, not studio: the tree is upper case and has been since it was
-    # named. Nothing ran this file, so the assertion sat wrong instead of red.
-    assert_includes script.to_s, "/STUDIO/postpro/postpro.rb"
+      # The media tools live under MASTER/tools since 9baa6047e.
+      assert_includes script.to_s, "/MASTER/tools/postpro/postpro.rb"
       assert File.file?(script), "expected postpro at #{script}"
     end
   end

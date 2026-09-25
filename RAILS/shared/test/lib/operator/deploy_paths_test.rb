@@ -5,29 +5,29 @@ require "pathname"
 require_relative "../../../lib/operator/deploy_paths"
 
 class DeployPathsTest < Minitest::Test
-  def test_postpro_resolves_under_studio
+  def test_postpro_resolves_under_master_tools
     with_env("PUB4_ROOT" => repo_root, "PUB4_RAILS_ROOT" => rails_root) do
       script = Operator::DeployPaths.postpro_script
       assert script, "expected postpro script"
-      assert_includes script.to_s, "/STUDIO/postpro/postpro.rb"
+      assert_includes script.to_s, "/MASTER/tools/postpro/postpro.rb"
       assert File.file?(script)
     end
   end
 
-  def test_preprompt_resolves_under_studio
+  def test_preprompt_resolves_under_master_tools
     with_env("PUB4_ROOT" => repo_root, "PUB4_RAILS_ROOT" => rails_root) do
       script = Operator::DeployPaths.preprompt_script
       assert script, "expected preprompt script"
-      assert_includes script.to_s, "/STUDIO/preprompt/preprompt.rb"
+      assert_includes script.to_s, "/MASTER/tools/preprompt/preprompt.rb"
       assert File.file?(script)
     end
   end
 
-  def test_dilla_resolves_under_studio
+  def test_dilla_resolves_under_master_tools
     with_env("PUB4_ROOT" => repo_root, "PUB4_RAILS_ROOT" => rails_root) do
       script = Operator::DeployPaths.dilla_script
       assert script, "expected dilla script"
-      assert_includes script.to_s, "/STUDIO/dilla/dilla.rb"
+      assert_includes script.to_s, "/MASTER/tools/dilla/dilla.rb"
       assert File.file?(script)
     end
   end
@@ -62,8 +62,8 @@ class DeployPathsTest < Minitest::Test
   def test_repo_root_is_the_checkout_not_its_parent
     with_env("PUB4_ROOT" => nil, "PUB4_RAILS_ROOT" => rails_root, "PUB4_DEPLOY_ROOT" => nil) do
       assert_equal repo_root, Operator::DeployPaths.repo_root.to_s
-      assert_equal File.join(repo_root, "STUDIO/dilla/dilla.rb"),
-                   Operator::DeployPaths.repo_join("STUDIO/dilla/dilla.rb").to_s
+      assert_equal File.join(repo_root, "MASTER/tools/dilla/dilla.rb"),
+                   Operator::DeployPaths.repo_join("MASTER/tools/dilla/dilla.rb").to_s
     end
   end
 
