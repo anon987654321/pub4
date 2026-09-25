@@ -67,6 +67,26 @@ class Marketplace::Checkout < ApplicationRecord
   # One payment clears every order in the basket. Done in a transaction because
   # a half-paid basket — some orders paid, some not, one card charged — is the
   # state nobody has a way to resolve.
+  def authorize_payment!(transaction_id:)
+    update!(
+      payment_provider: "dintero",
+      payment_status: "authorized",
+      dintero_transaction_id: transaction_id,
+      status: "pending_payment"
+    )
+    order_lines.each do |order|
+      order.authorize_payment!(transaction_id: transaction_id)
+    end
+  end
+
+  def fail_payment!(transaction_id: nil)
+    update!(
+      payment_status: "failed",
+      dintero_transaction_id: transaction_id.presence || dintero_transaction_id
+    )
+    order_lines.each { |order| order.fail_payment!(transaction_id: transaction_id) }
+  end
+
   def mark_paid!(reference: payment_reference)
     transaction do
       update!(status: "paid", paid_at: Time.current, payment_reference: reference.presence || payment_reference)
