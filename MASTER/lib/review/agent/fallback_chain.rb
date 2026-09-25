@@ -24,19 +24,21 @@ module Master
             attempted_models << attempt.fetch(:model)
             response = try_fallback_attempt(attempt, timed_out_models:, stage_warnings:, prompt:, context:, stream:, image:, &blk)
             next unless response
+            return accepted_fallback_response(response, attempt, stage_warnings) if response.is_a?(Master::Result::Ok)
 
-            if response.is_a?(Master::Result::Ok)
-              answered = response.model || attempt.fetch(:model)
-              publish_llm_success(answered, response)
-              @bus&.publish("agent:stage_warnings", warnings: stage_warnings) unless stage_warnings.empty?
-              return response.with_model(answered)
-            end
             last_response = response
             queue = refresh_fallback_queue(queue, attempted_models)
           end
 
           @bus&.publish("agent:all_fallbacks_exhausted", warnings: stage_warnings)
           exhausted_result(last_response, stage_warnings)
+        end
+
+        def accepted_fallback_response(response, attempt, stage_warnings)
+          answered = response.model || attempt.fetch(:model)
+          publish_llm_success(answered, response)
+          @bus&.publish("agent:stage_warnings", warnings: stage_warnings) unless stage_warnings.empty?
+          response.with_model(answered)
         end
 
         # A turn no model answered ends on one line naming each model tried and
