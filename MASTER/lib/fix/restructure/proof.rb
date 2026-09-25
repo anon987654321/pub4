@@ -63,11 +63,12 @@ module Master
         end
 
         def production_files(plan)
-          out, status = Master::Io::Exec.capture2e("git", "-C", @tree_root, "ls-files")
+          out, status = Master::Io::Exec.capture2e("git", "-C", @repo_root, "ls-files")
           return [] unless status.success?
 
-          out.lines.map { |line| File.join(@tree_root, line.strip) }.select do |file|
-            File.file?(file) && !plan.paths.include?(file.delete_prefix("#{@repo_root}/")) && !test_path?(file)
+          out.lines.map { |line| File.join(@repo_root, line.strip) }.select do |file|
+            File.file?(file) && !plan.paths.include?(file.delete_prefix("#{@repo_root}/")) && !test_path?(file) &&
+              %w[.rb .rake .js .mjs].include?(File.extname(file))
           end
         end
 
