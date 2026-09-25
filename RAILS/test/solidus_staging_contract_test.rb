@@ -3,7 +3,7 @@
 require "minitest/autorun"
 
 # Staging-prep contract for Solidus (no gem install required).
-# Full cutover is operator-run on a non-1GB host — see brgen/docs/SOLIDUS_MARKETPLACE.md.
+# Full cutover is operator-run on a non-1GB Postgres host.
 class SolidusStagingContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   BRGEN = File.join(ROOT, "brgen")
@@ -13,7 +13,7 @@ class SolidusStagingContractTest < Minitest::Test
     assert_includes gemfile, 'ENV["SOLIDUS_MARKETPLACE"] == "1"'
     assert_includes gemfile, 'gem "solidus"'
     assert_includes gemfile, "solidus_starter_frontend"
-    assert_includes gemfile, "solidus_marketplace"
+    assert_not_match(/gem[[:space:]]+"solidus_marketplace"/, gemfile)
   end
 
   def test_initializer_defines_status_helper
@@ -34,13 +34,14 @@ class SolidusStagingContractTest < Minitest::Test
     assert_includes routes, 'at: "/solidus"'
   end
 
-  def test_docs_and_apps_yml_track_planned_mount
-    docs = File.read(File.join(BRGEN, "docs/SOLIDUS_MARKETPLACE.md"))
+  def test_apps_yml_tracks_optional_solidus_marketplace_kernel
     apps = File.read(File.join(ROOT, "apps.yml"))
-    assert_includes docs, "SOLIDUS_MARKETPLACE=1"
-    assert_match(/1.?GB OpenBSD VPS/, docs)
+    gemfile = File.read(File.join(BRGEN, "Gemfile"))
+    assert_match(/Solidus native marketplace features/, apps)
     assert_match(/solidus core mount/, apps)
     assert_match(/status: planned/, apps)
+    assert_not_match(/solidus_marketplace.*0\.1\.0/, apps)
+    assert_includes gemfile, 'ENV["SOLIDUS_MARKETPLACE"] == "1"'
   end
 
   def test_schema_has_no_spree_tables_by_default
