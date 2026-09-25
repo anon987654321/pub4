@@ -19,7 +19,7 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
   PROVIDER_HOSTS = {
     "stripe" => %w[checkout.stripe.com],
     "vipps" => %w[vipps.no],
-    "dintero" => %w[checkout.dintero.com checkout.api.dintero.com]
+    "dintero" => %w[checkout.dintero.com]
   }.freeze
 
   # POST /checkout  provider=stripe|vipps
