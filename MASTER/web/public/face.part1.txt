@@ -376,8 +376,17 @@ function flushStreamTts(pending, opts = {}) {
   if (rest.trim()) enqueueSpeech((first ? tsPrefix : '') + rest.trim(), speakOpts);
 }
 function detectLang(text) {
-  if (/[æøåÆØÅ]/.test(text) || /\b(ikke|jeg|deg|seg|eller|dette|disse|skal|dette|vil|kan)\b/i.test(text)) return 'nb';
+  if (/[æøåÆØÅ]/.test(text) || /\b(og|ikke|jeg|deg|seg|eller|dette|disse|skal|vil|kan|må|har|er|fordi|hvis|når|noen|veldig|riktig|ferdig)\b/i.test(text)) return 'nb';
   return 'en';
+}
+function speechVoiceForText(text) {
+  const language = detectLang(text);
+  const configured = window.MASTER_VOICE_POLICY?.language_voices?.[language];
+  if (configured) {
+    const alias = String(configured).toLowerCase();
+    return VOICE_ALIASES[alias] || String(configured);
+  }
+  return window.MASTER_VOICE_POLICY?.neural || 'en-US-JennyNeural';
 }
 
 const State = {
