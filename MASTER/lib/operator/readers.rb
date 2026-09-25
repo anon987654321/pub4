@@ -11,7 +11,7 @@ module Operator
   # that could not see the reference that mattered.
   #
   #   hash_dig_compat.rb  merged into MASTER/test/test_helper.rb as "its only
-  #                       reader". STUDIO's dilla/lib/music_gems.rb required it
+  #                       reader". MASTER/tools/dilla/lib/music_gems.rb required it
   #                       by File.expand_path from another tree, inside a
   #                       `rescue LoadError`, so it did not even raise — dilla
   #                       rendered without coltrane for days.
