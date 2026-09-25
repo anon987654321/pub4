@@ -1,5 +1,8 @@
 # Air Superiority
 
+## Canonical contract
+
+
 ## Purpose
 
 Air Superiority is a MASTER plugin for defensive local observation of Wi-Fi and
