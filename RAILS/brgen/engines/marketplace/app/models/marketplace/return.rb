@@ -12,7 +12,7 @@ class Marketplace::Return < ApplicationRecord
   include Shared::StrictSafeAssociations
 
   # requested -> approved|refused, approved -> received. Money is a fourth thing
-  # (refunded_at): StripeRefund on receive, or the row stays unrefunded.
+  # (refunded_at): the selected payment provider confirms it, or the row stays pending.
   STATUSES = %w[requested approved refused received].freeze
   # Fourteen days from delivery, which is the statutory floor for a distance
   # purchase from a business in Norway.
