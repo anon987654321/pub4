@@ -29,7 +29,8 @@ module Marketplace
         def post(path, payload = nil, checkout: false, idempotency_key: nil)
           req = Net::HTTP::Post.new(uri(path, checkout: checkout))
           req["Idempotency-Key"] = idempotency_key if idempotency_key.present?
-          request(req, payload)
+          req.body = JSON.generate(payload) if payload
+          request(req)
         end
 
         def token
@@ -82,7 +83,7 @@ module Marketplace
           parse_response(response, uri)
         end
 
-        def request(req, payload = nil)
+        def request(req)
           req["Authorization"] = "Bearer #{token}"
           req["Content-Type"] = "application/json"
           req["Accept"] = "application/json"
