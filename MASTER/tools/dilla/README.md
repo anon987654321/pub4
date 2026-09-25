@@ -48,7 +48,7 @@ and every piece set to the same loudness under a true-peak ceiling. The bed bega
 as the pad under MASTER's narration and became the engine's render because it
 sounded better than the engine's own catalogue; `ruby dilla.rb bed` still plays
 it under the narration, ducking while a line is spoken, and
-`STUDIO/dilla/data/bed.yml` holds every number it uses. `ruby dilla.rb demo-all`
+`MASTER/tools/dilla/data/bed.yml` holds every number it uses. `ruby dilla.rb demo-all`
 renders the older engine's catalogue.
 
 Old work comes back whole. An Ableton set is a gzipped XML document, so
@@ -626,7 +626,7 @@ drums more 909, the chords more Dilla or the textures more FlyLo.
 
 ## Running it
 
-Run everything from `STUDIO/dilla`. `ruby dilla.rb out.wav 18` renders one
+Run everything from `MASTER/tools/dilla`. `ruby dilla.rb out.wav 18` renders one
 track of eighteen bars, and `TRACK=kembara_rindu` in front of it picks the
 track. Bare `ruby dilla.rb` renders the ten-piece showcase into `demo.wav`,
 `piece <name>` renders one row, `compose` the six-minute piece, `stream` plays
@@ -665,3 +665,32 @@ SPEAK=0 ruby dilla.rb demo-all 12 demo.wav
 ruby dilla.rb replay direction_v4.wav.provenance.json
 ruby dilla.rb knobs
 ```
+
+## Security and trust boundaries
+
+Dilla is an offline-first media tool. Its main security surface is local input, process execution, filesystem state, and imported project data rather than an HTTP API.
+
+The important architectural rules are:
+
+- Treat imported Ableton XML, YAML, JSON, MIDI, audio metadata, and generated manifests as untrusted data. Parse data as data; never turn imported strings into Ruby source, shell fragments, or dynamic constant names.
+- Keep external-process arguments structured. ffmpeg, ffprobe, Demucs, and other helpers must receive argument arrays rather than shell-interpolated command strings.
+- Treat every path as hostile to the boundary it crosses. Resolve it, constrain it to the intended workspace where appropriate, and do not follow an unexpected symlink between validation and use.
+- Make state-changing renders atomic. A render should write a temporary file, validate it, then replace the destination; concurrent renders must not corrupt a catalogue or provenance record.
+- Keep network access out of the render path. If a future feature downloads material or metadata, it needs an explicit, bounded fetch boundary with redirect validation and private/link-local destination protection.
+- Keep provenance authoritative. A checksum, seed, source path, rights declaration, and resolved configuration describe what was actually rendered; they are evidence, not permission to use material whose rights are unknown.
+- Prefer data-only serialization. Never deserialize arbitrary Ruby objects from project files.
+
+The wider MASTER security vocabulary also covers HTTP request framing, SSRF, TOCTOU races, GraphQL query abuse, JWT verification, unsafe deserialization, and abandoned DNS records. Most are not Dilla-specific today; they become relevant if Dilla is exposed through a web service, remote job queue, API, or hosted asset importer.
+
+## MASTER integration
+
+Dilla is a MASTER tool, not a second application framework. Its source of truth remains its own data, code, presets, and provenance files, while MASTER owns governance, invocation, validation, and tool discovery.
+
+Canonical commands:
+
+ruby MASTER/tools/dilla/dilla.rb knobs
+ruby MASTER/tools/dilla/dilla.rb ears demo.wav
+ruby MASTER/tools/dilla/dilla.rb config-provenance
+ruby MASTER/tools/dilla/dilla.rb audit
+
+The canonical path is now MASTER/tools/dilla. Retired STUDIO/dilla references should not be copied into new automation.
