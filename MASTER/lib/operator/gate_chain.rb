@@ -35,7 +35,7 @@ module Operator
 
     # Paths nothing writes by hand. `bin/gate` has said in a comment for months
     # that scanner.rb skips `cache` but not `.cache`, so /fix descends into
-    # STUDIO's generated lora/**/.cache/** copies — a warning with no reader.
+    # MASTER/tools' generated lora/**/.cache/** copies — a warning with no reader.
     # This is the reader: a rewritten generated file is named, and fails the run.
     GENERATED = %r{/\.cache/|/node_modules/|/public/assets/|/app/assets/builds/|\.lock\z}
 
@@ -111,7 +111,7 @@ module Operator
     # currently cannot answer — a tier with no answer must not stand between the
     # rest of the ladder and its verdict.
     # Narrowing by tree drops stages rather than shrinking them, because that is
-    # what each stage is: the RAILS gate runner has nothing to say about STUDIO,
+    # what each stage is: the RAILS gate runner has nothing to say about MASTER/tools,
     # and brgen's suite is not a MASTER session's business. Two stages stay
     # whole under every --tree — the ratchets and the sprawl census are
     # repo-wide measurements by definition, and both are cheap.
@@ -226,7 +226,7 @@ module Operator
     # Whole suites, not the ones the diff touches: a green over hand-picked tests
     # is unmeasured. This is `bin/operator test`'s mapping with every path in it.
     # The fifth element is the tree the suite proves, so --tree can drop the ones
-    # that prove another. It is not derivable from the working directory: STUDIO's
+    # that prove another. It is not derivable from the working directory: MASTER/tools'
     # suite runs from MASTER, because the rake task lives there.
     def suite_jobs(trees = TREES)
       [
@@ -237,7 +237,7 @@ module Operator
            File.join(ROOT, "RAILS", app), {}, "RAILS"]
         end,
         ["OPENBSD", [RUBY, "-e", OPENBSD_SUITE], File.join(ROOT, "OPENBSD"), {}, "OPENBSD"],
-        ["tools", [RUBY, BUNDLE, "exec", RUBY, "-S", "rake", "studio"], MASTER, {}, "MASTER"],
+        ["tools", [RUBY, BUNDLE, "exec", RUBY, "-S", "rake", "-f", File.join(MASTER, "tools", "Rakefile")], MASTER, {}, "MASTER"],
       ].select { |job| trees.include?(job.last) }
     end
 
