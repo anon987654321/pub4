@@ -26,7 +26,7 @@ module Operator
   # search alone finds none of the path-built requires; a `require_relative`
   # search alone finds none of the runtime `File.expand_path` ones.
   class Readers
-    TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
+    TREES = %w[MASTER RAILS OPENBSD].freeze
 
     # knowledge/ and output/ are vendored or generated and are never committed;
     # a word in someone else's system prompt is not a reader.
