@@ -273,13 +273,31 @@ class DeployGatesContractTest < Minitest::Test
     end
   end
 
+  # The operator's recipes are data in operator.yml: each says what you want,
+  # what to run and what to expect. A recipe naming a script that has moved
+  # hands the operator a command that fails, so every tree path a `run` names
+  # has to exist.
+  def test_operator_recipes_name_commands_that_exist
+    recipes = YAML.safe_load_file(File.join(OPENBSD_ROOT, "data", "operator.yml"), aliases: true).fetch("recipes")
+    refute_empty recipes, "operator.yml has no recipes — the parse broke, not the tree"
+
+    incomplete = recipes.reject { |r| %w[want run expect].all? { |k| r[k].to_s.strip != "" } }
+    assert_empty incomplete.map { |r| r["want"] }, "recipes missing want, run or expect"
+
+    missing = recipes.flat_map do |recipe|
+      recipe["run"].scan(%r{\b(?:MASTER|OPENBSD|RAILS|STUDIO)/[\w./-]+}).reject do |path|
+        File.exist?(File.join(REPO_ROOT, path))
+      end.map { |path| "#{recipe["want"]}: #{path}" }
+    end
+    assert_empty missing, "operator.yml recipes run paths that do not exist"
+  end
+
   def test_operator_surface_files_exist
     %w[bin/vps-state bin/vps-deploy bin/vps-logs bin/post-pull-checklist lib/gate_environment.rb].each do |rel|
       path = File.join(OPENBSD_ROOT, rel)
       assert File.exist?(path), "missing OPENBSD/#{rel}"
     end
     assert File.exist?(File.join(ROOT, "apps.horizon.yml"))
-    assert File.exist?(File.join(REPO_ROOT, "OPENBSD", "RECIPES.md"))
     assert File.exist?(File.join(REPO_ROOT, "RAILS", "deploy.sh"))
     assert File.exist?(File.join(REPO_ROOT, "TODO.md"))
     assert File.exist?(File.join(OPENBSD_ROOT, "data", "operator.yml"))
