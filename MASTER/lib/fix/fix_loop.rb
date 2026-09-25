@@ -111,9 +111,9 @@ module Master
         result
       end
 
-      # After the passes, with no transaction open: a rename or a restructure
-      # moves files the pass transactions track by path, so neither can happen
-      # inside one. Each sweep fails alone.
+      # Structural sweeps run between repair passes, with no transaction open:
+      # a rename or restructure moves files the pass transactions track by path,
+      # so each sweep is isolated and a kept change returns to fresh observation.
       def sweep_tree(target, run_id)
         @sweeps.flat_map do |sweep|
           sweep.run(target:, run_id:)
