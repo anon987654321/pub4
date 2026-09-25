@@ -1,11 +1,13 @@
 # MASTER's main sound, improvising live and endless: soul-jazz harmony chosen
 # chord by chord, each voiced nearest the last, the key moving on its own.
 # The chords play only Moog presets on dilla's ladder, morphing over four
-# chords, whole and uncut; the turntablist's crossfader waits behind
-# CUTS_ON. A hand still works the record now and then: a tape stop, a
-# spinback at the end of some phrases, a dub delay throw. Over it, quiet dry
-# Rhodes arpeggios; under it the rolling Moog bass, an industrial grid at
-# 128 BPM and the DFAM, always changing. Kicks sit off: KICKS_ON.
+# chords, on two decks at once, and a turntablist's sharp-curve crossfader
+# cuts between the decks on the thirty-second grid, a new cut every bar.
+# A hand works the record too: baby scratches on opening cuts, a tape stop
+# now and then, a spinback at the end of some phrases, and dub delay throws.
+# Under it all the rolling Moog bass, an industrial grid at 128 BPM and the
+# DFAM, always changing. Kicks and leads sit switched off at the operator's
+# word: KICKS_ON and LEADS_ON.
 $LOAD_PATH.unshift File.expand_path("~/Documents/GitHub/pub4/STUDIO/dilla/lib")
 require "sound"
 
@@ -163,14 +165,10 @@ ACCENT = [1.35, 0.8, 1.0, 0.85, 1.25, 0.8, 1.1, 0.9].freeze
 KICK_LEVEL = 0.06
 # Off at the operator's word, and with them the rumble and the pump.
 KICKS_ON = false
-# The crossfader is off at the operator's word: the chords play whole on
-# deck A, the morphing preset, and deck B is not voiced. true brings the
-# turntablist's cuts back.
-CUTS_ON = false
 # The lead plays over every chord, at the operator's word.
 LEAD_ALWAYS = true
 # Muted at the operator's word; true brings the leads back.
-LEADS_ON = true
+LEADS_ON = false
 kicks = []
 click_lp = 0.0
 # Turntablism on the pads: a scratch DJ's sharp-curve crossfader, two decks
@@ -217,7 +215,7 @@ dub_send = 0.0
 dub_throw = false
 DUB_LP = 1.0 - Math.exp(-2 * Math::PI * 1800.0 / RATE)
 DUB_HP = 1.0 - Math.exp(-2 * Math::PI * 220.0 / RATE)
-CUT_GLIDE = 1.0 - Math.exp(-1.0 / (0.005 * RATE))
+CUT_GLIDE = 1.0 - Math.exp(-1.0 / (0.0005 * RATE))
 # The Crystallizer, after Soundtoys: reversed grains of the lead, pitched up
 # an octave or a fifth, a quarter second late, fed back into themselves.
 # Two readers half a grain apart, Hann-windowed, crossfade into a shimmer.
@@ -388,7 +386,7 @@ while frame < frames
     # The second layer, crossfaded against the first on a rhythm: the preset
     # two stops further round the Moog wheel, so the two never sound alike.
     pad_b = MOOG_CHORDS.fetch(moog_order[((chord_i / MORPH_CHORDS) + 2) % moog_order.size])
-    voicing.each { |m| voices << voice(m, pad_b, next_chord, CHORD_LEN - 0.1, 0.3, bass: :pad_b) } if CUTS_ON
+    voicing.each { |m| voices << voice(m, pad_b, next_chord, CHORD_LEN - 0.1, 0.3, bass: :pad_b) }
     # The rolling bass: the root on the three sixteenths after every kick,
     # short and even, the octave up on the last of each beat now and then.
     (CHORD_LEN / (BAR / 8)).round.times do |beat|
@@ -406,7 +404,7 @@ while frame < frames
       # chord an octave up, arped upward.
       order = (voicing + voicing.map { |m| m + 12 }).sort
       step = BAR / 16
-      16.times { |k| voices << voice(order[k % order.size], P.fetch(arp_patches[(k / 4) % arp_patches.size]), next_chord + (k * step), step * 0.7, 0.18, bass: :arp) }
+      16.times { |k| voices << voice(order[k % order.size], P.fetch(arp_patches[(k / 4) % arp_patches.size]), next_chord + (k * step), step * 0.7, 0.45, bass: :arp) }
       LOG.puts "  arp over it"
     end
     chord_i += 1
@@ -632,7 +630,7 @@ while j < n
   drums += Math.tanh(drums * 12.0) * 0.025
   # The pads pump against the kick.
   pump = 1.0 - (0.25 * duck)
-deck = CUTS_ON ? cut[(now / (DFAM_STEP / 2)).floor % 32] : "A"
+deck = cut[(now / (DFAM_STEP / 2)).floor % 32]
 gain_a += CUT_GLIDE * ((deck == "A" ? 1.0 : 0.0) - gain_a)
 gain_b += CUT_GLIDE * ((deck == "B" ? 1.0 : 0.0) - gain_b)
 pl = (pad_l[j] * gain_a) + (padb_l[j] * gain_b)
@@ -640,7 +638,7 @@ pr = (pad_r[j] * gain_a) + (padb_r[j] * gain_b)
 # Baby scratches: a third of the cuts that open the fader get a hand on it.
 s32 = (now / (DFAM_STEP / 2)).floor
 if s32 != last_s32
-  deck_fx = [:baby, now] if last_deck == "-" && deck != "-" && deck_fx.nil? && rng.rand < 0.12
+  deck_fx = [:baby, now] if last_deck == "-" && deck != "-" && deck_fx.nil? && rng.rand < 0.35
   last_s32 = s32
   last_deck = deck
 end
@@ -654,7 +652,7 @@ if deck_fx && now >= deck_fx[1]
   when :baby
     len = DFAM_STEP
     if x < len
-      d = 0.008 * (1.0 - Math.cos(2 * Math::PI * x / len)) / 2.0
+      d = 0.018 * (1.0 - Math.cos(2 * Math::PI * x / len)) / 2.0
     else
       deck_fx = nil
     end
