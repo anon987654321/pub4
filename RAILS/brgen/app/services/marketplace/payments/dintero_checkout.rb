@@ -89,12 +89,34 @@ module Marketplace
           payable
         end
 
-        def captured!(payable, transaction_id:)
+        def captured!(payable, transaction_id:, items: [])
           payable.update_columns(
             dintero_transaction_id: transaction_id,
             updated_at: Time.current
           )
-          payable.mark_paid!(reference: payable.payment_reference)
+
+          if payable.is_a?(Marketplace::Checkout)
+            line_ids = Array(items).filter_map { |item| item["line_id"].presence }.map(&:to_s)
+            return payable if line_ids.empty?
+
+            payable.order_lines.where(id: line_ids).find_each do |order|
+              order.update_columns(
+                dintero_transaction_id: transaction_id,
+                updated_at: Time.current
+              )
+              order.mark_paid!(reference: payable.payment_reference)
+            end
+
+            if payable.order_lines.where.not(payment_status: "paid").none?
+              payable.update!(
+                status: "paid",
+                paid_at: Time.current,
+                dintero_transaction_id: transaction_id
+              )
+            end
+          else
+            payable.mark_paid!(reference: payable.payment_reference)
+          end
           payable
         end
 
