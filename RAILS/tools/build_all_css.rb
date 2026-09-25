@@ -13,7 +13,13 @@ require "open3"
 require "yaml"
 require "fileutils"
 require_relative "design_tokens"
-require_relative "../../MASTER/lib/operator/ruby_runner"
+# The deployed copy on vm23 (/home/<app>/pub4-rails) is RAILS without MASTER, so
+# the shared runner is optional: vps_ci's css_build step died on this require.
+begin
+  require_relative "../../MASTER/lib/operator/ruby_runner"
+rescue LoadError
+  nil
+end
 
 RAILS_ROOT = File.expand_path("..", __dir__)
 ROOT = File.expand_path("../..", __dir__)
@@ -187,7 +193,11 @@ end
 # "skipped" with a rubygems require line — so the npx fallback was doing all
 # three builds, silently, and it is the weaker of the two paths.
 def bundle_cmd(_app_dir)
-  Operator::RubyRunner.bundle_cmd
+  return Operator::RubyRunner.bundle_cmd if defined?(Operator::RubyRunner)
+
+  # Without MASTER, OpenBSD's pinned bundler is bundle34 when it is installed.
+  on_path = ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? { |dir| File.executable?(File.join(dir, "bundle34")) }
+  on_path ? "bundle34" : "bundle"
 end
 
 def try_dartsass(app_dir)
