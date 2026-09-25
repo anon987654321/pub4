@@ -113,7 +113,7 @@ module Operator
       tracked.select { |f| VAGUE.include?(File.basename(f, File.extname(f))) }.sort
     end
 
-    # A census that reads nothing reports nothing and passes. STUDIO's gate did
+    # A census that reads nothing reports nothing and passes. MASTER/tools gate did
     # exactly that for the length of a worktree: VENDORED matched the absolute
     # path, every file was excluded, and it announced inconclusive rather than
     # failing. corpus is the floor -- the size the last ratchet saw -- so a
