@@ -51,64 +51,15 @@ class Marketplace::WebhooksController < ActionController::Base
   end
 
   def dintero
-    body = request.body.read
-    return head(:bad_request) unless Marketplace::Payments::DinteroSignature.valid_webhook?(
-      header: request.headers["event-signature"],
-      body: body
-    )
-
-    payload = JSON.parse(body)
-    event_delivery = payload["event_delivery"].presence
-    event = payload["event"].presence
-    return head(:bad_request) if event_delivery.blank? || event.blank?
-    return head(:bad_request) if request.headers["event-delivery"].present? &&
-      request.headers["event-delivery"] != event_delivery
-    return head(:bad_request) if request.headers["event"].present? &&
-      request.headers["event"] != event
-    return head(:bad_request) if payload["account_id"].present? &&
-      payload["account_id"] != ENV["DINTERO_ACCOUNT_ID"].to_s
+    payload, event_delivery, event = dintero_payload(request.body.read)
+    return head(:bad_request) unless payload
 
     delivery = begin_delivery(event_delivery:, event:)
     return head(:ok) if delivery.succeeded? || delivery.active?
 
-    attempts = 0
-    loop do
-      attempts += 1
-      begin
-        process_event(event, payload)
-        break
-      rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotFound, ArgumentError, KeyError => error
-        delivery.fail!(error)
-        return head(:ok)
-      rescue ActiveRecord::Deadlocked, ActiveRecord::LockWaitTimeout, ActiveRecord::StatementInvalid => error
-        if attempts < 3
-          sleep(attempts == 1 ? 0.25 : 1.0)
-          next
-        end
+    status = process_dintero_event(delivery, event, payload)
+    return head(status) unless status == :finish
 
-        if delivery.provider_attempts_exhausted?
-          delivery.fail!(error)
-          return head(:ok)
-        end
-
-        delivery.retryable!(error)
-        return head(:internal_server_error)
-      rescue StandardError => error
-        if attempts < 3
-          sleep(attempts == 1 ? 0.25 : 1.0)
-          next
-        end
-
-        if delivery.provider_attempts_exhausted?
-          delivery.fail!(error)
-          return head(:ok)
-        end
-
-        delivery.retryable!(error)
-        return head(:internal_server_error)
-      end
-    end
-    delivery.finish!
     head :ok
   rescue JSON::ParserError => error
     if defined?(delivery) && delivery
@@ -121,6 +72,49 @@ class Marketplace::WebhooksController < ActionController::Base
   end
 
   private
+
+  def process_dintero_event(delivery, event, payload)
+    attempts = 0
+    loop do
+      attempts += 1
+      process_event(event, payload)
+      delivery.finish!
+      return :finish
+    rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotFound, ArgumentError, KeyError => error
+      delivery.fail!(error)
+      return :ok
+    rescue ActiveRecord::Deadlocked, ActiveRecord::LockWaitTimeout, ActiveRecord::StatementInvalid, StandardError => error
+      return finalize_dintero_retry(delivery, attempts, error) if attempts >= 3
+
+      sleep(attempts == 1 ? 0.25 : 1.0)
+    end
+  end
+
+  def finalize_dintero_retry(delivery, _attempts, error)
+    if delivery.provider_attempts_exhausted?
+      delivery.fail!(error)
+      return :ok
+    end
+
+    delivery.retryable!(error)
+    :internal_server_error
+  end
+
+  def dintero_payload(body)
+    return unless Marketplace::Payments::DinteroSignature.valid_webhook?(
+      header: request.headers["event-signature"], body:
+    )
+
+    payload = JSON.parse(body)
+    event_delivery = payload["event_delivery"].presence
+    event = payload["event"].presence
+    return unless event_delivery.present? && event.present?
+    return if request.headers["event-delivery"].present? && request.headers["event-delivery"] != event_delivery
+    return if request.headers["event"].present? && request.headers["event"] != event
+    return if payload["account_id"].present? && payload["account_id"] != ENV["DINTERO_ACCOUNT_ID"].to_s
+
+    [payload, event_delivery, event]
+  end
 
   def begin_delivery(event_delivery:, event:)
     delivery = Marketplace::WebhookDelivery.find_by(
