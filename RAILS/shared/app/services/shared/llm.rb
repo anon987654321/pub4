@@ -15,20 +15,23 @@ module Shared
       @model = model
     end
 
+    # json=true keeps the existing structured-output contract; plain responses
+    # opt out so streaming and prose callers share this provider boundary too.
+    def ask(prompt, with: nil, json: true, &block)
+      require "ruby_llm"
+
+      chat = RubyLLM.context { |config| config.openrouter_api_key = ENV.fetch("OPENROUTER_API_KEY") }
+                         .chat(model: @model, provider: PROVIDER, assume_model_exists: true)
+      chat = chat.with_params(response_format: { type: "json_object" }) if json
+
+      response = chat.ask(prompt, with:, &block)
+      response.content
+    end
+
     def attachment(content, filename:)
       require "ruby_llm"
 
       RubyLLM::Attachment.new(StringIO.new(content), filename:)
-    end
-
-    def ask(prompt, with: nil)
-      require "ruby_llm"
-
-      RubyLLM.context { |config| config.openrouter_api_key = ENV.fetch("OPENROUTER_API_KEY") }
-             .chat(model: @model, provider: PROVIDER, assume_model_exists: true)
-             .with_params(response_format: { type: "json_object" })
-             .ask(prompt, with:)
-             .content
     end
   end
 end

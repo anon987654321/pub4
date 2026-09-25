@@ -32,8 +32,8 @@ class ThreadSummarizer
     if block_given?
       # Streaming path (future: wire to turbo chunks via cable_ready or ws)
       response = ""
-      chat = RubyLLM.chat(model: MODEL)
-      chat.ask(prompt) do |chunk|
+      chat = Shared::Llm.new(model: MODEL)
+      chat.ask(prompt, json: false) do |chunk|
         response << chunk.content.to_s
         block.call(chunk.content.to_s) if chunk.content
       end

@@ -124,13 +124,13 @@ host = host.to_s.strip
         Return plain text only.
       PROMPT
 
-      StrunkWhitePass.call(RubyLLM.chat(model: MODEL).ask(prompt).content.to_s.strip)
+      StrunkWhitePass.call(Shared::Llm.new(model: MODEL).ask(prompt, json: false).to_s.strip)
     rescue StandardError => error
       Rails.logger.warn("NewsletterComposer lede fallback: #{error.class}") if defined?(Rails)
       fallback
     end
 
-    def llm_available? = defined?(RubyLLM) && ENV["OPENROUTER_API_KEY"].present?
+    def llm_available? = Shared::Llm.configured?
 
     def seed_topic(seed)
       return "local community" unless seed

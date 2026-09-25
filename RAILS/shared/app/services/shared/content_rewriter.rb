@@ -56,7 +56,7 @@ module Shared
       PROMPT
 
       payload = Timeout.timeout(TIMEOUT) {
-        RubyLLM.chat(model: MODEL).ask(prompt).content.to_s
+        Shared::Llm.new(model: MODEL).ask(prompt, json: true).to_s
       }
       parse_payload(payload, fallback_title: title, fallback_body: body, fallback_comments: comments)
     end

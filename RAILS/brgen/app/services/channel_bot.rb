@@ -155,7 +155,7 @@ class ChannelBot
       hedging, no emoji, no quotation marks, no name prefix. Just the message.
     PROMPT
 
-    reply = RubyLLM.chat(model: MODEL).ask(prompt).content.to_s.strip
+    reply = Shared::Llm.new(model: MODEL).ask(prompt, json: false).to_s.strip
     reply.delete_prefix('"').delete_suffix('"').first(MAX_LEN)
   end
 
