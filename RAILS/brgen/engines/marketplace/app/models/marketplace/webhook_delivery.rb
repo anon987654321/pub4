@@ -4,6 +4,7 @@ class Marketplace::WebhookDelivery < ApplicationRecord
   self.table_name = "marketplace_webhook_deliveries"
 
   STATUSES = %w[processing succeeded failed].freeze
+  MAX_PROVIDER_ATTEMPTS = 5
 
   validates :provider, :event_delivery, :event, :received_at, presence: true
   validates :status, inclusion: { in: STATUSES }
@@ -15,6 +16,10 @@ class Marketplace::WebhookDelivery < ApplicationRecord
 
   def active?
     status == "processing" && received_at > 120.seconds.ago
+  end
+
+  def provider_attempts_exhausted?
+    attempts.to_i >= MAX_PROVIDER_ATTEMPTS - 1
   end
 
   def finish!
