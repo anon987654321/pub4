@@ -6,7 +6,7 @@ require "tmpdir"
 require_relative "gate_probe_harness"
 require_relative "../../../MASTER/lib/operator/gates"
 
-# master_tts moved to MASTER/gates on 2026-09-11 and kept its row in
+# master_tts lives in MASTER/lib/operator/gates.rb and keeps its row in
 # RAILS/gates/gates.yml, so it is reached through `require_gate`, which resolves a
 # path naming a tree from the repo root. That is the first thing worth pinning:
 # the gate that broke on this move broke on path arithmetic, not on its checks.
@@ -110,7 +110,10 @@ class MasterTtsGateTest < Minitest::Test
   # a sample, so a green master_tts means the wiring is declared — not that TTS
   # speaks. Pinned so the claim cannot quietly widen.
   def test_every_check_reads_source_so_the_pass_line_cannot_mean_tts_works
-    source = File.read(File.join(GATE::ROOT, "MASTER", "gates", "master_tts.rb"))
+    # The class shares MASTER/lib/operator/gates.rb with gates that do shell
+    # out, so read only its own body, found wherever Ruby says it is defined.
+    path, line = Object.const_source_location(GATE.name)
+    source = File.readlines(path).drop(line - 1).join[/\A.*?^  end$/m]
 
     refute_match(/Net::HTTP|TCPSocket|UNIXSocket|Open3/, source,
                  "a gate that speaks to the daemon needs a third state for the daemon being down")
