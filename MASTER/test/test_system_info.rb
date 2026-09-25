@@ -24,8 +24,8 @@ class TestSystemInfo < Minitest::Test
     lines = HwRenderer.new(config: {}).send(:macos_hw_lines)
 
     assert_equal [
-      "real mem = 17179869184 (16384MB)",
-      "avail mem = 4294967296 (4096MB)",
+      "real memory = 17179869184 (16384MB)",
+      "available memory = 4294967296 (4096MB)",
       "mainbus0 at root: Mac14,9",
       "cpu0 at mainbus0: Apple M2 Pro",
       "kern0 at mainbus0: Darwin 25.5.0 arm64",
