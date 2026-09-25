@@ -3,12 +3,14 @@
 require_relative "../../operator/gate_chain"
 require_relative "pass_result"
 require_relative "target_resolver"
+require_relative "proof"
 
 module Master
   module CLI
     class Pipeline
       class Pass
         include TargetResolver
+        include Proof
         # PassResult defines this pass's Result and keeps this file small.
 
         def initialize(scanner:, fix_loop:, root:, deliberation: nil, bus: nil, swarm: nil)
@@ -119,7 +121,16 @@ module Master
         # repair did about it, and what the tree says after. Read-only, the
         # reading is followed by what a repair would take on rather than by a
         # repair. The council argues inside the repair, not beside it.
+        #
+        # A writing pass reads its proof first, before the observation's
+        # autofix touches the tree, so the proof at the end is judged against
+        # what was already failing; and it notes what was dirty then, so what it
+        # delivers is only what it changed.
         def fix_sections(resolved:, shell:, posture:, aesthetic:)
+          if @apply
+            baseline = proof_baseline(resolved)
+            @start_dirty = repo_git.changed_paths
+          end
           sections = [observe_section(title: "observe", unit: "obs0", shell:, aesthetic:)]
           unless @apply
             return sections << ["would repair", log_phase("fix0", "preview", "path=#{shell}") { run_fix_preview(resolved) }]
@@ -131,7 +142,7 @@ module Master
           end]
           sections << ["changes", changes_section(before)]
           sections << observe_section(title: "re-observe", unit: "obs1", shell:, aesthetic:)
-          sections << proof_section(resolved)
+          sections << proof_section(resolved, baseline)
         end
 
         # A repair that says it repaired and shows nothing asks the operator to
@@ -155,80 +166,6 @@ module Master
 
           pastel = Master::Trace::Dmesg.pastel
           patch.lines.map { |line| pastel.decorate(line, *patch_style(line)) }.join
-        end
-
-        # The proof a converged repair owes, run once at the end of a writing
-        # pass. The commands are the ladder's own, so there is one spelling of
-        # what proves each tree and this stage cannot drift from it.
-        PROOF_TAIL = 12
-
-        # A proof runs whole suites, and a suite holds tests that run /fix, whose
-        # own proof would start the suites again; the child of a proof skips it.
-        PROOF_ENV = "MASTER_IN_PROOF"
-
-        def proof_section(abs)
-          return ["proof", "proof skipped: already inside a proof run"] if ENV[PROOF_ENV] == "1"
-
-          name, runner = proof_runner(abs)
-          return ["proof", "no proof command for #{shell_target(abs)} — nothing registered"] unless runner
-
-          ["proof", log_phase("gate0", "proof", nil) do
-            ok, out = inside_proof { runner.call }
-            @failed_stages << "proof" unless ok
-            proof_body(ok, out)
-          end]
-        end
-
-        # RAILS proves by `runner.rb --all` (GATE_AUTOFIX=0: the fix loop owns
-        # the writes, the proof measures); the other trees prove by their whole
-        # suites, which is `bin/operator test`'s mapping, unchanged.
-        def proof_runner(abs)
-          chain = Operator::GateChain
-          if abs == Master::RAILS_ROOT || abs.start_with?("#{Master::RAILS_ROOT}/")
-            return ["rails gates", -> { rails_proof(*chain.rails_gates(scan_only: true)) }]
-          end
-
-          tree = PROOF_ROOTS.find { |_name, root| abs == root || abs.start_with?("#{root}/") }&.first
-          [tree, -> { chain.suites([tree]).values_at(0, 1) }] if tree
-        end
-
-        # runner.rb exits 3 when no gate failed and some measured nothing — off
-        # the deploy host that is deploy_drift's stamps, and the rendered half
-        # when Chrome or the apps are absent. GateResult's standing decision is
-        # that "could not measure" blocks only under GATE_STRICT_INCONCLUSIVE,
-        # which the runner itself turns into exit 1, so the proof passes on 3
-        # and says what it did not see rather than failing every local repair.
-        RUNNER_INCONCLUSIVE = 3
-
-        def rails_proof(ok, out, status)
-          return [ok, out] unless !ok && status == RUNNER_INCONCLUSIVE
-
-          [true, Array(out) + ["proof: no gate failed; the inconclusive gates above measured nothing here " \
-                               "(GATE_STRICT_INCONCLUSIVE=1 blocks on them)"]]
-        end
-
-        PROOF_ROOTS = {
-          "MASTER" => Operator::GateChain::MASTER,
-          "STUDIO" => File.join(Operator::GateChain::ROOT, "STUDIO"),
-          "OPENBSD" => File.join(Operator::GateChain::ROOT, "OPENBSD"),
-        }.freeze
-
-        def inside_proof
-          previous = ENV[PROOF_ENV]
-          ENV[PROOF_ENV] = "1"
-          yield
-        ensure
-          ENV[PROOF_ENV] = previous
-        end
-
-        def proof_body(ok, out)
-          lines = Array(out).map(&:to_s).reject(&:empty?)
-          shown = ok ? lines.last(6) : lines.last(PROOF_TAIL)
-          if shown.empty?
-"proof: #{ok ? 'ok' : 'FAIL'} (no output)"
-else
-shown.join("\n")
-end
         end
 
         def patch_style(line)
