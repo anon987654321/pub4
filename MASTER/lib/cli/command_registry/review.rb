@@ -34,6 +34,16 @@ module Master
       # one, validates it and observes again, until the tree converges, stops
       # improving, or hands back a state only a person can settle. `--dry-run`
       # stops after the reading and says what it would take on.
+      # /critique — the council stage only. It observes and argues, but does not write.
+      def dispatch_critique(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, review_crew: nil, swarm: nil, **_legacy)
+        raw = arg_for(ctx).to_s.strip
+        _apply, _critique, aesthetic, _only, target = parse_pass_flags(raw)
+        with_dmesg_verbosity(raw) do
+          run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, review_crew:, swarm: },
+                   target:, apply: false, critique: true, aesthetic:, only: "critique")
+        end
+      end
+
       def dispatch_fix(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, review_crew: nil, swarm: nil, **_legacy)
         raw = arg_for(ctx).to_s.strip
         apply, _critique, aesthetic, _only, target = parse_pass_flags(raw)
