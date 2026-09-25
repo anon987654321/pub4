@@ -5,8 +5,7 @@ require_relative "../lib/cli/face"
 require_relative "../lib/cli/face/window"
 
 # The terminal face keeps its head in the top third of the window and the
-# last three jobs under it (7552cab9c). Window#screen draws the whole window
-# as escape sequences, so the layout is checked here without a microphone.
+# last three jobs under it. Motion stays within a readable front-facing turn.
 class TestFaceWindowLayout < Minitest::Test
   Quiet = Struct.new(:missing) do
     def available? = missing.nil?
@@ -42,5 +41,51 @@ class TestFaceWindowLayout < Minitest::Test
   def test_every_row_of_the_window_is_painted
     painted = rows_of(window.screen(30, 60, 2.0))
     assert_equal (1..30).to_a, painted.keys.sort
+  end
+
+  def test_a_failed_turn_does_not_start_picture_work
+    face = Master::CLI::Face::Window.new(
+      turn: ->(_) { Master::Result.err("talk0: empty response", category: :provider_error) },
+      ear: Quiet.new(false),
+      mouth: Quiet.new(false),
+      input: StringIO.new,
+      output: StringIO.new,
+      size: -> { [24, 80] },
+    )
+
+    face.stub(:picture, ->(_) { flunk("picture work started after a failed turn") }) do
+      face.send(:answer, "Bug and ember lay out.")
+    end
+
+    text = rows_of(face.screen(24, 80, 1.0)).values.join("\n")
+    assert_includes text, "talk0: empty response"
+  end
+
+  def test_a_successful_turn_can_start_picture_work
+    face = Master::CLI::Face::Window.new(
+      turn: ->(_) { Master::Result.ok("Reply") },
+      ear: Quiet.new(false),
+      mouth: Quiet.new(false),
+      input: StringIO.new,
+      output: StringIO.new,
+      size: -> { [24, 80] },
+    )
+    pictured = nil
+
+    face.stub(:picture, ->(text) { pictured = text }) do
+      face.send(:answer, "Bug and ember lay out.")
+    end
+
+    assert_equal "Bug and ember lay out.", pictured
+  end
+
+  def test_motion_keeps_the_face_within_a_readable_turn
+    motion = Master::CLI::Face::Motion.new(seed: 7)
+    yaw = 0.0
+
+    120.times do |i|
+      yaw = motion.step(state: :idle, t: (i + 1) / 15.0).yaw
+      assert_operator yaw.abs, :<=, 0.5
+    end
   end
 end
