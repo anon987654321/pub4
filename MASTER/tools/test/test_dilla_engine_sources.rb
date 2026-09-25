@@ -3,7 +3,7 @@
 # Deliberately does NOT load the engine. DillaSources exists so provenance and
 # this suite can ask what the engine is made of without booting it, and a test
 # that required dilla.rb first would not be testing that property.
-require_relative "studio_helper"
+require_relative "tool_test_helper"
 require_relative "../dilla/lib/engine_sources"
 
 # Five pieces of code used to answer "which files is the engine made of" and
@@ -16,7 +16,7 @@ class TestEngineSources < Minitest::Test
     # If this file ever grows a require of dilla.rb, ROOT, or a gem, the gate
     # and provenance both start paying a full engine boot to ask a question
     # about filenames.
-    source = File.read(File.join(Studio::ROOT, "dilla", "lib", "engine_sources.rb"))
+    source = File.read(File.join(ToolTest::ROOT, "dilla", "lib", "engine_sources.rb"))
     requires = source.scan(/^\s*require(?:_relative)?\s/)
 
     assert_empty requires, "engine_sources.rb grew a dependency; it is the one file that must have none"
