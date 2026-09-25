@@ -23,7 +23,8 @@ module Master
         # Measured on the tree before the plan is applied.
         def baseline(plan)
           tests = related_tests(plan)
-          { tests:, failing: failing(tests), tree: tree_baseline(plan) }
+          delete_needles = plan.deletes.to_h { |path| [path, names_in(path, nil)] }
+          { tests:, failing: failing(tests), tree: tree_baseline(plan), delete_needles: }
         end
 
         # A reason the restructure fails, or nil.
@@ -41,11 +42,11 @@ module Master
           "does not parse: #{broken.join(", ")}" unless broken.empty?
         end
 
-        def deletion_reference_failure(plan)
+        def deletion_reference_failure(plan, before)
           plan.deletes.filter_map do |path|
             next unless production_source?(path)
 
-            needles = names_in(path, nil)
+            needles = before.fetch(:delete_needles).fetch(path)
             hits = production_files(plan).filter_map do |file|
               lines = File.foreach(file).with_index(1).select do |text, _line|
                 needles.any? { |needle| text.match?(needle) }
