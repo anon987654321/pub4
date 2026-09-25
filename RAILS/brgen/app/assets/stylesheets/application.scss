@@ -9970,6 +9970,84 @@ body.vertical-marketplace .store-buybox .price {
   }
 }
 
+
+/* Bol search-result rows: image, descriptive content, then price/purchase context.
+   The promotional cards above keep the catalogue's campaign rail; the main result
+   set switches to the denser comparison anatomy visible on bol category pages. */
+
+@media (min-width: 768px) {
+  body.vertical-marketplace #marketplace-listings.deal-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  body.vertical-marketplace #marketplace-listings .deal-card {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: 24px;
+    padding: 24px 0;
+    border-bottom: 1px solid var(--bol-rule);
+  }
+
+  body.vertical-marketplace #marketplace-listings .deal-card-hit {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    grid-column: 1 / -1;
+    gap: 24px;
+  }
+
+  body.vertical-marketplace #marketplace-listings .deal-card-fav-slot {
+    inset-block-start: 20px;
+    inset-inline-start: 196px;
+  }
+
+  body.vertical-marketplace #marketplace-listings .deal-card-img {
+    grid-row: 1;
+    width: 220px;
+    height: 220px;
+    padding: 12px;
+  }
+
+  body.vertical-marketplace #marketplace-listings .deal-card-body {
+    align-self: start;
+    padding: 4px 0;
+    gap: 10px;
+  }
+
+  body.vertical-marketplace #marketplace-listings .deal-price {
+    color: var(--bol-price);
+    font-size: 28px;
+    order: 5;
+  }
+
+  body.vertical-marketplace #marketplace-listings .deal-card-title {
+    font-size: 16px;
+    line-height: 1.35;
+  }
+
+  body.vertical-marketplace #marketplace-listings .deal-card-body::after {
+    content: "";
+    display: block;
+    min-height: 44px;
+    width: 160px;
+    margin-top: 2px;
+    border-radius: 4px;
+    background: var(--bol-buy);
+  }
+}
+
+@media (max-width: 767px) {
+  body.vertical-marketplace #marketplace-listings .deal-card {
+    padding-block: 16px;
+    border-bottom: 1px solid var(--bol-rule);
+  }
+
+  body.vertical-marketplace #marketplace-listings .deal-card-body {
+    gap: 7px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   body.vertical-marketplace .bol-primary,
   body.vertical-marketplace .deal-card,
