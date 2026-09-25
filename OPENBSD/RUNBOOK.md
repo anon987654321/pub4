@@ -6,7 +6,7 @@ place.
 
 ## Repo layout
 
-`MASTER/`, `RAILS/`, `OPENBSD/`, `STUDIO/` at the repo root, plus dotfolders.
+`MASTER/`, `RAILS/`, `OPENBSD/`, `MASTER/tools/` at the repo root, plus dotfolders.
 Canonical inventories: `RAILS/apps.yml`, `OPENBSD/deploy_inventory.json`. The
 JSON is generated from `apps.yml` by `ruby OPENBSD/bin/sync_deploy_inventory.rb`,
 and the `domain_alignment` gate fails when the two disagree. Deploy
