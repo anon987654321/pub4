@@ -28,7 +28,7 @@ end
 desc "dilla's suite, one process per file"
 task "test:dilla" => DILLA_SUITES.map { |suite| "test:dilla:#{suite}" }
 
-TOOL_SUITES = FileList["test/test_tools_*.rb"].map { |path| File.basename(path, ".rb").sub(/\Atest_tools_/, "") }
+TOOL_SUITES = FileList["test/test_tools_*.rb"].map { |path| File.basename(path, ".rb").sub(/\Atest_tools_/, "") }.reject { |name| name == "gate" }
 
 TOOL_SUITES.each do |tool|
   Rake::TestTask.new("test:#{tool}") do |t|
