@@ -13,7 +13,7 @@ module Eritel
         started_at: Time.current
       )
 
-      order.update!(state: "registry_pending")
+      order.update!(state: "registry_pending", registry_request_id: operation.request_id)
 
       result = dispatch(order)
 
@@ -73,6 +73,37 @@ module Eritel
       DomainLifecycle.transition!(order.domain, to: target, actor: "registry", metadata: {
         order_id: order.id
       }) unless order.domain.state == target
+    end
+
+    def self.reconcile(operation:)
+      raise ArgumentError, "operation is not in reconciliation" unless operation.reconciliation?
+
+      result = Registry.current.check(operation.order.domain.name)
+      AuditEvent.create!(
+        domain: operation.order.domain,
+        event_type: "registry_reconciliation_check",
+        actor: "operator",
+        data: {
+          operation_id: operation.id,
+          request_id: operation.request_id,
+          availability: result[:available],
+          source: result[:source]
+        }
+      )
+      result
+    rescue RegistryAdapter::UnsupportedOperation => e
+      AuditEvent.create!(
+        domain: operation.order.domain,
+        event_type: "registry_reconciliation_check",
+        actor: "operator",
+        data: {
+          operation_id: operation.id,
+          request_id: operation.request_id,
+          outcome: "unavailable",
+          error: e.class.name
+        }
+      )
+      nil
     end
 
     def self.record_audit(order, operation, result, outcome, error: nil)
