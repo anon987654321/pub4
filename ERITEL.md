@@ -190,6 +190,18 @@ Norid's current public statistics show 887,043 .no domains and 263 registrars, i
 
 These are reference architectures, not claims about what EriTel should adopt or what .er currently permits. Current .er policy must come from EriTel and the relevant Eritrean authorities.
 
+## Reference implementation in pub4
+
+The companion implementation lives under RAILS/eritel and OPENBSD/eritel.
+
+It currently provides a Rails application shell, domain normalization and policy services, participant authorization, persistent domain/order/registry-operation records, audit events, a registry adapter boundary, an isolated simulator, reconciliation handling, and OpenBSD reference configuration.
+
+The implementation is deliberately useful before EriTel supplies a live registry interface. It can demonstrate the full application workflow without sending registry traffic.
+
+The production registry provider defaults to disabled. A live provider requires explicit endpoint, credentials, protocol documentation, written authorization, and sandbox conformance.
+
+This implementation is a reference platform, not evidence that any particular .er registration is currently available or that EriTel has authorized any partner.
+
 ## Technical architecture
 
 Preferred conceptual architecture:
