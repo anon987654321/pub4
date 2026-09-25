@@ -52,34 +52,22 @@ else
   failures << "missing OPENBSD/bin/validate_doas.ksh"
 end
 
-console_common = File.join(TOOLING, "vps_console_common.exp")
-failures << "missing OPENBSD/bin/vps_console_common.exp" unless File.file?(console_common)
-
 console_main = File.join(TOOLING, "vps_console.exp")
 if File.file?(console_main)
   text = File.read(console_main)
-  unless text.include?("vps_console_common.exp") && text.include?("require_console_risk_ack")
-    failures << "OPENBSD/bin/vps_console.exp must source vps_console_common.exp and call require_console_risk_ack"
+  unless text.include?("proc require_console_risk_ack") && text.match?(/^require_console_risk_ack$/)
+    failures << "OPENBSD/bin/vps_console.exp must define and call require_console_risk_ack"
   end
   failures << "OPENBSD/bin/vps_console.exp must target vm23 only (found vm27)" if text.include?("vm27")
 else
   failures << "missing OPENBSD/bin/vps_console.exp"
 end
 
-# Nine two-line shims, each delegating to vps_console.exp. This list names every
-# one and fails when one stops delegating, which is what keeps
-# require_console_risk_ack unbypassable; folding them away drops that proof.
-%w[vps_console_short vps_console_status vps_console_probe vps_console_fix_key
-   vps_console_start_install vps_console_poll_install vps_console_install
-   vps_console_sync_and_install vps_drop_install].each do |name|
-  path = File.join(TOOLING, "#{name}.exp")
-  failures << "missing OPENBSD/#{name}.exp" unless File.file?(path)
-  next unless File.file?(path)
-
-  text = File.read(path)
-  unless text.include?("vps_console.exp")
-    failures << "OPENBSD/#{name}.exp must delegate to vps_console.exp"
-  end
+# vps_console.exp is the one console door, and the ack inside it is the whole
+# safety. Any other expect script beside it is a way to the console that
+# skipped that check, so it fails here rather than being trusted to delegate.
+Dir.glob(File.join(TOOLING, "*.exp")).reject { |path| path == console_main }.each do |path|
+  failures << "OPENBSD/bin/#{File.basename(path)}: console automation belongs in vps_console.exp as a mode"
 end
 
 Dir.glob(File.join(OPENBSD, "etc", "rc.d", "*")).sort.each do |path|

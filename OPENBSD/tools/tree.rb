@@ -6,8 +6,6 @@
 # Constitution-aware project tree for pub4.
 # Respects skip_dirs from MASTER/data/rules.yml + aggressive pruning for overview.
 # Usage: ruby tree.rb [root] [--max-depth=3] [--summary]
-#
-# Shell entry (canonical): zsh OPENBSD/bin/tree.sh — operator wrapper for vm23 / local use.
 
 require "yaml"
 require "optparse"
@@ -69,9 +67,9 @@ class ProjectTree
   end
 
   # `run` is the surface, and `initialize` is how you get one. Everything below
-  # is how it works: sixteen public methods for a script whose only caller is
-  # `ruby tree.rb` (and `tree.sh`, which shells exactly that) is sixteen things a
-  # future reader may take for API. NO_GOD_CLASS counted them, correctly.
+  # is how it works: a script only ever run whole, by hand or by
+  # Master::Io::Tree, has no API, and sixteen public methods are sixteen things
+  # a future reader may take for one. NO_GOD_CLASS counted them, correctly.
   private
 
   # These reads come from the tree, not from hardcoded `puts` lines, which is

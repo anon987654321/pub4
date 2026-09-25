@@ -1,5 +1,5 @@
 # OPENBSD operator runtime authority — served via /orient deploy and MASTER/bin/operator.
-# Markdown stubs (START_HERE.md, OPENBSD/RECIPES.md) point here; edit this file.
+# The one command and recipe catalogue; OPENBSD/README.md points here.
 
 meta:
   source: runtime authority
@@ -57,7 +57,7 @@ recipes:
     run: OPENBSD/bin/vps-state
     expect: per-app SHA, what a deploy would move
   - want: The repo shape, pruned
-    run: zsh OPENBSD/bin/tree.sh . --pub4-overview
+    run: ruby OPENBSD/tools/tree.rb . --pub4-overview
     expect: Rails apps collapsed, MASTER/lib subsystems, no vendor or node_modules
   - want: Refresh the domain expiry snapshot
     run: ruby OPENBSD/bin/domain_watch.rb --update

@@ -1,2 +1,0 @@
-#!/usr/bin/expect -f
-exec [file join [file dirname $argv0] vps_console.exp] drop_install {*}$argv

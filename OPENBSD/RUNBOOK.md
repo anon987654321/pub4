@@ -133,7 +133,7 @@ or health, then document the fix).
 |--------|-----|
 | `vmctl console/stop/start/reboot` on server4 | Serial console sessions have caused VM reboots and site outages |
 | `pkill`/`kill` of `cu`, `vmctl`, or other VMM console sessions on server4 | Disrupts other operators and can wedge vm23 |
-| `vps_console*.exp` / `vps_drop_install.exp` without human approval | Gated by `I_UNDERSTAND_CONSOLE_RISK=1`; recovery-only |
+| `vps_console.exp` without human approval | Gated by `I_UNDERSTAND_CONSOLE_RISK=1`; recovery-only |
 | Deploy, install, or `pkill` deploy workers from the serial console | Bypasses SSH safety, tmux, and load gates |
 | Target vm27 or any non-vm23 VM | Wrong tenant; production is vm23 (`dev`) |
 | `OPERATOR.sh --stage-1` without `I_UNDERSTAND_DNS_WIPE=1` | Destructive DNS wipe |
@@ -367,8 +367,8 @@ ceiling. Restart order when recovering: **master → brgen → amber → relayd*
 
 ## vps_console.exp modes
 
-Recovery-only — requires `I_UNDERSTAND_CONSOLE_RISK=1`. Thin wrappers:
-`vps_console_<mode>.exp`, `vps_drop_install.exp`.
+Recovery-only — requires `I_UNDERSTAND_CONSOLE_RISK=1`. One script, the mode
+as its first argument: `expect -f OPENBSD/bin/vps_console.exp <mode>`.
 
 | Mode | Purpose |
 |------|---------|

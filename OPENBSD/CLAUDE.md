@@ -1,6 +1,7 @@
 # OPENBSD deploy pipeline — gotchas for agents
 
-Operator-facing docs live in `README.md`/`RUNBOOK.md`/`RECIPES.md`. This file is
+Operator-facing docs live in `README.md` and `RUNBOOK.md`, and the recipes in
+`data/operator.yml`. This file is
 specifically the sharp edges that have burned agents in this repo — read it
 before touching the deploy pipeline, not after.
 

@@ -3,7 +3,8 @@
 #   short [cmd]  status  probe  fix_key  start_install  poll_install
 #   install  sync_and_install  drop_install
 #
-# Thin wrappers: vps_console_<mode>.exp and vps_drop_install.exp exec this file.
+# This is the only console script, so the mode is an argument rather than a
+# file per mode: one door means one place the ack below can be bypassed from.
 # What each mode does: OPENBSD/RUNBOOK.md, "vps_console.exp modes".
 #
 # Usage: I_UNDERSTAND_CONSOLE_RISK=1 expect -f OPENBSD/bin/vps_console.exp <mode> [args...]
@@ -17,7 +18,17 @@ if {$mode eq "" || $mode eq "-h" || $mode eq "--help"} {
   exit [expr {$mode eq "" ? 1 : 0}]
 }
 
-source [file join [file dirname $argv0] vps_console_common.exp]
+# Recovery-only: agents never run this without a human's explicit approval,
+# and the refusal comes before anything is spawned.
+proc require_console_risk_ack {} {
+  global env
+  if {![info exists env(I_UNDERSTAND_CONSOLE_RISK)] || $env(I_UNDERSTAND_CONSOLE_RISK) != "1"} {
+    puts stderr "REFUSING: vmctl console automation is recovery-only."
+    puts stderr "Human operator must approve: export I_UNDERSTAND_CONSOLE_RISK=1"
+    puts stderr "See OPENBSD/RUNBOOK.md, \"vps_console.exp modes\"."
+    exit 1
+  }
+}
 require_console_risk_ack
 
 # Host, port and key live here once; console_spawn is the only ssh line.

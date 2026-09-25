@@ -73,8 +73,18 @@ class VpsSafetyGateTest < Minitest::Test
     assert_includes out, "REFUSING"
   end
 
+  # A second console script would reach vmctl without passing the ack.
+  def test_a_second_console_script_is_refused
+    with_fixture do |dir, _|
+      File.write(File.join(dir, "OPENBSD", "bin", "vps_console_short.exp"), "#!/usr/bin/expect -f\nspawn ssh vm23\n")
+      out, status = run_gate(dir)
+      refute status.success?
+      assert_includes out, "vps_console_short.exp: console automation belongs in vps_console.exp"
+    end
+  end
+
   def test_console_scripts_live_in_openbsd_bin
-    %w[validate_doas.ksh vps_console_common.exp vps_drop_install.exp].each do |name|
+    %w[validate_doas.ksh vps_console.exp].each do |name|
       assert File.file?(File.join(ROOT, "bin", name)), "missing #{name} in OPENBSD/bin"
     end
   end
