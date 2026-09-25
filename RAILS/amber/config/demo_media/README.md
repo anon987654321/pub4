@@ -11,9 +11,9 @@ cut-out, because the dressing room lays its zones over the first photo and the
 cut-out is drawn for that. A row whose file is missing is skipped with a warning
 rather than raised, since one failed seed blocks every deploy.
 
-The frames are prompts in STUDIO/lora/seed_media.yml, rendered on Replicate and
+The frames are prompts in MASTER/tools/lora/seed_media.yml, rendered on Replicate and
 graded by postpro before they arrive here, and each one's prompt, model, seed
-and preset is recorded in STUDIO/lora/seed_media_manifest.yml. No person appears
+and preset is recorded in MASTER/tools/lora/seed_media_manifest.yml. No person appears
 in any of them.
 
 These graded copies are tracked in git, which is a deliberate exception to the
