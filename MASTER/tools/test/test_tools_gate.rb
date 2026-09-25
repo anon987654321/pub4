@@ -231,7 +231,7 @@ class TestToolsGate < Minitest::Test
   def test_the_restore_is_registered_where_it_runs_after_the_suite
     source = File.read(File.expand_path("tools_helper.rb", __dir__))
 
-    assert_match(/Minitest\.after_run\s*\{\s*Studio\.restore_engine_state!/, source,
+    assert_match(/Minitest\.after_run\s*\{\s*ToolTest.restore_engine_state!/, source,
                  "restore_engine_state! must be registered with Minitest.after_run — a bare at_exit " \
                  "is registered after minitest/autorun's and therefore runs before the tests")
   end
