@@ -1,13 +1,11 @@
 # MASTER's main sound, improvising live and endless: soul-jazz harmony chosen
 # chord by chord, each voiced nearest the last, the key moving on its own.
 # The chords play only Moog presets on dilla's ladder, morphing over four
-# chords, whole and uncut, through a Juno-60 chorus, breathing on every beat
-# the way a sidechain would. Over them quiet Moog arpeggios, each note on its
-# own chance and its own point on a glide through four lead patches. Under
-# them the rolling Moog bass, an industrial grid at 128 BPM and the DFAM,
-# always changing; air on top from an exciter. Now and then a hand on the
-# record: a tape stop, a spinback, a dub throw. Kicks sit off (KICKS_ON),
-# and the turntablist's crossfader waits behind CUTS_ON.
+# chords, whole and uncut; the turntablist's crossfader waits behind
+# CUTS_ON. A hand still works the record now and then: a tape stop, a
+# spinback at the end of some phrases, a dub delay throw. Over it, quiet dry
+# Rhodes arpeggios; under it the rolling Moog bass, an industrial grid at
+# 128 BPM and the DFAM, always changing. Kicks sit off: KICKS_ON.
 $LOAD_PATH.unshift File.expand_path("~/Documents/GitHub/pub4/STUDIO/dilla/lib")
 require "sound"
 
@@ -34,19 +32,12 @@ PROPHET_LEADS = {
 P.merge!(PROPHET_LEADS)
 # The Rhodes leads: dilla's two electric pianos, and each a shade brighter
 # and darker.
-MOOG_LEADS = {
-  # The Minimoog lead: two saws a hair apart over a square an octave down,
-  # the ladder half open and ringing.
-  minimoog_lead: { waves: %i[saw saw square], detune: [0.0, 6.0, 0.0], octaves: [0, 0, -1], cutoff: 1300.0, env_amount: 2200.0, resonance: 0.48, drive: 1.15 },
-  # The Voyager pluck: a triangle and a square, the envelope snapping the
-  # filter shut, a glassy knock at the top of each note.
-  voyager_pluck: { waves: %i[triangle square triangle], detune: [0.0, -4.0, 1200.0], octaves: [0, 0, 0], cutoff: 700.0, env_amount: 3200.0, resonance: 0.58, drive: 1.0 },
-  # The Sub 37 sync lead: a bright saw and a square a fifth up, a little grit.
-  sub37_lead: { waves: %i[saw square saw], detune: [0.0, 702.0, -5.0], octaves: [0, 0, 0], cutoff: 1600.0, env_amount: 1800.0, resonance: 0.4, drive: 1.3 },
-  # The Prodigy flute: a lone triangle, the ladder barely open, soft.
-  prodigy_flute: { waves: %i[triangle triangle saw], detune: [0.0, 3.0, -3.0], octaves: [0, 1, -1], cutoff: 900.0, env_amount: 1200.0, resonance: 0.3, drive: 0.9 },
-}.transform_values { |p| p.merge(SNAP) }.freeze
-P.merge!(MOOG_LEADS)
+RHODES_LEADS = {
+  rhodes_tine: P[:rhodes_tine], e_piano: P[:e_piano],
+  rhodes_bright: P[:rhodes_tine].merge(cutoff: P[:rhodes_tine][:cutoff] * 1.6),
+  e_piano_dark: P[:e_piano].merge(cutoff: P[:e_piano][:cutoff] * 0.65),
+}.freeze
+P.merge!(RHODES_LEADS)
 # Moog chord presets, on dilla's ladder: the chords play only these, the
 # patch morphing from one to the next without a seam -- cutoff, resonance,
 # envelope depth, drive and detune all glide; the waves change at halfway.
@@ -60,25 +51,6 @@ MOOG_CHORDS = {
 }.transform_values { |p| p.merge(MOOG_ENV) }.freeze
 # Four chords to travel from one preset to the next, in a fresh order each lap.
 MORPH_CHORDS = 4
-# The leads rotate continuously: every note's patch is where a glide through
-# the Moog leads stands at that moment, one patch every six seconds, so no
-# two notes in a row share a sound and no change is ever a switch.
-LEAD_GLIDE_S = 6.0
-# A fractional read from the chorus line, so the sweep glides rather than steps.
-def juno_read(line, pos)
-  i = pos.floor
-  f = pos - i
-  (line[i % line.size] * (1.0 - f)) + (line[(i + 1) % line.size] * f)
-end
-def lead_at(order, time)
-  pos = time / LEAD_GLIDE_S
-  a = MOOG_LEADS.fetch(order[pos.floor % order.size])
-  b = MOOG_LEADS.fetch(order[(pos.floor + 1) % order.size])
-  x = pos - pos.floor
-  mix = ->(k) { a[k] + ((b[k] - a[k]) * x) }
-  (x < 0.5 ? a : b).merge(cutoff: mix.(:cutoff), env_amount: mix.(:env_amount), resonance: mix.(:resonance),
-                           drive: mix.(:drive), detune: a[:detune].each_index.map { |i| a[:detune][i] + ((b[:detune][i] - a[:detune][i]) * x) })
-end
 def moog_morph(order, chord_i)
   pos = chord_i.to_f / MORPH_CHORDS
   a = MOOG_CHORDS.fetch(order[pos.floor % order.size])
@@ -201,22 +173,6 @@ LEAD_ALWAYS = true
 LEADS_ON = true
 kicks = []
 click_lp = 0.0
-lead_order = nil
-# The Juno-60 chorus, after TAL-Chorus-LX, on the chords only: the mono sum
-# through two short delays swept by one slow triangle, the two sides in
-# opposite phase, blended with the dry chord.
-JUNO_LEN = 1_024
-juno = Array.new(JUNO_LEN, 0.0)
-juno_w = 0
-JUNO_CENTRE = 0.0035 * RATE
-JUNO_DEPTH = 0.0017 * RATE
-JUNO_HZ = 0.5
-# The breath, after LFOTool: the chords dip on every beat and swell back,
-# as a sidechain would with the kick gone. Glided so the dip never clicks.
-BREATH_DEPTH = 0.3
-BREATH_RECOVER_S = 0.12
-breath = 1.0
-BREATH_GLIDE = 1.0 - Math.exp(-1.0 / (0.004 * RATE))
 # Turntablism on the pads: a scratch DJ's sharp-curve crossfader, two decks
 # (the two Moog layers) cut hard on the thirty-second grid. Each pattern is
 # 32 steps, one bar: A is deck A open, B deck B, - the fader closed. The
@@ -358,7 +314,7 @@ MASTER = [
   vcs(depth: 0.34, smear: 2.4), sonitex(bits: 12, lo: 40, hi: 13_000, drive: 1.12),
   vcs(depth: 0.38, smear: 1.7), sonitex(bits: 13, lo: 42, hi: 15_000, drive: 1.04),
   vcs(depth: 0.26, smear: 3.6), sonitex(bits: 11, lo: 42, hi: 12_000, drive: 1.18),
-  "aexciter=amount=1.2:drive=5:freq=3500:ceil=16000", "alimiter=limit=0.95"
+  "alimiter=limit=0.95"
 ].join(",")
 def space_echo(head_ms, decays)
   taps = [1, 2, 3].map { |k| (head_ms * k).round }.join("|")
@@ -445,22 +401,12 @@ while frame < frames
     if LEADS_ON && (LEAD_ALWAYS || rng.rand < 0.3)
       # The loved lead, dry: an arpeggio over the chord an octave up, its shape
       # drawn fresh, a new patch every four notes across every lead the synth has.
-      lead_order ||= MOOG_LEADS.keys.shuffle(random: rng)
+      arp_patches = RHODES_LEADS.keys.shuffle(random: rng)
       # An octave lower than before, and always climbing: the chord, then the
       # chord an octave up, arped upward.
       order = (voicing + voicing.map { |m| m + 12 }).sort
       step = BAR / 16
-      # Stochas-style probability: each step plays on its own chance, and a 5- or
-      # 7-step layer running against the 16 marks the notes that always sound,
-      # so the arpeggio keeps its shape but never repeats a bar.
-      odd = [5, 7].sample(random: rng)
-      16.times do |k|
-        chance = (k % odd).zero? ? 1.0 : [0.9, 0.55, 0.75, 0.45][k % 4]
-        next if rng.rand > chance
-      
-        at = next_chord + (k * step)
-        voices << voice(order[k % order.size], lead_at(lead_order, at), at, step * 0.7, 0.08, bass: :arp)
-      end
+      16.times { |k| voices << voice(order[k % order.size], P.fetch(arp_patches[(k / 4) % arp_patches.size]), next_chord + (k * step), step * 0.7, 0.18, bass: :arp) }
       LOG.puts "  arp over it"
     end
     chord_i += 1
@@ -685,9 +631,7 @@ while j < n
   # Parallel distortion on the drum bus: grit blended under the clean hits.
   drums += Math.tanh(drums * 12.0) * 0.025
   # The pads pump against the kick.
-beat_len = 4 * DFAM_STEP
-breath += BREATH_GLIDE * ((1.0 - (BREATH_DEPTH * Math.exp(-(now % beat_len) / BREATH_RECOVER_S))) - breath)
-pump = breath
+  pump = 1.0 - (0.25 * duck)
 deck = CUTS_ON ? cut[(now / (DFAM_STEP / 2)).floor % 32] : "A"
 gain_a += CUT_GLIDE * ((deck == "A" ? 1.0 : 0.0) - gain_a)
 gain_b += CUT_GLIDE * ((deck == "B" ? 1.0 : 0.0) - gain_b)
@@ -758,15 +702,6 @@ dub_r[dub_w] = (pr * dub_send) + ((dub_lp_l - dub_hp_l) * 0.6)
 dub_w = (dub_w + 1) % DUB_LEN
 pl += (dub_lp_l - dub_hp_l) * 0.7
 pr += (dub_lp_r - dub_hp_r) * 0.7
-mono = (pl + pr) * 0.5
-juno[juno_w] = mono
-tri = ((now * JUNO_HZ) % 1.0)
-tri = tri < 0.5 ? tri * 2 : 2 - (tri * 2)
-jl = juno_read(juno, juno_w - JUNO_CENTRE - (JUNO_DEPTH * tri))
-jr = juno_read(juno, juno_w - JUNO_CENTRE - (JUNO_DEPTH * (1.0 - tri)))
-juno_w = (juno_w + 1) % JUNO_LEN
-pl = (pl * 0.75) + (jl * 0.55)
-pr = (pr * 0.75) + (jr * 0.55)
 left[j] += (pl * pump) + drums + rumble
 right[j] += (pr * pump) + drums + rumble
 # The Crystallizer on the lead.
