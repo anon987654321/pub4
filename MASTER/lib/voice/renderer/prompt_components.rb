@@ -16,6 +16,15 @@ module Master
       module PromptComponents
         TOKEN_KILO_THRESHOLD = 1000
         PROMPT_PATH_MAX = 44
+        # The prompt token alone carries the phase; the path and state stay quiet.
+        PHASE_COLORS = {
+          "discover" => :yellow,
+          "implement" => :cyan,
+          "audit" => :red,
+          "grind" => :magenta,
+          "polish" => :magenta,
+          "watch" => :blue,
+        }.freeze
         def splash(model)
           context = splash_context(model)
           lines = [*identity_lines(context), *splash_dmesg_lines, *device_lines_for(context),
