@@ -46,14 +46,17 @@ class DmesgTest < Minitest::Test
   # The known-bad run: one step passes loudly, one fails with a finding wrapped
   # in escapes, one passes with a warning. Only the failure, the warning and the
   # summary reach the operator; the passing step's output reaches the log.
+  # Each step also announces itself as it starts, append-only, so a long step
+  # is not silence; those lines are asserted apart from the verdicts.
   def test_a_run_prints_failures_warnings_and_one_summary
     out, log = run_ci do
       step "quiet_step", "echo passing-step-output"
       step "fallback_drift_lint", "printf '\\033[31mfallback_drift_lint: a.scss:3 drifts\\033[0m\\n'; exit 1"
       step "rubocop_autocorrect", "echo 'warn: rubocop autocorrected a.rb, not in git'"
     end
-    lines = out.lines.map(&:chomp)
+    running, lines = out.lines.map(&:chomp).partition { |line| line.start_with?("ci0 at demo: running ") }
 
+    assert_equal %w[quiet_step fallback_drift_lint rubocop_autocorrect].map { |name| "ci0 at demo: running #{name}" }, running
     assert_match(/\Aci0 at demo: fallback_drift_lint failed in \d+\.\ds\z/, lines[0])
     assert_equal "  fallback_drift_lint: a.scss:3 drifts", lines[1]
     assert_equal "ci0 at demo: rubocop_autocorrect warn: rubocop autocorrected a.rb, not in git", lines[2]
@@ -65,10 +68,10 @@ class DmesgTest < Minitest::Test
     assert_includes log, "passing-step-output"
   end
 
-  def test_a_green_run_prints_one_line
+  def test_a_green_run_prints_its_start_and_one_verdict
     out, = run_ci { step "quiet_step", "echo fine" }
 
-    assert_match(/\Aci0 at demo: 1 of 1 steps passed in \d+\.\ds\n\z/, out)
+    assert_match(/\Aci0 at demo: running quiet_step\nci0 at demo: 1 of 1 steps passed in \d+\.\ds\n\z/, out)
   end
 
   def test_a_command_that_cannot_start_is_a_failed_step
