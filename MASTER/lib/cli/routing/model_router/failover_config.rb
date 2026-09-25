@@ -33,12 +33,6 @@ module Master
             configured.empty? ? nil : configured.freeze
           end
 
-          # The claude_code chain's head — the subscription-billed CLI lane the
-          # single-shot doors (Agent#ask, #ask_once) hop to on a category a
-          # retry cannot cure. Retiring the lane in models.yml retires the hop.
-          def single_call_fallback_model
-            Array(@rules.dig("models", "claude_code")).first&.fetch("id", nil)
-          end
         end
       end
     end
