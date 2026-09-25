@@ -174,7 +174,8 @@ class Marketplace::WebhooksController < ActionController::Base
     when "REFUNDED"
       Marketplace::Payments::DinteroCheckout.refunded!(
         payable,
-        transaction_id: transaction_id
+        transaction_id: transaction_id,
+        items: transaction["items"] || []
       )
     end
   end
