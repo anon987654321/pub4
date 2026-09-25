@@ -105,7 +105,10 @@ class Marketplace::WebhooksController < ActionController::Base
   end
 
   def finalize_dintero_retry(delivery, _attempts, error)
-    return delivery.fail!(error) || :ok if delivery.provider_attempts_exhausted?
+    if delivery.provider_attempts_exhausted?
+      delivery.fail!(error)
+      return :ok
+    end
 
     delivery.retryable!(error)
     :internal_server_error
