@@ -211,6 +211,11 @@ class Marketplace::Order < ApplicationRecord
   # confirms receipt, not when the return is approved: an approved return that
   # never arrives would put a thing back in stock that is still in the post.
   def enqueue_store_payout!
+    # Dintero allocations are already attached to the transaction. Creating the
+    # legacy Stripe payout row as well would give an operator a second way to
+    # move the seller's money.
+    return if payment_provider == "dintero"
+
     store_id = Marketplace::Listing.where(id: listing_id).pick(:store_id)
     return if store_id.blank? || total_cents.to_i <= 0
     return if Marketplace::Payout.exists?(order_id: id)
