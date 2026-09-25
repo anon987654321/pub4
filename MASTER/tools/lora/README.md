@@ -325,10 +325,31 @@ training; a sample from the newest checkpoint; check, generate and grade in one
 pass; and two Replicate renders, the second a dry run.
 
 ```sh
-STUDIO/lora/ragnhild/lora --check
-STUDIO/lora/ragnhild/lora --train
-STUDIO/lora/ragnhild/lora --generate
-STUDIO/lora/ragnhild/lora --all
-STUDIO/lora/ragnhild/lora --generate-replicate --set selfies
-STUDIO/lora/ragnhild/lora --generate-replicate --set distance --dry-run
+MASTER/tools/lora/ragnhild/lora --check
+MASTER/tools/lora/ragnhild/lora --train
+MASTER/tools/lora/ragnhild/lora --generate
+MASTER/tools/lora/ragnhild/lora --all
+MASTER/tools/lora/ragnhild/lora --generate-replicate --set selfies
+MASTER/tools/lora/ragnhild/lora --generate-replicate --set distance --dry-run
 ```
+
+## Security and trust boundaries
+
+LoRA tooling sits at the boundary between local prompt material, model assets, provider APIs, and generated artifacts. Provenance, credential isolation, remote-input validation, and deterministic local state are the important controls.
+
+- Never put provider tokens in prompts, generated metadata, git-tracked files, or command lines that may be logged.
+- Treat downloaded model metadata, weights, archives, and provider responses as untrusted input. Validate format and size before processing; never execute code from an archive merely because its filename or model ID looks trusted.
+- If a provider URL is accepted from configuration or an API response, validate scheme, host, redirects, and final destination before fetching. Block private and link-local destinations unless an explicit trusted boundary requires them.
+- Make model/catalog updates atomic and idempotent. Concurrent sync must not leave a half-written registry or overwrite provenance.
+- Prefer opaque identifiers and server-side state for authenticated browser sessions. If JWTs are introduced, pin the accepted algorithm and key type in configuration rather than trusting the token header.
+- Keep provider calls bounded by explicit timeouts, response-size limits, and cancellation.
+- Treat serialized training/config data as data-only. Avoid arbitrary object deserialization and executable hooks.
+- Record model version, source, adapter version, dataset provenance, seed, and resolved settings alongside generated artifacts.
+
+GraphQL-specific controls belong at the API boundary: authenticate and authorize fields, bound query depth/cost, and rate-limit batches. HTTP request-smuggling controls likewise belong at the proxy/API boundary.
+
+## MASTER integration
+
+LoRA is a creative/model tool under MASTER/tools/lora. MASTER provides governance and invocation; LoRA owns model composition, prompt construction, adapter data, and artifact provenance.
+
+New automation should reference MASTER/tools/lora, never the retired STUDIO/lora path.
