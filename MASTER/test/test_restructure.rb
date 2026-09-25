@@ -127,6 +127,23 @@ class TestRestructure < Minitest::Test
     assert_match(/production references/, proof.failure(plan, baseline))
   end
 
+  def test_master_restructure_ratchets_recursive_core_ceiling
+    write("MASTER/data/spine.yml", "spine:\n  core_recursive_files: 2\n")
+    write("MASTER/lib/core/one.rb", "module One; end\n")
+    write("MASTER/lib/core/two.rb", "module Two; end\n")
+    sh("git", "add", "-A", chdir: @repo)
+    sh("git", "commit", "-m", "core baseline", chdir: @repo)
+
+    plan = Restructure::Plan.parse(<<~TEXT)
+      SUMMARY: remove dead core file
+      === DELETE MASTER/lib/core/two.rb
+      === END
+    TEXT
+    ratcheted = restructure.send(:ratcheted_plan, plan)
+
+    assert_equal "  core_recursive_files: 1\n", ratcheted.writes.fetch("MASTER/data/spine.yml")
+  end
+
   def test_each_tree_is_proved_its_own_way
     assert_instance_of Restructure::MasterProof, Restructure::Proof.for("MASTER", @repo)
     assert_instance_of Restructure::RailsProof, Restructure::Proof.for("RAILS", @repo)
