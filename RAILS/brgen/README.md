@@ -516,29 +516,27 @@ RAILS/brgen/app/jobs/google_enhanced_conversions_job.rb
 
 ## Payment webhooks
 
-## Routes
-
-In `config/routes.rb` (alongside TradeDoubler):
-
-```ruby
-post "webhooks/tradedoubler" => "webhooks/tradedoubler#create", as: :webhooks_tradedoubler
-post "webhooks/stripe" => "webhooks/stripe#create",       as: :webhooks_stripe
-post "webhooks/vipps" => "webhooks/vipps#create",        as: :webhooks_vipps
-post "webhooks/dintero" => "webhooks/dintero#create",    as: :webhooks_dintero
-```
+Stripe and Vipps keep their existing host routes. Dintero lives inside the
+marketplace engine so its callback and webhook route share the engine's
+subdomain constraints.
 
 ## Dintero
 
 | Item | Value |
 |------|-------|
-| Checkout | signed session callback + server-side transaction state |
+| Checkout | Shopping API order/session + signed callback |
 | Webhook | `POST /webhooks/dintero` |
 | Webhook secret | `DINTERO_HOOK_SECRET` (HMAC-SHA1 over raw body) |
-| Seller payout | `DINTERO_HOOK_URL` subscription + payout destination reported `ACTIVE` + inline split allocation |
+| Seller payout | payout destination must report `ACTIVE`; each selected line carries its split |
+| Capture/refund | separate Dintero operations; local paid/refunded state follows webhook confirmation |
 
 Create checkout sessions with an explicit `merchant_reference`. Keep the browser
 return separate from the signed callback. Dintero is the source of truth for
-authorization and capture; the app only marks an order paid after capture.
+authorization, capture, and refund; browser redirects never settle money.
+
+Operator enablement is explicit: set `DINTERO_CHECKOUT_ENABLED=1` only after the
+test account passes the checkout, capture, refund, replay, and payout-destination
+contracts. Register the hook subscription with `bin/rails dintero:hooks:create`.
 
 ## Stripe
 
