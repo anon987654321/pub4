@@ -61,14 +61,15 @@ pub4/
 ├── OPENBSD/                  deploy pipeline; production is one box, vm23
 │   ├── etc/                  relayd, pf, acme — read the man page first
 │   ├── bin/vps-deploy
+│   ├── bin/vps_console.exp   the one console door; each recovery mode is an argument
 │   ├── RUNBOOK.md
 │   └── dotfiles/             sketchybar, skhd — priced OS paths
 │
 └── STUDIO/                   media tools
     ├── dilla/                beats — renders land beside dilla.rb
-    ├── postpro/              grade
+    ├── postpro/              grade; camera_profiles.json is every body, by vendor
     ├── preprompt/
-    ├── bplans/               business plans as YAML, the generator still a brief
+    ├── bplans/               business plans as YAML; the generator is unwritten
     ├── lora/
     │   └── _toolkit/toolkit.sh              renamed from lib.sh
     ├── isolation.rb          hoisted from tools/
