@@ -1,0 +1,13 @@
+# Example only. Replace names with the approved public hostname.
+
+# authority letsencrypt {
+#   api url "https://acme-v02.api.letsencrypt.org/directory"
+#   account key "/etc/acme/letsencrypt-privkey.pem"
+# }
+
+# domain eritel.example.invalid {
+#   alternative names { www.eritel.example.invalid }
+#   domain key "/etc/ssl/private/eritel.example.invalid.key"
+#   domain full chain certificate "/etc/ssl/eritel.example.invalid.fullchain.pem"
+#   sign with letsencrypt
+# }
