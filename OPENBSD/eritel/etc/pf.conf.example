@@ -1,0 +1,18 @@
+# Example only. Merge into the host policy after a security review.
+
+set block-policy drop
+set skip on lo
+
+table <eritel_local> const { 127.0.0.1 }
+
+block all
+pass on lo0
+pass out keep state
+
+# Public TLS ingress is handled by relayd.
+pass in proto tcp to port 443 keep state
+
+# Outbound HTTPS is required only when the authorized registry adapter uses TLS.
+pass out proto tcp to any port 443 keep state
+
+# DNS administration is not exposed by this reference policy.
