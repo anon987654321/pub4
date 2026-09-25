@@ -105,9 +105,23 @@ module Master
         private
 
         def findings_for(path, depth:)
-          return rows_of(scan(path, depth:)).map { |item| item.merge(path:) } unless File.directory?(path)
+          return file_rows(path, scan(path, depth:)) unless File.directory?(path)
 
-          rows_of(scan_dir(path, depth:)).flat_map { |file, res| rows_of(res).map { |item| item.merge(path: file) } }
+          rows_of(scan_dir(path, depth:)).flat_map { |file, res| file_rows(file, res) }
+        end
+
+        # A file the scanner refuses to read (too long, binary, a symlink) is a
+        # fact about the file, as FixLoop's scanner treats it, so it adds no rows
+        # and the census goes on; a scan that failed still raises.
+        def file_rows(path, result)
+          return [] if refused?(result)
+
+          rows_of(result).map { |item| item.merge(path:) }
+        end
+
+        def refused?(result)
+          result.respond_to?(:err?) && result.err? && result.category == :validation &&
+            !result.message.to_s.start_with?("file validation failed")
         end
 
         # scan_dir answers a Result whose value is [path, Result] pairs, so the
