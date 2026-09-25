@@ -7,7 +7,7 @@ Rails.application.configure do
 
   embed_hosts = ENV.fetch(
     "MASTER_FRAME_ANCESTORS",
-    "https://brgen.no https://www.brgen.no https://amber.fashion",
+    "https://brgen.no https://www.brgen.no https://amberapp.art",
   ).split
 
   config.content_security_policy do |policy|
