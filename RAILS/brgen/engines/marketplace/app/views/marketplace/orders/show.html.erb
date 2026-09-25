@@ -15,6 +15,8 @@
   <dd><%= @order.quantity %></dd>
   <dt><%= t("marketplace.order_total") %></dt>
   <dd data-money><%= @order.total_display %></dd>
+  <dt><%= t("marketplace.payment_status") %></dt>
+  <dd><span class="chip"><%= t("marketplace.payment_statuses.#{@order.payment_status}", default: @order.payment_status.to_s.humanize) %></span></dd>
   <dt><%= t("marketplace.order_buyer") %></dt>
   <dd><%= @order.buyer.display_name %></dd>
   <dt><%= t("marketplace.order_seller") %></dt>
@@ -24,6 +26,13 @@
     <dd><%= @order.message %></dd>
   <% end %>
 </dl>
+
+<% if policy(@order).update? && @order.seller == Current.user && @order.payment_provider == "dintero" && @order.payment_status == "authorized" %>
+  <div class="order-actions">
+    <%= button_to t("marketplace.capture_order"), capture_order_path(@order), method: :post,
+          class: "btn btn-primary", form: { data: { turbo: false } } %>
+  </div>
+<% end %>
 
 <% if policy(@order).update? %>
   <div class="order-actions">
