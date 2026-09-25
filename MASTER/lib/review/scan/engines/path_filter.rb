@@ -13,8 +13,8 @@ module Master
 
         # `.cache` and `scratch` (2026-08-11): `cache` was listed and `.cache`
         # was not, which bin/gate already warned about in a comment rather than
-        # fixing. `scratch` is the same shape — STUDIO/dilla/scratch holds a
-        # demucs virtualenv, so `/scan ../STUDIO/dilla` walked 24,521 files,
+        # fixing. `scratch` is the same shape — MASTER/tools/dilla/scratch holds a
+        # demucs virtualenv, so `/scan ../MASTER/tools/dilla` walked 24,521 files,
         # about 5,000 of them pip's vendored copy of packaging, to reach the 36
         # Ruby files the tool is made of. Skipping both: 793 files in 38s, and
         # the findings are about dilla instead of about torch. Nothing under
