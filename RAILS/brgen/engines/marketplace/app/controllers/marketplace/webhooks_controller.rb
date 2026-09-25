@@ -76,7 +76,7 @@ class Marketplace::WebhooksController < ActionController::Base
         retry
       end
 
-      if delivery.attempts.to_i >= 4
+      if delivery.provider_attempts_exhausted?
         delivery.fail!(error)
         return head(:ok)
       end
