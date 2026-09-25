@@ -153,6 +153,7 @@ class Marketplace::Order < ApplicationRecord
 
   def authorize_payment!(transaction_id:)
     update!(
+      payment_provider: "dintero",
       payment_status: "authorized",
       dintero_transaction_id: transaction_id
     )
