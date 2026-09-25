@@ -51,6 +51,20 @@ Before any external launch:
 6. test the registry adapter against an authorized non-production endpoint;
 7. add the service to production inventory only after the above are complete.
 
+## Documentation
+
+- docs/REFERENCE_REGISTRIES.md — Norid and ISNIC patterns.
+- docs/REGISTRY_MODEL.md — direct, registrar and technical-partner modes.
+- docs/POLICY.md — proposed policy layers.
+- docs/EPP.md — sandbox and production integration boundary.
+- docs/API.md — application API boundary.
+- docs/DNS.md — nameserver and DNSSEC boundary.
+- docs/SECURITY.md — trust, secrets, audit and failure handling.
+- docs/ABUSE.md — abuse and dispute workflow.
+- docs/COMMERCIAL.md — transaction and settlement model.
+- docs/OPERATIONS.md — OpenBSD operating contract.
+- docs/ROLLOUT.md — staged deployment.
+
 See ERITEL.md for the partnership plan and evidence rules.
 
 ## Reference registry models
