@@ -95,6 +95,15 @@ module Master
           owners.map { |path| "Possible owner, #{relative(path)}:\n#{numbered(path)}" }.join("\n\n")
         end
 
+        def production_reference_section
+          hits = production_references.flat_map do |path, lines|
+            lines.map { |number, text| "#{relative(path)}:#{number}: #{text.strip[0, 160]}" }
+          end
+          return if hits.empty?
+
+          "Production references:\n#{hits.first(REFERENCE_LINES).join("\n")}"
+        end
+
         def reference_section
           hits = references.flat_map do |path, lines|
             lines.map { |number, text| "#{relative(path)}:#{number}: #{text.strip[0, 160]}" }
@@ -113,6 +122,16 @@ module Master
         end
 
         # { path => [[line_number, text]] } for files that name the stem or a constant.
+        def production_references
+          @production_references ||= Context.tracked(@tree)
+            .reject { |path| path == @path || test_path?(path) }
+            .to_h do |path|
+              [path, File.foreach(path).with_index(1).select { |text, _n| text.match?(needle) }.map(&:reverse)]
+            rescue ArgumentError
+              [path, []]
+            end.reject { |_path, lines| lines.empty? }
+        end
+
         def references
           @references ||= Context.tracked(@tree).reject { |path| path == @path }.to_h do |path|
             [path, File.foreach(path).with_index(1).select { |text, _n| text.match?(needle) }.map(&:reverse)]
