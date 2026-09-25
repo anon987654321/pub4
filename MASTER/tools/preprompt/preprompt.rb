@@ -9,7 +9,7 @@ require "time"
 require "digest"
 require "securerandom"
 # Paths into MASTER are spelled from this file up to the repo root. A relative
-# ../lib/ would resolve to STUDIO/lib/, which does not exist, and abort the
+# ../lib/ would resolve to MASTER/tools/lib/, which does not exist, and abort the
 # whole file on its first require.
 require_relative "../../../lib/io/replicate_client"
 require_relative "../../../lib/io/script_dispatch"
@@ -492,7 +492,7 @@ end
 
 # Everything below this line is the CLI: it reads ARGV, and the `case` at the
 # end runs a command or aborts with usage. Without this guard, *loading* the file
-# ran a command — so nothing could ever require it, and STUDIO/gate.rb could
+# ran a command — so nothing could ever require it, and MASTER/tools/gate.rb could
 # check it no further than "it parses", which is the check an autofix passes
 # while leaving the tool dead.
 #
@@ -620,7 +620,7 @@ parser = OptionParser.new do |p|
     The token is REPLICATE_API_TOKEN, then REPLICATE_API_KEY, then api_token in
     ~/.config/preprompt/config.json. vocab-check, chains and --dry-run need none.
     chain NAME --until STAGE stops after that stage; --from STAGE resumes from files an earlier run wrote.
-    Live schemas: cd STUDIO && rake preprompt:schema_audit (skipped without a token).
+    Live schemas: cd MASTER/tools && rake preprompt:schema_audit (skipped without a token).
   TXT
   p.on("--prompt TEXT") { |v| options[:prompt] = v }
   p.on("--model MODEL") { |v| options[:model] = v; options[:model_explicit] = true }
@@ -726,7 +726,7 @@ when "chain"
 
   # The loop itself lives in Chain.run, which takes this block. It is injected
   # so the carry-forward can be tested without spending anything — see
-  # STUDIO/test/test_tools_chain.rb, which hands in a recorder and asserts that stage
+  # MASTER/tools/test/test_tools_chain.rb, which hands in a recorder and asserts that stage
   # N+1 is given stage N's file. That is the one thing a chain must get
   # right and the one thing that fails silently: a model handed no image
   # generates from the prompt and returns something plausible.
