@@ -14,7 +14,6 @@ module Master
       # ASCII, so a serial console and a pipe read the same as a terminal.
       module PromptComponents
         TOKEN_KILO_THRESHOLD = 1000
-        PROMPT_TARGET_MEASURE = 66
         PROMPT_PATH_MAX = 44
         PROMPT_PATH_MIN = 10
         PHASE_COLORS = {
@@ -100,7 +99,7 @@ module Master
           git = git_prompt_segments
           phase_text = phase_label(phase)
           suffix = [git, phase_text, phase_prompt(last_ok, phase)].reject(&:empty?).join(" ")
-          path = prompt_path(suffix_length: suffix.length)
+          path = prompt_path(suffix_length: visible_length(suffix))
           [d(path), suffix].reject(&:empty?).join(" ") + " "
         end
 
@@ -112,20 +111,30 @@ module Master
           budget = prompt_path_budget(suffix_length:)
           return path if path.length <= budget
 
-          tail = "…/#{path.split('/').last(2).join('/')}"
-          tail.length <= budget ? tail : File.basename(path)
+          tail = "#{Aesthetic.wscons? ? '...' : '…'}/#{path.split('/').last(2).join('/')}"
+          return tail if tail.length <= budget
+          return File.basename(path) if File.basename(path).length <= budget
+
+          path[-budget, budget]
         end
 
-        # Bringhurst's comfortable measure is 45–75 characters, with 66 as a
-        # classic target. A shell prompt is intentionally shorter, but the same
-        # principle applies: preserve a calm return path and cut decoration first.
+        # Use MASTER's typography contract rather than a second copy of its
+        # measure. The prompt borrows its discipline from prose, but the cursor
+        # and working path still get priority over a theoretical line length.
         def prompt_path_budget(suffix_length: 0)
           screen = TTY::Screen.width
+          target = Master::Design.measure_ideal_ch(root: @config["root"] || Master::ROOT).to_i
           available = screen - suffix_length - 1
-          [available, PROMPT_TARGET_MEASURE - suffix_length - 1, PROMPT_PATH_MAX].min
-            .clamp(PROMPT_PATH_MIN, PROMPT_PATH_MAX)
+          [available, target - suffix_length - 1, PROMPT_PATH_MAX].min
+            .clamp(1, PROMPT_PATH_MAX)
         rescue StandardError
           PROMPT_PATH_MAX
+        end
+
+        def visible_length(text)
+          text.to_s.gsub(/\e\[[0-9;?]*[ -\/]*[@-~]/, "").length
+        rescue StandardError
+          text.to_s.length
         end
 
         def splash_ready_line(context)
