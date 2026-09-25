@@ -38,6 +38,7 @@ class SolidusStagingContractTest < Minitest::Test
     apps = File.read(File.join(ROOT, "apps.yml"))
     gemfile = File.read(File.join(BRGEN, "Gemfile"))
     assert_match(/Solidus native marketplace features/, apps)
+    assert_match(/Dintero split checkout/, apps)
     assert_match(/solidus core mount/, apps)
     assert_match(/status: planned/, apps)
     assert_not_match(/solidus_marketplace.*0\.1\.0/, apps)
