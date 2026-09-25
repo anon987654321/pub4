@@ -90,13 +90,17 @@ module Master
           state, level, jobs, words, draft, events = @lock.synchronize do
             [@state, @level, @jobs.dup, @words.dup, @draft.dup, @events.slice!(0..)]
           end
-          # The head is the top third. The rest is the last three jobs, then
-          # the status line and the line being typed.
-          face_rows = [[rows / 3, 1].max, rows - 4].min
-          job_rows = [rows - face_rows - 2, 1].max
-          face = Face.frame(state:, rows: face_rows, cols:, t:, level:, events:, motion: @motion).split("\n")
-          body = face.map { |line| tint(state, line) } + tail(column(jobs, words), job_rows, cols)
-          body << "#{DIM}#{status(state)[0, cols]}#{PLAIN}" << typed(draft, cols)
+          # The face owns the whole viewport. The last four rows are a transparent
+          # control strip: recent jobs, status and input replace the face there,
+          # while the renderer still receives every row and can size the head to
+          # the real terminal rather than an arbitrary top third.
+          overlay_rows = [rows, 4].min
+          job_rows = [overlay_rows - 2, 1].max
+          face = Face.frame(state:, rows:, cols:, t:, level:, events:, motion: @motion).split("\n")
+          overlay = tail(column(jobs, words), job_rows, cols)
+          overlay << "#{DIM}#{status(state)[0, cols]}#{PLAIN}" << typed(draft, cols)
+          face.last(overlay_rows).replace(overlay.last(overlay_rows))
+          body = face.map { |line| tint(state, line) }
           painted = body.each_with_index.map { |line, i| "\e[#{i + 1};1H#{line}\e[K" }.join
           "\e[?25l#{painted}\e[#{body.size};#{[draft.length + 3, cols].min}H\e[?25h"
         end
