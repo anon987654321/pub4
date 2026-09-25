@@ -4,7 +4,7 @@ require "fileutils"
 require "json"
 # MasterPaths::ROOT rather than Master::ROOT, which is defined in lib/master.rb
 # and therefore only exists after a full runtime boot. lib/io/replicate_client.rb
-# is deliberately standalone-loadable -- STUDIO/preprompt and STUDIO/lora both
+# is deliberately standalone-loadable -- MASTER/tools/preprompt and MASTER/tools/lora both
 # require it and nothing else -- and it calls Swallow.log in three rescue paths,
 # so on the first Replicate training for a new subject (model_exists? raises,
 # the rescue fires) the swallow raised NameError instead of logging. Same value,
