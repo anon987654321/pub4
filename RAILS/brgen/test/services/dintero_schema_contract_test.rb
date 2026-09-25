@@ -20,6 +20,7 @@ class DinteroSchemaContractTest < ActiveSupport::TestCase
 
     assert_equal 3, checkout.scan(/t\.string "dintero_(order_id|session_id|transaction_id)"/).length
     assert_equal 3, orders.scan(/t\.string "dintero_(order_id|session_id|transaction_id)"/).length
+    assert_match(/t\.text "dintero_split_json"/, orders)
     assert_equal 1, stores.scan(/t\.string "dintero_payout_destination_id"/).length
     assert_equal 1, deliveries.scan(/create_table "marketplace_webhook_deliveries"/).length
 
