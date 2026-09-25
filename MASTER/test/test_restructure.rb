@@ -144,6 +144,37 @@ class TestRestructure < Minitest::Test
     assert_equal "  core_recursive_files: 1\n", ratcheted.writes.fetch("MASTER/data/spine.yml")
   end
 
+  def test_cross_file_architecture_is_restructure_evidence
+    write("MASTER/lib/alpha_service.rb", "class AlphaService; def run; 1; end; end\n")
+    write("MASTER/lib/beta_service.rb", "class BetaService; def run; 1; end; end\n")
+    write("MASTER/lib/gamma_service.rb", "class GammaService; def run; 1; end; end\n")
+    sh("git", "add", "-A", chdir: @repo)
+    sh("git", "commit", "-m", "parallel architecture", chdir: @repo)
+
+    findings = Master::Fix::RestructureSweep::Context.structural_findings(File.join(@repo, "MASTER"))
+    finding = findings.find { |_path, rule, _message, _related| rule == "PARALLEL_HIERARCHY" }
+
+    refute_nil finding
+    assert_equal 3, finding.fetch(3).size
+    assert_includes finding.fetch(3), File.join(@repo, "MASTER/lib/alpha_service.rb")
+  end
+
+  def test_context_shows_related_architecture_files
+    context = Master::Fix::RestructureSweep::Context.new(
+      @repo,
+      File.join(@repo, "MASTER/lib/alpha_service.rb"),
+      related: [
+        File.join(@repo, "MASTER/lib/beta_service.rb"),
+        File.join(@repo, "MASTER/lib/gamma_service.rb"),
+      ],
+    )
+
+    text = context.to_s
+    assert_includes text, "Related architecture evidence:"
+    assert_includes text, "MASTER/lib/beta_service.rb"
+    assert_includes text, "MASTER/lib/gamma_service.rb"
+  end
+
   def test_each_tree_is_proved_its_own_way
     assert_instance_of Restructure::MasterProof, Restructure::Proof.for("MASTER", @repo)
     assert_instance_of Restructure::RailsProof, Restructure::Proof.for("RAILS", @repo)
