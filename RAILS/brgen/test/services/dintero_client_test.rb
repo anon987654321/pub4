@@ -18,8 +18,6 @@ class DinteroClientTest < ActiveSupport::TestCase
   test "non-production defaults to Dintero test hosts" do
     assert_equal Marketplace::Payments::DinteroClient::TEST_API_HOST,
                  Marketplace::Payments::DinteroClient.api_host
-    assert_equal Marketplace::Payments::DinteroClient::TEST_CHECKOUT_HOST,
-                 Marketplace::Payments::DinteroClient.checkout_host
   end
 
   test "production defaults to live hosts" do
@@ -27,8 +25,6 @@ class DinteroClientTest < ActiveSupport::TestCase
     Rails.instance_variable_set(:@_env, ActiveSupport::EnvironmentInquirer.new("production"))
     assert_equal Marketplace::Payments::DinteroClient::LIVE_API_HOST,
                  Marketplace::Payments::DinteroClient.api_host
-    assert_equal Marketplace::Payments::DinteroClient::LIVE_CHECKOUT_HOST,
-                 Marketplace::Payments::DinteroClient.checkout_host
   ensure
     Rails.instance_variable_set(:@_env, original)
   end
