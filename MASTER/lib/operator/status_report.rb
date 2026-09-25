@@ -43,7 +43,7 @@ module Operator
       lines << "branch: #{payload[:branch]} @ #{payload[:commit]} (#{payload[:dirty]} dirty, #{payload[:behind]} behind upstream)"
       # Dirty files grouped by top-level tree, so a session sees at a glance
       # which trees hold ANOTHER session's work-in-progress. Sessions kept
-      # re-deriving "whose are the STUDIO files" from raw porcelain output;
+      # re-deriving "whose are the MASTER/tools files" from raw porcelain output;
       # the answer is one line, printed every time.
       payload[:dirty_by_tree].each do |tree, count|
         lines << "  dirty in #{tree}: #{count} file(s) — if not yours, another session's; never sweep them"
@@ -94,7 +94,7 @@ module Operator
     # Porcelain is `XY <path>`, and <path> is not always a bare path.
     #
     # git QUOTES it whenever it holds a space or a non-ASCII byte, so a dirty
-    # `MASTER/tools/dilla/før.wav` was tallied under the tree `"STUDIO` — a quote
+    # `MASTER/tools/dilla/før.wav` was tallied under the tree `"MASTER — a quote
     # character in the name of a tree, in the line whose whole job is telling one
     # session which trees hold another session's work. A rename reports
     # `<old> -> <new>`, and the tree that matters is where the file landed.
