@@ -17,7 +17,7 @@ module Marketplace
           raise ArgumentError, "order is not payable" unless order.respond_to?(:startable?) && order.startable?
 
           reference = merchant_reference(order)
-          order.update_columns(payment_reference: reference, dintero_session_id: nil) if order.payment_reference != reference
+          order.update_columns(payment_provider: "dintero", payment_reference: reference, dintero_session_id: nil) if order.payment_reference != reference
 
           response = DinteroClient.post(
             "/v1/sessions-profile",
@@ -218,7 +218,7 @@ module Marketplace
         end
 
         def platform_fee_cents(order)
-          ((order.total_cents.to_i * platform_fee_bps) / 10_000.0).round
+          ((order.total_cents.to_i * platform_fee_bps) + 5_000) / 10_000
         end
       end
     end
