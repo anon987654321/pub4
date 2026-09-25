@@ -2,8 +2,7 @@
 
 # Which methods in MASTER/lib does nothing name?
 #
-# code_reach.rb asks this of a file and answers 0. This asks it of a method,
-# which is SPRAWL-104: handlers left behind when a surface closed, helpers whose
+# This asks it of a method, which is SPRAWL-104: handlers left behind when a surface closed, helpers whose
 # only caller went, commands nothing registers.
 #
 #   ruby MASTER/tools/method_reach.rb
@@ -28,8 +27,7 @@
 #      line lost every call it made, and undo_line read as dead when its only
 #      caller is `def dispatch_undo(...) = undo_line(...)`. Sixteen of them.
 #   4. Substring matching. A grep for `dispatch_core` matches
-#      `dispatch_core_slash_command`, a different method — the same prefix trap
-#      code_reach.rb records for its lookbehind.
+#      `dispatch_core_slash_command`, a different method.
 #
 # One streaming pass, no corpus in memory. The shape that read every tracked
 # body into a hash and scanned it once per candidate ran the machine out of

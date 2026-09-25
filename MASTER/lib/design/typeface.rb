@@ -47,20 +47,6 @@ module Master
 
         true
       end
-
-      def metric_snapshot(name, root: Master::ROOT)
-        spec = fetch(name, root:)
-        {
-          family: spec.fetch("family"),
-          classification: spec.fetch("classification"),
-          x_height: spec["x_height"],
-          width: spec["width"],
-          contrast: spec["contrast"],
-          weight_range: spec["weight_range"],
-          optical_sizing: spec["optical_sizing"],
-          availability: spec.fetch("availability"),
-        }
-      end
     end
   end
 end

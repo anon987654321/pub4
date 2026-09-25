@@ -37,8 +37,6 @@ module Master
 
         body.match?(MARKER_RE) ? :nb : :en
       end
-
-      def norwegian?(text) = detect(text) == :nb
     end
   end
 end

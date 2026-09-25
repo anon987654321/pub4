@@ -22,10 +22,6 @@ module Master
         lessons.find { |row| row["id"].to_s == id.to_s }
       end
 
-      def self.startup_bullets(limit: 8)
-        lessons.first(limit).map { |row| format_lesson(row) }
-      end
-
       def self.format_lesson(row)
         id = row["id"].to_s
         signal = row["signal"].to_s

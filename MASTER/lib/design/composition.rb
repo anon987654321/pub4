@@ -23,21 +23,11 @@ module Master
         Hash(spec.fetch("variants", {}))
       end
 
-      def variant_keys(name = "marketplace_sale", root: Master::ROOT)
-        variants(name, root:).keys
-      end
-
       def variant(name:, variant: nil, root: Master::ROOT)
         rows = variants(name, root:)
         key = variant.to_s
         key = rows.keys.first if key.empty?
         [key, rows.fetch(key)]
-      end
-
-      def requested_variant(name, variant, root: Master::ROOT)
-        rows = variants(name, root:)
-        candidate = variant.to_s
-        rows.key?(candidate) ? candidate : rows.keys.first
       end
 
       def brief(school:, purpose: nil, root: Master::ROOT)

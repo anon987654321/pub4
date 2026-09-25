@@ -3,7 +3,6 @@
 require_relative "test_helper"
 require "cli/council_crit"
 require "cli/deliberation_prep"
-require "cli/fix_preview_report"
 require "cli/fold_risk"
 
 class TestCLI < Minitest::Test
@@ -120,31 +119,6 @@ class TestCLI < Minitest::Test
     command = Master::CLI::CommandRegistry::Command.new(receiver, :dispatch_example, "/tmp/root")
 
     assert_equal "/tmp/root:ok", command.call(args: "ok")
-  end
-
-  def test_fix_preview_report_renders_clean_and_skipped_states
-    clean = Master::CLI::FixPreviewReport.new(total: 0, skipped: 2, rules: {}, files: {})
-    assert_equal(
-      "preview: clean — no violations\nskipped: 2 generated/vendored file(s) — not fixable in place",
-      clean.render,
-    )
-  end
-
-  def test_fix_preview_report_renders_rules_and_truncates_long_file_names
-    report = Master::CLI::FixPreviewReport.new(
-      total: 3,
-      skipped: 1,
-      rules: { "STYLE" => 2, "SAFETY" => 1 },
-      files: { ("a" * 70) => 3 },
-    )
-
-    output = report.render
-
-    assert_includes output, "preview: 3 violations (no changes made)"
-    assert_includes output, "skipped: 1 generated/vendored file(s)"
-    assert_includes output, "by rule:\n  STYLE"
-    assert_includes output, "top files:\n  #{"a" * 60} 3"
-    refute_includes output, "a" * 61
   end
 
   def test_deliberation_prep_publishes_and_returns_nil_when_ideation_fails

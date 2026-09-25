@@ -23,12 +23,6 @@ class RepoPathsTest < Minitest::Test
     assert_equal Master::REPO_ROOT, Master.repo_root
     assert_equal File.expand_path("..", Master::ROOT), Master.repo_root
   end
-
-  def test_tool_path_joins_under_master_tools
-    path = Master.tool_path("security_sweep.rb")
-    assert_includes path, "/MASTER/tools/security_sweep.rb"
-    assert File.file?(path)
-  end
 end
 
 # frozen_string_literal: true

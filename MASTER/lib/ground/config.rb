@@ -22,7 +22,6 @@ module Master
         def auto? = self["auto"] == true
         def reasoning_mode = self["reasoning_mode"].to_s
         def task_type = self["task_type"].to_s
-        def auto_testing? = self["auto_testing"] == true
         def web_port = self["web_port"].to_i
         def history_max = self["history_max"].to_i
         def cache_ttl = self["cache_ttl"].to_i

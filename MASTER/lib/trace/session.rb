@@ -143,10 +143,6 @@ module Master
             @snapshots[path] << content
           end
         end
-
-        def last_snapshot(path)
-          @mutex.synchronize { @snapshots[path]&.last }
-        end
       end
 
       # Token accounting and compaction of one conversation, which ContextWindow

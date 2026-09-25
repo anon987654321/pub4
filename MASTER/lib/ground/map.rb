@@ -98,14 +98,6 @@ module Master
             by_tag("aesthetic").merge(by_tag("ui"))
           end
 
-          def operation_for(rule_id)
-            rid = rule_id.to_s
-            principles.each_value do |entry|
-              return entry.operation if entry.rule_ids.map(&:to_s).include?(rid) && entry.operation
-            end
-            nil
-          end
-
           def rules_for(principle_id)
             entry = self[principle_id]
             entry ? entry.rule_ids : []

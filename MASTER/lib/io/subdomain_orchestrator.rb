@@ -24,7 +24,7 @@ module Master
       DESCRIPTION = "Synchronize or inspect a pub4 subdomain cluster " \
                     "(#{CLUSTER_DOMAINS.join(", ")}).".freeze
 
-      APP_PORTS_PATH = File.join(Master::DEPLOY_ROOT, "deploy_inventory.json").freeze
+      APP_PORTS_PATH = File.join(Master::OPENBSD_ROOT, "deploy_inventory.json").freeze
 
       def initialize(root: Master::ROOT, event_bus: nil, web_fetch: nil)
         @root = root

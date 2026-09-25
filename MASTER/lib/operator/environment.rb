@@ -68,10 +68,6 @@ module Operator
       "/home/#{app}/app"
     end
 
-    def dev_repo_root
-      ENV.fetch("PUB4_ROOT", "/home/dev/pub4")
-    end
-
     def ruby_label
       "#{RbConfig.ruby} (#{RUBY_VERSION})"
     end

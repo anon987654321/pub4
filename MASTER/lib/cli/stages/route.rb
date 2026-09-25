@@ -18,8 +18,6 @@ module Master
           @bus = bus
         end
 
-        def add_command(name, handler) = @commands[name.to_s] = handler
-
         def call(ctx)
           case ctx.intent
           when :command then route_command(ctx)

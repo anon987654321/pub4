@@ -133,7 +133,6 @@ module Master
 
           allowed = %w[
             data/SOUL.md
-            data/CANON.md
             data/IDENTITY.md
           ].freeze
           next [] if allowed.include?(rel)

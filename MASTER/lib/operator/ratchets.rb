@@ -106,7 +106,7 @@ module Operator
     def master_yaml_rows
       [*rule_reach_and_blind_rows, *rule_saturation_and_silent_rows, *autofix_rows,
        *rule_hygiene_rows_a, *rule_hygiene_rows_b, *fixture_and_dep_rows,
-       *self_findings_rows, *reach_rows, *code_and_namespace_rows, *sprawl_rows].compact
+       *self_findings_rows, *reach_rows, *namespace_rows, *sprawl_rows].compact
     end
 
     # Three rows rather than one, because they are three different facts and
@@ -241,17 +241,8 @@ module Operator
        end]
     end
 
-    # code_reach is sibling to data_reach, one level up: that asks whether a
-    # declaration has a reader, this whether a whole file does. It reads 0 and
-    # the row exists to hold it there — an unreached file is how lib/ grows
-    # without anything failing.
-    def code_and_namespace_rows
-      [master_row("code_reach", "data/code_reach.yml", "lib files nothing names") do
-         require File.join(MASTER, "tools/code_reach")
-         unreached = Operator::CodeReach.unreached
-         [unreached.size, Operator::CodeReach.ceiling, unreached]
-       end,
-       master_row("namespace", "data/spine.yml", "files declaring no module or class") do
+    def namespace_rows
+      [master_row("namespace", "data/spine.yml", "files declaring no module or class") do
          require File.join(MASTER, "lib/operator/namespace_ratchet")
          flat = Operator::NamespaceRatchet.ceilings.keys.flat_map { |dir| Operator::NamespaceRatchet.flat_files(dir) }
          [flat.size, Operator::NamespaceRatchet.ceilings.values.sum, flat]

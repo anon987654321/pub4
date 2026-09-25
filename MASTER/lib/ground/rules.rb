@@ -91,7 +91,7 @@ module Master
         @root = root || Master::ROOT
         @data_dir = File.join(@root, "data")
         @soul_path = File.join(@data_dir, "soul.yml")
-        @voice_path = Master.data_file("voice.yml")
+        @voice_path = Master.data_path("voice.yml")
         @data = Master.load_rules(root: @root) || {}
         @voice_data = load_yaml(@voice_path) || {}
         # limits.yml is no longer parsed here. It was loaded on every Rules
@@ -144,7 +144,6 @@ module Master
         kernel[id_str] || philosophy.find { |a| a["id"] == id_str }&.dig("name")
       end
 
-      def valid_id?(id) = all_ids.include?(id.to_s)
       def all_ids = @all_ids ||= all_rules.map { |r| r["id"] }.compact.to_set.freeze
       def empty? = @data.empty?
 

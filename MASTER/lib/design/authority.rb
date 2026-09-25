@@ -25,10 +25,6 @@ module Master
         spec = contract(root:)
         "priority=#{spec.fetch("priority")} order=#{ORDER.join(">")} purpose=#{purpose} surface=#{path} school=#{school} proof=rendered_evidence_required"
       end
-
-      def inherited?(school_name, root: Master::ROOT)
-        school(school_name, root:).fetch("inherits_authoritative_design") == true
-      end
     end
   end
 end

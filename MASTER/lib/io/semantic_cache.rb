@@ -77,15 +77,6 @@ module Master
         @fuzzy_index ||= SemanticIndex.new(embedder: Master::Review::Embeddings)
       end
 
-      def invalidate!(prompt, model)
-        key = cache_key(prompt, model)
-        path = cache_path(key)
-        @lock.synchronize do
-          File.delete(path) if File.exist?(path)
-          delete_manifest_entry(key)
-        end
-      end
-
       def stats
         @lock.synchronize do
           files = Dir.glob(File.join(@root, "*.json"))

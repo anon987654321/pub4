@@ -41,7 +41,6 @@ module Master
       GEM_DIRS = [".local/share/gem", ".gem"].freeze
       STAGE1_PROMISES = "stdio rpath wpath cpath proc exec inet dns tty unveil prot_exec error"
       STAGE2_PROMISES = "stdio rpath wpath cpath proc exec inet dns tty prot_exec error"
-      STAGE3_PROMISES = "stdio rpath wpath cpath tty"
 
       def stage1_boot!(root)
         pledge(STAGE1_PROMISES)
@@ -67,11 +66,6 @@ module Master
       def stage2_lock!
         lock_unveil!
         pledge(STAGE2_PROMISES)
-      end
-
-      def stage3_scan_only!
-        lock_unveil!
-        pledge(STAGE3_PROMISES)
       end
     end
   end

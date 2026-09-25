@@ -215,6 +215,6 @@ class TestMemory < Minitest::Test
   end
 
   def test_context_injection_budget_is_bounded_by_model_context
-    assert_operator Master::Ground::Memory::MAX_INJECT_TOKENS, :<=, Master::CTX_WINDOW_SIZE / 100
+    assert_operator Master::Ground::Memory::MAX_INJECT_TOKENS, :<=, Master::DEFAULT_CONTEXT_WINDOW / 100
   end
 end

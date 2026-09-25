@@ -217,15 +217,6 @@ module Master
         (core + extras.rotate(offset)).first(MAX_SURFACES)
       end
 
-      def visual_signal(payload)
-        visual = payload["visual"] || {}
-        first = visual["first_screen"] || {}
-        first["small_text"].to_i * 10 +
-          first["centered_long_text"].to_i * 8 +
-          [first["interactive"].to_i - 7, 0].max * 4 +
-          first["largest_element_area_ratio"].to_f
-      end
-
       def candidate_sources(target:, files:, captures:, graph:)
         candidates = Array(files).select { |path| source_file?(path) }.uniq
         if graph

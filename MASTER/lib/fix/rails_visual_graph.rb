@@ -18,9 +18,7 @@ module Master
       # route, so the verb is not at the start of the line.
       ROUTE_RE = /^\s*(?:\S+\s+)?(GET|POST|PUT|PATCH|DELETE|OPTIONS|HEAD)\s+(\/\S*)\s+(\S+#\S+)/
 
-      SurfaceMap = Data.define(:surface, :app, :route, :sources) do
-        def source_paths = sources
-      end
+      SurfaceMap = Data.define(:surface, :app, :route, :sources)
 
       attr_reader :apps, :routes, :edges, :errors
 

@@ -6,7 +6,7 @@ module Master
     # bounded mood Mind updates from prediction error: one counts tokens and the other scores
     # surprise, so the two share a word and no formula.
     module ContextPressure
-      DEFAULT_LIMIT = Master::CTX_WINDOW_SIZE
+      DEFAULT_LIMIT = Master::DEFAULT_CONTEXT_WINDOW
 
       def self.snapshot(session:, limit: DEFAULT_LIMIT)
         est = session.respond_to?(:token_est) ? session.token_est.to_i : 0

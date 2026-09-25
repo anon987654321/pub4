@@ -70,12 +70,6 @@ module Master
           def quarantine
             @quarantine ||= ProviderQuarantine.new(health: @provider_health)
           end
-
-          def runtime_choice(task: :exploration)
-            Master::Io::RuntimeRegistry.new.choose(task:)
-          rescue StandardError
-            { provider: :local, model: preferred, score: 0.5, quarantined: [] }
-          end
         end
       end
     end

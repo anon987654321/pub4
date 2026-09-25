@@ -7,7 +7,7 @@ class TestScriptDispatch < Minitest::Test
     workspace = File.expand_path("../..", __dir__)
     path = Master::Io::ScriptDispatch.script_path(workspace, "repo_inventory")
 
-    assert_equal Master.tool_path("repo_inventory.rb"), path
+    assert_equal File.join(Master::ROOT, "tools", "repo_inventory.rb"), path
   end
 
   def test_uses_workspace_as_working_directory_for_fallback_tool

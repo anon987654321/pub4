@@ -139,13 +139,6 @@ module Master
           end
         end
 
-        def parse_frontmatter(path)
-          fm = Master::Ground::Frontmatter.parse_file(path)
-          type = fm[:meta]["type"].to_s
-          type = "general" if type.empty?
-          [type, fm[:body]]
-        end
-
         def prune_stale!
           cutoff = Time.now.to_i - TTL_DAYS * SECONDS_PER_DAY
           @store.each do |key, value|

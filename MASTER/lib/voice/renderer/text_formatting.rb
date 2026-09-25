@@ -23,7 +23,6 @@ module Master
           end.join
         end
 
-        def format_error(message) = render(message, mode: :error)
         def format_dmesg(line) = @p.dim(line.to_s)
 
         # Only a standalone numeric range earns an en dash. Firing on any

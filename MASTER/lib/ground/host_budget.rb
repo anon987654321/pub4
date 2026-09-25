@@ -76,10 +76,6 @@ module Master
         "host budget: full-repo analyze/autofix OOMs on #{mb}MB — use /fix lib, or bin/cli --fast"
       end
 
-      def shell_fragment_tip
-        "shell tip: if CLI dies mid-line, ksh runs the leftover text — use a smaller target or quote paths"
-      end
-
       def suspended_ruby_pids(user: ENV["USER"])
         return [] unless user && !user.empty?
 

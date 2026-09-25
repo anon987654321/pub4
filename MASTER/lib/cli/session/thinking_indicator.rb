@@ -35,23 +35,6 @@ module Master
         @unit_sub = @refs.logging.listen { |line| print_unit_line(line) } if units_console?
       end
 
-      def spawn_spinner_thread
-        Thread.new do
-          loop do
-            @think_mutex.synchronize do
-              next if @think_paused
-
-              label = @activity&.label(stage: @think_stage, elapsed: elapsed_seconds) || "thinking #{elapsed_seconds}s"
-              print "\r\e[K#{@refs.renderer.render(one_row(label), mode: :dim)}"
-              $stdout.flush
-            end
-            sleep TICK_SECONDS
-          end
-        rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "cli.spinner", event_bus: @refs.bus)
-        end
-      end
-
       # The fold stops to ask a person about a push, a hard reset or a deploy,
       # and a terminal the operator is typing into is a person. The operator
       # said approval belongs there, so the interactive session answers; the

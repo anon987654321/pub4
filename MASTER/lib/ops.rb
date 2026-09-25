@@ -216,13 +216,6 @@ module Master
         env && ENV[env] == "1"
       end
 
-      def allowed_to_start?(name)
-        validate_loop_slot!
-        return false unless enabled?(name)
-        return false if LoopOwner.active
-        cooldown_elapsed?(name)
-      end
-
       def cooldown_elapsed?(name)
         cooldown = loop_config(name)["min_sleep_seconds"].to_i
         return true if cooldown <= 0

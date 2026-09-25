@@ -2,7 +2,7 @@
 
 require_relative "test_helper"
 
-# Minimal unit tests for Master::Agent — specifically targeting the Tier-1
+# Minimal unit tests for Master::Review::Agent — specifically targeting the Tier-1
 # bugs the patch corrects. Does not hit any real LLM.
 class TestAgent < Minitest::Test
   include Master
@@ -16,7 +16,7 @@ class TestAgent < Minitest::Test
   FakeCache   = Struct.new(:store) { def fetch(k, _m, &b); (store[k] ||= b.call); end }
 
   def setup
-    @agent = Master::Agent.new(deps: Master::Agent::Dependencies.from_kwargs(
+    @agent = Master::Review::Agent.new(deps: Master::Review::Agent::Dependencies.from_kwargs(
       config:          FakeConfig.new("claude-sonnet-4-6", :exploration, "none"),
       session:         FakeSession.new([]),
       tools:           [],

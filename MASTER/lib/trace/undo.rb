@@ -24,7 +24,6 @@ module Master
         @root = root
         @journal = File.join(root, ".master", "undo_journal.jsonl")
         @stack = load_journal
-        @redo = []
       end
 
       def snapshot(path)
@@ -39,9 +38,7 @@ module Master
         Result.err("undo snapshot: #{e.message}", category: :unknown)
       end
 
-      def undo!(steps: 1) = replay(@stack, @redo, "undo", steps)
-
-      def redo!(steps: 1) = replay(@redo, @stack, "redo", steps)
+      def undo!(steps: 1) = replay(@stack, "undo", steps)
 
       def history(limit: 10)
         @stack.last(limit).reverse.map.with_index(1) do |entry, i|
@@ -52,18 +49,13 @@ module Master
 
       private
 
-      # Undo and redo are one move in two directions: pop the file's previous
-      # content off one stack, push what is on disk now onto the other, and put
-      # the popped content back. Only the two stacks and the word in the event
-      # differ, so they are arguments.
-      def replay(from, to, verb, steps)
+      # Pop the file's previous content off the stack and put it back.
+      def replay(from, verb, steps)
         return Result.err("nothing to #{verb}", category: :validation) if from.empty?
 
         paths = []
         [steps, from.size].min.times do
           entry = from.pop
-          current = File.exist?(entry["path"]) ? File.read(entry["path"]) : nil
-          to << { "path" => entry["path"], "content" => current, "ts" => Time.now.to_i }
           restore(entry["path"], entry["content"])
           paths << entry["path"]
           @bus&.publish("#{verb}:applied", path: paths.last)

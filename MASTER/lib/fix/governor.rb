@@ -16,7 +16,6 @@ module Master
         @bus = event_bus
         @prompt = $stdout.isatty ? TTY::Prompt.new : nil
         @auto = config.auto?
-        @approve_all = false
         @decisions = {}
         @rate_windows = Hash.new { |h, k| h[k] = [] }
         @rate_mutex = Mutex.new
@@ -36,9 +35,9 @@ module Master
 
         case tier
         when :safe then return Result.ok(true)
-        when :guarded then return Result.ok(true) if @auto || @approve_all
+        when :guarded then return Result.ok(true) if @auto
         when :dangerous
-          return Result.ok(true) if @auto || @approve_all
+          return Result.ok(true) if @auto
           return Result.ok(true) unless needs_human?(description)
         end
 
@@ -48,9 +47,6 @@ module Master
       end
 
       alias permit? check_permit
-
-      def approve_all! = @approve_all = true
-      def reset_approve! = @approve_all = false
 
       # Decisions are exact to the tool and request description. "Always" never
       # becomes a blanket approval for the whole tier, which keeps an interactive

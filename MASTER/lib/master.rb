@@ -18,19 +18,9 @@ module Master
   REPO_ROOT = File.expand_path("..", ROOT).freeze
   OPENBSD_ROOT = File.join(REPO_ROOT, "OPENBSD").freeze
   RAILS_ROOT = File.join(REPO_ROOT, "RAILS").freeze
-  DEPLOY_ROOT = OPENBSD_ROOT.freeze
-  DEPLOY_RAILS = RAILS_ROOT.freeze
-  TOOLS_ROOT = File.join(ROOT, "tools").freeze
   DATA = File.join(ROOT, "data").freeze
   COUNCIL_PATH = File.join(DATA, "council.yml").freeze
   RULES_PATH = File.join(DATA, "rules.yml").freeze
-  BOOTSTRAP_AUTHORITY_FILES = [
-    ["soul", "data/soul.yml"], ["rules", "data/rules.yml"],
-    ["voice", "data/voice.yml"], ["limits", "data/limits.yml"], ["orders", "data/state.yml"],
-    ["playbook", "data/patterns.yml"],
-    ["skills", "data/patterns.yml"], ["context", "data/project_context.yml"],
-    ["operator", "../OPENBSD/RUNBOOK.md"]
-  ].freeze
 
   BUNDLE_BIN = RUBY_PLATFORM.include?("openbsd") ? "bundle34" : "bundle"
   MIN_API_KEY_LENGTH_HEURISTIC = 20
@@ -43,7 +33,6 @@ module Master
   # three copies of one slug in step.
   SEVERITY_RANK = { info: 0, warning: 1, error: 2, critical: 3 }.freeze
   DEFAULT_CONTEXT_WINDOW = 128_000
-  CTX_WINDOW_SIZE = DEFAULT_CONTEXT_WINDOW
   VIOLATION_TRUNCATE = 90
 
   FILE_LANGUAGE_MAP = {
@@ -132,14 +121,9 @@ module Master
   # every snapshot, and reported the boot receipt degraded on a capability the
   # process had.
   def self.git_checkout?(root = REPO_ROOT) = File.exist?(File.join(root, ".git"))
-  def self.operator_path(*parts) = File.join(OPENBSD_ROOT, *parts)
-  def self.rails_path(*parts) = File.join(RAILS_ROOT, *parts)
-  def self.openbsd_path(*parts) = File.join(OPENBSD_ROOT, *parts)
-  def self.tool_path(*parts) = File.join(TOOLS_ROOT, *parts)
   def self.data_path(*parts) = File.join(DATA, *parts)
   # The one reader of data/rules.yml. A missing section raises rather than
-  # returning {}, because data_file answers a missing file with a path to it and
-  # every caller reads the empty result as a law with nothing in it.
+  # returning {}, because every caller reads the empty result as a law with nothing in it.
   def self.law(section, root: ROOT)
     path = File.join(root, "data", "rules.yml")
     mtime = File.mtime(path)
@@ -175,16 +159,8 @@ module Master
     path.empty? ? config : config.dig(*path.map(&:to_s))
   end
 
-  def self.limits_path = data_file("limits.yml", "workflow.yml")
-  def self.state_path = data_file("state.yml", "standing_orders.yml")
-
-  def self.data_file(*names)
-    names.each do |name|
-      path = data_path(name)
-      return path if File.exist?(path)
-    end
-    data_path(names.first)
-  end
+  def self.limits_path = data_path("limits.yml")
+  def self.state_path = data_path("state.yml")
 
   def self.flatten_rules(body)
     return body.values.flatten if body.is_a?(Hash)
@@ -200,13 +176,6 @@ module Master
   rescue StandardError => e
     warn("rule_count: #{e.message}")
     0
-  end
-
-  def self.authority_paths(root: ROOT)
-    BOOTSTRAP_AUTHORITY_FILES.filter_map do |label, relative|
-      path = File.expand_path(relative, root)
-      [label, path] if File.exist?(path)
-    end
   end
 
   loader = Zeitwerk::Loader.new
@@ -245,10 +214,4 @@ module Master
   require_relative "unwrap_error"
 
   def self.eager_load! = LOADER.eager_load
-
-  def self.const_missing(symbol)
-    return Review::Agent if symbol == :Agent
-
-    super
-  end
 end

@@ -26,10 +26,6 @@ module Master
           with_built_index { find_locked(name) }
         end
 
-        def references_to(fqn)
-          with_built_index { references_for(fqn) }
-        end
-
         def impact(fqn)
           with_built_index do
             refs = references_for(fqn)

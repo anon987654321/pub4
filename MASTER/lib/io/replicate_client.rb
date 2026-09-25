@@ -78,15 +78,6 @@ module Master
           get(URI("#{BASE}/trainings/#{id}"))
         end
 
-        # Download LoRA artifact from a completed training (output.weights URL).
-        # Writes the tar (or whatever Replicate returns) to path.
-        def download_training_weights(training, path)
-          url = training_weights_url(training)
-          raise "training has no output.weights URL" if url.to_s.empty?
-
-          download_url(url, path)
-        end
-
         def training_weights_url(training)
           training = get_training(training) if training.is_a?(String)
           output = training["output"]
@@ -186,11 +177,6 @@ module Master
         version = pinned || latest_version(model_id)
         pred = post(URI("#{BASE}/predictions"), { version:, input: })
         wait_for(pred["id"], timeout:)
-      end
-
-      def predict_vision(model_id, prompt:, image_urls:, timeout: 600)
-        input = { prompt:, images: Array(image_urls) }
-        predict(model_id, input, timeout:)
       end
 
       # Bounded catalog read used by Preprompt search/sync. Replicate returns a

@@ -21,10 +21,6 @@ module Master
           { step:, at:, offset: dilla_offset + swing_offset }
         end
       end
-
-      def seconds_per_beat(bpm:)
-        60.0 / bpm
-      end
     end
   end
 end

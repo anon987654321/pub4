@@ -11,7 +11,7 @@ module Master
     MUTATING_TOOLS = %w[write_file str_replace ast_edit].freeze
     RING_SIZE = 1000
 
-    # Default tool factories. Override via data/tools.yml or register_tool().
+    # Default tool factories. data/tools.yml overrides them.
     DEFAULT_TOOL_MAP = {
       "ReadFile" => ->(r, i) {
         Io::ReadFile.new(root: r, undo: i[:undo], event_bus: i[:bus], ground_truth: i[:ground_truth])
@@ -51,34 +51,6 @@ module Master
         Io::DynamicHttp.new(governor: i[:governor], event_bus: i[:bus])
       },
     }.freeze
-
-    @tool_registry = DEFAULT_TOOL_MAP.dup
-    @registry_mutex = Mutex.new
-
-    class << self
-      # Register a custom tool factory at runtime. Thread-safe.
-      def register_tool(name, factory)
-        @registry_mutex.synchronize do
-          @tool_registry[name.to_s] = factory
-        end
-      end
-
-      # Unregister a tool. Returns the removed factory or nil.
-      def unregister_tool(name)
-        @registry_mutex.synchronize do
-          @tool_registry.delete(name.to_s)
-        end
-      end
-
-      def tool_map
-        @registry_mutex.synchronize { @tool_registry.dup.freeze }
-      end
-
-      # Reset to defaults (useful in tests).
-      def reset_tools!
-        @registry_mutex.synchronize { @tool_registry = DEFAULT_TOOL_MAP.dup }
-      end
-    end
 
     module_function
 
@@ -187,7 +159,7 @@ module Master
       defs = Master.load_yaml(path)
       return [] unless defs.is_a?(Array)
 
-      registry = ::Master::Builder.tool_map
+      registry = ::Master::Builder::DEFAULT_TOOL_MAP
       defs.filter_map do |defn|
         next unless defn["default"] == true
         factory = registry[defn["name"].to_s]

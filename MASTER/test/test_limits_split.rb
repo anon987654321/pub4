@@ -100,10 +100,8 @@ class TestLimitsSplit < Minitest::Test
     refute_respond_to rules, :workflow
   end
 
-  # limits.yml is still read whole, so the guidance is still served —
-  # the split relabels it, it does not hide it.
+  # The split relabels the guidance; it does not delete it from limits.yml.
   def test_limits_file_still_contains_guidance
-    assert_includes Master::BOOTSTRAP_AUTHORITY_FILES.flatten, "data/limits.yml"
     assert_includes File.read(PATH), "guidance:"
   end
 end

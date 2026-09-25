@@ -380,8 +380,8 @@ module Master
 
         # pledge(2) and unveil(2) restrict a process once, at boot, in a fixed
         # order: promise the syscalls, deny the filesystem root, open the paths
-        # back, then lock. Ground::Pledge holds that order in stage1_boot!,
-        # stage2_lock! and stage3_scan_only!, and a caller that assembles its own
+        # back, then lock. Ground::Pledge holds that order in stage1_boot! and
+        # stage2_lock!, and a caller that assembles its own
         # promise string somewhere else restricts a different process than the one
         # data/principle_map.yml pledge_unveil describes.
         #
