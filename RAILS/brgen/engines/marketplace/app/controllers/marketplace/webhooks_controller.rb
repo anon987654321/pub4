@@ -136,9 +136,9 @@ class Marketplace::WebhooksController < ActionController::Base
 
   def process_event(event, payload)
     case event
-    when "checkout_authorization", "checkout_authorization_update"
+    when "checkout_authorization"
       process_authorization(payload)
-    when "checkout_transaction", "checkout_transaction_update"
+    when "checkout_transaction"
       process_transaction(payload["transaction"] || payload)
     when "approval_payout_destination_update"
       process_payout_destination_case(payload["payout_destination_case"] || {})
