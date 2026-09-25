@@ -10026,15 +10026,6 @@ body.vertical-marketplace .store-buybox .price {
     line-height: 1.35;
   }
 
-  body.vertical-marketplace #marketplace-listings .deal-card-body::after {
-    content: "";
-    display: block;
-    min-height: 44px;
-    width: 160px;
-    margin-top: 2px;
-    border-radius: 4px;
-    background: var(--bol-buy);
-  }
 }
 
 @media (max-width: 767px) {
