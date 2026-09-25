@@ -1,0 +1,15 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "open3"
+
+commands = [
+  %w[bundle exec rails runner Rails.application.initialize!],
+  %w[bundle exec rails db:prepare],
+  %w[bundle exec rails test]
+]
+
+commands.each do |command|
+  puts "eritel: #{command.join(" ")}"
+  system(*command) || exit($CHILD_STATUS.exitstatus || 1)
+end
