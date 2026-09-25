@@ -76,7 +76,10 @@ class TestScanCoverage < Minitest::Test
   def test_extensionless_ruby_counts_as_ruby
     counted = Operator::ScanCoverage.ruby_count("bin")
 
-    assert_operator counted, :>, 20,
+    # A floor well under the real count and far above the extension-only one:
+    # bin/ keeps its Ruby extensionless, so .rb globbing sees none of it. Five
+    # scripts left bin/ on purpose on 2026-09-23, which took 24 to 19.
+    assert_operator counted, :>, 10,
                     "bin/ holds Ruby with a shebang and no .rb suffix; counting " \
                     "by extension alone reports #{counted} and hides the directory"
   end

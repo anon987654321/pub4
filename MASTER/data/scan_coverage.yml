@@ -57,8 +57,6 @@ scan_coverage:
       outside the runtime. Exempt from SelfCheck only: lib/operator/self_findings.rb
       counts MASTER/tools under its ratchet, so a finding here is measured and
       cannot grow silently.
-    script: >-
-      One-off migration and probe scripts, kept for the record rather than run.
     web: >-
       A Rails application with its own gates (bin/check --profile=web,
       test:web_ui, test:integration_web). MASTER's scanner law is written for the
