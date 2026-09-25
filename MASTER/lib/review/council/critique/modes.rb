@@ -74,7 +74,7 @@ module Master
                 "preserve existing visual identity",
                 "use Ruby QualityFramework sound rules from Deliberation",
                 "when proposing Dilla-style timing, call Master::Voice::Dilla for swing, nudge, chord, and preset data",
-                "do not invent a second critique system inside STUDIO/dilla — perfect via MASTER commands",
+                "do not invent a second critique system inside MASTER/tools/dilla — perfect via MASTER commands",
               ],
             },
             dilla: {
@@ -91,12 +91,12 @@ module Master
               # the boot sequence. Before the split this read the first 36 KB of a
               # 1.37 MB file — the patch catalogue, and nothing downstream of it.
               files: %w[
-                ../STUDIO/dilla/dilla.rb
-                ../STUDIO/dilla/lib/engine/master_chain.rb
-                ../STUDIO/dilla/lib/engine/bus_filters.rb
-                ../STUDIO/dilla/lib/engine/drum_bus_filter.rb
-                ../STUDIO/dilla/lib/engine/groove_timing.rb
-                ../STUDIO/dilla/lib/listen.rb
+                ../MASTER/tools/dilla/dilla.rb
+                ../MASTER/tools/dilla/lib/engine/master_chain.rb
+                ../MASTER/tools/dilla/lib/engine/bus_filters.rb
+                ../MASTER/tools/dilla/lib/engine/drum_bus_filter.rb
+                ../MASTER/tools/dilla/lib/engine/groove_timing.rb
+                ../MASTER/tools/dilla/lib/listen.rb
                 lib/voice/dilla.rb lib/voice/production_dna.rb
                 lib/io/analog_capabilities.rb
               ],
@@ -116,7 +116,7 @@ module Master
                 "prefer existing FLAG_ENV / DILLA_STYLE_DEFAULTS knobs over new files",
                 "use Master::Voice::Dilla and ProductionDna for timing/DNA; use MixMetrics for evidence",
                 "multi-solution then cherry-pick is mandatory (QualityFramework general rule)",
-                "surgical ENV/mix changes only — no second crit engine inside STUDIO/dilla",
+                "surgical ENV/mix changes only — no second crit engine inside MASTER/tools/dilla",
               ],
             },
             # General: whatever MASTER is currently processing (usually the
