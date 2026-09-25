@@ -79,7 +79,7 @@ namespace :preprompt do
     #
     # Deliberately not part of `rake`. It needs the network and a token, and a
     # check that cannot run must say so rather than pass.
-    require_relative "../MASTER/lib/io/replicate_client"
+    require_relative "../../lib/io/replicate_client"
 
     token = Master::Io::ReplicateClient.load_token
     if token.to_s.strip.empty?
@@ -132,7 +132,7 @@ namespace :preprompt do
     # So this reads them off the provider instead of anybody typing them. It
     # prints an entry to paste; it does not edit the table, because which models
     # this tool offers is a decision about what the pictures look like.
-    require_relative "../MASTER/lib/io/replicate_client"
+    require_relative "../../lib/io/replicate_client"
 
     model = ENV["MODEL"].to_s.strip
     abort "usage: rake preprompt:schema_suggest MODEL=owner/name" if model.empty?
