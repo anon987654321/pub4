@@ -12,16 +12,34 @@ module Master
         REQUIRERS = 5
         SMALL = 400
 
-        # [path, rule_id, message] for every structural finding under target.
+        # [path, rule_id, message, related_paths] for every actionable structural finding.
         def self.structural_findings(target)
           rules = structural_rules(target)
-          tracked(target).flat_map do |path|
+          local = tracked(target).flat_map do |path|
             code = File.read(path, encoding: "UTF-8")
-            rules.flat_map { |rule| rule.check(code, path:) }.map { |f| [path, f[:rule].to_s, f[:message].to_s] }
+            rules.flat_map { |rule| rule.check(code, path:) }.map { |f| [path, f[:rule].to_s, f[:message].to_s, []] }
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "restructure.findings", path:)
             []
           end
+          local + cross_file_findings(target)
+        end
+
+        def self.cross_file_findings(target)
+          rows = Master::Review::Scan::CrossFileAnalysis.new(root: target).call(production_files(target))
+          findings = rows.flat_map { |_path, result| result.value_or([]) }
+          findings.filter_map do |finding|
+            next unless %w[PARALLEL_HIERARCHY CYCLIC_DEPENDENCY].include?(finding[:rule].to_s)
+
+            related = finding[:impact_radius].is_a?(Hash) ? Array(finding[:impact_radius][:files]) : []
+            path = related.first
+            next unless path
+
+            [path, finding[:rule].to_s, finding[:message].to_s, related]
+          end
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "restructure.cross_file_findings", target:)
+          []
         end
 
         def self.structural_rules(target)
@@ -55,9 +73,10 @@ module Master
           end
         end
 
-        def initialize(repo_root, path)
+        def initialize(repo_root, path, related: [])
           @root = repo_root
           @path = path
+          @related = Array(related)
           @tree = File.join(repo_root, relative(path).split("/").first)
         end
 
