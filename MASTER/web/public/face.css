@@ -1336,7 +1336,7 @@ body[data-runtime-profile="crt"] #cognition-ecology {
 }
 .emotional-timeline span {
   flex: 1;
-  min-width: 44px;
+  min-width: var(--tap-min);
   background: color-mix(in srgb, var(--face-fg) 35%, transparent);
 }
 
