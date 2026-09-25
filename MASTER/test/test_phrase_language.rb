@@ -44,8 +44,8 @@ class TestPhraseLanguage < Minitest::Test
     plan = M.plan(text, emotion, melodic: false, languages: { nb: :finn })
 
     assert_equal 2, plan[:phrases].length
-    assert_equal :finn, plan[:phrases][0][:voice]
-    assert_nil plan[:phrases][1][:voice], "an unmapped language inherits the resolved voice"
+    assert_equal :pernille, plan[:phrases][0][:voice]
+    assert_equal :jenny, plan[:phrases][1][:voice]
   end
 
   def test_no_language_map_means_no_voice_on_any_phrase
@@ -56,18 +56,14 @@ class TestPhraseLanguage < Minitest::Test
     assert(plan[:phrases].none? { |p| p.key?(:voice) })
   end
 
-  # data/voice.yml sets single_voice: jenny and persona_affects_text_only: true.
-  # Switching voices mid-utterance is the one thing that contradicts it, so it
-  # ships off and the default has to stay that way until it is chosen.
-  def test_switching_is_off_by_default_so_the_single_voice_policy_holds
-    refute T::DEFAULTS["phrase_language_switching"]
-    assert_nil T.phrase_languages(T::DEFAULTS)
+  def test_language_switching_is_on_by_default_and_uses_registered_voices
+    assert T::DEFAULTS["phrase_language_switching"]
+    assert_equal({ nb: :pernille, en: :jenny }, T.phrase_languages(T::DEFAULTS))
   end
 
-  def test_turning_it_on_maps_only_the_languages_that_name_a_voice
-    cfg = T::DEFAULTS.merge("phrase_language_switching" => true)
-
-    assert_equal({ nb: :finn }, T.phrase_languages(cfg))
+  def test_turning_language_switching_off_removes_phrase_voice_overrides
+    cfg = T::DEFAULTS.merge("phrase_language_switching" => false)
+    assert_nil T.phrase_languages(cfg)
   end
 
   def test_the_mapped_voice_is_one_the_registry_actually_knows
