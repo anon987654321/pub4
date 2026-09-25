@@ -1,6 +1,6 @@
 ---
 id: air_superiority
-version: 1.0.0
+version: 1.1.0
 description: Defensive Wi-Fi and Bluetooth observation with a local known-device baseline on desktop or Android/Termux.
 entrypoint: air_superiority.rb
 observe_actions: [status, scan]
