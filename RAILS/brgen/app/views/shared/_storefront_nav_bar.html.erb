@@ -4,10 +4,8 @@
     those links resolve against that engine's routes. A cart link appears when
     the vertical passes one.
 
-    Kaufland.de's two-band anatomy: the sections sit as tabs on the first band
-    beside the account and cart links, and the second band is the grey search
-    strip, opened by the place the reader shops from where Kaufland puts its
-    category menu.
+    The marketplace variant follows bol.com's commerce hierarchy: service strip,
+    blue brand/search header, category links, then the catalogue.
 
     No second wordmark. The fixed .brgen-logo-mark already names the host on
     every surface, and the shared nav carries the vertical's name as the way
@@ -17,10 +15,10 @@
 <% variant = local_assigns.fetch(:variant, :default).to_sym %>
 
 <% if variant == :bol %>
-  <div class="storefront-utility storefront-utility--bol" aria-label="Shopper service information">
-    <span>Free delivery from 20</span>
-    <span>Fast delivery, including evenings</span>
-    <span>Free returns</span>
+  <div class="storefront-utility storefront-utility--bol" aria-label="<%= t("marketplace.utility.label") %>">
+    <span><%= t("marketplace.utility.delivery") %></span>
+    <span><%= t("marketplace.utility.fast_delivery") %></span>
+    <span><%= t("marketplace.utility.returns") %></span>
   </div>
 <% end %>
 
