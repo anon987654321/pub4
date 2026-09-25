@@ -2,6 +2,7 @@
 
 require "open3"
 require "rbconfig"
+require "operator/ruby_runner"
 
 module Operator
   # Every gate in the repo, in one order, fixing as it goes.
@@ -29,7 +30,8 @@ module Operator
   module GateChain
     ROOT = File.expand_path("../../..", __dir__)
     MASTER = File.join(ROOT, "MASTER")
-    RUBY = RbConfig.ruby
+    RUBY = Operator::RubyRunner.gate_ruby
+    BUNDLE = Operator::RubyRunner.bundle_cmd
 
     # Paths nothing writes by hand. `bin/gate` has said in a comment for months
     # that scanner.rb skips `cache` but not `.cache`, so /fix descends into
@@ -206,9 +208,9 @@ module Operator
     # any other, so launched with this process's Ruby every gate was skipped and
     # the stage reported one refusal as its whole result.
     def rails_gates(scan_only:)
-      capture("rbenv", "exec", "ruby", "gates/runner.rb", "--all",
+      capture(RUBY, "gates/runner.rb", "--all",
               chdir: File.join(ROOT, "RAILS"),
-              env: { "GATE_AUTOFIX" => scan_only ? "0" : "1", "RBENV_VERSION" => "3.4.9" })
+              env: { "GATE_AUTOFIX" => scan_only ? "0" : "1" })
     end
 
     # Every file runs, then the run fails once with all of them named. Aborting
@@ -231,11 +233,11 @@ module Operator
         ["MASTER", [RUBY, File.join(MASTER, "bin", "check"), "--profile=ci"], MASTER, {}, "MASTER"],
         ["RAILS contracts", [RUBY, "test/run_all.rb"], File.join(ROOT, "RAILS"), {}, "RAILS"],
         *%w[brgen amber bsdports].map do |app|
-          ["#{app} suite", %w[rbenv exec bundle exec bin/rails test],
-           File.join(ROOT, "RAILS", app), { "RBENV_VERSION" => "3.4.9" }, "RAILS"]
+          ["#{app} suite", [RUBY, BUNDLE, "exec", RUBY, "-S", "rails", "test"],
+           File.join(ROOT, "RAILS", app), {}, "RAILS"]
         end,
         ["OPENBSD", [RUBY, "-e", OPENBSD_SUITE], File.join(ROOT, "OPENBSD"), {}, "OPENBSD"],
-        ["STUDIO", %w[bundle exec rake studio], MASTER, {}, "STUDIO"],
+        ["STUDIO", [RUBY, BUNDLE, "exec", RUBY, "-S", "rake", "studio"], MASTER, {}, "STUDIO"],
       ].select { |job| trees.include?(job.last) }
     end
 
