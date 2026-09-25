@@ -3,7 +3,7 @@
   <div class="listing-buy-bar" role="group" aria-label="<%= t("marketplace.buy_actions") %>">
     <div class="listing-buy-bar-actions">
       <% dintero_ready = Marketplace::Payments::DinteroCheckout.configured? &&
-           @listing.store&.dintero_ready? %>
+           Marketplace::Payments::DinteroCheckout.supported_listing?(@listing) %>
       <% if dintero_ready %>
         <%= button_to t("marketplace.buy_now_dintero"),
               checkout_path,
