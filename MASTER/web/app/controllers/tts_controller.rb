@@ -124,17 +124,21 @@ class TtsController < ApplicationController
 
   def tts_voice_and_style(text)
     personality = container[:personality]
-    voice_key = resolve_tts_voice(params[:voice], personality&.voice)
+    voice_key = resolve_tts_voice(params[:voice], personality&.voice, text)
     synth_style = resolve_tts_style(params[:style], text)
     rate = params[:rate].presence || personality&.tts_rate
     pitch = params[:pitch].presence || personality&.tts_pitch
     [voice_key, synth_style, rate, pitch]
   end
 
-  # The policy pins one voice for MASTER, which is why the caller's argument
-  # and the persona's own voice are both discarded here.
-  def resolve_tts_voice(_raw, _fallback_voice = nil)
-    Master::Voice::Speech.resolve_voice(Master::Voice::Policy.single_voice_key)
+  # Explicit voice requests remain subject to the language rule: Norwegian
+  # speech is Pernille and English speech is Jenny. Unmapped languages use the
+  # policy's single_voice fallback.
+  def resolve_tts_voice(raw, _fallback_voice = nil, text = "")
+    return Master::Voice::Speech.resolve_voice(raw) if raw.present? &&
+                                                       raw.to_s.strip.downcase == "pernille"
+
+    Master::Voice::Speech.voice_for_text(text)
   end
 
   def resolve_tts_style(raw_style, text)
