@@ -244,7 +244,9 @@ module Master
             # that is the parallel structure the rule is for.
             next if paths.all? { |path| own_part?(stem, path) }
 
-            build("PARALLEL_HIERARCHY", "#{stem} spans #{paths.size} class/module hierarchies — share a base or collapse the parallel structure")
+            build("PARALLEL_HIERARCHY",
+                  "#{stem} spans #{paths.size} class/module hierarchies — share a base or collapse the parallel structure",
+                  impact_radius: { files: paths.to_a })
           end
         end
 
@@ -296,7 +298,9 @@ module Master
             end
           end
           cycle = find_cycle(graph)
-          cycle ? [build("CYCLIC_DEPENDENCY", "cyclic require_relative dependency: #{cycle.map { |path| rel(path) }.join(" -> ")}")] : []
+          cycle ? [build("CYCLIC_DEPENDENCY",
+                          "cyclic require_relative dependency: #{cycle.map { |path| rel(path) }.join(" -> ")}",
+                          impact_radius: { files: cycle })] : []
         end
 
         def group_occurrences(files, pattern)
@@ -357,8 +361,8 @@ module Master
         # advice about ownership rather than a verdict: reproduce a count with
         # CrossFileAnalysis.new(root:).call(paths) and read the findings before
         # treating it as work.
-        def build(rule, message)
-          Finding.build(rule:, line: 1, severity: :warning, message:, tags: %i[DRY SPRAWL])
+        def build(rule, message, impact_radius: nil)
+          Finding.build(rule:, line: 1, severity: :warning, message:, tags: %i[DRY SPRAWL], impact_radius:)
         end
 
         def rel(path)
