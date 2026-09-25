@@ -10,6 +10,9 @@ class Domain < ApplicationRecord
     deleted: "deleted"
   }
 
+  has_many :orders, dependent: :restrict_with_exception
+  has_many :audit_events, dependent: :restrict_with_exception
+
   validates :name, presence: true, uniqueness: true
   validates :state, presence: true
 end
