@@ -5,7 +5,7 @@
 # method and runs no command -- which is the same property STUDIO/gate.rb's
 # load probe depends on, tested directly in test_engine_sources.rb.
 
-require_relative "studio_helper"
+require_relative "tool_test_helper"
 require "tmpdir"
 
 # Silence the boot chatter; the engine writes a dmesg banner on load. Scratch
