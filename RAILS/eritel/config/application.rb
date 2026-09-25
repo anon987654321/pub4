@@ -25,7 +25,10 @@ module Eritel
 
     config.generators.system_tests = nil
 
-    config.x.registry_provider = ENV.fetch("ERITEL_REGISTRY_PROVIDER", "simulator")
+    config.x.registry_provider = ENV.fetch(
+      "ERITEL_REGISTRY_PROVIDER",
+      Rails.env.production? ? "disabled" : "simulator"
+    )
     config.x.registry_endpoint = ENV["ERITEL_REGISTRY_ENDPOINT"]
   end
 end
