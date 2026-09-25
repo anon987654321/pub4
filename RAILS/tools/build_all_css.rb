@@ -13,6 +13,7 @@ require "open3"
 require "yaml"
 require "fileutils"
 require_relative "design_tokens"
+require_relative "../../MASTER/lib/operator/ruby_runner"
 
 RAILS_ROOT = File.expand_path("..", __dir__)
 ROOT = File.expand_path("../..", __dir__)
@@ -185,24 +186,8 @@ end
 # bare `bundle` resolved to system Ruby 2.6 and every app's dartsass:build
 # "skipped" with a rubygems require line — so the npx fallback was doing all
 # three builds, silently, and it is the weaker of the two paths.
-def bundle_cmd(app_dir)
-  version = ruby_version_for(app_dir)
-  return ["bundle"] unless version && which("rbenv")
-
-  ["rbenv", "exec", "bundle"].tap { ENV["RBENV_VERSION"] = version }
-end
-
-def ruby_version_for(app_dir)
-  [app_dir, RAILS_ROOT, File.expand_path("..", RAILS_ROOT)].each do |dir|
-    file = File.join(dir, ".ruby-version")
-    return File.read(file).strip if File.file?(file)
-  end
-  nil
-end
-
-def which(bin)
-  ENV.fetch("PATH", "").split(File::PATH_SEPARATOR)
-     .any? { |dir| File.executable?(File.join(dir, bin)) }
+def bundle_cmd(_app_dir)
+  Operator::RubyRunner.bundle_cmd
 end
 
 def try_dartsass(app_dir)
