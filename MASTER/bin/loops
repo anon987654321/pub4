@@ -10,7 +10,7 @@
 # loop1 is the MASTER face reading the README aloud, with the ai.brgen.no
 # wordmark in the corner. loop2 is a shell booting bin/cli on vm23.
 #
-# Both carry MASTER/tools/MASTER/tools/dilla/demo.wav. loop1 MIXES it under the narration rather
+# Both carry MASTER/tools/dilla/demo.wav. loop1 MIXES it under the narration rather
 # than replacing it — the face's mouth is driven by that narration and swapping
 # the track would leave it lip-syncing to nothing. loop2 has no voice, so the
 # music is its whole soundtrack.
