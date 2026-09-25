@@ -3342,7 +3342,7 @@ RADIO_BERGEN_SONIC_PATH = File.join(ROOT, "data", "reference_sonic.yml").freeze
 # playlist, and RadioBergenManifest already looked in config/radio_bergen/
 # first. It lives there outright now, and dilla reads across to it.
 RADIO_BERGEN_MANIFEST_PATH =
-  File.expand_path("../../RAILS/brgen/config/radio_bergen/tracks.yml", ROOT).freeze
+  File.expand_path("../../../RAILS/brgen/config/radio_bergen/tracks.yml", ROOT).freeze
 
 # Study radio.brgen.no manifest → sonic learnings (also: ruby dilla.rb radio-bergen-study).
 module RadioBergenStudy
@@ -3712,7 +3712,7 @@ module RadioBergenStudy
   },
 }.freeze
 
-  DOSSIERS_PATH = File.expand_path("../../MASTER/data/radio_bergen_track_dossiers.yml", ROOT).freeze
+  DOSSIERS_PATH = File.expand_path("../../data/radio_bergen_track_dossiers.yml", ROOT).freeze
 
   module DeepAudio
       module_function
@@ -16087,7 +16087,7 @@ end
 # --- Live playback ---
 
 # Render a short preview and play it immediately via ffplay.
-TTS_WORKER = File.expand_path("../../MASTER/bin/tts-worker", ROOT)
+TTS_WORKER = File.expand_path("../../bin/tts-worker", ROOT)
 # Funny-but-clear Edge voices — avoid heavy pitch/effects that hurt intelligibility.
 SPEECH_VOICES = %w[en-US-AndrewNeural en-US-GuyNeural en-US-BrianMultilingualNeural].freeze
 SPEECH_VOICE_DEFAULT = "en-US-AndrewNeural"
