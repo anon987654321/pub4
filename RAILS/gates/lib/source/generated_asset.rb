@@ -91,6 +91,8 @@ module Deploy
         return
       end
 
+      return if failed_compile?(build, result, app_name)
+
       build_mtime = File.mtime(build)
       dirty = dirty_paths
       sources.each do |source|
@@ -127,6 +129,22 @@ module Deploy
     # that made a property-by-property check report every dialect as drift.
     SIMPLE_ATOM = /(?:#(?:[0-9a-fA-F]{3,8})|-?[\d.]+(?:px|rem|em|%|ch)?)/i
     SIMPLE_LITERAL = /\A#{SIMPLE_ATOM.source}\z/i
+
+    # dart-sass answers a compile error by writing the error itself as the
+    # stylesheet — a comment and a body::before that prints it — and exits
+    # non-zero into a build step nobody reads. The file is fresh by mtime and
+    # declares no token, so the checks below all pass it; every page then
+    # renders unstyled under the error text.
+    SASS_ERROR = %r{\A\s*/\* Error: }
+
+    def failed_compile?(build, result, app_name)
+      head = File.read(build, 200).to_s
+      return false unless head.match?(SASS_ERROR)
+
+      result.fail("#{app_name}: application.css is a Sass error page (#{head.lines.first.strip}) " \
+                  "— fix the source and rebuild with bin/rails dartsass:build")
+      true
+    end
 
     def content_stale?(sources, build, result, app_name)
       allowed = Hash.new { |h, k| h[k] = [] }

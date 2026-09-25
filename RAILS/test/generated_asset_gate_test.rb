@@ -48,6 +48,30 @@ class GeneratedAssetGateTest < Minitest::Test
     assert result.ok?, result.failures.join
   end
 
+  def compile_check(build_css)
+    Dir.mktmpdir do |dir|
+      build = File.join(dir, "application.css")
+      File.write(build, build_css)
+      result = Deploy::GateResult.new
+      [gate.send(:failed_compile?, build, result, "amber"), result]
+    end
+  end
+
+  # All three committed builds were this page for a day, with the gate green.
+  def test_a_sass_error_page_is_a_failed_build
+    flagged, result = compile_check(%(/* Error: expected "{".\n *    ,\n */\nbody::before { content: "Error"; }\n))
+
+    assert flagged
+    refute result.ok?
+  end
+
+  def test_a_compiled_stylesheet_is_not_an_error_page
+    flagged, result = compile_check(":root{--bg: #000000}body{margin:0}\n/* Error: in a comment later */\n")
+
+    refute flagged
+    assert result.ok?, result.failures.join
+  end
+
   def test_live_builds_match_their_source_literals
     result = Deploy::GeneratedAssetGate.run
 
