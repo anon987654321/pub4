@@ -68,6 +68,7 @@ module Master
           @closing = false
           @motion = Motion.new(seed: Random.new_seed % 1_000_003)
           @events = []
+          @jobs = []
           @opened = now
         end
 
@@ -86,11 +87,15 @@ module Master
         # after the window opened. The events since the last frame go to the
         # face once.
         def screen(rows, cols, t)
-          state, level, words, draft, events = @lock.synchronize { [@state, @level, @words.dup, @draft.dup, @events.slice!(0..)] }
-          text_rows = [rows / 4, 2].max
-          face_rows = [rows - text_rows - 2, 1].max
+          state, level, jobs, words, draft, events = @lock.synchronize do
+            [@state, @level, @jobs.dup, @words.dup, @draft.dup, @events.slice!(0..)]
+          end
+          # The head is the top third. The rest is the last three jobs, then
+          # the status line and the line being typed.
+          face_rows = [[rows / 3, 1].max, rows - 4].min
+          job_rows = [rows - face_rows - 2, 1].max
           face = Face.frame(state:, rows: face_rows, cols:, t:, level:, events:, motion: @motion).split("\n")
-          body = face.map { |line| tint(state, line) } + tail(words, text_rows, cols)
+          body = face.map { |line| tint(state, line) } + tail(column(jobs, words), job_rows, cols)
           body << "#{DIM}#{status(state)[0, cols]}#{PLAIN}" << typed(draft, cols)
           painted = body.each_with_index.map { |line, i| "\e[#{i + 1};1H#{line}\e[K" }.join
           "\e[?25l#{painted}\e[#{body.size};#{[draft.length + 3, cols].min}H\e[?25h"
@@ -205,6 +210,17 @@ module Master
           end
           set(:idle, [reply])
           nudge(:nod)
+          picture(text) if text.to_s.split.size >= 4
+        end
+
+        # Her sentence is the sitting. The reply is already spoken; this
+        # writes the still and the clip under ~/ideas and names the clip.
+        def picture(text)
+          set(:thinking, ["making the picture"])
+          paths = Master::Io::IdeaPicture.new.write(text)
+          set(:idle, ["saved #{paths[:clip]}"])
+        rescue StandardError => e
+          set(:idle, ["picture failed: #{e.message.to_s[0, 140]}"])
         end
 
         # The turn runs beside the window so ^C can abandon it. It carries no
@@ -266,7 +282,18 @@ module Master
             @state = state
             @level = nil
             @words = words
+            note_job(words)
           end
+        end
+
+        # The column under the head. The step that is running is the line,
+        # and only the last three stay.
+        def note_job(words)
+          line = words.first.to_s.strip
+          return if line.empty? || @jobs.last == line
+
+          @jobs << line
+          @jobs.shift while @jobs.size > 3
         end
 
         def show(words) = change { @words = words }
@@ -291,6 +318,15 @@ module Master
 
         # The last rows of the words, wrapped to the window and padded so the
         # status line stays put.
+        # The last three lines under the head: finished steps, then the line
+        # that is still changing (a partial, a spoken chunk).
+        def column(jobs, words)
+          lines = jobs.dup
+          live = words.first.to_s.strip
+          lines << live if !live.empty? && lines.last != live
+          lines.last(3)
+        end
+
         def tail(words, rows, cols)
           lines = words.flat_map { |text| wrap(text.to_s, cols) }.last(rows)
           lines + Array.new(rows - lines.size, "")
