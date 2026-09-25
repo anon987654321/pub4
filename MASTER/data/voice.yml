@@ -3,18 +3,12 @@
 # Persona registries (personas.yml, soul.yml) affect LLM text/style only when persona_affects_text_only is true.
 # Engine chain / transcendent mode: data/tts.yml (not used by web TtsJob). VPS env: OPENBSD/etc/rc.d/master.
 tts:
-  # MASTER speaks English in an American woman's voice, on the operator's ask.
+  # English defaults to en-US-JennyNeural. Norwegian speech is a separate
+  # declared language route and MUST use nb-NO-PernilleNeural.
   #
-  # en-US-JennyNeural is an English (United States) neural voice, so the accent
-  # is the locale's own rather than a second language reading English — which is
-  # why soul.yml keeps language.primary: english and sets `dialect` to american.
-  #
-  # These two keys are the decision and everything else reads or cites them:
-  # Policy::FALLBACK (kept in step by hand, for an unreadable file), the browser
-  # through Policy.browser_payload, and soul.yml's voice, tts_voice and dialect,
-  # because the constitution describes the speaker. A voice change moves every
-  # one of those together, and test_yaml_registries asserts the readers agree
-  # rather than naming the voice.
+  # language_voices is the source of truth for text-to-voice selection. The
+  # Policy fallback, CLI Speech, web controller and face all read it instead of
+  # embedding a second Norwegian voice choice.
   # English is the default voice. Norwegian is always spoken by Pernille.
   # The language map takes precedence over single_voice; single_voice is the
   # fallback for text whose language cannot be determined.
