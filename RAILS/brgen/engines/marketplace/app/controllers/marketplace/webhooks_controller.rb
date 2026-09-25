@@ -51,22 +51,8 @@ class Marketplace::WebhooksController < ActionController::Base
   end
 
   def dintero
-    body = request.body.read
-    return head(:bad_request) unless Marketplace::Payments::DinteroSignature.valid_webhook?(
-      header: request.headers["event-signature"],
-      body: body
-    )
-
-    payload = JSON.parse(body)
-    event_delivery = payload["event_delivery"].presence
-    event = payload["event"].presence
-    return head(:bad_request) if event_delivery.blank? || event.blank?
-    return head(:bad_request) if request.headers["event-delivery"].present? &&
-      request.headers["event-delivery"] != event_delivery
-    return head(:bad_request) if request.headers["event"].present? &&
-      request.headers["event"] != event
-    return head(:bad_request) if payload["account_id"].present? &&
-      payload["account_id"] != ENV["DINTERO_ACCOUNT_ID"].to_s
+    payload, event_delivery, event = dintero_payload(request.body.read)
+    return head(:bad_request) unless payload
 
     delivery = begin_delivery(event_delivery:, event:)
     return head(:ok) if delivery.succeeded? || delivery.active?
@@ -112,6 +98,22 @@ class Marketplace::WebhooksController < ActionController::Base
 
     delivery.retryable!(error)
     :internal_server_error
+  end
+
+  def dintero_payload(body)
+    return unless Marketplace::Payments::DinteroSignature.valid_webhook?(
+      header: request.headers["event-signature"], body:
+    )
+
+    payload = JSON.parse(body)
+    event_delivery = payload["event_delivery"].presence
+    event = payload["event"].presence
+    return unless event_delivery.present? && event.present?
+    return if request.headers["event-delivery"].present? && request.headers["event-delivery"] != event_delivery
+    return if request.headers["event"].present? && request.headers["event"] != event
+    return if payload["account_id"].present? && payload["account_id"] != ENV["DINTERO_ACCOUNT_ID"].to_s
+
+    [payload, event_delivery, event]
   end
 
   def begin_delivery(event_delivery:, event:)
