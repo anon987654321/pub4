@@ -68,6 +68,8 @@ class Marketplace::Checkout < ApplicationRecord
   # a half-paid basket — some orders paid, some not, one card charged — is the
   # state nobody has a way to resolve.
   def authorize_payment!(transaction_id:)
+    return self if status == "paid"
+
     transaction do
       update!(
         payment_provider: "dintero",
@@ -81,6 +83,8 @@ class Marketplace::Checkout < ApplicationRecord
   end
 
   def fail_payment!(transaction_id: nil)
+    return self if status == "paid"
+
     transaction do
       update!(
         payment_provider: "dintero",
