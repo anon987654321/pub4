@@ -29,8 +29,8 @@ html[data-theme].chrome-hidden {
   display: flex;
   min-height: 54px; /* own height — not the published clearance var (zero when hidden) */
   background: var(--surface-elevated);
-  z-index: var(--z-nav, 80);
-  padding-bottom: var(--safe-bottom, 0px);
+  z-index: var(--z-nav);
+  padding-bottom: var(--safe-bottom);
   /* "Hide bars on scroll to free up space" -- ported from the real 2014
      mobile.css footer.slide_down, driven by pub4/scroll_chrome. */
   transition: transform 0.25s var(--ease-out);
@@ -44,7 +44,7 @@ html.chrome-hidden .tab-bar {
    thin visual pill (edge-swiper pattern). Safe-area only (no chrome-inset). */
 .tab-bar-peel {
   position: fixed;
-  bottom: var(--safe-bottom, 0px);
+  bottom: var(--safe-bottom);
   /* Centred by auto margins between zeroed inline insets, not by
      `left: 50%; transform: translateX(-50%)`. The old pair mixed a physical
      offset with a physical translate, so neither half flipped under
@@ -52,7 +52,7 @@ html.chrome-hidden .tab-bar {
      logical_properties warning was pointing at a real asymmetry rather than a
      style preference. Same rendered box in LTR; measured below. */
   inset-inline: 0;
-  z-index: var(--z-nav, 80);
+  z-index: var(--z-nav);
   width: 48px;
   min-height: var(--tap-min);
   min-width: var(--tap-min);
@@ -73,7 +73,7 @@ html.chrome-hidden .tab-bar {
   display: block;
   width: 36px;
   height: 4px;
-  border-radius: var(--radius-pill, 999px);
+  border-radius: var(--radius-pill);
   background: currentColor;
   opacity: 0.55;
 }
@@ -84,7 +84,7 @@ html.chrome-hidden .tab-bar {
 .tab-bar-peel:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
-  border-radius: var(--radius-sm, 8px);
+  border-radius: var(--radius-sm);
 }
 /* When the bar is open the peel is unused (controller sets [hidden]). */
 .tab-bar-peel[hidden] {
@@ -116,17 +116,17 @@ html.drawer-open .tab-bar-peel {
 /* First-visit coach — sits just above the flush bottom peel once. */
 .tab-bar-coach {
   position: fixed;
-  bottom: calc(var(--safe-bottom, 0px) + 2.75rem);
+  bottom: calc(var(--safe-bottom) + 2.75rem);
   /* See .tab-bar-peel: auto margins between zeroed inline insets, so the
      centring survives a direction flip. */
   inset-inline: 0;
   margin-inline: auto;
-  z-index: calc(var(--z-nav, 80) + 1);
+  z-index: calc(var(--z-nav) + 1);
   width: min(20rem, calc(100vw - 2rem));
   padding: 0.75rem var(--space-3);
   background: var(--surface-elevated);
   border: 0;
-  border-radius: var(--radius-sm, 8px);
+  border-radius: var(--radius-sm);
   font-family: var(--font);
   color: var(--text);
   box-sizing: border-box;
@@ -153,7 +153,7 @@ html.drawer-open .tab-bar-peel {
   min-height: var(--tap-min);
   min-width: var(--tap-min);
   padding: var(--space-1) 0.75rem;
-  border-radius: var(--radius-sm, 8px);
+  border-radius: var(--radius-sm);
   /* Fill, not outline. These two buttons were the last eight lines on the
      rendered front page (measured 390x844: 8 visible borders, all of them
      here) -- the 2026-08-04 "no lines at all" pass converted .btn-ghost,
@@ -203,7 +203,7 @@ html.drawer-open .tab-bar-peel {
 .tab-item[aria-current="page"]::after {
   content: "";
   position: absolute;
-  inset-block-end: calc(4px + var(--safe-bottom, 0px));
+  inset-block-end: calc(4px + var(--safe-bottom));
   width: 5px;
   height: 5px;
   border-radius: var(--radius-pill);

@@ -35,11 +35,11 @@ body.auth-surface {
 .auth-form {
   max-width: 22rem;
   margin-inline: auto;
-  padding: clamp(4.5rem, 12vw, 6rem) var(--space-4, 1rem) var(--space-8, 3rem);
+  padding: clamp(4.5rem, 12vw, 6rem) var(--space-4) var(--space-8);
 }
 
 .auth-form h1 {
-  margin: 0 0 var(--space-2, 0.5rem);
+  margin: 0 0 var(--space-2);
   font-size: var(--text-xl);
   font-weight: var(--weight-heavy);
   letter-spacing: var(--tracking-tighter);
@@ -50,14 +50,14 @@ body.auth-surface {
   /* Capped in ch: design_rules.typography.line_length wants prose inside the
      measure, and this ran past it. */
   max-width: var(--measure-narrow);
-  margin: 0 0 var(--space-4, 1rem);
+  margin: 0 0 var(--space-4);
   font-size: var(--text-sm);
   line-height: 1.5;
   color: var(--text-secondary);
 }
 
 .auth-form-lead a {
-  color: var(--accent, var(--text));
+  color: var(--accent);
   font-weight: var(--weight-bold);
   text-decoration: none;
 }
@@ -71,7 +71,7 @@ body.auth-surface {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
-  margin-bottom: var(--space-3, 0.75rem);
+  margin-bottom: var(--space-3);
 }
 
 .auth-form .field label {
@@ -93,8 +93,8 @@ body.auth-surface {
   min-height: var(--tap-min);
   padding: var(--space-2) 0.75rem;
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm, 8px);
-  background: var(--search-bg, var(--surface));
+  border-radius: var(--radius-sm);
+  background: var(--search-bg);
   color: var(--text);
   font: inherit;
   box-sizing: border-box;
@@ -110,7 +110,7 @@ body.auth-surface {
 .auth-form .password-field {
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: var(--space-2, 0.5rem);
+  gap: var(--space-2);
   align-items: center;
 }
 
@@ -123,7 +123,7 @@ body.auth-surface {
 }
 
 .auth-form .actions {
-  margin-top: var(--space-4, 1rem);
+  margin-top: var(--space-4);
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -135,7 +135,7 @@ body.auth-surface {
 }
 
 .auth-form-footer {
-  margin-top: var(--space-4, 1rem);
+  margin-top: var(--space-4);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -151,8 +151,8 @@ body.auth-surface {
 .auth-form-footer a {
   display: inline-flex;
   align-items: center;
-  min-height: var(--tap-min, 44px);
-  color: var(--accent, var(--text));
+  min-height: var(--tap-min);
+  color: var(--accent);
   font-weight: var(--weight-bold);
   text-decoration: none;
   white-space: nowrap;
@@ -172,8 +172,8 @@ body.auth-surface {
 /* OAuth block — only rendered when at least one provider is configured. */
 .oauth-links {
   display: grid;
-  gap: var(--space-2, 0.5rem);
-  margin-bottom: var(--space-4, 1rem);
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
 }
 
 .oauth-links .btn,
@@ -186,8 +186,8 @@ body.auth-surface {
 .oauth-divider {
   display: flex;
   align-items: center;
-  gap: var(--space-3, 0.75rem);
-  margin: 0 0 var(--space-4, 1rem);
+  gap: var(--space-3);
+  margin: 0 0 var(--space-4);
   font-size: var(--text-sm);
   color: var(--text-secondary);
 }
@@ -203,7 +203,7 @@ body.auth-surface {
 .auth-form-qr {
   display: grid;
   place-items: center;
-  margin-bottom: var(--space-4, 1rem);
+  margin-bottom: var(--space-4);
 }
 
 .auth-form-qr svg,

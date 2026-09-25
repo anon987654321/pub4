@@ -9,7 +9,7 @@
 }
 
 .sidebar-card h3 {
-  font-size: var(--text-title, 1.25rem);
+  font-size: var(--text-title);
   font-weight: var(--weight-heavy);
   color: var(--text);
   margin-bottom: 0.75rem;
@@ -71,7 +71,7 @@
 }
 
 .page-header h1 {
-  font-size: var(--text-title, 1.25rem);
+  font-size: var(--text-title);
   font-weight: var(--weight-heavy);
   font-family: var(--font);
   letter-spacing: var(--tracking-tighter);
@@ -105,8 +105,8 @@
      subtracting the padding put this one at -1.4 and centred it on 21, 12px above
      everything beside it. The icon was there before the padding was added too — the
      compensation preserved the misalignment rather than causing it. */
-  top: calc(var(--chrome-inset-block, 8px) + var(--safe-top, 0px) + var(--top-band-nudge, 0px));
-  inset-inline-end: calc(var(--chrome-inset, 12px) + var(--safe-right, 0px) - 12px);
+  top: calc(var(--chrome-inset-block) + var(--safe-top) + var(--top-band-nudge));
+  inset-inline-end: calc(var(--chrome-inset) + var(--safe-right) - 12px);
   z-index: var(--z-chrome-toggle);
   width: var(--tap-min);
   height: var(--tap-min);
@@ -140,18 +140,18 @@
    two signals, so the state survives grayscale and colour-blindness alike
    (visual_contract undefined_class: read/unread had no rule anywhere). */
 article.unread .notification-title-link {
-  font-weight: var(--weight-bold, 700);
+  font-weight: var(--weight-bold);
 }
 article.unread .notification-title-link::before {
   content: "";
   display: inline-block;
-  inline-size: var(--space-2, 0.5rem);
-  block-size: var(--space-2, 0.5rem);
-  margin-inline-end: var(--space-2, 0.5rem);
-  border-radius: var(--radius-pill, 999px);
+  inline-size: var(--space-2);
+  block-size: var(--space-2);
+  margin-inline-end: var(--space-2);
+  border-radius: var(--radius-pill);
   background: var(--accent);
   vertical-align: middle;
 }
 article.read {
-  color: var(--text-secondary, inherit);
+  color: var(--text-secondary);
 }

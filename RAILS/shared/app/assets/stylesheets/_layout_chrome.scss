@@ -69,8 +69,8 @@ body[data-layout="document"] {
   flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
-  gap: var(--space-3, 0.75rem);
-  margin-block-end: var(--space-4, 1rem);
+  gap: var(--space-3);
+  margin-block-end: var(--space-4);
   max-width: var(--measure);
 }
 
@@ -113,14 +113,14 @@ body[data-layout="document"] {
   .push-enable-btn,
   .password-toggle
 ) {
-  min-height: var(--tap-min, 44px);
-  min-inline-size: var(--tap-min, 44px);
+  min-height: var(--tap-min);
+  min-inline-size: var(--tap-min);
 }
 
 /* Main column gutters — single rule so app shells cannot re-fight each other. */
 main#main-content,
 main[role="main"] {
-  padding-inline: var(--page-gutter, clamp(16px, 5vw, 48px));
+  padding-inline: var(--page-gutter);
   box-sizing: border-box;
 }
 
@@ -133,7 +133,7 @@ main[role="main"] {
 
 /* A flash alert shares the toast z-tier with face errors. */
 .flash-alert {
-  z-index: var(--z-toast, 1100);
+  z-index: var(--z-toast);
 }
 
 /* shared/_flash_toasts — where a confirmation lands. Pinned above the bottom
@@ -142,13 +142,13 @@ main[role="main"] {
    The stack lets presses through; only the toast itself takes them. */
 .toast-stack {
   position: fixed;
-  inset-inline: var(--chrome-inset, 12px);
-  bottom: calc(max(var(--tab-bar-h, 0px), var(--tap-min, 44px)) + var(--safe-bottom, 0px) + var(--chrome-inset, 12px));
-  z-index: var(--z-toast, 1100);
+  inset-inline: var(--chrome-inset);
+  bottom: calc(max(var(--tab-bar-h), var(--tap-min)) + var(--safe-bottom) + var(--chrome-inset));
+  z-index: var(--z-toast);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-2, 8px);
+  gap: var(--space-2);
   pointer-events: none;
 }
 
@@ -173,7 +173,7 @@ main[role="main"] {
      composition (a 44px tap target plus its block padding, plus the safe area
      the bar itself adds) rather than restated as a constant: at an 18px root a
      hardcoded 3.5rem measured 63px against a 62px bar and left a 1px seam. */
-  --nav-swiper-h: calc(var(--tap-min, 44px) + (var(--space-2) * 2) + var(--safe-top, 0px));
+  --nav-swiper-h: calc(var(--tap-min) + (var(--space-2) * 2) + var(--safe-top));
   /* --z-brand moved to _tokens.scss, where the rest of the ladder lives. It was
      declared here, which made the ladder two sources: a reader sizing a new
      layer against _tokens saw --z-overlay: 100 then --z-modal: 1000 and could
@@ -189,14 +189,14 @@ main[role="main"] {
 .brand-mark {
   position: fixed;
   /* Above app chrome, not merely above the drawer -- see --z-brand. */
-  z-index: var(--z-brand, 120);
+  z-index: var(--z-brand);
   /* +--top-band-nudge: the nav link's box is line-height + padding (47.25px)
      against this mark's 44px tap box, same top — so their centres sat 1.6px
      apart and rendered_invariants read the band as misaligned on every
      surface. The nudge drops the fixed chrome to the LINK's centre, because
      moving text metrics would visibly reflow and this moves nothing else. */
-  top: calc(var(--chrome-inset-block, 8px) + var(--safe-top, 0px) + var(--top-band-nudge, 0px));
-  inset-inline-start: calc(var(--chrome-inset, 12px) + var(--safe-left, 0px));
+  top: calc(var(--chrome-inset-block) + var(--safe-top) + var(--top-band-nudge));
+  inset-inline-start: calc(var(--chrome-inset) + var(--safe-left));
   display: inline-flex;
   align-items: center;
   justify-content: flex-start;
@@ -214,7 +214,7 @@ main[role="main"] {
    different typeface per app: Inter on brgen, the system face on amber, and
    JetBrains Mono on bsdports, whose --font is monospace by design. A
    logotype that exists in print does not follow an app's UI-font choice. */
-font: var(--weight-heavy) clamp(0.9375rem, 2.8vw, 1.125rem) / 1 var(--font-brand, var(--font));
+font: var(--weight-heavy) clamp(0.9375rem, 2.8vw, 1.125rem) / 1 var(--font-brand);
   letter-spacing: var(--tracking-tightest);
   color: var(--text);
   text-decoration: none;
@@ -253,6 +253,6 @@ font: var(--weight-heavy) clamp(0.9375rem, 2.8vw, 1.125rem) / 1 var(--font-brand
 .brand-mark:focus-visible {
   color: var(--text);
   text-decoration: none;
-  outline: var(--focus-ring, 2px solid var(--accent));
+  outline: var(--focus-ring);
   outline-offset: 2px;
 }

@@ -46,15 +46,15 @@
   position: absolute;
   inset-inline: 0;
   inset-block-start: 50%;
-  block-size: var(--tap-min, 44px);
-  min-inline-size: var(--tap-min, 44px);
+  block-size: var(--tap-min);
+  min-inline-size: var(--tap-min);
   transform: translateY(-50%);
 }
 
 .site-legal .site-verify {
   flex-basis: 100%;
   font-size: 13px;
-  color: var(--text, #333333);
+  color: var(--text);
   display: flex;
   flex-wrap: wrap;
   gap: 8px 16px;
@@ -78,12 +78,12 @@
 
 .legal-prose .legal-eyebrow {
   font-size: 0.72rem;
-  color: var(--text-secondary, #4d4d4d);
+  color: var(--text-secondary);
   margin: 0 0 12px;
 }
 
 .legal-prose .legal-updated {
-  color: var(--text-secondary, #4d4d4d);
+  color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
   font-size: 0.85rem;
   margin: 0 0 24px;
@@ -110,7 +110,7 @@
   gap: 16px;
   margin-top: 32px;
   padding-top: 16px;
-  border-top: 1px solid var(--border, #666666);
+  border-top: 1px solid var(--border);
   font-size: 14px;
 }
 

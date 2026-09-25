@@ -21,7 +21,7 @@
   gap: 4px;
   padding: 1px var(--space-2);
   border: 1px solid var(--border);
-  border-radius: var(--radius-pill, 999px);
+  border-radius: var(--radius-pill);
   background: var(--surface-elevated);
   color: var(--text);
   font-size: var(--text-xs);
@@ -118,7 +118,7 @@ li:focus-within .msg_reaction_picker {
   margin: var(--space-1) auto 0;
   padding: var(--space-1) var(--space-3);
   border: 1px solid var(--accent);
-  border-radius: var(--radius-pill, 999px);
+  border-radius: var(--radius-pill);
   background: var(--surface-elevated);
   color: var(--text);
   font-size: var(--text-xs);
@@ -152,16 +152,16 @@ li:focus-within .msg_reaction_picker {
 /* Fleet comment rows (shared comments/_comment) */
 .comment.comment_item {
   display: block;
-  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+  padding: var(--space-3) var(--space-4);
 }
 .comment.comment_item:hover {
-  background: var(--hover-subtle, transparent);
+  background: var(--hover-subtle);
 }
 .comment.comment_item header {
   font-size: var(--text-sm);
   line-height: 1.5;
   color: var(--text-secondary);
-  margin-bottom: var(--space-1, 0.25rem);
+  margin-bottom: var(--space-1);
 }
 .comment-author {
   color: var(--text);
@@ -175,13 +175,13 @@ li:focus-within .msg_reaction_picker {
   white-space: pre-wrap;
 }
 .comment-replies {
-  margin-inline-start: var(--space-4, 1rem);
-  padding-inline-start: var(--space-3, 0.75rem);
+  margin-inline-start: var(--space-4);
+  padding-inline-start: var(--space-3);
   border-inline-start: 2px solid var(--border);
 }
 .comment-replies:not(:has(*)) { display: none; }
 .comment-reply {
-  margin-top: var(--space-2, 0.5rem);
+  margin-top: var(--space-2);
 }
 .comment-reply-toggle {
   cursor: pointer;
@@ -192,7 +192,7 @@ li:focus-within .msg_reaction_picker {
 }
 .comment-reply-toggle::-webkit-details-marker { display: none; }
 .comment-reply-toggle:hover { text-decoration: underline; }
-.comment-reply[open] .comment-reply-toggle { margin-bottom: var(--space-2, 0.5rem); }
+.comment-reply[open] .comment-reply-toggle { margin-bottom: var(--space-2); }
 .comment-delete {
   display: inline;
   padding: 0;

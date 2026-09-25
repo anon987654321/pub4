@@ -28,12 +28,12 @@
   padding: 0 var(--control-pad-inline);
   border-radius: var(--radius-pill);
   border: 1px solid transparent;
-  background: var(--text, var(--color-primary));
-  color: var(--bg, var(--color-highlight));
+  background: var(--text);
+  color: var(--bg);
   font-weight: var(--weight-bold);
   text-decoration: none;
   cursor: pointer;
-  transition: opacity var(--transition-fast) var(--ease-out), background 160ms var(--ease-out), border-color 160ms var(--ease-out), color 160ms var(--ease-out), transform var(--duration-m3-short, 200ms) var(--ease-m3-spring, cubic-bezier(0.34, 1.56, 0.64, 1.0));
+  transition: opacity var(--transition-fast) var(--ease-out), background 160ms var(--ease-out), border-color 160ms var(--ease-out), color 160ms var(--ease-out), transform var(--duration-m3-short) var(--ease-m3-spring);
 }
 
 .btn:hover {
@@ -60,8 +60,8 @@
    button with a 1px edge is a line, and the flat system separates by surface.
    The zen-era btn--primary BEM twins are retired. */
 .btn.btn-primary {
-  background: var(--text, var(--color-primary));
-  color: var(--bg, var(--color-highlight));
+  background: var(--text);
+  color: var(--bg);
 }
 
 .btn.btn-ghost {
@@ -73,12 +73,12 @@
 }
 
 .btn.btn-ghost:hover {
-  background: var(--hover, var(--color-midtone-tint));
+  background: var(--hover);
 }
 
 .btn.btn-danger {
   background: var(--hover);
-  color: var(--danger, var(--text));
+  color: var(--danger);
   border: 0;
 }
 

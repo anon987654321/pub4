@@ -1,5 +1,12 @@
 @use "dialect_tokens" as x;
 
+// An app that states its own palette at an unlayered :root in both themes, as
+// brgen does, outranks every palette declaration below on every element, so it
+// forwards this file with ($palette: false) and ships none of them. $luxury is
+// amber's wardrobe extension set; nothing outside amber reads it.
+$palette: true !default;
+$luxury: true !default;
+
 // The token foundation lives in the lowest cascade layer. Un-layered styles
 // beat layered ones regardless of source order, so an app palette written
 // at plain :root (brgen-old, amber luxury, bsdports wscons) now wins BY
@@ -21,8 +28,10 @@
   }
 
   :root {
-    @include x.dark-tokens;
-    color-scheme: dark;
+    @if $palette {
+      @include x.dark-tokens;
+      color-scheme: dark;
+    }
     --color-midtone: var(--text-secondary);
     --color-highlight: var(--surface);
     --color-accent: var(--accent);
@@ -192,32 +201,37 @@
     --color-primary: var(--text);
     --color-surface: var(--surface);
 
-    /* Luxury minimalist extensions (Aesop/Toteme/Nécessaire inspired) */
-    /* Warm neutrals, generous breathing room, refined for product/wardrobe UIs */
-    --luxury-bg: #efefef;
-    --luxury-surface: #ffffff;
-    --luxury-text: #333333;
-    --luxury-muted: #4d4d4d;
-    --luxury-border: #888888;
-    --luxury-space-xs: 0.5rem;
-    --luxury-space-sm: 0.75rem;
-    --luxury-space-md: 1.5rem;
-    --luxury-space-lg: 2rem;
-    --luxury-space-xl: 3rem;
-    --luxury-font-display: clamp(1.953rem, 1.5rem + 2vw, 2.441rem);
-    --luxury-font-title: 1.563rem;
-    --luxury-font-meta: 0.875rem;
-    --luxury-letter-tight: -0.01em;
-    --luxury-line-relaxed: 1.6;
+
+    @if $luxury {
+      /* Luxury minimalist extensions (Aesop/Toteme/Nécessaire inspired) */
+      /* Warm neutrals, generous breathing room, refined for product/wardrobe UIs */
+      --luxury-bg: #efefef;
+      --luxury-surface: #ffffff;
+      --luxury-text: #333333;
+      --luxury-muted: #4d4d4d;
+      --luxury-border: #888888;
+      --luxury-space-xs: 0.5rem;
+      --luxury-space-sm: 0.75rem;
+      --luxury-space-md: 1.5rem;
+      --luxury-space-lg: 2rem;
+      --luxury-space-xl: 3rem;
+      --luxury-font-display: clamp(1.953rem, 1.5rem + 2vw, 2.441rem);
+      --luxury-font-title: 1.563rem;
+      --luxury-font-meta: 0.875rem;
+      --luxury-letter-tight: -0.01em;
+      --luxury-line-relaxed: 1.6;
+    }
   }
 
-  [data-theme="light"] {
-    @include semantic-light-overrides;
-  }
-
-  @media (prefers-color-scheme: light) {
-    :root:not([data-theme="dark"]) {
+  @if $palette {
+    [data-theme="light"] {
       @include semantic-light-overrides;
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root:not([data-theme="dark"]) {
+        @include semantic-light-overrides;
+      }
     }
   }
 

@@ -16,7 +16,7 @@
    pinned above the progressive tab bar like the chat widget. */
 .install-prompt {
   position: fixed;
-  inset-inline: var(--chrome-inset, 12px);
+  inset-inline: var(--chrome-inset);
   /* The panel spans the width, so it has to clear everything pinned to the
      bottom edge: the tab bar when it is open (--tab-bar-h, 0px when closed),
      and above that one tap-high row holding the peel handle that opens the bar
@@ -24,17 +24,17 @@
      390px: clearing only max(bar, peel) left the chat tab over the lower 32px
      of the Install button, and fixed chrome cannot be scrolled out from under
      a blocker. */
-  bottom: calc(var(--tab-bar-h, 0px) + var(--tap-min, 44px) + var(--safe-bottom, 0px) + var(--chrome-inset, 12px));
-  z-index: var(--z-toast, 1100);
+  bottom: calc(var(--tab-bar-h) + var(--tap-min) + var(--safe-bottom) + var(--chrome-inset));
+  z-index: var(--z-toast);
   max-width: 32rem;
   margin-inline: auto;
   display: flex;
   flex-direction: column;
-  gap: var(--sp, 8px);
+  gap: var(--sp);
   padding: 0.75rem 1rem;
   background: var(--surface-elevated);
   border: 1px solid var(--border);
-  border-radius: var(--radius-card, 16px);
+  border-radius: var(--radius-card);
   color: var(--text);
   font-family: var(--font);
 }
@@ -43,7 +43,7 @@
 
 .install-prompt strong {
   font-size: var(--text-base);
-  font-weight: var(--weight-heavy, 700);
+  font-weight: var(--weight-heavy);
 }
 
 .install-prompt p {
@@ -56,7 +56,7 @@
 .install-prompt-actions {
   display: flex;
   justify-content: flex-end;
-  gap: var(--sp, 8px);
+  gap: var(--sp);
 }
 
 .install-prompt-primary,
@@ -92,6 +92,6 @@
 :root[data-pwa-display="standalone"] .install-prompt { display: none; }
 
 :root[data-pwa-display="standalone"] body {
-  padding-bottom: var(--safe-bottom, 0px);
+  padding-bottom: var(--safe-bottom);
 }
 

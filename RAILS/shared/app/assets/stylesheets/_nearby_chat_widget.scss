@@ -16,11 +16,11 @@
    tab bar is open, --tab-bar-h lifts it clear of the menu. */
 .nearby-chat-widget {
   position: fixed;
-  bottom: calc(var(--tab-bar-h, 0px) + var(--safe-bottom, 0px));
-  inset-inline-end: var(--safe-right, 0px);
-  z-index: var(--z-toast, 1100);
+  bottom: calc(var(--tab-bar-h) + var(--safe-bottom));
+  inset-inline-end: var(--safe-right);
+  z-index: var(--z-toast);
   /* Tab/header keep mono chrome; body/log use primary type for readable chat. */
-  font-family: var(--font-mono, ui-monospace, monospace);
+  font-family: var(--font-mono);
   pointer-events: auto;
 }
 
@@ -49,7 +49,7 @@
   color: var(--text);
   padding: 0.625rem var(--space-4);
   min-height: var(--tap-min);
-  font: var(--text-xs)/1 var(--font-mono, ui-monospace, monospace);
+  font: var(--text-xs)/1 var(--font-mono);
   letter-spacing: var(--tracking-normal);
   cursor: pointer;
 }
@@ -135,7 +135,7 @@
        rule in design_rules. The top border stays — it is a real edge. */
     border-inline: 0;
     border-radius: 0;
-    padding-block-end: var(--safe-bottom, 0px);
+    padding-block-end: var(--safe-bottom);
     animation-name: nearby-widget-sheet-in;
   }
 }
@@ -356,7 +356,7 @@
   appearance: none;
   border: 0;
   background: transparent;
-  color: var(--accent, var(--text));
+  color: var(--accent);
   font: inherit;
   font-weight: var(--weight-bold);
   cursor: pointer;
@@ -392,7 +392,7 @@
   border-radius: 0;
   background: var(--bg);
   text-decoration: none;
-  font: var(--weight-bold) var(--text-xs)/1 var(--font-mono, ui-monospace, monospace);
+  font: var(--weight-bold) var(--text-xs)/1 var(--font-mono);
   width: fit-content;
 }
 

@@ -3,7 +3,9 @@
 // sheet rules extracted from brgen's _mobile.scss, which brgen still carries.
 // Forwarding either here would declare those selectors twice.
 @forward "fonts";
-@forward "tokens";
+// brgen states its palette at an unlayered :root in both themes, which
+// outranks the layered one, and reads none of amber's luxury tokens.
+@forward "tokens" with ($palette: false, $luxury: false);
 @forward "typography";
 @forward "layout_chrome";
 @forward "animations";

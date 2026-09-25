@@ -137,7 +137,7 @@ nav .brand {
   inset-inline-start: 0.75rem;
   /* Skip-links get the scale's own top tier (design_tokens' --z-skip: 2000)
      — was hardcoded to 1000, tying it with modals instead of outranking them. */
-  z-index: var(--z-skip, 2000);
+  z-index: var(--z-skip);
   padding: 0.5rem 0.75rem;
   background: var(--black);
   color: var(--white);

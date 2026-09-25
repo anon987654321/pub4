@@ -6,10 +6,10 @@
   display: grid;
   justify-items: center;
   gap: var(--space-1);
-  padding: var(--space-6, 2rem) var(--space-4, 1rem);
+  padding: var(--space-6) var(--space-4);
   text-align: center;
   border: 0;
-  border-radius: var(--radius-md, 12px);
+  border-radius: var(--radius-md);
   max-width: 28rem;
   margin-inline: auto;
   color: var(--text-secondary);
@@ -25,8 +25,8 @@
   height: 2.5rem;
   margin-block-end: var(--space-1);
   border: 0;
-  border-radius: var(--radius-pill, 9999px);
-  background: var(--hover-subtle, color-mix(in srgb, var(--text) 6%, transparent));
+  border-radius: var(--radius-pill);
+  background: var(--hover-subtle);
   font-size: var(--text-xs);
   line-height: 1;
   color: var(--text-secondary);
@@ -42,15 +42,15 @@
   width: 2.5rem;
   height: 2.5rem;
   border: 0;
-  border-radius: var(--radius-pill, 9999px);
-  background: var(--hover-subtle, color-mix(in srgb, var(--text) 6%, transparent));
+  border-radius: var(--radius-pill);
+  background: var(--hover-subtle);
   font-size: var(--text-xs);
   color: var(--text-secondary);
 }
 
 .empty-state-title {
   margin: 0;
-  font-size: var(--text-title, 1.25rem);
+  font-size: var(--text-title);
   font-weight: var(--weight-bold);
   font-family: var(--font);
   color: var(--text);
@@ -77,13 +77,13 @@
 .empty-state .btn,
 .empty-state-action,
 .empty-state-actions {
-  margin-block-start: var(--space-3, 0.75rem);
+  margin-block-start: var(--space-3);
 }
 
 .empty-state-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2, 0.5rem);
+  gap: var(--space-2);
   justify-content: center;
 }
 
@@ -98,23 +98,23 @@ body[data-theme="wscons"] .empty-state,
 /* Search skeleton (live_search loading) */
 .search-skeleton {
   display: grid;
-  gap: var(--space-3, 0.75rem);
-  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
 }
 
 .search-skeleton-card {
   display: grid;
   grid-template-columns: 40px 1fr;
-  gap: var(--space-3, 0.75rem);
+  gap: var(--space-3);
   align-items: start;
-  padding-block: var(--space-2, 0.5rem);
+  padding-block: var(--space-2);
   border-bottom: 0;
 }
 
 .search-skeleton-avatar {
   width: 40px;
   height: 40px;
-  border-radius: var(--radius-pill, 9999px);
+  border-radius: var(--radius-pill);
 }
 
 .search-skeleton-lines {
@@ -137,12 +137,12 @@ body[data-theme="wscons"] .empty-state,
 
 /* Shared skeleton if app did not define one */
 .skeleton {
-  border-radius: var(--radius-sm, 8px);
+  border-radius: var(--radius-sm);
   background: linear-gradient(
     90deg,
-    var(--hover-subtle, rgba(216, 214, 224, 0.03)) 0%,
-    var(--hover, rgba(216, 214, 224, 0.1)) 50%,
-    var(--hover-subtle, rgba(216, 214, 224, 0.03)) 100%
+    var(--hover-subtle) 0%,
+    var(--hover) 50%,
+    var(--hover-subtle) 100%
   );
   background-size: 200% 100%;
   animation: shared-skeleton-shimmer 1.2s var(--ease-in-out) infinite;

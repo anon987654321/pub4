@@ -14,5 +14,5 @@ main[role="main"] {
   /* --tab-bar-h is declared on :root by app-root-tokens, so the 54px fallback
      could never be reached — and it disagreed with the 44px the token actually
      holds, which is the shape a stale fallback takes when nothing reads it. */
-  padding-bottom: calc(var(--tab-bar-h) + var(--safe-bottom, 0px) + var(--space-2, 8px));
+  padding-bottom: calc(var(--tab-bar-h) + var(--safe-bottom) + var(--space-2));
 }

@@ -79,7 +79,7 @@
   }
 
   p + p {
-    margin-block-start: var(--space-3, 0.75rem);
+    margin-block-start: var(--space-3);
   }
 
   h1, h2, h3, h4 {
@@ -90,15 +90,15 @@
 
   h1 {
     font-size: var(--text-2xl);
-    font-weight: var(--weight-heavy, 800);
+    font-weight: var(--weight-heavy);
   }
   h2 {
     font-size: var(--text-xl);
-    font-weight: var(--weight-bold, 600);
+    font-weight: var(--weight-bold);
   }
   h3 {
     font-size: var(--text-title);
-    font-weight: var(--weight-bold, 600);
+    font-weight: var(--weight-bold);
   }
 
   ul, ol {
@@ -107,13 +107,13 @@
   }
 
   li + li {
-    margin-block-start: var(--space-1, 0.25rem);
+    margin-block-start: var(--space-1);
   }
 
   blockquote {
     margin-block: 1em;
     margin-inline: 0;
-    padding-inline-start: var(--space-4, 1rem);
+    padding-inline-start: var(--space-4);
     border-inline-start: 2px solid var(--border);
     color: var(--text-secondary);
     max-width: var(--measure);
@@ -156,10 +156,10 @@ main#main-content > header h1 {
   font-size: var(--text-2xl);
   line-height: var(--leading-tight);
   letter-spacing: var(--tracking-tight);
-  font-weight: var(--weight-heavy, 800);
+  font-weight: var(--weight-heavy);
   max-width: var(--measure-wide);
   text-wrap: balance;
-  margin-block-end: var(--space-4, 1rem);
+  margin-block-end: var(--space-4);
 }
 
 /* One rule dresses a section heading, at whatever depth it sits. The pair that
@@ -179,8 +179,8 @@ main section h2 {
   font-size: var(--text-title);
   line-height: var(--leading-tight);
   letter-spacing: var(--tracking-tight);
-  font-weight: var(--weight-bold, 600);
+  font-weight: var(--weight-bold);
   text-transform: none;
   text-wrap: balance;
-  margin-block-end: var(--space-3, 0.75rem);
+  margin-block-end: var(--space-3);
 }
