@@ -89,7 +89,7 @@ gem "stimulus_reflex", "~> 3.5"
 # Optional Solidus commerce kernel. Native Marketplace::* remains the seller/order
 # runtime until a deliberate dual-write and cutover on a Postgres host.
 if ENV["SOLIDUS_MARKETPLACE"] == "1"
-  gem "solidus", "~> 4.7"
+  gem "solidus", ">= 4.7.1", "< 4.8"
   gem "solidus_starter_frontend", "~> 0.2"
   gem "solidus_multi_domain", "~> 1.5"
 end
