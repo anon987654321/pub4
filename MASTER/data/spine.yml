@@ -260,12 +260,11 @@ spine:
   # repeat and failed-action guards, a schema-bound reply and a read-only answer;
   # the review footer's counts; and the shell tool and rollback reporting what
   # actually happened.
-  # Not raised for lib/core/execution and lib/core/routing, about 1,080 body
-  # lines that arrived with no sponsor and nothing calling the Pipeline. The
-  # operator chose on 2026-09-15 to keep that tree and repair it, which is a
-  # reason to keep it, not a budget for it; the row stays red until the tree is
-  # wired into the fold or paid for by a fall. Its two simulated classes were
-  # never under this ceiling, so deleting them lowers nothing.
+  # 35302 -> after the 2026-09-25 deletion of lib/core/execution and the dead
+  # Core::Routing::ModelControlPlane: about 1,080 body lines of abandoned
+  # execution machinery left with no production caller. The ceiling remains at
+  # 35302 until the next clean measurement ratchets it down; the important change
+  # is that this nested parallel execution spine no longer exists.
   # 35123 -> 35302, raised (log below) for the forward work MASTER owed: the
   # fold's reply schema built per turn from Proof#scope, so an early done, an
   # unproved commit and a write before ideation are not in the enum a

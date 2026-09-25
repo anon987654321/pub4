@@ -1078,8 +1078,12 @@ Much of it is built under other names; verify each before building on it:
 `Fix::Heartbeat` (scheduled jobs, `run_due!`), `Cognition::Mind` (persistent
 state over `.master/`, `tick!` and `reflect!`), `Ground::PersonalWorkspace`
 (per-subject `USER.md` and `MEMORY.md`), `Ground::StandingOrders`, the event
-bus, and `lib/core/execution`'s states with the runs and session recovery
-tests.
+bus.
+
+Closed 2026-09-25: `lib/core/execution` and its state-machine, verifier,
+presence, evidence, curriculum and benchmark scaffolding were removed after a
+production-call-site audit found no runtime consumers; dead `ModelControlPlane`
+went with it. The surviving `Core::Fold` remains the sole execution loop.
 
 Closed 2026-09-16: `Ground::StandingOrders` is the ledger the intake asked for
 — an order carries an owner, an authority domain, a wake (schedule, event or
