@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "timeout"
+
 # Two layers, because the one that was here had never rejected anything.
 #
 # `approve?` called an LLM and rescued StandardError by returning true. On
@@ -103,7 +105,7 @@ class PostModeration
     end
 
     Timeout.timeout(TIMEOUT) { moderate_sync }
-  rescue Timeout::Error, StandardError => error
+  rescue StandardError => error
     Rails.logger.warn("PostModeration timeout/error: #{error.class}: #{error.message}")
     true
   end
