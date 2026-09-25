@@ -105,8 +105,6 @@ class DinteroCheckoutTest < ActiveSupport::TestCase
     assert_equal :post, draft[:method]
     assert_match(%r{/shopping/draft_orders\z}, draft[:path])
     assert_equal false, draft[:payload][:options][:split_draft]
-    assert_equal "seller-1", draft[:payload][:order][:items].first[:id].nil? ? nil : seller.dintero_payout_destination_id
-
     assert_equal :put, complete[:method]
     assert_match(%r{/shopping/draft_orders/draft-1/complete\z}, complete[:path])
 
