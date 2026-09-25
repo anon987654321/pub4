@@ -73,11 +73,14 @@ class Marketplace::Return < ApplicationRecord
 
     payout = Marketplace::Payout.find_by(order_id: order.id)
     payout&.clawback_or_void!
-    return if order.payment_provider != "stripe"
-
-    id = Marketplace::Payments::StripeRefund.submit!(order: order)
-    update!(refunded_at: Time.current, refund_reference: id)
-    order.update!(payment_status: "refunded")
+    case order.payment_provider
+    when "dintero"
+      Marketplace::Payments::DinteroCheckout.refund!(order: order)
+    when "stripe"
+      id = Marketplace::Payments::StripeRefund.submit!(order: order)
+      update!(refunded_at: Time.current, refund_reference: id)
+      order.update!(payment_status: "refunded")
+    end
   rescue Marketplace::Payments::NotConfigured
     nil
   rescue StandardError => error
