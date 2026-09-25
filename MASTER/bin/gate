@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# The scan and critique pass over all four trees — two stages of the
+# The scan and critique pass over all three trees — two stages of the
 # repo-wide chain, not the chain itself. `MASTER/bin/operator gate` is the chain:
 # it runs this for the lexical and semantic tiers, then the RAILS gates, the
 # suites, the ratchets and the sprawl census, and attributes every file each
@@ -92,7 +92,7 @@ end
 
 # The four trees, by the name a person types. `.` is MASTER because this script
 # runs from inside it.
-TREE_PATHS = { "MASTER" => ".", "RAILS" => "../RAILS", "OPENBSD" => "../OPENBSD", "STUDIO" => "tools/studio" }.freeze
+TREE_PATHS = { "MASTER" => ".", "RAILS" => "../RAILS", "OPENBSD" => "../OPENBSD" }.freeze
 
 # Named trees when --tree is given, all four otherwise. An unknown name is
 # refused rather than silently narrowing the gate to nothing — a gate that
@@ -110,7 +110,7 @@ COMMANDS = {
   # repo reports clean on the part it looked at.
   #
   # In full-fix mode /fix writes wherever the scan walked; only
-  # Scanner::PathFilter's skip list keeps it out of STUDIO's generated
+  # Scanner::PathFilter's skip list keeps it out of generated
   # lora/**/.cache/** copies and dilla's demucs virtualenv. Read the printed
   # diff before committing; never commit rewrites of generated caches.
   # `bin/operator gate` names any such path and refuses to call the run clean.
