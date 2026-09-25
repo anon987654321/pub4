@@ -113,7 +113,7 @@ module Operator
         ### 7. The law you are reviewing against
 
         This repository is governed by MASTER, and its law is data rather than prose. Read it before
-        you judge anything, in this order — all four are inlined in `snapshot_MASTER.md`:
+        you judge anything, in this order — all three governed trees are represented by their own snapshots:
 
         1. `MASTER/data/soul.yml` — the kernel: absolutes, work rules, anti-simulation.
         2. `MASTER/data/rules.yml` — 242 declared rules, each with tier, severity and fix.
@@ -161,7 +161,7 @@ module Operator
       # The repo root, which is where an operator hands these to another model
       # from. CLAUDE.md's "nothing else sits at the repo root" is about the
       # tracked shape of the tree, and `.gitignore` already carries
-      # `/snapshot_*.md` — so these four never enter it, and no ratchet counts
+      # `/snapshot_*.md` — so these snapshot files never enter it, and no ratchet counts
       # them. Writing them to MASTER/output instead meant the operator had to
       # know a second location and every pack was two copies of 21 MB.
       out = File.join(REPO, "snapshot_#{tree}.md")
