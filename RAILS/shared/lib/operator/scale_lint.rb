@@ -138,14 +138,14 @@ module Operator
     # Counted separately from the apps, because they have different histories
     # and a single number would hide which surface moved. Measured against the
     # same scale, because that is the whole point.
-    # face.css and chat_upload.css moved from web/public to web/src when the
-    # build pipeline split source from output; this constant did not follow,
-    # so the corpus silently emptied and every face/* baseline read as fixed
-    # when nothing was being measured (RAILS/test/scale_lint_test.rb caught
-    # it: "face.css is not in the corpus, so the face is measured by
-    # nothing"). public/ carries no .css today -- error pages, icon, vendor,
-    # models -- confirming src/ is where the real source lives now.
-    FACE = File.join(REPO_ROOT, "MASTER", "web", "src")
+    #
+    # The face's sheets live in MASTER/web/public (fe829068c). The directory is
+    # found by where face.css actually is rather than named once, because each
+    # time the sources moved the corpus emptied silently and every face/*
+    # baseline read as fixed while nothing was measured.
+    FACE = %w[public src].map { |dir| File.join(REPO_ROOT, "MASTER", "web", dir) }
+                         .find { |dir| File.file?(File.join(dir, "face.css")) } ||
+           File.join(REPO_ROOT, "MASTER", "web", "public")
 
     def app_stylesheets
       @app_stylesheets ||= (
