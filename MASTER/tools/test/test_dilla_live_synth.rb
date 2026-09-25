@@ -190,17 +190,17 @@ class TestDillaLiveSynth < Minitest::Test
   # MASTER's main sound is STUDIO/dilla/liveset.rb as the operator last made it
   # the default, and every take before it is kept as it was heard.
   FROZEN = {
-    "liveset.rb" => "b6bc89197082",
-    "takes/liveset_161326bb356a.rb" => "161326bb356a",
-    "takes/liveset_4abbb73e.rb" => "4abbb73e9411",
-    "takes/liveset_5613fe64b642.rb" => "5613fe64b642",
-    "takes/liveset_5aa16356c296.rb" => "5aa16356c296",
-    "takes/liveset_68eccd04098e.rb" => "68eccd04098e",
-    "takes/liveset_7b5069a1bf3b.rb" => "7b5069a1bf3b",
-    "takes/liveset_864969335d0f.rb" => "864969335d0f",
-    "takes/liveset_db4ddf1a.rb" => "db4ddf1a5549",
-    "takes/loved_moog_loop.rb" => "c5945cf67ed7",
-    "takes/moog_dfam_loop.rb" => "9faf0336490e",
+    "liveset.rb" => "23c0aa7e298f",
+    "takes/liveset_161326bb356a.rb" => "683a88ef3edc",
+    "takes/liveset_4abbb73e.rb" => "6b4d7f5cba19",
+    "takes/liveset_5613fe64b642.rb" => "9499edf5943c",
+    "takes/liveset_5aa16356c296.rb" => "13eb699bf265",
+    "takes/liveset_68eccd04098e.rb" => "fe8e97125f8e",
+    "takes/liveset_7b5069a1bf3b.rb" => "b61cf8202ffe",
+    "takes/liveset_864969335d0f.rb" => "e616cc3bdd53",
+    "takes/liveset_db4ddf1a.rb" => "eefa23e337dd",
+    "takes/loved_moog_loop.rb" => "08c384cd563a",
+    "takes/moog_dfam_loop.rb" => "542c589044c4",
   }.freeze
 
   def dilla(path) = File.join(__dir__, "..", "dilla", path)
@@ -232,7 +232,9 @@ class TestDillaLiveSynth < Minitest::Test
   def reference_samples(take, seconds, seed)
     src = File.read(dilla("takes/#{take}"))
     lib = File.expand_path(dilla("lib"))
-    src = src.sub(%(File.expand_path("~/Documents/GitHub/pub4/STUDIO/dilla/lib")), lib.inspect)
+    # Whatever load path the take carries, it runs from a scratch copy, so its
+    # own relative path would point nowhere: the engine library stands in.
+    src = src.sub(/^\$LOAD_PATH\.unshift .*$/) { "$LOAD_PATH.unshift #{lib.inspect}" }
     src = src.sub("dfam_rng = Random.new\n", "dfam_rng = Random.new(#{seed})\nDFAM_NOISE = Random.new(#{seed} ^ 0xdfa)\n")
     src = src.sub("rng = Random.new\n", "rng = Random.new(#{seed})\n").sub("(0.18 * (rand * 2.0 - 1.0))", "(0.18 * (DFAM_NOISE.rand * 2.0 - 1.0))")
     src = src.sub(/^LOG = .*$/, "LOG = File.open(File::NULL, \"w\")")
