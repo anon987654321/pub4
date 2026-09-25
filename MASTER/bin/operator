@@ -8,13 +8,14 @@ require "open3"
 # from the repo root above it.
 ROOT = File.expand_path("../..", __dir__)
 OPENBSD_OPS = File.join(ROOT, "OPENBSD")
-RUBY = Operator::RubyRunner.ruby_cmd
-BUNDLE = Operator::RubyRunner.bundle_cmd
 $LOAD_PATH.unshift(File.join(ROOT, "MASTER", "lib")) unless $LOAD_PATH.include?(File.join(ROOT, "MASTER", "lib"))
 
 require "operator/environment"
 require "operator/ruby_runner"
 require "operator/status_report"
+
+RUBY = Operator::RubyRunner.ruby_cmd
+BUNDLE = Operator::RubyRunner.bundle_cmd
 
 def usage
   <<~HELP
