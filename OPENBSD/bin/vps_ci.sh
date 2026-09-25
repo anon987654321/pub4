@@ -54,6 +54,11 @@ sync_ci_rails_root() {
   # KeyError "social" (2026-09-24).
   doas rm -f "$mirror/MASTER/data/rules.yml"
   git -C "$repo" archive HEAD MASTER/data/rules.yml | doas sh -c "cd ${mirror} && tar xf -"
+  # build_all_css.rb picks its Ruby through MASTER/lib/operator/ruby_runner,
+  # which requires its siblings. Without the directory css_build dies on a
+  # LoadError before it compiles anything.
+  doas rm -rf "$mirror/MASTER/lib/operator"
+  git -C "$repo" archive HEAD MASTER/lib/operator | doas sh -c "cd ${mirror} && tar xf -"
   doas chown -R "${app}:${app}" "$mirror"
 }
 
