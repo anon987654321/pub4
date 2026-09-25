@@ -27,8 +27,8 @@ class TestRuntimeOneSource < Minitest::Test
   def test_style_gate_delegates_bundler_and_ruby
     source = read("../MASTER/tools/style_gate.rb")
     assert_includes source, 'require_relative "../lib/operator/ruby_runner"'
-    assert_includes source, "[BUNDLE, "exec", RUBY, "-S", "rubocop""
-    assert_includes source, "[BUNDLE, "exec", RUBY, shared_rubocop]"
+    assert_includes source, %([BUNDLE, "exec", RUBY, "-S", "rubocop")
+    assert_includes source, %([BUNDLE, "exec", RUBY, shared_rubocop])
     refute_includes source, "which ruby34"
   end
 end
