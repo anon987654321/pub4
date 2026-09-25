@@ -11,6 +11,14 @@ module Master
       # Stages::Route. test_command_registry_dispatch holds the two together, so a
       # verb cannot be built without a page or paged without being built.
       HELP_TOPICS = {
+        "face" => {
+          summary: "the Braille face, listening, in this terminal",
+          detail: [
+            "/face — the same head the web face draws, as Braille in a phone-sized",
+            "window. It listens while idle, speaks the reply, and the session keeps",
+            "what was said. Type a line to send it as text. ^D leaves.",
+          ],
+        },
         "fix" => {
           summary: "the convergence loop: observe, critique, repair, observe again",
           detail: [

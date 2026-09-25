@@ -125,10 +125,15 @@ module Master
         run_agent_turn(line)
       end
 
+      def open_face
+        puts Master::CLI::CommandRegistry.dispatch_face
+      end
+
       def dispatch_core_slash_command(stripped)
         case stripped
         when %r{\A/(?:help|\?)(?:\s+(.+))?\z} then run_help(Regexp.last_match(1))
         when "/exit", "/quit" then exit_cli
+        when "/face" then open_face
         when "/undo", "/rollback" then run_undo
         when "/clear" then run_input("/clear")
         else :unhandled

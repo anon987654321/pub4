@@ -155,6 +155,12 @@ if $stdin.tty?
 
   message = initial_message_from_argv(ARGV)
   message = "/status" if fast_boot && message.empty?
+  if !fast_boot && Master::CLI::Face::Window.asked?(message.split)
+    puts Master::CLI::CommandRegistry.dispatch_face
+    stop_cli_background_loop_safely(cli)
+    save_cli_session_safely(cli)
+    exit!(0)
+  end
   if fast_boot
     cli.pipe(message) unless message.empty?
     stop_cli_background_loop_safely(cli)

@@ -17,7 +17,7 @@ module Master
       include PromptBuilder
       include FallbackChain
 
-      DEFAULT_MESSAGE_WINDOW_SIZE = 16
+      DEFAULT_MESSAGE_WINDOW_SIZE = 40
 
       Dependencies = Data.define(
         :config, :session, :tools, :circuit_breaker, :cache, :bus,

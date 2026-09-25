@@ -1,0 +1,298 @@
+# frozen_string_literal: true
+
+require "io/console"
+require "io/wait"
+
+module Master
+  module CLI
+    module Face
+      # The face in a terminal: the frame on top, the words under it, a status
+      # line and the line being typed. One thread paints the whole window
+      # Face::FPS times a second at absolute cursor positions, so nothing
+      # scrolls, a resize is picked up on the next frame, and a stray line some
+      # other thread prints is painted over by the frame after it.
+      #
+      # Enter on an empty line listens, Enter again stops; a typed line is sent
+      # as it is. Either way the words go through turn, which is TurnRouter —
+      # the path bin/master takes — and the reply is spoken and shown.
+      class Window
+        ENTER = %W[\r \n].freeze
+        LEAVE = %W[\u0003 \u0004].freeze
+        ERASE = %W[\u007f \b].freeze
+        EXIT_WORDS = %w[/exit /quit exit quit].freeze
+        ACCENT = "\e[38;2;255;51;68m"
+        DIM = "\e[2m"
+        PLAIN = "\e[0m"
+
+        WORDS = %w[/face face].freeze
+        MESSAGE_FLAGS = %w[-m -p --message --prompt].freeze
+
+        # Whether a command line asks for the face and nothing else: `face`,
+        # `/face`, or either after -m, which is how bin/master passes it on.
+        def self.asked?(argv)
+          words = argv.reject { |arg| MESSAGE_FLAGS.include?(arg) }
+          words.size == 1 && WORDS.include?(words.first.strip)
+        end
+
+        # What the face says goes through TurnRouter, as a line typed at
+        # bin/master does. The container comes from a block called once, on
+        # the first utterance, so the face draws before any runtime exists and
+        # the boot is paid only by someone who speaks. A reply that streamed
+        # is the streamed text, as the session prints it.
+        def self.turn(&boot)
+          lock = Mutex.new
+          container = nil
+          lambda do |text|
+            lock.synchronize { container ||= boot.call }
+            streamed = +""
+            result = TurnRouter.call(message: text, container:, on_turn: ->(line) { streamed << line << "\n" })
+            return result if streamed.strip.empty? || result.err?
+
+            streamed
+          end
+        end
+
+        def initialize(turn:, ear: Ear.new, mouth: Mouth.new, input: $stdin, output: $stdout,
+                       size: -> { IO.console&.winsize || [24, 80] })
+          @turn = turn
+          @ear = ear
+          @mouth = mouth
+          @input = input
+          @output = output
+          @size = size
+          @lock = Mutex.new
+          @state = :idle
+          @level = nil
+          @words = [ear.missing, mouth.missing].compact
+          @draft = +""
+          @closing = false
+          @motion = Motion.new(seed: Random.new_seed % 1_000_003)
+          @events = []
+          @opened = now
+        end
+
+        PHONE_ROWS = 52
+        PHONE_COLS = 42
+
+        def run
+          @output.print("\e[8;#{PHONE_ROWS};#{PHONE_COLS}t\e[?1049h\e[2J")
+          painter = Thread.new { paint_forever }
+          raw { converse }
+          "face0: closed"
+        ensure
+          painter&.kill
+          @output.print("#{PLAIN}\e[?25h\e[?1049l")
+          @output.flush
+        end
+
+        # One whole window as the escape sequences that draw it, t seconds
+        # after the window opened. The events since the last frame go to the
+        # face once.
+        def screen(rows, cols, t)
+          state, level, words, draft, events = @lock.synchronize { [@state, @level, @words.dup, @draft.dup, @events.slice!(0..)] }
+          text_rows = [rows / 4, 2].max
+          face_rows = [rows - text_rows - 2, 1].max
+          face = Face.frame(state:, rows: face_rows, cols:, t:, level:, events:, motion: @motion).split("\n")
+          body = face.map { |line| tint(state, line) } + tail(words, text_rows, cols)
+          body << "#{DIM}#{status(state)[0, cols]}#{PLAIN}" << typed(draft, cols)
+          painted = body.each_with_index.map { |line, i| "\e[#{i + 1};1H#{line}\e[K" }.join
+          "\e[?25l#{painted}\e[#{body.size};#{[draft.length + 3, cols].min}H\e[?25h"
+        end
+
+        private
+
+        def paint_forever
+          last = nil
+          loop do
+            rows, cols = @size.call
+            @output.print("\e[2J") if last && last != [rows, cols]
+            last = [rows, cols]
+            @output.print(screen(rows, cols, now - @opened))
+            @output.flush
+            sleep 1.0 / Face::FPS
+          end
+        end
+
+        def now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+
+        def raw(&)
+          @input.respond_to?(:tty?) && @input.tty? ? @input.raw(&) : yield
+        end
+
+        def converse
+          until @closing
+            arm_ear
+            key = read_key(0.1)
+            react(key) if key
+          end
+        end
+
+        # Idle, with nothing typed, listens on its own. Enter or a typed
+        # character stops that take; the keys stay on this thread.
+        def arm_ear
+          return unless @ear.available?
+          return if @hearing
+          return unless @lock.synchronize { @state == :idle && @draft.empty? }
+
+          @halt_ear = false
+          @hearing = Thread.new { hear }
+        end
+
+        def hear
+          heard = listen
+          answer(heard) if heard && !@closing && !@suppress_heard
+        ensure
+          @suppress_heard = false
+          @hearing = nil
+        end
+
+        def react(key)
+          return @closing = true if key == :eof || LEAVE.include?(key)
+          return interrupt_ear(key) if hearing?
+
+          nudge(:key)
+          return submit if ENTER.include?(key)
+          return change { @draft.chop! } if ERASE.include?(key)
+
+          change { @draft << key } if key.match?(/\A[[:print:]]\z/)
+        end
+
+        def hearing? = @hearing&.alive?
+
+        # Enter drops the take. A typed character drops it and keeps the character.
+        def interrupt_ear(key)
+          @halt_ear = true
+          @suppress_heard = true
+          change { @draft << key } if key.match?(/\A[[:print:]]\z/)
+        end
+
+        def submit
+          text = @draft.strip
+          change { @draft.clear }
+          return @closing = true if EXIT_WORDS.include?(text)
+
+          text = listen if text.empty?
+          answer(text) if text
+        end
+
+        # Nil when nothing was heard, and the window says so; no guess stands
+        # in for a transcription.
+        def listen
+          @halt_ear = false
+          unless @ear.available?
+            show([@ear.missing])
+            return
+          end
+
+          set(:listening, ["listening — enter to stop"])
+          nudge(:listen)
+          heard = @ear.listen(stop: -> { @halt_ear || @closing }, on_partial: ->(text) { show(["heard: #{text}"]) })
+          set(:idle, ["heard nothing"]) unless heard
+          heard
+        end
+
+        def answer(text)
+          set(:thinking, ["you: #{text}"])
+          reply = think(text)
+          if @mouth.available?
+            set(:speaking, [reply])
+            @mouth.say(reply, on_level: ->(level) { change { @level = level } },
+                              on_chunk: ->(part) { show([part]) }, stop: -> { stop_key? })
+          end
+          set(:idle, [reply])
+          nudge(:nod)
+        end
+
+        # The turn runs beside the window so ^C can abandon it. It carries no
+        # terminal asker: the fold's y/N question cannot be answered in raw
+        # mode, so the face refuses what needs one, as the web face does. The
+        # open-face mark stops a spoken "face" from opening a second one.
+        def think(text)
+          worker = Thread.new do
+            Fiber[:master_terminal_ask] = nil
+            Fiber[:master_face_open] = true
+            reply_text(@turn.call(text))
+          rescue StandardError => e
+            "error: #{e.class}: #{e.message}"
+          end
+          sleep 0.05 while worker.alive? && !cancel_key?
+          return worker.value unless worker.alive?
+
+          worker.kill
+          "cancelled"
+        end
+
+        # turn answers with a Result, or with the text it streamed.
+        def reply_text(result)
+          return result.to_s unless result.is_a?(Master::Result)
+          return "error: #{result.message}" if result.err?
+
+          value = result.value
+          text = value.respond_to?(:[]) ? (value[:rendered] || value[:output]) : nil
+          (text || value).to_s.strip
+        end
+
+        def stop_key?
+          key = read_key(0)
+          @closing = true if key == :eof || LEAVE.include?(key)
+          ENTER.include?(key) || @closing
+        end
+
+        # ^C abandons the turn; ^D abandons it and leaves.
+        def cancel_key?
+          key = read_key(0)
+          @closing = true if key == :eof || key == "\u0004"
+          key == :eof || LEAVE.include?(key)
+        end
+
+        # A key, :eof when the input is gone, or nil when none came in time.
+        def read_key(timeout)
+          return nil if @input.respond_to?(:wait_readable) && !@input.wait_readable(timeout)
+
+          @input.getc || :eof
+        end
+
+        def set(state, words)
+          change do
+            @state = state
+            @level = nil
+            @words = words
+          end
+        end
+
+        def show(words) = change { @words = words }
+
+        # Something the face reacts to on its next frame (Motion::EVENTS).
+        def nudge(event) = change { @events << event }
+
+        def change(&) = @lock.synchronize(&)
+
+        def tint(state, line) = state == :listening ? "#{ACCENT}#{line}#{PLAIN}" : line
+
+        def status(state)
+          keys = @ear.available? ? "listening, typing sends" : "typing sends"
+          "face0: #{state} — #{keys}, ^D leaves"
+        end
+
+        # The end of the line being typed, which is the part being typed into.
+        def typed(draft, cols)
+          line = "> #{draft}"
+          line.length > cols ? line[-cols..] : line
+        end
+
+        # The last rows of the words, wrapped to the window and padded so the
+        # status line stays put.
+        def tail(words, rows, cols)
+          lines = words.flat_map { |text| wrap(text.to_s, cols) }.last(rows)
+          lines + Array.new(rows - lines.size, "")
+        end
+
+        def wrap(text, cols)
+          text.split("\n").flat_map do |para|
+            para.scan(/\S.{0,#{[cols - 1, 1].max}}(?=\s|\z)|\S{#{cols}}/).map(&:strip)
+          end
+        end
+      end
+    end
+  end
+end

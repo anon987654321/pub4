@@ -240,7 +240,7 @@ module Master
       # The container is a process singleton (web/config/initializers/
       # master_container.rb), so before this there was one @messages array for
       # every visitor to ai.brgen.no at once. Agent#conversation_context feeds
-      # the model `messages.last(17)`, so a stranger's turns became your
+      # the model `messages.last(41)`, so a stranger's turns became your
       # context: it could answer you with what someone else had just said, and
       # two people typing at the same time interleaved into one transcript.
       # /chat/history is auth-gated, so the endpoint never leaked — the model

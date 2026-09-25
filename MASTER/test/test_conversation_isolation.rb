@@ -8,7 +8,7 @@ require_relative "../lib/master"
 #
 # The web container is a process singleton (web/config/initializers/
 # master_container.rb) and nothing scoped the session under it, so
-# Agent#conversation_context — which feeds the model `messages.last(17)` —
+# Agent#conversation_context — which feeds the model `messages.last(41)` —
 # handed over whatever the last person to type had said. /chat/history is
 # auth-gated, so the endpoint never leaked; the model did, by answering one
 # person with another's words. It is also how the welcome greeting compounded:

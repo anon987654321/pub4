@@ -198,7 +198,7 @@ class ApplicationController < ActionController::Base
   #
   # The container is a process singleton, so Trace::Session held one transcript
   # for every visitor at once and Agent#conversation_context fed the model
-  # `messages.last(17)` regardless of who wrote them. /chat/history is auth-
+  # `messages.last(41)` regardless of who wrote them. /chat/history is auth-
   # gated so the endpoint never leaked; the model did, by answering one person
   # with what another had just said.
   #

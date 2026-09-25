@@ -40,6 +40,7 @@ module Master
 
       def initialize(container:)
         @container = container
+        Fiber[:master_cli_container] = container
         @refs = Container.from_hash(container)
         Reline::HISTORY.clear
         load_cli_history
