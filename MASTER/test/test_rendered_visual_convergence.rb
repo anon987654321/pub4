@@ -10,20 +10,23 @@ class TestRenderedVisualConvergence < Minitest::Test
   end
 
   def test_geometry_probe_exposes_first_screen_composition_facts
+    # d7e92d999 replaced the derived fact list with the measurements the
+    # council reads: the first screen's blocks, actions and area ratios, and
+    # the typography scale. The ch-measure mislabel stays gone.
     walk = read("../RAILS/gates/support/geometry_probe/walk.js")
-    assert_includes walk, "const firstScreen = (() => {"
-    assert_includes walk, "largest_area_ratio"
-    assert_includes walk, "weak-heading-scale"
-    assert_includes walk, "many-first-screen-actions"
-    assert_includes walk, "text_box_width_em_approx"
+    assert_includes walk, "first_screen: {"
+    assert_includes walk, "largest_element_area_ratio"
+    assert_includes walk, "primary_candidates"
+    assert_includes walk, "heading_sizes"
+    assert_includes walk, "distinct_font_sizes"
     refute_includes walk, "text_measures_ch_approx"
   end
 
   def test_visual_contract_uses_the_canonical_cdp_substrate
     source = read("../RAILS/gates/visual_contract.rb")
     assert_includes source, 'require_relative "support/geometry_probe"'
+    # 4ee2da222 moved capture onto the geometry probe's browser: no subprocess.
     assert_includes source, "GeometryProbe.with_browser"
-    assert_includes source, "Master::Io::Exec.capture3"
     refute_includes source, "Open3.capture3"
     assert_includes source, "ROOT = File.expand_path(\"../..\", __dir__).freeze"
     refute_includes source, 'require "selenium-webdriver"'
@@ -44,7 +47,7 @@ class TestRenderedVisualConvergence < Minitest::Test
     source = read("lib/fix/visual_pass.rb")
     refute_includes source, "file ||= sources.first"
     assert_includes source, "return unless surface && viewport"
-    assert_includes source, "return unless line"
+    assert_includes source, "return unless file && line"
   end
 
   def test_cdp_console_evidence_can_be_reset_between_pages
@@ -56,6 +59,6 @@ class TestRenderedVisualConvergence < Minitest::Test
   def test_ui_critique_excludes_judge_from_issue_numbering
     source = read("lib/review/council/critique.rb")
     assert_includes source, 'reject { |entry| entry[:persona].to_s == "Judge" }'
-    assert_includes source, "output VISUAL_CLEAN exactly"
+    assert_includes read("lib/review/council/critique/modes.rb"), "state VISUAL_CLEAN explicitly"
   end
 end

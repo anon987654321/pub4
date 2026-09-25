@@ -52,9 +52,15 @@ class TestCouncilHarvest < Minitest::Test
     refute_includes prompt, "more detail", "took the whole feedback body instead of the issue line"
   end
 
+  # With no issue raised, the mode's prompt leads and a clean-tree improvement
+  # review follows it (ed94d7850), anchored and forbidden to invent defects.
   def test_ideation_prompt_without_feedback_keeps_the_mode_prompt
     critic = Master::Review::Council::Critique.new(mode: :general, agent: nil, files: [])
-    assert_equal critic.instance_variable_get(:@mode)[:ideation_prompt], critic.send(:ideation_prompt, [])
+    prompt = critic.send(:ideation_prompt, [])
+
+    assert prompt.start_with?(critic.instance_variable_get(:@mode)[:ideation_prompt])
+    assert_includes prompt, "clean-tree improvement review"
+    assert_includes prompt, "Do not invent defects"
   end
 
   def test_adversarial_challenge_demands_a_verdict_per_idea

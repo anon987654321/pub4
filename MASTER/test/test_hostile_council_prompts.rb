@@ -15,7 +15,7 @@ class HostileCouncilPromptsTest < Minitest::Test
     source = File.read(File.expand_path("../lib/review/council/critique.rb", __dir__))
     assert_includes source, "SOLUTION RED-TEAM"
     assert_includes source, "hidden assumption"
-    assert_includes source, "simplest deletion"
+    assert_includes source, "smallest deletion"
     assert_includes source, "counterexample state"
     assert_includes source, "invert that assumption"
   end
