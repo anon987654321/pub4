@@ -104,7 +104,7 @@ module Operator
       # RAILS'. Resolving only from the repo root called 198 live items stale on
       # the first run, which is the shape this repo keeps relearning: check what
       # the instrument measured before believing the finding.
-      TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
+      TREES = %w[MASTER RAILS OPENBSD].freeze
 
       def locate(path)
         # A glob is a description of a set, not a claim that one file exists.
