@@ -16,11 +16,24 @@ module Master
       class Ear
         HINT = "install the Termux:API app, then pkg install termux-api"
         SOX = %w[sox -q -d -r 16000 -c 1].freeze
-        # A quiet room is well under one percent of full scale, so the old
-        # gate never opened and the file stayed empty. Speech starts the take;
-        # a short quiet, or the caller, ends it.
-        SILENCE = %w[silence 1 0.05 0.05% 1 0.8 0.08%].freeze
+        # The gate sits above the room, not at a fixed level: a fixed 1%
+        # never opened in a quiet room, and a fixed 0.05% opened on a
+        # laptop's own noise, which peaks near 0.4%, so every take was a
+        # sixth of a second of hiss. Half a second of the room is measured,
+        # and speech must rise to three times its level to start a take.
+        ROOM_S = 0.5
+        ROOM_TTL_S = 60
+        GATE_OVER_ROOM = 3.0
+        GATE_FLOOR = 0.3
+        # High enough that a loud room still puts the gate above its noise:
+        # under the room, every take would be twelve seconds of it.
+        GATE_CEILING = 60.0
         MAX_TAKE_S = 12
+        # Under this the take is a click or a breath, not a phrase.
+        MIN_TAKE_S = 0.4
+
+        # The start gate, in percent of full scale, for a room at room_percent.
+        def self.gate_for(room_percent) = (room_percent * GATE_OVER_ROOM).clamp(GATE_FLOOR, GATE_CEILING)
 
         def initialize(device: Master::Device)
           @device = device
@@ -84,17 +97,47 @@ module Master
         def host_listen(stop:, on_partial:)
           wav = File.join(Dir.tmpdir, "master-face-#{Process.pid}.wav")
           File.delete(wav) if File.exist?(wav)
-          pid = Process.spawn(*SOX, wav, *SILENCE, out: File::NULL, err: File::NULL)
+          pid = Process.spawn(*SOX, wav, *silence_effect, out: File::NULL, err: File::NULL)
           started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
           sleep 0.05 while alive?(pid) && !stop.call && (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) < MAX_TAKE_S
           finish_sox(pid)
-          return unless File.size?(wav).to_i > 2_000
+          return unless File.size?(wav).to_i > (MIN_TAKE_S * 16_000 * 2)
 
           text = transcribe(wav)
           on_partial&.call(text) if text && !text.empty?
           text
         ensure
           File.delete(wav) if wav && File.exist?(wav)
+        end
+
+        # sox's silence effect: a take starts when the level holds over the
+        # gate for 50 ms, and ends after 0.8 s under half the gate.
+        def silence_effect
+          gate = gate_percent
+          ["silence", "1", "0.05", "#{gate.round(3)}%", "1", "0.8", "#{(gate / 2).round(3)}%"]
+        end
+
+        # The room is measured again after a minute, so a fan that starts or
+        # stops moves the gate with it.
+        def gate_percent
+          now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+          if @room.nil? || now - @room_at > ROOM_TTL_S
+            @room = room_peak_percent
+            @room_at = now
+          end
+          self.class.gate_for(@room)
+        end
+
+        # The room's level as a percent: the 99th-percentile sample, so one
+        # knock does not raise the gate, taken after the first 150 ms, where
+        # opening the device clicks at up to 5%.
+        def room_peak_percent
+          raw, = Open3.capture2("sox", "-q", "-d", "-r", "16000", "-c", "1", "-b", "16", "-e", "signed",
+                                "-t", "raw", "-", "trim", "0", (ROOM_S + 0.15).to_s, binmode: true, err: File::NULL)
+          samples = raw.unpack("s<*").drop(2_400).map(&:abs).sort
+          samples.empty? ? 0.0 : samples[(samples.size * 0.99).floor] * 100.0 / 32_768
+        rescue StandardError
+          0.0
         end
 
         def alive?(pid)
