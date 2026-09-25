@@ -1,15 +1,5 @@
-<%# The storefront header marketplace and takeaway share, so the two read as
-    siblings and their geometry cannot drift. Styles in application.scss, pages: marketplace.
-    Each vertical renders it as a layout and yields its own sections, because
-    those links resolve against that engine's routes. A cart link appears when
-    the vertical passes one.
-
-    The marketplace variant follows bol.com's commerce hierarchy: service strip,
-    blue brand/search header, category links, then the catalogue.
-
-    No second wordmark. The fixed .brgen-logo-mark already names the host on
-    every surface, and the shared nav carries the vertical's name as the way
-    back to its root, so a logotype here would put two wordmarks on one page. %>
+<%# The storefront header marketplace and takeaway share the outer partial,
+    but the bol marketplace variant has its own measured commerce anatomy. %>
 <% deliver_to = local_assigns.fetch(:deliver_to, Current.city_record&.name.presence || Current.city_name) %>
 <% cart = local_assigns[:cart] %>
 <% variant = local_assigns.fetch(:variant, :default).to_sym %>
@@ -20,80 +10,121 @@
     <span><%= t("marketplace.utility.fast_delivery") %></span>
     <span><%= t("marketplace.utility.returns") %></span>
   </div>
-<% end %>
 
-<div id="navBar" class="#{"storefront-nav--bol" if variant == :bol}">
-  <% if variant == :bol %>
-    <%= render "shared/brand_mark", **brand_mark_fragments, href: brand_mark_href, class_name: "storefront-bol-brand" %>
-  <% end %>
+  <div id="navBar" class="storefront-nav--bol">
+    <div class="storefront-bol-header">
+      <%= render "shared/brand_mark", **brand_mark_fragments, href: brand_mark_href, class_name: "storefront-bol-brand" %>
 
-  <div id="topHalf">
-    <div id="sections">
+      <%= link_to main_app.nearby_path, class: "storefront-bol-deliver nav-hover",
+                  aria: { label: "#{t("storefront.deliver_to")} #{deliver_to}" } do %>
+        <%= icon :nearby, size: 18 %>
+        <span><%= deliver_to %></span>
+      <% end %>
+
+      <% live = local_assigns[:live] == true %>
+      <% live_data = { controller: "live-search", live_search_target: "form", turbo_stream: true,
+                       action: "change@document->live-search#relay turbo:submit-end->live-search#complete",
+                       live_search_updating_value: t("status.updating_results"),
+                       live_search_updated_value: t("status.results_updated"),
+                       live_search_failed_value: t("status.search_failed") } %>
+      <div class="search storefront-bol-search" data-controller="search-focus">
+        <%= form_with url: search_url, method: :get, id: StorefrontSearch::FORM, data: (live_data if live) do %>
+          <%= safe_join(local_assigns.fetch(:hidden_fields, {}).map { |name, value| hidden_field_tag(name, value, id: nil) }) %>
+          <%= search_field_tag :q, params[:q], id: nil, class: "nav-search-input", placeholder: search_placeholder,
+                aria: { label: search_label, controls: (StorefrontSearch::RESULTS if live) },
+                data: { live_search_target: ("input" if live),
+                        action: ["focus->search-focus#focus blur->search-focus#blur", ("input->live-search#input" if live)].compact.join(" ") } %>
+          <button type="submit" class="nav-search-submit" aria-label="<%= t("search.submit") %>"><%= icon :search, size: 22 %></button>
+          <% if live %>
+            <span class="visually-hidden" role="status" aria-live="polite" data-live-search-target="status"></span>
+          <% end %>
+        <% end %>
+      </div>
+
+      <div class="storefront-bol-account">
+        <%= link_to(authenticated? ? main_app.user_path(Current.user) : main_app.new_session_path,
+                    class: "nav-block nav-hover") do %>
+          <%= icon :profile, size: 22 %>
+          <span class="nav-block-label"><%= authenticated? ? (Current.user.username.presence || t("storefront.account")) : t("storefront.sign_in") %></span>
+        <% end %>
+        <% if cart %>
+          <%= link_to cart[:path], id: "cartLink",
+                      aria: { label: t("storefront.cart") },
+                      class: "nav-block nav-cart nav-hover#{ " nav-cart--active" if cart[:active] }" do %>
+            <%= icon :cart, size: 22 %>
+            <span class="nav-block-label"><%= t("storefront.cart") %></span>
+            <span class="nav-cart-count"><%= cart[:count].to_i %></span>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+
+    <nav class="storefront-bol-mainnav" aria-label="<%= t("marketplace.navigation_label") %>">
+      <details class="storefront-bol-categories">
+        <summary><%= t("marketplace.navigation_categories") %></summary>
+        <div class="storefront-bol-mega">
+          <% Array(local_assigns[:categories]).each do |category| %>
+            <section>
+              <h3><%= link_to category.name, listings_path(category_id: category.id) %></h3>
+              <% category.children.first(8).each do |child| %>
+                <%= link_to child.name, listings_path(category_id: child.id) %>
+              <% end %>
+            </section>
+          <% end %>
+        </div>
+      </details>
       <%= yield %>
-    </div>
-
-    <div id="accountStuff">
-      <%= link_to(authenticated? ? main_app.user_path(Current.user) : main_app.new_session_path,
-                  class: "nav-block nav-hover") do %>
-        <%= icon :profile, size: 22 %>
-        <span class="nav-block-label"><%= authenticated? ? (Current.user.username.presence || t("storefront.account")) : t("storefront.sign_in") %></span>
-      <% end %>
-      <% if cart %>
-        <%= link_to cart[:path], id: "cartLink", aria: { label: t("storefront.cart") },
-                    class: "nav-block nav-cart nav-hover#{" nav-cart--active" if cart[:active]}" do %>
-          <%= icon :cart, size: 22 %>
-          <span class="nav-block-label"><%= t("storefront.cart") %></span>
-          <span class="nav-cart-count"><%= cart[:count].to_i %></span>
-        <% end %>
-      <% end %>
-    </div>
-  </div>
-
-  <div id="bottomHalf">
-    <%= link_to main_app.nearby_path, class: "nav-block nav-deliver nav-hover",
-                aria: { label: "#{t("storefront.deliver_to")} #{deliver_to}" } do %>
-      <%= icon :nearby, size: 22 %> <span class="nav-block-label"><%= deliver_to %></span>
-    <% end %>
-
-    <%# The page's only search field (StorefrontSearch). A page that lists what
-        it searches passes live: its results stream into the region under the
-        teaser row as the reader types, and its filter controls join this form
-        from the page through form="storefront-search". Anywhere else the field
-        is a plain GET to that list.
-
-        hidden_fields render even when blank: geolocation#pin fills lat and lng
-        in place, and a field that is not there cannot be filled.
-
-        live-search sits on the form rather than on .search: the storefront
-        rule that clears the in-page field's band matches any live-search
-        controller, and on .search it would clear this band too. %>
-    <% live = local_assigns[:live] == true %>
-    <% live_data = { controller: "live-search", live_search_target: "form", turbo_stream: true,
-                     action: "change@document->live-search#relay turbo:submit-end->live-search#complete",
-                     live_search_updating_value: t("status.updating_results"),
-                     live_search_updated_value: t("status.results_updated"),
-                     live_search_failed_value: t("status.search_failed") } %>
-    <div class="search marketplace-nav-search" data-controller="search-focus">
-      <%= form_with url: search_url, method: :get, id: StorefrontSearch::FORM, data: (live_data if live) do %>
-        <%= safe_join(local_assigns.fetch(:hidden_fields, {}).map { |name, value| hidden_field_tag(name, value, id: nil) }) %>
-        <%= search_field_tag :q, params[:q], id: nil, class: "nav-search-input", placeholder: search_placeholder,
-              aria: { label: search_label, controls: (StorefrontSearch::RESULTS if live) },
-              data: { live_search_target: ("input" if live),
-                      action: ["focus->search-focus#focus blur->search-focus#blur", ("input->live-search#input" if live)].compact.join(" ") } %>
-        <button type="submit" class="nav-search-submit" aria-label="<%= t("search.submit") %>"><%= icon :search, size: 22 %></button>
-        <% if live %>
-          <span class="visually-hidden" role="status" aria-live="polite" data-live-search-target="status"></span>
-        <% end %>
-      <% end %>
-    </div>
-  </div>
-
-  <% if variant == :bol %>
-    <nav class="storefront-bol-subnav" aria-label="Marketplace shortcuts">
-      <%= link_to t("storefront.sell"), new_listing_path %>
-      <%= link_to t("storefront.saved_searches"), saved_searches_path if authenticated? %>
-      <%= link_to t("storefront.orders"), orders_path if authenticated? %>
-      <%= link_to t("storefront.account"), authenticated? ? main_app.user_path(Current.user) : main_app.new_session_path %>
     </nav>
-  <% end %>
-</div>
+  </div>
+<% else %>
+  <div id="navBar">
+    <div id="topHalf">
+      <div id="sections">
+        <%= yield %>
+      </div>
+
+      <div id="accountStuff">
+        <%= link_to(authenticated? ? main_app.user_path(Current.user) : main_app.new_session_path,
+                    class: "nav-block nav-hover") do %>
+          <%= icon :profile, size: 22 %>
+          <span class="nav-block-label"><%= authenticated? ? (Current.user.username.presence || t("storefront.account")) : t("storefront.sign_in") %></span>
+        <% end %>
+        <% if cart %>
+          <%= link_to cart[:path], id: "cartLink", aria: { label: t("storefront.cart") },
+                      class: "nav-block nav-cart nav-hover#{ " nav-cart--active" if cart[:active] }" do %>
+            <%= icon :cart, size: 22 %>
+            <span class="nav-block-label"><%= t("storefront.cart") %></span>
+            <span class="nav-cart-count"><%= cart[:count].to_i %></span>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+
+    <div id="bottomHalf">
+      <%= link_to main_app.nearby_path, class: "nav-block nav-deliver nav-hover",
+                  aria: { label: "#{t("storefront.deliver_to")} #{deliver_to}" } do %>
+        <%= icon :nearby, size: 22 %> <span class="nav-block-label"><%= deliver_to %></span>
+      <% end %>
+
+      <% live = local_assigns[:live] == true %>
+      <% live_data = { controller: "live-search", live_search_target: "form", turbo_stream: true,
+                       action: "change@document->live-search#relay turbo:submit-end->live-search#complete",
+                       live_search_updating_value: t("status.updating_results"),
+                       live_search_updated_value: t("status.results_updated"),
+                       live_search_failed_value: t("status.search_failed") } %>
+      <div class="search marketplace-nav-search" data-controller="search-focus">
+        <%= form_with url: search_url, method: :get, id: StorefrontSearch::FORM, data: (live_data if live) do %>
+          <%= safe_join(local_assigns.fetch(:hidden_fields, {}).map { |name, value| hidden_field_tag(name, value, id: nil) }) %>
+          <%= search_field_tag :q, params[:q], id: nil, class: "nav-search-input", placeholder: search_placeholder,
+                aria: { label: search_label, controls: (StorefrontSearch::RESULTS if live) },
+                data: { live_search_target: ("input" if live),
+                        action: ["focus->search-focus#focus blur->search-focus#blur", ("input->live-search#input" if live)].compact.join(" ") } %>
+          <button type="submit" class="nav-search-submit" aria-label="<%= t("search.submit") %>"><%= icon :search, size: 22 %></button>
+          <% if live %>
+            <span class="visually-hidden" role="status" aria-live="polite" data-live-search-target="status"></span>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+<% end %>
