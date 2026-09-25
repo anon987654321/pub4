@@ -4,8 +4,8 @@
 # The paid lane for seed media: Replicate renders, postpro grades, and a
 # manifest row records both.
 #
-#   ruby STUDIO/lora/_toolkit/run_seed_media_replicate.rb --out ~/seed_media
-#   ruby STUDIO/lora/_toolkit/run_seed_media_replicate.rb --out ~/seed_media --only KEY,KEY --dry-run
+#   ruby MASTER/tools/lora/_toolkit/run_seed_media_replicate.rb --out ~/seed_media
+#   ruby MASTER/tools/lora/_toolkit/run_seed_media_replicate.rb --out ~/seed_media --only KEY,KEY --dry-run
 #
 # The Colab lane beside it is free and needs a GPU session and Drive; this one
 # costs money per frame and needs only REPLICATE_API_TOKEN or REPLICATE_API_KEY
@@ -35,8 +35,8 @@ require "yaml"
 ROOT = File.expand_path("../../..", __dir__)
 require File.join(ROOT, "MASTER/lib/io/replicate_client")
 
-SPEC = File.join(ROOT, "STUDIO/lora/seed_media.yml")
-POSTPRO = File.join(ROOT, "STUDIO/postpro/postpro.rb")
+SPEC = File.join(ROOT, "MASTER/tools/lora/seed_media.yml")
+POSTPRO = File.join(ROOT, "MASTER/tools/postpro/postpro.rb")
 BASE = Master::Io::ReplicateClient::BASE
 # Published per-image prices, used only to state what a run cost. The
 # prediction's own metrics carry time, not money, for these per-image models.
