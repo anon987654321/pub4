@@ -65,8 +65,12 @@ module Master
           stdin.close
           heard = []
           reader = Thread.new { read_matches(stdout, heard, on_partial) }
-          sleep 0.05 while wait_thr.alive? && !stop.call
-          halt(wait_thr)
+          # Enter asks the recogniser to finish. Killing it here drops the
+          # phrase before it is printed, so wait for the line, then stop.
+          sleep 0.05 while wait_thr.alive? && heard.empty? && !stop.call
+          deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 4
+          sleep 0.05 while wait_thr.alive? && heard.empty? && Process.clock_gettime(Process::CLOCK_MONOTONIC) < deadline
+          halt(wait_thr) if wait_thr.alive?
           reader.join(1)
           heard.last
         ensure

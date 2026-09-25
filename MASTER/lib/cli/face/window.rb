@@ -129,6 +129,7 @@ module Master
         def arm_ear
           return unless @ear.available?
           return if @hearing
+          return if @ear_after && Process.clock_gettime(Process::CLOCK_MONOTONIC) < @ear_after
           return unless @lock.synchronize { @state == :idle && @draft.empty? }
 
           @halt_ear = false
@@ -141,6 +142,7 @@ module Master
         ensure
           @suppress_heard = false
           @hearing = nil
+          @ear_after = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 1.5
         end
 
         def react(key)
@@ -171,8 +173,7 @@ module Master
           change { @draft.clear }
           return @closing = true if EXIT_WORDS.include?(text)
 
-          text = listen if text.empty?
-          answer(text) if text
+          answer(text) if text && !text.empty?
         end
 
         # Nil when nothing was heard, and the window says so; no guess stands
