@@ -72,7 +72,7 @@ task :studio_gate do
   # trees and the gate requires OPENBSD/lib/gate_result. That independence is
   # deliberate (TODO.md: gate_result_is_a_shared_kernel_filed_
   # under_deploy) and a rake task is not a reason to spend it.
-  gate = File.expand_path("../STUDIO/gate.rb", __dir__)
+  gate = File.expand_path("../MASTER/tools/studio/gate.rb", __dir__)
   if File.file?(gate)
     unbundled { sh RbConfig.ruby, gate }
   else
@@ -84,10 +84,10 @@ end
 # has stopped being valid Ruby. They cannot catch a swing offset applied to the
 # wrong role, a seed that reads as pinned and is not, or a chord template that
 # voices a ninth as a second -- all of which parse, boot, and have shipped.
-# STUDIO/test is that half. Same subprocess reasoning as above.
+# MASTER/tools/studio/test is that half. Same subprocess reasoning as above.
 desc "STUDIO's own suite — engine arithmetic, the single-file tools, the gate"
 task :studio_test do
-  studio = File.expand_path("../STUDIO", __dir__)
+  studio = File.expand_path("tools/studio", __dir__)
   unless File.file?(File.join(studio, "Rakefile"))
     warn "studio: no suite at #{studio} — skipping (STUDIO tree absent?)"
     next
