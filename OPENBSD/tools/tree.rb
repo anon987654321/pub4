@@ -77,7 +77,7 @@ class ProjectTree
   # describe a repo that no longer existed: they still named lib/now, lib/judge,
   # lib/loop and lib/reach (renamed to cli/review/fix/io in 693d2630d), a
   # kernel/ directory (renamed to core/), "7 apps" (there are 3), lora as a
-  # top-level pillar (it moved under STUDIO/) and "lora/*.jpg at repo root" as
+  # top-level pillar (it moved under MASTER/tools/) and "lora/*.jpg at repo root" as
   # noise to clean up (there are none). A tool you are told to run *before*
   # restructuring is the last place a literal should stand in for a measurement.
   # Everything below is derived from the tree on disk.
