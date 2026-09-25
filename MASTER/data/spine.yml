@@ -28,6 +28,15 @@
 # SmallFunctionsRule so the repo counts code exactly one way.
 
 spine:
+  # Files per tree that declare no module or class, allowed only to fall; read
+  # by lib/operator/namespace_ratchet.rb. The values are the ones
+  # data/namespace_ceilings.yml held when b120b221a deleted it: 85aa20f62 taught
+  # the reader to look here and nothing wrote the key.
+  namespace_ceilings:
+    MASTER/lib: 0
+    RAILS/shared/lib: 2
+    STUDIO/dilla/lib: 0
+
   # Non-blank, non-comment lines across lib/**/*.rb, minus the Zeitwerk wrappers.
   # Present sponsors, all the same shape — a rule that could only be judged by a
   # model now judged deterministically: cross_file_analysis's structural-clone
