@@ -14,7 +14,7 @@ brgen is not a folder of apps. Every city apex in `Brgen::DomainRegistry` serves
 the feed, and the verticals are namespaced engines on subdomains of that apex —
 `dating.brgen.no`, `dating.lsangeles.com`, `marketplace.lndon.uk`. Apexes are
 usually the city with a vowel dropped. Read `brgen/AGENTS.md` before touching a
-vertical, and `brgen/ENGINES.md` before adding one.
+vertical, and `brgen/README.md` before adding one.
 
 `shared/` is the `pub4-shared` gem, mounted through `path: '../shared'`. The
 copy-tree deploy puts each app at `/home/<app>/app` and gives it its own copy of
@@ -53,7 +53,7 @@ every rendered gate degrades to a warning, so a green run is not by itself
 evidence that anything was measured.
 
 That distinction is the whole argument for the suite. A source gate asserts
-`_nav.scss` contains the string `min-height: 44px`. `geometry` asserts the box is
+the nav stylesheet contains the string `min-height: 44px`. `geometry` asserts the box is
 44px tall — the `--tap-min` token — at that viewport in a real browser, that nothing covers its centre
 pixel, and that its text clears WCAG AA against its composited background — with
 `var()`, `oklch` and `color-mix` resolved, which parsing hex out of a stylesheet
@@ -70,11 +70,12 @@ deliberately not under `GATE_AUTOFIX`, because blessing a regression is the
 behaviour this replaces.
 
 `geometry` and `reflow` do autofix, and the shape of it is deliberate. They write
-corrective rules into a generated `_autofix_geometry.scss` per app, register the
-`@use`, and rebuild CSS before remeasuring. Additive and quarantined, because a
+corrective rules into one generated block at the end of each app's
+`application.scss`, between two marker comments, and rebuild CSS before
+remeasuring. Additive and quarantined, because a
 rendered violation names a selector rather than a source rule and the cascade
 rather than any one declaration produced the box — so rewriting a guessed rule
-would be a guess. Delete the partial and its `@use` line to revert. Rounds and
+would be a guess. Delete the block to revert. Rounds and
 dry-run come from the shared `GateAutofix` policy through `GATE_AUTOFIX`,
 `GATE_AUTOFIX_DRY` and `GATE_AUTOFIX_ROUNDS`. Token colours are never rewritten:
 `design_metrics` prints the hex that would clear AA and leaves the brand decision
@@ -108,9 +109,9 @@ relayd sides in agreement.
 The operator half of domain switching is `/domain <name>` in the CLI through
 `SubdomainOrchestrator`, and the browser half is `window.MASTER_ACTIVE_DOMAIN`,
 read by `MASTER/web/public/chat_actions.js`. The dedicated domain bar has no
-source in the tree: only the precompiled
-`MASTER/web/public/assets/domain_cluster-3bf218f7.js` survives, so it ships and
-cannot be rebuilt. Treat it as vendored until someone restores the source.
+source in the tree and no build either: MASTER ignores its precompiled web
+assets, and the precompiled `domain_cluster` bundle that once survived there is gone.
+Restoring the bar means restoring its source.
 
 All three apps compile the same network-first-for-HTML service worker from
 `shared/pwa/service_worker.js`, served at `/service-worker` and rebuilt with `npm

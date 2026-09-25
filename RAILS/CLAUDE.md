@@ -79,8 +79,8 @@ and `/fix` mutates the working tree. `MASTER_GATE_SCAN_ONLY=1` for preflight.
 
 ## Traps
 
-- **Visual/CSS work:** read `shared/WIRING_NOTES.md` "Visual design system"
-  first. The layout chrome contract every surface shares is `shared/LAYOUT.md`.
+- **Visual/CSS work:** read `shared/README.md` first: the visual design system
+  and the layout chrome contract every surface shares are there.
   Tokens live in `shared/app/assets/stylesheets/_dialect_tokens.scss`; flat
   only, no shadow/blur/glow. Most layout "bugs" here are stale deployed CSS —
   diff live against source before changing anything.
@@ -103,7 +103,7 @@ and `/fix` mutates the working tree. `MASTER_GATE_SCAN_ONLY=1` for preflight.
 ## Editing frontend code
 
 Stimulus packages are vendored, never fetched from a CDN;
-`shared/frontend/STIMULUS_COMPONENTS_BASELINE.md` explains the gate that holds
+`shared/README.md` explains the gate that holds
 it and why a `pin` costs a `modulepreload`.
 
 The visual design is deliberate and the user is a trained architect. Restore or
@@ -124,4 +124,4 @@ one, and leave `PROTECTED` sections alone unless the task names them.
 Scanners hold the parts of this that one file can show: `NO_JQUERY`,
 `NO_INLINE_ASSETS_IN_SHELL`, `NO_MULTIPLE_LANGUAGES`, `NO_INLINE_STYLES`,
 `MAGIC_COLOR`. The rest are properties of a diff, so they are checked by reading
-one. Design values come from `MASTER/data/rules.yml#design_system`, never from a second token authority.
+one. Design values come from `MASTER/data/rules.yml`, section `design_system`, never from a second token authority.
