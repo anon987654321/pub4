@@ -120,7 +120,9 @@ class VisualContractBlindnessTest < Minitest::Test
   end
 
   # The runner is where the exit code becomes a word people read. 3 must reach
-  # the summary as INCONCLUSIVE and must not be added to the pass count.
+  # the summary as INCONCLUSIVE and must not be added to the pass count. The
+  # run exits 3 too: not 0, which claims a measured pass, and not 1, which
+  # blocks. GateChain reads it as skipped and /fix's proof as no failure.
   def test_the_runner_reports_the_uncaptured_run_as_inconclusive
     Dir.mktmpdir("visual-contract-runner") do |dir|
       out, status = Open3.capture2e(
@@ -130,7 +132,7 @@ class VisualContractBlindnessTest < Minitest::Test
 
       assert_includes out, "gates0 at rails: visual_contract inconclusive, checked nothing"
       assert_match(/^gates0 at rails: 0 of 1 passed .*; visual_contract inconclusive$/, out)
-      assert_equal 0, status.exitstatus, "an unmeasured gate must not block a run:\n#{out}"
+      assert_equal 3, status.exitstatus, "an unmeasured gate is the third state, neither pass nor block:\n#{out}"
     end
   end
 end
