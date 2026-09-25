@@ -472,7 +472,7 @@ when "test"
   #   RAILS/<app>/**   -> that app suite
   #   RAILS/gates|test -> the standalone contract suite
   #   OPENBSD/**       -> its local minitests (box-side proof stays on vm23)
-  #   STUDIO/**        -> refused; that tree belongs to its own session
+  #   MASTER/tools/**        -> refused; that tree belongs to its own session
   paths = ARGV.dup
   if paths.empty?
     paths = IO.popen(%w[git status --porcelain -z], chdir: ROOT, &:read)
@@ -481,7 +481,7 @@ when "test"
   trees = paths.map { |p| p.split("/").first(2) }
   # A skip, not a refusal. STUDIO belongs to its own session, but this derives
   # its scope from `git status` in a checkout several sessions share — so one
-  # untracked render under STUDIO/ used to abort the command outright and the
+  # untracked render under MASTER/tools/ used to abort the command outright and the
   # other three trees went untested, which in a shared tree is most of the time.
   studio, trees = trees.partition { |tree| tree.first == "STUDIO" }
   warn("pub4 test: skipping #{studio.size} STUDIO path(s) — that tree runs its own checks") if studio.any?
