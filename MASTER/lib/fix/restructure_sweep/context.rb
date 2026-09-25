@@ -153,6 +153,10 @@ module Master
           File.read(@path).scan(/^\s*(?:class|module)\s+([A-Z]\w+)/).flatten.uniq - Restructure.namespaces(@tree)
         end
 
+        def test_path?(path)
+          path.split("/").any? { |part| %w[test spec fixtures].include?(part) }
+        end
+
         def numbered(path) = File.foreach(path).with_index(1).map { |line, n| format("%4d  %s", n, line) }.join
         def relative(path) = path.to_s.delete_prefix("#{@root}/")
       end
