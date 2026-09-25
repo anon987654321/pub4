@@ -169,9 +169,9 @@ def test_the_post_chain_is_read_and_applied
   assert_equal chain, Master::Voice::Policy.browser_payload[:post_chain],
                "the face shapes from browser_payload; it must carry the same chain"
 
-  source = File.read(File.expand_path("../lib/voice/speech.rb", __dir__))
-  assert_match(/Policy\.post_chain/, source, "Speech never reads the chain")
-  assert_match(/shaped\(/, source, "Speech never applies the chain")
+  ran = shape_with_recorded_ffmpeg
+  assert_equal ["-af", chain], ran[:argv][ran[:argv].index("-af"), 2], "Speech never applies the chain"
+  assert ran[:result].end_with?("_shaped.mp3"), "Speech kept the unshaped file"
 
   # No per-file normalisation: the chain runs once per utterance, and loudnorm
   # levelled every sentence to the same loudness (measured: two clips 20 dB
@@ -179,6 +179,27 @@ def test_the_post_chain_is_read_and_applied
   refute_includes chain, "loudnorm", "a per-utterance chain must not normalise per file"
   assert_operator chain.index("volume="), :<, chain.index("alimiter"),
                   "the gain must come before the limiter"
+end
+
+# Speech.shaped over a scratch mp3, with ffmpeg replaced by a recorder that
+# writes the output it was asked for.
+def shape_with_recorded_ffmpeg
+  exec = Master::Io::Exec
+  original = exec.method(:capture3)
+  argv = nil
+  exec.define_singleton_method(:capture3) do |*args, **|
+    argv = args
+    File.write(args.last, "shaped")
+    ["", "", Struct.new(:success?).new(true)]
+  end
+  Dir.mktmpdir do |dir|
+    clip = File.join(dir, "utterance.mp3")
+    File.write(clip, "raw")
+    result = Master::Voice::Speech.shaped(clip)
+    { argv:, result: }
+  end
+ensure
+  exec.define_singleton_method(:capture3, original) if original
 end
 
   # The bed is declared here and rendered by whoever plays it, so what this can

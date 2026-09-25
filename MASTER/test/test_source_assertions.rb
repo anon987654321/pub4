@@ -41,9 +41,13 @@ require_relative "test_helper"
 # 175 -> 171, and the refutes 20 -> 18: the needle is code now, not a quoted
 # word, so an assertion about the verb `read` or a field named `body` stops
 # counting as a file grep. Nine such lines were never source assertions.
+# 171 -> 170, refutes back to 18: the 2026-09-23/24 batches had taken the count
+# to 285 and 31, nearly all of it new visual, stimulus and council tests reading
+# their subjects' source. They now drive the code, and running it found five
+# bugs the greps had passed; the post_chain test calls Speech.shaped too.
 class TestSourceAssertions < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
-  BASELINE = 171
+  BASELINE = 170
 
   # An assertion whose subject is the text of a file rather than a value the
   # code produced. `source`, `src` and `body` are this repo's names for that
