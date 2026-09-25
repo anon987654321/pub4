@@ -76,8 +76,7 @@ class DinteroCheckoutTest < ActiveSupport::TestCase
       dintero_payout_destination_status: "ACTIVE"
     )
     calls = []
-    Marketplace::Payments::DinteroPayoutRules.stub(:ensure_for!, true) do
-      Marketplace::Payments::DinteroClient.stub(:post, lambda { |path, payload, **options|
+    Marketplace::Payments::DinteroClient.stub(:post, lambda { |path, payload, **options|
       calls << { method: :post, path:, payload:, options: }
       case path
       when %r{/shopping/draft_orders\z}
@@ -111,7 +110,16 @@ class DinteroCheckoutTest < ActiveSupport::TestCase
 
     assert_equal :post, session[:method]
     assert_match(%r{/shopping/orders/order-1/sessions\z}, session[:path])
-    assert_equal({ line_id: 42, amount: 10_000 }, session[:payload][:items].first)
+    assert_equal 42, session[:payload][:items].first[:line_id]
+    assert_equal 10_000, session[:payload][:items].first[:amount]
+    assert_equal [
+      { payout_destination_id: "seller-1", amount: 9_500 },
+      { payout_destination_id: "platform-1", amount: 500 }
+    ], session[:payload][:items].first[:splits]
+    assert_equal(
+      { type: "proportional", destinations: [ "platform-1" ] },
+      session[:payload][:items].first[:fee_split]
+    )
   end
 
   test "an unapproved seller is rejected before the Dintero request" do
