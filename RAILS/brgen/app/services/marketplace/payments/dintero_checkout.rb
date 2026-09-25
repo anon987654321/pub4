@@ -22,6 +22,7 @@ module Marketplace
             create_shopping_order!(order, reference)
 
           persist_dintero_order!(order, dintero_order_id, reference) if dintero_order_id.present?
+          persist_split_contracts!(order)
 
           response = DinteroClient.post(
             "/v1/accounts/#{DinteroClient.account_id}/shopping/orders/#{ERB::Util.url_encode(dintero_order_id)}/sessions",
@@ -64,11 +65,12 @@ module Marketplace
           raise ArgumentError, "order has no Dintero transaction" if transaction_id.empty?
           raise ArgumentError, "order has no Dintero order id" if dintero_order_id.empty?
 
+          contract = stored_split_contract!(order)
           DinteroClient.post(
             "/v1/accounts/#{DinteroClient.account_id}/shopping/orders/#{ERB::Util.url_encode(dintero_order_id)}/captures",
             {
-              items: [ capture_item(order) ],
-              fee_split: fee_split
+              items: [ capture_item(order, contract:) ],
+              fee_split: contract[:fee_split]
             }.compact,
             idempotency_key: "brgen-capture-order-#{order.id}"
           )
@@ -83,11 +85,12 @@ module Marketplace
           dintero_order_id = order.dintero_order_id.to_s
           raise ArgumentError, "order has no Dintero order id" if dintero_order_id.empty?
 
+          contract = stored_split_contract!(order)
           DinteroClient.post(
             "/v1/accounts/#{DinteroClient.account_id}/shopping/orders/#{ERB::Util.url_encode(dintero_order_id)}/refunds",
             {
-              items: [ capture_item(order) ],
-              fee_split: fee_split
+              items: [ capture_item(order, contract:) ],
+              fee_split: contract[:fee_split]
             }.compact,
             idempotency_key: "brgen-refund-order-#{order.id}"
           )
@@ -285,6 +288,9 @@ module Marketplace
         def session_payload(payable, return_url:, callback_url:)
           orders = payable.is_a?(Marketplace::Checkout) ?
             payable.order_lines.includes(listing: :store).to_a : [ payable ]
+          fee_splits = orders.map { |order| stored_split_contract!(order)[:fee_split] }.compact.uniq
+          raise SellerNotReady, "Dintero fee split changed within checkout" if fee_splits.size > 1
+
           {
             items: orders.map { |order| session_item(order) },
             url: {
@@ -292,20 +298,44 @@ module Marketplace
               callback_url: callback_url
             },
             profile_id: DinteroClient.profile_id,
-            fee_split: fee_split
+            fee_split: fee_splits.first
           }.compact
         end
 
         def session_item(order)
+          contract = stored_split_contract!(order)
           {
             line_id: order.id.to_i,
             amount: order.total_cents,
-            splits: split_for(order)
+            splits: contract[:splits]
           }
         end
 
-        def capture_item(order)
-          session_item(order)
+        def capture_item(order, contract:)
+          {
+            line_id: order.id.to_i,
+            amount: order.total_cents,
+            splits: contract[:splits]
+          }
+        end
+
+        def persist_split_contracts!(payable)
+          orders = payable.is_a?(Marketplace::Checkout) ? payable.order_lines.to_a : [ payable ]
+          orders.each do |order|
+            contract = { splits: split_for(order), fee_split: fee_split }.compact
+            order.update_columns(dintero_split_json: JSON.generate(contract))
+          end
+        end
+
+        def stored_split_contract!(order)
+          raw = order.respond_to?(:dintero_split_json) ? order.dintero_split_json.to_s : ""
+          raise SellerNotReady, "Dintero split contract is missing for order #{order.id}" if raw.empty?
+
+          JSON.parse(raw, symbolize_names: true).tap do |contract|
+            raise SellerNotReady, "Dintero split contract is invalid for order #{order.id}" unless contract[:splits].is_a?(Array)
+          end
+        rescue JSON::ParserError
+          raise SellerNotReady, "Dintero split contract is invalid for order #{order.id}"
         end
 
         def split_for(order)
