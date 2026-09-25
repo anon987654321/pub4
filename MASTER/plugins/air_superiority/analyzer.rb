@@ -2,7 +2,7 @@
 
 module Master
   module Plugins
-    module AirSuperiority
+    module AirSuperioritySupport
       class Analyzer
         def initialize(observed_at: Time.now.utc)
           @observed_at = observed_at
