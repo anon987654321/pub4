@@ -18,22 +18,20 @@ module Marketplace
           raise ArgumentError, "order is not payable" unless order.respond_to?(:startable?) && order.startable?
 
           reference = merchant_reference(order)
-          order.update_columns(
-            payment_provider: "dintero",
-            payment_reference: reference,
-            dintero_session_id: nil
-          ) if order.payment_reference != reference
+          dintero_order_id = order.dintero_order_id.presence ||
+            create_shopping_order!(order, reference)
+
+          persist_dintero_order!(order, dintero_order_id, reference)
 
           response = DinteroClient.post(
-            "/v1/sessions-profile",
+            "/v1/accounts/#{DinteroClient.account_id}/shopping/orders/#{ERB::Util.url_encode(dintero_order_id)}/sessions",
             session_payload(order, return_url:, callback_url:),
-            checkout: true,
             idempotency_key: "brgen-session-#{reference}"
           )
           session_id = response.fetch("id")
           checkout_url = response.fetch("url")
 
-          persist_session!(order, session_id, reference)
+          persist_session!(order, dintero_order_id, session_id, reference)
           order.define_singleton_method(:dintero_checkout_url) { checkout_url }
           checkout_url
         rescue DinteroClient::Error => error
@@ -62,29 +60,35 @@ module Marketplace
           raise ArgumentError, "order is not authorized" unless order.payment_status == "authorized"
 
           transaction_id = order.dintero_transaction_id.to_s
+          dintero_order_id = order.dintero_order_id.to_s
           raise ArgumentError, "order has no Dintero transaction" if transaction_id.empty?
+          raise ArgumentError, "order has no Dintero order id" if dintero_order_id.empty?
 
-          response = DinteroClient.post(
-            "/v1/transactions/#{URI.encode_www_form_component(transaction_id)}/capture",
+          DinteroClient.post(
+            "/v1/accounts/#{DinteroClient.account_id}/shopping/orders/#{ERB::Util.url_encode(dintero_order_id)}/captures",
             { items: [ capture_item(order) ] },
             idempotency_key: "brgen-capture-order-#{order.id}"
           )
-          order.mark_paid!(reference: order.payment_reference)
-          response
         rescue DinteroClient::Error => error
           raise ProviderError, error.message
         end
 
         def authorize!(payable, transaction_id:)
-          payable.transaction do
+          if payable.is_a?(Marketplace::Checkout)
             payable.update!(
-              payment_status: "authorized",
+              payment_provider: "dintero",
               dintero_transaction_id: transaction_id,
-              status: payable.is_a?(Marketplace::Checkout) ? "pending_payment" : payable.status
+              status: "pending_payment"
             )
-            if payable.is_a?(Marketplace::Checkout)
-              payable.order_lines.each { |order| order.authorize_payment!(transaction_id: transaction_id) }
+            payable.order_lines.each do |order|
+              order.authorize_payment!(transaction_id: transaction_id)
             end
+          else
+            payable.update!(
+              payment_provider: "dintero",
+              payment_status: "authorized",
+              dintero_transaction_id: transaction_id
+            )
           end
           payable
         end
@@ -106,14 +110,7 @@ module Marketplace
               )
               order.mark_paid!(reference: payable.payment_reference)
             end
-
-            if payable.order_lines.where.not(payment_status: "paid").none?
-              payable.update!(
-                status: "paid",
-                paid_at: Time.current,
-                dintero_transaction_id: transaction_id
-              )
-            end
+            payable.sync_payment_status!
           else
             payable.mark_paid!(reference: payable.payment_reference)
           end
@@ -121,25 +118,10 @@ module Marketplace
         end
 
         def payable_for_reference(reference)
+          return if reference.blank?
+
           Marketplace::Checkout.find_by(payment_reference: reference) ||
             Marketplace::Order.find_by(payment_reference: reference)
-        end
-
-        def session_transaction(session_id)
-          DinteroClient.get(
-            "/v1/sessions/#{URI.encode_www_form_component(session_id)}",
-            checkout: true
-          )
-        rescue DinteroClient::Error => error
-          raise ProviderError, error.message
-        end
-
-        def transaction(transaction_id)
-          DinteroClient.get(
-            "/v1/transactions/#{URI.encode_www_form_component(transaction_id)}"
-          )
-        rescue DinteroClient::Error => error
-          raise ProviderError, error.message
         end
 
         def merchant_reference(payable)
@@ -149,38 +131,82 @@ module Marketplace
 
         private
 
-        def persist_session!(payable, session_id, reference)
+        def persist_dintero_order!(payable, dintero_order_id, reference)
+          payable.update_columns(
+            payment_provider: "dintero",
+            payment_reference: reference,
+            dintero_order_id: dintero_order_id,
+            updated_at: Time.current
+          )
+          return unless payable.is_a?(Marketplace::Checkout)
+
+          payable.order_lines.find_each do |order|
+            order.update_columns(
+              payment_provider: "dintero",
+              payment_reference: reference,
+              dintero_order_id: dintero_order_id,
+              updated_at: Time.current
+            )
+          end
+        end
+
+        def persist_session!(payable, dintero_order_id, session_id, reference)
           payable.update!(
             payment_provider: "dintero",
             payment_status: "pending",
             payment_reference: reference,
+            dintero_order_id: dintero_order_id,
             dintero_session_id: session_id
           )
-          if payable.is_a?(Marketplace::Checkout)
-            payable.order_lines.each do |order|
-              order.update_columns(
-                payment_provider: "dintero",
-                payment_status: "pending",
-                payment_reference: reference,
-                dintero_session_id: session_id,
-                updated_at: Time.current
-              )
-            end
+          return unless payable.is_a?(Marketplace::Checkout)
+
+          payable.order_lines.find_each do |order|
+            order.update_columns(
+              payment_provider: "dintero",
+              payment_status: "pending",
+              payment_reference: reference,
+              dintero_order_id: dintero_order_id,
+              dintero_session_id: session_id,
+              updated_at: Time.current
+            )
           end
+        end
+
+        def create_shopping_order!(payable, reference)
+          orders = payable.is_a?(Marketplace::Checkout) ? payable.order_lines.to_a : [ payable ]
+          response = DinteroClient.post(
+            "/v1/accounts/#{DinteroClient.account_id}/shopping/draft_orders",
+            {
+              merchant_reference: reference,
+              currency: payable.payment_currency,
+              items: orders.map { |order| draft_item(order) }
+            },
+            idempotency_key: "brgen-draft-#{reference}"
+          )
+          response.fetch("id")
+        rescue DinteroClient::Error => error
+          raise ProviderError, error.message
+        end
+
+        def draft_item(order)
+          {
+            id: order.id.to_s,
+            external_id: order.listing_id.to_s,
+            description: order.listing.title.to_s.truncate(120),
+            quantity: (order.quantity.presence || 1).to_i,
+            unit_price: order.unit_price_cents,
+            gross_amount: order.total_cents
+          }
         end
 
         def session_payload(payable, return_url:, callback_url:)
           orders = payable.is_a?(Marketplace::Checkout) ? payable.order_lines.to_a : [ payable ]
           {
+            merchant_reference: merchant_reference(payable),
+            items: orders.map { |order| session_item(order) },
             url: {
               return_url: return_url,
               callback_url: callback_url
-            },
-            order: {
-              amount: orders.sum(&:total_cents),
-              currency: payable.payment_currency,
-              merchant_reference: merchant_reference(payable),
-              items: orders.map { |order| session_item(order) }
             },
             profile_id: DinteroClient.profile_id
           }
@@ -188,7 +214,6 @@ module Marketplace
 
         def session_item(order)
           listing = order.listing
-          split = split_for(order)
           item = {
             id: listing.id.to_s,
             line_id: order.id.to_s,
@@ -196,7 +221,7 @@ module Marketplace
             quantity: (order.quantity.presence || 1).to_i,
             amount: order.total_cents
           }
-          item[:splits] = split
+          item[:splits] = split_for(order)
           item[:fee_split] = fee_split if fee_split
           item
         end
@@ -206,10 +231,10 @@ module Marketplace
         end
 
         def split_for(order)
-          destination = order.listing.store
-          payout_destination_id = destination&.dintero_payout_destination_id.to_s
-          status = destination&.dintero_payout_destination_status.to_s
-          unless destination && payout_destination_id.present? && status == "ACTIVE"
+          store = order.listing.store
+          payout_destination_id = store&.dintero_payout_destination_id.to_s
+          status = store&.dintero_payout_destination_status.to_s
+          unless store && payout_destination_id.present? && status == "ACTIVE"
             raise SellerNotReady,
                   "Dintero seller payout destination is not ACTIVE for listing #{order.listing_id}"
           end
@@ -221,15 +246,12 @@ module Marketplace
           splits = [
             { payout_destination_id: payout_destination_id, amount: seller_amount }
           ]
-          splits << {
-            payout_destination_id: ENV["DINTERO_PLATFORM_PAYOUT_DESTINATION_ID"].to_s,
-            amount: fee
-          } if fee.positive?
+          if fee.positive?
+            platform_destination = ENV["DINTERO_PLATFORM_PAYOUT_DESTINATION_ID"].to_s
+            raise SellerNotReady, "Dintero platform payout destination is not configured" if platform_destination.empty?
 
-          unless fee.zero? || ENV["DINTERO_PLATFORM_PAYOUT_DESTINATION_ID"].to_s.present?
-            raise SellerNotReady, "Dintero platform payout destination is not configured"
+            splits << { payout_destination_id: platform_destination, amount: fee }
           end
-
           splits
         end
 
@@ -243,7 +265,10 @@ module Marketplace
         end
 
         def platform_fee_bps
-          Integer(ENV.fetch(COMMISSION_ENV, "0"), 10)
+          bps = Integer(ENV.fetch(COMMISSION_ENV, "0"), 10)
+          raise SellerNotReady, "#{COMMISSION_ENV} must be between 0 and 10000" unless bps.between?(0, 10_000)
+
+          bps
         rescue ArgumentError
           raise SellerNotReady, "#{COMMISSION_ENV} must be an integer"
         end
