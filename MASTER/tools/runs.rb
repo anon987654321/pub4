@@ -60,8 +60,8 @@ module Operator
     # A string literal that looks like it selects ruby files.
     GLOB = /["']([A-Za-z0-9_.\-\/*\[\]{}]*\*[A-Za-z0-9_.\-\/*\[\]{}]*\.rb)["']/
 
-    # A runner naming one file outright runs it just as surely. STUDIO's Rakefile
-    # lists test_studio_gate.rb by name — deliberately, its comment says, because
+    # A runner naming one file outright runs it just as surely. tools/Rakefile
+    # lists test_tools_gate.rb by name — deliberately, its comment says, because
     # the glob beside it would pull in the dilla and tool suites — and a
     # glob-only extractor read that as a test nothing runs. A path literal that
     # matches no test file matches nothing here, so this cannot invent coverage.
@@ -105,7 +105,7 @@ module Operator
     TEST_DIR = %r{(?:\A|/)test/}
 
     def self.test_files
-      @test_files ||= Dir[File.join(ROOT, "{MASTER,RAILS,OPENBSD,STUDIO}/**/*.rb")]
+      @test_files ||= Dir[File.join(ROOT, "{MASTER,RAILS,OPENBSD}/**/*.rb")]
                       .map { |path| path.sub("#{ROOT}/", "") }
                       .reject { |path| path =~ %r{/(node_modules|vendor|tmp|\.master|knowledge|output)/} }
                       .select { |path| path =~ TEST_DIR }
