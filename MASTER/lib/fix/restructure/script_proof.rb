@@ -3,9 +3,9 @@
 module Master
   module Fix
     class Restructure
-      # OPENBSD and STUDIO have no loader to ask, so the proof is what parses
+      # OPENBSD and MASTER/tools have no loader to ask, so the proof is what parses
       # and what the tree's own tests say. Their test files run one process
-      # each, as run_all.rb and STUDIO's Rakefile run them, because each tool
+      # each, as run_all.rb and MASTER/tools's Rakefile run them, because each tool
       # defines its constants at top level and the names collide.
       class ScriptProof < Proof
         private
