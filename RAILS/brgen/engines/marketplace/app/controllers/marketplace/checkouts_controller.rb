@@ -140,7 +140,7 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
   # (variant-aware price, quantity 1) minus the offer framing — this is a
   # purchase, not a negotiation. The seller still gets the order notification.
   def create_buy_now_order
-    listing = Marketplace::Listing.find_by(id: params[:listing_id])
+    listing = Marketplace::Listing.includes(:store).find_by(id: params[:listing_id])
     if listing.nil? || !listing.buyable? || listing.expired? || listing.status != "active"
       redirect_to(listing ? listing_path(listing) : cart_path, alert: t("flash.marketplace.offer_failed"))
       return nil
@@ -230,7 +230,7 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
   end
 
   def payable_orders
-    Current.user.marketplace_orders.includes(:listing).select(&:startable?)
+    Current.user.marketplace_orders.includes(listing: :store).select(&:startable?)
   end
 
   # Everything payable gathered under one Checkout. The address is required: a
@@ -256,7 +256,7 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
     # Must be payable, not merely owned. Without that, POST /checkout?order_id=
     # of a paid/declined row walked into StripeCheckout.start!, which then
     # called mark_payment_pending! and rewound payment_status back to pending.
-    order = Current.user.marketplace_orders.includes(:listing).find_by(id: params[:order_id])
+    order = Current.user.marketplace_orders.includes(listing: :store).find_by(id: params[:order_id])
     order if order&.startable?
   end
 end
