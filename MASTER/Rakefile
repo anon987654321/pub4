@@ -40,7 +40,7 @@ end
 desc "STUDIO parses, has no orphans, its entry points boot, and its suite is green"
 task studio: %i[studio_gate studio_test]
 
-# Outside MASTER's bundle. STUDIO's tools resolve their own gems — postpro needs
+# Outside MASTER's bundle. tools tools resolve their own gems — postpro needs
 # ruby-vips and dilla needs coltrane/midilib/wavefile, none of which are in
 # MASTER's Gemfile and none of which should be: the trees are independent and
 # that is the point of the subprocess. A child inherits BUNDLE_GEMFILE and
@@ -72,7 +72,7 @@ task :studio_gate do
   # trees and the gate requires OPENBSD/lib/gate_result. That independence is
   # deliberate (TODO.md: gate_result_is_a_shared_kernel_filed_
   # under_deploy) and a rake task is not a reason to spend it.
-  gate = File.expand_path("../MASTER/tools/studio/gate.rb", __dir__)
+  gate = File.expand_path("tools/gate.rb", __dir__)
   if File.file?(gate)
     unbundled { sh RbConfig.ruby, gate }
   else
@@ -87,7 +87,7 @@ end
 # MASTER/tools/studio/test is that half. Same subprocess reasoning as above.
 desc "STUDIO's own suite — engine arithmetic, the single-file tools, the gate"
 task :studio_test do
-  studio = File.expand_path("tools/studio", __dir__)
+  studio = File.expand_path("tools", __dir__)
   unless File.file?(File.join(studio, "Rakefile"))
     warn "studio: no suite at #{studio} — skipping (STUDIO tree absent?)"
     next
