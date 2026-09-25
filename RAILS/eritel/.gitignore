@@ -1,0 +1,7 @@
+/log/*
+/tmp/*
+/storage/*
+/public/assets/*
+/.env
+/.ruby-version
+/.bundle
