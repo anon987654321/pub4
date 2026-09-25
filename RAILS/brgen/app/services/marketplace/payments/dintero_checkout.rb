@@ -75,6 +75,50 @@ module Marketplace
         rescue DinteroClient::Error => error
           raise ProviderError, error.message
         end
+        def refund!(order:)
+          raise NotConfigured, "Dintero" unless configured?
+          raise ArgumentError, "order is not a Dintero payment" unless order.payment_provider == "dintero"
+          raise ArgumentError, "order is not paid" unless order.payment_status == "paid"
+
+          dintero_order_id = order.dintero_order_id.to_s
+          raise ArgumentError, "order has no Dintero order id" if dintero_order_id.empty?
+
+          DinteroClient.post(
+            "/v1/accounts/#{DinteroClient.account_id}/shopping/orders/#{ERB::Util.url_encode(dintero_order_id)}/refunds",
+            {
+              items: [ capture_item(order) ],
+              fee_split: fee_split
+            }.compact,
+            idempotency_key: "brgen-refund-order-#{order.id}"
+          )
+        rescue DinteroClient::Error => error
+          raise ProviderError, error.message
+        end
+
+        def refunded!(payable, transaction_id:)
+          if payable.is_a?(Marketplace::Checkout)
+            payable.update_columns(
+              dintero_transaction_id: transaction_id,
+              updated_at: Time.current
+            )
+            payable.order_lines.where(payment_status: "paid").find_each do |order|
+              order.update_columns(
+                payment_status: "refunded",
+                dintero_transaction_id: transaction_id,
+                updated_at: Time.current
+              )
+              mark_return_refunded!(order, transaction_id)
+            end
+          else
+            payable.update!(
+              payment_status: "refunded",
+              dintero_transaction_id: transaction_id
+            )
+            mark_return_refunded!(payable, transaction_id)
+          end
+          payable
+        end
+
         def captured!(payable, transaction_id:, items: [])
           payable.update_columns(
             dintero_transaction_id: transaction_id,
@@ -114,6 +158,19 @@ module Marketplace
         end
 
         private
+
+        def mark_return_refunded!(order, reference)
+          return unless order.respond_to?(:id)
+
+          return_record = Marketplace::Return.where(
+            order_id: order.id,
+            status: "received"
+          ).where(refunded_at: nil).order(resolved_at: :desc).first
+          return_record&.update!(
+            refunded_at: Time.current,
+            refund_reference: reference
+          )
+        end
 
         def persist_dintero_order!(payable, dintero_order_id, reference)
           payable.update_columns(
