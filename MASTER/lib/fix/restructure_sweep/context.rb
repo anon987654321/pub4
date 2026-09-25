@@ -81,7 +81,8 @@ module Master
         end
 
         def to_s
-          [inventory_section, history_section, file_section, directory_section, owner_section,\n           reference_section, production_reference_section, requirer_section].compact.join("\n\n")
+          [inventory_section, history_section, file_section, directory_section, owner_section,
+           reference_section, production_reference_section, requirer_section].compact.join("\n\n")
         end
 
         private
