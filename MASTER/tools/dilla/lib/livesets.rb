@@ -1894,7 +1894,7 @@ module Livesets
   # dilla.rb as it was at `ref`, exported into scratch with the MASTER code it
   # loads at boot. The crate is linked in rather than copied: an old tree reads
   # samples/ where it always did.
-  AB_EXPORT = %w[STUDIO/dilla MASTER/lib MASTER/Gemfile MASTER/Gemfile.lock].freeze
+  AB_EXPORT = %w[MASTER/tools/dilla MASTER/lib MASTER/Gemfile MASTER/Gemfile.lock].freeze
 
   def ab_entry(ref, work)
     return File.join(D, "dilla.rb") unless ref
