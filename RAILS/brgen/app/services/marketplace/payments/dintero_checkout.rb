@@ -21,7 +21,7 @@ module Marketplace
           dintero_order_id = order.dintero_order_id.presence ||
             create_shopping_order!(order, reference)
 
-          persist_dintero_order!(order, dintero_order_id, reference)
+          persist_dintero_order!(order, dintero_order_id, reference) if dintero_order_id.present?
 
           response = DinteroClient.post(
             "/v1/accounts/#{DinteroClient.account_id}/shopping/orders/#{ERB::Util.url_encode(dintero_order_id)}/sessions",
@@ -174,16 +174,27 @@ module Marketplace
 
         def create_shopping_order!(payable, reference)
           orders = payable.is_a?(Marketplace::Checkout) ? payable.order_lines.includes(listing: :store).to_a : [ payable ]
-          response = DinteroClient.post(
+          draft = DinteroClient.post(
             "/v1/accounts/#{DinteroClient.account_id}/shopping/draft_orders",
             {
-              merchant_reference: reference,
-              currency: payable.payment_currency,
-              items: orders.map { |order| draft_item(order) }
+              order: {
+                merchant_reference: reference,
+                currency: payable.payment_currency,
+                items: orders.map { |order| draft_item(order) }
+              },
+              options: {
+                split_draft: false
+              }
             },
             idempotency_key: "brgen-draft-#{reference}"
           )
-          response.fetch("id")
+          draft_id = draft.fetch("id")
+
+          completed = DinteroClient.request(
+            :put,
+            "/v1/accounts/#{DinteroClient.account_id}/shopping/draft_orders/#{ERB::Util.url_encode(draft_id)}/complete"
+          )
+          completed["order_id"] || completed.dig("order", "order_id") || completed.fetch("id")
         rescue DinteroClient::Error => error
           raise ProviderError, error.message
         end
