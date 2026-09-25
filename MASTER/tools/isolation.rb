@@ -29,7 +29,7 @@ require "rbconfig"
 #   suite-only failure   the test is right and something before it interferes
 #   isolation-only failure   the test needs setup a neighbour happens to do,
 #                            so it is asserting less than it claims
-class StudioIsolation
+class ToolsIsolation
   ROOT = File.expand_path(__dir__)
   RUBY = RbConfig.ruby
 
