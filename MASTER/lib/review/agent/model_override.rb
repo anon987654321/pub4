@@ -43,7 +43,7 @@ module Master
           reason = @model_router.unreachable_reason(saved, wait: true) if @model_router.respond_to?(:unreachable_reason)
           return @pinned_model = saved unless reason
 
-          Trace::Dmesg.once("model0", "#{saved} unavailable; dynamic routing (#{reason})")
+          Trace::Dmesg.once("model0", "#{saved} unavailable; live pool selected")
         end
 
         # A pinned model that just failed is parked in the skip cache, and the
