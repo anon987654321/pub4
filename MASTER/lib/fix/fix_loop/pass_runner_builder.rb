@@ -13,7 +13,6 @@ module Master
           committer = Committer.new(git: @git, bus:, root:,
                                        ground_truth:, preserve_user_intent:)
           conflict_resolver = ConflictResolver.new(root:, bus:, law_resolver:)
-          loop_scanner = Scanner.new(scanner:, root:, bus:, conflict_resolver:)
           llm_router = LlmRouter.new(agent)
           council = CouncilRound.new(agent:, root:, bus:)
           visual_pass = VisualPass.new(agent:, root:, bus:)
@@ -21,7 +20,7 @@ module Master
           preamble = self.class.preamble_from_soul
 
           PassRunner.new(
-            bus:, committer:, loop_scanner:, llm_router:, rollback:, root:,
+            bus:, committer:, conflict_resolver:, llm_router:, rollback:, root:,
             rules:, agent:, scanner:, learnings:, preamble:,
             clean_runs_required:,
             plateau_window:,
