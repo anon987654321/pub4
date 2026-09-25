@@ -54,7 +54,7 @@ class GateContractSpec < Minitest::Test
   # The chain ends with a clean tree, and that tree is MASTER plus whatever
   # --tree named.
   #
-  # This read the literal assert_clean("RAILS", "OPENBSD", "STUDIO", "MASTER")
+  # This used to read a literal fourth-tree assertion; the target list is now computed.
   # until --tree made the list a computed one: same contract, different
   # spelling, which is the failure this file already records at the top.
   def test_gate_is_expected_to_keep_repo_clean
@@ -66,8 +66,7 @@ class GateContractSpec < Minitest::Test
   # The gate must cover every sibling tree CLAUDE.md names, not a subset.
   #
   # It carried RAILS and OPENBSD and reported the repo clean on that basis.
-  # STUDIO — dilla, lora, postpro, preprompt — was never scanned, fixed or
-  # reviewed, so "gate clean" was a claim about three quarters of the repo.
+  # MASTER/tools is now part of MASTER, so its coverage is exercised through the MASTER tree and tool suite.
   #
   # Read out of `--explain` rather than out of the source, because the target
   # list is computed: --tree narrows it, and a spec grepping for a literal
@@ -76,7 +75,7 @@ class GateContractSpec < Minitest::Test
   def test_gate_targets_every_sibling_tree
     explain = gate_explain
 
-    %w[../RAILS ../OPENBSD ../STUDIO].each do |tree|
+    %w[../RAILS ../OPENBSD].each do |tree|
       assert_includes explain, tree,
                       "bin/gate does not scan #{tree}; a gate whose target list is shorter " \
                       "than the repo reports clean on the part it looked at"
@@ -90,7 +89,7 @@ class GateContractSpec < Minitest::Test
     # --apply as a directory the moment the full-fix line grew one.
     paths = gate_explain.scan(%r{bin/cli /\w+((?:\s+--[\w-]+)*)\s+(\S+)}).map(&:last).uniq
 
-    assert_operator paths.size, :>=, 4, "expected the default ladder to name all four trees"
+    assert_operator paths.size, :>=, 3, "expected the default ladder to name all three trees"
     paths.each do |relative|
       absolute = File.expand_path(relative, ROOT)
       assert File.directory?(absolute), "bin/gate references missing directory: #{relative}"
