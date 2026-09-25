@@ -56,7 +56,7 @@ module Master
         # In YAML a mapping line's value is data, and a hyphen in data is a
         # character some reader parses. Measured over the tracked markdown and
         # YAML: 39 findings, of which 32 were mapping values — 28 of those
-        # `bpm_range: 84-90` in STUDIO/dilla/data/reference_sonic.yml, which dilla
+        # `bpm_range: 84-90` in MASTER/tools/dilla/data/reference_sonic.yml, which dilla
         # parses to render audio. YAML also carries real prose, in comments and
         # in block scalars, and those lines are not mappings, so the seven that
         # survive are all paragraphs.
