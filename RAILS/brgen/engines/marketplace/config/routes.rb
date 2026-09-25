@@ -20,6 +20,7 @@ Marketplace::Engine.routes.draw do
     resources :variants, only: %i[index create update destroy]
   end
 resources :orders, only: %i[index show update] do
+  member { post :capture }
   # Sending it back. Offered only against a shop — see Marketplace::Return.
   resources :returns, only: %i[create update]
 end
