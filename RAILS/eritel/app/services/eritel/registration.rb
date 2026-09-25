@@ -17,6 +17,8 @@ module Eritel
         item.state = "pending"
       end
 
+      raise Rejected, "domain lifecycle disallows registration" unless record.pending?
+
       Order.create!(
         domain: record,
         registrant:,
