@@ -387,8 +387,8 @@ body[data-council-persona]::after {
   position: fixed;
   top: calc(var(--inset-t) + 2px);
   inset-inline-end: calc(var(--inset-r) + 2px);
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   color: var(--c-mic-off, #6b6b6b);
   opacity: 1;
   pointer-events: none;
@@ -399,8 +399,8 @@ body[data-council-persona]::after {
 }
 
 #mic-dot svg {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   display: block;
   fill: currentColor;
 }
