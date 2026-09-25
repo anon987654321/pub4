@@ -1,20 +1,22 @@
 # frozen_string_literal: true
 
 require "json"
-require "fileutils"
-require_relative "../../io/atomic_write"
 
 module Master::Core::Routing
   # CapabilityMap — empirical model performance with an optional durable store.
+  #
+  # The store is written by the caller's `write`, (path, content) -> any: the
+  # fold spine requires nothing from the rest of lib/, so the atomic writer
+  # arrives from outside. Without one the map
+  # reads its file and keeps what it learns in memory.
   class CapabilityMap
-    include Master::Io::AtomicWrite
-
     MIN_SAMPLES = 3
 
     attr_reader :scores, :path
 
-    def initialize(path: nil)
+    def initialize(path: nil, write: nil)
       @path = path
+      @write = write
       @scores = load_scores
     end
 
@@ -99,9 +101,9 @@ module Master::Core::Routing
     end
 
     def persist
-      return unless @path
+      return unless @path && @write
 
-      write_atomic(@path, JSON.pretty_generate(@scores) + "\n")
+      @write.call(@path, JSON.pretty_generate(@scores) + "\n")
     rescue StandardError => e
       Master::Ground::Swallow.log(e, context: "CapabilityMap.persist", path: @path)
       nil

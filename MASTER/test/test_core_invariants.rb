@@ -46,6 +46,23 @@ class TestCapabilityMap < Minitest::Test
     assert_operator @map.score_for("new-model", :coding), :<, 0.5
     assert_operator @map.score_for("new-model", :coding), :>, 0.0
   end
+
+  # The store is written through the writer the caller hands in, and a map
+  # built on the same path reads it back.
+  def test_outcomes_persist_through_the_injected_writer
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "caps.json")
+      written = []
+      write = lambda do |target, content|
+        written << target
+        File.write(target, content)
+      end
+      Master::Core::Routing::CapabilityMap.new(path:, write:).record_outcome("gemma", :coding, true)
+
+      assert_equal [path], written
+      assert_equal 1.0, Master::Core::Routing::CapabilityMap.new(path:).success_rate("gemma", "coding")
+    end
+  end
 end
 
 # frozen_string_literal: true

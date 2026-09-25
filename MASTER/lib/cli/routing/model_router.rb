@@ -7,7 +7,7 @@ require_relative "model_router/failover_config"
 require_relative "model_router/diagnostics"
 require_relative "model_router/pool"
 require_relative "model_router/hosted_endpoints"
-require_relative "../../core/routing/compute_pool"
+require_relative "compute_pool"
 
 module Master
   module CLI
@@ -37,8 +37,9 @@ module Master
           @root = root
           @provider_health = provider_health
           @rules = load_rules
-          @capability_map = Master::Core::Routing::CapabilityMap.new(path: File.join(@root, "runtime", "telemetry", "model_capabilities.json"))
-          @compute_pool = Master::Core::Routing::ComputePool.new(router: self, root: @root)
+          @capability_map = Master::Core::Routing::CapabilityMap.new(path: File.join(@root, "runtime", "telemetry", "model_capabilities.json"),
+                                                                    write: Object.new.extend(Io::AtomicWrite).method(:write_atomic))
+          @compute_pool = ComputePool.new(router: self, root: @root)
           start_pool_probes
         end
 

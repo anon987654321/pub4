@@ -22,7 +22,7 @@ class TestComputePool < Minitest::Test
   end
 
   def setup
-    @pool = Master::Core::Routing::ComputePool.new(router: Router.new, root: Dir.mktmpdir)
+    @pool = Master::CLI::Routing::ComputePool.new(router: Router.new, root: Dir.mktmpdir)
   end
 
   def test_ranks_reachable_models

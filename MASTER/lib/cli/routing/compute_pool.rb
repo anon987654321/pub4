@@ -7,7 +7,7 @@ require_relative "../../io/quota_gate"
 require_relative "../../io/catalog_index"
 
 module Master
-  module Core
+  module CLI
     module Routing
       # Live compute economics for model selection.
       #

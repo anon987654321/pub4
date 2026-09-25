@@ -33,7 +33,7 @@ module Master
     # catalog is empty. Returns a lambda that restores both.
     module RoutingIsolation
       def self.install
-        pool = Master::Core::Routing::ComputePool
+        pool = Master::CLI::Routing::ComputePool
         router = Master::CLI::Routing::ModelRouter
         saved = [[pool, :rank, pool.instance_method(:rank)],
                  [router, :live_free_models, router.instance_method(:live_free_models)]]
