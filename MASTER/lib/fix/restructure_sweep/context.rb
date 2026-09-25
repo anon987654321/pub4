@@ -22,7 +22,52 @@ module Master
             Master::Ground::Swallow.log(e, context: "restructure.findings", path:)
             []
           end
-          local + cross_file_findings(target)
+          local + cross_file_findings(target) + dead_subtree_findings(target)
+        end
+
+        def self.dead_subtree_findings(target)
+          return [] unless File.basename(target.to_s) == "MASTER"
+
+          source = production_files(target)
+          subtrees = source.group_by { |path| File.dirname(path) }.keys.filter_map do |dir|
+            files = source.select { |path| path == dir || path.start_with?("#{dir}/") }
+            next if files.size < 3
+            next if dir == File.join(target.to_s, "lib")
+            next if dir.split("/").any? { |part| %w[test spec fixtures vendor].include?(part) }
+
+            all = Dir.glob(File.join(dir, "**", "*.{rb,rake,js,mjs}")).select(&:file?)
+            next if all.size < 3
+
+            needles = all.flat_map { |path| names_in_file(path) }.uniq
+            outside = source - all
+            referenced = outside.any? do |path|
+              code = File.read(path, encoding: "UTF-8")
+              needles.any? { |needle| code.match?(needle) }
+            rescue StandardError
+              false
+            end
+            next if referenced
+
+            first = all.first
+            [first, "DEAD_SUBTREE", "#{relative_static(first, target)} subtree has #{all.size} production source files and no production references from outside the subtree", all]
+          end
+          subtrees.sort_by { |_path, _rule, message, _files| [message[/\d+/].to_i, message] }
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "restructure.dead_subtree", target:)
+          []
+        end
+
+        def self.names_in_file(path)
+          stem = File.basename(path, ".*")
+          constants = File.read(path, encoding: "UTF-8")
+            .scan(/^\s*(?:class|module)\s+([A-Z][\w:]+)/).flatten
+          [stem.length >= 4 ? Regexp.escape(stem) : nil, *constants.map { |name| Regexp.escape(name) }].compact
+        rescue StandardError
+          []
+        end
+
+        def self.relative_static(path, target)
+          path.to_s.delete_prefix("#{target}/")
         end
 
         def self.cross_file_findings(target)
