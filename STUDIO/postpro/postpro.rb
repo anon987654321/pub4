@@ -476,7 +476,13 @@ end
 # defect this file already fixes for master.json and preprompt.rb. A bare
 # relative path meant even a read-only --vocab-check created a log wherever the
 # operator happened to be standing.
-$logger = Logger.new(File.join(__dir__, "postpro.log"), "daily", level: Logger::DEBUG)
+#
+# The Rails apps run this as their own user from dev's checkout on vm23, where
+# this directory is not theirs to write, so the log falls back to stderr there
+# rather than aborting the grade before it starts.
+postpro_log = File.join(__dir__, "postpro.log")
+postpro_log = $stderr unless File.writable?(File.exist?(postpro_log) ? postpro_log : __dir__)
+$logger = Logger.new(postpro_log, "daily", level: Logger::DEBUG)
 $cli_logger = Object.new.tap do |obj|
   def obj.info(msg) = PostproBootstrap.dmesg(msg)
   # warn was missing while two call sites used it, so a bad recipe key hit
