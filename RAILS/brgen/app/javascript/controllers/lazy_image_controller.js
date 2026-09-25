@@ -9,7 +9,15 @@ export default class extends Controller {
   static values = { src: String, blurhash: String }
 
   connect() {
-    if (this.hasImageTarget) {
+    if (!this.hasImageTarget) return
+
+    if (this.blurhashValue && !this.srcValue && !this.imageTarget.complete) {
+      this.renderBlurhashPlaceholder(this.imageTarget, this.blurhashValue)
+      this.imageTarget.addEventListener("load", this.clearBlurhashPlaceholder.bind(this), { once: true })
+      return
+    }
+
+    if (this.srcValue) {
       this.observer = new IntersectionObserver(this.load.bind(this), {
         rootMargin: "200px"
       })
@@ -44,6 +52,11 @@ export default class extends Controller {
         delete img.dataset.src
       }
     })
+  }
+
+  clearBlurhashPlaceholder(img) {
+    img.style.backgroundImage = ""
+    img.style.backgroundSize = ""
   }
 
   renderBlurhashPlaceholder(img, hash) {

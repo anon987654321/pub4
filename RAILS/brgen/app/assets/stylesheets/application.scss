@@ -9379,7 +9379,7 @@ body.vertical-playlist input[type="range"] {
 // media galleries popped in at full opacity with no transition armed. The
 // 240ms duration is not invented here -- it is the same figure the controller
 // already writes inline for its blurhash-canvas case.
-img[data-controller="lazy-image"] {
+img[data-controller="lazy-image"][data-lazy-image-src-value] {
   opacity: 0;
 }
 

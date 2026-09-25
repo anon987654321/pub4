@@ -360,7 +360,7 @@ class ApplicationHelperTest < ActionView::TestCase
 
     assert_equal %(<picture><source type="image/webp" srcset="#{set.([ 400, 800, 1200 ], { format: :webp })}" sizes="(max-width: 768px) 100vw, 800px">) +
                  %(<img alt="c" srcset="#{set.([ 400, 800, 1200 ], {})}" sizes="(max-width: 768px) 100vw, 800px" width="4" height="3" ) +
-                 %(class="post-image" loading="lazy" src="#{largest.(1200)}" /></picture>),
+                 %(class="post-image" loading="lazy" data-controller="lazy-image" data-lazy-image-target="image" data-lazy-image-blurhash-value="LEHV6nWB2yk8" src="#{largest.(1200)}" /></picture>),
                  responsive_image_tag(blob, alt: "c", class: "post-image")
     assert_equal %(<picture><source type="image/webp" srcset="#{set.([ 360, 720 ], { format: :webp })}" sizes="(max-width: 768px) 50vw, 220px">) +
                  %(<img alt="" srcset="#{set.([ 360, 720 ], {})}" sizes="(max-width: 768px) 50vw, 220px" width="4" height="3" ) +

@@ -248,10 +248,13 @@ module Shared
     # defines its own responsive_image_tag in its ApplicationHelper, which
     # wins over this one: it serves preprocessed named variants first and
     # resolves through the ambient url_for.
-    def responsive_image_tag(attachment, alt:, widths: [ 400, 800, 1_200 ], sizes: "(max-width: 768px) 100vw, 800px", loading: "lazy", **options)
+    def responsive_image_tag(attachment, alt:, widths: [ 400, 800, 1_200 ], sizes: "(max-width: 768px) 100vw, 800px", loading: "lazy", blurhash: nil, **options)
       image_options = reserved_image_options(attachment, options, loading:)
 
       return image_tag(attachment, alt: alt, **image_options) unless attachment.respond_to?(:variant)
+
+      blurhash ||= attachment.try(:blurhash) || attachment.try(:blob).try(:blurhash) || attachment.try(:metadata).try(:[], "blurhash")
+      blurhash = nil unless loading.to_s == "lazy"
 
       through_main_app = ->(variant) { main_app.url_for(variant) }
       responsive_picture_tag(
@@ -259,6 +262,7 @@ module Shared
         alt: alt,
         widths: widths,
         sizes: sizes,
+        blurhash:,
         srcset_url: through_main_app,
         img_src: through_main_app,
         **image_options
@@ -284,7 +288,7 @@ module Shared
     #   srcset_url — callable, variant -> URL string, used for both srcsets
     #   img_src    — callable, largest variant -> whatever image_tag should get;
     #                omitted, image_tag receives the variant itself
-    def responsive_picture_tag(attachment, alt:, widths:, sizes:, srcset_url:, img_src: nil, **image_options)
+    def responsive_picture_tag(attachment, alt:, widths:, sizes:, srcset_url:, img_src: nil, blurhash: nil, **image_options)
       widths = Array(widths).map(&:to_i).uniq.sort
       largest = attachment.variant(resize_to_limit: [ widths.last, widths.last ])
       webp_srcset = widths.map do |width|
@@ -293,6 +297,12 @@ module Shared
       fallback_srcset = widths.map do |width|
         "#{srcset_url.call(attachment.variant(resize_to_limit: [ width, width ]))} #{width}w"
       end.join(", ")
+
+      image_options[:data] = (image_options[:data] || {}).merge(
+        controller: "lazy-image",
+        lazy_image_target: "image",
+        lazy_image_blurhash_value: blurhash,
+      ) if blurhash.present?
 
       content_tag(:picture) do
         safe_join(

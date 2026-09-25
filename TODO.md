@@ -378,8 +378,8 @@ is left changes how a surface looks, or needs vm23.
 - **Resolved 2026-09-25:** rejected optimistic like/vote actions now roll back
   and show the localized shared error toast. Cable disconnect feedback remains
   a separate open item for the client connection surface.
-- **The feed card paints no blurhash.** `lazy_image_tag` carries the
-  placeholder; `posts/_post` renders `responsive_image_tag`, which does not.
+- **Resolved 2026-09-25:** responsive feed images now opt into the existing
+  blurhash decoder while retaining responsive WebP/srcset delivery.
 - **Needs vm23.** A p95 server-time ceiling per route means something only when
   measured on the box, warm and cold; and whether relayd serves HTTP/2 or
   compresses anything is a man-page-then-measure question there.
