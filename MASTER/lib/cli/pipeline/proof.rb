@@ -180,10 +180,10 @@ module Master
         end
 
         def suite_proof(chain, tree)
-          runs = chain.suite_jobs([tree]).map do |name, cmd, dir, env, _tree|
+          runs = chain.suite_jobs([tree]).map do |name, cmd, dir, env, _tree, unbundled|
             # bin/check prints a passing step's output only when asked, and a
             # suite that passed must still count as one that finished.
-            ok, out = chain.capture(*cmd, chdir: dir, env: env.merge("CHECK_VERBOSE" => "1"))
+            ok, out = chain.capture(*cmd, chdir: dir, env: env.merge("CHECK_VERBOSE" => "1"), unbundled:)
             [name, ok, out]
           end
           framed = runs.flat_map { |name, ok, out| ["proof suite #{name}: #{ok ? "ok" : "FAIL"}", *out] }
