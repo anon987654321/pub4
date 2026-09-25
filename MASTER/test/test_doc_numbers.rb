@@ -60,7 +60,9 @@ class TestDocNumbers < Minitest::Test
   def test_the_checker_measures_something
     assert_operator @report[:values], :>, 10,
                     "only #{@report[:values]} token values extracted — design_tokens.yml moved or changed shape"
-    assert_operator @report[:docs], :>, 30,
+    # 29 documents since the 2026-09-24 consolidation; a floor for a reader
+    # that stopped reading, not a count to hold.
+    assert_operator @report[:docs], :>, 20,
                     "only #{@report[:docs]} documents scanned"
     refute Operator::DocNumbers.traceable?("Minimum touch target: 44px.", ["shared_chrome.tap_min"])
     assert Operator::DocNumbers.traceable?("Minimum touch target: 44px (`--tap-min`).", ["shared_chrome.tap_min"])

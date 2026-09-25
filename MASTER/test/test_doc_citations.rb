@@ -25,11 +25,13 @@ class TestDocCitations < Minitest::Test
 
   # A checker that has stopped finding anything to check reports clean forever.
   def test_the_checker_is_reading_documents_and_data
-    assert_operator @report["docs"], :>, 40, "only #{@report['docs']} documents seen"
+    # 29 documents since the 2026-09-24 consolidation folded 28 into their
+    # READMEs; the floor catches a checker that stopped reading, not a count.
+    assert_operator @report["docs"], :>, 20, "only #{@report['docs']} documents seen"
     # Floor, not a target: rewriting prose to drop a quoted number is a real loss
     # of coverage, so the floor is asserted rather than quietly followed downward.
-    # It stands at the one quotation the live documents carry, START_HERE.md's
-    # `core_files`.
+    # It stands at the one quotation the live documents carry, the Do Not Touch
+    # list's `core_files` in AGENTS.md.
     assert_operator @report["quotations"] + @report["citations"], :>=, 1,
                     "only #{@report['quotations']} quotation(s) and #{@report['citations']} " \
                     "citation(s) found — the checker stopped matching"
