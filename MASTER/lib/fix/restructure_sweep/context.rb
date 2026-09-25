@@ -29,9 +29,7 @@ module Master
           return [] unless File.basename(target.to_s) == "MASTER"
 
           source = production_files(target)
-          subtrees = source.group_by { |path| File.dirname(path) }.keys.filter_map do |dir|
-            files = source.select { |path| path == dir || path.start_with?("#{dir}/") }
-            next if files.size < 3
+          subtrees = Dir.glob(File.join(target.to_s, "lib", "**", "*")).select(&:directory?).filter_map do |dir|
             next if dir == File.join(target.to_s, "lib")
             next if dir.split("/").any? { |part| %w[test spec fixtures vendor].include?(part) }
 
@@ -61,7 +59,8 @@ module Master
           stem = File.basename(path, ".*")
           constants = File.read(path, encoding: "UTF-8")
             .scan(/^\s*(?:class|module)\s+([A-Z][\w:]+)/).flatten
-          [stem.length >= 4 ? Regexp.escape(stem) : nil, *constants.map { |name| Regexp.escape(name) }].compact
+          [stem.length >= 4 ? Regexp.new(Regexp.escape(stem)) : nil,
+           *constants.map { |name| Regexp.new("\\b#{Regexp.escape(name)}\\b") }].compact
         rescue StandardError
           []
         end
