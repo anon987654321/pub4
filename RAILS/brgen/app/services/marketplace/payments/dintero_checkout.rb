@@ -29,7 +29,7 @@ module Marketplace
           session_id = response.fetch("id")
           checkout_url = response.fetch("url")
 
-          persist_session!(order, session_id, reference)
+          persist_session!(order, dintero_order_id, session_id, reference)
           order.define_singleton_method(:dintero_checkout_url) { checkout_url }
           checkout_url
         rescue DinteroClient::Error => e
@@ -56,16 +56,14 @@ module Marketplace
           transaction_id = order.dintero_transaction_id.to_s
           raise ArgumentError, "order has no Dintero transaction" if transaction_id.empty?
 
-          response = DinteroClient.post(
-            "/v1/transactions/#{URI.encode_www_form_component(transaction_id)}/capture",
-            {
-              items: [ capture_item(order) ],
-              amount: order.total_cents
-            },
+          dintero_order_id = order.dintero_order_id.to_s
+          raise ArgumentError, "order has no Dintero order id" if dintero_order_id.empty?
+
+          DinteroClient.post(
+            "/v1/accounts/#{DinteroClient.account_id}/shopping/orders/#{ERB::Util.url_encode(dintero_order_id)}/captures",
+            { items: [ capture_item(order) ] },
             idempotency_key: "brgen-capture-order-#{order.id}"
           )
-          order.mark_paid!(reference: order.payment_reference)
-          response
         rescue DinteroClient::Error => e
           raise ProviderError, e.message
         end
@@ -98,14 +96,13 @@ module Marketplace
             Marketplace::Order.find_by(payment_reference: reference)
         end
 
-        def session_transaction(session_id)
-          DinteroClient.get("/v1/sessions/#{URI.encode_www_form_component(session_id)}", checkout: true)
-        rescue DinteroClient::Error => e
-          raise ProviderError, e.message
-        end
+        def session_transaction(order:, session_id:)
+          dintero_order_id = order.dintero_order_id.to_s
+          raise ArgumentError, "order has no Dintero order id" if dintero_order_id.empty?
 
-        def transaction(transaction_id)
-          DinteroClient.get("/v1/transactions/#{URI.encode_www_form_component(transaction_id)}")
+          DinteroClient.get(
+            "/v1/accounts/#{DinteroClient.account_id}/shopping/orders/#{ERB::Util.url_encode(dintero_order_id)}/sessions/#{ERB::Util.url_encode(session_id)}"
+          )
         rescue DinteroClient::Error => e
           raise ProviderError, e.message
         end
