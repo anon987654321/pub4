@@ -31,29 +31,36 @@ module Master
 
           source = production_files(target)
           subtrees = Dir.glob(File.join(target.to_s, "lib", "**", "*")).select(&:directory?).filter_map do |dir|
-            next if dir == File.join(target.to_s, "lib")
-            next if dir.split("/").any? { |part| %w[test spec fixtures vendor].include?(part) }
-
-            all = Dir.glob(File.join(dir, "**", "*.{rb,rake,js,mjs}")).select(&:file?)
-            next if all.size < 3
-
-            needles = all.flat_map { |path| names_in_file(path) }.uniq
-            outside = source - all
-            referenced = outside.any? do |path|
-              code = File.read(path, encoding: "UTF-8")
-              needles.any? { |needle| code.match?(needle) }
-            rescue StandardError
-              false
-            end
-            next if referenced
-
-            first = all.first
-            [first, "DEAD_SUBTREE", "#{relative_static(first, target)} subtree has #{all.size} production source files and no production references from outside the subtree", all]
+            dead_subtree(dir, target, source)
           end
           subtrees.sort_by { |_path, _rule, message, _files| [message[/\d+/].to_i, message] }
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "restructure.dead_subtree", target:)
           []
+        end
+
+        # One directory's finding, or nil while anything outside it names it.
+        def self.dead_subtree(dir, target, source)
+          return if dir == File.join(target.to_s, "lib")
+          return if dir.split("/").any? { |part| %w[test spec fixtures vendor].include?(part) }
+
+          all = Dir.glob(File.join(dir, "**", "*.{rb,rake,js,mjs}")).select(&:file?)
+          return if all.size < 3
+
+          needles = all.flat_map { |path| names_in_file(path) }.uniq
+          return if referenced_outside?(source - all, needles)
+
+          first = all.first
+          [first, "DEAD_SUBTREE", "#{relative_static(first, target)} subtree has #{all.size} production source files and no production references from outside the subtree", all]
+        end
+
+        def self.referenced_outside?(outside, needles)
+          outside.any? do |path|
+            code = File.read(path, encoding: "UTF-8")
+            needles.any? { |needle| code.match?(needle) }
+          rescue StandardError
+            false
+          end
         end
 
         def self.names_in_file(path)
@@ -69,6 +76,8 @@ module Master
         def self.relative_static(path, target)
           path.to_s.delete_prefix("#{target}/")
         end
+
+        private_class_method :dead_subtree, :referenced_outside?, :names_in_file, :relative_static
 
         def self.cross_file_findings(target)
           rows = Master::Review::Scan::CrossFileAnalysis.new(root: target).call(production_files(target))

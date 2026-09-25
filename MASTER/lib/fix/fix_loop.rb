@@ -287,21 +287,7 @@ module Master
         @run_journal.pass_start(run_id, pass, transaction_id:)
 
         @homeostat&.observe(:tool_call) # a pass is loop overhead distinct from the LLM call inside it
-        if deadline.expired?
-          @bus&.publish("fix_loop:timeout", pass:, budget_seconds:)
-          # Err, not ok. A run that stopped because the clock ran out did not
-          # finish fixing, and saying "ok" here is how the 2026-07-31 gate
-          # reported a green MASTER phase whose /fix had completed exactly one
-          # pass: bin/cli exited 0, bin/gate saw success, and the /scan on
-          # either side of it printed the identical 110 violations.
-          #
-          # :timeout matches LLMDispatcher's category for the same situation, so
-          # a caller that wants to treat "ran out of time" differently from
-          # "genuinely failed" can, and one that does not gets the truth by
-          # default. Both callers already handle err: watch_loop ignores
-          # the return and through_pipeline logs "fail".
-          return Result.err("wall-clock timeout (#{budget_seconds}s) after #{i} pass(es)", category: :timeout)
-        end
+        return timed_out(i, pass, budget_seconds) if deadline.expired?
 
         result = @pass_runner.run_pass(
           files:, target:, pass:, deadline: deadline.at, transaction_id:,
@@ -310,26 +296,46 @@ module Master
           consecutive_clean: state[:consecutive_clean]
         )
         state[:consecutive_clean] = result.consecutive_clean
-        structural = if %i[clean plateau].include?(result.status)
-                       sweep_tree(target, run_id)
-                     else
-                       []
-                     end
-        if structural.any?
-          state[:consecutive_clean] = 0
-          files.replace(@file_collector.collect(target))
-          message = "structural surgery kept #{structural.size}; re-entering repair"
-          @run_journal.pass_finish(run_id, pass, status: :structural_repair, message:)
-          @bus&.publish("fix_loop:structural_repair", pass:, changes: structural.size)
-          Master::Trace::Dmesg.status("fix0", "pass #{pass}, #{message}")
-          return nil
-        end
+        return nil if structural_repair?(result, files:, target:, state:, run_id:, pass:)
 
         @run_journal.pass_finish(run_id, pass, status: result.status, message: result.message)
         ending = PASS_ENDINGS[result.status]
         return terminal(ending, result.message) if ending
 
         result.status == :plateau ? :break : nil
+      end
+
+      # Err, not ok. A run that stopped because the clock ran out did not
+      # finish fixing, and saying "ok" here is how the 2026-07-31 gate
+      # reported a green MASTER phase whose /fix had completed exactly one
+      # pass: bin/cli exited 0, bin/gate saw success, and the /scan on
+      # either side of it printed the identical 110 violations.
+      #
+      # :timeout matches LLMDispatcher's category for the same situation, so
+      # a caller that wants to treat "ran out of time" differently from
+      # "genuinely failed" can, and one that does not gets the truth by
+      # default. Both callers already handle err: watch_loop ignores
+      # the return and through_pipeline logs "fail".
+      def timed_out(i, pass, budget_seconds)
+        @bus&.publish("fix_loop:timeout", pass:, budget_seconds:)
+        Result.err("wall-clock timeout (#{budget_seconds}s) after #{i} pass(es)", category: :timeout)
+      end
+
+      # A clean or plateaued pass gets structural surgery; anything it keeps
+      # sends the loop back into repair with the new file list.
+      def structural_repair?(result, files:, target:, state:, run_id:, pass:)
+        return false unless %i[clean plateau].include?(result.status)
+
+        structural = sweep_tree(target, run_id)
+        return false if structural.empty?
+
+        state[:consecutive_clean] = 0
+        files.replace(@file_collector.collect(target))
+        message = "structural surgery kept #{structural.size}; re-entering repair"
+        @run_journal.pass_finish(run_id, pass, status: :structural_repair, message:)
+        @bus&.publish("fix_loop:structural_repair", pass:, changes: structural.size)
+        Master::Trace::Dmesg.status("fix0", "pass #{pass}, #{message}")
+        true
       end
 
       def halted_result = Result.err("BLOCKED: fix_loop halted, #{@halt_reason || "self_violation"}", category: :policy)
