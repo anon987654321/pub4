@@ -69,13 +69,21 @@
       <% end %>
     </div>
 
+    <% dintero_ready = Marketplace::Payments::DinteroCheckout.configured? &&
+         @cart_items.all? { |item| item.listing.store&.dintero_ready? } %>
     <% vipps_ready = Marketplace::Payments::VippsCheckout.configured? %>
     <% stripe_ready = Marketplace::Payments::StripeCheckout.configured? &&
          !(Rails.env.production? && Marketplace::Payments::StripeCheckout.test_key?) %>
     <%# The pay buttons submit without Turbo: checkout answers with a redirect to
         the provider's own host, and a fetch cannot follow a cross-origin redirect. %>
-    <% if vipps_ready || stripe_ready %>
+    <% if dintero_ready || vipps_ready || stripe_ready %>
       <div class="cart-pay-actions" role="group" aria-label="<%= t("marketplace.payment_methods") %>">
+        <% if dintero_ready %>
+          <%= button_to t("marketplace.pay_dintero"), checkout_path,
+                method: :post, params: { provider: "dintero" },
+                class: "btn btn-primary cart-pay-dintero",
+                form: { data: { turbo: false } } %>
+        <% end %>
         <% if vipps_ready %>
           <%= button_to t("marketplace.pay_vipps"), checkout_path,
                 method: :post, params: { provider: "vipps" },
