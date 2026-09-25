@@ -23,7 +23,7 @@
 # rows, every persona, every provider, RuntimeCatalog's runtime.yml sections),
 # keys served whole to the face and read in JavaScript (topologies.yml), and
 # keys read from another tree (pub_archive_restore.yml by RAILS,
-# radio_bergen_track_dossiers.yml by STUDIO/dilla). A member is a defect only
+# radio_bergen_track_dossiers.yml by MASTER/tools/dilla). A member is a defect only
 # after all three are ruled out.
 #
 # That is also why no gate fails on an unread key. The tree reaches data through
