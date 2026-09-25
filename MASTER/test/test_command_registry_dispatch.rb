@@ -39,19 +39,11 @@ class TestCommandRegistryDispatch < Minitest::Test
   # A `*_commands` method is a table of verbs. Only control_commands exists,
   # and build merges it; slash_commands is the help list, not a table.
   def test_critique_is_a_documented_discoverable_command
-    infra = {
-      bus: nil, trace: nil, learnings: nil, session: nil, undo: nil, config: nil
-    }
-    ai = {
-      agent: nil, scanner: nil, fix_loop: nil, deliberation: nil, review_crew: nil, swarm: nil,
-      standing: nil, soul: nil, code_index: nil, reference_graph: nil,
-      metrics: nil, git: nil
-    }
-    built = Master::CLI::CommandRegistry.build(infra:, ai:, root: Master::ROOT)
-
     assert built.key?("critique")
-    assert_includes Master::CLI::CommandRegistry.slash_commands, "/critique"
-    assert_match(%r{/critique}, Master::CLI::CommandRegistry.help_text("critique"))
+    assert_includes Registry::HELP_TOPICS.keys, "critique"
+    assert_includes Registry.slash_commands, "/critique"
+    assert_match(%r{/critique}, Registry.help_text("critique"))
+    assert_equal :dispatch_critique, built.fetch("critique").method_name
   end
 
   def test_no_command_table_is_left_unmerged
