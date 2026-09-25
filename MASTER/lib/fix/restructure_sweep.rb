@@ -19,12 +19,20 @@ module Master
     # caps the findings tried per run, each costing two model calls.
     class RestructureSweep
       ATTEMPTS = Integer(ENV.fetch("MASTER_FIX_RESTRUCTURE_ATTEMPTS", 4))
+      ROUNDS = Integer(ENV.fetch("MASTER_FIX_RESTRUCTURE_ROUNDS", 4))
       KEEPS = 3
       ORDER = %w[FILE_SPRAWL NO_GOD_CLASS SMALL_FILES JS_MODULE_SIZE].freeze
       TREES = Contracts::BY_TREE.keys.freeze
 
       PROPOSE = <<~TEXT
         Restructure part of this tree to remove one structural finding.
+
+        Autonomous surgery rules:
+        - Read the archaeology below before deciding that a file is dead or should move.
+        - A pure deletion is valid only when surviving production code has no reference to its path or defined constants.
+        - Tests are evidence, not production callers. If a deleted test is the only consumer, say so in SUMMARY.
+        - Recalculate the recursive tree census after every kept restructure; hidden nested growth is not free.
+        - Reconcile the structural ratchet when the measured core gets smaller. Keep the recorded ceiling honest.
 
         Finding: %<rule>s at %<path>s: %<message>s
 
@@ -74,11 +82,18 @@ module Master
         return [] if ENV["MASTER_FIX_RESTRUCTURES"] == "0" || !TREES.include?(File.basename(target.to_s))
 
         kept = []
-        candidates(target, run_id).first(ATTEMPTS).each do |finding|
-          break if kept.size >= KEEPS
+        ROUNDS.times do |round|
+          round_kept = []
+          candidates(target, "#{run_id}-#{round}").first(ATTEMPTS).each do |finding|
+            break if kept.size + round_kept.size >= KEEPS * ROUNDS
 
-          result = attempt(finding)
-          kept << result.value! if result&.ok?
+            result = attempt(finding)
+            round_kept << result.value! if result&.ok?
+          end
+          kept.concat(round_kept)
+          break if round_kept.empty?
+
+          Master::Trace::Dmesg.status("restructure0", "round #{round + 1}, kept #{round_kept.size}, total #{kept.size}")
         end
         kept
       end
