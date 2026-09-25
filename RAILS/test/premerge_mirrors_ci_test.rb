@@ -44,7 +44,8 @@ class PremergeMirrorsCiTest < Minitest::Test
     run = workflow("rails-tests.yml").dig("jobs", "test", "steps").filter_map { |s| s["run"] }.join("\n")
 
     assert_includes run, "bin/ci", "the workflow stopped running bin/ci"
-    assert_includes premerge_source, %("bundle", "exec", "bin/ci")
+    assert_includes premerge_source, "BUNDLE"
+    assert_includes premerge_source, %("exec", *RUBY, "bin/ci")
   end
 
   def test_it_runs_the_layout_suite_the_way_the_workflow_does
@@ -79,13 +80,12 @@ class PremergeMirrorsCiTest < Minitest::Test
     assert_match(/BLOCKED/, premerge_source)
   end
 
-  # Which workflow runs without being asked, recorded rather than assumed. Both
-  # were dispatch-only under the billing lock; rails-tests.yml runs on push and
-  # on pull requests again, and layout-suite.yml still has its auto-run block
-  # commented out. That asymmetry is the whole reason premerge still exists, so
-  # it fails here when either half moves — including the good direction.
+  # Which workflows run without being asked, recorded rather than assumed.
+  # Both are currently manual-dispatch only, so this local mirror is deliberate:
+  # it proves the commands a dispatched workflow would run without claiming that
+  # GitHub runs them automatically on every change.
   TRIGGERS = {
-    "rails-tests.yml" => %w[pull_request push workflow_dispatch],
+    "rails-tests.yml" => %w[workflow_dispatch],
     "layout-suite.yml" => %w[workflow_dispatch],
   }.freeze
 
