@@ -93,18 +93,31 @@ begin
   sleep options[:tap_wait]
 
   state = browser.evaluate(<<~JS)
-    ({
-      primerFired: !!window._primerFired,
-      primerGone: !document.getElementById('primer'),
-      faceSession: document.body.classList.contains('face-session'),
-      zshLive: document.getElementById('zsh')?.classList.contains('live'),
-      faceType: typeof window.MASTER_FACE
-    })
+    (() => {
+      const face = document.getElementById('face');
+      const rect = face?.getBoundingClientRect();
+      const viewport = [window.innerWidth, window.innerHeight];
+      return {
+        primerFired: !!window._primerFired,
+        primerGone: !document.getElementById('primer'),
+        faceSession: document.body.classList.contains('face-session'),
+        zshLive: document.getElementById('zsh')?.classList.contains('live'),
+        faceType: typeof window.MASTER_FACE,
+        viewport,
+        faceRect: rect ? [rect.x, rect.y, rect.width, rect.height] : null,
+        faceFullscreen: !!rect &&
+          rect.x === 0 && rect.y === 0 &&
+          Math.abs(rect.width - viewport[0]) < 0.5 &&
+          Math.abs(rect.height - viewport[1]) < 0.5
+      };
+    })()
   JS
 
   VIEWPORTS.each do |name, dims|
     capture!(browser, File.join(run_dir, "02-session-#{name}.png"), "session-#{name}", manifest, viewport: dims)
   end
+
+  abort("screenshot_calibrate: face is not fullscreen at #{state[:viewport].inspect}") unless state[:faceFullscreen]
 
   manifest[:state] = state
   manifest[:stylecoach] = []
