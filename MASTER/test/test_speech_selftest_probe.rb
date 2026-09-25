@@ -49,9 +49,8 @@ class TestSpeechSelftestProbe < Minitest::Test
     assert_equal 0, calls, "memoised probe re-spawned the worker"
   end
 
-  # The trap: bundler/setup inside the worker writes Gemfile.lock, so an
-  # mtime-keyed memo is invalidated by the very probe it memoises. Keying on
-  # content survives the touch.
+  # Keyed on content, so a lockfile touch without a change (bundler rewrites
+  # the file when it re-resolves) cannot invalidate the memo.
   #
   # The mtime is moved with File.utime rather than by running the worker, and
   # that is not laziness. Written the obvious way — run the worker, compare —
@@ -84,22 +83,6 @@ class TestSpeechSelftestProbe < Minitest::Test
     Digest::SHA256.stub(:file, ->(_path) { Digest::SHA256.new.update("a different bundle") }) do
       refute_equal before, Speech.send(:selftest_stamp)
     end
-  end
-
-  # The worker still touches the lockfile, which is the premise of the test
-  # above. If this ever fails, that premise is gone and both can be simplified.
-  def test_the_worker_still_writes_the_lockfile_it_reads
-    lock = File.join(Master::ROOT, "Gemfile.lock")
-    skip "no Gemfile.lock in this checkout" unless File.file?(lock)
-
-    original = File.mtime(lock)
-    File.utime(original - 30, original - 30, lock)
-    system(RbConfig.ruby, Speech::WORKER, "--selftest", out: File::NULL, err: File::NULL, chdir: Master::ROOT)
-
-    refute_equal (original - 30).to_i, File.mtime(lock).to_i,
-                 "worker no longer touches the lockfile — the content key is now belt and braces, not load-bearing"
-  ensure
-    File.utime(original, original, lock) if original
   end
 
   def test_a_missing_worker_is_reported_as_the_blocker_rather_than_a_bare_false

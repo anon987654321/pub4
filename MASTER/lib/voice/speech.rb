@@ -155,11 +155,10 @@ module Master
         File.executable?(WORKER)
       end
 
-      # The lockfile is keyed by content, not mtime, and that is load-bearing:
-      # the worker's own `bundler/setup` touches Gemfile.lock, so an mtime key
-      # is invalidated by the very probe it is memoising and every call spawns
-      # again. Measured — two consecutive calls both cost a full subprocess.
-      # The worker script is keyed by mtime because nothing writes to it.
+      # The lockfile is keyed by content, not mtime: bundler rewrites it when it
+      # re-resolves, and a touch that changes nothing must not re-spawn the
+      # probe it memoises. The worker script is keyed by mtime because nothing
+      # writes to it.
       def selftest_stamp
         lock = File.join(Master::ROOT, "Gemfile.lock")
         [
