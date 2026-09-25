@@ -92,7 +92,7 @@ module Deploy
     # a Ruby file dropped there is not parsed either.
     VENDORED = %r{/(scratch|renders|stems|samples|project|tmp|node_modules|venv|\.venv|site-packages)/}
 
-    PROBE_TIMEOUT = Integer(ENV.fetch("MASTER/tools_PROBE_TIMEOUT", "60"))
+    PROBE_TIMEOUT = Integer(ENV.fetch("MASTER_TOOLS_PROBE_TIMEOUT", "60"))
 
     # dilla's support files are the one place file count can still grow. The
     # engine is dilla.rb; everything else dilla carries is support, counted at any
@@ -389,7 +389,7 @@ end
     }.freeze
 
     def self_check
-      return if ENV["MASTER/tools_GATE_SELFCHECK"].to_s.downcase == "off"
+      return if ENV["MASTER_TOOLS_GATE_SELFCHECK"].to_s.downcase == "off"
 
       observed = broken_tree_findings
       # include?, not start_with?: a soft failure is rendered as "[soft] tools
@@ -402,7 +402,7 @@ end
       missed.each_value do |defect|
         @result.fail(
           "tools self-check: this gate no longer reports #{defect} — its pass line is decoration " \
-          "until that is fixed (MASTER/tools_GATE_SELFCHECK=off to skip)"
+          "until that is fixed (MASTER_TOOLS_GATE_SELFCHECK=off to skip)"
         )
       end
     rescue StandardError => e
