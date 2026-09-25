@@ -35,6 +35,11 @@ module Marketplace
     scope :by_vertical, ->(vertical) { where(vertical: vertical) if vertical.present? }
     scope :recent, -> { order(created_at: :desc) }
 
+    def dintero_ready?
+      dintero_payout_destination_id.present? &&
+        dintero_payout_destination_status == "ACTIVE"
+    end
+
     def grocery?
       vertical == "groceries"
     end
