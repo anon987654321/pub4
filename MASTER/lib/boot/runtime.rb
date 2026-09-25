@@ -163,7 +163,6 @@ module Master
     end
 
     # models.yml models — the routing tiers, each a list of rows carrying an id.
-    # Core::Routing::ModelCatalog resolves names against these and model_defs.
     def model_tiers(root: ROOT)
       load_yaml(File.join(root, "data", "models.yml")).fetch("models", {})
     end
