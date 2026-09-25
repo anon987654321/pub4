@@ -104,7 +104,7 @@ class Marketplace::WebhooksController < ActionController::Base
       provider: "dintero",
       event_delivery: event_delivery
     )
-    return delivery if delivery&.succeeded? || delivery&.active?
+    return delivery if delivery&.succeeded? || delivery&.status == "failed" || delivery&.active?
 
     if delivery
       delivery.update!(
