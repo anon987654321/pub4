@@ -7,6 +7,7 @@
 require "open3"
 require "json"
 require "yaml"
+require_relative "ruby_runner"
 require_relative "../trace/dmesg"
 require_relative "../../../OPENBSD/lib/gate_result"
 require_relative "../../../RAILS/gates/support/bounded_command"
@@ -21,6 +22,8 @@ module Deploy
     # The repository root: this file is MASTER/lib/operator/gates.rb.
     ROOT = File.expand_path("../../..", __dir__)
     MASTER = File.join(ROOT, "MASTER")
+    RUBY = Operator::RubyRunner.ruby_cmd
+    BUNDLE = Operator::RubyRunner.bundle_cmd
     SAFE_ENV = {
       "MASTER_SAFE_MODE" => "1",
       "MASTER_BACKGROUND" => "0",
@@ -253,7 +256,7 @@ module Deploy
     # :timeout — the child is killed, so a stalled scan costs SCAN_TIMEOUT_S
     # rather than the rest of the day.
     def bounded_scan(line)
-      Open3.popen2e(SAFE_ENV, "bundle", "exec", "ruby", "bin/cli", chdir: MASTER) do |stdin, out, wait|
+      Open3.popen2e(SAFE_ENV, RUBY, BUNDLE, "exec", RUBY, "bin/cli", chdir: MASTER) do |stdin, out, wait|
         stdin.write("#{line}\n")
         stdin.close
         output = +""
