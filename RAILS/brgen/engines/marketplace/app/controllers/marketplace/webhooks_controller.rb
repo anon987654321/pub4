@@ -76,38 +76,12 @@ class Marketplace::WebhooksController < ActionController::Base
       attempts += 1
       process_event(event, payload)
     rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotFound, ArgumentError, KeyError => error
-      Marketplace::Payments::DinteroWebhook.permanent!(error)
-    rescue ActiveRecord::Deadlocked, ActiveRecord::LockWaitTimeout, ActiveRecord::StatementInvalid => error
-      Marketplace::Payments::DinteroWebhook.transient!(error)
-    rescue Marketplace::Payments::DinteroWebhook::PermanentWebhookError => error
       delivery.fail!(error)
       return head(:ok)
-    rescue Marketplace::Payments::DinteroWebhook::TransientWebhookError => error
-      if attempts < 3
-        sleep(attempts == 1 ? 0.25 : 1.0)
-        retry
-      end
-
-      if delivery.provider_attempts_exhausted?
-        delivery.fail!(error)
-        return head(:ok)
-      end
-
-      delivery.retryable!(error)
-      return head(:internal_server_error)
+    rescue ActiveRecord::Deadlocked, ActiveRecord::LockWaitTimeout, ActiveRecord::StatementInvalid => error
+      retry_webhook_delivery!(delivery, attempts, error)
     rescue StandardError => error
-      if attempts < 3
-        sleep(attempts == 1 ? 0.25 : 1.0)
-        retry
-      end
-
-      if delivery.provider_attempts_exhausted?
-        delivery.fail!(error)
-        return head(:ok)
-      end
-
-      delivery.retryable!(error)
-      return head(:internal_server_error)
+      retry_webhook_delivery!(delivery, attempts, error)
     end
 
     delivery.finish!
@@ -123,6 +97,21 @@ class Marketplace::WebhooksController < ActionController::Base
   end
 
   private
+
+  def retry_webhook_delivery!(delivery, attempts, error)
+    if attempts < 3
+      sleep(attempts == 1 ? 0.25 : 1.0)
+      retry
+    end
+
+    if delivery.provider_attempts_exhausted?
+      delivery.fail!(error)
+      return head(:ok)
+    end
+
+    delivery.retryable!(error)
+    head(:internal_server_error)
+  end
 
   def begin_delivery(event_delivery:, event:)
     delivery = Marketplace::WebhookDelivery.find_by(
