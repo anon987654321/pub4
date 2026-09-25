@@ -9,18 +9,18 @@ module Operator
 
     def ruby_cmd
       return ENV["PUB4_RUBY"] if ENV["PUB4_RUBY"].to_s != ""
+      return path if (path = rbenv_path("ruby"))
       return "ruby34" if executable?("ruby34")
       return "ruby3.4" if executable?("ruby3.4")
-      return path if (path = rbenv_path("ruby"))
 
       RbConfig.ruby
     end
 
     def bundle_cmd
       return ENV["PUB4_BUNDLE"] if ENV["PUB4_BUNDLE"].to_s != ""
+      return path if (path = rbenv_path("bundle"))
       return "bundle34" if executable?("bundle34")
       return "bundle3.4" if executable?("bundle3.4")
-      return path if (path = rbenv_path("bundle"))
 
       "bundle"
     end
