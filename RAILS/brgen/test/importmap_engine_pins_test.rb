@@ -65,9 +65,10 @@ class ImportmapEnginePinsTest < ActiveSupport::TestCase
   end
 
   # Named individually because each is a user-visible surface someone reported
-  # working from the source alone.
-  test "the four controllers that were dead in production are pinned" do
-    %w[dating_intro marketplace_logo playlist_player tv_player].each do |name|
+  # working from the source alone. dating_intro was the fourth; 37d66d956
+  # deleted it with the intro it drove, and no view names it.
+  test "the controllers that were dead in production are pinned" do
+    %w[marketplace_logo playlist_player tv_player].each do |name|
       assert_includes controller_specifiers, "controllers/#{name}_controller",
                       "#{name} is unpinned again — it was inert in production before this was fixed"
     end

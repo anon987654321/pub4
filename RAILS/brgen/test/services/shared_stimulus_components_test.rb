@@ -80,8 +80,9 @@ class SharedStimulusComponentsTest < Minitest::Test
     # keying on Current.user&.id meant a per-guest key, and brgen mints a fresh
     # guest for every cookieless request, so the cache scored zero hits on
     # crawler traffic. Assert the caching, not the key it happens to use.
-    assert_includes read_source(File.join(ROOT, "brgen/app/views/posts/_post.html.erb")), "cache [post"
-    assert_includes read_source(File.join(ROOT, "amber/app/views/posts/_post.html.erb")), "cache [post"
+    fragment = /<% cache \[[^\]]*\bpost\b/
+    assert_match fragment, read_source(File.join(ROOT, "brgen/app/views/posts/_post.html.erb"))
+    assert_match fragment, read_source(File.join(ROOT, "amber/app/views/posts/_post.html.erb"))
     # The share button uses the shared clipboard component. This pinned the
     # literal PAIR "clipboard popover", which is the same frozen-detail mistake
     # the comment above records for the cache key, six lines up in this test:
