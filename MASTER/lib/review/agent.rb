@@ -155,58 +155,66 @@ end
       def retry_on_broke_lane(result, chosen, messages, system: nil, image: nil, temperature: nil)
         return result unless result.is_a?(Master::Result::Err) && single_call_failover_categories.include?(result.category)
 
-        fallback = single_call_fallback_model
-        # Nothing left to hop to, so this stops being one model's problem and
-        # becomes the tier's: recorded on the gate, which is what the council
-        # and the semantic rules ask before spending the next call.
-        unless fallback && fallback != chosen
-          Io::QuotaGate.trip_if_limited(source: "agent single-shot", message: result.message, model: chosen)
-          return result
+        last = result
+        single_call_fallback_models(chosen).each do |fallback|
+          @bus&.publish("llm:ask_failover", from: chosen, to: fallback, category: last.category)
+          hopped = @dispatcher.send_with_cache(fallback, messages, system:, stream: false, image:, temperature:)
+          return record_single_call_substitution(chosen, fallback, hopped) if hopped.is_a?(Master::Result::Ok)
+
+          last = hopped
+          break unless last.is_a?(Master::Result::Err) && single_call_failover_categories.include?(last.category)
         end
 
-        @bus&.publish("llm:ask_once_failover", from: chosen, to: fallback, category: result.category)
-        hopped = @dispatcher.send_with_cache(fallback, messages, system:, stream: false, image:, temperature:)
-        if hopped.is_a?(Master::Result::Err)
-          Io::QuotaGate.trip_if_limited(source: "agent single-shot", message: hopped.message, model: fallback)
-        else
-          # The lane that answered is not the lane that was routed to. Recorded
-          # rather than quietly accepted: a council whose personas ran on a
-          # substitute model is worth far more than one that did not run, and
-          # worth nothing at all if the verdict does not say so.
-          Io::QuotaGate.substituted(from: chosen, to: fallback)
-        end
-        hopped
+        Io::QuotaGate.trip_if_limited(source: "agent single-shot", message: last.message, model: chosen)
+        last
       end
 
-      # Route around a model the skip cache has already parked for a spend
-      # limit or a refused key. The single-shot doors ask once per persona and
-      # once per file, so without this the same dead endpoint is bought
-      # twenty-six times to learn one fact. Only quota and auth categories
-      # divert: a timeout or a 5xx wants the same lane again, which is what the
-      # in-place retry above exists for.
+      def single_call_fallback_models(chosen)
+        if @model_router.respond_to?(:fallback_chain)
+          task_type = @config.task_type.to_s.empty? ? :exploration : @config.task_type.to_sym
+          return Array(@model_router.fallback_chain(task_type:)).uniq.reject { |model| model == chosen }
+        end
+
+        fallback = single_call_fallback_model
+        fallback && fallback != chosen ? [fallback] : []
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Agent.single_call_fallback_models")
+        []
+      end
+
+      def record_single_call_substitution(from, to, result)
+        if result.is_a?(Master::Result::Ok)
+          Io::QuotaGate.substituted(from:, to:)
+        else
+          Io::QuotaGate.trip_if_limited(source: "agent single-shot", message: result.message, model: to)
+        end
+        result
+      end
+
+      # The claude_code chain's head remains the compatibility fallback for
+      # routers that do not expose a live chain. Real routing uses the full
+      # dynamic ModelRouter chain above.
+      def single_call_fallback_model
+        @single_call_fallback_model ||= (@model_router.single_call_fallback_model if @model_router.respond_to?(:single_call_fallback_model))
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Agent.single_call_fallback_model")
+        nil
+      end
+
+      # Every single-shot call also follows the live route when its selected
+      # lane is parked by a recent budget/auth failure.
       DIVERT_CATEGORIES = %i[budget quota_exceeded auth_error no_api_key].freeze
 
       def live_model(selected)
         return selected unless DIVERT_CATEGORIES.include?(Io::ModelSkipCache.skip_category(selected))
 
-        fallback = single_call_fallback_model
+        fallback = single_call_fallback_models(selected).first
         return selected unless fallback && fallback != selected
 
         @bus&.publish("llm:skip_cache_hop", from: selected, to: fallback,
                                             reason: Io::ModelSkipCache.skip_reason(selected))
         Io::QuotaGate.substituted(from: selected, to: fallback)
         fallback
-      end
-
-      # The claude_code chain's head — read through ModelRouter, the one
-      # sanctioned models.yml reader, so retiring the lane retires the failover.
-      def single_call_fallback_model
-        @single_call_fallback_model ||= (@model_router.single_call_fallback_model if @model_router.respond_to?(:single_call_fallback_model))
-      rescue StandardError => e
-        # No chain head is a working degradation (the hop is skipped), but a
-        # router that RAISED is worth a line on the record.
-        Master::Ground::Swallow.log(e, context: "Agent.single_call_fallback_model")
-        nil
       end
 
       def dispatch_chat_response(dispatch, stream:, image:, &blk)
