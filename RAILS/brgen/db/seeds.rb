@@ -245,7 +245,7 @@ puts "Marketplace: #{stores.size} stores, #{listings.size} listings, some orders
 
 # --- Dating subapp ---
 num_dating = (35 * SEED_SCALE).clamp(10, 1000)
-# Frames per gender in STUDIO/lora/seed_media.yml, under dating.pool.
+# Frames per gender in MASTER/tools/lora/seed_media.yml, under dating.pool.
 DATING_POOL = { "woman" => 8, "man" => 8, "nonbinary" => 2, "other" => 2 }.freeze
 # Visible is derived from the photo, not asserted alongside it, the same way
 # Brgen::BergenDemoSeeder derives it. A profile may not be visible without one
