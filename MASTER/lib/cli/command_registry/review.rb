@@ -39,7 +39,7 @@ module Master
         raw = arg_for(ctx).to_s.strip
         _apply, _critique, aesthetic, _only, target = parse_pass_flags(raw)
         with_dmesg_verbosity(raw) do
-          run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, review_crew:, swarm: },
+          run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
                    target:, apply: false, critique: true, aesthetic:, only: "critique")
         end
       end
@@ -48,7 +48,7 @@ module Master
         raw = arg_for(ctx).to_s.strip
         apply, _critique, aesthetic, _only, target = parse_pass_flags(raw)
         rendered = with_dmesg_verbosity(raw) do
-          run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, review_crew:, swarm: },
+          run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
                    target:, apply: apply.nil? || apply, critique: false, aesthetic:, only: "fix")
         end
         return rendered unless Master::Fix::CodeWatch.requested?
