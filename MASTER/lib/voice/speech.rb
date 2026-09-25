@@ -256,9 +256,8 @@ module Master
       def clean_text(text)
         StrunkPass.call(
           text.to_s
-            .gsub(/```.*?```/m, " code omitted. ")
-            .gsub(/`([^`]+)`/, "\\1")
-            .gsub(/https?:\/\/\S+/, " link omitted ")
+            .gsub("```", "")
+            .gsub("`", "")
             .gsub(/[•●▪▫◦]/, ". ")
             .gsub(/[\t\r\n]+/, ". ")
             .gsub(/[*_#>\[\]{}|]/, " "),
