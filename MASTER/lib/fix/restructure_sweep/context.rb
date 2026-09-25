@@ -81,7 +81,7 @@ module Master
         end
 
         def to_s
-          [inventory_section, history_section, file_section, directory_section, owner_section,
+          [inventory_section, history_section, file_section, related_section, directory_section, owner_section,
            reference_section, production_reference_section, requirer_section].compact.join("\n\n")
         end
 
@@ -109,6 +109,18 @@ module Master
 
         def file_section
           "The file, #{relative(@path)}:\n#{numbered(@path)}"
+        end
+
+        def related_section
+          paths = @related.reject { |path| path == @path }.first(4)
+          return if paths.empty?
+
+          rows = paths.map do |path|
+            "#{relative(path)} (#{File.foreach(path).count} lines)"
+          rescue StandardError
+            relative(path)
+          end
+          "Related architecture evidence:\n#{rows.join("\n")}"
         end
 
         def directory_section
