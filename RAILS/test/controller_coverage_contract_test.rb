@@ -87,7 +87,7 @@ class ControllerCoverageContractTest < Minitest::Test
 
   def test_brgen_playlist_imports_controller
     body = read_app("brgen", "app/controllers/playlist/imports_controller.rb")
-    assert_includes body, "class Playlist::ImportsController"
+    assert_match(/module Playlist\s+class ImportsController\b/m, body)
     assert_actions body, "create"
   end
 
