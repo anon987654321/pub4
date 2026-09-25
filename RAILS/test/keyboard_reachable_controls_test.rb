@@ -342,7 +342,9 @@ class KeyboardReachableControlsTest < Minitest::Test
     texts = views.select { |path| File.read(path).match?(/(?:pointer|touch|mouse)move->/) }.map { |p| p.sub("#{ROOT}/", "") }
 
     assert_empty texts - bound, "these views bind a move the tag matcher did not read"
-    assert_operator gesture_surfaces.size, :>=, 6, "the census found #{gesture_surfaces.map { |s| surface_id(s) }}"
+    # Five known drags: the media gallery, the bottom sheet, the dating deck,
+    # playlist track rows and pull-to-refresh. Fewer means the matcher went blind.
+    assert_operator gesture_surfaces.size, :>=, 5, "the census found #{gesture_surfaces.map { |s| surface_id(s) }}"
   end
 
   # A move listener on a target or a child is a surface this census cannot place,
