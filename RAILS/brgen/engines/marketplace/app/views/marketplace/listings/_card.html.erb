@@ -3,15 +3,9 @@
 <% favorited = local_assigns.fetch(:favorited) {
      @favorited_listing_ids&.include?(listing.id)
    } %>
-<%# Kaufland.de's grid tile: a square #f5f5f5 image well with the wishlist heart
-    in its corner, then price, title, stars and a seller badge on an 8px gap.
-    Kaufland sets the title above the price; brgen keeps the price first, which
-    layout_search holds as a hard floor for catalogue scanning.
-
-    Every storefront tile keeps its fields in one order, and
-    StorefrontCardLadderTest holds it: picture, price, title, subtitle, stars,
-    place and time, seller. A tile shows the rungs it has data for and never
-    swaps two. %>
+<%# Bol-style catalogue row: image, product information, then the real purchase
+    action at the inline end. The link contains only the product content, so the
+    cart button remains a separate interactive control. %>
 <article class="deal-card listing" data-product-id="<%= listing.id %>">
   <div class="deal-card-fav-slot">
     <%= render "marketplace/listings/favorite_button", listing: listing, favorited: favorited == true %>
@@ -46,6 +40,16 @@
       <% if (seller = listing.user&.display_name).present? %>
         <%= tag.span t("marketplace.seller_badge", name: seller), class: "store-badge" %>
       <% end %>
+    </div>
+  <% end %>
+
+  <% if listing.buyable? && authenticated? && Current.user != listing.user %>
+    <div class="deal-card-actions">
+      <%= button_to t("marketplace.add_to_cart"),
+            listing_orders_path(listing),
+            params: { quantity: 1 },
+            class: "btn btn-primary deal-card-buy" %>
+      <%= link_to t("marketplace.offer"), "#make-offer", class: "deal-card-offer" %>
     </div>
   <% end %>
 </article>
