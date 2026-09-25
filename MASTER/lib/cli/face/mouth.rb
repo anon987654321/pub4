@@ -73,7 +73,9 @@ module Master
 
         private
 
-        def termux? = @device.available?(:media_player)
+        def termux?
+          @device.android? && Master::Voice::Playback.which("termux-media-player")
+        end
 
         def chunks(text)
           clipped = text.to_s[0, Master::Voice::Playback::MAX_SPOKEN_CHARS]
@@ -117,8 +119,9 @@ module Master
         end
 
         def termux_take(path)
-          @device.media_play(path)
-          [->(elapsed, length) { elapsed < length }, -> { @device.media_stop }]
+          pid = Process.spawn("termux-media-player", "play", path, out: File::NULL, err: File::NULL)
+          Process.detach(pid)
+          [->(elapsed, length) { elapsed < length }, -> { system("termux-media-player", "stop", out: File::NULL, err: File::NULL) }]
         end
 
         def quietly(halt)

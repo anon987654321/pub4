@@ -15,8 +15,11 @@ module Master
       class Ear
         HINT = "install the Termux:API app, then pkg install termux-api"
         SOX = %w[sox -q -d -r 16000 -c 1].freeze
-        # Sound starts the take; a second of quiet ends it. stop still cuts it.
-        SILENCE = %w[silence 1 0.15 1% 1 1.0 1%].freeze
+        # A quiet room is well under one percent of full scale, so the old
+        # gate never opened and the file stayed empty. Speech starts the take;
+        # a short quiet, or the caller, ends it.
+        SILENCE = %w[silence 1 0.05 0.05% 1 0.8 0.08%].freeze
+        MAX_TAKE_S = 12
 
         def initialize(device: Master::Device)
           @device = device
@@ -44,9 +47,9 @@ module Master
         private
 
         def termux_missing
-          return "mic0: termux-speech-to-text missing — #{HINT}; type instead" unless @device.available?(:speech)
+          return nil if Master::Voice::Playback.which("termux-speech-to-text")
 
-          nil
+          "mic0: termux-speech-to-text missing — #{HINT}; type instead"
         end
 
         def sox?
@@ -72,7 +75,8 @@ module Master
           wav = File.join(Dir.tmpdir, "master-face-#{Process.pid}.wav")
           File.delete(wav) if File.exist?(wav)
           pid = Process.spawn(*SOX, wav, *SILENCE, out: File::NULL, err: File::NULL)
-          sleep 0.05 while alive?(pid) && !stop.call
+          started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+          sleep 0.05 while alive?(pid) && !stop.call && (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) < MAX_TAKE_S
           finish_sox(pid)
           return unless File.size?(wav).to_i > 2_000
 

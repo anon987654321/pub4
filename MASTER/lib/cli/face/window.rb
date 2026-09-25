@@ -71,11 +71,8 @@ module Master
           @opened = now
         end
 
-        PHONE_ROWS = 52
-        PHONE_COLS = 42
-
         def run
-          @output.print("\e[8;#{PHONE_ROWS};#{PHONE_COLS}t\e[?1049h\e[2J")
+          @output.print("\e[?1049h\e[2J")
           painter = Thread.new { paint_forever }
           raw { converse }
           "face0: closed"
@@ -159,9 +156,12 @@ module Master
 
         def hearing? = @hearing&.alive?
 
-        # Enter drops the take. A typed character drops it and keeps the character.
+        # Enter ends the take and sends what was heard. A letter ends it too,
+        # and that letter is the start of a typed line instead.
         def interrupt_ear(key)
           @halt_ear = true
+          return if ENTER.include?(key)
+
           @suppress_heard = true
           change { @draft << key } if key.match?(/\A[[:print:]]\z/)
         end
@@ -246,10 +246,15 @@ module Master
         end
 
         # A key, :eof when the input is gone, or nil when none came in time.
+        # getc waits on a cooked buffer and drops keys once the terminal is
+        # raw. getch reads the tty itself, one character at a time.
         def read_key(timeout)
           return nil if @input.respond_to?(:wait_readable) && !@input.wait_readable(timeout)
 
-          @input.getc || :eof
+          key = @input.getch
+          key.nil? ? :eof : key
+        rescue EOFError
+          :eof
         end
 
         def set(state, words)
@@ -270,7 +275,7 @@ module Master
         def tint(state, line) = state == :listening ? "#{ACCENT}#{line}#{PLAIN}" : line
 
         def status(state)
-          keys = @ear.available? ? "listening, typing sends" : "typing sends"
+          keys = @ear.available? ? "speak, or type — enter sends" : "type — enter sends"
           "face0: #{state} — #{keys}, ^D leaves"
         end
 
