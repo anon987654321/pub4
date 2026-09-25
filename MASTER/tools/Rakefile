@@ -43,14 +43,14 @@ Rake::TestTask.new("test:gate") do |t|
   # Named, not globbed. test/test_*.rb now reaches the dilla and tool files as
   # well, and one process for all three is the name collision the task split
   # above exists to prevent.
-  t.test_files = ["test/test_studio_gate.rb"]
+  t.test_files = ["test/test_tools_gate.rb"]
   t.warning = false
 end
 
-desc "STUDIO's suite — dilla engine arithmetic, the single-file tools, and the gate itself"
+desc "tools suite — dilla engine arithmetic, the single-file tools, and the gate itself"
 task test: ["test:gate", "test:dilla", *TOOL_SUITES.map { |tool| "test:#{tool}" }]
 
-desc "The parse/inventory/load gate (also reachable as MASTER's `rake studio`)"
+desc "The parse/inventory/load gate (also reachable as MASTER's `rake tools`)"
 task :gate do
   ruby File.expand_path("gate.rb", __dir__)
 end
@@ -171,7 +171,7 @@ task :isolation do
   # for all of them. Not part of `rake`: one process per test is minutes, and
   # a check nobody will wait for is a check nobody runs.
   require_relative "isolation"
-  failures = StudioIsolation.run(pattern: ENV["TEST"])
+  failures = ToolsIsolation.run(pattern: ENV["TEST"])
   exit(1) unless failures.zero?
 end
 
