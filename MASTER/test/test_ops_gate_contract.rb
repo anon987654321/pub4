@@ -97,6 +97,16 @@ class GateContractSpec < Minitest::Test
     end
   end
 
+  def test_dogfood_uses_the_shared_runtime_selection
+    source = File.read(File.join(ROOT, "bin", "dogfood"))
+
+    assert_includes source, 'require_relative "../lib/operator/ruby_runner"'
+    assert_includes source, "RUBY = Operator::RubyRunner.ruby_cmd"
+    assert_includes source, 'Operator::RubyRunner.bundle_cmd'
+    refute_includes source, "RbConfig.ruby"
+    refute_includes source, "RUBY_PLATFORM.include?(\"openbsd\")"
+  end
+
   def test_gate_uses_the_shared_runtime_selection
     source = File.read(GATE)
 
