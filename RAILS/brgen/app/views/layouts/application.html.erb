@@ -183,9 +183,13 @@
   </div>
   </div>
   <%= render "shared/flash_toasts" %>
+  <%# after_engagement: the first screen is the page. On a phone the prompt
+      rose over the feed before anything else had painted, so it waits for the
+      visitor's first scroll, tap or key, on every surface and vertical. %>
   <%= render "shared/install_prompt",
         title: t("install.title"),
-        body: t("install.body") %>
+        body: t("install.body"),
+        after_engagement: true %>
   <%= render "shared/nearby_chat_widget" %>
   <%= render "shared/link_converter" %>
   <%# The quiet footer's first column: the city and every surface of it. %>

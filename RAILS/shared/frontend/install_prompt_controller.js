@@ -25,26 +25,27 @@ export default class extends Controller {
       this.reveal()
     }
 
-  window.addEventListener("beforeinstallprompt", this.onBeforeInstall)
-  this.prepareCopy()
+    window.addEventListener("beforeinstallprompt", this.onBeforeInstall)
+    this.prepareCopy()
 
-  // afterEngagement: the page's first screen is the page (amber's home is
-  // its mark in white), so the prompt waits for a scroll, a tap or a key.
-  this.engaged = !this.afterEngagementValue
-  this.onEngage = () => {
-    this.engaged = true
-    this.stopListening()
+    // afterEngagement: the page's first screen is the page (amber's home is
+    // its mark in white, brgen's every surface its content), so the prompt
+    // waits for a scroll, a tap or a key.
+    this.engaged = !this.afterEngagementValue
+    this.onEngage = () => {
+      this.engaged = true
+      this.stopListening()
+      this.reveal()
+    }
+    if (!this.engaged) {
+      for (const type of ENGAGEMENT) window.addEventListener(type, this.onEngage, { once: true, passive: true })
+    }
     this.reveal()
   }
-  if (!this.engaged) {
-    for (const type of ENGAGEMENT) window.addEventListener(type, this.onEngage, { once: true, passive: true })
-  }
-  this.reveal()
-}
 
-stopListening() {
-  for (const type of ENGAGEMENT) window.removeEventListener(type, this.onEngage)
-}
+  stopListening() {
+    for (const type of ENGAGEMENT) window.removeEventListener(type, this.onEngage)
+  }
 
   disconnect() {
     window.removeEventListener("beforeinstallprompt", this.onBeforeInstall)

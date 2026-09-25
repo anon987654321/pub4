@@ -275,10 +275,15 @@ module Deploy
     end
 
     # At phone width the install prompt and the chat tab are both fixed to the
-    # bottom edge. A prompt the page never showed is not measured.
+    # bottom edge. A prompt the page never showed is not measured. brgen's
+    # prompt waits for the visitor's first scroll, tap or key (after_engagement),
+    # so the probe scrolls once before it measures; unengaged, it measures
+    # nothing and the check would pass having seen no prompt.
     def check_phone_bottom_chrome(session)
       session.viewport(PHONE[:width], PHONE[:height], mobile: true)
       session.navigate("https://#{PHONE[:host]}/", settle: 1.5)
+      session.evaluate(%(window.dispatchEvent(new Event("scroll"))))
+      sleep 0.3
       measured = session.evaluate(BOTTOM_PROBE)
       return @result.skipped_live("rendered_invariants: #{PHONE[:host]} phone unreadable") unless measured
 

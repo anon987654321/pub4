@@ -13,6 +13,15 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     assert_select "head meta[name='turbo-refresh-scroll'][content='preserve']", 1
   end
 
+  # The install prompt used to rise over the feed on first paint. It waits for
+  # a scroll, tap or key now, and the layout that asks for that serves every
+  # surface, so one page proves the attribute reaches the controller.
+  def test_the_install_prompt_waits_for_engagement
+    host! "brgen.no"
+    get root_url
+    assert_select "#install-prompt[data-install-prompt-after-engagement-value='true'][hidden]", 1
+  end
+
   def test_guest_root_shows_social_feed
     host! "brgen.no"
     get root_url
