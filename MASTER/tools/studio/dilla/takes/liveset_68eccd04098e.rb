@@ -5,7 +5,7 @@
 # grid at 128 BPM (offbeat hats crushed to 12 bits, a noise snare on two and
 # four) and the DFAM, drawing a new groove and rate every few bars. Kicks and
 # leads sit switched off at the operator's word: KICKS_ON and LEADS_ON.
-$LOAD_PATH.unshift File.expand_path("~/Documents/GitHub/pub4/STUDIO/dilla/lib")
+$LOAD_PATH.unshift File.expand_path("~/Documents/GitHub/pub4/MASTER/tools/studio/dilla/lib")
 require "sound"
 
 RATE = 32_000
