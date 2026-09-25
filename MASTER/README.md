@@ -99,8 +99,8 @@ $ cd MASTER && bin/cli
 
 MASTER 2.8.0 (CONSTITUTIONAL) #8021: Fri Sep  4 17:39:16 CEST 2026
     mac@Mac.lan:/Users/mac/Documents/GitHub/pub4/MASTER
-real mem = 8589934592 (8192MB)
-avail mem = 1813561344 (1729MB)
+real memory = 8589934592 (8192MB)
+available memory = 1813561344 (1729MB)
 mainbus0 at root: Mac14,2
 cpu0 at mainbus0: Apple M2
 kern0 at mainbus0: Darwin 25.5.0 arm64
