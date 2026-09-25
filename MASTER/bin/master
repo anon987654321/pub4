@@ -56,6 +56,20 @@ if ARGV.first == "--help" || ARGV.first == "-h"
   exit 0
 end
 
+# A phone whose bundle install stopped halfway would boot into a LoadError
+# trace. On Termux bin/ruby resolves to this same interpreter, so the gems this
+# Ruby sees are the ones bin/cli gets; elsewhere bin/ruby may pick another
+# Ruby, and asking this one would be asking the wrong interpreter.
+if RUBY_PLATFORM.include?("android") || ENV["PREFIX"].to_s.start_with?("/data/data/com.termux/")
+  require_relative "../lib/device/onboarding"
+  missing = Master::Device::Onboarding.missing_gems(File.join(MASTER, "Gemfile.lock"))
+  unless missing.empty?
+    warn "gems0: #{missing.size} missing: #{missing.first(6).join(" ")}#{" and more" if missing.size > 6}"
+    warn "gems0: cd #{MASTER} && #{Master::Device::Onboarding::TERMUX_BUNDLE}"
+    exit 1
+  end
+end
+
 # Let MASTER's own tooling find the checkout without recomputing it from a
 # Rails root, which Operator::DeployPaths exists to stop callers doing.
 ENV["PUB4_ROOT"] ||= ROOT

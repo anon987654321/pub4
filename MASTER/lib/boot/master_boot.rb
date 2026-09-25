@@ -69,10 +69,18 @@ module Master
     def emit_device_status
       return unless Device.android?
 
-      Device.status_lines.each { |line| warn(line) }
+      # Without Termux:API every capability is unavailable for one reason, so
+      # the boot says it once; /doctor device still lists each.
+      lines = Device.status_lines
+      lines = lines.first(2) unless Device.termux?
+      lines.each { |line| warn(line) }
     rescue StandardError => e
       warn("device0: capability discovery failed — #{e.class}: #{e.message}")
     end
+
+    # The first interactive boot on a host says what is present and what is
+    # missing, each with its fix line; Device::Onboarding never raises.
+    def onboard = Device::Onboarding.run!
 
     # A new phone gets the face's ear in the background, so the session
     # opens at once; Device::Setup says what it does as it goes.
@@ -87,6 +95,7 @@ module Master
 
       prepare_runtime!
       emit_device_status
+      onboard
       set_up_device
       Ground::Pledge.stage1_boot!(root)
       service_ok = ensure_services!(root:)
@@ -101,6 +110,7 @@ module Master
     def boot_fast(root: Dir.pwd)
       prepare_runtime!
       emit_device_status
+      onboard
       set_up_device
       container = Builder.build_fast(root:)
       container[:device_perception] = Device::Perception.new(bus: container[:bus])

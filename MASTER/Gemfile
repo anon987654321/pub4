@@ -31,6 +31,12 @@ gem "flay", require: false
 gem "opentelemetry-sdk", "~> 1.11", require: false
 
 gem "sqlite3", "~> 2.9"
+# Termux has no prebuilt sqlite3 gem and the SQLite it vendors fails to build
+# there, so a phone links the gem against pkg's libsqlite (pkg install sqlite).
+# A build.sqlite3 the operator set with bundle config wins.
+if RUBY_PLATFORM.include?("android") && Bundler.settings["build.sqlite3"].nil?
+  Bundler.settings.temporary("build.sqlite3" => "--enable-system-libraries")
+end
 gem "wisper", "~> 2.0"
 
 # Architecture #7: file-watcher reactive trigger (kqueue on OpenBSD, inotify on Linux)

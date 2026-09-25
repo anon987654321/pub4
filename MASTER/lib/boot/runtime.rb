@@ -183,7 +183,7 @@ module Master
     # Termux packages Ollama for arm64 phones, where 1B to 3B models are what
     # the memory holds.
     def local_model_install_hint
-      return "pkg install ollama, ollama serve &, ollama pull qwen3.5:0.8b" if ENV["PREFIX"].to_s.include?("com.termux")
+      return "pkg install ollama, ollama serve &, ollama pull qwen3.5:0.8b" if Device.android?
 
       "ollama pull gemma3:4b"
     end
