@@ -200,7 +200,7 @@ module Master
         keys = key.downcase.split(/[.\/]/)
         cursor = style
         keys.each do |k|
-          return nil unless cursor.is_a?(Hash) && cursor.key?(k)
+          return unless cursor.is_a?(Hash) && cursor.key?(k)
 
           cursor = cursor[k]
         end
