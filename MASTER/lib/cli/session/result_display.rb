@@ -51,7 +51,6 @@ module Master
         Master::Voice::Playback.speak(spoken_form(text))
         print_fix_activity_footer
         print_parallel_errors_footer(ok)
-        puts
       end
 
       # A pass report is a log, and reading a log aloud from the top takes
