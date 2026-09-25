@@ -22,7 +22,7 @@ class Marketplace::Order < ApplicationRecord
   # shipped and a shipped order awaiting payment are both real, and collapsing
   # them into one column is why "where is my parcel" goes unanswered.
   FULFILMENT_STATUSES = %w[unfulfilled shipped delivered cancelled returned].freeze
-  PAYMENT_STATUSES = %w[unpaid pending paid failed refunded].freeze
+  PAYMENT_STATUSES = %w[unpaid pending authorized paid failed refunded].freeze
   PAYMENT_PROVIDERS = %w[stripe vipps].freeze
 
   validates :status, inclusion: { in: STATUSES }
@@ -150,6 +150,20 @@ class Marketplace::Order < ApplicationRecord
   # through the same guarded path rather than a second one beside it.
   def payment_currency = strict_safe_attribute(:listing, :currency).presence || "NOK"
   def payment_description = listing_title
+
+  def authorize_payment!(transaction_id:)
+    update!(
+      payment_status: "authorized",
+      dintero_transaction_id: transaction_id
+    )
+  end
+
+  def fail_payment!(transaction_id: nil)
+    update!(
+      payment_status: "failed",
+      dintero_transaction_id: transaction_id.presence || dintero_transaction_id
+    )
+  end
 
   def payable?
     payment_status.in?(%w[unpaid pending failed]) && status.in?(%w[pending pending_payment])
