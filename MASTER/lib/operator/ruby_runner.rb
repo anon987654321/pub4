@@ -9,7 +9,8 @@ module Operator
 
     def ruby_cmd
       return ENV["PUB4_RUBY"] if ENV["PUB4_RUBY"].to_s != ""
-      return path if (path = rbenv_path("ruby"))
+      path = rbenv_path("ruby")
+      return path if path
       return "ruby34" if executable?("ruby34")
       return "ruby3.4" if executable?("ruby3.4")
 
@@ -18,7 +19,8 @@ module Operator
 
     def bundle_cmd
       return ENV["PUB4_BUNDLE"] if ENV["PUB4_BUNDLE"].to_s != ""
-      return path if (path = rbenv_path("bundle"))
+      path = rbenv_path("bundle")
+      return path if path
       return "bundle34" if executable?("bundle34")
       return "bundle3.4" if executable?("bundle3.4")
 
