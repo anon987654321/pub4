@@ -29,6 +29,7 @@ require "yaml"
 module Deploy
   module RouteManifest
     ROOT = File.expand_path("../..", __dir__)
+    require File.join(ROOT, "MASTER", "lib", "operator", "ruby_runner")
     RAILS_ROOT = File.join(ROOT, "RAILS")
     PATH = File.join(RAILS_ROOT, "gates", "data", "route_manifest.yml")
     APPS = %w[brgen amber bsdports].freeze
@@ -58,18 +59,13 @@ module Deploy
 
     def capture_routes(app)
       out, status = Open3.capture2e(
-        { "RBENV_VERSION" => ruby_version, "RAILS_ENV" => "development" },
-        "rbenv", "exec", "bundle", "exec", "bin/rails", "routes",
+        { "RAILS_ENV" => "development" },
+        Operator::RubyRunner.bundle_cmd, "exec", Operator::RubyRunner.ruby_cmd, "bin/rails", "routes",
         chdir: app_root(app)
       )
       raise "bin/rails routes failed in #{app}:\n#{out.lines.last(15).join}" unless status.success?
 
       out
-    end
-
-    def ruby_version
-      path = File.join(ROOT, ".ruby-version")
-      File.file?(path) ? File.read(path).strip : ENV.fetch("RBENV_VERSION", "")
     end
 
     # controller#action -> sorted GET paths. A pages#show carrying `{page: "terms"}`
