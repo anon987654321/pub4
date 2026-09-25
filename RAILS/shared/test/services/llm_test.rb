@@ -4,7 +4,7 @@ require "minitest/autorun"
 require_relative "../../app/services/shared/llm"
 
 class SharedLlmTest < Minitest::Test
-  test "default provider reads the OpenRouter key" do
+  def test_default_provider_reads_the_openrouter_key
     old = ENV["OPENROUTER_API_KEY"]
     ENV["OPENROUTER_API_KEY"] = "test-key"
 
@@ -13,7 +13,7 @@ class SharedLlmTest < Minitest::Test
     ENV["OPENROUTER_API_KEY"] = old
   end
 
-  test "provider readiness reads the selected provider key" do
+  def test_provider_readiness_reads_the_selected_provider_key
     old = ENV["GROQ_API_KEY"]
     ENV["GROQ_API_KEY"] = "test-key"
 
@@ -22,7 +22,7 @@ class SharedLlmTest < Minitest::Test
     ENV["GROQ_API_KEY"] = old
   end
 
-  test "unknown providers fail explicitly" do
+  def test_unknown_providers_fail_explicitly
     assert_raises(KeyError) { Shared::Llm.key_env_for(:unknown) }
   end
 end
