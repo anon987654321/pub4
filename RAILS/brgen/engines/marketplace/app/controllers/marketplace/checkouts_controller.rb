@@ -8,6 +8,7 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
   # here and raises.
   PAYMENT_ERRORS = [
     Marketplace::Payments::ProviderError,
+    Marketplace::Payments::DinteroClient::Error,
     Net::OpenTimeout, Net::ReadTimeout, SocketError, OpenSSL::SSL::SSLError,
     Errno::ECONNREFUSED, Errno::ECONNRESET, JSON::ParserError, KeyError
   ].freeze
@@ -17,7 +18,8 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
   # whatever that reply named.
   PROVIDER_HOSTS = {
     "stripe" => %w[checkout.stripe.com],
-    "vipps" => %w[vipps.no]
+    "vipps" => %w[vipps.no],
+    "dintero" => %w[checkout.dintero.com checkout.api.dintero.com]
   }.freeze
 
   # POST /checkout  provider=stripe|vipps
@@ -59,6 +61,9 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
     # instead of sending the buyer to the address form for a payment that
     # could never start.
     raise Marketplace::Payments::NotConfigured, provider.capitalize unless provider_configured?(provider)
+
+    Marketplace::Payments::DinteroCheckout.ensure_sellers_ready!(payable) if provider == "dintero" && payable.is_a?(Array)
+    Marketplace::Payments::DinteroCheckout.ensure_sellers_ready!([ payable ]) if provider == "dintero" && !payable.is_a?(Array)
 
     payable = build_basket(payable) if payable.is_a?(Array)
     # build_basket redirects on its own when there is no delivery address —
@@ -137,6 +142,10 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
       redirect_to(listing ? listing_path(listing) : cart_path, alert: t("flash.marketplace.offer_failed"))
       return nil
     end
+    if provider == "dintero" && !Marketplace::Payments::DinteroCheckout.supported_listing?(listing)
+      redirect_to listing_path(listing), alert: t("flash.marketplace.dintero_seller_not_ready")
+      return nil
+    end
     if listing.user_id == Current.user.id
       redirect_to listing_path(listing), alert: t("flash.marketplace.offer_failed")
       return nil
@@ -181,6 +190,7 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
     case provider
     when "stripe" then Marketplace::Payments::StripeCheckout.configured?
     when "vipps"  then Marketplace::Payments::VippsCheckout.configured?
+    when "dintero" then Marketplace::Payments::DinteroCheckout.configured?
     else false
     end
   end
@@ -195,7 +205,17 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
       Marketplace::Payments::VippsCheckout.start!(
         order: payable, return_url: return_url(payable, "vipps")
       )
+    when "dintero"
+      Marketplace::Payments::DinteroCheckout.start!(
+        order: payable,
+        return_url: return_url(payable, "dintero"),
+        callback_url: dintero_callback_url
+      )
     end
+  end
+
+  def dintero_callback_url
+    webhooks_dintero_callback_url
   end
 
   def return_url(payable, provider)
