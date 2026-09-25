@@ -32,8 +32,8 @@ module Shared
       require "ruby_llm"
 
       chat = RubyLLM.context { |config| configure_provider(config) }
-                         .chat(model: model_for_ruby_llm, provider: ruby_provider, assume_model_exists: true)
-      chat = chat.with_params(response_format: { type: "json_object" }) if json
+                         .chat(model: model_for_ruby_llm, provider: ruby_provider, protocol: :chat_completions, assume_model_exists: true)
+      chat = chat.with_provider_options(response_format: { type: "json_object" }) if json
 
       response = chat.ask(prompt, with:, &block)
       response.content
