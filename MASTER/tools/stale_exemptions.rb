@@ -45,7 +45,7 @@ module Operator
   module StaleExemptions
     MASTER_DIR = File.expand_path("..", __dir__)
     ROOT = File.expand_path("..", MASTER_DIR)
-    TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
+    TREES = %w[MASTER RAILS OPENBSD].freeze
 
     # The bare form only. `scan: intentional-colors` and `scan: intentional-important`
     # are file-head directives to one rule each, with their own semantics and
