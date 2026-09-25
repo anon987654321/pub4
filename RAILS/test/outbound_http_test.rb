@@ -17,6 +17,14 @@ class FediverseSsrfTest < Minitest::Test
     refute Fediverse::Client.public_https?(URI("https://example.com:8443/actor"))
   end
 
+  def test_plain_http_is_refused_by_the_predicate
+    refute Shared::OutboundHttp.public_https?(URI("http://example.com/actor"))
+  end
+
+  def test_https_on_port_80_is_refused_by_the_predicate
+    refute Shared::OutboundHttp.public_https?(URI("https://example.com:80/actor"))
+  end
+
   # The predicate tests above pass whether or not the request path consults it,
   # so they cannot tell a guard from a decoration. These drive the real method.
   def test_request_refuses_a_loopback_host
@@ -168,8 +176,7 @@ class OutboundHttpTimeoutTest < Minitest::Test
   end
 
   def test_a_bounded_connection_and_a_comment_pass
-    source = "# Net::HTTP.get takes no timeout, so this does not use it\n" \
-             "Net::HTTP.start(host, 443, open_timeout: 5, read_timeout: 10) { |h| h.get(path) }\n"
+    source = "# Net::HTTP.get takes no timeout, so this does not use it\n"              "Net::HTTP.start(host, 443, open_timeout: 5, read_timeout: 10) { |h| h.get(path) }\n"
     assert_empty self.class.findings(source, "planted.rb")
   end
 end

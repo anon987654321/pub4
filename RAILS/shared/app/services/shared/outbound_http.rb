@@ -38,6 +38,7 @@ module Shared
     module_function
 
     def public_https?(uri)
+      return false unless uri.is_a?(URI::HTTPS)
       return false unless uri.port.nil? || uri.port == 443
 
       addrs = Resolv.getaddresses(uri.host)
