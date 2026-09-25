@@ -131,13 +131,9 @@ class TtsController < ApplicationController
     [voice_key, synth_style, rate, pitch]
   end
 
-  # Explicit voice requests remain subject to the language rule: Norwegian
-  # speech is Pernille and English speech is Jenny. Unmapped languages use the
-  # policy's single_voice fallback.
-  def resolve_tts_voice(raw, _fallback_voice = nil, text = "")
-    return Master::Voice::Speech.resolve_voice(raw) if raw.present? &&
-                                                       raw.to_s.strip.downcase == "pernille"
-
+  # The speech policy chooses the voice from the text. A caller cannot force an
+  # English voice onto Norwegian speech or a Norwegian voice onto English speech.
+  def resolve_tts_voice(_raw, _fallback_voice = nil, text = "")
     Master::Voice::Speech.voice_for_text(text)
   end
 
