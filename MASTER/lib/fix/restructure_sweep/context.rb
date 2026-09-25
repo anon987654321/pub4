@@ -32,6 +32,21 @@ module Master
            scan::Rules::FileSprawlRule.new(root: target), js&.new].compact
         end
 
+        def self.repository_files(root)
+          out, status = Master::Io::Exec.capture2e("git", "-C", root.to_s, "ls-files")
+          return [] unless status.success?
+
+          out.lines.map { |line| File.join(root.to_s, line.strip) }.select(&:file?)
+        end
+
+        def self.production_files(root)
+          repository_files(root).select do |path|
+            SOURCE_EXT.include?(File.extname(path)) &&
+              !path.split("/").any? { |part| %w[test spec fixtures].include?(part) } &&
+              !Master::Review::Scan::Scanner.skip_path?(path, root: root.to_s)
+          end
+        end
+
         def self.tracked(target)
           out, = Master::Io::Exec.capture2e("git", "-C", target.to_s, "ls-files")
           out.lines.map { |line| File.join(target.to_s, line.strip) }.select do |path|
@@ -53,9 +68,10 @@ module Master
         private
 
         def inventory_section
-          rows = Context.tracked(@tree)
-          counts = rows.group_by { |path| relative(path).split("/").first }.transform_values(&:size)
-          "Tree census: #{rows.size} tracked source files; #{counts.map { |tree, count| "#{tree}=#{count}" }.join(", ")}"
+          tracked = Context.repository_files(@root)
+          source = Context.tracked(@tree)
+          counts = source.group_by { |path| relative(path).split("/").first }.transform_values(&:size)
+          "Tree census: #{tracked.size} tracked files repo-wide; #{source.size} source files here; #{counts.map { |tree, count| "#{tree}=#{count}" }.join(", ")}"
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "restructure.inventory")
           nil
@@ -123,7 +139,7 @@ module Master
 
         # { path => [[line_number, text]] } for files that name the stem or a constant.
         def production_references
-          @production_references ||= Context.tracked(@tree)
+          @production_references ||= Context.production_files(@root)
             .reject { |path| path == @path || test_path?(path) }
             .to_h do |path|
               [path, File.foreach(path).with_index(1).select { |text, _n| text.match?(needle) }.map(&:reverse)]
