@@ -64,6 +64,12 @@ Before any external launch:
 - docs/COMMERCIAL.md — transaction and settlement model.
 - docs/OPERATIONS.md — OpenBSD operating contract.
 - docs/ROLLOUT.md — staged deployment.
+- docs/REGISTRATION.md — guarded registration workflow.
+- docs/RECONCILIATION.md — unknown-result handling.
+- docs/PARTICIPANTS.md — accreditation boundary.
+- docs/DATA_MODEL.md — data model.
+- docs/DEMO.md — registry-free demonstration path.
+- docs/TESTING.md — test layers.
 
 See ERITEL.md for the partnership plan and evidence rules.
 
