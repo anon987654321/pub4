@@ -22,34 +22,37 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, privacy_path
   end
 
-  def test_guest_root_shows_animated_amber_logo
+  # The operator's home page, 2026-09-25: two icons in the corner, the mark
+  # centred, four looks on the point-cloud figure, the footer. Nothing else.
+  def test_guest_root_is_the_mark_four_looks_and_the_footer
     get root_url
     assert_response :success
-    assert_includes response.body, "amber-guest-hero"
-    assert_select ".amber-logo-banner", count: 1
-    assert_select ".amber-guest-hero .amber-logo-banner", count: 0
-    # Through the key, so it follows the locale amber resolves to (nb by
-    # default) rather than pinning the English copy — same fix as b369c6213
-    # made for brgen's home and signup pages.
-    assert_includes response.body, I18n.t("home.guest_title")
-    # Four browse rows, one per body region, back on the front page and rendered
-    # from home/index rather than from layouts/application -- which is what put
-    # them above the content of every page and this page's logo 5,410px down.
-    # The mannequin they replaced keeps its own page at outfits/dressing_room.
-    assert_includes response.body, "wardrobe_showcase"
-    assert_equal 4, response.body.scan(/wardrobe_showcase_row(?!_)/).size
-    # Adjacent rows drift opposite ways, so the same two garments never stay
-    # paired. Two of four carry the reverse class, which is what alternating is.
-    assert_equal 2, response.body.scan(/wardrobe_showcase_row_reverse/).size
-    assert_includes response.body, I18n.t("home.showcase.headwear.label")
-    assert_not_includes response.body, "mannequin-svg"
+    assert_select ".amber-masthead--home .amber-logo-home", 1
+    assert_select ".amber-corner a[href=?]", new_session_path
+    # Through the key, so it follows the locale amber resolves to (nb by default).
+    assert_select "h1", text: I18n.t("home.looks.title")
+    assert_select ".amber-look", 4
+    # Each look is worn by the dressing room's particle mannequin.
+    assert_select ".amber-look [data-controller=particle-mannequin][aria-hidden=true]", 4
+    # Each look opens on the whole outfit, then one slide per garment.
+    assert_select ".amber-look:first-of-type .amber-look-slide:first-child figcaption", I18n.t("home.looks.whole")
+    assert_select ".look-zone svg", minimum: 8
     # A garment name reaches the page whether or not a demo wardrobe is seeded.
     assert_includes response.body, "Gold hoop earrings"
-    # Saving belongs to an account, so the guest gets the rotation without it.
-    assert_not_includes response.body, "dressing-room-save"
-    assert_includes response.body, "amber-compose-box"
-    assert_includes response.body, I18n.t("empty.guest_post")
+    # No hero, no rails, no feed.
+    assert_select ".sidebar, .widgets, .amber-compose-box, .btn", 0
     assert_not_includes response.body, 'class="master-embed-frame"'
+  end
+
+  def test_the_footer_links_only_to_routes_that_answer
+    get root_url
+    hrefs = css_select(".amber-footer a[href]").map { |a| a["href"] }.reject { |href| href.start_with?("mailto:") }
+    assert_operator hrefs.size, :>=, 25
+
+    hrefs.uniq.each do |href|
+      get href
+      assert_includes [ 200, 302 ], response.status, "#{href} answered #{response.status}"
+    end
   end
 
   def test_guest_root_can_open_master_embed

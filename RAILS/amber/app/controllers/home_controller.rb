@@ -6,13 +6,10 @@ class HomeController < ApplicationController
   def index
     return render_master_guest_home!(title: "Amber") if params[:master].present? && master_guest_home?
 
+    @looks = Amber::HomeLooks.looks_for(Current.user)
+
     unless authenticated?
-      if Amber::DemoWardrobe.available?
-        @demo_items = Amber::DemoWardrobe.preview_items
-        @demo_outfits = Amber::DemoWardrobe.preview_outfits
-      end
-      @pagy, @guest_posts = pagy(Post.public_feed.includes(:outfit, :item, user: :profile))
-      @anon_service = Shared::AnonymousPost.new(request: request, user: Current.user)
+      @demo_items = Amber::DemoWardrobe.preview_items if Amber::DemoWardrobe.available?
       return
     end
 

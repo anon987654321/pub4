@@ -15,14 +15,42 @@ module Amber
       shoes: [ "Shoes" ]
     }.freeze
 
-    # What a guest sees when no demo wardrobe has been seeded. The garment names
-    # are real enough to show what the feature does, and the mannequin's own
-    # controller already handles a garment with no photograph — it hides the
-    # overlay and still cycles the name, the count and the reason.
-    #
-    # This existed before as WardrobeShowcase::FALLBACK, and it is the reason a
-    # fresh install never showed an empty landing page. Keeping that property is
-    # the point of reaching for it here.
+    # What a guest sees when no demo wardrobe has been seeded: garment names real
+    # enough to show what the feature does, per body region. The mannequin hides
+    # the overlay of a garment with no photograph and still cycles its name, and
+    # HomeLooks draws these as silhouettes, so a fresh install never shows an
+    # empty page.
+    FALLBACK = {
+      headwear: [
+        { title: "Gold hoop earrings", brand: "Mejuri", color: "gold" },
+        { title: "Silk square scarf", brand: "H&M", color: "rust" },
+        { title: "Oatmeal ribbed beanie", brand: "Arket", color: "oatmeal" },
+        { title: "Cat-eye sunglasses", brand: "Ray-Ban", color: "tortoise" }
+      ],
+      tops: [
+        { title: "Oatmeal cashmere crew", brand: "COS", color: "oatmeal" },
+        { title: "Blush satin blouse", brand: "& Other Stories", color: "blush" },
+        { title: "Striped Breton tee", brand: "Arket", color: "navy/white" },
+        { title: "Navy oversized blazer", brand: "The Frankie Shop", color: "navy" }
+      ],
+      bottoms: [
+        { title: "Charcoal wide-leg trousers", brand: "Arket", color: "charcoal" },
+        { title: "Indigo straight-leg jeans", brand: "Everlane", color: "indigo" },
+        { title: "Sage pleated midi skirt", brand: "Sézane", color: "sage" },
+        { title: "Ivory silk slip dress", brand: "Reformation", color: "ivory" }
+      ],
+      shoes: [
+        { title: "Black pointed-toe ankle boots", brand: "Vagabond", color: "black" },
+        { title: "White leather trainers", brand: "Veja", color: "white" },
+        { title: "Tan suede loafers", brand: "Ganni", color: "tan" },
+        { title: "Block-heel pumps", brand: "Samsoe Samsoe", color: "nude" }
+      ]
+    }.freeze
+
+    # The category each region stands for, so a fallback garment is drawn as what
+    # it is (a scarf is an accessory, not a sweater).
+    FALLBACK_CATEGORY = { headwear: "Accessories", tops: "Tops", bottoms: "Bottoms", shoes: "Shoes" }.freeze
+
     NO_PHOTOS = Object.new
     def NO_PHOTOS.attached? = false
 
@@ -30,8 +58,8 @@ module Amber
       def photos = NO_PHOTOS
     end
 
-    # WardrobeShowcase names its zones after body regions; the mannequin names
-    # its own after the four overlay slots. Same four, different vocabulary.
+    # FALLBACK names its regions after the body; the mannequin names its own
+    # after the four overlay slots. Same four, different vocabulary.
     FALLBACK_ZONE = { head: :headwear, top: :tops, bottom: :bottoms, shoes: :shoes }.freeze
 
     module_function
@@ -51,7 +79,7 @@ module Amber
       return zones_for(DemoWardrobe.items.with_photos_for_display) if DemoWardrobe.available?
 
       FALLBACK_ZONE.transform_values do |key|
-        WardrobeShowcase::FALLBACK.fetch(key, []).each_with_index.map do |row, index|
+        FALLBACK.fetch(key, []).each_with_index.map do |row, index|
           Placeholder.new(id: "#{key}-#{index}", title: row[:title], color: row[:color])
         end
       end

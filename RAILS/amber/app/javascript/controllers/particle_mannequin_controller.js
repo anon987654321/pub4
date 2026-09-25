@@ -60,8 +60,9 @@ export default class extends Controller {
     for (let i = 0; i < COUNT; i++) {
       const home = this.bodyPoint()
       points.push({
-        x: Math.random() * this.width,
-        y: Math.random() * this.height,
+        // Under reduced motion the figure is drawn once, so it starts formed.
+        x: this.reducedMotion ? home.x * this.width / WIDTH : Math.random() * this.width,
+        y: this.reducedMotion ? home.y * this.height / HEIGHT : Math.random() * this.height,
         vx: (Math.random() - 0.5) * 0.3,
         vy: (Math.random() - 0.5) * 0.3,
         homeX: home.x,
@@ -107,9 +108,10 @@ export default class extends Controller {
 
     this.ctx.clearRect(0, 0, this.width, this.height)
 
-    const accent = getComputedStyle(document.documentElement)
-      .getPropertyValue("--accent")
-      .trim() || "#667085"
+    // --particle-ink lets a page paint the figure its own colour (the home
+    // page's looks draw it in their grey); elsewhere it is the accent.
+    const accent = getComputedStyle(this.element).getPropertyValue("--particle-ink").trim() ||
+      getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#667085"
 
     const centerX = this.width * 0.5
     const centerY = this.height * 0.43

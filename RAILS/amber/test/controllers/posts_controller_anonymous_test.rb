@@ -3,8 +3,8 @@
 require "test_helper"
 
 class PostsControllerAnonymousTest < ActionDispatch::IntegrationTest
-  def test_guest_can_post_anonymously_on_frontpage
-    get root_url
+  def test_guest_can_post_anonymously_from_the_feed
+    get posts_url
     assert_response :success
     assert_includes response.body, "amber-compose-box"
 

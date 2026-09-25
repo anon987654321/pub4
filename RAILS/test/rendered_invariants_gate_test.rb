@@ -171,26 +171,24 @@ class RenderedInvariantsGateTest < Minitest::Test
     assert_empty check(:check_top_band_alignment, "brgen.no", payload(band: band)).failures
   end
 
-  def hero(title:, body:, button:, link:)
-    G::AMBER_HERO_COLUMN.zip([title, body, button, link]).to_h
+  def look(scroll: 0, inset: 0) = { "scroll" => scroll, "inset" => inset }
+
+  def test_four_looks_that_open_on_their_first_slide_pass
+    assert_empty check(:check_home_looks, Array.new(4) { look }).failures
   end
 
-  # The measured case: amberapp.art at 1440px on 2026-09-25, each line of the
-  # hero centred at its own width.
-  def test_an_amber_hero_whose_lines_start_at_four_x_fails_and_says_by_how_much
-    result = check(:check_hero_column, hero(title: 468.0, body: 523.0, button: 512.0, link: 420.0))
+  # The measured case: rows that load part-way through, half a garment at the edge.
+  def test_a_look_that_opens_scrolled_fails_and_names_it
+    result = check(:check_home_looks, [look, look(scroll: 57), look, look])
 
-    assert_names result, /hero is 103\.0px off one left edge/
+    assert_names result, /look\(s\) 2 do not open on their first slide/
   end
 
-  def test_an_amber_hero_on_one_left_edge_passes
-    assert_empty check(:check_hero_column, hero(title: 420.0, body: 420.0, button: 420.4, link: 420.0)).failures
+  def test_a_first_slide_inset_from_its_track_fails
+    assert_names check(:check_home_looks, [look(inset: 12), look, look, look]), /first slide inset 12px/
   end
 
-  # A line that did not render is a hero that changed shape, not an aligned one.
-  def test_an_amber_hero_missing_a_line_fails
-    result = check(:check_hero_column, hero(title: 420.0, body: nil, button: 420.0, link: 420.0))
-
-    assert_names result, /hero is missing \.amber-guest-hero \.body/
+  def test_a_home_page_without_four_looks_fails
+    assert_names check(:check_home_looks, [look, look]), /shows 2 looks, not 4/
   end
 end

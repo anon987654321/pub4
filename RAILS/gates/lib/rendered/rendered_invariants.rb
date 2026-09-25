@@ -83,20 +83,12 @@ module Deploy
     # Sub-pixel differences are rounding, not misalignment.
     ALIGN_TOLERANCE_PX = 1
 
-    # amber's signed-out hero: the sentence, the paragraph, the first button and
-    # the first secondary link, which must start on one left edge. Each is
-    # narrower than the hero, so a rule that centres or insets any one of them
-    # sends it to its own x. Measured on amberapp.art on 2026-09-25 before the
-    # fix: 468, 523, 512 and 420 at 1440px wide. The first button and link are
-    # measured rather than their rows, because a row spans the column whatever
-    # its contents do.
+    # amber's home page is four looks, each a carousel over one figure. Each row
+    # has to open on its first slide, flush with its own edge: a carousel that
+    # loads scrolled, or a first slide inset from the track, shows half a garment
+    # at the edge, which is what amberapp.art's rows did on 2026-09-25.
     AMBER_HOME = "https://amberapp.art/"
-    AMBER_HERO_COLUMN = [
-      ".amber-guest-hero .title",
-      ".amber-guest-hero .body",
-      ".amber-guest-hero .actions > :first-child",
-      ".amber-guest-secondary > a",
-    ].freeze
+    AMBER_LOOKS = 4
 
     # runner.rb and gate_environment.rb both invoke a gate as `Class.run`. This
     # gate shipped with only the instance method, so it was a row in gates.yml
@@ -122,7 +114,7 @@ module Deploy
       CdpSession.open do |session|
         session.viewport(1280, 800)
         SURFACES.each { |surface| check_surface(session, surface) }
-        check_amber_hero_column(session)
+        check_amber_home_looks(session)
       end
       @result
     rescue CdpSession::Unavailable => e
@@ -248,45 +240,41 @@ module Deploy
       )
     end
 
-    # A fresh profile is a signed-out visitor, which is who the hero is for.
-    def check_amber_hero_column(session)
+    # A fresh profile is a signed-out visitor, which is who the page is for.
+    def check_amber_home_looks(session)
       session.navigate(AMBER_HOME, settle: 1.5)
-      measured = session.evaluate(format(HERO_PROBE, selectors: JSON.generate(AMBER_HERO_COLUMN)))
+      measured = session.evaluate(LOOKS_PROBE)
       return @result.skipped_live("rendered_invariants: #{AMBER_HOME} unreadable") unless measured
 
-      check_hero_column(JSON.parse(measured))
+      check_home_looks(JSON.parse(measured))
     rescue StandardError => e
       @result.skipped_live("rendered_invariants: #{AMBER_HOME} #{e.class}")
     end
 
-    # lefts: selector => the x its box starts at, or nil when it did not render.
-    def check_hero_column(lefts)
-      missing = lefts.select { |_, left| left.nil? }.keys
-      unless missing.empty?
-        return @result.fail("#{AMBER_HOME} hero is missing #{missing.join(', ')}; the column check " \
-                            "cannot measure a hero it cannot find")
-      end
-
+    # rows: one per look, { "scroll" => the track's scrollLeft, "inset" => the
+    # first slide's left edge less the track's }.
+    def check_home_looks(rows)
       @result.checked!
-      spread = lefts.values.max - lefts.values.min
-      return if spread <= ALIGN_TOLERANCE_PX
+      return @result.fail("#{AMBER_HOME} shows #{rows.size} looks, not #{AMBER_LOOKS}") if rows.size != AMBER_LOOKS
 
+      off = rows.each_with_index.reject do |row, _|
+        row["scroll"].to_f.abs <= ALIGN_TOLERANCE_PX && row["inset"].to_f.abs <= ALIGN_TOLERANCE_PX
+      end
+      return if off.empty?
+
+      detail = off.map { |row, i| "look #{i + 1}: scrolled #{row['scroll']}px, first slide inset #{row['inset']}px" }
       @result.fail(
-        "#{AMBER_HOME} hero is #{spread.round(1)}px off one left edge " \
-        "(left: #{lefts.map { |sel, left| "#{sel} #{left.round(1)}" }.join(', ')}). " \
-        "The hero is one column: look for a centring rule or an auto margin on one of its lines.",
+        "#{AMBER_HOME} look(s) #{off.map { |_, i| i + 1 }.join(', ')} do not open on their first slide " \
+        "(#{detail.join('; ')}). A row starts at scrollLeft 0 with its first slide on the track's edge.",
       )
     end
 
-    HERO_PROBE = <<~JS
-      (() => {
-        const lefts = {};
-        for (const sel of %<selectors>s) {
-          const r = document.querySelector(sel)?.getBoundingClientRect();
-          lefts[sel] = (r && r.width > 0) ? r.left : null;
-        }
-        return JSON.stringify(lefts);
-      })()
+    LOOKS_PROBE = <<~JS
+      (() => JSON.stringify([...document.querySelectorAll(".amber-look-track")].map(track => {
+        const slide = track.querySelector(".amber-look-slide");
+        return { scroll: track.scrollLeft,
+                 inset: slide ? Math.round(slide.getBoundingClientRect().left - track.getBoundingClientRect().left) : null };
+      })))()
     JS
 
     PROBE = <<~JS

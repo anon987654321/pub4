@@ -16,7 +16,7 @@ class LocaleNegotiationTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "html[lang=?]", "en"
-    assert_includes response.body, I18n.t("home.guest_title", locale: :en)
+    assert_includes response.body, I18n.t("home.looks.title", locale: :en)
   end
 
   test "the highest-quality supported language wins, not the first listed" do

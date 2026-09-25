@@ -98,6 +98,33 @@ module Amber
       image.extract_area(left, top, width, height)
     end
 
+    # The same drawing as inline SVG, its viewBox cut to the shape, for a page
+    # that lays garments on a figure. Needs no vips and no stored photograph,
+    # so it draws the same on a box where the demo wardrobe was never seeded.
+    def inline_svg(title:, color:, category: nil)
+      shape = shape_for(title: title, category: category)
+      body = PATHS.fetch(shape) { PATHS.fetch(:sweater) }.call(hex_for(color))
+      x, y, width, height = extent(body)
+      %(<svg xmlns="http://www.w3.org/2000/svg" viewBox="#{x} #{y} #{width} #{height}" aria-hidden="true" focusable="false">#{body}</svg>)
+    end
+
+    # The box every coordinate in the drawing falls inside, padded by the seam
+    # and ring strokes (16 at most). Control points count as well, so a curve's
+    # box is generous rather than tight, which costs a little margin and never
+    # clips an edge.
+    def extent(body)
+      points = body.scan(/\bd="([^"]+)"/).flatten.flat_map { |d| d.scan(/-?\d+(?:\.\d+)?/).map(&:to_f).each_slice(2).to_a }
+      body.scan(/<rect x="([\d.]+)" y="([\d.]+)" width="([\d.]+)" height="([\d.]+)"/).each do |x, y, w, h|
+        points << [ x.to_f, y.to_f ] << [ x.to_f + w.to_f, y.to_f + h.to_f ]
+      end
+      body.scan(/<circle cx="([\d.]+)" cy="([\d.]+)" r="([\d.]+)"/).each do |cx, cy, r|
+        points << [ cx.to_f - r.to_f, cy.to_f - r.to_f ] << [ cx.to_f + r.to_f, cy.to_f + r.to_f ]
+      end
+      xs, ys = points.transpose
+      pad = 8
+      [ xs.min - pad, ys.min - pad, xs.max - xs.min + (2 * pad), ys.max - ys.min + (2 * pad) ].map(&:round)
+    end
+
     def svg_for(shape, fill)
       body = PATHS.fetch(shape) { PATHS.fetch(:sweater) }.call(fill)
       %(<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 520" width="400" height="520">#{body}</svg>)

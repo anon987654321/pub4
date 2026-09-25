@@ -1,36 +1,74 @@
+<%# The heavy footer: every part of amber a reader can reach, grouped the way a
+    magazine groups its sections, then the wordmark and the copyright line.
+    Every link is a route in config/routes.rb or the shared legal routes. The
+    ones behind sign-in are listed for guests too; they answer with the
+    sign-in page, which is where a guest who wants them has to go. %>
+<%
+  columns = {
+    wardrobe: [
+      [ :items, items_path ], [ :add_item, new_item_path ], [ :shopping_list, shopping_list_items_path ],
+      [ :analytics, analytics_wardrobe_items_path ], [ :timeline, timeline_wardrobe_items_path ]
+    ],
+    outfits: [
+      [ :outfits, outfits_path ], [ :dressing_room, dressing_room_outfits_path ], [ :planner, planned_outfits_path ],
+      [ :suggestions, ai_suggest_outfits_path ], [ :packing, ai_packing_list_path ]
+    ],
+    declutter: [
+      [ :declutter, declutter_index_path ], [ :organize, organize_wardrobe_items_path ],
+      [ :capsule, ai_capsule_path ], [ :palette, ai_palette_path ]
+    ],
+    community: [
+      [ :feed, posts_path ], [ :live, live_streams_path ], [ :messages, messages_path ], [ :connections, connections_path ]
+    ],
+    amber: [
+      [ :home, root_path ], [ :search, ai_search_path ], [ :style_profile, ai_style_profile_path ],
+      *(authenticated? ? [] : [ [ :sign_in, new_session_path ], [ :create_account, new_registration_path ] ])
+    ]
+  }
+%>
 <footer class="amber-footer" role="contentinfo">
-  <div class="amber-footer-cols">
-    <%# These labels were hardcoded English in an app whose default locale is
-        nb. With a language switcher below them, untranslated chrome would make
-        switching look broken. %>
-    <nav aria-label="<%= t("footer.wardrobe") %>">
-      <%= tag.h2 t("footer.wardrobe") %>
-      <%= link_to t("footer.browse"), authenticated? ? items_path : demo_wardrobe_path %>
-      <%= link_to t("pages.outfits"), outfits_path if authenticated? %>
-      <%= link_to t("footer.ai_styling"), ai_search_path if authenticated? %>
-    </nav>
-    <nav aria-label="<%= t("footer.about") %>">
-      <%= tag.h2 t("footer.about") %>
-      <%= link_to t("app.name"), root_path %>
-      <%= link_to t("nav.sign_in"), new_session_path unless authenticated? %>
-    </nav>
-    <nav aria-label="<%= t("footer.support") %>">
-      <%= tag.h2 t("footer.support") %>
-      <%= mail_to legal_contact_email, t("footer.contact") %>
-    </nav>
+  <nav class="amber-footer-cols" aria-label="<%= t("footer.label") %>">
+    <% columns.each do |heading, links| %>
+      <div class="amber-footer-col">
+        <%= tag.h2 t("footer.#{heading}") %>
+        <ul>
+          <% links.each do |key, path| %>
+            <li><%= link_to t("footer.links.#{key}"), path %></li>
+          <% end %>
+          <% if heading == :amber %>
+            <li><%= mail_to legal_contact_email, t("footer.contact") %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+    <div class="amber-footer-col">
+      <%= tag.h2 t("footer.legal") %>
+      <ul>
+        <li><%= link_to t("legal.privacy"), privacy_path %></li>
+        <li><%= link_to t("legal.terms"), terms_path %></li>
+        <li><%= link_to t("legal.cookies"), cookies_path %></li>
+      </ul>
+    </div>
     <%# The only route into the English half of the locale files. Plain links,
         so it works before any JavaScript runs; the choice sticks in the
         session. %>
-    <nav aria-label="<%= t("footer.language") %>" class="amber-footer-locales">
+    <div class="amber-footer-col amber-footer-locales">
       <%= tag.h2 t("footer.language") %>
-      <% available_locales.each do |locale| %>
-        <%= link_to t("footer.locales.#{locale}"),
-              locale_url(locale),
-              class: ("is-current" if locale == current_locale),
-              lang: locale,
-              "aria-current": ("true" if locale == current_locale) %>
-      <% end %>
-    </nav>
+      <ul>
+        <% available_locales.each do |locale| %>
+          <li><%= link_to t("footer.locales.#{locale}"),
+                locale_url(locale),
+                class: ("is-current" if locale == current_locale),
+                lang: locale,
+                "aria-current": ("true" if locale == current_locale) %></li>
+        <% end %>
+      </ul>
+    </div>
+  </nav>
+  <div class="amber-footer-mark">
+    <%= link_to root_path, class: "amber-footer-home", aria: { label: t("nav.brand_home") } do %>
+      <%= render "shared/logo", id_prefix: "amber-footer", view_box: "58 105 410 108" %>
+    <% end %>
+    <p class="amber-footer-legal">&copy; <%= Date.current.year %> <%= t("app.name") %>. <%= t("footer.tagline") %></p>
   </div>
-  <p class="amber-footer-legal">&copy; <%= Date.current.year %> <%= t("app.name") %>. <%= t("footer.tagline") %></p>
 </footer>

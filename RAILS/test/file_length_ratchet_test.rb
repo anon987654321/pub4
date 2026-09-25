@@ -198,9 +198,9 @@ class FileLengthRatchetTest < Minitest::Test
     # 6486 -> 6479: the inline flash notice went with the markup that wore
     # it — a notice is a toast now, so its four rules styled nothing.
     "brgen/app/assets/stylesheets/application.scss" => 6479,
-    # 1736 -> 1721: the full-bleed hero banner's rules went, since the bar
-    # holds the only instance of the mark.
-    "amber/app/assets/stylesheets/application.scss" => 1721,
+    # 1721 -> 1649: the home page's marquee rows, hero and guest feed went
+    # with the four-looks design.
+    "amber/app/assets/stylesheets/application.scss" => 1649,
     "bsdports/app/assets/stylesheets/application.scss" => 454,
     # user_flow.rb left this list on 2026-09-09: 308 -> 166, under the 300 rb
     # limit, so a ceiling here would only re-admit it. Its own header admitted

@@ -144,6 +144,14 @@ end
     wardrobe_swatch_pair(color).last
   end
 
+  # A home-page garment as inline SVG. html_safe because GarmentSilhouette
+  # builds every byte of it from its own PATHS and COLORS tables: the title
+  # only chooses a shape and the colour only chooses a table entry, so no
+  # reader-supplied text reaches the markup.
+  def garment_silhouette(garment)
+    Amber::GarmentSilhouette.inline_svg(title: garment.title, color: garment.color, category: garment.category).html_safe # rubocop:disable Rails/OutputSafety
+  end
+
   def wardrobe_swatch_pair(color)
     name = color.to_s.downcase
     match = WARDROBE_SWATCHES.find { |pattern, _swatch, _ink| pattern.match?(name) }

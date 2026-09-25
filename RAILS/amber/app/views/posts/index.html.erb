@@ -1,6 +1,9 @@
 <%= turbo_stream_from "posts" %>
 <%= turbo_frame_tag "amber-posts" do %>
 <%= tag.h1 t("pages.community") %>
+<%# The compose box lives with the feed it posts to; the home page is the four
+    looks alone. A guest posts here without an account, as before. %>
+<%= render "shared/feed_compose" %>
 <% if @posts.any? %>
   <div id="amber-posts-list"><%= render @posts %></div>
   <%= render "shared/infinite_scroll_sentinel",

@@ -61,34 +61,36 @@
         shared theme toggle's sun icon was referencing symbols this app never
         included. %>
     <%= render "shared/icon_sprite" if icon_sprite? %>
-<%# Amber's own Caprasimo mark, not shared/_brand_mark (the type-only wordmark
-    brgen and bsdports share). The fleet mark is the wrong identity here.
-    It lives inside the bar, not as a second fixed corner. The viewBox is the
-    word's ink at --brand-hero, measured in Chrome, so the word fills the bar's
-    200px mark box rather than drawing a fifth of it on the full stage. %>
+<%# The header is two icons in the top corner, as brgen's is: the account (or
+    sign-in) link and the light/dark toggle. The toggle's input stays a
+    sibling of .theme-root, because the dark palette is written as
+    #dark-toggle:checked ~ .theme-root; the account link sits beside its label.
+
+    Below it, amber's own Caprasimo mark, centred: large on the home page, where
+    it is the first screen, and at a bar's size everywhere else. The viewBox is
+    the word's ink, measured in Chrome, so the word fills its box. %>
 <%= render "shared/theme_toggle", storage_key: "amber-theme" %>
+<% home = current_page?(root_path) %>
 
 <div class="theme-root">
-<header class="amber-logo-banner">
+<div class="amber-corner" role="region" aria-label="<%= t("nav.account") %>">
+  <% if authenticated? %>
+    <%= link_to user_path(Current.user), class: "amber-corner-link", title: t("nav.account"), aria: { label: t("nav.account") } do %><%= icon :profile, size: 20 %><% end %>
+  <% else %>
+    <%= link_to new_session_path, class: "amber-corner-link", title: t("nav.sign_in"), aria: { label: t("nav.sign_in") } do %><%= icon :sign_in, size: 20 %><% end %>
+  <% end %>
+</div>
+
+<header class="amber-masthead<%= " amber-masthead--home" if home %>">
   <%= link_to root_path, class: "amber-logo-home", aria: { label: t("nav.brand_home") } do %>
     <%= render "shared/logo", id_prefix: "amber-nav", view_box: "58 105 410 108" %>
   <% end %>
-  <div class="amber-nav-actions">
-    <% if authenticated? %>
-      <%= link_to t("nav.account"), user_path(Current.user), class: "btn-sm" %>
-      <%# destructive: no-confirm-ok — reversible — signing out, and signing in again is the same click %>
-      <%= link_to t("nav.sign_out"), session_path, data: { turbo_method: :delete }, class: "btn-sm" %>
-    <% else %>
-      <%= link_to t("nav.sign_in"), new_session_path, class: "btn-sm" %>
-    <% end %>
-  </div>
 </header>
 
-<%# shared/_wardrobe_showcase is four auto-advancing carousel rows at 1235px
-    each. In the layout it sat above every page a signed-out visitor could
-    reach; home/index renders it instead, which is the one page it is for. %>
 <div class="app-shell" data-controller="scroll-chrome" data-scroll-chrome-storage-key-value="pub4:tab-bar:open">
   <div class="layout">
+    <%# The home page is the logo, the four looks and the footer: no rails. %>
+    <% unless home %>
     <div class="sidebar-swiper" data-controller="edge-swiper" data-edge-swiper-edge-value="left" data-turbo-permanent>
     <aside class="sidebar" data-edge-swiper-target="root">
       <nav role="navigation" aria-label="<%= t("nav.primary_nav") %>">
@@ -98,12 +100,14 @@
     <button type="button" class="edge-grip edge-grip-start" data-edge-swiper-target="grip"
             data-action="click->edge-swiper#toggle" aria-label="<%= t("nav.show_sidebar") %>" aria-expanded="false"></button>
     </div>
+    <% end %>
 
     <main id="main-content" role="main" aria-label="<%= t("nav.main") %>">
       <%= render "shared/flash" %>
       <%= yield %>
     </main>
 
+    <% unless home %>
     <div class="widgets-swiper" data-controller="edge-swiper" data-edge-swiper-edge-value="right">
     <button type="button" class="edge-grip edge-grip-end" data-edge-swiper-target="grip"
             data-action="click->edge-swiper#toggle" aria-label="<%= t("nav.show_widgets") %>" aria-expanded="false"></button>
@@ -111,6 +115,7 @@
       <%= render "shared/widgets" %>
     </aside>
     </div>
+    <% end %>
   </div>
 
   <%= render "shared/footer" %>

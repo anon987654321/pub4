@@ -7,7 +7,6 @@
 @use "affiliate_feed_unit";
 @use "dialect_tokens" as x;
 @use "sass:meta";
-@use "sass:math";
 
 // ============================================================ tokens
 
@@ -19,6 +18,9 @@
 // luxury.light_danger records it for the contrast census.
 @mixin amber-light-inks {
   --text-secondary: var(--luxury-muted);
+  // White paper, the operator's call on 2026-09-25: the luxury light surface
+  // (#fff) under everything rather than its #efefef ground.
+  --bg: var(--surface);
   --border: var(--luxury-border);
   --danger: #82372d;
 }
@@ -51,11 +53,10 @@
   /* The Caprasimo word's size in the logo's own viewBox units. Display type
      reads no step of the body ladder; this is the mark's own scale. */
   --brand-hero: 120px;
-  /* The top bar is the mark plus its block padding, and the shared shell reads
-     --top-band-block to start the open rails below the bar. Its default is
-     brgen's 56px band, which put amber's search pill under a 70px bar. */
-  --amber-mark-block: 52px;
-  --top-band-block: calc(var(--amber-mark-block) + 2 * var(--space-2));
+  /* The home page's standing figure, drawn in points under the clothes it
+     wears: light enough that the garments read as worn rather than as a second
+     drawing. The operator's value, 2026-09-25. */
+  --figure-ink: #ccc;
   /* Amber luxury refinements (UI_REFINEMENTS §D) */
   --line-height-relaxed: 1.6;
   --letter-display: 0.04em;
@@ -265,37 +266,62 @@ h2 {
   }
 }
 
-/* The sticky top bar: the Caprasimo mark at the start, the account link at the
-   end, and the theme toggle fixed in the inline-end padding. Its block size is
-   --top-band-block (set on :root above), so the open rails start below it. */
-.amber-logo-banner {
-  position: sticky;
-  top: 0;
-  z-index: calc(var(--z-nav) + 1);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: var(--surface);
-  padding-inline: var(--space-3) var(--chrome-toggle-inline);
-  padding-block: var(--space-2);
+/* The two header icons, top right, the way brgen's chrome corner sits: the
+   account link just inside the theme toggle's label, which the shared sheet
+   fixes to the corner itself. */
+.amber-corner {
+  position: fixed;
+  z-index: var(--z-chrome-toggle);
+  inset-block-start: calc(var(--chrome-inset-block, 8px) + var(--safe-top, 0px) + var(--top-band-nudge, 0px));
+  inset-inline-end: calc(var(--chrome-inset, 12px) + var(--safe-right, 0px) - 12px + var(--tap-min));
 }
 
-/* The mark gives way on a narrow phone and the account link does not, so at
-   320px "Sign in" stays on one line and the word scales down beside it. */
+.amber-corner-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+  color: var(--text);
+  opacity: 0.75;
+}
+
+.amber-corner-link:hover,
+.amber-corner-link:focus-visible {
+  opacity: 1;
+}
+
+/* The mark, centred under the corner. On the home page it is the whole first
+   screen: a wide word in a lot of white, the way the page opens before a
+   single garment. Elsewhere it is a bar-sized way home. */
+.amber-masthead {
+  display: flex;
+  justify-content: center;
+  padding-block: var(--space-8) var(--space-6);
+}
+
 .amber-logo-home {
   display: block;
-  flex: 0 1 auto;
-  min-width: 0;
   line-height: 0; // intentional: collapses the inline-SVG descender gap
 }
 
-/* 200px is the mark footprint the bar has always given it. The nav passes
-   _logo a viewBox cropped to the word, so the word fills this box instead of
-   sitting a tenth of its size in the middle of the 1000x500 stage. */
-.amber-logo-banner .amber-instance {
+.amber-masthead .amber-instance {
   width: 200px;
-  max-width: 100%;
-  height: var(--amber-mark-block);
+  aspect-ratio: 410 / 108;
+}
+
+.amber-masthead--home {
+  min-height: 72svh;
+  align-items: center;
+  padding-inline: var(--page-gutter);
+}
+
+.amber-masthead--home .amber-logo-home {
+  width: min(100%, 880px);
+}
+
+.amber-masthead--home .amber-instance {
+  width: 100%;
 }
 
 .amber-logo-svg {
@@ -304,124 +330,67 @@ h2 {
   display: block;
 }
 
-.amber-nav-actions {
-  display: flex;
-  flex: none;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-/* One left edge. The title, the paragraph and the two rows of links are each
-   narrower than the hero, and each centred itself at its own width, so all four
-   started at a different x. A page here reads from the column's left edge (see
-   .layout > main#main-content), and the alignment law in rules.yml keeps body
-   text left and centred text to three lines. */
-.amber-guest-hero {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-4);
-}
-
-/* main#main-content in front so the layout's page-title rule cannot reach the
-   hero sentence, which keeps its own size and weight. */
-main#main-content .amber-guest-hero .title {
-  max-width: 28rem;
-  margin: 0;
-  font-family: var(--font);
-  font-size: clamp(1.35rem, 3vw, 1.75rem);
-  font-weight: var(--weight-normal);
-  letter-spacing: var(--tracking-tight);
-}
-
-/* ch, not rem: 32rem is 640px at amber's root and the measure the type
-   actually sets is counted in characters, which is what the gate reads.
-   --leading-normal (1.5) because this is prose: --line-height is the root's
-   absolute 20px, which would set the 15.75px paragraph at 1.27. */
-.amber-guest-hero .body {
-  max-width: var(--measure-narrow);
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
-  line-height: var(--leading-normal);
-}
-
-.amber-guest-hero .actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-  margin: 0;
-}
-
-.amber-guest-secondary {
-  margin: 0;
-  font-size: var(--text-sm, 0.875rem);
-}
-
-.amber-guest-secondary a {
-  color: var(--text-secondary);
-  text-decoration: none;
-  font-weight: var(--weight-bold);
-}
-
-.amber-guest-secondary a:hover,
-.amber-guest-secondary a:focus-visible {
-  color: var(--text);
-  text-decoration: underline;
-}
-
-/* The feed's column, not the viewport: from 1280px the fixed rails stand in
-   the gutters and a full-width footer ran its first and last columns under
-   them. A block, not _minimal's footer row: in a row the link grid refused to
-   shrink below three columns and ran off both sides of a phone. */
+/* A magazine's footer: every section of amber in quiet columns, then the mark
+   and the copyright line. A block rather than _minimal's footer row, so the
+   column grid fits as many columns as the width holds and no more. */
 .amber-footer {
   display: block;
-  max-width: var(--feed-max);
-  margin-inline: auto;
   margin-block-start: var(--luxury-space-xl);
-  padding: var(--luxury-space-xl) var(--luxury-space-md) var(--luxury-space-lg);
+  padding: var(--space-16) var(--page-gutter) var(--space-12);
+  border-block-start: 1px solid var(--border);
 }
 
 .amber-footer-cols {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(var(--tile-min-md), 1fr));
-  gap: var(--luxury-space-lg);
-  max-width: 640px;
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  gap: var(--space-10) var(--space-8);
+  max-width: 1200px;
+  margin-inline: auto;
 }
 
-.amber-footer-cols nav {
-  display: flex;
-  flex-direction: column;
-  gap: var(--luxury-space-xs);
+.amber-footer-col ul {
+  list-style: none;
 }
 
-.amber-footer-cols h2 {
+.amber-footer-col h2 {
   font-size: var(--luxury-font-meta);
   font-weight: var(--weight-bold);
-  color: var(--luxury-muted);
-  margin-bottom: var(--luxury-space-xs);
+  color: var(--text);
+  margin-bottom: var(--space-2);
 }
 
-/* The footer nav and the language switcher are both link lists a thumb hunts
-   for, so each link holds the 44px Fitts floor. */
-.amber-footer-cols a {
+/* Each link holds the 44px Fitts floor: they are what a thumb hunts for. */
+.amber-footer-col a {
   display: inline-flex;
   align-items: center;
   min-height: var(--tap-min, 44px);
-  min-inline-size: var(--tap-min, 44px);
   font-size: var(--luxury-font-meta);
-  color: var(--luxury-text);
+  color: var(--luxury-muted);
 }
 
 /* Language switcher. The current locale reads as chosen rather than as a link
    you have not pressed yet. */
 .amber-footer-locales a.is-current {
   font-weight: var(--weight-bold);
-  text-decoration: underline;
+  color: var(--text);
+}
+
+.amber-footer-mark {
+  max-width: 1200px;
+  margin: var(--space-16) auto 0;
+}
+
+.amber-footer-home {
+  display: block;
+  width: 160px;
+}
+
+.amber-footer-mark .amber-instance {
+  aspect-ratio: 410 / 108;
 }
 
 .amber-footer-legal {
-  margin-top: var(--luxury-space-xl);
+  margin-top: var(--space-4);
   font-size: var(--luxury-font-meta);
   color: var(--luxury-muted);
 }
@@ -635,26 +604,6 @@ main#main-content .amber-guest-hero .title {
   color: var(--accent);
 }
 
-.amber-guest-feed {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.amber-guest-feed .feed-post {
-  background: var(--bg);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-card);
-  padding: var(--space-4) var(--space-4);
-  margin-bottom: var(--space-3);
-}
-
-.amber-guest-feed .author {
-  color: var(--text);
-  font-weight: var(--weight-bold);
-}
-
 // ============================================================ layout
 
 /* Amber's toteme/necessaire-inspired chrome has no dividing borders anywhere
@@ -737,17 +686,6 @@ main#main-content header > nav {
 main#main-content header > nav .btn,
 main#main-content header > nav form {
   flex: 0 0 auto;
-}
-
-/* From 1280px both rails stand open beside the column. They open on the line
-   the column's first block starts on, rather than flush under the bar, so the
-   three columns share one top: main's own block padding and its first child's
-   margin, one --space-8 each. */
-@media (min-width: 1280px) {
-  .sidebar,
-  .widgets {
-    padding-block-start: calc(var(--top-band-block) + var(--safe-top, 0px) + 2 * var(--space-8));
-  }
 }
 
 @media (min-width: 640px) {
@@ -857,9 +795,8 @@ main#main-content header > nav form {
   inset: 0;
 }
 
-/* Text links a thumb aims for on their own: the guest hero's secondary row, the
-   demo item's way back, the widget card's links and a section's closing link. */
-.amber-guest-secondary a,
+/* Text links a thumb aims for on their own: the demo item's way back, the
+   widget card's links and a section's closing link. */
 .item-detail > p:first-child a,
 .sidebar-card p a,
 .more_link {
@@ -959,7 +896,7 @@ main#main-content header > nav form {
   background: var(--color-black);
   color: var(--color-white);
   border: none;
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-pill);
   cursor: pointer;
   font-size: var(--text-sm);
   text-decoration: none;
@@ -985,7 +922,7 @@ main#main-content header > nav form {
   background: var(--hover-subtle);
   color: var(--text);
   border: none;
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-pill);
   cursor: pointer;
 }
 
@@ -1881,204 +1818,108 @@ main#main-content header > nav form {
   margin-top: var(--space-3);
 }
 
-// ============================================================ pages: wardrobe showcase
+// ============================================================ pages: home looks
 
-/* Guest wardrobe carousels: four rows under the logo, one per body region.
-   They render from home/index alone, and a row is a fixed, small height rather
-   than whatever its contents come to.
-
-   Motion is transforms and no JavaScript. The track holds the slide list twice
-   and travels exactly half its width, so the copy under the cursor at the reset
-   is identical to the one leaving and the loop has no seam. Direction alternates
-   by row, which is the whole point of the arrangement: adjacent zones drift
-   opposite ways, so the same two garments never stay paired.
-
-   It steps rather than crawls: a garment slides in over 0.7s and the row holds
-   for 3.6s, the pace these rows kept as a Swiper carousel. A continuous drift
-   is always cut mid-garment at both edges, so a still frame of it showed half a
-   tile at each end. Holding on whole tiles needs two numbers to agree: the
-   visible count, which sizes each tile to fill the row exactly, and the slide
-   count, which Amber::WardrobeShowcase::SLIDES_PER_ROW fixes so one step is
-   always one tile. */
-
-$showcase_slides: 12;
-$showcase_hold: 3.6;
-$showcase_move: 0.7;
-
-// Two decimals of a percent: Sass writes ten, and 24 stops of them cost the
-// sheet more than its weight ceiling allows.
-@function showcase_round($value, $places) {
-  $scale: math.pow(10, $places);
-
-  @return math.div(math.round($value * $scale), $scale);
-}
-
-@keyframes wardrobe_showcase_step {
-  @for $k from 0 through $showcase_slides - 1 {
-    $at: $k * ($showcase_hold + $showcase_move);
-    $total: $showcase_slides * ($showcase_hold + $showcase_move);
-
-    #{showcase_round(math.div($at, $total) * 100%, 2)},
-    #{showcase_round(math.div($at + $showcase_hold, $total) * 100%, 2)} {
-      transform: translateX(showcase_round(math.div(-50% * $k, $showcase_slides), 3));
-    }
-  }
-
-  100% { transform: translateX(-50%); }
-}
-
-.wardrobe_showcase {
-  --row_gap: var(--space-3);
-
-  border-block: 1px solid var(--border);
-  padding-block: var(--space-3, 16px);
-
-  /* This is a flex item, and a flex item's min-width is auto, so without this
-     the track's max-content width would become the section's width, far past
-     the column, with overflow:hidden clipping nothing. */
-  min-width: 0;
-  max-width: 100%;
-}
-
-.wardrobe_showcase_row {
-  min-width: 0;
-  max-width: 100%;
-}
-
-.wardrobe_showcase_row + .wardrobe_showcase_row {
-  border-top: 1px solid var(--border);
-  margin-top: var(--space-3, 16px);
-  padding-top: var(--space-3, 16px);
-}
-
-.wardrobe_showcase_head {
+/* Four looks, stacked, with the air between them the operator asked for
+   (2026-09-25, after antigravity.google): whole screens of white, a large
+   tightly tracked title, then the figure. */
+.amber-looks {
   display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-  padding-bottom: var(--space-2);
+  flex-direction: column;
+  gap: clamp(120px, 16vw, 200px);
+  padding-block-end: clamp(120px, 16vw, 200px);
 }
 
-.wardrobe_showcase_label {
+main#main-content .amber-look-title {
   margin: 0;
-  font-size: var(--text-sm, 0.875rem);
-  font-weight: var(--weight-bold, 700);
+  max-width: none;
+  text-align: center;
+  font-size: clamp(40px, 6vw, 88px);
+  font-weight: var(--weight-normal);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
 }
 
-.wardrobe_showcase_hint {
-  margin: 0;
-  font-size: var(--text-xs, 0.75rem);
-  color: var(--text-secondary);
+/* The figure and the slides share one box, the mannequin's 160:390, centred in the stage and
+   clear of the caption line, so a zone's percentages land on the same body
+   in both layers. */
+.amber-look-stage {
+  position: relative;
+  height: min(78svh, 640px);
+  margin-block-start: var(--space-8);
 }
 
-/* The column, not the viewport. Full-bleed would run the rows under the fixed
-   right rail, where the ancestor clips them, into a band neither full width nor
-   aligned to anything.
-
-   overflow-x hidden and not auto: the track is twice the visible width by
-   construction, and a scrollbar under every row would be four scrollbars. */
-.wardrobe_showcase_viewport {
-  overflow: hidden;
-  container: wardrobe_row / inline-size;
+.amber-look-figure,
+.amber-look-body {
+  position: absolute;
+  inset-block: 0 3rem;
+  inset-inline-start: 50%;
+  height: calc(100% - 3rem);
+  aspect-ratio: 160 / 390;
+  transform: translateX(-50%);
 }
 
-.wardrobe_showcase_track {
-  --slides_visible: 3;
-
-  display: flex;
-  width: max-content;
-  /* The timing function eases each slide between two holds; the holds are
-     keyframe pairs at one value, so no curve moves them. */
-  animation: wardrobe_showcase_step #{$showcase_slides * ($showcase_hold + $showcase_move)}s var(--ease-in-out) infinite;
+.amber-look-figure {
+  --particle-ink: var(--figure-ink);
 }
 
-@container wardrobe_row (min-width: 480px) {
-  .wardrobe_showcase_track {
-    --slides_visible: 5;
-  }
-}
-
-.wardrobe_showcase_row_reverse .wardrobe_showcase_track {
-  animation-direction: reverse;
-}
-
-/* The trailing padding is the gap between the two copies, and it sits after a
-   tile rather than before one, so the first garment starts on the column's
-   left edge with the label and the hero above it. */
-.wardrobe_showcase_group {
-  display: flex;
-  gap: var(--row_gap);
-  padding-inline-end: var(--row_gap);
-}
-
-/* A rotation that moves under the cursor mid-click picks the wrong garment. */
-.wardrobe_showcase_viewport:hover .wardrobe_showcase_track,
-.wardrobe_showcase_viewport:focus-within .wardrobe_showcase_track {
-  animation-play-state: paused;
-}
-
-/* Each tile and its gap take an exact share of the row, so a row at rest
-   shows whole garments edge to edge. */
-.wardrobe_slide {
-  flex: 0 0 calc(100cqi / var(--slides_visible) - var(--row_gap));
-  min-width: 0;
-}
-
-.wardrobe_slide_media {
-  display: block;
-  aspect-ratio: 1;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  /* Not plain surface: a white shirt or a white trainer on white paper is an
-     empty box with a caption under it. A few percent of ink behind the cut-out
-     gives the pale half of the wardrobe an edge to sit against. */
-  background: color-mix(in srgb, var(--text) 4%, var(--surface));
-}
-
-/* contain: a slide shows the whole garment, not the middle of it. */
-.wardrobe_slide_image {
+/* The dressing room lets its particles spill past the mannequin; here they
+   fill the body box, so the garments land on the body the points draw. */
+.amber-look-figure .mannequin-particles {
+  inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: contain;
 }
 
-/* No photo: the garment's own colour, with its initial over it. A grey box
-   would read as a failed image rather than as an item awaiting one. */
-.wardrobe_slide_swatch {
-  display: grid;
-  place-items: center;
-  background: var(--swatch, var(--surface));
-  color: var(--swatch-ink, var(--text));
+.amber-look-track {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
 }
 
-/* difference against a pale swatch renders the letter invisible, which is the
-   one case the swatch exists for. Plain ink, and the ink comes with the
-   swatch, because not every swatch is light enough to carry one: against
-   --text, charcoal measures 1.21 and navy 1.36. ApplicationHelper carries the
-   pair. */
-.wardrobe_slide_glyph {
-  font-size: var(--text-lg, 1.125rem);
-  font-weight: var(--weight-bold, 700);
-  color: var(--swatch-ink, var(--text));
+.amber-look-slide {
+  position: relative;
+  flex: 0 0 100%;
+  margin: 0;
+  scroll-snap-align: start;
 }
 
-.wardrobe_slide_title {
-  margin: var(--space-2) 0 0;
-  font-size: var(--text-xs, 0.75rem);
+.amber-look-slide figcaption {
+  position: absolute;
+  inset: auto 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 3rem;
+  font-size: var(--text-sm);
   color: var(--text-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .wardrobe_showcase_track { animation: none; }
-
-  /* Standing still, the second copy is redundant width the reader has to scroll
-     past, so the viewport becomes an ordinary scroller over the first. */
-  .wardrobe_showcase_viewport { overflow-x: auto; }
-  .wardrobe_showcase_group + .wardrobe_showcase_group { display: none; }
+/* Where each garment is worn, in percent of the body box: the mannequin's
+   own 160x390 grid, where the dressing room's .zone boxes sit too. */
+.look-zone {
+  position: absolute;
+  display: block;
 }
+
+.look-zone svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.look-zone--torso { inset: 18% 6% auto; height: 34%; }
+.look-zone--dress { inset: 18% 8% auto; height: 60%; }
+.look-zone--legs { inset: 52% 10% auto; height: 43%; }
+.look-zone--feet { inset: 93% 6% auto; height: 7%; }
+.look-zone--crown { inset: 0.5% 30% auto; height: 8%; }
+.look-zone--eyes { inset: 6% 33% auto; height: 4%; }
+.look-zone--ears { inset: 8% 30% auto; height: 6%; }
+.look-zone--hand { inset: 50% -6% auto 78%; height: 10%; }
 
 // ============================================================ product pen: jOx logo
 

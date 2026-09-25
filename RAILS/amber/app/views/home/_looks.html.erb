@@ -1,0 +1,32 @@
+<%# locals: looks — Amber::HomeLooks::Look, four of them.
+
+    Each look is a carousel over one standing figure. The figure (the particle
+    mannequin) stays put while the slides scroll over it: the first slide wears the
+    whole outfit, each one after it a single piece, so a swipe dresses and
+    undresses the same body. Native scroll-snap does the swiping, so a row
+    starts on its first slide with no script and no scroll position to restore. %>
+<section class="amber-looks" aria-label="<%= t("home.looks.title") %>">
+  <% looks.each_with_index do |look, index| %>
+    <% name = look.name.presence || t("home.looks.look", number: index + 1) %>
+    <section class="amber-look" aria-labelledby="amber-look-<%= index %>">
+      <h2 class="amber-look-title" id="amber-look-<%= index %>"><%= name %></h2>
+      <div class="amber-look-stage">
+        <%# The dressing room's particle mannequin, the same body: its controller
+            draws the canvas into this box, and --particle-ink paints it grey. %>
+        <div class="amber-look-figure" data-controller="particle-mannequin" aria-hidden="true"></div>
+        <div class="amber-look-track" tabindex="0" role="group" aria-label="<%= t("home.looks.swipe", name: name) %>">
+          <% ([ [ t("home.looks.whole"), look.garments ] ] + look.garments.map { |garment| [ garment.title, [ garment ] ] }).each do |caption, garments| %>
+            <figure class="amber-look-slide">
+              <div class="amber-look-body">
+                <% garments.each do |garment| %>
+                  <span class="look-zone look-zone--<%= garment.zone %>"><%= garment_silhouette(garment) %></span>
+                <% end %>
+              </div>
+              <figcaption><%= caption %></figcaption>
+            </figure>
+          <% end %>
+        </div>
+      </div>
+    </section>
+  <% end %>
+</section>

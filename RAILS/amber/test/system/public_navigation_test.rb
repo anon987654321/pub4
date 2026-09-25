@@ -11,8 +11,9 @@ class PublicNavigationTest < ApplicationSystemTestCase
     # default is nb, and pinning either one made this test fail for a reason
     # that has nothing to do with navigation.
     locale = find("html", visible: :all)[:lang]
-    assert_selector "h1", text: I18n.t("home.guest_title", locale: locale)
-    assert_link I18n.t("home.browse_demo", locale: locale)
+    # The heading is for screen readers; the page shows the mark and the looks.
+    assert_equal I18n.t("home.looks.title", locale: locale), find("h1", visible: :all).text(:all).strip
+    assert_selector ".amber-corner a[aria-label='#{I18n.t("nav.sign_in", locale: locale)}']"
     # The skip link is off-screen until focused, and Selenium reports "" for a
     # hidden node's text — so read textContent explicitly rather than filtering
     # on a string the driver can never see.
