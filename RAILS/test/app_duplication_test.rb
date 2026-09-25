@@ -6,7 +6,7 @@ require "minitest/autorun"
 # constants by bare name, so SessionsController and friends must exist in every
 # app even when their whole body is `include Shared::Something`. Those are 4-9
 # lines each and not worth chasing. Anything *substantial* appearing in two
-# apps byte-for-byte is a missed extraction — see WIRING_NOTES.md for what was
+# apps byte-for-byte is a missed extraction — see shared/README.md for what was
 # extracted in the 2026-07-28 sweep and what was deliberately left.
 class AppDuplicationTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)

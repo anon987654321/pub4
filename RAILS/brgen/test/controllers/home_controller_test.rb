@@ -87,7 +87,7 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
   # subapp_nav_items -- the same verticals brgen_nav_items already puts in the
   # .nav_swiper_bar immediately above it -- so root shipped two sticky horizontal
   # scrollers at top:0 offering the same destinations. The row is gone; the
-  # swiper is the primary nav (WIRING_NOTES "Layout"). The count assertion is the
+  # swiper is the primary nav (shared/README.md "Layout"). The count assertion is the
   # part that would have caught the duplicate in the first place.
   #
   # By href rather than by label, which is the change 2026-08-29 forced: the

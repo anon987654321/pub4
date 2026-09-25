@@ -8,7 +8,7 @@ module Operator
   # each; every ceiling only descends.
   #
   #   low_contrast — WCAG ratios computed from the COMPILED bundles, because the
-  #     build is what production wears (WIRING_NOTES: "read the second table
+  #     build is what production wears (shared/README.md: "read the second table
   #     before the first"). Text pairs read large_text_contrast (AA 4.5) from
   #     rules.yml; UI/accent pairs stay at WCAG non-text 3:1. AAA 7.0
   #     (normal_text_contrast) is design_metrics' budgeted gate — raising this

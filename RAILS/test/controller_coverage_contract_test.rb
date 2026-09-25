@@ -169,7 +169,7 @@ class ControllerCoverageContractTest < Minitest::Test
   # transactional storefront. There is no listing model in the host app --
   # app/models/marketplace.rb is a table-name-prefix module and nothing else --
   # so both docs sent a reader looking for a tier that was never built. Same
-  # shape as the WIRING_NOTES dialect table that sent CSS work at the palette
+  # shape as the shared/README.md dialect table that sent CSS work at the palette
   # brgen had left.
   #
   # This asserts the pair stays consistent in whichever direction it is resolved:

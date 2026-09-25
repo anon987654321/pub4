@@ -4,7 +4,7 @@
 // beat layered ones regardless of source order, so an app palette written
 // at plain :root (brgen-old, amber luxury, bsdports wscons) now wins BY
 // CONSTRUCTION — reordering @use in an application.scss can no longer
-// silently restore this file's indigo, which WIRING_NOTES carried as a
+// silently restore this file's indigo, which shared/README.md carried as a
 // live hazard from 2026-08-10 until today.
 @layer tokens {
   // Shared light-theme override set — used identically by [data-theme="light"]

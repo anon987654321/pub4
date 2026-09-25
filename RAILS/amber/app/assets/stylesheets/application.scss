@@ -26,7 +26,7 @@
 // light-tokens at [data-theme=light] and at :root:not([data-theme=dark])
 // inside prefers-color-scheme: light, (0,2,0) against :root's (0,1,0). The two
 // rules after this one restate luxury at those selectors, so a visitor in OS
-// light mode wears amber's dialect. WIRING_NOTES records the same leak for
+// light mode wears amber's dialect. shared/README.md records the same leak for
 // brgen's two light themes.
 :root {
   @include x.luxury-light-tokens;

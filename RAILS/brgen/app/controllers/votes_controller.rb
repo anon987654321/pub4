@@ -3,7 +3,7 @@
 # Brgen-specific VotesController.
 # See shared for Reactable/Votable concern. Local controller kept for
 # content-score side-effects and city-specific behavior.
-# See RAILS/shared/WIRING_NOTES.md "Deferred DRY".
+# See RAILS/shared/README.md "Deferred DRY".
 class VotesController < ApplicationController
   # Post includes Shared::Sluggable, so to_param is the slug and
   # post_vote_path(post) carries "sol-pa-floyen". find_votable called

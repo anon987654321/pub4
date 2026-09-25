@@ -143,10 +143,10 @@ module Deploy
 
       def design_contract_checks
         design_contracts.each { |contract| apply_design_contract(contract) }
-        # WIRING_NOTES flat rule still the product constitution for non-pen CSS
-        if File.file?(WIRING_NOTES)
-          notes = File.read(WIRING_NOTES)
-          @result.fail("user_flow: WIRING_NOTES lost Flat rule") unless notes.match?(/Flat rule|box-shadow/i)
+        # The flat rule in shared/README.md is the product constitution for non-pen CSS.
+        if File.file?(DESIGN_DOC)
+          notes = File.read(DESIGN_DOC)
+          @result.fail("user_flow: shared/README.md lost the Flat rule") unless notes.match?(/Flat rule|box-shadow/i)
         end
       end
 

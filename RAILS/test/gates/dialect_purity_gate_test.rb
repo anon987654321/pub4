@@ -36,7 +36,7 @@ class DialectPurityGateTest < Minitest::Test
       vertical_accent_ink: "#110f19"
   YAML
 
-  WIRING = "Dialects: social, luxury, openbsd_wscons, face_root.\n" \
+  DESIGN_DOC = "Dialects: social, luxury, openbsd_wscons, face_root.\n" \
            "Flat rule: no box-shadow anywhere.\n" \
            "Vertical accents come from vertical_accents, through _vertical_shell.\n"
 
@@ -54,7 +54,7 @@ class DialectPurityGateTest < Minitest::Test
 
   def sound_tree(dir)
     plant(dir, "MASTER/data/rules.yml", MASTER_RULES)
-    plant(dir, "RAILS/shared/WIRING_NOTES.md", WIRING)
+    plant(dir, "RAILS/shared/README.md", DESIGN_DOC)
     plant(dir, "RAILS/brgen/app/assets/stylesheets/application.scss", BRGEN)
     plant(dir, "RAILS/bsdports/app/assets/stylesheets/application.scss", BSDPORTS)
     plant(dir, "RAILS/amber/app/assets/stylesheets/application.scss", "// luxury palette\n")
@@ -129,7 +129,7 @@ class DialectPurityGateTest < Minitest::Test
 
   def test_a_missing_vertical_accent_entry_fails
     result = gate_over do |dir|
-      plant(dir, "MASTER/data/rules.yml", MASTER_RULES.sub(%(      dating:\n        accent: "#b3315a"\n), ""))
+      plant(dir, "MASTER/data/rules.yml", MASTER_RULES.sub(%(    dating:\n      accent: "#b3315a"\n), ""))
     end
 
     refute result.ok?, "a missing vertical accent passed"
@@ -138,20 +138,20 @@ class DialectPurityGateTest < Minitest::Test
 
   def test_a_dialect_missing_from_master_design_fails
     result = gate_over do |dir|
-      plant(dir, "MASTER/data/rules.yml", MASTER_RULES.sub(/      luxury:\n        accent: "#b08d57"\n/, ""))
+      plant(dir, "MASTER/data/rules.yml", MASTER_RULES.sub(/  luxury:\n    accent: "#b08d57"\n/, ""))
     end
 
     refute result.ok?, "a missing dialect passed"
     assert_match(/MASTER design_system missing luxury/, result.failures.first)
   end
 
-  def test_wiring_notes_that_lost_the_flat_rule_fail
+  def test_a_design_doc_that_lost_the_flat_rule_fails
     result = gate_over do |dir|
-      plant(dir, "RAILS/shared/WIRING_NOTES.md", WIRING.sub(/Flat rule.*\n/, ""))
+      plant(dir, "RAILS/shared/README.md", DESIGN_DOC.sub(/Flat rule.*\n/, ""))
     end
 
-    refute result.ok?, "WIRING_NOTES without the flat rule passed"
-    assert_match(/lost Flat rule/, result.failures.first)
+    refute result.ok?, "a design doc without the flat rule passed"
+    assert_match(/lost the Flat rule/, result.failures.first)
   end
 
   def test_a_missing_master_rules_fails_rather_than_passing_empty

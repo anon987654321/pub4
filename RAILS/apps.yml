@@ -51,9 +51,9 @@ apps:
         - { name: moderation tools,                                        status: done, notes: "ModerationWorkflow, admin/reports, ModerationReport, ModerationFlag, TrustScore" }
         - { name: media pipeline (Active Storage variants),                status: done, notes: "Shared::MediaProcessable + MediaProcessingJob on post/listing/dating/message/playlist/takeaway/tv; responsive_image_tag + blurhash" }
         - { name: "identity + trust primitives (OAuth subjects, merge, reputation)", status: done, notes: "identity_providers, external_identities, account_merges, trust_signals; wired via OmniAuth callbacks + TrustScore" }
-        - { name: photo/multimodal upload (visitor allowed on public surface), status: done, notes: "intentionally open for chat vision; see WIRING_NOTES.md" }
-        - { name: unified Activity graph emission,                         status: done, notes: "ActivityTrackable + EventEmitter across playlist/marketplace/takeaway/tv/dating verticals; see WIRING_NOTES.md" }
-        - { name: "shared model concerns (Notifiable, ActivityTrackable, GeoLocatable, Votable, Commentable, Taggable promoted)", status: done, notes: "reduced local duplication/sprawl; see shared/app/models/concerns/shared/ + WIRING_NOTES" }
+        - { name: photo/multimodal upload (visitor allowed on public surface), status: done, notes: "intentionally open for chat vision; see shared/README.md" }
+        - { name: unified Activity graph emission,                         status: done, notes: "ActivityTrackable + EventEmitter across playlist/marketplace/takeaway/tv/dating verticals; see shared/README.md" }
+        - { name: "shared model concerns (Notifiable, ActivityTrackable, GeoLocatable, Votable, Commentable, Taggable promoted)", status: done, notes: "reduced local duplication/sprawl; see shared/app/models/concerns/shared/ + shared/README.md" }
         - { name: "MASTER frontend/cosmetic scan rules (web_rules, cosmetic_rules, FrontendAuditor)", status: done, notes: "scan_profiles.cosmetic + frontend_production_gate + frontend_auditor_gate" }
         - { name: Reddit scrape seed (rephrase + Strunk & White),          status: done, notes: "RedditSeed + ContentRewriter + StrunkWhitePass" }
         - { name: SEO / affiliate / newsletter kit (shared),                 status: done, notes: "Shared::SeoKit, json_ld, affiliate_disclosure, newsletter_cta" }
