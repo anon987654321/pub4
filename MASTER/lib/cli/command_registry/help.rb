@@ -42,6 +42,13 @@ module Master
             "what a repair would take on, without taking it on.",
           ],
         },
+        "critique" => {
+          summary: "read-only: the council, without the principle map",
+          detail: [
+            "/critique [path] — run the council against the path. It reads and argues, then stops.",
+            "/review runs the critique plus the principle map; /fix is the operation that writes.",
+          ],
+        },
         "plugin" => {
           summary: "list and invoke governed plugins",
           detail: [
