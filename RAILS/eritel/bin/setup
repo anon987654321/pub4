@@ -1,0 +1,11 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "fileutils"
+require "open3"
+
+root = File.expand_path("..", __dir__)
+Dir.chdir(root) do
+  system("bundle", "install") || abort("eritel: bundle install failed")
+  system("bin/rails", "db:prepare") || abort("eritel: database preparation failed")
+end
