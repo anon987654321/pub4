@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "tools_helper"
-Studio::Tools.load_tool("postpro/postpro.rb")
+ToolTest::Tools.load_tool("postpro/postpro.rb")
 
 # postpro is a film emulation: fourteen stocks, each a row in six parallel
 # tables (grain, channel grain scale, reciprocity, push response, H&D curve,
@@ -12,7 +12,7 @@ Studio::Tools.load_tool("postpro/postpro.rb")
 # No image is opened here. Everything under test is table shape and scalar
 # arithmetic, so this runs without libvips having anything to do.
 class TestPostproFilm < Minitest::Test
-  POSTPRO_SOURCE = File.join(Studio::ROOT, "postpro", "postpro.rb")
+  POSTPRO_SOURCE = File.join(ToolTest::ROOT, "postpro", "postpro.rb")
   COLOUR_STOCKS = (STOCKS.keys - %i[tri_x ilford_hp5 ilford_delta3200]).freeze
 
   # --- the tables agree about which films exist ---------------------------
