@@ -133,7 +133,7 @@ module Master
           rescue StandardError => e
             action = handle_fix_exception(e, violation, event: "rule_loop:fix_error")
             next if action == :retry
-            return nil
+            return
           end
           nil
         end
