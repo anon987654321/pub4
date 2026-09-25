@@ -3179,6 +3179,14 @@ function pickBrowserVoice(lang) {
   const exact = pool.filter((v) => (v.lang || '').toLowerCase() === want);
   const loose = pool.filter((v) => (v.lang || '').toLowerCase().startsWith(base));
 
+  // Norwegian is a hard identity rule. Never substitute Christopher, Jenny,
+  // Daniel, Samantha, or another nb-NO voice for Pernille. The server remains
+  // the fallback when the exact browser voice is not installed.
+  if (base === 'nb') {
+    return pool.find((v) => /\bpernille\b/i.test(named(v)) && (v.lang || '').toLowerCase().startsWith('nb'))
+      || null;
+  }
+
   // A neural voice in the right locale beats everything. Below that, a good
   // concatenative voice in the right locale beats a neural one in the wrong
   // one — accent errors are more distracting than synthesis age. The platform
