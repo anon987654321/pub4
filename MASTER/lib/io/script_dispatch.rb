@@ -46,7 +46,6 @@ module Master
           [File.join(candidate, "tools", "#{tool}.rb"),
            File.join(candidate, "tools", tool, "#{tool}.rb")]
         end
-        candidates << File.join(MasterPaths.repo, "STUDIO", tool, "#{tool}.rb")
         candidates.find { |candidate| File.file?(candidate) } || candidates.first
       end
 
@@ -57,7 +56,7 @@ module Master
         return File.expand_path("..", requested_root) if script.start_with?(File.join(requested_root, "tools") + File::SEPARATOR)
         # MASTER/tools/<tool> scripts run from their own directory — that's where
         # their scratch/.cache, samples/, and project/ state live.
-        return File.dirname(script) if script.start_with?(File.join(MasterPaths.repo, "STUDIO") + File::SEPARATOR)
+        return File.dirname(script) if script.start_with?(File.join(MasterPaths.repo, "MASTER", "tools") + File::SEPARATOR)
         return requested_root if File.directory?(requested_root)
 
         MasterPaths.repo
