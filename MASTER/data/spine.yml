@@ -923,7 +923,9 @@ pub4_source_ceilings:
 # Mutation-checked rather than asserted into existence: dropping master fails 2,
 # reordering fails 1, turning the root guard into a warning fails 1, and gutting
 # the SKIP_CI branch fails 1, with the unmutated source at 0.
-  OPENBSD: 98
+# 98 -> 90, locked 2026-09-25. eef2c0afe folded ten console .exp files into
+# vps_console.exp and removed bin/tree.sh, whose caller runs tools/tree.rb.
+  OPENBSD: 90
   # 220 -> 222 for lora/seed_media.yml and lora/_toolkit/install_seed_media.rb,
   # the prompt set for every seeded photograph and the script that grades and
   # files what comes back from it. Two files, both named, neither foldable:
@@ -1098,8 +1100,12 @@ name_candidates: 23
 # (agent_map.yml, ssh_vm23.sh), and a script run through another shell is not
 # a surface the tree offers. The only net door change since f754501d1 set the
 # post-move census at 46.
+#
+# OPENBSD 45 -> 34, locked 2026-09-25. eef2c0afe: nine executable console
+# shims became modes of vps_console.exp, their sourced helper folded in, and
+# bin/tree.sh went, since its callers run tools/tree.rb.
 pub4_entrypoint_ceilings:
   MASTER: 20
   RAILS: 3
-  OPENBSD: 45
+  OPENBSD: 34
   STUDIO: 0
