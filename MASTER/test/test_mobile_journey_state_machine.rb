@@ -17,7 +17,7 @@ class TestMobileJourneyStateMachine < Minitest::Test
 
   def test_discovers_search_and_filter_states
     source = read("../RAILS/gates/support/mobile_journey_probe.rb")
-    assert_includes source, 'input[type="search"]'
+    assert_includes source, "input[type='search']"
     assert_includes source, 'kind: "search"'
     assert_includes source, 'kind: "filter"'
   end

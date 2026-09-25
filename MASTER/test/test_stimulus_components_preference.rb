@@ -28,7 +28,7 @@ class TestStimulusComponentsPreference < Minitest::Test
   def test_existing_custom_controller_is_not_allowed_to_claim_component_ownership
     source = read("../RAILS/gates/lib/source/stimulus_components.rb")
     assert_includes source, "custom Stimulus behavior overlaps"
-    assert_includes source, "use the upstream controller when its contract fits"
+    assert_includes source, "inspect this concrete call site before replacing the controller"
   end
 
   def test_opportunity_requires_a_concrete_view_call_site
