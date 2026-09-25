@@ -46,11 +46,11 @@ module Master
         devices, bluetooth_error = scan_safely { scan_bluetooth }
         known = load_known
         observed_at = Time.now.utc
-        analyzer = Analyzer.new(observed_at:)
+        analyzer = AirSuperioritySupport::Analyzer.new(observed_at:)
         wifi_findings = analyzer.wifi(networks, known.fetch("known_networks", []))
         bluetooth_findings = analyzer.bluetooth(devices, known.fetch("known_devices", []))
         errors = [wifi_error, bluetooth_error].compact
-        result = ScanResult.new(
+        result = AirSuperioritySupport::ScanResult.new(
           wifi: networks,
           bluetooth: devices,
           errors:,
