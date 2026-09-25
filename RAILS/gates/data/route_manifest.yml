@@ -2,7 +2,7 @@
 schema: 1
 apps:
   brgen:
-    digest: 1de39725b26c7c31
+    digest: f51fa79dab68b83a
     routes:
       rails/pwa#offline:
       - "/offline"
@@ -338,6 +338,8 @@ apps:
       - "/checkout"
       marketplace/addresses#index:
       - "/addresses"
+      marketplace/webhooks#dintero_callback:
+      - "/webhooks/dintero/callback"
       marketplace/categories#show:
       - "/categories/:id"
       marketplace/saved_searches#index:
