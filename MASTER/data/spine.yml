@@ -35,7 +35,7 @@ spine:
   namespace_ceilings:
     MASTER/lib: 0
     RAILS/shared/lib: 2
-    STUDIO/dilla/lib: 0
+    MASTER/tools/dilla/lib: 0
 
   # Non-blank, non-comment lines across lib/**/*.rb, minus the Zeitwerk wrappers.
   # Present sponsors, all the same shape — a rule that could only be judged by a
@@ -298,7 +298,7 @@ spine:
 # The coarse sprawl net over all four trees: one source-file ceiling each, so a
 # new file anywhere fails `bin/operator measure` until it folds into an existing one
 # or the ceiling is raised here with the reason in the commit. dilla's engine has
-# a finer per-part guard in STUDIO/gate.rb. On-disk source files (code, style,
+# a finer per-part guard in MASTER/tools/gate.rb. On-disk source files (code, style,
 # markup, config, docs), vendored/generated excluded.
 pub4_source_ceilings:
   # UNIT CHANGED 2026-09-13: source files only. A path under a test/
@@ -985,7 +985,7 @@ pub4_source_ceilings:
   #
   # Three subjects and an entry point, not one subject split four ways: the
   # first writes music, the second plays over it, the third knows nothing about
-  # music at all. STUDIO/gate.rb's DILLA_SUPPORT_CEILING carries the same
+  # music at all. MASTER/tools/gate.rb's DILLA_SUPPORT_CEILING carries the same
   # reasoning for the same three modules.
   # 153 -> 148, a fall. CATALOGUE.md arrived from TODO.md and six files left:
   # a test asserting render_rand, a method the engine has never defined, and
@@ -993,7 +993,7 @@ pub4_source_ceilings:
   # belongs beside the three sets it was written after.
   # 148 -> 145: the trymbot skin is retired. It was one deletable file by
   # design — the same MASTER process wearing a different host — plus its README
-  # and its test, and STUDIO/gate.rb no longer registers a subsystem that is not
+  # and its test, and MASTER/tools/gate.rb no longer registers a subsystem that is not
   # there.
   # 145 -> 143, a fall nobody recorded. postpro/motion.rb and
   # test/test_tools_motion.rb went and the ceiling stayed, so the row sat two
@@ -1003,7 +1003,7 @@ pub4_source_ceilings:
   # the broadcast loop and the bed digger are lib/livesets.rb behind
   # `dilla.rb live`; the sine stream and its player are lib/sine_stream.rb;
   # bin/crate, bin/demo_full.rb, scripts/generate_tts.rb and the librosa script
-  # left with nothing reading them. STUDIO/gate.rb fails if any of the three
+  # left with nothing reading them. MASTER/tools/gate.rb fails if any of the three
   # directories returns. 117 -> 108.
   # 108 -> 70: dilla lib/ folds forty-four modules into six subjects -- sound,
   # sampling, ledger, harmony, groove, listen -- and radio_bergen_study.rb, a
@@ -1022,7 +1022,7 @@ pub4_source_ceilings:
 # Directly under bin/, so an app's generated bin/rails and a tool's own bin/
 # scripts are not counted as surfaces of the tree. STUDIO has no bin/ of its own
 # and records 0, which is the true number rather than a blind one — every STUDIO
-# tool is invoked as `ruby STUDIO/<tool>/<tool>.rb`.
+# tool is invoked as `ruby MASTER/tools/<tool>/<tool>.rb`.
 #
 # A ceiling at the honest count rather than at the two the prose asks for: a
 # target nobody can reach is a ratchet everyone learns to override. It falls as
