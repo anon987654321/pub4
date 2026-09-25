@@ -131,6 +131,14 @@ module Deploy
               # a scope that is payments services only, where ensure! is the
               # convention. Measured: it moves stripe_refund.rb and no other file.
               /(?:^|\s)[A-Z]\w*\.ensure!/,
+              # Two more fail-closed shapes, each a secret the file cannot work
+              # without: ENV.fetch with no default raises when the secret is
+              # absent (dintero_client.rb authenticates that way), and a
+              # verifier that answers false when its secret is blank accepts
+              # nothing (dintero_signature.rb). Measured: these move those two
+              # files and no other.
+              /ENV\.fetch\(\s*"[A-Z_]*SECRET"\s*\)/,
+              /return false if ENV\["[A-Z_]*SECRET"\]\.to_s\.blank\?/,
             ],
             scope_glob: "**/payments/**/*.rb",
             # A file that defines no method performs no payment, so it cannot
