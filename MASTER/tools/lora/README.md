@@ -1,5 +1,58 @@
 # Person-LoRA
 
+## Canonical contract
+
+### Purpose
+
+Manage governed LoRA/image-training workflows, including prompt/media preparation,
+bounded provider interactions, training orchestration, and provenance.
+
+### Inputs
+
+Prompt sets, local subject media, model/capability declarations, explicit
+training options, and provider credentials supplied through the environment.
+
+### Outputs
+
+Training jobs, generated media, manifests, statistics, provenance, and explicit
+provider failures. Credentials are never repository outputs.
+
+### Invocation
+
+Use the tool entrypoints under `MASTER/tools/lora/` or the documented helper
+scripts in `_toolkit/`. Provider work is explicit; local inspection stays
+possible without credentials.
+
+### Architecture
+
+The main tool owns the governed workflow. `_toolkit/` contains provider and
+environment adapters. Subject directories contain subject-specific inputs and
+outputs; shared policy remains in MASTER.
+
+### Data and state
+
+Subject media and manifests are sensitive state. Keep caches, credentials,
+temporary provider material, and local runtime environments outside git.
+
+### Security boundary
+
+Treat every image, prompt, model identifier, archive, provider response, and
+remote URL as untrusted. Validate redirects and download destinations, bound
+file sizes and jobs, avoid shell interpolation, and never execute provider
+content.
+
+### Validation
+
+Capability checks must be grounded in live provider schemas where applicable.
+Missing credentials, unavailable adapters, and provider drift are explicit
+non-success states, not inferred passes.
+
+### MASTER integration
+
+LoRA is a canonical MASTER tool. MASTER provides governance and dispatch; LoRA
+owns the training/media workflow.
+
+
 **Dette er ikke et filter lagt over et tilfeldig ansikt.** Det er et forsøk på å
 gi deg tilbake deg selv i lys som er snillere — norsk, voksen, varm, ekte — slik
 at et bilde kan kjennes som et bedre minne, ikke en fremmed versjon av deg.
@@ -352,4 +405,4 @@ GraphQL-specific controls belong at the API boundary: authenticate and authorize
 
 LoRA is a creative/model tool under MASTER/tools/lora. MASTER provides governance and invocation; LoRA owns model composition, prompt construction, adapter data, and artifact provenance.
 
-New automation should reference MASTER/tools/lora, never the retired STUDIO/lora path.
+New automation should reference MASTER/tools/lora, never the retired MASTER/tools/lora path.
