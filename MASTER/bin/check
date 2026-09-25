@@ -50,7 +50,7 @@ node_bin = ENV["PATH"].to_s.split(File::PATH_SEPARATOR).push("/usr/local/bin")
 # rake["studio"] is in agent as well as the two heavy profiles, and it is the
 # only step that is. The agent profile is what runs around law and fix-loop work,
 # which is exactly the work that has silently broken STUDIO before — `bin/gate`'s
-# /fix step rewrites the whole shared worktree, and until MASTER/tools/studio/gate.rb there
+# /fix step rewrites the whole shared worktree, and until MASTER/tools/MASTER/tools/gate.rb there
 # was nothing in any profile that noticed. It costs ~3s: parse is in-process AST
 # and the two load probes are about a second each.
 
