@@ -10,7 +10,10 @@
     MASTER face is not embedded: its iframe points at ai.brgen.no, and a
     document load waits on its frames, so the page never reached readyState
     "complete" while MASTER was slow or down. ?master=1 still opens it. %>
-<h1 class="visually-hidden"><%= t("home.looks.title") %></h1>
+<%# The heading is what orients a first visitor now that the guest hero is
+    gone, so it carries the orientation marker the walkthrough gate reads. The
+    attribute has no CSS or controller behind it. %>
+<h1 class="visually-hidden" data-visitor-orientation><%= t("home.looks.title") %></h1>
 <%= render "looks", looks: @looks %>
 
 <% if authenticated? %>
