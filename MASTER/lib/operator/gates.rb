@@ -58,7 +58,7 @@ module Deploy
     # The budget sits with the gates whose scan it bounds. This gate runs MASTER's
     # chain over RAILS, so the per-target seconds are RAILS' to declare, and a
     # copy here would be a second source that drifts.
-    BUDGET_PATH = File.expand_path("../../RAILS/gates/data/constitutional_budget.yml", __dir__)
+    BUDGET_PATH = File.expand_path("../../../RAILS/gates/data/constitutional_budget.yml", __dir__)
     # `scan: done [profile: full] 410 violations | top DEAD_CODE=99 …`
     VIOLATION_LINE = /^scan\d*: done\b[^\n]*?\b(\d+) violations/
     # And the other spelling of the same number: `scan: done [profile: aesthetic]
