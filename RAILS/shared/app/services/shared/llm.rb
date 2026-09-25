@@ -6,13 +6,23 @@ module Shared
   class Llm
     DEFAULT_MODEL = "google/gemini-2.0-flash-001"
     PROVIDER = :openrouter
+    PROVIDER_KEY_ENVS = {
+      openrouter: "OPENROUTER_API_KEY",
+      groq: "GROQ_API_KEY",
+    }.freeze
 
-    def self.configured?
-      ENV["OPENROUTER_API_KEY"].to_s.strip != ""
+    def self.key_env_for(provider)
+      PROVIDER_KEY_ENVS.fetch(provider.to_sym)
     end
 
-    def initialize(model: DEFAULT_MODEL)
+    def self.configured?(provider: PROVIDER, key_env: nil)
+      ENV[key_env || key_env_for(provider)].to_s.strip != ""
+    end
+
+    def initialize(model: DEFAULT_MODEL, provider: PROVIDER, key_env: nil)
       @model = model
+      @provider = provider.to_sym
+      @key_env = key_env || self.class.key_env_for(@provider)
     end
 
     # json=true keeps the existing structured-output contract; plain responses

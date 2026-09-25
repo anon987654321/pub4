@@ -16,6 +16,7 @@
 # no network, no key and no phrasebook — it is the signature all 57 shared.
 class PostModeration
   MODEL = ENV.fetch("MODERATION_MODEL", "groq/llama-3.1-8b-instant")
+  PROVIDER = ENV.fetch("MODERATION_PROVIDER", "groq").to_sym
   TIMEOUT = 2
 
   # A link, however written. Bare hostnames included: several of the 57 posted
@@ -97,7 +98,7 @@ class PostModeration
   # honest about the same fact and leaves a log line that means something.
   def llm_approves?
     unless configured?
-      Rails.logger.info("PostModeration: no MODERATION_API_KEY, heuristics only")
+      Rails.logger.info("PostModeration: no #{moderation_key_env}, heuristics only")
       return true
     end
 
@@ -108,8 +109,13 @@ class PostModeration
   end
 
   def configured?
-    ENV["MODERATION_API_KEY"].present? || ENV["GROQ_API_KEY"].present? ||
-      ENV["OPENAI_API_KEY"].present? || ENV["ANTHROPIC_API_KEY"].present?
+    Shared::Llm.configured?(provider: PROVIDER, key_env: moderation_key_env)
+  end
+
+  def moderation_key_env
+    return "MODERATION_API_KEY" if ENV["MODERATION_API_KEY"].present?
+
+    Shared::Llm.key_env_for(PROVIDER)
   end
 
   def moderate_sync
@@ -120,7 +126,8 @@ class PostModeration
       Body: #{@post.content.to_s.truncate(2000)}
     PROMPT
 
-    verdict = RubyLLM.chat(model: MODEL).ask(prompt).content.to_s.strip.upcase
+    verdict = Shared::Llm.new(model: MODEL, provider: PROVIDER, key_env: moderation_key_env)
+      .ask(prompt, json: false).to_s.strip.upcase
     !verdict.include?("REJECT")
   end
 end
