@@ -43,6 +43,23 @@ class TestPlugins < Minitest::Test
     assert result[:bluetooth]
   end
 
+  def test_air_scan_marks_partial_results_explicitly
+    plugin = Master::Plugin.load("air_superiority")
+    result = plugin.send(:scan)
+    assert_includes [true, false], result[:complete]
+    assert result[:observed_at]
+    assert_equal result[:wifi].length, result[:counts][:wifi]
+    assert_equal result[:bluetooth].length, result[:counts][:bluetooth]
+  end
+
+  def test_air_analysis_uses_normalized_findings
+    analyzer = Master::Plugins::AirSuperiority::Analyzer.new(observed_at: Time.at(0).utc)
+    findings = analyzer.wifi([{ "bssid" => "AA:BB:CC:DD:EE:FF", "ssid" => "test" }], [])
+    assert_equal "unknown_wifi", findings.first.kind
+    assert_equal "advisory", findings.first.severity
+    assert_equal Time.at(0).utc, findings.first.observed_at
+  end
+
   def test_observable_actions_are_declared_by_manifest
     assert_equal %w[status inspect], Master::Plugin.info("social_browser").observe_actions
     assert_equal %w[status scan], Master::Plugin.info("air_superiority").observe_actions
