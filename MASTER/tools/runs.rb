@@ -26,7 +26,7 @@ module Operator
     # Files that orchestrate other files. Each is read for glob literals.
     RUNNERS = %w[
       MASTER/Rakefile
-      MASTER/tools/studio/Rakefile
+      MASTER/tools/MASTER/tools/Rakefile
       MASTER/bin/check
       MASTER/bin/ci
       MASTER/bin/gate
@@ -79,7 +79,7 @@ module Operator
           source = File.read(path)
           (source.scan(GLOB).flatten + source.scan(EXACT).flatten).uniq.each do |glob|
             # Globs are written relative to the tree the runner lives in.
-            found[runner] << (glob.start_with?("MASTER/", "RAILS/", "OPENBSD/", "MASTER/tools/studio/") ? glob : "#{base}/#{glob}")
+            found[runner] << (glob.start_with?("MASTER/", "RAILS/", "OPENBSD/", "MASTER/tools/MASTER/tools/") ? glob : "#{base}/#{glob}")
           end
         end
 
