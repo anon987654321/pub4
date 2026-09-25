@@ -28,12 +28,24 @@ module Master
         # sessions pushed around it. Rebase onto what arrived and push once
         # more. A rebase that conflicts is aborted, and the refusal raised.
         def push
-          git!("push")
+          git!("push", *push_target)
         rescue RuntimeError => e
           raise unless e.message.match?(/rejected|non-fast-forward|fetch first/)
 
           rebase_onto_upstream!
-          git!("push")
+          git!("push", *push_target)
+        end
+
+        # The upstream named outright. A /fix worktree's branch is
+        # agent/fix-<tree> tracking origin/main, and a bare push refuses a
+        # branch whose name differs from its upstream's, so the delivery that
+        # the proof had just cleared failed at the last step.
+        def push_target
+          upstream, status = Master::Io::Exec.capture2e("git", "-C", @root_path, "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}")
+          remote, branch = upstream.to_s.strip.split("/", 2)
+          return [] unless status.success? && remote && branch
+
+          [remote, "HEAD:#{branch}"]
         end
 
         def rebase_onto_upstream!
