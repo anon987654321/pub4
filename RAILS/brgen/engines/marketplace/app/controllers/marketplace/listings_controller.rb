@@ -61,6 +61,7 @@ class Marketplace::ListingsController < Marketplace::BaseController
     @nearby_listings = nearby_listings_for(@listing)
     @questions = @listing.questions.includes(:user, :answered_by).for_display
     @variants = @listing.variants.ordered.includes(:options).in_stock
+    @categories = Marketplace::Category.roots.includes(:children)
     @question = Marketplace::Question.new if Current.user.present?
   end
 
