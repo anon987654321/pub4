@@ -2,7 +2,7 @@
 # with the chords chosen live instead of looped. It opens on the loved
 # progression, then walks soul-jazz harmony, each chord voiced nearest the
 # last, a new moog patch every two chords, the DFAM on top. Endless.
-$LOAD_PATH.unshift File.expand_path("~/Documents/GitHub/pub4/MASTER/tools/studio/dilla/lib")
+$LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 require "sound"
 
 RATE = 32_000
