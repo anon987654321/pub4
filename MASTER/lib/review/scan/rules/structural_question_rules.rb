@@ -365,7 +365,7 @@ module Master
           # Calls a String, Array or Hash answers are the language, not another
           # object's data: `line.strip` four times is no envy of `line`.
           CORE_METHODS = [String, Array, Hash, Integer, Float, Symbol, Enumerable, Comparable, Kernel, Object, NilClass]
-                         .flat_map(&:instance_methods).to_set { |name| name.to_s }.freeze
+                         .flat_map(&:instance_methods).to_set(&:to_s).freeze
 
           def methods(code) = keyword_blocks(code, "def")
 

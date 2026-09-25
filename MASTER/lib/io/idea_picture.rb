@@ -26,9 +26,9 @@ module Master
         FileUtils.mkdir_p(DIR)
         stamp = Time.now.strftime("%Y%m%d-%H%M%S")
         still = render_still(words, stamp)
-        return { still: still } unless film
+        return { still: } unless film
 
-        { still: still, clip: render_film(words, still, stamp, duration) }
+        { still:, clip: render_film(words, still, stamp, duration) }
       end
 
       def render_still(words, stamp)
@@ -51,7 +51,7 @@ module Master
 
       def film_input(words, still, duration)
         { prompt: "The same photograph, held, one slow motion. #{words}",
-          image: client.upload_file(still), duration: duration, mode: "quality",
+          image: client.upload_file(still), duration:, mode: "quality",
           aspect_ratio: "2:3", resolution: "768p" }
       end
 

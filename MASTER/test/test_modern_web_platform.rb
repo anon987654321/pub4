@@ -21,7 +21,7 @@ class TestModernWebPlatformEvidence < Minitest::Test
       @calls = []
     end
 
-    def evaluate(script)
+    def evaluate(_script)
       @calls << :evaluate
       @reply
     end

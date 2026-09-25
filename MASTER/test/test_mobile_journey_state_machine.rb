@@ -203,7 +203,7 @@ class TestMobileJourneyStateMachine < Minitest::Test
 
     state = Deploy::MobileJourneyProbe.state_signature(cdp)
 
-    assert_equal [["menu", "true"]], state["expanded"]
+    assert_equal [%w[menu true]], state["expanded"]
     assert_equal [["sheet", true], ["faq", true], ["confirm", false]], state["open"]
     assert_equal "q", state["active"]
   end

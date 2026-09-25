@@ -107,7 +107,7 @@ class TestStimulusComponentsPreference < Minitest::Test
         ROOT: root, RAILS_ROOT: rails,
         BOOT_FILES: [File.join(rails, "shared/frontend/stimulus_boot.js")],
         BASELINE: File.join(rails, "shared/config/importmap_baseline.rb"),
-        VENDOR: File.join(rails, "shared/vendor/javascript"),
+        VENDOR: File.join(rails, "shared/vendor/javascript")
       }
       saved = overrides.keys.to_h { |name| [name, Gate.const_get(name)] }
       begin

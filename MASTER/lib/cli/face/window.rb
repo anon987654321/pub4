@@ -280,7 +280,7 @@ module Master
         # getc waits on a cooked buffer and drops keys once the terminal is
         # raw. getch reads the tty itself, one character at a time.
         def read_key(timeout)
-          return nil if @input.respond_to?(:wait_readable) && !@input.wait_readable(timeout)
+          return if @input.respond_to?(:wait_readable) && !@input.wait_readable(timeout)
 
           key = @input.getch
           key.nil? ? :eof : key

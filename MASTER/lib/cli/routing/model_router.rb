@@ -94,7 +94,6 @@ module Master
           Io::ModelSkipCache.filter(chitchat_head(ranked, task_type))
         end
 
-
         # Greetings are explicitly routed to the free tier. A locally installed
         # subscription CLI used to jump ahead of `pref`, contradicting the route
         # table and spending the strongest lane on “hello”. Keep it available as

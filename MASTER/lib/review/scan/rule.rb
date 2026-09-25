@@ -102,7 +102,7 @@ module Master
         # callers are in its own file; a public one's may be anywhere, which
         # a one-file repair cannot see, so Opus declined every such finding.
         def signature_radius(lines, index)
-          return nil if lines[index].to_s.match?(/\A\s*(?:private|protected)\s+def\b/)
+          return if lines[index].to_s.match?(/\A\s*(?:private|protected)\s+def\b/)
 
           visibility = lines.first(index).reverse.find { |line| line.match?(/\A\s*(?:private|protected|public)\s*\z/) }
           visibility.to_s.strip == "public" || visibility.nil? ? SPANS_FILES : nil

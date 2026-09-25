@@ -46,7 +46,7 @@ module Operator
       "through" => "review",
       "sessions" => "session", "continue" => "session", "resume" => "session", "fork" => "session",
       "mission" => "status", "runtime" => "status",
-      "auth" => "model", "law" => "soul", "device" => "doctor", "rollback" => "undo",
+      "auth" => "model", "law" => "soul", "device" => "doctor", "rollback" => "undo"
     }.freeze
 
     def report

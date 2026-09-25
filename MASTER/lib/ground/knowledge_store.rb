@@ -35,10 +35,10 @@ module Master
           recent = @db.execute("SELECT event_type, dimension FROM feedback_events WHERE ts >= ?", [cutoff])
           tool_failure_opportunities(recent) +
             event_count_opportunities(
-              recent, type: "user_correction", category: :repeated_correction, minimum: RSI_CORRECTION_MIN,
+              recent, type: "user_correction", category: :repeated_correction, minimum: RSI_CORRECTION_MIN
             ) +
             event_count_opportunities(
-              recent, type: "provider_error", category: :provider_errors, minimum: RSI_PROVIDER_MIN,
+              recent, type: "provider_error", category: :provider_errors, minimum: RSI_PROVIDER_MIN
             )
         end
       end

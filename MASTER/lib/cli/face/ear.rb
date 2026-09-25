@@ -82,7 +82,7 @@ module Master
         private
 
         def termux_missing
-          return nil if Master::Voice::Playback.which("termux-speech-to-text")
+          return if Master::Voice::Playback.which("termux-speech-to-text")
 
           "mic0: termux-speech-to-text missing — #{HINT}; type instead"
         end

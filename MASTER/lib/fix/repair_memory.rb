@@ -47,7 +47,7 @@ module Master
         # Once per rule: the counts still move while in-flight repairs land, so
         # the line itself cannot be the key.
         ANNOUNCED.add?(rule_id.to_s) && Master::Trace::Dmesg.status(
-          "fix0", "#{rule_id} retired from model repair: declined #{stats["declined"]} of #{stats["asked"]}",
+          "fix0", "#{rule_id} retired from model repair: declined #{stats["declined"]} of #{stats["asked"]}"
         )
         true
       end

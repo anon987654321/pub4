@@ -29,7 +29,7 @@ module Master
         # — so the face falls silent exactly where the session does.
         def missing
           return "voice0: off here — replies stay text" unless Master::Voice::Playback.enabled?
-          return nil if termux? || Master::Voice::Playback.player
+          return if termux? || Master::Voice::Playback.player
 
           "voice0: no player — on Termux #{Ear::HINT}; replies stay text"
         end

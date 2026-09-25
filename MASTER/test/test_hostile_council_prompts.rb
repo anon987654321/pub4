@@ -34,7 +34,7 @@ class HostileCouncilPromptsTest < Minitest::Test
     prompt = critic.send(:ideation_prompt, FEEDBACK)
 
     assert_includes prompt, "SOLUTION RED-TEAM"
-    %w[hidden\ assumption smallest\ deletion counterexample\ state invert\ that\ assumption].each do |phrase|
+    ["hidden assumption", "smallest deletion", "counterexample state", "invert that assumption"].each do |phrase|
       assert_includes prompt, phrase
     end
     assert_operator prompt.index("SOLUTION RED-TEAM"), :<, prompt.index("1. the nav wraps on narrow phones"),

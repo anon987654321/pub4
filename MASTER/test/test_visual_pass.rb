@@ -78,7 +78,7 @@ class VisualPassContractTest < Minitest::Test
     with_tmp do |dir|
       pass = Pass.new(agent: :agent, root: dir)
       pass.instance_variable_set(:@dir, dir)
-      capture = { surface: surface, payload: { "elements" => [] }, screenshot: "x.png", journeys: [], platform: {} }
+      capture = { surface:, payload: { "elements" => [] }, screenshot: "x.png", journeys: [], platform: {} }
       pass.send(:decorate_design, [capture])
       assert capture[:payload].key?("design_fingerprint"), "every capture carries its design fingerprint"
 

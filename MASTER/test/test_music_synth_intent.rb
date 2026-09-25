@@ -88,7 +88,7 @@ class TestMusicSynthIntent < Minitest::Test
   def test_live_synth_sentences_go_to_dilla_live_say
     sentences = ["play", "play some music", "improvise", "keep playing", "play me something with moog patches", "play a moog bass",
                  "play a lofi pad morphing through dilla_love", "slowly open the filter", "morph to a prophet pad",
-                 "play me a chord progression with a few different moog patches", "stop",]
+                 "play me a chord progression with a few different moog patches", "stop"]
     sentences.each do |sentence|
       sent = nil
       Master::Io::ScriptDispatch.stub(:run, ->(root:, tool:, arg:) { (sent = [tool, arg]) && Master::Result.ok("live0: ok") }) do
@@ -101,7 +101,7 @@ class TestMusicSynthIntent < Minitest::Test
 
   def test_code_talk_is_not_music
     ["open the patch in the editor", "turn the lead generator into a service", "fix the filter in search",
-     "what is a moog",].each do |sentence|
+     "what is a moog"].each do |sentence|
       refute INTENT.live_synth?(sentence), sentence
     end
   end
