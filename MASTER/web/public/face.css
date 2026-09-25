@@ -1319,7 +1319,19 @@ body[data-runtime-profile="crt"] #cognition-ecology {
 
 .virtual-spacer { width: 100%; pointer-events: none; flex-shrink: 0; }
 
-#face { touch-action: manipulation; min-height: 44vh; }
+#face {
+  position: fixed;
+  inset: 0;
+  width: 100dvw;
+  height: 100dvh;
+  min-width: 100dvw;
+  min-height: 100dvh;
+  max-width: 100dvw;
+  max-height: 100dvh;
+  display: block;
+  margin: 0;
+  touch-action: manipulation;
+}
 
 .emotional-timeline {
   position: fixed;
