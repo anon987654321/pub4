@@ -114,7 +114,7 @@ class Marketplace::Order < ApplicationRecord
     transitioned = false
     transaction do
       lock!
-      next if payment_status == "paid"
+      next if payment_status.in?(%w[paid refunded])
 
       transitioned = true
       # The variant is what was bought, so the variant is what runs out. Falling
@@ -152,6 +152,8 @@ class Marketplace::Order < ApplicationRecord
   def payment_description = listing_title
 
   def authorize_payment!(transaction_id:)
+    return self if payment_status.in?(%w[paid refunded])
+
     update!(
       payment_provider: "dintero",
       payment_status: "authorized",
@@ -160,6 +162,8 @@ class Marketplace::Order < ApplicationRecord
   end
 
   def fail_payment!(transaction_id: nil)
+    return self if payment_status.in?(%w[paid refunded])
+
     update!(
       payment_status: "failed",
       dintero_transaction_id: transaction_id.presence || dintero_transaction_id
