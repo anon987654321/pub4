@@ -10,7 +10,6 @@ require_relative "support/cdp_session"
 require_relative "support/geometry_probe"
 require "fileutils"
 require "uri"
-require_relative "support/geometry_probe"
 require "time"
 require "yaml"
 
@@ -210,11 +209,11 @@ module VisualContractGate
     FileUtils.mkdir_p(output)
     results = []
 
-    GeometryProbe.with_browser(root: ROOT, warm: []) do |cdp|
+    Deploy::GeometryProbe.with_browser(root: ROOT, warm: []) do |cdp|
       matrix(app).each do |cell|
         width, height = cell[:dimensions]
         cdp.viewport(width, height, mobile: width < 500)
-        cdp.headers(GeometryProbe::PROBE_HEADERS)
+        cdp.headers(Deploy::GeometryProbe::PROBE_HEADERS)
         cdp.clear_cookies
         cdp.clear_events
         url = URI.join(base, cell[:route]).to_s
@@ -244,7 +243,7 @@ module VisualContractGate
       end
     end
     results
-  rescue CdpSession::Unavailable, CdpSession::Error, SystemCallError => e
+  rescue Deploy::CdpSession::Unavailable, Deploy::CdpSession::Error, SystemCallError => e
     raise CannotMeasure, "could not measure with Chrome/CDP (#{e.class}: #{e.message})"
   end
 

@@ -7,6 +7,8 @@ module Deploy
     MAX_ACTIONS = 6
     MAX_NAVIGATIONS = 2
 
+    # An interpolating heredoc, so a JavaScript regex escape is written doubled:
+    # a single \b here reaches the browser as a backspace and \s as a space.
     ACTION_DISCOVERY = <<~JS
       (() => {
         const visible = el => {
@@ -35,7 +37,7 @@ module Deploy
           }
           return null;
         };
-        const label = el => (el.getAttribute("aria-label") || el.textContent || "").trim().replace(/\s+/g, " ").slice(0, 48);
+        const label = el => (el.getAttribute("aria-label") || el.textContent || "").trim().replace(/\\s+/g, " ").slice(0, 48);
         const out = [];
         for (const el of document.querySelectorAll("button, summary, [aria-expanded='false'], details > summary")) {
           if (!visible(el)) continue;
@@ -77,7 +79,7 @@ module Deploy
           let url;
           try { url = new URL(raw, location.href); } catch (_) { continue; }
           if (url.origin !== origin || url.pathname === location.pathname && url.search === location.search) continue;
-          if (/\b(logout|signout|delete|destroy|remove|unsubscribe)\b/i.test(
+          if (/\\b(logout|signout|delete|destroy|remove|unsubscribe)\\b/i.test(
             [link.textContent, link.getAttribute("aria-label"), url.pathname].filter(Boolean).join(" ")
           )) continue;
           if (link.hasAttribute("data-method") || link.hasAttribute("data-turbo-method")) continue;
