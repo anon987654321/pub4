@@ -11,7 +11,7 @@ module Master
         include TargetResolver
         # PassResult defines this pass's Result and keeps this file small.
 
-        def initialize(scanner:, fix_loop:, root:, deliberation: nil, bus: nil, review_crew: nil, swarm: nil)
+        def initialize(scanner:, fix_loop:, root:, deliberation: nil, bus: nil, swarm: nil)
           @failed_stages = []
           @swarm = swarm
           @scanner = scanner
@@ -19,7 +19,6 @@ module Master
           @root = root
           @deliberation = deliberation
           @bus = bus
-          @review_crew = review_crew
           @t0 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
           @unit = "review0"
           @observation_totals = {}
