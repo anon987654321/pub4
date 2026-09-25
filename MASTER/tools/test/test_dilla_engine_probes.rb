@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "studio_helper"
+require_relative "tool_test_helper"
 require "json"
 require "open3"
 require "rbconfig"
@@ -31,11 +31,11 @@ class TestDilla < Minitest::Test
   #
   # Loading the engine writes dilla's session and learnings JSON, and those are
   # tracked files in a tree this suite does not own. Two separate hooks restored
-  # them: Studio.restore_engine_state! in test/studio_helper.rb, and a Minitest.after_run
+  # them: Studio.restore_engine_state! in test/tool_test_helper.rb, and a Minitest.after_run
   # block here. Two hooks, one file, and -- this is the part that made it a bug --
   # SNAPSHOTS TAKEN AT DIFFERENT MOMENTS.
   #
-  #   test/studio_helper.rb        binreads project/**/*.json when the helper loads.
+  #   test/tool_test_helper.rb        binreads project/**/*.json when the helper loads.
   #   test/dilla_helper.rb  then requires the engine, WHICH WRITES session.json.
   #   this file             binread the same paths after that, at its own load.
   #
@@ -51,7 +51,7 @@ class TestDilla < Minitest::Test
   # test now asserts content, which is what its own contract is about.
   #
   # One hook, snapshotting earliest, covering a superset of these three paths:
-  # test/studio_helper.rb's glob is dilla/project/**/*.json. Nothing is lost by deleting
+  # test/tool_test_helper.rb's glob is dilla/project/**/*.json. Nothing is lost by deleting
   # this, and the earlier snapshot is the correct one.
 
   # `env:` is injected before the engine loads, which is the only point at which
