@@ -131,14 +131,24 @@ module Amber
           item, :photos, seed: row[:image], preset: "portrait", width: 720, height: 960
         )
       end
-      return true if silhouette_attached?(item)
-
-      # Replaces rather than skips: every demo item already wears a picsum
-      # photograph, and leaving it there is the bug. Scoped to the demo user's
-      # own wardrobe, which nobody else edits.
-      item.photos.purge
-      item.photos.attach(io: StringIO.new(png), filename: "#{row[:image]}.png", content_type: "image/png")
+      unless silhouette_attached?(item)
+        # Replaces rather than skips: every demo item already wears a picsum
+        # photograph, and leaving it there is the bug. Scoped to the demo user's
+        # own wardrobe, which nobody else edits.
+        item.photos.purge
+        item.photos.attach(io: StringIO.new(png), filename: "#{row[:image]}.png", content_type: "image/png")
+      end
+      attach_flat_lay!(item, row)
       true
+    end
+
+    # The graded flat lay rides second, after the cut-out. photos.first is what
+    # the dressing room lays its zones over, and the cut-out is drawn for that;
+    # the item page shows every photo, which is where a real one earns its place.
+    def attach_flat_lay!(item, row)
+      return if item.photos.any? { |photo| photo.blob.content_type == "image/jpeg" }
+
+      Shared::DemoMedia.attach_catalog!(item, :photos, seed: row[:image])
     end
 
     def silhouette_attached?(item)
@@ -162,6 +172,9 @@ module Amber
           description: "Demo capsule look — browse only until you sign in."
         )
         outfit.save!
+        if attach_media && !outfit.image.attached?
+          Shared::DemoMedia.attach_catalog!(outfit, :image, seed: "amber-outfit-#{row[:name].parameterize}")
+        end
 
         row[:items].each do |title|
           item = items_by_title[title]

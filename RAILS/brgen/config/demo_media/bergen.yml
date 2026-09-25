@@ -1,95 +1,91 @@
-# Bergen demo photography — Wikimedia Commons (CC-licensed). Keys match BergenDemoSeeder seed names.
-# Refresh broken links: bundle exec rails brgen:demo_media:verify
+---
 meta:
   city: Bergen
   domain: brgen.no
-  source: Wikimedia Commons
-
+  source: 'file rows: STUDIO/lora/seed_media.yml, rendered on Replicate and graded
+    by postpro (see README.md); url rows: Wikimedia Commons'
 images:
   bergen-floyen-morning:
-    url: https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Vista_de_Bergen_desde_la_monta%C3%B1a_Fl%C3%B8yen%2C_Noruega%2C_2019-09-08%2C_DD_48.jpg/1280px-Vista_de_Bergen_desde_la_monta%C3%B1a_Fl%C3%B8yen%2C_Noruega%2C_2019-09-08%2C_DD_48.jpg
-    credit: Diego Delso / CC BY-SA 4.0
+    file: images/bergen-floyen-morning.jpg
+    graded: true
   bergen-bryggen-rain:
-    url: https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Bryggen_in_Bergen.jpg/1280px-Bryggen_in_Bergen.jpg
-    credit: Wikimedia Commons
+    file: images/bergen-bryggen-rain.jpg
+    graded: true
   bergen-fog-vagen:
-    url: https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Bryggen%2C_Bergen%2C_Noruega%2C_2019-09-08%2C_DD_115-117_PAN.jpg/1280px-Bryggen%2C_Bergen%2C_Noruega%2C_2019-09-08%2C_DD_115-117_PAN.jpg
-    credit: Diego Delso / CC BY-SA 4.0
+    file: images/bergen-fog-vagen.jpg
+    graded: true
   bergen-fish-market:
-    url: https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Norwegen_1998_%28117%29_Bergen-_Fisketorget_%2834160728933%29.jpg/1280px-Norwegen_1998_%28117%29_Bergen-_Fisketorget_%2834160728933%29.jpg
-    credit: Wikimedia Commons
+    file: images/bergen-fish-market.jpg
+    graded: true
   bergen-concert-hall:
-    url: https://upload.wikimedia.org/wikipedia/commons/4/4c/Grieghallen.jpg
-    credit: Wikimedia Commons
+    file: images/bergen-concert-hall.jpg
+    graded: true
   bergen-ulriken-trail:
-    url: https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Ulriken_Bergen.jpg/1280px-Ulriken_Bergen.jpg
-    credit: Wikimedia Commons
+    file: images/bergen-ulriken-trail.jpg
+    graded: true
   bergen-hiking:
-    url: https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Ulriken_Bergen.jpg/1280px-Ulriken_Bergen.jpg
-    credit: Wikimedia Commons
+    file: images/bergen-hiking.jpg
+    graded: true
   bergen-damsgardsfjellet:
-    url: https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Store_Lungeg%C3%A5rdsvann%2C_Kronstad_etc%2C_wide_wiev_from_road_to_Fl%C3%B8yen%2C_Bergen_02.jpg/1280px-Store_Lungeg%C3%A5rdsvann%2C_Kronstad_etc%2C_wide_wiev_from_road_to_Fl%C3%B8yen%2C_Bergen_02.jpg
-    credit: Wikimedia Commons
+    file: images/bergen-damsgardsfjellet.jpg
+    graded: true
   bergen-lungegaardsvann:
-    url: https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/00_4400_View_over_the_store_Lungeg%C3%A5rdsvann_-_Bergen_%28Norway%29.jpg/1280px-00_4400_View_over_the_store_Lungeg%C3%A5rdsvann_-_Bergen_%28Norway%29.jpg
-    credit: Wikimedia Commons
+    file: images/bergen-lungegaardsvann.jpg
+    graded: true
   bergen-pepperkakebyen:
-    url: https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Bryggen_in_Bergen.jpg/1280px-Bryggen_in_Bergen.jpg
-    credit: Wikimedia Commons
+    file: images/bergen-pepperkakebyen.jpg
+    graded: true
   bergen-bakery:
-    url: https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Bergen_Fish_market_-_FlowerSection.JPG/1280px-Bergen_Fish_market_-_FlowerSection.JPG
-    credit: Wikimedia Commons
+    file: images/bergen-bakery.jpg
+    graded: true
   bergen-brunch:
-    url: https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Bergen_Fish_market_-_FlowerSection.JPG/1280px-Bergen_Fish_market_-_FlowerSection.JPG
-    credit: Wikimedia Commons
+    file: images/bergen-brunch.jpg
+    graded: true
   bergen-radio-night:
-    url: https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Bryggen%2C_Bergen%2C_Noruega%2C_2019-09-08%2C_DD_115-117_PAN.jpg/1280px-Bryggen%2C_Bergen%2C_Noruega%2C_2019-09-08%2C_DD_115-117_PAN.jpg
-    credit: Diego Delso / CC BY-SA 4.0
+    file: images/bergen-radio-night.jpg
+    graded: true
   bergen-logen:
-    url: https://upload.wikimedia.org/wikipedia/commons/4/4c/Grieghallen.jpg
-    credit: Wikimedia Commons
+    file: images/bergen-logen.jpg
+    graded: true
   bergen-dog-park:
-    url: https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/00_4400_View_over_the_store_Lungeg%C3%A5rdsvann_-_Bergen_%28Norway%29.jpg/1280px-00_4400_View_over_the_store_Lungeg%C3%A5rdsvann_-_Bergen_%28Norway%29.jpg
-    credit: Wikimedia Commons
-
+    file: images/bergen-dog-park.jpg
+    graded: true
   bergen-place-floybanen:
-    url: https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Vista_de_Bergen_desde_la_monta%C3%B1a_Fl%C3%B8yen%2C_Noruega%2C_2019-09-08%2C_DD_48.jpg/1280px-Vista_de_Bergen_desde_la_monta%C3%B1a_Fl%C3%B8yen%2C_Noruega%2C_2019-09-08%2C_DD_48.jpg
-    credit: Diego Delso / CC BY-SA 4.0
+    file: images/bergen-place-floybanen.jpg
+    graded: true
   bergen-place-bryggen:
-    url: https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Bryggen_in_Bergen.jpg/1280px-Bryggen_in_Bergen.jpg
-    credit: Wikimedia Commons
+    file: images/bergen-place-bryggen.jpg
+    graded: true
   bergen-place-fisketorget:
-    url: https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Norwegen_1998_%28117%29_Bergen-_Fisketorget_%2834160728933%29.jpg/1280px-Norwegen_1998_%28117%29_Bergen-_Fisketorget_%2834160728933%29.jpg
-    credit: Wikimedia Commons
+    file: images/bergen-place-fisketorget.jpg
+    graded: true
   bergen-place-grieghallen:
-    url: https://upload.wikimedia.org/wikipedia/commons/4/4c/Grieghallen.jpg
-    credit: Wikimedia Commons
+    file: images/bergen-place-grieghallen.jpg
+    graded: true
   bergen-place-ulriken:
-    url: https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Ulriken_Bergen.jpg/1280px-Ulriken_Bergen.jpg
-    credit: Wikimedia Commons
+    file: images/bergen-place-ulriken.jpg
+    graded: true
   bergen-place-lungegaardsvann:
-    url: https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/00_4400_View_over_the_store_Lungeg%C3%A5rdsvann_-_Bergen_%28Norway%29.jpg/1280px-00_4400_View_over_the_store_Lungeg%C3%A5rdsvann_-_Bergen_%28Norway%29.jpg
-    credit: Wikimedia Commons
+    file: images/bergen-place-lungegaardsvann.jpg
+    graded: true
   bergen-place-nordnesparken:
-    url: https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Store_Lungeg%C3%A5rdsvann%2C_Kronstad_etc%2C_wide_wiev_from_road_to_Fl%C3%B8yen%2C_Bergen_02.jpg/1280px-Store_Lungeg%C3%A5rdsvann%2C_Kronstad_etc%2C_wide_wiev_from_road_to_Fl%C3%B8yen%2C_Bergen_02.jpg
-    credit: Wikimedia Commons
+    file: images/bergen-place-nordnesparken.jpg
+    graded: true
   bergen-place-vilvite:
-    url: https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Bergen_Fish_market_-_FlowerSection.JPG/1280px-Bergen_Fish_market_-_FlowerSection.JPG
-    credit: Wikimedia Commons
-
+    file: images/bergen-place-vilvite.jpg
+    graded: true
   bergen-takeaway-colonialen:
-    url: https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Bergen_Fish_market_-_FlowerSection.JPG/1280px-Bergen_Fish_market_-_FlowerSection.JPG
-    credit: Wikimedia Commons
+    file: images/bergen-takeaway-colonialen.jpg
+    graded: true
   bergen-takeaway-fishme:
-    url: https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Norwegen_1998_%28117%29_Bergen-_Fisketorget_%2834160728933%29.jpg/1280px-Norwegen_1998_%28117%29_Bergen-_Fisketorget_%2834160728933%29.jpg
-    credit: Wikimedia Commons
+    file: images/bergen-takeaway-fishme.jpg
+    graded: true
   bergen-takeaway-potetkjelleren:
-    url: https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Bryggen_in_Bergen.jpg/1280px-Bryggen_in_Bergen.jpg
-    credit: Wikimedia Commons
+    file: images/bergen-takeaway-potetkjelleren.jpg
+    graded: true
   bergen-takeaway-dyvekes:
-    url: https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Bryggen%2C_Bergen%2C_Noruega%2C_2019-09-08%2C_DD_115-117_PAN.jpg/1280px-Bryggen%2C_Bergen%2C_Noruega%2C_2019-09-08%2C_DD_115-117_PAN.jpg
-    credit: Diego Delso / CC BY-SA 4.0
-
+    file: images/bergen-takeaway-dyvekes.jpg
+    graded: true
   bergen-tv-live-avatar:
     url: https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Bryggen%2C_Bergen%2C_Noruega%2C_2019-09-08%2C_DD_115-117_PAN.jpg/480px-Bryggen%2C_Bergen%2C_Noruega%2C_2019-09-08%2C_DD_115-117_PAN.jpg
     credit: Diego Delso / CC BY-SA 4.0
@@ -105,40 +101,114 @@ images:
   bergen-tv-bybanen-avatar:
     url: https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/00_4400_View_over_the_store_Lungeg%C3%A5rdsvann_-_Bergen_%28Norway%29.jpg/480px-00_4400_View_over_the_store_Lungeg%C3%A5rdsvann_-_Bergen_%28Norway%29.jpg
     credit: Wikimedia Commons
-
   bergen-dating-emilie:
-    url: https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Vista_de_Bergen_desde_la_monta%C3%B1a_Fl%C3%B8yen%2C_Noruega%2C_2019-09-08%2C_DD_48.jpg/480px-Vista_de_Bergen_desde_la_monta%C3%B1a_Fl%C3%B8yen%2C_Noruega%2C_2019-09-08%2C_DD_48.jpg
-    credit: Diego Delso / CC BY-SA 4.0
+    file: images/bergen-dating-emilie.jpg
+    graded: true
   bergen-dating-magnus:
-    url: https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Bryggen_in_Bergen.jpg/480px-Bryggen_in_Bergen.jpg
-    credit: Wikimedia Commons
+    file: images/bergen-dating-magnus.jpg
+    graded: true
   bergen-dating-silje:
-    url: https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Bryggen%2C_Bergen%2C_Noruega%2C_2019-09-08%2C_DD_115-117_PAN.jpg/480px-Bryggen%2C_Bergen%2C_Noruega%2C_2019-09-08%2C_DD_115-117_PAN.jpg
-    credit: Diego Delso / CC BY-SA 4.0
+    file: images/bergen-dating-silje.jpg
+    graded: true
   bergen-dating-jonas:
-    url: https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Ulriken_Bergen.jpg/480px-Ulriken_Bergen.jpg
-    credit: Wikimedia Commons
+    file: images/bergen-dating-jonas.jpg
+    graded: true
   bergen-dating-henrik:
-    url: https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Norwegen_1998_%28117%29_Bergen-_Fisketorget_%2834160728933%29.jpg/480px-Norwegen_1998_%28117%29_Bergen-_Fisketorget_%2834160728933%29.jpg
-    credit: Wikimedia Commons
+    file: images/bergen-dating-henrik.jpg
+    graded: true
   bergen-dating-ingrid:
-    url: https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/00_4400_View_over_the_store_Lungeg%C3%A5rdsvann_-_Bergen_%28Norway%29.jpg/480px-00_4400_View_over_the_store_Lungeg%C3%A5rdsvann_-_Bergen_%28Norway%29.jpg
-    credit: Wikimedia Commons
+    file: images/bergen-dating-ingrid.jpg
+    graded: true
   bergen-dating-sofie:
-    url: https://upload.wikimedia.org/wikipedia/commons/4/4c/Grieghallen.jpg
-    credit: Wikimedia Commons
+    file: images/bergen-dating-sofie.jpg
+    graded: true
   bergen-dating-anders:
-    url: https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Bergen_Fish_market_-_FlowerSection.JPG/480px-Bergen_Fish_market_-_FlowerSection.JPG
-    credit: Wikimedia Commons
+    file: images/bergen-dating-anders.jpg
+    graded: true
   bergen-dating-hanne:
-    url: https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Store_Lungeg%C3%A5rdsvann%2C_Kronstad_etc%2C_wide_wiev_from_road_to_Fl%C3%B8yen%2C_Bergen_02.jpg/480px-Store_Lungeg%C3%A5rdsvann%2C_Kronstad_etc%2C_wide_wiev_from_road_to_Fl%C3%B8yen%2C_Bergen_02.jpg
-    credit: Wikimedia Commons
+    file: images/bergen-dating-hanne.jpg
+    graded: true
   bergen-dating-per:
-    url: https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Vista_de_Bergen_desde_la_monta%C3%B1a_Fl%C3%B8yen%2C_Noruega%2C_2019-09-08%2C_DD_48.jpg/480px-Vista_de_Bergen_desde_la_monta%C3%B1a_Fl%C3%B8yen%2C_Noruega%2C_2019-09-08%2C_DD_48.jpg
-    credit: Diego Delso / CC BY-SA 4.0
+    file: images/bergen-dating-per.jpg
+    graded: true
   bergen-dating-live:
-    url: https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Bryggen%2C_Bergen%2C_Noruega%2C_2019-09-08%2C_DD_115-117_PAN.jpg/480px-Bryggen%2C_Bergen%2C_Noruega%2C_2019-09-08%2C_DD_115-117_PAN.jpg
-    credit: Diego Delso / CC BY-SA 4.0
+    file: images/bergen-dating-live.jpg
+    graded: true
   bergen-dating-marte:
-    url: https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/00_4400_View_over_the_store_Lungeg%C3%A5rdsvann_-_Bergen_%28Norway%29.jpg/480px-00_4400_View_over_the_store_Lungeg%C3%A5rdsvann_-_Bergen_%28Norway%29.jpg
-    credit: Wikimedia Commons
+    file: images/bergen-dating-marte.jpg
+    graded: true
+  bergen-bike-sale:
+    file: images/bergen-bike-sale.jpg
+    graded: true
+  bergen-macbook:
+    file: images/bergen-macbook.jpg
+    graded: true
+  bergen-skis:
+    file: images/bergen-skis.jpg
+    graded: true
+  bergen-sofa:
+    file: images/bergen-sofa.jpg
+    graded: true
+  bergen-stroller:
+    file: images/bergen-stroller.jpg
+    graded: true
+  dating-pool-man-01:
+    file: images/dating-pool-man-01.jpg
+    graded: true
+  dating-pool-man-02:
+    file: images/dating-pool-man-02.jpg
+    graded: true
+  dating-pool-man-03:
+    file: images/dating-pool-man-03.jpg
+    graded: true
+  dating-pool-man-04:
+    file: images/dating-pool-man-04.jpg
+    graded: true
+  dating-pool-man-05:
+    file: images/dating-pool-man-05.jpg
+    graded: true
+  dating-pool-man-06:
+    file: images/dating-pool-man-06.jpg
+    graded: true
+  dating-pool-man-07:
+    file: images/dating-pool-man-07.jpg
+    graded: true
+  dating-pool-man-08:
+    file: images/dating-pool-man-08.jpg
+    graded: true
+  dating-pool-nonbinary-01:
+    file: images/dating-pool-nonbinary-01.jpg
+    graded: true
+  dating-pool-nonbinary-02:
+    file: images/dating-pool-nonbinary-02.jpg
+    graded: true
+  dating-pool-other-01:
+    file: images/dating-pool-other-01.jpg
+    graded: true
+  dating-pool-other-02:
+    file: images/dating-pool-other-02.jpg
+    graded: true
+  dating-pool-woman-01:
+    file: images/dating-pool-woman-01.jpg
+    graded: true
+  dating-pool-woman-02:
+    file: images/dating-pool-woman-02.jpg
+    graded: true
+  dating-pool-woman-03:
+    file: images/dating-pool-woman-03.jpg
+    graded: true
+  dating-pool-woman-04:
+    file: images/dating-pool-woman-04.jpg
+    graded: true
+  dating-pool-woman-05:
+    file: images/dating-pool-woman-05.jpg
+    graded: true
+  dating-pool-woman-06:
+    file: images/dating-pool-woman-06.jpg
+    graded: true
+  dating-pool-woman-07:
+    file: images/dating-pool-woman-07.jpg
+    graded: true
+  dating-pool-woman-08:
+    file: images/dating-pool-woman-08.jpg
+    graded: true

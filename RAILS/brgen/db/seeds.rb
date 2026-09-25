@@ -191,7 +191,10 @@ listings = stores.flat_map do |store|
       status: 'active',
       created_at: rand(1..60).days.ago,
       views_count: rand((100 * SEED_SCALE)..(10_000 * SEED_SCALE))
-    )
+    ).tap do |listing|
+      # One generated photograph per leaf category, catalogue only.
+      Brgen::DemoMedia.attach_catalog!(listing, :photos, seed: "listing-#{leaf_slug}")
+    end
   end
 end
 
@@ -242,6 +245,8 @@ puts "Marketplace: #{stores.size} stores, #{listings.size} listings, some orders
 
 # --- Dating subapp ---
 num_dating = (35 * SEED_SCALE).clamp(10, 1000)
+# Frames per gender in STUDIO/lora/seed_media.yml, under dating.pool.
+DATING_POOL = { "woman" => 8, "man" => 8, "nonbinary" => 2, "other" => 2 }.freeze
 # Visible is derived from the photo, not asserted alongside it, the same way
 # Brgen::BergenDemoSeeder derives it. A profile may not be visible without one
 # — a visible profile with no photo sits in the deck as a blank card — and
@@ -259,8 +264,12 @@ dating_profiles = users.sample(num_dating).map do |user|
     longitude: user.longitude,
     bydel: %w[Sentrum Nordnes Sandviken Kalfaret].sample
   )
-  Brgen::DemoMedia.attach_remote_postpro!(
-    profile, :photos, seed: "dating-#{user.id}", preset: "portrait", width: 600, height: 900
+  # A photograph from the generated pool for this gender, drawn by user id so a
+  # replant gives the same face to the same user. Catalogue only: a bulk seed
+  # of hundreds must not fetch hundreds of picsum landscapes for faces.
+  pool = DATING_POOL.fetch(profile.gender)
+  Brgen::DemoMedia.attach_catalog!(
+    profile, :photos, seed: format("dating-pool-%s-%02d", profile.gender, (user.id % pool) + 1)
   )
   profile.visible = profile.photos.attached?
   profile.save!

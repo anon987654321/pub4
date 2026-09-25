@@ -15,6 +15,10 @@ module Brgen
       Shared::DemoMedia.attach_remote_postpro!(*args, **kwargs, catalog: CATALOG)
     end
 
+    def attach_catalog!(*args, **kwargs)
+      Shared::DemoMedia.attach_catalog!(*args, **kwargs, catalog: CATALOG)
+    end
+
     def skip_attach?
       Shared::DemoMedia.skip_attach?
     end

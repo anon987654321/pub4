@@ -1,0 +1,8 @@
+---
+meta:
+  source: STUDIO/lora/seed_media.yml, rendered on Replicate and graded by postpro
+    (see README.md)
+images:
+  amber-camel-wrap-coat:
+    file: images/amber-camel-wrap-coat.jpg
+    graded: true
