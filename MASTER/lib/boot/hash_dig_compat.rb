@@ -12,7 +12,7 @@
 # Prepending restores MRI's behaviour without needing the original C method
 # back, and it is idempotent so repeated bootstraps are free.
 #
-# It is installed only where coltrane is loaded: STUDIO's
+# It is installed only where coltrane is loaded: MASTER/tools's
 # dilla/lib/music_gems.rb requires it by absolute path right after
 # `require "coltrane"`, and MASTER never loads coltrane, so neither MASTER's
 # boot nor its test suite installs it. test_master_boot proves it in a child
