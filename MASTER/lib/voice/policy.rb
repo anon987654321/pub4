@@ -16,9 +16,9 @@ module Master
         "neural" => "en-US-JennyNeural",
         "persona_affects_text_only" => true,
         "stream_live_default" => true,
-        "default_rate" => "+0%",
+        "default_rate" => "-7%",
         "default_pitch" => "+0Hz",
-        "rotation" => %w[jenny christopher],
+        "rotation" => %w[jenny],
         "post_chain" => nil,
         "bed" => nil,
       }.freeze
