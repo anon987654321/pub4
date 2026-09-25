@@ -1074,6 +1074,7 @@ nb:
       blockbuster: Storfilm
   marketplace:
     buy_now_vipps: Kjøp med Vipps
+    buy_now_dintero: Kjøp med Dintero
     order_number: "Ordre #%{id}"
     order_for: Gjelder
     order_status: Status
