@@ -3,7 +3,7 @@
 class Marketplace::OrdersController < Marketplace::BaseController
   before_action :require_user_session
   before_action :set_listing, only: :create
-  before_action :set_order, only: %i[show update]
+  before_action :set_order, only: %i[show update capture]
 
   # Buyer's order history — a paid order used to vanish (the cart only lists
   # pending). Scoped to Current.user's own orders.
@@ -50,6 +50,20 @@ class Marketplace::OrdersController < Marketplace::BaseController
     else
       redirect_to listing_path(@listing), alert: t("flash.marketplace.offer_failed")
     end
+  end
+
+  def capture
+    authorize @order
+    unless @order.seller == Current.user && @order.payment_provider == "dintero" && @order.payment_status == "authorized"
+      redirect_to order_path(@order), alert: t("flash.marketplace.capture_unavailable")
+      return
+    end
+
+    Marketplace::Payments::DinteroCheckout.capture!(order: @order)
+    redirect_to order_path(@order), notice: t("flash.marketplace.capture_started")
+  rescue Marketplace::Payments::NotConfigured, Marketplace::Payments::ProviderError => error
+    Rails.logger.warn("[dintero] capture order=#{@order.id}: #{error.class}: #{error.message}")
+    redirect_to order_path(@order), alert: t("flash.marketplace.capture_failed")
   end
 
   def update
