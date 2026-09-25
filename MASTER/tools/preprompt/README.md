@@ -151,7 +151,7 @@ describes the subject, the crop, the camera height and the background — not th
 compiled prompt, which is how the image was made rather than what it is of.
 
 `--postpro PRESET` hands the finished file straight to
-`STUDIO/postpro/postpro.rb`. The `capabilities` command emits the executable
+`MASTER/tools/postpro/postpro.rb`. The `capabilities` command emits the executable
 60-item Preprompt/LoRA contract as JSON.
 
 ## Keeping the model table honest
@@ -193,15 +193,15 @@ The last two commands, run from `STUDIO`, hold the model table against the live
 schemas and print an entry to paste for a model the table does not have.
 
 ```sh
-ruby STUDIO/preprompt/preprompt.rb generate \
+ruby MASTER/tools/preprompt/preprompt.rb generate \
   --prompt "Bergen rain, 35mm documentary photograph" --output .master/media/bergen.webp
-ruby STUDIO/preprompt/preprompt.rb search flux --limit 100
-ruby STUDIO/preprompt/preprompt.rb sync --limit 250
-ruby STUDIO/preprompt/preprompt.rb stats
-ruby STUDIO/preprompt/preprompt.rb capabilities
-ruby STUDIO/preprompt/preprompt.rb vocab-check
+ruby MASTER/tools/preprompt/preprompt.rb search flux --limit 100
+ruby MASTER/tools/preprompt/preprompt.rb sync --limit 250
+ruby MASTER/tools/preprompt/preprompt.rb stats
+ruby MASTER/tools/preprompt/preprompt.rb capabilities
+ruby MASTER/tools/preprompt/preprompt.rb vocab-check
 
-ruby STUDIO/preprompt/preprompt.rb generate \
+ruby MASTER/tools/preprompt/preprompt.rb generate \
   --prompt "a fisherman on a dock" \
   --stock hp5 --lens 85mm --distance portrait --camera-height eye \
   --lighting rembrandt --weather drizzle --time-of-day blue_hour \
@@ -211,3 +211,32 @@ cd STUDIO
 rake preprompt:schema_audit
 rake preprompt:schema_suggest MODEL=black-forest-labs/flux-2-max
 ```
+
+## Security and trust boundaries
+
+Preprompt is MASTER's provider boundary for image generation. The sensitive edges are credentials, remote API requests, provider-returned URLs, downloaded media, model metadata, and local artifact storage.
+
+- Keep REPLICATE_API_TOKEN, REPLICATE_API_KEY, and equivalent credentials outside prompts, source files, git history, provenance text, and ordinary command output.
+- Treat provider catalog entries and schemas as untrusted remote data. Validate identifiers and capabilities before using them to construct requests.
+- If a provider returns an output URL that Preprompt downloads, validate the URL and every redirect before connecting. Restrict schemes, block private/link-local destinations, enforce response-size and timeout limits, and never let a provider-controlled URL become an internal network request.
+- Never build shell commands from model IDs, prompts, filenames, or provider URLs. Use structured process arguments.
+- Write generated artifacts and provenance atomically. Concurrent batches must not produce duplicate or truncated gallery records.
+- Treat provider responses, downloaded images, and serialized sidecars as data. Never deserialize arbitrary Ruby objects or execute provider-supplied content.
+- If Preprompt is behind a reverse proxy, the proxy and backend must agree on request framing; security controls must not depend on ambiguous HTTP/1.1 parsing.
+- If browser authentication is ever added, prefer server-side sessions. If JWTs are introduced, pin the accepted algorithm and key type rather than trusting alg from the token.
+- If GraphQL is introduced, bound depth and query cost, authorize fields, and rate-limit batched operations.
+- Provider outages, cancellation, and timeouts must remain explicit failures. Security boundaries must not silently fall back to an unexpected endpoint or model.
+
+Subdomain ownership is also part of deployment: hostnames used for generated-media callbacks, galleries, or provider integrations need lifecycle auditing so abandoned third-party DNS targets cannot become trusted-looking content origins.
+
+## MASTER integration
+
+Preprompt lives at MASTER/tools/preprompt and is the canonical image-generation boundary. MASTER owns governance and dispatch; Preprompt owns vocabulary, provider capability mapping, request construction, generation, and artifact provenance.
+
+Canonical examples:
+
+ruby MASTER/tools/preprompt/preprompt.rb capabilities
+ruby MASTER/tools/preprompt/preprompt.rb vocab-check
+ruby MASTER/tools/preprompt/preprompt.rb generate --prompt "Bergen rain" --dry-run
+
+Use MASTER/tools/preprompt in new scripts and documentation. STUDIO/preprompt is a retired path.
