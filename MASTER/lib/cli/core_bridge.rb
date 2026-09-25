@@ -48,7 +48,7 @@ module Master
             label: "mission-#{id}", files:,
           )
         end
-        Master::Core::Mission.new(root:, bus:, checkpoint:).start!(
+        Master::Fix::Mission.new(root:, bus:, checkpoint:).start!(
           goal:, scope: root, model:, effort: ENV.fetch("MASTER_EFFORT", "medium"),
           plan: Master::Ground::ActivePlan.read(root)
         )

@@ -33,7 +33,7 @@ class DashboardController < ApplicationController
       events: session.respond_to?(:messages) ? session.messages.last(10) : [],
       bus_events:,
       model: agent.model.to_s,
-      mission: Master::Core::Mission.current(root:),
+      mission: Master::Fix::Mission.current(root:),
       tokens: pressure[:tokens],
       cost: session.respond_to?(:cost) ? session.cost : 0.0,
       open_breakers: c[:breaker].respond_to?(:open_models) ? c[:breaker].open_models : [],

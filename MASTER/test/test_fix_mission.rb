@@ -4,7 +4,7 @@ require_relative "test_helper"
 require "tmpdir"
 require "json"
 
-class CoreMissionTest < Minitest::Test
+class FixMissionTest < Minitest::Test
   class Bus
     attr_reader :events
 
@@ -20,7 +20,7 @@ class CoreMissionTest < Minitest::Test
   def test_mission_lifecycle_persists_one_contract
     Dir.mktmpdir do |root|
       bus = Bus.new
-      mission = Master::Core::Mission.new(root:, bus:).start!(
+      mission = Master::Fix::Mission.new(root:, bus:).start!(
         goal: "fix the face",
         scope: root,
         model: "agy:auto",
@@ -33,7 +33,7 @@ class CoreMissionTest < Minitest::Test
       mission.transition!(:verify)
       mission.finish!(summary: "clean")
 
-      record = Master::Core::Mission.current(root:)
+      record = Master::Fix::Mission.current(root:)
       assert_equal mission.id, record["id"]
       assert_equal "completed", record["state"]
       assert_equal "deliver", record["stage"]
@@ -48,7 +48,7 @@ class CoreMissionTest < Minitest::Test
 
   def test_invalid_stage_and_effort_are_handled_deterministically
     Dir.mktmpdir do |root|
-      mission = Master::Core::Mission.new(root:).start!(goal: "x", effort: "absurd")
+      mission = Master::Fix::Mission.new(root:).start!(goal: "x", effort: "absurd")
       assert_equal "medium", mission.record["effort"]
       assert_raises(ArgumentError) { mission.transition!(:teleport) }
     end
@@ -62,7 +62,7 @@ class CoreMissionTest < Minitest::Test
           label: "mission-#{id}", files:,
         )
       end
-      mission = Master::Core::Mission.new(root:, checkpoint:).start!(goal: "checkpoint", scope: root)
+      mission = Master::Fix::Mission.new(root:, checkpoint:).start!(goal: "checkpoint", scope: root)
       mission.checkpoint!(files: ["file.txt"])
 
       checkpoint = mission.record["checkpoint"]

@@ -7,7 +7,7 @@ require "time"
 require_relative "../io/atomic_write"
 
 module Master
-  module Core
+  module Fix
     # Mission — one durable contract for autonomous work.
     #
     # It does not perform work. It records the goal, scope, model, effort,

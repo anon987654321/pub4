@@ -195,7 +195,7 @@ module Master
             label: "mission-#{id}", files:,
           )
         end
-        Master::Core::Mission.new(root: @root, bus: @bus, checkpoint:).start!(
+        Master::Fix::Mission.new(root: @root, bus: @bus, checkpoint:).start!(
           goal: "fix #{relative_target(target)}",
           scope: target,
           model: @agent.respond_to?(:model) ? @agent.model : ENV["MASTER_MODEL"],

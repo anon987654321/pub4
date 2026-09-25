@@ -244,7 +244,7 @@ module Master
       def dispatch_undo(undo, ctx: nil) = undo_line("reverted", undo.undo!)
 
       def dispatch_mission(root, ctx: nil)
-        record = Master::Core::Mission.current(root:)
+        record = Master::Fix::Mission.current(root:)
         arg = arg_for(ctx)
         return "mission0: none" unless record
 
