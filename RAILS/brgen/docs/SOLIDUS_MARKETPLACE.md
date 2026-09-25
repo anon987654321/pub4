@@ -10,7 +10,7 @@ Solidus's current marketplace offering covers capabilities such as mixed carts, 
 
 Solidus can provide the commerce kernel around product, variant, taxon, cart, checkout, shipment, and merchant operations once the database and cutover are staged.
 
-Dintero owns marketplace money movement. A seller payout destination must be approved and `ACTIVE` before the seller slice is sent in a Dintero split. Capture is a separate transition from authorization, and BRGEN does not mark an order paid merely because a browser returned from checkout.
+Dintero owns marketplace money movement. A seller payout destination must be approved and `ACTIVE` before the seller slice is sent in an inline split. The same split contract is repeated on capture and refund operations. Capture is a separate transition from authorization, and BRGEN does not mark an order paid merely because a browser returned from checkout.
 
 ## Dintero
 
@@ -18,7 +18,7 @@ Dintero's Shopping API creates payment sessions for a Shopping order. The integr
 
 Dintero hook delivery has its own event-delivery identity. BRGEN verifies the raw request body before JSON parsing, stores `event-delivery` for replay handling, and keeps the signed session callback separate from the webhook route.
 
-The checkout adapter is explicitly gated by `DINTERO_CHECKOUT_ENABLED=1`. A credentialed but unverified integration therefore cannot present a payment button before the Shopping API payload has been exercised in Dintero test mode.
+The checkout adapter is explicitly gated by `DINTERO_CHECKOUT_ENABLED=1`. A credentialed but unverified integration therefore cannot present a payment button before the Shopping API payload has been exercised in Dintero test mode. Dintero capture and refund confirmation remain webhook-authoritative.
 
 ## Staging
 
