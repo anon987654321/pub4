@@ -14,7 +14,7 @@ require "digest"
 # that does not exist -- so this file has aborted on its first require, every
 # invocation, since 687c07a43. MASTER/tools/studio/dilla/dilla.rb reaches the same library
 # by the path below; postpro and preprompt were never updated with it.
-require_relative "../../MASTER/lib/io/analog_capabilities"
+require_relative "../../../lib/io/analog_capabilities"
 
 require "open3"
 require "rbconfig"
