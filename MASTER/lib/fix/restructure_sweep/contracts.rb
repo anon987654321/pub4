@@ -40,14 +40,6 @@ module Master
               and never move. An rc.d script's name is its service's name.
             - Scripts are zsh or POSIX sh with OpenBSD base tools; no GNU-only flags.
           TEXT
-          "STUDIO" => <<~TEXT,
-            STUDIO, media tools: dilla makes beats, postpro grades images,
-            preprompt and lora generate.
-            - Each tool defines its constants at top level; two tools must never
-              define the same name.
-            - dilla's sound defaults and postpro's graded look never change, and
-              nothing here may render. MASTER/tools/lora and MASTER/tools/dilla/data never move.
-          TEXT
         }.freeze
 
         def self.for(tree) = "#{BY_TREE.fetch(tree)}#{COMMON}"
