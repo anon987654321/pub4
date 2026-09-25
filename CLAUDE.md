@@ -28,7 +28,7 @@ renamed.
 | `MASTER/` | A constitutional AI runtime in pure Ruby. The primary product. | `MASTER/bin/master "<instruction>"` |
 | `RAILS/` | Three Rails 8 apps: **brgen** (a city social network; its verticals are mounted engines), **amber** (wardrobe), **bsdports**. | `RAILS/bin/triangle up` |
 | `OPENBSD/` | The deploy pipeline and the VPS runbook. Production is one box, `vm23`. | `MASTER/bin/operator vps state` |
-| `MASTER/tools/MASTER/tools/` | Media tools. **dilla** makes beats, **postpro** grades images, **preprompt**/**lora** generate. | `ruby MASTER/tools/MASTER/tools/dilla/dilla.rb` |
+| `MASTER/tools/` | Media tools. **dilla** makes beats, **postpro** grades images, **preprompt**/**lora** generate. | `ruby MASTER/tools/dilla/dilla.rb` |
 
 Nothing else sits at the repo root but this file, `TODO.md` — the single
 repo-wide backlog (every per-tree debt/TODO/blocker list was folded into it) —
@@ -36,7 +36,7 @@ and `TREE.md`, the map of the four trees. (`WISHLIST.md` folded into `TODO.md`
 on 2026-09-06 — one backlog, forward work as its last section.) Build output
 never sits at the root whatever the tool's default: dilla writes to `$PWD`
 unless `DILLA_OUTPUT_DIR` says otherwise, and one session's renders lived at the
-root for weeks because of it. They belong beside `MASTER/tools/MASTER/tools/dilla/dilla.rb`, which
+root for weeks because of it. They belong beside `MASTER/tools/dilla/dilla.rb`, which
 is where dilla falls back when invoked from the root.
 
 ## Commands
@@ -103,8 +103,8 @@ the whole of it: `rotation` (the voices, chosen per utterance), `post_chain`
 speech, and a pointer). `Voice::Policy` reads them, `Speech#shaped` applies the
 chain, `browser_payload` hands them to the face so it sounds like the server.
 The chain borrows dillas vocabulary; the bed is dillas own render, module `Bed`
-in `MASTER/tools/MASTER/tools/dilla/dilla.rb`, declared in `MASTER/tools/MASTER/tools/dilla/data/bed.yml` and played
-by `ruby MASTER/tools/MASTER/tools/dilla/dilla.rb bed` (the operator's call, 2026-09-14).
+in `MASTER/tools/dilla/dilla.rb`, declared in `MASTER/tools/dilla/data/bed.yml` and played
+by `ruby MASTER/tools/dilla/dilla.rb bed` (the operator's call, 2026-09-14).
 
 **Renders are irreplaceable.** dilla and postpro write real output with rotating
    seeds. Never render over a take that matters, and never change a rendered-sound
