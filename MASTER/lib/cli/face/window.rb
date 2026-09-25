@@ -6,8 +6,8 @@ require "io/wait"
 module Master
   module CLI
     module Face
-      # The face in a terminal: the frame on top, the words under it, a status
-      # line and the line being typed. One thread paints the whole window
+      # The face in a terminal: the animation owns the viewport, with recent words,
+      # status and input overlaid in a four-row control strip. One thread paints the whole window
       # Face::FPS times a second at absolute cursor positions, so nothing
       # scrolls, a resize is picked up on the next frame, and a stray line some
       # other thread prints is painted over by the frame after it.
@@ -99,7 +99,7 @@ module Master
           face = Face.frame(state:, rows:, cols:, t:, level:, events:, motion: @motion).split("\n")
           overlay = tail(column(jobs, words), job_rows, cols)
           overlay << "#{DIM}#{status(state)[0, cols]}#{PLAIN}" << typed(draft, cols)
-          face.last(overlay_rows).replace(overlay.last(overlay_rows))
+          face[-overlay_rows, overlay_rows] = overlay.last(overlay_rows)
           body = face.map { |line| tint(state, line) }
           painted = body.each_with_index.map { |line, i| "\e[#{i + 1};1H#{line}\e[K" }.join
           "\e[?25l#{painted}\e[#{body.size};#{[draft.length + 3, cols].min}H\e[?25h"
