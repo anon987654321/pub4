@@ -64,3 +64,17 @@ class RegistrationTest < ActiveSupport::TestCase
     assert_empty Order.all
   end
 end
+
+  test "rejects an existing active domain" do
+    Domain.create!(name: "taken.er", state: "active")
+
+    assert_raises Eritel::Registration::Rejected do
+      Eritel::Registration.create(
+        domain: "taken.er",
+        registrant: @registrant,
+        idempotency_key: "order-4"
+      )
+    end
+
+    assert_empty Order.all
+  end
