@@ -5,6 +5,7 @@ module Marketplace
     class DinteroCheckout
       class SellerNotReady < ProviderError; end
 
+      COMMISSION_ENV = "DINTERO_PLATFORM_COMMISSION_BPS"
 
       class << self
         def configured?
@@ -156,9 +157,6 @@ module Marketplace
           orders = payable.is_a?(Marketplace::Checkout) ?
             payable.order_lines.includes(listing: :store).to_a : [ payable ]
 
-          stores = orders.map { |order| order.listing.store }.uniq
-          stores.each { |store| DinteroPayoutRules.ensure_for!(store) }
-
           draft = DinteroClient.post(
             "/v1/accounts/#{DinteroClient.account_id}/shopping/draft_orders",
             {
@@ -168,8 +166,7 @@ module Marketplace
                 items: orders.map { |order| draft_item(order) }
               },
               options: {
-                split_draft: false,
-                payout: true
+                split_draft: false
               }
             },
             idempotency_key: "brgen-draft-#{reference}"
@@ -192,7 +189,7 @@ module Marketplace
           {
             id: order.id.to_s,
             external_id: order.id.to_s,
-            store: DinteroPayoutRules.item_store(order.listing.store),
+            store: { id: order.listing.store_id.to_s },
             description: order.listing.title.to_s.truncate(120),
             quantity: (order.quantity.presence || 1).to_i,
             unit_price: order.unit_price_cents,
@@ -216,15 +213,61 @@ module Marketplace
         def session_item(order)
           {
             line_id: order.id.to_i,
-            amount: order.total_cents
-          }
+            amount: order.total_cents,
+            splits: split_for(order),
+            fee_split: fee_split
+          }.compact
         end
 
         def capture_item(order)
-          {
-            line_id: order.id.to_i,
-            amount: order.total_cents
-          }
+          session_item(order)
+        end
+
+        def split_for(order)
+          store = order.listing.store
+          seller_destination = store&.dintero_payout_destination_id.to_s
+          seller_status = store&.dintero_payout_destination_status.to_s
+          unless seller_destination.present? && seller_status == "ACTIVE"
+            raise SellerNotReady,
+                  "Dintero seller payout destination is not ACTIVE for listing #{order.listing_id}"
+          end
+
+          fee = platform_fee_cents(order)
+          seller_amount = order.total_cents - fee
+          raise SellerNotReady, "Dintero platform fee exceeds order total" if seller_amount.negative?
+
+          splits = [
+            { payout_destination_id: seller_destination, amount: seller_amount }
+          ]
+          if fee.positive?
+            platform_destination = ENV["DINTERO_PLATFORM_PAYOUT_DESTINATION_ID"].to_s
+            raise SellerNotReady, "Dintero platform payout destination is not configured" if platform_destination.empty?
+
+            splits << { payout_destination_id: platform_destination, amount: fee }
+          end
+          splits
+        end
+
+        def fee_split
+          return if platform_fee_bps.zero?
+
+          platform_destination = ENV["DINTERO_PLATFORM_PAYOUT_DESTINATION_ID"].to_s
+          raise SellerNotReady, "Dintero platform payout destination is not configured" if platform_destination.empty?
+
+          { type: "proportional", destinations: [ platform_destination ] }
+        end
+
+        def platform_fee_bps
+          bps = Integer(ENV.fetch(COMMISSION_ENV, "0"), 10)
+          raise SellerNotReady, "#{COMMISSION_ENV} must be between 0 and 10000" unless bps.between?(0, 10_000)
+
+          bps
+        rescue ArgumentError
+          raise SellerNotReady, "#{COMMISSION_ENV} must be an integer"
+        end
+
+        def platform_fee_cents(order)
+          ((order.total_cents.to_i * platform_fee_bps) + 5_000) / 10_000
         end
 
       end
