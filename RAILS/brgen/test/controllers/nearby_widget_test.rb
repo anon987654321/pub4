@@ -32,11 +32,9 @@ class NearbyWidgetTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_includes response.body, "#brgen"
-    assert_select "[data-nearby-chat-target=tabLabel]", text: "Chat", count: 1
     assert_select "form#nearby_widget_message"
     assert_select "form textarea, form input[type=text]"
     assert_match(/nearby-chat#locate/, response.body)
-    assert_select "a.nearby-chat-widget-messenger", text: "Open Messenger", count: 1
     assert_select "input[name=origin][value=widget]"
     refute_match(/>\s*(Loading the room|Laster rommet)…?\s*</, response.body)
   end
@@ -168,6 +166,16 @@ class NearbyWidgetTest < ActionDispatch::IntegrationTest
       assert_equal "brgen", labels.first.text.strip,
                    "the tab must ship the room it will land in, not a placeholder the JS replaces"
     end
+  end
+
+  # The Messenger handoff sits in the widget's header, which the layout renders;
+  # the turbo-frame response carries only the room.
+  test "the widget header links to Messenger" do
+    get root_path
+
+    assert_response :success
+    assert_select ".nearby-chat-widget-header a.nearby-chat-widget-messenger",
+                  text: I18n.t("chat.open_messenger"), count: 1
   end
 
   test "the tab label and the frame's room line come from the same source" do
