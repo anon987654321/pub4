@@ -75,6 +75,12 @@ class Marketplace::WebhooksController < ActionController::Base
         sleep(attempts == 1 ? 0.25 : 1.0)
         retry
       end
+
+      if delivery.attempts.to_i >= 4
+        delivery.fail!(error)
+        return head(:ok)
+      end
+
       delivery.retryable!(error)
       return head(:internal_server_error)
     end
