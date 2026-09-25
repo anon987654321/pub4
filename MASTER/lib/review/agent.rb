@@ -75,7 +75,7 @@ module Master
 
       def ask(prompt, context: nil, operation: nil, image: nil, temperature: nil)
         messages = Array(context) + [{ role: "user", content: apply_reasoning_mode(prompt) }]
-        selected_model = live_model(operation ? model_for(operation:) : routed_models.first)
+        selected_model = operation ? model_for(operation:) : routed_models.first
         result = @dispatcher.send_with_cache(selected_model, messages, stream: false, image:, temperature:)
         result = retry_on_broke_lane(result, selected_model, messages, image:, temperature:)
         record_capability_outcome(operation:, selected_model:, result:)
@@ -85,7 +85,7 @@ module Master
 
       def ask_once(prompt, system: nil, law: true, model: nil, image: nil, temperature: nil, format: nil, failover: true)
         messages = [{ role: "user", content: prompt }]
-        chosen = live_model(model || self.model)
+        chosen = model || self.model
         sys = role_system(system, law:)
         result = @dispatcher.send_with_cache(chosen, messages, system: sys, stream: false, image:, temperature:, format:)
         result = retry_on_broke_lane(result, chosen, messages, system: sys, image:, temperature:) if failover
@@ -174,20 +174,6 @@ end
       def record_single_call_substitution(from, to, result)
         Io::QuotaGate.substituted(from:, to:) if result.is_a?(Master::Result::Ok)
         result
-      end
-
-      # Every single-shot call also follows the live route when its selected
-      # lane is parked by a recent provider failure.
-      def live_model(selected)
-        return selected unless Io::ModelSkipCache.skipped?(selected)
-
-        fallback = single_call_fallback_models(selected).first
-        return selected unless fallback && fallback != selected
-
-        @bus&.publish("llm:skip_cache_hop", from: selected, to: fallback,
-                                            reason: Io::ModelSkipCache.skip_reason(selected))
-        Io::QuotaGate.substituted(from: selected, to: fallback)
-        fallback
       end
 
       def dispatch_chat_response(dispatch, stream:, image:, &blk)
