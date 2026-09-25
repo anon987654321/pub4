@@ -9,6 +9,8 @@ module Marketplace
     class DinteroClient
       LIVE_API_HOST = "https://api.dintero.com"
       LIVE_CHECKOUT_HOST = "https://checkout.dintero.com"
+      TEST_API_HOST = "https://test.dintero.com"
+      TEST_CHECKOUT_HOST = "https://test.dintero.com"
       TOKEN_TTL_SKEW = 60
 
       class Error < StandardError
@@ -89,11 +91,25 @@ module Marketplace
         end
 
         def api_host
-          ENV["DINTERO_API_BASE"].to_s.strip.presence || LIVE_API_HOST
+          configured = ENV["DINTERO_API_BASE"].to_s.strip
+          return configured if configured.present? && safe_host?(configured)
+
+          production? && !test_mode? ? LIVE_API_HOST : TEST_API_HOST
         end
 
         def checkout_host
-          ENV["DINTERO_CHECKOUT_BASE"].to_s.strip.presence || LIVE_CHECKOUT_HOST
+          configured = ENV["DINTERO_CHECKOUT_BASE"].to_s.strip
+          return configured if configured.present? && safe_host?(configured)
+
+          production? && !test_mode? ? LIVE_CHECKOUT_HOST : TEST_CHECKOUT_HOST
+        end
+
+        def test_mode?
+          ENV["DINTERO_TEST_MODE"].to_s.strip == "1"
+        end
+
+        def production?
+          defined?(Rails) && Rails.respond_to?(:env) && Rails.env.production?
         end
 
         def account_id = ENV.fetch("DINTERO_ACCOUNT_ID").strip
@@ -103,6 +119,16 @@ module Marketplace
 
         def required?(*names)
           names.all? { |name| ENV[name].to_s.strip.present? }
+        end
+
+        def safe_host?(value)
+          uri = URI(value)
+          return false unless uri.is_a?(URI::HTTPS)
+
+          return false if production? && !test_mode? && uri.host == URI(LIVE_API_HOST).host
+          return true
+        rescue URI::InvalidURIError
+          false
         end
 
         def authenticate
