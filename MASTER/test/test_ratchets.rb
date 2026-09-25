@@ -18,7 +18,12 @@ class TestRatchets < Minitest::Test
   # measurement, not a hang, and the default 30s bound exists to catch hangs.
   def test_timeout = 300
 
-  def rows = @rows ||= Operator::Ratchets.all
+  # Measured once per process. Each of the ten tests reading rows paid for its
+  # own two-minute measurement, and the file alone ran past bin/check's 900s
+  # step timeout, so check:ci reported `test` failed with no test named.
+  def self.rows = @rows ||= Operator::Ratchets.all
+
+  def rows = self.class.rows
 
   def readable = rows.reject { |row| row.current.nil? || row.ceiling.nil? }
 
@@ -43,7 +48,11 @@ class TestRatchets < Minitest::Test
   end
 
   def test_no_ratchet_is_unreadable
-    unreadable = rows.reject { |row| row.current && row.ceiling }
+    # Pointer rows (file_length, coverage_ratchet) and the fast css_budget rows
+    # carry no number by design; their own tests or --deep measure them. A row
+    # whose measurement failed says "unreadable:", as master_row and
+    # unreadable_row write it.
+    unreadable = rows.select { |row| row.note.to_s.start_with?("unreadable") }
 
     assert_empty unreadable.map { |row| "#{row.name}: #{row.note}" },
                  "an unreadable ratchet is evidence that measurement failed, not a pass"
