@@ -10,9 +10,9 @@ require "time"
 require "fileutils"
 require "digest"
 # ../lib/io/... was correct at MASTER/tools/postpro/. It has not been correct
-# since the move to STUDIO/, where it resolves to STUDIO/lib/io/ -- a directory
+# since the move to MASTER/tools/studio/, where it resolves to MASTER/tools/studio/lib/io/ -- a directory
 # that does not exist -- so this file has aborted on its first require, every
-# invocation, since 687c07a43. STUDIO/dilla/dilla.rb reaches the same library
+# invocation, since 687c07a43. MASTER/tools/studio/dilla/dilla.rb reaches the same library
 # by the path below; postpro and preprompt were never updated with it.
 require_relative "../../MASTER/lib/io/analog_capabilities"
 
