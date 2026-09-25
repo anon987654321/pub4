@@ -134,6 +134,31 @@ class DinteroCheckoutTest < ActiveSupport::TestCase
     end
   end
 
+
+  test "refund sends Dintero refund and leaves local order paid until webhook confirmation" do
+    seller = Store.new(
+      dintero_payout_destination_id: "seller-1",
+      dintero_payout_destination_status: "ACTIVE"
+    )
+    payable = order(store: seller, dintero_order_id: "order-1")
+    payable.payment_provider = "dintero"
+    payable.payment_status = "paid"
+    payable.payment_reference = "brgen-dintero-order-42"
+
+    seen = nil
+    Marketplace::Payments::DinteroClient.stub(:post, ->(path, payload, **options) {
+      seen = { path:, payload:, options: }
+      {}
+    }) do
+      Marketplace::Payments::DinteroCheckout.refund!(order: payable)
+    end
+
+    assert_equal "/v1/accounts/T12345678/shopping/orders/order-1/refunds", seen[:path]
+    assert_equal 10_000, seen[:payload][:items].first[:amount]
+    assert_equal "brgen-refund-order-42", seen[:options][:idempotency_key]
+    assert_equal "paid", payable.payment_status
+  end
+
   test "capture sends the operation and leaves the local order authorized until webhook confirmation" do
     seller = Store.new(
       dintero_payout_destination_id: "seller-1",
