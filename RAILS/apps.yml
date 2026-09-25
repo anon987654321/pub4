@@ -125,7 +125,7 @@ apps:
         - { name: solidus core mount (catalog/cart/checkout/admin),         status: planned, notes: "Gemfile + initializer + /solidus mount stub ready; solidus:install remains staging-only on a database supported by the target Solidus deployment. Native Marketplace::* stays public until an explicit cutover." }
         - { name: solidus_starter_frontend storefront,                     status: planned, notes: "Amazon-like PDP/cart/checkout UI after solidus:install" }
         - { name: Solidus native marketplace features,                   status: planned, notes: "Evaluate against BRGEN seller/order domain; do not install the legacy solidus_marketplace gem." }
-        - { name: Dintero split checkout,                                 status: planned, notes: "Signed callback/webhook verification, replay-safe event deliveries, seller ACTIVE payout gate, draft-order/session adapter and seller capture route. Enable checkout only after Dintero staging validation." }
+        - { name: Dintero split checkout,                                 status: planned, notes: "Signed callback/webhook verification, replay-safe event deliveries, seller ACTIVE payout gate, Shopping draft/order/session adapter, inline per-line splits, seller capture and refund routes, and conversion tracking. Enable checkout only after Dintero staging validation." }
         - { name: Amazon feature parity map,                               status: planned, notes: "PDP, search facets, cart, multi-seller, reviews, order history — see SOLIDUS_MARKETPLACE.md" }
         - { name: AI recommendations,                                       status: planned, agent: ignore }
       subapp_playlist:
