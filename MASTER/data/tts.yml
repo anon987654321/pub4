@@ -29,18 +29,12 @@ transcendent:
   # Edge round trip per phrase, capped at Melody::MAX_PHRASES; false restores a
   # single call at one rate and one pitch.
   phrase_rhythm_enabled: true
-  # Read a Norwegian clause with a Norwegian voice. Off: data/voice.yml sets
-  # single_voice: jenny and persona_affects_text_only: true, and this is the one
-  # thing that contradicts it. Turning it on is an operator decision about
-  # identity, not a bug fix.
-  #
-  # The three switches differ on purpose: rhythm on, contour by threshold,
-  # language off. Do not align their defaults.
-  phrase_language_switching: false
+  # A Norwegian clause is always rendered with Pernille; English uses Jenny.
+  # Language routing is a speech rule, not an optional stylistic switch.
+  phrase_language_switching: true
   phrase_language_voices:
-    nb: finn
-    en: ~
-  max_chars: 900
+    nb: pernille
+    en: jenny
   # Local MLX (Apple Silicon)
   mlx_model: mlx-community/Kokoro-82M-bf16
   mlx_voice: af_bella
