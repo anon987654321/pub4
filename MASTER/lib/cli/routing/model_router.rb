@@ -81,9 +81,9 @@ module Master
           @compute_pool.select(ids, task_type:, empirical_best:) || @config.model
         end
 
-        # Only models the pool can reach. Free cloud lanes follow the tiers, paid
-        # Replicate follows those, and the local tier closes the chain: a 3B model
-        # on a laptop is the lane of last resort while any network lane answers.
+        # Only models the pool can reach. Free cloud lanes follow the tiers and
+        # paid Replicate follows those. A discovered local model may join the
+        # same live chain; local availability is not an offline contract.
         def fallback_chain(task_type: :exploration)
           return [@config.model] unless enabled?
 
