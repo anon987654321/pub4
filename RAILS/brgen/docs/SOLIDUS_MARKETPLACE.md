@@ -10,7 +10,7 @@ Solidus's current marketplace offering covers capabilities such as mixed carts, 
 
 Solidus can provide the commerce kernel around product, variant, taxon, cart, checkout, shipment, and merchant operations once the database and cutover are staged.
 
-Dintero owns marketplace money movement. A seller payout destination must be approved and `ACTIVE` before the seller slice is sent in an inline split. The same split contract is repeated on capture and refund operations. Capture is a separate transition from authorization, and BRGEN does not mark an order paid merely because a browser returned from checkout.
+Dintero owns marketplace money movement. A seller payout destination must be approved and `ACTIVE` before the seller slice is sent in an inline split. BRGEN persists the exact split contract on each local order and reuses it for capture and refund, so later configuration changes cannot silently rewrite a historical transaction. Capture is a separate transition from authorization, and BRGEN does not mark an order paid merely because a browser returned from checkout.
 
 ## Dintero
 
