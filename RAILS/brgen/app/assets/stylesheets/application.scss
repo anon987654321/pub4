@@ -544,20 +544,6 @@ body.vertical-marketplace #navBar {
 
 .feed-hint { padding: 0 var(--space-4) var(--space-2); }
 
-/* Guest open funnel on the home intro (Live → marketplace → messages). */
-
-@media (min-width: 1265px) {
-  .compose-label { display: inline; }
-  .compose-icon { display: none; }
-}
-
-/* 768, not 769: every other bound in the family treats 768 as the tablet edge,
-   so the compose control changes band at the same width as the rest of the shell. */
-@media (min-width: 768px) and (max-width: 1264px) {
-  .compose-label { display: none; }
-  .compose-icon { display: block; }
-}
-
 /* Inline only. The block axis is the shared rule's job — restating it as a
    bare --space-2 dropped --top-band-nudge and left the control on 31 against
    the bar's 33, the same misalignment as desktop in a smaller dose. */
@@ -684,45 +670,6 @@ table.lines {
   }
 }
 
-/* Splash — bold OLED intro for unauth visitors */
-.splash {
-  position: fixed;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  background: var(--bg);
-  color: var(--text);
-  cursor: pointer;
-  user-select: none;
-  z-index: var(--z-splash);
-  text-align: center;
-  padding: 16px;
-  opacity: 1;
-  transition: opacity var(--transition-fast) var(--ease-out);
-}
-.splash[hidden] { display: none; }
-.splash h2 { margin: 0 0 8px; font-size: clamp(2.5rem, 12vw, 5rem); font-weight: var(--weight-heavy); color: var(--text); letter-spacing: var(--tracking-tightest); transition: transform var(--transition-fast) var(--ease-out); }
-.splash h2.clicked { transform: scale(1.02); }
-.splash .tagline { color: var(--text-secondary); font-size: clamp(0.9rem, 2.8vw, 1.05rem); margin: 0 0 var(--space-6); max-width: 28em; line-height: 1.5; }
-.splash .chips { display: flex; flex-wrap: wrap; gap: var(--space-1); justify-content: center; margin-bottom: var(--space-6); }
-.splash .chip {
-  padding: var(--space-1) .75rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-pill);
-  font: var(--text-xs)/1.4 var(--font);
-  color: var(--text-secondary);
-  transition: color var(--transition-fast) var(--ease-out), border-color var(--transition-fast) var(--ease-out), background var(--transition-fast) var(--ease-out);
-}
-
-.splash .chip:hover,
-.splash .chip:focus-within {
-  color: var(--text);
-  border-color: var(--accent);
-  background: var(--hover-subtle);
-}
-.splash .hint { color: var(--text-secondary); font-size: var(--text-xs); letter-spacing: var(--tracking-wide); }
-.splash a { color: inherit; }
-
 // ============================================================ chrome: nav
 
 /* Sticky feed header — single source (accent underline + scroll fade) */
@@ -741,13 +688,6 @@ table.lines {
   font-size: var(--text-title);
   font-weight: var(--weight-heavy);
   letter-spacing: var(--tracking-tighter);
-}
-
-/* brgen wordmark, top-left of the feed -- same weight/tracking as MASTER's
-   own .top-left-logo treatment, just sized for the feed header context. */
-.feed-brand-mark {
-  letter-spacing: var(--tracking-tightest);
-  text-transform: none;
 }
 
 .feed-tabs {
@@ -2151,9 +2091,6 @@ body[class*="vertical-"] .compose-launcher {
 .vote-btn.active-up { color: var(--upvote); }
 .vote-btn.active-down { color: var(--downvote); }
 .vote-score { font: var(--weight-bold) var(--text-xs) / 1 var(--font); color: var(--text-secondary); }
-.post-title { font: var(--weight-bold) var(--text-sm) / 1.5 var(--font); color: var(--text); margin-bottom: var(--space-3); }
-.post-title a { color: var(--text); }
-.post-title a:hover { text-decoration: underline; }
 
 .post_body { color: var(--text); line-height: var(--leading-loose); font-size: var(--text-base); }
 .post_body p { margin: 0 0 var(--space-5); }
@@ -2458,27 +2395,6 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
   align-items: center;
   margin: var(--space-2) 0 var(--space-4);
   font-size: var(--text-sm);
-}
-
-.compose-box textarea,
-.compose-box .ProseMirror {
-  max-height: min(40vh, 280px);
-  overflow-y: auto;
-}
-
-/* Room for the soft keyboard, which only ever exists here. env() is 0 wherever
-   there is no keyboard, so the term is self-cancelling — but the --space-2 beside
-   it is not, and .compose-box has no other padding rule in the tree, so leaving
-   this unconditional would put 8px under the composer on desktop where there is
-   none today. The min-width step below takes it back off. */
-.compose-box {
-  padding-bottom: calc(var(--space-2) + max(env(keyboard-inset-height, 0px), var(--keyboard-inset, 0px)));
-}
-
-@media (min-width: 768px) {
-  .compose-box {
-    padding-bottom: 0;
-  }
 }
 
 #comments-section form textarea {
@@ -3627,36 +3543,6 @@ body.vertical-marketplace .top-offers-rail .sale-ad .deal-price {
   font-weight: var(--weight-bold);
 }
 
-/* ---- teaser row ----------------------------------------------------- */
-
-.store-teasers {
-  display: grid;
-  gap: 16px;
-  margin-block: 24px var(--store-section);
-}
-
-.store-cta {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: var(--tap-min);
-  padding-inline: 24px;
-  border: 0;
-  border-radius: var(--radius-pill);
-  background: var(--store-ink);
-  color: var(--store-page);
-  font-size: 16px;
-  font-weight: var(--weight-bold);
-  text-decoration: none;
-  transition: background-color var(--transition-fast) var(--ease-out);
-}
-
-.store-cta:hover {
-  background: var(--store-ink-soft);
-  color: var(--store-page);
-  text-decoration: none;
-}
-
 .store-panel {
   display: flex;
   flex-direction: column;
@@ -3729,42 +3615,6 @@ body.vertical-marketplace .top-offers-rail .sale-ad .deal-price {
 }
 
 @media (min-width: 768px) {
-  .store-teasers--kaufland-catalogue {
-    grid-template-columns: minmax(0, 826fr) minmax(0, 510fr);
-  }
-
-  .store-teasers--bol-clean {
-    grid-template-columns: 1fr;
-  }
-
-  .store-teasers--bol-clean .store-promo-art {
-    grid-template-columns: minmax(0, 58fr) minmax(0, 42fr);
-  }
-
-  .store-teasers--bol-clean .store-promo-art-media {
-    grid-column: 1;
-    grid-row: 1;
-  }
-
-  .store-teasers--bol-clean .store-promo-art-copy {
-    grid-column: 2;
-    grid-row: 1;
-  }
-
-  .store-teasers--brgen-hybrid {
-    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-  }
-
-  .store-teasers--brgen-hybrid .store-promo-art {
-    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-  }
-
-  .store-teasers--brgen-hybrid .store-promo-art-copy {
-    padding-inline-end: 32px;
-  }
-}
-
-@media (min-width: 768px) {
   .deal-cats .deal-cat {
     flex-basis: 110px;
     font-size: 16px;
@@ -3778,40 +3628,9 @@ body.vertical-marketplace .top-offers-rail .sale-ad .deal-price {
     display: flex;
     gap: 16px;
   }
-
-  .store-teasers {
-    grid-template-columns: minmax(0, 826fr) minmax(0, 510fr);
-    margin-block-start: 32px;
-  }
-}
-
-@media (max-width: 767px) {
-  .store-teasers--bol-clean .store-promo-art {
-    min-height: 480px;
-  }
-
-  .store-teasers--bol-clean .store-promo-art-media {
-    order: 1;
-  }
-
-  .store-teasers--bol-clean .store-promo-art-copy {
-    order: 2;
-  }
-
-  .store-teasers--brgen-hybrid .store-promo-art {
-    min-height: 560px;
-  }
-
-  .store-teasers--brgen-hybrid .store-promo-art-copy {
-    padding-inline: 20px;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .store-cta {
-    transition: none;
-  }
-
   .deal-cat {
     transition: none !important;
   }
@@ -4721,7 +4540,6 @@ body.vertical-marketplace .top-offers-rail .sale-ad .deal-price {
 label.field--check-label > input { min-height: var(--tap-min); min-width: var(--tap-min); }
 .chips--bar { padding: var(--space-3) var(--space-4); border-bottom: 0; }
 .listing-price { font-size: var(--text-2xl); font-weight: var(--weight-heavy); color: var(--danger, var(--color-danger)); margin-bottom: var(--space-1); }
-.listing-actions { margin: var(--space-4) 0; display: flex; gap: var(--space-3); align-items: center; }
 .track-row { display: flex; align-items: center; justify-content: space-between; }
 /* swipe_controller's _queueTrack adds this once the listen-queue POST
    succeeds (playlist/sets/show); a settled affirmation, not the mid-swipe
@@ -4907,10 +4725,6 @@ label.field--check-label > input { min-height: var(--tap-min); min-width: var(--
   border-radius: var(--radius-pill);
   font: var(--text-xs) / 1 var(--font);
   padding: var(--space-1) var(--space-2);
-}
-
-.swipe-chips .chip--status {
-  opacity: 0.7;
 }
 
 .swipe-prompt {
@@ -5204,12 +5018,6 @@ body.vertical-dating .hotkey-coach {
 
    Scoped to this footer. The shared .site-legal footer already clears the floor
    at 48px on brgen.no, so a shared rule would be redundant there. */
-.dating-intro-trust nav a {
-  display: inline-flex;
-  align-items: center;
-  min-height: var(--tap-min, 44px);
-}
-
 .dating-discover-panel {
   min-height: 100dvh;
   /* --space-16 (4rem) is the largest declared step and clears the tab bar plus
@@ -5643,21 +5451,6 @@ body[class*="vertical-"] main > section {
   animation: matchFadeIn .18s var(--ease-out) both;
 }
 
-.match-overlay__card {
-  width: min(24rem, 100%);
-  padding: var(--space-5);
-  border-radius: var(--radius-card);
-  background: var(--surface-elevated, var(--surface));
-  border: 0;
-  text-align: center;
-}
-
-.match-overlay__eyebrow {
-  margin: 0 0 var(--space-1);
-  font-size: var(--text-xs);
-  color: var(--text-secondary);
-}
-
 [dir="rtl"] {
   direction: rtl;
 }
@@ -5738,13 +5531,6 @@ body.vertical-marketplace .store-hero h1 {
   color: var(--store-ink-soft);
   font-size: 16px;
   line-height: var(--leading-normal);
-}
-
-/* The live number, so the banner says something true rather than something
-   evergreen. */
-.store-hero .store-hero-count strong {
-  color: var(--store-ink);
-  font-weight: var(--weight-heavy);
 }
 
 :is(body.vertical-marketplace, body.vertical-takeaway) .page-header h1 {
@@ -6331,10 +6117,6 @@ font-size: clamp(12px, 3vw, var(--text-sm));
 .radio-library-item span {
   font-size: var(--text-xs);
   color: var(--color-muted);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .dating-intro-arrow { transition: none; }
 }
 
 /* No .visually-hidden here. shared/_components.scss declares it identically for
@@ -8512,12 +8294,6 @@ body.vertical-messenger .roster-nick {
 
 // ============================================================ pages: city home and surfaces
 
-/* Guest/city home orientation — sits above the feed, not under an AI hero. */
-.city-home-intro {
-  padding: var(--space-4, 1rem) 0 var(--space-3, 0.75rem);
-  max-width: var(--measure);
-}
-
 .profile-header {
   display: flex;
   flex-wrap: wrap;
@@ -9811,10 +9587,6 @@ body.vertical-marketplace .store-badge {
   font-size: 12px;
 }
 
-body.vertical-marketplace .store-teasers {
-  margin: 0;
-}
-
 body.vertical-marketplace .store-terms {
   max-width: var(--bol-max);
   margin: 32px auto 0;
@@ -9924,13 +9696,6 @@ body.vertical-marketplace .store-buybox .price {
 
   body.vertical-marketplace #navBar.storefront-nav--bol .marketplace-nav-search {
     width: 100%;
-  }
-
-  body.vertical-marketplace #navBar.storefront-nav--bol .storefront-bol-subnav {
-    justify-content: flex-start;
-    overflow-x: auto;
-    gap: 20px;
-    padding-inline: 16px;
   }
 
   body.vertical-marketplace .bol-market-hero {

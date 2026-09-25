@@ -50,46 +50,17 @@ select {
   outline-offset: 2px;
 }
 
-// Only the steps _tokens.scss actually declares. The loop ran 1 through 16 and
-// emitted .mt-7/.mt-9/.mt-11/.mt-13/.mt-14/.mt-15 (and their .px- twins) long
-// after those six tokens were deleted for sitting off the 8px rhythm, so twelve
-// utility classes shipped resolving var(--space-N) to nothing — present in the
-// stylesheet, inert on the element.
-@each $step in (1, 2, 3, 4, 5, 6, 8, 10, 12, 16) {
+// Only the steps a view asks for: marketplace's cart and listing pages carry
+// .mt-8 and tv's video page .mt-12. Every other step, and every .px- twin, was
+// a class no template named.
+@each $step in (8, 12) {
   .mt-#{$step} { margin-top: var(--space-#{$step}); }
-  .px-#{$step} { padding-inline: var(--space-#{$step}); }
 }
 
 .text-sm { font-size: var(--text-sm); line-height: 1.5; }
-.text-base { font-size: var(--text-base); line-height: 1.5; }
-.text-lg { font-size: var(--text-lg); line-height: 1.5; }
 
-.text-primary { color: var(--color-primary); }
-.bg-surface { background: var(--color-surface); }
 .full-bleed {
   width: 100vw;
   margin-inline: calc(50% - 50vw);
 }
 
-.truncate-2,
-.truncate-3 {
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-}
-
-.truncate-2 {
-  -webkit-line-clamp: 2;
-}
-
-.truncate-3 {
-  -webkit-line-clamp: 3;
-}
-
-.h-dvh { height: 100dvh; }
-.min-h-dvh { min-height: 100dvh; }
-.h-svh { height: 100svh; }
-.min-h-svh { min-height: 100svh; }
-.w-fit { width: fit-content; }
-.w-min { width: min-content; }
-.w-max { width: max-content; }
