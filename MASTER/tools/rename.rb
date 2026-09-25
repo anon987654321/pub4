@@ -35,7 +35,7 @@ module Operator
     # the fixture holds the shapes that are rare here — a constant glued to
     # another word, a path written as a string. Nothing else sets it.
     ROOT = ENV.fetch("RENAME_ROOT", File.expand_path("../..", __dir__))
-    TREES = ENV["RENAME_ROOT"] ? ["."] : %w[MASTER OPENBSD RAILS STUDIO].freeze
+    TREES = ENV["RENAME_ROOT"] ? ["."] : %w[MASTER OPENBSD RAILS].freeze
     SKIP = %r{/(vendor|node_modules|tmp|log|knowledge|output|\.master|\.git)/}
     TEXT_EXTENSIONS = %w[.rb .rake .erb .yml .yaml .md .js .json .txt .scss .css].freeze
 
