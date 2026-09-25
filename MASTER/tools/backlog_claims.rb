@@ -33,8 +33,8 @@ TREES = %w[MASTER RAILS OPENBSD].freeze
 # A verdict already written into the item — these have been decided.
 DECIDED = /\*\*(?:Fixed|Done|Already|Closed|Declined|Overtaken|Measured|False|Partly|Argued|Held|Confirmed)\b/i
 
-PATH_LINE = %r{\b((?:MASTER|RAILS|OPENBSD|STUDIO)?/?[\w./-]+\.(?:rb|yml|yaml|scss|css|js|mjs|erb|md|sh|rake|json|conf|zone))[:#](\d+)\b}
-BARE_PATH = %r{\b((?:MASTER|RAILS|OPENBSD|STUDIO)/[\w./-]+\.(?:rb|yml|yaml|scss|css|js|mjs|erb|md|sh|rake|json|conf))\b}
+PATH_LINE = %r{\b((?:MASTER|RAILS|OPENBSD)?/?[\w./-]+\.(?:rb|yml|yaml|scss|css|js|mjs|erb|md|sh|rake|json|conf|zone))[:#](\d+)\b}
+BARE_PATH = %r{\b((?:MASTER|RAILS|OPENBSD)/[\w./-]+\.(?:rb|yml|yaml|scss|css|js|mjs|erb|md|sh|rake|json|conf))\b}
 
 module BacklogClaims
   module_function
