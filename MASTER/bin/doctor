@@ -108,6 +108,20 @@ rescue StandardError => e
   Check.new(name: "tts-socket", state: :fail, detail: e.message)
 end
 
+# The face's ear: whisper.cpp and a model, else Gemini. A phone with neither
+# fails, and says where its setup stands; any other host without one measured
+# nothing, because the deploy box has no microphone to hear with.
+def check_face_stt
+  words = Master::CLI::Face::Transcriber.new
+  detail = words.describe
+  return Check.new(name: "face-stt", state: :pass, detail:) if words.lane
+  return unmeasured("face-stt", "#{detail}; the face types instead") unless Master::Device.android?
+
+  fail_check("face-stt", "#{detail}; setup: #{Master::Device::Setup.new.progress}")
+rescue NameError, LoadError => e
+  unmeasured("face-stt", "#{e.class}: #{e.message}")
+end
+
 def check_web_token
   cfg_path = File.join(ROOT, ".master", "config.yml")
   cfg = YAML.safe_load_file(cfg_path, aliases: true) rescue {}
@@ -171,6 +185,7 @@ checks = [
   check_content_dedup,
   check_api_keys,
   check_tts_socket,
+  check_face_stt,
   check_web_token,
   check_key_rotator,
   check_model_quota,
