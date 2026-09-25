@@ -44,7 +44,7 @@ class TestGateChain < Minitest::Test
 
     refute_includes scoped, "source", "the RAILS gate runner says nothing about MASTER"
     assert_includes scoped, "ratchets", "the ratchets are repo-wide by definition and cheap"
-    assert_equal ["MASTER"], G.suite_jobs(%w[MASTER]).map(&:first)
+    assert_equal ["MASTER", "tools"], G.suite_jobs(%w[MASTER]).map(&:first)
     assert_equal ["RAILS contracts", "brgen suite", "amber suite", "bsdports suite"],
                  G.suite_jobs(%w[RAILS]).map(&:first)
   end
@@ -56,12 +56,14 @@ class TestGateChain < Minitest::Test
     rails = G.suite_jobs(%w[RAILS]).find { |job| job.first == "brgen suite" }
     assert_equal [G::RUBY, G::BUNDLE, "exec", G::RUBY, "-S", "rails", "test"], rails[1]
 
-    studio = G.suite_jobs(%w[STUDIO]).find { |job| job.first == "STUDIO" }
-    assert_equal [G::RUBY, G::BUNDLE, "exec", G::RUBY, "-S", "rake", "studio"], studio[1]
+    tools = G.suite_jobs(%w[MASTER]).find { |job| job.first == "tools" }
+    assert_equal [G::RUBY, "-S", "rake"], tools[1]
+    assert_equal File.join(G::MASTER, "tools"), tools[2]
+    assert_equal true, tools[5]
   end
 
   def test_every_suite_job_names_a_tree_the_scoping_knows
-    strays = G.suite_jobs.map(&:last) - G::TREES
+    strays = G.suite_jobs.map { |job| job[4] } - G::TREES
 
     assert_empty strays, "a suite tagged with a tree --tree cannot name is unreachable"
   end
@@ -122,7 +124,7 @@ class TestGateChain < Minitest::Test
   end
 
   def test_generated_paths_are_recognised_in_every_tree_that_has_them
-    %w[STUDIO/lora/.cache/x.json RAILS/brgen/app/assets/builds/application.css
+    %w[MASTER/tools/lora/.cache/x.json RAILS/brgen/app/assets/builds/application.css
        RAILS/amber/public/assets/x.js MASTER/Gemfile.lock].each do |path|
       assert_match G::GENERATED, path
     end
