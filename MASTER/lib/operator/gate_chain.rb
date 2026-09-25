@@ -237,7 +237,7 @@ module Operator
            File.join(ROOT, "RAILS", app), {}, "RAILS"]
         end,
         ["OPENBSD", [RUBY, "-e", OPENBSD_SUITE], File.join(ROOT, "OPENBSD"), {}, "OPENBSD"],
-        ["tools", [RUBY, BUNDLE, "exec", RUBY, "-S", "rake", "-f", File.join(MASTER, "tools", "Rakefile")], MASTER, {}, "MASTER"],
+        ["tools", [RUBY, BUNDLE, "exec", RUBY, "-S", "rake"], File.join(MASTER, "tools"), {}, "MASTER"],
       ].select { |job| trees.include?(job.last) }
     end
 
