@@ -11,6 +11,7 @@ module Master
         REFERENCE_LINES = 80
         REQUIRERS = 5
         SMALL = 400
+        RELATED_LINES = 180
 
         # [path, rule_id, message, related_paths] for every actionable structural finding.
         def self.structural_findings(target)
@@ -160,11 +161,18 @@ module Master
           return if paths.empty?
 
           rows = paths.map do |path|
-            "#{relative(path)} (#{File.foreach(path).count} lines)"
+            lines = File.foreach(path).first(RELATED_LINES)
+            suffix = File.foreach(path).count > RELATED_LINES ? "
+... truncated at #{RELATED_LINES} lines" : ""
+            "Related file, #{relative(path)}:\n#{numbered_lines(lines)}#{suffix}"
           rescue StandardError
-            relative(path)
+            "Related file, #{relative(path)}"
           end
-          "Related architecture evidence:\n#{rows.join("\n")}"
+          rows.join("\n\n")
+        end
+
+        def numbered_lines(lines)
+          lines.each_with_index.map { |line, index| format("%4d  %s", index + 1, line) }.join
         end
 
         def directory_section
