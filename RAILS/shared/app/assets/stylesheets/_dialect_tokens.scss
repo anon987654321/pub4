@@ -1,6 +1,6 @@
 /* BEGIN:generated-vertical-accents — ruby RAILS/tools/sync_dialect_tokens.rb */
 $vertical-accents: (
-  marketplace: (#98876e, #8d7e66, #98876e),
+  marketplace: (#2563EB, #1D4ED8, #1E40AF),  /* bol-inspired commercial blue */
   tv: (#dc635c, #b83a33, #dc635c),
   dating: (#00d4aa, #00b391, #009579),
   takeaway: (#e07b39, #c26a30, #c26a30),
@@ -106,8 +106,8 @@ $vertical-accent-ink: #110f19;
    8 in the brgen_old port and 0 in bsdports. The last two are declared
    identities and keep their step; luxury had no reason and its 14 was not
    on scale.radius_px at all. */
---radius-card: 12px;
---radius-lg: 12px;
+--radius-card: 16px;
+--radius-lg: 16px;
   --sidebar-width: 275px;
   // --feed-max is app-root-tokens', not this mixin's, and it was in both — so
   // every :root that includes a palette and an app root emitted it twice. The
