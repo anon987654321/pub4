@@ -39,15 +39,21 @@ class TestVoicePerformance < Minitest::Test
     end
   end
 
+  # A sentence that is both a warning and a contrast is spoken as a warning:
+  # sentence_role checks warning first, and that order is prosody, which is
+  # the operator's. The contrast case is a contrast and nothing else.
   def test_roles_are_semantic
     plan = Master::Voice::Performance.plan(
-      "The answer starts here. However, there is a risk. Are you sure? The key is this.",
+      "The answer starts here. However, the timing matters. Are you sure? The key is this.",
     )
 
     assert_equal :opening, plan[0][:role]
     assert_equal :contrast, plan[1][:role]
     assert_equal :question, plan[2][:role]
     assert_equal :closing, plan[3][:role]
+
+    both = Master::Voice::Performance.plan("Start here. However, there is a risk. Then stop.")
+    assert_equal :warning, both[1][:role]
   end
 
   def test_commas_and_clauses_stay_inside_the_sentence
