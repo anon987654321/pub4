@@ -265,23 +265,20 @@ class ApplicationHelperTest < ActionView::TestCase
     assert_equal post_path(post), notification_href(n)
   end
 
-  # The wordmark is the city domain, on every host. It was the literal "brgen"
-  # everywhere once, so Oslo and Frankfurt wore Bergen's name; it then went the
-  # other way and rendered whole hostnames on verticals; then it dropped to the
-  # bare city label. It is the domain now — brgen.no, oshlo.no, lsangeles.com —
-  # which is one shape per city and the string that is on the stickers.
+  # The wordmark is the city name without its TLD, on every host: the
+  # domain is an address, and the title and canonical link carry it.
   test "brand mark on a city apex is that city, not brgen" do
     Current.domain = "oshlo.no"
     Current.subapp = nil
 
-    assert_equal({ label: "oshlo.no" }, brand_mark_fragments)
+    assert_equal({ label: "oshlo" }, brand_mark_fragments)
   end
 
   test "brand mark on the bergen apex is unchanged" do
     Current.domain = "brgen.no"
     Current.subapp = nil
 
-    assert_equal({ label: "brgen.no" }, brand_mark_fragments)
+    assert_equal({ label: "brgen" }, brand_mark_fragments)
   end
 
   test "brand mark on a vertical is still just the city" do
@@ -292,9 +289,20 @@ class ApplicationHelperTest < ActionView::TestCase
     # It used to render the whole host -- quiet "markedsplass.", bold "brgen",
     # quiet ".no". That prints a URL where a logo goes, and the nav swiper
     # already marks which vertical is active. Operator decision 2026-08-27.
-    assert_equal({ label: "brgen.no" }, brand_mark_fragments)
+    assert_equal({ label: "brgen" }, brand_mark_fragments)
   end
 
+  # Every host in the registry, apex and vertical alike: no mark shows a TLD.
+  test "no city host renders its TLD in the brand mark" do
+    Brgen::DomainRegistry::ENTRIES.each do |entry|
+      Current.domain = entry.domain
+      label = brand_mark_fragments[:label]
+  
+      assert_equal entry.domain.split(".").first, label, "the mark on #{entry.domain} should be its name alone"
+      refute_includes label, ".", "the mark on #{entry.domain} shows a dot-TLD"
+    end
+  end
+  
   # Every city is a peer — the mark leaves for whichever city the request
   # resolved to, never a hardcoded brgen.no. dating renders no primary nav, so
   # on that vertical this link is the only way off the page.
@@ -322,7 +330,7 @@ class ApplicationHelperTest < ActionView::TestCase
     Current.subapp = :marketplace
     request.host = "marketplace.lsangeles.com"
 
-    assert_equal({ label: "lsangeles.com" }, brand_mark_fragments)
+    assert_equal({ label: "lsangeles" }, brand_mark_fragments)
   end
 
   # The markup both image helpers emit, spelled out attribute by attribute.

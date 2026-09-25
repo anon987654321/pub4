@@ -3,22 +3,13 @@
     on a dark-mode machine and nothing flashes before paint. The value lives in
     ApplicationHelper::DEFAULT_SURFACE_THEME, with the reason; _theme_bootstrap
     overwrites it from localStorage when the reader has chosen. %>
-<%# --brand-mark-glyphs is how the gutter learns the wordmark's length.
-
-    The mark is a city domain, so it is not one width: brgen.no draws 8
-    glyphs and lsangeles.com 13, and --brand-mark-inline is the gutter every
-    other piece of top chrome clears. Measured in Chrome at the clamp's
-    ceiling, 700 Helvetica Neue at -0.03em: brgen 55px, brgen.no 80px,
-    lsangeles.com 125px, against a 4.75rem (76px) reservation. So the mark
-    already overflowed its own gutter on the longest city before the TLD was
-    added, and adding it put brgen.no over too. A link under the mark stops
-    being clickable, which is the failure that put the variable here.
-
-    A count rather than a width, because the width is the clamp's business —
-    _root.scss multiplies this by the same clamp the mark itself is set in, so
-    the gutter tracks the type at every viewport instead of being right at one.
-    It goes on <html> because --brand-mark-inline is declared on :root and a
-    custom property only inherits downward. %>
+<%# --brand-mark-glyphs is how the gutter learns the wordmark's length. The
+    mark is a city name, so it is not one width: brgen is 5 glyphs and
+    lsangeles 9, and --brand-mark-inline is the gutter every other piece of top
+    chrome clears; a link under the mark stops being clickable. A count rather
+    than a width, because the width is the clamp's business, and it goes on
+    <html> because --brand-mark-inline is declared on :root and a custom
+    property only inherits downward. %>
 <html lang="<%= Current.locale || I18n.locale %>" dir="ltr" data-theme="<%= surface_theme %>" class="chrome-hidden"
       style="--brand-mark-glyphs: <%= brand_mark_fragments[:label].to_s.length %>">
 <head>
@@ -98,9 +89,7 @@
   <%# One shared mark across brgen, amber and bsdports (shared/_brand_mark).
       class_name keeps .brgen-logo-mark so every rule already written against it
       -- including _vertical_shell's playlist case -- still applies. %>
-  <%# label/prefix/suffix come from brand_mark_fragments so the mark names the
-      host: "brgen" on the apex, "markedsplass.brgen.no" on a vertical, and the
-      city's own name on every other city host. %>
+  <%# brand_mark_fragments gives the city name without its TLD. %>
   <%= render "shared/brand_mark", **brand_mark_fragments, href: brand_mark_href,
              class_name: "brand-mark brgen-logo-mark" %>
   <%# Search lives here now, beside the mark, on every surface. Both rails

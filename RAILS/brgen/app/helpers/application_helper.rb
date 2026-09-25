@@ -141,39 +141,19 @@ DEFAULT_SURFACE_THEME = "light"
 
 def surface_theme = DEFAULT_SURFACE_THEME
 
-  # The wordmark names the host it is actually on.
+  # The wordmark names the city the request resolved to, and only the city.
+  # Current.domain comes from the registry, so this never parses the host a
+  # second time; the nav swiper, not the mark, says which vertical is active.
   #
-  # It was the literal "brgen" on every surface, so Oslo, Stavanger, Trondheim,
-  # Cardiff, Edinburgh and Frankfurt all wore Bergen's name, and every vertical
-  # wore it too — markedsplass and dating were indistinguishable from the city
-  # apex they hang off. One mark still, not seven: the city label keeps the
-  # weight and the wordmark's letterspacing, and the subdomain and TLD are set
-  # quieter around it, so the shape a reader recognises is unchanged and the
-  # thing it now says is true.
+  # The mark is the city name without its TLD: brgen, oshlo, lsangeles
+  # (operator, 2026-09-25). A TLD in a wordmark reads as an address, and the
+  # address already lives where it means something: the title, the canonical
+  # link and the social card all take Current.domain whole.
   #
-  # Current.domain is the city domain the request resolved to (brgen.no,
-  # lsangeles.com), so this follows the registry rather than parsing the host a
-  # second time and disagreeing with it.
-  # The mark is the brand, and only the brand.
-  #
-  # It used to render the whole host on a vertical -- quiet "markedsplass.",
-  # bold "brgen", quiet ".no" -- so that one wordmark could say which surface
-  # a reader was on. That prints a URL where a logo goes, and it is a thing the
-  # nav already says better: the swiper marks the active vertical, and the page
-  # itself is the answer. Operator decision 2026-08-27.
-  #
-  # The mark carries the TLD — brgen.no, not brgen (operator, 2026-08-29). That
-  # is not a walk back of the paragraph above: what was wrong there was printing
-  # the *host*, so a reader on markedsplass saw markedsplass.brgen.no where a
-  # logo goes and the mark changed width per surface. The domain is the brand.
-  # It is the same string on every surface of a city, and it is what is on the
-  # stickers.
-  #
-  # Still one length per city rather than one per host, so the gutter arithmetic
-  # stays retired. --brand-mark-inline does have to cover three more glyphs;
-  # _layout_chrome carries that measurement.
+  # One length per city rather than one per host, so the gutter arithmetic
+  # stays retired; the layout counts the label for --brand-mark-glyphs.
   def brand_mark_fragments
-    { label: Current.domain.presence || "brgen.no" }
+    { label: (Current.domain.presence || "brgen.no").split(".").first }
   end
 
   # Where the mark goes when you click it.

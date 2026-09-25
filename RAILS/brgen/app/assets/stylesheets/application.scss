@@ -82,8 +82,8 @@ x.$vertical-accent-ink: #110f19;
 
      _layout_chrome publishes --brand-mark-inline as a flat 4.75rem, which is
      right for amber and bsdports: their marks are one fixed word. brgen's is a
-     city domain, 8 glyphs on brgen.no and 13 on lsangeles.com, too wide for a
-     flat number. A link under the mark stops being clickable, which is the
+     city name, 5 glyphs on brgen and 9 on lsangeles, too wide for a flat
+     number. A link under the mark stops being clickable, which is the
      failure the variable exists to prevent, so brgen sizes it instead of
      inheriting it.
 
@@ -92,7 +92,7 @@ x.$vertical-accent-ink: #110f19;
      `font: ... $brgen-logo-font`, which outranks the shared .brand-mark's
      var(--font-brand) at (0,1,0), so on brgen the wordmark is system-ui.
      system-ui on macOS is SF Pro, which switches optical size around 20px, so
-     "brgen.no" measures 83.3px at a 20.25px font and 84.1px at 16.875px: wider
+     an 8-glyph mark measured 83.3px at a 20.25px font and 84.1px at 16.875px: wider
      type at the smaller size. A factor from Helvetica Neue (0.503 em/glyph)
      under-reserves by 11px at 390px and puts the first nav link under the
      wordmark.
