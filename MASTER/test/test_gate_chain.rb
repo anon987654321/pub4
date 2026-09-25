@@ -49,6 +49,17 @@ class TestGateChain < Minitest::Test
                  G.suite_jobs(%w[RAILS]).map(&:first)
   end
 
+  def test_every_runtime_stage_uses_the_shared_ruby_selection
+    assert_equal Operator::RubyRunner.gate_ruby, G::RUBY
+    assert_equal Operator::RubyRunner.bundle_cmd, G::BUNDLE
+
+    rails = G.suite_jobs(%w[RAILS]).find { |job| job.first == "brgen suite" }
+    assert_equal [G::RUBY, G::BUNDLE, "exec", G::RUBY, "-S", "rails", "test"], rails[1]
+
+    studio = G.suite_jobs(%w[STUDIO]).find { |job| job.first == "STUDIO" }
+    assert_equal [G::RUBY, G::BUNDLE, "exec", G::RUBY, "-S", "rake", "studio"], studio[1]
+  end
+
   def test_every_suite_job_names_a_tree_the_scoping_knows
     strays = G.suite_jobs.map(&:last) - G::TREES
 

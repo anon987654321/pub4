@@ -97,6 +97,15 @@ class GateContractSpec < Minitest::Test
     end
   end
 
+  def test_gate_uses_the_shared_runtime_selection
+    source = File.read(GATE)
+
+    assert_includes source, "require_relative \"../lib/operator/ruby_runner\""
+    assert_includes source, "Operator::RubyRunner.ruby_cmd"
+    assert_includes source, "Operator::RubyRunner.bundle_cmd"
+    assert_includes source, "Open3.popen2e(SAFE_ENV, RUBY, BUNDLE, \"exec\", RUBY, \"bin/cli\""
+  end
+
   def test_gate_forces_safe_env
     source = File.read(GATE)
     assert_includes source, "SAFE_ENV"
