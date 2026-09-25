@@ -43,7 +43,7 @@ module Marketplace
           raise ArgumentError, "order has no Dintero transaction" if transaction_id.empty?
 
           response = DinteroClient.post(
-            "/v1/transactions/#{URI.encode_uri_component(transaction_id)}/capture",
+            "/v1/transactions/#{ERB::Util.url_encode(transaction_id)}/capture",
             {
               items: [ capture_item(order) ],
               amount: order.total_cents
@@ -100,13 +100,13 @@ module Marketplace
         end
 
         def session_transaction(session_id)
-          DinteroClient.get("/v1/sessions/#{URI.encode_uri_component(session_id)}", checkout: true)
+          DinteroClient.get("/v1/sessions/#{ERB::Util.url_encode(session_id)}", checkout: true)
         rescue DinteroClient::Error => e
           raise ProviderError, e.message
         end
 
         def transaction(transaction_id)
-          DinteroClient.get("/v1/transactions/#{URI.encode_uri_component(transaction_id)}")
+          DinteroClient.get("/v1/transactions/#{ERB::Util.url_encode(transaction_id)}")
         rescue DinteroClient::Error => e
           raise ProviderError, e.message
         end
