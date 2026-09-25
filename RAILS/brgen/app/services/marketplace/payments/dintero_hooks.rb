@@ -64,10 +64,7 @@ module Marketplace
         def webhook_url
           url = ENV["DINTERO_HOOK_URL"].to_s.strip
           url = "https://markedsplass.brgen.no/webhooks/dintero" if url.empty?
-          uri = URI(url)
-          raise ArgumentError, "DINTERO_HOOK_URL must use HTTPS" unless uri.is_a?(URI::HTTPS)
-          raise ArgumentError, "DINTERO_HOOK_URL must include a host" if uri.host.blank?
-
+          validate_url!(url)
           url
         rescue URI::InvalidURIError
           raise ArgumentError, "DINTERO_HOOK_URL is invalid"
