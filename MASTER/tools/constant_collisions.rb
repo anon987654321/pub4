@@ -5,10 +5,10 @@
 # `already initialized constant ROOT` in bin/check's output looked cosmetic. It
 # was the only thing standing between the security sweep and scanning a music
 # directory: `rake test` requires MASTER/tools/security_sweep.rb and loads
-# STUDIO/dilla/dilla.rb, both defined a bare top-level ROOT pointing at different
+# MASTER/tools/dilla/dilla.rb, both defined a bare top-level ROOT pointing at different
 # trees, and Ruby resolves that by warning and letting the SECOND assignment win.
 # Load order decided whether `git ls-files` ran against pub4 or against
-# STUDIO/dilla, and the sweep printed "0 tracked secrets" either way.
+# MASTER/tools/dilla, and the sweep printed "0 tracked secrets" either way.
 #
 # 24 files still define a bare top-level ROOT and that is fine: a standalone
 # script run as `ruby thing.rb` never shares an interpreter with another. What is
