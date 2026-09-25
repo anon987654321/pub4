@@ -21,7 +21,7 @@ require "open3"
 module Operator
   module Snapshot
     REPO = File.expand_path("../..", __dir__)
-    TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
+    TREES = %w[MASTER RAILS OPENBSD].freeze
 
     # Extension → fence language. Anything unlisted gets a bare fence.
     FENCE = {
