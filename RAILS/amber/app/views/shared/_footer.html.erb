@@ -70,5 +70,8 @@
       <%= render "shared/logo", id_prefix: "amber-footer", view_box: "58 105 410 108" %>
     <% end %>
     <p class="amber-footer-legal">&copy; <%= Date.current.year %> <%= t("app.name") %>. <%= t("footer.tagline") %></p>
+    <%# The affiliate note the shared legal row carried; its privacy, terms and
+        cookies links are the Legal column above. %>
+    <%= render "shared/affiliate_disclosure" %>
   </div>
 </footer>

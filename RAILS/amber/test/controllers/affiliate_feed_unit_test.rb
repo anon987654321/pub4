@@ -88,7 +88,7 @@ class AffiliateFeedUnitTest < ActionDispatch::IntegrationTest
     get item_path(item)
 
     assert_response :success
-    assert_select "footer.site-legal p.affiliate-fine[role=note]", text: /#{Regexp.escape(I18n.t("legal.affiliate_disclosure"))}/
+    assert_select "footer.amber-footer p.affiliate-fine[role=note]", text: /#{Regexp.escape(I18n.t("legal.affiliate_disclosure"))}/
   end
 
   def test_no_inventory_renders_no_band_rather_than_an_empty_one

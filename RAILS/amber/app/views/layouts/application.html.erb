@@ -119,7 +119,6 @@
   </div>
 
   <%= render "shared/footer" %>
-  <%= render "shared/site_legal_footer" %>
   <%= render "shared/flash_toasts" %>
 
   <div class="tab-bar-coach"
@@ -178,7 +177,8 @@
 
 <%= render "shared/install_prompt",
       title: t("install.title"),
-      body: t("install.body") %>
+      body: t("install.body"),
+      after_engagement: home %>
 <%# Shared::Affiliate attribution. Renders nothing without TRADEDOUBLER_WEBSITE_ID; amber
     showed affiliate links for months with no website id anywhere in its process,
     so every click was unattributed. See Shared::LinkConverter. %>

@@ -11,6 +11,10 @@ module Amber
   # reason, and so a look costs no image request.
   module HomeLooks
     COUNT = 4
+    
+    # A look with no outfit name of its own takes the name for its place, so
+    # the page never shows a numbered placeholder.
+    NAME_KEYS = %i[weekend studio dinner morning].freeze
 
     Garment = Data.define(:title, :color, :category, :zone)
     Look = Data.define(:name, :garments)
@@ -33,7 +37,9 @@ module Amber
 
     def looks_for(user = nil)
       looks = outfit_looks(user&.outfits) + outfit_looks(demo_outfits) + fallback_looks
-      looks.first(COUNT)
+      looks.first(COUNT).each_with_index.map do |look, index|
+        look.name.present? ? look : look.with(name: I18n.t("home.looks.names.#{NAME_KEYS.fetch(index)}"))
+      end
     end
 
     def outfit_looks(scope)

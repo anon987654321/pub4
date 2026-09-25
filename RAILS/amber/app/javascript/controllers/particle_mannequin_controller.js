@@ -5,6 +5,11 @@ const HEIGHT = 390
 const COUNT = 520
 
 export default class extends Controller {
+  // count: how many particles make the body. opacity: when set, every
+  // particle at that alpha instead of fading toward the edges, for a page
+  // that draws the figure in a pale ink on white.
+  static values = { count: { type: Number, default: COUNT }, opacity: Number }
+
   connect() {
     this.canvas = document.createElement("canvas")
     this.canvas.className = "mannequin-particles"
@@ -57,7 +62,7 @@ export default class extends Controller {
 
   seed() {
     const points = []
-    for (let i = 0; i < COUNT; i++) {
+    for (let i = 0; i < this.countValue; i++) {
       const home = this.bodyPoint()
       points.push({
         // Under reduced motion the figure is drawn once, so it starts formed.
@@ -146,7 +151,7 @@ export default class extends Controller {
       point.y += point.vy * 70 * dt
 
       const edge = Math.hypot(point.x - centerX, point.y - centerY) / Math.max(this.width, this.height)
-      this.ctx.globalAlpha = Math.max(0.05, 0.58 - edge * 0.36)
+      this.ctx.globalAlpha = this.opacityValue || Math.max(0.05, 0.58 - edge * 0.36)
       this.ctx.fillStyle = accent
       this.ctx.fillRect(Math.round(point.x), Math.round(point.y), point.size, point.size)
     })

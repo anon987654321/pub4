@@ -7,22 +7,23 @@
     starts on its first slide with no script and no scroll position to restore. %>
 <section class="amber-looks" aria-label="<%= t("home.looks.title") %>">
   <% looks.each_with_index do |look, index| %>
-    <% name = look.name.presence || t("home.looks.look", number: index + 1) %>
+    <% name = look.name %>
     <section class="amber-look" aria-labelledby="amber-look-<%= index %>">
       <h2 class="amber-look-title" id="amber-look-<%= index %>"><%= name %></h2>
       <div class="amber-look-stage">
         <%# The dressing room's particle mannequin, the same body: its controller
             draws the canvas into this box, and --particle-ink paints it grey. %>
-        <div class="amber-look-figure" data-controller="particle-mannequin" aria-hidden="true"></div>
+        <div class="amber-look-figure" data-controller="particle-mannequin" data-particle-mannequin-count-value="1800" data-particle-mannequin-opacity-value="0.9" aria-hidden="true"></div>
         <div class="amber-look-track" tabindex="0" role="group" aria-label="<%= t("home.looks.swipe", name: name) %>">
-          <% ([ [ t("home.looks.whole"), look.garments ] ] + look.garments.map { |garment| [ garment.title, [ garment ] ] }).each do |caption, garments| %>
+          <% slides = [ [ t("home.looks.whole"), look.garments ] ] + look.garments.map { |garment| [ garment.title, [ garment ] ] } %>
+          <% slides.each_with_index do |(caption, garments), position| %>
             <figure class="amber-look-slide">
               <div class="amber-look-body">
                 <% garments.each do |garment| %>
                   <span class="look-zone look-zone--<%= garment.zone %>"><%= garment_silhouette(garment) %></span>
                 <% end %>
               </div>
-              <figcaption><%= caption %></figcaption>
+              <figcaption><%= caption %> <span class="amber-look-position"><%= t("home.looks.position", index: position + 1, count: slides.size) %></span></figcaption>
             </figure>
           <% end %>
         </div>

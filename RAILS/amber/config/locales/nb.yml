@@ -103,7 +103,12 @@ nb:
   home:
     looks:
       title: "Fire antrekk fra garderoben"
-      look: "Antrekk %{number}"
+      names:
+        weekend: "Helgetur"
+        studio: "Atelierdag"
+        dinner: "Sen middag"
+        morning: "Bymorgen"
+      position: "%{index} av %{count}"
       whole: "Hele antrekket"
       swipe: "%{name}: sveip gjennom plaggene"
     dashboard: "Oversikt"

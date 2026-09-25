@@ -11,7 +11,9 @@ checks:
   - {id: chrome.pwa_manifest, in: amber/app/views/layouts/application.html.erb, has: [pwa_manifest]}
   - {id: chrome.logo, in: amber/app/views/layouts/application.html.erb, has: ["shared/logo", amber-logo-home], lack: ["shared/brand_mark"]}
   - {id: chrome.sidebar_nav, in: amber/app/views/shared/_sidebar_nav.html.erb, has: [nav.sign_in]}
-  - {id: chrome.legal, in: amber/app/views/layouts/application.html.erb, has: [site_legal_footer]}
+  # amber's own footer carries the legal links and the affiliate note the shared
+  # legal row did, so the layout no longer renders that row as well.
+  - {id: chrome.legal, in: amber/app/views/shared/_footer.html.erb, has: [privacy_path, terms_path, cookies_path, shared/affiliate_disclosure]}
   # --- design ---
   - {id: design.stack_entry, in: amber/app/assets/stylesheets/application.scss, has: ['@use "stack"']}
   # The luxury item card, the guest compose box and the dressing room, by the
@@ -22,12 +24,10 @@ checks:
   - {id: design.focus_ring, in: shared/app/assets/stylesheets/_focus_ring.scss, has: [":focus-visible"]}
   - {id: design.no_dialog_compose, in: amber/app/views/shared/_feed_compose.html.erb, lack: ["<dialog", form-submit, requestSubmit]}
   # --- home / compose / posts ---
-  - {id: home.guest_compose, in: amber/app/views/home/index.html.erb, has: [shared/feed_compose]}
-  # The mannequin moved to its own page (outfits/dressing_room, covered by
-  # outfits.dressing_room below); what the home page renders for a signed-out
-  # visitor is the four browse rows.
-  - {id: home.wardrobe_showcase, in: amber/app/views/home/index.html.erb, has: [shared/wardrobe_showcase]}
-  - {id: home.empty_posts, in: amber/app/views/home/index.html.erb, has: [empty.no_posts_yet, empty.guest_post]}
+  # The home page is the mark, four looks on the particle mannequin and the
+  # footer (operator, 2026-09-25); the compose box lives with the feed.
+  - {id: home.looks, in: amber/app/views/home/_looks.html.erb, has: [particle-mannequin, amber-look-track, amber-look-slide]}
+  - {id: posts.guest_compose, in: amber/app/views/posts/index.html.erb, has: [shared/feed_compose, empty.no_posts_yet, empty.guest_post]}
   - {id: compose.box, in: amber/app/views/shared/_feed_compose.html.erb, has: [amber-compose-box, "text_area :body", posts_path, feed-compose]}
   - {id: compose.guest_anon, in: amber/app/views/shared/_feed_compose.html.erb, has: [anonymous, guest_hint]}
   - {id: compose.expand, in: amber/app/views/shared/_feed_compose.html.erb, has: [feed-compose#expand, amber-compose-footer]}
@@ -66,7 +66,6 @@ checks:
   # --- demo ---
   - {id: demo.index, in: amber/app/views/demo_wardrobe/index.html.erb, has: [demo]}
   - {id: demo.show, in: amber/app/views/demo_wardrobe/show.html.erb, has: [item]}
-  - {id: demo.home_cta, in: amber/app/views/home/index.html.erb, has: [demo_wardrobe_path]}
   # --- AI ---
   - {id: ai.capsule, in: amber/app/views/ai/capsule.html.erb, has: [capsule]}
   - {id: ai.palette, in: amber/app/views/ai/color_palette.html.erb, has: [color]}
@@ -92,7 +91,7 @@ checks:
   - {id: pwa.manifest, in: amber/app/views/pwa/manifest.json.erb, has: [name, icons]}
   - {id: pwa.sw, in: amber/app/views/pwa/service-worker.js, has: [offline]}
   # --- live ---
-  - {id: live.home, live: {path: /, status: 200, has: [amber-compose-box, skip-link, main-content], lack: [Routing Error, "Exception"]}}
+  - {id: live.home, live: {path: /, status: 200, has: [amber-look, skip-link, main-content], lack: [Routing Error, "Exception"]}}
   # Two documented answers, and DemoWardrobeController#require_demo! is where
   # they are written: the capsule renders when the demo wardrobe is seeded, and
   # redirects to root with an alert when it is not. vm23 has the seed and a
@@ -102,4 +101,4 @@ checks:
   - {id: live.demo, live: {path: /demo, status: [200, 302], redirect_to: /, has: [demo]}}
   - {id: live.sign_in, live: {path: /session/new, status: 200, has: [session]}}
   - {id: live.sign_up, live: {path: /registration/new, status: 200, has: [registration]}}
-  - {id: live.posts, live: {path: /posts, status: 200, has: [post]}}
+  - {id: live.posts, live: {path: /posts, status: 200, has: [post, amber-compose-box]}}

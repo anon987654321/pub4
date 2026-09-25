@@ -104,7 +104,12 @@ en:
   home:
     looks:
       title: "Four looks from the wardrobe"
-      look: "Look %{number}"
+      names:
+        weekend: "Weekend walk"
+        studio: "Studio day"
+        dinner: "Late dinner"
+        morning: "City morning"
+      position: "%{index} of %{count}"
       whole: "The whole look"
       swipe: "%{name}: swipe through the pieces"
     dashboard: "Dashboard"

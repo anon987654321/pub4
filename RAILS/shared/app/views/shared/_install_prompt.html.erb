@@ -5,7 +5,8 @@
     First of the three onboarding prompts; the menu coach and the push button
     both wait behind it. See shared/frontend/onboarding_queue.js.
 
-    Locals: title (optional), body (optional). Defaults stay generic for unknown hosts. %>
+    Locals: title (optional), body (optional), after_engagement (optional:
+    wait for a scroll, tap or key before showing). Defaults stay generic for unknown hosts. %>
 <% title = local_assigns[:title].presence || t("install.title") %>
 <% body = local_assigns[:body].presence || t("install.body") %>
 <%# role="region" with a name, because this sits outside main and outside every
@@ -19,6 +20,7 @@
      aria-label="<%= title %>"
      hidden
      data-controller="install-prompt"
+     data-install-prompt-after-engagement-value="<%= local_assigns.fetch(:after_engagement, false) %>"
      data-install-prompt-ios-safari-value="<%= t("install.ios_safari") %>"
      data-install-prompt-ios-chrome-value="<%= t("install.ios_chrome") %>"
      data-install-prompt-android-value="<%= t("install.android") %>">

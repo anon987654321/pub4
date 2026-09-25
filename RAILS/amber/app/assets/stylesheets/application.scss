@@ -389,7 +389,8 @@ h2 {
   aspect-ratio: 410 / 108;
 }
 
-.amber-footer-legal {
+.amber-footer-legal,
+.amber-footer-mark .affiliate-fine {
   margin-top: var(--space-4);
   font-size: var(--luxury-font-meta);
   color: var(--luxury-muted);
@@ -1886,6 +1887,11 @@ main#main-content .amber-look-title {
   flex: 0 0 100%;
   margin: 0;
   scroll-snap-align: start;
+}
+
+.amber-look-position {
+  margin-inline-start: var(--space-2);
+  color: var(--luxury-muted);
 }
 
 .amber-look-slide figcaption {

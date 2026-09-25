@@ -5,6 +5,7 @@ import { announceInstallVisible } from "pub4/onboarding"
 // The unscoped key stays readable so a dismissal from before the key was
 // namespaced still counts; only new writes are scoped.
 const LEGACY_DISMISSED_KEY = "install-prompt-dismissed"
+const ENGAGEMENT = [ "scroll", "pointerdown", "keydown" ]
 
 // A phone that is not already installed gets asked on the first visit.
 // beforeinstallprompt is Chrome's native dialog, not a gate: it often never
@@ -12,7 +13,7 @@ const LEGACY_DISMISSED_KEY = "install-prompt-dismissed"
 // why opening brgen.no in Chrome on a phone showed nothing.
 export default class extends Controller {
   static targets = [ "body", "installButton" ]
-  static values = { iosSafari: String, iosChrome: String, android: String }
+  static values = { iosSafari: String, iosChrome: String, android: String, afterEngagement: Boolean }
 
   connect() {
     this.deferredPrompt = null
@@ -24,13 +25,30 @@ export default class extends Controller {
       this.reveal()
     }
 
-    window.addEventListener("beforeinstallprompt", this.onBeforeInstall)
-    this.prepareCopy()
+  window.addEventListener("beforeinstallprompt", this.onBeforeInstall)
+  this.prepareCopy()
+
+  // afterEngagement: the page's first screen is the page (amber's home is
+  // its mark in white), so the prompt waits for a scroll, a tap or a key.
+  this.engaged = !this.afterEngagementValue
+  this.onEngage = () => {
+    this.engaged = true
+    this.stopListening()
     this.reveal()
   }
+  if (!this.engaged) {
+    for (const type of ENGAGEMENT) window.addEventListener(type, this.onEngage, { once: true, passive: true })
+  }
+  this.reveal()
+}
+
+stopListening() {
+  for (const type of ENGAGEMENT) window.removeEventListener(type, this.onEngage)
+}
 
   disconnect() {
     window.removeEventListener("beforeinstallprompt", this.onBeforeInstall)
+    this.stopListening()
   }
 
   canShow() {
@@ -69,7 +87,7 @@ export default class extends Controller {
   }
 
   reveal() {
-    if (!this.canShow()) return
+    if (!this.engaged || !this.canShow()) return
     if (!this.element.hidden) return
 
     this.element.hidden = false
