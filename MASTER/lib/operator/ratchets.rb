@@ -397,12 +397,13 @@ rescue StandardError => e
 end
 
 def command_surface_names
-  cli = File.read(File.join(MASTER, "lib/cli/command_registry.rb"))
-  control = File.read(File.join(MASTER, "lib/cli/command_registry/control_commands.rb"))
+  # The registry and whatever files it is split into, by glob: naming one
+  # split file made the whole row unreadable the day that file was folded.
+  registry = [File.join(MASTER, "lib/cli/command_registry.rb"), *Dir[File.join(MASTER, "lib/cli/command_registry/*.rb")]]
   router = File.read(File.join(MASTER, "lib/cli/turn_router.rb"))
   operator = File.read(File.join(MASTER, "bin/operator"))
 
-  verbs = (cli + control).scan(/^\s+"([a-z_?]+)" => command\(/).flatten
+  verbs = registry.map { |path| File.read(path) }.join.scan(/^\s+"([a-z_?]+)" => command\(/).flatten
   inferred = router[/PIPELINE_COMMANDS = %w\[([^\]]+)\]/, 1].to_s.split
   slashes = router[/PIPELINE_SLASH = %w\[([^\]]+)\]/, 1].to_s.split
   subcommands = operator.scan(/^when "([a-z_?-]+)"/).flatten
