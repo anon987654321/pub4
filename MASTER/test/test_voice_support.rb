@@ -64,7 +64,7 @@ class TestVoiceSupport < Minitest::Test
       PB.stub(:available?, true) do
         PB.stub(:ensure_worker, queued) do
           PB.speak("   ")
-          PB.speak("x" * (PB::MAX_SPOKEN_CHARS + 1))
+          PB.speak("x" * 12000)
           PB.speak(" hello ")
         end
       end
