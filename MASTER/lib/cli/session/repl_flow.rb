@@ -95,7 +95,6 @@ module Master
           model: @refs.agent.model,
           phase: @refs.session.phase,
           context: @refs.session.token_est.to_i / CONTEXT_STEP,
-          cost: @refs.session.cost.to_f.round(2),
         }
         return false if @last_status_state == state
 
