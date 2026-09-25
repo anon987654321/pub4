@@ -48,20 +48,26 @@ module Master
 
       def context
         load_laws!
-        IDS.map { |id| format(id, Law.rules.fetch(id)) }.join("\n")
+        IDS.map { |id| line(id) }.join("\n")
       end
 
+      # law/ keys its registry by symbol. DENSITY, PROXIMITY, LINEARITY,
+      # ABSTRACTION and SINGULARITY are the axioms under rules.yml `laws:`, not
+      # law/ files, so they are read from there.
       def load_laws!
-        return if defined?(Law) && Law.rules.key?(IDS.first)
-
         require File.expand_path("../../law/law", __dir__)
-        Law.load_all(File.expand_path("../../law", __dir__))
-        missing = IDS.reject { |id| Law.rules.key?(id) }
+        Law.load_all(File.expand_path("../../law", __dir__)) unless Law.rules.key?(IDS.first.to_sym)
+        missing = IDS.reject { |id| Law.rules.key?(id.to_sym) || axioms.key?(id) }
         raise "visual usability law missing: #{missing.join(", ")}" unless missing.empty?
       end
 
-      def format(id, law)
-        "#{id}: #{law.ask} Fix: #{law.fix}"
+      def axioms
+        @axioms ||= Master.load_yaml(Master::RULES_PATH).fetch("laws", {})
+      end
+
+      def line(id)
+        law = Law.rules[id.to_sym]
+        law ? "#{id}: #{law.ask} Fix: #{law.fix}" : "#{id}: #{axioms.fetch(id).fetch("principle")}"
       end
     end
   end
