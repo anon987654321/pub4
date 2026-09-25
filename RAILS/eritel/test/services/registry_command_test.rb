@@ -33,6 +33,7 @@ class RegistryCommandTest < ActiveSupport::TestCase
     assert_equal first.id, second.id
     assert_equal 1, RegistryOperation.count
     assert_equal "succeeded", second.state
+    assert_equal first.request_id, @order.reload.registry_request_id
   end
 
   test "successful creation activates the order and domain" do
