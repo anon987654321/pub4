@@ -1,5 +1,57 @@
 # Preprompt
 
+## Canonical contract
+
+### Purpose
+
+Construct governed image-generation requests from structured photographic
+vocabularies, model capabilities, and explicit operator choices.
+
+### Inputs
+
+Prompt text, named photographic vocabularies, model selection, optional source
+images for edits, deterministic batch settings, and provider credentials.
+
+### Outputs
+
+Provider results, downloaded local artifacts when requested, provenance
+sidecars, capability reports, and explicit provider failures.
+
+### Invocation
+
+Use `ruby MASTER/tools/preprompt/preprompt.rb <command>`.
+
+### Architecture
+
+`preprompt.rb` is the request boundary. `lib/craft.rb` owns vocabulary and
+composition; provider/model data is declared in the tool and verified against
+live schemas when that check is deliberately run.
+
+### Data and state
+
+Prompts and manifests are source/provenance. Credentials, provider responses,
+temporary downloads, and caches stay outside the repository unless explicitly
+promoted.
+
+### Security boundary
+
+Treat provider schemas, URLs, prompts, images, and model identifiers as
+untrusted. Validate redirects and destinations, bound downloads and request
+size, use structured subprocesses, and never deserialize or execute remote data.
+
+### Validation
+
+Unknown vocabulary values, unsupported model inputs, missing source images,
+missing credentials, and provider failures must be explicit failures. Schema
+audits report inability to measure rather than passing silently.
+
+### MASTER integration
+
+Preprompt is a canonical MASTER tool. MASTER governs routing and lifecycle;
+Preprompt owns photographic vocabulary, model mapping, request construction,
+and artifact provenance.
+
+
 **A photograph is a set of decisions, and preprompt makes each of them
 nameable.** It is MASTER's noninteractive Replicate boundary: it generates
 images, downloads a result when an output path is asked for, searches the
@@ -239,4 +291,4 @@ ruby MASTER/tools/preprompt/preprompt.rb capabilities
 ruby MASTER/tools/preprompt/preprompt.rb vocab-check
 ruby MASTER/tools/preprompt/preprompt.rb generate --prompt "Bergen rain" --dry-run
 
-Use MASTER/tools/preprompt in new scripts and documentation. STUDIO/preprompt is a retired path.
+Use MASTER/tools/preprompt in new scripts and documentation. MASTER/tools/preprompt is a retired path.
