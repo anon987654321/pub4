@@ -89,63 +89,6 @@ that clear orbital debris or microplastic from the sea. The saucer was never the
 goal, only a distant phenotype. What we ask Norway to fund is the first rung —
 the mind, and the clean ground it stands on.
 
-## Executable constitution
-
-`data/rules.yml` is the declarative catalogue: names, provenance, scope, severity, and compatibility metadata. `law/` is the executable constitutional layer: detectors, semantic questions, practice guidance, remedies, and worked examples that can be proved offline.
-
-Migration is being done in batches so each rule remains reversible and auditable. Batches 1–7 have migrated the catalogue’s semantic layer into executable Law definitions covering foundational architecture, design, security, refactoring, user experience, LLM operations, and prose. Domain-specific lexical and structural detectors remain in their existing `law/ruby.rb`, `law/javascript.rb`, `law/shell.rb`, `law/css.rb`, and `law/html.rb` homes until those consumers are migrated without losing deterministic coverage.
-
-The executable Law layer now contains 140 universal definitions plus four Rails-specific semantic definitions in `law/rails.rb`, with no duplicate `Law.define` IDs across the current law sources. The semantic implementation has been retired from YAML; the remaining catalogue fields describe rules but no longer contain their executable semantic prompts or remedies. The next stage is consolidation of the remaining deterministic and structural registry detectors under Law without losing coverage.
-
-## Reliability kernel
-
-MASTER treats completion and survivability as separate claims.
-
-The constitutional core is designed to keep a truthful runtime alive when optional
-services fail. `/fix` journals its run before the first pass, records each pass
-durably, marks crashes explicitly, and replays an interrupted pass on the next
-invocation instead of silently skipping work. Concurrent fix runs for different
-targets are refused rather than sharing recovery state.
-
-Long-running budgets use a monotonic clock, so an NTP step or manual wall-clock
-change cannot extend a fix beyond its elapsed-time budget. File content still uses
-the existing atomic-write and checkpoint mechanisms; the journal records
-lifecycle state, not a second copy of repository contents.
-
-The intended invariant is simple: MASTER may be **healthy**, **degraded**, or
-**failed**, but an unavailable model, TTS worker, network path, or other optional
-capability must never be reported as successful execution.
-
-A `/fix` pass is transactional across its owned files: either its validated changes
-are delivered as one unit, or the transaction restores the exact observed pre-pass
-state. A concurrent edit is detected rather than overwritten. Successful delivery
-promotes the resulting Git commit to a durable known-good runtime; `/runtime rollback`
-only operates on a clean checkout and returns to that recorded commit.
-
-Optional services are supervised with a bounded restart budget, and expensive model
-work is shed when measured CPU load, RSS, file-descriptor, thread, or disk pressure
-reaches critical limits. Deterministic work can therefore continue under pressure
-without turning a resource emergency into a restart storm.
-
-## Rendered convergence
-
-Source-clean is not improvement-clean. Every `/fix` pass starts with deterministic
-observation and, for `RAILS/` or `MASTER/web`, a real rendered observation. MASTER captures real browser surfaces through the existing
-GeometryProbe/CDP gates, gives the screenshot and measured geometry to the UI
-council, turns the council's selected repairs into ordinary fix-loop findings,
-and renders again on the next pass. Typography, hierarchy, spacing,
-alignment, density, composition and responsive behavior are therefore part of
-convergence, not a final human-afterthought.
-
-A source-clean non-web target is treated the same way conceptually: MASTER makes
-one anchored Council improvement pass looking for real simplification, naming,
-duplication, complexity, prose, accessibility and layout-adjacent micro-smells,
-then feeds selected repairs through the ordinary RuleLoop. Unanchored taste,
-speculative redesign and hallucinated defects never become automatic fixes.
-
-The browser is evidence, not decoration: when the capture or visual council
-cannot run, the pass says INCONCLUSIVE rather than claiming DONE.
-
 ## Under the hood
 
 Wake it with one line and it comes up like an old Unix machine, telling you what
@@ -208,13 +151,58 @@ person. Allow applies the effect against a checkpoint it undoes the moment the
 effect errs. A fourth verdict, Revise, rewrites the effect inside admit and
 never reaches the loop. Everything past that is detail.
 
-Read [AGENTS](AGENTS.md), which routes into the governing law and closes on what
-MASTER refuses and why. Anything strange on purpose says so in a comment beside
-it, and the open work lives in [one backlog](../TODO.md). Licensed MIT.
+**Executable constitution.** `data/rules.yml` is the declarative catalogue: names, provenance, scope, severity, and compatibility metadata. `law/` is the executable constitutional layer: detectors, semantic questions, practice guidance, remedies, and worked examples that can be proved offline.
 
-## Android and Termux
+Migration is being done in batches so each rule remains reversible and auditable. Batches 1–7 have migrated the catalogue’s semantic layer into executable Law definitions covering foundational architecture, design, security, refactoring, user experience, LLM operations, and prose. Domain-specific lexical and structural detectors remain in their existing `law/ruby.rb`, `law/javascript.rb`, `law/shell.rb`, `law/css.rb`, and `law/html.rb` homes until those consumers are migrated without losing deterministic coverage.
 
-MASTER detects Android/Termux at boot and exposes a truthful device capability layer through `Master::Device`. When the official Termux:API app and the `termux-api` package are installed, the runtime can query battery, camera information, sensors, audio information and location, and can explicitly capture a camera photo or microphone recording. The hardware layer never claims permission or hardware access merely because a command exists; failures are reported as unavailable instead of simulated success.
+The executable Law layer now contains 140 universal definitions plus four Rails-specific semantic definitions in `law/rails.rb`, with no duplicate `Law.define` IDs across the current law sources. The semantic implementation has been retired from YAML; the remaining catalogue fields describe rules but no longer contain their executable semantic prompts or remedies. The next stage is consolidation of the remaining deterministic and structural registry detectors under Law without losing coverage.
+
+**Reliability kernel.** MASTER treats completion and survivability as separate claims.
+
+The constitutional core is designed to keep a truthful runtime alive when optional
+services fail. `/fix` journals its run before the first pass, records each pass
+durably, marks crashes explicitly, and replays an interrupted pass on the next
+invocation instead of silently skipping work. Concurrent fix runs for different
+targets are refused rather than sharing recovery state.
+
+Long-running budgets use a monotonic clock, so an NTP step or manual wall-clock
+change cannot extend a fix beyond its elapsed-time budget. File content still uses
+the existing atomic-write and checkpoint mechanisms; the journal records
+lifecycle state, not a second copy of repository contents.
+
+The intended invariant is simple: MASTER may be **healthy**, **degraded**, or
+**failed**, but an unavailable model, TTS worker, network path, or other optional
+capability must never be reported as successful execution.
+
+A `/fix` pass is transactional across its owned files: either its validated changes
+are delivered as one unit, or the transaction restores the exact observed pre-pass
+state. A concurrent edit is detected rather than overwritten. Successful delivery
+promotes the resulting Git commit to a durable known-good runtime; `/runtime rollback`
+only operates on a clean checkout and returns to that recorded commit.
+
+Optional services are supervised with a bounded restart budget, and expensive model
+work is shed when measured CPU load, RSS, file-descriptor, thread, or disk pressure
+reaches critical limits. Deterministic work can therefore continue under pressure
+without turning a resource emergency into a restart storm.
+
+**Rendered convergence.** Source-clean is not improvement-clean. Every `/fix` pass starts with deterministic
+observation and, for `RAILS/` or `MASTER/web`, a real rendered observation. MASTER captures real browser surfaces through the existing
+GeometryProbe/CDP gates, gives the screenshot and measured geometry to the UI
+council, turns the council's selected repairs into ordinary fix-loop findings,
+and renders again on the next pass. Typography, hierarchy, spacing,
+alignment, density, composition and responsive behavior are therefore part of
+convergence, not a final human-afterthought.
+
+A source-clean non-web target is treated the same way conceptually: MASTER makes
+one anchored Council improvement pass looking for real simplification, naming,
+duplication, complexity, prose, accessibility and layout-adjacent micro-smells,
+then feeds selected repairs through the ordinary RuleLoop. Unanchored taste,
+speculative redesign and hallucinated defects never become automatic fixes.
+
+The browser is evidence, not decoration: when the capture or visual council
+cannot run, the pass says INCONCLUSIVE rather than claiming DONE.
+
+**Android and Termux.** MASTER detects Android/Termux at boot and exposes a truthful device capability layer through `Master::Device`. When the official Termux:API app and the `termux-api` package are installed, the runtime can query battery, camera information, sensors, audio information and location, and can explicitly capture a camera photo or microphone recording. The hardware layer never claims permission or hardware access merely because a command exists; failures are reported as unavailable instead of simulated success.
 
 Install both the Termux:API application and the `termux-api` package before expecting Android hardware access. The official Termux project documents the add-on and its command-line package separately.
 
@@ -242,30 +230,25 @@ Then:
 
 Location is explicit rather than a boot probe because it is a user-sensitive capability. Camera and microphone operations are explicit too. Termux:API itself mediates Android permissions; for example, camera access can trigger the Android camera permission flow.
 
-### Android perception
-
-On Android/Termux, MASTER can continuously publish normalized device observations onto the same EventBus consumed by cognition. The stream includes battery, Wi-Fi/network state, the available sensor inventory, and one-shot readings for accelerometer, gyroscope, magnetometer, light, and proximity when those sensors exist. Events are namespaced as `device:battery`, `device:network`, `device:sensors`, `device:accelerometer`, `device:gyroscope`, `device:magnetometer`, `device:light`, and `device:proximity`.
+**Android perception.** On Android/Termux, MASTER can continuously publish normalized device observations onto the same EventBus consumed by cognition. The stream includes battery, Wi-Fi/network state, the available sensor inventory, and one-shot readings for accelerometer, gyroscope, magnetometer, light, and proximity when those sensors exist. Events are namespaced as `device:battery`, `device:network`, `device:sensors`, `device:accelerometer`, `device:gyroscope`, `device:magnetometer`, `device:light`, and `device:proximity`.
 
 The perception loop is bounded and stoppable. It does not automatically activate the camera, microphone, or location. Those remain explicit operations. Set `MASTER_DEVICE=0` to disable Android perception for a process.
 
-## Whole-tree verification
+**Whole-tree verification.** From `MASTER/`, `rake test:all_trees` discovers the repository's top-level trees, checks Ruby syntax, parses YAML and JSON, and runs every discovered Ruby test file under a tree's `test/` directory. It is a smoke-and-contract gate across MASTER, OPENBSD, RAILS, STUDIO and any future top-level tree; it does not pretend that syntax or smoke tests replace application-specific integration tests.
 
-From `MASTER/`, `rake test:all_trees` discovers the repository's top-level trees, checks Ruby syntax, parses YAML and JSON, and runs every discovered Ruby test file under a tree's `test/` directory. It is a smoke-and-contract gate across MASTER, OPENBSD, RAILS, STUDIO and any future top-level tree; it does not pretend that syntax or smoke tests replace application-specific integration tests.
+**Snapshots.** Run `/snapshot` to write one source snapshot per governed tree: `snapshot_MASTER.md`, `snapshot_OPENBSD.md`, `snapshot_RAILS.md`, and `snapshot_STUDIO.md`. Snapshots include meaningful text source only: dot files and directories, temporary/generated/dependency trees, and binary/media files are excluded. The command is deterministic apart from files that change while it runs. Generated snapshots are artifacts, not a second source of truth.
 
-## Snapshots
-
-Run `/snapshot` to write one source snapshot per governed tree: `snapshot_MASTER.md`, `snapshot_OPENBSD.md`, `snapshot_RAILS.md`, and `snapshot_STUDIO.md`. Snapshots include meaningful text source only: dot files and directories, temporary/generated/dependency trees, and binary/media files are excluded. The command is deterministic apart from files that change while it runs. Generated snapshots are artifacts, not a second source of truth.
-
-## Aegis and cognition
-
-Aegis remains a design horizon, not a scaffold. The buildable part today is the drift model: a pure function from entry position, sea state, current and elapsed time to a probable-position ellipse, testable against published search-and-rescue drift data. Marine sensing stays deferred until there is real hardware and a reader for every proposed sensor; placeholder sensing would violate anti-simulation.
+**Aegis and cognition.** Aegis remains a design horizon, not a scaffold. The buildable part today is the drift model: a pure function from entry position, sea state, current and elapsed time to a probable-position ellipse, testable against published search-and-rescue drift data. Marine sensing stays deferred until there is real hardware and a reader for every proposed sensor; placeholder sensing would violate anti-simulation.
 
 The cognition layer observes EventBus activity, scores surprise and salience, keeps a bounded working set, maintains bounded affect and self-model state, learns first-order event transitions, and periodically writes reflections to long-term memory. These are engineering proxies, not evidence of consciousness. The self-model records phenomenal consciousness as unknown. Perception stays in memory; tick! is the writer and publisher, persistence is bounded, and state lives under .master/cognition/state.yml.
 
-## Contract examples
-
-A good MASTER change reads the target and nearby tests first, changes one concern, keeps existing naming and error style, adds the smallest relevant proof, and reports exact checks run. A bad change renames registries merely because they look alike, moves a live directory without tracing readers, skips checks because the change is called documentation, or marks backlog work complete without evidence.
+**Contract examples.** A good MASTER change reads the target and nearby tests first, changes one concern, keeps existing naming and error style, adds the smallest relevant proof, and reports exact checks run. A bad change renames registries merely because they look alike, moves a live directory without tracing readers, skips checks because the change is called documentation, or marks backlog work complete without evidence.
 
 A finished TODO entry is deleted rather than ticked; evidence belongs in the commit and remaining work stays in the repo-root TODO.md. A proposed refactor is refused when its consumer graph or evidence argues against it. Scanner findings distinguish real violations from false positives instead of editing code merely to make a pattern disappear.
 
 The command and file surface is deliberately smaller than the implementation. When a detail becomes operationally important, put it in executable configuration, a test, or the nearest living README rather than creating another Markdown file.
+
+Read [AGENTS](AGENTS.md), which routes into the governing law and closes on what
+MASTER refuses and why. Anything strange on purpose says so in a comment beside
+it, and the open work lives in [one backlog](../TODO.md). Licensed MIT.
+
