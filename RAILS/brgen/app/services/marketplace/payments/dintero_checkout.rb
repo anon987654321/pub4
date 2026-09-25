@@ -35,6 +35,19 @@ module Marketplace
           raise ProviderError, e.message
         end
 
+        def ensure_sellers_ready!(orders)
+          Array(orders).each do |order|
+            listing = order.listing
+            store = listing&.store
+            raise SellerNotReady, "Dintero seller is not configured for listing #{order.listing_id}" unless store&.dintero_ready?
+          end
+          true
+        end
+
+        def supported_listing?(listing)
+          listing&.store&.dintero_ready? == true
+        end
+
         def capture!(order:)
           raise NotConfigured, "Dintero" unless configured?
           raise ArgumentError, "order is not a Dintero authorization" unless order.payment_provider == "dintero"
