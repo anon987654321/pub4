@@ -107,13 +107,15 @@ module Marketplace
             end.map(&:to_s)
             return payable if line_ids.empty?
 
-            payable.order_lines.where(id: line_ids).where(payment_status: "paid").find_each do |order|
-              order.update_columns(
-                payment_status: "refunded",
-                dintero_transaction_id: transaction_id,
-                updated_at: Time.current
-              )
-              mark_return_refunded!(order, transaction_id)
+            payable.transaction do
+              payable.order_lines.where(id: line_ids).where(payment_status: "paid").find_each do |order|
+                order.update_columns(
+                  payment_status: "refunded",
+                  dintero_transaction_id: transaction_id,
+                  updated_at: Time.current
+                )
+                mark_return_refunded!(order, transaction_id)
+              end
             end
           else
             payable.update!(
@@ -137,14 +139,16 @@ module Marketplace
             end.map(&:to_s)
             return payable if line_ids.empty?
 
-            payable.order_lines.where(id: line_ids).find_each do |order|
-              order.update_columns(
-                dintero_transaction_id: transaction_id,
-                updated_at: Time.current
-              )
-              order.mark_paid!(reference: payable.payment_reference)
+            payable.transaction do
+              payable.order_lines.where(id: line_ids).find_each do |order|
+                order.update_columns(
+                  dintero_transaction_id: transaction_id,
+                  updated_at: Time.current
+                )
+                order.mark_paid!(reference: payable.payment_reference)
+              end
+              payable.sync_payment_status!
             end
-            payable.sync_payment_status!
           else
             payable.mark_paid!(reference: payable.payment_reference)
           end
