@@ -148,8 +148,10 @@ module Deploy
 
     def content_stale?(sources, build, result, app_name)
       allowed = Hash.new { |h, k| h[k] = [] }
+      interpolated = []
       sources.each do |path|
         body = File.read(path)
+        interpolated.concat(interpolated_tokens(body))
         token_literals(body).each { |name, values| allowed[name].concat(values) }
         # --bg: #{$bg} compiles to a hex the custom property never spells.
         # The mixin default `$bg: #17161c` is that hex, the same source
@@ -163,6 +165,10 @@ module Deploy
         # hex per vertical, so "not in the mixin default" is the design.
         next if %w[accent accent-hover].include?(name)
         next if allowed[name].empty?
+        # A token some source also sets by interpolation compiles to hexes no
+        # literal spells, so its literals are not the whole list: --accent-ink
+        # is #fff on markedsplass and #{$bg} or the vertical ink elsewhere.
+        next if interpolated.include?(name)
 
         extra = values - allowed[name]
         next if extra.empty?
@@ -183,6 +189,11 @@ module Deploy
         found[name] << value.downcase
       end
       found
+    end
+
+    def interpolated_tokens(body)
+      # TOKEN_DECL stops at the brace, so the interpolation is matched here.
+      body.to_s.scan(/--([\w-]+)\s*:[^;{}]*#\{/).flatten.uniq
     end
 
     def scss_var_literals(body)

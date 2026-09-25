@@ -41,7 +41,7 @@ deploy_tracked_app() {
   # (removed) overlay_brgen_radio_manifest — the function was never defined and the
   # manifest it targeted lives at config/radio_bergen, which the tree sync above
   # already copies. The orphaned call aborted the SKIP_CI deploy path with
-  # "command not found". The full-CI path never called it. See ENGINES.md notes.
+  # "command not found". The full-CI path never called it. See brgen/README.md, which carries the engine recipe.
   doas chown -R "${app_name}:${app_name}" "$APP_DIR"
 
   deploy_status "$app_name" "master scan"

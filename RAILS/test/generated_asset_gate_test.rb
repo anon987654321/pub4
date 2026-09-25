@@ -48,6 +48,18 @@ class GeneratedAssetGateTest < Minitest::Test
     assert result.ok?, result.failures.join
   end
 
+  # The measured case: marketplace spells --accent-ink: #fff, and every other
+  # root interpolates it, so the build's #000000 and #110f19 are not drift.
+  def test_a_token_also_set_by_interpolation_is_not_held_to_its_literals
+    source = <<~'SCSS'
+      :root { --accent-ink: #{$bg}; }
+      body.vertical-marketplace { --accent-ink: #fff; }
+    SCSS
+    result = check(source, "--accent-ink: #000000;\n--accent-ink: #fff;\n")
+
+    assert result.ok?, result.failures.join
+  end
+
   def compile_check(build_css)
     Dir.mktmpdir do |dir|
       build = File.join(dir, "application.css")
