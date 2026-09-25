@@ -32,8 +32,10 @@ class FallbackDriftLintTest < Minitest::Test
     _names, families = LINT.declared_names
 
     refute_empty families, "no interpolated declaration found; this test would prove nothing"
-    assert families.any? { |f| f.match?("--vertical-dating-accent") },
-           "brgen's accent map emits --vertical-<v>-accent; the check must not call it undeclared"
+    # The map emits only the -hover family since 72d575b56 dropped the unread
+    # base declaration; that a family is read matters, not which one.
+    assert families.any? { |f| f.match?("--vertical-dating-accent-hover") },
+           "brgen's accent map emits --vertical-<v>-accent-hover; the check must not call it undeclared"
   end
 
   def test_a_name_written_at_runtime_counts_as_declared

@@ -69,7 +69,8 @@ class GateFailOpenTest < Minitest::Test
   def test_the_summary_names_the_errored_gates_and_does_not_count_them_as_passes
     run_fixture_suite do |out, _status, _ledger|
       assert_includes out, "gates0 at rails: raiser, missing_class errored and blocked nothing", out
-      assert_match(/^gates0 at rails: 2 of 4 passed in \S+, autofix on; raiser, missing_class errored$/, out)
+      # Autofix follows the caller's GATE_AUTOFIX, which this test does not set.
+      assert_match(/^gates0 at rails: 2 of 4 passed in \S+, autofix (?:on|off); raiser, missing_class errored$/, out)
     end
   end
 
@@ -77,7 +78,7 @@ class GateFailOpenTest < Minitest::Test
   # news, and the run should stop.
   def test_strict_errors_promotes_a_crash_to_a_blocking_failure
     run_fixture_suite("GATE_STRICT_ERRORS" => "1") do |out, status, _ledger|
-      assert_match(/^gates0 at rails: 2 of 4 passed in \S+, autofix on; raiser, missing_class failed$/, out)
+      assert_match(/^gates0 at rails: 2 of 4 passed in \S+, autofix (?:on|off); raiser, missing_class failed$/, out)
       assert_equal 1, status.exitstatus, out
     end
   end
