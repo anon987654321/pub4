@@ -29,9 +29,8 @@ module Master
         # single_voice: jenny and persona_affects_text_only: true — one voice is
         # a recorded decision, and this is the one thing that would break it.
         # The machinery is here so the choice is a flag rather than a rewrite.
-        "phrase_language_switching" => false,
-        "phrase_language_voices" => { "nb" => "finn", "en" => nil },
-        "max_chars" => 900,
+        "phrase_language_switching" => true,
+        "phrase_language_voices" => { "nb" => "pernille", "en" => "jenny" },
         "mlx_model" => "mlx-community/chatterbox-fp16",
         "mlx_voice" => "default",
         "exaggeration" => 0.62,
@@ -67,7 +66,7 @@ module Master
       def synthesize(text, voice: nil, style: :auto, rate: nil, pitch: nil, voice_locked: false, style_locked: false)
         cfg = load_config
         clean = Speech.clean_text(text)
-        return if clean.empty? || clean.length < MIN_SYNTHESIZABLE_CHARS
+        return if clean.empty?
 
         emotion = Emotion.analyze(clean)
         melody = Melody.plan(clean, emotion, melodic: melodic_contour?(cfg, emotion), languages: phrase_languages(cfg))
@@ -140,7 +139,7 @@ module Master
 
       def warm_erratic_prosody(voice, clean, style, voice_locked, style_locked, resolved_voice)
         locked_style = style_locked ? style : nil
-        if voice_locked && voice
+        if voice
           pick = WarmErratic.pick_for_voice(voice, clean, style: locked_style)
         else
           pick = WarmErratic.pick(clean)
