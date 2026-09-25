@@ -9,8 +9,6 @@ module Marketplace
     class DinteroClient
       LIVE_API_HOST = "https://api.dintero.com"
       LIVE_CHECKOUT_HOST = "https://checkout.dintero.com"
-      TEST_API_HOST = "https://test.dintero.com"
-      TEST_CHECKOUT_HOST = "https://test.dintero.com"
       TOKEN_TTL_SKEW = 60
 
       class Error < StandardError
@@ -84,25 +82,11 @@ module Marketplace
         end
 
         def api_host
-          explicit = ENV["DINTERO_API_BASE"].to_s.strip
-          return explicit if explicit.present?
-
-          production? && !test_mode? ? LIVE_API_HOST : TEST_API_HOST
+          ENV["DINTERO_API_BASE"].to_s.strip.presence || LIVE_API_HOST
         end
 
         def checkout_host
-          explicit = ENV["DINTERO_CHECKOUT_BASE"].to_s.strip
-          return explicit if explicit.present?
-
-          production? && !test_mode? ? LIVE_CHECKOUT_HOST : TEST_CHECKOUT_HOST
-        end
-
-        def test_mode?
-          ENV["DINTERO_TEST_MODE"].to_s.strip.present?
-        end
-
-        def production?
-          defined?(Rails) && Rails.respond_to?(:env) ? Rails.env.production? : false
+          ENV["DINTERO_CHECKOUT_BASE"].to_s.strip.presence || LIVE_CHECKOUT_HOST
         end
 
         def account_id = ENV.fetch("DINTERO_ACCOUNT_ID").strip
