@@ -66,7 +66,10 @@ module Marketplace
 
           DinteroClient.post(
             "/v1/accounts/#{DinteroClient.account_id}/shopping/orders/#{ERB::Util.url_encode(dintero_order_id)}/captures",
-            { items: [ capture_item(order) ] },
+            {
+              items: [ capture_item(order) ],
+              fee_split: fee_split
+            }.compact,
             idempotency_key: "brgen-capture-order-#{order.id}"
           )
         rescue DinteroClient::Error => error
@@ -206,17 +209,17 @@ module Marketplace
               return_url: return_url,
               callback_url: callback_url
             },
-            profile_id: DinteroClient.profile_id
-          }
+            profile_id: DinteroClient.profile_id,
+            fee_split: fee_split
+          }.compact
         end
 
         def session_item(order)
           {
             line_id: order.id.to_i,
             amount: order.total_cents,
-            splits: split_for(order),
-            fee_split: fee_split
-          }.compact
+            splits: split_for(order)
+          }
         end
 
         def capture_item(order)
