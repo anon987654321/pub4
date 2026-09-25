@@ -4,7 +4,7 @@
 selling alike.** marketplace is a mountable Rails engine served at the
 marketplace subdomain, localised per country — `markedsplass.brgen.no`,
 `marketplace.lsangeles.com`, resolved through
-`Brgen::DomainRegistry::SUBAPP_ALIASES`. `../../ENGINES.md` is the recipe;
+`Brgen::DomainRegistry::SUBAPP_ALIASES`. `../../README.md` is the recipe;
 `../../AGENTS.md` is the topology.
 
 Store owners post product listings across categories, buyers add them to a cart
@@ -16,9 +16,8 @@ optional: true`: with a store it is a shop's product, without one it is a person
 selling a chair. Only the first is built out. The seeds always attach a store,
 there is no separate casual surface, and the storefront chrome wraps both.
 
-Nothing casual lives in the host app either, so do not go looking for it there.
-`brgen/app/models/marketplace.rb` is a table-name-prefix module and the host has
-no listing model at all. What is Craigslist-shaped about brgen is the access
+Nothing casual lives in the host app either, so do not go looking for it there:
+the host has no listing model at all. What is Craigslist-shaped about brgen is the access
 model rather than the catalogue: `ListingPolicy` lets anyone list without signing
 up, and `Shared::Authentication` gives an anonymous visitor a soft `Current.user`
 to do it with. The taxonomy is consumer goods — electronics, clothing, furniture,

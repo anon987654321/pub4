@@ -781,11 +781,6 @@ reads `::User.column_names` in a class body, so eager loading a fresh worktree
 aborts with `Could not find table 'users'` before it reaches anything about
 engines. Run `bin/rails db:prepare` first.
 
-## Engine extraction (done)
-
-`install_frontend_baseline.sh` is deprecated. Prune per-app duplicates of shared
-controllers/partials when found.
-
 ## What is *not* extracted, and why (2026-07-28)
 
 A sweep for byte-identical files across amber/brgen/bsdports found 26 of them —
@@ -857,7 +852,7 @@ The census keeps proposing these, and each was read and refused. The three
 per-app `Current` models stay: amber's and bsdports' are identical six-liners,
 brgen's is a strict superset, and `Current.user` needs a bare constant. The
 `brgen/app/models/user/*_associations.rb` files stay in the host, because
-`brgen/ENGINES.md` keeps `User` there. The `honesty` shelf in
+`brgen/README.md` keeps `User` there. The `honesty` shelf in
 `gates/lib/source/` is three files united by a word, and `gates.yml` addresses
 each by require and class. The ActiveRecord regroups (`item`, `declutter`,
 `community`, `fedi`, `story`) collide — `OutfitItem` as `Item::Outfit` meets

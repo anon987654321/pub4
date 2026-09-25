@@ -10,9 +10,8 @@
 #
 # Why this exists: the browser and live-HTTP gates belong on the deploy host,
 # and vm23 has no headroom to run them (TODO.md item 2). So they ran nowhere,
-# and every gate whose live half was skipped still printed PASSED. `shared/bin/dev`
-# could not fill the gap -- it execs `foreman start -f Procfile.dev`, only amber
-# has a Procfile.dev, and none of the three apps ship bin/dev at all.
+# and every gate whose live half was skipped still printed PASSED. None of the
+# three apps ships bin/dev, so this is the one way to boot them together.
 #
 # Pending migrations are the usual reason a booted app answers 500 rather than
 # 200, so `up` migrates before it waits.

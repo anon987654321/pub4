@@ -141,59 +141,34 @@ else
                "(set BUNDLE_CMD to the intended Bundler executable)"
 end
 
-# Every shared/test file that runs under bare ruby, not a hand-picked six.
+# Every shared/test file, globbed so a new one cannot fall out of a list.
 #
-# The engine's own runner cannot run them: shared/bin/ci requires
-# ../config/boot, which requires bundler/setup, and shared/ has no Gemfile —
-# it is mounted by path into each app. So `ruby bin/ci` aborts with
-# Bundler::GemfileNotFound before Minitest starts, and MASTER's own
-# "a test nothing runs" census (tools/runs.rb) maps shared/bin/ci to
-# shared/test/**/*_test.rb and counts them covered. Measured 2026-09-06:
-# fourteen of the twenty ran nowhere, and three of those fourteen were red —
-# a Rails-only `presence` and `Date.current` in a class written to run without
-# Rails, and an assertion spelling the STUDIO tree in lower case.
-#
-# Listed rather than globbed, because one of them needs an app and the list
-# has to say which: master_embed_helper_test.rb is an ActionView::TestCase and
-# runs below, through brgen.
-%w[
-  test/pwa_design_contract_test.rb
-  test/design_contract_test.rb
-  ../MASTER/web/test/pwa_master_contract_test.rb
-  test/shared_social_routes_test.rb
-  test/i18n_resolution_test.rb
-  shared/test/activity_trackable_test.rb
-  shared/test/lib/design_tokens_test.rb
-  shared/test/lib/vapid_test.rb
-  shared/test/lib/operator/ci_guard_test.rb
-  shared/test/lib/operator/dmesg_test.rb
-  shared/test/lib/operator/deploy_paths_test.rb
-  shared/test/services/account_exporter_test.rb
-  shared/test/services/anonymous_post_test.rb
-  shared/test/services/content_rewriter_test.rb
-  shared/test/services/demo_media_test.rb
-  shared/test/services/dilla_processor_test.rb
-  shared/test/services/discovery_test.rb
-  shared/test/services/domain_event_test.rb
-  shared/test/services/frontend_auditor_test.rb
-  shared/test/services/geo_isolation_test.rb
-  shared/test/services/link_embed_test.rb
-  shared/test/services/live_search_test.rb
-  shared/test/services/newsletter_composer_test.rb
-  shared/test/services/postpro_processor_test.rb
-  shared/test/services/sitemap_builder_test.rb
-  shared/test/services/strunk_white_pass_test.rb
+# The engine has no runner of its own: shared/ has no Gemfile and no
+# application, because it is mounted by path into each app, so this is the
+# only place its tests run. A file that requires test_helper needs a booted
+# app and runs through brgen's bundle; the rest run under bare ruby, beside the
+# RAILS contract tests that guard the engine's wiring.
+BOOTED_SHARED_TESTS, BARE_SHARED_TESTS =
+  Dir.glob("shared/test/**/*_test.rb", base: ROOT).sort
+     .partition { |test| File.read(File.join(ROOT, test)).match?(/^require "test_helper"/) }
+
+[
+  "test/pwa_design_contract_test.rb",
+  "test/design_contract_test.rb",
+  "../MASTER/web/test/pwa_master_contract_test.rb",
+  "test/shared_social_routes_test.rb",
+  "test/i18n_resolution_test.rb",
+  *BARE_SHARED_TESTS,
 ].each do |test|
   run(test, [*RUBY, test], chdir: ROOT)
 end
 
-# The one that needs a booted app, run through brgen's bundle.
 if BUNDLE
-  run("shared master_embed_helper", [*BUNDLE, "exec", *RUBY, "bin/rails", "test",
-                                     "../shared/test/master_embed_helper_test.rb"],
+  run("shared booted tests", [*BUNDLE, "exec", *RUBY, "bin/rails", "test",
+                              *BOOTED_SHARED_TESTS.map { |test| "../#{test}" }],
       chdir: File.join(ROOT, "brgen"))
 else
-  UNCHECKED << "bundle not on PATH — shared/test/master_embed_helper_test.rb skipped (needs a booted app)"
+  UNCHECKED << "bundle not on PATH — #{BOOTED_SHARED_TESTS.join(", ")} skipped (they need a booted app)"
 end
 
 [

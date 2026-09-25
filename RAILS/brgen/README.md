@@ -85,10 +85,7 @@ Marketplace is the only localized subdomain word. Messenger was never extracted.
 brgen main keeps the x.com-style social feed; the marketplace engine owns every
 listing there is; the rest are their own hosts.
 
-This paragraph used to say brgen main also kept "the craigslist/airbnb-style
-personal classifieds". It does not and never did:
-`brgen/app/models/marketplace.rb` is a table-name-prefix module and there is no
-listing model in the host app. Both tiers are one `Marketplace::Listing`, which
+There is no listing model in the host app. Both tiers are one `Marketplace::Listing`, which
 `belongs_to :store, optional: true` — a listing with a store is a shop's
 product, a listing without one is a person selling a chair. The casual tier is
 therefore expressible but not built: no separate surface, no seeds that exercise
