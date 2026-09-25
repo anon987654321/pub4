@@ -13,7 +13,7 @@ export default class extends Controller {
 
     this.ctx = this.canvas.getContext("2d", { alpha: true })
     this.reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false
-    this.points = this.seed()
+    this.points = []
     this.activity = 0.12
     this.pointerX = 0.5
     this.pointerY = 0.42
