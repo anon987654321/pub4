@@ -1,0 +1,49 @@
+name: BRGEN marketplace contracts
+
+on:
+  push:
+    paths:
+      - "RAILS/brgen/**"
+      - "RAILS/gates/**"
+      - "RAILS/apps.yml"
+      - ".github/workflows/brgen-marketplace.yml"
+  pull_request:
+    paths:
+      - "RAILS/brgen/**"
+      - "RAILS/gates/**"
+      - "RAILS/apps.yml"
+      - ".github/workflows/brgen-marketplace.yml"
+  workflow_dispatch:
+
+jobs:
+  contracts:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: RAILS/brgen
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+
+      - name: Dintero and marketplace contract tests
+        env:
+          RAILS_ENV: test
+        run: |
+          bundle exec ruby -Itest test/services/dintero_client_test.rb
+          bundle exec ruby -Itest test/services/dintero_signature_test.rb
+          bundle exec ruby -Itest test/services/dintero_checkout_test.rb
+          bundle exec ruby -Itest test/services/dintero_checkout_contract_test.rb
+          bundle exec ruby -Itest test/services/dintero_hooks_test.rb
+          bundle exec ruby -Itest test/services/dintero_schema_contract_test.rb
+          bundle exec ruby -Itest test/services/dintero_webhook_delivery_test.rb
+          bundle exec ruby -Itest test/controllers/marketplace_returns_test.rb
+
+      - name: Marketplace payout isolation
+        env:
+          RAILS_ENV: test
+        run: bundle exec ruby -Itest test/models/marketplace_payout_test.rb
