@@ -5,7 +5,7 @@ require "open3"
 
 # SWEEP_ROOT, not ROOT. This file is required by test/test_security_sweep.rb,
 # and 25 files in this repo define a bare top-level ROOT, each pointing at a
-# different tree. In one `rake test` process STUDIO/dilla/dilla.rb also defines
+# different tree. In one `rake test` process MASTER/tools/dilla/dilla.rb also defines
 # one, so the two collided: Ruby warned and let the second assignment win, which
 # means whichever loaded last silently gave the other the wrong repo root.
 # The warning was the only thing standing between that and a sweep of the wrong
