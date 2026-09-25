@@ -79,9 +79,9 @@ module Master
           real = sysctl_value("hw.memsize").to_i
           return [] unless real.positive?
 
-          lines = ["real mem = #{real} (#{real / MEGABYTE}MB)"]
-          avail = available_memory_bytes
-          lines << "avail mem = #{avail} (#{avail / MEGABYTE}MB)" if avail.positive?
+          lines = ["real memory = #{real} (#{real / MEGABYTE}MB)"]
+          available = available_memory_bytes
+          lines << "available memory = #{available} (#{available / MEGABYTE}MB)" if available.positive?
           lines
         end
 
