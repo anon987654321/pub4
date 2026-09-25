@@ -10,16 +10,17 @@ class TestOpenbsdTtsChain < Minitest::Test
     refute_includes chain, "chatterbox"
   end
 
+  # No token from anywhere load_token looks: REPLICATE_API_TOKEN,
+  # REPLICATE_API_KEY and the config file. Clearing one variable left the
+  # other two to the machine running the suite.
   def test_attempt_replicate_on_openbsd_without_token
-    token = ENV["REPLICATE_API_TOKEN"]
-    ENV.delete("REPLICATE_API_TOKEN")
     engines = Master::Voice::Engines
-    engines.stub(:openbsd?, true) do
-      refute engines.available?("replicate_kokoro", {})
-      assert engines.attempt?("replicate_kokoro", {})
+    Master::Io::ReplicateClient.stub(:load_token, "") do
+      engines.stub(:openbsd?, true) do
+        refute engines.available?("replicate_kokoro", {})
+        assert engines.attempt?("replicate_kokoro", {})
+      end
     end
-  ensure
-    token.nil? ? ENV.delete("REPLICATE_API_TOKEN") : ENV["REPLICATE_API_TOKEN"] = token
   end
 
   def test_load_config_honors_master_tts_engine_chain_override
