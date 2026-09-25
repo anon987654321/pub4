@@ -10,7 +10,7 @@ module Master
       # was a YAML one-liner in CLAUDE.md that iterated the wrong shape for months.
       #
       # A list, not a copy: it reads data/rules.yml at call time, the same file
-      # `bin/operator rule <ID>` prints a card from. An argument filters by id or
+      # `bin/operator rules <ID>` prints a card from. An argument filters by id or
       # name, so `/rules guard` narrows to the rules that govern guard clauses.
       #
       # Read-only on purpose. The verb that enforces them is /review, and that
@@ -33,7 +33,7 @@ module Master
           kind = rule_enforcement(::Law.rules[rule["id"].to_s.to_sym])
           format("%-28s %-10s %-8s %s", rule["id"], rule["tier"], rule["severity"], kind)
         end
-        ["#{rows.size} of #{rules.size} rules — bin/operator rule <ID> for one in full", *lines].join("\n")
+        ["#{rows.size} of #{rules.size} rules — bin/operator rules <ID> for one in full", *lines].join("\n")
       end
 
       # A rule absent from law/ is enforced by a scan detector in the registry;

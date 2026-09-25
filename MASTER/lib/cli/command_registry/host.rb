@@ -32,7 +32,11 @@ module Master
       end
 
       # /doctor — bin/doctor's report followed by the security audit.
+      # `/doctor device` asks the hardware the host exposes through Termux:API.
       def dispatch_doctor(root, ctx: nil)
+        word, rest = subcommand(ctx)
+        return dispatch_device(root, ctx: rest) if word == "device"
+
         script = File.join(root, "bin", "doctor")
         body = if File.file?(script)
                  out, err, status = Master::Io::Exec.capture3(Gem.ruby, script, chdir: root)

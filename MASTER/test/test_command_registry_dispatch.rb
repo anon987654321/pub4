@@ -33,9 +33,7 @@ class TestCommandRegistryDispatch < Minitest::Test
   # A verb with no page is a command nobody can find, and a page with no verb
   # sends the reader to type something the router cannot resolve.
   def test_help_pages_and_the_built_surface_are_one_set
-    paged = Registry::HELP_TOPICS.keys + Registry::ALIASES.keys
-
-    assert_equal built.keys.sort, paged.sort
+    assert_equal built.keys.sort, Registry::HELP_TOPICS.keys.sort
   end
 
   # A `*_commands` method is a table of verbs. Only control_commands exists,
@@ -47,13 +45,9 @@ class TestCommandRegistryDispatch < Minitest::Test
                  "a new command table has to be merged by build, or it is a verb with no route"
   end
 
-  def test_session_commands_are_registered
-    assert Registry::HELP_TOPICS.key?("sessions")
-    assert Registry::HELP_TOPICS.key?("continue")
-    assert Registry::HELP_TOPICS.key?("fork")
-    assert_equal "continue", Registry::ALIASES["resume"]
-    assert Registry.respond_to?(:dispatch_sessions)
-    assert Registry.respond_to?(:dispatch_continue)
-    assert Registry.respond_to?(:dispatch_fork)
+  def test_session_commands_are_one_verb
+    assert_equal :dispatch_session, built.fetch("session").method_name
+    %w[sessions continue resume fork].each { |gone| refute built.key?(gone), "/#{gone} is /session #{gone}" }
+    assert_includes Registry.help_text("session"), "/session fork"
   end
 end

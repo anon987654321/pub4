@@ -44,17 +44,12 @@ module Master
         d = command_deps(ai:, root:, infra:)
         review_verbs(d).merge(session_verbs(infra[:session], infra[:undo])).merge(
           "status" => command(:dispatch_status, d[:root], d[:fix_loop], d[:bus], d[:git], d[:trace], d[:learnings]),
-          "device" => command(:dispatch_device, d[:root]),
           "commit" => command(:dispatch_commit, ai[:agent], root, review_gate: true),
           "model" => command(:dispatch_model, d[:agent], d[:config], d[:metrics], d[:root]),
-          "auth" => command(:dispatch_auth),
           "plugin" => command(:dispatch_plugin),
           "pair" => command(:dispatch_pair, root),
-          "runtime" => command(:dispatch_runtime, d[:root]),
-          "mission" => command(:dispatch_mission, d[:root]),
           "doctor" => command(:dispatch_doctor, root),
           "rules" => command(:dispatch_rules, root),
-          "law" => command(:dispatch_law),
           "snapshot" => command(:dispatch_snapshot, d[:root]),
           "why" => command(:dispatch_why, d[:agent], d[:root]),
           "help" => command(:help_text, nil),
@@ -67,13 +62,28 @@ module Master
       def session_verbs(session, undo)
         {
           "undo" => command(:dispatch_undo, undo),
-          "rollback" => command(:dispatch_undo, undo),
           "clear" => command(:dispatch_clear, session),
-          "sessions" => command(:dispatch_sessions, session),
-          "continue" => command(:dispatch_continue, session),
-          "resume" => command(:dispatch_continue, session),
-          "fork" => command(:dispatch_fork, session),
+          "session" => command(:dispatch_session, session),
         }
+      end
+
+      # One verb for the conversations, where there were four names for three
+      # acts: bare lists them, `continue` (or `resume`) switches, `fork` branches.
+      def dispatch_session(session, ctx: nil)
+        word, rest = subcommand(ctx)
+        case word
+        when "", "list" then dispatch_sessions(session)
+        when "continue", "resume" then dispatch_continue(session, ctx: rest)
+        when "fork" then dispatch_fork(session, ctx: rest)
+        else "session  session continue <id>  session fork [id]"
+        end
+      end
+
+      # The first word of a verb's arguments, and a ctx carrying the rest, so a
+      # host verb hands a folded one exactly what it was handed before.
+      def subcommand(ctx)
+        word, rest = arg_for(ctx).split(/\s+/, 2)
+        [word.to_s.downcase, { args: rest.to_s }]
       end
 
       # Positional, and the order is load-bearing: Command#dependency_kwargs
@@ -140,7 +150,7 @@ module Master
         return Ground::SubscriptionAuth.login(name) if name && !name.empty?
 
         return Ground::SubscriptionAuth.login(arg) unless arg.include?(" ")
-        "auth  auth status  auth login <claude|chatgpt|grok>"
+        "model auth  model auth status  model auth login <claude|chatgpt|grok>"
       end
 
       def auth_status_lines
@@ -167,7 +177,7 @@ module Master
         when "protocol" then Law::Contract::PROTOCOL.join("\n")
         when "handshake" then JSON.generate(Master::Ground::LawHandshake.new.export)
         else
-          "law  law contract  law full  law digest  law protocol  law handshake"
+          "soul law  soul law contract|full|digest|protocol|handshake"
         end
       end
 
@@ -220,7 +230,7 @@ module Master
         when /\Alocation(?:\s+(gps|network|passive))?\z/
           Master::Device.location(provider: $1).to_json
         else
-          "device  device status  device battery  device camera  device sensors  device audio  device wifi  device volume  device torch [on|off]  device location [gps|network|passive]"
+          "doctor device  status|battery|camera|sensors|audio|wifi|volume|torch [on|off]|location [gps|network|passive]"
         end
       end
 
@@ -273,7 +283,7 @@ module Master
             "goal: #{record["goal"]}",
           ].join("\n")
         else
-          "mission  mission status"
+          "status mission"
         end
       rescue StandardError => e
         "mission0: #{e.class}: #{e.message}"
@@ -297,7 +307,7 @@ module Master
           result = runtime.rollback!
           result.ok? ? result.value!.to_s : result.message
         else
-          "runtime  runtime status  runtime promote  runtime rollback"
+          "status runtime  status runtime promote  status runtime rollback --confirm"
         end
       end
 
@@ -354,8 +364,13 @@ module Master
         results.map { |r| "#{r[:name]}: #{r[:result].ok? ? "ok" : r[:result].message}" }.join("\n")
       end
 
+      # /soul law is the executable law's portable contract: the constitution
+      # read as what an external agent must present.
       def dispatch_soul(soul, ctx: nil)
         arg = arg_for(ctx)
+        word, rest = subcommand(ctx)
+        return dispatch_law(ctx: rest) if word == "law"
+
         case arg
         when "", "show" then soul.summary
         when "version", "changelog" then soul.changelog
@@ -364,7 +379,7 @@ module Master
         when "reject" then soul.reject
         when "rollback" then soul.rollback
         when /\Apropose (.+)\z/ then soul.propose($1.strip)
-        else "soul  soul version  soul diff  soul approve  soul reject  soul rollback  soul propose <rationale>"
+        else "soul  soul version  soul diff  soul approve  soul reject  soul rollback  soul propose <rationale>  soul law"
         end
       end
 

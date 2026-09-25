@@ -31,7 +31,7 @@ def usage
       bin/operator test [<path>...]       smallest complete proof for the paths (default: dirty files)
       bin/operator land -m <msg> <path>...  commit, rebase, re-check, push
       bin/operator worktree <name>|finish own checkout, or finish (rebase, push the branch, do not merge main)
-      bin/operator rule <ID> [--card] [--json] [--corpus MASTER|all] [path...]
+      bin/operator rules <ID> [--card] [--json] [--corpus MASTER|all] [path...]
                                       the rule, its exemption, then what it finds
       bin/operator hooks                  install the shared-tree commit guard
       bin/operator readers <path>         who reaches this file, across all four trees
@@ -242,8 +242,9 @@ when "worktree"
   name = ARGV.shift
   abort("usage: bin/operator worktree <name>|finish [--remove]") if name.to_s.empty?
   exec("sh", File.join(OPENBSD_OPS, "dev", "agent_worktree.sh"), name, *ARGV)
-when "rule"
+when "rules"
   # One rule: what it says, what it spares, and what it finds — in that order.
+  # The same word as the CLI's /rules, which lists them; this is one in full.
   #
   # It printed findings and nothing else, so the one thing a session actually
   # needs before writing a line was the one thing it could not get cheaply.
@@ -262,7 +263,7 @@ when "rule"
   require "yaml"
   require "json"
   id = ARGV.shift.to_s
-  abort("usage: bin/operator rule <ID> [--card] [--json] [--corpus MASTER|all] [path...]") if id.empty?
+  abort("usage: bin/operator rules <ID> [--card] [--json] [--corpus MASTER|all] [path...]") if id.empty?
 
   corpus = "MASTER"
   ARGV.delete_if { |arg| (m = arg.match(/\A--corpus=(.+)\z/)) && (corpus = m[1]) }

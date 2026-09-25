@@ -134,7 +134,7 @@ module Master
         when %r{\A/(?:help|\?)(?:\s+(.+))?\z} then run_help(Regexp.last_match(1))
         when "/exit", "/quit" then exit_cli
         when "/face" then open_face
-        when "/undo", "/rollback" then run_undo
+        when "/undo" then run_undo
         when "/clear" then run_input("/clear")
         else :unhandled
         end

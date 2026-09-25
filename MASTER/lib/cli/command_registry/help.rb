@@ -5,11 +5,9 @@ module Master
     module CommandRegistry
       module_function
 
-      # One topic per registered command, and the registry is the whole list:
-      # `build` returns clear, commit, doctor, fix, help, model, orders, pair,
-      # plugin, review, rollback, rules, soul, status, undo and why, and nothing reaches
-      # Stages::Route. test_command_registry_dispatch holds the two together, so a
-      # verb cannot be built without a page or paged without being built.
+      # One topic per registered command, and the registry is the whole list.
+      # test_command_registry_dispatch holds the two together, so a verb cannot
+      # be built without a page or paged without being built.
       HELP_TOPICS = {
         "face" => {
           summary: "the Braille face, listening, in this terminal",
@@ -55,19 +53,18 @@ module Master
             "air_superiority performs defensive Wi-Fi/Bluetooth observation and keeps only a local known-device baseline.",
           ],
         },
-        "device" => {
-          summary: "Android and Termux:API hardware capabilities",
-          detail: ["/device — truthful hardware/API capability report.",
-                   "/device battery|camera|sensors|audio — query the matching Termux:API endpoint.",
-                   "/device location [gps|network|passive] — explicitly request location; never sampled at boot."],
-        },
         "status" => {
-          summary: "one-frame health",
-          detail: ["/status — mode, git, fix loop, last pipeline stage, recent events."],
+          summary: "one-frame health, the mission and the known-good runtime",
+          detail: ["/status — mode, git, fix loop, last pipeline stage, recent events.",
+                   "/status mission — the current mission contract, stage, model, effort and goal.",
+                   "The mission persists across interruption; artifacts and checkpoints remain separate evidence.",
+                   "/status runtime — the recorded known-good commit.",
+                   "/status runtime promote — record the current committed HEAD as known-good.",
+                   "/status runtime rollback --confirm — return a clean checkout to the recorded known-good commit."],
         },
         "undo" => {
           summary: "revert the last recorded change",
-          detail: ["/undo — /rollback is the same."],
+          detail: ["/undo — the last change this session recorded."],
         },
         "commit" => {
           summary: "commit the named paths",
@@ -77,13 +74,10 @@ module Master
           ],
         },
         "model" => {
-          summary: "show or switch the active model",
-          detail: ["/model", "/model <name> — routing from data/models.yml.", "/model benchmark — benchmark reachable Ollama models; /model benchmark all includes every reachable lane."],
-        },
-        "auth" => {
-          summary: "connect subscription compute through the provider's official CLI",
-          detail: ["/auth — show subscription lanes.", "/auth status — show installed and known authentication state.",
-                   "/auth login claude|chatgpt|grok — run the provider's official browser sign-in flow.",
+          summary: "show or switch the active model, and connect its subscriptions",
+          detail: ["/model", "/model <name> — routing from data/models.yml.", "/model benchmark — benchmark reachable Ollama models; /model benchmark all includes every reachable lane.",
+                   "/model auth — show subscription lanes and their authentication state.",
+                   "/model auth login claude|chatgpt|grok — run the provider's official browser sign-in flow.",
                    "MASTER never receives or stores your password, OAuth code, cookies or session credentials."],
         },
         "pair" => {
@@ -91,18 +85,11 @@ module Master
           detail: ["/pair issue [label]", "/pair <code>", "/pair status"],
         },
         "doctor" => {
-          summary: "host, provider, and exposure health",
-          detail: ["/doctor — keys, disk, git, pairing/gateway exposure."],
-        },
-        "mission" => {
-          summary: "durable autonomous work state",
-          detail: ["/mission — show the current mission contract, stage, model, effort and goal.",
-                   "The mission persists across interruption; artifacts and checkpoints remain separate evidence."],
-        },
-        "runtime" => {
-          summary: "known-good runtime promotion and rollback",
-          detail: ["/runtime status", "/runtime promote — record the current committed HEAD as known-good.",
-                   "/runtime rollback --confirm — return a clean checkout to the recorded known-good commit."],
+          summary: "host, provider, exposure and hardware health",
+          detail: ["/doctor — keys, disk, git, pairing/gateway exposure.",
+                   "/doctor device — truthful Android/Termux:API hardware capability report.",
+                   "/doctor device battery|camera|sensors|audio — query the matching Termux:API endpoint.",
+                   "/doctor device location [gps|network|passive] — explicitly request location; never sampled at boot."],
         },
         "help" => {
           summary: "this list",
@@ -112,18 +99,11 @@ module Master
           summary: "clear the session transcript",
           detail: ["/clear — does not undo file changes."],
         },
-        "sessions" => {
-          summary: "list the in-memory conversation sessions",
-          detail: ["/sessions — list sessions; the current one is marked with *.",
-                   "/continue <id> or /resume <id> — switch to an existing session."],
-        },
-        "continue" => {
-          summary: "continue an existing conversation",
-          detail: ["/continue <id> — switch the active conversation.", "/resume <id> is an alias."],
-        },
-        "fork" => {
-          summary: "branch the current conversation",
-          detail: ["/fork [id] — clone the current conversation and continue in the new branch."],
+        "session" => {
+          summary: "the conversations: list, continue or branch one",
+          detail: ["/session — list sessions; the current one is marked with *.",
+                   "/session continue <id> — switch the active conversation; resume is the same word.",
+                   "/session fork [id] — clone the current conversation and continue in the new branch."],
         },
         "orders" => {
           summary: "the objective ledger — the work that runs without being asked",
@@ -135,15 +115,12 @@ module Master
           summary: "read and amend the constitution",
           detail: ["/soul — the summary. /soul version, /soul diff.",
                    "/soul propose <rationale> then /soul approve or /soul reject;",
-                   "/soul rollback undoes the last amendment. Absolute sections do not move."],
-        },
-        "law" => {
-          summary: "the portable enforcement contract",
-          detail: ["/law or /law contract — generated contract for MASTER and external LLMs.",
-                   "/law full — complete law questions, fixes and proof examples.",
-                   "/law digest — current executable-law identity.",
-                   "/law handshake — export the exact contract an external agent must present before admission.",
-                   "/law protocol — the mandatory enforcement sequence."],
+                   "/soul rollback undoes the last amendment. Absolute sections do not move.",
+                   "/soul law or /soul law contract — generated contract for MASTER and external LLMs.",
+                   "/soul law full — complete law questions, fixes and proof examples.",
+                   "/soul law digest — current executable-law identity.",
+                   "/soul law handshake — export the exact contract an external agent must present before admission.",
+                   "/soul law protocol — the mandatory enforcement sequence."],
         },
         "snapshot" => {
           summary: "write the current MASTER tree and source to one Markdown artifact",
@@ -153,7 +130,7 @@ module Master
         "rules" => {
           summary: "the declared rules, one line each",
           detail: ["/rules [filter] — id, tier, severity and kind from data/rules.yml.",
-                   "bin/operator rule <ID> prints one in full."],
+                   "bin/operator rules <ID> prints one in full."],
         },
         "why" => {
           summary: "what a rule says, and where it comes from",
@@ -162,17 +139,11 @@ module Master
         },
       }.freeze
 
-      # /rollback is /undo registered twice, so help answers for it under the
-      # name the user typed. It gets no topic of its own — two entries print the
-      # same sentence twice in the summary, and the surface is one command.
-      ALIASES = { "rollback" => "undo", "resume" => "continue" }.freeze
-
       def help_text(command = nil)
         key = command.to_s.strip.sub(/\A\//, "")
         return help_summary if key.empty?
 
-        name = ALIASES.fetch(key, key)
-        topic = HELP_TOPICS[name]
+        topic = HELP_TOPICS[key]
         return unknown_command_text(key) unless topic
 
         (["/#{key} — #{topic[:summary]}"] + topic[:detail]).join("\n")
@@ -187,7 +158,7 @@ module Master
       end
 
       def slash_commands
-        (HELP_TOPICS.keys.map { |k| "/#{k}" } + ALIASES.keys.map { |k| "/#{k}" } + %w[/exit /quit]).uniq.sort
+        (HELP_TOPICS.keys.map { |k| "/#{k}" } + %w[/exit /quit]).uniq.sort
       end
 
       # The list is a table, so its second column is aligned; everywhere else

@@ -1,34 +1,24 @@
 #compdef master cli
 
-# The slash surface CommandRegistry.build returns, one line per help topic and
-# alias. test/test_completions.rb fails when this list and the registry differ.
+# The slash surface CommandRegistry.build returns, one line per help topic. test/test_completions.rb fails when this list and the registry differ.
 _master() {
   local -a commands
   commands=(
     'fix:observe, critique, repair, observe again until it converges'
     'review:read-only — the council and the principle map'
-    'status:one-frame health'
+    'status:one-frame health, the mission and the known-good runtime'
     'plugin:list and invoke governed plugins'
     'undo:revert the last recorded change'
-    'rollback:the same as undo'
     'commit:commit the named paths'
-    'model:show or switch the active model'
+    'model:show or switch the active model, and connect its subscriptions'
     'pair:issue or redeem a pairing code'
-    'doctor:host, provider, and exposure health'
-    'device:Android and Termux hardware capabilities'
-    'auth:connect subscription compute through the provider CLI'
-    'mission:durable autonomous work state'
-    'runtime:known-good runtime promotion and rollback'
+    'doctor:host, provider, exposure and hardware health'
     'rules:the declared rules, one line each'
     'why:what a rule says, and where it comes from'
     'orders:standing orders'
-    'soul:read and amend the constitution'
-    'law:the portable enforcement contract'
+    'soul:read and amend the constitution, and its portable contract'
     'snapshot:write the MASTER tree and source to one Markdown file'
-    'sessions:list the conversation sessions'
-    'continue:continue an existing conversation'
-    'resume:the same as continue'
-    'fork:branch the current conversation'
+    'session:list, continue or branch a conversation'
     'help:list commands'
     'clear:clear the session transcript'
     'exit:leave MASTER'

@@ -69,11 +69,11 @@ def parse_initial_message_options(argv)
       ENV["MASTER_SKIP_TTS"] = "1"
       ENV["MASTER_WEB"] = "0"
     end
-    opts.on("-c", "--continue [ID]") { |id| options[:message] = id.to_s.empty? ? "/continue" : "/continue #{id}" }
-    opts.on("--resume [ID]") { |id| options[:message] = id.to_s.empty? ? "/resume" : "/resume #{id}" }
-    opts.on("-s", "--session ID") { |id| options[:message] = "/continue #{id}" }
-    opts.on("--fork [ID]") { |id| options[:message] = id.to_s.empty? ? "/fork" : "/fork #{id}" }
-    opts.on("--sessions") { options[:message] = "/sessions" }
+    opts.on("-c", "--continue [ID]") { |id| options[:message] = "/session continue #{id}".strip }
+    opts.on("--resume [ID]") { |id| options[:message] = "/session continue #{id}".strip }
+    opts.on("-s", "--session ID") { |id| options[:message] = "/session continue #{id}" }
+    opts.on("--fork [ID]") { |id| options[:message] = "/session fork #{id}".strip }
+    opts.on("--sessions") { options[:message] = "/session" }
     opts.on("--fold", "run the message through the core Fold, then exit") { ENV["MASTER_FOLD"] = "1" }
     opts.on("--web") { ENV["MASTER_WEB"] = "1" }
     opts.on("--no-web") { ENV["MASTER_WEB"] = "0" }

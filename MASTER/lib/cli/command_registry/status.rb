@@ -11,8 +11,15 @@ module Master
       # /status — one frame of health, as dmesg lines. What is fine or does not
       # apply on this host says nothing: no "rcctl absent" on a Mac, no bundle row
       # when the bundle is satisfied, no raw bus events.
+      #
+      # `/status mission` and `/status runtime` read the two durable records a
+      # frame does not show: the autonomous mission, and the known-good commit.
       def dispatch_status(root:, fix_loop:, bus:, git: Io::GitOperations.new(File.expand_path("..", root)), trace: nil,
                           learnings: nil, ctx: nil)
+        word, rest = subcommand(ctx)
+        return dispatch_mission(root, ctx: rest) if word == "mission"
+        return dispatch_runtime(root, ctx: rest) if word == "runtime"
+
         gather_status_data(root:, fix_loop:, git:)
           .merge(rsi: rsi_opportunities(learnings))
           .then { |data| render_status_lines(data) }.join("\n")

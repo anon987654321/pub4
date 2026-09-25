@@ -63,11 +63,31 @@ class TestEcosystemFeatures < Minitest::Test
     # /orders and /soul joined on the same grounds: both handlers, both
     # subjects and both help entries existed, and control_commands was merged
     # into the table by nothing.
-    # /plugin, /runtime, /device, /auth, /mission, /law, /snapshot and the
-    # session commands (/sessions, /continue with /resume, /fork) each landed
-    # with a handler and a help entry.
-    assert_equal %w[auth clear commit continue device doctor fix fork help law mission model orders pair plugin
-                    resume review rollback rules runtime sessions snapshot soul status undo why],
+    # /plugin and /snapshot landed with a handler and a help entry. The rest of
+    # that batch folded into verbs that already owned their subject, so the
+    # command surface stays a number a person can hold: /status mission and
+    # /status runtime, /doctor device, /model auth, /soul law, and /session for
+    # sessions, continue, resume and fork. /rollback went with them: three
+    # verbs meant three different rollbacks, and /undo is the one it aliased.
+    assert_equal %w[clear commit doctor fix help model orders pair plugin
+                    review rules session snapshot soul status undo why],
                  registry.keys.sort
+  end
+
+  def test_folded_verbs_answer_under_their_host
+    registry = Master::CLI::CommandRegistry
+    session = Master::Trace::Session.new
+
+    assert_equal "sessions0: none", registry.dispatch_session(session, ctx: { args: "" })
+    assert_match(/session0: forked /, registry.dispatch_session(session, ctx: { args: "fork" }))
+    assert_match(/^\* /, registry.dispatch_session(session, ctx: { args: "list" }))
+    assert_match(/session0: continued /, registry.dispatch_session(session, ctx: { args: "resume" }))
+    assert_includes registry.dispatch_soul(nil, ctx: { args: "law bogus" }), "soul law contract"
+    assert_includes registry.dispatch_doctor(Master::ROOT, ctx: { args: "device bogus" }), "doctor device"
+    assert_includes registry.dispatch_model(agent: nil, config: nil, metrics: nil, root: Master::ROOT, arg: "auth bogus words"),
+                    "model auth login"
+    status = ->(args) { registry.dispatch_status(root: Master::ROOT, fix_loop: nil, bus: nil, git: nil, ctx: { args: }) }
+    assert_includes status.("runtime bogus"), "status runtime promote"
+    assert_match(/\Amission(0: none|: )/, status.("mission"))
   end
 end

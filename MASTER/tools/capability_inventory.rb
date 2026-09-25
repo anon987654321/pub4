@@ -39,8 +39,15 @@ module Operator
     #
     # Each key is a word this surface no longer answers to, and each value is the
     # word that took its work. /review is named for lib/review, the subsystem that
-    # scans and critiques.
-    RENAMES = { "through" => "review" }.freeze
+    # scans and critiques. The rest folded into the verb that owns the subject
+    # and answer as its subcommands: /session continue, /status runtime and so
+    # on; /rollback was /undo under a second name.
+    RENAMES = {
+      "through" => "review",
+      "sessions" => "session", "continue" => "session", "resume" => "session", "fork" => "session",
+      "mission" => "status", "runtime" => "status",
+      "auth" => "model", "law" => "soul", "device" => "doctor", "rollback" => "undo",
+    }.freeze
 
     def report
       current = inventory(nil)

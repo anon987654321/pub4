@@ -177,7 +177,7 @@ capability must never be reported as successful execution.
 A `/fix` pass is transactional across its owned files: either its validated changes
 are delivered as one unit, or the transaction restores the exact observed pre-pass
 state. A concurrent edit is detected rather than overwritten. Successful delivery
-promotes the resulting Git commit to a durable known-good runtime; `/runtime rollback`
+promotes the resulting Git commit to a durable known-good runtime; `/status runtime rollback`
 only operates on a clean checkout and returns to that recorded commit.
 
 Optional services are supervised with a bounded restart budget, and expensive model
@@ -219,15 +219,15 @@ bin/cli
 Then:
 
 ```text
-/device
-/device battery
-/device camera
-/device sensors
-/device audio
-/device wifi
-/device volume
-/device torch on
-/device location gps
+/doctor device
+/doctor device battery
+/doctor device camera
+/doctor device sensors
+/doctor device audio
+/doctor device wifi
+/doctor device volume
+/doctor device torch on
+/doctor device location gps
 ```
 
 Location is explicit rather than a boot probe because it is a user-sensitive capability. Camera and microphone operations are explicit too. Termux:API itself mediates Android permissions; for example, camera access can trigger the Android camera permission flow.
