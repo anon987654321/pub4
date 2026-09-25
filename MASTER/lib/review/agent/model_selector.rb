@@ -16,7 +16,18 @@ module Master
 
         def routed_models(message = nil, task_type: nil)
           chain = routed_chain(message, task_type:)
-          @pinned_model ? ([@pinned_model] + chain).uniq : chain
+          return chain unless @pinned_model
+          return chain unless pinned_model_reachable?
+
+          ([@pinned_model] + chain).uniq
+        end
+
+        def pinned_model_reachable?
+          return true unless @model_router.respond_to?(:unreachable_reason)
+          @model_router.unreachable_reason(@pinned_model, wait: false).nil?
+        rescue StandardError => e
+          @bus&.publish("llm:pinned_model_unavailable", model: @pinned_model, error: e.message)
+          false
         end
 
         def routed_chain(message, task_type:)
