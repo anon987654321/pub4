@@ -472,24 +472,24 @@ when "test"
   #   RAILS/<app>/**   -> that app suite
   #   RAILS/gates|test -> the standalone contract suite
   #   OPENBSD/**       -> its local minitests (box-side proof stays on vm23)
-  #   MASTER/tools/**        -> refused; that tree belongs to its own session
+  #   MASTER/tools/**        -> MASTER tool suite
   paths = ARGV.dup
   if paths.empty?
     paths = IO.popen(%w[git status --porcelain -z], chdir: ROOT, &:read)
               .split("\0").filter_map { |l| l[3..] }
   end
   trees = paths.map { |p| p.split("/").first(2) }
-  # A skip, not a refusal. STUDIO belongs to its own session, but this derives
-  # its scope from `git status` in a checkout several sessions share — so one
-  # untracked render under MASTER/tools/ used to abort the command outright and the
-  # other three trees went untested, which in a shared tree is most of the time.
-  studio, trees = trees.partition { |tree| tree.first == "STUDIO" }
-  warn("pub4 test: skipping #{studio.size} STUDIO path(s) — that tree runs its own checks") if studio.any?
+  # MASTER/tools is part of MASTER, but it has its own complete suite so tool
+  # regressions cannot hide behind the core MASTER tests.
+  tool_paths = paths.select { |path| path.start_with?("MASTER/tools/") }
 
   jobs = []
   rails_parts = trees.select { |t| t.first == "RAILS" }.map(&:last).uniq
   if trees.any? { |t| t.first == "MASTER" }
     jobs << ["MASTER suite", %w[bundle exec rake test], File.join(ROOT, "MASTER"), {}]
+    if tool_paths.any?
+      jobs << ["MASTER tools suite", [RUBY, "-S", "rake"], File.join(ROOT, "MASTER", "tools"), {}]
+    end
     if paths.any? { |p| p.start_with?("MASTER/law/") }
       jobs << ["MASTER dogfood", %w[bundle exec rake dogfood], File.join(ROOT, "MASTER"), {}]
     end
@@ -507,16 +507,12 @@ when "test"
     jobs << ["OPENBSD minitests", ["ruby", "-e", runner], File.join(ROOT, "OPENBSD"), {}]
   end
   if jobs.empty?
-    if trees.empty? && studio.any?
-      abort("pub4 test: every path given is STUDIO's — run `rake studio` from MASTER, or name a path elsewhere")
-    end
-
     abort("pub4 test: no suite maps to #{paths.first(3).join(', ')}")
   end
 
   # Say what was chosen before running it, so a surprising suite is visible
   # up front rather than after a long run.
-  puts "pub4 test: #{paths.size} path(s) -> #{jobs.map(&:first).join(', ')}"
+  puts "pub4 test: #{paths.size} path(s) -> #{jobs.map(&:first).uniq.join(', ')}"
   failed = jobs.reject do |name, cmd, dir, env|
     puts "== #{name}"
     system(env, *cmd, chdir: dir)
