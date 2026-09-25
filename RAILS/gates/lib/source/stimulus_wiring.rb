@@ -285,7 +285,7 @@ module Deploy
       normalized = path.delete_prefix("#{@rails_root}/")
       normalized.start_with?("shared/app/helpers/", "shared/app/components/") ||
         normalized.start_with?("#{normalized.split("/").first}/app/helpers/") ||
-        normalized.match?(%r{A(?:amber|brgen|bsdports)/engines/[^/]+/app/helpers/})
+        normalized.match?(%r{\A(?:amber|brgen|bsdports)/engines/[^/]+/app/helpers/})
     end
 
     # A shared helper is a method every app could call, but its markup reaches
