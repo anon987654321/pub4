@@ -11,11 +11,17 @@
  * Nothing else in _components's head can beat these rules: `*` and `:focus-visible`
  * are 0-0-0 and 0-1-0 over properties `.btn` does not set, `input, button,
  * textarea, select { font: inherit }` is 0-0-1 against `.btn`'s 0-1-0, and no
- * element in the tree wears `.btn` beside a `.px-*`, `.text-primary`,
- * `.bg-surface`, `.truncate-*`, `.h-dvh` or `.visually-hidden` utility, which are
- * the only other 0-1-0 rules there that share a property with it.
+ * element in the tree wears `.btn` beside a `.mt-*`, `.text-sm` or
+ * `.visually-hidden` utility, which are the only other 0-1-0 rules there that
+ * share a property with it.
  */
 
+// An app whose own later .btn restates every property of the base below, as
+// brgen's accent skin does, forwards this file with ($base: false). The base
+// would never win a property there; the variants stay either way.
+$base: true !default;
+
+@if $base {
 .btn {
   display: inline-flex;
   align-items: center;
@@ -34,6 +40,7 @@
   text-decoration: none;
   cursor: pointer;
   transition: opacity var(--transition-fast) var(--ease-out), background 160ms var(--ease-out), border-color 160ms var(--ease-out), color 160ms var(--ease-out), transform var(--duration-m3-short) var(--ease-m3-spring);
+}
 }
 
 .btn:hover {

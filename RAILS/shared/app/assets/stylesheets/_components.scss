@@ -24,17 +24,8 @@
 }
 
 .empty-state-icon {
-  width: 64px;
-  height: 64px;
   margin-inline: auto;
   margin-bottom: var(--space-4);
-  opacity: 0.4;
-}
-
-.empty-state-title {
-  font-size: var(--text-lg);
-  font-weight: var(--weight-bold);
-  color: var(--text-primary);
 }
 
 .empty-state-body {
@@ -42,13 +33,6 @@
   color: var(--text-secondary);
   max-width: 66ch;
   margin-inline: auto;
-}
-
-.skeleton {
-  background: linear-gradient(90deg, var(--color-surface) 25%, var(--color-border) 50%, var(--color-surface) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.4s var(--ease-in-out) infinite;
-  border-radius: var(--radius-sm);
 }
 
 .toast {
@@ -69,7 +53,6 @@
 .toast--success { border-inline-start: 3px solid var(--color-success); }
 .toast--error { border-inline-start: 3px solid var(--color-danger); }
 
-.feed-item,
 article {
   contain: content;
   content-visibility: auto;
@@ -447,7 +430,7 @@ body:has(dialog[data-dialog-target="dialog"][open]) {
 
 /* Mobile sensor affordances */
 @media (pointer: coarse) {
-  .deal-card, .post-card {
+  .deal-card {
     transition: transform 0.2s var(--ease-out);
   }
   .deal-card:active {

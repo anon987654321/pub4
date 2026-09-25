@@ -36,11 +36,8 @@
 
 .prose,
 .post_body,
-.post-body,
 .feed-post-body,
-.feed-post-prose,
-.article-body,
-.editorial-body {
+.feed-post-prose {
   max-width: var(--measure);
   font-size: var(--text-base);
   line-height: var(--leading-normal);
@@ -48,7 +45,6 @@
   letter-spacing: var(--tracking-normal);
   text-align: start;
   hyphens: auto;
-  -webkit-hyphens: auto;
   hanging-punctuation: first allow-end last;
   text-wrap: pretty;
   // design_rules micro: hyphenate-limit-chars 6/3/2 so `auto` does not break a
@@ -125,17 +121,14 @@
 [data-money],
 .deal-price,
 .listing-price,
-.listing-buy-bar-amount,
 .item-subtotal,
 .feed-action-count {
   font-variant-numeric: lining-nums tabular-nums;
   font-feature-settings: "kern", "liga", "clig", "lnum", "tnum";
 }
 
-.prose-meta,
 .feed-post-meta,
-.feed-post-byline,
-.editorial-meta {
+.feed-post-byline {
   font-size: var(--text-sm);
   line-height: var(--leading-tight);
   color: var(--text-secondary);

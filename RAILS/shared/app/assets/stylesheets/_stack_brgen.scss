@@ -12,7 +12,7 @@
 // Immediately before components, and that is a cascade position rather than an
 // alphabetical one: _components's forced-colors block ties with `.btn` at 0-1-0
 // and has to keep the later word.
-@forward "buttons";
+@forward "buttons" with ($base: false);
 @forward "components";
 @forward "search_yep";
 @forward "empty_state";

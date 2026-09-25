@@ -88,8 +88,6 @@ body[data-layout="document"] {
 }
 
 /* Prose / lead blocks share one measure with face HUD caption width discipline. */
-.prose-measure,
-.city-home-intro,
 .auth-form-lead,
 .vertical-purpose {
   max-width: var(--measure);

@@ -169,14 +169,16 @@ x.$vertical-accent-ink: #110f19;
   body.vertical-#{$v} {
     --accent: #{list.nth($c, 1)};
     --accent-ink: #{x.$vertical-accent-ink};
-    --vertical-#{$v}-accent: #{list.nth($c, 1)};
-    --vertical-#{$v}-accent-hover: #{list.nth($c, 2)};
+    // The marketplace bol layer reads its hover by name (--bol-blue-dark);
+    // every other vertical paints through --accent alone.
+    @if $v == marketplace {
+      --vertical-#{$v}-accent-hover: #{list.nth($c, 2)};
+    }
   }
   /* Light restates rather than carries: the dataset is the one light path. */
   :root[data-theme="light"] body.vertical-#{$v} {
     --accent: #{list.nth($c, 3)};
     --accent-ink: #{x.$vertical-accent-ink};
-    --vertical-#{$v}-accent: #{list.nth($c, 3)};
   }
 }
 
@@ -212,11 +214,6 @@ label { display: block; font-size: var(--text-sm); color: var(--text-secondary);
 @keyframes matchFadeIn {
   from { opacity: 0; transform: scale(.96); }
   to { opacity: 1; transform: scale(1); }
-}
-
-@keyframes radio-pulse {
-  0%, 100% { opacity: 0.9; }
-  50% { opacity: 0.6; }
 }
 
 @keyframes tv-live-pulse {
@@ -700,17 +697,14 @@ table.lines {
      of the tab. */
   padding: 0 var(--chrome-toggle-inline) 0 var(--brand-mark-inline);
   mask-image: linear-gradient(to right, var(--bg) 88%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to right, var(--bg) 88%, transparent 100%);
 
   /* Make the row actually swipeable rather than merely overflowing:
      - touch-action pan-x hands horizontal drags to this scroller instead of
        letting the page claim them as a vertical scroll
-     - momentum scrolling on iOS
      - overscroll containment so swiping past the last vertical does not chain
        out to the page and trigger pull-to-refresh
      - scroll snapping so a swipe settles on a vertical instead of mid-word */
   touch-action: pan-x;
-  -webkit-overflow-scrolling: touch;
   overscroll-behavior-x: contain;
   scroll-snap-type: x proximity;
   scroll-padding-inline-start: var(--brand-mark-inline);
@@ -882,10 +876,9 @@ label.compose-action:hover { color: var(--text); }
   margin-inline: var(--nav-clear);
   justify-content: safe center;
   /* Same swipe contract as .feed-tabs: pan-x so Chrome on a phone does not
-     wait to see if the gesture is a vertical page scroll, momentum on iOS,
-     and overscroll that does not chain into pull-to-refresh. */
+     wait to see if the gesture is a vertical page scroll, and overscroll that
+     does not chain into pull-to-refresh. */
   touch-action: pan-x;
-  -webkit-overflow-scrolling: touch;
   overscroll-behavior-x: contain;
   scroll-snap-type: x proximity;
   scroll-padding-inline: var(--space-1);
@@ -907,7 +900,6 @@ label.compose-action:hover { color: var(--text); }
   --nav-fade-stop: calc(100% - var(--space-4));
   --nav-fade-start: calc(var(--nav-fade-stop) - 2.5rem);
   mask-image: linear-gradient(to right, transparent 0, var(--bg) var(--nav-fade-lead), var(--bg) var(--nav-fade-start), transparent var(--nav-fade-stop));
-  -webkit-mask-image: linear-gradient(to right, transparent 0, var(--bg) var(--nav-fade-lead), var(--bg) var(--nav-fade-start), transparent var(--nav-fade-stop));
 }
 
 .nav_swiper_bar::-webkit-scrollbar { display: none; }
@@ -1746,7 +1738,6 @@ label.compose-action:hover { color: var(--text); }
 /* --- the floating composer --- */
 
 .composer {
-  max-height: min(90vh, 760px);
   padding: 0;
   /* --surface-elevated sits a hair off the page value, which is right for a
      card in the feed and wrong for a modal: against a dimmed backdrop the
@@ -2143,7 +2134,7 @@ body[class*="vertical-"] .compose-launcher {
 /* Forms — x.com minimal */
 .form-wrap { padding: var(--space-6) var(--space-4); max-width: 480px; }
 .form-wrap--compact { padding: var(--space-3) var(--space-4); max-width: none; }
-.field { display: flex; flex-direction: column; gap: var(--space-1); margin-bottom: var(--space-4); }
+.field { flex-direction: column; margin-bottom: var(--space-4); }
 .field--check { flex-direction: row; align-items: center; gap: var(--space-2); }
 
 /* Not in the list below, because a file input must keep the browser's own
@@ -2518,9 +2509,6 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
   font-size: var(--text-sm);
 }
 .feed-action:hover { color: var(--accent); background: var(--hover); }
-/* Tactile press feedback; reduced-motion users get the instant state (the
-   global guard drops the transition, the transform still reads as a press). */
-.feed-action:active { transform: scale(0.9); }
 .feed-action.active { color: var(--accent); }
 .feed-action:focus-visible {
   outline: 2px solid var(--accent);
@@ -4834,7 +4822,6 @@ label.field--check-label > input { min-height: var(--tap-min); min-width: var(--
   padding: 4px 4px var(--space-3);
   scroll-snap-type: x mandatory;
   scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
   touch-action: pan-x;
 }
 
@@ -4852,7 +4839,7 @@ body.vertical-dating {
   --dating-muted: var(--text-secondary);
   --dating-card: var(--surface-elevated);
   --dating-border: var(--border);
-  --dating-accent: var(--vertical-dating-accent, #00d4aa);
+  --dating-accent: var(--accent);
   /* The Nordic teal is a fill colour. As ink on the light surface this vertical
      actually renders on it measures 1.77:1 — the BankID trust line, which is
      the one label on the intro a user is meant to read carefully. Same hue,
@@ -4866,7 +4853,6 @@ body.vertical-dating {
      is the ink, and the :root[data-theme="dark"] body.vertical-dating rule below
      restores the bright teal, 9.11 on the card. Operator decision. */
   --dating-accent-ink: #00705c;
-  --dating-accent-warm: #ff5500;
   --dating-pass: var(--danger);
   background: var(--dating-bg);
   color: var(--dating-ink);
@@ -4955,10 +4941,6 @@ body.vertical-dating .match .feed-card-avatar-img {
   }
 }
 
-.dating-discover-panel {
-  min-height: 100dvh;
-  padding: 0 var(--space-3) var(--space-16);
-}
 
 body.vertical-dating .nearby-chat-widget,
 body.vertical-dating .hotkey-coach {
@@ -5005,17 +4987,6 @@ body.vertical-dating .hotkey-coach {
   margin-block-end: var(--space-3);
 }
 
-/* The three legal links in this footer set 19px line boxes, a third of the 44px
-   floor design_rules.ux_laws sets. No source-text lint can see a line box; a
-   browser measuring rectangles can.
-
-   The target grows, the type does not. These are legal links rather than
-   navigation and are meant to stay quiet, so padding does the work and
-   --text-sm is untouched. inline-flex because a 19px box with margin around it
-   is still hit-tested at 19: the box itself has to be 44.
-
-   Scoped to this footer. The shared .site-legal footer already clears the floor
-   at 48px on brgen.no, so a shared rule would be redundant there. */
 .dating-discover-panel {
   min-height: 100dvh;
   /* --space-16 (4rem) is the largest declared step and clears the tab bar plus
@@ -5111,17 +5082,13 @@ body.vertical-dating .empty {
 // ============================================================ layout: vertical shell
 
 /* Vertical surfaces — x shell underneath, product chrome on top */
-body[class*="vertical-"] .feed-header,
-body[class*="vertical-"] .compose-box {
+body[class*="vertical-"] .feed-header {
   display: none;
 }
 
 /* The storefront display slot is used only by promotional surfaces. Marketplace
-   resolves it to the house grotesk; takeaway still resolves the legacy display face. */
-body.vertical-marketplace {
-  --font-ad: var(--font);
-}
-
+   resolves it to the house grotesk (--font-ad in the bol block below); takeaway
+   still resolves the legacy display face. */
 body.vertical-takeaway {
   --font-ad: "Instrument Serif", var(--font);
   /* Kaufland.de's storefront system, measured from its archived home, category
@@ -6409,7 +6376,6 @@ body.vertical-playlist {
 --color-muted: var(--text-secondary);
   --color-overlay: color-mix(in srgb, var(--bg) 92%, transparent);
   --color-elevated: var(--surface-elevated);
-  --transition: color 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: var(--color-bg);
   color: var(--color-text);
 /* Bottom transport bar.
@@ -9182,7 +9148,6 @@ body.vertical-marketplace {
   --bol-muted: #666666;
   --bol-rule: #d9d9d9;
   --bol-price: #c91f2c;
-  --bol-buy: #ffb500;
   --bol-max: 1248px;
   --bol-gutter: 16px;
   --bol-header-height: 56px;
@@ -9220,7 +9185,6 @@ body.vertical-marketplace #navBar.storefront-nav--bol {
   position: relative;
   z-index: var(--z-nav);
   margin-inline: calc(50% - 50vw);
-  background: var(--bol-blue);
   color: #fff;
   border: 0;
   box-shadow: none;
@@ -9231,7 +9195,6 @@ body.vertical-marketplace .storefront-utility--bol {
   align-items: center;
   justify-content: center;
   gap: 32px;
-  min-height: 28px;
   padding: 0 var(--bol-gutter);
   border-bottom: 1px solid var(--bol-rule);
   background: var(--bol-page);
@@ -9241,16 +9204,11 @@ body.vertical-marketplace .storefront-utility--bol {
 }
 
 body.vertical-marketplace .storefront-bol-brand {
-  position: absolute;
   z-index: 2;
   inset-block-start: 0;
   inset-inline-start: max(var(--bol-gutter), calc((100vw - var(--bol-max)) / 2));
   display: inline-flex;
   align-items: center;
-  min-width: 120px;
-  min-height: var(--bol-header-height);
-  color: #fff;
-  font-size: 30px;
   font-weight: 800;
   letter-spacing: -0.04em;
   text-decoration: none;
@@ -9668,10 +9626,7 @@ body.vertical-marketplace .store-buybox .price {
   }
 
   body.vertical-marketplace .storefront-bol-brand {
-    position: static;
     grid-column: 1;
-    min-height: 58px;
-    font-size: 26px;
   }
 
   body.vertical-marketplace #navBar.storefront-nav--bol #accountStuff {
@@ -9779,7 +9734,6 @@ body.vertical-marketplace .store-buybox .price {
 
   body.vertical-marketplace #marketplace-listings .deal-card {
     display: grid;
-    grid-template-columns: 220px minmax(0, 1fr);
     gap: 24px;
     padding: 24px 0;
     border-bottom: 1px solid var(--bol-rule);
@@ -9788,7 +9742,6 @@ body.vertical-marketplace .store-buybox .price {
   body.vertical-marketplace #marketplace-listings .deal-card-hit {
     display: grid;
     grid-template-columns: 220px minmax(0, 1fr);
-    grid-column: 1 / -1;
     gap: 24px;
   }
 
