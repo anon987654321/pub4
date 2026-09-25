@@ -13,6 +13,8 @@ module Marketplace
       def valid_callback?(header:, request:, now: Time.current)
         timestamp, signature = parse(header)
         return false if timestamp.nil? || signature.blank?
+        return false if ENV["DINTERO_ACCOUNT_ID"].to_s.blank? ||
+          ENV["DINTERO_CALLBACK_SECRET"].to_s.blank?
         return false if timestamp > now.to_i || now.to_i - timestamp > MAX_AGE.to_i
 
         expected = callback_header(
@@ -25,6 +27,7 @@ module Marketplace
 
       def valid_webhook?(header:, body:)
         return false if header.to_s.empty?
+        return false if ENV["DINTERO_HOOK_SECRET"].to_s.blank?
 
         expected = OpenSSL::HMAC.hexdigest(
           "SHA1",
