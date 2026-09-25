@@ -57,7 +57,7 @@ module Operator
     # bin/operator calls. Everything below is a stage or a helper one of these three
     # reaches, so the file reads in the order the ladder runs rather than the
     # order it was written.
-    TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
+    TREES = %w[MASTER RAILS OPENBSD].freeze
 
     def run(scan_only:, only: nil, list: false, trees: nil)
       trees = normalise_trees(trees)
@@ -116,7 +116,7 @@ module Operator
     # whole under every --tree — the ratchets and the sprawl census are
     # repo-wide measurements by definition, and both are cheap.
     def stages(scan_only:, trees: TREES)
-      scope = trees == TREES ? "all four trees" : trees.join(", ")
+      scope = trees == TREES ? "all three trees" : trees.join(", ")
       [
         Stage.new(name: "lexical", purpose: "law/ and the scan registry over #{scope}, autofixing",
                   mutates: !scan_only, run: -> { gate("--lexical-only", scan_only:, trees:) }),
@@ -237,7 +237,7 @@ module Operator
            File.join(ROOT, "RAILS", app), {}, "RAILS"]
         end,
         ["OPENBSD", [RUBY, "-e", OPENBSD_SUITE], File.join(ROOT, "OPENBSD"), {}, "OPENBSD"],
-        ["STUDIO", [RUBY, BUNDLE, "exec", RUBY, "-S", "rake", "studio"], MASTER, {}, "STUDIO"],
+        ["tools", [RUBY, BUNDLE, "exec", RUBY, "-S", "rake", "studio"], MASTER, {}, "MASTER"],
       ].select { |job| trees.include?(job.last) }
     end
 
