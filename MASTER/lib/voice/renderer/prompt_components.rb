@@ -14,11 +14,9 @@ module Master
       # ASCII, so a serial console and a pipe read the same as a terminal.
       module PromptComponents
         TOKEN_KILO_THRESHOLD = 1000
+        PROMPT_TARGET_MEASURE = 66
         PROMPT_PATH_MAX = 44
-        # What the branch, ahead/behind, phase and prompt token take beside the
-        # path on one line.
-        PROMPT_SEGMENTS_WIDTH = 36
-        PROMPT_PATH_MIN = 8
+        PROMPT_PATH_MIN = 10
         PHASE_COLORS = {
           "discover" => :yellow,
           "implement" => :cyan,
@@ -47,7 +45,7 @@ module Master
         end
 
         def state_line(model, **options)
-          bits = ["model0: #{short_model(model)}", "ctx #{context_label(options[:tokens])}"]
+          bits = ["model0: #{short_model(model)}", "ctx0: #{context_label(options[:tokens])}"]
           violations = options.fetch(:violations, 0).to_i
           bits << "scan0: #{violations} violations" if violations.positive?
           cost = cost_label(options[:cost])
@@ -94,27 +92,38 @@ module Master
 
         private
 
+        # The prompt is set like text, not a status bar: location first,
+        # repository state second, phase third, cursor last. Keep the whole line
+        # near a 66-character measure when the terminal permits it, and let the
+        # path yield before the meaningful state does.
         def zsh_prompt(phase, last_ok)
-          [d(prompt_path), git_prompt_segments, phase_label(phase),
-           phase_prompt(last_ok, phase)].reject(&:empty?).join(" ") + " "
+          git = git_prompt_segments
+          phase_text = phase_label(phase)
+          suffix = [git, phase_text, phase_prompt(last_ok, phase)].reject(&:empty?).join(" ")
+          path = prompt_path(suffix_length: suffix.length)
+          [d(path), suffix].reject(&:empty?).join(" ") + " "
         end
 
         # zsh's own %~: home as a tilde, and a long path cut from the left so
-        # the tail you are actually in stays readable.
-        def prompt_path
+        # the tail you are actually in stays readable. Use a typographic
+        # ellipsis: it is quieter than three full stops and reads as one mark.
+        def prompt_path(suffix_length: 0)
           path = Dir.pwd.sub(/\A#{Regexp.escape(Dir.home)}/, "~")
-          budget = prompt_path_budget
+          budget = prompt_path_budget(suffix_length:)
           return path if path.length <= budget
 
-          tail = ".../#{path.split('/').last(2).join('/')}"
+          tail = "…/#{path.split('/').last(2).join('/')}"
           tail.length <= budget ? tail : File.basename(path)
         end
 
-        # PROMPT_PATH_MAX on a desktop; on a phone the path, branch and phase
-        # took the whole line before the cursor, so the path gets what the
-        # screen leaves, down to the directory name alone.
-        def prompt_path_budget
-          (TTY::Screen.width - PROMPT_SEGMENTS_WIDTH).clamp(PROMPT_PATH_MIN, PROMPT_PATH_MAX)
+        # Bringhurst's comfortable measure is 45–75 characters, with 66 as a
+        # classic target. A shell prompt is intentionally shorter, but the same
+        # principle applies: preserve a calm return path and cut decoration first.
+        def prompt_path_budget(suffix_length: 0)
+          screen = TTY::Screen.width
+          available = screen - suffix_length - 1
+          [available, PROMPT_TARGET_MEASURE - suffix_length - 1, PROMPT_PATH_MAX].min
+            .clamp(PROMPT_PATH_MIN, PROMPT_PATH_MAX)
         rescue StandardError
           PROMPT_PATH_MAX
         end
@@ -210,7 +219,7 @@ module Master
         end
 
         def phase_label(phase)
-          phase && phase.to_s != "idle" ? phase_tinted("(#{phase})", phase) : ""
+          phase && phase.to_s != "idle" ? phase_tinted(phase.to_s, phase) : ""
         end
 
         def monotonic_milliseconds
