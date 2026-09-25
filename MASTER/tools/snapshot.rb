@@ -130,7 +130,7 @@ module Operator
         - **The Rails apps default to Norwegian.** Assert through I18n keys, never English literals,
           and every key needs both `en.yml` and `nb.yml`.
         - **Renders are irreplaceable.** Never change a rendered-sound or graded-look default in
-          `STUDIO`; never alter a colour, font or layout value — the operator is a trained architect.
+          `MASTER/tools`; never alter a colour, font or layout value — the operator is a trained architect.
         - **Ratchets.** `MASTER/bin/operator measure` records ~55 numbers with ceilings. Adding a file,
           growing `lib/`, or introducing a finding moves one. A patch that moves a number must move the
           ceiling in the same patch and say what paid for it. Slack is the same defect as debt.
