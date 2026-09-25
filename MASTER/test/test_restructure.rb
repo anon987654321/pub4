@@ -159,6 +159,21 @@ class TestRestructure < Minitest::Test
     assert_includes finding.fetch(3), File.join(@repo, "MASTER/lib/user_controller.rb")
   end
 
+  def test_dead_production_subtree_becomes_an_autonomous_candidate
+    write("MASTER/lib/dead_machine/base.rb", "class DeadMachine; end\n")
+    write("MASTER/lib/dead_machine/state.rb", "class DeadMachineState < DeadMachine; end\n")
+    write("MASTER/lib/dead_machine/runner.rb", "require_relative \"state\"\nclass DeadMachineRunner; end\n")
+    sh("git", "add", "-A", chdir: @repo)
+    sh("git", "commit", "-m", "dead subtree", chdir: @repo)
+
+    findings = Master::Fix::RestructureSweep::Context.structural_findings(File.join(@repo, "MASTER"))
+    finding = findings.find { |_path, rule, _message, _related| rule == "DEAD_SUBTREE" }
+
+    refute_nil finding
+    assert_includes finding.fetch(2), "no production references"
+    assert_equal 3, finding.fetch(3).size
+  end
+
   def test_context_shows_related_architecture_files
     context = Master::Fix::RestructureSweep::Context.new(
       @repo,
