@@ -9,7 +9,7 @@
 # gem -- so those callers can require it without booting the engine.
 #
 # The engine is one file, with its parts inline in load order. The live scripts
-# in lib/ are named apart below; STUDIO/gate.rb counts every support file against
+# in lib/ are named apart below; MASTER/tools/gate.rb counts every support file against
 # DILLA_SUPPORT_CEILING, which is a separate question from what the engine loads.
 module DillaSources
   class << self
