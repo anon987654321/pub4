@@ -6,7 +6,7 @@
 # chirp, orbit, flare, tear, a new cut every bar. Under them the rolling Moog
 # bass, an industrial grid at 128 BPM and the DFAM, always changing. Kicks
 # and leads sit switched off at the operator's word: KICKS_ON and LEADS_ON.
-$LOAD_PATH.unshift File.expand_path("~/Documents/GitHub/pub4/STUDIO/dilla/lib")
+$LOAD_PATH.unshift File.expand_path("~/Documents/GitHub/pub4/MASTER/tools/studio/dilla/lib")
 require "sound"
 
 RATE = 32_000
