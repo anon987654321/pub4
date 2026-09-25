@@ -120,8 +120,10 @@ module Marketplace
           uri = URI(configured)
           raise ArgumentError, "Dintero host must use HTTPS" unless uri.is_a?(URI::HTTPS)
 
-          allowed = [ URI(live).host, URI(test).host ]
-          raise ArgumentError, "Dintero host is not approved" unless allowed.include?(uri.host)
+          allowed = [ URI(live), URI(test) ]
+          approved = allowed.find { |endpoint| endpoint.host == uri.host && endpoint.port == uri.port }
+          raise ArgumentError, "Dintero host is not approved" unless approved
+          raise ArgumentError, "Dintero host must not include a path" unless uri.path.blank? || uri.path == "/"
 
           if production? && !test_mode? && uri.host == URI(test).host
             raise ArgumentError, "Dintero test host is disabled in production"
@@ -131,7 +133,6 @@ module Marketplace
         rescue URI::InvalidURIError
           raise ArgumentError, "Dintero host is invalid"
         end
-
 
         def authenticate
           account = account_id
