@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "zlib"
-require "base64"
 
 class WardrobeAi
   # The no-model answers. See wardrobe_ai/offline.rb — most machines and vm23
@@ -32,11 +31,11 @@ class WardrobeAi
     # ruby_llm's bundled registry, and the registry is a snapshot that goes
     # stale. Refusing to call a model because a shipped list has not heard of
     # it is the wrong failure.
-    def ask(prompt)
+    def ask(prompt, with: nil)
       RubyLLM.context { |config| config.openrouter_api_key = @token }
              .chat(model: MODEL, provider: :openrouter, assume_model_exists: true)
              .with_params(response_format: { type: "json_object" })
-             .ask(prompt)
+             .ask(prompt, with:)
              .content
     end
   end
@@ -101,12 +100,8 @@ class WardrobeAi
       Reply ONLY with JSON: {"outfits": [{"name": "outfit name", "items": ["item title 1", "item title 2", "item title 3"], "description": "why it works"}]}
     PROMPT
     vision_items = items.select { |i| i.photos.attached? }.first(5)
-    outfits = if vision_items.any?
-      images = vision_items.map { |i| image_data_url(i.photos.first) }.compact
-      chat_with_vision(prompt, images)["outfits"] || []
-    else
-      chat(prompt)["outfits"] || []
-    end
+    attachments = vision_items.filter_map { |item| item.photos.first if item.photos.attached? }
+    outfits = chat(prompt, with: attachments)["outfits"] || []
     outfits = rule_based_outfits(items, occasion:, season:) if outfits.blank?
     Array(outfits).each { |o| o["source"] ||= @client ? "openrouter" : "rule" if o.is_a?(Hash) }
     outfits
@@ -258,10 +253,10 @@ class WardrobeAi
     OpenRouter.new(token)
   end
 
-  def chat(prompt)
+  def chat(prompt, with: nil)
     return fallback_response(prompt) unless @client
 
-    content = @client.ask(prompt)
+    content = with ? @client.ask(prompt, with:) : @client.ask(prompt)
     return fallback_response(prompt) if content.blank?
 
     JSON.parse(content)
@@ -273,34 +268,5 @@ class WardrobeAi
     fallback_response(prompt)
   end
 
-  def image_data_url(photo)
-    return nil unless photo
 
-    bytes = photo.download
-    "data:#{photo.content_type.presence || "image/jpeg"};base64,#{Base64.strict_encode64(bytes)}"
-  end
-
-  def chat_with_vision(prompt, image_data_urls)
-    return fallback_response(prompt) unless @client && image_data_urls.any?
-
-    content = [ { type: "text", text: prompt } ]
-    image_data_urls.each do |url|
-      content << { type: "image_url", image_url: { url: url } }
-    end
-
-    response = @client.chat(
-      parameters: {
-        model: MODEL,
-        messages: [ { role: "user", content: content } ],
-        response_format: { type: "json_object" }
-      }
-    )
-    content_text = response.dig("choices", 0, "message", "content")
-    return fallback_response(prompt) if content_text.blank?
-
-    JSON.parse(content_text)
-  rescue StandardError => e
-    Rails.logger.error("WardrobeAI vision error: #{e.class}: #{e.message}")
-    fallback_response(prompt)
-  end
 end

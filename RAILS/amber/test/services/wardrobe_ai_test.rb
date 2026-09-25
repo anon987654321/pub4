@@ -4,6 +4,8 @@ require "test_helper"
 
 class WardrobeAiTest < ActiveSupport::TestCase
   class FakeClient
+    attr_reader :with
+
     def initialize(content: nil, error: nil)
       @content = content
       @error = error
@@ -12,9 +14,10 @@ class WardrobeAiTest < ActiveSupport::TestCase
     # The seam is ask(prompt) -> String. This used to reproduce OpenAI's
     # choices/message/content envelope, so the double asserted a vendor's HTTP
     # shape rather than what WardrobeAi actually needs from a model.
-    def ask(_prompt)
+    def ask(_prompt, with: nil)
       raise @error if @error
 
+      @with = with
       @content
     end
   end
@@ -58,6 +61,16 @@ class WardrobeAiTest < ActiveSupport::TestCase
     service = WardrobeAi.new(user, client: FakeClient.new(error: StandardError.new("boom")))
 
     assert_equal [], service.suggest_outfits
+  end
+
+  test "chat passes multimodal attachments through the model seam" do
+    client = FakeClient.new(content: '{"ok":true}')
+    service = WardrobeAi.new(User.new, client: client)
+
+    result = service.send(:chat, "inspect these", with: [ :photo ])
+
+    assert_equal true, result["ok"]
+    assert_equal [ :photo ], client.with
   end
 
   test "fingerprint_for is deterministic and not claimed as embedding provider" do
