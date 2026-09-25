@@ -41,9 +41,9 @@ YAML.load_file(manifest_path).then { |manifest| manifest["gates"] || manifest }
     .each_value.select { |row| row.is_a?(Hash) && RELEASE_GATE_CLASSES.include?(row["class"]) }
     .each do |row|
       require_path = row.fetch("require")
-      # Paths starting with a known tree (MASTER, RAILS, OPENBSD, STUDIO) are repo-relative.
+      # Paths starting with a known tree (MASTER, RAILS, OPENBSD) are repo-relative.
       # Others are RAILS-relative.
-      full_path = if require_path.match?(%r{\A(?:MASTER|RAILS|OPENBSD|STUDIO)/})
+      full_path = if require_path.match?(%r{\A(?:MASTER|RAILS|OPENBSD)/})
                     File.join(repo_root, require_path)
                   else
                     File.join(__dir__, require_path)
