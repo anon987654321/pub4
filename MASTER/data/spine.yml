@@ -653,7 +653,10 @@ pub4_source_ceilings:
   # (cable_bridge, MasterChannel, ApplicationCable channel and connection) that
   # went when /events/stream became the face's one pipe. cable.yml leaves too
   # and a drop migration arrives, which nets to zero.
-  MASTER: 715
+  # 715 -> 718: three new repository-source files added by this architecture pass —
+  # the Bplans contract plus the Air Superiority and Social Browser plugin READMEs.
+  # These are deliberate contract surfaces, not absorbed growth.
+  MASTER: 718
 
   # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:
@@ -851,7 +854,9 @@ pub4_source_ceilings:
   # its paths from the working tree and put them back.
   # 1980 -> 1932, a fall. Each Rails app compiles from one application.scss, so
   # 72 partials left the index and Operator::ScssRules joined it.
-  RAILS: 1932
+  # 1932 -> 1983: RAILS/eritel adds 51 tracked source/docs files. The pre-existing
+  # 47-file overage remains visible; only the named ERITEL addition is paid for.
+  RAILS: 1983
   # 106 -> 107 is test/test_githooks.rb. dev/githooks holds the three guards
   # that are the whole defence against a shared index, and nothing tested any of
   # them — a hook that stopped firing looks exactly like a week in which nobody
@@ -925,7 +930,9 @@ pub4_source_ceilings:
 # the SKIP_CI branch fails 1, with the unmutated source at 0.
 # 98 -> 90, locked 2026-09-25. eef2c0afe folded ten console .exp files into
 # vps_console.exp and removed bin/tree.sh, whose caller runs tools/tree.rb.
-  OPENBSD: 90
+  # 90 -> 92: OPENBSD/eritel adds README.md and bin/preflight.ksh. No other
+  # source growth is absorbed by this raise.
+  OPENBSD: 92
   # 220 -> 222 for lora/seed_media.yml and lora/_toolkit/install_seed_media.rb,
   # the prompt set for every seeded photograph and the script that grades and
   # files what comes back from it. Two files, both named, neither foldable:
