@@ -166,7 +166,7 @@ class Marketplace::WebhooksController < ActionController::Base
     when "AUTHORIZED"
       payable.authorize_payment!(transaction_id: transaction_id)
     when "CAPTURED"
-      Marketplace::Payments::DinteroCheckout.captured!(payable, transaction_id: transaction_id)
+      Marketplace::Payments::DinteroCheckout.captured!(payable, transaction_id: transaction_id, items: transaction["items"] || [])
     when "FAILED", "VOIDED"
       payable.fail_payment!(transaction_id: transaction_id)
     when "REFUNDED"
