@@ -44,5 +44,8 @@ class DinteroClientTest < ActiveSupport::TestCase
   test "arbitrary API hosts are refused" do
     ENV["DINTERO_API_BASE"] = "https://example.invalid"
     assert_raises(ArgumentError) { Marketplace::Payments::DinteroClient.api_host }
+
+    ENV["DINTERO_API_BASE"] = "#{Marketplace::Payments::DinteroClient::LIVE_API_HOST}:4443/"
+    assert_raises(ArgumentError) { Marketplace::Payments::DinteroClient.api_host }
   end
 end
