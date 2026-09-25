@@ -660,11 +660,11 @@ end
               note: current.nil? ? "neither gate printed a count for #{rule} (silent when it passes)" : nil)
     end
 
+    # Empty when the file is missing, so --deep reports the unreadable row
+    # instead of raising out of the whole register.
     def css_budget_ceilings
       path = File.join(RAILS, "gates/data/css_budget.yml")
-      raise "CSS budget missing: #{path}" unless File.file?(path)
-
-      YAML.safe_load_file(path).fetch("rules")
+      File.file?(path) ? YAML.safe_load_file(path).fetch("rules") : {}
     end
 
 def deep_rows

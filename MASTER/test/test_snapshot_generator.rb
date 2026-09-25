@@ -69,7 +69,7 @@ class TestSnapshotGenerator < Minitest::Test
       output = File.join(dir, "snapshot_MASTER.md")
       File.write(File.join(dir, "example.rb"), "puts :ok\n")
       Master::Snapshot.new(root: dir, output:).write!
-      refute_includes File.read(output), "snapshot_MASTER.md"
+      refute_includes File.read(output), "snapshot_MASTER.md" # source-assertion: ok — the snapshot write! just produced
     end
   end
 

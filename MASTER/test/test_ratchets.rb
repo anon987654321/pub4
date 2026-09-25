@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require "tmpdir"
+require "fileutils"
 require_relative "../lib/operator/ratchets"
 
 # Wish-list items 1 and 2, made executable.
@@ -35,16 +37,44 @@ class TestRatchets < Minitest::Test
   end
 
   def test_missing_rails_lints_are_not_silently_omitted
-    source = File.read(File.join(Operator::Ratchets::MASTER, "lib/operator/ratchets.rb"))
-    assert_includes source, "lint file missing"
-    assert_includes source, "Operator lint module missing"
+    notes = with_rails(Dir.mktmpdir) { Operator::Ratchets.rails_lint_rows.map(&:note) }
+
+    assert_equal Operator::Ratchets::RAILS_LINTS.size, notes.size, "every lint keeps its row"
+    assert_equal ["unreadable: lint file missing"], notes.uniq
+  end
+
+  def test_a_lint_file_without_its_module_is_unreadable
+    path = File.join(Operator::Ratchets::RAILS, Operator::Ratchets::RAILS_LINTS.fetch("asset_url"))
+    finder = Operator::Ratchets.method(:lint_module)
+    Operator::Ratchets.define_singleton_method(:lint_module) { |_path| nil }
+    row = Operator::Ratchets.rows_for_lint("asset_url", path)
+
+    assert_nil row.current
+    assert_match(/\Aunreadable: .*Operator lint module missing/, row.note)
+  ensure
+    Operator::Ratchets.define_singleton_method(:lint_module, finder) if finder
   end
 
   def test_missing_css_budget_is_not_silently_omitted
-    source = File.read(File.join(Operator::Ratchets::MASTER, "lib/operator/ratchets.rb"))
-    assert_includes source, 'name: "css_budget", current: nil, ceiling: nil'
-    assert_includes source, "unreadable: budget missing"
-    assert_includes source, "unreadable: no CSS ceilings available"
+    fast, deep = with_rails(Dir.mktmpdir) do
+      [Operator::Ratchets.css_budget_rows, Operator::Ratchets.css_constitution_rows]
+    end
+
+    assert_equal [["css_budget", nil, nil, "unreadable: budget missing"]],
+                 fast.map { |row| [row.name, row.current, row.ceiling, row.note] }
+    assert_equal [["css_budget", "unreadable: no CSS ceilings available"]],
+                 deep.map { |row| [row.name, row.note] }
+  end
+
+  def with_rails(dir)
+    original = Operator::Ratchets::RAILS
+    Operator::Ratchets.send(:remove_const, :RAILS)
+    Operator::Ratchets.const_set(:RAILS, dir)
+    yield
+  ensure
+    Operator::Ratchets.send(:remove_const, :RAILS)
+    Operator::Ratchets.const_set(:RAILS, original)
+    FileUtils.remove_entry(dir) if dir != original && File.directory?(dir)
   end
 
   def test_no_ratchet_is_unreadable

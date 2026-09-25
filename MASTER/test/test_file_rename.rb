@@ -40,8 +40,9 @@ class TestFileRename < Minitest::Test
     assert result.ok?, -> { result.message }
     refute File.exist?(File.join(@root, PARTIAL))
     assert File.exist?(File.join(@root, "RAILS/shared/app/assets/stylesheets/_thing.scss"))
+    # source-assertion: ok — the readers the rename rewrote, in a scratch repo
     assert_includes read(APP), %(@use "thing";)
-    assert_includes read(DOC), "_thing.scss"
+    assert_includes read(DOC), "_thing.scss" # source-assertion: ok — as above
     assert_empty git("status", "--porcelain").strip
     assert_match(/_zen_thing\.scss is _thing\.scss/, git("log", "-1", "--format=%B"))
   end
@@ -55,7 +56,7 @@ class TestFileRename < Minitest::Test
     assert_match(/compiled CSS changed for amber/, result.message)
     assert File.exist?(File.join(@root, PARTIAL))
     refute File.exist?(File.join(@root, "RAILS/shared/app/assets/stylesheets/_thing.scss"))
-    assert_includes read(APP), %(@use "zen_thing";)
+    assert_includes read(APP), %(@use "zen_thing";) # source-assertion: ok — the reader the rollback restored
     assert_empty git("status", "--porcelain").strip
   end
 
