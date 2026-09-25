@@ -35,15 +35,16 @@ class DinteroCheckoutContractTest < ActiveSupport::TestCase
 
     store = Struct.new(:dintero_payout_destination_id, :dintero_payout_destination_status)
       .new("seller_123", "ACTIVE")
-    listing = Struct.new(:id, :title, :store, :listing_id)
-      .new(7, "Lamp", store, 7)
+    listing = Struct.new(:id, :title, :store)
+      .new(7, "Lamp", store)
     order = Struct.new(:listing, :listing_id, :total_cents)
       .new(listing, 7, 1000)
 
     splits = Marketplace::Payments::DinteroCheckout.send(:split_for, order)
-    assert_equal 2, splits.length
-    assert_equal 900, splits.find { |split| split[:payout_destination_id] == "seller_123" }[:amount]
-    assert_equal 100, splits.find { |split| split[:payout_destination_id] == "platform_123" }[:amount]
+    assert_equal [
+      { payout_destination_id: "seller_123", amount: 900 },
+      { payout_destination_id: "platform_123", amount: 100 }
+    ], splits
     assert_equal 1000, splits.sum { |split| split[:amount] }
   end
 
