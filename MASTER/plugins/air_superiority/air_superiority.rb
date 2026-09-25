@@ -6,14 +6,14 @@ require "open3"
 require "rbconfig"
 require "timeout"
 require "yaml"
+require_relative "models"
+require_relative "analyzer"
 
 module Master
   module Plugins
     class AirSuperiority < Master::Plugin::Base
       Error = Master::Plugin::Error
       PolicyError = Master::Plugin::PolicyError
-      Threat = Data.define(:type, :severity, :details, :data)
-
       KNOWN_FILE = File.expand_path("~/.master/plugins/air_superiority/known.yml")
       COMMAND_TIMEOUT_S = 12
 
@@ -45,20 +45,32 @@ module Master
         networks, wifi_error = scan_safely { scan_wifi }
         devices, bluetooth_error = scan_safely { scan_bluetooth }
         known = load_known
-        wifi_threats = analyze_wifi(networks, known.fetch("known_networks", []))
-        bluetooth_threats = analyze_bluetooth(devices, known.fetch("known_devices", []))
+        observed_at = Time.now.utc
+        analyzer = Analyzer.new(observed_at:)
+        wifi_findings = analyzer.wifi(networks, known.fetch("known_networks", []))
+        bluetooth_findings = analyzer.bluetooth(devices, known.fetch("known_devices", []))
+        errors = [wifi_error, bluetooth_error].compact
+        result = ScanResult.new(
+          wifi: networks,
+          bluetooth: devices,
+          errors:,
+          complete: errors.empty?,
+          observed_at:,
+        )
 
         {
           plugin: manifest.id,
           runtime:,
-          wifi: networks,
-          bluetooth: devices,
-          errors: [wifi_error, bluetooth_error].compact,
-          threats: (wifi_threats + bluetooth_threats).map(&:to_h),
+          wifi: result.wifi,
+          bluetooth: result.bluetooth,
+          errors: result.errors,
+          complete: result.complete,
+          observed_at: result.observed_at.iso8601,
+          threats: (wifi_findings + bluetooth_findings).map(&:to_h),
           counts: {
-            wifi: networks.length,
-            bluetooth: devices.length,
-            threats: wifi_threats.length + bluetooth_threats.length,
+            wifi: result.wifi.length,
+            bluetooth: result.bluetooth.length,
+            threats: wifi_findings.length + bluetooth_findings.length,
           },
         }
       end
@@ -151,36 +163,6 @@ module Master
         when "bluetoothctl" then parse_bluetoothctl(run("bluetoothctl", "devices"))
         else
           raise Error, "air_superiority: Bluetooth scan unavailable on #{runtime}"
-        end
-      end
-
-      def analyze_wifi(rows, known)
-        known_bssids = known.map { |row| row["bssid"].to_s.downcase }.reject(&:empty?)
-        rows.filter_map do |row|
-          bssid = row["bssid"].to_s.downcase
-          next if bssid.empty? || known_bssids.include?(bssid)
-
-          Threat.new(
-            type: "unknown_wifi",
-            severity: "advisory",
-            details: "Wi-Fi network is not in the local known list",
-            data: row,
-          )
-        end
-      end
-
-      def analyze_bluetooth(rows, known)
-        known_addresses = known.map { |row| row["address"].to_s.downcase }.reject(&:empty?)
-        rows.filter_map do |row|
-          address = row["address"].to_s.downcase
-          next if address.empty? || known_addresses.include?(address)
-
-          Threat.new(
-            type: "unknown_bluetooth",
-            severity: "advisory",
-            details: "Bluetooth device is not in the local known list",
-            data: row,
-          )
         end
       end
 
