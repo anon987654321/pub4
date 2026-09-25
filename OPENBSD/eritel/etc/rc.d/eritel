@@ -1,0 +1,29 @@
+#!/bin/ksh
+
+APP_DIR=/home/eritel/app
+PORT=49173
+ENV_FILE=/etc/eritel.env
+
+export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
+
+[[ -r "$ENV_FILE" ]] || {
+  echo "eritel: missing $ENV_FILE" >&2
+  exit 1
+}
+
+. "$ENV_FILE"
+
+: "${SECRET_KEY_BASE:?missing SECRET_KEY_BASE}"
+
+daemon_user="eritel"
+daemon_execdir="$APP_DIR"
+daemon="/bin/ksh"
+daemon_flags="-c 'cd $APP_DIR && set -a && . $ENV_FILE && set +a && export RAILS_ENV=production RUBY_YJIT_ENABLE=0 HOME=/home/eritel && exec /usr/local/bin/bundle34 exec falcon serve -n ${FALCON_WORKERS:-1} --health-check-timeout 300 --bind http://127.0.0.1:$PORT'"
+daemon_timeout=120
+rc_bg=YES
+rc_reload=NO
+
+. /etc/rc.d/rc.subr
+pexp="ruby34.*$PORT"
+
+rc_cmd $1
