@@ -15,7 +15,6 @@ module Master
       # line is the fallback; a guessed transcription never is.
       class Ear
         HINT = "install the Termux:API app, then pkg install termux-api"
-        SOX = %w[sox -q -d -r 16000 -c 1].freeze
         # The gate sits above the room, not at a fixed level: a fixed 1%
         # never opened in a quiet room, and a fixed 0.05% opened on a
         # laptop's own noise, which peaks near 0.4%, so every take was a
@@ -29,14 +28,22 @@ module Master
         # under the room, every take would be twelve seconds of it.
         GATE_CEILING = 60.0
         MAX_TAKE_S = 12
+        RATE_HZ = 16_000
+        FRAME_BYTES = 640 # 20 ms
+        START_FRAMES = 3 # 60 ms over the gate starts a take
+        END_FRAMES = 40 # 0.8 s under half of it ends one
+        PREROLL_FRAMES = 12
+        PARTIAL_EVERY_S = 1.0
         # Under this the take is a click or a breath, not a phrase.
         MIN_TAKE_S = 0.4
 
         # The start gate, in percent of full scale, for a room at room_percent.
         def self.gate_for(room_percent) = (room_percent * GATE_OVER_ROOM).clamp(GATE_FLOOR, GATE_CEILING)
 
-        def initialize(device: Master::Device)
+        def initialize(device: Master::Device, capture: nil, transcriber: nil)
           @device = device
+          @capture = capture || -> { open_stream }
+          @transcriber = transcriber || ->(pcm) { transcribe(pcm) }
         end
 
         # Nil when the ear can listen, otherwise the sentence that says why not.
@@ -94,27 +101,84 @@ module Master
         # sox ends the take on silence. The words are the transcription of
         # that file, not a guess, and the reply itself still goes through the
         # session so the next turn can hear this one.
+        # The host ear streams: sox hands raw 16 kHz samples to Ruby, which
+        # finds the start and end of speech itself, so the words can be
+        # transcribed while the take is still going. Once a second the take so
+        # far goes to Gemini and its words are shown, the way the web face
+        # shows the browser's interim results; the pause that ends the take
+        # sends the whole of it once more, and that transcript is the one kept.
         def host_listen(stop:, on_partial:)
-          wav = File.join(Dir.tmpdir, "master-face-#{Process.pid}.wav")
-          File.delete(wav) if File.exist?(wav)
-          pid = Process.spawn(*SOX, wav, *silence_effect, out: File::NULL, err: File::NULL)
-          started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-          sleep 0.05 while alive?(pid) && !stop.call && (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) < MAX_TAKE_S
-          finish_sox(pid)
-          return unless File.size?(wav).to_i > (MIN_TAKE_S * 16_000 * 2)
+          stream = @capture.call
+          take = capture_take(stream, stop:, on_partial:)
+          return unless take && take.bytesize > (MIN_TAKE_S * RATE_HZ * 2)
 
-          text = transcribe(wav)
+          @finished = true
+          text = @transcriber.call(take)
           on_partial&.call(text) if text && !text.empty?
           text
         ensure
-          File.delete(wav) if wav && File.exist?(wav)
+          close_stream(stream)
         end
 
-        # sox's silence effect: a take starts when the level holds over the
-        # gate for 50 ms, and ends after 0.8 s under half the gate.
-        def silence_effect
-          gate = gate_percent
-          ["silence", "1", "0.05", "#{gate.round(3)}%", "1", "0.8", "#{(gate / 2).round(3)}%"]
+        # Reads 20 ms frames until speech has started and then paused, or the
+        # caller stops. A quarter second before the start is kept, so the
+        # first syllable is not clipped by the gate that found it.
+        def capture_take(stream, stop:, on_partial:)
+          gate = gate_percent * 327.68
+          @finished = false
+          preroll = []
+          take = nil
+          loud = quiet = 0
+          last_partial = 0
+          until stop.call
+            frame = stream.read(FRAME_BYTES)
+            break if frame.nil? || frame.empty?
+
+            peak = frame.unpack("s<*").map(&:abs).max.to_i
+            if take.nil?
+              preroll << frame
+              preroll.shift while preroll.size > PREROLL_FRAMES
+              loud = peak > gate ? loud + 1 : 0
+              take = preroll.join if loud >= START_FRAMES
+              next
+            end
+
+            take << frame
+            quiet = peak < gate / 2 ? quiet + 1 : 0
+            break if quiet >= END_FRAMES || take.bytesize >= MAX_TAKE_S * RATE_HZ * 2
+
+            # A second more of speech since the last interim, counted in the
+            # audio rather than on the clock, and none still in flight.
+            next unless take.bytesize - last_partial >= PARTIAL_EVERY_S * RATE_HZ * 2 && !@worker&.alive?
+
+            last_partial = take.bytesize
+            @worker = partial(take.dup, on_partial)
+          end
+          take
+        end
+
+        # One interim transcript, off the reading thread. Once the final one is
+        # under way a late interim is dropped, so the words never step back.
+        def partial(pcm, on_partial)
+          return unless on_partial
+
+          Thread.new do
+            text = @transcriber.call(pcm)
+            on_partial.call(text) if text && !text.empty? && !@finished
+          end
+        end
+
+        def open_stream
+          IO.popen(%w[sox -q -d -r 16000 -c 1 -b 16 -e signed -t raw -], "rb", err: File::NULL)
+        end
+
+        def close_stream(stream)
+          return unless stream
+
+          Process.kill("INT", stream.pid) if stream.respond_to?(:pid) && stream.pid
+          stream.close
+        rescue Errno::ESRCH, IOError
+          nil
         end
 
         # The room is measured again after a minute, so a fan that starts or
@@ -140,21 +204,7 @@ module Master
           0.0
         end
 
-        def alive?(pid)
-          Process.kill(0, pid)
-          true
-        rescue Errno::ESRCH
-          false
-        end
-
-        def finish_sox(pid)
-          Process.kill("INT", pid) if alive?(pid)
-          Process.wait(pid)
-        rescue Errno::ESRCH, Errno::ECHILD
-          nil
-        end
-
-        def transcribe(wav)
+        def transcribe(pcm)
           key = gemini_key
           return unless key
 
@@ -165,7 +215,7 @@ module Master
           body = {
             contents: [{ parts: [
               { text: 'Transcribe the speech. Reply as JSON: {"heard":"..."} . Empty heard when there is no speech.' },
-              { inline_data: { mime_type: "audio/wav", data: Base64.strict_encode64(File.binread(wav)) } },
+              { inline_data: { mime_type: "audio/wav", data: Base64.strict_encode64(wav_bytes(pcm)) } },
             ] }],
             generationConfig: { responseMimeType: "application/json", thinkingConfig: { thinkingBudget: 0 } },
           }
@@ -174,6 +224,12 @@ module Master
           JSON.parse(text.to_s)["heard"].to_s.strip
         rescue StandardError
           nil
+        end
+
+        # A 16 kHz mono 16-bit wav around raw samples.
+        def wav_bytes(pcm)
+          ["RIFF", 36 + pcm.bytesize, "WAVE", "fmt ", 16, 1, 1, RATE_HZ, RATE_HZ * 2, 2, 16, "data", pcm.bytesize]
+            .pack("a4Va4a4VvvVVvva4V") + pcm
         end
 
         def gemini_key
