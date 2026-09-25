@@ -15,7 +15,7 @@ module Brgen
       end
 
       # One candidate now, not four. The three fallbacks pointed into
-      # studio/radio-bergen, which no longer exists — brgen serves this playlist,
+      # MASTER/tools/radio-bergen, which no longer exists — brgen serves this playlist,
       # so the manifest lives in brgen's own config where the first candidate
       # always looked. In development that path resolves directly; in production
       # it is the same path, so there is nothing left to fall back to.
@@ -33,17 +33,17 @@ module Brgen
       end
 
       # All four candidates named a subsystem that no longer exists: 41b20306d
-      # removed studio/radio-bergen ("brgen's playlist replaced what it served"),
-      # and the surviving three paths were lowercase `studio/` after 2d4551597
+      # removed MASTER/tools/radio-bergen ("brgen's playlist replaced what it served"),
+      # and the surviving three paths were lowercase `MASTER/tools/` after 2d4551597
       # renamed the directory to STUDIO. So sonic_learnings returned {} on every
       # call, and radio_bergen_study_test.rb skipped itself rather than failing.
       # The learnings live in the dilla engine's own reference file now.
       def sonic_learnings_candidates
         [
           rails_root.join("config/radio_bergen/sonic.yml"),
-          rails_root.join("../../../STUDIO/dilla/data/reference_sonic.yml").expand_path,
-          Operator::DeployPaths.repo_join("STUDIO/dilla/data/reference_sonic.yml"),
-          Pathname.new("#{Operator::DeployPaths::DEFAULT_REPO}/STUDIO/dilla/data/reference_sonic.yml")
+          rails_root.join("../../../MASTER/tools/dilla/data/reference_sonic.yml").expand_path,
+          Operator::DeployPaths.repo_join("MASTER/tools/dilla/data/reference_sonic.yml"),
+          Pathname.new("#{Operator::DeployPaths::DEFAULT_REPO}/MASTER/tools/dilla/data/reference_sonic.yml")
         ]
       end
 
@@ -119,11 +119,11 @@ module Brgen
           "object: pub2 monolithic index.html → radio.brgen.no warp tunnel",
           "archive: #{meta['source_archive'] || 'anon987654321/pub2'} @ #{pub2_head}",
           # These two are rendered to the visitor on the playlist surface, so
-          # they name paths that exist. studio/radio-bergen/ was removed in
+          # they name paths that exist. MASTER/tools/radio-bergen/ was removed in
           # 41b20306d; the manifest moved into this app and the learnings into
           # the dilla engine.
           "manifest: RAILS/brgen/config/radio_bergen/tracks.yml",
-          "learnings: STUDIO/dilla/data/reference_sonic.yml (ruby dilla.rb radio-bergen-study)",
+          "learnings: MASTER/tools/dilla/data/reference_sonic.yml (ruby dilla.rb radio-bergen-study)",
           "lesson: do_not_restore monolithic index.html — manifest + Rails vertical instead",
           "excavated: #{local_count} local_mp3 metadata rows · #{youtube_count} youtube references",
           "policy: #{manifest.dig('external_reference', 'policy') || 'reference_only_until_rights_review'}",
