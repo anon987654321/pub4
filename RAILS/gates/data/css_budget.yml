@@ -347,7 +347,16 @@ weight_kb:
   # desktop surface (c4801541a) and the Material 3 message bubbles and typing
   # pulse (80be5eb12). Each was a deliberate design change, so cutting it would
   # undo the work; the rebuild is the first measurement of it.
-  brgen: 215
+  #
+  # brgen 215 -> 235 on 2026-09-25, named rather than absorbed, in two parts.
+  # 234KB is what origin/main already compiled to: the marketplace bol storefront
+  # (6f96f26cb, dc061e474, dd5e32b7a, 8cf08ce6d, 4611d264a, bc6cbaab7, 9379e4112)
+  # landed its SCSS without rebuilding, so the committed build weighed 215 while
+  # the source weighed 234, and the first rebuild measured it. The last 1.5KB is
+  # the antigravity.google treatment the operator asked for the same day: the
+  # display page header, the black sign-in pill, the quiet footer and the
+  # section rhythm. Each is a deliberate design change.
+  brgen: 235
   amber: 110
 # 64 -> 65 on 2026-09-12. Mobile-first costs bytes: stating the phone case
 # unconditionally and restoring the wider one at a min-width edge writes each

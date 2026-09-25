@@ -10,7 +10,10 @@
   terms_href = respond_to?(:terms_path) ? terms_path : main_app.terms_path
   cookies_href = respond_to?(:cookies_path) ? cookies_path : main_app.cookies_path
 %>
+<%# An app that wants a multi-column footer fills :site_footer_columns; the
+    legal links are always the last column. %>
 <footer class="site-legal">
+  <%= yield :site_footer_columns %>
   <nav aria-label="<%= t("legal.aria") %>">
     <%= link_to t("legal.privacy"), privacy_href %>
     <%= link_to t("legal.terms"), terms_href %>

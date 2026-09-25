@@ -58,11 +58,14 @@
     --text-xl: 1.5rem;
     /* design_tokens ui_polish.type_tokens.text_display */
     --text-2xl: 1.75rem;
-  /* The display slot: hero/marketing type above the body ladder. Added
-     2026-08-22 because every off-ladder arrival this month was display type
-     with no sanctioned home; value from brgen/_affiliate.scss, its first
-     citer. */
-  --text-display: 2.2rem;
+  /* The display slot: the one large centred headline a page leads with,
+     at antigravity.google's scale (operator, 2026-09-25). px, not rem, because
+     brgen roots at 18px and the scale is the reference's, not a multiple of
+     the reading size. */
+  --text-display: clamp(40px, 6vw, 88px);
+  /* The gap between a page's sections, from the same reference: 64px on a
+     phone, opening to 160px on a wide screen. */
+  --section-rhythm: clamp(64px, 10vw, 160px);
     /* Every step here sits on design_rules.yml's 8px rhythm
        ([0,4,8,12,16,20,24,32,40,44,48,64,96]px) — steps 7/9/11/13/14/15 used to
        fill the scale out to a smooth 0.25rem stride (28/36/44/52/56/60px),

@@ -25,7 +25,7 @@
       and a dark color-scheme hint gave it dark scrollbars and form controls. The
       browser bar takes each ground's own --bg. %>
   <%= tag.meta name: "color-scheme", content: surface_theme %>
-  <%= tag.meta name: "theme-color", content: "#efefef", data: { light_color: "#efefef", dark_color: "#000000" } %>
+  <%= tag.meta name: "theme-color", content: "#ffffff", data: { light_color: "#ffffff", dark_color: "#000000" } %>
     <%= render "shared/theme_bootstrap", storage_key: "brgen-theme" %>
   <%# content_for(:x) with no block is the read form: it already returns nil when unset,
       so content_for?(:x) ? yield(:x) : … was two lookups and the key named twice. %>
@@ -105,7 +105,7 @@
           always set — the question is whether it is a real account. %>
       <% if Current.user.nil? || Current.user.guest? %>
         <%= link_to new_session_path, class: "chrome-auth", title: t("nav.sign_in"),
-                    "aria-label": t("nav.sign_in") do %><%= icon("sign_in", size: 20) %><% end %>
+                    "aria-label": t("nav.sign_in") do %><span class="chrome-auth-label"><%= t("nav.sign_in") %></span><%= icon("sign_in", size: 20) %><% end %>
       <% end %>
 <%# The one theme mechanism: the shared toggle writes data-theme through
     the Stimulus controller, and the shared bootstrap restores it at
@@ -188,6 +188,13 @@
         body: t("install.body") %>
   <%= render "shared/nearby_chat_widget" %>
   <%= render "shared/link_converter" %>
+  <%# The quiet footer's first column: the city and every surface of it. %>
+  <% content_for :site_footer_columns do %>
+    <div class="site-footer-col">
+      <p class="site-footer-head"><%= city_name %></p>
+      <% brgen_nav_items.each do |_slug, label, href| %><%= link_to label, href %><% end %>
+    </div>
+  <% end %>
   <%= render "shared/site_legal_footer" %>
 </body>
 </html>

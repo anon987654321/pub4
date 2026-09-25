@@ -117,15 +117,19 @@ $vertical-accent-ink: #110f19;
   // identical 600px at every app root, so nothing moves.
 }
 
-// The light half of the one scheme. text #333 on #efefef is 10.99:1 and on #fff
-// 12.63:1; secondary #4d4d4d is 7.35 / 8.45, because TYPOGRAPHY asks 7.0 of normal
-// text and secondary is set at meta sizes. The accent is
-// #000 rather than a hue, so a link needs an underline to be a link.
+// The light half of the one scheme: a white page with #efefef panels, the
+// antigravity.google grounding the operator chose on 2026-09-25, from the same
+// eight values. text #333 on #fff is 12.63:1 and on #efefef 10.99:1; secondary
+// #4d4d4d is 8.45 / 7.35, because TYPOGRAPHY asks 7.0 of normal text and
+// secondary is set at meta sizes. The accent is #000 rather than a hue, so a
+// link needs an underline to be a link. MASTER/data/rules.yml#design_system
+// still records the old #efefef page; that file is immutable here, so the
+// projection in design_tokens.yml follows when the operator amends it.
 @mixin light-tokens(
-  $bg: #efefef,
-  $surface: #ffffff,
-  $surface-elevated: #ffffff,
-  $search-bg: #ffffff,
+  $bg: #ffffff,
+  $surface: #efefef,
+  $surface-elevated: #efefef,
+  $search-bg: #efefef,
   $text: #333333,
   $text-secondary: #4d4d4d,
   $border: #666666,

@@ -113,6 +113,11 @@ x.$vertical-accent-ink: #110f19;
 
      --brand-mark-glyphs comes from the layout, which is the only place that
      knows the label. The 9 fallback covers a mark rendered without it. */
+    /* The nav link is a 44px box now, text-sm on --space-3 padding lifted
+       to the tap floor, the same box as the fixed chrome, so the shared 1.6px
+       nudge that matched the old 47.25px link would put the mark and toggle
+       below the links' centre line. */
+    --top-band-nudge: 0px;
     --brand-mark-inline: calc(
   var(--chrome-inset, 12px) + var(--safe-left, 0px) +
   var(--brand-mark-glyphs, 9) * 0.64 * clamp(0.9375rem, 2.8vw, 1.125rem) + 0.5rem
@@ -243,7 +248,9 @@ label { display: block; font-size: var(--text-sm); color: var(--text-secondary);
 
 .search_palette_trigger {
   position: fixed;
-  inset-block-start: var(--chrome-inset, 12px);
+  /* On the band's centre line with the mark and the corner controls, which
+     take their top from the bar rather than from the screen edge. */
+  inset-block-start: calc(var(--chrome-inset-block, 8px) + var(--safe-top, 0px) + var(--top-band-nudge, 0px));
   /* One tap target clear of the theme toggle, which is fixed to the same
      corner. At the plain inset the two overlap by 32px and the toggle sits
      higher, so it takes the taps; the brand mark's gutter prevents the same
@@ -623,6 +630,41 @@ table.lines {
   opacity: 1;
 }
 
+/* The label shows only where the sign-in becomes a pill, below. */
+.chrome-auth-label { display: none; }
+
+/* From md the corner holds sign-in and the toggle side by side, so the search
+   glyph clears two tap targets, not one: clearing only the toggle put it over
+   the sign-in link by 28px. */
+@media (min-width: 768px) {
+  body:has(.chrome-auth) .search_palette_trigger {
+    inset-inline-end: calc(var(--chrome-inset, 12px) + 2 * var(--tap-min, 44px) + var(--space-1, 4px));
+  }
+}
+
+/* The one black pill in the header, antigravity.google's (operator,
+   2026-09-25). Fixed width, so the search glyph beside it can clear it by
+   arithmetic; 7.5rem holds "Logg inn" and "Sign in" with the icon. */
+@media (min-width: 1265px) {
+  .chrome-corner .chrome-auth {
+    inline-size: 7.5rem;
+    gap: var(--space-2);
+    margin-inline-end: var(--space-2);
+    padding: 0;
+    border-radius: var(--radius-pill);
+    background: var(--text);
+    color: var(--bg);
+    opacity: 1;
+    font-size: var(--text-sm);
+  }
+
+  .chrome-auth-label { display: inline; }
+
+  body:has(.chrome-auth) .search_palette_trigger {
+    inset-inline-end: calc(var(--chrome-inset, 12px) + var(--tap-min, 44px) + 7.5rem + var(--space-2) + var(--space-1, 4px));
+  }
+}
+
 /* From md the wordmark returns to the leading edge beside the nav, and the
    light/dark control returns to the opposite corner, where the base
    .brgen-logo-mark and .theme-toggle rules place them. */
@@ -984,10 +1026,10 @@ label.compose-action:hover { color: var(--text); }
   /* Tight both ways, so the run costs as little width as it can while keeping
      its 44px tap target. */
   padding: var(--space-3) var(--space-3);
-  /* Big letters, the operator's call: the primary nav reads as primary, and a
-     bar that retires can afford the width. */
-  font: var(--text-lg)/1 var(--font);
-  font-weight: var(--weight-bold);
+  /* Small light text in a slim bar, antigravity.google's header (operator,
+     2026-09-25); the red rule, not weight, marks the active entry. */
+  font: var(--text-sm)/1 var(--font);
+  font-weight: var(--weight-normal);
   color: var(--text-secondary);
   white-space: nowrap;
   transition: color var(--transition-fast) var(--ease-in-out),
@@ -997,7 +1039,7 @@ label.compose-action:hover { color: var(--text); }
 .nav_link:hover { color: var(--text); background: var(--hover); text-decoration: none; }
 
 /* Active state is a thick red rule under the entry, and exactly one entry
-   wears it, as the operator designed. With eight peers all set in --weight-bold,
+   wears it, as the operator designed. With eight peers all set in one weight,
    weight cannot mark one of them, and colour alone is a contrast step a reader
    scanning a row does not register.
 
@@ -7220,12 +7262,6 @@ body.vertical-tv main {
   margin-inline: auto;
 }
 
-body.vertical-tv .page-header h1 {
-  font-size: var(--text-lg);
-  font-weight: var(--weight-bold);
-  letter-spacing: var(--tracking-tighter);
-  color: var(--text);
-}
 
 .episode-list {
   display: flex;
@@ -7606,11 +7642,6 @@ body.vertical-maps .page-header {
   padding: max(16px, env(safe-area-inset-top)) 16px 0.75rem;
 }
 
-body.vertical-maps .page-header h1 {
-  font-weight: var(--weight-bold);
-  letter-spacing: var(--tracking-tightest);
-}
-
 body.vertical-maps article.place {
   max-width: min(100%, 720px);
   margin: 0 auto;
@@ -7723,13 +7754,6 @@ body.vertical-messenger .page-header {
   margin-bottom: 1rem;
   padding-bottom: 0.75rem;
   border-bottom: 0;
-}
-
-body.vertical-messenger .page-header h1 {
-  font-size: clamp(1.5rem, 5vw, 1.875rem);
-  font-weight: var(--weight-bold);
-  letter-spacing: var(--tracking-tightest);
-  margin: 0;
 }
 
 body.vertical-messenger ul[aria-label="Conversations"] {
@@ -8609,8 +8633,31 @@ aside:not([class]) > h2 {
   margin: var(--space-3) 0 0;
 }
 
+/* The page header is one large centred headline, antigravity.google's
+   language in the house face (operator, 2026-09-25), and every vertical
+   inherits it from here. It restates what shell_widgets' slim sticky bar
+   sets, because that partial loads before these rules and still serves
+   bsdports as a bar. Leading is --leading-none, the law's nearest step to
+   the reference's 1.05; balance keeps a two-line title off one word. */
 .page-header {
-  padding: var(--space-4);
+  position: static;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-4);
+  max-width: var(--measure);
+  margin: 0 auto var(--space-8);
+  padding: var(--space-12) var(--space-4) 0;
+  background: none;
+  text-align: center;
+}
+
+.page-header h1 {
+  margin: 0;
+  font-size: var(--text-display);
+  font-weight: var(--weight-normal);
+  letter-spacing: var(--tracking-tightest);
+  line-height: var(--leading-none);
+  text-wrap: balance;
 }
 
 /* A live search index sits straight in main, which carries no gutter inside
@@ -8620,13 +8667,39 @@ aside:not([class]) > h2 {
   margin-inline: var(--space-4);
 }
 
-.page-header h1 {
-  margin: 0 0 var(--space-1);
-  font-size: var(--text-title, 1.25rem);
-  font-weight: var(--weight-heavy);
-  font-family: var(--font);
-  letter-spacing: var(--tracking-tighter);
+
+/* A section's distance from the one before it, antigravity.google's wide
+   rhythm (operator, 2026-09-25). :where() so any section that already states
+   its own margin keeps it. */
+:where(main#main-content > section + section) {
+  margin-block-start: var(--section-rhythm);
 }
+
+/* The quiet multi-column footer from the same reference: small secondary type
+   in columns, the city's surfaces first and the legal links last, a
+   section's rhythm above it and room below for the bottom chrome. */
+.site-legal {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--space-8);
+  max-width: var(--container-max);
+  margin: var(--section-rhythm) auto 0;
+  padding: var(--space-12) var(--page-gutter) calc(var(--space-16) + var(--tap-min));
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.site-legal :is(nav, .site-footer-col) {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.site-legal a { color: inherit; text-decoration: none; }
+.site-legal a:hover { color: var(--text); }
+.site-footer-head { margin: 0; color: var(--text); }
+.site-legal .affiliate-fine { grid-column: 1 / -1; margin: 0; }
 
 /* G · a11y floor + touch targets */
 :where(button, .btn, .feed-action, .nav-item, .nav_link, a.chip, .push-enable-btn) {
