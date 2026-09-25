@@ -21,7 +21,7 @@ end
 # frozen_string_literal: true
 class TestCapabilityMap < Minitest::Test
   def setup
-    @map = Master::Core::Routing::CapabilityMap.new
+    @map = Master::CLI::Routing::CapabilityMap.new
   end
 
   def test_recording_outcomes
@@ -57,10 +57,10 @@ class TestCapabilityMap < Minitest::Test
         written << target
         File.write(target, content)
       end
-      Master::Core::Routing::CapabilityMap.new(path:, write:).record_outcome("gemma", :coding, true)
+      Master::CLI::Routing::CapabilityMap.new(path:, write:).record_outcome("gemma", :coding, true)
 
       assert_equal [path], written
-      assert_equal 1.0, Master::Core::Routing::CapabilityMap.new(path:).success_rate("gemma", "coding")
+      assert_equal 1.0, Master::CLI::Routing::CapabilityMap.new(path:).success_rate("gemma", "coding")
     end
   end
 end
