@@ -43,7 +43,7 @@ class TestDocPaths < Minitest::Test
     OPENBSD/RUNBOOK.md
     RAILS/README.md
     RAILS/CLAUDE.md
-    STUDIO/README.md
+    MASTER/tools/README.md
   ].freeze
 
   # Every coding agent reads a different file, and pub4 had one of the five.
@@ -99,9 +99,9 @@ class TestDocPaths < Minitest::Test
     assert_includes body, "docs:agent_contracts" # source-assertion: ok — a document has no behaviour but its text
   end
 
-  # The repo root is four trees and CLAUDE.md. bin/ moved under MASTER and
+  # The repo root has three governed trees and CLAUDE.md. bin/ moved under MASTER and
   # dotfiles/ under OPENBSD, so neither is a top-level tree any more.
-  TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
+  TREES = %w[MASTER RAILS OPENBSD].freeze
   # Paths that name a thing on the VPS, not a thing in the repo.
   ABSOLUTE_OR_REMOTE = %r{\A(/|~|https?:|[a-z]+@)}
 
