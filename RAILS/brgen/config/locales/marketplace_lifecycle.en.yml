@@ -1,0 +1,7 @@
+en:
+  mailer:
+    abandoned_cart_subject: "Your Brgen cart is still waiting"
+    abandoned_cart_title: "Your cart is still here"
+    abandoned_cart_lede: "You left these items in your cart. They are still available when you are ready."
+    abandoned_cart_button: "Open my cart"
+    abandoned_cart_permission: "You receive this because you chose marketplace emails. You can change your email preferences from your account."
