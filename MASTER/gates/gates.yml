@@ -51,6 +51,9 @@
 #
 # Order is run order.
 
+architecture:
+  script: architecture.rb
+
 production:
   require: lib/production
   class: Deploy::ProductionGate
