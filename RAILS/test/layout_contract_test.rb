@@ -3,7 +3,7 @@
 # Family layout contract: MASTER face + RAILS apps share chrome vars, skip-link,
 # main landmark, and 44px tap floor. Dialects may restyle; structure stays.
 require "minitest/autorun"
-require_relative "../shared/lib/operator/scss_rules"
+require_relative "../../MASTER/tools/design/scss_rules"
 
 class LayoutContractTest < Minitest::Test
   # __dir__ is RAILS/test → ROOT is RAILS/ → REPO is pub4 checkout root.
