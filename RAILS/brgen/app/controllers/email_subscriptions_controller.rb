@@ -21,7 +21,7 @@ class EmailSubscriptionsController < ApplicationController
   # the property that makes it safe lives in a `before_create` in another file,
   # and "unguessable" is a claim about a token generator that nothing stops
   # someone shortening. A limit costs one line and does not depend on that.
-  rate_limit to: 30, within: 1.minute, only: %i[confirm destroy], name: "token_lookup",
+  rate_limit to: 30, within: 1.minute, only: %i[confirm show update destroy], name: "token_lookup",
     with: -> { redirect_to root_path, alert: t("shared.flash.rate_limited") }
 
   def create
@@ -42,6 +42,16 @@ class EmailSubscriptionsController < ApplicationController
     end
   end
 
+  def show
+    @subscription = find_subscription
+  end
+
+  def update
+    subscription = find_subscription
+    subscription.update_marketing_preferences!(marketing: params.dig(:email_subscription, :marketing) == "1")
+    redirect_to email_subscription_path(token: subscription.token), notice: t("email_preferences.updated")
+  end
+
   def confirm
     sub = EmailSubscription.find_by!(token: params[:token])
     if sub.confirmed?
@@ -53,7 +63,7 @@ class EmailSubscriptionsController < ApplicationController
   end
 
   def destroy
-    sub = EmailSubscription.find_by!(token: params[:token])
+    sub = find_subscription
     sub.destroy!
     redirect_to root_path, notice: t("flash.unsubscribed")
   end
