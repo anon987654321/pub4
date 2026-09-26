@@ -17,4 +17,10 @@ class TestTriangleRuntimeContract < Minitest::Test
     assert_includes SOURCE, 'BUNDLE, "exec", RUBY, "bin/rails", "db:prepare"'
     assert_includes SOURCE, 'BUNDLE, "exec", RUBY, "bin/rails", "server"'
   end
+
+  def test_triangle_does_not_boot_after_a_failed_migration
+    assert_includes SOURCE, 'unless migrate(app)'
+    assert_includes SOURCE, 'failed << app[:name]'
+    assert_includes SOURCE, 'next'
+  end
 end
