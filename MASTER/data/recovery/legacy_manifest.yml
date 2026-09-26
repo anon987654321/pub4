@@ -78,12 +78,13 @@ legacy_roots:
       but schema provenance should stay available.
 
   - path: README.md
-    state: archived
+    state: ported
     priority: medium
-    target_path: STUDIO/postpro/IMAGE_ENGINE_POSITIONING.md
+    target_path: MASTER/tools/postpro/README.md
     reason: >
       Old root README described the image-processing/analog-engine product
-      positioning that belongs with postpro.
+      positioning; the current postpro boundary carries that purpose in its
+      canonical README rather than preserving a second documentation file.
 
   - path: misc/vulcheck/
     state: ported
