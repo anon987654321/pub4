@@ -29,7 +29,6 @@ module Operator
 
     PUBLISH_METHODS = %w[publish].freeze
     SUBSCRIBE_METHODS = %w[subscribe].freeze
-    BROWSER_LISTENER_METHODS = %w[addEventListener subscribe].freeze
     EVENT_NAME = /\A[a-z][a-z0-9_]*:[a-z][a-z0-9_:-]*\z/
     WILDCARDS = ["*", "**"].freeze
 
@@ -167,10 +166,8 @@ module Operator
             state = :code
           end
         when :line_comment
-          if char == "
-"
-            out << "
-"
+          if char == "\n"
+            out << "\n"
             state = :code
           else
             out << " "
@@ -182,9 +179,7 @@ module Operator
             i += 2
             next
           end
-          out << (char == "
-" ? "
-" : " ")
+          out << (char == "\n" ? "\n" : " ")
         end
 
         i += 1
@@ -268,7 +263,8 @@ module Operator
         return strict && (result[:unpublished].any? || result[:unconsumed].any?) ? 1 : 0
       end
 
-      io.puts "event_bus: #{result[:publishers].size} publishers, #{result[:subscribers].size} Ruby subscribers, "               "#{result[:listeners].size} browser listeners, #{result[:references].size} browser references"
+      io.puts "event_bus: #{result[:publishers].size} publishers, #{result[:subscribers].size} Ruby subscribers, " \
+              "#{result[:listeners].size} browser listeners, #{result[:references].size} browser references"
 
       unless result[:unpublished].empty?
         io.puts "event_bus: topics with no publisher:"
