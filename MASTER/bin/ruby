@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# Resolve pub4's exact pinned Ruby where rbenv is available; never downgrade
+# Resolve pub4's exact pinned Ruby where rbenv is available; never silently downgrade
 set -eu
 
 ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
@@ -10,29 +10,84 @@ if [ -f "$ROOT/.ruby-version" ]; then
   PINNED_VERSION="$(cat "$ROOT/.ruby-version")"
 fi
 
-if [ -n "$PINNED_VERSION" ] && [ -x "$RBENV_ROOT/versions/$PINNED_VERSION/bin/ruby" ]; then
-  RUBY="$RBENV_ROOT/versions/$PINNED_VERSION/bin/ruby"
-else
+find_rbenv() {
+  RBENV="${RBENV:-}"
+  if [ -n "$RBENV" ] && [ -x "$RBENV" ]; then
+    printf '%s
+' "$RBENV"
+    return
+  fi
+
   RBENV="$(command -v rbenv 2>/dev/null || true)"
-  if [ -z "$RBENV" ] && [ -x "$RBENV_ROOT/bin/rbenv" ]; then
-    RBENV="$RBENV_ROOT/bin/rbenv"
+  if [ -n "$RBENV" ] && [ -x "$RBENV" ]; then
+    printf '%s
+' "$RBENV"
+    return
   fi
 
-  if [ -n "$RBENV" ] && [ -n "$PINNED_VERSION" ]; then
-    RUBY="$(RBENV_VERSION="$PINNED_VERSION" "$RBENV" which ruby 2>/dev/null || true)"
+  if [ -x "$RBENV_ROOT/bin/rbenv" ]; then
+    printf '%s
+' "$RBENV_ROOT/bin/rbenv"
+  fi
+}
+
+rbenv_path() {
+  RBENV="$1"
+  direct="$RBENV_ROOT/versions/$PINNED_VERSION/bin/ruby"
+  if [ -x "$direct" ]; then
+    printf '%s
+' "$direct"
+    return
   fi
 
+  [ -n "$PINNED_VERSION" ] || return
+  output="$(RBENV_VERSION="$PINNED_VERSION" "$RBENV" which ruby 2>/dev/null || true)"
+  if [ -n "$output" ] && [ -x "$output" ]; then
+    printf '%s
+' "$output"
+  fi
+}
+
+install_pinned_ruby() {
+  RBENV="$1"
+  [ -n "$PINNED_VERSION" ] || return 1
+  [ "${MASTER_AUTO_INSTALL_RUBY:-1}" = "0" ] && return 1
+
+  if ! "$RBENV" install -s "$PINNED_VERSION"; then
+    return 1
+  fi
+
+  rbenv_path "$RBENV"
+}
+
+RUBY=""
+RBENV="$(find_rbenv || true)"
+
+if [ -n "$RBENV" ]; then
+  RUBY="$(rbenv_path "$RBENV" || true)"
+  if [ -z "$RUBY" ]; then
+    RUBY="$(install_pinned_ruby "$RBENV" || true)"
+  fi
 fi
 
 RUBY="${RUBY:-$(command -v ruby 2>/dev/null || true)}"
 if [ -z "${RUBY:-}" ]; then
-  printf '%s\n' "pub4: no Ruby executable found; .ruby-version requires $PINNED_VERSION" >&2
+  printf '%s
+' "pub4: no Ruby executable found; .ruby-version requires $PINNED_VERSION" >&2
   exit 1
 fi
 
 ACTUAL="$("$RUBY" -e 'print RUBY_VERSION')"
 if [ "$ACTUAL" != "$PINNED_VERSION" ]; then
-  printf '%s\n' "pub4: Ruby $ACTUAL detected; .ruby-version requires $PINNED_VERSION" >&2
+  printf '%s
+' "pub4: Ruby $ACTUAL detected; .ruby-version requires $PINNED_VERSION" >&2
+  if [ -n "$RBENV" ]; then
+    printf '%s
+' "pub4: run: RBENV_VERSION=$PINNED_VERSION $RBENV install -s $PINNED_VERSION" >&2
+  else
+    printf '%s
+' "pub4: install rbenv + ruby-build, then run: rbenv install -s $PINNED_VERSION" >&2
+  fi
   exit 1
 fi
 

@@ -16,7 +16,10 @@ if File.file?(pinned_ruby)
   if !expected_ruby.empty? && RUBY_VERSION != expected_ruby && ENV["MASTER_ALLOW_UNPINNED_RUBY"] != "1"
     ruby_wrapper = File.expand_path("../bin/ruby", __dir__)
     if File.executable?(ruby_wrapper)
-      reexec = -> { exec(ruby_wrapper, __FILE__, *ARGV) }
+      reexec = lambda do
+        ENV["BUNDLE_GEMFILE"] = File.expand_path("../Gemfile", __dir__)
+        exec(ruby_wrapper, "-rbundler/setup", __FILE__, *ARGV)
+      end
       defined?(Bundler) ? Bundler.with_unbundled_env(&reexec) : reexec.call
     end
     warn "cli: Ruby #{expected_ruby} required; running #{RUBY_VERSION} — use #{ruby_wrapper} bin/cli"

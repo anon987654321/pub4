@@ -22,6 +22,33 @@ class BrgenMailersTest < ActionMailer::TestCase
     end
   end
 
+  test "newsletter carries a real preferences link in both parts" do
+    sub = EmailSubscription.create!(
+      email: "newsletter-preferences@example.com",
+      confirmed: true,
+      agreed_to_marketing: true
+    )
+    edition = NewsletterEdition.create!(
+      kind: "daily",
+      city: "bergen",
+      edition_date: Date.current,
+      subject: "Bergen today",
+      lede: "A few useful things.",
+      sign_off: "Brgen",
+      permission_line: "You asked for these emails.",
+      stories: [],
+      deals: []
+    )
+
+    mail = NewsletterMailer.edition(sub, edition)
+    preference_path = email_subscription_path(token: sub.token)
+
+    [ mail.html_part, mail.text_part ].each do |part|
+      assert_includes part.body.to_s, preference_path
+      assert_includes part.body.to_s, I18n.t("email_preferences.title")
+    end
+  end
+
   test "verification subject is a key and both parts carry the token" do
     user = User.create!(email_address: "verify-brgen@example.com", password: "password")
     token = user.generate_email_verification!

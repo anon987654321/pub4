@@ -16,3 +16,4 @@ nb:
     seller_delivery_completion: "%{rate} av sendte er levert"
     seller_return_rate: "%{rate} av kjøp returnert"
     seller_average_rating: "%{rating}/5 fra %{count} vurderinger"
+    seller_paid_sales: "Betalte salg: %{amount}"

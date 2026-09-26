@@ -263,30 +263,30 @@ module Master
         end
       end
 
-def surface_anatomy(surface)
-      label = [surface.app, surface.label, surface.host, surface.path].compact.join("/").downcase
-      key = surface_key_for(label, surface)
-      row = reference_study.fetch("vertical_anatomy", {})[key]
-      return "generic task anatomy" unless row.is_a?(Hash)
+      def surface_anatomy(surface)
+        label = [surface.app, surface.label, surface.host, surface.path].compact.join("/").downcase
+        key = surface_key_for(label, surface)
+        row = reference_study.fetch("vertical_anatomy", {})[key]
+        return "generic task anatomy" unless row.is_a?(Hash)
 
-      structure = Array(row["structure"]).join(" -> ")
-      "attention=#{row["attention"]}; structure=#{structure}; lenses=#{Array(row["reference_lenses"]).join(",")}"
-    end
+        structure = Array(row["structure"]).join(" -> ")
+        "attention=#{row["attention"]}; structure=#{structure}; lenses=#{Array(row["reference_lenses"]).join(",")}"
+      end
 
-    def surface_key_for(label, surface)
-      return "messenger" if label.include?("messenger") || label.include?("conversation") || label.include?("/messages")
-      return "marketplace" if label.include?("markedsplass") || label.include?("marketplace") || label.include?("listings") || label.include?("shops")
-      return "dating" if label.include?("dating") || label.include?("likes")
-      return "takeaway" if label.include?("takeaway") || label.include?("restaurant")
-      return "radio" if label.include?("radio") || label.include?("playlist") || label.include?("sets")
-      return "tv" if label.include?("tv_") || (label.include?("/feed") && label.include?("tv"))
-      return "maps" if label.include?("maps") || label.include?("places")
-      return "amber" if surface.app.to_s == "amber"
-      return "bsdports" if surface.app.to_s == "bsdports"
-      "brgen_social"
-    end
+      def surface_key_for(label, surface)
+        return "messenger" if label.include?("messenger") || label.include?("conversation") || label.include?("/messages")
+        return "marketplace" if label.include?("markedsplass") || label.include?("marketplace") || label.include?("listings") || label.include?("shops")
+        return "dating" if label.include?("dating") || label.include?("likes")
+        return "takeaway" if label.include?("takeaway") || label.include?("restaurant")
+        return "radio" if label.include?("radio") || label.include?("playlist") || label.include?("sets")
+        return "tv" if label.include?("tv_") || (label.include?("/feed") && label.include?("tv"))
+        return "maps" if label.include?("maps") || label.include?("places")
+        return "amber" if surface.app.to_s == "amber"
+        return "bsdports" if surface.app.to_s == "bsdports"
+        "brgen_social"
+      end
 
-    def reference_context
+      def reference_context
         study = reference_study
         blocks = study.filter_map do |name, row|
           next unless row.is_a?(Hash)

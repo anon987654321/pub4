@@ -13,8 +13,8 @@ class MarketplaceSavedAndFacetsTest < ActionDispatch::IntegrationTest
     ActsAsTenant.current_tenant = @city
     @bikes = Marketplace::Category.create!(name: "Sykler", slug: "sykler-#{SecureRandom.hex(4)}")
     @sofas = Marketplace::Category.create!(name: "Sofaer", slug: "sofaer-#{SecureRandom.hex(4)}")
-    @cheap = listing("Brukt sykkel", category: @bikes, price_cents: 40_000, condition: "fair")
-    @dear = listing("Racersykkel", category: @bikes, price_cents: 1_500_000, condition: "like_new")
+    @cheap = listing("Brukt sykkel", category: @bikes, price_cents: 40_000, condition: "good")
+    @dear = listing("Racersykkel", category: @bikes, price_cents: 1_500_000, condition: "very_good")
     @sofa = listing("Sofa", category: @sofas, price_cents: 300_000, condition: "good")
   end
 
@@ -43,7 +43,7 @@ class MarketplaceSavedAndFacetsTest < ActionDispatch::IntegrationTest
   test "a facet counts what picking it would leave" do
     assert_equal 2, facets.categories[@bikes.id]
     assert_equal 1, facets.categories[@sofas.id]
-    assert_equal 1, facets.conditions["good"]
+    assert_equal 2, facets.conditions["good"]
   end
 
   # Counting with its own filter applied answers "how many of what you already
@@ -53,8 +53,8 @@ class MarketplaceSavedAndFacetsTest < ActionDispatch::IntegrationTest
     narrowed = facets(category_id: @bikes.id)
     assert_equal 2, narrowed.categories[@bikes.id]
     assert_equal 1, narrowed.categories[@sofas.id]
-    assert_nil narrowed.conditions["good"]
-    assert_equal 1, narrowed.conditions["fair"]
+    assert_nil narrowed.conditions["satisfactory"]
+    assert_equal 1, narrowed.conditions["good"]
   end
 
   # The grid shows one kind at a time, so a facet counting every kind promises

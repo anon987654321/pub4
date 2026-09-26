@@ -48,12 +48,16 @@ class Marketplace::Return < ApplicationRecord
   # approved return that never arrives would otherwise put a thing back on the
   # shelf that is still in the post.
   def receive!(by:)
-    return self if status == "received"
-
-    transaction do
-      update!(status: "received", resolved_by: by, resolved_at: Time.current)
-      order_record&.restock_returned!
+    transitioned = false
+    with_lock do
+      unless status == "received"
+        update!(status: "received", resolved_by: by, resolved_at: Time.current)
+        order_record&.restock_returned!
+        transitioned = true
+      end
     end
+    return self unless transitioned
+
     record_listing_commerce_event
     record_listing_event("return", user: order_buyer, metadata: { order_id: order_record&.id, return_id: id })
     refund_after_receive!

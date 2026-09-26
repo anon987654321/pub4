@@ -1220,11 +1220,11 @@ en:
     offers: Offers
     add_address_body: Save an address so the next purchase does not ask again.
     conditions:
-      new: new
-      like_new: like new
-      good: good
-      fair: fair
-      poor: poor
+      new_with_tags: New with tags
+      new_without_tags: New without tags
+      very_good: Very good
+      good: Good
+      satisfactory: Satisfactory
     questions: Questions
     ask_question: Ask about this listing
     ask_placeholder: "Is it still available?"

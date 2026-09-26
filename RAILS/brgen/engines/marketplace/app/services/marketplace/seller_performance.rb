@@ -24,6 +24,10 @@ class Marketplace::SellerPerformance
     )
     counts = events.group(:event_name).count
     review_scope = Marketplace::Review.where(listing_id: listing_ids)
+    paid_sales = Marketplace::Order.joins(:listing)
+      .where(listing_id: listing_ids, payment_status: "paid", paid_at: (now - WINDOW)..now)
+      .group("marketplace_listings.currency")
+      .sum(Arel.sql("COALESCE(marketplace_orders.price_cents, marketplace_listings.price_cents, 0) * marketplace_orders.quantity"))
     purchases = counts.fetch(EVENT_NAMES[:purchases], 0)
     shipped = counts.fetch(EVENT_NAMES[:shipped], 0)
     delivered = counts.fetch(EVENT_NAMES[:delivered], 0)
@@ -36,6 +40,7 @@ class Marketplace::SellerPerformance
       returns: returns,
       delivery_completion_rate: ratio(delivered, shipped),
       return_rate: ratio(returns, purchases),
+      paid_sales_by_currency: paid_sales,
       review_count: review_scope.count,
       average_rating: review_scope.average(:rating)&.to_f&.round(2)
     }

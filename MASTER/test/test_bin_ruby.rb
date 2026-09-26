@@ -35,6 +35,58 @@ class TestBinRuby < Minitest::Test
     end
   end
 
+  def test_missing_pinned_ruby_bootstraps_through_rbenv_install
+    old_path = ENV["PATH"]
+    old_root = ENV["RBENV_ROOT"]
+    old_auto = ENV["MASTER_AUTO_INSTALL_RUBY"]
+
+    Dir.mktmpdir do |root|
+      fake_bin = File.join(root, "bin")
+      versions_bin = File.join(root, "versions", "4.0.7", "bin")
+      FileUtils.mkdir_p(fake_bin)
+      FileUtils.mkdir_p(versions_bin)
+      fake_ruby = File.join(versions_bin, "ruby")
+      File.write(fake_ruby, <<~SH)
+        #!/bin/sh
+        case "$2" in
+          "print RUBY_VERSION") printf '4.0.7' ;;
+          *) exit 0 ;;
+        esac
+      SH
+
+      rbenv = File.join(fake_bin, "rbenv")
+      install_log = File.join(root, "install.log")
+      File.write(rbenv, <<~SH)
+        #!/bin/sh
+        if [ "$1" = "which" ]; then
+          exit 1
+        fi
+        if [ "$1" = "install" ]; then
+          printf '%s\n' "$*" > "#{install_log}"
+          chmod 755 "#{fake_ruby}"
+          exit 0
+        fi
+        exit 1
+      SH
+      File.chmod(0o755, rbenv)
+
+      File.write(File.join(root, ".ruby-version"), "4.0.7\n")
+      ENV["RBENV_ROOT"] = root
+      ENV["PATH"] = fake_bin + File::PATH_SEPARATOR + old_path
+      ENV["MASTER_AUTO_INSTALL_RUBY"] = "1"
+
+      out, err, status = unbundled { Open3.capture3(BIN, "-e", "print RUBY_VERSION") }
+
+      assert status.success?, err
+      assert_equal "4.0.7", out
+      assert_equal "install -s 4.0.7", File.read(install_log).strip
+    ensure
+      ENV["PATH"] = old_path
+      ENV["RBENV_ROOT"] = old_root
+      ENV["MASTER_AUTO_INSTALL_RUBY"] = old_auto
+    end
+  end
+
   def test_rbenv_path_uses_the_repo_pinned_version
     old_path = ENV["PATH"]
     old_fake_path = ENV["FAKE_RBENV_PATH"]

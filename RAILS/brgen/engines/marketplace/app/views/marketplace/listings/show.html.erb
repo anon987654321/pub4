@@ -8,6 +8,13 @@
       [@listing.title, seo_canonical_url]
     ])) %>
 
+<% if params[:listed] == "1" && Current.user.present? && Current.user == @listing.user %>
+  <aside class="listing-published-notice" role="status">
+    <strong><%= t("marketplace.listing_published_heading") %></strong>
+    <%= link_to t("marketplace.list_another"), new_listing_path(kind: @listing.kind), class: "btn btn-primary btn-sm" %>
+  </aside>
+<% end %>
+
 <%= render "marketplace/nav_bar",
       cart_count: (Current.user.present? ? Current.user.marketplace_orders.where(status: "pending").count : 0),
       categories: @categories %>
@@ -25,6 +32,9 @@
 
 <div class="store-pdp">
   <div class="store-pdp-media">
+    <% if @listing.video.attached? %>
+      <%= video_tag @listing.video, controls: true, preload: "metadata", class: "listing-video", aria: { label: t("marketplace.optional_video") } %>
+    <% end %>
     <% if @listing.photos.attached? %>
       <%= render "shared/media_gallery", attachments: @listing.photos, title: @listing.title %>
     <% else %>
@@ -150,6 +160,9 @@
         <% end %>
         <% if @seller_performance[:return_rate] %>
           <span class="chip"><%= t("marketplace.seller_return_rate", rate: number_to_percentage(@seller_performance[:return_rate] * 100, precision: 0)) %></span>
+        <% end %>
+        <% @seller_performance[:paid_sales_by_currency].each do |currency, cents| %>
+          <span class="chip"><%= t("marketplace.seller_paid_sales", amount: Shared::MoneyDisplay.format(cents, currency)) %></span>
         <% end %>
         <% if @seller_performance[:average_rating] %>
           <span class="chip"><%= t("marketplace.seller_average_rating", rating: number_with_precision(@seller_performance[:average_rating], precision: 2), count: @seller_performance[:review_count]) %></span>
