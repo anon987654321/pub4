@@ -37,14 +37,27 @@ module Master
 
       def boundary_for(path, root: Master::ROOT)
         absolute = File.expand_path(path.to_s, root)
-        actual = boundaries
-        found = actual.find do |boundary|
-          prefix = File.join(repo_root(Master::ROOT), boundary.path) + File::SEPARATOR
-          absolute.start_with?(prefix) || absolute == prefix.delete_suffix(File::SEPARATOR)
+        found = boundaries(root:).max_by do |boundary|
+          base = File.join(repo_root(root), boundary.path)
+          path_within?(absolute, base) ? base.length : -1
         end
-        return found.name if found
+        found&.name
+      end
 
-        "master" if !File.absolute?(path.to_s) && !File.file?(File.join(root, "data", "rules.yml"))
+      # A target owns its direct boundary roots. A target that contains a nested
+      # boundary explicitly names both; a target nested inside a boundary falls
+      # back to the most specific containing boundary. This keeps MASTER/tools
+      # in STUDIO without making the parent MASTER boundary an accidental write
+      # permission.
+      def scope_for(target, root: Master::ROOT)
+        absolute = File.expand_path(target.to_s, root)
+        rows = boundaries(root:)
+        nested = rows.select do |boundary|
+          path_within?(File.join(repo_root(root), boundary.path), absolute)
+        end
+        names = nested.map(&:name)
+        names = [boundary_for(absolute, root:)] if names.empty?
+        names.compact.uniq.freeze
       end
 
       def check(root: Master::ROOT)
@@ -162,7 +175,21 @@ module Master
       end
 
       def repo_root(root)
+        candidate = File.expand_path(root)
+        loop do
+          return candidate if File.exist?(File.join(candidate, ".git"))
+
+          parent = File.dirname(candidate)
+          break if parent == candidate
+          candidate = parent
+        end
         File.expand_path("..", root)
+      end
+
+      def path_within?(path, parent)
+        child = File.expand_path(path)
+        base = File.expand_path(parent)
+        child == base || child.start_with?("#{base}#{File::SEPARATOR}")
       end
 
       def cycles(rows)
