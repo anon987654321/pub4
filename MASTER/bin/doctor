@@ -59,6 +59,20 @@ def check_command(name, *cmd)
   Check.new(name:, state: ok ? :pass : :fail, detail: ok ? out.lines.first.to_s.strip : err)
 end
 
+def check_dependencies
+  require_relative "../lib/boot/dependency_manager"
+  status = Master::Boot::DependencyManager.new(root: ROOT).status
+  ok = status[:bundle_ok]
+  detail = if ok
+             "bundle #{status[:bundler].empty? ? "unversioned" : status[:bundler]} ready"
+           else
+             status[:bundle_output].to_s.lines.first.to_s.strip
+           end
+  Check.new(name: "dependencies", state: ok ? :pass : :fail, detail: detail)
+rescue StandardError => e
+  Check.new(name: "dependencies", state: :fail, detail: "#{e.class}: #{e.message}")
+end
+
 def check_bundle
   ok, out, err = run("bundle", "check", chdir: ROOT)
   Check.new(name: "bundle", state: (ok) ? :pass : :fail, detail: if ok
@@ -183,7 +197,7 @@ checks = [
   check_ruby,
   check_command("git", "git", "--version"),
   check_command("sqlite3", "ruby", "-e", "require 'sqlite3'; puts SQLite3::SQLITE_VERSION"),
-  check_bundle,
+  check_dependencies,
   check_yaml,
   check_content_dedup,
   check_api_keys,
