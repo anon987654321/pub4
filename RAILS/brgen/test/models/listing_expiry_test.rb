@@ -132,6 +132,15 @@ class ListingExpiryTest < ActiveSupport::TestCase
     refute_includes ids, lapsed.id
   end
 
+  test "a departing seller's listing is hidden from everyone" do
+    @seller.update_columns(deleted_at: Time.current, deletion_scheduled_at: 7.days.from_now)
+    listing = listing()
+
+    assert_not Marketplace::ListingPolicy.new(nil, listing).show?
+    assert_not Marketplace::ListingPolicy.new(@seller, listing).show?
+    assert_empty Marketplace::ListingPolicy::Scope.new(nil, Marketplace::Listing).resolve.where(id: listing.id)
+  end
+
   test "strangers cannot view or order an expired listing; the owner still can" do
     lapsed = listing
     lapsed.update_columns(expires_at: 1.hour.ago)
