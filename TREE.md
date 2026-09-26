@@ -82,7 +82,7 @@ those two stayed. The three counts come from
 `MASTER/data/sprawl_census.yml`; `bin/operator measure --why sprawl.lone_dirs`
 names the members rather than leaving this paragraph to remember them.
 
-The grammar that keeps this map short. The four trees stay at the root and are
+The grammar that keeps this map short. The three governed trees stay at the root and MASTER/tools stays inside MASTER; they are
 never nested under an `apps/`. Files move only when their location breaks a
 rule, never because a listing would look tidier. `RAILS/shared/` gives nothing
 to a `platform/` until a second app consumes it, and brgen's engines are product
