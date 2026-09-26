@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../../gates/support/geometry_type"
+require_relative "../../../MASTER/gates/support/geometry_type"
 require_relative "../../../OPENBSD/lib/gate_result"
 
 class GeometryTypographyTest < Minitest::Test
