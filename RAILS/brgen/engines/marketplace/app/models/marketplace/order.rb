@@ -184,7 +184,9 @@ class Marketplace::Order < ApplicationRecord
     return false unless status.in?(%w[pending pending_payment])
 
     listed = association(:listing).loaded? ? listing : Marketplace::Listing.find_by(id: listing_id)
-    listed.nil? || (listed.status == "active" && !listed.expired? && listed.in_stock?)
+    return false unless listed
+
+    listed.status == "active" && !listed.expired? && listed.in_stock?
   end
 
   # Shipping is the seller telling the buyer where the parcel is. Notified on
