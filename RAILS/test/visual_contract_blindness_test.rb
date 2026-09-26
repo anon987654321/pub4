@@ -4,7 +4,7 @@ require "minitest/autorun"
 require "open3"
 require "rbconfig"
 require "tmpdir"
-require_relative "../gates/visual_contract"
+require_relative "../../MASTER/gates/visual_contract"
 
 # visual_contract is the one gate in this tree that cannot be wrong about the
 # pixels and can be wrong about everything else: it captures a screenshot per
@@ -21,8 +21,8 @@ require_relative "../gates/visual_contract"
 # nothing, and it said "ok" under a runner line announcing that Chrome was
 # present and the gate could measure.
 class VisualContractBlindnessTest < Minitest::Test
-  GATE = File.expand_path("../gates/visual_contract.rb", __dir__)
-  RUNNER = File.expand_path("../gates/runner.rb", __dir__)
+  GATE = File.expand_path("../../MASTER/gates/visual_contract.rb", __dir__)
+  RUNNER = File.expand_path("../../MASTER/gates/runner.rb", __dir__)
 
   def cell(state:, route:, sha:, viewport: :mobile)
     { app: :bsdports, state: state, viewport: viewport, route: route, status: 200,
