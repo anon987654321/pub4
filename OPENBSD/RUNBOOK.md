@@ -494,14 +494,14 @@ the heartbeat's age.
   root-owned, export the app `HOME` and `NPM_CONFIG_CACHE`.
 - MASTER dead tap: precompile `MASTER/web` production assets, restart `master`,
   then verify `https://ai.brgen.no` after the primer tap.
-- relayd/domain drift: run `RAILS/gates/runner.rb domain_alignment` and
+- relayd/domain drift: run `MASTER/gates/runner.rb domain_alignment` and
   `OPENBSD/gates/deploy_smoke_gate.rb` before restarting relayd.
 - pf lockout: use the server4 console and flush the `bruteforce` table; do not
   keep reconnecting.
 - Silent TTS: `checks.tts` on `https://ai.brgen.no/health` is the authority, and
   it already gates the deploy — `health_check.rb` fails on `checks.tts false`,
   `MASTER/web`'s health controller 503s the whole endpoint on it, and
-  `bin/check-vps` runs both. On the source side `RAILS/gates/runner.rb
+  `bin/check-vps` runs both. On the source side `MASTER/gates/runner.rb
   production` runs `MasterTtsGate`, which pins the worker, the supervisor's
   bundle isolation and `rc.d/master`'s `ensure_daemon!`, and probes for a host
   backend when `MASTER_TTS_REQUIRE_HOST_BACKEND=1`. It is a capability check
