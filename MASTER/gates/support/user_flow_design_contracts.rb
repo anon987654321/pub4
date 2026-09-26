@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative "../../shared/lib/operator/scss_rules"
-require_relative "../../shared/app/services/shared/frontend_rule_set"
+require_relative "../../tools/design/scss_rules"
+require_relative "../../tools/design/frontend_rule_set"
 
 module Deploy
   class UserFlowGate
