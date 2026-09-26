@@ -628,9 +628,9 @@ in `OPENBSD/CLAUDE.md`.
 - **No docs/ directory.** Human documentation is one `README.md` per boundary,
   held by `test/test_doc_paths.rb`; Aegis, cognition and the contract examples
   live in `README.md`, and the Do Not Touch list lives here.
-- **No media generation in MASTER.** STUDIO's preprompt and lora keep it. A
-  generation need is a `lib/core/world.rb` handler, never the deleted LoRA
-  pipeline and video chain restored from history.
+- **Media generation lives behind MASTER/tools.** Dilla, postpro, preprompt and
+  lora are tool boundaries under `MASTER/tools/`; `lib/core/world.rb` routes to
+  them instead of owning their provider or media logic.
 - **No unmeasured gem.** The ruby_llm satellites stay out: `-schema` is
   deprecated in favour of a Hash, and `-resilience`, `-top_secret`, `-agents`,
   `-team` and `-template` are thinner than what MASTER owns. `-test`,
