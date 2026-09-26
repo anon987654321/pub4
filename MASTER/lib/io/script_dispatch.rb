@@ -54,7 +54,7 @@ module Master
         # root — the parent of the MASTER checkout — so relative asset/config
         # paths resolve identically regardless of the tool's file layout.
         return File.expand_path("..", requested_root) if script.start_with?(File.join(requested_root, "tools") + File::SEPARATOR)
-        # MASTER/tools/<tool> scripts run from their own directory — that's where
+        # MASTER/tools/<tool> scripts run from their own directory — that is where
         # their scratch/.cache, samples/, and project/ state live.
         return File.dirname(script) if script.start_with?(File.join(MasterPaths.repo, "MASTER", "tools") + File::SEPARATOR)
         return requested_root if File.directory?(requested_root)
