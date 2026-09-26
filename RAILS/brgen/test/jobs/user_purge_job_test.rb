@@ -20,7 +20,13 @@ class UserPurgeJobTest < ActiveJob::TestCase
   teardown { ActsAsTenant.current_tenant = nil }
 
   def purge!
-    @user.update_columns(deleted_at: Time.current, deletion_scheduled_at: 1.day.ago)
+    @user.update_columns(
+      deleted_at: Time.current,
+      deletion_scheduled_at: 1.day.ago,
+      email_verification_token: "verification-token",
+      magic_link_token: "magic-token",
+      magic_link_expires_at: 1.hour.from_now
+    )
     UserPurgeJob.perform_now
   end
 
@@ -33,6 +39,9 @@ class UserPurgeJobTest < ActiveJob::TestCase
       assert_nil @user.latitude
       assert_nil @user.longitude
       assert_nil @user.deletion_scheduled_at
+      assert_nil @user.email_verification_token
+      assert_nil @user.magic_link_token
+      assert_nil @user.magic_link_expires_at
       assert_not_nil @user.deleted_at
     end
   end
