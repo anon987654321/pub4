@@ -15,7 +15,7 @@ install_system_runtime() {
     OpenBSD)
       if command -v pkg_add >/dev/null 2>&1; then
         if [ "$(id -u)" -eq 0 ]; then
-          pkg_add -I "ruby%${PINNED_VERSION%%.*}" || true
+          pkg_add -I "ruby%${PINNED_VERSION%.*}" || true
         elif command -v doas >/dev/null 2>&1; then
           doas -n pkg_add -I "ruby%${PINNED_VERSION%%.*}" || true
         elif command -v sudo >/dev/null 2>&1; then
