@@ -20,7 +20,7 @@ module Federatable
   # city_id rather than city: this is called on users a controller loaded with
   # nothing preloaded, and ApplicationRecord is strict_loading by default —
   # reading the association here raised on every webfinger and actor fetch.
-  def federated? = username.present? && !guest? && city_id.present?
+  def federated? = username.present? && !guest? && city_id.present? && deleted_at.nil? && deletion_scheduled_at.nil?
 
   def actor_domain = strict_safe(:city)&.domain
 
