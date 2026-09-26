@@ -16,3 +16,4 @@ en:
     seller_delivery_completion: "%{rate} delivered after shipping"
     seller_return_rate: "%{rate} of purchases returned"
     seller_average_rating: "%{rating}/5 from %{count} reviews"
+    seller_paid_sales: "Paid sales: %{amount}"
