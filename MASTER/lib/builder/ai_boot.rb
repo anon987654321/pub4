@@ -105,10 +105,9 @@ module Master
         # Never under minitest, and that is not a convenience. The rule registry is
         # a global, and a suite has test-defined rules in it — tools/ratchets.rb
         # records the same thing about the selftest row, which it measures deep for
-        # exactly this reason. `rake selftest` reads 0 violations on this tree while
-        # a container booted inside the suite reads 1, and the difference is the
-        # harness rather than the code. A boot that raises on a number the harness
-        # inflated fails four tests and tells the reader nothing true.
+        # exactly this reason. The self-test laws themselves run identically here
+        # and under `rake selftest`; only registry-backed population counts can
+        # differ under a loaded test suite.
         if ENV.fetch("MASTER_STRICT_BOOT", "1") != "0" && !defined?(Minitest)
           first = summary.checks.lazy.flat_map(&:findings).first
           detail = if first
