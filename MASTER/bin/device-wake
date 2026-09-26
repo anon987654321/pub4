@@ -1,6 +1,9 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require_relative "../lib/boot/entrypoint"
+Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
+
 ENV["MASTER_DEVICE_AGENT"] = "0"
 ENV["MASTER_WEB"] = "0"
 ENV["MASTER_SKIP_TTS"] = "0"
