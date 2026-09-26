@@ -50,7 +50,7 @@ class Dating::Profile < ApplicationRecord
 
   has_many :prompts, class_name: "Dating::Prompt", dependent: :destroy
 
-  scope :visible, -> { where(visible: true).where("age >= 18") }
+  scope :visible, -> { joins(:user).where(visible: true).where("age >= 18").where(users: { deleted_at: nil, deletion_scheduled_at: nil }) }
   # Visible-without-photos used to be creatable (the validation ran on :update
   # only) and then sat in the deck as a blank card. The attribute-named
   # `visible` scope stays the flag+age filter; deck surfaces add this.
