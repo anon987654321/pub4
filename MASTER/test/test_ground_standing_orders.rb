@@ -222,6 +222,8 @@ class StandingOrdersTest < Minitest::Test
       end
     end.new([])
     File.write(File.join(root, "file.rb"), "puts :ok\n")
+    repo = File.expand_path("..", root)
+    relative = File.join(File.basename(root), "file.rb")
     calls = []
     responses = [
       [" M file.rb\n", FakeStatus.new(true)],
@@ -237,10 +239,10 @@ class StandingOrdersTest < Minitest::Test
         assert result.ok?
         assert_equal true, result.value![:committed]
         assert_equal true, result.value![:pushed]
-        assert_equal ["git", "-C", File.expand_path("..", root), "commit", "-m", "auto: standing-order commit (1 file(s))", "--", "master-autocommit-#{File.basename(root).split("-").last}/file.rb"],
+        assert_equal ["git", "-C", repo, "commit", "-m", "auto: standing-order commit (1 file(s))", "--", relative],
                      calls[1].last
         assert_equal ["git", "-C", File.expand_path("..", root), "push"], calls[2].last
-        assert_equal [["autocommit:pushed", { files: 1 }]], bus.events
+        assert_equal [["autocommit:pushed", { files: 1, paths: [relative] }]], bus.events
       end
     end
   ensure
