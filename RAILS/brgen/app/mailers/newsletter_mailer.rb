@@ -9,7 +9,7 @@ class NewsletterMailer < ApplicationMailer
   def edition(subscription, newsletter_edition)
     @subscription = subscription
     @edition = newsletter_edition.to_edition
-    @unsubscribe_url = email_subscription_url(subscription.token, host: mail_host)
+    @preferences_url = email_subscription_url(subscription.token, host: mail_host, protocol: "https")
     mail(
       to: subscription.email,
       subject: @edition.subject,
