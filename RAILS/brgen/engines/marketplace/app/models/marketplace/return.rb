@@ -48,6 +48,8 @@ class Marketplace::Return < ApplicationRecord
   # approved return that never arrives would otherwise put a thing back on the
   # shelf that is still in the post.
   def receive!(by:)
+    return self if status == "received"
+
     transaction do
       update!(status: "received", resolved_by: by, resolved_at: Time.current)
       order_record&.restock_returned!
