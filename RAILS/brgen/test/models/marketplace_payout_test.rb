@@ -54,6 +54,17 @@ class MarketplacePayoutTest < ActiveSupport::TestCase
     end
   end
 
+  test "shipping and delivery record private lifecycle events" do
+    order = paid_order
+    assert_difference -> { ActivityEvent.where(event_name: "MarketplaceOrderShipped").count }, 1 do
+      order.ship!(tracking_code: "NO123", carrier: "Test")
+    end
+    assert_difference -> { ActivityEvent.where(event_name: "MarketplaceOrderDelivered").count }, 1 do
+      order.mark_delivered!
+    end
+    assert_equal "private", ActivityEvent.where(subject_type: "Marketplace::Listing", subject_id: @listing.id,
+                                                 event_name: "MarketplaceOrderShipped").last.visibility
+  end
   test "delivery of a shop order enqueues one pending payout" do
     order = paid_order
     assert_difference -> { Marketplace::Payout.count }, 1 do
