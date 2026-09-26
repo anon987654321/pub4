@@ -92,10 +92,11 @@ module Master
               # 1.37 MB file — the patch catalogue, and nothing downstream of it.
               files: %w[
                 tools/dilla/dilla.rb
-                tools/dilla/lib/engine/master_chain.rb
-                tools/dilla/lib/engine/bus_filters.rb
-                tools/dilla/lib/engine/drum_bus_filter.rb
-                tools/dilla/lib/engine/groove_timing.rb
+                tools/dilla/lib/sound.rb
+                tools/dilla/lib/groove.rb
+                tools/dilla/lib/harmony.rb
+                tools/dilla/lib/sampling.rb
+                tools/dilla/lib/livesets.rb
                 tools/dilla/lib/listen.rb
                 lib/voice/dilla.rb lib/voice/production_dna.rb
                 lib/io/analog_capabilities.rb
