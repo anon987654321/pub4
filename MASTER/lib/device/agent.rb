@@ -59,15 +59,16 @@ module Master
           raise "local pairing failed" unless result
 
           Ground::Pairing.apply_token!(result[:token], root:)
+          public_result = result.reject { |key, _| key == :token }
           Ground::PersonalWorkspace.append_memory(
-            root:, subject: result[:subject], key: "owner_label", body: result[:label], type: "user",
+            root:, subject: public_result[:subject], key: "owner_label", body: public_result[:label], type: "user",
           )
           save_state(root, {
-            "owner_subject" => result[:subject],
-            "owner_label" => result[:label],
+            "owner_subject" => public_result[:subject],
+            "owner_label" => public_result[:label],
             "paired_at" => Time.now.utc.iso8601,
           })
-          result
+          public_result.merge(onboarding: OwnerProfile.onboarding_prompt(root:, subject: public_result[:subject]))
         end
 
         def release_owner!(root:)
