@@ -366,7 +366,7 @@ module Deploy
         elements: mapped,
         viewport: viewport,
         dialect: dialect,
-        contrast_ok: true
+        contrast_ok: rendered_design_quality_contrast_ok?(elements)
       )
       @result.fail(
         "geometry design_quality: #{surface.id} fails rendered hard floor "         "(tap=#{vector.tap_ok} contrast=#{vector.contrast_ok})",
@@ -375,6 +375,24 @@ module Deploy
       @result.warn(
         "geometry design_quality: #{surface.id} rhythm=#{vector.rhythm.round(2)} "         "hierarchy=#{vector.hierarchy.round(2)} density=#{vector.density.round(2)} "         "alignment=#{vector.alignment.round(2)} balance=#{vector.balance.round(2)}"
       )
+    end
+
+    def rendered_design_quality_contrast_ok?(elements)
+      elements.each do |element|
+        next unless element["visible"] && !element["text"].to_s.strip.empty?
+
+        fg = element["color"]
+        bg = element["bg"]
+        next unless fg && bg
+
+        _size, _bold, _large, floor = text_grade(element)
+        ratio = DesignMetrics.contrast_ratio(fg, bg)
+        next unless ratio
+
+        return false if ratio < floor
+      end
+
+      true
     end
 
     def check_landmarks(surface, data)
