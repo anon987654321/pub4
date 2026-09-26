@@ -14,12 +14,18 @@ class TestIoMcpAndWebChat < Minitest::Test
     def publish(name, **payload) = events << [name, payload]
   end
 
-  FakeClient = Struct.new(:started, :fail) do
-    def start
-      raise "npx missing" if fail
-
-      self.started = true
+  class FakeClient
+    def initialize(fail:)
+      @fail = fail
     end
+
+    def connect
+      raise "npx missing" if @fail
+
+      @connected = true
+    end
+
+    def tools = []
   end
 
   def coordinator_with(servers_yaml)
