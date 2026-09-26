@@ -22,7 +22,7 @@ require "yaml"
 # a planted route table, which is the only part of this gate that can be proved
 # without booting three Rails apps.
 class RailsRuntimeGateTest < Minitest::Test
-  GATES_DIR = File.expand_path("../../gates", __dir__)
+  GATES_DIR = File.expand_path("../../../MASTER/gates", __dir__)
   SCRIPT = File.join(GATES_DIR, "rails_runtime.rb")
 
   def run_script(*args, env: {})
