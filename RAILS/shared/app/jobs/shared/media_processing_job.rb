@@ -11,8 +11,8 @@ module Shared
       end
 
       record = model.find(record_id)
-      reflections = record.class.respond_to?(:attachment_reflections) ? record.class.attachment_reflections : {}
-      unless reflections.key?(attachment_name.to_s)
+      reflection = record.class.respond_to?(:reflect_on_attachment) && record.class.reflect_on_attachment(attachment_name)
+      unless reflection
         raise ArgumentError, "media attachment is not declared: #{record.class.name}##{attachment_name}"
       end
 
