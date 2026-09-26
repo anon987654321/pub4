@@ -116,15 +116,16 @@ if [ -z "$RUBY" ]; then
   fi
   RUBY="${RUBY:-$(command -v ruby 2>/dev/null || true)}"
 fi
-if [ -z "${PINNED_VERSION:-}" ]; then
-  exec "$RUBY" "$@"
-fi
-
 if [ -z "${RUBY:-}" ]; then
   printf '%s
 ' "pub4: no Ruby executable found; .ruby-version requires $PINNED_VERSION" >&2
   exit 1
 fi
+
+if [ -z "${PINNED_VERSION:-}" ]; then
+  exec "$RUBY" "$@"
+fi
+
 
 ACTUAL="$("$RUBY" -e 'print RUBY_VERSION')"
 if [ "$ACTUAL" != "$PINNED_VERSION" ]; then
