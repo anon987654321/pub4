@@ -441,7 +441,7 @@ require_relative "support/runner_explain"
 
 options = {}
 OptionParser.new do |opts|
-  opts.banner = "Usage: ruby RAILS/gates/runner.rb [options] [gate_names...]"
+  opts.banner = "Usage: ruby MASTER/gates/runner.rb [options] [gate_names...]"
   opts.on("--all", "Run all registered gates") { options[:all] = true }
   opts.on("--list", "List available gates") { options[:list] = true }
   opts.on("--explain", "Explain each gate and the environment switches, running nothing") { options[:explain] = true }
