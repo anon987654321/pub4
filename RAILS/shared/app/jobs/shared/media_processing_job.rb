@@ -5,7 +5,17 @@ module Shared
     queue_as :bulk
 
     def perform(record_class_name, record_id, attachment_name, variants: {})
-      record = record_class_name.constantize.find(record_id)
+      model = record_class_name.to_s.safe_constantize
+      unless model.is_a?(Class) && model < ActiveRecord::Base
+        raise ArgumentError, "media record class is not an ActiveRecord model: #{record_class_name}"
+      end
+
+      record = model.find(record_id)
+      reflections = record.class.respond_to?(:attachment_reflections) ? record.class.attachment_reflections : {}
+      unless reflections.key?(attachment_name.to_s)
+        raise ArgumentError, "media attachment is not declared: #{record.class.name}##{attachment_name}"
+      end
+
       attachment = record.public_send(attachment_name)
       files = attachment.respond_to?(:attachments) ? attachment.attachments : Array(attachment)
 
