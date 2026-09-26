@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require_relative "../../../shared/lib/operator/master_design"
+require_relative "../../../tools/design/master_design"
 require_relative "../../../../OPENBSD/lib/gate_result"
-require_relative "../../../shared/lib/operator/scss_rules"
+require_relative "../../../tools/design/scss_rules"
 
 module Deploy
   # Dialect purity: social / luxury / CRT / face stay separate; vertical accents single map.
