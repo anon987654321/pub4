@@ -40,7 +40,7 @@ module Master
       end
 
       # /device — local Android companion status and ownership boundary.
-      def dispatch_device(root, ctx: nil)
+      def dispatch_device_agent(root, ctx: nil)
         return "device: local-only" if Fiber[:master_visitor] == true
 
         _word, _rest = subcommand(ctx)
