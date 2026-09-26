@@ -7525,6 +7525,7 @@ def dilla_role_velocity(role, bar, step, sec_gain: 1.0, backbeat: false)
   # consistent dynamically (near-inaudible to clearly-present within the
   # same phrase), not the most locked-in.
   spread = role == :ghost ? 0.22 : 0.08
+  base *= DillaGroove.phrase_velocity_multiplier(bar:, role:)
   vel = dilla_velocity(base, bar, step, spread:) * sec_gain
   # Wonky primary: kick-forward; snares/hats sit under kick (tops were piercing).
   if wonky_primary_drums?
@@ -13379,11 +13380,13 @@ def dilla_quality(path, baseline_path = nil)
   harmony_breakdown = harmony_measured ? DillaHarmony.score_breakdown(chords) : nil
   harshness = DillaMaster.analyze_harshness(spectrum)
   sub_kick = DillaMaster.sub_kick_balance(spectrum, harmony_score)
+  producer_meter = DillaTaste.measure(path)
   report = media_metadata(path).merge(
     schema: "dilla.master.v1", path: File.expand_path(path), delivery: File.extname(path).delete_prefix(".").downcase,
     integrated_lufs: loudness["input_i"]&.to_f, true_peak_dbtp: loudness["input_tp"]&.to_f,
     harmony_score:, harmony_breakdown:,
     progression_chord_names: chords&.map { |c| c[:name] },
+    producer_meter:,
     harshness:, sub_kick_balance: sub_kick,
     loudness_range_lu: loudness["input_lra"]&.to_f, mono_rms_db: mono, spectral_rms_db: spectrum,
     # MASTER_LUFS_BY_STYLE targets -17..-20 (dilla/donuts as low as -20) --
