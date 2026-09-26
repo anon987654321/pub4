@@ -93,3 +93,21 @@ the `master-agent` runit service and enables it. `termux-services` can supervise
 the process under `$PREFIX/var/service`; a Termux:Boot script can start the
 service manager at Android boot. The installer uses `termux-wake-lock` in that
 boot path, which trades battery life for a stronger always-on guarantee.
+
+
+## Voice wake
+
+Wake listening is a separate, explicit capability. It is **off by default**.
+On Android/Termux, `/wake on` records consent in `.master/wake_word.json` and
+enables the phrases `hey master` plus the owner's explicit `pet_name` when one
+exists. `bin/device-wake` listens in four-second local microphone windows and
+uses the local whisper model to detect those phrases; audio is not uploaded.
+
+The resident installer also creates a supervised `master-wake` service, but
+that service remains inert until `/wake on`. Disable it with `/wake off`.
+Continuous microphone use costs battery and is intentionally visible and
+reversible.
+
+Termux's microphone recorder supports bounded recording windows and an
+unlimited mode; MASTER deliberately uses bounded windows so a recorder cannot
+hold the microphone indefinitely after an error.
