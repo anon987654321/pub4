@@ -41,6 +41,7 @@ def usage
       bin/operator readers <path>         who reaches this file, across all three governed trees
       bin/operator pushed? <path>...      is this content on origin/main, or only here
       bin/operator snapshot [...]         regenerate the snapshot packs (MASTER/tools/snapshot.rb)
+      bin/operator event-bus [--strict] [--json]  census Ruby publishers/subscribers and browser event references
 
     Profiles (passed through to check scripts):
       OPENBSD/bin/check --profile=contributor
@@ -233,6 +234,8 @@ when "snapshot"
   # stale at a commit no checkout still has and nothing could refresh them.
   # Lives in MASTER/tools so it is one implementation, reachable from here.
   exec(RbConfig.ruby, File.join(ROOT, "MASTER", "tools", "snapshot.rb"), *ARGV)
+when "event-bus"
+  exec(RbConfig.ruby, File.join(ROOT, "MASTER", "tools", "event_bus_reach.rb"), *ARGV)
 when "post-pull"
   script = File.join(OPENBSD_OPS, "bin", "post-pull-checklist")
   exec(script, *ARGV)
