@@ -168,22 +168,22 @@ class TestGitHooks < Minitest::Test
     assert_match(/PUB4_SPLIT_MOVE=1/, out)
   end
 
-  # --- 4. STUDIO ownership -------------------------------------------------
+   # --- 4. MASTER/tools ownership -------------------------------------------------
 
-  def test_studio_belongs_to_the_session_that_claimed_it
-    write("STUDIO/.session", "other-session\n")
-    write("STUDIO/beat.rb", "# a take\n")
+  def test_master_tools_belongs_to_the_session_that_claimed_it
+    write("MASTER/tools/.session", "other-session\n")
+    write("MASTER/tools/beat.rb", "# a take\n")
     git!("add", "STUDIO/.session", "STUDIO/beat.rb")
-    out, status = commit("touch STUDIO")
+    out, status = commit("touch MASTER/tools")
 
-    refute_committed out, status, /REFUSED — STUDIO is owned by session 'other-session'/
+    refute_committed out, status, /REFUSED — MASTER\/tools is owned by session 'other-session'/
   end
 
-  def test_the_claiming_session_may_commit_studio
-    write("STUDIO/.session", "mine\n")
-    write("STUDIO/beat.rb", "# a take\n")
+  def test_the_claiming_session_may_commit_master_tools
+    write("MASTER/tools/.session", "mine\n")
+    write("MASTER/tools/beat.rb", "# a take\n")
     git!("add", "STUDIO/.session", "STUDIO/beat.rb")
-    out, status = commit("touch STUDIO", env: { "PUB4_SESSION" => "mine" })
+    out, status = commit("touch MASTER/tools", env: { "PUB4_SESSION" => "mine" })
 
     assert status.success?, "the owning session was refused its own tree:\n#{out}"
   end
@@ -195,7 +195,7 @@ class TestGitHooks < Minitest::Test
   # parses staged engine files, so the same incident cannot land again unseen.
 
   def test_a_staged_engine_file_that_does_not_parse_is_refused
-    write("STUDIO/dilla/dilla.rb", "def broken\nend\nend\n")
+    write("MASTER/tools/dilla/dilla.rb", "def broken\nend\nend\n")
     git!("add", "STUDIO/dilla/dilla.rb")
     out, status = commit("break the engine")
 
@@ -204,7 +204,7 @@ class TestGitHooks < Minitest::Test
   end
 
   def test_a_staged_engine_file_that_parses_commits
-    write("STUDIO/dilla/lib/knob.rb", "# frozen_string_literal: true\n\n# a knob\n")
+    write("MASTER/tools/dilla/lib/knob.rb", "# frozen_string_literal: true\n\n# a knob\n")
     git!("add", "STUDIO/dilla/lib/knob.rb")
     out, status = commit("a knob that parses")
 
@@ -212,7 +212,7 @@ class TestGitHooks < Minitest::Test
   end
 
   def test_a_staged_non_engine_ruby_file_needs_no_parse
-    write("STUDIO/scratch.rb", "# not the engine\n")
+    write("MASTER/tools/scratch.rb", "# not the engine\n")
     git!("add", "STUDIO/scratch.rb")
     out, status = commit("ruby outside the engine")
 
@@ -220,7 +220,7 @@ class TestGitHooks < Minitest::Test
   end
 
   def test_the_parse_override_is_honoured
-    write("STUDIO/dilla/dilla.rb", "end\n")
+    write("MASTER/tools/dilla/dilla.rb", "end\n")
     git!("add", "STUDIO/dilla/dilla.rb")
     out, status = commit("broken, deliberately", env: { "PUB4_PARSE_SKIP" => "1" })
 
