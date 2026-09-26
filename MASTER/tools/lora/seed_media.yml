@@ -24,7 +24,7 @@
 #   scene    No adapter. The picture comes from what the post actually says --
 #            a thread about fog over Vagen gets fog over Vagen, not "Norway".
 #
-# Prompting follows STUDIO/README.md, which is measured rather than folklore:
+# Prompting follows MASTER/tools/lora/README.md, which is measured rather than folklore:
 # Subject + Action + Style + Context with the subject first; 30-80 words, a real
 # ceiling and not a style note; hex codes instead of colour words; a named body
 # and aperture; and subject DISTANCE, because perspective distortion is a
