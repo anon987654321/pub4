@@ -6,6 +6,7 @@ Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
 
 require "optparse"
 require "open3"
+require "shellwords"
 
 # Two levels: this lives in MASTER/bin/, and every sibling tree is reached
 # from the repo root above it.
@@ -530,7 +531,7 @@ when "vps"
   case sub
   when "state"
     if ARGV.delete("--remote")
-      ssh_run("cd /home/dev/pub4 && ruby34 OPENBSD/bin/vps-state #{ARGV.join(' ')}")
+      ssh_run("cd /home/dev/pub4 && #{Shellwords.join(["ruby34", "OPENBSD/bin/vps-state", *ARGV])}")
     else
       exec(File.join(OPENBSD_OPS, "bin", "vps-state"), *ARGV)
     end
@@ -538,7 +539,7 @@ when "vps"
     app = ARGV.shift
     abort(usage) if app.to_s.empty?
     if ARGV.delete("--remote")
-      ssh_run("cd /home/dev/pub4 && zsh OPENBSD/bin/vps-deploy #{app}")
+      ssh_run("cd /home/dev/pub4 && #{Shellwords.join(["zsh", "OPENBSD/bin/vps-deploy", app])}")
     else
       exec(File.join(OPENBSD_OPS, "bin", "vps-deploy"), app, *ARGV)
     end
@@ -546,7 +547,7 @@ when "vps"
     app = ARGV.shift
     abort(usage) if app.to_s.empty?
     if ARGV.delete("--remote")
-      ssh_run("cd /home/dev/pub4 && ruby34 OPENBSD/bin/vps-logs #{app} #{ARGV.join(' ')}")
+      ssh_run("cd /home/dev/pub4 && #{Shellwords.join(["ruby34", "OPENBSD/bin/vps-logs", app, *ARGV])}")
     else
       exec(File.join(OPENBSD_OPS, "bin", "vps-logs"), app, *ARGV)
     end
