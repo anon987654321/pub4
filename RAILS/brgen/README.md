@@ -51,7 +51,20 @@ and is labelled in the UI. It is never payable inventory.
 `/home/dev/pub4` layout last. Set `PUB4_ROOT` or `PUB4_RAILS_ROOT` only to point
 at a different tree than the one the code was loaded from.
 
-### Bringing it up
+#
+## Commerce distribution
+
+The marketplace exposes a Google Merchant Center product feed at
+`/merchant-feed.xml` on each marketplace host. It contains live first-party goods
+with a public landing page, product image, price, availability, condition and
+category when present. Affiliate inventory is deliberately excluded.
+
+Google Merchant Center can use the feed for Shopping ads and cost-free product
+listings when the account, domain, shipping and policy requirements are satisfied.
+The public marketplace listing pages already carry Product structured data; keep
+the feed values and landing-page values aligned when listing data changes.
+
+## Bringing it up
 
 ```zsh
 doas zsh RAILS/brgen/brgen.sh
