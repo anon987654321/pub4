@@ -49,9 +49,10 @@ vm23_tmux() {
   typeset session=$1
   shift
   typeset cmd=$*
+  typeset quoted_session=${(q)session}
   vm23_ssh \
-    "tmux has-session -t ${session} 2>/dev/null && tmux kill-session -t ${session}; \
-     tmux new-session -d -s ${session} ${(q)cmd}"
+    "tmux has-session -t ${quoted_session} 2>/dev/null && tmux kill-session -t ${quoted_session}; \
+     tmux new-session -d -s ${quoted_session} ${(q)cmd}"
 }
 
 if [[ $ZSH_EVAL_CONTEXT == toplevel ]]; then
