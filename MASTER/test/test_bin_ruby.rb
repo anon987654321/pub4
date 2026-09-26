@@ -105,7 +105,7 @@ class TestBinRuby < Minitest::Test
   def test_openbsd_doas_install_uses_pinned_minor_package_branch
     script = File.read(BIN)
 
-    assert_includes script, 'pkg_add -I "ruby%${PINNED_VERSION%.*}"'
+    assert_equal 3, script.scan('pkg_add -I "ruby%${PINNED_VERSION%.*}"').length
     refute_includes script, 'pkg_add -I "ruby%${PINNED_VERSION%%.*}"'
   end
 
