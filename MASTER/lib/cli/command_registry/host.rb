@@ -77,6 +77,36 @@ module Master
         end
       end
 
+      # /wake — explicit microphone wake-word consent and status.
+      def dispatch_wake(root, ctx: nil)
+        return "wake: local-only" if Fiber[:master_visitor] == true
+        return "wake: Android/Termux only" unless Master::Device.android? && Master::Device.termux?
+
+        wake = Master::Device::WakeWord.new(root:)
+        word, rest = subcommand(ctx)
+        case word
+        when "", "status"
+          "wake: #{wake.enabled? ? "on" : "off"} phrases=#{wake.phrases.join(", ")}"
+        when "on", "enable"
+          pet = Master::Device::Agent.owner_subject(root:)
+          phrases = ["hey master"]
+          unless pet.empty?
+            profile = Master::Device::OwnerProfile.values(root:, subject: pet)
+            name = profile["pet_name"].to_s.strip
+            phrases << "hey #{name.downcase}" unless name.empty?
+          end
+          wake.enable!(phrases:)
+          "wake: on — #{wake.phrases.join(", ")}"
+        when "off", "disable"
+          wake.disable!
+          "wake: off"
+        else
+          "wake: status | on | off"
+        end
+      rescue StandardError => e
+        "wake0: unavailable — #{e.class}: #{e.message}"
+      end
+
       # /device — local Android companion status and ownership boundary.
       def dispatch_device_agent(root, ctx: nil)
         return "device: local-only" if Fiber[:master_visitor] == true

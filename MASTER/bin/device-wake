@@ -1,0 +1,31 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+ENV["MASTER_DEVICE_AGENT"] = "0"
+ENV["MASTER_WEB"] = "0"
+ENV["MASTER_SKIP_TTS"] = "0"
+
+ROOT = File.expand_path("..", __dir__)
+Dir.chdir(ROOT)
+$LOAD_PATH.unshift File.join(ROOT, "lib")
+
+require "master"
+require_relative "../lib/device/wake_word"
+
+session = Master.boot(root: ROOT)
+wake = Master::Device::WakeWord.new(root: ROOT)
+
+trap("TERM") { wake.stop! }
+trap("INT") { wake.stop! }
+
+wake.run_forever do |_phrase, _heard|
+  subject = Master::Device::Agent.owner_subject(root: ROOT)
+  greeting = if subject.empty?
+               "Hello. I'm MASTER. Pair me first if this is your phone."
+             else
+               Master::Device::OwnerProfile.wake_greeting(root: ROOT, subject:)
+             end
+
+  warn("wake0: #{greeting}")
+  system("termux-tts-speak", "-s", "MUSIC", greeting) if system("command", "-v", "termux-tts-speak", out: File::NULL, err: File::NULL)
+end
