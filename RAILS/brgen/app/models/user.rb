@@ -60,7 +60,8 @@ class User < ApplicationRecord
   # Public profile pages a crawler may list. Not a tenant row — city_id is
   # only a home-city hint — so the sitemap names the city at the call site.
   scope :public_profiles, -> {
-    where(guest: false).where.not(username: [ nil, "" ])
+    where(guest: false, deleted_at: nil, deletion_scheduled_at: nil)
+      .where.not(username: [ nil, "" ])
   }
 
   # The same name every city-facing surface uses, with the one difference this
