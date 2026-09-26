@@ -6,6 +6,9 @@ en:
     placeholder_notice: Example listing — not a tracked affiliate link
     sponsored: Sponsored
     feed_unit_label: Sponsored products
+    amazon_label: Amazon Associates
+    amazon_shop: Shop on Amazon
+    paid_link: Paid link
     cta:
       buy: Buy now!
       happy: Be happy!
