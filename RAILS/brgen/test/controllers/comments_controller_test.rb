@@ -93,9 +93,9 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
     post session_path, params: { email_address: outsider.email_address, password: "password123" }
     assert_response :redirect
 
-    assert_raises(ActiveRecord::RecordNotFound) do
-      post generate_summary_comment_path(comment)
-    end
+    post generate_summary_comment_path(comment)
+
+    assert_response :not_found
   end
 
   test "a comment posted to no parent is a 404, not a 500" do
