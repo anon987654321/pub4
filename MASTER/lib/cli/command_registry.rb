@@ -189,8 +189,8 @@ module Master
         session = container[:session] if container
         return "face0: no session" unless session
 
-        turn = Face::Talk.for_session(session)
-        Face::Window.new(turn:).run
+        turn = Face::Talk.for_session(session, container:)
+        Face::Window.new(turn:, event_bus: container[:bus]).run
       end
 
       def dispatch_device(_root, ctx: nil)
