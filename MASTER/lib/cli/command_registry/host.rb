@@ -10,7 +10,13 @@ module Master
         arg = arg_for(ctx)
         case arg
         when "", "status"
-          Master::Ground::Pairing.status.inspect
+          status = Master::Ground::Pairing.status
+          device = Master::Device::Agent.status(root:)
+          { pairing: status, device: device }.inspect
+        when /\Aowner(?:\s+(.*))?\z/
+          label = $1.to_s.strip
+          result = Master::Device::Agent.claim_owner!(root:, label:)
+          Master::Ground::Pairing.redeem_notice(result)
         when /\Aissue(?:\s+(.*))?\z/
           issued = Master::Ground::Pairing.issue(root:, label: $1.to_s.strip)
           "pair code #{issued[:code]} expires in #{issued[:expires_in]}s — redeem via /pair #{issued[:code]} or the face field"
