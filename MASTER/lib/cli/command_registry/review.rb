@@ -56,20 +56,25 @@ module Master
         return rendered unless apply.nil? || apply
 
         gate_rounds = 0
+        gate_status = 0
+        gate_changed = []
         loop do
-          status, changed = Operator::GateChain.verify_fix(target:)
+          gate_status, gate_changed = Operator::GateChain.verify_fix(target:)
           gate_rounds += 1
-          break if status == 0 && changed.empty?
-          break if changed.empty? || gate_rounds >= MAX_FIX_GATE_ROUNDS
+          break if gate_status == 0 && gate_changed.empty?
+          break if gate_changed.empty? || gate_rounds >= MAX_FIX_GATE_ROUNDS
 
-          rendered = [rendered, "gate: verification changed #{changed.size} file(s); re-entering /fix"].join("\n")
+          rendered = [rendered, "gate: verification changed #{gate_changed.size} file(s); re-entering /fix"].join("\n")
           rendered = with_dmesg_verbosity(raw) do
             run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
                      target:, apply: true, critique: false, aesthetic:, only: "fix")
           end
         end
 
-        if gate_rounds >= MAX_FIX_GATE_ROUNDS
+        if gate_status != 0
+          rendered = [rendered, "fix: gate verification did not pass (status #{gate_status})"].join("\n")
+        end
+        if gate_rounds >= MAX_FIX_GATE_ROUNDS && gate_status == 0 && gate_changed.any?
           rendered = [rendered, "fix: gate verification reached #{MAX_FIX_GATE_ROUNDS} rounds without a stable tree"].join("\n")
         end
 
