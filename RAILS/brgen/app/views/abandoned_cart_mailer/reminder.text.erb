@@ -9,3 +9,7 @@
 <%= t("mailer.abandoned_cart_button") %>: <%= @cart_url %>
 
 <%= t("mailer.signoff") %>
+
+<% if @preferences_url.present? %>
+<%= t("email_preferences.title") %>: <%= @preferences_url %>
+<% end %>
