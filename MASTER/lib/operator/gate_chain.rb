@@ -60,9 +60,8 @@ module Operator
     # order it was written.
     TREES = %w[MASTER RAILS OPENBSD].freeze
 
-    # The outer /fix lifecycle already owns the lexical observation/repair loop.
-    # Verification therefore runs every other registered gate without re-entering
-    # /fix and returns both its verdict and the files that this verification changed.
+    # /fix already owns lexical observation and repair. Its verification tail must
+    # therefore prove the repaired tree without recursively invoking /fix again.
     def verify_fix(target:)
       trees = trees_for_target(target)
       selected = stages(scan_only: false, trees:).reject { |stage| stage.name == "lexical" }
@@ -73,7 +72,8 @@ module Operator
 
     def trees_for_target(target)
       text = target.to_s.strip
-      abs = case text.upcase
+      relative = text.delete_prefix("../")
+      abs = case relative.upcase
             when "", ".", "ALL", "EVERYTHING" then ROOT
             when "MASTER" then MASTER
             when "RAILS" then File.join(ROOT, "RAILS")
@@ -115,3 +115,336 @@ module Operator
       selected.each { |s| puts format("  %-9s %s%s", s.name, s.purpose, s.mutates ? "  [writes]" : "") }
       0
     end
+
+    def report(selected, scan_only:, trees:, return_results: false)
+      foreign = dirty
+      mode = scan_only ? "scan-only (writes nothing)" : "full-fix (writes)"
+      puts "gate: #{mode} over #{trees.join(", ")} — #{selected.map(&:name).join(" -> ")}"
+      announce_foreign(foreign)
+
+      seen = foreign.dup
+      results = selected.each_with_index.map do |stage, index|
+        puts "gate: #{index + 1}/#{selected.size} #{stage.name}"
+        result = run_stage(stage, seen)
+        seen |= result.changed
+        result
+      end
+      status = summarise(results, foreign)
+      return [status, results.flat_map(&:changed)] if return_results
+
+      status
+    end
+
+    # The ladder. Order is not taste: the deterministic fixers run first so
+    # everything after measures the fixed tree; the ratchets run after the suites
+    # because a fix moves the numbers; sprawl runs after the ratchets because it
+    # only locks in a fall that already happened; and the council runs last
+    # because it is the only stage that costs money and the only one that
+    # currently cannot answer — a tier with no answer must not stand between the
+    # rest of the ladder and its verdict.
+    # Narrowing by tree drops stages rather than shrinking them, because that is
+    # what each stage is: the RAILS gate runner has nothing to say about MASTER/tools,
+    # and brgen's suite is not a MASTER session's business. Two stages stay
+    # whole under every --tree — the ratchets and the sprawl census are
+    # repo-wide measurements by definition, and both are cheap.
+    def stages(scan_only:, trees: TREES)
+      scope = trees == TREES ? "all three trees" : trees.join(", ")
+      [
+        lexical_stage(scan_only:, trees:, scope:),
+        rails_stage(scan_only:, trees:),
+        openbsd_stage(trees:),
+        suites_stage(trees:),
+        ratchets_stage,
+        sprawl_stage(scan_only:),
+        council_stage(scan_only:, trees:)
+      ].compact
+    end
+
+    def lexical_stage(scan_only:, trees:, scope:)
+      Stage.new(
+        name: "lexical",
+        purpose: "law/ and the scan registry over #{scope}, autofixing",
+        mutates: !scan_only,
+        run: -> { gate("--lexical-only", scan_only:, trees:) }
+      )
+    end
+
+    def rails_stage(scan_only:, trees:)
+      return unless trees.include?("RAILS")
+
+      Stage.new(
+        name: "source",
+        purpose: "every RAILS gate, source and rendered, fix + remeasure",
+        mutates: !scan_only,
+        run: -> { rails_gates(scan_only:) }
+      )
+    end
+
+    def openbsd_stage(trees:)
+      return unless trees.include?("OPENBSD")
+
+      Stage.new(
+        name: "openbsd",
+        purpose: "every OpenBSD config, shell and deploy gate",
+        mutates: false,
+        run: -> { openbsd_gates }
+      )
+    end
+
+    def suites_stage(trees:)
+      Stage.new(
+        name: "suites",
+        purpose: suite_purpose(trees),
+        mutates: false,
+        run: -> { suites(trees) }
+      )
+    end
+
+    def ratchets_stage
+      Stage.new(
+        name: "ratchets",
+        purpose: "every recorded ceiling, current beside it",
+        mutates: false,
+        run: -> { capture(RUBY, File.join(MASTER, "bin", "operator"), "measure", "--deep") }
+      )
+    end
+
+    def sprawl_stage(scan_only:)
+      Stage.new(
+        name: "sprawl",
+        purpose: "lone dirs, stutter, vague names, duplicate files",
+        mutates: !scan_only,
+        run: -> { sprawl(scan_only:) }
+      )
+    end
+
+    def council_stage(scan_only:, trees:)
+      Stage.new(
+        name: "council",
+        purpose: "/critique and /review, then the panel's picks back through the runtime",
+        mutates: council_fix?(scan_only:),
+        run: -> { council(scan_only:, trees:) }
+      )
+    end
+
+    # /critique IS the council: dispatch_critique hands the path to
+    # Review::Council::Critique, which runs the persona panel, the adversarial
+    # round and the cherry-pick. A second one here is a second debate.
+    def council(scan_only:, trees: TREES)
+      ok, body, exitstatus = gate("--semantic-only", scan_only:, trees:)
+      # Exit 3 is the panel saying it reached nobody — today, four personas
+      # against a provider out of credit. Straight through, so the summary
+      # reports the tier as skipped and the run refuses to call itself clean.
+      return [ok, body, exitstatus] unless ok
+
+      picks = cherry_picks
+      return [true, body + ["council: no cherry-picks to act on"], 0] if picks.empty?
+      return act_on(picks, body) if council_fix?(scan_only:)
+
+      noted = picks.map { |pick| "council: pick — #{pick}" }
+      [true, body + noted + ["council: #{picks.size} pick(s) recorded, none acted on here"], 0]
+    end
+
+    # A pick is a sentence, not a diff, so it goes to the instruction surface.
+    # `bin/master "<pick>"` is the runtime with the whole repo in reach; /fix
+    # takes a path, applies deterministic transforms, and cannot read an argument.
+    def act_on(picks, body)
+      acted = picks.first(PICK_BUDGET).map do |pick|
+        ok, out, = capture(RUBY, File.join(MASTER, "bin", "master"), pick)
+        ["#{ok ? "implemented" : "REFUSED"}: #{pick}", out.last(3)]
+      end
+      failed = acted.count { |line, _| line.start_with?("REFUSED") }
+      lines = body + acted.flat_map { |line, out| ["council: #{line}", *out.map { |o| "council|   #{o}" }] }
+      lines << "council: #{acted.size} of #{picks.size} pick(s) acted on, #{failed} refused"
+      [failed.zero?, lines, failed.zero? ? 0 : 1]
+    end
+
+    # Harvest writes every deliberation to .master/critiques/<mode>_latest.md
+    # rather than losing it to scrollback. That file is this stage's input.
+    def cherry_picks = picks_in(File.join(MASTER, ".master", "critiques"))
+
+    def picks_in(dir)
+      latest = Dir.glob(File.join(dir, "*_latest.md")).max_by { |file| File.mtime(file) }
+      return [] unless latest
+
+      section = File.read(latest).split("## cherry-picked").last.to_s
+      section.lines.filter_map { |line| line.strip[/\A-\s+(.+)\z/, 1] }.reject(&:empty?)
+    rescue StandardError => e
+      raise "council: harvest under #{dir} unreadable: #{e.class}: #{e.message}"
+    end
+
+    # Never in scan-only: that mode's promise is a shared checkout untouched.
+    # PUB4_GATE_COUNCIL_FIX=0 turns it off in full-fix too, for a run where the
+    # panel argues and nothing moves.
+    def council_fix?(scan_only:)
+      !scan_only && ENV.fetch("PUB4_GATE_COUNCIL_FIX", "1") != "0"
+    end
+
+    def gate(tier, scan_only:, trees: TREES)
+      scope = trees == TREES ? [] : ["--tree=#{trees.join(',')}"]
+      capture(RUBY, File.join(MASTER, "bin", "gate"), tier, *scope, *(scan_only ? ["--scan-only"] : []))
+    end
+
+    # GATE_AUTOFIX defaults to on; naming it keeps scan-only honest either way.
+    # Under the Ruby the repo pins, as the app suites below run. runner.rb refuses
+    # any other, so launched with this process's Ruby every gate was skipped and
+    # the stage reported one refusal as its whole result.
+    def rails_gates(scan_only:)
+      capture(RUBY, "gates/runner.rb", "--all",
+              chdir: File.join(ROOT, "RAILS"),
+              env: { "GATE_AUTOFIX" => scan_only ? "0" : "1" })
+    end
+
+    def openbsd_gates
+      capture(RUBY, File.join(ROOT, "OPENBSD", "bin", "check-openbsd"), chdir: ROOT)
+    end
+
+    # Every file runs, then the run fails once with all of them named. Aborting
+    # on the first non-zero status leaves the other nine files and their 280
+    # assertions unmeasured behind whichever name sorts first, and reports the
+    # tree as having one broken suite rather than an unknown number.
+    OPENBSD_SUITE = <<~SUITE
+      files = Dir["test/test_*.rb"].sort
+      failed = files.reject { |f| system(RbConfig.ruby, f) }
+      abort("openbsd: \#{failed.size} of \#{files.size} file(s) failed — \#{failed.join(", ")}") if failed.any?
+    SUITE
+
+    # Whole suites, not the ones the diff touches: a green over hand-picked tests
+    # is unmeasured. This is `bin/operator test`'s mapping with every path in it.
+    # The fifth element is the tree the suite proves, so --tree can drop the ones
+    # that prove another. It is not derivable from the working directory: MASTER/tools'
+    # suite runs from MASTER, because the rake task lives there.
+    def suite_jobs(trees = TREES)
+      [
+        ["MASTER", [RUBY, File.join(MASTER, "bin", "check"), "--profile=ci"], MASTER, {}, "MASTER"],
+        ["RAILS contracts", [RUBY, "test/run_all.rb"], File.join(ROOT, "RAILS"), {}, "RAILS"],
+        *%w[brgen amber bsdports].map do |app|
+          ["#{app} suite", [RUBY, BUNDLE, "exec", RUBY, "-S", "rails", "test"],
+           File.join(ROOT, "RAILS", app), {}, "RAILS"]
+        end,
+        ["OPENBSD", [RUBY, "-e", OPENBSD_SUITE], File.join(ROOT, "OPENBSD"), {}, "OPENBSD"],
+        ["tools", [RUBY, "-S", "rake"], File.join(MASTER, "tools"), {}, "MASTER", true],
+      ].select { |job| trees.include?(job.last) }
+    end
+
+    def suites(trees = TREES)
+      results = suite_jobs(trees).map do |name, cmd, dir, env, _tree, unbundled|
+        ok, out = capture(*cmd, chdir: dir, env:, unbundled:)
+        [name, ok, out]
+      end
+      failed = results.reject { |_, ok, _| ok }
+      body = results.map { |name, ok, _| "#{name}: #{ok ? "ok" : "FAIL"}" }
+      body += failed.flat_map { |name, _, out| out.last(12).map { |line| "#{name}| #{line}" } }
+      body << "suites: #{results.size - failed.size}/#{results.size} green"
+      [failed.empty?, body, failed.empty? ? 0 : 1]
+    end
+
+    # Reduction, not rearrangement. The census counts a directory bought for one
+    # file, a name repeating its parent, a name that says nothing; --ratchet
+    # records a fall so the ground cannot be given back. Moving a file to drop one
+    # of those is a namespace judgement and not a tool's to make.
+    def sprawl(scan_only:)
+      census = [RUBY, File.join(MASTER, "lib", "operator", "sprawl_census.rb")]
+      census << "--ratchet" unless scan_only
+      ok, body = capture(*census)
+      dup_ok, dup_body = capture(RUBY, File.join(MASTER, "tools", "dup_census.rb"))
+      both = ok && dup_ok
+      verdict = "sprawl: #{both ? "at or under every recorded low" : "over a recorded low"}"
+      [both, body + dup_body + [verdict], both ? 0 : 1]
+    end
+
+    # [ok, body, exitstatus] — the status, because 3 is a third state a boolean
+    # cannot carry.
+    #
+    # Every stage is a child process, and that nesting stays. The process is what
+    # gives a stage its own exit status, bin/gate's stage timeouts and a window
+    # for attributing changed files; running stages in-process saves boot time
+    # and loses all three.
+    def capture(*cmd, chdir: MASTER, env: {}, unbundled: false)
+      runner = -> { Open3.capture2e(ENV.to_h.merge(env), *cmd, chdir:) }
+      out, status = if unbundled && defined?(Bundler)
+                      Bundler.with_unbundled_env { runner.call }
+                    else
+                      runner.call
+                    end
+      [status.success?, out.lines.map(&:rstrip).reject(&:empty?), status.exitstatus]
+    rescue StandardError => e
+      [false, ["#{e.class}: #{e.message}"], 1]
+    end
+
+    # Untracked files count: a stage that drops a new file in is a stage that
+    # changed the tree, and much of the damage this chain attributes arrives so.
+    def dirty
+      out, status = Open3.capture2e("git", "status", "--porcelain", "-z", chdir: ROOT)
+      raise "gate: git status failed: #{out.to_s.strip}" unless status.success?
+
+      out.split("\0").filter_map { |entry| entry[3..] }.reject(&:empty?)
+    end
+
+    # The instrument's own summary line, not the last line printed — the rule
+    # tools/sweep.rb learned when design_baseline printed its verdict above its
+    # detail and "last line" read a detail row as the verdict.
+    def verdict(body)
+      summary = body.reverse.find { |line| line.match?(/\A[a-z][a-z_0-9]*:\s/) }
+      (summary || body.last).to_s.strip
+    end
+
+    # The seam to the council's own diagnosis, not invented here.
+    # Deliberation#failure_reason slugs each persona's failure and quorum_error
+    # tallies them ("quorum not reached (2/26) — 24x insufficient_credits");
+    # bin/gate matches that on INCONCLUSIVE and --semantic-only returns 3 rather
+    # than aborting. The reason arrives in the stage's verdict line, so this only
+    # reads the status, and a richer predicate later changes this method alone.
+    def classify(ok, exitstatus)
+      return "ok" if ok
+      return "skipped" if exitstatus == 3
+
+      "failed"
+    end
+
+    def run_stage(stage, seen)
+      puts "\n== #{stage.name}: #{stage.purpose}"
+      ok, body, exitstatus = stage.run.call
+      changed = dirty - seen
+      state = classify(ok, exitstatus)
+      state = "failed" if changed.any? && !stage.mutates
+      puts "   #{state}: #{verdict(body)}"
+      body.last(state == "ok" ? 0 : 12).each { |line| puts "   | #{line}" }
+      announce_changed(stage, changed)
+      Result.new(stage: stage.name, state:, summary: verdict(body), changed:)
+    end
+
+    def announce_foreign(foreign)
+      return puts("gate: tree clean at the start — everything below belongs to this run") if foreign.empty?
+
+      puts "gate: #{foreign.size} file(s) were ALREADY modified before this run — not this chain's, leave them:"
+      foreign.first(20).each { |path| puts "   ~ #{path}" }
+      puts "   ~ … and #{foreign.size - 20} more" if foreign.size > 20
+    end
+
+    def announce_changed(stage, changed)
+      return if changed.empty?
+
+      label = stage.mutates ? "changed by #{stage.name}" : "CHANGED BY A STAGE THAT PROMISED NOT TO WRITE"
+      puts "   #{changed.size} file(s) #{label}:"
+      changed.first(30).each { |path| puts "   + #{path}#{path.match?(GENERATED) ? "   GENERATED — revert" : ""}" }
+      puts "   + … and #{changed.size - 30} more" if changed.size > 30
+    end
+
+    def summarise(results, foreign)
+      changed = results.flat_map(&:changed)
+      generated = changed.grep(GENERATED)
+      clean = results.count { |result| result.state == "ok" }
+      puts "\ngate: #{clean}/#{results.size} stage(s) clean, #{changed.size} changed, #{foreign.size} foreign"
+      results.select { |r| r.state == "skipped" }.each { |r| puts "gate: #{r.stage} NOT MEASURED — #{r.summary}" }
+      results.select { |r| r.state == "failed" }.each { |r| puts "gate: #{r.stage} FAILED — #{r.summary}" }
+      generated.each { |path| puts "gate: generated file rewritten, revert it — #{path}" }
+
+      return 1 if results.any? { |r| r.state == "failed" } || generated.any?
+      return 3 if results.any? { |r| r.state == "skipped" }
+
+      puts "gate: clean"
+      0
+    end
+  end
+end
