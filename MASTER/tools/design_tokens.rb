@@ -111,7 +111,7 @@ module DesignTokens
     data = load
     accents = data.fetch("vertical_accents")
     ink = data.fetch("vertical_accent_ink")
-    lines = ["/* BEGIN:generated-vertical-accents — ruby RAILS/tools/sync_dialect_tokens.rb */", "$vertical-accents: ("]
+    lines = ["/* BEGIN:generated-vertical-accents — ruby MASTER/tools/design_tokens.rb sync_dialect_tokens */", "$vertical-accents: ("]
     accents.each do |name, values|
       lines << "  #{name}: (#{values.fetch('accent')}, #{values.fetch('hover')}, #{values.fetch('light')}),"
     end
@@ -133,7 +133,7 @@ module DesignTokens
 
   def face_root_block
     <<~CSS.strip
-      /* BEGIN:generated-face-root — ruby RAILS/tools/generate_face_root_css.rb */
+      /* BEGIN:generated-face-root — ruby MASTER/tools/design_tokens.rb generate_face_root_css */
       #{face_root_css}
       /* END:generated-face-root */
     CSS
@@ -186,7 +186,7 @@ module DesignTokens
     expected = face_root_css
     return nil if actual == expected
 
-    "face.css :root drift — run: ruby RAILS/tools/generate_face_root_css.rb"
+    "face.css :root drift — run: ruby MASTER/tools/design_tokens.rb generate_face_root_css"
   end
 
   # Every .scss under RAILS/. Generated CSS is a projection of the canonical
