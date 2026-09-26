@@ -25,7 +25,10 @@ module Master
         return Result.err("memory_record: key must match #{KEY_RE.source}", category: :validation) unless KEY_RE.match?(key)
 
         subject = Fiber[:master_pair_subject].to_s
-        subject = Master::Device::Agent.owner_subject(root: @root) if subject.strip.empty? && defined?(Master::Device::Agent)
+        if subject.strip.empty? && Fiber[:master_visitor] != true && defined?(Master::Device::Agent) &&
+            Master::Device::Agent.paired?(root: @root)
+          subject = Master::Device::Agent.owner_subject(root: @root)
+        end
 
         if subject.strip != ""
           path = Master::Ground::PersonalWorkspace.append_memory(root: @root, subject:, key:, body:, type:)
