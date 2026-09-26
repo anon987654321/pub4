@@ -27,7 +27,7 @@ module Shared
     # Search service hard-caps at 1000 products per the docs.
     SEARCH_HARD_CAP = 1_000
 
-    Deal = Data.define(:title, :description, :price, :currency, :image_url, :click_url, :merchant, :placeholder)
+    Deal = Data.define(:title, :description, :price, :currency, :image_url, :click_url, :merchant, :placeholder, :source)
     Voucher = Data.define(
       :external_id, :program_id, :program_name, :code, :title, :short_description,
       :description, :voucher_type_id, :track_url, :landing_url, :discount_amount,
