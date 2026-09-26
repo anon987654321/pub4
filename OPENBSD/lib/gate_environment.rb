@@ -11,10 +11,10 @@ module Deploy
       end
     end
 
-    RAILS_GATES = "RAILS/gates/runner.rb"
+    RAILS_GATES = "MASTER/gates/runner.rb"
 
     # The deploy-time integrity sequence, in order. This is not a registry of
-    # RAILS gates -- that is RAILS/gates/gates.yml, and the rows below name a
+    # RAILS gates -- that is MASTER/gates/gates.yml, and the rows below name a
     # gate rather than a file so the two cannot drift. It used to point at
     # per-gate scripts at the RAILS root; those were shims over the same classes
     # the runner already loads in-process.
