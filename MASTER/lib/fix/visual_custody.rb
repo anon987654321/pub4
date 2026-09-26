@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
+require_relative "../result"
 require_relative "../../gates/support/geometry_probe"
 require_relative "../../gates/lib/rendered/layout_snapshot"
 
@@ -45,8 +46,10 @@ module Master
 
       def compare_captures(captures, label)
         rows = captures.filter_map do |capture|
+          surface = capture[:surface]
+          next unless @surfaces.include?(surface)
           next unless capture.dig(:payload, "composition", "state") == "resting"
-          [capture[:surface], capture[:payload]]
+          [surface, capture[:payload]]
         end
         compare_payloads(rows, label)
       end
