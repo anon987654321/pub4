@@ -54,6 +54,7 @@ class ErasureCoverageTest < Minitest::Test
     "external_identities"        => [ :destroy, "a federated login carrying their email and phone number" ],
     "marketplace_addresses"      => [ :destroy, "recipient, street, postcode and phone, and nothing else" ],
     "marketplace_saved_searches" => [ :destroy, "what someone searched for, saved under their name" ],
+    "push_subscriptions"       => [ :destroy, "browser push endpoint and cryptographic subscription keys are account credentials" ],
 
     "takeaway_orders"       => [ :nullify, "retained as a financial record (Art. 17(3)(b)); the address it went to is not part of that" ],
     "posts"                 => [ :nullify, "content is retained so threads do not collapse; the coordinates it was written at are not" ],
