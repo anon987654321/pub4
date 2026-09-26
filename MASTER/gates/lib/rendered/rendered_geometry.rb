@@ -9,7 +9,7 @@ require_relative "../../support/geometry_probe"
 require_relative "../../support/geometry_autofix"
 require_relative "../../support/gate_autofix"
 require_relative "../../support/design_metrics"
-require_relative "../../../shared/lib/operator/master_design"
+require_relative "../../../tools/design/master_design"
 
 module Deploy
   # Rendered-geometry contracts: Fitts, occlusion, overflow, computed contrast,
