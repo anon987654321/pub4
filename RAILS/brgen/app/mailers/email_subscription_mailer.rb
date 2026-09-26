@@ -8,7 +8,7 @@ class EmailSubscriptionMailer < ApplicationMailer
   def confirm(sub)
     @sub = sub
     @confirm_url = confirm_email_subscription_url(token: sub.token)
-    @unsubscribe_url = email_subscription_url(token: sub.token)
+    @preferences_url = email_subscription_url(token: sub.token, host: ENV.fetch("APP_HOST", "brgen.no"), protocol: "https")
     mail to: sub.email, subject: t("mailer.confirm_subscription")
   end
 end
