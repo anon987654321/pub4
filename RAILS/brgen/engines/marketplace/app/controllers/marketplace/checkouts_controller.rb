@@ -266,7 +266,8 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
         metadata: { checkout_id: checkout.id }
       )
     end
-    checkout.recalculate!    checkout
+    checkout.recalculate!
+    checkout
   end
 
   def find_payable_order
