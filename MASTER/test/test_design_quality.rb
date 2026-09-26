@@ -30,6 +30,18 @@ class TestDesignQuality < Minitest::Test
     refute vector.tap_ok
   end
 
+  def test_hard_floor_rejects_contrast_failure
+    vector = Deploy::DesignQuality.calculate(
+      elements: [element(x: 0, y: 0)],
+      viewport: { w: 390, h: 844 },
+      dialect: :social,
+      contrast_ok: false
+    )
+
+    refute vector.hard_ok?
+    refute vector.contrast_ok
+  end
+
   def test_soft_vector_is_bounded
     vector = Deploy::DesignQuality.calculate(
       elements: [element(x: 0, y: 0), element(x: 100, y: 27, font_size: 24, font_weight: 700)],
