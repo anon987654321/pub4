@@ -15,7 +15,7 @@ module Master
     end
 
     def self.ractor_call(payload)
-      { "ractor_#{payload.fetch("message")}" => payload.fetch("multiplier") }
+      { "ractor_#{payload.fetch("message")}_#{payload.fetch("multiplier")}" => payload.fetch("multiplier") }
     end
   end
 end
@@ -43,7 +43,7 @@ class TestRuntimeCompute < Minitest::Test
     result = Master::Runtime::Compute.map(jobs, backend: :auto, operation: :invoke)
 
     assert_equal 4, result.size
-    assert_equal({ "ractor_3" => 4 }, result[3])
+    assert_equal({ "ractor_3_4" => 4 }, result[3])
   end
 
   def test_parallel_group_uses_ractors_for_ractor_safe_stages
