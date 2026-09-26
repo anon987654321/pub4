@@ -3,10 +3,10 @@
 require "minitest/autorun"
 require "yaml"
 require_relative "../../OPENBSD/lib/gate_result"
-require_relative "../gates/lib/source/css_constitution"
-require_relative "../gates/support/design_metrics"
-require_relative "../gates/lib/research/design_metrics"
-require_relative "../gates/support/css_weight"
+require_relative "../../MASTER/gates/lib/source/css_constitution"
+require_relative "../../MASTER/gates/support/design_metrics"
+require_relative "../../MASTER/gates/lib/research/design_metrics"
+require_relative "../../MASTER/gates/support/css_weight"
 require_relative "../../MASTER/lib/operator/gates"
 
 # Two gaps, same shape: a rule that exists and measures nothing.
@@ -32,7 +32,7 @@ class GateLiveAndCssBudgetTest < Minitest::Test
   end
 
   def test_css_budget_failure_is_inconclusive
-    source = File.read(File.expand_path("../gates/lib/source/css_constitution.rb", __dir__))
+    source = File.read(File.expand_path("../../MASTER/gates/lib/source/css_constitution.rb", __dir__))
     assert_includes source, "CSS ceilings were not measured"
     assert_includes source, "@result.inconclusive!"
   end
@@ -106,7 +106,7 @@ class GateLiveAndCssBudgetTest < Minitest::Test
   end
 
   def budget
-    YAML.safe_load_file(File.expand_path("../gates/data/css_budget.yml", __dir__)).fetch("rules")
+    YAML.safe_load_file(File.expand_path("../../MASTER/gates/data/css_budget.yml", __dir__)).fetch("rules")
   end
 
   def test_every_counted_css_rule_has_a_ceiling
