@@ -11,7 +11,6 @@ module Master
         # a local repo, and a scan that waits half a minute on a wedged index
         # has already cost more than the answer is worth.
         GIT_TIMEOUT_SECONDS = 5
-        POOL_SIZE = [Etc.nprocessors, 8].min.freeze
         SCAN_SINCE_EXT = /\.(rb|rake|gemspec|erb|yml|yaml|js|css|sh|zsh)\z/.freeze
         GC_EVERY_N_ITERATIONS = 5
 
@@ -59,24 +58,13 @@ module Master
         end
 
         def parallel_map(items)
-          cursor = Mutex.new
-          index = 0
-          results = Array.new(items.size)
-          threads = Array.new(POOL_SIZE) do
-            Thread.new(results) do |thread_results|
-              loop do
-                i = cursor.synchronize { (index += 1) - 1 }
-                break if i >= items.size
-                maybe_gc(i)
-                thread_results[i] = yield(items[i], i)
-              rescue StandardError => e
-                @bus&.publish("scanner:thread_error", path: items[i], index: i, error: e.message)
-                thread_results[i] = [items[i], Result.err(e.message, category: :infrastructure)]
-              end
-            end
+          Master::Runtime::Compute.map(items, backend: :thread) do |item, index|
+            maybe_gc(index)
+            yield(item, index)
+          rescue StandardError => e
+            @bus&.publish("scanner:thread_error", path: item, index:, error: e.message)
+            [item, Result.err(e.message, category: :infrastructure)]
           end
-          threads.each(&:join)
-          results
         end
 
         def maybe_gc(index)
