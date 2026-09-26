@@ -203,6 +203,7 @@ class Marketplace::Order < ApplicationRecord
       record_listing_commerce_event("MarketplaceOrderShipped", actor: seller, metadata: metadata)
       record_listing_event("shipped", user: seller, metadata: metadata)
     end
+    return self if already_shipped
     detail = tracking_code.presence ? "#{listing_title} — #{carrier.presence || 'Tracking'}: #{tracking_code}" : listing_title
     deliver_notification(buyer_record, title: I18n.t("marketplace.order_notification.on_its_way"), body: detail, source: self, kind: "order")
   end
@@ -256,11 +257,10 @@ class Marketplace::Order < ApplicationRecord
     already_delivered = fulfilment_status == "delivered"
     update!(fulfilment_status: "delivered", delivered_at: Time.current)
     enqueue_store_payout!
-    unless already_delivered
-      metadata = { order_id: id }
-      record_listing_commerce_event("MarketplaceOrderDelivered", actor: buyer_record, metadata: metadata)
-      record_listing_event("delivered", user: buyer_record, metadata: metadata)
-    end
+    return self if already_delivered
+    metadata = { order_id: id }
+    record_listing_commerce_event("MarketplaceOrderDelivered", actor: buyer_record, metadata: metadata)
+    record_listing_event("delivered", user: buyer_record, metadata: metadata)
     deliver_notification(buyer_record, title: I18n.t("marketplace.order_notification.delivered"), body: listing_title, source: self, kind: "order")
   end
 
