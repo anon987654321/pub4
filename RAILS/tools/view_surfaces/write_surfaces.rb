@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Rewrites the generated block of RAILS/gates/data/geometry_surfaces.yml from
+# Rewrites the generated block of MASTER/gates/data/geometry_surfaces.yml from
 # probed_<app>.jsonl: every HTML GET route that rendered for a guest, minus
 # what is already declared by hand or by BrgenVerticalSurfaces.
 require "json"
