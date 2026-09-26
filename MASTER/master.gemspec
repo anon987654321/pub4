@@ -26,6 +26,7 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "zeitwerk",   "~> 2.7"
   spec.add_dependency "ruby_llm",   "~> 2.0"
+  spec.add_dependency "ruby_llm-mcp", "~> 1.0"
   spec.add_dependency "tty-prompt", "~> 0.23"
   spec.add_dependency "pastel",     "~> 0.8"
   spec.add_dependency "diffy",      "~> 3.4"
