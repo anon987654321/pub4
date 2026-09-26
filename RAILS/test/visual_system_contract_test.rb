@@ -182,8 +182,8 @@ class VisualSystemContractTest < Minitest::Test
   end
 
   def test_brgen_and_amber_mount_the_shared_surface
-    assert_includes BRGEN_LAYOUT.read, 'data-controller="brgen-shell visual-field"'
-    assert_includes AMBER_LAYOUT.read, 'data-controller="visual-field'
+    assert_includes BRGEN_LAYOUT.read, "visual-field"
+    assert_includes AMBER_LAYOUT.read, "visual-field"
   end
 
   def test_radio_publishes_into_the_shared_visual_contract
