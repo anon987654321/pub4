@@ -252,6 +252,7 @@ class StandingOrdersTest < Minitest::Test
   test "autocommit reports a push failure after the commit lands" do
     root = Dir.mktmpdir("master-autocommit-")
     File.write(File.join(root, "file.rb"), "puts :ok\n")
+    relative = File.join(File.basename(root), "file.rb")
     event = { path: File.join(root, "file.rb") }
     bus = Struct.new(:events) do
       def publish(name, **payload)
@@ -272,7 +273,7 @@ class StandingOrdersTest < Minitest::Test
         assert_equal true, result.value![:committed]
         assert_equal false, result.value![:pushed]
         assert_equal "rejected", result.value![:push_error]
-        assert_equal [["autocommit:push_failed", { error: "rejected" }]], bus.events
+        assert_equal [["autocommit:push_failed", { error: "rejected", paths: [relative] }]], bus.events
       end
     end
   ensure
