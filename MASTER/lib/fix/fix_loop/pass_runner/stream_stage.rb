@@ -77,6 +77,7 @@ module Master
           def finish_stream(fixed, found, files, pass)
             return if fixed.zero?
 
+            @pass_progress = true
             @committer.commit_if_dirty("fix_loop: stream-fix [pass #{pass}]", findings: found, owned_paths: files)
           end
 
