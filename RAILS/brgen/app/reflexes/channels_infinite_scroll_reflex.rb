@@ -6,7 +6,7 @@ class ChannelsInfiniteScrollReflex < Shared::InfiniteScrollReflex
   private
 
   def scope
-    scope = Tv::Channel.all.includes(:user)
+    scope = Tv::Channel.publicly_visible.includes(:user)
     if element.dataset["q"].present?
       term = "%#{ActiveRecord::Base.sanitize_sql_like(element.dataset["q"])}%"
       channel_ids = scope.where("name LIKE ? OR description LIKE ?", term, term).pluck(:id)
