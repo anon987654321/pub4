@@ -361,33 +361,49 @@ module Master
       end
 
       def install_system_packages
-        spec = package_command
-        return { ok: false, changed: false, command: nil, output: "no supported package manager found" } unless spec
+        specs = package_commands
+        return { ok: false, changed: false, command: nil, output: "no supported package manager found" } if specs.empty?
 
-        argv, label = spec
-        report("installing system build dependencies via #{label}")
-        ok, stdout, stderr = @runner.call(argv, chdir: @root, env: @env.to_h)
-        output = join_output(stdout, stderr)
-        { ok: ok, changed: ok, command: argv, output: output }
+        outputs = []
+        specs.each do |argv, label|
+          report("installing system build dependencies via #{label}")
+          ok, stdout, stderr = @runner.call(argv, chdir: @root, env: @env.to_h)
+          outputs << join_output(stdout, stderr)
+          next if ok
+
+          return { ok: false, changed: false, command: argv, output: outputs.reject(&:empty?).join("\n") }
+        end
+
+        { ok: true, changed: true, command: specs.map(&:first), output: outputs.reject(&:empty?).join("\n") }
       end
 
-      def package_command
+      # Compatibility helper for callers and tests that need one representative
+      # package command. Installation uses package_commands so multi-step package
+      # managers cannot silently discard their prerequisite step.
+      def package_command = package_commands.first
+
+      def package_commands
         packages = SYSTEM_PACKAGES.fetch(package_manager_name, [])
-        return if packages.empty?
+        return [] if packages.empty?
 
         case package_manager_name
         when :termux
-          [["pkg", "install", "-y", *packages], "pkg"]
+          [[["pkg", "install", "-y", *packages], "pkg"]]
         when :openbsd
-          privileged(["pkg_add", "-I", *packages], "pkg_add")
+          [privileged(["pkg_add", "-I", *packages], "pkg_add")].compact
         when :macos
-          [["brew", "install", *packages], "brew"]
+          [[["brew", "install", *packages], "brew"]]
         when :debian
-          privileged(["apt-get", "update"], "apt-get") && privileged(["apt-get", "install", "-y", *packages], "apt-get")
+          [
+            privileged(["apt-get", "update"], "apt-get"),
+            privileged(["apt-get", "install", "-y", *packages], "apt-get")
+          ].compact
         when :fedora
-          privileged(["dnf", "install", "-y", *packages], "dnf")
+          [privileged(["dnf", "install", "-y", *packages], "dnf")].compact
         when :arch
-          privileged(["pacman", "-Sy", "--needed", "--noconfirm", *packages], "pacman")
+          [privileged(["pacman", "-Sy", "--needed", "--noconfirm", *packages], "pacman")].compact
+        else
+          []
         end
       end
 
