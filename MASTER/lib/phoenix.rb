@@ -183,7 +183,7 @@ module Master
           break if parent == candidate
           candidate = parent
         end
-        File.expand_path("..", root)
+        Master::REPO_ROOT
       end
 
       def path_within?(path, parent)
