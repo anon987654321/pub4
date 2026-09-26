@@ -60,6 +60,19 @@ class TestMusicRealtime < Minitest::Test
     assert_equal Master::Music::Synth.oscillator(:sine, 1.0, 0.0), value
   end
 
+  def test_stream_player_discovery_works_from_a_minimal_path
+    Dir.mktmpdir do |dir|
+      sox = File.join(dir, "sox")
+      File.write(sox, "#!/bin/sh\n")
+      File.chmod(0o755, sox)
+      old_path = ENV["PATH"]
+      ENV["PATH"] = dir
+      assert_equal true, Master::Music::AudioSink.which("sox")
+    ensure
+      ENV["PATH"] = old_path
+    end
+  end
+
   def test_unavailable_player_raises_rather_than_silently_dropping_audio
     assert_raises(Master::Music::AudioSink::NoPlayerError) { Master::Music::AudioSink.new(player: nil) }
   end
