@@ -35,6 +35,19 @@ const _StimulusSortable = class _StimulusSortable extends Controller {
 
       item.append(controls);
     });
+    this.refreshKeyboardControls();
+  }
+
+  refreshKeyboardControls() {
+    const items = Array.from(this.element.children);
+    items.forEach((item, index) => {
+      const controls = item.querySelector("[data-sortable-keyboard-control]");
+      if (!controls) return;
+      controls.querySelectorAll("button").forEach((button) => {
+        const delta = Number(button.dataset.sortableDelta);
+        button.disabled = (delta < 0 && index === 0) || (delta > 0 && index === items.length - 1);
+      });
+    });
   }
 
   removeKeyboardControls() {
@@ -61,6 +74,7 @@ const _StimulusSortable = class _StimulusSortable extends Controller {
     item.focus();
 
     await this.onUpdate({ item, newIndex: nextIndex });
+    this.refreshKeyboardControls();
   }
 
   async onKeyboardReorder(event) {
