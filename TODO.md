@@ -1825,9 +1825,11 @@ entry below is the shape, the evidence, and the seam it wants.
   without a hand-maintained orphan list.
 - **A restated value drifts; a derived one cannot.** `voice.yml` vs
   `Policy::FALLBACK`, preprompt's `MODEL_CAPABILITIES` vs live provider
-  schemas, rules.yml's ids vs `law/` vs the registry, brgen's inline social
-  routes vs `shared/config/routes/social.rb`, relayd's keypair list deciding
-  which city domains live vs `apps.yml`. The seam: one generator from the
+  schemas, and brgen's inline social routes vs `shared/config/routes/social.rb`
+  remain. The rules.yml/law/registry subclaim is now covered by the existing
+  `RuleRegistryAudit` plus `/rules sources`, which names YAML-only, Law-only
+  and shipped-registry-only IDs while respecting `folded_into`. The relayd
+  keypair list versus `apps.yml` remains. The seam: one generator from the
   primary source, in the shape `rake docs:agent_contracts` already sets —
   or a check that reads both and refuses disagreement, like
   `test_yaml_registries.rb` could do for the fallback rates.
