@@ -69,7 +69,7 @@ class WellKnownController < ApplicationController
   end
 
   def federated_scope(city)
-    scope = User.where(guest: false).where.not(username: [ nil, "" ])
+    scope = User.where(guest: false, deleted_at: nil, deletion_scheduled_at: nil).where.not(username: [ nil, "" ])
     city ? scope.where(city_id: city.id) : scope
   end
 end
