@@ -44,7 +44,16 @@ module Marketplace
       score += 0.35 if title.include?(@query)
       score += 0.15 if description.include?(@query)
       score += 0.10 if category.include?(@query)
+      score = (score * 0.7) + (taste_score * 0.3) if @user
       score.clamp(0.0, 1.0)
+    end
+
+    def taste_score
+      return 0.5 unless defined?(TasteRanker) && TasteRanker.respond_to?(:score_for_listing)
+
+      TasteRanker.score_for_listing(@user, listing_title: @listing.title, category: @listing.category&.name)
+    rescue StandardError
+      0.5
     end
 
     def performance_score
