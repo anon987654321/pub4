@@ -154,7 +154,7 @@ module Master
           return :blocked unless validate_paths(message, paths)
 
           @git.commit(with_finding_ids(message, findings, paths), paths:)
-          @bus&.publish("ops:commit", message: message.to_s[0, 120], head: @git.head, paths:)
+          @bus&.publish("ops:commit", message: message.to_s[0, 120], head: @git.head, paths:, findings:)
           @git.push
           verify_push!(paths)
           promote_known_good(@git.head, paths)
@@ -191,7 +191,7 @@ module Master
           @git.commit(with_finding_ids(message, findings, paths), paths:)
           head_after = @git.head
           transaction.delivery.record_commit!(head_after:)
-          @bus&.publish("ops:commit", message: message.to_s[0, 120], head: head_after, paths:)
+          @bus&.publish("ops:commit", message: message.to_s[0, 120], head: head_after, paths:, findings:)
           @git.push
           verify_push!(paths)
           promote_known_good(head_after, paths)
