@@ -5,7 +5,7 @@ require "fileutils"
 require "json"
 require "open3"
 require "tmpdir"
-require_relative "../../RAILS/gates/lib/source/stimulus_components"
+require_relative "../../MASTER/gates/lib/source/stimulus_components"
 
 # The gate suggests an upstream Stimulus Component only where a custom
 # controller duplicates one and a view actually mounts it. These run the gate
