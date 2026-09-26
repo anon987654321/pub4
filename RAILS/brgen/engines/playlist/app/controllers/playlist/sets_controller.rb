@@ -90,7 +90,8 @@ class Playlist::SetsController < ApplicationController
 
   def set_visible_to_viewer?
     case @set.privacy.to_s
-    when "", "public", "unlisted" then true
+    when "", "public", "unlisted" then owner_active?
+
     # Anything not named public is private: a privacy value outside the list
     # reached the database some way other than the form, and a typo must not
     # publish a set its owner hid.
