@@ -50,17 +50,27 @@ module Master
       end
 
       def working_directory(requested_root, script)
-        # Any tool under tools/ (flat or in its own subdir) runs from the repo
-        # root — the parent of the MASTER checkout — so relative asset/config
-        # paths resolve identically regardless of the tool's file layout.
-        return File.expand_path("..", requested_root) if script.start_with?(File.join(requested_root, "tools") + File::SEPARATOR)
-        # MASTER/tools/<tool> scripts run from their own directory — that is where
-        # their scratch/.cache, samples/, and project/ state live.
-        return File.dirname(script) if script.start_with?(File.join(MasterPaths.repo, "MASTER", "tools") + File::SEPARATOR)
+        # A flat tools/<tool>.rb entry keeps the workspace-root convention. A
+        # nested tools/<tool>/<tool>.rb entry owns its directory because that is
+        # where media assets, scratch, samples and project state live.
+        tools_root = File.join(requested_root, "tools")
+        if script.start_with?(tools_root + File::SEPARATOR)
+          relative = script.delete_prefix(tools_root + File::SEPARATOR)
+          return File.dirname(script) if relative.include?(File::SEPARATOR)
+          return File.expand_path("..", requested_root)
+        end
+
+        master_tools = File.join(MasterPaths.repo, "MASTER", "tools")
+        if script.start_with?(master_tools + File::SEPARATOR)
+          relative = script.delete_prefix(master_tools + File::SEPARATOR)
+          return File.dirname(script) if relative.include?(File::SEPARATOR)
+        end
+
         return requested_root if File.directory?(requested_root)
 
         MasterPaths.repo
       end
+
     end
   end
 end
