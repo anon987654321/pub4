@@ -128,6 +128,34 @@ class TestDillaBed < Minitest::Test
   ensure
     FileUtils.rm_f(out) if out
   end
+
+  def test_bare_invoke_runs_the_catalogue_end_to_end
+    skip "ffmpeg and ffprobe not on PATH" unless system("which", "ffmpeg", out: File::NULL, err: File::NULL) &&
+                                                   system("which", "ffprobe", out: File::NULL, err: File::NULL)
+
+    Dir.mktmpdir("dilla-noarg-smoke") do |dir|
+      out = File.join(dir, "demo.wav")
+      env = {
+        "DILLA_PIECES_ORDER" => "minor_half_step_pair,maj7_minor_cycle",
+        "DILLA_PIECES_SECONDS" => "2",
+        "DILLA_PIECES_FADE" => "0.1",
+        "DILLA_PIECES_OUTPUT" => out,
+        "DILLA_SCRATCH_DIR" => File.join(dir, "scratch"),
+        "DILLA_NO_PROVENANCE" => "1",
+        "DILLA_ASSET_CHECK" => "0",
+      }
+      output, error, status = Open3.capture3(env, RbConfig.ruby, DILLA_SOURCE)
+
+      assert status.success?, error
+      assert File.file?(out), output
+      mp3 = out.sub(/\.wav\z/i, ".mp3")
+      assert File.file?(mp3), output
+      duration = Open3.capture2("ffprobe", "-v", "error", "-show_entries", "format=duration",
+                                "-of", "default=nw=1:nk=1", out).first.to_f
+      assert_operator duration, :>, 2.5
+      assert_operator duration, :<, 5.0
+    end
+  end
 end
 
 # The six-minute piece, which is `dilla.rb compose` since 2026-09-16 and was the
