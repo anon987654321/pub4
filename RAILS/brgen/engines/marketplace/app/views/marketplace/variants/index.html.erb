@@ -12,7 +12,7 @@
 <% if @variants.any? %>
   <%# Drag a version to reorder it. Each row PATCHes its own new place, and
       the buyer's size picker lists them in this order. %>
-  <ul role="list" class="variant-list" data-controller="sortable" data-sortable-resource-name-value="variant">
+  <ul role="list" class="variant-list" data-controller="sortable" data-sortable-resource-name-value="variant" data-sortable-move-up-label-value="<%= t("marketplace.move_up") %>" data-sortable-move-down-label-value="<%= t("marketplace.move_down") %>">
     <% @variants.each do |variant| %>
       <li role="listitem" data-sortable-update-url="<%= listing_variant_path(@listing, variant) %>">
         <span class="variant-label"><%= variant.label %></span>
