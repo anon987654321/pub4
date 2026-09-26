@@ -3,7 +3,8 @@ ownership:
   README.md:
     purpose: project front door
     risk: low
-    check: bin/check  ../TODO.md:
+    check: bin/check
+  ../TODO.md:
     purpose: consolidated repo-wide backlog (per-tree DEBT.md, RAILS/TODO.md,
       RAILS/BLOCKERS.md and OPENBSD/data/debt.yml were folded in; features live
       in RAILS/apps.yml, horizon in RAILS/apps.horizon.yml, operator recipes in
