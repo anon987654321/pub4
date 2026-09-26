@@ -4,11 +4,11 @@ require "minitest/autorun"
 require "tmpdir"
 require "fileutils"
 require "json"
-require_relative "../../gates/support/design_metrics"
-require_relative "../../gates/support/geometry_autofix"
-require_relative "../../gates/lib/gate_mutation"
-require_relative "../../gates/support/geometry_probe"
-require_relative "../../gates/support/geometry_type"
+require_relative "../../../MASTER/gates/support/design_metrics"
+require_relative "../../../MASTER/gates/support/geometry_autofix"
+require_relative "../../../MASTER/gates/lib/gate_mutation"
+require_relative "../../../MASTER/gates/support/geometry_probe"
+require_relative "../../../MASTER/gates/support/geometry_type"
 require_relative "../../../OPENBSD/lib/gate_result"
 
 # Unit coverage for the pure logic behind the browser-backed gates. Nothing
@@ -284,7 +284,7 @@ class RenderedGatesTest < Minitest::Test
   end
 
   def test_type_walk_script_is_present
-    path = File.join(__dir__, "../../gates/support/geometry_type_walk.js")
+    path = File.join(__dir__, "../../../MASTER/gates/support/geometry_type_walk.js")
     src = File.read(path)
     assert_includes src, "firstLineChars"
     assert_includes src, "empty_ratio"
