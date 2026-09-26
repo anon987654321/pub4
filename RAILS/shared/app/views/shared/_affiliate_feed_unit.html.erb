@@ -1,58 +1,49 @@
-<%# In-feed affiliate unit: product tiles packed edge to edge with a couple of
-    call-to-action tiles among them, and a pointer parallax over the band.
-
-    This is the CodePen banner kept at RAILS/shared/reference/affiliate_banner/,
-    rebuilt on this tree's stack. The pen needed jQuery, imagesLoaded, Parallax,
-    Packery and anime — five CDN scripts, one of them GPLv3-or-paid — to pack
-    uneven images and tilt them. CSS grid packs them, and one Stimulus
-    controller does the tilt.
-
-    Reads Shared::Affiliate.deals, the same single path over every network the sidebar
-    unit uses, so a new network appears here without editing this view. %>
-<%# in_grid: the band is being placed inside a CSS grid of records rather than a
-    vertical list of them. Without it the aside becomes one more grid cell the
-    width of a garment tile, and the packed band inside it collapses. The
-    modifier spans the row instead; amber's wardrobe and outfit galleries are
-    both grids, brgen's feed is not. %>
 <% deals = affiliate_deals_for(category: local_assigns[:category], limit: 8) %>
-<% if deals.any? %>
+<% visible_deals = deals.select { |deal| affiliate_product_content_allowed?(deal) || deal.respond_to?(:source) && deal.source.to_s == "amazon" } %>
+<% if visible_deals.any? %>
   <aside class="affiliate_feed_unit<%= " affiliate_feed_unit--in_grid" if local_assigns[:in_grid] %>"
-         aria-label="<%= t("affiliate.feed_unit_label") %>"
-         data-controller="parallax-tilt"
-         data-action="pointermove->parallax-tilt#move pointerleave->parallax-tilt#leave">
-    <p class="sponsored"><%= t("affiliate.sponsored") %></p>
+         aria-label="<%= t("affiliate.feed_unit_label") %>">
+    <header class="affiliate_feed_header">
+      <div>
+        <p class="affiliate_feed_kicker"><%= t("affiliate.sponsored") %></p>
+        <h2><%= t("affiliate.deals_title") %></h2>
+      </div>
+    </header>
 
     <div class="affiliate_feed_grid">
-      <% deals.each_with_index do |deal, index| %>
-        <%# A call-to-action tile every third slot, the rhythm the pen used. %>
-        <% if index.positive? && (index % 3).zero? %>
-          <% cta = t("affiliate.cta").values[(index / 3 - 1) % t("affiliate.cta").size] %>
-          <div class="affiliate_feed_cta" data-parallax-tilt-target="tile" data-parallax-tilt-depth="0.14">
-            <%= cta %>
-          </div>
-        <% end %>
-
-        <a class="affiliate_feed_tile"
+      <% visible_deals.each do |deal| %>
+        <% amazon = deal.respond_to?(:source) && deal.source.to_s == "amazon" %>
+        <% amazon_content = affiliate_product_content_allowed?(deal) %>
+        <a class="affiliate_feed_tile<%= " affiliate_feed_tile--amazon" if amazon && !amazon_content %>"
            href="<%= deal.click_url %>"
            target="_blank"
            rel="noopener sponsored"
-           data-parallax-tilt-target="tile"
-           data-parallax-tilt-depth="<%= format("%.3f", 0.03 + (index % 5) * 0.022) %>">
-          <% if deal.image_url.present? %>
-            <%# reserved: container — .affiliate_feed_tile img is absolute inset 0 %>
-            <img loading="lazy" decoding="async"
-                 alt="<%= deal.title.presence || t("affiliate.deal_alt") %>"
-                 src="<%= deal.image_url %>">
-          <% end %>
-          <span class="affiliate_feed_title"><%= deal.title %></span>
-          <% if deal.price.present? %>
-            <span class="affiliate_feed_price"><%= deal.currency %> <%= deal.price %></span>
-          <% end %>
-          <%# Same rule as the sidebar unit: an unlabelled placeholder is
-              indistinguishable from a paid deal, to the visitor and to whoever
-              reconciles the payout. %>
-          <% if deal.placeholder %>
-            <span class="affiliate_feed_placeholder"><%= t("affiliate.placeholder_notice") %></span>
+           data-controller="outbound-click"
+           data-action="click->outbound-click#record"
+           data-outbound-click-url-value="<%= deal.click_url %>"
+           data-outbound-click-merchant-value="<%= affiliate_program_label(deal) %>"
+           data-outbound-click-surface-value="<%= local_assigns[:surface].presence || "affiliate_feed" %>">
+          <% if amazon && !amazon_content %>
+            <span class="affiliate_feed_amazon_mark"><%= t("affiliate.amazon_label") %></span>
+            <span class="affiliate_feed_title"><%= t("affiliate.amazon_shop") %></span>
+            <span class="affiliate_feed_link_disclosure"><%= t("affiliate.paid_link") %></span>
+          <% else %>
+            <% if deal.image_url.present? %>
+              <span class="affiliate_feed_media">
+                <img loading="lazy" decoding="async"
+                     alt="<%= deal.title.presence || t("affiliate.deal_alt") %>"
+                     src="<%= deal.image_url %>">
+              </span>
+            <% end %>
+            <span class="affiliate_feed_source"><%= affiliate_program_label(deal) %></span>
+            <span class="affiliate_feed_title"><%= deal.title %></span>
+            <% if deal.price.present? %>
+              <span class="affiliate_feed_price"><%= deal.currency %> <%= deal.price %></span>
+            <% end %>
+            <span class="affiliate_feed_link_disclosure"><%= t("affiliate.paid_link") %></span>
+            <% if deal.placeholder %>
+              <span class="affiliate_feed_placeholder"><%= t("affiliate.placeholder_notice") %></span>
+            <% end %>
           <% end %>
         </a>
       <% end %>
