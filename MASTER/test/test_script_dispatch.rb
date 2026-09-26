@@ -17,30 +17,30 @@ class TestScriptDispatch < Minitest::Test
     assert_equal workspace, Master::Io::ScriptDispatch.working_directory(workspace, script)
   end
 
-  def test_finds_media_tool_moved_out_to_studio
+  def test_finds_media_tool_under_master_tools
     workspace = File.expand_path("../..", __dir__)
     path = Master::Io::ScriptDispatch.script_path(workspace, "preprompt")
 
-    assert_equal File.join(MasterPaths.repo, "STUDIO", "preprompt", "preprompt.rb"), path
+    assert_equal File.join(MasterPaths.repo, "MASTER", "tools", "preprompt", "preprompt.rb"), path
   end
 
-  def test_uses_own_directory_as_working_directory_for_studio_tool
+  def test_uses_own_directory_as_working_directory_for_master_tool
     workspace = File.expand_path("../..", __dir__)
     script = Master::Io::ScriptDispatch.script_path(workspace, "preprompt")
 
-    assert_equal File.join(MasterPaths.repo, "STUDIO", "preprompt"), Master::Io::ScriptDispatch.working_directory(workspace, script)
+    assert_equal File.join(MasterPaths.repo, "MASTER", "tools", "preprompt"), Master::Io::ScriptDispatch.working_directory(workspace, script)
   end
 
-  # Regression test: dilla is the one media tool where STUDIO/dilla/ also
+  # Regression test: dilla is the one media tool where MASTER/tools/dilla/ also
   # contains an unrelated archived file (archive/hiphop_techno_experiment.rb)
-  # that used to sit at STUDIO/dilla/dilla.rb and silently hijack this exact
+  # that used to sit at the old STUDIO/dilla/dilla.rb path and silently hijack this exact
   # resolution path (MediaIntent's chat-driven beat requests resolved to it
   # instead of the real engine, with no test catching it).
-  def test_finds_dilla_engine_moved_out_to_studio
+  def test_finds_dilla_engine_under_master_tools
     workspace = File.expand_path("../..", __dir__)
     path = Master::Io::ScriptDispatch.script_path(workspace, "dilla")
 
-    assert_equal File.join(MasterPaths.repo, "STUDIO", "dilla", "dilla.rb"), path
+    assert_equal File.join(MasterPaths.repo, "MASTER", "tools", "dilla", "dilla.rb"), path
     assert File.file?(path)
   end
 end
