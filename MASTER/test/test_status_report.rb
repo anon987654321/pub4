@@ -11,11 +11,11 @@ class TestStatusReport < Minitest::Test
   def tree_of(line) = Operator::StatusReport.allocate.send(:tree_of, line)
 
   # git quotes a path the moment it holds a space or a non-ASCII byte, which
-  # STUDIO/dilla produces routinely. Unquoted, `STUDIO/dilla/før.wav` tallied
+  # MASTER/tools/dilla produces routinely. Unquoted, `STUDIO/dilla/før.wav` tallied
   # under the tree `"STUDIO`.
   def test_a_quoted_path_is_attributed_to_its_real_tree
     assert_equal "RAILS", tree_of(%q{ M "RAILS/sp ace.rb"})
-    assert_equal "STUDIO", tree_of(%q{?? "STUDIO/dilla/f\303\270r.wav"})
+    assert_equal "MASTER", tree_of(%q{?? "MASTER/tools/dilla/f\303\270r.wav"})
   end
 
   # A rename reports `<old> -> <new>`, and the tree that holds the file now is
@@ -26,7 +26,7 @@ class TestStatusReport < Minitest::Test
 
   def test_the_ordinary_shapes_still_work
     assert_equal "RAILS", tree_of(" M RAILS/a.rb")
-    assert_equal "STUDIO", tree_of("?? STUDIO/b")
+    assert_equal "MASTER", tree_of("?? MASTER/tools/b")
     assert_equal "MASTER", tree_of("MM MASTER/lib/core/world.rb")
   end
 
