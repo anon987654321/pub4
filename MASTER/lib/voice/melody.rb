@@ -69,8 +69,9 @@ module Master
       # A phrase with no entry carries no :voice and inherits the resolved one
       # through Engines.synthesize_phrase_parts' fetch default.
       def voice_for(phrase, languages)
-        key = languages[Language.detect(phrase)]
-        key ? { voice: key, language: Language.detect(phrase) } : {}
+        language = Language.detect(phrase)
+        key = languages[language]
+        key ? { voice: key, language: } : {}
       end
     end
   end
