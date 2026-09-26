@@ -71,6 +71,22 @@ class UserPurgeJobTest < ActiveJob::TestCase
     end
   end
 
+  test "push credentials are gone" do
+    ActsAsTenant.with_tenant(@city) do
+      PushSubscription.create!(
+        user: @user,
+        endpoint: "https://push.example/sub/#{SecureRandom.hex(8)}",
+        p256dh: SecureRandom.hex(16),
+        auth: SecureRandom.hex(8)
+      )
+
+      purge!
+
+      assert_empty PushSubscription.where(user_id: @user.id),
+                   "push credentials survived erasure"
+    end
+  end
+
   test "postal addresses and federated identities are gone" do
     ActsAsTenant.with_tenant(@city) do
       Marketplace::Address.create!(user: @user, recipient: "Johann", line1: "Storgata 1",
