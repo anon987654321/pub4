@@ -11,7 +11,7 @@ module Marketplace
     allow_unauthenticated_access
 
     def show
-      listings = Marketplace::Listing.live
+      listings = Marketplace::Listing.publicly_visible
         .where(kind: "goods")
         .where.not(price_cents: nil)
         .with_attached_photos
