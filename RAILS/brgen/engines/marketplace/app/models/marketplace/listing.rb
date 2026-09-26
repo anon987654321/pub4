@@ -113,6 +113,7 @@ class Marketplace::Listing < ApplicationRecord
   # match this row, and only if they are due — a filtered index is not a
   # stream we can append into.
   after_create :alert_matching_saved_searches
+  after_create_commit :queue_ranking_recalculation
 
   # A classifieds listing has a life. Without one the marketplace fills with
   # things sold two years ago that nobody took down, and the honest listings
@@ -138,7 +139,7 @@ class Marketplace::Listing < ApplicationRecord
   SORTS = %w[rank recent price_low price_high].freeze
   scope :sorted_by, lambda { |sort|
     case sort
-    when "rank" then order(ranking_score: :desc)
+    when "rank" then order(ranking_score: :desc, created_at: :desc)
     when "price_low" then order(price_cents: :asc)
     when "price_high" then order(price_cents: :desc)
     else recent
@@ -249,6 +250,12 @@ class Marketplace::Listing < ApplicationRecord
       occurred_at: Time.current
     )
   end
+  def queue_ranking_recalculation
+    Marketplace::RecalculateRankingJob.perform_later(id)
+  rescue StandardError => e
+    Rails.logger.warn("Listing ranking enqueue skipped: #{e.class}: #{e.message}")
+  end
+
   def favorite_for(user) = favorites.find_by(user: user)
   def store_name = store&.name
 
