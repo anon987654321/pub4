@@ -73,6 +73,15 @@ class TestRuleLoopPolicy < Minitest::Test
   # apply passed `encoding:` to write_atomic, which takes no such keyword, so
   # every model fix raised at the write, was logged as a write error, and
   # nothing a model proposed was ever applied.
+  def test_visual_custody_is_limited_to_frontend_rails_sources
+    loop = Master::Fix::RuleLoop.allocate
+
+    assert loop.send(:visual_source?, "/repo/RAILS/brgen/app/assets/stylesheets/application.scss")
+    assert loop.send(:visual_source?, "/repo/RAILS/brgen/app/views/home/index.html.erb")
+    refute loop.send(:visual_source?, "/repo/RAILS/brgen/app/models/post.rb")
+    refute loop.send(:visual_source?, "/repo/MASTER/web/public/face.css")
+  end
+
   def test_an_accepted_fix_is_written
     Dir.mktmpdir do |root|
       path = File.join(root, "sample.rb")

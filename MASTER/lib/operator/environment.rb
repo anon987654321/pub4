@@ -5,9 +5,6 @@ require "socket"
 
 module Operator
   module Environment
-    REQUIRED_RUBY = Gem::Version.new("3.4.0")
-    REQUIRED_RUBY_MAX = Gem::Version.new("3.5.0")
-
     module_function
 
     def repo_root(from: __dir__)
@@ -30,8 +27,12 @@ module Operator
       Gem::Version.new(RUBY_VERSION)
     end
 
+    def required_ruby
+      @required_ruby ||= Gem::Version.new(File.read(File.join(repo_root, ".ruby-version")).strip)
+    end
+
     def ruby_version_ok?
-      ruby_version >= REQUIRED_RUBY && ruby_version < REQUIRED_RUBY_MAX
+      ruby_version == required_ruby
     end
 
     def tree_kind
@@ -74,19 +75,17 @@ module Operator
     def ruby_mismatch_message
       return if ruby_version_ok?
 
-      "Ruby #{RUBY_VERSION} detected; pub4 expects ~> 3.4 (use ruby34/bundle34 on OpenBSD or .ruby-version locally)"
+      "Ruby #{RUBY_VERSION} detected; pub4 requires .ruby-version"
     end
 
     def next_command_for(mode = self.mode)
       case mode
       when :vps_operator
-        # after git pull; then ruby34 OPENBSD/gates/integrity_gate.rb
         "zsh OPENBSD/bin/vps-deploy <app>"
       when :local_contributor
         if ruby_version_ok?
           "OPENBSD/bin/check && cd MASTER && bin/check --profile=contributor"
         else
-          # resolves Ruby 3.4
           "MASTER/bin/ruby OPENBSD/bin/check"
         end
       else

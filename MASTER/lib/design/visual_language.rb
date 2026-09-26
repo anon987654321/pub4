@@ -173,6 +173,12 @@ module Master
 
       module_function
 
+      def reference_study
+        @reference_study ||= Master.load_yaml(File.join(Master::ROOT, "data", "design_reference_study.yml")) || {}
+      rescue StandardError
+        {}
+      end
+
       def brief(surface:, payload:)
         direction_lines(surface, direction_for(surface)) + evidence_lines(payload)
       end
@@ -198,6 +204,8 @@ module Master
           composition=#{Master::Design::Composition.brief(school:, purpose:)}
           reference_lenses=#{Array(DIRECTIONS.fetch(direction)[:references]).join(",")}
           reference_mission=#{DIRECTIONS.fetch(direction)[:reference_mission]}
+          external_reference_discipline=#{reference_discipline(direction)}
+          surface_anatomy=#{surface_anatomy(surface)}
         TEXT
       end
 
@@ -229,9 +237,72 @@ module Master
           "ART DIRECTION",
           "Authoritative design is priority 1: establish purpose, agency, clarity, hierarchy, trust, consistency, craft, and delight before selecting a visual school. Protect one memorable element and reject generic defaults only when they conflict with the product's purpose or rendered evidence.",
           blocks.join("\n\n"),
-        ].join("\n")
+          reference_context,
+        ].compact.join("\n")
       rescue StandardError => e
         "ART DIRECTION unavailable: #{e.class}: #{e.message}"
+      end
+
+      def reference_discipline(direction)
+        study = reference_study
+        case direction
+        when :conversational
+          Array(study.dig("antigravity", "useful_patterns")).first(5).join(",")
+        when :local_social
+          Array(study.dig("x", "useful_patterns")).first(5).join(",")
+        when :marketplace, :transactional_food
+          Array(study.dig("hey", "useful_patterns")).first(5).join(",")
+        else
+          Array(study.dig("shared_principles")).first(5).join(",")
+        end
+      end
+
+      def surface_anatomy(surface)
+        label = [surface.app, surface.label, surface.host, surface.path].compact.join("/").downcase
+        key =
+          if label.include?("messenger") || label.include?("conversation") || label.include?("/messages")
+            "messenger"
+          elsif label.include?("markedsplass") || label.include?("marketplace") || label.include?("listings") || label.include?("shops")
+            "marketplace"
+          elsif label.include?("dating") || label.include?("likes")
+            "dating"
+          elsif label.include?("takeaway") || label.include?("restaurant")
+            "takeaway"
+          elsif label.include?("radio") || label.include?("playlist") || label.include?("sets")
+            "radio"
+          elsif label.include?("tv_") || label.include?("/feed") && label.include?("tv")
+            "tv"
+          elsif label.include?("maps") || label.include?("places")
+            "maps"
+          elsif surface.app.to_s == "amber"
+            "amber"
+          elsif surface.app.to_s == "bsdports"
+            "bsdports"
+          else
+            "brgen_social"
+          end
+        row = reference_study.fetch("vertical_anatomy", {})[key]
+        return "generic task anatomy" unless row.is_a?(Hash)
+
+        structure = Array(row["structure"]).join(" -> ")
+        "attention=#{row["attention"]}; structure=#{structure}; lenses=#{Array(row["reference_lenses"]).join(",")}"
+      end
+
+        study = reference_study
+        blocks = study.filter_map do |name, row|
+          next unless row.is_a?(Hash)
+
+          useful = Array(row["useful_patterns"]).first(7)
+          avoid = Array(row["avoid"]).first(4)
+          next if useful.empty? && avoid.empty?
+
+          "#{name}: use=#{useful.join(",")}; avoid=#{avoid.join(",")}"
+        end
+        return if blocks.empty?
+
+        "REFERENCE STUDY
+#{blocks.join("
+")}"
       end
 
       def fingerprint(payload)

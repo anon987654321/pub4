@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# Resolve pub4's exact pinned Ruby where rbenv is available; OpenBSD falls back
+# Resolve pub4's exact pinned Ruby where rbenv is available; never downgrade
 set -eu
 
 ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
@@ -22,12 +22,18 @@ else
     RUBY="$(RBENV_VERSION="$PINNED_VERSION" "$RBENV" which ruby 2>/dev/null || true)"
   fi
 
-  if [ -z "${RUBY:-}" ] && command -v ruby34 >/dev/null 2>&1; then
-    RUBY=ruby34
-  elif [ -z "${RUBY:-}" ] && command -v ruby3.4 >/dev/null 2>&1; then
-    RUBY=ruby3.4
-  fi
 fi
 
-RUBY="${RUBY:-ruby}"
+RUBY="${RUBY:-$(command -v ruby 2>/dev/null || true)}"
+if [ -z "${RUBY:-}" ]; then
+  printf '%s\n' "pub4: no Ruby executable found; .ruby-version requires $PINNED_VERSION" >&2
+  exit 1
+fi
+
+ACTUAL="$("$RUBY" -e 'print RUBY_VERSION')"
+if [ "$ACTUAL" != "$PINNED_VERSION" ]; then
+  printf '%s\n' "pub4: Ruby $ACTUAL detected; .ruby-version requires $PINNED_VERSION" >&2
+  exit 1
+fi
+
 exec "$RUBY" "$@"
