@@ -91,8 +91,6 @@ module Master
     end
 
     def boot(root: Dir.pwd)
-      return boot_fast(root:) if ENV["MASTER_FAST"] == "1"
-
       prepare_runtime!
       emit_device_status
       onboard
@@ -102,19 +100,8 @@ module Master
       warn("master0: continuing in degraded presentation mode") unless service_ok
       container = bootstrap_container(root:)
       Ground::Pledge.stage2_lock!
-      CLI::WebServer.start(container[:config])
-      CLI::BootBanner.print
-      CLI::Session.new(container:)
-    end
-
-    def boot_fast(root: Dir.pwd)
-      prepare_runtime!
-      emit_device_status
-      onboard
-      set_up_device
-      container = Builder.build_fast(root:)
-      container[:device_perception] = Device::Perception.new(bus: container[:bus])
-      container[:device_perception].start!
+      CLI::WebServer.start(container[:config]) unless ENV["MASTER_WEB"] == "0"
+      CLI::BootBanner.print unless ENV["MASTER_FAST"] == "1"
       CLI::Session.new(container:)
     end
   end
