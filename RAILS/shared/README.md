@@ -315,7 +315,7 @@ app-owned paths), `bin/rails dartsass:build` in CI.
   theme-toggle
 - `Shared::StimulusFormHelper` — `character_counter_field`,
   `password_visibility_field`, `read_more`
-- Gate: `ruby RAILS/gates/runner.rb stimulus_components` (no legacy
+- Gate: `ruby MASTER/gates/runner.rb stimulus_components` (no legacy
   `char-counter` / duplicate controllers)
 - `theme_meta.js`, `nav_autohide_controller.js`, `live_search_controller.js`, …
 
@@ -501,7 +501,7 @@ bin/rails test
 
 Family-level: `ruby RAILS/test/pwa_design_contract_test.rb`, `ruby
 RAILS/test/design_contract_test.rb`, `ruby
-RAILS/test/shared_social_routes_test.rb`, `ruby RAILS/gates/runner.rb
+RAILS/test/shared_social_routes_test.rb`, `ruby MASTER/gates/runner.rb
 frontend_production`.
 
 ## x.com parity recovery (2026-07-20)
@@ -529,7 +529,7 @@ adopts them.
 ruby RAILS/test/design_contract_test.rb
 ruby RAILS/shared/test/lib/design_tokens_test.rb
 ruby RAILS/tools/build_all_css.rb --check
-ruby RAILS/gates/runner.rb frontend_auditor
+ruby MASTER/gates/runner.rb frontend_auditor
 ```
 
 ## Who owns a rendered value (2026-08-11)
@@ -1028,8 +1028,8 @@ failure. What follows is the current contract; the divergences are listed at the
 end so the old text is not restored by someone who finds it in history.
 
 Enforced by `Deploy::StimulusComponentsGate`
-(`RAILS/gates/lib/source/stimulus_components.rb`), run as `ruby
-RAILS/gates/runner.rb stimulus_components`. That class is the source of truth.
+(`MASTER/gates/lib/source/stimulus_components.rb`), run as `ruby
+MASTER/gates/runner.rb stimulus_components`. That class is the source of truth.
 This document explains it; it does not redefine it.
 
 ## Packages are vendored, not fetched
