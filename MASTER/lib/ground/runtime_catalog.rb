@@ -99,7 +99,7 @@ module Master
         end
 
         # The three files the browser payload is assembled from. Private because
-        # web_boot_payload is its only caller anywhere in the four trees.
+        # web_boot_payload is its only caller anywhere in the three governed trees.
         def web_boot_sources
           {
             topologies: Master.load_yaml(Master.data_path("topologies.yml"), default: {}),
