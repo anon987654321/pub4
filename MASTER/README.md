@@ -187,6 +187,16 @@ change cannot extend a fix beyond its elapsed-time budget. File content still us
 the existing atomic-write and checkpoint mechanisms; the journal records
 lifecycle state, not a second copy of repository contents.
 
+**Durable missions.** A long-running `/fix` objective is not tied to one Ruby
+process. The mission record under `.master/mission.json` is the durable objective;
+each `FixLoop` execution is one bounded attempt. A supervisor acquires a lease,
+runs the attempt, records completion/blocking/deferment, and wakes again when the
+mission is due. File changes wake the same supervisor rather than launching a
+second fix loop. A crashed process therefore loses an attempt, not the mission:
+the next MASTER process reclaims the expired lease and resumes the objective.
+See [fix-supervision.md](docs/fix-supervision.md) for the lifecycle and recovery
+contract.
+
 The intended invariant is simple: MASTER may be **healthy**, **degraded**, or
 **failed**, but an unavailable model, TTS worker, network path, or other optional
 capability must never be reported as successful execution.

@@ -21,13 +21,14 @@ module Master
         "personal_pulse" => :personal_pulse,
       }.freeze
 
-      def initialize(root:, agent: nil, scanner: nil, memory: nil, event_bus: nil, homeostat: nil)
+      def initialize(root:, agent: nil, scanner: nil, memory: nil, event_bus: nil, homeostat: nil, fix_loop: nil)
         @root = root
         @agent = agent
         @scanner = scanner
         @memory = memory
         @bus = event_bus
         @homeostat = homeostat
+        @fix_loop = fix_loop
         @jobs = load_jobs
         @state = load_state
         @thread = nil
@@ -43,6 +44,7 @@ module Master
           loop do
             break if @stop
             run_due!
+            reconcile_fix_mission!
             @homeostat&.observe(:idle_tick)
             # StandingOrders wakes its heartbeat and scheduled objectives on this.
             @bus&.publish("heartbeat:tick")
@@ -81,6 +83,27 @@ module Master
         { name:, result: }
       end
 
+      # Heartbeat reconciles durable work but never becomes a second repair
+      # scheduler. It only wakes a mission whose lease is stale or whose next wake
+      # has arrived.
+      def reconcile_fix_mission!
+        return unless @fix_loop
+
+        record = Mission.current(root: @root)
+        return unless record
+        return unless %w[running waiting].include?(record["state"].to_s)
+
+        expired = record["state"].to_s == "running" && lease_expired?(record)
+        due = record["state"].to_s == "waiting" && due?(record)
+        return unless expired || due
+
+        reason = expired ? "heartbeat:expired_lease" : "heartbeat:due"
+        @fix_loop.wake_background!(reason:)
+        @bus&.publish("heartbeat:mission_wake", mission: record["id"], reason:)
+      rescue StandardError => e
+        @bus&.publish("heartbeat:mission_reconcile_error", error: "#{e.class}: #{e.message}")
+      end
+
       def list
         @jobs.map do |job|
           last = @state.dig(job["name"], "last_run").to_i
@@ -90,6 +113,24 @@ module Master
       end
 
       private
+
+      def due?(record)
+        wake = record["next_wake_at"]
+        return true if wake.to_s.empty?
+
+        Time.iso8601(wake.to_s) <= Time.now.utc
+      rescue ArgumentError
+        true
+      end
+
+      def lease_expired?(record)
+        value = record["lease_until"]
+        return true if value.to_s.empty?
+
+        Time.iso8601(value.to_s) <= Time.now.utc
+      rescue ArgumentError
+        true
+      end
 
       def execute_job(job)
         method_name = JOB_HANDLERS[job["action"]]

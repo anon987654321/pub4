@@ -146,7 +146,7 @@ module Master
 
     def build_autonomous_monitors(root:, infra:, agent:, scanner:, bus:, lean_boot:, fix_loop:, rollback:)
       heartbeat = Fix::Heartbeat.new(root:, agent:, scanner:, memory: infra[:memory],
-        event_bus: bus, homeostat: infra[:homeostat])
+        event_bus: bus, homeostat: infra[:homeostat], fix_loop:)
       triggers = Trace::Triggers.new(event_bus: bus, scanner:, agent:)
       triggers.install_defaults!
       propose_tree = lean_boot ? nil : Fix::ProposeTree.new(root:, agent:, event_bus: bus)

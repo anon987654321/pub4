@@ -88,36 +88,6 @@ class TestFixLoopOscillation < Minitest::Test
     def commit(_message, paths:) = nil
   end
 
-  class CountingFixLoop < Master::Fix::FixLoop
-    attr_reader :run_count
-
-    def initialize(*args, **kwargs)
-      super
-      @run_count = 0
-    end
-
-    def run(_target)
-      @run_count += 1
-      Master::Result.ok("cycle #{@run_count}")
-    end
-  end
-
-  class CrashThenHaltFixLoop < Master::Fix::FixLoop
-    attr_reader :run_count
-
-    def initialize(*args, **kwargs)
-      super
-      @run_count = 0
-    end
-
-    def run(_target)
-      @run_count += 1
-      raise "first cycle failed" if @run_count == 1
-
-      halt!(reason: "test complete")
-    end
-  end
-
   StubRule = Struct.new(:id, :severity)
 
   def setup
@@ -216,38 +186,15 @@ class TestFixLoopOscillation < Minitest::Test
     assert_equal persistent, cycles.first[:payload][:violation].to_h.slice(:file, :line, :rule, :message)
   end
 
-  def test_run_forever_stops_after_max_cycles
-    loop = CountingFixLoop.new(
-      rules: [StubRule.new("TEST_RULE", :warning)],
-      agent: OpenCircuitAgent.new,
-      scanner: ConstantScanner.new([]),
-      root: @root,
-      bus: @bus,
-      git: StubGit.new,
-    )
-    loop.run_forever(@root, max_cycles: 2, startup_delay: 0, idle_sleep: 0)
+  def test_run_forever_owns_the_supervisor_not_a_cycle_bound
+    mission = Master::Fix::Mission.new(root: @root)
+    mission.ensure_queued!(goal: "fix #{@root}", scope: @root)
 
-    assert_equal 2, loop.run_count
-    max_cycles = @bus.events.select { |e| e[:event] == "fix_loop:max_cycles" }
-    assert_equal 1, max_cycles.size
-    assert_equal 2, max_cycles.first[:payload][:cycles]
-  end
-
-  def test_run_forever_continues_after_cycle_error
-    loop = CrashThenHaltFixLoop.new(
-      rules: [StubRule.new("TEST_RULE", :warning)],
-      agent: OpenCircuitAgent.new,
-      scanner: ConstantScanner.new([]),
-      root: @root,
-      bus: @bus,
-      git: StubGit.new,
-    )
-    loop.run_forever(@root, max_cycles: 3, startup_delay: 0, idle_sleep: 0, cooldown_sleep: 0)
-
-    assert_equal 2, loop.run_count
-    errors = @bus.events.select { |e| e[:event] == "fix_loop:error" }
-    assert_equal 1, errors.size
-    assert_match(/first cycle failed/, errors.first[:payload][:error])
+    loop = build_loop([])
+    supervisor = Master::Fix::Supervisor.new(root: @root, target: @root, fix_loop: loop)
+    assert_respond_to supervisor, :run_forever
+    assert_respond_to supervisor, :wake!
+    assert_equal "waiting", Master::Fix::Mission.current(root: @root)["state"]
   end
 
   def test_halt_blocks_fix_loop_run

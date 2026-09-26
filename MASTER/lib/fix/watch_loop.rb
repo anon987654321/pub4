@@ -75,7 +75,9 @@ module Master
           # watched-file edit gets the same stagnation detection and commit
           # gating as the batch path instead of WatchLoop's own simpler
           # per-rule loop (which has neither).
-          if @fix_loop
+          if @fix_loop&.background_alive?
+            @fix_loop.wake_background!(reason: "source_changed", path:)
+          elsif @fix_loop
             @fix_loop.run(path, max_passes: 3, budget_seconds: 120, incremental: true)
           else
             applicable = @rules.select { |r| r.respond_to?(:applies_to?) ? r.applies_to?(path) : true }

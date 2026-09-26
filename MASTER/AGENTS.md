@@ -163,14 +163,19 @@ Before calling code dead, prove the scan on a case you already know the answer
 to. An entry whose premise turns out to be false is the most valuable thing you
 can bring back — say so plainly rather than working around it.
 
-**Say what you could not measure.** "Sweep until clean or blocked" names no
-bound, and the runtime gives itself one: `FixLoop` stops after fifteen passes or
-thirty minutes. Take the same bound. When the same file fails a third time, when
-a gate will not load, or when the triangle is down, stop and report the attempt
-rather than the outcome. A gate that could not measure is inconclusive, neither
-a pass nor a failure, and calling it a pass claims the code was read when
-nothing was. An unverified claim costs more than an unfinished task, because the
-next reader builds on it.
+**Say what you could not measure.** A single `FixLoop` attempt is bounded:
+it stops after its pass limit or wall-clock budget. That is an execution bound,
+not a claim that the mission is complete. A durable `/fix` mission remains
+waiting and receives another scheduled attempt unless verification proves
+completion, a human decision is required, or the mission is explicitly blocked.
+When the same file fails a third time, when a gate will not load, or when the
+triangle is down, stop and report the attempt rather than the outcome. A gate
+that could not measure is inconclusive, neither a pass nor a failure, and calling
+it a pass claims the code was read when nothing was. An unverified claim costs
+more than an unfinished task, because the next reader builds on it.
+
+The complete supervisor contract is [`docs/fix-supervision.md`](docs/fix-supervision.md):
+the mission is durable, the attempt is mortal.
 
 **Never move a ratchet to absorb your own growth.** `MASTER/bin/operator
 measure` must end where it started, and slack is the same defect as debt: a
