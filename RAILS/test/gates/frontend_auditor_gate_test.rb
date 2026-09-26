@@ -4,7 +4,7 @@ require "minitest/autorun"
 require "pathname"
 require "tmpdir"
 require_relative "gate_fixture"
-require_relative "../../gates/lib/source/frontend_auditor"
+require_relative "../../../MASTER/gates/lib/source/frontend_auditor"
 # The gate `load`s this at run time, so a test that calls the auditor directly
 # has to name it or depend on which test minitest shuffles first.
 require_relative "../../shared/app/services/shared/frontend_auditor"
