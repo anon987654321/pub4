@@ -37,6 +37,7 @@ module Master
           "pair" => command(:dispatch_pair, root),
           "device" => command(:dispatch_device_agent, root),
           "owner" => command(:dispatch_owner, root),
+          "wake" => command(:dispatch_wake, root),
           "doctor" => command(:dispatch_doctor, root),
           "rules" => command(:dispatch_rules, root),
           "snapshot" => command(:dispatch_snapshot, d[:root]),
