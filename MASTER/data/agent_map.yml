@@ -1,5 +1,5 @@
 # Machine-readable map for coding agents — "touching X → edit these files".
-# Human mirror: AGENTS.md + START_HERE.md. Read this file.
+# Human mirrors: CLAUDE.md + MASTER/AGENTS.md. Read this file.
 schema: 1
 
 topics:
