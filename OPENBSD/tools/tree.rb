@@ -117,8 +117,6 @@ class ProjectTree
     puts
     puts "MASTER alignment (far-away, measured):"
 
-    line(:ok, "START_HERE.md is the single orientation doc") if File.exist?(File.join(master, "START_HERE.md"))
-
     libs = subdirs(File.join(master, "lib"))
     line(:ok, "lib/ spine: #{libs.join(' → ')}") if libs.any?
 
