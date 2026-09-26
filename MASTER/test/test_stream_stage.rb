@@ -15,13 +15,22 @@ class StreamStageTest < Minitest::Test
   class GatedScanner
     def initialize(repaired) = @repaired = repaired
 
-    def violations(files)
-      files.each_with_index.flat_map do |path, index|
-        @repaired.pop(timeout: 5) || raise("no repair started while the scan ran") if index == 2
-        rows = [{ rule: "LONG_METHOD", file: File.basename(path) }, { rule: "DRY", file: File.basename(path) }]
-        yield path, rows if block_given?
-        rows
-      end
+    def scan(path, index)
+      @repaired.pop(timeout: 5) || raise("no repair started while the scan ran") if index == 2
+      [
+        { rule: "LONG_METHOD", file: File.basename(path), line: 1, message: "long" },
+        { rule: "DRY", file: File.basename(path), line: 2, message: "dry" }
+      ]
+    end
+  end
+
+  class RepairAwareScanner
+    def initialize(repaired) = @repaired = repaired
+
+    def scan(path)
+      return [] if @repaired[path]
+
+      [{ rule: "LONG_METHOD", file: File.basename(path), line: 1, message: "long" }]
     end
   end
 
@@ -44,6 +53,8 @@ class StreamStageTest < Minitest::Test
     @events = Queue.new
     @log = []
     @loop_scanner = GatedScanner.new(@events)
+    @repair_state = nil
+    @scan_index = 0
     @committer = NullCommitter.new
     @rule_order = RuleOrder.new([Rule.new("LONG_METHOD"), Rule.new("DRY")])
     @violation_counts = Hash.new(0)
@@ -65,6 +76,16 @@ class StreamStageTest < Minitest::Test
     refute(streamed.any? { |_file, rule| rule == "DRY" })
     assert_equal 3, unstreamed(found, streamed).size
     assert(unstreamed(found, streamed).all? { |row| row[:rule] == "DRY" })
+  end
+
+  def test_findings_are_refreshed_after_a_stream_repair
+    @repair_state = {}
+    @loop_scanner = RepairAwareScanner.new(@repair_state)
+    found, streamed = streaming_observation(%w[/repo/a.rb], "/repo", 1, Time.now + 60)
+
+    assert_empty found
+    assert_includes streamed, ["a.rb", "LONG_METHOD"]
+    assert_equal ["fix_loop: stream-fix [pass 1]"], @committer.commits
   end
 
   def test_no_repair_after_the_deadline
@@ -93,11 +114,19 @@ class StreamStageTest < Minitest::Test
 
   def run_rule_once(rule, files, _pass)
     @log.concat(files) if rule.id == "LONG_METHOD"
+    @repair_state[files.first] = true if @repair_state
     @events << :repaired
     { fixed: 1, status: :applied }
   end
 
-  def run_observation_stage(files, _target) = @loop_scanner.violations(files)
+  def violations_for(path)
+    index = @scan_index
+    @scan_index += 1
+    rows = @loop_scanner.is_a?(GatedScanner) ? @loop_scanner.scan(path, index) : @loop_scanner.scan(path)
+    rows.map { |row| row.merge(severity: :warning) }
+  end
+
+  def run_observation_stage(files, _target) = files.flat_map { |path| violations_for(path) }
   # These tests pin when repairs start, not how a file is repaired.
   def repair_file(path, _rows, runnable, rel, stream) = run_streamed_rules(runnable, path, rel, stream)
   def tally_rule_results(results, **) = results.sum { |_rule, result| result[:fixed] }
