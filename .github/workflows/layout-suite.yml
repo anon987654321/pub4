@@ -7,7 +7,7 @@ name: Layout suite + app smoke
 # commented out and never restored, so nothing outside this file is holding it.
 #
 # The same gates locally:
-#   GATE_AUTOFIX=0 ruby RAILS/gates/runner.rb layout_suite
+#   GATE_AUTOFIX=0 ruby MASTER/gates/runner.rb layout_suite
 #   sh OPENBSD/bin/deploy-smoke.sh --local
 
 on:
@@ -38,7 +38,7 @@ jobs:
       - name: Layout suite (source + fixture gates; no live app required)
         env:
           GATE_AUTOFIX: "0"
-        run: ruby RAILS/gates/runner.rb layout_suite
+        run: ruby MASTER/gates/runner.rb layout_suite
 
   inventory:
     runs-on: ubuntu-24.04
