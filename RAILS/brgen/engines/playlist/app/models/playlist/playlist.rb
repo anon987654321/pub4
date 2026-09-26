@@ -21,7 +21,7 @@ class Playlist::Playlist < ApplicationRecord
 
   validates :name, presence: true, length: { maximum: 100 }
 
-  scope :public_playlists, -> { where(public_access: true) }
+  scope :public_playlists, -> { where(public_access: true).joins(:user).where(users: { deleted_at: nil, deletion_scheduled_at: nil }) }
   scope :popular,           -> { order(plays_count: :desc) }
   scope :recent,            -> { order(created_at: :desc) }
   scope :city_trending, ->(city = Current.city_record) {
