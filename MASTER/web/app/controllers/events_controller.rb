@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require Rails.root.join("../lib/device/wake_signal").to_s
+
 # EventsController — SSE stream of EventBus events to the orb visualizer, at
 # GET /events/stream. It subscribes to every bus topic through `**` and writes each event
 # as an anonymous `data:` line; the orb reads them with
@@ -36,9 +38,13 @@ class EventsController < ApplicationController
     sub      = bus.subscribe(STREAM_PATTERN) { |ev| offer(received, ev, visitor_tier:, mine:) }
     deadline       = Time.now + MAX_STREAM_S
     next_keepalive = Time.now + KEEPALIVE_EVERY_S
+    stream_started_at = Time.now.to_f
+    last_wake_id = nil
 
     while Time.now < deadline
-      event = received.pop(timeout: [next_keepalive - Time.now, 0].max)
+      timeout = [next_keepalive - Time.now, 0.25].min
+      timeout = 0 if timeout.negative?
+      event = received.pop(timeout:)
       if event
         payload = visitor_tier ? visitor_safe_payload(event) : event
         response.stream.write("data: #{payload.to_json}\n\n")
@@ -47,6 +53,10 @@ class EventsController < ApplicationController
         response.stream.write("event: link\ndata: {\"state\":\"quiet\"}\n\n") rescue nil
         next_keepalive = Time.now + KEEPALIVE_EVERY_S
       end
+
+      emit_wake(response, stream_started_at, last_wake_id) do |id|
+        last_wake_id = id
+      end unless visitor_tier
     end
   rescue IOError, ActionController::Live::ClientDisconnected
     # Client went away — normal. Stop streaming.
@@ -56,6 +66,26 @@ class EventsController < ApplicationController
   end
 
   private
+
+  def emit_wake(response, stream_started_at, last_wake_id)
+    event = Master::Device::WakeSignal.read(root: Rails.root.join("..").to_s)
+    return unless event
+    return unless event[:type].to_s == "device:wake"
+    return unless event[:at].to_f > stream_started_at
+    return if event[:id].to_s.empty? || event[:id].to_s == last_wake_id
+
+    payload = {
+      t: event[:at],
+      type: "device:wake",
+      data: event,
+    }
+    response.stream.write("data: #{payload.to_json}\n\n")
+    yield(event[:id].to_s)
+  rescue IOError, ActionController::Live::ClientDisconnected
+    raise
+  rescue StandardError
+    nil
+  end
 
   # Runs on the publisher's thread, so it never blocks: the visitor filter
   # applies before the queue, and a full queue drops the event. A slow client
