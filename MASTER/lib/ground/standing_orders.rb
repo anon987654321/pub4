@@ -251,7 +251,7 @@ end
         @mutex.synchronize { @running.delete(order["name"]) }
       end
 
-      def state_of(order) = VALID_STATES.include?(order["state"]) ? order["state"] : "done"
+      def state_of(order) = VALID_STATES.include?(order["state"]) ? order["state"] : "error"
       def domain_of(order) = order.fetch("domain", Tool::Domain::DEFAULT).to_s
 
       def execute_order(order, event: nil)
