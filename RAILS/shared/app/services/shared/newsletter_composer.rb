@@ -12,7 +12,7 @@ module Shared
     )
 
     Story = Data.define(:title, :url, :teaser, :meta, :image_url)
-    Deal = Data.define(:title, :url, :description, :price, :currency, :merchant, :image_url)
+    Deal = Data.define(:title, :url, :description, :price, :currency, :merchant, :image_url, :source)
 
     MODEL = ENV.fetch("NEWSLETTER_MODEL", ENV.fetch("REWRITE_MODEL", "google/gemini-2.0-flash-001"))
 
@@ -157,6 +157,7 @@ host = host.to_s.strip
         currency: deal.currency.to_s,
         merchant: deal.merchant.to_s,
         image_url: deal.image_url.to_s,
+        source: deal.respond_to?(:source) ? deal.source.to_s : "",
       )
     end
 
