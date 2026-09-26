@@ -10,7 +10,7 @@ class ChannelsInfiniteScrollReflex < Shared::InfiniteScrollReflex
     if element.dataset["q"].present?
       term = "%#{ActiveRecord::Base.sanitize_sql_like(element.dataset["q"])}%"
       channel_ids = scope.where("name LIKE ? OR description LIKE ?", term, term).pluck(:id)
-      video_ids = Tv::Video.published.where("title LIKE ? OR description LIKE ?", term, term).pluck(:tv_channel_id)
+      video_ids = Tv::Video.publicly_visible.where("title LIKE ? OR description LIKE ?", term, term).pluck(:tv_channel_id)
       scope = scope.where(id: (channel_ids + video_ids).uniq)
     else
       scope = scope.popular
