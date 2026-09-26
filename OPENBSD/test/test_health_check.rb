@@ -7,7 +7,7 @@ require "json"
 require "yaml"
 # Under a C locale -- which is how the weekly integrity run invokes these on
 # vm23 -- Ruby defaults file reads to US-ASCII. Same require, same reason, as
-# RAILS/gates/runner.rb.
+# MASTER/gates/runner.rb.
 require_relative "../lib/utf8"
 
 # Behaviour, not spelling. These run health_check.rb the way the laptop and the
