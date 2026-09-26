@@ -187,7 +187,7 @@ class TestDillaLiveSynth < Minitest::Test
     end
   end
 
-  # MASTER's main sound is STUDIO/dilla/liveset.rb as the operator last made it
+  # MASTER's main sound is MASTER/tools/dilla/liveset.rb as the operator last made it
   # the default, and every take before it is kept as it was heard.
   FROZEN = {
     "liveset.rb" => "23c0aa7e298f",
