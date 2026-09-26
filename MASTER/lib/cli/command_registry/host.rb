@@ -37,6 +37,17 @@ module Master
         end
       end
 
+      # /device — local Android companion status and ownership boundary.
+      def dispatch_device(root, ctx: nil)
+        _word, _rest = subcommand(ctx)
+        status = Master::Device::Agent.status(root:)
+        paired = status[:paired] ? "paired" : "unpaired"
+        owner = status[:owner_label].to_s.empty? ? "" : " owner=#{status[:owner_label]}"
+        "device: #{paired}#{owner} id=#{status[:device_id]} last_tick=#{status[:last_tick_at] || "never"}"
+      rescue StandardError => e
+        "device: unavailable — #{e.class}: #{e.message}"
+      end
+
       # /doctor — bin/doctor's report followed by the security audit.
       # `/doctor device` asks the hardware the host exposes through Termux:API.
       def dispatch_doctor(root, ctx: nil)
