@@ -9,10 +9,13 @@ module Marketplace
       seller: 0.20
     }.freeze
 
-    def initialize(listing, query: nil, user: nil)
+    # Persisted ranking is deliberately global and user-agnostic. A scheduled
+    # recalculation has no buyer, so it must not depend on a user-local service
+    # such as Amber's TasteRanker. Personalisation belongs in a request-layer
+    # ranker that has an explicit preference source.
+    def initialize(listing, query: nil)
       @listing = listing
       @query = query.to_s.downcase.strip
-      @user = user
     end
 
     def score
@@ -44,16 +47,7 @@ module Marketplace
       score += 0.35 if title.include?(@query)
       score += 0.15 if description.include?(@query)
       score += 0.10 if category.include?(@query)
-      score = (score * 0.7) + (taste_score * 0.3) if @user
       score.clamp(0.0, 1.0)
-    end
-
-    def taste_score
-      return 0.5 unless defined?(TasteRanker) && TasteRanker.respond_to?(:score_for_listing)
-
-      TasteRanker.score_for_listing(@user, listing_title: @listing.title, category: @listing.category&.name)
-    rescue StandardError
-      0.5
     end
 
     def performance_score
