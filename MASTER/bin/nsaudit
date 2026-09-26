@@ -1,6 +1,9 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require_relative "../lib/boot/entrypoint"
+Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
+
 # master-nsaudit — find Master::* references that no longer resolve.
 # Useful after namespace refactors. Exits 0 clean, 1 if any unresolved.
 
