@@ -42,6 +42,7 @@ class TestFeedbackLedger < Minitest::Test
     bus.publish("llm:call_complete", model: "gpt-4.1", tokens_out: 42)
     bus.publish("llm:provider_outcome", model: "gpt-4.1", status: "provider_error", error: "boom")
     bus.publish("fix_loop:soul_proposal", root:, rule: "T205", sample: [{ file: "lib/example.rb" }])
+    bus.publish("production:evidence", root:, boundary: "master", signal: "fix.pass", value: 1, source: "test")
     bus.publish("fix_loop:oscillation", violations: 1)
 
     db = SQLite3::Database.new(File.join(root, ".master", "knowledge.sqlite3"))
@@ -58,6 +59,11 @@ class TestFeedbackLedger < Minitest::Test
     log = File.join(root, "runtime", "rsi_improvements.md")
     assert File.exist?(log)
     assert_match(/T205/, File.read(log))
+
+    phoenix_log = File.join(root, Master::Phoenix::JOURNAL)
+    assert File.exist?(phoenix_log)
+    entries = File.readlines(phoenix_log).map { |line| JSON.parse(line) }
+    assert_equal %w[change observation], entries.map { |entry| entry.fetch("kind") }
   ensure
     db&.close
     FileUtils.remove_entry(root) if root && Dir.exist?(root)

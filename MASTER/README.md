@@ -127,6 +127,23 @@ model nemotron-3-super-120b-a12b, ctx 0/128.0k
 
 Every web change has one extra proof: the page is rendered in a real browser and the screenshot plus measured DOM geometry go back through the same council and fix loop. Source-clean is not visual-clean; `/fix RAILS` and `/fix MASTER/web` continue until the rendered surface converges or the run honestly plateaus.
 
+**Phoenix architecture.** The implementation is disposable; the boundaries are not. Four
+regeneration boundaries are declared in the existing constitutional registry:
+MASTER, RAILS, OPENBSD and MASTER/tools as STUDIO's replaceable tool plane. Each
+names its entrypoint, owner, dependencies and proof command. `rake architecture`
+checks the graph and its live paths without creating another configuration source.
+
+A meaningful architectural change carries five facts in `.master/phoenix.ndjson`:
+goal, constraints, alternatives, evidence and decision. Existing fix-loop feedback
+writes those facts through the same ledger, so the reasoning behind a change is
+recorded beside the resulting commit instead of being lost in chat history.
+Production adapters can publish `production:evidence` and the ledger records the
+observation against the same boundary graph. Nothing claims production evidence
+when no producer has supplied it.
+
+The Fowler-style regeneration test is concrete: preserve the boundary contract,
+regenerate the implementation inside it, then re-run its proof command.
+
 Every change a model wants runs through one loop. It proposes an effect, the
 constitution admits it, and only an admitted effect touches a file.
 
