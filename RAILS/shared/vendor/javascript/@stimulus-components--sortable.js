@@ -28,7 +28,7 @@ const _StimulusSortable = class _StimulusSortable extends Controller {
         button.className = "btn btn-ghost btn-sm";
         button.textContent = delta < 0 ? "↑" : "↓";
         button.setAttribute("aria-label", label);
-        button.dataset.action = `sortable#moveBy`;
+        button.dataset.action = `${this.identifier}#moveBy`;
         button.dataset.sortableDelta = String(delta);
         controls.append(button);
       });
