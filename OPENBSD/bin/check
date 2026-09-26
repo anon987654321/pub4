@@ -16,9 +16,9 @@ OptionParser.new do |parser|
     Local deploy gates, no box required:
       openbsd              OPENBSD/bin/check-openbsd (identity, installed targets, ports,
                            dns zones, deploy smoke, resource guard, shell syntax, vps safety)
-      production           RAILS/gates/runner.rb production
-      phantom fk           RAILS/gates/runner.rb phantom_foreign_keys
-      domain align         RAILS/gates/runner.rb domain_alignment
+      production           MASTER/gates/runner.rb production
+      phantom fk           MASTER/gates/runner.rb phantom_foreign_keys
+      domain align         MASTER/gates/runner.rb domain_alignment
       dr freshness         OPENBSD/bin/dr-pull --check (skips off the operator Mac)
       openbsd contracts    OPENBSD/test/run_all.rb, one process per file
 
@@ -34,9 +34,9 @@ failures = []
 # check-openbsd owns identity and the deploy smoke gate, and brings installed
 # targets, dns zones and vps safety into the one command most people type.
 failures << "openbsd" unless runner.run("openbsd", RUBY, "OPENBSD/bin/check-openbsd")
-failures << "production" unless runner.run("production", RUBY, "RAILS/gates/runner.rb", "production")
-failures << "phantom_fk" unless runner.run("phantom fk", RUBY, "RAILS/gates/runner.rb", "phantom_foreign_keys")
-failures << "domain_align" unless runner.run("domain align", RUBY, "RAILS/gates/runner.rb", "domain_alignment")
+failures << "production" unless runner.run("production", RUBY, "MASTER/gates/runner.rb", "production")
+failures << "phantom_fk" unless runner.run("phantom fk", RUBY, "MASTER/gates/runner.rb", "phantom_foreign_keys")
+failures << "domain_align" unless runner.run("domain align", RUBY, "MASTER/gates/runner.rb", "domain_alignment")
 
 # The only copy of production data that leaves vm23 is dr-pull's, and it stopped
 # for seven nights without anything noticing. This asks how old the newest pull
