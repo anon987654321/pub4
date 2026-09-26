@@ -32,7 +32,7 @@ module Operator
   #
   # Deliberately source-level. A headless-browser CLS measurement is the more
   # direct instrument and this tree already has one path for that
-  # (RAILS/gates/rendered_gates), but browser gates belong on the deploy host --
+  # (MASTER/gates/rendered_gates), but browser gates belong on the deploy host --
   # they monopolise a machine for an hour. This runs in milliseconds on every
   # check and catches the cause rather than the symptom.
   module LayoutStabilityLint
