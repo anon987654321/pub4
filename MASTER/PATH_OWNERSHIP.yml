@@ -40,9 +40,9 @@ ownership:
     check: bin/check --profile=web
   gates/:
     purpose: gates that measure MASTER itself — its face, its assets, its own scan
-      chain — declared in RAILS/gates/gates.yml and run by that runner
+      chain — declared in MASTER/gates/gates.yml and run by that runner
     risk: medium
-    check: ruby RAILS/gates/runner.rb master_tts master_web_assets constitutional_scan
+    check: ruby MASTER/gates/runner.rb master_tts master_web_assets constitutional_scan
   bin/:
     purpose: executable entry points and validation wrappers
     risk: high
