@@ -4,8 +4,8 @@ require "minitest/autorun"
 require "tmpdir"
 require "fileutils"
 require_relative "gates/method_swap"
-require_relative "../gates/lib/source/payment_honesty"
-require_relative "../gates/lib/source/affiliate_honesty"
+require_relative "../../MASTER/gates/lib/source/payment_honesty"
+require_relative "../../MASTER/gates/lib/source/affiliate_honesty"
 
 # Both honesty gates are tables of file -> pattern, and a table is only
 # enforcement if a tree that breaks it fails. Running either against the real
