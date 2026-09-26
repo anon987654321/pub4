@@ -2,7 +2,7 @@
 meta:
   city: Bergen
   domain: brgen.no
-  source: 'file rows: STUDIO/lora/seed_media.yml, rendered on Replicate and graded
+  source: 'file rows: MASTER/tools/lora/seed_media.yml, rendered on Replicate and graded
     by postpro (see README.md); url rows: Wikimedia Commons'
 images:
   bergen-floyen-morning:
