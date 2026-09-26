@@ -62,6 +62,20 @@ module Master
         values(root:, subject:)
       end
 
+      GREETINGS = [
+        "Oh! #{'%s'} heard you. Tiny ears, giant agenda.",
+        "There you are. #{'%s'} is awake.",
+        "Boop. #{'%s'} online and behaving suspiciously well.",
+        "Hey! #{'%s'} reporting for mischief.",
+      ].freeze
+
+      def wake_greeting(root:, subject:)
+        profile = values(root:, subject:)
+        pet = profile["pet_name"].to_s.strip
+        name = pet.empty? ? "MASTER" : pet
+        GREETINGS.fetch(Time.now.to_i % GREETINGS.length) % name
+      end
+
       def onboarding_prompt(root:, subject:)
         profile = values(root:, subject:)
         missing = KEYS.select { |key| !profile.key?(key) }
