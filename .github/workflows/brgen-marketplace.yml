@@ -4,13 +4,13 @@ on:
   push:
     paths:
       - "RAILS/brgen/**"
-      - "RAILS/gates/**"
+      - "MASTER/gates/**"
       - "RAILS/apps.yml"
       - ".github/workflows/brgen-marketplace.yml"
   pull_request:
     paths:
       - "RAILS/brgen/**"
-      - "RAILS/gates/**"
+      - "MASTER/gates/**"
       - "RAILS/apps.yml"
       - ".github/workflows/brgen-marketplace.yml"
   workflow_dispatch:
