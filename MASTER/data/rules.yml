@@ -3917,7 +3917,7 @@ rules:
         action: Advanced/secondary controls should start collapsed or on secondary surfaces.
 
     # Worn type — what the visitor sees, not what the stylesheet declares.
-    # Reader: RAILS/gates/support/geometry_type.rb (and GeometryProbe TYPE_WALK).
+    # Reader: MASTER/gates/support/geometry_type.rb (and GeometryProbe TYPE_WALK).
     # MASTER/lib/design/thresholds.rb#worn_profile is the Ruby face.
     # A profile with no reader is inert; test_design_rules_worn_type.rb holds that.
   - id: WORN_TYPE
@@ -4118,7 +4118,7 @@ rules:
           engineering afterthoughts. The apps already ship a manifest, a service worker
           and offline controllers; the budget is what is missing.
       weight:
-        ceiling_lives_in: RAILS/gates/data/, in the css_budget.yml ratchet shape —
+        ceiling_lives_in: MASTER/gates/data/, in the css_budget.yml ratchet shape —
           a number measured from a real run that only ever ratchets down.
         measured_2026_08_31: tracked application.css is 204KB brgen, 110KB amber,
           64KB bsdports. JS builds are gitignored (RAILS/*/public/assets/), so only
@@ -4509,7 +4509,7 @@ style:
     # Body text earns AAA in both modes (12.51:1 dark, 16.26:1 light, measured
     # 2026-08-03). The secondary/accent tier does not, and saying "AAA" flatly made
     # a blanket claim the palette has never met. The live number is a ceiling in
-    # RAILS/gates/data/css_budget.yml (contrast_below_aa / contrast_below_aaa) so it
+    # MASTER/gates/data/css_budget.yml (contrast_below_aa / contrast_below_aaa) so it
     # falls rather than drifts; design_rules.yml keeps 7.0 as the target it moves toward.
     target: wcag_2_2_aa_with_aaa_body_text
     requirements:
