@@ -83,6 +83,6 @@ duplicate_members:
 - RAILS/brgen/db/cable_schema.rb | RAILS/bsdports/db/cable_schema.rb
 - RAILS/brgen/db/cache_schema.rb | RAILS/bsdports/db/cache_schema.rb
 - RAILS/brgen/db/migrate/20260625140000_create_anonymous_post_quotas.rb | RAILS/shared/db/migrate/20260625140000_create_anonymous_post_quotas.rb
-- RAILS/gates/data/layout_snapshots/brgen-conversations-desktop.json | RAILS/gates/data/layout_snapshots/brgen-messenger-desktop.json
-- RAILS/gates/data/layout_snapshots/bsdports-home-desktop.json | RAILS/gates/data/layout_snapshots/bsdports-ports_index-desktop.json
-- RAILS/gates/data/layout_snapshots/bsdports-home-mobile.json | RAILS/gates/data/layout_snapshots/bsdports-ports_index-mobile.json
+- MASTER/gates/data/layout_snapshots/brgen-conversations-desktop.json | MASTER/gates/data/layout_snapshots/brgen-messenger-desktop.json
+- MASTER/gates/data/layout_snapshots/bsdports-home-desktop.json | MASTER/gates/data/layout_snapshots/bsdports-ports_index-desktop.json
+- MASTER/gates/data/layout_snapshots/bsdports-home-mobile.json | MASTER/gates/data/layout_snapshots/bsdports-ports_index-mobile.json
