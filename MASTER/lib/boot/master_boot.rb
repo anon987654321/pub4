@@ -43,6 +43,8 @@ module Master
       # booting is also what restores continuity across restarts.
       container[:cognition] = Cognition::Mind.new(root:, bus: container[:bus], memory: container[:memory])
       container[:cognition].tick!
+      Device::Agent.start!(root:, bus: container[:bus], cognition: container[:cognition],
+                           standing: container[:standing])
       unless ENV["MASTER_DEVICE"] == "0"
         container[:device_perception] = Device::Perception.new(bus: container[:bus])
         container[:device_perception].start!
