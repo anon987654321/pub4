@@ -44,7 +44,13 @@ class Marketplace::OrdersController < Marketplace::BaseController
       quantity: quantity
     )
     if @order.save
-      @order.deliver_notification(@listing.user, title: "New marketplace offer", body: "#{Current.user.display_name} sent an offer for #{@listing.title}.", source: @order)
+      @order.deliver_notification(
+        @listing.user,
+        title: I18n.t("marketplace.order_notification.new_offer"),
+        body: I18n.t("marketplace.order_notification.new_offer_body", buyer: Current.user.display_name, title: @listing.title),
+        source: @order,
+        kind: "order"
+      )
       @order.record_activity!("MarketplaceOfferSent", actor: Current.user, source_vertical: "marketplace", locality: @listing.location)
       @listing.record_event!("cart", user: Current.user, metadata: { order_id: @order.id, quantity: quantity })
       redirect_to listing_path(@listing), notice: t("flash.marketplace.offer_sent")

@@ -22,6 +22,10 @@ nb:
     top: "Topp"
     verified: "Verifisert"
     order_notification:
+      new_order: "Nytt kjøp"
+      new_order_body: "%{buyer} kjøpte %{title}."
+      new_offer: "Nytt tilbud"
+      new_offer_body: "%{buyer} sendte et tilbud på %{title}."
       offer_accepted: "Tilbudet er godtatt"
       offer_accepted_body: "Tilbudet ditt på %{title} ble godtatt."
       offer_declined: "Tilbudet er avslått"
@@ -32,6 +36,13 @@ nb:
       payment_confirmed_body: "Betalingen din for %{title} er bekreftet."
       on_its_way: "På vei"
       delivered: "Levert"
+    delivery_promise:
+      same_day_bergen: "I dag i Bergen"
+      next_day_bergen: "I morgen i Bergen"
+      next_day_west: "I morgen på Vestlandet"
+      one_to_two_days: "1–2 dager"
+      three_to_five_days: "3–5 dager"
+      pickup_only: "Hentes"
     stripe_connect_id: "Stripe Connect-konto"
     stripe_connect_hint: "acct_… fra Stripe Connect. Utbetalinger blir stående til dette er satt og Stripe er konfigurert."
     payouts: Utbetalinger

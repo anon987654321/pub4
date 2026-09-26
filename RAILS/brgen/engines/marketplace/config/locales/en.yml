@@ -22,6 +22,10 @@ en:
     top: "Top"
     verified: "Verified"
     order_notification:
+      new_order: "New order"
+      new_order_body: "%{buyer} bought %{title}."
+      new_offer: "New offer"
+      new_offer_body: "%{buyer} sent an offer for %{title}."
       offer_accepted: "Offer accepted"
       offer_accepted_body: "Your offer for %{title} was accepted."
       offer_declined: "Offer declined"
@@ -32,6 +36,13 @@ en:
       payment_confirmed_body: "Your payment for %{title} is confirmed."
       on_its_way: "On its way"
       delivered: "Delivered"
+    delivery_promise:
+      same_day_bergen: "Today in Bergen"
+      next_day_bergen: "Tomorrow in Bergen"
+      next_day_west: "Tomorrow in Western Norway"
+      one_to_two_days: "1–2 days"
+      three_to_five_days: "3–5 days"
+      pickup_only: "Pickup only"
     stripe_connect_id: "Stripe Connect account"
     stripe_connect_hint: "acct_… from Stripe Connect. Payouts stay pending until this is set and Stripe is configured."
     payouts: Payouts

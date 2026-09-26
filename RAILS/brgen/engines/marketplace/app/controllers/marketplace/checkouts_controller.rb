@@ -170,8 +170,13 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
     # in ModerationWorkflow#penalize_owner, caught here by this lane's test
     # before it could reach a customer mid-payment.
     seller = User.find_by(id: listing.user_id)
-    order.deliver_notification(seller, title: "New marketplace order",
-                                       body: "#{Current.user.display_name}: #{listing.title}") if seller
+    order.deliver_notification(
+      seller,
+      title: I18n.t("marketplace.order_notification.new_order"),
+      body: I18n.t("marketplace.order_notification.new_order_body", buyer: Current.user.display_name, title: listing.title),
+      source: order,
+      kind: "order"
+    ) if seller
     order.record_activity!("MarketplaceOfferSent", actor: Current.user, source_vertical: "marketplace")
     order
   end

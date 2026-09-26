@@ -119,6 +119,28 @@ class Marketplace::CheckoutsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+
+  test "buy now notification uses marketplace translations" do
+    sign_in(@buyer)
+    with_stripe_start("https://checkout.stripe.com/c/pay/cs_probe") do
+      post marketplace.checkout_path, params: { provider: "stripe", listing_id: @listing.id }
+    end
+
+    order = Marketplace::Order.where(listing_id: @listing.id, buyer_id: @buyer.id).order(:id).last
+    notification = Notification.where(
+      user_id: @seller.id,
+      source_type: "Marketplace::Order",
+      source_id: order.id
+    ).order(:id).last
+
+    assert_equal I18n.t("marketplace.order_notification.new_order"), notification.title
+    assert_equal I18n.t(
+      "marketplace.order_notification.new_order_body",
+      buyer: @buyer.display_name,
+      title: @listing.title
+    ), notification.body
+  end
+
   test "create with a paid order_id does not rewind payment_status" do
     sign_in(@buyer)
     @order.update!(payment_status: "paid", status: "paid")
