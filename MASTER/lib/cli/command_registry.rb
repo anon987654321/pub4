@@ -17,18 +17,6 @@ module Master
     module CommandRegistry
       module_function
 
-      def build_fast(infra:, ai:, root:)
-        bus = infra[:bus]
-        git = Io::GitOperations.new(File.expand_path("..", root))
-        trace = infra[:trace]
-        {
-          "status" => Command.new do |ctx|
-            dispatch_status(root:, fix_loop: nil, bus:, git:, trace:, learnings: infra[:learnings], ctx:)
-          end,
-          "help" => command(:help_text, nil),
-        }
-      end
-
       # Closed public surface: every verb here has a help topic, and every file
       # under command_registry/ holds the dispatchers these verbs reach or the
       # stages Pipeline::Pass calls. Observation and critique stay as methods the
