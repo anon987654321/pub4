@@ -1,0 +1,11 @@
+<%= t("mailer.abandoned_cart_title") %>
+
+<%= t("mailer.abandoned_cart_lede") %>
+
+<% @orders.each do |order| %>
+<%= order.quantity.presence || 1 %> × <%= order.listing.title %> — <%= order.total_display %>
+<% end %>
+
+<%= t("mailer.abandoned_cart_button") %>: <%= @cart_url %>
+
+<%= t("mailer.signoff") %>
