@@ -12,11 +12,13 @@ class BrgenMailersTest < ActionMailer::TestCase
     assert_equal I18n.t("mailer.confirm_subscription"), mail.subject
     assert_equal [ "letters-test@example.com" ], mail.to
     assert_match(/brgen\.no/, mail.from.join)
+    preference_path = email_subscription_path(token: sub.token)
     assert mail.html_part, "expected an html part"
     assert mail.text_part, "expected a text part"
     [ mail.html_part, mail.text_part ].each do |part|
       assert_includes part.body.to_s, sub.token
       assert_includes part.body.to_s, I18n.t("mailer.confirm_lede")
+      assert_includes part.body.to_s, preference_path
     end
   end
 
