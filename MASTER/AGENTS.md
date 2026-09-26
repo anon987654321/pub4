@@ -91,7 +91,7 @@ the 47 conduct rules a detector cannot describe, the rules that can refuse a
 write, and how many run without a model. Read it when the full catalogue will
 not fit.
 
-Ruby is pinned to 3.4.9: run `RBENV_VERSION=3.4.9 rbenv exec ruby ...`.
+Ruby is pinned to 4.0.7: run `RBENV_VERSION=4.0.7 rbenv exec ruby ...`.
 
 ## Ruby and zsh, never the GNU text tools
 
@@ -203,8 +203,8 @@ An agent arrives with none of the session context that makes the tree
 navigable, so these are the facts that are not deducible from the code and
 that a fresh agent gets wrong on its first attempt.
 
-**Ruby is pinned to 3.4.9.** Run everything as
-`RBENV_VERSION=3.4.9 rbenv exec ruby ...`. Bare `ruby` picks up whatever is on
+**Ruby is pinned to 4.0.7.** Run everything as
+`RBENV_VERSION=4.0.7 rbenv exec ruby ...`. Bare `ruby` picks up whatever is on
 PATH; `MASTER/gates/runner.rb` prints a one-line warning about it and carries on,
 so app-bundle gates then fail for the interpreter rather than for a finding.
 `RBENV_VERSION` alone does nothing where rbenv's shims are not on PATH, which
