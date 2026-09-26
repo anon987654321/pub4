@@ -36,7 +36,7 @@ class StimulusComponentsAdoptionTest < Minitest::Test
   # The gate proves pins are vendored by resolving each one, so it has to see
   # both spellings the baseline uses.
   def test_the_gate_reads_listed_and_single_pins
-    require_relative "../gates/lib/source/stimulus_components"
+    require_relative "../../MASTER/gates/lib/source/stimulus_components"
     baseline = %(%w[\n  clipboard dropdown\n].each { |name| sc_pin.call(name) }\n) +
                %(pin "@stimulus-components/textarea-autogrow", to: "x.js"\npin "sortablejs"\n)
 
