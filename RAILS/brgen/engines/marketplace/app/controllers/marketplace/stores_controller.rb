@@ -12,7 +12,7 @@ module Marketplace
     before_action :load_city_places, only: %i[new create edit update]
 
     def index
-      scope = Marketplace::Store.active.by_vertical(params[:vertical]).recent
+      scope = Marketplace::Store.publicly_visible.by_vertical(params[:vertical]).recent
       scope = apply_live_search(scope, columns: %w[name description vertical], vertical: "marketplace") if live_search_query.present?
       @pagy, @stores = pagy(scope)
       finish_storefront_search(partial: "marketplace/stores/live_search_results")
@@ -20,7 +20,7 @@ module Marketplace
 
     def show
       @listings = @store.listings.live.recent.with_attached_photos.includes(:user, :category).limit(100)
-      @other_stores = Marketplace::Store.active.where.not(id: @store.id).limit(6)
+      @other_stores = Marketplace::Store.publicly_visible.where.not(id: @store.id).limit(6)
       @pagy_payouts, @payouts = pagy(@store.payouts.order(created_at: :desc), limit: 20) if Current.user&.id == @store.owner_id
     end
 
@@ -58,7 +58,7 @@ module Marketplace
     private
 
     def set_store
-      @store = Marketplace::Store.find_by!(slug: params[:id])
+      @store = Marketplace::Store.publicly_visible.find_by!(slug: params[:id])
     end
 
     # owner_id, not owner: set_store finds by slug with nothing preloaded, and
