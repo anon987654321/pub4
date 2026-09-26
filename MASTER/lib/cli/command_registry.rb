@@ -347,7 +347,7 @@ module Master
 
         fields[:owner] ||= begin
           paired = Fiber[:master_pair_subject].to_s
-          paired = Master::Device::Agent.owner_subject(root:) if paired.empty? && defined?(Master::Device::Agent)
+          paired = Master::Device::Agent.owner_subject(root: Master::ROOT) if paired.empty? && defined?(Master::Device::Agent)
           paired.empty? ? "operator" : paired
         end
         standing.upsert(**fields)
