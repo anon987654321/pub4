@@ -48,6 +48,19 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "a departing comment author is rendered as anonymous" do
+    author = user("departing-comment")
+    post_record = a_post(author)
+    comment = Comment.create!(user: author, commentable: post_record, content: "private author")
+    author.update_columns(deleted_at: Time.current, deletion_scheduled_at: 7.days.from_now)
+
+    get post_path(post_record)
+
+    assert_response :success
+    assert_select ".comment-author", text: "anon", count: 1
+    refute_includes response.body, author.username
+  end
+
   test "a reply streams into the parent thread, not the top of the list" do
     ActsAsTenant.with_tenant(@city) do
       author = user("parent-author")
