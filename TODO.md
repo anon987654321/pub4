@@ -341,7 +341,7 @@ the "One chrome", ad system and layout sections bring back for a decision.
   drifts because the baseline was taken on an empty database and db:prepare
   seeds ports. Done when brgen boots the same way within a few minutes.
 - **CSS budgets raised on 2026-09-25, for the operator to review.**
-  `RAILS/gates/data/css_budget.yml` moved brgen 203→215 KB, amber 108→110 and
+  `MASTER/gates/data/css_budget.yml` moved brgen 203→215 KB, amber 108→110 and
   bsdports 64→66, naming the design work each raise pays for: Radio
   discovery, the storefront promotional art, three marketplace layouts, the
   ambient chat desktop and the Material 3 bubbles. The raise was named rather
@@ -374,7 +374,7 @@ the "One chrome", ad system and layout sections bring back for a decision.
   artwork coordinates. shared's remainder includes tiptap's 30px and vendored
   CSS, which only MASTER's scanner or its pen allowlist could exempt, both on a
   sacred path. The operator decides: change the values, or record new ceilings
-  with a reason in `RAILS/gates/data/constitutional_budget.yml`.
+  with a reason in `MASTER/gates/data/constitutional_budget.yml`.
 
 ### Instant — what the operator still decides
 
@@ -494,7 +494,7 @@ page and this does not clear with time. At Domeneshop, make ns.hyp.net serve
 the real zone (secondary from ns.brgen.no) or drop its parked copy; the
 registration is paid to 2027-08-08. The deadline is the certificate
 (`notAfter=Nov 10 2026`), because acme-client's HTTP-01 needs the name to resolve
-here. Done when `ruby RAILS/gates/runner.rb dns_zones` passes. `ALLOW_BSDPORTS_DOWN=1`
+here. Done when `ruby MASTER/gates/runner.rb dns_zones` passes. `ALLOW_BSDPORTS_DOWN=1`
 on the uptime-check crontab line comes off the same day; `bin/deploy-smoke.sh`
 names the delegation until then.
 
@@ -684,7 +684,7 @@ slices. Each is a hypothesis with its seam.
   hashtags, partner programs/memberships, marketplace deals, community wiki
   pages, tv shows/episodes/live_streams/sounds), or are structurally unprobeable
   (password-reset tokens; conversations and listening-party rows a stateless
-  guest probe can never pre-seed). Seams: `RAILS/gates/support/live_record_ids.rb`.
+  guest probe can never pre-seed). Seams: `MASTER/gates/support/live_record_ids.rb`.
 - **A post's link embed loads the provider's thumbnail before a tap.**
   `shared/_link_embed` renders the facade image straight from the provider's
   image host, so the reader's browser asks the provider before pressing play.
@@ -940,7 +940,7 @@ one as a ticket without asking first.
 
 - **The face's brightness is a look, not a bug.** It renders at 0.4% of pixels
   lit, and whether that is right is the operator's eye.
-- **Retire the rolling pixel baseline.** `RAILS/gates/visual_contract.rb`
+- **Retire the rolling pixel baseline.** `MASTER/gates/visual_contract.rb`
   re-baselines to zero on the next run by design, so a regression reports once
   and then becomes the reference. `layout_snapshot` commits reviewable JSON —
   71 tracked files — and is the candidate for the fleet's only visual baseline.
@@ -1146,12 +1146,12 @@ no named reader, and an intent-to-deliver pipeline that renames stages
   drawn from a fallback, reading type that shrinks as the viewport widens. All
   are soft. Count each surface's findings on the first run and the probe cost of
   the extra awaited script, then decide which harden. Seams:
-  `RAILS/gates/support/rendered_geometry/`, `geometry_probe/glyphs.js`,
-  `RAILS/gates/lib/rendered/reflow.rb`.
+  `MASTER/gates/support/rendered_geometry/`, `geometry_probe/glyphs.js`,
+  `MASTER/gates/lib/rendered/reflow.rb`.
 - **Interaction states beyond focus.** Forcing `:disabled`, `:active` and
   `aria-busy` over CDP and measuring them waits on "Motion is a rendered value"
   and the feedback items in the RAILS section. Seam:
-  `RAILS/gates/lib/rendered/keyboard_flow.rb`.
+  `MASTER/gates/lib/rendered/keyboard_flow.rb`.
 - **Offer only the verbs that are legal this turn.** `Core::Model.offer` builds
   the schema from `Proof#scope`, but `lib/cli/core_bridge.rb:76` still defaults
   to the static `SCHEMA`, so an early `done` can still be generated. Done when
