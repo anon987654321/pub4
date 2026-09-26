@@ -60,6 +60,27 @@ module Operator
     # order it was written.
     TREES = %w[MASTER RAILS OPENBSD].freeze
 
+    # The outer /fix lifecycle already owns the lexical observation/repair loop.
+    # Verification therefore runs every other registered gate without re-entering
+    # /fix and returns both its verdict and the files that this verification changed.
+    def verify_fix(target:)
+      trees = trees_for_target(target)
+      selected = stages(scan_only: false, trees:).reject { |stage| stage.name == "lexical" }
+      return [0, []] if selected.empty?
+
+      report(selected, scan_only: false, trees:, return_results: true)
+    end
+
+    def trees_for_target(target)
+      abs = File.expand_path(target)
+      return TREES if abs == ROOT
+      return ["RAILS"] if abs == File.join(ROOT, "RAILS") || abs.start_with?("#{File.join(ROOT, "RAILS")}/")
+      return ["OPENBSD"] if abs == File.join(ROOT, "OPENBSD") || abs.start_with?("#{File.join(ROOT, "OPENBSD")}/")
+      return ["MASTER"] if abs == MASTER || abs.start_with?("#{MASTER}/")
+
+      abort "gate: target is outside pub4 trees: #{target}"
+    end
+
     def run(scan_only:, only: nil, list: false, trees: nil)
       trees = normalise_trees(trees)
       all = stages(scan_only:, trees:)
@@ -88,7 +109,7 @@ module Operator
       0
     end
 
-    def report(selected, scan_only:, trees:)
+    def report(selected, scan_only:, trees:, return_results: false)
       foreign = dirty
       mode = scan_only ? "scan-only (writes nothing)" : "full-fix (writes)"
       puts "gate: #{mode} over #{trees.join(", ")} — #{selected.map(&:name).join(" -> ")}"
@@ -101,7 +122,10 @@ module Operator
         seen |= result.changed
         result
       end
-      summarise(results, foreign)
+      status = summarise(results, foreign)
+      return [status, results.flat_map(&:changed)] if return_results
+
+      status
     end
 
     # The ladder. Order is not taste: the deterministic fixers run first so
