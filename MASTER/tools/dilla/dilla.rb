@@ -5811,7 +5811,7 @@ def acquire_stream_lock!
       begin
         Process.kill(0, holder)
         dmesg_warn("stream lock held by pid #{holder} — exit")
-        exit 0
+        exit 1
       rescue Errno::ESRCH
         FileUtils.rm_f(STREAM_LOCK_PATH)
       end
@@ -20114,19 +20114,33 @@ end
 DEMO_LOCK_PATH = scratch_path("dilla_demo.lock").freeze
 
 def acquire_demo_lock!
-  if File.exist?(DEMO_LOCK_PATH)
-    holder = File.read(DEMO_LOCK_PATH).strip.to_i
-    if holder.positive?
-      begin
-        Process.kill(0, holder)
-        dmesg_warn("demo-all already running as pid #{holder} — exit (DEMO_NO_LOCK=1 to override)")
-        exit 0
-      rescue Errno::ESRCH
+  loop do
+    begin
+      File.open(DEMO_LOCK_PATH, File::WRONLY | File::CREAT | File::EXCL, 0o600) do |io|
+        io.write(Process.pid)
+      end
+      break
+    rescue Errno::EEXIST
+      holder = begin
+        File.read(DEMO_LOCK_PATH).strip.to_i
+      rescue Errno::ENOENT, Errno::EACCES
+        0
+      end
+
+      if holder.positive?
+        begin
+          Process.kill(0, holder)
+          dmesg_warn("demo-all already running as pid #{holder} — exit (DEMO_NO_LOCK=1 to override)")
+          exit 1
+        rescue Errno::ESRCH
+          FileUtils.rm_f(DEMO_LOCK_PATH)
+        end
+      else
         FileUtils.rm_f(DEMO_LOCK_PATH)
       end
     end
   end
-  File.write(DEMO_LOCK_PATH, Process.pid.to_s)
+
   at_exit do
     FileUtils.rm_f(DEMO_LOCK_PATH) if File.exist?(DEMO_LOCK_PATH) &&
                                       File.read(DEMO_LOCK_PATH).strip.to_i == Process.pid
@@ -20725,6 +20739,11 @@ render_dilla(part, bars_count)
   end
 
   abort "demo-all: no parts rendered" if parts.empty?
+
+  if parts.length != order.length
+    missing = order.length - parts.length
+    abort "demo-all: #{missing} part(s) missing (#{parts.length}/#{order.length}); refusing to publish a partial demo"
+  end
 
   # Look inside the parts before joining them.
   #

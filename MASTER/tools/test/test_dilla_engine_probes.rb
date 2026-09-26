@@ -165,6 +165,14 @@ class TestDilla < Minitest::Test
     refute_includes result.fetch("dispatch_keys"), "camel"
   end
 
+  def test_demo_failure_contracts_are_hard_failures
+    source = DILLA_SOURCE
+
+    assert_includes source, 'File::EXCL', "the demo lock must be acquired atomically"
+    assert_includes source, 'exit 1', "an active demo lock must not look successful"
+    assert_includes source, 'refusing to publish a partial demo', "a partial catalogue must not be published"
+  end
+
   def test_stream_defaults_keep_style_dna_not_creative_max
     result = eval_in_engine(<<~RUBY)
       %w[STREAM_CREATIVE STREAM_PUNCH STREAM_COMFORT DILLA_COMFORT LA_BEAT_PROGRESSION

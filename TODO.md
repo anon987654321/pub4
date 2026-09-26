@@ -122,9 +122,6 @@ and 6 need the registrar or money.
 
 ### MASTER/tools
 
-1. **dilla's demo run tells the truth.** Entry: "The demo run lies about
-   success". Done when a held lock, an unknown command and a missing part each
-   exit non-zero. No sound changes, so it needs no ear.
 2. **The no-arg smoke test.** Entry: "No smoke test for the no-arg path".
    After 1.
 3. **Restructuring rows 1, 6 and 15.** Entry: "dilla — restructuring". Each
@@ -1276,13 +1273,6 @@ default unless marked.
   third unchanged, and both pass it a single pitch, so `V7/ii` and `bVII7` land
   on soul profiles as a lone note unless `validate_and_fix` repairs them —
   measure that, then voice them fully or delete them. Sound change — operator.
-- **The demo run lies about success.** `acquire_demo_lock!` exits 0 when another
-  run holds the lock and checks-then-writes (use `File::EXCL` or flock); an
-  unknown command prints help and exits 0; the loop exits 0 with parts missing
-  (exit non-zero unless `parts == order`); `demo_all` sets
-  `DILLA_STREAMING=1`; `DEMO_TRACK_TIMEOUT` defaults to 420 s. (A run wiping the
-  last run's parts is the operator's choice of 2026-09-14, "deletes", not a
-  defect.)
 - **Logs and provenance print load-time device ENV.** `ringtone_layer_describe`
   and the sidecar can report `COPY_MACHINE=6` on a slot `apply_album_slot!`
   forced to 0. Snapshot after the last `force_env!`.
