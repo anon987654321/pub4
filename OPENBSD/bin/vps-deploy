@@ -383,7 +383,7 @@ if [[ -n ${PUB4_DEPLOY_BROWSER_GATES:-} ]]; then
 fi
 print "vps-deploy: $app (gates: ${gate_names})"
 hold_deploy_flag
-if ! GATE_AUTOFIX=0 GATE_REQUIRE_LIVE=1 ruby34 "$repo/RAILS/gates/runner.rb" "${gate_names[@]}"; then
+if ! GATE_AUTOFIX=0 GATE_REQUIRE_LIVE=1 ruby34 "$repo/MASTER/gates/runner.rb" "${gate_names[@]}"; then
   write_stamp "$app" failed
   print -u2 "vps-deploy: $app gates failed — the app is deployed and serving, and something"
   print -u2 "            it is now serving does not hold. Fix or revert; do not deploy over it."
