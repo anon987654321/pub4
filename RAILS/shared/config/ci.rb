@@ -15,7 +15,8 @@ ENV["GIT_CEILING_DIRECTORIES"] ||= "/"
 # no network.
 ENV["BUNDLER_AUDIT_UPDATE"] ||= "1"
 ENV["NPM_CONFIG_CACHE"] ||= File.expand_path("~/.npm")
-monorepo_rails = "/home/dev/pub4/RAILS"
+monorepo_rails = ENV["PUB4_RAILS_ROOT"].to_s.strip
+monorepo_rails = File.expand_path("../..", __dir__) if monorepo_rails.empty?
 ENV["PUB4_RAILS_ROOT"] ||= monorepo_rails if File.directory?(File.join(monorepo_rails, "shared"))
 
 vps_host = ENV["PUB4_CI_GUARD"] == "1" || File.exist?("/var/db/pub4_vps") || File.exist?("/etc/relayd.conf")
