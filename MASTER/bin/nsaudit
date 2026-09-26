@@ -6,6 +6,7 @@
 
 Encoding.default_external = Encoding::UTF_8
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
+require "bundler/setup"
 require "master"
 
 # Eager-load so Zeitwerk-ignored fragments (loaded via explicit require, e.g.
