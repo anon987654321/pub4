@@ -78,6 +78,27 @@ class Marketplace::OrderTest < ActiveSupport::TestCase
   # and the retry skipped the work because the order was no longer payable?.
   #
   # Loading with a bare find_by is the whole point of these three.
+  test "a paid transition records one private purchase event" do
+    ActsAsTenant.with_tenant(@city) do
+      listing = Marketplace::Listing.create!(user: @seller, category: @category, title: "Camera",
+                                             price_cents: 7_500, currency: "NOK", stock: 2)
+      order = Marketplace::Order.create!(buyer: @buyer, listing: listing, status: "pending", quantity: 1)
+
+      assert_difference -> { ActivityEvent.where(
+        subject_type: "Marketplace::Listing",
+        subject_id: listing.id,
+        event_name: "MarketplacePurchaseCompleted",
+        visibility: "private"
+      ).count }, 1 do
+        order.mark_paid!(reference: "evt_purchase")
+      end
+
+      second = Marketplace::Order.find(order.id)
+      second.mark_paid!(reference: "evt_purchase")
+      assert_equal 1, ActivityEvent.where(subject_type: "Marketplace::Listing", subject_id: listing.id,
+                                         event_name: "MarketplacePurchaseCompleted").count
+    end
+  end
   test "mark_paid! on a freshly-found order does not violate strict loading" do
     ActsAsTenant.with_tenant(@city) do
       listing = Marketplace::Listing.create!(user: @seller, category: @category, title: "Lamp", price_cents: 4_000, currency: "NOK")
