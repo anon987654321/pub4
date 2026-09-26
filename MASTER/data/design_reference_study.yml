@@ -1,0 +1,95 @@
+# External design-reference study for MASTER's visual reasoning.
+# These are reference lenses, not copied branding, CSS, typography, or assets.
+# The product's own design language, rendered evidence, and operator-owned values win.
+
+antigravity:
+  product_form: agent_first
+  useful_patterns:
+    - task_level_progress
+    - artifacts_as_reviewable_work
+    - browser_in_loop_verification
+    - persistent_workspace_context
+    - progressive_disclosure
+    - plan_before_build
+    - precise_feedback_on_artifacts
+  apply_when:
+    - the user creates or reviews work
+    - an app has multiple object states
+    - a long task needs resumable evidence
+  avoid:
+    - copying google branding
+    - turning every page into an IDE
+    - adding panels without a demonstrated information need
+
+x:
+  product_form: content_first_social_stream
+  useful_patterns:
+    - persistent_primary_navigation
+    - obvious_current_location
+    - central_live_content_stream
+    - composer_near_the_content
+    - inline_actions
+    - contextual_secondary_rail_on_wide_views
+    - dense_information_without_visual_noise
+  apply_when:
+    - a surface is social or community driven
+    - the task is scan_choose_open
+    - recency and activity are primary signals
+  avoid:
+    - importing x-specific branding
+    - assuming every surface needs a right rail
+    - making controls compete with content
+
+hey:
+  product_form: opinionated_workflow_mailbox
+  useful_patterns:
+    - meaningful_information_states
+    - clear_piles_or_sections
+    - explicit_reply_later_state
+    - explicit_set_aside_state
+    - calm_typographic_hierarchy
+    - predictable_retrieval
+    - action_bar_close_to_the_object
+  apply_when:
+    - a surface manages queues or saved work
+    - users need defer_or_resume behavior
+    - information should leave the primary stream without disappearing
+  avoid:
+    - arbitrary piles
+    - novelty for its own sake
+    - hiding important actions behind decorative interaction
+
+shared_principles:
+  - content_or_object_before_chrome
+  - one_primary_action_per_surface
+  - persistent_orientation
+  - progressive_disclosure
+  - explicit_state
+  - visible_return_path
+  - predictable_retrieval
+  - responsive_recomposition
+  - keyboard_and_touch_parity
+  - measured_geometry_before_style_change
+  - preserve_operator_owned_values
+  - no_new_visual_primitive_without_evidence
+
+family_shell:
+  rail: persistent_orientation
+  inbox_or_index: scan_and_choose
+  primary: task_or_content
+  artifact_or_context: optional_only_when_evidence_requires
+  mobile: one_primary_column_with_drawer_or_sheet_states
+  desktop: additional_context_may_be_side_by_side
+  rule: shared_geometry_contract_does_not_imply_shared_visual_dialect
+
+review_questions:
+  - What is the user's object of attention?
+  - Where is the next action without searching?
+  - What state is this object in?
+  - How does the user return?
+  - What can leave the primary stream without becoming lost?
+  - Which element deserves the strongest visual mass?
+  - Which element is decorative noise?
+  - Does the wide layout add information or only columns?
+  - Does the mobile layout recompose or merely shrink?
+  - Is the proposed change supported by rendered evidence?
