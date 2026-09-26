@@ -75,6 +75,9 @@ class TestFixLoopCommitter < Minitest::Test
     bus = FakeBus.new
     run_committer(git, bus, "fix: ok")
     assert_equal [["fix: ok", ["lib/ok.rb"]]], git.commits
+    commit_event = bus.events.find { |event, _| event == "ops:commit" }
+    assert_equal ["lib/ok.rb"], commit_event.last[:paths]
+    assert_equal [], commit_event.last[:findings]
     refute blocked?(bus)
   end
 
