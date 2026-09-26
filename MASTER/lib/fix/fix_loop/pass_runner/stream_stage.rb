@@ -39,6 +39,7 @@ module Master
             found = stream_violations(files, queue)
             WORKERS.times { queue << :done }
             finish_stream(workers.sum(&:value), found, files, pass)
+            found = refresh_streamed_findings(found, streamed)
             StreamCursor.write(@root, target, @stream_stopped_at)
             emit_topology(found, target)
             [found, streamed]
@@ -77,6 +78,22 @@ module Master
             return if fixed.zero?
 
             @committer.commit_if_dirty("fix_loop: stream-fix [pass #{pass}]", findings: found, owned_paths: files)
+          end
+
+          # Workers repair concurrently with the scan, so the original finding
+          # list can be stale by the time convergence is judged. Re-read only
+          # files that a worker actually attempted; untouched files keep the
+          # original scan result, preserving the streaming speedup.
+          def refresh_streamed_findings(found, streamed)
+            touched = streamed.map(&:first).uniq
+            return found if touched.empty?
+
+            fresh = touched.flat_map do |relative|
+              path = File.expand_path(relative, @root)
+              File.exist?(path) ? violations_for(path) : []
+            end
+            untouched = found.reject { |finding| touched.include?(finding[:file].to_s) }
+            resolve_violations(untouched + fresh)
           end
 
           def drain_repairs(queue, streamed, pass, deadline)
