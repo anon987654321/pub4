@@ -57,7 +57,10 @@ class TestRuntimeCompute < Minitest::Test
     result = group.call(user_message: "hello")
 
     assert result.ok?, result.inspect
-    assert_equal({ user_message: "hello", "ractor_hello" => 2 }, result.value!)
+    assert_equal(
+      { user_message: "hello", "ractor_hello_2" => 2, "ractor_hello_3" => 3 },
+      result.value!,
+    )
   end
 
   def test_parallel_group_can_force_the_thread_backend

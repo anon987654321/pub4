@@ -58,6 +58,72 @@ module Master
 
         private
 
+        def run_stage_pool(frozen)
+          return run_ractor_stage_pool(frozen) if @backend == :ractor
+          return run_ractor_stage_pool(frozen) if ractor_stage_group?
+
+          run_thread_stage_pool(frozen)
+        end
+
+        def run_thread_stage_pool(frozen)
+          results = Master::Runtime::Compute.map(
+            @stages,
+            backend: :thread,
+            timeout: PARALLEL_TIMEOUT_S,
+          ) { |stage, _index| run_parallel_stage(stage, frozen) }
+          Thread.current[:vector_clock] = Process.clock_gettime(Process::CLOCK_MONOTONIC, :nanosecond)
+          results
+        end
+
+        def ractor_stage_group?
+          return false unless @backend == :auto
+          return false unless Master::Runtime::Compute.ractor_available?
+          !@stages.empty? && @stages.all? { |stage| ractor_stage?(stage) }
+        end
+
+        def ractor_stage?(stage)
+          stage.respond_to?(:ractor_safe?) && stage.ractor_safe? &&
+            stage.respond_to?(:ractor_payload) && stage.class.respond_to?(:ractor_call)
+        end
+
+        def run_ractor_stage_pool(frozen)
+          raise ArgumentError, "parallel group has a non-Ractor stage" unless @stages.all? { |stage| ractor_stage?(stage) }
+
+          jobs = @stages.map { |stage| [stage.class.name, "ractor_call", stage.ractor_payload(frozen)] }
+          values = Master::Runtime::Compute.map(
+            jobs,
+            backend: :ractor,
+            operation: :invoke,
+            timeout: PARALLEL_TIMEOUT_S,
+          )
+          values.map.with_index do |value, index|
+            raise ArgumentError, "Ractor stage #{@stages[index].class.name} returned #{value.class}, expected Hash" unless value.is_a?(Hash)
+
+            Result.ok(value)
+          end
+        end
+
+        def run_parallel_stage(stage, frozen)
+          stage.call(frozen)
+        rescue StandardError => e
+          @bus&.publish("pipeline:stage_error", stage: stage.class.name, error: e.message)
+          Result.err("parallel stage #{stage.class.name}: #{e.message}", category: :infrastructure)
+        end
+
+        def merge_results(ctx, results)
+          merged = ctx
+          errors = []
+          results.each do |result|
+            if result.ok?
+              merged = merged.merge(result.value!)
+            else
+              errors << result.message
+            end
+          end
+          errors.empty? ? merged : merged.merge(_parallel_errors: errors)
+        end
+      end
+
       private
 
       DEPLOY_RE = /\b(deploy|ship|shipping|release|publish)\b/i
