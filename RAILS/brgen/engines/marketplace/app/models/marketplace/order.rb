@@ -139,6 +139,11 @@ class Marketplace::Order < ApplicationRecord
     return unless transitioned
 
     title = listing_title
+    record_listing_commerce_event(
+      "MarketplacePurchaseCompleted",
+      actor: buyer_record,
+      metadata: { order_id: id, total_cents: total_cents, quantity: quantity.to_i }
+    )
     deliver_notification(seller, title: I18n.t("marketplace.order_notification.payment_received"), body: I18n.t("marketplace.order_notification.payment_received_body", title: title), source: self, kind: "order")
     deliver_notification(buyer_record, title: I18n.t("marketplace.order_notification.payment_confirmed"), body: I18n.t("marketplace.order_notification.payment_confirmed_body", title: title), source: self, kind: "order")
     PartnerMarketing.attribute_order!(self, visitor_digest: nil)
@@ -194,6 +199,11 @@ class Marketplace::Order < ApplicationRecord
       carrier: carrier,
       shipped_at: Time.current
     )
+    record_listing_commerce_event(
+      "MarketplaceOrderShipped",
+      actor: seller,
+      metadata: { order_id: id }
+    )
     detail = tracking_code.presence ? "#{listing_title} — #{carrier.presence || 'Tracking'}: #{tracking_code}" : listing_title
     deliver_notification(buyer_record, title: I18n.t("marketplace.order_notification.on_its_way"), body: detail, source: self, kind: "order")
   end
@@ -246,10 +256,30 @@ class Marketplace::Order < ApplicationRecord
   def mark_delivered!
     update!(fulfilment_status: "delivered", delivered_at: Time.current)
     enqueue_store_payout!
+    record_listing_commerce_event(
+      "MarketplaceOrderDelivered",
+      actor: buyer_record,
+      metadata: { order_id: id }
+    )
     deliver_notification(buyer_record, title: I18n.t("marketplace.order_notification.delivered"), body: listing_title, source: self, kind: "order")
   end
 
   private
+
+  private
+
+  def record_listing_commerce_event(event_name, actor:, metadata:)
+    listing = Marketplace::Listing.strict_loading(false).find_by(id: listing_id)
+    return unless listing
+
+    listing.record_activity!(
+      event_name,
+      actor: actor,
+      source_vertical: "marketplace",
+      visibility: "private",
+      metadata: metadata
+    )
+  end
 
   def listing_must_be_live
     return if listing.blank?
