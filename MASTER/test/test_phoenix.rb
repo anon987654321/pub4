@@ -3,6 +3,9 @@
 require "fileutils"
 require "json"
 require "tmpdir"
+require "fileutils"
+require "json"
+require "tmpdir"
 require_relative "test_helper"
 
 class TestPhoenix < Minitest::Test
