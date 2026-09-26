@@ -93,7 +93,7 @@ class SitemapsController < ApplicationController
 
   def marketplace_entries
     entries_for(Marketplace::Store.publicly_visible.in_current_city, changefreq: "weekly", priority: "0.6") { |s| marketplace.shop_url(s) } +
-      entries_for(Marketplace::Listing.live.in_current_city, changefreq: "daily", priority: "0.7") { |l| marketplace.listing_url(l) } +
+      entries_for(Marketplace::Listing.publicly_visible.in_current_city, changefreq: "daily", priority: "0.7") { |l| marketplace.listing_url(l) } +
       entries_for(Marketplace::Deal.live.in_current_city, changefreq: "daily", priority: "0.6") { |d| marketplace.deal_url(d) }
   end
 
