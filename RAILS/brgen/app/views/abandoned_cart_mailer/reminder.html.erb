@@ -22,4 +22,7 @@
 
   <tr><td class="mail-signoff"><%= t("mailer.signoff") %></td></tr>
   <tr><td class="mail-permission"><%= t("mailer.abandoned_cart_permission") %></td></tr>
+  <% if @preferences_url.present? %>
+    <tr><td class="mail-footer"><a href="<%= @preferences_url %>"><%= t("email_preferences.title") %></a></td></tr>
+  <% end %>
 </table>
