@@ -78,6 +78,17 @@ class ListingExpiryTest < ActiveSupport::TestCase
 
   # Two workers can both read the listing before either stamps it; only one
   # may send.
+  test "expiry notices skip departing sellers" do
+    soon = listing
+    soon.update_columns(expires_at: 3.days.from_now)
+    @seller.update_columns(deleted_at: Time.current, deletion_scheduled_at: 7.days.from_now)
+
+    assert_no_difference -> { @seller.notifications.count } do
+      ListingExpiryJob.perform_now
+    end
+    assert_nil soon.reload.renewal_notice_sent_at
+  end
+
   test "a listing is claimed once however many workers read it" do
     soon = listing
     soon.update_columns(expires_at: 3.days.from_now)
