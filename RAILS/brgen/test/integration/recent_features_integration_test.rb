@@ -78,6 +78,30 @@ class RecentFeaturesIntegrationTest < ActionDispatch::IntegrationTest
     assert follower.following?(subject)
   end
 
+  test "a departing account cannot receive a new direct message" do
+    subject = User.create!(
+      email_address: "dm-leaving-#{SecureRandom.hex(4)}@brgen.no",
+      password: "password123",
+      username: "dm_leaving_#{SecureRandom.hex(3)}",
+      guest: false
+    )
+    subject.update_columns(deleted_at: Time.current, deletion_scheduled_at: 7.days.from_now)
+
+    actor = User.create!(
+      email_address: "dm-actor-#{SecureRandom.hex(4)}@brgen.no",
+      password: "password123",
+      username: "dm_actor_#{SecureRandom.hex(3)}",
+      guest: false
+    )
+
+    sign_in_on("brgen.no", actor)
+
+    assert_no_difference -> { Conversation.count } do
+      post user_conversations_path(subject)
+    end
+    assert_redirected_to conversations_path
+  end
+
   test "maps check-in works for guests without signup" do
     host! "maps.brgen.no"
     place = Place.create!(
