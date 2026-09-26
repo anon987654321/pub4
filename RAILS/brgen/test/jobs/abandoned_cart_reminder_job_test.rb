@@ -60,6 +60,16 @@ class AbandonedCartReminderJobTest < ActiveJob::TestCase
     assert_nil @checkout.reload.abandoned_cart_reminded_at
   end
 
+  test "does not send an abandoned-cart reminder after deletion is scheduled" do
+    EmailSubscription.create!(email: @buyer.email_address, confirmed: true, agreed_to_marketing: true)
+    @buyer.update_columns(deleted_at: Time.current, deletion_scheduled_at: 7.days.from_now)
+
+    assert_no_enqueued_emails do
+      assert_equal 0, AbandonedCartReminderJob.perform_now
+    end
+    assert_nil @checkout.reload.abandoned_cart_reminded_at
+  end
+
   test "never sends a second reminder once marked" do
     EmailSubscription.create!(email: @buyer.email_address, confirmed: true, agreed_to_marketing: true)
     @checkout.update_columns(abandoned_cart_reminded_at: 1.hour.ago)
