@@ -20,7 +20,7 @@ Gem::Specification.new do |spec|
   spec.files         = Dir["lib/**/*.rb", "bin/*", "data/**/*", "plugins/**/*"]
   spec.require_paths = ["lib"]
   spec.bindir        = "bin"
-  spec.executables   = ["cli", "master-kernel", "status"]
+  spec.executables   = ["cli"]
 
   spec.required_ruby_version = ">= 4.0"
 
