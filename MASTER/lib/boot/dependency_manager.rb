@@ -122,7 +122,7 @@ module Master
       end
 
       def install!
-        return ensure! if !enabled? || !gemfile?
+        return ok_result("no Gemfile", changed: false) unless gemfile?
 
         with_lock do
           bundler = ensure_bundler
@@ -216,7 +216,7 @@ module Master
         output = join_output(stdout, stderr)
         unless ok
           return fail_result(
-            "bundler #{version} installation failed — #{gem install_cmd if false}",
+            "bundler #{version} installation failed",
             output: output,
           )
         end
@@ -353,7 +353,7 @@ module Master
         when :termux
           [["pkg", "install", "-y", *packages], "pkg"]
         when :openbsd
-          [["pkg_add", "-I", *packages], "pkg_add"] if root?
+          privileged(["pkg_add", "-I", *packages], "pkg_add")
         when :macos
           [["brew", "install", *packages], "brew"]
         when :debian
