@@ -61,6 +61,13 @@ class Playlist::PlaylistTest < ActiveSupport::TestCase
     end
   end
 
+  test "public_playlists excludes departing owners" do
+    @user.update_columns(deleted_at: Time.current, deletion_scheduled_at: 7.days.from_now)
+    shown = Playlist::Playlist.create!(name: "Gone soon", user: @user, public_access: true)
+
+    assert_not_includes Playlist::Playlist.public_playlists, shown
+  end
+
   test "public_playlists excludes private ones" do
     ActsAsTenant.with_tenant(@city) do
       shown = Playlist::Playlist.create!(name: "Åpen", user: @user, public_access: true)
