@@ -168,6 +168,7 @@ class TestDilla < Minitest::Test
   def test_demo_failure_contracts_are_hard_failures
     source = DILLA_SOURCE
 
+    assert_includes source, 'File::EXCL', "the demo lock must be acquired atomically"
     assert_includes source, 'exit 1', "an active demo lock must not look successful"
     assert_includes source, 'refusing to publish a partial demo', "a partial catalogue must not be published"
   end
