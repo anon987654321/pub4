@@ -6,9 +6,10 @@ module Master
   module Device
     module OwnerProfile
       extend Master::Io::AtomicWrite
-      KEYS = %w[name language locale timezone communication_style interests].freeze
+      KEYS = %w[name pet_name language locale timezone communication_style interests].freeze
       LABELS = {
         "name" => "Name",
+        "pet_name" => "MASTER pet name",
         "language" => "Language",
         "locale" => "Locale",
         "timezone" => "Timezone",
@@ -61,13 +62,27 @@ module Master
         values(root:, subject:)
       end
 
+      GREETINGS = [
+        "Oh! #{'%s'} heard you. Tiny ears, giant agenda.",
+        "There you are. #{'%s'} is awake.",
+        "Boop. #{'%s'} online and behaving suspiciously well.",
+        "Hey! #{'%s'} reporting for mischief.",
+      ].freeze
+
+      def wake_greeting(root:, subject:)
+        profile = values(root:, subject:)
+        pet = profile["pet_name"].to_s.strip
+        name = pet.empty? ? "MASTER" : pet
+        GREETINGS.fetch(Time.now.to_i % GREETINGS.length) % name
+      end
+
       def onboarding_prompt(root:, subject:)
         profile = values(root:, subject:)
         missing = KEYS.select { |key| !profile.key?(key) }
         return "owner0: profile complete" if missing.empty?
 
         labels = missing.first(3).map { |key| LABELS.fetch(key) }
-        "owner0: tell me any of these you want me to remember: #{labels.join(", ")}. "           "You can skip any item."
+        "owner0: tell me any of these you want me to remember: #{labels.join(", ")}. "           "You can skip any item. Give me a pet name too, if you want a more personal feel."
       end
 
       def ensure!(root:, subject:)
