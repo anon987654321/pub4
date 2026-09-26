@@ -67,7 +67,7 @@ class TestMusicRealtime < Minitest::Test
       File.chmod(0o755, sox)
       old_path = ENV["PATH"]
       ENV["PATH"] = dir
-      assert_equal true, Master::Music::AudioSink.which("sox")
+      assert_equal sox, Master::Music::AudioSink.which("sox")
     ensure
       ENV["PATH"] = old_path
     end
