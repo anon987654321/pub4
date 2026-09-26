@@ -82,7 +82,7 @@ module Master
       # learned, and a retired word that falls silently to chat is a worse answer
       # than one that still works. They rewrite to the canonical form; only four
       # words are advertised, in help and in the contract.
-      PIPELINE_SLASH = %w[fix critique council self workflow triad sweep through].freeze
+      PIPELINE_SLASH = %w[fix critique council scan self workflow triad sweep through].freeze
 
       INFER_MIN_CONFIDENCE = 0.62
 
@@ -267,7 +267,7 @@ module Master
       # The words that mean "go through the tree and change it". They are
       # spellings of /fix: a sweep with its own reading-and-repair lifecycle
       # beside the engine's is a second engine, which is what /fix absorbed.
-      WRITING_SLASH = %w[fix sweep through workflow triad self].freeze
+      WRITING_SLASH = %w[fix scan sweep through workflow triad self].freeze
 
       def rewrite_slash(input)
         name, rest = input.sub(%r{\A/}, "").split(/\s+/, 2)
