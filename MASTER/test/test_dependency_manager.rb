@@ -104,7 +104,6 @@ class TestDependencyManager < Minitest::Test
       [true, "Installed", ""]
     ])
     manager.define_singleton_method(:package_manager_name) { :debian }
-    manager.define_singleton_method(:package_command) { super() }
     manager.define_singleton_method(:privileged) do |command, label|
       [["sudo", "-n", *command], label]
     end
