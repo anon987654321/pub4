@@ -1,3 +1,5 @@
+import { publishVisual } from "pub4/visual_field"
+
 'use strict'
 
 const DEFAULT_TRACKS = [
@@ -897,6 +899,14 @@ export class RadioBrgen {
         this._deck = null
         return null
       })
+    publishVisual("radio:track", {
+      topology: "tunnel",
+      mode: "radio:track",
+      activity: 0.72,
+      arousal: 0.62,
+      confidence: 0.9,
+      beat: 0.65
+    })
     const deck = await this._deck
     if (!deck || this._destroyed) return
     this.deck = deck
@@ -1036,6 +1046,21 @@ export class RadioBrgen {
       try {
         const audioData = this.audioEngine.getAudioData()
         this.visualEngine.update(audioData)
+        const visualNow = performance.now()
+        if (!this._lastVisualSignalAt || visualNow - this._lastVisualSignalAt >= 50) {
+          this._lastVisualSignalAt = visualNow
+          publishVisual("radio:audio", {
+            topology: "tunnel",
+            mode: this.vizMode === 0 ? "radio:tunnel" : "radio:deck",
+            activity: audioData.average,
+            arousal: audioData.average,
+            confidence: 0.92,
+            bass: audioData.bass,
+            mid: audioData.mid,
+            high: audioData.high,
+            beat: audioData.beat
+          })
+        }
         const visualInput = {
           ...audioData,
           parallax: this.visualEngine.parallaxOffset(audioData)
