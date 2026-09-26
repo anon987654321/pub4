@@ -51,11 +51,13 @@ module Marketplace
     end
 
     def performance_score
-      events = @listing.events.recent(7)
-      clicks = events.of_type("click").count
-      carts = events.of_type("cart").count
-      purchases = events.of_type("purchase").count
-      returns = events.of_type("return").count
+      counts = @listing.events.recent(7)
+                         .where(event_type: %w[click cart purchase return])
+                         .group(:event_type).count
+      clicks = counts.fetch("click", 0)
+      carts = counts.fetch("cart", 0)
+      purchases = counts.fetch("purchase", 0)
+      returns = counts.fetch("return", 0)
 
       return 0.15 if clicks.zero?
 
