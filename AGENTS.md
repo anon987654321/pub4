@@ -32,7 +32,7 @@ output.
 
 Inside the runtime there is one verb and three words for its parts. `/review
 [path]` runs the whole pass — scan, critique, principle map — and reads without
-writing. `/scan` is the detectors alone. `/critique` is the council. `/fix` is
+writing. `/critique` is the council. `/fix` is
 the convergence operation: it scans, renders when applicable, repairs findings,
 and — even when deterministic checks are clean — asks the council for anchored
 micro-improvements. It then verifies the result and repeats until the tree
