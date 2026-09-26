@@ -3,7 +3,7 @@
 require "minitest/autorun"
 require_relative "../../../MASTER/lib/operator/gates"
 
-# The gate is four full MASTER scans, ~11 minutes end to end (brgen alone is
+# The gate scans six explicit constitutional targets, ~11 minutes end to end (brgen alone is
 # ~4.5). These cover which targets it picks, which is the part worth changing
 # and the only part cheap enough to test.
 class ConstitutionalScanTargetsTest < Minitest::Test
@@ -23,7 +23,7 @@ class ConstitutionalScanTargetsTest < Minitest::Test
   # The gate asks MASTER for its lexical tier and nothing else. Without this
   # flag the runtime hands /scan an agent and every file costs a model round
   # trip: measured 2026-09-06, brgen alone ran 48 minutes of wall clock against
-  # 35 seconds of CPU. With it, all four targets finish in under two minutes.
+  # 35 seconds of CPU. With it, all six targets finish in under two minutes.
   # A per-app finding ceiling needs no model, and a gate nobody can afford to
   # run is a gate nobody runs.
   def test_the_scan_asks_for_the_deterministic_tier
