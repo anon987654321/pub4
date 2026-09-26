@@ -3,6 +3,7 @@
 
 Encoding.default_external = Encoding::UTF_8
 Encoding.default_internal = Encoding::UTF_8
+ENV["MASTER_STRICT_BOOT"] = "0" if ARGV.first.to_s.strip.start_with?("/fix") && !ENV.key?("MASTER_STRICT_BOOT")
 $stdout.set_encoding("UTF-8")
 $stderr.set_encoding("UTF-8")
 # Always unbuffered so tee/logs capture progress before EOF (scan can run minutes).
