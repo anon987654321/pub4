@@ -21,7 +21,7 @@ module Operator
     # Otherwise derive the source checkout from this file; never assume a
     # developer's home directory.
     def rules_path
-      source = File.expand_path("../../../../MASTER/data/rules.yml", __dir__)
+      source = File.expand_path("../../data/rules.yml", __dir__)
       configured = ENV["PUB4_RAILS_ROOT"].to_s.strip
       candidates = [
         (File.join(File.dirname(configured), "MASTER/data/rules.yml") unless configured.empty?),
