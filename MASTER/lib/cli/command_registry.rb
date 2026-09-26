@@ -35,7 +35,7 @@ module Master
           "model" => command(:dispatch_model, d[:agent], d[:config], d[:metrics], d[:root]),
           "plugin" => command(:dispatch_plugin),
           "pair" => command(:dispatch_pair, root),
-          "device" => command(:dispatch_device, root),
+          "device" => command(:dispatch_device_agent, root),
           "doctor" => command(:dispatch_doctor, root),
           "rules" => command(:dispatch_rules, root),
           "snapshot" => command(:dispatch_snapshot, d[:root]),
