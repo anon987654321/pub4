@@ -149,9 +149,9 @@ end
 
   def resolve_conversation_partner
     if params[:username].present?
-      User.find_by!(username: params[:username].to_s.strip.downcase)
+      User.messageable.find_by!(username: params[:username].to_s.strip.downcase)
     else
-      User.find(params[:user_id])
+      User.messageable.find(params[:user_id])
     end
   end
 
