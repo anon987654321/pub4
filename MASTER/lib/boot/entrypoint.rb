@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require "rubygems"
+require_relative "dependency_manager"
+
 module Master
   module Boot
     module Entrypoint
