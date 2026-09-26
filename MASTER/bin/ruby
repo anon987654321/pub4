@@ -124,16 +124,32 @@ fi
 
 ACTUAL="$("$RUBY" -e 'print RUBY_VERSION')"
 if [ "$ACTUAL" != "$PINNED_VERSION" ]; then
-  printf '%s
-' "pub4: Ruby $ACTUAL detected; .ruby-version requires $PINNED_VERSION" >&2
-  if [ -n "$RBENV" ]; then
-    printf '%s
-' "pub4: run: RBENV_VERSION=$PINNED_VERSION $RBENV install -s $PINNED_VERSION" >&2
-  else
-    printf '%s
-' "pub4: install rbenv + ruby-build, then run: rbenv install -s $PINNED_VERSION" >&2
+  if [ "${MASTER_AUTO_INSTALL_RUBY:-1}" != "0" ]; then
+    install_system_runtime
+    RBENV="$(find_rbenv || true)"
+    if [ -n "$RBENV" ]; then
+      RUBY="$(rbenv_path "$RBENV" || true)"
+      if [ -z "$RUBY" ]; then
+        RUBY="$(install_pinned_ruby "$RBENV" || true)"
+      fi
+      if [ -n "$RUBY" ]; then
+        ACTUAL="$("$RUBY" -e 'print RUBY_VERSION')"
+      fi
+    fi
   fi
-  exit 1
+
+  if [ "$ACTUAL" != "$PINNED_VERSION" ]; then
+    printf '%s
+' "pub4: Ruby $ACTUAL detected; .ruby-version requires $PINNED_VERSION" >&2
+    if [ -n "$RBENV" ]; then
+      printf '%s
+' "pub4: run: RBENV_VERSION=$PINNED_VERSION $RBENV install -s $PINNED_VERSION" >&2
+    else
+      printf '%s
+' "pub4: install rbenv + ruby-build, then run: rbenv install -s $PINNED_VERSION" >&2
+    fi
+    exit 1
+  fi
 fi
 
 exec "$RUBY" "$@"
