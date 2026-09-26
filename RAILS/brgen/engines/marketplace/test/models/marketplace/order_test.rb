@@ -175,6 +175,17 @@ class Marketplace::OrderTest < ActiveSupport::TestCase
     end
   end
 
+  test "startable? is false when the listing no longer exists" do
+    order = Marketplace::Order.new(
+      buyer: @buyer,
+      listing_id: 9_999_999,
+      status: "pending",
+      payment_status: "unpaid"
+    )
+
+    assert_equal false, order.startable?
+  end
+
   test "startable? is false once a PSP session is pending" do
     ActsAsTenant.with_tenant(@city) do
       listing = Marketplace::Listing.create!(user: @seller, category: @category, title: "Pending", price_cents: 2_000, currency: "NOK")
