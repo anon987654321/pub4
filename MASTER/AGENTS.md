@@ -38,7 +38,7 @@ The three top-level trees, and how each is entered:
 - `MASTER/` — a constitutional AI runtime in pure Ruby. `MASTER/bin/master "<instruction>"`.
 - `RAILS/` — brgen (a city social network, verticals as mounted engines), amber, bsdports. `RAILS/bin/triangle up`.
 - `OPENBSD/` — the deploy pipeline and the VPS runbook. Production is one box, vm23.
-- `MASTER/tools/` — the canonical tool plane inside MASTER: dilla, postpro, preprompt, lora and bplans.
+`MASTER/tools/` is the canonical tool plane inside MASTER: dilla, postpro, preprompt, lora and bplans.
 
 Two commands cover most work. `MASTER/bin/operator gate` runs the whole ladder over
 all three top-level trees; `MASTER/bin/operator measure` prints every ratchet with its ceiling.
