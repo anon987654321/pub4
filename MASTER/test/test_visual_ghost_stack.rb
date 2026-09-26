@@ -2,7 +2,7 @@
 
 require_relative "test_helper"
 require "zlib"
-require File.expand_path("../../RAILS/gates/support/geometry_probe", __dir__)
+require File.expand_path("../../MASTER/gates/support/geometry_probe", __dir__)
 
 # VisualGhostStack keeps a bounded history per surface and state, and renders
 # evidence pages from it through whatever browser session /fix already holds.
