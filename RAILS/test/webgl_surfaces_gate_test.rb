@@ -2,7 +2,7 @@
 
 require "minitest/autorun"
 require "yaml"
-require_relative "../gates/lib/rendered/webgl_surfaces"
+require_relative "../../MASTER/gates/lib/rendered/webgl_surfaces"
 
 # TODO.md section 4: the rendered gates launch Chrome with --disable-gpu,
 # which turns WebGL off outright, so MapLibre and the MASTER face both measure
