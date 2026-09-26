@@ -56,13 +56,13 @@ doas rm -rf public/assets
 doas chown -R dev:dev public
 BUNDLE_WITHOUT=development:test bundle34 exec rails assets:build_face_runtime assets:build_face_modules_bundle assets:build_face_vision_bundle 2>/dev/null || true
 BUNDLE_WITHOUT=development:test bundle34 exec rails assets:precompile
-# The asset gate, through whichever door exists. RAILS/gates/runner.rb was
+# The asset gate, through whichever door exists. MASTER/gates/runner.rb was
 # deleted on 2026-09-16 and every deploy script still named it, so `vps-deploy
 # master` died here under set -e with the box half deployed: new assets on disk,
 # the old process still serving them. The gate itself lives in MASTER/gates and
 # runs either way.
-if [ -f "$ROOT/RAILS/gates/runner.rb" ]; then
-  BUNDLE_WITHOUT=development:test bundle34 exec ruby "$ROOT/RAILS/gates/runner.rb" master_web_assets
+if [ -f "$ROOT/MASTER/gates/runner.rb" ]; then
+  BUNDLE_WITHOUT=development:test bundle34 exec ruby "$ROOT/MASTER/gates/runner.rb" master_web_assets
 else
   BUNDLE_WITHOUT=development:test bundle34 exec ruby -e '
     require ARGV[0]
