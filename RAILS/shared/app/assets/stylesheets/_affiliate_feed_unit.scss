@@ -1,110 +1,164 @@
-// The in-feed affiliate unit, lifted out of brgen so amber can wear it too.
+// Shared commerce rail for Brgen and Amber.
 //
-// Extracted verbatim: the rules were already the self-contained tail of
-// brgen/_affiliate.scss, and this file is @use-d immediately after it, so the
-// cascade order every one of these selectors had is the order it still has.
-// Nothing here was renamed, reordered or collapsed.
+// The old implementation copied a playful packed-image banner. The product
+// surfaces need the calmer catalogue anatomy used by the marketplace instead:
+// identity, product, price and one obvious outbound action. No new brand is
+// introduced here; each host keeps its own dialect tokens.
 
 .affiliate_feed_unit {
   display: block;
-  margin: var(--space-4) 0;
+  margin: var(--space-5) 0;
   padding: var(--space-3);
-  background: var(--surface-elevated);
-  border: 0;
-  border-radius: var(--radius-sm);
-  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
 }
 
-.affiliate_feed_unit .sponsored {
-  margin: 0 0 var(--space-2);
-  font-size: var(--text-xs);
+.affiliate_feed_header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-block-end: var(--space-3);
+}
+
+.affiliate_feed_header h2,
+.affiliate_feed_kicker {
+  margin: 0;
+}
+
+.affiliate_feed_kicker {
   color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-heavy);
+  letter-spacing: .04em;
+  text-transform: uppercase;
 }
 
-/* auto-fill + minmax is the packing rule: as many columns as fit, each at
-   least 108px, the row height fixed so uneven product images form a band
-   rather than a ragged edge. */
+.affiliate_feed_header h2 {
+  margin-block-start: 2px;
+  font-size: var(--text-lg);
+  line-height: var(--leading-tight);
+}
+
 .affiliate_feed_grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(var(--tile-min-sm), 1fr));
-  grid-auto-rows: 132px;
-  gap: var(--space-2);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3);
 }
 
-.affiliate_feed_tile,
-.affiliate_feed_cta {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  gap: 2px;
-  padding: var(--space-2);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  position: relative;
+.affiliate_feed_tile {
+  min-width: 0;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto auto;
+  gap: 6px;
+  padding: 0 0 var(--space-2);
+  border: 0;
   color: inherit;
   text-decoration: none;
-  /* transform only — the controller writes translate3d, and transitioning
-     transform keeps the tilt off the layout path. */
-  transition: transform 120ms var(--ease-out);
-  will-change: transform;
 }
 
-.affiliate_feed_tile img {
-  position: absolute;
-  inset: 0;
+.affiliate_feed_tile:focus-visible {
+  outline: 2px solid var(--focus-ring-color, var(--accent));
+  outline-offset: 3px;
+}
+
+.affiliate_feed_media {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  background: var(--surface-elevated);
+  border-radius: var(--radius-md);
+}
+
+.affiliate_feed_media img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  z-index: 0;
+  object-fit: contain;
 }
 
-.affiliate_feed_title,
-.affiliate_feed_price,
+.affiliate_feed_source,
+.affiliate_feed_link_disclosure,
 .affiliate_feed_placeholder {
-  position: relative;
-  z-index: 1;
+  color: var(--text-secondary);
   font-size: var(--text-xs);
   line-height: var(--leading-tight);
 }
 
-/* The image runs to the tile edge, so the label needs its own ground rather
-   than a text-shadow — flat, and legible over any product photo. */
-.affiliate_feed_title,
-.affiliate_feed_price {
-  background: var(--surface);
-  padding: 2px 4px;
-  border-radius: 2px;
-  align-self: flex-start;
-}
-
-.affiliate_feed_price { font-weight: var(--weight-heavy); }
-
-.affiliate_feed_cta {
-  align-items: center;
-  justify-content: center;
-  grid-column: span 2;
-  background: var(--accent);
-  /* accent-ink, not inherit: the tile paints the accent behind text that would
-     otherwise stay the body colour, which on a light accent is light-on-light.
-     This is the token that exists for exactly that pairing. */
-  color: var(--accent-ink);
-  font-size: var(--text-base);
+.affiliate_feed_source {
+  margin-block-start: 2px;
   font-weight: var(--weight-heavy);
-  text-align: center;
 }
 
-/* The tilt is decoration: without it the band still reads. */
+.affiliate_feed_title {
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  line-height: 1.35;
+}
+
+.affiliate_feed_price {
+  color: var(--text);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-heavy);
+  line-height: 1.1;
+}
+
+.affiliate_feed_link_disclosure {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.affiliate_feed_amazon_mark {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  width: fit-content;
+  padding-inline: 7px;
+  border-radius: 3px;
+  background: var(--text);
+  color: var(--surface);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-heavy);
+}
+
+.affiliate_feed_tile--amazon {
+  align-content: center;
+  min-height: 100%;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-elevated);
+}
+
+.affiliate_feed_unit .affiliate-fine {
+  margin-block-start: var(--space-3);
+}
+
+@media (max-width: 900px) {
+  .affiliate_feed_grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .affiliate_feed_unit {
+    padding: var(--space-2);
+  }
+
+  .affiliate_feed_grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .affiliate_feed_tile,
-  .affiliate_feed_cta {
+  .affiliate_feed_tile {
     transition: none;
   }
 }
 
-/* Placed inside a grid of records rather than a list of them: span every
-   column so the band keeps its own packing, instead of being sized as one
-   more tile. Additive — the base rule is untouched, and brgen's feed, which
-   is not a grid, never gets this class. */
 .affiliate_feed_unit--in_grid {
   grid-column: 1 / -1;
 }
