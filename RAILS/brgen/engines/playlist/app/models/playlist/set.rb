@@ -24,7 +24,7 @@ module Playlist
     validates :privacy, inclusion: { in: PRIVACY_LEVELS }, allow_blank: true
 
     scope :visible, -> { where(privacy: [ nil, "public", "unlisted" ]) }
-    scope :publicly_listed, -> { where(privacy: [ nil, "public" ]) }
+    scope :publicly_listed, -> { where(privacy: [ nil, "public" ]).joins(:user).where(users: { deleted_at: nil, deletion_scheduled_at: nil }) }
 
     def add_track!(track, user:)
       set_track = set_tracks.find_or_initialize_by(track: track)
