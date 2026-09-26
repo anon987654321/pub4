@@ -2,7 +2,7 @@
 
 require_relative "../../../../OPENBSD/lib/gate_result"
 require_relative "../../support/layout_search"
-require_relative "../../../shared/lib/operator/scss_rules"
+require_relative "../../../tools/design/scss_rules"
 
 module Deploy
   # Bounded multi-candidate layout search for marketplace.
