@@ -58,10 +58,12 @@ module Master
         return Result.err("visual custody: no rendered snapshot payloads", category: :inconclusive) if rows.empty?
 
         checked = 0
+        missing = []
         failures = rows.filter_map do |surface, payload|
           path = baseline_path(surface)
           unless File.file?(path)
-            next "#{surface.id}: missing committed baseline #{relative(path)}"
+            missing << "#{surface.id}: missing committed baseline #{relative(path)}"
+            next
           end
 
           unless Deploy::GeometryProbe.ok?(payload)
@@ -76,6 +78,11 @@ module Master
 
           "#{surface.id}: #{diffs.first(6).join("; ")}"
         end
+
+        return Result.err(
+          "visual custody: #{label} has no committed baseline — #{missing.join(" / ")}",
+          category: :inconclusive,
+        ) if missing.any?
 
         return Result.ok(state: :preserved, checked:, label:) if failures.empty?
 
