@@ -69,8 +69,10 @@ class NvdCve
       res = http.request(req)
       return [] unless res.is_a?(Net::HTTPSuccess)
 
-      data = JSON.parse(res.body) rescue {}
+      data = JSON.parse(res.body)
       data.dig("vulnerabilities") || []
+    rescue JSON::ParserError
+      []
     end
 
     # The advisory for one CVE, saved, or nil when it has no id or will not save.
