@@ -255,7 +255,7 @@ get "i/:token" => "invites#show", as: :invite
     resources :memberships, only: :show
   end
 
-  resources :email_subscriptions, only: %i[create destroy], param: :token
+  resources :email_subscriptions, only: %i[show create update destroy], param: :token
   get "confirm_email/:token" => "email_subscriptions#confirm", as: :confirm_email_subscription
 
   constraints(jobs_constraint) do
