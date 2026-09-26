@@ -17,7 +17,7 @@ class DailyDigestJob < ApplicationJob
   private
 
   def subscribers_for(city)
-    scope = EmailSubscription.marketing_opted_in
+    scope = EmailSubscription.delivery_eligible
     city.present? ? scope.where(city:) : scope
   end
 end
