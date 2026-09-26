@@ -28,9 +28,12 @@ SCRIPT_DIR=${0:a:h}
 REPO_ROOT=${SCRIPT_DIR:h}
 CONFIG_ROOT=${REPO_ROOT}/OPENBSD
 
-for helper in operator_core operator_config operator_apply operator_stage1 operator_apps operator_stage2; do
-  source "${CONFIG_ROOT}/lib/${helper}.zsh"
-done
+source "${CONFIG_ROOT}/lib/operator_core.zsh"
+source "${CONFIG_ROOT}/lib/operator_config.zsh"
+source "${CONFIG_ROOT}/lib/operator_apply.zsh"
+source "${CONFIG_ROOT}/lib/operator_stage1.zsh"
+source "${CONFIG_ROOT}/lib/operator_apps.zsh"
+source "${CONFIG_ROOT}/lib/operator_stage2.zsh"
 
 deploy_live() {
   sync_openbsd_apply "${CONFIG_ROOT}"
