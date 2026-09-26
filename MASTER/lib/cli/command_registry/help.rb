@@ -97,7 +97,7 @@ module Master
         },
         "owner" => {
           summary: "show and edit the paired owner's explicit profile",
-          detail: ["/owner", "/owner intro", "/owner set name=... language=... locale=... timezone=... communication_style=... interests=...", "/owner forget <key>"],
+          detail: ["/owner", "/owner intro", "/owner set name=... pet_name=... language=... locale=... timezone=... communication_style=... interests=...", "/owner forget <key>"],
         },
         "doctor" => {
           summary: "host, provider, exposure and hardware health",
