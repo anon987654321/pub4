@@ -6,7 +6,7 @@ class RestaurantsInfiniteScrollReflex < Shared::InfiniteScrollReflex
   private
 
   def scope
-    scope = Takeaway::Restaurant.active.includes(:user)
+    scope = Takeaway::Restaurant.publicly_visible.includes(:user)
     scope = scope.where(cuisine_type: element.dataset["cuisine"]) if element.dataset["cuisine"].present?
     if element.dataset["q"].present?
       term = "%#{ActiveRecord::Base.sanitize_sql_like(element.dataset["q"])}%"
