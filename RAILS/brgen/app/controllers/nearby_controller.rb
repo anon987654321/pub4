@@ -112,7 +112,7 @@ class NearbyController < ApplicationController
   # be bounded before it gets there -- inside a dense city this was every user
   # within the radius, on a 1GB box.
   def nearby_users(lat, lng, radius)
-    User.nearby(lat, lng, radius).limit(NEARBY_LIMIT).reject { |user| user == Current.user }.filter_map do |user|
+    User.messageable.nearby(lat, lng, radius).limit(NEARBY_LIMIT).reject { |user| user == Current.user }.filter_map do |user|
       distance = user.distance_to(lat, lng)
       next if distance.nil? || distance > radius
 
