@@ -258,10 +258,30 @@ module Master
       end
 
       def surface_anatomy(surface)
-        name = surface.app.to_s == "brgen" ? surface.label.to_s : surface.app.to_s
-        rows = reference_study.fetch("vertical_anatomy", {})
-        key = rows.key?(name) ? name : (surface.label.to_s)
-        row = rows[key]
+        label = [surface.app, surface.label, surface.host, surface.path].compact.join("/").downcase
+        key =
+          if label.include?("messenger") || label.include?("conversation") || label.include?("/messages")
+            "messenger"
+          elsif label.include?("markedsplass") || label.include?("marketplace") || label.include?("listings") || label.include?("shops")
+            "marketplace"
+          elsif label.include?("dating") || label.include?("likes")
+            "dating"
+          elsif label.include?("takeaway") || label.include?("restaurant")
+            "takeaway"
+          elsif label.include?("radio") || label.include?("playlist") || label.include?("sets")
+            "radio"
+          elsif label.include?("tv_") || label.include?("/feed") && label.include?("tv")
+            "tv"
+          elsif label.include?("maps") || label.include?("places")
+            "maps"
+          elsif surface.app.to_s == "amber"
+            "amber"
+          elsif surface.app.to_s == "bsdports"
+            "bsdports"
+          else
+            "brgen_social"
+          end
+        row = reference_study.fetch("vertical_anatomy", {})[key]
         return "generic task anatomy" unless row.is_a?(Hash)
 
         structure = Array(row["structure"]).join(" -> ")
