@@ -122,8 +122,6 @@ GEM
     lint_roller (1.1.0)
     logger (1.7.0)
     marcel (1.1.0)
-    mcp (0.8.0)
-      json-schema (>= 4.1)
     midilib (4.0.2)
     mini_portile2 (2.8.9)
     minitest (5.27.0)
@@ -333,7 +331,6 @@ CHECKSUMS
   lint_roller (1.1.0) sha256=2c0c845b632a7d172cb849cc90c1bce937a28c5c8ccccb50dfd46a485003cc87
   logger (1.7.0) sha256=196edec7cc44b66cfb40f9755ce11b392f21f7967696af15d274dde7edff0203
   marcel (1.1.0) sha256=fdcfcfa33cc52e93c4308d40e4090a5d4ea279e160a7f6af988260fa970e0bee
-  mcp (0.8.0) sha256=ae8bd146bb8e168852866fd26f805f52744f6326afb3211e073f78a95e0c34fb
   midilib (4.0.2) sha256=2eb9a981c792f647298bc8945fbb01f48007d35ac609cdaa8169adee3d81749e
   mini_portile2 (2.8.9) sha256=0cd7c7f824e010c072e33f68bc02d85a00aeb6fce05bb4819c03dfd3c140c289
   minitest (5.27.0) sha256=2d3b17f8a36fe7801c1adcffdbc38233b938eb0b4966e97a6739055a45fa77d5
