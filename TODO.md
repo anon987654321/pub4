@@ -679,8 +679,10 @@ slices. Each is a hypothesis with its seam.
 
 ### RAILS
 
-- **Drag-only reorder** (amber outfits, marketplace variants) has no keyboard path
-  (WCAG 2.5.7), and a keyboard path means visible controls: the operator's.
+- **Drag-only reorder** (amber outfits, marketplace variants) is closed 2026-09-26.
+  The shared Sortable controller now provides visible Move up/Move down buttons,
+  ArrowUp/ArrowDown movement, focus retention, edge disabling and the existing
+  PATCH persistence path; Amber and Marketplace supply Norwegian and English labels.
 - **17 of the 42 `needs_id` guest pages still get no live probe.** 25 were wired to
   a real seeded record via `Deploy::LiveRecordIds` and are curl-verified live.
   The rest need seed data nothing in the repo writes yet (events, stories,
