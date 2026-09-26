@@ -444,7 +444,7 @@ flows:
   # at all. Seed an account, export the pair, and the journey runs:
   #
   #   FLOW_BSDPORTS_EMAIL=you@example.no FLOW_BSDPORTS_PASSWORD=... \
-  #     ruby RAILS/gates/runner.rb user_flow
+  #     ruby MASTER/gates/runner.rb user_flow
   - id: bsdports_signed_in_comment_lands
     app: bsdports
     description: A signed-in visitor comments on a port and the comment is on the page afterwards.
