@@ -63,6 +63,7 @@ module Master
           @visual_pass = visual_pass
           @opportunity_pass = opportunity_pass
           @ground_truth_failures = 0
+          @pass_progress = false
         end
 
         def violations(files) = resolve_violations(files.flat_map { |path| violations_for(path) })
@@ -92,6 +93,7 @@ module Master
         def run_pass(files:, target:, pass:, deadline:, transaction_id:, history:, seen_snapshots:,
                      recurring_violations:, consecutive_clean:)
           pass_mtimes = mtimes(files)
+          @pass_progress = false
           start_pass_transaction(files:, target:, pass:, transaction_id:)
           found, streamed = observe_pass(files, target, pass, deadline)
 
@@ -101,7 +103,7 @@ module Master
           found, shed = supplement_with_improvements(found, pass:, files:, deadline:, consecutive_clean:)
           return shed if shed
           return clean_pass_result(files, pass_mtimes, pass, consecutive_clean) if found.empty?
-          return plateau_result if stagnant?(history, seen_snapshots, recurring_violations, found, pass)
+          return plateau_result if stagnant?(history, seen_snapshots, recurring_violations, found, pass, progressed: @pass_progress)
 
           # A reload skips the rule stage: it would ask the model about the whole
           # scan on code that is already out of date.
@@ -214,7 +216,10 @@ module Master
 
         def run_fast_stage(files, pass)
           fixed = fast_pass(files)
-          @committer.commit_if_dirty("fix_loop: fast-fix [pass #{pass}]", owned_paths: files) if fixed > 0
+          if fixed > 0
+            @pass_progress = true
+            @committer.commit_if_dirty("fix_loop: fast-fix [pass #{pass}]", owned_paths: files)
+          end
           fixed
         end
 

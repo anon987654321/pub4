@@ -11,7 +11,8 @@ module Master
         module StagnationDetection
           private
 
-          def stagnant?(history, seen_snapshots, recurring_violations, found, pass)
+          def stagnant?(history, seen_snapshots, recurring_violations, found, pass, progressed: false)
+            return false if progressed
             return true if oscillating?(seen_snapshots, found, pass)
             return true if recurrence_cycle?(recurring_violations, found, pass)
 

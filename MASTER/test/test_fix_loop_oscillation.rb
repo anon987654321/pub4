@@ -148,6 +148,26 @@ class TestFixLoopOscillation < Minitest::Test
     assert_equal :policy, rollback.calls.first.category
   end
 
+  def test_progressed_pass_spares_oscillation_rollback
+    rollback = RollbackSpy.new
+    loop = build_loop([{ rule: "TEST_RULE", file: "dummy.yml", line: 1, message: "osc" }], rollback:)
+    pass_runner = loop.instance_variable_get(:@pass_runner)
+
+    stagnant = pass_runner.send(
+      :stagnant?,
+      [],
+      ["snapshot"],
+      Hash.new(0),
+      [{ rule: "TEST_RULE", file: "dummy.yml", line: 1, message: "osc" }],
+      2,
+      progressed: true
+    )
+
+    refute stagnant
+    assert_empty rollback.calls
+    assert_empty @bus.events.select { |e| e[:event] == "fix_loop:oscillation" }
+  end
+
   def test_oscillation_does_not_fire_when_violations_clear
     # Empty violation set -> clean path, no oscillation.
     loop = build_loop([])
