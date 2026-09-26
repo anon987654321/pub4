@@ -6,9 +6,10 @@ module Master
   module Device
     module OwnerProfile
       extend Master::Io::AtomicWrite
-      KEYS = %w[name language locale timezone communication_style interests].freeze
+      KEYS = %w[name pet_name language locale timezone communication_style interests].freeze
       LABELS = {
         "name" => "Name",
+        "pet_name" => "MASTER pet name",
         "language" => "Language",
         "locale" => "Locale",
         "timezone" => "Timezone",
@@ -67,7 +68,7 @@ module Master
         return "owner0: profile complete" if missing.empty?
 
         labels = missing.first(3).map { |key| LABELS.fetch(key) }
-        "owner0: tell me any of these you want me to remember: #{labels.join(", ")}. "           "You can skip any item."
+        "owner0: tell me any of these you want me to remember: #{labels.join(", ")}. "           "You can skip any item. Give me a pet name too, if you want a more personal feel."
       end
 
       def ensure!(root:, subject:)
