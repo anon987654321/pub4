@@ -65,6 +65,16 @@ class StandingOrdersTest < Minitest::Test
     end
   end
 
+  def test_due_can_be_scoped_to_one_owner
+    mine = order("name" => "mine", "owner" => "owner123")
+    theirs = order("name" => "theirs", "owner" => "operator")
+
+    with_orders([mine, theirs]) do
+      assert_equal ["mine"], @orders.due(owner: "owner123").map { |o| o["name"] }
+      assert_equal ["mine", "theirs"], @orders.due.map { |o| o["name"] }
+    end
+  end
+
   # An errored order waits for /orders reset, and "running" must not be picked up
   # twice.
   def test_due_skips_running_and_errored_orders
