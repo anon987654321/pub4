@@ -13,7 +13,8 @@ const _StimulusSortable = class _StimulusSortable extends Controller {
     if (event.target === this.element) return;
     if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
 
-    const item = event.target.closest(":scope > *");
+    let item = event.target;
+    while (item && item.parentElement !== this.element) item = item.parentElement;
     if (!item || item.parentElement !== this.element || event.target !== item) return;
 
     const items = Array.from(this.element.children);
