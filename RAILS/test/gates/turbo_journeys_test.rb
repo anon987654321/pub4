@@ -2,7 +2,7 @@
 
 require "minitest/autorun"
 require_relative "../../../OPENBSD/lib/gate_result"
-require_relative "../../gates/support/turbo_journeys"
+require_relative "../../../MASTER/gates/support/turbo_journeys"
 
 # The journeys journey_invariant walks in Chrome, judged on planted answers: the
 # scripts run only on the deploy host, and the verdicts are where a defect is
