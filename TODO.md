@@ -233,13 +233,9 @@ the "One chrome", ad system and layout sections bring back for a decision.
     specifically) takes ActiveSupport out of MASTER's lock; `AGENTS.md`
     already asks for `Bundler.with_unbundled_env` when a child process needs
     STUDIO's bundle, which is the seam to use.
-  - **`ruby_llm-mcp` has no version cap** (`Gemfile:26`) and RuboCop 1.85
-    independently pulls a *different* `mcp` gem (0.8) as a dev dependency —
-    two MCP stacks, unrelated. Decide 1.13 vs a measured upgrade to
-    `ruby_llm` 2.0 in one worktree (`providers.yml`'s `ruby_llm_key` setters
-    need re-checking either way — `apply_api_keys` already warns when
-    RubyLLM has no setter, which is scar tissue from this breaking once), and
-    cap or drop `ruby_llm-mcp` until a named test uses it.
+  - **MCP compatibility is now on RubyLLM 2 + MCP 1.6.** The former
+    `ruby_llm-mcp` compatibility item is resolved on `main`; keep the
+    provider-key contract tests covering the current RubyLLM API.
   - **`opentelemetry-sdk` is `require: false` with no instrumentation gem
     paired to it** — an SDK that traces nothing. Either add the matching
     `opentelemetry-instrumentation-*` gem or drop the SDK; a lock entry that
@@ -361,10 +357,10 @@ the "One chrome", ad system and layout sections bring back for a decision.
   until the ignore landed. The entry argues the advisory cannot reach this tree —
   it is scoped to Ruby 3.1.x, we pin 3.4.9, and no user-supplied string ever
   becomes a class, agent or tool name here — but an ignore is a standing
-  claim, not a fix. The upgrade stages by fragility: brgen and amber first
-  (unpinned, `RubyLLM.chat().ask` is their whole surface, service tests prove
-  them, then delete the ignore); web second (its `ruby_llm-mcp` 1.0.x must
-  accept 2.x); MASTER last and alone — `lib/io/ruby_llm_patch.rb`
+  claim, not a fix. The RubyLLM 2.x migration is now the live baseline across
+  MASTER and the Rails apps; keep service and provider-key contract tests
+  proving that API rather than carrying an old `ruby_llm-mcp` compatibility
+  plan. MASTER's `lib/io/ruby_llm_patch.rb` remains its own seam —
   monkey-patches `RubyLLM::Models` internals and carries 16 Tool classes, so
   it wants its own worktree run of `test_ruby_llm_patch.rb` and the
   dispatcher suite. Note the ignore's prose names only brgen and amber at
