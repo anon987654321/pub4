@@ -7,6 +7,8 @@ module Shared
     def push_to(user, title:, body: "", url: "/")
       return unless Shared::Vapid.configured?
       return unless user.respond_to?(:push_subscriptions)
+      return if user.respond_to?(:deleted_at) && user.deleted_at.present?
+      return if user.respond_to?(:deletion_scheduled_at) && user.deletion_scheduled_at.present?
 
       Shared::WebPushJob.perform_later(user.id, title:, body:, url:)
     end
@@ -23,6 +25,8 @@ module Shared
       return if vapid.blank?
       return unless user.respond_to?(:push_subscriptions)
       return if user.respond_to?(:guest?) && user.guest?
+      return if user.respond_to?(:deleted_at) && user.deleted_at.present?
+      return if user.respond_to?(:deletion_scheduled_at) && user.deletion_scheduled_at.present?
 
       payload = JSON.generate({ title:, body:, url:, tag: }.compact)
 
