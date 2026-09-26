@@ -98,6 +98,29 @@ class TestDependencyManager < Minitest::Test
     assert @commands.any? { |row| row.first == ["pkg", "install", "-y", "sqlite"] }
   end
 
+  def test_debian_runs_update_before_install
+    manager = fake_manager([
+      [true, "Hit", ""],
+      [true, "Installed", ""]
+    ])
+    manager.define_singleton_method(:package_manager_name) { :debian }
+    manager.define_singleton_method(:package_command) { super() }
+    manager.define_singleton_method(:privileged) do |command, label|
+      [["sudo", "-n", *command], label]
+    end
+    manager.define_singleton_method(:run_bundle) do |*args|
+      [false, "", "extconf failed: missing compiler"]
+    end
+
+    result = manager.send(:install_system_packages)
+
+    assert result[:ok]
+    assert_equal [
+      ["sudo", "-n", "apt-get", "update"],
+      ["sudo", "-n", "apt-get", "install", "-y", *Master::Boot::DependencyManager::SYSTEM_PACKAGES[:debian]]
+    ], @commands.map(&:first)
+  end
+
   def test_openbsd_uses_noninteractive_pkg_add_with_privilege
     manager = fake_manager([])
     manager.define_singleton_method(:package_manager_name) { :openbsd }
