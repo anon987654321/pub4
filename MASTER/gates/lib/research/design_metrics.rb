@@ -5,11 +5,11 @@ require_relative "../../support/design_metrics/contrast_checks"
 require_relative "../../support/design_metrics/type_checks"
 require_relative "../../../../OPENBSD/lib/gate_result"
 require_relative "../../../../OPENBSD/lib/deploy_inventory"
-require_relative "../../../tools/crawl_support"
+require_relative "../../../../RAILS/tools/crawl_support"
 require_relative "../../support/geometry_probe"
 require_relative "../../support/design_metrics"
-require_relative "../../../shared/lib/operator/master_design"
-require_relative "../../../shared/lib/operator/scss_rules"
+require_relative "../../../tools/design/master_design"
+require_relative "../../../tools/design/scss_rules"
 
 module Deploy
   # P2: measure design_rules.yml (type, contrast, touch, spacing, measure)
