@@ -58,7 +58,8 @@ module Master
             loop = RuleLoop.new(
               rule: OpportunityPass::Rule.new(OpportunityPass::RULE_ID),
               agent: @agent, scanner: @scanner, root: @root, bus: @bus,
-              learnings: @learnings, committer: @committer
+              learnings: @learnings, committer: @committer,
+              visual_custody: @visual_pass&.custody,
             )
             loop.injected_preamble = [@preamble, council_preamble(council)].compact.join("\n\n")
             result = loop.run_once(files, external_violations: findings)
