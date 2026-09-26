@@ -19,7 +19,7 @@ install_system_runtime() {
         elif command -v doas >/dev/null 2>&1; then
           doas -n pkg_add -I "ruby%${PINNED_VERSION%.*}" || true
         elif command -v sudo >/dev/null 2>&1; then
-          sudo -n pkg_add -I "ruby%${PINNED_VERSION%%.*}" || true
+          sudo -n pkg_add -I "ruby%${PINNED_VERSION%.*}" || true
         fi
       fi
       ;;
@@ -125,7 +125,6 @@ fi
 if [ -z "${PINNED_VERSION:-}" ]; then
   exec "$RUBY" "$@"
 fi
-
 
 ACTUAL="$("$RUBY" -e 'print RUBY_VERSION')"
 if [ "$ACTUAL" != "$PINNED_VERSION" ]; then
