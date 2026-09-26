@@ -20,3 +20,17 @@ class Shared::DatabaseSnapshotJobTest < ActiveSupport::TestCase
     end
   end
 end
+
+  test "fails when gzip cannot produce the snapshot" do
+    Dir.mktmpdir do |dir|
+      ENV["PUB4_BACKUP_DIR"] = dir
+      job = Shared::DatabaseSnapshotJob.new
+      job.define_singleton_method(:system) { |*| false }
+
+      error = assert_raises(RuntimeError) { job.perform }
+
+      assert_match(/gzip failed/, error.message)
+    ensure
+      ENV.delete("PUB4_BACKUP_DIR")
+    end
+  end
