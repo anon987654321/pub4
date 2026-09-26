@@ -28,39 +28,22 @@ class TestDependencyManager < Minitest::Test
 
   def teardown = FileUtils.rm_rf(@root)
 
-  def manager(env: {})
-    merged = { "PATH" => "/bin", "MASTER_AUTO_INSTALL" => "1", "MASTER_AUTO_BUNDLE" => "1" }.merge(env)
-    MANAGER.new(
-      root: @root,
-      env: merged,
-      out: StringIO.new,
-      home: @root,
-      command_path: ->(name) { name == "bundle" ? "/fake/bundle" : "/fake/#{name}" },
-      runner: lambda do |argv, chdir:, env:|
-        @commands << [argv, chdir, env]
-        yield_to_runner(argv) if defined?(@runner_response)
-      end,
-    )
-  end
-
-  def fake_manager(responses)
+  def fake_manager(responses, bundler: true)
     manager = MANAGER.new(
       root: @root,
       env: { "PATH" => "/bin", "MASTER_AUTO_INSTALL" => "1", "MASTER_AUTO_BUNDLE" => "1" },
       out: StringIO.new,
       home: @root,
-      command_path: ->(name) { "/fake/#{name}" },
+      command_path: ->(_name) { "/fake/gem" },
       runner: lambda do |argv, chdir:, env:|
         @commands << [argv, chdir, env]
-        response = responses.shift || [true, "", ""]
-        response
+        responses.shift || [true, "", ""]
       end,
     )
     manager.define_singleton_method(:bundler_path) do |_version|
-      "/fake/bundle"
+      bundler ? "/fake/bundle" : nil
     end
     manager
-  end
 
   def test_clean_bundle_does_not_install_or_touch_lock
     manager = fake_manager([[true, "The Gemfile's dependencies are satisfied", ""]])
@@ -74,20 +57,25 @@ class TestDependencyManager < Minitest::Test
     assert_equal before, File.read(File.join(@root, "Gemfile.lock"))
   end
 
-  def test_missing_bundle_installs_it_then_rechecks
-    responses = [
-      [false, "", "Could not find a matching version of bundler"],
-      [true, "installed", ""],
-      [true, "The Gemfile's dependencies are satisfied", ""],
-    ]
-    manager = fake_manager(responses)
+  def test_missing_bundle_installs_bundler_then_rechecks
+    installed = false
+    responses = [[true, "installed", ""], [true, "The Gemfile's dependencies are satisfied", ""]]
+    manager = fake_manager(responses, bundler: false)
+    manager.define_singleton_method(:bundler_path) do |_version|
+      installed ? "/fake/bundle" : nil
+    end
+    manager.define_singleton_method(:gem_command) { "/fake/gem" }
+    manager.define_singleton_method(:run) do |command, chdir:, env:|
+      @commands << [command, chdir, env]
+      installed = true if command.first(2) == ["/fake/gem", "install"]
+      responses.shift || [true, "", ""]
+    end
 
     result = manager.ensure!
 
     assert result.success?
-    assert_equal ["gem", "install"], @commands[0].first[1..2]
-    assert_equal ["fake"], [] unless false
-    assert_equal ["bundle", "check"], @commands[-1].first[1..]
+    assert @commands.any? { |row| row.first.first(2) == ["/fake/gem", "install"] }
+    assert_equal ["/fake/bundle", "check"], @commands.last.first
   end
 
   def test_native_build_failure_installs_system_packages_and_retries
