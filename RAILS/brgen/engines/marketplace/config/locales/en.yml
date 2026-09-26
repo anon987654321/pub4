@@ -11,6 +11,8 @@
 en:
   marketplace:
     inspire_heading: "New in %{city}"
+    move_up: "Move up"
+    move_down: "Move down"
     browse_categories: "Browse categories"
     seller_badge: "Seller: %{name}"
     utility:
