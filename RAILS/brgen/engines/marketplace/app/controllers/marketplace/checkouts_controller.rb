@@ -247,9 +247,21 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
       marketplace_address: address,
       currency: orders.first.payment_currency
     )
-    orders.each { |order| order.update!(marketplace_checkout_id: checkout.id) }
-    checkout.recalculate!
-    checkout
+    orders.each do |order|
+      added_to_checkout = order.marketplace_checkout_id.blank?
+      order.update!(marketplace_checkout_id: checkout.id)
+      next unless added_to_checkout
+
+      listing = Marketplace::Listing.strict_loading(false).find_by(id: order.listing_id)
+      listing&.record_activity!(
+        "MarketplaceCartAdded",
+        actor: Current.user,
+        source_vertical: "marketplace",
+        visibility: "private",
+        metadata: { checkout_id: checkout.id }
+      )
+    end
+    checkout.recalculate!    checkout
   end
 
   def find_payable_order
