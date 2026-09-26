@@ -91,12 +91,12 @@ module Master
               # the boot sequence. Before the split this read the first 36 KB of a
               # 1.37 MB file — the patch catalogue, and nothing downstream of it.
               files: %w[
-                ../MASTER/tools/dilla/dilla.rb
-                ../MASTER/tools/dilla/lib/engine/master_chain.rb
-                ../MASTER/tools/dilla/lib/engine/bus_filters.rb
-                ../MASTER/tools/dilla/lib/engine/drum_bus_filter.rb
-                ../MASTER/tools/dilla/lib/engine/groove_timing.rb
-                ../MASTER/tools/dilla/lib/listen.rb
+                tools/dilla/dilla.rb
+                tools/dilla/lib/engine/master_chain.rb
+                tools/dilla/lib/engine/bus_filters.rb
+                tools/dilla/lib/engine/drum_bus_filter.rb
+                tools/dilla/lib/engine/groove_timing.rb
+                tools/dilla/lib/listen.rb
                 lib/voice/dilla.rb lib/voice/production_dna.rb
                 lib/io/analog_capabilities.rb
               ],
