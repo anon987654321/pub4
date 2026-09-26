@@ -98,6 +98,7 @@ module Master
         @committer = options[:committer]
         @stage_commit = options.fetch(:stage_commit, false)
         @visual_image = nil
+        @visual_custody = options[:visual_custody]
         @conflicts = ConflictResolver.new(root:, bus: @bus)
       end
 
@@ -234,6 +235,11 @@ module Master
         end
         if (failure = failing_test_for(path))
           return reject_fix(path, old_src, "test_failed", test: failure)
+        end
+
+        if @visual_custody
+          custody = @visual_custody.verify!
+          return reject_fix(path, old_src, "visual_regression", evidence: custody.message) unless custody.ok?
         end
 
         @bus&.publish("rule_loop:fix_applied", rule: @rule.id, file: path)
