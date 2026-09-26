@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+
+require_relative "../lib/boot/entrypoint"
+Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
 #
 # One check entrypoint. A profile is a named list of steps — pick one:
 #
