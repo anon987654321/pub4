@@ -8,6 +8,7 @@ module Master
     # attempt may die; the mission remains and becomes eligible for another wake.
     class Supervisor
       DEFAULT_POLL_INTERVAL = 30
+      LEASE_RENEW_SECONDS = Mission::LEASE_RENEW_SECONDS
 
       def initialize(root:, target:, fix_loop:, bus: nil, wake_mutex: Mutex.new, wake_condition: ConditionVariable.new)
         @root = root
@@ -45,6 +46,10 @@ module Master
         @wake_mutex.synchronize { @wake_condition.broadcast }
       end
 
+      def stopping?
+        stopped?
+      end
+
       private
 
       def stopped?
@@ -57,13 +62,31 @@ module Master
 
         @bus&.publish("fix_supervisor:run", mission: record["id"], target: record["scope"],
                       attempt: record["attempt_count"].to_i + 1)
-        result = @fix_loop.run(@target)
+        result = with_lease_guard { @fix_loop.run(@target) }
         result
       rescue StandardError => e
         @bus&.publish("fix_supervisor:attempt_failed", error: "#{e.class}: #{e.message}")
         mission = Mission.new(root: @root)
         mission.defer!(reason: "supervisor: #{e.class}: #{e.message}", seconds: 60)
         :error
+      end
+
+      def with_lease_guard
+        stop = false
+        thread = Thread.new do
+          until stop
+            sleep LEASE_RENEW_SECONDS
+            break if stop
+            Mission.new(root: @root, bus: @bus).heartbeat!
+          end
+        rescue StandardError, ScriptError => e
+          @bus&.publish("fix_supervisor:lease_error", error: "#{e.class}: #{e.message}")
+        end
+        thread.abort_on_exception = false
+        yield
+      ensure
+        stop = true if defined?(stop)
+        thread&.kill
       end
 
       def due_for_target?(record)
