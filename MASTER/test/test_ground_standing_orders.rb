@@ -182,6 +182,20 @@ class StandingOrdersTest < Minitest::Test
     assert @orders.send(:event_match?, excluded, "tool:after", { tool: "write_file", path: "lib/x.rb" })
   end
 
+  def test_invalid_filter_is_ignored_and_reported
+    subject = order("trigger" => "event", "event" => "tool:after", "filter" => "[")
+
+    refute @orders.send(:filter_match?, subject, { tool: "write_file" })
+    assert @bus.events.any? { |event| event.first == "standing_order:invalid_filter" }
+  end
+
+  def test_invalid_exclude_is_ignored_and_reported
+    subject = order("trigger" => "event", "event" => "tool:after", "exclude" => "[")
+
+    refute @orders.send(:exclude_match?, subject, { tool: "write_file" })
+    assert @bus.events.any? { |event| event.first == "standing_order:invalid_exclude" }
+  end
+
   def test_an_empty_filter_matches_everything
     assert @orders.send(:filter_match?, order, {})
     refute @orders.send(:exclude_match?, order, {})
