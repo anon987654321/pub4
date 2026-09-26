@@ -37,6 +37,20 @@ class SearchPaletteTest < ActionDispatch::IntegrationTest
     assert_includes response.body, %(<turbo-stream action="update" target="#{SearchController::PALETTE_SUGGESTIONS}">)
   end
 
+  test "people search excludes accounts leaving the service" do
+    leaving = User.create!(
+      email_address: "search-leaving-#{SecureRandom.hex(4)}@brgen.no",
+      password: "password123",
+      username: "search_leaving_#{SecureRandom.hex(3)}"
+    )
+    leaving.update_columns(deleted_at: Time.current, deletion_scheduled_at: 7.days.from_now)
+
+    get global_search_path(q: "search_leaving_")
+
+    assert_response :success
+    refute_includes response.body, leaving.username
+  end
+
   test "the palette form says where it is searching from" do
     get communities_path
 
