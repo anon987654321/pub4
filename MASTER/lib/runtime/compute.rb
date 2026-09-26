@@ -170,7 +170,7 @@ module Master
         Timeout.timeout(timeout) do
           until active.empty?
             ractor, message = Ractor.select(*ractors)
-            worker_id, index, ok, value = message
+            _worker_id, index, ok, value = message
             active.delete(index)
             results[index] = ractor_result!(ok, index, value)
             next_index = refill_ractor(ractor, next_index, jobs, active)
@@ -178,7 +178,16 @@ module Master
         end
         results
       rescue Timeout::Error
+        kill_ractors(ractors)
         raise TimeoutError, timeout
+      end
+
+      def kill_ractors(ractors)
+        ractors.each do |ractor|
+          ractor.kill
+        rescue StandardError
+          nil
+        end
       end
 
       def ractor_result!(ok, index, value)
