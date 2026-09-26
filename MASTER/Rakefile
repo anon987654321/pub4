@@ -781,7 +781,7 @@ AUDIT_GATES = %w[
 # failed from one that crashed, and a crashing gate blocks nothing while reading
 # like a fault in the tree.
 #
-# The vocabulary is RAILS/gates/runner.rb's, which has separated these since it
+# The vocabulary is MASTER/gates/runner.rb's, which has separated these since it
 # grew a third state, and for the same reason: a coverage number a run did not
 # earn is the number people quote.
 AUDIT_LABEL = {
