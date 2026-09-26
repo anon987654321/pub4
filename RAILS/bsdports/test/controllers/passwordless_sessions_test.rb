@@ -70,6 +70,21 @@ class PasswordlessSessionsTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t("shared.flash.magic_link_invalid"), flash[:alert]
   end
 
+  def test_a_deletion_pending_account_cannot_use_an_existing_magic_link
+    @user.update_columns(
+      magic_link_token: "live-token",
+      magic_link_expires_at: 5.minutes.from_now,
+      deletion_scheduled_at: 1.day.from_now,
+      deleted_at: Time.current
+    )
+
+    get magic_session_url(token: "live-token")
+
+    assert_redirected_to new_session_url
+    assert_equal I18n.t("shared.flash.magic_link_invalid"), flash[:alert]
+    assert_nil @user.reload.magic_link_token, "a rejected link must be burned"
+  end
+
   def test_a_missing_or_empty_token_is_refused
     get magic_session_url(token: "")
     assert_redirected_to new_session_url
