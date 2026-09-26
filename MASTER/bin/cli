@@ -13,7 +13,8 @@ pinned_ruby = File.expand_path("../.ruby-version", __dir__)
 if File.file?(pinned_ruby)
   expected_ruby = File.read(pinned_ruby).strip
   if !expected_ruby.empty? && RUBY_VERSION != expected_ruby && ENV["MASTER_ALLOW_UNPINNED_RUBY"] != "1"
-    warn "cli: Ruby #{expected_ruby} required; running #{RUBY_VERSION} — use MASTER/bin/ruby bin/cli"
+    ruby_wrapper = File.expand_path("../bin/ruby", __dir__)
+    warn "cli: Ruby #{expected_ruby} required; running #{RUBY_VERSION} — use #{ruby_wrapper} bin/cli"
     exit 78
   end
 end

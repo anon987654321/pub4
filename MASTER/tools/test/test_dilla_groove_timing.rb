@@ -120,6 +120,32 @@ class TestGrooveTiming < Minitest::Test
 
   # Sonata-form phases. A gain of zero would mute a section outright; a gain
   # above one would make a section louder than the recapitulation it builds to.
+  def test_phrase_performance_is_deterministic_but_changes_across_a_four_bar_sentence
+    with_env("PHRASE_PERFORMANCE" => "1", "DILLA_RENDER_SEED" => "42") do
+      timings = 4.times.map { |bar| DillaGroove.phrase_performance_ms(bar:, role: :snare, beat_p: 60.0 / 88.0) }
+      refute_equal 1, timings.uniq.length, "phrase gesture must not collapse into one fixed offset"
+      repeated = 4.times.map { |bar| DillaGroove.phrase_performance_ms(bar:, role: :snare, beat_p: 60.0 / 88.0) }
+      assert_equal timings, repeated, "the same phrase position must reproduce exactly"
+    end
+  end
+
+  def test_phrase_velocity_tracks_the_statement_mutation_answer_arc
+    with_env("PHRASE_PERFORMANCE" => "1") do
+      values = %i[kick snare hat lead].map do |role|
+        [
+          DillaGroove.phrase_velocity_multiplier(bar: 0, role:),
+          DillaGroove.phrase_velocity_multiplier(bar: 2, role:),
+          DillaGroove.phrase_velocity_multiplier(bar: 3, role:),
+        ]
+      end
+
+      values.each do |statement, mutation, answer|
+        assert_operator mutation, :>, statement
+        assert_operator answer, :<, mutation
+      end
+    end
+  end
+
   def test_phase_gain_is_a_multiplier_bounded_by_the_recapitulation
     phases = %i[exposition development recapitulation coda]
     gains = phases.to_h { |phase| [phase, send(:phase_gain_multiplier, phase)] }

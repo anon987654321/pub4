@@ -2292,6 +2292,90 @@ module DillaGroove
     ghost: Math::PI * 0.25,
   }.freeze
 
+  # Phrase performance is the shared gesture underneath the individual hits.
+  # Four bars make one sentence: statement, repeat, mutation, answer. The
+  # sentence gets one seeded movement which every role partly shares, then each
+  # lane gets a small signed difference. That gives a band a common breath
+  # without making every instrument move as one block.
+  PHRASE_STATES = %i[statement repeat mutation answer].freeze
+  PHRASE_ROLE_BIAS_TICKS = {
+    kick: -1, kick_anchor: -1, kick_sync: -1,
+    snare: 1, clap: 1, ghost: 1,
+    hat: 0, hat_down: 0, hat_up: 0, open: 0,
+    bass: -1, pad: 1, ep: 1, keys: 1, chord: 1,
+    lead: 2, scale_lead: 2, xlead: 2,
+  }.freeze
+  PHRASE_VELOCITY_WEIGHT = {
+    kick: 1.0, kick_anchor: 1.0, kick_sync: 1.0,
+    snare: 0.95, clap: 0.9, ghost: 0.55,
+    hat: 0.7, hat_down: 0.7, hat_up: 0.75, open: 0.72,
+    bass: 0.82, pad: 0.4, ep: 0.45, keys: 0.45, chord: 0.45,
+    lead: 0.65, scale_lead: 0.65, xlead: 0.65,
+  }.freeze
+  PHRASE_STATE_GAIN = {
+    statement: 0.98,
+    repeat: 1.0,
+    mutation: 1.06,
+    answer: 0.90,
+  }.freeze
+
+  def phrase_state(bar)
+    PHRASE_STATES.fetch(bar.to_i % PHRASE_STATES.length)
+  end
+
+  def phrase_index(bar)
+    bar.to_i.div(PHRASE_STATES.length)
+  end
+
+  def phrase_shared_ticks(bar)
+    phrase = phrase_index(bar)
+    Random.new(stable_hash("#{render_seed}:phrase:#{phrase}:shared")).rand(-2..2)
+  end
+
+  def phrase_role_ticks(bar, role:)
+    return 0 unless enabled?
+    role_key = role.to_s.to_sym
+    return 0 unless PHRASE_ROLE_BIAS_TICKS.key?(role_key)
+
+    shared = phrase_shared_ticks(bar)
+    lane_seed = stable_hash("#{render_seed}:phrase:#{phrase_index(bar)}:#{role_key}")
+    lane = Random.new(lane_seed).rand(-1..1)
+    bias = PHRASE_ROLE_BIAS_TICKS.fetch(role_key)
+    state = phrase_state(bar)
+    ticks = case state
+            when :statement, :repeat
+              shared
+            when :mutation
+              shared + lane
+            when :answer
+              -shared + lane
+            end
+    ticks += (bias * 0.5).round if state == :mutation
+    ticks -= (bias * 0.5).round if state == :answer
+    ticks.clamp(-3, 3)
+  end
+
+  def phrase_performance_ms(bar:, role:, beat_p:)
+    return 0 unless enabled?
+    return 0 if ENV["PHRASE_PERFORMANCE"] == "0"
+    beat = beat_p.to_f
+    return 0 unless beat.positive?
+
+    tick_ms = (beat / 96.0) * 1000.0
+    (phrase_role_ticks(bar, role:) * tick_ms).round(3)
+  end
+
+  def phrase_velocity_multiplier(bar:, role:)
+    return 1.0 unless enabled?
+    return 1.0 if ENV["PHRASE_PERFORMANCE"] == "0"
+    weight = PHRASE_VELOCITY_WEIGHT.fetch(role.to_s.to_sym, 0.0)
+    return 1.0 if weight.zero?
+
+    state_gain = PHRASE_STATE_GAIN.fetch(phrase_state(bar))
+    (1.0 + ((state_gain - 1.0) * weight)).clamp(0.78, 1.10).round(4)
+  end
+
+
   # Slow-oscillating timing drift applied on top of per-hit jitter — the
   # difference between a groove that "breathes" over a phrase and one that's
   # merely noisy hit-to-hit. Deterministic (same bar always drifts the same
@@ -2649,6 +2733,7 @@ module DillaGroove
   def apply_event_timing!(t, role:, beat_p:, bar:, step:, bpm: 90, section: nil)
     t + role_timing_offset(role, beat_p, bar, step) +
       swing_jitter_ms(bpm, step, bar, role:, section:) +
+      phrase_performance_ms(bar:, role:, beat_p:) / 1000.0 +
       (role.to_s.start_with?("hat") ? hat_micro_delay_sec(bar, step, beat_p) : 0.0) +
       (%i[kick kick_anchor kick_sync].include?(role.to_sym) ? freehand_kick_sec(bar, step, beat_p) : 0.0)
   end

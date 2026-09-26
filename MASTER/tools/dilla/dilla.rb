@@ -7525,6 +7525,7 @@ def dilla_role_velocity(role, bar, step, sec_gain: 1.0, backbeat: false)
   # consistent dynamically (near-inaudible to clearly-present within the
   # same phrase), not the most locked-in.
   spread = role == :ghost ? 0.22 : 0.08
+  base *= DillaGroove.phrase_velocity_multiplier(bar:, role:)
   vel = dilla_velocity(base, bar, step, spread:) * sec_gain
   # Wonky primary: kick-forward; snares/hats sit under kick (tops were piercing).
   if wonky_primary_drums?

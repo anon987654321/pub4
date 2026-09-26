@@ -165,6 +165,12 @@ class TestTraceSupport < Minitest::Test
 
   # The fallback format is for an event the console gives no line, which is
   # normal mode; under verbose, the default, every event has a console line.
+  def test_dmesg_finding_filters_accept_ansi_and_verdict_lines
+    text = "\e[31mfix0: MASTER/lib/example.rb:12: missing gate\e[0m\r\n"
+    assert_equal ["fix0: MASTER/lib/example.rb:12: missing gate"], Master::Trace::Dmesg.findings(text)
+    assert_equal "plain line", Master::Trace::Dmesg.plain("plain line\r")
+  end
+
   def test_logging_formats_tool_events_and_redacts_details
     bus = Bus.new
     logging = Master::Trace::Logging.new(ring_buffer: [], event_bus: bus)
