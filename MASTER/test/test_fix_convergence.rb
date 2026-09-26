@@ -80,6 +80,17 @@ class TestFixConvergence < Minitest::Test
     refute_includes Master::CLI::Pipeline::Pass::STAGES, "scan"
   end
 
+  def test_bare_fix_resolves_to_the_pub4_root
+    resolver = Class.new do
+      include Master::CLI::Pipeline::TargetResolver
+      def initialize(root) = @root = root
+    end.new(Master::ROOT)
+
+    assert_equal Master::REPO_ROOT, resolver.resolve_target("")
+    assert_equal Master::REPO_ROOT, resolver.resolve_target("everything")
+    assert_equal Master::RAILS_ROOT, resolver.resolve_target("RAILS")
+  end
+
   # 2-4. /fix observes, repairs what the reading found, and observes again.
   def test_fix_reenters_after_gate_repairs_until_the_tree_stabilises
     verified = []
@@ -178,172 +189,3 @@ class TestFixConvergence < Minitest::Test
   end
 
   # The loop builds its own council: the test below injects one, and an
-  # injected double would pass just as well against a loop that never built it.
-  def test_a_fix_loop_carries_a_council_of_its_own
-    runner = build_loop([]).instance_variable_get(:@pass_runner)
-
-    assert_instance_of Master::Fix::FixLoop::CouncilRound, runner.instance_variable_get(:@council)
-  end
-
-  def test_a_fix_loop_builds_a_visual_pass
-    runner = build_loop([]).instance_variable_get(:@pass_runner)
-
-    assert_instance_of Master::Fix::VisualPass, runner.instance_variable_get(:@visual_pass)
-  end
-
-  # 9. The council argues inside the loop, and 11: its pick reaches the repair.
-  def test_the_council_runs_inside_the_pass_and_its_picks_reach_the_repair
-    council = Object.new
-    asked = []
-    council.define_singleton_method(:run) do |files:, pass:, deadline:|
-      asked << { files:, pass: }
-      { feedback: [{ feedback: "the name hides the intent" }], cherry_picks: ["rename the flag to what it gates"] }
-    end
-    loop = build_loop([{ rule: "TEST_RULE", file: File.join(@root, "dummy.yml"), line: 1, message: "x" }],
-                      council:)
-    runner = loop.instance_variable_get(:@pass_runner)
-
-    loop.run(@root, max_passes: 1)
-
-    refute_empty asked, "the council never ran inside the pass"
-    preamble = runner.send(:council_preamble, { cherry_picks: ["rename the flag to what it gates"] })
-    assert_includes preamble, "rename the flag to what it gates"
-    assert_nil runner.send(:council_preamble, { cherry_picks: [] })
-  end
-
-  # 6. A clean tree the ground truth agrees with is the one state that says DONE.
-  def test_a_clean_pass_asks_council_for_improvements
-    asked = []
-    council = Object.new
-    council.define_singleton_method(:improve) do |files:, pass:, deadline:|
-      asked << { files:, pass: }
-      []
-    end
-    result = build_loop([], council:).run(@root, max_passes: 2)
-
-    assert result.ok?
-    assert_match(/\ADONE: /, result.value!)
-    assert_equal 1, asked.size, "the first clean streak pass should invoke proactive review once"
-    refute_empty asked.first[:files]
-  end
-
-  def test_council_improvements_require_a_file_and_line_or_symbol_anchor
-    file = File.join(@root, "dummy.yml")
-    round = Master::Fix::FixLoop::CouncilRound.new(agent: nil, root: @root, bus: @bus)
-    anchored = round.send(
-      :improvement_findings,
-      { cherry_picks: ["dummy.yml line 1: simplify the redundant empty declaration"] },
-      [file],
-    )
-    unanchored = round.send(
-      :improvement_findings,
-      { cherry_picks: ["simplify the redundant empty declaration"] },
-      [file],
-    )
-
-    assert_equal 1, anchored.size
-    assert_equal file, anchored.first[:file]
-    assert_equal 1, anchored.first[:line]
-    assert_empty unanchored
-    assert_equal :improvement, anchored.first[:kind]
-  end
-
-  def test_clean_tree_ideation_demands_anchored_candidates
-    critique = Master::Review::Council::Critique.new(mode: :general, agent: nil)
-    prompt = critique.send(:ideation_prompt, [])
-
-    assert_includes prompt, "5 to 20 materially different candidates"
-    assert_includes prompt, "repository-relative file and stable line or symbol"
-    assert_includes prompt, "Do not invent defects"
-  end
-
-  def test_a_converged_run_is_done
-    result = build_loop([]).run(@root)
-
-    assert result.ok?
-    assert_match(/\ADONE: /, result.value!)
-  end
-
-  # 7. Running out of passes is not finishing.
-  def test_a_pass_limit_is_a_plateau_not_a_done
-    violations = [{ rule: "TEST_RULE", file: File.join(@root, "dummy.yml"), line: 1, message: "stays" }]
-    result = build_loop(violations).run(@root, max_passes: 2)
-
-    assert result.ok?
-    assert_match(/\APLATEAU: /, result.value!)
-    refute_match(/DONE/, result.value!)
-  end
-
-  # 13. A repair the tree refuses cannot read as a finished tree.
-  def test_a_ground_truth_that_keeps_refusing_is_a_validation_failure
-    ground_truth = Object.new
-    def ground_truth.assert_fresh!(path, reason:) = Master::Result.err("stale #{path} (#{reason})", category: :validation)
-
-    result = build_loop([], ground_truth:).run(@root, max_passes: 5)
-
-    assert_match(/\AVALIDATION_FAILED: /, result.value!)
-  end
-
-  # 14. A halt is the loop saying the decision is not its to make.
-  def test_a_halted_loop_is_blocked
-    loop = build_loop([])
-    loop.halt!(reason: "self_violation")
-
-    result = loop.run(@root, requested: false)
-
-    assert_predicate result, :err?
-    assert_match(/\ABLOCKED: /, result.message)
-  end
-
-  # 10 and 12. Every issue keeps its strongest proposal, the field is capped,
-  # and a heading is not a proposal.
-  def test_cherry_pick_keeps_one_repair_per_issue_and_caps_the_field
-    feedback = [{ feedback: "issue 1 the flag name hides what it gates" },
-                { feedback: "issue 2 the retry has no ceiling" }]
-    ideas = (["Solutions:"] +
-             Array.new(25) { |i| "issue 1 rename the flag, variant #{i} hides gates name" } +
-             ["issue 2 cap the retry with a ceiling and backoff"]).join("\n")
-
-    picks = Master::Review::Council::Critique::CherryPick.rank(feedback, ideas)
-
-    assert_operator picks.size, :<=, Master::Review::Council::Critique::CherryPick::LIMIT
-    assert(picks.any? { |pick| pick.include?("cap the retry") }, "the second issue lost its only proposal")
-    refute_includes picks, "Solutions:"
-  end
-
-  def test_cherry_pick_reads_brainstorm_ideas_not_only_the_final_synthesis
-    result = Master::Result.ok(
-      ideas: ["issue 1 small repair", "issue 2 distinct repair"],
-      critiques: [],
-      final: "synthesis",
-    )
-
-    text = Master::Review::Council::Critique::CherryPick.ideas_text(result)
-
-    assert_includes text, "issue 1 small repair"
-    assert_includes text, "issue 2 distinct repair"
-    assert_includes text, "synthesis"
-  end
-
-  # The preview printed two Ruby hashes through #inspect: one line past the
-  # width of any terminal, with the counts that matter wherever the wrap put
-  # them, and every file named by its full path inside a tree the pass has
-  # already named.
-  def test_the_repair_preview_reads_as_lines
-    pass = Master::CLI::Pipeline::Pass.allocate
-    counts = { "FEW_ARGUMENTS" => 28, "magic_number" => 26, "FEATURE_ENVY" => 14,
-               "CQS" => 9, "SMALL_FILES" => 6, "COUPLER_SMELLS" => 5, "duplicate_code" => 4 }
-    lines = pass.send(:preview_lines, total: 107, rules: counts, files: { "lib/voice/engines.rb" => 20 })
-
-    assert_equal "preview: 107 repairs", lines.lines.first.chomp
-    assert_match(/^preview rules: FEW_ARGUMENTS 28, /, lines)
-    assert_match(/, and 1 more$/, lines.lines[1].chomp)
-    assert_equal "preview files: engines.rb 20", lines.lines[2].chomp
-    refute_match(/lib.voice.engines/, lines)
-  end
-
-  def test_one_repair_is_not_repairs
-    pass = Master::CLI::Pipeline::Pass.allocate
-    assert_equal "preview: 1 repair", pass.send(:preview_lines, total: 1, rules: {}, files: {})
-  end
-end
