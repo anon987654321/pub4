@@ -14,6 +14,8 @@ module Master
           device = Master::Device::Agent.status(root:)
           { pairing: status, device: device }.inspect
         when /\Aowner(?:\s+(.*))?\z/
+          return "pair: local owner pairing requires Android/Termux" unless Master::Device.android? && Fiber[:master_visitor] != true
+
           label = $1.to_s.strip
           result = Master::Device::Agent.claim_owner!(root:, label:)
           Master::Ground::Pairing.redeem_notice(result)
@@ -39,6 +41,8 @@ module Master
 
       # /device — local Android companion status and ownership boundary.
       def dispatch_device(root, ctx: nil)
+        return "device: local-only" if Fiber[:master_visitor] == true
+
         _word, _rest = subcommand(ctx)
         status = Master::Device::Agent.status(root:)
         paired = status[:paired] ? "paired" : "unpaired"
