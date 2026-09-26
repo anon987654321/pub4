@@ -62,6 +62,28 @@ class TestSelfTest < Minitest::Test
     end
   end
 
+  def test_openbsd_deploy_corpus_uses_real_paths_and_skips_tests
+    Dir.mktmpdir do |workspace|
+      root = File.join(workspace, "MASTER")
+      openbsd = File.join(workspace, "OPENBSD")
+      FileUtils.mkdir_p(File.join(openbsd, "dev"))
+      FileUtils.mkdir_p(File.join(openbsd, "test"))
+
+      operator = File.join(openbsd, "OPERATOR.sh")
+      stage = File.join(openbsd, "dev", "operator_stage_1.zsh")
+      test_file = File.join(openbsd, "test", "fixture.rb")
+      File.write(operator, "#!/usr/bin/env zsh\n")
+      File.write(stage, "#!/usr/bin/env zsh\n")
+      File.write(test_file, "def fixture; end\n")
+
+      paths = Master::Review::Scan::SelfTest.new(root:).send(:build_deploy_paths)
+
+      assert_includes paths, operator
+      assert_includes paths, stage
+      refute_includes paths, test_file
+    end
+  end
+
   private
 
   def write_fixture_tree(root)
