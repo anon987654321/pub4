@@ -95,6 +95,17 @@ class MarketplaceReturnsTest < ActionDispatch::IntegrationTest
     assert_equal "private", event.visibility
     assert_nil event.metadata["reason"], "free-form return reasons must not enter the analytics event"
   end
+  test "repeated receipt does not restock or emit a second return event" do
+    order = delivered_order(@shop_listing)
+    sent_back = order.returns.create!(reason: "Feil farge")
+
+    sent_back.receive!(by: @seller)
+    sent_back.receive!(by: @seller)
+
+    assert_equal 5, @shop_listing.reload.stock
+    assert_equal 1, ActivityEvent.where(subject_type: "Marketplace::Listing", subject_id: @shop_listing.id,
+                                       event_name: "MarketplaceReturnReceived").count
+  end
   test "a received return is not a refunded one" do
     order = delivered_order(@shop_listing)
     sent_back = order.returns.create!(reason: "Feil farge")
