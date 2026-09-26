@@ -81,6 +81,30 @@ class TestFixConvergence < Minitest::Test
   end
 
   # 2-4. /fix observes, repairs what the reading found, and observes again.
+  def test_fix_reenters_after_gate_repairs_until_the_tree_stabilises
+    verified = []
+    states = [[0, ["RAILS/app/models/item.rb"]], [0, []]]
+    fix_loop = Object.new
+    fix_loop.define_singleton_method(:run) { |target, **| Master::Result.ok("DONE: clean") }
+    fix_loop.define_singleton_method(:preview) { |_| Master::Result.ok(total: 0, rules: {}, files: {}) }
+    scanner = Object.new
+    def scanner.scan(*) = Master::Result.ok([])
+    def scanner.scan_dir(*) = Master::Result.ok([])
+
+    result = Operator::GateChain.stub(:verify_fix, ->(target:) { verified << target; states.shift }) do
+      Master::CLI::CommandRegistry.stub(:observe, ->(*) { "clean" }) do
+        Master::CLI::CommandRegistry.dispatch_fix(
+          scanner:, fix_loop:, deliberation: nil, root: Master::ROOT, bus: nil,
+          ctx: { args: "RAILS --no-aesthetic" }
+        )
+      end
+    end
+
+    assert_equal 2, verified.size
+    assert_equal Master::RAILS_ROOT, verified.first
+    assert_includes result, "DONE: clean"
+  end
+
   def test_fix_observes_repairs_and_observes_again
     seen = []
     repaired = []
