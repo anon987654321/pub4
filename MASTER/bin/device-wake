@@ -57,10 +57,3 @@ wake.run_forever do |_phrase, _heard|
     conversation_deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 20
   end
 end
-
-def speak(text)
-  return if text.to_s.strip.empty?
-  return unless system("command", "-v", "termux-tts-speak", out: File::NULL, err: File::NULL)
-
-  system("termux-tts-speak", "-s", "MUSIC", text.to_s, out: File::NULL, err: File::NULL)
-end
