@@ -232,14 +232,8 @@ class Marketplace::Listing < ApplicationRecord
   def sold? = status == "sold"
 
   def delivery_badge
-    case delivery_promise
-    when 0 then "I dag i Bergen"
-    when 1 then "I morgen i Bergen"
-    when 2 then "I morgen Vestlandet"
-    when 3 then "1–2 dager"
-    when 4 then "3–5 dager"
-    when 5 then "Hentes"
-    end
+    key = DELIVERY_PROMISES.key(delivery_promise)
+    key ? I18n.t("marketplace.delivery_promise.#{key}") : nil
   end
 
   def record_event!(type, user: nil, metadata: {})
