@@ -24,7 +24,10 @@ module Master
         type = VALID_TYPES.include?(type.to_s) ? type.to_s : "general"
         return Result.err("memory_record: key must match #{KEY_RE.source}", category: :validation) unless KEY_RE.match?(key)
 
-        if (subject = Fiber[:master_pair_subject].to_s).strip != ""
+        subject = Fiber[:master_pair_subject].to_s
+        subject = Master::Device::Agent.owner_subject(root: @root) if subject.strip.empty? && defined?(Master::Device::Agent)
+
+        if subject.strip != ""
           path = Master::Ground::PersonalWorkspace.append_memory(root: @root, subject:, key:, body:, type:)
           @bus&.publish("memory:record", key:, type:, path: relative(path), paired: true)
           return Result.ok("memory_record: #{relative(path)}")
