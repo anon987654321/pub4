@@ -191,29 +191,51 @@ module Master
       class Autocommit < Base
         def call
           repo = File.expand_path(File.join(root, ".."))
-          out, _, status = Master::Io::Exec.capture3("git", "-C", repo, "status", "--porcelain")
+          paths = mutation_paths(repo)
+          return Result.ok(skipped: true, reason: "no owned mutation paths") if paths.empty?
+
+          relative = paths.map { |path| path.delete_prefix("#{repo}/") }.uniq
+          out, _, status = Master::Io::Exec.capture3("git", "-C", repo, "status", "--porcelain", "--", *relative)
           return Result.ok(skipped: true) unless status.success? && !out.strip.empty?
+
           commit_message = "auto: standing-order commit (#{out.lines.size} file(s))"
-          _, st = Master::Io::Exec.capture2e("git", "-C", repo, "commit", "-m", commit_message)
+          _, st = Master::Io::Exec.capture2e("git", "-C", repo, "commit", "-m", commit_message, "--", *relative)
           return Result.err("commit failed") unless st.success?
 
           push_out, push_st = Master::Io::Exec.capture2e("git", "-C", repo, "push")
           if push_st.success?
-            bus&.publish("autocommit:pushed", files: out.lines.size)
-            Result.ok(committed: true, pushed: true)
+            bus&.publish("autocommit:pushed", files: out.lines.size, paths: relative)
+            Result.ok(committed: true, pushed: true, paths: relative)
           else
-            bus&.publish("autocommit:push_failed", error: push_out.strip[0, 200])
-            Result.ok(committed: true, pushed: false, push_error: push_out.strip)
+            bus&.publish("autocommit:push_failed", error: push_out.strip[0, 200], paths: relative)
+            Result.ok(committed: true, pushed: false, paths: relative, push_error: push_out.strip)
           end
         rescue StandardError => e
           Result.err(e.message)
         end
+
+        private
+
+        def mutation_paths(repo)
+          tracker = Master::Trace::WriteTracker.current
+          touched = Array(tracker&.paths).filter_map { |path| owned_path(path, repo) }.uniq
+          return touched if touched.any?
+
+          [event&.dig(:path), event&.dig(:full)].filter_map { |path| owned_path(path, repo) }.uniq
+        end
+
+        def owned_path(path, repo)
+          value = path.to_s.strip
+          return if value.empty?
+
+          full = File.expand_path(value, root)
+          full.start_with?("#{repo}/") && File.file?(full) ? full : nil
+        rescue StandardError
+          nil
+        end
       end
 
     # Backup — openrsync standing order.
-    # Syncs ~/pub4 to wingman1.openbsd.amsterdam:backup using openrsync over SSH.
-    # Runs as a background standing order; never blocks the main loop.
-      class Backup < Base
         REMOTE_HOST = "s4vm23@wingman1.openbsd.amsterdam"
         REMOTE_PATH = "backup"
         SSH_OPTS = %w[-o BatchMode=yes -o ConnectTimeout=10].freeze
