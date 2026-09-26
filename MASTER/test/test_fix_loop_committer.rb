@@ -145,8 +145,6 @@ class TestFixLoopCommitter < Minitest::Test
   # An explicit fix owns its target: a change already sitting in a target
   # file is committed with the fix, and a dirty path outside it is not.
   def test_architecture_scope_blocks_a_cross_boundary_commit
-    write_file("RAILS/apps.yml", "apps:\n")
-    write_file("MASTER/README.md", "# master\n")
     git = FakeGit.new([], ["RAILS/apps.yml", "MASTER/README.md"])
     bus = FakeBus.new
     committer = Master::Fix::FixLoop::Committer.new(git:, bus:, root: Master::REPO_ROOT)
