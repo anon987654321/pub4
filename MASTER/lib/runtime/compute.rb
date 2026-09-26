@@ -127,27 +127,33 @@ module Master
         invalid = items.index { |item| !valid_invoke_job?(item) }
         raise ArgumentError, "invalid ractor invoke job at #{invalid}" if invalid
 
-        items.map { |item| Ractor.make_shareable(item) }
+        items.map { |item| Ractor.make_shareable(item, copy: true) }
       end
 
       def spawn_ractors(operation, worker_count)
         Array.new(worker_count) do |worker_id|
           Ractor.new(operation.to_sym, worker_id) do |op, id|
-            loop do
-              message = Ractor.receive
-              break if message == :stop
-
-              job_index, payload = message
-              begin
-                result = Master::Runtime::Compute.invoke(op, payload)
-                Ractor.yield([id, job_index, true, Ractor.make_shareable(result)])
-              rescue StandardError, SecurityError => e
-                error = { "class" => e.class.name.to_s, "message" => e.message.to_s }.freeze
-                Ractor.yield([id, job_index, false, error])
-              end
-            end
+            Master::Runtime::Compute.ractor_loop(op, id)
           end
         end
+      end
+
+      def ractor_loop(operation, worker_id)
+        loop do
+          message = Ractor.receive
+          break if message == :stop
+
+          job_index, payload = message
+          ractor_process(worker_id, job_index, operation, payload)
+        end
+      end
+
+      def ractor_process(worker_id, job_index, operation, payload)
+        result = invoke(operation, payload)
+        Ractor.yield([worker_id, job_index, true, Ractor.make_shareable(result, copy: true)])
+      rescue StandardError, SecurityError => e
+        error = { "class" => e.class.name.to_s, "message" => e.message.to_s }.freeze
+        Ractor.yield([worker_id, job_index, false, error])
       end
 
       def seed_ractors(ractors, jobs)
@@ -194,14 +200,21 @@ module Master
       def stop_ractors(ractors)
         return unless ractors
 
-        ractors.each do |ractor|
-          begin
-            ractor.send(:stop)
-          rescue StandardError
-            nil
-          end
-        end
-        ractors.each { |ractor| ractor.take rescue nil }
+        ractors.each { |ractor| stop_ractor(ractor) }
+      end
+
+      def stop_ractor(ractor)
+        ractor.send(:stop)
+      rescue StandardError
+        nil
+      ensure
+        ractor_take(ractor)
+      end
+
+      def ractor_take(ractor)
+        ractor.take
+      rescue StandardError
+        nil
       end
 
       def invoke(operation, payload)
