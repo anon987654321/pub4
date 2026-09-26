@@ -42,7 +42,7 @@ class MarketplaceReturnsTest < ActionDispatch::IntegrationTest
 
   test "stale return instances do not restock twice" do
     ActsAsTenant.with_tenant(@city) do
-      order = paid_shop_order
+      order = delivered_order(@shop_listing)
       sent_back = order.returns.create!(reason: "Feil farge")
       first = Marketplace::Return.strict_loading(false).find(sent_back.id)
       second = Marketplace::Return.strict_loading(false).find(sent_back.id)
@@ -51,7 +51,7 @@ class MarketplaceReturnsTest < ActionDispatch::IntegrationTest
       second.receive!(by: @seller)
 
       assert_equal "received", sent_back.reload.status
-      assert_equal 1, order.reload.listing.available_quantity
+      assert_equal 5, @shop_listing.reload.stock
       assert_equal 1, Notification.where(
         source_type: "Marketplace::Return",
         source_id: sent_back.id,
