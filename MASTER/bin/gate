@@ -1,6 +1,9 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require_relative "../lib/boot/entrypoint"
+Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
+
 # The scan and critique pass over all three trees — two stages of the
 # repo-wide chain, not the chain itself. `MASTER/bin/operator gate` is the chain:
 # it runs this for the lexical and semantic tiers, then the RAILS gates, the
