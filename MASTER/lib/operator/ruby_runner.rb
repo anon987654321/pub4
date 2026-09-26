@@ -56,8 +56,11 @@ module Operator
     end
 
     def command_path(name)
-      output, status = Open3.capture2e("command", "-v", name)
-      status.success? ? output.to_s.strip : ""
+      path_entries = ENV.fetch("PATH", "").split(File::PATH_SEPARATOR)
+      path_entries.filter_map do |directory|
+        path = File.join(directory, name)
+        path if File.file?(path) && File.executable?(path)
+      end.first.to_s
     end
 
     def pinned_version(root)
