@@ -60,7 +60,7 @@ class Takeaway::RestaurantsController < Takeaway::BaseController
 
   private
 
-  def set_restaurant = (@restaurant = find_by_slug_or_id(Takeaway::Restaurant, params[:id]))
+  def set_restaurant = (@restaurant = find_by_slug_or_id(Takeaway::Restaurant.publicly_visible, params[:id]))
 
   def authorize_owner!
     redirect_to(restaurants_path, alert: t("flash.takeaway.not_the_owner")) unless @restaurant.owner?(Current.user)
@@ -100,7 +100,7 @@ class Takeaway::RestaurantsController < Takeaway::BaseController
   end
 
   def promotional_menu_feature
-    restaurant = Takeaway::Restaurant.active
+    restaurant = Takeaway::Restaurant.publicly_visible
       .joins(menu_items: :photo_attachment)
       .merge(Takeaway::MenuItem.available)
       .includes(menu_items: { photo_attachment: :blob })
@@ -121,7 +121,7 @@ class Takeaway::RestaurantsController < Takeaway::BaseController
   def nearby_restaurants_for(restaurant)
     return Takeaway::Restaurant.none unless restaurant.geo?
 
-    Takeaway::Restaurant.active
+    Takeaway::Restaurant.publicly_visible
       .where.not(id: restaurant.id)
       .nearby(restaurant.latitude, restaurant.longitude, 5)
       .limit(6)
