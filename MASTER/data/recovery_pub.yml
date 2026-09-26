@@ -6,8 +6,9 @@ name: pub_restore_contract
 # could only drift. lint:data_singularity and lint:dedup both failed on the pair.
 updated: "2026-06-26"
 layout_note: >-
-  Paths naming DEPLOY/ predate its split into RAILS/, OPENBSD/ and STUDIO/.
-  Those three are repointed; DEPLOY/bp and DEPLOY/sh have no successor here.
+  Paths naming DEPLOY/ predate its split into RAILS/, OPENBSD/ and the
+  MASTER/tools plane. Those paths are repointed; DEPLOY/bp and DEPLOY/sh have no
+  successor here.
 
 law:
   - Never mark renamed material as restored.
@@ -59,7 +60,6 @@ checks:
     - RECOVERY/pub/README.md
     - MASTER/data/recovery/plugin_schema_v1.json
     - DEPLOY/bp/RESTORE_SOURCE_PIPELINE.md
-    - STUDIO/postpro/IMAGE_ENGINE_POSITIONING.md
 
   missing_until_restored:
     - RECOVERY/pub/__OLD_BACKUPS/MEGA_ALL_APPS.md
