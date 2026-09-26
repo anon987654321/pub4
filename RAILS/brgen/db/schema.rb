@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_25_143000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_26_183000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -669,6 +669,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_25_143000) do
     t.index ["marketplace_address_id"], name: "index_marketplace_checkouts_on_marketplace_address_id"
     t.index ["user_id", "status"], name: "index_marketplace_checkouts_on_user_id_and_status"
     t.index ["user_id"], name: "index_marketplace_checkouts_on_user_id"
+    t.datetime "abandoned_cart_reminded_at"    t.index ["status", "abandoned_cart_reminded_at", "updated_at"], name: "index_marketplace_checkouts_on_abandoned_cart_reminder"
+
   end
 
   create_table "marketplace_deals", force: :cascade do |t|
