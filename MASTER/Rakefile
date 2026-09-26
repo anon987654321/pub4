@@ -27,6 +27,16 @@ Rake::TestTask.new(:test) do |t|
   t.warning = false
 end
 
+desc "Check Phoenix regeneration boundaries and provenance contracts"
+task :architecture do
+  $LOAD_PATH.unshift(File.join(__dir__, "lib"))
+  require "master"
+  report = Master::Phoenix.check
+  puts Master::Phoenix.line
+  report.failures.each { |failure| puts "phoenix0: #{failure}" }
+  abort "phoenix0: architecture contract failed" unless report.clean
+end
+
 desc "Generate and objectively inspect a TTS torture suite"
 task :voice_benchmark do
   run_tool("tools/voice_benchmark.rb")
