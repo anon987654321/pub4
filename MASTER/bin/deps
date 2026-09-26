@@ -4,7 +4,7 @@
 require_relative "../lib/boot/entrypoint"
 
 ROOT = File.expand_path("..", __dir__)
-Master::Boot::Entrypoint.prepare!(root: ROOT)
+Master::Boot::Entrypoint.reexec_pinned_ruby!(root: ROOT, env: ENV, out: $stderr, argv: ARGV, program: $PROGRAM_NAME)
 
 manager = Master::Boot::DependencyManager.new(root: ROOT)
 
@@ -18,10 +18,12 @@ result = case command
            status[:bundle_ok]
          when "install", "repair"
            manager.install!
+         when "update"
+           manager.update!
          when "system"
            manager.install_system_packages!
          else
-           warn "usage: bin/deps [check|install|repair|system]"
+           warn "usage: bin/deps [check|install|repair|update|system]"
            exit 64
          end
 
