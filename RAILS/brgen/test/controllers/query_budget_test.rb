@@ -143,7 +143,7 @@ def seed_listings(count, categories:)
     email_address: "listing-#{SecureRandom.hex(4)}@brgen.no",
     password: "password123", city: @city,
   )
-  conditions = %w[fair good like_new]
+  conditions = %w[good satisfactory very_good]
 
   Array.new(count) do |i|
     listing = Marketplace::Listing.create!(

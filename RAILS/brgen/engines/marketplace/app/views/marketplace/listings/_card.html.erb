@@ -17,9 +17,8 @@
     <%# Sold outranks casual outranks condition, and only sold is loud. %>
     <% badge, badge_soft =
          if listing.sold? then [t("marketplace.sold"), false]
-         elsif listing.casual? then [t("marketplace.from_a_person"), true]
          elsif listing.condition.present?
-           [t("marketplace.conditions.#{listing.condition}", default: listing.condition.tr("_", " ")), true]
+           [listing.condition_label, true]
          end %>
     <%= render "marketplace/card_media", photo:, fallback_char: listing.title.to_s.first&.upcase || "?", badge:, badge_soft: badge_soft == true %>
 
@@ -37,7 +36,10 @@
               (distance_km ? t("marketplace.distance_km", km: number_with_precision(distance_km, precision: 1)) : nil),
               listing.category&.name ].compact.join(" · ") %>
       </div>
-      <%= tag.span listing.delivery_badge, class: "store-badge store-badge--delivery" if listing.delivery_badge.present? %>
+      <div class="listing-source-badges">
+        <%= tag.span listing.store_id.present? ? t("marketplace.from_a_shop") : t("marketplace.from_a_person"), class: "store-badge listing-source-badge#{listing.store_id.present? ? " listing-source-badge--shop" : ""}" %>
+        <%= tag.span listing.delivery_badge, class: "store-badge store-badge--delivery" if listing.delivery_badge.present? %>
+      </div>
       <% if (seller = listing.user&.display_name).present? %>
         <%= tag.span t("marketplace.seller_badge", name: seller), class: "store-badge" %>
       <% end %>

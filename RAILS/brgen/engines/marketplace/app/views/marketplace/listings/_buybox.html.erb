@@ -13,10 +13,9 @@
   <% if @listing.photo_processing? %>
     <p class="listing-status listing-status--muted"><%= t("marketplace.photo_processing_notice") %></p>
   <% end %>
-  <p><%= [(@listing.condition.present? ? t("marketplace.conditions.#{@listing.condition}", default: @listing.condition) : nil), @listing.location].compact.join(" · ") %></p>
+  <p><%= [@listing.condition_label, @listing.location].compact.join(" · ") %></p>
   <p class="listing-delivery"><%= @listing.delivery_badge %></p>
-  <p><%= tag.strong(@listing.user&.display_name || t("chat.anon")) %>
-    <% if @listing.reviews_count.to_i.positive? %> · <%= t("marketplace.seller_rating", rating: number_with_precision(@listing.rating, precision: 1)) %><% end %></p>
+  <p><%= tag.strong(t("marketplace.sold_by", name: (@listing.store&.name || @listing.user&.display_name || t("chat.anon")))) %> · <%= @listing.store_id.present? ? t("marketplace.shop_seller") : t("marketplace.private_seller") %><% if @listing.reviews_count.to_i.positive? %> · <%= t("marketplace.seller_rating", rating: number_with_precision(@listing.rating, precision: 1)) %><% end %></p>
   <p><%= t("marketplace.views", count: @listing.views_count.to_i) %> · <%= t("marketplace.saves", count: @listing.favorites.size) %></p>
   <%= render "marketplace/listings/buy_bar" %>
   <%# seller can read back nil: User is acts_as_tenant-scoped on city, so a
