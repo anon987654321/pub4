@@ -44,6 +44,7 @@ class TestDependencyManager < Minitest::Test
       bundler ? "/fake/bundle" : nil
     end
     manager
+  end
 
   def test_clean_bundle_does_not_install_or_touch_lock
     manager = fake_manager([[true, "The Gemfile's dependencies are satisfied", ""]])
@@ -53,7 +54,7 @@ class TestDependencyManager < Minitest::Test
 
     assert result.success?
     assert_equal 1, @commands.length
-    assert_equal ["bundle", "check"], @commands.first.first[1..]
+    assert_equal ["check"], @commands.first.first[1..]
     assert_equal before, File.read(File.join(@root, "Gemfile.lock"))
   end
 
@@ -118,7 +119,7 @@ class TestDependencyManager < Minitest::Test
 
     argv, label = manager.send(:package_command)
     assert_equal "pkg", label
-    assert_equal %w[pkg install -y], argv.first(4)
+    assert_equal %w[pkg install -y], argv.first(3)
     assert_includes argv, "sqlite"
   end
 
