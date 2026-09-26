@@ -10,6 +10,7 @@ import Autosave from "pub4/autosave"
 import DraftStore from "pub4/draft_store"
 import MediaPicker from "pub4/media_picker"
 import FeedCompose from "pub4/feed_compose"
+import VisualSurface from "pub4/visual_surface"
 
 // @stimulus-components packages, matching stimulus_boot.js's own table
 // convention — see its COMPONENT_REGISTRATIONS for why these stay separate
@@ -30,6 +31,7 @@ export function bootSocialStimulus(application) {
   application.register("draft-store", DraftStore)
   application.register("media-picker", MediaPicker)
   application.register("feed-compose", FeedCompose)
+  application.register("visual-field", VisualSurface)
 
   COMPONENT_REGISTRATIONS.forEach(([name, component]) => application.register(name, component))
 }
