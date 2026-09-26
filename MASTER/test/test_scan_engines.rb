@@ -83,7 +83,7 @@ class TestScanEngines < Minitest::Test
     assert PF.skip_path?("/repo/RAILS/brgen/db/schema.rb", root:)
     assert PF.skip_path?("/repo/RAILS/brgen/app/assets/builds/application.css", root:)
     assert PF.skip_path?("/repo/RAILS/shared/public/swiper-bundle.min.css", root:)
-    assert PF.skip_path?("/repo/STUDIO/dilla/scratch/venv/x.py", root:)
+    assert PF.skip_path?("/repo/MASTER/tools/dilla/scratch/venv/x.py", root:)
     refute PF.skip_path?("/repo/MASTER/lib/review/scan/scanner.rb", root:)
     refute PF.skip_path?("/repo/RAILS/brgen/db/seeds.rb", root:)
   end
