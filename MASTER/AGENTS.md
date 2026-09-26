@@ -200,7 +200,7 @@ that a fresh agent gets wrong on its first attempt.
 
 **Ruby is pinned to 3.4.9.** Run everything as
 `RBENV_VERSION=3.4.9 rbenv exec ruby ...`. Bare `ruby` picks up whatever is on
-PATH; `RAILS/gates/runner.rb` prints a one-line warning about it and carries on,
+PATH; `MASTER/gates/runner.rb` prints a one-line warning about it and carries on,
 so app-bundle gates then fail for the interpreter rather than for a finding.
 `RBENV_VERSION` alone does nothing where rbenv's shims are not on PATH, which
 is this Mac: bare `ruby` is Homebrew's 4.0.5. `MASTER/bin/ruby` resolves 3.4.
@@ -463,7 +463,7 @@ to edit it by hand. Editing the build is a fix that survives until the next
 | Persona / voice policy | `topics.persona` |
 | Law / scanners / loop | all scanner law is `data/rules.yml`; the executable law is `law/` |
 | Extend runtime behavior | `data/spine.yml` header and `test/test_core_no_lib_backedges.rb`. New ability in the fold = one Effect verb in `lib/core/world.rb`; new constraint = one rule in `lib/core/constitution.rb`; anything else is ordinary `lib/` and must not grow it (`rake lint:spine`) |
-| Worn type / layout gates | `data/rules.yml` `design_rules.worn_type` + `RAILS/gates/support/geometry_type.rb`. Feed is a short measure; legal/prose is 66ch. |
+| Worn type / layout gates | `data/rules.yml` `design_rules.worn_type` + `MASTER/gates/support/geometry_type.rb`. Feed is a short measure; legal/prose is 66ch. |
 | brgen city network / verticals | `RAILS/brgen/AGENTS.md` — one process, city apex + subdomain engines |
 
 Touch-map: `data/agent_map.yml`. Law sections live in `data/rules.yml`. Work is a sentence, or `/review [path]`. Slash set: `/review` `/status` `/undo` `/commit` `/model` `/pair` `/doctor` `/help` `/clear`.
@@ -508,7 +508,7 @@ gates it names exist.
    gate: an ordering rule for two commands run on the VPS; nothing in the repo
    observes whether the box was deployed after its last pull.
 8. Feature truth: `RAILS/apps.yml`; backlog and debt: repo-root `TODO.md`. —
-   gate: `RAILS/gates/lib/source/apps_yml.rb`
+   gate: `MASTER/gates/lib/source/apps_yml.rb`
 9. Never autonomously run `vmctl console/stop/start` or kill `cu` on server4 —
    see `OPENBSD/RUNBOOK.md`. — no gate: a prohibition on an action, not a
    property of the tree; the guard is the human-only env var in item 11.
