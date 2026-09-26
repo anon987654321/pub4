@@ -93,3 +93,61 @@ review_questions:
   - Does the wide layout add information or only columns?
   - Does the mobile layout recompose or merely shrink?
   - Is the proposed change supported by rendered evidence?
+
+vertical_anatomy:
+  brgen_social:
+    attention: person_place_activity
+    structure: [orientation, feed, composer, context, return_path]
+    reference_lenses: [x]
+  messenger:
+    attention: conversation
+    structure: [rail, inbox, thread, composer, contextual_artifact]
+    reference_lenses: [antigravity, x, hey]
+    preservation: keep_declared_geometry_and_existing_messenger_snapshots
+  marketplace:
+    attention: item_price_trust
+    structure: [orientation, discovery, filters, listings, item_detail, purchase_or_contact]
+    reference_lenses: [x, hey]
+  dating:
+    attention: person_choice
+    structure: [orientation, person_focus, evidence, decision_actions, match_handoff]
+    reference_lenses: [x, hey]
+  takeaway:
+    attention: food_availability_order
+    structure: [restaurant_identity, menu_or_catalog, availability, cart, checkout_status]
+    reference_lenses: [hey, x]
+  radio:
+    attention: sound_track_artist
+    structure: [station_identity, now_playing, player, queue, discovery, visualizer]
+    reference_lenses: [antigravity]
+  tv:
+    attention: video_story
+    structure: [player_or_feed, title_context, engagement, next_item, sound]
+    reference_lenses: [x, antigravity]
+  maps:
+    attention: place_relation
+    structure: [search, map, result_list_or_sheet, place_detail, route_or_action]
+    reference_lenses: [x, antigravity]
+  amber:
+    attention: garment_outfit
+    structure: [wardrobe_orientation, visual_inventory, item_detail, outfit_composition, next_action]
+    reference_lenses: [hey, antigravity]
+  bsdports:
+    attention: port_package
+    structure: [search, identity, version, install_or_use, dependencies, documentation]
+    reference_lenses: [antigravity]
+  completion_rule:
+    every_surface_must_answer:
+      - what_am_i_looking_at
+      - what_state_is_it_in
+      - what_can_i_do_next
+      - how_do_i_get_back
+    responsive_rule:
+      - mobile_recomposes
+      - desktop_adds_information_not_chrome
+      - touch_targets_remain_measured
+    visual_rule:
+      - render_first
+      - source_second
+      - protect_operator_owned_values
+      - change_only_with_evidence
