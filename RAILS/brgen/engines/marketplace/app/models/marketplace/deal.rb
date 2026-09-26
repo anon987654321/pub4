@@ -28,7 +28,7 @@ module Marketplace
     }
     # A deal whose listing has lapsed is still "active" on its own dates, and
     # used to keep a sold-two-months-ago chair on the marketplace front page.
-    scope :live, -> { active.joins(:listing).merge(Marketplace::Listing.live) }
+    scope :live, -> { active.joins(:listing).merge(Marketplace::Listing.publicly_visible) }
 
     scope :featured, -> { where(featured: true) }
 
