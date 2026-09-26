@@ -87,6 +87,21 @@ class TestBinRuby < Minitest::Test
     end
   end
 
+  def test_missing_ruby_pin_uses_available_ruby
+    old_path = ENV["PATH"]
+    Dir.mktmpdir do |root|
+      fake = File.join(root, "ruby")
+      File.write(fake, "#!/bin/sh\nprintf '4.0.7'\n")
+      File.chmod(0o755, fake)
+      ENV["PATH"] = "#{root}#{File::PATH_SEPARATOR}#{old_path}"
+      out, err, status = unbundled { Open3.capture3(BIN, "-e", "print RUBY_VERSION") }
+      assert status.success?, err
+      assert_equal "4.0.7", out
+    end
+  ensure
+    ENV["PATH"] = old_path
+  end
+
   def test_openbsd_doas_install_uses_pinned_minor_package_branch
     script = File.read(BIN)
 
