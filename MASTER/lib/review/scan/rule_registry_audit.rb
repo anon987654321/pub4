@@ -6,7 +6,7 @@ module Master
       # Audits rules.yml declarative corpus vs Ruby scanner registry.
       class RuleRegistryAudit
         Report = Data.define(:yaml_rules, :registry_ids, :kernel_ids, :lexical_wired, :lexical_unwired,
-                             :semantic_only, :structural_unwired, :dep_graph_gaps, :mechanical) do
+                             :semantic_only, :structural_unwired, :dep_graph_gaps, :mechanical, :source_drift) do
           # "clean" over 99 rules and "clean" over 225 are different claims, and
           # until now they printed identically everywhere except rake constitution.
           #
@@ -30,17 +30,6 @@ module Master
             (mechanical.size * 100.0 / yaml_rules).round(1)
           end
 
-          # The same three populations that make the audit useful, exposed as
-          # names rather than only counts. A YAML rule represented by `folded_into`
-          # belongs to the detector named by that field, so it is not reported as
-          # an unexplained YAML-only rule.
-          def source_drift
-            {
-              yaml_only: @yaml_only.dup.freeze,
-              law_only: @law_only.dup.freeze,
-              registry_only: @registry_only.dup.freeze,
-            }
-          end
         end
 
         def initialize(root: Master::ROOT)
@@ -52,7 +41,7 @@ module Master
           registry = build_registry_ids
           c = classify_yaml_entries(yaml_entries, registry)
 
-          report = Report.new(
+          Report.new(
             yaml_rules: c[:yaml_ids].size,
             registry_ids: registry,
             kernel_ids: c[:kernel],
@@ -62,9 +51,8 @@ module Master
             structural_unwired: c[:structural_unwired],
             dep_graph_gaps: ungraphed_rule_ids(registry),
             mechanical: mechanical(yaml_entries, registry:).map { |rule| rule["id"] },
+            source_drift: source_drift(yaml_entries, registry),
           )
-          define_source_drift(report, yaml_entries, registry)
-          report
         end
 
         # One statement of "something can run this rule", because three gate
@@ -73,26 +61,26 @@ module Master
         #
         # `folded_into` names the rule that reports for this one: the id survives
         # so principle_map can trace it, and the detector exists once, elsewhere.
-        def define_source_drift(report, yaml_entries, registry)
+        def source_drift(yaml_entries, registry)
           yaml_ids = yaml_entries.map { |rule| key_of(rule) }.to_set
           laws = law_ids
           registry_ids = registry.map(&:to_s).map(&:downcase).to_set
 
-          report.instance_variable_set(
-            :@yaml_only,
-            yaml_entries.filter_map do |rule|
-              id = key_of(rule)
-              folded = rule["folded_into"].to_s.downcase
-              next if laws.include?(id) || registry_ids.include?(id)
-              next if !folded.empty? && (laws.include?(folded) || registry_ids.include?(folded))
+          yaml_only = yaml_entries.filter_map do |rule|
+            id = key_of(rule)
+            folded = rule["folded_into"].to_s.downcase
+            next if laws.include?(id) || registry_ids.include?(id)
+            next if !folded.empty? && (laws.include?(folded) || registry_ids.include?(folded))
 
-              rule["id"]
-            end.sort,
-          )
-          report.instance_variable_set(:@law_only, (laws - yaml_ids).sort)
-          report.instance_variable_set(:@registry_only, (registry_ids - yaml_ids).sort)
+            rule["id"]
+          end
+
+          {
+            yaml_only: yaml_only.sort.freeze,
+            law_only: (laws - yaml_ids).sort.freeze,
+            registry_only: (registry_ids - yaml_ids).sort.freeze,
+          }.freeze
         end
-        private :define_source_drift
 
         def mechanical(entries, registry: build_registry_ids)
           laws = law_ids
