@@ -69,14 +69,6 @@ module Master
       config.fetch(:bus) { $stderr }.puts "config validation warnings: #{config.validate.join('; ')}"
     end
 
-    def fast_agent_stub
-      Object.new.tap do |stub|
-        stub.define_singleton_method(:call) do |_ctx|
-          Master::Result.err("fast mode: /status /help only", category: :validation)
-        end
-        stub.define_singleton_method(:model) { "fast" }
-      end
-    end
 
     def build_infrastructure(root)
       config = Ground::Config.new(root)
