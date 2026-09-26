@@ -3,6 +3,7 @@
 require "json"
 require "fileutils"
 require "securerandom"
+require "socket"
 require "time"
 require_relative "../io/atomic_write"
 
@@ -19,6 +20,7 @@ module Master
       MAX_GOAL_BYTES = 2_048
       MAX_PLAN_BYTES = 4_096
       LEASE_SECONDS = 300
+      LEASE_RENEW_SECONDS = 60
       RETRY_BASE_SECONDS = 60
       RETRY_MAX_SECONDS = 3_600
       STATES = %w[queued running waiting completed failed blocked interrupted].freeze
@@ -26,6 +28,14 @@ module Master
       STAGES = %w[discover plan execute verify deliver].freeze
 
       attr_reader :root, :id
+
+      def self.instance_id
+        if @instance_pid != Process.pid
+          @instance_pid = Process.pid
+          @instance_id = "#{Socket.gethostname}:#{Process.pid}:#{SecureRandom.hex(8)}"
+        end
+        @instance_id
+      end
 
       def initialize(root: Master::ROOT, bus: nil, checkpoint: nil)
         @root = File.expand_path(root)
@@ -131,7 +141,7 @@ module Master
           return self unless @record
 
           @record["last_seen_at"] = now
-          if @record["state"] == "running"
+          if @record["state"] == "running" && @record["lease_owner"].to_s == self.class.instance_id
             @record["lease_until"] = (Time.now.utc + LEASE_SECONDS).iso8601
           end
           persist!
@@ -326,7 +336,7 @@ module Master
         return false unless record["scope"].to_s == relative(scope).to_s
 
         return true unless record["state"].to_s == "running"
-        return true if record["lease_owner"].to_s == Process.pid.to_s
+        return true if record["lease_owner"].to_s == self.class.instance_id
         return false unless lease_expired?(record)
 
         true
@@ -334,7 +344,7 @@ module Master
 
       def claim_unlocked!
         if @record["state"] == "running" &&
-           @record["lease_owner"].to_s != Process.pid.to_s &&
+           @record["lease_owner"].to_s != self.class.instance_id &&
            !lease_expired?(@record)
           raise "mission already leased by pid=#{@record["lease_owner"]}"
         end
@@ -346,7 +356,7 @@ module Master
         @record["last_seen_at"] = now
         @record["next_wake_at"] = nil
         @record["wake_reason"] = nil
-        @record["lease_owner"] = Process.pid.to_s
+        @record["lease_owner"] = self.class.instance_id
         @record["lease_until"] = (Time.now.utc + LEASE_SECONDS).iso8601
       end
 
@@ -382,7 +392,7 @@ module Master
           "wake_reason" => nil,
           "wake_requested" => false,
           "last_seen_at" => now,
-          "lease_owner" => Process.pid.to_s,
+          "lease_owner" => self.class.instance_id,
           "lease_until" => (Time.now.utc + LEASE_SECONDS).iso8601,
         }
       end

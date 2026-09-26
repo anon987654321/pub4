@@ -13,6 +13,7 @@ module Master
           return Result.err("fix_loop already running") if @bg_thread&.alive?
           @halted = false
           @halt_reason = nil
+          @bg_stop_requested = false
           @bg_mutex ||= Mutex.new
           @bg_condition ||= ConditionVariable.new
           @bg_target = target
@@ -20,9 +21,7 @@ module Master
           prepared = prepare_background_mission(target)
           return prepared unless prepared.ok?
 
-          @supervisor = Supervisor.new(root: @root, target:, fix_loop: self, bus: @bus,
-                                       wake_mutex: @bg_mutex, wake_condition: @bg_condition)
-          @bg_thread = Thread.new { @supervisor.run_forever }
+          @bg_thread = Thread.new { supervise_background(target) }
           @bg_thread.abort_on_exception = false
           @bus&.publish("fix_loop:background_start", target:)
           Result.ok("fix_loop background started")
@@ -31,6 +30,7 @@ module Master
         def stop_background!
           return Result.err("fix_loop not running") unless @bg_thread&.alive?
 
+          @bg_stop_requested = true
           @supervisor&.stop!
           @bg_thread.join(2)
           @bg_thread.kill if @bg_thread&.alive?
@@ -62,6 +62,7 @@ module Master
         def halt!(reason: "self_violation")
           @halted = true
           @halt_reason = reason
+          @bg_stop_requested = true
           @supervisor&.stop!
           @bg_thread&.kill if @bg_thread&.alive?
           @bg_thread = nil
@@ -80,13 +81,36 @@ module Master
           @bg_target = target
           @bg_mutex ||= Mutex.new
           @bg_condition ||= ConditionVariable.new
-          @supervisor ||= Supervisor.new(root: @root, target:, fix_loop: self, bus: @bus,
-                                         wake_mutex: @bg_mutex, wake_condition: @bg_condition)
           prepare_background_mission(target)
-          @supervisor.run_forever
+          supervise_background(target)
         end
 
         private
+
+        def supervise_background(target)
+          restart_delay = 1
+          loop do
+            break if @bg_stop_requested
+
+            supervisor = Supervisor.new(root: @root, target:, fix_loop: self, bus: @bus,
+                                        wake_mutex: @bg_mutex, wake_condition: @bg_condition)
+            @supervisor = supervisor
+            supervisor.run_forever
+            break if @bg_stop_requested || supervisor.stopping?
+
+            @bus&.publish("fix_loop:supervisor_restarting", delay: restart_delay, target:)
+            sleep restart_delay
+            restart_delay = [restart_delay * 2, 60].min
+          rescue StandardError, ScriptError => e
+            @bus&.publish("fix_loop:supervisor_died",
+                          error: "#{e.class}: #{e.message}",
+                          restart_in: restart_delay,
+                          target:)
+            Master::Trace::Dmesg.status("fix0", "supervisor died: #{e.class}: #{e.message}, restart #{restart_delay}s")
+            sleep restart_delay
+            restart_delay = [restart_delay * 2, 60].min
+          end
+        end
 
         def prepare_background_mission(target)
           current = Mission.current(root: @root)

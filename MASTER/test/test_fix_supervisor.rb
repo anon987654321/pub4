@@ -2,6 +2,7 @@
 
 require_relative "test_helper"
 require "tmpdir"
+require "json"
 
 class FixSupervisorTest < Minitest::Test
   def queue_mission(root)
@@ -62,7 +63,27 @@ class FixSupervisorTest < Minitest::Test
       saved = Master::Fix::Mission.current(root:)
       assert_equal mission.id, resumed.id
       assert_operator saved["attempt_count"].to_i, :>=, 2
-      assert_equal Process.pid.to_s, saved["lease_owner"]
+      assert_equal Master::Fix::Mission.instance_id, saved["lease_owner"]
+    end
+  end
+
+  def test_lease_owner_is_unique_to_the_current_master_instance
+    owner = Master::Fix::Mission.instance_id
+    assert_match(/:\d+:[0-9a-f]{16}\z/, owner)
+    refute_equal Process.pid.to_s, owner
+  end
+
+  def test_foreign_running_lease_is_not_extended
+    Dir.mktmpdir do |root|
+      mission = Master::Fix::Mission.new(root:).start!(goal: "fix #{root}", scope: root)
+      record = Master::Fix::Mission.current(root:)
+      record["lease_owner"] = "other-host:1234:deadbeefdeadbeef"
+      before = record["lease_until"]
+      File.write(File.join(root, ".master", "mission.json"), JSON.pretty_generate(record) + "\n")
+
+      Master::Fix::Mission.new(root:).heartbeat!
+      saved = Master::Fix::Mission.current(root:)
+      assert_equal before, saved["lease_until"]
     end
   end
 

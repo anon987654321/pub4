@@ -22,10 +22,6 @@ module Master
         end
         def clean_runs_required = convergence_cfg["consecutive_clean_runs_required"] || CLEAN_RUNS
         def plateau_window = convergence_cfg["stagnant_threshold"] || PLATEAU_WINDOW
-        def supervisor_poll_interval
-          value = workflow_cfg.dig("autoloop", "poll_interval").to_f
-          value.positive? ? value : Supervisor::DEFAULT_POLL_INTERVAL
-        end
       end
     end
   end
