@@ -66,8 +66,8 @@ end
 def gate_steps
   [
     Step.new(name: "layout_suite (source + fixture gates)", group: :gates, run: lambda {
-      runner = File.join(ROOT, "gates", "runner.rb")
-      next [BLOCKED, "gates/runner.rb is missing"] unless File.file?(runner)
+      runner = File.join(ROOT, "..", "MASTER", "gates", "runner.rb")
+      next [BLOCKED, "MASTER/gates/runner.rb is missing"] unless File.file?(runner)
 
       # GATE_AUTOFIX=0 to match the workflow: a pre-merge check that repairs the
       # tree while measuring it is measuring a tree that does not exist yet.
