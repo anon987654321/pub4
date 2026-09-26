@@ -541,18 +541,18 @@ end
       path = File.join(RAILS, "gates/data/css_budget.yml")
       unless File.file?(path)
         return [Row.new(name: "css_budget", current: nil, ceiling: nil, direction: :down,
-                        source: "RAILS/gates/data/css_budget.yml",
+                        source: "MASTER/gates/data/css_budget.yml",
                         note: "unreadable: budget missing")]
       end
 
       YAML.safe_load_file(path).fetch("rules").map do |rule, ceiling|
         Row.new(name: "css_budget.#{rule}", current: nil, ceiling:, direction: :down,
-                source: "RAILS/gates/data/css_budget.yml",
+                source: "MASTER/gates/data/css_budget.yml",
                 note: "current value is --deep (runs css_constitution)")
       end
     rescue StandardError => e
       [Row.new(name: "css_budget", current: nil, ceiling: nil, direction: :down,
-              source: "RAILS/gates/data/css_budget.yml",
+              source: "MASTER/gates/data/css_budget.yml",
               note: "unreadable: #{e.class}")]
     end
 
@@ -614,7 +614,7 @@ end
       ceilings = css_budget_ceilings
       if ceilings.empty?
         return [Row.new(name: "css_budget", current: nil, ceiling: nil, direction: :down,
-                        source: "RAILS/gates/data/css_budget.yml",
+                        source: "MASTER/gates/data/css_budget.yml",
                         note: "unreadable: no CSS ceilings available")]
       end
 
