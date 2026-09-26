@@ -361,6 +361,7 @@ module Shared
           image_url: row[:image_url].to_s,
           click_url: row[:click_url].to_s,
           merchant: row[:merchant].to_s.presence || "Amazon",
+          source: "amazon",
           placeholder: false,
         )
       end

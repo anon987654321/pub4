@@ -19,7 +19,7 @@ module Shared
     # `placeholder` travels with the deal so the view can label it. Rendering
     # seeded placeholder inventory as an ordinary paid deal would be dishonest to
     # the visitor and unreconcilable against a payout report.
-    Deal = Data.define(:title, :description, :price, :currency, :image_url, :click_url, :merchant, :placeholder)
+    Deal = Data.define(:title, :description, :price, :currency, :image_url, :click_url, :merchant, :placeholder, :source)
 
     # Order is display priority when several networks can fill the same slot.
     # Named, not referenced: holding the classes here would make this file load
@@ -84,6 +84,7 @@ module Shared
           click_url: product.click_url.to_s,
           merchant: product.merchant.to_s,
           placeholder: product.placeholder,
+          source: product.source.to_s,
         )
       end
     end

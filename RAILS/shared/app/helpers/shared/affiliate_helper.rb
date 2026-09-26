@@ -23,5 +23,22 @@ module Shared
       @affiliate_deals_cache ||= {}
       @affiliate_deals_cache[[ category, limit ]] ||= Shared::Affiliate.deals(category:, limit:)
     end
+
+    # Amazon's current Associates licence restricts Product Advertising Content
+    # on sites intended for mobile use unless Amazon has granted written approval.
+    # Amber and brgen are deliberately mobile-first, so the link survives but
+    # Amazon-supplied title/image/price content stays out until the operator
+    # records that approval explicitly.
+    def affiliate_product_content_allowed?(deal)
+      return true unless deal.respond_to?(:source) && deal.source.to_s == "amazon"
+
+      ENV["AMAZON_PRODUCT_CONTENT_MOBILE_APPROVED"] == "1"
+    end
+
+    def affiliate_program_label(deal)
+      return "Amazon Associates" if deal.respond_to?(:source) && deal.source.to_s == "amazon"
+
+      "TradeDoubler"
+    end
   end
 end

@@ -1,15 +1,15 @@
 name: MASTER fix RAILS live
 
-# One deliberate live experiment on the convergence branch.
+# One deliberate full live experiment on a dedicated execution branch.
 # The branch guard prevents a MASTER-authored push from recursively starting
 # another repair run. The command uses the repository's own triangle bootstrap
-# and writes only to this branch.
+# and writes only to this execution branch.
 on:
   workflow_dispatch:
   push:
+    branches: [run/master-fix-rails-full-20260926]
+  pull_request:
     branches: [main]
-    paths:
-      - MASTER/data/design_reference_study.yml
 
 permissions:
   contents: write

@@ -6,6 +6,9 @@ nb:
     placeholder_notice: Eksempeloppføring — ikke en sporet partnerlenke
     sponsored: Annonse
     feed_unit_label: Sponsede produkter
+    amazon_label: Amazon Associates
+    amazon_shop: Se hos Amazon
+    paid_link: Betalt lenke
     cta:
       buy: Kjøp nå!
       happy: Bli glad!
