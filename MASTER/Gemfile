@@ -8,6 +8,7 @@ gem "psych"
 gem "yaml"
 
 gem "ruby_llm", "~> 2.0"
+gem "ruby_llm-mcp", "~> 1.0"
 gem "reline", "~> 0.6"
 gem "tty-prompt", "~> 0.23"
 gem "tty-reader", "~> 0.9"
