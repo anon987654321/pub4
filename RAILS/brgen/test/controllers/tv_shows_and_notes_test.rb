@@ -112,6 +112,21 @@ class TvShowsAndNotesTest < ActionDispatch::IntegrationTest
     assert_match I18n.t("tv.channel_subtitle", city: "Bergen"), response.body
   end
 
+  test "a departing channel owner is hidden from public tv" do
+    @owner.update_columns(deleted_at: Time.current, deletion_scheduled_at: 7.days.from_now)
+    host! "tv.brgen.no"
+
+    get tv.channel_path(@channel)
+    assert_response :not_found
+
+    get tv.channels_path
+    assert_response :success
+    refute_includes response.body, @channel.name
+
+    get tv.video_path(@video)
+    assert_response :not_found
+  end
+
   test "the channel search empty state speaks the locale" do
     @video.destroy!
     @channel.destroy!
