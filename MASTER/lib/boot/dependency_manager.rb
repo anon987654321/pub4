@@ -117,6 +117,37 @@ module Master
                    message: e.message, output: e.full_message)
       end
 
+      def update!(*gems)
+        return ok_result("no Gemfile", changed: false) unless gemfile?
+
+        with_lock do
+          bundler = ensure_bundler
+          return bundler unless bundler.ok
+
+          args = ["update", *gems]
+          report("updating bundle#{gems.empty? ? "" : " #{gems.join(" ")}"}")
+          ok, stdout, stderr = run_bundle(*args)
+          output = join_output(stdout, stderr)
+          if !ok && native_build_failure?(output)
+            system = install_system_packages
+            return fail_result("bundle update failed; system dependencies unavailable", output: output) unless system[:ok]
+
+            ok, stdout, stderr = run_bundle(*args)
+            output = join_output(output, join_output(stdout, stderr))
+          end
+
+          if ok
+            ok_result("bundle updated", changed: true, bundle: true, output: output, bundler: bundler.bundler)
+          else
+            fail_result("bundle update failed", output: output)
+          end
+        end
+      rescue StandardError => e
+        report("bundle update failed: #{e.class}: #{e.message}")
+        Result.new(ok: false, changed: false, bundler: nil, bundle: nil, system: nil,
+                   message: e.message, output: e.full_message)
+      end
+
       def install!
         return ok_result("no Gemfile", changed: false) unless gemfile?
 
