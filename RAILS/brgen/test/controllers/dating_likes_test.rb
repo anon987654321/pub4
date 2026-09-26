@@ -75,6 +75,18 @@ class DatingLikesTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "a deletion-pending profile cannot be disliked by id" do
+    @them.update_columns(deleted_at: Time.current, deletion_scheduled_at: 7.days.from_now)
+
+    sign_in_as(@me)
+    in_dating
+
+    assert_raises(ActiveRecord::RecordNotFound) do
+      post dating.dislikes_path, params: { user_id: @them.id }
+    end
+    assert_not Dating::Dislike.exists?(disliker_id: @me.id, dislikee_id: @them.id)
+  end
+
   test "who liked you lists people waiting and drops the ones already answered" do
     waiting = user_with_profile("waiting")
     answered = user_with_profile("answered")
