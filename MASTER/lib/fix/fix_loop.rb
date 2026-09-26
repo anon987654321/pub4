@@ -41,8 +41,6 @@ module Master
       PASS_ENDINGS = { clean: :done, validation_failed: :validation_failed,
                        delivery_failed: :delivery_failed, reloading: :reloading }.freeze
 
-      IDLE_SLEEP = 300
-      STARTUP_DELAY = 90
       MAX_PASSES = 15
       CLEAN_RUNS = 2
       PLATEAU_WINDOW = 3
@@ -64,6 +62,7 @@ module Master
         @incremental = incremental
         @halted = false
         @halt_reason = nil
+        @run_mutex = Mutex.new
         @git = git || Io::GitOperations.new(root)
         @run_journal = RunJournal.new(root:, bus:)
 
@@ -82,6 +81,13 @@ module Master
       # while a single violation stood, so "fix and commit" scanned and stopped.
       def run(target = @root, max_passes: max_passes_default, budget_seconds: RUN_BUDGET_SECONDS,
               incremental: @incremental, requested: false)
+        @run_mutex ||= Mutex.new
+        @run_mutex.synchronize do
+          run_unlocked(target, max_passes:, budget_seconds:, incremental:, requested:)
+        end
+      end
+
+      def run_unlocked(target, max_passes:, budget_seconds:, incremental:, requested:)
         mission = nil
         return halted_result if halted? && !requested
 
@@ -96,21 +102,29 @@ module Master
       rescue StandardError => e
         @bus&.publish("fix_loop:crash", error: e.message, backtrace: e.backtrace&.first(8))
         @run_journal&.crash(run_id, e.message) if defined?(run_id) && run_id
-        mission&.fail!(e)
+        mission&.defer!(reason: "crash: #{e.class}: #{e.message}", seconds: 60)
         Result.err("fix_loop: #{e.message} @ #{e.backtrace&.first(3)&.join(" | ")}", category: :unknown)
       end
 
       def finish_run(result, target, run_id, mission: nil)
         state = terminal_state_for(result)
         @run_journal.terminal(run_id, state, message: result.to_s)
-        mission&.transition!(:verify, summary: result.to_s)
-        mission_state = state == :done ? "completed" : "interrupted"
-        mission&.finish!(state: mission_state, summary: result.to_s)
+
+        if mission&.requeue_if_requested!
+          @bus&.publish("fix_loop:mission_requeued", run_id:, state:, reason: "wake received during attempt")
+        elsif state == :done
+          mission&.finish!(state: "completed", summary: result.to_s)
+        elsif %i[human_decision blocked].include?(state)
+          mission&.block!(reason: result.to_s)
+        else
+          mission&.defer!(reason: "attempt #{state}: #{result.to_s}")
+        end
+
         @bus&.publish("fix_loop:terminal", state:, message: result.to_s)
         result
       end
 
-      # Structural sweeps run between repair passes, with no transaction open:
+      # Structural sweeps/s run between repair passes, with no transaction open:
       # a rename or restructure moves files the pass transactions track by path,
       # so each sweep is isolated and a kept change returns to fresh observation.
       def sweep_tree(target, run_id)
@@ -191,14 +205,13 @@ module Master
             label: "mission-#{id}", files:,
           )
         end
-        Master::Fix::Mission.new(root: @root, bus: @bus, checkpoint:).start!(
+        Master::Fix::Mission.new(root: @root, bus: @bus, checkpoint:).start_or_resume!(
           goal: "fix #{relative_target(target)}",
           scope: target,
           model: @agent.respond_to?(:model) ? @agent.model : ENV["MASTER_MODEL"],
           effort: ENV.fetch("MASTER_EFFORT", "high"),
-          plan: Ground::ActivePlan.read(@root),
-        ).transition!(:plan, plan: Ground::ActivePlan.read(@root) || "fix plan: observe, critique, repair, verify")
-          .transition!(:execute)
+          plan: Ground::ActivePlan.read(@root) || "fix plan: observe, critique, repair, verify",
+        )
       rescue StandardError => e
         @bus&.publish("mission:error", error: e.message, phase: "start")
         raise
