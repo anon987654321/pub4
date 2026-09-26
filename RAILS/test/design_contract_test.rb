@@ -4,8 +4,8 @@
 # Asserts contracts against current main paths (not the obsolete pub4_* renames).
 require "yaml"
 require "minitest/autorun"
-require_relative "../shared/lib/operator/master_design"
-require_relative "../shared/lib/operator/scss_rules"
+require_relative "../../MASTER/tools/design/master_design"
+require_relative "../../MASTER/tools/design/scss_rules"
 
 class DesignContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
