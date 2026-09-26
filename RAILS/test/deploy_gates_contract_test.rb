@@ -102,7 +102,7 @@ class DeployGatesContractTest < Minitest::Test
 
   def test_check_rails_wires_gates_by_name
     source = File.read(File.join(OPENBSD_ROOT, "bin", "check-rails"))
-    assert_includes source, "RAILS/gates/runner.rb"
+    assert_includes source, "MASTER/gates/runner.rb"
     %w[schema_migration generated_asset port_inventory production].each do |gate|
       assert_match(/"#{gate}"/, source, "check-rails should run the #{gate} gate")
     end
@@ -153,7 +153,7 @@ class DeployGatesContractTest < Minitest::Test
   # so it cannot outlive a file the way it did when the shims moved.
   def test_integrity_chain_names_gates_that_exist
     source = File.read(File.join(OPENBSD_ROOT, "lib", "gate_environment.rb"))
-    assert_includes source, "RAILS/gates/runner.rb"
+    assert_includes source, "MASTER/gates/runner.rb"
     source.scan(/RAILS_GATES, args: %w\[(\w+)\]/).flatten.each do |gate|
       assert GATES.key?(gate), "integrity chain runs #{gate}, which is not in gates.yml"
     end
