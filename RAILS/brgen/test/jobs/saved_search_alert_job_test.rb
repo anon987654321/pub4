@@ -57,6 +57,16 @@ class SavedSearchAlertJobTest < ActiveJob::TestCase
     end
   end
 
+  test "a departing account receives no saved-search alerts" do
+    saved_search(query: "sykkel")
+    @watcher.update_columns(deleted_at: Time.current, deletion_scheduled_at: 7.days.from_now)
+    listing(title: "Sykkel etter sletting")
+
+    assert_no_difference -> { @watcher.notifications.count } do
+      SavedSearchAlertJob.perform_now
+    end
+  end
+
   test "a search with alerts off is never run" do
     saved_search(query: "sykkel", notify: false)
     listing(title: "Ny sykkel")
