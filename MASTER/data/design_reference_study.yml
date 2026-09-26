@@ -59,6 +59,28 @@ hey:
     - novelty for its own sake
     - hiding important actions behind decorative interaction
 
+bol:
+  product_form: commerce_catalogue
+  useful_patterns:
+    - search_led_discovery
+    - category_breadcrumb_wayfinding
+    - context_specific_filter_facets
+    - explicit_result_sorting
+    - comparison_rich_product_results
+    - clear_price_availability_and_purchase_context
+    - restrained_promotional_labels
+    - related_product_discovery_without_chrome_overload
+    - mobile_and_desktop_parity
+    - customer_specific_help_for_discovery_and_comparison
+  apply_when:
+    - a surface sells or compares physical goods
+    - users need to narrow a large catalogue
+    - price availability trust and action must scan together
+  avoid:
+    - copying bol branding or proprietary assets
+    - treating promotion as more important than product relevance
+    - adding filters without category-specific evidence
+
 shared_principles:
   - content_or_object_before_chrome
   - one_primary_action_per_surface
@@ -107,7 +129,7 @@ vertical_anatomy:
   marketplace:
     attention: item_price_trust
     structure: [orientation, discovery, filters, listings, item_detail, purchase_or_contact]
-    reference_lenses: [x, hey]
+    reference_lenses: [bol, x, hey]
   dating:
     attention: person_choice
     structure: [orientation, person_focus, evidence, decision_actions, match_handoff]
