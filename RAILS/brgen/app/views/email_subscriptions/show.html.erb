@@ -2,7 +2,7 @@
   <h1><%= t("email_preferences.title") %></h1>
   <p><%= t("email_preferences.intro") %></p>
 
-  <%= form_with model: @subscription, scope: :email_subscription, url: email_subscription_path(token: @subscription.token), method: :patch do |form| %>
+  <%= form_with scope: :email_subscription, url: email_subscription_path(token: @subscription.token), method: :patch do |form| %>
     <fieldset>
       <legend><%= t("email_preferences.marketing_legend") %></legend>
       <label>
