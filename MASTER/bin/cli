@@ -9,6 +9,15 @@ $stderr.set_encoding("UTF-8")
 $stdout.sync = true
 $stderr.sync = true
 
+pinned_ruby = File.expand_path("../.ruby-version", __dir__)
+if File.file?(pinned_ruby)
+  expected_ruby = File.read(pinned_ruby).strip
+  if !expected_ruby.empty? && RUBY_VERSION != expected_ruby && ENV["MASTER_ALLOW_UNPINNED_RUBY"] != "1"
+    warn "cli: Ruby #{expected_ruby} required; running #{RUBY_VERSION} — use MASTER/bin/ruby bin/cli"
+    exit 78
+  end
+end
+
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 # The tree is this file's parent, not Dir.pwd. bin/master exists to chdir
 # here; a caller from the repo root must get the same runtime without it.
