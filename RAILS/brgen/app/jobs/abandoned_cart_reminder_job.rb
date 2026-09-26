@@ -37,7 +37,9 @@ class AbandonedCartReminderJob < ApplicationJob
     return false unless user
     return false unless user.respond_to?(:email_verified?) && user.email_verified?
     return false unless user.respond_to?(:email_address) && user.email_address.present?
+    return false if user.respond_to?(:deleted_at) && user.deleted_at.present?
+    return false if user.respond_to?(:deletion_scheduled_at) && user.deletion_scheduled_at.present?
 
-    EmailSubscription.marketing_opted_in.exists?(email: user.email_address)
+    EmailSubscription.delivery_eligible.exists?(email: user.email_address)
   end
 end
