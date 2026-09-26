@@ -52,7 +52,7 @@ def parse_initial_message_options(argv)
       puts opts
       puts ""
       puts "Pipe mode:  echo '/status' | bin/cli"
-      puts "Fast mode:  bin/cli --fast   (no boot scan, TTS or web; one command, then exit)"
+      puts "Fast mode:  bin/cli --fast   (skip optional boot services; one command, then exit)"
       puts "Headless:   bin/cli --headless -p PROMPT   (JSON mission receipt, non-interactive)"
       puts "Gates:      MASTER/bin/check --profile=contributor|agent|full"
       puts "VPS 1GB:    auto-skips TTS/boot-scan/web — scope a scan to a path, not the whole repo"
@@ -119,17 +119,12 @@ end
 fast_boot = ARGV.include?("--fast") || ENV["MASTER_FAST"] == "1"
 require "ground/host_budget"
 Master::Ground::HostBudget.warn_or_reap_suspended!
-Master::CLI::BootBanner.print unless fast_boot
-if $stdin.tty? && !fast_boot
-  cli = Master.boot(root: Dir.pwd)
-elsif $stdin.tty? && fast_boot
-  cli = Master.boot(root: Dir.pwd)
-else
+unless $stdin.tty?
   ENV["MASTER_PIPE"] = "1"
   ENV["MASTER_SKIP_BOOT_SCAN"] = "1"
   ENV["MASTER_SKIP_TTS"] = "1"
-  cli = Master.boot(root: Dir.pwd)
 end
+cli = Master.boot(root: Dir.pwd)
 Master::Ops::RuntimeLoopGuards.install!
 
 # --fold routes one coding goal through the core Fold, then exits. Plain-language
