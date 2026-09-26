@@ -150,7 +150,7 @@ switch -- $mode {
     at_prompt
     send "cd /home/dev/pub4/MASTER && bundle install\r"
     at_prompt
-    send "cd /home/dev/pub4/MASTER/web && bundle install && RAILS_ENV=production SECRET_KEY_BASE_DUMMY=1 bundle exec rails assets:precompile && bundle exec ruby /home/dev/pub4/RAILS/gates/runner.rb master_web_assets && doas rcctl restart master\r"
+    send "cd /home/dev/pub4/MASTER/web && bundle install && RAILS_ENV=production SECRET_KEY_BASE_DUMMY=1 bundle exec rails assets:precompile && bundle exec ruby /home/dev/pub4/MASTER/gates/runner.rb master_web_assets && doas rcctl restart master\r"
     at_prompt
     send "for a in brgen amber bsdports; do sed -i '' 's|ruby34 /home/dev/pub4/MASTER/bin/cli|(cd /home/dev/pub4/MASTER \\&\\& bundle exec ruby bin/cli|g' /home/dev/pub4/RAILS/\$a/\$a.sh; done\r"
     at_prompt
