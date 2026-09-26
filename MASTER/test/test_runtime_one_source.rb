@@ -10,7 +10,7 @@ class TestRuntimeOneSource < Minitest::Test
   end
 
   def test_release_gate_delegates_runtime_selection
-    source = read("../RAILS/gates/release.rb")
+    source = read("../MASTER/gates/release.rb")
     assert_includes source, 'require_relative "../../MASTER/lib/operator/ruby_runner"'
     assert_includes source, "[Operator::RubyRunner.ruby_cmd]"
     assert_includes source, "Operator::RubyRunner.bundle_cmd"
