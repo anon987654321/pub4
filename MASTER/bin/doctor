@@ -178,7 +178,8 @@ def check_provider_catalog
 end
 
 $LOAD_PATH.unshift File.join(ROOT, "lib")
-require "master" rescue nil
+require "master"
+
 
 if ARGV.include?("--fix")
   require "fileutils"
