@@ -15,7 +15,7 @@ require_relative "../../OPENBSD/lib/gate_ledger"
 # "records the error and allows the original call" when a gate raises: a gate
 # whose blocks are mostly its own bugs teaches people to route around the suite.
 #
-# pub4's version was worse than a false block. RAILS/gates/runner.rb built its
+# pub4's version was worse than a false block. MASTER/gates/runner.rb built its
 # whole outcome table in one `to_h`, with `klass.run` unguarded inside it, so a
 # single raising gate ended the process — every gate after it in --all order
 # never ran, and the summary was a backtrace. Measured against the committed
