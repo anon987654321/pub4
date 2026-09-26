@@ -154,10 +154,10 @@ module Master
           return :blocked unless validate_paths(message, paths)
 
           @git.commit(with_finding_ids(message, findings, paths), paths:)
-          @bus&.publish("ops:commit", message: message.to_s[0, 120], head: @git.head, paths:, findings:)
           @git.push
           verify_push!(paths)
           promote_known_good(@git.head, paths)
+          @bus&.publish("ops:commit", message: message.to_s[0, 120], head: @git.head, paths:, findings:)
           Result.ok(:committed)
         rescue StandardError => e
           @bus&.publish("fix_loop:commit_error", error: e.message)
