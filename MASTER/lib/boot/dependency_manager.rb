@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "fileutils"
-require "json"
 require "open3"
 require "rbconfig"
 require "rubygems"
@@ -20,7 +19,6 @@ module Master
     # Nothing here updates a lockfile on a healthy bundle. Dependency changes remain
     # an explicit Bundler operation, not a surprise hidden inside boot.
     class DependencyManager
-      DEFAULT_INSTALL_ATTEMPTS = 2
       SYSTEM_PACKAGES = {
         termux: %w[git clang make cmake pkg-config sqlite openssl libffi],
         openbsd: %w[pkgconf gmake sqlite3 libffi],
@@ -75,7 +73,6 @@ module Master
         runner: nil,
         command_path: nil,
         home: nil,
-        attempts: DEFAULT_INSTALL_ATTEMPTS
       )
         @root = File.expand_path(root)
         @env = env
@@ -83,7 +80,6 @@ module Master
         @runner = runner || method(:capture)
         @command_path = command_path || method(:which)
         @home = home || File.expand_path("~")
-        @attempts = attempts.to_i.clamp(1, 3)
       end
 
       def ensure!
@@ -219,6 +215,7 @@ module Master
           )
         end
 
+        Gem::Specification.reset
         if bundler_path(version)
           ok_result("bundler #{version} installed", changed: true, bundler: version, output: output)
         else
@@ -402,10 +399,6 @@ module Master
 
       def run(command, chdir:, env:)
         @runner.call(command, chdir: chdir, env: env)
-      end
-
-      def gem_install_cmd
-        "gem install"
       end
 
       def ok_result(message, changed:, bundler: nil, bundle: nil, output: nil)
