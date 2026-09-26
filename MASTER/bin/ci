@@ -1,6 +1,9 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require_relative "../lib/boot/entrypoint"
+Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
+
 # The name GitHub Actions, bin/preflight and the vm23 runbook all invoke, over
 # the step list bin/check owns.
 #
