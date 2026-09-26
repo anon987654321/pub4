@@ -543,6 +543,21 @@ class TestDillaLivesets < Minitest::Test
     assert_includes command, "2"
   end
 
+  def test_dilla_player_command_finds_a_local_soundcard_player
+    Dir.mktmpdir do |dir|
+      play = File.join(dir, "play")
+      File.write(play, "#!/bin/sh\n")
+      File.chmod(0o755, play)
+
+      command = with_env("PATH" => dir) { DillaLive.player_command(32_000) }
+      assert_equal play, command.first
+      assert_includes command, "-t"
+      assert_includes command, "raw"
+      assert_includes command, "-c"
+      assert_includes command, "2"
+    end
+  end
+
   def test_the_live_catalogue_asks_for_the_jit_and_says_what_it_got
     answer = DillaLive.accelerate!
 
