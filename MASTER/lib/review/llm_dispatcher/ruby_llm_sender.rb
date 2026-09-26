@@ -15,10 +15,16 @@ module Master
         def send_ruby_llm(selected_model, messages, sys:, stream:, image: nil, temperature: nil, format: nil, &blk)
           chat_session = build_chat_session(selected_model, messages, sys:, image:, temperature:, format:)
           last_text = (messages.last || {})[:content].to_s
-          ask_arg, temp_file = build_ask_arg(last_text, image)
+          ask_arg, attachment, temp_file = build_ask_arg(last_text, image)
 
           begin
-            reply = if stream && blk
+            reply = if attachment
+                      if stream && blk
+                        chat_session.ask(ask_arg, with: attachment) { |chunk| blk.call(chunk.content.to_s) if chunk.content }
+                      else
+                        chat_session.ask(ask_arg, with: attachment)
+                      end
+                    elsif stream && blk
                       chat_session.ask(ask_arg) { |chunk| blk.call(chunk.content.to_s) if chunk.content }
                     else
                       chat_session.ask(ask_arg)
@@ -37,8 +43,7 @@ module Master
           # it started with. KeyRotator swaps the global key under rule groups that
           # run in threads, and a shared config handed that swap to calls in flight.
           chat_session = RubyLLM.context.chat(model: selected_model)
-          final_sys = build_final_system(selected_model, sys)
-          chat_session.with_instructions(final_sys) if final_sys
+          apply_system_instructions(chat_session, selected_model, sys)
           chat_session.with_temperature(temperature) if temperature && chat_session.respond_to?(:with_temperature)
 
           messages[0...-1].each do |message_entry|
@@ -62,26 +67,23 @@ module Master
         # REACT_MAX_STEPS already bounds the emulated loop, so it bounds this one.
         def cap_tool_rounds(chat_session)
           rounds = 0
-          # RubyLLM 1.15 renamed the hook and warns on the old name, a line that
-          # lands in the middle of the prompt; 1.13 knows only the old one.
+          # RubyLLM 2 exposes after_message as the message callback; the old
+          # on_end_message compatibility path is deliberately gone.
           count = lambda do |message|
             next unless message.respond_to?(:tool_call?) && message.tool_call?
 
             rounds += 1
             raise ToolRoundLimit, "tool calling passed #{REACT_MAX_STEPS} rounds" if rounds > REACT_MAX_STEPS
           end
-          return chat_session.after_message(&count) if chat_session.respond_to?(:after_message)
-
-          chat_session.on_end_message(&count)
+          chat_session.after_message(&count)
         end
 
         def build_ask_arg(last_text, image)
           has_image = image && ((!image[:path].to_s.empty? && File.file?(image[:path])) || !image[:data].to_s.empty?)
-          return [last_text, nil] unless has_image
+          return [last_text, nil, nil] unless has_image
 
           attachment, temp_file = build_image_attachment(image)
-          content = RubyLLM::Content.new(text: last_text, attachments: [attachment])
-          [content, temp_file]
+          [last_text, attachment, temp_file]
         end
 
         def build_image_attachment(image)
@@ -116,10 +118,11 @@ end)
 
         def record_usage(reply, model)
           return unless @session
-          input = reply.respond_to?(:input_tokens) ? reply.input_tokens.to_i : 0
-          output = reply.respond_to?(:output_tokens) ? reply.output_tokens.to_i : 0
-          cached = reply.respond_to?(:cached_tokens) ? reply.cached_tokens.to_i : 0
-          cache_write = reply.respond_to?(:cache_creation_tokens) ? reply.cache_creation_tokens.to_i : 0
+          tokens = reply.respond_to?(:tokens) ? reply.tokens : nil
+          input = tokens&.input.to_i
+          output = tokens&.output.to_i
+          cached = tokens&.cache_read.to_i
+          cache_write = tokens&.cache_write.to_i
           tokens = input + output
           return record_estimated_usage(reply, model) if tokens.zero? && reply.respond_to?(:content)
           return if tokens.zero?
@@ -150,7 +153,7 @@ end)
 
         def listed_price_per_million(model, direction)
           info = Master::Review::LLMDispatcher.model_info(model)
-          info && (direction == :output ? info.output_price_per_million : info.input_price_per_million)
+          info&.price(direction)
         end
 
         # True when either direction fell to the flat rate, so the amount is a
@@ -211,7 +214,7 @@ end)
 
         def structured_output?(model)
           info = Master::Review::LLMDispatcher.model_info(model)
-          info.respond_to?(:structured_output?) && info.structured_output?
+          info&.respond_to?(:supports?) && info.supports?(:structured_output)
         end
 
         # A schema-bound reply arrives parsed. Hash#to_s is Ruby's inspect, which
@@ -240,17 +243,32 @@ end)
         # when sys is that prompt. A caller's own system prompt is other text, and
         # sending the persona split in its place drops the caller's instructions.
         def build_final_system(selected_model, sys)
-          return sys unless claude_model?(selected_model)
+          return [] if sys.nil?
+
+          unless claude_model?(selected_model)
+            return [{ text: sys, append: false, cache_until_here: false }]
+          end
+
           raw = @system_prompt_proc.call
           if raw.is_a?(Hash) && raw[:static] && sys.to_s.start_with?(raw[:static])
-            static_text = nemotron_system_prompt(selected_model, raw[:static])
-            blocks = [{ type: "text", text: static_text, cache_control: { type: "ephemeral" } }]
-            blocks << { type: "text", text: raw[:dynamic] } if raw[:dynamic]
-            RubyLLM::Content::Raw.new(blocks)
+            blocks = [{ text: nemotron_system_prompt(selected_model, raw[:static]), append: false, cache_until_here: true }]
+            blocks << { text: raw[:dynamic], append: true, cache_until_here: false } if raw[:dynamic]
+            blocks
           else
             base = nemotron_system_prompt(selected_model, sys)
-            return base unless base.is_a?(String)
-            RubyLLM::Content::Raw.new([{ type: "text", text: base, cache_control: { type: "ephemeral" } }])
+            return [] unless base.is_a?(String)
+
+            [{ text: base, append: false, cache_until_here: true }]
+          end
+        end
+
+        def apply_system_instructions(chat_session, selected_model, sys)
+          build_final_system(selected_model, sys).each do |block|
+            chat_session.with_instructions(
+              block[:text],
+              append: block[:append],
+              cache_until_here: block[:cache_until_here],
+            )
           end
         end
       end
