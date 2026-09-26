@@ -62,7 +62,7 @@ class TasteRanker
       0.0
     end
 
-    (hit ? 0.82 : 0.38 + wear_bonus).clamp(0.0, 1.0)
+    ((hit ? 0.82 : 0.38) + wear_bonus).clamp(0.0, 1.0)
   rescue StandardError
     0.5
   end
