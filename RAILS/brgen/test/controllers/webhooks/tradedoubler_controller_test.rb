@@ -18,6 +18,14 @@ class Webhooks::TradedoublerControllerTest < ActionDispatch::IntegrationTest
     ENV.delete("TRADEDOUBLER_WEBHOOK_SECRET")
   end
 
+  test "rejects a malformed token length without raising" do
+    ENV["TRADEDOUBLER_WEBHOOK_SECRET"] = "secret-ok"
+    post webhooks_tradedoubler_path, params: { messageTypeId: 5, transactionId: "t1", token: "x" }
+    assert_response :unauthorized
+  ensure
+    ENV.delete("TRADEDOUBLER_WEBHOOK_SECRET")
+  end
+
   test "accepts signed postback" do
     ENV["TRADEDOUBLER_WEBHOOK_SECRET"] = "secret-ok"
     post webhooks_tradedoubler_path, params: {
