@@ -118,10 +118,18 @@ module Operator
     end
 
     def js_references(source)
-      source.scan(/(['"])([^'"]+)\1/).filter_map do |_quote, value|
+      quoted = source.scan(/(['"])([^'"]+)\1/).filter_map do |_quote, value|
         topic = value.strip
         { topic:, role: :reference } if event_topic?(topic)
       end
+
+      regex = source.scan(%r{/((?:\\.|[^/\\\n])*)/[a-z]*}i).flat_map do |body|
+        body.to_s.scan(/[a-z][a-z0-9_]*:[a-z][a-z0-9_:-]*/).filter_map do |topic|
+          { topic:, role: :reference } if event_topic?(topic)
+        end
+      end
+
+      quoted + regex
     end
 
     def strip_comments(source)
