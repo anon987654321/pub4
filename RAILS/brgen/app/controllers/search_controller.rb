@@ -18,7 +18,7 @@ class SearchController < ApplicationController
     return if @query.blank?
 
     @results[:people] = apply_live_search(
-      User.where(bot: false, guest: false, deleted_at: nil),
+      User.public_profiles.where(bot: false),
       columns: %w[username display_name],
       vertical: "people"
     )
