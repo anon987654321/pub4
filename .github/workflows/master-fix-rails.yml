@@ -8,6 +8,8 @@ on:
   workflow_dispatch:
   push:
     branches: [run/master-fix-rails-full-20260926]
+  pull_request:
+    branches: [main]
 
 permissions:
   contents: write
