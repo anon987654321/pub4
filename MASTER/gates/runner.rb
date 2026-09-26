@@ -1,13 +1,13 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Consolidated Rails Gates Runner — the one entrypoint for every gate.
+# Consolidated repository Gates Runner — the one entrypoint for every gate.
 #
 # Usage:
-#   ruby RAILS/gates/runner.rb --all
-#   ruby RAILS/gates/runner.rb production domain_alignment
-#   ruby RAILS/gates/runner.rb --list
-#   ruby RAILS/gates/runner.rb --explain
+#   ruby MASTER/gates/runner.rb --all
+#   ruby MASTER/gates/runner.rb production domain_alignment
+#   ruby MASTER/gates/runner.rb --list
+#   ruby MASTER/gates/runner.rb --explain
 #
 # Every Rails probe is declared in gates.yml and nowhere else. MASTER owns
 # orchestration and completion policy; this file is the Rails probe registry
@@ -57,7 +57,7 @@ end
 # They already list what they skipped, and GATE_STRICT_INCONCLUSIVE makes that
 # blocking. visual_contract without Chrome measures nothing at all.
 SUBPROCESS_INCONCLUSIVE = 3
-RAILS_ROOT = File.expand_path("..", __dir__)
+RAILS_ROOT = File.join(REPO_ROOT, "RAILS")
 REPO_ROOT = File.expand_path("../..", __dir__)
 
 # GATES_FILE points the runner at a different registry. It exists so the
