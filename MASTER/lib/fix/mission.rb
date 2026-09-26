@@ -417,7 +417,9 @@ module Master
       def assign_payload(key, value)
         case key.to_sym
         when :plan then @record["plan"] = value.to_s.byteslice(0, MAX_PLAN_BYTES)
-        when :artifact then artifact!(value)
+        when :artifact
+          path = relative(value)
+          @record["artifacts"] = (@record.fetch("artifacts", []) + [path]).uniq.last(32) if path
         when :checkpoint then @record["checkpoint"] = value
         end
       end
