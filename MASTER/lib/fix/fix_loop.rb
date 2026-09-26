@@ -94,10 +94,13 @@ module Master
         files = incremental ? @file_collector.collect_changed(target) : @file_collector.collect(target)
         journal = @run_journal.start_or_resume(target:, files:, max_passes:, budget_seconds:)
         run_id = journal["id"]
-        budget_error = exhausted_budget(journal:, run_id:)
-        return budget_error if budget_error
-
         mission = mission_for(target:)
+        budget_error = exhausted_budget(journal:, run_id:)
+        if budget_error
+          mission.defer!(reason: budget_error.message)
+          return budget_error
+        end
+
         run_journaled(journal, files:, target:, max_passes:, budget_seconds:, mission:)
       rescue StandardError => e
         @bus&.publish("fix_loop:crash", error: e.message, backtrace: e.backtrace&.first(8))
