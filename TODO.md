@@ -60,6 +60,12 @@ it. A line leaves when its entry closes; re-order rather than append.
    weaknesses" (MASTER). After 2. Done when `CQS` spares memoisation and an
    oscillation keeps the repairs that moved.
 
+### Ractor boundary — decided 2026-09-26
+
+- **Do not put Ractors around the live agent graph.** Ruby 3.4 documents Ractor as experimental; MASTER's Zeitwerk classes, event bus, mutable services, configuration and LLM adapters are stateful. The existing process/subprocess seams already provide hard boundaries.
+- **Do not use Ractors in RAILS request handling.** Keep request concurrency in Rails. Use processes where isolation is required.
+- **Future Ractor seam: pure-data CPU work only.** A candidate must be bounded and embarrassingly parallel, exchange frozen strings, arrays or numeric buffers, use a fixed worker count, and return deterministic output identical to the sequential path.
+- **No implementation until a benchmark proves it.** Measure wall time and allocations on Ruby 3.4.9. Reject the Ractor path when it is not materially faster or adds complexity without measurable capacity gain.
 ### MASTER
 
 1. **The ruby_llm 2.0 upgrade, staged.** Entry: RAILS "Audit findings". Done
@@ -113,7 +119,7 @@ and 6 need the registrar or money.
 6. **Off-host backups and 2 GB of RAM.** Entries: `off_host_dr`,
    `multi_app_ram`. Operator: money.
 
-### STUDIO
+### MASTER/tools
 
 1. **dilla's demo run tells the truth.** Entry: "The demo run lies about
    success". Done when a held lock, an unknown command and a missing part each
@@ -154,7 +160,7 @@ the "One chrome", ad system and layout sections bring back for a decision.
   and 2 SLACK, and `file_length` and `coverage_ratchet` unreadable. The
   largest are `spine.lib_body_ceiling` 47837/35302, `autofix_reach.bare_true`
   238/0, `growth.master` 749/646, `self_findings.law` 300/230,
-  `growth.rails` 1986/1932 and `growth.studio` 100/69; the slack rows are
+  `growth.rails` 1986/1932 and `growth.master_tools` 100/69; the slack rows are
   `rule_reach` 14/70 and `rule_audit.silent` 39/43. None has been shown to be
   a spelling defect; the growth is several sessions' at once, which is why no
   one session has owned the raise. Per row: `bin/operator measure --why
@@ -228,7 +234,7 @@ the "One chrome", ad system and layout sections bring back for a decision.
     music-theory gem nothing in `MASTER/lib/music/` calls —
     `Music::Synth`/`Realtime` implement sine/square/triangle themselves, and
     `wavefile` (also in `:dilla`) writes WAVs that live playback does not use.
-    Moving `:dilla` to STUDIO's own Gemfile (or dropping `head_music`
+    Moving `:dilla` to MASTER's bundle (or dropping `head_music`
     specifically) takes ActiveSupport out of MASTER's lock; `AGENTS.md`
     already asks for `Bundler.with_unbundled_env` when a child process needs
     STUDIO's bundle, which is the seam to use.
@@ -542,7 +548,7 @@ only the box can take.
   steady-state VSZ measured on vm23, not RSS: brgen reads 869 MB VSZ, and a
   number guessed from RSS kills a healthy app.
 
-## STUDIO
+## MASTER/tools
 
 Re-measured 2026-09-11 against the real crate. `samples/` is gitignored, so a
 worktree shows an empty crate that is not; dilla is under active edit, so trust
@@ -612,7 +618,7 @@ a bare invoke is what it ran. Do not triplicate the engine file.
   destination file, so any split starts by folding support code, and 14 support
   files use `__dir__`/`__FILE__`. `dilla parts` indexes the engine.
 - Not worth chasing, each measured: merging the three techno renderers (three
-  sounds); blanket rescues in STUDIO (optional probes and teardown); preset reach
+  sounds); blanket rescues in MASTER/tools (optional probes and teardown); preset reach
   in `postpro`/`lora` (selected by name from argv; `vocab_check` owns it); the 37
   stale `sample_worth.json` slugs (pruned on the next chop); the sample rate
   declared under three names (all namespaced; `sampling.rb`'s 11,025 is
@@ -1021,14 +1027,14 @@ sitting.
      guessed wider than the column silently drops desktop from four columns to
      three. Measure the container, then set the floor.
 
-### STUDIO — dilla
+### MASTER/tools — dilla
 
 Re-measured 2026-09-13. What is left accepts a changed input, so it is the
 operator's:
 
 859. **The crate on main disagrees with `data/assets.json`.** `DillaAssets.verify` there: `samples/{kembara_rindu,lo_borges,semua_untuk_mu}/loop.wav` missing, and seven one-shots under `samples/drums/` changed hash at the same size. Restore them, or `dilla assets record` to accept the new drums as the inputs.
 
-### STUDIO — postpro, preprompt, lora
+### MASTER/tools — postpro, preprompt, lora
 
 907. **Chains are ungraded by default.** `generate` applies `HOUSE_POSTPRO` (`portrait`); `chain` grades its final frame only when `--postpro` is given or the last stage names a `postpro`. Whether chains share the house grade is a graded-look call.
 926. **`lora/guides/*.m4a` are tracked TTS output** beside their `.txt` scripts. Keep them in git or untrack them; either is the operator's.
