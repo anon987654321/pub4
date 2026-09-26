@@ -33,6 +33,15 @@ class TestDeviceOwnerProfile < Minitest::Test
     end
   end
 
+  def test_pet_name_customizes_the_wake_greeting
+    Dir.mktmpdir("owner-profile") do |root|
+      Profile.set(root:, subject: "abc123", pet_name: "Mochi")
+      greeting = Profile.wake_greeting(root:, subject: "abc123")
+
+      assert_includes greeting, "Mochi"
+    end
+  end
+
   def test_onboarding_prompt_reports_missing_fields
     Dir.mktmpdir("owner-profile") do |root|
       prompt = Profile.onboarding_prompt(root:, subject: "abc123")
