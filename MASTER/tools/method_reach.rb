@@ -8,7 +8,7 @@
 #   ruby MASTER/tools/method_reach.rb
 #
 # A name here is a candidate, not a corpse. Verify each with a word-boundary
-# grep across all four trees before deleting, and delete the transitive closure
+# grep across all three governed trees before deleting, and delete the transitive closure
 # rather than one layer — removing a dead handler orphans the helpers only it
 # called, so this has to be re-run until it settles.
 #
