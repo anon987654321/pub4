@@ -31,7 +31,7 @@ class SearchController < ApplicationController
     @results[:channels] = apply_live_search(Tv::Channel.publicly_visible, columns: %w[name description], vertical: "tv")
     @results[:videos] = apply_live_search(Tv::Video.publicly_visible, columns: %w[title description], vertical: "tv")
     @results[:sets] = apply_live_search(Playlist::Set.publicly_listed, columns: %w[name description], vertical: "playlist")
-    @results[:restaurants] = apply_live_search(Takeaway::Restaurant.active, columns: %w[name city cuisine_type], vertical: "takeaway")
+    @results[:restaurants] = apply_live_search(Takeaway::Restaurant.indexable, columns: %w[name city cuisine_type], vertical: "takeaway")
     @results[:places] = apply_live_search(Place.all, columns: %w[name kind], vertical: "maps")
 
     # html/turbo_stream declare themselves but render nothing here, so the
