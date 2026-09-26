@@ -235,7 +235,7 @@ cannot run, the pass says INCONCLUSIVE rather than claiming DONE.
 
 Install both the Termux:API application and the `termux-api` package before expecting Android hardware access. The official Termux project documents the add-on and its command-line package separately.
 
-**The phone's first run.** Install Termux and the Termux:API app from the same place, F-Droid being the usual one. In Termux, install git, ruby, build-essential and sqlite with pkg, clone pub4 into the home directory rather than shared storage, which cannot hold an executable, and run bundle install inside MASTER. The Gemfile links the sqlite3 gem against Termux's own SQLite, so a current checkout needs no bundle config line. Then run bin/master. If bundle install stopped partway, bin/master names the missing gems and the one line that finishes the job instead of booting into a stack trace. The first boot prints a short checklist in the boot's own voice, each piece in place and each missing one beside the command that fixes it. It writes a commented env file at ~/.config/master/env and never puts a key in it. With no key MASTER still answers through LLM7's keyless free tier; an OpenRouter or Gemini key uncommented in that file, or a local Ollama model, gives it a better one. Later boots print only what is still missing.
+**The phone's first run.** Install Termux and the Termux:API app from the same place, F-Droid being the usual one. In Termux, install git, ruby, build-essential and sqlite with pkg, clone pub4 into the home directory rather than shared storage, which cannot hold an executable, and run `bin/deps install` inside MASTER. The dependency manager installs Bundler at the lockfile's version, runs `bundle check`, installs the bundle when needed, and adds platform build packages only when a native extension actually needs them. The Gemfile links the sqlite3 gem against Termux's own SQLite, so a current checkout needs no manual bundle config line. Then run bin/master. If bundle install stopped partway, bin/master names the missing gems and the one line that finishes the job instead of booting into a stack trace. The first boot prints a short checklist in the boot's own voice, each piece in place and each missing one beside the command that fixes it. It writes a commented env file at ~/.config/master/env and never puts a key in it. With no key MASTER still answers through LLM7's keyless free tier; an OpenRouter or Gemini key uncommented in that file, or a local Ollama model, gives it a better one. Later boots print only what is still missing.
 
 ****The phone becomes a resident companion only after explicit pairing.** On Android, the boot starts a lightweight `Device::Agent` beside the face. It keeps Cognition and owner-scoped StandingOrders alive at a bounded cadence, but a fresh phone remains unpaired and therefore runs no owner-scoped orders. Say `/pair owner [name]` to make the phone personal; `/device` shows the durable device/owner state. The same subject is reused across face worker threads, so personal USER.md and MEMORY.md do not disappear when a turn runs on a new thread.
 
@@ -248,8 +248,11 @@ From Termux:
 ```console
 pkg install termux-api
 cd ~/path/to/pub4/MASTER
+bin/deps install
 bin/cli
 ```
+
+`bin/deps check` reports the exact Ruby, Bundler and bundle state without changing anything. `bin/deps system` installs the platform build prerequisites explicitly; `bin/deps update [GEM ...]` is the explicit lockfile-changing operation.
 
 Then:
 
