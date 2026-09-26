@@ -21,7 +21,7 @@ drifts. The previous version was deleted at `6cdd2cb97` after exactly that — i
 still described a `DEPLOY/` tree and `lib/now,judge,loop` modules that had been
 renamed.
 
-## The four trees
+## The three governed trees
 
 | | what it is | entry point |
 |---|---|---|
@@ -32,7 +32,7 @@ renamed.
 
 Nothing else sits at the repo root but this file, `TODO.md` — the single
 repo-wide backlog (every per-tree debt/TODO/blocker list was folded into it) —
-and `TREE.md`, the map of the four trees. (`WISHLIST.md` folded into `TODO.md`
+and `TREE.md`, the map of the three governed trees plus the MASTER/tools plane. (`WISHLIST.md` folded into `TODO.md`
 on 2026-09-06 — one backlog, forward work as its last section.) Build output
 never sits at the root whatever the tool's default: dilla writes to `$PWD`
 unless `DILLA_OUTPUT_DIR` says otherwise, and one session's renders lived at the
@@ -62,8 +62,8 @@ Run the smallest check that proves the work, and do not report done without its
 output. `--profile=agent` may fail on known debt tagged `agent-ignore`; do not
 chase scan noise on unrelated patches.
 
-`bin/operator gate` is the whole ladder in one command: the scanner over all four
-trees with autofix on, every RAILS gate, every suite, the ratchets, the sprawl
+`bin/operator gate` is the whole ladder in one command: the scanner over all three
+governed trees with autofix on, every RAILS gate, every suite, the ratchets, the sprawl
 census, and last the council. It writes by default and says which files each
 stage changed, under that stage's name, so a bad fix is attributable to the
 stage that made it. Everything already modified when it starts is listed first
