@@ -57,9 +57,7 @@ module Master
 
         gate_rounds = 0
         loop do
-          status, changed = Operator::GateChain.verify_fix(target: Master::CLI::Pipeline::TargetResolver.instance_method(:resolve_target).bind(Object.new.tap do |o|
-            o.instance_variable_set(:@root, root)
-          end).call(target))
+          status, changed = Operator::GateChain.verify_fix(target:)
           gate_rounds += 1
           break if status == 0 && changed.empty?
           break if changed.empty? || gate_rounds >= MAX_FIX_GATE_ROUNDS
@@ -218,48 +216,3 @@ module Master
       # concatenate this into UTF-8 prompt text, and a truncation boundary
       # landing mid-character otherwise raises Encoding::CompatibilityError
       # the moment it's joined with anything not itself forced to BINARY
-      # (confirmed live: every /critique persona failing with exactly that
-      # error, tracing back to this truncation never restoring the tag).
-      def snapshot_truncate(text, byte_limit)
-        text.b[0, byte_limit].force_encoding("UTF-8").scrub
-      end
-
-      def snapshot_files(abs_path)
-        pending = [abs_path]
-        files = []
-        until pending.empty? || files.size >= SNAPSHOT_DIR_FILE_LIMIT
-          scan_snapshot_dir(pending.shift, pending, files)
-        end
-        files
-      end
-
-      def scan_snapshot_dir(current, pending, files)
-        Dir.children(current).sort.each do |entry|
-          path = File.join(current, entry)
-          next if snapshot_skip_path?(path)
-
-          add_snapshot_entry(path, pending, files)
-          break if files.size >= SNAPSHOT_DIR_FILE_LIMIT
-        end
-      rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "CommandRegistry.scan_snapshot_dir")
-        nil
-      end
-
-      def add_snapshot_entry(path, pending, files)
-        return pending << path if File.directory?(path)
-
-        files << path if snapshot_file?(path)
-      end
-
-      def snapshot_skip_path?(path)
-        segments = path.split(File::SEPARATOR)
-        SNAPSHOT_SKIP_SEGMENTS.any? { |segment| segments.include?(segment) }
-      end
-
-      def snapshot_file?(path)
-        File.file?(path) && SNAPSHOT_EXTENSIONS.include?(File.extname(path))
-      end
-    end
-  end
-end
