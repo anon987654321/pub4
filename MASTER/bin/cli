@@ -15,7 +15,8 @@ if File.file?(pinned_ruby)
   if !expected_ruby.empty? && RUBY_VERSION != expected_ruby && ENV["MASTER_ALLOW_UNPINNED_RUBY"] != "1"
     ruby_wrapper = File.expand_path("../bin/ruby", __dir__)
     if File.executable?(ruby_wrapper)
-      exec(ruby_wrapper, __FILE__, *ARGV)
+      reexec = -> { exec(ruby_wrapper, __FILE__, *ARGV) }
+      defined?(Bundler) ? Bundler.with_unbundled_env(&reexec) : reexec.call
     end
     warn "cli: Ruby #{expected_ruby} required; running #{RUBY_VERSION} — use #{ruby_wrapper} bin/cli"
     exit 78
