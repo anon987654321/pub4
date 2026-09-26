@@ -87,6 +87,13 @@ class TestBinRuby < Minitest::Test
     end
   end
 
+  def test_openbsd_doas_install_uses_pinned_minor_package_branch
+    script = File.read(BIN)
+
+    assert_includes script, 'pkg_add -I "ruby%${PINNED_VERSION%.*}"'
+    refute_includes script, 'pkg_add -I "ruby%${PINNED_VERSION%%.*}"'
+  end
+
   def test_rbenv_path_uses_the_repo_pinned_version
     old_path = ENV["PATH"]
     old_fake_path = ENV["FAKE_RBENV_PATH"]
