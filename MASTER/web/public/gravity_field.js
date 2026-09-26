@@ -50,9 +50,9 @@
 
     const profile = root.dataset.runtimeProfile || "calm";
     const area = width * height;
-    if (profile === "battery") return 220;
+    if (profile == "battery") return 220;
     if (area < 420000) return 320;
-    if (profile === "full" || profile === "crt") return 820;
+    if (profile == "full" || profile == "crt") return 820;
     return 640;
   }
 
@@ -111,7 +111,7 @@
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     const nextCount = targetCount();
-    if (nextCount !== count) {
+    if (nextCount != count) {
       count = nextCount;
       seed();
     }
@@ -162,8 +162,8 @@
     center.y += (center.targetY - center.y) * dt * 1.9;
 
     const profile = root.dataset.runtimeProfile || "calm";
-    const spring = profile === "battery" ? 3.2 : 4.2 + activity * 1.5;
-    const damping = Math.exp(-(profile === "battery" ? 5.8 : 6.4) * dt);
+    const spring = profile == "battery" ? 3.2 : 4.2 + activity * 1.5;
+    const damping = Math.exp(-(profile == "battery" ? 5.8 : 6.4) * dt);
     const pointerRadius = Math.min(220, Math.max(120, Math.min(width, height) * 0.20));
 
     for (const particle of particles) {
