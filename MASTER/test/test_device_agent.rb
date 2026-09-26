@@ -37,6 +37,22 @@ class TestDeviceAgent < Minitest::Test
     end
   end
 
+  def test_claim_owner_persists_subject_and_pairs_current_session
+    Dir.mktmpdir("device-agent") do |root|
+      result = Master::Device::Agent.claim_owner!(root:, label: "Alex")
+      status = Master::Device::Agent.status(root:)
+
+      refute_empty result[:subject]
+      assert_equal result[:subject], status[:owner_subject]
+      assert_equal "Alex", status[:owner_label]
+      assert_equal true, Fiber[:master_paired]
+      assert_equal result[:subject], Fiber[:master_pair_subject]
+    ensure
+      Fiber[:master_paired] = nil
+      Fiber[:master_pair_subject] = nil
+    end
+  end
+
   def test_tick_persists_runtime_state_without_running_personal_orders
     Dir.mktmpdir("device-agent") do |root|
       cognition = FakeCognition.new
