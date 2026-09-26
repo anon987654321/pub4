@@ -69,6 +69,8 @@ module Master
           return self if current && current["goal"].to_s == goal.to_s && current["scope"].to_s == relative(scope).to_s &&
                           current["state"].to_s == "blocked"
 
+          raise active_mission_conflict(current, goal:, scope:) if active_for_other_target?(current, goal:, scope:)
+
           start_unlocked!(goal:, scope:, model:, effort:, plan:)
           @record["state"] = "waiting"
           @record["stage"] = "discover"
@@ -95,6 +97,8 @@ module Master
             persist!
             resumed = true
           else
+            raise active_mission_conflict(current, goal:, scope:) if active_for_other_target?(current, goal:, scope:)
+
             start_unlocked!(goal:, scope:, model:, effort:, plan:)
             persist!
             resumed = false
@@ -340,6 +344,17 @@ module Master
         return false unless lease_expired?(record)
 
         true
+      end
+
+      def active_for_other_target?(record, goal:, scope:)
+        return false unless record
+        return false unless RESUMABLE_STATES.include?(record["state"].to_s)
+
+        record["goal"].to_s != goal.to_s || record["scope"].to_s != relative(scope).to_s
+      end
+
+      def active_mission_conflict(record, goal:, scope:)
+        "mission already active for #{record["scope"]} (requested #{relative(scope)}; #{record["goal"]} != #{goal})"
       end
 
       def claim_unlocked!
