@@ -6,9 +6,9 @@ module Master
   module Review
     module Scan
       class SelfTest
-        # Self-test checks run against the OPENBSD-mirrored deploy tree
-        # (rails/, openbsd/, sh/, postpro/) — a separate corpus from MASTER's
-        # own lib/, so kept as its own concern with its own path resolution.
+        # Self-test checks run against OpenBSD's authored source/config corpus,
+        # separately from MASTER's lib/. Discovery uses real paths and extensions,
+        # never a case-dependent alias such as "openbsd/**".
         module DeployChecks
           private
 
@@ -57,9 +57,12 @@ module Master
             end
           end
 
+          MAX_DEPLOY_FILE_BYTES = 24_000
+
           def deploy_small_files_findings
-            deploy_paths.select { |p| File.size(p) > 300 * 80 rescue false }.map do |path|
-              finding(path:, line: 1, message: "OPERATOR file >~300 lines (violates DENSITY/SMALL_FILES)")
+            deploy_paths.select { |path| File.size(path) > MAX_DEPLOY_FILE_BYTES rescue false }.map do |path|
+              finding(path:, line: 1,
+                message: "OpenBSD deploy file exceeds #{MAX_DEPLOY_FILE_BYTES} bytes (violates DENSITY/SMALL_FILES)")
             end
           end
 
@@ -67,26 +70,23 @@ module Master
             @deploy_paths ||= build_deploy_paths
           end
 
+          DEPLOY_EXTENSIONS = %w[.rb .sh .zsh .ksh .erb .yml .yaml].freeze
+          DEPLOY_IGNORED_SEGMENTS = %w[test quarantine].freeze
+
           def build_deploy_paths
             deploy_root = File.expand_path("../OPENBSD", @root)
             return [] unless File.directory?(deploy_root)
 
-            patterns = [
-              File.join(deploy_root, "rails", "**", "*.rb"),
-              File.join(deploy_root, "openbsd", "**", "*"),
-              File.join(deploy_root, "sh", "**", "*"),
-              File.join(deploy_root, "postpro", "**", "*.rb"),
-              File.join(deploy_root, "*.rb"),
-            ]
-            patterns.flat_map { |pattern| Dir.glob(pattern) }
-                    .select { |path| File.file?(path) }
-                    .select { |path| deploy_path_allowed?(path, deploy_root) }
-                    .uniq.sort
+            Dir.glob(File.join(deploy_root, "**", "*"))
+              .select { |path| File.file?(path) }
+              .select { |path| DEPLOY_EXTENSIONS.include?(File.extname(path).downcase) }
+              .select { |path| deploy_path_allowed?(path, deploy_root) }
+              .uniq.sort
           end
 
           def deploy_path_allowed?(path, deploy_root)
             rel = path.delete_prefix("#{deploy_root}/")
-            !Scanner.skip_path?(rel) && !rel.split("/").include?("db")
+            !Scanner.skip_path?(rel) && !DEPLOY_IGNORED_SEGMENTS.any? { |segment| rel.split("/").include?(segment) }
           end
         end
 
