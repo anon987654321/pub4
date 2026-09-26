@@ -191,18 +191,22 @@ class Marketplace::Order < ApplicationRecord
   # the transition rather than left as a status for the buyer to poll, because
   # nobody polls an order page.
   def ship!(tracking_code: nil, carrier: nil)
-    already_shipped = fulfilment_status == "shipped"
-    update!(
-      fulfilment_status: "shipped",
-      tracking_code: tracking_code,
-      carrier: carrier,
-      shipped_at: Time.current
-    )
-    unless already_shipped
-      metadata = { order_id: id, carrier: carrier }
-      record_listing_commerce_event("MarketplaceOrderShipped", actor: seller, metadata: metadata)
-      record_listing_event("shipped", user: seller, metadata: metadata)
+    transitioned = false
+    with_lock do
+      already_shipped = fulfilment_status == "shipped"
+      update!(
+        fulfilment_status: "shipped",
+        tracking_code: tracking_code,
+        carrier: carrier,
+        shipped_at: Time.current
+      )
+      transitioned = !already_shipped
     end
+    return self unless transitioned
+
+    metadata = { order_id: id, carrier: carrier }
+    record_listing_commerce_event("MarketplaceOrderShipped", actor: seller, metadata: metadata)
+    record_listing_event("shipped", user: seller, metadata: metadata)
     detail = tracking_code.presence ? "#{listing_title} — #{carrier.presence || 'Tracking'}: #{tracking_code}" : listing_title
     deliver_notification(buyer_record, title: I18n.t("marketplace.order_notification.on_its_way"), body: detail, source: self, kind: "order")
   end
@@ -253,14 +257,18 @@ class Marketplace::Order < ApplicationRecord
   end
 
   def mark_delivered!
-    already_delivered = fulfilment_status == "delivered"
-    update!(fulfilment_status: "delivered", delivered_at: Time.current)
-    enqueue_store_payout!
-    unless already_delivered
-      metadata = { order_id: id }
-      record_listing_commerce_event("MarketplaceOrderDelivered", actor: buyer_record, metadata: metadata)
-      record_listing_event("delivered", user: buyer_record, metadata: metadata)
+    transitioned = false
+    with_lock do
+      already_delivered = fulfilment_status == "delivered"
+      update!(fulfilment_status: "delivered", delivered_at: Time.current)
+      transitioned = !already_delivered
     end
+    return self unless transitioned
+
+    enqueue_store_payout!
+    metadata = { order_id: id }
+    record_listing_commerce_event("MarketplaceOrderDelivered", actor: buyer_record, metadata: metadata)
+    record_listing_event("delivered", user: buyer_record, metadata: metadata)
     deliver_notification(buyer_record, title: I18n.t("marketplace.order_notification.delivered"), body: listing_title, source: self, kind: "order")
   end
 
