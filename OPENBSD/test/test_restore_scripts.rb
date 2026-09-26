@@ -7,7 +7,7 @@ require "tmpdir"
 # Every read below inspects UTF-8 source. Under a C locale -- which is how the
 # weekly integrity run invokes these on vm23 -- Ruby defaults file reads to
 # US-ASCII and each one raises "invalid byte sequence". Same require, same
-# reason, as RAILS/gates/runner.rb.
+# reason, as MASTER/gates/runner.rb.
 require_relative "../lib/utf8"
 
 class RestoreScriptsTest < Minitest::Test
