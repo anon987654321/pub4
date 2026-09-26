@@ -40,6 +40,26 @@ class TestPhoenix < Minitest::Test
     FileUtils.remove_entry(dir) if dir && File.exist?(dir)
   end
 
+  def test_a_commit_can_cover_multiple_boundaries
+    dir = Dir.mktmpdir("phoenix-commit")
+    master_file = File.expand_path("../lib/master.rb", __dir__)
+    rails_file = File.expand_path("../../RAILS/apps.yml", __dir__)
+
+    entries = Master::Phoenix.record_commit(
+      root: dir,
+      message: "fix: boundary seam",
+      head: "abc123",
+      paths: [master_file, rails_file],
+      findings: [{ rule: "BOUNDARY" }]
+    )
+
+    assert_equal %w[master rails], entries.map { |entry| entry[:boundary] }
+    assert_equal "abc123", entries.first[:evidence][:head]
+    assert_equal 1, entries.first[:evidence][:findings]
+  ensure
+    FileUtils.remove_entry(dir) if dir && File.exist?(dir)
+  end
+
   def test_production_evidence_is_append_only
     dir = Dir.mktmpdir("phoenix-evidence")
     Master::Phoenix.record_evidence(
