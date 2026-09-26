@@ -14,7 +14,7 @@ DRIFT_STAMPS = Dir.mktmpdir("deploy-drift-stamps")
 Minitest.after_run { FileUtils.remove_entry(DRIFT_STAMPS) if File.directory?(DRIFT_STAMPS) }
 ENV["PUB4_STAMP_DIR"] = DRIFT_STAMPS
 
-require_relative "../../gates/lib/live/deploy_drift"
+require_relative "../../../MASTER/gates/lib/live/deploy_drift"
 
 # deploy_drift is the gate the third state was invented for.
 #
