@@ -11,19 +11,17 @@ module Operator
       return ENV["PUB4_RUBY"] if ENV["PUB4_RUBY"].to_s != ""
       path = rbenv_path("ruby", root:)
       return path if path
-      return "ruby34" if executable?("ruby34")
-      return "ruby3.4" if executable?("ruby3.4")
+      actual = Gem::Version.new(RUBY_VERSION)
+      required = Gem::Version.new(pinned_version(root))
+      return RbConfig.ruby if actual == required
 
-      RbConfig.ruby
+      raise Environment.ruby_mismatch_message
     end
 
     def bundle_cmd(root: Environment.repo_root)
       return ENV["PUB4_BUNDLE"] if ENV["PUB4_BUNDLE"].to_s != ""
       path = rbenv_path("bundle", root:)
       return path if path
-      return "bundle34" if executable?("bundle34")
-      return "bundle3.4" if executable?("bundle3.4")
-
       "bundle"
     end
 
