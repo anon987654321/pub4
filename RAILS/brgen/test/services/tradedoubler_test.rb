@@ -123,6 +123,20 @@ class TradedoublerTest < ActiveSupport::TestCase
     assert_equal [], Shared::Tradedoubler.parse("a string")
   end
 
+  test "stored affiliate deals carry network provenance" do
+    Shared::AffiliateProduct.create!(
+      source: "tradedoubler", external_id: "provenance-1", title: "Tracked product",
+      click_url: "https://clk.test/p", market: "NO", category: "fashion",
+      price_cents: 12_900, currency: "NOK", merchant: "Merchant", in_stock: true,
+      placeholder: false, last_seen_at: Time.current
+    )
+
+    deal = Shared::Affiliate.deals(category: "fashion", limit: 1).first
+
+    assert_equal "tradedoubler", deal.source
+    assert_equal "Tracked product", deal.title
+  end
+
   test "to_cents strips currency noise and thousands separators" do
     assert_equal 24_990, Shared::Tradedoubler.to_cents("249.90")
     assert_equal 24_990, Shared::Tradedoubler.to_cents("249,90")
