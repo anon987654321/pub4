@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Shape census over every tracked file in all four trees. The tree's shape is
+# Shape census over every tracked file in all three governed trees. The tree's shape is
 # conduct: a directory bought for one file, a name that repeats its parent, a
 # name that says nothing, and a path deeper than its neighbours all cost a
 # reader something. FILE_SPRAWL in the scan registry measures the first two for
