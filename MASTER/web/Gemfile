@@ -29,6 +29,7 @@ gem "master", path: ".."
 
 # MASTER lib deps (must mirror root Gemfile)
 gem "ruby_llm", "~> 2.0"
+gem "ruby_llm-mcp", "~> 1.0"
 gem "tty-prompt", "~> 0.23"
 gem "tty-reader", "~> 0.9"
 gem "tty-screen", "~> 0.8"
