@@ -13,23 +13,6 @@ $stderr.set_encoding("UTF-8")
 $stdout.sync = true
 $stderr.sync = true
 
-pinned_ruby = File.expand_path("../.ruby-version", __dir__)
-if File.file?(pinned_ruby)
-  expected_ruby = File.read(pinned_ruby).strip
-  if !expected_ruby.empty? && RUBY_VERSION != expected_ruby && ENV["MASTER_ALLOW_UNPINNED_RUBY"] != "1"
-    ruby_wrapper = File.expand_path("../bin/ruby", __dir__)
-    if File.executable?(ruby_wrapper)
-      reexec = lambda do
-        ENV["BUNDLE_GEMFILE"] = File.expand_path("../Gemfile", __dir__)
-        exec(ruby_wrapper, "-rbundler/setup", __FILE__, *ARGV)
-      end
-      defined?(Bundler) ? Bundler.with_unbundled_env(&reexec) : reexec.call
-    end
-    warn "cli: Ruby #{expected_ruby} required; running #{RUBY_VERSION} — use #{ruby_wrapper} bin/cli"
-    exit 78
-  end
-end
-
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 # The tree is this file's parent, not Dir.pwd. bin/master exists to chdir
 # here; a caller from the repo root must get the same runtime without it.
