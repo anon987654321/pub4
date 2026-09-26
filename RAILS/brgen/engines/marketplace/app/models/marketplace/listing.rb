@@ -131,6 +131,7 @@ class Marketplace::Listing < ApplicationRecord
   # their own expired listings back.
   scope :active,   -> { where(status: "active") }
   scope :live,     -> { active.where("expires_at IS NULL OR expires_at > ?", Time.current) }
+  scope :publicly_visible, -> { live.joins(:user).where(users: { deleted_at: nil, deletion_scheduled_at: nil }) }
   scope :expired,  -> { active.where("expires_at IS NOT NULL AND expires_at <= ?", Time.current) }
   scope :expiring_soon, lambda {
     live.where(renewal_notice_sent_at: nil).where("expires_at <= ?", Time.current + RENEWAL_NOTICE)
