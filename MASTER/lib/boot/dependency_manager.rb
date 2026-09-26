@@ -153,8 +153,6 @@ module Master
       end
 
       def install_system_packages!
-        return { ok: true, changed: false, command: nil, output: "no package manager" } unless enabled?
-
         with_lock { install_system_packages }
       rescue StandardError => e
         report("system dependency install failed: #{e.class}: #{e.message}")
