@@ -33,8 +33,6 @@ end
 require "optparse"
 require "master"
 require "cli/boot_banner"
-require "cli/web_server"
-Master.prepare_runtime!(unsafe: ENV["MASTER_UNSAFE_PROCESS_DEFAULTS"] == "1")
 
 def initial_message_from_argv(argv)
   options = parse_initial_message_options(argv)
@@ -146,8 +144,6 @@ if ENV["MASTER_FOLD"] == "1"
 end
 
 if $stdin.tty?
-  Master::CLI::WebServer.start(cli.container[:config]) unless fast_boot
-
   message = initial_message_from_argv(ARGV)
   message = "/status" if fast_boot && message.empty?
   if !fast_boot && Master::CLI::Face::Window.asked?(message.split)
