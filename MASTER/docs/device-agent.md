@@ -25,8 +25,9 @@ to that personal workspace. Standing orders run by the device agent are filtered
 to the paired subject; operator-owned orders do not become phone automation by
 accident.
 
-`/device` reports whether the local companion is paired and when its resident
-tick last ran.
+`/device` reports whether the local companion is paired and when its resident tick last ran.
+
+After pairing, `/owner intro` shows the small profile the owner may choose to fill in, `/owner set key=value ...` records explicit preferences, and `/owner forget <key>` removes one field. `pet_name` is one of those fields, so the owner can give MASTER a playful name such as `Mochi`, `Ares`, or `Biscuit`; wake-time greetings use that explicit name rather than inventing an identity.
 
 ## Interactive phone
 
