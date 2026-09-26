@@ -13,6 +13,11 @@ class EmailSubscription < ApplicationRecord
 
   scope :confirmed, -> { where(confirmed: true) }
   scope :marketing_opted_in, -> { confirmed.where(agreed_to_marketing: true) }
+  scope :delivery_eligible, -> {
+    marketing_opted_in.where.not(
+      email: User.where("deleted_at IS NOT NULL OR deletion_scheduled_at IS NOT NULL").select(:email_address),
+    )
+  }
 
   def confirm!
     update!(confirmed: true, confirmed_at: Time.current)
