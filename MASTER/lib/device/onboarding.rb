@@ -24,11 +24,9 @@ module Master
       # variable names each provider reads stay in data/providers.yml.
       LANE_ORDER = %w[openrouter anthropic openai gemini xai deepseek mistral replicate].freeze
       BUILD_TOOLS = %w[clang make pkg-config].freeze
-      # What bundle install needs on Termux before it can build the native
-      # gems, and the flag that links sqlite3 against pkg's libsqlite. The
-      # Gemfile sets the flag itself; the line stays for a stale checkout.
-      TERMUX_BUNDLE = "pkg install build-essential sqlite && bundle config set build.sqlite3 " \
-                      "--enable-system-libraries && bundle install"
+      # The dependency manager owns bundle installation and native package setup;
+      # onboarding prints the same explicit recovery command as bin/deps.
+      TERMUX_BUNDLE = "cd MASTER && bin/deps install"
       TEMPLATE = <<~ENV
         # MASTER reads this file at boot. One KEY=value per line; # starts a comment.
         # Uncomment one key and paste your own value. MASTER never writes a key here.
