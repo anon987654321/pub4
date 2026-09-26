@@ -96,7 +96,8 @@ module Master
 
           def run_rule_once(rule, files, pass, council: nil)
             rl = RuleLoop.new(rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus,
-                              learnings: @learnings, committer: @committer)
+                              learnings: @learnings, committer: @committer,
+                              visual_custody: @visual_pass&.custody)
             rl.injected_preamble = [@preamble, council_preamble(council)].compact.join("\n\n")
             @bus&.publish("fix_loop:tier2_quality_route", pass:, rule: rule.id) if @rule_order.tier2?(rule.id)
             rl.run_once(files)
