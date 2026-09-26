@@ -32,13 +32,14 @@ class Takeaway::Restaurant < ApplicationRecord
             numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
 
   scope :active, -> { where(active: true) }
+  scope :publicly_visible, -> { active.joins(:user).where(users: { deleted_at: nil, deletion_scheduled_at: nil }) }
   scope :popular, -> { order(rating: :desc, updated_at: :desc, id: :desc) }
   scope :near, ->(lat, lng, radius_km = 5) { nearby(lat, lng, radius_km) }
 
   # What a search engine may be told about. A demo restaurant — `demo` is set by
   # the seeders, never by an owner's form — keeps its page but is not presented
   # as a business: no sitemap entry, no LocalBusiness, and noindex on the page.
-  scope :indexable, -> { active.where(demo: false) }
+  scope :indexable, -> { publicly_visible.where(demo: false) }
 
   # Open only when recorded hours say so. A restaurant with no hours is not
   # known to be open, so it is not reported open; hours_known? tells that apart
