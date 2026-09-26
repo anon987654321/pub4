@@ -26,7 +26,7 @@ npm ci && npm run build:pwa               # rebuild the Workbox service worker
 
 `RAILS/test/*.rb` are standalone Minitest files run under bare `ruby` — they
 read source as text and never boot Rails. App tests under `RAILS/<app>/test/`
-need the app bundle. Ruby 3.4.9 is pinned by `.ruby-version` at the repo root
+need the app bundle. Ruby 4.0.7 is pinned by `.ruby-version` at the repo root
 and in each app directory, so app commands resolve the same interpreter from any
 cwd.
 
@@ -95,7 +95,7 @@ and `/fix` mutates the working tree. `MASTER_GATE_SCAN_ONLY=1` for preflight.
 - **In a worktree, live gates measure main.** The local fleet serves the main
   checkout, so a view change stays invisible to rendered gates until it merges,
   while gate data files are read from your tree. App suites do run in a
-  worktree: `cd RAILS/<app> && RBENV_VERSION=3.4.9 rbenv exec bundle exec rails
+  worktree: `cd RAILS/<app> && RBENV_VERSION=4.0.7 rbenv exec bundle exec rails
   test` prepares its own sqlite from the checked-in schema.
 - **Horizon features** in `apps.horizon.yml` are `agent: ignore` — do not
   implement unprompted.
