@@ -19,7 +19,7 @@ module Master
         # Radians a second: the face turns only a little at rest and in thought.
         # Full rotation made the Braille head collapse into a narrow silhouette.
         YAW = { idle: [0.20, 0.32], thinking: [0.28, 0.55] }.freeze
-        EVENTS = %i[key listen nod].freeze
+        EVENTS = %i[key listen nod thinking phantom council].freeze
 
         # A critically damped spring, stepped implicitly so a long frame can
         # never make it overshoot or blow up.
@@ -72,8 +72,20 @@ module Master
             @yaw.v += @rng.rand(-0.4..0.4)
             @dip.v -= 0.25
             @particles.each { |p| p.push += @rng.rand(0.6..1.4) if p.height < -0.2 }
-          when :listen then @particles.each { |p| p.push -= 0.5 }
-          when :nod then @pitch.v += 1.6
+          when :listen
+            @particles.each { |p| p.push -= 0.5 }
+          when :nod
+            @pitch.v += 1.6
+          when :thinking
+            @pitch.v -= 0.35
+            @yaw.v += @rng.rand(-0.12..0.12)
+          when :phantom
+            @roll.v += @rng.rand(-0.8..0.8)
+            @dip.v += 0.5
+            @particles.each { |p| p.push += @rng.rand(0.8..1.5) }
+          when :council
+            @yaw.v += @rng.rand(-0.3..0.3)
+            @pitch.v += 0.45
           end
         end
 
