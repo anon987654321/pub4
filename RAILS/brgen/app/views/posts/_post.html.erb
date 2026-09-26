@@ -105,7 +105,7 @@
           time: time_ago_in_words(post.created_at),
           title: post.title,
           content: nil,
-          url: post_path(post),
+          url: post.attributed? ? post_path(post) : nil,
           media: post_media.presence,
           actions: post_actions,
           frame: false,
