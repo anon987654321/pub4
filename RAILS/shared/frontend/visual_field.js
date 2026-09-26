@@ -29,16 +29,16 @@ function signedHash(index, salt = 0) {
 export function normalizeVisual(detail = {}) {
   return {
     topology: detail.topology || detail.canonical_topology || null,
-    activity: clamp(detail.activity ?? detail.arousal ?? 0.16),
-    entropy: clamp(detail.entropy ?? 0.2),
-    confidence: clamp(detail.confidence ?? 0.82),
-    arousal: clamp(detail.arousal ?? 0.16),
-    valence: clamp(detail.valence ?? 0),
-    focus: clamp(detail.focus ?? detail.confidence ?? 0.82),
-    bass: clamp(detail.bass ?? 0),
-    mid: clamp(detail.mid ?? 0),
-    high: clamp(detail.high ?? 0),
-    beat: clamp(detail.beat ?? 0),
+    activity: clamp(detail.activity || detail.arousal || 0.16),
+    entropy: clamp(detail.entropy || 0.2),
+    confidence: clamp(detail.confidence || 0.82),
+    arousal: clamp(detail.arousal || 0.16),
+    valence: clamp(detail.valence || 0),
+    focus: clamp(detail.focus || detail.confidence || 0.82),
+    bass: clamp(detail.bass || 0),
+    mid: clamp(detail.mid || 0),
+    high: clamp(detail.high || 0),
+    beat: clamp(detail.beat || 0),
     mode: detail.mode || "idle",
     name: detail.name || detail.event || "visual"
   }
@@ -81,7 +81,7 @@ export class VisualField {
     this.beat = 0
     this.mode = "idle"
     this.points = new Float32Array(0)
-    this.reducedMotion = typeof matchMedia === "function" &&
+    this.reducedMotion = typeof matchMedia == "function" &&
       matchMedia("(prefers-reduced-motion: reduce)").matches
 
     this.canvas.setAttribute("aria-hidden", "true")
@@ -148,11 +148,11 @@ export class VisualField {
   ensureCount() {
     const area = this.width * this.height
     const mobile = area < 420000
-    const battery = document.documentElement.dataset.runtimeProfile === "battery"
+    const battery = document.documentElement.dataset.runtimeProfile == "battery"
     const reduced = this.reducedMotion
     const base = surfaceDefaults(this.surface).count
     const next = reduced ? Math.min(104, base) : mobile ? Math.min(260, base) : battery ? Math.min(220, base) : base
-    if (next !== this.points.length / 6) {
+    if (next != this.points.length / 6) {
       this.count = next
       this.seed()
     }
@@ -196,7 +196,7 @@ export class VisualField {
   }
 
   pairTarget(index, now) {
-    const side = index % 2 === 0 ? -1 : 1
+    const side = index % 2 == 0 ? -1 : 1
     const local = Math.floor(index / 2)
     const ring = 0.12 + hash(local, 29) * 0.74
     const angle = local * GOLDEN_ANGLE + hash(local, 31) * 0.18
@@ -246,7 +246,7 @@ export class VisualField {
     const h = this.height
     const center = w * 0.5
 
-    if (section === 0) {
+    if (section == 0) {
       const angle = u * TAU
       return {
         x: center + Math.cos(angle) * w * 0.17 * (0.92 + 0.08 * Math.sin(now * 0.0002)),
@@ -259,7 +259,7 @@ export class VisualField {
       const y = h * (0.24 + u * 0.31)
       const shoulder = w * (0.12 + 0.12 * Math.sin(Math.PI * u))
       return {
-        x: center + (section === 1 ? -shoulder : shoulder) + jitter * 1.8,
+        x: center + (section == 1 ? -shoulder : shoulder) + jitter * 1.8,
         y: y + Math.sin(u * Math.PI + now * 0.0002) * 1.5,
         depth: 0.42 + hash(index, 79) * 0.58
       }
@@ -267,7 +267,7 @@ export class VisualField {
 
     if (section <= 5) {
       const y = h * (0.49 + u * 0.43)
-      const side = section % 2 === 0 ? -1 : 1
+      const side = section % 2 == 0 ? -1 : 1
       const leg = w * 0.09 + u * w * 0.03
       return {
         x: center + side * leg + jitter * 2,
@@ -277,7 +277,7 @@ export class VisualField {
     }
 
     const y = h * (0.36 + u * 0.30)
-    const side = section === 6 ? -1 : 1
+    const side = section == 6 ? -1 : 1
     return {
       x: center + side * (w * 0.30 + u * w * 0.07),
       y: y + jitter * 1.6,
@@ -345,7 +345,7 @@ export class VisualField {
       this.points[i + 3] = vy
       this.points[i + 5] = depth
 
-      if (repel && index % 17 === 0) {
+      if (repel && index % 17 == 0) {
         const neighbor = ((index + repel) % this.count) * 6
         const dx = this.points[i] - this.points[neighbor]
         const dy = this.points[i + 1] - this.points[neighbor + 1]
@@ -387,7 +387,7 @@ export class VisualField {
       this.context.fillRect(Math.round(this.points[i]), Math.round(this.points[i + 1]), 1, 1)
     }
 
-    if (this.topology === "pair" && !this.reducedMotion) {
+    if (this.topology == "pair" && !this.reducedMotion) {
       this.context.globalAlpha = Math.min(0.12, 0.02 + this.confidence * 0.06)
       this.context.beginPath()
       this.context.moveTo(this.width * 0.3, this.height * 0.47)
