@@ -112,6 +112,10 @@ module Master
         self.class.send(:save_state, root, "started_at" => Time.now.utc.iso8601) unless @state["started_at"]
       end
 
+      def stop!
+        @stop = true
+      end
+
       def run_forever
         loop do
           break if @stop || self.class.instance_variable_get(:@stop)
