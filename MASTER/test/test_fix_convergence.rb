@@ -115,6 +115,25 @@ class TestFixConvergence < Minitest::Test
     assert_includes result, "DONE: clean"
   end
 
+  def test_fix_surfaces_a_gate_failure_when_it_makes_no_changes
+    fix_loop = Object.new
+    fix_loop.define_singleton_method(:run) { |target, **| Master::Result.ok("DONE: clean") }
+    scanner = Object.new
+    def scanner.scan(*) = Master::Result.ok([])
+    def scanner.scan_dir(*) = Master::Result.ok([])
+
+    result = Operator::GateChain.stub(:verify_fix, ->(target:) { [1, []] }) do
+      Master::CLI::CommandRegistry.stub(:observe, ->(*) { "clean" }) do
+        Master::CLI::CommandRegistry.dispatch_fix(
+          scanner:, fix_loop:, deliberation: nil, root: Master::ROOT, bus: nil,
+          ctx: { args: "RAILS --no-aesthetic" }
+        )
+      end
+    end
+
+    assert_includes result, "gate verification did not pass (status 1)"
+  end
+
   # 2-4. /fix observes, repairs what the reading found, and observes again.
   def test_fix_observes_repairs_and_observes_again
     seen = []
