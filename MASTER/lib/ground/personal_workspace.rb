@@ -37,6 +37,10 @@ module Master
       end
 
       def prompt_section(root = Master::ROOT, subject = Fiber[:master_pair_subject])
+        if subject.to_s.strip.empty? && Fiber[:master_visitor] != true && defined?(Master::Device::Agent) &&
+            Master::Device::Agent.paired?(root:)
+          subject = Master::Device::Agent.owner_subject(root:)
+        end
         return unless subject.to_s.strip != ""
 
         dir = dir_for(subject, root:)

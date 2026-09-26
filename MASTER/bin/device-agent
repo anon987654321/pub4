@@ -1,0 +1,27 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+ENV["MASTER_DEVICE_AGENT"] = "0"
+ENV["MASTER_WEB"] = "0"
+ENV["MASTER_SKIP_TTS"] = "1"
+
+ROOT = File.expand_path("..", __dir__)
+Dir.chdir(ROOT)
+
+$LOAD_PATH.unshift File.join(ROOT, "lib")
+require "master"
+
+session = Master.boot(root: ROOT)
+container = session.container
+agent = Master::Device::Agent.new(
+  root: ROOT,
+  bus: container[:bus],
+  cognition: container[:cognition],
+  standing: container[:standing],
+)
+
+trap("TERM") { agent.stop! }
+trap("INT") { agent.stop! }
+
+Master::Device::Agent.send(:save_state, ROOT, "foreground_service" => true)
+agent.run_forever

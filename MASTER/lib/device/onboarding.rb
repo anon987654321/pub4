@@ -88,6 +88,7 @@ module Master
         created = ensure_env_file
         @out.puts("onboard0: first run on this #{@android ? "phone" : "host"}") if first
         @out.puts("env0: created #{home(@env_file)}, comments only; uncomment one key there") if created
+        @out.puts("pair0: this phone is not personal yet — say /pair owner [name] to pair it to yourself") if @android && !Device::Agent.paired?(root: @root)
         checks.each { |check| @out.puts("#{check.name}0: #{check.says}") if first || !check.ok }
         mark! if first
       end

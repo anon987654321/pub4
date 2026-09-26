@@ -43,6 +43,33 @@ class TestPersonalWorkspace < Minitest::Test
     assert_equal "HEARTBEAT_OK", Master::Ground::PersonalWorkspace.pulse(root: @root)
   end
 
+  def test_persisted_device_owner_is_not_loaded_for_a_visitor
+    Master::Device::Agent.stub(:owner_subject, "owner") do
+      Master::Device::Agent.stub(:paired?, true) do
+        Fiber[:master_visitor] = true
+        assert_nil Master::Ground::PersonalWorkspace.prompt_section(@root)
+      ensure
+        Fiber[:master_visitor] = nil
+      end
+    end
+  end
+
+  def test_persisted_device_owner_is_used_for_memory_only_in_a_local_context
+    Master::Device::Agent.stub(:paired?, true) do
+      Master::Device::Agent.stub(:owner_subject, "owner123") do
+        Fiber[:master_pair_subject] = nil
+        Fiber[:master_visitor] = nil
+        tool = Master::Io::MemoryRecord.new(memory: nil, root: @root)
+        result = tool.call(key: "likes_tea", description: "pref", body: "drinks tea", type: "user")
+        assert result.ok?, result.inspect
+        assert_includes result.value!, "owner123/MEMORY.md"
+      ensure
+        Fiber[:master_pair_subject] = nil
+        Fiber[:master_visitor] = nil
+      end
+    end
+  end
+
   def test_memory_record_writes_to_workspace_when_paired
     Fiber[:master_pair_subject] = "sub1"
     tool = Master::Io::MemoryRecord.new(memory: nil, root: @root)
