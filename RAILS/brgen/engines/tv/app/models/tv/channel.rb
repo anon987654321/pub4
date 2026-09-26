@@ -33,6 +33,7 @@ class Tv::Channel < ApplicationRecord
   validates :slug, uniqueness: true, format: { with: /\A[a-z0-9_-]+\z/ }
   before_validation { self.slug ||= name.to_s.parameterize }
 
+  scope :publicly_visible, -> { joins(:user).where(users: { deleted_at: nil, deletion_scheduled_at: nil }) }
   scope :popular, -> { order(subscribers_count: :desc) }
 
   def to_param = slug
