@@ -7,7 +7,7 @@
 # rules and for a year only one of them was counted:
 #
 #   law       the 122 rules in law/ with a lexical detector, applied to every
-#             tracked source file in the four trees
+#             tracked source file in the three governed trees
 #   registry  the 145 rules the RuleDSL registry builds, run through the
 #             scanner itself and kept at error severity
 #
