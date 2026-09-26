@@ -18,7 +18,7 @@ file including this one. A harness file (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`,
 a second copy of it: the copy is always the one being read, and it is always the
 one that drifted.
 
-The four trees, and how each is entered:
+The three governed trees, with MASTER/tools inside MASTER:
 
 - `MASTER/` — a constitutional AI runtime in pure Ruby. `MASTER/bin/master "<instruction>"`.
 - `RAILS/` — brgen (a city social network, verticals as mounted engines), amber, bsdports. `RAILS/bin/triangle up`.
