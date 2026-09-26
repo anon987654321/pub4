@@ -53,6 +53,8 @@ nb:
     saved_search_default_name: Søk på markedsplassen
     all_categories: Alle
     category: Kategori
+    move_up: "Flytt opp"
+    move_down: "Flytt ned"
     any_query: Alle søkeord
     alerts_on: varsler på
     partner_program: Partnerprogram
