@@ -70,7 +70,7 @@ export default class extends Controller {
     if (this.surfaceValue) return this.surfaceValue
     if (document.querySelector(".radio-tunnel")) return "radio"
     if (document.body.classList.contains("vertical-dating")) return "dating"
-    if (document.body.dataset.surface === "luxury") return "luxury"
+    if (document.body.dataset.surface == "luxury") return "luxury"
     if (window.location.pathname.startsWith("/chat")) return "master"
     return "social"
   }
