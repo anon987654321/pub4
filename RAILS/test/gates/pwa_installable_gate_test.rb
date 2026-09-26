@@ -4,7 +4,7 @@ require "fileutils"
 require "minitest/autorun"
 require "tmpdir"
 require_relative "gate_probe_harness"
-require_relative "../../gates/lib/source/pwa_installable"
+require_relative "../../../MASTER/gates/lib/source/pwa_installable"
 
 # pwa_installable is one of the two gates in this batch that needs nothing but the
 # checkout, so its third state is that it has none: no browser, no listening app,
