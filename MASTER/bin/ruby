@@ -10,6 +10,40 @@ if [ -f "$ROOT/.ruby-version" ]; then
   PINNED_VERSION="$(cat "$ROOT/.ruby-version")"
 fi
 
+install_system_runtime() {
+  case "$(uname -s 2>/dev/null || true)" in
+    OpenBSD)
+      if command -v pkg_add >/dev/null 2>&1; then
+        if [ "$(id -u)" -eq 0 ]; then
+          pkg_add -I "ruby%${PINNED_VERSION%%.*}" || true
+        elif command -v doas >/dev/null 2>&1; then
+          doas -n pkg_add -I "ruby%${PINNED_VERSION%%.*}" || true
+        elif command -v sudo >/dev/null 2>&1; then
+          sudo -n pkg_add -I "ruby%${PINNED_VERSION%%.*}" || true
+        fi
+      fi
+      ;;
+    Darwin)
+      if command -v brew >/dev/null 2>&1; then
+        brew install rbenv ruby-build || true
+      fi
+      ;;
+    Linux)
+      if [ -n "${PREFIX:-}" ] && command -v pkg >/dev/null 2>&1; then
+        pkg install -y ruby || true
+      elif command -v apt-get >/dev/null 2>&1; then
+        if [ "$(id -u)" -eq 0 ]; then
+          apt-get update && apt-get install -y rbenv ruby-build || true
+        elif command -v sudo >/dev/null 2>&1; then
+          sudo -n apt-get update && sudo -n apt-get install -y rbenv ruby-build || true
+        fi
+      elif command -v brew >/dev/null 2>&1; then
+        brew install rbenv ruby-build || true
+      fi
+      ;;
+  esac
+}
+
 find_rbenv() {
   RBENV="${RBENV:-}"
   if [ -n "$RBENV" ] && [ -x "$RBENV" ]; then
@@ -71,6 +105,17 @@ if [ -n "$RBENV" ]; then
 fi
 
 RUBY="${RUBY:-$(command -v ruby 2>/dev/null || true)}"
+if [ -z "$RUBY" ]; then
+  install_system_runtime
+  RBENV="$(find_rbenv || true)"
+  if [ -n "$RBENV" ]; then
+    RUBY="$(rbenv_path "$RBENV" || true)"
+    if [ -z "$RUBY" ]; then
+      RUBY="$(install_pinned_ruby "$RBENV" || true)"
+    fi
+  fi
+  RUBY="${RUBY:-$(command -v ruby 2>/dev/null || true)}"
+fi
 if [ -z "${RUBY:-}" ]; then
   printf '%s
 ' "pub4: no Ruby executable found; .ruby-version requires $PINNED_VERSION" >&2
