@@ -36,16 +36,14 @@ entries:
     The pattern is a `bin/<name>-worker` script that runs EventMachine work and writes a tempfile; the controller calls `Open3.capture3`. Reference implementation: `MASTER/bin/tts-worker` and `MASTER/lib/voice/speech.rb#synthesize_edge`.
 - key: project_master
   name: MASTER project context
-  description: pub4/MASTER — constitutional AI coding agent on OpenBSD VPS dev@brgen.no
+  description: pub4/MASTER — constitutional AI runtime and repo-wide governance kernel
   type: project
   body: |-
-    The MASTER project runs on VPS dev@brgen.no (46.23.89.226), OpenBSD 7.8, 1GB RAM, with passwordless doas. SSH uses `sshpass -p '<pass>' ssh -o StrictHostKeyChecking=no dev@46.23.89.226 'cmd'`—password per session; see `OPENBSD/RUNBOOK.md`. The codebase lives at `~/pub4/MASTER/`—roughly six thousand lines of Ruby, Zeitwerk-autoloaded.
+    MASTER is the constitutional AI runtime in pure Ruby. The repository is governed as three top-level trees: MASTER, RAILS and OPENBSD; `MASTER/tools/` is the canonical tool plane inside MASTER.
 
-    MASTER is a constitutional AI agent replacing the Claude Code CLI. OpenRouter runs through `ruby_llm` with default model `nvidia/nemotron-3-super-120b-a12b:free`. Fallback beyond it comes from the live :free catalogue (`use_live_catalog` in models.yml) — the static free chain thinned to one entry when OpenRouter withdrew its free tiers in 2026-08.
+    The public runtime surfaces are `MASTER/bin/master` for the agent session and `MASTER/bin/operator` for repository-wide operations. `/review` is read-only; `/critique` invokes council; `/fix` is the write/convergence operation. `MASTER/bin/operator gate` runs the repository ladder with autofix enabled, while `--scan-only` is the measurement-only variant.
 
-    All coding happens on the VPS via sshpass SSH—never local edits. Patches go through `~/pub4/tmp/patch.rb`. Shell work uses zsh builtins only; no sed, awk, grep, find, head, or tail.
-
-    The command pipeline is Intake → Infer → Route → DestructiveReview → Execute → Render; plain-language goals go to Core::Fold instead. Every write on either lane is judged by Review::Scan::WriteGuard before it lands. Pipe commands with `echo "cmd" | bundle exec ruby bin/cli`. Startup YAML includes `state.yml`, `limits.yml`, `rules.yml`, `voice.yml`, `style.yml`, and `models.yml`. The web tier is Falcon on port 53187; relayd terminates TLS at `https://ai.brgen.no` on 443. Deploy checks: `ruby OPENBSD/gates/integrity_gate.rb` and `bin/probe integrity`.
+    Production is vm23. OpenBSD deploy behavior belongs under `OPENBSD/`; Rails product truth belongs under `RAILS/apps.yml`. `MASTER/data/soul.yml` and `MASTER/data/rules.yml` are the law. Current runtime structure is the code that exists under `MASTER/lib/` and the tool implementations under `MASTER/tools/`; do not substitute an abandoned module target or a historical shell workflow for the present tree.
 - key: project_master_dual_gemfile
   name: MASTER has two Gemfiles
   description: MASTER/Gemfile (CLI) and MASTER/web/Gemfile (Falcon web) are independent
@@ -58,17 +56,13 @@ entries:
 
     When adding a dependency, edit both Gemfiles, run `bundle install` in `MASTER/` and `MASTER/web/`, and verify the gem appears in `MASTER/web/Gemfile.lock`.
 - key: project_master_seven_module_refactor
-  name: MASTER 7-module refactor (approved 2026-05-08)
-  description: User approved collapse of lib/master/ into 7 time-oriented modules
-    — now/loop/judge/voice/ground/reach/trace. Multi-commit, pass-by-pass; ship on
-    VPS dev@brgen.no.
-  type: project
+  name: historical seven-module refactor proposal
+  description: Reverted architecture proposal retained only as provenance
+  type: reference
   body: |-
-    Approved 2026-05-08 after scan, sweep, and council on `lib/` and `OPERATOR`.
+    The seven-module layout (`now`, `loop`, `judge`, `voice`, `ground`, `reach`, `trace`) was proposed on 2026-05-08 and later abandoned. The current repository does not use that target structure: the live `MASTER/lib/` tree has its present domain directories, and the public operator surfaces are `bin/master` and `bin/operator`.
 
-    Target layout under `lib/`: `now/` for cli, repl, and pipeline; `loop/` for autoloop, sweep, heartbeat, and convergence; `judge/` for scan/rules, council, swarm, and security with a unified Verdict; `voice/` for personality, soul, renderer, and speech; `ground/` for config, axioms, and `data/*.yml` as the Constitution aggregator; `reach/` for tools/base plus twenty-four tools; `trace/` for session, telemetry, bus, and undo. The old `lib/master/` tree is gone; this subsumes the Constitution aggregator, Io::Base, deliberation unification, refactor cycle, Security::Policy, and the Voice namespace.
-
-    Passes run one commit each with tests green and Zeitwerk ok: skeleton, then voice, trace, ground, reach, judge, loop, and finally now with stages folded into pipeline-as-data in `now/pipeline.rb`. Work happens on VPS dev@brgen.no on branch `refactor/seven-modules`. Time-orientation—now versus loop versus trace—replaces file-type splits; `judge/` unifies four "is this OK?" trees.
+    Treat this entry as historical context only. Do not create, restore, or route code toward the seven-module layout unless a new architectural decision explicitly establishes it. Git history holds the old implementation and branch work.
 - key: project_master_yml_json_authority
   name: master.yml/master.json migration is complete — soul.yml/rules.yml are sole
     authority
