@@ -30,7 +30,11 @@ module Master
       attr_reader :root, :id
 
       def self.instance_id
-        @instance_id ||= "#{Socket.gethostname}:#{Process.pid}:#{SecureRandom.hex(8)}"
+        if @instance_pid != Process.pid
+          @instance_pid = Process.pid
+          @instance_id = "#{Socket.gethostname}:#{Process.pid}:#{SecureRandom.hex(8)}"
+        end
+        @instance_id
       end
 
       def initialize(root: Master::ROOT, bus: nil, checkpoint: nil)
@@ -137,7 +141,7 @@ module Master
           return self unless @record
 
           @record["last_seen_at"] = now
-          if @record["state"] == "running"
+          if @record["state"] == "running" && @record["lease_owner"].to_s == self.class.instance_id
             @record["lease_until"] = (Time.now.utc + LEASE_SECONDS).iso8601
           end
           persist!
