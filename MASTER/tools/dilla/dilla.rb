@@ -5811,7 +5811,7 @@ def acquire_stream_lock!
       begin
         Process.kill(0, holder)
         dmesg_warn("stream lock held by pid #{holder} — exit")
-        exit 0
+        exit 1
       rescue Errno::ESRCH
         FileUtils.rm_f(STREAM_LOCK_PATH)
       end
@@ -20725,6 +20725,11 @@ render_dilla(part, bars_count)
   end
 
   abort "demo-all: no parts rendered" if parts.empty?
+
+  if parts.length != order.length
+    missing = order.length - parts.length
+    abort "demo-all: #{missing} part(s) missing (#{parts.length}/#{order.length}); refusing to publish a partial demo"
+  end
 
   # Look inside the parts before joining them.
   #
