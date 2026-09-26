@@ -6,7 +6,7 @@ class GroupMembersController < ApplicationController
   before_action :set_group
 
   def create
-    user = User.find_by(username: params[:username].to_s.strip.downcase)
+    user = User.messageable.find_by(username: params[:username].to_s.strip.downcase)
     if user.blank? || blocked_either_way?(user)
       redirect_to conversation_path(@group), alert: t("flash.user_not_found")
       return
