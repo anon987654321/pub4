@@ -99,9 +99,9 @@ module Master
         DEFAULT_LIMIT = 2000
 
         description "Read a file with line numbers. Path is relative to project root."
-        param :path, desc: "File path relative to project root", required: true
-        param :offset, desc: "First line to read (0-indexed)", type: "integer", required: false
-        param :limit, desc: "Maximum number of lines to return", type: "integer", required: false
+        parameter :path, desc: "File path relative to project root", required: true
+        parameter :offset, desc: "First line to read (0-indexed)", type: "integer", required: false
+        parameter :limit, desc: "Maximum number of lines to return", type: "integer", required: false
 
         def execute(path:, offset: 0, limit: DEFAULT_LIMIT)
           forward(path: path.to_s, offset: offset.to_i, limit: limit.to_i)
@@ -111,8 +111,8 @@ module Master
       class WriteFile < RubyLLM::Tool
         include ToolForwarding
         description "Write content to a file, creating it if needed. Snapshots for undo."
-        param :path, desc: "File path relative to project root", required: true
-        param :content, desc: "Full content to write", required: true
+        parameter :path, desc: "File path relative to project root", required: true
+        parameter :content, desc: "Full content to write", required: true
 
         def execute(path:, content:)
           forward(path: path.to_s, content: content.to_s) { |value| "Written: #{value}" }
@@ -122,9 +122,9 @@ module Master
       class StrReplace < RubyLLM::Tool
         include ToolForwarding
         description "Replace an exact unique string in a file with new content."
-        param :path, desc: "File path relative to project root", required: true
-        param :old_string, desc: "Exact string to find (must be unique in file)", required: true
-        param :new_string, desc: "Replacement string", required: true
+        parameter :path, desc: "File path relative to project root", required: true
+        parameter :old_string, desc: "Exact string to find (must be unique in file)", required: true
+        parameter :new_string, desc: "Replacement string", required: true
 
         def execute(path:, old_string:, new_string:)
           forward(path: path.to_s, old_string: old_string.to_s, new_string: new_string.to_s) do |value|
@@ -136,8 +136,8 @@ module Master
       class ListDir < RubyLLM::Tool
         include ToolForwarding
         description "List directory contents as a tree. Path is relative to project root."
-        param :path, desc: "Directory path (default: project root)", required: false
-        param :depth, desc: "Tree depth (1-5)", type: "integer", required: false
+        parameter :path, desc: "Directory path (default: project root)", required: false
+        parameter :depth, desc: "Tree depth (1-5)", type: "integer", required: false
 
         def execute(path: ".", depth: 3)
           forward(path: path.to_s, depth: depth.to_i)
@@ -147,9 +147,9 @@ module Master
       class SearchFiles < RubyLLM::Tool
         include ToolForwarding
         description "Search files in the project for a regex pattern. Returns matching lines with context."
-        param :pattern, desc: "Ruby regex pattern to search for", required: true
-        param :path, desc: "Directory to search in (default: project root)", required: false
-        param :context, desc: "Lines of context to show around each match", type: "integer", required: false
+        parameter :pattern, desc: "Ruby regex pattern to search for", required: true
+        parameter :path, desc: "Directory to search in (default: project root)", required: false
+        parameter :context, desc: "Lines of context to show around each match", type: "integer", required: false
 
         def execute(pattern:, path: ".", context: 2)
           forward(pattern: pattern.to_s, glob: path.to_s, context_lines: context.to_i)
@@ -159,7 +159,7 @@ module Master
       class Shell < RubyLLM::Tool
         include ToolForwarding
         description "Run a shell command in the project root. MASTER enforces blocked patterns."
-        param :command, desc: "Shell command to execute", required: true
+        parameter :command, desc: "Shell command to execute", required: true
 
         def execute(command:) = forward(command: command.to_s)
       end
@@ -169,7 +169,7 @@ module Master
         MAX_QUERY_LENGTH = 300
 
         description "Search the web using DuckDuckGo. Returns titles and snippets."
-        param :query, desc: "Search query (max #{MAX_QUERY_LENGTH} chars)", required: true
+        parameter :query, desc: "Search query (max #{MAX_QUERY_LENGTH} chars)", required: true
 
         def execute(query:) = forward(query: query.to_s)
       end
@@ -177,7 +177,7 @@ module Master
       class WebFetch < RubyLLM::Tool
         include ToolForwarding
         description "Fetch a URL as plain text. Rewrites github/gist/arxiv/codepen URLs."
-        param :url, desc: "http(s) URL to fetch", required: true
+        parameter :url, desc: "http(s) URL to fetch", required: true
 
         def execute(url:) = forward(url: url.to_s)
       end
@@ -185,8 +185,8 @@ module Master
       class AskLlm < RubyLLM::Tool
         include ToolForwarding
         description "Ask a sub-question to a fresh LLM context. Useful for isolated reasoning."
-        param :prompt, desc: "The question or prompt to ask", required: true
-        param :context, desc: "Optional background context", required: false
+        parameter :prompt, desc: "The question or prompt to ask", required: true
+        parameter :context, desc: "Optional background context", required: false
 
         def execute(prompt:, context: nil)
           forward(prompt: prompt.to_s, context: context&.to_s)
@@ -196,9 +196,9 @@ module Master
       class GitContext < RubyLLM::Tool
         include ToolForwarding
         description "Query git log, blame, diff, status, or show for the project."
-        param :operation, desc: "One of: log, blame, diff, status, show", required: true
-        param :path, desc: "File path (required for blame; optional for log/diff/show)", required: false
-        param :limit, desc: "Max commits for log", type: "integer", required: false
+        parameter :operation, desc: "One of: log, blame, diff, status, show", required: true
+        parameter :path, desc: "File path (required for blame; optional for log/diff/show)", required: false
+        parameter :limit, desc: "Max commits for log", type: "integer", required: false
 
         def execute(operation:, path: nil, limit: 20)
           forward(operation: operation.to_s, path: path&.to_s, limit: limit.to_i)
@@ -208,13 +208,13 @@ module Master
       class AstEdit < RubyLLM::Tool
         include ToolForwarding
         description "AST-aware Ruby code editing: find, rename, or insert methods safely."
-        param :operation, desc: "One of: find_method, rename_method, add_after, method_lines", required: true
-        param :path, desc: "File path relative to project root", required: true
-        param :name, desc: "Method name (for find_method, method_lines)", required: false
-        param :from, desc: "Original method name (for rename_method)", required: false
-        param :to, desc: "New method name (for rename_method)", required: false
-        param :after, desc: "Insert after this method name (for add_after)", required: false
-        param :code, desc: "Ruby code to insert (for add_after)", required: false
+        parameter :operation, desc: "One of: find_method, rename_method, add_after, method_lines", required: true
+        parameter :path, desc: "File path relative to project root", required: true
+        parameter :name, desc: "Method name (for find_method, method_lines)", required: false
+        parameter :from, desc: "Original method name (for rename_method)", required: false
+        parameter :to, desc: "New method name (for rename_method)", required: false
+        parameter :after, desc: "Insert after this method name (for add_after)", required: false
+        parameter :code, desc: "Ruby code to insert (for add_after)", required: false
 
         def execute(operation:, path:, name: nil, from: nil, to: nil, after: nil, code: nil)
           forward(operation: operation.to_s, path: path.to_s,
@@ -227,8 +227,8 @@ module Master
         include ToolForwarding
         description "Search the local knowledge base: ruby_llm docs, OpenBSD man pages, " \
           "system prompts, gem docs. Topics: ruby_llm, openbsd, system_prompts, gems, awesome."
-        param :query, desc: "Search pattern (regex-capable)", required: true
-        param :topic, desc: "Limit to topic folder: ruby_llm, openbsd, system_prompts, gems, awesome", required: false
+        parameter :query, desc: "Search pattern (regex-capable)", required: true
+        parameter :topic, desc: "Limit to topic folder: ruby_llm, openbsd, system_prompts, gems, awesome", required: false
 
         def execute(query:, topic: nil)
           forward(query: query.to_s, topic: topic&.to_s)
@@ -238,10 +238,10 @@ module Master
       class FeedbackRecord < RubyLLM::Tool
         include ToolForwarding
         description "Record RSI feedback: tool_success, tool_failure, user_correction, provider_error, user_feedback."
-        param :event_type, desc: "One of: tool_success tool_failure user_correction provider_error user_feedback", required: true
-        param :dimension, desc: "Tool name, provider name, or pattern label", required: true
-        param :value, desc: "Numeric value (1.0=success 0.0=failure or duration)", type: "number", required: false
-        param :metadata, desc: "Additional context string", required: false
+        parameter :event_type, desc: "One of: tool_success tool_failure user_correction provider_error user_feedback", required: true
+        parameter :dimension, desc: "Tool name, provider name, or pattern label", required: true
+        parameter :value, desc: "Numeric value (1.0=success 0.0=failure or duration)", type: "number", required: false
+        parameter :metadata, desc: "Additional context string", required: false
 
         def execute(event_type:, dimension:, value: nil, metadata: nil)
           forward(event_type: event_type.to_s, dimension: dimension.to_s, value:, metadata:)
@@ -251,10 +251,10 @@ module Master
       class MemoryRecord < RubyLLM::Tool
         include ToolForwarding
         description "Write a durable markdown memory record (user facts, feedback, project context, or external references)."
-        param :key, desc: "Snake-case identifier, e.g. user_role or feedback_no_python", required: true
-        param :description, desc: "One-line hook surfaced in the memory index", required: true
-        param :body, desc: "Full memory body (markdown)", required: true
-        param :type, desc: "One of: user, feedback, project, reference, general", required: false
+        parameter :key, desc: "Snake-case identifier, e.g. user_role or feedback_no_python", required: true
+        parameter :description, desc: "One-line hook surfaced in the memory index", required: true
+        parameter :body, desc: "Full memory body (markdown)", required: true
+        parameter :type, desc: "One of: user, feedback, project, reference, general", required: false
 
         def execute(key:, description:, body:, type: "general")
           forward(key: key.to_s, description: description.to_s, body: body.to_s, type: type.to_s)
@@ -264,8 +264,8 @@ module Master
       class SubdomainOrchestrator < RubyLLM::Tool
         include ToolForwarding
         description "Inspect or synchronize a pub4 subdomain cluster. Domains: marketplace, playlist, takeaway, tv, messages, maps, amber, bsdports, brgen, ai."
-        param :domain, desc: "Subdomain cluster key (e.g. marketplace, maps, amber, bsdports)", required: true
-        param :context, desc: "Optional operator context or directive", required: false
+        parameter :domain, desc: "Subdomain cluster key (e.g. marketplace, maps, amber, bsdports)", required: true
+        parameter :context, desc: "Optional operator context or directive", required: false
 
         def execute(domain:, context: nil)
           forward(domain: domain.to_s, context:) { |value| JSON.pretty_generate(value) }
@@ -276,9 +276,9 @@ module Master
         include ToolForwarding
 
         description "Observe a declared read-only plugin capability. Never grants plugin write authority."
-        param :plugin, desc: "Plugin id, such as social_browser or air_superiority", required: true
-        param :action, desc: "Declared observation action, such as status, inspect or scan", required: true
-        param :args, desc: "JSON object of observation arguments", required: false
+        parameter :plugin, desc: "Plugin id, such as social_browser or air_superiority", required: true
+        parameter :action, desc: "Declared observation action, such as status, inspect or scan", required: true
+        parameter :args, desc: "JSON object of observation arguments", required: false
 
         def execute(plugin:, action:, args: "{}")
           payload = args.is_a?(Hash) ? args : JSON.parse(args.to_s)
@@ -291,8 +291,8 @@ module Master
       class DynamicHttp < RubyLLM::Tool
         include ToolForwarding
         description "Call a configured HTTP tool from data/tools.dynamic.yml."
-        param :name, desc: "Tool name from tools.dynamic.yml", required: true
-        param :params, desc: "JSON object of query/body parameters", required: false
+        parameter :name, desc: "Tool name from tools.dynamic.yml", required: true
+        parameter :params, desc: "JSON object of query/body parameters", required: false
 
         def execute(name:, params: "{}")
           payload = params.is_a?(Hash) ? params : JSON.parse(params.to_s)
