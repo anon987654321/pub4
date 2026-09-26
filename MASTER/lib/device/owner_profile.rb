@@ -5,6 +5,7 @@ require "fileutils"
 module Master
   module Device
     module OwnerProfile
+      extend Master::Io::AtomicWrite
       KEYS = %w[name language locale timezone communication_style interests].freeze
       LABELS = {
         "name" => "Name",
@@ -44,7 +45,7 @@ module Master
         body = rows.join
         body += "\n## Profile\n" unless body.match?(/^## Profile\s*$/)
         body = body.sub(/\n?\z/, "\n") + profile.join
-        File.write(path(root:, subject:), body)
+        write_atomic(path(root:, subject:), body)
         values(root:, subject:)
       end
 
@@ -55,7 +56,7 @@ module Master
         set(root:, subject:, **{ key => "" })
         rows = File.read(path(root:, subject:), encoding: "UTF-8").lines
         rows.reject! { |line| line.match?(/A-s+#{Regexp.escape(LABELS.fetch(key))}:/) }
-        File.write(path(root:, subject:), rows.join)
+        write_atomic(path(root:, subject:), rows.join)
         values(root:, subject:)
       end
 
