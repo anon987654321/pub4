@@ -471,7 +471,7 @@ to edit it by hand. Editing the build is a fix that survives until the next
 | Worn type / layout gates | `data/rules.yml` `design_rules.worn_type` + `MASTER/gates/support/geometry_type.rb`. Feed is a short measure; legal/prose is 66ch. |
 | brgen city network / verticals | `RAILS/brgen/AGENTS.md` — one process, city apex + subdomain engines |
 
-Touch-map: `data/agent_map.yml`. Law sections live in `data/rules.yml`. Work is a sentence, or `/review [path]`. Slash set: `/review` `/status` `/undo` `/commit` `/model` `/pair` `/doctor` `/help` `/clear`.
+Touch-map: `data/agent_map.yml`. Law sections live in `data/rules.yml`. Work is a sentence, or `/review [path]`. Slash set: `/review` `/status` `/undo` `/commit` `/model` `/pair` `/device` `/doctor` `/help` `/clear`.
 
 ## Checks
 
