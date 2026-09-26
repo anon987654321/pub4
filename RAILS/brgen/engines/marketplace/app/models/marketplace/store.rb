@@ -31,6 +31,7 @@ module Marketplace
     before_validation :default_slug
 
     scope :active, -> { where(active: true) }
+    scope :publicly_visible, -> { active.joins(:owner).where(users: { deleted_at: nil, deletion_scheduled_at: nil }) }
     scope :verified, -> { where(verified: true) }
     scope :by_vertical, ->(vertical) { where(vertical: vertical) if vertical.present? }
     scope :recent, -> { order(created_at: :desc) }
