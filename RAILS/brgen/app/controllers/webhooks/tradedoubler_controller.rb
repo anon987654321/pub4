@@ -39,6 +39,8 @@ module Webhooks
                  request.headers["X-Tradedoubler-Token"].to_s.presence
       return false if provided.blank?
 
+      return false unless secret.bytesize == provided.bytesize
+
       ActiveSupport::SecurityUtils.secure_compare(secret, provided)
     end
 
