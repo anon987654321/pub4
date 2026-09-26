@@ -345,7 +345,11 @@ module Master
         fields = pairs.filter_map { |key, value| [ORDER_KEYS[key], value.to_s.strip] if ORDER_KEYS[key] }.to_h
         return ORDERS_USAGE unless fields[:name]
 
-        fields[:owner] ||= Fiber[:master_pair_subject].to_s.then { |paired| paired.empty? ? "operator" : paired }
+        fields[:owner] ||= begin
+          paired = Fiber[:master_pair_subject].to_s
+          paired = Master::Device::Agent.owner_subject(root:) if paired.empty? && defined?(Master::Device::Agent)
+          paired.empty? ? "operator" : paired
+        end
         standing.upsert(**fields)
       end
 
