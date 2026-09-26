@@ -17,7 +17,7 @@ class TestGateChain < Minitest::Test
   def test_every_stage_runs_a_script_that_exists
     missing = %w[bin/gate bin/operator bin/check bin/master lib/operator/sprawl_census.rb tools/dup_census.rb]
               .reject { |path| File.file?(File.join(G::MASTER, path)) }
-    missing << "RAILS/gates/runner.rb" unless File.file?(File.join(G::ROOT, "RAILS", "gates", "runner.rb"))
+    missing << "MASTER/gates/runner.rb" unless File.file?(File.join(G::ROOT, "RAILS", "gates", "runner.rb"))
     missing << "OPENBSD/bin/check-openbsd" unless File.file?(File.join(G::ROOT, "OPENBSD", "bin", "check-openbsd"))
 
     assert_empty missing, "the chain invokes these and they are not on disk"
