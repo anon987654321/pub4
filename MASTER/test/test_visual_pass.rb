@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require File.expand_path("../../RAILS/gates/support/geometry_probe", __dir__)
+require File.expand_path("../../MASTER/gates/support/geometry_probe", __dir__)
 
 # VisualPass measures through GeometryProbe and CompositionProbe, judges through
 # the Council's :ui critique, and only turns a pick into a finding when it can
