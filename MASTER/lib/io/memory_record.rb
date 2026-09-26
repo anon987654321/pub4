@@ -26,7 +26,7 @@ module Master
 
         subject = Fiber[:master_pair_subject].to_s
         if subject.strip.empty? && Fiber[:master_visitor] != true && defined?(Master::Device::Agent) &&
-            Master::Device::Agent.paired?(root: @root)
+            Master::Device.android? && Master::Device::Agent.paired?(root: @root)
           subject = Master::Device::Agent.owner_subject(root: @root)
         end
 
