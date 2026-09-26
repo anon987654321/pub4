@@ -17,7 +17,7 @@
 # places, and GATE_MAP's file paths outlived the shims they pointed at.
 #
 # Fields
-#   require     path under RAILS/gates/, loaded before the class is named
+#   require     path under MASTER/gates/, loaded before the class is named
 #   class       Deploy::* constant answering .run and returning a GateResult
 #   pass        success line; %{apps} / %{schemas} / %{assets} resolve via
 #               runner.rb's COUNTERS
