@@ -24,7 +24,7 @@ module Shared
 
       connection = ActiveRecord::Base.connection
       connection.execute("VACUUM INTO #{connection.quote(target)}")
-      system("gzip", "-f", target)
+      raise "database snapshot: gzip failed for #{target}" unless system("gzip", "-f", target)
 
       rotate(dir)
       "#{target}.gz"
