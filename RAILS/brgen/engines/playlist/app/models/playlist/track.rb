@@ -35,8 +35,7 @@ class Playlist::Track < ApplicationRecord
 
   before_validation :default_audio_hosting_fields
 
-  scope :publicly_visible, -> { privacy_column? ? where(privacy: "public") : all }
-  scope :publicly_visible_to_service, -> { publicly_visible.joins(:user).where(users: { deleted_at: nil, deletion_scheduled_at: nil }) }
+  scope :publicly_visible, -> { (privacy_column? ? where(privacy: "public") : all).where.not(user_id: nil).joins(:user).where(users: { deleted_at: nil, deletion_scheduled_at: nil }) }
   scope :unexpired, -> {
     column_names.include?("expires_at") ? where("expires_at IS NULL OR expires_at > ?", Time.current) : all
   }
