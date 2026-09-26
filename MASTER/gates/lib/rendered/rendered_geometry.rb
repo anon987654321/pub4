@@ -9,6 +9,7 @@ require_relative "../../support/geometry_probe"
 require_relative "../../support/geometry_autofix"
 require_relative "../../support/gate_autofix"
 require_relative "../../support/design_metrics"
+require_relative "../../support/design_quality"
 require_relative "../../../tools/design/master_design"
 
 module Deploy
@@ -140,6 +141,7 @@ module Deploy
       check_target_spacing(surface, elements)
       check_centered_prose(surface, elements)
       check_visual_composition(surface, data)
+      check_design_quality(surface, elements)
       check_rhythm(surface, data, GeometryType.check(@result, surface, data))
     end
 
@@ -332,6 +334,47 @@ module Deploy
       return nil if dx.negative? && dy.negative?
 
       [dx, dy].reject(&:negative?).min
+    end
+
+    def check_design_quality(surface, elements)
+      viewport = { w: surface.width, h: surface.height }
+      mapped = Array(elements).filter_map do |element|
+        rect = element["frect"] || element["rect"]
+        next unless rect
+
+        Deploy::DesignQuality::Element.new(
+          tag: element["tag"],
+          role: element["role"],
+          text: element["text"],
+          x: rect["x"],
+          y: rect["y"],
+          w: rect["w"],
+          h: rect["h"],
+          font_size: element["font_size"],
+          font_weight: element["font_weight"],
+          color: element["color"],
+          bg_color: element["bg_color"],
+          is_text: !element["text"].to_s.strip.empty?,
+          is_control: element["interactive"] || element["role"] == "button",
+          is_image: element["tag"] == "img"
+        )
+      end
+      return if mapped.empty?
+
+      dialect = { "brgen" => :social, "amber" => :luxury }.fetch(surface.app.to_s, :default)
+      vector = Deploy::DesignQuality.calculate(
+        elements: mapped,
+        viewport: viewport,
+        dialect: dialect,
+        contrast_ok: true
+      )
+      @result.fail(
+        "geometry design_quality: #{surface.id} fails rendered hard floor "         "(tap=#{vector.tap_ok} contrast=#{vector.contrast_ok})",
+        severity: :hard
+      ) unless vector.hard_ok?
+      @result.warn(
+        "geometry design_quality: #{surface.id} rhythm=#{vector.rhythm.round(2)} "         "hierarchy=#{vector.hierarchy.round(2)} density=#{vector.density.round(2)} "         "alignment=#{vector.alignment.round(2)} balance=#{vector.balance.round(2)}"
+      )
     end
 
     def check_landmarks(surface, data)

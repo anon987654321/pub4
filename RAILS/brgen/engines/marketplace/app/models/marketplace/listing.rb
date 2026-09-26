@@ -41,6 +41,8 @@ class Marketplace::Listing < ApplicationRecord
   # Size and colour as rows. A listing with variants is bought by the variant,
   # not by the listing — see Marketplace::Variant.
   has_many :variants, class_name: "Marketplace::Variant", dependent: :destroy
+  has_many :events, class_name: "Marketplace::ListingEvent",
+           foreign_key: :listing_id, dependent: :delete_all, inverse_of: :listing
   has_one :job_detail, class_name: "Marketplace::JobDetail", dependent: :destroy
   has_one :housing_detail, class_name: "Marketplace::HousingDetail", dependent: :destroy
   has_one :gig_detail, class_name: "Marketplace::GigDetail", dependent: :destroy
@@ -59,6 +61,22 @@ class Marketplace::Listing < ApplicationRecord
   # null for every bicycle.
   KINDS = %w[goods job housing gig].freeze
   STATUSES = %w[active sold reserved removed].freeze
+
+  DELIVERY_PROMISES = {
+    same_day_bergen: 0,
+    next_day_bergen: 1,
+    next_day_west: 2,
+    one_to_two_days: 3,
+    three_to_five_days: 4,
+    pickup_only: 5
+  }.freeze
+
+  FULFILMENT_METHODS = {
+    self_ship: 0,
+    local_hub: 1,
+    locker: 2,
+    third_party: 3
+  }.freeze
   # Set only when the create action enqueues PostproJob (photos attached and a
   # preset chosen); nil means postpro was never requested, which stays the
   # common case since a preset is optional. skipped covers PostproProcessor
@@ -80,6 +98,9 @@ class Marketplace::Listing < ApplicationRecord
   validates :status, inclusion: { in: STATUSES }
   validates :photo_status, inclusion: { in: PHOTO_STATUSES }, allow_nil: true
   validates :latitude, :longitude, numericality: true, allow_nil: true
+  validates :delivery_promise, inclusion: { in: DELIVERY_PROMISES.values }
+  validates :fulfilment_method, inclusion: { in: FULFILMENT_METHODS.values }
+  validates :ranking_score, :seller_score, numericality: true
 
   before_validation do
     self.status ||= "active"
@@ -92,6 +113,7 @@ class Marketplace::Listing < ApplicationRecord
   # match this row, and only if they are due — a filtered index is not a
   # stream we can append into.
   after_create :alert_matching_saved_searches
+  after_create_commit :queue_ranking_recalculation
 
   # A classifieds listing has a life. Without one the marketplace fills with
   # things sold two years ago that nobody took down, and the honest listings
@@ -114,9 +136,10 @@ class Marketplace::Listing < ApplicationRecord
   scope :recent,   -> { order(created_at: :desc) }
   # The three orders a browsing buyer asks for. Anything else in the param is
   # newest first, which is the page as it arrives.
-  SORTS = %w[recent price_low price_high].freeze
+  SORTS = %w[rank recent price_low price_high].freeze
   scope :sorted_by, lambda { |sort|
     case sort
+    when "rank" then order(ranking_score: :desc, created_at: :desc)
     when "price_low" then order(price_cents: :asc)
     when "price_high" then order(price_cents: :desc)
     else recent
@@ -127,6 +150,8 @@ class Marketplace::Listing < ApplicationRecord
   # No store = a person selling a chair. The storefront already stores that;
   # these scopes are the chrome the index was missing.
   scope :casual, -> { where(store_id: nil) }
+  scope :ranked, -> { order(ranking_score: :desc) }
+  scope :with_fast_delivery, -> { where(delivery_promise: [0, 1, 2]) }
   scope :from_shops, -> { where.not(store_id: nil) }
   scope :near, ->(lat, lng, radius_km = 5) { nearby(lat, lng, radius_km) }
   scope :rated, -> { where("rating > 0") }
@@ -205,6 +230,32 @@ class Marketplace::Listing < ApplicationRecord
   def price_display = Shared::MoneyDisplay.format(price_cents, currency)
   def casual? = store_id.nil?
   def sold? = status == "sold"
+
+  def delivery_badge
+    case delivery_promise
+    when 0 then "I dag i Bergen"
+    when 1 then "I morgen i Bergen"
+    when 2 then "I morgen Vestlandet"
+    when 3 then "1–2 dager"
+    when 4 then "3–5 dager"
+    when 5 then "Hentes"
+    end
+  end
+
+  def record_event!(type, user: nil, metadata: {})
+    events.create!(
+      event_type: type.to_s,
+      user: user,
+      metadata: metadata,
+      occurred_at: Time.current
+    )
+  end
+  def queue_ranking_recalculation
+    Marketplace::RecalculateRankingJob.perform_later(id)
+  rescue StandardError => e
+    Rails.logger.warn("Listing ranking enqueue skipped: #{e.class}: #{e.message}")
+  end
+
   def favorite_for(user) = favorites.find_by(user: user)
   def store_name = store&.name
 
