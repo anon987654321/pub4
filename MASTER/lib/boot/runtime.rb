@@ -17,7 +17,6 @@ module Master
     }.freeze
 
     def configure_providers!
-      require_relative "../io/bedrock_stub"
       require "ruby_llm"
       require_relative "../io/ruby_llm_patch"
       RubyLLM.configure do |config|
