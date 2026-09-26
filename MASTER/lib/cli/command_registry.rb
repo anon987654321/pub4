@@ -266,6 +266,11 @@ module Master
             "model: #{record["model"]}",
             "effort: #{record["effort"]}",
             "goal: #{record["goal"]}",
+            "attempt: #{record["attempt_count"]}",
+            "retries: #{record["retry_count"]}",
+            "next_wake: #{record["next_wake_at"] || "now"}",
+            "wake_reason: #{record["wake_reason"] || "none"}",
+            "lease: #{record["lease_owner"] || "none"} until #{record["lease_until"] || "none"}",
           ].join("\n")
         else
           "status mission"
