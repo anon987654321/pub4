@@ -115,12 +115,23 @@ module Master
       end
 
       def ractor_map(items, operation:, workers:, timeout:)
+        jobs = prepare_ractor_jobs(items)
+        ractors = spawn_ractors(operation, worker_limit(jobs.size, workers))
+        seed_ractors(ractors, jobs)
+        collect_ractor_results(ractors, jobs, timeout)
+      ensure
+        stop_ractors(ractors)
+      end
+
+      def prepare_ractor_jobs(items)
         invalid = items.index { |item| !valid_invoke_job?(item) }
         raise ArgumentError, "invalid ractor invoke job at #{invalid}" if invalid
 
-        jobs = items.map { |item| Ractor.make_shareable(item) }
-        worker_count = worker_limit(jobs.size, workers)
-        ractors = Array.new(worker_count) do |worker_id|
+        items.map { |item| Ractor.make_shareable(item) }
+      end
+
+      def spawn_ractors(operation, worker_count)
+        Array.new(worker_count) do |worker_id|
           Ractor.new(operation.to_sym, worker_id) do |op, id|
             loop do
               message = Ractor.receive
@@ -137,59 +148,60 @@ module Master
             end
           end
         end
+      end
 
-        results = Array.new(jobs.size)
-        next_index = 0
-        active = {}
-
-        ractors.each do |ractor|
-          break if next_index >= jobs.size
-
-          ractor.send([next_index, jobs[next_index]])
-          active[next_index] = ractor
-          next_index += 1
+      def seed_ractors(ractors, jobs)
+        jobs.each_with_index.take(ractors.size).each do |(job, index)|
+          ractors[index].send([index, job])
         end
+      end
+
+      def collect_ractor_results(ractors, jobs, timeout)
+        results = Array.new(jobs.size)
+        active = (0...[ractors.size, jobs.size].min).to_h { |index| [index, ractors[index]] }
+        next_index = active.size
 
         Timeout.timeout(timeout) do
           until active.empty?
             ractor, message = Ractor.select(*ractors)
-            _worker_id, index, ok, value = message
+            worker_id, index, ok, value = message
             active.delete(index)
-
-            unless ok
-              raise ExecutionError.new(
-                index:, operation: operation.to_s, message: "#{value.fetch('class')}: #{value.fetch('message')}",
-              )
-            end
-
-            results[index] = value
-            if next_index < jobs.size
-              ractor.send([next_index, jobs[next_index]])
-              active[next_index] = ractor
-              next_index += 1
-            end
+            results[index] = ractor_result!(ok, index, value)
+            next_index = refill_ractor(ractor, next_index, jobs, active)
           end
         end
-
         results
       rescue Timeout::Error
-        ractors&.each { |ractor| ractor.kill }
         raise TimeoutError, timeout
-      ensure
-        ractors&.each do |ractor|
+      end
+
+      def ractor_result!(ok, index, value)
+        return value if ok
+
+        raise ExecutionError.new(
+          index:, operation: "invoke", message: "#{value.fetch("class")}: #{value.fetch("message")}",
+        )
+      end
+
+      def refill_ractor(ractor, next_index, jobs, active)
+        return next_index if next_index >= jobs.size
+
+        ractor.send([next_index, jobs[next_index]])
+        active[next_index] = ractor
+        next_index + 1
+      end
+
+      def stop_ractors(ractors)
+        return unless ractors
+
+        ractors.each do |ractor|
           begin
             ractor.send(:stop)
           rescue StandardError
             nil
           end
         end
-        ractors&.each do |ractor|
-          begin
-            ractor.take
-          rescue StandardError
-            nil
-          end
-        end
+        ractors.each { |ractor| ractor.take rescue nil }
       end
 
       def invoke(operation, payload)
