@@ -13,9 +13,9 @@ require_relative "visual_ghost_stack"
 require_relative "visual_evidence_rows"
 require_relative "visual_artifact"
 require_relative "../design/visual_language"
-require_relative "../../../RAILS/gates/support/mobile_journey_probe"
-require_relative "../../../RAILS/gates/support/composition_probe"
-require_relative "../../../RAILS/gates/support/web_platform_probe"
+require_relative "../../gates/support/mobile_journey_probe"
+require_relative "../../gates/support/composition_probe"
+require_relative "../../gates/support/web_platform_probe"
 
 module Master
   module Fix
@@ -72,7 +72,7 @@ module Master
         return Result.ok(state: :not_applicable) unless applicable?(target)
         raise "visual review has no agent" unless @agent
 
-        require File.expand_path("../../../RAILS/gates/support/geometry_probe", __dir__)
+        require File.expand_path("../../gates/support/geometry_probe", __dir__)
 
         @dir = Dir.mktmpdir("master-visual")
         @ghost_stack = VisualGhostStack.new(root: repo_root, dir: @dir)
