@@ -3,7 +3,7 @@
 require "minitest/autorun"
 require "tmpdir"
 require_relative "gate_fixture"
-require_relative "../../gates/lib/source/dialect_purity"
+require_relative "../../../MASTER/gates/lib/source/dialect_purity"
 
 # Four dialects that must stay apart, and one map that owns the accents.
 #
