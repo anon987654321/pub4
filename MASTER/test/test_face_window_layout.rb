@@ -93,6 +93,24 @@ class TestFaceWindowLayout < Minitest::Test
     assert_equal "Bug and ember lay out.", pictured
   end
 
+  def test_speaking_does_not_arm_the_microphone
+    ear = Quiet.new(nil)
+    face = Master::CLI::Face::Window.new(
+      turn: ->(_) {},
+      ear:,
+      mouth: Quiet.new(nil),
+      input: StringIO.new,
+      output: StringIO.new,
+      size: -> { [24, 80] },
+    )
+
+    face.send(:set, :speaking, ["reply"])
+    face.send(:arm_ear)
+
+    assert_nil face.instance_variable_get(:@hearing)
+    assert_nil face.instance_variable_get(:@ear_after)
+  end
+
   def test_motion_keeps_the_face_within_a_readable_turn
     motion = Master::CLI::Face::Motion.new(seed: 7)
     yaw = 0.0

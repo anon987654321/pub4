@@ -281,13 +281,13 @@ the "One chrome", ad system and layout sections bring back for a decision.
   `llm:**`, `pipeline:**`, `phantom:**` and `council:**`, maps existing events
   into bounded motion reactions, and unsubscribes when the window closes. The
   `face/depth_map.rb` copies `generateFaceDepthMap` by hand; nothing on the web
-  side points back, and nothing checks the copy. Measured 2026-09-25, in the
-  order to close them. Behaviour first, no look involved: the terminal listens
-  while it speaks, with no echo guard where the web face turns its mic down
-  (`window.rb:134`, `face.runtime.js`); it never subscribes to the bus, so
-  `phantom:*`, `pipeline:*`, `llm:*` and `council:*` move only the web face;
-  its idle motion ignores `VOICE_IDLE_SIGNATURES`; a failed turn is lost where
-  the web queues it offline; and the web face lacks the terminal's
+  side points back, and nothing checks the copy. The terminal echo guard is
+  now explicit and regression-tested: the ear only arms in `:idle` with an
+  empty draft, and the post-listen cooldown prevents immediate re-arming.
+  Measured 2026-09-25, in the order to close them. Behaviour first, no look
+  involved: it listens while idle; its idle motion ignores
+  `VOICE_IDLE_SIGNATURES`; a failed turn is lost where the web queues it
+  offline; and the web face lacks the terminal's
   `IdeaPicture` after a reply. Neither face plays the voice bed that
   `Voice::Policy#bed` declares. Then a test that paints both depth maps from
   one seed and compares them. What changes the look waits for the operator:
