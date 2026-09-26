@@ -41,7 +41,7 @@ class TestIoMcpAndWebChat < Minitest::Test
     built = []
     build = lambda do |name, transport, config|
       built << [name, transport, config]
-      FakeClient.new(false, name == "broken")
+      FakeClient.new(fail: name == "broken")
     end
     coordinator.stub(:build_mcp_client, build) { coordinator.connect_all }
     events = coordinator.instance_variable_get(:@bus).events
@@ -91,9 +91,9 @@ class TestIoMcpAndWebChat < Minitest::Test
 
   def test_mcp_tool_runs_through_the_governor
     client = Struct.new(:calls) do
-      def call_tool(name, params)
-        calls << [name, params]
-        "ok"
+      def call_tool(tool:, arguments:)
+        calls << [tool.name, arguments]
+        { "result" => { "content" => [{ "type" => "text", "text" => "ok" }] } }
       end
     end.new([])
     governor = Governor.new
@@ -107,7 +107,7 @@ class TestIoMcpAndWebChat < Minitest::Test
       tier: :dangerous,
     )
 
-    assert_equal "ok", tool.execute(path: "README.md")
+    assert_equal JSON.generate([{ "type" => "text", "text" => "ok" }]), tool.execute(path: "README.md")
     assert_equal [["filesystem__read_file", :dangerous, tool.description]], governor.calls
     assert_equal [["read_file", { path: "README.md" }]], client.calls
   end
