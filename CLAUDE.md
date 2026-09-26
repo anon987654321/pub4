@@ -54,7 +54,7 @@ cd MASTER && bin/check               # ordinary code
 cd MASTER && bin/check --profile=agent   # law, scanners, fix loop
 cd MASTER && bin/check --profile=web     # the face
 cd MASTER && bin/check --profile=full    # release gate
-ruby RAILS/gates/runner.rb --all     # every RAILS gate
+ruby MASTER/gates/runner.rb --all     # every RAILS gate
 ```
 
 Run the smallest check that proves the work, and do not report done without its
