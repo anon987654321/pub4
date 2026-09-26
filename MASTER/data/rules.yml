@@ -97,6 +97,46 @@ laws:
     research:
       - name: "Operator Sovereignty over Aesthetics"
         url: "internal:operator_decision_log"
+
+architecture:
+  # Phoenix preserves these boundaries while allowing their implementations to be
+  # regenerated. This is architecture, not a second command or dependency registry.
+  provenance_required:
+    - goal
+    - constraints
+    - alternatives
+    - evidence
+    - decision
+  boundaries:
+    master:
+      path: MASTER
+      entry: MASTER/bin/master
+      owner: master
+      depends_on: []
+      check: MASTER/bin/check
+    rails:
+      path: RAILS
+      entry: RAILS/bin/triangle
+      owner: rails
+      depends_on:
+        - master
+      check: MASTER/gates/runner.rb --all
+    openbsd:
+      path: OPENBSD
+      entry: OPENBSD/bin/vps-deploy
+      owner: openbsd
+      depends_on:
+        - master
+        - rails
+      check: OPENBSD/bin/check
+    studio:
+      path: MASTER/tools
+      entry: MASTER/tools/runs.rb
+      owner: master
+      depends_on:
+        - master
+      check: MASTER/tools/runs.rb
+
 plugins:
   social_browser:
     scope: external_web
