@@ -99,7 +99,7 @@ module Master
         DEFAULT_LIMIT = 2000
 
         description "Read a file with line numbers. Path is relative to project root."
-        param :path, desc: "File path relative to project root", required: true
+        parameter :path, desc: "File path relative to project root", required: true
         param :offset, desc: "First line to read (0-indexed)", type: "integer", required: false
         param :limit, desc: "Maximum number of lines to return", type: "integer", required: false
 
