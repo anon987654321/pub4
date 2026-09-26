@@ -9,6 +9,7 @@ class Marketplace::ReviewsController < Marketplace::BaseController
     Shared::ReviewGeoStamp.apply!(review, Current.user)
 
     if review.save
+      @listing.record_event!("review", user: Current.user, metadata: { review_id: review.id, rating: review.rating })
       redirect_to listing_path(@listing), notice: t("flash.marketplace.review_saved")
     else
       redirect_to listing_path(@listing), alert: review.errors.full_messages.to_sentence
