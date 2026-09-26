@@ -51,6 +51,21 @@ class FixSupervisorTest < Minitest::Test
     end
   end
 
+  def test_expired_running_lease_is_reclaimable
+    Dir.mktmpdir do |root|
+      mission = Master::Fix::Mission.new(root:).start!(goal: "fix #{root}", scope: root)
+      record = Master::Fix::Mission.current(root:)
+      record["lease_until"] = (Time.now.utc - 1).iso8601
+      File.write(File.join(root, ".master", "mission.json"), JSON.pretty_generate(record) + "\n")
+
+      resumed = Master::Fix::Mission.new(root:).start_or_resume!(goal: "fix #{root}", scope: root)
+      saved = Master::Fix::Mission.current(root:)
+      assert_equal mission.id, resumed.id
+      assert_operator saved["attempt_count"].to_i, :>=, 2
+      assert_equal Process.pid.to_s, saved["lease_owner"]
+    end
+  end
+
   def test_supervisor_runs_only_when_the_persisted_mission_is_due
     Dir.mktmpdir do |root|
       queue_mission(root)
