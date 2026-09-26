@@ -10,7 +10,7 @@ require "yaml"
 require_relative "ruby_runner"
 require_relative "../trace/dmesg"
 require_relative "../../../OPENBSD/lib/gate_result"
-require_relative "../../../RAILS/gates/support/bounded_command"
+require_relative "../../../MASTER/gates/support/bounded_command"
 require_relative "../../../RAILS/tools/design_tokens"
 
 # frozen_string_literal: true
@@ -58,7 +58,7 @@ module Deploy
 
     # The budget sits with the gates whose scan it bounds. It covers the explicit
     # constitutional targets below, each with its own ceiling in RAILS' registry.
-    BUDGET_PATH = File.expand_path("../../../RAILS/gates/data/constitutional_budget.yml", __dir__)
+    BUDGET_PATH = File.expand_path("../../../MASTER/gates/data/constitutional_budget.yml", __dir__)
     # `scan: done [profile: full] 410 violations | top DEAD_CODE=99 …`
     VIOLATION_LINE = /^scan\d*: done\b[^\n]*?\b(\d+) violations/
     # And the other spelling of the same number: `scan: done [profile: aesthetic]
