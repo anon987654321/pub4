@@ -24,7 +24,7 @@ module Master
       def values(root:, subject:)
         ensure!(root:, subject:)
         File.read(path(root:, subject:), encoding: "UTF-8").each_line.filter_map do |line|
-          match = line.match(/A-s+([^:]+):s*(.*?)s*z/)
+          match = line.match(/\A-\s+([^:]+):\s*(.*?)\s*\z/)
           next unless match
           key = LABELS.key(match[1].strip)
           key && !match[2].empty? ? [key, match[2]] : nil
@@ -37,7 +37,8 @@ module Master
         return values(root:, subject:) if updates.empty?
 
         rows = File.read(path(root:, subject:), encoding: "UTF-8").lines
-        rows.reject! { |line| line.match?(/A-s+(?:#{LABELS.values.map { |label| Regexp.escape(label) }.join("|")}):/) }
+        labels = LABELS.values.map { |label| Regexp.escape(label) }.join("|")
+        rows.reject! { |line| line.match?(/\A-\s+(?:#{labels}):/) }
         profile = KEYS.filter_map do |key|
           value = updates.fetch(key, nil) || values(root:, subject:)[key]
           value && !value.empty? ? "- #{LABELS.fetch(key)}: #{value}\n" : nil
@@ -55,7 +56,7 @@ module Master
 
         set(root:, subject:, **{ key => "" })
         rows = File.read(path(root:, subject:), encoding: "UTF-8").lines
-        rows.reject! { |line| line.match?(/A-s+#{Regexp.escape(LABELS.fetch(key))}:/) }
+        rows.reject! { |line| line.match?(/\A-\s+#{Regexp.escape(LABELS.fetch(key))}:/) }
         write_atomic(path(root:, subject:), rows.join)
         values(root:, subject:)
       end
