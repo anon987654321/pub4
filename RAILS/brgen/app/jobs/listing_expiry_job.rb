@@ -12,7 +12,7 @@ class ListingExpiryJob < ApplicationJob
   limits_concurrency to: 1, key: "listing-expiry", duration: 1.hour, on_conflict: :discard
 
   def perform
-    Marketplace::Listing.expiring_soon.includes(:user).find_each do |listing|
+    Marketplace::Listing.expiring_soon.joins(:user).where(users: { deleted_at: nil, deletion_scheduled_at: nil }).includes(:user).find_each do |listing|
       next unless claim(listing)
 
       notify(listing)
