@@ -143,6 +143,7 @@ module Shared
         click_url: product.click_url.to_s,
         merchant: product.merchant.to_s,
         placeholder: product.placeholder?,
+        source: "tradedoubler",
       )
     end
 
@@ -156,6 +157,7 @@ module Shared
         click_url: row[:click_url].to_s,
         merchant: row[:merchant].to_s,
         placeholder: false,
+        source: "tradedoubler",
       )
     end
   end
