@@ -118,8 +118,8 @@ and 6 need the registrar or money.
 
 ### MASTER/tools
 
-2. **The no-arg smoke test.** Entry: "No smoke test for the no-arg path".
-   After 1.
+2. **The no-arg smoke test.** Closed 2026-09-26. The bare Dilla entrypoint has
+   an opt-in bounded smoke seam and an end-to-end WAV/MP3 duration test.
 3. **Restructuring rows 1, 6 and 15.** Entry: "dilla — restructuring". Each
    must leave the snapshot identical.
 4. **Everything marked [risk], [yours] or "operator"** waits for his ear, and
@@ -166,7 +166,8 @@ the "One chrome", ad system and layout sections bring back for a decision.
   `measure` exits clean or each off row names its decision. A second seam
   from the 2026-09-23 pass belongs with it: `measure` could print the entry
   that owns each ceiling, so a red row points at a record instead of at
-  nobody.
+  nobody. Closed 2026-09-26: non-clean measure rows now print the source record
+  that owns each ceiling.
 - **The rules.yml trim draft was lost, and it can be rebuilt.** A draft that
   retired rules which fire on nothing, reach no configuration or misread
   their subject never reached a commit. Rebuild it as a diff from
@@ -276,7 +277,9 @@ the "One chrome", ad system and layout sections bring back for a decision.
   either builds whisper.cpp on the device or names the step that failed.
   Operator: the phone.
 - **The web and terminal faces differ, and only the terminal says they
-  should not.** `lib/cli/face.rb` calls itself "the web face itself", and
+  should not.** Runtime event-bus parity is closed: the terminal subscribes to
+  `llm:**`, `pipeline:**`, `phantom:**` and `council:**`, maps existing events
+  into bounded motion reactions, and unsubscribes when the window closes. The
   `face/depth_map.rb` copies `generateFaceDepthMap` by hand; nothing on the web
   side points back, and nothing checks the copy. Measured 2026-09-25, in the
   order to close them. Behaviour first, no look involved: the terminal listens
