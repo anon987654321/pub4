@@ -86,3 +86,9 @@ The architecture therefore is:
 
 This is a local personal-agent architecture, not device takeover. Android
 remains the authority over permissions and process lifetime.
+
+For Termux itself, `MASTER/tools/device/termux/install-agent-service.sh` creates
+the `master-agent` runit service and enables it. `termux-services` can supervise
+the process under `$PREFIX/var/service`; a Termux:Boot script can start the
+service manager at Android boot. The installer uses `termux-wake-lock` in that
+boot path, which trades battery life for a stronger always-on guarantee.
