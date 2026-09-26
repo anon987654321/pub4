@@ -4,7 +4,7 @@ require "json"
 require "minitest/autorun"
 require "tmpdir"
 require_relative "gate_probe_harness"
-require_relative "../../gates/lib/rendered/web_vitals_budget"
+require_relative "../../../MASTER/gates/lib/rendered/web_vitals_budget"
 
 # PERF-100, and the clearest case in this batch of a gate that reported ok while
 # measuring nothing.
