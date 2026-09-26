@@ -20,6 +20,16 @@ class Marketplace::Checkout < ApplicationRecord
 
   scope :open_baskets, -> { where(status: "open") }
 
+  ABANDONED_CART_AFTER = 4.hours
+
+  def abandoned_cart_reminder_due?(now: Time.current)
+    status == "open" &&
+      abandoned_cart_reminded_at.blank? &&
+      created_at <= now - ABANDONED_CART_AFTER &&
+      updated_at <= now - ABANDONED_CART_AFTER &&
+      Marketplace::Order.where(marketplace_checkout_id: id).exists?
+  end
+
   # ApplicationRecord is strict_loading by default and a checkout is usually
   # found by id — from a controller, a PSP webhook, a job — with nothing
   # preloaded, so every read of `orders` here raised. Same shape as
