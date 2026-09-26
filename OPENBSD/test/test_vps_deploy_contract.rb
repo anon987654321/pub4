@@ -39,6 +39,14 @@ class VpsDeployContractTest < Minitest::Test
     assert_equal %w[amber bsdports], deploy_all.last(2).sort
   end
 
+  def test_it_rejects_an_unknown_deploy_target
+    assert_match(
+      /case \$app in\n\s+all\|master\|brgen\|amber\|bsdports\) ;;.*\n\s+\*\) .*exit 2/,
+      SOURCE,
+      "an arbitrary app name must not reach filesystem, service or deploy-stamp paths"
+    )
+  end
+
   def test_it_refuses_to_run_as_root
     assert_match(/if \[\[ \$\(id -u\) -eq 0 \]\]; then/, SOURCE,
                  "the uid guard is gone — root reaches git pull and fails on a host key instead")
