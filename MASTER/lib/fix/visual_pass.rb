@@ -12,6 +12,7 @@ require_relative "visual_contact_sheet"
 require_relative "visual_ghost_stack"
 require_relative "visual_evidence_rows"
 require_relative "visual_artifact"
+require_relative "visual_custody"
 require_relative "../design/visual_language"
 require_relative "../../gates/support/mobile_journey_probe"
 require_relative "../../gates/support/composition_probe"
@@ -53,13 +54,14 @@ module Master
         def severity = :warning
       end
 
-      attr_reader :dir
+      attr_reader :dir, :custody
 
       def initialize(agent:, root:, bus: nil)
         @agent = agent
         @root = root
         @bus = bus
         @dir = nil
+        @custody = nil
       end
 
       def applicable?(target)
@@ -84,6 +86,10 @@ module Master
         captures = capture_surfaces(surfaces, pass:)
         return inconclusive("no surface was measured") if captures.empty?
 
+        @custody = VisualCustody.new(root: repo_root, surfaces:, bus: @bus)
+        custody = @custody.preflight!(captures)
+        return inconclusive(custody.message) unless custody.ok?
+
         decorate_design(captures)
         coverage = graph_coverage(surfaces, captures)
         return inconclusive("missing rendered surfaces: #{coverage[:missing].join(", ")}") if coverage[:missing].any?
@@ -105,6 +111,7 @@ module Master
         Master::Ground::Swallow.log(e, context: "fix.visual_pass.cleanup", event_bus: @bus)
       ensure
         @dir = nil
+        @custody = nil
       end
 
       private
