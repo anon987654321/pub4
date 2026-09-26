@@ -52,6 +52,7 @@ class Marketplace::Return < ApplicationRecord
       update!(status: "received", resolved_by: by, resolved_at: Time.current)
       order_record&.restock_returned!
     end
+    record_listing_commerce_event
     refund_after_receive!
     deliver_notification(order_buyer, title: I18n.t("marketplace.return_received_title"),
                                       body: refunded? ? I18n.t("marketplace.return_refunded_body") : I18n.t("marketplace.return_refund_pending"),
@@ -86,6 +87,22 @@ class Marketplace::Return < ApplicationRecord
   rescue StandardError => error
     Rails.logger.warn("marketplace refund held: #{error.class}: #{error.message}")
     nil
+  end
+
+  def record_listing_commerce_event
+    order = order_record
+    return unless order
+
+    listing = Marketplace::Listing.strict_loading(false).find_by(id: order.listing_id)
+    return unless listing
+
+    listing.record_activity!(
+      "MarketplaceReturnReceived",
+      actor: order_buyer,
+      source_vertical: "marketplace",
+      visibility: "private",
+      metadata: { order_id: order.id, return_id: id }
+    )
   end
 
   def one_open_return_per_order
