@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "yaml"
-require_relative "../../shared/lib/operator/master_design"
+require_relative "../../tools/design/master_design"
 
 module Deploy
   # Page-level visual *quality* (not pixel regression).
