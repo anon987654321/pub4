@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../gates/visual_contract"
+require_relative "../../MASTER/gates/visual_contract"
 
 class VisualContractGateTest < Minitest::Test
   def test_each_app_covers_failure_states_and_all_viewports
@@ -13,7 +13,7 @@ class VisualContractGateTest < Minitest::Test
   end
 
   def test_manifest_schema_records_render_and_accessibility_evidence
-    source = File.read(File.expand_path("../gates/visual_contract.rb", __dir__))
+    source = File.read(File.expand_path("../../MASTER/gates/visual_contract.rb", __dir__))
     %w[status title screenshot_sha256 console_errors accessibility_violations pixel_diff_count pixel_diff_ratio pixel_diff_image].each do |field|
       assert_includes source, "#{field}:"
     end
@@ -111,7 +111,7 @@ class VisualContractGateTest < Minitest::Test
   end
 
   def test_runner_forwards_visual_capture_env_to_gate
-    source = File.read(File.expand_path("../gates/runner.rb", __dir__))
+    source = File.read(File.expand_path("../../MASTER/gates/runner.rb", __dir__))
     %w[VISUAL_CAPTURE VISUAL_CAPTURE_APP VISUAL_CAPTURE_BASE visual_contract_capture_args].each do |needle|
       assert_includes source, needle
     end
@@ -120,7 +120,7 @@ end
 
 class VisualContractBrowserTest < Minitest::Test
   def test_visual_contract_uses_the_shared_cdp_browser
-    source = File.read(File.expand_path("../gates/visual_contract.rb", __dir__))
+    source = File.read(File.expand_path("../../MASTER/gates/visual_contract.rb", __dir__))
     assert_includes source, 'require_relative "support/geometry_probe"'
     assert_includes source, "GeometryProbe.with_browser"
     refute_includes source, "selenium-webdriver"
