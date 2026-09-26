@@ -26,7 +26,7 @@ require_relative "../../OPENBSD/lib/gate_ledger"
 # being silently absent forever, and this asserts it names the gate rather than
 # just counting it.
 class GateFailOpenTest < Minitest::Test
-  GATES_DIR = File.expand_path("../gates", __dir__)
+  GATES_DIR = File.expand_path("../../MASTER/gates", __dir__)
   RUNNER = File.join(GATES_DIR, "runner.rb")
   FIXTURE_REGISTRY = File.join(GATES_DIR, "fixtures", "failopen", "gates.yml")
 
