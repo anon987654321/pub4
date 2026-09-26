@@ -32,6 +32,7 @@ class WeeklyDealsJobTest < ActiveSupport::TestCase
     NewsletterMailer.define_singleton_method(:edition, original)
     assert delivered
     assert edition.reload.sent_at.present?
+  end
 
   test "does not deliver weekly deals to a departing account's address" do
     edition = NewsletterEdition.create!(
