@@ -119,35 +119,81 @@ module Operator
     def stages(scan_only:, trees: TREES)
       scope = trees == TREES ? "all three trees" : trees.join(", ")
       [
-        Stage.new(name: "lexical", purpose: "law/ and the scan registry over #{scope}, autofixing",
-                  mutates: !scan_only, run: -> { gate("--lexical-only", scan_only:, trees:) }),
-        (if trees.include?("RAILS")
-           Stage.new(name: "source", purpose: "every RAILS gate, source and rendered, fix + remeasure",
-                     mutates: !scan_only, run: -> { rails_gates(scan_only:) })
-         end),
-        (if trees.include?("OPENBSD")
-           Stage.new(name: "openbsd", purpose: "every OpenBSD config, shell and deploy gate",
-                     mutates: false, run: -> { openbsd_gates })
-         end),
-        Stage.new(name: "suites", purpose: suite_purpose(trees),
-                  mutates: false, run: -> { suites(trees) }),
-        Stage.new(name: "ratchets", purpose: "every recorded ceiling, current beside it", mutates: false,
-                  # --deep, because this is the pass that can afford it. Fast mode
-                  # leaves eleven rows unreadable — the CSS budgets that need a
-                  # browser, selftest, selfcheck, principle_trace — and a ladder
-                  # running for forty minutes that skips them to save two has
-                  # measured the cheap half of its own register.
-                  run: -> { capture(RUBY, File.join(MASTER, "bin", "operator"), "measure", "--deep") }),
-        Stage.new(name: "sprawl", purpose: "lone dirs, stutter, vague names, duplicate files",
-                  mutates: !scan_only, run: -> { sprawl(scan_only:) }),
-        Stage.new(name: "council", purpose: "/critique and /review, then the panel's picks back through the runtime",
-                  mutates: council_fix?(scan_only:), run: -> { council(scan_only:, trees:) }),
+        lexical_stage(scan_only:, trees:, scope:),
+        rails_stage(scan_only:, trees:),
+        openbsd_stage(trees:),
+        suites_stage(trees:),
+        ratchets_stage,
+        sprawl_stage(scan_only:),
+        council_stage(scan_only:, trees:)
       ].compact
     end
 
-    def suite_purpose(trees)
-      jobs = suite_jobs(trees).map(&:first)
-      jobs.empty? ? "no suite belongs to #{trees.join(", ")}" : jobs.join(", ")
+    def lexical_stage(scan_only:, trees:, scope:)
+      Stage.new(
+        name: "lexical",
+        purpose: "law/ and the scan registry over #{scope}, autofixing",
+        mutates: !scan_only,
+        run: -> { gate("--lexical-only", scan_only:, trees:) }
+      )
+    end
+
+    def rails_stage(scan_only:, trees:)
+      return unless trees.include?("RAILS")
+
+      Stage.new(
+        name: "source",
+        purpose: "every RAILS gate, source and rendered, fix + remeasure",
+        mutates: !scan_only,
+        run: -> { rails_gates(scan_only:) }
+      )
+    end
+
+    def openbsd_stage(trees:)
+      return unless trees.include?("OPENBSD")
+
+      Stage.new(
+        name: "openbsd",
+        purpose: "every OpenBSD config, shell and deploy gate",
+        mutates: false,
+        run: -> { openbsd_gates }
+      )
+    end
+
+    def suites_stage(trees:)
+      Stage.new(
+        name: "suites",
+        purpose: suite_purpose(trees),
+        mutates: false,
+        run: -> { suites(trees) }
+      )
+    end
+
+    def ratchets_stage
+      Stage.new(
+        name: "ratchets",
+        purpose: "every recorded ceiling, current beside it",
+        mutates: false,
+        run: -> { capture(RUBY, File.join(MASTER, "bin", "operator"), "measure", "--deep") }
+      )
+    end
+
+    def sprawl_stage(scan_only:)
+      Stage.new(
+        name: "sprawl",
+        purpose: "lone dirs, stutter, vague names, duplicate files",
+        mutates: !scan_only,
+        run: -> { sprawl(scan_only:) }
+      )
+    end
+
+    def council_stage(scan_only:, trees:)
+      Stage.new(
+        name: "council",
+        purpose: "/critique and /review, then the panel's picks back through the runtime",
+        mutates: council_fix?(scan_only:),
+        run: -> { council(scan_only:, trees:) }
+      )
     end
 
     # /critique IS the council: dispatch_critique hands the path to
