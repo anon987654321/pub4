@@ -26,7 +26,7 @@ The four trees, and how each is entered:
 - `MASTER/tools/` — dilla makes beats, postpro grades images, preprompt and lora generate.
 
 Two commands cover most work. `MASTER/bin/operator gate` runs the whole ladder over
-all four trees; `MASTER/bin/operator measure` prints every ratchet with its ceiling.
+all three trees; `MASTER/bin/operator measure` prints every ratchet with its ceiling.
 Run the smallest check that proves the work, and never report done without its
 output.
 
