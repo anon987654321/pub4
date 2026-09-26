@@ -41,6 +41,11 @@ fi
 app=${1:-}
 [[ -n $app ]] || { usage >&2; exit 2 }
 
+case $app in
+  all|master|brgen|amber|bsdports) ;;
+  *) print -u2 "vps-deploy: unknown app \"$app\" — allowed: all, master, brgen, amber, bsdports"; exit 2 ;;
+esac
+
 # A full deploy outlives the ssh session that starts it. When that session is
 # cut — a timeout, a dropped link — the pipe carrying its output dies with it and
 # the only record of what happened is gone, while the deploy itself carries on to
