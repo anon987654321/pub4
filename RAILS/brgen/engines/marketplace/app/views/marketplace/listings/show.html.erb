@@ -137,6 +137,25 @@
       <span class="chip"><%= @listing.status %></span>
       <%= link_to t("marketplace.variants"), listing_variants_path(@listing), class: "chip" %>
     </div>
+
+    <% if @seller_performance %>
+      <p class="deal-meta"><%= t("marketplace.seller_performance_window") %></p>
+      <div class="chips">
+        <span class="chip"><%= t("marketplace.seller_purchases", count: @seller_performance[:purchases]) %></span>
+        <span class="chip"><%= t("marketplace.seller_shipped", count: @seller_performance[:shipped]) %></span>
+        <span class="chip"><%= t("marketplace.seller_delivered", count: @seller_performance[:delivered]) %></span>
+        <span class="chip"><%= t("marketplace.seller_returns", count: @seller_performance[:returns]) %></span>
+        <% if @seller_performance[:delivery_completion_rate] %>
+          <span class="chip"><%= t("marketplace.seller_delivery_completion", rate: number_to_percentage(@seller_performance[:delivery_completion_rate] * 100, precision: 0)) %></span>
+        <% end %>
+        <% if @seller_performance[:return_rate] %>
+          <span class="chip"><%= t("marketplace.seller_return_rate", rate: number_to_percentage(@seller_performance[:return_rate] * 100, precision: 0)) %></span>
+        <% end %>
+        <% if @seller_performance[:average_rating] %>
+          <span class="chip"><%= t("marketplace.seller_average_rating", rating: number_with_precision(@seller_performance[:average_rating], precision: 2), count: @seller_performance[:review_count]) %></span>
+        <% end %>
+      </div>
+    <% end %>
   </div>
 
   <div class="section-divider">
