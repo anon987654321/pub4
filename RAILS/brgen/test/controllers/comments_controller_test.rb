@@ -83,6 +83,21 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "a stranger cannot summarize a private community comment" do
+    owner = user("private-owner")
+    outsider = user("private-outsider")
+    community = Community.create!(name: "Private #{SecureRandom.hex(3)}", user: owner, city: @city, privacy: "private")
+    post_record = Post.create!(user: owner, title: "secret", city: @city, community: community)
+    comment = Comment.create!(user: owner, commentable: post_record, content: "private thread")
+
+    post session_path, params: { email_address: outsider.email_address, password: "password123" }
+    assert_response :redirect
+
+    assert_raises(ActiveRecord::RecordNotFound) do
+      post generate_summary_comment_path(comment)
+    end
+  end
+
   test "a comment posted to no parent is a 404, not a 500" do
     post comments_path, params: { comment: { content: "til ingen" } }
     assert_response :not_found
