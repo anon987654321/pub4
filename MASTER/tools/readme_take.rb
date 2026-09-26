@@ -15,7 +15,7 @@
 #   1. README.md becomes speakable prose and then README.wav, read by the voice
 #      data/voice.yml names. Code blocks, the image and the HTML comment are
 #      dropped: they are for a reader's eye and are noise read aloud.
-#   2. The face speaks it, recorded frame by frame by RAILS/gates/probes/
+#   2. The face speaks it, recorded frame by frame by MASTER/gates/probes/
 #      face_loop_record.rb, in slices with a fresh browser each time. One
 #      browser holding four minutes of this face grows until the machine
 #      complains.
