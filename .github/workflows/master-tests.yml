@@ -1,14 +1,18 @@
 name: MASTER Tests
 
-# Manual dispatch only.
-#
-# Fast path:
-#   cd MASTER && bin/check --profile=full
-#   OPENBSD/bin/check --profile=contributor && cd MASTER && bin/check --profile=agent
-#
-# GitHub Actions remains available for deliberate validation without making
-# every push or pull request pay for the full suite.
+# Continuous validation for MASTER changes; workflow_dispatch remains available
+# for deliberate reruns.
 on:
+  push:
+    paths:
+      - "MASTER/**"
+      - ".ruby-version"
+      - ".github/workflows/master-tests.yml"
+  pull_request:
+    paths:
+      - "MASTER/**"
+      - ".ruby-version"
+      - ".github/workflows/master-tests.yml"
   workflow_dispatch:
 
 jobs:
