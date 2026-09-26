@@ -105,6 +105,12 @@ uses the local whisper model to detect those phrases; audio is not uploaded.
 
 The resident installer also creates a supervised `master-wake` service, but
 that service remains inert until `/wake on`. Disable it with `/wake off`.
+
+After a wake phrase, the service hands the microphone to the existing
+`Face::Ear` and the same `Face::Talk` session used by the interactive face.
+The greeting is spoken locally through Termux TTS, spoken turns are added to
+the normal session transcript, and twenty seconds of silence returns the
+phone to low-power wake listening.
 Continuous microphone use costs battery and is intentionally visible and
 reversible.
 

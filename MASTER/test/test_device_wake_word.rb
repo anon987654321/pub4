@@ -9,7 +9,11 @@ class TestDeviceWakeWord < Minitest::Test
       wake = Master::Device::WakeWord.new(root:, which: ->(_cmd) { true })
       wake.enable!(phrases: ["Hey MASTER", " hey master "])
 
-      assert wake.enabled?
+      Master::Device.stub(:android?, true) do
+        Master::Device.stub(:termux?, true) do
+          assert wake.enabled?
+        end
+      end
       assert_equal ["hey master"], wake.phrases
     end
   end
@@ -26,8 +30,7 @@ class TestDeviceWakeWord < Minitest::Test
 
   def test_disabled_listener_does_not_require_microphone
     Dir.mktmpdir("wake-word") do |root|
-      calls = 0
-      wake = Master::Device::WakeWord.new(root:, which: ->(_cmd) { calls += 1; false })
+      wake = Master::Device::WakeWord.new(root:, which: ->(_cmd) { true })
 
       wake.send(:write_state, "enabled" => false)
       # The listener checks tool availability once, then sleeps without opening

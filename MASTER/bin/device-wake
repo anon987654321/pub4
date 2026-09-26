@@ -4,6 +4,7 @@
 ENV["MASTER_DEVICE_AGENT"] = "0"
 ENV["MASTER_WEB"] = "0"
 ENV["MASTER_SKIP_TTS"] = "0"
+ENV["MASTER_CLI_SPEAK"] = "0"
 
 ROOT = File.expand_path("..", __dir__)
 Dir.chdir(ROOT)
@@ -13,10 +14,20 @@ require "master"
 require_relative "../lib/device/wake_word"
 
 session = Master.boot(root: ROOT)
+container = session.container
+ear = Master::CLI::Face::Ear.new(device: Master::Device)
+talk = Master::CLI::Face::Talk.for_session(session)
 wake = Master::Device::WakeWord.new(root: ROOT)
 
 trap("TERM") { wake.stop! }
 trap("INT") { wake.stop! }
+
+def speak(text)
+  return if text.to_s.strip.empty?
+  return unless system("command", "-v", "termux-tts-speak", out: File::NULL, err: File::NULL)
+
+  system("termux-tts-speak", "-s", "MUSIC", text.to_s, out: File::NULL, err: File::NULL)
+end
 
 wake.run_forever do |_phrase, _heard|
   subject = Master::Device::Agent.owner_subject(root: ROOT)
@@ -26,6 +37,23 @@ wake.run_forever do |_phrase, _heard|
                Master::Device::OwnerProfile.wake_greeting(root: ROOT, subject:)
              end
 
-  warn("wake0: #{greeting}")
-  system("termux-tts-speak", "-s", "MUSIC", greeting) if system("command", "-v", "termux-tts-speak", out: File::NULL, err: File::NULL)
+  speak(greeting)
+  container[:bus]&.publish("device:wake", subject:, phrase: _phrase)
+  conversation_deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 20
+  loop do
+    break if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= conversation_deadline
+    heard = ear.listen(
+      stop: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) >= conversation_deadline },
+    )
+    break if heard.to_s.strip.empty?
+
+    result = talk.call(heard.to_s.strip)
+    unless result.ok?
+      speak(result.message)
+      break
+    end
+
+    speak(result.value!)
+    conversation_deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 20
+  end
 end
