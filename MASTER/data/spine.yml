@@ -658,7 +658,7 @@ pub4_source_ceilings:
   # These are deliberate contract surfaces, not absorbed growth.
   MASTER: 718
 
-  # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
+  # 2359 -> 2360 for MASTER/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:
   # it belongs beside the other probes and folds into nothing.
   #
