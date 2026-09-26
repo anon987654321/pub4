@@ -28,7 +28,7 @@ BUNDLE = Operator::RubyRunner.bundle_cmd
 # Two autofix switches, both off. MASTER_AUTOFIX gates the background fix loop;
 # MASTER_SCAN_AUTOFIX gates the deterministic AstFixer pass, which defaults on
 # and would otherwise write before the repair stage is reached.
-# RAILS/gates/lib/constitutional_scan.rb carries the same pair.
+# MASTER/gates/lib/constitutional_scan.rb carries the same pair.
 SAFE_ENV = {
   "MASTER_SAFE_MODE" => "1",
   "MASTER_BACKGROUND" => "0",
