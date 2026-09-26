@@ -43,7 +43,7 @@ cd "${PUB4}/MASTER/web"
 bundle config set --local path vendor/bundle
 bundle install
 RAILS_ENV=production SECRET_KEY_BASE_DUMMY=1 bundle exec rails assets:precompile
-bundle exec ruby "${PUB4}/RAILS/gates/runner.rb" master_web_assets
+bundle exec ruby "${PUB4}/MASTER/gates/runner.rb" master_web_assets
 doas rcctl restart master 2>/dev/null || doas rcctl start master
 doas rcctl check master || { log "WARN: master not ok"; failed=$((failed + 1)); }
 
