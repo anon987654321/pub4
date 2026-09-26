@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../../gates/support/dom_surface_schema"
+require_relative "../../../MASTER/gates/support/dom_surface_schema"
 require_relative "../../../OPENBSD/lib/gate_result"
 
 class DomSurfaceSchemaTest < Minitest::Test
-  FIXTURES = File.expand_path("../../gates/fixtures/surfaces", __dir__)
+  FIXTURES = File.expand_path("../../../MASTER/gates/fixtures/surfaces", __dir__)
 
   def setup
     @schema = Deploy::DomSurfaceSchema.new
