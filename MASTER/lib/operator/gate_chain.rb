@@ -9,7 +9,7 @@ module Operator
   # Every gate in the repo, in one order, fixing as it goes.
   #
   # The pieces all existed and nothing ran them together: `bin/gate` held the
-  # scanner chain, `RAILS/gates/runner.rb --all` the app gates, `bin/check` the
+  # scanner chain, `MASTER/gates/runner.rb --all` the app gates, `bin/check` the
   # suites, `bin/operator measure` the ratchets, `tools/sprawl_census.rb` the shape of
   # the tree. Five invocations, no run covering the repo, so "is the tree
   # conformant" answered for whichever quarter the last session measured.
@@ -27,7 +27,7 @@ module Operator
   #
   #   Honest tiers. A stage that measured nothing is neither a pass nor a
   #   failure: it reports as skipped and the run exits 3, the third state
-  #   RAILS/gates/runner.rb already spells for a precondition it never met.
+  #   MASTER/gates/runner.rb already spells for a precondition it never met.
   module GateChain
     ROOT = File.expand_path("../../..", __dir__)
     MASTER = File.join(ROOT, "MASTER")
