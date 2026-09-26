@@ -82,6 +82,19 @@ class MarketplaceReturnsTest < ActionDispatch::IntegrationTest
 
   # Nothing in the tree moves money yet, and the page says so rather than
   # implying the buyer has been paid.
+  test "receiving a return records one private return event" do
+    order = delivered_order(@shop_listing)
+    sent_back = order.returns.create!(reason: "Feil farge")
+
+    assert_difference -> { ActivityEvent.where(event_name: "MarketplaceReturnReceived").count }, 1 do
+      sent_back.receive!(by: @seller)
+    end
+
+    event = ActivityEvent.where(subject_type: "Marketplace::Listing", subject_id: @shop_listing.id,
+                                event_name: "MarketplaceReturnReceived").last
+    assert_equal "private", event.visibility
+    assert_nil event.metadata["reason"], "free-form return reasons must not enter the analytics event"
+  end
   test "a received return is not a refunded one" do
     order = delivered_order(@shop_listing)
     sent_back = order.returns.create!(reason: "Feil farge")
