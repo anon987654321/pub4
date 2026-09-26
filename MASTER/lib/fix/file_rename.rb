@@ -7,7 +7,7 @@ require_relative "file_rename/css_build"
 module Master
   module Fix
     # Moves one file to a better name, rewrites every reference to it across the
-    # four trees, and keeps the move only if it can be proved harmless; otherwise
+    # three governed trees, and keeps the move only if it can be proved harmless; otherwise
     # it puts everything back. One commit per rename, so a bad name is one revert.
     #
     # The kinds it renames are the ones whose name nothing but a path reaches:
