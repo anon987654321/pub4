@@ -2,7 +2,7 @@
 
 require "minitest/autorun"
 require "set"
-require_relative "../shared/lib/operator/scss_rules"
+require_relative "../../MASTER/tools/design/scss_rules"
 
 # brgen is one site. Its verticals are mountable engines, and each one's styles
 # are a body.vertical-<name> scope in brgen's stylesheet, which is exactly the
@@ -171,7 +171,7 @@ class VerticalConsistencyTest < Minitest::Test
   # seventh engine — the same blind spot, deferred. UserFlowGate reads them off
   # disk now, and this holds that every engine that exists is covered.
   def test_the_view_contract_covers_every_engine
-    require_relative "../gates/lib/live/user_flow"
+    require_relative "../../MASTER/gates/lib/live/user_flow"
     on_disk = Dir.glob(File.join(ROOT, "brgen/engines/*/app/views"))
                  .map { |path| path.sub("#{ROOT}/", "") }
 
