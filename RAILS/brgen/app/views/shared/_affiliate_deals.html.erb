@@ -1,31 +1,52 @@
-<%# Shared::Affiliate, not Shared::Tradedoubler: one read path over every network, so a new
-    one appears here without editing this view. %>
 <% deals = affiliate_deals_for(category: local_assigns[:category], limit: 6) %>
 <% if deals.any? %>
-  <div class="sidebar-card">
-    <%= tag.h3 t("affiliate.deals_title") %>
-    <% deals.each do |d| %>
-      <a href="<%= d.click_url %>" target="_blank" rel="noopener sponsored" class="affiliate-deal">
-        <% if d.image_url.present? %>
-          <%# Was emitting loading="lazy" twice on the same tag. %>
-          <img loading="lazy" width="52" height="52" alt="<%= d.title.presence || t("affiliate.deal_alt") %>" src="<%= d.image_url %>">
-        <% end %>
-        <div> <%# scan: intentional — an anonymous text block; the flex row is the layout and a name here would have no reader %>
-          <p class="affiliate-title"><%= d.title %></p>
-          <p class="affiliate-merchant"><%= d.merchant %></p>
-          <% if d.price.present? %>
-            <p class="deal-price"><%= d.currency %> <%= d.price %></p>
+  <aside class="affiliate_deals sidebar-card" aria-label="<%= t("affiliate.deals_title") %>">
+    <header class="affiliate_feed_header">
+      <div>
+        <p class="affiliate_feed_kicker"><%= t("affiliate.sponsored") %></p>
+        <h2><%= t("affiliate.deals_title") %></h2>
+      </div>
+    </header>
+
+    <div class="affiliate_sidebar_grid">
+      <% deals.each do |deal| %>
+        <% amazon = deal.respond_to?(:source) && deal.source.to_s == "amazon" %>
+        <% amazon_content = affiliate_product_content_allowed?(deal) %>
+        <a class="affiliate_sidebar_card<%= " affiliate_sidebar_card--amazon" if amazon && !amazon_content %>"
+           href="<%= deal.click_url %>"
+           target="_blank"
+           rel="noopener sponsored"
+           data-controller="outbound-click"
+           data-action="click->outbound-click#record"
+           data-outbound-click-url-value="<%= deal.click_url %>"
+           data-outbound-click-merchant-value="<%= affiliate_program_label(deal) %>"
+           data-outbound-click-surface-value="<%= local_assigns[:surface].presence || "affiliate_sidebar" %>">
+          <% if amazon && !amazon_content %>
+            <span class="affiliate_feed_amazon_mark"><%= t("affiliate.amazon_label") %></span>
+            <span class="affiliate_feed_title"><%= t("affiliate.amazon_shop") %></span>
+            <span class="affiliate_feed_link_disclosure"><%= t("affiliate.paid_link") %></span>
+          <% else %>
+            <% if deal.image_url.present? %>
+              <span class="affiliate_sidebar_media">
+                <img loading="lazy" decoding="async" width="88" height="88"
+                     alt="<%= deal.title.presence || t("affiliate.deal_alt") %>"
+                     src="<%= deal.image_url %>">
+              </span>
+            <% end %>
+            <span class="affiliate_feed_source"><%= affiliate_program_label(deal) %></span>
+            <span class="affiliate_feed_title"><%= deal.title %></span>
+            <% if deal.price.present? %>
+              <span class="affiliate_feed_price"><%= deal.currency %> <%= deal.price %></span>
+            <% end %>
+            <span class="affiliate_feed_link_disclosure"><%= t("affiliate.paid_link") %></span>
+            <% if deal.placeholder %>
+              <span class="affiliate_feed_placeholder"><%= t("affiliate.placeholder_notice") %></span>
+            <% end %>
           <% end %>
-          <%# Placeholder inventory is seeded so this surface can be demoed before
-              brgen.no is an approved TradeDoubler publisher. Label it: an
-              unlabelled placeholder is indistinguishable from a paid deal, both
-              to the visitor and to whoever reconciles the payout. %>
-          <% if d.placeholder %>
-            <p><%= t("affiliate.placeholder_notice") %></p>
-          <% end %>
-        </div>
-      </a>
-    <% end %>
+        </a>
+      <% end %>
+    </div>
+
     <%= render "shared/affiliate_disclosure" %>
-  </div>
+  </aside>
 <% end %>
