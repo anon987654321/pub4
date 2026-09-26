@@ -102,4 +102,47 @@ class TestFaceWindowLayout < Minitest::Test
       assert_operator yaw.abs, :<=, 0.5
     end
   end
+
+  class FakeBus
+    attr_reader :patterns
+
+    def initialize
+      @patterns = {}
+    end
+
+    def subscribe(pattern, &handler)
+      (@patterns[pattern] ||= []) << handler
+      -> { @patterns[pattern].delete(handler) }
+    end
+
+    def publish(event)
+      @patterns.each_value { |handlers| handlers.each { |handler| handler.call(event: event) } }
+    end
+  end
+
+  def test_terminal_face_subscribes_to_runtime_event_families_and_unsubscribes
+    bus = FakeBus.new
+    face = Master::CLI::Face::Window.new(
+      turn: ->(_) {},
+      ear: Quiet.new(nil),
+      mouth: Quiet.new(nil),
+      input: StringIO.new,
+      output: StringIO.new,
+      size: -> { [24, 80] },
+      event_bus: bus,
+    )
+
+    assert_equal %w[council:** llm:** phantom:** pipeline:**], bus.patterns.keys.sort
+
+    bus.publish("pipeline:stage_start")
+    events = face.instance_variable_get(:@events)
+    assert_equal [:thinking], events
+
+    bus.publish("phantom:detected")
+    assert_equal [:thinking, :phantom], face.instance_variable_get(:@events)
+
+    face.send(:unsubscribe_from_bus)
+    bus.publish("council:deliberation")
+    assert_equal [:thinking, :phantom], face.instance_variable_get(:@events)
+  end
 end
