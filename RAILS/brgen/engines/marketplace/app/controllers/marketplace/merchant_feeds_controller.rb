@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "builder"
+
 module Marketplace
   # Google Merchant Center product feed for first-party marketplace inventory.
   #
@@ -16,6 +18,8 @@ module Marketplace
         .includes(:category, :variants)
         .recent
         .limit(10_000)
+        .to_a
+        .select { |listing| listing.photos.attached? }
 
       render xml: feed_xml(listings), content_type: "application/xml"
     end
@@ -66,7 +70,7 @@ module Marketplace
     end
 
     def condition_for(listing)
-      listing.condition.to_s == "used" ? "used" : "new"
+      listing.condition.to_s == "new" ? "new" : "used"
     end
 
     def storefront_url
