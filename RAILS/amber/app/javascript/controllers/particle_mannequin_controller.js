@@ -8,6 +8,7 @@ export default class extends Controller {
     this.canvas = document.createElement("canvas")
     this.canvas.className = "mannequin-particles"
     this.canvas.setAttribute("aria-hidden", "true")
+    if (this.hasOpacityValue) this.canvas.style.opacity = String(this.opacityValue)
     this.element.prepend(this.canvas)
 
     this.field = new VisualField({
