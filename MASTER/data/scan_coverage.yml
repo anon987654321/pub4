@@ -64,3 +64,9 @@ scan_coverage:
       produces findings nobody acts on. The face law (FOR_OF, TEMPLATE_LITERALS,
       NO_JQUERY and the rest) is still counted: lib/operator/self_findings.rb reads
       MASTER/web under its ratchet, skipping only generated bundles.
+    gates: >-
+      Gates are executable instruments, not runtime source. They have their own
+      manifest (gates/gates.yml) and runner, and the gate suite is the check that
+      governs them. Scanning the instruments with the runtime constitution would
+      mix the measuring apparatus into the subject and make every fixture-shaped
+      assertion part of the measured corpus.
