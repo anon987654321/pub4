@@ -29,8 +29,11 @@ class TestDeviceWakeWord < Minitest::Test
       calls = 0
       wake = Master::Device::WakeWord.new(root:, which: ->(_cmd) { calls += 1; false })
 
-      assert_equal :disabled, wake.run_forever
-      assert_equal 0, calls
+      wake.send(:write_state, "enabled" => false)
+      # The listener checks tool availability once, then sleeps without opening
+      # the microphone while disabled.
+      wake = Master::Device::WakeWord.new(root:, which: ->(_cmd) { true }, sleeper: ->(_seconds) { raise "stop" })
+      assert_raises(RuntimeError) { wake.run_forever }
     end
   end
 end
