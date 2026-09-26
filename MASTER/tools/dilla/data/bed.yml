@@ -1,10 +1,10 @@
 # The bed: the pad, the drums on top of it, the lead and the bass.
 #
-# module Bed in STUDIO/dilla/dilla.rb renders it and reads every number below;
+# module Bed in MASTER/tools/dilla/dilla.rb renders it and reads every number below;
 # nothing else keeps a copy. A bare `ruby dilla.rb` plays the catalogue through
 # it, and `ruby dilla.rb bed` plays it under MASTER's narration, which is where
 # it began (MASTER/data/voice.yml points here). A key with no reader in module
-# Bed is a defect, and STUDIO/test/test_dilla_bed.rb pins the decisions that are
+# Bed is a defect, and MASTER/tools/test/test_dilla_bed.rb pins the decisions that are
 # easiest to undo by accident.
 # The chords are dilla's, and in a narration pass only the ones he actually played.
 #
