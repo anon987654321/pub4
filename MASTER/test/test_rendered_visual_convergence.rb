@@ -2,8 +2,8 @@
 
 require_relative "test_helper"
 require "open3"
-require File.expand_path("../../RAILS/gates/support/geometry_probe", __dir__)
-require File.expand_path("../../RAILS/gates/visual_contract", __dir__)
+require File.expand_path("../../MASTER/gates/support/geometry_probe", __dir__)
+require File.expand_path("../../MASTER/gates/visual_contract", __dir__)
 
 # The rendered half of /fix: the geometry walk Chrome runs, the screenshot
 # contract that shares its browser, the anchors a visual finding must carry, and
