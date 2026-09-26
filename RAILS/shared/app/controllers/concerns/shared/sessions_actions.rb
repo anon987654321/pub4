@@ -64,7 +64,10 @@ module Shared
       return if token.empty?
 
       user = User.find_by(magic_link_token: token)
-      user if user&.magic_link_valid?
+      return unless user&.magic_link_valid?
+      return if user.try(:deletion_pending?) || user.try(:deleted_at).present?
+
+      user
     end
   end
 end
