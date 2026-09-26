@@ -51,4 +51,10 @@ class TestEventBusReach < Minitest::Test
     assert_includes result[:references].fetch("phantom:retry"), "web/public/topology_registry.js"
     assert_includes result[:references].fetch("pipeline:start"), "web/public/face_semantics.js"
   end
+
+  def test_operator_exposes_the_census
+    source = File.read(File.expand_path("../../bin/operator", __dir__))
+    assert_includes source, 'when "event-bus"'
+    assert_includes source, 'MASTER", "tools", "event_bus_reach.rb"'
+  end
 end
