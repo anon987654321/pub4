@@ -24,9 +24,9 @@ class SitemapCityScopeContractTest < Minitest::Test
   # nil means global by design and must NOT be scoped.
   SCOPED = {
     "Post.hot" => :own, "Community" => :own, "Tv::Channel" => :own,
-    "Takeaway::Restaurant.indexable" => :own, "Marketplace::Store.active" => :own,
-    "Marketplace::Listing.live" => :own, "Place" => :own,
-    "Tv::Video.published" => :parent, "Marketplace::Deal.live" => :parent,
+    "Takeaway::Restaurant.indexable" => :own, "Marketplace::Store.publicly_visible" => :own,
+    "Marketplace::Listing.publicly_visible" => :own, "Place" => :own,
+    "Tv::Video.publicly_visible" => :parent, "Marketplace::Deal.live" => :parent,
   }.freeze
 
   def source
