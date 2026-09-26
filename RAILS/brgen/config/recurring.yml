@@ -140,3 +140,13 @@ production:
     class: Shared::DatabaseSnapshotJob
     queue: bulk
     schedule: every day at 2:20am
+
+  recalculate_marketplace_rankings:
+    class: Marketplace::RecalculateRankingJob
+    queue: default
+    schedule: every 2 hours
+
+  update_marketplace_seller_scores:
+    class: Marketplace::UpdateSellerScoresJob
+    queue: default
+    schedule: every day at 3am
