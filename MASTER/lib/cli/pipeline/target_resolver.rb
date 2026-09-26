@@ -6,7 +6,7 @@ module Master
       module TargetResolver
         def resolve_target(raw)
           text = raw.to_s.strip
-          text = "." if text.empty? || text.match?(/\A(?:all|everything|the|code|codebase|it|this|that)\z/i)
+          return Master::REPO_ROOT if text.empty? || text.match?(%r{\A(?:all|everything|the|code|codebase|it|this|that)\z}i)
           aliases = target_aliases
           return aliases[text] if aliases.key?(text)
           if text.match?(%r{\Arails[:/]}i)
