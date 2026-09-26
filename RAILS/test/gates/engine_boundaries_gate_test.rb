@@ -3,7 +3,7 @@
 require "minitest/autorun"
 require "tmpdir"
 require_relative "gate_fixture"
-require_relative "../../gates/lib/source/engine_boundaries"
+require_relative "../../../MASTER/gates/lib/source/engine_boundaries"
 
 # One engine naming another engine's constant. These plant two engines in a
 # temporary tree and pass it as the gate's root.
