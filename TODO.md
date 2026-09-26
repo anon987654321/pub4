@@ -173,7 +173,8 @@ the "One chrome", ad system and layout sections bring back for a decision.
   `measure` exits clean or each off row names its decision. A second seam
   from the 2026-09-23 pass belongs with it: `measure` could print the entry
   that owns each ceiling, so a red row points at a record instead of at
-  nobody.
+  nobody. Closed 2026-09-26: non-clean `measure` rows now print the source record
+  that owns each ceiling.
 - **The rules.yml trim draft was lost, and it can be rebuilt.** A draft that
   retired rules which fire on nothing, reach no configuration or misread
   their subject never reached a commit. Rebuild it as a diff from
