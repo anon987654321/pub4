@@ -54,12 +54,16 @@ module Master
       end
 
       def run_forever
-        return :disabled unless enabled?
         raise "wake word requires termux-microphone-record" unless @which.call("termux-microphone-record")
         raise "wake word requires whisper-cli" unless @which.call("whisper-cli")
 
-        emit("wake0: listening for #{phrases.join(", ")}")
         until @stop
+          unless enabled?
+            @sleeper.call(5)
+            next
+          end
+
+          emit("wake0: listening for #{phrases.join(", ")}")
           heard = listen_once
           next if heard.to_s.empty?
 
