@@ -2,7 +2,7 @@
 # larger body of agent-facing prose that this file used to present as the same
 # thing.
 #
-# START_HERE.md lists limits.yml as Tier 1, "Law". Measured 2026-08-02: of 38
+# CLAUDE.md points agents at the law; limits.yml carries budgets and standing guidance. Measured 2026-08-02: of 38
 # top-level keys, 9 had a reader and 29 had none — 485 of 794 lines. Both generic
 # accessors that might have reached the rest (`Rules#workflow` and
 # `Rules#workflow_rule(key)`) had zero call sites and are deleted.
@@ -603,7 +603,7 @@ guidance:
     reading_tiers:
       explore:
         required:
-        - START_HERE.md
+        - CLAUDE.md
         optional:
         - data/soul.yml ABSOLUTE sections
         note: Recon and analysis — pair with llm_ergonomics; external rg allowed.
@@ -621,10 +621,10 @@ guidance:
         - data/patterns.yml#operator_playbook
         note: VPS friction, relayd, recovery — run bin/operator playbook when signals match.
     mandatory_reads:
-    - See reading_tiers — START_HERE.md first; full constitution only for structural edits.
+    - See reading_tiers — CLAUDE.md first; full constitution only for structural edits.
     playbook_command: bin/operator playbook — print codified operator lessons when signals match production friction
     check_standing_orders: Verify FSM state before any mutation -- UNCHANGE blocks refactoring
-    scan_before_analysis: Use /scan deep via MASTER, not external agents, for code analysis
+    scan_before_analysis: Use /review via MASTER for read-only analysis; use /fix for convergence and writes
     ssh_edit_pattern: Write to /tmp, run ruby /tmp/patch.rb -- never ruby -i with heredoc
   corruption_prevention:
     llm_error_in_file: git checkout HEAD -- data/ && rcctl restart master -- LLM error strings silently
@@ -738,7 +738,7 @@ guidance:
   llm_ergonomics:
     core_principle: Optimize for actual LLM behavior and context limits, not idealized super-agents.
     guidance:
-    - Provide high-density mental models (START_HERE.md) before requiring deep constitution reads.
+    - Use CLAUDE.md as the high-density orientation before requiring deep constitution reads.
     - Allow external tools (grep, rg, find) for reconnaissance and understanding. Require constitutional
       tools only for production changes.
     - When full strict adherence would cause context exhaustion or paralysis, prefer 'good enough + evidence'
