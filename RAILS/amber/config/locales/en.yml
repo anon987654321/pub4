@@ -194,6 +194,8 @@ en:
     organize: "Closet organization"
     shop_smarter: "Shop smarter"
   actions:
+    move_up: "Move up"
+    move_down: "Move down"
     compose_outfit: "Compose an outfit"
     new_post: "New post"
     edit: "Edit"
