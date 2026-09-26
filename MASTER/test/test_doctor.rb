@@ -69,6 +69,12 @@ class TestDoctor < Minitest::Test
   # Every construction goes through the three-state struct. A stray `ok:` is an
   # ArgumentError at runtime, which is how this was found: doctor crashed on
   # its first check after the struct changed.
+  def test_doctor_does_not_swallow_master_boot_errors
+    source = File.read(DOCTOR)
+    refute_match(/require "master" rescue nil/, source)
+    assert_match(/require "master"\n/, source)
+  end
+
   def test_no_check_is_constructed_with_a_boolean
     code = File.read(DOCTOR).lines.reject { |line| line.strip.start_with?("#") }.join
     refute_match(/Check\.new\([^)]*\bok:/, code, "a Check is still built with ok:")
