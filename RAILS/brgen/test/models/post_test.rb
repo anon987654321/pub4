@@ -3,6 +3,20 @@
 require "test_helper"
 
 class PostTest < ActiveSupport::TestCase
+  test "departing accounts are not attributed on their posts" do
+    user = User.strict_loading(false).create!(
+      email_address: "departing-post-#{SecureRandom.hex(4)}@brgen.no",
+      password: "password12345",
+      username: "departing_post_#{SecureRandom.hex(3)}"
+    )
+    user.update_columns(deleted_at: Time.current, deletion_scheduled_at: 7.days.from_now)
+    post = Post.new(user: user, title: "Still public", content: "body")
+
+    assert_not post.attributed?
+    assert_equal "anon", post.author_name
+    assert_nil post.author_avatar_url
+  end
+
   test "reading_time_minutes ignores markup and rounds up" do
     words = Array.new(201, "bergen").join(" ")
     post = Post.new(content: "<p>#{words}</p><script>alert('x')</script>")
