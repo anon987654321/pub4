@@ -29,6 +29,13 @@ class Playlist::SetTest < ActiveSupport::TestCase
     assert_not_includes mine.visible, hidden
   end
 
+  test "publicly listed sets exclude departing owners" do
+    @user.update_columns(deleted_at: Time.current, deletion_scheduled_at: 7.days.from_now)
+    shown = Playlist::Set.create!(user: @user, name: "Gone soon", privacy: "public")
+
+    assert_not_includes Playlist::Set.publicly_listed, shown
+  end
+
   test "add_track! appends in order and adds the same track once" do
     set = Playlist::Set.create!(user: @user, name: "Rekkefølge")
     first = Playlist::Track.create!(title: "A", user: @user)
