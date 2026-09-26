@@ -18,7 +18,6 @@ module Master
       VERSION = 1
       STATE_PATH = ".master/device_agent.json"
       TICK_SECONDS = 60
-      MAX_ERRORS = 5
       ERROR_BACKOFF_SECONDS = 300
 
       class << self
