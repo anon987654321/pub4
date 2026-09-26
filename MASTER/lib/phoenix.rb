@@ -83,6 +83,28 @@ module Master
         entry
       end
 
+      def record_commit(root: Master::ROOT, message:, head:, paths:, findings: [])
+        boundaries = Array(paths).filter_map { |path| boundary_for(path, root:) }.uniq
+        return [] if boundaries.empty?
+
+        boundaries.map do |boundary|
+          entry = record_change(
+            root:,
+            boundary:,
+            goal: message.to_s,
+            constraints: ["preserve governing law", "commit only owned paths"],
+            alternatives: ["defer delivery", "deliver the validated change"],
+            evidence: {
+              head: head.to_s,
+              paths: Array(paths).map(&:to_s),
+              findings: Array(findings).size
+            },
+            decision: "deliver the validated change"
+          )
+          entry
+        end
+      end
+
       def record_evidence(root: Master::ROOT, boundary:, signal:, value:, source:, context: nil)
         entry = {
           schema: 1,
