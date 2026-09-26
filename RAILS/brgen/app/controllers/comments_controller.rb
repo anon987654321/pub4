@@ -7,7 +7,7 @@ class CommentsController < ApplicationController
   before_action :require_verified_email, only: :create
   before_action :require_real_user, only: [ :destroy, :generate_summary ]
   rate_limit to: 5, within: 1.minute, only: :generate_summary,
-             by: -> { Current.user&.id || request.remote_ip }
+             by: -> { Current.user&.id ? "u#{Current.user.id}" : request.remote_ip }
   before_action :set_commentable, only: :create
   before_action :set_summary_comment, :authorize_summary_comment, only: :generate_summary
 
