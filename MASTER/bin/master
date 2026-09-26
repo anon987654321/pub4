@@ -43,7 +43,7 @@ if ARGV.first == "--help" || ARGV.first == "-h"
       bin/master                        interactive session
       bin/master "<instruction>"        run one instruction, then interactive
       bin/master --fold "<goal>"        route one coding goal through the core Fold
-      bin/master --fast                 no boot scan, TTS or web; one command, then exit (1GB hosts)
+      bin/master --fast                 skip optional boot services; one command, then exit
       echo '/status' | bin/master       pipe mode
 
     Slash commands (/review, /status, /commit, /help, …) work as they do
