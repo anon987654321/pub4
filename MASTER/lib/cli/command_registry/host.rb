@@ -58,7 +58,7 @@ module Master
           "owner: forgot #{$1}"
         when /\Aset\s+(.+)\z/
           fields = parse_owner_fields($1)
-          return "owner: usage /owner set name=... language=... locale=... timezone=... communication_style=... interests=..." if fields.empty?
+          return "owner: usage /owner set name=... pet_name=... language=... locale=... timezone=... communication_style=... interests=..." if fields.empty?
           Master::Device::OwnerProfile.set(root:, subject:, **fields)
           Master::Device::OwnerProfile.onboarding_prompt(root:, subject:)
         else
