@@ -188,7 +188,7 @@ Law.define(:META_CHARSET) do
   severity :error
   languages %i[html]
   scope :file
-  # A gate fixture is a specimen, not a page. RAILS/gates/fixtures holds
+  # A gate fixture is a specimen, not a page. MASTER/gates/fixtures holds
   # hand-written good_ and bad_ documents that exist to be graded BY the gates,
   # and the bad ones are wrong on purpose — nine of this law's findings were its
   # own test data, including four files whose names say so.
