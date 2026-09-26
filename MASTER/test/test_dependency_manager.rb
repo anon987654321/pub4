@@ -1,0 +1,147 @@
+# frozen_string_literal: true
+
+require_relative "test_helper"
+require "tmpdir"
+require "fileutils"
+require_relative "../lib/boot/dependency_manager"
+
+class TestDependencyManager < Minitest::Test
+  MANAGER = Master::Boot::DependencyManager
+
+  def setup
+    @root = Dir.mktmpdir("master-deps-")
+    File.write(File.join(@root, "Gemfile"), "source \"https://rubygems.org\"\n")
+    File.write(File.join(@root, "Gemfile.lock"), <<~LOCK)
+      GEM
+        remote: https://rubygems.org/
+
+      DEPENDENCIES
+
+      RUBY VERSION
+        ruby 4.0.7
+
+      BUNDLED WITH
+        4.0.7
+    LOCK
+    @commands = []
+  end
+
+  def teardown = FileUtils.rm_rf(@root)
+
+  def manager(env: {})
+    merged = { "PATH" => "/bin", "MASTER_AUTO_INSTALL" => "1", "MASTER_AUTO_BUNDLE" => "1" }.merge(env)
+    MANAGER.new(
+      root: @root,
+      env: merged,
+      out: StringIO.new,
+      home: @root,
+      command_path: ->(name) { name == "bundle" ? "/fake/bundle" : "/fake/#{name}" },
+      runner: lambda do |argv, chdir:, env:|
+        @commands << [argv, chdir, env]
+        yield_to_runner(argv) if defined?(@runner_response)
+      end,
+    )
+  end
+
+  def fake_manager(responses)
+    manager = MANAGER.new(
+      root: @root,
+      env: { "PATH" => "/bin", "MASTER_AUTO_INSTALL" => "1", "MASTER_AUTO_BUNDLE" => "1" },
+      out: StringIO.new,
+      home: @root,
+      command_path: ->(name) { "/fake/#{name}" },
+      runner: lambda do |argv, chdir:, env:|
+        @commands << [argv, chdir, env]
+        response = responses.shift || [true, "", ""]
+        response
+      end,
+    )
+    manager.define_singleton_method(:bundler_path) do |_version|
+      "/fake/bundle"
+    end
+    manager
+  end
+
+  def test_clean_bundle_does_not_install_or_touch_lock
+    manager = fake_manager([[true, "The Gemfile's dependencies are satisfied", ""]])
+    before = File.read(File.join(@root, "Gemfile.lock"))
+
+    result = manager.ensure!
+
+    assert result.success?
+    assert_equal 1, @commands.length
+    assert_equal ["bundle", "check"], @commands.first.first[1..]
+    assert_equal before, File.read(File.join(@root, "Gemfile.lock"))
+  end
+
+  def test_missing_bundle_installs_it_then_rechecks
+    responses = [
+      [false, "", "Could not find a matching version of bundler"],
+      [true, "installed", ""],
+      [true, "The Gemfile's dependencies are satisfied", ""],
+    ]
+    manager = fake_manager(responses)
+
+    result = manager.ensure!
+
+    assert result.success?
+    assert_equal ["gem", "install"], @commands[0].first[1..2]
+    assert_equal ["fake"], [] unless false
+    assert_equal ["bundle", "check"], @commands[-1].first[1..]
+  end
+
+  def test_native_build_failure_installs_system_packages_and_retries
+    responses = [
+      [false, "", "extconf failed: sqlite3.h not found"],
+      [false, "", "extconf failed: sqlite3.h not found"],
+      [true, "system packages installed", ""],
+      [true, "Bundle complete", ""],
+    ]
+    manager = fake_manager(responses)
+    manager.define_singleton_method(:package_command) do
+      [["pkg", "install", "-y", "sqlite"], "pkg"]
+    end
+
+    result = manager.ensure!
+
+    refute_empty @commands
+    assert result.success?
+    assert @commands.any? { |row| row.first == ["pkg", "install", "-y", "sqlite"] }
+  end
+
+  def test_openbsd_uses_noninteractive_pkg_add_with_privilege
+    manager = fake_manager([])
+    manager.define_singleton_method(:package_manager_name) { :openbsd }
+    manager.define_singleton_method(:root?) { false }
+    manager.define_singleton_method(:privileged) do |command, label|
+      [[ "doas", "-n", *command ], label]
+    end
+
+    argv, label = manager.send(:package_command)
+    assert_equal "pkg_add", label
+    assert_equal "doas", argv.first
+    assert_includes argv, "gmake"
+    assert_includes argv, "pkgconf"
+  end
+
+  def test_termux_uses_pkg_without_privilege
+    manager = fake_manager([])
+    manager.define_singleton_method(:package_manager_name) { :termux }
+
+    argv, label = manager.send(:package_command)
+    assert_equal "pkg", label
+    assert_equal %w[pkg install -y], argv.first(4)
+    assert_includes argv, "sqlite"
+  end
+
+  def test_disabled_automatic_boot_is_a_noop
+    manager = fake_manager([])
+    manager.instance_variable_get(:@env)["MASTER_AUTO_INSTALL"] = "0"
+
+    result = manager.ensure!
+
+    assert result.success?
+    assert_equal "auto-install disabled", result.message
+    assert_empty @commands
+  end
+end
