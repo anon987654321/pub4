@@ -44,6 +44,7 @@ class TestRuntimeCompute < Minitest::Test
 
     assert_equal 4, result.size
     assert_equal({ "ractor_3_4" => 4 }, result[3])
+    refute jobs.any? { |job| job.frozen? }, "Ractor preparation must not freeze caller-owned jobs"
   end
 
   def test_parallel_group_uses_ractors_for_ractor_safe_stages
