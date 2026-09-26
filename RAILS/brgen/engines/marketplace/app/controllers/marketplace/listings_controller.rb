@@ -36,7 +36,7 @@ class Marketplace::ListingsController < Marketplace::BaseController
     # Price + sort facets (Amazon/Craigslist-style browsing, was recency only).
     scope = scope.where("price_cents >= ?", (params[:min_price].to_f * 100).to_i) if params[:min_price].present?
     scope = scope.where("price_cents <= ?", (params[:max_price].to_f * 100).to_i) if params[:max_price].present?
-    @sort = Marketplace::Listing::SORTS.include?(params[:sort]) ? params[:sort] : "recent"
+    @sort = Marketplace::Listing::SORTS.include?(params[:sort]) ? params[:sort] : "rank"
     @pagy, @listings = pagy(scope.sorted_by(@sort))
     @listing_distances = listing_distances(@listings, lat: @search_lat, lng: @search_lng)
     @categories = Marketplace::Category.roots.includes(:children)
@@ -55,6 +55,7 @@ class Marketplace::ListingsController < Marketplace::BaseController
     return if redirect_id_to_slug(@listing)
 
     @listing.increment!(:views_count)
+    @listing.record_event!("click", user: Current.user, metadata: { path: request.path })
     if Current.user.present? && Current.user == @listing.user
       owner = @listing.store_id ? Marketplace::Store.strict_loading(false).find_by(id: @listing.store_id) : @listing.user
       @seller_performance = Marketplace::SellerPerformance.new(owner || @listing.user).summary
