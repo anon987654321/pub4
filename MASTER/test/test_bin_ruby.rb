@@ -72,7 +72,7 @@ class TestBinRuby < Minitest::Test
       ENV["PATH"] = "#{fake_bin}#{File::PATH_SEPARATOR}#{old_path}"
       ENV["FAKE_RBENV_PATH"] = ruby_path
 
-      assert_equal ruby_path, Operator::RubyRunner.ruby_cmd
+      assert_equal ruby_path, Operator::RubyRunner.ruby_cmd(root:)
     ensure
       ENV["PATH"] = old_path
       ENV["FAKE_RBENV_PATH"] = old_fake_path
