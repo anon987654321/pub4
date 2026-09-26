@@ -3,8 +3,8 @@
 require "minitest/autorun"
 require "json"
 require "open3"
-require_relative "../../RAILS/gates/support/cdp_session"
-require_relative "../../RAILS/gates/support/mobile_journey_probe"
+require_relative "../../MASTER/gates/support/cdp_session"
+require_relative "../../MASTER/gates/support/mobile_journey_probe"
 
 # The mobile journey probe is two halves: JavaScript that decides what a phone
 # user can safely do on a page, and Ruby that does it and records what changed.
