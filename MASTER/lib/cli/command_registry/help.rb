@@ -91,6 +91,10 @@ module Master
           summary: "issue or redeem a pairing code",
           detail: ["/pair owner [label]", "/pair issue [label]", "/pair <code>", "/pair status"],
         },
+        "device" => {
+          summary: "show local phone agent and owner state",
+          detail: ["/device"],
+        },
         "doctor" => {
           summary: "host, provider, exposure and hardware health",
           detail: ["/doctor — keys, disk, git, pairing/gateway exposure.",
