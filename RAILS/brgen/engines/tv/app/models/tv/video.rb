@@ -41,6 +41,7 @@ class Tv::Video < ApplicationRecord
   # :published is also used by admin and by the channel's own show page, where
   # the channel is already the tenant-scoped record doing the asking.
   scope :published, -> { where(status: "published").order(published_at: :desc) }
+  scope :publicly_visible, -> { published.joins(channel: :user).where(users: { deleted_at: nil, deletion_scheduled_at: nil }) }
 
   # Trending ranks by watch time, not by page opens. views_count is incremented
   # in videos#show, so a viewer who bounced after four seconds moved a video up
