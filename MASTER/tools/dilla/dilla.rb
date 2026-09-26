@@ -20726,6 +20726,11 @@ render_dilla(part, bars_count)
 
   abort "demo-all: no parts rendered" if parts.empty?
 
+  if parts.length != order.length
+    missing = order.length - parts.length
+    abort "demo-all: #{missing} part(s) missing (#{parts.length}/#{order.length}); refusing to publish a partial demo"
+  end
+
   # Look inside the parts before joining them.
   #
   # 28 of the 86 tracks in the demo committed at c0d00f488 were silence -- the
@@ -39083,6 +39088,6 @@ if __FILE__ == $PROGRAM_NAME
     default_render!
   else
     handler = DISPATCH[cmd]
-    handler ? handler.call : help
+    handler ? handler.call : abort("dilla: unknown command #{cmd.inspect} — run `ruby dilla.rb help`")
   end
 end
