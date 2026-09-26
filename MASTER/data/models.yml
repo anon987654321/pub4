@@ -149,7 +149,7 @@ model_defs:
     # condition as claude_cli_sonnet above -- one account, one quota.
     score: { quality: 0.99, speed: 0.55, cost: 0.3 }
   claude_opus_api: &claude_opus_api
-    id: anthropic/claude-opus-4
+    id: anthropic/claude-opus-4.1
     <<: *model_defaults
     context_window: 200000
     score: { quality: 0.99, speed: 0.50, cost: 0.20 }

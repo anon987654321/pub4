@@ -10,6 +10,11 @@
 # `find_without_provider` and raises ModelNotFoundError on any id the
 # shipped registry does not carry.
 module RubyLLM
+  if const_defined?(:Tool) && RubyLLM::Tool.respond_to?(:parameter) &&
+     !RubyLLM::Tool.respond_to?(:param)
+    RubyLLM::Tool.singleton_class.alias_method(:param, :parameter)
+  end
+
   class Models
     class << self
       # `encoding:` is the whole reason this override exists. The registry is

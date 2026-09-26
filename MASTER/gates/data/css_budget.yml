@@ -12,7 +12,7 @@
 # the ceiling exists so the next change cannot add to it silently. Lower one with
 # GATE_CSS_RATCHET=1 after a run that beats it.
 #
-# Recorded 2026-08-03 from a full run (RAILS/gates/runner.rb css_constitution).
+# Recorded 2026-08-03 from a full run (MASTER/gates/runner.rb css_constitution).
 #
 # Re-measured 2026-08-09 over 92 stylesheets, up from 82. The gate globbed
 # <app>/app/assets/stylesheets and brgen's five verticals are mountable engines,

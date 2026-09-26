@@ -111,21 +111,21 @@ class TestFallbackChain < Minitest::Test
   def test_an_offline_head_does_not_invent_a_local_fallback
     offline = -> { Master::Result.err("Failed to open TCP connection: getaddrinfo", category: :offline) }
     dispatcher = CountingDispatcher.new(
-      "anthropic/claude-opus-4" => offline,
+      "anthropic/claude-opus-4.1" => offline,
       "google/gemini-2.5-flash" => offline,
       "ollama:llama3.2:3b" => -> { flunk "offline fallback must not invent a local lane" },
     )
     agent = build_agent(dispatcher)
     router = FakeRouter.new
-    router.define_singleton_method(:fallback_chain) { |task_type:| %w[anthropic/claude-opus-4 google/gemini-2.5-flash] }
+    router.define_singleton_method(:fallback_chain) { |task_type:| %w[anthropic/claude-opus-4.1 google/gemini-2.5-flash] }
     router.define_singleton_method(:local_models) { ["ollama:llama3.2:3b"] }
     agent.instance_variable_set(:@model_router, router)
 
-    response = agent.send(:attempt_chat_with_fallbacks, candidate_models: %w[anthropic/claude-opus-4 google/gemini-2.5-flash],
+    response = agent.send(:attempt_chat_with_fallbacks, candidate_models: %w[anthropic/claude-opus-4.1 google/gemini-2.5-flash],
                                                         prompt: "hi", context: [], stream: false)
 
     assert response.err?
-    assert_equal %w[anthropic/claude-opus-4 google/gemini-2.5-flash], dispatcher.calls
+    assert_equal %w[anthropic/claude-opus-4.1 google/gemini-2.5-flash], dispatcher.calls
   end
 
   def test_failed_turn_rechecks_the_live_router_for_new_models

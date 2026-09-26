@@ -487,7 +487,7 @@ module Master
               next unless body
               mutates = body_contains?(body, Prism::InstanceVariableWriteNode, Prism::InstanceVariableOperatorWriteNode)
               returns_value = body_has_explicit_return?(body)
-              if mutates && returns_value
+              if mutates && returns_value && !memoized_reader?(body)
                 findings << finding(line: node.location.start_line,
                   message: "method #{node.name} mutates state and returns a value — split into command and query")
               end
@@ -507,6 +507,39 @@ module Master
             return false unless node.respond_to?(:child_nodes)
             return true if node.is_a?(Prism::ReturnNode) && node.arguments&.arguments&.any?
             node.child_nodes.compact.any? { |c| body_has_explicit_return?(c) }
+          end
+
+          # A memoized reader deliberately writes absent state and returns the
+          # resulting value. Recognize both the guard-and-assign form and ||= so
+          # CQS does not classify cache initialization as a mixed command/query.
+          def memoized_reader?(body)
+            writes = child_nodes_of(body, Prism::InstanceVariableWriteNode, Prism::InstanceVariableOperatorWriteNode)
+            return false unless writes.one?
+
+            write = writes.first
+            name = write.name.to_s
+            returns = child_nodes_of(body, Prism::ReturnNode)
+            matching = returns.select do |node|
+              args = node.arguments&.arguments
+              args&.one? && args.first.is_a?(Prism::InstanceVariableReadNode) &&
+                args.first.name.to_s == name
+            end
+            return false unless returns.any? && matching.size == returns.size
+
+            return true if write.is_a?(Prism::InstanceVariableOperatorWriteNode)
+
+            reads = child_nodes_of(body, Prism::InstanceVariableReadNode)
+            reads.any? { |node| node.name.to_s == name && node.location.start_offset < write.location.start_offset } &&
+              matching.any? { |node| node.location.start_offset < write.location.start_offset }
+          end
+
+          def child_nodes_of(node, *types)
+            return [] unless node.respond_to?(:child_nodes)
+
+            matches = []
+            matches << node if types.include?(node.class)
+            node.child_nodes.compact.each { |child| matches.concat(child_nodes_of(child, *types)) }
+            matches
           end
         end
 

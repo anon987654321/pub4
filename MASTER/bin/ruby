@@ -3,13 +3,30 @@
 set -eu
 
 ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+RBENV_ROOT="${RBENV_ROOT:-$HOME/.rbenv}"
+PINNED_VERSION=""
 
-if command -v ruby34 >/dev/null 2>&1; then
-  RUBY=ruby34
-elif command -v ruby3.4 >/dev/null 2>&1; then
-  RUBY=ruby3.4
-elif [ -f "$ROOT/.ruby-version" ] && command -v rbenv >/dev/null 2>&1; then
-  RUBY="$(rbenv which ruby 2>/dev/null || true)"
+if [ -f "$ROOT/.ruby-version" ]; then
+  PINNED_VERSION="$(cat "$ROOT/.ruby-version")"
+fi
+
+if [ -n "$PINNED_VERSION" ] && [ -x "$RBENV_ROOT/versions/$PINNED_VERSION/bin/ruby" ]; then
+  RUBY="$RBENV_ROOT/versions/$PINNED_VERSION/bin/ruby"
+else
+  RBENV="$(command -v rbenv 2>/dev/null || true)"
+  if [ -z "$RBENV" ] && [ -x "$RBENV_ROOT/bin/rbenv" ]; then
+    RBENV="$RBENV_ROOT/bin/rbenv"
+  fi
+
+  if [ -n "$RBENV" ] && [ -n "$PINNED_VERSION" ]; then
+    RUBY="$(RBENV_VERSION="$PINNED_VERSION" "$RBENV" which ruby 2>/dev/null || true)"
+  fi
+
+  if [ -z "${RUBY:-}" ] && command -v ruby34 >/dev/null 2>&1; then
+    RUBY=ruby34
+  elif [ -z "${RUBY:-}" ] && command -v ruby3.4 >/dev/null 2>&1; then
+    RUBY=ruby3.4
+  fi
 fi
 
 RUBY="${RUBY:-ruby}"

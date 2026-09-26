@@ -237,7 +237,7 @@ class TestKeylessRouting < Minitest::Test
     router.define_singleton_method(:probe_value) { |name, wait:| name == "openrouter_credits" ? false : nil }
 
     assert router.reachable?("nvidia/nemotron-3-super-120b-a12b:free")
-    assert_match(/credit is spent/, router.unreachable_reason("anthropic/claude-opus-4"))
+    assert_match(/credit is spent/, router.unreachable_reason("anthropic/claude-opus-4.1"))
   end
 
   def test_a_cli_lane_joins_when_signed_in_and_names_its_login_when_not

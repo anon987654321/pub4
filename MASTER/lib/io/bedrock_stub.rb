@@ -15,7 +15,8 @@ module RubyLLM
       def self.headers(_cfg) = {}
       def self.models = []
       def self.configuration_options = []
-      def self.slug = "bedrock"
+      def self.slug = @slug || "bedrock"
+      def self.slug=(value) = @slug = value.to_s
     end
   end
 end
