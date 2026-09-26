@@ -65,6 +65,19 @@ class MarketplacePayoutTest < ActiveSupport::TestCase
     assert_equal "private", ActivityEvent.where(subject_type: "Marketplace::Listing", subject_id: @listing.id,
                                                  event_name: "MarketplaceOrderShipped").last.visibility
   end
+  test "repeated shipment and delivery calls do not duplicate lifecycle events" do
+    order = paid_order
+
+    order.ship!(tracking_code: "NO123", carrier: "Test")
+    order.ship!(tracking_code: "NO124", carrier: "Test")
+    order.mark_delivered!
+    order.mark_delivered!
+
+    assert_equal 1, ActivityEvent.where(subject_type: "Marketplace::Listing", subject_id: @listing.id,
+                                       event_name: "MarketplaceOrderShipped").count
+    assert_equal 1, ActivityEvent.where(subject_type: "Marketplace::Listing", subject_id: @listing.id,
+                                       event_name: "MarketplaceOrderDelivered").count
+  end
   test "delivery of a shop order enqueues one pending payout" do
     order = paid_order
     assert_difference -> { Marketplace::Payout.count }, 1 do
