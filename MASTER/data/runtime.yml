@@ -178,10 +178,19 @@ event_registry:
   - namespace: voice
     owner: voice
     when: TTS start/done, speech errors
+  - namespace: pub4
+    owner: shared frontend
+    when: cross-app visual state and audio field signals
   established_events:
   - event: master:visual
     target: visual_bridge.js
     purpose: topology/mode changes
+  - event: pub4:visual
+    target: shared/frontend/visual_field.js
+    purpose: normalized cross-app visual state
+  - event: radio:audio
+    target: shared/frontend/visual_field.js
+    purpose: normalized audio bands for radio surfaces
   - event: master:clusters
     target: cluster registry
     purpose: cluster registry updates
@@ -418,6 +427,18 @@ face_enhancements:
     status: implemented
     handler: both
     summary: Vertical timbre persistent kernel bias per subapp
+  - id: fe_033
+    area: web
+    tier: p0
+    status: implemented
+    handler: both
+    summary: Shared Antigravity visual field across MASTER, Brgen, Dating, Amber and Radio
+  - id: fe_034
+    area: bus
+    tier: p0
+    status: implemented
+    handler: js
+    summary: Cross-app visual contract with reduced-motion and deterministic particle topology
   - id: fe_033
     area: bus
     tier: p2
