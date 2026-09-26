@@ -6,6 +6,10 @@ name: MASTER fix RAILS live
 # and writes only to this branch.
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - MASTER/data/design_reference_study.yml
 
 permissions:
   contents: write
