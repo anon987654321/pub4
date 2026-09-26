@@ -71,7 +71,8 @@ module Webhooks
       expected = OpenSSL::HMAC.hexdigest("SHA256", secret, signed_payload)
 
       matched = signatures.any? do |candidate|
-        ActiveSupport::SecurityUtils.secure_compare(expected, candidate)
+        candidate.bytesize == expected.bytesize &&
+          ActiveSupport::SecurityUtils.secure_compare(expected, candidate)
       end
       raise SignatureError, "signature mismatch" unless matched
 
