@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../../gates/support/layout_search"
-require_relative "../../gates/lib/research/layout_search"
+require_relative "../../../MASTER/gates/support/layout_search"
+require_relative "../../../MASTER/gates/lib/research/layout_search"
 require_relative "../../../OPENBSD/lib/gate_result"
 
 class LayoutSearchTest < Minitest::Test
