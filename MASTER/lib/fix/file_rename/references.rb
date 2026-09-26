@@ -5,7 +5,7 @@ require_relative "../../operator/readers"
 module Master
   module Fix
     class FileRename
-      # Every spelling that names a renamed file, across the four trees, and the
+      # Every spelling that names a renamed file, across the three governed trees, and the
       # rewrite from old to new. Only exact forms: the basename, the `_stem` a
       # comment or partial uses, and the bare name in a Sass @use/@forward/@import.
       # A plain word match would rewrite "base" in every sentence that says it.
