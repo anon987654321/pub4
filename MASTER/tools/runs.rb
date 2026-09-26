@@ -38,8 +38,8 @@ module Operator
       OPENBSD/bin/check-vps
       OPENBSD/test/run_all.rb
       RAILS/test/run_all.rb
-      RAILS/gates/runner.rb
-      RAILS/gates/release.rb
+      MASTER/gates/runner.rb
+      MASTER/gates/release.rb
       package.json
     ].freeze
 
