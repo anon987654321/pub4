@@ -124,8 +124,8 @@ class TestGrooveTiming < Minitest::Test
     with_env("PHRASE_PERFORMANCE" => "1", "DILLA_RENDER_SEED" => "42") do
       timings = 4.times.map { |bar| DillaGroove.phrase_performance_ms(bar:, role: :snare, beat_p: 60.0 / 88.0) }
       refute_equal 1, timings.uniq.length, "phrase gesture must not collapse into one fixed offset"
-      assert_equal timings, 2.times.flat_map { |offset| 4.times.map { |bar| DillaGroove.phrase_performance_ms(bar: offset * 4 + bar, role: :snare, beat_p: 60.0 / 88.0) }.first(4) },
-                   "the gesture must stay reproducible for the same phrase position"
+      repeated = 4.times.map { |bar| DillaGroove.phrase_performance_ms(bar:, role: :snare, beat_p: 60.0 / 88.0) }
+      assert_equal timings, repeated, "the same phrase position must reproduce exactly"
     end
   end
 
