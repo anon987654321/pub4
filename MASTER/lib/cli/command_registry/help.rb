@@ -89,7 +89,7 @@ module Master
         },
         "pair" => {
           summary: "issue or redeem a pairing code",
-          detail: ["/pair issue [label]", "/pair <code>", "/pair status"],
+          detail: ["/pair owner [label]", "/pair issue [label]", "/pair <code>", "/pair status"],
         },
         "doctor" => {
           summary: "host, provider, exposure and hardware health",
