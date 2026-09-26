@@ -18,6 +18,10 @@ class EmailSubscription < ApplicationRecord
     update!(confirmed: true, confirmed_at: Time.current)
   end
 
+  def update_marketing_preferences!(marketing:)
+    update!(agreed_to_marketing: marketing)
+  end
+
   private
 
   def generate_token
