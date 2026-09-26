@@ -82,7 +82,7 @@ class Marketplace::SavedSearch < ApplicationRecord
 
     if query.present?
       listing_hits = Shared::LiveSearch.call(
-        Marketplace::Listing.live, query: query, columns: %w[title description location]
+        Marketplace::Listing.publicly_visible, query: query, columns: %w[title description location]
       )
       headline_hits = Shared::LiveSearch.call(
         Marketplace::Deal.live, query: query, columns: %w[headline]
