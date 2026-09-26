@@ -54,7 +54,7 @@ module Master
         end
 
         def initialize(turn:, ear: Ear.new, mouth: Mouth.new, input: $stdin, output: $stdout,
-                       size: -> { IO.console&.winsize || [24, 80] })
+                       size: -> { IO.console&.winsize || [24, 80] }, event_bus: nil)
           @turn = turn
           @ear = ear
           @mouth = mouth
@@ -70,6 +70,7 @@ module Master
           @motion = Motion.new(seed: Random.new_seed % 1_000_003)
           @events = []
           @jobs = []
+          @event_unsubscribers = subscribe_to_bus(event_bus)
           @opened = now
         end
 
@@ -80,6 +81,7 @@ module Master
           "face0: closed"
         ensure
           painter&.kill
+          unsubscribe_from_bus
           @output.print("#{PLAIN}\e[?25h\e[?1049l")
           @output.flush
         end
@@ -322,6 +324,40 @@ module Master
         # Something the face reacts to on its next frame (Motion::EVENTS).
         def nudge(event) = change { @events << event }
 
+        # The terminal face listens to the same runtime event families as the
+        # browser face. Event delivery only queues a bounded motion event; the
+        # painter consumes it on the next frame, so bus handlers never touch the
+        # terminal or block a publisher.
+        def subscribe_to_bus(event_bus)
+          return [] unless event_bus.respond_to?(:subscribe)
+
+          %w[llm:** pipeline:** phantom:** council:**].map do |pattern|
+            event_bus.subscribe(pattern) { |event| bus_event(event) }
+          end
+        rescue StandardError => e
+          set(:idle, ["face0: event bus unavailable — #{e.message.to_s[0, 100]}"])
+          []
+        end
+
+        def bus_event(event)
+          type = event[:event] || event["event"]
+          motion = case type.to_s
+                   when /\Allm:(?:request|send)\z/, /\Apipeline:stage_start\z/ then :thinking
+                   when /\Allm:(?:response|call_complete)\z/, /\Apipeline:(?:stage_complete|complete|done)\z/ then :nod
+                   when /\Aphantom:(?:detected|recovery|halt|occurrence)\z/ then :phantom
+                   when /\Acouncil:/ then :council
+                   end
+          nudge(motion) if motion
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "face.window.bus_event", event: type)
+        end
+
+        def unsubscribe_from_bus
+          @event_unsubscribers.each { |unsubscribe| unsubscribe.call }
+          @event_unsubscribers.clear
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "face.window.unsubscribe")
+        end
         def change(&) = @lock.synchronize(&)
 
         def tint(state, line) = state == :listening ? "#{ACCENT}#{line}#{PLAIN}" : line
