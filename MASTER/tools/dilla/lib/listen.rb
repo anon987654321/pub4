@@ -319,6 +319,8 @@ module DillaTaste
     "high-frequency energy" => { units: "dB", knob: "SAMPLE_EXCITE, SAMPLE_LOOP_LP" },
     "stereo width" => { units: "ratio", knob: "stereo_pan, apulsator amount" },
     "dynamic spread" => { units: "dB", knob: "the master bus compression" },
+    "silence ratio" => { units: "ratio", knob: "phrase dropouts, kick sparsity, section arrangement" },
+    "crest factor" => { units: "dB", knob: "transient shaping, drum dynamics, bus compression" },
   }.freeze
 
   class << self
@@ -412,11 +414,15 @@ module DillaTaste
       return {} if env.length < 10
 
       mean = env.sum / env.length
+      rms = Math.sqrt(env.sum { |value| value * value } / env.length)
       onsets = (1...env.length).count { |i| env[i] > mean * 1.6 && env[i] > env[i - 1] * 1.5 }
       peak = env.max
+      silence_cut = mean * 0.18
       {
         "transient density" => (onsets / (env.length / 100.0)).round(3),
         "dynamic spread" => (peak.positive? && mean.positive? ? (20 * Math.log10(peak / mean)).round(2) : nil),
+        "silence ratio" => (env.count { |value| value <= silence_cut }.to_f / env.length).round(4),
+        "crest factor" => (peak.positive? && rms.positive? ? (20 * Math.log10(peak / rms)).round(2) : nil),
       }
     end
 
