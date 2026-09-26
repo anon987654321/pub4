@@ -110,7 +110,13 @@ module Master
         # harness rather than the code. A boot that raises on a number the harness
         # inflated fails four tests and tells the reader nothing true.
         if ENV.fetch("MASTER_STRICT_BOOT", "1") != "0" && !defined?(Minitest)
-          raise "builder: self_test failed with #{summary.violation_count} violation(s)"
+          first = summary.checks.lazy.flat_map(&:findings).first
+          detail = if first
+            " — #{first[:path]}:#{first[:line]}: #{first[:message]}"
+          else
+            ""
+          end
+          raise "builder: self_test failed with #{summary.violation_count} violation(s)#{detail}"
         end
       end
     end
