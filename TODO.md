@@ -125,8 +125,6 @@ and 6 need the registrar or money.
 1. **dilla's demo run tells the truth.** Entry: "The demo run lies about
    success". Done when a held lock, an unknown command and a missing part each
    exit non-zero. No sound changes, so it needs no ear.
-2. **The no-arg smoke test.** Entry: "No smoke test for the no-arg path".
-   After 1.
 3. **Restructuring rows 1, 6 and 15.** Entry: "dilla — restructuring". Each
    must leave the snapshot identical.
 4. **Everything marked [risk], [yours] or "operator"** waits for his ear, and
@@ -1295,10 +1293,10 @@ default unless marked.
   commands; its loudness and a bit-identical run are the only evidence.
   `each_parallel` seeds each item, so the drift is elsewhere: find it before
   trusting a bed snapshot.
-- **No smoke test for the no-arg path.** `test_dilla_bed` checks the bed's
-  source text; nothing yet runs `Bed.catalogue!` end to end with a
-  two-piece order into a tmpdir and asserts demo.wav, demo.mp3 and the join's
-  length. It needs a render, so it runs on a quiet machine.
+- **No smoke test for the no-arg path.** Closed 2026-09-26. The real bare
+  `dilla.rb` dispatch now has an opt-in bounded smoke seam, and
+  `test_dilla_bed.rb` launches the actual no-argument entrypoint against two
+  known pieces in a temporary tree, asserting WAV/MP3 output and joined duration.
 
 ## dilla — operator decisions
 
