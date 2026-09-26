@@ -708,7 +708,9 @@ def deep_rows
         current = row.current.nil? ? "?" : row.current.to_s
         ceiling = row.ceiling.nil? ? "-" : row.ceiling.to_s
         line = format("  %-#{width}s %8s / %-8s %-10s", row.name, current, ceiling, row.state)
-        row.note ? "#{line} #{row.note}" : line
+        suffix = row.source.to_s.empty? ? "" : " (#{row.source})"
+        suffix = "" if row.state == "at"
+        row.note ? "#{line} #{suffix} #{row.note}".squeeze(" ") : "#{line}#{suffix}"
       end
       broken = rows.reject(&:ok?).reject { |row| row.current.nil? || row.ceiling.nil? }
       summary = if broken.empty?
