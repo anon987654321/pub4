@@ -11,7 +11,7 @@ class StoryRepliesController < ApplicationController
     # and a reply box that still works after the sweep is a promise broken
     # quietly.
     story = Story.alive.find(params[:story_id])
-    author = User.find(story.user_id)
+    author = User.messageable.find(story.user_id)
 
     return redirect_to(stories_path, alert: t("flash.story_reply_self")) if author.id == Current.user.id
     return redirect_to(stories_path, alert: t("flash.user_not_found")) if blocked_either_way?(author)
