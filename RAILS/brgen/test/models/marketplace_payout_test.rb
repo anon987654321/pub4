@@ -77,6 +77,16 @@ class MarketplacePayoutTest < ActiveSupport::TestCase
                                        event_name: "MarketplaceOrderShipped").count
     assert_equal 1, ActivityEvent.where(subject_type: "Marketplace::Listing", subject_id: @listing.id,
                                        event_name: "MarketplaceOrderDelivered").count
+    assert_equal 1, Notification.where(
+      source_type: "Marketplace::Order",
+      source_id: order.id,
+      title: I18n.t("marketplace.order_notification.on_its_way")
+    ).count
+    assert_equal 1, Notification.where(
+      source_type: "Marketplace::Order",
+      source_id: order.id,
+      title: I18n.t("marketplace.order_notification.delivered")
+    ).count
   end
   test "delivery of a shop order enqueues one pending payout" do
     order = paid_order
