@@ -37301,16 +37301,25 @@ pads = chop(played, bars, scratch("pads"))
   end
 
   def pieces!(showcase: Pieces.showcase)
-    names = showcase ? Array(showcase["order"]) : Pieces.names
+    override = ENV["DILLA_PIECES_ORDER"].to_s.split(",").map(&:strip).reject(&:empty?)
+    names = if override.empty?
+              showcase ? Array(showcase["order"]) : Pieces.names
+            else
+              override
+            end
     unknown = names.reject { |name| Pieces.fetch(name) }
     abort "showcase: no piece named #{unknown.join(', ')}" unless unknown.empty?
 
     missing_grids.each do |piece, slug|
-      dmesg_warn("#{piece} wants the drums of #{slug}, which are not in samples/midi — " \
-                 "run: ruby dilla.rb import-als <the set> write")
+      dmesg_warn("#{piece} wants the drums of #{slug}, which are not in samples/midi — "                  "run: ruby dilla.rb import-als <the set> write")
     end
-    seconds = showcase && showcase["seconds_each"]
-    fade = Float((showcase && showcase["crossfade_s"]) || CATALOGUE.fetch("crossfade_s"))
+    seconds = if ENV["DILLA_PIECES_SECONDS"].to_s.empty?
+                showcase && showcase["seconds_each"]
+              else
+                Float(ENV["DILLA_PIECES_SECONDS"])
+              end
+    fade = Float((ENV["DILLA_PIECES_FADE"] || (showcase && showcase["crossfade_s"]) ||
+                  CATALOGUE.fetch("crossfade_s")))
     base = Integer(ENV.fetch("RENDER_SEED") { rand(2**31) })
     parts_dir = File.join(SCRATCH_DIR, "pieces")
     FileUtils.mkdir_p(parts_dir)
@@ -37322,7 +37331,8 @@ pads = chop(played, bars, scratch("pads"))
       trim!(part, Float(seconds)) if seconds
       part
     end
-    dest = File.join(ROOT, "demo.wav")
+    dest = File.expand_path(ENV.fetch("DILLA_PIECES_OUTPUT", File.join(ROOT, "demo.wav")))
+    FileUtils.mkdir_p(File.dirname(dest))
     join_catalogue(parts, dest, fade)
     grit_catalogue!(dest, lufs: MASTER_LUFS_BY_STYLE[:default])
     mp3 = demo_encode_mp3(dest)
