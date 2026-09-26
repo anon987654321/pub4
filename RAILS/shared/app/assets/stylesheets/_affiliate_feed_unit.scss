@@ -162,3 +162,75 @@
 .affiliate_feed_unit--in_grid {
   grid-column: 1 / -1;
 }
+
+
+.affiliate_sidebar_grid {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.affiliate_sidebar_card {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  grid-template-areas:
+    "media source"
+    "media title"
+    "media price"
+    "media disclosure";
+  gap: 4px 12px;
+  padding: var(--space-2) 0;
+  border-top: 1px solid var(--border);
+  color: inherit;
+  text-decoration: none;
+}
+
+.affiliate_sidebar_card:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.affiliate_sidebar_media {
+  grid-area: media;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  background: var(--surface-elevated);
+  border-radius: var(--radius-sm);
+}
+
+.affiliate_sidebar_media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.affiliate_sidebar_card .affiliate_feed_source {
+  grid-area: source;
+}
+
+.affiliate_sidebar_card .affiliate_feed_title {
+  grid-area: title;
+}
+
+.affiliate_sidebar_card .affiliate_feed_price {
+  grid-area: price;
+}
+
+.affiliate_sidebar_card .affiliate_feed_link_disclosure,
+.affiliate_sidebar_card .affiliate_feed_placeholder {
+  grid-area: disclosure;
+}
+
+.affiliate_sidebar_card--amazon {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "source"
+    "title"
+    "disclosure";
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-elevated);
+}
