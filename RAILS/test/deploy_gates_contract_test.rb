@@ -302,7 +302,7 @@ class DeployGatesContractTest < Minitest::Test
     assert File.exist?(File.join(REPO_ROOT, "TODO.md"))
     assert File.exist?(File.join(OPENBSD_ROOT, "data", "operator.yml"))
     # MASTER/bin/operator, not a root bin/. The repo root holds four documents and
-    # the four trees; the operator surface has lived under MASTER since the
+    # the three governed trees; the operator surface has lived under MASTER since the
     # sprawl census emptied the root, and this line was still looking for the
     # shim that removal deleted.
     assert File.exist?(File.join(REPO_ROOT, "MASTER", "bin", "operator"))
