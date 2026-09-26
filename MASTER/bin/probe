@@ -98,12 +98,12 @@ CHECKS = {
   },
   "rails" => {
     desc: "RAILS production gate",
-    cmd: [RUBY, File.join(REPO_ROOT, "RAILS", "gates", "runner.rb"), "production"],
+    cmd: [RUBY, File.join(MASTER_ROOT, "gates", "runner.rb"), "production"],
     cwd: REPO_ROOT,
   },
   "phantom_fk" => {
     desc: "Rails schema phantom foreign-key targets",
-    cmd: [RUBY, File.join(REPO_ROOT, "RAILS", "gates", "runner.rb"), "phantom_foreign_keys"],
+    cmd: [RUBY, File.join(MASTER_ROOT, "gates", "runner.rb"), "phantom_foreign_keys"],
     cwd: REPO_ROOT,
   },
   "playbook" => {
