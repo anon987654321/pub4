@@ -65,6 +65,17 @@ class FediverseTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  test "a departing account is not discoverable through webfinger or its actor" do
+    @user.update_columns(deleted_at: Time.current, deletion_scheduled_at: 7.days.from_now)
+    host! "brgen.no"
+
+    get webfinger_path(resource: "acct:kari@brgen.no")
+    assert_response :not_found
+
+    get "/users/kari", headers: ap_headers
+    assert_response :not_found
+  end
+
   test "the actor document carries a key and the endpoints a peer needs" do
     host! "brgen.no"
 
