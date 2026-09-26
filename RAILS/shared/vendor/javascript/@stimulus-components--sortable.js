@@ -42,11 +42,12 @@ const _StimulusSortable = class _StimulusSortable extends Controller {
   }
 
   async moveBy(event) {
-    const item = event.currentTarget.closest(":scope > *");
+    let item = event.currentTarget;
+    while (item && item.parentElement !== this.element) item = item.parentElement;
     const delta = Number(event.currentTarget.dataset.sortableDelta);
     if (!item || item.parentElement !== this.element || !Number.isInteger(delta)) return;
 
-    const items = Array.from(this.element.children).filter((node) => node !== event.currentTarget.closest(".sortable-keyboard-controls"));
+    const items = Array.from(this.element.children);
     const index = items.indexOf(item);
     const nextIndex = index + delta;
     if (index < 0 || nextIndex < 0 || nextIndex >= items.length) return;
