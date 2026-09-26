@@ -62,6 +62,16 @@ class StoryRepliesControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  test "a departing story author cannot receive a new reply" do
+    @author.update_columns(deleted_at: Time.current, deletion_scheduled_at: 7.days.from_now)
+    sign_in_as(@viewer)
+
+    assert_no_difference -> { Message.count } do
+      post story_replies_path(@story), params: { content: "Hei" }
+    end
+    assert_response :not_found
+  end
+
   test "the author has nobody to answer but themselves" do
     sign_in_as(@author)
 
