@@ -20,8 +20,8 @@ family_members:
 - RAILS/brgen/app/models#story
 - RAILS/brgen/app/models/user#associations
 - RAILS/brgen/app/services/marketplace/payments#stripe
-- RAILS/gates/lib/source#honesty
-- RAILS/gates/support#geometry
+- MASTER/gates/lib/source#honesty
+- MASTER/gates/support#geometry
 - RAILS/shared/app/controllers/concerns/shared#actions
 - RAILS/shared/app/controllers/concerns/shared#auth
 - RAILS/shared/app/models/shared#affiliate
