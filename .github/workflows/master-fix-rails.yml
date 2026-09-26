@@ -5,9 +5,6 @@ name: MASTER fix RAILS live
 # another repair run. The command uses the repository's own triangle bootstrap
 # and writes only to this branch.
 on:
-  push:
-    branches:
-      - fix/convergence-antigravity-affiliate-20260926
   workflow_dispatch:
 
 permissions:
