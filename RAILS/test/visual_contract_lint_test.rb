@@ -2,7 +2,7 @@
 
 require "minitest/autorun"
 require_relative "../shared/lib/operator/visual_contract_lint"
-require_relative "../shared/lib/operator/master_design"
+require_relative "../../MASTER/tools/design/master_design"
 
 class VisualContractLintTest < Minitest::Test
   L = Operator::VisualContractLint
