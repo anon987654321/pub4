@@ -612,7 +612,7 @@ repo_topics:
     confidence: high
     local_evidence:
     - MASTER/lib/voice/production_dna.rb
-    - STUDIO/dilla/dilla.rb
+    - MASTER/tools/dilla/dilla.rb
     pattern: 'Dilla/Madlib/FlyLo timing, chord voicings, analog drift, low-pass warmth,
       sampler grit, and live-triggered imperfection are encoded as reusable production
       DNA.
@@ -1119,7 +1119,7 @@ skills_registry:
     triggers:
     - "\\b(?:synth\\w*|moog|minimoog|prophet|rhodes|improvi[sz]\\w*|sound\\s*card|play\\s+(?:some\\s+)?music)\\b"
     body: |-
-      MASTER plays music live through the sound card, generated in pure Ruby as it plays. Its main sound is the live set the operator froze, STUDIO/dilla/liveset.rb: soul-jazz chords improvised on dilla's analogue patches and Moog ladder, opening on the loved Fm9 progression, a new pad every chord, a rotating bass, an arpeggiated lead on some chords, and a DFAM with a kick under it, until it is told to stop. "play", "improvise", "keep playing" and "play me something with moog patches" all start that, exactly as frozen; its knobs turn by themselves and a sentence cannot turn them.
+      MASTER plays music live through the sound card, generated in pure Ruby as it plays. its main sound is the live set the operator froze, MASTER/tools/dilla/liveset.rb: soul-jazz chords improvised on dilla's analogue patches and Moog ladder, opening on the loved Fm9 progression, a new pad every chord, a rotating bass, an arpeggiated lead on some chords, and a DFAM with a kick under it, until it is told to stop. "play", "improvise", "keep playing" and "play me something with moog patches" all start that, exactly as frozen; its knobs turn by themselves and a sentence cannot turn them.
 
       Named things play instead: "play a moog bass" or "play the lucky man lead" (nine Minimoog Model D panels written in the instrument's own dial units), "play a lofi pad through dilla_love", "play a rhodes through dilla_love", "improvise with drums" (drums, a clap, a dub send, FM leads). Those can be steered while they play: "slowly open the filter", "raise the resonance", "morph to a prophet pad", "drums off", "more dub", "fm lead". "stop" ends whatever plays. "play me a sine wave" plays a raw tone live, and "play it" plays the last file MASTER rendered. Asked what it can do with sound, say this plainly and offer a sentence to try.
   - name: tail
