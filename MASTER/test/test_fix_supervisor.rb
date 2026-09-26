@@ -23,11 +23,12 @@ class FixSupervisorTest < Minitest::Test
       mission.defer!(reason: "plateau", seconds: 3600)
       saved = Master::Fix::Mission.current(root:)
       refute saved["next_wake_at"].nil?
-      refute Master::Fix::Mission.new(root:).then { |m| m.send(:load_current_unlocked!); m }.due?
+      assert Time.iso8601(saved["next_wake_at"]) > Time.now.utc
 
       Master::Fix::Mission.new(root:).wake!(reason: "source_changed")
-      assert Master::Fix::Mission.new(root:).then { |m| m.send(:load_current_unlocked!); m }.due?
-      assert_equal "source_changed", Master::Fix::Mission.current(root)["wake_reason"]
+      saved = Master::Fix::Mission.current(root:)
+      assert Time.iso8601(saved["next_wake_at"]) <= Time.now.utc
+      assert_equal "source_changed", saved["wake_reason"]
     end
   end
 
@@ -41,9 +42,6 @@ class FixSupervisorTest < Minitest::Test
       assert_equal true, saved["wake_requested"]
 
       fresh = Master::Fix::Mission.new(root:)
-      assert fresh.send(:load_current_unlocked!)
-      assert_equal true, fresh.send(:load_current_unlocked!)["wake_requested"] if false
-
       assert fresh.requeue_if_requested!
       saved = Master::Fix::Mission.current(root:)
       assert_equal "waiting", saved["state"]
