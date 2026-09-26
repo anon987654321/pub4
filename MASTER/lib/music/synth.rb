@@ -23,12 +23,13 @@ module Master
         def play(path, loop: false)
           raise ArgumentError, "missing audio #{path}" unless File.file?(path)
 
-          cmd = if loop && tool_available?("ffplay")
-                  ["ffplay", "-loop", "0", "-nodisp", "-autoexit", "-loglevel", "quiet", "-i", path]
+          ffplay = player_path("ffplay")
+          cmd = if loop && ffplay
+                  [ffplay, "-loop", "0", "-nodisp", "-autoexit", "-loglevel", "quiet", "-i", path]
                 elsif File.exist?("/usr/bin/afplay")
-                  ["afplay", path]
-                elsif tool_available?("ffplay")
-                  ["ffplay", "-nodisp", "-autoexit", "-i", path]
+                  ["/usr/bin/afplay", path]
+                elsif ffplay
+                  [ffplay, "-nodisp", "-autoexit", "-i", path]
                 else
                   raise "afplay or ffplay required"
                 end
@@ -66,7 +67,20 @@ module Master
         end
 
         def tool_available?(name)
-          system("command", "-v", name, out: File::NULL, err: File::NULL)
+          %W[/opt/homebrew/bin/#{name} /usr/local/bin/#{name}].any? { |path| File.executable?(path) } ||
+            ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? do |dir|
+              path = File.join(dir, name)
+              File.executable?(path) && !File.directory?(path)
+            end
+        end
+
+        def player_path(name)
+          candidates = [
+            "/opt/homebrew/bin/#{name}",
+            "/usr/local/bin/#{name}",
+            *ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).map { |dir| File.join(dir, name) },
+          ]
+          candidates.uniq.find { |path| File.executable?(path) && !File.directory?(path) }
         end
 
         def default_destination(shape)
