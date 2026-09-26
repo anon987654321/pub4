@@ -41,6 +41,8 @@ class AmberScriptTest < ActiveSupport::TestCase
 
     assert_includes content, 'deploy_tracked_app "$APP_NAME"'
     assert_includes shared, 'bundle_install_as_app "$APP_NAME" "$APP_DIR"'
+    assert_includes shared, "bundle_cas_prepare"
+    assert_includes shared, "bundle_cas_capture"
     assert_includes shared, "bundle config set --local deployment true"
     assert_includes shared, "bundle config set --local without"
     assert_includes shared, "development test"

@@ -679,6 +679,27 @@ design_system:
         off_scale_opacity: 29
         off_scale_duration: 30
 
+runtime_policy:
+  concurrency:
+    io_backend: thread
+    cpu_backend: ractor_when_explicitly_safe
+    unknown_backend: serial
+    worker_limit: 8
+    timeout_seconds: 30
+  jit:
+    env: MASTER_JIT
+    modes: [auto, off, yjit]
+    constrained_host: off
+    android: off
+  native:
+    ractor_safety_unknown: deny
+  performance:
+    require_output_digest: true
+    benchmark_clock: monotonic
+  dependencies:
+    artifact_store: sha256
+    bundler_remains_authoritative: true
+
 engineering_fit:
   classify: 'For every problem, decide: under-engineered, over-engineered, or perfectly
     engineered — and say why.'

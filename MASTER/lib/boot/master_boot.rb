@@ -24,6 +24,8 @@ module Master
       prepare_runtime!
       init_ground(root:)
       container = Builder.build(root:)
+      Runtime::Jit.apply!
+      container[:native_inventory] = Runtime::NativeInventory.snapshot
       init_loop(root:, container:)
       start_constitution_drift(container)
       container
