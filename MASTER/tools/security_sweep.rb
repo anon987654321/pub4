@@ -33,7 +33,7 @@ PLACEHOLDERS = /\A(?:password123|changeme|example|secret|\[your password\])\z/i
 PROSE_VALUE = /\A[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'’\-]*[?.!]?\z/
 # A value that is nothing but an indirection names where the credential comes
 # from; the credential itself lives in the environment or a locale file.
-# RAILS/gates/data/flows.yml posts "$FLOW_AMBER_PASSWORD" to a login form, and a
+# MASTER/gates/data/flows.yml posts "$FLOW_AMBER_PASSWORD" to a login form, and a
 # sweep that reads a variable name as the secret it stands for is the same
 # always-noise failure the i18n strings above already caused once.
 INDIRECTION = /\A(?:\$\{?[A-Za-z_]\w*\}?|%\{[^}]+\}|<%=[^%]*%>|\#\{[^}]+\})\z/
