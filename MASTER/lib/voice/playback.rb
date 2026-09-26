@@ -46,15 +46,20 @@ module Master
       def player
         return @player if defined?(@player) && !@player.nil?
 
-        name = PLAYERS.keys.find { |candidate| which(candidate) }
-        @player = name && [name, PLAYERS.fetch(name)]
+        name, path = PLAYERS.keys.filter_map do |candidate|
+          path = which(candidate)
+          [candidate, path] if path
+        end.first
+        @player = name && [path, PLAYERS.fetch(name)]
       end
 
       def which(cmd)
-        ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? do |dir|
-          path = File.join(dir, cmd)
-          File.executable?(path) && !File.directory?(path)
-        end
+        candidates = [
+          "/opt/homebrew/bin/#{cmd}",
+          "/usr/local/bin/#{cmd}",
+          *ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).map { |dir| File.join(dir, cmd) },
+        ]
+        candidates.uniq.find { |path| File.executable?(path) && !File.directory?(path) }
       end
 
       def available?
