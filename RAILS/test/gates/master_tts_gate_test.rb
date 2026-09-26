@@ -7,7 +7,7 @@ require_relative "gate_probe_harness"
 require_relative "../../../MASTER/lib/operator/gates"
 
 # master_tts lives in MASTER/lib/operator/gates.rb and keeps its row in
-# RAILS/gates/gates.yml, so it is reached through `require_gate`, which resolves a
+# MASTER/gates/gates.yml, so it is reached through `require_gate`, which resolves a
 # path naming a tree from the repo root. That is the first thing worth pinning:
 # the gate that broke on this move broke on path arithmetic, not on its checks.
 #
