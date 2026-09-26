@@ -26,6 +26,8 @@ nb:
       new_order_body: "%{buyer} kjøpte %{title}."
       new_offer: "Nytt tilbud"
       new_offer_body: "%{buyer} sendte et tilbud på %{title}."
+      offer_reminder: "Påminnelse om markedsplassbud"
+      offer_reminder_body: "%{buyer} venter på et tilbud på %{title}."
       offer_accepted: "Tilbudet er godtatt"
       offer_accepted_body: "Tilbudet ditt på %{title} ble godtatt."
       offer_declined: "Tilbudet er avslått"

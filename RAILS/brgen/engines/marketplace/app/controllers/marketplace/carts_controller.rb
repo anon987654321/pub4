@@ -22,9 +22,14 @@ class Marketplace::CartsController < Marketplace::BaseController
 
       order.deliver_notification(
         order.seller,
-        title: "Marketplace offer reminder",
-        body: "#{Current.user.display_name} is waiting on an offer for #{order.listing.title}.",
-        source: order
+        title: I18n.t("marketplace.order_notification.offer_reminder"),
+        body: I18n.t(
+          "marketplace.order_notification.offer_reminder_body",
+          buyer: Current.user.display_name,
+          title: order.listing.title
+        ),
+        source: order,
+        kind: "order"
       )
       order.record_activity!(
         "MarketplaceOfferResent",

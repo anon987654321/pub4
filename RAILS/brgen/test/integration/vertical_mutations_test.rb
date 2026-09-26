@@ -102,6 +102,19 @@ class VerticalMutationsTest < ActionDispatch::IntegrationTest
     # pinning the bug in place. Second one of these today; the other was
     # maps.checked_in_recently in vertical_forms_test.
     assert_equal I18n.t("flash.marketplace.offers_sent", count: 1), flash[:notice].to_s
+
+    notification = Notification.where(
+      user_id: seller.id,
+      source_type: "Marketplace::Order",
+      source_id: Marketplace::Order.order(:id).last.id
+    ).order(:id).last
+
+    assert_equal I18n.t("marketplace.order_notification.offer_reminder"), notification.title
+    assert_equal I18n.t(
+      "marketplace.order_notification.offer_reminder_body",
+      buyer: buyer.display_name,
+      title: listing.title
+    ), notification.body
   end
 
   test "dating mutual likes create a match" do
