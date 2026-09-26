@@ -7,9 +7,9 @@ module Operator
   module RubyRunner
     module_function
 
-    def ruby_cmd
+    def ruby_cmd(root: Environment.repo_root)
       return ENV["PUB4_RUBY"] if ENV["PUB4_RUBY"].to_s != ""
-      path = rbenv_path("ruby")
+      path = rbenv_path("ruby", root:)
       return path if path
       return "ruby34" if executable?("ruby34")
       return "ruby3.4" if executable?("ruby3.4")
@@ -17,9 +17,9 @@ module Operator
       RbConfig.ruby
     end
 
-    def bundle_cmd
+    def bundle_cmd(root: Environment.repo_root)
       return ENV["PUB4_BUNDLE"] if ENV["PUB4_BUNDLE"].to_s != ""
-      path = rbenv_path("bundle")
+      path = rbenv_path("bundle", root:)
       return path if path
       return "bundle34" if executable?("bundle34")
       return "bundle3.4" if executable?("bundle3.4")
@@ -68,8 +68,8 @@ module Operator
       File.file?(path) ? File.read(path).strip : ""
     end
 
-    def gate_ruby
-      ruby_cmd
+    def gate_ruby(root: Environment.repo_root)
+      ruby_cmd(root:)
     end
 
     def runtime_gate_skipped?
