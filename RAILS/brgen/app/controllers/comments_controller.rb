@@ -6,7 +6,10 @@ class CommentsController < ApplicationController
              by: -> { Current.user&.id ? "u#{Current.user.id}" : request.remote_ip }
   before_action :require_verified_email, only: :create
   before_action :require_real_user, only: [ :destroy, :generate_summary ]
+  rate_limit to: 5, within: 1.minute, only: :generate_summary,
+             by: -> { Current.user&.id || request.remote_ip }
   before_action :set_commentable, only: :create
+  before_action :set_summary_comment, :authorize_summary_comment, only: :generate_summary
 
   def create
     @comment = @commentable.comments.build(comment_params)
@@ -42,7 +45,6 @@ class CommentsController < ApplicationController
   end
 
   def generate_summary
-    @comment = Comment.includes(:user, :votes, replies: :user).find(params[:id])
     return unless @comment.long_thread?
     ThreadSummarizer.call(@comment)
     respond_to do |format|
@@ -52,6 +54,22 @@ class CommentsController < ApplicationController
   end
 
   private
+
+  def set_summary_comment
+    @comment = Comment.includes(:user, :votes, replies: :user).find(params[:id])
+  end
+
+  def authorize_summary_comment
+    readable = case @comment.commentable_type
+               when "Post"
+                 Post.includes(:community).find(@comment.commentable_id).readable_by?(Current.user)
+               when "Event"
+                 Event.find(@comment.commentable_id).readable_by?(Current.user)
+               else
+                 false
+               end
+    raise ActiveRecord::RecordNotFound unless readable
+  end
 
   def set_commentable
     # Posts and events are slug-routed. Post.find("konsert-pa-landmark") 404s
