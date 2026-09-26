@@ -38181,10 +38181,9 @@ module DillaLive
       end
     end
 
-    # sox first, and not as a fallback: ffplay takes no -ac, so the obvious
-    # stereo invocation of it dies on "Option not found" with the pipe already
-    # open, which surfaces as a broken pipe seconds later and looks like
-    # anything but a bad argument.
+    # Prefer the native SoX stream player, then ffplay. Search Homebrew's
+    # standard locations before PATH because a GUI/daemon launch can inherit a
+    # deliberately small PATH even when the tools are installed locally.
     def player_command(rate = RATE)
       if (play = which("play"))
         [play, "-q", "-t", "raw", "-r", rate.to_s, "-e", "signed", "-b", "16", "-c", "2", "-"]
@@ -38195,9 +38194,12 @@ module DillaLive
     end
 
     def which(bin)
-      ENV["PATH"].to_s.split(File::PATH_SEPARATOR)
-                 .map { |dir| File.join(dir, bin) }
-                 .find { |path| File.executable?(path) && !File.directory?(path) }
+      candidates = [
+        "/opt/homebrew/bin/#{bin}",
+        "/usr/local/bin/#{bin}",
+        *ENV["PATH"].to_s.split(File::PATH_SEPARATOR).map { |dir| File.join(dir, bin) },
+      ]
+      candidates.uniq.find { |path| File.executable?(path) && !File.directory?(path) }
     end
 
     # The same signal path, written to a file instead of to the speakers.
