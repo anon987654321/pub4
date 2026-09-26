@@ -50,7 +50,7 @@ module Operator
     def master_bridge_base
       env_value("MASTER_BRIDGE_URL") ||
         env_value("MASTER_WEB_URL") ||
-        (File.file?("/etc/relayd.conf") ? "http://127.0.0.1:53187" : "http://127.0.0.1:53187")
+        "http://127.0.0.1:53187"
     end
 
     # Falls back to the checkout this file actually lives in, not to the server
