@@ -12,7 +12,7 @@ class SharedMediaProcessingJobContractTest < Minitest::Test
   end
 
   def test_only_declared_active_storage_attachments_are_dispatched
-    assert_includes SOURCE, "record.class.attachment_reflections"
-    assert_includes SOURCE, 'reflections.key?(attachment_name.to_s)'
+    assert_includes SOURCE, "record.class.reflect_on_attachment(attachment_name)"
+    assert_includes SOURCE, "unless reflection"
   end
 end
