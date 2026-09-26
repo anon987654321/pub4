@@ -172,6 +172,20 @@
     const type = event?.type || event?.event || event?.data?.event || "runtime:event";
     // EventsController sends { t, type, data: busEvent }; listeners read the bus event.
     const payload = event?.data || event;
+    if (type === "device:wake") {
+      const wake = payload?.data && typeof payload.data === "object" ? payload.data : payload;
+      const detail = {
+        phrase: wake?.phrase || "",
+        mode: "wake",
+        topology: "papua-mask",
+        entropy: 0.48,
+        confidence: 0.96,
+        raw: event
+      };
+      window.dispatchEvent(new CustomEvent("master:wake", { detail }));
+      emitVisual("device:wake", detail);
+      return;
+    }
     const deviceVisual = /^device:/.test(type) ? classifyDevice(type, payload) : null;
     const mapped = deviceVisual || ((window.MASTERTopology && typeof window.MASTERTopology.classifyEvent === "function")
       ? window.MASTERTopology.classifyEvent(type, payload)
