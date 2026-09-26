@@ -2882,3 +2882,29 @@ ui_philosophy:
       face3d:
       - lower phosphor decay harsher dither steps
       - expose lit_pixels and blend targets in dev panel
+
+performance_runtime:
+  id: performance_runtime
+  tier: core
+  area: runtime
+  status: active
+  invariants:
+  - id: classify_concurrency
+    rule: I/O and orchestration remain thread-oriented; isolated CPU work may use Ractors.
+  - id: measure_optimization
+    rule: Runtime optimizations retain before/after timing and output-digest evidence.
+  - id: native_boundary
+    rule: Native gems are inventoryable and unknown Ractor safety never becomes implicit permission.
+  - id: content_addressed_dependencies
+    rule: Shared immutable gem artifacts are deduplicated by SHA-256 without replacing Bundler installed state.
+  landed_subsystems:
+  - path: runtime/compute.rb
+    role: serial, thread, and explicit Ractor compute backends
+  - path: runtime/jit.rb
+    role: adaptive YJIT capability detection and telemetry
+  - path: runtime/native_inventory.rb
+    role: native-extension and Ractor-safety inventory
+  - path: runtime/benchmark.rb
+    role: deterministic timing and output-digest comparison
+  - path: RAILS/_bundle.sh
+    role: content-addressed gem-artifact cache shared by Rails applications
