@@ -106,4 +106,60 @@ class FixSupervisorTest < Minitest::Test
       assert_equal "completed", Master::Fix::Mission.current(root)["state"]
     end
   end
+
+  def test_active_mission_cannot_be_replaced_by_another_target
+    Dir.mktmpdir do |root|
+      first = File.join(root, "RAILS", "brgen")
+      second = File.join(root, "RAILS", "amber")
+      FileUtils.mkdir_p([first, second])
+
+      mission = Master::Fix::Mission.new(root:).start!(
+        goal: "fix RAILS/brgen",
+        scope: first,
+        model: "test:model",
+        effort: "high",
+        plan: "observe, repair, verify",
+      )
+
+      error = assert_raises(RuntimeError) do
+        Master::Fix::Mission.new(root:).start_or_resume!(
+          goal: "fix RAILS/amber",
+          scope: second,
+          model: "test:model",
+          effort: "high",
+          plan: "observe, repair, verify",
+        )
+      end
+
+      assert_match(/mission already active for RAILS/brgen/, error.message)
+      saved = Master::Fix::Mission.current(root:)
+      assert_equal mission.id, saved["id"]
+      assert_equal "RAILS/brgen", saved["scope"]
+      assert_equal "running", saved["state"]
+    end
+  end
+
+  def test_queueing_another_target_does_not_overwrite_running_mission
+    Dir.mktmpdir do |root|
+      first = File.join(root, "MASTER")
+      second = File.join(root, "OPENBSD")
+      FileUtils.mkdir_p([first, second])
+
+      Master::Fix::Mission.new(root:).start!(
+        goal: "fix MASTER",
+        scope: first,
+      )
+
+      error = assert_raises(RuntimeError) do
+        Master::Fix::Mission.new(root:).ensure_queued!(
+          goal: "fix OPENBSD",
+          scope: second,
+        )
+      end
+
+      assert_match(/mission already active for MASTER/, error.message)
+      assert_equal "MASTER", Master::Fix::Mission.current(root)["scope"]
+    end
+  end
+end
 end
