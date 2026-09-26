@@ -68,6 +68,7 @@ class StreamStageTest < Minitest::Test
     assert_equal %w[/repo/a.rb /repo/b.rb /repo/c.rb], @log.sort
     assert_includes streamed, ["a.rb", "LONG_METHOD"]
     assert_equal ["fix_loop: stream-fix [pass 1]"], @committer.commits
+    assert_equal true, @pass_progress
   end
 
   def test_duplication_waits_for_the_whole_scan
