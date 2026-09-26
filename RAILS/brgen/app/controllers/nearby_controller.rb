@@ -81,7 +81,7 @@ class NearbyController < ApplicationController
   end
 
   def create
-    other = User.find(params[:user_id])
+    other = User.messageable.find(params[:user_id])
     return redirect_to(nearby_path, alert: t("flash.thats_you")) if other == Current.user
 
     # Only start chats with people actually in range — don't let the endpoint
