@@ -73,6 +73,18 @@ emotional_mapping:
   volatility: flicker
   recovery: gradual_recomposition
 
+visual_fleet:
+  field: RAILS/shared/frontend/visual_field.js
+  controller: RAILS/shared/frontend/visual_surface_controller.js
+  contract: pub4:visual
+  surfaces:
+    master: { topology: orb, purpose: cognition command center }
+    social: { topology: terrain, purpose: city and community ambient field }
+    dating: { topology: pair, purpose: proximity and connection }
+    luxury: { topology: ambient, purpose: restrained fashion atmosphere }
+    mannequin: { topology: mannequin, purpose: garment silhouette }
+    radio: { topology: tunnel, purpose: audio-reactive depth field }
+
 topologies:
   - id: face
     label: Cognition Mask
