@@ -49,6 +49,18 @@ class DatingDiscoveryTest < ActiveSupport::TestCase
     assert_not under.valid?
   end
 
+  test "visible discovery excludes accounts leaving or already deleted" do
+    leaving = profile("woman", "man")
+    deleted = profile("woman", "man")
+    leaving.user.update_columns(deleted_at: Time.current, deletion_scheduled_at: 7.days.from_now)
+    deleted.user.update_columns(deleted_at: Time.current, deletion_scheduled_at: 1.day.ago)
+
+    ids = Dating::Profile.visible.pluck(:id)
+
+    assert_not_includes ids, leaving.id
+    assert_not_includes ids, deleted.id
+  end
+
   test "visible discovery never includes anyone under 18" do
     adult = profile("woman", "man")
     ids = Dating::Profile.visible.pluck(:id)
