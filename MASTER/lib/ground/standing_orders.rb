@@ -211,13 +211,21 @@ end
       def filter_match?(order, payload)
         pattern = order["filter"].to_s
         return true if pattern.empty?
+
         payload_strings(payload).any? { |s| Regexp.new(pattern).match?(s) }
+      rescue RegexpError => error
+        @bus&.publish("standing_order:invalid_filter", name: order["name"], error: error.message)
+        false
       end
 
       def exclude_match?(order, payload)
         pattern = order["exclude"].to_s
         return false if pattern.empty?
+
         payload_strings(payload).any? { |s| Regexp.new(pattern).match?(s) }
+      rescue RegexpError => error
+        @bus&.publish("standing_order:invalid_exclude", name: order["name"], error: error.message)
+        false
       end
 
       def payload_strings(payload)
