@@ -763,6 +763,13 @@ class TestWebUI < Minitest::Test
   # container was nil for the life of the process, nothing was logged, and the
   # started flag stayed claimed -- so the one attempt was the only attempt.
   # These two lines are what make a second one possible.
+  def test_container_bootstrap_uses_standard_error_boundary
+    loader = File.read(File.expand_path("../web/config/initializers/master_container.rb", __dir__))
+
+    refute_includes loader, "rescue Exception"
+    assert_includes loader, "rescue StandardError"
+  end
+
   def test_container_bootstrap_can_be_rearmed
     loader = File.read(File.expand_path("../web/config/initializers/master_container.rb", __dir__))
     controller = File.read(File.expand_path("../web/app/controllers/application_controller.rb", __dir__))
