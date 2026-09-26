@@ -81,7 +81,7 @@ class Playlist::PlaylistsController < Playlist::BaseController
   end
 
   def playlist_visible_to_viewer?
-    return true if @playlist.public_access?
+    return owner_active? if @playlist.public_access?
 
     Current.user && (
       @playlist.user_id == Current.user.id ||
