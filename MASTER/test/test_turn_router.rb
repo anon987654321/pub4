@@ -40,6 +40,7 @@ def test_a_writing_word_reaches_fix_and_a_reading_word_reaches_the_council
   router = Master::CLI::TurnRouter
 
   assert_equal "/fix lib/io", router.rewrite_slash("/fix lib/io")
+  assert_equal "/fix RAILS --no-autofix", router.rewrite_slash("/scan RAILS --no-autofix")
   assert_equal "/fix x", router.rewrite_slash("/sweep x")
   assert_equal "/fix", router.rewrite_slash("/triad")
   assert_equal "/review --only critique lib", router.rewrite_slash("/critique lib")
