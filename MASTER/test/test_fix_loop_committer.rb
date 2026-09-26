@@ -165,6 +165,7 @@ class TestFixLoopCommitter < Minitest::Test
 
     assert_raises(RuntimeError) { run_committer(git, bus, "fix: ok") }
     assert(bus.events.any? { |event, _| event == "fix_loop:commit_error" })
+    refute(bus.events.any? { |event, _| event == "ops:commit" })
   end
 
   # A lint that did not pass blocks the commit. Io::Exec answers a timed-out
