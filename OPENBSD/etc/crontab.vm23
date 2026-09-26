@@ -47,7 +47,7 @@ PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
 # terminates no TLS, and the answer is 000 whatever the app is doing — so the
 # waiver removes a check that cannot pass rather than one that is failing. The
 # app itself stays covered: deploy-smoke keeps http://127.0.0.1:47312/up
-# required, and `ruby RAILS/gates/runner.rb dns_zones` is the check that stays
+# required, and `ruby MASTER/gates/runner.rb dns_zones` is the check that stays
 # red until the delegation comes back. Drop this line's prefix the day it does.
 #
 # The redirect is the reason this waiver is hygiene rather than an alert change:
