@@ -89,14 +89,14 @@ value with interpolation in it.
 ```zsh
 # Warm apps first (Falcon), then:
 export RBENV_VERSION=3.4.9
-ruby RAILS/gates/runner.rb page_simulation flow_journey \
+ruby MASTER/gates/runner.rb page_simulation flow_journey \
   layout_suite rendered_suite human_walkthrough shared_wiring \
   production generated_asset schema_migration port_inventory \
   constitutional_scan gate_mutation visual_contract
 
 # Optional hard mode (deploy host / CI with Chrome + apps):
 GATE_STRICT_INCONCLUSIVE=1 GATE_STRICT_SOFT=1 \
-  ruby RAILS/gates/runner.rb rendered_suite page_simulation
+  ruby MASTER/gates/runner.rb rendered_suite page_simulation
 ```
 
 ## What “adequate” means here
@@ -118,22 +118,22 @@ triangle** (brgen · amber · MASTER web).
 
 ```zsh
 # Source checks always; live HTTP when apps listen
-ruby RAILS/gates/runner.rb page_simulation
+ruby MASTER/gates/runner.rb page_simulation
 
 # With the apps up (guest GET matrix): RAILS/bin/triangle up, ports from apps.yml
-ruby RAILS/gates/runner.rb page_simulation
+ruby MASTER/gates/runner.rb page_simulation
 
 # Multi-step journeys (postconditions, redirect honesty)
-ruby RAILS/gates/runner.rb flow_journey
+ruby MASTER/gates/runner.rb flow_journey
 
 # Vertical + secondary host probes (user_flow guest persona)
-ruby RAILS/gates/runner.rb user_flow
+ruby MASTER/gates/runner.rb user_flow
 
 # Phone viewport journey (44px `--tap-min` chrome, overflow, landmarks, brgen subapps)
-ruby RAILS/gates/runner.rb mobile_flow
+ruby MASTER/gates/runner.rb mobile_flow
 
 # Desktop tab order
-ruby RAILS/gates/runner.rb keyboard_flow
+ruby MASTER/gates/runner.rb keyboard_flow
 ```
 
 ## Inventory
@@ -202,7 +202,7 @@ walks them when Chrome is available. Amber feed / outfits / demo are in
 Simulation is not report-only. Soft findings (residual EN CTAs, missing titles,
 form labels) are fixed in the same pass:
 
-1. `ruby RAILS/gates/runner.rb page_simulation`
+1. `ruby MASTER/gates/runner.rb page_simulation`
 2. Address soft/hard findings (i18n keys in `en.yml` + `nb.yml`, wire `t()`)
 3. Re-run until source matrix is clean
 4. When ports are open, clear live findings the same way
