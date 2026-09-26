@@ -85,6 +85,30 @@ class NearbyControllerTest < ActionDispatch::IntegrationTest
     refute_includes response.body, "realname"
   end
 
+  test "a deletion-pending user cannot be targeted for a nearby chat" do
+    lat, lng = random_base_coords
+    me = User.create!(
+      email_address: "nearby-me-#{SecureRandom.hex(4)}@example.com",
+      password: "password12345",
+      latitude: lat,
+      longitude: lng
+    )
+    leaving = User.create!(
+      email_address: "nearby-leaving-#{SecureRandom.hex(4)}@example.com",
+      password: "password12345",
+      latitude: lat,
+      longitude: lng
+    )
+    leaving.update_columns(deleted_at: Time.current, deletion_scheduled_at: 7.days.from_now)
+
+    sign_in(me)
+
+    assert_raises(ActiveRecord::RecordNotFound) do
+      post nearby_path, params: { user_id: leaving.id }
+    end
+    assert_not Conversation.direct_between(me, leaving).exists? if Conversation.respond_to?(:direct_between)
+  end
+
   test "visiting an unknown geo-room slug directly does not auto-create it" do
     get channel_path("nearby-999:999")
     assert_redirected_to channels_path
