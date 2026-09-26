@@ -6,7 +6,7 @@ module Master
       # Audits rules.yml declarative corpus vs Ruby scanner registry.
       class RuleRegistryAudit
         Report = Data.define(:yaml_rules, :registry_ids, :kernel_ids, :lexical_wired, :lexical_unwired,
-                             :semantic_only, :structural_unwired, :dep_graph_gaps, :mechanical) do
+                             :semantic_only, :structural_unwired, :dep_graph_gaps, :mechanical, :source_drift) do
           # "clean" over 99 rules and "clean" over 225 are different claims, and
           # until now they printed identically everywhere except rake constitution.
           #
@@ -29,6 +29,7 @@ module Master
 
             (mechanical.size * 100.0 / yaml_rules).round(1)
           end
+
         end
 
         def initialize(root: Master::ROOT)
@@ -50,6 +51,7 @@ module Master
             structural_unwired: c[:structural_unwired],
             dep_graph_gaps: ungraphed_rule_ids(registry),
             mechanical: mechanical(yaml_entries, registry:).map { |rule| rule["id"] },
+            source_drift: source_drift(yaml_entries, registry),
           )
         end
 
@@ -59,6 +61,27 @@ module Master
         #
         # `folded_into` names the rule that reports for this one: the id survives
         # so principle_map can trace it, and the detector exists once, elsewhere.
+        def source_drift(yaml_entries, registry)
+          yaml_ids = yaml_entries.map { |rule| key_of(rule) }.to_set
+          laws = law_ids
+          registry_ids = registry.map(&:to_s).map(&:downcase).to_set
+
+          yaml_only = yaml_entries.filter_map do |rule|
+            id = key_of(rule)
+            folded = rule["folded_into"].to_s.downcase
+            next if laws.include?(id) || registry_ids.include?(id)
+            next if !folded.empty? && (laws.include?(folded) || registry_ids.include?(folded))
+
+            rule["id"]
+          end
+
+          {
+            yaml_only: yaml_only.sort.freeze,
+            law_only: (laws - yaml_ids).sort.freeze,
+            registry_only: (registry_ids - yaml_ids).sort.freeze,
+          }.freeze
+        end
+
         def mechanical(entries, registry: build_registry_ids)
           laws = law_ids
           entries.select do |rule|

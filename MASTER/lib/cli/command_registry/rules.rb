@@ -16,8 +16,10 @@ module Master
       # Read-only on purpose. The verb that enforces them is /review, and that
       # needs --apply to write. A second verb that scans and fixes would be the
       # same pipeline under another name.
-      def dispatch_rules(_root, ctx: nil)
+      def dispatch_rules(root, ctx: nil)
         filter = arg_for(ctx).downcase
+        return dispatch_rule_sources(root) if filter == "sources"
+
         rules = Master.law("rules") || []
         rows = rules.select do |rule|
           next true if filter.empty?
@@ -34,6 +36,24 @@ module Master
           format("%-28s %-10s %-8s %s", rule["id"], rule["tier"], rule["severity"], kind)
         end
         ["#{rows.size} of #{rules.size} rules — bin/operator rules <ID> for one in full", *lines].join("\n")
+      end
+
+      def dispatch_rule_sources(root)
+        audit = Master::Review::Scan::RuleRegistryAudit.new(root:).call
+        drift = audit.source_drift
+
+        [
+          "rules: source drift",
+          "  yaml_only: #{drift[:yaml_only].size}",
+          *drift[:yaml_only].map { |id| "    #{id}" },
+          "  law_only: #{drift[:law_only].size}",
+          *drift[:law_only].map { |id| "    #{id}" },
+          "  registry_only: #{drift[:registry_only].size}",
+          *drift[:registry_only].map { |id| "    #{id}" },
+        ].join("
+")
+      rescue StandardError => e
+        "rules0: source audit failed — #{e.class}: #{e.message}"
       end
 
       # A rule absent from law/ is enforced by a scan detector in the registry;

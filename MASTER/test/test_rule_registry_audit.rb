@@ -68,6 +68,16 @@ class TestRuleRegistryAudit < Minitest::Test
     assert_kind_of Array, audit.ungraphed_rule_ids
   end
 
+  def test_source_drift_is_a_three_way_audit
+    drift = audit.call.source_drift
+
+    assert_equal %i[law_only registry_only yaml_only], drift.keys.sort
+    drift.each_value { |ids| assert_kind_of Array, ids }
+    assert_equal drift[:yaml_only].sort, drift[:yaml_only]
+    assert_equal drift[:law_only].sort, drift[:law_only]
+    assert_equal drift[:registry_only].sort, drift[:registry_only]
+  end
+
   def test_a_rule_a_test_defined_is_not_in_the_corpus
     assert_includes Master::Review::Scan::Rule.registry, RuleDefinedByATest,
                     "the premise: defining the class registers it"
