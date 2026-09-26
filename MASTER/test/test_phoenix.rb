@@ -24,7 +24,7 @@ class TestPhoenix < Minitest::Test
     assert_equal ["studio"], Master::Phoenix.scope_for("tools")
     assert_equal ["rails"], Master::Phoenix.scope_for("../RAILS")
     assert_equal %w[master studio], Master::Phoenix.scope_for(Master::ROOT)
-    assert_equal %w[master openbsd rails studio], Master::Phoenix.scope_for(Master::REPO_ROOT)
+    assert_equal %w[master rails openbsd studio], Master::Phoenix.scope_for(Master::REPO_ROOT)
   end
 
   def test_provenance_requires_the_five_architectural_facts
