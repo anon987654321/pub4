@@ -12,7 +12,6 @@ require "tmpdir"
 # UTF-8 source raises "invalid byte sequence".
 require_relative "../lib/utf8"
 require_relative "../gates/config_drift_gate"
-require_relative "../lib/operator_source"
 
 # etc/crontab.vm23 is the tracked half of root's crontab, and OPERATOR.sh's
 # install_tracked_crontab merges it onto the box. Both halves can be complete
@@ -32,7 +31,7 @@ class TrackedCrontabTest < Minitest::Test
 
   def crontab_source = @crontab_source ||= File.read(TRACKED)
 
-  def operator_source = @operator_source ||= Deploy::OperatorSource.read(OPERATOR)
+  def operator_source = @operator_source ||= File.read(OPERATOR)
 
   # One parser for a cron line, the drift gate's, so the shapes it must and must
   # not read (an env prefix, a redirect, a PATH line) have one set of fixtures, in

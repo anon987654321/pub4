@@ -4,7 +4,6 @@ require "minitest/autorun"
 require "open3"
 require "yaml"
 require_relative "../bin/render_dns"
-require_relative "../lib/operator_source"
 
 # Four DNS facts were written down twice: data/dns.yml declares them, OPERATOR.sh
 # restates them as shell literals, and gates/dns_zones.rb had its own third copy
@@ -18,7 +17,7 @@ require_relative "../lib/operator_source"
 class DnsFactsAgreeTest < Minitest::Test
   OPENBSD = File.expand_path("..", __dir__)
   POLICY = YAML.safe_load_file(File.join(OPENBSD, "data", "dns.yml"))
-  OPERATOR = Deploy::OperatorSource.read(File.join(OPENBSD, "OPERATOR.sh"))
+  OPERATOR = File.read(File.join(OPENBSD, "OPERATOR.sh"), encoding: "UTF-8")
 
   def shell_scalar(name)
     OPERATOR[/^typeset -r #{name}="([^"]+)"/, 1]

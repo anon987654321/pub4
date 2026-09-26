@@ -29,7 +29,6 @@
 #   ruby OPENBSD/gates/installed_targets_gate.rb --json
 
 require "json"
-require_relative "../lib/operator_source"
 
 module Deploy
   module InstalledTargetsGate
@@ -62,7 +61,7 @@ module Deploy
 
     def operator
       path = File.join(root, "OPERATOR.sh")
-      File.file?(path) ? OperatorSource.read(path) : ""
+      File.file?(path) ? read(path) : ""
     end
 
     # The config that names a path, and every script the repo puts under

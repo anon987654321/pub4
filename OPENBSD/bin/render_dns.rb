@@ -26,7 +26,6 @@
 require "yaml"
 require "date"
 require "fileutils"
-require_relative "../lib/operator_source"
 
 # UTF-8 explicitly on every read. The zone files are ASCII, but OPERATOR.sh and
 # data/dns.yml carry em dashes in their comments, and vm23's cron and non-login
@@ -53,7 +52,7 @@ module RenderDns
   # The city network, straight out of the shell array the installer uses, so the
   # generator cannot describe a different fleet from the one OPERATOR.sh deploys.
   def city_zones
-    block = Deploy::OperatorSource.read(OPERATOR)[/ALL_DOMAINS=\(\n(.*?)\n\)/m, 1] or
+    block = File.read(OPERATOR, encoding: "UTF-8")[/ALL_DOMAINS=\(\n(.*?)\n\)/m, 1] or
       raise "ALL_DOMAINS block not found in #{OPERATOR}"
 
     block.lines.filter_map do |line|

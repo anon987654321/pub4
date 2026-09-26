@@ -9,9 +9,7 @@
 # OPERATOR.sh legitimately contains UTF-8 bytes (em dashes in comments); the
 # plain string #include? checks below tolerated that under the remote's
 # US-ASCII default external encoding, but the =~ regex checks do not.
-require_relative "../lib/operator_source"
-
-script = Deploy::OperatorSource.read(ARGV.fetch(0, File.expand_path("../OPERATOR.sh", __dir__)))
+script = File.read(ARGV.fetch(0, File.expand_path("../OPERATOR.sh", __dir__)), encoding: "UTF-8")
 
 issues = []
 

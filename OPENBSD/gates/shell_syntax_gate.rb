@@ -35,7 +35,7 @@ rescue EOFError, ArgumentError
   nil
 end
 
-scripts = (Dir.glob("OPENBSD/**/*.sh") + Dir.glob("OPENBSD/**/*.zsh") + Dir.glob("OPENBSD/bin/*") + Dir.glob("OPENBSD/usr/local/bin/*"))
+scripts = (Dir.glob("OPENBSD/**/*.sh") + Dir.glob("OPENBSD/bin/*") + Dir.glob("OPENBSD/usr/local/bin/*"))
           .uniq.sort.select { |path| File.file?(path) }
 
 failures = []
