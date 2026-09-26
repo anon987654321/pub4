@@ -1,17 +1,18 @@
 name: RAILS Tests
 
-# Manual dispatch only.
-#
-# Local fast path:
-#   cd RAILS/<app> && bundle exec bin/ci
-#   OPENBSD/bin/check-rails --profile=contributor
-#
-# Full gates:
-#   ruby MASTER/gates/runner.rb domain_alignment production etc.
-#
-# GitHub Actions remains available for deliberate validation without making
-# every push or pull request pay for the full matrix.
+# Continuous application validation; workflow_dispatch remains available for
+# deliberate reruns.
 on:
+  push:
+    paths:
+      - "RAILS/**"
+      - ".ruby-version"
+      - ".github/workflows/rails-tests.yml"
+  pull_request:
+    paths:
+      - "RAILS/**"
+      - ".ruby-version"
+      - ".github/workflows/rails-tests.yml"
   workflow_dispatch:
 
 jobs:
