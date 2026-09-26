@@ -22,6 +22,13 @@ wake = Master::Device::WakeWord.new(root: ROOT)
 trap("TERM") { wake.stop! }
 trap("INT") { wake.stop! }
 
+def speak(text)
+  return if text.to_s.strip.empty?
+  return unless system("command", "-v", "termux-tts-speak", out: File::NULL, err: File::NULL)
+
+  system("termux-tts-speak", "-s", "MUSIC", text.to_s, out: File::NULL, err: File::NULL)
+end
+
 wake.run_forever do |_phrase, _heard|
   subject = Master::Device::Agent.owner_subject(root: ROOT)
   greeting = if subject.empty?
