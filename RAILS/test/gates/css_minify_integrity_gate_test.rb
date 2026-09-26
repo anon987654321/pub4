@@ -4,7 +4,7 @@ require "minitest/autorun"
 require "pathname"
 require "tmpdir"
 require_relative "gate_fixture"
-require_relative "../../gates/lib/source/css_minify_integrity"
+require_relative "../../../MASTER/gates/lib/source/css_minify_integrity"
 
 # Compile each app's entrypoint twice and compare.
 #
