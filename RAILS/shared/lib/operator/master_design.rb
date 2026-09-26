@@ -17,14 +17,17 @@ module Operator
   module MasterDesign
     module_function
 
-    # The deploy layout is not the repo layout -- each app carries its own copy
-    # of shared/, so the relative walk that works here resolves to nothing on
-    # the box. PUB4_RAILS_ROOT is set by the runner when it knows better.
+    # Prefer an explicit monorepo root when a deployed app provides one.
+    # Otherwise derive the source checkout from this file; never assume a
+    # developer's home directory.
     def rules_path
-      [ ENV["PUB4_RAILS_ROOT"] && File.join(File.dirname(ENV["PUB4_RAILS_ROOT"]), "MASTER/data/rules.yml"),
-        "/home/dev/pub4/MASTER/data/rules.yml",
-        File.expand_path("../../../../MASTER/data/rules.yml", __dir__) ]
-        .compact.find { |candidate| File.readable?(candidate) }
+      source = File.expand_path("../../../../MASTER/data/rules.yml", __dir__)
+      configured = ENV["PUB4_RAILS_ROOT"].to_s.strip
+      candidates = [
+        (File.join(File.dirname(configured), "MASTER/data/rules.yml") unless configured.empty?),
+        source,
+      ].compact
+      candidates.find { |candidate| File.readable?(candidate) }
     end
 
     def document(path = rules_path)
