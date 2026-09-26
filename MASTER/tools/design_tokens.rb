@@ -2,14 +2,14 @@
 # frozen_string_literal: true
 
 require "yaml"
-require_relative "../shared/lib/operator/master_design"
+require_relative "design/master_design"
 
 module DesignTokens
-  ROOT = File.expand_path("..", __dir__)
-  SOURCE = File.join(ROOT, "..", "MASTER", "data", "rules.yml")
-  ARTIFACT = File.join(ROOT, "shared", "design_tokens.yml")
+  ROOT = File.expand_path("../..", __dir__)
+  SOURCE = File.join(ROOT, "MASTER", "data", "rules.yml")
+  ARTIFACT = File.join(ROOT, "RAILS", "shared", "design_tokens.yml")
   FACE_ORDER = %w[c_text x_text c_accent c_danger c_code].freeze
-  DIALECT_PATH = File.join(ROOT, "shared", "app", "assets", "stylesheets", "_dialect_tokens.scss")
+  DIALECT_PATH = File.join(ROOT, "RAILS", "shared", "app", "assets", "stylesheets", "_dialect_tokens.scss")
 
   # Explicit yml-key -> css-var maps for the values that have drifted before
   # (--color-warning, 2026-07-21: shared/_tokens.scss said #ffd400 while
@@ -192,7 +192,7 @@ module DesignTokens
   # Every .scss under RAILS/. Generated CSS is a projection of the canonical
   # MASTER design system and is never an authority of its own.
   def all_scss_files
-    Dir.glob(File.join(ROOT, "*/app/assets/stylesheets/**/*.scss"))
+    Dir.glob(File.join(ROOT, "RAILS", "*/app/assets/stylesheets/**/*.scss"))
   end
 
   def property_pattern(css_var)
