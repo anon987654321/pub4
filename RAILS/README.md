@@ -133,9 +133,9 @@ file, and the backlog in the repo-root `TODO.md`.
 ### Running it
 
 ```zsh
-ruby RAILS/gates/runner.rb --all           # every registered gate
-ruby RAILS/gates/runner.rb --list          # what there is to run
-ruby RAILS/gates/runner.rb rendered_suite  # the browser-backed ones
+ruby MASTER/gates/runner.rb --all           # every registered gate
+ruby MASTER/gates/runner.rb --list          # what there is to run
+ruby MASTER/gates/runner.rb rendered_suite  # the browser-backed ones
 RAILS/bin/triangle up                      # boot the surfaces the live gates probe
 cd RAILS/<app> && bin/ci                   # RuboCop, Brakeman, bundler-audit, tests
 cd MASTER && ruby bin/gate                 # MASTER's own chain over this tree
