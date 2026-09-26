@@ -1,6 +1,9 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require_relative "../lib/boot/entrypoint"
+Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
+
 # master-smoke — boot + wire-check + (optional) web ping. Exits 0 clean, 1 on
 # any failure. Use after every refactor pass and as a pre-restart gate:
 #   bin/smoke && doas rcctl restart master
