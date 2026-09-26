@@ -44,6 +44,19 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t("flash.welcome"), flash[:notice]
   end
 
+  test "a deletion-pending public profile is not reachable" do
+    subject = User.create!(
+      email_address: "leaving-#{SecureRandom.hex(4)}@brgen.no",
+      password: "password123",
+      username: "leaving_#{SecureRandom.hex(3)}"
+    )
+    subject.update_columns(deleted_at: Time.current, deletion_scheduled_at: 7.days.from_now)
+
+    get user_path(subject)
+
+    assert_response :not_found
+  end
+
   test "a signed-in user is sent past sign-up, and a second post creates nothing" do
     post users_path, params: { accept_terms: "1", accept_age: "1", user: {
       email_address: "already@example.test", password: "password123", password_confirmation: "password123"
