@@ -14,9 +14,9 @@ root `CLAUDE.md` was once deleted wholesale for exactly that drift.
 ## Commands
 
 ```zsh
-ruby RAILS/gates/runner.rb --all          # every registered gate
-ruby RAILS/gates/runner.rb --list         # gate names
-ruby RAILS/gates/runner.rb production     # one gate, or a composite
+ruby MASTER/gates/runner.rb --all          # every registered gate
+ruby MASTER/gates/runner.rb --list         # gate names
+ruby MASTER/gates/runner.rb production     # one gate, or a composite
 ruby RAILS/test/<name>_test.rb            # one contract test — bare ruby, no bundle
 cd RAILS/<app> && bin/ci                  # per-app RuboCop, Brakeman, bundler-audit, tests
 cd RAILS/<app> && bin/rails test test/models/item_test.rb:42   # one app test
