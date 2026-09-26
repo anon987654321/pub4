@@ -60,7 +60,7 @@ module Deploy
       "RAILS/CLAUDE.md" => "prose: the shed-vs-outage triage note",
       "OPENBSD/CLAUDE.md" => "prose: same triage note",
       "OPENBSD/RUNBOOK.md" => "prose: operator reference",
-      "RAILS/gates/PAGE_SIM.md" => "generated report",
+      "MASTER/gates/PAGE_SIM.md" => "generated report",
     }.freeze
 
     FLEET_SCAN_GLOB = "{RAILS,OPENBSD,MASTER,bin}/**/*.{rb,sh,yml,yaml,json,conf,mjs,js,md,erb,exp}"
