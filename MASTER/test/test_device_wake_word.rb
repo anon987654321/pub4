@@ -1,0 +1,36 @@
+# frozen_string_literal: true
+
+require_relative "../test_helper"
+require "tmpdir"
+
+class TestDeviceWakeWord < Minitest::Test
+  def test_enable_normalizes_phrases
+    Dir.mktmpdir("wake-word") do |root|
+      wake = Master::Device::WakeWord.new(root:, which: ->(_cmd) { true })
+      wake.enable!(phrases: ["Hey MASTER", " hey master "])
+
+      assert wake.enabled?
+      assert_equal ["hey master"], wake.phrases
+    end
+  end
+
+  def test_match_accepts_a_phrase_inside_transcription
+    Dir.mktmpdir("wake-word") do |root|
+      wake = Master::Device::WakeWord.new(root:, which: ->(_cmd) { true })
+      wake.enable!(phrases: ["hey mochi"])
+
+      assert_equal "hey mochi", wake.send(:match, "Hey Mochi, are you there?")
+      assert_nil wake.send(:match, "hello there")
+    end
+  end
+
+  def test_disabled_listener_does_not_require_microphone
+    Dir.mktmpdir("wake-word") do |root|
+      calls = 0
+      wake = Master::Device::WakeWord.new(root:, which: ->(_cmd) { calls += 1; false })
+
+      assert_equal :disabled, wake.run_forever
+      assert_equal 0, calls
+    end
+  end
+end
