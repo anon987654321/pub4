@@ -1,6 +1,7 @@
 name: MASTER fix RAILS live
 
 # One deliberate full live experiment on a dedicated execution branch.
+# Triggered 2026-09-26 after refreshing the execution branch from main.
 # The branch guard prevents a MASTER-authored push from recursively starting
 # another repair run. The command uses the repository's own triangle bootstrap
 # and writes only to this execution branch.
