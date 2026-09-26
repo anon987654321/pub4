@@ -38,7 +38,7 @@ def usage
       bin/operator rules <ID> [--card] [--json] [--corpus MASTER|all] [path...]
                                       the rule, its exemption, then what it finds
       bin/operator hooks                  install the shared-tree commit guard
-      bin/operator readers <path>         who reaches this file, across all four trees
+      bin/operator readers <path>         who reaches this file, across all three governed trees
       bin/operator pushed? <path>...      is this content on origin/main, or only here
       bin/operator snapshot [...]         regenerate the snapshot packs (MASTER/tools/snapshot.rb)
 
