@@ -22,6 +22,8 @@ class EmailSubscription < ApplicationRecord
     update!(agreed_to_marketing: marketing)
   end
 
+  def marketing = agreed_to_marketing?
+
   private
 
   def generate_token
