@@ -2,8 +2,8 @@
 
 require "minitest/autorun"
 require_relative "gates/method_swap"
-require_relative "../gates/lib/rendered/journey_invariant"
-require_relative "../gates/lib/rendered/cross_app"
+require_relative "../../MASTER/gates/lib/rendered/journey_invariant"
+require_relative "../../MASTER/gates/lib/rendered/cross_app"
 
 # Two browser-backed gates whose findings are decided in Ruby, not in Chrome.
 # journey_invariant compares two walks of the same surface; cross_app compares
