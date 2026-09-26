@@ -44,6 +44,34 @@ module Master
         self
       end
 
+      # Prepare an objective without consuming an execution attempt. The background
+      # supervisor uses this to create work that will be claimed only when due.
+      def ensure_queued!(goal:, scope: @root, model: nil, effort: "medium", plan: nil)
+        with_lock do
+          current = load_record
+          if current && current["goal"].to_s == goal.to_s && current["scope"].to_s == relative(scope).to_s &&
+             %w[running waiting].include?(current["state"].to_s)
+            @record = current
+            @id = current["id"]
+            return self
+          end
+
+          return self if current && current["goal"].to_s == goal.to_s && current["scope"].to_s == relative(scope).to_s &&
+                          current["state"].to_s == "blocked"
+
+          start_unlocked!(goal:, scope:, model:, effort:, plan:)
+          @record["state"] = "waiting"
+          @record["stage"] = "discover"
+          @record["attempt_count"] = 0
+          @record["next_wake_at"] = now
+          @record["lease_owner"] = nil
+          @record["lease_until"] = nil
+          persist!
+        end
+        emit("mission:queued", id: @id, goal: @record["goal"], scope: @record["scope"])
+        self
+      end
+
       # Reuse the durable objective when it is still alive. A completed mission
       # is deliberately a new objective on the next wake; a blocked mission may
       # be replaced only by an explicit/manual /fix request.
@@ -119,16 +147,43 @@ module Master
           return self unless @record
           return self unless RESUMABLE_STATES.include?(@record["state"].to_s)
 
-          @record["state"] = "waiting"
-          @record["next_wake_at"] = now
-          @record["wake_reason"] = reason.to_s[0, 240]
-          @record["lease_owner"] = nil
-          @record["lease_until"] = nil
+          reason = reason.to_s[0, 240]
+          if @record["state"].to_s == "running"
+            @record["wake_requested"] = true
+            @record["wake_reason"] = reason
+          else
+            @record["state"] = "waiting"
+            @record["next_wake_at"] = now
+            @record["wake_reason"] = reason
+            @record["lease_owner"] = nil
+            @record["lease_until"] = nil
+          end
           @record["last_seen_at"] = now
           persist!
         end
         emit("mission:wake", id: @id, reason:)
         self
+      end
+
+      # Turn a wake received during an attempt into durable work for
+      # the next attempt without treating an external event as a retry failure.
+      def requeue_if_requested!
+        with_lock do
+          load_current_unlocked!
+          return false unless @record && @record["wake_requested"]
+
+          reason = @record["wake_reason"].to_s
+          @record["state"] = "waiting"
+          @record["stage"] = "verify"
+          @record["next_wake_at"] = now
+          @record["wake_requested"] = false
+          @record["lease_owner"] = nil
+          @record["lease_until"] = nil
+          @record["last_seen_at"] = now
+          persist!
+        end
+        emit("mission:requeued", id: @id, reason:)
+        true
       end
 
       def due?
@@ -254,10 +309,8 @@ module Master
 
       def self.block_current(root: Master::ROOT, reason:)
         mission = new(root:)
-        mission.send(:with_lock) do
-          mission.send(:load_current_unlocked!)
-          mission.block!(reason:)
-        end
+        mission.send(:load_current_unlocked!)
+        mission.block!(reason:)
         mission
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Mission.block_current")
@@ -327,6 +380,7 @@ module Master
           "retry_count" => 0,
           "next_wake_at" => nil,
           "wake_reason" => nil,
+          "wake_requested" => false,
           "last_seen_at" => now,
           "lease_owner" => Process.pid.to_s,
           "lease_until" => (Time.now.utc + LEASE_SECONDS).iso8601,
