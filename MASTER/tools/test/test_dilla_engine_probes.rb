@@ -165,6 +165,9 @@ class TestDilla < Minitest::Test
     refute_includes result.fetch("dispatch_keys"), "camel"
   end
 
+  def test_unknown_command_is_a_hard_failure
+    assert_includes DILLA_SOURCE, 'abort("dilla: unknown command'
+  end
   def test_demo_failure_contracts_are_hard_failures
     source = DILLA_SOURCE
 
