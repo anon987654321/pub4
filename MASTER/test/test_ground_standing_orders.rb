@@ -221,6 +221,7 @@ class StandingOrdersTest < Minitest::Test
         events << [name, payload]
       end
     end.new([])
+    File.write(File.join(root, "file.rb"), "puts :ok\n")
     calls = []
     responses = [
       [" M file.rb\n", FakeStatus.new(true)],
@@ -228,14 +229,15 @@ class StandingOrdersTest < Minitest::Test
       ["", FakeStatus.new(true)]
     ]
 
+    event = { path: File.join(root, "file.rb") }
     Master::Io::Exec.stub(:capture3, ->(*args, **) { calls << [:status, args]; [" M file.rb\n", nil, FakeStatus.new(true)] }) do
       Master::Io::Exec.stub(:capture2e, ->(*args, **) { calls << [:run, args]; responses.shift }) do
-        result = Master::Ground::Orders::Autocommit.new(container: { root:, bus: }).call
+        result = Master::Ground::Orders::Autocommit.new(container: { root:, bus:, event: }).call
 
         assert result.ok?
         assert_equal true, result.value![:committed]
         assert_equal true, result.value![:pushed]
-        assert_equal ["git", "-C", File.expand_path("..", root), "commit", "-m", "auto: standing-order commit (1 file(s))"],
+        assert_equal ["git", "-C", File.expand_path("..", root), "commit", "-m", "auto: standing-order commit (1 file(s))", "--", "master-autocommit-#{File.basename(root).split("-").last}/file.rb"],
                      calls[1].last
         assert_equal ["git", "-C", File.expand_path("..", root), "push"], calls[2].last
         assert_equal [["autocommit:pushed", { files: 1 }]], bus.events
@@ -247,6 +249,8 @@ class StandingOrdersTest < Minitest::Test
 
   test "autocommit reports a push failure after the commit lands" do
     root = Dir.mktmpdir("master-autocommit-")
+    File.write(File.join(root, "file.rb"), "puts :ok\n")
+    event = { path: File.join(root, "file.rb") }
     bus = Struct.new(:events) do
       def publish(name, **payload)
         events << [name, payload]
@@ -260,7 +264,7 @@ class StandingOrdersTest < Minitest::Test
 
     Master::Io::Exec.stub(:capture3, ->(*) { [" M file.rb\n", nil, FakeStatus.new(true)] }) do
       Master::Io::Exec.stub(:capture2e, ->(*) { responses.shift }) do
-        result = Master::Ground::Orders::Autocommit.new(container: { root:, bus: }).call
+        result = Master::Ground::Orders::Autocommit.new(container: { root:, bus:, event: }).call
 
         assert result.ok?
         assert_equal true, result.value![:committed]
