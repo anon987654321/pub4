@@ -138,7 +138,10 @@ module Deploy
           next
         end
 
-        migrate(app)
+        unless migrate(app)
+          failed << app[:name]
+          next
+        end
         boot(app)
         if wait_for(app)
           puts "triangle: #{app[:name]} up on #{app[:port]}"
