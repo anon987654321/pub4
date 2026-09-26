@@ -26,9 +26,9 @@ class GateRequiresResolveTest < Minitest::Test
 
   def test_preconditions_are_declared_once_and_read_from_the_registry
     require "yaml"
-    rows = YAML.safe_load_file(File.expand_path("../gates/gates.yml", __dir__))
+    rows = YAML.safe_load_file(File.expand_path("../../MASTER/gates/gates.yml", __dir__))
     strays = rows.flat_map { |name, row| (Array(row["needs"]) - KNOWN_PRECONDITIONS).map { |n| "#{name}: #{n}" } }
-    source = File.read(File.expand_path("../gates/runner.rb", __dir__))
+    source = File.read(File.expand_path("../../MASTER/gates/runner.rb", __dir__))
 
     assert_empty strays, "declared preconditions nothing checks"
     refute_empty rows.select { |_, row| Array(row["needs"]).include?("browser") }
@@ -36,11 +36,11 @@ class GateRequiresResolveTest < Minitest::Test
     assert_includes source, 'needs(key).include?("browser")'
   end
 
-  GATES = File.expand_path("../gates", __dir__)
+  GATES = File.expand_path("../../MASTER/gates", __dir__)
 
   REPO = File.expand_path("../..", GATES)
   TREES = {
-    "RAILS/gates" => GATES,
+    "MASTER/gates" => GATES,
     "MASTER/lib" => File.expand_path("../../MASTER/lib", __dir__),
     "OPENBSD" => File.expand_path("../../OPENBSD", __dir__),
   }.freeze
