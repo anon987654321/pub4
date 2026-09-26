@@ -193,6 +193,22 @@ class UserPurgeJobTest < ActiveJob::TestCase
     end
   end
 
+  test "erasure runs as one database transaction" do
+    ActsAsTenant.with_tenant(@city) do
+      transactional = false
+      job = UserPurgeJob.new
+      original = job.method(:anonymise)
+      job.define_singleton_method(:anonymise) do |user|
+        transactional = ActiveRecord::Base.connection.transaction_open?
+        original.call(user)
+      end
+
+      job.send(:erase!, @user)
+
+      assert transactional, "all erasure changes must share one database transaction"
+    end
+  end
+
   test "an account still inside its grace window is not touched" do
     ActsAsTenant.with_tenant(@city) do
       profile = Dating::Profile.create!(user: @user, bio: "Still here", age: 30)
