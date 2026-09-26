@@ -7,7 +7,7 @@ name: RAILS Tests
 #   OPENBSD/bin/check-rails --profile=contributor
 #
 # Full gates:
-#   ruby RAILS/gates/runner.rb domain_alignment production etc.
+#   ruby MASTER/gates/runner.rb domain_alignment production etc.
 #
 # GitHub Actions remains available for deliberate validation without making
 # every push or pull request pay for the full matrix.
