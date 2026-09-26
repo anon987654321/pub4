@@ -38,7 +38,6 @@ module Operator
       cwd = Dir.pwd
       return :deployed_app if cwd.match?(%r{/home/[^/]+/app\z})
       return :dev_checkout if cwd.include?("/home/dev/pub4") ||
-                               File.directory?(File.join(repo_root, "OPENBSD")) ||
                                File.directory?(File.join(repo_root, "OPENBSD"))
       :local
     end
