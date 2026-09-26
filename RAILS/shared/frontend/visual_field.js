@@ -26,19 +26,23 @@ function signedHash(index, salt = 0) {
   return hash(index, salt) * 2 - 1
 }
 
+function valueOr(value, fallback) {
+  return value == null ? fallback : value
+}
+
 export function normalizeVisual(detail = {}) {
   return {
     topology: detail.topology || detail.canonical_topology || null,
-    activity: clamp(detail.activity || detail.arousal || 0.16),
-    entropy: clamp(detail.entropy || 0.2),
-    confidence: clamp(detail.confidence || 0.82),
-    arousal: clamp(detail.arousal || 0.16),
-    valence: clamp(detail.valence || 0),
-    focus: clamp(detail.focus || detail.confidence || 0.82),
-    bass: clamp(detail.bass || 0),
-    mid: clamp(detail.mid || 0),
-    high: clamp(detail.high || 0),
-    beat: clamp(detail.beat || 0),
+    activity: clamp(valueOr(detail.activity, valueOr(detail.arousal, 0.16))),
+    entropy: clamp(valueOr(detail.entropy, 0.2)),
+    confidence: clamp(valueOr(detail.confidence, 0.82)),
+    arousal: clamp(valueOr(detail.arousal, 0.16)),
+    valence: clamp(valueOr(detail.valence, 0)),
+    focus: clamp(valueOr(detail.focus, valueOr(detail.confidence, 0.82))),
+    bass: clamp(valueOr(detail.bass, 0)),
+    mid: clamp(valueOr(detail.mid, 0)),
+    high: clamp(valueOr(detail.high, 0)),
+    beat: clamp(valueOr(detail.beat, 0)),
     mode: detail.mode || "idle",
     name: detail.name || detail.event || "visual"
   }
