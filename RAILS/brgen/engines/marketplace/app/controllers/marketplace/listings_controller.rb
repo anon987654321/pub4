@@ -55,7 +55,10 @@ class Marketplace::ListingsController < Marketplace::BaseController
     return if redirect_id_to_slug(@listing)
 
     @listing.increment!(:views_count)
-    @seller_performance = Marketplace::SellerPerformance.new(@listing.store || @listing.user).summary if Current.user.present? && Current.user == @listing.user
+    if Current.user.present? && Current.user == @listing.user
+      owner = @listing.store_id ? Marketplace::Store.strict_loading(false).find_by(id: @listing.store_id) : @listing.user
+      @seller_performance = Marketplace::SellerPerformance.new(owner || @listing.user).summary
+    end
     @order = Marketplace::Order.new if Current.user.present?
     @reviews = @listing.reviews.includes(:user).order(created_at: :desc)
     @review = Marketplace::Review.new if Current.user.present? && @listing.reviewable_by?(Current.user)
