@@ -86,6 +86,18 @@ class TakeawayControllersTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "a departing restaurant owner is hidden from public takeaway" do
+    @owner.update_columns(deleted_at: Time.current, deletion_scheduled_at: 7.days.from_now)
+    host! "takeaway.brgen.no"
+
+    get takeaway.restaurant_path(@restaurant)
+    assert_response :not_found
+
+    get takeaway.restaurants_path
+    assert_response :success
+    refute_includes response.body, @restaurant.name
+  end
+
   test "the owner adds and removes a menu item" do
     sign_in_as(@owner)
 
