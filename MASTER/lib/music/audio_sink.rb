@@ -67,8 +67,11 @@ module Master
       end
 
       def self.default_player
-        name = PLAYERS.keys.find { |candidate| which(candidate) }
-        name && [name, PLAYERS.fetch(name)]
+        name, path = PLAYERS.keys.filter_map do |candidate|
+          path = which(candidate)
+          [candidate, path] if path
+        end.first
+        name && [path, PLAYERS.fetch(name)]
       end
 
       def self.which(cmd)
@@ -77,7 +80,7 @@ module Master
           "/usr/local/bin/#{cmd}",
           *ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).map { |dir| File.join(dir, cmd) },
         ]
-        candidates.uniq.any? { |path| File.executable?(path) && !File.directory?(path) }
+        candidates.uniq.find { |path| File.executable?(path) && !File.directory?(path) }
       end
     end
   end
