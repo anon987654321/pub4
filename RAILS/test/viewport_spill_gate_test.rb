@@ -3,7 +3,7 @@
 require "minitest/autorun"
 require "yaml"
 require "json"
-require_relative "../gates/lib/rendered/viewport_spill"
+require_relative "../../MASTER/gates/lib/rendered/viewport_spill"
 
 # Six surfaces hung off the right edge of a 390px phone before this gate
 # existed, and no source read would have found any of them: the causes were a
