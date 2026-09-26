@@ -66,6 +66,7 @@ it. A line leaves when its entry closes; re-order rather than append.
 - **Do not use Ractors in RAILS request handling.** Keep request concurrency in Rails. Use processes where isolation is required.
 - **Future Ractor seam: pure-data CPU work only.** A candidate must be bounded and embarrassingly parallel, exchange frozen strings, arrays or numeric buffers, use a fixed worker count, and return deterministic output identical to the sequential path.
 - **No implementation until a benchmark proves it.** Measure wall time and allocations on Ruby 3.4.9. Reject the Ractor path when it is not materially faster or adds complexity without measurable capacity gain.
+- **MASTER implementation:** `MASTER/lib/runtime/compute.rb` now provides serial/thread/Ractor execution behind an explicit safe-invoke protocol. Keep RAILS on request/process concurrency until a pure-data CPU workload is isolated and benchmarked; NVD fetching, ActiveRecord work, Dilla subprocesses and socket handling are not Ractor candidates.
 ### MASTER
 
 1. **The ruby_llm 2.0 upgrade, staged.** Entry: RAILS "Audit findings". Done
