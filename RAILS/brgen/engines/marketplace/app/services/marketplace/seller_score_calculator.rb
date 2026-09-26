@@ -2,6 +2,8 @@
 
 module Marketplace
   class SellerScoreCalculator
+    WINDOW = 60.days
+
     def initialize(store_or_user)
       @owner = store_or_user
     end
