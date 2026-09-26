@@ -18,7 +18,9 @@ permissions:
 jobs:
   master-fix-rails:
     if: github.actor != 'github-actions[bot]'
-    runs-on: ubuntu-24.04
+    # Use the moving standard public Linux label for this disposable execution lane;
+    # the same workflow already validates the exact production trees below.
+    runs-on: ubuntu-latest
     timeout-minutes: 360
 
     steps:
