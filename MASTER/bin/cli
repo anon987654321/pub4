@@ -32,7 +32,6 @@ end
 
 require "optparse"
 require "master"
-require "cli/boot_banner"
 
 def initial_message_from_argv(argv)
   options = parse_initial_message_options(argv)
