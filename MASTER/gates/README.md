@@ -88,7 +88,7 @@ value with interpolation in it.
 
 ```zsh
 # Warm apps first (Falcon), then:
-export RBENV_VERSION=3.4.9
+export RBENV_VERSION=4.0.7
 ruby MASTER/gates/runner.rb page_simulation flow_journey \
   layout_suite rendered_suite human_walkthrough shared_wiring \
   production generated_asset schema_migration port_inventory \
