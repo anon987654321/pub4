@@ -103,7 +103,7 @@ class UserPurgeJob < ApplicationJob
     attrs[:username] = "deleted_#{user.id}"                if user.has_attribute?(:username)
     attrs[:display_name] = nil                                 if user.has_attribute?(:display_name)
     attrs[:password_digest] = BCrypt::Password.create(SecureRandom.hex(24)) if user.has_attribute?(:password_digest)
-    %i[otp_secret magic_link_token remember_token latitude longitude location].each do |col|
+    %i[otp_secret magic_link_token magic_link_expires_at remember_token email_verification_token latitude longitude location].each do |col|
       attrs[col] = nil if user.has_attribute?(col)
     end
     user.update_columns(attrs)
