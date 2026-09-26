@@ -1,0 +1,90 @@
+name: MASTER fix RAILS live
+
+# One deliberate live experiment on the convergence branch.
+# The branch guard prevents a MASTER-authored push from recursively starting
+# another repair run. The command uses the repository's own triangle bootstrap
+# and writes only to this branch.
+on:
+  push:
+    branches:
+      - fix/convergence-antigravity-affiliate-20260926
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  master-fix-rails:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout complete branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Ruby 4
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+          working-directory: MASTER
+
+      - name: Install Chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v google-chrome >/dev/null 2>&1 &&
+             ! command -v chromium >/dev/null 2>&1 &&
+             ! command -v chromium-browser >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y chromium
+          fi
+
+      - name: Boot the live Rails surface matrix
+        env:
+          RAILS_LOG_LEVEL: info
+          TRIANGLE_BOOT_TIMEOUT: "180"
+        run: |
+          ruby RAILS/bin/triangle up
+          ruby RAILS/bin/triangle status
+
+      - name: Run MASTER /fix over RAILS
+        env:
+          MASTER_EFFORT: high
+          MASTER_CONSENSUS_FIXES: "1"
+          MASTER_VISUAL_SURFACES_PER_PASS: "0"
+          MASTER_VISUAL_COMPOSITION_STATES: "12"
+          MASTER_FIX_RUN_BUDGET_S: "14400"
+          MASTER_FIX_COMMIT_STAGE: "1"
+          GATE_STRICT_INCONCLUSIVE: "1"
+          MASTER_KEYLESS: "1"
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          set -euo pipefail
+          MASTER/bin/ruby MASTER/bin/cli --headless -p "/fix RAILS"
+
+      - name: Verify branch state
+        if: always()
+        run: |
+          git status --short
+          git log --oneline --decorate -n 12
+
+      - name: Capture live repair evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: master-fix-rails-evidence
+          path: |
+            RAILS/tmp/triangle/**
+            MASTER/runtime/**
+            MASTER/tmp/**
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Shut down live surfaces
+        if: always()
+        run: ruby RAILS/bin/triangle down
