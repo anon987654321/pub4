@@ -142,7 +142,7 @@ class Marketplace::ListingsController < Marketplace::BaseController
   def listing_params
     params.require(:listing).permit(
       :title, :description, :price_cents, :condition, :status, :location,
-      :latitude, :longitude, :category_id, :preset, :kind, photos: [],
+      :latitude, :longitude, :category_id, :preset, :kind, :delivery_promise, :fulfilment_method, photos: [],
       job_detail_attributes: %i[employer employment_type salary_min_cents salary_max_cents remote],
       housing_detail_attributes: %i[rent_cents deposit_cents rooms size_sqm available_from housing_type],
       gig_detail_attributes: %i[pay_cents starts_at hours]
