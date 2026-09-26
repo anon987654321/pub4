@@ -11,7 +11,7 @@ class Tv::ChannelsController < Tv::BaseController
     scope = Tv::Channel.publicly_visible.with_attached_avatar.includes(:user)
     if live_search_query.present?
       channel_ids = apply_live_search(scope, columns: %w[name description], vertical: "tv").pluck(:id)
-      video_ids = apply_live_search(Tv::Video.published, columns: %w[title description], vertical: "tv").pluck(:tv_channel_id)
+      video_ids = apply_live_search(Tv::Video.publicly_visible, columns: %w[title description], vertical: "tv").pluck(:tv_channel_id)
       scope = scope.where(id: (channel_ids + video_ids).uniq)
     else
       scope = scope.popular
