@@ -42,6 +42,7 @@ class TestFeedbackLedger < Minitest::Test
     bus.publish("llm:call_complete", model: "gpt-4.1", tokens_out: 42)
     bus.publish("llm:provider_outcome", model: "gpt-4.1", status: "provider_error", error: "boom")
     bus.publish("fix_loop:soul_proposal", root:, rule: "T205", sample: [{ file: "lib/example.rb" }])
+    bus.publish("ops:commit", root:, message: "fix_loop: llm-fix [pass 1]", head: "abc123", paths: ["lib/example.rb"], findings: [{ rule: "T205" }])
     bus.publish("production:evidence", root:, boundary: "master", signal: "fix.pass", value: 1, source: "test")
     bus.publish("fix_loop:oscillation", violations: 1)
 
@@ -64,6 +65,8 @@ class TestFeedbackLedger < Minitest::Test
     assert File.exist?(phoenix_log)
     entries = File.readlines(phoenix_log).map { |line| JSON.parse(line) }
     assert_equal %w[change observation], entries.map { |entry| entry.fetch("kind") }
+    assert_equal "fix_loop: llm-fix [pass 1]", entries.first.fetch("goal")
+    assert_equal 1, entries.first.fetch("evidence").fetch("findings")
   ensure
     db&.close
     FileUtils.remove_entry(root) if root && Dir.exist?(root)
