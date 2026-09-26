@@ -48,6 +48,41 @@ class TestScanRuleContracts < Minitest::Test
     assert_finding Rules::CqsRule.new, code, "cqs.rb", "mutates state and returns"
   end
 
+  def test_cqs_ignores_guarded_memoized_reader
+    code = <<~RUBY
+      def value
+        return @value if @value
+        @value = load_value
+        return @value
+      end
+    RUBY
+
+    assert_empty Rules::CqsRule.new.check(code, path: "memoized.rb")
+  end
+
+  def test_cqs_ignores_or_equals_memoized_reader
+    code = <<~RUBY
+      def value
+        @value ||= load_value
+        return @value
+      end
+    RUBY
+
+    assert_empty Rules::CqsRule.new.check(code, path: "memoized_equals.rb")
+  end
+
+  def test_cqs_still_flags_a_non_memoized_write_and_return
+    code = <<~RUBY
+      def update
+        @value = load_value
+        persist!
+        return @value
+      end
+    RUBY
+
+    assert_finding Rules::CqsRule.new, code, "non_memoized.rb", "mutates state and returns"
+  end
+
   def test_secret_proximity_reaches_findings_through_the_bridge
     hits = Rules::LawBridgeRule.new.check(%q{api_key = "sk_live_123456789"}, path: "app.rb")
 
