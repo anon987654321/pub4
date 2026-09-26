@@ -49,12 +49,14 @@ class Marketplace::Listing < ApplicationRecord
   accepts_nested_attributes_for :job_detail, :housing_detail, :gig_detail, allow_destroy: true
   has_many :favorited_by_users, through: :favorites, source: :user
   has_many_attached :photos
+  has_one_attached :video
+  attr_accessor :source
   process_media_variants :photos, variants: {
     thumb: { resize_to_limit: [ 360, 360 ], format: :webp },
     card: { resize_to_limit: [ 800, 800 ], format: :webp }
   }
 
-  CONDITIONS = %w[new like_new good fair poor].freeze
+  CONDITIONS = %w[new_with_tags new_without_tags very_good good satisfactory].freeze
   # What is being listed. goods is a thing with a price; the other three are the
   # Craigslist half — same city scoping, search, expiry and messaging, different
   # facts about them, which live in a table each rather than in columns that are
@@ -229,6 +231,8 @@ class Marketplace::Listing < ApplicationRecord
 
   def price_display = Shared::MoneyDisplay.format(price_cents, currency)
   def casual? = store_id.nil?
+  def source_kind = store_id.present? ? :shop : :person
+  def condition_label = condition.present? ? I18n.t("marketplace.conditions.#{condition}", default: condition.to_s.tr("_", " ")) : nil
   def sold? = status == "sold"
 
   def delivery_badge

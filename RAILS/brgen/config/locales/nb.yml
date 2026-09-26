@@ -1226,11 +1226,11 @@ nb:
     offers: Bud
     add_address_body: Lagre en adresse så neste kjøp ikke krever den på nytt.
     conditions:
-      new: ny
-      like_new: som ny
-      good: bra
-      fair: grei
-      poor: slitt
+      new_with_tags: Ny med lapper
+      new_without_tags: Ny uten lapper
+      very_good: Svært god
+      good: God
+      satisfactory: Tilfredsstillende
     questions: Spørsmål
     ask_question: Spør om annonsen
     ask_placeholder: "Er den fortsatt ledig?"

@@ -8,6 +8,13 @@
       [@listing.title, seo_canonical_url]
     ])) %>
 
+<% if params[:listed] == "1" && Current.user.present? && Current.user == @listing.user %>
+  <aside class="listing-published-notice" role="status">
+    <strong><%= t("marketplace.listing_published_heading") %></strong>
+    <%= link_to t("marketplace.list_another"), new_listing_path(kind: @listing.kind), class: "btn btn-primary btn-sm" %>
+  </aside>
+<% end %>
+
 <%= render "marketplace/nav_bar",
       cart_count: (Current.user.present? ? Current.user.marketplace_orders.where(status: "pending").count : 0),
       categories: @categories %>
@@ -25,6 +32,9 @@
 
 <div class="store-pdp">
   <div class="store-pdp-media">
+    <% if @listing.video.attached? %>
+      <%= video_tag @listing.video, controls: true, preload: "metadata", class: "listing-video", aria: { label: t("marketplace.optional_video") } %>
+    <% end %>
     <% if @listing.photos.attached? %>
       <%= render "shared/media_gallery", attachments: @listing.photos, title: @listing.title %>
     <% else %>

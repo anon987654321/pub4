@@ -73,17 +73,21 @@ class Marketplace::ListingsController < Marketplace::BaseController
   def new
     authorize Marketplace::Listing
     @kind = Marketplace::Listing.kind_from(params[:kind])
-    @listing = Marketplace::Listing.new(kind: @kind)
+    @listing = Marketplace::Listing.new(kind: @kind, condition: (@kind == "goods" ? "very_good" : nil))
     @listing.build_job_detail if @kind == "job"
     @listing.build_housing_detail if @kind == "housing"
     @listing.build_gig_detail if @kind == "gig"
-    @categories = Marketplace::Category.all
+    @categories, @stores = listing_form_options
   end
 
   def create
     authorize Marketplace::Listing
-    @listing = Current.user.marketplace_listings.build(listing_params_for_kind(listing_params[:kind].presence || "goods"))
-    if @listing.save
+    permitted = listing_params_for_kind(listing_params[:kind].presence || "goods")
+    source = permitted.delete(:source).to_s
+    store_id = permitted.delete(:store_id)
+    @listing = Current.user.marketplace_listings.build(permitted)
+    assign_listing_source(@listing, source, store_id)
+    if @listing.errors.empty? && @listing.save
       preset = params[:listing][:preset].presence
       if preset && @listing.photos.attached?
         @listing.mark_photo_status!("pending")
@@ -93,32 +97,37 @@ class Marketplace::ListingsController < Marketplace::BaseController
         actor: Current.user, action: "listing.created", subject: @listing,
         source_vertical: "marketplace", locality: @listing.location
       )
-      redirect_to listing_path(@listing), notice: t("flash.marketplace.listing_published")
+      redirect_to listing_path(@listing, listed: "1"), notice: t("flash.marketplace.listing_published")
     else
       # The form reads both of these and create set neither, so a refused
       # listing answered 500 rather than showing the reader what was wrong with
       # it. Only the kinds work made that reachable — until now every refusal
       # here was a validation the form itself prevented.
       @kind = @listing.kind.presence || "goods"
-      @categories = Marketplace::Category.all
+      @categories, @stores = listing_form_options
       render :new, status: :unprocessable_entity
     end
   end
 
   def edit
     authorize @listing
-    @categories = Marketplace::Category.all
+    @categories, @stores = listing_form_options
   end
 
   def update
     authorize @listing
-    if @listing.update(listing_update_params)
+    permitted = listing_update_params
+    source = permitted.delete(:source).to_s
+    store_id = permitted.delete(:store_id)
+    assign_listing_source(@listing, source, store_id)
+    if @listing.errors.empty? && @listing.update(permitted)
       Shared::DomainEvent.record!(
         actor: Current.user, action: "listing.updated", subject: @listing,
         source_vertical: "marketplace", locality: @listing.location
       )
       redirect_to listing_path(@listing)
     else
+      @categories, @stores = listing_form_options
       render(:edit, status: :unprocessable_entity)
     end
   end
@@ -137,12 +146,12 @@ class Marketplace::ListingsController < Marketplace::BaseController
 
   private
 
-  def set_listing = (@listing = find_by_slug_or_id(Marketplace::Listing.includes(:user, :category, photos_attachments: :blob), params[:id]))
+  def set_listing = (@listing = find_by_slug_or_id(Marketplace::Listing.includes(:user, :store, :category, photos_attachments: :blob, video_attachment: :blob), params[:id]))
 
   def listing_params
     params.require(:listing).permit(
       :title, :description, :price_cents, :condition, :status, :location,
-      :latitude, :longitude, :category_id, :preset, :kind, :delivery_promise, :fulfilment_method, photos: [],
+      :latitude, :longitude, :category_id, :preset, :kind, :delivery_promise, :fulfilment_method, :source, :store_id, :video, photos: [],
       job_detail_attributes: %i[employer employment_type salary_min_cents salary_max_cents remote],
       housing_detail_attributes: %i[rent_cents deposit_cents rooms size_sqm available_from housing_type],
       gig_detail_attributes: %i[pay_cents starts_at hours]
@@ -152,6 +161,23 @@ class Marketplace::ListingsController < Marketplace::BaseController
   # Only the detail block for the kind being listed. Permitting all three would
   # let a job advert arrive carrying rent, and the row would sit there with
   # nothing rendering it.
+  def listing_form_options
+    [Marketplace::Category.all, Marketplace::Store.active.where(owner: Current.user).order(:name)]
+  end
+
+  def assign_listing_source(listing, source, store_id)
+    if source == "shop"
+      store = Marketplace::Store.active.find_by(id: store_id, owner_id: Current.user.id)
+      if store
+        listing.store = store
+      else
+        listing.errors.add(:store_id, :invalid)
+      end
+    else
+      listing.store = nil
+    end
+  end
+
   def listing_params_for_kind(kind)
     permitted = listing_params
     %w[job housing gig].each do |other_kind|

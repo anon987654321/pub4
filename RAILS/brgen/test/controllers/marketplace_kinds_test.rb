@@ -171,6 +171,45 @@ end
     assert_not_includes response.body, "listing[job_detail_attributes]"
   end
 
+  test "the goods form is photo first and uses the standardized condition scale" do
+    sign_in_as(@lister)
+
+    get marketplace.new_listing_path
+    assert_response :success
+    assert_includes response.body, I18n.t("marketplace.upload_from_gallery")
+    assert_includes response.body, I18n.t("marketplace.photo_guidance")
+    assert_includes response.body, I18n.t("marketplace.listing_steps.photos")
+    assert_select "select[name='listing[condition]'] option[value='very_good'][selected]"
+    assert_includes response.body, I18n.t("marketplace.conditions.new_with_tags")
+    assert_includes response.body, I18n.t("marketplace.from_a_person")
+  end
+
+  test "a shop listing can only attach one of the seller's own active shops" do
+    sign_in_as(@lister)
+    store = Marketplace::Store.create!(
+      owner: @lister,
+      name: "My shop",
+      slug: "my-shop-#{SecureRandom.hex(3)}",
+      active: true
+    )
+
+    post marketplace.listings_path, params: {
+      listing: {
+        title: "Shop goods",
+        kind: "goods",
+        category_id: @category.id,
+        price_cents: 25_000,
+        condition: "very_good",
+        location: "Bergen",
+        source: "shop",
+        store_id: store.id
+      }
+    }
+
+    assert_redirected_to %r{/listings/}
+    assert_equal store.id, Marketplace::Listing.order(:id).last.store_id
+  end
+
   # A salary range that runs backwards reads as a typo nobody can act on.
   test "a backwards salary range is refused" do
     detail = Marketplace::JobDetail.new(salary_min_cents: 60_000_00, salary_max_cents: 40_000_00)
