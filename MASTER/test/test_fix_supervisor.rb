@@ -63,7 +63,7 @@ class FixSupervisorTest < Minitest::Test
       saved = Master::Fix::Mission.current(root:)
       assert_equal mission.id, resumed.id
       assert_operator saved["attempt_count"].to_i, :>=, 2
-      assert_equal Process.pid.to_s, saved["lease_owner"]
+      assert_equal Master::Fix::Mission.instance_id, saved["lease_owner"]
     end
   end
 
