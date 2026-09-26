@@ -98,16 +98,12 @@ module MasterContainerLoader
       Rails.logger.info("master_container: ready")
       container
     end
-  # Exception, not StandardError. This runs in a thread with no joiner, so
-  # anything it does not catch disappears without a line anywhere -- and the
-  # flag above stays claimed, which used to mean the process served "Starting
-  # up..." for the rest of its life having logged nothing. NoMemoryError is the
-  # live case on a 1GB box under swap pressure, and it is not a StandardError.
-  # FAIL_VISIBLY reads a line, so it cannot see the re-raise below or the log
-  # after it; the marker carries that reason to it.
-  rescue Exception => e # rubocop:disable Lint/RescueException -- scan: intentional
-    raise if e.is_a?(SystemExit) || e.is_a?(SignalException)
-
+  # The bootstrap thread has no caller to report an exception to. Keep the
+  # failure visible in the Rails log and release the claim so the next request
+  # can rearm the container. StandardError is the application failure boundary;
+  # process-level exceptions must still terminate the process rather than being
+  # swallowed by a background thread.
+  rescue StandardError => e
     Rails.logger.error("master_container boot failed: #{e.class}: #{e.message}")
     config.x.master_bootstrap_started = false
     nil
