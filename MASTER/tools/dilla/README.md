@@ -154,6 +154,13 @@ file: the Dilla Lab page brgen serves from `RAILS/brgen/public/dilla/dilla.html`
 `ruby dilla.rb live`, which plays the catalogue and, as `live set`, the livesets
 in `lib/livesets.rb`, and `ruby dilla.rb sines`, which runs the sine stream.
 
+For local soundcard playback, `ruby MASTER/tools/dilla/dilla.rb live default`
+starts the detached live player and `ruby MASTER/tools/dilla/liveset.rb` runs
+the frozen endless liveset directly. The live path needs ffmpeg and either SoX
+or ffplay. Player discovery checks Homebrew's standard locations before PATH, so
+a GUI-launched terminal does not need a separately configured shell PATH just to
+hear the instrument.
+
 A liveset take is not a wav. Every pass writes one line to
 `project/liveset.jsonl` naming its seed and every choice it made, and keeping a
 take renders it to `demo.wav` and adds that line, titled, to
