@@ -86,11 +86,13 @@ class UserPurgeJob < ApplicationJob
     # few lines are about to replace with purged-<id>@deleted.invalid.
     former_email = user.try(:email_address)
 
-    DESTROY.each { |row| resolve(row[:model])&.where(row[:key] => user.id)&.find_each(&:destroy) }
-    NULLIFY.each { |row| nullify(row, user) }
-    erase_email_subscription(former_email)
-    anonymise(user)
-    user.sessions.delete_all if user.respond_to?(:sessions)
+    ActiveRecord::Base.transaction do
+      DESTROY.each { |row| resolve(row[:model])&.where(row[:key] => user.id)&.find_each(&:destroy) }
+      NULLIFY.each { |row| nullify(row, user) }
+      erase_email_subscription(former_email)
+      anonymise(user)
+      user.sessions.delete_all if user.respond_to?(:sessions)
+    end
   end
 
   def anonymise(user)
