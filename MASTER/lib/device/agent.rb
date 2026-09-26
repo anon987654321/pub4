@@ -51,6 +51,9 @@ module Master
         # on the phone; Pairing mints the same scoped personal identity used by
         # remote channels, but the bearer token is never printed.
         def claim_owner!(root:, label: nil)
+          existing = owner_subject(root:)
+          raise "device already paired; release the current owner before pairing again" unless existing.empty?
+
           issued = Ground::Pairing.issue(root:, label: label.to_s.empty? ? "local-owner" : label)
           result = Ground::Pairing.redeem(issued[:code], root:)
           raise "local pairing failed" unless result
@@ -65,6 +68,22 @@ module Master
             "paired_at" => Time.now.utc.iso8601,
           })
           result
+        end
+
+        def release_owner!(root:)
+          subject = owner_subject(root:)
+          raise "device is not paired" if subject.empty?
+
+          Ground::Pairing.revoke(subject, root:)
+          path = File.join(root, STATE_PATH)
+          current = state(root)
+          current.delete("owner_subject")
+          current.delete("owner_label")
+          current.delete("paired_at")
+          write_atomic(path, JSON.pretty_generate(current) + "\n", mode: 0o600)
+          Fiber[:master_paired] = nil
+          Fiber[:master_pair_subject] = nil
+          subject
         end
 
         def status(root: Master::ROOT)

@@ -89,11 +89,15 @@ module Master
         },
         "pair" => {
           summary: "issue or redeem a pairing code",
-          detail: ["/pair owner [label]", "/pair issue [label]", "/pair <code>", "/pair status"],
+          detail: ["/pair owner [label]", "/pair release", "/pair issue [label]", "/pair <code>", "/pair status"],
         },
         "device" => {
           summary: "show local phone agent and owner state",
           detail: ["/device"],
+        },
+        "owner" => {
+          summary: "show and edit the paired owner's explicit profile",
+          detail: ["/owner", "/owner intro", "/owner set name=... language=... locale=... timezone=... communication_style=... interests=...", "/owner forget <key>"],
         },
         "doctor" => {
           summary: "host, provider, exposure and hardware health",

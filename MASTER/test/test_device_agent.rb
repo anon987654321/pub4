@@ -43,10 +43,35 @@ class TestDeviceAgent < Minitest::Test
       status = Master::Device::Agent.status(root:)
 
       refute_empty result[:subject]
+      refute result.key?(:token)
       assert_equal result[:subject], status[:owner_subject]
       assert_equal "Alex", status[:owner_label]
       assert_equal true, Fiber[:master_paired]
       assert_equal result[:subject], Fiber[:master_pair_subject]
+    ensure
+      Fiber[:master_paired] = nil
+      Fiber[:master_pair_subject] = nil
+    end
+  end
+
+  def test_claim_owner_refuses_a_second_owner
+    Dir.mktmpdir("device-agent") do |root|
+      Master::Device::Agent.send(:save_state, root, "owner_subject" => "owner123")
+      error = assert_raises(RuntimeError) { Master::Device::Agent.claim_owner!(root:, label: "Other") }
+      assert_match(/already paired/, error.message)
+    end
+  end
+
+  def test_release_owner_clears_identity_but_keeps_personal_workspace
+    Dir.mktmpdir("device-agent") do |root|
+      result = Master::Device::Agent.claim_owner!(root:, label: "Alex")
+      workspace = Master::Ground::PersonalWorkspace.dir_for(result[:subject], root:)
+      assert File.directory?(workspace)
+
+      released = Master::Device::Agent.release_owner!(root:)
+      assert_equal result[:subject], released
+      refute Master::Device::Agent.paired?(root:)
+      assert File.directory?(workspace)
     ensure
       Fiber[:master_paired] = nil
       Fiber[:master_pair_subject] = nil
