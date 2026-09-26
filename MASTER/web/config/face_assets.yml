@@ -9,8 +9,8 @@
 #   * /etc/rc.d/master's precompile-skip digest covers ~10 named files and
 #     silently misses the other ~30, so editing one and restarting keeps a stale
 #     fingerprint (see web/CLAUDE.md).
-#   * `grep face_state.js` finds nothing, because the include_tag writes
-#     `face_state`. A file can look dead and be live.
+#   * grep face_state.js finds nothing, because the include_tag writes
+#     face_state. A file can look dead and be live.
 #
 # Order within each group is load order and is part of the boot contract. Read
 # the group comments before moving anything between them.
@@ -22,6 +22,8 @@
 #              the cell pool. particle_worker.js (shell_manifest) is the Worker
 #              that steps a transferred pool off the main thread. face_particles.js
 #              (face_eager) builds the step context from face State after the tap.
+#              gravity_field.js (face_eager) is the ambient Antigravity-style
+#              constellation: deterministic shell, spring return and local pointer field.
 #   ecology    cognition_ecology.js (face_vision_deferred) owns the 2D canvas and
 #              window.MASTEREcology; cognition_ecology_render.js draws it, loaded
 #              straight after. face_offscreen_ecology.js (face_eager) moves that
@@ -43,6 +45,7 @@ face_eager:
   - face_micro_interactions.js
   - face_perf_guards.js
   - face_brutalist.js
+  - gravity_field.js
 
 # Imported lazily from the tail of face.part5.txt via _deferFaceMod(), after the
 # face itself is up.
@@ -89,7 +92,7 @@ shell_blocking:
 # master:container-ready that must be armed before either can fire.
 #
 # It was the one asset the view loaded that this file did not name, allowlisted
-# out of the "every script the view loads is in the manifest" test. That is the
+# out of the every script the view loads is in the manifest test. That is the
 # hole the manifest exists to close: rc.d's precompile-skip digest enumerates
 # this file through script/face_asset_paths.rb, so an undeclared module could be
 # edited and restarted with precompile silently skipped and the stale
@@ -98,7 +101,7 @@ shell_boot:
   - boot_fsm.js
 
 # Plain <script defer> tags in the shell. These stay written out literally in
-# index.html.erb rather than rendered from here: their *positions* differ and
+# index.html.erb rather than rendered from here: their positions differ and
 # are load-bearing — face_2d_fallback sits after the inline boot script so it
 # cannot delay tap wiring, and a test pins that ordering. Listed here so the set
 # is still enumerable; a contract test asserts the view and this file agree.
@@ -113,9 +116,9 @@ shell_early:
 # felt_state leads: it installs the master:visual/master:emotion listeners that
 # make it the presence store, and visual_bridge below starts emitting both on
 # load. It was undeclared and therefore never loaded at all, which left
-# window.MASTERFeltState undefined — so chat_actions' own send path dropped the
-# felt state from every message and logged "invalid felt state payload" instead,
-# and face_vision's felt_state rule read an empty string forever.
+# window.MASTERFeltState undefined — so chat_actions own send path dropped the
+# felt state from every message and logged invalid felt state payload instead,
+# and face_vision felt_state rule read an empty string forever.
 shell_manifest:
   - felt_state
   - ui_presence
@@ -136,7 +139,7 @@ shell_late:
   - viewport_inset.js
 
 # Stylesheets the shell links by asset_path. Not JavaScript, but digested the
-# same way, so rc.d's precompile-skip digest has to see an edit to them too.
+# same way, so rc.d precompile-skip digest has to see an edit to them too.
 shell_css:
   - face.css
   - chat_upload.css
