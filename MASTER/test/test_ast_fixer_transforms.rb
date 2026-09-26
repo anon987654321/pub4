@@ -133,7 +133,7 @@ class TestAstFixerTransforms < Minitest::Test
   #   sel + '[' + seen[sel] + ']'  ->  `${sel}[${seen}`[sel] + ']'
   #
   # Every duplicate key comes back "undefined]", and `node --check` passes. This
-  # was written into RAILS/gates/support/geometry_probe/walk.js on the trial run
+  # was written into MASTER/gates/support/geometry_probe/walk.js on the trial run
   # recorded in TODO.md and reverted by hand. `'a'.repeat(3)` is the member-access
   # half: converting it moves the call onto the whole template.
   def test_string_concat_declines_a_chain_followed_by_a_subscript_or_member
