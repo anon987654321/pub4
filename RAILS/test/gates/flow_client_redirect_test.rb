@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../../gates/lib/live/flow_journey"
+require_relative "../../../MASTER/gates/lib/live/flow_journey"
 
 # The journey gate is supposed to be measuring the app under test on
 # 127.0.0.1. It was not, whenever a redirect answered with an absolute URL.
