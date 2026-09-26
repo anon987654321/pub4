@@ -1599,9 +1599,9 @@ end
 #
 # This is the one direction this engine could not go. listen.rb already
 # renders audio TO an image -- showspectrumpic, for auditing -- and nothing goes
-# the other way. STUDIO has three image tools sitting next to dilla (postpro,
-# preprompt, lora) whose output has never been able to reach the audio engine at
-# all, and this is the shortest honest bridge between them: a preprompt frame or
+# the other way. MASTER/tools contains three image tools beside dilla (postpro, preprompt,
+# lora). Their output has not been a live input to the audio engine, and this is
+# the shortest honest bridge between them: a preprompt frame or
 # a postpro grade becomes an oscillator.
 #
 # Pure Ruby on raw samples, like sample_flip and the grain cloud, with ffmpeg
