@@ -1,6 +1,9 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require_relative "../lib/boot/entrypoint"
+Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
+
 # Drives the CLI end to end. test/test_dogfood.rb, which `rake dogfood` runs, proves the laws
 # against their fixtures; the two are different checks.
 require "open3"
