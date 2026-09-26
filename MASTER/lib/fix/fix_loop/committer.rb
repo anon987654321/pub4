@@ -35,10 +35,12 @@ module Master
           @commit_mutex = Mutex.new
           @transaction = nil
           @known_good = root ? Ground::KnownGood.new(root:, bus:) : nil
+          @boundary_scope = nil
         end
 
-        def baseline!
+        def baseline!(scope: nil)
           @baseline = @git.changed_paths
+          @boundary_scope = normalize_boundary_scope(scope)
         rescue StandardError => e
           @bus&.publish("fix_loop:commit_error", error: e.message)
           raise "cannot establish fix transaction baseline: #{e.class}: #{e.message}"
@@ -60,7 +62,9 @@ module Master
           @commit_mutex.synchronize do
             transaction = @transaction
             @transaction = nil
-            transaction&.rollback!
+            result = transaction&.rollback!
+            @boundary_scope = nil
+            result
           end
         end
 
@@ -82,6 +86,8 @@ module Master
             transaction&.delivery&.preserve! if transaction&.active?
             Result.err("fix transaction delivery: #{e.message}", category: :infrastructure)
           end
+        ensure
+          @boundary_scope = nil unless @transaction
         end
 
         # Runs the two checks that can block delivery -- concurrent changes,
@@ -165,6 +171,8 @@ module Master
         end
 
         def validate_paths(message, paths)
+          return false unless boundary_scope_ok?(paths)
+
           broken = ruby_files(paths).reject { |path| ruby_parses?(path) }
           return block_commit(broken) && false unless broken.empty?
           return block_commit_intent(message) && false unless intent_preserved?(message, paths)
@@ -242,6 +250,43 @@ module Master
           return if ahead.zero?
 
           raise "git push left #{ahead} commit#{"s" unless ahead == 1} unpushed: #{paths.join(", ")}"
+        end
+
+        def normalize_boundary_scope(scope)
+          return nil if scope.nil?
+
+          values = Array(scope).map(&:to_s).reject(&:empty?).uniq
+          known = Master::Phoenix.boundaries(root: @root).map(&:name)
+          unknown = values - known
+          raise ArgumentError, "unknown phoenix boundary scope: #{unknown.join(", ")}" unless unknown.empty?
+
+          values.freeze
+        end
+
+        def boundary_scope_ok?(paths)
+          return true if @boundary_scope.nil? || @boundary_scope.empty?
+
+          foreign = Array(paths).filter_map do |path|
+            boundary = Master::Phoenix.boundary_for(path, root: @root)
+            next if boundary.nil? || @boundary_scope.include?(boundary)
+
+            [path, boundary]
+          end
+          return true if foreign.empty?
+
+          boundaries = foreign.map(&:last).uniq
+          @bus&.publish(
+            "fix_loop:commit_blocked",
+            reason: "architecture_scope",
+            scope: @boundary_scope,
+            paths: foreign.map(&:first),
+            boundaries:,
+          )
+          Master::Trace::Dmesg.status(
+            "fix0",
+            "architecture scope blocked: #{boundaries.join(", ")} outside #{@boundary_scope.join(", ")}"
+          )
+          false
         end
 
         def block_commit(files)
