@@ -23,14 +23,14 @@ failures << "installed targets" unless runner.run("installed targets", RUBY, "OP
 # The other half of the same question: every cron line, rc.d service and nsd
 # zone reaches a file the tree ships.
 failures << "reach" unless runner.run("reach", RUBY, "OPENBSD/tools/reach.rb")
-failures << "ports" unless runner.run("ports", RUBY, "RAILS/gates/runner.rb", "port_inventory")
+failures << "ports" unless runner.run("ports", RUBY, "MASTER/gates/runner.rb", "port_inventory")
 # The generator's own --check first, so a DNS edit is judged without the Rails
 # gate registry; dns_zones then adds the live query to our own nameserver.
 failures << "dns render" unless runner.run("dns render", RUBY, "OPENBSD/bin/render_dns.rb", "--check")
-# dns_zones is registered in RAILS/gates/gates.yml. It belongs here rather than
+# dns_zones is registered in MASTER/gates/gates.yml. It belongs here rather than
 # in check-rails: what it compares is OPENBSD/var/nsd/zones against what
 # bin/render_dns.rb generates, plus a live query to our own nameserver.
-failures << "dns_zones" unless runner.run("dns zones", RUBY, "RAILS/gates/runner.rb", "dns_zones", env: LIVE_ENV)
+failures << "dns_zones" unless runner.run("dns zones", RUBY, "MASTER/gates/runner.rb", "dns_zones", env: LIVE_ENV)
 failures << "deploy_smoke" unless runner.run("deploy smoke", RUBY, "OPENBSD/gates/deploy_smoke_gate.rb")
 # The shed ladder decides which site goes down under memory pressure.
 failures << "resource guard" unless runner.run("resource guard", "ksh",
