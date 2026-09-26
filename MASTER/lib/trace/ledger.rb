@@ -32,6 +32,7 @@ module Master
           @bus&.subscribe("llm:call_complete") { |payload| record_llm(payload) }
           @bus&.subscribe("llm:provider_outcome") { |payload| record_provider(payload) }
           @bus&.subscribe("fix_loop:soul_proposal") { |payload| record_improvement(payload) }
+          @bus&.subscribe("ops:commit") { |payload| record_commit(payload) }
           @bus&.subscribe("production:evidence") { |payload| record_production_evidence(payload) }
           @bus&.subscribe("fix_loop:oscillation") { |_payload| trigger_rollback("fix loop oscillation") }
           @bus&.subscribe("fix_loop:cycle_detected") { |_payload| trigger_rollback("fix loop cycle detected") }
@@ -105,20 +106,22 @@ module Master
           FileUtils.mkdir_p(File.dirname(path))
           File.open(path, "a") { |file| file.write(line) }
 
-          boundary = Master::Phoenix.boundary_for(files.first || root, root:)
-          if boundary
-            Master::Phoenix.record_change(
-              root:,
-              boundary:,
-              goal: "resolve recurring #{rule_id}",
-              constraints: ["preserve governing law", "preserve observed behavior"],
-              alternatives: ["leave unchanged", "make the narrow repair"],
-              evidence: { rule: rule_id, files: files },
-              decision: "route the proposal through the fix loop"
-            )
-          end
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "Ledger::Feedback.record_improvement", event_bus: @bus)
+        end
+
+        def record_commit(payload)
+          root = payload[:root] || payload["root"] || Master::ROOT
+          paths = Array(payload[:paths] || payload["paths"])
+          Master::Phoenix.record_commit(
+            root:,
+            message: payload[:message] || payload["message"],
+            head: payload[:head] || payload["head"],
+            paths:,
+            findings: payload[:findings] || payload["findings"] || []
+          )
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "Ledger::Feedback.record_commit", event_bus: @bus)
         end
 
         def record_production_evidence(payload)
