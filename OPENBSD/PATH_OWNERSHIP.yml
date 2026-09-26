@@ -25,12 +25,12 @@ ownership:
     purpose: aspirational features (agent ignore)
     risk: low
     check: OPENBSD/bin/check-rails
-  ../RAILS/gates/gates.yml:
+  ../MASTER/gates/gates.yml:
     purpose: the gate registry — every RAILS and OPENBSD/gates gate is declared
-      there and run through RAILS/gates/runner.rb
+      there and run through MASTER/gates/runner.rb
     risk: critical
     check: OPENBSD/bin/check-rails
-  ../RAILS/gates/lib/production.rb:
+  ../MASTER/gates/lib/production.rb:
     purpose: production Rails contract
     risk: high
     check: OPENBSD/bin/check-rails
@@ -114,7 +114,7 @@ ownership:
   gates/:
     purpose: the gate scripts (health check, config drift, installed targets,
       safety, smoke, identity, integrity chain) and the domain, DNS and port
-      gate classes RAILS/gates/gates.yml registers
+      gate classes MASTER/gates/gates.yml registers
     risk: high
     check: OPENBSD/bin/check-openbsd
   data/:
