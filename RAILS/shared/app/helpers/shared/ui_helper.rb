@@ -117,7 +117,8 @@ module Shared
     # Display name for a comment author (works across guest/anon/username shapes).
     def comment_author_name(comment)
       user = comment.try(:user)
-      return t("chat.anon", default: "anon") if user.blank?
+      return t("chat.anon", default: "anon") if user.blank? || user.try(:guest?) ||
+        user.try(:deleted_at).present? || user.try(:deletion_scheduled_at).present?
 
       user.try(:username).presence ||
         user.try(:display_name).presence ||
