@@ -21,6 +21,7 @@ module Master
       ERROR_BACKOFF_SECONDS = 300
 
       class << self
+        extend Master::Io::AtomicWrite
         def start!(root:, bus:, cognition:, standing:)
           return if !Device.android?
           return if ENV["MASTER_DEVICE_AGENT"] == "0"
@@ -95,7 +96,7 @@ module Master
           payload = current.merge(changes)
           payload["version"] = VERSION
           payload["device_id"] ||= "#{Socket.gethostname}-#{SecureRandom.hex(8)}"
-          File.write(path, JSON.pretty_generate(payload) + "\n", mode: "w", encoding: "UTF-8")
+          write_atomic(path, JSON.pretty_generate(payload) + "\n", mode: 0o600)
           payload
         end
       end
