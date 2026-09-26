@@ -49,6 +49,24 @@ class TasteRanker
     @user = user
   end
 
+  def self.score_for_listing(user, listing_title:, category: nil)
+    return 0.5 if user.blank?
+
+    preferences = user.style_preferences.pluck(:name).map { |name| name.to_s.downcase }
+    title = listing_title.to_s.downcase
+    cat = category.to_s.downcase
+    hit = preferences.any? { |preference| title.include?(preference) || cat.include?(preference) }
+    wear_bonus = if user.respond_to?(:wear_logs)
+      [user.wear_logs.count.to_f / 50.0, 0.2].min
+    else
+      0.0
+    end
+
+    (hit ? 0.82 : 0.38 + wear_bonus).clamp(0.0, 1.0)
+  rescue StandardError
+    0.5
+  end
+
   # Sorted best-first. Ties break on id so the order is stable between requests
   # — a carousel that reshuffles on every page load is not a preference model.
   def rank(items)
