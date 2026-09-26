@@ -5,7 +5,7 @@ require_relative "../../../../OPENBSD/lib/gate_result"
 require_relative "../../../tools/crawl_support"
 require_relative "../../support/brgen_vertical_surfaces"
 require_relative "../../support/dom_surface_schema"
-require_relative "../../../shared/lib/operator/scss_rules"
+require_relative "../../../tools/design/scss_rules"
 
 module Deploy
   # The first screen carries a skip link, a main landmark and an h1, and the
