@@ -120,6 +120,28 @@ class Marketplace::CheckoutsControllerTest < ActionDispatch::IntegrationTest
   end
 
 
+
+  test "basket checkout reaches the PSP with a recalculated total" do
+    sign_in(@buyer)
+    @buyer.marketplace_addresses.create!(
+      recipient: "Kari",
+      line1: "Marken 4",
+      postcode: "5017",
+      city_name: "Bergen",
+      country_code: "NO",
+      default_address: true
+    )
+    with_stripe_start(lambda { |order:, success_url:, cancel_url:|
+      assert_instance_of Marketplace::Checkout, order
+      assert_equal @order.reload.price_cents, order.reload.total_cents
+      "https://checkout.stripe.com/c/pay/cs_basket"
+    }) do
+      post marketplace.checkout_path, params: { provider: "stripe" }
+    end
+
+    assert_redirected_to "https://checkout.stripe.com/c/pay/cs_basket"
+  end
+
   test "buy now notification uses marketplace translations" do
     sign_in(@buyer)
     with_stripe_start("https://checkout.stripe.com/c/pay/cs_probe") do
