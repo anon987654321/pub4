@@ -77,7 +77,7 @@ the 47 conduct rules a detector cannot describe, the rules that can refuse a
 write, and how many run without a model. Read it when the full catalogue will
 not fit.
 
-Ruby is pinned to 3.4.9: run `RBENV_VERSION=3.4.9 rbenv exec ruby ...`.
+Ruby is pinned to 4.0.7: run `RBENV_VERSION=4.0.7 rbenv exec ruby ...`.
 
 ## Ruby and zsh, never the GNU text tools
 
