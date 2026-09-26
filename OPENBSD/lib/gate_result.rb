@@ -79,7 +79,7 @@ module Deploy
     # its own bugs is one people learn to route around — which is how a gate
     # fleet stops being read at all.
     #
-    # pub4's version of that was worse than a false block: RAILS/gates/runner.rb
+    # pub4's version of that was worse than a false block: MASTER/gates/runner.rb
     # called `klass.run` with no rescue, so one gate raising killed the process
     # and every gate after it in the --all order never ran. Forty-six gates
     # reporting nothing, exit 1, and a backtrace where the summary should be.
@@ -200,7 +200,7 @@ module Deploy
     end
 
     # The one place the three states are ranked. Callers that aggregate gates
-    # (RAILS/gates/runner.rb) ask for this instead of re-deriving it from the
+    # (MASTER/gates/runner.rb) ask for this instead of re-deriving it from the
     # three lists, so the suite line and a leaf's own output cannot disagree.
     #
     # :inconclusive means the gate measured nothing, not that it skipped
