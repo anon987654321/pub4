@@ -65,6 +65,27 @@ class MarketplacePayoutTest < ActiveSupport::TestCase
     assert_equal "private", ActivityEvent.where(subject_type: "Marketplace::Listing", subject_id: @listing.id,
                                                  event_name: "MarketplaceOrderShipped").last.visibility
   end
+  test "stale shipment and delivery instances do not duplicate notifications" do
+    first = Marketplace::Order.strict_loading(false).find(paid_order.id)
+    second = Marketplace::Order.strict_loading(false).find(first.id)
+
+    first.ship!(tracking_code: "NO123", carrier: "Test")
+    second.ship!(tracking_code: "NO124", carrier: "Test")
+    second.mark_delivered!
+    first.mark_delivered!
+
+    assert_equal 1, Notification.where(
+      source_type: "Marketplace::Order",
+      source_id: first.id,
+      title: I18n.t("marketplace.order_notification.on_its_way")
+    ).count
+    assert_equal 1, Notification.where(
+      source_type: "Marketplace::Order",
+      source_id: first.id,
+      title: I18n.t("marketplace.order_notification.delivered")
+    ).count
+  end
+
   test "repeated shipment and delivery calls do not duplicate lifecycle events" do
     order = paid_order
 
