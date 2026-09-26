@@ -16,7 +16,8 @@ require_relative "../../../RAILS/tools/design_tokens"
 # frozen_string_literal: true
 
 module Deploy
-  # Scan-only constitutional preflight: MASTER /scan on RAILS (+ optional OPENBSD).
+  # Scan-only constitutional preflight. It uses the private /scan compatibility spelling
+  # so this legacy gate can reuse the CLI scanner while public repair remains /fix.
   # Does not run /fix (no autonomous edits). Full chain: `cd MASTER && ruby bin/gate`.
   class ConstitutionalScanGate
     # The repository root: this file is MASTER/lib/operator/gates.rb.
@@ -55,9 +56,8 @@ module Deploy
     # the full gate is ~11 minutes.
     attr_reader :targets, :skipped
 
-    # The budget sits with the gates whose scan it bounds. This gate runs MASTER's
-    # chain over RAILS, so the per-target seconds are RAILS' to declare, and a
-    # copy here would be a second source that drifts.
+    # The budget sits with the gates whose scan it bounds. It covers the explicit
+    # constitutional targets below, each with its own ceiling in RAILS' registry.
     BUDGET_PATH = File.expand_path("../../../RAILS/gates/data/constitutional_budget.yml", __dir__)
     # `scan: done [profile: full] 410 violations | top DEAD_CODE=99 …`
     VIOLATION_LINE = /^scan\d*: done\b[^\n]*?\b(\d+) violations/
@@ -130,7 +130,7 @@ module Deploy
 
     private
 
-    # This gate is four full MASTER scans back to back and takes north of ten
+    # This gate scans the full target set back to back and can take north of ten
     # minutes. It used to buffer every subprocess and print nothing until the
     # end, so `runner.rb --all` looked hung for a quarter of an hour and in
     # practice nobody ran it. Progress goes to stderr as it happens; GateResult
@@ -220,7 +220,8 @@ module Deploy
       @result.fail("constitutional scan error for #{path}: #{e.class}: #{e.message}")
     end
 
-    # A crash is not a finding count, and `/scan` exits 0 whether it found 0 or
+    # A crash is not a finding count, and the private `/scan` compatibility route
+    # exits 0 whether it found 0 or
     # 410 — so the exit status says almost nothing and the count has to come out
     # of the output.
     #
