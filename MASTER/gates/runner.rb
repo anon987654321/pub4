@@ -28,7 +28,7 @@
 # or config fails. Dropping it silently broke production, frontend and
 # domain_align inside the integrity chain while they passed standalone.
 require_relative "../../OPENBSD/lib/utf8"
-require_relative "../shared/lib/operator/dmesg"
+require_relative "../lib/trace/dmesg"
 require "optparse"
 require "rbconfig"
 require "tempfile"
@@ -78,7 +78,7 @@ GATE_PARENT = ENV.fetch("PUB4_DEPLOY_APP", "rails")
 
 def say(detail)
   clear_progress
-  puts Operator::Dmesg.line(GATE_UNIT, GATE_PARENT, detail)
+  puts Master::Trace::Dmesg.line(GATE_UNIT, GATE_PARENT, detail)
 end
 
 # Gates use the same append-only dmesg stream as the rest of pub4.
@@ -371,9 +371,9 @@ def capture_output
 end
 
 def report_gate(key, outcome, lines, seconds, verbose:)
-  fact = "#{key} #{OUTCOME_LABEL.fetch(outcome)} in #{Operator::Dmesg.duration(seconds)}"
+  fact = "#{key} #{OUTCOME_LABEL.fetch(outcome)} in #{Master::Trace::Dmesg.duration(seconds)}"
   if outcome == :passed && !verbose && output_log
-    output_log.puts(Operator::Dmesg.line(GATE_UNIT, GATE_PARENT, fact), *lines)
+    output_log.puts(Master::Trace::Dmesg.line(GATE_UNIT, GATE_PARENT, fact), *lines)
     return
   end
   say(fact) unless outcome == :passed && verbose
@@ -422,7 +422,7 @@ def run_one(key, verbose:)
   started = clock
   outcome, output = capture_output { subprocess?(row) ? run_subprocess(key, row) : run_in_process(key, row, verbose:) }
   elapsed = ((clock - started) * 1000).round
-  lines = Operator::Dmesg.collapse(Operator::Dmesg.plain(output).lines)
+  lines = Master::Trace::Dmesg.collapse(Master::Trace::Dmesg.plain(output).lines)
   report_gate(key, outcome, lines, elapsed / 1000.0, verbose:)
   record_reasons(key, outcome)
   ledger.record(
@@ -532,7 +532,7 @@ end
 # this is the line people quote.
 autofix = ENV["GATE_AUTOFIX"].to_s.strip.downcase.match?(/\A(0|false|no|off)\z/) ? "off" : "on"
 verdict = ["#{by_outcome.fetch(:passed, []).size} of #{outcomes.size} passed in " \
-           "#{Operator::Dmesg.duration(clock - run_started)}, autofix #{autofix}"]
+           "#{Master::Trace::Dmesg.duration(clock - run_started)}, autofix #{autofix}"]
 %i[failed errored inconclusive].each do |outcome|
   verdict << "#{by_outcome[outcome].join(', ')} #{outcome}" if by_outcome[outcome]
 end
