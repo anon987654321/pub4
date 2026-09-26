@@ -1,0 +1,35 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../lib/boot/entrypoint"
+
+ROOT = File.expand_path("..", __dir__)
+Master::Boot::Entrypoint.prepare!(root: ROOT)
+
+manager = Master::Boot::DependencyManager.new(root: ROOT)
+
+command = ARGV.fetch(0, "install")
+result = case command
+         when "check", "status"
+           status = manager.status
+           puts "deps0: ruby=#{status[:ruby]} required=#{status[:ruby_required].empty? ? "none" : status[:ruby_required]}"
+           puts "deps0: bundler=#{status[:bundler].empty? ? "none" : status[:bundler]} installed=#{status[:bundler_installed] || "no"}"
+           puts "deps0: bundle=#{status[:bundle_ok] ? "ok" : "missing"}#{status[:bundle_output].to_s.empty? ? "" : " #{status[:bundle_output].to_s.lines.first.to_s.strip}"}"
+           status[:bundle_ok]
+         when "install", "repair"
+           manager.install!
+         when "system"
+           manager.install_system_packages!
+         else
+           warn "usage: bin/deps [check|install|repair|system]"
+           exit 64
+         end
+
+if result.respond_to?(:success?)
+  puts "deps0: #{result.message}" if result.respond_to?(:message) && result.message
+  puts result.output.to_s unless result.output.to_s.strip.empty?
+  exit(result.success? ? 0 : 1)
+end
+
+puts "deps0: #{result[:ok] ? "system dependencies ready" : result[:output]}"
+exit(result[:ok] ? 0 : 1)
