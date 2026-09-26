@@ -33,16 +33,31 @@ module Operator
     # so they do not need to reproduce rbenv's selection logic themselves.
     def rbenv_path(name, root: Environment.repo_root)
       version = pinned_version(root)
-      return if version.empty? || !executable?("rbenv")
+      return if version.empty?
+
+      rbenv_root = ENV["RBENV_ROOT"].to_s
+      rbenv_root = File.expand_path("~/.rbenv") if rbenv_root.empty?
+      direct = File.join(rbenv_root, "versions", version, "bin", name)
+      return direct if File.executable?(direct)
+
+      rbenv = ENV["RBENV"].to_s
+      rbenv = command_path("rbenv") if rbenv.empty?
+      rbenv = File.join(rbenv_root, "bin", "rbenv") if rbenv.empty?
+      return unless File.executable?(rbenv)
 
       output, status = Open3.capture2e(
         { "RBENV_VERSION" => version },
-        "rbenv", "which", name
+        rbenv, "which", name
       )
       path = output.to_s.strip
       return unless status.success? && File.executable?(path)
 
       path
+    end
+
+    def command_path(name)
+      output, status = Open3.capture2e("command", "-v", name)
+      status.success? ? output.to_s.strip : ""
     end
 
     def pinned_version(root)
