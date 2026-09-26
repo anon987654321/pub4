@@ -209,6 +209,70 @@ class StandingOrdersTest < Minitest::Test
 
   # /orders run executes whatever is due with nobody watching, so a hard reset,
   # a push or doas written as an order must never reach the router.
+
+  FakeStatus = Struct.new(:ok) do
+    def success? = ok
+  end
+
+  test "autocommit pushes after a successful commit" do
+    root = Dir.mktmpdir("master-autocommit-")
+    bus = Struct.new(:events) do
+      def publish(name, **payload)
+        events << [name, payload]
+      end
+    end.new([])
+    calls = []
+    responses = [
+      [" M file.rb\n", FakeStatus.new(true)],
+      ["", FakeStatus.new(true)],
+      ["", FakeStatus.new(true)]
+    ]
+
+    Master::Io::Exec.stub(:capture3, ->(*args, **) { calls << [:status, args]; [" M file.rb\n", nil, FakeStatus.new(true)] }) do
+      Master::Io::Exec.stub(:capture2e, ->(*args, **) { calls << [:run, args]; responses.shift }) do
+        result = Master::Ground::Orders::Autocommit.new(container: { root:, bus: }).call
+
+        assert result.ok?
+        assert_equal true, result.value![:committed]
+        assert_equal true, result.value![:pushed]
+        assert_equal ["git", "-C", File.expand_path("..", root), "commit", "-m", "auto: standing-order commit (1 file(s))"],
+                     calls[1].last
+        assert_equal ["git", "-C", File.expand_path("..", root), "push"], calls[2].last
+        assert_equal [["autocommit:pushed", { files: 1 }]], bus.events
+      end
+    end
+  ensure
+    FileUtils.remove_entry(root) if root && Dir.exist?(root)
+  end
+
+  test "autocommit reports a push failure after the commit lands" do
+    root = Dir.mktmpdir("master-autocommit-")
+    bus = Struct.new(:events) do
+      def publish(name, **payload)
+        events << [name, payload]
+      end
+    end.new([])
+    responses = [
+      ["", FakeStatus.new(true)],
+      ["", FakeStatus.new(true)],
+      ["rejected\n", FakeStatus.new(false)]
+    ]
+
+    Master::Io::Exec.stub(:capture3, ->(*) { [" M file.rb\n", nil, FakeStatus.new(true)] }) do
+      Master::Io::Exec.stub(:capture2e, ->(*) { responses.shift }) do
+        result = Master::Ground::Orders::Autocommit.new(container: { root:, bus: }).call
+
+        assert result.ok?
+        assert_equal true, result.value![:committed]
+        assert_equal false, result.value![:pushed]
+        assert_equal "rejected", result.value![:push_error]
+        assert_equal [["autocommit:push_failed", { error: "rejected" }]], bus.events
+      end
+    end
+  ensure
+    FileUtils.remove_entry(root) if root && Dir.exist?(root)
+  end
+
   def test_run_due_refuses_destructive_commands_before_routing
     routed = []
     pipeline = ->(input) { routed << input.value![:user_message]; Master::Result.ok("ran") }
