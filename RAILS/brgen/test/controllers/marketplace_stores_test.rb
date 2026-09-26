@@ -49,6 +49,14 @@ class MarketplaceStoresTest < ActionDispatch::IntegrationTest
     assert_not_includes response.body, I18n.t("marketplace.payout_release")
   end
 
+  test "a departing owner's shop is not publicly reachable" do
+    @owner.update_columns(deleted_at: Time.current, deletion_scheduled_at: 7.days.from_now)
+    host! "markedsplass.brgen.no"
+
+    get marketplace.shop_path(@store)
+    assert_response :not_found
+  end
+
   test "the owner sees payouts a page at a time" do
     21.times { payout_for_delivery(2.days.ago) }
     sign_in_as(@owner)
