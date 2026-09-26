@@ -53,6 +53,8 @@ en:
     saved_search_default_name: Marketplace search
     all_categories: All
     category: Category
+    move_up: "Move up"
+    move_down: "Move down"
     any_query: Any query
     alerts_on: alerts on
     partner_program: Partner program
