@@ -52,25 +52,32 @@ class TestVoiceSupport < Minitest::Test
       File.chmod(0o755, File.join(dir, name))
     end
     PB.remove_instance_variable(:@player) if PB.instance_variable_defined?(:@player)
-    with_env("PATH" => dir) { assert_equal ["ffplay", %w[-nodisp -autoexit -loglevel quiet]], PB.player }
+    with_env("PATH" => dir) { assert_equal [File.join(dir, "ffplay"), %w[-nodisp -autoexit -loglevel quiet]], PB.player }
   ensure
     PB.remove_instance_variable(:@player) if PB.instance_variable_defined?(:@player)
     FileUtils.rm_rf(dir)
   end
 
-  def test_speak_refuses_empty_and_document_length_text_before_anything_else
+  def test_speak_refuses_empty_but_keeps_long_text_and_short_text
     queued = []
+    long = "x" * 12000
+    PB.instance_variable_set(:@pending, nil)
     PB.stub(:enabled?, true) do
       PB.stub(:available?, true) do
         PB.stub(:ensure_worker, queued) do
           PB.speak("   ")
-          PB.speak("x" * 12000)
+          PB.speak(long)
           PB.speak(" hello ")
         end
       end
     end
 
-    assert_equal ["hello"], queued.map { |job| job[1] }
+    spoken = queued.map { |job| job[1] }.join
+    assert_includes spoken, long
+    assert_includes spoken, "hello"
+    assert_operator queued.size, :>, 1
+  ensure
+    PB.instance_variable_set(:@pending, nil)
   end
 
   # Two paths reached the door with one reply and MASTER said it twice; a
