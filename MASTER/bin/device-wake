@@ -12,6 +12,7 @@ $LOAD_PATH.unshift File.join(ROOT, "lib")
 
 require "master"
 require_relative "../lib/device/wake_word"
+require_relative "../lib/device/wake_signal"
 
 session = Master.boot(root: ROOT)
 container = session.container
@@ -38,6 +39,7 @@ wake.run_forever do |_phrase, _heard|
              end
 
   speak(greeting)
+  Master::Device::WakeSignal.publish(root: ROOT, phrase: _phrase)
   container[:bus]&.publish("device:wake", subject:, phrase: _phrase)
   conversation_deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 20
   loop do
