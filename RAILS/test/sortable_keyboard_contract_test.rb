@@ -18,6 +18,8 @@ class SortableKeyboardContractTest < Minitest::Test
     assert_includes source, 'item.setAttribute("aria-keyshortcuts", "ArrowUp ArrowDown")'
     assert_includes source, 'this.installKeyboardControls()'
     assert_includes source, 'button.textContent = delta < 0 ? "↑" : "↓"'
+    assert_includes source, 'this.identifier'
+    assert_includes source, 'moveBy'
     assert_includes source, 'await this.onUpdate({ item, newIndex: nextIndex })'
   end
 
