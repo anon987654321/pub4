@@ -62,6 +62,29 @@ class WebPushJobTest < ActiveSupport::TestCase
     assert_equal({ "title" => "t", "body" => "b", "url" => "/conversations" }, messages.first)
   end
 
+  test "does not deliver queued pushes after deletion is scheduled" do
+    Rails.application.config.x.vapid = { subject: "mailto:a@b.c", public_key: "x", private_key: "y" }
+    sub = PushSubscription.create!(user: @user, endpoint: "https://push.example/departing", p256dh: "p", auth: "a")
+    @user.update_columns(deleted_at: Time.current, deletion_scheduled_at: 7.days.from_now)
+    called = false
+
+    Webpush.stub(:payload_send, ->(**) { called = true }) do
+      Shared::WebPushJob.new.perform(notification_id: @notification.id)
+    end
+
+    assert_not called
+    assert PushSubscription.exists?(sub.id)
+  end
+
+  test "does not enqueue direct push requests for a departing user" do
+    Rails.application.config.x.vapid = { subject: "mailto:a@b.c", public_key: "x", private_key: "y" }
+    @user.update_columns(deleted_at: Time.current, deletion_scheduled_at: 7.days.from_now)
+
+    assert_no_enqueued_jobs only: Shared::WebPushJob do
+      Shared::Pushable.push_to(@user, title: "t", body: "b")
+    end
+  end
+
   test "a pushable notification enqueues the shared job by notification id" do
     notification = nil
     assert_enqueued_jobs 1, only: Shared::WebPushJob do
