@@ -192,8 +192,10 @@ process. The mission record under `.master/mission.json` is the durable objectiv
 each `FixLoop` execution is one bounded attempt. A supervisor acquires a lease,
 runs the attempt, records completion/blocking/deferment, and wakes again when the
 mission is due. File changes wake the same supervisor rather than launching a
-second fix loop. A crashed process therefore loses an attempt, not the mission:
-the next MASTER process reclaims the expired lease and resumes the objective.
+second fix loop. A crashed process therefore loses an attempt, not the mission: the next MASTER
+process reclaims the expired lease and resumes the objective. During long model
+runs the supervisor renews the lease, and an unexpected in-process supervisor
+failure is restarted with bounded backoff before work is resumed.
 See [fix-supervision.md](docs/fix-supervision.md) for the lifecycle and recovery
 contract.
 
