@@ -168,7 +168,7 @@ class Post < ApplicationRecord
 
   # Whether the post publicly names who wrote it. One answer for every surface
   # that shows an author: the name, the identicon and the structured data.
-  def attributed? = !(anonymous? || user&.guest? || live?)
+  def attributed? = !(anonymous? || user&.guest? || user&.deleted_at.present? || user&.deletion_scheduled_at.present? || live?)
 
   def author_name = attributed? ? (user&.username.presence || "anon") : "anon"
 
