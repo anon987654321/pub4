@@ -237,7 +237,7 @@ module Master
         # know what stood there.
         #
         # Deletion waits for a person. The word is /fix, and an unattended pass —
-        # bin/gate over four trees — adds without deleting.
+        # bin/gate over all three governed trees — adds without deleting.
         #
         # The list is AstFixer::DELETING_TRANSFORMS rather than a copy here: it
         # names methods that class defines, and the copy that stood here gated
