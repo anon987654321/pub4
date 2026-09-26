@@ -53,7 +53,7 @@ module Master
     module QuotaGate
       CATEGORY = :exhausted
       # The exit status a stage takes when a paid tier could not run. Third
-      # state, not a failure and not a pass: RAILS/gates/runner.rb already
+      # state, not a failure and not a pass: MASTER/gates/runner.rb already
       # spends 3 on "inconclusive — nothing measured", and a chain that folds
       # "could not run" into either of the other two is the defect this whole
       # file guards.
