@@ -47,10 +47,10 @@ class StandingOrdersTest < Minitest::Test
     @orders.instance_variable_set(:@orders, previous)
   end
 
-  def test_state_of_falls_back_for_an_unknown_state
+  def test_state_of_parks_an_unknown_state
     assert_equal "pending", @orders.send(:state_of, order)
-    assert_equal "done", @orders.send(:state_of, order("state" => "nonsense"))
-    assert_equal "done", @orders.send(:state_of, order("state" => nil))
+    assert_equal "error", @orders.send(:state_of, order("state" => "nonsense"))
+    assert_equal "error", @orders.send(:state_of, order("state" => nil))
     Orders::VALID_STATES.each { |state| assert_equal state, @orders.send(:state_of, order("state" => state)) }
   end
 
