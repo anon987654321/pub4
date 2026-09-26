@@ -4,9 +4,9 @@
 
      loop1 is the face reading this file aloud, in the voice data/voice.yml
      names, with the ai.brgen.no wordmark in the corner — recorded by
-     RAILS/gates/probes/face_loop_record.rb. loop2 is a shell booting bin/cli,
+     MASTER/gates/probes/face_loop_record.rb. loop2 is a shell booting bin/cli,
      cropped to the boot message and the prompt, recorded by
-     RAILS/gates/probes/shell_loop_record.rb. Its banner is read from
+     MASTER/gates/probes/shell_loop_record.rb. Its banner is read from
      Master::CLI::BootBanner at record time rather than pasted, so changing the
      banner changes the film.
 
