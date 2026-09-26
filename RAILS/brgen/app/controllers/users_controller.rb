@@ -13,7 +13,7 @@ class UsersController < ApplicationController
     # By username as well as id, because the ActivityPub actor advertises
     # https://<city>/users/<username> as its `url` — and a profile link handed
     # to the fediverse that 404s in a browser is worse than not federating.
-    scope = User.includes(:dating_profile)
+    scope = User.public_profiles.includes(:dating_profile)
     @user = scope.find_by(username: params[:id]) || scope.find(params[:id])
     # The same preloads HomeController gives the same partial: the card reads
     # post.image.attached?, one query per post without with_attached_image.
