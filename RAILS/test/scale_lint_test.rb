@@ -3,7 +3,7 @@
 require "yaml"
 require "minitest/autorun"
 require_relative "../shared/lib/operator/scale_lint"
-require_relative "../shared/lib/operator/master_design"
+require_relative "../../MASTER/tools/design/master_design"
 
 # The rhythm axis, ratcheted.
 #
