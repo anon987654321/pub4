@@ -64,9 +64,9 @@ topics:
     files:
       - data/rules.yml
       - lib/design/thresholds.rb
-      - RAILS/gates/support/geometry_type.rb
-      - RAILS/gates/support/geometry_type_walk.js
-      - RAILS/gates/support/geometry_probe.rb
+      - MASTER/gates/support/geometry_type.rb
+      - MASTER/gates/support/geometry_type_walk.js
+      - MASTER/gates/support/geometry_probe.rb
     tests:
       - test/test_design_rules_worn_type.rb
       - RAILS/test/gates/rendered_gates_test.rb
