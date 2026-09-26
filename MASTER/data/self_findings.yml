@@ -416,10 +416,10 @@ registry_finding_members:
   - NO_GOD_CLASS RAILS/brgen/lib/brgen/bergen_demo_seeder.rb:8
   - NO_GOD_CLASS RAILS/brgen/lib/brgen/irc/bridge.rb:10
   - NO_GOD_CLASS RAILS/brgen/lib/brgen/radio_bergen_manifest.rb:7
-  - NO_GOD_CLASS RAILS/gates/lib/rendered/rendered_geometry.rb:26
-  - NO_GOD_CLASS RAILS/gates/lib/research/design_metrics.rb:17
-  - NO_GOD_CLASS RAILS/gates/support/cdp_session.rb:31
-  - NO_GOD_CLASS RAILS/gates/support/geometry_probe.rb:20
+  - NO_GOD_CLASS MASTER/gates/lib/rendered/rendered_geometry.rb:26
+  - NO_GOD_CLASS MASTER/gates/lib/research/design_metrics.rb:17
+  - NO_GOD_CLASS MASTER/gates/support/cdp_session.rb:31
+  - NO_GOD_CLASS MASTER/gates/support/geometry_probe.rb:20
   - NO_GOD_CLASS MASTER/tools/dilla/lib/harmony.rb:1657
   - NO_GOD_CLASS MASTER/tools/dilla/lib/sound.rb:4185
   - SILENT_RESCUE MASTER/lib/core/routing/model_catalog.rb:30
