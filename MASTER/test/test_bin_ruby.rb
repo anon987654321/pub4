@@ -6,7 +6,7 @@ require "tmpdir"
 require "fileutils"
 require_relative "../lib/operator/ruby_runner"
 
-# bin/ruby picks ruby34, ruby3.4 or rbenv's ruby and execs the rest of the line.
+# bin/ruby picks the exact .ruby-version interpreter and execs the rest of the line.
 # Whichever it picks, the line must run under it with its arguments intact.
 class TestBinRuby < Minitest::Test
   BIN = File.expand_path("../bin/ruby", __dir__)
@@ -24,12 +24,12 @@ class TestBinRuby < Minitest::Test
     Dir.mktmpdir do |root|
       fake_bin = File.join(root, "bin")
       FileUtils.mkdir_p(fake_bin)
-      command = File.join(fake_bin, "ruby34")
+      command = File.join(fake_bin, "ruby")
       File.write(command, "#!/bin/sh\n")
       File.chmod(0o755, command)
       ENV["PATH"] = "#{fake_bin}#{File::PATH_SEPARATOR}#{old_path}"
 
-      assert_equal command, Operator::RubyRunner.command_path("ruby34")
+      assert_equal command, Operator::RubyRunner.command_path("ruby")
     ensure
       ENV["PATH"] = old_path
     end
@@ -81,7 +81,7 @@ class TestBinRuby < Minitest::Test
         puts ENV.fetch("FAKE_RBENV_PATH")
       RUBY
       File.chmod(0o755, rbenv)
-      generic = File.join(fake_bin, "ruby34")
+      generic = File.join(fake_bin, "ruby")
       File.write(generic, "#!/bin/sh\\nexit 99\\n")
       File.chmod(0o755, generic)
       File.write(File.join(root, ".ruby-version"), "4.0.7\\n")
