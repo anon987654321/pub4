@@ -283,22 +283,12 @@ the "One chrome", ad system and layout sections bring back for a decision.
   either builds whisper.cpp on the device or names the step that failed.
   Operator: the phone.
 - **The web and terminal faces differ, and only the terminal says they
-  should not.** `lib/cli/face.rb` calls itself "the web face itself", and
-  `face/depth_map.rb` copies `generateFaceDepthMap` by hand; nothing on the web
-  side points back, and nothing checks the copy. Measured 2026-09-25, in the
-  order to close them. Behaviour first, no look involved: the terminal listens
-  while it speaks, with no echo guard where the web face turns its mic down
-  (`window.rb:134`, `face.runtime.js`); it never subscribes to the bus, so
-  `phantom:*`, `pipeline:*`, `llm:*` and `council:*` move only the web face;
-  its idle motion ignores `VOICE_IDLE_SIGNATURES`; a failed turn is lost where
-  the web queues it offline; and the web face lacks the terminal's
-  `IdeaPicture` after a reply. Neither face plays the voice bed that
-  `Voice::Policy#bed` declares. Then a test that paints both depth maps from
-  one seed and compares them. What changes the look waits for the operator:
-  state tint and mood colour, visemes beyond one mouth value, the provider
-  chip, council lanes. Photo upload and camera vision are the browser's by
-  nature and stay there. Done when each gap is closed or argued beside the
-  code, and the depth-map test holds the copy.
+  should not.** Bus parity is now closed for the runtime event families:
+  the terminal subscribes to `llm:**`, `pipeline:**`, `phantom:**` and
+  `council:**`, maps the existing event names into bounded Motion reactions,
+  and removes the subscriptions when the window closes. The remaining gaps
+  are the real-phone echo/idle behaviour, offline failed-turn queueing, voice
+  bed parity, depth-map parity, and the browser-only state/look decisions.
 - **vm23, after the next deploy:** re-probe the one-shot Edge fallback
   (`synthesize_edge_oneshot`) with a real MP3 write, and `test -S
   .master/tts.sock`; `/health` alone is a capability check.
