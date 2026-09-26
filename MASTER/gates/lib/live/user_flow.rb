@@ -3,13 +3,13 @@
 require "yaml"
 require_relative "../../../../OPENBSD/lib/deploy_inventory"
 require_relative "../../../../OPENBSD/lib/gate_result"
-require_relative "../../../tools/crawl_support"
+require_relative "../../../../RAILS/tools/crawl_support"
 require_relative "../../support/gate_autofix"
 require_relative "../../support/brgen_vertical_surfaces"
 require_relative "../../support/guest_flow_persona"
 require_relative "../../support/dom_surface_schema"
 require_relative "../../support/user_flow_design_contracts"
-require_relative "../../../shared/lib/operator/master_design"
+require_relative "../../../tools/design/master_design"
 
 module Deploy
   # Critical-path user flows + MASTER design/principle semantics.
