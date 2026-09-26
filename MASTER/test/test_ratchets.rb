@@ -218,6 +218,19 @@ class TestRatchets < Minitest::Test
     assert_empty rows.reject { |row| row.source.to_s.match?(/\w/) }.map(&:name)
   end
 
+  def test_render_names_the_owner_for_an_off_row
+    rows = [
+      Operator::Ratchets::Row.new(name: "growth.master", current: 11, ceiling: 10,
+                                  direction: :down, source: "MASTER/data/spine.yml"),
+      Operator::Ratchets::Row.new(name: "spine.core_files", current: 5, ceiling: 5,
+                                  direction: :fixed, source: "MASTER/data/spine.yml"),
+    ]
+
+    output = Operator::Ratchets.render(rows)
+
+    assert_match(/growth\.master .*OVER .*\(MASTER\/data\/spine\.yml\)/, output)
+    refute_match(/spine\.core_files .*MASTER\/data\/spine\.yml/, output)
+  end
   # The two spine numbers are not the same kind of thing and must not be reported
   # as if they were: one is a budget, one is an invariant (data/spine.yml's header).
   def test_the_spine_invariant_is_marked_as_one
