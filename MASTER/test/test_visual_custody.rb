@@ -27,13 +27,32 @@ class TestVisualCustody < Minitest::Test
     { surface:, payload: }
   end
 
+  def raw_payload
+    data = baseline
+    {
+      "title" => data["title"],
+      "vw" => data.fetch("viewport").fetch(0),
+      "vh" => data.fetch("viewport").fetch(1),
+      "scroll_width" => data["scroll_width"],
+      "client_width" => data.fetch("viewport").fetch(0),
+      "h1_count" => data["h1_count"],
+      "landmarks" => data["landmarks"],
+      "first_screen" => data["first_screen"],
+      "elements" => data.fetch("elements").map do |element|
+        element.merge("visible" => true, "onscreen" => true)
+      end,
+      "status" => 200,
+      "composition" => { "state" => "resting" },
+    }
+  end
+
   def baseline
     path = File.join(ROOT, "gates", "data", "layout_snapshots", "brgen-messenger-desktop.json")
     JSON.parse(File.read(path))
   end
 
   def test_matching_snapshot_is_preserved
-    payload = baseline.merge("status" => 200, "composition" => { "state" => "resting" })
+    payload = raw_payload
     custody = Master::Fix::VisualCustody.new(root: ROOT, surfaces: [surface])
 
     result = custody.preflight!([capture(payload)])
