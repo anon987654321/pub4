@@ -96,7 +96,7 @@ module Master
         return false unless due?(record)
 
         return true unless record["state"].to_s == "running"
-        return true if record["lease_owner"].to_s == Process.pid.to_s
+        return true if record["lease_owner"].to_s == Mission.instance_id
         return lease_expired?(record)
       end
 
