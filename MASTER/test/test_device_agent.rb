@@ -43,6 +43,7 @@ class TestDeviceAgent < Minitest::Test
       status = Master::Device::Agent.status(root:)
 
       refute_empty result[:subject]
+      refute result.key?(:token)
       assert_equal result[:subject], status[:owner_subject]
       assert_equal "Alex", status[:owner_label]
       assert_equal true, Fiber[:master_paired]
