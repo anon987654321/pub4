@@ -28,11 +28,10 @@ renamed.
 | `MASTER/` | A constitutional AI runtime in pure Ruby. The primary product. | `MASTER/bin/master "<instruction>"` |
 | `RAILS/` | Three Rails 8 apps: **brgen** (a city social network; its verticals are mounted engines), **amber** (wardrobe), **bsdports**. | `RAILS/bin/triangle up` |
 | `OPENBSD/` | The deploy pipeline and the VPS runbook. Production is one box, `vm23`. | `MASTER/bin/operator vps state` |
-| `MASTER/tools/` | Media tools. **dilla** makes beats, **postpro** grades images, **preprompt**/**lora** generate. | `ruby MASTER/tools/dilla/dilla.rb` |
 
 Nothing else sits at the repo root but this file, `TODO.md` — the single
 repo-wide backlog (every per-tree debt/TODO/blocker list was folded into it) —
-and `TREE.md`, the map of the three governed trees plus the MASTER/tools plane. (`WISHLIST.md` folded into `TODO.md`
+and `TREE.md`, the map of the three governed trees. `MASTER/tools/` is the canonical tool plane inside MASTER. (`WISHLIST.md` folded into `TODO.md`
 on 2026-09-06 — one backlog, forward work as its last section.) Build output
 never sits at the root whatever the tool's default: dilla writes to `$PWD`
 unless `DILLA_OUTPUT_DIR` says otherwise, and one session's renders lived at the
