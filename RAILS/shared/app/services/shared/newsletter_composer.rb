@@ -39,6 +39,7 @@ host = host.to_s.strip
     end
 
     def daily(city_name:, stories:, hero: nil, cta_url: nil)
+      @email_campaign = "daily"
       curated = Array(stories).first(5)
       lede = compose_lede(
         kind: :daily,
@@ -62,13 +63,14 @@ host = host.to_s.strip
         stories: curated.map { |story| story_struct(story) },
         deals: [],
         cta_label: "Open #{@app_name}",
-        cta_url:,
+        cta_url: tracked_first_party_url(cta_url),
         permission_line: permission_line(city_name),
         edition_date: edition_today,
       )
     end
 
     def weekly_deals(city_name:, deals:, hero: nil)
+      @email_campaign = "weekly_deals"
       curated = Array(deals).first(6)
       lede = compose_lede(
         kind: :weekly_deals,
@@ -176,10 +178,28 @@ host = host.to_s.strip
       # record and a host raises "wrong number of arguments" — a different
       # ArgumentError from the "Missing host" one, and indistinguishable in a
       # log line that recorded only the class.
-      Rails.application.routes.url_helpers.polymorphic_url(story, **url_options)
+      tracked_first_party_url(Rails.application.routes.url_helpers.polymorphic_url(story, **url_options))
     rescue StandardError => e
       Rails.logger.warn("newsletter url skipped: #{e.class}: #{e.message}")
       nil
+    end
+
+
+    def tracked_first_party_url(url)
+      return url if url.to_s.blank?
+      return url unless @host.present?
+
+      uri = URI.parse(url.to_s)
+      return url unless uri.host.blank? || uri.host == @host
+
+      params = URI.decode_www_form(uri.query.to_s).to_h
+      params["utm_source"] = "brgen"
+      params["utm_medium"] = "email"
+      params["utm_campaign"] = @email_campaign.to_s if @email_campaign.present?
+      uri.query = URI.encode_www_form(params)
+      uri.to_s
+    rescue URI::InvalidURIError
+      url
     end
 
     def story_image_url(story)
