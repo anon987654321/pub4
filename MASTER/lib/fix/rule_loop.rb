@@ -32,6 +32,7 @@ module Master
       CONVERGE_THRESHOLD = 0.05
 
       MIN_SEVERITY = :warning
+      VISUAL_EXTENSIONS = %w[.css .scss .erb .html .htm .js .ts].freeze
 
       SEMANTIC_PASS_CHECKLIST = <<~TEXT.strip
         Before answering, do a semantic pass:
@@ -237,7 +238,7 @@ module Master
           return reject_fix(path, old_src, "test_failed", test: failure)
         end
 
-        if @visual_custody
+        if @visual_custody && visual_source?(path)
           custody = @visual_custody.verify!
           return reject_fix(path, old_src, "visual_regression", evidence: custody.message) unless custody.ok?
         end
@@ -283,6 +284,11 @@ module Master
         limit = [old_lines.size - prefix, new_lines.size - prefix].min
         suffix += 1 while suffix < limit && old_lines[old_lines.size - 1 - suffix] == new_lines[new_lines.size - 1 - suffix]
         [prefix + 1, [new_lines.size - suffix, prefix + 1].max]
+      end
+
+      def visual_source?(path)
+        VISUAL_EXTENSIONS.include?(File.extname(path).downcase) &&
+          path.to_s.include?("/RAILS/")
       end
 
       def reject_fix(path, original, reason, **details)
