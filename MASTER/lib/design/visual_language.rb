@@ -205,6 +205,7 @@ module Master
           reference_lenses=#{Array(DIRECTIONS.fetch(direction)[:references]).join(",")}
           reference_mission=#{DIRECTIONS.fetch(direction)[:reference_mission]}
           external_reference_discipline=#{reference_discipline(direction)}
+          surface_anatomy=#{surface_anatomy(surface)}
         TEXT
       end
 
@@ -256,7 +257,17 @@ module Master
         end
       end
 
-      def reference_context
+      def surface_anatomy(surface)
+        name = surface.app.to_s == "brgen" ? surface.label.to_s : surface.app.to_s
+        rows = reference_study.fetch("vertical_anatomy", {})
+        key = rows.key?(name) ? name : (surface.label.to_s)
+        row = rows[key]
+        return "generic task anatomy" unless row.is_a?(Hash)
+
+        structure = Array(row["structure"]).join(" -> ")
+        "attention=#{row["attention"]}; structure=#{structure}; lenses=#{Array(row["reference_lenses"]).join(",")}"
+      end
+
         study = reference_study
         blocks = study.filter_map do |name, row|
           next unless row.is_a?(Hash)
