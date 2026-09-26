@@ -72,10 +72,12 @@ module Master
       end
 
       def self.which(cmd)
-        ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? do |dir|
-          path = File.join(dir, cmd)
-          File.executable?(path) && !File.directory?(path)
-        end
+        candidates = [
+          "/opt/homebrew/bin/#{cmd}",
+          "/usr/local/bin/#{cmd}",
+          *ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).map { |dir| File.join(dir, cmd) },
+        ]
+        candidates.uniq.any? { |path| File.executable?(path) && !File.directory?(path) }
       end
     end
   end
