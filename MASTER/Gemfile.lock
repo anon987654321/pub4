@@ -191,23 +191,20 @@ GEM
       parser (>= 3.3.7.2)
       prism (~> 1.7)
     ruby-progressbar (1.13.0)
-    ruby_llm (1.16.0)
+    mcp (1.6.0)
+      json_schemer (>= 2.4)
+    ruby_llm (2.0.0)
       base64
       event_stream_parser (~> 1)
       faraday (>= 1.10.0)
       faraday-multipart (>= 1)
       faraday-net_http (>= 1)
       faraday-retry (>= 1)
-      marcel (~> 1)
-      ruby_llm-schema (~> 0)
+      json (< 3)
+      marcel (>= 1, < 3)
+      schematist (~> 1.1)
       zeitwerk (~> 2)
-    ruby_llm-mcp (1.0.1)
-      httpx (~> 1.4)
-      json-schema (>= 5.0, < 7)
-      json_schemer (~> 2.4)
-      ruby_llm (~> 1.9)
-      zeitwerk (~> 2)
-    ruby_llm-schema (0.4.0)
+    schematist (1.1.0)
     securerandom (0.4.1)
     sexp_processor (4.17.5)
     simplecov (0.22.0)
@@ -275,8 +272,10 @@ DEPENDENCIES
   reek (~> 6.4)
   reline (~> 0.6)
   rubocop (~> 1.60)
-  ruby_llm (~> 1.16)
-  ruby_llm-mcp (~> 1.0)
+  event_stream_parser (>= 1.0)
+  faraday (>= 2.0)
+  mcp (~> 1.6)
+  ruby_llm (~> 2.0)
   simplecov
   sqlite3 (~> 2.9)
   tty-command (~> 0.10)
@@ -368,9 +367,6 @@ CHECKSUMS
   rubocop (1.85.1) sha256=3dbcf9e961baa4c376eeeb2a03913dca5e3987033b04d38fa538aa1e7406cc77
   rubocop-ast (1.49.1) sha256=4412f3ee70f6fe4546cc489548e0f6fcf76cafcfa80fa03af67098ffed755035
   ruby-progressbar (1.13.0) sha256=80fc9c47a9b640d6834e0dc7b3c94c9df37f08cb072b7761e4a71e22cff29b33
-  ruby_llm (1.16.0) sha256=26bd5310cf2ce55f74a60f8aae0b0d0327b586ff4532c84828103c3b2b905a18
-  ruby_llm-mcp (1.0.1) sha256=22121bfdea1874935debdd9cee0235d02473885ce8347cf745a323f0707fd248
-  ruby_llm-schema (0.4.0) sha256=e930f5a5316f9301bff3fb7fe572e44727d05bb8e50621001bbb49a47d63b8da
   securerandom (0.4.1) sha256=cc5193d414a4341b6e225f0cb4446aceca8e50d5e1888743fac16987638ea0b1
   sexp_processor (4.17.5) sha256=ae2b48ba98353d5d465ce8759836b7a05f2e12c5879fcd14d7815b026de32f0e
   simplecov (0.22.0) sha256=fe2622c7834ff23b98066bb0a854284b2729a569ac659f82621fc22ef36213a5
