@@ -74,7 +74,7 @@ class Marketplace::SavedSearch < ApplicationRecord
     cutoff = since || last_notified_at || created_at
     scope = Marketplace::Deal.live
               .joins(:listing)
-              .merge(Marketplace::Listing.live)
+              .merge(Marketplace::Listing.publicly_visible)
               .where("marketplace_deals.created_at > ?", cutoff)
 
     scope = scope.where(marketplace_listings: { category_id: category_id }) if category_id.present?
