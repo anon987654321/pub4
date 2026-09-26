@@ -111,6 +111,13 @@ production:
     queue: bulk
     schedule: every 30 minutes
 
+  # One recovery email after four quiet hours, and only for verified users who
+  # explicitly opted into marketplace email.
+  abandoned_cart_reminders:
+    class: AbandonedCartReminderJob
+    queue: bulk
+    schedule: every hour at minute 42
+
   # resume_session mints a real User row for every cookieless visitor, so the
   # table grows with crawler traffic. This removes guest rows only; real
   # accounts leave through purge_deleted_users below, so the two never touch the
