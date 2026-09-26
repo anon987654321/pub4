@@ -7,6 +7,7 @@ module Marketplace
     end
 
     def show?
+      return false unless seller_active?
       return true if owner?
 
       record.status != "removed" && !record.expired?
@@ -35,8 +36,15 @@ module Marketplace
       # on a public index. Expiry is a scope rather than a state change for
       # exactly that reason.
       def resolve
-        scope.live
+        scope.live.joins(:user).where(users: { deleted_at: nil, deletion_scheduled_at: nil })
       end
+    end
+
+    private
+
+    def seller_active?
+      seller = record.user
+      seller.present? && seller.deleted_at.nil? && seller.deletion_scheduled_at.nil?
     end
   end
 end
