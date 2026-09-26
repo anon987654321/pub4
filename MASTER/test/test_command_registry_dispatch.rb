@@ -38,6 +38,12 @@ class TestCommandRegistryDispatch < Minitest::Test
 
   # A `*_commands` method is a table of verbs. Only control_commands exists,
   # and build merges it; slash_commands is the help list, not a table.
+  def test_device_and_hardware_commands_have_distinct_routes
+    assert_equal :dispatch_device_agent, built.fetch("device").method_name
+    assert Registry.respond_to?(:dispatch_device)
+    assert Registry.respond_to?(:dispatch_device_agent)
+  end
+
   def test_critique_is_a_documented_discoverable_command
     assert built.key?("critique")
     assert_includes Registry::HELP_TOPICS.keys, "critique"
