@@ -72,10 +72,6 @@ it. A line leaves when its entry closes; re-order rather than append.
 1. **The ruby_llm 2.0 upgrade, staged.** Entry: RAILS "Audit findings". Done
    when the CVE ignore is gone from `bundler-audit.yml`. After the brgen and
    amber suites are green.
-2. **The event-bus census.** Entry: "Every tree has one fail-open seam". Done
-   when it names the three known orphan topics unprompted; then the face regex
-   renames (Wiring 2) and the mood producer become one decision for the
-   operator.
 3. **The /face ear on a real phone.** Entry: "The /face ear is unproven on a
    phone". Done when a Termux session transcribes one Norwegian and one
    English phrase through pulseaudio and a source-built whisper.cpp.
@@ -1815,12 +1811,13 @@ entry below is the shape, the evidence, and the seam it wants.
 
 - **Every tree has one fail-open seam where absence reads as success.** The
   rendered RAILS seam is now explicit: missing Chrome marks browser gates
-  inconclusive and `runner.rb` exits 3. The remaining seam is a
-  publisher/listener census for MASTER's event bus in the shape of
-  `tools/data_reach.rb` (`tools/snapshot.rb` maps JS event names to
-  subscribers, and nothing maps Ruby publishers). Done when the census names
-  `agent:mood`, `phantom:retry` and `pipeline:start` without being told, since
-  those three are known orphans.
+  inconclusive and `runner.rb` exits 3. MASTER now has an explicit
+  publisher/listener census at `tools/event_bus_reach.rb`, exposed as
+  `bin/operator event-bus [--strict] [--json]`. It parses Ruby publishers and
+  subscribers structurally and records browser listeners and event references,
+  including event names embedded in JS regexes. The known unpublished topics
+  `agent:mood`, `phantom:retry` and `pipeline:start` are therefore discoverable
+  without a hand-maintained orphan list.
 - **A restated value drifts; a derived one cannot.** `voice.yml` vs
   `Policy::FALLBACK`, preprompt's `MODEL_CAPABILITIES` vs live provider
   schemas, rules.yml's ids vs `law/` vs the registry, brgen's inline social
