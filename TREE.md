@@ -86,7 +86,7 @@ The grammar that keeps this map short. The three governed trees stay at the root
 never nested under an `apps/`. Files move only when their location breaks a
 rule, never because a listing would look tidier. `RAILS/shared/` gives nothing
 to a `platform/` until a second app consumes it, and brgen's engines are product
-domains only. `RAILS/gates/` keeps its name: renaming it `verification/` would
+domains only. `MASTER/gates/` keeps its name: renaming it `verification/` would
 move the runner, `gates.yml` and every ownership row for no reader.
 Ownership-free names (`misc/`, `utils/`, `common/`, `old/`) are refused
 everywhere a framework does not dictate them; Rails `app/helpers/` is
