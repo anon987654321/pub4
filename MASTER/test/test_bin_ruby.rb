@@ -18,6 +18,23 @@ class TestBinRuby < Minitest::Test
     assert_match(/\A\d+\.\d+\.\d+ a b,c\z/, out)
   end
 
+  def test_command_path_finds_executables_on_path_without_a_shell_builtin
+    old_path = ENV["PATH"]
+
+    Dir.mktmpdir do |root|
+      fake_bin = File.join(root, "bin")
+      FileUtils.mkdir_p(fake_bin)
+      command = File.join(fake_bin, "ruby34")
+      File.write(command, "#!/bin/sh\n")
+      File.chmod(0o755, command)
+      ENV["PATH"] = "#{fake_bin}#{File::PATH_SEPARATOR}#{old_path}"
+
+      assert_equal command, Operator::RubyRunner.command_path("ruby34")
+    ensure
+      ENV["PATH"] = old_path
+    end
+  end
+
   def test_rbenv_path_uses_the_repo_pinned_version
     old_path = ENV["PATH"]
     old_fake_path = ENV["FAKE_RBENV_PATH"]
