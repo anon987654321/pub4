@@ -12,7 +12,7 @@ class Marketplace::SavedSearch < ApplicationRecord
   # Rows with alerts switched on that the job has not looked at recently. The
   # `notify` column and its "alerts on" chip predate anything that could act on
   # them: saving a search was a bookmark, and ticking the box changed a label.
-  scope :alerting, -> { where(notify: true) }
+  scope :alerting, -> { where(notify: true).joins(:user).where(users: { deleted_at: nil, deletion_scheduled_at: nil }) }
 
   # At most one alert per search per this window, however often the job runs.
   # A quarter-hourly job with a chatty seller would otherwise be a notification
