@@ -3,7 +3,7 @@
 require "set"
 
 module Operator
-  # Who reaches a file, across all four trees, by every spelling this repo
+  # Who reaches a file, across all three governed trees, by every spelling this repo
   # actually uses.
   #
   # This exists because "its only reader is X" has been wrong four times, and
