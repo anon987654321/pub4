@@ -117,18 +117,19 @@ end
 
       # A verified objective is met and stops waking; an errored one waits for
       # /orders reset.
-      def due
+      def due(owner: nil)
         now = Time.now.to_i
         @orders.select do |o|
           o["enabled"] &&
+            (owner.nil? || o["owner"].to_s == owner.to_s) &&
             WAKES.include?(o["trigger"]) &&
             %w[pending done].include?(state_of(o)) &&
             (now - o["last_run_at"].to_i) >= o["interval_s"].to_i
         end
       end
 
-      def run_due!
-        results = due.map { |order| run_one_order(order) }
+      def run_due!(owner: nil)
+        results = due(owner:).map { |order| run_one_order(order) }
         persist if results.any?
         results
       end
