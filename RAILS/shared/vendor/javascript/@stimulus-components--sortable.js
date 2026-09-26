@@ -6,14 +6,46 @@ import { FetchRequest } from "@rails/request.js";
 const _StimulusSortable = class _StimulusSortable extends Controller {
   initialize() {
     this.onUpdate = this.onUpdate.bind(this);
+    this.onKeyboardReorder = this.onKeyboardReorder.bind(this);
+  }
+
+  async onKeyboardReorder(event) {
+    if (event.target === this.element) return;
+    if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
+
+    const item = event.target.closest(":scope > *");
+    if (!item || item.parentElement !== this.element || event.target !== item) return;
+
+    const items = Array.from(this.element.children);
+    const index = items.indexOf(item);
+    const nextIndex = event.key === "ArrowUp" ? index - 1 : index + 1;
+    if (nextIndex < 0 || nextIndex >= items.length) return;
+
+    event.preventDefault();
+    const neighbor = items[nextIndex];
+    if (event.key === "ArrowUp") {
+      this.element.insertBefore(item, neighbor);
+    } else {
+      this.element.insertBefore(item, neighbor.nextSibling);
+    }
+    item.focus();
+
+    const newIndex = Array.from(this.element.children).indexOf(item);
+    await this.onUpdate({ item, newIndex });
   }
   connect() {
     this.sortable = new Sortable(this.element, {
       ...this.defaultOptions,
       ...this.options
     });
+    this.element.addEventListener("keydown", this.onKeyboardReorder);
+    Array.from(this.element.children).forEach((item) => {
+      if (!item.hasAttribute("tabindex")) item.tabIndex = 0;
+      item.setAttribute("aria-keyshortcuts", "ArrowUp ArrowDown");
+    });
   }
   disconnect() {
+    this.element.removeEventListener("keydown", this.onKeyboardReorder);
     this.sortable.destroy(), this.sortable = void 0;
   }
   async onUpdate({ item, newIndex }) {
