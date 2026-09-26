@@ -63,28 +63,6 @@ module Master
       runtime
     end
 
-    def build_fast(root: Dir.pwd)
-      Ground::BootChecks.run(root:)
-      config = Ground::Config.new(root)
-      warn_config_validation(config)
-      boot_config = config.freeze_boot
-      trace = boot_trace(root:, config:)
-      bus = trace[:bus]
-      renderer = Voice::Renderer.new(config:)
-      output_check = Review::OutputCheck.load(root:)
-      output_guard = Voice::OutputGuard.new
-      scanner = build_scanner(root:, bus:)
-      code_index = Review::CodeIndex.new(root:, event_bus: bus)
-      ai = { scanner:, code_index: }
-      infra = trace.merge(config:, boot_config:, renderer:, output_check:, output_guard:, root:)
-      commands = CLI::CommandRegistry.build_fast(infra:, ai:, root:)
-      agent = fast_agent_stub
-      ai[:agent] = agent
-      runtime = infra.merge(ai).merge(commands:, scanner:, root:)
-      pipeline = CLI::Pipeline::Turn.new(container: runtime)
-      runtime.merge(pipeline:)
-    end
-
     def warn_config_validation(config)
       return unless config.respond_to?(:validate) && !config.valid?
 
