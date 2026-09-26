@@ -47,8 +47,8 @@ module Master
         marketplace: {
           school: :commerce_editorial,
           composition: :marketplace_sale,
-          references: %i[kaufland bol],
-          reference_mission: "Kaufland catalogue breadth and campaign entry points; bol cleanliness, service clarity, recommendation rails, and restrained product chrome",
+          references: %i[bol kaufland x hey],
+          reference_mission: "bol-first commerce craft: search-led discovery, category wayfinding, useful filters, comparison-rich results, clear price/availability/trust, and calm purchase actions; Kaufland breadth remains a secondary catalogue lens",
           match: /markedsplass|market|listing|shop|order/i,
           density: :high, warmth: :local, formality: :practical, contrast: :clear,
           ornament: :low, motion: :functional, materiality: :physical,
@@ -250,7 +250,13 @@ module Master
           Array(study.dig("antigravity", "useful_patterns")).first(5).join(",")
         when :local_social
           Array(study.dig("x", "useful_patterns")).first(5).join(",")
-        when :marketplace, :transactional_food
+        when :marketplace
+          [
+            *Array(study.dig("bol", "useful_patterns")).first(6),
+            *Array(study.dig("x", "useful_patterns")).first(2),
+            *Array(study.dig("hey", "useful_patterns")).first(2)
+          ].join(",")
+        when :transactional_food
           Array(study.dig("hey", "useful_patterns")).first(5).join(",")
         else
           Array(study.dig("shared_principles")).first(5).join(",")
