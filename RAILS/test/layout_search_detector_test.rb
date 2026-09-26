@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../gates/support/layout_search"
-require_relative "../gates/lib/research/layout_search"
+require_relative "../../MASTER/gates/support/layout_search"
+require_relative "../../MASTER/gates/lib/research/layout_search"
 
 # The gate's own fixture pair, the way every law in MASTER carries one: a
 # tree-shape the detector must read as photo_first and one it must read as
