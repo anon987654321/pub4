@@ -15,7 +15,7 @@ _operator() {
     'post-pull:the checklist after a pull'
     'worktree:own checkout, or finish one'
     'rules:one rule, its exemption, and what it finds'
-    'readers:who reaches this file, across all four trees'
+    'readers:who reaches this file, across all three governed trees'
     'hooks:install the shared-tree commit guard'
     'vps:state, deploy or logs on the box'
     'pushed?:is this content on origin/main'
