@@ -4,7 +4,7 @@
 #
 # Process (monthly):
 #   1. Add ~20 labeled screens (fixture or captured HTML path)
-#   2. ruby RAILS/gates/runner.rb calibration
+#   2. ruby MASTER/gates/runner.rb calibration
 #   3. Review false positives/negatives + weight suggestions
 #   4. Optionally apply: GATE_CALIBRATION_APPLY=1
 #
