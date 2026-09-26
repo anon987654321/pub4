@@ -19,6 +19,14 @@ class TestPhoenix < Minitest::Test
     assert_equal "studio", Master::Phoenix.boundary_for("tools/runs.rb")
   end
 
+  def test_scope_follows_target_granularity
+    assert_equal ["master"], Master::Phoenix.scope_for("lib/master.rb")
+    assert_equal ["studio"], Master::Phoenix.scope_for("tools")
+    assert_equal ["rails"], Master::Phoenix.scope_for("../RAILS")
+    assert_equal %w[master studio], Master::Phoenix.scope_for(Master::ROOT)
+    assert_equal %w[master openbsd rails studio], Master::Phoenix.scope_for(Master::REPO_ROOT)
+  end
+
   def test_provenance_requires_the_five_architectural_facts
     dir = Dir.mktmpdir("phoenix")
     entry = Master::Phoenix.record_change(
