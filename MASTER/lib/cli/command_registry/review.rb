@@ -12,7 +12,7 @@ module Master
       SNAPSHOT_DIR_FILE_BYTES = 1_200
       SNAPSHOT_DIR_TOTAL_BYTES = 32_000
       SNAPSHOT_DIR_FILE_LIMIT = 40
-      SNAPSHOT_EXTENSIONS = %w[.rb .erb .yml].freeze
+      SNAPSHOT_EXTENSIONS = %w[.rb .erb .js .yml].freeze
       SNAPSHOT_SKIP_SEGMENTS = %w[
         .git .bundle node_modules vendor tmp log coverage storage cache dist build knowledge public var
       ].freeze
@@ -44,6 +44,8 @@ module Master
         end
       end
 
+      MAX_FIX_GATE_ROUNDS = Integer(ENV.fetch("MASTER_FIX_GATE_ROUNDS", "5"))
+
       def dispatch_fix(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, swarm: nil, **_legacy)
         raw = arg_for(ctx).to_s.strip
         apply, _critique, aesthetic, _only, target = parse_pass_flags(raw)
@@ -51,6 +53,28 @@ module Master
           run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
                    target:, apply: apply.nil? || apply, critique: false, aesthetic:, only: "fix")
         end
+        return rendered unless apply.nil? || apply
+
+        gate_rounds = 0
+        loop do
+          status, changed = Operator::GateChain.verify_fix(target: Master::CLI::Pipeline::TargetResolver.instance_method(:resolve_target).bind(Object.new.tap do |o|
+            o.instance_variable_set(:@root, root)
+          end).call(target))
+          gate_rounds += 1
+          break if status == 0 && changed.empty?
+          break if changed.empty? || gate_rounds >= MAX_FIX_GATE_ROUNDS
+
+          rendered = [rendered, "gate: verification changed #{changed.size} file(s); re-entering /fix"].join("\n")
+          rendered = with_dmesg_verbosity(raw) do
+            run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
+                     target:, apply: true, critique: false, aesthetic:, only: "fix")
+          end
+        end
+
+        if gate_rounds >= MAX_FIX_GATE_ROUNDS
+          rendered = [rendered, "fix: gate verification reached #{MAX_FIX_GATE_ROUNDS} rounds without a stable tree"].join("\n")
+        end
+
         return rendered unless Master::Fix::CodeWatch.requested?
 
         # A run that stopped for newer code continues on it, in this process.
