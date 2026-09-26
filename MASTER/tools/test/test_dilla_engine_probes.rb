@@ -165,6 +165,28 @@ class TestDilla < Minitest::Test
     refute_includes result.fetch("dispatch_keys"), "camel"
   end
 
+  def test_unknown_command_exits_nonzero
+    result = eval_in_engine(<<~RUBY)
+      dispatch = DISPATCH["__does_not_exist__"]
+      status = if dispatch
+                 0
+               else
+                 1
+               end
+      puts JSON.generate(status:)
+    RUBY
+
+    assert_equal 1, result.fetch("status")
+  end
+
+  def test_demo_all_refuses_a_partial_catalogue
+    result = eval_in_engine(<<~RUBY)
+      puts JSON.generate(source: File.read(ENGINE).include?("refusing to publish a partial demo"))
+    RUBY
+
+    assert result.fetch("source"), "demo-all must refuse partial output"
+  end
+
   def test_stream_defaults_keep_style_dna_not_creative_max
     result = eval_in_engine(<<~RUBY)
       %w[STREAM_CREATIVE STREAM_PUNCH STREAM_COMFORT DILLA_COMFORT LA_BEAT_PROGRESSION
