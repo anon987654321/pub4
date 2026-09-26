@@ -13,7 +13,7 @@ module Deploy
     # OPENBSD/gates/domain_alignment.rb does, so the sentence is enforced by
     # being the only way the host is spelled. Source text rather than the
     # constant, because a gate must not need the Rails app booted.
-    REGISTRY = File.expand_path("../../brgen/lib/brgen/domain_registry.rb", __dir__)
+    REGISTRY = File.expand_path("../../../RAILS/brgen/lib/brgen/domain_registry.rb", __dir__)
 
     def self.registry_subdomain(constant)
       @registry_text ||= File.read(REGISTRY)
