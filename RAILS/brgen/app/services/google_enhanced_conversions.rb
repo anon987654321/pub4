@@ -189,16 +189,22 @@ module GoogleEnhancedConversions
     end
 
     def ingest!(events:, validate_only: false)
+      destination = {
+        "operatingAccount" => {
+          "accountType" => "GOOGLE_ADS",
+          "accountId" => customer_id
+        },
+        "productDestinationId" => conversion_action_id
+      }
+      if login_customer_id
+        destination["loginAccount"] = {
+          "accountType" => "GOOGLE_ADS",
+          "accountId" => login_customer_id
+        }
+      end
+
       body = {
-        "destinations" => [
-          {
-            "operatingAccount" => {
-              "accountType" => "GOOGLE_ADS",
-              "accountId" => customer_id
-            },
-            "productDestinationId" => conversion_action_id
-          }
-        ],
+        "destinations" => [ destination ],
         "encoding" => "HEX",
         "events" => events,
         "validateOnly" => validate_only
@@ -214,7 +220,7 @@ module GoogleEnhancedConversions
       req = Net::HTTP::Post.new(uri)
       req["Authorization"] = "Bearer #{access_token}"
       req["Content-Type"] = "application/json"
-      req["login-customer-id"] = login_customer_id if login_customer_id
+      req["login-account"] = "accountTypes/GOOGLE_ADS/accounts/#{login_customer_id}" if login_customer_id
       req.body = JSON.generate(body)
 
       res = Net::HTTP.start(uri.host, uri.port, use_ssl: true, open_timeout: 10, read_timeout: 30) do |http|
