@@ -10,7 +10,7 @@ require_relative "../lib/gate_environment"
 INTEGRITY_ROOT = File.expand_path("../..", __dir__)
 
 # Exit 3 is how a subprocess gate says it measured nothing: crawl_probe with no
-# app listening, as RAILS/gates/runner.rb's SUBPROCESS_INCONCLUSIVE reads it.
+# app listening, as MASTER/gates/runner.rb's SUBPROCESS_INCONCLUSIVE reads it.
 INTEGRITY_INCONCLUSIVE = 3
 
 # The gate's own command, run from the repo root. Returns [output, verdict],
