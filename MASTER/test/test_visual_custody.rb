@@ -65,7 +65,7 @@ class TestVisualCustody < Minitest::Test
     result = custody.preflight!([capture(payload)])
 
     refute result.ok?
-    assert_equal :policy, result.category
+    assert_equal :inconclusive, result.category
     assert_includes result.message, "missing committed baseline"
   end
 end
