@@ -58,18 +58,17 @@ class TestPersonalWorkspace < Minitest::Test
     Master::Device::Agent.stub(:paired?, true) do
       Master::Device.stub(:android?, true) do
         Master::Device::Agent.stub(:owner_subject, "owner123") do
-        Fiber[:master_pair_subject] = nil
-        Fiber[:master_visitor] = nil
-        tool = Master::Io::MemoryRecord.new(memory: nil, root: @root)
-        result = tool.call(key: "likes_tea", description: "pref", body: "drinks tea", type: "user")
-        assert result.ok?, result.inspect
-        assert_includes result.value!, "owner123/MEMORY.md"
-        ensure
           Fiber[:master_pair_subject] = nil
           Fiber[:master_visitor] = nil
+          tool = Master::Io::MemoryRecord.new(memory: nil, root: @root)
+          result = tool.call(key: "likes_tea", description: "pref", body: "drinks tea", type: "user")
+          assert result.ok?, result.inspect
+          assert_includes result.value!, "owner123/MEMORY.md"
         end
       end
     end
+    Fiber[:master_pair_subject] = nil
+    Fiber[:master_visitor] = nil
   end
 
   def test_memory_record_writes_to_workspace_when_paired
