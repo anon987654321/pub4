@@ -131,6 +131,35 @@ module Master
         nil
       end
 
+      ANSI = /\e\\[[0-9;?]*[A-Za-z]/
+      VERDICT = /\\b(?:fail(?:ed|ures?)?|errors?|offen[cs]es?|violations?|exceed(?:s|ed)?|missing|expected|refused)\\b/i
+      FINDING = Regexp.union(/:\\d+\\b/, VERDICT)
+      FINDING_LIMIT = 8
+
+      def line(unit, parent, detail) = "#{unit} at #{parent}: #{detail}"
+
+      def plain(text) = text.to_s.scrub.gsub(ANSI, "").delete("\\r")
+
+      def collapse(lines)
+        lines.map(&:chomp).chunk_while { |a, b| a == b }.map do |run|
+          run.size > 1 ? "#{run.first} ×#{run.size}" : run.first
+        end
+      end
+
+      def findings(text, limit: FINDING_LIMIT)
+        lines = collapse(plain(text).lines).reject { |candidate| candidate.strip.empty? }
+        hits = lines.grep(FINDING)
+        picked = hits.empty? ? lines.last(limit) : hits.first(limit)
+        picked.map { |finding| finding.strip[0, 200] }
+      end
+
+      def duration(seconds)
+        return format("%.1fs", seconds) if seconds < 60
+
+        minutes, rest = seconds.round.divmod(60)
+        "#{minutes}m #{rest}s"
+      end
+
       def counted(number, noun) = "#{number} #{noun}#{"s" unless number == 1}"
 
       def pastel
