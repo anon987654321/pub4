@@ -144,6 +144,23 @@ class TestFixLoopCommitter < Minitest::Test
 
   # An explicit fix owns its target: a change already sitting in a target
   # file is committed with the fix, and a dirty path outside it is not.
+  def test_architecture_scope_blocks_an_unowned_path
+    git = FakeGit.new([], ["RAILS/apps.yml", "TODO.md"])
+    bus = FakeBus.new
+    committer = Master::Fix::FixLoop::Committer.new(git:, bus:, root: Master::REPO_ROOT)
+    committer.baseline!(scope: ["rails"])
+    committer.commit_if_dirty("fix: rails", owned_paths: [
+      File.join(Master::REPO_ROOT, "RAILS/apps.yml"),
+      File.join(Master::REPO_ROOT, "TODO.md")
+    ])
+
+    assert_empty git.commits
+    assert_equal 0, git.pushes
+    event = bus.events.find { |name, _| name == "fix_loop:commit_blocked" }
+    assert_equal "architecture_scope", event.last[:reason]
+    assert_equal ["unowned"], event.last[:boundaries]
+  end
+
   def test_architecture_scope_blocks_a_cross_boundary_commit
     git = FakeGit.new([], ["RAILS/apps.yml", "MASTER/README.md"])
     bus = FakeBus.new

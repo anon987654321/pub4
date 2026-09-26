@@ -268,9 +268,9 @@ module Master
 
           foreign = Array(paths).filter_map do |path|
             boundary = Master::Phoenix.boundary_for(path, root: @root)
-            next if boundary.nil? || @boundary_scope.include?(boundary)
+            next if boundary && @boundary_scope.include?(boundary)
 
-            [path, boundary]
+            [path, boundary || "unowned"]
           end
           return true if foreign.empty?
 
