@@ -38,7 +38,9 @@ class AbandonedCartReminderJobTest < ActiveJob::TestCase
     ActsAsTenant.current_tenant = @city
   end
 
-  teardown { ActsAsTenant.current_tenant = nil }
+  def teardown
+    ActsAsTenant.current_tenant = nil
+  end
 
   test "sends one reminder to a verified marketing subscriber" do
     EmailSubscription.create!(email: @buyer.email_address, confirmed: true, agreed_to_marketing: true)
