@@ -7,7 +7,7 @@ require_relative "gate_probe_harness"
 require_relative "../../../OPENBSD/gates/port_inventory"
 
 # port_inventory moved to OPENBSD/gates on 2026-09-11 and kept its row in
-# RAILS/gates/gates.yml, so its ROOT is now two levels up rather than three. Three
+# MASTER/gates/gates.yml, so its ROOT is now two levels up rather than three. Three
 # gates broke on exactly that arithmetic during the move — one went looking for
 # /Users/mac/Documents/GitHub/RAILS/apps.yml — and the fail-open runner called it
 # errored rather than failed, which is the quietest way for a gate to stop
