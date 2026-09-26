@@ -8,7 +8,7 @@ gem "psych"
 gem "yaml"
 
 gem "ruby_llm", "~> 2.0"
- gem "mcp", "~> 1.6"
+gem "mcp", "~> 1.6"
 gem "event_stream_parser", ">= 1.0"
 gem "faraday", ">= 2.0"
 gem "ruby_llm-mcp", "~> 1.0"
