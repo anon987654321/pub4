@@ -10,6 +10,9 @@ class AbandonedCartMailer < ApplicationMailer
                            .where(marketplace_checkout_id: checkout.id)
                            .includes(:listing, :variant)
     @cart_url = cart_url(host: mail_host, protocol: "https")
+    if (subscription = EmailSubscription.find_by(email: @user.email_address))
+      @preferences_url = email_subscription_url(token: subscription.token, host: mail_host, protocol: "https")
+    end
     mail to: @user.email_address,
          subject: I18n.t("mailer.abandoned_cart_subject", count: @orders.size)
   end
