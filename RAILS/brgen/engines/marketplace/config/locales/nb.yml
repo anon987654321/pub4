@@ -11,6 +11,8 @@
 nb:
   marketplace:
     inspire_heading: "Nytt i %{city}"
+    move_up: "Flytt opp"
+    move_down: "Flytt ned"
     browse_categories: "Utforsk kategorier"
     seller_badge: "Selger: %{name}"
     utility:
