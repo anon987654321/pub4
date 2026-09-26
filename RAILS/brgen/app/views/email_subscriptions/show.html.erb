@@ -1,4 +1,4 @@
-<main class="content-column" data-controller="email-preferences">
+<main class="form-wrap">
   <h1><%= t("email_preferences.title") %></h1>
   <p><%= t("email_preferences.intro") %></p>
 
@@ -12,7 +12,7 @@
       <p><%= t("email_preferences.marketing_help") %></p>
     </fieldset>
 
-    <%= form.submit t("email_preferences.save") , class: "btn" %>
+    <%= form.submit t("email_preferences.save"), class: "btn" %>
   <% end %>
 
   <hr>
