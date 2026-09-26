@@ -78,8 +78,8 @@ class SitemapsController < ApplicationController
   end
 
   def tv_entries
-    entries_for(Tv::Channel.in_current_city, changefreq: "weekly", priority: "0.6") { |c| tv.channel_url(c) } +
-      entries_for(Tv::Video.published.in_current_city, changefreq: "monthly", priority: "0.5") { |v| tv.video_url(v) }
+    entries_for(Tv::Channel.publicly_visible.in_current_city, changefreq: "weekly", priority: "0.6") { |c| tv.channel_url(c) } +
+      entries_for(Tv::Video.publicly_visible.in_current_city, changefreq: "monthly", priority: "0.5") { |v| tv.video_url(v) }
   end
 
   def playlist_entries
@@ -92,7 +92,7 @@ class SitemapsController < ApplicationController
   end
 
   def marketplace_entries
-    entries_for(Marketplace::Store.active.in_current_city, changefreq: "weekly", priority: "0.6") { |s| marketplace.shop_url(s) } +
+    entries_for(Marketplace::Store.publicly_visible.in_current_city, changefreq: "weekly", priority: "0.6") { |s| marketplace.shop_url(s) } +
       entries_for(Marketplace::Listing.live.in_current_city, changefreq: "daily", priority: "0.7") { |l| marketplace.listing_url(l) } +
       entries_for(Marketplace::Deal.live.in_current_city, changefreq: "daily", priority: "0.6") { |d| marketplace.deal_url(d) }
   end
