@@ -34,17 +34,30 @@ jobs:
         env:
           RAILS_ENV: test
         run: |
-          bundle exec ruby -Itest test/services/dintero_client_test.rb
-          bundle exec ruby -Itest test/services/dintero_signature_test.rb
-          bundle exec ruby -Itest test/services/dintero_checkout_test.rb
-          bundle exec ruby -Itest test/services/dintero_checkout_contract_test.rb
-          bundle exec ruby -Itest test/services/dintero_hooks_test.rb
-          bundle exec ruby -Itest test/services/dintero_schema_contract_test.rb
-          bundle exec ruby -Itest test/services/dintero_webhook_delivery_test.rb
-          bundle exec ruby -Itest engines/marketplace/test/controllers/marketplace/webhooks_controller_test.rb
-          bundle exec ruby -Itest test/controllers/marketplace_returns_test.rb
+          mkdir -p tmp
+          set -o pipefail
+          {
+            bundle exec ruby -Itest test/services/dintero_client_test.rb
+            bundle exec ruby -Itest test/services/dintero_signature_test.rb
+            bundle exec ruby -Itest test/services/dintero_checkout_test.rb
+            bundle exec ruby -Itest test/services/dintero_checkout_contract_test.rb
+            bundle exec ruby -Itest test/services/dintero_hooks_test.rb
+            bundle exec ruby -Itest test/services/dintero_schema_contract_test.rb
+            bundle exec ruby -Itest test/services/dintero_webhook_delivery_test.rb
+            bundle exec ruby -Itest engines/marketplace/test/controllers/marketplace/webhooks_controller_test.rb
+            bundle exec ruby -Itest test/controllers/marketplace_returns_test.rb
+          } 2>&1 | tee tmp/brgen-marketplace-contracts.log
 
       - name: Marketplace payout isolation
         env:
           RAILS_ENV: test
         run: bundle exec ruby -Itest test/models/marketplace_payout_test.rb
+
+      - name: Capture contract failure output
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: brgen-marketplace-contract-failure
+          path: RAILS/brgen/tmp/brgen-marketplace-contracts.log
+          if-no-files-found: error
+          retention-days: 7
