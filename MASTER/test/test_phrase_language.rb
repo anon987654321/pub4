@@ -41,7 +41,7 @@ class TestPhraseLanguage < Minitest::Test
   def test_a_mixed_reply_splits_into_phrases_of_different_languages
     text = "Det ser faktisk riktig ut. The problem is in the event bridge."
     emotion = Master::Voice::Emotion.analyze(text)
-    plan = M.plan(text, emotion, melodic: false, languages: { nb: :finn })
+    plan = M.plan(text, emotion, melodic: false, languages: T.phrase_languages(T::DEFAULTS))
 
     assert_equal 2, plan[:phrases].length
     assert_equal :pernille, plan[:phrases][0][:voice]
