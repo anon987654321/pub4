@@ -111,14 +111,14 @@ class TestCliReplExit < Minitest::Test
   # The pause is for the prompt to re-arm: a ^C written while Reline is between
   # two readline calls is read as input rather than raising.
   def test_ctrl_c_at_the_prompt_exits_cleanly
-    output, status = drive { |terminal| 2.times { terminal.write("\x03"); sleep 1.2 } }
+    output, status = drive { |terminal| 2.times { write_terminal(terminal, "\x03"); sleep 1.2 } }
 
     assert_equal 0, status.exitstatus, output
     refute_match(/Error|from .+\.rb:\d+/, output)
   end
 
   def test_ctrl_d_at_the_prompt_exits_cleanly
-    output, status = drive { |terminal| terminal.write("\x04") }
+    output, status = drive { |terminal| write_terminal(terminal, "\x04") }
 
     assert_equal 0, status.exitstatus, output
     refute_match(/Error|from .+\.rb:\d+/, output)
@@ -171,6 +171,12 @@ class TestCliReplExit < Minitest::Test
       _, status = Process.waitpid2(pid)
       return [output, status]
     end
+  end
+
+  def write_terminal(writer, bytes)
+    writer.write(bytes)
+  rescue Errno::EIO, Errno::EPIPE
+    nil
   end
 
   def read_until(reader, output, pattern, seconds)
