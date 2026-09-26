@@ -84,7 +84,7 @@ class ChromeI18nLintTest < Minitest::Test
     refute_match(Operator::ChromeI18nLint::EMPTY_TITLE, sample)
   end
 
-  # RAILS/gates/GATE_ADEQUACY.md gap 2: a screen-reader user on :nb hears
+  # MASTER/gates/GATE_ADEQUACY.md gap 2: a screen-reader user on :nb hears
   # English for every one of these, and nothing counted them.
   def test_detects_hardcoded_aria_labels_in_both_spellings
     [
