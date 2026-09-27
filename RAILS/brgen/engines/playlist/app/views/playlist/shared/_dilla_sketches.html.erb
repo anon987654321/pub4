@@ -8,10 +8,6 @@
 <% rich_form = local_assigns.fetch(:rich_form, false) %>
 <section role="region" aria-label="<%= t("aria.dilla_sketches") %>">
   <h2><%= t("playlist.dilla_sketches") %></h2>
-  <p>
-    <%= t("playlist.sketches_blurb") %>
-    <a href="/dilla/dilla.html<%= local_assigns[:lab_query] %>" target="_blank" rel="noopener">dilla.html</a>
-  </p>
   <% if sketches.any? %>
     <% sketches.each do |sk| %>
       <div class="dilla-sketch">
