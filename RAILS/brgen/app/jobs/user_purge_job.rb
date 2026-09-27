@@ -88,7 +88,12 @@ class UserPurgeJob < ApplicationJob
     former_email = user.try(:email_address)
 
     ActiveRecord::Base.transaction do
-      DESTROY.each { |row| resolve!(row[:model]).where(row[:key] => user.id).find_each(&:destroy) }
+      DESTROY.each do |row|
+        model = resolve!(row[:model])
+        next unless model
+
+        model.where(row[:key] => user.id).find_each(&:destroy)
+      end
       NULLIFY.each { |row| nullify(row, user) }
       erase_email_subscription(former_email)
       anonymise(user)
@@ -114,6 +119,8 @@ class UserPurgeJob < ApplicationJob
 
   def nullify(row, user)
     model = resolve!(row[:model])
+    return unless model
+
     columns = row[:columns].select { |c| model.column_names.include?(c.to_s) }
     return if columns.empty?
 
@@ -133,6 +140,7 @@ class UserPurgeJob < ApplicationJob
   # becomes available.
   def resolve!(name)
     model = name.safe_constantize
+    return unless model
     return model if model.respond_to?(:table_exists?) && model.table_exists?
 
     raise "erasure dependency unavailable: #{name}"
