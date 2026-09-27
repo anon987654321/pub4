@@ -6,7 +6,7 @@ module Shared
   # GDPR article 15 export. AccountSettingsController#export named this class from AN212 on; nobody wrote it.
   class AccountExporter
     HEADERS = %w[section record field value].freeze
-    SECRET_COLUMNS = %w[password_digest otp_secret].freeze
+    SECRET_COLUMNS = %w[password_digest otp_secret private_key].freeze
     SECRET_SUFFIXES = %w[_token _digest _secret].freeze
 
     def self.call(user) = new(user).to_csv
