@@ -49,7 +49,7 @@ class CreatorProfilesController < ApplicationController
   end
 
   def set_public_profile
-    @profile = CreatorProfile.includes(user: :privacy_setting).find_by!(handle: params[:handle])
+    @profile = CreatorProfile.publicly_visible.includes(user: :privacy_setting).find_by!(handle: params[:handle])
   end
 
   def creator_profile_params
