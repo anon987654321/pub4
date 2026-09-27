@@ -279,9 +279,8 @@ exactly the reason stated above.
 Tempo then follows from length rather than the other way round — `bpm = 240 ×
 bars ÷ seconds` returns all four declared tempos exactly (92, 96, 92, 114).
 That direction matters: onset-based tempo detection has nothing to work with on
-a sustained passage, and `RadioBergenStudy::DeepAudio.estimate_bpm` reports the
-median onset gap, which on this broadcast returned 66.7 BPM for four unrelated
-passages — 66.7 being 18 frames of 0.05s, not a tempo. When no bar count puts a
+a sustained passage, and `the retired Radio Bergen study used the median onset gap here, which returned
+66.7 BPM for four unrelated passages — 66.7 being 18 frames of 0.05s, not a tempo. When no bar count puts a
 length in 70–140 BPM the row carries `bpm 0`, which the loop filter already
 reads as "play at native speed".
 
