@@ -38,21 +38,6 @@ class Playlist::DillaSketch < ApplicationRecord
     )
   end
 
-  def lab_url(base = "/dilla/dilla.html")
-    hash = encode_lab_state
-    q = "sketch_id=#{id}"
-    q += "&playlist_id=#{playlist_id}" if playlist_id
-    q += "&set_id=#{set_id}" if set_id
-    return "#{base}?#{q}" if hash.blank?
-
-    "#{base}?#{q}##{hash}"
-  end
-
-  def encode_lab_state
-    JSON.dump(to_lab_hash).then { |s| Base64.strict_encode64(s) }
-  rescue StandardError
-    ""
-  end
 
   def enqueue_render!(publish: true)
     update!(render_status: "queued", render_error: nil)
