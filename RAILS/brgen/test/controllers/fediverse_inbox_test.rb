@@ -106,6 +106,19 @@ class FediverseInboxTest < ActionDispatch::IntegrationTest
 
   # Delivery retries on any non-2xx and several implementations retry
   # optimistically, so the same activity arriving twice is routine.
+  test "a failed handler leaves the activity retryable" do
+    activity = follow_activity
+    processor = Fediverse::InboxProcessor.new(activity, @actor)
+    processor.define_singleton_method(:handle_follow) { raise "temporary delivery failure" }
+
+    assert_raises(RuntimeError) { processor.call }
+    assert_not FediActivity.exists?(uri: activity["id"])
+
+    processor.define_singleton_method(:handle_follow) { :accepted }
+    assert_equal :accepted, processor.call
+    assert FediActivity.exists?(uri: activity["id"])
+  end
+
   test "the same activity delivered twice is processed once" do
     activity = follow_activity
 
