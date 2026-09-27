@@ -43,8 +43,13 @@ module Marketplace
     private
 
     def seller_active?
-      seller = record.user
-      seller.present? && seller.deleted_at.nil? && seller.deletion_scheduled_at.nil?
+      return false unless record.user_id
+
+      User.where(
+        id: record.user_id,
+        deleted_at: nil,
+        deletion_scheduled_at: nil
+      ).exists?
     end
   end
 end
