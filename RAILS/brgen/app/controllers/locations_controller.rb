@@ -44,7 +44,7 @@ class LocationsController < ApplicationController
     return head :ok unless moved || due
 
     # Broadcast to each nearby user that I just arrived/am still near.
-    User.nearby(lat, lng, ALERT_RADIUS_KM).each do |other|
+    User.messageable.nearby(lat, lng, ALERT_RADIUS_KM).each do |other|
       next if other == me
       next if other.distance_to(lat, lng).to_f > ALERT_RADIUS_KM
 
