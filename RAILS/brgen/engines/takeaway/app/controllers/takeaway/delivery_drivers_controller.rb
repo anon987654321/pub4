@@ -2,12 +2,13 @@
 
 module Takeaway
   class DeliveryDriversController < ApplicationController
-    before_action :set_driver, only: %i[show update]
+    before_action :set_public_driver, only: :show
+    before_action :set_driver, only: :update
     before_action :require_real_user, only: :update
     before_action :authorize_owner!, only: :update
 
     def index
-      @delivery_drivers = Takeaway::DeliveryDriver.available.includes(:user).limit(100)
+      @delivery_drivers = Takeaway::DeliveryDriver.publicly_available.includes(:user).limit(100)
     end
 
     def show
@@ -23,9 +24,11 @@ module Takeaway
 
     private
 
+    def set_public_driver
+      @delivery_driver = Takeaway::DeliveryDriver.publicly_visible.includes(:user).find(params[:id])
+    end
+
     def set_driver
-      # includes(:user): show names the driver, and strict loading raises on a
-      # lazy belongs_to read off a record found by id.
       @delivery_driver = Takeaway::DeliveryDriver.includes(:user).find(params[:id])
     end
 
