@@ -209,6 +209,18 @@ class UserPurgeJobTest < ActiveJob::TestCase
     end
   end
 
+  test "a missing erasure dependency leaves the account queued for retry" do
+    ActsAsTenant.with_tenant(@city) do
+      @user.update_columns(deleted_at: Time.current, deletion_scheduled_at: 1.day.ago)
+      job = UserPurgeJob.new
+      job.define_singleton_method(:resolve!) { |_name| raise "simulated missing table" }
+
+      assert_raises(RuntimeError) { job.send(:erase!, @user) }
+      assert_equal 1.day.ago.to_date, @user.reload.deletion_scheduled_at.to_date,
+                   "a failed erasure must remain eligible for the next purge run"
+    end
+  end
+
   test "erasure runs as one database transaction" do
     ActsAsTenant.with_tenant(@city) do
       transactional = false
