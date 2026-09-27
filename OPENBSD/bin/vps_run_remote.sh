@@ -22,6 +22,8 @@ VM=${SSH_USER}@${SSH_HOST}
 HYP=${HYPERVISOR:-dev@server4.openbsd.amsterdam}
 HYP_PORT=${HYP_PORT:-31415}
 REMOTE_LOG=/tmp/pub4_install_latest.log
+quoted_vm=${(q)VM}
+quoted_log=${(q)REMOTE_LOG}
 
 log() { printf '[vps_run] %s\n' "$*" }
 
@@ -32,7 +34,7 @@ scp -i "$KEY" -P "$HYP_PORT" -o StrictHostKeyChecking=accept-new "$INSTALL_SH" "
 
 log "start install on VM (nohup — may take 30–60 min on 1GB RAM)"
 ssh -i "$KEY" -p "$HYP_PORT" -o StrictHostKeyChecking=accept-new "$HYP" \
-  "scp -o StrictHostKeyChecking=accept-new /tmp/vps_install_all.sh ${VM}:/tmp/vps_install_all.sh && \
-   ssh -o StrictHostKeyChecking=accept-new ${VM} 'chmod +x /tmp/vps_install_all.sh; nohup /tmp/vps_install_all.sh > ${REMOTE_LOG} 2>&1 & echo PID:\$!'"
+  "scp -o StrictHostKeyChecking=accept-new ${quoted_vm}:/tmp/vps_install_all.sh && \
+   ssh -o StrictHostKeyChecking=accept-new ${quoted_vm} 'chmod +x /tmp/vps_install_all.sh; nohup /tmp/vps_install_all.sh > ${quoted_log} 2>&1 & echo PID:\$!'"
 
-log "tail log: ssh jump → ssh ${VM} tail -f ${REMOTE_LOG}"
+log "tail log: ssh jump → ssh ${quoted_vm} tail -f ${quoted_log}"
