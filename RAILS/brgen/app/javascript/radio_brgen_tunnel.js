@@ -619,9 +619,6 @@ class VisualEngine {
       }
     }
     this.pointCount = count
-    // `particles` and `centers` stay as length-bearing stubs: the dat.GUI panel
-    // and setPerformanceMode read config, but the old per-frame CPU arrays are
-    // gone — position is computed in the vertex shader now.
     this.particles = []
     this.centers = []
     if (!this.gl) {
@@ -875,7 +872,6 @@ export class RadioBrgen {
       options.heading.textContent = options.headingText
     }
 
-    this.setupGUI()
     this.setupEventListeners()
     this.startAnimation()
   }
@@ -912,33 +908,6 @@ export class RadioBrgen {
     this.deck = deck
     this.vizMode = (this.vizMode + 1) % deck.size
     deck.show(this.vizMode, this.visualEngine.w, this.visualEngine.h)
-  }
-
-  setupGUI() {
-    // Dev-only: dat.GUI autoPlace is a light panel that collides with the
-    // top-left brand on the immersive playlist surface.
-    if (typeof window.dat === "undefined") return
-    if (!window.location.search.includes("datgui=1")) return
-    this.gui = new window.dat.GUI({ autoPlace: true, width: 280 })
-    const guiParams = {
-      particleCount: this.visualEngine.config.particleCountPerRow,
-      bassInfluence: this.audioEngine.bassInfluence,
-      midInfluence: this.audioEngine.midInfluence,
-      highInfluence: this.audioEngine.highInfluence,
-      performanceMode: this.visualEngine.isMobile,
-      nextTrack: () => this.audioEngine.nextTrack()
-    }
-    const visFolder = this.gui.addFolder("Visualization")
-    visFolder.add(guiParams, "particleCount", 32, 128, 8).name("Particles per Row").onChange(v => {
-      this.visualEngine.config.particleCountPerRow = Math.round(v)
-      this.visualEngine.initParticles()
-    })
-    const audioFolder = this.gui.addFolder("Audio Reactivity")
-    audioFolder.add(guiParams, "bassInfluence", 0, 2).name("Bass Influence").onChange(v => { this.audioEngine.bassInfluence = v })
-    audioFolder.add(guiParams, "midInfluence", 0, 2).name("Mid Influence").onChange(v => { this.audioEngine.midInfluence = v })
-    audioFolder.add(guiParams, "highInfluence", 0, 2).name("High Influence").onChange(v => { this.audioEngine.highInfluence = v })
-    audioFolder.add(guiParams, "nextTrack").name("Next Track")
-    visFolder.add(guiParams, "performanceMode").name("Low Performance").onChange(v => this.visualEngine.setPerformanceMode(v))
   }
 
   setupEventListeners() {
