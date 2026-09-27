@@ -91,6 +91,70 @@ class TestFixConvergence < Minitest::Test
     assert_equal Master::RAILS_ROOT, resolver.resolve_target("RAILS")
   end
 
+  def test_all_three_tree_names_resolve_to_the_pub4_root
+    resolver = Class.new do
+      include Master::CLI::Pipeline::TargetResolver
+      def initialize(root) = @root = root
+    end.new(Master::ROOT)
+
+    assert_equal Master::REPO_ROOT, resolver.resolve_target("MASTER RAILS OPENBSD")
+    assert_equal Master::REPO_ROOT, resolver.resolve_target("openbsd, rails, master")
+    refute_equal Master::REPO_ROOT, resolver.resolve_target("MASTER RAILS")
+  end
+
+  def test_gate_chain_recognizes_all_three_tree_names
+    assert_equal %w[MASTER RAILS OPENBSD],
+                 Operator::GateChain.trees_for_target("MASTER RAILS OPENBSD")
+    assert_equal %w[MASTER RAILS OPENBSD],
+                 Operator::GateChain.trees_for_target("openbsd,rails,master")
+  end
+
+  def test_exact_all_tree_fix_command_targets_the_repo_and_preserves_gate_scope
+    repaired = []
+    verified = []
+    fix_loop = Object.new
+    fix_loop.define_singleton_method(:run) { |target, **| repaired << target; Master::Result.ok("DONE: clean") }
+    fix_loop.define_singleton_method(:preview) { |_| Master::Result.ok(total: 0, rules: {}, files: {}) }
+    scanner = Object.new
+    def scanner.scan(*) = Master::Result.ok([])
+    def scanner.scan_dir(*) = Master::Result.ok([])
+
+    Operator::GateChain.stub(:verify_fix, ->(target:) { verified << target; [0, []] }) do
+      Master::CLI::CommandRegistry.stub(:observe, ->(*) { "clean" }) do
+        Master::CLI::CommandRegistry.dispatch_fix(
+          scanner:, fix_loop:, deliberation: nil, root: Master::ROOT, bus: nil,
+          ctx: { args: "MASTER RAILS OPENBSD --no-aesthetic" }
+        )
+      end
+    end
+
+    assert_equal [Master::REPO_ROOT], repaired
+    assert_equal ["MASTER RAILS OPENBSD"], verified
+  end
+
+  def test_exact_all_tree_fix_command_targets_the_repo_and_preserves_gate_scope
+    repaired = []
+    verified = []
+    fix_loop = Object.new
+    fix_loop.define_singleton_method(:run) { |target, **| repaired << target; Master::Result.ok("DONE: clean") }
+    fix_loop.define_singleton_method(:preview) { |_| Master::Result.ok(total: 0, rules: {}, files: {}) }
+    scanner = Object.new
+    def scanner.scan(*) = Master::Result.ok([])
+    def scanner.scan_dir(*) = Master::Result.ok([])
+
+    Operator::GateChain.stub(:verify_fix, ->(target:) { verified << target; [0, []] }) do
+      Master::CLI::CommandRegistry.stub(:observe, ->(*) { "clean" }) do
+        Master::CLI::CommandRegistry.dispatch_fix(
+          scanner:, fix_loop:, deliberation: nil, root: Master::ROOT, bus: nil,
+          ctx: { args: "MASTER RAILS OPENBSD --no-aesthetic" }
+        )
+      end
+    end
+
+    assert_equal [Master::REPO_ROOT], repaired
+    assert_equal ["MASTER RAILS OPENBSD"], verified
+  end
+
   def test_fix_reenters_after_gate_repairs_until_the_tree_stabilises
     verified = []
     states = [[0, ["RAILS/app/models/item.rb"]], [0, []]]
