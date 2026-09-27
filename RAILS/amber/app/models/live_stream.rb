@@ -5,6 +5,8 @@ class LiveStream < ApplicationRecord
 
   belongs_to :user
 
+  scope :publicly_visible, -> { joins(:user).where(users: { deleted_at: nil, deletion_scheduled_at: nil }) }
+
   validates :title, presence: true
   validates :status, inclusion: { in: STATUSES }
 
