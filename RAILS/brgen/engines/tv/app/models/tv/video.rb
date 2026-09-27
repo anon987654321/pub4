@@ -61,8 +61,8 @@ class Tv::Video < ApplicationRecord
     tv_videos.views_count DESC
   SQL
 
-  scope :trending,  -> { published.in_current_city.reorder(Arel.sql(WATCH_TIME_SQL)) }
-  scope :recent,    -> { published.in_current_city.order(published_at: :desc) }
+  scope :trending,  -> { publicly_visible.in_current_city.reorder(Arel.sql(WATCH_TIME_SQL)) }
+  scope :recent,    -> { publicly_visible.in_current_city.order(published_at: :desc) }
 
   after_update_commit :record_video_published, if: :published_status_change?
 
