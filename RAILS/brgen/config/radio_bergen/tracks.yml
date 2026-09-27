@@ -18,10 +18,6 @@ meta:
     - takedown_contact
     - cache_policy
 
-# Local broadcast files were retired with brgen/public. Radio Bergen keeps
-# the externally referenced crate here; locally hosted audio belongs in the
-# application's persistent media/storage layer, not in the source tree.
-
 external_reference:
   policy: reference_only_until_rights_review
   youtube:
