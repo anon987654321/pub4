@@ -6,7 +6,7 @@ class WardrobeItemsController < ApplicationController
   before_action :authorize!, only: %i[show edit update destroy]
 
   def index
-    @wardrobe_items = WardrobeItem.includes(:item).recent.limit(100)
+    @wardrobe_items = Current.user.wardrobe_items.includes(:item).recent.limit(100)
   end
 
   def analytics
