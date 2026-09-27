@@ -71,6 +71,19 @@ class UserPurgeJobTest < ActiveJob::TestCase
     end
   end
 
+  test "federated follow relationships are gone" do
+    actor = FediActor.create!(
+      uri: "https://remote.example/users/purge-#{SecureRandom.hex(4)}",
+      inbox_url: "https://remote.example/inbox"
+    )
+    FediFollow.create!(user: @user, fedi_actor: actor, state: "accepted", direction: "outbound")
+
+    purge!
+
+    assert_empty FediFollow.where(user_id: @user.id),
+                 "federated follow relationships survived erasure"
+  end
+
   test "push credentials are gone" do
     ActsAsTenant.with_tenant(@city) do
       PushSubscription.create!(
