@@ -1,9 +1,4 @@
 <% content_for :title, t("maps.map") %>
-<% content_for :head do %>
-  <link href="/vendor/maplibre-gl.css" rel="stylesheet">
-  <script src="/vendor/maplibre-gl.js"></script>
-<% end %>
-
 <%# The page is a full-bleed map, so its heading cannot be visible without
     sitting on top of the map. Hidden rather than absent: this was the one brgen
     surface with no heading at any level, which leaves it with no entry in the
