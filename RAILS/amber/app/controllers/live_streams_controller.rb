@@ -2,11 +2,12 @@
 
 class LiveStreamsController < ApplicationController
   before_action :require_real_user
-  before_action :set_live_stream, only: %i[show update destroy]
+  before_action :set_public_live_stream, only: :show
+  before_action :set_live_stream, only: %i[update destroy]
 
   def index
     @pagy, @live_streams = pagy(
-      LiveStream.where(status: %w[scheduled live]).includes(:user).order(:scheduled_at, :created_at)
+      LiveStream.publicly_visible.where(status: %w[scheduled live]).includes(:user).order(:scheduled_at, :created_at)
     )
     @live_stream = Current.user.live_streams.build
   end
@@ -40,6 +41,7 @@ class LiveStreamsController < ApplicationController
 
   private
 
+  def set_public_live_stream = @live_stream = LiveStream.publicly_visible.find(params[:id])
   def set_live_stream = @live_stream = LiveStream.find(params[:id])
   # user_id, not user — @live_stream is found by id with nothing preloaded and
   # strict_loading_by_default raises on the association read.
