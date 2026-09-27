@@ -162,9 +162,8 @@ class TakeawayControllersTest < ActionDispatch::IntegrationTest
     refute_includes response.body, courier.display_name
 
     assert_nil Takeaway::DeliveryDriver.nearest_free(60.39, 5.32, 10)
-    assert_raises(ActiveRecord::RecordNotFound) do
-      get takeaway.delivery_driver_path(driver)
-    end
+    get takeaway.delivery_driver_path(driver)
+    assert_response :not_found
   end
 
   test "the kitchen cannot skip a step, and is told why" do
