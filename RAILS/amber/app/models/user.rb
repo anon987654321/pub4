@@ -39,6 +39,8 @@ class User < ApplicationRecord
 
   normalizes :email_address, with: ->(e) { e.strip.downcase }
 
+  scope :publicly_visible, -> { where(guest: false, deleted_at: nil, deletion_scheduled_at: nil) }
+
   validates :email_address, presence: true, uniqueness: true
 
   after_create :ensure_identity_records, unless: :guest?
@@ -46,7 +48,7 @@ class User < ApplicationRecord
   def guest? = has_attribute?(:guest) && self[:guest]
 
   def display_name
-    return "anon" if guest?
+    return "anon" if guest? || deleted_at.present? || deletion_scheduled_at.present?
 
     profile&.display_name.presence || email_address.to_s.split("@").first
   end
