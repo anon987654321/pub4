@@ -75,7 +75,15 @@ module Shared
     def resume_session
       @session_resumed = true
       Current.session = find_session_by_cookie
-      Current.user = Current.session&.user || find_or_create_guest_user
+      Current.user = Current.session&.user
+
+      if Current.user && (Current.user.try(:deleted_at).present? || Current.user.try(:deletion_pending?))
+        Current.session.destroy!
+        Current.session = nil
+        Current.user = find_or_create_guest_user
+      elsif Current.user.nil?
+        Current.user = find_or_create_guest_user
+      end
     end
 
     def start_new_session_for(user)
