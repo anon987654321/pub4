@@ -11,7 +11,7 @@ class SetsInfiniteScrollReflex < Shared::InfiniteScrollReflex
 
     term = "%#{ActiveRecord::Base.sanitize_sql_like(element.dataset["q"])}%"
     set_ids = scope.where("name LIKE ? OR description LIKE ?", term, term).pluck(:id)
-    track_ids = Playlist::Track.where("name LIKE ? OR artist LIKE ?", term, term).pluck(:playlist_set_id)
+    track_ids = Playlist::Track.publicly_visible.where("name LIKE ? OR artist LIKE ?", term, term).pluck(:playlist_set_id)
     scope.where(id: (set_ids + track_ids).uniq)
   end
 end
