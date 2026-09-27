@@ -18,7 +18,6 @@ module Brgen
   # seeder's own test asks for.
   module BergenDemoData
     RADIO_BERGEN_PLAYLIST = "Radio Bergen"
-    LOCAL_AUDIO_BASE = ENV.fetch("RADIO_BERGEN_AUDIO_BASE", "https://ai.brgen.no")
 
     USERS = [
       %w[Emilie emilie_floyen],
