@@ -34,6 +34,7 @@ class Partner::Program < ApplicationRecord
   validate :percent_within_ceiling
 
   scope :open_now, -> { where(status: "open") }
+  scope :publicly_visible, -> { open_now.joins(:store).merge(Marketplace::Store.publicly_visible) }
 
   def open? = status == "open"
 
