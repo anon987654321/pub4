@@ -6,7 +6,7 @@ class StoresInfiniteScrollReflex < Shared::InfiniteScrollReflex
   private
 
   def scope
-    scope = Marketplace::Store.active.recent
+    scope = Marketplace::Store.publicly_visible.recent
     scope = scope.by_vertical(element.dataset["vertical"]) if element.dataset["vertical"].present?
     return scope unless element.dataset["q"].present?
 
