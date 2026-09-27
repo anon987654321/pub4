@@ -89,29 +89,10 @@ module Brgen
         end
       end
 
-      # The tracks the app serves itself. These are the ones that carry a real
-      # signal: a YouTube embed is cross-origin so no AnalyserNode can read it,
-      # and the tunnel's audio reactivity ran off a sine wave for exactly that
-      # reason. An <audio> element pointed at our own file can be analysed.
-      def local_tracks
-        Array(load["local_mp3"]).filter_map do |row|
-          src = row["src"].presence
-          next unless src
-
-          {
-            title: row["title"].to_s,
-            src: src,
-            artist: row["artist"].presence || "AKMD",
-            seconds: row["seconds"].to_i
-          }
-        end
-      end
-
       def archaeology_lines
         manifest = load
         meta = manifest["meta"] || {}
         pub2_head = lessons_pub2_head
-        local_count = Array(manifest["local_mp3"]).size
         youtube_count = youtube_tracks.size
 
         [
@@ -123,9 +104,9 @@ module Brgen
           # 41b20306d; the manifest moved into this app and the learnings into
           # the dilla engine.
           "manifest: RAILS/brgen/config/radio_bergen/tracks.yml",
-          "learnings: MASTER/tools/dilla/data/reference_sonic.yml (ruby dilla.rb radio-bergen-study)",
+          "learnings: MASTER/tools/dilla/data/reference_sonic.yml",
           "lesson: do_not_restore monolithic index.html — manifest + Rails vertical instead",
-          "excavated: #{local_count} local_mp3 metadata rows · #{youtube_count} youtube references",
+          "catalogue: #{youtube_count} external references · no local source files",
           "policy: #{manifest.dig('external_reference', 'policy') || 'reference_only_until_rights_review'}",
           "surface: radio.brgen.no — tap to boot tunnel (pub4 matrix index.html lineage)"
         ]
