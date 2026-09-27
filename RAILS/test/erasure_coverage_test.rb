@@ -50,6 +50,18 @@ class ErasureCoverageTest < Minitest::Test
   #   :handled      erasure reaches it some other way, named in the reason
   #   :not_personal the columns are not about one of our users
   CLASSIFIED = {
+  PRIVATE_RELATIONS = {
+    "notifications"       => "private inbox state and pushable alerts",
+    "identity_assurances" => "identity/trust evidence belonging to the account",
+    "reputation_scores"   => "derived account reputation, not shared content",
+    "trust_signals"       => "derived account trust history",
+    "message_receipts"    => "private read/delivery metadata on conversations",
+    "typing_indicators"   => "ephemeral private presence state",
+    "account_merges"      => "signup/guest merge bookkeeping",
+    "event_rsvps"         => "the account's private attendance choices",
+    "story_views"         => "the account's private viewing history"
+  }.freeze
+
     "dating_profiles"            => [ :destroy, "the profile exists only to describe the person; photographs and the verification selfie go with it" ],
     "external_identities"        => [ :destroy, "a federated login carrying their email and phone number" ],
     "marketplace_addresses"      => [ :destroy, "recipient, street, postcode and phone, and nothing else" ],
@@ -101,6 +113,13 @@ class ErasureCoverageTest < Minitest::Test
       Add each to CLASSIFIED with one of #{DISPOSITIONS.join(', ')} and the
       reason — and for :destroy or :nullify, to UserPurgeJob as well.
     MSG
+  end
+
+  def test_private_relations_are_real_tables
+    tables = schema.scan(/create_table "([^"]+)"/).flatten
+    missing = PRIVATE_RELATIONS.keys.reject { |table| tables.include?(table) }
+
+    assert_empty missing, "private erasure relations name missing tables: #{missing.join(', ')}"
   end
 
   def test_every_classification_names_a_disposition_and_a_reason
