@@ -82,7 +82,6 @@
           create_url: playlist_dilla_sketches_path(@playlist),
           render_path_proc: ->(sk) { render_audio_playlist_dilla_sketch_path(@playlist, sk) },
           can_manage: pl_can_manage,
-          lab_query: "?playlist_id=#{@playlist.id}",
           rich_form: true %>
   </details>
 <% end %>
