@@ -7,6 +7,15 @@ class RecentFeaturesIntegrationTest < ActionDispatch::IntegrationTest
     post session_path, params: { email_address: user.email_address, password: "password" }
   end
 
+  test "departing user profiles are not public" do
+    user = User.strict_loading(false).create!(email_address: "departing-user@example.com", password: "password")
+    user.update_columns(deleted_at: Time.current, deletion_scheduled_at: 7.days.from_now)
+
+    get user_path(user)
+
+    assert_response :not_found
+  end
+
   test "creator profile is private until published" do
     user = User.strict_loading(false).create!(email_address: "creator@example.com", password: "password")
     profile = user.create_creator_profile!(
