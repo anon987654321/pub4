@@ -30,6 +30,46 @@ class UserPurgeJobTest < ActiveJob::TestCase
     UserPurgeJob.perform_now
   end
 
+  test "social relationship rows are erased" do
+    ActsAsTenant.with_tenant(@city) do
+      other = User.create!(
+        email_address: "relation-other-#{SecureRandom.hex(4)}@brgen.no",
+        password: "password123",
+        city: @city
+      )
+      post = Post.create!(user: other, title: "Relationship target", content: "x", city: @city)
+      listing = Marketplace::Listing.create!(
+        user: other,
+        title: "Saved listing",
+        price_cents: 100,
+        status: "active"
+      )
+      community = Community.create!(
+        name: "Relation #{SecureRandom.hex(3)}",
+        user: other,
+        city: @city
+      )
+
+      Follow.create!(follower: @user, followed: other)
+      Block.create!(blocker: other, blocked: @user)
+      Bookmark.create!(user: @user, post: post)
+      Marketplace::ListingFavorite.create!(user: @user, listing: listing)
+      CommunityMembership.create!(user: @user, community: community, role: "member")
+      Dating::Like.create!(liker: @user, likee: other)
+      Dating::Dislike.create!(disliker: other, dislikee: @user)
+
+      purge!
+
+      assert_empty Follow.where("follower_id = :id OR followed_id = :id", id: @user.id)
+      assert_empty Block.where("blocker_id = :id OR blocked_id = :id", id: @user.id)
+      assert_empty Bookmark.where(user_id: @user.id)
+      assert_empty Marketplace::ListingFavorite.where(user_id: @user.id)
+      assert_empty CommunityMembership.where(user_id: @user.id)
+      assert_empty Dating::Like.where("liker_id = :id OR likee_id = :id", id: @user.id)
+      assert_empty Dating::Dislike.where("disliker_id = :id OR dislikee_id = :id", id: @user.id)
+    end
+  end
+
   test "private account relations are erased" do
     ActsAsTenant.with_tenant(@city) do
       other = User.create!(
