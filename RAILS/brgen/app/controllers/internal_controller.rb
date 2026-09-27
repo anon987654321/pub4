@@ -50,7 +50,8 @@ class InternalController < ApplicationController
 
     render json: { ok: true, track_id: track.id, title: track.title }
   rescue StandardError => e
-    render json: { ok: false, error: e.message }, status: :internal_server_error
+    Rails.logger.error("internal dilla publish failed: #{e.class}: #{e.message}")
+    render json: { ok: false, error: "internal publish failed" }, status: :internal_server_error
   end
 
   private
