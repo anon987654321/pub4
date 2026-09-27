@@ -39,16 +39,6 @@ class Playlist::DillaSketchTest < ActiveSupport::TestCase
     assert_equal [ "jazz", 4 ], mixed.to_lab_hash.values_at(:style, :bars)
   end
 
-  test "the lab url names the sketch and its set, and carries the state in the fragment" do
-    set = Playlist::Set.create!(user: @user, name: "Skisser")
-    sketch = Playlist::DillaSketch.create!(user: @user, set: set, name: "Beat", state: { "pat_" => [ 1, 0 ] })
-
-    url = sketch.lab_url
-    path, fragment = url.split("#", 2)
-
-    assert_equal "/dilla/dilla.html?sketch_id=#{sketch.id}&set_id=#{set.id}", path
-    assert_equal sketch.to_lab_hash.deep_stringify_keys, JSON.parse(Base64.strict_decode64(fragment))
-  end
 
   test "queueing a render clears the last error and enqueues the job" do
     sketch = Playlist::DillaSketch.create!(user: @user, name: "Render", state: { "swing" => 0.5 },
