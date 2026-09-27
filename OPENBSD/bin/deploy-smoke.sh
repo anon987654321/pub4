@@ -240,8 +240,9 @@ if [ "$run_public" = "1" ]; then
   # never digests these files, so a sync that dropped public/ would look green.
   #
   # This exact font 404'd on amber for months while the stylesheet asking for it
-  # returned 200, because it existed only under brgen/public — Operator::AssetUrlLint
-  # now catches that at source, but a source lint cannot prove the file shipped.
+  # returned 200, because it existed only under one app-local public root.
+  # Operator::AssetUrlLint catches that source mismatch; this probe still proves
+  # the shared asset actually shipped.
   check_http shared_font_brgen "https://brgen.no/fonts/lg.woff2" 1
   check_http shared_font_amber "https://amberapp.art/fonts/lg.woff2" "$amber_req"
   brgen_html_smoke
