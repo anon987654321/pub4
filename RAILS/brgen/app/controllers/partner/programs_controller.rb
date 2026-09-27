@@ -5,10 +5,11 @@ module Partner
   class ProgramsController < ApplicationController
     allow_unauthenticated_access only: %i[index show]
     before_action :require_authentication, except: %i[index show]
-    before_action :set_program, only: %i[show edit update]
+    before_action :set_public_program, only: :show
+    before_action :set_program, only: %i[edit update]
 
     def index
-      @programs = Partner::Program.open_now.includes(:store).order(created_at: :desc).limit(100)
+      @programs = Partner::Program.publicly_visible.includes(:store).order(created_at: :desc).limit(100)
       @mine = if Current.user.present? && !guest?
                 Partner::Membership.where(user: Current.user).includes(:program)
       else
@@ -65,6 +66,10 @@ module Partner
     end
 
     private
+
+    def set_public_program
+      @program = Partner::Program.publicly_visible.find(params[:id])
+    end
 
     def set_program
       @program = Partner::Program.find(params[:id])
