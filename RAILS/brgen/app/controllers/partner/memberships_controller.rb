@@ -5,7 +5,7 @@ module Partner
     before_action :require_authentication
 
     def create
-      program = Partner::Program.find(params[:program_id])
+      program = Partner::Program.publicly_visible.find(params[:program_id])
       unless program.open?
         redirect_to partner_program_path(program), alert: t("flash.program_not_open") and return
       end
