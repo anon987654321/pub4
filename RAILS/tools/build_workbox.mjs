@@ -57,9 +57,9 @@ try {
       // form queue and periodic sync that amber and bsdports still have.
       //
       // Nothing is lost by excluding them: the CacheFirst route already caches
-      // assets at runtime, on demand, and a content-addressed URL can never go
-      // stale there — a changed asset is simply a different URL. What stays
-      // precached is the stable set: icons, fonts, error pages, / and /offline.
+      // assets at runtime, on demand. Apps with their own public root precache
+      // those stable files; BRGEN has no app-local public root, so its generated
+      // worker precaches only / and /offline and serves shared assets on demand.
       globIgnores: ["service-worker.js", "assets/**"],
       additionalManifestEntries: [
         { url: "/", revision: "shell-v1" },
