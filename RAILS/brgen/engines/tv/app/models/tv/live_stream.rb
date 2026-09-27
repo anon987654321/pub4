@@ -20,9 +20,10 @@ module Tv
 
     before_validation :default_status
 
-    scope :live, -> { where(status: "live") }
-    scope :scheduled, -> { where(status: "scheduled") }
-    scope :recent, -> { order(updated_at: :desc) }
+    scope :publicly_visible, -> { joins(:user).where(users: { deleted_at: nil, deletion_scheduled_at: nil }) }
+    scope :live, -> { publicly_visible.where(status: "live") }
+    scope :scheduled, -> { publicly_visible.where(status: "scheduled") }
+    scope :recent, -> { publicly_visible.order(updated_at: :desc) }
 
     def go_live!
       update!(status: "live", started_at: Time.current)
