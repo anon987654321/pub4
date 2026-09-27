@@ -30,6 +30,9 @@ class InternalController < ApplicationController
     upload = params[:audio] || params[:file]
     return render(json: { ok: false, error: "audio missing" }, status: :bad_request) unless upload.respond_to?(:read)
 
+    playlist = resolve_publish_playlist(user)
+    return render(json: { ok: false, error: "playlist not writable" }, status: :forbidden) if params[:playlist_id].present? && playlist.nil?
+
     track = Playlist::Track.create!(
       user: user,
       title: title.truncate(100),
@@ -43,14 +46,7 @@ class InternalController < ApplicationController
       content_type: upload.content_type.presence || "audio/mpeg"
     )
 
-    if params[:playlist_id].present?
-      pl = Playlist::Playlist.find_by(id: params[:playlist_id])
-      unless pl && playlist_writable_by?(pl, user)
-        return render json: { ok: false, error: "playlist not writable" }, status: :forbidden
-      end
-
-      pl.add_track!(track, user: user)
-    end
+    playlist&.add_track!(track, user: user)
 
     render json: { ok: true, track_id: track.id, title: track.title }
   rescue StandardError => e
@@ -59,6 +55,13 @@ class InternalController < ApplicationController
   end
 
   private
+
+  def resolve_publish_playlist(user)
+    return unless params[:playlist_id].present?
+
+    playlist = Playlist::Playlist.find_by(id: params[:playlist_id])
+    playlist if playlist && playlist_writable_by?(playlist, user)
+  end
 
   def playlist_writable_by?(playlist, user)
     return true if playlist.user_id == user.id
