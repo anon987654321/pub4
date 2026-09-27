@@ -48,17 +48,13 @@ class BergenDemoSeederTest < ActiveSupport::TestCase
     assert playlist.public_access
     assert_operator playlist.tracks.count, :>=, 20
 
-    # Sandviken Hotell A, not Stailings. The catalogue was replaced when radio
-    # bergen took over serving it and Stailings went with the old one, so this
-    # looked up nil and asked it for source_type. The assertion is the same one:
-    # a local mp3 arrives as a direct track pointing at its own file.
-    local = playlist.tracks.find_by(title: "Sandviken Hotell A", artist: "Angelo Reira & Johann")
-    assert_equal "direct", local.source_type
-    assert_match(%r{/audio/akmd/.+\.mp3}, local.source_url)
-
     dilla = playlist.tracks.find_by(title: "Microphone Master", artist: "J Dilla")
+    assert dilla, "manifest track was not seeded"
     assert_equal "youtube", dilla.source_type
-    assert_match(/9EGHwkDix78/, dilla.source_url)
+    assert_equal "9EGHwkDix78", dilla.source_url[/[\w-]{11}/]
+
+    assert playlist.tracks.all? { |track| track.source_type == "youtube" },
+           "retired local audio must not re-enter the seeded playlist"
   end
 
   test "seeds credible dating profiles and mutual matches" do
