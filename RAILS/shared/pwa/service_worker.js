@@ -122,8 +122,6 @@ self.addEventListener("push", event => {
     // bar; a full-colour icon there renders as a grey blob. brgen's hand-rolled
     // worker had this right and the shared one did not, so this arrives with
     // brgen rather than being lost on the way in. All three apps ship both files.
-    icon: "/icon-192.png",
-    badge: "/icon-mono-192.png",
     data: { url: data.url || "/" },
   }))
 })
