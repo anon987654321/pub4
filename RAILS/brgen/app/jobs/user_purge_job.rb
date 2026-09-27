@@ -88,7 +88,7 @@ class UserPurgeJob < ApplicationJob
     former_email = user.try(:email_address)
 
     ActiveRecord::Base.transaction do
-      DESTROY.each { |row| resolve(row[:model])&.where(row[:key] => user.id)&.find_each(&:destroy) }
+      DESTROY.each { |row| resolve!(row[:model]).where(row[:key] => user.id).find_each(&:destroy) }
       NULLIFY.each { |row| nullify(row, user) }
       erase_email_subscription(former_email)
       anonymise(user)
@@ -130,8 +130,10 @@ class UserPurgeJob < ApplicationJob
   # An engine may not be mounted, and a table may predate a migration on a box
   # mid-deploy. Erasure that raises leaves the account half-purged, which is
   # worse than the one that is skipped and retried on the next run.
-  def resolve(name)
+  def resolve!(name)
     model = name.safe_constantize
-    model if model.respond_to?(:table_exists?) && model.table_exists?
+    return model if model.respond_to?(:table_exists?) && model.table_exists?
+
+    raise "erasure dependency unavailable: #{name}"
   end
 end
