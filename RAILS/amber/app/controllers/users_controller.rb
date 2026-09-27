@@ -2,7 +2,7 @@
 
 class UsersController < ApplicationController
   def show
-    @user = User.includes(:creator_profile, :profile, :privacy_setting).find(params[:id])
+    @user = User.publicly_visible.includes(:creator_profile, :profile, :privacy_setting).find(params[:id])
     visible = WardrobeVisibilityPolicy.new(viewer: Current.user, owner: @user).can_view_wardrobe?
     @items = if visible
       @user.items.with_photos_for_display.recent.limit(12)
