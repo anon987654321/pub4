@@ -22,7 +22,7 @@ class Post < ApplicationRecord
   scope :public_feed, -> { recent }
 
   def author_name
-    return "anon" if anonymous? || user&.guest?
+    return "anon" if anonymous? || user&.guest? || user&.deleted_at.present? || user&.deletion_scheduled_at.present?
 
     user.display_name
   end
