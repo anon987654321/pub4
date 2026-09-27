@@ -70,12 +70,15 @@ class TestFixConvergence < Minitest::Test
     budget
   end
 
-  # 1. /scan is not a public command, in the registry or in the router.
-  def test_scan_is_not_a_command
-    refute_includes Master::CLI::TurnRouter::PIPELINE_SLASH, "scan"
+  # /scan is a retired public command. The router may still recognize the old
+  # spelling only long enough to rewrite it to /fix, so no separate scan
+  # dispatcher, help topic, or pipeline stage can survive.
+  def test_scan_is_not_a_public_command
+    assert_includes Master::CLI::TurnRouter::PIPELINE_SLASH, "scan"
     refute_includes Master::CLI::TurnRouter::PIPELINE_COMMANDS, "scan"
     refute Master::CLI::CommandRegistry::HELP_TOPICS.key?("scan")
     refute Master::CLI::CommandRegistry.respond_to?(:dispatch_scan)
+    assert_equal "/fix RAILS", Master::CLI::TurnRouter.new.send(:rewrite_slash, "/scan RAILS")
     assert_includes Master::CLI::Pipeline::Pass::STAGES, "fix"
     refute_includes Master::CLI::Pipeline::Pass::STAGES, "scan"
   end
