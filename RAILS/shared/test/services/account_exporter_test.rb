@@ -31,12 +31,12 @@ class SharedAccountExporterTest < Minitest::Test
   end
 
   def test_redacts_credentials_but_keeps_the_rest
-    secrets = { "password_digest" => "x", "otp_secret" => "y", "remember_token" => "z" }
+    secrets = { "password_digest" => "x", "otp_secret" => "y", "remember_token" => "z", "private_key" => "-----BEGIN PRIVATE KEY-----" }
     rows = export(Owner.new({ "id" => 7, "email_address" => "a@b.no" }.merge(secrets)))
 
     assert_equal [ "7" ], values_for(rows, "account", "id")
     assert_equal [ "a@b.no" ], values_for(rows, "account", "email_address")
-    assert_empty rows.select { |row| %w[password_digest otp_secret remember_token].include?(row["field"]) }
+    assert_empty rows.select { |row| %w[password_digest otp_secret remember_token private_key].include?(row["field"]) }
   end
 
   def test_exports_owned_associations_and_numbers_their_records
