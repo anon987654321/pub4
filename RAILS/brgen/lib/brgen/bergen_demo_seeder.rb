@@ -256,15 +256,7 @@ module Brgen
     def radio_bergen_manifest_tracks
       @radio_bergen_manifest_tracks ||= begin
         manifest = load_radio_bergen_manifest
-        local = Array(manifest["local_mp3"]).map do |row|
-          {
-            artist: row["artist"],
-            title: row["title"],
-            source_type: "direct",
-            source_url: "#{LOCAL_AUDIO_BASE}#{row['src']}"
-          }
-        end
-        youtube = Array(manifest.dig("external_reference", "youtube")).map do |row|
+        Array(manifest.dig("external_reference", "youtube")).map do |row|
           {
             artist: row["artist"],
             title: row["title"],
@@ -272,7 +264,6 @@ module Brgen
             source_url: "https://www.youtube.com/watch?v=#{row['id']}"
           }
         end
-        local + youtube
       end
     end
 
