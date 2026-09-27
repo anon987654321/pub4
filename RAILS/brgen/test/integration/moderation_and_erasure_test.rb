@@ -25,6 +25,20 @@ class ModerationAndErasureTest < ActiveSupport::TestCase
     assert_not_includes Post.kept.to_a, post
   end
 
+  test "a failed resolution rolls back the report status" do
+    post = Post.create!(user: @author, title: "rollback", content: "x")
+    report = ModerationWorkflow.report!(reporter: @author, target: post, reason: "spam")
+    workflow = ModerationWorkflow.new
+    workflow.define_singleton_method(:remove_content) { |_report| raise "simulated removal failure" }
+
+    assert_raises(RuntimeError) do
+      workflow.transition!(report: report, status: "resolved")
+    end
+
+    assert_equal "open", report.reload.status
+    assert_nil post.reload.removed_at
+  end
+
   test "hot ranking decays with age (fresh beats stale-but-higher)" do
     stale = Post.create!(user: @author, title: "old", content: "x", created_at: 5.days.ago)
     fresh = Post.create!(user: @author, title: "new", content: "y")
