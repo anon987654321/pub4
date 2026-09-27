@@ -25,7 +25,7 @@ fi
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 export SSH_HOST=${SSH_HOST:-dev@brgen.no}
-export SSH_KEY=${SSH_KEY:-~/.ssh/id_ed25519_brgen}
+export SSH_KEY=${SSH_KEY:-${HOME}/.ssh/id_ed25519_brgen}
 SSH_OPTS=(-o BatchMode=yes -o ConnectTimeout=10 -i "$SSH_KEY")
 drift=0
 
