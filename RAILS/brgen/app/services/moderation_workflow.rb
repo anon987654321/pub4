@@ -10,32 +10,36 @@ class ModerationWorkflow
   end
 
   def report!(reporter:, target:, reason:, details: nil)
-    report = ModerationReport.create!(
-      user: reporter,
-      reportable: target,
-      reason: reason.presence || "other",
-      details: details,
-      status: "open"
-    )
-    flag_for(report, status: "open")
-    report
+    ModerationReport.transaction do
+      report = ModerationReport.create!(
+        user: reporter,
+        reportable: target,
+        reason: reason.presence || "other",
+        details: details,
+        status: "open"
+      )
+      flag_for(report, status: "open")
+      report
+    end
   end
 
   def transition!(report:, status:)
     return report unless ModerationReport::STATUSES.include?(status)
 
-    report.update!(status: status)
-    case status
-    when "open", "reviewing"
-      flag_for(report, status: status)
-    when "resolved"
-      close_flags(report, status: "resolved")
-      remove_content(report)
-      penalize_owner(report)
-    when "dismissed"
-      close_flags(report, status: "dismissed")
+    ModerationReport.transaction do
+      report.update!(status: status)
+      case status
+      when "open", "reviewing"
+        flag_for(report, status: status)
+      when "resolved"
+        close_flags(report, status: "resolved")
+        remove_content(report)
+        penalize_owner(report)
+      when "dismissed"
+        close_flags(report, status: "dismissed")
+      end
+      report
     end
-    report
   end
 
   private
