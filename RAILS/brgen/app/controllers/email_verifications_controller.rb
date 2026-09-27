@@ -7,7 +7,7 @@ class EmailVerificationsController < ApplicationController
 
   # Confirm via the emailed link.
   def show
-    user = User.find_by(email_verification_token: params[:token].to_s) if params[:token].present?
+    user = User.public_profiles.find_by(email_verification_token: params[:token].to_s) if params[:token].present?
     if user
       user.verify_email!
       redirect_to main_app.root_path, notice: t("verify.done", default: "Email confirmed — thanks!")
