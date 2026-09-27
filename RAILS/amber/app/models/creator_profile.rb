@@ -14,5 +14,5 @@ class CreatorProfile < ApplicationRecord
 
   normalizes :handle, with: ->(value) { value.to_s.strip.downcase }
 
-  scope :publicly_visible, -> { where(public: true) }
+  scope :publicly_visible, -> { where(public: true).joins(:user).where(users: { deleted_at: nil, deletion_scheduled_at: nil }) }
 end
