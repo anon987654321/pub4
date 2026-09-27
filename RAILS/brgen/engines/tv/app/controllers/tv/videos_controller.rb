@@ -89,7 +89,7 @@ class Tv::VideosController < Tv::BaseController
   # its sound — which is what makes it a duet rather than a second clip that
   # happens to mention the first. A sound can also be reused on its own.
   def apply_sound_and_duet(video)
-    original = Tv::Video.published.find_by(id: params.dig(:video, :duet_of_id))
+    original = Tv::Video.publicly_visible.find_by(id: params.dig(:video, :duet_of_id))
     if original&.allow_duets?
       video.duet_of = original
       video.sound_id = original.sound_id
