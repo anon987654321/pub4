@@ -4,7 +4,7 @@ class FollowsController < ApplicationController
   before_action :require_real_user
 
   def create
-    @user = User.find(params[:user_id])
+    @user = User.publicly_visible.find(params[:user_id])
     Current.user.follows_as_follower.find_or_create_by!(followee: @user) unless Current.user == @user
     @user.record_activity!("AmberFollowCreated", source_vertical: "amber", actor: Current.user)
     respond_to do |format|
