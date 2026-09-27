@@ -50,6 +50,19 @@ class SocialGuardsTest < ActionDispatch::IntegrationTest
     assert_select "a", "Høstgarderobe"
   end
 
+  test "departing hosts do not appear in live streams" do
+    host = user("leaving-host")
+    viewer = user("viewer")
+    stream = LiveStream.create!(user: host, title: "Hidden stream", status: "scheduled")
+    host.update_columns(deleted_at: Time.current, deletion_scheduled_at: 7.days.from_now)
+    sign_in(viewer)
+
+    get live_streams_path
+
+    assert_response :success
+    refute_includes response.body, stream.title
+  end
+
   test "destroying another user's affiliate link is refused" do
     owner = user("owner")
     stranger = user("stranger")
