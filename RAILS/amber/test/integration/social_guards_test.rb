@@ -25,6 +25,19 @@ class SocialGuardsTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "a departing connection cannot message" do
+    alice = user("alice")
+    bob = user("bob")
+    Connection.create!(requester: alice, addressee: bob, status: "accepted")
+    bob.update_columns(deleted_at: Time.current, deletion_scheduled_at: 7.days.from_now)
+    sign_in(alice)
+
+    assert_no_difference "Message.count" do
+      post messages_path, params: { message: { recipient_id: bob.id, body: "Hei" } }
+    end
+    assert_response :unprocessable_entity
+  end
+
   test "a blocked connection cannot message" do
     alice = user("alice")
     bob = user("bob")
