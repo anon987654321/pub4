@@ -5114,11 +5114,6 @@ body.vertical-playlist .radio-header {
   display: none !important;
 }
 
-/* dat.GUI autoPlace is a light panel that steals the top chrome. */
-body.vertical-playlist .dg.ac {
-  display: none !important;
-}
-
 /* Brand mark sits above the tunnel canvas (z:50). Position and size are the
    fleet default — the wordmark lands in the same place on every surface, so it
    reads as one product rather than a set of lookalikes. The only thing playlist
