@@ -30,6 +30,49 @@ class UserPurgeJobTest < ActiveJob::TestCase
     UserPurgeJob.perform_now
   end
 
+  test "private account relations are erased" do
+    ActsAsTenant.with_tenant(@city) do
+      other = User.create!(
+        email_address: "purge-other-#{SecureRandom.hex(4)}@brgen.no",
+        password: "password123",
+        city: @city
+      )
+      conversation = Conversation.create!(conversation_type: "direct")
+      ConversationParticipant.create!(conversation: conversation, user: @user)
+      message = Message.create!(conversation: conversation, sender: @user, content: "private", message_type: "text")
+
+      notification = Notification.create!(user: @user, kind: "alert")
+      assurance = IdentityAssurance.create!(user: @user, level: "account", source: "test")
+      reputation = ReputationScore.create!(user: @user, scope: "global")
+      trust = TrustSignal.create!(user: @user, kind: "test", source: SecureRandom.uuid)
+      receipt = MessageReceipt.create!(message: message, user: @user)
+      typing = TypingIndicator.create!(conversation: conversation, user: @user, expires_at: 1.minute.from_now)
+      merge = AccountMerge.create!(guest_user: other, user: @user, status: "merged")
+      event = Event.create!(user: @user, title: "Private RSVP", starts_at: 2.days.from_now)
+      rsvp = EventRsvp.create!(event: event, user: @user, status: "interested")
+      story = Story.new(user: @user, city: @city, expires_at: 1.day.from_now)
+      story.media.attach(io: StringIO.new("jpegbytes"), filename: "private-story.jpg", content_type: "image/jpeg")
+      story.save!
+      view = StoryView.create!(story: story, user: @user)
+
+      purge!
+
+      {
+        notification: Notification.exists?(notification.id),
+        assurance: IdentityAssurance.exists?(assurance.id),
+        reputation: ReputationScore.exists?(reputation.id),
+        trust: TrustSignal.exists?(trust.id),
+        receipt: MessageReceipt.exists?(receipt.id),
+        typing: TypingIndicator.exists?(typing.id),
+        merge: AccountMerge.exists?(merge.id),
+        rsvp: EventRsvp.exists?(rsvp.id),
+        view: StoryView.exists?(view.id)
+      }.each do |name, present|
+        assert_not present, "#{name} survived account erasure"
+      end
+    end
+  end
+
   test "the account itself is anonymised" do
     ActsAsTenant.with_tenant(@city) do
       purge!
