@@ -71,6 +71,18 @@ class UserPurgeJobTest < ActiveJob::TestCase
     end
   end
 
+  test "federation signing credentials are gone" do
+    @user.update_columns(
+      private_key: "PRIVATE-KEY",
+      public_key: "PUBLIC-KEY"
+    )
+
+    purge!
+
+    assert_nil @user.reload.private_key
+    assert_nil @user.reload.public_key
+  end
+
   test "federated follow relationships are gone" do
     actor = FediActor.create!(
       uri: "https://remote.example/users/purge-#{SecureRandom.hex(4)}",
