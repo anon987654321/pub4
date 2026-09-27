@@ -44,13 +44,13 @@ class Marketplace::ListingFacets
   end
 
   def filtered(except:)
-    result = scope
-    result = result.where(category_id: params[:category_id]) if params[:category_id].present? && except != :category_id
-    result = result.where(condition: params[:condition]) if params[:condition].present? && except != :condition
+    filtered_scope = scope
+    filtered_scope = filtered_scope.where(category_id: params[:category_id]) if params[:category_id].present? && except != :category_id
+    filtered_scope = filtered_scope.where(condition: params[:condition]) if params[:condition].present? && except != :condition
     if except != :price
-      result = result.where("price_cents >= ?", (params[:min_price].to_f * 100).to_i) if params[:min_price].present?
-      result = result.where("price_cents <= ?", (params[:max_price].to_f * 100).to_i) if params[:max_price].present?
+      filtered_scope = filtered_scope.where("price_cents >= ?", (params[:min_price].to_f * 100).to_i) if params[:min_price].present?
+      filtered_scope = filtered_scope.where("price_cents <= ?", (params[:max_price].to_f * 100).to_i) if params[:max_price].present?
     end
-    result
+    filtered_scope
   end
 end
