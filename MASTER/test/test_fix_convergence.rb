@@ -5,7 +5,7 @@ require "tmpdir"
 
 # /fix is the whole improvement operation: it observes, lets the council argue,
 # repairs, and observes again, and it ends in a state that says what actually
-# happened. /scan is gone — a reading nobody acts on was the thing it named.
+# happened. /scan has no separate operation; its compatibility spelling rewrites to /fix.
 class TestFixConvergence < Minitest::Test
   StubRule = Struct.new(:id, :severity)
 
