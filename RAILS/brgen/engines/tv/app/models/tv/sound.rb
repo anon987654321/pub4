@@ -14,7 +14,8 @@ class Tv::Sound < ApplicationRecord
 
   validates :title, presence: true, length: { maximum: 120 }
 
-  scope :popular, -> { order(videos_count: :desc, id: :desc) }
+  scope :publicly_visible, -> { joins(:user).where(users: { deleted_at: nil, deletion_scheduled_at: nil }) }
+  scope :popular, -> { publicly_visible.order(videos_count: :desc, id: :desc) }
 
   # Named after the clip that introduced it, which is what every app that has
   # this does — "original sound — kari" is a name people recognise before they
@@ -29,6 +30,6 @@ class Tv::Sound < ApplicationRecord
   # Ranked the way the feed is: by watch time, not by view count, which counts
   # accidental clicks.
   def videos_by_watch_time
-    Tv::Video.published.where(sound_id: id).reorder(Arel.sql(Tv::Video::WATCH_TIME_SQL))
+    Tv::Video.publicly_visible.where(sound_id: id).reorder(Arel.sql(Tv::Video::WATCH_TIME_SQL))
   end
 end
