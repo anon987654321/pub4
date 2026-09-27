@@ -64,7 +64,10 @@ class SharedAccountExporterTest < Minitest::Test
     rows = export(owner)
 
     assert_equal [ "1" ], values_for(rows, "account", "id")
-    assert_equal 1, rows.count { |row| row["field"] == "export_error" }
+    error_rows = rows.select { |row| row["field"] == "export_error" }
+    assert_equal 1, error_rows.size
+    assert_equal "association unavailable", error_rows.first["value"]
+    refute_includes error_rows.first["value"], "Object"
   end
 
   private
