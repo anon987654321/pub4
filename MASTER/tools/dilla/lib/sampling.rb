@@ -905,11 +905,9 @@ module RadioChop
   # window and reset=1 means what it reads as. aresample first because the count
   # is in samples and the arithmetic needs a known rate.
   #
-  # Worth knowing when reading the rest of the engine: RadioBergenStudy::DeepAudio
-  # .band_rms builds the same graph the same wrong way, so its `window:` argument
-  # is off by the same factor everywhere it is used. Not corrected from here --
-  # the thresholds and min_gap values in the wonky drum learner were tuned
-  # against that series and would all shift under it.
+  # This engine's own DeepAudio windowing follows the corrected frame-size path;
+  # the old Radio Bergen learner used a different series and is no longer part of
+  # the runtime. Keep the current thresholds tied to this engine's measurements.
   #
   # "-inf" is dropped rather than read: String#to_f turns it into 0.0, which is
   # full scale, so a digital-silence window would score as the loudest thing in
