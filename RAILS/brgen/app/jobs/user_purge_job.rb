@@ -113,7 +113,7 @@ class UserPurgeJob < ApplicationJob
   end
 
   def nullify(row, user)
-    model = resolve(row[:model]) or return
+    model = resolve!(row[:model])
     columns = row[:columns].select { |c| model.column_names.include?(c.to_s) }
     return if columns.empty?
 
