@@ -7,7 +7,7 @@ class LiveStreamsInfiniteScrollReflex < Shared::InfiniteScrollReflex
   private
 
   def scope
-    LiveStream.where(status: %w[scheduled live])
+    LiveStream.publicly_visible.where(status: %w[scheduled live])
               .includes(:user)
               .order(:scheduled_at, :created_at)
   end
