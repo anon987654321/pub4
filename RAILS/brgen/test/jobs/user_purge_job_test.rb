@@ -194,7 +194,7 @@ class UserPurgeJobTest < ActiveJob::TestCase
     { destroy: UserPurgeJob::DESTROY, nullify: UserPurgeJob::NULLIFY }.each do |disposition, rows|
       rows.each do |row|
         model = row[:model].safe_constantize
-        assert model, "#{row[:model]} does not resolve — the job would silently skip it"
+        assert model, "#{row[:model]} does not resolve — the job must fail closed and retry later"
 
         recorded = classified[model.table_name]
         assert recorded, "#{model.table_name} is touched by the job and classified nowhere"
