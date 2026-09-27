@@ -13,6 +13,8 @@ module Takeaway
     validates :license_number, length: { maximum: 128 }, allow_blank: true
 
     scope :available, -> { where(available: true) }
+    scope :publicly_visible, -> { joins(:user).where(users: { deleted_at: nil, deletion_scheduled_at: nil }) }
+    scope :publicly_available, -> { publicly_visible.where(available: true) }
     include Shared::GeoLocatable
     # custom lat/lng columns (current_*); keep specialized bbox + expose haversine via concern
     scope :nearby, ->(lat, lng, km = 10) {
@@ -34,7 +36,7 @@ module Takeaway
       busy = Takeaway::Order.where(status: "out_for_delivery")
                             .where.not(delivery_driver_id: nil)
                             .select(:delivery_driver_id)
-      available.nearby(lat, lng, km)
+      publicly_available.nearby(lat, lng, km)
                .where.not(id: busy)
                .to_a
                .min_by { |driver| haversine(lat, lng, driver.current_lat, driver.current_lng) }
