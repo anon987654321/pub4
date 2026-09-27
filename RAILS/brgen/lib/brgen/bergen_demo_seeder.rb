@@ -182,7 +182,7 @@ module Brgen
       owner = @users_by_username.fetch("live_bergenlive")
       playlist = Playlist::Playlist.find_or_initialize_by(city: @city, name: RADIO_BERGEN_PLAYLIST, user: owner)
       playlist.assign_attributes(
-        description: "AKMD-lokallåter og beat-referanser fra Radio Bergen-manifestet. Nattbuss, tunnel og regnby.",
+        description: "Beat-referanser fra Radio Bergen-manifestet. Nattbuss, tunnel og regnby.",
         public_access: true,
         collaborative: false,
         plays_count: playlist.plays_count.to_i.positive? ? playlist.plays_count : 428
