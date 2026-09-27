@@ -7,18 +7,17 @@ what was actually drawn. Recovered from gist
 anon987654321/290153d185fa76944a91159270f72ec7, pen ogLWRJL, at
 https://codepen.io/license/pen/ogLWRJL.
 
-One of the four is live. `dating/home/_heart.html.erb` renders the dating heart,
-and the placeholder comment that asked for "the exact snippet ... when ready" was
-asking for this one.
+The recovered dating heart is kept here as reference material; its former
+app partial was unused and has been removed.
 
 The other three each cost something. The marketplace unit pulls two images from
 i.imgur.com, and an external host is both a CSP problem and an availability one,
 so self-host before wiring it. The playlist unit's scifi iris eye and floating
 particle field are pure css-doodle and would drop straight in, but its `.ml15`
 letter reveal and spinning `.lp` need anime.js, which this tree does not carry.
-The pen as a whole loads css-doodle, Swiper and anime.js from cdnjs, and brgen
-self-hosts css-doodle at `/vendor/css-doodle.min.js` and pins nothing — seven CDN
-pins once cost a page 537 requests, so vendor anything new the same way.
+The pen as a whole loads css-doodle, Swiper and anime.js from cdnjs. Keep those
+external dependencies as reference only; new runtime code should use the repo's
+owned assets.
 
 `<footer class="bankid">Protected by BankID</footer>` sits here too. Neither its
 markup nor its CSS is in the dating intro any more; git has both if the badge is
