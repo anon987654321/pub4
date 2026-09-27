@@ -31,6 +31,19 @@ class SessionBoundariesTest < ActionDispatch::IntegrationTest
     ActionController::Base.allow_forgery_protection = original
   end
 
+  test "a deletion marker revokes an already-issued session" do
+    post session_path, params: { email_address: @user.email_address, password: "password123" }
+    session_row = @user.sessions.reload.sole
+
+    @user.schedule_deletion!
+    get root_path
+
+    assert_nil controller.send(:find_session_by_cookie), "deletion must revoke an existing session"
+    assert_empty @user.sessions.reload, "a departing account must have no usable session rows"
+    assert_not_equal @user.id, controller.current_user&.id
+    assert_predicate session_row, :destroyed?
+  end
+
   test "destroying the session row signs the browser out" do
     post session_path, params: { email_address: @user.email_address, password: "password123" }
     session_row = @user.sessions.reload.sole
