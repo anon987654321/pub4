@@ -40,7 +40,7 @@ module Shared
         attribute_rows(record).each { |field, value| csv << [ reflection.name, index, field, value ] }
       end
     rescue StandardError => e
-      csv << [ reflection.name, 0, "export_error", "#{e.class}: #{e.message}" ]
+      csv << [ reflection.name, 0, "export_error", "association unavailable" ]
     end
 
     def records(reflection)
