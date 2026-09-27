@@ -43,6 +43,26 @@ class ErasureCoverageTest < Minitest::Test
 
   DISPOSITIONS = %i[destroy nullify handled not_personal].freeze
 
+  # User-owned private/relationship rows that do not survive account erasure.
+  PRIVATE_RELATIONS = {
+    "notifications"                 => "private inbox state and pushable alerts",
+    "identity_assurances"           => "identity and trust evidence belonging to the account",
+    "reputation_scores"             => "derived account reputation, not shared content",
+    "trust_signals"                 => "derived account trust history",
+    "message_receipts"              => "private read and delivery metadata on messages",
+    "typing_indicators"             => "ephemeral presence state",
+    "account_merges"                => "signup and guest merge bookkeeping",
+    "event_rsvps"                   => "private attendance choices",
+    "story_views"                   => "private story viewing history",
+    "follows"                       => "public social-graph edges owned by the account",
+    "blocks"                        => "private mute and hide relationships",
+    "bookmarks"                     => "private saved-post state",
+    "marketplace_listing_favorites" => "private marketplace saved-listing state",
+    "community_memberships"         => "account membership and moderation roles",
+    "dating_likes"                  => "private dating intent and comments",
+    "dating_dislikes"               => "private dating pass history"
+  }.freeze
+
   # Every table whose columns look personal, and what erasure does about it.
   #
   #   :destroy      the job destroys the row (and its attachments with it)
@@ -50,49 +70,44 @@ class ErasureCoverageTest < Minitest::Test
   #   :handled      erasure reaches it some other way, named in the reason
   #   :not_personal the columns are not about one of our users
   CLASSIFIED = {
-  PRIVATE_RELATIONS = {
-    "notifications"       => "private inbox state and pushable alerts",
-    "identity_assurances" => "identity/trust evidence belonging to the account",
-    "reputation_scores"   => "derived account reputation, not shared content",
-    "trust_signals"       => "derived account trust history",
-    "message_receipts"    => "private read/delivery metadata on conversations",
-    "typing_indicators"   => "ephemeral private presence state",
-    "account_merges"      => "signup/guest merge bookkeeping",
-    "event_rsvps"         => "the account's private attendance choices",
-    "story_views"         => "the account's private viewing history"
-  }.freeze
+    "dating_profiles"                  => [ :destroy, "the profile exists only to describe the person; photographs and the verification selfie go with it" ],
+    "external_identities"              => [ :destroy, "a federated login carrying their email and phone number" ],
+    "marketplace_addresses"             => [ :destroy, "recipient, street, postcode and phone, and nothing else" ],
+    "marketplace_saved_searches"        => [ :destroy, "what someone searched for, saved under their name" ],
+    "push_subscriptions"                => [ :destroy, "browser push endpoint and cryptographic subscription keys are account credentials" ],
+    "fedi_follows"                      => [ :destroy, "local federation relationship graph belonging to the account" ],
+    "notifications"                     => [ :destroy, "private account alerts and notification delivery state" ],
+    "identity_assurances"               => [ :destroy, "identity assurance evidence belonging to the account" ],
+    "reputation_scores"                 => [ :destroy, "derived reputation state scoped to the account" ],
+    "trust_signals"                     => [ :destroy, "derived trust history scoped to the account" ],
+    "message_receipts"                  => [ :destroy, "private read and delivery metadata on messages" ],
+    "typing_indicators"                 => [ :destroy, "ephemeral presence state scoped to the account" ],
+    "account_merges"                    => [ :destroy, "account creation and guest merge bookkeeping" ],
+    "event_rsvps"                       => [ :destroy, "private attendance choices belonging to the account" ],
+    "story_views"                       => [ :destroy, "private story viewing history belonging to the account" ],
+    "follows"                            => [ :destroy, "public social-graph edges owned by the account" ],
+    "blocks"                             => [ :destroy, "private mute and hide relationships owned by the account" ],
+    "bookmarks"                          => [ :destroy, "private saved-post state owned by the account" ],
+    "marketplace_listing_favorites"      => [ :destroy, "private saved-listing state owned by the account" ],
+    "community_memberships"              => [ :destroy, "account membership and moderation roles" ],
+    "dating_likes"                       => [ :destroy, "private dating intent and comments owned by the account" ],
+    "dating_dislikes"                    => [ :destroy, "private dating pass history owned by the account" ],
 
-    "dating_profiles"            => [ :destroy, "the profile exists only to describe the person; photographs and the verification selfie go with it" ],
-    "external_identities"        => [ :destroy, "a federated login carrying their email and phone number" ],
-    "marketplace_addresses"      => [ :destroy, "recipient, street, postcode and phone, and nothing else" ],
-    "marketplace_saved_searches" => [ :destroy, "what someone searched for, saved under their name" ],
-    "push_subscriptions"       => [ :destroy, "browser push endpoint and cryptographic subscription keys are account credentials" ],
-    "fedi_follows"             => [ :destroy, "local federation relationship graph belonging to the account" ],
-    "notifications"            => [ :destroy, "private account alerts and notification delivery state" ],
-    "identity_assurances"      => [ :destroy, "identity assurance evidence belonging to the account" ],
-    "reputation_scores"        => [ :destroy, "derived reputation state scoped to the account" ],
-    "trust_signals"            => [ :destroy, "derived trust history scoped to the account" ],
-    "message_receipts"         => [ :destroy, "private read and delivery metadata on messages" ],
-    "typing_indicators"        => [ :destroy, "ephemeral presence state scoped to the account" ],
-    "account_merges"           => [ :destroy, "account creation and guest merge bookkeeping" ],
-    "event_rsvps"              => [ :destroy, "private attendance choices belonging to the account" ],
-    "story_views"              => [ :destroy, "private story viewing history belonging to the account" ],
+    "takeaway_orders"                    => [ :nullify, "retained as a financial record (Art. 17(3)(b)); the address it went to is not part of that" ],
+    "posts"                              => [ :nullify, "content is retained so threads do not collapse; the coordinates it was written at are not" ],
+    "stories"                            => [ :nullify, "as posts: the story is retained, the coordinates it was posted from are not" ],
+    "marketplace_listings"               => [ :nullify, "the listing is half of somebody else's order; where the goods are is usually where the seller lives" ],
+    "marketplace_checkouts"              => [ :nullify, "its address FK points at a row this job destroys" ],
+    "events"                             => [ :nullify, "a venue is not a home, but the coordinates on one somebody hosted are theirs" ],
 
-    "takeaway_orders"       => [ :nullify, "retained as a financial record (Art. 17(3)(b)); the address it went to is not part of that" ],
-    "posts"                 => [ :nullify, "content is retained so threads do not collapse; the coordinates it was written at are not" ],
-    "stories"               => [ :nullify, "as posts: the story is retained, the coordinates it was posted from are not" ],
-    "marketplace_listings"  => [ :nullify, "the listing is half of somebody else's order; where the goods are is usually where the seller lives" ],
-    "marketplace_checkouts" => [ :nullify, "its address FK points at a row this job destroys" ],
-    "events"                => [ :nullify, "a venue is not a home, but the coordinates on one somebody hosted are theirs" ],
+    "users"                              => [ :handled, "the account row itself, anonymised in place by anonymise" ],
+    "sessions"                            => [ :handled, "erase! calls user.sessions.delete_all" ],
+    "email_subscriptions"                 => [ :handled, "keyed by address rather than user_id; erase_email_subscription reads the address before it is overwritten" ],
 
-    "users"               => [ :handled, "the account row itself, anonymised in place by anonymise" ],
-    "sessions"            => [ :handled, "erase! calls user.sessions.delete_all" ],
-    "email_subscriptions" => [ :handled, "keyed by address rather than user_id; erase_email_subscription reads the address before it is overwritten" ],
-
-    "cities"                => [ :not_personal, "a city's own coordinates" ],
-    "places"                => [ :not_personal, "a public place's address, with no owning user" ],
-    "fedi_actors"           => [ :not_personal, "an actor on another server — not our account to erase" ],
-    "takeaway_restaurants"  => [ :not_personal, "a business address, and the business is not the user" ],
+    "cities"                              => [ :not_personal, "a city's own coordinates" ],
+    "places"                              => [ :not_personal, "a public place's address, with no owning user" ],
+    "fedi_actors"                         => [ :not_personal, "an actor on another server — not our account to erase" ],
+    "takeaway_restaurants"                => [ :not_personal, "a business address, and the business is not the user" ]
   }.freeze
 
   def schema = @schema ||= File.read(SCHEMA)
