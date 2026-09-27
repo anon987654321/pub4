@@ -5353,14 +5353,6 @@ body[class*="vertical-"] main > section {
   text-decoration: none;
 }
 
-.maplibregl-popup-content {
-  border-radius: var(--radius-card);
-  padding: var(--space-3) var(--space-4);
-  /* Flat UI (design_rules pixel_perfection): contrast, not glow */
-  border: 1px solid var(--border);
-  background: var(--surface-elevated);
-}
-
 .match-overlay {
   position: fixed;
   inset: 0;
@@ -7247,14 +7239,11 @@ width: 100dvw;
 .tv-card-sub { color: var(--text-secondary); font-size: var(--text-sm); margin-block-start: 4px; }
 .tv-views { font-variant-numeric: tabular-nums; }
 
-/* Maps: immersive vertical branding (Inter, MapLibre HUD). The vertical shell
-   rules hide the core chrome. */
+/* Maps: immersive vertical branding. The vertical shell rules hide the core chrome. */
 
 body.vertical-maps {
   /* maps is a light surface and the layout pins it, so this dialect follows
-     the theme like every other vertical. The basemap it loads, openfreemap's
-     positron (rgb(242,243,240)), is light too, so chrome and map match, and
-     --text-secondary #545454 reads APCA Lc 78.6 on the #f2f2f2 place cards. */
+     the theme like every other vertical. */
 
   /* Cool graphite cartography, aligned with vertical_accents.maps. These are
      token references rather than literals so they follow the theme the layout
