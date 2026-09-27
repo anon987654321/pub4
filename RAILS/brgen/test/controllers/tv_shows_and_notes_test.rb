@@ -170,6 +170,15 @@ class TvShowsAndNotesTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  test "departing creators disappear from the tv home feed" do
+    @owner.update_columns(deleted_at: Time.current, deletion_scheduled_at: 7.days.from_now)
+    host! "tv.brgen.no"
+
+    get tv.root_path
+    assert_response :success
+    refute_includes response.body, @video.title
+  end
+
   test "viewer counts pluralise in Norwegian" do
     stream = Tv::LiveStream.create!(user: @owner, channel: @channel, title: "Kveldssending", status: "live", viewer_count: 1)
     host! "tv.brgen.no"
