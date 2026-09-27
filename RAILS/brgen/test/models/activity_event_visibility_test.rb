@@ -17,6 +17,23 @@ class ActivityEventVisibilityTest < ActiveSupport::TestCase
     assert_not_includes ids, priv.id, "a private dating like must never surface on a profile"
   end
 
+  test "for_city_home excludes events from departing actors" do
+    listing = Marketplace::Listing.create!(
+      user: @user, title: "Leaving chair", description: "chair",
+      price_cents: 1000, status: "active",
+      category: Marketplace::Category.create!(name: "Leaving #{SecureRandom.hex(3)}", slug: "leaving-#{SecureRandom.hex(4)}"),
+      city: @city
+    )
+    ActivityEvent.create!(
+      actor: @user, source_vertical: "marketplace", event_name: "ListingCreated",
+      subject_type: "Marketplace::Listing", subject_id: listing.id,
+      visibility: "public", moderation_state: "clean"
+    )
+    @user.update_columns(deleted_at: Time.current, deletion_scheduled_at: 7.days.from_now)
+
+    refute ActivityEvent.for_city_home(@city).any? { |event| event.actor_id == @user.id }
+  end
+
   test "for_city_home keeps another city's listing off this city's strip" do
     foreign = ActivityEvent.create!(
       actor: @user, source_vertical: "marketplace", event_name: "ListingCreated",
