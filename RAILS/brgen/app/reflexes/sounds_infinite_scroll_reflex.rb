@@ -7,5 +7,5 @@ class SoundsInfiniteScrollReflex < Shared::InfiniteScrollReflex
 
   private
 
-  def scope = Tv::Sound.popular.includes(:user)
+  def scope = Tv::Sound.publicly_visible.popular.includes(:user)
 end
