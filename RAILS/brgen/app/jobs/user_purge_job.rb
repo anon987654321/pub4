@@ -57,7 +57,18 @@ class UserPurgeJob < ApplicationJob
     { model: "AccountMerge", key: :user_id },
     { model: "AccountMerge", key: :guest_user_id },
     { model: "EventRsvp", key: :user_id },
-    { model: "StoryView", key: :user_id }
+    { model: "StoryView", key: :user_id },
+    { model: "Follow", key: :follower_id },
+    { model: "Follow", key: :followed_id },
+    { model: "Block", key: :blocker_id },
+    { model: "Block", key: :blocked_id },
+    { model: "Bookmark", key: :user_id },
+    { model: "Marketplace::ListingFavorite", key: :user_id },
+    { model: "CommunityMembership", key: :user_id },
+    { model: "Dating::Like", key: :liker_id },
+    { model: "Dating::Like", key: :likee_id },
+    { model: "Dating::Dislike", key: :disliker_id },
+    { model: "Dating::Dislike", key: :dislikee_id }
   ].freeze
 
   # Retained rows with personal columns to clear.
