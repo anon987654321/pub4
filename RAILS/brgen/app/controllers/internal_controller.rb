@@ -45,7 +45,11 @@ class InternalController < ApplicationController
 
     if params[:playlist_id].present?
       pl = Playlist::Playlist.find_by(id: params[:playlist_id])
-      pl&.add_track!(track, user: user)
+      unless pl && playlist_writable_by?(pl, user)
+        return render json: { ok: false, error: "playlist not writable" }, status: :forbidden
+      end
+
+      pl.add_track!(track, user: user)
     end
 
     render json: { ok: true, track_id: track.id, title: track.title }
@@ -56,11 +60,20 @@ class InternalController < ApplicationController
 
   private
 
+  def playlist_writable_by?(playlist, user)
+    return true if playlist.user_id == user.id
+
+    playlist.collaborations.where(user_id: user.id, role: "editor").exists?
+  end
+
   def find_publish_user
-    if params[:user_id].present?
-      User.find_by(id: params[:user_id])
-    elsif params[:user_email].present?
-      User.find_by(email_address: params[:user_email].to_s.downcase.strip)
-    end
+    user =
+      if params[:user_id].present?
+        User.find_by(id: params[:user_id])
+      elsif params[:user_email].present?
+        User.find_by(email_address: params[:user_email].to_s.downcase.strip)
+      end
+
+    user if user && user.deleted_at.nil? && user.deletion_scheduled_at.nil?
   end
 end
