@@ -29,7 +29,7 @@ class Partner::Membership < ApplicationRecord
   # Only an approved partner in an open programme earns. Checked at click time
   # and again at attribution: a membership can be suspended between the two, and
   # the click that was legitimate when it happened must not pay out after.
-  def earning? = status == "approved" && program.open?
+  def earning? = status == "approved" && User.where(id: user_id, deleted_at: nil, deletion_scheduled_at: nil).exists? && Partner::Program.publicly_visible.where(id: program_id).exists?
 
   def approve!
     update!(status: "approved", approved_at: Time.current)
