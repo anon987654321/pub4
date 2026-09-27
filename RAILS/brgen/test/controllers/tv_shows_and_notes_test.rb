@@ -152,6 +152,24 @@ class TvShowsAndNotesTest < ActionDispatch::IntegrationTest
     assert_select "[role=list] > [role=listitem]", 1
   end
 
+  test "a departing live-stream owner disappears from the public tv surface" do
+    stream = Tv::LiveStream.create!(
+      user: @owner, channel: @channel, title: "Hidden broadcast", status: "live", viewer_count: 3
+    )
+    @owner.update_columns(deleted_at: Time.current, deletion_scheduled_at: 7.days.from_now)
+    host! "tv.brgen.no"
+
+    get tv.live_streams_path
+    assert_response :success
+    refute_includes response.body, stream.title
+
+    get tv.live_stream_path(stream)
+    assert_response :not_found
+
+    post tv.live_stream_stream_chats_path(stream), params: { stream_chat: { message: "still here" } }
+    assert_response :not_found
+  end
+
   test "viewer counts pluralise in Norwegian" do
     stream = Tv::LiveStream.create!(user: @owner, channel: @channel, title: "Kveldssending", status: "live", viewer_count: 1)
     host! "tv.brgen.no"
