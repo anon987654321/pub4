@@ -1,16 +1,13 @@
-# Radio Bergen restored track manifest.
+# Radio Bergen track manifest.
 #
-# The binaries live beside this manifest now, at brgen/public/audio/akmd/, and
-# are tracked: vps-deploy is `git pull --ff-only`, so an untracked file can
-# never reach the box, and a manifest naming files the server does not have is
-# the inert-config shape this repo keeps producing. 113 MB of already-128kbps
-# audio against a 3.3 GB .git is the same trade .gitignore makes for demo-each.
+# Local broadcast files were retired from the source tree with brgen/public.
+# This file now carries the external/reference crate only; locally hosted audio
+# belongs in the application's persistent media/storage layer.
 #
-# Playback rights: cleared by the operator 2026-08-27. AKMD is the crew (Alt
-# Kult Ma Do) and Chase Swayze is its Houston affiliate, so every track here is
-# ours to publish. The one file that was not — a commercially released J Dilla
-# track sitting in the same pub2 folder — was deleted rather than copied.
-
+# Playback rights and attribution remain operator-owned metadata for the archived
+# references. Review before publishing any source that is not independently
+# cleared.
+#
 meta:
   source_archive: anon987654321/pub2
   restored_for: pub4
