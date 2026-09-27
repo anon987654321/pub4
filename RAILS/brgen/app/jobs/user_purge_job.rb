@@ -128,8 +128,9 @@ class UserPurgeJob < ApplicationJob
   end
 
   # An engine may not be mounted, and a table may predate a migration on a box
-  # mid-deploy. Erasure that raises leaves the account half-purged, which is
-  # worse than the one that is skipped and retried on the next run.
+  # mid-deploy. Erasure must stop before anonymising the account in that case,
+  # so the deletion marker remains and the next run can retry after the schema
+  # becomes available.
   def resolve!(name)
     model = name.safe_constantize
     return model if model.respond_to?(:table_exists?) && model.table_exists?
