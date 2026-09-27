@@ -118,6 +118,8 @@ self.addEventListener("push", event => {
   event.waitUntil(self.registration.showNotification(data.title || APP_NAME, {
     body: data.body || "",
     actions: data.actions || [],
+    icon: data.icon || "/icon-192.png",
+    badge: data.badge || "/icon-mono-192.png",
     // The badge is the small monochrome glyph Android punches into the status
     // bar; a full-colour icon there renders as a grey blob. brgen's hand-rolled
     // worker had this right and the shared one did not, so this arrives with
