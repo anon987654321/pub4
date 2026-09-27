@@ -19,6 +19,28 @@ class RecentFeaturesIntegrationTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_path
   end
 
+  test "departing creator profiles are no longer public" do
+    user = User.strict_loading(false).create!(email_address: "departing-creator@example.com", password: "password")
+    profile = user.create_creator_profile!(
+      handle: "departing_creator",
+      display_name: "Departing Creator",
+      public: true
+    )
+    user.update_columns(deleted_at: Time.current, deletion_scheduled_at: 7.days.from_now)
+
+    get creator_profile_path(profile.handle)
+
+    assert_response :not_found
+  end
+
+  test "departing authors lose attribution without losing retained post content" do
+    user = User.strict_loading(false).create!(email_address: "departing-poster@example.com", password: "password")
+    post = user.posts.create!(body: "A retained post", anonymous: false)
+    user.update_columns(deleted_at: Time.current, deletion_scheduled_at: 7.days.from_now)
+
+    assert_equal "anon", post.reload.author_name
+  end
+
   test "signed-in user can create and showcase creator profile" do
     user = User.strict_loading(false).create!(email_address: "showcase@example.com", password: "password")
     item = user.items.create!(title: "Blazer", category: "outerwear")
