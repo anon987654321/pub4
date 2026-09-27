@@ -27,7 +27,7 @@ module Tv
     private
 
     def set_live_stream
-      @live_stream = Tv::LiveStream.find(params[:live_stream_id])
+      @live_stream = Tv::LiveStream.publicly_visible.find(params[:live_stream_id])
     end
 
     def stream_chat_params
