@@ -9,7 +9,7 @@ class Playlist::CollaborationsController < Playlist::BaseController
     end
 
     username = params[:username].to_s.strip
-    target_user = User.find_by(username: username)
+    target_user = User.public_profiles.find_by(username: username)
     unless target_user
       redirect_to(target_path, alert: t("flash.playlist.user_not_found")) and return
     end
