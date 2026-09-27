@@ -7,62 +7,6 @@
 
 // ============================================================ tokens
 
-// The storefront display face is contextual. Marketplace resolves --font-ad to
-// the house grotesk; takeaway keeps the existing Instrument Serif campaign face.
-//
-// Copyright 2022 The Instrument Serif Project Authors, SIL Open Font Licence 1.1
-// (https://openfontlicense.org), so it ships in the repo rather than per seat.
-// Latin-subset static woff2, regular and italic, vendored to public/fonts/ from
-// fontsource 5.3.0, which builds them from the Google Fonts upstream. local()
-// first, the vendored file second, the pinned CDN copy last.
-//
-// font-display: swap, because a hero is the first thing painted and the face is
-// the point of it; a late swap there does not reflow text anyone is reading.
-$fs: "https://cdn.jsdelivr.net/npm/@fontsource/instrument-serif@5.3.0/files";
-// Latin-1 (U+0000-00FF) covers Norwegian æ ø å; the rest is fontsource's own
-// latin range, so a page without those glyphs never fetches the file.
-$latin: "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD";
-
-// The wordmark keeps the platform UI face it has always been set in. Body text
-// takes --font from app-root-tokens, the one typeface MASTER/data/rules.yml#design_system names.
-$brgen-logo-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-
-/* Per-vertical accent identity. Overriding --accent cascades to --accent,
-   --upvote, --focus-ring and the turbo bar, so each vertical's buttons, links,
-   and active states read as its own place rather than the shared indigo. The
-   second selector carries the accent into light mode on browsable verticals
-   (immersive ones hide #dark-toggle, so it simply never matches there). */
-/* Vertical accent identity is generated from MASTER/data/rules.yml#design_system. */
-/* Ink for anything painted ON these accents. Every one of the seven is tuned
-   to be legible as ink on a light surface, which makes them all too light to
-   carry light ink: against --bg (#f7f6fa) they run 1.77–3.46:1, and
-   .compose-btn and brgen's own .btn both paint color: var(--bg) on
-   background: var(--accent). One dark ink clears AA for all of them.
-
-   The ink holds against both the dark and the light column of the map above:
-   #110f19 runs 4.59 to 5.45 on the light accents and 5.10 to 9.94 on the dark
-   ones, clearing the 4.5 floor for the button type they carry. It is the
-   smallest step in the same near-black that does.
-
-   The hover column is the third. .nav-search-submit:hover swaps the fill to it
-   and keeps color: var(--accent-ink); marketplace's hover, the only one wired,
-   measures 4.80. tv's 3.34 and maps' 4.31 are under 4.5 and reach no pixel
-   until their hover is wired. Moving a colour is the operator's. */
-x.$vertical-accent-ink: #110f19;
-
-@each $style in (normal, italic) {
-  @font-face {
-    font-family: "Instrument Serif";
-    src: local("Instrument Serif"),
-         url("/fonts/instrument-serif-latin-400-#{$style}.woff2") format("woff2"),
-         url("#{$fs}/instrument-serif-latin-400-#{$style}.woff2") format("woff2");
-    font-weight: 400;
-    font-style: $style;
-    font-display: swap;
-    unicode-range: #{$latin};
-  }
-}
-
 :root {
   // BRGEN_OLD dark — dark-inverted port of the real 2014 desktop.css/
   // mobile.css (pub/__OLD_BACKUPS/BRGEN_OLD). True grayscale, no accent
@@ -5102,7 +5046,7 @@ body[class*="vertical-"] .feed-header {
    resolves it to the house grotesk (--font-ad in the bol block below); takeaway
    still resolves the legacy display face. */
 body.vertical-takeaway {
-  --font-ad: "Instrument Serif", var(--font);
+  --font-ad: var(--font);
   /* Kaufland.de's storefront system, measured from its archived home, category
      and product pages at 1440 and 400 (the owner's instruction: copy it
      exactly, then mould). The palette is its light theme; the three sizes are the
