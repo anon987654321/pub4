@@ -40,6 +40,13 @@ def queries_during
   count
 end
 
+  test "location alerts only target messageable users" do
+    source = File.read(File.expand_path("../../app/controllers/locations_controller.rb", __dir__), encoding: "UTF-8")
+
+    assert_includes source, "User.messageable.nearby(lat, lng, ALERT_RADIUS_KM)"
+    refute_includes source, "User.nearby(lat, lng, ALERT_RADIUS_KM)"
+  end
+
   test "a repeat ping from the same grid square does not re-announce" do
     ping(lat: 60.39, lng: 5.32)
     assert_response :success
