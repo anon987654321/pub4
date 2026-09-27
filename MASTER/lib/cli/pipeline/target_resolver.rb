@@ -4,8 +4,11 @@ module Master
   module CLI
     class Pipeline
       module TargetResolver
+        ALL_TREE_NAMES = %w[MASTER RAILS OPENBSD].freeze
+
         def resolve_target(raw)
           text = raw.to_s.strip
+          return Master::REPO_ROOT if all_tree_target?(text)
           return Master::REPO_ROOT if text.empty? || text.match?(%r{\A(?:all|everything|the|code|codebase|it|this|that)\z}i)
           aliases = target_aliases
           return aliases[text] if aliases.key?(text)
@@ -18,6 +21,11 @@ module Master
           path = File.expand_path(text, @root)
           return path if File.exist?(path)
           File.expand_path(text, Master::REPO_ROOT)
+        end
+
+        def all_tree_target?(text)
+          names = text.split(/[,\s]+/).reject(&:empty?).map(&:upcase).uniq.sort
+          names == ALL_TREE_NAMES.sort
         end
 
         def shell_target(abs)
