@@ -72,6 +72,9 @@ module Operator
 
     def trees_for_target(target)
       text = target.to_s.strip
+      tree_names = text.split(/[,\s]+/).reject(&:empty?).map(&:upcase).uniq.sort
+      return TREES if tree_names == TREES.sort
+
       relative = text.delete_prefix("../")
       abs = case relative.upcase
             when "", ".", "ALL", "EVERYTHING" then ROOT
