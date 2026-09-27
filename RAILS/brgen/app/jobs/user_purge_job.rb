@@ -47,7 +47,17 @@ class UserPurgeJob < ApplicationJob
     { model: "Marketplace::SavedSearch", key: :user_id },
     { model: "PushSubscription", key: :user_id },
     # Inbound/outbound federation relationships are part of the user identity graph.
-    { model: "FediFollow", key: :user_id }
+    { model: "FediFollow", key: :user_id },
+    { model: "Notification", key: :user_id },
+    { model: "IdentityAssurance", key: :user_id },
+    { model: "ReputationScore", key: :user_id },
+    { model: "TrustSignal", key: :user_id },
+    { model: "MessageReceipt", key: :user_id },
+    { model: "TypingIndicator", key: :user_id },
+    { model: "AccountMerge", key: :user_id },
+    { model: "AccountMerge", key: :guest_user_id },
+    { model: "EventRsvp", key: :user_id },
+    { model: "StoryView", key: :user_id }
   ].freeze
 
   # Retained rows with personal columns to clear.
