@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs"
 import { build } from "esbuild"
 import { injectManifest } from "workbox-build"
 import { mkdtemp, rm } from "node:fs/promises"
@@ -20,6 +21,11 @@ try {
   for (const app of APPS) {
     const bundled = join(temp, `${app}.js`)
     const destination = join(root, app, "app", "views", "pwa", "service-worker.js")
+    const appPublic = join(root, app, "public")
+    const globDirectory = existsSync(appPublic) ? appPublic : join(root, "shared", "public")
+    const globPatterns = existsSync(appPublic)
+      ? ["**/*.{css,js,png,jpg,jpeg,webp,svg,woff,woff2,ico,html}"]
+      : []
     await build({
       entryPoints: [source],
       outfile: bundled,
@@ -33,8 +39,8 @@ try {
     const result = await injectManifest({
       swSrc: bundled,
       swDest: destination,
-      globDirectory: join(root, app, "public"),
-      globPatterns: ["**/*.{css,js,png,jpg,jpeg,webp,svg,woff,woff2,ico,html}"],
+      globDirectory,
+      globPatterns,
       // assets/ is excluded because precaching content-addressed URLs is a
       // contradiction: the whole point of a digest is that the URL changes with
       // the content, and a precache manifest freezes the URL at build time.
