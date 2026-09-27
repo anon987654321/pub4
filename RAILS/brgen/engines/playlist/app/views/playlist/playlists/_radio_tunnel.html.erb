@@ -1,11 +1,3 @@
-<%# dat.GUI only when explicitly requested (?datgui=1 + show_dat_gui).
-    Default off — the light autoPlace panel steals the brand corner. %>
-<% if local_assigns.fetch(:show_dat_gui, false) %>
-<% content_for :head do %>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.9/dat.gui.min.js" defer></script>
-<% end %>
-<% end %>
-
 <%# auto_start still defaults true for embeds, but the playlist home passes
     false: a page that begins playing on load is music nobody asked for, coming
     from a tab that may not be in front of you, and the transport bar is not on
