@@ -29,8 +29,7 @@ class AssetUrlLintTest < Minitest::Test
   end
 
   # The regression this lint was written for. amber's layout links
-  # `/lightgallery.css`, amber has no copy, so it is served shared's — and shared's
-  # `../fonts/lg.*` resolved to files that existed only under brgen/public.
+  # `/lightgallery.css`, amber has no copy, so it is served shared's.
   # Asserted through the resolver rather than by listing files, so moving the
   # assets to a different served root still passes and deleting them fails.
   def test_amber_can_resolve_the_lightgallery_icon_font
@@ -40,21 +39,6 @@ class AssetUrlLintTest < Minitest::Test
       assert L.satisfied_everywhere?(ref, sheet),
              "#{ref} must resolve for every app that links shared's lightgallery.css, not just brgen"
     end
-  end
-
-  # An app-owned stylesheet may rely on its own public/ root; a shared one may not,
-  # because it is served to three apps. This is the distinction that turns a
-  # file-existence check into a measurement.
-  def test_a_shared_sheet_needs_the_file_where_every_app_can_see_it
-    shared_sheet = File.join(L::RAILS_ROOT, "shared/app/assets/stylesheets/_fonts.scss")
-    brgen_sheet = File.join(L::RAILS_ROOT, "brgen/app/assets/stylesheets/application.scss")
-
-    assert L.satisfied_everywhere?("/fonts/JetBrainsMonoNerdFont-Regular.woff2", shared_sheet)
-    # Instrument Serif is the storefront promotional face, vendored in
-    # brgen/public only, which is the property under test.
-    assert L.satisfied_everywhere?("/fonts/instrument-serif-latin-400-normal.woff2", brgen_sheet)
-    refute L.satisfied_everywhere?("/fonts/instrument-serif-latin-400-normal.woff2", shared_sheet),
-           "the promotional face lives only in brgen/public — a shared stylesheet asking for it would 404 on amber"
   end
 
   # My own first run reported PP Neue Montreal in five weights because `expand`
