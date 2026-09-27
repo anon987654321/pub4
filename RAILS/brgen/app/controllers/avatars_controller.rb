@@ -9,6 +9,8 @@
 class AvatarsController < ApplicationController
   def show
     user = User.find(params[:id])
+    return head :not_found if user.deleted_at.present? || user.deletion_scheduled_at.present?
+
     svg = Quilt::Identicon.new(user.id.to_s, scale: 6, transparent: true, format: "svg").to_blob
 
     expires_in 1.year, public: true
