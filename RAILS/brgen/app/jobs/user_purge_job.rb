@@ -45,7 +45,9 @@ class UserPurgeJob < ApplicationJob
     { model: "Marketplace::Address",  key: :user_id },
     # What someone searched for, saved under their name. Nobody else reads it.
     { model: "Marketplace::SavedSearch", key: :user_id },
-    { model: "PushSubscription", key: :user_id }
+    { model: "PushSubscription", key: :user_id },
+    # Inbound/outbound federation relationships are part of the user identity graph.
+    { model: "FediFollow", key: :user_id }
   ].freeze
 
   # Retained rows with personal columns to clear.
