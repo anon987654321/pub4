@@ -1,7 +1,7 @@
 <%#
   Shared Dilla sketches list + form for Set and Playlist parents.
   locals: parent, sketches, render_path_proc, destroy_path_proc (optional), create_url,
-          form_scope (optional), lab_query (optional), can_manage, rich_form (bool)
+          form_scope (optional), can_manage, rich_form (bool)
 %>
 <% sketches = local_assigns[:sketches] || [] %>
 <% can_manage = local_assigns.fetch(:can_manage, false) %>
@@ -22,9 +22,6 @@
           · <%= t("playlist.render_statuses.#{sk.render_status || "idle"}") %>
 
         <%= t("playlist.sketch_by", name: sk.user&.try(:display_name) || sk.user&.email || t("chat.anon")) %>
-        <% if sk.lab_url.present? %>
-          <a href="<%= sk.lab_url %>" target="_blank" rel="noopener" class="btn btn-ghost btn-sm"><%= t("playlist.open_in_lab") %></a>
-        <% end %>
         <% if can_manage %>
           <%= button_to t("playlist.render"), render_path_proc.call(sk), method: :post, class: "btn btn-primary btn-sm", params: { publish: "1" } %>
           <% if local_assigns[:destroy_path_proc] %>
