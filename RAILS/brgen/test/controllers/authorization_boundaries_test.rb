@@ -92,6 +92,17 @@ class AuthorizationBoundariesTest < ActionDispatch::IntegrationTest
     end
   end
 
+  # A deterministic identicon is publicly cacheable, so a departing account
+  # must not leave a stable visual identifier reachable by raw user id.
+  test "a departing user's avatar is no longer public" do
+    target = user("avatar-target")
+    target.update_columns(deleted_at: Time.current, deletion_scheduled_at: 7.days.from_now)
+
+    get avatar_user_path(target)
+
+    assert_response :not_found
+  end
+
   # --- blocks ---------------------------------------------------------------
 
   test "blocking a user records it" do
