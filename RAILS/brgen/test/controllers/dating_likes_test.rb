@@ -81,9 +81,9 @@ class DatingLikesTest < ActionDispatch::IntegrationTest
     sign_in_as(@me)
     in_dating
 
-    assert_raises(ActiveRecord::RecordNotFound) do
-      post dating.dislikes_path, params: { user_id: @them.id }
-    end
+    post dating.dislikes_path, params: { user_id: @them.id }
+
+    assert_response :not_found
     assert_not Dating::Dislike.exists?(disliker_id: @me.id, dislikee_id: @them.id)
   end
 
