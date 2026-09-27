@@ -35,6 +35,20 @@ class OwnerAuthorizationTest < ActionDispatch::IntegrationTest
     WardrobeItem.create!(user: owner, item: item)
   end
 
+  test "the wardrobe index only shows the signed-in user's items" do
+    owner = user("owner")
+    stranger = user("stranger")
+    mine = item_for(owner)
+    theirs = item_for(stranger)
+    sign_in(owner)
+
+    get wardrobe_items_path
+
+    assert_response :success
+    assert_includes response.body, mine.item.title
+    refute_includes response.body, theirs.item.title
+  end
+
   test "the owner reaches their own wardrobe item" do
     owner = user("owner")
     wardrobe_item = item_for(owner)
