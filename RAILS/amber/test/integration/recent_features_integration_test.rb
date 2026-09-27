@@ -69,6 +69,23 @@ class RecentFeaturesIntegrationTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Daily blazer"
   end
 
+  test "departing users cannot receive new social relationships" do
+    actor = User.strict_loading(false).create!(email_address: "social-actor@example.com", password: "password")
+    target = User.strict_loading(false).create!(email_address: "social-target@example.com", password: "password")
+    target.update_columns(deleted_at: Time.current, deletion_scheduled_at: 7.days.from_now)
+    sign_in_amber(actor)
+
+    assert_no_difference -> { Follow.count } do
+      post follow_user_path(target)
+    end
+    assert_response :not_found
+
+    assert_no_difference -> { Connection.count } do
+      post connections_path, params: { user_id: target.id }
+    end
+    assert_response :not_found
+  end
+
   test "wardrobe item join is unique per user and item" do
     user = User.strict_loading(false).create!(email_address: "wardrobe@example.com", password: "password")
     item = user.items.create!(title: "Shirt", category: "tops")
