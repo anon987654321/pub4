@@ -67,6 +67,16 @@ class ErasureCoverageTest < Minitest::Test
     "marketplace_addresses"      => [ :destroy, "recipient, street, postcode and phone, and nothing else" ],
     "marketplace_saved_searches" => [ :destroy, "what someone searched for, saved under their name" ],
     "push_subscriptions"       => [ :destroy, "browser push endpoint and cryptographic subscription keys are account credentials" ],
+    "fedi_follows"             => [ :destroy, "local federation relationship graph belonging to the account" ],
+    "notifications"            => [ :destroy, "private account alerts and notification delivery state" ],
+    "identity_assurances"      => [ :destroy, "identity assurance evidence belonging to the account" ],
+    "reputation_scores"        => [ :destroy, "derived reputation state scoped to the account" ],
+    "trust_signals"            => [ :destroy, "derived trust history scoped to the account" ],
+    "message_receipts"         => [ :destroy, "private read and delivery metadata on messages" ],
+    "typing_indicators"        => [ :destroy, "ephemeral presence state scoped to the account" ],
+    "account_merges"           => [ :destroy, "account creation and guest merge bookkeeping" ],
+    "event_rsvps"              => [ :destroy, "private attendance choices belonging to the account" ],
+    "story_views"              => [ :destroy, "private story viewing history belonging to the account" ],
 
     "takeaway_orders"       => [ :nullify, "retained as a financial record (Art. 17(3)(b)); the address it went to is not part of that" ],
     "posts"                 => [ :nullify, "content is retained so threads do not collapse; the coordinates it was written at are not" ],
@@ -113,6 +123,15 @@ class ErasureCoverageTest < Minitest::Test
       Add each to CLASSIFIED with one of #{DISPOSITIONS.join(', ')} and the
       reason — and for :destroy or :nullify, to UserPurgeJob as well.
     MSG
+  end
+
+  def test_private_relations_are_destroyed_by_the_job
+    expected = PRIVATE_RELATIONS.keys.index_with { :destroy }
+    actual = expected.to_h do |table, _|
+      [ table, CLASSIFIED.fetch(table).first ]
+    end
+
+    assert_equal expected, actual
   end
 
   def test_private_relations_are_real_tables
