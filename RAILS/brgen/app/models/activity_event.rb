@@ -31,7 +31,10 @@ class ActivityEvent < ApplicationRecord
   def self.for_city_home(city, limit: 8)
     return none unless city
 
-    candidates = visible.public_only.where(event_name: HOME_STRIP_EVENTS).recent.limit(limit * 4).to_a
+    candidates = visible.public_only.where(event_name: HOME_STRIP_EVENTS)
+                                .joins(:actor)
+                                .where(users: { guest: false, deleted_at: nil, deletion_scheduled_at: nil })
+                                .recent.limit(limit * 4).to_a
     subjects = subjects_for(candidates)
     candidates.each { |event| event.activity_subject = subjects[[ event.subject_type.to_s, event.subject_id ]] }
     candidates.select { |event| in_city?(event, city, subjects) }.first(limit)
