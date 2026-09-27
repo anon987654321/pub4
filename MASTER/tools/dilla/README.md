@@ -149,8 +149,7 @@ declared in `data/bed.yml`.
 
 Every knob the engine reads, with its current default, comes from
 `ruby dilla.rb knobs`, and `config-provenance` after a render names what that
-render resolved. There are three ways to hear the engine without rendering a
-file: the Dilla Lab page brgen serves from `RAILS/brgen/public/dilla/dilla.html`,
+render resolved. Two ways remain to hear the engine without rendering a file:
 `ruby dilla.rb live`, which plays the catalogue and, as `live set`, the livesets
 in `lib/livesets.rb`, and `ruby dilla.rb sines`, which runs the sine stream.
 
