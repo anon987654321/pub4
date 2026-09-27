@@ -18,11 +18,17 @@ module Fediverse
     def call
       type = @activity["type"].to_s
       return :ignored unless HANDLED.include?(type)
-      # An inbox POST arriving twice is routine, not exceptional: delivery
-      # retries on any non-2xx, and several implementations retry optimistically.
-      return :duplicate unless record_once!
 
-      send(:"handle_#{type.downcase}")
+      # Record only after the handler succeeds. If processing or its outbound
+      # delivery fails, the sender will retry and the activity must remain
+      # retryable rather than being mistaken for work already completed.
+      uri = @activity["id"].to_s
+      return :ignored if uri.blank?
+      return :duplicate if FediActivity.exists?(uri: uri)
+
+      result = send(:"handle_#{type.downcase}")
+      record_once!
+      result
     end
 
     private
@@ -35,7 +41,7 @@ module Fediverse
         uri: uri, activity_type: @activity["type"], fedi_actor: @actor, received_at: Time.current
       )
       true
-    rescue ActiveRecord::RecordNotUnique, ActiveRecord::RecordInvalid
+    rescue ActiveRecord::RecordNotUnique
       false
     end
 
