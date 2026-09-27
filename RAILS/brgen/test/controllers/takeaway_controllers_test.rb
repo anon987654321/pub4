@@ -149,6 +149,24 @@ class TakeawayControllersTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t("takeaway.driver_updated"), flash[:notice]
   end
 
+  test "a departing courier is hidden and not eligible for dispatch" do
+    courier = create_user("tc_leaving_courier")
+    driver = Takeaway::DeliveryDriver.create!(
+      user: courier, vehicle_type: "bicycle", available: true, current_lat: 60.39, current_lng: 5.32
+    )
+    courier.update_columns(deleted_at: Time.current, deletion_scheduled_at: 7.days.from_now)
+
+    host! "takeaway.brgen.no"
+    get takeaway.delivery_drivers_path
+    assert_response :success
+    refute_includes response.body, courier.display_name
+
+    assert_nil Takeaway::DeliveryDriver.nearest_free(60.39, 5.32, 10)
+    assert_raises(ActiveRecord::RecordNotFound) do
+      get takeaway.delivery_driver_path(driver)
+    end
+  end
+
   test "the kitchen cannot skip a step, and is told why" do
     order = place_takeaway_order!(restaurant: @restaurant, user: @diner, item: @soup)
     sign_in_as(@owner)
