@@ -64,8 +64,8 @@ module Master
       # PIPELINE_COMMANDS is what a person types: three words where there were
       # ten. /fix is the operation that changes the tree — it observes,
       # critiques, repairs and observes again — while /review and /critique read
-      # and argue without writing. There is no /scan: a reading nobody acts on
-      # is the thing /fix absorbed.
+      # and argue without writing. /scan remains only as a compatibility alias
+      # that rewrites to /fix; there is no separate scan operation.
       PIPELINE_COMMANDS = %w[review fix critique].freeze
 
       # MODEL_ALIASES is what the intent router accepts from a model, which is not
@@ -77,11 +77,11 @@ module Master
       PIPELINE_WORDS = (PIPELINE_COMMANDS + MODEL_ALIASES).freeze
       FOLD_SLASH = %w[fold run].freeze
       READ_SLASH = %w[explain why laws axioms principles].freeze
-      # What a typed slash is allowed to be. Wider than the four words the surface
-      # offers, and deliberately: /sweep and /council were spellings people had
-      # learned, and a retired word that falls silently to chat is a worse answer
-      # than one that still works. They rewrite to the canonical form; only four
-      # words are advertised, in help and in the contract.
+      # What a typed slash is allowed to be. Wider than the three words the surface
+      # offers, and deliberately: /scan, /sweep and /council were spellings people
+      # had learned, and a retired word that falls silently to chat is a worse
+      # answer than one that still works. They rewrite to the canonical form; only
+      # review, fix and critique are advertised.
       PIPELINE_SLASH = %w[fix critique council scan self workflow triad sweep through].freeze
 
       INFER_MIN_CONFIDENCE = 0.62
