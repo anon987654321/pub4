@@ -30,6 +30,23 @@ class PlaylistWritesTest < ActionDispatch::IntegrationTest
     host! "radio.brgen.no"
   end
 
+  test "the owner cannot add a departing account as a collaborator" do
+    leaving = User.strict_loading(false).create!(
+      email_address: "playlist-leaving-#{SecureRandom.hex(4)}@brgen.no",
+      password: "password123",
+      username: "playlist_leaving_#{SecureRandom.hex(3)}",
+      guest: false
+    )
+    leaving.update_columns(deleted_at: Time.current, deletion_scheduled_at: 7.days.from_now)
+
+    sign_in_as(@owner)
+
+    assert_no_difference -> { Playlist::Collaboration.count } do
+      post playlist.set_collaborations_path(@set), params: { username: leaving.username, role: "viewer" }
+    end
+    assert_redirected_to playlist.set_path(@set)
+  end
+
   test "the owner adds a collaborator, and the block names the role in the locale" do
     sign_in_as(@owner)
 
