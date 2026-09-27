@@ -12,7 +12,8 @@ class Tv::VideosController < Tv::BaseController
              by: -> { Current.user&.id ? "u#{Current.user.id}" : request.remote_ip },
              with: -> { redirect_back fallback_location: root_path, alert: t("flash.videos_rate_limited") }
 
-  before_action :set_video, only: %i[show destroy]
+  before_action :set_public_video, only: :show
+  before_action :set_video, only: :destroy
   before_action :require_video_owner!, only: :destroy
 
   # One view row per viewer per video per hour: a refresh reopens the row the
@@ -40,7 +41,7 @@ class Tv::VideosController < Tv::BaseController
     @video = Tv::Video.new
     # Answering a clip is a link into this form; the sounds list is the other
     # way in, for a video that reuses audio without answering anybody.
-    @duet_of = Tv::Video.published.find_by(id: params[:duet_of_id])
+    @duet_of = Tv::Video.publicly_visible.find_by(id: params[:duet_of_id])
     @sounds = Tv::Sound.popular.limit(20) if @duet_of.nil?
   end
 
@@ -77,6 +78,7 @@ class Tv::VideosController < Tv::BaseController
   # `Current.user != @video.channel.user`, which is only reached when
   # authenticated -- so the page rendered for guests and raised for every
   # signed-in viewer, which is why a guest-only smoke test never saw it.
+  def set_public_video = (@video = find_by_slug_or_id(Tv::Video.publicly_visible.includes(:user, :sound, :duet_of, :duets, comments: :user, video_notes: :user, channel: :user), params[:id]))
   def set_video = (@video = find_by_slug_or_id(Tv::Video.includes(:user, :sound, :duet_of, :duets, comments: :user, video_notes: :user, channel: :user), params[:id]))
   # No :tv_channel_id -- the channel comes from the route and is ownership
   # checked. Permitting it let a submitted id override that check by
@@ -94,7 +96,7 @@ class Tv::VideosController < Tv::BaseController
       return
     end
 
-    reused = Tv::Sound.find_by(id: params.dig(:video, :sound_id))
+    reused = Tv::Sound.publicly_visible.find_by(id: params.dig(:video, :sound_id))
     video.sound_id = reused.id if reused
   end
 
