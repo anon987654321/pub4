@@ -9,7 +9,7 @@ class SoundVideosInfiniteScrollReflex < Shared::InfiniteScrollReflex
   private
 
   def scope
-    sound = Tv::Sound.find_by(id: element.dataset["sound_id"])
+    sound = Tv::Sound.publicly_visible.find_by(id: element.dataset["sound_id"])
     return Tv::Video.none unless sound
 
     sound.videos_by_watch_time.includes(:channel, :user)
