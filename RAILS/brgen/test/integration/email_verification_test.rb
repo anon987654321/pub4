@@ -29,6 +29,27 @@ class EmailVerificationTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "verification works without a public username" do
+    email = "verify-no-username-#{SecureRandom.hex(4)}@brgen.no"
+    post users_path, params: {
+      accept_terms: "1",
+      accept_age: "1",
+      user: {
+        email_address: email,
+        password: "password12345",
+        password_confirmation: "password12345"
+      }
+    }
+    assert_response :redirect
+
+    user = User.find_by!(email_address: email)
+    assert_nil user.username
+    get verify_email_path(user.email_verification_token)
+
+    assert_redirected_to root_path
+    assert user.reload.email_verified?
+  end
+
   test "an unverified signup is gated from posting until it confirms" do
     email = "gate-#{SecureRandom.hex(4)}@brgen.no"
     post users_path, params: { accept_terms: "1", accept_age: "1", user: { email_address: email, username: "g_#{SecureRandom.hex(3)}", password: "password12345", password_confirmation: "password12345" } }
