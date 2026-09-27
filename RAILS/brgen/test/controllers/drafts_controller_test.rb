@@ -37,3 +37,25 @@ class DraftsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "two", session[:drafts]["comment_9"]["title"]
   end
 end
+
+
+  def test_update_redacts_credential_shaped_fields
+    patch draft_path("post_new"), params: {
+      title: "Half-written",
+      "user[password]": "super-secret",
+      "oauth[token]": "bearer-secret"
+    }
+
+    assert_response :no_content
+    draft = session[:drafts]["post_new"]
+    assert_equal "Half-written", draft["title"]
+    refute_includes draft.keys.map(&:to_s), "user[password]"
+    refute_includes draft.keys.map(&:to_s), "oauth[token]"
+  end
+
+  def test_update_rejects_an_oversized_cookie_draft
+    patch draft_path("post_new"), params: { body: "x" * (Shared::DraftsActions::MAX_BYTES + 1) }
+
+    assert_response :content_too_large
+    assert_nil session[:drafts]&.[]("post_new")
+  end
