@@ -4,11 +4,12 @@ module Tv
   class LiveStreamsController < ApplicationController
     before_action :require_live_streaming!, only: %i[new create]
     before_action :require_user_session, only: %i[new create]
-    before_action :set_live_stream, only: %i[show update destroy go_live end_live]
+    before_action :set_public_live_stream, only: :show
+    before_action :set_live_stream, only: %i[update destroy go_live end_live]
     before_action :require_live_stream_owner!, only: %i[update destroy go_live end_live]
 
     def index
-      @live_streams = Tv::LiveStream.recent.limit(50)
+      @live_streams = Tv::LiveStream.publicly_visible.recent.limit(50)
     end
 
     def show
