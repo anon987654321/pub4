@@ -260,6 +260,12 @@ class DeployGatesContractTest < Minitest::Test
     assert_includes File.read(File.join(ROOT, "gates", "runner.rb")), "resolve_gates"
   end
 
+  def test_apps_yml_validator_points_at_the_canonical_rails_inventory
+    source = File.read(File.join(REPO_ROOT, "MASTER", "gates", "lib", "source", "apps_yml.rb"))
+    assert_includes source, 'ROOT = File.join(REPO_ROOT, "RAILS")'
+    assert File.file?(File.join(REPO_ROOT, "RAILS", "apps.yml"))
+  end
+
   def test_production_gate_runs_apps_yml_validator_in_process
     source = File.read(File.join(ROOT, "gates", "lib", "production.rb"))
     assert_includes source, "AppsYmlValidator.run"
