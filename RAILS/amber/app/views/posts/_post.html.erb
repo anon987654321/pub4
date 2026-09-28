@@ -1,10 +1,11 @@
 <%# I18n.locale is in the key because the fragment holds translated chrome and
     Rails does not add the locale to fragment cache keys itself — without it,
     switching language served whichever language rendered the post first. %>
-<% cache [post, Current.user&.id, post.anonymous?, I18n.locale] do %>
+<% cache [post, Current.user&.id, post.voted_by?(Current.user), post.anonymous?, I18n.locale] do %>
   <% post_actions = capture do %>
     <% unless guest? %>
       <%= render "posts/like_button", post: post %>
+      <%= render "shared/post_embed_action", post: post, url: post_url(post) %>
     <% end %>
     <% if post.user == Current.user && !guest? %>
       <%= button_to t("actions.delete"), post_path(post), method: :delete, data: { turbo_confirm: t("actions.confirm_delete") } %>
@@ -27,7 +28,12 @@
         name: post.author_name,
         url: (post.anonymous? || post.user&.guest? ? nil : user_path(post.user)),
         content: post.body,
-        title: nil,
+        title: strip_tags(post.body.to_s).squish.truncate(88, separator: " "),
+        show_votes: true,
+        vote_path: post_vote_path(post),
+        vote_score: post.score,
+        upvoted: Current.user.present? && post.upvoted_by?(Current.user),
+        downvoted: Current.user.present? && post.downvoted_by?(Current.user),
         meta: post_meta.presence,
         media: (render("shared/link_embed", embed:) if embed),
         actions: post_actions,
