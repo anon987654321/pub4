@@ -118,6 +118,8 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes feed, 'render "home/media_card"'
     assert_includes card, "responsive_image_tag(post.image"
     assert_includes css, ".brgen-media-wall"
+    assert_includes css, "body.vertical-messenger #messages article {"
+    assert_includes css, "border-block-end: 1px solid var(--border)"
   end
 
   def test_amber_prioritizes_owned_clothes_and_reversible_lifecycle
