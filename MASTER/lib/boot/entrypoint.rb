@@ -11,7 +11,8 @@ module Master
       def prepare!(root:, env: ENV, out: $stderr, argv: ARGV, program: $PROGRAM_NAME)
         root = File.expand_path(root)
         reexec_pinned_ruby!(root:, env:, out:, argv:, program:)
-        result = DependencyManager.ensure!(root:, env:, out:)
+        manager = DependencyManager.new(root:, env:, out:)
+        result = manager.ensure!
         unless result.ok
           out.puts("deps0: #{result.message}")
           detail = result.output.to_s.strip
@@ -19,6 +20,7 @@ module Master
           exit 78
         end
 
+        manager.activate_environment!
         activate_bundle!(root)
 
         true
