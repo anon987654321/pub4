@@ -3665,15 +3665,6 @@ body.vertical-marketplace .top-offers-rail .sale-ad .deal-price {
     transition: none !important;
   }
 
-  *,
-  *::before,
-  *::after {
-  }
-
-  *,
-  *::before,
-  *::after {
-  }
 }
 
 /* Marketplace chrome — subnav, filters, cats, PDP, store grid. */
@@ -4402,9 +4393,8 @@ body.vertical-marketplace .top-offers-rail .sale-ad .deal-price {
   border: none;
   color: var(--text);
   border-radius: var(--radius-sm);
-  /* 32px clears the WCAG 24px floor but not Fitts's 44px: it is the largest
-     this can go without eating most of the 80px thumbnail it sits on
-     (design_rules.yml ux_laws.fitts). */
+  /* The thumbnail control keeps a 32px footprint by deliberate exception: its
+     80px host leaves room for the neighboring controls without obscuring the image. */
   width: 32px;
   height: 32px;
   font-size: var(--text-xs);
