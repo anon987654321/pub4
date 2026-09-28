@@ -1,9 +1,10 @@
 
-<article class="brgen-media-card">
+<% media_layout = %w[wide regular tall regular regular][local_assigns.fetch(:media_index, 0).to_i % 5] %>
+<article class="brgen-media-card brgen-media-card--<%= media_layout %>">
   <div class="brgen-media-image">
     <% if post.image.attached? %>
       <div data-controller="lightbox">
-        <a href="<%= url_for(post.image) %>" data-turbo="false" class="brgen-media-lightbox-link">
+        <a href="<%= url_for(post.image) %>" data-turbo="false" data-lg-size="1600-1200" class="brgen-media-lightbox-link">
           <%= responsive_image_tag(post.image, alt: post.title.presence || "", loading: "lazy", class: "brgen-media-image-tag") %>
         </a>
       </div>
