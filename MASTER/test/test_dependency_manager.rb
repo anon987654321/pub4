@@ -18,7 +18,7 @@ class TestDependencyManager < Minitest::Test
       DEPENDENCIES
 
       RUBY VERSION
-        ruby 4.0.7
+        ruby 4.0.5
 
       BUNDLED WITH
         4.0.7
