@@ -10,6 +10,7 @@ class Message < ApplicationRecord
   scope :unread, -> { where(read_at: nil) }
 
   after_create_commit :enqueue_master_reply, if: :master_message?
+  after_create_commit :broadcast_live
 
   def master_message?
     !sender.bot? && recipient&.master_bot?
@@ -22,11 +23,6 @@ class Message < ApplicationRecord
   def enqueue_master_reply
     MasterMessageReplyJob.perform_later(id)
   end
-end
-
-  after_create_commit :broadcast_live
-
-  private
 
   def broadcast_live
     fresh = Message.includes(:sender, :recipient).find(id)
@@ -39,3 +35,4 @@ end
       )
     end
   end
+end
