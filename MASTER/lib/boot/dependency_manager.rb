@@ -284,7 +284,7 @@ module Master
           )
         end
 
-        Gem::Specification.reset
+        refresh_gem_state!
         if bundler_path(version)
           ok_result("bundler #{version} installed", changed: true, bundler: version, output: output)
         else
@@ -363,11 +363,24 @@ module Master
 
       def bundler_path(version)
         return nil if version.to_s.empty?
+        return nil unless bundler_spec(version)
 
         Gem.bin_path("bundler", "bundle", version)
       rescue Gem::GemNotFoundException, Gem::Exception
-        user = File.join(user_gem_bin, "bundle")
-        File.executable?(user) ? user : nil
+        nil
+      end
+
+      def bundler_spec(version)
+        Gem::Specification.find_all_by_name("bundler").find do |spec|
+          spec.version.to_s == version.to_s
+        end
+      rescue Gem::Exception
+        nil
+      end
+
+      def refresh_gem_state!
+        Gem.clear_paths
+        Gem::Specification.reset
       end
 
       def gem_command
