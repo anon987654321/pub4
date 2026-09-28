@@ -18,7 +18,6 @@ require "rbconfig"
 MASTER_ROOT = File.expand_path("..", __dir__)
 REPO_ROOT = File.expand_path("..", MASTER_ROOT)
 RUBY = RbConfig.ruby
-RUBY3 = Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("3.0.0")
 
 # Inlined from bin/probe_selfscan (2026-08-19 sprawl collapse): deep-scan
 # lib/master.rb and fail on error/critical findings.
@@ -39,7 +38,6 @@ CHECKS = {
     desc: "MASTER boot/wiring smoke",
     cmd: [RUBY, File.join(MASTER_ROOT, "bin", "smoke")],
     cwd: MASTER_ROOT,
-    needs_ruby3: true,
   },
   "smoke-web" => {
     desc: "MASTER web face HTTP smoke (bootstrap-aware)",
@@ -57,25 +55,21 @@ CHECKS = {
     desc: "MASTER namespace reference audit",
     cmd: [RUBY, File.join(MASTER_ROOT, "bin", "nsaudit")],
     cwd: MASTER_ROOT,
-    needs_ruby3: true,
   },
   "selftest" => {
     desc: "rules.yml self_test laws against MASTER itself",
     cmd: [RUBY, "-S", "rake", "selftest"],
     cwd: MASTER_ROOT,
-    needs_ruby3: true,
   },
   "data_singularity" => {
     desc: "top-level data YAML key singularity lint",
     cmd: [RUBY, "-S", "rake", "lint:data_singularity"],
     cwd: MASTER_ROOT,
-    needs_ruby3: true,
   },
   "models" => {
     desc: "every declared model id still served by the provider (network)",
     cmd: [RUBY, "-S", "rake", "lint:models"],
     cwd: MASTER_ROOT,
-    needs_ruby3: true,
   },
   # bin/preflight used to sit here, and `all` ran it. It checked ruby, bundler
   # and `bundle check`, warned about three API keys, syntax-checked
@@ -92,7 +86,6 @@ CHECKS = {
     desc: "Staged lines judged by the law (bin/operator lint)",
     cmd: [RUBY, File.join(MASTER_ROOT, "bin", "operator"), "lint", "--staged", "--changed-lines"],
     cwd: REPO_ROOT,
-    needs_ruby3: true,
     skip: lambda {
       out, = Open3.capture2e("git", "diff", "--cached", "--name-only", chdir: REPO_ROOT)
       out.lines.none? { |line| !line.strip.empty? }
@@ -118,7 +111,6 @@ CHECKS = {
     desc: "MASTER unit tests + constitution scan",
     cmd: [RUBY, File.join(MASTER_ROOT, "bin", "ci")],
     cwd: MASTER_ROOT,
-    needs_ruby3: true,
   },
   "health" => {
     desc: "OpenBSD VPS stack health",
@@ -132,13 +124,11 @@ CHECKS = {
     # -I lib because core_smoke requires "master"; nothing else puts it on the path.
     cmd: [RUBY, "-I", File.join(MASTER_ROOT, "lib"), File.join(MASTER_ROOT, "test", "test_core_smoke.rb")],
     cwd: MASTER_ROOT,
-    needs_ruby3: true,
   },
   "dogfood" => {
     desc: "MASTER CLI dogfood (bundle exec ruby bin/cli + chitchat)",
     cmd: [RUBY, File.join(MASTER_ROOT, "bin", "dogfood")],
     cwd: MASTER_ROOT,
-    needs_ruby3: true,
   },
   "crawl" => {
     desc: "HTTP crawl manifest + inventory sync (apps.yml ↔ deploy_inventory.json)",
@@ -166,7 +156,6 @@ CHECKS = {
     desc: "Deep-scan lib/master.rb (set MASTER_PROBE_SELF=1)",
     cmd: [RUBY, "-e", SELFSCAN_SRC],
     cwd: MASTER_ROOT,
-    needs_ruby3: true,
     skip: -> { ENV["MASTER_PROBE_SELF"] != "1" },
     skip_reason: "set MASTER_PROBE_SELF=1",
   },
@@ -206,10 +195,6 @@ end
 failures = []
 checks.each do |name|
   meta = CHECKS.fetch(name)
-  if meta[:needs_ruby3] && !RUBY3
-    puts "probe: #{name.ljust(9)} skip - Ruby #{RUBY_VERSION} cannot parse MASTER Ruby 3 syntax; rerun with ruby34"
-    next
-  end
 
   if meta[:skip]&.call
     puts "probe: #{name.ljust(9)} skip - #{meta.fetch(:skip_reason)}"
