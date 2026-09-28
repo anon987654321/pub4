@@ -71,6 +71,13 @@ fi
 # scripts here (rules.yml, BSD/GNU idiom drift), and the exit status is the
 # whole signal anyway.
 if command -v vips >/dev/null 2>&1; then
+  /usr/local/bin/ruby40 -e '
+    require "rubygems"
+    raw = ARGV.fetch(0).to_s
+    match = raw.match(/(\\d+\\.\\d+\\.\\d+)/)
+    exit 1 unless match && Gem::Version.new(match[1]) >= Gem::Version.new("8.18.1")
+  ' "$(vips --version 2>/dev/null)" || \
+    logger -t daily.local "libvips below 8.18.1 — update /usr/ports/graphics/libvips before image processing"
   /usr/local/bin/ruby40 -e 'exit(`vips -l 2>/dev/null`.include?("svgload") ? 0 : 1)' || \
     logger -t daily.local "libvips lost svgload — amber garment cut-outs degrade silently; make reinstall in /usr/ports/graphics/libvips"
 else
