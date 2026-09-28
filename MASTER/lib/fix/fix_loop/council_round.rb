@@ -20,8 +20,10 @@ module Master
           def severity = :warning
         end
         IMPROVEMENT_SEVERITY = :warning
+        MAX_IMPROVEMENT_FINDINGS = Integer(ENV.fetch("MASTER_FIX_IMPROVEMENT_FINDINGS", "4"))
         DESTRUCTIVE_IMPROVEMENT = /\b(?:delete|remove|drop|erase|discard)\b/i.freeze
-        LINE_RE = /\b(?:line|ln)\s*#?\s*(\d+)\b|:(\d+)\b/i.freeze
+        SAFE_REMOVE_IMPROVEMENT = /\bremove\s+(?:the\s+)?(?:unused|dead|redundant)\s+(?:argument|parameter|import|require)\b/i.freeze
+        LINE_RE = /\b(?:line|ln)\s*#?\s*(\d+)\b/i.freeze
         SYMBOL_RE = /\b(class|module|def)\s+([A-Za-z_]\w*[!?=]?)/i.freeze
 
         def initialize(agent:, root:, bus: nil)
@@ -59,7 +61,7 @@ module Master
           return unless result&.ok?
 
           value = result.value!
-          findings = improvement_findings(value, selected)
+          findings = improvement_findings(value, selected).first(MAX_IMPROVEMENT_FINDINGS)
           @bus&.publish(
             "fix_loop:improvement_council",
             pass:, files: selected.size, critiques: Array(value[:feedback]).size,
@@ -68,7 +70,7 @@ module Master
           Master::Trace::Dmesg.status(
             "fix0",
             "pass #{pass}, improvement council #{Master::Trace::Dmesg.counted(findings.size, "candidate")}",
-          ) if findings.any?
+          )
           findings
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "fix_loop.improvement_council", event_bus: @bus)
@@ -115,14 +117,14 @@ module Master
         end
 
         def destructive_pick?(pick)
-          pick.match?(DESTRUCTIVE_IMPROVEMENT)
+          pick.match?(DESTRUCTIVE_IMPROVEMENT) && !pick.match?(SAFE_REMOVE_IMPROVEMENT)
         end
 
         def anchor_for(pick, files)
           file = file_anchor(pick, files)
           return [nil, nil] unless file
 
-          [file, line_anchor(pick) || symbol_line(pick, file)]
+          [file, line_anchor(pick, file) || symbol_line(pick, file)]
         end
 
         def rotating_files(files, pass)
@@ -144,11 +146,20 @@ module Master
           basenames.first[0] if basenames.size == 1
         end
 
-        def line_anchor(pick)
+        def line_anchor(pick, file)
           match = pick.match(LINE_RE)
-          return unless match
+          if match
+            line = match[1].to_i
+            return line if line.positive?
+          end
 
-          line = (match[1] || match[2]).to_i
+          basename = File.basename(file)
+          relative = repo_relative(file)
+          path_match = [relative, basename].find { |path| pick.include?("#{path}:") }
+          return unless path_match
+
+          path_match_match = pick.match(/#{Regexp.escape(path_match)}:(\d+)\b/)
+          line = path_match_match&.captures&.first.to_i
           line.positive? ? line : nil
         end
 
