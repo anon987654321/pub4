@@ -1,22 +1,3 @@
-<%#
-  Shared post card for the focus triangle (brgen + amber).
-
-  locals:
-    post        — required
-    variant     — :card (default, brgen feed_card) or :prose (amber feed-post)
-    name        — author display (default post_display_name)
-    avatar_url  — optional
-    handle      — optional @slug / community
-    url         — link for name/title (default post_path if available)
-    title       — headline (brgen title; optional for amber)
-    content     — body HTML/text
-    meta        — optional under body (outfit/item)
-    media       — optional media block
-    actions     — optional footer actions (capture)
-    time        — optional; defaults to time_ago_in_words
-    frame       — wrap in turbo_frame_tag dom_id(post) (default false)
-    class       — extra classes on the article
-%>
 <% post = local_assigns.fetch(:post) %>
 <% variant = local_assigns.fetch(:variant, :card).to_sym %>
 <% name = local_assigns[:name] || post_display_name(post) %>
@@ -26,92 +7,49 @@
 <% content = local_assigns.key?(:content) ? local_assigns[:content] : post_body_text(post) %>
 <% time = local_assigns[:time] || (post.created_at ? time_ago_in_words(post.created_at) : nil) %>
 <% url = local_assigns[:url] %>
-<% if url.nil? && post.persisted? && respond_to?(:post_path) %>
-  <% url = post_path(post) rescue nil %>
-<% end %>
+<% if url.nil? && post.persisted? && respond_to?(:post_path) %><% url = post_path(post) rescue nil %><% end %>
 <% meta = local_assigns[:meta] %>
 <% media = local_assigns[:media] %>
 <% actions = local_assigns[:actions] %>
 <% frame = local_assigns.fetch(:frame, false) %>
 <% css_class = local_assigns[:class] %>
-
+<% show_votes = local_assigns.fetch(:show_votes, false) %>
+<% vote_path = local_assigns[:vote_path] %>
+<% vote_score = local_assigns.fetch(:vote_score, post.respond_to?(:score) ? post.score : 0).to_i %>
+<% upvoted = local_assigns.fetch(:upvoted, false) %>
+<% downvoted = local_assigns.fetch(:downvoted, false) %>
+<% body_plain = strip_tags(content.to_s).squish %>
+<% derived_title = strip_tags(title.to_s).squish.presence || body_plain.truncate(88, separator: " ") %>
+<% more_label = local_assigns.fetch(:more_label, t("post.read_more", default: "Read full post")) %>
+<% vote_rail = capture do %>
+  <div class="post-vote-rail" aria-label="<%= t("post.voting", default: "Post voting") %>">
+    <% if vote_path.present? && Current.user.present? %>
+      <%= button_to vote_path, method: :post, params: { vote: { value: 1 } }, class: "post-vote-btn#{' is-active' if upvoted}", form_class: "post-vote-form", aria: { label: t("post.upvote", default: "Upvote"), pressed: upvoted } do %><%= render "shared/feed_icon", name: "upvote" %><% end %>
+      <span class="post-vote-score"><%= vote_score %></span>
+      <%= button_to vote_path, method: :post, params: { vote: { value: -1 } }, class: "post-vote-btn#{' is-active' if downvoted}", form_class: "post-vote-form", aria: { label: t("post.downvote", default: "Downvote"), pressed: downvoted } do %><%= render "shared/feed_icon", name: "downvote" %><% end %>
+    <% else %><span class="post-vote-score post-vote-score--static"><%= vote_score %></span><% end %>
+  </div>
+<% end %>
 <% card = capture do %>
   <% if variant == :prose %>
-    <article class="feed-post<%= " #{css_class}" if css_class.present? %>"
-             role="article"
-             aria-label="<%= t("post.by_author", name: name, default: "Post by %{name}") %>">
-      <header class="feed-post-meta feed-post-byline">
-        <span class="author">
-          <% if url.present? && !(post.try(:anonymous?) || post.try(:user)&.try(:guest?)) %>
-            <%= link_to name, url, class: "link-inherit" %>
-          <% else %>
-            <%= name %>
-          <% end %>
-        </span>
-  <%# How far away it was written, after who and when. Jodel's stamp, and the
-    reason its feed reads as a place — brgen has had the coordinates and the
-    distance method the whole time and rendered neither. Nil unless the
-    reader has shared a position and the post carries one, so a feed with no
-    location is unchanged rather than full of blanks. %>
-<% place = distance_stamp(post) %>
-<% if place %>
-  · <span class="feed-post-place"><%= place %></span>
-<% end %>
-      <% if time.present? && post.created_at %>
-          · <time datetime="<%= post.created_at.iso8601 %>"><%= time %></time>
-        <% elsif time.present? %>
-          · <span class="feed-post-time"><%= time %></span>
-        <% end %>
-      </header>
-      <% if title.present? && title.to_s != content.to_s %>
-        <h2 class="feed-post-title"><%= url.present? ? link_to(title, url) : title %></h2>
-      <% end %>
-      <% if content.present? %>
-        <div class="feed-post-body feed-post-prose prose"><%= content %></div>
-      <% end %>
-      <% if meta.present? %>
-        <div><%= meta %></div> <%# scan: intentional — the caller-supplied meta slot; its content names itself %>
-      <% end %>
-      <% if media.present? %>
-        <div class="feed-post-media"><%= media %></div>
-      <% end %>
-      <% if actions.present? %>
-        <footer class="feed-post-actions"><%= actions %></footer>
-      <% end %>
+    <article id="<%= dom_id(post) %>" class="feed-post post-reading-card<%= " #{css_class}" if css_class.present? %>" role="article" aria-label="<%= t("post.by_author", name: name, default: "Post by %{name}") %>">
+      <div class="post-reading-layout"><%= vote_rail if show_votes %><div class="post-reading-main">
+        <header class="feed-post-meta feed-post-byline"><span class="author"><%= url.present? ? link_to(name, url, class: "link-inherit") : name %></span><% if (place = distance_stamp(post)) %> · <span class="feed-post-place"><%= place %></span><% end %><% if time.present? && post.created_at %> · <time datetime="<%= post.created_at.iso8601 %>"><%= time %></time><% elsif time.present? %> · <span class="feed-post-time"><%= time %></span><% end %></header>
+        <% if derived_title.present? %><h2 class="feed-post-title post-reading-title"><%= url.present? ? link_to(derived_title, url) : derived_title %></h2><% end %>
+        <% if content.present? %><div class="feed-post-body feed-post-prose prose post-reading-body-preview"><%= content %></div><% if url.present? && body_plain.length > 260 %><%= link_to "…", url, class: "post-reading-more", aria: { label: more_label }, title: more_label %><% end %><% end %>
+        <% if meta.present? %><div><%= meta %></div><% end %><% if media.present? %><div class="feed-post-media"><%= media %></div><% end %><% if actions.present? %><footer class="feed-post-actions post-reading-actions"><%= actions %></footer><% end %>
+      </div></div>
     </article>
   <% else %>
-    <%# Card dialect: title line is title, or body when no title (amber-style). %>
-    <% card_title = title.presence || content %>
-    <% card_body = title.present? ? content : nil %>
-    <%= render "shared/feed_card",
-          avatar_url: avatar_url,
-          name: name,
-          handle: handle,
-          time: time,
-          title: card_title,
-          content: card_body,
-          meta: meta,
-          media: media,
-          actions: actions,
-          record: (post if actions.blank?),
-          reply_path: local_assigns[:reply_path],
-          repost_path: local_assigns[:repost_path],
-          reposted: local_assigns.fetch(:reposted, false),
-          repost_count: local_assigns.fetch(:repost_count, 0),
-          liked: local_assigns.fetch(:liked, false),
-          like_count: local_assigns.fetch(:like_count, 0),
-          comment_count: local_assigns.fetch(:comment_count, 0),
-          view_count: local_assigns[:view_count],
-          share_url: local_assigns[:share_url] || url,
-          url: url,
-          class: [ "feed-card", css_class ].compact.join(" ") %>
+    <article id="<%= dom_id(post) %>" class="feed-card post-reading-card<%= " #{css_class}" if css_class.present? %>">
+      <div class="post-reading-layout"><%= vote_rail if show_votes %><div class="post-reading-main post-reading-main--card">
+        <div class="feed-card-author-row"><div class="feed-card-avatar"><% if avatar_url.present? %><%= image_tag avatar_url, class: "feed-card-avatar-img", alt: name || "avatar", width: 40, height: 40 %><% else %><% monogram = (name || "?").first.upcase %><div class="feed-card-avatar-placeholder monogram monogram--<%= monogram.ord % 6 %>" role="img" aria-label="<%= name || "Anonymous" %> monogram"><%= monogram %></div><% end %></div><div class="feed-card-header"><span class="feed-card-name"><%= url.present? ? link_to(name, url, class: "link-inherit") : name %></span><% if handle.present? %><span class="feed-card-handle"><%= handle %></span><% end %><% if time.present? %><span class="feed-card-time">· <%= time %></span><% end %></div></div>
+        <% if derived_title.present? %><h2 class="feed-card-text post-reading-title"><%= url.present? ? link_to(derived_title, url) : derived_title %></h2><% end %>
+        <% if content.present? %><div class="feed-card-body post-reading-body-preview"><%= content %></div><% if url.present? && body_plain.length > 260 %><%= link_to "…", url, class: "post-reading-more", aria: { label: more_label }, title: more_label %><% end %><% end %>
+        <% if meta.present? %><div class="feed-card-meta"><%= meta %></div><% end %><% if media.present? %><div class="feed-card-media"><%= media %></div><% end %>
+        <% if actions.present? %><div class="feed-card-actions post-reading-actions"><%= actions %></div><% elsif local_assigns[:record].present? %><%= render "shared/action_bar", record: local_assigns[:record], reply_path: local_assigns[:reply_path], repost_path: local_assigns[:repost_path], reposted: local_assigns.fetch(:reposted, false), repost_count: local_assigns.fetch(:repost_count, 0), liked: local_assigns.fetch(:liked, false), like_count: local_assigns.fetch(:like_count, 0), comment_count: local_assigns.fetch(:comment_count, 0), view_count: local_assigns[:view_count], share_url: local_assigns[:share_url] || url %><% end %>
+      </div></div>
+    </article>
   <% end %>
 <% end %>
-
-<% if frame && post.persisted? %>
-  <%= turbo_frame_tag dom_id(post), target: "_top" do %>
-    <%= card %>
-  <% end %>
-<% else %>
-  <%= card %>
-<% end %>
+<% if frame && post.persisted? %><%= turbo_frame_tag dom_id(post), target: "_top" do %><%= card %><% end %><% else %><%= card %><% end %>
