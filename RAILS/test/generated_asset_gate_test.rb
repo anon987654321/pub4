@@ -60,6 +60,20 @@ class GeneratedAssetGateTest < Minitest::Test
     assert result.ok?, result.failures.join
   end
 
+  def test_missing_generated_build_is_inconclusive
+    Dir.mktmpdir do |dir|
+      source = File.join(dir, "tokens.scss")
+      File.write(source, "--radius-card: 12px;\n")
+      result = Deploy::GateResult.new
+      gate.send(:stale?, dir, result, "amber")
+
+      refute result.ok?
+      assert result.respond_to?(:inconclusive?)
+      assert result.inconclusive?, result.failures.join(", ")
+      assert_empty result.failures
+    end
+  end
+
   def compile_check(build_css)
     Dir.mktmpdir do |dir|
       build = File.join(dir, "application.css")
