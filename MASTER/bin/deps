@@ -16,7 +16,7 @@ result = case command
            # Do not inherit MASTER_FAST: bin/cli intentionally has a non-TTY
            # shortcut under that flag, while this command exists to prove the
            # real Master.boot path regardless of whether a caller has a pipe.
-           system({ "MASTER_FAST" => nil }, cli, "--fast")
+           system({ "MASTER_FAST" => nil, "MASTER_BOOT_STATUS" => "1" }, cli, "--fast")
          when "check", "status"
            status = manager.status
            puts "deps0: ruby=#{status[:ruby]} required=#{status[:ruby_required].empty? ? "none" : status[:ruby_required]}"
