@@ -40,7 +40,8 @@ module Master
       POSTPRO_RE = /\b(?:post-?process|colour\s+grade|color\s+grade|film\s+look|vhs(?:\s+tape)?\s+look|crt(?:\s+broadcast)?\s+look|camcorder(?:\s+glitch)?\s+look|make\s+this\s+(?:cinematic|analog|analogue))\b/i.freeze
       IMAGE_PATH_RE = /(?:["']([^"']+\.(?:jpe?g|png|webp|tiff?))["']|(?:\A|\s)([^\s"']+\.(?:jpe?g|png|webp|tiff?))(?=\z|\s))/i.freeze
       POSTPRO_SUBJECT_RE = /\bpostpro(?:\.rb)?\b.*?\b(?:over|on|in|for|from)\b\s+["']([^"']+)["']/i.freeze
-      POSTPRO_SUBJECT_TOKEN_RE = /\bpostpro(?:\.rb)?\b.*?\b(?:over|on|in|for|from)\b\s+(~?(?:\/|\.\/|\.\.\/)?[^\s"']+\/?)(?=\z|\s)/i.freeze
+      POSTPRO_SUBJECT_TOKEN_RE = /\bpostpro(?:\.rb)?\b.*?\b(?:over|on|in|for|from)\b\s+(?:these|the|my|new)?\s*(?:photos?|images?|pictures?|files?)?\s*(?:in|at|from|under)?\s*(~?(?:\/|\.\/|\.\.\/)?[^\s"']+\/?)(?=\z|\s)/i.freeze
+      POSTPRO_PATH_TOKEN_RE = /\b(?:in|at|from|under)\s+(~?(?:\/|\.\/|\.\.\/)?[^\s"']+\/?)(?=\z|\s)/i.freeze
 
       def handles?(text)
         text.match?(KICK_RE) || text.match?(PLAY_LAST_RE) || text.match?(SYNTH_RE) || live_synth?(text) ||
@@ -73,6 +74,7 @@ module Master
       def postprocess(text, root:)
         source = text.match(POSTPRO_SUBJECT_RE)&.captures&.first
         source ||= text.match(POSTPRO_SUBJECT_TOKEN_RE)&.captures&.first
+        source ||= text.match(POSTPRO_PATH_TOKEN_RE)&.captures&.first
         source ||= text.match(IMAGE_PATH_RE)&.captures&.compact&.first
         return Result.err("postpro: include an existing image file or directory path", category: :validation) if source.to_s.empty?
 
