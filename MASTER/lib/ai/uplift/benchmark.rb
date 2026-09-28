@@ -27,7 +27,7 @@ module Master
           }
           points = checks.values.count(true)
           {
-            "schema" => "master.gemma.benchmark/v1",
+            "schema" => "master.llm.benchmark/v1",
             "checks" => checks,
             "points" => points,
             "total" => checks.size,
