@@ -149,7 +149,3 @@
           label: t("search.marketplace_label"), target: StorefrontSearch::RESULTS, suggestions: StorefrontSearch::SUGGESTIONS %>
   </section>
 </div>
-<% content_for :widgets do %>
-  <%= render "shared/affiliate_deals", category: params[:category_id] %>
-  <%= render "shared/newsletter_cta" %>
-<% end %>
