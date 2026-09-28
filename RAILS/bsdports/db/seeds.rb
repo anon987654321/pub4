@@ -8,6 +8,9 @@
 # "wildly popular" impression for demos. Real port data comes from import rake tasks.
 
 require "faker"
+require "shared/seed_forge"
+
+Shared::SeedForge.boot!
 
 # Platforms (reference)
 Platform.find_or_create_by!(slug: "openbsd") do |platform|
