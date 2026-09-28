@@ -29,7 +29,7 @@ module Operator
       ".yml" => "yaml", ".yaml" => "yaml", ".json" => "json",
       ".js" => "javascript", ".mjs" => "javascript", ".ts" => "typescript",
       ".css" => "css", ".scss" => "scss", ".html" => "html", ".erb" => "erb",
-      ".md" => "markdown", ".sh" => "bash", ".zsh" => "bash", ".ksh" => "bash",
+      ".md" => "markdown", ".sh" => "zsh", ".zsh" => "zsh", ".ksh" => "zsh",
       ".sql" => "sql", ".conf" => "conf", ".toml" => "toml"
     }.freeze
 
@@ -200,6 +200,11 @@ module Operator
           f.puts fence
           f.puts
         end
+        # The end marker is deliberately last. A transferred or truncated
+        # snapshot without it is incomplete even when the header survived.
+        f.puts "## Snapshot complete"
+        f.puts
+        f.puts "snapshot0: complete tree=#{tree} files=#{paths.size} text=#{texts.size} binary=#{binaries.size}"
       end
 
       io.puts format("snapshot: %-8s %5d files (%d binary) → %s (%.1f MB)",
