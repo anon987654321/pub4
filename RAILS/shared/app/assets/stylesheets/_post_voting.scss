@@ -1,0 +1,56 @@
+// Shared post voting and reading geometry. Dialects own colour; this file owns structure.
+.post-reading-layout {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: start;
+}
+.post-reading-main { min-width: 0; }
+.post-vote-rail {
+  position: sticky;
+  top: calc(var(--top-band-block, 0px) + var(--space-3));
+  display: grid;
+  justify-items: center;
+  gap: 0;
+  inline-size: 48px;
+}
+.post-vote-form { margin: 0; }
+.post-vote-btn {
+  display: grid;
+  place-items: center;
+  inline-size: var(--tap-min);
+  min-inline-size: var(--tap-min);
+  block-size: var(--tap-min);
+  min-block-size: var(--tap-min);
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.post-vote-btn:hover,
+.post-vote-btn:focus-visible {
+  background: var(--hover-subtle);
+  color: var(--text);
+}
+.post-vote-btn.is-active {
+  background: transparent;
+  color: var(--accent);
+}
+.post-vote-score {
+  display: grid;
+  place-items: center;
+  min-inline-size: var(--tap-min);
+  min-block-size: 30px;
+  padding-inline: 2px;
+  font-size: var(--text-base);
+  font-weight: var(--weight-heavy);
+  line-height: 1;
+}
+@media (max-width: 479px) {
+  .post-reading-layout {
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: var(--space-2);
+  }
+  .post-vote-rail { inline-size: 44px; }
+}
