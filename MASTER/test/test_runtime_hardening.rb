@@ -208,6 +208,16 @@ class RuntimeHardeningTest < Minitest::Test
 
   # Both ids are OpenRouter slugs, and the pool offers a lane only with its key,
   # so the key stands in for the machine this routing would run on.
+  def test_council_reachability_uses_a_reachable_fallback_floor
+    agent = Object.new
+    agent.define_singleton_method(:model) { "missing-primary" }
+    router = Object.new
+    router.define_singleton_method(:pool) { |wait:| wait == false ? ["ollama:qwen3"] : [] }
+    agent.define_singleton_method(:model_router) { router }
+
+    assert Master::Review::Council::Deliberation.reachable_for?(agent)
+  end
+
   def test_model_router_uses_provider_health_to_avoid_unhealthy_primary
     saved = ENV["OPENROUTER_API_KEY"]
     ENV["OPENROUTER_API_KEY"] = "sk-or-v1-#{'a' * 64}"
