@@ -38,6 +38,7 @@ class User < ApplicationRecord
   has_many :sessions,        dependent: :destroy, inverse_of: :user
 
   normalizes :email_address, with: ->(e) { e.strip.downcase }
+  require "securerandom"
 
   scope :publicly_visible, -> { where(guest: false, deleted_at: nil, deletion_scheduled_at: nil) }
 
@@ -46,8 +47,21 @@ class User < ApplicationRecord
   after_create :ensure_identity_records, unless: :guest?
 
   def guest? = has_attribute?(:guest) && self[:guest]
+  def bot? = has_attribute?(:bot) && self[:bot]
+  def master_bot? = bot? && email_address.to_s == "master@amber.local"
+
+  def self.master_bot
+    bot = find_or_initialize_by(email_address: "master@amber.local")
+    bot.username = "master" if bot.respond_to?(:username=)
+    bot.guest = true if bot.respond_to?(:guest=)
+    bot.bot = true
+    bot.password = SecureRandom.hex(24) if bot.new_record?
+    bot.save!
+    bot
+  end
 
   def display_name
+    return "MASTER" if master_bot?
     return "anon" if guest? || deleted_at.present? || deletion_scheduled_at.present?
 
     profile&.display_name.presence || email_address.to_s.split("@").first
