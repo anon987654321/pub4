@@ -50,11 +50,14 @@ class TestCliBootE2e < Minitest::Test
       status = nil
 
       while Time.now < deadline
-        output << reader.readpartial(4096) if reader.wait_readable(0.2)
+        begin
+          output << reader.readpartial(4096) if reader.wait_readable(0.2)
+        rescue Errno::EIO, EOFError
+          done, status = Process.waitpid2(pid)
+          break if done
+        end
+
         done, status = Process.waitpid2(pid, Process::WNOHANG)
-        break if done
-      rescue Errno::EIO, EOFError
-        done, status = Process.waitpid2(pid)
         break if done
       end
 
