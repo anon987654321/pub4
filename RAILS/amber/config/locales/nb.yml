@@ -622,6 +622,9 @@ nb:
     unread_count:
       one: "%{count} ulest"
       other: "%{count} uleste"
+    invite_master: "Inviter MASTER"
+    master_present: "MASTER er her"
+    master_joined: "MASTER ble med i denne chatten."
   connections:
     title: "Forbindelser"
     empty_body: "Følg skapere, og be deretter om en forbindelse for å sende melding."
@@ -934,6 +937,7 @@ nb:
     recycled: "gjenvunnet"
     released: "sluppet"
   flash:
+    master_invited: "MASTER ble med i chatten."
     no_outfit_suggestion: "Fant ikke noe antrekk å foreslå."
     joy_analysis_heuristic: "Gledesanalysen er gjort med lokale regler."
     joy_analysis_ai: "Gledesanalysen er gjort med AI."
