@@ -7,7 +7,7 @@ module Master
   module AI
     module Uplift
       module Dataset
-        SCHEMA = "master.gemma.sft/v1"
+        SCHEMA = "master.llm.sft/v1"
 
         module_function
 
