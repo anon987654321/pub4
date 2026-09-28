@@ -3,7 +3,7 @@
 module Shared
   class Engine < ::Rails::Engine
     isolate_namespace Shared
-    # Use << not += — Rails 8.1 freezes path arrays during engine boot; += breaks later engines.
+    # Use << not += — Rails 8.2 freezes path arrays during engine boot; += breaks later engines.
     %w[app/models app/models/concerns app/services app/controllers app/controllers/concerns app/policies app/helpers
 app/jobs app/reflexes].each do |dir|
       config.autoload_paths << root.join(dir).to_s
