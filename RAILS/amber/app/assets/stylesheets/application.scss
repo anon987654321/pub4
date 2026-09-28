@@ -2216,8 +2216,47 @@ main#main-content .amber-look-title {
 .amber-message header{display:flex;align-items:baseline;justify-content:space-between;gap:.75rem;font-size:var(--text-xs)}
 .amber-message p{margin:.35rem 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
 .amber-message--mine{text-align:end}.amber-message--mine p{text-align:start;margin-inline-start:15%}
-.post-show-reading{max-width:880px;margin-inline:auto}.post-show-reading .post-reading-title{font-size:clamp(1.75rem,5vw,3.5rem)!important}
-.post-embed-action{text-decoration:none!important}
+.post-show-reading {
+  max-width: 880px;
+  margin-inline: auto;
+}
+.post-show-reading .post-reading-title {
+  font-size: clamp(1.75rem, 5vw, 3.5rem);
+}
+.post-show-reading .feed-post-byline {
+  margin-block-end: var(--space-3);
+}
+.post-show-reading .post-reading-body-preview,
+.post-show-reading .feed-post-prose {
+  max-width: var(--measure);
+}
+.post-show-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  margin-block-start: var(--space-5);
+  padding-block-start: var(--space-3);
+  border-block-start: 1px solid var(--border);
+}
+.post-show-actions > form {
+  margin: 0;
+}
+.post-show-comments {
+  max-width: 880px;
+  margin-inline: auto;
+  margin-block-start: var(--space-8);
+  padding-block-start: var(--space-4);
+  border-block-start: 1px solid var(--border);
+}
+.post-show-comments > h2 {
+  margin-block-end: var(--space-3);
+}
+.post-show-back {
+  max-width: 880px;
+  margin: var(--space-4) auto var(--space-8);
+}
+.post-embed-action { text-decoration: none !important; }
 @media(max-width:767px){.amber-editorial-nav{justify-content:flex-start}.amber-look,.amber-look:nth-child(even){grid-template-columns:1fr;gap:var(--space-6);min-height:auto}.amber-look:nth-child(even) .amber-look-title,.amber-look:nth-child(even) .amber-look-stage{order:initial}.amber-look-title{max-width:none}.amber-look-stage{min-height:82vw}}
 
 /* Editorial product page: image is the primary object, metadata stays in reach on wide screens. */
