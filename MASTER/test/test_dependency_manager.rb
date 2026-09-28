@@ -193,8 +193,26 @@ class TestDependencyManager < Minitest::Test
     assert result.changed
     assert_equal ["check"], @commands[0].first[1..]
     assert_equal [RbConfig.ruby, "-rbundler/setup", "-rjson", "-e", "exit"], @commands[1].first
-    assert_equal ["pristine"], @commands[2].first[1..]
+    assert_equal ["install", "--jobs", "4", "--retry", "3"], @commands[2].first[1..]
     assert_equal [RbConfig.ruby, "-rbundler/setup", "-rjson", "-e", "exit"], @commands[3].first
+  end
+
+  def manager_bundle_gems_path
+    Master::Boot::DependencyManager.new(
+      root: @root,
+      env: { "PATH" => "/bin", "MASTER_AUTO_INSTALL" => "1", "MASTER_AUTO_BUNDLE" => "1" },
+      out: StringIO.new,
+      home: @root,
+    ).send(:bundle_gems_path)
+  end
+
+  def test_stale_native_bundle_cleanup_removes_private_gems
+    path = manager_bundle_gems_path
+    FileUtils.mkdir_p(path)
+    File.write(File.join(path, "stale.bundle"), "homebrew")
+
+    assert manager.send(:discard_stale_native_bundle!)
+    refute Dir.exist?(path)
   end
 
   def test_clean_bundle_does_not_install_or_touch_lock
@@ -224,7 +242,7 @@ class TestDependencyManager < Minitest::Test
     assert result.success?
     assert_equal ["check"], @commands[0].first[1..]
     assert_equal ["install", "--jobs", "4", "--retry", "3"], @commands[1].first[1..]
-    assert_equal ["pristine"], @commands[3].first[1..]
+    assert_equal ["install", "--jobs", "4", "--retry", "3"], @commands[3].first[1..]
   end
 
   def test_native_abi_repair_failure_does_not_install_os_packages
