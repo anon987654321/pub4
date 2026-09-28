@@ -1,0 +1,15 @@
+name: runner smoke
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          set -euo pipefail
+          ruby --version
+          git --version
+          printf '%s\n' "runner-smoke: ok"
