@@ -457,27 +457,33 @@ module Master
 
       def bundler_path(version)
         return nil if version.to_s.empty?
-        spec = bundler_spec(version)
-        return nil unless spec
 
-        candidate = File.join(bundler_gem_home, "bin", "bundle")
-        return candidate if File.executable?(candidate)
-
-        Gem.bin_path("bundler", "bundle", version)
-      rescue Gem::GemNotFoundException, Gem::Exception
+        bundler_spec(version)&.then do |spec|
+          executable = File.join(spec.full_gem_path, "exe", "bundle")
+          executable if File.executable?(executable)
+        end
+      rescue Gem::Exception
         nil
       end
 
       def bundler_spec(version)
+        candidates = []
+
         path = File.join(
           bundler_gem_home,
           "specifications",
           "bundler-#{version}.gemspec",
         )
-        return Gem::Specification.load(path) if File.file?(path)
+        candidates << Gem::Specification.load(path) if File.file?(path)
 
-        Gem::Specification.find_all_by_name("bundler").find do |spec|
-          spec.version.to_s == version.to_s
+        candidates.concat(
+          Gem::Specification.find_all_by_name("bundler").select do |spec|
+            spec.version.to_s == version.to_s
+          end
+        )
+
+        candidates.compact.find do |spec|
+          File.executable?(File.join(spec.full_gem_path, "exe", "bundle"))
         end
       rescue Gem::Exception
         nil
