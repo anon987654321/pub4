@@ -43,8 +43,9 @@ class MarketplaceCartContractTest < Minitest::Test
     maps = brgen_read("app/views/maps/home/index.html.erb")
     amber = File.read(File.join(ROOT, "amber/app/views/layouts/application.html.erb"))
 
-    # BRGEN no longer carries an app-local public tree; the map controller has
-    # an explicit list fallback instead of a dead vendored MapLibre bundle.
+    # The map controller has an explicit list fallback and does not load the
+    # restored public MapLibre bundle at runtime. Reference assets may still live
+    # in public/ for archived media and operator inspection.
     refute_includes dating, "cdn.jsdelivr.net/npm/css-doodle"
     refute_includes maps, "/vendor/maplibre-gl.js"
     refute_includes maps, "cdn.jsdelivr.net/npm/maplibre"
