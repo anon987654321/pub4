@@ -2,7 +2,7 @@
 
 # pub4 backlog
 
-The single backlog for the repo. Authority: `MASTER/data/soul.yml` > `MASTER/data/rules.yml` > root `CLAUDE.md` > the per-tree contract. Feature truth is `RAILS/apps.yml`; aspiration is `RAILS/apps.horizon.yml`; executable behavior and git history outrank prose.
+The single backlog for the repo. Authority: `MASTER/data/soul.yml` > `MASTER/data/rules.yml` > executable law (`MASTER/law/*.rb` and `MASTER/lib/review/scan/rules/*.rb`) > repo harnesses (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.cursorrules`, `.github/copilot-instructions.md`) > per-tree contracts. Feature truth is `RAILS/apps.yml`; aspiration is `RAILS/apps.horizon.yml`; executable behavior and git history outrank prose.
 
 A finding is a hypothesis. Historical dated sections below are evidence records, not automatically-open work. An item is current only when it appears in the current plan or has been re-measured on the current `main` tree. Close an item by deleting it after the code and its proof land; keep historical evidence in git.
 
