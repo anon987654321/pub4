@@ -1,7 +1,8 @@
-<% deals = affiliate_deals_for(category: local_assigns[:category], limit: 8) %>
+<% brgen_surface = local_assigns[:surface].to_s == "brgen" %>
+<% deals = affiliate_deals_for(category: local_assigns[:category], limit: brgen_surface ? 1 : 8) %>
 <% visible_deals = deals.select { |deal| affiliate_product_content_allowed?(deal) || deal.respond_to?(:source) && deal.source.to_s == "amazon" } %>
 <% if visible_deals.any? %>
-  <aside class="affiliate_feed_unit<%= " affiliate_feed_unit--in_grid" if local_assigns[:in_grid] %>"
+  <aside class="affiliate_feed_unit<%= " affiliate_feed_unit--brgen" if brgen_surface %><%= " affiliate_feed_unit--in_grid" if local_assigns[:in_grid] %>"
          aria-label="<%= t("affiliate.feed_unit_label") %>">
     <header class="affiliate_feed_header">
       <div>

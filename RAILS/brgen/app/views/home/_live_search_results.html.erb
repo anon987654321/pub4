@@ -13,7 +13,7 @@
      appended pages, counting slots from the top of the feed rather than the top
      of the page, so the rhythm does not restart on every scroll. %>
  <% if ((index + 1) % Brgen::HomeFeed::AFFILIATE_EVERY).zero? && index + 1 < @posts.size %>
- <li><%= render "shared/affiliate_feed_unit" %></li>
+ <li><%= render "shared/affiliate_feed_unit", surface: "brgen" %></li>
  <% end %>
  <% end %>
  </ul>
