@@ -2,8 +2,8 @@
 
 require Rails.root.join("../lib/device/wake_signal").to_s
 
-# EventsController — SSE stream of EventBus events to the orb visualizer, at
-# GET /events/stream. It subscribes to every bus topic through `**` and writes each event
+# EventsController — bounded SSE stream of EventBus events to the orb visualizer, at
+# GET /events/stream. It subscribes only to the face's declared signal families and writes each event
 # as an anonymous `data:` line; the orb reads them with
 # `new EventSource("/events/stream")` and `onmessage`.
 #
