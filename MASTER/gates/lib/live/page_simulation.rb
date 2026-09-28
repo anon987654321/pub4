@@ -385,8 +385,12 @@ module Deploy
     # green live run still says which pages it did not load.
     def name_unprobed_pages(unprobed)
       unprobed.group_by { |page| page[:app] }.each do |app, rows|
-        paths = rows.map { |page| page[:path] }.uniq
-        @result.warn("page_simulation: #{app} #{paths.size} guest page(s) need a record id and got no live probe — #{paths.join(", ")}")
+        rows.group_by { |page| LiveRecordIds.unresolved_reason(page) }.each do |reason, grouped|
+          paths = grouped.map { |page| page[:path] }.uniq
+          @result.warn(
+            "page_simulation: #{app} #{paths.size} guest page(s) need a record id and got no live probe — "             "#{paths.join(", ")} — #{reason}"
+          )
+        end
       end
     end
 
