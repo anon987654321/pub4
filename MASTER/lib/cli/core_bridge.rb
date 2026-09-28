@@ -30,7 +30,7 @@ module Master
           { mission: mission.record, reason: done.reason, turns: done.turns, summary: done.summary,
             transcript:, risk: memory.proof.risk }
         rescue StandardError => e
-          mission.defer!(reason: "core attempt: #{e.class}: #{e.message}") if mission
+          defer_mission_on_error(mission, e)
           raise
         end
       end
@@ -53,6 +53,15 @@ module Master
           goal:, scope: root, model:, effort: ENV.fetch("MASTER_EFFORT", "medium"),
           plan: Master::Ground::ActivePlan.read(root), origin: "fold", auto_continue: true
         )
+      end
+
+      def defer_mission_on_error(mission, error)
+        record = Master::Fix::Mission.current(root: mission.root)
+        return unless record && %w[running waiting].include?(record["state"].to_s)
+
+        mission.defer!(reason: "core attempt: #{error.class}: #{error.message}")
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "CoreBridge.defer_mission_on_error")
       end
 
       def seed_continuation(memory, record)
