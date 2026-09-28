@@ -28,6 +28,6 @@ class HomeInfiniteScrollReflex < Shared::InfiniteScrollReflex
   def after_row(_record, slot)
     return unless (slot % Brgen::HomeFeed::AFFILIATE_EVERY).zero?
 
-    render(partial: "shared/affiliate_feed_unit")
+    render(partial: "shared/affiliate_feed_unit", locals: { surface: "brgen" })
   end
 end
