@@ -30,6 +30,7 @@ class EventsController < ApplicationController
     scan:**
     sweep:**
     audit:**
+    availability:**
     memory
     memory:**
     retriev:**
