@@ -20,7 +20,7 @@ class Communities::ModerationController < ApplicationController
 
   def update
     report = @community.moderation_queue.find(params[:id])
-    ModerationWorkflow.transition!(report: report, status: params[:status]) if params[:status].present?
+    ModerationWorkflow.transition!(report: report, status: params[:status], decision_reason: params[:decision_reason]) if params[:status].present?
     redirect_back fallback_location: community_moderation_index_path(@community)
   end
 
