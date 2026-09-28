@@ -31,6 +31,14 @@ disk until a written constitution approves it.
 This is both the project and its business plan — the case for building it here,
 with [Innovasjon Norge](https://en.innovasjonnorge.no/article/startups).
 
+## Durable work and small-model training
+
+A conversational task is durable work: the Fold is only one bounded attempt. An unfinished goal lives in `.master/mission.json`, and TaskSteward re-enters another bounded attempt when the mission is due, including after a process restart. Human approval is a real blocking state, not a reason to spin.
+
+The model trajectory contract is provider-neutral. `MASTER_LLM_RECORD=1` captures verified model/tool trajectories; the same benchmark can score, filter and export behavior from Llama, Qwen, Gemma, GLM, Phi, GPT-OSS, Nemotron or another model without tying the contract to a vendor. Training happens outside MASTER; only verified behavior returns.
+
+Research is a capability, not a prose promise. MASTER has local knowledge retrieval, web search and URL fetching, including GitHub and arXiv-to-ar5iv URL rewriting. The runtime should use those tools when the evidence router marks a task as requiring outside evidence, then record the sources and verification state rather than silently relying on memory.
+
 ## The idea
 
 Ninety-nine percent of AI is written in Python, chosen for its libraries rather
