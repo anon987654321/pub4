@@ -8,7 +8,7 @@ module Master
     # attempt ends. The mission is the durable objective; this steward only wakes
     # the same bounded runner again when the persisted record says it is due.
     class TaskSteward
-      POLL_SECONDS = Integer(ENV.fetch("MASTER_TASK_POLL_SECONDS", "15"))
+      POLL_SECONDS = Integer(ENV.fetch("MASTER_TASK_POLL_SECONDS", "15")).clamp(1, 300)
 
       class << self
         def start!(root:, bus: nil, runner:)
@@ -165,6 +165,7 @@ module Master
       def defer_failed_mission(error)
         record = Mission.current(root: @root)
         return unless record && record["origin"].to_s == "fold" && record["auto_continue"] == true
+        return if leased_by_another_process?(record)
 
         Mission.new(root: @root, bus: @bus).defer!(
           reason: "steward: #{error.class}: #{error.message}",
@@ -172,6 +173,15 @@ module Master
         )
       rescue StandardError => e
         @bus&.publish("task_steward:defer_error", error: "#{e.class}: #{e.message}")
+      end
+
+      def leased_by_another_process?(record)
+        return false unless record["state"].to_s == "running"
+
+        owner = record["lease_owner"].to_s
+        return false if owner.empty? || owner == Mission.instance_id
+
+        !lease_expired?(record)
       end
 
       def result_ok?(result)
