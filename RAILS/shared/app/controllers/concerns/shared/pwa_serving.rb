@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "digest"
 require_relative "../../../../lib/shared/mobile_app_registry"
 
 module Shared
@@ -86,8 +87,33 @@ module Shared
     def allow_browser(*); end
 
     def service_worker_source
-      render_to_string(template: "pwa/service-worker", layout: false)
-        .gsub(CACHE_VERSION_PLACEHOLDER, ENV.fetch("CACHE_VERSION", "v2"))
+      source = render_to_string(template: "pwa/service-worker", layout: false)
+      version = ENV["CACHE_VERSION"].presence || Digest::SHA256.hexdigest(source)[0, 12]
+      source = source.gsub(CACHE_VERSION_PLACEHOLDER, version)
+
+      # Runtime cache names carry the worker revision, so activation can retire
+      # every older pages/dynamic/assets/shell bucket instead of leaving one cache
+      # per deployment on the device forever.
+      cleanup = <<~JAVASCRIPT
+        ;(() => {
+          const prefixes = ["pages", "dynamic", "assets", "shell"].map(kind => `${APP_NAME}-${kind}-`)
+          self.addEventListener("activate", event => {
+            event.waitUntil(
+              caches.keys().then(names => Promise.all(
+                names
+                  .filter(name => prefixes.some(prefix => name.startsWith(prefix)) &&
+                                  name !== `${APP_NAME}-pages-${CACHE_VERSION}` &&
+                                  name !== `${APP_NAME}-dynamic-${CACHE_VERSION}` &&
+                                  name !== `${APP_NAME}-assets-${CACHE_VERSION}` &&
+                                  name !== `${APP_NAME}-shell-${CACHE_VERSION}`)
+                  .map(name => caches.delete(name))
+              ))
+            )
+          })
+        })()
+      JAVASCRIPT
+
+      source + cleanup
     end
   end
 end
