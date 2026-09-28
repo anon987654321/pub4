@@ -96,6 +96,10 @@ class PwaInstallableGateTest < Minitest::Test
     end
   end
 
+  def test_gate_default_root_is_the_repository
+    assert File.file?(File.join(GATE::ROOT, "RAILS", "apps.yml"))
+  end
+
   def test_static_amber_manifest_is_accepted
     with_tree do |root|
       FileUtils.rm(File.join(root, "amber/app/views/pwa/manifest.json.erb"))
