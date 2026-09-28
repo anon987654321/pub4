@@ -114,7 +114,7 @@ module Master
       container = bootstrap_container(root:)
       Ground::Pledge.stage2_lock!
       CLI::WebServer.start(container[:config]) unless ENV["MASTER_WEB"] == "0"
-      CLI::BootBanner.print unless ENV["MASTER_FAST"] == "1"
+      CLI::BootBanner.print unless ENV["MASTER_FAST"] == "1" && ENV["MASTER_BOOT_STATUS"] != "1"
       CLI::Session.new(container:)
     end
   end
