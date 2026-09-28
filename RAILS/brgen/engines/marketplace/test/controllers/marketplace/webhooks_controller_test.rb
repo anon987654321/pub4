@@ -2,10 +2,10 @@
 
 require "test_helper"
 
-# These webhooks are public, unauthenticated POSTs with skip_forgery_protection
-# and no rate limit, and they can transition an order to paid. Before this suite
-# existed, stripe checked only that a Stripe-Signature header was non-blank and
-# vipps checked nothing, so anyone could mark any order paid.
+# These engine webhooks are public, unauthenticated POSTs with
+# skip_forgery_protection and no rate limit, and Dintero can transition an order
+# to paid. Stripe and Dintero stay covered here; Vipps is host-owned and is
+# covered by Webhooks::VippsControllerTest.
 class Marketplace::WebhooksControllerTest < ActionDispatch::IntegrationTest
   SECRET = "whsec_test_secret"
 
