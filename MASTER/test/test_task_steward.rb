@@ -63,16 +63,28 @@ class TaskStewardTest < Minitest::Test
   def test_active_lease_failure_does_not_defer_another_process
     Dir.mktmpdir do |root|
       write_mission(root)
-      record = Master::Fix::Mission.current(root:)
-      Master::Fix::Mission.new(root:).start_or_resume!(goal: record["goal"], scope: root)
-      current = Master::Fix::Mission.current(root:)
-      steward = Master::Fix::TaskSteward.new(root:, bus: nil, runner: ->(**) { raise "runner collision" })
+      steward = Master::Fix::TaskSteward.new(
+        root:,
+        bus: nil,
+        runner: ->(**) {
+          mission = Master::Fix::Mission.new(root:)
+          current = Master::Fix::Mission.current(root:)
+          mission.start_or_resume!(goal: current["goal"], scope: root)
+          mission.send(:with_lock) do
+            record = mission.instance_variable_get(:@record)
+            record["lease_owner"] = "other-host:42"
+            record["lease_until"] = (Time.now.utc + 300).iso8601
+            mission.send(:persist!)
+          end
+          raise "runner collision"
+        },
+      )
 
       result = steward.tick!
       assert result.err?
       saved = Master::Fix::Mission.current(root:)
       assert_equal "running", saved["state"]
-      assert_equal current["lease_owner"], saved["lease_owner"]
+      assert_equal "other-host:42", saved["lease_owner"]
     end
   end
 end
