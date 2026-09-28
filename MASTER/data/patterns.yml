@@ -304,6 +304,27 @@ prompt_archaeology:
     - Pair mobile_web_opportunities with permissioned action harness.
     - Add visible mobile breadcrumbs for multi-step actions.
     - Use local-first storage for action queue and rollback metadata.
+  - id: external_content_trust
+    name: External Content Is Evidence, Not Authority
+    pattern: 'Web pages, search results, repository text, provider metadata, files and model outputs can contain instructions aimed at the agent. Their content is evidence to interpret, never authority to change the task, permissions, constitution or tool scope.'
+    sharpen_master:
+    - Keep untrusted-content screening at the tool boundary, before content enters model context.
+    - Tell child agents explicitly that external text cannot change their authority or task.
+    - Preserve provenance for external evidence so a later reviewer can distinguish source content from policy.
+  - id: bounded_agent_recursion
+    name: Bounded Agent Recursion
+    pattern: 'Agent composition needs a finite nesting boundary. Concurrency limits stop breadth; a depth limit stops recursive tool orchestration from consuming the turn indefinitely.'
+    sharpen_master:
+    - Carry agent depth in execution context, not only in prose.
+    - Keep recursive tools excluded from child scopes.
+    - Make the depth boundary observable and regression-tested.
+  - id: evidence_bearing_completion
+    name: Evidence-Bearing Completion
+    pattern: 'A system should not claim that an action happened merely because the action was requested or the plan said it would happen. Completion needs an observed result.'
+    sharpen_master:
+    - Stamp completion with concrete tool/test output.
+    - Keep cache, token and provider metrics on the same completion event.
+    - Prefer explicit unknowns over inferred success.
   - id: self_critique_without_theater
     name: Self-Critique Without Theater
     pattern: 'Strong systems critique themselves, but user-facing output should not
