@@ -127,6 +127,8 @@ class Post < ApplicationRecord
   # Geo-stamped Live posts (Jodel layer). Not all posts are Live.
   scope :live,   -> { where.not(latitude: nil).where.not(longitude: nil) }
   scope :search, ->(q) {
+    return none unless connection.data_source_exists?("posts_fts")
+
     ids = connection.select_values(sanitize_sql_array([ "SELECT rowid FROM posts_fts WHERE posts_fts MATCH ?", q ]))
     ids.any? ? where(id: ids) : none
   }
