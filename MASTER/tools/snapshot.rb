@@ -7,7 +7,7 @@
 # cap, plus a tree listing and the reading protocol.
 #
 # The generator that made them was `bin/snapshot`, deleted with the DEPLOY tree
-# in the OPENBSD reorganisation — so the three files sat eleven days stale at a
+# in the OPENBSD reorganisation — so the source mirrors sat stale at a
 # commit that no longer exists in any working checkout, with nothing able to
 # refresh them. This lives in tools/ and is reachable as `MASTER/bin/operator snapshot`,
 # which is the surface an operator already has.
@@ -21,7 +21,13 @@ require "open3"
 module Operator
   module Snapshot
     REPO = File.expand_path("../..", __dir__)
-    TREES = %w[MASTER RAILS OPENBSD].freeze
+    TREE_PATHS = {
+      "MASTER" => "MASTER",
+      "RAILS" => "RAILS",
+      "OPENBSD" => "OPENBSD",
+      "STUDIO" => "MASTER/tools"
+    }.freeze
+    TREES = TREE_PATHS.keys.freeze
 
     # Extension → fence language. Anything unlisted gets a bare fence.
     FENCE = {
@@ -36,8 +42,9 @@ module Operator
     module_function
 
     def tracked(tree)
-      out, status = Open3.capture2("git", "ls-files", "-z", tree, chdir: REPO)
-      raise "git ls-files failed for #{tree}" unless status.success?
+      path = TREE_PATHS.fetch(tree) { raise "snapshot: unknown tree #{tree.inspect}" }
+      out, status = Open3.capture2("git", "ls-files", "-z", path, chdir: REPO)
+      raise "git ls-files failed for #{tree} (#{path})" unless status.success?
 
       out.split("\0").reject(&:empty?).sort
     end
@@ -169,7 +176,7 @@ module Operator
       File.open(out, "w") do |f|
         f.puts "# #{tree} — source snapshot"
         f.puts
-        f.puts "Generated #{Time.now.utc.strftime('%Y-%m-%d %H:%M UTC')} · git #{head_sha} · " \
+        f.puts "Generated #{Time.now.utc.strftime('%Y-%m-%d %H:%M UTC')} — git #{head_sha} — " \
                "#{texts.size} files inlined in full (no size cap)" \
                "#{binaries.empty? ? '' : ", #{binaries.size} binary listed only"}."
         f.puts
