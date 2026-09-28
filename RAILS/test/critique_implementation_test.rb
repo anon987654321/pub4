@@ -239,6 +239,20 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes icons, '"like" => :like'
   end
 
+  def test_amber_post_feed_and_detail_share_the_reading_anatomy
+    feed = read("amber/app/views/posts/_post.html.erb")
+    show = read("amber/app/views/posts/show.html.erb")
+    css = read("amber/app/assets/stylesheets/application.scss")
+
+    assert_includes feed, 'variant: :prose'
+    assert_includes feed, 'show_votes: true'
+    assert_includes feed, 'post_url: post_path(post)'
+    assert_includes feed, 'link_to "…", post_url'
+    assert_includes show, 'render "shared/post_vote_rail"'
+    assert_includes show, 'class="post-show-actions feed-card-actions"'
+    assert_includes css, ".post-show-comments"
+  end
+
   def test_amber_prioritizes_owned_clothes_and_reversible_lifecycle
     index = read("amber/app/views/items/index.html.erb")
     show = read("amber/app/views/items/show.html.erb")
