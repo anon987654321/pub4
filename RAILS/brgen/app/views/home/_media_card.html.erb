@@ -1,6 +1,6 @@
 
 <% media_layout = %w[wide regular tall regular regular][local_assigns.fetch(:media_index, 0).to_i % 5] %>
-<article class="brgen-media-card brgen-media-card--<%= media_layout %>">
+<li class="brgen-media-card brgen-media-card--<%= media_layout %>">
   <div class="brgen-media-image">
     <% if post.image.attached? %>
       <div data-controller="lightbox">
@@ -20,4 +20,4 @@
       <span><%= post.author_name %> · <%= time_ago_in_words(post.created_at) %></span>
     </div>
   <% end %>
-</article>
+</li>

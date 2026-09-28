@@ -90,9 +90,10 @@ class CritiqueImplementationTest < Minitest::Test
     controller = read("shared/frontend/post_progressive_controller.js")
     boot = read("shared/frontend/stimulus_boot_social.js")
     importmap = read("shared/config/importmap_baseline.rb")
+    css = read("brgen/app/assets/stylesheets/application.scss")
 
     assert_includes form, 'post-progressive'
-    assert_includes form, 'post_progressive_target: "photoInput"'
+    assert_includes form, 'post_progressive_target: "mediaInput"'
     assert_includes form, 'post.new_media_heading'
     assert_includes form, 'post.new_write_heading'
     assert_includes form, 'post.new_text_only'
@@ -125,6 +126,14 @@ class CritiqueImplementationTest < Minitest::Test
 
     refute_includes card, "post_path(post) rescue nil"
     assert_includes card, "respond_to?(:post_path)"
+  end
+
+  def test_rails_runtime_gate_scans_the_rails_tree
+    gate = read("_runtime_gate.sh")
+
+    assert_includes gate, "--scan-only --tree=RAILS"
+    refute_includes gate, "--scan-only --tree=OPENBSD"
+    assert_match(/total violations|scan[0-9]*:.*violations/, gate)
   end
 
   def test_brgen_post_detail_renders_all_attached_media
@@ -161,6 +170,7 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes card, 'data-controller="lightbox"'
     assert_includes card, 'data-turbo="false"'
     assert_includes card, "media_index"
+    assert_includes card, '<li class="brgen-media-card'
     assert_includes css, ".brgen-media-card--wide"
     assert_includes css, ".brgen-media-card--tall"
     assert_includes css, ".brgen-media-video::-webkit-media-controls-panel"
