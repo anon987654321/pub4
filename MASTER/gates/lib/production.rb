@@ -2,6 +2,7 @@
 
 require "open3"
 require "yaml"
+require "rubygems"
 require_relative "../../../OPENBSD/lib/gate_result"
 require_relative "../support/bounded_command"
 require_relative "../lib/source/apps_yml"
@@ -17,6 +18,8 @@ module Deploy
     RAILS_ROOT = File.join(ROOT, "RAILS")
     APPS_YML = File.join(RAILS_ROOT, "apps.yml")
     SHARED_DEPLOY = File.join(RAILS_ROOT, "_deploy.sh")
+    RAILS_STACK = YAML.safe_load_file(File.join(ROOT, "MASTER", "data", "rules.yml")).fetch("rails_stack").freeze
+    RAILS_VERSION = Gem::Version.new(RAILS_STACK.fetch("rails"))
 
     def self.run(skip_nested: false)
       new(skip_nested: skip_nested).run
@@ -118,7 +121,20 @@ module Deploy
       if File.file?(gemfile)
         gemfile_text = File.read(gemfile)
         @result.warn("#{name}: Gemfile has no explicit ruby version") unless gemfile_text.match?(/^ruby\s+/)
-        fail_app!(app_failures, "Gemfile must target Rails 8.1") unless gemfile_text.match?(/^gem ['"]rails['"], ['"]~> 8\.1/)
+        requirement_text = gemfile_text[/^gem ['"]rails['"],\s*['"]([^'"]+)['"]/, 1]
+        begin
+          requirement = requirement_text && Gem::Requirement.new(requirement_text)
+          fail_app!(app_failures, "Gemfile does not allow Rails #{RAILS_VERSION}") unless requirement&.satisfied_by?(RAILS_VERSION)
+        rescue ArgumentError
+          fail_app!(app_failures, "Gemfile has an invalid Rails requirement")
+        end
+        lockfile = File.join(app_dir, "Gemfile.lock")
+        if File.file?(lockfile)
+          locked = File.read(lockfile)[/^    rails \((\d+(?:\.\d+)+)\)$/m, 1]
+          fail_app!(app_failures, "Gemfile.lock must resolve Rails #{RAILS_VERSION}") unless locked && Gem::Version.new(locked) == RAILS_VERSION
+        else
+          fail_app!(app_failures, "missing Gemfile.lock")
+        end
         check_job_supervisor(app_failures, name) if gemfile_text.include?("solid_queue")
       else
         fail_app!(app_failures, "missing Gemfile")
