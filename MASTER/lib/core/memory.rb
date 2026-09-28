@@ -97,7 +97,7 @@ module Master::Core
     def record(effect, observation)
       act = act_text(effect)
       obs = observe_text(effect, observation)
-      # The same action straight after it failed fails the same way; gemma3:4b
+      # The same action straight after it failed fails the same way; small local models
       # asked a surface-less CLI one question four times. Said once, plainly.
       obs = "ERR: this is the action that just failed (#{obs}). Do something else." if act == @last_act && @last_failed
       @last_act, @last_failed = act, obs.start_with?("ERR")
@@ -120,7 +120,7 @@ module Master::Core
     private
 
     # A read of a file whose content is already on the record is not shown
-    # again. gemma3:4b read one file five times with STATE saying done was
+    # again. small local models read one file five times with STATE saying done was
     # allowed; the repeat now reads as an error that says what to do instead,
     # whichever model made it, and costs no second copy of the file.
     def observe_text(effect, observation)
