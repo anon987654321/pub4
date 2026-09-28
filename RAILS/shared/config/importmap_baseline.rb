@@ -113,4 +113,3 @@ pin "idb-keyval", to: "idb-keyval.js"
   reveal sortable password-visibility popover rails-nested-form
 ].each { |name| sc_pin.call(name) }
 
-pin "@stimulus-components/textarea-autogrow", to: "@stimulus-components--textarea-autogrow.js"
