@@ -284,7 +284,7 @@ end
       end
 
       def record_trajectory!(message:, model:, outcome:)
-        return unless ENV["MASTER_GEMMA_RECORD"] == "1"
+        return unless ENV["MASTER_LLM_RECORD"] == "1"
 
         events = Array(Fiber[:master_trajectory_events]).dup
         events << { "event" => "outcome", "outcome" => outcome, "model" => model.to_s }
@@ -302,9 +302,9 @@ end
           "events" => events,
           "outcome" => outcome,
           "verified" => verified
-        ).append!(File.join(Master::ROOT, ".master", "gemma", "trajectories.ndjson"))
+        ).append!(File.join(Master::ROOT, ".master", "trajectories", "trajectories.ndjson"))
       rescue StandardError => e
-        @bus&.publish("gemma:record_error", error: e.message)
+        @bus&.publish("llm:record_error", error: e.message)
       ensure
         Fiber[:master_trajectory_events] = nil
       end
@@ -324,7 +324,7 @@ end
         context = conversation_context
         tokens_approx = Trace::Session.estimate_tokens(message)
         @bus&.publish("llm:request", model: selected_model, tokens: tokens_approx)
-        if ENV["MASTER_GEMMA_RECORD"] == "1"
+        if ENV["MASTER_LLM_RECORD"] == "1"
           Fiber[:master_trajectory_events] << { "event" => "llm:request", "model" => selected_model, "tokens" => tokens_approx }
         end
         @deps.homeostat&.observe(:llm_call)
