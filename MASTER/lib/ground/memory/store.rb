@@ -152,7 +152,7 @@ module Master
         end
 
         def archived_or_summary?(key)
-          key.to_s.start_with?("archive/") || key == "_consolidated_summary"
+          key.to_s.start_with?("archive/", "conflict/") || key == "_consolidated_summary"
         end
 
         def remember_auto(type, snippet)
