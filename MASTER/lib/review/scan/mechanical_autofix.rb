@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "shellwords"
 require_relative "ast_fixer"
 require_relative "write_guard"
 
@@ -65,7 +64,8 @@ module Master
         end
 
         def uncommitted_modification?(path)
-          out = `git -C #{Shellwords.escape(@root)} status --porcelain -- #{Shellwords.escape(path.to_s)} 2>/dev/null`
+          out, status = Master::Io::Exec.capture2e("git", "-C", @root, "status", "--porcelain", "--", path.to_s, timeout: 15)
+          raise "git status failed" unless status.success?
           # XY porcelain codes: skip tracked-modified (" M", "MM", "AM", "RM").
           out.to_s.lines.any? { |line| line =~ /\A(\sM|MM|AM|RM)/ }
         rescue StandardError => e
