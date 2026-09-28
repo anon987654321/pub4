@@ -1,10 +1,10 @@
 #!/bin/ksh
-# rc_pre and the post-start block below run bundle34, ruby34 and curl — all
+# rc_pre and the post-start block below run bundle40, ruby40 and curl — all
 # packages in /usr/local/bin. rcctl inherits its caller's PATH, and root's cron
 # PATH has no /usr/local/bin, so every one of them resolved when an operator
 # restarted master from a login shell and none of them resolved when
 # resource_guard.sh's cron tick did. For master that was fatal rather than
-# degraded: the asset gate reported "bundle34: not found", could not tell that
+# degraded: the asset gate reported "bundle40: not found", could not tell that
 # apart from broken assets, and took the exit-1 branch that refuses to start.
 # ai.brgen.no was down from 08:20 to 14:50 on 2026-07-31 for exactly this, and
 # again from 15:10 — twice, because the guard's restart is what triggers it.
@@ -31,7 +31,7 @@ daemon="/bin/ksh"
 # Mac) from a silent rewrite into a startup error that says which gem disagrees —
 # which is the failure this box should have, because the rewrite was papering over
 # a lock that does not describe what is installed here.
-daemon_flags="-c 'cd /home/dev/pub4/MASTER/web && set -a && . /etc/master.env && set +a && export PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 LC_ALL=C.UTF-8 RAILS_ENV=production CACHE_VERSION=${CACHE_VERSION} SECRET_KEY_BASE_DUMMY=1 BUNDLE_FROZEN=true && exec /usr/local/bin/bundle34 exec falcon serve -n ${FALCON_WORKERS:-1} --health-check-timeout 300 --bind http://127.0.0.1:${PORT}'"
+daemon_flags="-c 'cd /home/dev/pub4/MASTER/web && set -a && . /etc/master.env && set +a && export PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 LC_ALL=C.UTF-8 RAILS_ENV=production CACHE_VERSION=${CACHE_VERSION} SECRET_KEY_BASE_DUMMY=1 BUNDLE_FROZEN=true && exec /usr/local/bin/bundle40 exec falcon serve -n ${FALCON_WORKERS:-1} --health-check-timeout 300 --bind http://127.0.0.1:${PORT}'"
 # Prod safety flags (MASTER_SAFE_MODE etc.) live in /etc/master.env (see master.env.sample).
 # rc.d sets a minimal set; env can override for the face runtime. See DeployPaths and
 # MASTER/data/limits.yml for resource budgets on 1GB VPS.
@@ -66,7 +66,7 @@ daemon_execdir="/home/dev/pub4/MASTER/web"
 daemon_logger="daemon.notice"
 daemon_timeout="300"
 . /etc/rc.d/rc.subr
-pexp="ruby34.*${PORT}"
+pexp="ruby40.*${PORT}"
 rc_bg=YES
 rc_reload=NO
 
@@ -74,17 +74,17 @@ rc_pre() {
   # Deploy-in-progress lock, first: resource_guard reads this flag to hold off
   # shedding during the bundle check and the cold boot that follow.
   touch /home/dev/pub4/.deploying 2>/dev/null || true
-  # Check, never install. rc_pre runs as root, and a root `bundle34 install` in
+  # Check, never install. rc_pre runs as root, and a root `bundle40 install` in
   # dev's checkout leaves root-owned gems and .bundle/config that the next dev
   # deploy cannot rewrite. vps_deploy_master.sh installs both bundles as dev; a
   # failed check here is logged by name so the restart that follows a drifted
   # lock says why, instead of healing it in a way nothing records.
   for _gemfile in /home/dev/pub4/MASTER/web/Gemfile /home/dev/pub4/MASTER/Gemfile; do
-    (cd "${_gemfile%/Gemfile}" && BUNDLE_GEMFILE="$_gemfile" BUNDLE_WITHOUT=development:test bundle34 check >/dev/null 2>&1) ||
-      logger -t master "bundle34 check failed for $_gemfile — run vps-deploy master as dev to install"
+    (cd "${_gemfile%/Gemfile}" && BUNDLE_GEMFILE="$_gemfile" BUNDLE_WITHOUT=development:test bundle40 check >/dev/null 2>&1) ||
+      logger -t master "bundle40 check failed for $_gemfile — run vps-deploy master as dev to install"
   done
   pkill -f "falcon.*${PORT}" 2>/dev/null
-  pkill -f "ruby34.*${PORT}" 2>/dev/null
+  pkill -f "ruby40.*${PORT}" 2>/dev/null
   pkill -f "/home/dev/pub4/MASTER/bin/tts-worker" 2>/dev/null
   rm -f /home/dev/pub4/MASTER/.master/tts.sock /home/dev/pub4/MASTER/.master/tts-0.sock /home/dev/pub4/MASTER/.master/tts-1.sock 2>/dev/null || true
   # Propshaft must not re-digest public/assets/ (nested assets/assets wedges boot).
@@ -94,7 +94,7 @@ rc_pre() {
     [[ -f "$_f" ]] || _face_ok=0
   done
   if [[ "$_face_ok" = "0" ]]; then
-    (cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec rails assets:build_face_runtime assets:build_face_modules_bundle assets:build_face_vision_bundle) 2>/dev/null || true
+    (cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle40 exec rails assets:build_face_runtime assets:build_face_modules_bundle assets:build_face_vision_bundle) 2>/dev/null || true
   fi
   _manifest=/home/dev/pub4/MASTER/web/public/assets/.manifest.json
   _stamp=/home/dev/pub4/MASTER/web/tmp/.assets_precompile_stamp
@@ -106,7 +106,7 @@ rc_pre() {
   # silently skipped with a stale fingerprint. The tail below is the non-asset
   # inputs (stylesheet, service worker, the views themselves), which the
   # manifest does not and should not describe.
-  _face_assets=$(cd /home/dev/pub4/MASTER/web && ruby34 script/face_asset_paths.rb 2>/dev/null)
+  _face_assets=$(cd /home/dev/pub4/MASTER/web && ruby40 script/face_asset_paths.rb 2>/dev/null)
   _face_assets_rc=$?
   _force_precompile=0
   if [[ "$_face_assets_rc" != "0" ]] || [[ -z "$_face_assets" ]]; then
@@ -143,7 +143,7 @@ rc_pre() {
     # face_runtime_digest: null — the field the deploy-confidence playbook says
     # to check. It stayed invisible because public/ is served undigested, so the
     # face kept working while every fingerprinted asset was missing.
-    if (cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec rails assets:precompile) 2>/dev/null; then
+    if (cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle40 exec rails assets:precompile) 2>/dev/null; then
       if [[ "$_force_precompile" = "1" ]]; then
         logger -t master "precompiled but stamp not written: the digest was computed without the manifest list and would license a skip"
       else
@@ -160,14 +160,14 @@ rc_pre() {
   _gate=/home/dev/pub4/MASTER/gates/runner.rb
   _gate_name=master_web_assets
   if [[ -f "$_gate" ]]; then
-    _gate_out=$(cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec ruby "$_gate" "$_gate_name" 2>&1)
+    _gate_out=$(cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle40 exec ruby "$_gate" "$_gate_name" 2>&1)
     _gate_rc=$?
     if [[ "$_gate_rc" != "0" ]]; then
       logger -t master "assets gate failed, forcing fresh precompile and retrying once: $_gate_out"
       # Same rule as the stamp above, and this is the path where breaking it
       # hurts most: the gate has already said the assets are wrong, so stamping
       # a precompile that failed makes every later start skip the retry.
-      if (cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec rails assets:precompile) 2>/dev/null; then
+      if (cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle40 exec rails assets:precompile) 2>/dev/null; then
         if [[ "$_force_precompile" = "1" ]]; then
           logger -t master "retry precompiled but stamp not written: narrowed digest"
         else
@@ -177,7 +177,7 @@ rc_pre() {
       else
         logger -t master "retry precompile failed — stamp not written, the gate below decides the start"
       fi
-      _gate_out=$(cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec ruby "$_gate" "$_gate_name" 2>&1)
+      _gate_out=$(cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle40 exec ruby "$_gate" "$_gate_name" 2>&1)
       _gate_rc=$?
       if [[ "$_gate_rc" != "0" ]]; then
         logger -t master "CRITICAL: assets gate still failing after retry, refusing to start with broken assets: $_gate_out"
@@ -198,7 +198,7 @@ if [[ "$1" = "start" ]] || [[ "$1" = "restart" ]]; then
     # whatever terminal ran the restart, and a token there is operator access for
     # anyone who reads either. The line points at /pair issue, which hands out a
     # one-time code.
-    ruby34 -ryaml -e 'c=YAML.load_file("/home/dev/pub4/MASTER/.master/config.yml") rescue {}; u=c["web_public_url"]||"http://127.0.0.1:#{c["web_port"]||53187}"; t=c["web_token"]; puts t ? "web: #{u}, token set, /pair issue for a code" : "web: #{u}"' 2>/dev/null
+    ruby40 -ryaml -e 'c=YAML.load_file("/home/dev/pub4/MASTER/.master/config.yml") rescue {}; u=c["web_public_url"]||"http://127.0.0.1:#{c["web_port"]||53187}"; t=c["web_token"]; puts t ? "web: #{u}, token set, /pair issue for a code" : "web: #{u}"' 2>/dev/null
     # Wait for Falcon /up, then restart relayd so HTTPS does not stay empty after rcctl restart master.
     _i=0
     _up_ok=0
@@ -225,7 +225,7 @@ if [[ "$1" = "start" ]] || [[ "$1" = "restart" ]]; then
     fi
     # Warm TTS with MASTER Gemfile only — never inherit Falcon web/vendor/bundle env.
     _tts_warm_ok=0
-    if su -m dev -c 'unset BUNDLE_PATH GEM_HOME GEM_PATH BUNDLE_BIN_PATH BUNDLE_WITHOUT BUNDLE_DEPLOYMENT RUBYOPT; cd /home/dev/pub4/MASTER && BUNDLE_GEMFILE=/home/dev/pub4/MASTER/Gemfile MASTER_TTS_TIMEOUT=45 bundle34 exec ruby -Ilib -e "require \"master\"; exit(Master::Voice::TtsSupervisor.ensure_daemon! ? 0 : 1)"' 2>>/var/log/daemon; then
+    if su -m dev -c 'unset BUNDLE_PATH GEM_HOME GEM_PATH BUNDLE_BIN_PATH BUNDLE_WITHOUT BUNDLE_DEPLOYMENT RUBYOPT; cd /home/dev/pub4/MASTER && BUNDLE_GEMFILE=/home/dev/pub4/MASTER/Gemfile MASTER_TTS_TIMEOUT=45 bundle40 exec ruby -Ilib -e "require \"master\"; exit(Master::Voice::TtsSupervisor.ensure_daemon! ? 0 : 1)"' 2>>/var/log/daemon; then
       _l=0
       while [[ "$_l" -lt 30 ]]; do
         [[ -S /home/dev/pub4/MASTER/.master/tts-0.sock ]] && { _tts_warm_ok=1; break; }
@@ -236,7 +236,7 @@ if [[ "$1" = "start" ]] || [[ "$1" = "restart" ]]; then
     if [[ "$_tts_warm_ok" = "0" ]]; then
       logger -t master "CRITICAL: TTS sockets missing after ensure_daemon (check .master/tts-worker-*.log)"
     fi
-    ruby34 /home/dev/pub4/MASTER/web/script/probe_http 2>/dev/null || logger -t master "probe_http failed after restart"
+    ruby40 /home/dev/pub4/MASTER/web/script/probe_http 2>/dev/null || logger -t master "probe_http failed after restart"
   fi
 fi
 # rc_pre touched the deploy flag; it comes off here, after the /up, ping and TTS
