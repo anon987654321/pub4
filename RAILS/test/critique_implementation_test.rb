@@ -114,6 +114,7 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes home, "home.feed_view"
     assert_includes home, "home.media_wall_view"
     assert_includes controller, "Brgen::HomeFeed.media_only(scope)"
+    assert_includes controller, 'scope.with_attached_video if params[:view].to_s == "media"'
     assert_includes feed, 'params[:view].to_s == "media"'
     assert_includes feed, 'render "home/media_card"'
     assert_includes feed, "brgen-media-add-link"

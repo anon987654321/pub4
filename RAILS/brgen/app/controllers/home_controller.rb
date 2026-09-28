@@ -13,6 +13,7 @@ class HomeController < ApplicationController
     # with_attached_image, or the card's `post.image.attached?` costs one
     # active_storage_attachments query per post — 25 on a full page.
     scope = scope.includes(:user, :community, :votes).with_attached_image
+    scope = scope.with_attached_video if params[:view].to_s == "media"
     scope = apply_live_search(scope, columns: %w[title content], vertical: "feed") if live_search_query.present?
     @pagy, @posts = pagy(scope)
     @communities = Community.popular_cached(limit: 10)
