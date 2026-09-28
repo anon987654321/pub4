@@ -133,12 +133,17 @@ class TakeawayControllersTest < ActionDispatch::IntegrationTest
 
   test "the drivers list names each courier and only the courier edits their row" do
     courier = create_user("tc_courier")
-    driver = Takeaway::DeliveryDriver.create!(user: courier, vehicle_type: "bicycle", available: true)
+    driver = Takeaway::DeliveryDriver.create!(
+      user: courier, vehicle_type: "bicycle", available: true,
+      current_lat: 60.3930, current_lng: 5.3250
+    )
     sign_in_as(@diner)
 
     get takeaway.delivery_drivers_path
     assert_response :success
     assert_includes response.body, courier.display_name
+    refute_includes response.body, "60.3930"
+    refute_includes response.body, "5.3250"
 
     patch takeaway.delivery_driver_path(driver), params: { delivery_driver: { vehicle_type: "car" } }
     assert_equal "bicycle", driver.reload.vehicle_type
