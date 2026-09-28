@@ -121,7 +121,7 @@ module Master
           bundle = ensure_bundle
           return bundle if bundle.ok
 
-          return bundle unless native_build_failure?(bundle.output)
+          return bundle unless system_recovery_failure?(bundle)
 
           system = install_system_packages
           return bundle unless system[:ok]
@@ -541,6 +541,11 @@ module Master
 
       def bundle_jobs
         @env["MASTER_LOW_RESOURCE"] == "1" ? 2 : 4
+      end
+
+      def system_recovery_failure?(result)
+        %w[bundle install failed bundle install failed in user path].include?(result.message) &&
+          native_build_failure?(result.output)
       end
 
       def dependency_conflict?(output) = output.to_s.match?(DEPENDENCY_CONFLICT)
