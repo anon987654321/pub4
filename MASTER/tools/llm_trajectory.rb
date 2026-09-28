@@ -29,16 +29,16 @@ module Master
         when "manifest"
           puts JSON.pretty_generate(Master::AI::OperatorContract.manifest)
         when "benchmark"
-          puts JSON.pretty_generate(Master::AI::Uplift::Benchmark.suite)
+          puts JSON.pretty_generate(Master::AI::Trajectory::Benchmark.suite)
         when "score"
           score_file(argv.fetch(0))
         when "record"
           record_file(argv.fetch(0))
         when "export"
-          count = Master::AI::Uplift::Dataset.export(input: argv.fetch(0), output: argv.fetch(1))
+          count = Master::AI::Trajectory::Dataset.export(input: argv.fetch(0), output: argv.fetch(1))
           puts "trajectory0: exported #{count} verified trajectory(s)"
         when "preferences"
-          count = Master::AI::Uplift::Dataset.export_preferences(input: argv.fetch(0), output: argv.fetch(1))
+          count = Master::AI::Trajectory::Dataset.export_preferences(input: argv.fetch(0), output: argv.fetch(1))
           puts "trajectory0: exported #{count} preference pair(s)"
         else
           puts usage
@@ -53,12 +53,12 @@ module Master
       def score_file(path)
         File.foreach(path) do |line|
           next if line.strip.empty?
-          puts JSON.generate(Master::AI::Uplift::Benchmark.score(JSON.parse(line)))
+          puts JSON.generate(Master::AI::Trajectory::Benchmark.score(JSON.parse(line)))
         end
       end
 
       def record_file(path)
-        record = Master::AI::Uplift::Trajectory.new(JSON.parse(File.read(path)))
+        record = Master::AI::Trajectory::Record.new(JSON.parse(File.read(path)))
         destination = File.join(Master::ROOT, ".master", "trajectories", "trajectories.ndjson")
         record.append!(destination)
         puts "trajectory0: recorded #{destination}"
