@@ -9,7 +9,8 @@ class RailsStackContractTest < Minitest::Test
   RAILS_ROOT = File.join(REPO_ROOT, "RAILS")
   STACK = YAML.safe_load_file(File.join(REPO_ROOT, "MASTER", "data", "rules.yml")).fetch("rails_stack")
   RAILS_VERSION = Gem::Version.new(STACK.fetch("rails"))
-  RAILS_REQUIREMENT = Gem::Requirement.new("~> #{RAILS_VERSION}")
+  RAILS_SOURCE = STACK.fetch("rails_source")
+  RAILS_REF = STACK.fetch("rails_ref")
 
   APP_ROOTS = %w[
     RAILS/brgen
@@ -29,10 +30,10 @@ class RailsStackContractTest < Minitest::Test
   def test_every_rails_gemfile_tracks_the_current_stack
     APP_ROOTS.each do |root|
       body = File.read(File.join(REPO_ROOT, root, "Gemfile"))
-      requirement = body[/gem "rails", "([^"]+)"/, 1]
-
-      assert_equal RAILS_REQUIREMENT.to_s, requirement,
-                   "#{root}/Gemfile must track Rails #{RAILS_VERSION}, not #{requirement.inspect}"
+      source = body[/gem "rails", github: "([^"]+)", ref: "([^"]+)"/, 1, 2]
+      assert source, "#{root}/Gemfile must pin Rails from the audited git source"
+      assert_equal RAILS_SOURCE, source[0]
+      assert_equal RAILS_REF, source[1]
     end
   end
 
@@ -48,18 +49,17 @@ class RailsStackContractTest < Minitest::Test
       railties = body[/^    railties \((\d+(?:\.\d+)+)\)$/m, 1]
       assert_equal rails, railties, "#{root}/Gemfile.lock splits Rails and railties versions"
 
-      dependency = body[/^  rails \(([^)]+)\)$/m, 1]
-      assert_equal RAILS_REQUIREMENT.to_s, dependency,
-                   "#{root}/Gemfile.lock dependency no longer matches the Gemfile"
+      git = body[/^  remote: https:\/\/github.com\/rails\/rails\.git\n  revision: (\h+)$/m, 1]
+      assert_equal RAILS_REF, git, "#{root}/Gemfile.lock is not pinned to Rails #{RAILS_REF}"
     end
   end
 
-  def test_every_rails_app_uses_8_1_framework_defaults
+  def test_every_rails_app_uses_8_2_framework_defaults
     APP_ROOTS.each do |root|
       body = File.read(File.join(REPO_ROOT, root, "config", "application.rb"))
 
-      assert_includes body, "config.load_defaults 8.1",
-                       "#{root} is on an older Rails framework-default target"
+      assert_includes body, "config.load_defaults 8.2",
+                       "#{root} is not on the Rails 8.2 framework-default target"
       refute_includes body, "config.load_defaults 8.0",
                       "#{root} still targets Rails 8.0 defaults"
     end
