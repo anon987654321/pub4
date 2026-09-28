@@ -89,7 +89,7 @@ module Shared
         ok = system(
           RbConfig.ruby, postpro_script,
           "--input", input, "--output", output,
-          "--stock", GRADE_STOCK, "--preset", GRADE_PRESET,
+          "--preset", GRADE_PRESET,
           out: File::NULL, err: File::NULL
         )
         raise "postpro grading failed" unless ok
