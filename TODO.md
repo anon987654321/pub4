@@ -1,76 +1,146 @@
 # pub4 backlog
 
-The single backlog for the repo. Authority: `MASTER/data/soul.yml` >
-`MASTER/data/rules.yml` > root `CLAUDE.md` > the per-tree contract. Feature
-truth is `RAILS/apps.yml`; aspiration is `RAILS/apps.horizon.yml`; rationale sits
-in the comment beside the code and in the Refused lists in `MASTER/AGENTS.md` and `OPENBSD/CLAUDE.md`. A record is deleted when it
-closes, and `git log` keeps the history.
+The single backlog for the repo. Authority: `MASTER/data/soul.yml` > `MASTER/data/rules.yml` > root `CLAUDE.md` > the per-tree contract. Feature truth is `RAILS/apps.yml`; aspiration is `RAILS/apps.horizon.yml`; executable behavior and git history outrank prose.
 
-**A finding is a hypothesis.** When 645 entries here were re-measured on
-2026-09-12, 46% were already built or false, and a third of the layout
-citations named the wrong file, line or figure. The guards that keep paying:
+A finding is a hypothesis. Historical dated sections below are evidence records, not automatically-open work. An item is current only when it appears in the current plan or has been re-measured on the current `main` tree. Close an item by deleting it after the code and its proof land; keep historical evidence in git.
 
-- The tree rarely spells a mechanism the way an entry does. `QueryBudgetTest`,
-  `Bullet.raise` and `strict_loading_by_default` are the RAILS performance work
-  and none says "performance". Find the reader before calling anything open.
-- An entry asking for a *gate* over something the tree already does is a
-  detector, not a feature, and much smaller than its wording.
-- A census has more than one end: gem callers include `Gemfile.lock`
-  dependents, every bus topic reaches the `"*"` subscriber, and all four trees
-  count. `MASTER/AGENTS.md` carries the examples.
-- Anything that moves a rendered value is the operator's, however it is filed.
+## Current state — 2026-09-28
 
-**Search this file for a subject before adding an entry, and fold rather than
-append.** Subjects named in four or more sections:
+- `main` is the authoritative repository baseline. The tree has changed materially since the previous 2026-09-27 audit.
+- Ruby is pinned to `4.0.7` at root and in `MASTER/.ruby-version`. Exact-pin enforcement and runner fixes have landed; verify every real host/runner rather than reopening the old Ruby-version task.
+- Main has now aligned the Rails Gemfiles/locked app stacks to Rails 8.1.4 and moved brgen to Rails 8.1 defaults. **Rails 8.2 is now the active migration target**, because another agent is actively upgrading pub4.
+- The official Rails 8.2 Edge Guide/release notes are still marked work in progress rather than a stable tagged release. The migration must therefore keep edge-vs-release state explicit and re-lock when the exact 8.2 target is fixed.
+- Rails 8.2 migration seams called out by the current upstream guides include Herb HTML+ERB compilation, modern header-based CSRF behavior, enum negative scopes including `nil`, Active Storage analysis/variant timing, SQLite table-alteration behavior around `ON DELETE CASCADE`, and enqueue-after-transaction-commit behavior. Each must be verified against pub4 rather than accepted wholesale.
+- Main has no open PRs and no open issues, but stale branches remain. The all-tree fix runner branch carries seven unique commits yet is 108 commits behind current main; the older full-Rails runner branch carries two unique commits and is 346 commits behind. Recover useful patches selectively; do not merge their history wholesale.
+- Recent GitHub Actions for the marketplace contract workflow have failed before recorded job steps. Logs were unavailable through the current integration, so the exact root cause remains unverified. The live full three-tree `/fix` run is therefore not proven.
+- `RAILS/test/run_all.rb` currently discovers 131 contract files recursively, one process per file. The historical red count is stale after the Rails/defaults changes until the suite is rerun.
 
-```zsh
-ruby -e 'ls=File.readlines("TODO.md"); s=[]; ls.each_with_index{|l,i| s<<[i,l.chomp.sub("## ","")] if l.start_with?("## ")}; o=Array.new(ls.size); s.each_with_index{|(i,t),n| (i...(s[n+1]?s[n+1][0]:ls.size)).each{|k| o[k]=t}}; h=Hash.new{|x,k| x[k]=[]}; ls.each_with_index{|l,i| l.scan(/`([A-Za-z0-9_\/.:-]{6,})`/).flatten.each{|t| h[t]<<o[i] if t=~%r{[/._]}}}; h.map{|t,v| [t,v.compact.uniq]}.select{|_,v| v.size>=4}.sort_by{|_,v| -v.size}.each{|t,v| puts "#{v.size}  #{t}"}'
-```
+## Current plan — ordered 2026-09-28
 
-Forward work is the last section of this file.
+### Rails 8.2 migration
+- Re-run the complete RAILS contract suite before and after the migration; record exact files, runs, assertions, failures and exit status.
+- Run `bin/rails herb:check` and repair every template that cannot compile through Herb before enabling the 8.2 HTML+ERB default.
+- Audit every `protect_from_forgery` caller and the configured CSRF strategy; add regression coverage for header-only versus legacy-token fallback where relevant.
+- Audit enum negative scopes for `nil` semantics.
+- Audit Active Storage validations and processing. The 8.2 guide changes when attachment metadata is analyzed and introduces explicit processing timing.
+- Audit every Active Job enqueue site whose correctness depends on transaction visibility. Verify Solid Queue behavior after the 8.2 enqueue-after-commit change.
+- Exercise SQLite migrations involving child foreign keys with `ON DELETE CASCADE`.
+- Compare all framework-default and initializer changes against the 8.2 upgrade guide; remove only superseded Rails 8.0/8.1 compatibility code.
+- Run security, autoloading, routing, rendering, asset, cache, job, mailer, Active Storage, PWA and system-test gates after the version change.
+- Keep edge-only migration changes isolated. When 8.2 receives a stable tag, compare edge to the tag, re-lock against the stable target, and rerun the full gate set.
+- Do not treat Rails 8.1.4 as the destination; it is the current main baseline while the 8.2 migration is in progress.
+
+### MASTER /fix convergence
+- Prove exact `/fix MASTER RAILS OPENBSD` dispatch from a clean checkout.
+- Keep `/scan` retired as a public command; any compatibility alias must remain deliberate and tested.
+- Prove observe → repair → re-observe → verify semantics over all three governed trees.
+- Prove council findings are consumed by the fix loop rather than merely written to disk.
+- Make DONE, PLATEAU, VALIDATION_FAILED and BLOCKED distinct terminal states; never call inconclusive evidence green.
+- Fix the known CQS false-positive around guard-then-assign memoisation and add a must-not-flag corpus.
+- Fix stagnation/oscillation detection so a repair applied by the streaming stage is included in the progress snapshot before rollback logic runs.
+- Keep pass counts, retries, threads and subprocesses bounded.
+- Re-measure the MASTER ratchets. Historical 21-row numbers are not current truth. Use `bin/operator measure --why <row>` before changing any ceiling.
+- Rebuild the rules.yml trim draft only from current measurements; do not loosen constitutional limits merely to manufacture green.
+
+### Rendered gates and browser evidence
+- Make `RAILS/bin/triangle up` reproducible from a fresh worktree and ensure at least one rendered gate produces a measured count instead of inconclusive.
+- Re-run the one-content-column/vertical consistency pass at mobile and 1440px widths.
+- Re-measure CSS budgets, magic values, type scale, leading, spacing, interaction contrast and unused selectors after the Rails 8.2 asset/defaults changes.
+- Recompute the `needs_id` guest-page census from current routes/apps; the historical 17 missing probes is not authoritative until rerun.
+- Extend behavioral journey proof for Turbo frame navigation, focus restoration, reconnect/scroll behavior and mobile flow where current code still lacks evidence.
+- Use current web.dev Baseline/Interop support data for browser decisions. `field-sizing`, container style queries and `:open` are available candidates, not mandates.
+- Use CSS-Tricks as technique/reference material only; do not use its older compatibility tables as the 2026 browser-support authority.
+
+### Marketplace, commerce and monetization
+- Prove Dintero staging callbacks/webhook signatures, replay safety, seller ACTIVE payout gates, capture/refund behavior and per-line splits before production enablement.
+- Prove Stripe Connect seller-account/balance/transfer paths with real staging credentials; keep missing-credential behavior fail-closed.
+- Keep the native `Marketplace::` domain as the public runtime until any Solidus cutover has an explicit dual-write/migration plan on a supported database.
+- Re-measure the shared affiliate interface and wire one presentation contract across house offers, Amazon and TradeDoubler.
+- Prove Amazon's current Creators API boundary, TradeDoubler feed/link conversion, disclosure, `rel=nofollow sponsored` semantics and click/conversion attribution.
+- Embed the shared product-snippet surface in Amber, Brgen feed contexts and relevant storefront/takeaway contexts without duplicating offer data.
+
+### MASTER face, voice and device proof
+- Prove web/terminal behavior parity before touching visual style.
+- Remove or wire the `agent:mood` listener/producer seam.
+- Make depth-map parity single-sourced or regression-tested from one deterministic seed.
+- Reconcile idle motion, offline failed-turn handling, IdeaPicture response behavior and voice-bed behavior.
+- Keep the terminal echo guard.
+- Prove the real Termux phone ear with one Norwegian and one English phrase through the intended streaming path, or record the exact hardware/software blocker.
+- Re-probe the vm23 Edge TTS one-shot path with a real MP3 write and socket check.
+- Visual morphology, colors, visemes and voice aesthetic remain operator decisions.
+
+### Ruby/OpenBSD runtime boundary
+- The repo is pinned to Ruby 4.0.7, while many OpenBSD scripts/rc.d definitions still use `ruby34` and `bundle34`. Treat this as a compatibility seam, not a search/replace.
+- Measure the actual vm23 Ruby package/interpreter available for the target OpenBSD version first.
+- Align deployment scripts, process matching, cron, health checks and bundle wrappers with the runtime that actually boots the apps.
+- Re-prove Rails 8.2 compatibility before changing the operational interpreter names.
+
+### vm23 / OpenBSD
+- Run the watched `doas zsh OPENBSD/OPERATOR.sh` flow and obtain a clean remote config-drift result.
+- Verify nsd process count and stale `nsd-resign` cleanup; verify amber leftovers are gone.
+- Verify bsdports survives three deploys.
+- Verify relayd restarts once per deploy.
+- Verify the weekly integrity job is installed and actually scheduled.
+- Verify deployed `git_sha`, core/optional app readiness and post-deploy restart order.
+- Confirm TTS worker logs stay owned by `master`.
+- Check SQLite WAL/checkpoint backup consistency and restoreability.
+- Measure SQLite writer topology and `busy_timeout` only when the observed box shows real lock contention.
+- Keep the 2 GB RAM target as an operator infrastructure decision and size Falcon/Solid Queue from measurements.
+
+### Dependencies
+- Re-audit `MASTER/Gemfile` after the Rails 8.2 work.
+- Confirm whether `rb-edge-tts` can move to a TTS-only dependency path without boot-time EventMachine.
+- Confirm whether the `:dilla` group needs `head_music` and `wavefile` in the constitutional CLI lock.
+- Resolve the `opentelemetry-sdk` with no clear instrumentation consumer.
+- Confirm the historical `flay` no-caller finding.
+- Make host-specific watcher dependencies (`rb-kqueue`/`rb-inotify`) and `BUNDLE_FROZEN` behavior consistent across Mac, Linux/Termux and OpenBSD.
+
+### Dilla / MASTER/tools
+- Re-measure all historical Dilla defects against the current engine before editing: hocket patch sameness, unapplied VoiceStack cutoff, incomplete secondary-dominant/backdoor voicings, load-time ENV provenance, duplicate command doors and bed-render determinism.
+- Reconcile `DillaAssets.verify` with `data/assets.json`; historical missing/changing sample hashes need current verification.
+- Keep sound-changing decisions with the operator.
+- Preserve deterministic renders wherever the harness promises snapshot identity.
+- Re-measure postpro/LoRA pipeline provenance and calibration before undertaking video postpro or new performance machinery.
+
+### Repository hygiene
+- Recover useful unique commits from stale runner branches selectively, then delete superseded branches.
+- Do not claim the live full /fix sweep succeeded until GitHub Actions or an equivalent watched run emits actionable step-level evidence.
+- Keep this TODO as the single forward backlog. Historical dated sections remain for archaeology; they are not proof that the listed issue still exists.
+
+## External reference baseline — refreshed 2026-09-28
+
+Rails:
+- Edge Guides: https://edgeguides.rubyonrails.org/
+- Rails 8.2 release notes: https://edgeguides.rubyonrails.org/8_2_release_notes.html
+- Rails upgrading guide: https://edgeguides.rubyonrails.org/upgrading_ruby_on_rails.html
+- Rails releases: https://github.com/rails/rails/releases
+- Rails main: https://github.com/rails/rails
+- Turbo Rails: https://github.com/hotwired/turbo-rails
+- Stimulus Rails: https://github.com/hotwired/stimulus-rails
+- Importmap Rails: https://github.com/rails/importmap-rails
+- Solid Queue: https://github.com/rails/solid_queue
+
+Web:
+- Baseline 2026: https://web.dev/baseline/2026
+- Accessibility: https://web.dev/learn/accessibility/
+- CSS: https://web.dev/learn/css/
+- Interop 2026: https://web.dev/blog/interop-2026
+- Interop 2027: https://web.dev/blog/interop-2027-proposals
+
+Community/reference:
+- Awesome Ruby: https://github.com/markets/awesome-ruby
+- Awesome Rails: https://github.com/gramantin/awesome-rails
+- Awesome CSS: https://github.com/awesome-css-group/awesome-css
+- Awesome UI: https://github.com/coderdiaz/awesome-ui
+- Awesome Self-Hosted: https://github.com/awesome-selfhosted/awesome-selfhosted
+- CSS-Tricks Anchor Positioning: https://css-tricks.com/css-anchor-positioning-guide/
+
+Reference order: GitHub upstream implementation/release history → official Rails Edge Guides/release notes → current Hotwire/Rails ecosystem repos → web.dev/Baseline/Interop → current Awesome lists → CSS-Tricks for technique/inspiration.
 
 ---
+## MASTER
 
-## The plan — ordered 2026-09-25
-
-What to do next, and in what order. Each line names the entry that carries the
-detail, what done looks like, what it waits on ("after"), and where the
-operator is needed ("Operator:"). Order is value against effort within each
-group, and the first group comes first because every later check reads through
-it. A line leaves when its entry closes; re-order rather than append.
-
-### First: the instruments
-
-1. **Pin the Ruby every runner uses.** Entry: "`bin/operator` broke on a
-   one-line lookup" (MASTER). Done when `test_bin_ruby.rb` is green on this
-   Mac and `bin/operator test` refuses to run under a Ruby that is not the
-   version in `MASTER/.ruby-version`.
-2. **Turn the RAILS contract suite green, 131 files.** Entry: "The RAILS
-   contract suite is red" (RAILS). After 1. Done when `ruby
-   RAILS/test/run_all.rb` exits 0 under the pinned Ruby.
-3. **Give every ratchet row an owner and a decision.** Entry: "21 ratchet rows
-   are off" (MASTER). After 2, since three rows are RAILS contract tests. Done
-   when `bin/operator measure` prints no OVER and no SLACK row without a named
-   raise or a locked fall. Operator: `spine.lib_body_ceiling`, and every row
-   whose ceiling sits in `data/rules.yml`.
-4. **Make rendered gates measure on a fresh checkout.** Entry: "Rendered gates
-   measure nothing on a fresh checkout" (RAILS). Done when `RAILS/bin/triangle
-   up` in a new worktree boots all four surfaces within a few minutes and one
-   rendered gate reports a count rather than inconclusive.
-5. **Stop /fix crying wolf and stop it stalling.** Entry: "/fix's own
-   weaknesses" (MASTER). After 2. Done when `CQS` spares memoisation and an
-   oscillation keeps the repairs that moved.
-
-### Ractor boundary — decided 2026-09-26
-
-- **Do not put Ractors around the live agent graph.** Ruby 3.4 documents Ractor as experimental; MASTER's Zeitwerk classes, event bus, mutable services, configuration and LLM adapters are stateful. The existing process/subprocess seams already provide hard boundaries.
-- **Do not use Ractors in RAILS request handling.** Keep request concurrency in Rails. Use processes where isolation is required.
-- **Future Ractor seam: pure-data CPU work only.** A candidate must be bounded and embarrassingly parallel, exchange frozen strings, arrays or numeric buffers, use a fixed worker count, and return deterministic output identical to the sequential path.
-- **No implementation until a benchmark proves it.** Measure wall time and allocations on the repository-pinned Ruby. Reject the Ractor path when it is not materially faster or adds complexity without measurable capacity gain.
-- **MASTER implementation:** `MASTER/lib/runtime/compute.rb` now provides serial/thread/Ractor execution behind an explicit safe-invoke protocol. Keep RAILS on request/process concurrency until a pure-data CPU workload is isolated and benchmarked; NVD fetching, ActiveRecord work, Dilla subprocesses and socket handling are not Ractor candidates.
-### MASTER
-
-1. **The ruby_llm 2.0 upgrade, staged.** Entry: RAILS "Audit findings". Done
+1. **RubyLLM 2 compatibility is on main; retain provider-key contract coverage.** Entry: RAILS "Audit findings". Done
    when the CVE ignore is gone from `bundler-audit.yml`. After the brgen and
    amber suites are green.
 3. **The /face ear on a real phone.** Entry: "The /face ear is unproven on a
@@ -305,8 +375,8 @@ the "One chrome", ad system and layout sections bring back for a decision.
 
 ### Instruments — found 2026-09-25
 
-- **The RAILS contract suite is red in 7 of 132 files, all rendered values.**
-  Measured under the then-pinned Ruby on 2026-09-26, down from 23. Every remaining failure is
+- **Historical: 7 of 132 was the 2026-09-26 measurement; stale after the latest Rails/defaults work. Re-run the current 131-file suite.**
+  Measured under the historical pinned Ruby on 2026-09-26, down from 23. Every remaining failure is
   a CSS value or a stylesheet's size, so each is the operator's or the brgen
   CSS pass's: `breakpoint_lint` (a 1024px edge in brgen), `css_coverage_lint`
   (13 classes the markup asks for and no sheet defines — store-promo-*,
