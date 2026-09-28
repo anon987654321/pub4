@@ -2,8 +2,9 @@
 
 One screen. Everything else is reference, reached from here.
 
-Authority order: `MASTER/data/soul.yml` > `MASTER/data/rules.yml` > this file >
-the per-tree contract. Feature truth is `RAILS/apps.yml`.
+Authority order: `MASTER/data/soul.yml` > `MASTER/data/rules.yml` >
+executable law (`MASTER/law/*.rb` and `MASTER/lib/review/scan/rules/*.rb`) >
+this file > the per-tree contract. Feature truth is `RAILS/apps.yml`.
 
 **MASTER is the primary configuration; this file is secondary and so is every
 other harness file.** Claude Code reads this one, Codex and most agents read
