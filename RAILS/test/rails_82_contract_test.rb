@@ -51,13 +51,13 @@ class Rails82ContractTest < Minitest::Test
       ["eritel/db/migrate/20260925000300_create_participants_registrants_orders.rb", 't.string :status, null: false, default: "pending"'],
       ["eritel/db/migrate/20260925000300_create_participants_registrants_orders.rb", 't.string :verification_status, null: false, default: "pending"'],
       ["eritel/db/migrate/20260925000300_create_participants_registrants_orders.rb", "t.string :operation, null: false"],
-      ["eritel/db/migrate/20260925000300_create_participants_registrants_orders.rb", 't.string :state, null: false, default: "pending"'],
       ["eritel/db/migrate/20260925000300_create_participants_registrants_orders.rb", 't.string :state, null: false, default: "pending"']
     ].uniq.each do |path, declaration|
       assert_includes read(path), declaration
     end
 
     {
+      "eritel/app/models/domain.rb" => %w[state],
       "eritel/app/models/participant.rb" => %w[kind status],
       "eritel/app/models/registrant.rb" => %w[verification_status],
       "eritel/app/models/order.rb" => %w[operation state],
