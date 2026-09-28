@@ -107,6 +107,18 @@ A finding is a hypothesis. Historical dated sections below are evidence records,
 - Do not claim the live full /fix sweep succeeded until GitHub Actions or an equivalent watched run emits actionable step-level evidence.
 - Keep this TODO as the single forward backlog. Historical dated sections remain for archaeology; they are not proof that the listed issue still exists.
 
+### Final research carry-forward — 2026-09-28
+
+- Track Rails 8.1.4 as the stable baseline and Rails 8.2 as edge work until the 8.2 release is tagged. Never let edge-only behavior silently become the production contract.
+- Once the 8.2 target is fixed, re-lock every Rails app and compare the resulting lockfiles against the exact upstream release; keep Rails, Turbo, Stimulus, Importmap and Solid Queue versions explicit rather than relying on floating assumptions.
+- Make Rails 8.1/8.2 local CI (bin/ci) and the repository contract runner agree on the same test/security/style scope. Rails 8.1's Local CI is useful here even if GitHub-hosted runners remain unavailable.
+- Treat generated PWA/service-worker output as build products: change the source/build contract, regenerate, and test source/output parity rather than hand-editing generated workers.
+- Use web.dev Baseline/Interop as the browser-support authority. Baseline 2026 now includes features such as field-sizing, container style queries and :open; adopt them only where the measured browser floor and progressive-enhancement path support them.
+- Keep CSS-Tricks and Awesome lists as technique/discovery feeds, not compatibility or security authorities. Prefer W3C/MDN/web.dev and upstream implementation repositories for decisions.
+- Audit Importmap SRI/integrity behavior and pin hygiene before adding more JavaScript. Current importmap-rails releases include SRI support and changed pin/package handling, so stale assumptions here can create unnecessary asset work.
+- Re-check Turbo/Stimulus integration at their current upstream versions before inventing custom navigation/event machinery; prefer native Hotwire behavior where it covers the seam.
+- Revisit Solid Queue transaction/enqueue semantics during the Rails 8.2 migration, especially on SQLite, and preserve an executable regression for every production-critical ordering guarantee.
+
 ## External reference baseline — refreshed 2026-09-28
 
 Rails:
