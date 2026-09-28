@@ -1,0 +1,26 @@
+version: 1
+policy:
+  deterministic: true
+  synthetic_only: true
+  seed_env: SEED_FORGE_SEED
+  images: generated
+  freshness: relative_to_boot
+world:
+  geography: real_local
+  venues: fictional_plausible
+  distribution: power_law
+  prices: norwegian
+  rhythm: circadian
+  staleness: honest
+realism:
+  forbidden_strings:
+    - test
+    - lorem
+    - foo
+    - admin123
+  require_real_locality: true
+  require_image_provenance: generated
+grades:
+  - demo
+  - ci
+  - stress
