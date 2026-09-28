@@ -11,3 +11,25 @@ class TestBootEntrypoint < Minitest::Test
     assert_includes SOURCE, 'require "bundler/setup"'
   end
 end
+  def test_bundle_activation_uses_the_lockfile_bundler_version
+    assert_match(/version = locked_bundler_version\(root\)/, SOURCE)
+    assert_match(/gem\("bundler", version\) unless version\.empty\?/, SOURCE)
+    assert_match(/require "bundler\/setup"/, SOURCE)
+  end
+
+  def test_lockfile_bundler_version_is_read_from_the_master_lock
+    Dir.mktmpdir("master-entrypoint") do |root|
+      File.write(File.join(root, "Gemfile.lock"), <<~LOCK)
+        GEM
+          remote: https://rubygems.org/
+
+        DEPENDENCIES
+
+        BUNDLED WITH
+          4.0.7
+      LOCK
+
+      reader = Master::Boot::Entrypoint.method(:locked_bundler_version)
+      assert_equal "4.0.7", reader.call(root)
+    end
+  end
