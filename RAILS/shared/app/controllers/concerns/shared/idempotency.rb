@@ -47,15 +47,27 @@ module Shared
         return
       end
 
-      return unless cached.is_a?(Hash) && cached["state"] == "processing"
+      claimed = Rails.cache.write(
+        key,
+        { "state" => "processing" },
+        expires_in: LOCK_TTL,
+        unless_exist: true
+      )
+      return if claimed
 
-      head :conflict
+      # Another request may have completed between the read and the claim.
+      cached = Rails.cache.read(key)
+      if cached.is_a?(Hash) && cached["state"] == "complete"
+        replay_idempotency_response(cached)
+      else
+        head :conflict
+      end
     end
 
     def store_idempotency_response
-      return if performed? && response.status >= 500
-      return if Rails.cache.read(idempotency_cache_key).is_a?(Hash) &&
-                Rails.cache.read(idempotency_cache_key)["state"] == "complete"
+      return if response.status >= 500
+      cached = Rails.cache.read(idempotency_cache_key)
+      return if cached.is_a?(Hash) && cached["state"] == "complete"
 
       Rails.cache.write(
         idempotency_cache_key,
@@ -73,10 +85,10 @@ module Shared
     end
 
     def replay_idempotency_response(cached)
-      headers = {}
-      headers["Location"] = cached["location"] if cached["location"].present?
-      headers["Content-Type"] = cached["content_type"] if cached["content_type"].present?
-      render plain: cached["body"].to_s, status: cached["status"].to_i, **headers
+      self.status = cached["status"].to_i
+      self.content_type = cached["content_type"].to_s if cached["content_type"].present?
+      response.set_header("Location", cached["location"]) if cached["location"].present?
+      self.response_body = cached["body"].to_s
     end
   end
 end
