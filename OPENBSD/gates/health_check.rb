@@ -23,7 +23,7 @@ options = {
 }
 
 OptionParser.new do |parser|
-  parser.banner = "Usage: ruby34 OPENBSD/gates/health_check.rb [--core|--all-ready-apps] [--public|--public-only] [--json]"
+  parser.banner = "Usage: ruby40 OPENBSD/gates/health_check.rb [--core|--all-ready-apps] [--public|--public-only] [--json]"
   parser.on("--core", "Core services only: nsd, httpd, relayd, smtpd (required — it carries johann@brgen.no), " \
                       "brgen, and master, which is a service rather than an apps.yml app") { options[:core] = true }
   parser.on("--all-ready-apps", "Require every app listed in RAILS/apps.yml") { options[:all_ready_apps] = true }
