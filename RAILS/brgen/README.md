@@ -2,7 +2,7 @@
 
 **A social network with no global timeline, because the city you live in is the
 only feed that ever mattered.** brgen is one Rails process serving many hosts.
-Rails 8.1.4 on SQLite behind Falcon, with Hotwire, Solid Queue, Solid Cache and
+Rails 8.2.0.alpha on SQLite behind Falcon, with Hotwire, Solid Queue, Solid Cache and
 relayd. `AGENTS.md` is the agent map.
 
 A city is an apex, and the apex is the social feed. Each vertical is a namespaced
@@ -131,7 +131,7 @@ exactly; the two starred steps are non-obvious and cost a boot each to find.
      `isolate_namespace Ns` and `include Shared::VerticalEngine`, nothing else.
      That module (`shared/lib/shared/vertical_engine.rb`) is the boot shape all
      six verticals share: `<<` (never `+=`) on `config.autoload_paths` because
-     Rails 8.1.4 freezes those arrays mid-boot, `config.paths["db/migrate"] <<`,
+     Rails 8.2 freezes those arrays mid-boot, `config.paths["db/migrate"] <<`,
      and initializers that `append_view_path` and push `app/javascript` onto
      `config.assets.paths`. It derives every path from
      the including class's own `root` and names its initializers after the
