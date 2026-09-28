@@ -57,7 +57,19 @@ module Operator
       path
     end
 
-    def openbsd_path(name, root: Environment.repo_root)\n      return unless RUBY_PLATFORM.match?(/openbsd/)\n\n      version = pinned_version(root)\n      return unless version.match?(/\\A4\\.0\\.\\d+\\z/)\n\n      suffix = version.split(".")[0, 2].join\n      executable = "#{name}#{suffix}"\n      path = command_path(executable)\n      path unless path.empty?\n    end\n\n    def command_path(name)
+    def openbsd_path(name, root: Environment.repo_root)
+      return unless RUBY_PLATFORM.match?(/openbsd/)
+
+      version = pinned_version(root)
+      return unless version.match?(/\A4\.0\.\d+\z/)
+
+      suffix = version.split(".")[0, 2].join
+      executable = "#{name}#{suffix}"
+      path = command_path(executable)
+      path unless path.empty?
+    end
+
+    def command_path(name)
       path_entries = ENV.fetch("PATH", "").split(File::PATH_SEPARATOR)
       path_entries.filter_map do |directory|
         path = File.join(directory, name)

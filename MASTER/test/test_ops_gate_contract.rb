@@ -113,6 +113,13 @@ class GateContractSpec < Minitest::Test
     refute_includes source, "RUBY_VERSION.start_with?"
   end
 
+  def test_ruby_runner_openbsd_method_is_real_ruby_source
+    source = File.read(File.join(ROOT, "lib", "operator", "ruby_runner.rb"))
+
+    assert_includes source, "def openbsd_path(name, root: Environment.repo_root)"
+    refute_includes source, "def openbsd_path(name, root: Environment.repo_root)\\n"
+  end
+
   def test_gate_uses_the_shared_runtime_selection
     source = File.read(GATE)
 
