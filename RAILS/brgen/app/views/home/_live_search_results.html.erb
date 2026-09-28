@@ -3,7 +3,7 @@
 <% end %>
 
 <% if @posts.any? %>
- <%= turbo_frame_tag "home-feed", target: "_top" do %>
+ <%= turbo_frame_tag "home-feed-frame", target: "_top" do %>
  <ul class="post-feed feed_list<%= " brgen-media-wall" if params[:view].to_s == "media" %>" id="home-feed" data-feed-updates-target="feed">
  <% if params[:view].to_s == "media" %>
    <%= render "home/media_add_card" %>

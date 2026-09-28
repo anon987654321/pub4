@@ -113,6 +113,13 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes importmap, 'pin "pub4/post_progressive"'
   end
 
+  def test_brgen_home_feed_frame_does_not_share_the_feed_list_id
+    feed = read("brgen/app/views/home/_live_search_results.html.erb")
+
+    assert_includes feed, 'turbo_frame_tag "home-feed-frame"'
+    assert_includes feed, 'id="home-feed"'
+  end
+
   def test_shared_post_card_does_not_silently_rescue_post_routes
     card = read("shared/app/views/shared/_post_card.html.erb")
 
