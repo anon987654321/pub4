@@ -10439,7 +10439,6 @@ body.vertical-marketplace .listing-review-cover-image {
 .home-feed-views {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
   margin-block-end: var(--space-3);
   border-block-end: 1px solid var(--border);
 }
@@ -10448,9 +10447,13 @@ body.vertical-marketplace .listing-review-cover-image {
   display: inline-flex;
   align-items: center;
   min-height: var(--tap-min);
-  padding-inline: var(--space-1);
+  padding-inline: var(--space-2);
   color: var(--text-secondary);
   text-decoration: none;
+}
+
+.home-feed-view + .home-feed-view {
+  border-inline-start: 1px solid var(--border);
 }
 
 .home-feed-view.is-active {
