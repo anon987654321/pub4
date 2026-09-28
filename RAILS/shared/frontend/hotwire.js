@@ -3,6 +3,7 @@ import "@hotwired/turbo-rails"
 import { bootThemeMeta } from "pub4/theme_meta"
 import { allows } from "pub4/cookie_consent"
 import { installOfflineQueue } from "pub4/pwa_runtime"
+import "pub4/console_guard"
 
 bootThemeMeta()
 installOfflineQueue()
