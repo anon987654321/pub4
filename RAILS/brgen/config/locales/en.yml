@@ -398,6 +398,10 @@ en:
     back_channels: "← channels"
     disappearing: Disappearing messages
     nav_label: Conversation nav
+    composer_label: "Message composer"
+    typing_one: "%{name} is typing"
+    typing_many: "%{names} are typing"
+    typing_many_truncated: "%{names} and %{count} others are typing"
     unread_one: "%{count} new message ↓"
     unread_other: "%{count} new messages ↓"
     pin: Pin
