@@ -132,6 +132,8 @@ class TestDependencyManager < Minitest::Test
     assert_equal File.join(@root, "Gemfile"), bundle_env["BUNDLE_GEMFILE"]
     assert_match(%r{/\.master/bundler/[0-9a-f]{16}/app$}, bundle_env["BUNDLE_APP_CONFIG"])
     assert_match(%r{/\.master/bundler/[0-9a-f]{16}/global$}, bundle_env["BUNDLE_USER_CONFIG"])
+    assert_match(%r{/\.master/bundler/[0-9a-f]{16}/gems$}, bundle_env["BUNDLE_PATH"])
+    assert_equal "1", bundle_env["BUNDLE_DISABLE_SHARED_GEMS"]
   end
 
   def test_activation_environment_reuses_the_sanitized_bundle_context
@@ -149,6 +151,8 @@ class TestDependencyManager < Minitest::Test
     assert_equal File.join(@root, "Gemfile"), env["BUNDLE_GEMFILE"]
     assert_match(%r{/\.master/bundler/[0-9a-f]{16}/app$}, env["BUNDLE_APP_CONFIG"])
     assert_match(%r{/\.master/bundler/[0-9a-f]{16}/global$}, env["BUNDLE_USER_CONFIG"])
+    assert_match(%r{/\.master/bundler/[0-9a-f]{16}/gems$}, env["BUNDLE_PATH"])
+    assert_equal "1", env["BUNDLE_DISABLE_SHARED_GEMS"]
     assert_nil env["BUNDLE_FROZEN"]
     assert_nil env["BUNDLE_PATH"]
     assert_nil env["BUNDLE_WITHOUT"]
