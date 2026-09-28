@@ -8,7 +8,7 @@ class SecurityAdvisory < ApplicationRecord
 
   belongs_to :port, optional: true
 
-  validates :title, presence: true
+  validates :title, :severity, presence: true
   validates :identifier, uniqueness: true, allow_blank: true
 
   scope :recent, -> { order(published_at: :desc, updated_at: :desc) }

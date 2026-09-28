@@ -4429,7 +4429,6 @@ style:
     outsource_to_gems_rule: "If a well-maintained gem solves the problem correctly, use it. Do not reimplement."
     outsource_to_gems_rationale: "Gems carry tests, edge cases, and maintenance. Home-grown duplicates carry bugs."
     outsource_to_gems_examples:
-      - "flay for AST-level duplicate detection"
       - "reek for code smell analysis"
       - "rubocop for style enforcement"
       - "prism for Ruby parsing"

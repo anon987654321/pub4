@@ -10,35 +10,27 @@ A finding is a hypothesis. Historical dated sections below are evidence records,
 - Ruby is pinned to `4.0.7` at root and in `MASTER/.ruby-version`. Exact-pin enforcement and runner fixes have landed; verify every real host/runner rather than reopening the old Ruby-version task.
 - Main has now aligned the Rails Gemfiles/locked app stacks to Rails 8.1.4 and moved brgen to Rails 8.1 defaults. **Rails 8.2 is now the active migration target**, because another agent is actively upgrading pub4.
 - The official Rails 8.2 Edge Guide/release notes are still marked work in progress rather than a stable tagged release. The migration must therefore keep edge-vs-release state explicit and re-lock when the exact 8.2 target is fixed.
-- Rails 8.2 migration seams called out by the current upstream guides include Herb HTML+ERB compilation, modern header-based CSRF behavior, enum negative scopes including `nil`, Active Storage analysis/variant timing, SQLite table-alteration behavior around `ON DELETE CASCADE`, and enqueue-after-transaction-commit behavior. Each must be verified against pub4 rather than accepted wholesale.
+- Rails 8.2 migration seams called out by the current upstream guides include Herb HTML+ERB compilation, modern header-based CSRF behavior, enum negative scopes including `nil`, Active Storage analysis/variant timing, SQLite table-alteration behavior around `ON DELETE CASCADE`, and enqueue-after-transaction-commit behavior. The source-side contracts are now explicit; live 8.2/runtime verification stays open until the exact target can be exercised.
 - Main has no open PRs and no open issues, but stale branches remain. The all-tree fix runner branch carries seven unique commits yet is 108 commits behind current main; the older full-Rails runner branch carries two unique commits and is 346 commits behind. Recover useful patches selectively; do not merge their history wholesale.
-- Recent GitHub Actions for the marketplace contract workflow have failed before recorded job steps. Logs were unavailable through the current integration, so the exact root cause remains unverified. The live full three-tree `/fix` run is therefore not proven.
-- `RAILS/test/run_all.rb` currently discovers 131 contract files recursively, one process per file. The historical red count is stale after the Rails/defaults changes until the suite is rerun.
+- Hosted CI is not the verification path for this backlog. The live full three-tree `/fix` run remains unproven until an equivalent manually watched run emits actionable step-level evidence.
+- `RAILS/test/run_all.rb` currently discovers 131 contract files recursively, one process per file. The historical red count remains stale until the suite is rerun manually on the current main baseline.
 
 ## Current plan — ordered 2026-09-28
 
 ### Rails 8.2 migration
 - Re-run the complete RAILS contract suite before and after the migration; record exact files, runs, assertions, failures and exit status.
 - Run `bin/rails herb:check` and repair every template that cannot compile through Herb before enabling the 8.2 HTML+ERB default.
-- Audit every `protect_from_forgery` caller and the configured CSRF strategy; add regression coverage for header-only versus legacy-token fallback where relevant.
-- Audit enum negative scopes for `nil` semantics.
-- Audit Active Storage validations and processing. The 8.2 guide changes when attachment metadata is analyzed and introduces explicit processing timing.
-- Audit every Active Job enqueue site whose correctness depends on transaction visibility. Verify Solid Queue behavior after the 8.2 enqueue-after-commit change.
-- Exercise SQLite migrations involving child foreign keys with `ON DELETE CASCADE`.
-- Compare all framework-default and initializer changes against the 8.2 upgrade guide; remove only superseded Rails 8.0/8.1 compatibility code.
+- Source-audit every transaction-sensitive Active Job producer; the critical model producers now originate from `after_commit`/`after_create_commit`. Runtime proof of the Rails 8.2 enqueue-after-commit behavior remains open until the 8.2 target can be exercised.
+- Static-audit SQLite foreign-key rebuild migrations for `PRAGMA foreign_keys` restore and keep the existing destroy-cascade tests; run the migration exercise against a real SQLite database before the 8.2 cutover.
+- Keep the framework-default audit executable: every Rails app is pinned to `load_defaults 8.1`, no app has an explicit HTML+ERB Erubi override, and the legacy Rails 8.0 compatibility layer has no active initializer. Re-run this contract when the 8.2 target is locked.
 - Run security, autoloading, routing, rendering, asset, cache, job, mailer, Active Storage, PWA and system-test gates after the version change.
 - Keep edge-only migration changes isolated. When 8.2 receives a stable tag, compare edge to the tag, re-lock against the stable target, and rerun the full gate set.
 - Do not treat Rails 8.1.4 as the destination; it is the current main baseline while the 8.2 migration is in progress.
 
 ### MASTER /fix convergence
 - Prove exact `/fix MASTER RAILS OPENBSD` dispatch from a clean checkout.
-- Keep `/scan` retired as a public command; any compatibility alias must remain deliberate and tested.
 - Prove observe → repair → re-observe → verify semantics over all three governed trees.
-- Prove council findings are consumed by the fix loop rather than merely written to disk.
-- Make DONE, PLATEAU, VALIDATION_FAILED and BLOCKED distinct terminal states; never call inconclusive evidence green.
-- Fix the known CQS false-positive around guard-then-assign memoisation and add a must-not-flag corpus.
-- Fix stagnation/oscillation detection so a repair applied by the streaming stage is included in the progress snapshot before rollback logic runs.
-- Keep pass counts, retries, threads and subprocesses bounded.
+- The council-to-repair seam is now covered by a regression test; the remaining proof is an actual three-tree `/fix` run from a clean checkout.
 - Re-measure the MASTER ratchets. Historical 21-row numbers are not current truth. Use `bin/operator measure --why <row>` before changing any ceiling.
 - Rebuild the rules.yml trim draft only from current measurements; do not loosen constitutional limits merely to manufacture green.
 
@@ -61,10 +53,9 @@ A finding is a hypothesis. Historical dated sections below are evidence records,
 
 ### MASTER face, voice and device proof
 - Prove web/terminal behavior parity before touching visual style.
-- Remove or wire the `agent:mood` listener/producer seam.
 - Make depth-map parity single-sourced or regression-tested from one deterministic seed.
 - Reconcile idle motion, offline failed-turn handling, IdeaPicture response behavior and voice-bed behavior.
-- Keep the terminal echo guard.
+- Keep the terminal echo guard. This is closed by the current regression-tested idle/draft/cooldown behavior.
 - Prove the real Termux phone ear with one Norwegian and one English phrase through the intended streaming path, or record the exact hardware/software blocker.
 - Re-probe the vm23 Edge TTS one-shot path with a real MP3 write and socket check.
 - Visual morphology, colors, visemes and voice aesthetic remain operator decisions.
@@ -91,8 +82,6 @@ A finding is a hypothesis. Historical dated sections below are evidence records,
 - Re-audit `MASTER/Gemfile` after the Rails 8.2 work.
 - Confirm whether `rb-edge-tts` can move to a TTS-only dependency path without boot-time EventMachine.
 - Confirm whether the `:dilla` group needs `head_music` and `wavefile` in the constitutional CLI lock.
-- Resolve the `opentelemetry-sdk` with no clear instrumentation consumer.
-- Confirm the historical `flay` no-caller finding.
 - Make host-specific watcher dependencies (`rb-kqueue`/`rb-inotify`) and `BUNDLE_FROZEN` behavior consistent across Mac, Linux/Termux and OpenBSD.
 
 ### Dilla / MASTER/tools
@@ -104,7 +93,7 @@ A finding is a hypothesis. Historical dated sections below are evidence records,
 
 ### Repository hygiene
 - Recover useful unique commits from stale runner branches selectively, then delete superseded branches.
-- Do not claim the live full /fix sweep succeeded until GitHub Actions or an equivalent watched run emits actionable step-level evidence.
+- Do not claim the live full /fix sweep succeeded until an equivalent manually watched run emits actionable step-level evidence; GitHub Actions are intentionally not part of this workflow.
 - Keep this TODO as the single forward backlog. Historical dated sections remain for archaeology; they are not proof that the listed issue still exists.
 
 ### Final research carry-forward — 2026-09-28
@@ -264,12 +253,9 @@ the "One chrome", ad system and layout sections bring back for a decision.
   memoisation fires while `||=` does not; sample five findings per noisy rule
   and fix the rule, as the refinement section says. And the 2026-09-25 RAILS
   run lost its one applied repair to stagnation detection, not to the proof:
-  `fix0: oscillation, pass 2` fired after the stream stage had applied it,
-  and the rollback took it back. The oscillation snapshot is of findings
-  before the streamed repairs, so a pass that changed something can read as
-  a repeat (`pass_runner/stagnation_detection.rb`). Done when `CQS` passes a
-  memoised reader in its must-not-flag example and a pass whose stream
-  applied a repair is not rolled back as an oscillation.
+  `fix0: oscillation, pass 2` previously fired after the stream stage had applied a
+  repair. The stream now refreshes touched findings and marks pass progress before
+  stagnation logic; the CQS corpus and stream regression are executable contracts.
 
 ### Operator decisions
 

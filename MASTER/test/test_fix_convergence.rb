@@ -286,6 +286,34 @@ class TestFixConvergence < Minitest::Test
     assert_nil runner.send(:council_preamble, { cherry_picks: [] })
   end
 
+  def test_council_result_is_passed_into_the_repair_stage
+    council = Object.new
+    council.define_singleton_method(:run) do |files:, pass:, deadline:|
+      { feedback: [], cherry_picks: ["dummy.yml line 1: tighten the boundary"] }
+    end
+    loop = build_loop(
+      [{ rule: "TEST_RULE", file: File.join(@root, "dummy.yml"), line: 1, message: "x" }],
+      council:,
+    )
+    runner = loop.instance_variable_get(:@pass_runner)
+    received = nil
+    runner.define_singleton_method(:run_llm_stage) do |found, files, pass, deadline, council:|
+      received = council
+      0
+    end
+
+    runner.send(
+      :dispatch_llm_stages,
+      [{ rule: "TEST_RULE", file: File.join(@root, "dummy.yml"), line: 1, message: "x" }],
+      [File.join(@root, "dummy.yml")],
+      1,
+      Time.now + 60,
+      nil,
+    )
+
+    assert_same council, received, "council findings must reach the repair stage as repair context"
+  end
+
   # 6. A clean tree the ground truth agrees with is the one state that says DONE.
   def test_a_clean_pass_asks_council_for_improvements
     asked = []

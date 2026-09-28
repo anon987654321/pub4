@@ -35,8 +35,22 @@ class SecurityAdvisoryTest < ActiveSupport::TestCase
     assert_equal (0..3).to_a, SecurityAdvisory.severities.values
   end
 
-  test "an advisory with no stated severity is medium" do
-    assert_equal "medium", advisory.tap(&:validate).severity
+  test "an advisory with no stated severity defaults to medium" do
+    record = advisory
+    assert_equal "medium", record.severity
+    assert record.valid?
+  end
+
+  test "a nil severity is invalid" do
+    refute advisory(severity: nil).valid?
+  end
+
+  test "negative severity scope does not hide valid records" do
+    medium = advisory(severity: :medium).tap(&:save!)
+    critical = advisory(identifier: "CVE-2026-0005", severity: :critical).tap(&:save!)
+
+    assert_equal [medium], SecurityAdvisory.not_critical.to_a
+    refute SecurityAdvisory.not_critical.include?(critical)
   end
 
   test "each severity round-trips through its predicate" do

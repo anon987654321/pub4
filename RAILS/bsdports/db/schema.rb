@@ -138,7 +138,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_14_120000) do
     t.integer "port_id"
     t.datetime "published_at"
     t.datetime "resolved_at"
-    t.integer "severity", default: 1
+    t.integer "severity", default: 1, null: false
     t.string "source_url"
     t.string "title", null: false
     t.datetime "updated_at", null: false

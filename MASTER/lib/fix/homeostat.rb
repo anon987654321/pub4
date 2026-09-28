@@ -116,6 +116,7 @@ module Master
         @state = DRIVES.transform_values { |spec| spec[:setpoint] }
         @started_at = Time.now
         @prev_health = :healthy
+        @prev_mood = mood
       end
 
       def observe(event, **_kwargs)
@@ -127,6 +128,7 @@ module Master
         end
         @bus&.publish("homeostat:observe", event:, state: snap)
         publish_health_transition(snap)
+        publish_mood_transition
         snap
       end
 
@@ -146,6 +148,14 @@ module Master
         current = health_status
         return if current == @prev_health
         @prev_health = current
+      end
+
+      def publish_mood_transition
+        current = mood
+        return if current == @prev_mood
+
+        @prev_mood = current
+        @bus&.publish("agent:mood", mood: current, source: "homeostat")
       end
 
       def decay_drift!

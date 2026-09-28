@@ -31,6 +31,43 @@ class SessionBoundariesTest < ActionDispatch::IntegrationTest
     ActionController::Base.allow_forgery_protection = original
   end
 
+  test "a header-only csrf token is accepted for a write" do
+    original = ActionController::Base.allow_forgery_protection
+    ActionController::Base.allow_forgery_protection = true
+
+    get new_session_path
+    token = controller.send(:form_authenticity_token)
+
+    post session_path,
+         params: { email_address: @user.email_address, password: "password123" },
+         headers: { "X-CSRF-Token" => token }
+
+    assert_response :redirect
+    assert_equal @user.id, controller.current_user.id
+  ensure
+    ActionController::Base.allow_forgery_protection = original
+  end
+
+  test "a legacy hidden authenticity token is accepted for a write" do
+    original = ActionController::Base.allow_forgery_protection
+    ActionController::Base.allow_forgery_protection = true
+
+    get new_session_path
+    token = controller.send(:form_authenticity_token)
+
+    post session_path,
+         params: {
+           authenticity_token: token,
+           email_address: @user.email_address,
+           password: "password123"
+         }
+
+    assert_response :redirect
+    assert_equal @user.id, controller.current_user.id
+  ensure
+    ActionController::Base.allow_forgery_protection = original
+  end
+
   test "a deletion marker revokes an already-issued session" do
     post session_path, params: { email_address: @user.email_address, password: "password123" }
     session_row = @user.sessions.reload.sole
