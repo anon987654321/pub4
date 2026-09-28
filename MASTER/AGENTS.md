@@ -207,7 +207,7 @@ that a fresh agent gets wrong on its first attempt.
 PATH; `MASTER/gates/runner.rb` prints a one-line warning about it and carries on,
 so app-bundle gates then fail for the interpreter rather than for a finding.
 `RBENV_VERSION` alone does nothing where rbenv's shims are not on PATH, which
-is this Mac: bare `ruby` is Homebrew's 4.0.5. `MASTER/bin/ruby` resolves 3.4.
+is this Mac: bare `ruby` is Homebrew's 4.0.5. `MASTER/bin/ruby` enforces the pinned `.ruby-version` (currently 4.0.5).
 
 **The checkout is shared and usually dirty.** Never `git add -A`. Commit
 path-scoped: `git commit -- <paths>`. When the pre-commit hook refuses over
