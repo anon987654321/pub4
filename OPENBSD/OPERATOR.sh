@@ -27,10 +27,8 @@ SCRIPT_DIR=${0:a:h}
 REPO_ROOT=${SCRIPT_DIR:h}
 CONFIG_ROOT=${REPO_ROOT}/OPENBSD
 
-# Usage first. main() is the last of 977 lines and this text used to live inside
-# it, so the one thing an operator opening the file needs was 900 lines below
-# every function it describes.
-# Usage and operational stages live in small sourced modules.
+# Usage comes first. Operational stages live in small sourced modules, so the
+# entrypoint stays navigable without depending on a stale file-line count.
 source "${SCRIPT_DIR}/dev/operator_usage.zsh"
  for ONE_SOURCE. Pure Zsh: log, backup_directory, install_*, sync_openbsd_configs.
 log() {
