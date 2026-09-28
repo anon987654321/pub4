@@ -14,11 +14,11 @@ module Shared
 
     def available? = @client.available?
 
-    def reply(conversation:, sender:, message:)
+    def reply(messages:, sender:, message:, session_key:, channel:)
       result = @client.turn(
-        prompt(conversation:, sender:, message:),
-        session_key: "messenger:#{conversation_key(conversation)}",
-        channel: "messenger",
+        prompt(messages:, sender:, message:),
+        session_key:,
+        channel:,
       )
       return unless result["ok"]
 
@@ -29,7 +29,7 @@ module Shared
 
     private
 
-    def prompt(conversation:, sender:, message:)
+    def prompt(messages:, sender:, message:)
       <<~TEXT.byteslice(0, MAX_PROMPT_BYTES)
         You are MASTER, the shared assistant invited into a private messenger conversation.
         You are a participant, not the owner of the conversation. Answer the latest human
@@ -37,22 +37,20 @@ module Shared
         Re-read or research when the question needs current evidence.
 
         Conversation:
-        #{transcript(conversation)}
+        #{transcript(messages)}
 
         Latest sender: #{sender_name(sender)}
         Latest message:
-        #{message.body_or_content}
+        #{message_text(message)}
       TEXT
     end
 
-    def transcript(conversation)
-      rows = conversation.messages.includes(:sender).order(created_at: :desc).limit(MAX_CONTEXT).reverse
-      rows.map { |message| "#{sender_name(message.sender)}: #{message.body_or_content}" }.join("\n")
+    def transcript(messages)
+      Array(messages).last(MAX_CONTEXT).map { |row| "#{sender_name(row.sender)}: #{message_text(row)}" }.join("\n")
     end
 
-    def conversation_key(conversation)
-      app = conversation.class.name.underscore.tr("/", "_")
-      "#{app}:#{conversation.id}"
+    def message_text(message)
+      message.respond_to?(:body) ? message.body.to_s : message.content.to_s
     end
 
     def sender_name(sender)
