@@ -11,6 +11,8 @@ module Operator
       return ENV["PUB4_RUBY"] if ENV["PUB4_RUBY"].to_s != ""
       path = rbenv_path("ruby", root:)
       return path if path
+      path = openbsd_path("ruby", root:)
+      return path if path
       actual = Gem::Version.new(RUBY_VERSION)
       required = Gem::Version.new(pinned_version(root))
       return RbConfig.ruby if actual == required
@@ -22,13 +24,15 @@ module Operator
       return ENV["PUB4_BUNDLE"] if ENV["PUB4_BUNDLE"].to_s != ""
       path = rbenv_path("bundle", root:)
       return path if path
+      path = openbsd_path("bundle", root:)
+      return path if path
       "bundle"
     end
 
     # Resolve the executable from the repo's pinned Ruby instead of trusting the
     # shell's current Ruby. This is the common seam between macOS rbenv and
-    # OpenBSD's ruby34/bundle34 binaries: callers receive one executable path,
-    # so they do not need to reproduce rbenv's selection logic themselves.
+    # OpenBSD's ruby40/bundle40 binaries: callers receive one executable path,
+    # so they do not need to reproduce platform selection logic themselves.
     def rbenv_path(name, root: Environment.repo_root)
       version = pinned_version(root)
       return if version.empty?
@@ -53,7 +57,7 @@ module Operator
       path
     end
 
-    def command_path(name)
+    def openbsd_path(name, root: Environment.repo_root)\n      return unless RUBY_PLATFORM.match?(/openbsd/)\n\n      version = pinned_version(root)\n      return unless version.match?(/\\A4\\.0\\.\\d+\\z/)\n\n      suffix = version.split(".")[0, 2].join\n      executable = "#{name}#{suffix}"\n      path = command_path(executable)\n      path unless path.empty?\n    end\n\n    def command_path(name)
       path_entries = ENV.fetch("PATH", "").split(File::PATH_SEPARATOR)
       path_entries.filter_map do |directory|
         path = File.join(directory, name)
