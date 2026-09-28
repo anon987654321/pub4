@@ -26,7 +26,7 @@ export PATH
 # been failing every night.)
 #
 # Plain ASCII in the logger line: syslog renders an em dash as M-bM^@M^T.
-su dev -c 'cd /home/dev/pub4 && /usr/local/bin/ruby34 OPENBSD/bin/domain_watch.rb' \
+su dev -c 'cd /home/dev/pub4 && /usr/local/bin/ruby40 OPENBSD/bin/domain_watch.rb' \
   > /var/log/domain_watch.log 2>&1 ||
   logger -t weekly.local "domain_watch: a domain is expiring, lapsed or changed hands - see /var/log/domain_watch.log"
 
