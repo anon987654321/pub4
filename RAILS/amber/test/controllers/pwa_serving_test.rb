@@ -45,6 +45,19 @@ class PwaServingTest < ActionDispatch::IntegrationTest
   # nothing about what the server does. test_source_assertions is right to
   # refuse that, so it is gone rather than rewritten into something weaker.
 
+  test "the service worker replaces its cache version placeholder before serving" do
+    previous = ENV["CACHE_VERSION"]
+    ENV["CACHE_VERSION"] = "contract-test"
+
+    get pwa_service_worker_path
+
+    assert_response :success
+    refute_includes response.body, "__CACHE_VERSION__"
+    assert_includes response.body, "contract-test"
+  ensure
+    ENV["CACHE_VERSION"] = previous
+  end
+
   test "the offline page renders without a session" do
     get pwa_offline_path
 
