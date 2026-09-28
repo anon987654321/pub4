@@ -339,8 +339,6 @@ end
       end
 
       class AvailabilityPosture < Base
-        require_relative "../cli/routing/availability_policy"
-
         def call
           router = @container[:agent]&.model_router
           return Result.err("availability: no model router") unless router.respond_to?(:pool)
