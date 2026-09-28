@@ -169,6 +169,20 @@ class TestDependencyManager < Minitest::Test
     assert_equal ["/fake/bundle", "check"], @commands.last.first
   end
 
+  def test_resolver_conflict_fails_with_explicit_non_mutating_message
+    manager = fake_manager([
+      [false, "", "Could not find compatible versions for gem 'ruby_llm'"]
+    ])
+
+    result = manager.ensure!
+
+    refute result.success?
+    assert_includes result.message, "constraints conflict"
+    assert_includes result.message, "no automatic lockfile rewrite"
+    assert_equal ["check"], @commands.first.first[1..]
+    assert_equal ["install", "--jobs", "4", "--retry", "3"], @commands.last.first[1..]
+  end
+
   def test_native_build_failure_installs_system_packages_and_retries
     responses = [
       [false, "", "extconf failed: sqlite3.h not found"],
