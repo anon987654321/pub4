@@ -3,7 +3,7 @@
 **A wardrobe that knows what is in it, what you actually wear, and what it is
 guessing at.** amber holds garments and outfits, runs the KonMari declutter loop,
 keeps a style timeline, and makes recommendations that can say where they came
-from. Rails 8.1.4 on SQLite behind Falcon, with Hotwire, Active Storage and relayd,
+from. Rails 8.2.0.alpha on SQLite behind Falcon, with Hotwire, Active Storage and relayd,
 on port 61352.
 
 Deploy it with `doas zsh RAILS/amber/amber.sh` and prove it on
