@@ -20,7 +20,7 @@ esac
 # Production has one checkout, and a worktree is never a deploy target.
 ROOT=/home/dev/pub4
 ALL_APPS_FLAG=/var/db/pub4_all_apps
-APPS=$(ruby34 -ryaml -e 'puts YAML.safe_load_file(ARGV[0]).fetch("apps").keys.join(" ")' "$ROOT/RAILS/apps.yml")
+APPS=$(ruby40 -ryaml -e 'puts YAML.safe_load_file(ARGV[0]).fetch("apps").keys.join(" ")' "$ROOT/RAILS/apps.yml")
 [ -n "$APPS" ] || { echo "start_all_apps: no apps read from $ROOT/RAILS/apps.yml" >&2; exit 1; }
 SERVICES="master $APPS"
 
@@ -42,5 +42,5 @@ for svc in $SERVICES; do
   rcctl check "$svc" || exit 1
 done
 
-ruby34 "$ROOT/OPENBSD/gates/health_check.rb" --all-ready-apps
+ruby40 "$ROOT/OPENBSD/gates/health_check.rb" --all-ready-apps
 echo "all apps up (resource_guard shedding disabled via $ALL_APPS_FLAG)"
