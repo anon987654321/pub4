@@ -54,3 +54,6 @@
   }
   .post-vote-rail { inline-size: 44px; }
 }
+
+.post-vote-frame { display: block; inline-size: 48px; }
+@media (max-width: 479px) { .post-vote-frame { inline-size: 44px; } }
