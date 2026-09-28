@@ -45,12 +45,28 @@ class Rails82ContractTest < Minitest::Test
     assert_includes advisory_schema, 't.integer "severity", default: 1, null: false'
     assert_includes advisory_model, "validates :title, :severity, presence: true"
 
-    {
-      "eritel/db/migrate/20260925000100_create_domains.rb" => "t.string :state, null: false, default: "pending"",
-      "eritel/db/migrate/20260925000300_create_participants_registrants_orders.rb" => "t.string :kind, null: false",
-      "eritel/db/migrate/20260925000300_create_participants_registrants_orders.rb" => "t.string :status, null: false, default: "pending""
-    }.each do |path, declaration|
+    declarations = [
+      ["eritel/db/migrate/20260925000100_create_domains.rb", 't.string :state, null: false, default: "pending"'],
+      ["eritel/db/migrate/20260925000300_create_participants_registrants_orders.rb", "t.string :kind, null: false"],
+      ["eritel/db/migrate/20260925000300_create_participants_registrants_orders.rb", 't.string :status, null: false, default: "pending"'],
+      ["eritel/db/migrate/20260925000300_create_participants_registrants_orders.rb", 't.string :verification_status, null: false, default: "pending"'],
+      ["eritel/db/migrate/20260925000300_create_participants_registrants_orders.rb", "t.string :operation, null: false"],
+      ["eritel/db/migrate/20260925000300_create_participants_registrants_orders.rb", 't.string :state, null: false, default: "pending"'],
+      ["eritel/db/migrate/20260925000300_create_participants_registrants_orders.rb", 't.string :state, null: false, default: "pending"']
+    ].uniq.each do |path, declaration|
       assert_includes read(path), declaration
+    end
+
+    {
+      "eritel/app/models/participant.rb" => %w[kind status],
+      "eritel/app/models/registrant.rb" => %w[verification_status],
+      "eritel/app/models/order.rb" => %w[operation state],
+      "eritel/app/models/registry_operation.rb" => %w[state]
+    }.each do |path, fields|
+      source = read(path)
+      fields.each do |field|
+        assert_match(/validates .*#{field}.*presence/, source, "#{path} allows nil enum #{field}")
+      end
     end
   end
 
