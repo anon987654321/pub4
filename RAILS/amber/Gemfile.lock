@@ -27,83 +27,74 @@ GIT
       websocket-driver (>= 0.6.1)
       zeitwerk (~> 2.6)
     actionmailbox (8.2.0.alpha)
-      activesupport (= 8.2.0.alpha)
+      actionpack (= 8.2.0.alpha)
+      activejob (= 8.2.0.alpha)
       activerecord (= 8.2.0.alpha)
       activestorage (= 8.2.0.alpha)
-      activejob (= 8.2.0.alpha)
-      actionpack (= 8.2.0.alpha)
+      activesupport (= 8.2.0.alpha)
       mail (>= 2.8.0)
     actionmailer (8.2.0.alpha)
-      activesupport (= 8.2.0.alpha)
       actionpack (= 8.2.0.alpha)
       actionview (= 8.2.0.alpha)
       activejob (= 8.2.0.alpha)
+      activesupport (= 8.2.0.alpha)
       mail (>= 2.8.0)
       rails-dom-testing (~> 2.2)
     actionpack (8.2.0.alpha)
+      actionview (= 8.2.0.alpha)
       activesupport (= 8.2.0.alpha)
       nokogiri (>= 1.8.5)
       rack (>= 2.2.4)
-      rack-session (>= 1.0)
+      rack-session (>= 1.0.1)
       rack-test (>= 0.6.3)
-      rails-html-sanitizer (~> 1.7)
       rails-dom-testing (~> 2.2)
+      rails-html-sanitizer (~> 1.7)
       useragent (~> 0.16)
-      actionview (= 8.2.0.alpha)
     actiontext (8.2.0.alpha)
-      activesupport (= 8.2.0.alpha)
+      action_text-trix (~> 2.1.16)
+      actionpack (= 8.2.0.alpha)
       activerecord (= 8.2.0.alpha)
       activestorage (= 8.2.0.alpha)
-      actionpack (= 8.2.0.alpha)
-      nokogiri (>= 1.8.5)
+      activesupport (= 8.2.0.alpha)
       globalid (>= 0.6.0)
-      action_text-trix (~> 2.1.16)
+      nokogiri (>= 1.8.5)
     actionview (8.2.0.alpha)
       activesupport (= 8.2.0.alpha)
       builder (~> 3.1)
       erubi (~> 1.11)
       herb (>= 0.10)
-      rails-html-sanitizer (~> 1.7)
       rails-dom-testing (~> 2.2)
+      rails-html-sanitizer (~> 1.7)
     activejob (8.2.0.alpha)
       activesupport (= 8.2.0.alpha)
       globalid (>= 1.4.0)
     activemodel (8.2.0.alpha)
       activesupport (= 8.2.0.alpha)
     activerecord (8.2.0.alpha)
-      activesupport (= 8.2.0.alpha)
       activemodel (= 8.2.0.alpha)
+      activesupport (= 8.2.0.alpha)
       timeout (>= 0.4.0)
     activestorage (8.2.0.alpha)
-      activesupport (= 8.2.0.alpha)
       actionpack (= 8.2.0.alpha)
       activejob (= 8.2.0.alpha)
       activerecord (= 8.2.0.alpha)
+      activesupport (= 8.2.0.alpha)
       marcel (~> 2.0)
     activesupport (8.2.0.alpha)
-      i18n (>= 1.6, < 2)
-      tzinfo (~> 2.0, >= 2.0.5)
+      base64
+      bigdecimal
       concurrent-ruby (~> 1.0, >= 1.3.1)
       connection_pool (>= 2.2.5)
-      minitest (>= 5.1)
-      base64
       drb
-      bigdecimal
+      i18n (>= 1.6, < 2)
       json
-      psych (>= 4)
       logger (>= 1.4.2)
-      securerandom (>= 0.3)
-      uri (>= 0.13.1)
+      minitest (>= 5.1)
+      psych (>= 4)
       ractor-dispatch (>= 0.3.0)
-    railties (8.2.0.alpha)
-      activesupport (= 8.2.0.alpha)
-      actionpack (= 8.2.0.alpha)
-      rackup (>= 1.0.0)
-      rake (>= 12.2)
-      thor (~> 1.0, >= 1.2.2)
-      zeitwerk (~> 2.6)
-      irb (~> 1.13)
-      tsort (>= 0.2)
+      securerandom (>= 0.3)
+      tzinfo (~> 2.0, >= 2.0.5)
+      uri (>= 0.13.1)
     rails (8.2.0.alpha)
       actioncable (= 8.2.0.alpha)
       actionmailbox (= 8.2.0.alpha)
@@ -116,11 +107,23 @@ GIT
       activerecord (= 8.2.0.alpha)
       activestorage (= 8.2.0.alpha)
       activesupport (= 8.2.0.alpha)
-      railties (= 8.2.0.alpha)
       bundler (>= 1.15.0)
-
+      railties (= 8.2.0.alpha)
+    railties (8.2.0.alpha)
+      actionpack (= 8.2.0.alpha)
+      activesupport (= 8.2.0.alpha)
+      irb (~> 1.13)
+      rackup (>= 1.0.0)
+      rake (>= 12.2)
+      thor (~> 1.0, >= 1.2.2)
+      tsort (>= 0.2)
+      zeitwerk (~> 2.6)
 GEM
-GEM
+    herb (0.11.0)
+    ractor-dispatch (0.3.0)
+    globalid (1.4.0)
+      activesupport (>= 6.1)
+    marcel (2.1.0)
   remote: https://rubygems.org/
   specs:
     action_text-trix (2.1.19)
@@ -262,8 +265,6 @@ GEM
     fugit (1.12.1)
       et-orbi (~> 1.4)
       raabro (~> 1.4)
-    globalid (1.4.0)
-      activesupport (>= 5.0)
     google-protobuf (4.35.1)
       bigdecimal
       rake (~> 13.3)
@@ -327,7 +328,6 @@ GEM
       net-pop
       net-smtp
     mapping (1.1.3)
-    marcel (2.1.0)
     matrix (0.4.3)
     metrics (0.15.0)
     mini_magick (5.3.1)
@@ -644,10 +644,6 @@ PLATFORMS
   x86_64-linux-musl
   x86_64-openbsd
 
-    herb (0.10.2)
-
-    ractor-dispatch (0.3.0)
-
 DEPENDENCIES
   bcrypt (~> 3.1.7)
   bootsnap
@@ -693,6 +689,10 @@ DEPENDENCIES
   web-console
 
 CHECKSUMS
+  herb (0.11.0) sha256=cba4bfc57f7c1f4b3ee2f4ed02d966d121ce9d8649b087c721d4f9c61f7c63e2
+  ractor-dispatch (0.3.0) sha256=cd2d46743303e00fe500df168b4dde85080160fd9f04539cada4b4dd5e588f68
+  globalid (1.4.0) sha256=037f12fbf1d9d7a014d501c2d5c77356fd4ddd96d7a7991d6700bba96706f427
+  marcel (2.1.0) sha256=f8b0327111dc7e516331eeefe052e981ce50e2bd826c1042a53cdf047fcc3512
   action_text-trix (2.1.19) sha256=7012f59421009cf284aa651294896414d653a61a2417c9b8714c8476d2f74009
   addressable (2.9.0) sha256=7fdf6ac3660f7f4e867a0838be3f6cf722ace541dd97767fa42bc6cfa980c7af
   ast (2.4.3) sha256=954615157c1d6a382bc27d690d973195e79db7f55e9765ac7c481c60bdb4d383
@@ -750,6 +750,7 @@ CHECKSUMS
   fiber-local (1.1.0) sha256=c885f94f210fb9b05737de65d511136ea602e00c5105953748aa0f8793489f06
   fiber-storage (1.0.1) sha256=f48e5b6d8b0be96dac486332b55cee82240057065dc761c1ea692b2e719240e1
   fugit (1.12.1) sha256=5898f478ede9b415f0804e42b8f3fd53f814bd85eebffceebdbc34e1107aaf68
+  google-protobuf (4.35.1) sha256=a3a6471331d918f58dfa4d014a8f6286f0af2cf4840216bde52fcf2ea3fe3726
   google-protobuf (4.35.1-aarch64-linux-gnu) sha256=50ca44d0eeff3f8475e630a1accdd974256f3510694d574e2c9d6119ea8bc9e1
   google-protobuf (4.35.1-aarch64-linux-musl) sha256=d5c65cef6bd6498a9e5ed5f88cf6cf7e341c10b0a005e32137d5d1a2b6e8c18a
   google-protobuf (4.35.1-x86-linux-gnu) sha256=cc7492566b27ad8b5dfa3a7b6f9b11e905050cc53c2fa8ff22de375a9e7a70fb
@@ -776,6 +777,8 @@ CHECKSUMS
   loofah (2.25.2) sha256=2007f746959ac65552456e04b433e83deb22759ab38c838b4445c70e43425918
   mail (2.9.1) sha256=06574eca475253d6c18145dd70af80d0eb970182d55053497c5f4d797ea160e8
   mapping (1.1.3) sha256=2274931d20ecd46eaafdd1e00c58cc7472133b213bcac335cc7733d3c75f4da2
+  matrix (0.4.3) sha256=a0d5ab7ddcc1973ff690ab361b67f359acbb16958d1dc072b8b956a286564c5b
+  metrics (0.15.0) sha256=61ded5bac95118e995b1bc9ed4a5f19bc9814928a312a85b200abbdac9039072
   mini_magick (5.3.1) sha256=29395dfd76badcabb6403ee5aff6f681e867074f8f28ce08d78661e9e4a351c4
   mini_mime (1.1.5) sha256=8681b7e2e4215f2a159f9400b5816d85e9d8c6c6b491e96a12797e798f8bccef
   mini_portile2 (2.8.9) sha256=0cd7c7f824e010c072e33f68bc02d85a00aeb6fce05bb4819c03dfd3c140c289
