@@ -128,7 +128,7 @@ class GateContractSpec < Minitest::Test
     assert_includes source, 'require "operator/ruby_runner"'
     assert_includes source, "[RUBY, BUNDLE, \"exec\", RUBY, \"bin/rails\", \"test\"]"
     refute_includes source, "%w[rbenv exec bundle exec bin/rails test]"
-    refute_includes source, '{ "RBENV_VERSION" => "3.4.9" }'
+    refute_includes source, "RBENV_VERSION"
   end
 
   def test_gate_forces_safe_env
