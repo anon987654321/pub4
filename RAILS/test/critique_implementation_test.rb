@@ -121,6 +121,12 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes card, "responsive_image_tag(post.image"
     assert_includes card, "video_tag post.video"
     assert_includes card, "brgen-media-play"
+    assert_includes card, 'data-controller="lightbox"'
+    assert_includes card, 'data-turbo="false"'
+    assert_includes card, "media_index"
+    assert_includes css, ".brgen-media-card--wide"
+    assert_includes css, ".brgen-media-card--tall"
+    assert_includes css, ".brgen-media-lightbox-link"
     assert_includes css, ".brgen-media-wall"
     assert_includes css, "body.vertical-messenger #messages article {"
     assert_includes css, "border-block-end: 1px solid var(--border)"
