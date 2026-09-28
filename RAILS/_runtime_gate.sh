@@ -8,8 +8,11 @@ set -euo pipefail
 master_scan_dep() {
   local app_name=$1
   local master=${MASTER_ROOT:-/home/dev/pub4/MASTER}
-  local log=/tmp/master_${app_name}_scan.log
-  [[ -x ${master}/bin/cli ]] || return 0
+  local log_dir=/var/db/pub4
+  local log=${log_dir}/master_${app_name}_scan.log
+  [[ -x ${master}/bin/cli ]] || { log_err "MASTER scan unavailable at ${master}"; return 1; }
+  mkdir -p "$log_dir" || { log_err "cannot create ${log_dir} for MASTER scan log"; return 1; }
+  chmod 700 "$log_dir"
   [[ -n ${SKIP_MASTER_SCAN:-} ]] && { log "MASTER scan skipped (SKIP_MASTER_SCAN)"; return 0; }
   log "MASTER rules scan (OPERATOR) pre-bundle"
   if ! (cd "$master" && MASTER_SCAN_DETERMINISTIC=1 MASTER_SAFE_MODE=1 bundle_exec exec ruby bin/gate --scan-only --tree=RAILS) \
