@@ -472,7 +472,7 @@ for unified graph + Turbo Stream consumers.
 
 ## Write races on SQLite, and the owner's own fields (2026-09-13)
 
-Rails 8.1 opens every SQLite transaction `BEGIN IMMEDIATE`
+Rails 8.2 preserves the explicit SQLite transaction behavior `BEGIN IMMEDIATE`
 (ActiveRecord's SQLite3 database statements), so each save takes the
 database's single writer lock before its validations read. A uniqueness
 validation and the insert behind it therefore cannot interleave with another
