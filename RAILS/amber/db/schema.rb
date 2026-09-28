@@ -556,6 +556,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_15_120000) do
     t.datetime "deletion_scheduled_at"
     t.string "email_address", null: false
     t.boolean "guest", default: false, null: false
+    t.boolean "bot", default: false, null: false
     t.datetime "magic_link_expires_at"
     t.string "magic_link_token"
     t.string "otp_secret"
@@ -564,6 +565,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_15_120000) do
     t.datetime "remember_token_expires_at"
     t.boolean "two_factor_enabled", default: false, null: false
     t.datetime "updated_at", null: false
+    t.index ["bot"], name: "index_users_on_bot"
     t.index ["deletion_scheduled_at"], name: "index_users_on_deletion_scheduled_at"
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
     t.index ["guest", "created_at"], name: "index_users_on_guest_and_created_at"
