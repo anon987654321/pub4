@@ -65,6 +65,7 @@ module Master
           # constant, never anything the visitor typed -- a note assembled
           # from user input would be an instruction the user wrote for us.
           parts << Fiber[:master_persona_note]
+          parts << Master::AI::OperatorContract.prompt
           parts << CLI::SubagentContext.brief
           parts << conversational_register_line if casual_task?
           parts << felt_sense_section if @felt_sense.is_a?(Hash)
