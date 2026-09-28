@@ -36,5 +36,7 @@ class MediaIntentTest < Minitest::Test
 
   def test_postpro_literal_is_a_media_intent
     assert Master::Io::MediaIntent.handles?("run postpro.rb over ~/Pictures/new")
+    assert Master::Io::MediaIntent.handles?("use postpro for these photos in ~/Pictures/new")
+    refute Master::Io::MediaIntent.handles?("what is postpro?")
   end
 end
