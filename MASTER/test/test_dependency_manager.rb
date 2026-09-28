@@ -46,6 +46,23 @@ class TestDependencyManager < Minitest::Test
     manager
   end
 
+  def test_watcher_gems_use_install_if_across_master_bundles
+    [File.join(Master::ROOT, "Gemfile"), File.join(Master::ROOT, "web", "Gemfile")].each do |path|
+      source = File.read(path)
+
+      assert_match(
+        /install_if -> \{ RUBY_PLATFORM =~ \/bsd\|dragonfly\/i \} do\n\s+gem "rb-kqueue", "~> 0\.2"/,
+        source,
+        "#{path} must declare rb-kqueue through Bundler install_if"
+      )
+      assert_match(
+        /install_if -> \{ RUBY_PLATFORM =~ \/linux\/ && !RUBY_PLATFORM\.include\?\("android"\) \} do\n\s+gem "rb-inotify", "~> 0\.10"/,
+        source,
+        "#{path} must declare rb-inotify through Bundler install_if"
+      )
+    end
+  end
+
   def test_dilla_music_dependencies_stay_inside_the_dilla_group
     source = File.read(File.join(Master::ROOT, "Gemfile"))
     group = source[/group :dilla do\n(.*?)^end/m, 1].to_s
