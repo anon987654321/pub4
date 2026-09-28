@@ -16,7 +16,7 @@ module Deploy
       "shared/app/services/shared/tradedoubler.rb" => /configured\?|matrix_uri|products_token|placeholder/,
       "shared/app/services/shared/affiliate.rb" => /NETWORK_NAMES|stored_deals|import_all!/,
       "brgen/lib/brgen/affiliate_placeholders.rb" => /placeholder: true/,
-      "brgen/app/views/shared/_affiliate_deals.html.erb" => /placeholder|sponsored|affiliate_disclosure/,
+      "shared/app/views/shared/_affiliate_feed_unit.html.erb" => /placeholder|sponsored|affiliate_disclosure/,
       "shared/app/views/shared/_affiliate_disclosure.html.erb" => /affiliate_disclosure_text/,
       "shared/app/models/shared/affiliate_conversion.rb" => /message_type_id|record_from_postback!/,
       "brgen/app/controllers/webhooks/tradedoubler_controller.rb" => /unauthorized|TRADEDOUBLER_WEBHOOK_SECRET|secure_compare/,
