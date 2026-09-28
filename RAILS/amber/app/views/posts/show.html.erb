@@ -1,18 +1,12 @@
 <%# posts#show is public. The shared Article schema builds its URL from
     url_for(@post), which is already the public path, so it needs no override. %>
+<% content_for :title, strip_tags(@post.body.to_s).squish.truncate(80, separator: " ") %>
+<% content_for :description, strip_tags(@post.body.to_s).squish.truncate(160, separator: " ") %>
 <% content_for :json_ld, json_ld_for(@post, type: :article) %>
 <%= turbo_stream_from @post %>
 <article id="<%= dom_id(@post) %>" class="post-reading-card post-show-reading">
   <div class="post-reading-layout">
-    <div class="post-vote-rail" aria-label="<%= t("post.voting", default: "Post voting") %>">
-      <% if Current.user.present? %>
-        <%= button_to post_vote_path(@post), method: :post, params: { vote: { value: 1 } }, class: "post-vote-btn#{' is-active' if @post.upvoted_by?(Current.user)}", form_class: "post-vote-form", aria: { label: t("post.upvote", default: "Upvote"), pressed: @post.upvoted_by?(Current.user) } do %><%= render "shared/feed_icon", name: "upvote" %><% end %>
-        <span class="post-vote-score"><%= @post.score %></span>
-        <%= button_to post_vote_path(@post), method: :post, params: { vote: { value: -1 } }, class: "post-vote-btn#{' is-active' if @post.downvoted_by?(Current.user)}", form_class: "post-vote-form", aria: { label: t("post.downvote", default: "Downvote"), pressed: @post.downvoted_by?(Current.user) } do %><%= render "shared/feed_icon", name: "downvote" %><% end %>
-      <% else %>
-        <span class="post-vote-score post-vote-score--static"><%= @post.score %></span>
-      <% end %>
-    </div>
+    <%= render "shared/post_vote_rail", post: @post, vote_path: post_vote_path(@post), vote_score: @post.score %>
     <div class="post-reading-main">
   <header class="feed-post-meta feed-post-byline">
     <span class="author"><%= @post.author_name %></span>
@@ -31,7 +25,7 @@
   <% end %>
   <% if @post.outfit %><p><em><%= t("post.outfit_label") %>: <%= link_to @post.outfit.name, outfit_path(@post.outfit) %></em></p><% end %>
   <% if @post.item %><p><em><%= t("post.item_label") %>: <%= link_to @post.item.title, item_path(@post.item) %></em></p><% end %>
-  <footer>
+  <footer class="post-show-actions feed-card-actions">
     <%= render "posts/like_button", post: @post %>
     <%= render "shared/post_embed_action", post: @post, url: post_url(@post) %>
     <% if @post.user == Current.user %>
@@ -42,7 +36,7 @@
   </div>
 </article>
 
-<section id="comments" aria-label="<%= t("comments.title") %>">
+<section id="comments" class="post-show-comments" aria-label="<%= t("comments.title") %>">
   <h2><%= t("comments.title") %> (<%= @post.comment_count %>)</h2>
   <div id="<%= dom_id(@post, "comments") %>">
     <%= render partial: "comments/comment", collection: @comments, as: :comment %>
@@ -52,4 +46,6 @@
   <% end %>
 </section>
 
-<%= link_to t("comments.back"), posts_path %>
+<nav class="post-show-back" aria-label="<%= t("comments.back") %>">
+  <%= link_to t("comments.back"), posts_path %>
+</nav>
