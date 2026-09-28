@@ -1,0 +1,43 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "json"
+require "net/http"
+require "time"
+require "uri"
+
+urls = ENV.fetch("UPTIME_URLS", "https://brgen.no/health,https://amberapp.art/health,https://bsdports.org/health").split(",").map(&:strip).reject(&:empty?)
+timeout = Integer(ENV.fetch("UPTIME_TIMEOUT_SECONDS", "10"))
+output = File.expand_path(ENV.fetch("UPTIME_LOG", "~/pub4-uptime/probe.jsonl"))
+FileUtils.mkdir_p(File.dirname(output)) unless defined?(FileUtils)
+require "fileutils"
+FileUtils.mkdir_p(File.dirname(output))
+
+results = urls.map do |url|
+  started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+  begin
+    uri = URI(url)
+    response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == "https",
+                               open_timeout: timeout, read_timeout: timeout) do |http|
+      http.get(uri.request_uri)
+    end
+    {
+      "at" => Time.now.utc.iso8601,
+      "url" => url,
+      "status" => response.code.to_i,
+      "milliseconds" => ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round
+    }
+  rescue StandardError => error
+    {
+      "at" => Time.now.utc.iso8601,
+      "url" => url,
+      "status" => nil,
+      "milliseconds" => ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round,
+      "error" => "#{error.class}: #{error.message}"
+    }
+  end
+end
+
+File.open(output, "a", encoding: "UTF-8") { |file| results.each { |result| file.puts(JSON.generate(result)) } }
+results.each { |result| puts JSON.generate(result) }
+exit 1 unless results.all? { |result| result["status"]&.between?(200, 399) }
