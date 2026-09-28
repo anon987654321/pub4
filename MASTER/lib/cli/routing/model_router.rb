@@ -82,7 +82,7 @@ module Master
           return @config.model if candidates.empty?
 
           ids = healthy(candidates).filter_map { |model| model["id"] }
-          ids = floor_candidates(candidates).filter_map { |model| model["id"] } if ids.empty?
+          ids = floor_candidates(candidates, operation: task_type).filter_map { |model| model["id"] } if ids.empty?
           @compute_pool.select(ids, task_type:, empirical_best:) || @config.model
         end
 
@@ -168,8 +168,8 @@ module Master
           models.reject { |m| unhealthy?(m["id"]) || stale_health?(m["id"]) || !reachable?(m["id"]) }
         end
 
-        def floor_candidates(models)
-          models.select { |model| @availability.meets_floor?(model["id"], operation: :interactive) }
+        def floor_candidates(models, operation:)
+          models.select { |model| @availability.meets_floor?(model["id"], operation:) }
         end
 
         def prefer_floor(all_models, fresh_models, operation:)
