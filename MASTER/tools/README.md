@@ -51,6 +51,14 @@ gate instead.
 `wc`, `perl` and `python` are banned in shell calls and committed scripts. BSD
 variants break GNU idioms and this repo deploys to OpenBSD.
 
+## Current media-compute truth
+
+The repository already has four LoRA execution lanes (`--train`, `--train-kaggle`, `--train-colab`, `--train-replicate`), a typed `Replicate::Chain` pipeline with provenance and resumable stages, postpro still grading with LUT export, and visual-quality gates. Do not add parallel lane, DAG, seed-ledger, or grading infrastructure without a missing reader or proof requirement.
+
+Browser WebGPU is currently a capability probe in the MASTER face, not a volunteer compute network. The ONNX smart-turn path uses WASM. Any future member-contributed compute must be an explicit, revocable, battery-aware opt-in with a server-side job protocol and no hidden background work.
+
+The current media gap is video: there is no implemented depth-estimation/segmentation/shot-detection grading pipeline in MASTER. Treat cinematic video as planned integration work, not as an existing professional finishing stack.
+
 ## What we know about prompting
 
 Gathered from Black Forest Labs' own guidance and from what the tools measure,
