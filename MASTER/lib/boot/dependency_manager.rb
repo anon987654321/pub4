@@ -72,7 +72,7 @@ module Master
         out: $stderr,
         runner: nil,
         command_path: nil,
-        home: nil,
+        home: nil
       )
         @root = File.expand_path(root)
         @env = env
