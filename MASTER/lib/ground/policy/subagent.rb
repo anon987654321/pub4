@@ -158,8 +158,9 @@ module Master
         # exactly the tools a call can reach.
         def brief(type, allowed)
           tools = allowed.empty? ? "no tools" : "only #{allowed.join(', ')}"
+          abi = Master::AI::OperatorContract.prompt
           "You run as a #{parse(type)} subagent: #{prompt_for(type)}. You may call #{tools}; " \
-            "any other tool call is refused, and a subagent cannot spawn another."
+            "any other tool call is refused, and a subagent cannot spawn another.\n\n#{abi}"
         end
       end
     end
