@@ -69,7 +69,7 @@ class Rails82ContractTest < Minitest::Test
       "brgen/app/models/post.rb" => "after_commit :federate_creation",
       "shared/app/models/concerns/shared/link_embeddable.rb" => "after_commit :resolve_link_embed_later",
       "amber/app/models/message.rb" => "after_create_commit :enqueue_master_reply",
-      "amber/app/models/notification.rb" => "after_create_commit :enqueue_delivery",
+      "brgen/app/models/notification.rb" => "after_create_commit",
       "brgen/app/models/repost.rb" => "after_create_commit :federate",
       "brgen/app/models/message.rb" => "after_create_commit :maybe_summon_bot",
       "brgen/engines/marketplace/app/models/marketplace/listing.rb" => "after_create_commit :queue_ranking_recalculation"
