@@ -10653,6 +10653,48 @@ form[data-publishing="true"] .post-progressive-nav {
   font-size: var(--text-xs);
 }
 
+.post-media-secondary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin-block-start: var(--space-2);
+}
+
+.post-media-choice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--tap-min);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.post-media-choice:hover,
+.post-media-choice:focus-within {
+  background: var(--hover-subtle);
+}
+
+.post-media-choice > svg {
+  flex: none;
+}
+
+.post-media-choice > span {
+  min-width: 0;
+}
+
+.post-media-choice strong,
+.post-media-choice small {
+  display: block;
+}
+
+.post-media-choice small {
+  margin-block-start: 2px;
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
 .post-progressive-actions {
   display: flex;
   flex-wrap: wrap;
@@ -10672,6 +10714,10 @@ form[data-publishing="true"] .post-progressive-nav {
 
   .post-photo-camera {
     min-height: 160px;
+  }
+
+  .post-media-secondary {
+    grid-template-columns: 1fr;
   }
 }
 
