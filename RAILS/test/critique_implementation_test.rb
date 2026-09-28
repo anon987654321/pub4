@@ -159,6 +159,7 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes css, ".brgen-media-video::-webkit-media-controls-panel"
     assert_includes css, ".brgen-media-lightbox-link"
     assert_includes css, ".brgen-media-wall"
+    assert_includes css, ".home-feed-view + .home-feed-view"
     assert_includes css, "body.vertical-messenger #messages article {"
     assert_includes css, "border-block-end: 1px solid var(--border)"
   end
