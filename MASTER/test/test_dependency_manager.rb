@@ -169,6 +169,25 @@ class TestDependencyManager < Minitest::Test
     refute_equal rbenv.send(:bundle_config_root), homebrew.send(:bundle_config_root)
   end
 
+  def test_incompatible_native_bundle_is_repaired_before_boot
+    responses = [
+      [true, "The Gemfile's dependencies are satisfied", ""],
+      [false, "", "linked to incompatible /opt/homebrew/Cellar/ruby/4.0.5/lib/libruby.4.0.dylib"],
+      [true, "Bundle pristine", ""],
+      [true, "", ""],
+    ]
+    manager = fake_manager(responses)
+
+    result = manager.send(:ensure_bundle)
+
+    assert result.success?
+    assert result.changed
+    assert_equal ["check"], @commands[0].first[1..]
+    assert_equal [RbConfig.ruby, "-rbundler/setup", "-rjson", "-e", "exit"], @commands[1].first
+    assert_equal ["pristine"], @commands[2].first[1..]
+    assert_equal [RbConfig.ruby, "-rbundler/setup", "-rjson", "-e", "exit"], @commands[3].first
+  end
+
   def test_clean_bundle_does_not_install_or_touch_lock
     manager = fake_manager([[true, "The Gemfile's dependencies are satisfied", ""]])
     before = File.read(File.join(@root, "Gemfile.lock"))
