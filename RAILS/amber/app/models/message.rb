@@ -11,3 +11,19 @@ class Message < ApplicationRecord
 
   def read! = update!(read_at: Time.current)
 end
+
+  after_create_commit :broadcast_live
+
+  private
+
+  def broadcast_live
+    fresh = Message.includes(:sender, :recipient).find(id)
+    [ sender_id, recipient_id ].uniq.each do |viewer_id|
+      fresh.broadcast_append_to(
+        "amber:messages:#{viewer_id}",
+        target: "amber-message-log",
+        partial: "messages/message",
+        locals: { message: fresh, viewer_id: viewer_id }
+      )
+    end
+  end

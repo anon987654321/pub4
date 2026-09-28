@@ -1,14 +1,9 @@
-<article id="<%= dom_id(message) %>" class="<%= "message--unread" if message.read_at.nil? && message.recipient_id == Current.user.id %>">
-  <%= tag.strong message.sender == Current.user ?
-          t("messages.to", name: message.recipient.display_name) :
-          t("messages.from", name: message.sender.display_name) %>
-  <%= tag.p message.body %>
-  <p>
-    <%= time_ago_in_words(message.created_at) %>
-    <% if message.read_at.nil? && message.recipient_id == Current.user.id %>
-      · <%= t("messages.unread") %>
-    <% elsif message.read_at %>
-      · <%= t("messages.read") %>
-    <% end %>
-  </p>
-</article>
+<% viewer_id = local_assigns[:viewer_id] || Current.user&.id %>
+<% mine = message.sender_id == viewer_id %>
+<li id="<%= dom_id(message) %>" class="amber-message<%= " amber-message--mine" if mine %>" role="listitem">
+  <header>
+    <strong><%= mine ? t("messages.to", name: message.recipient.display_name) : t("messages.from", name: message.sender.display_name) %></strong>
+    <time datetime="<%= message.created_at.iso8601 %>"><%= time_ago(message.created_at) %></time>
+  </header>
+  <p><%= message.body %></p>
+</li>

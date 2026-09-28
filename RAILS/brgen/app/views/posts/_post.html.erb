@@ -49,18 +49,6 @@
         <%= render "shared/feed_icon", name: "repost" %>
         <span class="feed-action-count"><%= post.reposts_count.positive? ? post.reposts_count : "" %></span>
       <% end %>
-      <button type="button" class="feed-action<%= " active" if Current.user.present? && post.upvoted_by?(Current.user) %>"
-              aria-label="<%= t("post.vote_aria", score: post.score, default: "Vote, score %{score}") %>"
-              aria-pressed="<%= Current.user.present? && post.upvoted_by?(Current.user) %>"
-              data-controller="action"
-              data-action="click->action#toggle"
-              title="<%= t("post.vote", default: "Vote") %>"
-              data-action-url-value="<%= post_vote_path(post) %>"
-              data-action-count-value="<%= post.score %>"
-              data-action-param-value="1">
-        <%= render "shared/feed_icon", name: "upvote" %>
-        <span class="feed-action-count" data-action-target="count"><%= post.score %></span>
-      </button>
       <div class="feed-action-menu" data-controller="dropdown" data-action="click@window->dropdown#hide">
         <button type="button" class="feed-action" aria-label="<%= t("post.more_actions", default: "More actions") %>"
                 aria-expanded="false" data-dropdown-button data-action="click->dropdown#toggle">
@@ -104,9 +92,14 @@
           handle: (post.community ? "@#{post.community.slug}" : nil),
           time: time_ago_in_words(post.created_at),
           title: post.title,
-          content: nil,
+          content: post.content,
           url: post.attributed? ? post_path(post) : nil,
           media: post_media.presence,
+          show_votes: true,
+          vote_path: post_vote_path(post),
+          vote_score: post.score,
+          upvoted: Current.user.present? && post.upvoted_by?(Current.user),
+          downvoted: Current.user.present? && post.downvoted_by?(Current.user),
           actions: post_actions,
           frame: false,
           class: "feed-card" %>

@@ -1,4 +1,6 @@
+<% origin = local_assigns[:origin] %>
 <%= form_with model: message, id: "message-form", data: { turbo: true } do |f| %>
+  <%= hidden_field_tag :origin, origin if origin.present? %>
   <%= render "shared/errors", object: message if lookup_context.exists?("shared/errors", [], true) %>
   <div class="field">
     <%= f.label :recipient_id %>

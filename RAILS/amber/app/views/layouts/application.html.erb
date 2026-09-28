@@ -87,6 +87,16 @@
   <% end %>
 </header>
 
+<% if home %>
+  <nav class="amber-editorial-nav" aria-label="<%= t("nav.primary_nav", default: "Amber") %>">
+    <%= link_to t("home.new_in", default: "New in"), items_path %>
+    <%= link_to t("nav.outfits", default: "Looks"), outfits_path %>
+    <%= link_to t("nav.feed", default: "Stories"), posts_path %>
+    <%= link_to t("nav.connections", default: "Creators"), connections_path %>
+    <%= link_to t("nav.messages", default: "Messages"), messages_path if authenticated? %>
+  </nav>
+<% end %>
+
 <div class="app-shell" data-controller="scroll-chrome" data-scroll-chrome-storage-key-value="pub4:tab-bar:open">
   <div class="layout">
     <%# The home page is the logo, the four looks and the footer: no rails. %>
@@ -120,6 +130,7 @@
 
   <%= render "shared/footer" %>
   <%= render "shared/flash_toasts" %>
+  <%= render "shared/nearby_chat_widget", title: t("nav.messages", default: "Messages") if authenticated? %>
 
   <div class="tab-bar-coach"
        data-scroll-chrome-target="coach"

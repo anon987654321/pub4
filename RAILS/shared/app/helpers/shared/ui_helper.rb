@@ -22,11 +22,23 @@ module Shared
     # have no Conversation model and should keep the handoff.
     def ambient_chat_frame_path
       return nearby_widget_path if respond_to?(:nearby_widget_path)
-      if respond_to?(:main_app) && main_app.respond_to?(:nearby_widget_path)
-        return main_app.nearby_widget_path
-      end
+      return main_app.nearby_widget_path if respond_to?(:main_app) && main_app.respond_to?(:nearby_widget_path)
+      return messages_widget_path if respond_to?(:messages_widget_path)
+      return main_app.messages_widget_path if respond_to?(:main_app) && main_app.respond_to?(:messages_widget_path)
 
       nil
+    end
+
+    def ambient_chat_mode
+      return :room if respond_to?(:nearby_widget_path) ||
+        (respond_to?(:main_app) && main_app.respond_to?(:nearby_widget_path))
+      return :messenger if respond_to?(:messages_widget_path) ||
+        (respond_to?(:main_app) && main_app.respond_to?(:messages_widget_path))
+      nil
+    end
+
+    def ambient_chat_is_messenger?
+      ambient_chat_mode == :messenger
     end
 
     # The room this visitor will land in, known at layout time.
@@ -48,6 +60,8 @@ module Shared
 
     def ambient_chat_room_label
       return nil unless ambient_chat_frame_path
+
+      return t("nav.messages", default: "Messages") if ambient_chat_is_messenger?
 
       user = defined?(Current) ? Current.user : nil
       located = user&.latitude.present? && user&.longitude.present?

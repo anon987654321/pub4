@@ -2,6 +2,7 @@
 
 class Post < ApplicationRecord
   include Shared::Commentable
+  include Shared::Votable
 
   belongs_to :user
   belongs_to :outfit, optional: true, touch: true

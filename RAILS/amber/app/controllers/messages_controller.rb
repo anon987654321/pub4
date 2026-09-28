@@ -13,12 +13,17 @@ class MessagesController < ApplicationController
     Current.user.received_messages.unread.update_all(read_at: Time.current)
   end
 
+  def widget
+    load_inbox
+    @message = Current.user.sent_messages.build
+  end
+
   def create
     @message = Current.user.sent_messages.build(message_params)
     @message.recipient = Current.user.messageable_users.find_by(id: @message.recipient_id)
     if @message.recipient && @message.save
       respond_to do |format|
-        format.turbo_stream
+        format.turbo_stream { render from_widget? ? :create_widget : :create }
         format.html { redirect_to messages_path, notice: t("flash.message_sent") }
       end
     else
@@ -29,6 +34,8 @@ class MessagesController < ApplicationController
   end
 
   private
+
+  def from_widget? = params[:origin] == "widget"
 
   def message_params = params.require(:message).permit(:recipient_id, :body)
 
