@@ -106,7 +106,7 @@ install_static() {
 
 install_tracked_crontab() {
   typeset tracked=${SCRIPT_DIR}/etc/crontab.vm23
-  [[ -f $tracked ]] || return 0
+  [[ -f $tracked ]] || { log ERROR "Missing tracked root crontab: $tracked"; return 1; }
 
   # /tmp/root_crontab.$$ was a PID-predictable name in a world-writable directory
   # that root wrote and then fed straight to crontab(1) — the same shape as the
