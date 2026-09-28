@@ -1087,6 +1087,15 @@ label.compose-action:hover { color: var(--text); }
 }
 
 
+body.vertical-messenger .layout > main#main-content {
+  max-width: none;
+  padding-inline: 0;
+}
+
+body.vertical-messenger .layout > main#main-content > section.messenger-window {
+  padding-inline: 0;
+}
+
 .messenger-window {
   display: grid;
   grid-template-columns: 1fr;
@@ -1489,9 +1498,20 @@ label.compose-action:hover { color: var(--text); }
   padding: var(--space-4) var(--space-3);
 }
 
+.messenger-pane > .messenger-conversation-header,
+.messenger-pane > #message_log .conversation-log,
+.messenger-pane > .messenger-composer-area {
+  padding-inline: var(--space-3);
+}
+
+.messenger-pane #message_log .conversation-log > li > article {
+  padding-inline: 0;
+}
+
 .messenger-composer-area {
   flex: none;
-  padding: var(--space-2) var(--space-3) var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  padding-block-end: max(var(--space-3), env(safe-area-inset-bottom));
   background: var(--surface-elevated);
 }
 
@@ -1652,7 +1672,7 @@ label.compose-action:hover { color: var(--text); }
   // look left. Mobile keeps the control because there the rail is not there.
   .messenger-header-back { display: none; }
 
-  .messenger-pane .conversation-log { padding-inline: var(--space-4); }
+  .messenger-pane .conversation-log { padding-inline: var(--space-3); }
 }
 
 // The inbox row — one conversation in a list, not a room in the window.
@@ -1666,6 +1686,14 @@ label.compose-action:hover { color: var(--text); }
 // window (.messenger-inbox-avatar in the avatar group, .messenger-inbox-meta in
 // the meta group) and specialised here, which is why these rules follow the
 // window's.
+
+.messenger-inbox-pane-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-3);
+}
 
 .messenger-inbox-row {
   display: flex;
