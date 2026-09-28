@@ -98,7 +98,7 @@ module Master
         include ToolForwarding
         DEFAULT_LIMIT = 2000
 
-        description "Read a file with line numbers. Path is relative to project root."
+        description "Read a file with line numbers. On unfamiliar work, map the tree first; then read relevant source systematically. Path is relative to project root."
         parameter :path, description: "File path relative to project root", required: true
         parameter :offset, description: "First line to read (0-indexed)", type: "integer", required: false
         parameter :limit, description: "Maximum number of lines to return", type: "integer", required: false
@@ -110,7 +110,7 @@ module Master
 
       class WriteFile < RubyLLM::Tool
         include ToolForwarding
-        description "Write content to a file, creating it if needed. Snapshots for undo."
+        description "Write content to a file, creating it if needed. Prefer complete, deliberate Ruby edits over shell text filters. Snapshots for undo."
         parameter :path, description: "File path relative to project root", required: true
         parameter :content, description: "Full content to write", required: true
 
@@ -121,7 +121,7 @@ module Master
 
       class StrReplace < RubyLLM::Tool
         include ToolForwarding
-        description "Replace an exact unique string in a file with new content."
+        description "Replace one exact unique string in a file. Use after reading the surrounding source; do not use broad regex rewrites when structure matters."
         parameter :path, description: "File path relative to project root", required: true
         parameter :old_string, description: "Exact string to find (must be unique in file)", required: true
         parameter :new_string, description: "Replacement string", required: true
@@ -135,7 +135,7 @@ module Master
 
       class ListDir < RubyLLM::Tool
         include ToolForwarding
-        description "List directory contents as a tree. Path is relative to project root."
+        description "FIRST STEP for an unfamiliar or broad task: list the project tree before sampling files. Depth-limited and root-relative."
         parameter :path, description: "Directory path (default: project root)", required: false
         parameter :depth, description: "Tree depth (1-5)", type: "integer", required: false
 
@@ -158,7 +158,7 @@ module Master
 
       class Shell < RubyLLM::Tool
         include ToolForwarding
-        description "Run a shell command in the project root. MASTER enforces blocked patterns."
+        description "Run a zsh command in the project root. Never use bash or GNU text-tool pipelines; prefer zsh globs/builtins for shell work and Ruby for file parsing or rewriting. MASTER enforces blocked patterns."
         parameter :command, description: "Shell command to execute", required: true
 
         def execute(command:) = forward(command: command.to_s)
@@ -195,7 +195,7 @@ module Master
 
       class GitContext < RubyLLM::Tool
         include ToolForwarding
-        description "Query git log, blame, diff, status, or show for the project."
+        description "Query git status, log, blame, diff, or show for the project. Check status before scoped writes; keep commits path-scoped."
         parameter :operation, description: "One of: log, blame, diff, status, show", required: true
         parameter :path, description: "File path (required for blame; optional for log/diff/show)", required: false
         parameter :limit, description: "Max commits for log", type: "integer", required: false
