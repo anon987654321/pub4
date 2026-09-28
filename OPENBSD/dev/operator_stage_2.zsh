@@ -5,6 +5,28 @@
 # are loaded. It owns stage_2 and its helpers; it does not execute on source.
 
 
+check_libvips_security() {
+  if ! command -v vips >/dev/null 2>&1; then
+    log ERROR "libvips missing — Rails Active Storage image processing cannot start safely"
+    return 1
+  fi
+
+  typeset _vips_version; _vips_version=$(vips --version 2>/dev/null) || {
+    log ERROR "libvips version probe failed"
+    return 1
+  }
+
+  /usr/local/bin/ruby40 -e '
+    require "rubygems"
+    raw = ARGV.fetch(0).to_s
+    match = raw.match(/(\d+\.\d+\.\d+)/)
+    abort("unreadable libvips version: #{raw}") unless match
+    abort("libvips #{match[1]} is below required 8.18.1") if Gem::Version.new(match[1]) < Gem::Version.new("8.18.1")
+  ' "$_vips_version" || return 1
+
+  log INFO "libvips ${_vips_version} meets >=8.18.1 security floor"
+  return 0
+}
 setup_services() {
   log INFO "Setting up services"
   /usr/sbin/rcctl enable smtpd
@@ -235,6 +257,8 @@ stage_2() {
   chmod 640 /etc/ssl/private/smtp.key /etc/ssl/smtp.crt
 
   setup_mail_client
+
+  check_libvips_security || { log ERROR "libvips security floor failed"; exit 1 }
 
   setup_services
 
