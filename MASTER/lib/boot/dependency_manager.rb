@@ -321,7 +321,9 @@ module Master
 
         report("rebuilding native bundle extensions")
         discard_stale_native_bundle!
-        pristine_ok, pristine_stdout, pristine_stderr = run_bundle("pristine")
+        pristine_ok, pristine_stdout, pristine_stderr = run_bundle(
+          "install", "--jobs", bundle_jobs.to_s, "--retry", "3"
+        )
         pristine_output = join_output(pristine_stdout, pristine_stderr)
         unless pristine_ok
           return fail_result(
@@ -376,7 +378,9 @@ module Master
 
           report("rebuilding native bundle extensions")
           discard_stale_native_bundle!
-          pristine_ok, pristine_stdout, pristine_stderr = run_bundle("pristine")
+          pristine_ok, pristine_stdout, pristine_stderr = run_bundle(
+            "install", "--jobs", bundle_jobs.to_s, "--retry", "3"
+          )
           pristine_output = join_output(pristine_stdout, pristine_stderr)
           unless pristine_ok
             return fail_result(
