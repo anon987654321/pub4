@@ -35,6 +35,17 @@ class ProviderCanaryTest < Minitest::Test
     end
   end
 
+  def test_provider_domain_splits_colon_slash_and_backslash_model_ids
+    canary = Master::CLI::Routing::ProviderCanary.new(
+      agent: Agent.new,
+      router: Router.new,
+    )
+
+    assert_equal "openai", canary.provider_domain("openai:gpt-4.1")
+    assert_equal "openai", canary.provider_domain("openai/gpt-4.1")
+    assert_equal "openai", canary.provider_domain("openai\\gpt-4.1")
+  end
+
   def test_candidates_keep_one_model_per_provider_domain
     canary = Master::CLI::Routing::ProviderCanary.new(
       agent: Agent.new,
