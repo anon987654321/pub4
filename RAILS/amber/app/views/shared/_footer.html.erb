@@ -47,6 +47,8 @@
         <li><%= link_to t("legal.privacy"), privacy_path %></li>
         <li><%= link_to t("legal.terms"), terms_path %></li>
         <li><%= link_to t("legal.cookies"), cookies_path %></li>
+        <li><button type="button" class="cookie-settings-trigger"
+                    data-action="click->cookie-consent#open"><%= t("legal.cookie_settings") %></button></li>
       </ul>
     </div>
     <%# The only route into the English half of the locale files. Plain links,

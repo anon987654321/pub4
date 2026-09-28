@@ -1,5 +1,7 @@
 @use "nearby_chat_widget";
 @use "install_prompt";
+@use "welcome_onboarding";
+@use "cookie_banner";
 
 .sidebar-card {
   background: var(--surface-elevated);

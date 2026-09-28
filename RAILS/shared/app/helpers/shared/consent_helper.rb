@@ -1,32 +1,51 @@
 # frozen_string_literal: true
 
+require "cgi"
+
 module Shared
-  # Consent state for anything that sets a non-essential cookie or calls a
-  # third party — currently advertising, and whatever analytics arrives later.
-  #
-  # There is no Consent Management Platform in this app yet, and every brgen
-  # visitor is in the EEA, so the only honest answer today is "no". This method
-  # exists so the ad surfaces can be built and placed against a real gate
-  # rather than a TODO, and so wiring a CMP later is one method body rather
-  # than a hunt through views.
-  #
-  # When a CMP lands it must set a durable, auditable signal — the TCF consent
-  # string, not a homegrown boolean — and this should read that. Returning true
-  # from a plain cookie the site sets itself would satisfy the code and not the
-  # regulation.
+  # Server-side gate for purposes that may load optional client technology.
+  # The browser writes the same versioned, purpose-scoped signal.
   module ConsentHelper
-    ADVERTISING_PURPOSE = "advertising"
+    CONSENT_COOKIE = "pub4_consent"
+    CONSENT_VERSION = "v1"
+    PURPOSES = %w[analytics advertising].freeze
 
     def advertising_consent?
-      return false unless respond_to?(:cookies)
+      consented_for?("advertising")
+    end
 
-      consent_signal.present? && consent_signal.include?(ADVERTISING_PURPOSE)
+    def analytics_consent?
+      consented_for?("analytics")
+    end
+
+    def consented_for?(purpose)
+      consent_purposes.include?(purpose.to_s)
+    end
+
+    def consent_decided?
+      raw = consent_signal
+      return false if raw.blank?
+
+      version, recorded_at, = CGI.unescape(raw).split("|", 3)
+      version == CONSENT_VERSION && recorded_at.present?
+    end
+
+    def consent_purposes
+      raw = consent_signal
+      return [] if raw.blank?
+
+      version, recorded_at, purposes = CGI.unescape(raw).split("|", 3)
+      return [] unless version == CONSENT_VERSION && recorded_at.present?
+
+      Array(purposes).first.to_s.split(",") & PURPOSES
     end
 
     private
 
     def consent_signal
-      cookies[:pub4_consent].to_s
+      return "" unless respond_to?(:cookies)
+
+      cookies[CONSENT_COOKIE].to_s
     end
   end
 end

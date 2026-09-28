@@ -18,6 +18,8 @@
     <%= link_to t("legal.privacy"), privacy_href %>
     <%= link_to t("legal.terms"), terms_href %>
     <%= link_to t("legal.cookies"), cookies_href %>
+    <button type="button" class="cookie-settings-trigger"
+            data-action="click->cookie-consent#open"><%= t("legal.cookie_settings") %></button>
   </nav>
   <%= render "shared/affiliate_disclosure" %>
 </footer>
