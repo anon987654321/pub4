@@ -44,10 +44,12 @@ end
 gem "wisper", "~> 2.0"
 
 # Architecture #7: file-watcher reactive trigger (kqueue on OpenBSD, inotify on Linux)
-# Skipped on Android/Termux — inotify gem unavailable there.
-if RUBY_PLATFORM =~ /bsd|dragonfly/i
+# The condition belongs to the dependency declaration so the lock can describe
+# every supported host without executing a platform-sensitive Gemfile branch.
+install_if -> { RUBY_PLATFORM =~ /bsd|dragonfly/i } do
   gem "rb-kqueue", "~> 0.2", require: false
-elsif RUBY_PLATFORM =~ /linux/ && !RUBY_PLATFORM.include?("android")
+end
+install_if -> { RUBY_PLATFORM =~ /linux/ && !RUBY_PLATFORM.include?("android") } do
   gem "rb-inotify", "~> 0.10", require: false
 end
 
