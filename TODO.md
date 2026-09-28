@@ -78,7 +78,6 @@ A finding is a hypothesis. Historical dated sections below are evidence records,
 
 ### Dependencies
 - Re-audit `MASTER/Gemfile` after the Rails 8.2 work.
-- Confirm whether the `:dilla` group needs `head_music` and `wavefile` in the constitutional CLI lock.
 - Make host-specific watcher dependencies (`rb-kqueue`/`rb-inotify`) and `BUNDLE_FROZEN` behavior consistent across Mac, Linux/Termux and OpenBSD.
 
 ### Dilla / MASTER/tools
