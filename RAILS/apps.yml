@@ -7,7 +7,7 @@
 # Human summary: RAILS/README.md and per-app README.md
 # Shared engine: RAILS/shared (pub4-shared gem)
 #
-# Stack default: Rails 8.1.4, Ruby 4.0.5, SQLite, Falcon, Solid Queue/Cache, relayd TLS
+# Stack default: Rails 8.2.0.alpha, Ruby 4.0.5, SQLite, Falcon, Solid Queue/Cache, relayd TLS
 #
 # Feature statuses are verified against landed code + TODO.md, not asserted from memory.
 # Planned/aspirational work lives in apps.horizon.yml (agent: ignore). Active apps: 0 port/missing gaps.
@@ -22,7 +22,7 @@ apps:
     # the feed at the apex and namespaced engines on subdomains
     # (dating.brgen.no, marketplace.lsangeles.com). See RAILS/brgen/AGENTS.md.
     # Not a fourth Rails app per vertical. ai.brgen.no is MASTER.
-    stack_now: SQLite3, Rails 8.1.4, Hotwire, Falcon, Active Storage, Solid Queue, Solid Cache, OpenBSD, relayd
+    stack_now: SQLite3, Rails 8.2.0.alpha, Hotwire, Falcon, Active Storage, Solid Queue, Solid Cache, OpenBSD, relayd
     stack_later: PostgreSQL where needed, city graph scaling, richer SNI/domain routing
     deploy_script: RAILS/brgen/brgen.sh
     deploy_root: RAILS/brgen
@@ -155,7 +155,7 @@ apps:
     # MASTER-signed token at /sso/from_master is the one door between them.
     domain: amberapp.art
     port: 61352
-    stack_now: SQLite3, Rails 8.1.4, Hotwire, Falcon, Active Storage, OpenBSD, relayd
+    stack_now: SQLite3, Rails 8.2.0.alpha, Hotwire, Falcon, Active Storage, OpenBSD, relayd
     stack_later: PostgreSQL, pgvector, multimodal retrieval, richer PWA/offline features
     deploy_script: RAILS/amber/amber.sh
     deploy_root: RAILS/amber
@@ -215,7 +215,7 @@ apps:
     title: bsdports
     domain: bsdports.org
     port: 47312
-    stack_now: SQLite3, Rails 8.1.4, Hotwire, Falcon, Active Storage, OpenBSD, relayd
+    stack_now: SQLite3, Rails 8.2.0.alpha, Hotwire, Falcon, Active Storage, OpenBSD, relayd
     stack_later: PostgreSQL, pgvector, infrastructure knowledge graph, OpenBSD package intelligence
     deploy_script: RAILS/bsdports/bsdports.sh
     deploy_root: RAILS/bsdports
