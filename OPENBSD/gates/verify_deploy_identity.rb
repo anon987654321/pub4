@@ -53,7 +53,7 @@ failures << "shared bundler helper missing without config" unless shared_functio
   'bundle config set --local without \"development test\"'
 )
 shared_checks = {
-  "need_cmd ruby34 bundle doas" => "shared deploy helper must require ruby34/bundle/doas",
+  "need_cmd ruby40 bundle doas" => "shared deploy helper must require ruby40/bundle/doas",
   'doas mkdir -p "${APP_DIR}/.bundle"' => "shared deploy helper missing app .bundle mkdir",
   'bundle_install_as_app "$APP_NAME" "$APP_DIR"' => "shared deploy helper missing bundler install",
   'install_rcd "$APP_NAME" "$APP_DIR" "$APP_PORT" "$APP_NAME"' => "shared deploy helper missing standard rc.d install call",
