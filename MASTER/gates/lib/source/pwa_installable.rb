@@ -19,9 +19,8 @@ module Deploy
   # neither. That is the claim worth holding, and it is one nobody can make by
   # listing a directory.
   class PwaInstallable
-    # Three levels, not four: gates/lib/source -> gates/lib -> gates -> RAILS.
-    # Four lands on the repo root and every path silently misses by one segment.
-    ROOT = File.expand_path("../../..", __dir__)
+    # gates/lib/source -> gates/lib -> gates -> MASTER -> repository root.
+    ROOT = File.expand_path("../../../..", __dir__)
     APPS = %w[brgen amber bsdports].freeze
 
     # Chrome installs on one 192 and one 512 with purpose "any". Maskable and
