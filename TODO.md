@@ -85,7 +85,6 @@ A finding is a hypothesis. Historical dated sections below are evidence records,
 - Re-audit `MASTER/Gemfile` after the Rails 8.2 work.
 - Confirm whether `rb-edge-tts` can move to a TTS-only dependency path without boot-time EventMachine.
 - Confirm whether the `:dilla` group needs `head_music` and `wavefile` in the constitutional CLI lock.
-- Confirm the historical `flay` no-caller finding.
 - Make host-specific watcher dependencies (`rb-kqueue`/`rb-inotify`) and `BUNDLE_FROZEN` behavior consistent across Mac, Linux/Termux and OpenBSD.
 
 ### Dilla / MASTER/tools
