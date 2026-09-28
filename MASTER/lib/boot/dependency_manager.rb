@@ -356,7 +356,43 @@ module Master
                                         "--retry", "3")
         output = join_output(stdout, stderr)
         if ok
-          ok_result("bundle installed", changed: true, bundle: true, output: output)
+          native_ok, native_stdout, native_stderr = probe_native_bundle
+          native_output = join_output(native_stdout, native_stderr)
+          return ok_result(
+            "bundle installed",
+            changed: true,
+            bundle: true,
+            output: join_output(output, native_output),
+          ) if native_ok
+
+          unless native_build_failure?(native_output)
+            return fail_result("bundle native probe failed",
+                               output: join_output(output, native_output))
+          end
+
+          report("rebuilding native bundle extensions")
+          pristine_ok, pristine_stdout, pristine_stderr = run_bundle("pristine")
+          pristine_output = join_output(pristine_stdout, pristine_stderr)
+          unless pristine_ok
+            return fail_result(
+              "bundle native extension repair failed",
+              output: join_output(output, native_output, pristine_output),
+            )
+          end
+
+          repaired_ok, repaired_stdout, repaired_stderr = probe_native_bundle
+          repaired_output = join_output(repaired_stdout, repaired_stderr)
+          return ok_result(
+            "bundle native extensions repaired",
+            changed: true,
+            bundle: true,
+            output: join_output(output, native_output, pristine_output, repaired_output),
+          ) if repaired_ok
+
+          fail_result(
+            "bundle native extension repair failed",
+            output: join_output(output, native_output, pristine_output, repaired_output),
+          )
         elsif permission_failure?(output)
           install_to_user_path(output)
         else
