@@ -61,6 +61,7 @@ MASTER/web/public/assets/
 # Generated snapshots. Share-packs (a tree listing plus every text file
 # verbatim, ~13MB a set) are written to the repo root carrying their date, so
 # they sit beside the code they describe.
+/snapshot_*.md
 
 # --- RAILS ------------------------------------------------------------------
 
