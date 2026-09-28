@@ -241,6 +241,7 @@ en:
     privacy: "Privacy"
     terms: "Terms"
     cookies: "Cookies"
+    cookie_settings: "Cookie settings"
     accept_terms: "I accept the terms and the privacy policy"
     accept_age: "I am at least 16 years old"
     dating_age: "I am at least 18. Dating is only for adults."
@@ -279,3 +280,54 @@ en:
   link_embed:
     play: "Play “%{title}” from %{provider}"
     open: "Open on %{provider}"
+
+
+  cookie_consent:
+    kicker: "Privacy choice"
+    title: "Cookies and similar technologies"
+    body: "We use strictly necessary storage to keep the site working. Optional analytics and partner advertising technology stay off until you choose."
+    accept: "Accept optional"
+    reject: "Reject optional"
+    manage: "Manage choices"
+    save: "Save choices"
+    policy: "Read the cookie policy"
+    settings_title: "Cookie choices"
+    settings_body: "Choose the optional purposes you allow. Necessary storage is always on."
+    purposes:
+      analytics:
+        title: "Statistics"
+        body: "Sampled performance measurement, including web-vitals data."
+      advertising:
+        title: "Partner advertising"
+        body: "Affiliate and advertising technology, including TradeDoubler when configured."
+  onboarding:
+    skip: "Skip introduction"
+    enter: "Explore"
+    brgen:
+      kicker: "A small guide to Brgen"
+      title: "%{city}, right now."
+      lead: "A local front page for people who live here, pass through, or simply want to see what is happening."
+      steps:
+        1:
+          title: "Read nearby"
+          body: "Local posts, communities and places stay close to the city they belong to."
+        2:
+          title: "Join the signal"
+          body: "Post, vote, reply and share when you have something worth adding."
+        3:
+          title: "Stay connected"
+          body: "Nearby conversations and the marketplace bring the useful local stuff together."
+    amber:
+      kicker: "A small guide to Amber"
+      title: "Get dressed for real life."
+      lead: "A wardrobe, lookbook and social feed built around the clothes you actually wear."
+      steps:
+        1:
+          title: "Keep your wardrobe"
+          body: "Save what you own and make the useful details searchable."
+        2:
+          title: "Build looks"
+          body: "Turn individual pieces into outfits, plans and repeatable combinations."
+        3:
+          title: "See what people wear"
+          body: "Follow creators, share looks and use the same messenger as Brgen."

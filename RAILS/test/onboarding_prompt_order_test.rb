@@ -2,8 +2,8 @@
 
 require "minitest/autorun"
 
-# The install prompt comes first, always; the menu coach and the push button
-# wait until the visitor is familiar with the app and never open over it.
+# The editorial welcome comes first. Install follows it, then the menu coach
+# and push button, with cookie consent resolved before any of them interrupt.
 #
 # That is a product decision, and before this it lived nowhere: each of the
 # three prompts decided on its own when to appear, none of them knew the others
@@ -31,6 +31,7 @@ class OnboardingPromptOrderTest < Minitest::Test
   }.freeze
 
   INSTALL = "shared/frontend/install_prompt_controller.js"
+  WELCOME = "shared/frontend/welcome_onboarding_controller.js"
 
   def queue = @queue ||= File.read(QUEUE)
 
@@ -40,10 +41,11 @@ class OnboardingPromptOrderTest < Minitest::Test
                     "pub4/onboarding must be pinned in the shared baseline, or every import of it 404s"
   end
 
-  def test_install_outranks_everything_else
+  def test_welcome_is_first_and_later_prompts_wait
     thresholds = queue.scan(/^\s{2}(\w+):\s*(\d+),/).to_h { |name, n| [name, n.to_i] }
     refute_empty thresholds, "MIN_SESSIONS did not parse — this test is measuring nothing"
 
+    assert_equal thresholds.fetch("welcome"), thresholds.fetch("install")
     install = thresholds.fetch("install")
     PROMPTS.each_key do |kind|
       assert_operator thresholds.fetch(kind), :>, install,
@@ -63,6 +65,17 @@ class OnboardingPromptOrderTest < Minitest::Test
   # Install can appear at any moment — the visitor posts, plays a track, sends a
   # message — so a threshold alone would still let a lower prompt sit on top of
   # one that arrived after it.
+  def test_welcome_blocks_install_and_later_prompts
+    welcome = File.read(File.join(ROOT, WELCOME))
+    install = File.read(File.join(ROOT, INSTALL))
+
+    assert_includes welcome, %(mayPrompt("welcome"))
+    assert_includes welcome, "setWelcomePending"
+    assert_includes install, %(mayPrompt("install"))
+    assert_includes install, "pub4:cookie-consent-resolved"
+    assert_includes install, "pub4:welcome-dismissed"
+  end
+
   def test_install_announces_and_the_others_step_back
     assert_includes File.read(File.join(ROOT, INSTALL)), "announceInstallVisible()",
                     "the install prompt must announce itself when it reveals"
@@ -77,7 +90,7 @@ class OnboardingPromptOrderTest < Minitest::Test
   # assertion above is a substring search, so the one failure mode they share is
   # searching a file that has moved.
   def test_the_files_this_asserts_against_exist
-    ([INSTALL] + PROMPTS.values).each do |relative|
+    ([INSTALL, WELCOME] + PROMPTS.values).each do |relative|
       assert_path_exists File.join(ROOT, relative)
     end
   end
