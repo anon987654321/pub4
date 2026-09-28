@@ -24,9 +24,13 @@
   </div>
   <div class="actions">
     <%= f.submit @ai_available ? t("ai.generate_suggestions") : t("ai.generate_rules"), class: "btn btn-primary" %>
-    <%= button_to t("ai_forms.generate_save"), ai_generate_outfit_path, method: :post, params: { occasion: params[:occasion], season: params[:season] }, class: "btn" %>
   </div>
 <% end %>
+
+<div class="actions">
+  <%= button_to t("ai_forms.generate_save"), ai_generate_outfit_path, method: :post,
+        params: { occasion: params[:occasion], season: params[:season] }, class: "btn" %>
+</div>
 
 <% if @suggestions.present? %>
   <% @suggestions.each_with_index do |s, i| %>
