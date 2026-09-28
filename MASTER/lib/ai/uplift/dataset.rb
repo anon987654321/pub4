@@ -35,6 +35,34 @@ module Master
           count
         end
 
+
+        def export_preferences(input:, output:)
+          records = File.foreach(input).filter_map do |line|
+            next if line.strip.empty?
+            JSON.parse(line)
+          rescue JSON::ParserError
+            nil
+          end
+          grouped = records.group_by { |record| record["task"].to_s }
+          count = 0
+          FileUtils.mkdir_p(File.dirname(output))
+          File.open(output, "w") do |out|
+            grouped.each_value do |group|
+              chosen = group.find { |record| Benchmark.score(record)["verified"] }
+              rejected = group.find { |record| !Benchmark.score(record)["verified"] }
+              next unless chosen && rejected
+              out.puts(JSON.generate(
+                "schema" => "master.gemma.preference/v1",
+                "task" => chosen["task"],
+                "chosen" => chosen["events"],
+                "rejected" => rejected["events"]
+              ))
+              count += 1
+            end
+          end
+          count
+        end
+
         def messages_for(record)
           [
             { "role" => "system", "content" => Master::AI::OperatorContract.prompt },
