@@ -8,7 +8,7 @@ module Master
   module AI
     module Uplift
       class Trajectory
-        SCHEMA = "master.gemma.trajectory/v1"
+        SCHEMA = "master.llm.trajectory/v1"
         REQUIRED = %w[task model events outcome verified].freeze
 
         attr_reader :data
