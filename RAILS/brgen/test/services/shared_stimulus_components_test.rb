@@ -32,7 +32,6 @@ class SharedStimulusComponentsTest < Minitest::Test
       Reveal
       Sortable
       toast
-      TextareaAutogrow
       PasswordVisibility
       RailsNestedForm
       CharacterCounter
@@ -68,8 +67,9 @@ class SharedStimulusComponentsTest < Minitest::Test
     # real artifact. What it does owe the reader is below.
 
     wardrobe_form = read_source(File.join(ROOT, "amber/app/views/wardrobe_items/_form.html.erb"))
-    assert wardrobe_form.include?("textarea-autogrow") || wardrobe_form.include?("character-counter")
-    assert_includes read_source(File.join(ROOT, "shared/app/views/comments/_form_fields.html.erb")), "textarea-autogrow"
+    assert_includes wardrobe_form, "character-counter"
+    assert_includes read_source(File.join(ROOT, "shared/app/views/comments/_form_fields.html.erb")), "tiptap-editor"
+    assert_includes read_source(File.join(ROOT, "shared/app/assets/stylesheets/_base.scss")), "field-sizing: content"
     # What matters here is that the post partial is fragment-cached at all. The
     # exact key was pinned as a literal, which froze an implementation detail:
     # keying on Current.user&.id meant a per-guest key, and brgen mints a fresh
