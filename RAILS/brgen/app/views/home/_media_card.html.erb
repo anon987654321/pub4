@@ -1,14 +1,21 @@
 
 <article class="brgen-media-card">
-  <%= link_to post_path(post), class: "brgen-media-link", aria: { label: post.title.presence || t("post.view", default: "View post") } do %>
-    <div class="brgen-media-image">
-      <% if post.image.attached? %>
-        <%= responsive_image_tag(post.image, alt: post.title.presence || "", loading: "lazy", class: "brgen-media-image-tag") %>
-      <% elsif post.video.attached? %>
+  <div class="brgen-media-image">
+    <% if post.image.attached? %>
+      <div data-controller="lightbox">
+        <a href="<%= url_for(post.image) %>" data-turbo="false" class="brgen-media-lightbox-link">
+          <%= responsive_image_tag(post.image, alt: post.title.presence || "", loading: "lazy", class: "brgen-media-image-tag") %>
+        </a>
+      </div>
+    <% elsif post.video.attached? %>
+      <%= link_to post_path(post), class: "brgen-media-link brgen-media-video-link",
+            aria: { label: post.title.presence || t("post.view", default: "View post") } do %>
         <%= video_tag post.video, controls: false, muted: true, playsinline: true, preload: "metadata", class: "brgen-media-video" %>
         <span class="brgen-media-play" aria-hidden="true">▶</span>
       <% end %>
-    </div>
+    <% end %>
+  </div>
+  <%= link_to post_path(post), class: "brgen-media-caption-link" do %>
     <div class="brgen-media-caption">
       <strong><%= post.title.presence || post.content.to_s.truncate(70, separator: " ") %></strong>
       <span><%= post.author_name %> · <%= time_ago_in_words(post.created_at) %></span>
