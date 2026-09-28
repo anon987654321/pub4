@@ -125,12 +125,13 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes feed, 'render "home/media_add_card"'
     assert_includes card, "responsive_image_tag(post.image"
     assert_includes card, "video_tag post.video"
-    assert_includes card, "brgen-media-play"
+    assert_includes card, 'controls: true'
     assert_includes card, 'data-controller="lightbox"'
     assert_includes card, 'data-turbo="false"'
     assert_includes card, "media_index"
     assert_includes css, ".brgen-media-card--wide"
     assert_includes css, ".brgen-media-card--tall"
+    assert_includes css, ".brgen-media-video::-webkit-media-controls-panel"
     assert_includes css, ".brgen-media-lightbox-link"
     assert_includes css, ".brgen-media-wall"
     assert_includes css, "body.vertical-messenger #messages article {"

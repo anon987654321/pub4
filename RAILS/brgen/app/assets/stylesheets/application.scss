@@ -10568,25 +10568,9 @@ body.vertical-marketplace .listing-review-cover-image {
   object-fit: cover;
 }
 
-.brgen-media-play {
-  position: absolute;
-  inset: 50% auto auto 50%;
-  transform: translate(-50%, -50%);
-  display: grid;
-  place-items: center;
-  width: 3rem;
-  height: 3rem;
-  border-radius: 50%;
-  background: var(--bg);
-  color: var(--text);
-  font-size: var(--text-sm);
-  line-height: 1;
-}
-
 @media (max-width: 479px) {
-  .brgen-media-play {
-    width: 2.5rem;
-    height: 2.5rem;
+  .brgen-media-video::-webkit-media-controls-panel {
+    min-height: 2.5rem;
   }
 }
 
