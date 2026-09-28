@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 Rails.application.routes.draw do
+  get "changelog" => "shared/changelog#show", as: :changelog
   get "offline" => "rails/pwa#offline", as: :pwa_offline
   get ".well-known/assetlinks.json" => "rails/pwa#assetlinks", as: :pwa_assetlinks
   get ".well-known/apple-app-site-association" => "rails/pwa#apple_app_site_association", as: :pwa_apple_app_site_association
