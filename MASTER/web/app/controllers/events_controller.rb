@@ -30,7 +30,11 @@ class EventsController < ApplicationController
     sweep:**
     audit:**
     memory
+    memory:**
+    retriev:**
     context
+    context:**
+    ctx:**
     compaction:**
     phantom:**
     route:**
@@ -40,7 +44,10 @@ class EventsController < ApplicationController
     fix_loop:**
     rule_loop:**
     tts:**
+    voice:**
     link
+    link:**
+    master:**
     error
     rollback
     failed
