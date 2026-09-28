@@ -10502,3 +10502,76 @@ body.vertical-marketplace .listing-review-cover-image {
   }
 }
 
+
+
+/* BRGEN sketch: progressive posting is one writing flow with a clear media-first entry. */
+.post-progressive-nav {
+  display: flex;
+  gap: var(--space-1);
+  margin-block-end: var(--space-4);
+  border-block-end: 1px solid var(--border);
+}
+
+.post-progressive-indicator {
+  padding: 0 var(--space-2) var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.post-progressive-indicator.is-active {
+  color: var(--text);
+  font-weight: var(--weight-heavy);
+  border-block-end: 2px solid var(--text);
+}
+
+.post-progressive-step > h2 {
+  margin-block-end: var(--space-1);
+  font-size: clamp(1.2rem, 3vw, 1.5rem);
+  line-height: 1.2;
+}
+
+.post-progressive-step > h2:focus {
+  outline: none;
+}
+
+.post-photo-entry {
+  margin-block-start: var(--space-4);
+}
+
+.post-photo-camera {
+  width: 100%;
+  min-height: 180px;
+  justify-content: center;
+  flex-direction: column;
+  border-radius: var(--radius-card);
+  border-style: dashed;
+  text-align: center;
+}
+
+.post-photo-camera small {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
+.post-progressive-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-block-start: var(--space-4);
+}
+
+.post-progressive-actions .btn-primary {
+  min-width: 8rem;
+}
+
+@media (max-width: 479px) {
+  .post-progressive-actions .btn {
+    flex: 1 1 auto;
+  }
+
+  .post-photo-camera {
+    min-height: 160px;
+  }
+}
+

@@ -85,6 +85,25 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes home_feed, 'surface: "brgen"'
   end
 
+  def test_brgen_new_post_is_progressive_and_photo_first
+    form = read("brgen/app/views/posts/new.html.erb")
+    controller = read("shared/frontend/post_progressive_controller.js")
+    boot = read("shared/frontend/stimulus_boot_social.js")
+    importmap = read("shared/config/importmap_baseline.rb")
+
+    assert_includes form, 'post-progressive'
+    assert_includes form, 'post_progressive_target: "photoInput"'
+    assert_includes form, 'post.new_media_heading'
+    assert_includes form, 'post.new_write_heading'
+    assert_includes form, 'post.new_text_only'
+    assert_includes form, 'data-action="click->post-progressive#back"'
+    assert_includes controller, 'this.#show(1)'
+    assert_includes controller, "mediaChanged"
+    assert_includes boot, 'import PostProgressive from "pub4/post_progressive"'
+    assert_includes boot, 'application.register("post-progressive", PostProgressive)'
+    assert_includes importmap, 'pin "pub4/post_progressive"'
+  end
+
   def test_brgen_front_page_exposes_feed_and_media_wall
     home = read("brgen/app/views/home/index.html.erb")
     controller = read("brgen/app/controllers/home_controller.rb")
