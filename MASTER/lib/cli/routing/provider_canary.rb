@@ -48,9 +48,9 @@ module Master
           return "replicate" if id.start_with?("replicate:")
 
           provider = @router.api_provider_for(id) if @router.respond_to?(:api_provider_for)
-          provider.to_s.empty? ? id.split(/[:\\/]/, 2).first : provider.to_s
+          provider.to_s.empty? ? id.split(/[:\/\\]/, 2).first : provider.to_s
         rescue StandardError
-          id.split(/[:\\/]/, 2).first
+          id.split(/[:\/\\]/, 2).first
         end
 
         private
