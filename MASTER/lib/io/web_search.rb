@@ -32,6 +32,8 @@ module Master
 
         data = JSON.parse(response.body)
         results = extract_results(data)
+        results = injection_guard.screen(results, tool: NAME, source: "duckduckgo", bus: @bus)
+        @bus&.publish("tool:untrusted_output", tool: NAME, source: "duckduckgo")
         @bus&.publish("tool:after", tool: NAME, query:)
         Result.ok(results)
       rescue StandardError => e
@@ -57,6 +59,10 @@ module Master
       end
 
       private
+
+      def injection_guard
+        @injection_guard ||= Master::Review::Security::InjectionGuard.new(mode: :permissive)
+      end
 
       def extract_results(data)
         parts = []
