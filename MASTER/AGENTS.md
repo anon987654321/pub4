@@ -43,7 +43,7 @@ The three top-level trees, and how each is entered:
 Two commands cover most work. `MASTER/bin/operator gate` runs the whole ladder over
 all three top-level trees; `MASTER/bin/operator measure` prints every ratchet with its ceiling.
 Run the smallest check that proves the work, and never report done without its
-output.
+output. Before targeted reading on an unfamiliar or broad task, run `ruby MASTER/tools/agent_context.rb --tree` for a bounded source map.
 
 Inside the runtime there is one verb and three words for its parts. `/review
 [path]` runs the whole pass — scan, critique, principle map — and reads without
