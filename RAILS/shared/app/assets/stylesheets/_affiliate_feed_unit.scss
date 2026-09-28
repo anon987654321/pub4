@@ -234,3 +234,37 @@
   border-radius: var(--radius-md);
   background: var(--surface-elevated);
 }
+
+
+.affiliate_feed_unit--brgen {
+  max-width: 42rem;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.affiliate_feed_unit--brgen .affiliate_feed_header {
+  justify-content: center;
+}
+
+.affiliate_feed_unit--brgen .affiliate_feed_grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.affiliate_feed_unit--brgen .affiliate_feed_tile {
+  max-width: 32rem;
+  margin-inline: auto;
+  width: 100%;
+}
+
+.affiliate_feed_unit--brgen .affiliate_feed_media {
+  aspect-ratio: 16 / 9;
+  border-radius: 0;
+  border: 1px solid var(--border);
+  background: var(--surface-elevated);
+}
+
+@media (max-width: 520px) {
+  .affiliate_feed_unit--brgen {
+    margin-inline: var(--space-2);
+  }
+}
