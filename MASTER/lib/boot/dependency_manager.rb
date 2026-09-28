@@ -478,16 +478,6 @@ module Master
         @command_path.call("gem")
       end
 
-      def user_gem_bin
-        File.join(Gem.user_dir, "bin")
-      rescue StandardError
-        File.join(@home, ".gem", "ruby", RbConfig::CONFIG.fetch("ruby_version", RUBY_VERSION), "bin")
-      end
-
-      def user_gem_env
-        { "PATH" => [user_gem_bin, @env.fetch("PATH", "")].reject(&:empty?).join(File::PATH_SEPARATOR) }
-      end
-
       def bundle_env
         bundle_gem_home = File.join(bundle_config_root, "gems")
         default_gem_path = Gem.default_dir
