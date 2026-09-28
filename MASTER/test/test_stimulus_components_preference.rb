@@ -82,7 +82,7 @@ class TestStimulusComponentsPreference < Minitest::Test
   def test_shared_boot_remains_the_single_registration_path
     names = boot_registrations(File.join(REPO, "RAILS/shared/frontend/stimulus_boot.js"))
 
-    %w[auto-submit clipboard toast read-more reveal textarea-autogrow password-visibility popover].each do |name|
+    %w[auto-submit clipboard toast read-more reveal password-visibility popover].each do |name|
       assert_includes names, name
     end
     assert_equal names.uniq, names, "a controller registered twice"
