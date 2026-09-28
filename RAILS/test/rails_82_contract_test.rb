@@ -125,7 +125,7 @@ test "every Rails Gemfile is pinned to the audited 8.2 source commit" do
 
   test "every locked Rails app names the audited git revision" do
     %w[RAILS/brgen RAILS/amber RAILS/bsdports MASTER/web].each do |root|
-      source = read("#{root}/Gemfile.lock")
+      source = File.read(File.join(File.expand_path("..", ROOT), root, "Gemfile.lock"))
       assert_match(/^  revision: #{Regexp.escape(RAILS_REF)}$/m, source)
       assert_match(/^    rails \(8\.2\.0\.alpha\)$/m, source)
     end
