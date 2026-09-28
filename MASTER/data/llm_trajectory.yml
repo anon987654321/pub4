@@ -1,0 +1,39 @@
+schema: 1
+objective: "improve small-model capability for MASTER through verified trajectories"
+operator_contract: "MASTER/lib/ai/operator_contract.rb"
+trajectory:
+  schema: "master.llm.trajectory/v1"
+  storage: ".master/trajectories/trajectories.ndjson"
+  record_env: MASTER_LLM_RECORD
+  verification: evidence_before_completion
+benchmark:
+  implementation: "MASTER/lib/ai/uplift/benchmark.rb"
+  schema: "master.llm.benchmark/v1"
+  checks:
+    - source_tree_first
+    - shell_abi
+    - argv_subprocess
+    - evidence
+    - verification
+training:
+  supervised_finetuning:
+    enabled: true
+    input: verified
+  preference_learning:
+    enabled: true
+    positives: verified
+    negatives: failed_or_policy_violating
+  reinforcement_learning:
+    enabled: true
+    reward: "benchmark ratio multiplied by verified completion"
+model_scope:
+  family: provider_neutral
+  examples:
+    - llama
+    - qwen
+    - gemma
+    - glm
+    - phi
+    - gpt_oss
+    - nemotron
+  principle: "the trajectory contract is about behavior and verification, not vendor or checkpoint"
