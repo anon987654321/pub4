@@ -53,13 +53,15 @@ module Master
           sizes.select(&:positive?)
         end
 
-        def council_target(current:, local_posture:, scarce:)
+        def council_target(current:, local_posture:, scarce:, local_only: false)
           current = current.to_i
           return 0 if current <= 0
 
           sizes = council_sizes
           target = if scarce
                      sizes.last
+                   elsif local_only
+                     sizes[-2]
                    elsif local_posture
                      sizes.first
                    else
