@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require "i18n"
 require "open-uri"
 
 module Shared
@@ -107,7 +108,8 @@ module Shared
 
       def slug(city)
         sanitized = sanitize_city(city)
-        sanitized.downcase.gsub(/[^a-z0-9]+/, "-").sub(/\A-/, "").sub(/-\z/, "")[0, 48].presence || "bergen"
+        transliterated = I18n.transliterate(sanitized)
+        transliterated.downcase.gsub(/[^a-z0-9]+/, "-").sub(/\A-/, "").sub(/-\z/, "")[0, 48].presence || "bergen"
       end
     end
   end
