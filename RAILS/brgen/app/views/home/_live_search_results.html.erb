@@ -6,13 +6,7 @@
  <%= turbo_frame_tag "home-feed", target: "_top" do %>
  <ul class="post-feed feed_list<%= " brgen-media-wall" if params[:view].to_s == "media" %>" id="home-feed" data-feed-updates-target="feed">
  <% if params[:view].to_s == "media" %>
-   <li class="brgen-media-add">
-     <%= link_to new_post_path, class: "brgen-media-add-link" do %>
-       <span aria-hidden="true">+</span>
-       <strong><%= t("posts.add_photo", default: "Upload") %></strong>
-       <small><%= t("home.media_wall_add_hint", default: "Share a photo or video") %></small>
-     <% end %>
-   </li>
+   <%= render "home/media_add_card" %>
  <% end %>
  <% @posts.each_with_index do |post, index| %>
  <li>
@@ -40,7 +34,11 @@
  <% end %>
  <% end %>
 <% else %>
- <% if live_search_query.present? %>
+ <% if params[:view].to_s == "media" %>
+   <ul class="post-feed feed_list brgen-media-wall" id="home-feed" aria-label="<%= t("home.media_wall_view", default: "Media wall") %>">
+     <%= render "home/media_add_card" %>
+   </ul>
+ <% elsif live_search_query.present? %>
    <%= render "shared/empty_state",
          title: t("empty.no_posts"),
          body: t("empty.no_posts_search"),
