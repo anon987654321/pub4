@@ -18,17 +18,17 @@ file including this one. A harness file (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`,
 a second copy of it: the copy is always the one being read, and it is always the
 one that drifted.
 
-The three governed trees, with MASTER/tools inside MASTER:
+The three top-level trees, and how each is entered:
 
 - `MASTER/` — a constitutional AI runtime in pure Ruby. `MASTER/bin/master "<instruction>"`.
 - `RAILS/` — brgen (a city social network, verticals as mounted engines), amber, bsdports. `RAILS/bin/triangle up`.
 - `OPENBSD/` — the deploy pipeline and the VPS runbook. Production is one box, vm23.
-`MASTER/tools/` is the canonical tool plane inside MASTER: dilla, postpro, preprompt and lora.
+`MASTER/tools/` is the canonical tool plane inside MASTER: dilla, postpro, preprompt, lora and bplans.
 
 Two commands cover most work. `MASTER/bin/operator gate` runs the whole ladder over
-all three trees; `MASTER/bin/operator measure` prints every ratchet with its ceiling.
+all three top-level trees; `MASTER/bin/operator measure` prints every ratchet with its ceiling.
 Run the smallest check that proves the work, and never report done without its
-output.
+output. Before targeted reading on an unfamiliar or broad task, run `ruby MASTER/tools/agent_context.rb --tree` for a bounded source map.
 
 Inside the runtime there is one verb and three words for its parts. `/review
 [path]` runs the whole pass — scan, critique, principle map — and reads without
@@ -37,7 +37,6 @@ the convergence operation: it scans, renders when applicable, repairs findings,
 and — even when deterministic checks are clean — asks the council for anchored
 micro-improvements. It then verifies the result and repeats until the tree
 converges, stops improving, or reaches a state MASTER may not settle alone.
-
 
 Five things that will bite you, in order:
 
@@ -149,14 +148,19 @@ Before calling code dead, prove the scan on a case you already know the answer
 to. An entry whose premise turns out to be false is the most valuable thing you
 can bring back — say so plainly rather than working around it.
 
-**Say what you could not measure.** "Sweep until clean or blocked" names no
-bound, and the runtime gives itself one: `FixLoop` stops after fifteen passes or
-thirty minutes. Take the same bound. When the same file fails a third time, when
-a gate will not load, or when the triangle is down, stop and report the attempt
-rather than the outcome. A gate that could not measure is inconclusive, neither
-a pass nor a failure, and calling it a pass claims the code was read when
-nothing was. An unverified claim costs more than an unfinished task, because the
-next reader builds on it.
+**Say what you could not measure.** A single `FixLoop` attempt is bounded:
+it stops after its pass limit or wall-clock budget. That is an execution bound,
+not a claim that the mission is complete. A durable `/fix` mission remains
+waiting and receives another scheduled attempt unless verification proves
+completion, a human decision is required, or the mission is explicitly blocked.
+When the same file fails a third time, when a gate will not load, or when the
+triangle is down, stop and report the attempt rather than the outcome. A gate
+that could not measure is inconclusive, neither a pass nor a failure, and calling
+it a pass claims the code was read when nothing was. An unverified claim costs
+more than an unfinished task, because the next reader builds on it.
+
+The complete supervisor contract is [`docs/fix-supervision.md`](docs/fix-supervision.md):
+the mission is durable, the attempt is mortal.
 
 **Never move a ratchet to absorb your own growth.** `MASTER/bin/operator
 measure` must end where it started, and slack is the same defect as debt: a
