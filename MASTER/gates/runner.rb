@@ -36,9 +36,9 @@ require "yaml"
 
 GATES_DIR = __dir__
 
-# Say which interpreter this is before anything runs. The repo pins 3.4.9 in
-# .ruby-version while MASTER runs the system Ruby and vm23 runs ruby34 — every
-# wrong pairing fails cryptically deep in a gem. Abort, not a warning: a
+# Say which interpreter this is before anything runs. The repo pins the exact
+# version in .ruby-version; running a different interpreter makes a later gem
+# failure cryptic, so the mismatch is rejected at the boundary. Abort, not a warning: a
 # warning next to a later gem crash reads as two findings, and operators
 # learned to ignore the first.
 pinned = File.read(File.join(File.expand_path("../..", __dir__), ".ruby-version")).strip rescue nil
