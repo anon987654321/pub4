@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require "cgi"
 require "digest"
 require "fileutils"
 require "json"
@@ -41,7 +42,7 @@ class HouseArtwork
 
   def initialize(options)
     @options = options
-    @seed = @options[:seed].presence || Digest::SHA256.hexdigest(@options[:text].to_s)[0, 12]
+    @seed = @options[:seed].to_s.empty? ? Digest::SHA256.hexdigest(@options[:text].to_s)[0, 12] : @options[:seed].to_s
   end
 
   def run!
@@ -174,14 +175,9 @@ class HouseArtwork
   end
 
   def escape(value)
-    value.to_s.encode(xml: :text)
+    CGI.escapeHTML(value.to_s)
   end
 end
 
-class String
-  def presence
-    empty? ? nil : self
-  end
-end
 
 HouseArtwork.run!(ARGV)
