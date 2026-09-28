@@ -426,8 +426,21 @@ module Master
           @home,
           ".master",
           "bundler",
-          Digest::SHA256.hexdigest(@root)[0, 16],
+          Digest::SHA256.hexdigest([@root, ruby_identity].join("\0"))[0, 16],
         )
+      end
+
+      # Native gems are ABI-bound to the Ruby installation that built them.
+      # The Ruby version alone is not enough on macOS: Homebrew Ruby and an
+      # rbenv Ruby can expose the same version while linking different libruby
+      # paths. Keep their private Bundler stores separate.
+      def ruby_identity
+        ruby = File.realpath(RbConfig.ruby)
+        prefix = RbConfig::CONFIG.fetch("prefix", "")
+        library = RbConfig::CONFIG.fetch("LIBRUBY_SO", "")
+        [ruby, prefix, library, RbConfig::CONFIG.fetch("ruby_version", RUBY_VERSION), RUBY_PLATFORM].join("\0")
+      rescue StandardError
+        [RbConfig.ruby, RbConfig::CONFIG.fetch("ruby_version", RUBY_VERSION), RUBY_PLATFORM].join("\0")
       end
 
       def bundle_jobs
