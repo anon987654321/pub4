@@ -41,12 +41,12 @@ class RailsStackContractTest < Minitest::Test
     LOCKED_ROOTS.each do |root|
       path = File.join(REPO_ROOT, root, "Gemfile.lock")
       body = File.read(path)
-      rails = body[/^    rails \((\d+(?:\.\d+)+)\)$/m, 1]
+      rails = body[/^    rails \(([^)]+)\)$/m, 1]
 
       assert rails, "#{root}/Gemfile.lock has no locked Rails version"
       assert_equal RAILS_VERSION, Gem::Version.new(rails)
 
-      railties = body[/^    railties \((\d+(?:\.\d+)+)\)$/m, 1]
+      railties = body[/^    railties \(([^)]+)\)$/m, 1]
       assert_equal rails, railties, "#{root}/Gemfile.lock splits Rails and railties versions"
 
       git = body[/^  remote: https:\/\/github.com\/rails\/rails\.git\n  revision: (\h+)$/m, 1]
