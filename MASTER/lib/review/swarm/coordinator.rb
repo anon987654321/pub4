@@ -34,9 +34,27 @@ module Master
           def direct_fallback(task)
             @bus&.publish(:swarm_fallback_start, task: task[0..60])
             response = @agent.ask(task)
-            SwarmResult.new(verdict: :approved, confidence: 0.5,
-                            reasoning: response.to_s, artifacts: { fallback: response },
-                            votes: { approved: 0, rejected: 0, neutral: 0 })
+
+            # A fallback is not a quorum. Never convert an unstructured answer
+            # into approval; callers need an explicit, machine-readable verdict
+            # before anything may be treated as approved.
+            approved = response.is_a?(Hash) && response["approved"] == true
+            rejected = response.is_a?(Hash) && response["approved"] == false
+            verdict = if approved
+                        :approved
+                      elsif rejected
+                        :rejected
+                      else
+                        :insufficient_quorum
+                      end
+
+            SwarmResult.new(
+              verdict:,
+              confidence: 0.5,
+              reasoning: response.to_s,
+              artifacts: { fallback: response },
+              votes: { approved: approved ? 1 : 0, rejected: rejected ? 1 : 0, neutral: approved || rejected ? 0 : 1 }
+            )
           rescue StandardError => e
             @bus&.publish(:swarm_fallback_failed, error: e.message)
             SwarmResult.new(verdict: :error, confidence: 0.0, reasoning: e.message, artifacts: {}, votes: { approved: 0, rejected: 0, neutral: 0 })
