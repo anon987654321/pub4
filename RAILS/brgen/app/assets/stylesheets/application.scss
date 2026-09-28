@@ -10462,19 +10462,26 @@ body.vertical-marketplace .listing-review-cover-image {
   min-width: 0;
 }
 
-.brgen-media-card:nth-child(5n + 1) {
+.brgen-media-card--wide {
   grid-column: span 2;
   grid-row: span 2;
 }
 
-.brgen-media-card:nth-child(5n + 4) {
+.brgen-media-card--tall {
   grid-row: span 2;
 }
 
-.brgen-media-link {
+.brgen-media-link,
+.brgen-media-lightbox-link,
+.brgen-media-caption-link {
   display: block;
   color: inherit;
   text-decoration: none;
+}
+
+.brgen-media-lightbox-link {
+  width: 100%;
+  height: 100%;
 }
 
 .brgen-media-image {
