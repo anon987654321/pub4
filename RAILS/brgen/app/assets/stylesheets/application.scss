@@ -988,8 +988,8 @@ label.compose-action:hover { color: var(--text); }
 //
 //   Discord            here            why it changed
 //   ---------------------------------------------------------------------------
-//   240px channel rail 240px           kept — already 30x the 8px base
-//   240px member list  240px           kept
+//   56px room rail    56px             compact persistent room switcher
+//   300px inbox        300px            readable DM list and search
 //   32px channel row   var(--tap-min)  layout_rules.touch.target_min_px is 44,
 //                                      and a 32px row is a miss on a phone
 //   8px row gutter     var(--space-2)  same number, named
@@ -1619,8 +1619,8 @@ label.compose-action:hover { color: var(--text); }
     // The panes cap themselves instead.
   }
 
-  // There is room for both here, so the master-detail switch above is undone
-  // rather than repeated: whichever of the two the phone was hiding comes back.
+  // There is room for the persistent rail, inbox, thread and artifact pane here,
+  // so mobile's master-detail switch is undone.
   .messenger-window:has(.conversation-log) .messenger-rail,
   .messenger-window:has(.conversation-log) .messenger-inbox { display: flex; }
   .messenger-window:not(:has(.conversation-log)) .messenger-pane { display: flex; }
@@ -1657,7 +1657,7 @@ label.compose-action:hover { color: var(--text); }
 
 // The inbox row — one conversation in a list, not a room in the window.
 //
-// The window is the two-pane frame at conversations#index and #show; this is
+// The window is the four-pane frame at conversations#index and #show; this is
 // the flat list conversations/_conversation_row renders, inside <noscript> and
 // the infinite-scroll reflex. Nothing here paints inside .messenger-window.
 //
