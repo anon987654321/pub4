@@ -10622,6 +10622,21 @@ body.vertical-marketplace .listing-review-cover-image {
   outline: none;
 }
 
+.post-publishing {
+  min-height: 8rem;
+  display: grid;
+  place-items: center;
+  margin-block: var(--space-6);
+  color: var(--text-secondary);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  text-align: center;
+}
+
+form[data-publishing="true"] .post-progressive-nav {
+  display: none;
+}
+
 .post-photo-entry {
   margin-block-start: var(--space-4);
 }
