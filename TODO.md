@@ -1,3 +1,5 @@
+## Completed in the 2026-09-28 backlog convergence pass
+
 # pub4 backlog
 
 The single backlog for the repo. Authority: `MASTER/data/soul.yml` > `MASTER/data/rules.yml` > root `CLAUDE.md` > the per-tree contract. Feature truth is `RAILS/apps.yml`; aspiration is `RAILS/apps.horizon.yml`; executable behavior and git history outrank prose.
