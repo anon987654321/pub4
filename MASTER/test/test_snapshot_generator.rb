@@ -64,6 +64,15 @@ class TestSnapshotGenerator < Minitest::Test
     end
   end
 
+  def test_operator_snapshot_marks_completion_and_uses_zsh_shell_fences
+    source = File.read(File.expand_path("../tools/snapshot.rb", __dir__))
+
+    assert_includes source, '".sh" => "zsh"'
+    assert_includes source, '".zsh" => "zsh"'
+    assert_includes source, '"## Snapshot complete"'
+    assert_includes source, 'snapshot0: complete tree='
+  end
+
   def test_snapshot_does_not_include_its_own_output
     Dir.mktmpdir do |dir|
       output = File.join(dir, "snapshot_MASTER.md")
