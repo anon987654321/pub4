@@ -100,12 +100,8 @@
         <%= link_to new_session_path, class: "chrome-auth", title: t("nav.sign_in"),
                     "aria-label": t("nav.sign_in") do %><span class="chrome-auth-label"><%= t("nav.sign_in") %></span><%= icon("sign_in", size: 20) %><% end %>
       <% end %>
-<%# The one theme mechanism: the shared toggle writes data-theme through
-    the Stimulus controller, and the shared bootstrap restores it at
-    parse time so a saved light theme does not flash dark first. The
-    checkbox-sibling CSS lane this layout used to carry is gone — the
-    dataset is authoritative in every app. %>
-<%= render "shared/theme_bootstrap", storage_key: "brgen-theme" %>
+<%# Theme preference is restored by the head bootstrap above; the corner
+    contains only the user-facing toggle. %>
 <%= render "shared/theme_toggle", storage_key: "brgen-theme" %>
     </div>
   <% end %>
