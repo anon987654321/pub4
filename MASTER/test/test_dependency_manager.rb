@@ -46,6 +46,17 @@ class TestDependencyManager < Minitest::Test
     manager
   end
 
+  def test_watcher_gems_are_locked_with_ffi_in_both_bundles
+    [File.join(Master::ROOT, "Gemfile.lock"), File.join(Master::ROOT, "web", "Gemfile.lock")].each do |path|
+      source = File.read(path)
+
+      assert_match(/rb-inotify \(0\.10\.1\)\n\s+ffi \(~> 1\.0\)/, source, "#{path} must lock rb-inotify with ffi")
+      assert_match(/rb-kqueue \(0\.2\.8\)\n\s+ffi \(>= 0\.5\.0\)/, source, "#{path} must lock rb-kqueue with ffi")
+      assert_includes source, "rb-inotify (~> 0.10)"
+      assert_includes source, "rb-kqueue (~> 0.2)"
+    end
+  end
+
   def test_watcher_gems_use_install_if_across_master_bundles
     [File.join(Master::ROOT, "Gemfile"), File.join(Master::ROOT, "web", "Gemfile")].each do |path|
       source = File.read(path)
