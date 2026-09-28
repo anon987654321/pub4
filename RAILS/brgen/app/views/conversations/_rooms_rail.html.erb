@@ -24,12 +24,12 @@
   <% if Current.user&.persisted? %>
     <div class="messenger-inbox-head">
       <%= link_to new_conversation_path, class: "btn btn-primary messenger-inbox-new",
-                  data: { turbo_frame: "_top" } do %>
+                  data: { turbo_frame: "messenger-pane" } do %>
         <%= icon :compose, size: 18 %>
         <span><%= t("messages.new_message") %></span>
       <% end %>
       <%= link_to search_conversations_path, class: "messenger-inbox-search",
-                  data: { turbo_frame: "_top" } do %>
+                  data: { turbo_frame: "messenger-pane" } do %>
         <%= icon :search, size: 17 %>
         <span><%= t("messages.search") %></span>
       <% end %>
