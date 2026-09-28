@@ -1,94 +1,60 @@
-<%# The left rail of the messenger window: every room you can reach, without
-    leaving the one you are in.
-
-    Each room link targets the messenger-pane frame, so switching swaps the
-    conversation and leaves the rail, its scroll position and the composer alone.
-    Without the frame every switch was a full navigation, which is what made this
-    read as a series of pages rather than one window.
-
-    The DM list is optional. Guests reach channels without an inbox, and the rail
-    renders for them too — the channels above it are a static roster and are
-    always there.
-
-    No brand block at the head of this rail. messenger is an immersive vertical,
-    so _vertical_shell hides the nav swiper and the theme toggle, but NOT
-    .brgen-logo-mark — the city wordmark is on screen at the top-left of this
-    surface like every other. A second mark inside the rail would be the identity
-    stated twice, and the mark is the brand and nothing else. %>
 <% rail_conversations = @rail_conversations || [] %>
 <% rail_unread = @rail_unread || {} %>
 <% rail_last_messages = @rail_last_messages || {} %>
 <% current_room = defined?(@conversation) ? @conversation : nil %>
 
 <nav class="messenger-rail" aria-label="<%= t("messages.rooms_label") %>">
-  <%# persisted?, not present?. A first-time visitor holds a soft guest that
-      find_or_create_guest_user has built but not written -- the row appears on
-      the second sighting, so a crawler never costs one. signed_id refuses an
-      unsaved record, and asking for a token here 500d the whole messenger for
-      everyone arriving for the first time. There is nothing to link to yet. %>
-  <% if Current.user&.persisted? %>
-    <div class="messenger-rail-head">
-      <%= link_to new_conversation_path, class: "btn btn-primary messenger-rail-new",
-                  data: { turbo_frame: "_top" } do %>
-        <%= icon :compose, size: 18 %>
-        <span><%= t("messages.new_message") %></span>
-      <% end %>
-    </div>
-
-    <%# Search, promoted out of the conversation header. It was one of two links
-        in a nav beside the room title, reachable only once you were already
-        inside a room — so searching for the room you wanted meant opening a
-        different one first. Here it sits with the inbox it searches. %>
-    <%= link_to search_conversations_path, class: "messenger-rail-search",
-                data: { turbo_frame: "_top" } do %>
-      <%= icon :search, size: 17 %>
-      <span><%= t("messages.search") %></span>
-    <% end %>
-  <% end %>
-
-  <%# Channels are grouped under a heading and DMs are not. That is the one
-      structural thing a flat list cannot do, and Conversation::CHANNELS is a
-      static roster so the grouping costs no query. %>
-  <h2 class="messenger-rail-group"><%= t("channels.title") %></h2>
+  <h2 class="visually-hidden"><%= t("messages.rooms_label") %></h2>
   <ul class="messenger-rail-list" role="list">
     <% Conversation::CHANNELS.each do |slug, spec| %>
       <li role="listitem">
         <%= link_to channel_path(slug), class: "messenger-rail-room",
                     data: { turbo_frame: "messenger-pane" },
-                    aria: { current: current_room&.slug == slug ? "page" : nil } do %>
-          <span class="messenger-rail-hash" aria-hidden="true">#</span>
-          <span class="messenger-rail-name"><%= spec[:name] %></span>
+                    aria: { current: current_room&.slug == slug ? "page" : nil, label: spec[:name] },
+                    title: spec[:name] do %>
+          <span aria-hidden="true"><%= spec[:name].to_s.first&.upcase || "#" %></span>
+          <span class="visually-hidden"><%= spec[:name] %></span>
         <% end %>
       </li>
     <% end %>
   </ul>
+</nav>
 
-  <% if Current.user %>
-    <h2 class="messenger-rail-group"><%= t("messages.title") %></h2>
-    <ul class="messenger-rail-list" role="list">
+<section class="messenger-inbox" aria-label="<%= t("messages.title") %>">
+  <% if Current.user&.persisted? %>
+    <div class="messenger-inbox-head">
+      <%= link_to new_conversation_path, class: "btn btn-primary messenger-inbox-new",
+                  data: { turbo_frame: "_top" } do %>
+        <%= icon :compose, size: 18 %>
+        <span><%= t("messages.new_message") %></span>
+      <% end %>
+      <%= link_to search_conversations_path, class: "messenger-inbox-search",
+                  data: { turbo_frame: "_top" } do %>
+        <%= icon :search, size: 17 %>
+        <span><%= t("messages.search") %></span>
+      <% end %>
+    </div>
+  <% end %>
+
+  <h2 class="messenger-inbox-heading"><%= t("messages.title") %></h2>
+  <ul class="messenger-inbox-list" role="list">
+    <% if Current.user %>
       <% rail_conversations.each do |room| %>
         <% unread = rail_unread.fetch(room.id, 0) %>
-        <%# The newest message per room comes from Conversation.last_messages_for,
-            one grouped query for the rail, rather than preloading every message
-            of every thread to read one preview line. %>
         <% last = rail_last_messages[room.id] %>
         <li role="listitem">
-          <%= link_to conversation_path(room), class: "messenger-rail-room messenger-rail-room--dm",
+          <%= link_to conversation_path(room), class: "messenger-inbox-room",
                       data: { turbo_frame: "messenger-pane" },
                       aria: { current: current_room&.id == room.id ? "page" : nil } do %>
             <span class="messenger-room-avatar" aria-hidden="true">
               <%= room.display_name_for(Current.user).to_s.first&.upcase || "?" %>
             </span>
             <span class="messenger-room-copy">
-              <span class="messenger-rail-name"><%= room.display_name_for(Current.user) %></span>
+              <span class="messenger-inbox-name"><%= room.display_name_for(Current.user) %></span>
               <% if last %>
-                <span class="messenger-room-preview"><%= truncate(last.content.to_s, length: 42) %></span>
+                <span class="messenger-room-preview"><%= truncate(last.content.to_s, length: 56) %></span>
               <% end %>
             </span>
-            <%# Unread outranks the timestamp rather than sitting beside it. Both
-                answer "is there anything here for me", and a count answers it
-                better; showing the two together spends the row's last column on
-                the weaker of the two. %>
             <span class="messenger-room-meta">
               <% if unread.positive? %>
                 <span class="messenger-rail-unread"><%= unread %></span>
@@ -100,41 +66,26 @@
         </li>
       <% end %>
       <% if rail_conversations.empty? %>
-        <li role="listitem" class="messenger-rail-empty"><%= t("messages.empty_title") %></li>
+        <li role="listitem" class="messenger-inbox-empty"><%= t("messages.empty_title") %></li>
       <% end %>
-    </ul>
-
-    <%# Your own "message me" link, and you do not need an account to hand one out.
-        A guest here is a persisted row with a session behind it, so it can hold a
-        conversation; what a guest cannot do is appear in the people picker, which
-        is a different permission and stays closed. Being handed a link is not
-        being findable.
-
-        At the foot of the rail now rather than at its head. It is the thing you
-        reach for once, when somebody you want is not here yet — it was sitting
-        above the rooms, ahead of everything you came for. %>
-    <%# user_plus, not share. share means "send this somewhere" and is right for
-        a post; this adds a person, which is what the link does and what Lucide's
-        user-plus draws.
-
-        The wrapper carries the controller and the button is a target, which is
-        the shape @stimulus-components/clipboard needs in order to swap the label
-        on success — the same pattern shared/_action_bar uses. A copy button with
-        no confirmation is a button people press twice. %>
-    <% if Current.user&.persisted? %>
-      <div class="messenger-rail-invite"
-           data-controller="clipboard"
-           data-clipboard-success-content-value="<%= t("actions.copied") %>">
-        <input type="hidden" data-clipboard-target="source"
-               value="<%= invite_url(token: Current.user.message_invite_token) %>"
-               aria-hidden="true" tabindex="-1">
-        <button type="button" class="messenger-rail-invite-copy"
-                data-clipboard-target="button"
-                data-action="click->clipboard#copy">
-          <%= icon :user_plus, size: 16 %>
-          <span><%= t("invite.copy_link") %></span>
-        </button>
-      </div>
+    <% else %>
+      <li role="listitem" class="messenger-inbox-empty"><%= t("messages.empty_title") %></li>
     <% end %>
+  </ul>
+
+  <% if Current.user&.persisted? %>
+    <div class="messenger-rail-invite"
+         data-controller="clipboard"
+         data-clipboard-success-content-value="<%= t("actions.copied") %>">
+      <input type="hidden" data-clipboard-target="source"
+             value="<%= invite_url(token: Current.user.message_invite_token) %>"
+             aria-hidden="true" tabindex="-1">
+      <button type="button" class="messenger-rail-invite-copy"
+              data-clipboard-target="button"
+              data-action="click->clipboard#copy">
+        <%= icon :user_plus, size: 16 %>
+        <span><%= t("invite.copy_link") %></span>
+      </button>
+    </div>
   <% end %>
-</nav>
+</section>

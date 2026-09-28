@@ -7,6 +7,7 @@
 // outranks the layered one, and reads none of amber's luxury tokens.
 @forward "tokens" with ($palette: false, $luxury: false);
 @forward "typography";
+@forward "post_voting";
 @forward "layout_chrome";
 @forward "animations";
 // Immediately before components, and that is a cascade position rather than an
