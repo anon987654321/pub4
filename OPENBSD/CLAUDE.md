@@ -5,6 +5,10 @@ Operator-facing docs live in `README.md` and `RUNBOOK.md`, and the recipes in
 specifically the sharp edges that have burned agents in this repo — read it
 before touching the deploy pipeline, not after.
 
+Authority order: `MASTER/data/soul.yml` > `MASTER/data/rules.yml` >
+executable law (`MASTER/law/*.rb` and `MASTER/lib/review/scan/rules/*.rb`) >
+repo harnesses > this per-tree contract.
+
 ## The fleet is four, and master is the one that gets dropped
 
 `bin/vps-deploy all` deploys `master brgen amber bsdports`, in that order,
