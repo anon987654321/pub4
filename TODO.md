@@ -78,7 +78,7 @@ A finding is a hypothesis. Historical dated sections below are evidence records,
 
 ### Dependencies
 - Re-audit `MASTER/Gemfile` after the Rails 8.2 work.
-- Make host-specific watcher dependencies (`rb-kqueue`/`rb-inotify`) and `BUNDLE_FROZEN` behavior consistent across Mac, Linux/Termux and OpenBSD.
+- Host-specific watcher gems are now declared with Bundler `install_if`, both MASTER lockfiles carry the watcher/ffi resolution, and the dependency-manager test pins the contract. Runtime host verification remains a deployment concern.
 
 ### Dilla / MASTER/tools
 - Re-measure all historical Dilla defects against the current engine before editing: hocket patch sameness, unapplied VoiceStack cutoff, incomplete secondary-dominant/backdoor voicings, load-time ENV provenance, duplicate command doors and bed-render determinism.
