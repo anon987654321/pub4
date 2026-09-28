@@ -53,7 +53,7 @@ module Master
           validation = validate_file(path)
           return validation if validation.err?
 
-          code = File.read(path, encoding: "UTF-8")
+          code = File.read(path, encoding: "UTF-8").scrub
           return Result.err("file too long: #{path}", category: :validation) if code.lines.count > MAX_LINES
 
           @bus&.publish("scan:file_read", path:, sha256: Digest::SHA256.hexdigest(code))
