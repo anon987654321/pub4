@@ -69,6 +69,8 @@ class CritiqueImplementationTest < Minitest::Test
     card = read("shared/app/views/shared/_post_card.html.erb")
     css = read("shared/app/assets/stylesheets/_minimal.scss")
     feed = read("brgen/lib/brgen/home_feed.rb")
+    affiliate = read("shared/app/views/shared/_affiliate_feed_unit.html.erb")
+    home_feed = read("brgen/app/views/home/_live_search_results.html.erb")
 
     assert_includes post, 'render "shared/post_embed_action"'
     assert_includes post, 'post.comment_count.positive? ? post.comment_count : ""'
@@ -78,6 +80,9 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes css, ".post-reading-preview"
     assert_includes css, ".feed-action-count:empty"
     assert_includes feed, "AFFILIATE_EVERY = 2"
+    assert_includes affiliate, 'brgen_surface ? 1 : 8'
+    assert_includes affiliate, "affiliate_feed_unit--brgen"
+    assert_includes home_feed, 'surface: "brgen"'
   end
 
   def test_amber_prioritizes_owned_clothes_and_reversible_lifecycle
