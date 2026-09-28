@@ -202,12 +202,7 @@ An agent arrives with none of the session context that makes the tree
 navigable, so these are the facts that are not deducible from the code and
 that a fresh agent gets wrong on its first attempt.
 
-**Ruby is pinned to 4.0.5.** Run everything as
-`RBENV_VERSION=4.0.5 rbenv exec ruby ...`. Bare `ruby` picks up whatever is on
-PATH; `MASTER/gates/runner.rb` prints a one-line warning about it and carries on,
-so app-bundle gates then fail for the interpreter rather than for a finding.
-`RBENV_VERSION` alone does nothing where rbenv's shims are not on PATH, which
-is this Mac: bare `ruby` is Homebrew's 4.0.5. `MASTER/bin/ruby` enforces the pinned `.ruby-version` (currently 4.0.5).
+**Ruby is pinned by `MASTER/.ruby-version`.** It is currently 4.0.5. Use `MASTER/bin/ruby` when the exact project interpreter is required; bare `ruby` is not the project contract.
 
 **The checkout is shared and usually dirty.** Never `git add -A`. Commit
 path-scoped: `git commit -- <paths>`. When the pre-commit hook refuses over
