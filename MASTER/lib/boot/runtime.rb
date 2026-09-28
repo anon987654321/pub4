@@ -16,6 +16,8 @@ module Master
       "watcher" => "MASTER_WATCHER", "heartbeat" => "MASTER_HEARTBEAT"
     }.freeze
 
+    REGEXP_TIMEOUT_S = 1.0
+
     def configure_providers!
       require "ruby_llm"
       require_relative "../io/ruby_llm_patch"
@@ -50,10 +52,24 @@ module Master
       ENV["MASTER_UNSAFE_PROCESS_DEFAULTS"] = "1" if unsafe
       require_relative "../ground/env_loader"
       Ground::EnvLoader.load!
+      install_regexp_timeout!
       apply_process_defaults!
       require_relative "../ground/host_budget"
       Ground::HostBudget.apply_defaults!
       install_process_guards!
+    end
+
+    # User- and provider-influenced regexps are a DoS surface. Ruby supports a
+    # process-wide default timeout; keep it configurable for a deliberately slower
+    # workload, but never leave the interpreter at its unlimited default.
+    def install_regexp_timeout!
+      value = Float(ENV.fetch("MASTER_REGEXP_TIMEOUT", REGEXP_TIMEOUT_S.to_s))
+      raise ArgumentError, "MASTER_REGEXP_TIMEOUT must be finite and > 0" unless value.finite? && value.positive?
+
+      Regexp.timeout = value
+    rescue ArgumentError, TypeError => e
+      warn("regexp0: invalid timeout — #{e.message}; using #{REGEXP_TIMEOUT_S}s")
+      Regexp.timeout = REGEXP_TIMEOUT_S
     end
 
     def install_process_guards!
