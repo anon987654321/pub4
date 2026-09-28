@@ -42,6 +42,7 @@ module Master
         BUNDLE_PATH
         BUNDLE_RETRY
         BUNDLE_USER_CONFIG
+        BUNDLE_DISABLE_SHARED_GEMS
         BUNDLE_USER_HOME
         BUNDLE_VERSION
         BUNDLE_WITH
@@ -414,6 +415,8 @@ module Master
           "BUNDLE_JOBS" => bundle_jobs.to_s,
           "BUNDLE_APP_CONFIG" => File.join(bundle_config_root, "app"),
           "BUNDLE_USER_CONFIG" => File.join(bundle_config_root, "global"),
+          "BUNDLE_PATH" => File.join(bundle_config_root, "gems"),
+          "BUNDLE_DISABLE_SHARED_GEMS" => "1",
         )
         env
       end
