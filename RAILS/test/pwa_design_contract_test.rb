@@ -97,9 +97,9 @@ class PwaDesignContractTest < Minitest::Test
     end
   end
 
-  # `<%= raw t("pwa.x").to_json %>` — an interpolated JSON value. Substituting a
-  # string literal leaves a document with the same shape, which is what the
-  # installability assertions below are about.
+  # A manifest may be static JSON or an ERB template. Static manifests are the
+  # preferred form when the app has no per-request values; dynamic manifests keep
+  # ERB only where the host or locale genuinely changes the document.
   ERB_EXPRESSION = /<%=.*?%>/m
   # `<% case vertical %>` — control flow. The document's shape then depends on
   # which branch runs, so there is nothing static to parse.
