@@ -65,6 +65,7 @@ Rails.application.routes.draw do
   resources :connections, only: %i[index create update]
   resources :live_streams, only: %i[index show create update destroy]
   resources :messages, only: %i[index create]
+  post "messages/invite_master" => "messages#invite_master", as: :invite_master_messages
   get "messages/widget" => "messages#widget", as: :messages_widget
 
   resources :posts, only: %i[index show new create destroy] do
