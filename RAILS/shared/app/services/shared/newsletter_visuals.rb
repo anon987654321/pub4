@@ -1,18 +1,19 @@
 # frozen_string_literal: true
 
-require "operator/deploy_paths"
+require "date"
 require "json"
 require "net/http"
-require "tempfile"
-require "tmpdir"
+require "operator/deploy_paths"
 require "rbconfig"
+require "tmpdir"
 require "fileutils"
-require "securerandom"
 require "open-uri"
+require "securerandom"
+require "shared/artwork_pipeline"
 
 module Shared
-  # Newsletter artwork is a first-class editorial layer: Replicate-generated
-  # images are materialized into the app's public tree so an email does not
+  # Newsletter artwork is a first-class editorial layer: generated images are
+  # graded and materialized into the app's public tree so an email does not
   # depend on a provider URL surviving after delivery.
   class NewsletterVisuals
     Hero = Data.define(:url, :alt, :caption, :source)
@@ -24,12 +25,12 @@ module Shared
     ARTWORK_COUNT = ENV.fetch("NEWSLETTER_ARTWORK_COUNT", "4").to_i.clamp(0, 6)
 
     class << self
-      def hero_for(city_name:, theme:, seed_attachment: nil, public_base: nil)
-        new(public_base:).hero_for(city_name:, theme:, seed_attachment:)
+      def hero_for(city_name:, theme:, seed_attachment: nil, public_base: nil, seed: nil)
+        new(public_base:).hero_for(city_name:, theme:, seed_attachment:, seed:)
       end
 
-      def artworks_for(city_name:, themes:, public_base: nil)
-        new(public_base:).artworks_for(city_name:, themes:)
+      def artworks_for(city_name:, themes:, public_base: nil, seed: nil)
+        new(public_base:).artworks_for(city_name:, themes:, seed:)
       end
     end
 
@@ -37,7 +38,7 @@ module Shared
       @public_base = public_base
     end
 
-    def hero_for(city_name:, theme:, seed_attachment: nil)
+    def hero_for(city_name:, theme:, seed_attachment: nil, seed: nil)
       if seed_attachment&.attached?
         processed = postpro_attachment(seed_attachment)
         return Hero.new(
@@ -52,21 +53,23 @@ module Shared
         city_name:,
         theme:,
         aspect_ratio: "16:9",
-        role: "newsletter hero"
+        role: "newsletter hero",
+        seed:
       )
       return nil unless artwork
 
       Hero.new(**artwork.to_h)
     end
 
-    def artworks_for(city_name:, themes:)
+    def artworks_for(city_name:, themes:, seed: nil)
       workers = Array(themes).first(ARTWORK_COUNT).map.with_index do |theme, index|
         Thread.new do
           replicate_artwork(
             city_name:,
             theme:,
             aspect_ratio: "3:2",
-            role: "newsletter editorial interlude #{index + 1}"
+            role: "newsletter editorial interlude #{index + 1}",
+            seed: seed && Integer(seed) + index
           )
         rescue StandardError => error
           log("artwork #{index + 1} failed: #{error.message}")
@@ -103,9 +106,16 @@ module Shared
       nil
     end
 
-    def replicate_artwork(city_name:, theme:, aspect_ratio:, role:)
+    def replicate_artwork(city_name:, theme:, aspect_ratio:, role:, seed: nil)
       token = ENV["REPLICATE_API_TOKEN"].presence
       return nil if token.blank?
+      return nil unless @public_base
+
+      seed ||= Shared::ArtworkPipeline.seed(
+        surface: "newsletter",
+        city: city_name,
+        brief: "#{role}:#{theme}"
+      )
 
       prompt = <<~PROMPT.squish
         #{role}, #{city_name}, Norway. #{theme}. Refined literary magazine
@@ -115,10 +125,10 @@ module Shared
         premium print composition, no text, no logos, no invented monuments,
         no recognizable public figures.
       PROMPT
-      output = replicate_predict(token:, prompt:, aspect_ratio:)
+      output = replicate_predict(token:, prompt:, aspect_ratio:, seed:)
       return nil if output.blank?
 
-      url = @public_base ? materialize_url(output, role) : output
+      url = materialize_url(output, role, city_name, theme, seed)
       return nil if url.blank?
 
       Artwork.new(
@@ -132,19 +142,23 @@ module Shared
       nil
     end
 
-    def replicate_predict(token:, prompt:, aspect_ratio:)
+    def replicate_predict(token:, prompt:, aspect_ratio:, seed:)
       uri = URI("https://api.replicate.com/v1/models/#{REPLICATE_MODEL}/predictions")
       payload = {
         input: {
           prompt:,
           aspect_ratio:,
           output_format: "webp",
-          output_quality: 90
+          output_quality: 90,
+          seed:
         }
       }
       response = replicate_post(uri, token, payload)
       prediction = JSON.parse(response)
-      result = poll_prediction(prediction["urls"]["get"], token)
+      status_url = prediction.dig("urls", "get")
+      raise "Replicate response has no status URL" unless status_url
+
+      result = poll_prediction(status_url, token)
       Array(result).grep(%r{\Ahttps?://}).first
     end
 
@@ -152,10 +166,12 @@ module Shared
       request = Net::HTTP::Post.new(uri)
       request["Authorization"] = "Bearer #{token}"
       request["Content-Type"] = "application/json"
-      request.body = body.to_json
       Net::HTTP.start(uri.hostname, uri.port, use_ssl: true, read_timeout: 120) do |http|
-        http.request(request)
-      end.body
+        response = http.request(request)
+        raise "Replicate HTTP #{response.code}: #{response.body.to_s[0, 300]}" unless response.is_a?(Net::HTTPSuccess)
+
+        response.body
+      end
     end
 
     def poll_prediction(status_url, token, attempts: 60)
@@ -176,26 +192,24 @@ module Shared
       nil
     end
 
-    def materialize_url(url, prefix)
-      return url unless @public_base
-
+    def materialize_url(url, prefix, city_name, theme, seed)
       dest_dir = File.join(@public_base, "newsletters", Date.current.iso8601)
       FileUtils.mkdir_p(dest_dir)
-      filename = "#{prefix.to_s.parameterize}-#{SecureRandom.hex(6)}.webp"
+      filename = "#{prefix.to_s.parameterize}-#{seed}.jpg"
       destination = File.join(dest_dir, filename)
-      temporary = "#{destination}.tmp-#{Process.pid}-#{Thread.current.object_id}"
 
-      URI.open(url, "rb", read_timeout: 60) do |source|
-        File.binwrite(temporary, source.read)
-      end
-      File.rename(temporary, destination)
+      Shared::ArtworkPipeline.publish_remote(
+        url:,
+        destination:,
+        surface: "newsletter",
+        city: city_name,
+        brief: theme,
+        source: "replicate_newsletter"
+      )
       "/newsletters/#{Date.current.iso8601}/#{filename}"
     rescue StandardError => error
-      FileUtils.rm_f(temporary) if temporary && File.exist?(temporary)
       log("materialize artwork failed: #{error.class}: #{error.message}")
       nil
-    ensure
-      FileUtils.rm_f(temporary) if temporary && File.exist?(temporary)
     end
 
     def publish_file(path, prefix)
