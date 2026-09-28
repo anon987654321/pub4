@@ -161,10 +161,9 @@ rather than
 returning quietly.
 
 The face's `mood` listener (the tint through `fadeColorTo`) and
-`chat_service.rb`'s `agent:mood` subscription have no producer: nothing
-publishes `agent:mood`. `felt:sense` is not one — it echoes the browser's own
-posted state. Wiring a producer makes the face change colour on its own, which
-is the operator's call.
+`chat_service.rb`'s `agent:mood` subscription now have a producer:
+`Homeostat#observe` publishes `agent:mood` only when the derived mood changes.
+`felt:sense` remains separate — it echoes the browser's own posted state.
 
 ## RESOLVED 2026-07-11: the real "dead tap" root cause was a MutationObserver loop
 
