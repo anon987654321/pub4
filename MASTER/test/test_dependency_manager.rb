@@ -94,6 +94,46 @@ class TestDependencyManager < Minitest::Test
     end
   end
 
+  def test_bundle_commands_ignore_ambient_configuration_and_use_master_context
+    manager = MANAGER.new(
+      root: @root,
+      env: {
+        "PATH" => "/bin",
+        "MASTER_AUTO_INSTALL" => "1",
+        "MASTER_AUTO_BUNDLE" => "1",
+        "BUNDLE_FROZEN" => "1",
+        "BUNDLE_DEPLOYMENT" => "1",
+        "BUNDLE_PATH" => "/tmp/wrong-bundle",
+        "BUNDLE_WITHOUT" => "test",
+        "BUNDLE_VERSION" => "system",
+        "BUNDLE_USER_CONFIG" => "/tmp/wrong-config",
+      },
+      out: StringIO.new,
+      home: @root,
+      command_path: ->(_name) { "/fake/gem" },
+      runner: lambda do |argv, chdir:, env:|
+        @commands << [argv, chdir, env]
+        [true, "The Gemfile's dependencies are satisfied", ""]
+      end,
+    )
+    manager.define_singleton_method(:bundler_path) { |_version| "/fake/bundle" }
+
+    result = manager.ensure!
+
+    assert result.success?
+    bundle_env = @commands.last[2]
+    %w[
+      BUNDLE_FROZEN
+      BUNDLE_DEPLOYMENT
+      BUNDLE_PATH
+      BUNDLE_WITHOUT
+      BUNDLE_VERSION
+    ].each { |key| assert_nil bundle_env[key], "#{key} must not leak into MASTER boot" }
+    assert_equal File.join(@root, "Gemfile"), bundle_env["BUNDLE_GEMFILE"]
+    assert_match(%r{/\.master/bundler/[0-9a-f]{16}/app$}, bundle_env["BUNDLE_APP_CONFIG"])
+    assert_match(%r{/\.master/bundler/[0-9a-f]{16}/global$}, bundle_env["BUNDLE_USER_CONFIG"])
+  end
+
   def test_clean_bundle_does_not_install_or_touch_lock
     manager = fake_manager([[true, "The Gemfile's dependencies are satisfied", ""]])
     before = File.read(File.join(@root, "Gemfile.lock"))
