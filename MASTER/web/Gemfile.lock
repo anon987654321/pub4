@@ -460,9 +460,9 @@ DEPENDENCIES
   pastel (~> 0.8)
   propshaft
   rails (~> 8.1.4)
+  rb-edge-tts!
   rb-inotify (~> 0.10)
   rb-kqueue (~> 0.2)
-  rb-edge-tts!
   reline (~> 0.6)
   ruby_llm (~> 2.0)
   solid_cache
