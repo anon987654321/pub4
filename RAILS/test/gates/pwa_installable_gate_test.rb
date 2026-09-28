@@ -96,6 +96,16 @@ class PwaInstallableGateTest < Minitest::Test
     end
   end
 
+  def test_static_amber_manifest_is_accepted
+    with_tree do |root|
+      FileUtils.rm(File.join(root, "amber/app/views/pwa/manifest.json.erb"))
+      write(File.join(root, "amber/app/views/pwa/manifest.json"), MANIFEST.gsub("<%= city_name %>", "Amber"))
+
+      failures = GATE.run.failures.join(" | ")
+      refute_match(/amber has no manifest/, failures)
+    end
+  end
+
   def test_an_app_with_no_service_worker_is_named
     with_tree do |root|
       FileUtils.rm(File.join(root, "amber/app/views/pwa/service-worker.js"))
