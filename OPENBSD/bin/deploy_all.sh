@@ -23,7 +23,7 @@ SCRIPT_DIR=${0:a:h}
 DEPLOY_ROOT=${SCRIPT_DIR:h}
 
 : "${USE_GIT_PULL:=1}"
-: "${REMOTE_RUBY:=ruby34}"
+: "${REMOTE_RUBY:=ruby40}"
 : "${RUN_REMOTE_HEALTH:=1}"
 : "${ALLOW_PARTIAL_DEPLOY:=0}"
 
