@@ -37,7 +37,7 @@ gem "diffy", "~> 3.4"
 gem "zeitwerk", "~> 2.7"
 
 group :tts do
-  gem "rb-edge-tts", git: "https://github.com/ZPVIP/rb-edge-tts"
+  gem "rb-edge-tts", "= 1.0.1"
 end
 
 # Must mirror MASTER/Gemfile — web controllers load lib/ code at runtime.
