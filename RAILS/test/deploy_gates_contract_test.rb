@@ -189,6 +189,16 @@ class DeployGatesContractTest < Minitest::Test
     refute_includes source, "archive_restore_gate"
   end
 
+  def test_rails_runtime_gate_fails_closed_when_master_scan_is_unavailable
+    source = File.read(File.join(ROOT, "_runtime_gate.sh"))
+    start = source.index("master_scan_dep()")
+    body = source[start, source.index("\n}\n", start) - start + 3]
+
+    assert_match(/\[\[ -x \$\{master\}\/bin\/cli \]\] \|\| \{.*return 1; \}/m, body)
+    refute_match(/\[\[ -x \$\{master\}\/bin\/cli \]\] \|\| return 0/, body)
+    assert_includes body, "var/db/pub4"
+  end
+
   def test_rails_runtime_gate_runs_production_in_process
     assert File.file?(File.join(ROOT, "gates", "lib", "production.rb"))
     source = File.read(File.join(ROOT, "gates", "rails_runtime.rb"))
