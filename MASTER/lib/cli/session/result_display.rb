@@ -35,22 +35,23 @@ module Master
 
       def display_ok(ok:, accumulated:, streamed:)
         text = streamed ? accumulated : success_text(ok)
+        routine = !streamed && routine_success?(text)
         if streamed
           puts unless text.end_with?("\n")
         else
           print "\r\e[K" if $stdout.isatty
-          return puts(text) if routine_success?(text)
+          puts(text) if routine
 
           # Printed, never paged: a pager takes the terminal from Reline while
           # other threads still write to it, and a ^C there lands in the shell.
           # Scrollback is the pager. No speaker tag either: the reply sits under
           # the line that asked for it, at full weight among dim system lines.
-          puts @refs.renderer.measure(text.chomp, width: reply_measure)
+          puts @refs.renderer.measure(text.chomp, width: reply_measure) unless routine
         end
         # The reply is printed before it is spoken, and speaking does not block
         # the prompt. A routine success returns above and stays silent: "ok" is
         # not worth a synthesis.
-        Master::Voice::Playback.speak(spoken_form(text))
+        Master::Voice::Playback.speak(spoken_form(text)) unless routine
         print_fix_activity_footer
         print_parallel_errors_footer(ok)
         print_capability_stamp(ok)
