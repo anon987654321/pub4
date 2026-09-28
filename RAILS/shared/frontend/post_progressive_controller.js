@@ -1,12 +1,18 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["step", "indicator", "photoInput"]
+  static targets = ["step", "indicator", "photoInput", "publishing"]
 
   connect() {
     this.index = 0
     this.steps = this.stepTargets
     this.indicators = this.indicatorTargets
+    this.onSubmitStart = () => this.#publishing(true)
+    this.onSubmitEnd = (event) => {
+      if (!event.detail?.success) this.#publishing(false)
+    }
+    this.element.addEventListener("turbo:submit-start", this.onSubmitStart)
+    this.element.addEventListener("turbo:submit-end", this.onSubmitEnd)
     this.photoInputTargets.forEach((input) => {
       input.addEventListener("change", this.mediaChanged)
     })
@@ -17,6 +23,8 @@ export default class extends Controller {
     this.photoInputTargets.forEach((input) => {
       input.removeEventListener("change", this.mediaChanged)
     })
+    this.element.removeEventListener("turbo:submit-start", this.onSubmitStart)
+    this.element.removeEventListener("turbo:submit-end", this.onSubmitEnd)
   }
 
   next() {
@@ -33,6 +41,16 @@ export default class extends Controller {
 
   mediaChanged = (event) => {
     if (event.target.files?.length) this.#show(1)
+  }
+
+  #publishing(active) {
+    if (!this.hasPublishingTarget) return
+
+    this.publishingTarget.hidden = !active
+    this.element.toggleAttribute("aria-busy", active)
+    this.element.dataset.publishing = active ? "true" : "false"
+    this.steps.forEach((step) => { step.hidden = active || this.steps.indexOf(step) !== this.index })
+    this.indicators.forEach((indicator) => { indicator.hidden = active })
   }
 
   #show(next) {
