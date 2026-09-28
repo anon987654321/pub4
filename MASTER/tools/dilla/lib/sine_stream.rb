@@ -17,7 +17,7 @@ require_relative "../dilla"
 require "fileutils"
 
 RATE = 44_100
-OUT = "/Users/mac/Music/dilla_sines"
+OUT = File.expand_path(ENV.fetch("SINE_OUT", File.join(Dir.home, "Music", "dilla_sines"))).freeze
 # Homebrew ffmpeg where it is installed, PATH otherwise.
 SINE_FFMPEG = File.executable?("/opt/homebrew/bin/ffmpeg") ? "/opt/homebrew/bin/ffmpeg" : "ffmpeg"
 PROGRESS = File.join(OUT, "now_playing.txt")
