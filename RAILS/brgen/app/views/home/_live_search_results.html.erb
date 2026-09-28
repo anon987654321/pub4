@@ -6,25 +6,29 @@
  <%= turbo_frame_tag "home-feed", target: "_top" do %>
  <ul class="post-feed feed_list" id="home-feed" data-feed-updates-target="feed">
  <% @posts.each_with_index do |post, index| %>
- <li><%= render "posts/post", post: post %></li>
- <%# One unit after every AFFILIATE_EVERY posts, never before the first and
-     never trailing the last — an ad in the last slot reads as the end of the
-     feed. HomeInfiniteScrollReflex#after_row carries the same cadence onto
-     appended pages, counting slots from the top of the feed rather than the top
-     of the page, so the rhythm does not restart on every scroll. %>
- <% if ((index + 1) % Brgen::HomeFeed::AFFILIATE_EVERY).zero? && index + 1 < @posts.size %>
- <li><%= render "shared/affiliate_feed_unit", surface: "brgen" %></li>
- <% end %>
+ <li>
+   <% if params[:view].to_s == "media" %>
+     <%= render "home/media_card", post: post %>
+   <% else %>
+     <%= render "posts/post", post: post %>
+     <% if ((index + 1) % Brgen::HomeFeed::AFFILIATE_EVERY).zero? && index + 1 < @posts.size %>
+       <%= render "shared/affiliate_feed_unit", surface: "brgen" %>
+     <% end %>
+   <% end %>
+ </li>
  <% end %>
  </ul>
 
- <%= render "shared/infinite_scroll_sentinel",
-            pagy: @pagy,
-            reflex: "HomeInfiniteScrollReflex#load_more",
-            sentinel_id: "home-feed-sentinel",
-            q: params[:q],
-            feed: params[:feed],
-            sort: params[:sort] %>
+ <%= render "shared/pager", pagy: @pagy, label: t("home.pagination", default: "Home feed pagination") if params[:view].to_s == "media" %>
+ <% if params[:view].to_s != "media" %>
+   <%= render "shared/infinite_scroll_sentinel",
+              pagy: @pagy,
+              reflex: "HomeInfiniteScrollReflex#load_more",
+              sentinel_id: "home-feed-sentinel",
+              q: params[:q],
+              feed: params[:feed],
+              sort: params[:sort] %>
+ <% end %>
  <% end %>
 <% else %>
  <% if live_search_query.present? %>
