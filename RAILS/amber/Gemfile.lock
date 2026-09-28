@@ -661,7 +661,7 @@ DEPENDENCIES
   puma
   pundit
   rack-mini-profiler
-  rails (~> 8.1.2)
+  rails (~> 8.1.4)
   rails-i18n (~> 8.0)
   rotp
   rqrcode
