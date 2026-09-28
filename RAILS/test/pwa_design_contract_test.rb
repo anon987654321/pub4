@@ -107,7 +107,7 @@ class PwaDesignContractTest < Minitest::Test
 
   def test_all_manifests_are_installable
     each_app do |app, root|
-      raw = read(root, "app/views/pwa/manifest.json.erb")
+      raw = manifest_source(root)
       # This used to switch on `app == "brgen"`, on the grounds that brgen's
       # manifest was the only ERB one. Localising the PWA shortcut labels made
       # every manifest ERB, and amber's then reached JSON.parse and raised.
@@ -182,6 +182,12 @@ def assert_primary_nav_labelled(app, root, layout)
     value = match[1].split(".").reduce(locale) { |node, segment| node&.fetch(segment, nil) }
     refute_nil value, "#{app}: nav aria-label uses #{match[1]}, which en.yml does not define"
     refute_empty value.to_s.strip, "#{app}: nav aria-label #{match[1]} is blank"
+  end
+
+  def manifest_source(root)
+    erb = File.join(root, "app/views/pwa/manifest.json.erb")
+    json = File.join(root, "app/views/pwa/manifest.json")
+    File.file?(erb) ? File.read(erb) : File.read(json)
   end
 
   def each_app
