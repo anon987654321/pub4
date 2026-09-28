@@ -112,4 +112,12 @@ class OnboardingPromptOrderTest < Minitest::Test
     assert_includes body, "pointer: coarse"
     assert_includes body, "this.phone()"
   end
+
+  def test_norwegian_city_slug_matches_localized_artwork
+    artwork = File.read(File.join(ROOT, ARTWORK))
+
+    assert_includes artwork, '"tromso" =>'
+    assert_includes artwork, 'I18n.transliterate(sanitized)'
+    assert_includes artwork, 'require "i18n"'
+  end
 end
