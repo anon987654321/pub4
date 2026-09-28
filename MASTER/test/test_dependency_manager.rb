@@ -239,7 +239,7 @@ class TestDependencyManager < Minitest::Test
     source = File.read(File.join(Master::ROOT, "bin", "deps"))
 
     assert_match(/when "boot"/, source)
-    assert_includes source, 'system(cli, "--help")'
+    assert_includes source, 'system(cli, "--fast")'
     assert_match(%r{cli = File\.join\(ROOT, "bin", "cli"\)}, source)
   end
 
