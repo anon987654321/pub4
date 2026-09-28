@@ -1,12 +1,6 @@
 # frozen_string_literal: true
 
 class User < ApplicationRecord
-  # Vipps Login is the identity dating trusts. ExternalIdentity/IdentityProvider
-  # already carry it — the callback writes one per successful OAuth round trip —
-  # so this asks a question of existing data rather than adding a column that
-  # would then need keeping in step with it.
-  has_many :external_identities, dependent: :destroy
-
   # Who may appear in the people picker. Guests have no stable identity to hold a
   # conversation open, bots are addressed in their channel rather than privately,
   # and a scheduled-for-deletion account should not collect new threads.
