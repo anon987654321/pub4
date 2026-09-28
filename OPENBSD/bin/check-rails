@@ -86,6 +86,22 @@ source_gates.each do |name, gate|
   failures << name.tr(" ", "_") unless runner.run(name, RUBY, GATES_RUNNER, gate, env: env)
 end
 
+# Rails 8.2's HTML+ERB compiler is part of the framework baseline, so every
+# active Rails Gemfile gets the same direct check. The app list comes from
+# apps.yml; MASTER/web is the additional Rails surface outside that matrix.
+rails_apps = YAML.safe_load_file(File.join(ROOT, "RAILS", "apps.yml")).fetch("apps").keys.map do |app|
+  File.join("RAILS", app)
+end + ["MASTER/web"]
+
+rails_apps.each do |app|
+  env = LIVE_ENV.merge(
+    "BUNDLE_GEMFILE" => File.join(ROOT, app, "Gemfile"),
+    "BUNDLE_IGNORE_CONFIG" => "1",
+  )
+  label = "herb #{app.tr("/", "_")}"
+  failures << label unless runner.run(label, RUBY, File.join(app, "bin", "rails"), "herb:check", env: env)
+end
+
 # Gates that are real but too slow for every run, or need a browser and warm
 # apps. constitutional_scan alone is four full MASTER scans (~21 min measured
 # 2026-08-01), which is why it sat unwired instead of being wired badly.
