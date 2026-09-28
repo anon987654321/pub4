@@ -131,7 +131,7 @@ class RailsUpgradeContractTest < Minitest::Test
       assert_match(/^  remote: https:\/\/github.com\/rails\/rails\.git$/m, source)
       assert_match(/^  revision: #{Regexp.escape(RAILS_REF)}$/m, source)
       assert_match(/^    rails \(8\.2\.0\.alpha\)$/m, source)
-      assert_includes source, "    herb (0.10.2)"
+      assert_includes source, "    herb (0.11.0)"
       assert_includes source, "    ractor-dispatch (0.3.0)"
       assert_includes source, "    marcel (2.1.0)"
       assert_includes source, "    globalid (1.4.0)"
@@ -140,10 +140,32 @@ class RailsUpgradeContractTest < Minitest::Test
     master = File.read(File.expand_path("../MASTER/web/Gemfile.lock", ROOT))
     assert_match(/^  revision: #{Regexp.escape(RAILS_REF)}$/m, master)
     assert_match(/^    rails \(8\.2\.0\.alpha\)$/m, master)
-    assert_includes master, "    herb (0.10.2)"
+    assert_includes master, "    herb (0.11.0)"
     assert_includes master, "    ractor-dispatch (0.3.0)"
     assert_includes master, "    marcel (2.1.0)"
     assert_includes master, "    globalid (1.4.0)"
+  end
+
+  test "Rails 8.2 locks keep dependency specs out of PLATFORMS" do
+    %w[brgen amber bsdports].each do |app|
+      source = read("#{app}/Gemfile.lock")
+      assert_equal 1, source.lines.count { |line| line.chomp == "GEM" }
+
+      gem = source.split("\nGEM\n", 2).fetch(1).split("\nPLATFORMS\n", 2).fetch(0)
+      platform = source.split("\nPLATFORMS\n", 2).fetch(1).split("\nDEPENDENCIES\n", 2).fetch(0)
+
+      assert_includes gem, "    herb (0.11.0)"
+      assert_includes gem, "    herb (0.11.0-x86_64-linux-gnu)"
+      assert_includes gem, "    ractor-dispatch (0.3.0)"
+      refute_match(/^    (herb|ractor-dispatch) \(/, platform)
+    end
+
+    source = read("../MASTER/web/Gemfile.lock")
+    assert_equal 1, source.lines.count { |line| line.chomp == "GEM" }
+    gem = source.split("\nGEM\n", 2).fetch(1).split("\nPLATFORMS\n", 2).fetch(0)
+    assert_includes gem, "    herb (0.11.0)"
+    assert_includes gem, "    herb (0.11.0-x86_64-linux-gnu)"
+    assert_includes gem, "    ractor-dispatch (0.3.0)"
   end
 
 end
