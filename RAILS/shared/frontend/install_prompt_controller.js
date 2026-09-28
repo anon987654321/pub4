@@ -1,6 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 import { installDismissedKey, standalone } from "pub4/pwa_standalone"
-import { announceInstallVisible } from "pub4/onboarding"
+import { announceInstallVisible, mayPrompt } from "pub4/onboarding"
 
 // The unscoped key stays readable so a dismissal from before the key was
 // namespaced still counts; only new writes are scoped.
@@ -26,6 +26,12 @@ export default class extends Controller {
     }
 
     window.addEventListener("beforeinstallprompt", this.onBeforeInstall)
+
+    this.onConsent = () => this.reveal()
+    this.onWelcomeDismissed = () => this.reveal()
+    window.addEventListener("pub4:cookie-consent-resolved", this.onConsent)
+    window.addEventListener("pub4:welcome-dismissed", this.onWelcomeDismissed)
+
     this.prepareCopy()
 
     // afterEngagement: the page's first screen is the page (amber's home is
@@ -49,6 +55,8 @@ export default class extends Controller {
 
   disconnect() {
     window.removeEventListener("beforeinstallprompt", this.onBeforeInstall)
+    window.removeEventListener("pub4:cookie-consent-resolved", this.onConsent)
+    window.removeEventListener("pub4:welcome-dismissed", this.onWelcomeDismissed)
     this.stopListening()
   }
 
@@ -88,7 +96,7 @@ export default class extends Controller {
   }
 
   reveal() {
-    if (!this.engaged || !this.canShow()) return
+    if (!this.engaged || !this.canShow() || !mayPrompt("install")) return
     if (!this.element.hidden) return
 
     this.element.hidden = false

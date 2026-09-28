@@ -1,6 +1,7 @@
 // Shared Hotwire baseline — Turbo Drive config, PWA shell, web-vitals sample (Rails 8 + Hotwire).
 import "@hotwired/turbo-rails"
 import { bootThemeMeta } from "pub4/theme_meta"
+import { allows } from "pub4/cookie_consent"
 
 bootThemeMeta()
 
@@ -162,7 +163,11 @@ const observeWebVitals = (metrics, report) =>
     .catch(() => observeWebVitalsFallback(metrics, report))
 
 const bootWebVitalsSampling = () => {
+  if (window.__pub4WebVitalsBooted) return
+  if (!allows("analytics")) return
   if (!webVitalsSampled()) return
+
+  window.__pub4WebVitalsBooted = true
 
   let teardown = () => {}
   let metrics = { lcp: null, inp: null, cls: null, inpTarget: null }
@@ -186,5 +191,9 @@ const bootWebVitalsSampling = () => {
   document.addEventListener("turbo:load", arm)
   arm()
 }
+
+window.addEventListener("pub4:cookie-consent-resolved", () => {
+  if (allows("analytics")) bootWebVitalsSampling()
+})
 
 bootWebVitalsSampling()
