@@ -65,7 +65,9 @@ This makes process restart cheap:
 ## Event sources
 
 The supervisor can sleep until the next durable wake time and can be woken early
-by an event.
+by an event. Conversational fold missions use the same durable Mission record through
+TaskSteward; the steward re-enters bounded CoreBridge attempts rather than asking the
+interactive surface for another "go on".
 
 Relevant events include source changes, provider recovery, resource recovery,
 manual requests and other runtime signals that mean “reconsider this mission”.
