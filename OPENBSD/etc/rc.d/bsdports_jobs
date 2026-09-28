@@ -22,18 +22,18 @@ daemon="/bin/ksh"
 # Sourced inside the app user's shell rather than interpolated here, where the
 # secret would sit in ps(1) argv; under set -a because `.` sets a bare
 # KEY=value unexported, and the job classes need every key in the file.
-daemon_flags="-c 'cd ${APP_DIR} && set -a && . /etc/bsdports.env && set +a && export RAILS_ENV=production HOME=/home/bsdports PUB4_ROOT=/home/dev/pub4 PUB4_RAILS_ROOT=/home/dev/pub4/RAILS && exec /usr/local/bin/bundle34 exec rake solid_queue:start'"
+daemon_flags="-c 'cd ${APP_DIR} && set -a && . /etc/bsdports.env && set +a && export RAILS_ENV=production HOME=/home/bsdports PUB4_ROOT=/home/dev/pub4 PUB4_RAILS_ROOT=/home/dev/pub4/RAILS && exec /usr/local/bin/bundle40 exec rake solid_queue:start'"
 daemon_user="bsdports"
 daemon_execdir="/home/bsdports/app"
 daemon_logger="daemon.notice"
 daemon_timeout="120"
 
 . /etc/rc.d/rc.subr
-# The process renames itself to "ruby34: solid-queue-supervisor(1.2.4): ...",
+# The process renames itself to "ruby40: solid-queue-supervisor(1.2.4): ...",
 # hence both - and _. rc.subr checks with `pgrep -q -xf "${pexp}"`, and -x
 # anchors the whole argv, which continues past the name: the trailing .* is
 # what lets rcctl check and stop see a running worker at all.
-pexp="ruby34.*solid[-_]queue.*"
+pexp="ruby40.*solid[-_]queue.*"
 rc_bg=YES
 rc_reload=NO
 
