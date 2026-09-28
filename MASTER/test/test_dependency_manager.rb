@@ -21,7 +21,7 @@ class TestDependencyManager < Minitest::Test
         ruby 4.0.5
 
       BUNDLED WITH
-        4.0.7
+        4.0.5
     LOCK
     @commands = []
   end
