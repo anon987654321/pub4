@@ -9,11 +9,9 @@
         </a>
       </div>
     <% elsif post.video.attached? %>
-      <%= link_to post_path(post), class: "brgen-media-link brgen-media-video-link",
-            aria: { label: post.title.presence || t("post.view", default: "View post") } do %>
-        <%= video_tag post.video, controls: false, muted: true, playsinline: true, preload: "metadata", class: "brgen-media-video" %>
-        <span class="brgen-media-play" aria-hidden="true">▶</span>
-      <% end %>
+      <%= video_tag post.video, controls: true, muted: true, playsinline: true, preload: "metadata",
+            class: "brgen-media-video",
+            aria: { label: post.title.presence || t("post.view", default: "Play video") } %>
     <% end %>
   </div>
   <%= link_to post_path(post), class: "brgen-media-caption-link" do %>
