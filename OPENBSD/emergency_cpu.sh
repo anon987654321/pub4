@@ -70,7 +70,7 @@ fi
 echo "=== kill orphan compile/boot processes ==="
 for pat in \
   'bundle install' \
-  'bundle34 install' \
+  'bundle40 install' \
   'gem install' \
   'assets:precompile' \
   'assets:build_face' \
@@ -100,9 +100,9 @@ fi
 
 echo "=== stop wedged Falcon workers (master + brgen) ==="
 pkill -f 'falcon.*53187' 2>/dev/null || true
-pkill -f 'ruby34.*53187' 2>/dev/null || true
+pkill -f 'ruby40.*53187' 2>/dev/null || true
 pkill -f 'falcon.*38182' 2>/dev/null || true
-pkill -f 'ruby34.*38182' 2>/dev/null || true
+pkill -f 'ruby40.*38182' 2>/dev/null || true
 pkill -f '/home/brgen/app' 2>/dev/null || true
 sleep 2
 
@@ -132,4 +132,4 @@ top -b -n1 | first_lines 18
 rcctl check master relayd brgen 2>/dev/null || true
 relayctl show hosts 2>/dev/null | first_lines 12 || true
 
-echo "Done. git pull, sync rc.d/master (-n 2), then probe: ruby34 MASTER/web/script/probe_http"
+echo "Done. git pull, sync rc.d/master (-n 2), then probe: ruby40 MASTER/web/script/probe_http"
