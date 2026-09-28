@@ -16,7 +16,7 @@ class RailsUpgradeContractTest < Minitest::Test
 
       assert_includes source, "config.load_defaults 8.2",
                       "#{app} drifted from the Rails 8.2 baseline"
-      refute_includes source, "config.load_defaults 8.0",
+      refute_includes source, "config.load_defaults 8.1",
                       "#{app} still carries the Rails 8.1 baseline"
     end
   end
