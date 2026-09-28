@@ -1,0 +1,161 @@
+/* First-party consent banner. Accept and reject are peers, not a conversion funnel. */
+.cookie-banner {
+  position: fixed;
+  inset-inline: var(--space-2);
+  bottom: calc(var(--safe-bottom) + var(--space-2));
+  z-index: var(--z-toast);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-4);
+  max-width: 82rem;
+  margin-inline: auto;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.cookie-banner[hidden] {
+  display: none;
+}
+
+.cookie-banner-kicker,
+.cookie-purpose strong {
+  display: block;
+  font-weight: var(--weight-bold);
+}
+
+.cookie-banner-kicker {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.cookie-banner-copy h2 {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-title);
+}
+
+.cookie-banner-copy p {
+  margin: 0;
+  max-width: 48rem;
+  line-height: 1.45;
+}
+
+.cookie-banner-policy {
+  margin-top: var(--space-2) !important;
+}
+
+.cookie-banner-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.cookie-banner-button {
+  min-width: 9rem;
+  min-height: var(--tap-min);
+  padding: 0 var(--control-pad-inline);
+  border: 1px solid var(--text);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: var(--weight-bold);
+  cursor: pointer;
+}
+
+.cookie-banner-button:hover {
+  background: var(--hover);
+}
+
+.cookie-banner-button:focus-visible,
+.cookie-settings-trigger:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+
+.cookie-consent-preferences {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 1fr);
+  gap: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.cookie-consent-preferences[hidden] {
+  display: none;
+}
+
+.cookie-consent-preferences h3 {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-base);
+}
+
+.cookie-purpose {
+  display: grid;
+  grid-template-columns: var(--tap-min) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-2);
+  min-height: var(--tap-min);
+  padding-block: var(--space-1);
+  color: var(--text-secondary);
+}
+
+.cookie-purpose input {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  margin: var(--space-1);
+}
+
+.cookie-purpose span {
+  display: block;
+  line-height: 1.45;
+}
+
+.cookie-purpose strong {
+  color: var(--text);
+}
+
+.cookie-consent-preferences-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.cookie-settings-trigger {
+  min-height: var(--tap-min);
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+@media (max-width: 760px) {
+  .cookie-banner {
+    grid-template-columns: 1fr;
+    max-height: min(90dvh, 42rem);
+    overflow-y: auto;
+  }
+
+  .cookie-banner-actions {
+    justify-content: stretch;
+  }
+
+  .cookie-banner-button {
+    flex: 1 1 9rem;
+  }
+
+  .cookie-consent-preferences {
+    grid-template-columns: 1fr;
+  }
+}
