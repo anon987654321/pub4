@@ -62,6 +62,14 @@
         <%= responsive_image_tag @post.image, alt: @post.title, class: "post-image" %>
       </a>
     </div>
+  <% elsif @post.video.attached? %>
+    <%= video_tag @post.video, controls: true, playsinline: true, preload: "metadata",
+          class: "post-image post-video", aria: { label: @post.title.presence || t("posts.video", default: "Post video") } %>
+  <% end %>
+
+  <% if @post.audio.attached? %>
+    <%= audio_tag @post.audio, controls: true, preload: "metadata", class: "post-audio",
+          aria: { label: @post.title.presence || t("posts.audio", default: "Post audio") } %>
   <% end %>
 
   <% if @post.content.present? %>

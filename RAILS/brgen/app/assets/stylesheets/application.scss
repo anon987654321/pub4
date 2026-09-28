@@ -4388,6 +4388,15 @@ body.vertical-marketplace .top-offers-rail .sale-ad .deal-price {
   margin: var(--space-2) 0;
 }
 
+.post-video {
+  background: var(--surface-elevated);
+}
+
+.post-audio {
+  width: 100%;
+  margin: var(--space-2) 0;
+}
+
 .push-enable-btn {
   position: fixed;
   bottom: calc(72px + var(--safe-bottom) + var(--space-2));
