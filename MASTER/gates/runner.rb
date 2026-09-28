@@ -42,7 +42,7 @@ GATES_DIR = __dir__
 # warning next to a later gem crash reads as two findings, and operators
 # learned to ignore the first.
 pinned = File.read(File.join(File.expand_path("../..", __dir__), ".ruby-version")).strip rescue nil
-if pinned && !RUBY_VERSION.start_with?(pinned.sub(/\.\d+\z/, ""))
+if pinned && RUBY_VERSION != pinned
   abort "[gates] ruby #{RUBY_VERSION}, repo pins #{pinned} — use `RBENV_VERSION=#{pinned} rbenv exec ruby gates/runner.rb ...`"
 end
 
