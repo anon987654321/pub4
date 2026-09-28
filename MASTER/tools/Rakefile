@@ -68,6 +68,7 @@ namespace :postpro do
 end
 
 namespace :replicate do
+  require_relative "replicate/lib/schema_snapshot"
   desc "Compare MODEL_CAPABILITIES against the schemas Replicate currently declares"
   task :schema_audit do
     # The second-source-of-truth problem, made visible. replicate keeps its own
@@ -83,7 +84,7 @@ namespace :replicate do
 
     token = Master::Io::ReplicateClient.load_token
     if token.to_s.strip.empty?
-      puts "replicate: schema_audit skipped — no REPLICATE_API_TOKEN; nothing was measured"
+      puts "replicate: schema_audit skipped — no REPLICATE_API_TOKEN; run `rake replicate:schema_audit_offline` for historical evidence"
       next
     end
 
@@ -118,6 +119,59 @@ namespace :replicate do
     end
     puts "replicate: #{drifted} of #{declared.length} model(s) need attention"
     exit(1) unless drifted.zero?
+  end
+
+  desc "Record current Replicate input schemas as offline evidence (requires token)"
+  task :schema_snapshot do
+    token = Master::Io::ReplicateClient.load_token
+    if token.to_s.strip.empty?
+      puts "replicate: schema_snapshot skipped — no REPLICATE_API_TOKEN; nothing was measured"
+      next
+    end
+
+    engine = File.read(File.expand_path("replicate/replicate.rb", __dir__))
+    table = engine[/^MODEL_CAPABILITIES = \{.*?^\}\.freeze/m] or abort "replicate: MODEL_CAPABILITIES not found"
+    declared = table.scan(/"([^"]+\/[^"]+)" => \{/).flatten.uniq
+    abort "replicate: parsed no models — refusing to write an empty snapshot" if declared.empty?
+
+    client = Master::Io::ReplicateClient.new(token:)
+    document = Replicate::SchemaSnapshot.write(client:, models: declared)
+    puts "replicate: schema snapshot wrote #{document.fetch("models").length} model(s) at #{document.fetch("captured_at")}"
+  end
+
+  desc "Compare MODEL_CAPABILITIES with the last recorded provider schema; never claims live freshness"
+  task :schema_audit_offline do
+    snapshot = Replicate::SchemaSnapshot.read
+    if snapshot.nil?
+      puts "replicate: schema_audit_offline inconclusive — no recorded provider schema snapshot"
+      exit(2)
+    end
+
+    ours = File.read(File.expand_path("replicate/replicate.rb", __dir__))
+                .then { |engine| engine[/^MODEL_CAPABILITIES = \{.*?^\}\.freeze/m] }
+                .then { |table| table.scan(/"([^"]+\/[^"]+)" => \{.*?input_keys: %w\[([^\]]*)\]/m).to_h { |model, keys| [model, keys.split.sort] } }
+
+    recorded = Replicate::SchemaSnapshot.by_model
+    missing = recorded.keys - ours.keys
+    added = ours.keys - recorded.keys
+    drifted = []
+
+    (ours.keys & recorded.keys).sort.each do |model|
+      gone = ours.fetch(model) - recorded.fetch(model)
+      extra = recorded.fetch(model) - ours.fetch(model)
+      next if gone.empty? && extra.empty?
+
+      drifted << model
+      puts "replicate: #{model} BASELINE DRIFT"
+      puts "  table contains keys absent from recorded schema: #{gone.join(', ')}" if gone.any?
+      puts "  recorded schema contains keys absent from table: #{extra.join(', ')}" if extra.any?
+    end
+
+    puts "replicate: snapshot-only models: #{missing.join(', ')}" if missing.any?
+    puts "replicate: table-only models: #{added.join(', ')}" if added.any?
+    puts "replicate: baseline matches snapshot captured at #{snapshot.fetch("captured_at")}" if drifted.empty? && missing.empty? && added.empty?
+    puts "replicate: baseline comparison is historical evidence, not a live provider audit"
+    exit(1) unless drifted.empty? && missing.empty? && added.empty?
   end
 
   desc "Emit a MODEL_CAPABILITIES entry for MODEL=owner/name from its live schema"
