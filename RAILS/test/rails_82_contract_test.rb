@@ -131,4 +131,28 @@ test "every Rails Gemfile is pinned to the audited 8.2 source commit" do
     end
   end
 
+
+  test "locked dependency graph carries the Rails 8.2 runtime floors" do
+    %w[RAILS/brgen RAILS/amber RAILS/bsdports MASTER/web].each do |root|
+      source = File.read(File.join(File.expand_path("..", ROOT), root, "Gemfile.lock"))
+      assert_includes source, "    herb (0.10.2)"
+      assert_includes source, "    ractor-dispatch (0.3.0)"
+      assert_includes source, "    marcel (2.1.0)"
+      assert_includes source, "    globalid (1.4.0)"
+      assert_includes source, "actionpack (= 8.2.0.alpha)"
+      assert_includes source, "activejob (= 8.2.0.alpha)"
+    end
+  end
+
+  test "repository contains no stale Rails 8.1 Gemfile or default pin" do
+    RAILS_ROOTS.each do |root|
+      root_path = File.join(File.expand_path("..", ROOT), root)
+      gemfile = File.read(File.join(root_path, "Gemfile"))
+      application = File.read(File.join(root_path, "config", "application.rb"))
+
+      refute_includes gemfile, "8.1.4"
+      refute_includes application, "config.load_defaults 8.1"
+    end
+  end
+
 end
