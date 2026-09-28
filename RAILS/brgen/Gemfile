@@ -6,7 +6,7 @@ ruby "4.0.7"
 gem "async"
 gem "async-http"
 gem "falcon"
-gem "rails", "~> 8.1.2"
+gem "rails", "~> 8.1.4"
 gem "rails-i18n", "~> 8.0"
 gem "sqlite3", "~> 2.1"
 
