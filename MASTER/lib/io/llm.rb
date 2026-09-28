@@ -32,6 +32,7 @@ module Master
         # tool:call and tool:return bracket every call, reads and fetches
         # included, so the operator sees each one the model makes.
         def forward(**args)
+          return orientation_refusal(args) if orientation_required?
           return repeated_call_reply(args) if repeated_call?(args)
 
           @bus&.publish("tool:call", tool: tool_name, subject: subject_of(args))
@@ -45,6 +46,7 @@ module Master
           end
 
           @bus&.publish("tool:return", tool: tool_name, ok: true, ms:, bytes: result.value!.to_s.bytesize)
+          Fiber[:master_tree_seen] = true if orientation_tool?
           block_given? ? yield(result.value!) : result.value!
         end
 
@@ -66,6 +68,24 @@ module Master
         # Agent#prepare_chat_turn clears.
         REPEAT_LIMIT = 3
         REPEAT_EXEMPT = %w[read_file].freeze
+
+        ORIENTATION_TOOLS = %w[Tree tree ListDir list_dir].freeze
+        ORIENTATION_REQUIRED_TOOLS = %w[ReadFile read_file SearchFiles search_files SymbolLookup symbol_lookup WriteFile write_file StrReplace str_replace AstEdit ast_edit atomic_write].freeze
+
+        def orientation_tool? = ORIENTATION_TOOLS.include?(tool_name.to_s)
+
+        def orientation_required?
+          !Fiber[:master_tree_seen] && ORIENTATION_REQUIRED_TOOLS.include?(tool_name.to_s)
+        end
+
+        def orientation_refusal(args)
+          subject = subject_of(args)
+          error = "tree required before source work#{subject.empty? ? "" : ": #{subject}"}"
+          @bus&.publish("tool:call", tool: tool_name, subject:)
+          @bus&.publish("tool:failed", tool: tool_name, category: :orientation, error:)
+          @bus&.publish("tool:return", tool: tool_name, ok: false, ms: 0, error:)
+          "Error: #{error}; call Tree or ListDir first."
+        end
 
         def repeated_call?(args)
           signature = call_signature(args)
