@@ -47,8 +47,7 @@ module Shared
         hero = Shared::NewsletterVisuals.hero_for(
           city_name: city,
           theme:,
-          seed:,
-          public_base: Shared::Engine.root.join("public").to_s
+          seed:
         )
         source = hero&.url.to_s
         return nil unless source.start_with?("http://", "https://")
