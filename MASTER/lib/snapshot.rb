@@ -4,7 +4,13 @@ require "fileutils"
 
 module Master
   class Snapshot
-    DEFAULT_TREES = %w[MASTER OPENBSD RAILS].freeze
+    TREE_PATHS = {
+      "MASTER" => "MASTER",
+      "RAILS" => "RAILS",
+      "OPENBSD" => "OPENBSD",
+      "STUDIO" => "MASTER/tools",
+    }.freeze
+    DEFAULT_TREES = TREE_PATHS.keys.freeze
     DEFAULT_OUTPUT = File.join(REPO_ROOT, "snapshot_MASTER.md")
     SKIP = %w[.git .bundle node_modules vendor tmp temp log logs coverage storage cache dist build output generated].freeze
     BINARY_EXTENSIONS = %w[
@@ -24,7 +30,7 @@ module Master
       return write_tree! unless File.expand_path(@root) == File.expand_path(REPO_ROOT)
 
       paths = DEFAULT_TREES.map do |name|
-        tree_root = File.join(@root, name)
+        tree_root = File.join(@root, TREE_PATHS.fetch(name))
         next unless File.directory?(tree_root)
 
         output = File.join(@root, "snapshot_#{name}.md")
