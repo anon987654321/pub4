@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "tmpdir"
 
 class TestBootEntrypoint < Minitest::Test
   SOURCE = File.read(File.expand_path("../lib/boot/entrypoint.rb", __dir__))
@@ -10,7 +11,7 @@ class TestBootEntrypoint < Minitest::Test
     assert_includes SOURCE, 'ENV["BUNDLE_GEMFILE"] = gemfile'
     assert_includes SOURCE, 'require "bundler/setup"'
   end
-end
+
   def test_bundle_activation_uses_the_lockfile_bundler_version
     assert_match(/version = locked_bundler_version\(root\)/, SOURCE)
     assert_match(/gem\("bundler", version\) unless version\.empty\?/, SOURCE)
@@ -33,3 +34,4 @@ end
       assert_equal "4.0.7", reader.call(root)
     end
   end
+end
