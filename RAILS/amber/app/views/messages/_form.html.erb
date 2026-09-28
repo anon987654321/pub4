@@ -10,7 +10,7 @@
   </div>
   <div class="field">
     <%= f.label :body %>
-    <%= character_counter_field f, :body, max: 2000, autogrow: true, rows: 3, placeholder: t("chat.dm_placeholder") %>
+    <%= character_counter_field f, :body, max: 2000, rows: 3, placeholder: t("chat.dm_placeholder") %>
   </div>
   <div class="field"><%= f.submit t("actions.send"), class: "btn", disabled: recipients.empty? %></div>
 <% end %>
