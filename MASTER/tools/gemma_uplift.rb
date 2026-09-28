@@ -17,6 +17,7 @@ module Master
             ruby MASTER/tools/gemma_uplift.rb score TRAJECTORIES.ndjson
             ruby MASTER/tools/gemma_uplift.rb record TRAJECTORY.json
             ruby MASTER/tools/gemma_uplift.rb export TRAJECTORIES.ndjson OUTPUT.ndjson
+            ruby MASTER/tools/gemma_uplift.rb preferences TRAJECTORIES.ndjson OUTPUT.ndjson
         TEXT
       end
 
