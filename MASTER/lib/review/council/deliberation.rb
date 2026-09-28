@@ -124,7 +124,15 @@ module Master
         # keys. Keep this gate aligned with LLMDispatcher's own refusal check.
         def self.reachable_for?(agent)
           model = agent.respond_to?(:model) ? agent.model : nil
-          Master.llm_reachable?(model)
+          return true if Master.llm_reachable?(model)
+
+          router = agent.respond_to?(:model_router) ? agent.model_router : nil
+          return false unless router.respond_to?(:pool)
+
+          Array(router.pool(wait: false)).any?
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "deliberation.reachable_for")
+          false
         end
 
         def review(code, context: nil, personas: nil, image: nil)
