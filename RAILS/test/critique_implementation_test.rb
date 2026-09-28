@@ -164,6 +164,7 @@ class CritiqueImplementationTest < Minitest::Test
     icons = read("shared/app/views/shared/_feed_icon.html.erb")
 
     assert_includes button, 'class: "feed-action"'
+    assert_includes button, 'aria: { label: t("post.like_count", count: post.likes_count) }'
     assert_includes button, 'form_class: "feed-action-form"'
     assert_includes button, 'name: "like"'
     assert_includes button, 'post.likes_count.to_i.positive? ? post.likes_count : ""'
