@@ -108,18 +108,26 @@ class ChannelBot
   # Decide whether a bot answers `message`, and post the reply if so.
   def self.reply_to(message)
     channel = message.conversation
-    return unless channel.channel?
+    return if message.sender.bot?
 
     ActsAsTenant.without_tenant do
       bots = channel.participants.where(bot: true).to_a
       return if bots.empty?
 
-      bot = addressed_bot(message.content, bots) || volunteer(message.content, bots)
+      bot = bot_for_message(channel, message, bots)
       return unless bot
 
       text = draft(bot, channel, message)
       channel.messages.create!(sender: bot, message_type: "text", content: text) if text.present?
     end
+  end
+
+  def self.bot_for_message(channel, message, bots)
+    master = bots.find { |bot| bot.username == "master" }
+    return master if master && channel.conversation_type == "direct"
+    return master if master && channel.group_dm? && addressed_bot(message.content, [master])
+
+    addressed_bot(message.content, bots) || volunteer(message.content, bots) if channel.channel?
   end
 
   # A bot named in the message (by @handle or bare handle) always answers.
@@ -144,6 +152,8 @@ class ChannelBot
   end
 
   def self.generate(persona, channel, message)
+    return generate_master(channel, message) if persona.equal?(PERSONAS["master"])
+
     spec = Conversation::CHANNELS[channel.slug] || {}
     prompt = <<~PROMPT
       You are #{persona[:voice]}
@@ -157,6 +167,14 @@ class ChannelBot
 
     reply = Shared::Llm.new(model: MODEL).ask(prompt, json: false).to_s.strip
     reply.delete_prefix('"').delete_suffix('"').first(MAX_LEN)
+  end
+
+  def self.generate_master(channel, message)
+    messages = channel.messages.includes(:sender).order(:created_at).last(MAX_CONTEXT)
+    Shared::MasterMessenger.new.reply(
+      messages:, sender: message.sender, message:,
+      session_key: "brgen:conversation:#{channel.id}", channel: "brgen-messenger"
+    ).to_s.first(MAX_LEN)
   end
 
   def self.transcript(channel)
