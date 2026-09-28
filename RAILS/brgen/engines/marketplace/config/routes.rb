@@ -45,7 +45,7 @@ end
   # leaves the engine namespace — so this URL and brgen's own /webhooks/stripe
   # are one handler, and a dashboard pointed at either still pays orders.
   post "webhooks/stripe", to: "/webhooks/stripe#create", as: :webhooks_stripe
-  post "webhooks/vipps", to: "webhooks#vipps", as: :webhooks_vipps
+  post "webhooks/vipps", to: "/webhooks/vipps#create", as: :webhooks_vipps
   get "webhooks/dintero/callback", to: "webhooks#dintero_callback", as: :webhooks_dintero_callback
   post "webhooks/dintero", to: "webhooks#dintero", as: :webhooks_dintero
   resources :categories, only: :show, param: :id
