@@ -419,7 +419,7 @@ the "One chrome", ad system and layout sections bring back for a decision.
   1.x: the advisory says `>= 2.0.0.rc1`, and 2.0.0 final shipped 2026-09-18 —
   the entry's own trigger has fired. It blocked every app deploy on 2026-09-16
   until the ignore landed. The entry argues the advisory cannot reach this tree —
-  it is scoped to Ruby 3.1.x, while the repository now pins Ruby 4.0.7, and no user-supplied string ever
+  it is scoped to Ruby 3.1.x, while the repository now pins Ruby 4.0.5, and no user-supplied string ever
   becomes a class, agent or tool name here — but an ignore is a standing
   claim, not a fix. The RubyLLM 2.x migration is now the live baseline across
   MASTER and the Rails apps; keep service and provider-key contract tests
