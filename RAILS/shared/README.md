@@ -1043,7 +1043,9 @@ empty vendor file pins successfully and breaks only at runtime.
 Vendored: `animated-number`, `auto-submit`, `character-counter`,
 `checkbox-select-all`, `clipboard`, `content-loader`, `dropdown`, `lightbox`,
 `notification`, `password-visibility`, `popover`, `rails-nested-form`,
-`read-more`, `reveal`, `sortable`, `textarea-autogrow`.
+`read-more`, `reveal`, `sortable`.
+
+Textarea growth is native CSS via `field-sizing: content`; there is no autogrow controller.
 
 **Do not reintroduce CDN pins for these.** `pin` defaults to `preload: true`, so
 every pin emits a `modulepreload` and the browser fetches it eagerly on first
