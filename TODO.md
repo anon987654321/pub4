@@ -23,8 +23,8 @@ A finding is a hypothesis. Historical dated sections below are evidence records,
 ### Rails 8.2 migration
 - Re-run the complete RAILS contract suite before and after the migration; record exact files, runs, assertions, failures and exit status.
 - Run `bin/rails herb:check` and repair every template that cannot compile through Herb before enabling the 8.2 HTML+ERB default.
-- Source audit of transaction-sensitive Active Job producers is closed by `RAILS/test/rails_82_contract_test.rb`; the critical model producers originate from `after_commit`/`after_create_commit`. Runtime proof of the Rails 8.2 enqueue-after-commit behavior remains open until the 8.2 target can be exercised.
-- Static SQLite foreign-key audit is closed by `RAILS/test/rails_82_contract_test.rb`, including `PRAGMA foreign_keys` restoration checks and existing destroy-cascade coverage. The migration exercise against a real SQLite database remains open before the 8.2 cutover.
+- Source audit of transaction-sensitive Active Job producers is closed by `RAILS/test/rails_upgrade_contract_test.rb`; the critical model producers originate from `after_commit`/`after_create_commit`. Runtime proof of the Rails 8.2 enqueue-after-commit behavior remains open until the 8.2 target can be exercised.
+- Static SQLite foreign-key audit is closed by `RAILS/test/rails_upgrade_contract_test.rb`, including `PRAGMA foreign_keys` restoration checks and existing destroy-cascade coverage. The migration exercise against a real SQLite database remains open before the 8.2 cutover.
 - Keep the framework-default audit executable: every Rails app is pinned to `load_defaults 8.1`, no app has an explicit HTML+ERB Erubi override, and the legacy Rails 8.0 compatibility layer has no active initializer. Re-run this contract when the 8.2 target is locked.
 - Run security, autoloading, routing, rendering, asset, cache, job, mailer, Active Storage, PWA and system-test gates after the version change.
 - Keep edge-only migration changes isolated. When 8.2 receives a stable tag, compare edge to the tag, re-lock against the stable target, and rerun the full gate set.
