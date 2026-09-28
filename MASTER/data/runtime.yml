@@ -95,7 +95,6 @@ availability:
     batch_scan: L1
   degrade:
     council: [7, 3, 1]
-    critique_rounds: [2, 1, 0]
 
 collaboration:
   id: collaboration_protocol
