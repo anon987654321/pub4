@@ -35,6 +35,12 @@ class ProviderCanaryTest < Minitest::Test
     end
   end
 
+  def test_provider_canary_source_compiles
+    path = File.expand_path("../lib/cli/routing/provider_canary.rb", __dir__)
+    source = File.read(path)
+    assert_silent { RubyVM::InstructionSequence.compile(source, path) }
+  end
+
   def test_provider_domain_splits_colon_slash_and_backslash_model_ids
     canary = Master::CLI::Routing::ProviderCanary.new(
       agent: Agent.new,
