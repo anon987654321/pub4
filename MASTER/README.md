@@ -259,7 +259,7 @@ bin/deps install
 bin/cli
 ```
 
-`bin/deps check` reports the exact Ruby, Bundler and bundle state without changing anything. `bin/deps boot` runs the real `bin/cli --help` path, including bundle activation and `require "master"`, and succeeds only when the CLI reaches its own option parser. `bin/deps system` installs the platform build prerequisites explicitly; `bin/deps update [GEM ...]` is the explicit lockfile-changing operation.
+`bin/deps check` reports the exact Ruby, Bundler and bundle state without changing anything. `bin/deps boot` runs the real `bin/cli --fast` path, including bundle activation, `require "master"` and `Master.boot`, and succeeds only when the CLI reaches its `/status` path. `bin/deps system` installs the platform build prerequisites explicitly; `bin/deps update [GEM ...]` is the explicit lockfile-changing operation.
 
 Then:
 
