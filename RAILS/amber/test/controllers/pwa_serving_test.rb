@@ -58,6 +58,20 @@ class PwaServingTest < ActionDispatch::IntegrationTest
     ENV["CACHE_VERSION"] = previous
   end
 
+  test "the service worker derives a version and retires older runtime caches" do
+    previous = ENV.delete("CACHE_VERSION")
+
+    get pwa_service_worker_path
+
+    assert_response :success
+    body = response.body
+    refute_includes body, "__CACHE_VERSION__"
+    assert_match(/pages-[0-9a-f]{12}/, body)
+    assert_includes body, "caches.keys().then(names => Promise.all("
+    assert_includes body, "name !== `${APP_NAME}-pages-${CACHE_VERSION}`"
+  ensure
+    ENV["CACHE_VERSION"] = previous if previous
+  end
   test "the offline page renders without a session" do
     get pwa_offline_path
 
