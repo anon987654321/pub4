@@ -117,7 +117,8 @@ class PwaDesignContractTest < Minitest::Test
         assert_includes raw, '"start_url"'
         assert_includes raw, '"scope"'
         assert_includes raw, "standalone"
-        assert_includes raw, "#000000"
+        assert_match(/"theme_color":\s*"#[0-9a-fA-F]{6}"/, raw)
+        assert_match(/"background_color":\s*"#[0-9a-fA-F]{6}"/, raw)
         assert_includes raw, "when \"playlist\"" if app == "brgen"
         refute_includes raw, "//dating."
         refute_includes raw, "brgen_ai_url"
