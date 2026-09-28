@@ -40,7 +40,7 @@
     <header class="nearby-chat-widget-header">
       <div class="nearby-chat-widget-header-title">
         <strong data-nearby-chat-target="headerLabel"><%= widget_title %></strong>
-        <span><%= t("chat.local_room") %></span>
+        <span><%= ambient_chat_is_messenger? ? t("chat.private_messages_lead", default: "Direct messages") : t("chat.local_room") %></span>
       </div>
       <nav class="nearby-chat-widget-header-actions" aria-label="<%= t("chat.actions_label") %>">
         <% if messenger_href %>
