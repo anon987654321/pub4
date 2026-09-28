@@ -86,6 +86,7 @@ end
     @editing = @conversation.messages.find_by(id: params[:edit])
     @editing = nil unless @editing&.editable_by?(Current.user)
     @is_group_admin = @conversation.admin?(Current.user)
+    @master_invited = @conversation.participants.any? { |participant| participant.bot? && participant.username == "master" }
   end
 
   def invite_master
