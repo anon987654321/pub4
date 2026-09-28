@@ -62,7 +62,7 @@ class HonestyGatesTest < Minitest::Test
       "def configured? = products_token.present?\nMATRIX = \"matrix_uri\"\nFID = \"fid\"\n",
     "shared/app/services/shared/affiliate.rb" => "def import_all!; end\n",
     "brgen/lib/brgen/affiliate_placeholders.rb" => "{ placeholder: true }\n",
-    "brgen/app/views/shared/_affiliate_deals.html.erb" => "<%= render \"shared/affiliate_disclosure\" %>\n",
+    "shared/app/views/shared/_affiliate_feed_unit.html.erb" => "<%= render \"shared/affiliate_disclosure\" %>\n",
     "shared/app/views/shared/_affiliate_disclosure.html.erb" => "<%= t(\"affiliate_disclosure_text\") %>\n",
     "shared/app/models/shared/affiliate_conversion.rb" => "def self.record_from_postback!(params); end\n",
     "brgen/app/controllers/webhooks/tradedoubler_controller.rb" =>
