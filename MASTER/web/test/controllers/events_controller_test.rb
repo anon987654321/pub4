@@ -52,13 +52,15 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 2, queue.size
   end
 
-  test "the stream subscription sees colon-named events" do
+  test "the stream subscription covers rendered signals without opening the whole bus" do
     bus = Master::Trace::EventBus.new(event_log: Class.new { def append(*) = nil }.new)
     seen = []
-    bus.subscribe(EventsController::STREAM_PATTERN) { |ev| seen << ev[:event] }
+    EventsController::STREAM_PATTERNS.each { |pattern| bus.subscribe(pattern) { |ev| seen << ev[:event] } }
     bus.publish("pipeline:stage_start")
     bus.publish("tts:started")
+    bus.publish("private:internal")
+    bus.publish("response")
 
-    assert_equal %w[pipeline:stage_start tts:started], seen
+    assert_equal %w[pipeline:stage_start tts:started response], seen
   end
 end
