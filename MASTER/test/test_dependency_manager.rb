@@ -249,7 +249,7 @@ class TestDependencyManager < Minitest::Test
     assert_includes argv, "sqlite"
   end
 
-  def test_boot_probe_uses_the_real_cli_help_path
+  def test_boot_probe_uses_the_real_master_boot_path
     source = File.read(File.join(Master::ROOT, "bin", "deps"))
 
     assert_match(/when "boot"/, source)
