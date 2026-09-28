@@ -20,7 +20,7 @@
   <dialog class="composer" data-feed-compose-target="dialog"
           data-action="click->feed-compose#backdropClose close->feed-compose#closed">
     <%= form_with model: Post.new, url: main_app.posts_path, class: "composer-form",
-          data: { controller: "form-submit", feed_compose_target: "box",
+          data: { controller: "form-submit", feed_compose_target: "box", pwa_offline: true, pwa_queued_text: t("pwa.queued", default: "Lagret for offline"),
                   action: "submit->form-submit#lock",
                   form_submit_blank: t("feed.compose_blank") } do |f| %>
       <header class="composer-header">
