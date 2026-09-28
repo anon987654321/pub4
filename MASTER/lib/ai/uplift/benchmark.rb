@@ -40,7 +40,7 @@ module Master
         def suite = TASKS.dup
 
         def tree_first?(events)
-          tree_index = events.index { |event| %w[ListDir list_dir Tree tree].include?(event["tool"].to_s) }
+          tree_index = events.index { |event| %w[ListDir list_dir Tree tree].include?(event["tool"].to_s) && event["ok"] == true }
           tree_index && events[0...tree_index].none? { |event| source_selection_event?(event) }
         end
 
