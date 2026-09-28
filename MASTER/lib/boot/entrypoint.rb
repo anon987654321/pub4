@@ -12,12 +12,24 @@ module Master
         root = File.expand_path(root)
         reexec_pinned_ruby!(root:, env:, out:, argv:, program:)
         result = DependencyManager.ensure!(root:, env:, out:)
-        return true if result.ok
+        unless result.ok
+          out.puts("deps0: #{result.message}")
+          detail = result.output.to_s.strip
+          out.puts(detail) unless detail.empty?
+          exit 78
+        end
 
-        out.puts("deps0: #{result.message}")
-        detail = result.output.to_s.strip
-        out.puts(detail) unless detail.empty?
-        exit 78
+        activate_bundle!(root)
+
+        true
+      end
+
+      def activate_bundle!(root)
+        gemfile = File.join(root, "Gemfile")
+        return unless File.file?(gemfile)
+
+        ENV["BUNDLE_GEMFILE"] = gemfile
+        require "bundler/setup"
       end
 
       def reexec_pinned_ruby!(root:, env:, out:, argv:, program:)
