@@ -13,7 +13,10 @@ result = case command
          when "boot"
            cli = File.join(ROOT, "bin", "cli")
            warn "deps0: probing #{cli} --fast"
-           system(cli, "--fast")
+           # Do not inherit MASTER_FAST: bin/cli intentionally has a non-TTY
+           # shortcut under that flag, while this command exists to prove the
+           # real Master.boot path regardless of whether a caller has a pipe.
+           system({ "MASTER_FAST" => nil }, cli, "--fast")
          when "check", "status"
            status = manager.status
            puts "deps0: ruby=#{status[:ruby]} required=#{status[:ruby_required].empty? ? "none" : status[:ruby_required]}"
