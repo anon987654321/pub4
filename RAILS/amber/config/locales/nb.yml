@@ -2,6 +2,12 @@ nb:
   # See the note in en.yml. Norwegian convention: non-breaking space as the
   # thousands delimiter, comma as the decimal separator, unit before the
   # amount — kr 1 234,50.
+  time:
+    formats:
+      short: "%H:%M"
+      long: "%-d. %B %Y"
+      month: "%B %Y"
+      day: "%a %-d."
   compose:
     bold: "Fet"
     italic: "Kursiv"
