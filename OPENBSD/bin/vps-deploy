@@ -189,10 +189,10 @@ hold_deploy_flag
 # this clean; a warning that names a number is still the difference between
 # knowing and not.
 if [[ -x /usr/local/bin/config_drift_gate.rb ]]; then
-  if ! /usr/local/bin/ruby34 /usr/local/bin/config_drift_gate.rb > /tmp/vps-deploy-drift.out 2>&1; then
-    # ruby34, not grep: coreutils are banned in committed scripts here, and the
+  if ! /usr/local/bin/ruby40 /usr/local/bin/config_drift_gate.rb > /tmp/vps-deploy-drift.out 2>&1; then
+    # ruby40, not grep: coreutils are banned in committed scripts here, and the
     # gate's own summary line already carries the count in the shape we want.
-    drift_count=$(/usr/local/bin/ruby34 -e \
+    drift_count=$(/usr/local/bin/ruby40 -e \
       'print File.read("/tmp/vps-deploy-drift.out").scan(/: DRIFT -/).size' 2>/dev/null)
     print "vps-deploy: $app WARNING — ${drift_count:-?} config(s) on the box differ from the repo being deployed"
     print "vps-deploy: $app see /tmp/vps-deploy-drift.out"
@@ -280,7 +280,7 @@ if ! doas rcctl restart "$app" || ! doas rcctl check "$app"; then
   exit 1
 fi
 
-port=$(ruby34 -ryaml -e 'puts YAML.safe_load(File.read("'"$repo"'/RAILS/apps.yml")).dig("apps","'"$app"'","port")')
+port=$(ruby40 -ryaml -e 'puts YAML.safe_load(File.read("'"$repo"'/RAILS/apps.yml")).dig("apps","'"$app"'","port")')
 up_ok=0
 for i in {1..150}; do
   curl -fsS "http://127.0.0.1:${port}/up" >/dev/null 2>&1 && { up_ok=1; break; }
@@ -297,7 +297,7 @@ done
 # So ask for the stylesheet the page actually links, through the Host that owns
 # it: these apps are domain-constrained and a bare-IP request is a 403, which
 # would make this check pass by never finding a link to test.
-domain=$(ruby34 -ryaml -e 'puts YAML.safe_load(File.read("'"$repo"'/RAILS/apps.yml")).dig("apps","'"$app"'","domain")')
+domain=$(ruby40 -ryaml -e 'puts YAML.safe_load(File.read("'"$repo"'/RAILS/apps.yml")).dig("apps","'"$app"'","domain")')
 # The page and the link are two reads, because under set -e and pipefail one
 # pipeline that finds no link fails the assignment and ends the deploy with no
 # stamp and no message. A home page that does not answer is a failed deploy; a
@@ -307,7 +307,7 @@ home_page=$(curl -fsS --max-time 30 -H "Host: ${domain}" "http://127.0.0.1:${por
   print -u2 "vps-deploy: $app / did not answer on :${port} with Host ${domain}"
   exit 1
 }
-css_href=$(print -r -- "$home_page" | ruby34 -e 'print $stdin.binmode.read[%r{/assets/[^"]+\.css}n].to_s')
+css_href=$(print -r -- "$home_page" | ruby40 -e 'print $stdin.binmode.read[%r{/assets/[^"]+\.css}n].to_s')
 if [[ -n $css_href ]]; then
   if curl -fsS -o /dev/null --max-time 30 -H "Host: ${domain}" "http://127.0.0.1:${port}${css_href}" 2>/dev/null; then
     print "vps-deploy: $app stylesheet ok (${css_href})"
@@ -321,9 +321,9 @@ else
 fi
 
 queue_schema="$repo/RAILS/${app}/db/queue_schema.rb"
-if [[ -f $queue_schema ]] && ! ruby34 -e 'exit File.read(ARGV[0]).include?("define(version: 0)")' "$queue_schema"; then
+if [[ -f $queue_schema ]] && ! ruby40 -e 'exit File.read(ARGV[0]).include?("define(version: 0)")' "$queue_schema"; then
   print "vps-deploy: $app (solid_queue proof)"
-  doas ruby34 "$repo/OPENBSD/gates/solid_queue_proof.rb" "$app" \
+  doas ruby40 "$repo/OPENBSD/gates/solid_queue_proof.rb" "$app" \
     || { write_stamp "$app" failed; print -u2 "vps-deploy: solid_queue proof failed for $app"; exit 1; }
 fi
 
@@ -388,7 +388,7 @@ if [[ -n ${PUB4_DEPLOY_BROWSER_GATES:-} ]]; then
 fi
 print "vps-deploy: $app (gates: ${gate_names})"
 hold_deploy_flag
-if ! GATE_AUTOFIX=0 GATE_REQUIRE_LIVE=1 ruby34 "$repo/MASTER/gates/runner.rb" "${gate_names[@]}"; then
+if ! GATE_AUTOFIX=0 GATE_REQUIRE_LIVE=1 ruby40 "$repo/MASTER/gates/runner.rb" "${gate_names[@]}"; then
   write_stamp "$app" failed
   print -u2 "vps-deploy: $app gates failed — the app is deployed and serving, and something"
   print -u2 "            it is now serving does not hold. Fix or revert; do not deploy over it."
