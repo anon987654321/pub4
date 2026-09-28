@@ -214,6 +214,7 @@ end
 
         @tools.each { |t| t.reset! if t.respond_to?(:reset!) }
         Fiber[:master_tool_streak] = nil
+        Fiber[:master_tree_seen] = nil
         @session.add_message(role: :user, content: message)
       end
 
