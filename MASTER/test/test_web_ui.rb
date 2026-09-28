@@ -179,6 +179,17 @@ class TestWebUI < Minitest::Test
     assert_includes source, 'document.addEventListener("visibilitychange"'
   end
 
+  def test_face_semantics_uses_published_event_vocabulary
+    semantics = File.read(File.expand_path("../web/public/face_semantics.js", __dir__))
+
+    assert_includes semantics, "phantom:(?:detected|occurrence|recovery|halt)"
+    assert_includes semantics, "pipeline:stage_start"
+    assert_includes semantics, "/council:/.test(name)"
+    refute_includes semantics, "phantom:retry"
+    refute_includes semantics, "pipeline:start"
+    refute_includes semantics, "council:deliberation"
+  end
+
   def test_visual_bridge_delegates_event_classification_to_registry
     bridge = File.read(File.expand_path("../web/public/visual_bridge.js", __dir__))
     registry = File.read(File.expand_path("../web/public/topology_registry.js", __dir__))

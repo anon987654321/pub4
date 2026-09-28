@@ -159,7 +159,7 @@ window.addEventListener('master:visual', (ev) => {
     rootBody.dataset.errorInstrument = '1';
     setTimeout(() => { delete rootBody.dataset.errorInstrument; }, 2200);
   }
-  if (/phantom:detected|phantom:retry|flinch/.test(name) || d.flinch) {
+  if (/phantom:(?:detected|occurrence|recovery|halt)|flinch/.test(name) || d.flinch) {
     State.shake = Math.max(State.shake || 0, 0.65);
     State.surpriseY = Math.max(State.surpriseY || 0, 0.42);
     State.pulse = Math.max(State.pulse || 0, 0.38);
@@ -185,11 +185,11 @@ window.addEventListener('master:visual', (ev) => {
     const K = window.ParticleKernel;
     K.spawn(mouthPool, 0, 0.5, { kind: 4, zone: 1, valence: 0.6, attention: 0.8, decay: 0.006 });
   }
-  if (/council:deliberation|council:start/.test(name)) {
+  if (/council:/.test(name)) {
     State.pulse = Math.max(State.pulse || 0, 0.48);
     State.mode = State.mode === 'speaking' ? State.mode : 'thinking';
   }
-  if (/llm:request|pipeline:start|thinking/.test(name) && State.mode !== 'speaking') {
+  if (/llm:request|pipeline:stage_start|thinking/.test(name) && State.mode !== 'speaking') {
     State.mode = 'thinking';
     State.pulse = Math.max(State.pulse || 0, 0.32);
   }

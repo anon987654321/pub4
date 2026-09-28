@@ -19,9 +19,9 @@
   ];
 
   const EVENT_CLASSIFIER = [
-    [/phantom:detected|phantom:retry/i,          { topology: "ecology", entropy: 0.88, confidence: 0.18, mode: "phantom" }],
+    [/phantom:(?:detected|occurrence|recovery|halt)/i,          { topology: "ecology", entropy: 0.88, confidence: 0.18, mode: "phantom" }],
     [/llm:escalation|fallback|retry/i,         { topology: "ecology",  entropy: 0.62, confidence: 0.46, mode: "escalation" }],
-    [/llm:request|agent:start|pipeline:start/i, { topology: "face",    entropy: 0.32, confidence: 0.72, mode: "thinking" }],
+    [/llm:request|agent:start|pipeline:stage/i, { topology: "face",    entropy: 0.32, confidence: 0.72, mode: "thinking" }],
     [/memory|retriev|context|compact/i,         { topology: "ecology", entropy: 0.28, confidence: 0.76, mode: "memory" }],
     [/tool|scan|sweep|audit/i,                  { topology: "ecology", entropy: 0.38, confidence: 0.70, mode: "tool" }],
     [/error|rollback|failed|failure/i,          { topology: "ecology", entropy: 0.78, confidence: 0.24, mode: "error" }],
@@ -41,7 +41,7 @@
       renderer: "face.js",
       palette: "operator",
       zones: ["eyes", "mouth", "brows", "jaw", "crown", "attention_vector"],
-      events: ["llm:request", "agent:start", "pipeline:start", "chat:append", "speech:start"]
+      events: ["llm:request", "agent:start", "pipeline:stage_start", "chat:append", "speech:start"]
     },
     codebase: {
       id: "codebase",
