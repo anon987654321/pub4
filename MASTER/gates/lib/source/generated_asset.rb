@@ -204,23 +204,16 @@ module Deploy
       found
     end
 
-    # tools/build_workbox.mjs writes app/views/pwa/service-worker.js — it is
-    # served through a route, not from public/. This compared public/, which no
-    # app has, so both File.file? guards were false and the whole check was
-    # unreachable: shared/pwa/service_worker.js could change and no app's
-    # bundle was ever reported stale.
+    # tools/build_workbox.mjs writes app/views/pwa/service-worker.js. The worker
+    # is served through the PWA controller rather than from public/. The check
+    # therefore compares that generated view against shared/pwa/service_worker.js.
     #
-    # Making it reachable then made it wrong for brgen, which no longer builds
-    # its service worker at all. Workbox froze ~89 fingerprinted asset URLs in
-    # a precache manifest; every deploy re-digests those assets, so `install`
-    # started failing with bad-precaching-response and the PWA broke on
-    # radio.brgen.no. brgen replaced the bundle with a hand-rolled worker
-    # that precaches only /offline. Telling that app to "run npm run build:pwa"
-    # is telling it to reintroduce the outage — and the freshness comparison is
-    # meaningless for a file no generator writes.
+    # The generator deliberately excludes digest assets from the precache manifest:
+    # content-addressed URLs belong in the runtime CacheFirst path, not in a
+    # manifest frozen at build time. All three apps use this shared Workbox source.
     #
-    # All three apps now ship the shared Workbox worker. Check each generated
-    # worker against the same source and keep the exception surface empty.
+    # A worker that is not recognisably Workbox-generated is not silently accepted:
+    # that would turn a drifted generator path into a green asset gate.
     def service_worker_stale?(app_dir, result, app_name)
       sw_source = File.join(RAILS_ROOT, "shared", "pwa", "service_worker.js")
       sw_build = File.join(app_dir, "app", "views", "pwa", "service-worker.js")
