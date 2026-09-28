@@ -36,8 +36,10 @@ module Master
       LIVE_SYNTH_PLAY_RE = /\b(?:play|morph\w*|fade|switch|jam)\b.*\b(?:(?:mini)?moog|model\s*d|prophet|rhodes|juno|synth\w*|pads?|lead|bass(?:line)?|brass|strings|flute|pluck|lo-?fi|chords?|progressions?|something)\b/i.freeze
       LIVE_SYNTH_KNOB_RE = /\b(?:open|close|sweep|raise|lower|turn)\b.*\b(?:filter|cutoff|resonance|emphasis|detune|contour)\b/i.freeze
       LIVE_SYNTH_ALONE_RE = /\A\s*(?:stop|silence|enough)\b|\bstop\s+(?:the\s+)?(?:music|playing|synth\w*|improvi\w*|jam)\b|\b(?:improvi[sz]e|keep\s+playing)\b|\A\s*(?:please\s+)?play(?:\s+(?:some\s+)?music)?\s*[.!]?\s*\z/i.freeze
-      POSTPRO_RE = /\b(?:post-?process|colour\s+grade|color\s+grade|film\s+look|vhs(?:\s+tape)?\s+look|crt(?:\s+broadcast)?\s+look|camcorder(?:\s+glitch)?\s+look|make\s+this\s+(?:cinematic|analog|analogue))\b/i.freeze
+      POSTPRO_RE = /\b(?:postpro(?:\.rb)?|post-?process|colour\s+grade|color\s+grade|film\s+look|vhs(?:\s+tape)?\s+look|crt(?:\s+broadcast)?\s+look|camcorder(?:\s+glitch)?\s+look|make\s+this\s+(?:cinematic|analog|analogue))\b/i.freeze
       IMAGE_PATH_RE = /(?:["']([^"']+\.(?:jpe?g|png|webp|tiff?))["']|(?:\A|\s)([^\s"']+\.(?:jpe?g|png|webp|tiff?))(?=\z|\s))/i.freeze
+      POSTPRO_SUBJECT_RE = /\bpostpro(?:\.rb)?\b.*?\b(?:over|on|in|for|from)\b\s+["']([^"']+)["']/i.freeze
+      POSTPRO_SUBJECT_TOKEN_RE = /\bpostpro(?:\.rb)?\b.*?\b(?:over|on|in|for|from)\b\s+(~?(?:\/|\.\/|\.\.\/)?[^\s"']+\/?(?:\z|\s))/i.freeze
 
       def handles?(text)
         text.match?(KICK_RE) || text.match?(PLAY_LAST_RE) || text.match?(SYNTH_RE) || live_synth?(text) ||
@@ -64,11 +66,20 @@ module Master
       end
 
       def postprocess(text, root:)
-        source = text.match(IMAGE_PATH_RE)&.captures&.compact&.first
-        return Result.err("postpro: include an existing JPG, PNG, WebP, or TIFF path", category: :validation) if source.to_s.empty?
+        source = text.match(POSTPRO_SUBJECT_RE)&.captures&.first
+        source ||= text.match(POSTPRO_SUBJECT_TOKEN_RE)&.captures&.first
+        source ||= text.match(IMAGE_PATH_RE)&.captures&.compact&.first
+        return Result.err("postpro: include an existing image file or directory path", category: :validation) if source.to_s.empty?
 
         source = File.expand_path(source)
-        return Result.err("postpro: input not found #{source}", category: :validation) unless File.file?(source)
+        return Result.err("postpro: input not found #{source}", category: :validation) unless File.file?(source) || File.directory?(source)
+
+        if File.directory?(source)
+          args = [source]
+          result = ScriptDispatch.run(root:, tool: "postpro",
+                                      arg: args.map { |value| Shellwords.escape(value) }.join(" "))
+          return result.ok? ? Result.ok({ output: result.value!, rendered: result.value!, media: :postpro, path: source }) : result
+        end
 
         preset = postpro_preset_for(text)
         output_dir = MEDIA_OUTPUT_DIR
