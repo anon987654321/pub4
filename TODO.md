@@ -11,8 +11,9 @@ A finding is a hypothesis. Historical dated sections below are evidence records,
 - Main has now aligned the Rails Gemfiles/locked app stacks to Rails 8.1.4 and moved brgen to Rails 8.1 defaults. **Rails 8.2 is now the active migration target**, because another agent is actively upgrading pub4.
 - Upstream Rails is still on the 8.1 stable line; the 8.2 line is `8.2.0.alpha` on the Rails source tree. Keep edge-only behavior explicit and re-lock only when the exact 8.2 stable target is fixed.
 - Rails 8.2 migration seams called out by the current upstream guides include Herb HTML+ERB compilation, modern header-based CSRF behavior, enum negative scopes including `nil`, Active Storage analysis/variant timing, SQLite table-alteration behavior around `ON DELETE CASCADE`, and enqueue-after-transaction-commit behavior. The source-side contracts are now explicit; live 8.2/runtime verification stays open until the exact target can be exercised. Edge TTS is now isolated in a dedicated `:tts` dependency group so Rails boot does not auto-require its EventMachine stack.
-- Main has no open PRs and no open issues, but stale branches remain. The all-tree fix runner branch carries seven unique commits yet is 108 commits behind current main; the older full-Rails runner branch carries two unique commits and is 346 commits behind. Recover useful patches selectively; do not merge their history wholesale.
+- Main has no open PRs and no open issues. The remaining repair branches are stale snapshots with no commits ahead of current main and can be removed after comparison.
 - Hosted CI is not the verification path for this backlog; the repository's GitHub Actions workflows are removed. The live full three-tree `/fix` run remains unproven until an equivalent manually watched run emits actionable step-level evidence.
+- MASTER boot now activates the repository bundle immediately after dependency installation, so a successful `deps0` bootstrap cannot fall through to a raw `require` missing the installed gems.
 - `RAILS/test/run_all.rb` currently discovers 131 contract files recursively, one process per file. The historical red count remains stale until the suite is rerun manually on the current main baseline.
 
 ## Current plan — ordered 2026-09-28
@@ -299,11 +300,6 @@ the "One chrome", ad system and layout sections bring back for a decision.
   - **MCP compatibility is now on RubyLLM 2 + MCP 1.6.** The former
     `ruby_llm-mcp` compatibility item is resolved on `main`; keep the
     provider-key contract tests covering the current RubyLLM API.
-  - **`opentelemetry-sdk` is `require: false` with no instrumentation gem
-    paired to it** — an SDK that traces nothing. Either add the matching
-    `opentelemetry-instrumentation-*` gem or drop the SDK; a lock entry that
-    can never emit a span is the same inert-config shape as everything else
-    this file has caught this way.
 - **After the next deploy, confirm `.master/tts-worker-*.log` stay
   `master`-owned.** `cable_bridge.rb`, one path a root `assets:precompile` could
   build a container through, is deleted, and `MasterContainerLoader.ensure!`
@@ -322,11 +318,7 @@ the "One chrome", ad system and layout sections bring back for a decision.
   defaulting to today's path, from the next `OPERATOR.sh` install.
 ### The faces, the ear, and TTS on the box
 
-- **The face's `mood` tint has a listener and no producer.** Nothing publishes
-  `agent:mood`; `web/app/services/chat_service.rb` relays it as `mood`, which
-  `face.part5.txt` hears, so the tint never fires. Decide: wire a producer
-  from `voice/emotion.rb`'s state (the face starts changing colour on its own)
-  or delete the listener. The seam is recorded in `MASTER/web/CLAUDE.md`.
+- Closed: `agent:mood` has a producer in `Homeostat#observe`, with the browser relay and event-bus contract covering the listener path.
 - **The /face ear is unproven on a phone.** `lib/cli/face/ear.rb` streams a
   Termux microphone through PulseAudio's OpenSL ES source into whisper.cpp,
   and `lib/device/setup.rb` installs `termux-api sox ffmpeg pulseaudio` and
@@ -344,8 +336,7 @@ the "One chrome", ad system and layout sections bring back for a decision.
   now explicit and regression-tested: the ear only arms in `:idle` with an
   empty draft, and the post-listen cooldown prevents immediate re-arming.
   Measured 2026-09-25, in the order to close them. Behaviour first, no look
-  involved: it listens while idle; its idle motion ignores
-  `VOICE_IDLE_SIGNATURES`; a failed turn is lost where the web queues it
+  involved: a failed turn is lost where the web queues it
   offline; and the web face lacks the terminal's
   `IdeaPicture` after a reply. Neither face plays the voice bed that
   `Voice::Policy#bed` declares. Then a test that paints both depth maps from
@@ -733,8 +724,7 @@ slices. Each is a hypothesis with its seam.
   `CLI::Propose` gone, `Ground::BiasGuard` has no runtime caller and the
   `biases` and `principle_priorities` blocks in `data/rules.yml` are unread;
   wiring or deleting them edits an immutable file, so it is the operator's.
-- **`solid_queue` and `solid_cache` sit in the web Gemfile with nothing loading
-  them.** Dropping them is a lockfile change, so it lands with a watched deploy.
+- Closed: `solid_queue` and `solid_cache` are active web/runtime dependencies; `production.rb` enforces their adapters and the Rails apps carry their queue/cache schemas.
 
 ### RAILS
 
