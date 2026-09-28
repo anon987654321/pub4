@@ -236,6 +236,7 @@ module Master
 
         ok, stdout, stderr = run(
           [gem, "install", "bundler", "-v", version, "--no-document", "--user-install"],
+          chdir: @root,
           env: user_gem_env,
         )
         output = join_output(stdout, stderr)
