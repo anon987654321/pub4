@@ -45,9 +45,16 @@
   <% else %>
     <article id="<%= dom_id(post) %>" class="feed-card post-reading-card<%= " #{css_class}" if css_class.present? %>">
       <div class="post-reading-layout"><%= vote_rail if show_votes %><div class="post-reading-main post-reading-main--card">
-        <div class="feed-card-author-row"><div class="feed-card-avatar"><% if avatar_url.present? %><%= image_tag avatar_url, class: "feed-card-avatar-img", alt: name || "avatar", width: 40, height: 40 %><% else %><% monogram = (name || "?").first.upcase %><div class="feed-card-avatar-placeholder monogram monogram--<%= monogram.ord % 6 %>" role="img" aria-label="<%= name || "Anonymous" %> monogram"><%= monogram %></div><% end %></div><div class="feed-card-header"><span class="feed-card-name"><%= url.present? ? link_to(name, author_url, class: "link-inherit") : name %></span><% if handle.present? %><span class="feed-card-handle"><%= handle %></span><% end %><% if time.present? %><span class="feed-card-time">· <%= time %></span><% end %></div></div>
+        <header class="feed-card-header feed-card-byline"><span class="feed-card-name"><%= url.present? ? link_to(name, author_url, class: "link-inherit") : name %></span><% if handle.present? %><span class="feed-card-handle"><%= handle %></span><% end %><% if time.present? %><span class="feed-card-time">· <%= time %></span><% end %></header>
         <% if derived_title.present? %><h2 class="feed-card-text post-reading-title"><%= post_url.present? ? link_to(derived_title, post_url) : derived_title %></h2><% end %>
-        <% if content.present? %><div class="feed-card-body post-reading-body-preview"><%= content %></div><% if post_url.present? && body_plain.length > 260 %><%= link_to "…", post_url, class: "post-reading-more", aria: { label: more_label }, title: more_label %><% end %><% end %>
+        <% if content.present? %>
+          <div class="post-reading-preview">
+            <div class="feed-card-body post-reading-body-preview"><%= content %></div>
+            <% if post_url.present? && body_plain.length > 260 %>
+              <%= link_to "…", post_url, class: "post-reading-more", aria: { label: more_label }, title: more_label %>
+            <% end %>
+          </div>
+        <% end %>
         <% if meta.present? %><div class="feed-card-meta"><%= meta %></div><% end %><% if media.present? %><div class="feed-card-media"><%= media %></div><% end %>
         <% if actions.present? %><div class="feed-card-actions post-reading-actions"><%= actions %></div><% elsif local_assigns[:record].present? %><%= render "shared/action_bar", record: local_assigns[:record], reply_path: local_assigns[:reply_path], repost_path: local_assigns[:repost_path], reposted: local_assigns.fetch(:reposted, false), repost_count: local_assigns.fetch(:repost_count, 0), liked: local_assigns.fetch(:liked, false), like_count: local_assigns.fetch(:like_count, 0), comment_count: local_assigns.fetch(:comment_count, 0), view_count: local_assigns[:view_count], share_url: local_assigns[:share_url] || url %><% end %>
       </div></div>
