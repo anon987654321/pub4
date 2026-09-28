@@ -204,7 +204,7 @@ class ScheduledJobsTest < Minitest::Test
 
   # ---- the load-waiting wrappers --------------------------------------------
 
-  # No ruby34 here, so the load never reads low: every tick waits and the run
+  # No ruby40 here, so the load never reads low: every tick waits and the run
   # ends in a skip, exit 0, without reaching an app.
   def test_prune_guests_waits_every_tick_then_skips
     env = { "PRUNE_GUESTS_LOAD_CEILING" => "0", "PRUNE_GUESTS_WAIT_TICKS" => "2", "PRUNE_GUESTS_TICK_SECONDS" => "1" }
