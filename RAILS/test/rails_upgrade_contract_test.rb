@@ -131,7 +131,7 @@ class RailsUpgradeContractTest < Minitest::Test
       assert_match(/^  remote: https:\/\/github.com\/rails\/rails\.git$/m, source)
       assert_match(/^  revision: #{Regexp.escape(RAILS_REF)}$/m, source)
       assert_match(/^    rails \(8\.2\.0\.alpha\)$/m, source)
-      assert_includes source, "    herb (0.10.2)"
+      assert_includes source, "    herb (0.11.0)"
       assert_includes source, "    ractor-dispatch (0.3.0)"
       assert_includes source, "    marcel (2.1.0)"
       assert_includes source, "    globalid (1.4.0)"
@@ -140,7 +140,7 @@ class RailsUpgradeContractTest < Minitest::Test
     master = File.read(File.expand_path("../MASTER/web/Gemfile.lock", ROOT))
     assert_match(/^  revision: #{Regexp.escape(RAILS_REF)}$/m, master)
     assert_match(/^    rails \(8\.2\.0\.alpha\)$/m, master)
-    assert_includes master, "    herb (0.10.2)"
+    assert_includes master, "    herb (0.11.0)"
     assert_includes master, "    ractor-dispatch (0.3.0)"
     assert_includes master, "    marcel (2.1.0)"
     assert_includes master, "    globalid (1.4.0)"
