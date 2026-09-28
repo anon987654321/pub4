@@ -215,7 +215,7 @@ def tree_of(text)
 
   # No explicit prefix: infer from vocabulary that is unambiguous per tree.
   return "RAILS" if text.match?(/\b(brgen|amber|bsdports|marketplace|takeaway|dating|radio|vertical|scss|erb|Stimulus|Turbo)\b/i)
-  return "MASTER" if text.match?(/\b(dilla|postpro|preprompt|lora|render|stem|bpm|sonic)\b/i)
+  return "MASTER" if text.match?(/\b(dilla|postpro|replicate|lora|render|stem|bpm|sonic)\b/i)
   return "OPENBSD" if text.match?(/\b(vm23|relayd|nsd|acme|pf\.conf|rc\.d|crontab|deploy|doas)\b/i)
   return "MASTER" if text.match?(/\b(law|scanner|ratchet|council|fold|soul\.yml|rules\.yml|face|TTS)\b/i)
 

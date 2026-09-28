@@ -371,7 +371,7 @@ return if collisions.any?
       RAILS/shared/app RAILS/shared/lib RAILS/gates
       RAILS/brgen/app RAILS/brgen/lib RAILS/amber/app RAILS/amber/lib
       RAILS/bsdports/app RAILS/bsdports/lib
-      MASTER/tools/dilla/lib MASTER/tools/lora MASTER/tools/postpro MASTER/tools/preprompt
+      MASTER/tools/dilla/lib MASTER/tools/lora MASTER/tools/postpro MASTER/tools/replicate
       OPENBSD/lib
     ].freeze
 

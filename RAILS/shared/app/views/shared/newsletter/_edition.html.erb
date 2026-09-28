@@ -14,16 +14,27 @@
   <% if edition.stories.any? %>
     <tr><td><hr class="mail-divider"></td></tr>
     <tr><td><p class="mail-section-title"><%= t("newsletter.today_in", city: edition.city_name) %></p></td></tr>
-    <% edition.stories.each do |story| %>
+    <% edition.stories.each_with_index do |story, index| %>
       <%= render "shared/newsletter/story", story: story %>
+      <% if edition.artworks[index].present? %>
+        <%= render "shared/newsletter/artwork", artwork: edition.artworks[index] %>
+      <% end %>
+    <% end %>
+  <% elsif edition.artworks.any? %>
+    <tr><td><hr class="mail-divider"></td></tr>
+    <% edition.artworks.each do |artwork| %>
+      <%= render "shared/newsletter/artwork", artwork: artwork %>
     <% end %>
   <% end %>
 
   <% if edition.deals.any? %>
     <tr><td><hr class="mail-divider"></td></tr>
     <tr><td><p class="mail-section-title"><%= t("newsletter.curated_offers") %></p></td></tr>
-    <% edition.deals.each do |deal| %>
+    <% edition.deals.each_with_index do |deal, index| %>
       <%= render "shared/newsletter/deal", deal: deal %>
+      <% if edition.artworks[index].present? %>
+        <%= render "shared/newsletter/artwork", artwork: edition.artworks[index] %>
+      <% end %>
     <% end %>
   <% end %>
 

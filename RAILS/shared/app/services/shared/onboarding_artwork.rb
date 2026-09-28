@@ -65,7 +65,7 @@ module Shared
       private
 
       def enqueue(surface:, city:)
-        token_present = ENV["REPLICATE_API_TOKEN"].present? || ENV["PREPROMPT_API_TOKEN"].present?
+        token_present = ENV["REPLICATE_API_TOKEN"].present?
         return unless token_present
         return if defined?(Rails) && Rails.env.test?
 

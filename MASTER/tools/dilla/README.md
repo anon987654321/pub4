@@ -136,7 +136,7 @@ a mix with a mix. The picture is the half that matters: nine octave bands put
 eight to sixteen kilohertz in one number, and a record with no air at all can
 pass every band and still be dull.
 Bare `ruby dilla.rb` does not open by asking what you want, as postpro and
-preprompt do: a render is reproduced from its knobs and its seed, and a question
+replicate do: a render is reproduced from its knobs and its seed, and a question
 at the start is a step a script cannot answer.
 
 The instruments are recipes, not recordings. `AnalogSynth::PATCHES` in

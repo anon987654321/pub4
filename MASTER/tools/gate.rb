@@ -16,7 +16,7 @@ module Deploy
   # silently broken dilla and postpro before. The only thing standing between
   # that and a broken engine was `dilla debug`, which nobody runs after a fix
   # and which covers dilla alone: the other 13 Ruby files in MASTER/tools — postpro,
-  # preprompt, the nine lora toolkit scripts — had nothing checking them at all.
+  # replicate, the nine lora toolkit scripts — had nothing checking them at all.
   #
   # Three checks, in increasing order of what they can catch:
   #
@@ -44,7 +44,7 @@ module Deploy
     # dead code accumulates in a tree with no suite.
     #
     # `entry` names a script whose load is probed. nil means the tree has no
-    # loadable entry point — see UNGUARDED below for why preprompt is one.
+    # loadable entry point — see UNGUARDED below for why replicate is one.
     TREES = [
       {
         name: "dilla",
@@ -59,9 +59,9 @@ module Deploy
         owner: "single-file tool",
       },
       {
-        name: "preprompt",
-        glob: "preprompt/**/*.rb",
-        entry: "preprompt/preprompt.rb",
+        name: "replicate",
+        glob: "replicate/**/*.rb",
+        entry: "replicate/replicate.rb",
         owner: "single-file tool",
       },
       {
@@ -254,7 +254,7 @@ end
     # Each tool is <name>/<name>.rb, <name>/lib/ and a README. Ruby beside the
     # entry point is the shape the three trees were moved out of, so a reader
     # finds the tool in one file and its support in one directory.
-    LAID_OUT_TOOLS = %w[dilla postpro preprompt].freeze
+    LAID_OUT_TOOLS = %w[dilla postpro replicate].freeze
 
     def check_layout(files)
       LAID_OUT_TOOLS.each do |tool|

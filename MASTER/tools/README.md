@@ -3,7 +3,7 @@
 **A claim about an image or a sound is worth nothing until something measures
 it.** Four media tools share that conviction. `dilla/` builds beats, Detroit in
 its lean and genre-agnostic in intent. `postpro/` is the house grade, analog
-photographic emulation for stills. `preprompt/` generates images, and
+photographic emulation for stills. `replicate/` generates images, and
 chains radically different models to do it. `lora/` trains person-specific
 fine-tunes, so a name survives across worlds. `bplans/` holds the business
 plans as YAML, waiting for a generator that has not been written. When it is,
@@ -60,7 +60,7 @@ not from folklore.
 weights the opening of the prompt most heavily. Bury the subject and the subject
 competes with the scenery.
 
-**30–80 words.** This is a real ceiling, not a style note. `preprompt` compiles a
+**30–80 words.** This is a real ceiling, not a style note. `replicate` compiles a
 caller's prompt together with vocabulary fields — subject distance, key side,
 catchlight, skin, selfie geometry — and all of them at once reaches 142 words,
 nearly double the guidance. Past the ceiling the later fields stop describing

@@ -184,7 +184,7 @@ narrow it with `--only`.
 A prompt set is what a subject is rendered as. Every written sitting lives in
 `ideas.yml`, tagged with its brief: `shoots` is fifty sittings of light, `warp`
 is the press shoot, and `best` is twenty-four of those named by reference.
-`scenarios`, `selfies` and `distance` are drawn by `preprompt/lib/craft.rb`
+`scenarios`, `selfies` and `distance` are drawn by `replicate/lib/craft.rb`
 from its vocabularies, numbered so a sitting is the same on every run, and
 each fits CLIP's 77 tokens.
 

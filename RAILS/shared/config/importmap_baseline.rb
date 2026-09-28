@@ -10,48 +10,12 @@ end
 pin "@hotwired/turbo-rails", to: "turbo.min.js"
 pin "@hotwired/stimulus", to: "@hotwired--stimulus.js"
 pin "@hotwired/stimulus-loading", to: "stimulus-loading.js"
-# Vendored, not CDN. The dist build is what makes that possible: src/index.js
-# pulls in ./fetch_request, ./fetch_response, ./request_interceptor and ./verbs
-# via *extensionless* relative imports — valid for a bundler, which auto-resolves
-# the .js, but not for a browser's native ES module loader, which requests the
-# literal path and 404s. dist/requestjs.js is pre-bundled with no imports at all.
 pin "@rails/request.js", to: "@rails--request.js"
-# The cable_ready gem ships its own importmap pinning morphdom to ga.jspm.io,
-# with `pin`'s default preload: true — measured on live brgen.no, that host and
-# jsDelivr were the two external modulepreloads on every page. This line runs
-# after the gem paths are drawn, so re-pinning the same name overrides it.
 pin "morphdom", to: "morphdom.js"
 pin "stimulus-use"
 pin "stimulus_reflex"
 pin "cable_ready"
-# No futurism pin, because nothing consumes it: no ERB in any app carries
-# data-controller="futurism". `pin` defaults to preload: true, so pinning it
-# costs an eager fetch on every page load to register a controller nobody asks
-# for. No view calls `futurize` either, so no Gemfile carries the gem; a
-# paginated index that wants the lazy-render boundary adds both back together.
-# No date-fns pin, and unpkg.com is no longer contacted by any app. It existed
-# for one consumer, @stimulus-components/timeago, and that controller is gone:
-# it reads data-timeago-datetime-value, no view in any app ever set one, and its
-# only possible effect was to overwrite the server's localised Norwegian with
-# date-fns English. Relative time is now rendered server-side by
-# Shared::UiHelper#time_ago. Restoring the pin means restoring the CDN, because
-# date-fns's ESM build cross-references ~200 siblings by *relative* path
-# (./addDays.js, ./formatDistance.js, ...) — vendoring one flattened file breaks
-# every one of those paths once served from our own domain.
-#
-# preload: false on every CDN-backed pin from here down. `pin` defaults to
-# preload: true, so each emitted a <link rel="modulepreload"> on every page of
-# every app -- jsDelivr and esm.sh on the first-paint critical path whether or
-# not any code on the page imported them.
 pin "sortablejs"
-# Tiptap, vendored rather than fetched — the rule this tree states in
-# STIMULUS_COMPONENTS_BASELINE.md and enforces for @stimulus-components. It was
-# two esm.sh pins, so every compose box on the site depended on a third party
-# being reachable at the moment someone started writing.
-#
-# preload: false is load-bearing. `pin` defaults to preload: true, which emits a
-# modulepreload and fetches all 288KB on every page load — for an editor most
-# visits never open — and makes the controller's dynamic import() decorative.
 pin "tiptap", to: "tiptap.js", preload: false
 pin "pub4/tiptap_editor", to: "tiptap_editor_controller.js"
 pin "pub4/hotwire", to: "hotwire.js"
@@ -82,10 +46,6 @@ pin "pub4/brgen_shell", to: "brgen_shell_controller.js"
 pin "pub4/nav_autohide", to: "nav_autohide_controller.js"
 pin "pub4/action", to: "action_controller.js"
 pin "pub4/bottom_sheet", to: "bottom_sheet_controller.js"
-pin "pub4/dismiss", to: "dismiss_controller.js"
-# 1% sample (hotwire.js WEB_VITALS_SAMPLE_RATE), with a local PerformanceObserver
-# fallback -- so 99 visitors in 100 never import this and none of them should
-# preload it.
 pin "web-vitals", to: "https://cdn.jsdelivr.net/npm/web-vitals@4.2.4/dist/web-vitals.js", preload: false
 pin "pub4/autosave", to: "autosave_controller.js"
 pin "pub4/draft_store", to: "draft_store_controller.js"
@@ -96,11 +56,12 @@ pin "pub4/feed_hotkey", to: "feed_hotkey_controller.js"
 pin "pub4/offline_feed", to: "offline_feed_controller.js"
 pin "pub4/pwa_standalone", to: "pwa_standalone_controller.js"
 pin "pub4/outbound_click", to: "outbound_click_controller.js"
-# Not a controller — the shared ordering rule for the three onboarding prompts.
 pin "pub4/onboarding", to: "onboarding_queue.js"
 pin "pub4/cookie_consent", to: "cookie_consent.js"
 pin "pub4/cookie_consent_controller", to: "cookie_consent_controller.js"
 pin "pub4/welcome_onboarding", to: "welcome_onboarding_controller.js"
+pin "pub4/newsletter_capture", to: "newsletter_capture_controller.js"
+pin "pub4/newsletter_capture", to: "newsletter_capture_controller.js"
 pin "pub4/link_converter", to: "link_converter_controller.js"
 pin "pub4/battery_aware", to: "battery_aware_controller.js"
 pin "pub4/network_aware", to: "network_aware_controller.js"
@@ -114,7 +75,5 @@ pin "idb-keyval", to: "idb-keyval.js"
 
 %w[
   animated-number auto-submit character-counter checkbox-select-all clipboard
-  dropdown lightbox notification read-more
-  reveal sortable password-visibility popover rails-nested-form
+  dropdown lightbox notification read-more reveal sortable password-visibility popover rails-nested-form
 ].each { |name| sc_pin.call(name) }
-

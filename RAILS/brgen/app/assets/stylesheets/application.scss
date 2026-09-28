@@ -6953,7 +6953,7 @@ body.vertical-takeaway .order-status {
   font-size: var(--text-sm);
 }
 
-/* TV — Odyssey-style cinematic watch + postpro/preprompt media polish */
+/* TV — Odyssey-style cinematic watch + postpro/replicate media polish */
 body.vertical-tv {
   --tv-stage: var(--bg);
   --tv-accent: var(--accent);
@@ -6991,8 +6991,8 @@ body.vertical-tv .video-player {
 }
 
 /* Grade is server-side (postpro); no CSS filter ornament (flat rule) */
-body.vertical-tv .preprompt-hero,
-body.vertical-tv .tv-media-image.preprompt-hero {
+body.vertical-tv .replicate-hero,
+body.vertical-tv .tv-media-image.replicate-hero {
   object-fit: cover;
   background: var(--tv-stage);
   border: 1px solid var(--border);

@@ -606,7 +606,7 @@ class TestPostproFilm < Minitest::Test
 
   # --- sidecars ------------------------------------------------------------
 
-  # preprompt writes <out>.json with the prompt, model and seed, then grades the
+  # replicate writes <out>.json with the prompt, model and seed, then grades the
   # same file in place. The grade's record joins that one; it does not erase it.
   def test_a_grade_keeps_the_sidecar_another_tool_wrote
     Dir.mktmpdir do |dir|

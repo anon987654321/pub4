@@ -13,7 +13,7 @@ require "digest"
 # since the move to MASTER/tools/, where it resolves to MASTER/tools/lib/io/ -- a directory
 # that does not exist -- so this file has aborted on its first require, every
 # invocation, since 687c07a43. MASTER/tools/dilla/dilla.rb reaches the same library
-# by the path below; postpro and preprompt were never updated with it.
+# by the path below; postpro and replicate were never updated with it.
 require_relative "../../lib/io/analog_capabilities"
 
 require "open3"
@@ -197,7 +197,7 @@ module PostproBootstrap
   end
 
   # Anchored to this file, for the same reason the camera profiles and
-  # PREPROMPT_PATH are: `File.exist?("master.json")` asked the shell's working
+  # REPLICATE_PATH are: `File.exist?("master.json")` asked the shell's working
   # directory, which is wherever the operator happened to be standing. It has
   # therefore been false on every invocation, so CONFIG has always been {} and
   # all twelve `CONFIG[...]` reads in this file have always taken their
@@ -239,7 +239,7 @@ module PostproBootstrap
     end
 
     # Anchored to this file, not to the shell's working directory, for the same
-    # reason as PREPROMPT_PATH below: a relative path finds the profiles only
+    # reason as REPLICATE_PATH below: a relative path finds the profiles only
     # from the one directory nobody runs from.
     profiles_path = File.expand_path("camera_profiles.json", __dir__)
     camera_profiles = load_camera_profiles(profiles_path)
@@ -334,7 +334,7 @@ POSTPRO_USAGE = <<~TXT
     --random [--count N] [--rough]    three to five chains, into Downloads
     --watch [DIR] [--preset NAME]     grade every new photo that lands in DIR
     --auto                            grade the default globs without prompting
-    --from-preprompt                   grade what preprompt just wrote
+    --from-replicate                   grade what replicate just wrote
     --rescue FILE [--output FILE]     diagnose a photograph, then apply the fix
     --measure FILE [--against AFTER]  read texture numbers and palette, or how a grade moved them
     --stock-sheet FILE [--preset NAME] [--output FILE]  one frame through every stock, tiled
@@ -464,7 +464,7 @@ if ARGV.include?("--measure")
   exit 0
 end
 # Anchored to the tool, not to the shell's working directory — the same CWD
-# defect this file already fixes for master.json and preprompt.rb. A bare
+# defect this file already fixes for master.json and replicate.rb. A bare
 # relative path meant even a read-only --vocab-check created a log wherever the
 # operator happened to be standing.
 #
@@ -501,14 +501,14 @@ if BOOTSTRAP[:gems][:vips]
   require_relative "lib/uncanny"
 end
 
-# Was File.exist?("preprompt.rb") -- relative to the CURRENT WORKING DIRECTORY,
-# which is wherever the user happened to be, and never the directory preprompt
+# Was File.exist?("replicate.rb") -- relative to the CURRENT WORKING DIRECTORY,
+# which is wherever the user happened to be, and never the directory replicate
 # lives in. It has been false on every invocation from anywhere, so the
-# --from-preprompt branch and the closing hand-off tip were both unreachable.
-# preprompt is a sibling of this file, and that relationship does not depend on
+# --from-replicate branch and the closing hand-off tip were both unreachable.
+# replicate is a sibling of this file, and that relationship does not depend on
 # where the shell was when it started.
-PREPROMPT_PATH = File.expand_path("../preprompt/preprompt.rb", __dir__)
-PREPROMPT_PRESENT = File.exist?(PREPROMPT_PATH)
+REPLICATE_PATH = File.expand_path("../replicate/replicate.rb", __dir__)
+REPLICATE_PRESENT = File.exist?(REPLICATE_PATH)
 CAMERA_PROFILES = BOOTSTRAP[:camera_profiles]
 CONFIG = BOOTSTRAP[:config]
 $postpro_seed = Integer(ENV.fetch("POSTPRO_SEED", "0"), exception: false) || 0
@@ -3847,18 +3847,18 @@ end
   parts.join(" ")
 end
 
-# Preprompt Integration
-def check_preprompt
-  return unless PREPROMPT_PRESENT
+# Replicate Integration
+def check_replicate
+  return unless REPLICATE_PRESENT
 
-  $cli_logger.info "Preprompt detected! Auto-processing generated images..."
+  $cli_logger.info "Replicate detected! Auto-processing generated images..."
 
   recent_files = Dir.glob("*_generated_*.{jpg,jpeg,png,webp}")
                     .select { |f| File.mtime(f) > (Time.now - 300) }
 
   return unless recent_files.any?
-    $cli_logger.info "Found #{recent_files.count} recent Preprompt outputs"
-    preset_name = PROMPT ? PROMPT.select("Choose preset for Preprompt outputs:", PRESETS.keys) : (CONFIG["default_preset"] || "house")
+    $cli_logger.info "Found #{recent_files.count} recent Replicate outputs"
+    preset_name = PROMPT ? PROMPT.select("Choose preset for Replicate outputs:", PRESETS.keys) : (CONFIG["default_preset"] || "house")
     recent_files.each { |file| process_file(file, 2, preset_name) }
 
 end
@@ -3947,9 +3947,9 @@ end
 
 # Main Workflow
 def get_input
-  $cli_logger.info "postpro.rb v18.0.0 full-analog#{PREPROMPT_PRESENT ? " preprompt=active" : ""}"
+  $cli_logger.info "postpro.rb v18.0.0 full-analog#{REPLICATE_PRESENT ? " replicate=active" : ""}"
 
-  check_preprompt if PREPROMPT_PRESENT
+  check_replicate if REPLICATE_PRESENT
 
   if PROMPT
     workflow = PROMPT.select("Choose workflow:", [
@@ -4023,7 +4023,7 @@ rescue StandardError => e
 end
 
 # A sidecar another tool wrote keeps its fields and gains this one's under
-# "postpro". preprompt grades in place and hands over the path whose .json
+# "postpro". replicate grades in place and hands over the path whose .json
 # already holds the prompt, model and seed; replacing that file left the graded
 # picture with a record of its grade and none of how it was made. A sidecar
 # postpro wrote itself, or one that does not parse, is replaced.
@@ -4357,7 +4357,7 @@ def vocab_check
   # name. Until 2026-08-12 process_file and run_random ran the finishing grain
   # and run_one_shot and run_watch did not, so the same --preset produced a
   # different negative depending on which entry point rendered it — and the thin
-  # side of the split was preprompt's --postpro handoff, which is the path that
+  # side of the split was replicate's --postpro handoff, which is the path that
   # makes the finals. Operator's call: all four grain.
   #
   # Read out of this file rather than asserted in prose, because the split had
@@ -4492,13 +4492,13 @@ def run_one_shot
   processed = preset(image, preset_name)
   # Operator, 2026-08-12: the four entry points now grain identically. This one
   # and run_watch did not, so the same --preset gave a different negative
-  # depending on whether it arrived through a batch or through preprompt's
+  # depending on whether it arrived through a batch or through replicate's
   # --postpro handoff -- and the handoff is the path that produces the finals.
   processed = apply_finishing_grain(processed, preset_name)
   processed = rgb_bands(processed)
   quality = CONFIG["jpeg_quality"] || 95
   # process_file honours --tiff16 and this ignored it, so the one-shot mode
-  # -- the mode preprompt's --postpro handoff uses, and the only one with an
+  # -- the mode replicate's --postpro handoff uses, and the only one with an
   # explicit output path -- quietly wrote 8-bit JPEG when asked for 16-bit TIFF.
   # A grading tool silently halving its bit depth is the kind of thing you find
   # much later, in the file.
@@ -4738,10 +4738,10 @@ def auto_launch
     end
     return run_random(subject)
   end
-  if ARGV.include?("--auto") || (!$stdin.tty? && ARGV.include?("--from-preprompt"))
+  if ARGV.include?("--auto") || (!$stdin.tty? && ARGV.include?("--from-replicate"))
     input = auto_mode
-  elsif ARGV.include?("--from-preprompt") && PREPROMPT_PRESENT
-    check_preprompt
+  elsif ARGV.include?("--from-replicate") && REPLICATE_PRESENT
+    check_replicate
     return
   else
     input = get_input
@@ -4792,8 +4792,8 @@ def auto_launch
   duration = (Time.now - start_time).round(2)
   $cli_logger.info "Complete! #{total_processed} files → #{total_variations} masterpieces (#{duration}s)"
 
-  return unless PREPROMPT_PRESENT && total_variations > 0
-    $cli_logger.info "Tip: Run 'ruby preprompt.rb' to generate more content!"
+  return unless REPLICATE_PRESENT && total_variations > 0
+    $cli_logger.info "Tip: Run 'ruby replicate.rb' to generate more content!"
 
 end
 

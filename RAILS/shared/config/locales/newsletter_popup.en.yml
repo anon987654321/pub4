@@ -1,0 +1,11 @@
+en:
+  newsletter_popup:
+    kicker: "The city letter"
+    title: "A better inbox."
+    lede: "Local things worth knowing, plus the occasional offer we would actually send to a friend."
+    reward: "Sign up and get the next city letter and this week's curated picks."
+    email_label: "Email address"
+    consent: "You'll get the newsletter you asked for. Unsubscribe anytime."
+    submit: "Send me the letter"
+    not_now: "Not now"
+    close: "Close"
