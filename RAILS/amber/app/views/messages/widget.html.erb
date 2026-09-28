@@ -1,0 +1,26 @@
+<turbo-frame id="nearby-chat-widget-frame" class="nearby-chat-widget-frame">
+  <%= turbo_stream_from "amber:messages:#{Current.user.id}" %>
+  <div class="nearby-chat-widget-mode">
+    <strong><%= t("nav.messages", default: "Messages") %></strong>
+    <span aria-hidden="true">·</span>
+    <%= t("chat.private_messages_lead", default: "Direct messages") %>
+  </div>
+  <ul id="amber-message-log" class="nearby-chat-widget-log conversation-log" role="log"
+      data-controller="conversation-log"
+      data-conversation-log-viewer-id-value="<%= Current.user.id %>"
+      aria-live="polite"
+      aria-relevant="additions"
+      aria-label="<%= t("messages.title", default: "Messages") %>">
+    <% if @messages.blank? %>
+      <li class="nearby-chat-widget-empty-item" role="status">
+        <%= t("messages.inbox_clear", default: "No messages yet") %>
+      </li>
+    <% end %>
+    <% @messages.to_a.reverse_each do |message| %>
+      <%= render "messages/message", message: message, viewer_id: Current.user.id %>
+    <% end %>
+  </ul>
+  <div class="amber-messenger-composer">
+    <%= render "messages/form", message: @message, recipients: @recipients, origin: "widget" %>
+  </div>
+</turbo-frame>
