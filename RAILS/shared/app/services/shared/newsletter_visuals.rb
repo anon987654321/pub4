@@ -60,17 +60,21 @@ module Shared
     end
 
     def artworks_for(city_name:, themes:)
-      Array(themes).first(ARTWORK_COUNT).filter_map.with_index do |theme, index|
-        replicate_artwork(
-          city_name:,
-          theme:,
-          aspect_ratio: "3:2",
-          role: "newsletter editorial interlude #{index + 1}"
-        )
-      rescue StandardError => error
-        log("artwork #{index + 1} failed: #{error.message}")
-        nil
+      workers = Array(themes).first(ARTWORK_COUNT).map.with_index do |theme, index|
+        Thread.new do
+          replicate_artwork(
+            city_name:,
+            theme:,
+            aspect_ratio: "3:2",
+            role: "newsletter editorial interlude #{index + 1}"
+          )
+        rescue StandardError => error
+          log("artwork #{index + 1} failed: #{error.message}")
+          nil
+        end
       end
+
+      workers.filter_map(&:value)
     end
 
     private
