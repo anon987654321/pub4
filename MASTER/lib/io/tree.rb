@@ -1,39 +1,21 @@
 # frozen_string_literal: true
 
-require "open3"
-require "rbconfig"
+require_relative "list_dir"
 
 module Master
   module Io
-    # Tree — lists directory structure via OPENBSD/tools/tree.rb.
-    # Safe: read-only, no writes.
+    # Tree is the agent-facing deep listing. ListDir owns the filesystem walk;
+    # keeping one implementation prevents the overview tool and the runtime tool
+    # from disagreeing about what a directory contains.
     class Tree
-      include PathGuard
-      SCRIPT = File.expand_path("../../../OPENBSD/tools/tree.rb", __dir__).freeze
+      MAX_DEPTH = ListDir::MAX_DEPTH
 
       def initialize(root:, event_bus: nil)
-        @bus = event_bus
-        @root = File.realpath(root)
+        @list_dir = ListDir.new(root:, event_bus:)
       end
 
       def call(path: nil)
-        target = @root
-        if path
-          resolved = resolve(path, write: false)
-          return resolved if resolved.err?
-
-          target = resolved.value!
-        end
-        return Result.err("path not found: #{target}", category: :validation) unless Dir.exist?(target)
-
-        out, err, status = Master::Io::Exec.capture3(RbConfig.ruby, SCRIPT, target)
-        return Result.err("tree failed: #{err.strip}", category: :unknown) unless status.success?
-
-        lines = out.lines.map(&:chomp).reject(&:empty?)
-        @bus&.publish("tool:tree", path: target, count: lines.size)
-        Result.ok(lines.join("\n"))
-      rescue StandardError => e
-        Result.err("tree: #{e.message}", category: :unknown)
+        @list_dir.call(path: path || ".", depth: MAX_DEPTH)
       end
     end
   end
