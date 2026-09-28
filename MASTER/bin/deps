@@ -10,6 +10,10 @@ manager = Master::Boot::DependencyManager.new(root: ROOT)
 
 command = ARGV.fetch(0, "install")
 result = case command
+         when "boot"
+           cli = File.join(ROOT, "bin", "cli")
+           warn "deps0: probing #{cli} --help"
+           system(cli, "--help")
          when "check", "status"
            status = manager.status
            puts "deps0: ruby=#{status[:ruby]} required=#{status[:ruby_required].empty? ? "none" : status[:ruby_required]}"
@@ -23,7 +27,7 @@ result = case command
          when "system"
            manager.install_system_packages!
          else
-           warn "usage: bin/deps [check|install|repair|update|system]"
+           warn "usage: bin/deps [check|install|repair|update|system|boot]"
            exit 64
          end
 
