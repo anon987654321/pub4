@@ -85,7 +85,7 @@ apps:
         - { name: "Tv::Show", status: done, notes: "tv_shows migration + ShowsController" }
         - { name: "Tv::Episode", status: done, notes: "tv_episodes migration + belongs_to show/video" }
         - { name: video upload + Active Storage variants,                  status: done, notes: "Tv::Video video_file + thumbnail; webp poster/thumb variants via MediaProcessable" }
-        - { name: live stream infrastructure,                              status: planned, agent: ignore, notes: "BLOCKER: needs a media server (nginx-rtmp / MediaMTX / SRS) plus transcoding, none of which exists. ffmpeg is not installed on vm23 either (see TODO.md), so the transcoding dependency is absent on the target host. Tv::Broadcast already models stream_key/go_live!/end_live! — the gap is infrastructure, not app code." }
+        - { name: live stream infrastructure,                              status: planned, agent: ignore, notes: "BLOCKER: needs a media server (nginx-rtmp / MediaMTX / SRS) plus a delivery/transcoding path. ffmpeg is already a required OpenBSD target; what is absent is the media server and external delivery tier. Tv::Broadcast already models stream_key/go_live!/end_live! — the gap is infrastructure, not upload/model code." }
         - { name: VideoPublished / BroadcastScheduled events,             status: done, notes: "VideoPublished on status=published; BroadcastScheduled via tracks_activity + BroadcastStarted/Ended" }
         - { name: "Tv::Sound (reusable audio, per-sound feed)", status: done, notes: "a video carries a sound and a sound lists its videos, which is the TikTok loop; videos_count moves with update! because a counter cache does not move on update_column" }
       subapp_dating:
