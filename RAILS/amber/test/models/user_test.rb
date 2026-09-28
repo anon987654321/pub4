@@ -9,4 +9,14 @@ require "shared/user_auth_examples"
 # case does.
 class UserTest < ActiveSupport::TestCase
   include Shared::UserAuthExamples
+
+  test "master bot is a stable reserved participant" do
+    master = User.master_bot
+
+    assert master.bot?
+    assert master.guest?
+    assert master.master_bot?
+    assert_equal "MASTER", master.display_name
+    assert_equal master.id, User.master_bot.id
+  end
 end
