@@ -352,11 +352,12 @@ end
           payload = {
             floor:,
             reachable:,
+            degraded: !reachable,
             levels:,
             models: models.first(12),
           }
           bus&.publish("availability:posture", **payload)
-          reachable ? Result.ok(payload) : Result.err("availability: interactive floor #{floor} unavailable", category: :offline)
+          Result.ok(payload)
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "availability_posture", event_bus: bus)
           Result.err(e.message, category: :infrastructure)
