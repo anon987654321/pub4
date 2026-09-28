@@ -26,7 +26,7 @@
             aria: { label: t("post.comment_aria", count: post.comment_count, default: "Comment, %{count} comments") },
             title: t("comments.submit") do %>
         <%= render "shared/feed_icon", name: "comment" %>
-        <span class="feed-action-count"><%= post.comment_count %></span>
+        <span class="feed-action-count"><%= post.comment_count.positive? ? post.comment_count : "" %></span>
       <% end %>
       <%# This button spent a long time with nothing behind it — first carrying
           data-controller="action" with no URL, so a press added the active
@@ -66,6 +66,7 @@
           <% end %>
         </div>
       </div>
+      <%= render "shared/post_embed_action", post: post, url: post_url(post) %>
       <button type="button" class="feed-action"
               data-controller="clipboard"
               data-clipboard-source-value="<%= post_url(post) %>"
