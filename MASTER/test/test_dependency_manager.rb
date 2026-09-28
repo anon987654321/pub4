@@ -171,6 +171,13 @@ class TestDependencyManager < Minitest::Test
     refute_equal rbenv.send(:bundle_config_root), homebrew.send(:bundle_config_root)
   end
 
+  def test_join_output_accepts_multiple_output_parts
+    manager = MANAGER.new(root: @root, env: {}, out: StringIO.new)
+
+    assert_equal "one\ntwo\nthree",
+                 manager.send(:join_output, "one", "", nil, "two", "three")
+  end
+
   def test_incompatible_native_bundle_is_repaired_before_boot
     responses = [
       [true, "The Gemfile's dependencies are satisfied", ""],
