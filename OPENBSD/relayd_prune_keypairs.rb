@@ -4,8 +4,8 @@
 # Drop `tls keypair` lines whose certificate is not on disk, because relayd
 # refuses to start over one and takes every site down with it.
 #
-#   ruby34 OPENBSD/relayd_prune_keypairs.rb [PATH]           # report only (default)
-#   ruby34 OPENBSD/relayd_prune_keypairs.rb --apply [PATH]   # rewrite PATH
+#   ruby40 OPENBSD/relayd_prune_keypairs.rb [PATH]           # report only (default)
+#   ruby40 OPENBSD/relayd_prune_keypairs.rb --apply [PATH]   # rewrite PATH
 #
 # Report-only unless told otherwise: this rewrites /etc/relayd.conf, and a tool
 # that edits the front door by default is one a curious run can break.
