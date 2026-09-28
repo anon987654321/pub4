@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class Playlist::ListensController < Playlist::BaseController
+  before_action :require_user_session, only: :create
+
   def create
     track = Playlist::Track.find(params[:track_id])
     Playlist::Listen.create!(user: Current.user, track: track)
