@@ -26,10 +26,9 @@ class TestDependencyContracts < Minitest::Test
 
   REPO = File.expand_path("../..", __dir__)
 
-  # No workflow may name a Ruby version. `.ruby-version` is the pin — five files,
-  # all 3.4.9, one per tree — and a workflow that restates it is a second source
-  # that drifts silently: two workflows once installed 3.3 against a repo pinned
-  # at 3.4.9, so they tested an interpreter nobody runs locally or on vm23.
+  # No workflow may name a Ruby version. `.ruby-version` is the pin, and a workflow
+  # that restates it is a second source that drifts silently. This test makes the
+  # workflow consume the same repository contract used by local and deploy commands.
   #
   # setup-ruby resolves `.ruby-version` against the step's working directory, and
   # each of those directories has one, so this reads the same pin everywhere.
