@@ -85,6 +85,7 @@ class TestLLMDispatcher < Minitest::Test
     complete = bus.events.find { |name, _payload| name == "llm:call_complete" }
     assert_equal 100, complete.last[:tokens_in]
     assert_equal 50, complete.last[:tokens_out]
+    assert_equal true, complete.last[:cache_hit]
     assert_equal event.last[:cost], complete.last[:cost_usd]
     assert_equal 1, session.costs.size
   end
@@ -102,6 +103,7 @@ class TestLLMDispatcher < Minitest::Test
     complete = bus.events.find { |name, _payload| name == "llm:call_complete" }
     assert_equal 250, complete.last[:tokens_in]
     assert_equal 0, complete.last[:tokens_out]
+    assert_equal false, complete.last[:cache_hit]
   end
 
   def test_active_file_types_collects_extensions_from_session_context
