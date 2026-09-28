@@ -55,12 +55,13 @@ class RailsStackContractTest < Minitest::Test
   end
 
   def test_every_rails_app_uses_8_1_framework_defaults
-    %w[brgen amber bsdports].each do |app|
-      body = File.read(File.join(RAILS_ROOT, app, "config", "application.rb"))
+    APP_ROOTS.each do |root|
+      body = File.read(File.join(REPO_ROOT, root, "config", "application.rb"))
+
       assert_includes body, "config.load_defaults 8.1",
-                       "#{app} is on an older Rails framework-default target"
+                       "#{root} is on an older Rails framework-default target"
       refute_includes body, "config.load_defaults 8.0",
-                      "#{app} still targets Rails 8.0 defaults"
+                      "#{root} still targets Rails 8.0 defaults"
     end
   end
 end
