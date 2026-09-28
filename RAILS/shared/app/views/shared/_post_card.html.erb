@@ -7,6 +7,8 @@
 <% content = local_assigns.key?(:content) ? local_assigns[:content] : post_body_text(post) %>
 <% time = local_assigns[:time] || (post.created_at ? time_ago_in_words(post.created_at) : nil) %>
 <% url = local_assigns[:url] %>
+<% author_url = local_assigns.key?(:author_url) ? local_assigns[:author_url] : url %>
+<% post_url = local_assigns.key?(:post_url) ? local_assigns[:post_url] : url %>
 <% if url.nil? && post.persisted? && respond_to?(:post_path) %><% url = post_path(post) rescue nil %><% end %>
 <% meta = local_assigns[:meta] %>
 <% media = local_assigns[:media] %>
@@ -34,18 +36,18 @@
   <% if variant == :prose %>
     <article id="<%= dom_id(post) %>" class="feed-post post-reading-card<%= " #{css_class}" if css_class.present? %>" role="article" aria-label="<%= t("post.by_author", name: name, default: "Post by %{name}") %>">
       <div class="post-reading-layout"><%= vote_rail if show_votes %><div class="post-reading-main">
-        <header class="feed-post-meta feed-post-byline"><span class="author"><%= url.present? ? link_to(name, url, class: "link-inherit") : name %></span><% if (place = distance_stamp(post)) %> · <span class="feed-post-place"><%= place %></span><% end %><% if time.present? && post.created_at %> · <time datetime="<%= post.created_at.iso8601 %>"><%= time %></time><% elsif time.present? %> · <span class="feed-post-time"><%= time %></span><% end %></header>
-        <% if derived_title.present? %><h2 class="feed-post-title post-reading-title"><%= url.present? ? link_to(derived_title, url) : derived_title %></h2><% end %>
-        <% if content.present? %><div class="feed-post-body feed-post-prose prose post-reading-body-preview"><%= content %></div><% if url.present? && body_plain.length > 260 %><%= link_to "…", url, class: "post-reading-more", aria: { label: more_label }, title: more_label %><% end %><% end %>
+        <header class="feed-post-meta feed-post-byline"><span class="author"><%= url.present? ? link_to(name, author_url, class: "link-inherit") : name %></span><% if (place = distance_stamp(post)) %> · <span class="feed-post-place"><%= place %></span><% end %><% if time.present? && post.created_at %> · <time datetime="<%= post.created_at.iso8601 %>"><%= time %></time><% elsif time.present? %> · <span class="feed-post-time"><%= time %></span><% end %></header>
+        <% if derived_title.present? %><h2 class="feed-post-title post-reading-title"><%= post_url.present? ? link_to(derived_title, post_url) : derived_title %></h2><% end %>
+        <% if content.present? %><div class="feed-post-body feed-post-prose prose post-reading-body-preview"><%= content %></div><% if post_url.present? && body_plain.length > 260 %><%= link_to "…", post_url, class: "post-reading-more", aria: { label: more_label }, title: more_label %><% end %><% end %>
         <% if meta.present? %><div><%= meta %></div><% end %><% if media.present? %><div class="feed-post-media"><%= media %></div><% end %><% if actions.present? %><footer class="feed-post-actions post-reading-actions"><%= actions %></footer><% end %>
       </div></div>
     </article>
   <% else %>
     <article id="<%= dom_id(post) %>" class="feed-card post-reading-card<%= " #{css_class}" if css_class.present? %>">
       <div class="post-reading-layout"><%= vote_rail if show_votes %><div class="post-reading-main post-reading-main--card">
-        <div class="feed-card-author-row"><div class="feed-card-avatar"><% if avatar_url.present? %><%= image_tag avatar_url, class: "feed-card-avatar-img", alt: name || "avatar", width: 40, height: 40 %><% else %><% monogram = (name || "?").first.upcase %><div class="feed-card-avatar-placeholder monogram monogram--<%= monogram.ord % 6 %>" role="img" aria-label="<%= name || "Anonymous" %> monogram"><%= monogram %></div><% end %></div><div class="feed-card-header"><span class="feed-card-name"><%= url.present? ? link_to(name, url, class: "link-inherit") : name %></span><% if handle.present? %><span class="feed-card-handle"><%= handle %></span><% end %><% if time.present? %><span class="feed-card-time">· <%= time %></span><% end %></div></div>
-        <% if derived_title.present? %><h2 class="feed-card-text post-reading-title"><%= url.present? ? link_to(derived_title, url) : derived_title %></h2><% end %>
-        <% if content.present? %><div class="feed-card-body post-reading-body-preview"><%= content %></div><% if url.present? && body_plain.length > 260 %><%= link_to "…", url, class: "post-reading-more", aria: { label: more_label }, title: more_label %><% end %><% end %>
+        <div class="feed-card-author-row"><div class="feed-card-avatar"><% if avatar_url.present? %><%= image_tag avatar_url, class: "feed-card-avatar-img", alt: name || "avatar", width: 40, height: 40 %><% else %><% monogram = (name || "?").first.upcase %><div class="feed-card-avatar-placeholder monogram monogram--<%= monogram.ord % 6 %>" role="img" aria-label="<%= name || "Anonymous" %> monogram"><%= monogram %></div><% end %></div><div class="feed-card-header"><span class="feed-card-name"><%= url.present? ? link_to(name, author_url, class: "link-inherit") : name %></span><% if handle.present? %><span class="feed-card-handle"><%= handle %></span><% end %><% if time.present? %><span class="feed-card-time">· <%= time %></span><% end %></div></div>
+        <% if derived_title.present? %><h2 class="feed-card-text post-reading-title"><%= post_url.present? ? link_to(derived_title, post_url) : derived_title %></h2><% end %>
+        <% if content.present? %><div class="feed-card-body post-reading-body-preview"><%= content %></div><% if post_url.present? && body_plain.length > 260 %><%= link_to "…", post_url, class: "post-reading-more", aria: { label: more_label }, title: more_label %><% end %><% end %>
         <% if meta.present? %><div class="feed-card-meta"><%= meta %></div><% end %><% if media.present? %><div class="feed-card-media"><%= media %></div><% end %>
         <% if actions.present? %><div class="feed-card-actions post-reading-actions"><%= actions %></div><% elsif local_assigns[:record].present? %><%= render "shared/action_bar", record: local_assigns[:record], reply_path: local_assigns[:reply_path], repost_path: local_assigns[:repost_path], reposted: local_assigns.fetch(:reposted, false), repost_count: local_assigns.fetch(:repost_count, 0), liked: local_assigns.fetch(:liked, false), like_count: local_assigns.fetch(:like_count, 0), comment_count: local_assigns.fetch(:comment_count, 0), view_count: local_assigns[:view_count], share_url: local_assigns[:share_url] || url %><% end %>
       </div></div>
