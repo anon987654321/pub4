@@ -43,7 +43,8 @@ it. A line leaves when its entry closes; re-order rather than append.
 
 1. **Pin the Ruby every runner uses.** Entry: "`bin/operator` broke on a
    one-line lookup" (MASTER). Done when `test_bin_ruby.rb` is green on this
-   Mac and `bin/operator test` refuses to run under a Ruby that is not 3.4.9.
+   Mac and `bin/operator test` refuses to run under a Ruby that is not the
+   version in `MASTER/.ruby-version`.
 2. **Turn the RAILS contract suite green, 131 files.** Entry: "The RAILS
    contract suite is red" (RAILS). After 1. Done when `ruby
    RAILS/test/run_all.rb` exits 0 under the pinned Ruby.
@@ -65,7 +66,7 @@ it. A line leaves when its entry closes; re-order rather than append.
 - **Do not put Ractors around the live agent graph.** Ruby 3.4 documents Ractor as experimental; MASTER's Zeitwerk classes, event bus, mutable services, configuration and LLM adapters are stateful. The existing process/subprocess seams already provide hard boundaries.
 - **Do not use Ractors in RAILS request handling.** Keep request concurrency in Rails. Use processes where isolation is required.
 - **Future Ractor seam: pure-data CPU work only.** A candidate must be bounded and embarrassingly parallel, exchange frozen strings, arrays or numeric buffers, use a fixed worker count, and return deterministic output identical to the sequential path.
-- **No implementation until a benchmark proves it.** Measure wall time and allocations on Ruby 3.4.9. Reject the Ractor path when it is not materially faster or adds complexity without measurable capacity gain.
+- **No implementation until a benchmark proves it.** Measure wall time and allocations on the repository-pinned Ruby. Reject the Ractor path when it is not materially faster or adds complexity without measurable capacity gain.
 - **MASTER implementation:** `MASTER/lib/runtime/compute.rb` now provides serial/thread/Ractor execution behind an explicit safe-invoke protocol. Keep RAILS on request/process concurrency until a pure-data CPU workload is isolated and benchmarked; NVD fetching, ActiveRecord work, Dilla subprocesses and socket handling are not Ractor candidates.
 ### MASTER
 
@@ -146,7 +147,7 @@ the "One chrome", ad system and layout sections bring back for a decision.
   so every `bin/operator` command raised `NameError` until `feae0a1ef`.
   `test_bin_ruby.rb` exercises that branch — it landed the same day in
   `9fa0f70d8` — and is still red on this Mac under both PATH Ruby (4.0.5)
-  and 3.4.9, in `test_rbenv_path_uses_the_repo_pinned_version`. Done when that
+  and the historical pinned runtime, in `test_rbenv_path_uses_the_repo_pinned_version`. Done when that
   test is green, the source-text assertions on `RubyRunner` in
   `test_ops_gate_contract.rb` and `test_runtime_one_source.rb` measure
   behaviour instead, and a push cannot leave with `test_bin_ruby.rb` red.
@@ -305,7 +306,7 @@ the "One chrome", ad system and layout sections bring back for a decision.
 ### Instruments — found 2026-09-25
 
 - **The RAILS contract suite is red in 7 of 132 files, all rendered values.**
-  Measured under 3.4.9 on 2026-09-26, down from 23. Every remaining failure is
+  Measured under the then-pinned Ruby on 2026-09-26, down from 23. Every remaining failure is
   a CSS value or a stylesheet's size, so each is the operator's or the brgen
   CSS pass's: `breakpoint_lint` (a 1024px edge in brgen), `css_coverage_lint`
   (13 classes the markup asks for and no sheet defines — store-promo-*,
@@ -355,7 +356,7 @@ the "One chrome", ad system and layout sections bring back for a decision.
   1.x: the advisory says `>= 2.0.0.rc1`, and 2.0.0 final shipped 2026-09-18 —
   the entry's own trigger has fired. It blocked every app deploy on 2026-09-16
   until the ignore landed. The entry argues the advisory cannot reach this tree —
-  it is scoped to Ruby 3.1.x, we pin 3.4.9, and no user-supplied string ever
+  it is scoped to Ruby 3.1.x, while the repository now pins Ruby 4.0.7, and no user-supplied string ever
   becomes a class, agent or tool name here — but an ignore is a standing
   claim, not a fix. The RubyLLM 2.x migration is now the live baseline across
   MASTER and the Rails apps; keep service and provider-key contract tests
