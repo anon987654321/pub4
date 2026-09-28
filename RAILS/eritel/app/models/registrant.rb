@@ -9,7 +9,7 @@ class Registrant < ApplicationRecord
 
   has_many :orders, dependent: :restrict_with_exception
 
-  validates :email, :country_code, presence: true
+  validates :email, :country_code, :verification_status, presence: true
   validates :email, uniqueness: true
   validates :country_code, length: { is: 2 }
 end
