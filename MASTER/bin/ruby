@@ -104,6 +104,9 @@ if [ -n "$RBENV" ]; then
   fi
 fi
 
+if [ -z "${RUBY:-}" ] && [ "$(uname -s 2>/dev/null || true)" = "OpenBSD" ] && [ -n "${PINNED_VERSION:-}" ]; then
+  RUBY="$(command -v "ruby${PINNED_VERSION%.*}" 2>/dev/null || true)"
+fi
 RUBY="${RUBY:-$(command -v ruby 2>/dev/null || true)}"
 if [ -z "$RUBY" ]; then
   install_system_runtime
@@ -113,6 +116,9 @@ if [ -z "$RUBY" ]; then
     if [ -z "$RUBY" ]; then
       RUBY="$(install_pinned_ruby "$RBENV" || true)"
     fi
+  fi
+  if [ -z "${RUBY:-}" ] && [ "$(uname -s 2>/dev/null || true)" = "OpenBSD" ] && [ -n "${PINNED_VERSION:-}" ]; then
+    RUBY="$(command -v "ruby${PINNED_VERSION%.*}" 2>/dev/null || true)"
   fi
   RUBY="${RUBY:-$(command -v ruby 2>/dev/null || true)}"
 fi
