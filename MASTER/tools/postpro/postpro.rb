@@ -155,9 +155,9 @@ module PostproBootstrap
         dmesg "ERROR no supported package manager found"
       end
     when /openbsd/
-      if system("which pkg_add > /dev/null 2>&1")
+      if system("which", "pkg_add", out: File::NULL, err: File::NULL)
         dmesg "attempting: pkg_add vips"
-        system("doas pkg_add vips")
+        system("doas", "pkg_add", "vips")
       else
         dmesg "ERROR pkg_add not found"
       end
