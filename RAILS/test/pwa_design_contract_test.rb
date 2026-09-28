@@ -9,16 +9,9 @@ class PwaDesignContractTest < Minitest::Test
   SHARED_ROOT = File.join(ROOT, "shared")
   APPS = %w[amber brgen bsdports].freeze
 
-  # Empty as of 2026-08-14, and kept rather than deleted because the exemption is
-  # the thing worth being able to say.
-  #
-  # brgen was hand-rolled because the Workbox build froze ~89 fingerprinted asset
-  # URLs in its precache manifest, every deploy re-digested them, `install` failed
-  # with bad-precaching-response, and the PWA broke on radio.brgen.no.
-  # Precaching content-addressed bundles is the wrong tool — but the tool was the
-  # glob, not Workbox: build_workbox now ignores assets/**, so the manifest holds
-  # only stable URLs and brgen is back on the shared worker with the offline form
-  # queue and periodic sync its escape had cost it.
+  # All current apps use the shared Workbox worker. This remains an explicit
+  # empty escape hatch: an app that genuinely needs a different worker must name
+  # the exception here rather than weakening the common contract.
   #
   # If an app needs to leave again, put it here rather than weakening the checks
   # every worker owes regardless of how it is built.
