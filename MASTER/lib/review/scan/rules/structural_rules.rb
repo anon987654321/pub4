@@ -82,12 +82,15 @@ module Master
           end
 
           def exposed_method_finding(node, visibility)
-            if node.receiver
-              finding(line: node.location.start_line,
-                message: "def self.#{node.name} below the private marker is still public — move it above")
-            elsif visibility == :public
+            receiver = node.receiver
+            if receiver.nil?
+              return unless visibility == :public
+
               finding(line: node.location.start_line,
                 message: "public method #{node.name} after private marker — move above private")
+            elsif receiver.is_a?(Prism::SelfNode)
+              finding(line: node.location.start_line,
+                message: "def self.#{node.name} below the private marker is still public — move it above")
             end
           end
 
@@ -110,10 +113,10 @@ module Master
           def check(code, path:)
             return [] unless path.to_s.end_with?(".rb", ".rake")
             findings = []
-            findings.concat(scan_lines(code, /\bmethod_missing\b/, message: "method_missing without respond_to_missing? — add respond_to_missing?")) \
+            findings.concat(scan_lines(code, /\bmethod_missing\s*[(:]/, message: "method_missing without respond_to_missing? — add respond_to_missing?")) \
               if code.include?("method_missing") && !code.include?("respond_to_missing?")
-            findings.concat(scan_lines(code, /\bconst_missing\b/, message: "const_missing — prefer explicit require"))
-            findings.concat(scan_lines(code, /\bautoload\b/, message: "autoload — prefer explicit require_relative"))
+            findings.concat(scan_lines(code, /\bconst_missing\s*[(:]/, message: "const_missing — prefer explicit require"))
+            findings.concat(scan_lines(code, /\bautoload\s*[(:]/, message: "autoload — prefer explicit require_relative"))
             findings
           end
 
@@ -122,6 +125,9 @@ module Master
           def scan_lines(src, pattern, message:)
             indexed_lines = src.lines.each_with_index
             indexed_lines.filter_map do |line, i|
+              next if line.lstrip.start_with?("#")
+              next if line.match?(/scan:\s*intentional\b/)
+
               finding(line: i + 1, message:) if line.match?(pattern)
             end
           end
