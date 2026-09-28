@@ -29,7 +29,7 @@ class RailsStackContractTest < Minitest::Test
       body = File.read(File.join(REPO_ROOT, root, "Gemfile"))
       assert_includes body,
         %(gem "rails", github: "rails/rails", ref: "#{RAILS_REF}"),
-        "#{root}/Gemfile must pin Rails 8.2 source #{RAILS_REF}"
+        "#{root}/Gemfile must pin Rails #{RAILS_VERSION} at #{RAILS_REF}"
     end
   end
 
@@ -38,12 +38,15 @@ class RailsStackContractTest < Minitest::Test
       body = File.read(File.join(REPO_ROOT, root, "Gemfile.lock"))
       assert_includes body, "remote: https://github.com/rails/rails"
       assert_includes body, "revision: #{RAILS_REF}"
+      assert_includes body, "actioncable (8.2.0.alpha)"
+      assert_includes body, "actionview (8.2.0.alpha)"
+      assert_includes body, "activesupport (8.2.0.alpha)"
       assert_includes body, "rails (8.2.0.alpha)"
       assert_includes body, "railties (8.2.0.alpha)"
-      assert_includes body, "rails!"
       assert_includes body, "herb (0.11.0)"
       assert_includes body, "ractor-dispatch (0.3.0)"
       assert_includes body, "marcel (2.1.0)"
+      assert_includes body, "rails!"
       refute_includes body, "rails (8.1.4)"
       refute_includes body, "rails (~> 8.1.4)"
     end
@@ -54,9 +57,9 @@ class RailsStackContractTest < Minitest::Test
       body = File.read(File.join(REPO_ROOT, root, "config", "application.rb"))
 
       assert_includes body, "config.load_defaults 8.2",
-                       "#{root} is on an older Rails framework-default target"
-      refute_includes body, "config.load_defaults 8.0",
-                      "#{root} still carries the Rails 8.1 defaults"
+                      "#{root} is not on Rails 8.2 defaults"
+      refute_includes body, "config.load_defaults 8.1",
+                      "#{root} still carries Rails 8.1 defaults"
     end
   end
 end
