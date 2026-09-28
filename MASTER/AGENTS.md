@@ -367,7 +367,7 @@ applies the strongest, validates it and reads the path again, until the tree
 converges, stops improving, or reaches a state MASTER may not settle alone. A
 run ends as DONE, PLATEAU, BLOCKED or VALIDATION_FAILED, and only DONE claims
 the work is finished. `/review` and `/critique` read and argue without writing.
-There is no `/scan`: observation is where a fix starts, not a command.
+`/scan` is the detector-only observation surface; `/fix` adds repair and verification.
 
 **That means a fix mutates the tree** — it has broken dilla, postpro and
 MASTER's own chat path. `--no-autofix` and `--dry-run` hold it back. Read the
