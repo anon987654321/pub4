@@ -7,7 +7,7 @@ A finding is a hypothesis. Historical dated sections below are evidence records,
 ## Current state — 2026-09-28
 
 - `main` is the authoritative repository baseline. The tree has changed materially since the previous 2026-09-27 audit.
-- Ruby is pinned to `4.0.7` at root and in `MASTER/.ruby-version`. Exact-pin enforcement and runner fixes have landed; verify every real host/runner rather than reopening the old Ruby-version task.
+- Ruby is pinned to `4.0.5` at root and in `MASTER/.ruby-version`. Exact-pin enforcement and runner fixes have landed; verify every real host/runner rather than reopening the old Ruby-version task.
 - Main has now aligned the Rails Gemfiles/locked app stacks to Rails 8.1.4 and moved brgen to Rails 8.1 defaults. **Rails 8.2 is now the active migration target**, because another agent is actively upgrading pub4.
 - The official Rails 8.2 Edge Guide/release notes are still marked work in progress rather than a stable tagged release. The migration must therefore keep edge-vs-release state explicit and re-lock when the exact 8.2 target is fixed.
 - Rails 8.2 migration seams called out by the current upstream guides include Herb HTML+ERB compilation, modern header-based CSRF behavior, enum negative scopes including `nil`, Active Storage analysis/variant timing, SQLite table-alteration behavior around `ON DELETE CASCADE`, and enqueue-after-transaction-commit behavior. The source-side contracts are now explicit; live 8.2/runtime verification stays open until the exact target can be exercised.
@@ -61,7 +61,7 @@ A finding is a hypothesis. Historical dated sections below are evidence records,
 - Visual morphology, colors, visemes and voice aesthetic remain operator decisions.
 
 ### Ruby/OpenBSD runtime boundary
-- The repo is pinned to Ruby 4.0.7, while many OpenBSD scripts/rc.d definitions still use `ruby34` and `bundle34`. Treat this as a compatibility seam, not a search/replace.
+- The repo is pinned to Ruby 4.0.5, while many OpenBSD scripts/rc.d definitions still use `ruby34` and `bundle34`. Treat this as a compatibility seam, not a search/replace.
 - Measure the actual vm23 Ruby package/interpreter available for the target OpenBSD version first.
 - Align deployment scripts, process matching, cron, health checks and bundle wrappers with the runtime that actually boots the apps.
 - Re-prove Rails 8.2 compatibility before changing the operational interpreter names.
