@@ -49,6 +49,32 @@ module Deploy
     # brgen.no itself -- the only city page_inventory ever points a host at.
     BERGEN_CITY_ID = 1
 
+    UNRESOLVED_REASONS = [
+      [/shared\/passwords\/edit\z/, "single-use password-reset token cannot be seeded as an unused live credential"],
+      [/\/conversations\/show\z/, "conversation membership is scoped to the requester, so a stateless guest probe cannot pre-seed a participant"],
+      [/\/listening_party\z/, "listening-party rows are created from a playlist/set and are not seeded independently"],
+      [/\/events\//, "no repository seed creates event rows"],
+      [/\/stories\//, "no repository seed creates story rows"],
+      [/\/hashtags\//, "no repository seed creates hashtag rows"],
+      [/\/partner/, "no repository seed creates partner-program rows"],
+      [/\/marketplace\/deals\//, "no repository seed creates marketplace-deal rows"],
+      [/\/communities\/wiki\//, "no repository seed creates standalone community-wiki rows"],
+      [/\/tv\/shows\//, "no repository seed creates TV-show rows"],
+      [/\/tv\/episodes\//, "no repository seed creates TV-episode rows"],
+      [/\/tv\/live_streams\//, "no repository seed creates live-stream rows"],
+      [/\/tv\/sounds\//, "no repository seed creates TV-sound rows"],
+    ].freeze
+
+    # Explains an unresolved guest page without pretending that an absent seed is
+    # a routing success. The message is part of the gate's evidence report.
+    def unresolved_reason(page)
+      id = page[:id].to_s
+      UNRESOLVED_REASONS.each { |pattern, reason| return reason if id.match?(pattern) }
+      return "no resolver is registered for this parameterised guest route" unless RESOLVERS.key?(id)
+
+      "resolver is registered, but no suitable seeded record exists in the app database"
+    end
+
     RESOLVERS = {
       "brgen/channels/show" => :irc_channel,
       "brgen/communities/show" => :community,
