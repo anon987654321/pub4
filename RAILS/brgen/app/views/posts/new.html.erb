@@ -29,7 +29,7 @@
     <section class="post-progressive-step" data-post-progressive-target="step"
              aria-labelledby="post-media-heading">
       <h2 id="post-media-heading" tabindex="-1" data-post-progressive-heading>
-        <%= t("post.new_media_heading", default: "Start with a photo") %>
+        <%= t("post.new_media_heading", default: "Start with media") %>
       </h2>
       <p class="form-help">
         <%= t("post.new_media_hint", default: "Add a photo first, or continue with text only.") %>
@@ -42,7 +42,7 @@
               direct_upload: true,
               class: "media-input-hidden",
               aria: { label: t("posts.add_photo") },
-              data: { media_picker_target: "input", post_progressive_target: "photoInput",
+              data: { media_picker_target: "input", post_progressive_target: "mediaInput",
                       action: "change->media-picker#pick" } %>
         <button type="button" class="post-photo-camera media-btn"
                 data-action="click->media-picker#trigger">
@@ -50,6 +50,35 @@
           <strong><%= t("posts.add_photo") %></strong>
           <small><%= t("post.new_media_camera_hint", default: "Camera or photo library") %></small>
         </button>
+        <div class="post-media-secondary">
+          <label class="post-media-choice">
+            <%= icon :video, size: 22 %>
+            <span>
+              <strong><%= t("compose.record_video", default: "Video") %></strong>
+              <small><%= t("post.new_video_hint", default: "Record or choose a video") %></small>
+            </span>
+            <%= f.file_field :video,
+                  accept: "video/*",
+                  capture: "environment",
+                  direct_upload: true,
+                  class: "visually-hidden",
+                  aria: { label: t("compose.record_video", default: "Video") },
+                  data: { post_progressive_target: "mediaInput" } %>
+          </label>
+          <label class="post-media-choice">
+            <%= icon :mic, size: 22 %>
+            <span>
+              <strong><%= t("compose.record_audio", default: "Audio") %></strong>
+              <small><%= t("post.new_audio_hint", default: "Record or choose audio") %></small>
+            </span>
+            <%= f.file_field :audio,
+                  accept: "audio/*",
+                  direct_upload: true,
+                  class: "visually-hidden",
+                  aria: { label: t("compose.record_audio", default: "Audio") },
+                  data: { post_progressive_target: "mediaInput" } %>
+          </label>
+        </div>
         <div class="media-preview" data-media-picker-target="preview" aria-live="polite"></div>
         <%= render "shared/preset_strip", f: f, hidden: true, picker_target: true %>
       </div>
