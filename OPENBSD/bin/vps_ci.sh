@@ -216,7 +216,7 @@ ci_rails_root=/home/${app}/pub4-rails/RAILS
 # Group read, not 710. master is the one service whose working directory is
 # under /home/dev, and getcwd(3) names each ancestor by reading it, so `--x`
 # lets it chdir and then fails Dir.pwd with EACCES. rubygems calls Dir.pwd
-# before Bundler is even loaded, so master died at bundle34 with no log of its
+# before Bundler is even loaded, so master died at bundle40 with no log of its
 # own and ai.brgen.no served an empty reply. 710 was verified by traversing,
 # which is a weaker claim than the one it was taken to prove.
 doas groupadd _pub4ci 2>/dev/null || true
@@ -244,7 +244,7 @@ doas chmod 750 /home/dev 2>/dev/null || true
 doas chmod 750 "/home/${app}/app/storage" 2>/dev/null || true
 doas chmod -R a+rX "${repo}/MASTER/tools" 2>/dev/null || true
 deploy_status "$app" "bundle install + bin/ci"
-doas sh -c "su -m ${app} -c 'export HOME=/home/${app}; export PUB4_ROOT=${repo}; export PUB4_CI_GUARD=1; export PUB4_CI_APP=${app}; export PUB4_RAILS_ROOT=${ci_rails_root}; export NPM_CONFIG_CACHE=${npm_cache}; export XDG_CACHE_HOME=${cache_home}; export BUNDLE_USER_HOME=/home/${app}/.bundle; cd ${app_dir} && bundle34 config unset without 2>/dev/null || true && bundle34 config unset deployment 2>/dev/null || true && bundle34 install --jobs=2 && bundle34 exec bin/ci'" \
+doas sh -c "su -m ${app} -c 'export HOME=/home/${app}; export PUB4_ROOT=${repo}; export PUB4_CI_GUARD=1; export PUB4_CI_APP=${app}; export PUB4_RAILS_ROOT=${ci_rails_root}; export NPM_CONFIG_CACHE=${npm_cache}; export XDG_CACHE_HOME=${cache_home}; export BUNDLE_USER_HOME=/home/${app}/.bundle; cd ${app_dir} && bundle40 config unset without 2>/dev/null || true && bundle40 config unset deployment 2>/dev/null || true && bundle40 install --jobs=2 && bundle40 exec bin/ci'" \
   || { deploy_status "$app" "bundle install + bin/ci" "failed"; exit 1; }
 
 sha=$(git -C "$repo" rev-parse --short HEAD 2>/dev/null || echo unknown)
