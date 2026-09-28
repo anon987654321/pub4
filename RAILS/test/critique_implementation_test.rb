@@ -122,6 +122,7 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes feed, 'params[:view].to_s == "media"'
     assert_includes feed, 'render "home/media_card"'
     assert_includes feed, "brgen-media-add-link"
+    assert_includes feed, 'render "home/media_add_card"'
     assert_includes card, "responsive_image_tag(post.image"
     assert_includes card, "video_tag post.video"
     assert_includes card, "brgen-media-play"
