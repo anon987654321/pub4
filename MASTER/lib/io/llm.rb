@@ -96,14 +96,14 @@ module Master
           event = {
             "tool" => tool.to_s,
             "phase" => phase,
-            "path" => args[:path].to_s unless args[:path].nil?,
-            "command" => args[:command].to_s unless args[:command].nil?,
-            "url" => args[:url].to_s unless args[:url].nil?,
-            "operation" => args[:operation].to_s unless args[:operation].nil?,
             "ok" => ok,
             "bytes" => bytes,
             "error" => error
-          }.compact
+          }
+          %w[path command url operation].each do |key|
+            value = args[key.to_sym]
+            event[key] = value.to_s unless value.nil?
+          end
           Fiber[:master_trajectory_events] ||= []
           Fiber[:master_trajectory_events] << event
         end
