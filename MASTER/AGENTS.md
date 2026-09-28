@@ -47,13 +47,14 @@ all three top-level trees; `MASTER/bin/operator measure` prints every ratchet wi
 Run the smallest check that proves the work, and never report done without its
 output. Before targeted reading on an unfamiliar or broad task, run `ruby MASTER/tools/agent_context.rb --tree` for a bounded source map.
 
-Inside the runtime there is one verb and three words for its parts. `/review
-[path]` runs the whole pass — scan, critique, principle map — and reads without
-writing. `/critique` is the council. `/fix` is
-the convergence operation: it scans, renders when applicable, repairs findings,
-and — even when deterministic checks are clean — asks the council for anchored
-micro-improvements. It then verifies the result and repeats until the tree
-converges, stops improving, or reaches a state MASTER may not settle alone.
+The public runtime surface has one writing verb and two read-only companions.
+`/review [path]` runs the whole read-only pass — scan, critique, principle map.
+`/critique` is the council. `/fix` is the convergence operation: it scans,
+renders when applicable, repairs findings, and — even when deterministic checks
+are clean — asks the council for anchored micro-improvements. It then verifies
+the result and repeats until the tree converges, stops improving, or reaches a
+state MASTER may not settle alone. `/scan` remains only as a private
+compatibility alias for legacy gates; it is not a separate public operation.
 
 Five things that will bite you, in order:
 
