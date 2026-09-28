@@ -100,6 +100,15 @@ class DeployGatesContractTest < Minitest::Test
                  "gates/lib/ holds exactly the gates in gates.yml; support code belongs in gates/support/"
   end
 
+  def test_check_rails_wires_herb_check_for_every_rails_surface
+    source = File.read(File.join(OPENBSD_ROOT, "bin", "check-rails"))
+
+    assert_includes source, "herb:check"
+    assert_includes source, 'File.join("RAILS", app)'
+    assert_includes source, '"MASTER/web"'
+    assert_includes source, '"BUNDLE_GEMFILE" => File.join(ROOT, app, "Gemfile")'
+  end
+
   def test_check_rails_wires_gates_by_name
     source = File.read(File.join(OPENBSD_ROOT, "bin", "check-rails"))
     assert_includes source, "MASTER/gates/runner.rb"
