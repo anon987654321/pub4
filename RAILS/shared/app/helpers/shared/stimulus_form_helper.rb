@@ -3,18 +3,17 @@
 module Shared
   module StimulusFormHelper
     # @stimulus-components/character-counter — countdown mode with maxlength.
-    def character_counter_field(form, method, max:, autogrow: false, **options)
+    def character_counter_field(form, method, max:, **options)
       rows = options.delete(:rows)
       wrapper = tag.div(
         data: {
-          controller: [ "character-counter", ("textarea-autogrow" if autogrow) ].compact.join(" "),
+          controller: "character-counter",
           character_counter_countdown_value: true,
         },
       ) do
         field_options = options.deep_dup
         field_options[:maxlength] = max
         field_options[:data] = (field_options[:data] || {}).merge(character_counter_target: "input")
-        field_options[:data][:controller] = "textarea-autogrow" if autogrow
 
         field =
           if rows
