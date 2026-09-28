@@ -20,7 +20,7 @@
 set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/../.." && pwd)
-RUBY=${RUBY:-$(command -v ruby34 2>/dev/null || command -v ruby)}
+RUBY=${RUBY:-$(command -v ruby40 2>/dev/null || command -v ruby)}
 
 # Same names this script has always documented, mapped onto health_check.rb's.
 HEALTH_CHECK_TIMEOUT=${UPTIME_CHECK_TIMEOUT:-20}
