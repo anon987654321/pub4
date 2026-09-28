@@ -41,8 +41,8 @@ module Deploy
     private
 
     def check_app(app)
-      manifest = File.join(ROOT, app, "app/views/pwa/manifest.json.erb")
-      unless File.file?(manifest)
+      manifest = manifest_path(app)
+      unless manifest
         @result.fail("pwa_installable: #{app} has no manifest at #{rel(manifest)}")
         return
       end
