@@ -43,9 +43,12 @@ module Shared
     end
 
     def render_static_error_page(status)
-      page = Rails.public_path.join("#{Rack::Utils.status_code(status)}.html")
+      filename = "#{Rack::Utils.status_code(status)}.html"
+      page = Rails.public_path.join(filename)
+      page = Shared::Engine.root.join("public", filename) unless page.file?
       return head(status) unless page.file?
 
+      response.headers["Retry-After"] = "120" if status.to_sym == :service_unavailable
       render html: page.read.html_safe, status:, layout: false
     end
   end
