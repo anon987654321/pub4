@@ -201,8 +201,8 @@ end
         return recovery_result if recovery_result
 
         @session.add_message(role: :assistant, content: text)
-        record_trajectory!(message: message, model: answered, outcome: "complete")
         answered = (response.model if response.respond_to?(:model)) || dispatch[:selected_model]
+        record_trajectory!(message: message, model: answered, outcome: "complete")
         publish_ctx_footer(answered)
         Result::Ok.new(text, answered)
       end
