@@ -167,6 +167,18 @@ class TestDependencyManager < Minitest::Test
     assert_equal before, File.read(File.join(@root, "Gemfile.lock"))
   end
 
+  def test_bundler_path_rejects_an_executable_without_the_pinned_spec
+    manager = MANAGER.new(
+      root: @root,
+      env: { "PATH" => "/bin", "MASTER_AUTO_INSTALL" => "1", "MASTER_AUTO_BUNDLE" => "1" },
+      out: StringIO.new,
+      home: @root,
+    )
+    manager.define_singleton_method(:bundler_spec) { |_version| nil }
+
+    assert_nil manager.send(:bundler_path, "4.0.5")
+  end
+
   def test_missing_bundle_installs_bundler_then_rechecks
     installed = false
     responses = [[true, "installed", ""], [true, "The Gemfile's dependencies are satisfied", ""]]
