@@ -1,0 +1,28 @@
+schema: 1
+base_model: "ollama:gemma3:4b"
+objective: "increase intrinsic capability for MASTER operation through verified trajectories"
+contract:
+  operator_abi: "MASTER/lib/ai/operator_contract.rb"
+  orientation: tree_first
+  shell: zsh
+  language: ruby
+  verification: evidence_before_completion
+benchmark:
+  implementation: "MASTER/lib/ai/uplift/benchmark.rb"
+training:
+  teacher_distillation:
+    enabled: true
+    teacher_lanes: [agy:auto, "claude-cli:claude-opus-5-5", "agy:gemini-3.7-flash-thinking"]
+    selection: "verified trajectories only"
+  supervised_finetuning:
+    enabled: true
+  preference_learning:
+    enabled: true
+    positives: verified
+    negatives: failed_or_policy_violating
+  reinforcement_learning:
+    enabled: true
+    reward: "benchmark ratio multiplied by verified completion"
+target:
+  artifact: "gemma-master"
+  routing: "disabled until a trained artifact is installed and verified"
