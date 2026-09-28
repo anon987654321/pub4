@@ -102,6 +102,9 @@ class VisualPassContractTest < Minitest::Test
       assert_includes kwargs[:visual_context], Master::Design::VisualLanguage.context([capture]).lines.first.strip
       assert_includes kwargs[:visual_context], "HOSTILE VISUAL AUDIT"
       assert_includes kwargs[:visual_context], "USABILITY LAWS"
+      assert_includes kwargs[:visual_context], "VISUAL RUBRIC"
+      assert_includes kwargs[:visual_context], "Worst-case content remains calm"
+      assert_includes kwargs[:visual_context], "Name the five strongest observable weaknesses"
     end
     assert Probe.surfaces.any? { |s| s.app == "master" }, "MASTER's own face is a declared surface"
   end
