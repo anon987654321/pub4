@@ -35,8 +35,9 @@ class CookieConsentContractTest < Minitest::Test
   end
 
   def test_both_apps_mount_the_banner_controller
-    assert_includes File.read(BRGEN_LAYOUT), "cookie-consent"
-    assert_includes File.read(AMBER_LAYOUT), "cookie-consent"
+    assert_match(/data-controller="[^"]*cookie-consent/, File.read(BRGEN_LAYOUT))
+    assert_match(/data-controller="[^"]*cookie-consent/, File.read(AMBER_LAYOUT))
+    assert_includes File.read(BANNER), %(data-cookie-consent-target="banner")
   end
 
   def test_server_helper_matches_browser_signal

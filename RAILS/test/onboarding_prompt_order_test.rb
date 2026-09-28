@@ -32,6 +32,8 @@ class OnboardingPromptOrderTest < Minitest::Test
 
   INSTALL = "shared/frontend/install_prompt_controller.js"
   WELCOME = "shared/frontend/welcome_onboarding_controller.js"
+  WELCOME_VIEW = "shared/app/views/shared/_welcome_onboarding.html.erb"
+  ARTWORK = "shared/app/services/shared/onboarding_artwork.rb"
 
   def queue = @queue ||= File.read(QUEUE)
 
@@ -67,8 +69,14 @@ class OnboardingPromptOrderTest < Minitest::Test
   # one that arrived after it.
   def test_welcome_blocks_install_and_later_prompts
     welcome = File.read(File.join(ROOT, WELCOME))
+    view = File.read(File.join(ROOT, WELCOME_VIEW))
+    artwork = File.read(File.join(ROOT, ARTWORK))
     install = File.read(File.join(ROOT, INSTALL))
 
+    assert_includes view, %(data-controller="welcome-onboarding")
+    assert_includes view, "OnboardingArtwork.url"
+    assert_includes view, "image_tag"
+    assert_includes artwork, "REPLICATE_API_TOKEN"
     assert_includes welcome, %(mayPrompt("welcome"))
     assert_includes welcome, "setWelcomePending"
     assert_includes install, %(mayPrompt("install"))
@@ -90,7 +98,7 @@ class OnboardingPromptOrderTest < Minitest::Test
   # assertion above is a substring search, so the one failure mode they share is
   # searching a file that has moved.
   def test_the_files_this_asserts_against_exist
-    ([INSTALL, WELCOME] + PROMPTS.values).each do |relative|
+    ([INSTALL, WELCOME, WELCOME_VIEW, ARTWORK] + PROMPTS.values).each do |relative|
       assert_path_exists File.join(ROOT, relative)
     end
   end
