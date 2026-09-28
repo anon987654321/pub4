@@ -201,7 +201,9 @@ module Master
         end
 
         def unhealthy?(model_id)
-          return true if Io::ModelQuota.over_quota?(model_id)
+          quota = Io::ModelQuota.forecast(model_id)
+          return true if quota && quota[:remaining].zero?
+          return true if quota && quota[:projected_daily] >= quota[:limit] * 0.8
           # llm_dispatcher.rb writes every failed call here regardless of which
           # path selected the model, but constrained_for (scan_semantic,
           # council, code_generation, ...) only ever consulted @provider_health,

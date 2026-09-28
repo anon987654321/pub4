@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "yaml"
+require_relative "../cli/routing/provider_canary"
 
 module Master
   module Fix
@@ -16,6 +17,7 @@ module Master
       JOB_HANDLERS = {
         "prune_memory" => :prune_memory,
         "check_models" => :check_model_availability,
+        "canary_providers" => :canary_providers,
         "self_test" => :run_self_test,
         "prune_undo" => :prune_undo_journal,
         "personal_pulse" => :personal_pulse,
@@ -145,6 +147,19 @@ module Master
 
       def prune_memory
         @memory&.consolidate!(agent: @agent) || "no memory"
+      end
+
+      def canary_providers
+        return "no agent" unless @agent
+        router = @agent.respond_to?(:model_router) ? @agent.model_router : nil
+        return "no router" unless router
+
+        Master::CLI::Routing::ProviderCanary.new(
+          agent: @agent,
+          router:,
+          event_bus: @bus,
+          max_providers: 3,
+        ).run
       end
 
       def check_model_availability

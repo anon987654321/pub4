@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "date"
 require "fileutils"
 require "json"
 require "time"
@@ -66,6 +67,49 @@ module Master
         [daily_limit - count(model, day:), 0].max
       end
 
+      def burn_rate_per_day(model, day: today_key, now: Time.now.utc)
+        used = count(model, day:)
+        start = Time.utc(*Date.strptime(day, "%Y-%m-%d").year_month_day)
+        elapsed = [now.to_f - start.to_f, 300.0].max
+        return 0.0 if used.zero?
+
+        used.to_f * 86_400 / elapsed
+      rescue ArgumentError
+        0.0
+      end
+
+      def forecast(model, day: today_key, now: Time.now.utc)
+        return unless trackable?(model)
+
+        used = count(model, day:)
+        limit = daily_limit
+        remaining = [limit - used, 0].max
+        projected_daily = burn_rate_per_day(model, day:, now:)
+        exhaustion_hours =
+          if remaining.zero?
+            0.0
+          elsif projected_daily.positive?
+            remaining.to_f / (projected_daily / 24.0)
+          end
+
+        {
+          model: model.to_s,
+          day:,
+          used:,
+          limit:,
+          remaining:,
+          projected_daily: projected_daily.round(2),
+          exhaustion_hours: exhaustion_hours&.round(2),
+        }
+      end
+
+      def burn_risk?(model, threshold: 0.8, day: today_key, now: Time.now.utc)
+        forecasted = forecast(model, day:, now:)
+        return false unless forecasted
+
+        forecasted[:projected_daily] >= forecasted[:limit] * threshold
+      end
+
       def exhausted_models(day: today_key)
         data = load_data[day] || {}
         data.select { |model, used| trackable?(model) && used.to_i >= daily_limit }.keys
@@ -82,6 +126,7 @@ module Master
           limit: daily_limit,
           models: tracked.transform_values(&:to_i),
           exhausted: tracked.select { |_, used| used.to_i >= daily_limit }.keys,
+          forecasts: tracked.keys.to_h { |model| [model, forecast(model, day:)] },
         }
       end
 
