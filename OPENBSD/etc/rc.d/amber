@@ -29,20 +29,20 @@ daemon="/bin/ksh"
 # job worker and it had never started one — 1670 jobs enqueued on brgen and 0
 # finished, measured 2026-08-12. rc.d/<app>_jobs is the real worker; read its
 # header before enabling it, because vm23 has 1 GB.
-daemon_flags="-c 'cd ${APP_DIR} && set -a && . /etc/amber.env && set +a && export RUBY_YJIT_ENABLE=0 RAILS_ENV=production HOME=/home/amber && exec /usr/local/bin/bundle34 exec falcon serve -n ${FALCON_WORKERS:-1} --health-check-timeout 300 --bind http://127.0.0.1:${PORT}'"
+daemon_flags="-c 'cd ${APP_DIR} && set -a && . /etc/amber.env && set +a && export RUBY_YJIT_ENABLE=0 RAILS_ENV=production HOME=/home/amber && exec /usr/local/bin/bundle40 exec falcon serve -n ${FALCON_WORKERS:-1} --health-check-timeout 300 --bind http://127.0.0.1:${PORT}'"
 daemon_user="amber"
 daemon_execdir="/home/amber/app"
 daemon_logger="daemon.notice"
 daemon_timeout="120"
 . /etc/rc.d/rc.subr
-pexp="ruby34.*${PORT}"
+pexp="ruby40.*${PORT}"
 rc_bg=YES
 rc_reload=NO
 
 rc_pre() {
   touch /home/dev/pub4/.deploying-amber 2>/dev/null || true
   pkill -f "falcon.*${PORT}" 2>/dev/null || true
-  pkill -f "ruby34.*${PORT}" 2>/dev/null || true
+  pkill -f "ruby40.*${PORT}" 2>/dev/null || true
   sleep 1
 }
 
