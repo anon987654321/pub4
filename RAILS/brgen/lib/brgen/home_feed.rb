@@ -44,7 +44,9 @@ module Brgen
     end
 
     def media_only(relation)
-      relation.joins(:image_attachment).distinct
+      images = Post.where(id: relation.joins(:image_attachment).select(:id))
+      videos = Post.where(id: relation.joins(:video_attachment).select(:id))
+      relation.merge(images.or(videos)).distinct
     end
 
     def ranked?(sort:)
