@@ -48,6 +48,8 @@ module Master
         BUNDLE_WITHOUT
       ].freeze
 
+      DEPENDENCY_CONFLICT = /could not find compatible versions|conflicting dependencies|incompatible requirements/i.freeze
+
       NATIVE_FAILURE = /
         extconf\ failed|
         cannot\ find|
@@ -294,7 +296,10 @@ module Master
         elsif permission_failure?(output)
           install_to_user_path(output)
         else
-          fail_result("bundle install failed", output: output)
+          message = dependency_conflict?(output) ?
+            "bundle dependency constraints conflict; no automatic lockfile rewrite was attempted" :
+            "bundle install failed"
+          fail_result(message, output: output)
         end
       end
 
@@ -309,8 +314,14 @@ module Master
 
         ok, stdout, stderr = run_bundle("install", "--jobs", bundle_jobs.to_s, "--retry", "3")
         output = join_output(previous_output, stdout, stderr)
-        ok ? ok_result("bundle installed in user path", changed: true, bundle: true, output: output) :
-          fail_result("bundle install failed in user path", output: output)
+        if ok
+          ok_result("bundle installed in user path", changed: true, bundle: true, output: output)
+        else
+          message = dependency_conflict?(output) ?
+            "bundle dependency constraints conflict; no automatic lockfile rewrite was attempted" :
+            "bundle install failed in user path"
+          fail_result(message, output: output)
+        end
       end
 
       def run_bundle(*args)
@@ -391,6 +402,8 @@ module Master
       def bundle_jobs
         @env["MASTER_LOW_RESOURCE"] == "1" ? 2 : 4
       end
+
+      def dependency_conflict?(output) = output.to_s.match?(DEPENDENCY_CONFLICT)
 
       def native_build_failure?(output) = output.to_s.match?(NATIVE_FAILURE)
 
