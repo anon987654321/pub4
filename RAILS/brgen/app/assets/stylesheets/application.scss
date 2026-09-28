@@ -1635,6 +1635,7 @@ label.compose-action:hover { color: var(--text); }
     max-block-size: 100dvh;
     overflow-y: auto;
     overscroll-behavior: contain;
+    padding-inline: 6px;
   }
 
   /* Each pane scrolls to the bottom of the viewport rather than to a viewport's
