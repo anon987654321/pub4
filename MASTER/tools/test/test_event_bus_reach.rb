@@ -7,14 +7,14 @@ class TestEventBusReach < Minitest::Test
   def test_ruby_extracts_only_literal_publishers_and_subscribers
     source = <<~RUBY
       # bus.publish("comment:fake")
-      bus.publish("pipeline:start")
+      bus.publish("pipeline:stage_start")
       @bus.subscribe("agent:mood") { |event| event }
       bus.publish(topic)
       subscribe("dynamic:" + suffix)
     RUBY
 
     assert_equal [
-      { topic: "pipeline:start", role: :publisher },
+      { topic: "pipeline:stage_start", role: :publisher },
       { topic: "agent:mood", role: :subscriber },
     ], Operator::EventBusReach.ruby_events(source)
   end
@@ -24,7 +24,7 @@ class TestEventBusReach < Minitest::Test
       // window.addEventListener("comment:fake", handler)
       window.addEventListener("pipeline:stage_start", handler)
       emitTtsEvent("tts:started")
-      const classify = /phantom:retry|pipeline:start/i;
+      const classify = /phantom:recovery|pipeline:stage_start/i;
       const url = "https://example.test/path";
     JS
 
@@ -35,21 +35,23 @@ class TestEventBusReach < Minitest::Test
 
     assert_equal ["pipeline:stage_start"], listeners
     assert_equal ["tts:started"], publishers
-    assert_includes refs, "phantom:retry"
-    assert_includes refs, "pipeline:start"
+    assert_includes refs, "phantom:recovery"
+    assert_includes refs, "pipeline:stage_start"
     refute_includes refs, "comment:fake"
   end
 
-  def test_current_tree_exposes_the_known_unpublished_topics
+  def test_current_tree_exposes_real_face_topics_without_stale_aliases
     result = Operator::EventBusReach.report
 
-    %w[agent:mood phantom:retry pipeline:start].each do |topic|
-      assert_includes result[:unpublished], topic
-    end
+    refute_includes result[:unpublished], "phantom:retry"
+    refute_includes result[:unpublished], "pipeline:start"
 
-    assert_includes result[:subscribers].fetch("agent:mood"), "web/app/services/chat_service.rb"
-    assert_includes result[:references].fetch("phantom:retry"), "web/public/topology_registry.js"
-    assert_includes result[:references].fetch("pipeline:start"), "web/public/face_semantics.js"
+    assert_includes result[:publishers], "phantom:detected"
+    assert_includes result[:publishers], "phantom:occurrence"
+    assert_includes result[:publishers], "phantom:recovery"
+    assert_includes result[:publishers], "pipeline:stage_start"
+    assert_includes result[:references].fetch("phantom:recovery"), "web/public/topology_registry.js"
+    assert_includes result[:references].fetch("pipeline:stage_start"), "web/public/face_semantics.js"
   end
 
   def test_operator_exposes_the_census
