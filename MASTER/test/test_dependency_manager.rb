@@ -220,6 +220,24 @@ class TestDependencyManager < Minitest::Test
     assert_equal ["pristine"], @commands[3].first[1..]
   end
 
+  def test_native_abi_repair_failure_does_not_install_os_packages
+    responses = [
+      [false, "", "dependencies missing"],
+      [true, "Bundle complete", ""],
+      [false, "", "linked to incompatible libruby"],
+      [false, "", "pristine failed"],
+    ]
+    manager = fake_manager(responses)
+    manager.define_singleton_method(:package_command) do
+      raise "OS package recovery must not run for ABI repair failure"
+    end
+
+    result = manager.ensure!
+
+    refute result.success?
+    assert_includes result.message, "native extension repair failed"
+  end
+
   def test_bundler_path_rejects_an_executable_without_the_pinned_spec
     manager = MANAGER.new(
       root: @root,
