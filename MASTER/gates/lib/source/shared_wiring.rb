@@ -11,7 +11,7 @@ module Deploy
     REQUIRED_ROUTE_FILES = %w[auth.rb fleet.rb social.rb legal.rb].freeze
     REQUIRED_PUBLIC_FILES = %w[404.html 422.html 500.html styles/errors.css].freeze
     REQUIRED_STIMULUS_REGISTRATIONS = %w[
-      autosave draft-store media-picker feed-compose scroll-reveal offline-feed pwa-standalone
+      autosave draft-store media-picker feed-compose scroll-reveal offline-feed pwa-standalone post-progressive
     ].freeze
     REQUIRED_SHARED_INITIALIZERS = %w[omniauth.rb auth_extensions.rb].freeze
     REQUIRED_SHARED_CONTROLLERS = %w[shared/reactions_controller.rb].freeze
@@ -49,7 +49,7 @@ module Deploy
       boot_text = boot_files.select { |f| File.file?(f) }.map { |f| File.read(f) }.join("\n")
       result.checked!(1 + boot_files.size)
       %w[
-        pub4/autosave pub4/draft_store pub4/media_picker pub4/feed_compose pub4/scroll_reveal
+        pub4/autosave pub4/draft_store pub4/media_picker pub4/feed_compose pub4/post_progressive pub4/scroll_reveal
         pub4/offline_feed pub4/pwa_standalone
       ].each do |pin|
         result.checked!
