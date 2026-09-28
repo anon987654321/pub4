@@ -219,9 +219,8 @@ module Deploy
     # is telling it to reintroduce the outage — and the freshness comparison is
     # meaningless for a file no generator writes.
     #
-    # So: check each app against the source it actually has. amber and bsdports
-    # still ship the Workbox bundle and are still worth a staleness check;
-    # brgen gets the opposite check, that the bundle has not crept back.
+    # All three apps now ship the shared Workbox worker. Check each generated
+    # worker against the same source and keep the exception surface empty.
     def service_worker_stale?(app_dir, result, app_name)
       sw_source = File.join(RAILS_ROOT, "shared", "pwa", "service_worker.js")
       sw_build = File.join(app_dir, "app", "views", "pwa", "service-worker.js")
