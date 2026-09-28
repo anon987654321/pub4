@@ -63,6 +63,18 @@ class TestDillaSineStream < Minitest::Test
     assert_empty result.fetch("wrong")
   end
 
+  def test_sine_output_honours_its_explicit_output_directory
+    Dir.mktmpdir do |dir|
+      result = in_sine_stream(<<~RUBY, env: { "SINE_OUT" => dir })
+        puts JSON.generate(out: OUT, progress: PROGRESS, stop: STOP)
+      RUBY
+
+      assert_equal dir, result.fetch("out")
+      assert_equal File.join(dir, "now_playing.txt"), result.fetch("progress")
+      assert_equal File.join(dir, "STOP"), result.fetch("stop")
+    end
+  end
+
   def test_a_take_already_beside_dilla_rb_is_refused_before_any_work
     Dir.mktmpdir do |dir|
       File.write(File.join(dir, "sines_beat.wav"), "a take")
