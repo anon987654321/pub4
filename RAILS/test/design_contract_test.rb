@@ -130,6 +130,16 @@ class DesignContractTest < Minitest::Test
     assert_includes js, "document.documentElement.dataset.theme"
   end
 
+  def test_brgen_mounts_theme_bootstrap_once_in_head
+    layout = File.read(File.join(ROOT, "brgen", "app", "views", "layouts", "application.html.erb"))
+    copies = layout.scan(/render "shared\/theme_bootstrap"/).size
+
+    assert_equal 1, copies
+    bootstrap = layout.index('render "shared/theme_bootstrap"')
+    assert bootstrap < layout.index("</head>"), "brgen theme bootstrap must run before first paint"
+    refute bootstrap > layout.index("<body"), "brgen must not bootstrap the theme again in the body"
+  end
+
   def test_theme_bootstrap_partial_sets_dataset_before_paint
     partial = File.read(THEME_BOOTSTRAP)
     assert_includes partial, "document.documentElement.dataset.theme"
