@@ -10,10 +10,7 @@
     "deny": [],
     "ask": []
   },
-  "comment": "Per MASTER2 LLM.md — bash permitted for git/ruby/bundle invocations only. All other shell ops use zsh. rbenv added because every Rails/MASTER command has to go through it (see env.RBENV_VERSION). vm23 ssh/curl deliberately NOT here: settings.local.json already grants Bash(ssh *) personally, and this file is committed — production access belongs in a per-operator file, not one that ships to whoever clones.",
-  "env": {
-    "RBENV_VERSION": "3.4.9"
-  },
+  "comment": "Per MASTER2 LLM.md — bash permitted for git/ruby/bundle invocations only. All other shell ops use zsh. rbenv is allowed so Rails/MASTER commands can honor the repository's .ruby-version. vm23 ssh/curl deliberately NOT here: settings.local.json already grants Bash(ssh *) personally, and this file is committed — production access belongs in a per-operator file, not one that ships to whoever clones.",
   "hooks": {
     "PostToolUse": [
       {
