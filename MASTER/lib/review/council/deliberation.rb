@@ -73,6 +73,7 @@ module Master
         def initialize(personas:, agent:, event_bus: nil, axioms: nil, **options)
           @personas = personas
           @agent = agent
+          @availability = CLI::Routing::AvailabilityPolicy.new(root: Master::ROOT)
           @bus = event_bus
           @rules = axioms
           @judge_enabled = options.fetch(:judge_enabled, true)
@@ -135,7 +136,7 @@ module Master
           # enough that the re-probe is not due yet; the council is a paid
           # tier, so it is skipped and says so rather than spending 26 calls
           # to relearn one fact.
-          return exhausted_error if Io::QuotaGate.blocked?
+          return exhausted_error if Io::QuotaGate.blocked? && !local_floor_available?
 
           context = reflexion_context(context)
           feedback = collect_feedback(active, code, context, image:)
@@ -163,7 +164,34 @@ module Master
 
         def active_personas(names)
           active = names ? @personas.select { |persona| names.include?(persona.name) } : @personas
-          active.empty? && !@personas.empty? ? @personas : active
+          active = @personas if active.empty? && !@personas.empty?
+
+          target = @availability.council_target(
+            current: active.size,
+            local_posture: self.class.local_posture?,
+            scarce: Io::QuotaGate.blocked? || (local_floor_available? && !cloud_floor_available?)
+          )
+          active.first(target)
+        end
+
+        def local_floor_available?
+          router = @agent.respond_to?(:model_router) ? @agent.model_router : nil
+          return false unless router.respond_to?(:pool)
+
+          Array(router.pool(wait: false)).any? { |id| @availability.level_for(id) == "L2" }
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "deliberation.local_floor_available", event_bus: @bus)
+          false
+        end
+
+        def cloud_floor_available?
+          router = @agent.respond_to?(:model_router) ? @agent.model_router : nil
+          return false unless router.respond_to?(:pool)
+
+          Array(router.pool(wait: false)).any? { |id| @availability.level_for(id) >= "L3" }
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "deliberation.cloud_floor_available", event_bus: @bus)
+          false
         end
 
         def reflexion_context(context)
