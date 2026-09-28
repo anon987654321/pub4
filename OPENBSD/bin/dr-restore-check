@@ -4,6 +4,7 @@
 require "fileutils"
 require "open3"
 require "time"
+require "tmpdir"
 
 root = File.expand_path(ENV.fetch("PUB4_DR_DIR", "~/pub4-dr"))
 stamps = Dir.glob(File.join(root, "*")).select { |path| File.directory?(path) }.sort
