@@ -8,8 +8,9 @@ marketplace subdomain, localised per country — `markedsplass.brgen.no`,
 `../../AGENTS.md` is the topology.
 
 Store owners post product listings across categories, buyers add them to a cart
-and check out through Dintero, Vipps or Stripe when configured, and both sides leave reviews. Deals and
-saved searches aid discovery, and `favorite` bookmarks a listing.
+and check out through Dintero, Vipps or Stripe when configured, and both sides
+leave reviews. Deals and saved searches aid discovery, and `favorite` bookmarks
+a listing.
 
 The two tiers are one model rather than two places. `Listing belongs_to :store,
 optional: true`: with a store it is a shop's product, without one it is a person
@@ -27,7 +28,7 @@ The `marketplace_` tables, prefixed by `isolate_namespace Marketplace`, are
 `Store`, `Listing`, `Category`, `Order`, `Review`, `Deal`, `ListingFavorite` and
 `SavedSearch`.
 
-`webhooks/dintero` is engine-local; `/webhooks/stripe` and `/webhooks/vipps` are host-owned payment callbacks shared with the marketplace domain. Dintero uses signed raw-body webhooks and a separate signed session callback. The Solidus
+`webhooks/dintero` is engine-local; `/webhooks/stripe` and `/webhooks/vipps` are host-owned payment callbacks shared with the marketplace domain. Dintero uses signed raw-body webhooks and a separate signed session callback. Solidus remains optional and mounts only when its integration is explicitly enabled.
 
 The engine depends on `pub4-shared` for `User`, authentication, tenancy and the
 design system. The host reaches its helpers as `marketplace.listing_url(…,
