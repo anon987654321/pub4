@@ -9,7 +9,6 @@ import ScrollChrome from "pub4/scroll_chrome"
 import Autosave from "pub4/autosave"
 import DraftStore from "pub4/draft_store"
 import MediaPicker from "pub4/media_picker"
-import PostProgressive from "pub4/post_progressive"
 import FeedCompose from "pub4/feed_compose"
 import VisualSurface from "pub4/visual_surface"
 
@@ -32,7 +31,6 @@ export function bootSocialStimulus(application) {
   application.register("draft-store", DraftStore)
   application.register("media-picker", MediaPicker)
   application.register("feed-compose", FeedCompose)
-  application.register("post-progressive", PostProgressive)
   application.register("visual-field", VisualSurface)
 
   COMPONENT_REGISTRATIONS.forEach(([name, component]) => application.register(name, component))
