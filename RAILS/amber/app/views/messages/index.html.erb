@@ -7,6 +7,9 @@
   <% else %>
     <p><%= t("messages.inbox_clear") %></p>
   <% end %>
+  <%= render "shared/master_invite",
+        path: invite_master_messages_path,
+        invited: @master_invited %>
 </header>
 
 <section class="form-wrap" aria-label="<%= t("messages.composer") %>">
