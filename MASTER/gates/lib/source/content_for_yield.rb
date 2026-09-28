@@ -11,7 +11,6 @@ module Deploy
     APPS = %w[amber brgen bsdports].freeze
     PRODUCER = /<%=?\s*(?:content_for|provide)\s*(?:\(\s*)?:([a-zA-Z_][a-zA-Z0-9_]*)|<%=?\s*(?:content_for|provide)\s*(?:\(\s*)?["']([a-zA-Z_][a-zA-Z0-9_]*)["']/
     CONSUMER = /<%=?\s*yield\s*(?:\(\s*)?:([a-zA-Z_][a-zA-Z0-9_]*)|<%=?\s*yield\s*(?:\(\s*)?["']([a-zA-Z_][a-zA-Z0-9_]*)["']|<%=?\s*content_for\s*\(\s*:([a-zA-Z_][a-zA-Z0-9_]*)\s*\)/
-    
     def self.run(root: ROOT)
       new(root:).run
     end
