@@ -21,6 +21,7 @@ module Shared
       # password_visibility_field raises on every sessions/new render.
       helper Shared::StimulusFormHelper
       helper Shared::AffiliateHelper
+      helper Shared::BuildInfoHelper
       allow_browser versions: :modern
       turbo_refreshes_with :morph, scroll: :preserve
       stale_when_importmap_changes
