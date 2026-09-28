@@ -875,6 +875,8 @@ end
 
     refute voice.respond_to?(:cutoff_scale)
     refute VoiceStack.method(:plan).parameters.any? { |kind, name| name == :key_track }
+    assert_equal 1, VoiceStack.describe([voice]).length
+    refute_includes VoiceStack.describe([voice]).first, "cutoff"
   end
 
   # Transposition must move pitch and nothing else -- same count, same times.
