@@ -130,6 +130,8 @@ class TestDependencyManager < Minitest::Test
       BUNDLE_VERSION
     ].each { |key| assert_nil bundle_env[key], "#{key} must not leak into MASTER boot" }
     assert_equal File.join(@root, "Gemfile"), bundle_env["BUNDLE_GEMFILE"]
+    assert_match(%r{/\.master/bundler/[0-9a-f]{16}/gems$}, bundle_env["GEM_HOME"])
+    assert_includes bundle_env["GEM_PATH"], bundle_env["GEM_HOME"]
     assert_match(%r{/\.master/bundler/[0-9a-f]{16}/app$}, bundle_env["BUNDLE_APP_CONFIG"])
     assert_match(%r{/\.master/bundler/[0-9a-f]{16}/global$}, bundle_env["BUNDLE_USER_CONFIG"])
     assert_match(%r{/\.master/bundler/[0-9a-f]{16}/gems$}, bundle_env["BUNDLE_PATH"])
