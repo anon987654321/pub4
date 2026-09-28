@@ -18,7 +18,11 @@
 module Operator
   module AgentContext
     MASTER_DIR = File.expand_path("..", __dir__)
+    REPO_ROOT = File.expand_path("..", MASTER_DIR)
     BLOCKING = %i[veto critical error].freeze
+    TREE_DEFAULT_DEPTH = 4
+    TREE_DEFAULT_MAX_ENTRIES = 2_000
+    TREE_SKIP = %w[.git .bundle vendor node_modules tmp log coverage storage .master knowledge output sockets pids cache].freeze
 
     module_function
 
@@ -78,12 +82,114 @@ module Operator
       words.any? { |w| name.include?(w) } ? [path] : []
     end
 
-    def render(query = nil)
-      out = ["MASTER conduct in force (law/practice.rb):"]
+    def shell_contract
+      banned = begin
+        Array(Master.law("zsh")&.[]("banned_commands")).map(&:to_s).sort
+      rescue StandardError
+        []
+      end
+
+      [
+        "Shell and reading contract:",
+        "  first pass on an unfamiliar or broad tree: ruby MASTER/tools/agent_context.rb --tree",
+        "  tree mode is orientation, not proof; use it before choosing individual files to read",
+        "  read relevant source completely where practical; for large files, read contiguous ranges and state what remains unread",
+        "  file and data parsing/rewriting: Ruby",
+        "  subprocesses from Ruby: argv form through Master::Io::Exec; avoid backticks and shell interpolation when argv is enough",
+        "  shell: zsh; use globs and builtins instead of GNU text-tool pipelines",
+        "  keep shell commands plain and readable; use one meaningful operation per line and && only when the dependency is the point",
+        "  zsh command execution is governed, root-confined, non-interactive, and time-bounded",
+        "  banned zsh tools: #{banned.empty? ? "law unavailable" : banned.join(", ")}"
+      ]
+    end
+
+    def tree_args(argv)
+      args = argv.dup
+      marker = args.index("--tree")
+      return unless marker
+
+      depth = TREE_DEFAULT_DEPTH
+      max_entries = TREE_DEFAULT_MAX_ENTRIES
+      root = REPO_ROOT
+
+      i = marker + 1
+      if args[i] && !args[i].start_with?("--")
+        root = File.expand_path(args[i], Dir.pwd)
+      end
+
+      args[i..].to_a.each do |arg|
+        case arg
+        when /\A--depth=(\d+)\z/
+          depth = Regexp.last_match(1).to_i
+        when /\A--max-entries=(\d+)\z/
+          max_entries = Regexp.last_match(1).to_i
+        end
+      end
+
+      [root, depth.clamp(0, 12), max_entries.clamp(1, 20_000)]
+    end
+
+    def render_tree(root: REPO_ROOT, max_depth: TREE_DEFAULT_DEPTH, max_entries: TREE_DEFAULT_MAX_ENTRIES)
+      root = File.realpath(root)
+      raise "tree root is not a directory: #{root}" unless Dir.exist?(root)
+
+      lines = []
+      seen = 0
+      truncated = false
+
+      walk = lambda do |dir, indent, depth|
+        return if depth > max_depth || truncated
+
+        entries = Dir.children(dir).sort_by do |name|
+          path = File.join(dir, name)
+          [File.directory?(path) ? 0 : 1, name]
+        end
+
+        entries.each do |name|
+          break if seen >= max_entries
+          next if TREE_SKIP.include?(name)
+
+          path = File.join(dir, name)
+          stat = File.lstat(path)
+          seen += 1
+          suffix = stat.symlink? ? "@" : stat.directory? ? "/" : ""
+          lines << "#{indent}+-- #{name}#{suffix}"
+
+          if stat.directory? && !stat.symlink?
+            if depth < max_depth
+              walk.call(path, "#{indent}|   ", depth + 1)
+            else
+              lines << "#{indent}|   +-- ... (depth limit)"
+              seen += 1
+            end
+          end
+        end
+
+        truncated = true if seen >= max_entries
+      end
+
+      lines << "#{File.basename(root)}/"
+      walk.call(root, "", 0)
+      lines << "+-- ... (max entries reached)" if truncated
+
+      header = [
+        "source_tree: #{root}",
+        "depth: #{max_depth}",
+        "entries shown: #{seen}",
+        "skips: #{TREE_SKIP.join(", ")}"
+      ]
+      (header + [""] + lines).join("\n")
+    rescue SystemCallError => e
+      "source_tree: unavailable: #{e.class}: #{e.message}"
+    end
+
+    def render(query = nil)      out = ["MASTER conduct in force (law/practice.rb):"]
       conduct.each { |name, text| out << "  #{name}: #{text.to_s.split(/(?<=\.)\s/).first}" }
       out << ""
       out << "Rules that can refuse a write (#{blocking_rules.size}): #{blocking_rules.join(', ')}"
       out << "Coverage: #{coverage}"
+      out << ""
+      out.concat(shell_contract)
       matched = lessons(query)
       out << "Lessons matching this prompt: #{matched.map { |p| File.basename(p, '.yml') }.join(', ')}" if matched.any?
       out.join("\n")
@@ -91,4 +197,11 @@ module Operator
   end
 end
 
-puts Operator::AgentContext.render(ARGV.first) if $PROGRAM_NAME == __FILE__
+if $PROGRAM_NAME == __FILE__
+  if (options = Operator::AgentContext.tree_args(ARGV))
+    root, depth, max_entries = options
+    puts Operator::AgentContext.render_tree(root:, max_depth: depth, max_entries:)
+  else
+    puts Operator::AgentContext.render(ARGV.first)
+  end
+end
