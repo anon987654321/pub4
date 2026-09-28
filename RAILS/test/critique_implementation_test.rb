@@ -85,6 +85,52 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes home_feed, 'surface: "brgen"'
   end
 
+
+  def test_brgen_post_detail_uses_the_shared_vote_rail_beside_the_title
+    show = read("brgen/app/views/posts/show.html.erb")
+    partial = read("shared/app/views/shared/_post_vote_rail.html.erb")
+    stream = read("brgen/app/views/votes/create.turbo_stream.erb")
+
+    assert_includes show, 'class="post-reading-layout"'
+    assert_includes show, 'turbo_frame_tag "post-vote-'
+    assert_includes show, 'render "shared/post_vote_rail"'
+    assert_includes show, '<%= tag.h1 @post.title %>'
+    assert show.index('render "shared/post_vote_rail"') < show.index("<%= tag.h1 @post.title %>")
+    assert_includes partial, "post-vote-btn"
+    assert_includes partial, "post-vote-score"
+    assert_includes stream, 'frame.start_with?("post-vote-")'
+    assert_includes stream, 'render "shared/post_vote_rail"'
+  end
+
+  def test_messenger_has_four_pane_desktop_contract_and_shared_artifacts
+    rooms = read("brgen/app/views/conversations/_rooms_rail.html.erb")
+    window = read("brgen/app/views/conversations/show.html.erb")
+    channel = read("brgen/app/views/channels/show.html.erb")
+    css = read("brgen/app/assets/stylesheets/application.scss")
+    artifact = read("shared/app/views/shared/_messenger_artifacts.html.erb")
+
+    assert_includes rooms, 'class="messenger-rail"'
+    assert_includes rooms, 'class="messenger-inbox"'
+    assert_includes window, 'render "shared/messenger_artifacts"'
+    assert_includes channel, 'render "shared/messenger_artifacts"'
+    assert_includes css, "grid-template-columns: 56px 300px minmax(0, 1fr) 360px;"
+    assert_includes css, ".messenger-artifact-pane"
+    assert_includes artifact, "artifact_voice"
+    assert_includes artifact, "artifact_preview"
+    assert_includes artifact, "no_artifacts"
+  end
+
+  def test_amber_product_detail_uses_photo_first_editorial_geometry
+    show = read("amber/app/views/items/show.html.erb")
+    css = read("amber/app/assets/stylesheets/application.scss")
+
+    assert_includes show, 'class="luxury-detail-grid"'
+    assert_includes show, 'class="luxury-photos"'
+    assert_includes show, 'class="luxury-meta"'
+    assert_includes css, ".item-detail--luxury .luxury-detail-grid"
+    assert_includes css, ".item-detail--luxury .luxury-meta"
+  end
+
   def test_brgen_new_post_is_progressive_and_photo_first
     form = read("brgen/app/views/posts/new.html.erb")
     controller = read("shared/frontend/post_progressive_controller.js")
