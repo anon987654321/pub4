@@ -2,11 +2,10 @@
 
 module Brgen
   module HomeFeed
-    # Posts between in-feed affiliate units. The reflex needs the same number
-    # the first screen uses, and since amber renders the same unit now, so does
-    # amber — so the number lives with the unit and this is the local name for
-    # it rather than a second copy.
-    AFFILIATE_EVERY = Shared::AffiliateHelper::FEED_EVERY
+    # The sketch places the first sponsored unit after the second post: visible
+    # enough to establish the commerce layer without turning the feed into an ad
+    # rail. Keep the cadence local to Brgen; Amber keeps its own shared rhythm.
+    AFFILIATE_EVERY = 2
 
     module_function
 
