@@ -31,7 +31,7 @@ module Master
           summary = context_summary.to_s
           hits = keyword_recall(message, top_n: RECALL_ENTRIES * 3).select do |hit|
             key = hit[:key].to_s
-            !key.start_with?("archive/") && !summary.include?("- #{key}: ") &&
+            !key.start_with?("archive/", "conflict/") && !summary.include?("- #{key}: ") &&
               (recall_terms("#{key} #{hit[:value]}") & terms).size >= RECALL_MIN_SHARED
           end
           return if hits.empty?
@@ -88,6 +88,7 @@ module Master
 
         def vector_recall(qvec:, top_n:, store:)
           store.filter_map do |key, data|
+            next if key.to_s.start_with?("conflict/")
             next unless data.is_a?(Hash) && data["vec"].is_a?(Array)
 
             score = Review::Embeddings.cosine(qvec, data["vec"])
@@ -102,6 +103,7 @@ module Master
           return [] if terms.empty?
 
           store.filter_map do |key, data|
+            next if key.to_s.start_with?("conflict/")
             value = data.is_a?(Hash) ? data["value"].to_s : data.to_s
             score = tfidf_score(terms, tokenize("#{key} #{value}"))
             next if score.zero?
