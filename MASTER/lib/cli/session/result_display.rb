@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../capability_stamp"
+
 module Master
   module CLI
     class Session
@@ -51,6 +53,7 @@ module Master
         Master::Voice::Playback.speak(spoken_form(text))
         print_fix_activity_footer
         print_parallel_errors_footer(ok)
+        print_capability_stamp(ok)
       end
 
       # A pass report is a log, and reading a log aloud from the top takes
@@ -83,6 +86,18 @@ module Master
         puts @refs.renderer.render(summary, mode: :dim)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "cli.fix_activity_footer", event_bus: @refs.bus)
+      end
+
+      def print_capability_stamp(ok)
+        model = ok.model
+        return if model.to_s.empty?
+
+        puts @refs.renderer.render(
+          Master::CLI::CapabilityStamp.render(model:, root: Master::ROOT),
+          mode: :dim,
+        )
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "cli.capability_stamp", event_bus: @refs.bus)
       end
 
       def print_parallel_errors_footer(ok)
