@@ -101,7 +101,7 @@ class RestoreScriptsTest < Minitest::Test
     # The reader is run rather than matched: what matters is the href it finds
     # on a page that links one, and nothing, not a failure, on a page that does
     # not — under set -e a failing read ends the deploy with no stamp.
-    reader = source[/^css_href=\$\(.*ruby34 -e '([^']+)'\)$/, 1]
+    reader = source[/^css_href=\$\(.*ruby40 -e '([^']+)'\)$/, 1]
     assert reader, "must read the href off the rendered page"
     link = '<link rel="stylesheet" href="/assets/application-1a2b.css">'
     found, status = Open3.capture2(RbConfig.ruby, "-e", reader, stdin_data: link)
