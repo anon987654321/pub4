@@ -184,7 +184,7 @@ module Operator
       "source_tree: unavailable: #{e.class}: #{e.message}"
     end
 
-    def render(query = nil)      out = ["MASTER conduct in force (law/practice.rb):"]
+    def render(query = nil)\n      out = ["MASTER conduct in force (law/practice.rb):"]
       conduct.each { |name, text| out << "  #{name}: #{text.to_s.split(/(?<=\.)\s/).first}" }
       out << ""
       out << "Rules that can refuse a write (#{blocking_rules.size}): #{blocking_rules.join(', ')}"
