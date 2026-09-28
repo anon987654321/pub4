@@ -10,7 +10,7 @@ A finding is a hypothesis. Historical dated sections below are evidence records,
 - Ruby is pinned to `4.0.5` across the existing project declarations. Ruby 4.0.7 now exists upstream, but 4.0.5 is the operator-selected project pin until deliberately changed.
 - Main has now aligned the Rails Gemfiles/locked app stacks to Rails 8.1.4 and moved brgen to Rails 8.1 defaults. **Rails 8.2 is now the active migration target**, because another agent is actively upgrading pub4.
 - The official Rails 8.2 Edge Guide/release notes are still marked work in progress rather than a stable tagged release. The migration must therefore keep edge-vs-release state explicit and re-lock when the exact 8.2 target is fixed.
-- Rails 8.2 migration seams called out by the current upstream guides include Herb HTML+ERB compilation, modern header-based CSRF behavior, enum negative scopes including `nil`, Active Storage analysis/variant timing, SQLite table-alteration behavior around `ON DELETE CASCADE`, and enqueue-after-transaction-commit behavior. The source-side contracts are now explicit; live 8.2/runtime verification stays open until the exact target can be exercised.
+- Rails 8.2 migration seams called out by the current upstream guides include Herb HTML+ERB compilation, modern header-based CSRF behavior, enum negative scopes including `nil`, Active Storage analysis/variant timing, SQLite table-alteration behavior around `ON DELETE CASCADE`, and enqueue-after-transaction-commit behavior. The source-side contracts are now explicit; live 8.2/runtime verification stays open until the exact target can be exercised. Edge TTS is now isolated in a dedicated `:tts` dependency group so Rails boot does not auto-require its EventMachine stack.
 - Main has no open PRs and no open issues, but stale branches remain. The all-tree fix runner branch carries seven unique commits yet is 108 commits behind current main; the older full-Rails runner branch carries two unique commits and is 346 commits behind. Recover useful patches selectively; do not merge their history wholesale.
 - Hosted CI is not the verification path for this backlog. The live full three-tree `/fix` run remains unproven until an equivalent manually watched run emits actionable step-level evidence.
 - `RAILS/test/run_all.rb` currently discovers 131 contract files recursively, one process per file. The historical red count remains stale until the suite is rerun manually on the current main baseline.
@@ -78,7 +78,6 @@ A finding is a hypothesis. Historical dated sections below are evidence records,
 
 ### Dependencies
 - Re-audit `MASTER/Gemfile` after the Rails 8.2 work.
-- Confirm whether `rb-edge-tts` can move to a TTS-only dependency path without boot-time EventMachine.
 - Confirm whether the `:dilla` group needs `head_music` and `wavefile` in the constitutional CLI lock.
 - Make host-specific watcher dependencies (`rb-kqueue`/`rb-inotify`) and `BUNDLE_FROZEN` behavior consistent across Mac, Linux/Termux and OpenBSD.
 

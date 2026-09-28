@@ -20,7 +20,9 @@ gem "pastel", "~> 0.8"
 gem "diffy", "~> 3.4"
 gem "ferrum", "~> 0.15"
 gem "zeitwerk", "~> 2.7"
-gem "rb-edge-tts", git: "https://github.com/ZPVIP/rb-edge-tts"
+group :tts do
+  gem "rb-edge-tts", git: "https://github.com/ZPVIP/rb-edge-tts"
+end
 
 group :test do
   gem "minitest", ">= 5.25"

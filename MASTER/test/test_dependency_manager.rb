@@ -46,6 +46,17 @@ class TestDependencyManager < Minitest::Test
     manager
   end
 
+  def test_edge_tts_isolated_to_tts_group_in_both_master_bundles
+    [File.join(Master::ROOT, "Gemfile"), File.join(Master::ROOT, "web", "Gemfile")].each do |path|
+      source = File.read(path)
+      assert_match(
+        /group :tts do\n\s+gem "rb-edge-tts", git: "https:\/\/github\.com\/ZPVIP\/rb-edge-tts"\nend/,
+        source,
+        "#{path} must keep Edge TTS out of the default Rails bundle"
+      )
+    end
+  end
+
   def test_clean_bundle_does_not_install_or_touch_lock
     manager = fake_manager([[true, "The Gemfile's dependencies are satisfied", ""]])
     before = File.read(File.join(@root, "Gemfile.lock"))
