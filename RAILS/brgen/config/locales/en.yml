@@ -409,6 +409,9 @@ en:
     unsend: Unsend
     confirm_unsend: Unsend this message? The text goes, the thread keeps its shape.
     forward: Forward
+    invite_master: Invite MASTER
+    master_present: MASTER is here
+    master_joined: MASTER joined this chat.
     forward_to: Forward to
     forwarded: Forwarded
     replying_to_story: Replied to your story
@@ -1608,6 +1611,7 @@ en:
       pending: asked
       accepted: following
   flash:
+    master_invited: MASTER joined the chat.
     business_verifications:
       sent: Request sent. A person reviews it.
       reviewed: Review saved.
