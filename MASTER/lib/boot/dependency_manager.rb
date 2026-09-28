@@ -113,6 +113,7 @@ module Master
         return Result.new(ok: true, changed: false, bundler: nil, bundle: nil, system: nil,
                           message: "no Gemfile", output: nil) unless gemfile?
 
+        activate_environment!
         with_lock do
           bundler = ensure_bundler
           return bundler unless bundler.ok
@@ -223,6 +224,7 @@ module Master
             @env[key] = value
           end
         end
+        refresh_gem_state! if @env.equal?(ENV)
         true
       end
 
@@ -274,10 +276,11 @@ module Master
         gem = gem_command
         return fail_result("gem executable missing; install RubyGems or use MASTER/bin/ruby") unless gem
 
+        install_dir = File.join(bundle_config_root, "gems")
         ok, stdout, stderr = run(
-          [gem, "install", "bundler", "-v", version, "--no-document", "--user-install"],
+          [gem, "install", "bundler", "-v", version, "--no-document", "--install-dir", install_dir],
           chdir: @root,
-          env: user_gem_env,
+          env: bundle_env,
         )
         output = join_output(stdout, stderr)
         unless ok
@@ -486,7 +489,16 @@ module Master
       end
 
       def bundle_env
-        env = user_gem_env.dup
+        bundle_gem_home = File.join(bundle_config_root, "gems")
+        default_gem_path = Gem.default_dir
+        env = {
+          "PATH" => [
+            File.join(bundle_gem_home, "bin"),
+            @env.fetch("PATH", ""),
+          ].reject(&:empty?).join(File::PATH_SEPARATOR),
+          "GEM_HOME" => bundle_gem_home,
+          "GEM_PATH" => [bundle_gem_home, default_gem_path].uniq.join(File::PATH_SEPARATOR),
+        }
 
         # A user's global ~/.bundle/config, deployment variables, or a stale
         # BUNDLE_PATH can silently change what boot installs or loads. MASTER
