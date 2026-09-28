@@ -179,7 +179,7 @@ consistency campaign; enforcement lives in `visual_contract_lint`,
 Token: face joins fleet token names (a face.part*.txt session — the
 --c-*/--x-text namespace is read by the GENERATED bundles. The tap-test fence
 LIFTED 2026-08-22: the local face failing to boot under triangle was nothing
-deeper than MASTER/web's bundle never installed under the pinned 3.4.9 — one
+deeper than MASTER/web's bundle never installed under the pinned repo Ruby — one
 bundle install, four surfaces up, face answers 200); shared edge scale;
 radius-scale parameter per dialect; scrim unification (operator's eye).
 Components: card-grid still needs a second real consumer.
