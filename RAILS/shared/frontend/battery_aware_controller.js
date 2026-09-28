@@ -12,6 +12,7 @@ import { Controller } from "@hotwired/stimulus"
 //
 // Events:
 //   pub4:battery-change    { detail: { level, charging, low, supported } }
+//   battery-save-mode     { detail: { enabled, level, charging, supported } }
 //   pub4:visibility-change { detail: { hidden } }
 //
 export default class extends Controller {
@@ -89,6 +90,15 @@ export default class extends Controller {
         level,
         charging,
         low,
+        supported: this.#supported
+      }
+    }))
+
+    window.dispatchEvent(new CustomEvent("battery-save-mode", {
+      detail: {
+        enabled: low,
+        level,
+        charging,
         supported: this.#supported
       }
     }))
