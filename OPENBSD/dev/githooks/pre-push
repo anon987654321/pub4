@@ -21,6 +21,13 @@
 # Installed by `bin/operator hooks`. The real fix is still `bin/operator worktree <name>`.
 
 ZERO = "0" * 40
+# Rebuild the three source mirrors immediately before every manual push. They are
+# ignored locally, so this cannot turn a documentation artifact into a pushed commit.
+snapshot_root = File.expand_path("../../..", __dir__)
+snapshot_tool = File.join(snapshot_root, "MASTER", "tools", "snapshot.rb")
+if File.file?(snapshot_tool)
+  system(RbConfig.ruby, snapshot_tool) or abort("pre-push: snapshot regeneration failed; push refused")
+end
 
 def commits(range)
   IO.popen(["git", "log", "--format=%h%x01%an%x01%ar%x01%s", range], &:read)
