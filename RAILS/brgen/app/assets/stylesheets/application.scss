@@ -1011,6 +1011,83 @@ label.compose-action:hover { color: var(--text); }
 //   .messenger-details-panel  ui_polish.flat_ui — floating chrome is 1px border
 //                             plus an elevated surface, never a shadow
 
+// Messenger artifact pane. The available evidence owns what appears here;
+// unsupported artifact kinds stay absent instead of being represented by fake data.
+.messenger-artifact-pane {
+  display: none;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  overflow-y: auto;
+  background: var(--surface-elevated);
+}
+.messenger-artifact-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-height: 64px;
+  padding: var(--space-2) var(--space-3);
+}
+.messenger-artifact-header h2 {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: 1.25;
+}
+.messenger-artifact-count {
+  display: grid;
+  place-items: center;
+  min-inline-size: 24px;
+  min-block-size: 24px;
+  padding-inline: var(--space-1);
+  border-radius: var(--radius-pill);
+  background: var(--hover);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+}
+.messenger-artifact-body {
+  min-width: 0;
+  padding: 0 var(--space-3) var(--space-3);
+}
+.messenger-artifact-kind {
+  margin-block: 0 var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+.messenger-artifact-image {
+  inline-size: 100%;
+  block-size: auto;
+  border: 1px solid var(--border);
+}
+.messenger-artifact-audio { inline-size: 100%; }
+.messenger-artifact-body .link_embed { margin: 0; }
+.messenger-artifact-meta {
+  margin-block-start: var(--space-3);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+.messenger-artifact-empty {
+  max-inline-size: 28rem;
+  padding: var(--space-4) var(--space-3);
+}
+.messenger-artifact-empty strong {
+  display: block;
+  margin-block-end: var(--space-1);
+}
+.messenger-artifact-empty p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
+}
+@media (min-width: 1280px) {
+  .messenger-artifact-pane { display: flex; }
+}
+
 // ============================================================ components: messenger
 
 .messenger-window {
@@ -1539,7 +1616,7 @@ label.compose-action:hover { color: var(--text); }
   .messenger-window {
     // 240px is Discord's rail, kept. The middle takes the rest — a conversation
     // has no ideal measure the way prose does, because a line of chat is short.
-    grid-template-columns: 240px minmax(0, 1fr);
+    grid-template-columns: 240px minmax(0, 1fr) 360px;
     // No block-size here either, for the same reason as above: the window is
     // 121px down the page, so a viewport-tall box ends 121px past the fold.
     // The panes cap themselves instead.
