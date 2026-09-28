@@ -23,6 +23,31 @@ class HotwireSurfacesTest < ActionDispatch::IntegrationTest
     assert_equal 0, Message.count
   end
 
+  test "inviting MASTER makes the shared bot selectable" do
+    post invite_master_messages_path
+    assert_redirected_to messages_path
+
+    master = User.master_bot
+    assert Current.user.received_messages.where(sender: master).exists?
+
+    get messages_path
+    assert_response :success
+    assert_includes response.body, "MASTER"
+    assert_includes response.body, I18n.t("messages.master_present")
+  end
+
+  test "messages addressed to MASTER enqueue the shared reply job" do
+    post invite_master_messages_path
+    master = User.master_bot
+
+    assert_enqueued_with(job: MasterMessageReplyJob) do
+      post messages_path, params: { message: { recipient_id: master.id, body: "What should I wear?" } }
+    end
+
+    assert_redirected_to messages_path
+    assert Message.exists?(sender: @user, recipient: master, body: "What should I wear?")
+  end
+
   test "accepted connection can be messaged over turbo stream" do
     Connection.create!(requester: @user, addressee: @other, status: "accepted")
 
