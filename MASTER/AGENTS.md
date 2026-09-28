@@ -174,8 +174,7 @@ that could not measure is inconclusive, neither a pass nor a failure, and callin
 it a pass claims the code was read when nothing was. An unverified claim costs
 more than an unfinished task, because the next reader builds on it.
 
-The complete supervisor contract is [`docs/fix-supervision.md`](docs/fix-supervision.md):
-the mission is durable, the attempt is mortal.
+The supervisor contract is executable in `Master::Fix::Mission` and `Master::Fix::Supervisor`: the mission is durable, the attempt is mortal.
 
 **Never move a ratchet to absorb your own growth.** `MASTER/bin/operator
 measure` must end where it started, and slack is the same defect as debt: a
