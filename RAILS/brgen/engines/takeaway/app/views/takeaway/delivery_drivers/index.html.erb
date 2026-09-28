@@ -14,7 +14,6 @@
       <%= render "shared/feed_card",
         name: label,
         meta: "#{driver.vehicle_type.presence || t("takeaway.vehicle_unset")} · #{driver.available? ? t("takeaway.available") : t("takeaway.unavailable")}",
-        content: (driver.location? ? "#{driver.current_lat}, #{driver.current_lng}" : nil),
         url: delivery_driver_path(driver),
         class: "takeaway" %>
     <% end %>
