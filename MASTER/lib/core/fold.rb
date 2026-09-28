@@ -66,6 +66,8 @@ private
       observation = Observation.no(detail)
       @memory.record(effect, observation)
       emit(turn, effect, observation)
+      return Done.new(reason: :needs_user, turns: turn, summary: detail) if answer.err? && answer.detail.to_s == "no surface to ask"
+
       nil
     end
 
