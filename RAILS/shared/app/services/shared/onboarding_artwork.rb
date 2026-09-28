@@ -2,7 +2,7 @@
 
 require "fileutils"
 require "i18n"
-require "shared/artwork_pipeline"
+require_relative "artwork_pipeline"
 
 module Shared
   # Deterministic first-party home for generated editorial onboarding art.
