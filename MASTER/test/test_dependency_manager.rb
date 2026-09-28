@@ -46,6 +46,15 @@ class TestDependencyManager < Minitest::Test
     manager
   end
 
+  def test_dilla_music_dependencies_stay_inside_the_dilla_group
+    source = File.read(File.join(Master::ROOT, "Gemfile"))
+    group = source[/group :dilla do\n(.*?)^end/m, 1].to_s
+
+    assert_includes group, 'gem "head_music", "~> 15.1"'
+    assert_includes group, 'gem "wavefile", "~> 1.1"'
+    assert_match(/group :dilla do/, source)
+  end
+
   def test_edge_tts_isolated_to_tts_group_in_both_master_bundles
     [File.join(Master::ROOT, "Gemfile"), File.join(Master::ROOT, "web", "Gemfile")].each do |path|
       source = File.read(path)
