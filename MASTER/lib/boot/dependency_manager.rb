@@ -321,14 +321,14 @@ module Master
 
         report("rebuilding native bundle extensions")
         discard_stale_native_bundle!
-        pristine_ok, pristine_stdout, pristine_stderr = run_bundle(
+        repair_ok, repair_stdout, repair_stderr = run_bundle(
           "install", "--jobs", bundle_jobs.to_s, "--retry", "3"
         )
-        pristine_output = join_output(pristine_stdout, pristine_stderr)
-        unless pristine_ok
+        repair_output = join_output(repair_stdout, repair_stderr)
+        unless repair_ok
           return fail_result(
             "bundle native extension repair failed",
-            output: join_output(output, native_output, pristine_output),
+            output: join_output(output, native_output, repair_output),
           )
         end
 
@@ -338,12 +338,12 @@ module Master
           "bundle native extensions repaired",
           changed: true,
           bundle: true,
-          output: join_output(output, native_output, pristine_output, repaired_output),
+          output: join_output(output, native_output, repair_output, repaired_output),
         ) if repaired_ok
 
         fail_result(
           "bundle native extension repair failed",
-          output: join_output(output, native_output, pristine_output, repaired_output),
+          output: join_output(output, native_output, repair_output, repaired_output),
         )
       end
 
@@ -378,14 +378,14 @@ module Master
 
           report("rebuilding native bundle extensions")
           discard_stale_native_bundle!
-          pristine_ok, pristine_stdout, pristine_stderr = run_bundle(
+          repair_ok, repair_stdout, repair_stderr = run_bundle(
             "install", "--jobs", bundle_jobs.to_s, "--retry", "3"
           )
-          pristine_output = join_output(pristine_stdout, pristine_stderr)
-          unless pristine_ok
+          repair_output = join_output(repair_stdout, repair_stderr)
+          unless repair_ok
             return fail_result(
               "bundle native extension repair failed",
-              output: join_output(output, native_output, pristine_output),
+              output: join_output(output, native_output, repair_output),
             )
           end
 
@@ -395,12 +395,12 @@ module Master
             "bundle native extensions repaired",
             changed: true,
             bundle: true,
-            output: join_output(output, native_output, pristine_output, repaired_output),
+            output: join_output(output, native_output, repair_output, repaired_output),
           ) if repaired_ok
 
           fail_result(
             "bundle native extension repair failed",
-            output: join_output(output, native_output, pristine_output, repaired_output),
+            output: join_output(output, native_output, repair_output, repaired_output),
           )
         elsif permission_failure?(output)
           install_to_user_path(output)
