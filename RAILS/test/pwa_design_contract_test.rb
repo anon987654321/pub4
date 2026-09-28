@@ -108,11 +108,8 @@ class PwaDesignContractTest < Minitest::Test
   def test_all_manifests_are_installable
     each_app do |app, root|
       raw = manifest_source(root)
-      # This used to switch on `app == "brgen"`, on the grounds that brgen's
-      # manifest was the only ERB one. Localising the PWA shortcut labels made
-      # every manifest ERB, and amber's then reached JSON.parse and raised.
-      # Switch on what the file actually contains instead: an app growing or
-      # losing a `case` no longer has to be remembered here.
+      # Dynamic manifests are checked from their source shape; static JSON is
+      # parsed directly. The helper chooses the representation the app ships.
       if raw.match?(ERB_CONTROL_FLOW)
         assert_includes raw, '"start_url"'
         assert_includes raw, '"scope"'
