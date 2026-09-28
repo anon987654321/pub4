@@ -4181,9 +4181,9 @@ rules:
       weight:
         ceiling_lives_in: MASTER/gates/data/, in the css_budget.yml ratchet shape —
           a number measured from a real run that only ever ratchets down.
-        measured_2026_08_31: tracked application.css is 204KB brgen, 110KB amber,
-          64KB bsdports. JS builds are gitignored (RAILS/*/public/assets/), so only
-          the CSS is reproducible outside a build.
+        baseline_source: generated application.css is deliberately untracked and rebuilt
+          from the checked-in SCSS before asset gates or deployment. JS builds are also
+          ignored, so budgets are measured only after an explicit source-to-build pass.
         action: Set a ceiling from a run of this tree, never from another product's
           published figure — Pinterest's 150KB and Tinder's 20KB CSS describe their
           trees, not this one, and a ceiling nothing measured is a wish. A budget
