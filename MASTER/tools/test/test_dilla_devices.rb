@@ -870,16 +870,13 @@ end
     assert_operator spans.min, :>, 0.3, "the requested amount is not being delivered"
   end
 
-  # Key tracking: a voice an octave up needs its cutoff an octave up, or the top
-  # of a stack goes dull because a fixed cutoff removes a larger share of a
-  # higher note's harmonics.
-  def test_key_tracking_follows_the_register
-    full = VoiceStack.plan(voices: 3, detune_mode: :octaves, key_track: 1.0)
-    none = VoiceStack.plan(voices: 3, detune_mode: :octaves, key_track: 0.0)
-    up = full.find { |v| v.semitones == 12 }
+  def test_voice_stack_has_no_unconsumed_cutoff_api
+    voice = VoiceStack.plan(voices: 3, detune_mode: :octaves).first
 
-    assert_in_delta 2.0, up.cutoff_scale, 1e-6, "an octave up should double the cutoff at full tracking"
-    assert_equal [1.0], none.map(&:cutoff_scale).uniq, "no tracking means no scaling"
+    refute voice.respond_to?(:cutoff_scale)
+    refute VoiceStack.method(:plan).parameters.any? { |kind, name| name == :key_track }
+    assert_equal 1, VoiceStack.describe([voice]).length
+    refute_includes VoiceStack.describe([voice]).first, "cutoff"
   end
 
   # Transposition must move pitch and nothing else -- same count, same times.

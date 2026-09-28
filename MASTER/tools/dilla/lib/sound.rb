@@ -1984,7 +1984,7 @@ module VoiceStack
 
   # A voice, as data. Everything the renderer needs and nothing it does not, so
   # a plan can be printed and pinned in a test without rendering a sample.
-  Voice = Struct.new(:index, :semitones, :cents, :gain, :macro, :cutoff_scale, keyword_init: true)
+  Voice = Struct.new(:index, :semitones, :cents, :gain, :macro, keyword_init: true)
 
   # voices:    how many. Seven is P_4L's count and the plan tables above hold it.
   # macro:     the shared position, 0..1, of whatever the caller is varying.
@@ -1993,12 +1993,8 @@ module VoiceStack
   # drift:     detune in cents, spread across the voices. Small numbers only --
   #            past about 25 cents the stack stops being one instrument and
   #            becomes several out of tune with each other.
-  # key_track: how hard each voice's filter follows its own pitch, 0..1. An
-  #            octave up moves the cutoff an octave up at 1.0. Without it the top
-  #            of a stack goes dull, because a fixed cutoff removes a larger
-  #            share of a higher note's harmonics.
   def plan(voices: 4, macro: 0.5, variation: 0.25, detune_mode: :fifths,
-           drift: 9.0, key_track: 0.5, tilt: 0.4, seed: 4242)
+           drift: 9.0, tilt: 0.4, seed: 4242)
     n = voices.to_i.clamp(1, 7)
     law = SPACING_LAWS.include?(detune_mode.to_sym) ? detune_mode.to_sym : nil
     steps = law ? SEMITONE_PLAN[:unison] : SEMITONE_PLAN.fetch(detune_mode.to_sym) { SEMITONE_PLAN[:fifths] }
@@ -2022,9 +2018,7 @@ module VoiceStack
         # Voices far from the written pitch sit back, or the stack reads as an
         # octave doubling rather than as one instrument.
         gain: (1.0 / (1.0 + (tilt.to_f * (semis.abs / 12.0)))).round(4),
-        macro: positions[i].round(4),
-        # Key tracking, as a multiplier on whatever cutoff the caller uses.
-        cutoff_scale: (2.0**((semis / 12.0) * key_track.to_f.clamp(0.0, 1.0))).round(4)
+        macro: positions[i].round(4)
       )
     end
   end
@@ -2119,8 +2113,8 @@ end
   # What a plan is, one line per voice.
   def describe(plan)
     plan.map do |v|
-      format("voice %d  %+3d st  %+6.2f cents  gain %.3f  macro %.3f  cutoff x%.3f",
-             v.index, v.semitones, v.cents, v.gain, v.macro, v.cutoff_scale)
+      format("voice %d  %+3d st  %+6.2f cents  gain %.3f  macro %.3f",
+             v.index, v.semitones, v.cents, v.gain, v.macro)
     end
   end
 end
