@@ -57,7 +57,7 @@ class RailsUpgradeContractTest < Minitest::Test
     assert_includes body, "rails!"
   end
 
-  test "no app overrides HTML+ERB back to Erubi before the 8.2 cutover" do
+  test "no app overrides HTML+ERB back to Erubi after the 8.2 cutover" do
     APPS.each do |app|
       source = Dir.glob(File.join(ROOT, app, "config/**/*.rb")).map { |path| File.read(path) }.join("\n")
 
