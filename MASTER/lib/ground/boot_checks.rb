@@ -91,9 +91,9 @@ module Master
         def check_config_valid(root)
           config = Config.new(root)
           errors = config.validate
-          fail("config_valid", errors.join("; "), severity: :fatal) unless errors.empty?
-            ok("config_valid", "all config values within bounds")
+          return fail("config_valid", errors.join("; "), severity: :fatal) unless errors.empty?
 
+          ok("config_valid", "all config values within bounds")
         rescue StandardError => e
           fail("config_valid", "validation error: #{e.message}")
         end
@@ -104,9 +104,9 @@ module Master
 
           required = %w[soul.yml rules.yml limits.yml]
           missing = required.reject { |f| File.exist?(File.join(dir, f)) }
-          fail("data_dir", "missing required: #{missing.join(", ")}") unless missing.empty?
-            ok("data_dir", "required law files present")
+          return fail("data_dir", "missing required: #{missing.join(", ")}") unless missing.empty?
 
+          ok("data_dir", "required law files present")
         end
 
         def check_soul_yaml(root)
