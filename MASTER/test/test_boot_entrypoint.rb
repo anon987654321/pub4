@@ -34,4 +34,46 @@ class TestBootEntrypoint < Minitest::Test
       assert_equal "4.0.7", reader.call(root)
     end
   end
+
+  def test_preloaded_wrong_bundler_reexecs_into_a_clean_process
+    Dir.mktmpdir("master-entrypoint") do |root|
+      File.write(File.join(root, "Gemfile"), "source \"https://rubygems.org\"\n")
+      File.write(File.join(root, "Gemfile.lock"), <<~LOCK)
+        GEM
+          remote: https://rubygems.org/
+
+        DEPENDENCIES
+
+        BUNDLED WITH
+          4.0.5
+      LOCK
+
+      active = Struct.new(:version).new(Gem::Version.new("4.0.7"))
+      env = {
+        "RUBYOPT" => "-rbundler/setup",
+        "RUBYLIB" => "/wrong/bundler/lib",
+        "BUNDLE_GEMFILE" => "/wrong/Gemfile",
+        "BUNDLE_LOCKFILE" => "/wrong/Gemfile.lock",
+      }
+      captured = nil
+
+      Master::Boot::Entrypoint.stub(:exec, ->(clean, program, *argv) { captured = [clean, program, argv] }) do
+        Gem.stub(:loaded_specs, { "bundler" => active }) do
+          Master::Boot::Entrypoint.reexec_mismatched_bundler!(
+            root:, env:, out: StringIO.new, argv: ["--fast"], program: "/tmp/bin/cli"
+          )
+        end
+      end
+
+      refute_nil captured
+      clean, program, argv = captured
+      assert_equal "/tmp/bin/cli", program
+      assert_equal ["--fast"], argv
+      assert_equal "1", clean["MASTER_BUNDLER_REEXEC_DONE"]
+      refute clean.key?("RUBYOPT")
+      refute clean.key?("RUBYLIB")
+      refute clean.key?("BUNDLE_GEMFILE")
+      refute clean.key?("BUNDLE_LOCKFILE")
+    end
+  end
 end
