@@ -162,6 +162,23 @@ class PageSimulationGateTest < Minitest::Test
 
   # A guest page whose path names a record gets no live probe, and a green live
   # run has to say which ones — without failing a deploy that requires live.
+  def test_unprobed_guest_pages_explain_why_the_record_is_not_resolvable
+    Dir.mktmpdir("page-sim-view") do |root|
+      row = page(root)
+      reset = page(root, path: "/passwords/:token/edit").merge(
+        id: "brgen/shared/passwords/edit",
+        needs_id: true,
+      )
+      result = simulate([row, reset], live: [row], needing_id: [reset], open: true)
+
+      assert_equal :passed, result.outcome, result.failures.join(" | ")
+      assert_match(
+        /single-use password-reset token cannot be seeded as an unused live credential/,
+        result.warnings.join(" | "),
+      )
+    end
+  end
+
   def test_a_guest_page_needing_an_id_is_named_when_its_app_is_live
     Dir.mktmpdir("page-sim-view") do |root|
       row = page(root)
