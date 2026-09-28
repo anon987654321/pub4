@@ -88,6 +88,12 @@
             <% end %>
 
             <section class="messenger-details-section">
+              <%= render "shared/master_invite",
+                    path: invite_master_conversation_path(@conversation),
+                    invited: @master_invited %>
+            </section>
+
+            <section class="messenger-details-section">
               <%= form_with url: conversation_path(@conversation), method: :patch,
                     class: "disappearing-settings#{" disappearing-settings--active" if @conversation.disappearing_messages?}" do |form| %>
                 <span class="disappearing-badge" aria-hidden="true"></span>
