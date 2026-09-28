@@ -235,6 +235,14 @@ class TestDependencyManager < Minitest::Test
     assert_includes argv, "sqlite"
   end
 
+  def test_boot_probe_uses_the_real_cli_help_path
+    source = File.read(File.join(Master::ROOT, "bin", "deps"))
+
+    assert_match(/when "boot"/, source)
+    assert_includes source, 'system(cli, "--help")'
+    assert_match(%r{cli = File\.join\(ROOT, "bin", "cli"\)}, source)
+  end
+
   def test_disabled_automatic_boot_is_a_noop
     manager = fake_manager([])
     manager.instance_variable_get(:@env)["MASTER_AUTO_INSTALL"] = "0"
