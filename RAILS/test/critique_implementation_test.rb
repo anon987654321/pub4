@@ -137,6 +137,17 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes css, "border-block-end: 1px solid var(--border)"
   end
 
+  def test_amber_post_like_uses_shared_feed_action_anatomy
+    button = read("amber/app/views/posts/_like_button.html.erb")
+    icons = read("shared/app/views/shared/_feed_icon.html.erb")
+
+    assert_includes button, 'class: "feed-action"'
+    assert_includes button, 'form_class: "feed-action-form"'
+    assert_includes button, 'name: "like"'
+    assert_includes button, 'post.likes_count.to_i.positive? ? post.likes_count : ""'
+    assert_includes icons, '"like" => :like'
+  end
+
   def test_amber_prioritizes_owned_clothes_and_reversible_lifecycle
     index = read("amber/app/views/items/index.html.erb")
     show = read("amber/app/views/items/show.html.erb")
