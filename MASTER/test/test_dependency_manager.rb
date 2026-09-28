@@ -272,6 +272,28 @@ class TestDependencyManager < Minitest::Test
     assert_nil manager.send(:bundler_path, "4.0.5")
   end
 
+  def test_missing_bundler_installs_into_separate_tool_store
+    installed = false
+    manager = fake_manager([[true, "installed", ""]], bundler: false)
+    manager.define_singleton_method(:bundler_path) do |_version|
+      installed ? "/fake/bundle" : nil
+    end
+    manager.define_singleton_method(:gem_command) { "/fake/gem" }
+    manager.define_singleton_method(:run) do |command, chdir:, env:|
+      @commands << [command, chdir, env]
+      installed = true
+      [true, "installed", ""]
+    end
+
+    result = manager.send(:ensure_bundler)
+
+    assert result.success?
+    command = @commands.first.first
+    assert_equal ["/fake/gem", "install", "bundler", "-v", "4.0.5", "--no-document"], command[0, 6]
+    assert_equal "--install-dir", command[6]
+    assert_match(%r{/.master/bundler/[0-9a-f]{16}/bundler$}, command[7])
+  end
+
   def test_missing_bundle_installs_bundler_then_rechecks
     installed = false
     responses = [[true, "installed", ""], [true, "The Gemfile's dependencies are satisfied", ""]]
