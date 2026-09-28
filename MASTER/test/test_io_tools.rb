@@ -450,18 +450,14 @@ class TestIoTools < Minitest::Test
 
   def test_tree_lists_the_path_it_was_given_rather_than_the_root
     with_root do |root|
-      FileUtils.mkdir_p(File.join(root, "sub"))
-      target = nil
-      ok = Struct.new(:success?).new(true)
-      capture = ->(*args) { target = args.last; ["one\n\ntwo\n", "", ok] }
+      FileUtils.mkdir_p(File.join(root, "sub", "nested"))
+      File.write(File.join(root, "sub", "one.txt"), "one\n")
+      File.write(File.join(root, "sub", "nested", "two.txt"), "two\n")
 
-      result = Master::Io::Exec.stub(:capture3, capture) do
-        Master::Io::Tree.new(root:).call(path: "sub")
-      end
+      result = Master::Io::Tree.new(root:).call(path: "sub")
 
       assert result.ok?, result.to_s
-      assert_equal File.join(root, "sub"), target
-      assert_equal "one\ntwo", result.value!
+      assert_equal "nested/\n  two.txt\none.txt", result.value!
     end
   end
 
@@ -472,10 +468,6 @@ class TestIoTools < Minitest::Test
       refute result.ok?
       assert_match(/escapes project root/, result.message)
     end
-  end
-
-  def test_tree_script_exists_where_the_tool_looks
-    assert File.file?(Master::Io::Tree::SCRIPT), "Tree shells #{Master::Io::Tree::SCRIPT}"
   end
 
   # --- SymbolLookup ------------------------------------------------------------
