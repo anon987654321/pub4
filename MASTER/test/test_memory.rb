@@ -52,6 +52,42 @@ class TestMemory < Minitest::Test
     assert_equal "i survived", mem2.recall("persist_key")
   end
 
+  def test_new_memory_has_provenance_with_explicit_source_and_confidence
+    @mem.remember("provenance", "captured", type: "user", source: "conversation:42", confidence: 0.9)
+
+    provenance = @mem.provenance("provenance")
+
+    assert_equal "conversation:42", provenance.fetch("source")
+    assert_equal 0.9, provenance.fetch("confidence")
+    assert_operator provenance.fetch("captured_at"), :>, 0
+  end
+
+  def test_legacy_memory_is_marked_low_confidence_when_reloaded
+    path = File.join(@root, ".master", "memory.yml")
+    FileUtils.mkdir_p(File.dirname(path))
+    File.write(path, { "old" => { "value" => "old fact", "ts" => Time.now.to_i, "type" => "user" } }.to_yaml)
+
+    mem = Master::Ground::Memory.new(root: @root)
+
+    assert_equal "legacy", mem.provenance("old").fetch("source")
+    assert_equal 0.0, mem.provenance("old").fetch("confidence")
+  end
+
+  def test_conflicting_memory_is_preserved_with_both_provenances
+    @mem.remember("deadline", "Friday", source: "conversation:1", confidence: 0.8)
+    @mem.remember("deadline", "Monday", source: "conversation:2", confidence: 0.7)
+
+    conflicts = @mem.conflicts_for("deadline")
+
+    assert_equal "Monday", @mem.recall("deadline")
+    assert_equal 1, conflicts.size
+    assert_equal "Friday", conflicts.first.fetch("previous")
+    assert_equal "Monday", conflicts.first.fetch("incoming")
+    assert_equal "conversation:1", conflicts.first.fetch("previous_provenance").fetch("source")
+    assert_equal "conversation:2", conflicts.first.fetch("incoming_provenance").fetch("source")
+  end
+
+
   # data/ is the constitution, so the runtime imports what the operator wrote
   # there and never plants a file of its own.
   def test_brain_files_are_imported_and_never_created
