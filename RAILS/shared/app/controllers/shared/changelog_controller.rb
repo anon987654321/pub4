@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Shared
-  class ChangelogController < ActionController::Base
+  class ChangelogController < ::ApplicationController
     include ActionController::Rendering
 
     def show
