@@ -9,11 +9,9 @@ require "json"
 require "time"
 require "fileutils"
 require "digest"
-# ../lib/io/... was correct at MASTER/tools/postpro/. It has not been correct
-# since the move to MASTER/tools/, where it resolves to MASTER/tools/lib/io/ -- a directory
-# that does not exist -- so this file has aborted on its first require, every
-# invocation, since 687c07a43. MASTER/tools/dilla/dilla.rb reaches the same library
-# by the path below; postpro and replicate were never updated with it.
+# postpro lives two levels below MASTER/, so ../../lib/io resolves to
+# MASTER/lib/io. Keep this anchored path rather than depending on the operator's
+# working directory.
 require_relative "../../lib/io/analog_capabilities"
 
 require "open3"
