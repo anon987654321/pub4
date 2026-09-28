@@ -1206,11 +1206,7 @@ no named reader, and an intent-to-deliver pipeline that renames stages
   `aria-busy` over CDP and measuring them waits on "Motion is a rendered value"
   and the feedback items in the RAILS section. Seam:
   `MASTER/gates/lib/rendered/keyboard_flow.rb`.
-- **Offer only the verbs that are legal this turn.** `Core::Model.offer` builds
-  the schema from `Proof#scope`, but `lib/cli/core_bridge.rb:76` still defaults
-  to the static `SCHEMA`, so an early `done` can still be generated. Done when
-  the bridge asks through `offer` and a gemma3:4b run shows fewer premature
-  `done`s than the static schema; a worked example in the prompt made it worse.
+- Closed: `Core::Model.offer` derives the per-turn verb and git-operation schema from `Proof#scope`, and `CoreBridge` tests verify that an unproved first turn cannot offer `done` or `git commit`.
 
 ## ChatGPT proposed forward work — intake 2026-09-11
 
