@@ -1332,7 +1332,7 @@ face_enhancements:
     tier: p1
     status: implemented
     handler: both
-    summary: Untrack RAILS/brgen/public/assets from git; deploy precompile only
+    summary: Retire the obsolete BRGEN app-local public/assets tree; shared static assets remain deploy-owned
   - id: bl_brgen_sidebar_live
     area: web
     tier: p2
