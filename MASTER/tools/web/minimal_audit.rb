@@ -3,6 +3,7 @@
 
 require "json"
 require "optparse"
+require "time"
 require "yaml"
 
 root = File.expand_path(ENV.fetch("PUB4_ROOT", File.join(__dir__, "../..")))
