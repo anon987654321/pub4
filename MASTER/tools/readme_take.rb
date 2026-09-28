@@ -50,6 +50,7 @@ VIEWPORT = "900x760"
 CLIP = "315,160,270,370"     # the face, in CSS pixels, at that viewport
 SLICE = 300
 ATTEMPTS = 3
+PINNED_RUBY = File.read(File.join(REPO, ".ruby-version")).strip.freeze
 GIF_FROM = 300               # a lively three seconds, well past the opening
 # 20fps of hard 1px dots is near the worst case for h264 and the recorder defaults
 # to 28, which gives 23MB for four minutes. 36 gives 14MB with the dots still
@@ -207,7 +208,7 @@ def speak!
 
     text = File.join(parts_dir, format("%02d.txt", index))
     File.write(text, para)
-    ok = system({ "RBENV_VERSION" => "3.4.9" }, "rbenv", "exec", "ruby",
+    ok = system({ "RBENV_VERSION" => PINNED_RUBY }, "rbenv", "exec", "ruby",
                 File.join(ROOT, "bin", "tts-worker"), reader_for(policy, index),
                 policy.default_rate, policy.default_pitch, out,
                 in: text, out: File::NULL, err: File::NULL)
@@ -259,7 +260,7 @@ def record!
     puts "slice #{from}...#{to}"
     ok = false
     ATTEMPTS.times do |attempt|
-      ok = system({ "RBENV_VERSION" => "3.4.9" }, "rbenv", "exec", "ruby",
+      ok = system({ "RBENV_VERSION" => PINNED_RUBY }, "rbenv", "exec", "ruby",
                   "gates/probes/face_loop_record.rb",
                   "--audio", WAV, "--out", MP4, "--fps", FPS.to_s,
                   "--viewport", VIEWPORT, "--scale", "2", "--clip", CLIP,
