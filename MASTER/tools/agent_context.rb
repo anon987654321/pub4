@@ -83,6 +83,7 @@ module Operator
     end
 
     def shell_contract
+      load_master
       banned = begin
         Array(Master.law("zsh")&.[]("banned_commands")).map(&:to_s).sort
       rescue StandardError
