@@ -7,6 +7,30 @@ class RobotsController < ApplicationController
   # cannot do.
   def show
     render plain: <<~ROBOTS, content_type: "text/plain"
+      User-agent: OAI-SearchBot
+      Allow: /
+      Disallow: /conversations
+      Disallow: /messages
+      Disallow: /admin
+      Disallow: /confirm_email/
+      Disallow: /location
+      Disallow: /nearby
+      Disallow: /profile
+      Disallow: /likes
+      Disallow: /dislikes
+      Disallow: /matches
+      Disallow: /next
+      Disallow: /cart
+
+      User-agent: ChatGPT-User
+      Allow: /
+
+      User-agent: GPTBot
+      Disallow: /
+
+      User-agent: Google-Extended
+      Disallow: /
+
       User-agent: *
       Disallow: /conversations
       Disallow: /messages

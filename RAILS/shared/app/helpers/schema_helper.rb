@@ -121,6 +121,8 @@ module SchemaHelper
       person_schema(resource)
     when "local_business", "restaurant"
       local_business_schema(resource)
+    when "event"
+      event_schema(resource)
     when "product", "listing"
       product_schema(resource)
     when "video", "video_object"
@@ -236,6 +238,65 @@ module SchemaHelper
     data["aggregateRating"] = aggregate_rating_snippet(listing)
 
     data.compact
+  end
+
+
+  def event_schema(event)
+    starts_at = event.try(:starts_at)
+    ends_at = event.try(:ends_at)
+    location_name = event.try(:location_name)
+    return if starts_at.blank? || location_name.blank?
+
+    location = {
+      "@type" => "Place",
+      "name" => location_name,
+      "address" => event.try(:address),
+    }
+    latitude = event.try(:latitude)
+    longitude = event.try(:longitude)
+    if latitude.present? && longitude.present?
+      location["geo"] = {
+        "@type" => "GeoCoordinates",
+        "latitude" => latitude,
+        "longitude" => longitude,
+      }
+    end
+
+    offer = if event.try(:free?)
+              {
+                "@type" => "Offer",
+                "price" => 0,
+                "priceCurrency" => event.try(:currency).presence || "NOK",
+                "availability" => "https://schema.org/InStock",
+                "url" => schema_url_for(event),
+              }
+            elsif event.try(:price_cents).to_i.positive?
+              {
+                "@type" => "Offer",
+                "price" => event.price_cents.to_i / 100.0,
+                "priceCurrency" => event.try(:currency).presence || "NOK",
+                "availability" => event.cancelled? ? nil : "https://schema.org/InStock",
+                "url" => schema_url_for(event),
+              }.compact
+            end
+
+    {
+      "@context" => "https://schema.org",
+      "@type" => "Event",
+      "name" => event.try(:title),
+      "description" => meta_description_for(event),
+      "startDate" => starts_at.in_time_zone("Europe/Oslo").iso8601,
+      "endDate" => (ends_at.in_time_zone("Europe/Oslo").iso8601 if ends_at.present?),
+      "eventStatus" => (
+        event.cancelled? ? "https://schema.org/EventCancelled" : "https://schema.org/EventScheduled"
+      ),
+      "eventAttendanceMode" => "https://schema.org/OfflineEventAttendanceMode",
+      "location" => location.compact,
+      "image" => seo_image_url(event.try(:cover)),
+      "offers" => offer,
+      "organizer" => person_snippet(event.try(:user)),
+      "url" => schema_url_for(event),
+    }.compact
   end
 
   def video_schema(video)
