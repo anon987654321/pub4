@@ -21,9 +21,34 @@ module Master
         end
 
         manager.activate_environment!
+        reexec_mismatched_bundler!(root:, env:, out:, argv:, program:)
         activate_bundle!(root)
 
         true
+      end
+
+      def reexec_mismatched_bundler!(root:, env:, out:, argv:, program:)
+        lock_version = locked_bundler_version(root)
+        return if lock_version.empty?
+
+        active = Gem.loaded_specs["bundler"]&.version&.to_s
+        return if active.nil? || active == lock_version
+        return if env["MASTER_BUNDLER_REEXEC_DONE"] == "1"
+
+        clean_env = env.to_h.dup
+        %w[RUBYOPT RUBYLIB].each { |key| clean_env.delete(key) }
+        %w[
+          BUNDLE_APP_CONFIG BUNDLE_BIN BUNDLE_DEPLOYMENT BUNDLE_FROZEN
+          BUNDLE_GEMFILE BUNDLE_IGNORE_CONFIG BUNDLE_JOBS BUNDLE_LOCKFILE
+          BUNDLE_ONLY BUNDLE_PATH BUNDLE_RETRY BUNDLE_USER_CONFIG
+          BUNDLE_USER_HOME BUNDLE_VERSION BUNDLE_WITH BUNDLE_WITHOUT
+        ].each { |key| clean_env.delete(key) }
+        clean_env["MASTER_BUNDLER_REEXEC_DONE"] = "1"
+        out.puts("bundler0: switching #{active} -> #{lock_version}")
+        exec(clean_env, File.expand_path(program), *argv)
+      rescue Errno::ENOENT => e
+        out.puts("bundler0: cannot re-exec #{program}: #{e.message}")
+        exit 78
       end
 
       def activate_bundle!(root)
