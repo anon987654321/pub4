@@ -184,7 +184,7 @@ module Master
     def local_model_install_hint
       return "pkg install ollama, ollama serve &, ollama pull qwen3.5:0.8b" if Device.android?
 
-      "ollama pull gemma3:4b"
+      "ollama pull qwen3.5:0.8b"
     end
 
     private
