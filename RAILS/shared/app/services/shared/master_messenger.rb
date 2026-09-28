@@ -22,7 +22,8 @@ module Shared
       )
       return unless result["ok"]
 
-      result["output"].to_s.strip.presence
+      output = result["output"].to_s.strip
+      output unless output.empty?
     rescue StandardError
       nil
     end
