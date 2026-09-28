@@ -31,7 +31,16 @@ module Master
         return unless File.file?(gemfile)
 
         ENV["BUNDLE_GEMFILE"] = gemfile
+        version = locked_bundler_version(root)
+        gem("bundler", version) unless version.empty?
         require "bundler/setup"
+      end
+
+      def locked_bundler_version(root)
+        lockfile = File.join(root, "Gemfile.lock")
+        return "" unless File.file?(lockfile)
+
+        File.read(lockfile)[/^BUNDLED WITH\n\s+(.+)$/m, 1].to_s.strip
       end
 
       def reexec_pinned_ruby!(root:, env:, out:, argv:, program:)
