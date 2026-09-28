@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
+require "fileutils"
 
 module Master
   module AI
@@ -11,6 +12,7 @@ module Master
         module_function
 
         def export(input:, output:)
+          FileUtils.mkdir_p(File.dirname(output))
           count = 0
           File.open(output, "w") do |out|
             File.foreach(input) do |line|
