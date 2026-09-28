@@ -212,6 +212,16 @@ class TestDependencyManager < Minitest::Test
     refute Dir.exist?(path)
   end
 
+  def test_bundler_path_rejects_stale_spec_without_executable
+    manager = MANAGER.new(root: @root, env: { "PATH" => "/bin" }, out: StringIO.new, home: @root)
+    stale = Gem::Specification.new("bundler", Gem::Version.new("4.0.5"))
+    stale.define_singleton_method(:full_gem_path) { "/tmp/master-stale-bundler" }
+
+    manager.define_singleton_method(:bundler_spec) { |_version| stale }
+
+    assert_nil manager.send(:bundler_path, "4.0.5")
+  end
+
   def test_clean_bundle_does_not_install_or_touch_lock
     manager = fake_manager([[true, "The Gemfile's dependencies are satisfied", ""]])
     before = File.read(File.join(@root, "Gemfile.lock"))
