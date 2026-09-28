@@ -10,7 +10,7 @@ A finding is a hypothesis. Historical dated sections below are evidence records,
 - Ruby is pinned to `4.0.7` at root and in `MASTER/.ruby-version`. Exact-pin enforcement and runner fixes have landed; verify every real host/runner rather than reopening the old Ruby-version task.
 - Main has now aligned the Rails Gemfiles/locked app stacks to Rails 8.1.4 and moved brgen to Rails 8.1 defaults. **Rails 8.2 is now the active migration target**, because another agent is actively upgrading pub4.
 - The official Rails 8.2 Edge Guide/release notes are still marked work in progress rather than a stable tagged release. The migration must therefore keep edge-vs-release state explicit and re-lock when the exact 8.2 target is fixed.
-- Rails 8.2 migration seams called out by the current upstream guides include Herb HTML+ERB compilation, modern header-based CSRF behavior, enum negative scopes including `nil`, Active Storage analysis/variant timing, SQLite table-alteration behavior around `ON DELETE CASCADE`, and enqueue-after-transaction-commit behavior. Each must be verified against pub4 rather than accepted wholesale.
+- Rails 8.2 migration seams called out by the current upstream guides include Herb HTML+ERB compilation, modern header-based CSRF behavior, enum negative scopes including `nil`, Active Storage analysis/variant timing, SQLite table-alteration behavior around `ON DELETE CASCADE`, and enqueue-after-transaction-commit behavior. The source-side contracts are now explicit; live 8.2/runtime verification stays open until the exact target can be exercised.
 - Main has no open PRs and no open issues, but stale branches remain. The all-tree fix runner branch carries seven unique commits yet is 108 commits behind current main; the older full-Rails runner branch carries two unique commits and is 346 commits behind. Recover useful patches selectively; do not merge their history wholesale.
 - Hosted CI is not the verification path for this backlog. The live full three-tree `/fix` run remains unproven until an equivalent manually watched run emits actionable step-level evidence.
 - `RAILS/test/run_all.rb` currently discovers 131 contract files recursively, one process per file. The historical red count remains stale until the suite is rerun manually on the current main baseline.
@@ -20,12 +20,9 @@ A finding is a hypothesis. Historical dated sections below are evidence records,
 ### Rails 8.2 migration
 - Re-run the complete RAILS contract suite before and after the migration; record exact files, runs, assertions, failures and exit status.
 - Run `bin/rails herb:check` and repair every template that cannot compile through Herb before enabling the 8.2 HTML+ERB default.
-- Audit every `protect_from_forgery` caller and the configured CSRF strategy; add regression coverage for header-only versus legacy-token fallback where relevant.
-- Audit enum negative scopes for `nil` semantics.
-- Audit Active Storage validations and processing. The 8.2 guide changes when attachment metadata is analyzed and introduces explicit processing timing.
-- Audit every Active Job enqueue site whose correctness depends on transaction visibility. Verify Solid Queue behavior after the 8.2 enqueue-after-commit change.
-- Exercise SQLite migrations involving child foreign keys with `ON DELETE CASCADE`.
-- Compare all framework-default and initializer changes against the 8.2 upgrade guide; remove only superseded Rails 8.0/8.1 compatibility code.
+- Source-audit every transaction-sensitive Active Job producer; the critical model producers now originate from `after_commit`/`after_create_commit`. Runtime proof of the Rails 8.2 enqueue-after-commit behavior remains open until the 8.2 target can be exercised.
+- Static-audit SQLite foreign-key rebuild migrations for `PRAGMA foreign_keys` restore and keep the existing destroy-cascade tests; run the migration exercise against a real SQLite database before the 8.2 cutover.
+- Keep the framework-default audit executable: every Rails app is pinned to `load_defaults 8.1`, no app has an explicit HTML+ERB Erubi override, and the legacy Rails 8.0 compatibility layer has no active initializer. Re-run this contract when the 8.2 target is locked.
 - Run security, autoloading, routing, rendering, asset, cache, job, mailer, Active Storage, PWA and system-test gates after the version change.
 - Keep edge-only migration changes isolated. When 8.2 receives a stable tag, compare edge to the tag, re-lock against the stable target, and rerun the full gate set.
 - Do not treat Rails 8.1.4 as the destination; it is the current main baseline while the 8.2 migration is in progress.
@@ -33,7 +30,7 @@ A finding is a hypothesis. Historical dated sections below are evidence records,
 ### MASTER /fix convergence
 - Prove exact `/fix MASTER RAILS OPENBSD` dispatch from a clean checkout.
 - Prove observe → repair → re-observe → verify semantics over all three governed trees.
-- Prove council findings are consumed by the fix loop rather than merely written to disk.
+- The council-to-repair seam is now covered by a regression test; the remaining proof is an actual three-tree `/fix` run from a clean checkout.
 - Re-measure the MASTER ratchets. Historical 21-row numbers are not current truth. Use `bin/operator measure --why <row>` before changing any ceiling.
 - Rebuild the rules.yml trim draft only from current measurements; do not loosen constitutional limits merely to manufacture green.
 
