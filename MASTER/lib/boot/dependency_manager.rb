@@ -320,6 +320,7 @@ module Master
         end
 
         report("rebuilding native bundle extensions")
+        discard_stale_native_bundle!
         pristine_ok, pristine_stdout, pristine_stderr = run_bundle("pristine")
         pristine_output = join_output(pristine_stdout, pristine_stderr)
         unless pristine_ok
@@ -374,6 +375,7 @@ module Master
           end
 
           report("rebuilding native bundle extensions")
+          discard_stale_native_bundle!
           pristine_ok, pristine_stdout, pristine_stderr = run_bundle("pristine")
           pristine_output = join_output(pristine_stdout, pristine_stderr)
           unless pristine_ok
@@ -501,7 +503,7 @@ module Master
           "BUNDLE_JOBS" => bundle_jobs.to_s,
           "BUNDLE_APP_CONFIG" => File.join(bundle_config_root, "app"),
           "BUNDLE_USER_CONFIG" => File.join(bundle_config_root, "global"),
-          "BUNDLE_PATH" => File.join(bundle_config_root, "gems"),
+          "BUNDLE_PATH" => bundle_gems_path,
           "BUNDLE_DISABLE_SHARED_GEMS" => "1",
         )
         env
@@ -527,6 +529,22 @@ module Master
         [ruby, prefix, library, RbConfig::CONFIG.fetch("ruby_version", RUBY_VERSION), RUBY_PLATFORM].join("\0")
       rescue StandardError
         [RbConfig.ruby, RbConfig::CONFIG.fetch("ruby_version", RUBY_VERSION), RUBY_PLATFORM].join("\0")
+      end
+
+      def discard_stale_native_bundle!
+        path = bundle_gems_path
+        return false unless File.directory?(path)
+
+        report("discarding stale native bundle #{path}")
+        FileUtils.rm_rf(path)
+        true
+      rescue StandardError => e
+        report("stale native bundle cleanup failed: #{e.class}: #{e.message}")
+        false
+      end
+
+      def bundle_gems_path
+        File.join(bundle_config_root, "gems")
       end
 
       def bundle_jobs
