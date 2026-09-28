@@ -37,34 +37,34 @@ export SECRET_KEY_BASE_DUMMY=1
 #
 # db:prepare is idempotent: it creates the database when absent, loads the
 # schema when empty, and otherwise applies only pending migrations.
-# Gems first: db:prepare is the first `bundle34 exec`, and a gem the pull just
+# Gems first: db:prepare is the first `bundle40 exec`, and a gem the pull just
 # added (ferrum-0.17.2, 2026-09-24) stopped the deploy there with GemNotFound
 # while the install that would have fixed it waited two steps later.
 echo "==> bundle"
-bundle34 config set --local without 'development:test' 2>/dev/null || true
-BUNDLE_WITHOUT=development:test bundle34 check 2>/dev/null || BUNDLE_WITHOUT=development:test bundle34 install
+bundle40 config set --local without 'development:test' 2>/dev/null || true
+BUNDLE_WITHOUT=development:test bundle40 check 2>/dev/null || BUNDLE_WITHOUT=development:test bundle40 install
 # The tts-worker and media tools boot from MASTER/Gemfile, not web's. rc.d/master
 # only checks it now, because it runs as root; installing belongs here, as dev.
-(cd "$ROOT/MASTER" && BUNDLE_GEMFILE=Gemfile bundle34 check >/dev/null 2>&1 || BUNDLE_GEMFILE=Gemfile bundle34 install)
+(cd "$ROOT/MASTER" && BUNDLE_GEMFILE=Gemfile bundle40 check >/dev/null 2>&1 || BUNDLE_GEMFILE=Gemfile bundle40 install)
 
 echo "==> db prepare"
-BUNDLE_WITHOUT=development:test bundle34 exec rails db:prepare
+BUNDLE_WITHOUT=development:test bundle40 exec rails db:prepare
 
 echo "==> assets precompile"
 # rc.d master precompiles as root; dev cannot rewrite root-owned public/assets/assets.
 doas rm -rf public/assets
 doas chown -R dev:dev public
-BUNDLE_WITHOUT=development:test bundle34 exec rails assets:build_face_runtime assets:build_face_modules_bundle assets:build_face_vision_bundle 2>/dev/null || true
-BUNDLE_WITHOUT=development:test bundle34 exec rails assets:precompile
+BUNDLE_WITHOUT=development:test bundle40 exec rails assets:build_face_runtime assets:build_face_modules_bundle assets:build_face_vision_bundle 2>/dev/null || true
+BUNDLE_WITHOUT=development:test bundle40 exec rails assets:precompile
 # The asset gate, through whichever door exists. MASTER/gates/runner.rb was
 # deleted on 2026-09-16 and every deploy script still named it, so `vps-deploy
 # master` died here under set -e with the box half deployed: new assets on disk,
 # the old process still serving them. The gate itself lives in MASTER/gates and
 # runs either way.
 if [ -f "$ROOT/MASTER/gates/runner.rb" ]; then
-  BUNDLE_WITHOUT=development:test bundle34 exec ruby "$ROOT/MASTER/gates/runner.rb" master_web_assets
+  BUNDLE_WITHOUT=development:test bundle40 exec ruby "$ROOT/MASTER/gates/runner.rb" master_web_assets
 else
-  BUNDLE_WITHOUT=development:test bundle34 exec ruby -e '
+  BUNDLE_WITHOUT=development:test bundle40 exec ruby -e '
     require ARGV[0]
     Deploy::MasterWebAssetsGate.run.report!("master web assets ok")
   ' "$ROOT/MASTER/lib/operator/gates.rb"
