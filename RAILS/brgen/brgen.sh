@@ -8,7 +8,7 @@ APP_PORT=38182
 APP_DOMAIN=brgen.no
 SCRIPT_DIR=${0:a:h}
 SRC_DIR=${SCRIPT_DIR}
-SHARED_BUNDLE_CACHE=${SHARED_BUNDLE_CACHE:-/var/cache/pub4/bundle/ruby34}
+SHARED_BUNDLE_CACHE=${SHARED_BUNDLE_CACHE:-/var/cache/pub4/bundle/ruby40}
 
 . "${SCRIPT_DIR:h}/_deploy.sh"
 
