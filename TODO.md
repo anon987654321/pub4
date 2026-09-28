@@ -10,10 +10,10 @@ A finding is a hypothesis. Historical dated sections below are evidence records,
 
 - `main` is the authoritative repository baseline. The tree has changed materially since the previous 2026-09-27 audit.
 - Ruby is pinned to `4.0.5` across the existing project declarations. Ruby 4.0.7 now exists upstream, but 4.0.5 is the operator-selected project pin until deliberately changed.
-- Main is aligned to the latest released Rails 8.1.4 line, with Rails 8.2 readiness checks kept separate. **Rails 8.2 remains a migration target, not the production pin yet.**
-- Upstream Rails still identifies `8.2.0.alpha` on its source tree, while the latest released tag is 8.1.4. Keep edge-only behavior explicit and do not re-lock production to 8.2 until a stable 8.2 release is available and the full upgrade suite is green.
-- Rails 8.2 migration seams called out by the current upstream guides include Herb HTML+ERB compilation, modern header-based CSRF behavior, enum negative scopes including `nil`, Active Storage analysis/variant timing, SQLite table-alteration behavior around `ON DELETE CASCADE`, and enqueue-after-transaction-commit behavior. The source-side contracts are now explicit; live 8.2/runtime verification stays open until the exact target can be exercised. Edge TTS is now isolated in a dedicated `:tts` dependency group so Rails boot does not auto-require its EventMachine stack.
-- Main has no open issues. PR #537 (`fix/rails-82-final-convergence-20260928`) remains open and unmerged: it targets Rails 8.2.0.alpha, is currently unmergeable against main, and is intentionally kept separate from the production 8.1.4 pin until a stable 8.2 release and full runtime proof exist. Remaining repair branches are stale snapshots with no commits ahead of current main and can be removed after comparison.
+- Rails 8.2.0.alpha is now the project baseline, pinned to the audited upstream source revision already merged into main.
+- The repository intentionally tracks that exact 8.2 edge revision; it must not float to a moving branch.
+- Rails 8.2 migration seams called out by the current upstream guides include Herb HTML+ERB compilation, modern header-based CSRF behavior, enum negative scopes including `nil`, Active Storage analysis/variant timing, SQLite table-alteration behavior around `ON DELETE CASCADE`, and enqueue-after-transaction-commit behavior. Source contracts are explicit; live boot, Herb compilation, database migration, browser/CDP, OpenBSD and Termux verification remain the final runtime gates. Edge TTS is now isolated in a dedicated `:tts` dependency group so Rails boot does not auto-require its EventMachine stack.
+- PR #537 is closed because its work was superseded by the merged 8.2 baseline. Main has no open issues at the last repository audit; stale branch refs remain to be reconciled.
 - Hosted CI is not the verification path for this backlog; the repository's GitHub Actions workflows are removed. The live full three-tree `/fix` run remains unproven until an equivalent manually watched run emits actionable step-level evidence.
 - MASTER boot now activates the repository bundle immediately after dependency installation, so a successful `deps0` bootstrap cannot fall through to a raw `require` missing the installed gems.
 - `RAILS/test/run_all.rb` currently discovers 131 contract files recursively, one process per file. The historical red count remains stale until the suite is rerun manually on the current main baseline.
@@ -22,13 +22,13 @@ A finding is a hypothesis. Historical dated sections below are evidence records,
 
 ### Rails 8.2 migration
 - Re-run the complete RAILS contract suite before and after the migration; record exact files, runs, assertions, failures and exit status.
-- Run `bin/rails herb:check` and repair every template that cannot compile through Herb before enabling the 8.2 HTML+ERB default.
+- Run `bin/rails herb:check` and repair every template that cannot compile through Herb now that the 8.2 HTML+ERB default is enabled.
 - Source audit of transaction-sensitive Active Job producers is closed by `RAILS/test/rails_upgrade_contract_test.rb`; the critical model producers originate from `after_commit`/`after_create_commit`. Runtime proof of the Rails 8.2 enqueue-after-commit behavior remains open until the 8.2 target can be exercised.
 - Static SQLite foreign-key audit is closed by `RAILS/test/rails_upgrade_contract_test.rb`, including `PRAGMA foreign_keys` restoration checks and existing destroy-cascade coverage. The migration exercise against a real SQLite database remains open before the 8.2 cutover.
 - Keep the framework-default audit executable: every Rails app is pinned to `load_defaults 8.2`, no app has an explicit HTML+ERB Erubi override, and the legacy Rails 8.0 compatibility layer has no active initializer. Re-run this contract when the 8.2 target is locked.
 - Run security, autoloading, routing, rendering, asset, cache, job, mailer, Active Storage, PWA and system-test gates after the version change.
-- Keep edge-only migration changes isolated. When 8.2 receives a stable tag, compare edge to the tag, re-lock against the stable target, and rerun the full gate set.
-- Rails 8.2.0.alpha is now the repository target. Move the exact audited source pin forward only after revalidation.
+- Keep the exact 8.2 edge revision isolated. When an official 8.2 tag exists, compare this revision to that tag, re-lock, and rerun the full gate set.
+- Rails 8.2.0.alpha is now the repository target; move the exact source pin only as an explicit upgrade.
 
 ### MASTER /fix convergence
 - Exact `/fix MASTER RAILS OPENBSD` dispatch is covered by `test_exact_all_tree_fix_command_targets_the_repo_and_preserves_gate_scope`; clean-checkout execution remains open.
@@ -90,6 +90,10 @@ A finding is a hypothesis. Historical dated sections below are evidence records,
 - Preserve deterministic renders wherever the harness promises snapshot identity.
 - Re-measure postpro/LoRA pipeline provenance and calibration before undertaking video postpro or new performance machinery.
 
+### Final /fix execution record
+- The code-level `/fix MASTER RAILS OPENBSD` source contract and final repair pass are in the repository. This session cannot execute the real command because the Git checkout/runtime is unavailable.
+- `/snapshot` also requires that checkout; do not claim generated snapshots until `MASTER/tools/snapshot.rb` runs against the final `main` tree.
+
 ### Repository hygiene
 - Recover useful unique commits from stale runner branches selectively, then delete superseded branches.
 - Do not claim the live full /fix sweep succeeded until an equivalent manually watched run emits actionable step-level evidence; GitHub Actions are intentionally not part of this workflow.
@@ -98,8 +102,8 @@ A finding is a hypothesis. Historical dated sections below are evidence records,
 ### Final research carry-forward — 2026-09-28
 
 - Track the exact Rails 8.2 edge source pin and never let a floating branch silently become the production contract.
-- Once the 8.2 target is fixed, re-lock every Rails app and compare the resulting lockfiles against the exact upstream release; keep Rails, Turbo, Stimulus, Importmap and Solid Queue versions explicit rather than relying on floating assumptions.
-- Make the Rails 8.2 local CI (bin/ci) and the repository contract runner agree on the same test/security/style scope. Rails 8.1's Local CI is useful here even if GitHub-hosted runners remain unavailable.
+- The four checked-in Rails lockfiles already carry the exact audited 8.2 source graph; runtime `bundle check`/test proof remains open.
+- Make Rails 8.2 local CI (`bin/ci`) and the repository contract runner agree on the same test/security/style scope.
 - Treat generated PWA/service-worker output as build products: change the source/build contract, regenerate, and test source/output parity rather than hand-editing generated workers.
 - Use web.dev Baseline/Interop as the browser-support authority. Baseline 2026 now includes features such as field-sizing, container style queries and :open; adopt them only where the measured browser floor and progressive-enhancement path support them.
 - Keep CSS-Tricks and Awesome lists as technique/discovery feeds, not compatibility or security authorities. Prefer W3C/MDN/web.dev and upstream implementation repositories for decisions.
