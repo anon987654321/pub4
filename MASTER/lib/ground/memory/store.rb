@@ -18,12 +18,34 @@ module Master
           import_external!
         end
 
-        def remember(key, value, type: "general")
+        def remember(key, value, type: "general", source: nil, confidence: 0.5)
           type = TYPES.include?(type.to_s) ? type.to_s : "general"
+          source ||= caller_source
+          confidence = confidence.to_f.clamp(0.0, 1.0)
           @mutex.synchronize do
             prune_stale! if @store.size > CONSOLIDATE_THRESHOLD
-            @store[key.to_s] = entry_for(key:, value:, type:)
+            previous = @store[key.to_s]
+            entry = entry_for(key:, value:, type:, source:, confidence:)
+            record_conflict!(key.to_s, previous, entry) if conflicting_entry?(key.to_s, previous, entry)
+            @store[key.to_s] = entry
             persist
+          end
+        end
+
+        def provenance(key)
+          @mutex.synchronize do
+            value = @store[key.to_s]
+            value.is_a?(Hash) ? (value["provenance"] || legacy_provenance(value)) : nil
+          end
+        end
+
+        def conflicts_for(key)
+          prefix = "conflict/#{key}/"
+          @mutex.synchronize do
+            @store.filter_map do |conflict_key, value|
+              next unless conflict_key.to_s.start_with?(prefix)
+              value
+            end.sort_by { |value| -value["ts"].to_i }
           end
         end
 
@@ -72,10 +94,57 @@ module Master
           @mutex.synchronize { @store_version }
         end
 
-        def entry_for(key:, value:, type:)
-          entry = { "value" => value.to_s, "ts" => Time.now.to_i, "type" => type }
+        def entry_for(key:, value:, type:, source:, confidence:)
+          ts = Time.now.to_i
+          entry = {
+            "value" => value.to_s,
+            "ts" => ts,
+            "type" => type,
+            "provenance" => {
+              "source" => source.to_s,
+              "captured_at" => ts,
+              "confidence" => confidence,
+            },
+          }
           entry["vec"] = vec if (vec = Review::Embeddings.embed("#{key} #{value}"))
           entry
+        end
+
+        def caller_source
+          location = caller_locations(2, 1).first
+          return "runtime" unless location
+
+          path = location.path.to_s
+          relative = path.start_with?("#{Master::ROOT}/") ? path.delete_prefix("#{Master::ROOT}/") : File.basename(path)
+          "runtime:#{relative}:#{location.lineno}"
+        end
+
+        def legacy_provenance(value)
+          {
+            "source" => "legacy",
+            "captured_at" => value["ts"].to_i,
+            "confidence" => 0.0,
+          }
+        end
+
+        def conflicting_entry?(key, previous, entry)
+          return false if key == "_consolidated_summary"
+          return false unless previous.is_a?(Hash) && previous.key?("value")
+
+          previous["value"].to_s != entry["value"].to_s
+        end
+
+        def record_conflict!(key, previous, entry)
+          fingerprint = Digest::SHA256.hexdigest("#{key}\0#{entry["value"]}")[0, 12]
+          conflict_key = "conflict/#{key}/#{entry["ts"]}-#{fingerprint}"
+          @store[conflict_key] = {
+            "key" => key,
+            "previous" => previous["value"].to_s,
+            "incoming" => entry["value"].to_s,
+            "previous_provenance" => previous["provenance"] || legacy_provenance(previous),
+            "incoming_provenance" => entry["provenance"],
+            "ts" => entry["ts"],
+          }
         end
 
         def typed_entry?(key:, value:, type:)
@@ -91,7 +160,7 @@ module Master
 
           count = @mutex.synchronize { @store.keys.count { |key| key.start_with?("auto/#{type}/") } }
           key = "auto/#{type}/#{count + 1}"
-          remember(key, snippet, type:)
+          remember(key, snippet, type:, source: "auto_save")
           key
         end
 
@@ -114,7 +183,7 @@ module Master
             next if @store.key?(key)
 
             body = entry["body"].to_s.strip
-            remember(key, body, type: entry["type"].to_s) unless body.empty?
+            remember(key, body, type: entry["type"].to_s, source: "data/project_context.yml") unless body.empty?
           end
         end
 
@@ -127,7 +196,7 @@ module Master
             next if @store.key?(key)
 
             body = File.read(path, encoding: "UTF-8").strip
-            remember(key, body, type: brain_type(name)) unless body.empty?
+            remember(key, body, type: brain_type(name), source: "data/#{name}") unless body.empty?
           end
         end
 
