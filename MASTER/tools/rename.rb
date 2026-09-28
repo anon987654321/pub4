@@ -27,6 +27,7 @@
 
 require "json"
 require "prism"
+require_relative "../lib/io/exec"
 
 module Operator
   module Rename
@@ -191,7 +192,8 @@ module Operator
       return unless path && File.basename(path, ".rb") == snake(old_name)
 
       target = File.join(File.dirname(path), "#{snake(new_name)}.rb")
-      system("git", "-C", ROOT, "mv", path, target) || raise("git mv failed: #{path}")
+      out, status = Master::Io::Exec.capture2e("git", "-C", ROOT, "mv", path, target)
+      raise "git mv failed: #{path}: #{out.strip}" unless status.success?
       @files = nil
       [path.sub("#{ROOT}/", ""), target.sub("#{ROOT}/", "")]
     end
@@ -236,7 +238,9 @@ module Operator
     # lost its environment on the way to the child process and aimed the tool at
     # the real repository, where a dirty tree would have stopped it.
     def dirty
-      `git -C #{ROOT} status --porcelain`.lines.map(&:chomp).reject(&:empty?)
+      out, status = Master::Io::Exec.capture2e("git", "-C", ROOT, "status", "--porcelain")
+      raise "rename: git status failed: #{out.strip}" unless status.success?
+      out.lines.map(&:chomp).reject(&:empty?)
     end
 
     def report_plan(old_name, new_name, apply:)
