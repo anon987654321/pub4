@@ -62,6 +62,8 @@ module Master
         pkg-config|
         permission\ denied|
         not\ writable|
+        linked\ to\ incompatible|
+        incompatible\ architecture|
         EACCES
       /ix.freeze
 
