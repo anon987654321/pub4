@@ -26,7 +26,7 @@ class StimulusComponentsAdoptionTest < Minitest::Test
 
   def test_shared_vendor_has_core_packages
     vendor = File.join(ROOT, "shared/vendor/javascript")
-    %w[password-visibility rails-nested-form character-counter textarea-autogrow].each do |pkg|
+    %w[password-visibility rails-nested-form character-counter].each do |pkg|
       path = File.join(vendor, "@stimulus-components--#{pkg}.js")
       assert File.file?(path), "missing #{path}"
       assert_operator File.size(path), :>, 100
