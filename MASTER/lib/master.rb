@@ -22,7 +22,7 @@ module Master
   COUNCIL_PATH = File.join(DATA, "council.yml").freeze
   RULES_PATH = File.join(DATA, "rules.yml").freeze
 
-  BUNDLE_BIN = RUBY_PLATFORM.include?("openbsd") ? "bundle34" : "bundle"
+  BUNDLE_BIN = RUBY_PLATFORM.include?("openbsd") ? "bundle40" : "bundle"
   MIN_API_KEY_LENGTH_HEURISTIC = 20
   MAX_CONSTITUTION_BYTES = 10 * 1024 * 1024
   YAML_LOAD_TIMEOUT_S = 20
