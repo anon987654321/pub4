@@ -9,7 +9,19 @@ class Message < ApplicationRecord
   scope :recent, -> { order(created_at: :desc) }
   scope :unread, -> { where(read_at: nil) }
 
+  after_create_commit :enqueue_master_reply, if: :master_message?
+
+  def master_message?
+    !sender.bot? && recipient&.master_bot?
+  end
+
   def read! = update!(read_at: Time.current)
+
+  private
+
+  def enqueue_master_reply
+    MasterMessageReplyJob.perform_later(id)
+  end
 end
 
   after_create_commit :broadcast_live
