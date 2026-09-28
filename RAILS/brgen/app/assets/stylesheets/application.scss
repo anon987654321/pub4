@@ -10469,6 +10469,10 @@ body.vertical-marketplace .listing-review-cover-image {
 
 .brgen-media-card {
   min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  height: 100%;
 }
 
 .brgen-media-card--wide {
@@ -10494,7 +10498,7 @@ body.vertical-marketplace .listing-review-cover-image {
 }
 
 .brgen-media-image {
-  aspect-ratio: 1;
+  min-height: 0;
   overflow: hidden;
   background: var(--surface-elevated);
 }
