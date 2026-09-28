@@ -95,6 +95,38 @@ class TestLora < Minitest::Test
     assert_empty leaks
   end
 
+  def test_pure_lora_toolkit_modules_load_without_a_provider
+    %w[shoots.rb postpro_samples.rb].each do |name|
+      out, status = offline_load(File.join(LORA, "_toolkit", name))
+      assert status.success?, "#{name} failed to load offline: #{out}"
+      assert_equal "loaded", out.lines.last.to_s.strip, "#{name} did not finish its load probe"
+    end
+  end
+
+  def test_render_config_loads_with_only_local_subject_data
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, "train.yaml"), "process:\n  name: probe\n")
+      env = {
+        "SUBJECT" => "probe",
+        "MODEL" => "probe",
+        "SUBJECT_DIR" => dir,
+      }
+      out, status = offline_load(File.join(LORA, "_toolkit", "render_config.rb"), env:)
+      assert status.success?, "render_config.rb failed to load offline: #{out}"
+      assert_equal "loaded", out.lines.last.to_s.strip
+    end
+  end
+
+  def offline_load(path, env: {})
+    script = <<~RUBY
+      #{env.map { |key, value| "ENV[#{key.inspect}] = #{value.inspect}" }.join("\n")}
+      $PROGRAM_NAME = "lora_offline_load_probe"
+      load #{path.inspect}
+      puts "loaded"
+    RUBY
+    Open3.capture2e(ENV.to_h, RbConfig.ruby, "-e", script)
+  end
+
   def test_judge_thresholds_load_and_every_one_is_a_number
     thresholds = YAML.safe_load_file(File.join(LORA, "_toolkit", "judge_thresholds.yml")).fetch("thresholds")
 
