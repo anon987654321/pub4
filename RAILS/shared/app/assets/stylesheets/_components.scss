@@ -1,3 +1,237 @@
+/* One shared form surface. App dialects may refine it later, but no form
+   is allowed to fall back to the browser's unrelated control language. */
+form :is(
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="search"],
+  input[type="number"],
+  input[type="date"],
+  input[type="time"],
+  input[type="month"],
+  input[type="week"],
+  input[type="datetime-local"],
+  select,
+  textarea
+):not(.btn) {
+  inline-size: 100%;
+  min-block-size: var(--tap-min);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  line-height: 1.5;
+  accent-color: var(--accent);
+  transition: background var(--transition-fast) var(--ease-out), border-color var(--transition-fast) var(--ease-out);
+}
+
+form :is(
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="search"],
+  input[type="number"],
+  input[type="date"],
+  input[type="time"],
+  input[type="month"],
+  input[type="week"],
+  input[type="datetime-local"],
+  select,
+  textarea
+):not(.btn):focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 1px;
+  border-color: var(--accent);
+  background: var(--surface-elevated);
+}
+
+form :is(
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="search"],
+  input[type="number"],
+  input[type="date"],
+  input[type="time"],
+  input[type="month"],
+  input[type="week"],
+  input[type="datetime-local"],
+  select,
+  textarea
+):not(.btn):disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+form :is(
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="search"],
+  input[type="number"],
+  input[type="date"],
+  input[type="time"],
+  input[type="month"],
+  input[type="week"],
+  input[type="datetime-local"],
+  select,
+  textarea
+):not(.btn)[aria-invalid="true"],
+form :is(
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="search"],
+  input[type="number"],
+  input[type="date"],
+  input[type="time"],
+  input[type="month"],
+  input[type="week"],
+  input[type="datetime-local"],
+  select,
+  textarea
+):not(.btn):user-invalid {
+  border-color: var(--danger);
+}
+
+form :is(input[type="file"], input[type="range"], input[type="color"]) {
+  accent-color: var(--accent);
+}
+
+form input[type="file"]::file-selector-button {
+  min-block-size: var(--tap-min);
+  margin-inline-end: var(--space-2);
+  padding: 0 var(--control-pad-inline);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--text);
+  color: var(--bg);
+  font: inherit;
+  font-weight: var(--weight-bold);
+  cursor: pointer;
+}
+
+form :is(.field, fieldset, p:has(> label)) {
+  display: grid;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+form > :is(.field, fieldset, p:has(> label)) {
+  margin-block-end: var(--space-4);
+}
+
+form :is(.field, fieldset, p:has(> label)) > label,
+form :is(.field, fieldset) > legend {
+  display: block;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: 1.4;
+}
+
+form > fieldset {
+  border: 0;
+  padding: 0;
+}
+
+form input[type="submit"]:not(.btn):not([class]),
+form button[type="submit"]:not(.btn):not([class]) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: var(--tap-min);
+  padding-inline: var(--control-pad-inline);
+  border: 1px solid var(--text);
+  border-radius: var(--radius-pill);
+  background: var(--text);
+  color: var(--bg);
+  font: inherit;
+  font-weight: var(--weight-bold);
+  cursor: pointer;
+}
+
+form input[type="submit"]:not(.btn):not([class]):hover,
+form button[type="submit"]:not(.btn):not([class]):hover {
+  opacity: 0.88;
+}
+
+form input[type="submit"]:not(.btn):not([class]):focus-visible,
+form button[type="submit"]:not(.btn):not([class]):focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+form input[type="submit"]:not(.btn):not([class]):disabled,
+form button[type="submit"]:not(.btn):not([class]):disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+dialog {
+  box-sizing: border-box;
+  inline-size: min(42rem, calc(100vw - var(--space-4)));
+  max-block-size: calc(100dvh - (var(--space-4) * 2));
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  color: var(--text);
+}
+
+dialog::backdrop {
+  background: var(--scrim-55);
+}
+
+[popover] {
+  box-sizing: border-box;
+  max-inline-size: min(24rem, calc(100vw - var(--space-4)));
+  max-block-size: calc(100dvh - (var(--space-4) * 2));
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+}
+
+[popover]:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  form :is(
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="tel"],
+    input[type="url"],
+    input[type="search"],
+    input[type="number"],
+    input[type="date"],
+    input[type="time"],
+    input[type="month"],
+    input[type="week"],
+    input[type="datetime-local"],
+    select,
+    textarea
+  ):not(.btn) {
+    transition: none;
+  }
+}
+
 // The layer order, reset, input floor, focus ring and utilities are
 // _base.scss, emitted here by the @use, ahead of everything below.
 @use "base";
