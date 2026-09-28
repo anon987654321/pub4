@@ -21,10 +21,10 @@ check_libvips_security() {
     raw = ARGV.fetch(0).to_s
     match = raw.match(/(\d+\.\d+\.\d+)/)
     abort("unreadable libvips version: #{raw}") unless match
-    abort("libvips #{match[1]} is below required 8.18.1") if Gem::Version.new(match[1]) < Gem::Version.new("8.18.1")
+    abort("libvips #{match[1]} is below required 8.18.2") if Gem::Version.new(match[1]) < Gem::Version.new("8.18.2")
   ' "$_vips_version" || return 1
 
-  log INFO "libvips ${_vips_version} meets >=8.18.1 security floor"
+  log INFO "libvips ${_vips_version} meets >=8.18.2 security floor"
   return 0
 }
 setup_services() {
