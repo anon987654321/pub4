@@ -623,6 +623,9 @@ en:
     unread_count:
       one: "%{count} unread"
       other: "%{count} unread"
+    invite_master: "Invite MASTER"
+    master_present: "MASTER is here"
+    master_joined: "MASTER joined this chat."
   connections:
     title: "Connections"
     empty_body: "Follow creators, then request a connection to message them."
@@ -932,6 +935,7 @@ en:
     recycled: "recycled"
     released: "released"
   flash:
+    master_invited: "MASTER joined the chat."
     no_outfit_suggestion: "No outfit suggestion generated."
     joy_analysis_heuristic: "Heuristic joy analysis applied."
     joy_analysis_ai: "AI joy analysis applied."
