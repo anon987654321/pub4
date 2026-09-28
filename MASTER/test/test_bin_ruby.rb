@@ -42,14 +42,14 @@ class TestBinRuby < Minitest::Test
 
     Dir.mktmpdir do |root|
       fake_bin = File.join(root, "bin")
-      versions_bin = File.join(root, "versions", "4.0.7", "bin")
+      versions_bin = File.join(root, "versions", "4.0.5", "bin")
       FileUtils.mkdir_p(fake_bin)
       FileUtils.mkdir_p(versions_bin)
       fake_ruby = File.join(versions_bin, "ruby")
       File.write(fake_ruby, <<~SH)
         #!/bin/sh
         case "$2" in
-          "print RUBY_VERSION") printf '4.0.7' ;;
+          "print RUBY_VERSION") printf '4.0.5' ;;
           *) exit 0 ;;
         esac
       SH
@@ -70,7 +70,7 @@ class TestBinRuby < Minitest::Test
       SH
       File.chmod(0o755, rbenv)
 
-      File.write(File.join(root, ".ruby-version"), "4.0.7\n")
+      File.write(File.join(root, ".ruby-version"), "4.0.5\n")
       ENV["RBENV_ROOT"] = root
       ENV["PATH"] = fake_bin + File::PATH_SEPARATOR + old_path
       ENV["MASTER_AUTO_INSTALL_RUBY"] = "1"
@@ -78,8 +78,8 @@ class TestBinRuby < Minitest::Test
       out, err, status = unbundled { Open3.capture3(BIN, "-e", "print RUBY_VERSION") }
 
       assert status.success?, err
-      assert_equal "4.0.7", out
-      assert_equal "install -s 4.0.7", File.read(install_log).strip
+      assert_equal "4.0.5", out
+      assert_equal "install -s 4.0.5", File.read(install_log).strip
     ensure
       ENV["PATH"] = old_path
       ENV["RBENV_ROOT"] = old_root
@@ -91,12 +91,12 @@ class TestBinRuby < Minitest::Test
     old_path = ENV["PATH"]
     Dir.mktmpdir do |root|
       fake = File.join(root, "ruby")
-      File.write(fake, "#!/bin/sh\nprintf '4.0.7'\n")
+      File.write(fake, "#!/bin/sh\nprintf '4.0.5'\n")
       File.chmod(0o755, fake)
       ENV["PATH"] = "#{root}#{File::PATH_SEPARATOR}#{old_path}"
       out, err, status = unbundled { Open3.capture3(BIN, "-e", "print RUBY_VERSION") }
       assert status.success?, err
-      assert_equal "4.0.7", out
+      assert_equal "4.0.5", out
     end
   ensure
     ENV["PATH"] = old_path
@@ -116,17 +116,17 @@ class TestBinRuby < Minitest::Test
     Dir.mktmpdir do |root|
       fake_bin = File.join(root, "bin")
       FileUtils.mkdir_p(fake_bin)
-      ruby_path = File.join(root, "ruby-4.0.7")
+      ruby_path = File.join(root, "ruby-4.0.5")
       File.write(ruby_path, "#!/usr/bin/env ruby\\n")
       File.chmod(0o755, ruby_path)
       rbenv = File.join(fake_bin, "rbenv")
       File.write(rbenv, <<~RUBY)
         #!/usr/bin/env ruby
-        abort "wrong version" unless ENV["RBENV_VERSION"] == "4.0.7"
+        abort "wrong version" unless ENV["RBENV_VERSION"] == "4.0.5"
         puts ENV.fetch("FAKE_RBENV_PATH")
       RUBY
       File.chmod(0o755, rbenv)
-      File.write(File.join(root, ".ruby-version"), "4.0.7\\n")
+      File.write(File.join(root, ".ruby-version"), "4.0.5\\n")
 
       ENV["PATH"] = "#{fake_bin}#{File::PATH_SEPARATOR}#{old_path}"
       ENV["FAKE_RBENV_PATH"] = ruby_path
@@ -145,20 +145,20 @@ class TestBinRuby < Minitest::Test
     Dir.mktmpdir do |root|
       fake_bin = File.join(root, "bin")
       FileUtils.mkdir_p(fake_bin)
-      ruby_path = File.join(root, "ruby-4.0.7")
+      ruby_path = File.join(root, "ruby-4.0.5")
       File.write(ruby_path, "#!/usr/bin/env ruby\\n")
       File.chmod(0o755, ruby_path)
       rbenv = File.join(fake_bin, "rbenv")
       File.write(rbenv, <<~RUBY)
         #!/usr/bin/env ruby
-        abort "wrong version" unless ENV["RBENV_VERSION"] == "4.0.7"
+        abort "wrong version" unless ENV["RBENV_VERSION"] == "4.0.5"
         puts ENV.fetch("FAKE_RBENV_PATH")
       RUBY
       File.chmod(0o755, rbenv)
       generic = File.join(fake_bin, "ruby")
       File.write(generic, "#!/bin/sh\\nexit 99\\n")
       File.chmod(0o755, generic)
-      File.write(File.join(root, ".ruby-version"), "4.0.7\\n")
+      File.write(File.join(root, ".ruby-version"), "4.0.5\\n")
 
       ENV["PATH"] = "#{fake_bin}#{File::PATH_SEPARATOR}#{old_path}"
       ENV["FAKE_RBENV_PATH"] = ruby_path
