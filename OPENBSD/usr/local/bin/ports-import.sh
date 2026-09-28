@@ -24,7 +24,7 @@ stamp() {
 # boot this wrapper is about to cause. See prune-guests.sh for the measurement
 # that found the 1-minute figure self-defeating.
 load_is_low() {
-  ruby34 -e '
+  ruby40 -e '
     n = `sysctl -n vm.loadavg 2>/dev/null`.scan(/\d+(?:\.\d+)?/)
     exit(1) if n.size < 3
     exit(n[1].to_f <= ARGV[0].to_f ? 0 : 1)
@@ -48,7 +48,7 @@ if ! wait_for_quiet; then
   exit 0
 fi
 
-out=$(su -m bsdports -c "cd /home/bsdports/app && set -a && . /etc/bsdports.env && set +a && HOME=/home/bsdports RAILS_ENV=production /usr/local/bin/ruby34 bin/rails runner /usr/local/bin/ports_import.rb" 2>&1)
+out=$(su -m bsdports -c "cd /home/bsdports/app && set -a && . /etc/bsdports.env && set +a && HOME=/home/bsdports RAILS_ENV=production /usr/local/bin/ruby40 bin/rails runner /usr/local/bin/ports_import.rb" 2>&1)
 status=$?
 
 result=$(printf '%s\n' "$out" | grep '^platform=')
