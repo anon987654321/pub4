@@ -276,7 +276,7 @@ module Master
         gem = gem_command
         return fail_result("gem executable missing; install RubyGems or use MASTER/bin/ruby") unless gem
 
-        install_dir = File.join(bundle_config_root, "gems")
+        install_dir = bundler_gem_home
         ok, stdout, stderr = run(
           [gem, "install", "bundler", "-v", version, "--no-document", "--install-dir", install_dir],
           chdir: @root,
@@ -457,7 +457,11 @@ module Master
 
       def bundler_path(version)
         return nil if version.to_s.empty?
-        return nil unless bundler_spec(version)
+        spec = bundler_spec(version)
+        return nil unless spec
+
+        candidate = File.join(bundler_gem_home, "bin", "bundle")
+        return candidate if File.executable?(candidate)
 
         Gem.bin_path("bundler", "bundle", version)
       rescue Gem::GemNotFoundException, Gem::Exception
@@ -465,6 +469,13 @@ module Master
       end
 
       def bundler_spec(version)
+        path = File.join(
+          bundler_gem_home,
+          "specifications",
+          "bundler-#{version}.gemspec",
+        )
+        return Gem::Specification.load(path) if File.file?(path)
+
         Gem::Specification.find_all_by_name("bundler").find do |spec|
           spec.version.to_s == version.to_s
         end
@@ -490,10 +501,11 @@ module Master
         env = {
           "PATH" => [
             File.join(bundle_gem_home, "bin"),
+            File.join(bundler_gem_home, "bin"),
             @env.fetch("PATH", ""),
           ].reject(&:empty?).join(File::PATH_SEPARATOR),
           "GEM_HOME" => bundle_gem_home,
-          "GEM_PATH" => [bundle_gem_home, default_gem_path].uniq.join(File::PATH_SEPARATOR),
+          "GEM_PATH" => [bundle_gem_home, bundler_gem_home, default_gem_path].uniq.join(File::PATH_SEPARATOR),
         }
 
         # A user's global ~/.bundle/config, deployment variables, or a stale
@@ -549,6 +561,10 @@ module Master
 
       def bundle_gems_path
         File.join(bundle_config_root, "gems")
+      end
+
+      def bundler_gem_home
+        File.join(bundle_config_root, "bundler")
       end
 
       def bundle_jobs
