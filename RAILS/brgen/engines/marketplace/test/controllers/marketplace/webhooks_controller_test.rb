@@ -32,6 +32,20 @@ class Marketplace::WebhooksControllerTest < ActionDispatch::IntegrationTest
     { "Stripe-Signature" => "t=#{timestamp},v1=#{digest}", "CONTENT_TYPE" => "application/json" }
   end
 
+  def vipps_headers(payload, secret:, date: Time.current.httpdate)
+    content_hash = Base64.strict_encode64(Digest::SHA256.digest(payload))
+    host = request.host
+    signed = "POST\n/webhooks/vipps\n#{date};#{host};#{content_hash}"
+    signature = Base64.strict_encode64(OpenSSL::HMAC.digest("SHA256", secret, signed))
+    {
+      "CONTENT_TYPE" => "application/json",
+      "x-ms-date" => date,
+      "x-ms-content-sha256" => content_hash,
+      "Host" => host,
+      "Authorization" => "HMAC-SHA256 SignedHeaders=x-ms-date;host;x-ms-content-sha256&Signature=#{signature}"
+    }
+  end
+
   test "stripe rejects a forged event and leaves the order unpaid" do
     with_secret do
       post "/webhooks/stripe", params: stripe_payload,
@@ -102,13 +116,12 @@ class Marketplace::WebhooksControllerTest < ActionDispatch::IntegrationTest
     checkout = Marketplace::Checkout.create!(user: @buyer, marketplace_address: address, currency: "NOK")
     [ @order, second ].each { |row| row.update!(marketplace_checkout_id: checkout.id, payment_reference: "vipps_basket") }
     checkout.update!(status: "pending_payment", payment_reference: "vipps_basket")
-    payload = { reference: "vipps_basket", state: "AUTHORIZED" }.to_json
-    mac = Base64.strict_encode64(OpenSSL::HMAC.digest("SHA256", secret, payload))
+    payload = { reference: "vipps_basket", name: "AUTHORIZED", success: true }.to_json
 
-    post "/webhooks/vipps", params: payload,
-         headers: { "CONTENT_TYPE" => "application/json", "Authorization" => "HMAC #{mac}" }
+    post "/webhooks/vipps", params: payload, headers: vipps_headers(payload, secret: secret)
 
     assert_response :ok
+    assert_instance_of Webhooks::VippsController, controller
     assert_equal "paid", checkout.reload.status
     assert_equal "paid", @order.reload.payment_status
     assert_equal "paid", second.reload.payment_status
