@@ -9,6 +9,7 @@ require_relative "source/dialect_purity"
 require_relative "source/payment_honesty"
 require_relative "source/affiliate_honesty"
 require_relative "source/content_honesty"
+require_relative "source/content_for_yield"
 require_relative "research/layout_search"
 require_relative "live/user_flow"
 require_relative "live/surface_schema"
@@ -33,6 +34,7 @@ module Deploy
       PaymentHonestyGate,
       AffiliateHonestyGate,
       ContentHonestyGate,
+      ContentForYieldGate,
       UserFlowGate,
       SurfaceSchemaGate,
       DesignMetricsGate,
