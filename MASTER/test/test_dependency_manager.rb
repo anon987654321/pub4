@@ -200,6 +200,24 @@ class TestDependencyManager < Minitest::Test
     assert_equal before, File.read(File.join(@root, "Gemfile.lock"))
   end
 
+  def test_install_rebuilds_native_bundle_before_reporting_success
+    responses = [
+      [false, "", "dependencies missing"],
+      [true, "Bundle complete", ""],
+      [false, "", "linked to incompatible libruby"],
+      [true, "Installed native extensions", ""],
+      [true, "", ""],
+    ]
+    manager = fake_manager(responses)
+
+    result = manager.ensure!
+
+    assert result.success?
+    assert_equal ["check"], @commands[0].first[1..]
+    assert_equal ["install", "--jobs", "4", "--retry", "3"], @commands[1].first[1..]
+    assert_equal ["pristine"], @commands[3].first[1..]
+  end
+
   def test_bundler_path_rejects_an_executable_without_the_pinned_spec
     manager = MANAGER.new(
       root: @root,
