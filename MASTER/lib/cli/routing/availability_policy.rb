@@ -17,7 +17,6 @@ module Master
           },
           "degrade" => {
             "council" => [7, 3, 1],
-            "critique_rounds" => [2, 1, 0],
           },
         }.freeze
 
@@ -46,19 +45,27 @@ module Master
         end
 
         def council_sizes
-          Array(@config.dig("degrade", "council") || DEFAULTS.dig("degrade", "council")).filter_map do |size|
+          sizes = Array(@config.dig("degrade", "council") || DEFAULTS.dig("degrade", "council")).filter_map do |size|
             Integer(size)
           rescue ArgumentError, TypeError
             nil
-          end.select(&:positive?)
+          end
+          sizes.select(&:positive?)
         end
 
-        def critique_rounds
-          Array(@config.dig("degrade", "critique_rounds") || DEFAULTS.dig("degrade", "critique_rounds")).filter_map do |rounds|
-            Integer(rounds)
-          rescue ArgumentError, TypeError
-            nil
-          end.select { |rounds| rounds >= 0 }
+        def council_target(current:, local_posture:, scarce:)
+          current = current.to_i
+          return 0 if current <= 0
+
+          sizes = council_sizes
+          target = if scarce
+                     sizes.last
+                   elsif local_posture
+                     sizes.first
+                   else
+                     current
+                   end
+          [target || current, current].min
         end
 
         def level_for(model_id)
