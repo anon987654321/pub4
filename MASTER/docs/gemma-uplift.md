@@ -4,7 +4,7 @@ MASTER now has an explicit operator ABI plus a training and evaluation loop for 
 
 The operator ABI is the inference-time scaffold. It establishes tree-first orientation, Ruby-first file work, zsh-only shell operation, argv subprocesses, readable commands, and evidence before completion.
 
-The uplift corpus records verified trajectories: task, model, ordered tool events, outcome, and verification state. Local trajectory data belongs under .master/gemma and should not be committed when it contains private prompts or secrets.
+The uplift corpus records verified trajectories: task, model, ordered tool events, outcome, and verification state. Set MASTER_GEMMA_RECORD=1 to capture the current agent turn automatically. Local trajectory data belongs under .master/gemma and should not be committed when it contains private prompts or secrets.
 
 The benchmark checks tree-first behavior, shell discipline, argv subprocesses, read-before-write, and verification.
 
@@ -18,3 +18,4 @@ Commands:
   ruby MASTER/tools/gemma_uplift.rb score .master/gemma/trajectories.ndjson
   ruby MASTER/tools/gemma_uplift.rb record trajectory.json
   ruby MASTER/tools/gemma_uplift.rb export .master/gemma/trajectories.ndjson .master/gemma/export.ndjson
+  ruby MASTER/tools/gemma_uplift.rb preferences .master/gemma/trajectories.ndjson .master/gemma/preferences.ndjson
