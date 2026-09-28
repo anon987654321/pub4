@@ -36,19 +36,19 @@ module Master
           return repeated_call_reply(args) if repeated_call?(args)
 
           @bus&.publish("tool:call", tool: tool_name, subject: subject_of(args))
-          record_trajectory_event(tool: tool_name, args:, phase: "call")
+          record_trajectory_event(tool: tool_name, args:, phase: "call", ok: nil)
           started = Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond)
           result = @tool.call(**args)
           ms = Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond) - started
           unless result.ok?
             @bus&.publish("tool:failed", tool: tool_name, category: result.category, error: result.message.to_s[0, 200])
             @bus&.publish("tool:return", tool: tool_name, ok: false, ms:, error: result.message.to_s[0, 200])
-            record_trajectory_event(tool: tool_name, args:, phase: "failed", error: result.message.to_s[0, 200])
+            record_trajectory_event(tool: tool_name, args:, phase: "failed", ok: false, error: result.message.to_s[0, 200])
             return "Error: #{result.message}"
           end
 
           @bus&.publish("tool:return", tool: tool_name, ok: true, ms:, bytes: result.value!.to_s.bytesize)
-          record_trajectory_event(tool: tool_name, args:, phase: "return", bytes: result.value!.to_s.bytesize)
+          record_trajectory_event(tool: tool_name, args:, phase: "return", ok: true, bytes: result.value!.to_s.bytesize)
           Fiber[:master_tree_seen] = true if orientation_tool?
           block_given? ? yield(result.value!) : result.value!
         end
@@ -90,7 +90,7 @@ module Master
           "Error: #{error}; call Tree or ListDir first."
         end
 
-        def record_trajectory_event(tool:, args:, phase:, error: nil, bytes: nil)
+        def record_trajectory_event(tool:, args:, phase:, ok:, error: nil, bytes: nil)
           return unless ENV["MASTER_GEMMA_RECORD"] == "1"
 
           event = {
@@ -100,6 +100,7 @@ module Master
             "command" => args[:command].to_s unless args[:command].nil?,
             "url" => args[:url].to_s unless args[:url].nil?,
             "operation" => args[:operation].to_s unless args[:operation].nil?,
+            "ok" => ok,
             "bytes" => bytes,
             "error" => error
           }.compact
