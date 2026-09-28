@@ -208,7 +208,8 @@ end)
             cost_usd: cost,
             estimated:,
             cached:,
-            cache_write:)
+            cache_write:,
+            cache_hit: cached.to_i.positive?)
           @bus&.publish("llm:transparency", model:, cost:, tokens:, estimated:, line:)
         end
 
