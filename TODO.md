@@ -94,6 +94,10 @@ A finding is a hypothesis. Historical dated sections below are evidence records,
 - Preserve deterministic renders wherever the harness promises snapshot identity.
 - Re-measure postpro/LoRA pipeline provenance and calibration before undertaking video postpro or new performance machinery.
 
+### Final /fix execution record
+- Source migration is prepared. Actual local `MASTER /fix MASTER RAILS OPENBSD`, `herb:check`, full test runner, rendered browser gates and `/snapshot` require the local checkout and installed runtime.
+- Snapshot files are generated artifacts and remain intentionally unclaimed until the local generator runs from current `main`.
+
 ### Repository hygiene
 - Recover useful unique commits from stale runner branches selectively, then delete superseded branches.
 - Do not claim the live full /fix sweep succeeded until an equivalent manually watched run emits actionable step-level evidence; GitHub Actions are intentionally not part of this workflow.
