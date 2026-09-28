@@ -116,7 +116,10 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes controller, "Brgen::HomeFeed.media_only(scope)"
     assert_includes feed, 'params[:view].to_s == "media"'
     assert_includes feed, 'render "home/media_card"'
+    assert_includes feed, "brgen-media-add-link"
     assert_includes card, "responsive_image_tag(post.image"
+    assert_includes card, "video_tag post.video"
+    assert_includes card, "brgen-media-play"
     assert_includes css, ".brgen-media-wall"
     assert_includes css, "body.vertical-messenger #messages article {"
     assert_includes css, "border-block-end: 1px solid var(--border)"
