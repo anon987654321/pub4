@@ -57,7 +57,9 @@ class MarketplaceCheckoutTest < ActiveSupport::TestCase
     assert_equal 50_000, checkout.reload.total_cents
 
     checkout.mark_paid!(reference: "ref-123")
+    checkout.mark_paid!(reference: "ref-replay")
     assert_equal "paid", checkout.reload.status
+    assert_equal "ref-123", checkout.reload.payment_reference
     assert_equal %w[paid paid], [ first.reload.payment_status, second.reload.payment_status ]
   end
 
