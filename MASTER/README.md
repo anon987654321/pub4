@@ -37,7 +37,7 @@ A conversational task is durable work: the Fold is only one bounded attempt. An 
 
 The model trajectory contract is provider-neutral. `MASTER_LLM_RECORD=1` captures verified model/tool trajectories; the same benchmark can score, filter and export behavior from Llama, Qwen, Gemma, GLM, Phi, GPT-OSS, Nemotron or another model without tying the contract to a vendor. Training happens outside MASTER; only verified behavior returns.
 
-Research is a capability, not a prose promise. MASTER has local knowledge retrieval, web search and URL fetching, including GitHub and arXiv-to-ar5iv URL rewriting. The runtime should use those tools when the evidence router marks a task as requiring outside evidence, then record the sources and verification state rather than silently relying on memory.
+Research is a capability, not a prose promise. MASTER has local knowledge retrieval, web search and URL fetching, including GitHub and arXiv-to-ar5iv URL rewriting. The evidence router invokes those paths for current, niche and research-shaped questions before answering. The built-in search backend is DuckDuckGo rather than Google, and there is no first-class arbitrary-YouTube-transcript adapter; those sources require a supported fetch path or a future dedicated capability.
 
 ## The idea
 
