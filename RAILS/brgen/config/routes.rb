@@ -174,6 +174,7 @@ resources :fediverse_follows, only: %i[index create destroy], controller: "fediv
 get "i/:token" => "invites#show", as: :invite
 
   resources :conversations, only: %i[index new show update] do
+    member { post :invite_master }
     # Search over the reader's own threads; ?conversation_id= narrows it to one.
     collection { get :search }
     # update is a bounded edit; destroy is an unsend, which keeps the row so a
