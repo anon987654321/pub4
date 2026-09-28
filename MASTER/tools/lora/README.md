@@ -89,11 +89,12 @@ Ragnhild? Er det Johann?
 
 Same dataset and trigger; pick the lane that fits ops cost.
 
-`--train-kaggle` is free, on a 16 GB T4, capped at 12 hours a session and about
-30 a week. `--train-colab` is free on the same T4 and needs no phone
-verification. `--train` runs locally on M2 MPS, or over SSH on a rented 24 GB
-pod at an hourly rate. `--train-replicate` runs about 1000 steps on a hosted
-H100 and charges per run.
+`--train-kaggle` is a free GPU lane subject to Kaggle's current quota,
+session and hardware availability. `--train-colab` is a free accelerated
+runtime subject to Colab's dynamic limits and available hardware. Neither lane
+is load-bearing: checkpoints are resumable, and a run may need another lane.
+`--train` runs locally on M2 MPS, or over SSH on a rented 24 GB pod at an hourly
+rate. `--train-replicate` is the provider-billed hosted lane.
 
 Anything after the lane flag goes to that lane: `./lora --train-kaggle
 --dry-run --steps 600`.
