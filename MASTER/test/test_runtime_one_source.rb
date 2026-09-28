@@ -14,7 +14,7 @@ class TestRuntimeOneSource < Minitest::Test
     assert_includes source, 'require_relative "../../MASTER/lib/operator/ruby_runner"'
     assert_includes source, "[Operator::RubyRunner.ruby_cmd]"
     assert_includes source, "Operator::RubyRunner.bundle_cmd"
-    refute_includes source, '["ruby34"]'
+    refute_includes source, '["ruby40"]'
   end
 
   def test_css_builder_delegates_bundle_selection
@@ -29,6 +29,6 @@ class TestRuntimeOneSource < Minitest::Test
     assert_includes source, 'require_relative "../lib/operator/ruby_runner"'
     assert_includes source, %([BUNDLE, "exec", RUBY, "-S", "rubocop")
     assert_includes source, %([BUNDLE, "exec", RUBY, shared_rubocop])
-    refute_includes source, "which ruby34"
+    refute_includes source, "which ruby40"
   end
 end
