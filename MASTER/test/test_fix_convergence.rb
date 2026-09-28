@@ -351,6 +351,67 @@ class TestFixConvergence < Minitest::Test
     assert_equal :improvement, anchored.first[:kind]
   end
 
+  def test_council_line_colon_requires_the_anchored_path
+    file = File.join(@root, "dummy.yml")
+    round = Master::Fix::FixLoop::CouncilRound.new(agent: nil, root: @root, bus: @bus)
+
+    anchored = round.send(
+      :improvement_findings,
+      { cherry_picks: ["dummy.yml:12 simplify the declaration"] },
+      [file],
+    )
+    ambiguous_line = round.send(
+      :improvement_findings,
+      { cherry_picks: ["Rails 8.2: simplify the declaration"] },
+      [file],
+    )
+
+    assert_equal 12, anchored.first[:line]
+    assert_empty ambiguous_line
+  end
+
+  def test_council_repo_root_still_produces_repo_relative_anchors
+    file = File.join(@root, "MASTER", "dummy.yml")
+    FileUtils.mkdir_p(File.dirname(file))
+    File.write(file, "one
+" + "two
+" + "three
+" + "four
+" + "five
+" + "six
+" + "seven
+")
+
+    round = Master::Fix::FixLoop::CouncilRound.new(agent: nil, root: @root, bus: @bus)
+    anchored = round.send(
+      :improvement_findings,
+      { cherry_picks: ["MASTER/dummy.yml:7 simplify this declaration"] },
+      [file],
+    )
+
+    assert_equal file, anchored.first[:file]
+    assert_equal 7, anchored.first[:line]
+  end
+
+  def test_council_allows_narrow_safe_remove_wording
+    file = File.join(@root, "dummy.yml")
+    round = Master::Fix::FixLoop::CouncilRound.new(agent: nil, root: @root, bus: @bus)
+
+    safe = round.send(
+      :improvement_findings,
+      { cherry_picks: ["dummy.yml line 1 remove the unused parameter"] },
+      [file],
+    )
+    unsafe = round.send(
+      :improvement_findings,
+      { cherry_picks: ["dummy.yml line 1 remove the behavior"] },
+      [file],
+    )
+
+    assert_equal 1, safe.size
+    assert_empty unsafe
+  end
+
   def test_clean_tree_ideation_demands_anchored_candidates
     critique = Master::Review::Council::Critique.new(mode: :general, agent: nil)
     prompt = critique.send(:ideation_prompt, [])
