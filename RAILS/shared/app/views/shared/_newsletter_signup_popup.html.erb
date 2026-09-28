@@ -23,7 +23,8 @@
     <p id="newsletter-capture-lede"><%= t("newsletter_popup.lede") %></p>
     <p class="newsletter-capture-reward"><%= t("newsletter_popup.reward") %></p>
 
-    <%= form_with url: email_subscriptions_path, method: :post, scope: :email_subscription do |form| %>
+    <%= form_with url: email_subscriptions_path, method: :post, scope: :email_subscription,
+          data: { action: "submit->newsletter-capture#remember" } do |form| %>
       <%= hidden_field_tag "email_subscription[city]", local_assigns.fetch(:city, nil) %>
       <%= hidden_field_tag "email_subscription[agreed_to_marketing]", "1" %>
       <div class="newsletter-capture-field">
