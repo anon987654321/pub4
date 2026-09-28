@@ -3,11 +3,11 @@
 # deploy_root: tracked tree copied to /home/<app>/app by <app>.sh
 # status: done | port | missing | planned
 #
-# Verify claims: cd MASTER && bundle exec ruby bin/cli  →  /scan RAILS/<app>
+# Verify claims: cd MASTER && bundle exec ruby bin/gate --scan-only --tree=RAILS
 # Human summary: RAILS/README.md and per-app README.md
 # Shared engine: RAILS/shared (pub4-shared gem)
 #
-# Stack default: Rails 8.1, Ruby 3.4, SQLite, Falcon, Solid Queue/Cache, relayd TLS
+# Stack default: Rails 8.1, Ruby 4.0.7, SQLite, Falcon, Solid Queue/Cache, relayd TLS
 #
 # Feature statuses are verified against landed code + TODO.md, not asserted from memory.
 # Planned/aspirational work lives in apps.horizon.yml (agent: ignore). Active apps: 0 port/missing gaps.
