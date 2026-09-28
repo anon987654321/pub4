@@ -12,11 +12,12 @@ you write:
    flag and the one it must not. Those two examples are the rule.
 4. `MASTER/lib/review/scan/rules/*.rb` — the registry, the rest of the detectors.
 
-That order is the authority order, and it outranks every per-agent instruction
-file including this one. A harness file (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`,
-`.cursorrules`, `.github/copilot-instructions.md`) is a pointer at the law, never
-a second copy of it: the copy is always the one being read, and it is always the
-one that drifted.
+The authority order is one stack: `soul.yml` > `rules.yml` >
+executable law (`law/*.rb` and `lib/review/scan/rules/*.rb`) > repo harnesses
+(`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.cursorrules`,
+`.github/copilot-instructions.md`) > per-tree contracts. Executable law outranks
+every sentence written about it. Harness files route agents to the law; they never
+override executable law and never become a second copy of it.
 
 The three top-level trees, and how each is entered:
 
