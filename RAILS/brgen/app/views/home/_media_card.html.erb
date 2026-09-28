@@ -1,0 +1,11 @@
+<article class="brgen-media-card">
+  <%= link_to post_path(post), class: "brgen-media-link", aria: { label: post.title.presence || t("post.view", default: "View post") } do %>
+    <div class="brgen-media-image">
+      <%= responsive_image_tag(post.image, alt: post.title.presence || "", loading: "lazy", class: "brgen-media-image-tag") %>
+    </div>
+    <div class="brgen-media-caption">
+      <strong><%= post.title.presence || post.content.to_s.truncate(70, separator: " ") %></strong>
+      <span><%= post.author_name %> · <%= time_ago_in_words(post.created_at) %></span>
+    </div>
+  <% end %>
+</article>

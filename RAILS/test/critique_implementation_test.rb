@@ -85,6 +85,22 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes home_feed, 'surface: "brgen"'
   end
 
+  def test_brgen_front_page_exposes_feed_and_media_wall
+    home = read("brgen/app/views/home/index.html.erb")
+    controller = read("brgen/app/controllers/home_controller.rb")
+    feed = read("brgen/app/views/home/_live_search_results.html.erb")
+    card = read("brgen/app/views/home/_media_card.html.erb")
+    css = read("brgen/app/assets/stylesheets/application.scss")
+
+    assert_includes home, "home.feed_view"
+    assert_includes home, "home.media_wall_view"
+    assert_includes controller, "Brgen::HomeFeed.media_only(scope)"
+    assert_includes feed, 'params[:view].to_s == "media"'
+    assert_includes feed, 'render "home/media_card"'
+    assert_includes card, "responsive_image_tag(post.image"
+    assert_includes css, ".brgen-media-wall"
+  end
+
   def test_amber_prioritizes_owned_clothes_and_reversible_lifecycle
     index = read("amber/app/views/items/index.html.erb")
     show = read("amber/app/views/items/show.html.erb")

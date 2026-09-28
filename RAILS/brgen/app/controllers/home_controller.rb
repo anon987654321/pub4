@@ -9,6 +9,7 @@ class HomeController < ApplicationController
 
     @feed = params[:feed]
     scope = Brgen::HomeFeed.scope(feed: @feed, authenticated: authenticated?, sort: params[:sort])
+    scope = Brgen::HomeFeed.media_only(scope) if params[:view].to_s == "media"
     # with_attached_image, or the card's `post.image.attached?` costs one
     # active_storage_attachments query per post — 25 on a full page.
     scope = scope.includes(:user, :community, :votes).with_attached_image
