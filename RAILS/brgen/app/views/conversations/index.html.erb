@@ -28,7 +28,7 @@
     </header>
     <div class="messenger-inbox-pane-content">
       <% if @conversations.any? %>
-        <ul class="messenger-inbox-list" role="list" aria-label="<%= t("aria.conversations") %>">
+        <ul class="messenger-inbox-list" role="list" aria-label="<%= t("messages.title") %>">
           <% @conversations.each do |conversation| %>
             <%= render "conversations/conversation_row",
                        conversation: conversation,
