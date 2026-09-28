@@ -39,7 +39,7 @@ module Master
       POSTPRO_RE = /\b(?:postpro(?:\.rb)?|post-?process|colour\s+grade|color\s+grade|film\s+look|vhs(?:\s+tape)?\s+look|crt(?:\s+broadcast)?\s+look|camcorder(?:\s+glitch)?\s+look|make\s+this\s+(?:cinematic|analog|analogue))\b/i.freeze
       IMAGE_PATH_RE = /(?:["']([^"']+\.(?:jpe?g|png|webp|tiff?))["']|(?:\A|\s)([^\s"']+\.(?:jpe?g|png|webp|tiff?))(?=\z|\s))/i.freeze
       POSTPRO_SUBJECT_RE = /\bpostpro(?:\.rb)?\b.*?\b(?:over|on|in|for|from)\b\s+["']([^"']+)["']/i.freeze
-      POSTPRO_SUBJECT_TOKEN_RE = /\bpostpro(?:\.rb)?\b.*?\b(?:over|on|in|for|from)\b\s+(~?(?:\/|\.\/|\.\.\/)?[^\s"']+\/?(?:\z|\s))/i.freeze
+      POSTPRO_SUBJECT_TOKEN_RE = /\bpostpro(?:\.rb)?\b.*?\b(?:over|on|in|for|from)\b\s+(~?(?:\/|\.\/|\.\.\/)?[^\s"']+\/?)(?=\z|\s)/i.freeze
 
       def handles?(text)
         text.match?(KICK_RE) || text.match?(PLAY_LAST_RE) || text.match?(SYNTH_RE) || live_synth?(text) ||
