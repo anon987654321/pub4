@@ -17,6 +17,18 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Select repository Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "4.0.7"
+          bundler: none
+
+      - name: Verify snapshot generator
+        run: |
+          set -euo pipefail
+          ruby --version
+          ruby -c MASTER/tools/snapshot.rb
+
       - name: Generate governed snapshots
         run: ruby MASTER/tools/snapshot.rb
 
