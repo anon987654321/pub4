@@ -5,7 +5,7 @@ set -euo pipefail
 
 bundle_exec() {
   local bundle_bin
-  bundle_bin=$(command -v bundle34 2>/dev/null || command -v bundle)
+  bundle_bin=$(command -v bundle40 2>/dev/null || command -v bundle)
   "$bundle_bin" "$@"
 }
 
@@ -55,11 +55,11 @@ bundle_install_as_app() {
 # bundle_cas_* — immutable SHA-256 store for gem artifacts shared by pub4 applications.
 # Bundler remains authoritative for installed gems; CAS only deduplicates immutable .gem bytes.
 bundle_cas_root() {
-  print -- "${SHARED_BUNDLE_CACHE:-/var/cache/pub4/bundle/ruby34}/cas/sha256"
+  print -- "${SHARED_BUNDLE_CACHE:-/var/cache/pub4/bundle/ruby40}/cas/sha256"
 }
 
 bundle_cas_digest() {
-  ruby34 -rdigest -e 'print Digest::SHA256.file(ARGV.fetch(0)).hexdigest' "$1"
+  ruby40 -rdigest -e 'print Digest::SHA256.file(ARGV.fetch(0)).hexdigest' "$1"
 }
 
 bundle_cas_store() {
@@ -108,7 +108,7 @@ bundle_cas_hydrate() {
 bundle_cas_prepare() {
   local app_name=$1
   local app_dir=$2
-  local shared="${SHARED_BUNDLE_CACHE:-/var/cache/pub4/bundle/ruby34}"
+  local shared="${SHARED_BUNDLE_CACHE:-/var/cache/pub4/bundle/ruby40}"
 
   ${_PRIV} mkdir -p "${shared}/cas/sha256"
   bundle_cas_capture_dir "${shared}/cache"
