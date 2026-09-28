@@ -89,7 +89,7 @@ class TestSnapshotGenerator < Minitest::Test
   def test_bare_snapshot_command_roots_at_the_repository
     roots = []
     fake = Object.new
-    def fake.write! = %w[snapshot_MASTER.md snapshot_RAILS.md]
+    def fake.write! = %w[snapshot_MASTER.md snapshot_RAILS.md snapshot_OPENBSD.md snapshot_STUDIO.md]
     capture = ->(root:, **) { roots << root; fake }
 
     out = Master::Snapshot.stub(:new, capture) { Master::CLI::CommandRegistry.dispatch_snapshot(nil, ctx: { args: "" }) }
