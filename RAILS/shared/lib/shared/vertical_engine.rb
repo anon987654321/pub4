@@ -33,7 +33,7 @@ module Shared
       root = engine.root
       prefix = engine.module_parent.name.underscore
 
-      # << not += : Rails 8.1 freezes these arrays during engine boot and +=
+      # << not += : Rails 8.2 freezes these arrays during engine boot and +=
       # rebinds to a new frozen array that later engines then fail to append to.
       AUTOLOAD_DIRS.each do |dir|
         path = root.join(dir)

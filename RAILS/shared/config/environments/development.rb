@@ -56,7 +56,7 @@ Rails.application.configure do
   config.active_support.deprecation = :log
 
   # Debug suits a developer reading the newest few hundred lines at a console.
-  # It does not suit a server left up for days answering gate probes: Rails 8.1
+  # It does not suit a server left up for days answering gate probes: Rails 8.2
   # ships two debug-level view subscribers, the classic LogSubscriber and the
   # structured one, so every partial render costs two lines in a file nothing
   # rotates. A long-lived caller says which it is; bin/triangle is one.
