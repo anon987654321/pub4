@@ -104,7 +104,7 @@ available memory = 1813561344 (1729MB)
 mainbus0 at root: Mac14,2
 cpu0 at mainbus0: Apple M2
 kern0 at mainbus0: Darwin 25.5.0 arm64
-ruby0 at mainbus0: ruby 4.0.5 arm64-darwin25
+ruby0 at mainbus0: ruby 4.0.7 arm64-darwin25
 shell0 at mainbus0: zsh, user mac
 soul0 at mainbus0: constitution rev 2.8.0
 soul0: imports soul rules limits state patterns openbsd
