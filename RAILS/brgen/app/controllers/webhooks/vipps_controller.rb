@@ -11,7 +11,7 @@ module Webhooks
   # Register (once) via Vipps API:
   #   POST /webhooks/v1/webhooks
   #   events: epayments.payment.authorized.v1, epayments.payment.captured.v1, …
-  #   Store the returned `secret` as VIPPS_WEBHOOK_SECRET (base64 string from Vipps).
+  #   Store the returned `secret` as VIPPS_WEBHOOK_SECRET.
   #
   # Auth: HMAC-SHA256 over method + pathAndQuery + "date;host;contentSha256"
   # Headers: x-ms-date, host, x-ms-content-sha256, Authorization
@@ -52,8 +52,8 @@ module Webhooks
     class SignatureError < StandardError; end
 
     def verify!(payload)
-      secret_b64 = ENV["VIPPS_WEBHOOK_SECRET"].to_s.strip
-      raise SignatureError, "VIPPS_WEBHOOK_SECRET missing" if secret_b64.blank?
+      secret = ENV["VIPPS_WEBHOOK_SECRET"].to_s.strip
+      raise SignatureError, "VIPPS_WEBHOOK_SECRET missing" if secret.blank?
 
       date = request.headers["x-ms-date"].to_s
       content_hash_hdr = request.headers["x-ms-content-sha256"].to_s
@@ -82,27 +82,12 @@ module Webhooks
       path_and_query = request.fullpath # includes query if any
       string_to_sign = "POST\n#{path_and_query}\n#{date};#{host};#{content_hash_hdr}"
 
-      # 3) HMAC-SHA256 with webhook secret (secret is base64 from Vipps registration)
-      # Vipps returns this secret base64-encoded at registration, but some
-      # setups store it raw. Only strict_decode64 rejects a non-base64 string;
-      # decode64 mangles it into plausible-looking bytes instead, so the raw
-      # branch never runs and every signature fails with nothing to show why.
-      key = begin
-        Base64.strict_decode64(secret_b64)
-      rescue ArgumentError
-        secret_b64
-      end
-
-      signature = Base64.strict_encode64(OpenSSL::HMAC.digest("SHA256", key, string_to_sign))
+      # 3) HMAC-SHA256 with the webhook secret.
+      signature = Base64.strict_encode64(OpenSSL::HMAC.digest("SHA256", secret, string_to_sign))
       expected_auth = "HMAC-SHA256 SignedHeaders=x-ms-date;host;x-ms-content-sha256&Signature=#{signature}"
 
-      unless ActiveSupport::SecurityUtils.secure_compare(expected_auth, auth)
-        # Also accept if only the Signature= part matches (header formatting variance)
-        got_sig = auth[/Signature=([^&\s]+)/, 1].to_s
-        unless got_sig.present? && ActiveSupport::SecurityUtils.secure_compare(signature, got_sig)
-          raise SignatureError, "authorization signature mismatch"
-        end
-      end
+      raise SignatureError, "authorization signature mismatch" unless
+        ActiveSupport::SecurityUtils.secure_compare(expected_auth, auth)
     end
 
     def handle_payload(body)
