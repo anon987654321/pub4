@@ -72,6 +72,32 @@ class TestSwarm < Minitest::Test
     refute reviewer.call(task: "check", context_slice: {}).value!["approved"]
   end
 
+  def test_direct_fallback_does_not_approve_plain_prose
+    agent = Object.new
+    agent.define_singleton_method(:ask) { |_task| "looks fine to me" }
+    coord = build_coordinator(agent)
+
+    result = coord.send(:direct_fallback, "check this")
+
+    assert_equal :insufficient_quorum, result.verdict
+    refute result.approved?
+    assert_equal 1, result.votes[:neutral]
+  end
+
+  def test_direct_fallback_honors_only_explicit_structured_verdicts
+    %i[approved rejected].each do |verdict|
+      agent = Object.new
+      approved = verdict == :approved
+      agent.define_singleton_method(:ask) { |_task| { "approved" => approved } }
+      coord = build_coordinator(agent)
+
+      result = coord.send(:direct_fallback, "check this")
+
+      assert_equal verdict, result.verdict
+      assert_equal approved, result.approved?
+    end
+  end
+
   def test_swarm_result_has_votes_field
     agent = FakeAgent.new(default: '{"approved": true, "violations": []}')
     coord = build_coordinator(agent)
