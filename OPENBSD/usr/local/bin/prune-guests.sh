@@ -50,10 +50,10 @@ stamp() {
 # waiting for a 1-minute load of 1.85 and then booting the runner put it at 3.31,
 # over the ceiling, and the job refused a spike it had caused itself.
 #
-# ruby34 because awk is banned in committed scripts here, and OpenBSD prints the
+# ruby40 because awk is banned in committed scripts here, and OpenBSD prints the
 # three numbers bare while macOS wraps them in braces.
 load_is_low() {
-  ruby34 -e '
+  ruby40 -e '
     n = `sysctl -n vm.loadavg 2>/dev/null`.scan(/\d+(?:\.\d+)?/)
     exit(1) if n.size < 3
     exit(n[1].to_f <= ARGV[0].to_f ? 0 : 1)
@@ -81,7 +81,7 @@ for app in brgen amber; do
   [ -d "/home/$app/app" ] || continue
 
   status=0
-  out=$(su -m "$app" -c "cd /home/$app/app && set -a && . /etc/$app.env && set +a && HOME=/home/$app RAILS_ENV=production /usr/local/bin/ruby34 bin/rails runner /usr/local/bin/prune_guests.rb" 2>&1) || status=$?
+  out=$(su -m "$app" -c "cd /home/$app/app && set -a && . /etc/$app.env && set +a && HOME=/home/$app RAILS_ENV=production /usr/local/bin/ruby40 bin/rails runner /usr/local/bin/prune_guests.rb" 2>&1) || status=$?
 
   result=$(printf '%s\n' "$out" | grep '^removed=') || result=""
 
