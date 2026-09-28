@@ -31,24 +31,24 @@ class ConversationsController < ApplicationController
                                          .pluck(:conversation_id).to_set
   end
 
-# Search the reader's own messages. Scoped through the conversations they
-# take part in, so a query cannot reach a thread they are not in, and it reads
-# `visible.unexpired` like every render does: a message that has disappeared
-# or been unsent must not come back through a search box, or ephemerality is
-# a rendering choice rather than a promise.
-# Starting a conversation used to mean typing someone's exact username into a
-# blank field on the inbox: you had to already know the handle of the person you
-# wanted, which is the one thing you do not know about someone you just met.
-# This is the same live-search machinery communities and events already use,
-# pointed at people, and every row carries the button that opens the thread.
-def new
-  scope = User.messageable.where.not(id: Current.user.id)
-  scope = apply_live_search(scope, columns: %w[username display_name], vertical: "people")
-  # No query yet: show who is around rather than an empty box. Newest first is
-  # the closest thing to "recently active" without another column.
-  @people = scope.order(created_at: :desc).limit(24)
-  finish_live_search(partial: "conversations/people_results")
-end
+  # Search the reader's own messages. Scoped through the conversations they
+  # take part in, so a query cannot reach a thread they are not in, and it reads
+  # `visible.unexpired` like every render does: a message that has disappeared
+  # or been unsent must not come back through a search box, or ephemerality is
+  # a rendering choice rather than a promise.
+  # Starting a conversation used to mean typing someone's exact username into a
+  # blank field on the inbox: you had to already know the handle of the person you
+  # wanted, which is the one thing you do not know about someone you just met.
+  # This is the same live-search machinery communities and events already use,
+  # pointed at people, and every row carries the button that opens the thread.
+  def new
+    scope = User.messageable.where.not(id: Current.user.id)
+    scope = apply_live_search(scope, columns: %w[username display_name], vertical: "people")
+    # No query yet: show who is around rather than an empty box. Newest first is
+    # the closest thing to "recently active" without another column.
+    @people = scope.order(created_at: :desc).limit(24)
+    finish_live_search(partial: "conversations/people_results")
+  end
 
   def search
     @query = params[:q].to_s.strip
@@ -142,14 +142,14 @@ end
   # thirty the way to a room is search, which sits at the head of the rail for
   # that reason. #index's own @pagy/@conversations serve the <noscript> list only.
   def load_rail
-  @rail_conversations = Conversation.for_user(Current.user)
-                                    .where(slug: nil)
-                                    .includes(:participants)
-                                    .order(Conversation::INBOX_ORDER)
-                                    .limit(30)
-  @rail_last_messages = Conversation.last_messages_for(@rail_conversations.map(&:id))
-  @rail_unread = Conversation.unread_counts_for(Current.user)
-end
+    @rail_conversations = Conversation.for_user(Current.user)
+                                      .where(slug: nil)
+                                      .includes(:participants)
+                                      .order(Conversation::INBOX_ORDER)
+                                      .limit(30)
+    @rail_last_messages = Conversation.last_messages_for(@rail_conversations.map(&:id))
+    @rail_unread = Conversation.unread_counts_for(Current.user)
+  end
 
   # DMs only, matching the list this search sits on. Public rooms are ambient
   # and already searchable by anyone who opens them; folding them in would make
