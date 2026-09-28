@@ -5,7 +5,8 @@ require_relative "../../../../OPENBSD/lib/gate_result"
 
 module Deploy
   class AppsYmlValidator
-    ROOT = File.expand_path("../../..", __dir__)
+    REPO_ROOT = File.expand_path("../../../..", __dir__)
+    ROOT = File.join(REPO_ROOT, "RAILS")
     APPS_YML = File.join(ROOT, "apps.yml")
     VALID_STATUSES = %w[done planned].freeze
 
