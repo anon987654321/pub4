@@ -6,12 +6,10 @@ require "yaml"
 
 class RailsStackContractTest < Minitest::Test
   REPO_ROOT = File.expand_path("../..", __dir__)
-  RAILS_ROOT = File.join(REPO_ROOT, "RAILS")
   STACK = YAML.safe_load_file(File.join(REPO_ROOT, "MASTER", "data", "rules.yml")).fetch("rails_stack")
   RAILS_VERSION = Gem::Version.new(STACK.fetch("rails"))
   RAILS_SOURCE = STACK.fetch("rails_source")
   RAILS_REF = STACK.fetch("rails_ref")
-  RAILS_REQUIREMENT = Gem::Requirement.new("~> #{RAILS_VERSION}")
 
   APP_ROOTS = %w[
     RAILS/brgen
@@ -55,14 +53,14 @@ class RailsStackContractTest < Minitest::Test
     end
   end
 
-  def test_every_rails_app_uses_8_1_framework_defaults
+  def test_every_rails_app_uses_8_2_framework_defaults
     APP_ROOTS.each do |root|
       body = File.read(File.join(REPO_ROOT, root, "config", "application.rb"))
 
       assert_includes body, "config.load_defaults 8.2",
                        "#{root} is not on the Rails 8.2 framework-default target"
       refute_includes body, "config.load_defaults 8.1",
-                      "#{root} still targets Rails 8.0 defaults"
+                      "#{root} still carries Rails 8.1 defaults"
     end
   end
 end
