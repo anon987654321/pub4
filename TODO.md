@@ -86,7 +86,7 @@ A finding is a hypothesis. Historical dated sections below are evidence records,
 - Host-specific watcher gems are now declared with Bundler `install_if`, both MASTER lockfiles carry the watcher/ffi resolution, and the dependency-manager test pins the contract. Runtime host verification remains a deployment concern.
 
 ### Dilla / MASTER/tools
-- Re-measure all historical Dilla defects against the current engine before editing: hocket patch sameness, unapplied VoiceStack cutoff, incomplete secondary-dominant/backdoor voicings, load-time ENV provenance, duplicate command doors and bed-render determinism.
+- Re-measure all historical Dilla defects against the current engine before editing: hocket patch sameness, unapplied incomplete secondary-dominant/backdoor voicings, load-time ENV provenance, duplicate command doors and bed-render determinism.
 - Reconcile `DillaAssets.verify` with `data/assets.json`; historical missing/changing sample hashes need current verification.
 - Keep sound-changing decisions with the operator.
 - Preserve deterministic renders wherever the harness promises snapshot identity.
