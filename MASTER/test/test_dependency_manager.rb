@@ -87,7 +87,7 @@ class TestDependencyManager < Minitest::Test
     [File.join(Master::ROOT, "Gemfile"), File.join(Master::ROOT, "web", "Gemfile")].each do |path|
       source = File.read(path)
       assert_match(
-        /group :tts do\n\s+gem "rb-edge-tts", git: "https:\/\/github\.com\/ZPVIP\/rb-edge-tts"\nend/,
+        /group :tts do\n\s+gem "rb-edge-tts", "= 1\.0\.1"\nend/,
         source,
         "#{path} must keep Edge TTS out of the default Rails bundle"
       )
