@@ -45,9 +45,9 @@ module Master
         @record = nil
       end
 
-      def start!(goal:, scope: @root, model: nil, effort: "medium", plan: nil)
+      def start!(goal:, scope: @root, model: nil, effort: "medium", plan: nil, origin: "unknown", auto_continue: false)
         with_lock do
-          start_unlocked!(goal:, scope:, model:, effort:, plan:)
+          start_unlocked!(goal:, scope:, model:, effort:, plan:, origin:, auto_continue:)
           persist!
         end
         emit("mission:start", @record.slice("id", "goal", "scope", "model", "effort"))
@@ -87,7 +87,7 @@ module Master
       # Reuse the durable objective when it is still alive. A completed mission
       # is deliberately a new objective on the next wake; a blocked mission may
       # be replaced only by an explicit/manual /fix request.
-      def start_or_resume!(goal:, scope: @root, model: nil, effort: "medium", plan: nil)
+      def start_or_resume!(goal:, scope: @root, model: nil, effort: "medium", plan: nil, origin: "unknown", auto_continue: false)
         with_lock do
           current = load_record
           if reusable_for?(current, scope, goal)
@@ -99,7 +99,7 @@ module Master
           else
             raise active_mission_conflict(current, goal:, scope:) if active_for_other_target?(current, goal:, scope:)
 
-            start_unlocked!(goal:, scope:, model:, effort:, plan:)
+            start_unlocked!(goal:, scope:, model:, effort:, plan:, origin:, auto_continue:)
             persist!
             resumed = false
           end
@@ -384,7 +384,7 @@ module Master
         true
       end
 
-      def start_unlocked!(goal:, scope:, model:, effort:, plan:)
+      def start_unlocked!(goal:, scope:, model:, effort:, plan:, origin: "unknown", auto_continue: false)
         @id = SecureRandom.hex(10)
         @record = {
           "version" => VERSION,
@@ -396,6 +396,9 @@ module Master
           "model" => model.to_s,
           "effort" => normalize_effort(effort),
           "plan" => plan.to_s.byteslice(0, MAX_PLAN_BYTES),
+          "summary" => nil,
+          "origin" => origin.to_s,
+          "auto_continue" => auto_continue == true,
           "started_at" => now,
           "finished_at" => nil,
           "checkpoint" => nil,
@@ -446,6 +449,7 @@ module Master
           path = relative(value)
           @record["artifacts"] = (@record.fetch("artifacts", []) + [path]).uniq.last(32) if path
         when :checkpoint then @record["checkpoint"] = value
+        when :summary then @record["summary"] = value.to_s.byteslice(0, MAX_PLAN_BYTES)
         end
       end
 
