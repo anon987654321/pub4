@@ -65,7 +65,10 @@ module Shared
     end
 
     def store_idempotency_response
-      return if response.status >= 500
+      if response.status >= 500
+        Rails.cache.delete(idempotency_cache_key)
+        return
+      end
       cached = Rails.cache.read(idempotency_cache_key)
       return if cached.is_a?(Hash) && cached["state"] == "complete"
 
