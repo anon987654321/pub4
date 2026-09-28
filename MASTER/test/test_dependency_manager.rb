@@ -159,6 +159,16 @@ class TestDependencyManager < Minitest::Test
     assert_nil env["BUNDLE_VERSION"]
   end
 
+  def test_bundle_store_isolated_by_ruby_installation
+    rbenv = MANAGER.new(root: @root, env: { "PATH" => "/bin" }, out: StringIO.new, home: @root)
+    homebrew = MANAGER.new(root: @root, env: { "PATH" => "/bin" }, out: StringIO.new, home: @root)
+
+    rbenv.define_singleton_method(:ruby_identity) { "/Users/mac/.rbenv/versions/4.0.5/bin/ruby\\0/Users/mac/.rbenv/versions/4.0.5\\0libruby.4.0.dylib" }
+    homebrew.define_singleton_method(:ruby_identity) { "/opt/homebrew/opt/ruby/bin/ruby\\0/opt/homebrew/Cellar/ruby/4.0.5\\0libruby.4.0.dylib" }
+
+    refute_equal rbenv.send(:bundle_config_root), homebrew.send(:bundle_config_root)
+  end
+
   def test_clean_bundle_does_not_install_or_touch_lock
     manager = fake_manager([[true, "The Gemfile's dependencies are satisfied", ""]])
     before = File.read(File.join(@root, "Gemfile.lock"))
