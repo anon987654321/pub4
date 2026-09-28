@@ -7,7 +7,9 @@ require "time"
 require "uri"
 require "fileutils"
 
-urls = ENV.fetch("UPTIME_URLS", "https://brgen.no/health,https://amberapp.art/health,https://bsdports.org/health").split(",").map(&:strip).reject(&:empty?)
+raw_urls = ENV["UPTIME_URLS"].to_s
+abort("uptime-probe: set UPTIME_URLS to comma-separated public health URLs") if raw_urls.empty?
+urls = raw_urls.split(",").map(&:strip).reject(&:empty?)
 timeout = Integer(ENV.fetch("UPTIME_TIMEOUT_SECONDS", "10"))
 output = File.expand_path(ENV.fetch("UPTIME_LOG", "~/pub4-uptime/probe.jsonl"))
 FileUtils.mkdir_p(File.dirname(output))
