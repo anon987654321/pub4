@@ -27,7 +27,7 @@ The `marketplace_` tables, prefixed by `isolate_namespace Marketplace`, are
 `Store`, `Listing`, `Category`, `Order`, `Review`, `Deal`, `ListingFavorite` and
 `SavedSearch`.
 
-`webhooks/dintero`, `webhooks/stripe` and `webhooks/vipps` receive payment callbacks; Dintero uses signed raw-body webhooks and a separate signed session callback. The Solidus
+`webhooks/dintero` is engine-local; `/webhooks/stripe` and `/webhooks/vipps` are host-owned payment callbacks shared with the marketplace domain. Dintero uses signed raw-body webhooks and a separate signed session callback. The Solidus
 
 The engine depends on `pub4-shared` for `User`, authentication, tenancy and the
 design system. The host reaches its helpers as `marketplace.listing_url(…,
