@@ -3,7 +3,7 @@
 require "minitest/autorun"
 
 class NewsletterCaptureContractTest < Minitest::Test
-  ROOT = File.expand_path("..", __dir__)
+  ROOT = File.expand_path("../..", __dir__)
   CONTROLLER = File.join(ROOT, "shared/frontend/newsletter_capture_controller.js")
   VIEW = File.join(ROOT, "shared/app/views/shared/_newsletter_signup_popup.html.erb")
   IMPORTMAP = File.join(ROOT, "shared/config/importmap_baseline.rb")
