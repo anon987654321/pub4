@@ -5,22 +5,6 @@ class Marketplace::WebhooksController < ActionController::Base
   include Shared::WriteThrottle
   self.write_throttle_limit = 300
 
-  def vipps
-    body = request.body.read
-    return head(:unauthorized) unless verified_vipps?(body)
-
-    payload = JSON.parse(body)
-    ref = payload["reference"] || payload.dig("payment", "reference")
-    state = payload["name"] || payload["state"] || payload.dig("payment", "state")
-    if state.to_s.match?(/AUTHORIZED|CAPTURED|SALE|RESERVED/i)
-      payable = Webhooks::PaymentPaid.find_by_payment_reference(ref)
-      Webhooks::PaymentPaid.mark_paid!(payable, reference: ref) if payable
-    end
-    head :ok
-  rescue JSON::ParserError
-    head :bad_request
-  end
-
   def dintero_callback
     return head(:bad_request) unless Marketplace::Payments::DinteroSignature.valid_callback?(
       header: request.headers["Dintero-Signature"],
