@@ -214,14 +214,4 @@ class Marketplace::WebhooksController < ActionController::Base
     )
   end
 
-  def verified_vipps?(payload)
-    secret = ENV["VIPPS_WEBHOOK_SECRET"].to_s
-    return false if secret.empty?
-
-    provided = request.headers["Authorization"].to_s.sub(/\AHMAC\s+/i, "")
-    return false if provided.empty?
-
-    expected = Base64.strict_encode64(OpenSSL::HMAC.digest("SHA256", secret, payload))
-    ActiveSupport::SecurityUtils.secure_compare(expected, provided)
-  end
 end
