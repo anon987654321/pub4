@@ -9,7 +9,8 @@ class PwaRuntimeContractTest < Minitest::Test
     source = File.read(File.join(ROOT, "shared/frontend/pwa_runtime.js"))
     assert_includes source, 'indexedDB.open(DB_NAME,DB_VERSION)'
     assert_includes source, '"X-Idempotency-Key":record.id'
-    assert_includes source, 'register("feed-prewarm"'
+    application = File.read(File.join(ROOT, "brgen/app/javascript/application.js"))
+    assert_includes application, 'register("feed-prewarm"'
     assert_includes source, "navigator.mediaSession"
     assert_includes source, "BarcodeDetector"
   end
