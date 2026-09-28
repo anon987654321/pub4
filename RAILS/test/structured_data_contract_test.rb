@@ -13,6 +13,18 @@ class StructuredDataContractTest < Minitest::Test
     File.read(File.join(ROOT, path))
   end
 
+  def test_event_schema_declares_real_event_fields
+    helper = read_rel("shared/app/helpers/schema_helper.rb")
+    show = read_rel("brgen/app/views/events/show.html.erb")
+    assert_includes helper, "def event_schema"
+    assert_includes helper, '"@type" => "Event"'
+    assert_includes helper, '"eventStatus"'
+    assert_includes helper, '"eventAttendanceMode"'
+    assert_includes helper, 'in_time_zone("Europe/Oslo")'
+    assert_includes show, "json_ld_for(@event, type: :event)"
+    assert_includes show, "breadcrumb_json_ld"
+  end
+
   def test_schema_helper_grows_collection_and_rating
     helper = read_rel("shared/app/helpers/schema_helper.rb")
     assert_includes helper, "def collection_page_schema"
