@@ -2,13 +2,13 @@
 
 require "fileutils"
 require "i18n"
-require "open-uri"
+require "shared/artwork_pipeline"
 
 module Shared
   # Deterministic first-party home for generated editorial onboarding art.
   # Generation runs in Solid Queue; rendering never waits for Replicate.
   class OnboardingArtwork
-    VERSION = "v1"
+    VERSION = "v2"
 
     CITY_CUES = {
       "bergen" => "Bryggen wooden waterfront, Vågen harbor, wet cobblestones, fjord light and the seven mountains",
@@ -41,25 +41,30 @@ module Shared
         destination = output_path(filename)
         return public_url(filename) if File.file?(destination)
 
-        temporary = nil
         city = sanitize_city(city)
         theme = prompt_for(surface:, city:)
-
-        hero = Shared::NewsletterVisuals.hero_for(city_name: city, theme:)
+        seed = ArtworkPipeline.seed(surface:, city:, brief: theme)
+        hero = Shared::NewsletterVisuals.hero_for(
+          city_name: city,
+          theme:,
+          seed:,
+          public_base: Shared::Engine.root.join("public").to_s
+        )
         source = hero&.url.to_s
         return nil unless source.start_with?("http://", "https://")
 
-        FileUtils.mkdir_p(File.dirname(destination))
-        temporary = "#{destination}.tmp-#{Process.pid}-#{Thread.current.object_id}"
-        File.binwrite(temporary, URI.open(source, "rb", read_timeout: 30).read)
-        File.rename(temporary, destination)
+        ArtworkPipeline.publish_remote(
+          url: source,
+          destination: destination,
+          surface: sanitize_surface(surface),
+          city:,
+          brief: theme,
+          source: "replicate_onboarding"
+        )
         public_url(filename)
       rescue StandardError => error
-        FileUtils.rm_f(temporary) if temporary
         Rails.logger.warn("OnboardingArtwork: #{error.class}: #{error.message}") if defined?(Rails)
         nil
-      ensure
-        FileUtils.rm_f(temporary) if temporary && File.exist?(temporary)
       end
 
       private
