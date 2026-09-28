@@ -2,10 +2,9 @@
 
 require "test_helper"
 
-# Two edges of a signed-in session that nothing exercised. The test environment
-# turns forgery protection off, so a write without a token passed every other
-# test here; and the sign-in cookie is permanent, so the Session row is the only
-# thing that can end one from the server side.
+# Rails 8.2 uses request metadata for the default CSRF verification path.
+# These tests pin the browser boundary and keep a legacy token from becoming a
+# cross-site bypass while the application still renders standard Rails forms.
 class SessionBoundariesTest < ActionDispatch::IntegrationTest
   setup do
     Brgen::CitySeed.sync! if City.table_exists?
@@ -19,11 +18,16 @@ class SessionBoundariesTest < ActionDispatch::IntegrationTest
 
   teardown { ActsAsTenant.current_tenant = nil }
 
-  test "a write without an authenticity token is refused" do
+  test "a cross-site write without csrf metadata is refused" do
     original = ActionController::Base.allow_forgery_protection
     ActionController::Base.allow_forgery_protection = true
 
-    post session_path, params: { email_address: @user.email_address, password: "password123" }
+    post session_path,
+         params: { email_address: @user.email_address, password: "password123" },
+         headers: {
+           "Sec-Fetch-Site" => "cross-site",
+           "Origin" => "https://attacker.example"
+         }
 
     assert_response :unprocessable_entity
     assert_empty @user.sessions.reload, "a forged sign-in created a session"
@@ -31,7 +35,7 @@ class SessionBoundariesTest < ActionDispatch::IntegrationTest
     ActionController::Base.allow_forgery_protection = original
   end
 
-  test "a header-only csrf token is accepted for a write" do
+  test "a same-origin csrf header is accepted for a write" do
     original = ActionController::Base.allow_forgery_protection
     ActionController::Base.allow_forgery_protection = true
 
@@ -40,7 +44,11 @@ class SessionBoundariesTest < ActionDispatch::IntegrationTest
 
     post session_path,
          params: { email_address: @user.email_address, password: "password123" },
-         headers: { "X-CSRF-Token" => token }
+         headers: {
+           "X-CSRF-Token" => token,
+           "Sec-Fetch-Site" => "same-origin",
+           "Origin" => "https://brgen.no"
+         }
 
     assert_response :redirect
     assert_equal @user.id, controller.current_user.id
@@ -48,7 +56,7 @@ class SessionBoundariesTest < ActionDispatch::IntegrationTest
     ActionController::Base.allow_forgery_protection = original
   end
 
-  test "a legacy hidden authenticity token is accepted for a write" do
+  test "a legacy hidden authenticity token cannot bypass cross-site csrf" do
     original = ActionController::Base.allow_forgery_protection
     ActionController::Base.allow_forgery_protection = true
 
@@ -60,47 +68,14 @@ class SessionBoundariesTest < ActionDispatch::IntegrationTest
            authenticity_token: token,
            email_address: @user.email_address,
            password: "password123"
+         },
+         headers: {
+           "Sec-Fetch-Site" => "cross-site",
+           "Origin" => "https://attacker.example"
          }
 
-    assert_response :redirect
-    assert_equal @user.id, controller.current_user.id
-  ensure
-    ActionController::Base.allow_forgery_protection = original
-  end
-
-  test "a header-only csrf token is accepted for a write" do
-    original = ActionController::Base.allow_forgery_protection
-    ActionController::Base.allow_forgery_protection = true
-
-    get new_session_path
-    token = controller.send(:form_authenticity_token)
-
-    post session_path,
-         params: { email_address: @user.email_address, password: "password123" },
-         headers: { "X-CSRF-Token" => token }
-
-    assert_response :redirect
-    assert_equal @user.id, controller.current_user.id
-  ensure
-    ActionController::Base.allow_forgery_protection = original
-  end
-
-  test "a legacy hidden authenticity token is accepted for a write" do
-    original = ActionController::Base.allow_forgery_protection
-    ActionController::Base.allow_forgery_protection = true
-
-    get new_session_path
-    token = controller.send(:form_authenticity_token)
-
-    post session_path,
-         params: {
-           authenticity_token: token,
-           email_address: @user.email_address,
-           password: "password123"
-         }
-
-    assert_response :redirect
-    assert_equal @user.id, controller.current_user.id
+    assert_response :unprocessable_entity
+    assert_empty @user.sessions.reload, "a legacy hidden token bypassed header-only csrf"
   ensure
     ActionController::Base.allow_forgery_protection = original
   end
