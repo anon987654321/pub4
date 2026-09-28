@@ -12,7 +12,7 @@ class MessagesController < ApplicationController
   # RAILS/test/rate_limit_naming_test.rb.
   rate_limit to: 30, within: 1.minute, only: :create, name: "burst",
              by: -> { Current.user&.id ? "u#{Current.user.id}" : request.remote_ip }
-  before_action :require_verified_email, only: :create
+  before_action :require_verified_email, only: %i[create forward]
   before_action :require_user_session
   before_action :set_conversation
 
