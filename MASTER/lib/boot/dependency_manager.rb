@@ -362,13 +362,7 @@ module Master
       end
 
       def bundle_env
-        env = user_gem_env.merge(
-          "BUNDLE_GEMFILE" => File.join(@root, "Gemfile"),
-          "BUNDLE_RETRY" => "3",
-          "BUNDLE_JOBS" => bundle_jobs.to_s,
-          "BUNDLE_APP_CONFIG" => File.join(bundle_config_root, "app"),
-          "BUNDLE_USER_CONFIG" => File.join(bundle_config_root, "global"),
-        )
+        env = user_gem_env.dup
 
         # A user's global ~/.bundle/config, deployment variables, or a stale
         # BUNDLE_PATH can silently change what boot installs or loads. MASTER
