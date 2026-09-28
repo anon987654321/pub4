@@ -84,24 +84,7 @@ module Operator
 
     def shell_contract
       load_master
-      banned = begin
-        Array(Master.law("zsh")&.[]("banned_commands")).map(&:to_s).sort
-      rescue StandardError
-        []
-      end
-
-      [
-        "Shell and reading contract:",
-        "  first pass on an unfamiliar or broad tree: ruby MASTER/tools/agent_context.rb --tree",
-        "  tree mode is orientation, not proof; use it before choosing individual files to read",
-        "  read relevant source completely where practical; for large files, read contiguous ranges and state what remains unread",
-        "  file and data parsing/rewriting: Ruby",
-        "  subprocesses from Ruby: argv form through Master::Io::Exec; avoid backticks and shell interpolation when argv is enough",
-        "  shell: zsh; use globs and builtins instead of GNU text-tool pipelines",
-        "  keep shell commands plain and readable; use one meaningful operation per line and && only when the dependency is the point",
-        "  zsh command execution is governed, root-confined, non-interactive, and time-bounded",
-        "  banned zsh tools: #{banned.empty? ? "law unavailable" : banned.join(", ")}"
-      ]
+      Master::AI::OperatorContract.prompt.lines.map { |line| "  #{line.rstrip}" }
     end
 
     def tree_args(argv)
