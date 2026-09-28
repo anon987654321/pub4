@@ -37,7 +37,9 @@ gem "pastel", "~> 0.8"
 gem "diffy", "~> 3.4"
 gem "zeitwerk", "~> 2.7"
 
-gem "rb-edge-tts", git: "https://github.com/ZPVIP/rb-edge-tts"
+group :tts do
+  gem "rb-edge-tts", git: "https://github.com/ZPVIP/rb-edge-tts"
+end
 
 # Must mirror MASTER/Gemfile — web controllers load lib/ code at runtime.
 gem "fiddle"
