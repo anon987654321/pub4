@@ -9,8 +9,8 @@ module Deploy
   class ContentForYieldGate
     ROOT = File.expand_path("../../../..", __dir__)
     APPS = %w[amber brgen bsdports].freeze
-    PRODUCER = /content_for\s*(?:\(\s*)?:([a-zA-Z_][a-zA-Z0-9_]*)|content_for\s*(?:\(\s*)?["']([a-zA-Z_][a-zA-Z0-9_]*)["']/
-    CONSUMER = /yield\s*(?:\(\s*)?:([a-zA-Z_][a-zA-Z0-9_]*)|yield\s*(?:\(\s*)?["']([a-zA-Z_][a-zA-Z0-9_]*)["']|content_for\s*\(\s*:([a-zA-Z_][a-zA-Z0-9_]*)\s*\)/
+    PRODUCER = /<%=?\s*(?:content_for|provide)\s*(?:\(\s*)?:([a-zA-Z_][a-zA-Z0-9_]*)|<%=?\s*(?:content_for|provide)\s*(?:\(\s*)?["']([a-zA-Z_][a-zA-Z0-9_]*)["']/
+    CONSUMER = /<%=?\s*yield\s*(?:\(\s*)?:([a-zA-Z_][a-zA-Z0-9_]*)|<%=?\s*yield\s*(?:\(\s*)?["']([a-zA-Z_][a-zA-Z0-9_]*)["']|<%=?\s*content_for\s*\(\s*:([a-zA-Z_][a-zA-Z0-9_]*)\s*\)/
     
     def self.run(root: ROOT)
       new(root:).run
