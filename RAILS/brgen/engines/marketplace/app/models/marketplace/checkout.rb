@@ -120,10 +120,13 @@ class Marketplace::Checkout < ApplicationRecord
   end
 
   def mark_paid!(reference: payment_reference)
-    transaction do
+    with_lock do
+      return self if status == "paid"
+
       update!(status: "paid", paid_at: Time.current, payment_reference: reference.presence || payment_reference)
       order_lines.each { |order| order.mark_paid!(reference: reference) }
     end
+    self
   end
 
   # A basket spanning three sellers is three deliveries, and each seller only
