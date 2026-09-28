@@ -2,7 +2,18 @@
     url_for(@post), which is already the public path, so it needs no override. %>
 <% content_for :json_ld, json_ld_for(@post, type: :article) %>
 <%= turbo_stream_from @post %>
-<article>
+<article id="<%= dom_id(@post) %>" class="post-reading-card post-show-reading">
+  <div class="post-reading-layout">
+    <div class="post-vote-rail" aria-label="<%= t("post.voting", default: "Post voting") %>">
+      <% if Current.user.present? %>
+        <%= button_to post_vote_path(@post), method: :post, params: { vote: { value: 1 } }, class: "post-vote-btn#{' is-active' if @post.upvoted_by?(Current.user)}", form_class: "post-vote-form", aria: { label: t("post.upvote", default: "Upvote"), pressed: @post.upvoted_by?(Current.user) } do %><%= render "shared/feed_icon", name: "upvote" %><% end %>
+        <span class="post-vote-score"><%= @post.score %></span>
+        <%= button_to post_vote_path(@post), method: :post, params: { vote: { value: -1 } }, class: "post-vote-btn#{' is-active' if @post.downvoted_by?(Current.user)}", form_class: "post-vote-form", aria: { label: t("post.downvote", default: "Downvote"), pressed: @post.downvoted_by?(Current.user) } do %><%= render "shared/feed_icon", name: "downvote" %><% end %>
+      <% else %>
+        <span class="post-vote-score post-vote-score--static"><%= @post.score %></span>
+      <% end %>
+    </div>
+    <div class="post-reading-main">
   <header class="feed-post-meta feed-post-byline">
     <span class="author"><%= @post.author_name %></span>
     <%# time_ago, not time_ago_in_words: Norwegian marks a past span on both
@@ -13,7 +24,7 @@
   </header>
   <%# Stripped first: truncating the raw field would cut inside a tag and put
       half an element in the page title. %>
-  <h1 class="post-title"><%= strip_tags(@post.body.to_s).truncate(80, separator: " ") %></h1>
+  <h1 class="post-title post-reading-title"><%= strip_tags(@post.body.to_s).truncate(80, separator: " ") %></h1>
   <div class="feed-post-body feed-post-prose prose"><%= rich_text @post.body %></div>
   <% if (embed = @post.link_embed_record) %>
     <%= render "shared/link_embed", embed: embed %>
@@ -22,10 +33,13 @@
   <% if @post.item %><p><em><%= t("post.item_label") %>: <%= link_to @post.item.title, item_path(@post.item) %></em></p><% end %>
   <footer>
     <%= render "posts/like_button", post: @post %>
+    <%= render "shared/post_embed_action", post: @post, url: post_url(@post) %>
     <% if @post.user == Current.user %>
       <%= button_to t("actions.delete"), post_path(@post), method: :delete, data: { turbo_confirm: t("actions.confirm_delete") } %>
     <% end %>
   </footer>
+    </div>
+  </div>
 </article>
 
 <section id="comments" aria-label="<%= t("comments.title") %>">
