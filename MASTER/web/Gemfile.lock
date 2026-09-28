@@ -21,83 +21,115 @@ PATH
       tty-prompt (~> 0.23)
       zeitwerk (~> 2.7)
 
+GIT
+  remote: https://github.com/rails/rails.git
+  revision: c9e85dbe297e248dd2f217d04f84a94881ac046a
+  specs:
+    actioncable (8.2.0.alpha)
+      actionpack (= 8.2.0.alpha)
+      activesupport (= 8.2.0.alpha)
+      nio4r (~> 2.0)
+      websocket-driver (>= 0.6.1)
+      zeitwerk (~> 2.6)
+    actionmailbox (8.2.0.alpha)
+      activesupport (= 8.2.0.alpha)
+      activerecord (= 8.2.0.alpha)
+      activestorage (= 8.2.0.alpha)
+      activejob (= 8.2.0.alpha)
+      actionpack (= 8.2.0.alpha)
+      mail (>= 2.8.0)
+    actionmailer (8.2.0.alpha)
+      activesupport (= 8.2.0.alpha)
+      actionpack (= 8.2.0.alpha)
+      actionview (= 8.2.0.alpha)
+      activejob (= 8.2.0.alpha)
+      mail (>= 2.8.0)
+      rails-dom-testing (~> 2.2)
+    actionpack (8.2.0.alpha)
+      activesupport (= 8.2.0.alpha)
+      nokogiri (>= 1.8.5)
+      rack (>= 2.2.4)
+      rack-session (>= 1.0)
+      rack-test (>= 0.6.3)
+      rails-html-sanitizer (~> 1.7)
+      rails-dom-testing (~> 2.2)
+      useragent (~> 0.16)
+      actionview (= 8.2.0.alpha)
+    actiontext (8.2.0.alpha)
+      activesupport (= 8.2.0.alpha)
+      activerecord (= 8.2.0.alpha)
+      activestorage (= 8.2.0.alpha)
+      actionpack (= 8.2.0.alpha)
+      nokogiri (>= 1.8.5)
+      globalid (>= 0.6.0)
+      action_text-trix (~> 2.1.16)
+    actionview (8.2.0.alpha)
+      activesupport (= 8.2.0.alpha)
+      builder (~> 3.1)
+      erubi (~> 1.11)
+      herb (>= 0.10)
+      rails-html-sanitizer (~> 1.7)
+      rails-dom-testing (~> 2.2)
+    activejob (8.2.0.alpha)
+      activesupport (= 8.2.0.alpha)
+      globalid (>= 1.4.0)
+    activemodel (8.2.0.alpha)
+      activesupport (= 8.2.0.alpha)
+    activerecord (8.2.0.alpha)
+      activesupport (= 8.2.0.alpha)
+      activemodel (= 8.2.0.alpha)
+      timeout (>= 0.4.0)
+    activestorage (8.2.0.alpha)
+      activesupport (= 8.2.0.alpha)
+      actionpack (= 8.2.0.alpha)
+      activejob (= 8.2.0.alpha)
+      activerecord (= 8.2.0.alpha)
+      marcel (~> 2.0)
+    activesupport (8.2.0.alpha)
+      i18n (>= 1.6, < 2)
+      tzinfo (~> 2.0, >= 2.0.5)
+      concurrent-ruby (~> 1.0, >= 1.3.1)
+      connection_pool (>= 2.2.5)
+      minitest (>= 5.1)
+      base64
+      drb
+      bigdecimal
+      json
+      psych (>= 4)
+      logger (>= 1.4.2)
+      securerandom (>= 0.3)
+      uri (>= 0.13.1)
+      ractor-dispatch (>= 0.3.0)
+    railties (8.2.0.alpha)
+      activesupport (= 8.2.0.alpha)
+      actionpack (= 8.2.0.alpha)
+      rackup (>= 1.0.0)
+      rake (>= 12.2)
+      thor (~> 1.0, >= 1.2.2)
+      zeitwerk (~> 2.6)
+      irb (~> 1.13)
+      tsort (>= 0.2)
+    rails (8.2.0.alpha)
+      actioncable (= 8.2.0.alpha)
+      actionmailbox (= 8.2.0.alpha)
+      actionmailer (= 8.2.0.alpha)
+      actionpack (= 8.2.0.alpha)
+      actiontext (= 8.2.0.alpha)
+      actionview (= 8.2.0.alpha)
+      activejob (= 8.2.0.alpha)
+      activemodel (= 8.2.0.alpha)
+      activerecord (= 8.2.0.alpha)
+      activestorage (= 8.2.0.alpha)
+      activesupport (= 8.2.0.alpha)
+      railties (= 8.2.0.alpha)
+      bundler (>= 1.15.0)
+
 GEM
   remote: https://rubygems.org/
   specs:
     action_text-trix (2.1.19)
       railties
-    actioncable (8.1.4)
-      actionpack (= 8.1.4)
-      activesupport (= 8.1.4)
-      nio4r (~> 2.0)
-      websocket-driver (>= 0.6.1)
-      zeitwerk (~> 2.6)
-    actionmailbox (8.1.4)
-      actionpack (= 8.1.4)
-      activejob (= 8.1.4)
-      activerecord (= 8.1.4)
-      activestorage (= 8.1.4)
-      activesupport (= 8.1.4)
-      mail (>= 2.8.0)
-    actionmailer (8.1.4)
-      actionpack (= 8.1.4)
-      actionview (= 8.1.4)
-      activejob (= 8.1.4)
-      activesupport (= 8.1.4)
-      mail (>= 2.8.0)
-      rails-dom-testing (~> 2.2)
-    actionpack (8.1.4)
-      actionview (= 8.1.4)
-      activesupport (= 8.1.4)
-      nokogiri (>= 1.8.5)
-      rack (>= 2.2.4)
-      rack-session (>= 1.0.1)
-      rack-test (>= 0.6.3)
-      rails-dom-testing (~> 2.2)
-      rails-html-sanitizer (~> 1.6)
-      useragent (~> 0.16)
-    actiontext (8.1.4)
-      action_text-trix (~> 2.1.15)
-      actionpack (= 8.1.4)
-      activerecord (= 8.1.4)
-      activestorage (= 8.1.4)
-      activesupport (= 8.1.4)
-      globalid (>= 0.6.0)
-      nokogiri (>= 1.8.5)
-    actionview (8.1.4)
-      activesupport (= 8.1.4)
-      builder (~> 3.1)
-      erubi (~> 1.11)
-      rails-dom-testing (~> 2.2)
-      rails-html-sanitizer (~> 1.6)
-    activejob (8.1.4)
-      activesupport (= 8.1.4)
-      globalid (>= 0.3.6)
-    activemodel (8.1.4)
-      activesupport (= 8.1.4)
-    activerecord (8.1.4)
-      activemodel (= 8.1.4)
-      activesupport (= 8.1.4)
-      timeout (>= 0.4.0)
-    activestorage (8.1.4)
-      actionpack (= 8.1.4)
-      activejob (= 8.1.4)
-      activerecord (= 8.1.4)
-      activesupport (= 8.1.4)
-      mcp (1.6.0)
-      json_schemer (>= 2.4)
-    marcel (~> 1.0)
-    activesupport (8.1.4)
-      base64
-      bigdecimal
-      concurrent-ruby (~> 1.0, >= 1.3.1)
-      connection_pool (>= 2.2.5)
-      drb
-      i18n (>= 1.6, < 2)
-      json
-      logger (>= 1.4.2)
-      minitest (>= 5.1)
-      schematist (1.1.0)
+    marcel (2.1.0)
     securerandom (>= 0.3)
       tzinfo (~> 2.0, >= 2.0.5)
       uri (>= 0.13.1)
@@ -213,8 +245,8 @@ GEM
     fugit (1.12.1)
       et-orbi (~> 1.4)
       raabro (~> 1.4)
-    globalid (1.3.0)
-      activesupport (>= 6.1)
+    globalid (1.4.0)
+      activesupport (>= 5.0)
     hana (1.3.7)
     http-2 (1.2.0)
     httpx (1.8.0)
@@ -327,20 +359,6 @@ GEM
       rack (>= 1.3)
     rackup (2.3.1)
       rack (>= 3)
-    rails (8.1.4)
-      actioncable (= 8.1.4)
-      actionmailbox (= 8.1.4)
-      actionmailer (= 8.1.4)
-      actionpack (= 8.1.4)
-      actiontext (= 8.1.4)
-      actionview (= 8.1.4)
-      activejob (= 8.1.4)
-      activemodel (= 8.1.4)
-      activerecord (= 8.1.4)
-      activestorage (= 8.1.4)
-      activesupport (= 8.1.4)
-      bundler (>= 1.15.0)
-      railties (= 8.1.4)
     rails-dom-testing (2.3.0)
       activesupport (>= 5.0.0)
       minitest
@@ -348,15 +366,6 @@ GEM
     rails-html-sanitizer (1.7.0)
       loofah (~> 2.25)
       nokogiri (>= 1.15.7, != 1.16.7, != 1.16.6, != 1.16.5, != 1.16.4, != 1.16.3, != 1.16.2, != 1.16.1, != 1.16.0.rc1, != 1.16.0)
-    railties (8.1.4)
-      actionpack (= 8.1.4)
-      activesupport (= 8.1.4)
-      irb (~> 1.13)
-      rackup (>= 1.0.0)
-      rake (>= 12.2)
-      thor (~> 1.0, >= 1.2.2)
-      tsort (>= 0.2)
-      zeitwerk (~> 2.6)
     rake (13.4.2)
     rdoc (7.2.0)
       erb
@@ -448,6 +457,10 @@ PLATFORMS
   x86_64-linux-musl
   x86_64-openbsd
 
+    herb (0.10.2)
+
+    ractor-dispatch (0.3.0)
+
 DEPENDENCIES
   brakeman
   bundler-audit
@@ -459,7 +472,7 @@ DEPENDENCIES
   master!
   pastel (~> 0.8)
   propshaft
-  rails (~> 8.1.4)
+  rails!
   rb-edge-tts!
   rb-inotify (~> 0.10)
   rb-kqueue (~> 0.2)
@@ -479,17 +492,6 @@ DEPENDENCIES
 
 CHECKSUMS
   action_text-trix (2.1.19) sha256=7012f59421009cf284aa651294896414d653a61a2417c9b8714c8476d2f74009
-  actioncable (8.1.4) sha256=cfcd72f8c861e01ccdc96d772ad8c5ad6ed0ea7c571aef81a794b6027eaa7f11
-  actionmailbox (8.1.4) sha256=9c4525e577ebb671ce558f3ea78b8a634f64e56a0e6e8d105b28b873793a06eb
-  actionmailer (8.1.4) sha256=f82d95d6762ae46ea38f221d3363639266af4f8e56d50e2bd367558674baf093
-  actionpack (8.1.4) sha256=245493cc51be195a7645e6fc184880fa7e5b32ff1a08e053ee31f58c76e30ea4
-  actiontext (8.1.4) sha256=33ee99bea7da6af911fc7d98b17013a8e1ec62aa01b20b20e9a5366f40dbf644
-  actionview (8.1.4) sha256=eff1efd07c4d969abad288322b423bcb67fdbab5e324c91ca37352b80f226076
-  activejob (8.1.4) sha256=4ed5b2ed8d4cc5c8f5f09becfef8346f202a4884eee0c8c73cae5ac378824099
-  activemodel (8.1.4) sha256=9a0906c127bd118aa5f06157db12b8f750da83dccee72db2f658547a0ae7a0e8
-  activerecord (8.1.4) sha256=3b4957ea7f246c9231bd7faa909312eac03a9101aaf87977b6c52733ff00b04f
-  activestorage (8.1.4) sha256=f4956f3ec9ee63e5e0b332b57c877cb627f82b56f4cc902279310d2aa285c7a8
-  activesupport (8.1.4) sha256=891dd3fe43c4fc8391934b237b1189bb1f661c932a84a840043db9d46a4e80df
   addressable (2.9.0) sha256=7fdf6ac3660f7f4e867a0838be3f6cf722ace541dd97767fa42bc6cfa980c7af
   async (2.39.0) sha256=df18730073f2bbb45788077dfa20cb365ecc1b9453969f44de6796b5191a00aa
   async-container (0.34.5) sha256=905d950bb4cc5219238214d3a11ac6c4b74d4affecd930027e929ba0b86234bd
@@ -542,7 +544,6 @@ CHECKSUMS
   fiber-storage (1.0.1) sha256=f48e5b6d8b0be96dac486332b55cee82240057065dc761c1ea692b2e719240e1
   fiddle (1.1.8) sha256=7fa8ee3627271497f3add5503acdbc3f40b32f610fc1cf49634f083ef3f32eee
   fugit (1.12.1) sha256=5898f478ede9b415f0804e42b8f3fd53f814bd85eebffceebdbc34e1107aaf68
-  globalid (1.3.0) sha256=05c639ad6eb4594522a0b07983022f04aa7254626ab69445a0e493aa3786ff11
   hana (1.3.7) sha256=5425db42d651fea08859811c29d20446f16af196308162894db208cac5ce9b0d
   http-2 (1.2.0) sha256=5bed923379ae67895d3bde440502219543da2885104b46ed7d604f5990efad1c
   httpx (1.8.0) sha256=10b300875be99cbc3497397278cf99632262567886f3582ee25ce492bdadbe2a
@@ -560,9 +561,6 @@ CHECKSUMS
   loofah (2.25.1) sha256=d436c73dbd0c1147b16c4a41db097942d217303e1f7728704b37e4df9f6d2e04
   mail (2.9.0) sha256=6fa6673ecd71c60c2d996260f9ee3dd387d4673b8169b502134659ece6d34941
   mapping (1.1.3) sha256=2274931d20ecd46eaafdd1e00c58cc7472133b213bcac335cc7733d3c75f4da2
-  marcel (1.1.0) sha256=fdcfcfa33cc52e93c4308d40e4090a5d4ea279e160a7f6af988260fa970e0bee
-  master (2.8.0)
-  metrics (0.15.0) sha256=61ded5bac95118e995b1bc9ed4a5f19bc9814928a312a85b200abbdac9039072
   mini_mime (1.1.5) sha256=8681b7e2e4215f2a159f9400b5816d85e9d8c6c6b491e96a12797e798f8bccef
   mini_portile2 (2.8.9) sha256=0cd7c7f824e010c072e33f68bc02d85a00aeb6fce05bb4819c03dfd3c140c289
   minitest (6.0.6) sha256=153ea36d1d987a62942382b61075745042a2b3123b1cd48f4c3675af9cc7d6f1
@@ -602,10 +600,8 @@ CHECKSUMS
   rack-session (2.1.2) sha256=595434f8c0c3473ae7d7ac56ecda6cc6dfd9d37c0b2b5255330aa1576967ffe8
   rack-test (2.2.0) sha256=005a36692c306ac0b4a9350355ee080fd09ddef1148a5f8b2ac636c720f5c463
   rackup (2.3.1) sha256=6c79c26753778e90983761d677a48937ee3192b3ffef6bc963c0950f94688868
-  rails (8.1.4) sha256=5f3ecdf9a2a3b79b2e31b8fee3b64a00f7284d76e5631f87d0e58e665911a33b
   rails-dom-testing (2.3.0) sha256=8acc7953a7b911ca44588bf08737bc16719f431a1cc3091a292bca7317925c1d
   rails-html-sanitizer (1.7.0) sha256=28b145cceaf9cc214a9874feaa183c3acba036c9592b19886e0e45efc62b1e89
-  railties (8.1.4) sha256=b5e7a8e8984e33114d68af62227971960aae1e6c02bd7c9d826ffad97fff583c
   rake (13.4.2) sha256=cb825b2bd5f1f8e91ca37bddb4b9aaf345551b4731da62949be002fa89283701
   rb-edge-tts (1.0.1)
   rdoc (7.2.0) sha256=8650f76cd4009c3b54955eb5d7e3a075c60a57276766ebf36f9085e8c9f23192
