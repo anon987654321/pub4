@@ -140,9 +140,7 @@ Reference order: GitHub upstream implementation/release history → official Rai
 ---
 ## MASTER
 
-1. **RubyLLM 2 compatibility is on main; retain provider-key contract coverage.** Entry: RAILS "Audit findings". Done
-   when the CVE ignore is gone from `bundler-audit.yml`. After the brgen and
-   amber suites are green.
+1. **RubyLLM 2 compatibility is on main; retain provider-key contract coverage.** This historical entry is closed as an upgrade task; its remaining value is the provider/API regression coverage. The current production gate is the Rails 8.2 migration and the green brgen/amber suites.
 3. **The /face ear on a real phone.** Entry: "The /face ear is unproven on a
    phone". Done when a Termux session transcribes one Norwegian and one
    English phrase through pulseaudio and a source-built whisper.cpp.
