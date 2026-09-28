@@ -2113,8 +2113,8 @@ end
   # What a plan is, one line per voice.
   def describe(plan)
     plan.map do |v|
-      format("voice %d  %+3d st  %+6.2f cents  gain %.3f  macro %.3f  cutoff x%.3f",
-             v.index, v.semitones, v.cents, v.gain, v.macro, v.cutoff_scale)
+      format("voice %d  %+3d st  %+6.2f cents  gain %.3f  macro %.3f",
+             v.index, v.semitones, v.cents, v.gain, v.macro)
     end
   end
 end
