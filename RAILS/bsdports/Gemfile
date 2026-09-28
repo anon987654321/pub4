@@ -4,7 +4,7 @@ source "https://rubygems.org"
 ruby "4.0.7"
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
-gem "rails", "~> 8.1.2"
+gem "rails", "~> 8.1.4"
 # Norwegian is the default locale in both apps, and without this the only
 # strings Rails itself produces — ActiveRecord validation messages, date and
 # number formats, distance_of_time_in_words — render in English inside a
