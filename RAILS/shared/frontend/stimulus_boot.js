@@ -12,7 +12,6 @@ import Clipboard from "@stimulus-components/clipboard"
 import Notification from "@stimulus-components/notification"
 import ReadMore from "@stimulus-components/read-more"
 import Reveal from "@stimulus-components/reveal"
-import TextareaAutogrow from "@stimulus-components/textarea-autogrow"
 import PasswordVisibility from "@stimulus-components/password-visibility"
 import Popover from "@stimulus-components/popover"
 import StimulusReflex from "stimulus_reflex"
@@ -54,7 +53,6 @@ const COMPONENT_REGISTRATIONS = [
   // offers it as a snippet, and SharedStimulusComponentsTest holds every
   // snippet to this table: a copied snippet must name a live controller.
   ["reveal", Reveal],
-  ["textarea-autogrow", TextareaAutogrow],
   ["password-visibility", PasswordVisibility],
   // Vendored since the 2014 tooltip port, never registered — the feed-action
   // tooltips (_popover_tooltip.scss) waited for this line.
