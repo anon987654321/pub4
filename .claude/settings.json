@@ -18,13 +18,13 @@
         "hooks": [
           {
             "type": "command",
-            "command": "jq -r '.tool_response.filePath // .tool_input.file_path' | { read -r f; case \"$f\" in */RAILS/*.scss) ruby /Users/mac/Documents/GitHub/pub4/RAILS/tools/build_all_css.rb;; esac; } 2>/dev/null || true",
+            "command": "jq -r '.tool_response.filePath // .tool_input.file_path' | { read -r f; case \"$f\" in */RAILS/*.scss) ROOT=\"$(git rev-parse --show-toplevel)\" && ruby \"$ROOT/RAILS/tools/build_all_css.rb\";; esac; } 2>/dev/null || true",
             "statusMessage": "Rebuilding app CSS",
             "timeout": 900
           },
           {
             "type": "command",
-            "command": "jq -r '.tool_response.filePath // .tool_input.file_path' | { read -r f; case \"$f\" in */MASTER/web/public/face.part*.txt|*/MASTER/web/public/face_speech_*.js) cd /Users/mac/Documents/GitHub/pub4/MASTER/web && rbenv exec bundle exec rails assets:build_face_runtime;; esac; } 2>/dev/null || true",
+            "command": "jq -r '.tool_response.filePath // .tool_input.file_path' | { read -r f; case \"$f\" in */MASTER/web/public/face.part*.txt|*/MASTER/web/public/face_speech_*.js) ROOT=\"$(git rev-parse --show-toplevel)\" && cd \"$ROOT/MASTER/web\" && rbenv exec bundle exec rails assets:build_face_runtime;; esac; } 2>/dev/null || true",
             "statusMessage": "Rebuilding face.runtime.js",
             "timeout": 600
           }
@@ -36,7 +36,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "ruby /Users/mac/.claude/hooks/speak_reply.rb",
+            "command": "test -f \"$HOME/.claude/hooks/speak_reply.rb\" && ruby \"$HOME/.claude/hooks/speak_reply.rb\" || true",
             "statusMessage": "Speaking the reply",
             "timeout": 120
           }
