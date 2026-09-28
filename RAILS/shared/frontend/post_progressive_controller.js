@@ -47,7 +47,7 @@ export default class extends Controller {
     if (!this.hasPublishingTarget) return
 
     this.publishingTarget.hidden = !active
-    this.element.toggleAttribute("aria-busy", active)
+    this.element.setAttribute("aria-busy", active ? "true" : "false")
     this.element.dataset.publishing = active ? "true" : "false"
     this.steps.forEach((step) => { step.hidden = active || this.steps.indexOf(step) !== this.index })
     this.indicators.forEach((indicator) => { indicator.hidden = active })

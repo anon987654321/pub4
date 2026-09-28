@@ -101,6 +101,7 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes controller, 'turbo:submit-start'
     assert_includes controller, 'turbo:submit-end'
     assert_includes controller, 'this.#publishing(true)'
+    assert_includes controller, 'setAttribute("aria-busy", active ? "true" : "false")'
     assert_includes controller, "mediaChanged"
     assert_includes form, "post-publishing"
     assert_includes boot, 'import PostProgressive from "pub4/post_progressive"'
