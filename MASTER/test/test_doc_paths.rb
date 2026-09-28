@@ -46,6 +46,20 @@ class TestDocPaths < Minitest::Test
     MASTER/tools/README.md
   ].freeze
 
+  def test_authority_order_puts_executable_law_above_harnesses
+    docs = %w[CLAUDE.md MASTER/AGENTS.md RAILS/CLAUDE.md OPENBSD/CLAUDE.md]
+    required = "MASTER/data/soul.yml > `MASTER/data/rules.yml`"
+    docs.each do |doc|
+      body = File.read(File.join(REPO, doc))
+      assert_includes body, "MASTER/data/soul.yml"
+      assert_includes body, "MASTER/data/rules.yml"
+      assert_match(/executable law.*(?:law\\/\\*\\.rb|law\\/\\*\\.rb)/m, body)
+    end
+
+    root = File.read(File.join(REPO, "CLAUDE.md"))
+    refute_match(/MASTER\\/data\\/rules\\.yml`? > this file >.*executable law/i, root)
+  end
+
   # Every coding agent reads a different file, and pub4 had one of the five.
   # An agent that never sees MASTER's law does not follow it however well the
   # law is written, so the four harness files are generated from one marked
