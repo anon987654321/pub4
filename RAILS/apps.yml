@@ -7,7 +7,7 @@
 # Human summary: RAILS/README.md and per-app README.md
 # Shared engine: RAILS/shared (pub4-shared gem)
 #
-# Stack default: Rails 8.1.4, Ruby 4.0.7, SQLite, Falcon, Solid Queue/Cache, relayd TLS
+# Stack default: Rails 8.1.4, Ruby 4.0.5, SQLite, Falcon, Solid Queue/Cache, relayd TLS
 #
 # Feature statuses are verified against landed code + TODO.md, not asserted from memory.
 # Planned/aspirational work lives in apps.horizon.yml (agent: ignore). Active apps: 0 port/missing gaps.
