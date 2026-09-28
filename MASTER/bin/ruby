@@ -1,162 +1,82 @@
-#!/usr/bin/env sh
-# Resolve pub4's exact pinned Ruby where rbenv is available; never silently downgrade
+#!/usr/bin/env zsh
+# Resolve the exact pinned Ruby without changing host package state.
 set -eu
 
-ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
-RBENV_ROOT="${RBENV_ROOT:-$HOME/.rbenv}"
-PINNED_VERSION=""
+ROOT=${0:A:h:h}
+RBENV_ROOT=${RBENV_ROOT:-$HOME/.rbenv}
+PINNED_VERSION=
 
-if [ -f "$ROOT/.ruby-version" ]; then
-  PINNED_VERSION="$(cat "$ROOT/.ruby-version")"
+if [[ -f $ROOT/.ruby-version ]]; then
+  PINNED_VERSION=$(< "$ROOT/.ruby-version")
+  PINNED_VERSION=${PINNED_VERSION//$'\n'/}
 fi
-
-install_system_runtime() {
-  case "$(uname -s 2>/dev/null || true)" in
-    OpenBSD)
-      if command -v pkg_add >/dev/null 2>&1; then
-        if [ "$(id -u)" -eq 0 ]; then
-          pkg_add -I "ruby%${PINNED_VERSION%.*}" || true
-        elif command -v doas >/dev/null 2>&1; then
-          doas -n pkg_add -I "ruby%${PINNED_VERSION%.*}" || true
-        elif command -v sudo >/dev/null 2>&1; then
-          sudo -n pkg_add -I "ruby%${PINNED_VERSION%.*}" || true
-        fi
-      fi
-      ;;
-    Darwin)
-      if command -v brew >/dev/null 2>&1; then
-        brew install rbenv ruby-build || true
-      fi
-      ;;
-    Linux)
-      if [ -n "${PREFIX:-}" ] && command -v pkg >/dev/null 2>&1; then
-        pkg install -y ruby || true
-      elif command -v apt-get >/dev/null 2>&1; then
-        if [ "$(id -u)" -eq 0 ]; then
-          apt-get update && apt-get install -y rbenv ruby-build || true
-        elif command -v sudo >/dev/null 2>&1; then
-          sudo -n apt-get update && sudo -n apt-get install -y rbenv ruby-build || true
-        fi
-      elif command -v brew >/dev/null 2>&1; then
-        brew install rbenv ruby-build || true
-      fi
-      ;;
-  esac
-}
 
 find_rbenv() {
-  RBENV="${RBENV:-}"
-  if [ -n "$RBENV" ] && [ -x "$RBENV" ]; then
-    printf '%s
-' "$RBENV"
+  REPLY=
+  if [[ -n ${RBENV:-} && -x $RBENV ]]; then
+    REPLY=$RBENV
     return
   fi
-
-  RBENV="$(command -v rbenv 2>/dev/null || true)"
-  if [ -n "$RBENV" ] && [ -x "$RBENV" ]; then
-    printf '%s
-' "$RBENV"
+  if (( $+commands[rbenv] )); then
+    REPLY=${commands[rbenv]}
     return
   fi
-
-  if [ -x "$RBENV_ROOT/bin/rbenv" ]; then
-    printf '%s
-' "$RBENV_ROOT/bin/rbenv"
+  if [[ -x $RBENV_ROOT/bin/rbenv ]]; then
+    REPLY=$RBENV_ROOT/bin/rbenv
   fi
 }
 
-rbenv_path() {
-  RBENV="$1"
-  direct="$RBENV_ROOT/versions/$PINNED_VERSION/bin/ruby"
-  if [ -x "$direct" ]; then
-    printf '%s
-' "$direct"
+pinned_ruby() {
+  local rbenv=$1
+  local direct="$RBENV_ROOT/versions/$PINNED_VERSION/bin/ruby"
+  REPLY=
+  if [[ -x $direct ]]; then
+    REPLY=$direct
     return
   fi
-
-  [ -n "$PINNED_VERSION" ] || return
-  output="$(RBENV_VERSION="$PINNED_VERSION" "$RBENV" which ruby 2>/dev/null || true)"
-  if [ -n "$output" ] && [ -x "$output" ]; then
-    printf '%s
-' "$output"
+  [[ -n $PINNED_VERSION ]] || return
+  local resolved
+  resolved=$(RBENV_VERSION=$PINNED_VERSION "$rbenv" which ruby 2>/dev/null || true)
+  if [[ -x $resolved ]]; then
+    REPLY=$resolved
   fi
 }
 
-install_pinned_ruby() {
-  RBENV="$1"
-  [ -n "$PINNED_VERSION" ] || return 1
-  [ "${MASTER_AUTO_INSTALL_RUBY:-1}" = "0" ] && return 1
+RUBY=
+RBENV=
+find_rbenv
+RBENV=$REPLY
 
-  if ! "$RBENV" install -s "$PINNED_VERSION"; then
-    return 1
-  fi
+if [[ -n $RBENV ]]; then
+  pinned_ruby "$RBENV"
+  RUBY=$REPLY
+fi
 
-  rbenv_path "$RBENV"
-}
-
-RUBY=""
-RBENV="$(find_rbenv || true)"
-
-if [ -n "$RBENV" ]; then
-  RUBY="$(rbenv_path "$RBENV" || true)"
-  if [ -z "$RUBY" ]; then
-    RUBY="$(install_pinned_ruby "$RBENV" || true)"
+if [[ -z $RUBY && -n $PINNED_VERSION ]]; then
+  ruby_command="ruby${PINNED_VERSION%.*}"
+  if (( $+commands[$ruby_command] )); then
+    RUBY=${commands[$ruby_command]}
   fi
 fi
 
-if [ -z "${RUBY:-}" ] && [ "$(uname -s 2>/dev/null || true)" = "OpenBSD" ] && [ -n "${PINNED_VERSION:-}" ]; then
-  RUBY="$(command -v "ruby${PINNED_VERSION%.*}" 2>/dev/null || true)"
+if [[ -z $RUBY ]] && (( $+commands[ruby] )); then
+  RUBY=${commands[ruby]}
 fi
-RUBY="${RUBY:-$(command -v ruby 2>/dev/null || true)}"
-if [ -z "$RUBY" ]; then
-  install_system_runtime
-  RBENV="$(find_rbenv || true)"
-  if [ -n "$RBENV" ]; then
-    RUBY="$(rbenv_path "$RBENV" || true)"
-    if [ -z "$RUBY" ]; then
-      RUBY="$(install_pinned_ruby "$RBENV" || true)"
-    fi
-  fi
-  if [ -z "${RUBY:-}" ] && [ "$(uname -s 2>/dev/null || true)" = "OpenBSD" ] && [ -n "${PINNED_VERSION:-}" ]; then
-    RUBY="$(command -v "ruby${PINNED_VERSION%.*}" 2>/dev/null || true)"
-  fi
-  RUBY="${RUBY:-$(command -v ruby 2>/dev/null || true)}"
-fi
-if [ -z "${RUBY:-}" ]; then
-  printf '%s
-' "pub4: no Ruby executable found; .ruby-version requires $PINNED_VERSION" >&2
+
+if [[ -z $RUBY ]]; then
+  print -u2 -- "ruby0: no Ruby executable found; .ruby-version requires $PINNED_VERSION"
+  print -u2 -- "ruby0: install the pinned Ruby through the host package system or rbenv"
   exit 1
 fi
 
-if [ -z "${PINNED_VERSION:-}" ]; then
-  exec "$RUBY" "$@"
-fi
-
-ACTUAL="$("$RUBY" -e 'print RUBY_VERSION')"
-if [ "$ACTUAL" != "$PINNED_VERSION" ]; then
-  if [ "${MASTER_AUTO_INSTALL_RUBY:-1}" != "0" ]; then
-    install_system_runtime
-    RBENV="$(find_rbenv || true)"
-    if [ -n "$RBENV" ]; then
-      RUBY="$(rbenv_path "$RBENV" || true)"
-      if [ -z "$RUBY" ]; then
-        RUBY="$(install_pinned_ruby "$RBENV" || true)"
-      fi
-      if [ -n "$RUBY" ]; then
-        ACTUAL="$("$RUBY" -e 'print RUBY_VERSION')"
-      fi
-    fi
-  fi
-
-  if [ "$ACTUAL" != "$PINNED_VERSION" ]; then
-    printf '%s
-' "pub4: Ruby $ACTUAL detected; .ruby-version requires $PINNED_VERSION" >&2
-    if [ -n "$RBENV" ]; then
-      printf '%s
-' "pub4: run: RBENV_VERSION=$PINNED_VERSION $RBENV install -s $PINNED_VERSION" >&2
+if [[ -n $PINNED_VERSION ]]; then
+  ACTUAL=$("$RUBY" -e "print RUBY_VERSION")
+  if [[ $ACTUAL != $PINNED_VERSION ]]; then
+    print -u2 -- "ruby0: $ACTUAL detected; $PINNED_VERSION required"
+    if [[ -n $RBENV ]]; then
+      print -u2 -- "ruby0: run RBENV_VERSION=$PINNED_VERSION $RBENV install -s $PINNED_VERSION"
     else
-      printf '%s
-' "pub4: install rbenv + ruby-build, then run: rbenv install -s $PINNED_VERSION" >&2
+      print -u2 -- "ruby0: install rbenv + ruby-build, then rbenv install -s $PINNED_VERSION"
     fi
     exit 1
   fi
