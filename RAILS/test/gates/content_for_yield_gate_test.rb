@@ -45,7 +45,7 @@ class ContentForYieldGateTest < Minitest::Test
 
   def test_content_for_can_be_consumed_with_content_for_reader
     tree(
-      view: "<% content_for :description, "x" %>\n",
+      view: "<% content_for :description, \"x\" %>\n",
       layout: "<%= content_for(:description) %>\n"
     ) do
       result = GATE.run
