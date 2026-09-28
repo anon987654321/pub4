@@ -88,7 +88,7 @@ checks:
   - {id: creator.profile, in: amber/app/views/creator_profiles/show.html.erb, has: [creator]}
   - {id: declutter.index, in: amber/app/views/declutter/index.html.erb, has: [declutter]}
   # --- pwa ---
-  - {id: pwa.manifest, in: amber/app/views/pwa/manifest.json.erb, has: [name, icons]}
+  - {id: pwa.manifest, in: amber/app/views/pwa/manifest.json, has: [name, icons]}
   - {id: pwa.sw, in: amber/app/views/pwa/service-worker.js, has: [offline]}
   # --- live ---
   - {id: live.home, live: {path: /, status: 200, has: [amber-look, skip-link, main-content], lack: [Routing Error, "Exception"]}}
