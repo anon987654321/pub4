@@ -6,6 +6,7 @@ require "json"
 require "open-uri"
 require "operator/deploy_paths"
 require "tmpdir"
+require "time"
 
 module Shared
   # One publication boundary for generated stills. A provider URL is never the
