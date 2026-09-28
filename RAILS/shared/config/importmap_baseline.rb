@@ -20,6 +20,7 @@ pin "tiptap", to: "tiptap.js", preload: false
 pin "pub4/tiptap_editor", to: "tiptap_editor_controller.js"
 pin "pub4/hotwire", to: "hotwire.js"
 pin "pub4/pwa_runtime", to: "pwa_runtime.js"
+pin "pub4/console_guard", to: "console_guard.js"
 pin "pub4/visual_field", to: "visual_field.js"
 pin "pub4/visual_surface", to: "visual_surface_controller.js"
 pin "pub4/stimulus_boot", to: "stimulus_boot.js"
