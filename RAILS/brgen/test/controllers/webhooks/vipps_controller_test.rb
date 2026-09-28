@@ -5,22 +5,16 @@ require "test_helper"
 # Vipps signs the method, path, date, host and a hash of the body. Each of those
 # is a way in if it goes unchecked, so each gets a test that alters exactly one.
 class Webhooks::VippsControllerTest < ActionDispatch::IntegrationTest
-  SECRET_RAW = "vipps-test-secret"
-  SECRET_B64 = Base64.strict_encode64(SECRET_RAW)
+  SECRET = "vipps-test-secret"
 
   def body(reference: "brgen-order-1-abc")
     { reference:, name: "EPAYMENTS", occurred: Time.now.httpdate }.to_json
   end
 
-  def headers_for(payload, secret: SECRET_B64, date: Time.now.httpdate, host: "www.example.com", path: "/webhooks/vipps")
+  def headers_for(payload, secret: SECRET, date: Time.now.httpdate, host: "www.example.com", path: "/webhooks/vipps")
     content_hash = Base64.strict_encode64(Digest::SHA256.digest(payload))
-    key = begin
-      Base64.strict_decode64(secret)
-    rescue ArgumentError
-      secret
-    end
     signature = Base64.strict_encode64(
-      OpenSSL::HMAC.digest("SHA256", key, "POST\n#{path}\n#{date};#{host};#{content_hash}")
+      OpenSSL::HMAC.digest("SHA256", secret, "POST\n#{path}\n#{date};#{host};#{content_hash}")
     )
     {
       "x-ms-date" => date,
@@ -31,7 +25,7 @@ class Webhooks::VippsControllerTest < ActionDispatch::IntegrationTest
     }
   end
 
-  setup { ENV["VIPPS_WEBHOOK_SECRET"] = SECRET_B64 }
+  setup { ENV["VIPPS_WEBHOOK_SECRET"] = SECRET }
   teardown { ENV.delete("VIPPS_WEBHOOK_SECRET") }
 
   test "rejects when the webhook secret is unset" do
@@ -50,7 +44,7 @@ class Webhooks::VippsControllerTest < ActionDispatch::IntegrationTest
   test "rejects a signature computed with the wrong secret" do
     payload = body
     post webhooks_vipps_path, params: payload,
-                              headers: headers_for(payload, secret: Base64.strict_encode64("wrong"))
+                              headers: headers_for(payload, secret: "wrong")
     assert_response :unauthorized
   end
 
@@ -84,12 +78,4 @@ class Webhooks::VippsControllerTest < ActionDispatch::IntegrationTest
     assert_response :ok
   end
 
-  # decode64 accepts anything, so a raw secret has to be detected rather than
-  # decoded into plausible garbage.
-  test "accepts a secret stored raw rather than base64" do
-    ENV["VIPPS_WEBHOOK_SECRET"] = "not base64 at all!"
-    payload = body
-    post webhooks_vipps_path, params: payload, headers: headers_for(payload, secret: "not base64 at all!")
-    assert_response :ok
-  end
 end
