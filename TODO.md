@@ -27,7 +27,7 @@ A finding is a hypothesis. Historical dated sections below are evidence records,
 
 ### Rails 8.2 migration
 - Re-run the complete RAILS contract suite before and after the migration; record exact files, runs, assertions, failures and exit status.
-- Run `bin/rails herb:check` on every Rails app now that the 8.2 HTML+ERB default is enabled.
+- Run `bin/rails herb:check` on every Rails app now that the 8.2 HTML+ERB default is enabled; `OPENBSD/bin/check-rails` now wires this for brgen, amber, bsdports, eritel and MASTER/web. The remaining proof is the watched runtime result.
 - Source audit of transaction-sensitive Active Job producers is closed by `RAILS/test/rails_upgrade_contract_test.rb`; the critical model producers originate from `after_commit`/`after_create_commit`. Runtime proof of the Rails 8.2 enqueue-after-commit behavior remains open until the 8.2 target can be exercised.
 - Static SQLite foreign-key audit is closed by `RAILS/test/rails_upgrade_contract_test.rb`, including `PRAGMA foreign_keys` restoration checks and existing destroy-cascade coverage. The migration exercise against a real SQLite database remains open before the 8.2 cutover.
 - Keep the framework-default audit executable: every Rails app is pinned to `load_defaults 8.2`, no app has an explicit HTML+ERB Erubi override, and the legacy Rails 8.0 compatibility layer has no active initializer. Re-run this contract when the 8.2 target is locked.
@@ -170,9 +170,13 @@ Reference order: GitHub upstream implementation/release history → official Rai
 2. **The content column across the verticals.** Entry: "One chrome". Done when
    `vertical_consistency_test.rb` passes and a 1440px screenshot of tv shows one
    left edge. Operator: the screenshots before merge.
-3. **Seed data for the 17 unprobed guest pages.** Entry: "17 of the 42
-   `needs_id` guest pages". Done when `Deploy::LiveRecordIds` resolves each or
-   names why it cannot.
+3. **Guest page probe coverage now names its unresolved causes.** Entry: "17 of the 42
+   `needs_id` guest pages". `Deploy::LiveRecordIds.unresolved_reason` now gives
+   the page-level reason for every unresolved route, so missing probes are evidence
+   rather than an unexplained count. Live data seeds remain open for event, story,
+   hashtag, partner, marketplace-deal, community-wiki and TV records where a real
+   guest probe is still meaningful; password-reset tokens and requester-scoped
+   conversation/listening-party pages remain structurally unprobeable.
 4. **Marketplace money.** Entry: "Seller payouts need money". Operator: money.
 
 ### OPENBSD and vm23
@@ -742,13 +746,11 @@ slices. Each is a hypothesis with its seam.
   The shared Sortable controller now provides visible Move up/Move down buttons,
   ArrowUp/ArrowDown movement, focus retention, edge disabling and the existing
   PATCH persistence path; Amber and Marketplace supply Norwegian and English labels.
-- **17 of the 42 `needs_id` guest pages still get no live probe.** 25 were wired to
-  a real seeded record via `Deploy::LiveRecordIds` and are curl-verified live.
-  The rest need seed data nothing in the repo writes yet (events, stories,
-  hashtags, partner programs/memberships, marketplace deals, community wiki
-  pages, tv shows/episodes/live_streams/sounds), or are structurally unprobeable
-  (password-reset tokens; conversations and listening-party rows a stateless
-  guest probe can never pre-seed). Seams: `MASTER/gates/support/live_record_ids.rb`.
+- **The remaining parameterised guest surfaces are now reason-coded.** The page
+  simulation names why `Deploy::LiveRecordIds` could not resolve a route, while
+  keeping actual seedable categories visibly open until they have a real row and
+  a live response. Seams: `MASTER/gates/support/live_record_ids.rb` and
+  `MASTER/gates/lib/live/page_simulation.rb`.
 - **A post's link embed loads the provider's thumbnail before a tap.**
   `shared/_link_embed` renders the facade image straight from the provider's
   image host, so the reader's browser asks the provider before pressing play.
