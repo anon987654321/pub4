@@ -1902,3 +1902,27 @@ entry below is the shape, the evidence, and the seam it wants.
   and until then the runbook should say plainly that production's only
   second copy lives on one laptop disk.
 
+## Brgen + Amber city-scale parity — verified frontier
+
+The current tree already carries much of the claimed daily-use core: posts, follows, chronological and affinity feeds, reposts, crossposts, bookmarks, blocks, reports/moderation queues, notifications, search, stories, DMs, groups, replies, reactions, typing, receipts, forwarding, disappearing messages, Web Push, bot participation, Vipps identity, Active Storage media, TV upload/variants, watch-time ranking, sounds and duets. Do not rebuild those nouns under a second architecture.
+
+The remaining hard product frontier is media delivery rather than basic upload: HLS/transcode orchestration, object storage, CDN delivery, and live streaming infrastructure. ffmpeg is already an OpenBSD package target; the missing live piece is a media server/delivery tier. Keep the current one-box OpenBSD deployment as the measured baseline and do not assume Falcon/Solid Cable/SSE capacity from marketing numbers.
+
+Messenger transport is also not yet one shared SSE transport. Brgen production chat currently uses Turbo Streams over Solid Cable; MASTER's SSE endpoint is its own face/event-bus pipe. A transport unification needs a measured benchmark and a migration plan, not a rename.
+
+### M0 — foundation before new scale
+
+1. Measure Brgen messenger connection and broadcast capacity on vm23 with representative concurrent clients, message rates and reconnects. Record p50/p95 delivery latency, resident memory, CPU and dropped/retried events.
+2. Measure MASTER `/events/stream` separately. It is not a proxy for Brgen messenger capacity.
+3. Choose the external media storage and CDN contract before adding HLS. Active Storage is already the upload boundary; keep media ownership behind that boundary.
+4. Add HLS transcode jobs only after storage/delivery is chosen. ffmpeg is the local transcoder dependency; a media server remains a separate live-stream dependency.
+5. Keep ranking chronological or affinity-first until real city-scale telemetry exists. The existing watch-time and taste rankers are signals, not evidence that a global FYP is useful.
+6. Finish moderation as a product loop: preserve notices, decisions, clear statements of reasons, user-facing outcome notifications, and an internal appeal path. DSA obligations scale with the service's legal category and size; do not declare compliance from the report queue alone.
+7. Treat E2EE/MLS and WebRTC/SFU as explicit architecture projects. Do not add client-side cryptography or group-call signaling ad hoc to the existing message model.
+8. Keep the differentiating agent surface on the existing bot/message/MASTER path: agents can already be conversation participants. Build actions, permissions, provenance, quotas and human escalation before adding more bot personas.
+
+### Sequencing
+
+M0 capacity and storage decision -> social/messenger hardening -> identity/payment activation -> video/HLS -> agent actions in chat -> live audio/video -> E2EE and any telemetry-supported ranking work.
+
+The explicit non-goals remain streaks and dark-pattern retention, behavioral ad targeting, a global algorithmic feed before there is useful data, and a second billing or messaging architecture alongside the existing one.
