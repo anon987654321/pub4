@@ -47,9 +47,7 @@ A finding is a hypothesis. Historical dated sections below are evidence records,
 - Prove Dintero staging callbacks/webhook signatures, replay safety, seller ACTIVE payout gates, capture/refund behavior and per-line splits before production enablement.
 - Prove Stripe Connect seller-account/balance/transfer paths with real staging credentials; keep missing-credential behavior fail-closed.
 - Keep the native `Marketplace::` domain as the public runtime until any Solidus cutover has an explicit dual-write/migration plan on a supported database.
-- Re-measure the shared affiliate interface and wire one presentation contract across house offers, Amazon and TradeDoubler.
 - Prove Amazon's current Creators API boundary, TradeDoubler feed/link conversion, disclosure, `rel=nofollow sponsored` semantics and click/conversion attribution.
-- Embed the shared product-snippet surface in Amber, Brgen feed contexts and relevant storefront/takeaway contexts without duplicating offer data.
 
 ### MASTER face, voice and device proof
 - Prove web/terminal behavior parity before touching visual style.
