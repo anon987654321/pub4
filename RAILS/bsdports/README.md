@@ -2,7 +2,7 @@
 
 **Search the whole OpenBSD ports tree as fast as you can type.** bsdports is
 full-text live search over ports with their dependencies, advisories and
-maintainers, on Rails 8.1, SQLite with FTS5, Falcon, Hotwire and relayd.
+maintainers, on Rails 8.1.4, SQLite with FTS5, Falcon, Hotwire and relayd.
 
 Deploy it with `doas zsh RAILS/bsdports/bsdports.sh`, then prove it answers on
 `127.0.0.1:47312/up` and `/health`. Both, not one: relayd keeps terminating TLS
