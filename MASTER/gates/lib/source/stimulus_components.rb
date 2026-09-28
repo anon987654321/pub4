@@ -27,7 +27,7 @@ module Deploy
     # referenced. Add dialog back here when a view actually asks for it.
     REQUIRED_CONTROLLERS = %w[
       password-visibility nested-form character-counter
-      checkbox-select-all read-more textarea-autogrow
+      checkbox-select-all read-more
     ].freeze
 
     REQUIRED_PACKAGES = %w[password-visibility rails-nested-form].freeze
@@ -51,7 +51,6 @@ module Deploy
       "popover" => /getBoundingClientRect\(\)|style\.(top|left|right|bottom)\s*=|position\s*[:=]\s*["']absolute/i,
       "dropdown" => /aria-expanded|aria-haspopup|classList\.(add|remove).*?(open|active|expanded)/i,
       "auto-submit" => /form\.requestSubmit\(\)|form\.submit\(\)|requestSubmit\(/,
-      "textarea-autogrow" => /scrollHeight.*?(style\.height|height\s*=)|clientHeight.*?scrollHeight/i,
       "dialog" => /showModal\(\)|<dialog|aria-modal/i,
       "content-loader" => /fetch\(|Turbo\.visit|turbo-frame/i,
       "confirmation" => /confirm\(|data-confirm|confirmation/i,
