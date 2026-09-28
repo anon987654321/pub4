@@ -1,7 +1,13 @@
+
 <article class="brgen-media-card">
   <%= link_to post_path(post), class: "brgen-media-link", aria: { label: post.title.presence || t("post.view", default: "View post") } do %>
     <div class="brgen-media-image">
-      <%= responsive_image_tag(post.image, alt: post.title.presence || "", loading: "lazy", class: "brgen-media-image-tag") %>
+      <% if post.image.attached? %>
+        <%= responsive_image_tag(post.image, alt: post.title.presence || "", loading: "lazy", class: "brgen-media-image-tag") %>
+      <% elsif post.video.attached? %>
+        <%= video_tag post.video, controls: false, muted: true, playsinline: true, preload: "metadata", class: "brgen-media-video" %>
+        <span class="brgen-media-play" aria-hidden="true">▶</span>
+      <% end %>
     </div>
     <div class="brgen-media-caption">
       <strong><%= post.title.presence || post.content.to_s.truncate(70, separator: " ") %></strong>
