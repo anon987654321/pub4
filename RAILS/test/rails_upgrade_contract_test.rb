@@ -19,7 +19,7 @@ class RailsUpgradeContractTest < Minitest::Test
       assert_includes source, "config.load_defaults 8.2",
                       "#{app} drifted from the Rails 8.2 baseline"
       refute_includes source, "config.load_defaults 8.1",
-                      "#{app} still carries the Rails 8.0 baseline"
+                      "#{app} still carries the Rails 8.1 baseline"
     end
   end
 
@@ -37,7 +37,7 @@ class RailsUpgradeContractTest < Minitest::Test
 
     assert_includes source, '"X-CSRF-Token"'
     assert_includes source, "authenticity_token:"
-    assert_includes source, "a write without an authenticity token is refused"
+    assert_includes source, "a cross-site write without csrf metadata is refused"
   end
 
   test "audited enum fields are non-null at the persistence boundary" do

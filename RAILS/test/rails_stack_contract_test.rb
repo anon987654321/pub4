@@ -38,7 +38,7 @@ class RailsStackContractTest < Minitest::Test
     end
   end
 
-  def test_every_locked_app_resolves_the_current_rails_release
+  def test_every_locked_app_resolves_the_current_rails_source
     LOCKED_ROOTS.each do |root|
       path = File.join(REPO_ROOT, root, "Gemfile.lock")
       body = File.read(path)
@@ -47,10 +47,9 @@ class RailsStackContractTest < Minitest::Test
       assert rails, "#{root}/Gemfile.lock has no locked Rails version"
       assert_equal RAILS_VERSION, Gem::Version.new(rails)
 
-      railties = body[/^    railties \((\d+(?:\.\d+)+)\)$/m, 1]
+      railties = body[/^    railties \(([^)]+)\)$/m, 1]
       assert_equal rails, railties, "#{root}/Gemfile.lock splits Rails and railties versions"
 
-      dependency = body[/^  rails \(([^)]+)\)$/m, 1]
       git = body[/^  revision: (\h+)$/m, 1]
       assert_equal RAILS_REF, git, "#{root}/Gemfile.lock is not pinned to Rails #{RAILS_REF}"
     end
