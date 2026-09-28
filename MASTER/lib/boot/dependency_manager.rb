@@ -645,8 +645,7 @@ module Master
         Result.new(ok: false, changed: false, bundler: nil, bundle: nil, system: nil, message:, output:)
       end
 
-      def join_output(stdout, stderr) = [stdout, stderr].compact.reject(&:empty?).join("
-").strip
+      def join_output(*parts) = parts.flatten.compact.map(&:to_s).reject(&:empty?).join("\n").strip
 
       def report(message) = @out.puts("deps0: #{message}")
     end
