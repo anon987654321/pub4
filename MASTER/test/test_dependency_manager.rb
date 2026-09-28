@@ -222,6 +222,15 @@ class TestDependencyManager < Minitest::Test
     assert_nil manager.send(:bundler_path, "4.0.5")
   end
 
+  def test_bundle_process_uses_the_active_ruby
+    manager = MANAGER.new(root: @root, env: { "PATH" => "/usr/bin:/opt/homebrew/bin" }, out: StringIO.new, home: @root)
+    env = manager.send(:bundle_env)
+
+    assert_equal RbConfig.ruby, env["RUBY"]
+    assert_equal File.dirname(RbConfig.ruby), env["PATH"].split(File::PATH_SEPARATOR).first
+  end
+
+
   def test_clean_bundle_does_not_install_or_touch_lock
     manager = fake_manager([[true, "The Gemfile's dependencies are satisfied", ""]])
     before = File.read(File.join(@root, "Gemfile.lock"))
