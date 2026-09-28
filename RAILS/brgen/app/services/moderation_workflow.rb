@@ -5,8 +5,8 @@ class ModerationWorkflow
     new.report!(reporter: reporter, target: target, reason: reason, details: details)
   end
 
-  def self.transition!(report:, status:)
-    new.transition!(report: report, status: status)
+  def self.transition!(report:, status:, decision_reason: nil)
+    new.transition!(report: report, status: status, decision_reason: decision_reason)
   end
 
   def report!(reporter:, target:, reason:, details: nil)
@@ -23,11 +23,16 @@ class ModerationWorkflow
     end
   end
 
-  def transition!(report:, status:)
+  def transition!(report:, status:, decision_reason: nil)
     return report unless ModerationReport::STATUSES.include?(status)
 
     ModerationReport.transaction do
-      report.update!(status: status)
+      attrs = { status: status }
+      if %w[resolved dismissed].include?(status)
+        attrs[:decision_reason] = decision_reason.presence || report.reason
+        attrs[:decided_at] = Time.current
+      end
+      report.update!(**attrs)
       case status
       when "open", "reviewing"
         flag_for(report, status: status)
