@@ -68,13 +68,13 @@ class ShopSmarterTest < ActionDispatch::IntegrationTest
   # something that can answer, and this asserts the reversal rather than being
   # deleted: it is the one behaviour the move was for.
   test "a configured token now reaches a feed client amber can load" do
-    ENV["TRADEDOUBLER_TOKEN"] = "test-token"
-
-    assert defined?(Shared::Tradedoubler), "the feed client must be loadable in amber"
-    assert Shared::Tradedoubler.respond_to?(:deals)
-    assert_not_equal :no_feed_client, ShopTheLook.remote_unavailable_reason
-  ensure
-    ENV.delete("TRADEDOUBLER_TOKEN")
+    ENV.stub(:[], lambda { |key|
+      key.to_s == "TRADEDOUBLER_TOKEN" ? "test-token" : ENV.fetch(key, nil)
+    }) do
+      assert defined?(Shared::Tradedoubler), "the feed client must be loadable in amber"
+      assert Shared::Tradedoubler.respond_to?(:deals)
+      assert_not_equal :no_feed_client, ShopTheLook.remote_unavailable_reason
+    end
   end
 
   test "remote suggestions stay empty and local links still surface" do
