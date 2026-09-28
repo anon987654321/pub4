@@ -90,6 +90,7 @@ pin "web-vitals", to: "https://cdn.jsdelivr.net/npm/web-vitals@4.2.4/dist/web-vi
 pin "pub4/autosave", to: "autosave_controller.js"
 pin "pub4/draft_store", to: "draft_store_controller.js"
 pin "pub4/media_picker", to: "media_picker_controller.js"
+pin "pub4/post_progressive", to: "post_progressive_controller.js"
 pin "pub4/feed_compose", to: "feed_compose_controller.js"
 pin "pub4/feed_hotkey", to: "feed_hotkey_controller.js"
 pin "pub4/offline_feed", to: "offline_feed_controller.js"
