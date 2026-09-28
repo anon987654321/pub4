@@ -50,8 +50,11 @@ class AccountMergerAndModerationTest < ActiveSupport::TestCase
     assert flag, "reporting must flag the content"
     assert_equal "open", flag.status
 
-    ModerationWorkflow.transition!(report: report, status: "resolved")
-    assert_equal "resolved", report.reload.status
+    ModerationWorkflow.transition!(report: report, status: "resolved", decision_reason: "spam policy")
+    report.reload
+    assert_equal "resolved", report.status
+    assert_equal "spam policy", report.decision_reason
+    assert report.decided_at.present?
     assert_equal "resolved", flag.reload.status
     # remove_content: however the model spells removal, the feed must not show it.
     assert_not Post.where(id: post.id).where(deleted_at: nil).exists? if Post.column_names.include?("deleted_at")
