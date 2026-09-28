@@ -43,6 +43,10 @@ module Brgen
       exclude_blocked(Post.visible_to(user).merge(base), user)
     end
 
+    def media_only(relation)
+      relation.joins(:image_attachment).distinct
+    end
+
     def ranked?(sort:)
       sort.to_s == "hot"
     end
