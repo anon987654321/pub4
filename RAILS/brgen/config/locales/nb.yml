@@ -413,6 +413,9 @@ nb:
     unsend: Angre
     confirm_unsend: Angre denne meldingen? Teksten forsvinner, tråden beholder formen.
     forward: Videresend
+    invite_master: Inviter MASTER
+    master_present: MASTER er her
+    master_joined: MASTER ble med i denne chatten.
     forward_to: Videresend til
     forwarded: Videresendt
     replying_to_story: Svarte på historien din
@@ -1616,6 +1619,7 @@ nb:
       pending: spurt
       accepted: følger
   flash:
+    master_invited: MASTER ble med i chatten.
     business_verifications:
       sent: Forespørselen er sendt. En person vurderer den.
       reviewed: Vurderingen er lagret.
