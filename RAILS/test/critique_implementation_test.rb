@@ -64,6 +64,22 @@ class CritiqueImplementationTest < Minitest::Test
            ".feed-action must carry the tap floor"
   end
 
+  def test_brgen_post_sketch_is_a_compact_reading_unit
+    post = read("brgen/app/views/posts/_post.html.erb")
+    card = read("shared/app/views/shared/_post_card.html.erb")
+    css = read("shared/app/assets/stylesheets/_minimal.scss")
+    feed = read("brgen/lib/brgen/home_feed.rb")
+
+    assert_includes post, 'render "shared/post_embed_action"'
+    assert_includes post, 'post.comment_count.positive? ? post.comment_count : ""'
+    assert_includes card, "feed-card-byline"
+    assert_includes card, "post-reading-preview"
+    assert_includes card, 'link_to "…", post_url'
+    assert_includes css, ".post-reading-preview"
+    assert_includes css, ".feed-action-count:empty"
+    assert_includes feed, "AFFILIATE_EVERY = 2"
+  end
+
   def test_amber_prioritizes_owned_clothes_and_reversible_lifecycle
     index = read("amber/app/views/items/index.html.erb")
     show = read("amber/app/views/items/show.html.erb")
