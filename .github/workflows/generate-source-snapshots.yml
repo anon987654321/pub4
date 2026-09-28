@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   snapshots:
@@ -32,12 +33,17 @@ jobs:
       - name: Generate governed snapshots
         run: ruby MASTER/tools/snapshot.rb
 
-      - name: Commit snapshots
+      - name: Publish snapshot branch
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          branch="snapshot/generated-${GITHUB_RUN_ID}"
+          git switch --create "${branch}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add snapshot_MASTER.md snapshot_OPENBSD.md snapshot_RAILS.md
           git rm .github/workflows/generate-source-snapshots.yml
           git commit -m "chore(repo): add current source snapshots"
-          git push origin HEAD:main
+          git push origin "HEAD:${branch}"
+          gh pr create             --base main             --head "${branch}"             --title "chore(repo): add current source snapshots"             --body "Generated from main by MASTER/tools/snapshot.rb. The workflow removes itself in this publication commit."
