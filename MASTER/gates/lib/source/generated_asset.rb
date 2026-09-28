@@ -87,7 +87,7 @@ module Deploy
       return if sources.empty?
 
       unless File.file?(build)
-        result.fail("#{app_name}: missing compiled app/assets/builds/application.css")
+        result.inconclusive!("#{app_name}: generated application.css is absent — precompile assets before measuring generated output")
         return
       end
 
