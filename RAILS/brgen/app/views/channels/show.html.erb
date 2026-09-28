@@ -49,6 +49,7 @@
 
     <% if Current.user.present? %>
       <% handle = Current.user.channel_handle %>
+      <%= render "channels/composer", conversation: @conversation, message: @message %>
       <%= form_with model: @message, url: conversation_messages_path(@conversation),
                     id: "new_message", class: "channel-composer",
                     data: {
