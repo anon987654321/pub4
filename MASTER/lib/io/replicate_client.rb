@@ -7,7 +7,7 @@ require_relative "../ground/failure_taxonomy"
 require_relative "../io/quota_gate"
 # model_exists?, cancel_prediction and cancel_training all rescue into
 # Ground::Swallow, and nothing required it. Under a full MASTER boot something
-# else had loaded it first; loaded standalone -- which is how MASTER/tools/preprompt
+# else had loaded it first; loaded standalone -- which is how MASTER/tools/replicate
 # and MASTER/tools/lora's Replicate lane use this file -- the rescue itself raised
 # NameError. The three call sites where that lands are the ones you reach when
 # something has already gone wrong.
@@ -128,7 +128,7 @@ module Master
       # wait that will help from one that cannot.
       ExhaustedError = Class.new(StandardError)
 
-      CONFIG_PATH = File.expand_path("~/.config/preprompt/config.json").freeze
+      CONFIG_PATH = File.expand_path("~/.config/replicate/config.json").freeze
       BASE = "https://api.replicate.com/v1"
       LORA_TRAINER = "ostris/flux-dev-lora-trainer"
       TRANSIENT_STATUS = ((500..599).to_a << 429).freeze
@@ -179,7 +179,7 @@ module Master
         wait_for(pred["id"], timeout:)
       end
 
-      # Bounded catalog read used by Preprompt search/sync. Replicate returns a
+      # Bounded catalog read used by Replicate search/sync. Replicate returns a
       # cursor URL; only follow it until the caller's explicit limit is met.
       def models(limit: 100, query: nil)
         remaining = [[limit.to_i, 1].max, 1_000].min
@@ -200,7 +200,7 @@ module Master
       end
 
       # SHA-256 of a downloaded file, for provenance sidecars and the
-      # content-addressed blob cache in preprompt.rb.
+      # content-addressed blob cache in replicate.rb.
       def self.checksum(path)
         require "digest"
         Digest::SHA256.file(path).hexdigest
@@ -260,7 +260,7 @@ module Master
       # The input parameter names the provider currently declares, from the same
       # GET latest_version already makes.
       #
-      # preprompt keeps its own MODEL_CAPABILITIES table so it can refuse an
+      # replicate keeps its own MODEL_CAPABILITIES table so it can refuse an
       # unsupported option rather than let the API ignore it — which is the right
       # call, and is also a second source of truth. When Replicate changes a
       # schema the table goes stale, the tests stay green because they only check

@@ -1,17 +1,8 @@
-<%# Minimal legal footer — GDPR + publisher review. Flat. Dating hides this
-    because its intro is a swipe surface; those links live on the intro. %>
-<%# The type rules that were an inline <style> here live in
-    shared/app/assets/stylesheets/_site_legal.scss, moved verbatim. This
-    partial is rendered by all three layouts, so the block shipped a second
-    type system on every page of every app — which is what NO_INLINE_STYLES
-    exists to catch and could not act on while it sat in ERB. %>
 <%
   privacy_href = respond_to?(:privacy_path) ? privacy_path : main_app.privacy_path
   terms_href = respond_to?(:terms_path) ? terms_path : main_app.terms_path
   cookies_href = respond_to?(:cookies_path) ? cookies_path : main_app.cookies_path
 %>
-<%# An app that wants a multi-column footer fills :site_footer_columns; the
-    legal links are always the last column. %>
 <footer class="site-legal">
   <%= yield :site_footer_columns %>
   <nav aria-label="<%= t("legal.aria") %>">
@@ -22,4 +13,12 @@
             data-action="click->cookie-consent#open"><%= t("legal.cookie_settings") %></button>
   </nav>
   <%= render "shared/affiliate_disclosure" %>
+  <% if respond_to?(:email_subscriptions_path) && current_page?(main_app.root_path) %>
+    <%= render "shared/newsletter_signup_popup",
+          city: (respond_to?(:city_name) ? city_name : "Bergen"),
+          artwork_url: Shared::OnboardingArtwork.url(
+            surface: "brgen",
+            city: (respond_to?(:city_name) ? city_name : "Bergen")
+          ) %>
+  <% end %>
 </footer>

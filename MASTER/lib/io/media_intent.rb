@@ -65,10 +65,10 @@ module Master
       end
 
       def generate_cloud_image(prompt, root:)
-        output = File.join(MEDIA_OUTPUT_DIR, "preprompt-#{Time.now.utc.strftime('%Y%m%dT%H%M%SZ')}.webp")
+        output = File.join(MEDIA_OUTPUT_DIR, "replicate-#{Time.now.utc.strftime('%Y%m%dT%H%M%SZ')}.webp")
         args = ["generate", "--prompt", prompt, "--output", output]
-        result = ScriptDispatch.run(root:, tool: "preprompt", arg: args.map { |v| Shellwords.escape(v) }.join(" "))
-        result.ok? ? Result.ok({ output: result.value!, rendered: result.value!, media: :preprompt, path: output }) : result
+        result = ScriptDispatch.run(root:, tool: "replicate", arg: args.map { |v| Shellwords.escape(v) }.join(" "))
+        result.ok? ? Result.ok({ output: result.value!, rendered: result.value!, media: :replicate, path: output }) : result
       end
 
       def postprocess(text, root:)

@@ -395,7 +395,7 @@ expecting film curves.
 `MASTER/web/app/services/image_presenter.rb` grades web photos through it. The
 Rails apps reach it through `Operator::DeployPaths#postpro_script` for newsletter
 heroes and TV thumbnails, by way of `Shared::NewsletterVisuals` and brgen's
-`PostproJob`. `MASTER/tools/preprompt/preprompt.rb --postpro PRESET` hands a fresh
+`PostproJob`. `MASTER/tools/replicate/replicate.rb --postpro PRESET` hands a fresh
 generation straight here.
 
 Programmatic invocation goes through `Master::Io::ScriptDispatch` under the tool

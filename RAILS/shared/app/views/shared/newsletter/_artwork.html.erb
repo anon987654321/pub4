@@ -1,0 +1,14 @@
+<% if artwork.url.present? %>
+  <tr>
+    <td class="mail-artwork-wrap">
+      <img
+           src="<%= artwork.url %>"
+           alt="<%= artwork.alt %>"
+           width="620"
+           class="mail-artwork">
+    </td>
+  </tr>
+  <% if artwork.caption.present? %>
+    <tr><td class="mail-artwork-caption"><%= artwork.caption %></td></tr>
+  <% end %>
+<% end %>

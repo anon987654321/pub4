@@ -4,13 +4,13 @@ require_relative "test_helper"
 require "open3"
 require "rbconfig"
 
-# The two MASTER/tools vocab-checks are the real contract for postpro and preprompt.
+# The two MASTER/tools vocab-checks are the real contract for postpro and replicate.
 # They used to be operator memory. A table that fails quiet is how unread
 # temp: and a costume --final model survive.
 class TestToolsMedia < Minitest::Test
   ROOT = File.expand_path("../..", __dir__)
   POSTPRO = File.join(ROOT, "MASTER/tools", "postpro", "postpro.rb")
-  PREPROMPT = File.join(ROOT, "MASTER/tools", "preprompt", "preprompt.rb")
+  REPLICATE = File.join(ROOT, "MASTER/tools", "replicate", "replicate.rb")
 
   def test_postpro_unread_temp_is_a_vocab_check_error
     source = File.read(POSTPRO)
@@ -89,15 +89,15 @@ class TestToolsMedia < Minitest::Test
   # went red the day 495bb98d8 made FLUX 2 the default — a deliberate upgrade
   # the test read as a regression, which is what a version literal in an
   # assertion always ends up doing. What has to hold is that FINAL_MODEL names a
-  # model preprompt actually knows, and vocab-check is the check that proves it:
-  # preprompt.rb refuses a FINAL_MODEL with no MODEL_CAPABILITIES entry.
-  def test_preprompt_vocab_check_exits_zero_and_final_model_is_known
-    out, status = run_script(PREPROMPT, "vocab-check")
-    assert status.success?, "preprompt vocab-check failed:\n#{out}"
+  # model replicate actually knows, and vocab-check is the check that proves it:
+  # replicate.rb refuses a FINAL_MODEL with no MODEL_CAPABILITIES entry.
+  def test_replicate_vocab_check_exits_zero_and_final_model_is_known
+    out, status = run_script(REPLICATE, "vocab-check")
+    assert status.success?, "replicate vocab-check failed:\n#{out}"
 
-    source = File.read(PREPROMPT)
+    source = File.read(REPLICATE)
     final = source[/^FINAL_MODEL = "([^"]+)"/, 1]
-    assert final, "preprompt must declare a FINAL_MODEL"
+    assert final, "replicate must declare a FINAL_MODEL"
     assert_includes source, %("#{final}"), "FINAL_MODEL #{final} has no entry beside it"
     assert_includes source, '"black-forest-labs/flux-kontext-pro"'
     assert_includes source, "input_image"

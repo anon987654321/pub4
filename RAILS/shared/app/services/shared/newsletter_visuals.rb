@@ -1,25 +1,36 @@
 # frozen_string_literal: true
 
 require "operator/deploy_paths"
-
 require "json"
 require "net/http"
 require "tempfile"
+require "tmpdir"
 require "rbconfig"
 require "fileutils"
 require "securerandom"
+require "open-uri"
 
 module Shared
-  # Cinematic newsletter hero images via postpro + optional preprompt generation.
+  # Newsletter artwork is a first-class editorial layer: Replicate-generated
+  # images are materialized into the app's public tree so an email does not
+  # depend on a provider URL surviving after delivery.
   class NewsletterVisuals
     Hero = Data.define(:url, :alt, :caption, :source)
+    Artwork = Data.define(:url, :alt, :caption, :source)
 
-    PREPROMPT_MODEL = ENV.fetch("NEWSLETTER_HERO_MODEL", "black-forest-labs/flux-1.1-pro")
+    REPLICATE_MODEL = ENV.fetch("NEWSLETTER_REPLICATE_MODEL", "black-forest-labs/flux-2-max")
     POSTPRO_PRESET = ENV.fetch("NEWSLETTER_POSTPRO_PRESET", "magic_hour")
     POSTPRO_STOCK = ENV.fetch("NEWSLETTER_POSTPRO_STOCK", "kodak_portra")
+    ARTWORK_COUNT = ENV.fetch("NEWSLETTER_ARTWORK_COUNT", "4").to_i.clamp(0, 6)
 
-    def self.hero_for(city_name:, theme:, seed_attachment: nil, public_base: nil)
-      new(public_base:).hero_for(city_name:, theme:, seed_attachment:)
+    class << self
+      def hero_for(city_name:, theme:, seed_attachment: nil, public_base: nil)
+        new(public_base:).hero_for(city_name:, theme:, seed_attachment:)
+      end
+
+      def artworks_for(city_name:, themes:, public_base: nil)
+        new(public_base:).artworks_for(city_name:, themes:)
+      end
     end
 
     def initialize(public_base: nil)
@@ -29,14 +40,37 @@ module Shared
     def hero_for(city_name:, theme:, seed_attachment: nil)
       if seed_attachment&.attached?
         processed = postpro_attachment(seed_attachment)
-        return Hero.new(url: processed, alt: "#{city_name} — #{theme}", caption: "Processed with postpro",
-source: :postpro) if processed
+        return Hero.new(
+          url: processed,
+          alt: "#{city_name} — #{theme}",
+          caption: "Processed with postpro",
+          source: :postpro
+        ) if processed
       end
 
-      generated = preprompt_hero(city_name:, theme:)
-      return generated if generated
+      artwork = replicate_artwork(
+        city_name:,
+        theme:,
+        aspect_ratio: "16:9",
+        role: "newsletter hero"
+      )
+      return nil unless artwork
 
-      nil
+      Hero.new(**artwork.to_h)
+    end
+
+    def artworks_for(city_name:, themes:)
+      Array(themes).first(ARTWORK_COUNT).filter_map.with_index do |theme, index|
+        replicate_artwork(
+          city_name:,
+          theme:,
+          aspect_ratio: "3:2",
+          role: "newsletter editorial interlude #{index + 1}"
+        )
+      rescue StandardError => error
+        log("artwork #{index + 1} failed: #{error.message}")
+        nil
+      end
     end
 
     private
@@ -65,24 +99,45 @@ source: :postpro) if processed
       nil
     end
 
-    def preprompt_hero(city_name:, theme:)
-      token = ENV["REPLICATE_API_TOKEN"].presence || ENV["PREPROMPT_API_TOKEN"].presence
+    def replicate_artwork(city_name:, theme:, aspect_ratio:, role:)
+      token = ENV["REPLICATE_API_TOKEN"].presence
       return nil if token.blank?
 
-      prompt = "Editorial newsletter hero, #{city_name}, #{theme}, cinematic natural light, " \
-               "minimal composition, kodak portra grain, no text, no logos, magazine cover quality"
-      output = replicate_predict(token:, prompt:)
+      prompt = <<~PROMPT.squish
+        #{role}, #{city_name}, Norway. #{theme}. Refined literary magazine
+        art direction, sophisticated editorial illustration or candid fashion
+        photography as appropriate, tactile material detail, natural light,
+        human scale, local specificity, restrained Nordic palette, quietly witty,
+        premium print composition, no text, no logos, no invented monuments,
+        no recognizable public figures.
+      PROMPT
+      output = replicate_predict(token:, prompt:, aspect_ratio:)
       return nil if output.blank?
 
-      Hero.new(url: output, alt: "#{city_name} — #{theme}", caption: "Generated for this edition", source: :preprompt)
+      url = @public_base ? materialize_url(output, role) : output
+      return nil if url.blank?
+
+      Artwork.new(
+        url:,
+        alt: "#{city_name} — #{theme}",
+        caption: "Generated with Replicate for this edition",
+        source: :replicate
+      )
     rescue StandardError => error
-      log("preprompt hero failed: #{error.message}")
+      log("Replicate artwork failed: #{error.class}: #{error.message}")
       nil
     end
 
-    def replicate_predict(token:, prompt:)
-      uri = URI("https://api.replicate.com/v1/models/#{PREPROMPT_MODEL}/predictions")
-      payload = { input: { prompt:, aspect_ratio: "16:9", output_format: "jpg" } }
+    def replicate_predict(token:, prompt:, aspect_ratio:)
+      uri = URI("https://api.replicate.com/v1/models/#{REPLICATE_MODEL}/predictions")
+      payload = {
+        input: {
+          prompt:,
+          aspect_ratio:,
+          output_format: "webp",
+          output_quality: 90
+        }
+      }
       response = replicate_post(uri, token, payload)
       prediction = JSON.parse(response)
       result = poll_prediction(prediction["urls"]["get"], token)
@@ -94,21 +149,49 @@ source: :postpro) if processed
       request["Authorization"] = "Bearer #{token}"
       request["Content-Type"] = "application/json"
       request.body = body.to_json
-      Net::HTTP.start(uri.hostname, uri.port, use_ssl: true, read_timeout: 120) { |http| http.request(request) }.body
+      Net::HTTP.start(uri.hostname, uri.port, use_ssl: true, read_timeout: 120) do |http|
+        http.request(request)
+      end.body
     end
 
-    def poll_prediction(status_url, token, attempts: 30)
+    def poll_prediction(status_url, token, attempts: 60)
       attempts.times do
         uri = URI(status_url)
         request = Net::HTTP::Get.new(uri)
         request["Authorization"] = "Bearer #{token}"
-        body = JSON.parse(Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { |http| http.request(request) }.body)
+        body = JSON.parse(
+          Net::HTTP.start(uri.hostname, uri.port, read_timeout: 60) do |http|
+            http.request(request)
+          end.body
+        )
         return body["output"] if body["status"] == "succeeded"
-        raise "replicate failed: #{body["error"]}" if body["status"] == "failed"
+        raise "Replicate failed: #{body["error"]}" if body["status"] == "failed"
 
         sleep 2
       end
       nil
+    end
+
+    def materialize_url(url, prefix)
+      return url unless @public_base
+
+      dest_dir = File.join(@public_base, "newsletters", Date.current.iso8601)
+      FileUtils.mkdir_p(dest_dir)
+      filename = "#{prefix.to_s.parameterize}-#{SecureRandom.hex(6)}.webp"
+      destination = File.join(dest_dir, filename)
+      temporary = "#{destination}.tmp-#{Process.pid}-#{Thread.current.object_id}"
+
+      URI.open(url, "rb", read_timeout: 60) do |source|
+        File.binwrite(temporary, source.read)
+      end
+      File.rename(temporary, destination)
+      "/newsletters/#{Date.current.iso8601}/#{filename}"
+    rescue StandardError => error
+      FileUtils.rm_f(temporary) if temporary && File.exist?(temporary)
+      log("materialize artwork failed: #{error.class}: #{error.message}")
+      nil
+    ensure
+      FileUtils.rm_f(temporary) if temporary && File.exist?(temporary)
     end
 
     def publish_file(path, prefix)
@@ -116,7 +199,8 @@ source: :postpro) if processed
 
       dest_dir = File.join(@public_base, "newsletters", Date.current.iso8601)
       FileUtils.mkdir_p(dest_dir)
-      dest = File.join(dest_dir, "#{prefix}-#{SecureRandom.hex(6)}.jpg")
+      extension = File.extname(path).presence || ".webp"
+      dest = File.join(dest_dir, "#{prefix}-#{SecureRandom.hex(6)}#{extension}")
       FileUtils.cp(path, dest)
       "/newsletters/#{Date.current.iso8601}/#{File.basename(dest)}"
     end

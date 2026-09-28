@@ -2,6 +2,7 @@
 @use "install_prompt";
 @use "welcome_onboarding";
 @use "cookie_banner";
+@use "newsletter_capture";
 
 .sidebar-card {
   background: var(--surface-elevated);

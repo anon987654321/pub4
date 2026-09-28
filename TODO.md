@@ -212,7 +212,7 @@ Only he can close these, and each is small once he sits down to it:
 the rules.yml trim draft (MASTER); the CSS budget ceilings (RAILS);
 `spine.lib_body_ceiling` and the rules.yml ratchet rows (MASTER); the two
 `soul.yml` edits (refinement 8); the vm23 session above; the bsdports.org
-delegation; the Replicate key or retiring preprompt; and the rendered values
+delegation; the Replicate key or retiring replicate; and the rendered values
 the "One chrome", ad system and layout sections bring back for a decision.
 
 ---
@@ -1026,7 +1026,7 @@ one as a ticket without asking first.
   re-baselines to zero on the next run by design, so a regression reports once
   and then becomes the reference. `layout_snapshot` commits reviewable JSON —
   71 tracked files — and is the candidate for the fleet's only visual baseline.
-- **preprompt has no Replicate access, so the whole tool is unreachable.** Fund it
+- **replicate has no Replicate access, so the whole tool is unreachable.** Fund it
   or retire it; leaving it is the inert-wiring defect with a price tag.
 - **One box per city rather than one box for every city.** brgen's verticals are
   already engines and vm23 sits at its capacity ceiling, so a cell per city is
@@ -1110,13 +1110,13 @@ operator's:
 
 859. **The crate on main disagrees with `data/assets.json`.** `DillaAssets.verify` there: `samples/{kembara_rindu,lo_borges,semua_untuk_mu}/loop.wav` missing, and seven one-shots under `samples/drums/` changed hash at the same size. Restore them, or `dilla assets record` to accept the new drums as the inputs.
 
-### MASTER/tools — postpro, preprompt, lora
+### MASTER/tools — postpro, replicate, lora
 
 907. **Chains are ungraded by default.** `generate` applies `HOUSE_POSTPRO` (`portrait`); `chain` grades its final frame only when `--postpro` is given or the last stage names a `postpro`. Whether chains share the house grade is a graded-look call.
 926. **`lora/guides/*.m4a` are tracked TTS output** beside their `.txt` scripts. Keep them in git or untrack them; either is the operator's.
 931. **`lora/_toolkit/judge_thresholds.yml` was calibrated on seven images;** `ragnhild/dataset/` now holds six. Recalibrating moves the quality floors.
 932. **What the photography triage left open.**
-   - postpro's one-shot path, which is the one preprompt uses, skips the camera-profile pass that `process_file` runs. Adding it changes the graded look, so it is the operator's.
+   - postpro's one-shot path, which is the one replicate uses, skips the camera-profile pass that `process_file` runs. Adding it changes the graded look, so it is the operator's.
    - A chain's provenance names no model version, because MASTER's `replicate_client` predict returns none. It waits on that client.
    - Postpro on video is deep work: an ffmpeg path beside the vips one, a grain seed held steady across frames, halation that does not crawl, optional period artefacts (gate flicker, weave, telecine), shutter-angle emulation, one graded frame applied to all, a per-minute budget, and a stills-and-video parity test. The comment above `POSTPRO_USAGE` in `postpro.rb` states what a replacement must hold.
 934. **Melody research for dilla, 2026-09-14.**
@@ -1764,7 +1764,7 @@ choose. Numbers are for citation, not for order.
 79. **Loudness for the destination** [cheap] — every set ends in `dynaudnorm` and
     a limiter at a hand-picked `volume=`. Integrated LUFS is a solved measurement
     and lies about speech over music, which matters for 7.
-80. **A sleeve** [yours] — `MASTER/tools/postpro` grades images and `preprompt` generates
+80. **A sleeve** [yours] — `MASTER/tools/postpro` grades images and `replicate` generates
     them. A catalogue with covers is a release.
 81. **Publish the tracklist** [yours] — `radio.brgen.no` exists and is empty of
     this.
@@ -1901,7 +1901,7 @@ entry below is the shape, the evidence, and the seam it wants.
   `agent:mood`, `phantom:retry` and `pipeline:start` are therefore discoverable
   without a hand-maintained orphan list.
 - **A restated value drifts; a derived one cannot.** `voice.yml` vs
-  `Policy::FALLBACK`, preprompt's `MODEL_CAPABILITIES` vs live provider
+  `Policy::FALLBACK`, replicate's `MODEL_CAPABILITIES` vs live provider
   schemas, and brgen's inline social routes vs `shared/config/routes/social.rb`
   remain. The rules.yml/law/registry subclaim is now covered by the existing
   `RuleRegistryAudit` plus `/rules sources`, which names YAML-only, Law-only
@@ -1915,10 +1915,10 @@ entry below is the shape, the evidence, and the seam it wants.
   deterministic checklist critic as the bottom tier of the council would
   keep the ladder's top honest while the provider is unreachable — a design
   decision, the operator's.
-- **lora and preprompt check nothing they cannot reach.** lora's ~4.8k LOC is
-  parse-checked only; preprompt's `schema_audit` needs network and token, so
+- **lora and replicate check nothing they cannot reach.** lora's ~4.8k LOC is
+  parse-checked only; replicate's `schema_audit` needs network and token, so
   it never runs in rake. The seam: a recorded-schema snapshot committed under
-  `MASTER/tools/preprompt/data/` so the audit diffs offline, and one loaded-module
+  `MASTER/tools/replicate/data/` so the audit diffs offline, and one loaded-module
   smoke test for lora's toolkits that does not need a provider.
 - **Engines are namespaces pretending at detachability.** Sixteen engine
   views call `main_app.`, every engine model names host `User` by

@@ -2,8 +2,8 @@
 
 # What a photograph can be asked for, in words a diffusion model acts on.
 #
-# Every vocabulary, pool and composer lives here rather than in preprompt.rb,
-# because preprompt.rb reaches into MASTER for its Replicate client and lora
+# Every vocabulary, pool and composer lives here rather than in replicate.rb,
+# because replicate.rb reaches into MASTER for its Replicate client and lora
 # composes prompts on a rented GPU that has none of that loaded. Nothing in this
 # file makes a request, reads a credential or requires a gem.
 

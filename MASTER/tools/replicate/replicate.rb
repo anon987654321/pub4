@@ -81,7 +81,7 @@ MODEL_CAPABILITIES = {
   #
   # Read from Replicate's own documentation rather than from the schema
   # endpoint, which needs a token this machine does not have. `rake
-  # preprompt:schema_audit` is what confirms them against the provider, and
+  # replicate:schema_audit` is what confirms them against the provider, and
   # should be the first thing run once a token is present.
   #
   # No safety_tolerance: that was a FLUX 1.1 field and nothing in the FLUX 2
@@ -119,7 +119,7 @@ MODEL_CAPABILITIES = {
   #
   # Declared from the model page and never read off the schema, so it carries
   # `unverified: true` and Chain.problems refuses it until `rake
-  # preprompt:schema_audit` confirms the keys. `light_source` has no flag; only
+  # replicate:schema_audit` confirms the keys. `light_source` has no flag; only
   # a chain stage's options set it, which `chain_option_keys` records.
   "zsxkib/ic-light" => {
     input_keys: %w[prompt subject_image light_source seed output_format],
@@ -139,10 +139,10 @@ DEFAULT_CAPABILITY = { input_keys: %w[prompt aspect_ratio output_format seed], n
 # Sub-second, and the current generation. Explore here, commit to FINAL_MODEL.
 PREVIEW_MODEL = "black-forest-labs/flux-2-klein-4b"
 # What --final asks for. The flag was parsed into options[:final] and nothing
-# ever read it, so `--final` did nothing at all: with PREPROMPT_MODEL set to a
+# ever read it, so `--final` did nothing at all: with REPLICATE_MODEL set to a
 # preview model it silently kept previewing.
 #
-# Max, the highest-fidelity FLUX 2 model. Ordinary runs use PREPROMPT_MODEL,
+# Max, the highest-fidelity FLUX 2 model. Ordinary runs use REPLICATE_MODEL,
 # flux-2-pro by default; --final is how one image leaves that for the best
 # model the table declares.
 FINAL_MODEL = "black-forest-labs/flux-2-max"
@@ -267,7 +267,7 @@ end
 
 # The one-picture input keys, in whichever spelling a model uses. input_images,
 # the FLUX 2 list, is filled from reference_images instead.
-SINGLE_IMAGE_KEYS = (Preprompt::Chain::IMAGE_INPUT_KEYS - ["input_images"]).freeze
+SINGLE_IMAGE_KEYS = (Replicate::Chain::IMAGE_INPUT_KEYS - ["input_images"]).freeze
 
 # `passthrough` is a chain stage's own options. A key the model declares and
 # nothing above fills, such as IC-Light's light_source, goes out as the stage
@@ -466,7 +466,7 @@ end
 # was no grade at all, and the house look was whatever anyone remembered to
 # type. A look that has to be remembered is not a house look.
 #
-# `portrait` because preprompt mostly makes faces and it is the preset built for
+# `portrait` because replicate mostly makes faces and it is the preset built for
 # them: kodak_portra with skin_protect, and grain. The grain is not decoration.
 # Generated skin is too clean and its specular response uniform, because models
 # learn from retouched photography and have no account of subsurface scattering
@@ -475,9 +475,9 @@ end
 # generated face after the fact.
 #
 # Changed in one place, here, or per run with --postpro, or per shell with
-# PREPROMPT_POSTPRO. --no-postpro turns it off entirely, which is what you want
+# REPLICATE_POSTPRO. --no-postpro turns it off entirely, which is what you want
 # when the output is going into another tool that will grade it later.
-HOUSE_POSTPRO = ENV.fetch("PREPROMPT_POSTPRO", "portrait")
+HOUSE_POSTPRO = ENV.fetch("REPLICATE_POSTPRO", "portrait")
 
 def maybe_handoff_postpro(output, preset)
   return output unless preset
@@ -609,18 +609,18 @@ def vocab_check
   exit(1) if problems.any?
 end
 
-cache = File.expand_path(ENV.fetch("PREPROMPT_CATALOG", "~/.cache/preprompt/models.json"))
-blob_cache_dir = File.expand_path(ENV.fetch("PREPROMPT_BLOB_CACHE", "~/.cache/preprompt/blobs"))
-options = { model: ENV.fetch("PREPROMPT_MODEL", "black-forest-labs/flux-2-pro"), aspect_ratio: nil, limit: 100, dry_run: false, batch: 1 }
+cache = File.expand_path(ENV.fetch("REPLICATE_CATALOG", "~/.cache/replicate/models.json"))
+blob_cache_dir = File.expand_path(ENV.fetch("REPLICATE_BLOB_CACHE", "~/.cache/replicate/blobs"))
+options = { model: ENV.fetch("REPLICATE_MODEL", "black-forest-labs/flux-2-pro"), aspect_ratio: nil, limit: 100, dry_run: false, batch: 1 }
 parser = OptionParser.new do |p|
   p.banner = <<~TXT.chomp
-    Usage: preprompt.rb generate|search|sync|stats|capabilities|vocab-check|chains|chain NAME|help [options]
+    Usage: replicate.rb generate|search|sync|stats|capabilities|vocab-check|chains|chain NAME|help [options]
 
     generate without --output prints the result URLs and writes nothing.
     The token is REPLICATE_API_TOKEN, then REPLICATE_API_KEY, then api_token in
-    ~/.config/preprompt/config.json. vocab-check, chains and --dry-run need none.
+    ~/.config/replicate/config.json. vocab-check, chains and --dry-run need none.
     chain NAME --until STAGE stops after that stage; --from STAGE resumes from files an earlier run wrote.
-    Live schemas: cd MASTER/tools && rake preprompt:schema_audit (skipped without a token).
+    Live schemas: cd MASTER/tools && rake replicate:schema_audit (skipped without a token).
   TXT
   p.on("--prompt TEXT") { |v| options[:prompt] = v }
   p.on("--model MODEL") { |v| options[:model] = v; options[:model_explicit] = true }
@@ -679,19 +679,19 @@ end
 
 case command
 when "capabilities"
-  puts Master::Io::AnalogCapabilities.report(:preprompt)
+  puts Master::Io::AnalogCapabilities.report(:replicate)
 when "chains"
   # The chains this tree ships, from the directory rather than a maintained
   # list, so adding one is adding a file.
-  names = Preprompt::Chain.available
+  names = Replicate::Chain.available
   if names.empty?
-    puts "preprompt: no chains in #{Preprompt::Chain::DEFAULT_DIR}"
+    puts "replicate: no chains in #{Replicate::Chain::DEFAULT_DIR}"
   else
     names.each do |name|
-      chain = Preprompt::Chain.load(name)
+      chain = Replicate::Chain.load(name)
       puts "#{name}  (#{chain[:stages].length} stages)"
       puts "  #{chain[:description].to_s.strip.gsub(/\s+/, ' ')[0, 200]}"
-      puts Preprompt::Chain.plan(chain)
+      puts Replicate::Chain.plan(chain)
       puts
     end
   end
@@ -700,27 +700,27 @@ when "chain"
   # because stage 2 could not produce what stage 3 assumed has already cost the
   # first five, which is why this refuses on the plan rather than on the wire.
   name = ARGV.shift.to_s
-  abort "usage: preprompt chain NAME [--dry-run]" if name.empty?
+  abort "usage: replicate chain NAME [--dry-run]" if name.empty?
 
   chain = begin
-    Preprompt::Chain.load(name)
-  rescue Preprompt::Chain::Invalid => e
-    abort "preprompt: #{e.message}"
+    Replicate::Chain.load(name)
+  rescue Replicate::Chain::Invalid => e
+    abort "replicate: #{e.message}"
   end
 
-  puts "preprompt: chain #{name} — #{chain[:stages].length} stages"
-  puts Preprompt::Chain.plan(chain)
+  puts "replicate: chain #{name} — #{chain[:stages].length} stages"
+  puts Replicate::Chain.plan(chain)
 
-  problems = Preprompt::Chain.problems(chain, capability_for: method(:capability_for))
+  problems = Replicate::Chain.problems(chain, capability_for: method(:capability_for))
   unless problems.empty?
     warn ""
-    problems.each { |problem| warn "preprompt: REFUSED — #{problem}" }
-    abort "preprompt: #{problems.length} problem(s); nothing was requested and nothing was spent"
+    problems.each { |problem| warn "replicate: REFUSED — #{problem}" }
+    abort "replicate: #{problems.length} problem(s); nothing was requested and nothing was spent"
   end
-  puts "preprompt: the chain is satisfiable — every stage can take what the one before it produces"
+  puts "replicate: the chain is satisfiable — every stage can take what the one before it produces"
 
   if options[:dry_run]
-    puts "preprompt: --dry-run, so nothing was requested"
+    puts "replicate: --dry-run, so nothing was requested"
     exit 0
   end
 
@@ -730,7 +730,7 @@ when "chain"
   # N+1 is given stage N's file. That is the one thing a chain must get
   # right and the one thing that fails silently: a model handed no image
   # generates from the prompt and returns something plausible.
-  abort "preprompt: chain #{name} needs REPLICATE_API_TOKEN to run; --dry-run validates without it" if
+  abort "replicate: chain #{name} needs REPLICATE_API_TOKEN to run; --dry-run validates without it" if
     Master::Io::ReplicateClient.load_token.to_s.strip.empty?
 
   base = options[:output] || "chain-#{name}.jpg"
@@ -763,11 +763,11 @@ when "chain"
     stage_seed = seed || options[:seed] || SecureRandom.random_number(2**31)
     input = build_input(compiled, stage_options, seed: stage_seed, negative_prompt: negative, passthrough: stage.options)
 
-    puts "preprompt: stage #{index + 1}/#{total} #{stage.name} — #{stage.model}"
+    puts "replicate: stage #{index + 1}/#{total} #{stage.name} — #{stage.model}"
     started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-    urls = Array(client.predict(stage.model, input, timeout: stage.timeout || Preprompt::Chain::DEFAULT_TIMEOUT)).flatten.compact
+    urls = Array(client.predict(stage.model, input, timeout: stage.timeout || Replicate::Chain::DEFAULT_TIMEOUT)).flatten.compact
     duration = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started).round(2)
-    raise Preprompt::Chain::StageFailed, "stage #{stage.name} returned no output" if urls.empty?
+    raise Replicate::Chain::StageFailed, "stage #{stage.name} returned no output" if urls.empty?
 
     FileUtils.mkdir_p(File.dirname(target))
     client.download_url(urls.first, target)
@@ -776,41 +776,41 @@ when "chain"
               duration_s: duration }
     sidecar = write_provenance(target, prompt, compiled, negative, stage_options, stage_seed, digest, trace)
     append_gallery_manifest(sidecar, alt_text_for(prompt, stage_options))
-    puts "preprompt: stage #{index + 1} wrote #{target}"
+    puts "replicate: stage #{index + 1} wrote #{target}"
     kept << target
     { path: target, seed: stage_seed }
   end
 
   kept = []
   produced = begin
-    Preprompt::Chain.run(chain, perform: perform, until_stage: options[:until], image: options[:image],
+    Replicate::Chain.run(chain, perform: perform, until_stage: options[:until], image: options[:image],
                                 seed: options[:seed], from_stage: options[:from], resume: resume)
-  rescue Preprompt::Chain::Invalid, Preprompt::Chain::NothingToResume => e
-    abort "preprompt: #{e.message}"
+  rescue Replicate::Chain::Invalid, Replicate::Chain::NothingToResume => e
+    abort "replicate: #{e.message}"
   rescue StandardError => e
     record_failed_chain(chain, e, kept)
-    abort "preprompt: chain #{name} stopped: #{e.message}; #{kept.length} frame(s) kept, failure recorded"
+    abort "replicate: chain #{name} stopped: #{e.message}; #{kept.length} frame(s) kept, failure recorded"
   end
 
   # postpro last, on the final frame only — grading an intermediate would be
   # graded again by every stage after it. Last means after any upscale too: grain
   # laid down and then resampled turns to mush.
-  preset = Preprompt::Chain.grade_for(chain, produced: produced, requested: options[:postpro])
+  preset = Replicate::Chain.grade_for(chain, produced: produced, requested: options[:postpro])
   maybe_handoff_postpro(produced.last, preset) if produced.any?
-  puts "preprompt: chain #{name} produced #{produced.length} frame(s)"
+  puts "replicate: chain #{name} produced #{produced.length} frame(s)"
   puts produced
 when "vocab-check"
   vocab_check
 when "generate"
   abort parser.to_s if options[:prompt].to_s.strip.empty?
   if !options[:dry_run] && Master::Io::ReplicateClient.load_token.to_s.strip.empty?
-    abort "preprompt: generate needs a token (REPLICATE_API_TOKEN, REPLICATE_API_KEY, or api_token in " \
-          "~/.config/preprompt/config.json); --dry-run compiles the prompt without one"
+    abort "replicate: generate needs a token (REPLICATE_API_TOKEN, REPLICATE_API_KEY, or api_token in " \
+          "~/.config/replicate/config.json); --dry-run compiles the prompt without one"
   end
   abort "warn: --preview and --final ask for different models" if options[:preview] && options[:final]
 
-  options[:model] = PREVIEW_MODEL if options[:preview] && !ENV.key?("PREPROMPT_MODEL") && !options[:model_explicit]
-  # --final overrides PREPROMPT_MODEL, unlike --preview. That is the asymmetry
+  options[:model] = PREVIEW_MODEL if options[:preview] && !ENV.key?("REPLICATE_MODEL") && !options[:model_explicit]
+  # --final overrides REPLICATE_MODEL, unlike --preview. That is the asymmetry
   # the flag is for: the environment variable is how you leave a session in
   # preview, and --final is how you say "not this one, do it properly".
   options[:model] = FINAL_MODEL if options[:final] && !options[:model_explicit]
@@ -850,19 +850,19 @@ when "generate"
     input = build_input(varied, options, seed:, negative_prompt:)
 
     if options[:dry_run]
-      puts "ok: preprompt dry-run model=#{options[:model]} input=#{input.inspect}"
+      puts "ok: replicate dry-run model=#{options[:model]} input=#{input.inspect}"
       next nil
     end
 
     urls = Array(client.predict(options[:model], input)).flatten.compact
-    abort "warn: preprompt returned no output" if urls.empty?
+    abort "warn: replicate returned no output" if urls.empty?
 
     target = if options[:output]
                options[:batch] > 1 ? options[:output].sub(/(\.\w+)?\z/) { |ext| "-#{index}#{ext}" } : options[:output]
              end
 
     unless target
-      puts "ok: preprompt generated\n#{urls.join("\n")}"
+      puts "ok: replicate generated\n#{urls.join("\n")}"
       next nil
     end
 
@@ -872,21 +872,21 @@ when "generate"
     sidecar = write_provenance(target, options[:prompt], varied, negative_prompt, options, seed, digest)
     append_gallery_manifest(sidecar, alt_text_for(options[:prompt], options, batch_background(index, options[:batch])))
     maybe_handoff_postpro(target, options[:postpro])
-    puts "ok: preprompt generated #{target}"
+    puts "ok: replicate generated #{target}"
     target
   end.compact
 
   outputs
 when "search"
   query = ARGV.join(" ").strip
-  abort "usage: preprompt.rb search QUERY [--limit N]" if query.empty?
+  abort "usage: replicate.rb search QUERY [--limit N]" if query.empty?
   rows = Master::Io::ReplicateClient.new.models(limit: options[:limit], query:)
   puts rows.map { |row| "#{row['owner']}/#{row['name']}\t#{row['description'].to_s.gsub(/\s+/, ' ')[0, 120]}" }
 when "sync"
   rows = Master::Io::ReplicateClient.new.models(limit: options[:limit])
   FileUtils.mkdir_p(File.dirname(cache))
   File.write(cache, JSON.pretty_generate({ synced_at: Time.now.utc.iso8601, models: rows }))
-  puts "ok: preprompt synced #{rows.length} models to #{cache}"
+  puts "ok: replicate synced #{rows.length} models to #{cache}"
 when "stats"
   data = File.file?(cache) ? JSON.parse(File.read(cache)) : { "models" => [] }
   models = Array(data["models"])

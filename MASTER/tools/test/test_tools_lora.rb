@@ -23,9 +23,9 @@ class TestLora < Minitest::Test
     assert_empty Dir[File.join(LORA, "johann", "dataset", "*")], "johann has no consented dataset"
   end
 
-  # Written sittings and drawn scenarios go through the one composer preprompt
+  # Written sittings and drawn scenarios go through the one composer replicate
   # owns, and the drawn set has no file for a glob to find.
-  def test_scenarios_are_a_set_that_preprompt_draws
+  def test_scenarios_are_a_set_that_replicate_draws
     require_relative "../lora/_toolkit/shoots"
 
     assert_includes available_sets, "scenarios"

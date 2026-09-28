@@ -41,7 +41,7 @@ pub4/
 │   ├── tools/                canonical tool plane
 │   │   ├── dilla/            beats
 │   │   ├── postpro/          image grading
-│   │   ├── preprompt/        image generation
+│   │   ├── replicate/        image generation
 │   │   ├── bplans/           business-plan source
 │   │   ├── lora/             training/media workflows
 │   │   ├── isolation.rb      tool isolation runner

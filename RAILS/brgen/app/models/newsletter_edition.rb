@@ -22,6 +22,7 @@ class NewsletterEdition < ApplicationRecord
       hero_url: hero_url,
       hero_alt: hero_alt,
       hero_caption: hero_caption,
+      artworks: Array(artworks).map { |row| artwork_from_json(row) },
       stories: Array(stories).map { |row| story_from_json(row) },
       deals: Array(deals).map { |row| deal_from_json(row) },
       cta_label: cta_label,
@@ -34,6 +35,15 @@ class NewsletterEdition < ApplicationRecord
   def city_label = city.presence&.titleize || "Brgen"
 
   private
+
+  def artwork_from_json(row)
+    Shared::NewsletterVisuals::Artwork.new(
+      url: row["url"],
+      alt: row["alt"],
+      caption: row["caption"],
+      source: (row["source"] || "replicate").to_sym
+    )
+  end
 
   def story_from_json(row)
     Shared::NewsletterComposer::Story.new(

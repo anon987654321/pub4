@@ -17,9 +17,9 @@
 
 require "yaml"
 require "pathname"
-# preprompt composes the prompt and counts its tokens; this file chooses the
+# replicate composes the prompt and counts its tokens; this file chooses the
 # sittings and the subject.
-require_relative "../../preprompt/lib/craft"
+require_relative "../../replicate/lib/craft"
 
 LORA_ROOT = Pathname.new(__dir__).join("..").expand_path
 
@@ -31,7 +31,7 @@ LORA_ROOT = Pathname.new(__dir__).join("..").expand_path
 # blend of it. best is the short list, and it names sittings in the other two
 # rather than copying their prose.
 #
-# The drawn sets have no entries there at all: preprompt draws their sittings by
+# The drawn sets have no entries there at all: replicate draws their sittings by
 # number, and each is capped only when nothing narrows it. scenarios are
 # portraits in drawn situations, selfies keep a selfie's framing and gaze from
 # two or three metres, and distance is one sitting at six stated camera

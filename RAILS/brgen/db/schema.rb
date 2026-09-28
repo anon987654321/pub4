@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_26_183000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_28_110000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -1031,6 +1031,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_26_183000) do
   end
 
   create_table "newsletter_editions", force: :cascade do |t|
+    t.json "artworks", default: []
     t.string "app_name", default: "Brgen", null: false
     t.string "city"
     t.datetime "created_at", null: false

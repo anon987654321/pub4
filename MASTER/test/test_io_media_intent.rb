@@ -77,7 +77,7 @@ class MediaIntentSpec < Minitest::Test
     refute captured[:env].key?("TRACK"), "plain 'dilla' style should not force TRACK, letting the engine pick its own default progression"
   end
 
-  def test_routes_explicit_image_requests_to_preprompt
+  def test_routes_explicit_image_requests_to_replicate
     captured = nil
     runner = lambda do |**kwargs|
       captured = kwargs
@@ -87,10 +87,10 @@ class MediaIntentSpec < Minitest::Test
     Master::Io::ScriptDispatch.stub(:run, runner) do
       result = MediaIntent.dispatch("generate a photo of Bergen at the fjord")
       assert result.ok?
-      assert_equal :preprompt, result.value![:media]
+      assert_equal :replicate, result.value![:media]
     end
 
-    assert_equal "preprompt", captured[:tool]
+    assert_equal "replicate", captured[:tool]
     assert_includes captured[:arg], "--prompt generate\\ a\\ photo\\ of\\ Bergen\\ at\\ the\\ fjord"
   end
 end

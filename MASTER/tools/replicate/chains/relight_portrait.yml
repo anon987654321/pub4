@@ -10,7 +10,7 @@ description: >
   hers from stage 1, and only the light moves.
 
   zsxkib/ic-light carries `unverified: true` in MODEL_CAPABILITIES, so
-  Chain.problems refuses this chain until `rake preprompt:schema_audit` has
+  Chain.problems refuses this chain until `rake replicate:schema_audit` has
   confirmed its input keys against Replicate. That refusal is the point: a
   guessed key validates cleanly, gets dropped by the API, and returns a
   plausible picture with a stage silently skipped.

@@ -3,11 +3,12 @@
 require "date"
 
 module Shared
-  # Seth Godin permission-marketing composer: one idea, personal voice, curated picks.
+  # Permission-marketing composer: one idea, personal voice, curated picks and
+  # an art direction that feels like a publication rather than a product feed.
   class NewsletterComposer
     Edition = Data.define(
       :kind, :app_name, :city_name, :locale, :subject, :preheader, :lede, :sign_off,
-      :hero_url, :hero_alt, :hero_caption, :stories, :deals,
+      :hero_url, :hero_alt, :hero_caption, :artworks, :stories, :deals,
       :cta_label, :cta_url, :permission_line, :edition_date
     )
 
@@ -16,29 +17,22 @@ module Shared
 
     MODEL = ENV.fetch("NEWSLETTER_MODEL", ENV.fetch("REWRITE_MODEL", "google/gemini-2.0-flash-001"))
 
-    def self.daily(city_name:, stories:, hero: nil, app_name: "Brgen", locale: "en", cta_url: nil, host: nil)
-      new(app_name:, locale:, host:).daily(city_name:, stories:, hero:, cta_url:)
+    def self.daily(city_name:, stories:, hero: nil, artworks: [], app_name: "Brgen", locale: "en", cta_url: nil, host: nil)
+      new(app_name:, locale:, host:).daily(city_name:, stories:, hero:, artworks:, cta_url:)
     end
 
-    def self.weekly_deals(city_name:, deals:, hero: nil, app_name: "Brgen", locale: "en", host: nil)
-      new(app_name:, locale:, host:).weekly_deals(city_name:, deals:, hero:)
+    def self.weekly_deals(city_name:, deals:, hero: nil, artworks: [], app_name: "Brgen", locale: "en", host: nil)
+      new(app_name:, locale:, host:).weekly_deals(city_name:, deals:, hero:, artworks:)
     end
 
-    # host is the city domain this edition is written for, so a letter about
-    # Oslo links to oshlo.no. Without it url_for raises "Missing host to link
-    # to!" — the rescue below turned that into a nil link for every story and
-    # every image, so an edition composed and shipped with nothing to click.
     def initialize(app_name: "Brgen", locale: "en", host: nil)
       @app_name = app_name
       @locale = locale
-# `presence` is ActiveSupport, and this class is written to run without
-# Rails: its own test requires the file directly, which is how the two
-# errors below stayed invisible — nothing ran it. A blank host is nil.
-host = host.to_s.strip
-@host = host.empty? ? nil : host
+      host = host.to_s.strip
+      @host = host.empty? ? nil : host
     end
 
-    def daily(city_name:, stories:, hero: nil, cta_url: nil)
+    def daily(city_name:, stories:, hero: nil, artworks: [], cta_url: nil)
       @email_campaign = "daily"
       curated = Array(stories).first(5)
       lede = compose_lede(
@@ -60,6 +54,7 @@ host = host.to_s.strip
         hero_url: hero&.url,
         hero_alt: hero&.alt || "#{city_name} this week",
         hero_caption: hero&.caption,
+        artworks: Array(artworks).first(6).map(&:to_h),
         stories: curated.map { |story| story_struct(story) },
         deals: [],
         cta_label: "Open #{@app_name}",
@@ -69,7 +64,7 @@ host = host.to_s.strip
       )
     end
 
-    def weekly_deals(city_name:, deals:, hero: nil)
+    def weekly_deals(city_name:, deals:, hero: nil, artworks: [])
       @email_campaign = "weekly_deals"
       curated = Array(deals).first(6)
       lede = compose_lede(
@@ -91,6 +86,7 @@ host = host.to_s.strip
         hero_url: hero&.url,
         hero_alt: hero&.alt || "Curated deals",
         hero_caption: hero&.caption,
+        artworks: Array(artworks).first(6).map(&:to_h),
         stories: [],
         deals: curated.map { |deal| deal_struct(deal) },
         cta_label: "Browse deals",
@@ -104,14 +100,11 @@ host = host.to_s.strip
 
     def edition_today
       return Time.zone.today if defined?(Time) && Time.respond_to?(:zone) && Time.zone
-
-      # Date.current is ActiveSupport too, so the fallback needed the fallback.
       Date.today
     end
 
     def read_attr(object, name)
       return object.public_send(name) if object.respond_to?(name)
-
       nil
     end
 
@@ -119,7 +112,7 @@ host = host.to_s.strip
       return fallback unless llm_available?
 
       prompt = <<~PROMPT
-        Write the opening paragraph for a permission-marketing email (Seth Godin style).
+        Write the opening paragraph for a permission-marketing email.
         One idea. Personal. No hype. No exclamation marks. 2-3 short sentences max.
         City: #{city_name}. Edition: #{kind}. App: #{@app_name}. Language: #{@locale}.
         Seed topic: #{seed_topic(seed)}
@@ -136,7 +129,6 @@ host = host.to_s.strip
 
     def seed_topic(seed)
       return "local community" unless seed
-
       read_attr(seed, :title) || read_attr(seed, :name) || truncate_text(seed.to_s, 120)
     end
 
@@ -163,9 +155,6 @@ host = host.to_s.strip
       )
     end
 
-    # A newsletter is read outside the app, so every link has to be absolute.
-    # url_for raises without a host and there is no request here to infer one
-    # from, which is why these take @host rather than relying on a default.
     def url_options
       @host ? { host: @host, protocol: "https" } : {}
     end
@@ -174,16 +163,13 @@ host = host.to_s.strip
       return story if story.is_a?(String)
       return nil unless defined?(Rails) && story.respond_to?(:model_name)
 
-      # polymorphic_url, not url_for: url_for takes one argument, so passing a
-      # record and a host raises "wrong number of arguments" — a different
-      # ArgumentError from the "Missing host" one, and indistinguishable in a
-      # log line that recorded only the class.
-      tracked_first_party_url(Rails.application.routes.url_helpers.polymorphic_url(story, **url_options))
-    rescue StandardError => e
-      Rails.logger.warn("newsletter url skipped: #{e.class}: #{e.message}")
+      tracked_first_party_url(
+        Rails.application.routes.url_helpers.polymorphic_url(story, **url_options)
+      )
+    rescue StandardError => error
+      Rails.logger.warn("newsletter url skipped: #{error.class}: #{error.message}")
       nil
     end
-
 
     def tracked_first_party_url(url)
       return url if url.to_s.blank?
@@ -193,7 +179,7 @@ host = host.to_s.strip
       return url unless uri.host.blank? || uri.host == @host
 
       params = URI.decode_www_form(uri.query.to_s).to_h
-      params["utm_source"] = "brgen"
+      params["utm_source"] = @app_name.to_s.downcase
       params["utm_medium"] = "email"
       params["utm_campaign"] = @email_campaign.to_s if @email_campaign.present?
       uri.query = URI.encode_www_form(params)
@@ -207,19 +193,17 @@ host = host.to_s.strip
 
       variant = story.image.variant(resize_to_limit: [ 800, 450 ], format: :webp)
       Rails.application.routes.url_helpers.rails_representation_url(variant, **url_options)
-    rescue StandardError => e
-      Rails.logger.warn("newsletter url skipped: #{e.class}: #{e.message}")
+    rescue StandardError => error
+      Rails.logger.warn("newsletter image skipped: #{error.class}: #{error.message}")
       nil
     end
 
     def default_daily_lede(city_name)
-      "A short list of what people in #{city_name} are talking about today. " \
-        "You asked for this. Here it is."
+      "A short list of what people in #{city_name} are talking about today. You asked for this. Here it is."
     end
 
     def default_deals_lede(city_name)
-      "A handful of offers we would actually click ourselves. " \
-        "Curated for #{city_name}, not sprayed at everyone on the internet."
+      "A handful of offers we would actually click ourselves. Curated for #{city_name}, not sprayed at everyone on the internet."
     end
 
     def lede_subject(lede)
@@ -235,8 +219,7 @@ host = host.to_s.strip
     def sign_off_for(city_name) = "— The #{@app_name} editors, #{city_name}"
 
     def permission_line(city_name)
-      "You subscribed because #{city_name} matters to you. " \
-        "We send only what we would read ourselves."
+      "You subscribed because #{city_name} matters to you. We send only what we would read ourselves."
     end
 
     def polish(text) = StrunkWhitePass.call(text.to_s.gsub(/\s+/, " ").strip)
@@ -244,7 +227,6 @@ host = host.to_s.strip
     def truncate_text(text, length)
       string = text.to_s
       return string if string.length <= length
-
       "#{string[0, length - 1]}…"
     end
   end
