@@ -32,6 +32,10 @@ input, button, textarea, select {
   font: inherit;
 }
 
+textarea {
+  field-sizing: content;
+}
+
 /* `font: inherit` above hands every field its container's size, which is how a
    search input ends up at 12px inside a small-type shell without any rule ever
    naming it. iOS Safari zooms the viewport when a text field under 16px takes
