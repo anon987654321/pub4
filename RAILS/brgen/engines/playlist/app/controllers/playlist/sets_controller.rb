@@ -103,11 +103,9 @@ class Playlist::SetsController < ApplicationController
     end
   end
 
-  # The form scope is the model's param_key, "playlist_set" -- same as
-  # PlaylistsController's :playlist_playlist. Requiring :set here meant a
-  # submitted form would have raised ParameterMissing, had the form rendered.
+  # form_with model: @set submits the model's param_key, "playlist_set".
   def set_params
-    params.require(:set).permit(:name, :description, :privacy, :collaborative)
+    params.require(:playlist_set).permit(:name, :description, :privacy, :collaborative)
   end
 
   def authorize_owner_or_editor
