@@ -74,6 +74,7 @@ module Master
 
         finalize_chat_response(response, message, dispatch:, image:, stream:, escalation_depth:, task_type:, &blk)
       rescue StandardError => chat_error
+        record_trajectory!(message: message, model: @config.model, outcome: "failed")
         Result.err("agent: #{chat_error.message}", category: :handler_exception)
       end
 
@@ -200,6 +201,7 @@ end
         return recovery_result if recovery_result
 
         @session.add_message(role: :assistant, content: text)
+        record_trajectory!(message: message, model: answered, outcome: "complete")
         answered = (response.model if response.respond_to?(:model)) || dispatch[:selected_model]
         publish_ctx_footer(answered)
         Result::Ok.new(text, answered)
@@ -215,6 +217,7 @@ end
         @tools.each { |t| t.reset! if t.respond_to?(:reset!) }
         Fiber[:master_tool_streak] = nil
         Fiber[:master_tree_seen] = nil
+        Fiber[:master_trajectory_events] = []
         @session.add_message(role: :user, content: message)
       end
 
@@ -280,6 +283,32 @@ end
         Result.err(err.message, category: err.category)
       end
 
+      def record_trajectory!(message:, model:, outcome:)
+        return unless ENV["MASTER_GEMMA_RECORD"] == "1"
+
+        events = Array(Fiber[:master_trajectory_events]).dup
+        events << { "event" => "outcome", "outcome" => outcome, "model" => model.to_s }
+        verified = Master::AI::Uplift::Benchmark.score(
+          "task" => message.to_s,
+          "model" => model.to_s,
+          "events" => events,
+          "outcome" => outcome,
+          "verified" => outcome == "complete"
+        )["verified"]
+
+        Master::AI::Uplift::Trajectory.new(
+          "task" => message.to_s,
+          "model" => model.to_s,
+          "events" => events,
+          "outcome" => outcome,
+          "verified" => verified
+        ).append!(File.join(Master::ROOT, ".master", "gemma", "trajectories.ndjson"))
+      rescue StandardError => e
+        @bus&.publish("gemma:record_error", error: e.message)
+      ensure
+        Fiber[:master_trajectory_events] = nil
+      end
+
       def publish_ctx_footer(model_id)
         est = @session.respond_to?(:token_est) ? @session.token_est : 0
         limit = Master.context_window(model_id)
@@ -295,6 +324,9 @@ end
         context = conversation_context
         tokens_approx = Trace::Session.estimate_tokens(message)
         @bus&.publish("llm:request", model: selected_model, tokens: tokens_approx)
+        if ENV["MASTER_GEMMA_RECORD"] == "1"
+          Fiber[:master_trajectory_events] << { "event" => "llm:request", "model" => selected_model, "tokens" => tokens_approx }
+        end
         @deps.homeostat&.observe(:llm_call)
         { candidate_models:, selected_model:, prompt:, context: }
       end
