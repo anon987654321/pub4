@@ -54,6 +54,11 @@
   <%= turbo_stream_from Post.city_feed_stream(feed_city.id) %>
 <% end %>
 
+<nav class="home-feed-views" aria-label="<%= t("home.feed_views", default: "Feed views") %>">
+  <%= link_to t("home.feed_view", default: "Feed"), root_path(feed: params[:feed]), class: "home-feed-view#{' is-active' if params[:view].to_s != "media"}", aria: { current: ("page" if params[:view].to_s != "media") } %>
+  <%= link_to t("home.media_wall_view", default: "Media wall"), root_path(feed: params[:feed], view: "media"), class: "home-feed-view#{' is-active' if params[:view].to_s == "media"}", aria: { current: ("page" if params[:view].to_s == "media") } %>
+</nav>
+
 <section id="feed-panel" aria-label="<%= t("home.local_posts") %>" data-visitor-orientation
          data-controller="feed-updates"
          data-feed-updates-one-value="<%= t("home.new_posts.one") %>"
