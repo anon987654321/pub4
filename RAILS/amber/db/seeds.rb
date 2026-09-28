@@ -9,6 +9,9 @@ if Rails.env.production?
 end
 
 require "faker"
+require "shared/seed_forge"
+
+Shared::SeedForge.boot!
 
 puts "Seeding Amber with female fashion fictive data..."
 

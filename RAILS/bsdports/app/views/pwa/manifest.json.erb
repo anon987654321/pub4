@@ -33,6 +33,8 @@
   ],
   "start_url": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "launch_handler": { "client_mode": ["navigate-existing", "auto"] },
   "scope": "/",
   "description": <%= raw t("pwa.description").to_json %>,
   "theme_color": "#0ea5e9",

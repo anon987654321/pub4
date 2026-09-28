@@ -1,0 +1,10 @@
+version: 1
+entries:
+  - date: 2026-09-28
+    title: "Convergence"
+    items:
+      - "Shared form and native-overlay surfaces now have contract coverage."
+      - "Event structured data and crawler controls are part of the public SEO contract."
+      - "Generated editorial artwork now uses deterministic seeds, postpro grading, and provenance."
+      - "PWA installs declare share targets and existing-window launch behavior."
+      - "Offline mutation replay carries an idempotency key."

@@ -64,6 +64,42 @@ class AudioEngine {
     this.audio = null
     this.analyser = null
     this.bins = null
+    this.#configureMediaSession()
+  }
+
+  #configureMediaSession() {
+    if (!("mediaSession" in navigator)) return
+    const actions = {
+      play: () => {
+        this.userInteracted = true
+        this.start()
+      },
+      pause: () => this.stop(),
+      nexttrack: () => this.nextTrack(),
+      previoustrack: () => this.previousTrack()
+    }
+    Object.entries(actions).forEach(([action, handler]) => {
+      try {
+        navigator.mediaSession.setActionHandler(action, handler)
+      } catch {
+        // Some browsers expose Media Session without every action.
+      }
+    })
+  }
+
+  #syncMediaSession() {
+    if (!("mediaSession" in navigator)) return
+    const track = this.tracks[this.currentTrack]
+    if (!track) return
+    const artwork = track.artwork ||
+      document.querySelector('meta[property="og:image"]')?.content
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: track.title,
+      artist: track.artist || "Radio Bergen",
+      album: "Radio Bergen",
+      artwork: artwork ? [{ src: artwork }] : []
+    })
+    navigator.mediaSession.playbackState = this.isPlaying ? "playing" : "paused"
   }
 
   get currentIsLocal() {
@@ -75,6 +111,7 @@ class AudioEngine {
     this.loadCurrentTrack()
     this.startTime = performance.now()
     this.updateTrackDisplay()
+    this.#syncMediaSession()
     return true
   }
 
@@ -179,11 +216,21 @@ class AudioEngine {
     }
   }
 
+  previousTrack() {
+    this.currentTrack = (this.currentTrack - 1 + this.tracks.length) % this.tracks.length
+    this.retryCount = 0
+    this.loadCurrentTrack()
+    this.updateTrackDisplay()
+    this.#syncMediaSession()
+    this.onTrackChange?.()
+  }
+
   nextTrack() {
     this.currentTrack = (this.currentTrack + 1) % this.tracks.length
     this.retryCount = 0
     this.loadCurrentTrack()
     this.updateTrackDisplay()
+    this.#syncMediaSession()
     this.onTrackChange?.()
   }
 
@@ -257,6 +304,7 @@ class AudioEngine {
     if (this.iframe) this.iframe.src = ""
     if (this.audio) this.audio.pause()
     clearTimeout(this._advanceTimer)
+    this.#syncMediaSession()
   }
 }
 

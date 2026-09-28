@@ -12,6 +12,11 @@
     <button type="button" class="cookie-settings-trigger"
             data-action="click->cookie-consent#open"><%= t("legal.cookie_settings") %></button>
   </nav>
+  <p class="site-footer-build">
+    <span>v<%= app_version %></span>
+    <span><%= app_revision.first(12) %></span>
+    <%= link_to t("legal.changelog", default: "Endringslogg"), main_app.changelog_path %>
+  </p>
   <%= render "shared/affiliate_disclosure" %>
   <% if respond_to?(:email_subscriptions_path) && current_page?(main_app.root_path) %>
     <%= render "shared/newsletter_signup_popup",
