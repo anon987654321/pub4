@@ -16,7 +16,7 @@ agent_types:
     requires:    plan_id
   research:
     purpose:     "external lookup, citations, summaries"
-    tools:       [web_search, web_fetch, search_knowledge]
+    tools:       [web_search, web_fetch, search_knowledge, list_dir, tree, read_file]
     max_runtime: 120s
   verify:
     purpose:     "ruby -c, scan, test, council vote"
