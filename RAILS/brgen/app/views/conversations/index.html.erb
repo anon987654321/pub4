@@ -21,14 +21,29 @@
   <%= render "conversations/rooms_rail" %>
 
   <%= turbo_frame_tag "messenger-pane", class: "messenger-pane" do %>
-    <%# No action here. The rail carries "Ny melding" as its first control and
-        it is on screen whenever this pane is, so an identical button in the
-        middle of the pane was the same offer made twice — and the copy under
-        the title already names the one in the rail. %>
-    <%# empty_state: no-action-ok %>
-    <%= render "shared/empty_state",
-          title: t("messages.empty_title"),
-          body: t("messages.empty_body") %>
+    <header class="messenger-conversation-header">
+      <div class="messenger-header-identity">
+        <%= tag.h1 t("messages.title") %>
+      </div>
+    </header>
+    <div class="messenger-inbox-pane-content">
+      <% if @conversations.any? %>
+        <ul class="messenger-inbox-list" role="list" aria-label="<%= t("aria.conversations") %>">
+          <% @conversations.each do |conversation| %>
+            <%= render "conversations/conversation_row",
+                       conversation: conversation,
+                       unread: @unread_counts.fetch(conversation.id, 0),
+                       pinned: @pinned_ids.include?(conversation.id),
+                       last: @last_messages[conversation.id] %>
+          <% end %>
+        </ul>
+        <%= render "shared/pager", pagy: @pagy %>
+      <% else %>
+        <%= render "shared/empty_state",
+              title: t("messages.empty_title"),
+              body: t("messages.empty_body") %>
+      <% end %>
+    </div>
   <% end %>
 </section>
 
