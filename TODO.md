@@ -18,6 +18,7 @@ A finding is a hypothesis. Historical dated sections below are evidence records,
 - All surviving remote repair/experiment refs are now zero-delta aliases of current `main`; the connected GitHub surface does not expose branch deletion. No surviving ref carries divergent code.
 - Hosted CI is not the verification path for this backlog; the repository's GitHub Actions workflows are removed. The live full three-tree `/fix` run remains unproven until an equivalent manually watched run emits actionable step-level evidence.
 - MASTER boot now activates the repository bundle immediately after dependency installation, so a successful `deps0` bootstrap cannot fall through to a raw `require` missing the installed gems.
+- MASTER boot now also activates the exact Bundler version recorded by `BUNDLED WITH` before `bundler/setup`; this prevents the install/check executable and the in-process Bundler library from selecting different git-source checkout contexts.
 - MASTER audit entrypoints under `tools/` now delegate to their live `lib/operator/` implementations for rule reach, namespace ratchet, autofix reach and rule audit; a regression checks every Rakefile-declared tool path exists.
 - `RAILS/test/run_all.rb` currently discovers 131 contract files recursively, one process per file. The historical red count remains stale until the suite is rerun manually on the current main baseline.
 
