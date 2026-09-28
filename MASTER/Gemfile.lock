@@ -264,9 +264,9 @@ DEPENDENCIES
   psych
   rack-test (~> 2.1)
   rake (~> 13.2)
+  rb-edge-tts!
   rb-inotify (~> 0.10)
   rb-kqueue (~> 0.2)
-  rb-edge-tts!
   reek (~> 6.4)
   reline (~> 0.6)
   rubocop (~> 1.60)
