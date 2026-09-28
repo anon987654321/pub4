@@ -292,12 +292,11 @@ the "One chrome", ad system and layout sections bring back for a decision.
   hand-repaired copy, CHECKSUMS deleted, that keeps TTS alive. Apply during a
   deploy and verify with `rcctl restart master` and `vps state --remote`
   reading `tts_socket=true`.
-  - **`rb-edge-tts` (git, `ZPVIP/rb-edge-tts`) pulls EventMachine 1.2.7 into the
-    boot bundle**, a 2018-era reactor, for a gem only `bin/tts-worker` needs.
-    Isolating it into a `:tts` group `bin/tts-worker` alone bundle-execs would
-    keep EventMachine off every other process's boot path; verify
-    `Speech.edge_tts_ready?` still works as a spawn probe rather than a
-    boot-time `require` before landing it.
+  - **`rb-edge-tts` is now a released RubyGems dependency, exact-pinned at 1.0.1.**
+    The Git checkout failure class is removed from the normal boot path. It still
+    pulls EventMachine 1.2.7 into the `:tts` group for `bin/tts-worker`; keep
+    that group isolated and verify `Speech.edge_tts_ready?` still works as a
+    spawn probe rather than a boot-time `require`.
   - **`:dilla` pulls `head_music` 15.1, which pulls ActiveSupport 8, i18n,
     tzinfo and concurrent-ruby into a constitutional CLI's lock** for a
     music-theory gem nothing in `MASTER/lib/music/` calls —
