@@ -197,17 +197,14 @@ class TestDependencyManager < Minitest::Test
     assert_equal [RbConfig.ruby, "-rbundler/setup", "-rjson", "-e", "exit"], @commands[3].first
   end
 
-  def manager_bundle_gems_path
-    Master::Boot::DependencyManager.new(
+  def test_stale_native_bundle_cleanup_removes_private_gems
+    manager = MANAGER.new(
       root: @root,
       env: { "PATH" => "/bin", "MASTER_AUTO_INSTALL" => "1", "MASTER_AUTO_BUNDLE" => "1" },
       out: StringIO.new,
       home: @root,
-    ).send(:bundle_gems_path)
-  end
-
-  def test_stale_native_bundle_cleanup_removes_private_gems
-    path = manager_bundle_gems_path
+    )
+    path = manager.send(:bundle_gems_path)
     FileUtils.mkdir_p(path)
     File.write(File.join(path, "stale.bundle"), "homebrew")
 
