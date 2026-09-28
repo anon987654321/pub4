@@ -89,20 +89,15 @@ install_template() {
   typeset src=${CONFIG_ROOT}/$1 dst=$2
   [[ -f $src ]] || { log ERROR "Missing template: $src"; exit 1 }
   typeset content; content=$(<"$src")
-  eval "cat > \"$dst\" <<INSTALL_TEMPLATE_EOF
-$content
-INSTALL_TEMPLATE_EOF"
+  print -r -- "$content" > "$dst"
 }
 
 append_template() {
   typeset src=${CONFIG_ROOT}/$1 dst=$2
   [[ -f $src ]] || { log ERROR "Missing template: $src"; exit 1 }
   typeset content; content=$(<"$src")
-  eval "cat >> \"$dst\" <<APPEND_TEMPLATE_EOF
-$content
-APPEND_TEMPLATE_EOF"
+  print -r -- "$content" >> "$dst"
 }
-
 install_static() {
   typeset src=${CONFIG_ROOT}/$1 dst=$2
   [[ -f $src ]] || { log ERROR "Missing file: $src"; exit 1 }
@@ -265,17 +260,22 @@ sync_openbsd_apply() {
   if [[ -n ${SKIP_MASTER_SCAN:-} ]]; then
     log WARN "MASTER scan skipped (SKIP_MASTER_SCAN)"
   elif [[ -x /home/dev/pub4/MASTER/bin/cli ]]; then
+    typeset scan_log_dir=/var/db/pub4
+    typeset scan_log=$scan_log_dir/master_deploy_scan.log
+    mkdir -p "$scan_log_dir" || { log ERROR "cannot create $scan_log_dir"; return 1 }
+    chmod 700 "$scan_log_dir"
     log INFO "MASTER rules scan (OPERATOR) — strict pre-apply per rules.yml (ROBUSTNESS/SINGULARITY/LINEARITY/PROXIMITY/ABSTRACTION/DENSITY + veto)"
-    if ! su dev -c 'cd /home/dev/pub4/MASTER && MASTER_SCAN_DETERMINISTIC=1 MASTER_SAFE_MODE=1 bundle40 exec ruby bin/gate --scan-only --tree=OPENBSD' 2>&1 | tee /tmp/master_deploy_scan.log; then
+    if ! su dev -c 'cd /home/dev/pub4/MASTER && MASTER_SCAN_DETERMINISTIC=1 MASTER_SAFE_MODE=1 bundle40 exec ruby bin/gate --scan-only --tree=OPENBSD' 2>&1 | tee "$scan_log"; then
       log ERROR "MASTER scan found violations — refusing sync/apply (self_violation would occur per rules.yml)"
       return 1
     fi
     log INFO "MASTER scan clean — proceeding (scan_clean + self_apply satisfied)"
   else
-    log WARN "MASTER not available for scan; continuing (violates full self-application — fix immediately)"
+    log ERROR "MASTER not available for scan — refusing sync/apply"
+    return 1
   fi
 
-  # Enforce ground_truth_check + evidence before writes (rules.yml): fresh read, diff, output shown.
+  # Enforce ground_truth_check/ + evidence before writes (rules.yml): fresh read, diff, output shown.
   # library_verify pre-flight before bundle/shell (per rules).
   for f in /etc/pf.conf /etc/relayd.conf; do
     [[ -s $f ]] || { log ERROR "ground_truth fail on $f"; return 1; }
