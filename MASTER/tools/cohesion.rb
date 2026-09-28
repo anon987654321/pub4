@@ -368,7 +368,7 @@ return if collisions.any?
     # counting them would drown the signal the roots below carry.
     ROOTS = %w[
       MASTER/lib MASTER/law MASTER/tools MASTER/web/app
-      RAILS/shared/app RAILS/shared/lib RAILS/gates
+      RAILS/shared/app RAILS/shared/lib
       RAILS/brgen/app RAILS/brgen/lib RAILS/amber/app RAILS/amber/lib
       RAILS/bsdports/app RAILS/bsdports/lib
       MASTER/tools/dilla/lib MASTER/tools/lora MASTER/tools/postpro MASTER/tools/replicate
