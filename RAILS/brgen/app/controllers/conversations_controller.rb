@@ -88,6 +88,16 @@ end
     @is_group_admin = @conversation.admin?(Current.user)
   end
 
+  def invite_master
+    @conversation = Conversation.for_user(Current.user).includes(:participants).find(params[:id])
+    master = ChannelBot.bot_for("master")
+    @conversation.join!(master)
+    unless @conversation.messages.where(sender: master).exists?
+      @conversation.messages.create!(sender: master, message_type: "text", content: I18n.t("messages.master_joined"))
+    end
+    redirect_to @conversation, notice: t("flash.master_invited")
+  end
+
   def update
     @conversation = Conversation.for_user(Current.user).find(params[:id])
     # Channel/geo rooms inherit CHANNEL_TTL. Any member can hit this PATCH
