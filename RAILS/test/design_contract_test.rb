@@ -130,6 +130,20 @@ class DesignContractTest < Minitest::Test
     assert_includes js, "document.documentElement.dataset.theme"
   end
 
+  def test_shared_base_locks_mobile_text_sizing
+    base = File.read(File.join(ROOT, "shared", "app", "assets", "stylesheets", "_base.scss"))
+    assert_includes base, "-webkit-text-size-adjust: 100%;"
+    assert_includes base, "text-size-adjust: 100%;"
+  end
+
+  def test_brgen_composer_uses_starting_style_entry
+    css = File.read(File.join(ROOT, "brgen", "app", "assets", "stylesheets", "application.scss"))
+    refute_includes css, "composer-drop-in"
+    refute_includes css, "composer-backdrop-in"
+    assert_includes css, "@starting-style"
+    assert_includes css, ".composer[open]::backdrop"
+  end
+
   def test_brgen_mounts_theme_bootstrap_once_in_head
     layout = File.read(File.join(ROOT, "brgen", "app", "views", "layouts", "application.html.erb"))
     copies = layout.scan(/render "shared\/theme_bootstrap"/).size

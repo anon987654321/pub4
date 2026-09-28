@@ -4,6 +4,12 @@
 // before its own first rule, so it compiles exactly where it stood.
 @layer reset, base, layout, components, utilities, overrides;
 
+/* Keep iOS from inflating text when the viewport changes orientation. */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;

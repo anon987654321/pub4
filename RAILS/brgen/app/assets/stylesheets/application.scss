@@ -133,15 +133,6 @@
 
 a { color: var(--text); text-decoration: none; }
 
-@keyframes composer-drop-in {
-  from { transform: translateY(-24px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-@keyframes composer-backdrop-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
 
 label { display: block; font-size: var(--text-sm); color: var(--text-secondary); }
 
@@ -1996,17 +1987,34 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
 /* Slides down into place. The dialog is display:none until showModal(), so the
    animation runs on open with no JS class toggling. */
 .composer[open] {
-  animation: composer-drop-in 220ms cubic-bezier(0.2, 0.8, 0.3, 1);
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity 220ms var(--ease-out),
+    transform 220ms cubic-bezier(0.2, 0.8, 0.3, 1);
 }
 
 .composer[open]::backdrop {
-  animation: composer-backdrop-in 180ms var(--ease-out);
+  opacity: 1;
+  transition: opacity 180ms var(--ease-out);
+}
+
+@starting-style {
+  .composer[open] {
+    opacity: 0;
+    transform: translateY(-24px);
+  }
+
+  .composer[open]::backdrop {
+    opacity: 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .composer[open],
   .composer[open]::backdrop {
     animation: none;
+    transition: none;
   }
 }
 

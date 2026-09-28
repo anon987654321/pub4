@@ -265,6 +265,23 @@ module Master
            .first(MAX_FILES)
       end
 
+      def visual_rubric_context
+        rubric = Master.load_yaml(File.join(Master::ROOT, "data", "visual_rubric.yml"), default: {}) || {}
+        dimensions = rubric.fetch("dimensions", {})
+        judgment = rubric.fetch("judgment", {})
+        constraints = rubric.fetch("constraints", {})
+
+        [
+          "VISUAL RUBRIC",
+          *dimensions.map { |name, rule| "#{name}: #{rule}" },
+          "JUDGMENT: #{judgment.map { |name, rule| "#{name}: #{rule}" }.join(" | ")}",
+          "CONSTRAINTS: #{constraints.map { |name, rule| "#{name}: #{rule}" }.join(" | ")}",
+        ].join("\n")
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "fix.visual_pass.visual_rubric", event_bus: @bus)
+        "VISUAL RUBRIC: unavailable"
+      end
+
       def context_row(capture)
         surface = capture[:surface]
         payload = capture[:payload]
@@ -307,6 +324,7 @@ module Master
           Judge the render first. Source is supporting evidence.
           Apply the executable MASTER design/usability constitution below. These are laws, not a scoring checklist. Identify only laws supported by rendered evidence.
           #{Master::Fix::VisualUsability.context}
+          #{visual_rubric_context}
           #{Master::Fix::VisualReference.context}
           Every actionable issue must name the applicable law id(s), surface/viewport, and a stable selector or visible text anchor.
           Use the ghost stack for visual alignment, the difference view for changed pixels, and geometry drift for stable-element movement. A difference image proves change, not that the change is wrong. Look for actual opportunities in hierarchy, typography, measure, leading,
