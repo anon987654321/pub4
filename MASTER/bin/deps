@@ -23,7 +23,7 @@ result = case command
          when "install", "repair"
            manager.install!
          when "update"
-           manager.update!
+           manager.update!(*ARGV.drop(1))
          when "system"
            manager.install_system_packages!
          else
