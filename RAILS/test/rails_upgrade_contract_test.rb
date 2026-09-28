@@ -10,15 +10,51 @@ class RailsUpgradeContractTest < Minitest::Test
     File.read(File.join(ROOT, path))
   end
 
-  test "all Rails apps stay on the same 8.1 framework-default baseline" do
+  test "all Rails apps use the forced 8.2 framework-default baseline" do
     APPS.each do |app|
       source = read("#{app}/config/application.rb")
 
-      assert_includes source, "config.load_defaults 8.1",
-                      "#{app} drifted from the Rails 8.1 baseline"
+      assert_includes source, "config.load_defaults 8.2",
+                      "#{app} drifted from the Rails 8.2 baseline"
       refute_includes source, "config.load_defaults 8.0",
-                      "#{app} still carries the Rails 8.0 baseline"
+                      "#{app} still carries the Rails 8.1 baseline"
     end
+  end
+
+  test "all Rails Gemfiles pin one audited upstream 8.2 source revision" do
+    ref = "c9e85dbe297e248dd2f217d04f84a94881ac046a"
+
+    (APPS + ["../MASTER/web"]).each do |root|
+      source = read("#{root}/Gemfile")
+      assert_includes source,
+        %(gem "rails", github: "rails/rails", ref: "#{ref}"),
+        "#{root}/Gemfile must pin Rails 8.2 source #{ref}"
+    end
+  end
+
+  test "all locked production Rails graphs carry the 8.2 framework and new runtime floors" do
+    %w[brgen amber bsdports].each do |app|
+      body = read("#{app}/Gemfile.lock")
+      assert_includes body, "revision: c9e85dbe297e248dd2f217d04f84a94881ac046a"
+      assert_includes body, "actionview (8.2.0.alpha)"
+      assert_includes body, "activesupport (8.2.0.alpha)"
+      assert_includes body, "rails (8.2.0.alpha)"
+      assert_includes body, "railties (8.2.0.alpha)"
+      assert_includes body, "herb (0.11.0)"
+      assert_includes body, "ractor-dispatch (0.3.0)"
+      assert_includes body, "marcel (2.1.0)"
+      assert_includes body, "rails!"
+      refute_includes body, "rails (8.1.4)"
+      refute_includes body, "rails (~> 8.1.4)"
+    end
+
+    body = read("../MASTER/web/Gemfile.lock")
+    assert_includes body, "revision: c9e85dbe297e248dd2f217d04f84a94881ac046a"
+    assert_includes body, "rails (8.2.0.alpha)"
+    assert_includes body, "herb (0.11.0)"
+    assert_includes body, "ractor-dispatch (0.3.0)"
+    assert_includes body, "marcel (2.1.0)"
+    assert_includes body, "rails!"
   end
 
   test "no app overrides HTML+ERB back to Erubi before the 8.2 cutover" do
@@ -30,12 +66,12 @@ class RailsUpgradeContractTest < Minitest::Test
     end
   end
 
-  test "Brgen covers both modern header and legacy form CSRF writes" do
+  test "Brgen covers Rails 8.2 fetch-metadata CSRF behavior" do
     source = read("brgen/test/controllers/session_boundaries_test.rb")
 
-    assert_includes source, '"X-CSRF-Token"'
+    assert_includes source, '"Sec-Fetch-Site"'
     assert_includes source, "authenticity_token:"
-    assert_includes source, "a write without an authenticity token is refused"
+    assert_includes source, "cross-site"
   end
 
   test "audited enum fields are non-null at the persistence boundary" do
