@@ -96,6 +96,21 @@ class TrackedCrontabTest < Minitest::Test
 
   # The point of this file. Skipping is correct; skipping quietly is what let a
   # tracked job go unscheduled for six days.
+  def test_missing_tracked_crontab_fails_closed
+    assert_match(/\[\[ -f \$tracked \]\] \|\| \{ log ERROR .*; return 1; \}/,
+                 operator_source)
+  end
+
+  def test_template_helpers_do_not_eval_repository_content
+    install = operator_source[/install_template\(\).*?\n\}\n\nappend_template\(/m]
+    append = operator_source[/append_template\(\).*?\n\}\n\ninstall_static\(/m]
+
+    refute_nil install
+    refute_nil append
+    refute_match(/\beval\b/, install)
+    refute_match(/\beval\b/, append)
+  end
+
   def test_a_skipped_cron_line_says_so
     loop_body = operator_source[/while IFS= read -r line; do.*?done < \$tracked/m]
 
