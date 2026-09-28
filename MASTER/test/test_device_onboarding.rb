@@ -104,7 +104,7 @@ class TestDeviceOnboarding < Minitest::Test
   def test_missing_gems_reads_the_lockfile_and_skips_git_sources
     lock = File.join(@dir, "Gemfile.lock")
     File.write(lock, "GEM\n  specs:\n\nDEPENDENCIES\n  minitest (>= 5.25)\n  no_such_gem_here (~> 1.0)\n  " \
-                     "rb-edge-tts!\n\nBUNDLED WITH\n  4.0.5\n")
+                     "some_git_gem!\n\nBUNDLED WITH\n  4.0.5\n")
     assert_equal ["no_such_gem_here"], Onboarding.missing_gems(lock)
   end
 end
