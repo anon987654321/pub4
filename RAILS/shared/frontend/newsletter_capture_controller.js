@@ -4,35 +4,32 @@ const STORAGE_KEY = "pub4:newsletter-capture"
 const REOPEN_AFTER_MS = 7 * 24 * 60 * 60 * 1000
 
 export default class extends Controller {
-  static targets = [ "dialog", "email" ]
+  static targets = [ "email" ]
   static values = { delay: { type: Number, default: 12000 } }
 
   connect() {
     this.dismissed = false
     this.timer = window.setTimeout(() => this.reveal(), this.delayValue)
-    this.onSubmit = () => this.remember()
-    this.element.addEventListener("submit", this.onSubmit)
   }
 
   disconnect() {
     window.clearTimeout(this.timer)
-    this.element.removeEventListener("submit", this.onSubmit)
   }
 
   reveal() {
     if (this.dismissed || !this.eligible()) return
-    if (typeof this.dialogTarget.showModal === "function") {
-      this.dialogTarget.showModal()
+    if (typeof this.element.showModal === "function") {
+      this.element.showModal()
     } else {
-      this.dialogTarget.setAttribute("open", "open")
+      this.element.setAttribute("open", "open")
     }
     requestAnimationFrame(() => this.emailTarget.focus())
   }
 
   close() {
     this.dismissed = true
-    this.dialogTarget.close?.()
-    this.dialogTarget.removeAttribute("open")
+    this.element.close?.()
+    this.element.removeAttribute("open")
     this.remember()
   }
 
@@ -52,6 +49,6 @@ export default class extends Controller {
   }
 
   backdropClose(event) {
-    if (event.target === this.dialogTarget) this.close()
+    if (event.target === this.element) this.close()
   }
 }
