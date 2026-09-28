@@ -49,6 +49,16 @@ class RuntimeHardeningTest < Minitest::Test
     assert_match(/1 req\/min/, error.message)
   end
 
+  def test_circuit_breaker_classifies_provider_deadline_as_timeout
+    breaker = Master::Io::CircuitBreaker.new(budget_max: 0, req_max: 60)
+
+    result = breaker.call(0) { raise Timeout::Error, "300s deadline" }
+
+    assert_predicate result, :err?
+    assert_equal :timeout, result.category
+    assert_match(/deadline/, result.message)
+  end
+
   def test_circuit_breaker_registry_does_not_increment_unselected_model_bucket
     registry = Master::Io::CircuitBreakerRegistry.new(budget_max: 0, req_max: 1)
     model_a = registry.for("model-a")
