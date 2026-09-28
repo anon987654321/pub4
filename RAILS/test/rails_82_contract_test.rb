@@ -5,6 +5,8 @@ require "minitest/autorun"
 class Rails82ContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   APPS = %w[brgen amber bsdports eritel].freeze
+  RAILS_ROOTS = APPS + ["MASTER/web"]
+  RAILS_REF = "c9e85dbe297e248dd2f217d04f84a94881ac046a"
 
   def read(path)
     File.read(File.join(ROOT, path))
@@ -14,10 +16,10 @@ class Rails82ContractTest < Minitest::Test
     APPS.each do |app|
       source = read("#{app}/config/application.rb")
 
-      assert_includes source, "config.load_defaults 8.1",
-                      "#{app} drifted from the Rails 8.1 baseline"
+      assert_includes source, "config.load_defaults 8.2",
+                      "#{app} drifted from the Rails 8.2 baseline"
       refute_includes source, "config.load_defaults 8.0",
-                      "#{app} still carries the Rails 8.0 baseline"
+                      "#{app} still carries the Rails 8.1 baseline"
     end
   end
 
@@ -113,3 +115,20 @@ class Rails82ContractTest < Minitest::Test
     end
   end
 end
+
+
+  test "every Rails Gemfile is pinned to the audited 8.2 source commit" do
+    RAILS_ROOTS.each do |root|
+      source = read("#{root}/Gemfile")
+      assert_includes source, 'gem "rails", github: "rails/rails", ref: "' + RAILS_REF + '"',
+                      "#{root}/Gemfile drifted from the exact Rails edge pin"
+    end
+  end
+
+  test "every locked Rails app names the audited git revision" do
+    %w[RAILS/brgen RAILS/amber RAILS/bsdports MASTER/web].each do |root|
+      source = read("#{root}/Gemfile.lock")
+      assert_match(/^  revision: #{Regexp.escape(RAILS_REF)}$/m, source)
+      assert_match(/^    rails \(8\.2\.0\.alpha\)$/m, source)
+    end
+  end
