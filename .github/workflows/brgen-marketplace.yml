@@ -17,7 +17,7 @@ on:
 
 jobs:
   contracts:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: RAILS/brgen
