@@ -15,7 +15,7 @@
     <%= form.label :bio %>
     <div data-controller="character-counter" data-character-counter-countdown-value="true">
   <div class="compose-surface" data-controller="tiptap-editor">
-    <%= form.text_area :bio, rows: 4 , maxlength: 1000, data: { character_counter_target: "input", tiptap_editor_target: "field", controller: "textarea-autogrow" } %>
+    <%= form.text_area :bio, rows: 4 , maxlength: 1000, data: { character_counter_target: "input", tiptap_editor_target: "field" } %>
     <div class="tiptap_mount" data-tiptap-editor-target="mount" hidden></div>
     <div class="tiptap_toolbar" data-tiptap-editor-target="toolbar" hidden>
       <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bold" title="<%= t("compose.bold") %>"><strong>B</strong></button>
