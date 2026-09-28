@@ -109,8 +109,6 @@ module Shared
     def replicate_artwork(city_name:, theme:, aspect_ratio:, role:, seed: nil)
       token = ENV["REPLICATE_API_TOKEN"].presence
       return nil if token.blank?
-      return nil unless @public_base
-
       seed ||= Shared::ArtworkPipeline.seed(
         surface: "newsletter",
         city: city_name,
