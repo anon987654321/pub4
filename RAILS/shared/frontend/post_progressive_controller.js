@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["step", "indicator", "photoInput", "publishing"]
+  static targets = ["step", "indicator", "mediaInput", "publishing"]
 
   connect() {
     this.index = 0
@@ -13,14 +13,14 @@ export default class extends Controller {
     }
     this.element.addEventListener("turbo:submit-start", this.onSubmitStart)
     this.element.addEventListener("turbo:submit-end", this.onSubmitEnd)
-    this.photoInputTargets.forEach((input) => {
+    this.mediaInputTargets.forEach((input) => {
       input.addEventListener("change", this.mediaChanged)
     })
     this.#show(0)
   }
 
   disconnect() {
-    this.photoInputTargets.forEach((input) => {
+    this.mediaInputTargets.forEach((input) => {
       input.removeEventListener("change", this.mediaChanged)
     })
     this.element.removeEventListener("turbo:submit-start", this.onSubmitStart)

@@ -103,6 +103,10 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes controller, 'this.#publishing(true)'
     assert_includes controller, 'setAttribute("aria-busy", active ? "true" : "false")'
     assert_includes controller, "mediaChanged"
+    assert_includes form, 'accept: "video/*"'
+    assert_includes form, 'accept: "audio/*"'
+    assert_includes form, 'post_progressive_target: "mediaInput"'
+    assert_includes css, ".post-media-secondary"
     assert_includes form, "post-publishing"
     assert_includes boot, 'import PostProgressive from "pub4/post_progressive"'
     assert_includes boot, 'application.register("post-progressive", PostProgressive)'
