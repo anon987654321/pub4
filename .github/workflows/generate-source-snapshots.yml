@@ -1,0 +1,30 @@
+name: generate source snapshots
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  snapshots:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Generate governed snapshots
+        run: ruby MASTER/tools/snapshot.rb
+
+      - name: Commit snapshots
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add snapshot_MASTER.md snapshot_OPENBSD.md snapshot_RAILS.md
+          git rm .github/workflows/generate-source-snapshots.yml
+          git commit -m "chore(repo): add current source snapshots"
+          git push origin HEAD:main
