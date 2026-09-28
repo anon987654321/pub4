@@ -200,6 +200,41 @@ class TestHomeostatSignals < Minitest::Test
 
   # --- observation feeds the signals -------------------------------------
 
+  class MoodBus
+    attr_reader :events
+
+    def initialize = @events = []
+
+    def publish(event, payload = {})
+      @events << [event, payload]
+    end
+  end
+
+  def test_mood_transitions_publish_one_agent_mood_event
+    bus = MoodBus.new
+    unit = H.new(event_bus: bus)
+
+    unit.observe(:llm_success)
+    refute bus.events.any? { |event, _payload| event == "agent:mood" }
+
+    unit.instance_variable_get(:@state)[:error_rate] = 0.5
+    unit.observe(:idle_tick)
+
+    assert_equal [["agent:mood", { mood: :tense, source: "homeostat" }]], bus.events
+  end
+
+  def test_repeated_observations_do_not_republish_an_unchanged_mood
+    bus = MoodBus.new
+    unit = H.new(event_bus: bus)
+    state = unit.instance_variable_get(:@state)
+    state[:error_rate] = 0.5
+
+    unit.observe(:idle_tick)
+    unit.observe(:idle_tick)
+
+    assert_equal 1, bus.events.count { |event, _payload| event == "agent:mood" }
+  end
+
   def test_a_run_of_failures_reaches_tense_and_the_cheap_tier
     unit = H.new
     6.times { unit.observe(:llm_failure) }
