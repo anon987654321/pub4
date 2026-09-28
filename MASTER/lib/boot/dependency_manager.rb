@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "digest"
 require "fileutils"
 require "open3"
 require "rbconfig"
@@ -27,6 +28,25 @@ module Master
         fedora: %w[gcc gcc-c++ make cmake pkgconf-pkg-config openssl-devel libyaml-devel libffi-devel sqlite-devel],
         arch: %w[base-devel cmake pkgconf openssl libyaml libffi sqlite],
       }.freeze
+
+      BUNDLE_CONTEXT_KEYS = %w[
+        BUNDLE_APP_CONFIG
+        BUNDLE_BIN
+        BUNDLE_DEPLOYMENT
+        BUNDLE_FROZEN
+        BUNDLE_GEMFILE
+        BUNDLE_IGNORE_CONFIG
+        BUNDLE_JOBS
+        BUNDLE_LOCKFILE
+        BUNDLE_ONLY
+        BUNDLE_PATH
+        BUNDLE_RETRY
+        BUNDLE_USER_CONFIG
+        BUNDLE_USER_HOME
+        BUNDLE_VERSION
+        BUNDLE_WITH
+        BUNDLE_WITHOUT
+      ].freeze
 
       NATIVE_FAILURE = /
         extconf\ failed|
@@ -342,10 +362,35 @@ module Master
       end
 
       def bundle_env
-        user_gem_env.merge(
+        env = user_gem_env.merge(
           "BUNDLE_GEMFILE" => File.join(@root, "Gemfile"),
           "BUNDLE_RETRY" => "3",
           "BUNDLE_JOBS" => bundle_jobs.to_s,
+          "BUNDLE_APP_CONFIG" => File.join(bundle_config_root, "app"),
+          "BUNDLE_USER_CONFIG" => File.join(bundle_config_root, "global"),
+        )
+
+        # A user's global ~/.bundle/config, deployment variables, or a stale
+        # BUNDLE_PATH can silently change what boot installs or loads. MASTER
+        # owns its dependency context, while still allowing explicit credential
+        # and build variables outside this list to flow through.
+        BUNDLE_CONTEXT_KEYS.each { |key| env[key] = nil }
+        env.merge!(
+          "BUNDLE_GEMFILE" => File.join(@root, "Gemfile"),
+          "BUNDLE_RETRY" => "3",
+          "BUNDLE_JOBS" => bundle_jobs.to_s,
+          "BUNDLE_APP_CONFIG" => File.join(bundle_config_root, "app"),
+          "BUNDLE_USER_CONFIG" => File.join(bundle_config_root, "global"),
+        )
+        env
+      end
+
+      def bundle_config_root
+        File.join(
+          @home,
+          ".master",
+          "bundler",
+          Digest::SHA256.hexdigest(@root)[0, 16],
         )
       end
 
