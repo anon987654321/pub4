@@ -133,7 +133,12 @@ module Deploy
     # correct.
     def check_brgen_brand
       @result.checked!
-      source = File.read(File.join(ROOT, "brgen/app/views/pwa/manifest.json.erb"))
+      manifest = manifest_path("brgen")
+      unless manifest
+        @result.fail("pwa_installable: brgen has no manifest under app/views/pwa")
+        return
+      end
+      source = File.read(manifest)
       unless source.include?("city_name")
         @result.fail("pwa_installable: brgen manifest does not derive its name from city_name — " \
                      "an installed app on oshlo.no would be called Bergen")
