@@ -98,7 +98,11 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes form, 'post.new_text_only'
     assert_includes form, 'data-action="click->post-progressive#back"'
     assert_includes controller, 'this.#show(1)'
+    assert_includes controller, 'turbo:submit-start'
+    assert_includes controller, 'turbo:submit-end'
+    assert_includes controller, 'this.#publishing(true)'
     assert_includes controller, "mediaChanged"
+    assert_includes form, "post-publishing"
     assert_includes boot, 'import PostProgressive from "pub4/post_progressive"'
     assert_includes boot, 'application.register("post-progressive", PostProgressive)'
     assert_includes importmap, 'pin "pub4/post_progressive"'
