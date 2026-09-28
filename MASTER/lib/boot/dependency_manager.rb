@@ -504,12 +504,18 @@ module Master
       def bundle_env
         bundle_gem_home = File.join(bundle_config_root, "gems")
         default_gem_path = Gem.default_dir
+        ruby_bin = File.dirname(RbConfig.ruby)
         env = {
+          # Bundler's executable is a Ruby shebang. Put the exact interpreter
+          # that launched MASTER first so native gem builds cannot silently
+          # switch to another Ruby installation with the same version.
           "PATH" => [
+            ruby_bin,
             File.join(bundle_gem_home, "bin"),
             File.join(bundler_gem_home, "bin"),
             @env.fetch("PATH", ""),
           ].reject(&:empty?).join(File::PATH_SEPARATOR),
+          "RUBY" => RbConfig.ruby,
           "GEM_HOME" => bundle_gem_home,
           "GEM_PATH" => [bundle_gem_home, bundler_gem_home, default_gem_path].uniq.join(File::PATH_SEPARATOR),
         }
