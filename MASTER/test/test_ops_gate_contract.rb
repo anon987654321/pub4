@@ -106,6 +106,13 @@ class GateContractSpec < Minitest::Test
     refute_includes source, "RUBY_PLATFORM.include?(\"openbsd\")"
   end
 
+  def test_gate_rejects_any_ruby_version_other_than_the_repo_pin
+    source = File.read(File.join(ROOT, "gates", "runner.rb"))
+
+    assert_includes source, "RUBY_VERSION != pinned"
+    refute_includes source, "RUBY_VERSION.start_with?"
+  end
+
   def test_gate_uses_the_shared_runtime_selection
     source = File.read(GATE)
 
