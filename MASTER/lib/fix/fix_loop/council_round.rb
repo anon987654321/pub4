@@ -175,8 +175,8 @@ module Master
         end
 
         def repo_relative(path)
-          repo = File.expand_path("..", @root)
-          File.expand_path(path).delete_prefix("#{repo}/")
+          base = File.basename(File.expand_path(@root)) == "MASTER" ? File.expand_path("..", @root) : @root
+          File.expand_path(path).delete_prefix("#{File.expand_path(base)}/")
         end
 
         def publish(value, pass:, files:)
