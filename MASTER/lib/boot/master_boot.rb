@@ -43,6 +43,7 @@ module Master
       # booting is also what restores continuity across restarts.
       container[:cognition] = Cognition::Mind.new(root:, bus: container[:bus], memory: container[:memory])
       container[:cognition].tick!
+      start_task_steward(root, container)
       Device::Agent.start!(root:, bus: container[:bus], cognition: container[:cognition],
                            standing: container[:standing])
       unless ENV["MASTER_DEVICE"] == "0"
@@ -50,6 +51,14 @@ module Master
         container[:device_perception].start!
       end
       container[:heartbeat]&.start!
+    end
+
+    def start_task_steward(root, container)
+      container[:task_steward] = Fix::TaskSteward.start!(
+        root:, bus: container[:bus], runner: ->(goal:, mission:) {
+          CLI::CoreBridge.run(goal, root:, bus: container[:bus], model_id: mission["model"], container:)
+        }
+      )
     end
 
     def ensure_services!(root: ROOT)
