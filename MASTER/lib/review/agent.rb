@@ -288,7 +288,7 @@ end
 
         events = Array(Fiber[:master_trajectory_events]).dup
         events << { "event" => "outcome", "outcome" => outcome, "model" => model.to_s }
-        verified = Master::AI::Uplift::Benchmark.score(
+        verified = Master::AI::Trajectory::Benchmark.score(
           "task" => message.to_s,
           "model" => model.to_s,
           "events" => events,
@@ -296,7 +296,7 @@ end
           "verified" => outcome == "complete"
         )["verified"]
 
-        Master::AI::Uplift::Trajectory.new(
+        Master::AI::Trajectory::Record.new(
           "task" => message.to_s,
           "model" => model.to_s,
           "events" => events,
