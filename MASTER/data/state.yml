@@ -65,3 +65,11 @@
   command: doas rcctl restart master
   callable: restart_master
   enabled: true
+
+- name: availability_posture
+  description: Report the interactive capability floor and reachable model ladder without mutating runtime state.
+  trigger: heartbeat
+  interval_s: 120
+  command: status availability
+  callable: availability_posture
+  enabled: true

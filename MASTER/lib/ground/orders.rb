@@ -338,6 +338,31 @@ end
         end
       end
 
+      class AvailabilityPosture < Base
+        def call
+          router = @container[:agent]&.model_router
+          return Result.err("availability: no model router") unless router.respond_to?(:pool)
+
+          policy = Master::CLI::Routing::AvailabilityPolicy.new(root:)
+          models = Array(router.pool(wait: false)).uniq
+          levels = models.group_by { |model| policy.level_for(model) }.transform_values(&:size)
+          floor = policy.ladder_floor(:interactive)
+          reachable = models.any? { |model| policy.meets_floor?(model, operation: :interactive) }
+
+          payload = {
+            floor:,
+            reachable:,
+            levels:,
+            models: models.first(12),
+          }
+          bus&.publish("availability:posture", **payload)
+          reachable ? Result.ok(payload) : Result.err("availability: interactive floor #{floor} unavailable", category: :offline)
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "availability_posture", event_bus: bus)
+          Result.err(e.message, category: :infrastructure)
+        end
+      end
+
       class RestartMaster < Base
         def call
           _, status = Master::Io::Exec.capture2e("doas", "rcctl", "restart", "master")
@@ -362,6 +387,7 @@ end
             "aggressive_merge" => AggressiveMerge,
             "constitution_drift" => ConstitutionDrift,
             "backup" => Backup,
+            "availability_posture" => AvailabilityPosture,
           }
         end
 

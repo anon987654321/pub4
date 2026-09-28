@@ -47,6 +47,30 @@ class StandingOrdersTest < Minitest::Test
     @orders.instance_variable_set(:@orders, previous)
   end
 
+  def test_availability_posture_order_reports_ladder_levels_without_mutation
+    agent = Object.new
+    router = Object.new
+    router.define_singleton_method(:pool) { |wait:| %w[ollama:qwen3 web-chat:grok] }
+    agent.define_singleton_method(:model_router) { router }
+    bus = Struct.new(:events) do
+      def publish(name, **payload)
+        events << [name, payload]
+      end
+    end.new([])
+    orders = Orders.new(pipeline: nil, event_bus: bus)
+    orders.wire_container(agent:, root: Master::ROOT, bus:)
+
+    callable = Master::Ground::Orders::AvailabilityPosture.new(container: { agent:, root: Master::ROOT, bus: })
+    result = callable.call
+
+    assert_predicate result, :ok?
+    assert_equal "L2", result.value!.fetch(:floor)
+    assert_equal true, result.value!.fetch(:reachable)
+    assert_equal 1, result.value!.fetch(:levels).fetch("L2")
+    assert_equal 1, result.value!.fetch(:levels).fetch("L3")
+    assert bus.events.any? { |event| event.first == "availability:posture" }
+  end
+
   def test_state_of_parks_an_unknown_state
     assert_equal "pending", @orders.send(:state_of, order)
     assert_equal "error", @orders.send(:state_of, order("state" => "nonsense"))
