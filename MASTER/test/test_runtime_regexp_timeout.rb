@@ -37,7 +37,7 @@ class TestRuntimeRegexpTimeout < Minitest::Test
       /^(a|a)+$/.match?("a" * 100_000 + "x")
     end
 
-    assert_match(/regexp match timeout/i, error.message)
+    assert_kind_of Regexp::TimeoutError, error
   ensure
     Regexp.timeout = previous_timeout
   end
