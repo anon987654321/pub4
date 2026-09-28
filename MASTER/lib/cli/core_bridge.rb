@@ -18,18 +18,19 @@ module Master
         memory ||= Master::Core::Memory.new(risk:)
         model ||= Master::Core::Model.new(**{ model_id:, chat: agent_chat(container, bus:) }.compact)
         mission = start_mission(goal, root:, bus:, model: model_id || model)
+        seed_continuation(memory, mission.record)
         begin
           mission.transition!(:plan, plan: Master::Ground::ActivePlan.read(root) || "fold plan: constitutional turn loop")
           world = build_world(root:, container:)
           mission.transition!(:execute)
           done = build_fold(model:, memory:, world:, max_turns:, observer:).run(goal)
-          mission.transition!(:verify, summary: done.summary)
-          mission.finish!(state: done.reason == :complete ? "completed" : "interrupted", summary: done.summary)
+          mission.transition!(:verify, summary: continuation_summary(done))
+          settle_mission(mission, done)
 
           { mission: mission.record, reason: done.reason, turns: done.turns, summary: done.summary,
             transcript:, risk: memory.proof.risk }
         rescue StandardError => e
-          mission.fail!(e)
+          mission.defer!(reason: "core attempt: #{e.class}: #{e.message}") if mission
           raise
         end
       end
@@ -48,10 +49,32 @@ module Master
             label: "mission-#{id}", files:,
           )
         end
-        Master::Fix::Mission.new(root:, bus:, checkpoint:).start!(
+        Master::Fix::Mission.new(root:, bus:, checkpoint:).start_or_resume!(
           goal:, scope: root, model:, effort: ENV.fetch("MASTER_EFFORT", "medium"),
-          plan: Master::Ground::ActivePlan.read(root)
+          plan: Master::Ground::ActivePlan.read(root), origin: "fold", auto_continue: true
         )
+      end
+
+      def seed_continuation(memory, record)
+        return unless record && record["attempt_count"].to_i > 1
+
+        summary = record["summary"].to_s
+        reason = record["wake_reason"].to_s
+        memory.note(:continuation, "This is another bounded attempt at the same durable task. Previous attempt: #{summary}. Wake: #{reason}. Re-inspect the current tree; never assume the old state is unchanged.")
+      end
+
+      def continuation_summary(done)
+        done.summary.to_s.empty? ? "attempt ended: #{done.reason}" : done.summary
+      end
+
+      def settle_mission(mission, done)
+        if done.reason == :complete
+          mission.finish!(state: "completed", summary: done.summary)
+        elsif done.reason == :needs_user
+          mission.block!(reason: done.summary.to_s)
+        else
+          mission.defer!(reason: "attempt #{done.reason}: #{continuation_summary(done)}")
+        end
       end
 
       # Core::Model speaks RubyLLM's chat shape and, left alone, calls RubyLLM
