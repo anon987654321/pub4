@@ -71,7 +71,7 @@ module Master
           # converging styling to nothing cannot start the specificity war
           # this rule exists to prevent — so erase-shaped importants
           # (none/transparent/0) pass and painting ones still fire.
-          erase = /(?:border[\w-]*|outline[\w-]*|background|border-radius|padding|animation|transition|box-shadow|display)\s*:\s*(?:none|transparent|0)[^;!]*!\s*important/
+          erase = /(?:border|outline|background|padding|animation|transition|box-shadow|display)[\w-]*\s*:\s*(?:none|transparent|0)[^;!]*!\s*important/
           source_text = without_block_comments(without_override_media(src))
           # Markers are consulted on the ORIGINAL lines: the block-comment
           # stripping above blanks /* scan: intentional-marker */ before scan_lines
@@ -203,7 +203,7 @@ module Master
         # SKIP_TO_MAIN lives once, in law/html.rb — fixtures attached, any narrowing
         # this version had learned ported there (2026-08-21 twin retirement).
 
-        RuleDSL.rule :H1_VISIBILITY,
+        RuleDSL.rule :ASYNC_STATUS,
           severity: :info, tags: %i[ACCESSIBILITY], applies_to: %i[html],
           fires: %(<turbo-frame id="feed"></turbo-frame>\n),
           does_not_fire: %(<turbo-frame id="feed" aria-live="polite"></turbo-frame>\n),
