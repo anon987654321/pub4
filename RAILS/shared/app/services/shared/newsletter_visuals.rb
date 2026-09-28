@@ -9,7 +9,7 @@ require "tmpdir"
 require "fileutils"
 require "open-uri"
 require "securerandom"
-require "shared/artwork_pipeline"
+require_relative "artwork_pipeline"
 
 module Shared
   # Newsletter artwork is a first-class editorial layer: generated images are
