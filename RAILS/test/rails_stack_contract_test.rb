@@ -30,14 +30,14 @@ class RailsStackContractTest < Minitest::Test
   def test_every_rails_gemfile_tracks_the_current_stack
     APP_ROOTS.each do |root|
       body = File.read(File.join(REPO_ROOT, root, "Gemfile"))
-      source = body[/gem "rails", github: "([^"]+)", ref: "([^"]+)"/, 1, 2]
-      assert source, "#{root}/Gemfile must pin Rails from the audited git source"
-      assert_equal RAILS_SOURCE, source[0]
-      assert_equal RAILS_REF, source[1]
+      match = body.match(/gem "rails", github: "([^"]+)", ref: "([^"]+)"/)
+      assert match, "#{root}/Gemfile must pin Rails from the audited git source"
+      assert_equal RAILS_SOURCE, match[1]
+      assert_equal RAILS_REF, match[2]
     end
   end
 
-  def test_every_locked_app_resolves_the_current_rails_release
+  def test_every_locked_app_resolves_the_current_rails_source
     LOCKED_ROOTS.each do |root|
       path = File.join(REPO_ROOT, root, "Gemfile.lock")
       body = File.read(path)
