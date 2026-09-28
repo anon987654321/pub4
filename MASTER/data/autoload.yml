@@ -67,9 +67,9 @@ autoload:
 
   # Declare a constant outside Master::, so the path cannot imply the name.
   defines_a_foreign_namespace:
-    # RubyLLM::Providers::Bedrock -- pre-defines the constant so ruby_llm never
-    # autoloads openssl.so. Load-bearing; see TODO.md.
-    - io/bedrock_stub.rb
+    # RubyLLM::Providers::Bedrock is intentionally not shadowed. MASTER does
+    # not enable a Bedrock transport on OpenBSD, and the old compatibility file
+    # was removed as an incompatible provider shadow.
     - io/ruby_llm_patch.rb
     # Operator:: -- shared with RAILS and OPENBSD, its own tool, not Master::Operator.
     - operator

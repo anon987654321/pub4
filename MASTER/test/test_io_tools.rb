@@ -607,22 +607,14 @@ class TestIoTools < Minitest::Test
     assert_match(/input not found/, error.message)
   end
 
-  # --- BedrockStub -------------------------------------------------------------
+  # --- RubyLLMProviderBoundary ------------------------------------------------
 
-  # configure_providers! requires the stub before ruby_llm so Zeitwerk never
-  # loads bedrock/auth.rb, which requires openssl. A fresh process, because in
-  # this one another test may already have loaded ruby_llm in either order.
-  # Without the stub the same script loads the gem's bedrock/auth.rb.
-  def test_the_bedrock_stub_keeps_ruby_llm_from_loading_bedrock_auth
-    script = <<~RUBY
-      require #{File.expand_path('../lib/io/bedrock_stub', __dir__).inspect}
-      require "ruby_llm"
-      RubyLLM::Providers::Bedrock.slug
-      puts $LOADED_FEATURES.grep(%r{providers/bedrock/auth}).size
-    RUBY
-    out, err, status = Open3.capture3(RbConfig.ruby, "-e", script)
+  def test_bedrock_provider_shadow_is_not_registered_as_a_master_loader
+    source = File.read(File.join(Master::ROOT, "data", "autoload.yml"))
+    refute_includes source, "io/bedrock_stub.rb"
+  end
 
-    assert status.success?, err
-    assert_equal "0", out.strip
+  def test_removed_bedrock_stub_is_absent
+    refute File.exist?(File.join(Master::ROOT, "lib", "io", "bedrock_stub.rb"))
   end
 end
