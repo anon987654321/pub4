@@ -9,6 +9,8 @@ class RailsStackContractTest < Minitest::Test
   RAILS_ROOT = File.join(REPO_ROOT, "RAILS")
   STACK = YAML.safe_load_file(File.join(REPO_ROOT, "MASTER", "data", "rules.yml")).fetch("rails_stack")
   RAILS_VERSION = Gem::Version.new(STACK.fetch("rails"))
+  RAILS_SOURCE = STACK.fetch("rails_source")
+  RAILS_REF = STACK.fetch("rails_ref")
   RAILS_REQUIREMENT = Gem::Requirement.new("~> #{RAILS_VERSION}")
 
   APP_ROOTS = %w[
@@ -29,10 +31,10 @@ class RailsStackContractTest < Minitest::Test
   def test_every_rails_gemfile_tracks_the_current_stack
     APP_ROOTS.each do |root|
       body = File.read(File.join(REPO_ROOT, root, "Gemfile"))
-      requirement = body[/gem "rails", "([^"]+)"/, 1]
-
-      assert_equal RAILS_REQUIREMENT.to_s, requirement,
-                   "#{root}/Gemfile must track Rails #{RAILS_VERSION}, not #{requirement.inspect}"
+      match = body.match(/gem "rails", github: "([^"]+)", ref: "([^"]+)"/)
+      assert match, "#{root}/Gemfile must pin Rails from the audited git source"
+      assert_equal RAILS_SOURCE, match[1]
+      assert_equal RAILS_REF, match[2]
     end
   end
 
@@ -40,7 +42,7 @@ class RailsStackContractTest < Minitest::Test
     LOCKED_ROOTS.each do |root|
       path = File.join(REPO_ROOT, root, "Gemfile.lock")
       body = File.read(path)
-      rails = body[/^    rails \((\d+(?:\.\d+)+)\)$/m, 1]
+      rails = body[/^    rails \(([^)]+)\)$/m, 1]
 
       assert rails, "#{root}/Gemfile.lock has no locked Rails version"
       assert_equal RAILS_VERSION, Gem::Version.new(rails)
@@ -49,8 +51,8 @@ class RailsStackContractTest < Minitest::Test
       assert_equal rails, railties, "#{root}/Gemfile.lock splits Rails and railties versions"
 
       dependency = body[/^  rails \(([^)]+)\)$/m, 1]
-      assert_equal RAILS_REQUIREMENT.to_s, dependency,
-                   "#{root}/Gemfile.lock dependency no longer matches the Gemfile"
+      git = body[/^  revision: (\h+)$/m, 1]
+      assert_equal RAILS_REF, git, "#{root}/Gemfile.lock is not pinned to Rails #{RAILS_REF}"
     end
   end
 
@@ -58,9 +60,9 @@ class RailsStackContractTest < Minitest::Test
     APP_ROOTS.each do |root|
       body = File.read(File.join(REPO_ROOT, root, "config", "application.rb"))
 
-      assert_includes body, "config.load_defaults 8.1",
-                       "#{root} is on an older Rails framework-default target"
-      refute_includes body, "config.load_defaults 8.0",
+      assert_includes body, "config.load_defaults 8.2",
+                       "#{root} is not on the Rails 8.2 framework-default target"
+      refute_includes body, "config.load_defaults 8.1",
                       "#{root} still targets Rails 8.0 defaults"
     end
   end
