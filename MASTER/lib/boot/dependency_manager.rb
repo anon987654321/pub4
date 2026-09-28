@@ -296,9 +296,55 @@ module Master
 
       def ensure_bundle
         ok, stdout, stderr = run_bundle("check")
-        return ok_result("bundle clean", changed: false, bundle: true, output: join_output(stdout, stderr)) if ok
+        output = join_output(stdout, stderr)
+        return install_bundle unless ok
 
-        install_bundle
+        native_ok, native_stdout, native_stderr = probe_native_bundle
+        native_output = join_output(native_stdout, native_stderr)
+        if native_ok
+          return ok_result(
+            "bundle clean",
+            changed: false,
+            bundle: true,
+            output: join_output(output, native_output),
+          )
+        end
+
+        unless native_build_failure?(native_output)
+          return fail_result("bundle native probe failed", output: join_output(output, native_output))
+        end
+
+        report("rebuilding native bundle extensions")
+        pristine_ok, pristine_stdout, pristine_stderr = run_bundle("pristine")
+        pristine_output = join_output(pristine_stdout, pristine_stderr)
+        unless pristine_ok
+          return fail_result(
+            "bundle native extension repair failed",
+            output: join_output(output, native_output, pristine_output),
+          )
+        end
+
+        repaired_ok, repaired_stdout, repaired_stderr = probe_native_bundle
+        repaired_output = join_output(repaired_stdout, repaired_stderr)
+        return ok_result(
+          "bundle native extensions repaired",
+          changed: true,
+          bundle: true,
+          output: join_output(output, native_output, pristine_output, repaired_output),
+        ) if repaired_ok
+
+        fail_result(
+          "bundle native extension repair failed",
+          output: join_output(output, native_output, pristine_output, repaired_output),
+        )
+      end
+
+      def probe_native_bundle
+        @runner.call(
+          [RbConfig.ruby, "-rbundler/setup", "-rjson", "-e", "exit"],
+          chdir: @root,
+          env: bundle_env,
+        )
       end
 
       def install_bundle
