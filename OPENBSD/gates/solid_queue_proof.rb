@@ -125,7 +125,7 @@ module SolidQueueProof
         "export HOME=/home/#{app}",
         "cd #{Shellwords.escape(app_dir)}",
         "env RAILS_ENV=production SECRET_KEY_BASE=#{Shellwords.escape(secret)} " \
-          "bundle34 exec rails runner -e production #{Shellwords.escape(runner_source(app, tries))}",
+          "bundle40 exec rails runner -e production #{Shellwords.escape(runner_source(app, tries))}",
       ].join(" && "),
     ]
 
