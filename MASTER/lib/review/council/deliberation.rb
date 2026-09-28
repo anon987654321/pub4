@@ -169,7 +169,8 @@ module Master
           target = @availability.council_target(
             current: active.size,
             local_posture: self.class.local_posture?,
-            scarce: Io::QuotaGate.blocked? || (local_floor_available? && !cloud_floor_available?)
+            scarce: Io::QuotaGate.blocked?,
+            local_only: local_floor_available? && !cloud_floor_available?
           )
           active.first(target)
         end
