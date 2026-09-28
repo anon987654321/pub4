@@ -9,7 +9,7 @@
 <% url = local_assigns[:url] %>
 <% author_url = local_assigns.key?(:author_url) ? local_assigns[:author_url] : url %>
 <% post_url = local_assigns.key?(:post_url) ? local_assigns[:post_url] : url %>
-<% if url.nil? && post.persisted? && respond_to?(:post_path) %><% url = post_path(post) rescue nil %><% end %>
+<% if url.nil? && post.persisted? && respond_to?(:post_path) %><% url = post_path(post) %><% end %>
 <% meta = local_assigns[:meta] %>
 <% media = local_assigns[:media] %>
 <% actions = local_assigns[:actions] %>
