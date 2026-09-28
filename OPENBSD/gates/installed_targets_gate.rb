@@ -51,7 +51,7 @@ module Deploy
     # Base-system and package binaries. The gate is about what THIS repo is
     # responsible for installing, not about auditing the OpenBSD ports tree.
     PROVIDED_BY_PACKAGES = %w[
-      ruby34 bundle34 git sqlite3 psql rcctl relayctl nsd-control acme-client
+      ruby40 bundle40 git sqlite3 psql rcctl relayctl nsd-control acme-client
       vips ffmpeg node npm doas su tee logger newsyslog drill dig sendmail curl wget
     ].freeze
 
