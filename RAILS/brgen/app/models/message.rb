@@ -154,9 +154,15 @@ class Message < ApplicationRecord
     message_receipts.where(user: user).where.not(read_at: nil).exists?
   end
 
-  # Only human messages in a channel can summon a bot — never a bot replying to
-  # a bot (that would loop) and never a plain DM.
-  def bot_worthy? = conversation.channel? && !sender.bot?
+  # Human messages can summon a bot in a channel, or the invited MASTER in
+  # a direct/group conversation. Bot messages never summon another bot.
+  def bot_worthy?
+    return false if sender.bot?
+    return true if conversation.channel?
+
+    conversation.participants.exists?(id: sender.id, bot: false) &&
+      conversation.participants.where(bot: true, username: "master").exists?
+  end
 
   def maybe_summon_bot = ChannelBotReplyJob.set(wait: rand(2..6).seconds).perform_later(id)
 
