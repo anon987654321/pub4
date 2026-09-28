@@ -320,7 +320,7 @@ module Master
         end
 
         report("rebuilding native bundle extensions")
-        discard_stale_native_bundle!
+        return fail_result("stale native bundle cleanup failed") unless discard_stale_native_bundle!
         repair_ok, repair_stdout, repair_stderr = run_bundle(
           "install", "--jobs", bundle_jobs.to_s, "--retry", "3"
         )
@@ -377,7 +377,7 @@ module Master
           end
 
           report("rebuilding native bundle extensions")
-          discard_stale_native_bundle!
+          return fail_result("stale native bundle cleanup failed", output: join_output(output, native_output)) unless discard_stale_native_bundle!
           repair_ok, repair_stdout, repair_stderr = run_bundle(
             "install", "--jobs", bundle_jobs.to_s, "--retry", "3"
           )
