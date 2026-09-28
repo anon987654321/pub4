@@ -530,7 +530,7 @@ class TestDillaLivesets < Minitest::Test
 
   # The live catalogue synthesises every sample in Ruby against a deadline, so
   # it turns the JIT on for itself. Answers for the interpreter it is running
-  # under rather than assuming one: 3.4.9 here is built without YJIT.
+  # under rather than assuming a particular Ruby build has YJIT.
   def test_player_command_targets_the_local_soundcard
     command = nil
     stubbing(audio_tool: ->(name) { name == "sox" ? "/tmp/sox" : nil }) do
