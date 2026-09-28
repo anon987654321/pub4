@@ -25,7 +25,7 @@ class ArtworkPipelineContractTest < Minitest::Test
   def test_newsletter_replicate_requests_are_seeded_and_published_through_postpro
     source = File.read(File.join(ROOT, "shared/app/services/shared/newsletter_visuals.rb"))
     assert_includes source, "seed:"
-    assert_includes source, "output_format: "webp""
+    assert_includes source, 'output_format: "webp"'
     assert_includes source, "ArtworkPipeline.publish_remote"
     assert_includes source, 'filename = "#{prefix.to_s.parameterize}-#{seed}.jpg"'
   end

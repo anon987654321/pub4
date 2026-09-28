@@ -6,7 +6,7 @@ require "optparse"
 require "time"
 require "yaml"
 
-root = File.expand_path(ENV.fetch("PUB4_ROOT", File.join(__dir__, "../..")))
+root = File.expand_path(ENV.fetch("PUB4_ROOT", File.join(__dir__, "../../..")))
 law_path = File.join(root, "MASTER/data/minimalism.yml")
 law = YAML.safe_load_file(law_path, permitted_classes: [], aliases: false)
 
