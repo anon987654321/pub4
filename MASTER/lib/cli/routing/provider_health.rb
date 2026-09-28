@@ -39,7 +39,7 @@ module Master
             case event["status"].to_s
             when "success"
               [score + SUCCESS_BONUS, MAX_SCORE].min
-            when "failure", "timeout", "rate_limit", "provider_error", "quota_exceeded"
+            when "failure", "timeout", "rate_limit", "provider_error", "quota_exceeded", "canary_validation_failure"
               [score - FAILURE_PENALTY, MIN_SCORE].max
             else
               score

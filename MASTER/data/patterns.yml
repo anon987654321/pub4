@@ -786,15 +786,21 @@ cli:
   multiline_max_lines: 500
   history_limit: 2000
 
-# Merged from former heartbeat.yml — heartbeat jobs, all disabled. Schedule-based
-# maintenance removed. self_test runs as the auto_default standing order (after
-# any source mutation); snapshot is `bin/operator snapshot`; prune_memory and
-# prune_undo have no command.
+# Merged from former heartbeat.yml — heartbeat jobs live here. Schedule-based
+# maintenance outside the heartbeat remains removed. self_test runs as the
+# auto_default standing order (after any source mutation); snapshot is
+# `bin/operator snapshot`; prune_memory and prune_undo have no command.
 heartbeat:
   - name: prune_memory
     action: prune_memory
     enabled: false
     description: Disabled; no command replaces it.
+  - name: canary_providers
+    action: canary_providers
+    interval_seconds: 120
+    enabled: true
+    description: Small real-path provider canaries with unique prompts.
+
   - name: self_test
     action: self_test
     interval_seconds: 3600

@@ -25,6 +25,7 @@ class EventsController < ApplicationController
     pipeline:**
     llm:**
     agent:**
+    provider:**
     tool:**
     scan:**
     sweep:**
