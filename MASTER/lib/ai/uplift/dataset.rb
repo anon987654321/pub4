@@ -52,7 +52,7 @@ module Master
               rejected = group.find { |record| !Benchmark.score(record)["verified"] }
               next unless chosen && rejected
               out.puts(JSON.generate(
-                "schema" => "master.gemma.preference/v1",
+                "schema" => "master.llm.preference/v1",
                 "task" => chosen["task"],
                 "chosen" => chosen["events"],
                 "rejected" => rejected["events"]
