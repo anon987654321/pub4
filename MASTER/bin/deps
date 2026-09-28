@@ -12,8 +12,8 @@ command = ARGV.fetch(0, "install")
 result = case command
          when "boot"
            cli = File.join(ROOT, "bin", "cli")
-           warn "deps0: probing #{cli} --help"
-           system(cli, "--help")
+           warn "deps0: probing #{cli} --fast"
+           system(cli, "--fast")
          when "check", "status"
            status = manager.status
            puts "deps0: ruby=#{status[:ruby]} required=#{status[:ruby_required].empty? ? "none" : status[:ruby_required]}"
