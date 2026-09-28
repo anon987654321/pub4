@@ -1,8 +1,12 @@
 # frozen_string_literal: true
 
+require "yaml"
+
 module Shared
   class ChangelogController < ::ApplicationController
     include ActionController::Rendering
+
+    allow_unauthenticated_access only: :show
 
     def show
       @changelog = YAML.safe_load_file(
