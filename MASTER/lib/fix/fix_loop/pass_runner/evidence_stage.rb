@@ -83,8 +83,14 @@ module Master
               "Council-selected, anchored micro-improvement. Preserve behavior and make the smallest evidence-backed repair.",
             ].join("\n\n")
             result = loop.run_once(files, external_violations: findings)
-            @bus&.publish("fix_loop:improvement_fix", pass:, findings: findings.size, fixed: result[:fixed].to_i)
-            result[:fixed].to_i
+            fixed = result[:fixed].to_i
+            breakdown = result[:breakdown].to_h
+            Master::Trace::Dmesg.status(
+              "fix0",
+              "pass #{pass}, improvement stage #{fixed}/#{findings.size} fixed#{breakdown.empty? ? "" : ", #{breakdown.map { |status, count| "#{count} #{status}" }.join(", ")}"}",
+            )
+            @bus&.publish("fix_loop:improvement_fix", pass:, findings: findings.size, fixed:, breakdown:)
+            fixed
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "pass_runner.improvement_stage", event_bus: @bus)
             0
