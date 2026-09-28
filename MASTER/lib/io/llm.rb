@@ -91,7 +91,7 @@ module Master
         end
 
         def record_trajectory_event(tool:, args:, phase:, ok:, error: nil, bytes: nil)
-          return unless ENV["MASTER_GEMMA_RECORD"] == "1"
+          return unless ENV["MASTER_LLM_RECORD"] == "1"
 
           event = {
             "tool" => tool.to_s,
