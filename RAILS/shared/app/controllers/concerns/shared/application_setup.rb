@@ -8,6 +8,7 @@ module Shared
       include Shared::RescueHandlers
       include Shared::Authentication
       include Shared::WriteThrottle
+      include Shared::Idempotency
       include Shared::PunditAuthorization
       include Shared::PagyPagination
       include Shared::VisitCounting
