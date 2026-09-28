@@ -18,6 +18,9 @@ class AvailabilityLadderTest < Minitest::Test
     assert_equal "L2", subject.ladder_floor(:interactive)
     assert_equal "L1", subject.ladder_floor(:batch_scan)
     assert_equal %w[7 3 1], subject.council_sizes.map(&:to_s)
+    assert_equal 7, subject.council_target(current: 20, local_posture: true, scarce: false, local_only: false)
+    assert_equal 3, subject.council_target(current: 20, local_posture: false, scarce: false, local_only: true)
+    assert_equal 1, subject.council_target(current: 20, local_posture: false, scarce: true, local_only: true)
   end
 
   def test_model_levels_do_not_call_cloud_ollama_local
