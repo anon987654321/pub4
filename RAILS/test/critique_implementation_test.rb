@@ -108,6 +108,18 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes importmap, 'pin "pub4/post_progressive"'
   end
 
+  def test_brgen_post_detail_renders_all_attached_media
+    controller = read("brgen/app/controllers/posts_controller.rb")
+    show = read("brgen/app/views/posts/show.html.erb")
+    css = read("brgen/app/assets/stylesheets/application.scss")
+
+    assert_includes controller, "with_attached_image.with_attached_video.with_attached_audio"
+    assert_includes show, 'video_tag @post.video, controls: true'
+    assert_includes show, 'audio_tag @post.audio, controls: true'
+    assert_includes css, ".post-video"
+    assert_includes css, ".post-audio"
+  end
+
   def test_brgen_front_page_exposes_feed_and_media_wall
     home = read("brgen/app/views/home/index.html.erb")
     controller = read("brgen/app/controllers/home_controller.rb")
