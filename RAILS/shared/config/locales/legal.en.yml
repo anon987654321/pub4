@@ -17,27 +17,24 @@ en:
     cookies_page:
       eyebrow: Cookies
       heading: Cookies on %{host}
-      intro_html: We keep cookie use to a minimum. We run <strong>no third-party advertising
-        or tracking networks</strong> and build no cross-site profile of you.
+      intro_html: We keep cookie use to a minimum. Strictly necessary storage keeps the service working. Optional analytics and partner advertising technology stay off until you choose.
       necessary_heading: Strictly necessary
       necessary_body: A session cookie keeps you signed in and protects forms against
         forgery (CSRF). Sign-in doesn’t work without it. It needs no consent.
+      analytics_heading: Optional analytics
+      analytics_body: Sampled web-vitals performance measurement is optional and only starts after you choose Statistics.
       fingerprint_heading: Device fingerprint
       fingerprint_body: A first-party browser fingerprint caps how much a guest can
         post from one device and slows spam. It is not a third-party cookie, it is
         not sold, and it is not used to show you ads.
       partner_heading: Partner / affiliate
-      partner_body: If you click a partner link, the partner — for example TradeDoubler
-        or Amazon Associates — may set a cookie on their side to attribute a resulting
-        purchase to us. We don’t set it ourselves, and it isn’t used to show you ads
-        here.
+      partner_body: Partner links and TradeDoubler attribution are optional. When enabled, the partner — for example TradeDoubler or Amazon Associates — may use cookies or similar technology on its side to attribute a resulting purchase to us.
       advertising_heading: Advertising
       advertising_body_html: The ads we show are <strong>first-party</strong> and
         sold directly by us when those slots are on. They set no tracking cookies
         and share no data with ad networks.
       control_heading: How to control them
-      control_body: You can delete and block cookies in your browser. Block the necessary
-        ones and you won’t be able to sign in.%{partner}
+      control_body: Use Cookie settings to change optional choices at any time. You can also delete and block cookies in your browser. Block the necessary ones and you won’t be able to sign in.%{partner}
       control_partner_clause: " To avoid partner cookies, don’t click partner links."
     terms_page:
       eyebrow: Terms of use
@@ -91,25 +88,18 @@ en:
         joy)"
       activity_item_html: "<strong>Account activity</strong>: comments and watch lists
         you create on ports."
-      technical_item_html: "<strong>Technical</strong>: a session cookie that keeps
-        you signed in, and aggregated, non-identifying operational logs for security
-        and debugging."
+      technical_item_html: "<strong>Technical</strong>: a session cookie that keeps you signed in, and aggregated, non-identifying operational logs for security and debugging."
+      analytics_item_html: "<strong>Optional analytics</strong>: sampled web-vitals performance measurement, only after you choose Statistics."
       fingerprint_item_html: "<strong>Device fingerprint</strong>: a first-party browser
         fingerprint used to cap guest posts and slow spam. It is not shared with third
         parties and is not used for advertising."
       location_item_html: "<strong>Location</strong>: approximate only, and only if
         you turn it on for “nearby” features. We never store precise GPS."
       ads_heading: Advertising and partner links
-      ads_body_html: We sell and serve <strong>our own advertising directly</strong>
-        when those slots are on. First-party ads share no data with third-party ad
-        networks. Some links are <strong>partner / affiliate links</strong>. If you
-        click one, the partner may set a cookie so a resulting purchase is attributed
-        to us. See %{cookies}.
+      ads_body_html: We sell and serve <strong>our own advertising directly</strong> when those slots are on. Some links are <strong>partner / affiliate links</strong>; optional TradeDoubler attribution only loads after you choose Partner advertising. See %{cookies}.
       ads_cookies_link: cookies
       basis_heading: Legal basis
-      basis_body: We process account data to perform our contract to provide the service
-        (GDPR Art. 6(1)(b)), security and operational logs under legitimate interest
-        (Art. 6(1)(f))%{location}.
+      basis_body: We process account data to perform our contract to provide the service (GDPR Art. 6(1)(b)), security and operational logs under legitimate interest (Art. 6(1)(f))%{location}. Optional analytics and partner advertising technology use consent where required.
       basis_location_clause: ", and location only on your consent (Art. 6(1)(a)),
         which you may withdraw at any time"
       rights_heading: Your rights

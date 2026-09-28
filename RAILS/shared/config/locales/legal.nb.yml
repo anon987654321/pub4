@@ -17,30 +17,26 @@ nb:
     cookies_page:
       eyebrow: Informasjonskapsler
       heading: Informasjonskapsler på %{host}
-      intro_html: Vi holder bruken av informasjonskapsler på et minimum. Vi bruker
-        <strong>ingen tredjeparts annonse- eller sporingsnettverk</strong> og bygger
-        ingen profil av deg på tvers av nettsteder.
+      intro_html: Vi holder bruken av informasjonskapsler på et minimum. Strengt nødvendig lagring holder tjenesten i gang. Valgfri analyse og partnerannonsering er av før du velger.
       necessary_heading: Nødvendige
       necessary_body: En øktinformasjonskapsel holder deg innlogget og beskytter skjemaer
         mot forfalskning (CSRF). Uten den fungerer ikke innlogging. Denne krever ikke
         samtykke.
+      analytics_heading: Valgfri analyse
+      analytics_body: Utvalgt web-vitals-måling av ytelse er valgfri og starter først når du velger Statistikk.
       fingerprint_heading: Enhetsavtrykk
       fingerprint_body: Et førsteparts avtrykk av nettleseren brukes til å begrense
         hvor mye en gjest kan poste fra samme enhet, og til å bremse spam. Det er
         ikke en tredjepartskapsel, det selges ikke, og det brukes ikke til å vise
         deg annonser.
       partner_heading: Partner / affiliate
-      partner_body: Klikker du på en partnerlenke, kan partneren — for eksempel TradeDoubler
-        eller Amazon Associates — sette en informasjonskapsel hos seg for å tilskrive
-        et eventuelt kjøp til oss. Vi setter den ikke selv, og den brukes ikke til
-        å vise deg annonser her.
+      partner_body: Partnerlenker og TradeDoubler-attribusjon er valgfritt. Når det er aktivert, kan partneren — for eksempel TradeDoubler eller Amazon Associates — bruke informasjonskapsler eller lignende teknologi hos seg for å tilskrive et eventuelt kjøp til oss.
       advertising_heading: Reklame
       advertising_body_html: Annonsene vi viser er <strong>førsteparts</strong> og
         selges direkte av oss når slike plasser er slått på. De setter ikke sporingskapsler
         og deler ikke data med annonsenettverk.
       control_heading: Slik styrer du dem
-      control_body: Du kan slette og blokkere informasjonskapsler i nettleseren din.
-        Blokkerer du de nødvendige, kan du ikke logge inn.%{partner}
+      control_body: Bruk Cookie-innstillinger for å endre valgfrie valg når som helst. Du kan også slette og blokkere informasjonskapsler i nettleseren din. Blokkerer du de nødvendige, kan du ikke logge inn.%{partner}
       control_partner_clause: " Vil du unngå partnerkapsler, la være å klikke på partnerlenker."
     terms_page:
       eyebrow: Brukervilkår
@@ -93,9 +89,8 @@ nb:
         glede)"
       activity_item_html: "<strong>Kontoaktivitet</strong>: kommentarer og overvåkningslister
         du selv oppretter på porter."
-      technical_item_html: "<strong>Teknisk</strong>: en øktinformasjonskapsel som
-        holder deg innlogget, og aggregert, ikke-identifiserende driftslogg for sikkerhet
-        og feilretting."
+      technical_item_html: "<strong>Teknisk</strong>: en øktinformasjonskapsel som holder deg innlogget, og aggregert, ikke-identifiserende driftslogg for sikkerhet og feilretting."
+      analytics_item_html: "<strong>Valgfri analyse</strong>: utvalgt web-vitals-måling av ytelse, kun etter at du velger Statistikk."
       fingerprint_item_html: "<strong>Enhetsavtrykk</strong>: et førsteparts avtrykk
         av nettleseren, brukt til å begrense gjesteposting og spam. Det deles ikke
         med tredjepart og brukes ikke til reklame."
@@ -103,16 +98,10 @@ nb:
         hvis du selv aktiverer det for «i nærheten»-funksjoner. Vi lagrer aldri presis
         GPS."
       ads_heading: Reklame og partnerlenker
-      ads_body_html: Vi selger og viser <strong>vår egen annonseplass direkte</strong>
-        når slike plasser er slått på. Førstepartsannonser deler ikke data med tredjeparts
-        annonsenettverk. Enkelte lenker er <strong>partner-/affiliatelenker</strong>.
-        Klikker du på en slik lenke, kan partneren sette en informasjonskapsel slik
-        at et eventuelt kjøp tilskrives oss. Se %{cookies}.
+      ads_body_html: Vi selger og viser <strong>vår egen annonseplass direkte</strong> når slike plasser er slått på. Enkelte lenker er <strong>partner-/affiliatelenker</strong>; valgfri TradeDoubler-attribusjon lastes først etter at du har valgt Partnerannonsering. Se %{cookies}.
       ads_cookies_link: informasjonskapsler
       basis_heading: Behandlingsgrunnlag
-      basis_body: Vi behandler kontodata for å oppfylle avtalen om å levere tjenesten
-        (GDPR art. 6(1)(b)), sikkerhets- og driftslogg ut fra berettiget interesse
-        (art. 6(1)(f))%{location}.
+      basis_body: Vi behandler kontodata for å oppfylle avtalen om å levere tjenesten (GDPR art. 6(1)(b)), sikkerhets- og driftslogg ut fra berettiget interesse (art. 6(1)(f))%{location}. Valgfri analyse og partnerannonsering bruker samtykke der det kreves.
       basis_location_clause: ", og posisjon kun på grunnlag av ditt samtykke (art.
         6(1)(a)), som du når som helst kan trekke tilbake"
       rights_heading: Dine rettigheter
