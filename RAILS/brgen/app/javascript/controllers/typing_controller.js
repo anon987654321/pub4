@@ -12,7 +12,7 @@ export default class extends Controller {
   }
 
   expire() {
-    if (!this.element.children.length) return
+    if (!this.element.childNodes.length) return
     this.element.replaceChildren()
   }
 }
