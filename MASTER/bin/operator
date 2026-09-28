@@ -531,7 +531,7 @@ when "vps"
   case sub
   when "state"
     if ARGV.delete("--remote")
-      ssh_run("cd /home/dev/pub4 && #{Shellwords.join(["ruby34", "OPENBSD/bin/vps-state", *ARGV])}")
+      ssh_run("cd /home/dev/pub4 && #{Shellwords.join(["ruby40", "OPENBSD/bin/vps-state", *ARGV])}")
     else
       exec(File.join(OPENBSD_OPS, "bin", "vps-state"), *ARGV)
     end
@@ -547,7 +547,7 @@ when "vps"
     app = ARGV.shift
     abort(usage) if app.to_s.empty?
     if ARGV.delete("--remote")
-      ssh_run("cd /home/dev/pub4 && #{Shellwords.join(["ruby34", "OPENBSD/bin/vps-logs", app, *ARGV])}")
+      ssh_run("cd /home/dev/pub4 && #{Shellwords.join(["ruby40", "OPENBSD/bin/vps-logs", app, *ARGV])}")
     else
       exec(File.join(OPENBSD_OPS, "bin", "vps-logs"), app, *ARGV)
     end
