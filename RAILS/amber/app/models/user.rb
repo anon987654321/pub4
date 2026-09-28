@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "securerandom"
+
 class User < ApplicationRecord
   has_secure_password
 
@@ -38,7 +40,6 @@ class User < ApplicationRecord
   has_many :sessions,        dependent: :destroy, inverse_of: :user
 
   normalizes :email_address, with: ->(e) { e.strip.downcase }
-  require "securerandom"
 
   scope :publicly_visible, -> { where(guest: false, deleted_at: nil, deletion_scheduled_at: nil) }
 
