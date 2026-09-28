@@ -21,6 +21,11 @@
       </span>
     </nav>
 
+    <p class="post-publishing" data-post-progressive-target="publishing"
+       role="status" aria-live="polite" hidden>
+      <%= t("post.new_publishing", default: "Publishing…") %>
+    </p>
+
     <section class="post-progressive-step" data-post-progressive-target="step"
              aria-labelledby="post-media-heading">
       <h2 id="post-media-heading" tabindex="-1" data-post-progressive-heading>
