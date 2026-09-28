@@ -43,7 +43,7 @@ module Deploy
     def check_app(app)
       manifest = manifest_path(app)
       unless manifest
-        @result.fail("pwa_installable: #{app} has no manifest at #{rel(manifest)}")
+        @result.fail("pwa_installable: #{app} has no manifest under app/views/pwa")
         return
       end
 
@@ -51,6 +51,11 @@ module Deploy
       check_keys(app, source)
       check_icons(app, source)
       check_service_worker(app)
+    end
+
+    def manifest_path(app)
+      candidates = %w[app/views/pwa/manifest.json app/views/pwa/manifest.json.erb]
+      candidates.map { |path| File.join(ROOT, app, path) }.find { |path| File.file?(path) }
     end
 
     def check_keys(app, source)
