@@ -571,7 +571,7 @@ Order resolution: `client_reference_id` (`order_id:` / `checkout_id:`) or `metad
 |------|--------|
 | URL | `https://<host>/webhooks/vipps` |
 | Events | at least `epayments.payment.authorized.v1`, `epayments.payment.captured.v1` |
-| Secret | `VIPPS_WEBHOOK_SECRET` (base64 from registration response) |
+| Secret | `VIPPS_WEBHOOK_SECRET` (the secret returned by webhook registration) |
 
 Register once:
 
