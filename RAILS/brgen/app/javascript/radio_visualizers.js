@@ -87,6 +87,15 @@ export class VisualizerDeck {
     tunnelCanvas.after(this.canvas)
     this.ctx = this.canvas.getContext("2d", { alpha: false, willReadFrequently: true }) || this.canvas.getContext("2d")
     this.renderers = []
+    // The shared visual governor remains the outer budget. This local cap adds
+    // the explicit battery-save contract without taking ownership of the loop.
+    this.fpsCap = 60
+    this.lastFrameAt = -Infinity
+    this.powerSaveHandler = (event) => {
+      this.fpsCap = event?.detail?.enabled ? 30 : 60
+      this.lastFrameAt = -Infinity
+    }
+    window.addEventListener("battery-save-mode", this.powerSaveHandler)
   }
 
   get size() { return RENDERERS.length }
@@ -112,6 +121,11 @@ export class VisualizerDeck {
   }
 
   frame(mode, audioData) {
+    const now = performance.now()
+    const frameInterval = 1000 / Math.max(1, this.fpsCap)
+    if (now - this.lastFrameAt < frameInterval) return
+    this.lastFrameAt = now
+
     const p = audioData?.parallax || deviceTilt
     const energy = Math.max(0, Math.min(1, audioData?.average || 0))
     const beat = Math.max(0, Math.min(1, audioData?.beat || 0))
@@ -129,6 +143,7 @@ export class VisualizerDeck {
   }
 
   destroy() {
+    window.removeEventListener("battery-save-mode", this.powerSaveHandler)
     this.canvas.style.transform = ""
     this.canvas.remove()
   }

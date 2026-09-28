@@ -14,6 +14,7 @@
       style="--brand-mark-glyphs: <%= brand_mark_fragments[:label].to_s.length %>">
 <head>
   <meta charset="utf-8">
+  <meta name="view-transition" content="same-origin">
   <%= tag.meta name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" %>
   <%= tag.meta name: "mobile-web-app-capable", content: "yes" %>
   <%# iOS ignores the manifest for standalone behaviour — these give an installed
