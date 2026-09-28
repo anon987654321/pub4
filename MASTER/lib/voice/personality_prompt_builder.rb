@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "personality_style_sections"
+require_relative "dialogue_rubric"
 
 module Master
   module Voice
@@ -22,7 +23,7 @@ module Master
       CORE_SECTIONS = %w[
         master_identity master_meta_instruction master_constitution_absolute
         master_constitution_kernel master_priority master_output_format
-        master_medical_disclaimer master_special_disclaimer master_refusal_policy
+        master_dialogue_rubric master_medical_disclaimer master_special_disclaimer master_refusal_policy
       ].freeze
 
       # What an agent running under a role prompt carries ahead of that role:
@@ -43,6 +44,7 @@ module Master
         add_constitution(sections, soul)
         add_priority(sections)
         add_output_format(sections)
+        add_dialogue_rubric(sections)
         add_contextual_sections(sections) if context == :full
         add_disclaimer(sections)
         add_refusal_policy(sections)
@@ -297,6 +299,13 @@ module Master
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "PromptBuilder.all_rules", severity: :cosmetic)
         []
+      end
+
+      def add_dialogue_rubric(sections)
+        block = DialogueRubric.prompt_block
+        sections["master_dialogue_rubric"] = block if block
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "PromptBuilder.add_dialogue_rubric", severity: :cosmetic)
       end
 
       def add_disclaimer(sections)
