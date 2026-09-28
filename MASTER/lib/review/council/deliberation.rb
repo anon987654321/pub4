@@ -118,9 +118,17 @@ module Master
         # because ideation and the semantic rules reach a model without passing
         # through here. This one still refuses early rather than spending
         # TOTAL_BUDGET_S discovering it per persona.
+        #
+        # Reachability includes subscription CLIs and local models, not just API
+        # keys. Keep this gate aligned with LLMDispatcher's own refusal check.
+        def self.reachable_for?(agent)
+          model = agent.respond_to?(:model) ? agent.model : nil
+          Master.llm_reachable?(model)
+        end
+
         def review(code, context: nil, personas: nil, image: nil)
           active = active_personas(personas)
-          return Result.err("council: no personas, or no provider key", category: :validation) if active.empty? || !Master.any_api_key_present?
+          return Result.err("council: no personas, or no provider reached", category: :validation) if active.empty? || !Deliberation.reachable_for?(@agent)
 
           # The gate answers before the panel is convened, not per persona.
           # Blocked here means the provider said "out of credit" recently
