@@ -134,6 +134,27 @@ class TestDependencyManager < Minitest::Test
     assert_match(%r{/\.master/bundler/[0-9a-f]{16}/global$}, bundle_env["BUNDLE_USER_CONFIG"])
   end
 
+  def test_activation_environment_reuses_the_sanitized_bundle_context
+    env = {
+      "PATH" => "/bin",
+      "BUNDLE_FROZEN" => "1",
+      "BUNDLE_PATH" => "/tmp/wrong-bundle",
+      "BUNDLE_WITHOUT" => "tts",
+      "BUNDLE_VERSION" => "system",
+    }
+    manager = MANAGER.new(root: @root, env:, out: StringIO.new, home: @root)
+
+    assert manager.activate_environment!
+
+    assert_equal File.join(@root, "Gemfile"), env["BUNDLE_GEMFILE"]
+    assert_match(%r{/\.master/bundler/[0-9a-f]{16}/app$}, env["BUNDLE_APP_CONFIG"])
+    assert_match(%r{/\.master/bundler/[0-9a-f]{16}/global$}, env["BUNDLE_USER_CONFIG"])
+    assert_nil env["BUNDLE_FROZEN"]
+    assert_nil env["BUNDLE_PATH"]
+    assert_nil env["BUNDLE_WITHOUT"]
+    assert_nil env["BUNDLE_VERSION"]
+  end
+
   def test_clean_bundle_does_not_install_or_touch_lock
     manager = fake_manager([[true, "The Gemfile's dependencies are satisfied", ""]])
     before = File.read(File.join(@root, "Gemfile.lock"))
