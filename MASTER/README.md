@@ -204,8 +204,7 @@ second fix loop. A crashed process therefore loses an attempt, not the mission: 
 process reclaims the expired lease and resumes the objective. During long model
 runs the supervisor renews the lease, and an unexpected in-process supervisor
 failure is restarted with bounded backoff before work is resumed.
-See [fix-supervision.md](docs/fix-supervision.md) for the lifecycle and recovery
-contract.
+The same lifecycle and recovery contract is executable in `Master::Fix::Mission` and `Master::Fix::Supervisor`; README is the human-facing reference.
 
 The intended invariant is simple: MASTER may be **healthy**, **degraded**, or
 **failed**, but an unavailable model, TTS worker, network path, or other optional
