@@ -123,7 +123,9 @@ class TestDependencyManager < Minitest::Test
     result = manager.ensure!
 
     assert result.success?
-    assert @commands.any? { |row| row.first.first(2) == ["/fake/gem", "install"] }
+    bundler_command = @commands.find { |row| row.first.first(2) == ["/fake/gem", "install"] }
+    refute_nil bundler_command
+    assert_equal @root, bundler_command[1]
     assert_equal ["/fake/bundle", "check"], @commands.last.first
   end
 
