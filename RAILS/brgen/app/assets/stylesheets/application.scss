@@ -7751,25 +7751,25 @@ body.vertical-messenger #messages {
 }
 
 body.vertical-messenger #messages article {
-  max-width: 82%;
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-card);
-  border: 1px solid transparent;
+  max-width: none;
+  width: 100%;
+  padding: var(--space-3) 0;
+  border: 0;
+  border-block-end: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+  color: var(--text);
+}
+
+body.vertical-messenger #messages article[data-from="self"],
+body.vertical-messenger #messages article[data-from="peer"] {
+  align-self: stretch;
+  background: transparent;
+  border-inline: 0;
 }
 
 body.vertical-messenger #messages article[data-from="self"] {
-  align-self: flex-end;
-  background: var(--msg-bubble-self);
-  color: var(--text);
-  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--msg-border));
-  border-bottom-right-radius: var(--radius-sm);
-}
-
-body.vertical-messenger #messages article[data-from="peer"] {
-  align-self: flex-start;
-  background: var(--msg-bubble-peer);
-  border-color: var(--msg-border);
-  border-bottom-left-radius: var(--radius-sm);
+  text-align: start;
 }
 
 /* Disappearing-thread signature: a bubble's own border visibly erodes as it
