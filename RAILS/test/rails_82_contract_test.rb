@@ -12,13 +12,13 @@ class Rails82ContractTest < Minitest::Test
     File.read(File.join(ROOT, path))
   end
 
-  test "all Rails apps stay on the same 8.1 framework-default baseline" do
+  test "all Rails apps stay on the same 8.2 framework-default baseline" do
     APPS.each do |app|
       source = read("#{app}/config/application.rb")
 
       assert_includes source, "config.load_defaults 8.2",
                       "#{app} drifted from the Rails 8.2 baseline"
-      refute_includes source, "config.load_defaults 8.0",
+      refute_includes source, "config.load_defaults 8.1",
                       "#{app} still carries the Rails 8.1 baseline"
     end
   end
@@ -114,12 +114,10 @@ class Rails82ContractTest < Minitest::Test
       assert_match(/PRAGMA\s+foreign_keys\s*=\s*ON/i, source, "#{path} never restores SQLite FK enforcement")
     end
   end
-end
 
-
-  test "every Rails Gemfile is pinned to the audited 8.2 source commit" do
+test "every Rails Gemfile is pinned to the audited 8.2 source commit" do
     RAILS_ROOTS.each do |root|
-      source = read("#{root}/Gemfile")
+      source = File.read(File.join(File.expand_path("..", ROOT), root, "Gemfile"))
       assert_includes source, 'gem "rails", github: "rails/rails", ref: "' + RAILS_REF + '"',
                       "#{root}/Gemfile drifted from the exact Rails edge pin"
     end
@@ -132,3 +130,5 @@ end
       assert_match(/^    rails \(8\.2\.0\.alpha\)$/m, source)
     end
   end
+
+end
