@@ -52,5 +52,8 @@ export default class extends Controller {
 
     const heading = this.steps[this.index]?.querySelector("h2, legend, [data-post-progressive-heading]")
     heading?.focus?.({ preventScroll: true })
+
+    const input = this.steps[this.index]?.querySelector("input[type='text'], textarea, [contenteditable='true']")
+    if (this.index === 1 && input && !input.value) input.focus({ preventScroll: true })
   }
 }
