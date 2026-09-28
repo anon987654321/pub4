@@ -27,4 +27,10 @@ class PostTest < ActiveSupport::TestCase
   test "reading_time_minutes is zero without body text" do
     assert_equal 0, Post.new(content: "<p> </p>").reading_time_minutes
   end
+
+  test "search returns no posts when the FTS table is absent" do
+    Post.connection.stub(:data_source_exists?, false) do
+      assert_empty Post.search("bergen")
+    end
+  end
 end
