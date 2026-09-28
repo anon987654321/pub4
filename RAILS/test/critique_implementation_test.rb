@@ -109,6 +109,13 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes importmap, 'pin "pub4/post_progressive"'
   end
 
+  def test_shared_post_card_does_not_silently_rescue_post_routes
+    card = read("shared/app/views/shared/_post_card.html.erb")
+
+    refute_includes card, "post_path(post) rescue nil"
+    assert_includes card, "respond_to?(:post_path)"
+  end
+
   def test_brgen_post_detail_renders_all_attached_media
     controller = read("brgen/app/controllers/posts_controller.rb")
     show = read("brgen/app/views/posts/show.html.erb")
