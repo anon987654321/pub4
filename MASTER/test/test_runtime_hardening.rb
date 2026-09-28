@@ -49,6 +49,16 @@ class RuntimeHardeningTest < Minitest::Test
     assert_match(/1 req\/min/, error.message)
   end
 
+  def test_circuit_breaker_classifies_provider_deadline_as_timeout
+    breaker = Master::Io::CircuitBreaker.new(budget_max: 0, req_max: 60)
+
+    result = breaker.call(0) { raise Timeout::Error, "300s deadline" }
+
+    assert_predicate result, :err?
+    assert_equal :timeout, result.category
+    assert_match(/deadline/, result.message)
+  end
+
   def test_circuit_breaker_registry_does_not_increment_unselected_model_bucket
     registry = Master::Io::CircuitBreakerRegistry.new(budget_max: 0, req_max: 1)
     model_a = registry.for("model-a")
@@ -198,6 +208,16 @@ class RuntimeHardeningTest < Minitest::Test
 
   # Both ids are OpenRouter slugs, and the pool offers a lane only with its key,
   # so the key stands in for the machine this routing would run on.
+  def test_council_reachability_uses_a_reachable_fallback_floor
+    agent = Object.new
+    agent.define_singleton_method(:model) { "missing-primary" }
+    router = Object.new
+    router.define_singleton_method(:pool) { |wait:| wait == false ? ["ollama:qwen3"] : [] }
+    agent.define_singleton_method(:model_router) { router }
+
+    assert Master::Review::Council::Deliberation.reachable_for?(agent)
+  end
+
   def test_model_router_uses_provider_health_to_avoid_unhealthy_primary
     saved = ENV["OPENROUTER_API_KEY"]
     ENV["OPENROUTER_API_KEY"] = "sk-or-v1-#{'a' * 64}"

@@ -43,7 +43,7 @@
     <% if @item.brand.present? %><%= tag.dt t("items.brand") %><%= tag.dd @item.brand %><% end %>
     <% if @item.price? %><%= tag.dt t("items.price") %><%= tag.dd number_to_currency(@item.price) %><% end %>
     <%= tag.dt t("items.worn") %><dd id="<%= dom_id(@item, :worn) %>"><%= t("items.worn_times", count: @item.times_worn.to_i) %></dd>
-    <% if @item.purchase_date? %><%= tag.dt t("items.purchased") %><dd><%= @item.purchase_date.strftime("%b %Y") %></dd><% end %>
+    <% if @item.purchase_date? %><%= tag.dt t("items.purchased") %><dd><%= l(@item.purchase_date, format: :month) %></dd><% end %>
   </dl>
 
   <% if @item.mood_effect.present? || @item.life_phase.present? %>

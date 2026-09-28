@@ -13,6 +13,7 @@ require_relative "llm_dispatcher/ruby_llm_sender"
 require_relative "llm_dispatcher/tool_registry"
 require_relative "llm_dispatcher/lane_silence"
 require_relative "llm_dispatcher/http_sender"
+require_relative "../cli/routing/availability_policy"
 
 module Master
   module Review
@@ -121,6 +122,7 @@ module Master
         @config, @cache, @circuit_breaker = deps.config, deps.cache, deps.circuit_breaker
         @tools, @bus, @system_prompt_proc = deps.tools, deps.bus, system_prompt
         @model_router = deps.model_router
+        @availability = Master::CLI::Routing::AvailabilityPolicy.new(root: Master::ROOT)
         @session = deps.session
         @tool_registry = load_tool_registry
       end
@@ -143,8 +145,10 @@ module Master
         @bus&.publish("llm:send", model: selected_model)
         cache_key = cache_key_for(messages.last[:content], messages[0...-1], selected_model, system, temperature)
         result = breaker_for(selected_model).call(estimate_cost(messages.last[:content], selected_model)) do
-          @cache.fetch(cache_key, selected_model) do
-            send_llm_request(selected_model, messages, system:, stream:, image:, temperature:, format:, &blk)
+          Timeout.timeout(@availability.dispatch_deadline_s) do
+            @cache.fetch(cache_key, selected_model) do
+              send_llm_request(selected_model, messages, system:, stream:, image:, temperature:, format:, &blk)
+            end
           end
         end
         settle(result, selected_model, started)

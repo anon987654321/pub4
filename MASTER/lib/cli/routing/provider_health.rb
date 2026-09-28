@@ -49,6 +49,38 @@ module Master
 
         def unhealthy?(model) = score(model) <= MIN_SCORE
 
+        def observed?(model)
+          !events_for(model.to_s).empty?
+        end
+
+        def age_seconds(model, now: @now.call)
+          event = latest_event(model)
+          return unless event
+
+          [now.to_f - event_time(event).to_f, 0.0].max
+        rescue StandardError
+          nil
+        end
+
+        def freshness(model, max_age_s:)
+          age = age_seconds(model, now: @now.call)
+          return :unknown unless age
+
+          age <= max_age_s.to_f ? :fresh : :stale
+        end
+
+        def fresh?(model, max_age_s:)
+          freshness(model, max_age_s:) == :fresh
+        end
+
+        def stale?(model, max_age_s:)
+          freshness(model, max_age_s:) == :stale
+        end
+
+        def latest_event(model)
+          events_for(model.to_s).max_by { |event| event_time(event).to_f }
+        end
+
         def rank(models)
           Array(models).sort_by { |model| -score(model) }
         end
@@ -62,6 +94,12 @@ module Master
         # one read no matter how many models it scores.
         def events_for(model_id)
           all_events.select { |event| event["model"].to_s == model_id }
+        end
+
+        def event_time(event)
+          Time.iso8601(event.fetch("ts"))
+        rescue ArgumentError, KeyError, TypeError
+          Time.at(0).utc
         end
 
         def all_events

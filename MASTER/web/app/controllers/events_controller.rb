@@ -2,8 +2,8 @@
 
 require Rails.root.join("../lib/device/wake_signal").to_s
 
-# EventsController — SSE stream of EventBus events to the orb visualizer, at
-# GET /events/stream. It subscribes to every bus topic through `**` and writes each event
+# EventsController — bounded SSE stream of EventBus events to the orb visualizer, at
+# GET /events/stream. It subscribes only to the face's declared signal families and writes each event
 # as an anonymous `data:` line; the orb reads them with
 # `new EventSource("/events/stream")` and `onmessage`.
 #
@@ -17,9 +17,46 @@ class EventsController < ApplicationController
   QUEUE_CAP          = 256
   KEEPALIVE_EVERY_S  = 15.0  # SSE comment cadence — long enough to be silent, short enough to keep proxies happy
   MAX_STREAM_S       = 600   # hard cap — 10 minute stream ceiling
-  # `**`, not `*`: the bus compiles `*` to colon-free names, so a single star
-  # streamed `error` and dropped every `tool:`, `pipeline:` and `tts:` event.
-  STREAM_PATTERN = "**"
+  # The face needs a bounded set of signals, not the whole bus. Keeping this
+  # list surface-specific avoids sending unrelated/background events to every
+  # open browser.
+  STREAM_PATTERNS = %w[
+    council:**
+    pipeline:**
+    llm:**
+    agent:**
+    tool:**
+    scan:**
+    sweep:**
+    audit:**
+    memory
+    memory:**
+    retriev:**
+    context
+    context:**
+    ctx:**
+    compaction:**
+    phantom:**
+    route:**
+    infer:**
+    skills:**
+    codebase:**
+    fix_loop:**
+    rule_loop:**
+    tts:**
+    voice:**
+    link
+    link:**
+    master:**
+    error
+    rollback
+    failed
+    failure
+    done
+    complete
+    success
+    response
+  ].freeze
   VISITOR_SAFE_PREFIX = %r{\A(?:tts:|pipeline:stage|council:start|link)}i.freeze
 
   def stream
@@ -35,7 +72,7 @@ class EventsController < ApplicationController
     bus      = container[:bus]
     mine     = conversation_id
     received = SizedQueue.new(QUEUE_CAP)
-    sub      = bus.subscribe(STREAM_PATTERN) { |ev| offer(received, ev, visitor_tier:, mine:) }
+    subs     = STREAM_PATTERNS.map { |pattern| bus.subscribe(pattern) { |ev| offer(received, ev, visitor_tier:, mine:) } }
     deadline       = Time.now + MAX_STREAM_S
     next_keepalive = Time.now + KEEPALIVE_EVERY_S
     stream_started_at = Time.now.to_f
@@ -61,7 +98,7 @@ class EventsController < ApplicationController
   rescue IOError, ActionController::Live::ClientDisconnected
     # Client went away — normal. Stop streaming.
   ensure
-    sub&.call
+    subs&.each { |sub| sub.call rescue nil }
     response.stream.close rescue nil
   end
 

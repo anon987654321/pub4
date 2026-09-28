@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "monitor"
+require "timeout"
 require "fileutils"
 require "yaml"
 require_relative "atomic_write"
@@ -72,6 +73,8 @@ module Master
         result = blk.call
         on_success
         result
+      rescue Timeout::Error => e
+        Result.err("provider call exceeded its deadline: #{e.message}", category: :timeout)
       rescue RubyLLM::RateLimitError => e
         # API rate limit is infrastructure noise — don't open the circuit.
         Result.err("rate_limit: #{e.message}", category: :rate_limit)

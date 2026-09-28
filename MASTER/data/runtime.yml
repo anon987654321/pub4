@@ -87,6 +87,15 @@ cognitive_spine:
     - telemetry_only_state
     - ui_owned_runtime_state
     - stale_namespace_compatibility_shims
+availability:
+  health_freshness_s: 120
+  dispatch_deadline_s: 300
+  ladder_floor:
+    interactive: L2
+    batch_scan: L1
+  degrade:
+    council: [7, 3, 1]
+
 collaboration:
   id: collaboration_protocol
   tier: ops
