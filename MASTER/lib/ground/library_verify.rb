@@ -36,4 +36,3 @@ module Master
   end
 end
 
-require "shellwords"
