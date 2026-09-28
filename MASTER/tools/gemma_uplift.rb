@@ -46,7 +46,7 @@ module Master
       end
 
       def score_file(path)
-        File.foreach(path) do |line>
+        File.foreach(path) do |line|
           next if line.strip.empty?
           record = JSON.parse(line)
           puts JSON.generate(Master::AI::Uplift::Benchmark.score(record))
