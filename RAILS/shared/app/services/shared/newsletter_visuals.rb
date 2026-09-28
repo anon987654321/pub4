@@ -21,7 +21,6 @@ module Shared
 
     REPLICATE_MODEL = ENV.fetch("NEWSLETTER_REPLICATE_MODEL", "black-forest-labs/flux-2-max")
     POSTPRO_PRESET = ENV.fetch("NEWSLETTER_POSTPRO_PRESET", "magic_hour")
-    POSTPRO_STOCK = ENV.fetch("NEWSLETTER_POSTPRO_STOCK", "kodak_portra")
     ARTWORK_COUNT = ENV.fetch("NEWSLETTER_ARTWORK_COUNT", "4").to_i.clamp(0, 6)
 
     class << self
@@ -95,7 +94,7 @@ module Shared
         ok = system(
           RbConfig.ruby, script,
           "--input", input, "--output", output,
-          "--stock", POSTPRO_STOCK, "--preset", POSTPRO_PRESET,
+          "--preset", POSTPRO_PRESET,
           out: File::NULL, err: File::NULL
         )
         return publish_file(output, "postpro") if ok && File.exist?(output)
