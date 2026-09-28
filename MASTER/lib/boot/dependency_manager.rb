@@ -208,6 +208,21 @@ module Master
         { ok: false, changed: false, command: nil, output: e.full_message }
       end
 
+      # Apply the same sanitized Bundler context used by ensure!/install! to the
+      # current process before requiring bundler/setup. Without this, a standalone
+      # bin/cli can validate one bundle context and activate another, producing the
+      # misleading "git source is not yet checked out" error after a successful install.
+      def activate_environment!
+        bundle_env.each do |key, value|
+          if value.nil?
+            @env.delete(key)
+          else
+            @env[key] = value
+          end
+        end
+        true
+      end
+
       def status
         bundler_version = locked_bundler_version
         bundle_ok, bundle_output, = run_bundle("check")
