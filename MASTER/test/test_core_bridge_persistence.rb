@@ -7,7 +7,7 @@ require "tmpdir"
 class CoreBridgePersistenceTest < Minitest::Test
   class ScriptedModel
     def initialize(*effects) = @effects = effects
-    def propose(*) = @effects.shift || Master::Core::Effect.done("done")
+    def propose(_context, verbs:, **) = @effects.shift || Master::Core::Effect.done("done")
   end
 
   def test_incomplete_fold_remains_the_same_mission_for_the_next_attempt
