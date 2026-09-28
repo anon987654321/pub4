@@ -47,6 +47,26 @@ class StandingOrdersTest < Minitest::Test
     @orders.instance_variable_set(:@orders, previous)
   end
 
+  def test_availability_posture_reports_degraded_as_ok_so_it_keeps_waking
+    agent = Object.new
+    router = Object.new
+    router.define_singleton_method(:pool) { |wait:| [] }
+    agent.define_singleton_method(:model_router) { router }
+    bus = Struct.new(:events) do
+      def publish(name, **payload)
+        events << [name, payload]
+      end
+    end.new([])
+
+    callable = Master::Ground::Orders::AvailabilityPosture.new(container: { agent:, root: Master::ROOT, bus: })
+    result = callable.call
+
+    assert_predicate result, :ok?
+    assert_equal false, result.value!.fetch(:reachable)
+    assert_equal true, result.value!.fetch(:degraded)
+    assert bus.events.any? { |event| event.first == "availability:posture" && event.last[:degraded] }
+  end
+
   def test_availability_posture_order_reports_ladder_levels_without_mutation
     agent = Object.new
     router = Object.new
