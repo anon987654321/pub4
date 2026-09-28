@@ -13,6 +13,7 @@ module Master
           usage:
             ruby MASTER/tools/gemma_uplift.rb contract
             ruby MASTER/tools/gemma_uplift.rb manifest
+            ruby MASTER/tools/gemma_uplift.rb benchmark
             ruby MASTER/tools/gemma_uplift.rb score TRAJECTORIES.ndjson
             ruby MASTER/tools/gemma_uplift.rb record TRAJECTORY.json
             ruby MASTER/tools/gemma_uplift.rb export TRAJECTORIES.ndjson OUTPUT.ndjson
@@ -26,6 +27,8 @@ module Master
           puts Master::AI::OperatorContract.prompt
         when "manifest"
           puts JSON.pretty_generate(Master::AI::OperatorContract.manifest)
+        when "benchmark"
+          puts JSON.pretty_generate(Master::AI::Uplift::Benchmark.suite)
         when "score"
           score_file(argv.fetch(0))
         when "record"
@@ -35,6 +38,11 @@ module Master
           output = argv.fetch(1)
           count = Master::AI::Uplift::Dataset.export(input:, output:)
           puts "gemma0: exported #{count} verified trajectory(s)"
+        when "preferences"
+          input = argv.fetch(0)
+          output = argv.fetch(1)
+          count = Master::AI::Uplift::Dataset.export_preferences(input:, output:)
+          puts "gemma0: exported #{count} preference pair(s)"
         else
           puts usage
           return false
