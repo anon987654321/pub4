@@ -5,23 +5,25 @@ require "minitest/autorun"
 class RailsUpgradeContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   APPS = %w[brgen amber bsdports eritel].freeze
+  ROOTS = APPS + ["../MASTER/web"]
+  RAILS_REF = "c9e85dbe297e248dd2f217d04f84a94881ac046a"
 
   def read(path)
     File.read(File.join(ROOT, path))
   end
 
-  test "all Rails apps stay on the same 8.1 framework-default baseline" do
+  test "all Rails apps stay on the same 8.2 framework-default baseline" do
     APPS.each do |app|
       source = read("#{app}/config/application.rb")
 
-      assert_includes source, "config.load_defaults 8.1",
-                      "#{app} drifted from the Rails 8.1 baseline"
-      refute_includes source, "config.load_defaults 8.0",
+      assert_includes source, "config.load_defaults 8.2",
+                      "#{app} drifted from the Rails 8.2 baseline"
+      refute_includes source, "config.load_defaults 8.1",
                       "#{app} still carries the Rails 8.0 baseline"
     end
   end
 
-  test "no app overrides HTML+ERB back to Erubi before the 8.2 cutover" do
+  test "no app overrides HTML+ERB back to Erubi after the 8.2 cutover" do
     APPS.each do |app|
       source = Dir.glob(File.join(ROOT, app, "config/**/*.rb")).map { |path| File.read(path) }.join("\n")
 
@@ -112,4 +114,36 @@ class RailsUpgradeContractTest < Minitest::Test
       assert_match(/PRAGMA\s+foreign_keys\s*=\s*ON/i, source, "#{path} never restores SQLite FK enforcement")
     end
   end
+
+  test "every Rails Gemfile pins the audited 8.2 source" do
+    ROOTS.each do |root|
+      source = File.read(File.expand_path(File.join(root, "Gemfile"), ROOT))
+      match = source.match(/gem "rails", github: "([^"]+)", ref: "([^"]+)"/)
+      assert match, "#{root}/Gemfile must pin Rails from the audited git source"
+      assert_equal "rails/rails", match[1]
+      assert_equal RAILS_REF, match[2]
+    end
+  end
+
+  test "every locked application names the audited 8.2 source revision" do
+    %w[brgen amber bsdports].each do |app|
+      source = read("#{app}/Gemfile.lock")
+      assert_match(/^  remote: https:\/\/github.com\/rails\/rails\.git$/m, source)
+      assert_match(/^  revision: #{Regexp.escape(RAILS_REF)}$/m, source)
+      assert_match(/^    rails \(8\.2\.0\.alpha\)$/m, source)
+      assert_includes source, "    herb (0.10.2)"
+      assert_includes source, "    ractor-dispatch (0.3.0)"
+      assert_includes source, "    marcel (2.1.0)"
+      assert_includes source, "    globalid (1.4.0)"
+    end
+
+    master = File.read(File.expand_path("../MASTER/web/Gemfile.lock", ROOT))
+    assert_match(/^  revision: #{Regexp.escape(RAILS_REF)}$/m, master)
+    assert_match(/^    rails \(8\.2\.0\.alpha\)$/m, master)
+    assert_includes master, "    herb (0.10.2)"
+    assert_includes master, "    ractor-dispatch (0.3.0)"
+    assert_includes master, "    marcel (2.1.0)"
+    assert_includes master, "    globalid (1.4.0)"
+  end
+
 end
