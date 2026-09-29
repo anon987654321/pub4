@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../../trace/self_evolution_trigger"
+require_relative "../trace/self_evolution_trigger"
 
 module Master
   module CLI

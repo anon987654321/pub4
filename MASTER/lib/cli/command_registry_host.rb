@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../../operator/capability_graph"
+require_relative "../operator/capability_graph"
 
 module Master
   module CLI

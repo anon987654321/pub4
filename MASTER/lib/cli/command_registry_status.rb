@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require "time"
-require_relative "../../trace/log"
-require_relative "../presentation_contract"
+require_relative "../trace/log"
+require_relative "presentation_contract"
 
 module Master
   module CLI

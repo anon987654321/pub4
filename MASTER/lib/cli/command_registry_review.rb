@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative "../tribunal_feedback"
-require_relative "../../review/council/critique"
+require_relative "tribunal_feedback"
+require_relative "../review/council/critique"
 
 module Master
   module CLI
