@@ -27,7 +27,7 @@ class TestChitchatRouting < Minitest::Test
   def test_chitchatting_covers_small_talk_and_social_replies
     router = Master::CLI::Routing::ModelRouter.new(config: FakeConfig.new, root: Master::ROOT)
 
-    %w[thanks "thank you" "nice to meet you" "good night"].each do |phrase|
+    ["thanks", "thank you", "nice to meet you", "good night"].each do |phrase|
       assert_equal :chitchat, router.classify_intent(phrase), phrase
     end
     assert_equal :chitchat, router.classify_intent("what's up?")
