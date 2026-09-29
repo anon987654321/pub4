@@ -4,6 +4,7 @@ require_relative "test_helper"
 
 class TestDependencyContracts < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
+  REPO = File.expand_path("../..", __dir__)
 
   def test_reek_dependency_is_declared_for_reek_rule
     gemfile = File.read(File.join(ROOT, "Gemfile"))
@@ -32,7 +33,5 @@ class TestDependencyContracts < Minitest::Test
     refute_empty pins, "no .ruby-version found — this test would pass having measured nothing"
     assert_equal 1, pins.values.uniq.size, "the pin disagrees with itself: #{pins.inspect}"
   end
-
-  private
 
 end
