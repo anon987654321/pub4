@@ -35,7 +35,7 @@ module Master
       def load_destructive_commands
         return FALLBACK unless File.exist?(PATTERNS_PATH)
 
-        data = Master.load_yaml(PATTERNS_PATH)
+        data = Master.patterns_config
         list = Array(data&.dig("infer", "destructive")).map(&:to_s).reject(&:empty?)
         raise "destructive command policy is empty: #{PATTERNS_PATH}" if list.empty?
 
