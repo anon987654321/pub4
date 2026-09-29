@@ -37,12 +37,12 @@ module Operator
           next
         end
 
-        if (match = line.match(/^## `(.+)`s*$/))
+        if (match = line.match(/^## `(.+)`\s*$/))
           current = match[1]
           next
         end
 
-        next unless current && (match = line.match(/^(`{3,})(?:[A-Za-z0-9_-]+)?s*$/))
+        next unless current && (match = line.match(/^(`{3,})(?:[A-Za-z0-9_-]+)?\s*$/))
         fence = match[1]
         body = []
       end
