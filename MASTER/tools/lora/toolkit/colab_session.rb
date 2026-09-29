@@ -16,7 +16,7 @@
 # profile in render_config.rb applies unchanged: fp16 because Turing has no
 # bf16, quantised because 16 GB will not hold FLUX.1-dev otherwise.
 #
-# Invoked as:  ruby MASTER/tools/lora/_toolkit/colab_session.rb <subject>
+# Invoked as:  ruby MASTER/tools/lora/toolkit/colab_session.rb <subject>
 # Expects:     HF_TOKEN in the environment, put there by the notebook
 
 require "fileutils"
