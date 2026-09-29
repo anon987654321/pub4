@@ -91,7 +91,7 @@ module Operator
     # A test is a file under a test/ directory, not every file whose
     # name reads like one. The name alone was the first instrument and it was
     # wrong in both directions: law/ rules are named for what they detect, so
-    # squint_test.rb read as a test (exempted by hand), MASTER/tools/test_naming.rb
+    # squint_test.rb read as a test (exempted by hand), MASTER/test/test/tools/test_naming.rb
     # is the lint over test names and read as an orphan test forever, and
     # lib/review/scan/self_test.rb read as a test that happened to be covered by
     # a bin/check glob — a false positive masked by a coincidence, which is the
