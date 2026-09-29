@@ -25,8 +25,7 @@ LORA_ROOT="$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)"
 REPO_ROOT="$(CDPATH= cd -- "$SCRIPT_DIR/../../.." && pwd)"
 
 if [ -z "${SUBJECT_DIR:-}" ]; then
-  echo "error: SUBJECT_DIR is not set — run a subject's wrapper, e.g." >&2
-  echo "       MASTER/tools/lora/ragnhild/lora --all" >&2
+  echo "error: SUBJECT_DIR is not set — run MASTER/tools/lora/lora SUBJECT --all" >&2
   exit 1
 fi
 SUBJECT_DIR="$(CDPATH= cd -- "$SUBJECT_DIR" && pwd)"
