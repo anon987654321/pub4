@@ -3,7 +3,7 @@
 require "minitest/autorun"
 require "tmpdir"
 require_relative "gate_fixture"
-require_relative "../../gates/lib/source/scale_ratchet"
+require_relative "../../gates/lib/scale_ratchet"
 
 # A corner nothing else in the family has, against a recorded ceiling.
 #
