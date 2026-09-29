@@ -78,8 +78,7 @@ module Master
       end
 
       def models_failover_cfg
-        path = File.join(Master::ROOT, "data", "models.yml")
-        Master.load_yaml(path).fetch("failover", {})
+        Master.models_config.fetch("failover", {})
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "ModelSkipCache.models_failover_cfg")
         {}
