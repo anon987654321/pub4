@@ -60,8 +60,8 @@ def gate_steps
       runner = File.join(ROOT, "..", "MASTER", "gates", "runner.rb")
       next [BLOCKED, "MASTER/gates/runner.rb is missing"] unless File.file?(runner)
 
-      # GATE_AUTOFIX=0 to match the workflow: a pre-merge check that repairs the
-      # tree while measuring it is measuring a tree that does not exist yet.
+      # A pre-merge check that repairs the tree while measuring it is measuring a
+      # tree that does not exist yet, so this stays explicitly read-only.
       ok = system({ "GATE_AUTOFIX" => "0" }, *RUBY, runner, "layout_suite")
       ok ? [PASSED, nil] : [FAILED, "layout_suite reported failures"]
     }),
@@ -129,5 +129,5 @@ if blocked.any?
   exit 3
 end
 
-puts "premerge: #{passed} step(s) passed — this is what CI would have run"
+puts "premerge: #{passed} step(s) passed — local premerge checks are green"
 exit 0
