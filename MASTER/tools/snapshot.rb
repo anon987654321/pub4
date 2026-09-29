@@ -226,7 +226,7 @@ module Operator
   end
 end
 
-exit Operator::Snapshot.run(ARGV.empty? ? Operator::Snapshot::TREES : ARGV) if $PROGRAM_NAME == __FILE__
+
 
 
 require "fileutils"
@@ -294,18 +294,20 @@ end
 
 
 
-options = {}
-OptionParser.new do |opts|
-  opts.banner = "Usage: ruby snapshot.rb [--to DIR] SNAPSHOT.md..."
-  opts.on("--to DIR") { |dir| options[:root] = dir }
-end.parse!(ARGV)
-
-abort "snapshot extract: give at least one snapshot" if ARGV.empty?
-root = File.expand_path(options.fetch(:root, Dir.mktmpdir("master-snapshot-")))
-FileUtils.mkdir_p(root)
-
-count = ARGV.sum do |path|
-  Operator::SnapshotExtract.write(Operator::SnapshotExtract.parse(path), root)
+if $PROGRAM_NAME == __FILE__
+  if ARGV.first == "--extract" || ARGV.first == "--to" || ARGV.any? { |arg| arg.end_with?(".md") && File.file?(arg) }
+    ARGV.shift if ARGV.first == "--extract"
+    options = {}
+    OptionParser.new do |opts|
+      opts.banner = "Usage: ruby snapshot.rb --extract [--to DIR] SNAPSHOT.md..."
+      opts.on("--to DIR") { |dir| options[:root] = dir }
+    end.parse!(ARGV)
+    abort "snapshot extract: give at least one snapshot" if ARGV.empty?
+    root = File.expand_path(options.fetch(:root, Dir.mktmpdir("master-snapshot-")))
+    FileUtils.mkdir_p(root)
+    count = ARGV.sum { |path| Operator::SnapshotExtract.write(Operator::SnapshotExtract.parse(path), root) }
+    puts "snapshot0: rehydrated #{count} text file(s) into #{root}"
+  else
+    exit Operator::Snapshot.run(ARGV.empty? ? Operator::Snapshot::TREES : ARGV)
+  end
 end
-
-puts "snapshot0: rehydrated #{count} text file(s) into #{root}"
