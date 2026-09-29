@@ -1,6 +1,8 @@
 ## Completed in the 2026-09-28 backlog convergence pass
 ## Completed in the 2026-09-29 KISS convergence pass
 
+- Removed the orphaned GitHub Actions mirror layer: the hosted workflow files are gone, `RAILS/test/premerge_mirrors_ci_test.rb` and workflow-specific dependency checks are gone, and `MASTER/bin/ci` plus `RAILS/bin/premerge` now describe only the local/vm23 verification path.
+
 - Boot no longer runs the full constitutional self-test on every startup. `MASTER_BOOT_SELF_TEST=1` is an explicit diagnostic; `rake selftest`, the heartbeat job and the `/fix` verification path retain the actual self-audit instead of duplicating it in critical boot.
 - `SINGULARITY` now owns rule/deploy identity. Cross-file top-level YAML registry duplication remains enforced by the separate `lint:data_singularity` gate, so generic keys such as `dimensions` cannot turn an unrelated registry into a boot failure.
 - `models.yml`, `patterns.yml` and `soul.yml` each have one shared MASTER reader; their consumers reuse `Master.models_config`, `Master.patterns_config` and `Master.soul_config`. Redundant accessor memoization and reflective collaborator access were removed where the existing APIs already exposed the needed state.
@@ -28,7 +30,7 @@ A finding is a hypothesis. Historical dated sections below are evidence records,
 - Static marketplace safeguards are already present: Dintero checkout/split/refund contracts, persisted split contracts, ACTIVE seller gates, replay/schema tests, Stripe fail-closed payout behavior and affiliate disclosure/sponsored-link contracts. Production enablement still requires real staging evidence.
 - The rendered/browser, MASTER three-tree /fix, vm23/OpenBSD, Termux/Edge TTS, payment-provider staging, Dilla/audio and final snapshot items remain evidence gates because their truth depends on a watched runtime, real credentials, hardware, or the final checkout. They are not marked green by source inspection.
 - The hosted repository currently exposes `main` as the authoritative branch surface; older `origin/*` names may remain in an existing checkout until `git fetch --prune origin`. Do not treat stale remote-tracking refs as live branches or unfinished work.
-- Hosted GitHub Actions are not the verification path. Manual execution remains the intended release proof.
+- GitHub Actions workflows are not part of the repository verification surface. Manual local and vm23 execution remains the intended release proof.
 
 ## Current plan — ordered 2026-09-29
 
