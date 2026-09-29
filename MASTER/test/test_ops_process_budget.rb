@@ -25,6 +25,16 @@ class ProcessBudgetSpec < Minitest::Test
     end
   end
 
+  def test_loop_slot_uses_process_budget_limit
+    with_clean_loop_env do
+      ENV["MASTER_AUTOFIX"] = "1"
+      ENV["MASTER_WATCHER"] = "1"
+      Master::Ops::ProcessBudget.stub(:max_active_loops, 2) do
+        assert Master::Ops::LoopSlot.valid?
+      end
+    end
+  end
+
   def test_process_budget_rejects_multiple_active_slots
     with_clean_loop_env do
       ENV["MASTER_AUTOFIX"] = "1"
