@@ -265,20 +265,29 @@ module Operator
   end
 end
 
+
 if $PROGRAM_NAME == __FILE__
-  report = Operator::DocNumbers.run
-  count = report[:findings].values.sum(&:size)
-
-  if ARGV.include?("--json")
-    puts JSON.pretty_generate(report)
-  else
-    report[:findings].each do |doc, rows|
-      puts doc
-      rows.each { |row| puts "  #{row['value'].ljust(9)} owned by #{row['tokens'].join(', ')}" }
+  if ARGV.delete("--numbers")
+    report = Operator::DocNumbers.run
+    count = report[:findings].values.sum(&:size)
+    if ARGV.include?("--json")
+      puts JSON.pretty_generate(report)
+    else
+      report[:findings].each do |doc, rows|
+        puts doc
+        rows.each { |row| puts "  #{row['value'].ljust(9)} owned by #{row['tokens'].join(', ')}" }
+      end
+      puts
+      puts "#{report[:values]} token values checked across #{report[:docs]} documents, #{count} untraceable"
     end
-    puts
-    puts "#{report[:values]} token values checked across #{report[:docs]} documents, #{count} untraceable"
+    exit(count.zero? ? 0 : 1)
+  else
+    report = Operator::DocCitations.run
+    if ARGV.include?("--json")
+      puts JSON.pretty_generate(report)
+    else
+      puts JSON.pretty_generate(report)
+    end
+    exit(report.fetch("findings").empty? ? 0 : 1)
   end
-
-  exit(count.zero? ? 0 : 1)
 end
