@@ -15,6 +15,8 @@
 # go out — the binding half: the conduct rules that govern how to work, what the
 # gate can actually block on, and how much of the law is unmeasured right now.
 
+require_relative "../lib/fix/protocol"
+
 module Operator
   module AgentContext
     MASTER_DIR = File.expand_path("..", __dir__)
@@ -85,6 +87,32 @@ module Operator
     def shell_contract
       load_master
       Master::AI::OperatorContract.prompt.lines.map { |line| "  #{line.rstrip}" }
+    end
+
+    # Canonical context for an external model asked to execute /fix.
+    def fix_context(target: REPO_ROOT, full: false)
+      load_master
+      target = File.expand_path(target, Dir.pwd)
+      Master::Fix::Protocol.context(root: REPO_ROOT, target:, full:)
+    rescue StandardError => e
+      "MASTER /fix context unavailable: #{e.class}: #{e.message}"
+    end
+
+    def fix_context_args(argv)
+      marker = argv.index("--fix-context")
+      return unless marker
+
+      target = REPO_ROOT
+      full = false
+      argv[(marker + 1)..].to_a.each do |arg|
+        case arg
+        when "--full"
+          full = true
+        else
+          target = File.expand_path(arg, Dir.pwd) if !arg.start_with?("--") && target == REPO_ROOT
+        end
+      end
+      [target, full]
     end
 
     def tree_args(argv)
@@ -183,7 +211,10 @@ module Operator
 end
 
 if $PROGRAM_NAME == __FILE__
-  if (options = Operator::AgentContext.tree_args(ARGV))
+  if (options = Operator::AgentContext.fix_context_args(ARGV))
+    target, full = options
+    puts Operator::AgentContext.fix_context(target:, full:)
+  elsif (options = Operator::AgentContext.tree_args(ARGV))
     root, depth, max_entries = options
     puts Operator::AgentContext.render_tree(root:, max_depth: depth, max_entries:)
   else

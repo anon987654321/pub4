@@ -56,6 +56,8 @@ the result and repeats until the tree converges, stops improving, or reaches a
 state MASTER may not settle alone. `/scan` remains only as a private
 compatibility alias for legacy gates; it is not a separate public operation.
 
+`/fix` also has a canonical executable procedure in `Master::Fix::Protocol`. Do not infer the repair lifecycle from prose: run `MASTER/bin/master --fix-context <target>` when handing the operation to an external LLM, and treat its live corpus, rule metadata, repair strategies and terminal states as the task context.
+
 Five things that will bite you, in order:
 
 1. The checkout is shared. Commit path-scoped with `git commit -- <paths>`, and

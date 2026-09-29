@@ -15,6 +15,7 @@ module Master
             rule_violations = violations.group_by { |v| v[:rule].to_s }
             ordered = @rule_order.ordered(violation_counts: @violation_counts)
             runnable = ordered.select { |rule| rule_violations.key?(rule.id.to_s) }
+            runnable += semantic_rule_adapters(rule_violations, ordered)
             if runnable.empty? && rule_violations.any?
               Master::Trace::Dmesg.status(
                 "fix0",
@@ -75,10 +76,18 @@ module Master
 
           def run_rule_group(group:, files:, pass:, rule_violations:, council: nil)
             unless disjoint_rule_files?(group, rule_violations)
-              return group.map { |rule| [rule, run_rule_once(rule, files, pass, council:)] }
+              return group.map do |rule|
+                [rule, run_rule_once(rule, files, pass, council:,
+                                     external_violations: rule_violations[rule.id.to_s])]
+              end
             end
 
-            group.map { |rule| Thread.new { [rule, run_rule_once(rule, files, pass, council:)] } }.map(&:value)
+            group.map do |rule|
+              Thread.new do
+                [rule, run_rule_once(rule, files, pass, council:,
+                                     external_violations: rule_violations[rule.id.to_s])]
+              end
+            end.map(&:value)
           end
 
           # What the council picked this pass, as repairs to weigh rather than
@@ -94,13 +103,40 @@ module Master
               "change that preserves what the code means; ignore any that does neither.\n#{picks.join("\n")}"
           end
 
-          def run_rule_once(rule, files, pass, council: nil)
+          SemanticFixRule = Data.define(:id, :severity, :law) do
+            def semantic? = true
+            def practice = nil
+            def ask = law.ask
+            def fix = law.fix
+            def contract_entry = law.contract_entry
+          end
+
+          def semantic_rule_adapters(rule_violations, ordered)
+            known = ordered.map { |rule| rule.id.to_s }.to_set
+            require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
+            ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
+            rule_violations.keys.reject { |id| known.include?(id.to_s) }.filter_map do |id|
+              law = ::Law.rules[id.to_s]
+              next unless law&.semantic?
+              SemanticFixRule.new(id: id.to_s, severity: law.severity, law:)
+            end
+          rescue StandardError => e
+            Master::Ground::Swallow.log(e, context: "fix_loop.semantic_rule_adapters", event_bus: @bus)
+            []
+          end
+
+          def run_rule_once(rule, files, pass, council: nil, external_violations: nil)
             rl = RuleLoop.new(rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus,
                               learnings: @learnings, committer: @committer,
                               visual_custody: @visual_pass&.custody)
             rl.injected_preamble = [@preamble, council_preamble(council)].compact.join("\n\n")
             @bus&.publish("fix_loop:tier2_quality_route", pass:, rule: rule.id) if @rule_order.tier2?(rule.id)
-            rl.run_once(files)
+            normalized = Array(external_violations).map do |violation|
+              file = violation[:file].to_s
+              absolute = file.start_with?("/") ? file : File.expand_path(file, @root)
+              Violation.from_finding(violation.to_h, file: absolute)
+            end
+            rl.run_once(files, external_violations: normalized.empty? ? nil : normalized)
           end
 
           def disjoint_rule_files?(rules, rule_violations)
