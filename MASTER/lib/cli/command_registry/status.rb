@@ -2,6 +2,7 @@
 
 require "time"
 require_relative "../../trace/log"
+require_relative "../presentation_contract"
 
 module Master
   module CLI
@@ -42,14 +43,10 @@ module Master
       end
 
       def render_status_lines(d)
-        lines = ["master0: #{Master::CLI::RuntimeMode.summary(config: d[:config])}", git_line(d)]
-        lines << "service0: master #{d[:svc][:state]}" if d.dig(:svc, :state)
-        lines << "fix0: background #{d[:bg]}, autofix #{d[:af]}" if d[:bg]
-        lines << "review0: last stage #{d[:stage]}#{d[:verdict]}" if d[:stage]
-        lines << "bundle0: #{d[:bndl]}" if d[:bndl]
-        Array(d[:failures]).each { |e| lines << "trace0: #{e}" }
-        Array(d[:rsi]).each { |row| lines << "learn0: #{format_opportunity(row)}" }
-        lines.compact
+        Master::CLI::PresentationContract.status_lines(
+          d,
+          verbose: ENV["MASTER_CLI_VERBOSE"] == "1" || ENV["MASTER_CLI_TRACE"] == "1",
+        )
       end
 
       def git_line(d)

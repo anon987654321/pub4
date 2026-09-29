@@ -102,22 +102,17 @@ module Master
         true
       end
 
-      NL_DISPATCH = [
-        [/\A(?:hi|hello|hey|yo|good (?:morning|afternoon|evening))[\s!.?]*\z/i, :run_chitchat],
-        [/\A(?:again|repeat)(?:\s+(?:that|it))?[.!?]*\z/i, :repeat_last],
-        [/\b(?:do|run)\s+(?:that|it)\s+again\b/i, :repeat_last],
-        [/\bfocus\s+(?:mode|on|off)\b|\btoggle\s+focus\b/i, :toggle_focus],
-      ].freeze
-
-      DIRECT_SHELL_ATOM = /\A(?:pwd|whoami|date|uname(?:\s+-[[:alnum:]-]+)?|ls(?:\s+[[:alnum:]_./~*-]+)*|git\s+(?:status|branch(?:\s+--show-current)?|rev-parse\s+--show-toplevel))\z/i.freeze
-
       # An empty line does nothing, as in a shell: Enter never runs an action
       # the operator has not read.
       def handle_repl_line(line)
         stripped = line.strip
         return if stripped.empty?
-        NL_DISPATCH.each { |pat, meth| return send(meth) if stripped.match?(pat) }
-        return run_direct_shell(stripped) if direct_shell?(stripped)
+        case Master::CLI::OperatorGrammar.parse(stripped)&.kind
+        when :chitchat then return run_chitchat
+        when :repeat then return repeat_last
+        when :toggle_focus then return toggle_focus
+        when :direct_shell then return run_direct_shell(stripped)
+        end
 
         handled = dispatch_core_slash_command(stripped)
         return handled unless handled == :unhandled
@@ -159,7 +154,11 @@ module Master
         result = shell.call(command:)
         text = result.ok? ? result.value!.to_s : result.message.to_s
         puts @refs.renderer.render(text, mode: result.ok? ? :dim : :error)
-        @refs.session.add_message(role: :user, content: "$ #{command}\n#{text}")
+        @refs.session.add_message(
+          role: :user,
+          content: "$ #{command}\n#{text}",
+          layer: :execution,
+        )
       end
 
       def bang_shell
@@ -178,10 +177,6 @@ module Master
         @last_ok = result.ok?
         @exit_code = result.ok? ? 0 : 2
         puts @refs.renderer.render(text, mode: result.ok? ? :dim : :error)
-      end
-
-      def direct_shell?(command)
-        command.split(/\s+(?:&&|;)\s+/).all? { |part| DIRECT_SHELL_ATOM.match?(part) }
       end
 
       def repeat_last

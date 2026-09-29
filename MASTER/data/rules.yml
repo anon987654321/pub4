@@ -2192,7 +2192,7 @@ rules:
     severity: info
     autofix: add_trailing_commas
   - id: TYPOGRAPHIC_EXCELLENCE
-    source: Butterick's Practical Typography (Matthew Butterick)
+    source: Robert Bringhurst — The Elements of Typographic Style
     name: Typographic excellence in user-facing text
     tier: aesthetic
     severity: info
@@ -2205,8 +2205,8 @@ rules:
     severity: info
     autofix: true
   - id: TYPOGRAPHY_DISCIPLINE
-    source: Butterick's Practical Typography (Matthew Butterick)
-    name: Hierarchy via weight and brightness, not decoration
+    source: Robert Bringhurst — The Elements of Typographic Style
+    name: Hierarchy via measure, rhythm, proportion, and restrained emphasis
     tier: interface
     severity: info
     autofix: true
@@ -3130,6 +3130,27 @@ rules:
           Enable OpenType kern/liga/clig/onum/pnum on prose; oldstyle-nums in
           body, tabular-nums in tables; hyphens auto with 6/3/2 limits;
           orphans/widows 3. Reader is Design::Thresholds.micro_typography.
+      bringhurst:
+        authority: "The Elements of Typographic Style"
+        measure_ch: 66
+        body_leading: 1.5
+        heading_leading: 1.25
+        scale_ratio: 1.25
+        max_families: 2
+        max_weights: 3
+        paragraph_spacing_em: 0.75
+        first_line_indent_em: 1.5
+        indent_after_heading: false
+        indent_after_block: false
+        hanging_punctuation: true
+        optical_alignment: true
+        body_letter_spacing: false
+        all_caps_tracking_em: [0.05, 0.15]
+        body_numerals: oldstyle-nums
+        table_numerals: tabular-nums
+        quote_style: locale
+        norwegian_guillemets: true
+        principle: "Treat typography as a system of proportion, measure, rhythm, and hierarchy; decoration is never a substitute for structure."
       accessibility:
         normal_text_contrast: 7.0
         large_text_contrast: 4.5

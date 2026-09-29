@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../ai/orientation"
+require_relative "../../cli/context_layers"
 
 module Master
   module Review
@@ -135,7 +136,9 @@ module Master
         def conversation_context(max_messages: Agent::DEFAULT_MESSAGE_WINDOW_SIZE)
           messages = @session.messages
           return [] unless messages.respond_to?(:each)
-          messages.last(max_messages + 1)[0...-1] || []
+
+          visible = messages.select { |message| Master::CLI::ContextLayers.model_visible?(message[:layer]) }
+          visible.last(max_messages + 1)[0...-1] || []
         end
       end
     end

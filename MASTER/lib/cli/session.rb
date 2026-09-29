@@ -9,6 +9,7 @@ require_relative "session/result_display"
 require_relative "session/background_scan"
 require_relative "session/repl_flow"
 require_relative "session/bridge_run"
+require_relative "operator_grammar"
 
 require "open3"
 require "reline"
