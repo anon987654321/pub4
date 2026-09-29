@@ -626,7 +626,7 @@ end
     # A file that reopens a constant must not define its own path-implied one --
     # otherwise it is autoloadable and the ignore is hiding a naming mistake.
     #
-    # The whole nesting, not the basename: lib/review/scan/engines/path_filter.rb
+    # The whole nesting, not the basename: lib/review/scan/path_filter.rb
     # opens `module PathFilter` and the basename check called that autoloadable,
     # while Zeitwerk wants Scan::Engines::PathFilter and the file declares
     # Scan::PathFilter. `rake autoload` was red on a name this lint called clean.
