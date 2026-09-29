@@ -76,6 +76,8 @@ module Master
       return true if result.ok? && result.value!.healthy?
       reason = result.ok? ? result.value!.message : result.message
       warn("tts0: degraded — #{reason}")
+      blocker = Voice::Speech.edge_tts_blocker
+      warn("tts0: edge blocker — #{blocker}") unless blocker.to_s.empty?
       false
     end
 
