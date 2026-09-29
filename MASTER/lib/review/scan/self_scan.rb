@@ -74,7 +74,7 @@ module Master
           return @rules.size if @rules
           return @scanner.rules.size if @scanner.respond_to?(:rules)
 
-          Array(@scanner.instance_variable_get(:@rules)).size
+          0
         end
 
         def count_violations(pairs)
