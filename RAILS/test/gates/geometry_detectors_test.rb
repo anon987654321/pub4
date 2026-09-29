@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../../gates/lib/rendered/rendered_geometry"
+require_relative "../../gates/lib/rendered_geometry"
 require_relative "../../../OPENBSD/lib/gate_result"
 require_relative "gate_probe_harness"
 
