@@ -1,5 +1,4 @@
 AllCops:
-  TargetRubyVersion: 3.4
   NewCops: disable
   SuggestExtensions: false
   DisabledByDefault: true
