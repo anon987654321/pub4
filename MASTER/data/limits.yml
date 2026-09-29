@@ -278,6 +278,11 @@ validation:
   after_write: ruby -c lib/FILE.rb
   after_commit: ruby -e "require_relative 'lib/master'; puts 'ok'"
   scan_file: bundle exec ruby bin/cli scan lib/FILE.rb
+# Per-request server budget, read by ServerResponseBudgetGate over PageInventory's guest crawl.
+server_response_budget:
+  p95_ms: 1500
+  p95_bytes: 1048576
+
 dmesg:
   enabled: true
   style: openbsd
