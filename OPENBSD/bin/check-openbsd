@@ -28,7 +28,7 @@ failures << "ports" unless runner.run("ports", RUBY, "MASTER/gates/runner.rb", "
 # gate registry; dns_zones then adds the live query to our own nameserver.
 failures << "dns render" unless runner.run("dns render", RUBY, "OPENBSD/bin/render_dns.rb", "--check")
 # dns_zones is registered in MASTER/gates/gates.yml. It belongs here rather than
-# in check-rails: what it compares is OPENBSD/var/nsd/zones against what
+# in check-rails: what it compares is OPENBSD/dns/zones against what
 # bin/render_dns.rb generates, plus a live query to our own nameserver.
 failures << "dns_zones" unless runner.run("dns zones", RUBY, "MASTER/gates/runner.rb", "dns_zones", env: LIVE_ENV)
 failures << "deploy_smoke" unless runner.run("deploy smoke", RUBY, "OPENBSD/gates/deploy_smoke_gate.rb")
