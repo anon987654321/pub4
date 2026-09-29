@@ -9,7 +9,7 @@ require "open3"
 # top-level constants when it loads, so it loads in a child process rather than
 # in the suite's.
 class TestDillaSineStream < Minitest::Test
-  SINE_STREAM = File.expand_path("../dilla/lib/sine_stream.rb", __dir__)
+  SINE_STREAM = File.expand_path("../../tools/dilla/lib/sine_stream.rb", __dir__)
 
   def in_sine_stream(script, env: {})
     probe = "require #{SINE_STREAM.dump}\nrequire \"json\"\n#{script}"
