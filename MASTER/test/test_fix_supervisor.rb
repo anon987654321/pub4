@@ -162,4 +162,3 @@ class FixSupervisorTest < Minitest::Test
     end
   end
 end
-end
