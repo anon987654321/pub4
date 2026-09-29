@@ -2,7 +2,7 @@
 
 require_relative "tool_test_helper"
 require "tmpdir"
-require_relative "../replicate/lib/chain"
+require_relative "../../tools/replicate/lib/chain"
 
 # replicate refuses an option a model does not accept rather than letting the API
 # ignore it, because a request that "works" while silently dropping a setting is
