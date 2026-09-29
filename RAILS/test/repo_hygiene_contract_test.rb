@@ -169,6 +169,7 @@ class RepoHygieneContractTest < Minitest::Test
       MASTER/tools/device/
       MASTER/tools/Rakefile
       RAILS/shared/reference/
+      RAILS/visual_contract/
       RAILS/tools/
     ]
 
