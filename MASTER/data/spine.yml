@@ -694,7 +694,7 @@ pub4_source_ceilings:
   # the other, so the split has to be worth a named line here.
   # brgen/test/services/playlist_wiring_test.rb takes four playlist contracts
   # out of a bundle of forty (deploy_backlog_test 631 -> 557), and
-  # gates/support/design_metrics/type_checks.rb takes the five source checks
+  # gates/support/type_checks.rb takes the five source checks
   # that read a font declaration (design_metrics 462 -> 345). Both are one
   # subject, and both fold into nothing that exists.
   # 2373 -> 2374 for gates/support/chrome_process.rb, the third file
