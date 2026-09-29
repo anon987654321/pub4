@@ -3,8 +3,6 @@
 require_relative "test_helper"
 require "master"
 
-# frozen_string_literal: true
-
 require "minitest/autorun"
 require_relative "support/face_manifest_helper"
 
