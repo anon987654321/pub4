@@ -132,6 +132,13 @@ class TestMasterLoop < Minitest::Test
     assert_equal from_yaml, Master::MasterRuntime::LOOP_FLAGS
   end
 
+  def test_models_config_is_the_single_models_registry_reader
+    config = Master.models_config(root: Master::ROOT)
+    assert_equal "openrouter", config.dig("openrouter", "provider") unless config.dig("openrouter", "provider").nil?
+    assert config.key?("models")
+    assert_equal config, Master.models_config(root: Master::ROOT)
+  end
+
   def test_limits_and_state_resolve_to_their_files
     assert File.exist?(Master.limits_path)
     assert Master.limits_path.end_with?("limits.yml")
