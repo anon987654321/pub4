@@ -79,8 +79,7 @@ module Master
       }.freeze
 
       def self.build_tool_capable_re
-        yml_path = File.join(Master::ROOT, "data", "models.yml")
-        prefixes = Master.load_yaml(yml_path).fetch("tool_capable_prefixes", [])
+        prefixes = Master.models_config.fetch("tool_capable_prefixes", [])
         escaped = prefixes.map { |p| Regexp.escape(p) }
         Regexp.new("\\A(?:#{escaped.join("|")})(?:[:\\/@\\-.].+)?\\z", Regexp::IGNORECASE).freeze
       end
@@ -90,7 +89,7 @@ module Master
       # The local tier's settings, read here with the rest of models.yml rather
       # than by the sender: one reader per data file.
       def self.ollama_settings
-        @ollama_settings ||= Master.load_yaml(File.join(Master::ROOT, "data", "models.yml")).fetch("ollama", {})
+        @ollama_settings ||= Master.models_config.fetch("ollama", {})
       end
 
       # One lookup per model id, held for the process. The registry is 1,170
