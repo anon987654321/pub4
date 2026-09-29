@@ -14,7 +14,6 @@ module Master
       ITEM_COUNT = 24
       MAX_ITEMS = 40
       MIN_ITEMS = 20
-      COOLDOWN_SECS = 3_600
 
       def initialize(root:, agent:, event_bus: nil)
         @root = root
@@ -24,8 +23,6 @@ module Master
 
       def call(state:, target:, run_id:)
         return "wishlist: skipped — no model" unless @agent.respond_to?(:ask)
-        return cooldown_message if cooling_down?
-
         orientation = Master::AI::Orientation.render(root: @root, target:, depth: 1, max_entries: 40)
         response = @agent.ask(prompt(orientation:, state:, target:, run_id:))
         items = normalize(parse(response))
@@ -54,15 +51,6 @@ module Master
 
       def out_file
         File.join(@root, OUT_PATH)
-      end
-
-      def cooling_down?
-        File.file?(out_file) && (Time.now - File.mtime(out_file)) < COOLDOWN_SECS
-      end
-
-      def cooldown_message
-        mins = ((COOLDOWN_SECS - (Time.now - File.mtime(out_file))) / 60).ceil
-        "wishlist: cooldown — next run in #{mins}m"
       end
 
       def prompt(orientation:, state:, target:, run_id:)
