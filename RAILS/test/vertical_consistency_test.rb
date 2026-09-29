@@ -171,7 +171,7 @@ class VerticalConsistencyTest < Minitest::Test
   # seventh engine — the same blind spot, deferred. UserFlowGate reads them off
   # disk now, and this holds that every engine that exists is covered.
   def test_the_view_contract_covers_every_engine
-    require_relative "../../MASTER/gates/lib/live/user_flow"
+    require_relative "../../MASTER/gates/lib/user_flow"
     on_disk = Dir.glob(File.join(ROOT, "brgen/engines/*/app/views"))
                  .map { |path| path.sub("#{ROOT}/", "") }
 
