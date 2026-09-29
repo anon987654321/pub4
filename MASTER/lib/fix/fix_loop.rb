@@ -18,6 +18,7 @@ require_relative "rename_sweep"
 require_relative "severity"
 require_relative "violation"
 require_relative "wishlist"
+require_relative "protocol"
 
 module Master
   module Fix
@@ -179,7 +180,7 @@ module Master
         @rule_order.ordered(violation_counts:)
       end
 
-      def self.preamble_from_soul = RuleLoop.soul_preamble
+      def self.preamble_from_soul = [RuleLoop.soul_preamble, Protocol.instruction].join("\n\n")
 
       private
 
