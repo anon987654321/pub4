@@ -4,6 +4,11 @@ require_relative "test_helper"
 require "json"
 
 class TestAiTrajectory < Minitest::Test
+  def test_ai_namespace_is_loaded_by_zeitwerk
+    assert_equal "Master::AI", Master::AI.name
+    assert_respond_to Master::AI::OperatorContract, :prompt
+  end
+
   def test_operator_contract_is_compact_and_openbsd_shaped
     prompt = Master::AI::OperatorContract.prompt
     assert_includes prompt, "style: openbsd"
