@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "date"
+require "yaml"
 require_relative "rule_dsl"
 
 module Master
