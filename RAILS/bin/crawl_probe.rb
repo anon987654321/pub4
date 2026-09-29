@@ -6,7 +6,7 @@
 require "open3"
 require "optparse"
 require "timeout"
-require_relative "crawl_support"
+require_relative "../shared/lib/crawl_support
 
 MASTER_ROOT = File.join(CrawlSupport::ROOT, "MASTER")
 
