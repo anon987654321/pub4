@@ -137,7 +137,7 @@ module Master
     def build_autonomous_core(root:, infra:, agent:, scanner:, axioms:, bus:)
       standing = Ground::StandingOrders.new(pipeline: nil, event_bus: bus)
       git = Io::GitOperations.new(root)
-      rules = scanner.instance_variable_get(:@rules)
+      rules = scanner.rules
       learnings = infra[:learnings]
       rollback = Fix::Rollback.new(root:, bus:)
       fix_loop = build_fix_loop(root:, infra:, agent:, scanner:, axioms:, rules:, learnings:, rollback:, bus:, git:)
