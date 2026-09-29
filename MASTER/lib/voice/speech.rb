@@ -421,6 +421,7 @@ module Master
         # right there. synthesize() (the non-streaming caller) already had
         # this fallback -- this path (the one TtsJob actually uses) didn't.
         return true if attempt_espeak_synthesis(text_str, output_path, on_chunk)
+        return true if attempt_say_synthesis(text_str, output_path, on_chunk)
 
         @last_error ||= "streaming synthesis produced empty audio"
         false
@@ -540,6 +541,32 @@ module Master
 
         on_chunk&.call(File.size(output_path))
         true
+      end
+
+      # macOS ships say even when espeak-ng is absent. The web TTS job
+      # uses this streaming path, so an unavailable Edge worker must not make
+      # a perfectly capable workstation silent.
+      def attempt_say_synthesis(text_str, output_path, on_chunk)
+        return false unless Engines.available?("say", {})
+
+        ok = Engines.synth(
+          "say",
+          text: text_str,
+          out_path: output_path,
+          cfg: {},
+          emotion: {},
+          melody: { phrases: [] },
+          voice: default_voice,
+          rate: nil,
+          pitch: nil,
+        )
+        return false unless ok && File.exist?(output_path) && File.size?(output_path)
+
+        on_chunk&.call(File.size(output_path))
+        true
+      rescue StandardError => e
+        warn_tts("say fallback failed: #{e.class}: #{e.message}")
+        false
       end
 
       def mime_type_for(path)
