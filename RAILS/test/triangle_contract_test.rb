@@ -23,7 +23,7 @@ class TriangleContractTest < Minitest::Test
 
   test "triangle exposes deterministic named-surface and lifecycle commands" do
     assert_includes source, "def self.selected(names)"
-    assert_includes source, "when nil, "up""
+    assert_includes source, 'when nil, "up"'
     assert_includes source, 'when "status"'
     assert_includes source, 'when "down"'
     assert_includes source, "BOOT_TIMEOUT"
