@@ -340,8 +340,7 @@ module Master
             @rule_recurrence.delete(rule_id)
             sample = found.select { |v| v[:rule].to_s == rule_id }.first(5)
             @bus&.publish("fix_loop:soul_proposal", root: @root, rule: rule_id, sample:)
-            append_improvement(rule_id, sample)
-          end
+            end
           (@rule_recurrence.keys - tally.keys).each { |k| @rule_recurrence.delete(k) }
         end
 
