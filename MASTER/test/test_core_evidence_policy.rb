@@ -102,6 +102,23 @@ class EvidencePolicyTest < Minitest::Test
   # Evidence proves something about the tree it was earned against. A write after
   # it makes it a claim about a tree that no longer exists, so `done` must not be
   # reachable on the strength of a run that predates the change.
+  def test_an_unlabelled_exec_invalidates_evidence_earned_before_it
+    proof = proof_with(:test_pass, :scan_clean, :code_review)
+    assert proof.proved?
+
+    proof.record_evidence(E.exec(%w[echo mutate]), OK)
+
+    refute proof.proved?, "an unlabeled exec preserved evidence from an earlier state"
+  end
+
+  def test_an_evidence_bearing_exec_keeps_the_current_proof_generation
+    proof = proof_with(:test_pass, :scan_clean, :code_review)
+    assert proof.proved?
+
+    proof.record_evidence(E.exec(PRODUCER_ARGV.fetch(:code_review), evidence: :code_review), OK)
+
+    assert proof.proved?, "producer evidence should not invalidate itself"
+  end
   def test_a_write_invalidates_evidence_earned_before_it
     proof = proof_with(:test_pass, :scan_clean, :code_review)
     assert proof.proved?, "precondition: the fold had proved itself"
