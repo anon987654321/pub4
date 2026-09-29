@@ -28,7 +28,7 @@ group :tts do
 end
 
 group :test do
-  gem "minitest", ">= 5.25"
+  gem "minitest", "~> 5.25"
   gem "rack-test", "~> 2.1"
   gem "simplecov", require: false
 end
