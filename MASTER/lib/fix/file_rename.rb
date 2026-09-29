@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
+require "open3"
 require "prism"
+require_relative "../operator/readers"
 require_relative "file_rename/references"
 require_relative "file_rename/css_build"
 
@@ -26,6 +28,70 @@ module Master
         return if FIXED_NAMES.include?(File.basename(path)) || path.match?(%r{/(vendor|node_modules|builds)/})
 
         KINDS.find { |_, pattern| path.match?(pattern) }&.first
+      end
+
+
+      module References
+        SASS_LOAD = /(@(?:use|forward|import)\s+["'](?:[^"']*\/)? )%<name>s(["'])/
+        SASS_LOAD = /(@(?:use|forward|import)\s+["'](?:[^"']*\/)?)%<name>s(["'])/
+
+        def self.forms(from, to)
+          old_base = File.basename(from)
+          new_base = File.basename(to)
+          old_stem = old_base.sub(/\..*\z/, "")
+          new_stem = new_base.sub(/\..*\z/, "")
+          pairs = [[old_base, new_base], [old_stem, new_stem]]
+          pairs << [old_stem.delete_prefix("_"), new_stem.delete_prefix("_")] if old_stem.start_with?("_")
+          pairs.uniq
+        end
+
+        def self.rewrite(text, from, to)
+          out = text.dup
+          forms(from, to).each do |old, new|
+            if old.start_with?("_") || old.include?(".")
+              out.gsub!(/(?<![\w-])#{Regexp.escape(old)}(?![\w-])/, new)
+            else
+              out.gsub!(Regexp.new(format(SASS_LOAD.source, name: Regexp.escape(old)))) { "#{$1}#{new}#{$2}" }
+            end
+          end
+          out == text ? nil : out
+        end
+
+        def self.remaining(root, from, to)
+          each_file(root).select do |path|
+            text = File.read(path, encoding: "UTF-8")
+            text.valid_encoding? && !rewrite(text, from, to).nil?
+          rescue ArgumentError
+            false
+          end
+        end
+
+        def self.each_file(root)
+          Operator::Readers::TREES.flat_map do |tree|
+            Dir.glob(File.join(root, tree, "**", "*")).reject do |path|
+              path.match?(Operator::Readers::SKIP) || path.include?("/builds/") || !File.file?(path) ||
+                File.size(path) > 2_000_000
+            end
+          end
+        end
+      end
+
+      module CssBuild
+        APPS = %w[amber brgen bsdports].freeze
+        SASS = "sass@1.93.2"
+
+        def self.rules(repo_root)
+          rails = File.join(repo_root, "RAILS")
+          APPS.to_h do |app|
+            out, err, status = Open3.capture3("npx", "--yes", SASS, "--no-source-map", "--quiet",
+                                              "--load-path=#{app}/app/assets/stylesheets",
+                                              "--load-path=shared/app/assets/stylesheets",
+                                              "#{app}/app/assets/stylesheets/application.scss", chdir: rails)
+            raise "sass failed for #{app}: #{err.lines.first(3).join}" unless status.success?
+
+            [app, out.gsub(%r{/\*.*?\*/}m, "")]
+          end
+        end
       end
 
       def initialize(repo_root:, git: nil, css_rules: ->(root) { CssBuild.rules(root) })
