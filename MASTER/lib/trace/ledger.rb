@@ -243,3 +243,22 @@ module Master
         # Increment under lock; true when a snapshot flush is due.
         def tally(context)
           @mutex.synchronize do
+            @counts[context] += 1
+            @total += 1
+            (@total % SNAPSHOT_EVERY).zero?
+          end
+        end
+
+        def flush
+          path = File.join(@root, LEDGER_PATH)
+          FileUtils.mkdir_p(File.dirname(path))
+          line = JSON.generate(at: Time.now.utc.iso8601, total:, counts: snapshot)
+          File.open(path, "a") { |io| io.write(line, "\n") }
+        rescue StandardError => e
+          # Cannot route through Swallow.log — it recurses into this stream.
+          ::Kernel.warn("swallow_ledger: flush failed — #{e.class}: #{e.message}")
+        end
+      end
+    end
+  end
+end
