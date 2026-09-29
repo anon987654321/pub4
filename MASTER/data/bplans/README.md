@@ -12,7 +12,7 @@ state.
 
 ## Inputs
 
-- YAML plan files under `MASTER/tools/bplans/`.
+- YAML plan files under `MASTER/data/bplans/`.
 - A named plan key such as `ragnhild`, `space`, `syre`, or `weapons` when a
   caller selects one.
 
@@ -67,4 +67,4 @@ must be explicit failures. No fallback may manufacture a plausible plan.
 ruby MASTER/bin/master "inspect the ragnhild business plan"
 ```
 
-Use `MASTER/tools/bplans/` in new references; there is no retired STUDIO path.
+Use `MASTER/data/bplans/` in new references; there is no retired STUDIO path.
