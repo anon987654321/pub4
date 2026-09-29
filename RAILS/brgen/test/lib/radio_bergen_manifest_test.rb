@@ -22,7 +22,7 @@ class RadioBergenManifestTest < ActiveSupport::TestCase
 
     assert_includes lines.join("\n"), "pub4/index.html"
     assert_includes lines.join("\n"), "monolithic index.html"
-    assert_includes lines.join("\n"), "config/radio_bergen/tracks.yml"
+    assert_includes lines.join("\n"), "config/radio_bergen.yml"
   end
 
   # The archaeology lines are rendered to the visitor, so a path in one of them
