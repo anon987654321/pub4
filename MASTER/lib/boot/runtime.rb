@@ -174,7 +174,7 @@ module Master
     # dispatcher asks. Read here with the other models.yml accessors, because
     # a data file with a second loader is a data file with two shapes.
     def cli_lanes(root: ROOT)
-      @cli_lanes ||= Master.models_config(root:).fetch("cli_lanes", {})
+      Master.models_config(root:).fetch("cli_lanes", {})
     end
 
     # models.yml models — the routing tiers, each a list of rows carrying an id.
