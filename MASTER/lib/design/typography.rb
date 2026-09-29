@@ -47,6 +47,33 @@ module Master
         )
       end
 
+      def self.bringhurst(root: Master::ROOT)
+        typography = Master::Design::Thresholds.load(root:).fetch("typography", {})
+        contract = typography.fetch("bringhurst", {})
+        {
+          authority: contract.fetch("authority", "The Elements of Typographic Style"),
+          measure: contract.fetch("measure_ch", measure_ideal_ch(root:)).to_f,
+          body_leading: contract.fetch("body_leading", body_line_height_preferred(root:)).to_f,
+          heading_leading: contract.fetch("heading_leading", 1.25).to_f,
+          scale_ratio: contract.fetch("scale_ratio", 1.25).to_f,
+          max_families: contract.fetch("max_families", 2).to_i,
+          max_weights: contract.fetch("max_weights", 3).to_i,
+          paragraph_spacing_em: contract.fetch("paragraph_spacing_em", 0.75).to_f,
+          first_line_indent_em: contract.fetch("first_line_indent_em", 1.5).to_f,
+          indent_after_heading: contract.fetch("indent_after_heading", false),
+          indent_after_block: contract.fetch("indent_after_block", false),
+          hanging_punctuation: contract.fetch("hanging_punctuation", true),
+          optical_alignment: contract.fetch("optical_alignment", true),
+          body_letter_spacing: contract.fetch("body_letter_spacing", false),
+          all_caps_tracking_em: Array(contract.fetch("all_caps_tracking_em", [0.05, 0.15])).map(&:to_f),
+          body_numerals: contract.fetch("body_numerals", "oldstyle-nums").to_s,
+          table_numerals: contract.fetch("table_numerals", "tabular-nums").to_s,
+          quote_style: contract.fetch("quote_style", "locale").to_s,
+          norwegian_guillemets: contract.fetch("norwegian_guillemets", true),
+          principle: contract.fetch("principle", "").to_s,
+        }.freeze
+      end
+
       def self.for_surface(path:, purpose: nil, root: Master::ROOT)
         route = path.to_s.split("?").first
         return profile(ROUTE_PROFILES.fetch(route), root:) if ROUTE_PROFILES.key?(route)
