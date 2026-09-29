@@ -94,6 +94,15 @@ module Master
         end
       end
 
+      # Read-only structural campaign evidence for /fix preview. No model call,
+      # no filesystem mutation and no Git operation beyond the census.
+      def preview(target)
+        tree_targets(target).to_h do |tree, _tree_root|
+          shape = Operator::SprawlCensus.shape(tree)
+          [tree, shape.merge(candidates: shape.fetch(:members).first(MAX_CANDIDATES))]
+        end
+      end
+
       private
 
       def tree_targets(target)
