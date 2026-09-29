@@ -80,7 +80,7 @@ module Deploy
         name: "test",
         glob: "test/**/*.rb",
         entry: nil,
-        owner: "MASTER/tools/Rakefile — isolated test suite",
+        owner: "MASTER/Rakefile — isolated test suite",
       },
     ].freeze
 
