@@ -179,7 +179,7 @@ module Master
 
         def load_patterns
           return [{}, [], INFER_DESTRUCTIVE] unless File.exist?(PATTERNS_PATH)
-          data = Master.load_yaml(PATTERNS_PATH) || {}
+          data = Master.patterns_config
           infer = data["infer"] || {}
           commands = infer["commands"] || {}
           patterns = commands.each_with_object({}) do |(name, spec), out|
