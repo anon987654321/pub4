@@ -98,7 +98,7 @@ module Master
         # they sit under RAILS/<app>/, and the scan root is the repo.
         #
         # app/views/pwa/service-worker.js is Workbox's minified bundle, written per
-        # app by `npm run build:pwa` (RAILS/tools/build_workbox.mjs): every finding
+        # app by `npm run build:pwa` (RAILS/bin/build_workbox.mjs): every finding
         # in it is about Workbox, and the next build undoes any fix.
         SKIP_PATH_SUFFIXES = %w[db/schema.rb db/structure.sql app/views/pwa/service-worker.js].freeze
 
