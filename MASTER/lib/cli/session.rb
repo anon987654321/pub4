@@ -19,7 +19,7 @@ require "fileutils"
 module Master
   module CLI
     class Session
-      CONFIG = (Master.load_yaml(Master.data_path("patterns.yml")) || {}).fetch("cli", {}).freeze
+      CONFIG = Master.patterns_config.fetch("cli", {}).freeze
       IDLE_SLEEP_DEFAULT = CONFIG.fetch("idle_sleep_seconds", 60)
       DMESG_BUFFER_LINES = CONFIG.fetch("dmesg_buffer_lines", 80)
       MULTILINE_MAX_LINES = CONFIG.fetch("multiline_max_lines", 500)
