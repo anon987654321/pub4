@@ -6,7 +6,7 @@
 
 require "optparse"
 require "timeout"
-require_relative "crawl_support"
+require_relative "../shared/lib/crawl_support
 
 SUPPORT = File.join(CrawlSupport::ROOT, "MASTER", "web", "script", "browser_probe_support.rb")
 require SUPPORT
