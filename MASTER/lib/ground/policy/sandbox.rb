@@ -79,6 +79,36 @@ module Master
 
         module_function
 
+        SHELL_WRAPPERS = %w[sh bash zsh ksh fish csh tcsh dash].freeze
+        INLINE_FLAGS = {
+          "ruby" => %w[-e --eval],
+          "python" => %w[-c],
+          "python3" => %w[-c],
+          "node" => %w[-e],
+          "nodejs" => %w[-e],
+          "perl" => %w[-e],
+          "php" => %w[-r],
+        }.freeze
+
+        # This is the argv/workspace boundary, not an operating-system jail.
+        # The command still runs with the workspace as cwd, but an effect cannot
+        # explicitly name an outside path or hand source text to another shell
+        # or inline interpreter that can ignore cwd and mutate arbitrary paths.
+        def scope_violation(argv, root:)
+          values = Array(argv).map(&:to_s)
+          return "empty argv" if values.empty?
+          return "shell execution outside argv scope is forbidden" if shell_wrapper?(values)
+          return "inline interpreter execution is forbidden" if inline_interpreter?(values)
+          return "git -C target escapes the workspace" if git_directory_escape?(values, root:)
+
+          outside = values.drop(1).find do |arg|
+            path_argument?(arg) && !inside_root?(File.expand_path(arg, root), File.realpath(root))
+          end
+          outside ? "execution path escapes workspace: #{outside}" : nil
+        rescue StandardError => e
+          "execution scope could not be established: #{e.class}: #{e.message}"
+        end
+
         def decide(command)
           source = command.to_s.strip
           return Decision.new(mode: :deny, reason: "empty command") if source.empty?
@@ -106,6 +136,38 @@ module Master
 
         def allowed?(command)
           decide(command).allow?
+        end
+
+        def shell_wrapper?(argv)
+          argv.each_cons(2).any? do |name, flag|
+            SHELL_WRAPPERS.include?(File.basename(name)) && flag.to_s.match?(/\A-(?:c|command)\z/)
+          end
+        end
+
+        def inline_interpreter?(argv)
+          argv.each_cons(2).any? do |name, flag|
+            flags = INLINE_FLAGS[File.basename(name)] || []
+            flags.include?(flag.to_s)
+          end
+        end
+
+        def git_directory_escape?(argv, root:)
+          argv.each_with_index.any? do |arg, index|
+            next false unless arg == "-C" || arg == "--git-dir" || arg == "--work-tree"
+            value = argv[index + 1]
+            value && !inside_root?(File.expand_path(value, root), File.realpath(root))
+          end
+        end
+
+        def path_argument?(arg)
+          value = arg.to_s
+          return false if value.empty? || value.start_with?("-")
+          return false if value.match?(%r{\A[a-z][a-z0-9+.-]*://}i)
+          value.start_with?("/", "~", "$HOME", "./", "../") || value.include?("/")
+        end
+
+        def inside_root?(path, root)
+          path == root || path.start_with?(root + File::SEPARATOR)
         end
 
         # Ground::Policy was a module holding one method, whose stated goal was
