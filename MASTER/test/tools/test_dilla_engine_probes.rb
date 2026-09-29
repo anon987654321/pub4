@@ -10,7 +10,7 @@ require "timeout"
 # load it in a subprocess — loading here would leak ROOT/OUTPUT_DIR into the
 # shared test process. CLI dispatch is guarded by `__FILE__ == $PROGRAM_NAME`.
 class TestDilla < Minitest::Test
-  ENGINE = File.expand_path("../dilla/dilla.rb", __dir__)
+  ENGINE = File.expand_path("../../tools/dilla/dilla.rb", __dir__)
 
   # A hung probe (coltrane-gem hang — see README) used to pin a
   # dilla_test_probe process near 100% CPU forever with no output and no
@@ -2418,7 +2418,7 @@ class TestDilla < Minitest::Test
   end
 
   def test_mix_metrics_returns_band_levels_when_demo_present
-    demo = File.expand_path("../dilla/demo.wav", __dir__)
+    demo = File.expand_path("../../tools/dilla/demo.wav", __dir__)
     skip "demo.wav missing" unless File.file?(demo)
     skip "ffmpeg not available" unless system("ffmpeg", "-version", out: File::NULL, err: File::NULL)
     result = eval_in_engine(<<~RUBY)
@@ -2442,7 +2442,7 @@ class TestDilla < Minitest::Test
   # "the demo is broken", not a taste judgement, and a demo the operator
   # deliberately masters differently should not fail it.
   def test_shipped_demo_has_no_dead_stretch_and_lands_near_its_loudness_target
-    demo = File.expand_path("../dilla/demo.mp3", __dir__)
+    demo = File.expand_path("../../tools/dilla/demo.mp3", __dir__)
     skip "demo.mp3 missing" unless File.file?(demo)
     skip "ffmpeg not available" unless system("ffmpeg", "-version", out: File::NULL, err: File::NULL)
 
@@ -2624,7 +2624,7 @@ class TestDilla < Minitest::Test
   # any 610 strings, and these six are the ones the module's own comment records
   # as having gone missing the first time.
   def test_provenance_records_the_knobs_the_engine_reads_from_every_engine_file
-    require File.expand_path("../dilla/lib/ledger", __dir__)
+    require File.expand_path("../../tools/dilla/lib/ledger", __dir__)
     keys = DillaProvenance.engine_env_keys
 
     %w[PROGRESSION SONITEX RAP_VOCAL ANALOG_CHAIN PAD_VOL KICK_GAIN].each do |knob|
@@ -2653,7 +2653,7 @@ class TestDilla < Minitest::Test
   # The sidecar was renamed from .dilla to .provenance.json, and pub4 keeps no
   # reader for a renamed file: an old sidecar beside a part is not a recipe.
   def test_provenance_reads_no_dilla_suffix
-    require File.expand_path("../dilla/lib/ledger", __dir__)
+    require File.expand_path("../../tools/dilla/lib/ledger", __dir__)
     Dir.mktmpdir do |dir|
       part = File.join(dir, "part.wav")
       File.write("#{part}.dilla", JSON.generate("render_seed" => 7))
@@ -2670,7 +2670,7 @@ class TestDilla < Minitest::Test
   # the check MASTER's autofix has broken this engine past before. The fix is
   # DillaSources; this test is what stops a sixth answer appearing.
   def test_engine_sources_is_the_only_definition_of_what_the_engine_is
-    require File.expand_path("../dilla/lib/engine_sources", __dir__)
+    require File.expand_path("../../tools/dilla/lib/engine_sources", __dir__)
     root = DillaSources.root
 
     assert_empty Dir[File.join(root, "lib", "engine", "*.rb")],
@@ -2701,7 +2701,7 @@ class TestDilla < Minitest::Test
   # including the two it got wrong on the first attempt, both in the direction of
   # telling the operator a working value was a mistake.
   def test_knob_registry_reads_each_knob_as_the_engine_reads_it
-    require File.expand_path("../dilla/lib/ledger", __dir__)
+    require File.expand_path("../../tools/dilla/lib/ledger", __dir__)
 
     assert_operator DillaKnobs.all.length, :>=, 600, "the engine reads 729 knobs"
 
@@ -2737,7 +2737,7 @@ class TestDilla < Minitest::Test
   # the part before it look twice its size, and a duplicate name, which sends a
   # reader to the wrong one. Neither shows up in a render.
   def test_the_engine_part_index_covers_the_file_once_each
-    src = File.readlines(File.expand_path("../dilla/dilla.rb", __dir__))
+    src = File.readlines(File.expand_path("../../tools/dilla/dilla.rb", __dir__))
     marks = src.each_with_index.filter_map do |line, index|
       (m = line.match(/\A#\s*engine part:\s*(\S+)/)) && [m[1], index + 1]
     end
@@ -2767,7 +2767,7 @@ class TestDilla < Minitest::Test
   # "STREAM_HARMONY_EVERY"] || ENV["EVOLVE_EVERY"] || "2"`, which belongs to the
   # chain and was being compared against a different method's cadence.
   def test_the_conflict_report_does_not_read_a_sentinel_as_a_default
-    require File.expand_path("../dilla/lib/ledger", __dir__)
+    require File.expand_path("../../tools/dilla/lib/ledger", __dir__)
 
     refute DillaKnobs["MELODIC_LEAD"].conflicting_defaults?,
            "the presence sentinel at melodic_lead_mode? is being read as a default: " \
@@ -2806,7 +2806,7 @@ class TestDilla < Minitest::Test
   # An eighth name here is a knob that grew a second default without anyone
   # deciding it should have one, which is the failure this pins.
   def test_the_set_of_knobs_with_two_defaults_does_not_grow
-    require File.expand_path("../dilla/lib/ledger", __dir__)
+    require File.expand_path("../../tools/dilla/lib/ledger", __dir__)
 
     adjudicated = %w[BARS BPM EVOLVE_GROOVE_W EVOLVE_HARMONY_W LISTEN_PASSES RENDER_BEAUTY_MIN TRACK]
     current = DillaKnobs.conflicts.keys.sort
@@ -2818,7 +2818,7 @@ class TestDilla < Minitest::Test
   end
 
   def test_knob_check_finds_real_mistakes_and_stays_quiet_otherwise
-    require File.expand_path("../dilla/lib/ledger", __dir__)
+    require File.expand_path("../../tools/dilla/lib/ledger", __dir__)
 
     # Each of these is a mistake the engine used to accept in silence.
     problems = DillaKnobs.validate(
@@ -2848,7 +2848,7 @@ class TestDilla < Minitest::Test
   # pins, which locks out the tables that chose them -- so the recipe is not the
   # environment, it is the part of it the caller typed.
   def test_provenance_separates_what_the_operator_pinned_from_what_the_engine_filled
-    require File.expand_path("../dilla/lib/ledger", __dir__)
+    require File.expand_path("../../tools/dilla/lib/ledger", __dir__)
 
     Dir.mktmpdir do |dir|
       output = File.join(dir, "pins.wav")
@@ -2888,8 +2888,8 @@ class TestDilla < Minitest::Test
   # all -- and it has to be provable in both directions, or "frozen" is a claim
   # rather than a behaviour.
   def test_dilla_frozen_reads_the_learned_state_and_writes_none_of_it
-    require File.expand_path("../dilla/lib/ledger", __dir__)
-    session = File.expand_path("../dilla/project/session.json", __dir__)
+    require File.expand_path("../../tools/dilla/lib/ledger", __dir__)
+    session = File.expand_path("../../tools/dilla/project/session.json", __dir__)
     skip "no session state on this machine yet" unless File.file?(session)
 
     # One render, not two: the suite gives each test 30 seconds and a render is
@@ -3018,7 +3018,7 @@ class TestDilla < Minitest::Test
   # against a difference that was known in advance, which is what this test is.
   def test_taste_separates_two_piles_on_a_difference_it_was_given
     skip "ffmpeg not available" unless system("which ffmpeg > /dev/null 2>&1")
-    require File.expand_path("../dilla/lib/listen", __dir__)
+    require File.expand_path("../../tools/dilla/lib/listen", __dir__)
 
     Dir.mktmpdir do |dir|
       # The piles differ in level and in nothing else.
@@ -3099,7 +3099,7 @@ class TestDilla < Minitest::Test
   # point at it: renders are gitignored and the seed rotates, so a manifest
   # referring to a deleted wav records nothing at all.
   def test_an_assembly_records_its_parts_with_offsets_and_their_recipes
-    require File.expand_path("../dilla/lib/ledger", __dir__)
+    require File.expand_path("../../tools/dilla/lib/ledger", __dir__)
 
     Dir.mktmpdir do |dir|
       parts = %w[a b].map { |name| File.join(dir, "#{name}.wav") }
@@ -3145,7 +3145,7 @@ class TestDilla < Minitest::Test
   # The control for the test above, and the mechanism on its own: frozen has to
   # be the only difference, or "it did not write" proves nothing about freezing.
   def test_frozen_state_writes_when_thawed_and_announces_every_skip
-    require File.expand_path("../dilla/lib/ledger", __dir__)
+    require File.expand_path("../../tools/dilla/lib/ledger", __dir__)
 
     Dir.mktmpdir do |dir|
       target = File.join(dir, "state.json")
@@ -3171,7 +3171,7 @@ class TestDilla < Minitest::Test
   # read as harsh; the same numbers on the old two-band shape must not, so a
   # caller that has not been updated keeps its previous result.
   def test_analyze_harshness_sees_the_presence_band
-    require File.expand_path("../dilla/lib/listen", __dir__)
+    require File.expand_path("../../tools/dilla/lib/listen", __dir__)
 
     old_shape = { mid: -18.0, high: -42.5 }
     old = DillaMaster.analyze_harshness(old_shape)
@@ -3188,7 +3188,7 @@ class TestDilla < Minitest::Test
   end
 
   def test_loss_gates_reject_true_peak_and_lufs_and_share_the_quality_window
-    require File.expand_path("../dilla/lib/listen", __dir__)
+    require File.expand_path("../../tools/dilla/lib/listen", __dir__)
 
     gates = DillaMaster.loss_gates
     assert gates["true_peak_max_dbtp"], "loss_gates must name a true-peak ceiling"
@@ -3294,7 +3294,7 @@ class TestDilla < Minitest::Test
   # FLAG_KINDS names switches by hand, so a name there has to be a switch the
   # engine still reads, or the list is keeping a place for something gone.
   def test_every_classified_switch_is_a_knob_the_engine_reads
-    require File.expand_path("../dilla/lib/ledger", __dir__)
+    require File.expand_path("../../tools/dilla/lib/ledger", __dir__)
 
     named = DillaKnobs::FLAG_KINDS.values.flatten
     assert_equal named.uniq.size, named.size, "a switch is classified twice"
