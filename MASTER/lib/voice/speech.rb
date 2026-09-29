@@ -169,7 +169,7 @@ module Master
         return "worker is not executable at #{WORKER}" unless worker_executable?
 
         _out, err, status = Master::Io::Exec.capture3(
-          TtsSupervisor.daemon_env(Master::ROOT), Gem.ruby, WORKER, "--selftest",
+          TtsSupervisor.daemon_env(Master::ROOT), RbConfig.ruby, WORKER, "--selftest",
           chdir: Master::ROOT, timeout: SELFTEST_TIMEOUT_S
         )
         return if status.success?
