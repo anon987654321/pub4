@@ -83,7 +83,7 @@ module Master
           parts << Ground::PersonalWorkspace.prompt_section(@config["root"] || Master::ROOT)
           parts << @code_index.summary if @code_index&.built?
           parts << @memory.context_summary if @memory&.context_summary
-          parts << @memory.turn_recall(last_user_message) if @memory.respond_to?(:turn_recall)
+          parts << (@memory.turn_recall(last_user_message) if @memory.respond_to?(:turn_recall))
           parts.compact.join("\n\n").then { |s| s.empty? ? nil : filter_prompt(s) }
         end
 
