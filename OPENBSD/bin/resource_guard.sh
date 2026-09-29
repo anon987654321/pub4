@@ -230,7 +230,7 @@ fi
 # Load-history log: LOAD_WARN/LOAD_CRIT above were set from a single evening's
 # observation (itself skewed high by concurrent deploys/agent activity, not a
 # calm baseline) -- recalibrating them again by guesswork would repeat the
-# same mistake. This gives a real dataset (`awk '{print $4}' | sort -n` etc.)
+# same mistake. This gives a real dataset (sort the recorded fields by their numeric value with the existing Ruby tooling)
 # to recalibrate from once enough ticks have accumulated. One line/5min ==
 # ~2000 lines/week; rotated weekly via newsyslog (OPENBSD/etc/newsyslog.conf).
 #
