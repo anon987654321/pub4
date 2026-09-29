@@ -11,7 +11,7 @@ module Master
       module_function
 
       def profiles
-        raw = (Master.load_yaml(CONFIG_PATH) || {})["auth_profiles"]
+        raw = Master.patterns_config["auth_profiles"]
         Array(raw.is_a?(Hash) ? raw["lanes"] : nil).select do |lane|
           lane.is_a?(Hash) && lane["auth"] == "subscription"
         end
