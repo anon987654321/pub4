@@ -3,7 +3,6 @@
 require_relative "test_helper"
 require "master"
 
-# frozen_string_literal: true
 class MasterPathsTest < Minitest::Test
   def test_paths_resolve_under_master_root
     assert MasterPaths.root.end_with?("/MASTER")
@@ -13,7 +12,6 @@ class MasterPathsTest < Minitest::Test
   end
 end
 
-# frozen_string_literal: true
 
 require "minitest/autorun"
 require_relative "../lib/master"
@@ -25,7 +23,6 @@ class RepoPathsTest < Minitest::Test
   end
 end
 
-# frozen_string_literal: true
 require "fileutils"
 
 class TestRepoMap < Minitest::Test
