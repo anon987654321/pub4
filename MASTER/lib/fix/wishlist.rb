@@ -26,7 +26,7 @@ module Master
         orientation = Master::AI::Orientation.render(root: @root, target:, depth: 1, max_entries: 40)
         response = @agent.ask(prompt(orientation:, state:, target:, run_id:))
         items = normalize(parse(response))
-        return "wishlist: parse failed" if items.empty?
+        return "wishlist: parse failed" if items.size < MIN_ITEMS
 
         write_report(items, state:, target:, run_id:)
         @bus&.publish("wishlist:done", drafted: items.size, target:, state:)
