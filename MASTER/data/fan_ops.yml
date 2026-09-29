@@ -50,3 +50,14 @@ caps:
   drafts_per_digest: 40
   store: runtime/fan_ops/dossier.db
   output: runtime/fan_ops/digest.md
+ 
+operator:
+  register:
+    formality: low
+    humor: dry
+    verbosity: terse
+    languages: [nb, en]
+  boundaries:
+    never_nudge_hours: '23:00–08:00'
+    topics_off_limits_for_drafts: [politics, politikk]
+    never_store: []
