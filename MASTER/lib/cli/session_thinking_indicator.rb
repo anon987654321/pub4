@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../stream_accumulator"
+require_relative "stream_accumulator"
 
 module Master
   module CLI

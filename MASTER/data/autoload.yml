@@ -17,14 +17,15 @@ autoload:
   reopens_a_constant_defined_elsewhere:
     # Master::CLI::Session -- the REPL, split by concern. container.rb is NOT here:
     # it defines Master::CLI::Session::Container and autoloads normally.
-    - cli/session/background_scan.rb
-    - cli/session/bridge_run.rb
-    - cli/session/command_ops.rb
-    - cli/session/repl_flow.rb
-    - cli/session/repl_io.rb
-    - cli/session/result_display.rb
-    - cli/session/signals.rb
-    - cli/session/thinking_indicator.rb
+    - cli/session_background_scan.rb
+    - cli/session_bridge_run.rb
+    - cli/session_command_ops.rb
+    - cli/session_repl_flow.rb
+    - cli/session_repl_io.rb
+    - cli/session_result_display.rb
+    - cli/session_signals.rb
+    - cli/session_container.rb
+    - cli/session_thinking_indicator.rb
     # Master::CLI::CommandRegistry -- one file per verb or pipeline stage.
     # command.rb defines its own constant and is left autoloadable.
     - cli/command_registry/help.rb

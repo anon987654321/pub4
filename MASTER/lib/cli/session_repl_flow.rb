@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "repl_io"
+require_relative "session_repl_io"
 
 module Master
   module CLI
