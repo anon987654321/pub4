@@ -35,3 +35,11 @@ class PublicNavigationTest < ApplicationSystemTestCase
     assert_accessible
   end
 end
+
+
+  test "session and public catalogue states remain accessible to assistive technology" do
+    ["/session/new", "/registration/new", "/cart"].each do |path|
+      visit path
+      assert_accessible
+    end
+  end
