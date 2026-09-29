@@ -98,7 +98,7 @@ module Master
       # no filesystem mutation and no Git operation beyond the census.
       def preview(target)
         tree_targets(target).to_h do |tree, _tree_root|
-          shape = Operator::SprawlCensus.shape(tree)
+          shape = Operator::SprawlCensus.shape(tree, root: @root)
           [tree, shape.merge(candidates: shape.fetch(:members).first(MAX_CANDIDATES))]
         end
       end
@@ -176,11 +176,11 @@ module Master
         []
       end
 
-      def rounds = Integer(ENV.fetch("MASTER_FIX_SPRAWL_ROUNDS", DEFAULT_ROUNDS))
+      def rounds = [Integer(ENV.fetch("MASTER_FIX_SPRAWL_ROUNDS", DEFAULT_ROUNDS)), 12].min
 
-      def findings_limit = Integer(ENV.fetch("MASTER_FIX_SPRAWL_FINDINGS", DEFAULT_FINDINGS))
+      def findings_limit = [Integer(ENV.fetch("MASTER_FIX_SPRAWL_FINDINGS", DEFAULT_FINDINGS)), MAX_CANDIDATES].min
 
-      def keeps = Integer(ENV.fetch("MASTER_FIX_SPRAWL_KEEPS", DEFAULT_KEEPS))
+      def keeps = [Integer(ENV.fetch("MASTER_FIX_SPRAWL_KEEPS", DEFAULT_KEEPS)), 12].min
 
       def actionable_rule?(rule)
         %w[DEAD_SUBTREE PARALLEL_HIERARCHY CYCLIC_DEPENDENCY FILE_SPRAWL SMALL_FILES NO_GOD_CLASS].include?(rule.to_s)
