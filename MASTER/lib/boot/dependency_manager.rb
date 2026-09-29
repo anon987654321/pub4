@@ -491,6 +491,11 @@ module Master
 
       def refresh_gem_state!
         Gem.clear_paths
+        if @env.equal?(ENV)
+          gem_home = @env["GEM_HOME"].to_s
+          gem_path = @env["GEM_PATH"].to_s.split(File::PATH_SEPARATOR).reject(&:empty?)
+          Gem.use_paths(gem_home, gem_path) unless gem_home.empty?
+        end
         Gem::Specification.reset
       end
 
