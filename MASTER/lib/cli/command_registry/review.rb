@@ -50,8 +50,10 @@ module Master
         raw = arg_for(ctx).to_s.strip
         apply, _critique, aesthetic, _only, target = parse_pass_flags(raw)
         rendered = with_dmesg_verbosity(raw) do
-          run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
-                   target:, apply: apply.nil? || apply, critique: false, aesthetic:, only: "fix")
+          with_fix_depth(raw) do
+            run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
+                     target:, apply: apply.nil? || apply, critique: false, aesthetic:, only: "fix")
+          end
         end
         return rendered unless apply.nil? || apply
 
@@ -66,8 +68,10 @@ module Master
 
           rendered = [rendered, "gate: verification changed #{gate_changed.size} file(s); re-entering /fix"].join("\n")
           rendered = with_dmesg_verbosity(raw) do
-            run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
-                     target:, apply: true, critique: false, aesthetic:, only: "fix")
+            with_fix_depth(raw) do
+              run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
+                       target:, apply: true, critique: false, aesthetic:, only: "fix")
+            end
           end
         end
 
@@ -106,7 +110,7 @@ module Master
       }.freeze
 
       PASS_FLAGS = {
-        "--dry-run" => [:apply, false], "preview" => [:apply, false], "dry" => [:apply, false],
+        "--dry-run" => [:apply, false], "--preview" => [:apply, false], "preview" => [:apply, false], "dry" => [:apply, false],
         "--no-autofix" => [:apply, false], "no-autofix" => [:apply, false],
         "--apply" => [:apply, true], "apply" => [:apply, true], "fix" => [:apply, true],
         "--no-critique" => [:critique, false], "no-critique" => [:critique, false],
@@ -124,7 +128,7 @@ module Master
         joined_only(raw.split(/\s+/)).each do |token|
           if (flag = PASS_FLAGS[token.downcase])
             flags[flag.first] = flag.last
-          elsif DMESG_FLAGS.key?(token.downcase)
+          elsif DMESG_FLAGS.key?(token.downcase) || token.casecmp?("--deep")
             next
           elsif token =~ ONLY_FLAG
             flags[:only] = Regexp.last_match(1)
@@ -149,6 +153,25 @@ module Master
         return yield unless level
 
         Master::Trace::Dmesg.with_verbosity(level) { yield }
+      end
+
+      # --deep raises only the structural campaign budget. It does not
+      # weaken proofs, path guards or tree-specific contracts.
+      def with_fix_depth(raw)
+        return yield unless raw.to_s.split(/\s+/).any? { |token| token.casecmp?("--deep") }
+
+        keys = %w[MASTER_FIX_SPRAWL_ROUNDS MASTER_FIX_SPRAWL_FINDINGS MASTER_FIX_SPRAWL_KEEPS
+                  MASTER_FIX_RESTRUCTURE_ATTEMPTS MASTER_FIX_RESTRUCTURE_ROUNDS MASTER_FIX_RESTRUCTURE_KEEPS]
+        previous = keys.to_h { |key| [key, ENV[key]] }
+        ENV["MASTER_FIX_SPRAWL_ROUNDS"] = "8"
+        ENV["MASTER_FIX_SPRAWL_FINDINGS"] = "24"
+        ENV["MASTER_FIX_SPRAWL_KEEPS"] = "8"
+        ENV["MASTER_FIX_RESTRUCTURE_ATTEMPTS"] = "8"
+        ENV["MASTER_FIX_RESTRUCTURE_ROUNDS"] = "8"
+        ENV["MASTER_FIX_RESTRUCTURE_KEEPS"] = "8"
+        yield
+      ensure
+        previous&.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
       end
 
       def run_deliberation(deliberation:, payload:, context:)
