@@ -222,7 +222,7 @@ set. The first line below is the whole suite, the second one tool, and the third
 finds the tests that pass only in company.
 
 ```zsh
-cd MASTER/tools && rbenv exec rake test
-cd MASTER/tools && rbenv exec rake test:postpro
-cd MASTER/tools && rbenv exec rake isolation
+cd MASTER && rbenv exec rake tools
+cd MASTER && rbenv exec rake test:postpro
+cd MASTER && rbenv exec rake isolation
 ```
