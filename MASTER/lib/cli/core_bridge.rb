@@ -224,7 +224,7 @@ module Master
         Master::Core::Fold.new(
           model:,
           constitution: Master::Core::Constitution.load(data_dir: Master.data_path, verify: scan_verifier,
-                                                        sandbox: shell_sandbox),
+                                                        sandbox: shell_sandbox(root: root)),
           world:,
           memory:,
           max_turns:,
@@ -250,14 +250,15 @@ module Master
       # unattended. Handed in rather than required, because core reaches nothing
       # in lib/ (test_no_lib_backedges).
       #
-      # Three answers, because the policy has three. :deny returns a reason and
-      # blocks. An :ask the policy recognises by name — a push, a hard reset, a
-      # deploy — returns { ask: } and the Constitution turns it into a Request a
-      # person answers. The :ask it returns for every command it has no pattern
-      # for returns nil and proceeds, because that is most commands and the fold
-      # has to be able to run its own tests.
-      def shell_sandbox
+      # Scope is checked before policy classification. Policy decides whether
+      # a command is safe, needs a person, or is unknown; scope decides whether
+      # the argv can explicitly reach outside this workspace at all. Unknown
+      # policy does not mean unlimited filesystem authority.
+      def shell_sandbox(root:)
         lambda { |argv|
+          scope_error = Master::Ground::Policy::Sandbox.scope_violation(argv, root:)
+          next scope_error if scope_error
+
           decision = Master::Ground::Policy::Sandbox.decide(argv.join(" "))
           next decision.reason if decision.deny?
           next({ ask: decision.reason }) if decision.recognised_ask?
