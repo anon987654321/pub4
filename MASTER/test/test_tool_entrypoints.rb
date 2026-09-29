@@ -9,7 +9,7 @@ class TestToolEntrypoints < Minitest::Test
 
   def test_every_rake_declared_tool_file_exists
     source = File.read(RAKEFILE, encoding: "UTF-8")
-    paths = source.scan(/["'](tools/[^"']+\.rb)["']/).flatten.uniq.sort
+    paths = source.scan(%r{["'](tools/[^"']+\.rb)["']}).flatten.uniq.sort
 
     refute_empty paths
     missing = paths.reject { |path| File.file?(File.join(ROOT, path)) }
