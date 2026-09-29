@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative "../../ai/orientation"
-require_relative "../../fix/wishlist"
 
 module Master
   module Review
