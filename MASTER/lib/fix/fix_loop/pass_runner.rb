@@ -73,13 +73,14 @@ module Master
         def violations_for(path)
           return [] unless File.exist?(path)
 
+          preflight = @preflight.findings([path])
+          return preflight.map { |finding| Violation.from_finding(finding, file: path.delete_prefix("#{@root}/")) } if preflight.any?
+
           result = Master::Result.wrap(@scanner.scan(path))
           return skip_unreadable(path, result) if !result.ok? && result.category == :validation
           raise "fix scan failed for #{path}: #{result.message}" unless result.ok?
 
           findings = result.value!
-          preflight = @preflight.findings([path])
-          findings = findings + preflight
           @bus&.publish("fix_loop:scan_progress", file: path.delete_prefix("#{@root}/"), count: findings.size) if findings.any?
           findings.select { |finding| Severity.at_least?(finding.fetch(:severity, :warning), :warning) }
                   .map { |finding| Violation.from_finding(finding, file: path.delete_prefix("#{@root}/")) }
