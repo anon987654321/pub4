@@ -213,6 +213,10 @@ module Master
           enforcement: #{Array(entry["enforcement"]).join(", ")}
           fix strategy: #{entry["fix_strategy"]}
           verification strategy: #{entry["verify_strategy"]}
+          question: #{entry["question"].to_s}
+          fix guidance: #{entry["fix"].to_s}
+          forbidden example: #{entry["bad"].to_s}
+          compliant example: #{entry["good"].to_s}
 
           This is an actionable repair stage. Do not stop merely because the
           existing rule has no deterministic fixer. Inspect the code semantically
