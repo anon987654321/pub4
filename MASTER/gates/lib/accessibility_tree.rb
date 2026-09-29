@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
-require_relative "../../../../OPENBSD/lib/gate_result"
+require_relative "../../../OPENBSD/lib/gate_result"
 require_relative "../support/cdp_session"
 require_relative "../support/geometry_probe"
 require_relative "../support/page_inventory"
@@ -12,7 +12,7 @@ module Deploy
   # already walks. An accessible DOM is not enough: the question is what Chrome
   # exposes to assistive technology.
   class AccessibilityTreeGate
-    ROOT = File.expand_path("../../../..", __dir__)
+    ROOT = File.expand_path("../../..", __dir__)
     MAX_SURFACES = 8
     INTERACTIVE_ROLES = %w[button link textbox checkbox radio combobox listbox].freeze
 
