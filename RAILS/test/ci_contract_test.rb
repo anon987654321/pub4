@@ -28,7 +28,7 @@ class CiContractTest < Minitest::Test
 
     shared = read(SHARED_CI)
     %w[
-      bundle check
+      bin/setup --skip-server
       rubocop
       bundler-audit
       brakeman
