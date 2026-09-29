@@ -1,6 +1,6 @@
 {
   "schema": "dilla.render.v1",
-  "note": "Reproduce with: RENDER_SEED=2001838629 DILLA_ASSET_CHECK=0 DILLA_KNOB_CHECK=0 SAMPLE_LOOP=/Users/mac/Documents/GitHub/pub4/STUDIO/dilla/crate/loops/semua_untukmu/choir_trim.wav SAMPLE_CARRIES_HARMONY=1 SAMPLE_LOOP_WEIGHT=1.7 RAP_VOCAL=jonas_v DRUM_FEEL=broken_beat SONITEX=donuts_soul INTRO_BARS=0 RENDER_MODE=dilla SWING=54 BPM=96 ruby dilla.rb renders/feel_broken_beat.wav 8",
+  "note": "Reproduce with: RENDER_SEED=2001838629 DILLA_ASSET_CHECK=0 DILLA_KNOB_CHECK=0 SAMPLE_LOOP=MASTER/tools/dilla/crate/loops/semua_untukmu/choir_trim.wav SAMPLE_CARRIES_HARMONY=1 SAMPLE_LOOP_WEIGHT=1.7 RAP_VOCAL=jonas_v DRUM_FEEL=broken_beat SONITEX=donuts_soul INTRO_BARS=0 RENDER_MODE=dilla SWING=54 BPM=96 ruby dilla.rb renders/feel_broken_beat.wav 8",
   "render_seed": 2001838629,
   "seed_was": "drawn and recorded",
   "command": {
@@ -8,7 +8,7 @@
       "renders/feel_broken_beat.wav",
       "8"
     ],
-    "cwd": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla"
+    "cwd": "MASTER/tools/dilla"
   },
   "engine": {
     "file": "dilla.rb",
@@ -62,7 +62,7 @@
     "FLYLO_BASE_DRUM_VOL": "0.85",
     "DRUM_MIX_WEIGHT": "0.95",
     "VINYL": "1",
-    "SAMPLE_LOOP": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla/crate/loops/semua_untukmu/choir_trim.wav",
+    "SAMPLE_LOOP": "MASTER/tools/dilla/crate/loops/semua_untukmu/choir_trim.wav",
     "HARM_BUS_VOL": "1.4",
     "HARM_SUB_CUT_DB": "-4.0",
     "HARM_BODY_DB": "2.2",
@@ -192,7 +192,7 @@
   "pinned": {
     "DILLA_ASSET_CHECK": "0",
     "DILLA_KNOB_CHECK": "0",
-    "SAMPLE_LOOP": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla/crate/loops/semua_untukmu/choir_trim.wav",
+    "SAMPLE_LOOP": "MASTER/tools/dilla/crate/loops/semua_untukmu/choir_trim.wav",
     "SAMPLE_CARRIES_HARMONY": "1",
     "SAMPLE_LOOP_WEIGHT": "1.7",
     "RAP_VOCAL": "jonas_v",
