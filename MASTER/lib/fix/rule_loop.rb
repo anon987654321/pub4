@@ -70,7 +70,7 @@ module Master
         private
 
         def build_soul_preamble
-          soul = Master.load_yaml(Master.data_path("soul.yml"))
+          soul = Master.soul_config
           abs = soul.fetch("absolute", {})
           golden = abs["golden_rule"] || "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
           lines = ["Golden rule: #{golden}",
