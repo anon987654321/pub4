@@ -366,7 +366,7 @@ namespace :postpro do
 end
 
 namespace :replicate do
-  require_relative "tools/replicate/lib/schema_snapshot"
+  require_relative "tools/replicate/schema_snapshot"
 
   desc "Compare MODEL_CAPABILITIES against the live Replicate schemas"
   task :schema_audit do
