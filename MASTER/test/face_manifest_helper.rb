@@ -9,7 +9,7 @@ require "yaml"
 # are gone — the view renders from the manifest — so each spec would otherwise
 # grow its own copy of this parsing.
 module FaceManifestHelper
-  PATH = File.expand_path("../../web/config/face_assets.yml", __dir__).freeze
+  PATH = File.expand_path("../web/config/face_assets.yml", __dir__).freeze
 
   module_function
 
