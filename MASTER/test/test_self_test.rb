@@ -117,7 +117,7 @@ class TestSelfTest < Minitest::Test
 
       findings = Master::Review::Scan::SelfTest.new(root:).send(:deploy_nesting_findings)
       assert_equal 1, findings.size
-      assert_equal 14, findings.first[:line]
+      assert_equal 12, findings.first[:line]
     end
   end
 
