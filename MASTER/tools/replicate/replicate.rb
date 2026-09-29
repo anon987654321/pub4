@@ -18,8 +18,8 @@ require_relative "../../lib/boot/paths"
 # Shellwords.escape is called in maybe_handoff_postpro; without this require
 # --postpro reaches a NameError instead of a handoff.
 require "shellwords"
-require_relative "lib/craft"
-require_relative "lib/chain"
+require_relative "craft"
+require_relative "chain"
 
 # What each Replicate model actually accepts, checked against the live schemas
 # rather than remembered.
@@ -726,7 +726,7 @@ when "chain"
 
   # The loop itself lives in Chain.run, which takes this block. It is injected
   # so the carry-forward can be tested without spending anything — see
-  # MASTER/tools/test/test_tools_chain.rb, which hands in a recorder and asserts that stage
+  # MASTER/test/tools/test_tools_chain.rb, which hands in a recorder and asserts that stage
   # N+1 is given stage N's file. That is the one thing a chain must get
   # right and the one thing that fails silently: a model handed no image
   # generates from the prompt and returns something plausible.

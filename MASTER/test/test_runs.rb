@@ -58,12 +58,12 @@ class TestRuns < Minitest::Test
   end
 
   # What makes a file a test is the directory, not the name — three source files
-  # were named like tests and one of them, tools/test_naming.rb, was reported as
+  # were named like tests and one of them, test/tools/test_naming.rb, was reported as
   # an orphan permanently. The narrowing must not turn the gate off, so both
   # directions: a lint named test_naming is not a test, and a real test a
   # runner's glob does not reach is still unreached.
   def test_the_directory_is_what_makes_a_file_a_test
-    refute_includes Operator::Runs.test_files, "MASTER/tools/test_naming.rb"
+    refute_includes Operator::Runs.test_files, "MASTER/test/test/tools/test_naming.rb"
     refute_includes Operator::Runs.test_files, "MASTER/lib/review/scan/self_test.rb"
     assert_empty Operator::Runs.who_runs("MASTER/test/deep/nested/test_orphan.rb"),
                  "the Rakefile globs one level, so a nested test would go unrun"

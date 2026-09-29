@@ -1,27 +1,5 @@
 # MASTER
 
-<!-- Two films, both rebuilt by MASTER/bin/loops.
-
-     loop1 is the face reading this file aloud, in the voice data/voice.yml
-     names, with the ai.brgen.no wordmark in the corner — recorded by
-     MASTER/gates/probes/face_loop_record.rb. loop2 is a shell booting bin/cli,
-     cropped to the boot message and the prompt, recorded by
-     MASTER/gates/probes/shell_loop_record.rb. Its banner is read from
-     Master::CLI::BootBanner at record time rather than pasted, so changing the
-     banner changes the film.
-
-     Each mp4 carries the sound and each gif is the same take without it: GIF
-     has no audio track at all, which is why the pair exists rather than one
-     file. The frame is the gif because GitHub's sanitizer strips <video> —
-     measured 2026-08-30 — so the mp4 is what the frame links to rather than
-     what it embeds: clicking either opens the take with its audio.
-
-     An inline player with sound needs the mp4 uploaded through GitHub's web UI
-     and its user-attachments URL pasted here. That upload is the operator's; a
-     repo-relative <video src="loop1.mp4"> renders as nothing. -->
-<a href="loop1.mp4"><img src="loop1.gif" width="360" alt="The MASTER face, reading this page aloud — click for sound"></a>
-<a href="loop2.mp4"><img src="loop2.gif" width="360" alt="MASTER booting on vm23 — click for sound"></a>
-
 **MASTER is the first artificial intelligence written in pure Ruby that governs
 itself by law, not by hope — grown in Norway, to run its own mind on power drawn
 from inside a fjord mountain.** Most systems let a model act first and inspect the
@@ -246,7 +224,7 @@ Install both the Termux:API application and the `termux-api` package before expe
 
 ****The phone becomes a resident companion only after explicit pairing.** On Android, the boot starts a lightweight `Device::Agent` beside the face. It keeps Cognition and owner-scoped StandingOrders alive at a bounded cadence, but a fresh phone remains unpaired and therefore runs no owner-scoped orders. Say `/pair owner [name]` to make the phone personal; `/device` shows the durable device/owner state. The same subject is reused across face worker threads, so personal USER.md and MEMORY.md do not disappear when a turn runs on a new thread.
 
-For a resident process that survives closing the face, run `bundle exec ruby bin/device-agent` under a Termux process supervisor. `MASTER/tools/device/termux/install-agent-service.sh` installs the runit service path and a Termux:Boot hook. The launcher keeps the same MASTER boot, but disables the web server and TTS service in that process. The agent does not infer who owns the phone, grant Android permissions or bypass Tool::Profile / Tool::Domain boundaries.
+For a resident process that survives closing the face, run `bundle exec ruby bin/device-agent` under a Termux process supervisor. `MASTER/tools/termux_install_agent_service.sh` installs the runit service path and a Termux:Boot hook. The launcher keeps the same MASTER boot, but disables the web server and TTS service in that process. The agent does not infer who owns the phone, grant Android permissions or bypass Tool::Profile / Tool::Domain boundaries.
 
 The phone sets itself up to listen.** The terminal face hears speech through whisper.cpp running on the device itself, in Norwegian or English without being told which. On a new Termux install MASTER notices what the face's ear lacks and fetches it in the background while the session opens: the Termux packages for the microphone and sound, whisper.cpp built from source until Termux packages it, and the small multilingual model a phone's memory can hold. Each step prints one line as the boot does, a finished step is never repeated, and a failed build waits hours before it tries again and gives up after five tries. Until whisper is in place the face listens through Termux's own speech recogniser, and `bin/doctor` says where the setup stands. A laptop needs only whisper.cpp and a model on disk; Gemini transcribes only where neither exists.
 

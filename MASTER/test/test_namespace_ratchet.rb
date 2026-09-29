@@ -5,7 +5,7 @@ require "json"
 require "open3"
 
 class TestNamespaceRatchet < Minitest::Test
-  TOOL = File.expand_path("../tools/namespace_ratchet.rb", __dir__)
+  TOOL = File.expand_path("../lib/operator/namespace_ratchet.rb", __dir__)
 
   def test_tool_entrypoint_delegates_to_the_live_ratchet
     assert_path_exists TOOL

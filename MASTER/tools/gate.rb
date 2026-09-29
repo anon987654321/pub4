@@ -74,13 +74,13 @@ module Deploy
         name: "gate",
         glob: "*.rb",
         entry: nil,
-        owner: "this file and isolation.rb — pinned by MASTER/tools/test/test_tools_gate.rb",
+        owner: "this file and isolation.rb — pinned by MASTER/test/tools/test_tools_gate.rb",
       },
       {
         name: "test",
         glob: "test/**/*.rb",
         entry: nil,
-        owner: "MASTER/tools/Rakefile — isolated test suite",
+        owner: "MASTER/Rakefile — isolated test suite",
       },
     ].freeze
 

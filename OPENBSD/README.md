@@ -14,7 +14,7 @@ read it before SSH, `doas`, deploy, DNS, relayd, NSD or recovery.
 another command catalogue. `CLAUDE.md` holds the sharp edges that have burned
 agents here, and `PATH_OWNERSHIP.yml` says what every path is for.
 
-What is in `var/nsd/` is a mirror of the NSD configuration templates and nothing
+What is in `dns/` is the tracked NSD configuration and generated zone source and nothing
 more. The live signed zones sit on vm23 under `/var/nsd/` and are deliberately
 not in git, because a signed zone in a shared checkout is a key in a shared
 checkout.

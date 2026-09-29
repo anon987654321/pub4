@@ -87,7 +87,7 @@ module Deploy
       "OPENBSD/etc/relayd.conf",
       "OPENBSD/etc/acme-client.conf",
       "OPENBSD/data/dns.yml",
-      "OPENBSD/var/nsd/etc/nsd.conf",
+      "OPENBSD/dns/nsd.conf",
     ].freeze
 
     RETIRED_APP_NAMES = %w[baibl blognet hjerterom].freeze

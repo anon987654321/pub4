@@ -39,18 +39,12 @@ end
 
 desc "Generate and objectively inspect a TTS torture suite"
 task :voice_benchmark do
-  run_tool("tools/voice_benchmark.rb")
+  run_tool("bin/voice_benchmark")
 end
 
-desc "Scan for tracked secrets and validate the quarantine/virus_museum structure"
+desc "Scan for tracked secrets"
 task :security_sweep do
   run_tool("tools/security_sweep.rb")
-end
-
-desc "Run the canonical MASTER/tools gate and suite"
-task :tools do
-  tools_root = File.expand_path("tools", __dir__)
-  Bundler.with_unbundled_env { Dir.chdir(tools_root) { sh RbConfig.ruby, "-S", "rake" } }
 end
 
 desc "Deep scan lib/ — triage scanner self-findings separately from actionable violations"
@@ -325,6 +319,172 @@ namespace :test do
   end
 end
 
+# Tool suites run in isolation because dilla, postpro and replicate define top-level
+# constants and methods with overlapping names. The tests live under test/tools;
+# this is the single task registry.
+DILLA_SUITES = FileList["test/tools/test_dilla_*.rb"].map { |path| File.basename(path, ".rb").sub(/\Atest_dilla_/, "") }
+DILLA_SUITES.each do |suite|
+  Rake::TestTask.new("test:dilla:#{suite}") do |t|
+    t.libs << "test"
+    t.test_files = ["test/tools/test_dilla_#{suite}.rb"]
+    t.warning = false
+  end
+end
+
+desc "dilla's suite, one process per file"
+task "test:dilla" => DILLA_SUITES.map { |suite| "test:dilla:#{suite}" }
+
+TOOL_SUITES = FileList["test/tools/test_tools_*.rb"].map { |path| File.basename(path, ".rb").sub(/\Atest_tools_/, "") }.reject { |name| name == "gate" }
+TOOL_SUITES.each do |tool|
+  Rake::TestTask.new("test:#{tool}") do |t|
+    t.libs << "test"
+    t.test_files = ["test/tools/test_tools_#{tool}.rb"]
+    t.warning = false
+  end
+end
+
+Rake::TestTask.new("test:gate") do |t|
+  t.libs << "test"
+  t.test_files = ["test/tools/test_tools_gate.rb"]
+  t.warning = false
+end
+
+desc "tools suite — isolated dilla, tool and gate tests"
+task :tools do
+  Rake::Task["test:gate"].invoke
+  Rake::Task["test:dilla"].invoke
+  TOOL_SUITES.each { |tool| Rake::Task["test:#{tool}"].invoke }
+end
+
+desc "The parse/inventory/load gate for MASTER/tools"
+task :gate do
+  run_tool("tools/gate.rb")
+end
+
+namespace :postpro do
+  desc "Install postpro's runtime dependencies"
+  task :bootstrap do
+    ENV["POSTPRO_INSTALL_DEPS"] = "1"
+    run_tool("tools/postpro/postpro.rb", "--vocab-check")
+  end
+end
+
+namespace :replicate do
+  require_relative "tools/replicate/schema_snapshot"
+
+  desc "Compare MODEL_CAPABILITIES against the live Replicate schemas"
+  task :schema_audit do
+    require "master"
+    token = Master::Io::ReplicateClient.load_token
+    if token.to_s.strip.empty?
+      puts "replicate: schema_audit skipped — no REPLICATE_API_TOKEN; run rake replicate:schema_audit_offline for historical evidence"
+      next
+    end
+    engine = File.read(File.expand_path("tools/replicate/replicate.rb", __dir__))
+    table = engine[/^MODEL_CAPABILITIES = \{.*?^\}\.freeze/m] or abort "replicate: MODEL_CAPABILITIES not found"
+    declared = table.scan(/"([^"]+\/[^\"]+)" => \{.*?input_keys: %w\[([^\]]*)\]/m).to_h { |model, keys| [model, keys.split] }
+    abort "replicate: parsed no models — the table shape changed" if declared.empty?
+    client = Master::Io::ReplicateClient.new(token:)
+    drifted = 0
+    declared.each do |model, ours|
+      live = client.input_keys(model)
+      if live.empty?
+        puts "replicate: #{model} — no schema returned"
+        drifted += 1
+        next
+      end
+      gone = ours - live
+      added = live - ours
+      puts "replicate: #{model} ok (#{ours.length} keys)" if gone.empty? && added.empty?
+      next if gone.empty? && added.empty?
+      drifted += 1
+      puts "replicate: #{model} DRIFT"
+      puts "  we send keys the model no longer declares: #{gone.join(', ')}" if gone.any?
+      puts "  the model declares keys we never send: #{added.join(', ')}" if added.any?
+    rescue StandardError => e
+      puts "replicate: #{model} — lookup failed (#{e.class}: #{e.message})"
+      drifted += 1
+    end
+    puts "replicate: #{drifted} of #{declared.length} model(s) need attention"
+    exit(1) unless drifted.zero?
+  end
+
+  desc "Record current Replicate input schemas as offline evidence"
+  task :schema_snapshot do
+    require "master"
+    token = Master::Io::ReplicateClient.load_token
+    if token.to_s.strip.empty?
+      puts "replicate: schema_snapshot skipped — no REPLICATE_API_TOKEN; nothing was measured"
+      next
+    end
+    engine = File.read(File.expand_path("tools/replicate/replicate.rb", __dir__))
+    table = engine[/^MODEL_CAPABILITIES = \{.*?^\}\.freeze/m] or abort "replicate: MODEL_CAPABILITIES not found"
+    declared = table.scan(/"([^"]+\/[^\"]+)" => \{/).flatten.uniq
+    abort "replicate: parsed no models — refusing to write an empty snapshot" if declared.empty?
+    client = Master::Io::ReplicateClient.new(token:)
+    document = Replicate::SchemaSnapshot.write(client:, models: declared)
+    puts "replicate: schema snapshot wrote #{document.fetch("models").length} model(s) at #{document.fetch("captured_at")}"
+  end
+
+  desc "Compare MODEL_CAPABILITIES with the last recorded provider schema"
+  task :schema_audit_offline do
+    snapshot = Replicate::SchemaSnapshot.read
+    if snapshot.nil?
+      puts "replicate: schema_audit_offline inconclusive — no recorded provider schema snapshot"
+      exit(2)
+    end
+    engine = File.read(File.expand_path("tools/replicate/replicate.rb", __dir__))
+    table = engine[/^MODEL_CAPABILITIES = \{.*?^\}\.freeze/m]
+    ours = table.to_s.scan(/"([^"]+\/[^\"]+)" => \{.*?input_keys: %w\[([^\]]*)\]/m).to_h { |model, keys| [model, keys.split.sort] }
+    recorded = Replicate::SchemaSnapshot.by_model
+    missing = recorded.keys - ours.keys
+    added = ours.keys - recorded.keys
+    drifted = []
+    (ours.keys & recorded.keys).sort.each do |model|
+      gone = ours.fetch(model) - recorded.fetch(model)
+      extra = recorded.fetch(model) - ours.fetch(model)
+      next if gone.empty? && extra.empty?
+      drifted << model
+      puts "replicate: #{model} BASELINE DRIFT"
+      puts "  table contains keys absent from recorded schema: #{gone.join(', ')}" if gone.any?
+      puts "  recorded schema contains keys absent from table: #{extra.join(', ')}" if extra.any?
+    end
+    puts "replicate: snapshot-only models: #{missing.join(', ')}" if missing.any?
+    puts "replicate: table-only models: #{added.join(', ')}" if added.any?
+    puts "replicate: baseline matches snapshot captured at #{snapshot.fetch("captured_at")}" if drifted.empty? && missing.empty? && added.empty?
+    puts "replicate: baseline comparison is historical evidence, not a live provider audit"
+    exit(1) unless drifted.empty? && missing.empty? && added.empty?
+  end
+
+  desc "Emit a MODEL_CAPABILITIES entry from the live schema"
+  task :schema_suggest do
+    require "master"
+    model = ENV["MODEL"].to_s.strip
+    abort "usage: rake replicate:schema_suggest MODEL=owner/name" if model.empty?
+    token = Master::Io::ReplicateClient.load_token
+    abort "replicate: no REPLICATE_API_TOKEN" if token.empty?
+    keys = Master::Io::ReplicateClient.new(token:).input_keys(model)
+    abort "replicate: #{model} returned no input schema" if keys.empty?
+    guidance = keys.find { |k| %w[guidance guidance_scale cfg cfg_scale].include?(k) }
+    steps = keys.find { |k| %w[num_inference_steps steps].include?(k) }
+    negative = keys.find { |k| k.include?("negative") }
+    puts "  # #{model} — input keys read from the live schema on #{Time.now.strftime('%Y-%m-%d')}."
+    puts "  #{model.dump} => {"
+    puts "    input_keys: %w[#{keys.join(' ')}],"
+    puts "    negative_prompt_key: #{negative ? negative.dump : 'nil'},"
+    puts "    guidance_key: #{guidance.dump}, guidance_range: (0.0..10.0), guidance_default: 3.0," if guidance
+    puts "    steps_key: #{steps.dump}, steps_range: (1..50), steps_default: 28," if steps
+    puts "  },"
+  end
+end
+
+desc "Find tests that only pass in company, or only alone"
+task :isolation do
+  require_relative "tools/isolation"
+  failures = ToolsIsolation.run(pattern: ENV["TEST"])
+  exit(1) unless failures.zero?
+end
+
 task default: :test
 
 # Which files moved the spine, so the number comes with a culprit.
@@ -419,23 +579,6 @@ namespace :docs do
       File.write(path, agent_contract_document(audience))
       puts "docs:agent_contracts: wrote #{relative}"
     end
-  end
-end
-
-namespace :readme do
-  desc "Record the README's opening image: the face reading this file aloud"
-  task :take do
-    ruby File.join(__dir__, "tools", "readme_take.rb")
-  end
-
-  desc "Only tts.wav — the README read in the voice data/voice.yml names"
-  task :speech do
-    ruby File.join(__dir__, "tools", "readme_take.rb"), "--speech"
-  end
-
-  desc "Only loop.mp4 and loop.gif, from the tts.wav already on disk"
-  task :record do
-    ruby File.join(__dir__, "tools", "readme_take.rb"), "--record"
   end
 end
 

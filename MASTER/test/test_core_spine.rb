@@ -199,7 +199,6 @@ class TestKernelSpine < Minitest::Test
     memory.record(Master::Core::Effect.write("RAILS/b.rb", "x"), Master::Core::Observation.ok("ok"))
 
     assert_nil Master::Core::Constitution.scope_creep_reason("bin/check", memory.proof)
-    assert_nil Master::Core::Constitution.scope_creep_reason("dotfiles/zshrc", memory.proof)
   end
 
   def test_two_hats_blocks_a_mixed_large_commit

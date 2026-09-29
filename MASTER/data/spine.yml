@@ -658,7 +658,7 @@ pub4_source_ceilings:
   # These are deliberate contract surfaces, not absorbed growth.
   MASTER: 718
 
-  # 2359 -> 2360 for MASTER/gates/probes/face_capture_probe.rb, which gets the
+  # 2359 -> 2360 for MASTER/gates/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:
   # it belongs beside the other probes and folds into nothing.
   #
@@ -933,7 +933,7 @@ pub4_source_ceilings:
   # 90 -> 92: OPENBSD/eritel adds README.md and bin/preflight.ksh. No other
   # source growth is absorbed by this raise.
   OPENBSD: 92
-  # 220 -> 222 for lora/seed_media.yml and lora/_toolkit/install_seed_media.rb,
+  # 220 -> 222 for lora/seed_media.yml and lora/toolkit/install_seed_media.rb,
   # the prompt set for every seeded photograph and the script that grades and
   # files what comes back from it. Two files, both named, neither foldable:
   # the prompts are data and the installer is the only thing that writes a
@@ -942,7 +942,7 @@ pub4_source_ceilings:
   # This deliberately leaves STUDIO one over. That one is not mine --
   # lib/engine/album_signature.rb is untracked, so raising for it would fit
   # the ceiling to a file nobody has landed.
-  # 222 -> 224 for lora/_toolkit/run_seed_media_colab.rb and the seed_media.ipynb
+  # 222 -> 224 for lora/toolkit/run_seed_media_colab.rb and the seed_media.ipynb
   # it generates. The notebook is committed because Colab opens a notebook from a
   # public repo URL and cannot be handed one any other way, and the generator is
   # committed because the notebook says edits belong in it.
@@ -963,7 +963,7 @@ pub4_source_ceilings:
   # and four in dilla/live/ (broadcast.sh, dig_crate.rb, dig_crate.sh, synth.rb).
   # Six more since: live/ambient_pads.als.rb, chord_based_beats.als.rb,
   # sampled_based_beats.als.rb, rack.rb and recall.rb -- the Ableton-facing surface,
-  # where a file per project shape is the shape -- plus lora/_toolkit/toolkit.sh,
+  # where a file per project shape is the shape -- plus lora/toolkit/toolkit.sh,
   # against synth.rb, _toolkit/lib.sh and one fixture removed. Three of the twelve
   # are dilla tests: test_dilla_crate_dig.rb, test_dilla_radio_bergen_study.rb and
   # test_dilla_take_write.rb.

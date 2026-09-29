@@ -356,7 +356,7 @@ end
 # three of the four layers a photograph fails on are beyond any grade, and a
 # tool that quietly tries everything and reports success is lying about them.
 if ARGV.include?("--rescue")
-  require_relative "lib/rescue"
+  require_relative "rescue"
   subject = ARGV[ARGV.index("--rescue") + 1]
   if subject.nil? || !File.file?(subject)
     PostproBootstrap.dmesg("ERROR --rescue needs a readable file")
@@ -386,7 +386,7 @@ if ARGV.include?("--rescue")
     exit 1
   end
 
-  require_relative "lib/uncanny"
+  require_relative "uncanny"
   comparison = Postpro::Uncanny.compare(subject, target)
   Postpro::Uncanny.verdict(comparison).each { |line| PostproBootstrap.dmesg("rescue: #{line}") }
   PostproBootstrap.dmesg("rescue: wrote #{target}")
@@ -398,7 +398,7 @@ end
 # are readings, and the set is left as it was — moving a frame toward the
 # median changes the graded look, which is the operator's decision.
 if ARGV.include?("--set")
-  require_relative "lib/frame_set"
+  require_relative "frame_set"
   dir = ARGV[ARGV.index("--set") + 1]
   unless dir && File.directory?(dir)
     PostproBootstrap.dmesg("ERROR --set needs a directory of frames")
@@ -432,7 +432,7 @@ end
 # says which way each number moved and whether that is the direction film
 # emulation should move it.
 if ARGV.include?("--measure")
-  require_relative "lib/uncanny"
+  require_relative "uncanny"
   subject = ARGV[ARGV.index("--measure") + 1]
   if subject.nil? || !File.file?(subject)
     PostproBootstrap.dmesg("ERROR --measure needs a readable file")
@@ -496,7 +496,7 @@ if BOOTSTRAP[:gems][:vips]
   # would raise during load and take the whole tool down instead of degrading.
   # The grade reads it now — shadow_lift asks where the blacks already sit, and
   # preset() asks how much texture and contrast the source arrived with.
-  require_relative "lib/uncanny"
+  require_relative "uncanny"
 end
 
 # Was File.exist?("replicate.rb") -- relative to the CURRENT WORKING DIRECTORY,
@@ -4045,7 +4045,7 @@ end
 # frame whose sidecar carries it can be re-graded identically by checking out
 # the commit whose files hash to it.
 GRADE_VERSION = Digest::SHA256.hexdigest(
-  [__FILE__, *Dir[File.join(__dir__, "lib", "*.rb")].sort].map { |path| File.binread(path) }.join,
+  [__FILE__, *Dir[File.join(__dir__, "*.rb")].sort].map { |path| File.binread(path) }.join,
 )[0, 12].freeze
 
 # The four uncanny numbers on the picture that went in and the one that came

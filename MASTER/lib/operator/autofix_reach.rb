@@ -25,7 +25,7 @@
 # undetectable — every one of the twelve wrong. Ten have a live detector in law/
 # or the RuleDSL registry, and the other two (WHITESPACE_PUNCTUATION,
 # MESSAGE_CHAIN) carry `folded_into:` naming the rule that reports for them. It
-# is the same instrument error tools/rule_reach.rb's own header records against
+# is the same instrument error lib/operator/rule_reach.rb's own header records against
 # itself, so the question is asked there now, once: `RuleReach.mechanical`
 # already knows all three populations and loads the laws rather than grepping
 # for them.
@@ -42,8 +42,8 @@
 # emptying them means either writing the transforms or demoting the rules — per
 # rule, with a reason, not as a sweep.
 #
-#   ruby MASTER/tools/autofix_reach.rb
-#   ruby MASTER/tools/autofix_reach.rb --json
+#   ruby MASTER/lib/operator/autofix_reach.rb
+#   ruby MASTER/lib/operator/autofix_reach.rb --json
 
 require "yaml"
 require "json"

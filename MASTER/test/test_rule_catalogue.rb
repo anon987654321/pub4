@@ -6,7 +6,7 @@ require_relative "../lib/operator/autofix_reach"
 require_relative "../lib/operator/rule_reach"
 
 # The two gates over the rule catalogue itself — tools/rule_hygiene.rb on its
-# ids, aliases and metadata, tools/autofix_reach.rb on whether a rule fix
+# ids, aliases and metadata, lib/operator/autofix_reach.rb on whether a rule fix
 # promise reaches code. One file because they read one subject, and because
 # each was measuring itself rather than the catalogue in the same way: hygiene
 # counted the check names inside a rule config as rules, and autofix_reach

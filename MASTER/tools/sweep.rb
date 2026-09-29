@@ -55,15 +55,15 @@ module Operator
         Probe.new(unit: "dupcensus", trees: %w[MASTER], run: -> { tool("dup_census.rb") }),
         Probe.new(unit: "datareach", trees: %w[MASTER], run: -> { tool("data_reach.rb") }),
         Probe.new(unit: "readersing", trees: %w[MASTER], run: -> { tool("reader_singularity.rb") }),
-        Probe.new(unit: "rulereach", trees: %w[MASTER], run: -> { tool("rule_reach.rb") }),
-        Probe.new(unit: "namespace", trees: %w[MASTER], run: -> { tool("namespace_ratchet.rb") }),
+        Probe.new(unit: "rulereach", trees: %w[MASTER], run: -> { operator_tool("rule_reach.rb") }),
+        Probe.new(unit: "namespace", trees: %w[MASTER], run: -> { operator_tool("namespace_ratchet.rb") }),
         Probe.new(unit: "designbase", trees: %w[RAILS], run: -> { tool("design_baseline.rb") }),
 # OPENBSD's declarations and their readers live in different files by
 # design — crontab names a path, OPERATOR.sh installs it, rc.d holds the
 # service, nsd.conf names the zone — and nothing failed when a pair
 # stopped agreeing.
 Probe.new(unit: "obsdreach", trees: %w[OPENBSD],
-          run: -> { sibling("OPENBSD", "tools/reach.rb") }),
+          run: -> { sibling("OPENBSD", "bin/reach") }),
 # MASTER/tools's coverage was never thin, only unreported here: gate.rb parses
 # every first-party file, checks dilla's manifest against the disk, and
 # boots the guarded entry points. `rake tools` already runs it; this is
@@ -78,6 +78,10 @@ Probe.new(unit: "toolsgate", trees: %w[MASTER],
 
     def tool(name, *args)
       capture(RbConfig.ruby, File.join(MASTER, "tools", name), *args)
+    end
+
+    def operator_tool(name, *args)
+      capture(RbConfig.ruby, File.join(MASTER, "lib", "operator", name), *args, chdir: MASTER)
     end
 
 # Run from the sibling's own directory. MASTER requires nothing from the

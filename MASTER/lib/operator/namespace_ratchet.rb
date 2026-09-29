@@ -8,8 +8,8 @@
 # import to fail. A module boundary answers for free the question that tree
 # needs a bespoke test to ask.
 #
-#   ruby MASTER/tools/namespace_ratchet.rb
-#   ruby MASTER/tools/namespace_ratchet.rb --ratchet
+#   ruby MASTER/lib/operator/namespace_ratchet.rb
+#   ruby MASTER/lib/operator/namespace_ratchet.rb --ratchet
 #
 # Ratchets rather than demands: 863 methods is not one patch. Recording the
 # count and refusing a rise makes every new file a module and every merge

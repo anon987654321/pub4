@@ -26,7 +26,6 @@ module Operator
     # Files that orchestrate other files. Each is read for glob literals.
     RUNNERS = %w[
       MASTER/Rakefile
-      MASTER/tools/Rakefile
       MASTER/bin/check
       MASTER/bin/ci
       MASTER/bin/gate
@@ -60,7 +59,7 @@ module Operator
     # A string literal that looks like it selects ruby files.
     GLOB = /["']([A-Za-z0-9_.\-\/*\[\]{}]*\*[A-Za-z0-9_.\-\/*\[\]{}]*\.rb)["']/
 
-    # A runner naming one file outright runs it just as surely. tools/Rakefile
+    # A runner naming one file outright runs it just as surely. MASTER/Rakefile
     # lists test_tools_gate.rb by name — deliberately, its comment says, because
     # the glob beside it would pull in the dilla and tool suites — and a
     # glob-only extractor read that as a test nothing runs. A path literal that
@@ -91,7 +90,7 @@ module Operator
     # A test is a file under a test/ directory, not every file whose
     # name reads like one. The name alone was the first instrument and it was
     # wrong in both directions: law/ rules are named for what they detect, so
-    # squint_test.rb read as a test (exempted by hand), MASTER/tools/test_naming.rb
+    # squint_test.rb read as a test (exempted by hand), MASTER/test/test/tools/test_naming.rb
     # is the lint over test names and read as an orphan test forever, and
     # lib/review/scan/self_test.rb read as a test that happened to be covered by
     # a bin/check glob — a false positive masked by a coincidence, which is the
