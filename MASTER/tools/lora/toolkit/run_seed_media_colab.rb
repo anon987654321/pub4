@@ -3,7 +3,7 @@
 
 # The seed-media lane: render every photograph the three RAILS apps seed with.
 #
-#   ruby MASTER/tools/lora/_toolkit/run_seed_media_colab.rb
+#   ruby MASTER/tools/lora/toolkit/run_seed_media_colab.rb
 #
 # Writes MASTER/tools/lora/seed_media.ipynb. Commit it, open it from the GitHub URL
 # this prints, set HF_TOKEN in the sidebar, and run.
@@ -235,7 +235,7 @@ render_cell = <<~PYTHON
   print("")
   print(f"ok: {made} frame(s) in {OUT}")
   print("next: download that folder, then on the Mac:")
-  print("  ruby MASTER/tools/lora/_toolkit/install_seed_media.rb <folder>")
+  print("  ruby MASTER/tools/lora/toolkit/install_seed_media.rb <folder>")
 PYTHON
 
 notebook = {
