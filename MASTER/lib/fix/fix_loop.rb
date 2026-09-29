@@ -218,11 +218,17 @@ module Master
           scope: target,
           model: @agent.respond_to?(:model) ? @agent.model : ENV["MASTER_MODEL"],
           effort: ENV.fetch("MASTER_EFFORT", "high"),
-          plan: Ground::ActivePlan.read(@root) || "fix plan: observe, critique, repair, verify",
+          plan: mission_plan,
         )
       rescue StandardError => e
         @bus&.publish("mission:error", error: e.message, phase: "start")
         raise
+      end
+
+      def mission_plan
+        [Ground::ActivePlan.read(@root), Wishlist.pending_context(@root)].compact.then do |parts|
+          parts.empty? ? "fix plan: observe, critique, repair, verify" : parts.join("\n\n")
+        end
       end
 
       def relative_target(path)
