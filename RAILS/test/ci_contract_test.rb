@@ -14,7 +14,7 @@ class CiContractTest < Minitest::Test
   test "canonical ci entrypoint runs contracts before every app ci" do
     source = read(File.join(ROOT, "bin", "ci"))
 
-    assert_includes source, 'test", "run_all.rb'
+    assert_includes source, 'File.join(ROOT, "test", "run_all.rb")'
     APPS.each do |app|
       assert_includes source, 'File.join(ROOT, app, "bin", "ci")'
     end
