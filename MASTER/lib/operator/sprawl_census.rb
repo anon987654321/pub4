@@ -24,6 +24,7 @@
 # adding it.
 
 require "yaml"
+require "digest"
 
 module Operator
   module SprawlCensus
@@ -130,6 +131,85 @@ module Operator
       tracked.select { |f| VAGUE.include?(File.basename(f, File.extname(f))) }.sort
     end
 
+    TEXT_EXTENSIONS = %w[.rb .rake .js .mjs .scss .css .erb .html .md .yml .yaml .json .txt .conf .sh].freeze
+    DEEP_PATH = 5
+    DUPLICATE_MAX_BYTES = 1_048_576
+    SHAPE_MEMBER_LIMIT = 16
+
+    def tree_files(tree)
+      prefix = "#{tree}/"
+      tracked.select { |path| path.start_with?(prefix) }
+    end
+
+    def tree_directories(tree)
+      tree_files(tree).flat_map do |path|
+        parts = path.split("/")
+        (1...parts.length).map { |index| parts[0...index].join("/") }
+      end.uniq.sort
+    end
+
+    def lone_dirs_for(tree)
+      base = "#{tree}/"
+      lone_dirs.select { |path| path.start_with?(base) }
+    end
+
+    def stutter_for(tree)
+      base = "#{tree}/"
+      stutter.select { |path| path.start_with?(base) }
+    end
+
+    def vague_names_for(tree)
+      base = "#{tree}/"
+      vague_names.select { |path| path.start_with?(base) }
+    end
+
+    def deep_paths_for(tree)
+      tree_files(tree).select do |path|
+        path.count("/") >= DEEP_PATH
+      end
+    end
+
+    # Exact content duplication is evidence, never a deletion verdict. A pair can
+    # still have different loading semantics, so /fix must prove the chosen operation.
+    def duplicate_groups_for(tree)
+      files = tree_files(tree).select do |path|
+        TEXT_EXTENSIONS.include?(File.extname(path).downcase) &&
+          File.size?(File.join(ROOT, path)).to_i <= DUPLICATE_MAX_BYTES
+      end
+      files.group_by do |path|
+        Digest::SHA256.file(File.join(ROOT, path)).hexdigest
+      end.values.select { |group| group.size > 1 }.sort_by { |group| [-group.size, group.first] }
+    rescue StandardError => e
+      warn "sprawl_census: duplicate scan failed for #{tree}: #{e.class}: #{e.message}"
+      []
+    end
+
+    def shape(tree)
+      files = tree_files(tree)
+      lone = lone_dirs_for(tree)
+      repeated = stutter_for(tree)
+      vague = vague_names_for(tree)
+      duplicates = duplicate_groups_for(tree)
+      deep = deep_paths_for(tree)
+      members = [
+        *lone.map { |path| { path:, rule: "LONE_DIRECTORY", message: "one-file directory candidate" } },
+        *repeated.map { |path| { path:, rule: "STUTTER", message: "directory and file repeat the same name" } },
+        *vague.map { |path| { path:, rule: "VAGUE_NAME", message: "name says little on its own" } },
+        *deep.map { |path| { path:, rule: "DEEP_PATH", message: "unusually deep path candidate" } },
+        *duplicates.flat_map { |group| group.map { |path| { path:, rule: "DUPLICATE_CONTENT", message: "exact content duplicate group", related: group } } },
+      ].uniq { |row| [row[:rule], row[:path]] }.first(SHAPE_MEMBER_LIMIT)
+      {
+        files: files.size,
+        directories: tree_directories(tree).size,
+        lone_dirs: lone.size,
+        stutter: repeated.size,
+        vague_names: vague.size,
+        duplicate_groups: duplicates.size,
+        deep_paths: deep.size,
+        members: members,
+      }
+    end
+
     # A census that reads nothing reports nothing and passes. MASTER/tools gate did
     # exactly that for the length of a worktree: VENDORED matched the absolute
     # path, every file was excluded, and it announced inconclusive rather than
@@ -178,9 +258,17 @@ module Operator
     end
 
     def list_members
-      { "lone_dirs" => lone_dirs, "stutter" => stutter, "vague_names" => vague_names }.each do |kind, files|
-        puts "\n#{kind} (#{files.size})"
-        files.each { |f| puts "  #{f}" }
+      %w[MASTER RAILS OPENBSD].each do |tree|
+        current = shape(tree)
+        puts "\n#{tree}"
+        %i[files directories lone_dirs stutter vague_names duplicate_groups deep_paths].each do |key|
+          puts "  #{key}: #{current.fetch(key)}"
+        end
+        current[:members].each do |member|
+          related = Array(member[:related]).first(3).join(", ")
+          suffix = related.empty? ? "" : " [#{related}]"
+          puts "  #{member[:rule]} #{member[:path]} — #{member[:message]}#{suffix}"
+        end
       end
       0
     end
