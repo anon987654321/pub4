@@ -83,7 +83,8 @@ module Deploy
       slow = rows.max_by { |row| row[:ms] }
       large = rows.max_by { |row| row[:bytes] }
       @result.warn(
-        "server_response_budget: #{app} n=#{rows.size} p95=#{p95_ms.round}ms/#{p95_bytes}B "         "max=#{slow[:path]} #{slow[:ms].round}ms, largest=#{large[:path]} #{large[:bytes]}B"
+        "server_response_budget: #{app} n=#{rows.size} p95=#{p95_ms.round}ms/#{p95_bytes}B " \\
+        "max=#{slow[:path]} #{slow[:ms].round}ms, largest=#{large[:path]} #{large[:bytes]}B"
       )
     end
 
