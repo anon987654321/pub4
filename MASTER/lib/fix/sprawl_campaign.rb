@@ -70,6 +70,12 @@ module Master
         Rails load conventions, OpenBSD installed-target semantics, generated
         paths, ownership violations, and complexity that was merely moved.
 
+        The resulting diff is below:
+
+        ```diff
+        %<diff>s
+        ```
+
         The plan is acceptable only if the resulting tree is materially more
         coherent and smaller in structural sprawl, while preserving behavior.
 
@@ -136,10 +142,11 @@ module Master
           next if plan.empty?
 
           after_gate = lambda do |diff|
-            verdict = ask(format(ATTACK, tree:, summary: plan.summary))
+            verdict = ask(format(ATTACK, tree:, summary: plan.summary, diff:))
             return "review: #{verdict.lines.first.to_s.strip[0, 200]}" unless verdict.start_with?("APPROVE")
+            return "review: resulting structural score did not improve" unless shape_improves?(tree, before)
 
-            shape_improves?(tree, before)
+            nil
           end
           result = restructure_for(tree).call(
             plan,
