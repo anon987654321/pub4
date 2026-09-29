@@ -17,6 +17,7 @@ require_relative "opportunity_pass"
 require_relative "rename_sweep"
 require_relative "severity"
 require_relative "violation"
+require_relative "wishlist"
 
 module Master
   module Fix
@@ -65,6 +66,7 @@ module Master
         @run_mutex = Mutex.new
         @git = git || Io::GitOperations.new(root)
         @run_journal = RunJournal.new(root:, bus:)
+        @wishlist = Wishlist.new(root: @root, agent: @agent, event_bus: @bus)
 
         @file_collector = FileCollector.new(root:, bus:)
         @rule_order = RuleOrder.new(rules:, learnings:, bus:, root:)
@@ -123,7 +125,10 @@ module Master
           mission&.defer!(reason: "attempt #{state}: #{result.to_s}")
         end
 
+        wishlist_message = @wishlist.call(state: state.to_s, target:, run_id:)
+        @bus&.publish("fix_loop:wishlist", state:, target:, message: wishlist_message)
         @bus&.publish("fix_loop:terminal", state:, message: result.to_s)
+
         result
       end
 
