@@ -7,11 +7,10 @@ require "fileutils"
 require "mail"
 require "net/imap"
 require "yaml"
-require_relative "fan_ops_digest_support"
 
 ROOT = File.expand_path("..", __dir__).freeze
 CONFIG = YAML.safe_load_file(File.join(ROOT, "data", "fan_ops.yml"), aliases: false).freeze
-OPERATOR = YAML.safe_load_file(File.join(ROOT, "data", "operator_model.yml"), aliases: false).freeze
+OPERATOR = CONFIG.fetch("operator").freeze
 
 require "fileutils"
 require "sqlite3"
