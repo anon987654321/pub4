@@ -151,6 +151,14 @@ class RepoHygieneContractTest < Minitest::Test
       OPENBSD/quarantine/
       OPENBSD/eritel/
       RAILS/eritel/
+      MASTER/tools/design/
+      MASTER/tools/web/
+      MASTER/tools/postpro/lib/
+      MASTER/tools/replicate/lib/
+      MASTER/tools/lora/_toolkit/
+      MASTER/tools/bplans/
+      MASTER/tools/device/
+      MASTER/tools/Rakefile
       RAILS/shared/reference/
     ]
 
