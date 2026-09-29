@@ -72,6 +72,7 @@ class TestCliOperatorLayer < Minitest::Test
 
   def test_repeatable_media_and_duration_are_deterministic
     assert Master::Io::MediaIntent.repeatable?("play a loud sine wave for 10s")
+    assert Master::Io::MediaIntent.repeatable?("play the default music")
     assert_equal 10.0, Master::Io::MediaIntent.send(:duration_for, "play a sine wave for 10s")
     assert_equal 3.0, Master::Io::MediaIntent.send(:duration_for, "play a sine wave")
   end
