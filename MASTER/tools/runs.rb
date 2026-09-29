@@ -26,7 +26,6 @@ module Operator
     # Files that orchestrate other files. Each is read for glob literals.
     RUNNERS = %w[
       MASTER/Rakefile
-      MASTER/tools/Rakefile
       MASTER/bin/check
       MASTER/bin/ci
       MASTER/bin/gate
@@ -60,7 +59,7 @@ module Operator
     # A string literal that looks like it selects ruby files.
     GLOB = /["']([A-Za-z0-9_.\-\/*\[\]{}]*\*[A-Za-z0-9_.\-\/*\[\]{}]*\.rb)["']/
 
-    # A runner naming one file outright runs it just as surely. tools/Rakefile
+    # A runner naming one file outright runs it just as surely. MASTER/Rakefile
     # lists test_tools_gate.rb by name — deliberately, its comment says, because
     # the glob beside it would pull in the dilla and tool suites — and a
     # glob-only extractor read that as a test nothing runs. A path literal that
