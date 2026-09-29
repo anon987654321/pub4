@@ -316,7 +316,7 @@ end end.join
     end
 
     # WCAG relative luminance: each sRGB channel is gamma-decoded before the
-    # weights apply, as RAILS/gates/support/design_metrics/contrast.rb does.
+    # weights apply, as MASTER/gates/support/contrast.rb does.
     def relative_luminance(hex)
       h = hex.length < 6 ? hex.chars.flat_map { |c| [c, c] }.join : hex
       r, g, b = h[0, 6].scan(/../).map { |pair| srgb_to_linear(pair.to_i(16) / 255.0) }

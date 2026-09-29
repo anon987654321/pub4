@@ -63,7 +63,7 @@ production:
 
 rendered_invariants:
   needs: [browser]
-  require: lib/rendered/rendered_invariants
+  require: lib/rendered_invariants
   class: Deploy::RenderedInvariants
   pass: "Rendered invariants passed (theme served matches theme declared; chat tab corner consistent or declared)."
   covered_by: rendered_suite
@@ -80,24 +80,24 @@ domain_alignment:
   covered_by: release
 
 frontend_auditor:
-  require: lib/source/frontend_auditor
+  require: lib/frontend_auditor
   class: Deploy::FrontendAuditorGate
   pass: "auditor: 0 warnings"
   covered_by: layout_suite
 
 frontend_production:
-  require: lib/source/frontend_production
+  require: lib/frontend_production
   class: Deploy::FrontendProductionGate
   pass: "Frontend production gate passed (%{apps} apps + MASTER/web layouts)."
   covered_by: release
 
 generated_asset:
-  require: lib/source/generated_asset
+  require: lib/generated_asset
   class: Deploy::GeneratedAssetGate
   pass: "Generated asset freshness gate passed for %{apps} Rails apps."
 
 human_walkthrough:
-  require: lib/live/human_walkthrough
+  require: lib/human_walkthrough
   class: Deploy::HumanWalkthroughGate
   pass: "Human walkthrough gate passed for %{apps} Rails apps."
 
@@ -114,14 +114,14 @@ master_web_assets:
   covered_by: production
 
 phantom_foreign_keys:
-  require: lib/source/phantom_foreign_keys
+  require: lib/phantom_foreign_keys
   class: Deploy::PhantomForeignKeysGate
   pass: "phantom_foreign_keys: clean (%{schemas} schemas)"
 
 # isolate_namespace isolates tables and routes, not constants; this holds the
 # one deliberate cross-engine read at one.
 engine_boundaries:
-  require: lib/source/engine_boundaries
+  require: lib/engine_boundaries
   class: Deploy::EngineBoundariesGate
   pass: "engine_boundaries: no engine names another's constants beyond its declared reads"
 
@@ -139,12 +139,12 @@ release:
   script: release.rb
 
 schema_migration:
-  require: lib/source/schema_migration
+  require: lib/schema_migration
   class: Deploy::SchemaMigrationGate
   pass: "Schema/migration gate passed for %{apps} Rails apps."
 
 stimulus_components:
-  require: lib/source/stimulus_components
+  require: lib/stimulus_components
   class: Deploy::StimulusComponentsGate
   pass: "Stimulus Components adoption gate passed."
   covered_by: release
@@ -155,81 +155,81 @@ visual_contract:
   script: visual_contract.rb
 
 user_flow:
-  require: lib/live/user_flow
+  require: lib/user_flow
   class: Deploy::UserFlowGate
   pass: "User flow + MASTER design-principle gate passed."
   covered_by: layout_suite
 
 css_constitution:
-  require: lib/source/css_constitution
+  require: lib/css_constitution
   class: Deploy::CssConstitutionGate
   pass: "CSS constitution gate passed (all stylesheets)."
   covered_by: layout_suite
 
 scale_ratchet:
-  require: lib/source/scale_ratchet
+  require: lib/scale_ratchet
   class: Deploy::ScaleRatchetGate
   pass: "Spacing, leading, radius and weight are on the declared scale."
   covered_by: layout_suite
 
 # Source-side Bringhurst/Butterick contract. Rendered geometry remains the authority for optical results.
 typography_contract:
-  require: lib/source/typography_contract
+  require: lib/typography_contract
   class: Deploy::TypographyContractGate
   pass: "Typography contract passed (source declarations match the contextual reading profiles)."
   covered_by: layout_suite
 
 css_minify_integrity:
-  require: lib/source/css_minify_integrity
+  require: lib/css_minify_integrity
   class: Deploy::CssMinifyIntegrityGate
   pass: "css_minify_integrity: ok"
   covered_by: layout_suite
 
 first_screen:
-  require: lib/live/first_screen
+  require: lib/first_screen
   class: Deploy::FirstScreenGate
   pass: "ok: first-screen markers present, tap minimum declared"
   covered_by: layout_suite
 
 dialect_purity:
-  require: lib/source/dialect_purity
+  require: lib/dialect_purity
   class: Deploy::DialectPurityGate
   pass: "Dialect purity gate passed."
   covered_by: layout_suite
 
 payment_honesty:
-  require: lib/source/payment_honesty
+  require: lib/payment_honesty
   class: Deploy::PaymentHonestyGate
   pass: "Payment honesty gate passed."
   covered_by: layout_suite
 
 affiliate_honesty:
-  require: lib/source/affiliate_honesty
+  require: lib/affiliate_honesty
   class: Deploy::AffiliateHonestyGate
   pass: "Affiliate honesty gate passed."
   covered_by: layout_suite
 
 content_honesty:
-  require: lib/source/content_honesty
+  require: lib/content_honesty
   class: Deploy::ContentHonestyGate
   pass: "Content honesty gate passed (no Faker filler on public surfaces)."
   covered_by: layout_suite
 
 content_for_yield:
-  require: lib/source/content_for_yield
+  require: lib/content_for_yield
   class: Deploy::ContentForYieldGate
   pass: "content_for_yield: every produced content slot has a consumer"
   covered_by: layout_suite
 
 layout_search:
-  require: lib/research/layout_search
+  require: lib/layout_search
   class: Deploy::LayoutSearchGate
   pass: "Layout search (least-resistance) gate passed."
   covered_by: layout_suite
 
 # Owns the professional layout + CSS stack, frontend_auditor included.
 stimulus_wiring:
-  require: lib/source/stimulus_wiring
+  require: lib/stimulus_wiring
   class: Deploy::StimulusWiringGate
   pass: "Stimulus wiring gate passed."
   covered_by: layout_suite
@@ -240,37 +240,37 @@ layout_suite:
   pass: "Layout suite passed (CSS + geometry + dialect + payment + content + flow + auditor + stimulus)."
 
 surface_schema:
-  require: lib/live/surface_schema
+  require: lib/surface_schema
   class: Deploy::SurfaceSchemaGate
   pass: "surface_schema: ok"
   covered_by: layout_suite
 
 design_metrics:
-  require: lib/research/design_metrics
+  require: lib/design_metrics
   class: Deploy::DesignMetricsGate
   pass: "design_metrics: ok"
   covered_by: layout_suite
 
 visual_quality:
-  require: lib/research/visual_quality
+  require: lib/visual_quality
   class: Deploy::VisualQualityGate
   pass: "visual_quality: ok"
   covered_by: layout_suite
 
 calibration:
-  require: lib/research/calibration
+  require: lib/calibration
   class: Deploy::CalibrationGate
   pass: "calibration: ok"
   covered_by: layout_suite
 
 apps_yml:
-  require: lib/source/apps_yml
+  require: lib/apps_yml
   class: Deploy::AppsYmlValidator
   pass: "apps.yml validator: OK"
   covered_by: production
 
 shared_wiring:
-  require: lib/source/shared_wiring
+  require: lib/shared_wiring
   class: Deploy::SharedWiringGate
   pass: "Shared wiring gate passed (routes, importmap, public assets, Stimulus)."
 
@@ -279,7 +279,7 @@ shared_wiring:
 # sits in I18n.load_path TWICE and the second entry lands after every app, so
 # shared always wins. nav.brand_home is why all three apps render "Home".
 locale_shadowing:
-  require: lib/source/locale_shadowing
+  require: lib/locale_shadowing
   class: Deploy::LocaleShadowingGate
   pass: "locale_shadowing: ok"
   covered_by: production
@@ -310,49 +310,49 @@ rendered_suite:
 
 rendered_geometry:
   needs: [browser]
-  require: lib/rendered/rendered_geometry
+  require: lib/rendered_geometry
   class: Deploy::RenderedGeometryGate
   pass: "ok: rendered geometry contracts satisfied"
   covered_by: rendered_suite
 
 webgl_surfaces:
   needs: [browser]
-  require: lib/rendered/webgl_surfaces
+  require: lib/webgl_surfaces
   class: Deploy::WebglSurfacesGate
   pass: "ok: webgl surfaces draw"
   covered_by: rendered_suite
 
 viewport_spill:
   needs: [browser]
-  require: lib/rendered/viewport_spill
+  require: lib/viewport_spill
   class: Deploy::ViewportSpillGate
   pass: "ok: nothing hangs off the right edge at 390px"
   covered_by: rendered_suite
 
 layout_snapshot:
   needs: [browser]
-  require: lib/rendered/layout_snapshot
+  require: lib/layout_snapshot
   class: Deploy::LayoutSnapshotGate
   pass: "ok: layout snapshots match committed baselines"
   covered_by: rendered_suite
 
 journey_invariant:
   needs: [browser]
-  require: lib/rendered/journey_invariant
+  require: lib/journey_invariant
   class: Deploy::JourneyInvariantGate
   pass: "ok: journey invariants hold"
   covered_by: rendered_suite
 
 reflow:
   needs: [browser]
-  require: lib/rendered/reflow
+  require: lib/reflow
   class: Deploy::ReflowGate
   pass: "ok: no overflow across the width sweep"
   covered_by: rendered_suite
 
 keyboard_flow:
   needs: [browser]
-  require: lib/rendered/keyboard_flow
+  require: lib/keyboard_flow
   class: Deploy::KeyboardFlowGate
   pass: "ok: keyboard tab order is sound"
   covered_by: rendered_suite
@@ -360,32 +360,32 @@ keyboard_flow:
 # Phone viewport journey floor (Fitts 44px, overflow, landmarks, verticals).
 mobile_flow:
   needs: [browser]
-  require: lib/rendered/mobile_flow
+  require: lib/mobile_flow
   class: Deploy::MobileFlowGate
   pass: "ok: mobile journey floor holds"
   covered_by: rendered_suite
 
 cross_app:
   needs: [browser]
-  require: lib/rendered/cross_app
+  require: lib/cross_app
   class: Deploy::CrossAppEquivalenceGate
   pass: "ok: shared chrome agrees across apps"
   covered_by: rendered_suite
 
 deploy_drift:
-  require: lib/live/deploy_drift
+  require: lib/deploy_drift
   class: Deploy::DeployDriftGate
   pass: "ok: no deploy drift detected"
 
 flow_journey:
-  require: lib/live/flow_journey
+  require: lib/flow_journey
   class: Deploy::FlowJourneyGate
   pass: "ok: user journeys pass with postconditions"
 
 # Full-matrix UI/UX simulation: every full-page view (brgen · amber · MASTER).
 # Source always; live HTTP when triangle ports are open.
 page_simulation:
-  require: lib/live/page_simulation
+  require: lib/page_simulation
   class: Deploy::PageSimulationGate
   pass: "ok: page UI/UX simulations clean across inventory"
 
@@ -399,7 +399,7 @@ gate_mutation:
 # not mistaken for a defect the way rect intersection would.
 occlusion:
   needs: [browser]
-  require: lib/rendered/occlusion
+  require: lib/occlusion
   class: Deploy::OcclusionGate
   pass: "ok: every control answers a press at its own centre"
   covered_by: rendered_suite
@@ -409,7 +409,7 @@ occlusion:
 # item 8 records the hole. Source half asserts the field collection still runs,
 # live half measures the two paint metrics against a budget.
 web_vitals_budget:
-  require: lib/rendered/web_vitals_budget
+  require: lib/web_vitals_budget
   class: Deploy::WebVitalsBudget
   pass: "ok: LCP and CLS within budget, field collection intact"
 
@@ -419,6 +419,6 @@ web_vitals_budget:
 # mounts its own ActionDispatch::Static — so a check that reads one of them
 # reports two apps as broken when they are not.
 pwa_installable:
-  require: lib/source/pwa_installable
+  require: lib/pwa_installable
   class: Deploy::PwaInstallable
   pass: "ok: three manifests installable, icons resolve, brgen follows its host"

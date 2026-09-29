@@ -125,10 +125,10 @@ ownership:
     purpose: OPENBSD contract tests, run by bin/check
     risk: medium
     check: OPENBSD/bin/check
-  tools/:
-    purpose: tree.rb (repo shape) and reach.rb (deploy reach), both Ruby helpers
-    risk: low
-    check: ruby OPENBSD/test/test_reach.rb
+  bin/:
+    purpose: operator commands, tree and deploy reach helpers
+    risk: high
+    check: OPENBSD/bin/check-openbsd
   etc/:
     purpose: repo mirror of live /etc configs
     risk: critical
@@ -138,8 +138,8 @@ ownership:
       from /usr/local/libexec
     risk: critical
     check: ruby OPENBSD/gates/installed_targets_gate.rb
-  var/:
-    purpose: nsd.conf and the unsigned zones bin/render_dns.rb generates
+  dns/:
+    purpose: tracked NSD configuration and generated unsigned zones
     risk: critical
     check: ruby OPENBSD/bin/render_dns.rb --check
   home/:

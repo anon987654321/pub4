@@ -4,7 +4,7 @@ require "minitest/autorun"
 require "fileutils"
 require "tmpdir"
 require "yaml"
-require_relative "../gates/lib/source/stimulus_wiring"
+require_relative "../gates/lib/stimulus_wiring"
 
 class StimulusWiringGateTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)

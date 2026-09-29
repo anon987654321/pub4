@@ -3,7 +3,7 @@
 require "minitest/autorun"
 require_relative "../../../MASTER/gates/support/exemplar_structure"
 require_relative "../../../MASTER/gates/support/visual_quality"
-require_relative "../../../MASTER/gates/lib/research/visual_quality"
+require_relative "../../../MASTER/gates/lib/visual_quality"
 require_relative "../../../OPENBSD/lib/gate_result"
 
 class VisualQualityTest < Minitest::Test

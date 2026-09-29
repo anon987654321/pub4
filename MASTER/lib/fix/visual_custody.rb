@@ -3,7 +3,7 @@
 require "json"
 require_relative "../result"
 require_relative "../../gates/support/geometry_probe"
-require_relative "../../gates/lib/rendered/layout_snapshot"
+require_relative "../../gates/lib/layout_snapshot"
 
 module Master
   module Fix

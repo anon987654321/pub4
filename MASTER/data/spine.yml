@@ -678,7 +678,7 @@ pub4_source_ceilings:
   # mention_test.rb, activity_trackable_concern_test.rb, fallback_drift_lint_test.rb,
   # flow_client_write_test.rb, generated_asset_gate_test.rb and
   # visual_contract_lint_test.rb. The rest is source and each folds into nothing:
-  # gates/lib/source/scale_ratchet.rb, gates/support/css_spacing_scans.rb and
+  # gates/lib/scale_ratchet.rb, gates/support/css_spacing_scans.rb and
   # css_weight.rb (two scans lifted out of a support file doing three jobs),
   # shared/concerns/shared/mentionable.rb, shared/lib/operator/master_design.rb, and
   # the migration that drops streams. Out: brgen/app/models/stream.rb,
@@ -694,7 +694,7 @@ pub4_source_ceilings:
   # the other, so the split has to be worth a named line here.
   # brgen/test/services/playlist_wiring_test.rb takes four playlist contracts
   # out of a bundle of forty (deploy_backlog_test 631 -> 557), and
-  # gates/support/design_metrics/type_checks.rb takes the five source checks
+  # gates/support/type_checks.rb takes the five source checks
   # that read a font declaration (design_metrics 462 -> 345). Both are one
   # subject, and both fold into nothing that exists.
   # 2373 -> 2374 for gates/support/chrome_process.rb, the third file
@@ -711,7 +711,7 @@ pub4_source_ceilings:
   # the controller concern, and `.table_exists?` on a Module raising NoMethodError
   # in every OAuth callback. ExternalIdentity and IdentityProvider are the real
   # persistence and were already doing the work.
-  # 2373 -> 2374 for gates/lib/rendered/web_vitals_budget.rb. The vitals
+  # 2373 -> 2374 for gates/lib/web_vitals_budget.rb. The vitals
   # sampler in shared/frontend/hotwire.js has beaconed LCP, CLS and INP at one
   # percent for months and nothing has ever failed on the numbers, so a
   # regression that doubles LCP ships and lands in a log line; GATE_ADEQUACY.md
@@ -729,7 +729,7 @@ pub4_source_ceilings:
   # prepends on a tap. It folds into no existing controller: pull_to_refresh
   # reloads on a gesture and typing_controller watches a field, and neither
   # owns a stream that must not paint.
-  # 2375 -> 2376 for gates/lib/source/pwa_installable.rb. Three manifests, and
+  # 2375 -> 2376 for gates/lib/pwa_installable.rb. Three manifests, and
   # nothing checked that the icons they declare exist or that brgen names the
   # city it is being served as. It folds into no existing gate: generated_asset
   # checks build freshness and frontend_production reads the shell, and neither
@@ -802,7 +802,7 @@ pub4_source_ceilings:
 # Neither folds anywhere: no existing probe walks the verticals, and no
 # existing amber test asks the contrast module anything.
 # 2393 -> 2394, which is two files in and one out. The contrast probe added
-# yesterday is a gate now — gates/lib/rendered/accent_contrast.rb and its
+# yesterday is a gate now — gates/lib/accent_contrast.rb and its
 # test — and gates/probes/accent_contrast_probe.rb went with the change
 # rather than staying beside it, because the same JS in two files is what the
 # single registry exists to prevent. A probe is a thing somebody has to

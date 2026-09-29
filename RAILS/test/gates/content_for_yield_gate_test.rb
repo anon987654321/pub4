@@ -4,7 +4,7 @@ require "fileutils"
 require "minitest/autorun"
 require "tmpdir"
 require_relative "gate_probe_harness"
-require_relative "../../../MASTER/gates/lib/source/content_for_yield"
+require_relative "../../../MASTER/gates/lib/content_for_yield"
 
 class ContentForYieldGateTest < Minitest::Test
   include GateProbe

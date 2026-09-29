@@ -2,10 +2,10 @@
 
 require "minitest/autorun"
 require_relative "gate_probe_harness"
-require_relative "../../gates/lib/rendered/occlusion"
-require_relative "../../gates/lib/rendered/reflow"
-require_relative "../../gates/lib/rendered/keyboard_flow"
-require_relative "../../gates/lib/rendered/mobile_flow"
+require_relative "../../gates/lib/occlusion"
+require_relative "../../gates/lib/reflow"
+require_relative "../../gates/lib/keyboard_flow"
+require_relative "../../gates/lib/mobile_flow"
 
 # The four browser-backed journey gates, proved on planted measurements.
 #

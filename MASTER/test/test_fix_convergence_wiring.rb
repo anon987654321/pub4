@@ -28,7 +28,7 @@ class FixConvergenceWiringTest < Minitest::Test
 
   def test_rendered_geometry_consumes_the_visual_measurement_payload
     geometry = File.read(File.expand_path("../../MASTER/gates/lib/rendered/rendered_geometry.rb", __dir__))
-    walk = File.read(File.expand_path("../../MASTER/gates/support/geometry_probe/walk.js", __dir__))
+    walk = File.read(File.expand_path("../../MASTER/gates/support/walk.js", __dir__))
 
     assert_includes walk, "visual"
     assert_includes walk, "first_screen"

@@ -151,6 +151,15 @@ class RepoHygieneContractTest < Minitest::Test
       OPENBSD/quarantine/
       OPENBSD/eritel/
       RAILS/eritel/
+      MASTER/gates/lib/live/
+      MASTER/gates/lib/rendered/
+      MASTER/gates/lib/source/
+      MASTER/gates/lib/research/
+      MASTER/gates/support/design_metrics/
+      MASTER/gates/support/geometry_probe/
+      MASTER/gates/support/journey_probe/
+      MASTER/gates/support/rendered_geometry/
+      OPENBSD/dns/etc/
       MASTER/tools/design/
       MASTER/tools/web/
       MASTER/tools/postpro/lib/

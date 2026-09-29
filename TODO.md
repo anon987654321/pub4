@@ -674,7 +674,7 @@ slices. Each is a hypothesis with its seam.
   simulation names why `Deploy::LiveRecordIds` could not resolve a route, while
   keeping actual seedable categories visibly open until they have a real row and
   a live response. Seams: `MASTER/gates/support/live_record_ids.rb` and
-  `MASTER/gates/lib/live/page_simulation.rb`.
+  `MASTER/gates/lib/page_simulation.rb`.
 - **A post's link embed loads the provider's thumbnail before a tap.**
   `shared/_link_embed` renders the facade image straight from the provider's
   image host, so the reader's browser asks the provider before pressing play.
@@ -1136,12 +1136,12 @@ no named reader, and an intent-to-deliver pipeline that renames stages
   drawn from a fallback, reading type that shrinks as the viewport widens. All
   are soft. Count each surface's findings on the first run and the probe cost of
   the extra awaited script, then decide which harden. Seams:
-  `MASTER/gates/support/rendered_geometry/`, `geometry_probe/glyphs.js`,
-  `MASTER/gates/lib/rendered/reflow.rb`.
+  `MASTER/gates/support/`, `geometry_probe/glyphs.js`,
+  `MASTER/gates/lib/reflow.rb`.
 - **Interaction states beyond focus.** Forcing `:disabled`, `:active` and
   `aria-busy` over CDP and measuring them waits on "Motion is a rendered value"
   and the feedback items in the RAILS section. Seam:
-  `MASTER/gates/lib/rendered/keyboard_flow.rb`.
+  `MASTER/gates/lib/keyboard_flow.rb`.
 - Closed: `Core::Model.offer` derives the per-turn verb and git-operation schema from `Proof#scope`, and `CoreBridge` tests verify that an unproved first turn cannot offer `done` or `git commit`.
 
 ## ChatGPT proposed forward work — intake 2026-09-11
