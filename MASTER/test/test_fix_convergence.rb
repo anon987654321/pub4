@@ -254,6 +254,32 @@ class TestFixConvergence < Minitest::Test
 
   # The loop builds its own council: the test below injects one, and an
   # injected double would pass just as well against a loop that never built it.
+  def test_preflight_runs_before_scanner_and_can_stop_parser_cascades
+    path = File.join(@root, "broken.rb")
+    File.write(path, "def broken(\n")
+
+    scanner_called = false
+    scanner = Object.new
+    scanner.define_singleton_method(:scan) { |*| scanner_called = true; raise "scanner should not run" }
+
+    preflight = Master::Fix::Preflight.new(root: @root)
+    loop = Master::Fix::FixLoop.new(
+      rules: [StubRule.new("TEST_RULE", :warning)],
+      agent: OpenCircuitAgent.new,
+      scanner:,
+      root: @root,
+      bus: @bus,
+      git: StubGit.new
+    )
+    runner = loop.instance_variable_get(:@pass_runner)
+    runner.instance_variable_set(:@preflight, preflight)
+
+    violations = runner.send(:violations_for, path)
+
+    assert_equal "PREFLIGHT", violations.first[:rule]
+    refute scanner_called
+  end
+
   def test_a_fix_loop_carries_a_council_of_its_own
     runner = build_loop([]).instance_variable_get(:@pass_runner)
 
