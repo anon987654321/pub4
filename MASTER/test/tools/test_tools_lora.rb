@@ -26,7 +26,7 @@ class TestLora < Minitest::Test
   # Written sittings and drawn scenarios go through the one composer replicate
   # owns, and the drawn set has no file for a glob to find.
   def test_scenarios_are_a_set_that_replicate_draws
-    require_relative "../lora/_toolkit/shoots"
+    require_relative "../../tools/lora/_toolkit/shoots"
 
     assert_includes available_sets, "scenarios"
     shoot, prompt = prompts_for("ragnhild", set: "scenarios", only: [3]).first
@@ -39,7 +39,7 @@ class TestLora < Minitest::Test
   # One file holds every written sitting, and best points into it rather than
   # copying prose that would then drift.
   def test_every_written_set_reads_from_ideas_yml
-    require_relative "../lora/_toolkit/shoots"
+    require_relative "../../tools/lora/_toolkit/shoots"
 
     assert_empty Dir[File.join(LORA, "shoots*.yml")], "a written set outside ideas.yml"
     assert_equal %w[best distance scenarios selfies shoots warp], available_sets
@@ -52,7 +52,7 @@ class TestLora < Minitest::Test
   end
 
   def test_selfies_and_the_distance_ladder_are_drawn_sets_with_their_caps
-    require_relative "../lora/_toolkit/shoots"
+    require_relative "../../tools/lora/_toolkit/shoots"
 
     assert_equal 48, prompts_for("ragnhild", set: "selfies").length
     assert_equal selfie_sitting(60), prompts_for("ragnhild", set: "selfies", only: [60]).first.first
@@ -187,7 +187,7 @@ class TestLora < Minitest::Test
   def curate_frames(dir)
     require "vips"
     require "tmpdir"
-    require_relative "../lora/_toolkit/curate"
+    require_relative "../../tools/lora/_toolkit/curate"
     scene = Studio.octave_scene(600, seed: 3)
     paths = {
       "a.jpg" => scene, "a_again.jpg" => (scene * 1.06).cast(:uchar),
