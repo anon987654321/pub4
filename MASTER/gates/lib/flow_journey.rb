@@ -15,8 +15,8 @@ module Deploy
   # landed. A "guest-open" surface that 302s to /session/new and renders 200
   # from there passes a body-regex probe and fails here.
   class FlowJourneyGate
-    ROOT = File.expand_path("../../../..", __dir__)
-    DATA = File.join(File.expand_path("../..", __dir__), "data", "flows.yml")
+    ROOT = File.expand_path("../../..", __dir__)
+    DATA = File.join(File.expand_path("../..", __dir__), "gates", "data", "flows.yml")
     MAX_REDIRECTS = 5
 
     def self.run = new.run
