@@ -55,7 +55,8 @@ cognitive_spine:
   - path: data/rules.yml
     role: executable constitutional rule registry
   - path: data/soul.yml
-    role: identity and absolute execution policy  spine_flow:
+    role: identity and absolute execution policy
+  spine_flow:
   - workflow
   - event_record
   - append_only_stream
