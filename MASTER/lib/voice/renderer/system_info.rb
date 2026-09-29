@@ -28,7 +28,7 @@ module Master
         end
 
         def soul_version
-          (Master.load_yaml(File.join(Master::DATA, "soul.yml")) || {})["version"] || "unknown"
+          Master.soul_config["version"] || "unknown"
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "SystemInfo.soul_version", severity: :load_bearing)
           "unknown"
