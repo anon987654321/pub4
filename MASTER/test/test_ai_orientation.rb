@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require_relative "../lib/ai/orientation"
+require_relative "../lib/ai"
 require "tmpdir"
 require "fileutils"
 
