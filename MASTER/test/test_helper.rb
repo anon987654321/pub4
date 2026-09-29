@@ -1,20 +1,5 @@
 # frozen_string_literal: true
 
-if ENV["COVERAGE"] == "1"
-  require "simplecov"
-  SimpleCov.start do
-    add_filter "/test/"
-    # The groups name directories that exist. They read lib/master/scan,
-    # lib/master/stages and lib/master/council, a path shape from before the lib
-    # rename, so three panes of this report were empty for as long as anyone ran
-    # it with COVERAGE=1. Groups shape the report rather than the threshold, so
-    # the 85% minimum was never wrong; the reading of it was.
-    add_group "Scan", "lib/review/scan"
-    add_group "Stages", "lib/cli/stages"
-    add_group "Council", "lib/review/council"
-    minimum_coverage 85
-  end
-end
 
 ENV["MT_NO_PLUGINS"] = "1"
 ENV["MASTER_TTS_MODE"] = "classic"
@@ -38,6 +23,22 @@ unless test_result.ok
 end
 test_boot.activate_environment!
 require "bundler/setup"
+
+if ENV["COVERAGE"] == "1"
+  require "simplecov"
+  SimpleCov.start do
+    add_filter "/test/"
+    # The groups name directories that exist. They read lib/master/scan,
+    # lib/master/stages and lib/master/council, a path shape from before the lib
+    # rename, so three panes of this report were empty for as long as anyone ran
+    # it with COVERAGE=1. Groups shape the report rather than the threshold, so
+    # the 85% minimum was never wrong; the reading of it was.
+    add_group "Scan", "lib/review/scan"
+    add_group "Stages", "lib/cli/stages"
+    add_group "Council", "lib/review/council"
+    minimum_coverage 85
+  end
+end
 
 gem "minitest", "~> 5.25"
 require "minitest/autorun"
