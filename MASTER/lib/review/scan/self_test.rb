@@ -35,18 +35,54 @@ module Master
             end
           end
 
+          SHELL_NESTING_EVENTS = /
+            (?:\A|;|then)\s*(if|while|until|for|case|select|repeat)\b |
+            (?:\A|;)\s*(fi|done|esac)\b
+          /x.freeze
+
+          SHELL_NESTING_OPENERS = %w[if while until for case select repeat].freeze
+          SHELL_NESTING_CLOSERS = %w[fi done esac].freeze
+
           def deploy_nesting_findings
-            deploy_paths.flat_map do |path|
-              next [] unless path.end_with?(".sh", ".erb")
-              lines = read_lines(path)
-              depth = 0
-              findings = []
-              lines.each_with_index do |line, i|
-                depth += 1 if line.match?(/^\s*(if|do|case|while|for)\b/)
-                depth -= 1 if line.match?(/^\s*(fi|done|esac|end)\b/)
-                findings << finding(path:, line: i + 1, message: "nesting >4 in OPERATOR (violates LINEARITY)") if depth > 4
+            deploy_paths.flat_map { |path| nesting_findings_for(path) }
+          end
+
+          def nesting_findings_for(path)
+            case File.extname(path).downcase
+            when ".sh", ".zsh", ".ksh" then shell_nesting_findings(path)
+            when ".erb" then erb_nesting_findings(path)
+            else []
+            end
+          end
+
+          def shell_nesting_findings(path)
+            depth = 0
+            findings = []
+            shell_code_lines(path).each_with_index do |line, index|
+              shell_nesting_events(line).each do |token|
+                depth += 1 if SHELL_NESTING_OPENERS.include?(token)
+                findings << finding(path:, line: index + 1, message: "nesting >4 in OPERATOR (violates LINEARITY)") if depth > 4
+                depth -= 1 if SHELL_NESTING_CLOSERS.include?(token)
               end
-              findings
+            end
+            findings
+          end
+
+          def shell_code_lines(path)
+            source = read_text(path).gsub(/'(?:[^'])*'|"(?:\\.|[^"\\])*"|\`(?:\\.|[^\`\\])*\`/m) { |quoted| quoted.gsub(/[^\n]/, " ") }
+            source.lines.map { |line| line.sub(/(^|\s)#.*\z/, "\\1") }
+          end
+
+          def shell_nesting_events(line)
+            line.scan(SHELL_NESTING_EVENTS).filter_map { |match| match[0] || match[1] }
+          end
+
+          def erb_nesting_findings(path)
+            depth = 0
+            read_lines(path).each_with_index.filter_map do |line, index|
+              depth += 1 if line.match?(/^\s*<%=?\s*(if|case|while|for)\b/)
+              depth -= 1 if line.match?(/^\s*<%=?\s*end\b/)
+              finding(path:, line: index + 1, message: "nesting >4 in OPERATOR (violates LINEARITY)") if depth > 4
             end
           end
 
