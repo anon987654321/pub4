@@ -244,7 +244,9 @@ module Master
         def singularity_yaml_paths(data_dir)
           Dir.glob(File.join(data_dir, "**", "*.yml")).sort.reject do |path|
             rel = path.delete_prefix("#{data_dir}/")
-            SINGULARITY_EXEMPT_REGISTERS.include?(rel)
+            rel.start_with?("agents/", "council/", "harnesses/", "lessons/", "ops/", "personas/",
+                            "prompts/", "rules/", "runtime/", "security/") ||
+              SINGULARITY_EXEMPT_REGISTERS.include?(rel)
           end
         end
 
@@ -272,6 +274,7 @@ module Master
             "openrouter" => %w[models.yml providers.yml],
             "thresholds" => %w[load.yml rules.yml],
             "voice" => %w[soul.yml voice.yml],
+            "dimensions" => %w[dialogue_rubric.yml visual_rubric.yml],
           }.fetch(key, []).include?(relative)
         end
 
