@@ -38,9 +38,9 @@ Operator::CiGuard.run! do
       step "setup", "bin/setup --skip-server"
     end
     css_builder = [
-      ENV["PUB4_RAILS_ROOT"] && File.join(ENV["PUB4_RAILS_ROOT"], "tools", "build_all_css.rb"),
+      ENV["PUB4_RAILS_ROOT"] && File.join(ENV["PUB4_RAILS_ROOT"], "bin", "build_all_css.rb"),
       "/home/dev/pub4/RAILS/bin/build_all_css.rb",
-      File.expand_path("../..", __dir__) + "/tools/build_all_css.rb",
+      File.expand_path("../..", __dir__) + "/bin/build_all_css.rb",
       File.expand_path("pub4-rails/RAILS/bin/build_all_css.rb", ENV["HOME"].to_s),
     ].compact.find { |candidate| File.readable?(candidate) }
     # A step that could not run is not a step that passed. These else branches
@@ -51,7 +51,7 @@ Operator::CiGuard.run! do
     if css_builder
       step "css_build", "#{RbConfig.ruby} #{css_builder} --app #{app}"
     else
-      step "css_build", "echo 'tools/build_all_css.rb not found in any known location' >&2; exit 1"
+      step "css_build", "echo 'bin/build_all_css.rb not found in any known location' >&2; exit 1"
     end
     pub4_lib = ENV["PUB4_RAILS_ROOT"] && File.join(ENV["PUB4_RAILS_ROOT"], "shared/lib/operator")
     pub4_lib ||= File.expand_path("../lib/operator", __dir__)
