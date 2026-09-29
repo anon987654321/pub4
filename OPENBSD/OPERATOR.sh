@@ -30,7 +30,7 @@ CONFIG_ROOT=${REPO_ROOT}/OPENBSD
 # Usage comes first. Operational stages live in small sourced modules, so the
 # entrypoint stays navigable without depending on a stale file-line count.
 source "${SCRIPT_DIR}/dev/operator_usage.zsh"
- for ONE_SOURCE. Pure Zsh: log, backup_directory, install_*, sync_openbsd_configs.
+# Helpers inlined for ONE_SOURCE. Pure Zsh: log, backup_directory, install_*, sync_openbsd_configs.
 log() {
   typeset level=$1; shift
   print -r -- "[$(date +'%Y-%m-%d %H:%M:%S')] [$level] $*" | tee -a /var/log/openbsd_setup.log >&2
