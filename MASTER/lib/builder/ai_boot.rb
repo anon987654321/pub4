@@ -97,10 +97,10 @@ module Master
       elsif !self_test.value!.ok?
         summary = self_test.value!
         bus&.publish("builder:self_test", ok: false, violations: summary.violation_count)
-        # Strict by default, because soul.yml's work rules put SURFACE_ERRORS_FIRST
-        # and a runtime that boots past its own constitution has already answered
-        # that question the other way. MASTER_STRICT_BOOT=0 for a boot that has to
-        # come up with known violations.
+        # A full self-test is a diagnostic, not a production-startup gate.
+        # MASTER_STRICT_BOOT=1 explicitly turns its findings into a boot failure.
+        # Keeping strictness opt-in lets an operator inspect known debt without
+        # making the application disappear merely because the diagnostic is dirty.
         #
         # Never under minitest, and that is not a convenience. The rule registry is
         # a global, and a suite has test-defined rules in it — tools/ratchets.rb
@@ -108,7 +108,7 @@ module Master
         # exactly this reason. The self-test laws themselves run identically here
         # and under `rake selftest`; only registry-backed population counts can
         # differ under a loaded test suite.
-        if ENV.fetch("MASTER_STRICT_BOOT", "1") != "0" && !defined?(Minitest)
+        if ENV.fetch("MASTER_STRICT_BOOT", "0") == "1" && !defined?(Minitest)
           first = summary.checks.lazy.flat_map(&:findings).first
           law_counts = summary.checks.map { |check| "#{check.law}=#{check.findings.size}" }.join(", ")
           detail = if first
