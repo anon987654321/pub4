@@ -4,4 +4,4 @@
 set -eu
 SUBJECT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 export SUBJECT_DIR
-exec "$SUBJECT_DIR/../_toolkit/run_generate.sh" "$@"
+exec "$SUBJECT_DIR/../toolkit/run_generate.sh" "$@"
