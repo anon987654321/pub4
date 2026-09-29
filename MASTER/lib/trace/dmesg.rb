@@ -209,6 +209,8 @@ module Master
           when "core:reason" then ["fold0: #{clip(payload[:why])}"]
           when "core:turn" then fold_turn(payload)
           when "fix_loop:terminal" then terminal(payload)
+          when "wishlist:done" then ["wish0: drafted #{payload[:drafted]} proposal(s)"]
+          when "wishlist:error" then ["wish0: failed — #{clip(payload[:error])}"]
           else
             verbose_event(payload)
           end
