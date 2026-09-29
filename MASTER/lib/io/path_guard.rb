@@ -4,7 +4,7 @@ module Master
   module Io
     module PathGuard
       SACRED_PATHS = begin
-        data = Master.load_yaml(Master.data_path("soul.yml"))
+        data = Master.soul_config
         Array(data.dig("absolute", "sacred_paths")).freeze
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "path_guard.sacred_paths")
