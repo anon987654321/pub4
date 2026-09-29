@@ -2,8 +2,8 @@
   "slug": "gunnhild",
   "artist": "Gunnhild",
   "source": "https://www.youtube.com/watch?v=95xXFe3Q2WY",
-  "vocal_path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/gunnhild/vocals.wav",
-  "stem_dir": "/Users/mac/Documents/GitHub/pub4/studio/dilla/samples/demux/htdemucs_ft/yt_20260729_001607",
+  "vocal_path": "MASTER/tools/dilla/project/learnings/vocals/gunnhild/vocals.wav",
+  "stem_dir": "MASTER/tools/dilla/samples/demux/htdemucs_ft/yt_20260729_001607",
   "bpm_estimate": 86.2,
   "phrases": [
     {
