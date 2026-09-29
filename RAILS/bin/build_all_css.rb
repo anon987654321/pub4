@@ -5,9 +5,9 @@
 # Syncs shared static tokens + ensures nerd fonts are present.
 #
 # Usage:
-#   ruby RAILS/tools/build_all_css.rb           # all apps with application.scss
-#   ruby RAILS/tools/build_all_css.rb --app brgen
-#   ruby RAILS/tools/build_all_css.rb --check   # verify x tokens without building
+#   ruby RAILS/bin/build_all_css.rb           # all apps with application.scss
+#   ruby RAILS/bin/build_all_css.rb --app brgen
+#   ruby RAILS/bin/build_all_css.rb --check   # verify x tokens without building
 
 require "open3"
 require "yaml"
