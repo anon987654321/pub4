@@ -376,7 +376,7 @@ module Master
 
             name = id.sub(%r{\Aollama[:/]}, "")
             installed = ollama_installed_models
-            return if installed.nil?
+            return "ollama unreachable at #{ollama_tags_base_url}" if installed.nil?
             return "ollama pull #{name}" unless ollama_pulled?(id)
             return if name.end_with?(":cloud", "-cloud")
 
