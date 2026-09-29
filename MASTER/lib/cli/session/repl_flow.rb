@@ -154,7 +154,11 @@ module Master
         result = shell.call(command:)
         text = result.ok? ? result.value!.to_s : result.message.to_s
         puts @refs.renderer.render(text, mode: result.ok? ? :dim : :error)
-        @refs.session.add_message(role: :user, content: "$ #{command}\n#{text}")
+        @refs.session.add_message(
+          role: :user,
+          content: "$ #{command}\n#{text}",
+          layer: :execution,
+        )
       end
 
       def bang_shell
