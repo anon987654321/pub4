@@ -156,7 +156,7 @@ class RepoHygieneContractTest < Minitest::Test
 
     tracked = git_files(".")
     forbidden.each do |path|
-      assert_empty tracked.grep(/\\A#{Regexp.escape(path)}/), "removed sprawl path returned: #{path}"
+      assert_empty tracked.grep(/\A#{Regexp.escape(path)}/), "removed sprawl path returned: #{path}"
     end
   end
 
