@@ -26,7 +26,7 @@ module Master
 
       def anti_simulation_words
         @anti_simulation_words ||= begin
-          words = Master.load_yaml(Master.data_path("soul.yml")).dig("absolute", "anti_simulation", "forbidden")
+          words = Master.soul_config.dig("absolute", "anti_simulation", "forbidden")
           Array(words).map(&:to_s).reject(&:empty?)
         rescue StandardError
           DEFAULT_ANTI_SIMULATION_WORDS
