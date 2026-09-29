@@ -284,9 +284,9 @@ end
 # is not. Nothing here judges whether a real finding is worth fixing — that is
 # the reading this makes affordable by removing the items that cannot be.
 #
-#   ruby MASTER/tools/backlog_triage.rb             # the counts
-#   ruby MASTER/tools/backlog_triage.rb --open      # items with a subject to check
-#   ruby MASTER/tools/backlog_triage.rb --absent    # items naming no file in the tree
+#   ruby MASTER/tools/backlog.rb             # the counts
+#   ruby MASTER/tools/backlog.rb --open      # items with a subject to check
+#   ruby MASTER/tools/backlog.rb --absent    # items naming no file in the tree
 #
 # A path is only checked when it looks like one this repo would hold. Prose
 # naming a gem, a URL or another project is not a claim about our tree, and
