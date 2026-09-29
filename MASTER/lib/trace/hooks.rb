@@ -120,7 +120,7 @@ module Master
       end
 
       def load_hooks
-        soul = Master.load_yaml(Master.data_path("soul.yml"))
+        soul = Master.soul_config
         soul["hooks"] || []
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Hooks.load_hooks")
