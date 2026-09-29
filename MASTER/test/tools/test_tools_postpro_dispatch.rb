@@ -18,7 +18,7 @@ require "json"
 # chain is the expensive path in postpro: a 160-pixel frame keeps the suite's
 # cost in seconds while still exercising the full chain, sidecar and all.
 class TestPostproDispatch < Minitest::Test
-  POSTPRO = File.expand_path("../postpro/postpro.rb", __dir__)
+  POSTPRO = File.expand_path("../../tools/postpro/postpro.rb", __dir__)
   SEED = "4242"
 
   def run_postpro(dir, *args, env: {})
