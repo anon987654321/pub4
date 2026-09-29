@@ -118,7 +118,7 @@ module Master
             "implementation" => normalize_choice(item["implementation"], %w[next_fix research operator], "next_fix"),
             "evidence" => item["evidence"].to_s.strip,
           }
-        end.first(MAX_ITEMS)
+        end.uniq { |item| item["id"] }.first(MAX_ITEMS)
       end
 
       def valid_anchor?(anchor)
@@ -159,6 +159,7 @@ module Master
           body << "### #{index + 1}. #{item["title"]}"
           body << ""
           body << "#{item["rationale"]} [#{item["effort"]}; #{item["implementation"]}]"
+          body << "id: #{item["id"]}"
           body << "anchor: #{item["anchor"]}"
           body << "change: #{item["change"]}"
           body << "evidence: #{item["evidence"]}"
