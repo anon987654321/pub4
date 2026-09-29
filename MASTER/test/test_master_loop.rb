@@ -33,7 +33,7 @@ class TestMasterLoop < Minitest::Test
       Master::Fix::FixLoop.stub(:new, fake_loop) do
         Master::Builder.stub(:start_fix_loop_background, ->(loop, **) { started << loop }) do
           Master::Builder.build_fix_loop(root: Master::ROOT, infra: {}, agent: nil, scanner: nil, axioms: nil,
-                                         rules: nil, learnings: nil, rollback: nil, bus: nil, git: nil)
+                                         rules: nil, learnings: nil, bus: nil, git: nil)
         end
       end
     end
@@ -58,7 +58,7 @@ class TestMasterLoop < Minitest::Test
     build = lambda do
       Master::Fix::FixLoop.stub(:new, ->(**kwargs) { seen << kwargs[:incremental] }) do
         Master::Builder.build_fix_loop(root: Master::ROOT, infra: {}, agent: nil, scanner: nil, axioms: nil,
-                                       rules: nil, learnings: nil, rollback: nil, bus: nil, git: nil)
+                                       rules: nil, learnings: nil, bus: nil, git: nil)
       end
     end
 
