@@ -161,6 +161,16 @@ class TestDependencyManager < Minitest::Test
     assert_nil env["BUNDLE_VERSION"]
   end
 
+  def test_direct_tests_bootstrap_master_bundle_before_versioned_gems
+    source = File.read(File.join(Master::ROOT, "test", "test_helper.rb"))
+    bundle_index = source.index('require "bundler/setup"')
+    minitest_index = source.index('gem "minitest", "~> 5.25"')
+
+    refute_nil bundle_index
+    refute_nil minitest_index
+    assert_operator bundle_index, :<, minitest_index
+  end
+
   def test_bundle_store_isolated_by_ruby_installation
     rbenv = MANAGER.new(root: @root, env: { "PATH" => "/bin" }, out: StringIO.new, home: @root)
     homebrew = MANAGER.new(root: @root, env: { "PATH" => "/bin" }, out: StringIO.new, home: @root)
