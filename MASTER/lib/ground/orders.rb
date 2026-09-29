@@ -312,10 +312,10 @@ module Master
         def publish_drift(report)
           delta = report[:delta]
           kind = if delta.negative?
-"improved"
-else
-(delta.positive? ? "regressed" : "steady")
-end
+                   "improved"
+                 else
+                   (delta.positive? ? "regressed" : "steady")
+                 end
           bus&.publish("constitution_drift:#{kind}", **report)
         end
 
