@@ -3,7 +3,7 @@
 require "minitest/autorun"
 
 class SharedMediaProcessingJobContractTest < Minitest::Test
-  SOURCE = File.read(File.expand_path("../../app/jobs/shared/media_processing_job.rb", __dir__))
+  SOURCE = File.read(File.expand_path("../app/jobs/shared/media_processing_job.rb", __dir__))
 
   def test_only_active_record_models_are_resolved
     assert_includes SOURCE, "record_class_name.to_s.safe_constantize"
