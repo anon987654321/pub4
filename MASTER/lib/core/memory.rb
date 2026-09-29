@@ -196,5 +196,51 @@ module Master::Core
       pinned = dropped.include?(@goal) ? [@goal] : []
       @entries = [*pinned, Entry.new(role: :note, text: @summarize.call(dropped - pinned)), *keep]
     end
+    module Types
+      class Episodic
+        attr_reader :episode
+
+        def initialize(episode)
+          @episode = episode
+        end
+
+        def transcript
+          @episode.events.map(&:to_s)
+        end
+      end
+
+      class Semantic
+        attr_reader :knowledge_base
+
+        def initialize
+          @knowledge_base = {}
+        end
+
+        def learn(key, value)
+          @knowledge_base[key] = value
+        end
+
+        def query(key)
+          @knowledge_base[key]
+        end
+      end
+
+      class Procedural
+        attr_reader :recipes
+
+        def initialize
+          @recipes = {}
+        end
+
+        def register_recipe(name, steps)
+          @recipes[name] = steps
+        end
+
+        def find_recipe(name)
+          @recipes[name]
+        end
+      end
+    end
+
   end
 end
