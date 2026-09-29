@@ -718,15 +718,13 @@ end
   task :data_singularity do
     $LOAD_PATH.unshift(File.join(__dir__, "lib"))
     require "master"
-    result = Master::Review::Scan::SelfTest.new(root: __dir__).call(laws: ["SINGULARITY"])
-    abort result.message unless result.ok?
-
-    check = result.value!.checks.fetch(0)
-    if check.ok?
+    scan = Master::Review::Scan::SelfTest.new(root: __dir__)
+    findings = scan.data_singularity_findings
+    if findings.empty?
       puts "lint:data_singularity: clean"
     else
-      check.findings.each { |finding| puts "  #{finding[:path]}:#{finding[:line]}: #{finding[:message]}" }
-      abort "lint:data_singularity: #{check.findings.size} violation(s)"
+      findings.each { |finding| puts "  #{finding[:path]}:#{finding[:line]}: #{finding[:message]}" }
+      abort "lint:data_singularity: #{findings.size} violation(s)"
     end
   end
 
