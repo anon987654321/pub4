@@ -9,7 +9,7 @@ class TestStyleGuides < Minitest::Test
     assert data["sources"].is_a?(Array)
     assert data["sources"].any? { |row| row["id"] == "ruby" }
     assert data["sources"].any? { |row| row["id"] == "rails" }
-    assert_includes data.dig("gates") || [], "tools/style_gate.rb"
+    assert_includes data.dig("gates") || [], "bin/style_gate"
   end
 
   # The local tier's references: each repo is a GitHub clone under a topic
