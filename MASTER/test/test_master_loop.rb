@@ -132,6 +132,20 @@ class TestMasterLoop < Minitest::Test
     assert_equal from_yaml, Master::MasterRuntime::LOOP_FLAGS
   end
 
+  def test_model_accessors_do_not_cache_across_roots
+    Dir.mktmpdir do |workspace|
+      one = File.join(workspace, "one", "data")
+      two = File.join(workspace, "two", "data")
+      FileUtils.mkdir_p(one)
+      FileUtils.mkdir_p(two)
+      File.write(File.join(one, "models.yml"), "models:\n  grok_primary:\n    - id: one-model\n")
+      File.write(File.join(two, "models.yml"), "models:\n  grok_primary:\n    - id: two-model\n")
+
+      assert_equal "one-model", Master::MasterRuntime.free_primary_model(root: workspace + "/one")
+      assert_equal "two-model", Master::MasterRuntime.free_primary_model(root: workspace + "/two")
+    end
+  end
+
   def test_models_config_is_the_single_models_registry_reader
     config = Master.models_config(root: Master::ROOT)
     assert_equal "openrouter", config.dig("openrouter", "provider") unless config.dig("openrouter", "provider").nil?
