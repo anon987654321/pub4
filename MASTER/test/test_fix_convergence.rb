@@ -242,6 +242,16 @@ class TestFixConvergence < Minitest::Test
     refute ok, "a failed gate passed the proof"
   end
 
+  def test_rails_gates_launches_a_runner_that_exists
+    seen = nil
+    capture = ->(*cmd, **) { seen = cmd; [true, [], 0] }
+    Operator::GateChain.stub(:capture, capture) { Operator::GateChain.rails_gates(scan_only: true) }
+
+    script = seen.map(&:to_s).find { |arg| arg.end_with?("runner.rb") }
+    refute_nil script, "rails_gates launched no runner.rb"
+    assert File.file?(script), "rails_gates launches #{script}, which does not exist"
+  end
+
   def test_a_proof_marks_its_children_and_restores_the_parent
     pass = Master::CLI::Pipeline::Pass.allocate
     saved = ENV.delete("MASTER_IN_PROOF")
