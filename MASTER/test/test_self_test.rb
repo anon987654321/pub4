@@ -100,6 +100,40 @@ class TestSelfTest < Minitest::Test
     end
   end
 
+  def test_shell_nesting_ignores_inline_closers_and_quoted_programs
+    Dir.mktmpdir do |workspace|
+      root = File.join(workspace, "MASTER")
+      openbsd = File.join(workspace, "OPENBSD")
+      FileUtils.mkdir_p(root)
+      FileUtils.mkdir_p(openbsd)
+
+      File.write(File.join(openbsd, "fixture.sh"), <<~ZSH)
+        #!/usr/bin/env zsh
+        for item in one two; do echo "$item"; done
+        if true; then echo yes; fi
+        awk '
+          if ($1 == "one") print
+          if ($1 == "two") print
+        '
+        if true; then
+          if true; then
+            if true; then
+              if true; then
+                if true; then
+                  print yes
+                fi
+              fi
+            fi
+          fi
+        fi
+      ZSH
+
+      findings = Master::Review::Scan::SelfTest.new(root:).send(:deploy_nesting_findings)
+      assert_equal 1, findings.size
+      assert_equal 12, findings.first[:line]
+    end
+  end
+
   def test_openbsd_deploy_corpus_uses_real_paths_and_skips_tests
     Dir.mktmpdir do |workspace|
       root = File.join(workspace, "MASTER")
