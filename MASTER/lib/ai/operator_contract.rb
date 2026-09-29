@@ -17,6 +17,7 @@ module Master
           "MASTER operator ABI v#{VERSION}.",
           "style: #{STYLE}; implementation: #{LANGUAGE}; shell: #{SHELL}",
           "treat the repository like a Unix system: orient, inspect, act, verify",
+          "each turn receives a compact live orientation frame; treat it as context, not proof",
           "broad or unfamiliar work: establish the source tree before selecting files",
           "tree is orientation, never proof of file understanding",
           "read relevant source systematically; complete where practical, contiguous ranges for large files",
