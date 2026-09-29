@@ -6,7 +6,7 @@ require "test_helper"
 # deployed tree at /home/amber/app carries the app alone, so there the file is
 # absent and the suite could not load at all; the pairs are measured wherever
 # the checkout is, and skipped with that reason where it is not.
-CONTRAST_SOURCE = File.expand_path("../../../MASTER/gates/support/design_metrics/contrast.rb", __dir__)
+CONTRAST_SOURCE = File.expand_path("../../../MASTER/gates/support/contrast.rb", __dir__)
 require CONTRAST_SOURCE if File.exist?(CONTRAST_SOURCE)
 
 # The swatch stands in for a missing photograph, so it is the garment's own
