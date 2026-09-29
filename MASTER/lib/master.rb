@@ -122,6 +122,10 @@ module Master
   # process had.
   def self.git_checkout?(root = REPO_ROOT) = File.exist?(File.join(root, ".git"))
   def self.data_path(*parts) = File.join(DATA, *parts)
+  def self.models_config(root: ROOT)
+    load_yaml(File.join(root, "data", "models.yml")) || {}
+  end
+
   # The one reader of data/rules.yml. A missing section raises rather than
   # returning {}, because every caller reads the empty result as a law with nothing in it.
   def self.law(section, root: ROOT)
