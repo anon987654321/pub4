@@ -76,28 +76,73 @@ module Master
         source = text.match(POSTPRO_SUBJECT_RE)&.captures&.first
         source ||= text.match(POSTPRO_SUBJECT_TOKEN_RE)&.captures&.first
         source ||= text.match(POSTPRO_PATH_TOKEN_RE)&.captures&.first
+        source ||= downloads_directory if text.match?(/\bdownloads?\b/i)
         source ||= text.match(IMAGE_PATH_RE)&.captures&.compact&.first
         return Result.err("postpro: include an existing image file or directory path", category: :validation) if source.to_s.empty?
 
         source = File.expand_path(source)
         return Result.err("postpro: input not found #{source}", category: :validation) unless File.file?(source) || File.directory?(source)
 
-        if File.directory?(source)
-          args = [source]
-          result = ScriptDispatch.run(root:, tool: "postpro",
-                                      arg: args.map { |value| Shellwords.escape(value) }.join(" "))
-          return result.ok? ? Result.ok({ output: result.value!, rendered: result.value!, media: :postpro, path: source }) : result
-        end
+        selection = postpro_selection(text, source)
+        return run_postpro_selection(selection[:files], text, root:) if selection
+        return run_postpro_file(source, text, root:) if File.file?(source)
 
+        args = [source]
+        result = ScriptDispatch.run(root:, tool: "postpro",
+                                    arg: args.map { |value| Shellwords.escape(value) }.join(" "))
+        result.ok? ? Result.ok({ output: result.value!, rendered: result.value!, media: :postpro, path: source }) : result
+      end
+
+      def downloads_directory
+        [
+          File.expand_path("~/Downloads"),
+          File.expand_path("~/downloads"),
+          File.expand_path("~/storage/downloads"),
+          "/sdcard/Download"
+        ].find { |path| File.directory?(path) }
+      end
+
+      def postpro_selection(text, source)
+        return unless File.directory?(source)
+
+        count = text.match(/\b(\d+)\s+(?:latest|newest|most\s+recent)\b/i)&.captures&.first&.to_i
+        return if count.nil? || count <= 0
+
+        extension = text.match(/\b(jpe?g|png|webp|tiff?)s?\b/i)&.captures&.first
+        files = Dir.glob(File.join(source, "**", "*"), File::FNM_DOTMATCH).select do |path|
+          next false unless File.file?(path)
+          next false if extension && File.extname(path).delete_prefix(".").downcase != extension.downcase.sub("jpeg", "jpg")
+          path.match?(/\.(?:jpe?g|png|webp|tiff?)\z/i)
+        end
+        files.sort_by { |path| -File.mtime(path).to_f }.first([count, 24].min).then { |rows| { files: rows } }
+      rescue StandardError
+        { files: [] }
+      end
+
+      def run_postpro_selection(files, text, root:)
+        return Result.err("postpro: no matching images found", category: :validation) if files.empty?
+
+        results = files.map { |source| run_postpro_file(source, text, root:) }
+        failure = results.find(&:err?)
+        return failure if failure
+
+        output = results.map { |result| result.value![:rendered].to_s }.join("\n")
+        rendered = ["postpro: processed #{files.size} images", output].reject(&:empty?).join("\n")
+        Result.ok(output: rendered, rendered:, media: :postpro_batch, paths: files)
+      end
+
+      def run_postpro_file(source, text, root:)
         preset = postpro_preset_for(text)
         output_dir = MEDIA_OUTPUT_DIR
         FileUtils.mkdir_p(output_dir)
         ext = File.extname(source)
         output = File.join(output_dir, "#{File.basename(source, ext)}-#{preset}#{ext}")
-
         args = ["--input", source, "--output", output, "--preset", preset]
         result = ScriptDispatch.run(root:, tool: "postpro", arg: args.map { |value| Shellwords.escape(value) }.join(" "))
-        result.ok? ? Result.ok({ output: result.value!, rendered: result.value!, media: :postpro, path: output }) : result
+        return result unless result.ok?
+
+        rendered = result.value!.to_s
+        Result.ok(output: rendered, rendered:, media: :postpro, path: output)
       end
 
       SYNTH_SHAPES = {
