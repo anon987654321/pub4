@@ -174,8 +174,8 @@ module Operator
       vague_names(root:).select { |path| path.start_with?(base) }
     end
 
-    def deep_paths_for(tree)
-      tree_files(tree).select do |path|
+    def deep_paths_for(tree, root: ROOT)
+      tree_files(tree, root:).select do |path|
         path.count("/") >= DEEP_PATH
       end
     end
@@ -188,7 +188,7 @@ module Operator
           File.size?(File.join(root, path)).to_i <= DUPLICATE_MAX_BYTES
       end
       files.group_by do |path|
-        Digest::SHA256.file(File.join(ROOT, path)).hexdigest
+        Digest::SHA256.file(File.join(root, path)).hexdigest
       end.values.select { |group| group.size > 1 }.sort_by { |group| [-group.size, group.first] }
     rescue StandardError => e
       warn "sprawl_census: duplicate scan failed for #{tree}: #{e.class}: #{e.message}"
