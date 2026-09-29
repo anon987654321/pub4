@@ -22,7 +22,7 @@ module Master
         # to ask for `rules` was opening soul.yml to back an accessor it never
         # touched. RuleLoop#build_soul_preamble does exactly that, so a preamble
         # read the file twice and its cache could only ever halve the cost.
-        def soul_data = @soul_data ||= (load_yaml(@soul_path) || {})
+        def soul_data = @soul_data ||= Master.soul_config(root: @root)
 
         def constitution
           @constitution ||= begin
@@ -90,7 +90,6 @@ module Master
       def initialize(root: nil)
         @root = root || Master::ROOT
         @data_dir = File.join(@root, "data")
-        @soul_path = File.join(@data_dir, "soul.yml")
         @voice_path = Master.data_path("voice.yml")
         @data = Master.load_rules(root: @root) || {}
         @voice_data = load_yaml(@voice_path) || {}
