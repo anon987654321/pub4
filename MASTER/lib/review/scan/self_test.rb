@@ -62,9 +62,12 @@ module Master
             findings = []
             shell_code_lines(path).each_with_index do |line, index|
               shell_nesting_events(line).each do |token|
-                depth += 1 if SHELL_NESTING_OPENERS.include?(token)
-                findings << finding(path:, line: index + 1, message: "nesting >4 in OPERATOR (violates LINEARITY)") if depth > 4
-                depth -= 1 if SHELL_NESTING_CLOSERS.include?(token)
+                if SHELL_NESTING_OPENERS.include?(token)
+                  depth += 1
+                  findings << finding(path:, line: index + 1, message: "nesting >4 in OPERATOR (violates LINEARITY)") if depth > 4
+                elsif SHELL_NESTING_CLOSERS.include?(token)
+                  depth -= 1
+                end
               end
             end
             findings
