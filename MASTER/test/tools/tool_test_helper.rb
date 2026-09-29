@@ -22,7 +22,7 @@ require "minitest/autorun"
 require "timeout"
 
 module ToolTest
-  ROOT = File.expand_path("..", __dir__)
+  ROOT = File.expand_path("../../tools", __dir__)
 
   # A synthetic photograph: noise summed across six octaves, so it holds detail at
   # every scale the way a recorded frame does. Built here because the postpro
