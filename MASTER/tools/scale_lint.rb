@@ -129,7 +129,7 @@ module Operator
 
     # MASTER's web face is the fourth surface of this family and it is governed
     # from here already: MASTER/data/rules.yml#design_system carries a `face_root:` section and
-    # RAILS/tools/generate_face_root_css.rb writes it into face.css's :root. The
+    # RAILS/bin/generate_face_root_css.rb writes it into face.css's :root. The
     # tokens were shared and the rhythm was not -- face.css sits on a 2px
     # sub-grid (6px x14, 10px x10, 14px x5, 5px x3) while the three apps are on
     # 4px, so a button in the face and the same button in brgen are a pixel or
