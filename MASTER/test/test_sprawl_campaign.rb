@@ -48,6 +48,16 @@ class TestSprawlCampaign < Minitest::Test
     assert_includes shape.fetch(:members).map { |row| row[:rule] }, "DUPLICATE_CONTENT"
   end
 
+  def test_preview_reads_the_custom_checkout
+    campaign = Master::Fix::SprawlCampaign.new(agent: nil, repo_root: @root)
+
+    preview = campaign.preview(@root)
+
+    assert_equal %w[MASTER OPENBSD RAILS], preview.keys.sort
+    assert_equal @root, campaign.instance_variable_get(:@root)
+    assert preview.fetch("MASTER").fetch(:files).positive?
+  end
+
   def test_shape_score_rewards_real_structural_reduction
     campaign = Master::Fix::SprawlCampaign.new(agent: nil, repo_root: @root)
     before = {
@@ -70,8 +80,14 @@ class TestSprawlCampaign < Minitest::Test
 
   def test_deep_is_a_fix_flag_not_a_target
     flags = Master::CLI::CommandRegistry.send(:parse_pass_flags, "--deep RAILS")
+    campaign = Master::Fix::SprawlCampaign.new(agent: nil, repo_root: @root)
 
     assert_equal "RAILS", flags.last
+    saved = ENV["MASTER_FIX_SPRAWL_ROUNDS"]
+    ENV["MASTER_FIX_SPRAWL_ROUNDS"] = "9"
+    assert_equal 9, campaign.send(:rounds)
+  ensure
+    saved.nil? ? ENV.delete("MASTER_FIX_SPRAWL_ROUNDS") : ENV["MASTER_FIX_SPRAWL_ROUNDS"] = saved
   end
 
   def test_campaign_prompt_forbids_cross_tree_changes_and_speculation
