@@ -55,11 +55,11 @@ class TestFixWishlist < Minitest::Test
 
   def test_invalid_file_anchors_are_dropped_without_losing_the_valid_queue
     bad = reply.dup
-    5.times { bad = bad.sub("anchor: lib/sample.rb:1", "anchor: lib/missing.rb:99") }
+    4.times { bad = bad.sub("anchor: lib/sample.rb:1", "anchor: lib/missing.rb:99") }
     agent = RecordingAgent.new(bad)
     result = Master::Fix::Wishlist.new(root: @root, agent:).call(state: "done", target: @root, run_id: "r2")
 
-    assert_equal "wishlist: drafted 19 item(s) → runtime/wishlist.md", result
+    assert_equal "wishlist: drafted 20 item(s) → runtime/wishlist.md", result
   end
 
   def test_pending_context_exposes_only_the_headings
