@@ -4,7 +4,7 @@ require "minitest/autorun"
 require "timeout"
 require "tmpdir"
 require "rbconfig"
-require_relative "../dilla/lib/listen"
+require_relative "../../tools/dilla/lib/listen"
 
 # ToolRun is how dilla runs a tool that is not a render step. It must keep the
 # contract of the call it replaced -- Open3's return values, Kernel#system's
@@ -63,8 +63,8 @@ class TestDillaToolRun < Minitest::Test
   # render tool leads a group of its own, so the signal never reaches it. Each
   # of these runs an engine as a group leader, signals it the way a terminal or
   # a `kill` would, and requires the tool it was waiting on to be gone after.
-  LISTEN = File.expand_path("../dilla/lib/listen.rb", __dir__)
-  ENGINE = File.expand_path("../dilla/dilla.rb", __dir__)
+  LISTEN = File.expand_path("../../tools/dilla/lib/listen.rb", __dir__)
+  ENGINE = File.expand_path("../../tools/dilla/dilla.rb", __dir__)
   # A test runner started in the background inherits SIGINT ignored, and Ruby
   # leaves an ignored signal ignored, so the engine asks for its handler back.
   PREAMBLE = %(trap("INT", "DEFAULT"); pidfile = ARGV.fetch(0)\n)
