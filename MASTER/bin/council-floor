@@ -1,0 +1,11 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../lib/boot/entrypoint"
+Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
+require "review/council/deterministic_floor"
+
+target = ARGV.shift || "."
+abort "usage: bin/council-floor <file-or-directory>" unless ARGV.empty?
+
+exit Master::Review::Council::DeterministicFloor.run(target)
