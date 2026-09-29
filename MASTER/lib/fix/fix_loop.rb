@@ -103,7 +103,7 @@ module Master
           return budget_error
         end
 
-        run_journaled(journal, files:, target:, max_passes:, budget_seconds:, mission:)
+        run_journaled(journal, files:, target:, max_passes:, budget_seconds:, mission:, requested:)
       rescue StandardError => e
         @bus&.publish("fix_loop:crash", error: e.message, backtrace: e.backtrace&.first(8))
         @run_journal&.crash(run_id, e.message) if defined?(run_id) && run_id
@@ -111,7 +111,7 @@ module Master
         Result.err("fix_loop: #{e.message} @ #{e.backtrace&.first(3)&.join(" | ")}", category: :unknown)
       end
 
-      def finish_run(result, target, run_id, mission: nil)
+      def finish_run(result, target, run_id, mission: nil, requested: false)
         state = terminal_state_for(result)
         @run_journal.terminal(run_id, state, message: result.to_s)
 
@@ -125,8 +125,8 @@ module Master
           mission&.defer!(reason: "attempt #{state}: #{result.to_s}")
         end
 
-        wishlist_message = @wishlist.call(state: state.to_s, target:, run_id:)
-        @bus&.publish("fix_loop:wishlist", state:, target:, message: wishlist_message)
+        wishlist_message = @wishlist.call(state: state.to_s, target:, run_id:) if requested
+        @bus&.publish("fix_loop:wishlist", state:, target:, message: wishlist_message) if requested
         @bus&.publish("fix_loop:terminal", state:, message: result.to_s)
 
         result
@@ -193,7 +193,7 @@ module Master
 
       # The run once its journal is open and a mission records it: resume what
       # an earlier process left, then the passes, then the terminal state.
-      def run_journaled(journal, files:, target:, max_passes:, budget_seconds:, mission:)
+      def run_journaled(journal, files:, target:, max_passes:, budget_seconds:, mission:, requested:)
         run_id = journal["id"]
         files = StreamCursor.order(@root, target, files)
         deadline = Ground::Reliability::Deadline.new(journal["remaining_seconds"].to_f)
@@ -204,7 +204,7 @@ module Master
         return resumed.tap { mission.fail!(resumed.message) } if resumed.err?
 
         result = run_passes(files:, target:, max_passes:, deadline:, budget_seconds:, start_pass: resumed.value!, run_id:)
-        finish_run(result, target, run_id, mission:)
+        finish_run(result, target, run_id, mission:, requested:)
       end
 
       def mission_for(target:)
