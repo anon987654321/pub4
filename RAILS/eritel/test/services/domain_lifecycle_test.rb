@@ -36,3 +36,5 @@ class DomainLifecycleTest < ActiveSupport::TestCase
     assert_not event.destroy
     assert_equal "active", @domain.reload.state
   end
+
+end
