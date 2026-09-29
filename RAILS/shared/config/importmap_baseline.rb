@@ -2,6 +2,7 @@
 
 # Shared importmap pins for the pub4 Rails family.
 # Include from each app: eval(File.read(Shared::Engine.root.join("config/importmap_baseline.rb")), binding)
+# Local modules are protected by the asset pipeline's SRI hashes. External pins must opt in explicitly.
 
 sc_pin = lambda do |name|
   pin("@stimulus-components/#{name}", to: "@stimulus-components--#{name}.js")
@@ -48,7 +49,7 @@ pin "pub4/brgen_shell", to: "brgen_shell_controller.js"
 pin "pub4/nav_autohide", to: "nav_autohide_controller.js"
 pin "pub4/action", to: "action_controller.js"
 pin "pub4/bottom_sheet", to: "bottom_sheet_controller.js"
-pin "web-vitals", to: "https://cdn.jsdelivr.net/npm/web-vitals@4.2.4/dist/web-vitals.js", preload: false
+pin "web-vitals", to: "https://cdn.jsdelivr.net/npm/web-vitals@4.2.4/dist/web-vitals.js", preload: false, integrity: false
 pin "pub4/autosave", to: "autosave_controller.js"
 pin "pub4/draft_store", to: "draft_store_controller.js"
 pin "pub4/media_picker", to: "media_picker_controller.js"
