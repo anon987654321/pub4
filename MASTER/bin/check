@@ -12,7 +12,7 @@ Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
 #   contributor  fast: unit suite + data singularity
 #   agent        law/agent changes: selftest + data singularity
 #   web          the face: static web UI (+ live web when MASTER_WEB_LIVE=1)
-#   ci           what GitHub Actions runs; MASTER_CI_FULL/WEB/BROWSER widen it
+#   ci           the canonical local CI floor; MASTER_CI_FULL/WEB/BROWSER widen it
 #   full         operator-grade gate: ci + bin/probe all + rake audit
 #
 # `bin/operator gate` runs this as one stage of the repo-wide chain, alongside the
