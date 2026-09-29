@@ -91,6 +91,7 @@ module Master
         stop_thinking_indicator
         print_bridge_footer(result.value[:core], state:) if result.ok? && state[:streamed] && result.value[:core]
         display_result(result:, accumulated:, streamed: state[:streamed])
+        @last_repeatable_input = input if result.ok? && Master::Io::MediaIntent.repeatable?(input)
       ensure
         @pipeline_thread = nil
         stop_thinking_indicator
@@ -114,6 +115,7 @@ module Master
         @last_input = nil
         @exit_code = 0
         @activity = Master::CLI::Activity.new
+        @last_repeatable_input = nil
       end
 
       def init_turn_state(input)

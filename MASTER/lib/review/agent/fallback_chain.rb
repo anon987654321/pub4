@@ -8,12 +8,13 @@ module Master
       module FallbackChain
         # Default when there is no router or no config; the live list comes from
         # data/models.yml via ModelRouter#failover_skip_categories.
-        NON_RETRYABLE = %i[timeout no_api_key].freeze
+        NON_RETRYABLE = %i[timeout no_api_key offline auth_error model_missing invalid_request].freeze
 
         private
 
         def attempt_chat_with_fallbacks(candidate_models:, prompt:, context:, stream:, image: nil, &blk)
           stage_warnings = []
+          candidate_models = Array(candidate_models).compact.reject { |model| model.to_s.empty? }
           queue = mode_chain_for(candidate_models)
           last_response = nil
           timed_out_models = Set.new
@@ -44,7 +45,7 @@ module Master
         # A turn no model answered ends on one line naming each model tried and
         # its reason, rather than the last failure alone.
         def exhausted_result(last_response, stage_warnings)
-          return Result.err("all LLM fallback modes exhausted", category: :llm_call_failure) unless last_response
+          return Result.err("no live model available — /model list or /doctor", category: :offline) unless last_response
 
           tried = stage_warnings.filter_map { |line| line[/\Allm failed in \S+ on (.*)\z/m, 1] }
                                 .uniq { |line| line.split(": ", 2).first }

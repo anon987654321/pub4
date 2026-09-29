@@ -104,8 +104,12 @@ module Master
 
       NL_DISPATCH = [
         [/\A(?:hi|hello|hey|yo|good (?:morning|afternoon|evening))[\s!.?]*\z/i, :run_chitchat],
+        [/\A(?:again|repeat)(?:\s+(?:that|it))?[.!?]*\z/i, :repeat_last],
+        [/\b(?:do|run)\s+(?:that|it)\s+again\b/i, :repeat_last],
         [/\bfocus\s+(?:mode|on|off)\b|\btoggle\s+focus\b/i, :toggle_focus],
       ].freeze
+
+      DIRECT_SHELL_ATOM = /\A(?:pwd|whoami|date|uname(?:\s+-[[:alnum:]-]+)?|ls(?:\s+[[:alnum:]_./~*-]+)*|git\s+(?:status|branch(?:\s+--show-current)?|rev-parse\s+--show-toplevel))\z/i.freeze
 
       # An empty line does nothing, as in a shell: Enter never runs an action
       # the operator has not read.
@@ -113,6 +117,7 @@ module Master
         stripped = line.strip
         return if stripped.empty?
         NL_DISPATCH.each { |pat, meth| return send(meth) if stripped.match?(pat) }
+        return run_direct_shell(stripped) if direct_shell?(stripped)
 
         handled = dispatch_core_slash_command(stripped)
         return handled unless handled == :unhandled
@@ -162,6 +167,28 @@ module Master
         return unless governor
 
         @bang_shell ||= Master::Io::Shell.new(root: @refs.root, governor:, event_bus: @refs.bus)
+      end
+
+      def run_direct_shell(command)
+        shell = bang_shell
+        return puts @refs.renderer.render("shell: unavailable", mode: :warning) unless shell
+
+        result = shell.call(command:)
+        text = result.ok? ? result.value!.to_s : result.message.to_s
+        @last_ok = result.ok?
+        @exit_code = result.ok? ? 0 : 2
+        puts @refs.renderer.render(text, mode: result.ok? ? :dim : :error)
+      end
+
+      def direct_shell?(command)
+        command.split(/\s+(?:&&|;)\s+/).all? { |part| DIRECT_SHELL_ATOM.match?(part) }
+      end
+
+      def repeat_last
+        input = @last_repeatable_input.to_s
+        return puts @refs.renderer.render("repeat: nothing to repeat", mode: :warning) if input.empty?
+
+        run_input(input)
       end
 
       def run_agent_turn(line)

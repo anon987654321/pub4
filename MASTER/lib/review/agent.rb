@@ -63,7 +63,7 @@ module Master
         compaction = prepare_chat_turn(message)
         return compaction if compaction.is_a?(Master::Result::Err)
 
-        prepare_evidence(message)
+        prepare_evidence(message) unless task_type.to_s == "chat"
         dispatch = prepare_chat_dispatch(message, task_type)
 
         rate_err = check_rate_limit(dispatch[:selected_model])

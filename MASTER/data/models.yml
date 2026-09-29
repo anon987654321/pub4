@@ -33,9 +33,12 @@ fallback_policy:
   "on":
     - timeout
     - no_api_key
+    - offline
+    - auth_error
     - rate_limit
     - budget
     - model_missing
+    - invalid_request
 
 failover:
   sequence: [fast, default, medium, strong]
