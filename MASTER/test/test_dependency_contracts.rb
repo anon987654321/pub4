@@ -25,6 +25,18 @@ class TestDependencyContracts < Minitest::Test
     assert_operator Gem::Version.new(Prism::VERSION), :>=, Gem::Version.new("1.7.0")
   end
 
+  def test_rubocop_uses_the_repository_ruby_pin
+    paths = [
+      File.join(ROOT, ".rubocop.yml"),
+      File.join(REPO, "RAILS", "shared", ".rubocop.yml")
+    ]
+
+    paths.each do |path|
+      refute_match(/TargetRubyVersion:/, File.read(path),
+                   "#{path} must derive its Ruby target from .ruby-version")
+    end
+  end
+
   def test_every_ruby_version_file_agrees
     pins = Dir[File.join(REPO, "{,MASTER/,RAILS/*/}.ruby-version")].to_h do |path|
       [path.sub("#{REPO}/", ""), File.read(path).strip]
