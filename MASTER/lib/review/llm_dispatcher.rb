@@ -222,6 +222,7 @@ module Master
         return Result.err(key_refusal(err), category: :no_api_key) if missing_key_error?(err)
         return Result.err(redact_secrets(err.message.to_s), category: :budget) if billing_error?(err)
         return Result.err(redact_secrets(err.message.to_s), category: :rate_limit) if rate_limit_error?(err)
+        return Result.err(redact_secrets(err.message.to_s), category: :invalid_request) if invalid_request_error?(err)
 
         Result.err(redact_secrets(err.message.to_s), category: :llm_call_failure)
       end
@@ -274,6 +275,7 @@ module Master
         return Master::Result.err(result.message, category: :offline) if offline_error?(result)
         return Master::Result.err(result.message, category: :budget) if billing_error?(result)
         return Master::Result.err(result.message, category: :rate_limit) if rate_limit_error?(result)
+        return Master::Result.err(result.message, category: :invalid_request) if invalid_request_error?(result)
 
         result
       end
