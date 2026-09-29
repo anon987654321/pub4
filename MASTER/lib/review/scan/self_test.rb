@@ -215,14 +215,21 @@ module Master
 
         def cross_yaml_duplicate_key_findings
           data_dir = File.join(@root, "data")
-          top_keys = Hash.new { |h, k| h[k] = [] }
+          entries = Hash.new { |h, k| h[k] = [] }
           singularity_yaml_paths(data_dir).each do |path|
-            top_level_yaml_keys(path).each { |key| top_keys[key] << path }
+            top_level_yaml_entries(path).each { |key, value| entries[key] << [path, value] }
           end
-          top_keys.flat_map do |key, paths|
-            next [] if paths.size < 2
-            paths.drop(1).map do |path|
-              finding(path:, line: 1, message: "top-level key #{key} also defined in #{paths.first} (SINGULARITY)")
+
+          entries.flat_map do |key, rows|
+            rows.group_by(&:last).flat_map do |value, duplicates|
+              next [] if duplicates.size < 2
+              reference = duplicates.first.first
+              duplicates.drop(1).map do |path, _|
+                finding(
+                  path:, line: 1,
+                  message: "top-level fact #{key} duplicates #{reference} (SINGULARITY)",
+                )
+              end
             end
           end
         end
@@ -250,32 +257,13 @@ module Master
           end
         end
 
-        def top_level_yaml_keys(path)
-          document = Psych.parse_file(path)
-          return [] unless document
-          root = document.root
-          return [] unless root.is_a?(Psych::Nodes::Mapping)
+        def top_level_yaml_entries(path)
+          yaml = YAML.safe_load_file(path, aliases: true, permitted_classes: [Date, Time])
+          return {} unless yaml.is_a?(Hash)
 
-          root.children.each_slice(2).filter_map do |key_node, _value_node|
-            next unless key_node.respond_to?(:value)
-            key = key_node.value.to_s
-            next if %w[schema meta version].include?(key)
-            next if duplicate_top_level_key_allowed?(path, key)
-            key
-          end
+          yaml.reject { |key, _value| %w[schema meta version].include?(key.to_s) }
         rescue Psych::Exception
-          []
-        end
-
-        def duplicate_top_level_key_allowed?(path, key)
-          relative = path.delete_prefix("#{File.join(@root, "data")}/")
-          {
-            "defaults" => %w[mcp_servers.yml models.yml],
-            "openrouter" => %w[models.yml providers.yml],
-            "thresholds" => %w[load.yml rules.yml],
-            "voice" => %w[soul.yml voice.yml],
-            "dimensions" => %w[dialogue_rubric.yml visual_rubric.yml],
-          }.fetch(key, []).include?(relative)
+          {}
         end
 
         def rule_ids(value, ids = [])
