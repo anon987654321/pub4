@@ -27,7 +27,7 @@ module Master
       def load_jobs(section, kind:)
         return [] unless File.file?(PATTERNS_PATH)
 
-        rows = (Master.load_yaml(PATTERNS_PATH) || {})[section]
+        rows = Master.patterns_config[section]
         return [] unless rows.is_a?(Array)
 
         rows.select do |row|
