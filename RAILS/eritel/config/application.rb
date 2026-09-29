@@ -16,6 +16,8 @@ Bundler.require(*Rails.groups)
 module Eritel
   class Application < Rails::Application
     config.load_defaults 8.2
+
+    config.assets.integrity_hash_algorithm = "sha256"
     config.autoload_lib(ignore: %w[assets tasks])
 
     config.time_zone = "Europe/Oslo"
