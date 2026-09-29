@@ -235,7 +235,8 @@ module Master
         end
       end
 
-    # Backup — openrsync standing order.
+      # Backup — openrsync standing order.
+      class Backup < Base
         REMOTE_HOST = "s4vm23@wingman1.openbsd.amsterdam"
         REMOTE_PATH = "backup"
         SSH_OPTS = %w[-o BatchMode=yes -o ConnectTimeout=10].freeze
