@@ -130,7 +130,7 @@ module Master
       def run_tree(tree, tree_root, prefix)
         kept = []
         rounds.times do |round|
-          before = Operator::SprawlCensus.shape(tree)
+          before = Operator::SprawlCensus.shape(tree, root: @root)
           findings = candidates(tree_root, before, prefix)
           break if findings.empty?
 
@@ -217,7 +217,7 @@ module Master
       end
 
       def shape_improves?(tree, before)
-        after = Operator::SprawlCensus.shape(tree)
+        after = Operator::SprawlCensus.shape(tree, root: @root)
         score(after) < score(before)
       end
 
