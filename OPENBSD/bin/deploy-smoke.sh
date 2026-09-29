@@ -106,13 +106,13 @@ mem_hint() {
   fi
   # OpenBSD: free pages × page size is awkward; top -b one-liner when present
   if command -v top >/dev/null 2>&1; then
-    line=$(top -b 2>/dev/null | sed -n 's/^Memory: //p' | head -1)
+    line=$(top -b 2>/dev/null | ruby40 -e 'line = STDIN.read.lines.find { |l| l.start_with?("Memory:") }; puts line&.chomp&.delete_prefix("Memory:")')
     if [ -n "$line" ]; then
       printf 'info memory: %s\n' "$line"
       case "$line" in
         *Free:\ [0-9]M*|*Free:\ [1-9][0-9]M*)
           # crude: free under ~80M is tight for a third Rails app
-          free_m=$(printf '%s' "$line" | sed -n 's/.*Free: \([0-9]*\)M.*/\1/p')
+          free_m=$(printf '%s\n' "$line" | ruby40 -e 'text=STDIN.read; puts(text[/Free:\s+(\d+)M/, 1].to_s)')
           if [ -n "$free_m" ] && [ "$free_m" -lt 80 ] 2>/dev/null; then
             warn "low free RAM (~${free_m}M) — amber+brgen+master may OOM (see TODO.md multi_app_ram)"
           fi
@@ -225,7 +225,7 @@ if [ "$run_public" = "1" ]; then
   bsdports_public_failed=$failed
   check_http bsdports_public "https://bsdports.org/up" "$bsdports_req"
   if [ "$failed" -ne "$bsdports_public_failed" ] && command -v dig >/dev/null 2>&1; then
-    bsdports_ns=$(dig +short NS bsdports.org 2>/dev/null | tr '\n' ' ')
+    bsdports_ns=$(dig +short NS bsdports.org 2>/dev/null | ruby40 -e 'puts STDIN.read.lines.map(&:strip).reject(&:empty?).join(" ")')
     case "$bsdports_ns" in
     *expireddomain*)
       printf '     cause: bsdports.org is delegated to %s\n' "$bsdports_ns" >&2
