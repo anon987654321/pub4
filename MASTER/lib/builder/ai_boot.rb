@@ -160,7 +160,7 @@ module Master
     end
 
     # MASTER_AUTOFIX=1 enables in-process convergence; off by default to avoid autocommits racing deploys.
-    def build_fix_loop(root:, infra:, agent:, scanner:, axioms:, rules:, learnings:, rollback:, bus:, git:)
+    def build_fix_loop(root:, infra:, agent:, scanner:, axioms:, rules:, learnings:, bus:, git:)
       fix_loop = Fix::FixLoop.new(
         rules:, axioms:, agent:, scanner:, root:, bus:, git:, learnings:,
         incremental: ENV["MASTER_INCREMENTAL"] == "1",
