@@ -65,10 +65,13 @@ module Operator
     def model_state(model)
       return "unknown" if model.to_s.empty?
       path = File.join(@root, "runtime", "telemetry", "provider_health.ndjson")
-      return "available" unless File.file?(path)
+      return "unknown" unless File.file?(path)
 
       health = Master::CLI::Routing::ProviderHealth.new(path:)
-      health.unhealthy?(model) ? "degraded" : "available"
+      return "degraded" if health.unhealthy?(model)
+      return "unknown" unless health.observed?(model)
+
+      health.stale?(model, max_age_s: 120) ? "degraded" : "available"
     rescue StandardError
       "unknown"
     end
