@@ -6,6 +6,8 @@ require "optparse"
 require "open3"
 require "tempfile"
 require "time"
+require "yaml"
+require "fileutils"
 
 ROOT = File.expand_path("..", __dir__)
 VOICE = File.join(ROOT, "data", "voice.yml")
@@ -81,7 +83,7 @@ def write_attestation(kind)
   }
   FileUtils.mkdir_p(File.dirname(STATE))
   File.write(STATE, JSON.pretty_generate(payload) + "\n", encoding: "UTF-8")
-  puts "device-accept0: recorded=#{STATE}"
+  puts "device-accept0: operator_attestation=#{STATE}"
 end
 
 options = { android: false, ios: false, record: false, attest: nil }
