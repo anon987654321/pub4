@@ -30,7 +30,7 @@ require "open3"
 module Operator
   module SprawlCensus
     ROOT = File.expand_path("../../..", __dir__)
-    CEILINGS = File.join(ROOT, "MASTER", "data", "sprawl_census.yml")
+    CEILINGS = File.join(ROOT, "MASTER", "data", "spine.yml")
 
     MANDATED = [
       # Zeitwerk reads the namespace off the path, so the nesting IS the name.
@@ -241,7 +241,9 @@ module Operator
     end
 
     def ceilings
-      File.exist?(CEILINGS) ? YAML.safe_load_file(CEILINGS) : {}
+      return {} unless File.exist?(CEILINGS)
+
+      YAML.safe_load_file(CEILINGS).fetch("spine", {}).fetch("sprawl_census", {})
     end
 
     def run(ratchet: false, list: false)
@@ -258,7 +260,15 @@ module Operator
       over = now.select { |k, v| v > recorded.fetch(k, v) }
       if ratchet && now.any? { |k, v| v < recorded.fetch(k, v) }
         merged = recorded.merge(now) { |_, old, new| [old, new].min }
-        File.write(CEILINGS, merged.merge("corpus" => tracked.size).to_yaml)
+        source = File.read(CEILINGS)
+        values = merged.merge("corpus" => tracked.size)
+        block = "  sprawl_census:\n" + values.sort_by { |key, _| key.to_s }.map { |key, value| "    " + key.to_s + ": " + value.to_s + "\n" }.join
+        if source.include?("\n  sprawl_census:\n")
+          source = source.sub(/\n  sprawl_census:\n(?:    [^\n]+\n)*/, "\n" + block)
+        else
+          source = source.sub(/^spine:\n/, "spine:\n" + block)
+        end
+        File.write(CEILINGS, source)
         puts "sprawl_census: recorded a new low"
         return 0
       end

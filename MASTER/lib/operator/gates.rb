@@ -11,7 +11,7 @@ require_relative "ruby_runner"
 require_relative "../trace/dmesg"
 require_relative "../../../OPENBSD/lib/gate_result"
 require_relative "../../../MASTER/gates/support/bounded_command"
-require_relative "../../../RAILS/tools/design_tokens"
+require_relative "../../tools/design_tokens"
 
 # frozen_string_literal: true
 

@@ -50,8 +50,7 @@ def password_hits(body)
 end
 
 SKIP_PATH_RE = %r{
-  \A(?:OPENBSD/quarantine/|
-  OPENBSD/archive/recovery/references/|
+  \A(?:  OPENBSD/archive/recovery/references/|
   .*/test/|
   .*/tests/|
   MASTER/data/eval_cases\.yml|

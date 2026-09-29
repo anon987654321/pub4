@@ -373,12 +373,12 @@ training; a sample from the newest checkpoint; check, generate and grade in one
 pass; and two Replicate renders, the second a dry run.
 
 ```sh
-MASTER/tools/lora/ragnhild/lora --check
-MASTER/tools/lora/ragnhild/lora --train
-MASTER/tools/lora/ragnhild/lora --generate
-MASTER/tools/lora/ragnhild/lora --all
-MASTER/tools/lora/ragnhild/lora --generate-replicate --set selfies
-MASTER/tools/lora/ragnhild/lora --generate-replicate --set distance --dry-run
+MASTER/tools/lora/lora ragnhild --check
+MASTER/tools/lora/lora ragnhild --train
+MASTER/tools/lora/lora ragnhild --generate
+MASTER/tools/lora/lora ragnhild --all
+MASTER/tools/lora/lora ragnhild --generate-replicate --set selfies
+MASTER/tools/lora/lora ragnhild --generate-replicate --set distance --dry-run
 ```
 
 ## Security and trust boundaries

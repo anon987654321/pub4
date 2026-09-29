@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 
-require_relative "command_registry/command"
-require_relative "command_registry/help"
-require_relative "command_registry/review"
-require_relative "command_registry/observe"
-require_relative "command_registry/status"
-require_relative "command_registry/model"
+require_relative "command_registry_command"
+require_relative "command_registry_help"
+require_relative "command_registry_review"
+require_relative "command_registry_observe"
+require_relative "command_registry_status"
+require_relative "command_registry_model"
 require_relative "model_benchmark"
-require_relative "command_registry/rules"
-require_relative "command_registry/host"
-require_relative "command_registry/workspace"
+require_relative "command_registry_rules"
+require_relative "command_registry_host"
+require_relative "command_registry_workspace"
 require_relative "../plugin"
 
 module Master

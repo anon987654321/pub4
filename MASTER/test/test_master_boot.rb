@@ -11,6 +11,17 @@ class MasterBootTest < Minitest::Test
     assert defined?(Master::MasterBoot)
   end
 
+  def test_builder_boots_without_the_retired_rollback_file
+    script = <<~RUBY
+      require "builder"
+      puts Master::Builder::DEFAULT_TOOL_MAP.size
+    RUBY
+
+    out, status = Open3.capture2e(RbConfig.ruby, "-I#{File.expand_path("../lib", __dir__)}", "-e", script)
+    assert status.success?, out
+    assert_match(/\\A\\d+\\n\\z/, out)
+  end
+
   def test_master_paths_shim_matches_boot_paths
     assert_equal MasterPaths::ROOT, File.expand_path("..", File.expand_path("../lib", __dir__))
     assert MasterPaths.data("rules.yml").end_with?("/data/rules.yml")

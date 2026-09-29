@@ -7,6 +7,37 @@ module Master
     VERSION = 1
     Manifest = Data.define(:id, :version, :description, :entrypoint, :path, :observe_actions)
 
+
+    class Base
+      attr_reader :manifest
+
+      def initialize(manifest:)
+        @manifest = manifest
+      end
+
+      def call(action:, **)
+        raise NotImplementedError, "#{manifest.id}: #{action} is not implemented"
+      end
+
+      private
+
+      def law_admission! = Master::Ground::LawHandshake::Admission.require!
+      def policy = Master::Plugin.policy(manifest.id)
+
+      def require_policy!(key, expected:)
+        actual = policy.fetch(key.to_s)
+        return true if actual == expected
+
+        raise PolicyError, "#{manifest.id}: policy #{key}=#{actual.inspect} does not admit #{expected.inspect}"
+      end
+
+      def require_consent!(value)
+        return true if value == true
+
+        raise PolicyError, "#{manifest.id}: explicit consent is required for an external write"
+      end
+    end
+
     class Error < StandardError; end
     class ManifestError < Error; end
     class PolicyError < Error; end

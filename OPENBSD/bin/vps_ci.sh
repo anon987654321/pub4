@@ -47,7 +47,7 @@ sync_ci_rails_root() {
     doas rm -rf "$mirror/MASTER/tools"
     git -C "$repo" archive HEAD MASTER/tools | doas sh -c "cd ${mirror} && tar xf -"
   fi
-  # MASTER is the design authority: RAILS/tools/build_all_css.rb and the lints
+  # MASTER is the design authority: RAILS/bin/build_all_css.rb and the lints
   # read design_system from MASTER/data/rules.yml through
   # Operator::MasterDesign, whose first candidate is this mirror's copy. The
   # app user cannot read /home/dev/pub4, so without it css_build died on

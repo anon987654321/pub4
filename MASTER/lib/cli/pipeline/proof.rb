@@ -2,7 +2,7 @@
 
 require "set"
 require_relative "../../operator/gate_chain"
-require_relative "proof/reading"
+
 
 module Master
   module CLI

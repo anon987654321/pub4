@@ -28,6 +28,11 @@
 # SmallFunctionsRule so the repo counts code exactly one way.
 
 spine:
+  sprawl_census:
+    lone_dirs: 15
+    stutter: 0
+    vague_names: 2
+    corpus: 2322
   # Files per tree that declare no module or class, allowed only to fall; read
   # by lib/operator/namespace_ratchet.rb. The values are the ones
   # data/namespace_ceilings.yml held when b120b221a deleted it: 85aa20f62 taught

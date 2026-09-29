@@ -165,10 +165,14 @@ class RepoHygieneContractTest < Minitest::Test
       MASTER/tools/postpro/lib/
       MASTER/tools/replicate/lib/
       MASTER/tools/lora/_toolkit/
-      MASTER/tools/bplans/
+      MASTER/data/bplans/
       MASTER/tools/device/
       MASTER/tools/Rakefile
+      MASTER/bin/verify
+      MASTER/tools/termux_install_agent_service.sh
       RAILS/shared/reference/
+      RAILS/visual_contract/
+      RAILS/tools/
     ]
 
     tracked = git_files(".")

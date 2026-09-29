@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require_relative "../tools/fan_ops_digest_support"
+require_relative "../tools/fan_ops_digest"
 
 class TestFanOpsDigest < Minitest::Test
   CONFIG = {
