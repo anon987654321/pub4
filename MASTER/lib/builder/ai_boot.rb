@@ -221,7 +221,7 @@ module Master
       # Close the Homeostat loop for the fix_loop events PassRunner/
       # StagnationDetection/BackgroundRunner don't already observe directly
       # (they only see their own instance's state, not bus-level events).
-      homeostat = fix_loop.instance_variable_get(:@homeostat)
+      homeostat = fix_loop.homeostat
       return unless homeostat
 
       bus.subscribe("fix_loop:llm_skipped") { homeostat.observe(:llm_failure) }
