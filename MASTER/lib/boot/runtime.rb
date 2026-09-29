@@ -94,7 +94,7 @@ module Master
     # Head of models.grok_primary — the declared :free pool this runtime routes
     # first when an OpenRouter key is present.
     def free_primary_model(root: ROOT)
-      @free_primary_model ||= load_yaml(File.join(root, "data", "models.yml"))
+      @free_primary_model ||= Master.models_config(root:)
                               .dig("models", "grok_primary")&.first&.fetch("id")
     end
 
@@ -103,7 +103,7 @@ module Master
     # comment saying to keep the two in step by hand, which is the maintenance
     # cost lint:dedup exists to price.
     def three_mirror_pool(root: ROOT)
-      @three_mirror_pool ||= Array(load_yaml(File.join(root, "data", "models.yml"))
+      @three_mirror_pool ||= Array(Master.models_config(root:)
                                    .dig("three_mirror_redundancy", "pool")).map(&:to_s).freeze
     end
 
@@ -167,19 +167,19 @@ module Master
     end
 
     def provider_models(root: ROOT)
-      load_yaml(File.join(root, "data", "models.yml")).fetch("model_defs", {})
+      Master.models_config(root:).fetch("model_defs", {})
     end
 
     # models.yml cli_lanes — the subscription CLIs the pool offers and the
     # dispatcher asks. Read here with the other models.yml accessors, because
     # a data file with a second loader is a data file with two shapes.
     def cli_lanes(root: ROOT)
-      @cli_lanes ||= load_yaml(File.join(root, "data", "models.yml")).fetch("cli_lanes", {})
+      @cli_lanes ||= Master.models_config(root:).fetch("cli_lanes", {})
     end
 
     # models.yml models — the routing tiers, each a list of rows carrying an id.
     def model_tiers(root: ROOT)
-      load_yaml(File.join(root, "data", "models.yml")).fetch("models", {})
+      Master.models_config(root:).fetch("models", {})
     end
 
     def keyless_llm_enabled?
