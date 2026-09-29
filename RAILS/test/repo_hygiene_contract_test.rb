@@ -168,6 +168,7 @@ class RepoHygieneContractTest < Minitest::Test
       MASTER/data/bplans/
       MASTER/tools/device/
       MASTER/tools/Rakefile
+      MASTER/bin/verify
       MASTER/tools/termux_install_agent_service.sh
       RAILS/shared/reference/
       RAILS/visual_contract/
