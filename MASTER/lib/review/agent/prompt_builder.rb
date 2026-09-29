@@ -61,6 +61,8 @@ module Master
         end
 
         def dynamic_prompt
+          return casual_dynamic_prompt if casual_task?
+
           parts = []
           # Set by the web tier when a request arrives on a host that wears a
           # different face, and cleared when the turn ends. It carries a
@@ -99,6 +101,14 @@ module Master
         # like a finished code review.
         def casual_task?
           @config.respond_to?(:task_type) && @config.task_type.to_s == "chat"
+        end
+
+        def casual_dynamic_prompt
+          [
+            conversational_register_line,
+            ("Current task: #{@session.topic}" if @session.respond_to?(:topic) && @session.topic),
+            @memory.turn_recall(last_user_message) if @memory.respond_to?(:turn_recall)
+          ].compact.join("\n\n")
         end
 
         def conversational_register_line
