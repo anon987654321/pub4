@@ -42,21 +42,21 @@ autoload:
     # Master::Review::Scan::Rules -- each file is RuleDSL.rule calls into the
     # shared registry, not a constant of its own. The structural_rules
     # DIRECTORY beside structural_rules.rb does autoload.
-    - review/scan/rules/cosmetic_rules.rb
-    - review/scan/rules/external_linter_rules.rb
-    - review/scan/rules/graph_rules.rb
-    - review/scan/rules/js_rules.rb
-    - review/scan/rules/lexical_rules.rb
-    - review/scan/rules/meta_rules.rb
-    - review/scan/rules/naming_rules.rb
-    - review/scan/rules/ruby_rules.rb
-    - review/scan/rules/semantic_rules.rb
-    - review/scan/rules/structural_question_rules.rb
-    - review/scan/rules/structural_rules.rb
-    - review/scan/rules/surface_rules.rb
-    - review/scan/rules/universal_rules.rb
-    - review/scan/rules/web_rules.rb
-    - review/scan/rules/yaml_bridge_rules.rb
+    - review/scan/cosmetic_rules.rb
+    - review/scan/external_linter_rules.rb
+    - review/scan/graph_rules.rb
+    - review/scan/js_rules.rb
+    - review/scan/lexical_rules.rb
+    - review/scan/meta_rules.rb
+    - review/scan/naming_rules.rb
+    - review/scan/ruby_rules.rb
+    - review/scan/semantic_rules.rb
+    - review/scan/structural_question_rules.rb
+    - review/scan/structural_rules.rb
+    - review/scan/surface_rules.rb
+    - review/scan/universal_rules.rb
+    - review/scan/web_rules.rb
+    - review/scan/yaml_bridge_rules.rb
     # Master::Review::Scan -- the scanner's three engines, split by concern and
     # required by scanner.rb. The directory groups them; it is not a namespace,
     # and each file declares the constant one level up.
