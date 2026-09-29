@@ -1,27 +1,3 @@
-# frozen_string_literal: true
-
-require "digest"
-require "fileutils"
-require "open3"
-require "set"
-require "time"
-require_relative "pass_runner/fast_stage"
-require_relative "pass_runner/llm_stage"
-require_relative "pass_runner/stagnation_detection"
-require_relative "pass_runner/evidence_stage"
-require_relative "pass_runner/stream_stage"
-require_relative "structural_stage"
-require_relative "../transaction"
-require_relative "../resource_budget"
-require_relative "../preflight"
-
-module Master
-  module Fix
-    class FixLoop
-      class PassRunner
-        # The model-repair stage's share of one pass; MASTER_FIX_PASS_BUDGET_S
-        # widens it for slow lanes, as MASTER_FIX_RUN_BUDGET_S does the run.
-        PASS_BUDGET_SECONDS = Integer(ENV.fetch("MASTER_FIX_PASS_BUDGET_S", 8 * 60))
 
         PassResult = Struct.new(:status, :message, :consecutive_clean, keyword_init: true)
 
@@ -32,7 +8,7 @@ module Master
         include StreamStage
         include StructuralStage
 
-        def initialize(bus:, committer:, conflict_resolver:, llm_router:, rollback:, root:,
+        def initialize(bus:, committer:, conflict_resolver:, llm_router:, root:,
                        rules:, agent:, scanner:, learnings:, preamble:,
                        clean_runs_required:, plateau_window:, ground_truth: nil, homeostat: nil, council: nil,
                        visual_pass: nil, opportunity_pass: nil, preflight: nil)
@@ -337,26 +313,13 @@ module Master
           tally.each do |rule_id, _|
             @rule_recurrence[rule_id] += 1
             next unless @rule_recurrence[rule_id] >= 3
+
             @rule_recurrence.delete(rule_id)
             sample = found.select { |v| v[:rule].to_s == rule_id }.first(5)
             @bus&.publish("fix_loop:soul_proposal", root: @root, rule: rule_id, sample:)
-            end
-          (@rule_recurrence.keys - tally.keys).each { |k| @rule_recurrence.delete(k) }
+          end
+          (@rule_recurrence.keys - tally.keys).each { |key| @rule_recurrence.delete(key) }
         end
-
-        def append_improvement(rule_id, sample)
-          files = sample.map { |v| v[:file] }.uniq.first(3).join(", ")
-          @bus&.publish("loop:recurrence", rule: rule_id, files:, at: Time.now.utc.iso8601)
-          line = "#{Time.now.utc.strftime("%Y-%m-%d %H:%M")} #{rule_id}: recurring in #{files}\n"
-          # runtime/rsi_improvements.md is Ledger::Feedback's, written from the
-          # soul_proposal event above; writing it here too put every line in twice.
-          path = File.join(@root, "runtime", "improvements.md")
-          FileUtils.mkdir_p(File.dirname(path))
-          File.open(path, "a") { |f| f.write(line) }
-        rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "fix_loop.append_improvement", event_bus: @bus, rule_id:)
-        end
-
         def circuit_open? = @llm_router.circuit_open?
         def open_breakers = @llm_router.open_breakers
       end
