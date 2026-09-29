@@ -8,7 +8,7 @@ require "optparse"
 require "timeout"
 require_relative "crawl_support"
 
-SUPPORT = File.expand_path("../../../MASTER/web/script/browser_probe_support.rb", __dir__)
+SUPPORT = File.join(CrawlSupport::ROOT, "MASTER", "web", "script", "browser_probe_support.rb")
 require SUPPORT
 
 def run_checks(browser, checks, label, failures)
