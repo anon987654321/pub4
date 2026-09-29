@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "../cli/context_layers"
 require "json"
 require "fileutils"
 require "securerandom"
@@ -281,8 +282,8 @@ module Master
       # existing reader expects the same array identity it always got.
       def messages(key = nil) = @mutex.synchronize { conversation(key || current_key)[:messages] }
 
-      def add_message(role:, content:)
-        msg = { role:, content:, ts: Time.now.to_i }
+      def add_message(role:, content:, layer: :conversation)
+        msg = { role:, content:, layer: Master::CLI::ContextLayers.normalize(layer), ts: Time.now.to_i }
         @mutex.synchronize do
           conversation(current_key)[:messages] << msg
           conversation(current_key)[:token_est] += Session.estimate_tokens(content)
