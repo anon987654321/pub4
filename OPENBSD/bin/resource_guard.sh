@@ -112,7 +112,7 @@ MEM_RESTORE=10
 # have to disagree, so the scripts that read the load share no library; a shared
 # file also means one more root-owned install target, since root sources only
 # root-owned absolute paths.
-load=$(sysctl -n vm.loadavg 2>/dev/null | awk '{print $2}')
+load=$(sysctl -n vm.loadavg 2>/dev/null | ruby40 -e 'parts=STDIN.read.scan(/\d+(?:\.\d+)?/); puts parts[1].to_s if parts.size >= 2')
 # Failing toward 9.9 sheds. A guard that cannot read the load must assume the
 # worst; assuming the best would disarm it exactly when sysctl is the thing
 # struggling.
@@ -122,28 +122,14 @@ load=${load:-9.9}
 # top's Memory line: "Memory: Real: 273M/578M act/tot Free: 383M Cache: 192M Swap: 562M/1264M"
 mem_avail_pct=100
 total_mb=$(( $(sysctl -n hw.physmem 2>/dev/null || echo 0) / 1048576 ))
-avail_mb=$(top -b -n 1 2>/dev/null | awk '
-  function mb(v) {
-    n = v + 0
-    if (v ~ /G/) { return n * 1024 }
-    if (v ~ /K/) { return n / 1024 }
-    return n
-  }
-  /^Memory:/ {
-    for (i = 1; i <= NF; i++) {
-      if ($i == "Free:")  { f = mb($(i+1)) }
-      if ($i == "Cache:") { c = mb($(i+1)) }
-    }
-    printf "%d", f + c
-    exit
-  }')
+avail_mb=$(top -b -n 1 2>/dev/null | ruby40 -e 'def mb(v); n=v.to_f; v.end_with?("G") ? n*1024 : v.end_with?("K") ? n/1024 : n; end; line=STDIN.read.lines.find { |l| l.start_with?("Memory:") }; if line; f=line[/Free:\s+([0-9.]+[MGK]?)/,1]; c=line[/Cache:\s+([0-9.]+[MGK]?)/,1]; puts (mb(f.to_s)+mb(c.to_s)).to_i; end')
 if [[ -n $avail_mb && $total_mb -gt 0 ]]; then
   mem_avail_pct=$(( avail_mb * 100 / total_mb ))
 else
   # Fallback if top output changes shape: vmstat free pages (undercounts by
   # the buffer cache, so only trust it as a floor, never for restore).
-  pages=$(vmstat -s | awk '/pages managed/{print $1}')
-  free=$(vmstat -s | awk '/pages free$/{print $1}')
+  pages=$(vmstat -s | ruby40 -e 'text=STDIN.read; puts(text[/^\s*(\d+)\s+pages managed/, 1].to_s)')
+  free=$(vmstat -s | ruby40 -e 'text=STDIN.read; puts(text[/^\s*(\d+)\s+pages free$/, 1].to_s)')
   if [[ -n $pages && -n $free && $pages -gt 0 ]]; then
     mem_avail_pct=$(( free * 100 / pages ))
   else
@@ -181,7 +167,7 @@ else
 fi
 
 shed=0
-if awk -v l="$load" -v w="$LOAD_WARN" 'BEGIN{exit !(l>=w)}'; then shed=1; fi
+if ruby40 -e 'exit ARGV[0].to_f >= ARGV[1].to_f ? 0 : 1' "$load" "$LOAD_WARN"; then shed=1; fi
 if [[ $mem_avail_pct -lt $MEM_WARN ]]; then shed=1; fi
 
 # A deploy is load this box was told to make. rc.d/{master,amber,brgen,bsdports}
@@ -240,7 +226,7 @@ fi
 # fields go last so the positions a recalibration reads stay where they are.
 rss=""
 for app in $CORE $OPTIONAL; do
-  kb=$(ps -o rss= -U "$app" 2>/dev/null | awk '{ s += $1 } END { printf "%d", s }')
+  kb=$(ps -o rss= -U "$app" 2>/dev/null | ruby40 -e 'puts STDIN.read.lines.sum { |line| line.to_i }')
   rss="$rss rss_$app=$(( ${kb:-0} / 1024 ))M"
 done
 echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) load=$load mem_avail=${mem_avail_pct}% shed=$shed deploy=$deploying$rss" \
@@ -277,10 +263,12 @@ if [[ $shed -eq 1 ]]; then
   # for and then took three ticks to undo. The list is ordered cheapest-to-lose
   # first, so a mild breach costs bsdports and leaves amber up.
   for svc in $OPTIONAL; do
-    if rcctl check "$svc" 2>/dev/null | grep -q '(ok)'; then
+    if case "$(rcctl check "$svc" 2>/dev/null || true)" in *'(ok)'*) true;; *) false;; esac; then
       logger -t resource-guard "shed $svc (load=$load mem_avail=${mem_avail_pct}% strikes=$strikes)"
       rcctl stop "$svc" 2>/dev/null || true
-      if ! grep -qx "$svc" "$SHED_STATE" 2>/dev/null; then
+      if ruby40 -e 'path, wanted = ARGV; ok = File.file?(path) && File.readlines(path, chomp: true).include?(wanted); exit(ok ? 0 : 1)' "$SHED_STATE" "$svc"; then
+        :
+      else
         echo "$svc" >> "$SHED_STATE"
       fi
       break
@@ -305,7 +293,7 @@ fi
 # still enabled in rc.d are restored, so deliberately disabled services
 # (e.g. decommissioned services) stay down.
 if [[ $shed -eq 0 && -s $SHED_STATE && $mem_avail_pct -ge $MEM_RESTORE ]]; then
-  if awk -v l="$load" -v r="$LOAD_RESTORE" 'BEGIN{exit !(l<r)}'; then
+  if ruby40 -e 'exit ARGV[0].to_f < ARGV[1].to_f ? 0 : 1' "$load" "$LOAD_RESTORE"; then
     restored=""
     for svc in $(cat "$SHED_STATE"); do
       if ! rcctl get "$svc" status >/dev/null 2>&1; then
@@ -313,7 +301,7 @@ if [[ $shed -eq 0 && -s $SHED_STATE && $mem_avail_pct -ge $MEM_RESTORE ]]; then
         restored=$svc
         break
       fi
-      if rcctl check "$svc" 2>/dev/null | grep -q '(ok)'; then
+      if case "$(rcctl check "$svc" 2>/dev/null || true)" in *'(ok)'*) true;; *) false;; esac; then
         restored=$svc
         break
       fi
@@ -323,13 +311,13 @@ if [[ $shed -eq 0 && -s $SHED_STATE && $mem_avail_pct -ge $MEM_RESTORE ]]; then
       break
     done
     if [[ -n $restored ]]; then
-      grep -vx "$restored" "$SHED_STATE" > "${SHED_STATE}.tmp" 2>/dev/null || true
+      ruby40 -e 'path, value = ARGV; lines = File.file?(path) ? File.readlines(path, chomp: true) : []; File.write(path + ".tmp", lines.reject { |line| line == value }.join("\n") + (lines.any? ? "\n" : ""))' "$SHED_STATE" "$restored"
       mv "${SHED_STATE}.tmp" "$SHED_STATE"
     fi
   fi
 fi
 
-if awk -v l="$load" -v c="$LOAD_CRIT" 'BEGIN{exit !(l>=c)}'; then
+if ruby40 -e 'exit ARGV[0].to_f >= ARGV[1].to_f ? 0 : 1' "$load" "$LOAD_CRIT"; then
   logger -t resource-guard "crit load=$load — running emergency_cpu"
   if [[ -x /usr/local/bin/emergency_cpu.sh ]]; then
     ksh /usr/local/bin/emergency_cpu.sh 2>&1 | logger -t resource-guard
