@@ -7,8 +7,8 @@ needed for Digital Asset Links.
 
 Run:
 
-    ruby RAILS/tools/mobile.rb android brgen
-    ruby RAILS/tools/mobile.rb android marketplace
+    ruby RAILS/bin/mobile android brgen
+    ruby RAILS/bin/mobile android marketplace
 
 The product matrix is RAILS/mobile/apps.yml. The generator passes each product
 manifest URL and a product-specific output directory to Bubblewrap.
@@ -30,7 +30,7 @@ belongs in `RAILS/mobile/android/.build/<app>` and is ignored by Git.
 
 Use:
 
-    ruby RAILS/tools/mobile.rb android brgen
+    ruby RAILS/bin/mobile android brgen
 
 Then inspect the generated `twa-manifest.json`, run the Bubblewrap build, and
 deploy the resulting Digital Asset Links data to the matching origin. Bubblewrap
