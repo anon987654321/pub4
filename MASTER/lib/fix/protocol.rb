@@ -145,7 +145,13 @@ module Master
       def excluded_reason(path, root:)
         return "immutable" if immutable?(path, root:)
         return "binary" if Master.binary_file?(path)
-        return "scanner_path_filter" if defined?(Master::Review::Scan::Scanner) && Master::Review::Scan::Scanner.skip_path?(path, root:)
+        scanner = if defined?(Master::Review::Scan::Scanner)
+          Master::Review::Scan::Scanner
+        else
+          require File.join(Master::ROOT, "lib", "review", "scan", "scanner")
+          Master::Review::Scan::Scanner
+        end
+        return "scanner_path_filter" if scanner.skip_path?(path, root:)
         nil
       rescue StandardError
         "unreadable_or_unclassifiable"
@@ -186,7 +192,7 @@ module Master
             "law" => rule_rows.size,
             "registry" => registry_count
           },
-          "rules" => full ? rule_rows : rule_rows.map { |entry| entry.slice("id", "severity", "mode", "languages", "enforcement", "fix_strategy", "verify_strategy") }
+          "rules" => full ? rule_rows : rule_rows.map { |entry| entry.slice("id", "severity", "mode", "languages", "question", "fix", "enforcement", "fix_strategy", "verify_strategy") }
         }
         JSON.pretty_generate(payload)
       end
