@@ -337,12 +337,6 @@ prompt. `run_seed_media_colab.rb` generates `seed_media.ipynb`,
 grades it and records it in `seed_media_manifest.yml`, and
 `install_seed_media.rb` turns rendered frames into graded catalogue entries.
 
-`ideas.yml` holds seventy-four written sittings: fifty in the shoots brief,
-sequenced in eight sides, twenty-four in warp, and the best twenty-four named
-by reference. `ideas/` keeps five of them rendered and graded. `guides/` holds
-narrated walkthroughs that describe a dataset that no longer exists and two
-lanes that are ruled out, kept as recordings and not trusted as instructions.
-
 Inside a subject, `lora` is the entry point: a seven-line script that names the
 subject and hands to `_toolkit`. `subject.env` says who, in three lines naming
 the subject, the model and the trigger. `train.yaml` says how, with the rank,
