@@ -43,10 +43,10 @@ stage_1() {
   # The old loop was the third writer of the same records and disagreed with the
   # other two: it emitted no www, no CAA, no SPF, no DMARC and an MX pointing at
   # a mail server that exists for one domain out of sixty.
-  install_static var/nsd/etc/nsd.conf /var/nsd/etc/nsd.conf
+  install_static dns/nsd.conf /var/nsd/etc/nsd.conf
   nsd-checkconf /var/nsd/etc/nsd.conf || { log ERROR "nsd.conf invalid"; exit 1 }
 
-  cp ${CONFIG_ROOT}/var/nsd/zones/master/*.zone /var/nsd/zones/master/
+  cp ${CONFIG_ROOT}/dns/zones/master/*.zone /var/nsd/zones/master/
 
   for domain_entry in $ALL_DOMAINS; do
     typeset domain=${domain_entry%%:*}
