@@ -408,6 +408,12 @@ occlusion:
 # percent for some time and nothing ever failed on the numbers; GATE_ADEQUACY
 # item 8 records the hole. Source half asserts the field collection still runs,
 # live half measures the two paint metrics against a budget.
+# Same guest crawl as page_simulation, measuring server time and payload before browser work.
+server_response_budget:
+  require: lib/server_response_budget
+  class: Deploy::ServerResponseBudgetGate
+  pass: "ok: server p95 response time and payload within budget"
+
 web_vitals_budget:
   require: lib/web_vitals_budget
   class: Deploy::WebVitalsBudget
