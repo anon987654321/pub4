@@ -47,12 +47,6 @@ task :security_sweep do
   run_tool("tools/security_sweep.rb")
 end
 
-desc "Run the canonical MASTER/tools gate and suite"
-task :tools do
-  tools_root = File.expand_path("tools", __dir__)
-  Bundler.with_unbundled_env { Dir.chdir(tools_root) { sh RbConfig.ruby, "-S", "rake" } }
-end
-
 desc "Deep scan lib/ — triage scanner self-findings separately from actionable violations"
 task :constitution do
   $LOAD_PATH.unshift(File.join(__dir__, "lib"))
