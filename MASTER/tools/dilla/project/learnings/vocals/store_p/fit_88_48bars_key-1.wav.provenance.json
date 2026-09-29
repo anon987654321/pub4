@@ -8,7 +8,7 @@
       "dilla",
       "renders/beats/direction_v4.wav"
     ],
-    "cwd": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla"
+    "cwd": "MASTER/tools/dilla"
   },
   "engine": {
     "file": "dilla.rb",

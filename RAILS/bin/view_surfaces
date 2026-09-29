@@ -1,0 +1,266 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Generate the guest-accessible HTML view-surface manifest.
+#
+# One command, four internal stages:
+#   ruby RAILS/bin/view_surfaces
+#   ruby RAILS/bin/view_surfaces --stage=list --app=brgen
+#   ruby RAILS/bin/view_surfaces --stage=resolve ROUTES.jsonl
+#   ruby RAILS/bin/view_surfaces --stage=probe brgen RESOLVED.jsonl
+#   ruby RAILS/bin/view_surfaces --stage=write WORKDIR MASTER/gates/data/geometry_surfaces.yml
+#
+# The stages remain separate because list/resolve run inside a Rails application,
+# probe runs against the local fleet, and write edits one generated YAML block.
+# They are one tool, not five independently discoverable tools.
+
+require "json"
+require "net/http"
+require "open3"
+require "tmpdir"
+require "yaml"
+
+ROOT = File.expand_path("../..", __dir__)
+RAILS = File.join(ROOT, "RAILS")
+APPS = %w[amber bsdports brgen].freeze
+APP_ORDER = %w[amber bsdports brgen].freeze
+SKIP_ROUTES = %r{\A/(rails|assets|cable|up|health|service-worker|manifest|(?:recede|resume|refresh)_historical_location|active_storage|api|admin/jobs|letter_opener|jobs)\b}
+SIGN_IN = %r{/((?:session|sessions|sign_in|login|users/sign_in|auth))\b}
+BEGIN_MARK = "  # BEGIN generated view surfaces"
+END_MARK = "  # END generated view surfaces"
+
+def run!(*cmd, chdir:, out: nil)
+  stdout, stderr, status = Open3.capture3(*cmd, chdir:)
+  abort "#{cmd.join(" ")} failed in #{chdir}:\n#{stderr.lines.last(5).join}" unless status.success?
+  File.write(out, stdout) if out
+  stdout
+end
+
+def list_get_routes
+  walk = lambda do |routes, prefix = "", constraint = nil, &block|
+    routes.each do |route|
+      app = route.app
+      app = app.app while app.respond_to?(:app) && !app.respond_to?(:routes) && app.respond_to?(:constraints)
+      sub = route.constraints[:subdomain] || constraint
+
+      if app.respond_to?(:routes) && app.routes.respond_to?(:routes) && app != Rails.application
+        walk.call(app.routes.routes, prefix + route.path.spec.to_s.sub(/\(\.:format\)\z/, ""), sub, &block)
+        next
+      end
+
+      block.call(route, prefix, sub)
+    end
+  end
+
+  walk.call(Rails.application.routes.routes) do |route, prefix, sub|
+    next unless route.verb.to_s.split("|").include?("GET")
+    next if route.defaults[:controller].nil?
+    next if route.defaults[:format] && route.defaults[:format].to_s != "html"
+
+    path = prefix + route.path.spec.to_s.sub(/\(\.:format\)\z/, "")
+    path = "/" if path.empty?
+    next if path.match?(SKIP_ROUTES) || path.include?("*")
+
+    puts JSON.generate(
+      path:,
+      action: "#{route.defaults[:controller]}##{route.defaults[:action]}",
+      subdomain: sub.is_a?(Regexp) ? sub.source : sub,
+      params: path.scan(/:(\w+)/).flatten
+    )
+  end
+end
+
+def model_for(name, controller)
+  base = name == "id" ? controller.split("/").last : name.delete_suffix("_id")
+  namespace = controller.split("/")[0..-2].map(&:camelize)
+  candidates = []
+  namespace.length.downto(0) { |n| candidates << (namespace.first(n) + [base.singularize.camelize]).join("::") }
+
+  candidates.each do |candidate|
+    klass = candidate.safe_constantize
+    return klass if klass.is_a?(Class) && klass < ActiveRecord::Base
+  end
+
+  nil
+end
+
+def value_for(name, controller)
+  klass = model_for(name, controller)
+  return unless klass
+
+  record =
+    if ActsAsTenant.respond_to?(:without_tenant)
+      ActsAsTenant.without_tenant { klass.strict_loading(false).first }
+    else
+      klass.strict_loading(false).first
+    end
+
+  record&.to_param
+rescue StandardError
+  nil
+end
+
+def resolve_route_params(input)
+  File.foreach(input) do |line|
+    next unless line.start_with?("{")
+
+    route = JSON.parse(line)
+    url = route.fetch("path").dup
+    missing = []
+
+    route.fetch("params").each do |name|
+      value = value_for(name, route.fetch("action").split("#").first)
+      value ? url.sub!(":#{name}", value.to_s) : missing << name
+    end
+
+    url = url.gsub(/\([^)]*\)/, "")
+    puts JSON.generate(route.merge("url" => url, "missing" => missing))
+  end
+end
+
+def load_apps
+  YAML.safe_load_file(File.join(RAILS, "apps.yml")).fetch("apps")
+end
+
+def probe_routes(app, input)
+  apps = load_apps
+  ports = apps.transform_values { |row| row.fetch("port") }.freeze
+  output = File.join(File.dirname(input), "probed_#{app}.jsonl")
+  rows = File.readlines(input).select { |line| line.start_with?("{") }.map { |line| JSON.parse(line) }
+  rows = rows.select { |row| row.fetch("missing").empty? }.uniq { |row| [row["url"], row["subdomain"]] }
+
+  File.open(output, "w") do |file|
+    rows.each do |row|
+      host =
+        if app == "brgen"
+          subs = Array(row["subdomain"])
+          sub = subs.include?("markedsplass") ? "markedsplass" : subs.first
+          sub ? "#{sub}.brgen.no" : "brgen.no"
+        else
+          "localhost"
+        end
+
+      http = Net::HTTP.new("127.0.0.1", ports.fetch(app))
+      http.open_timeout = 5
+      http.read_timeout = 30
+      row["url"] = row["url"].squeeze("/")
+      response = http.get(row["url"], "Host" => host, "Accept" => "text/html")
+      location = response["location"].to_s
+
+      kind =
+        case response.code.to_i
+        when 200
+          response["content-type"].to_s.include?("html") ? "page" : "non_html"
+        when 300..399
+          location.match?(SIGN_IN) ? "auth" : "redirect"
+        else
+          "error"
+        end
+
+      file.puts JSON.generate(row.merge("host" => host, "status" => response.code.to_i, "kind" => kind, "location" => location))
+    rescue StandardError => e
+      file.puts JSON.generate(row.merge(
+        "host" => host,
+        "status" => 0,
+        "kind" => "error",
+        "location" => "#{e.class}: #{e.message}"[0, 120]
+      ))
+    end
+  end
+
+  tally = File.readlines(output).map { |line| JSON.parse(line).fetch("kind") }.tally
+  puts "#{app}: #{tally.inspect}"
+end
+
+def write_surfaces(dir, yaml_path)
+  text = File.read(yaml_path)
+  text = text.sub(/#{Regexp.escape(BEGIN_MARK)}.*?#{Regexp.escape(END_MARK)}\n/m, "")
+  config = YAML.safe_load(text)
+  require File.join(ROOT, "MASTER", "gates", "support", "brgen_vertical_surfaces")
+
+  declared = Array(config["surfaces"]).map do |surface|
+    [surface["app"], surface["host"].to_s.sub(/\Abrgen\.no\z/, ""), surface["path"]]
+  end
+  Deploy::BrgenVerticalSurfaces::SURFACES.each do |surface|
+    declared << ["brgen", surface[:host].sub(/\Abrgen\.no\z/, ""), surface[:path]]
+  end
+
+  labels = Hash.new { |hash, key| hash[key] = Array(config["surfaces"]).select { |surface| surface["app"] == key }.map { |surface| surface["label"] } }
+  Deploy::BrgenVerticalSurfaces::SURFACES.each { |surface| labels["brgen"] << surface[:label] }
+
+  rows = APP_ORDER.flat_map do |app|
+    path = File.join(dir, "probed_#{app}.jsonl")
+    File.readlines(path).map { |line| JSON.parse(line) }
+      .select { |row| row["kind"] == "page" }
+      .map { |row| row.merge("app" => app) }
+  end
+
+  entries = rows.filter_map do |row|
+    app = row.fetch("app")
+    host = app == "brgen" ? row["host"] : nil
+    normalized_host = host.to_s.sub(/\Abrgen\.no\z/, "")
+    next if declared.include?([app, normalized_host, row["url"]])
+
+    controller, action = row.fetch("action").split("#")
+    sub = host && host != "brgen.no" ? "#{host.split(".").first}_" : ""
+    base = "#{sub}#{controller.tr("/", "_")}_#{action}".gsub(/[^a-z0-9_]/, "_")
+    label = base
+
+    while labels[app].include?(label)
+      label = "#{base}_#{labels[app].count { |item| item.start_with?(base) } + 1}"
+    end
+
+    labels[app] << label
+    { "app" => app, "label" => label, "host" => host, "path" => row["url"] }.compact
+  end
+
+  block = [
+    BEGIN_MARK,
+    "  # Every HTML GET route that rendered for a guest on the local fleet, from",
+    "  # RAILS/bin/view_surfaces. Hand-declared surfaces above win; routes behind",
+    "  # sign-in and routes whose parameters no local record fills are not here.",
+    "  # Regenerate, do not edit.",
+    *entries.map do |entry|
+      "  - { app: #{entry["app"]}, label: #{entry["label"]}, #{entry["host"] ? "host: #{entry["host"]}, " : ""}path: #{entry["path"].to_json}, viewports: [mobile, desktop] }"
+    end,
+    END_MARK
+  ].join("\n") + "\n"
+
+  anchor = "\n# Content that changes between two captures"
+  abort "anchor missing" unless text.include?(anchor)
+
+  File.write(yaml_path, text.sub(anchor, "\n#{block}#{anchor}"))
+  puts "#{entries.size} generated surfaces (#{entries.group_by { |entry| entry["app"] }.transform_values(&:size).inspect})"
+end
+
+def generate
+  Dir.mktmpdir("view_surfaces") do |work|
+    APP_ORDER.each do |app|
+      app_dir = File.join(RAILS, app)
+      routes = File.join(work, "routes_#{app}.jsonl")
+      resolved = File.join(work, "resolved_#{app}.jsonl")
+
+      run!("bin/rails", "runner", __FILE__, "--stage=list", chdir: app_dir, out: routes)
+      run!("bin/rails", "runner", __FILE__, "--stage=resolve", routes, chdir: app_dir, out: resolved)
+      run!("ruby", __FILE__, "--stage=probe", app, resolved, chdir: RAILS)
+    end
+
+    run!("ruby", __FILE__, "--stage=write", work, File.join(ROOT, "MASTER", "gates", "data", "geometry_surfaces.yml"), chdir: RAILS)
+  end
+end
+
+stage = ARGV.shift
+case stage
+when "--stage=list"
+  list_get_routes
+when "--stage=resolve"
+  resolve_route_params(ARGV.fetch(0))
+when "--stage=probe"
+  probe_routes(ARGV.fetch(0), ARGV.fetch(1))
+when "--stage=write"
+  write_surfaces(ARGV.fetch(0), ARGV.fetch(1))
+when nil
+  generate
+else
+  abort "usage: ruby RAILS/bin/view_surfaces [--stage=list|resolve|probe|write ...]"
+end

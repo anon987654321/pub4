@@ -17,50 +17,52 @@ autoload:
   reopens_a_constant_defined_elsewhere:
     # Master::CLI::Session -- the REPL, split by concern. container.rb is NOT here:
     # it defines Master::CLI::Session::Container and autoloads normally.
-    - cli/session/background_scan.rb
-    - cli/session/bridge_run.rb
-    - cli/session/command_ops.rb
-    - cli/session/repl_flow.rb
-    - cli/session/repl_io.rb
-    - cli/session/result_display.rb
-    - cli/session/signals.rb
-    - cli/session/thinking_indicator.rb
+    - cli/session_background_scan.rb
+    - cli/session_bridge_run.rb
+    - cli/session_command_ops.rb
+    - cli/session_repl_flow.rb
+    - cli/session_repl_io.rb
+    - cli/session_result_display.rb
+    - cli/session_signals.rb
+    - cli/session_container.rb
+    - cli/session_thinking_indicator.rb
     # Master::CLI::CommandRegistry -- one file per verb or pipeline stage.
     # command.rb defines its own constant and is left autoloadable.
-    - cli/command_registry/help.rb
-    - cli/command_registry/host.rb
-    - cli/command_registry/model.rb
-    - cli/command_registry/observe.rb
-    - cli/command_registry/review.rb
-    - cli/command_registry/rules.rb
-    - cli/command_registry/status.rb
-    - cli/command_registry/workspace.rb
+    - cli/command_registry_help.rb
+    - cli/command_registry_host.rb
+    - cli/command_registry_model.rb
+    - cli/command_registry_observe.rb
+    - cli/command_registry_review.rb
+    - cli/command_registry_rules.rb
+    - cli/command_registry_status.rb
+    - cli/command_registry_workspace.rb
+    - cli/command_registry_command.rb
     # Master::CLI::Pipeline::Pass -- pass_result.rb holds its Result value type.
     - cli/pipeline/pass_result.rb
     # Master::Review::Scan::Rules -- each file is RuleDSL.rule calls into the
     # shared registry, not a constant of its own. The structural_rules
     # DIRECTORY beside structural_rules.rb does autoload.
-    - review/scan/rules/cosmetic_rules.rb
-    - review/scan/rules/external_linter_rules.rb
-    - review/scan/rules/graph_rules.rb
-    - review/scan/rules/js_rules.rb
-    - review/scan/rules/lexical_rules.rb
-    - review/scan/rules/meta_rules.rb
-    - review/scan/rules/naming_rules.rb
-    - review/scan/rules/ruby_rules.rb
-    - review/scan/rules/semantic_rules.rb
-    - review/scan/rules/structural_question_rules.rb
-    - review/scan/rules/structural_rules.rb
-    - review/scan/rules/surface_rules.rb
-    - review/scan/rules/universal_rules.rb
-    - review/scan/rules/web_rules.rb
-    - review/scan/rules/yaml_bridge_rules.rb
+    - review/scan/cosmetic_rules.rb
+    - review/scan/external_linter_rules.rb
+    - review/scan/graph_rules.rb
+    - review/scan/js_rules.rb
+    - review/scan/lexical_rules.rb
+    - review/scan/meta_rules.rb
+    - review/scan/naming_rules.rb
+    - review/scan/ruby_rules.rb
+    - review/scan/semantic_rules.rb
+    - review/scan/structural_question_rules.rb
+    - review/scan/structural_rules.rb
+    - review/scan/surface_rules.rb
+    - review/scan/universal_rules.rb
+    - review/scan/web_rules.rb
+    - review/scan/yaml_bridge_rules.rb
     # Master::Review::Scan -- the scanner's three engines, split by concern and
     # required by scanner.rb. The directory groups them; it is not a namespace,
     # and each file declares the constant one level up.
-    - review/scan/engines/path_filter.rb
-    - review/scan/engines/progress_reporter.rb
-    - review/scan/engines/transport.rb
+    - review/scan/path_filter.rb
+    - review/scan/progress_reporter.rb
+    - review/scan/transport.rb
     # Master::Builder module functions, split out of builder.rb.
     - builder/ai_boot.rb
     - builder/boot_phases.rb

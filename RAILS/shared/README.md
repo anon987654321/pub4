@@ -87,8 +87,8 @@ Marketplace and Takeaway share one campaign-art system. The canonical grammar li
 
 ```zsh
 ruby RAILS/test/layout_contract_test.rb
-ruby RAILS/tools/generate_face_root_css.rb   # face :root sync
-ruby RAILS/tools/build_all_css.rb --check
+ruby RAILS/bin/generate_face_root_css.rb   # face :root sync
+ruby RAILS/bin/build_all_css.rb --check
 ```
 
 ---
@@ -528,7 +528,7 @@ adopts them.
 ```bash
 ruby RAILS/test/design_contract_test.rb
 ruby RAILS/shared/test/lib/design_tokens_test.rb
-ruby RAILS/tools/build_all_css.rb --check
+ruby RAILS/bin/build_all_css.rb --check
 ruby MASTER/gates/runner.rb frontend_auditor
 ```
 

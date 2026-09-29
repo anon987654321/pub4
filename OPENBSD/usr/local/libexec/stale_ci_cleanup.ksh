@@ -13,7 +13,7 @@ stale_ci_cleanup() {
   typeset mem_free=${2:-100}
   typeset STALE_LOAD=4.0
 
-  awk -v l="$load" -v t="$STALE_LOAD" 'BEGIN{exit !(l>=t)}' || return 0
+  ruby40 -e 'exit ARGV[0].to_f >= ARGV[1].to_f ? 0 : 1' "$load" "$STALE_LOAD" || return 0
 
   logger -t resource-guard "stale-ci cleanup load=$load mem_free=${mem_free}%"
 

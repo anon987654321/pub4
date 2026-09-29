@@ -9,7 +9,7 @@
       "/Users/mac/dilla_demo/49_picardy_window.mp3",
       "4"
     ],
-    "cwd": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla"
+    "cwd": "MASTER/tools/dilla"
   },
   "engine": {
     "file": "dilla.rb",

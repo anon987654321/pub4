@@ -9,7 +9,7 @@
       "--bars=32",
       "renders/beats/dilla_native_jonas.mp3"
     ],
-    "cwd": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla"
+    "cwd": "MASTER/tools/dilla"
   },
   "engine": {
     "file": "dilla.rb",

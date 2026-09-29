@@ -5,9 +5,9 @@ require "open3"
 require "timeout"
 require_relative "cross_file_analysis"
 require_relative "file_processor"
-require_relative "engines/path_filter"
-require_relative "engines/progress_reporter"
-require_relative "engines/transport"
+require_relative "path_filter"
+require_relative "progress_reporter"
+require_relative "transport"
 require_relative "mechanical_autofix"
 
 module Master

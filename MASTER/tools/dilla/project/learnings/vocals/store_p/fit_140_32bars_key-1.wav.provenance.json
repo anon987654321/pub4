@@ -1,15 +1,15 @@
 {
   "schema": "dilla.render.v1",
-  "note": "Reproduce with: RENDER_SEED=9157 ruby dilla.rb dilla --bars=32 /Users/mac/Documents/GitHub/pub4/STUDIO/dilla/renders/beats/rel3_kembara_maj7.mp3",
+  "note": "Reproduce with: RENDER_SEED=9157 ruby dilla.rb dilla --bars=32 MASTER/tools/dilla/renders/beats/rel3_kembara_maj7.mp3",
   "render_seed": 9157,
   "seed_was": "given",
   "command": {
     "argv": [
       "dilla",
       "--bars=32",
-      "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla/renders/beats/rel3_kembara_maj7.mp3"
+      "MASTER/tools/dilla/renders/beats/rel3_kembara_maj7.mp3"
     ],
-    "cwd": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla"
+    "cwd": "MASTER/tools/dilla"
   },
   "engine": {
     "file": "dilla.rb",

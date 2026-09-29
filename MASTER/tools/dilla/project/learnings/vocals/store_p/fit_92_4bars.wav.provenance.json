@@ -9,7 +9,7 @@
       "4",
       "/Users/mac/dilla_logs/smoke_nodrums.wav"
     ],
-    "cwd": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla"
+    "cwd": "MASTER/tools/dilla"
   },
   "engine": {
     "file": "dilla.rb",

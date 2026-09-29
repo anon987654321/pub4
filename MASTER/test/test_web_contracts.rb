@@ -4,7 +4,7 @@ require_relative "test_helper"
 require "master"
 
 require "minitest/autorun"
-require_relative "support/face_manifest_helper"
+require_relative "face_manifest_helper"
 
 class MasterNamespaceSpec < Minitest::Test
   include FaceManifestHelper

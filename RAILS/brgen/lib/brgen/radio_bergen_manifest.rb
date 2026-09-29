@@ -20,7 +20,7 @@ module Brgen
       # always looked. In development that path resolves directly; in production
       # it is the same path, so there is nothing left to fall back to.
       def manifest_candidates
-        [ rails_root.join("config/radio_bergen/tracks.yml") ]
+        [ rails_root.join("config/radio_bergen.yml") ]
       end
 
       def lessons_candidates
@@ -103,7 +103,7 @@ module Brgen
           # they name paths that exist. MASTER/tools/radio-bergen/ was removed in
           # 41b20306d; the manifest moved into this app and the learnings into
           # the dilla engine.
-          "manifest: RAILS/brgen/config/radio_bergen/tracks.yml",
+          "manifest: RAILS/brgen/config/radio_bergen.yml",
           "learnings: MASTER/tools/dilla/data/reference_sonic.yml",
           "lesson: do_not_restore monolithic index.html — manifest + Rails vertical instead",
           "catalogue: #{youtube_count} external references · no local source files",

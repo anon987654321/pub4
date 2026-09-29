@@ -5,7 +5,7 @@
   "seed_was": "drawn and recorded",
   "command": {
     "argv": [],
-    "cwd": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla"
+    "cwd": "MASTER/tools/dilla"
   },
   "engine": {
     "file": "dilla.rb",

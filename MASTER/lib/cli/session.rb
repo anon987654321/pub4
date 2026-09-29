@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
-require_relative "session/container"
-require_relative "session/signals"
-require_relative "session/command_ops"
-require_relative "session/thinking_indicator"
+require_relative "session_container"
+require_relative "session_signals"
+require_relative "session_command_ops"
+require_relative "session_thinking_indicator"
 require_relative "activity"
-require_relative "session/result_display"
-require_relative "session/background_scan"
-require_relative "session/repl_flow"
-require_relative "session/bridge_run"
+require_relative "session_result_display"
+require_relative "session_background_scan"
+require_relative "session_repl_flow"
+require_relative "session_bridge_run"
 require_relative "operator_grammar"
 
 require "open3"

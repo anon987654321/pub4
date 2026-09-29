@@ -212,6 +212,15 @@ module Deploy
     def status
       evaluate("performance.getEntriesByType('navigation')[0]?.responseStatus ?? null")
     end
+    # Return Chrome's actual accessibility tree, not a DOM approximation.
+    # This is the evidence a screen-reader path needs: roles and computed names
+    # after the page has loaded, through the same browser session as the other
+    # rendered gates.
+    def accessibility_tree
+      send_cmd("Accessibility.enable")
+      send_cmd("Accessibility.getFullAXTree").fetch("nodes", [])
+    end
+
 
     # Runtime.evaluate with returnByValue. Raises JsError on an uncaught throw
     # so a broken probe is loud rather than silently nil.

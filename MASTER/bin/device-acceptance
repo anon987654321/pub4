@@ -1,0 +1,102 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "json"
+require "optparse"
+require "open3"
+require "tempfile"
+require "time"
+require "yaml"
+require "fileutils"
+
+ROOT = File.expand_path("..", __dir__)
+VOICE = File.join(ROOT, "data", "voice.yml")
+STATE = File.join(ROOT, ".master", "device_acceptance.json")
+WINDOW_SECONDS = 4
+
+def run(*argv)
+  stdout, stderr, status = Open3.capture3(*argv)
+  raise "#{argv.join(" ")}: #{stderr.lines.first.to_s.strip}" unless status.success?
+
+  stdout
+end
+
+def command?(name)
+  system("command", "-v", name, out: File::NULL, err: File::NULL)
+end
+
+def record_android
+  raise "Android/Termux required" unless RUBY_PLATFORM.include?("android")
+  raise "termux-microphone-record missing" unless command?("termux-microphone-record")
+  raise "whisper-cli missing" unless command?("whisper-cli")
+
+  Tempfile.create(["master-device-acceptance-", ".wav"]) do |file|
+    path = file.path
+    file.close
+    run("termux-microphone-record", "-q")
+    run("termux-microphone-record", "-f", path, "-l", WINDOW_SECONDS.to_s, "-e", "wav", "-r", "16000", "-c", "1")
+    model = ENV["MASTER_WHISPER_MODEL"].to_s
+    model = [
+      File.expand_path("~/.local/share/whisper/ggml-small.bin"),
+      File.expand_path("~/.local/share/whisper/ggml-base.bin"),
+    ].find { |candidate| File.file?(candidate) } unless File.file?(model)
+
+    raise "whisper model missing" unless model && File.file?(model)
+
+    transcript = run("whisper-cli", "-m", model, "-f", path, "-nt", "-np", "-l", "auto")
+    puts "device-accept0: transcript=#{transcript.gsub(/s+/, " ").strip.inspect}"
+  ensure
+    run("termux-microphone-record", "-q") if command?("termux-microphone-record")
+  end
+end
+
+def voice_contract
+  data = YAML.safe_load_file(VOICE) || {}
+  tts = data.fetch("tts")
+  language_voices = tts.fetch("language_voices")
+  raise "voice contract: Norwegian is not Pernille" unless language_voices.fetch("nb") == "pernille"
+  raise "voice contract: English is not Jenny" unless language_voices.fetch("en") == "jenny"
+
+  puts "voice0: nb=pernille en=jenny"
+end
+
+def ios_device
+  raise "xcrun unavailable" unless command?("xcrun")
+
+  output = begin
+    run("xcrun", "devicectl", "list", "devices")
+  rescue StandardError
+    run("xcrun", "xctrace", "list", "devices")
+  end
+  devices = output.lines.grep(/iPhone|iPad/).grep(/connected|Booted|OS:/i)
+  raise "no connected or booted iOS device found" if devices.empty?
+
+  puts "ios0: device=#{devices.first.strip}"
+end
+
+def write_attestation(kind)
+  payload = {
+    kind:,
+    recorded_at: Time.now.utc.iso8601,
+    host: RUBY_PLATFORM,
+    operator: ENV.fetch("USER", "unknown"),
+  }
+  FileUtils.mkdir_p(File.dirname(STATE))
+  File.write(STATE, JSON.pretty_generate(payload) + "\n", encoding: "UTF-8")
+  puts "device-accept0: operator_attestation=#{STATE}"
+end
+
+options = { android: false, ios: false, record: false, attest: nil }
+OptionParser.new do |o|
+  o.banner = "usage: bin/device-acceptance [--android-live] [--ios-device] [--record]"
+  o.on("--android-live") { options[:android] = true }
+  o.on("--ios-device") { options[:ios] = true }
+  o.on("--record") { options[:record] = true }
+  o.on("--attest KIND") { |value| options[:attest] = value }
+end.parse!
+
+voice_contract
+record_android if options[:record] || options[:android]
+ios_device if options[:ios]
+write_attestation(options[:attest]) if options[:attest]
+puts "device-accept0: preflight complete"

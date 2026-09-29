@@ -2,8 +2,8 @@
   "slug": "gunnhild",
   "artist": "Gunnhild",
   "source": "/Users/mac/Downloads/Untitled.flac",
-  "vocal_path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/gunnhild/vocals.wav",
-  "stem_dir": "/Users/mac/Documents/GitHub/pub4/studio/dilla/samples/demux/htdemucs_ft/Untitled",
+  "vocal_path": "MASTER/tools/dilla/project/learnings/vocals/gunnhild/vocals.wav",
+  "stem_dir": "MASTER/tools/dilla/samples/demux/htdemucs_ft/Untitled",
   "bpm_estimate": 54.5,
   "phrases": [
     {

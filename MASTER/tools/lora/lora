@@ -1,0 +1,17 @@
+#!/bin/sh
+# One entry point for every subject; subject-specific state stays in its own directory.
+set -eu
+
+SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+subject="${1:-}"
+case "$subject" in
+  johann|ragnhild) ;;
+  *)
+    echo "usage: MASTER/tools/lora/lora <johann|ragnhild> [mode flags]" >&2
+    exit 2
+    ;;
+esac
+shift
+SUBJECT_DIR="$SCRIPT_DIR/$subject"
+export SUBJECT_DIR
+exec "$SCRIPT_DIR/toolkit/run_generate.sh" "$@"

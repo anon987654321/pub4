@@ -9,7 +9,7 @@
       "--bars=32",
       "renders/beats/semua_gunnhild.mp3"
     ],
-    "cwd": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla"
+    "cwd": "MASTER/tools/dilla"
   },
   "engine": {
     "file": "dilla.rb",
