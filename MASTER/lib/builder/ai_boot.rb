@@ -90,6 +90,10 @@ module Master
       end
     end
 
+    def strict_boot_requested?
+      ENV.fetch("MASTER_STRICT_BOOT", "0") == "1"
+    end
+
     def publish_self_test(bus, self_test)
       if self_test.err?
         warn("builder: #{self_test.message}")
@@ -108,7 +112,7 @@ module Master
         # exactly this reason. The self-test laws themselves run identically here
         # and under `rake selftest`; only registry-backed population counts can
         # differ under a loaded test suite.
-        if ENV.fetch("MASTER_STRICT_BOOT", "0") == "1" && !defined?(Minitest)
+        if strict_boot_requested? && !defined?(Minitest)
           first = summary.checks.lazy.flat_map(&:findings).first
           law_counts = summary.checks.map { |check| "#{check.law}=#{check.findings.size}" }.join(", ")
           detail = if first
