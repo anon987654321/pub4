@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "dilla_helper"
-require_relative "../dilla/lib/livesets"
+require_relative "../../tools/dilla/lib/livesets"
 require "stringio"
 require "digest"
 
