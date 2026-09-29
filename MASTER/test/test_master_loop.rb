@@ -85,9 +85,10 @@ class TestMasterLoop < Minitest::Test
     assert_equal ["watch_loop"], started
   end
 
-  # MASTER_SKIP_SELF_TEST=1 is the only thing that keeps boot from running the
-  # scanner's self-test.
-  def test_skip_self_test_keeps_boot_from_running_it
+  # Full constitutional self-test is an explicit boot diagnostic. The same test remains
+  # available through `rake selftest` and the heartbeat job without making the critical
+  # application startup path scan every repository law on every launch.
+  def test_boot_self_test_is_opt_in
     ran = []
     self_test = Object.new
     self_test.define_singleton_method(:call) { ran << :self_test }
@@ -108,9 +109,9 @@ class TestMasterLoop < Minitest::Test
       end
     end
 
-    with_env("MASTER_SKIP_SELF_TEST" => "1") { finalize.call }
+    with_env("MASTER_BOOT_SELF_TEST" => nil) { finalize.call }
     assert_empty ran
-    with_env("MASTER_SKIP_SELF_TEST" => nil) { finalize.call }
+    with_env("MASTER_BOOT_SELF_TEST" => "1") { finalize.call }
     assert_equal [:self_test], ran
   end
 
