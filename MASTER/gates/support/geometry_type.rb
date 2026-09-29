@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "yaml"
-require_relative "../../tools/design/master_design"
+require_relative "../../tools/master_design"
 require_relative "../../lib/design/typography"
 
 module Deploy
