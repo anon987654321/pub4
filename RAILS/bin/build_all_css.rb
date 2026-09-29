@@ -12,7 +12,7 @@
 require "open3"
 require "yaml"
 require "fileutils"
-require_relative "design_tokens"
+require_relative "../../MASTER/tools/design_tokens"
 # The deployed copy on vm23 (/home/<app>/pub4-rails) is RAILS without MASTER, so
 # the shared runner is optional: vps_ci's css_build step died on this require.
 begin
