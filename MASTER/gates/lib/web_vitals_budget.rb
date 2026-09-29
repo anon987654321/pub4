@@ -25,7 +25,7 @@ module Deploy
   # is still being collected in the field instead, which is the only honest
   # reading available here.
   class WebVitalsBudget
-    ROOT = File.expand_path("../../../..", __dir__)
+    ROOT = File.expand_path("../../..", __dir__)
     SHARED = File.join(ROOT, "RAILS", "shared")
     HOTWIRE = File.join(SHARED, "frontend", "hotwire.js")
 
