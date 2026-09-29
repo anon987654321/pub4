@@ -14,10 +14,10 @@ module Master
     # delegates the actual write/proof/commit to Restructure.
     class SprawlCampaign
       TREES = RestructureSweep::Contracts::BY_TREE.keys.freeze
-      ROUNDS = Integer(ENV.fetch("MASTER_FIX_SPRAWL_ROUNDS", 4))
-      FINDINGS = Integer(ENV.fetch("MASTER_FIX_SPRAWL_FINDINGS", 12))
       MAX_CANDIDATES = 32
-      KEEPS = Integer(ENV.fetch("MASTER_FIX_SPRAWL_KEEPS", 4))
+      DEFAULT_ROUNDS = 4
+      DEFAULT_FINDINGS = 12
+      DEFAULT_KEEPS = 4
 
       PROPOSE = <<~TEXT
         Consolidate this governed tree. This is an architectural cleanup, not a
@@ -123,7 +123,7 @@ module Master
 
       def run_tree(tree, tree_root, prefix)
         kept = []
-        ROUNDS.times do |round|
+        rounds.times do |round|
           before = Operator::SprawlCensus.shape(tree)
           findings = candidates(tree_root, before, prefix)
           break if findings.empty?
@@ -151,7 +151,7 @@ module Master
           kept << result.value!
           Master::Trace::Dmesg.status("sprawl0", "#{tree}: round #{round + 1}, kept #{plan.paths.size} path(s)")
         end
-        kept.first(KEEPS * ROUNDS)
+        kept.first(keeps * rounds)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "fix.sprawl_campaign", tree:)
         []
@@ -160,7 +160,7 @@ module Master
       def candidates(tree_root, shape, run_id)
         structural = RestructureSweep::Context.structural_findings(tree_root)
           .select { |_path, rule, _message, _related| actionable_rule?(rule) }
-          .first(FINDINGS)
+          .first(findings_limit)
         members = shape[:members].take(MAX_CANDIDATES).map do |member|
           path = File.join(@root, member.fetch(:path))
           [path, member.fetch(:rule), member.fetch(:message), member.fetch(:related, [])]
@@ -175,6 +175,12 @@ module Master
         Master::Ground::Swallow.log(e, context: "fix.sprawl_campaign.candidates", tree_root:)
         []
       end
+
+      def rounds = Integer(ENV.fetch("MASTER_FIX_SPRAWL_ROUNDS", DEFAULT_ROUNDS))
+
+      def findings_limit = Integer(ENV.fetch("MASTER_FIX_SPRAWL_FINDINGS", DEFAULT_FINDINGS))
+
+      def keeps = Integer(ENV.fetch("MASTER_FIX_SPRAWL_KEEPS", DEFAULT_KEEPS))
 
       def actionable_rule?(rule)
         %w[DEAD_SUBTREE PARALLEL_HIERARCHY CYCLIC_DEPENDENCY FILE_SPRAWL SMALL_FILES NO_GOD_CLASS].include?(rule.to_s)
