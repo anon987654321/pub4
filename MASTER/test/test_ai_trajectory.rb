@@ -84,4 +84,3 @@ class TestAiTrajectory < Minitest::Test
     end
   end
 end
-</sub>
