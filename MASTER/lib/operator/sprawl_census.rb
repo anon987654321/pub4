@@ -24,6 +24,8 @@
 # adding it.
 
 require "yaml"
+require "digest"
+require "open3"
 
 module Operator
   module SprawlCensus
@@ -74,10 +76,20 @@ module Operator
 
     module_function
 
-    def tracked
-      @tracked ||= `git -C #{ROOT} ls-files -z`.split("\0")
-                   .reject { |f| MANDATED.any? { |re| "/#{f}".match?(re) } }
-                   .select { |f| File.file?(File.join(ROOT, f)) }
+    def tracked(root: ROOT)
+      root = File.expand_path(root)
+      return @tracked ||= git_tracked(ROOT) if root == ROOT
+
+      git_tracked(root)
+    end
+
+    def git_tracked(root)
+      out, status = Open3.capture2e("git", "-C", root, "ls-files", "-z")
+      raise "sprawl_census: git ls-files failed: #{out}" unless status.success?
+
+      out.split("\0")
+        .reject { |f| MANDATED.any? { |re| "/#{f}".match?(re) } }
+        .select { |f| File.file?(File.join(root, f)) }
     end
 
     # A directory holding one file and no subdirectories is a namespace bought
@@ -88,10 +100,10 @@ module Operator
     # flattening it to `RepoEcologyCoChangeGraph` is a worse name, not less
     # sprawl. The shape comes from splitting a god class, and no lone directory
     # that predates it is forgiven by the exemption.
-    def lone_dirs
-      tracked.group_by { |f| File.dirname(f) }
-             .select { |dir, files| files.size == 1 && dir != "." && Dir.glob(File.join(ROOT, dir, "*/")).empty? }
-             .reject { |dir, _| File.file?(File.join(ROOT, "#{dir}.rb")) }
+    def lone_dirs(root: ROOT)
+      tracked(root:).group_by { |f| File.dirname(f) }
+             .select { |dir, files| files.size == 1 && dir != "." && Dir.glob(File.join(root, dir, "*/")).empty? }
+             .reject { |dir, _| File.file?(File.join(root, "#{dir}.rb")) }
              .values.flatten.sort
     end
 
@@ -99,18 +111,18 @@ module Operator
     # named after its folder and reads correctly at a command line, and
     # law/law.rb is how Ruby finds the Law namespace. entry_point? below is
     # what separates those from a file that says the name twice over.
-    def stutter
-      tracked.select do |f|
+    def stutter(root: ROOT)
+      tracked(root:).select do |f|
         parts = f.split("/")
         next false unless parts.size >= 2
         next false unless File.basename(f, File.extname(f)) == parts[-2]
 
-        !entry_point?(f)
+        !entry_point?(f, root:)
       end.sort
     end
 
-    def entry_point?(path)
-      full = File.join(ROOT, path)
+    def entry_point?(path, root: ROOT)
+      full = File.join(root, path)
       return true if File.executable?(full)
       return true if path.end_with?(".sh", ".yml", ".toml")
 
@@ -126,8 +138,87 @@ module Operator
       true
     end
 
-    def vague_names
-      tracked.select { |f| VAGUE.include?(File.basename(f, File.extname(f))) }.sort
+    def vague_names(root: ROOT)
+      tracked(root:).select { |f| VAGUE.include?(File.basename(f, File.extname(f))) }.sort
+    end
+
+    TEXT_EXTENSIONS = %w[.rb .rake .js .mjs .scss .css .erb .html .md .yml .yaml .json .txt .conf .sh].freeze
+    DEEP_PATH = 5
+    DUPLICATE_MAX_BYTES = 1_048_576
+    SHAPE_MEMBER_LIMIT = 16
+
+    def tree_files(tree, root: ROOT)
+      prefix = "#{tree}/"
+      tracked(root:).select { |path| path.start_with?(prefix) }
+    end
+
+    def tree_directories(tree, root: ROOT)
+      tree_files(tree, root:).flat_map do |path|
+        parts = path.split("/")
+        (1...parts.length).map { |index| parts[0...index].join("/") }
+      end.uniq.sort
+    end
+
+    def lone_dirs_for(tree, root: ROOT)
+      base = "#{tree}/"
+      lone_dirs(root:).select { |path| path.start_with?(base) }
+    end
+
+    def stutter_for(tree, root: ROOT)
+      base = "#{tree}/"
+      stutter(root:).select { |path| path.start_with?(base) }
+    end
+
+    def vague_names_for(tree, root: ROOT)
+      base = "#{tree}/"
+      vague_names(root:).select { |path| path.start_with?(base) }
+    end
+
+    def deep_paths_for(tree, root: ROOT)
+      tree_files(tree, root:).select do |path|
+        path.count("/") >= DEEP_PATH
+      end
+    end
+
+    # Exact content duplication is evidence, never a deletion verdict. A pair can
+    # still have different loading semantics, so /fix must prove the chosen operation.
+    def duplicate_groups_for(tree, root: ROOT)
+      files = tree_files(tree, root:).select do |path|
+        TEXT_EXTENSIONS.include?(File.extname(path).downcase) &&
+          File.size?(File.join(root, path)).to_i <= DUPLICATE_MAX_BYTES
+      end
+      files.group_by do |path|
+        Digest::SHA256.file(File.join(root, path)).hexdigest
+      end.values.select { |group| group.size > 1 }.sort_by { |group| [-group.size, group.first] }
+    rescue StandardError => e
+      warn "sprawl_census: duplicate scan failed for #{tree}: #{e.class}: #{e.message}"
+      []
+    end
+
+    def shape(tree, root: ROOT)
+      files = tree_files(tree, root:)
+      lone = lone_dirs_for(tree, root:)
+      repeated = stutter_for(tree, root:)
+      vague = vague_names_for(tree, root:)
+      duplicates = duplicate_groups_for(tree, root:)
+      deep = deep_paths_for(tree, root:)
+      members = [
+        *lone.map { |path| { path:, rule: "LONE_DIRECTORY", message: "one-file directory candidate" } },
+        *repeated.map { |path| { path:, rule: "STUTTER", message: "directory and file repeat the same name" } },
+        *vague.map { |path| { path:, rule: "VAGUE_NAME", message: "name says little on its own" } },
+        *deep.map { |path| { path:, rule: "DEEP_PATH", message: "unusually deep path candidate" } },
+        *duplicates.flat_map { |group| group.map { |path| { path:, rule: "DUPLICATE_CONTENT", message: "exact content duplicate group", related: group } } },
+      ].uniq { |row| [row[:rule], row[:path]] }.first(SHAPE_MEMBER_LIMIT)
+      {
+        files: files.size,
+        directories: tree_directories(tree, root:).size,
+        lone_dirs: lone.size,
+        stutter: repeated.size,
+        vague_names: vague.size,
+        duplicate_groups: duplicates.size,
+        deep_paths: deep.size,
+        members: members,
+      }
     end
 
     # A census that reads nothing reports nothing and passes. MASTER/tools gate did
@@ -178,9 +269,17 @@ module Operator
     end
 
     def list_members
-      { "lone_dirs" => lone_dirs, "stutter" => stutter, "vague_names" => vague_names }.each do |kind, files|
-        puts "\n#{kind} (#{files.size})"
-        files.each { |f| puts "  #{f}" }
+      %w[MASTER RAILS OPENBSD].each do |tree|
+        current = shape(tree)
+        puts "\n#{tree}"
+        %i[files directories lone_dirs stutter vague_names duplicate_groups deep_paths].each do |key|
+          puts "  #{key}: #{current.fetch(key)}"
+        end
+        current[:members].each do |member|
+          related = Array(member[:related]).first(3).join(", ")
+          suffix = related.empty? ? "" : " [#{related}]"
+          puts "  #{member[:rule]} #{member[:path]} — #{member[:message]}#{suffix}"
+        end
       end
       0
     end

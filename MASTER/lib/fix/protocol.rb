@@ -8,8 +8,8 @@ module Master
     # The canonical /fix execution contract. This is procedure, not a second
     # constitution: soul.yml and executable law remain authoritative.
     module Protocol
-      VERSION = 2
-      STAGES = %w[load inventory scan semantic repair verify repeat report].freeze
+      VERSION = 3
+      STAGES = %w[load inventory scan semantic repair structural verify repeat report].freeze
       TERMINAL_STATES = %w[DONE PLATEAU HUMAN_DECISION BLOCKED VALIDATION_FAILED DELIVERY_FAILED TIMEOUT FAILED RELOADING].freeze
 
       module_function
@@ -50,26 +50,36 @@ module Master
           semantic-model, structural, or rendered-surface repair as applicable.
           "No deterministic fixer exists" is not a terminal state.
 
-          6. VERIFY
-          Reread the changed file, re-run the affected rule, and run the
-          narrowest behavioral or surface check that proves the repair. A failed
-          verification rejects or rolls back that repair.
+          6. STRUCTURAL
+          After ordinary repair findings are addressed, inspect the whole governed
+          tree's shape. Measure directories, names, duplicate content, depth and
+          actionable cross-file structure. Propose bounded delete, merge, flatten or
+          relocation batches from that evidence. Keep each tree's architecture and
+          use the existing multi-file proof; never delete merely because a path is
+          inconvenient.
 
-          7. REPEAT
+          7. VERIFY
+          Reread the changed files, re-run the affected rules and structural census,
+          and run the narrowest behavioral or surface checks that prove the batch.
+          A failed verification rejects or rolls back the batch.
+
+          8. REPEAT
           Rescan filenames, contents, semantic rules, and prior failures after
           every kept batch. Continue until DONE, PLATEAU, HUMAN_DECISION, or
           BLOCKED. A pass limit, timeout, or process death ends only the attempt;
           it does not mean the mission is complete.
 
-          8. REPORT
-          Report commands, corpus, findings before and after, repairs attempted,
+          9. REPORT
+          Report commands, corpus, structural shape before and after, findings,
+          repairs attempted,
           repairs rejected, verification output, and unresolved findings. Never
           convert an unmeasured state into a pass and never describe a future
           action as completed.
 
           /fix and --dry-run are distinct. /fix writes and verifies. --dry-run
-          performs the same inventory, analysis and repair planning but writes
-          nothing.
+          performs the same inventory, analysis and structural planning but writes
+          nothing. --deep enlarges only the bounded structural campaign budget;
+          constitutional and verification rules do not change.
         TEXT
       end
 

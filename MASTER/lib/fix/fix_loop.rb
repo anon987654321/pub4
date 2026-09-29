@@ -15,6 +15,7 @@ require_relative "fix_loop/pass_runner_builder"
 require_relative "visual_pass"
 require_relative "opportunity_pass"
 require_relative "rename_sweep"
+require_relative "sprawl_campaign"
 require_relative "severity"
 require_relative "violation"
 require_relative "wishlist"
@@ -166,11 +167,16 @@ module Master
         violations = @pass_runner.violations(files)
         by_rule = violations.group_by { |v| v[:rule].to_s }.transform_values(&:size)
         by_file = violations.group_by { |v| v[:file].to_s }.transform_values(&:size)
+        sprawl = @sweeps.filter_map do |sweep|
+          next unless sweep.respond_to?(:preview)
+          [sweep.class.name.split("::").last, sweep.preview(target)]
+        end.to_h
         Result.ok(
           total: violations.size,
           rules: by_rule.sort_by { |_, n| -n }.first(10).to_h,
           files: by_file.sort_by { |_, n| -n }.first(10).to_h,
           skipped: @file_collector.skipped,
+          sprawl: sprawl.fetch("SprawlCampaign", {}),
         )
       end
 
@@ -184,11 +190,12 @@ module Master
 
       private
 
-      # The look back over the tree after the repair passes: renames, then
-      # restructures. Both work from the repository root.
+      # The look back over the tree after the repair passes: repository consolidation,
+      # renames, then targeted restructures. Each is isolated so a kept change returns
+      # to fresh observation.
       def build_sweeps(agent:, root:, bus:)
         repo_root = File.basename(root) == "MASTER" ? File.expand_path("..", root) : root
-        [RenameSweep.new(agent:, repo_root:, bus:), RestructureSweep.new(agent:, repo_root:, bus:)]
+        [SprawlCampaign.new(agent:, repo_root:, bus:), RenameSweep.new(agent:, repo_root:, bus:), RestructureSweep.new(agent:, repo_root:, bus:)]
       end
 
       # The run once its journal is open and a mission records it: resume what
