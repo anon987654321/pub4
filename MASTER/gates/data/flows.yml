@@ -497,3 +497,136 @@ flows:
         get: /items/new
         expect_status: [200]
         expect_final_path: /items/new
+
+
+  # Authenticated write/read journeys. These are opt-in: credentials point at a
+  # disposable seeded account outside git. A missing credential is inconclusive,
+  # never a green guest result. The mutations are deliberately bounded:
+  # checkout uses the selected provider with an account's existing cart, dating
+  # likes one configured target, the seller POST is validation-only, and Amber
+  # plans one existing outfit for one supplied date.
+  - id: brgen_authenticated_checkout
+    app: brgen
+    description: A signed-in buyer can reach the cart and checkout controller without falling back to guest auth.
+    requires_credentials: [BRGEN_E2E_EMAIL, BRGEN_E2E_PASSWORD, BRGEN_CHECKOUT_PROVIDER]
+    steps:
+      - name: sign_in
+        get: /session/new
+        host: brgen.no
+        expect_status: [200]
+      - name: authenticate
+        post: /session
+        host: brgen.no
+        params:
+          email_address: $BRGEN_E2E_EMAIL
+          password: $BRGEN_E2E_PASSWORD
+        expect_status: [200, 302, 303]
+        expect_final_path: { not: /session/new }
+      - name: cart
+        get: /cart
+        host: markedsplass.brgen.no
+        expect_status: [200, 302, 303]
+        expect_final_path: { not: /session/new }
+      - name: checkout
+        post: /checkout
+        host: markedsplass.brgen.no
+        params:
+          provider: $BRGEN_CHECKOUT_PROVIDER
+        expect_status: [200, 302, 303]
+        expect_final_path: { not: /session/new }
+
+  - id: brgen_authenticated_sell
+    app: brgen
+    description: A signed-in seller can reach the listing mutation endpoint without a server error; the probe submits invalid data so no listing is published.
+    requires_credentials: [BRGEN_E2E_EMAIL, BRGEN_E2E_PASSWORD]
+    steps:
+      - name: sign_in
+        get: /session/new
+        host: brgen.no
+        expect_status: [200]
+      - name: authenticate
+        post: /session
+        host: brgen.no
+        params:
+          email_address: $BRGEN_E2E_EMAIL
+          password: $BRGEN_E2E_PASSWORD
+        expect_status: [200, 302, 303]
+        expect_final_path: { not: /session/new }
+      - name: sell_form
+        get: /listings/new?kind=goods
+        host: markedsplass.brgen.no
+        expect_status: [200, 302, 303]
+        expect_any:
+          - '(?i)listing|annons|two.factor|2fa|verification'
+      - name: rejected_submit
+        post: /listings
+        host: markedsplass.brgen.no
+        params:
+          listing:
+            title: ""
+            kind: goods
+            description: "e2e validation probe"
+        expect_status: [200, 302, 303, 422]
+
+  - id: brgen_authenticated_dating_like
+    app: brgen
+    description: A signed-in dating account can mutate a configured target without leaving the dating surface.
+    requires_credentials: [BRGEN_E2E_EMAIL, BRGEN_E2E_PASSWORD, BRGEN_DATING_TARGET_USER_ID]
+    steps:
+      - name: sign_in
+        get: /session/new
+        host: brgen.no
+        expect_status: [200]
+      - name: authenticate
+        post: /session
+        host: brgen.no
+        params:
+          email_address: $BRGEN_E2E_EMAIL
+          password: $BRGEN_E2E_PASSWORD
+        expect_status: [200, 302, 303]
+        expect_final_path: { not: /session/new }
+      - name: matches
+        get: /matches
+        host: dating.brgen.no
+        expect_status: [200, 302, 303]
+        expect_final_path: { not: /session/new }
+      - name: like
+        post: /likes
+        host: dating.brgen.no
+        params:
+          user_id: $BRGEN_DATING_TARGET_USER_ID
+        expect_status: [200, 302, 303]
+        expect_final_path: { not: /session/new }
+
+  - id: amber_authenticated_wardrobe
+    app: amber
+    description: A signed-in wardrobe owner can create one planned outfit from an existing outfit.
+    requires_credentials: [AMBER_E2E_EMAIL, AMBER_E2E_PASSWORD, AMBER_E2E_OUTFIT_ID, AMBER_E2E_DATE]
+    steps:
+      - name: sign_in
+        get: /session/new
+        host: amberapp.art
+        expect_status: [200]
+      - name: authenticate
+        post: /session
+        host: amberapp.art
+        params:
+          email_address: $AMBER_E2E_EMAIL
+          password: $AMBER_E2E_PASSWORD
+        expect_status: [200, 302, 303]
+        expect_final_path: { not: /session/new }
+      - name: planner
+        get: /planned_outfits
+        host: amberapp.art
+        expect_status: [200, 302, 303]
+        expect_final_path: { not: /session/new }
+      - name: plan
+        post: /planned_outfits
+        host: amberapp.art
+        params:
+          planned_outfit:
+            outfit_id: $AMBER_E2E_OUTFIT_ID
+            planned_date: $AMBER_E2E_DATE
+            notes: "e2e"
+        expect_status: [200, 302, 303]
+        expect_final_path: { not: /session/new }
