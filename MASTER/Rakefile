@@ -39,7 +39,7 @@ end
 
 desc "Generate and objectively inspect a TTS torture suite"
 task :voice_benchmark do
-  run_tool("tools/voice_benchmark.rb")
+  run_tool("bin/voice_benchmark")
 end
 
 desc "Scan for tracked secrets"
