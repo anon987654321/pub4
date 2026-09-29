@@ -213,7 +213,7 @@ finding_members:
   - NO_CHANGELOG_COMMENT RAILS/brgen/engines/marketplace/test/models/marketplace/order_test.rb:20
   - NO_CHANGELOG_COMMENT RAILS/brgen/test/services/deploy_backlog_test.rb:353
   - NO_CHANGELOG_COMMENT RAILS/brgen/test/services/playlist_wiring_test.rb:30
-  - NO_CHANGELOG_COMMENT MASTER/tools/lora/_toolkit/colab_session.rb:219
+  - NO_CHANGELOG_COMMENT MASTER/tools/lora/toolkit/colab_session.rb:219
   - NO_CHANGELOG_COMMENT MASTER/tools/postpro/postpro.rb:1529
   - NO_CHANGELOG_COMMENT MASTER/tools/postpro/postpro.rb:2086
   - NO_CHANGELOG_COMMENT MASTER/tools/postpro/postpro.rb:4558
@@ -371,9 +371,9 @@ finding_members:
   - PROSE_OMIT_QUALIFIERS MASTER/tools/dilla/lib/harmony.rb:2220
   - PROSE_OMIT_QUALIFIERS MASTER/tools/dilla/lib/sine_stream.rb:240
   - PROSE_OMIT_QUALIFIERS MASTER/tools/dilla/lib/sine_stream.rb:5
-  - PROSE_OMIT_QUALIFIERS MASTER/tools/lora/_toolkit/colab_session.rb:485
-  - PROSE_OMIT_QUALIFIERS MASTER/tools/lora/_toolkit/curate.rb:214
-  - PROSE_OMIT_QUALIFIERS MASTER/tools/lora/_toolkit/render_config.rb:365
+  - PROSE_OMIT_QUALIFIERS MASTER/tools/lora/toolkit/colab_session.rb:485
+  - PROSE_OMIT_QUALIFIERS MASTER/tools/lora/toolkit/curate.rb:214
+  - PROSE_OMIT_QUALIFIERS MASTER/tools/lora/toolkit/render_config.rb:365
   - PROSE_OMIT_QUALIFIERS MASTER/tools/postpro/postpro.rb:1538
   - PROSE_OMIT_QUALIFIERS MASTER/tools/postpro/postpro.rb:3643
   - RUBY_NUMERIC_UNDERSCORE OPENBSD/test/test_disk_usage.rb:10
@@ -441,7 +441,7 @@ registry_finding_members:
   - SILENT_RESCUE MASTER/tools/dilla/lib/music_gems.rb:240
   - SILENT_RESCUE MASTER/tools/dilla/lib/music_gems.rb:249
   - SILENT_RESCUE MASTER/tools/gate.rb:474
-  - SILENT_RESCUE MASTER/tools/lora/_toolkit/curate.rb:163
+  - SILENT_RESCUE MASTER/tools/lora/toolkit/curate.rb:163
   - SILENT_RESCUE MASTER/tools/postpro/postpro.rb:291
   - SILENT_RESCUE MASTER/tools/postpro/postpro.rb:302
-  - SILENT_RESCUE MASTER/tools/test/test_dilla_engine_probes.rb:1299
+  - SILENT_RESCUE MASTER/test/tools/test_dilla_engine_probes.rb:1299
