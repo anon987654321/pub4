@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../../operator/capability_graph"
+
 module Master
   module CLI
     module CommandRegistry
@@ -135,7 +137,8 @@ module Master
                  "doctor: missing #{script}"
                end
         audit = Master::Ground::SecurityAudit.report(root:)
-        [body, audit].reject { |part| part.to_s.strip.empty? }.join("\n")
+        capabilities = ::Operator::CapabilityGraph.new(root:).render(model: ENV["MASTER_MODEL"])
+        [body, audit, capabilities].reject { |part| part.to_s.strip.empty? }.join("\n")
       end
     end
   end
