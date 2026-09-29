@@ -89,9 +89,7 @@ module Master
         enabled.first
       end
 
-      def valid?
-        enabled.size <= 1
-      end
+      def valid? = ProcessBudget.valid_loop_slot?
 
       def status
         {
@@ -106,7 +104,7 @@ module Master
         return true if valid?
 
         raise ArgumentError,
-              "Set exactly one loop: MASTER_LOOP=fix|watch|watcher or MASTER_AUTOFIX=1, MASTER_WATCH=1, MASTER_WATCHER=1."
+              "Too many active MASTER loops: #{enabled.join(", ")}; max=#{ProcessBudget.max_active_loops}"
       end
     end
 
