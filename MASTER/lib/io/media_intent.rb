@@ -73,7 +73,9 @@ module Master
       end
 
       def postprocess(text, root:)
-        source = downloads_directory if text.match?(/\b(?:my\s+|the\s+)?(?:local\s+)?downloads?(?:\s+folder)?\b/i)
+        downloads = text.match?(/\b(?:my\s+|the\s+)?(?:local\s+)?downloads?(?:\s+folder)?\b/i)
+        source = downloads_directory if downloads
+        return Result.err("postpro: Downloads folder not found", category: :validation) if downloads && source.to_s.empty?
         source ||= text.match(POSTPRO_SUBJECT_RE)&.captures&.first
         source ||= text.match(POSTPRO_SUBJECT_TOKEN_RE)&.captures&.first
         source ||= text.match(POSTPRO_PATH_TOKEN_RE)&.captures&.first
