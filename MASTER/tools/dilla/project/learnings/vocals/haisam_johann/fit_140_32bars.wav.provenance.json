@@ -1,15 +1,15 @@
 {
   "schema": "dilla.render.v1",
-  "note": "Reproduce with: RENDER_SEED=7311 ruby dilla.rb dilla --bars=32 /Users/mac/Documents/GitHub/pub4/STUDIO/dilla/renders/beats/r2_semua_dilla.mp3",
+  "note": "Reproduce with: RENDER_SEED=7311 ruby dilla.rb dilla --bars=32 MASTER/tools/dilla/renders/beats/r2_semua_dilla.mp3",
   "render_seed": 7311,
   "seed_was": "given",
   "command": {
     "argv": [
       "dilla",
       "--bars=32",
-      "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla/renders/beats/r2_semua_dilla.mp3"
+      "MASTER/tools/dilla/renders/beats/r2_semua_dilla.mp3"
     ],
-    "cwd": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla"
+    "cwd": "MASTER/tools/dilla"
   },
   "engine": {
     "file": "dilla.rb",
@@ -56,7 +56,7 @@
     "FLYLO_TOP_MIX": "0.65",
     "FLYLO_BASE_DRUM_VOL": "0.85",
     "VINYL": "1",
-    "SAMPLE_LOOP": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla/samples/semua_untuk_mu_140.wav",
+    "SAMPLE_LOOP": "MASTER/tools/dilla/samples/semua_untuk_mu_140.wav",
     "DEBUG_HARM_WEIGHT": "2.25",
     "HARM_BUS_VOL": "1.4",
     "HARM_SUB_CUT_DB": "-4.0",
