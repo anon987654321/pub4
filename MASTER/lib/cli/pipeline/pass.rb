@@ -320,10 +320,12 @@ def default_apply?(*) = false
         def preview_lines(value)
           total = value[:total].to_i
           files = value[:files].to_h.transform_keys { |path| File.basename(path.to_s) }
+          sprawl = value[:sprawl].to_h
           [
             "preview: #{total} #{total == 1 ? 'repair' : 'repairs'}",
             preview_row("rules", value[:rules]),
             preview_row("files", files),
+            preview_sprawl(sprawl),
           ].compact.join("\n")
         end
 
@@ -335,6 +337,17 @@ def default_apply?(*) = false
           rest = counts.size - shown.size
           line = "preview #{label}: #{shown.join(', ')}"
           rest.positive? ? "#{line}, and #{rest} more" : line
+        end
+
+        def preview_sprawl(sprawl)
+          rows = sprawl.sort_by { |tree, _| tree }.map do |tree, shape|
+            counts = %i[files directories lone_dirs stutter vague_names duplicate_groups deep_paths]
+              .map { |key| "#{key}=#{shape[key]}" }.join(" ")
+            "#{tree} #{counts}"
+          end
+          return if rows.empty?
+
+          "preview sprawl: #{rows.join(" ; ")}"
         end
 
         def run_critique(abs)
