@@ -52,8 +52,8 @@ module Master
         contract = typography.fetch("bringhurst", {})
         {
           authority: contract.fetch("authority", "The Elements of Typographic Style"),
-          measure: contract.fetch("measure_ch", measure_ideal_ch(root:)).to_f,
-          body_leading: contract.fetch("body_leading", body_line_height_preferred(root:)).to_f,
+          measure: contract.fetch("measure_ch", Master::Design::Thresholds.measure_ideal_ch(root:)).to_f,
+          body_leading: contract.fetch("body_leading", Master::Design::Thresholds.body_line_height_preferred(root:)).to_f,
           heading_leading: contract.fetch("heading_leading", 1.25).to_f,
           scale_ratio: contract.fetch("scale_ratio", 1.25).to_f,
           max_families: contract.fetch("max_families", 2).to_i,
