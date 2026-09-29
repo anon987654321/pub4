@@ -3,7 +3,6 @@
 require_relative "test_helper"
 require "master"
 
-# frozen_string_literal: true
 class TestReplicateKokoroEngine < Minitest::Test
   def test_available_when_token_env_set
     token = ENV["REPLICATE_API_TOKEN"]
@@ -24,7 +23,6 @@ class TestReplicateKokoroEngine < Minitest::Test
   end
 end
 
-# frozen_string_literal: true
 class TestCouncilFace < Minitest::Test
   def test_for_architect_has_left_lane
     face = Master::Voice::CouncilFace.for_persona("Architect")
