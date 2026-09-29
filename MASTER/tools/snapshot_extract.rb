@@ -2,6 +2,7 @@
 
 require "fileutils"
 require "optparse"
+require "tmpdir"
 
 # Rehydrates the source files embedded in one or more snapshot packs into a
 # temporary repository-shaped tree. It never invents missing binaries or claim
