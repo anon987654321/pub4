@@ -154,16 +154,6 @@ the "One chrome", ad system and layout sections bring back for a decision.
 
 ### Instruments and /fix — found 2026-09-25
 
-- **`bin/operator` broke on a one-line lookup, and the test that would have
-  caught it was not run.** `return path if (path = rbenv_path("ruby"))` in
-  `lib/operator/ruby_runner.rb` read `path` before the modifier assigned it,
-  so every `bin/operator` command raised `NameError` until `feae0a1ef`.
-  `test_bin_ruby.rb` exercises that branch — it landed the same day in
-  `9fa0f70d8` — and is still red on this Mac under both PATH Ruby (4.0.5)
-  and the historical pinned runtime, in `test_rbenv_path_uses_the_repo_pinned_version`. Done when that
-  test is green, the source-text assertions on `RubyRunner` in
-  `test_ops_gate_contract.rb` and `test_runtime_one_source.rb` measure
-  behaviour instead, and a push cannot leave with `test_bin_ruby.rb` red.
 - **21 ratchet rows are off.** `bin/operator measure` on 2026-09-25: 19 OVER
   and 2 SLACK, and `file_length` and `coverage_ratchet` unreadable. The
   largest are `spine.lib_body_ceiling` 47837/35302, `autofix_reach.bare_true`
