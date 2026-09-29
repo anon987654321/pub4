@@ -350,6 +350,28 @@ class TestFixConvergence < Minitest::Test
     assert_same council, received, "council findings must reach the repair stage as repair context"
   end
 
+  def test_requested_fix_ends_with_one_wishlist_generation
+    calls = []
+    journal = Object.new
+    journal.define_singleton_method(:terminal) { |*args, **kwargs| calls << [:terminal, args, kwargs] }
+    wishlist = Object.new
+    wishlist.define_singleton_method(:call) do |state:, target:, run_id:|
+      calls << [:wishlist, state, target, run_id]
+      "wishlist: drafted 24 item(s)"
+    end
+
+    loop = build_loop([])
+    loop.instance_variable_set(:@run_journal, journal)
+    loop.instance_variable_set(:@wishlist, wishlist)
+
+    loop.send(:finish_run, Master::Result.ok("DONE: clean"), @root, "r1", requested: true)
+
+    assert_equal 2, calls.size
+    assert_equal :terminal, calls.last.first
+    assert_equal :wishlist, calls.first.first
+    assert_equal "done", calls.first[1]
+  end
+
   # 6. A clean tree the ground truth agrees with is the one state that says DONE.
   def test_a_clean_pass_asks_council_for_improvements
     asked = []
