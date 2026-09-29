@@ -136,7 +136,7 @@ module Master
 
           answer = ask(format(PROPOSE, tree:, shape: render_shape(before), findings: render_findings(findings),
                               contracts: RestructureSweep::Contracts.for(tree).strip))
-          next if answer.strip == "KEEP"
+          break if answer.strip == "KEEP"
 
           plan = Restructure::Plan.parse(answer)
           next if plan.empty?
@@ -236,7 +236,10 @@ module Master
       end
 
       def campaign_message(tree, plan)
-        "refactor: #{plan.summary.empty? ? "consolidate #{tree}" : plan.summary}\n\n"           "Structural consolidation by /fix for #{tree}; measured shape improved, "           "hostile review approved the batch, and the tree-specific restructure proof held."
+        [
+          "refactor: #{plan.summary.empty? ? "consolidate #{tree}" : plan.summary}",
+          "Structural consolidation by /fix for #{tree}; measured shape improved, "             "hostile review approved the batch, and the tree-specific restructure proof held.",
+        ].join("\n\n")
       end
 
       def ask(prompt)
