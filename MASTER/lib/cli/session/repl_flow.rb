@@ -109,7 +109,7 @@ module Master
         [/\bfocus\s+(?:mode|on|off)\b|\btoggle\s+focus\b/i, :toggle_focus],
       ].freeze
 
-      DIRECT_SHELL_RE = /\A(?:pwd|whoami|date|uname(?:\s+-[[:alnum:]-]+)?|ls(?:\s+[[:alnum:]_./~*-]+)*|git\s+(?:status|branch(?:\s+--show-current)?|rev-parse\s+--show-toplevel))\z/i.freeze
+      DIRECT_SHELL_ATOM = /\A(?:pwd|whoami|date|uname(?:\s+-[[:alnum:]-]+)?|ls(?:\s+[[:alnum:]_./~*-]+)*|git\s+(?:status|branch(?:\s+--show-current)?|rev-parse\s+--show-toplevel))\z/i.freeze
 
       # An empty line does nothing, as in a shell: Enter never runs an action
       # the operator has not read.
@@ -181,7 +181,7 @@ module Master
       end
 
       def direct_shell?(command)
-        DIRECT_SHELL_RE.match?(command)
+        command.split(/\s+(?:&&|;)\s+/).all? { |part| DIRECT_SHELL_ATOM.match?(part) }
       end
 
       def repeat_last
