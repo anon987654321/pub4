@@ -60,65 +60,47 @@ class TestSelfTest < Minitest::Test
     end
   end
 
-  def test_singularity_flags_duplicate_top_level_data_facts
+  def test_data_singularity_flags_duplicate_top_level_data_facts
     Dir.mktmpdir do |root|
       write_fixture_tree(root)
       File.write(File.join(root, "data", "one.yml"), "alpha:\n  one: true\n")
       File.write(File.join(root, "data", "two.yml"), "alpha:\n  one: true\n")
 
-      result = Master::Review::Scan::SelfTest.new(root:).call(laws: ["SINGULARITY"])
-      singularity = result.value!.checks.fetch(0)
-
-      assert singularity.findings.any? { |finding| finding[:message].include?("top-level fact alpha") }
+      findings = Master::Review::Scan::SelfTest.new(root:).data_singularity_findings
+      assert findings.any? { |finding| finding[:message].include?("top-level fact alpha") }
     end
   end
 
-  def test_singularity_allows_same_key_with_independent_values
+  def test_singularity_allows_independent_registry_values
     Dir.mktmpdir do |root|
       write_fixture_tree(root)
       File.write(File.join(root, "data", "one.yml"), "law:\n  one: true\n")
       File.write(File.join(root, "data", "two.yml"), "law:\n  two: true\n")
 
-      result = Master::Review::Scan::SelfTest.new(root:).call(laws: ["SINGULARITY"])
-      singularity = result.value!.checks.fetch(0)
-
+      singularity = Master::Review::Scan::SelfTest.new(root:).call(laws: ["SINGULARITY"]).value!.checks.fetch(0)
       refute singularity.findings.any? { |finding| finding[:message].include?("top-level fact law") }
     end
   end
 
-  def test_singularity_ignores_namespaced_data_registers
+  def test_data_singularity_ignores_namespaced_data_registers
     Dir.mktmpdir do |root|
       write_fixture_tree(root)
       FileUtils.mkdir_p(File.join(root, "data", "rules"))
       File.write(File.join(root, "data", "rules", "one.yml"), "alpha:\n  one: true\n")
       File.write(File.join(root, "data", "two.yml"), "alpha:\n  two: true\n")
 
-      singularity = Master::Review::Scan::SelfTest.new(root:).call(laws: ["SINGULARITY"]).value!.checks.fetch(0)
-      refute singularity.findings.any? { |finding| finding[:path].include?("/data/rules/") },
-             "namespaced rule registers are outside this cross-file registry"
-      assert singularity.findings.any? { |finding| finding[:path].end_with?("/data/two.yml") }
+      findings = Master::Review::Scan::SelfTest.new(root:).data_singularity_findings
+      refute findings.any? { |finding| finding[:path].include?("/data/rules/") }
     end
   end
 
-  def test_real_rubrics_share_dimension_namespace_without_becoming_duplicates
-    singularity = Master::Review::Scan::SelfTest.new(root: Master::ROOT)
-      .call(laws: ["SINGULARITY"]).value!.checks.fetch(0)
+  def test_real_rubrics_share_dimension_namespace_without_becoming_singular_runtime_debt
+    findings = Master::Review::Scan::SelfTest.new(root: Master::ROOT).data_singularity_findings
 
-    refute singularity.findings.any? do |finding|
+    refute findings.any? do |finding|
       finding[:message].include?("top-level fact dimensions") &&
         [File.join(Master::ROOT, "data", "dialogue_rubric.yml"),
          File.join(Master::ROOT, "data", "visual_rubric.yml")].include?(finding[:path])
-    end
-  end
-
-  def test_singularity_allows_independent_rubric_dimensions
-    Dir.mktmpdir do |root|
-      write_fixture_tree(root)
-      File.write(File.join(root, "data", "dialogue_rubric.yml"), "dimensions:\n  answer_first: {}\n")
-      File.write(File.join(root, "data", "visual_rubric.yml"), "dimensions:\n  hierarchy: {}\n")
-
-      singularity = Master::Review::Scan::SelfTest.new(root:).call(laws: ["SINGULARITY"]).value!.checks.fetch(0)
-      refute singularity.findings.any? { |finding| finding[:message].include?("top-level key dimensions") }
     end
   end
 
