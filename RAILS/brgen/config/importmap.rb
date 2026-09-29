@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+enable_integrity!
+
 pin "application"
 pin_all_from "app/javascript/controllers", under: "controllers"
 
