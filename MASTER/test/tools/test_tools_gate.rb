@@ -5,7 +5,7 @@ require "open3"
 require "rbconfig"
 require "digest"
 require "tmpdir"
-require_relative "../gate.rb"
+require_relative "../../tools/gate.rb"
 
 # The gate is the only thing standing between MASTER's fix loop and a broken
 # tools, and it has one property nothing else in this repo has: it checks
@@ -97,7 +97,7 @@ class TestToolsGate < Minitest::Test
   # over a set that excludes the files an autofix is most likely to break --
   # which is exactly what happened before engine_sources.rb existed.
   def test_the_corpus_reaches_every_engine_part
-    require_relative "../dilla/lib/engine_sources"
+    require_relative "../../tools/dilla/lib/engine_sources"
     missing = DillaSources.all - gate.source_files
 
     assert_empty missing, "the gate parses a corpus that excludes #{missing.size} engine file(s)"
@@ -192,7 +192,7 @@ class TestToolsGate < Minitest::Test
 # So the guard is behavioural: dirty a real state file inside a real test run and
 # check it comes back. A source-grep for "Minitest.after_run" would pass on a
 # hook registered in a file nobody loads.
-  TARGET = File.expand_path("../dilla/project/session.json", __dir__)
+  TARGET = File.expand_path("../../tools/dilla/project/session.json", __dir__)
 
   def test_a_test_run_that_dirties_engine_state_restores_it
     skip "no session state on this machine yet" unless File.file?(TARGET)
