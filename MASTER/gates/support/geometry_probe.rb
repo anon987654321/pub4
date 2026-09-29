@@ -3,7 +3,7 @@
 require "net/http"
 require "yaml"
 require_relative "../../../OPENBSD/lib/deploy_inventory"
-require_relative "../../../RAILS/bin/crawl_support"
+require_relative "../../../RAILS/shared/lib/crawl_support"
 require_relative "cdp_session"
 require_relative "brgen_vertical_surfaces"
 require_relative "geometry_type" # worn-type walk; see GeometryType.probe
