@@ -24,7 +24,7 @@ require_relative "lib/secret_redaction"
 SOURCES = (
   VERBATIM.to_a +
   EXCLUDED.map { |repo_rel| [repo_rel, "/#{repo_rel}"] } +
-  [["var/nsd/etc/nsd.conf", "/var/nsd/etc/nsd.conf"], ["etc/.zshrc", "/home/dev/.zshrc"]]
+  [["dns/nsd.conf", "/var/nsd/etc/nsd.conf"], ["etc/.zshrc", "/home/dev/.zshrc"]]
 ).freeze
 
 def redact(body)
