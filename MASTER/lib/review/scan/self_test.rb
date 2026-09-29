@@ -131,6 +131,13 @@ module Master
           end
         end
 
+        # Cross-file YAML registry integrity is a separate gate. Keeping it out of the
+        # constitutional SINGULARITY runtime check prevents generic registry keys such
+        # as law or dimensions from turning unrelated data files into boot failures.
+        def data_singularity_findings
+          cross_yaml_duplicate_key_findings
+        end
+
         include DeployChecks
 
         Check = Data.define(:law, :description, :findings) do
@@ -185,7 +192,7 @@ module Master
               bare_rescue_findings + deploy_bare_rescue_findings + timeout_findings +
                 js_silent_catch_findings + library_verify_findings
             }],
-            ["SINGULARITY", lambda { duplicate_rule_id_findings + cross_yaml_duplicate_key_findings + deploy_duplicate_id_findings }],
+            ["SINGULARITY", lambda { duplicate_rule_id_findings + deploy_duplicate_id_findings }],
             ["LINEARITY", lambda { structural_findings(Rules::NestingDepthRule.new) + deploy_nesting_findings }],
             ["PROXIMITY", lambda { rule_test_proximity_findings }],
             ["ABSTRACTION", lambda { structural_findings(Rules::GodClassRule.new) + deploy_god_class_findings }],
