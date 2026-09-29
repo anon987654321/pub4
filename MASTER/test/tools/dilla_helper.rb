@@ -18,4 +18,4 @@ DILLA_BOOT_ENV = {
 }.freeze
 DILLA_BOOT_ENV.each { |key, value| ENV[key] ||= value }
 
-require_relative "../dilla/dilla"
+require_relative "../../tools/dilla/dilla"
