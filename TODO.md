@@ -27,7 +27,7 @@ A finding is a hypothesis. Historical dated sections below are evidence records,
 - `RAILS/bin/triangle` remains the reproducible live-app bootstrap path, and a dedicated contract test now pins its apps.yml port discovery, database preparation, asset-manifest invalidation, named-surface selection and lifecycle behavior.
 - Static marketplace safeguards are already present: Dintero checkout/split/refund contracts, persisted split contracts, ACTIVE seller gates, replay/schema tests, Stripe fail-closed payout behavior and affiliate disclosure/sponsored-link contracts. Production enablement still requires real staging evidence.
 - The rendered/browser, MASTER three-tree /fix, vm23/OpenBSD, Termux/Edge TTS, payment-provider staging, Dilla/audio and final snapshot items remain evidence gates because their truth depends on a watched runtime, real credentials, hardware, or the final checkout. They are not marked green by source inspection.
-- All 46 non-main remote refs were historically identical at commit `5772e277933fc74830448fefe4c8ce08cf658e81`. They carry no unique divergent work. They are now advanced to the same commit, so the remote surface has one authoritative tree. The GitHub connector exposes ref updates here but not branch deletion.
+- The hosted repository currently exposes `main` as the authoritative branch surface; older `origin/*` names may remain in an existing checkout until `git fetch --prune origin`. Do not treat stale remote-tracking refs as live branches or unfinished work.
 - Hosted GitHub Actions are not the verification path. Manual execution remains the intended release proof.
 
 ## Current plan — ordered 2026-09-29
