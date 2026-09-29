@@ -41,7 +41,7 @@ end
 if ARGV.first == "--fix-context"
   target = ARGV[1] && !ARGV[1].start_with?("-") ? ARGV[1] : ROOT
   full = ARGV.include?("--full")
-  exec(MASTER, "tools", "agent_context.rb", "--fix-context", target, *(["--full"] if full))
+  exec(File.join(MASTER, "bin", "ruby"), File.join(MASTER, "tools", "agent_context.rb"), "--fix-context", target, *(["--full"] if full))
 end
 
 if ARGV.first == "--help" || ARGV.first == "-h"
