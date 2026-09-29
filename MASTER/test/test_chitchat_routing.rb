@@ -24,6 +24,23 @@ class TestChitchatRouting < Minitest::Test
     assert_equal :chitchat, router.classify_intent("hey, how are you?")
   end
 
+  def test_chitchatting_covers_small_talk_and_social_replies
+    router = Master::CLI::Routing::ModelRouter.new(config: FakeConfig.new, root: Master::ROOT)
+
+    %w[thanks "thank you" "nice to meet you" "good night"].each do |phrase|
+      assert_equal :chitchat, router.classify_intent(phrase), phrase
+    end
+    assert_equal :chitchat, router.classify_intent("what's up?")
+    assert_equal :chitchat, router.classify_intent("i had a nice day")
+  end
+
+  def test_chitchat_does_not_capture_media_requests
+    router = Master::CLI::Routing::ModelRouter.new(config: FakeConfig.new, root: Master::ROOT)
+
+    refute_equal :chitchat, router.classify_intent("play some Dilla")
+    refute_equal :chitchat, router.classify_intent("start Radio Bergen")
+  end
+
   def test_work_requests_stay_off_chitchat
     router = Master::CLI::Routing::ModelRouter.new(config: FakeConfig.new, root: Master::ROOT)
     assert_equal :code_generation, router.classify_intent("please implement a fix for the scanner")
