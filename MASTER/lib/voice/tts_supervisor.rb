@@ -126,7 +126,7 @@ module Master
         env = daemon_env(root)
         log = log_path(root, index:)
         pid = Process.spawn(
-          env, Gem.ruby, worker, "--daemon", path,
+          env, RbConfig.ruby, worker, "--daemon", path,
           chdir: root, out: log, err: log, close_others: true
         )
         Process.detach(pid)
