@@ -1,35 +1,26 @@
 # Rails gates
 
-This README is the living documentation for the Rails gate suite. Executable gate definitions and runner output remain authoritative.
+This README describes the executable Rails and MASTER web gate family. The registry in
+`MASTER/gates/gates.yml`, the gate code, and the runner output are authoritative.
 
-Assessment date: 2026-08-01. Scope: RAILS family (brgen + verticals, amber,
-bsdports) + MASTER web UI.
+Assessment: 2026-09-30. Scope: RAILS family (brgen + verticals, amber, bsdports)
+and the MASTER web face.
 
-## Verdict
+## Current coverage
 
-**Strong professional floor. Not yet “perfectionist complete.”**
-
-What we have is among the denser Rails UI gate suites: source ratchets,
-multi-step journeys, full-page inventory sims, geometry/reflow, keyboard +
-mobile floors, mutation tests. A perfectionist still needs authenticated
-personas, denser residual-EN chrome, reliable CDP under load, and MASTER face in
-every browser leaf.
-
-## Coverage map
-
-| Layer | Gates | Adequacy |
-|-------|--------|----------|
-| Inventory / ports | apps_yml, port_inventory, shared_wiring | Solid |
-| Schema / runtime | schema_migration, phantom_foreign_keys, rails_runtime | Solid |
-| Design constitution | css_constitution, dialect_purity, payment_honesty, design_metrics | Strong |
-| Source UX floor | surface_schema, chrome_i18n/empty lints, human_walkthrough, user_flow | Strong |
-| Full-page matrix | **page_simulation** (137 triangle pages + bsdports when wired) | Strong source; live needs warm Falcon |
-| Multi-step journeys | **flow_journey** (brgen verticals depth + amber + master) | Strong guest; no auth journeys |
-| Phone UX | **mobile_flow**, reflow, geometry mobile | Good floor; CDP flake → inconclusive |
-| Keyboard | **keyboard_flow** | Good; desktop-first |
-| Pixel / visual | visual_contract, layout_snapshot, visual_quality | Canonical CDP capture + committed geometry snapshots; Council now consumes rendered evidence |
-| MASTER web | master_web_assets, production, page_sim face/dashboard | Face OK; static offline soft |
-| Integrity | gate_mutation, calibration, constitutional_scan | Solid |
+| Layer | Current state |
+|-------|---------------|
+| Inventory / ports | implemented; bsdports is part of family inventory |
+| Schema / runtime | implemented |
+| Source UX floor | implemented, with i18n and accessibility source checks |
+| Guest page matrix | implemented across brgen engines, amber, bsdports and MASTER |
+| Authenticated mutations | credentialed live journeys are defined in `flows.yml` |
+| Mobile browser | live mobile flow plus mutation coverage |
+| Keyboard | live tab-order coverage |
+| Pixel / visual | live CDP capture where the environment supplies apps and Chrome |
+| Screen reader | computed Chrome accessibility-tree gate |
+| Server performance | p95 response-time and response-byte budget gate |
+| Integrity | mutation, calibration and constitutional coverage |
 
 ## Remaining evidence gates
 
