@@ -508,7 +508,7 @@ flows:
   - id: brgen_authenticated_checkout
     app: brgen
     description: A signed-in buyer can reach the cart and checkout controller without falling back to guest auth.
-    requires_credentials: [BRGEN_E2E_EMAIL, BRGEN_E2E_PASSWORD, BRGEN_CHECKOUT_PROVIDER]
+    requires_credentials: [BRGEN_E2E_EMAIL, BRGEN_E2E_PASSWORD, BRGEN_CHECKOUT_PROVIDER, BRGEN_E2E_ORDER_ID]
     steps:
       - name: sign_in
         get: /session/new
@@ -532,6 +532,7 @@ flows:
         host: markedsplass.brgen.no
         params:
           provider: $BRGEN_CHECKOUT_PROVIDER
+          order_id: $BRGEN_E2E_ORDER_ID
         expect_status: [200, 302, 303]
         expect_final_path: { not: /session/new }
 
@@ -600,8 +601,8 @@ flows:
 
   - id: amber_authenticated_wardrobe
     app: amber
-    description: A signed-in wardrobe owner can create one planned outfit from an existing outfit.
-    requires_credentials: [AMBER_E2E_EMAIL, AMBER_E2E_PASSWORD, AMBER_E2E_OUTFIT_ID, AMBER_E2E_DATE]
+    description: A signed-in wardrobe owner can mutate an existing outfit without creating duplicate rows.
+    requires_credentials: [AMBER_E2E_EMAIL, AMBER_E2E_PASSWORD, AMBER_E2E_OUTFIT_ID]
     steps:
       - name: sign_in
         get: /session/new
@@ -615,18 +616,14 @@ flows:
           password: $AMBER_E2E_PASSWORD
         expect_status: [200, 302, 303]
         expect_final_path: { not: /session/new }
-      - name: planner
-        get: /planned_outfits
+      - name: outfit
+        get: /outfits/$AMBER_E2E_OUTFIT_ID
         host: amberapp.art
         expect_status: [200, 302, 303]
         expect_final_path: { not: /session/new }
-      - name: plan
-        post: /planned_outfits
+      - name: wear
+        post: /outfits/$AMBER_E2E_OUTFIT_ID/wear
         host: amberapp.art
-        params:
-          planned_outfit:
-            outfit_id: $AMBER_E2E_OUTFIT_ID
-            planned_date: $AMBER_E2E_DATE
-            notes: "e2e"
+        params: {}
         expect_status: [200, 302, 303]
         expect_final_path: { not: /session/new }
