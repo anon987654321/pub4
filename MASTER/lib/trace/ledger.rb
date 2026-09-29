@@ -139,23 +139,8 @@ module Master
           Master::Ground::Swallow.log(e, context: "Ledger::Feedback.record_production_evidence", event_bus: @bus)
         end
 
-        def trigger_rollback(message)
-          return unless @rollback
-
-          error = Struct.new(:category, :message) do
-            def err?
-              true
-            end
-          end.new(:policy, message)
-          @rollback.call(error)
-        rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "Ledger::Feedback.trigger_rollback", event_bus: @bus)
-        end
       end
 
-      # Reflexion captures fix-loop self-correction failures as natural-language
-      # reflections (Reflexion-style episodic memory) so later attempts avoid repeating a
-      # blocked commit. Refs: Shinn et al. Reflexion (arXiv:2303.11366); ReVeal (arXiv:2506.11442).
       class Reflexion
         MAX_REFLECTIONS = 50
 
@@ -258,22 +243,3 @@ module Master
         # Increment under lock; true when a snapshot flush is due.
         def tally(context)
           @mutex.synchronize do
-            @counts[context] += 1
-            @total += 1
-            (@total % SNAPSHOT_EVERY).zero?
-          end
-        end
-
-        def flush
-          path = File.join(@root, LEDGER_PATH)
-          FileUtils.mkdir_p(File.dirname(path))
-          line = JSON.generate(at: Time.now.utc.iso8601, total:, counts: snapshot)
-          File.open(path, "a") { |io| io.write(line, "\n") }
-        rescue StandardError => e
-          # Cannot route through Swallow.log — it recurses into this stream.
-          ::Kernel.warn("swallow_ledger: flush failed — #{e.class}: #{e.message}")
-        end
-      end
-    end
-  end
-end
