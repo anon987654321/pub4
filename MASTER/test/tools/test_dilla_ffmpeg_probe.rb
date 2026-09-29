@@ -3,7 +3,7 @@
 require "minitest/autorun"
 require "fileutils"
 require "tmpdir"
-require_relative "../dilla/lib/listen"
+require_relative "../../tools/dilla/lib/listen"
 
 # The scoring modules read ffmpeg through backticks and `.to_f`, so a path with
 # a quote in it was a shell command and a file ffmpeg could not open scored
