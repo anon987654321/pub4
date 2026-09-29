@@ -53,6 +53,7 @@ class TestBinRuby < Minitest::Test
   def test_rbenv_path_uses_the_repo_pinned_version
     old_path = ENV["PATH"]
     old_fake_path = ENV["FAKE_RBENV_PATH"]
+    old_rbenv_root = ENV["RBENV_ROOT"]
 
     Dir.mktmpdir do |root|
       fake_bin = File.join(root, "bin")
@@ -71,17 +72,20 @@ class TestBinRuby < Minitest::Test
 
       ENV["PATH"] = "#{fake_bin}#{File::PATH_SEPARATOR}#{old_path}"
       ENV["FAKE_RBENV_PATH"] = ruby_path
+      ENV["RBENV_ROOT"] = File.join(root, "empty-rbenv")
 
       assert_equal ruby_path, Operator::RubyRunner.rbenv_path("ruby", root:)
     ensure
       ENV["PATH"] = old_path
       ENV["FAKE_RBENV_PATH"] = old_fake_path
+      ENV["RBENV_ROOT"] = old_rbenv_root
     end
   end
 
   def test_ruby_runner_prefers_the_pinned_rbenv_over_generic_ruby40
     old_path = ENV["PATH"]
     old_fake_path = ENV["FAKE_RBENV_PATH"]
+    old_rbenv_root = ENV["RBENV_ROOT"]
 
     Dir.mktmpdir do |root|
       fake_bin = File.join(root, "bin")
@@ -103,11 +107,13 @@ class TestBinRuby < Minitest::Test
 
       ENV["PATH"] = "#{fake_bin}#{File::PATH_SEPARATOR}#{old_path}"
       ENV["FAKE_RBENV_PATH"] = ruby_path
+      ENV["RBENV_ROOT"] = File.join(root, "empty-rbenv")
 
       assert_equal ruby_path, Operator::RubyRunner.ruby_cmd
     ensure
       ENV["PATH"] = old_path
       ENV["FAKE_RBENV_PATH"] = old_fake_path
+      ENV["RBENV_ROOT"] = old_rbenv_root
     end
   end
 
