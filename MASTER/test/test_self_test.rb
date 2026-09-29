@@ -62,6 +62,31 @@ class TestSelfTest < Minitest::Test
     end
   end
 
+  def test_singularity_ignores_namespaced_data_registers
+    Dir.mktmpdir do |root|
+      write_fixture_tree(root)
+      FileUtils.mkdir_p(File.join(root, "data", "rules"))
+      File.write(File.join(root, "data", "rules", "one.yml"), "alpha:\n  one: true\n")
+      File.write(File.join(root, "data", "two.yml"), "alpha:\n  two: true\n")
+
+      singularity = Master::Review::Scan::SelfTest.new(root:).call(laws: ["SINGULARITY"]).value!.checks.fetch(0)
+      refute singularity.findings.any? { |finding| finding[:path].include?("/data/rules/") },
+             "namespaced rule registers are outside this cross-file registry"
+      assert singularity.findings.any? { |finding| finding[:path].end_with?("/data/two.yml") }
+    end
+  end
+
+  def test_singularity_allows_independent_rubric_dimensions
+    Dir.mktmpdir do |root|
+      write_fixture_tree(root)
+      File.write(File.join(root, "data", "dialogue_rubric.yml"), "dimensions:\n  answer_first: {}\n")
+      File.write(File.join(root, "data", "visual_rubric.yml"), "dimensions:\n  hierarchy: {}\n")
+
+      singularity = Master::Review::Scan::SelfTest.new(root:).call(laws: ["SINGULARITY"]).value!.checks.fetch(0)
+      refute singularity.findings.any? { |finding| finding[:message].include?("top-level key dimensions") }
+    end
+  end
+
   def test_openbsd_deploy_corpus_uses_real_paths_and_skips_tests
     Dir.mktmpdir do |workspace|
       root = File.join(workspace, "MASTER")
