@@ -40,7 +40,6 @@ module Master
           @committer = committer
           @conflict_resolver = conflict_resolver
           @llm_router = llm_router
-          @rollback = rollback
           @root = root
           @resource_budget = ResourceBudget.new(root:)
           @agent = agent
