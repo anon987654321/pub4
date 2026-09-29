@@ -3,7 +3,6 @@
 require_relative "test_helper"
 require "master"
 
-# frozen_string_literal: true
 class NoSecretNoteTest < Minitest::Test
   def test_blocks_secrets_in_note_text
     data_dir = File.expand_path("../data", __dir__)
@@ -18,7 +17,6 @@ class NoSecretNoteTest < Minitest::Test
   end
 end
 
-# frozen_string_literal: true
 class TestCapabilityMap < Minitest::Test
   def setup
     @map = Master::CLI::Routing::CapabilityMap.new
@@ -65,7 +63,6 @@ class TestCapabilityMap < Minitest::Test
   end
 end
 
-# frozen_string_literal: true
 class TestTripleMemory < Minitest::Test
   def setup
     @memory = Master::Core::Memory.new
@@ -89,7 +86,6 @@ class TestTripleMemory < Minitest::Test
   end
 end
 
-# frozen_string_literal: true
 
 require "minitest/autorun"
 class VerbClosureTest < Minitest::Test
