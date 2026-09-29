@@ -457,6 +457,21 @@ class TestFixConvergence < Minitest::Test
     assert_includes prompt, "Do not invent defects"
   end
 
+  def test_pending_wishlist_becomes_part_of_the_next_fix_mission
+    FileUtils.mkdir_p(File.join(@root, "runtime"))
+    File.write(File.join(@root, "runtime", "wishlist.md"), <<~WISH)
+      # MASTER wishlist
+      ### 1. Measure the boot boundary
+      ### 2. Add a runtime receipt
+    WISH
+
+    plan = build_loop([]).send(:mission_plan)
+
+    assert_includes plan, "Pending wishlist proposals:"
+    assert_includes plan, "### 1. Measure the boot boundary"
+    assert_includes plan, "### 2. Add a runtime receipt"
+  end
+
   def test_a_converged_run_is_done
     result = build_loop([]).run(@root)
 
