@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 <sub># frozen_string_literal: true
 
 require_relative "test_helper"
@@ -32,10 +34,10 @@ class TestAiTrajectory < Minitest::Test
         { "tool" => "Tree" },
         { "tool" => "ReadFile", "path" => "lib/a.rb" },
         { "tool" => "Shell", "command" => "bash -lc sed lib/a.rb" },
-        { "tool" => "test" }
+        { "tool" => "test" },
       ],
       "outcome" => "complete",
-      "verified" => true
+      "verified" => true,
     }
     score = Master::AI::Trajectory::Benchmark.score(record)
     refute score["checks"]["shell_abi"]
@@ -49,10 +51,10 @@ class TestAiTrajectory < Minitest::Test
       "events" => [
         { "tool" => "WriteFile", "path" => "lib/a.rb" },
         { "tool" => "ReadFile", "path" => "lib/a.rb" },
-        { "tool" => "verify" }
+        { "tool" => "verify" },
       ],
       "outcome" => "complete",
-      "verified" => true
+      "verified" => true,
     }
     refute Master::AI::Trajectory::Benchmark.score(record)["checks"]["evidence"]
   end
@@ -83,7 +85,7 @@ class TestAiTrajectory < Minitest::Test
         "model" => "small-model",
         "events" => [{ "tool" => "Tree" }, { "tool" => "verify" }],
         "outcome" => "complete",
-        "verified" => true
+        "verified" => true,
       }
       bad = good.merge("verified" => false)
       File.write(input, [good, bad].map { |record| JSON.generate(record) }.join("\n") + "\n")

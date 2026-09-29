@@ -180,7 +180,6 @@ end
 $LOAD_PATH.unshift File.join(ROOT, "lib")
 require "master"
 
-
 if ARGV.include?("--fix")
   require "fileutils"
   require "set"
