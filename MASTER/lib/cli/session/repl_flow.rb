@@ -192,7 +192,7 @@ module Master
       end
 
       def run_agent_turn(line)
-        if (refusal = host_refusal_for(line)
+        if (refusal = host_refusal_for(line))
           puts @refs.renderer.render(refusal, mode: :warning)
           return
         end
