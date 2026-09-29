@@ -146,6 +146,13 @@ class TestMasterLoop < Minitest::Test
     end
   end
 
+  def test_common_data_readers_resolve_the_declared_registries
+    assert_kind_of Hash, Master.models_config
+    assert_kind_of Hash, Master.patterns_config
+    assert_kind_of Hash, Master.soul_config
+    assert_kind_of Array, Master.soul_config.dig("absolute", "sacred_paths")
+  end
+
   def test_models_config_is_the_single_models_registry_reader
     config = Master.models_config(root: Master::ROOT)
     assert_equal "openrouter", config.dig("openrouter", "provider") unless config.dig("openrouter", "provider").nil?
