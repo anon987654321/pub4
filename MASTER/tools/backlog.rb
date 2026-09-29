@@ -423,12 +423,10 @@ module Operator
     end
   end
 end
-
-Operator::BacklogTriage.run(ARGV) if $PROGRAM_NAME == __FILE__
-
 if $PROGRAM_NAME == __FILE__
-  case ARGV.first
-  when "--claims", "--partition", "--symbols"
+  if ARGV.first == "--claims" || ARGV.first == "--partition" || ARGV.first == "--symbols"
+    ARGV.shift
+    ARGV.unshift("--partition") if ARGV.empty? && ARGV.first == "--claims"
     BacklogClaims.run
   else
     Operator::BacklogTriage.run(ARGV)
