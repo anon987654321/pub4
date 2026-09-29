@@ -68,8 +68,8 @@ module Master
           def violation_key(v) = "#{v[:rule]}:#{v[:file]}:#{v[:line]}"
 
           def trigger_rollback(message)
-            return unless @rollback
-            @rollback.call(Master::Result.err(message, category: :policy))
+            result = @committer.abort_transaction!
+            @bus&.publish("fix_loop:transaction_rollback", reason: message, result: result&.to_s)
           rescue StandardError => e
             @bus&.publish("fix_loop:rollback_error", error: e.message)
           end
