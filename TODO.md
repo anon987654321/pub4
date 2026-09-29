@@ -16,115 +16,37 @@ A finding is a hypothesis. Historical dated sections below are evidence records,
 
 - Direct MASTER test entrypoints now activate the same private Ruby/Bundler context as `bin/cli` before loading SimpleCov or Minitest; Minitest is constrained to `~> 5.25`, preventing a host-installed 6.x release from bypassing the locked suite.
 
-## Current state — 2026-09-28
+## Current state — 2026-09-29
 
-- `main` is the authoritative repository baseline. The tree has changed materially since the previous 2026-09-27 audit.
-- Ruby is pinned to `4.0.5` across the existing project declarations. Ruby 4.0.7 now exists upstream, but 4.0.5 is the operator-selected project pin until deliberately changed.
-- Bundler is now pinned to `4.0.5` in every committed lockfile so the Ruby 4.0.5 and Bundler toolchain moves together.
-- Main now pins every Rails surface to the same audited Rails 8.2.0.alpha commit (`c9e85dbe297e248dd2f217d04f84a94881ac046a`) with `load_defaults 8.2`. This is an explicit edge deployment, not a claim that 8.2 is a stable upstream release.
-- Rails 8.1.4 remains the latest released Rails version; the 8.2 line is still edge. The repository therefore treats the exact commit, checked-in locks, and manual runtime/browser proof as the production contract until Rails 8.2 has a stable release.
-- Rails 8.2 migration seams called out by the current upstream guides include Herb HTML+ERB compilation, modern header-based CSRF behavior, enum negative scopes including `nil`, Active Storage analysis/variant timing, SQLite table-alteration behavior around `ON DELETE CASCADE`, and enqueue-after-transaction-commit behavior. Source contracts are explicit; live boot, Herb compilation, database migration, browser/CDP, OpenBSD and Termux verification remain runtime gates. Edge TTS is now isolated in a dedicated `:tts` dependency group so Rails boot does not auto-require its EventMachine stack.
-- Main has no open issues or open PRs. The convergence PR series through #554 is merged; verify the exact current `main` SHA with `git rev-parse HEAD` rather than storing a self-referential commit hash in this backlog. All 47 surviving remote branches are kept converged to `main`; runtime, browser, OpenBSD and Termux proofs remain manual gates.
-- Media audit: the four LoRA lanes, Replicate::Chain provenance/resume pipeline and still-image postpro/LUT stack already exist. Browser WebGPU is only a capability probe today; volunteer compute, depth/segmentation video grading and shot-detection finishing are not implemented and must not be described as current capability.
-- All surviving remote repair/experiment refs are now zero-delta aliases of current `main`; the connected GitHub surface does not expose branch deletion. No surviving ref carries divergent code.
-- Hosted CI is not the verification path for this backlog; the repository's GitHub Actions workflows are removed. The live full three-tree `/fix` run remains unproven until an equivalent manually watched run emits actionable step-level evidence.
-- MASTER boot now activates the repository bundle immediately after dependency installation, so a successful `deps0` bootstrap cannot fall through to a raw `require` missing the installed gems.
-- MASTER boot now also activates the exact Bundler version recorded by `BUNDLED WITH` before `bundler/setup`; this prevents the install/check executable and the in-process Bundler library from selecting different git-source checkout contexts.
-- MASTER audit entrypoints under `tools/` now delegate to their live `lib/operator/` implementations for rule reach, namespace ratchet, autofix reach and rule audit; a regression checks every Rakefile-declared tool path exists.
-- `RAILS/test/run_all.rb` currently discovers 131 contract files recursively, one process per file. The historical red count remains stale until the suite is rerun manually on the current main baseline.
+- `main` is the authoritative repository baseline. There are no open pull requests.
+- Ruby remains pinned to `4.0.5`; Bundler remains pinned to `4.0.5`. Rails surfaces remain pinned to the audited Rails 8.2.0.alpha source revision `c9e85dbe297e248dd2f217d04f84a94881ac046a`, with `load_defaults 8.2`.
+- The Rails 8.2 source contracts are already executable: framework defaults, CSRF, enum persistence, commit-time job production, SQLite foreign-key rebuilds, Active Storage timing, lockfile source/revision and dependency-shape checks.
+- `RAILS/bin/ci` is now the canonical local Rails verification entrypoint: contract suite first, then brgen, amber, bsdports and eritel CI. Eritel's standalone runner now carries the same bundle, style, security and test floor without pretending it has the shared apps' CSS/engine topology.
+- Importmap integrity is now explicit on the three Propshaft/importmap store apps: `enable_integrity!` plus Propshaft `sha256` configuration. The shared external web-vitals CDN pin has an explicit `integrity: false` policy rather than an implicit assumption. The importmap contract and pin-source contract are executable.
+- The PWA source/build seam is executable: the three store apps point at one shared Workbox source and the build contract explicitly excludes digested assets from precache. Existing generated-worker contracts remain the guard against stale hand-edited output.
+- `RAILS/bin/triangle` remains the reproducible live-app bootstrap path, and a dedicated contract test now pins its apps.yml port discovery, database preparation, asset-manifest invalidation, named-surface selection and lifecycle behavior.
+- Static marketplace safeguards are already present: Dintero checkout/split/refund contracts, persisted split contracts, ACTIVE seller gates, replay/schema tests, Stripe fail-closed payout behavior and affiliate disclosure/sponsored-link contracts. Production enablement still requires real staging evidence.
+- The rendered/browser, MASTER three-tree /fix, vm23/OpenBSD, Termux/Edge TTS, payment-provider staging, Dilla/audio and final snapshot items remain evidence gates because their truth depends on a watched runtime, real credentials, hardware, or the final checkout. They are not marked green by source inspection.
+- All 46 non-main remote refs were historically identical at commit `5772e277933fc74830448fefe4c8ce08cf658e81`. They carry no unique divergent work. After this final main commit they will be advanced to the same commit so the remote surface has one authoritative tree. The GitHub connector exposes ref updates here but not branch deletion.
+- Hosted GitHub Actions are not the verification path. Manual execution remains the intended release proof.
 
-## Current plan — ordered 2026-09-28
+## Current plan — ordered 2026-09-29
 
-### Rails 8.2 migration
-- Re-run the complete RAILS contract suite before and after the migration; record exact files, runs, assertions, failures and exit status.
-- Run `bin/rails herb:check` on every Rails app now that the 8.2 HTML+ERB default is enabled; `OPENBSD/bin/check-rails` now wires this for brgen, amber, bsdports, eritel and MASTER/web. The remaining proof is the watched runtime result.
-- Source audit of transaction-sensitive Active Job producers is closed by `RAILS/test/rails_upgrade_contract_test.rb`; the critical model producers originate from `after_commit`/`after_create_commit`. Runtime proof of the Rails 8.2 enqueue-after-commit behavior remains open until the 8.2 target can be exercised.
-- Static SQLite foreign-key audit is closed by `RAILS/test/rails_upgrade_contract_test.rb`, including `PRAGMA foreign_keys` restoration checks and existing destroy-cascade coverage. The migration exercise against a real SQLite database remains open before the 8.2 cutover.
-- Keep the framework-default audit executable: every Rails app is pinned to `load_defaults 8.2`, no app has an explicit HTML+ERB Erubi override, and the legacy Rails 8.0 compatibility layer has no active initializer. Re-run this contract when the 8.2 target is locked.
-- Run security, autoloading, routing, rendering, asset, cache, job, mailer, Active Storage, PWA and system-test gates after the version change.
-- Keep the exact 8.2 edge source revision isolated. When an official 8.2 tag exists, compare it with this revision, re-lock, and rerun the full gate set.
-- Rails 8.2.0.alpha is now the repository target. Move the exact audited source pin forward only after revalidation.
+### Runtime evidence still required
+- Run the full Rails 8.2 contract suite on a clean checkout, including `bin/rails herb:check`, the database migration exercise and the security/autoloading/routing/rendering/cache/job/mailer/Active Storage/PWA/system-test gates.
+- Run `RAILS/bin/triangle up` from a fresh checkout and then a real rendered gate with Chrome, recording a measured result rather than an inconclusive precondition.
+- Re-run the one-content-column/vertical consistency pass at mobile and 1440px widths; re-measure CSS budgets, magic values, type scale, leading, spacing, interaction contrast and unused selectors from the current assets; recompute the current `needs_id` guest-page census from live routes/data.
+- Run the three-tree `MASTER /fix MASTER RAILS OPENBSD` from a clean checkout and re-measure MASTER ratchets before changing any ceiling. Do not substitute static source proof for the watched run.
+- Validate Dintero staging signatures/replay/capture/refund/per-line splits, Stripe Connect seller/balance/transfer behavior and the current Amazon/TradeDoubler boundaries with real staging credentials; missing credentials must remain fail-closed.
+- Prove the real Termux Norwegian/English ear path and vm23 Edge TTS MP3/socket path, or record the exact hardware/runtime blocker.
+- Verify the real vm23 Ruby package/interpreter seam, watched OpenBSD deployment, nsd/relayd state, bsdports repeated deploys, backup/restore consistency, storage and RAM headroom.
+- Re-measure Dilla asset hashes, hocket/voicing/provenance/determinism defects and postpro/LoRA calibration before sound- or video-changing work.
+- Regenerate the four tracked snapshots from the final checkout and commit them only after their contents are current.
+- When an official Rails 8.2 release exists, compare it to the audited edge revision, re-lock and rerun the complete proof set before changing the production source pin.
 
-### MASTER /fix convergence
-- Exact `/fix MASTER RAILS OPENBSD` dispatch is covered by `test_exact_all_tree_fix_command_targets_the_repo_and_preserves_gate_scope`; clean-checkout execution remains open.
-- Observe → repair → re-observe → verify semantics are regression-tested in the fix pipeline; the remaining proof is an actual three-tree run from a clean checkout.
-- The council-to-repair seam is now covered by a regression test; the remaining proof is an actual three-tree `/fix` run from a clean checkout.
-- Re-measure the MASTER ratchets. Historical 21-row numbers are not current truth. Use `bin/operator measure --why <row>` before changing any ceiling.
-- Rebuild the rules.yml trim draft only from current measurements; do not loosen constitutional limits merely to manufacture green.
-
-### Rendered gates and browser evidence
-- Make `RAILS/bin/triangle up` reproducible from a fresh worktree and ensure at least one rendered gate produces a measured count instead of inconclusive.
-- Re-run the one-content-column/vertical consistency pass at mobile and 1440px widths.
-- Re-measure CSS budgets, magic values, type scale, leading, spacing, interaction contrast and unused selectors after the Rails 8.2 asset/defaults changes.
-- Recompute the `needs_id` guest-page census from current routes/apps; the historical 17 missing probes is not authoritative until rerun.
-- Extend behavioral journey proof for Turbo frame navigation, focus restoration, reconnect/scroll behavior and mobile flow where current code still lacks evidence.
-- Use current web.dev Baseline/Interop support data for browser decisions. `field-sizing`, container style queries and `:open` are available candidates, not mandates.
-- Use CSS-Tricks as technique/reference material only; do not use its older compatibility tables as the 2026 browser-support authority.
-
-### Marketplace, commerce and monetization
-- Prove Dintero staging callbacks/webhook signatures, replay safety, seller ACTIVE payout gates, capture/refund behavior and per-line splits before production enablement.
-- Prove Stripe Connect seller-account/balance/transfer paths with real staging credentials; keep missing-credential behavior fail-closed.
-- Keep the native `Marketplace::` domain as the public runtime until any Solidus cutover has an explicit dual-write/migration plan on a supported database.
-- Prove Amazon's current Creators API boundary, TradeDoubler feed/link conversion, disclosure, `rel=nofollow sponsored` semantics and click/conversion attribution.
-
-### MASTER face, voice and device proof
-- Prove web/terminal behavior parity before touching visual style.
-- Make depth-map parity single-sourced or regression-tested from one deterministic seed.
-- Reconcile idle motion, offline failed-turn handling, IdeaPicture response behavior and voice-bed behavior.
-- Keep the terminal echo guard. This is closed by the current regression-tested idle/draft/cooldown behavior.
-- Prove the real Termux phone ear with one Norwegian and one English phrase through the intended streaming path, or record the exact hardware/software blocker.
-- Re-probe the vm23 Edge TTS one-shot path with a real MP3 write and socket check.
-- Visual morphology, colors, visemes and voice aesthetic remain operator decisions.
-
-### Ruby/OpenBSD runtime boundary
-- The project declarations are pinned to Ruby 4.0.5, while many OpenBSD scripts/rc.d definitions still use `ruby34` and `bundle34`. Treat this as a compatibility seam, not a search/replace.
-- Measure the actual vm23 Ruby package/interpreter available for the target OpenBSD version first.
-- Align deployment scripts, process matching, cron, health checks and bundle wrappers with the runtime that actually boots the apps.
-- Re-prove Rails 8.2 compatibility before changing the operational interpreter names.
-
-### vm23 / OpenBSD
-- Run the watched `doas zsh OPENBSD/OPERATOR.sh` flow and obtain a clean remote config-drift result.
-- Verify nsd process count and stale `nsd-resign` cleanup; verify amber leftovers are gone.
-- Verify bsdports survives three deploys.
-- Verify relayd restarts once per deploy.
-- Verify the weekly integrity job is installed and actually scheduled.
-- Verify deployed `git_sha`, core/optional app readiness and post-deploy restart order.
-- Confirm TTS worker logs stay owned by `master`.
-- Check SQLite WAL/checkpoint backup consistency and restoreability.
-- Measure SQLite writer topology and `busy_timeout` only when the observed box shows real lock contention.
-- Keep the 2 GB RAM target as an operator infrastructure decision and size Falcon/Solid Queue from measurements.
-
-### Dependencies
-- Re-audit `MASTER/Gemfile` after the Rails 8.2 work.
-- Host-specific watcher gems are now declared with Bundler `install_if`, both MASTER lockfiles carry the watcher/ffi resolution, and the dependency-manager test pins the contract. Runtime host verification remains a deployment concern.
-
-### Dilla / MASTER/tools
-- Re-measure all historical Dilla defects against the current engine before editing: hocket patch sameness, unapplied incomplete secondary-dominant/backdoor voicings, load-time ENV provenance, duplicate command doors and bed-render determinism.
-- Reconcile `DillaAssets.verify` with `data/assets.json`; historical missing/changing sample hashes need current verification.
-- Keep sound-changing decisions with the operator.
-- Preserve deterministic renders wherever the harness promises snapshot identity.
-- Re-measure postpro/LoRA pipeline provenance and calibration before undertaking video postpro or new performance machinery.
-
-### Final manual /fix status
-- The source-level final `/fix` convergence and lock repair are landed. This session cannot execute the real watched `MASTER /fix MASTER RAILS OPENBSD` command because there is no runnable checkout/runtime here.
-- Snapshot artifacts are no longer ignored and have a tracked generator; the current four local share-packs still need regeneration and commit from the final checkout before they can truthfully be called current.
-
-### Repository hygiene
-- Recover useful unique commits from stale runner branches selectively, then delete superseded branches.
-- Do not claim the live full /fix sweep succeeded until an equivalent manually watched run emits actionable step-level evidence; GitHub Actions are intentionally not part of this workflow.
-- Keep this TODO as the single forward backlog. Historical dated sections remain for archaeology; they are not proof that the listed issue still exists.
-
-### Final research carry-forward — 2026-09-28
-
-- Track the exact Rails 8.2 edge source pin and never let a floating branch silently become the production contract.
-- The four checked-in Rails lockfiles are rebuilt from the audited 8.2 source graph; local `bundle check` and full test proof remain runtime gates.
-- Make the Rails 8.2 local CI (bin/ci) and the repository contract runner agree on the same test/security/style scope. Rails 8.1's Local CI is useful here even if GitHub-hosted runners remain unavailable.
-- Treat generated PWA/service-worker output as build products: change the source/build contract, regenerate, and test source/output parity rather than hand-editing generated workers.
-- Use web.dev Baseline/Interop as the browser-support authority. Baseline 2026 now includes features such as field-sizing, container style queries and :open; adopt them only where the measured browser floor and progressive-enhancement path support them.
-- Keep CSS-Tricks and Awesome lists as technique/discovery feeds, not compatibility or security authorities. Prefer W3C/MDN/web.dev and upstream implementation repositories for decisions.
-- Audit Importmap SRI/integrity behavior and pin hygiene before adding more JavaScript. Current importmap-rails releases include SRI support and changed pin/package handling, so stale assumptions here can create unnecessary asset work.
-- Re-check Turbo/Stimulus integration at their current upstream versions before inventing custom navigation/event machinery; prefer native Hotwire behavior where it covers the seam.
-- Revisit Solid Queue transaction/enqueue semantics during the Rails 8.2 migration, especially on SQLite, and preserve an executable regression for every production-critical ordering guarantee.
+### Research/reference guardrails
+- Use official Rails and upstream Hotwire/importmap documentation, web.dev Baseline/Interop and upstream implementation history as compatibility authorities. CSS-Tricks and Awesome lists remain technique/discovery references, not security or browser-support authorities.
+- Preserve executable regressions for transaction ordering, generated PWA output, SRI/importmap hygiene, replay safety and other production-critical boundaries as implementations evolve.
 
 ## External reference baseline — refreshed 2026-09-28
 
