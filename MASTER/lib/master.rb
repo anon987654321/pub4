@@ -126,6 +126,15 @@ module Master
     load_yaml(File.join(root, "data", "models.yml")) || {}
   end
 
+  def self.patterns_config(root: ROOT)
+    load_yaml(File.join(root, "data", "patterns.yml")) || {}
+  end
+
+  def self.soul_config(root: ROOT)
+    load_yaml(File.join(root, "data", "soul.yml")) || {}
+  end
+
+
   # The one reader of data/rules.yml. A missing section raises rather than
   # returning {}, because every caller reads the empty result as a law with nothing in it.
   def self.law(section, root: ROOT)
