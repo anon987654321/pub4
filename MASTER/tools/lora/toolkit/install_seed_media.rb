@@ -3,8 +3,8 @@
 
 # Rendered frames in, graded catalogue entries out.
 #
-#   ruby MASTER/tools/lora/_toolkit/install_seed_media.rb ~/Downloads/seed_render
-#   ruby MASTER/tools/lora/_toolkit/install_seed_media.rb <dir> --dry-run
+#   ruby MASTER/tools/lora/toolkit/install_seed_media.rb ~/Downloads/seed_render
+#   ruby MASTER/tools/lora/toolkit/install_seed_media.rb <dir> --dry-run
 #
 # This is the half of the pipeline that runs on the Mac. The GPU half happens on
 # Colab against seed_media.yml; this takes what comes back, puts each frame
