@@ -66,7 +66,7 @@ test("gravity field boots as a deterministic reduced-motion renderer", () => {
   assert.equal(appended.length, 1)
   assert.equal(appended[0].id, "master-gravity-field")
   assert.match(source, /GOLDEN_ANGLE/)
-  assert.doesNotMatch(source, /Math\\.random\\s*\\(/)
+  assert.doesNotMatch(source, /Math\.random\s*\(/)
 })
 
 test("gravity field reacts to semantic visual events", () => {
