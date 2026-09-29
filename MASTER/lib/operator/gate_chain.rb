@@ -293,7 +293,7 @@ module Operator
     # any other, so launched with this process's Ruby every gate was skipped and
     # the stage reported one refusal as its whole result.
     def rails_gates(scan_only:)
-      capture(RUBY, "gates/runner.rb", "--all",
+      capture(RUBY, File.join(MASTER, "gates", "runner.rb"), "--all",
               chdir: File.join(ROOT, "RAILS"),
               env: { "GATE_AUTOFIX" => scan_only ? "0" : "1" })
     end
