@@ -3,11 +3,10 @@
 module Master
   module Fix
     class Restructure
-      # MASTER still eager-loads, which is Zeitwerk checking that every path
-      # defines the constant its name promises, and the boot self-test finds no
-      # ceiling breach it did not find before.
+      # MASTER still eager-loads, which proves Zeitwerk naming; the separate
+      # self-test command checks the constitutional ceilings around it.
       class MasterProof < Proof
-        ENV_BOOT = { "MASTER_STRICT_BOOT" => "0", "MASTER_FAST" => "1" }.freeze
+        ENV_BOOT = { "MASTER_FAST" => "1" }.freeze
 
         private
 
