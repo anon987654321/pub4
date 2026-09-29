@@ -13,6 +13,8 @@ class TestFixProtocol < Minitest::Test
     assert_includes text, "/fix and --dry-run are distinct"
     assert_includes text, "Semantic ask rules are executable"
     assert_includes text, "No deterministic fixer exists"
+    assert_includes text, "whole governed tree's shape"
+    assert_includes text, "--deep enlarges only the bounded structural campaign budget"
   end
 
   def test_rule_metadata_exposes_machine_readable_repair_and_verification
@@ -33,8 +35,9 @@ class TestFixProtocol < Minitest::Test
 
       payload = JSON.parse(Master::Fix::Protocol.render(root:, target: root))
 
-      assert_equal 2, payload.fetch("fix_protocol_version")
+      assert_equal 3, payload.fetch("fix_protocol_version")
       assert_includes payload.fetch("stages"), "semantic"
+      assert_includes payload.fetch("stages"), "structural"
       assert_includes payload.fetch("terminal_states"), "PLATEAU"
       assert_equal 1, payload.dig("corpus", "total_regular_files")
     end
