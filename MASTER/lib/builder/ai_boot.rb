@@ -110,12 +110,13 @@ module Master
         # differ under a loaded test suite.
         if ENV.fetch("MASTER_STRICT_BOOT", "1") != "0" && !defined?(Minitest)
           first = summary.checks.lazy.flat_map(&:findings).first
+          law_counts = summary.checks.map { |check| "#{check.law}=#{check.findings.size}" }.join(", ")
           detail = if first
             " — #{first[:path]}:#{first[:line]}: #{first[:message]}"
           else
             ""
           end
-          raise "builder: self_test failed with #{summary.violation_count} violation(s)#{detail}"
+          raise "builder: self_test failed with #{summary.violation_count} violation(s) [#{law_counts}]#{detail}"
         end
       end
     end
