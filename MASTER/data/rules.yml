@@ -750,7 +750,7 @@ beauty:
 self_test:
   laws_apply_to_self:
     ROBUSTNESS: scan lib/ for bare_rescue + missing timeouts
-    SINGULARITY: rules.yml entries unique by id; no two YAMLs define same key
+    SINGULARITY: rules.yml and deploy entries unique by id; data registries have their own lint
     LINEARITY: no nesting_depth > 4 in lib/
     PROXIMITY: test files within 1 directory of source
     ABSTRACTION: no class > god_class threshold in lib/
