@@ -3,7 +3,7 @@
 require "minitest/autorun"
 require "yaml"
 require_relative "../../OPENBSD/lib/gate_result"
-require_relative "../../MASTER/gates/lib/source/css_constitution"
+require_relative "../../MASTER/gates/lib/css_constitution"
 require_relative "../../MASTER/gates/support/design_metrics"
 require_relative "../../MASTER/gates/lib/research/design_metrics"
 require_relative "../../MASTER/gates/support/css_weight"
@@ -32,7 +32,7 @@ class GateLiveAndCssBudgetTest < Minitest::Test
   end
 
   def test_css_budget_failure_is_inconclusive
-    source = File.read(File.expand_path("../../MASTER/gates/lib/source/css_constitution.rb", __dir__))
+    source = File.read(File.expand_path("../../MASTER/gates/lib/css_constitution.rb", __dir__))
     assert_includes source, "CSS ceilings were not measured"
     assert_includes source, "@result.inconclusive!"
   end
