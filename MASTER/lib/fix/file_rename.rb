@@ -3,8 +3,6 @@
 require "open3"
 require "prism"
 require_relative "../operator/readers"
-require_relative "file_rename/references"
-require_relative "file_rename/css_build"
 
 module Master
   module Fix
@@ -32,7 +30,6 @@ module Master
 
 
       module References
-        SASS_LOAD = /(@(?:use|forward|import)\s+["'](?:[^"']*\/)? )%<name>s(["'])/
         SASS_LOAD = /(@(?:use|forward|import)\s+["'](?:[^"']*\/)?)%<name>s(["'])/
 
         def self.forms(from, to)
