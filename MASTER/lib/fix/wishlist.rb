@@ -3,6 +3,7 @@
 require "fileutils"
 require "time"
 require "yaml"
+require_relative "../ai/orientation"
 
 module Master
   module Fix
