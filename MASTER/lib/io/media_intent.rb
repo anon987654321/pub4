@@ -35,6 +35,7 @@ module Master
       # "open the patch" and "turn the lead into a test" stay chat.
       LIVE_SYNTH_PLAY_RE = /\b(?:play|morph\w*|fade|switch|jam)\b.*\b(?:(?:mini)?moog|model\s*d|prophet|rhodes|juno|synth\w*|pads?|lead|bass(?:line)?|brass|strings|flute|pluck|lo-?fi|chords?|progressions?|something)\b/i.freeze
       LIVE_SYNTH_KNOB_RE = /\b(?:open|close|sweep|raise|lower|turn)\b.*\b(?:filter|cutoff|resonance|emphasis|detune|contour)\b/i.freeze
+      LIVE_MUSIC_RE = /\b(?:play|start|resume|put on|queue)\b.*\b(?:liveset|default\s+music)\b/i.freeze
       LIVE_SYNTH_ALONE_RE = /\A\s*(?:stop|silence|enough)\b|\bstop\s+(?:the\s+)?(?:music|playing|synth\w*|improvi\w*|jam)\b|\b(?:improvi[sz]e|keep\s+playing)\b|\A\s*(?:please\s+)?play(?:\s+(?:some\s+)?music)?\s*[.!]?\s*\z/i.freeze
       POSTPRO_COMMAND_RE = /\b(?:run|use|call|invoke)\s+postpro(?:\.rb)?\b/i.freeze
       POSTPRO_RE = /\b(?:post-?process|colour\s+grade|color\s+grade|film\s+look|vhs(?:\s+tape)?\s+look|crt(?:\s+broadcast)?\s+look|camcorder(?:\s+glitch)?\s+look|make\s+this\s+(?:cinematic|analog|analogue))\b/i.freeze
@@ -121,7 +122,7 @@ module Master
       def generate_tone(text, root: MasterPaths.root)
         shape = synth_shape_for(text) || :sine
         hz = text.match?(/\b(?:deep|low|bass)\b/i) ? 110.0 : 440.0
-        return play_tone(shape, hz) if text.match?(LIVE_RE) && !text.match?(FILE_RE)
+        return play_tone(shape, hz, duration_for(text)) if text.match?(LIVE_RE) && !text.match?(FILE_RE)
 
         destination = File.join(MEDIA_OUTPUT_DIR, "master-#{shape}-#{Time.now.utc.strftime('%Y%m%dT%H%M%SZ')}.wav")
         result = Master::Music::Synth.render(shape:, hz:, destination:)
@@ -130,16 +131,28 @@ module Master
 
       LIVE_TONE_SECONDS = 3.0
 
-      def play_tone(shape, hz)
-        Master::Music::Realtime.play(shape:, hz:, seconds: LIVE_TONE_SECONDS)
-        line = "played #{shape} at #{hz.round} Hz on the sound card for #{LIVE_TONE_SECONDS.round} s"
+      def duration_for(text)
+        seconds = text.match(/\b(?:for\s+)?(\d+(?:\.\d+)?)\s*(?:seconds?|secs?|s)\b/i)&.captures&.first
+        seconds ? seconds.to_f.clamp(0.1, 300.0) : LIVE_TONE_SECONDS
+      end
+
+      def play_tone(shape, hz, seconds)
+        Master::Music::Realtime.play(shape:, hz:, seconds:)
+        line = "played #{shape} at #{hz.round} Hz on the sound card for #{seconds.to_s.sub(/\.0\z/, '')} s"
         Result.ok({ output: line, rendered: line, media: :synth_live })
       rescue Master::Music::AudioSink::NoPlayerError => e
         Result.err("#{e.message}: install sox (brew install sox) or ffmpeg, whose ffplay also plays", category: :infrastructure)
       end
 
       def live_synth?(text)
-        [LIVE_SYNTH_ALONE_RE, LIVE_SYNTH_PLAY_RE, LIVE_SYNTH_KNOB_RE].any? { |pattern| text.match?(pattern) }
+        [LIVE_MUSIC_RE, LIVE_SYNTH_ALONE_RE, LIVE_SYNTH_PLAY_RE, LIVE_SYNTH_KNOB_RE].any? { |pattern| text.match?(pattern) }
+      end
+
+      def repeatable?(text)
+        text.match?(PLAY_LAST_RE) ||
+          text.match?(LIVE_MUSIC_RE) ||
+          text.match?(SYNTH_RE) && text.match?(LIVE_RE) && !text.match?(FILE_RE) ||
+          live_synth?(text) && text.match?(LIVE_RE)
       end
 
       # dilla answers at once: a sentence that starts music leaves a player of
