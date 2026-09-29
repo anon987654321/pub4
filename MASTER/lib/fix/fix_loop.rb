@@ -26,6 +26,8 @@ module Master
     # in one of TERMINAL_STATES and says which: "complete" for a run that merely
     # ran out of passes is the false completion this loop exists to refuse.
     class FixLoop
+      attr_reader :homeostat
+
       include ConvergenceConfig
       include BackgroundRunner
       include PassRunnerBuilder
