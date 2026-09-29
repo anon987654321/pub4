@@ -24,7 +24,7 @@ module Master
       module_function
 
       def daily_limit
-        cfg = Master.load_yaml(File.join(Master::ROOT, "data", "models.yml"))
+        cfg = Master.models_config
         value = cfg&.dig("openrouter", "daily_quota_per_model")
         value.to_i.positive? ? value.to_i : DEFAULT_DAILY
       rescue StandardError => e
