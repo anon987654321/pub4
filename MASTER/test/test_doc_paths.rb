@@ -53,11 +53,11 @@ class TestDocPaths < Minitest::Test
       body = File.read(File.join(REPO, doc))
       assert_includes body, "MASTER/data/soul.yml"
       assert_includes body, "MASTER/data/rules.yml"
-      assert_match(/executable law.*(?:law\\/\\*\\.rb|law\\/\\*\\.rb)/m, body)
+      assert_match(/executable law.*law\/\*\.rb/m, body)
     end
 
     root = File.read(File.join(REPO, "CLAUDE.md"))
-    refute_match(/MASTER\\/data\\/rules\\.yml`? > this file >.*executable law/i, root)
+    refute_match(/MASTER\/data\/rules\.yml`? > this file >.*executable law/i, root)
   end
 
   # Every coding agent reads a different file, and pub4 had one of the five.
