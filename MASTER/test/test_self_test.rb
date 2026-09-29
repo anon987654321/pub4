@@ -89,6 +89,17 @@ class TestSelfTest < Minitest::Test
     end
   end
 
+  def test_real_rubrics_share_dimension_namespace_without_becoming_duplicates
+    singularity = Master::Review::Scan::SelfTest.new(root: Master::ROOT)
+      .call(laws: ["SINGULARITY"]).value!.checks.fetch(0)
+
+    refute singularity.findings.any? do |finding|
+      finding[:message].include?("top-level fact dimensions") &&
+        [File.join(Master::ROOT, "data", "dialogue_rubric.yml"),
+         File.join(Master::ROOT, "data", "visual_rubric.yml")].include?(finding[:path])
+    end
+  end
+
   def test_singularity_allows_independent_rubric_dimensions
     Dir.mktmpdir do |root|
       write_fixture_tree(root)
