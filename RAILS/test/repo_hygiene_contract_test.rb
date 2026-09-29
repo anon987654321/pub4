@@ -126,7 +126,7 @@ class RepoHygieneContractTest < Minitest::Test
 
     assert_includes tracked, "OPENBSD/dns/nsd.conf"
 
-    zones = tracked.grep(%r{\AOPENBSD/var/nsd/zones/master/.+\.zone\z})
+    zones = tracked.grep(%r{\AOPENBSD/dns/zones/master/.+\.zone\z})
     assert_operator zones.size, :>=, 50, "expected the generated zone set, found #{zones.size}"
 
     ungenerated = zones.reject do |rel|
