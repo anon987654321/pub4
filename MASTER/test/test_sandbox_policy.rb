@@ -45,6 +45,34 @@ class TestSandboxPolicy < Minitest::Test
     end
   end
 
+  def test_scope_rejects_explicit_paths_outside_the_workspace
+    root = Dir.mktmpdir("sandbox_scope")
+    assert_equal "execution path escapes workspace: /etc/passwd",
+                 POLICY.scope_violation(%w[cat /etc/passwd], root:)
+    assert_equal "git -C target escapes the workspace",
+                 POLICY.scope_violation(%w[git -C /tmp status], root:)
+    assert_nil POLICY.scope_violation(%w[git status], root:)
+  ensure
+    FileUtils.rm_rf(root) if root
+  end
+
+  def test_scope_rejects_shell_and_inline_interpreter_execution
+    root = Dir.mktmpdir("sandbox_scope")
+    assert_equal "shell execution outside argv scope is forbidden",
+                 POLICY.scope_violation(%w[sh -c echo\ hi], root:)
+    assert_equal "inline interpreter execution is forbidden",
+                 POLICY.scope_violation([RbConfig.ruby, "-e", "File.write('/tmp/x', 'x')"], root:)
+  ensure
+    FileUtils.rm_rf(root) if root
+  end
+
+  def test_scope_allows_workspace_relative_paths
+    root = Dir.mktmpdir("sandbox_scope")
+    assert_nil POLICY.scope_violation(%w[cat lib/example.rb], root:)
+    assert_nil POLICY.scope_violation(%w[git -C . status], root:)
+  ensure
+    FileUtils.rm_rf(root) if root
+  end
   def test_a_word_beginning_with_su_is_not_an_escalation
     ["ruby dilla.rb su_tunnel", "git status --summary", "ls subdir"].each do |cmd|
       refute POLICY.decide(cmd).deny?, "#{cmd} must not be denied"
