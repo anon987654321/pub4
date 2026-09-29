@@ -5,7 +5,7 @@ require "minitest/autorun"
 require "tmpdir"
 require "yaml"
 require_relative "gate_probe_harness"
-require_relative "../../gates/lib/live/page_simulation"
+require_relative "../../gates/lib/page_simulation"
 
 # page_simulation walks every full-page view twice: once as source text, always,
 # and once over HTTP when the app's port is open.
