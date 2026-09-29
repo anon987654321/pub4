@@ -124,6 +124,13 @@ module Master
           return preferred if qualified.empty?
 
           ids = qualified.filter_map { |m| m["id"] }
+          # Operation-constrained routing used to bypass the empirical capability
+          # map entirely. A model that had proven itself for this exact operation
+          # could win ordinary routing and still be ignored by scan_semantic/council.
+          # Keep the static quality floor as the safety boundary, then give an
+          # empirically proven member of that qualified set first position.
+          empirical_best = @capability_map.best_model_for(operation)
+          ids = [empirical_best, *ids].compact.uniq if empirical_best && ids.include?(empirical_best)
           @compute_pool.select(ids, task_type: operation) || preferred
         end
 
