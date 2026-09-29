@@ -10,7 +10,7 @@ module Master
       module_function
 
       def load_lanes
-        raw = (Master.load_yaml(CONFIG_PATH) || {})["auth_profiles"]
+        raw = Master.patterns_config["auth_profiles"]
         return [] unless raw.is_a?(Hash)
 
         Array(raw["lanes"]).select { |row| row.is_a?(Hash) && row["enabled"] != false }
