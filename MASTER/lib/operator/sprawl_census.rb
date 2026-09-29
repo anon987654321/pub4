@@ -201,7 +201,7 @@ module Operator
       repeated = stutter_for(tree, root:)
       vague = vague_names_for(tree, root:)
       duplicates = duplicate_groups_for(tree, root:)
-      deep = deep_paths_for(tree)
+      deep = deep_paths_for(tree, root:)
       members = [
         *lone.map { |path| { path:, rule: "LONE_DIRECTORY", message: "one-file directory candidate" } },
         *repeated.map { |path| { path:, rule: "STUTTER", message: "directory and file repeat the same name" } },
