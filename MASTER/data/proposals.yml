@@ -25,7 +25,7 @@ proposals:
     reason: >
       Wrong on both counts, and the grep that produced it ran from the wrong
       directory. engines/marketplace/config/routes.rb mounts Spree::Core::Engine
-      behind .mountable?, brgen/docs/SOLIDUS_MARKETPLACE.md exists, apps.yml
+      behind .mountable?, brgen/SOLIDUS_MARKETPLACE.md exists, apps.yml
       tracks it, and test/solidus_staging_contract_test.rb passes at HEAD. The
       wiring was deleted and restored inside one session.
     refuted_by: RAILS/test/solidus_staging_contract_test.rb
