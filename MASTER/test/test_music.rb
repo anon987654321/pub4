@@ -3,7 +3,6 @@
 require_relative "test_helper"
 require "master"
 
-# frozen_string_literal: true
 class TestMusicRhythm < Minitest::Test
   def test_grid_counts_steps
     grid = Master::Music::Rhythm.grid(bars: 1)
@@ -17,7 +16,6 @@ class TestMusicRhythm < Minitest::Test
   end
 end
 
-# frozen_string_literal: true
 class TestMusicTheory < Minitest::Test
   def test_minor_scale
     assert_equal %w[C D D# F G G# A#], Master::Music::Theory.scale(root: "C", name: :minor)
@@ -34,7 +32,6 @@ class TestMusicTheory < Minitest::Test
   end
 end
 
-# frozen_string_literal: true
 class TestMusicSynth < Minitest::Test
   def test_writes_valid_wav_for_each_shape
     Dir.mktmpdir do |dir|
