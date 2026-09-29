@@ -31,41 +31,46 @@ every browser leaf.
 | MASTER web | master_web_assets, production, page_sim face/dashboard | Face OK; static offline soft |
 | Integrity | gate_mutation, calibration, constitutional_scan | Solid |
 
-## Gaps a perfectionist would still flag
+## Remaining evidence gates
 
-1. **Authenticated personas** — no signed-in walk of cart checkout, dating
-   matches, sell form submit, amber wardrobe mutations.
-2. **Residual EN chrome** — measured 2026-08-01 instead of guessed at.
-   `chrome_i18n_lint` now has an `aria_label` rule (both `aria-label="…"` and
-   `aria: { label: "…" }`) and reports per kind: empty titles 0, search
-   placeholders 0, hardcoded aria-labels **172** across the three apps and the
-   shared engine. The aria baseline is 172 rather than 0 because closing it
-   needs Norwegian copy, not a regex; it may only ratchet down, and
-   `RAILS/test/chrome_i18n_lint_test.rb` fails both when a kind exceeds its
-   baseline and when a baseline has been beaten and not lowered. Until then, a
-   screen-reader user on `:nb` hears English for those 172 labels — which is the
-   gap, now with a number on it.
-3. **CDP reliability** — long rendered_suite + cold Falcon → timeouts;
-   mobile/keyboard must not green-wash (inconclusive when &lt;3 surfaces
-   measured).
-4. **MASTER face browser leaf** — not first-class in mobile_flow preferred set /
-   geometry_surfaces.
-5. **Auth + :id pages** — page_sim source-only for show/edit; no seeded live
-   IDs.
-6. **visual_contract capture** — needs `VISUAL_CAPTURE=1` + running apps;
-   it now reuses the canonical CDP session rather than a separate browser driver.
-   `/fix RAILS` additionally captures the declared geometry surfaces and feeds the
-   render to the same MASTER Council/repair loop.
-7. **bsdports** — out of product focus triangle but still a Rails app; must
-   appear in family `--all`.
-8. **No server-side perf budget** — `web_vitals_budget` ratchets LCP and CLS
-   on a real load, but nothing fails on p95 server time or payload bytes per
-   route in the crawl manifest.
-9. **No screen-reader path** — landmarks yes; no axe/full a11y tree walk beyond
-   visual_contract capture helpers.
-10. **gate_mutation** does not prove mobile_flow / page_simulation catch defects
-    yet.
+The source and rendered gate machinery now covers the earlier structural gaps. The
+remaining work is evidence that depends on credentials, a live box, or real
+hardware.
 
+1. **Authenticated journeys** — `flow_journey` now contains explicit signed-in
+   checkout, seller, dating-like and Amber wardrobe mutations. They require
+   disposable environment credentials and report missing credentials as
+   inconclusive rather than green.
+2. **Live `:id` coverage** — guest `:id` routes remain unresolved where no safe
+   seeded record can exist. `LiveRecordIds` documents those cases instead of
+   manufacturing identifiers.
+3. **Server performance** — `server_response_budget` now measures p95 response
+   time and response bytes across the same guest crawl used by
+   `PageInventory`, with budgets in `MASTER/data/limits.yml`.
+4. **Screen-reader path** — `accessibility_tree` reads Chrome's computed
+   accessibility tree over representative mobile surfaces. It checks for a
+   main landmark and names on interactive roles.
+5. **Real-device audio** — `MASTER/bin/device-acceptance` is the hardware
+   acceptance runner. It checks the declared voice policy, can record and
+   transcribe a real Android/Termux microphone window, and can verify that a
+   physical iOS device is attached. It does not claim device evidence until the
+   command is actually run on that hardware.
+6. **Rails payment staging** — checkout/payment provider success remains a
+   staging-and-credentials question. The source gates already fail closed around
+   provider configuration, seller readiness and callback integrity.
+
+## Gate status
+
+| Layer | Current state |
+|-------|---------------|
+| Guest page inventory | implemented, including brgen engines, amber, bsdports and MASTER |
+| Authenticated mutations | implemented as credentialed live journeys |
+| Mobile browser floor | implemented and mutation-tested |
+| Screen-reader tree | implemented through Chrome Accessibility CDP |
+| Server p95 time/bytes | implemented as `server_response_budget` |
+| Pixel regression | implemented; live capture remains environment-dependent |
+| Payment e2e | source/staging guards implemented; real provider transaction remains staging evidence |
+| Real Android/iOS audio | acceptance runner implemented; physical-device evidence is runtime work |
 ## Three instrument rules, each paid for
 
 A gate that demands one of several correct outcomes reports the environment as
