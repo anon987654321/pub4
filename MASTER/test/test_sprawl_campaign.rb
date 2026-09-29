@@ -35,6 +35,19 @@ class TestSprawlCampaign < Minitest::Test
     assert_equal [["RAILS", File.join(@root, "RAILS")]], campaign.send(:tree_targets, path)
   end
 
+  def test_shape_reads_the_repository_it_is_given
+    write("MASTER/lib/duplicate_a.rb", "class Duplicate; end\n")
+    write("MASTER/lib/duplicate_b.rb", "class Duplicate; end\n")
+    git("add", ".")
+    git("-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "-m", "duplicates")
+
+    shape = Operator::SprawlCensus.shape("MASTER", root: @root)
+
+    assert_equal 1, shape.fetch(:duplicate_groups)
+    assert_operator shape.fetch(:files), :>, 0
+    assert_includes shape.fetch(:members).map { |row| row[:rule] }, "DUPLICATE_CONTENT"
+  end
+
   def test_shape_score_rewards_real_structural_reduction
     campaign = Master::Fix::SprawlCampaign.new(agent: nil, repo_root: @root)
     before = {
@@ -44,6 +57,21 @@ class TestSprawlCampaign < Minitest::Test
     after = before.merge(files: 9, lone_dirs: 2)
 
     assert_operator campaign.send(:score, before), :>, campaign.send(:score, after)
+  end
+
+  def test_fix_loop_builds_sprawl_campaign_first
+    loop = Master::Fix::FixLoop.allocate
+    sweeps = loop.send(:build_sweeps, agent: nil, root: File.join(@root, "MASTER"), bus: nil)
+
+    assert_instance_of Master::Fix::SprawlCampaign, sweeps.first
+    assert_instance_of Master::Fix::RenameSweep, sweeps[1]
+    assert_instance_of Master::Fix::RestructureSweep, sweeps[2]
+  end
+
+  def test_deep_is_a_fix_flag_not_a_target
+    flags = Master::CLI::CommandRegistry.send(:parse_pass_flags, "--deep RAILS")
+
+    assert_equal "RAILS", flags.last
   end
 
   def test_campaign_prompt_forbids_cross_tree_changes_and_speculation
