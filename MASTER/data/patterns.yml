@@ -721,7 +721,7 @@ closings:
 # Merged from former motd.yml — rotating capability spotlight for boot dmesg (S1407).
 motd:
   spots:
-    - "scan: %{rule_count} rules, self-test on boot"
+    - "scan: %{rule_count} rules, constitutional self-test available"
     - "face: WebGL particle UI at /chat"
     - "council: multi-persona deliberation"
     - "engine: pub4-shared across active Rails apps"
