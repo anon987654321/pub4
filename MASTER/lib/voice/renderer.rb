@@ -59,7 +59,7 @@ module Master
       end
 
       def closing
-        lines = (Master.load_yaml(Master.data_path("patterns.yml")) || {})["closings"]
+        lines = Master.patterns_config["closings"]
         return unless lines.is_a?(Array) && lines.any?
 
         @p.dim(lines.sample)
