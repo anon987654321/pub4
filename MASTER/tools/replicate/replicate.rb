@@ -726,7 +726,7 @@ when "chain"
 
   # The loop itself lives in Chain.run, which takes this block. It is injected
   # so the carry-forward can be tested without spending anything — see
-  # MASTER/tools/test/test_tools_chain.rb, which hands in a recorder and asserts that stage
+  # MASTER/test/tools/test_tools_chain.rb, which hands in a recorder and asserts that stage
   # N+1 is given stage N's file. That is the one thing a chain must get
   # right and the one thing that fails silently: a model handed no image
   # generates from the prompt and returns something plausible.
