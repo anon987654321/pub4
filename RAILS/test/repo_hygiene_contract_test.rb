@@ -165,10 +165,11 @@ class RepoHygieneContractTest < Minitest::Test
       MASTER/tools/postpro/lib/
       MASTER/tools/replicate/lib/
       MASTER/tools/lora/_toolkit/
-      MASTER/tools/bplans/
+      MASTER/data/bplans/
       MASTER/tools/device/
       MASTER/tools/Rakefile
       RAILS/shared/reference/
+      RAILS/tools/
     ]
 
     tracked = git_files(".")
