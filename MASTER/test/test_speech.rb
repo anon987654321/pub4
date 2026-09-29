@@ -206,6 +206,22 @@ class TestSpeech < Minitest::Test
     end
   end
 
+  def test_streaming_falls_back_to_say_when_edge_and_espeak_miss
+    path = File.join(Dir.tmpdir, "m3_stream_say_fallback_test.mp3")
+    Master::Voice::Speech.stub(:attempt_espeak_synthesis, false) do
+      Master::Voice::Speech.stub(:edge_stream_written?, false) do
+        Master::Voice::Speech.stub(:transcendent_stream_written?, false) do
+          Master::Voice::Speech.stub(:attempt_say_synthesis, ->(_text, output_path, _on_chunk) { File.write(output_path, "fake-say-audio"); true }) do
+            assert Master::Voice::Speech.synthesize_streaming_to_file("hello", output_path: path, voice: :jenny, style: :neutral)
+          end
+        end
+      end
+    end
+    assert_equal "fake-say-audio", File.read(path)
+  ensure
+    File.delete(path) if path && File.exist?(path)
+  end
+
   def test_synthesize_falls_back_to_say_when_edge_and_espeak_miss
     Master::Voice::Speech.stub(:try_transcendent_synthesis, [false, nil]) do
       Master::Voice::Speech.stub(:available?, true) do
