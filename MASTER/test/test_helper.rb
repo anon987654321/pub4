@@ -24,6 +24,21 @@ ENV["MASTER_NO_POOL_PROBES"] = "1"
 # The suite is the proof: a test that drives a writing /fix pass must not start
 # the whole suite again from inside it.
 ENV["MASTER_IN_PROOF"] = "1"
+
+# Direct test entrypoints must use the same pinned, private bundle as bin/cli.
+# Otherwise RubyGems can select a host-installed Minitest (or a native gem
+# built against another Ruby) before the suite has a chance to activate MASTER.
+$LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
+require_relative "../lib/boot/dependency_manager"
+test_root = File.expand_path("..", __dir__)
+test_boot = Master::Boot::DependencyManager.new(root: test_root, env: ENV, out: $stderr)
+test_result = test_boot.ensure!
+unless test_result.ok
+  abort("deps0: #{test_result.message}\n#{test_result.output}".strip)
+end
+test_boot.activate_environment!
+require "bundler/setup"
+
 gem "minitest", "~> 5.25"
 require "minitest/autorun"
 require "minitest/mock"
