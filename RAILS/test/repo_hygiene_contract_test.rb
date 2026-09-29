@@ -135,6 +135,31 @@ class RepoHygieneContractTest < Minitest::Test
     assert_empty ungenerated, "hand-written zone file(s) — run `ruby OPENBSD/bin/render_dns.rb`:\n  #{ungenerated.join("\n  ")}"
   end
 
+  def test_removed_sprawl_paths_stay_gone
+    forbidden = %w[
+      MASTER/docs/
+      MASTER/tools/test/
+      MASTER/loop1.mp4
+      MASTER/loop1.gif
+      MASTER/loop2.mp4
+      MASTER/loop2.gif
+      MASTER/tools/readme_take.rb
+      MASTER/gates/probes/
+      OPENBSD/tools/
+      OPENBSD/var/nsd/
+      OPENBSD/dotfiles/
+      OPENBSD/quarantine/
+      OPENBSD/eritel/
+      RAILS/eritel/
+      RAILS/shared/reference/
+    ]
+
+    tracked = git_files(".")
+    forbidden.each do |path|
+      assert_empty tracked.grep(/\\A#{Regexp.escape(path)}/), "removed sprawl path returned: #{path}"
+    end
+  end
+
   def test_openbsd_has_operator_surfaces
     %w[
       OPENBSD/OPERATOR.sh
