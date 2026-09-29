@@ -15,7 +15,6 @@ class RailsStackContractTest < Minitest::Test
     RAILS/brgen
     RAILS/amber
     RAILS/bsdports
-    RAILS/eritel
     MASTER/web
   ].freeze
 
