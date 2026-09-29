@@ -20,12 +20,12 @@ provider failures. Credentials are never repository outputs.
 ### Invocation
 
 Use the tool entrypoints under `MASTER/tools/lora/` or the documented helper
-scripts in `_toolkit/`. Provider work is explicit; local inspection stays
+scripts in `toolkit/`. Provider work is explicit; local inspection stays
 possible without credentials.
 
 ### Architecture
 
-The main tool owns the governed workflow. `_toolkit/` contains provider and
+The main tool owns the governed workflow. `toolkit/` contains provider and
 environment adapters. Subject directories contain subject-specific inputs and
 outputs; shared policy remains in MASTER.
 
@@ -178,7 +178,7 @@ narrow it with `--only`.
 
 24 GB+ GPU (RTX 4090 / A5000 / L4 / A40), PyTorch 2.x + CUDA 12 template,
 50 GB+ disk. `export HF_TOKEN=hf_... SUBJECT=<subject>`, then
-`_toolkit/setup_runpod.sh --train`, then `tmux attach -t <subject>`.
+`toolkit/setup_runpod.sh --train`, then `tmux attach -t <subject>`.
 
 ## Prompt sets
 
@@ -313,7 +313,7 @@ Sources: replicate.com/collections/flux, /docs/guides/extend/working-with-loras,
 ## Layout
 
 A directory at this root is either a subject or starts with `_` and is shared
-by all of them. `_toolkit/` is the pipeline, and every subject uses the one.
+by all of them. `toolkit/` is the pipeline, and every subject uses the one.
 `curate.rb` decides which photographs earn a place and prepares them, and
 `heal.rb` removes a mark from skin in the ungraded original before anything
 grades it. `render_config.rb` writes the training YAML for the machine in use.
@@ -362,7 +362,7 @@ set from the machine or from Drive instead.
 Everything but the three `subject.env` values is shared. Environment knobs are
 `LORA_*` for every subject, such as `LORA_DEVICE`, `LORA_LR`, `LORA_STEPS`,
 `LORA_PROMPT` and `LORA_FLUX_MODEL`, because the directory already chose the
-subject and a knob named after one is not a knob. A `_toolkit/` script run
+subject and a knob named after one is not a knob. A `toolkit/` script run
 directly refuses, since it cannot know which subject was meant.
 
 ## Commands
