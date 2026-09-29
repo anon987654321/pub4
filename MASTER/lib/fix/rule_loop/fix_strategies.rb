@@ -271,8 +271,7 @@ module Master
 
         def routing_model_ids
           @routing_model_ids ||= begin
-            models = Master.load_yaml(File.join(Master::ROOT, "data", "models.yml")) || {}
-            tiers = models.fetch("models", {})
+            tiers = Master.models_config.fetch("models", {})
             {
               strong: first_model_id(tiers["strong"]),
               fast: first_model_id(tiers["fast"] || tiers["cheap"] || tiers["default"]),
