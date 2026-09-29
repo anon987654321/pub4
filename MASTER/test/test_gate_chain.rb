@@ -59,6 +59,13 @@ class TestGateChain < Minitest::Test
     assert_equal ["openbsd", "suites", "ratchets", "sprawl", "council"], scoped
   end
 
+  def test_master_fix_verification_reaches_the_constitutional_self_test
+    suite = G.suite_jobs(%w[MASTER]).find { |job| job.first == "MASTER" }
+    assert_equal [G::RUBY, File.join(G::MASTER, "bin", "check"), "--profile=ci"], suite[1]
+    check_source = File.read(File.join(G::MASTER, "bin", "check"))
+    assert_includes check_source, 'rake["selftest"]'
+  end
+
   def test_every_runtime_stage_uses_the_shared_ruby_selection
     assert_equal Operator::RubyRunner.gate_ruby, G::RUBY
     assert_equal Operator::RubyRunner.bundle_cmd, G::BUNDLE
