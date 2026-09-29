@@ -29,7 +29,7 @@ require "json"
 require "optparse"
 
 ROOT = File.expand_path("../../..", __dir__)
-SPEC = File.join(ROOT, "MASTER/tools/lora/seed_media.yml")
+SPEC = File.join(ROOT, "MASTER/data/lora/seed_media.yml")
 POSTPRO = File.join(ROOT, "MASTER/tools/postpro/postpro.rb")
 
 # Which app owns a key, and where that app keeps its catalogue. brgen's is the
