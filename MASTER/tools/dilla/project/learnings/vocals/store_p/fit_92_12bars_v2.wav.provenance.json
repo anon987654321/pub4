@@ -1,13 +1,13 @@
 {
   "schema": "dilla.render.v1",
-  "note": "Reproduce with: RENDER_SEED=854252256 DILLA_SH_TIMEOUT=520 DILLA_OUTPUT_DIR=/Users/mac/Documents/GitHub/pub4/STUDIO/dilla ruby dilla.rb demo-all",
+  "note": "Reproduce with: RENDER_SEED=854252256 DILLA_SH_TIMEOUT=520 DILLA_OUTPUT_DIR=MASTER/tools/dilla ruby dilla.rb demo-all",
   "render_seed": 854252256,
   "seed_was": "drawn and recorded",
   "command": {
     "argv": [
       "demo-all"
     ],
-    "cwd": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla"
+    "cwd": "MASTER/tools/dilla"
   },
   "engine": {
     "file": "dilla.rb",
@@ -16,7 +16,7 @@
     "ruby": "3.4.9"
   },
   "environment": {
-    "DILLA_OUTPUT_DIR": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla",
+    "DILLA_OUTPUT_DIR": "MASTER/tools/dilla",
     "BARS": "12",
     "SONITEX": "subtle",
     "TRACK": "sonmi451_probe_01",
@@ -214,7 +214,7 @@
   },
   "pinned": {
     "DILLA_SH_TIMEOUT": "520",
-    "DILLA_OUTPUT_DIR": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla"
+    "DILLA_OUTPUT_DIR": "MASTER/tools/dilla"
   },
   "derived": {
     "DILLA_RENDER_SEED": "820928"
