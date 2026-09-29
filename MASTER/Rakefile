@@ -16,7 +16,7 @@ Rake::TestTask.new(:test) do |t|
   # One flat directory, so one glob reaches every test. The suite was split
   # across nine subdirectories this glob did not match, and thirty tests went
   # unasked while `rake test` reported a full run.
-  t.test_files = FileList["test/test_*.rb"].exclude(
+  t.test_files = FileList["test/test_*.rb", "test/tools/test_*.rb"].exclude(
     "test/test_browser.rb",
     "test/test_web_http.rb",
     # rack/test lives in the web bundle, which is not installable on a
