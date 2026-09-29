@@ -14,9 +14,7 @@ module Master
       module_function
 
       def env_vars
-        models_path = File.join(Master::ROOT, "data", "models.yml")
-        models = Master.load_yaml(models_path)
-        vars = models&.dig("openrouter", "keys_env")
+        vars = Master.models_config.dig("openrouter", "keys_env")
         configured = Array(vars).map(&:to_s).reject(&:empty?)
         configured.empty? ? %w[OPENROUTER_API_KEY] : configured
       rescue StandardError => e
