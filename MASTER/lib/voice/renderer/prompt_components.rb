@@ -45,16 +45,17 @@ module Master
         def compact_splash(context)
           status = []
           status << "model: #{short_model(context[:model])}" unless context[:model].to_s.empty?
-          status << "voice: unavailable" unless Master::Voice::Speech.edge_tts_ready?
+          status << "voice: unavailable" if ENV["MASTER_TTS_DEGRADED"] == "1"
           status << "web: ready" if splash_web_url.to_s.include?("http")
+          mode = Master::CLI::RuntimeMode.summary(config: @config).split(", ").first(3).join(", ")
           [
             d("MASTER #{soul_version} ##{context[:build]}"),
             d("    #{context[:user]}@#{context[:host]}:#{@config['root'] || Dir.pwd}"),
             d(status.join("  ")),
-            d("mode: #{Master::CLI::RuntimeMode.summary(config: @config).split(", ").first(3).join(", ")}"),
+            d("mode: #{mode}"),
             "",
             splash_ready_line(context),
-          ].reject { |line| line.to_s.empty? && status.empty? }.join("\n")
+          ].join("\n")
         rescue StandardError
           [
             d("MASTER #{soul_version} ##{context[:build]}"),
@@ -72,9 +73,9 @@ module Master
         end
 
         def state_line(model, **options)
-          bits = ["model0: #{short_model(model)}", "ctx0: #{context_label(options[:tokens], model)}"]
+          bits = ["model: #{short_model(model)}", "ctx: #{context_label(options[:tokens], model)}"]
           violations = options.fetch(:violations, 0).to_i
-          bits << "scan0: #{violations} violations" if violations.positive?
+          bits << "scan: #{violations} violations" if violations.positive?
           d(bits.join(", "))
         end
 
