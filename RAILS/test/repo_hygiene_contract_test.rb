@@ -116,15 +116,15 @@ class RepoHygieneContractTest < Minitest::Test
   # a DNSSEC signing key; .zone.signed, K*.key and *.ds are all derived from one
   # and belong only on the box.
   def test_no_dnssec_key_material_is_tracked
-    secrets = git_files("OPENBSD/var/nsd").grep(/\.private\z|\.zone\.signed\z|\/K[^\/]+\.key\z|\.ds\z/)
+    secrets = git_files("OPENBSD/dns").grep(/\.private\z|\.zone\.signed\z|\/K[^\/]+\.key\z|\.ds\z/)
 
     assert_empty secrets, "DNSSEC key material must never be committed:\n  #{secrets.join("\n  ")}"
   end
 
   def test_every_nsd_zone_file_is_tracked_and_generated
-    tracked = git_files("OPENBSD/var/nsd")
+    tracked = git_files("OPENBSD/dns")
 
-    assert_includes tracked, "OPENBSD/var/nsd/etc/nsd.conf"
+    assert_includes tracked, "OPENBSD/dns/nsd.conf"
 
     zones = tracked.grep(%r{\AOPENBSD/var/nsd/zones/master/.+\.zone\z})
     assert_operator zones.size, :>=, 50, "expected the generated zone set, found #{zones.size}"
