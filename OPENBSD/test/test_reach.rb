@@ -21,7 +21,7 @@ class ReachTest < Minitest::Test
 
   def setup
     @tmp = Dir.mktmpdir("reach")
-    %w[etc/rc.d var/nsd/etc var/nsd/zones/master usr/local/bin bin].each do |d|
+    %w[etc/rc.d dns dns/zones/master usr/local/bin bin].each do |d|
       FileUtils.mkdir_p(File.join(@tmp, d))
     end
     write("etc/crontab.vm23", "PATH=/bin:/usr/local/bin\n")
