@@ -167,11 +167,16 @@ module Master
         violations = @pass_runner.violations(files)
         by_rule = violations.group_by { |v| v[:rule].to_s }.transform_values(&:size)
         by_file = violations.group_by { |v| v[:file].to_s }.transform_values(&:size)
+        sprawl = @sweeps.filter_map do |sweep|
+          next unless sweep.respond_to?(:preview)
+          [sweep.class.name.split("::").last, sweep.preview(target)]
+        end.to_h
         Result.ok(
           total: violations.size,
           rules: by_rule.sort_by { |_, n| -n }.first(10).to_h,
           files: by_file.sort_by { |_, n| -n }.first(10).to_h,
           skipped: @file_collector.skipped,
+          sprawl: sprawl.fetch("SprawlCampaign", {}),
         )
       end
 
