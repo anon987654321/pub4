@@ -4,6 +4,13 @@ require_relative "test_helper"
 require "json"
 
 class TestAiTrajectory < Minitest::Test
+  def test_operator_contract_is_available_from_master_load
+    contract = Master::AI::OperatorContract
+
+    assert_respond_to contract, :prompt
+    assert_respond_to contract, :manifest
+  end
+
   def test_ai_namespace_is_loaded_by_zeitwerk
     assert_equal "Master::AI", Master::AI.name
     assert_respond_to Master::AI::OperatorContract, :prompt
