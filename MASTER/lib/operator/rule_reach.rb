@@ -7,8 +7,8 @@
 # per file. A rule with none of those is law that no configuration can enforce,
 # and it counts toward "225 rules" in every report that quotes the total.
 #
-#   ruby MASTER/tools/rule_reach.rb
-#   ruby MASTER/tools/rule_reach.rb --ratchet
+#   ruby MASTER/lib/operator/rule_reach.rb
+#   ruby MASTER/lib/operator/rule_reach.rb --ratchet
 #
 # The semantic prompt drops info-severity violations deliberately — they double
 # the token cost of every file for findings nobody acts on. That exclusion is a
