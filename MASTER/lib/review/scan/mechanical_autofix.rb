@@ -103,7 +103,7 @@ module Master
         def scanner_rules
           return @scanner.rules if @scanner.respond_to?(:rules)
 
-          Array(@scanner.instance_variable_get(:@rules))
+          []
         end
       end
     end
