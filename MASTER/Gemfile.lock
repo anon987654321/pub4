@@ -260,7 +260,7 @@ DEPENDENCIES
   fiddle
   head_music (~> 15.1)
   midilib (~> 4.0)
-  minitest (>= 5.25)
+  minitest (~> 5.25)
   opentelemetry-sdk (~> 1.11)
   ostruct (~> 0.6)
   pastel (~> 0.8)
