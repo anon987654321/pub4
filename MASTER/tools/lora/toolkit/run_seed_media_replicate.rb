@@ -35,7 +35,7 @@ require "yaml"
 ROOT = File.expand_path("../../..", __dir__)
 require File.join(ROOT, "MASTER/lib/io/replicate_client")
 
-SPEC = File.join(ROOT, "MASTER/tools/lora/seed_media.yml")
+SPEC = File.join(ROOT, "MASTER/data/lora/seed_media.yml")
 POSTPRO = File.join(ROOT, "MASTER/tools/postpro/postpro.rb")
 BASE = Master::Io::ReplicateClient::BASE
 # Published per-image prices, used only to state what a run cost. The
