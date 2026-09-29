@@ -1,20 +1,11 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# One command that reproduces the two Rails workflows locally, without mutating the tree.
+# One local command for the two premerge groups: the Rails app CI entrypoints and
+# the repository layout/inventory gates. It never relies on hosted CI and never
+# repairs the tree while measuring it.
 #
-# Both workflows are workflow_dispatch only, so this is a deliberate local mirror,
-# not a claim that every push runs the same matrix on GitHub. The layout suite and
-# app matrix stay named here because either can be dispatched deliberately.
-#
-# The steps here are not a new opinion about what should be checked. They are
-# the two workflows, in order, and a test asserts that they stay that way — see
-# RAILS/test/premerge_mirrors_ci_test.rb. If a workflow gains a step and this
-# does not, that test fails rather than this quietly checking less.
-#
-# The exit codes follow the gate runner rather than a shell's 0/1, for the
-# reason today's exit-3 work exists: a step that could not run is not a step
-# that passed.
+# The exit codes follow the gate runner rather than a shell's 0/1:
 #
 #   0  every step ran and passed
 #   1  a step ran and failed
