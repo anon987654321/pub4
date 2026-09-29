@@ -3,7 +3,7 @@
 require "minitest/autorun"
 require "tmpdir"
 require_relative "gate_fixture"
-require_relative "../../gates/lib/source/phantom_foreign_keys"
+require_relative "../../gates/lib/phantom_foreign_keys"
 
 # A foreign key pointing at a table name no migration creates.
 #
