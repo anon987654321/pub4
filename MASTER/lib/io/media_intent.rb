@@ -73,10 +73,10 @@ module Master
       end
 
       def postprocess(text, root:)
-        source = text.match(POSTPRO_SUBJECT_RE)&.captures&.first
+        source = downloads_directory if text.match?(/\b(?:my\s+|the\s+)?(?:local\s+)?downloads?(?:\s+folder)?\b/i)
+        source ||= text.match(POSTPRO_SUBJECT_RE)&.captures&.first
         source ||= text.match(POSTPRO_SUBJECT_TOKEN_RE)&.captures&.first
         source ||= text.match(POSTPRO_PATH_TOKEN_RE)&.captures&.first
-        source ||= downloads_directory if text.match?(/\bdownloads?\b/i)
         source ||= text.match(IMAGE_PATH_RE)&.captures&.compact&.first
         return Result.err("postpro: include an existing image file or directory path", category: :validation) if source.to_s.empty?
 
