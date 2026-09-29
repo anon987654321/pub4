@@ -44,14 +44,12 @@ module Master
       end
 
       def provider_config(name)
-        path = File.join(Master::ROOT, "data", "models.yml")
-        providers = Master.load_yaml(path).dig("ferrum_web_chat", "providers") || {}
+        providers = Master.models_config.dig("ferrum_web_chat", "providers") || {}
         providers.fetch(name) { raise ProviderError, "unknown web chat provider: #{name}" }
       end
 
       def ferrum_config
-        path = File.join(Master::ROOT, "data", "models.yml")
-        Master.load_yaml(path).dig("ferrum_web_chat") || {}
+        Master.models_config.dig("ferrum_web_chat") || {}
       end
 
       def profile_path
