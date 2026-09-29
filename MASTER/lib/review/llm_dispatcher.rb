@@ -232,9 +232,36 @@ module Master
       # treat as permanent and skip rather than retry.
       def refusal_before_send(selected_model)
         return Result.err(LaneSilence.message, category: :no_api_key) if LaneSilence.silent?
+
+        reason = forced_lane_unavailable(selected_model)
+        return Result.err(reason[:message], category: reason[:category]) if reason
+
         return if Master.llm_reachable?(selected_model)
 
         Result.err(Master.no_api_key_message, category: :no_api_key)
+      end
+
+      def forced_lane_unavailable(model)
+        return unless @model_router&.respond_to?(:unreachable_reason)
+
+        id = model.to_s
+        return unless id.start_with?("ollama:", "ollama/", "local:")
+
+        reason = @model_router.unreachable_reason(id, wait: false)
+        return if reason.to_s.empty? || reason.to_s.start_with?("checking ")
+
+        category =
+          if reason.start_with?("ollama unreachable")
+            :offline
+          elsif reason.start_with?("ollama pull")
+            :model_missing
+          else
+            :provider_error
+          end
+        { message: reason, category: }
+      rescue StandardError => e
+        @bus&.publish("llm:preflight_error", model: model, error: e.message)
+        nil
       end
 
       # The circuit breaker returns provider failures as Err(:provider_error)
