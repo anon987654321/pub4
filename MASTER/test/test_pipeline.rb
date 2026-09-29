@@ -2,7 +2,7 @@
 
 require_relative "test_helper"
 
-# Pipeline unit tests — Result-monadic chaining and rollback contract.
+# Pipeline unit tests — Result-monadic chaining and deploy-gate contract.
 class TestPipeline < Minitest::Test
   include Master
 
@@ -154,7 +154,7 @@ class TestPipeline < Minitest::Test
     assert_match(/exploded/, result.message)
   end
 
-  def test_rollback_skipped_outside_git_workspace
+  def test_pipeline_error_does_not_mutate_outside_git_workspace
     # In /tmp (no .git), rollback is a no-op — must not crash.
     Dir.mktmpdir do |dir|
       pipe = Master::CLI::Pipeline.new([ErrStage.new(:validation)], root: dir)
@@ -196,7 +196,7 @@ class TestPipeline < Minitest::Test
     end
   end
 
-  def test_tier1_critical_deploy_block_rolls_back_dirty_workspace
+  def test_deploy_failure_does_not_reset_a_dirty_workspace
     Dir.mktmpdir do |dir|
       init_git_repo(dir)
       write_rules(dir)
@@ -212,8 +212,8 @@ class TestPipeline < Minitest::Test
       result = pipe.call(Master::Result.ok(user_message: "deploy now"))
 
       refute result.ok?
-      assert_includes bus.events.map(&:first), "pipeline:rollback"
-      assert_equal "puts :clean\n", File.read(File.join(dir, "lib", "tracked.rb"))
+      refute_includes bus.events.map(&:first), "pipeline:rollback"
+      assert_equal "puts :dirty\n", File.read(File.join(dir, "lib", "tracked.rb"))
     end
   end
 
