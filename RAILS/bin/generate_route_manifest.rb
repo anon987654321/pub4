@@ -9,7 +9,7 @@
 # -- made page_simulation probe 404s and report them as broken pages. Routes are
 # the truth; this file carries them to the gate.
 #
-#   ruby RAILS/tools/generate_route_manifest.rb [app ...]
+#   ruby RAILS/bin/generate_route_manifest.rb [app ...]
 #
 # NAME EVERY APP. This rewrites the whole file rather than merging into it, so
 # regenerating for one app deletes the other two and the next run of
@@ -122,7 +122,7 @@ if $PROGRAM_NAME == __FILE__
   if missing.any? && !ARGV.include?("--partial")
     warn "generate_route_manifest: this REWRITES the whole manifest, so naming " \
          "#{apps.join(", ")} would delete #{missing.join(", ")} from it."
-    warn "  regenerate everything:  ruby RAILS/tools/generate_route_manifest.rb"
+    warn "  regenerate everything:  ruby RAILS/bin/generate_route_manifest.rb"
     warn "  really write a partial: add --partial"
     exit 1
   end
