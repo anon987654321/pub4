@@ -73,11 +73,22 @@ module Master
         window_seconds: 300,
         wait_seconds: 5,
       )
-      return true if result.ok? && result.value!.healthy?
+      if result.ok? && result.value!.healthy?
+        ENV.delete("MASTER_TTS_DEGRADED")
+        ENV.delete("MASTER_TTS_REASON")
+        return true
+      end
+
       reason = result.ok? ? result.value!.message : result.message
-      warn("tts0: degraded — #{reason}")
+      ENV["MASTER_TTS_DEGRADED"] = "1"
+      ENV["MASTER_TTS_REASON"] = reason.to_s[0, 160]
       blocker = Voice::Speech.edge_tts_blocker
-      warn("tts0: edge blocker — #{blocker}") unless blocker.to_s.empty?
+      if ENV["MASTER_CLI_TRACE"] == "1" || ENV["MASTER_BOOT_STATUS"] == "1"
+        warn("tts0: degraded — #{reason}")
+        warn("tts0: edge blocker — #{blocker}") unless blocker.to_s.empty?
+      else
+        warn("voice: unavailable — /doctor")
+      end
       false
     end
 
