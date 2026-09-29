@@ -3,9 +3,9 @@
 require "net/http"
 require "socket"
 require "yaml"
-require_relative "../../../../OPENBSD/lib/deploy_inventory"
-require_relative "../../../../OPENBSD/lib/gate_result"
-require_relative "../../../tools/crawl_support"
+require_relative "../../../OPENBSD/lib/deploy_inventory"
+require_relative "../../../OPENBSD/lib/gate_result"
+require_relative "../../../MASTER/tools/crawl_support"
 require_relative "../support/fleet"
 require_relative "../support/page_inventory"
 
@@ -14,7 +14,7 @@ module Deploy
   # page simulation uses. It measures what the server actually delivered:
   # response time and bytes, before browser work is involved.
   class ServerResponseBudgetGate
-    ROOT = File.expand_path("../../../..", __dir__)
+    ROOT = File.expand_path("../../..", __dir__)
     LIMITS = File.join(ROOT, "MASTER", "data", "limits.yml")
     DEFAULTS = { "p95_ms" => 1500, "p95_bytes" => 1_048_576 }.freeze
 
