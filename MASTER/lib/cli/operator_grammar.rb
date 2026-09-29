@@ -11,7 +11,7 @@ module Master
       REPEAT = /\A(?:again|repeat)(?:\s+(?:that|it))?[.!?]*\z/i
       REPEAT_AGAIN = /\b(?:do|run)\s+(?:that|it)\s+again\b/i
       FOCUS = /\bfocus\s+(?:mode|on|off)\b|\btoggle\s+focus\b/i
-      DIRECT_SHELL_ATOM = /\A(?:pwd|whoami|date|uname(?:\s+-[[:alnum:]-]+)?|ls(?:\s+[[:alnum:]_./~*-]+)*|git\s+(?:status|branch(?:\s+--show-current)?|rev-parse\s+--show-toplevel))\z/i
+      DIRECT_SHELL_ATOM = /\A(?:pwd|whoami|date(?:\s+-u)?|uname(?:\s+-[[:alnum:]-]+)?|ls(?:\s+(?:-[[:alnum:]-]+|[[:alnum:]_./~*-]+))*|git\s+(?:status(?:\s+--short)?|branch(?:\s+--show-current)?|rev-parse\s+--show-toplevel|diff\s+--stat|log\s+(?:-n\s+\d+\s+)?--oneline))\z/i
 
       module_function
 
