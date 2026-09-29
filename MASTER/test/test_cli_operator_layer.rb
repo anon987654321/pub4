@@ -6,6 +6,7 @@ require "cli/turn_router"
 require "cli/session"
 require "cli/routing/model_router/pool"
 require "review/llm_dispatcher"
+require "cli/operator_grammar"
 
 class TestCliOperatorLayer < Minitest::Test
   def test_ollama_down_is_unavailable_during_route_preflight
@@ -62,12 +63,14 @@ class TestCliOperatorLayer < Minitest::Test
   end
 
   def test_direct_shell_accepts_read_only_chains_but_not_pipes
-    cli = Master::CLI::Session.allocate
+    grammar = Master::CLI::OperatorGrammar
 
-    assert cli.send(:direct_shell?, "ls && pwd")
-    assert cli.send(:direct_shell?, "git status; whoami")
-    refute cli.send(:direct_shell?, "ls | cat")
-    refute cli.send(:direct_shell?, "rm -rf /")
+    assert_equal :direct_shell, grammar.parse("ls && pwd").kind
+    assert_equal :direct_shell, grammar.parse("git status; whoami").kind
+    assert_equal :direct_shell, grammar.parse("ls -la").kind
+    assert_equal :direct_shell, grammar.parse("git diff --stat").kind
+    refute grammar.parse("ls | cat")
+    refute grammar.parse("rm -rf /")
   end
 
   def test_repeatable_media_and_duration_are_deterministic
