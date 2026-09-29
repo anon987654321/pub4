@@ -14,6 +14,13 @@ class TestAgentContext < Minitest::Test
     assert_includes text, "first pass on an unfamiliar or broad tree"
   end
 
+  def test_fix_context_is_explicitly_executable
+    text = Operator::AgentContext.fix_context
+    assert_includes text, "MASTER /fix external-agent contract v2"
+    assert_includes text, "Semantic ask rules are executable"
+    assert_includes text, "No deterministic fixer exists"
+  end
+
   def test_tree_mode_skips_runtime_noise
     Dir.mktmpdir("agent-tree") do |root|
       FileUtils.mkdir_p(File.join(root, "src", "nested"))
