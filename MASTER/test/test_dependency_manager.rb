@@ -138,6 +138,15 @@ class TestDependencyManager < Minitest::Test
     assert_equal "1", bundle_env["BUNDLE_DISABLE_SHARED_GEMS"]
   end
 
+  def test_activation_refreshes_rubygems_to_the_master_bundle
+    manager = MANAGER.new(root: Master::ROOT, env: ENV, out: StringIO.new)
+
+    manager.activate_environment!
+
+    assert_equal ENV["GEM_HOME"], Gem.dir
+    assert_includes Gem.path, ENV["GEM_HOME"]
+  end
+
   def test_activation_environment_reuses_the_sanitized_bundle_context
     env = {
       "PATH" => "/bin",
