@@ -1,4 +1,12 @@
 ## Completed in the 2026-09-28 backlog convergence pass
+## Completed in the 2026-09-29 KISS convergence pass
+
+- Boot no longer runs the full constitutional self-test on every startup. `MASTER_BOOT_SELF_TEST=1` is an explicit diagnostic; `rake selftest`, the heartbeat job and the `/fix` verification path retain the actual self-audit instead of duplicating it in critical boot.
+- `SINGULARITY` now owns rule/deploy identity. Cross-file top-level YAML registry duplication remains enforced by the separate `lint:data_singularity` gate, so generic keys such as `dimensions` cannot turn an unrelated registry into a boot failure.
+- `models.yml` has one MASTER reader (`Master.models_config`); runtime routing, WebChat, key rotation, model quota, skip-cache, dispatcher and fix strategy reuse it. Accessor memoization that could leak values across alternate roots was removed.
+- Scanner rules and FixLoop homeostat are accessed through public readers instead of instance-variable reflection; unused FixLoop Reflexion state was removed.
+- The next work remains evidence-first: the real Mac runtime, Rails/browser gates, vm23/OpenBSD, Termux, money/staging, and snapshot regeneration are not claimed complete until watched results exist.
+
 
 # pub4 backlog
 
