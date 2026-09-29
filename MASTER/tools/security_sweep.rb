@@ -130,7 +130,7 @@ def sweep
   end
 
   failures.concat(scan_tracked_secrets)
-  failures
+  [failures, 0]
 end
 
 # Guarded so test/test_security_sweep.rb can require this file and exercise the
@@ -138,7 +138,7 @@ end
 # run the whole sweep and read its output — which is how the rule shipped with a
 # sixteen-hit false-positive rate on translated UI copy.
 if $PROGRAM_NAME == __FILE__
-  failures = sweep
+  failures, = sweep
 
   if failures.any?
     warn "Security sweep failures:"
