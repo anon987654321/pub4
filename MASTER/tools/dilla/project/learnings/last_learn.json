@@ -1,6 +1,6 @@
 {
   "source": "https://www.youtube.com/watch?v=tUYG_pTjMBQ",
-  "stem_dir": "/Users/mac/Documents/GitHub/pub4/studio/dilla/samples/demux/htdemucs_6s/yt_20260727_151404",
+  "stem_dir": "MASTER/tools/dilla/samples/demux/htdemucs_6s/yt_20260727_151404",
   "analyzed_at": "2026-07-27T13:17:57Z",
   "bpm_estimate": 80.0,
   "progression_symbols": [
@@ -37,7 +37,7 @@
   ],
   "stems": {
     "bass.wav": {
-      "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/samples/demux/htdemucs_6s/yt_20260727_151404/bass.wav",
+      "path": "MASTER/tools/dilla/samples/demux/htdemucs_6s/yt_20260727_151404/bass.wav",
       "stem": "bass.wav",
       "bpm_estimate": 85.3,
       "swing_hint": "pushed",
@@ -51,7 +51,7 @@
       }
     },
     "drums.wav": {
-      "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/samples/demux/htdemucs_6s/yt_20260727_151404/drums.wav",
+      "path": "MASTER/tools/dilla/samples/demux/htdemucs_6s/yt_20260727_151404/drums.wav",
       "stem": "drums.wav",
       "bpm_estimate": 80.0,
       "swing_hint": "pushed",
@@ -92,7 +92,7 @@
       }
     },
     "guitar.wav": {
-      "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/samples/demux/htdemucs_6s/yt_20260727_151404/guitar.wav",
+      "path": "MASTER/tools/dilla/samples/demux/htdemucs_6s/yt_20260727_151404/guitar.wav",
       "stem": "guitar.wav",
       "pitch_classes": [
         5,
@@ -180,7 +180,7 @@
       ]
     },
     "other.wav": {
-      "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/samples/demux/htdemucs_6s/yt_20260727_151404/other.wav",
+      "path": "MASTER/tools/dilla/samples/demux/htdemucs_6s/yt_20260727_151404/other.wav",
       "stem": "other.wav",
       "pitch_classes": [
         2,
@@ -274,7 +274,7 @@
       ]
     },
     "piano.wav": {
-      "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/samples/demux/htdemucs_6s/yt_20260727_151404/piano.wav",
+      "path": "MASTER/tools/dilla/samples/demux/htdemucs_6s/yt_20260727_151404/piano.wav",
       "stem": "piano.wav",
       "pitch_classes": [
         7,
@@ -362,7 +362,7 @@
       ]
     },
     "vocals.wav": {
-      "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/samples/demux/htdemucs_6s/yt_20260727_151404/vocals.wav",
+      "path": "MASTER/tools/dilla/samples/demux/htdemucs_6s/yt_20260727_151404/vocals.wav",
       "stem": "vocals.wav",
       "pitch_classes": [
         9,
