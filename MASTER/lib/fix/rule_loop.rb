@@ -308,6 +308,7 @@ module Master
         Line #{violation[:line]}: #{violation[:message]}
         #{ctx[:fix_line]}
         #{visual_fix_context}
+        #{Protocol.rule_prompt(@rule)}
 
         #{SEMANTIC_PASS_CHECKLIST}
 
@@ -348,10 +349,12 @@ module Master
           If any reviewer blocks, return exactly: UNCHANGED
           TEXT
         when :diff
-          "Return a unified diff patch only (like `diff -u`). Fix only the violation.\n" \
-            "If unsafe to autofix, return exactly: UNCHANGED"
+          "Return a unified diff patch only (like `diff -u`). Fix the violation using the smallest evidence-backed change.\n" \
+            "Do not return UNCHANGED merely because no deterministic fixer exists; use AST or semantic reasoning first.\n" \
+            "Return UNCHANGED only when constitutional or verification evidence blocks the repair."
         else
-          "Return ONLY the corrected file. If unsafe to autofix, return exactly: UNCHANGED"
+          "Return ONLY the corrected file. Attempt the repair using semantic or structural reasoning when lexical automation is insufficient.\n" \
+            "Return UNCHANGED only when constitutional or verification evidence blocks a concrete repair attempt."
         end
       end
 
