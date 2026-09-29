@@ -191,6 +191,8 @@ module Master
     0
   end
 
+  require_relative "ai/operator_contract"
+
   loader = Zeitwerk::Loader.new
   loader.push_dir(__dir__, namespace: Master)
   loader.ignore(__FILE__)
