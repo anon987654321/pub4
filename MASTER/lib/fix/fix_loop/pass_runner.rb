@@ -13,6 +13,7 @@ require_relative "pass_runner/stream_stage"
 require_relative "structural_stage"
 require_relative "../transaction"
 require_relative "../resource_budget"
+require_relative "../preflight"
 
 module Master
   module Fix
@@ -34,7 +35,7 @@ module Master
         def initialize(bus:, committer:, conflict_resolver:, llm_router:, rollback:, root:,
                        rules:, agent:, scanner:, learnings:, preamble:,
                        clean_runs_required:, plateau_window:, ground_truth: nil, homeostat: nil, council: nil,
-                       visual_pass: nil, opportunity_pass: nil)
+                       visual_pass: nil, opportunity_pass: nil, preflight: nil)
           @bus = bus
           @committer = committer
           @conflict_resolver = conflict_resolver
@@ -44,6 +45,7 @@ module Master
           @resource_budget = ResourceBudget.new(root:)
           @agent = agent
           @scanner = scanner
+          @preflight = preflight || Preflight.new(root:, bus:)
           @learnings = learnings
           @preamble = preamble
           @rule_order = RuleOrder.new(rules:, learnings:, bus:, root:)
@@ -76,6 +78,8 @@ module Master
           raise "fix scan failed for #{path}: #{result.message}" unless result.ok?
 
           findings = result.value!
+          preflight = @preflight.findings([path])
+          findings = findings + preflight
           @bus&.publish("fix_loop:scan_progress", file: path.delete_prefix("#{@root}/"), count: findings.size) if findings.any?
           findings.select { |finding| Severity.at_least?(finding.fetch(:severity, :warning), :warning) }
                   .map { |finding| Violation.from_finding(finding, file: path.delete_prefix("#{@root}/")) }
