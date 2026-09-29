@@ -88,14 +88,14 @@ module Master
     # and the 2026-08-18 registry fix had to hand-edit all three in step. The
     # next withdrawn-slug swap is one yml line.
     def openrouter_default(root: ROOT)
-      @openrouter_default ||= provider_config(root:).dig("openrouter", "default_model")
+      provider_config(root:).dig("openrouter", "default_model")
     end
 
     # Head of models.grok_primary — the declared :free pool this runtime routes
     # first when an OpenRouter key is present.
     def free_primary_model(root: ROOT)
-      @free_primary_model ||= Master.models_config(root:)
-                              .dig("models", "grok_primary")&.first&.fetch("id")
+      Master.models_config(root:)
+            .dig("models", "grok_primary")&.first&.fetch("id")
     end
 
     # models.yml three_mirror_redundancy.pool — the three models Review::Consensus
@@ -103,8 +103,8 @@ module Master
     # comment saying to keep the two in step by hand, which is the maintenance
     # cost lint:dedup exists to price.
     def three_mirror_pool(root: ROOT)
-      @three_mirror_pool ||= Array(Master.models_config(root:)
-                                   .dig("three_mirror_redundancy", "pool")).map(&:to_s).freeze
+      Array(Master.models_config(root:)
+            .dig("three_mirror_redundancy", "pool")).map(&:to_s).freeze
     end
 
     def api_key_specs(root: ROOT)
