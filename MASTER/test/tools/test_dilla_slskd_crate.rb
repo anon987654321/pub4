@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../dilla/lib/slskd_crate"
+require_relative "../../tools/dilla/lib/slskd_crate"
 
 class TestSlskdCrate < Minitest::Test
   def test_audio_results_filters_non_audio
