@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require_relative "design_tokens"
+require_relative "../../MASTER/tools/design_tokens"
 
 # __dir__ is <repo>/RAILS/tools, so the repo root is two levels up, not
 # three — "../../.." escaped the checkout entirely and crashed on a
