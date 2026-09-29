@@ -103,9 +103,9 @@ module Deploy
         label = "flow:#{id}/#{name}"
         response = begin
           if (path = step["post"])
-            client.post(path, resolve_params(step["params"], credentials), host: step["host"])
+            client.post(resolve_path(path, credentials), resolve_params(step["params"], credentials), host: step["host"])
           else
-            client.get(step.fetch("get"), host: step["host"])
+            client.get(resolve_path(step.fetch("get"), credentials), host: step["host"])
           end
         rescue StandardError => e
           @result.fail("#{label}: #{e.class}: #{e.message}")
@@ -143,6 +143,13 @@ module Deploy
         end
       end
     end
+    # Paths may carry the same environment substitutions as form parameters.
+    # This keeps authenticated :id journeys tied to a disposable seeded record
+    # without inventing ids in git.
+    def resolve_path(path, credentials)
+      path.to_s.gsub(/\$([A-Z][A-Z0-9_]*)/) { credentials.fetch(Regexp.last_match(1), Regexp.last_match(0)) }
+    end
+
 
     def check_step(label, step, response, captures)
       expected = Array(step["expect_status"]).map(&:to_i)
