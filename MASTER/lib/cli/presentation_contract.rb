@@ -33,7 +33,7 @@ module Master
         return text unless text.match?(INTERNAL_EVENT)
 
         event, rest = text.split(/\s+/, 2)
-        label = event.to_s.sub(/\d+\z/, "").tr("_", " ")
+        label = event.to_s.sub(/\d+(?=[:#]\z|\z)/, "").delete_suffix(":").delete_suffix("#").tr("_", " ")
         rest.to_s.empty? ? label : "#{label}: #{rest}"
       end
 
