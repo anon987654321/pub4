@@ -47,7 +47,7 @@ end
 def parse_initial_message_options(argv)
   options = {}
   parser = OptionParser.new do |opts|
-    opts.banner = "Usage: bin/cli [-p PROMPT|-m MSG] [--continue [ID]|--session ID|--fork [ID]|--sessions] [--effort low|medium|high] [--headless] [--fast] [--web|--no-web] [--boot-status]"
+    opts.banner = "Usage: bin/cli [-p PROMPT|-m MSG] [--continue [ID]|--session ID|--fork [ID]|--sessions] [--effort low|medium|high] [--headless] [--fast] [--verbose|--trace] [--web|--no-web] [--boot-status]"
     opts.on("-h", "--help") do
       puts opts
       puts ""
@@ -78,6 +78,12 @@ def parse_initial_message_options(argv)
     opts.on("--web") { ENV["MASTER_WEB"] = "1" }
     opts.on("--no-web") { ENV["MASTER_WEB"] = "0" }
     opts.on("--boot-status") { ENV["MASTER_BOOT_STATUS"] = "1" }
+    opts.on("--verbose", "show live dmesg/tool progress while turns run") { ENV["MASTER_CLI_VERBOSE"] = "1" }
+    opts.on("--trace", "show verbose progress and full boot diagnostics") do
+      ENV["MASTER_CLI_TRACE"] = "1"
+      ENV["MASTER_CLI_VERBOSE"] = "1"
+      ENV["MASTER_BOOT_STATUS"] = "1"
+    end
     opts.on("--fast") do
       ENV["MASTER_FAST"] = "1"
       ENV["MASTER_SKIP_BOOT_SCAN"] = "1"

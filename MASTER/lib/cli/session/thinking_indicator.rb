@@ -80,6 +80,10 @@ module Master
         $stdout.flush
       end
 
+      def verbose_output?
+        ENV["MASTER_CLI_VERBOSE"] == "1" || ENV["MASTER_CLI_TRACE"] == "1"
+      end
+
       def units_console?
         @refs.logging.respond_to?(:listen) && Master::Trace::Dmesg.enabled?
       end
@@ -111,13 +115,15 @@ module Master
       def print_unit_line(line)
         return unless Master::Trace::Dmesg.enabled?
 
+        Master::Voice::Playback.speak(line) if line.match?(MILESTONE)
+        return unless verbose_output?
+
         io = $stdout.isatty ? $stdout : $stderr
         @think_mutex&.synchronize do
           @think_stage = line[/\A[^\s:]+/]
           io.print "\r\e[K" if io.isatty
           io.puts @refs.renderer.render(line, mode: :dim)
         end
-        Master::Voice::Playback.speak(line) if line.match?(MILESTONE)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "cli.print_unit_line", event_bus: @refs.bus)
       end

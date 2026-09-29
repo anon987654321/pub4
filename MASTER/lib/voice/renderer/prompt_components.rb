@@ -27,6 +27,8 @@ module Master
         }.freeze
         def splash(model)
           context = splash_context(model)
+          return compact_splash(context) unless verbose_boot?
+
           lines = [*identity_lines(context), *splash_dmesg_lines, *device_lines_for(context),
                    root_on_line(context)]
           host_status = Master::Ground::HostBudget.status_line
@@ -34,8 +36,35 @@ module Master
           lines.concat(["", splash_ready_line(context)])
           lines.join("\n")
         end
-
         alias banner splash
+
+        def verbose_boot?
+          ENV["MASTER_BOOT_STATUS"] == "1" || ENV["MASTER_CLI_VERBOSE"] == "1" || ENV["MASTER_CLI_TRACE"] == "1"
+        end
+
+        def compact_splash(context)
+          status = []
+          status << "model: #{short_model(context[:model])}" unless context[:model].to_s.empty?
+          status << "voice: unavailable" if ENV["MASTER_TTS_DEGRADED"] == "1"
+          status << "web: ready" if splash_web_url.to_s.include?("http")
+          mode = Master::CLI::RuntimeMode.summary(config: @config).split(", ").first(3).join(", ")
+          [
+            d("MASTER #{soul_version} ##{context[:build]}"),
+            d("    #{context[:user]}@#{context[:host]}:#{@config['root'] || Dir.pwd}"),
+            d(status.join("  ")),
+            d("mode: #{mode}"),
+            "",
+            splash_ready_line(context),
+          ].join("\n")
+        rescue StandardError
+          [
+            d("MASTER #{soul_version} ##{context[:build]}"),
+            d("    #{context[:user]}@#{context[:host]}:#{@config['root'] || Dir.pwd}"),
+            "",
+            splash_ready_line(context),
+          ].join("\n")
+        end
+
 
         # [state line or nil, prompt]. The state line carries what a status bar
         # used to: the caller prints it only when one of its values moves.
@@ -44,9 +73,9 @@ module Master
         end
 
         def state_line(model, **options)
-          bits = ["model0: #{short_model(model)}", "ctx0: #{context_label(options[:tokens], model)}"]
+          bits = ["model: #{short_model(model)}", "ctx: #{context_label(options[:tokens], model)}"]
           violations = options.fetch(:violations, 0).to_i
-          bits << "scan0: #{violations} violations" if violations.positive?
+          bits << "scan: #{violations} violations" if violations.positive?
           d(bits.join(", "))
         end
 

@@ -90,6 +90,8 @@ module Master
       end
 
       def print_capability_stamp(ok)
+        return unless verbose_output?
+
         model = ok.model
         return if model.to_s.empty?
 

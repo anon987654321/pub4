@@ -30,26 +30,36 @@ class TestRenderer < Minitest::Test
     assert_equal 10, FakeRenderer.new(config: {}).dmesg_lines.size
   end
 
-  def test_splash_keeps_multiline_boot_shape
+  def test_splash_is_compact_by_default
+    lines = FakeRenderer.new(config: {}).splash("model").lines
+
+    assert_operator lines.size, :<=, 8
+    assert_empty lines.grep(/boot line/)
+  end
+
+  def test_splash_keeps_multiline_boot_shape_when_verbose
+    ENV["MASTER_BOOT_STATUS"] = "1"
     lines = FakeRenderer.new(config: {}).splash("model").lines
 
     assert_operator lines.size, :>, 10
     assert_operator lines.count { |line| line.include?("boot line") }, :>=, 2
     assert_operator lines.count { |line| line.include?("boot line") }, :<=, 10
+  ensure
+    ENV.delete("MASTER_BOOT_STATUS")
   end
 
   def test_prompt_line_handles_missing_model
     renderer = FakeRenderer.new(config: {})
     state, prompt = renderer.prompt_line(nil, "idle", tokens: 0)
 
-    assert_includes strip_ansi(state), "model0: "
+    assert_includes strip_ansi(state), "model: "
     assert_match(/[%$] \z/, strip_ansi(prompt))
   end
 
   def test_prompt_line_state_shows_context_usage
     state, prompt = FakeRenderer.new(config: {}).prompt_line("model", "idle", tokens: 45_000)
 
-    assert_includes strip_ansi(state), "ctx0: 45.0k/128.0k"
+    assert_includes strip_ansi(state), "ctx: 45.0k/128.0k"
     assert_match(/[%$] \z/, strip_ansi(prompt))
   end
 
@@ -134,9 +144,12 @@ class TestRenderer < Minitest::Test
     refute_equal Master.context_window(named), Master.context_window(configured), "the fixture needs two windows"
 
     renderer = FakeRenderer.new(config: { "model" => configured })
+    ENV["MASTER_BOOT_STATUS"] = "1"
     line = strip_ansi(renderer.splash(named)).lines.find { |l| l.start_with?("model0: ") }
 
     assert_includes line, "1000.0k context"
+  ensure
+    ENV.delete("MASTER_BOOT_STATUS")
   end
 
   def strip_ansi(text)

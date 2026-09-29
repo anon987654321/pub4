@@ -285,7 +285,8 @@ end)
         # names its own failures and is not offline when its daemon is down.
         OFFLINE_SIGNS = ["getaddrinfo", "nodename nor servname", "name or service not known",
                          "temporary failure in name resolution", "network is unreachable",
-                         "no route to host", "enetunreach", "ehostunreach"].freeze
+                         "no route to host", "enetunreach", "ehostunreach",
+                         "connection refused", "ollama unreachable"].freeze
         OFFLINE_RE = Regexp.new(OFFLINE_SIGNS.map { |sign| Regexp.escape(sign) }.join("|"), Regexp::IGNORECASE)
         # A spent subscription reads as a spent balance: codex answers "You've
         # hit your usage limit" until its plan resets, and no retry cures that.
@@ -297,14 +298,17 @@ end)
         # place slept the 30s and 60s backoff while other free models were idle.
         RATE_LIMIT_RE = /rate.?limit|too many requests|\b429\b|overloaded|at capacity/i.freeze
 
+        INVALID_REQUEST_RE = /parameters requires a schema|invalid (?:request|parameter|argument)|malformed request|bad request/i.freeze
+
         def offline_error?(err)
-          message = err.message.to_s
-          !message.start_with?("ollama ") && message.match?(OFFLINE_RE)
+          err.message.to_s.match?(OFFLINE_RE)
         end
 
         def billing_error?(err) = err.message.to_s.match?(BILLING_RE)
 
         def rate_limit_error?(err) = err.message.to_s.match?(RATE_LIMIT_RE)
+
+        def invalid_request_error?(err) = err.message.to_s.match?(INVALID_REQUEST_RE)
 
         def missing_key_error?(err)
           return false if Master.keyless_llm_enabled?
