@@ -14,6 +14,8 @@ The single backlog for the repo. Authority: `MASTER/data/soul.yml` > `MASTER/dat
 
 A finding is a hypothesis. Historical dated sections below are evidence records, not automatically-open work. An item is current only when it appears in the current plan or has been re-measured on the current `main` tree. Close an item by deleting it after the code and its proof land; keep historical evidence in git.
 
+- Direct MASTER test entrypoints now activate the same private Ruby/Bundler context as `bin/cli` before loading SimpleCov or Minitest; Minitest is constrained to `~> 5.25`, preventing a host-installed 6.x release from bypassing the locked suite.
+
 ## Current state — 2026-09-28
 
 - `main` is the authoritative repository baseline. The tree has changed materially since the previous 2026-09-27 audit.
