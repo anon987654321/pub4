@@ -25,7 +25,7 @@ end
 
 options = { skip_closed: true, public: false, browser: false }
 OptionParser.new do |parser|
-  parser.banner = "Usage: ruby RAILS/tools/crawl_probe.rb [--strict] [--public] [--browser]"
+  parser.banner = "Usage: ruby RAILS/bin/crawl_probe.rb [--strict] [--public] [--browser]"
   parser.on("--strict", "Fail when ports are closed (default: skip offline apps)") { options[:skip_closed] = false }
   parser.on("--public", "Crawl public HTTPS URLs from apps.yml domains") { options[:public] = true }
   parser.on("--browser", "Also run Ferrum crawl (MASTER bundle + Chrome)") { options[:browser] = true }
