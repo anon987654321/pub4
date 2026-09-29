@@ -4,8 +4,8 @@
 # The paid lane for seed media: Replicate renders, postpro grades, and a
 # manifest row records both.
 #
-#   ruby MASTER/tools/lora/_toolkit/run_seed_media_replicate.rb --out ~/seed_media
-#   ruby MASTER/tools/lora/_toolkit/run_seed_media_replicate.rb --out ~/seed_media --only KEY,KEY --dry-run
+#   ruby MASTER/tools/lora/toolkit/run_seed_media_replicate.rb --out ~/seed_media
+#   ruby MASTER/tools/lora/toolkit/run_seed_media_replicate.rb --out ~/seed_media --only KEY,KEY --dry-run
 #
 # The Colab lane beside it is free and needs a GPU session and Drive; this one
 # costs money per frame and needs only REPLICATE_API_TOKEN or REPLICATE_API_KEY
