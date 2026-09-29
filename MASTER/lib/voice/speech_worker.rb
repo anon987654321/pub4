@@ -40,7 +40,7 @@ module Master
         # (and a retry then spawned a duplicate on the same output file).
         _out, err, status = Master::Io::Exec.capture3(
           TtsSupervisor.daemon_env(Master::ROOT),
-          Gem.ruby, Speech::WORKER, voice_name, style_config[:rate], style_config[:pitch], audio_path,
+          RbConfig.ruby, Speech::WORKER, voice_name, style_config[:rate], style_config[:pitch], audio_path,
           stdin_data: text.to_s,
           chdir: Master::ROOT,
           timeout:
