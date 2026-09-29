@@ -3,7 +3,7 @@
 require "minitest/autorun"
 require "tmpdir"
 require_relative "gate_fixture"
-require_relative "../../../MASTER/gates/lib/source/frontend_production"
+require_relative "../../../MASTER/gates/lib/frontend_production"
 
 # The application shell, read as text.
 #
