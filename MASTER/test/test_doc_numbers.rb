@@ -10,7 +10,7 @@
 
 require "minitest/autorun"
 require "yaml"
-require_relative "../tools/doc_numbers"
+require_relative "../tools/doc_audit"
 
 class TestDocNumbers < Minitest::Test
   BASELINE = File.expand_path("../data/doc_baselines.yml", __dir__)
