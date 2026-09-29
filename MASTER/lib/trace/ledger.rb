@@ -10,10 +10,9 @@ module Master
       # Feedback mirrors high-signal execution feedback into the SQLite
       # knowledge store so RSI can inspect tool results, corrections, and provider failures.
       class Feedback
-        def initialize(event_bus:, learnings:, rollback: nil)
+        def initialize(event_bus:, learnings:)
           @bus = event_bus
           @learnings = learnings
-          @rollback = rollback
         end
 
         # Set while one dispatcher call runs, once its tool has published its own
@@ -34,8 +33,6 @@ module Master
           @bus&.subscribe("fix_loop:soul_proposal") { |payload| record_improvement(payload) }
           @bus&.subscribe("ops:commit") { |payload| record_commit(payload) }
           @bus&.subscribe("production:evidence") { |payload| record_production_evidence(payload) }
-          @bus&.subscribe("fix_loop:oscillation") { |_payload| trigger_rollback("fix loop oscillation") }
-          @bus&.subscribe("fix_loop:cycle_detected") { |_payload| trigger_rollback("fix loop cycle detected") }
           self
         end
 
@@ -98,13 +95,14 @@ module Master
         end
 
         def record_improvement(payload)
-          root = payload[:root] || payload["root"] || Master::ROOT
           rule_id = payload[:rule] || payload["rule"] || "unknown"
           files = Array(payload[:sample] || payload["sample"]).map { |row| row[:file] || row["file"] }.compact.uniq
-          line = "#{Time.now.utc.strftime("%Y-%m-%d %H:%M")} #{rule_id}: recurring in #{files.join(", ")}\n"
-          path = File.join(root, "runtime", "rsi_improvements.md")
-          FileUtils.mkdir_p(File.dirname(path))
-          File.open(path, "a") { |file| file.write(line) }
+          record(
+            event_type: "fix_improvement",
+            dimension: rule_id,
+            value: files.size,
+            metadata: { files: },
+          )
 
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "Ledger::Feedback.record_improvement", event_bus: @bus)
