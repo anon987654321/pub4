@@ -160,7 +160,7 @@ module Master
         end
         kept.first(keeps * rounds)
       rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "fix.sprawl_campaign", tree:)
+        Master::Ground::Swallow.log(e, context: "fix.sprawl_campaign")
         []
       end
 
