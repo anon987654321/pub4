@@ -242,9 +242,11 @@ module Master
 
         # Increment under lock; true when a snapshot flush is due.
         def tally(context)
-          @mutex.synchronize do          @counts[context] += 1
-          @total += 1
-          (@total % SNAPSHOT_EVERY).zero?
+          @mutex.synchronize do
+            @counts[context] += 1
+            @total += 1
+            (@total % SNAPSHOT_EVERY).zero?
+          end
         end
 
         def flush
