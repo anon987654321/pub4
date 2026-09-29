@@ -144,7 +144,7 @@ class TestDillaSemantics < Minitest::Test
   end
 
   def test_profiles_reach_hate_and_industrial_through_knobs_they_read
-    require File.expand_path("../dilla/lib/ledger", __dir__)
+    require File.expand_path("../../tools/dilla/lib/ledger", __dir__)
     env = S.engine_env(S.profile(:basic_channel))
 
     assert_equal "0", env["HATE_DILLA"]
