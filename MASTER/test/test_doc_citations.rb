@@ -6,7 +6,7 @@
 
 require "minitest/autorun"
 require "yaml"
-require_relative "../tools/doc_citations"
+require_relative "../tools/doc_audit"
 
 class TestDocCitations < Minitest::Test
   def self.report = @report ||= Operator::DocCitations.run
