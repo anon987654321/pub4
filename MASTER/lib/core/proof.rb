@@ -97,6 +97,7 @@ module Master::Core
     def record_evidence(effect, observation)
       remember_write(effect) if effect.verb == :write && observation.ok?
       remember_read(effect) if effect.verb == :read && observation.ok?
+      invalidate_after_unlabelled_exec(effect) if effect.verb == :exec && observation.ok?
       @asked = true if effect.verb == :ask && observation.ok?
       @acted = true if %i[exec git].include?(effect.verb)
       return unless effect.verb == :exec && observation.ok?
@@ -136,8 +137,17 @@ module Master::Core
                .sum { |_kind, found| found.map(&:score).max }
     end
 
-    def remember_write(effect)
+    # An unlabeled exec is an effect whose reach is not known to Proof.
+    # Invalidate earlier evidence before the next done decision. Evidence
+    # producer execs are observational by contract and retain the generation
+    # they are proving.
+    def invalidate_after_unlabelled_exec(effect)
+      return unless effect.args[:evidence].to_s.empty?
+
       @generation += 1
+    end
+
+    def remember_write(effect)      @generation += 1
       tree = effect.args[:path].to_s.split("/").find { |part| Constitution::REPO_TREES.include?(part) }
       @write_trees << tree if tree
       @write_lines += effect.args[:content].to_s.lines.size

@@ -55,7 +55,7 @@ module Master
       WORKFLOW_PATH = Master.limits_path.freeze
 
       def initialize(rules:, agent:, scanner:, root:, axioms: nil, bus: nil, git: nil, learnings: nil,
-                     rollback: nil, incremental: false, ground_truth: nil, preserve_user_intent: nil,
+                     incremental: false, ground_truth: nil, preserve_user_intent: nil,
                      law_resolver: nil, homeostat: nil)
         @rules = rules
         @axioms = axioms
@@ -73,7 +73,7 @@ module Master
 
         @file_collector = FileCollector.new(root:, bus:)
         @rule_order = RuleOrder.new(rules:, learnings:, bus:, root:)
-        @pass_runner = build_pass_runner(rules:, agent:, scanner:, root:, bus:, learnings:, rollback:,
+        @pass_runner = build_pass_runner(rules:, agent:, scanner:, root:, bus:, learnings:,
           ground_truth:, preserve_user_intent:, law_resolver:, homeostat: @homeostat)
         @sweeps = build_sweeps(agent:, root:, bus:)
       end

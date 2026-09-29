@@ -83,7 +83,7 @@ class DashboardController < ApplicationController
   end
 
   def rsi_inbox(root)
-    file_panel(root, %w[runtime/improvements.md runtime/rsi_improvements.md runtime/soul_proposals.md],
+    file_panel(root, %w[data/proposals.yml],
                context: "Dashboard.file_excerpts") do |rel, path|
       { path: rel, bytes: File.size(path), excerpt: File.read(path)[0, 400] }
     end

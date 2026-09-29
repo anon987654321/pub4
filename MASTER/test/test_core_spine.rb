@@ -67,12 +67,22 @@ class TestKernelSpine < Minitest::Test
   # The real lambda the CLI hands in, so the seam is pinned against the actual
   # policy rather than a stand-in that could agree with nothing.
   def test_the_wired_sandbox_denies_a_dangerous_rm_and_allows_a_test_run
-    sandbox = Master::CLI::CoreBridge.send(:shell_sandbox)
+    sandbox = Master::CLI::CoreBridge.send(:shell_sandbox, root: Dir.pwd)
 
     refute_nil sandbox.call(%w[rm -rf /]), "the hardened policy did not deny a recursive force rm"
     assert_nil sandbox.call(%w[bundle exec rake test]), "the fold cannot run its own tests"
   end
 
+  def test_the_wired_sandbox_rejects_explicit_escape_and_inline_code
+    root = Dir.mktmpdir("core_sandbox")
+    sandbox = Master::CLI::CoreBridge.send(:shell_sandbox, root:)
+
+    assert_match(/execution path escapes workspace/, sandbox.call(%w[cat /etc/passwd]))
+    assert_equal "inline interpreter execution is forbidden",
+                 sandbox.call([RbConfig.ruby, "-e", "puts File.read('/etc/passwd')"])
+  ensure
+    FileUtils.rm_rf(root) if root
+  end
   def test_done_without_evidence_is_blocked
     Dir.mktmpdir do |dir|
       model = Model.new([Master::Core::Effect.done("fake")])

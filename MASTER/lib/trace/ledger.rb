@@ -10,10 +10,9 @@ module Master
       # Feedback mirrors high-signal execution feedback into the SQLite
       # knowledge store so RSI can inspect tool results, corrections, and provider failures.
       class Feedback
-        def initialize(event_bus:, learnings:, rollback: nil)
+        def initialize(event_bus:, learnings:)
           @bus = event_bus
           @learnings = learnings
-          @rollback = rollback
         end
 
         # Set while one dispatcher call runs, once its tool has published its own
@@ -34,8 +33,6 @@ module Master
           @bus&.subscribe("fix_loop:soul_proposal") { |payload| record_improvement(payload) }
           @bus&.subscribe("ops:commit") { |payload| record_commit(payload) }
           @bus&.subscribe("production:evidence") { |payload| record_production_evidence(payload) }
-          @bus&.subscribe("fix_loop:oscillation") { |_payload| trigger_rollback("fix loop oscillation") }
-          @bus&.subscribe("fix_loop:cycle_detected") { |_payload| trigger_rollback("fix loop cycle detected") }
           self
         end
 
@@ -98,13 +95,14 @@ module Master
         end
 
         def record_improvement(payload)
-          root = payload[:root] || payload["root"] || Master::ROOT
           rule_id = payload[:rule] || payload["rule"] || "unknown"
           files = Array(payload[:sample] || payload["sample"]).map { |row| row[:file] || row["file"] }.compact.uniq
-          line = "#{Time.now.utc.strftime("%Y-%m-%d %H:%M")} #{rule_id}: recurring in #{files.join(", ")}\n"
-          path = File.join(root, "runtime", "rsi_improvements.md")
-          FileUtils.mkdir_p(File.dirname(path))
-          File.open(path, "a") { |file| file.write(line) }
+          record(
+            event_type: "fix_improvement",
+            dimension: rule_id,
+            value: files.size,
+            metadata: { files: },
+          )
 
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "Ledger::Feedback.record_improvement", event_bus: @bus)
@@ -141,23 +139,8 @@ module Master
           Master::Ground::Swallow.log(e, context: "Ledger::Feedback.record_production_evidence", event_bus: @bus)
         end
 
-        def trigger_rollback(message)
-          return unless @rollback
-
-          error = Struct.new(:category, :message) do
-            def err?
-              true
-            end
-          end.new(:policy, message)
-          @rollback.call(error)
-        rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "Ledger::Feedback.trigger_rollback", event_bus: @bus)
-        end
       end
 
-      # Reflexion captures fix-loop self-correction failures as natural-language
-      # reflections (Reflexion-style episodic memory) so later attempts avoid repeating a
-      # blocked commit. Refs: Shinn et al. Reflexion (arXiv:2303.11366); ReVeal (arXiv:2506.11442).
       class Reflexion
         MAX_REFLECTIONS = 50
 
@@ -260,22 +243,3 @@ module Master
         # Increment under lock; true when a snapshot flush is due.
         def tally(context)
           @mutex.synchronize do
-            @counts[context] += 1
-            @total += 1
-            (@total % SNAPSHOT_EVERY).zero?
-          end
-        end
-
-        def flush
-          path = File.join(@root, LEDGER_PATH)
-          FileUtils.mkdir_p(File.dirname(path))
-          line = JSON.generate(at: Time.now.utc.iso8601, total:, counts: snapshot)
-          File.open(path, "a") { |io| io.write(line, "\n") }
-        rescue StandardError => e
-          # Cannot route through Swallow.log — it recurses into this stream.
-          ::Kernel.warn("swallow_ledger: flush failed — #{e.class}: #{e.message}")
-        end
-      end
-    end
-  end
-end

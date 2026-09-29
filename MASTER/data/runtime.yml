@@ -38,29 +38,24 @@ cognitive_spine:
   - id: context_pressure
     rule: Context pressure measured before escalation, compaction, or topology changes
   landed_subsystems:
-  - path: brain/providers/routing.yml
-    role: declarative provider routing and fallback policy
-  - path: runtime/events/
-    role: append-only cognition/event stream
-  - path: runtime/telemetry/
-    role: failure, correction, latency, token, and context-pressure journals
-  - path: runtime/context_pressure.rb
-    role: cognitive-pressure tracking
-  - path: runtime/experience.rb
-    role: plan/provider/tool-route scoring
-  - path: runtime/event_record.rb
-    role: canonical event record primitive
-  - path: runtime/replay_reader.rb
-    role: replay reader for JSONL event streams
-  - path: runtime/stale_namespace_audit.rb
-    role: post-refactor namespace drift scanner
-  - path: repair/git_history_miner.rb
-    role: commit-history mining for lost repair logic
-  - path: tools/contracts/runtime_event.yml
-    role: contract for append-only event emission
-  - path: data/rules.yml#stale_namespaces
-    role: migration registry for stale constants
-  spine_flow:
+  - path: lib/core.rb
+    role: constitutional fold kernel entrypoint
+  - path: lib/core/
+    role: constitutional fold spine implementations
+  - path: lib/fix/fix_loop.rb
+    role: bounded observe-repair convergence loop
+  - path: lib/io/exec.rb
+    role: bounded subprocess execution primitive
+  - path: lib/trace/ledger.rb
+    role: execution feedback and repair learning ledger
+  - path: lib/ground/runtime_catalog.rb
+    role: canonical runtime catalog reader
+  - path: data/runtime.yml
+    role: canonical runtime catalog source
+  - path: data/rules.yml
+    role: executable constitutional rule registry
+  - path: data/soul.yml
+    role: identity and absolute execution policy  spine_flow:
   - workflow
   - event_record
   - append_only_stream

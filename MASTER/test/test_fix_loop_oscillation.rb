@@ -69,16 +69,16 @@ class TestFixLoopOscillation < Minitest::Test
     end
   end
 
-  class RollbackSpy
+  class CommitterSpy
     attr_reader :calls
 
     def initialize
       @calls = []
     end
 
-    def call(result)
-      @calls << result
-      true
+    def abort_transaction!
+      @calls << :abort
+      Master::Result.ok(:rolled_back)
     end
   end
 
@@ -100,7 +100,7 @@ class TestFixLoopOscillation < Minitest::Test
     FileUtils.remove_entry(@root) if @root && Dir.exist?(@root)
   end
 
-  def build_loop(violations, rollback: nil)
+  def build_loop(violations)
     Master::Fix::FixLoop.new(
       rules: [StubRule.new("TEST_RULE", :warning)],
       agent: OpenCircuitAgent.new,
@@ -134,7 +134,6 @@ class TestFixLoopOscillation < Minitest::Test
 
   def test_oscillation_fires_when_violation_set_repeats
     # Pass 1: snapshot recorded. Pass 2: same snapshot -> oscillation break.
-    rollback = RollbackSpy.new
     loop = build_loop([{ rule: "TEST_RULE", file: "dummy.yml", line: 1, message: "osc" }], rollback:)
     result = loop.run(@root)
 
@@ -164,7 +163,7 @@ class TestFixLoopOscillation < Minitest::Test
     )
 
     refute stagnant
-    assert_empty rollback.calls
+    refute_includes @bus.events.map { |e| e[:event] }, "fix_loop:transaction_rollback"
     assert_empty @bus.events.select { |e| e[:event] == "fix_loop:oscillation" }
   end
 

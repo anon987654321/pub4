@@ -10,7 +10,7 @@ module Master
     module Protocol
       VERSION = 2
       STAGES = %w[load inventory scan semantic repair verify repeat report].freeze
-      TERMINAL_STATES = %w[DONE PLATEAU HUMAN_DECISION BLOCKED VALIDATION_FAILED DELIVERY_FAILED TIMEOUT FAILED].freeze
+      TERMINAL_STATES = %w[DONE PLATEAU HUMAN_DECISION BLOCKED VALIDATION_FAILED DELIVERY_FAILED TIMEOUT FAILED RELOADING].freeze
 
       module_function
 

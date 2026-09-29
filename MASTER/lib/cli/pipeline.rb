@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require_relative "../fix/rollback"
-
 module Master
   module CLI
     class Pipeline
@@ -17,7 +15,6 @@ module Master
         @root = root
         @orchestrator = orchestrator
         @scanner = scanner
-        @rollback = root ? Master::Fix::Rollback.new(root:, bus: @bus) : nil
       end
 
       def call(initial)
@@ -32,7 +29,6 @@ module Master
         publish_complete(final, timings)
         @orchestrator&.checkpoint(workflow_id: wf_id, label: final.ok? ? "ok" : "err")
         @orchestrator&.rotate!(keep_last: 1000)
-        maybe_rollback(final)
         final
       end
 
@@ -149,8 +145,6 @@ module Master
         blocked = check_violation_gates(summary, score)
         return blocked if blocked
 
-        propose_rollback_if_below_block_threshold(score)
-
         return Result.ok(ctx) if score >= evidence_threshold
 
         @bus&.publish("pipeline:blocked", gate: "evidence_score", violations: 0, score:)
@@ -173,13 +167,6 @@ module Master
         nil
       end
 
-      def propose_rollback_if_below_block_threshold(score)
-        block_threshold = evidence_block_threshold
-        return unless score < block_threshold
-
-        @bus&.publish("pipeline:rollback_proposed", gate: "evidence_block", score:, threshold: block_threshold)
-        @rollback&.call(Result.err("evidence score #{score} below block threshold #{block_threshold}", category: :policy))
-      end
 
       def deploy_intent?(ctx)
         [ctx[:user_message], ctx[:message], ctx[:command], ctx[:task_type]].compact.any? { |value| value.to_s.match?(DEPLOY_RE) }
@@ -248,10 +235,6 @@ module Master
           timings: timings.dup,
           stages: timings.keys,
           error: result.err? ? result.message : nil)
-      end
-
-      def maybe_rollback(result)
-        @rollback&.call(result)
       end
 
       def stage_label(stage)

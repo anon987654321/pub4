@@ -134,7 +134,7 @@ module Master
       lean_boot = ENV["MASTER_FULL_BOOT"] != "1"
       core = build_autonomous_core(root:, infra:, agent:, scanner:, axioms:, bus:)
       monitors = build_autonomous_monitors(root:, infra:, agent:, scanner:, bus:, lean_boot:,
-        fix_loop: core[:fix_loop], rollback: core[:rollback])
+        fix_loop: core[:fix_loop])
       core.merge(monitors)
     end
 
@@ -143,27 +143,26 @@ module Master
       git = Io::GitOperations.new(root)
       rules = scanner.rules
       learnings = infra[:learnings]
-      rollback = Fix::Rollback.new(root:, bus:)
-      fix_loop = build_fix_loop(root:, infra:, agent:, scanner:, axioms:, rules:, learnings:, rollback:, bus:, git:)
+      fix_loop = build_fix_loop(root:, infra:, agent:, scanner:, axioms:, rules:, learnings:, bus:, git:)
       watch_loop = build_watch_loop(rules:, agent:, scanner:, root:, bus:, learnings:, fix_loop:)
-      { standing:, git:, rollback:, fix_loop:, watch_loop: }
+      { standing:, git:, fix_loop:, watch_loop: }
     end
 
-    def build_autonomous_monitors(root:, infra:, agent:, scanner:, bus:, lean_boot:, fix_loop:, rollback:)
+    def build_autonomous_monitors(root:, infra:, agent:, scanner:, bus:, lean_boot:, fix_loop:)
       heartbeat = Fix::Heartbeat.new(root:, agent:, scanner:, memory: infra[:memory],
         event_bus: bus, homeostat: infra[:homeostat], fix_loop:)
       triggers = Trace::Triggers.new(event_bus: bus, scanner:, agent:)
       triggers.install_defaults!
       propose_tree = lean_boot ? nil : Fix::ProposeTree.new(root:, agent:, event_bus: bus)
-      subscribe_fix_loop_events(bus:, propose_tree:, rollback:, fix_loop:, lean_boot:)
+      subscribe_fix_loop_events(bus:, propose_tree:, fix_loop:, lean_boot:)
       watcher = build_watcher(bus:, root:)
       { heartbeat:, triggers:, propose_tree:, watcher: }
     end
 
     # MASTER_AUTOFIX=1 enables in-process convergence; off by default to avoid autocommits racing deploys.
-    def build_fix_loop(root:, infra:, agent:, scanner:, axioms:, rules:, learnings:, rollback:, bus:, git:)
+    def build_fix_loop(root:, infra:, agent:, scanner:, axioms:, rules:, learnings:, bus:, git:)
       fix_loop = Fix::FixLoop.new(
-        rules:, axioms:, agent:, scanner:, root:, bus:, git:, learnings:, rollback:,
+        rules:, axioms:, agent:, scanner:, root:, bus:, git:, learnings:,
         incremental: ENV["MASTER_INCREMENTAL"] == "1",
         ground_truth: infra[:ground_truth], preserve_user_intent: infra[:preserve_user_intent],
         law_resolver: infra[:law_resolver], homeostat: infra[:homeostat]
@@ -213,10 +212,8 @@ module Master
       wl
     end
 
-    def subscribe_fix_loop_events(bus:, propose_tree:, rollback:, fix_loop:, lean_boot:)
+    def subscribe_fix_loop_events(bus:, propose_tree:, fix_loop:, lean_boot:)
       subscribe_single_proposer(bus:, propose_tree:) unless lean_boot
-      bus.subscribe("fix_loop:oscillation") { |payload| rollback.call(Master::Result.err("fix loop oscillation", category: :policy)) }
-      bus.subscribe("fix_loop:cycle_detected") { |payload| rollback.call(Master::Result.err("fix loop cycle detected", category: :policy)) }
       bus.subscribe("system:crit") do
         watched_thread(bus, "stop_background") { fix_loop.stop_background! if fix_loop.background_alive? }
       end

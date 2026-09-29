@@ -33,9 +33,7 @@ class TestFeedbackLedger < Minitest::Test
     root = Dir.mktmpdir("feedback_ledger")
     bus = FakeBus.new
     learnings = Master::Ground::KnowledgeStore.new(root:)
-    rollback_calls = []
-    rollback = lambda { |result| rollback_calls << result; true }
-    Master::Trace::Ledger::Feedback.new(event_bus: bus, learnings:, rollback:).attach
+    Master::Trace::Ledger::Feedback.new(event_bus: bus, learnings:).attach
     db = nil
 
     bus.publish("tool:after", { tool: "write_file", exit_code: 0 })
@@ -54,12 +52,9 @@ class TestFeedbackLedger < Minitest::Test
     assert_includes types, "tool_success"
     assert_includes types, "provider_error"
     assert_operator rows.count { |row| row["event_type"] == "tool_success" }, :>=, 2
-    assert_equal 1, rollback_calls.size
-    assert_equal :policy, rollback_calls.first.category
-
-    log = File.join(root, "runtime", "rsi_improvements.md")
-    assert File.exist?(log)
-    assert_match(/T205/, File.read(log))
+    assert_empty Dir.glob(File.join(root, "runtime", "**", "*"))
+    assert_equal 1, rows.count { |row| row["event_type"] == "fix_improvement" }
+    assert_equal "T205", rows.find { |row| row["event_type"] == "fix_improvement" }["dimension"]
 
     phoenix_log = File.join(root, Master::Phoenix::JOURNAL)
     assert File.exist?(phoenix_log)
@@ -102,27 +97,30 @@ class TestFeedbackLedger < Minitest::Test
     FileUtils.remove_entry(root) if root && Dir.exist?(root)
   end
 
-  # The fix loop and the ledger both wrote rsi_improvements.md for one
-  # recurrence, so the log read every improvement twice.
+  # One recurrence event produces one persisted knowledge event. No markdown
+  # sidecar or retired runtime directory is created.
   def test_a_recurring_rule_is_logged_once
     root = Dir.mktmpdir("recurrence_log")
     bus = FakeBus.new
-    rsi_log = File.join(root, "runtime", "rsi_improvements.md")
+    learnings = Master::Ground::KnowledgeStore.new(root:)
     runner = Master::Fix::FixLoop::PassRunner.allocate
     runner.instance_variable_set(:@bus, bus)
     runner.instance_variable_set(:@root, root)
     runner.instance_variable_set(:@rule_recurrence, Hash.new(0))
     recur = -> { 3.times { runner.send(:track_recurrence, [{ rule: "T205", file: "lib/example.rb" }]) } }
 
+    Master::Trace::Ledger::Feedback.new(event_bus: bus, learnings:).attach
     recur.call
-    refute File.exist?(rsi_log), "the fix loop wrote the ledger's log itself"
-
-    Master::Trace::Ledger::Feedback.new(event_bus: bus, learnings: nil).attach
     recur.call
 
-    assert_equal 1, File.readlines(rsi_log).size, "the ledger did not write to the loop's root"
-    assert_equal 2, File.readlines(File.join(root, "runtime", "improvements.md")).size
+    db = SQLite3::Database.new(File.join(root, ".master", "knowledge.sqlite3"))
+    db.results_as_hash = true
+    rows = db.execute("SELECT dimension FROM feedback_events WHERE event_type = 'fix_improvement'")
+    assert_equal ["T205", "T205"], rows.map { |row| row["dimension"] }
+    refute Dir.exist?(File.join(root, "runtime")), "retired runtime namespace was created"
   ensure
+    db&.close
+    learnings&.close
     FileUtils.remove_entry(root) if root && Dir.exist?(root)
   end
 
