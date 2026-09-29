@@ -30,8 +30,8 @@ Before SSH:
   export HF_TOKEN=hf_... SUBJECT=$SUBJECT
 
 On pod:
-  curl -fsSL https://raw.githubusercontent.com/anon987654321/pub4/main/MASTER/tools/lora/_toolkit/setup_runpod.sh | sh
-  # or git clone pub4 and: ./MASTER/tools/lora/_toolkit/setup_runpod.sh --train
+  curl -fsSL https://raw.githubusercontent.com/anon987654321/pub4/main/MASTER/tools/lora/toolkit/setup_runpod.sh | sh
+  # or git clone pub4 and: ./MASTER/tools/lora/toolkit/setup_runpod.sh --train
 EOF
 }
 
