@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require_relative "../../ai/orientation"
+require_relative "../../fix/wishlist"
+
 module Master
   module Review
     class Agent
@@ -65,6 +68,8 @@ module Master
           # constant, never anything the visitor typed -- a note assembled
           # from user input would be an instruction the user wrote for us.
           parts << Fiber[:master_persona_note]
+          root = @config["root"] || Master::ROOT
+          parts << Master::AI::Orientation.render(root:, target: root)
           parts << Master::AI::OperatorContract.prompt
           parts << CLI::SubagentContext.brief
           parts << conversational_register_line if casual_task?
