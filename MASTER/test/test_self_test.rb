@@ -49,16 +49,29 @@ class TestSelfTest < Minitest::Test
     end
   end
 
-  def test_singularity_flags_duplicate_top_level_data_keys
+  def test_singularity_flags_duplicate_top_level_data_facts
     Dir.mktmpdir do |root|
       write_fixture_tree(root)
       File.write(File.join(root, "data", "one.yml"), "alpha:\n  one: true\n")
-      File.write(File.join(root, "data", "two.yml"), "alpha:\n  two: true\n")
+      File.write(File.join(root, "data", "two.yml"), "alpha:\n  one: true\n")
 
       result = Master::Review::Scan::SelfTest.new(root:).call(laws: ["SINGULARITY"])
       singularity = result.value!.checks.fetch(0)
 
-      assert singularity.findings.any? { |finding| finding[:message].include?("top-level key alpha") }
+      assert singularity.findings.any? { |finding| finding[:message].include?("top-level fact alpha") }
+    end
+  end
+
+  def test_singularity_allows_same_key_with_independent_values
+    Dir.mktmpdir do |root|
+      write_fixture_tree(root)
+      File.write(File.join(root, "data", "one.yml"), "law:\n  one: true\n")
+      File.write(File.join(root, "data", "two.yml"), "law:\n  two: true\n")
+
+      result = Master::Review::Scan::SelfTest.new(root:).call(laws: ["SINGULARITY"])
+      singularity = result.value!.checks.fetch(0)
+
+      refute singularity.findings.any? { |finding| finding[:message].include?("top-level fact law") }
     end
   end
 
