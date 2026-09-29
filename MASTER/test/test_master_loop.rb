@@ -88,6 +88,18 @@ class TestMasterLoop < Minitest::Test
   # Full constitutional self-test is an explicit boot diagnostic. The same test remains
   # available through `rake selftest` and the heartbeat job without making the critical
   # application startup path scan every repository law on every launch.
+  def test_strict_boot_is_explicitly_opt_in
+    with_env("MASTER_STRICT_BOOT" => nil) do
+      refute Master::Builder.strict_boot_requested?
+    end
+    with_env("MASTER_STRICT_BOOT" => "0") do
+      refute Master::Builder.strict_boot_requested?
+    end
+    with_env("MASTER_STRICT_BOOT" => "1") do
+      assert Master::Builder.strict_boot_requested?
+    end
+  end
+
   def test_boot_self_test_is_opt_in
     ran = []
     self_test = Object.new
