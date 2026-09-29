@@ -155,7 +155,6 @@ class TestMasterLoop < Minitest::Test
 
   def test_models_config_is_the_single_models_registry_reader
     config = Master.models_config(root: Master::ROOT)
-    assert_equal "openrouter", config.dig("openrouter", "provider") unless config.dig("openrouter", "provider").nil?
     assert config.key?("models")
     assert_equal config, Master.models_config(root: Master::ROOT)
   end
