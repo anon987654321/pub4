@@ -38,6 +38,14 @@ class TestRenderer < Minitest::Test
     assert_operator lines.count { |line| line.include?("boot line") }, :<=, 10
   end
 
+  def test_prompt_line_handles_missing_model
+    renderer = FakeRenderer.new(config: {})
+    state, prompt = renderer.prompt_line(nil, "idle", tokens: 0)
+
+    assert_includes strip_ansi(state), "model0: "
+    assert_match(/[%$] \z/, strip_ansi(prompt))
+  end
+
   def test_prompt_line_state_shows_context_usage
     state, prompt = FakeRenderer.new(config: {}).prompt_line("model", "idle", tokens: 45_000)
 
