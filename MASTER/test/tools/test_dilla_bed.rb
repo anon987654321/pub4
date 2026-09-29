@@ -9,7 +9,7 @@ require "open3"
 # the catalogue voiced, nothing played that the engine did not synthesise, no
 # setting without a reader, and a rendered piece that lands where it should.
 class TestDillaBed < Minitest::Test
-  DILLA_SOURCE = File.read(File.expand_path("../dilla/dilla.rb", __dir__))
+  DILLA_SOURCE = File.read(File.expand_path("../../tools/dilla/dilla.rb", __dir__))
   BED_SOURCE = DILLA_SOURCE[/^module Bed\n.*?^end\n/m]
   # data/bed.yml declares the bed and the piece, and module Composition reads the piece.
   READERS = BED_SOURCE + DILLA_SOURCE[/^module Composition\n.*?^end\n/m]
@@ -166,7 +166,7 @@ end
 class TestDillaComposition < Minitest::Test
   C = Composition
   E = DillaEvents
-  SOURCE = File.read(File.expand_path("../dilla/dilla.rb", __dir__))
+  SOURCE = File.read(File.expand_path("../../tools/dilla/dilla.rb", __dir__))
 
   # The bare invoke is the catalogue, which is what the operator asked demo.wav
   # to be on 2026-09-16: ten to twenty short pieces that are not each other. The
@@ -304,7 +304,7 @@ end
 # the one the table asked for, which is the failure that sounds like success.
 class TestDillaPieces < Minitest::Test
   ROWS = Pieces.rows
-  BED = YAML.load_file(File.expand_path("../dilla/data/bed.yml", __dir__), aliases: true)
+  BED = YAML.load_file(File.expand_path("../../tools/dilla/data/bed.yml", __dir__), aliases: true)
 
   # Sixteen written here plus fifteen read out of the operator's own Ableton
   # sets on 2026-09-16. The ceiling is what a listener will sit through rather
@@ -337,7 +337,7 @@ class TestDillaPieces < Minitest::Test
     families = BED.fetch("families").keys
     racks = BED.fetch("lead").fetch("racks").keys
     consoles = BED.fetch("consoles").keys
-    crate = File.expand_path("../dilla/samples/drums", __dir__)
+    crate = File.expand_path("../../tools/dilla/samples/drums", __dir__)
     ROWS.each do |row|
       bed = row.fetch("bed", {})
       Array(bed["pad_families"]).each { |name| assert_includes families, name, "#{row['name']}: no family #{name}" }
