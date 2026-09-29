@@ -74,8 +74,6 @@ module Master
         @rule_order = RuleOrder.new(rules:, learnings:, bus:, root:)
         @pass_runner = build_pass_runner(rules:, agent:, scanner:, root:, bus:, learnings:, rollback:,
           ground_truth:, preserve_user_intent:, law_resolver:, homeostat: @homeostat)
-        # Wire Ledger::Reflexion for strict self-correction per rules.yml (AK102, self-application)
-        @reflexions = Trace::Ledger::Reflexion.new(event_bus: bus, root:) if bus
         @sweeps = build_sweeps(agent:, root:, bus:)
       end
 
@@ -85,7 +83,6 @@ module Master
       # while a single violation stood, so "fix and commit" scanned and stopped.
       def run(target = @root, max_passes: max_passes_default, budget_seconds: RUN_BUDGET_SECONDS,
               incremental: @incremental, requested: false)
-        @run_mutex ||= Mutex.new
         @run_mutex.synchronize do
           run_unlocked(target, max_passes:, budget_seconds:, incremental:, requested:)
         end
