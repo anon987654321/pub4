@@ -63,7 +63,7 @@ material, not instruments. Nothing is uploaded, and nothing is fetched at render
 time.
 
 The suite is `MASTER/test/tools/test_dilla_*.rb`, which is the glob `rake test:dilla`
-expands in `MASTER/tools/Rakefile`; bare `rake` runs the gate and every suite. Check
+expands in the canonical `MASTER/Rakefile`; bare `rake` runs the gate and every suite. Check
 the path you are given before you trust a green run. This line has been wrong
 twice — once naming a file that had not existed for months, once naming a
 directory that has never existed — and both times it sent an operator to
