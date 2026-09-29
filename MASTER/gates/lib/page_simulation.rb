@@ -22,7 +22,7 @@ module Deploy
   # Personas: guest (Craigslist-style no-signup) and auth (session expected).
   # Scope: focus triangle — brgen · amber · MASTER web.
   class PageSimulationGate
-    ROOT = File.expand_path("../../../..", __dir__)
+    ROOT = File.expand_path("../../..", __dir__)
     REPORT_PATH = File.join(ROOT, "RAILS", "gates", "data", "page_sim_report.yml")
     SNAPSHOT_PATH = File.join(ROOT, "RAILS", "gates", "data", "page_sim_inventory.yml")
 
