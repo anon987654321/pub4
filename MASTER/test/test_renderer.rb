@@ -48,6 +48,23 @@ class TestRenderer < Minitest::Test
     ENV.delete("MASTER_BOOT_STATUS")
   end
 
+  def test_interactive_splash_defaults_to_full_boot_and_blue_surface
+    renderer = FakeRenderer.new(config: {})
+    old_dmesg = ENV["MASTER_DMESG"]
+    ENV.delete("MASTER_DMESG")
+
+    $stdout.stub(:tty?, true) do
+      text = renderer.splash("model")
+
+      assert_includes text, "e[44m"
+      assert_includes text, "e[37m"
+      assert_includes text, "boot line 0"
+      assert_includes text, "root on master0"
+    end
+  ensure
+    ENV["MASTER_DMESG"] = old_dmesg
+  end
+
   def test_prompt_line_handles_missing_model
     renderer = FakeRenderer.new(config: {})
     state, prompt = renderer.prompt_line(nil, "idle", tokens: 0)
