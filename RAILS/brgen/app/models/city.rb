@@ -7,7 +7,7 @@ class City < ApplicationRecord
   has_many :posts, dependent: :nullify
 
   # ActsAsTenant + domain resolution means city is chosen automatically from the request's TLD/domain.
-  # No user-facing city switcher; each city domain (brgen.no, lsangeles.com, oshlo.no, ...) is isolated.
+  # The city network can link to peer apexes, but each request remains isolated to its own tenant.
 
   validates :country_code, presence: true
   validates :domain, presence: true, uniqueness: true
