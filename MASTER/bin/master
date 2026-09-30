@@ -8,6 +8,7 @@ Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
 #
 #   bin/master                          interactive session
 #   bin/master "tighten brgen's feed"   one instruction, then interactive
+#   bin/master --daemon                 persistent vm23 control plane
 #   bin/master --fold "<goal>"          route the goal through the core Fold and exit
 #   echo /status | bin/master           pipe mode
 #
@@ -54,8 +55,21 @@ if ARGV.first == "--help" || ARGV.first == "-h"
       bin/master --fold "<goal>"        route one coding goal through the core Fold
       bin/master --fix-context [target] emit the canonical /fix context for external LLMs
       bin/master --fix-context [target] --full
-      bin/master --fast                 skip optional boot services; one command, then exit
-      echo '/status' | bin/master       pipe mode
+      bin/master --daemon               persistent vm23 control plane
+      bin/master --fast                  skip optional boot services; one command, then exit
+      echo '/status' | bin/master        pipe mode
+
+    vm23 control plane:
+      screen -S master
+      cd /home/dev/pub4
+      bin/master --daemon
+      # detach: Ctrl-A D
+      screen -r master
+
+    --daemon keeps this interactive MASTER process alive and adds the control
+    plane: main is fast-forward synced both ways with origin/main and accepted
+    commits are deployed with OPENBSD/bin/vps-deploy all. Only one MASTER
+    process may run at a time.
 
     Slash commands (/review, /status, /commit, /help, …) work as they do
     in MASTER/bin/cli — this is the same runtime, booted from MASTER/ so that
@@ -70,6 +84,22 @@ end
 # Let MASTER's own tooling find the checkout without recomputing it from a
 # Rails root, which Operator::DeployPaths exists to stop callers doing.
 ENV["PUB4_ROOT"] ||= ROOT
+
+# The vm23 control plane is the one long-lived MASTER process. The lock file is
+# deliberately never deleted; flock(2) releases it on normal exit, crash, or
+# SSH loss, and the next process can acquire it without stale-pid cleanup.
+daemon = ARGV.delete("--daemon")
+ENV["MASTER_CONTROL_PLANE"] = "1" if daemon
+require_relative "../lib/master"
+$MASTER_PROCESS_LOCK = Master::Ops::ProcessLock.acquire!(
+  root: MASTER, mode: daemon ? "control_plane" : "interactive"
+)
+unless $MASTER_PROCESS_LOCK
+  owner = Master::Ops::ProcessLock.owner(File.join(MASTER, ".master", "process.lock"))
+  detail = owner.empty? ? "" : " pid=#{owner["pid"]} host=#{owner["host"]} mode=#{owner["mode"]}"
+  warn "master0: another MASTER process owns the control plane#{detail}"
+  exit 75
+end
 
 # A bare instruction is what a person types; -m is what bin/cli parses. Passing
 # it through as -m keeps quoting behaviour identical whether the instruction has
