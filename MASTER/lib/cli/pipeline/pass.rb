@@ -89,8 +89,8 @@ module Master
             sections << ["stages", "unknown stage: #{@unknown_stages.join(", ")} — " \
                                    "--only takes #{STAGES.join(", ")} (council is a spelling of critique)"]
           end
-          sections.concat(fix_sections(resolved:, shell:, posture:, aesthetic:)) if run?("fix")
-          sections << critique_section(resolved, shell) if critique && run?("critique")
+          sections.concat(fix_sections(resolved:, shell:, posture:, aesthetic:, critique:)) if run?("fix")
+          sections << critique_section(resolved, shell) if critique && run?("critique") && !run?("fix")
           sections << ["principle map", log_phase("map0", "principle_map", nil) { map_line }] if run?("map")
           sections
         end
@@ -117,21 +117,23 @@ module Master
           ["critique", log_phase("crit0", "deliberation", "path=#{shell}") { run_critique(resolved) }]
         end
 
-        # The /fix lifecycle in three sections: what the tree says now, what the
-        # repair did about it, and what the tree says after. Read-only, the
-        # reading is followed by what a repair would take on rather than by a
-        # repair. The council argues inside the repair, not beside it.
+        # The canonical /fix lifecycle is one pass: observe, council critique,
+        # repair, re-observe, prove. In dry-run mode the repair becomes a preview.
+        # Review and critique remain compatibility views over this same pipeline.
         #
         # A writing pass reads its proof first, before the observation's
         # autofix touches the tree, so the proof at the end is judged against
         # what was already failing; and it notes what was dirty then, so what it
         # delivers is only what it changed.
-        def fix_sections(resolved:, shell:, posture:, aesthetic:)
+        def fix_sections(resolved:, shell:, posture:, aesthetic:, critique:)
           if @apply
             baseline = proof_baseline(resolved)
             @start_dirty = repo_git.changed_paths
           end
           sections = [observe_section(title: "observe", unit: "obs0", shell:, aesthetic:)]
+          if critique && !(@only && !@only.include?("critique"))
+            sections << critique_section(resolved, shell)
+          end
           unless @apply
             return sections << ["would repair", log_phase("fix0", "preview", "path=#{shell}") { run_fix_preview(resolved) }]
           end
