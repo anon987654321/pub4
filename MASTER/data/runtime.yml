@@ -55,7 +55,8 @@ cognitive_spine:
   - path: data/rules.yml
     role: executable constitutional rule registry
   - path: data/soul.yml
-    role: identity and absolute execution policy  spine_flow:
+    role: identity and absolute execution policy
+  spine_flow:
   - workflow
   - event_record
   - append_only_stream
@@ -2700,7 +2701,7 @@ style_guides:
     a11y: wcag_2_2_aaa_target
     seo: shared/seo_kit_json_ld_canonical
   gates:
-  - tools/style_gate.rb
+  - bin/style_gate
   - bundle exec rubocop
   - RAILS/shared/bin/rubocop
 tts_phrases:
