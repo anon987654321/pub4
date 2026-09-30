@@ -26,6 +26,17 @@ class GroundRedactorTest < Minitest::Test
     assert_equal "[CYCLE]", scrubbed[:value][0]
   end
 
+  def test_payload_terminates_on_a_hash_array_hash_cycle
+    hash = {}
+    array = []
+    hash[:array] = array
+    array << hash
+
+    scrubbed = Master::Ground::Redactor.payload(hash)
+
+    assert_equal "[CYCLE]", scrubbed[:array][0]
+  end
+
   def test_payload_redacts_note_text_and_sensitive_keys
     scrubbed = Master::Ground::Redactor.payload(
       text: "sk-#{'B' * 24}",
