@@ -1,7 +1,9 @@
-  frozen_string_literal: true
+ 
+# frozen_string_literal: true
 
 require "json"
 require "yaml"
+require_relative "fleet"
 require_relative "../../tools/generate_route_manifest"
 require_relative "brgen_vertical_surfaces"
 
