@@ -33,10 +33,10 @@ module Master
                     else "unknown"
                     end
 
-        "[served: #{id} @#{availability.level_for(id)} | health: #{health_text} | degraded: #{degraded}]"
+        "model0 at master0: served #{id}, level #{availability.level_for(id)}, health #{health_text}, degraded #{degraded}"
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "capability_stamp.render", model:)
-        "[served: #{id} | health: unknown | degraded: unknown]"
+        "model0 at master0: served #{id}, health unknown, degraded unknown"
       end
     end
   end
