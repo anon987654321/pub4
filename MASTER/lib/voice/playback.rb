@@ -227,7 +227,11 @@ module Master
           next if @warned
 
           @warned = true
-          warn "voice: #{message}"
+          if defined?(Master::Trace::Dmesg)
+            Master::Trace::Dmesg.once("voice0", message)
+          else
+            warn "voice0: #{message}"
+          end
         end
       end
     end
