@@ -15,35 +15,36 @@ module Master
         @embedder = embedder
         @threshold = threshold
         @max_entries = max_entries
-        # [{ embedding:, value: }, ...], oldest first
+        # [{ embedding:, value:, scope: }, ...], oldest first. Scope keeps one model/task
+        # from receiving another model/task's semantically similar answer.
         @entries = []
       end
 
       # Value of the nearest stored entry within threshold, or nil on a miss.
-      def nearest(text)
+      def nearest(text, scope: nil)
         vector = embed(text)
         return if vector.nil? || @entries.empty?
 
-        value, score = best_match(vector)
+        value, score = best_match(vector, scope:)
         score && score >= @threshold ? value : nil
       end
 
       # Record a prompt's embedding -> value for future near-hits (oldest evicted past the cap).
-      def remember(text, value)
+      def remember(text, value, scope: nil)
         vector = embed(text)
         return value if vector.nil?
 
-        @entries.push(embedding: vector, value:)
+        @entries.push(embedding: vector, value:, scope:)
         @entries.shift while @entries.size > @max_entries
         value
       end
 
       # Near-hit, or compute via the block and remember it.
-      def fetch(text)
-        hit = nearest(text)
+      def fetch(text, scope: nil)
+        hit = nearest(text, scope:)
         return hit unless hit.nil?
 
-        remember(text, yield)
+        remember(text, yield, scope:)
       end
 
       private
@@ -57,9 +58,10 @@ module Master
         nil
       end
 
-      def best_match(vector)
-        @entries.map { |entry| [entry[:value], @embedder.cosine(vector, entry[:embedding])] }
-                .max_by { |_value, score| score }
+      def best_match(vector, scope: nil)
+        candidates = @entries.select { |entry| scope.nil? || entry[:scope] == scope }
+        candidates.map { |entry| [entry[:value], @embedder.cosine(vector, entry[:embedding])] }
+                  .max_by { |_value, score| score }
       end
     end
   end
