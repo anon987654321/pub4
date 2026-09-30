@@ -180,16 +180,17 @@
     border-radius: 0;
   }
 
-  .style-timeline,
-  .viz-rows,
-  .viz-row {
-    border-block-start: 0;
-    border-block-end: 0;
-    border-inline-start: 0;
+  // Timelines and charts retain their axes/rules: here a line carries
+  // information, not surface decoration.
+
+  .occasion-card--sparse {
+    border: 0;
+    background: color-mix(in srgb, var(--color-warning) 15%, var(--surface-elevated));
   }
 
-  .viz-column-label {
-    border-top: 0;
+  .occasion-card--covered {
+    border: 0;
+    background: color-mix(in srgb, var(--color-success) 10%, var(--surface-elevated));
   }
 
   .amber-editorial-nav,
