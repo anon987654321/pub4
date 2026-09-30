@@ -56,6 +56,11 @@ class TestDevice < Minitest::Test
     ENV.delete("PREFIX")
   end
 
+  def test_android_audio_commands_are_part_of_capability_discovery
+    assert_equal "termux-tts-speak", Device::API_COMMANDS.fetch(:tts)
+    assert_equal "termux-media-player", Device::API_COMMANDS.fetch(:media_player)
+  end
+
   def test_status_is_dmesg_style
     lines = Device.status_lines
     assert lines.first.start_with?("device0:")
