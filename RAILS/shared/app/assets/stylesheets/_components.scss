@@ -19,8 +19,8 @@ form :is(
   inline-size: 100%;
   min-block-size: var(--tap-min);
   padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border: 0;
+  border-radius: 0;
   background: var(--surface);
   color: var(--text);
   font: inherit;
@@ -47,7 +47,7 @@ form :is(
 ):not(.btn):focus-visible {
   outline: var(--focus-ring);
   outline-offset: 1px;
-  border-color: var(--accent);
+  border-color: transparent;
   background: var(--surface-elevated);
 }
 
@@ -114,8 +114,8 @@ form input[type="file"]::file-selector-button {
   min-block-size: var(--tap-min);
   margin-inline-end: var(--space-2);
   padding: 0 var(--control-pad-inline);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-pill);
+  border: 0;
+  border-radius: 0;
   background: var(--text);
   color: var(--bg);
   font: inherit;
@@ -153,8 +153,8 @@ form button[type="submit"]:not(.btn):not([class]) {
   justify-content: center;
   min-block-size: var(--tap-min);
   padding-inline: var(--control-pad-inline);
-  border: 1px solid var(--text);
-  border-radius: var(--radius-pill);
+  border: 0;
+  border-radius: 0;
   background: var(--text);
   color: var(--bg);
   font: inherit;
@@ -185,8 +185,8 @@ dialog {
   max-block-size: calc(100dvh - (var(--space-4) * 2));
   margin: auto;
   padding: 0;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-card);
+  border: 0;
+  border-radius: 0;
   background: var(--surface);
   color: var(--text);
 }
@@ -200,8 +200,8 @@ dialog::backdrop {
   max-inline-size: min(24rem, calc(100vw - var(--space-4)));
   max-block-size: calc(100dvh - (var(--space-4) * 2));
   padding: var(--space-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border: 0;
+  border-radius: 0;
   background: var(--surface);
   color: var(--text);
 }
