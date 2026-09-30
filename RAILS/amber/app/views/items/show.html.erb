@@ -117,6 +117,12 @@
                           outbound_click_merchant_value: suggestion.merchant,
                           outbound_click_surface_value: "shop_the_look" } %>
             <span class="tag"><%= suggestion.source %></span>
+            <% if suggestion.reasons.present? %>
+              <span class="tag"><%= suggestion.reasons.to_sentence %></span>
+            <% end %>
+            <% if suggestion.commerce_key.present? %>
+              <span class="tag"><%= t("commerce_fit.local", default: "BRGEN marketplace") %></span>
+            <% end %>
           </li>
         <% end %>
       </ul>
