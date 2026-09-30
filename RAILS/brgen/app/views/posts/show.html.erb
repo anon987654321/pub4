@@ -105,8 +105,10 @@
   <h2>
     <%= t("comments.submit") %>
     <%= tag.strong Current.user&.guest? ? t("chat.anon") : (Current.user&.username || t("chat.anon")) %>
-    <% unless authenticated? %> · <%= render "shared/post_auth_prompt", post: @post %><% end %>
   </h2>
+  <% unless authenticated? %>
+    <%= render "shared/post_auth_prompt", post: @post, sign_up_path: (respond_to?(:new_user_path) ? new_user_path : new_registration_path) %>
+  <% end %>
   <% if authenticated? || guest? %>
     <%= render "comments/form", comment: @new_comment, commentable: @post %>
   <% end %>

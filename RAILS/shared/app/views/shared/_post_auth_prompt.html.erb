@@ -1,5 +1,10 @@
-<% post = local_assigns.fetch(:post) %>
-<% prompt_id = "post-auth-prompt-#{dom_id(post)}" %>
+<%
+  post = local_assigns.fetch(:post)
+  prompt_id = "post-auth-prompt-#{dom_id(post)}"
+  sign_up_path =
+    local_assigns[:sign_up_path] ||
+    (respond_to?(:new_registration_path) ? new_registration_path : new_user_path)
+%>
 <span class="post-auth-prompt-host">
   <button type="button"
           class="post-auth-prompt-trigger"
@@ -15,7 +20,7 @@
     <p><%= t("post.auth_prompt_body") %></p>
     <div class="post-auth-prompt-actions">
       <%= link_to t("nav.sign_in"), new_session_path, class: "btn btn-primary" %>
-      <%= link_to t("auth.create_account"), new_registration_path, class: "btn btn-ghost" %>
+      <%= link_to t("auth.create_account"), sign_up_path, class: "btn btn-ghost" %>
     </div>
     <p class="post-auth-prompt-note"><%= t("post.auth_prompt_note") %></p>
   </section>
