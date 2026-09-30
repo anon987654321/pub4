@@ -120,7 +120,7 @@ module Master
 
       def read_multiline
         lines = []
-        puts @refs.renderer.render("enter lines, blank line to send", mode: :dim)
+        Master::Trace::Dmesg.status("input0", "enter lines, blank line to send")
         loop do
           inner = safe_read_line("  ")
           break if inner.nil? || inner.strip.empty?
