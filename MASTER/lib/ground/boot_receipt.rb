@@ -178,7 +178,7 @@ module Master
       end
 
       def tts?
-        Voice::Speech.edge_tts_ready?
+        Voice::Speech.available?
       rescue StandardError
         false
       end
