@@ -23,7 +23,7 @@ class SurfaceChromeEndgameContractTest < Minitest::Test
       assert_endpoint_after(source, selector, include_line)
     end
 
-    assert_equal source.strip, source.sub(/\n@include endgame\.brgen;\s*\z/, "").strip + "\n@include endgame.brgen;"
+    assert_match(/\n@include endgame\.brgen;\s*\z/, source)
   end
 
   def test_amber_endgame_is_after_late_luxury_and_messenger_rules
@@ -31,11 +31,11 @@ class SurfaceChromeEndgameContractTest < Minitest::Test
     include_line = "@include endgame.amber;"
 
     [".feed-post {", ".amber-editorial-nav{", ".amber-messenger-composer textarea,.amber-messenger-composer select {",
-     "body[data-surface="luxury"] .item-card--luxury {"].each do |selector|
+     'body[data-surface="luxury"] .item-card--luxury {'].each do |selector|
       assert_endpoint_after(source, selector, include_line)
     end
 
-    assert_equal source.strip, source.sub(/\n@include endgame\.amber;\s*\z/, "").strip + "\n@include endgame.amber;"
+    assert_match(/\n@include endgame\.amber;\s*\z/, source)
   end
 
   def test_endgame_file_has_no_shadow_or_important_vetoes
