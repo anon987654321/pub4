@@ -51,6 +51,20 @@ class SearchPaletteTest < ActionDispatch::IntegrationTest
     refute_includes response.body, leaving.username
   end
 
+  test "the palette exposes the whole city network" do
+    get communities_path
+
+    assert_select ".search_palette_cities .city-network-item", Brgen::DomainRegistry::CITY_NETWORK_DOMAINS.size
+    assert_select ".search_palette_cities a[href='https://lsangeles.com/']", 1
+  end
+
+  test "the mobile More sheet exposes the same city network" do
+    get communities_path
+
+    assert_select ".mobile-sheet-cities .city-network-item", Brgen::DomainRegistry::CITY_NETWORK_DOMAINS.size
+    assert_select "#mobile-sheet-cities-title", 1
+  end
+
   test "the palette form says where it is searching from" do
     get communities_path
 
