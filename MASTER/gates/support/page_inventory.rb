@@ -1,4 +1,3 @@
- 
 # frozen_string_literal: true
 
 require "json"
@@ -8,7 +7,7 @@ require_relative "../../tools/generate_route_manifest"
 require_relative "brgen_vertical_surfaces"
 
 module Deploy
-    Canonical inventory of full-page Rails surfaces for UI/UX simulation.
+  # Canonical inventory of full-page Rails surfaces for UI/UX simulation.
   # Discovers non-partial HTML views under brgen, amber, and MASTER web, then
   # maps each to a host + path + guest/auth persona.
   module PageInventory
