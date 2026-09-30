@@ -11,6 +11,7 @@ class GroundRedactorTest < Minitest::Test
   def test_text_does_not_reenter_through_a_string_subclass
     klass = Class.new(String) do
       define_method(:to_s) { Master::Ground::Redactor.text(self) }
+      define_method(:to_str) { Master::Ground::Redactor.text(self) }
       define_method(:gsub) { |*args| Master::Ground::Redactor.text(self) }
     end
     raw = klass.new("token sk-#{'A' * 24} leaked")
