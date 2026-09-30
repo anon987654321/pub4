@@ -37,6 +37,7 @@ module Master
 
         def accepted_fallback_response(response, attempt, stage_warnings)
           answered = response.model || attempt.fetch(:model)
+          promote_runtime_model(from: attempt.fetch(:model), to: answered)
           publish_llm_success(answered, response)
           @bus&.publish("agent:stage_warnings", warnings: stage_warnings) unless stage_warnings.empty?
           response.with_model(answered)
