@@ -2,6 +2,7 @@
 
 require_relative "test_helper"
 require "tmpdir"
+require "fileutils"
 require "json"
 
 class FixMissionTest < Minitest::Test
@@ -43,6 +44,52 @@ class FixMissionTest < Minitest::Test
       assert_equal "clean", record["summary"]
       assert_equal %w[mission:start mission:stage mission:stage mission:stage mission:finish],
                    bus.events.map(&:first)
+    end
+  end
+
+  def test_v1_mission_migrates_and_resumes_without_losing_identity
+    Dir.mktmpdir do |root|
+      FileUtils.mkdir_p(File.join(root, ".master"))
+      legacy = {
+        "version" => 1,
+        "id" => "legacy-mission",
+        "state" => "running",
+        "stage" => "execute",
+        "goal" => "resume the task",
+        "scope" => root,
+        "model" => "agy:auto",
+        "effort" => "high",
+        "plan" => "inspect then repair",
+        "started_at" => "2026-09-30T20:00:00Z",
+        "finished_at" => nil,
+        "checkpoint" => nil,
+        "artifacts" => ["README.md"],
+        "error" => nil
+      }
+      path = File.join(root, ".master", "mission.json")
+      File.write(path, JSON.pretty_generate(legacy) + "\n")
+
+      migrated = Master::Fix::Mission.current(root:)
+      assert_equal 2, migrated["version"]
+      assert_equal "waiting", migrated["state"]
+      assert_equal "legacy-mission", migrated["id"]
+      assert_equal false, migrated["auto_continue"]
+      assert_nil migrated["lease_owner"]
+
+      mission = Master::Fix::Mission.new(root:).start_or_resume!(
+        goal: "resume the task",
+        scope: root,
+        model: "agy:auto",
+        effort: "high",
+        plan: "inspect then repair"
+      )
+      assert_equal "legacy-mission", mission.id
+      assert_equal "running", mission.record["state"]
+      assert_equal 2, mission.record["attempt_count"]
+
+      persisted = JSON.parse(File.read(path))
+      assert_equal 2, persisted["version"]
+      assert_equal "legacy-mission", persisted["id"]
     end
   end
 
