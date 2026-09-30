@@ -22,7 +22,8 @@ Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
 # includes MASTER alongside whatever was named.
 
 require "open3"
-require_relative "../lib/operator/ruby_runner"\nrequire_relative "../lib/operator/strict_mode"
+require_relative "../lib/operator/ruby_runner"
+require_relative "../lib/operator/strict_mode"
 
 ROOT = File.expand_path("..", __dir__)
 REPO = File.expand_path("..", ROOT)
@@ -32,7 +33,9 @@ BUNDLE = Operator::RubyRunner.bundle_cmd
 # MASTER_SCAN_AUTOFIX gates the deterministic AstFixer pass, which defaults on
 # and would otherwise write before the repair stage is reached.
 # MASTER/gates/lib/constitutional_scan.rb carries the same pair.
-STRICT_ENV = Operator::StrictMode.flags\n\nSAFE_ENV = {
+STRICT_ENV = Operator::StrictMode.flags
+
+SAFE_ENV = {
   "MASTER_SAFE_MODE" => "1",
   "MASTER_BACKGROUND" => "0",
   "MASTER_AUTOFIX" => "0",
@@ -229,11 +232,14 @@ def assert_clean(*paths)
   return if status.success?
 
   changed, = Open3.capture2e("git", "diff", "--name-only", "--", *paths, chdir: REPO)
-  files = changed.split("\n").reject(&:empty?)
+  files = changed.split("
+").reject(&:empty?)
   abort <<~ERR
     err: #{paths.join(", ")} is not clean after the chain — #{files.length} file(s) modified:
-    #{files.first(20).map { |f| "      #{f}" }.join("\n")}
-    #{files.length > 20 ? "      ... and #{files.length - 20} more\n" : ""}
+    #{files.first(20).map { |f| "      #{f}" }.join("
+")}
+    #{files.length > 20 ? "      ... and #{files.length - 20} more
+" : ""}
     The diff is printed above. This is the expected outcome when /fix had work to
     do: review those changes, commit them, and run the gate again. It is only a
     problem if you did not expect /fix to touch them, or if the tree was already
