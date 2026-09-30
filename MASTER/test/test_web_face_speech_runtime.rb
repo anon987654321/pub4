@@ -36,6 +36,17 @@ class FaceSpeechRuntimeSpec < Minitest::Test
     refute_includes bundle, "if (pending.length <= TTS_CHUNK_MAX)"
   end
 
+  def test_retired_partial_tts_path_is_absent
+    source = read("web/public/face_speech_runtime.js")
+    bundle = read("web/public/face.runtime.js")
+    runtime = read("data/runtime.yml")
+
+    refute_includes source, "function tryPartialTTSPlay"
+    refute_includes bundle, "function tryPartialTTSPlay"
+    refute_includes runtime, "tts_audio_stream"
+    refute_includes runtime, "enh_tts_audio_stream"
+  end
+
   def test_no_face_part_exists_outside_the_build_manifest
     rake = read("web/lib/tasks/face_runtime.rake")
     # The task names parts two ways: a range it maps over, and explicit
