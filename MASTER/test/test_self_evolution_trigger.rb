@@ -5,6 +5,8 @@ require "open3"
 
 class TestSelfEvolutionTrigger < Minitest::Test
   def test_skips_when_refactor_is_not_significant
+    previous = ENV["MASTER_SELF_EVOLUTION"]
+    ENV["MASTER_SELF_EVOLUTION"] = "1"
     Dir.mktmpdir do |dir|
       git(dir, "init")
       FileUtils.mkdir_p(File.join(dir, "MASTER", "lib"))
