@@ -75,29 +75,12 @@ module Master
       # The ordinary shell keeps Reline in charge of the prompt. /face opens the
       # dedicated alternate-screen stage when the operator wants the full face.
       def normal_prompt
-        state, prompt = @refs.renderer.prompt_line(
+        _state, prompt = @refs.renderer.prompt_line(
           @refs.agent.model, @refs.session.phase,
           last_ok: @last_ok, violations: violations_count,
           tokens: @refs.session.token_est, cost: @refs.session.cost
         )
-        puts state if state_changed?
         prompt
-      end
-
-      # Context grows every turn, so it counts as movement only by the step —
-      # otherwise the state line would print on every prompt and be a status bar
-      # again.
-      def state_changed?
-        state = {
-          violations: violations_count,
-          model: @refs.agent.model,
-          phase: @refs.session.phase,
-          context: @refs.session.token_est.to_i / CONTEXT_STEP,
-        }
-        return false if @last_status_state == state
-
-        @last_status_state = state
-        true
       end
 
       # An empty line does nothing, as in a shell: Enter never runs an action
