@@ -185,23 +185,6 @@ module Master
         yield result.value!
       end
 
-      # The critique stage of /review. Pipeline::Pass calls it.
-      def dispatch_critique(deliberation:, root:, ctx: nil)
-        arg = arg_for(ctx)
-        return "usage: /critique <file|text>" if arg.empty?
-        path = expand_or_root(arg, root)
-        # respond_to?, not `&.agent` — the safe-navigation operator guards a nil
-        # deliberation but not a deliberation that has no agent (lean
-        # boot, or a test double), which raised NoMethodError from here.
-        has_agent = deliberation.respond_to?(:agent) && deliberation.agent
-        return general_council_critique(deliberation, path) if has_agent && File.exist?(path)
-
-        payload = File.exist?(path) ? snapshot_artifact(path) : arg
-        run_deliberation(deliberation:, payload:, context: "explicit /critique session") do |feedback|
-          TribunalFeedback.new(feedback).render_full
-        end
-      end
-
       # Same persona-panel -> ideation -> cherry-pick pipeline the product
       # critiques (ui/sound/dilla) use, generalized to whatever the scan stage
       # just processed instead of a fixed file list.
