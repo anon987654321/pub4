@@ -138,7 +138,7 @@ end
 # start. This is deliberately local, cheap, and scoped to staged Ruby only.
 if ENV["PUB4_RUBY_PARSE_SKIP"] != "1"
   require "open3"
-  ruby_staged = staged.select { |path| path.end_with?(".rb") }
+  ruby_staged = staged.select { |path| path.end_with?(".rb") && File.file?(path) }
   ruby_staged.each do |path|
     out, status = Open3.capture2e(RbConfig.ruby, "-c", path)
     next if status.success?
