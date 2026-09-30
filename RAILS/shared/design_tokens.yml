@@ -314,6 +314,10 @@ face_root:
     tap-min: 44px
     text-meta: "0.8125rem"
     text-title: "1.25rem"
+    baseline: "4px"
+    measure: "60ch"
+    leading-body: "1.5"
+    leading-title: "1.25"
     radius-xs: "0"
     radius-sm: "0"
     radius-md: "0"
@@ -508,4 +512,3 @@ scale:
       off_scale_tracking: 10
       off_scale_opacity: 29
       off_scale_duration: 30
-
