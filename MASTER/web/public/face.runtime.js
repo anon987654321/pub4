@@ -3112,8 +3112,8 @@ function enqueueSpeech(text, opts = {}) {
     .trim();
   if (!clean) return;
   if (!shouldEnqueueTtsChunk(clean, opts)) return;
-  const _v = speechVoiceForText(decorated);
   const decorated = _quirkifyTts(clean, opts);
+  const _v = speechVoiceForText(decorated);
   applyParalinguisticState(decorated);
   if (tts.meta.size > 32) tts.meta.clear();
   tts.meta.set(decorated, {
