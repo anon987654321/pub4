@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "yaml"
-
 Gem::Specification.new do |spec|
   spec.name    = "master"
   # Release version is canonical at the pub4 root; soul.yml remains the
