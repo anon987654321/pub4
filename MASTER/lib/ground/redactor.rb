@@ -24,18 +24,7 @@ module Master
       end
 
       def self.payload(hash, seen: {}, depth: 0)
-        return "[DEPTH]" if depth >= MAX_DEPTH
-
-        seen.compare_by_identity
-        return "[CYCLE]" if seen.key?(hash)
-
-        seen[hash] = true
-        marked = true
-        hash.each_with_object({}) do |(key, value), out|
-          out[key] = scrub_value(key, value, seen:, depth: depth + 1)
-        end
-      ensure
-        seen.delete(hash) if marked
+        scrub_container(hash, seen:, depth:)
       end
 
       def self.scrub_value(key, value, seen: {}, depth: 0)
@@ -43,10 +32,8 @@ module Master
         return "[DEPTH]" if depth >= MAX_DEPTH && (value.is_a?(Hash) || value.is_a?(Array))
 
         case value
-        when Hash
-          payload(value, seen:, depth:)
-        when Array
-          scrub_array(key, value, seen:, depth:)
+        when Hash, Array
+          scrub_container(value, seen:, depth:)
         when String
           truncate(text(value))
         else
@@ -55,16 +42,64 @@ module Master
       end
 
       def self.scrub_array(key, array, seen:, depth: 0)
+        scrub_container(array, seen:, depth:)
+      end
+
+      def self.scrub_container(value, seen:, depth:)
         return "[DEPTH]" if depth >= MAX_DEPTH
-
         seen.compare_by_identity
-        return "[CYCLE]" if seen.key?(array)
+        return "[CYCLE]" if seen.key?(value)
 
-        seen[array] = true
-        marked = true
-        array.map { |item| scrub_value(key, item, seen:, depth: depth + 1) }
-      ensure
-        seen.delete(array) if marked
+        root = value.is_a?(Hash) ? {} : []
+        seen[value] = true
+        stack = [[:enter, value, root, depth]]
+
+        until stack.empty?
+          phase, source, target, current_depth = stack.pop
+
+          if phase == :leave
+            seen.delete(source)
+            next
+          end
+
+          stack << [:leave, source, target, current_depth]
+
+          if source.is_a?(Hash)
+            source.to_a.reverse_each do |child_key, child_value|
+              if child_key.to_s.match?(SENSITIVE_KEYS)
+                target[child_key] = "[REDACTED]"
+                next
+              end
+
+              assign_container_value(target, child_key, child_value, current_depth + 1, seen, stack)
+            end
+          else
+            source.length.times.to_a.reverse_each do |index|
+              assign_container_value(target, index, source[index], current_depth + 1, seen, stack)
+            end
+          end
+        end
+
+        root
+      end
+
+      def self.assign_container_value(target, key, value, depth, seen, stack)
+        if value.is_a?(Hash) || value.is_a?(Array)
+          if depth >= MAX_DEPTH
+            target[key] = "[DEPTH]"
+          elsif seen.key?(value)
+            target[key] = "[CYCLE]"
+          else
+            nested = value.is_a?(Hash) ? {} : []
+            target[key] = nested
+            seen[value] = true
+            stack << [:enter, value, nested, depth]
+          end
+        elsif value.is_a?(String)
+          target[key] = truncate(text(value))
+        else
+          target[key] = value
+        end
       end
 
       def self.truncate(value)
