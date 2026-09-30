@@ -14,6 +14,7 @@ require "ground/env_loader"
 require "bundler/setup"
 
 require "open3"
+require "pty"
 require "rbconfig"
 require "timeout"
 require "net/http"
@@ -94,6 +95,45 @@ failures << "auth_tier" unless step("auth tier") do
   end
 
   [ok, "visitor/auth/token separation failed"]
+end
+
+failures << "launcher" unless step("bin/ruby bin/cli boot") do
+  ruby_wrapper = File.expand_path("ruby", __dir__)
+  cli = File.expand_path("cli", __dir__)
+  output = +""
+  status = nil
+
+  PTY.spawn(
+    { "MASTER_FAST" => nil, "MASTER_WEB" => "0", "MASTER_SKIP_TTS" => "1",
+      "MASTER_SKIP_BOOT_SCAN" => "1", "MASTER_BACKGROUND" => "0",
+      "MASTER_AUTOFIX" => "0", "MASTER_WATCH" => "0", "MASTER_WATCHER" => "0",
+      "MASTER_HEARTBEAT" => "0" },
+    ruby_wrapper, cli, "--fast",
+  ) do |reader, writer, pid|
+    writer.close
+    deadline = Time.now + PIPE_TIMEOUT_SECONDS
+    loop do
+      break if Process.waitpid(pid, Process::WNOHANG)
+
+      if Time.now >= deadline
+        Process.kill("TERM", pid) rescue nil
+        Process.wait(pid) rescue nil
+        return [false, "launcher boot timed out after #{PIPE_TIMEOUT_SECONDS}s"]
+      end
+
+      output << reader.readpartial(4096) if reader.wait_readable(0.2)
+    rescue Errno::EIO, EOFError
+      break
+    end
+    _, status = Process.waitpid2(pid) unless status
+  ensure
+    writer.close unless writer.closed?
+    reader.close unless reader.closed?
+  end
+
+  [status&.success? && output.match?(/boot0:|ready|master@/i), status&.success? ? nil : output.lines.last&.strip]
+rescue StandardError => e
+  [false, "launcher boot: #{e.class}: #{e.message}"]
 end
 
 failures << "pipe" unless step("pipe command") do
