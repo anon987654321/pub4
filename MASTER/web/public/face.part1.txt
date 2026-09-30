@@ -201,13 +201,13 @@ initUiScale();
 initFocusMode();
 
 const RATE_KEY = 'master:tts-rate';
-const RATES = [0.75, 1.0, 1.25, 1.5, 2.0];
+const RATES = [0.75, 1.0, 1.1, 1.25, 1.5, 2.0];
 function getTtsRate() {
   const v = parseFloat(localStorage.getItem(RATE_KEY));
-  return Number.isFinite(v) && v > 0 ? v : 1.25;
+  return Number.isFinite(v) && v > 0 ? v : 1.0;
 }
 function setTtsRate(r) {
-  const rate = Number.isFinite(r) && r > 0 ? r : 1.25;
+  const rate = Number.isFinite(r) && r > 0 ? r : 1.0;
   localStorage.setItem(RATE_KEY, rate);
   if (window.MASTER_FACE?.tts?.audio) window.MASTER_FACE.tts.audio.playbackRate = rate;
   const el = document.getElementById('tts-rate');
@@ -222,6 +222,7 @@ const VOICE_IDLE_SIGNATURES = {
   'en-GB-RyanNeural': { breath: 0.96, saccade: 0.18, pulse_floor: 0.08, blink_ms: 2800 },
   'nb-NO-FinnNeural': { breath: 1.02, saccade: 0.20, pulse_floor: 0.10, blink_ms: 3000 },
   'en-US-AndrewNeural': { breath: 0.94, saccade: 0.16, pulse_floor: 0.07, blink_ms: 2600 },
+  'en-US-JennyNeural': { breath: 0.98, saccade: 0.14, pulse_floor: 0.07, blink_ms: 3400 },
   'nb-NO-PernilleNeural': { breath: 0.90, saccade: 0.10, pulse_floor: 0.05, blink_ms: 4200 }, // future-human: composed, steady gaze, still baseline, slow deliberate blink
   'en-NG-EzinneNeural': { breath: 1.10, saccade: 0.26, pulse_floor: 0.12, blink_ms: 3400 },
   'en-SG-WayneNeural': { breath: 0.92, saccade: 0.15, pulse_floor: 0.06, blink_ms: 2500 }
