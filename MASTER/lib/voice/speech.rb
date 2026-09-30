@@ -466,7 +466,7 @@ module Master
       def edge_stream_written?(text_str, voice, style_config, output_path, on_chunk)
         return false unless edge_tts_available?
 
-        TtsSupervisor.ensure_daemon!
+        TtsSupervisor.ensure_daemon! unless fast_tts_mode?
         voice_name = VOICES.fetch(voice.to_sym, VOICES[default_voice])
         attempt_socket_synthesis(text_str, voice_name, style_config, output_path, on_chunk) ||
           attempt_oneshot_synthesis(text_str, voice_name, style_config, output_path, on_chunk)

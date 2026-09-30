@@ -78,10 +78,11 @@ module Master
 
       def resolve_socket_path
         sock_path = TtsSupervisor.next_socket
-        unless File.socket?(sock_path)
-          TtsSupervisor.ensure_daemon!
-          sock_path = TtsSupervisor.next_socket
-        end
+        return unless sock_path
+        return sock_path if File.socket?(sock_path)
+
+        TtsSupervisor.ensure_daemon!
+        sock_path = TtsSupervisor.next_socket
         File.socket?(sock_path) ? sock_path : nil
       end
 
