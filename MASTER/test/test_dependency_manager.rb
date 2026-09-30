@@ -63,6 +63,9 @@ class TestDependencyManager < Minitest::Test
 
     assert_includes platforms, "x86_64-openbsd"
     assert_match(/^    sqlite3 \(2\.9\.4\)$/m, source)
+    assert_match(/^    mini_portile2 \(2\.8\.9\)$/m, source)
+    assert_match(/^  sqlite3 \(2\.9\.4\) sha256=[0-9a-f]+$/m, source)
+    assert_match(/^  mini_portile2 \(2\.8\.9\) sha256=[0-9a-f]+$/m, source)
   end
 
   def test_watcher_gems_use_install_if_across_master_bundles
