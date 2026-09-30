@@ -33,14 +33,16 @@ module Operator
 
     def source_population_delta(root, paths)
       tracked = tracked_paths(root)
-      additions = paths.count { |path| source_path?(path) && !tracked.include?(path) }
-      deletions = paths.count { |path| source_path?(path) && tracked.include?(path) && !File.exist?(File.join(root, path)) }
+      statuses = diff_statuses(root)
+      additions = statuses.count { |path, state| source_path?(path) && state.start_with?("A") }
+      deletions = statuses.count { |path, state| source_path?(path) && state.start_with?("D") }
 
-      diff_statuses(root).each do |path, state|
-        next unless source_path?(path)
-
-        additions += 1 if state.start_with?("A")
-        deletions += 1 if state.start_with?("D")
+      additions += paths.count do |path|
+        source_path?(path) && !tracked.include?(path) && !statuses.key?(path)
+      end
+      deletions += paths.count do |path|
+        source_path?(path) && tracked.include?(path) &&
+          !File.exist?(File.join(root, path)) && !statuses.key?(path)
       end
 
       [additions, deletions]
