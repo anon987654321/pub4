@@ -8,6 +8,16 @@ class GroundRedactorTest < Minitest::Test
     assert_equal "token [REDACTED] leaked", Master::Ground::Redactor.text(raw)
   end
 
+  def test_text_does_not_reenter_through_a_string_subclass
+    klass = Class.new(String) do
+      define_method(:to_s) { Master::Ground::Redactor.text(self) }
+      define_method(:gsub) { |*args| Master::Ground::Redactor.text(self) }
+    end
+    raw = klass.new("token sk-#{'A' * 24} leaked")
+
+    assert_equal "token [REDACTED] leaked", Master::Ground::Redactor.text(raw)
+  end
+
   def test_payload_terminates_on_a_self_referential_hash
     raw = {}
     raw[:child] = raw
