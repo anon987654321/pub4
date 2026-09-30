@@ -13,6 +13,8 @@ class ChromeAuditFlatContractTest < Minitest::Test
     source = read("shared/app/assets/stylesheets/_components.scss")
     assert_includes source, "border: 0;"
     assert_includes source, "outline: var(--focus-ring);"
+    assert_includes source, "outline: 2px solid var(--danger);"
+    assert_includes source, "color-mix(in srgb, var(--danger) 8%, var(--surface))"
   end
 
   def test_auth_and_promo_surfaces_do_not_reintroduce_container_borders

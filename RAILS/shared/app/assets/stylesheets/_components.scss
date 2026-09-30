@@ -102,7 +102,9 @@ form :is(
   select,
   textarea
 ):not(.btn):user-invalid {
-  border-color: var(--danger);
+  outline: 2px solid var(--danger);
+  outline-offset: 1px;
+  background: color-mix(in srgb, var(--danger) 8%, var(--surface));
 }
 
 form :is(input[type="file"], input[type="range"], input[type="color"]) {
