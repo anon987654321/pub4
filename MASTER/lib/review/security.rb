@@ -139,7 +139,8 @@ module Master
         end
 
         def injection_data
-          merged = Master.law("injection")
+          rules = Master.load_rules(root: Master::ROOT) || {}
+          merged = rules["injection"]
           merged if merged.is_a?(Hash) && !merged.empty?
         end
       end
