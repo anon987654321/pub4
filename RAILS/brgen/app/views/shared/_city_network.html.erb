@@ -1,0 +1,15 @@
+<% container_class = local_assigns.fetch(:container_class, "city-network") %>
+<section class="<%= container_class %>" aria-labelledby="city-network-title">
+  <h2 id="city-network-title" class="city-network-heading"><%= t("nav.cities") %></h2>
+  <nav class="city-network-list" aria-label="<%= t("nav.cities") %>">
+    <% city_network_entries.each do |entry| %>
+      <% if entry.domain == Current.domain %>
+        <span class="city-network-item" aria-current="page"><%= entry.city %></span>
+      <% else %>
+        <%= link_to entry.city, city_network_href(entry),
+                    class: "city-network-item",
+                    aria: { label: "#{entry.city} (#{entry.domain})" } %>
+      <% end %>
+    <% end %>
+  </nav>
+</section>
