@@ -8,7 +8,7 @@ class TestEnforcementWiring < Minitest::Test
     def output_context(_mode) = :routine
   end
 
-  def test_render_annotates_blocking_findings
+  def test_render_reports_blocking_findings
     checker = Master::Review::OutputCheck.new("hallucination" => ["created phantom"])
     renderer = FakeRenderer.new([])
     stage = Master::CLI::Stages::Render.new(renderer:, output_check: checker)
@@ -23,7 +23,7 @@ class TestEnforcementWiring < Minitest::Test
   # Both directions, because the guard was inert for as long as it was: a
   # reply that claims work with no evidence must reach the annotation, and one
   # that shows its work must not.
-  def test_render_annotates_an_unevidenced_completion_claim
+  def test_render_reports_an_unevidenced_completion_claim
     result = render_through_guard("I removed the dead file.")
 
     assert_equal "I removed the dead file.", result.value!.rendered
@@ -34,7 +34,7 @@ class TestEnforcementWiring < Minitest::Test
   def test_render_leaves_an_evidenced_reply_alone
     result = render_through_guard("I removed the dead file.\n$ git rm lib/x.rb\nexit code: 0")
 
-    refute_match(/output warning/, result.value!.rendered)
+    refute_includes result.value!.rendered, "output warning"
     assert_empty result.value!.output_findings
   end
 
