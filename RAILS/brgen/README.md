@@ -51,6 +51,7 @@ and is labelled in the UI. It is never payable inventory.
 at a different tree than the one the code was loaded from.
 
 #
+
 ## Commerce distribution
 
 The marketplace exposes a Google Merchant Center product feed at
@@ -74,6 +75,7 @@ curl -fsS http://127.0.0.1:38182/health
 ## Vertical engines
 
 <!-- doc_paths: ignore -->
+
 # brgen verticals as mountable engines
 
 brgen is one Falcon process. The main feed lives at the city apex. Each vertical
@@ -257,6 +259,7 @@ The gateway binds `127.0.0.1:6667` and starts nothing on its own. To expose it:
   latency and DB load at scale.
 - DMs (`PRIVMSG` to a nick) aren't bridged yet — channels only.
 - Per-nick bridged `User` rows accumulate; add a sweep like guest pruning.
+
 ## Goal
 
 Markedsplass (`marketplace.*` / `markedsplass.brgen.no`) keeps its seller and order

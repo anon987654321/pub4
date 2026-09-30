@@ -36,4 +36,3 @@ Then inspect the generated `twa-manifest.json`, run the Bubblewrap build, and
 deploy the resulting Digital Asset Links data to the matching origin. Bubblewrap
 documents `build` as producing the Play App Bundle and supports environment
 variables for CI signing passwords.
-

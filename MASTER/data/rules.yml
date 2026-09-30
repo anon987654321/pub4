@@ -4837,12 +4837,24 @@ business_plan:
 # words. No decorative rules, no filler.
 markdown_style:
   aesthetic: tadao_ando   # brutalist · ultra-minimal · unpredictable · negative space
+  sources:
+    - Strunk, The Elements of Style
+    - Bringhurst, The Elements of Typographic Style
+    - CommonMark
+    - GitHub Flavored Markdown
   applies_to: [MASTER, claude, grok, codex]
   rules:
-    - fewer sections than feel necessary; cut before you add
-    - irregular composition — vary heading levels and paragraph length
-    - negative space is structure, not waste
-    - concrete over ornament; delete anything decorative
+    - cut before you add; omit needless words
+    - prefer active voice, concrete verbs, and positive form when clearer
+    - keep one main subject per paragraph; keep related words together
+    - headings state structure, not decoration; keep hierarchy logical
+    - prefer the simplest Markdown construct that expresses the meaning
+    - use lists and tables only when they improve scanning or comparison
+    - fenced code is source; prose passes never rewrite it
+    - use consistent punctuation, parallel list forms, and restrained emphasis
+    - treat spacing, measure, hierarchy, and punctuation as typography, not decoration
+    - use negative space deliberately; remove ornamental separators and filler
+
 
 # The dependency graph FixLoop's topological sort reads. A rule under `after`
 # must not run before its dependencies finish, or one rule's fix reintroduces

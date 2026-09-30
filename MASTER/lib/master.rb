@@ -200,7 +200,7 @@ module Master
     "ai" => "AI", "cli" => "CLI", "llm" => "LLM", "llm_dispatcher" => "LLMDispatcher",
     "mcp_server" => "MCPServer", "mcp_coordinator" => "McpCoordinator",
     "diff_stager" => "DiffStager", "code_index" => "CodeIndex", "git_context" => "GitContext",
-    "ast_edit" => "AstEdit", "rule_dsl" => "RuleDSL", "constraint_dsl" => "ConstraintDSL", "tts" => "TTS"
+    "ast_edit" => "AstEdit", "rule_dsl" => "RuleDSL", "constraint_dsl" => "ConstraintDSL", "tts" => "TTS", "md" => "MD", "pdf" => "PDF"
   )
   loader.enable_reloading if defined?(MASTER_DEV_MODE) || ENV["MASTER_DEV"].to_s == "1"
 
