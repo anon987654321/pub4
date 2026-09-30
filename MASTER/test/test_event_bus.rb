@@ -64,6 +64,15 @@ class TestEventBus < Minitest::Test
     assert_equal Master::Trace::EventBus::MAX_DISPATCHED_EVENTS, seen
   end
 
+  def test_handler_failure_never_recurses_through_error_reporting
+    @bus.subscribe("outer") { raise "outer failure" }
+    @bus.subscribe("error:swallowed") { raise "error reporter failure" }
+
+    @bus.publish("outer")
+
+    assert_equal 1, @bus.instance_variable_get(:@failure_warnings).values.count(true)
+  end
+
   def test_publish_stamps_the_fiber_conversation
     seen = nil
     @bus.subscribe("tool:before") { |ev| seen = ev }
