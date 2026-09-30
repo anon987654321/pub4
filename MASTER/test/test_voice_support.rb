@@ -66,6 +66,19 @@ class TestVoiceSupport < Minitest::Test
     PB.instance_variable_set(:@queue, nil)
   end
 
+  def test_failed_audio_playback_does_not_fall_through_to_native_voice
+    spoken = []
+    PB.stub(:player, ["/tmp/missing-player", []]) do
+      PB.stub(:native_say, ->(text) { spoken << text; true }) do
+        PB.stub(:generation_active?, true) do
+          refute PB.play("/tmp/missing-audio")
+        end
+      end
+    end
+
+    assert_empty spoken
+  end
+
   def test_playback_is_silent_off_a_terminal_and_when_told_to_be
     $stdout.stub(:isatty, true) do
       with_env("MASTER_CLI_SPEAK" => nil, "MASTER_SKIP_TTS" => nil, "CI" => nil) { assert PB.enabled? }
