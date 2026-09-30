@@ -206,6 +206,41 @@ class TestFixConvergence < Minitest::Test
     assert_includes result, "DONE: clean"
   end
 
+  def test_fix_runs_deep_execution_trace_before_repair
+    order = []
+    fake_trace = Object.new
+    fake_trace.define_singleton_method(:run) do
+      order << :trace
+      Struct.new(:clean?, :summary, :failures).new(true, "execution_trace: clean", [])
+    end
+
+    fix_loop = Object.new
+    fix_loop.define_singleton_method(:run) do |target, **|
+      order << :repair
+      Master::Result.ok("DONE: clean")
+    end
+    scanner = Object.new
+    scanner.define_singleton_method(:scan) { |*| Master::Result.ok([]) }
+    scanner.define_singleton_method(:scan_dir) { |*| Master::Result.ok([]) }
+
+    saved = ENV.delete("MASTER_FIX_DEEP_TRACE")
+    result = Master::Fix::ExecutionTrace.stub(:new, ->(**) { fake_trace }) do
+      Operator::GateChain.stub(:verify_fix, ->(**) { [0, []] }) do
+        Master::CLI::CommandRegistry.stub(:observe, ->(*) { "clean" }) do
+          Master::CLI::CommandRegistry.dispatch_fix(
+            scanner:, fix_loop:, deliberation: nil, root: Master::ROOT, bus: nil,
+            ctx: { args: "RAILS --no-aesthetic" }
+          )
+        end
+      end
+    end
+
+    assert_equal [:trace, :repair], order
+    assert_includes result, "DONE: clean"
+  ensure
+    ENV["MASTER_FIX_DEEP_TRACE"] = saved if saved
+  end
+
   def test_fix_wraps_the_full_lifecycle_in_trace_verbosity
     levels = []
     fix_loop = Object.new
