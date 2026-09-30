@@ -61,7 +61,17 @@ module Deploy
     # The zones data/dns.yml and OPERATOR.sh declare, which is where nsd.conf is
     # rendered from, so a zone declared and not yet rendered is still watched.
     def zones
-      RenderDns.zones.keys.sort
+      # Watch both served zones and every registrar-held domain. Ownership is not
+      # service exposure: a parked/DNS-only name must be watched without becoming
+      # an nsd/relayd/acme zone merely because we own it.
+      (RenderDns.zones.keys + owned_domains).uniq.sort
+    end
+
+    def owned_domains
+      block = File.read(File.join(ROOT, "OPENBSD/OPERATOR.sh"), encoding: "UTF-8")[/^OWNED_DOMAINS=\\(\\n(.*?)\\n\\)$/m, 1]
+      raise "OWNED_DOMAINS block not found in OPERATOR.sh" unless block
+
+      block.lines.map(&:strip).reject { |line| line.empty? || line.start_with?("#") }
     end
 
     # Bounded, portable, and no shell. /usr/bin/timeout is OpenBSD's and absent
