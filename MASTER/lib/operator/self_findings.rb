@@ -310,7 +310,9 @@ module Operator
         next member unless File.file?(absolute)
 
         line_number = line.to_i
-        line_number.positive? && File.foreach(absolute, encoding: "UTF-8").take(line_number).length < line_number ? member : nil
+        next unless line_number.positive?
+
+        member if File.foreach(absolute, encoding: "UTF-8").take(line_number).length < line_number
       end
     rescue StandardError => e
       Master::Ground::Swallow.log(e, context: "self_findings.stale_members", path: root)
