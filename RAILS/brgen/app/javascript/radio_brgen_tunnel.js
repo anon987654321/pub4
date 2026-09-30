@@ -552,12 +552,12 @@ class VisualEngine {
       fov: 250,
       speed: 0.75,
       particleCountPerRow: this.isMobile ? 32 : 48,
-      zStep: this.isMobile ? 6 : 4
+      zStep: this.isMobile ? 7 : 5
     }
-    // antialias: false. Nothing here has an edge to smooth, and MSAA resolves a
-    // 1px point as partial coverage across up to four pixels — it costs
-    // bandwidth to destroy exactly the crispness this renderer exists for.
-    const opts = { alpha: false, antialias: false, depth: false, preserveDrawingBuffer: true }
+    // antialias: false. The tunnel is a one-pixel line drawing. Preserving the
+    // back buffer costs memory bandwidth and is unnecessary because the
+    // phosphor pass is rendered explicitly.
+    const opts = { alpha: false, antialias: false, depth: false, preserveDrawingBuffer: false }
     this.gl = canvas.getContext("webgl", opts) || canvas.getContext("experimental-webgl", opts)
     if (this.gl) {
       try {
@@ -595,6 +595,9 @@ class VisualEngine {
     this.angleBuf = gl.createBuffer()
     this.ringBuf = gl.createBuffer()
     this.seedBuf = gl.createBuffer()
+    this.lineAngleBuf = gl.createBuffer()
+    this.lineRingBuf = gl.createBuffer()
+    this.lineSeedBuf = gl.createBuffer()
     gl.disable(gl.DEPTH_TEST)
     gl.enable(gl.BLEND)
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
@@ -651,7 +654,41 @@ class VisualEngine {
         k += 1
       }
     }
+
+    // The original tunnel was a connected mesh, not a cloud of dots. Keep that
+    // character, but put the entire edge list in three static GPU buffers:
+    // ring loops + longitudinal seams become one GL_LINES draw instead of
+    // thousands of CPU line/pixel operations every frame.
+    const edgeCount = particleCountPerRow * (rows + rows - 1)
+    const lineVertexCount = edgeCount * 2
+    const lineAngle = new Float32Array(lineVertexCount)
+    const lineRingT = new Float32Array(lineVertexCount)
+    const lineSeed = new Float32Array(lineVertexCount)
+    let edge = 0
+    const pushVertex = (index, out) => {
+      lineAngle[out] = angle[index]
+      lineRingT[out] = ringT[index]
+      lineSeed[out] = seed[index]
+    }
+    for (let i = 0; i < rows; i++) {
+      for (let j = 0; j < particleCountPerRow; j++) {
+        const a = i * particleCountPerRow + j
+        const b = i * particleCountPerRow + ((j + 1) % particleCountPerRow)
+        pushVertex(a, edge * 2)
+        pushVertex(b, edge * 2 + 1)
+        edge += 1
+        if (i < rows - 1) {
+          const c = (i + 1) * particleCountPerRow + j
+          pushVertex(a, edge * 2)
+          pushVertex(c, edge * 2 + 1)
+          edge += 1
+        }
+      }
+    }
+
     this.pointCount = count
+    this.lineVertexCount = lineVertexCount
+    this.rows = rows
     this.particles = []
     this.centers = []
     if (!this.gl) {
@@ -667,6 +704,12 @@ class VisualEngine {
     gl.bufferData(gl.ARRAY_BUFFER, ringT, gl.STATIC_DRAW)
     gl.bindBuffer(gl.ARRAY_BUFFER, this.seedBuf)
     gl.bufferData(gl.ARRAY_BUFFER, seed, gl.STATIC_DRAW)
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.lineAngleBuf)
+    gl.bufferData(gl.ARRAY_BUFFER, lineAngle, gl.STATIC_DRAW)
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.lineRingBuf)
+    gl.bufferData(gl.ARRAY_BUFFER, lineRingT, gl.STATIC_DRAW)
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.lineSeedBuf)
+    gl.bufferData(gl.ARRAY_BUFFER, lineSeed, gl.STATIC_DRAW)
   }
 
   update(audioData) {
@@ -824,7 +867,21 @@ class VisualEngine {
     gl.uniform1f(u.uAlphaMax, INK_ALPHA_MAX)
     gl.uniform1f(u.uExposure, (0.85 + (this.audioBoost || 0) * 0.3) * post.exposure)
 
-    gl.drawArrays(gl.POINTS, 0, this.pointCount)
+    if (this.lineVertexCount > 0) {
+      const bindLine = (buf, loc) => {
+        if (loc < 0) return
+        gl.bindBuffer(gl.ARRAY_BUFFER, buf)
+        gl.enableVertexAttribArray(loc)
+        gl.vertexAttribPointer(loc, 1, gl.FLOAT, false, 0, 0)
+      }
+      bindLine(this.lineAngleBuf, this.attr.angle)
+      bindLine(this.lineRingBuf, this.attr.ringT)
+      bindLine(this.lineSeedBuf, this.attr.seed)
+      // The shader already calculates the same distorted 3D position for both
+      // endpoints. GL_LINES reconnects the historic radial grid without
+      // touching the CPU per frame.
+      gl.drawArrays(gl.LINES, 0, this.lineVertexCount)
+    }
   }
 
   #renderFallback() {
