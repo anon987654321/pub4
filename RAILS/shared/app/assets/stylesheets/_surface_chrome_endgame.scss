@@ -60,6 +60,8 @@
   .radio-nav a,
   .radio-nav-btn,
   .playlist-top-action,
+  .playlist-add-comment,
+  .playlist-transport-play,
   .playlist-transport-bar {
     border: 0;
     border-radius: 0;
@@ -91,6 +93,12 @@
     border-block-end: 0;
   }
 
+  .channel-composer textarea,
+  .live-stream-chat input[type="text"] {
+    border: 0;
+    border-radius: 0;
+  }
+
   body.vertical-messenger {
     #messages article,
     #new_message,
@@ -120,11 +128,16 @@
     .listing-source-option,
     .listing-step,
     .listing-video-field,
+    .listing-photo-gallery,
     .listing-filter-controls select,
     .listing-filter-controls input,
     .media-thumb-move,
     .media-thumb-rm,
+    .store-order input,
+    .store-order textarea,
+    .deal-card .qty-field,
     .store-seller-center,
+    .store-terms,
     .seller-summary dt,
     .seller-summary dd,
     .order-row,
@@ -132,7 +145,8 @@
     .deal-listing,
     .store-pdp-media,
     .listing-questions,
-    .listing-question {
+    .listing-question,
+    .cart-item {
       border: 0;
       border-radius: 0;
     }
@@ -141,17 +155,42 @@
       border-radius: 0;
     }
 
-    #navBar .nav-search-input {
+    #navBar .nav-search-input,
+    .search-form input[type="search"] {
       border: 0;
       border-radius: 0;
+    }
+
+    .store-panel,
+    .store-shortcut-well {
+      border: 0;
+      border-radius: 0;
+    }
+
+    .store-buybox > p {
+      border-block-end: 0;
     }
 
     .bol-kind-tabs {
       border-color: transparent;
     }
 
-    .bol-kind-tabs a {
+    .bol-kind-tabs a,
+    .listing-step-link.is-active {
       border-bottom-width: 0;
+      border-bottom-color: transparent;
+    }
+
+    .store-buybox .btn,
+    .deal-card-buy,
+    .listing-buy-bar-cta,
+    .bol-primary {
+      border: 0;
+      border-radius: 0;
+    }
+
+    .store-results-body > .deal-card {
+      border-bottom: 0;
     }
   }
 }
