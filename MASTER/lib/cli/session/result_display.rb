@@ -53,6 +53,7 @@ module Master
         # smallest and most useful CLI TTS test ("hello") never reached audio.
         Master::Voice::Playback.speak(spoken_form(text))
         print_fix_activity_footer
+        print_previous_question_footer
         print_parallel_errors_footer(ok)
         print_capability_stamp(ok)
       end
@@ -76,6 +77,20 @@ module Master
         [Master::Voice::Renderer::MEASURE, TTY::Screen.width - 1].min
       rescue StandardError
         Master::Voice::Renderer::MEASURE
+      end
+
+      def print_previous_question_footer
+        return unless @last_input.to_s.lstrip.start_with?("/fix", "fix ")
+        return unless @last_ok
+
+        question = @refs.session.last_user_question(before: @last_input)
+        return if question.to_s.empty?
+
+        line = "next0: your previous question — #{question}"
+        puts @refs.renderer.render(line, mode: :dim)
+        Master::Voice::Playback.speak(question)
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "cli.previous_question_footer", event_bus: @refs.bus)
       end
 
       def print_fix_activity_footer
