@@ -113,7 +113,7 @@ module ShopTheLook
     end
 
     def text_score(query, candidate)
-      words = query.downcase.split(/W+/).reject { |word| word.length < 3 }.uniq
+      words = query.downcase.split(/\W+/).reject { |word| word.length < 3 }.uniq
       return 0.0 if words.empty?
 
       candidate_text = candidate.downcase
