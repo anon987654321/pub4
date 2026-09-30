@@ -934,9 +934,9 @@ pub4_source_ceilings:
   # source growth is absorbed by this raise.
   OPENBSD: 92
   # 2026-09-30: STUDIO is restored as the governed media tree. The move transfers
-  # 242 source files out of MASTER/tools into STUDIO; the ceiling records that
+  # 243 source files out of MASTER/tools into STUDIO; the ceiling records that
   # exact observed population and absorbs no additional growth.
-  STUDIO: 242
+  STUDIO: 243
   # 220 -> 222 for lora/seed_media.yml and lora/_toolkit/install_seed_media.rb,
   # the prompt set for every seeded photograph and the script that grades and
   # files what comes back from it. Two files, both named, neither foldable:
