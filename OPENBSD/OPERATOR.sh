@@ -422,6 +422,32 @@ ALL_APPS=(
 
 SERVICES=()
 
+# Current registrar-held domain inventory, refreshed from the 2026-09-30 Domeneshop export.
+# This is ownership, not service exposure: parked or DNS-only names stay out of relayd/ACME until
+# an app/city explicitly adopts them. RAILS/apps.yml carries the same inventory; ownership tests pin both.
+OWNED_DOMAINS=(
+  amberapp.art
+  amberapp.no
+  amberapp.online
+  brgen.no
+  bsdports.net
+  bsdports.org
+  cardff.uk
+  denvr.us
+  edinbrgh.uk
+  foball.no
+  frankfrt.de
+  lndon.uk
+  lsangeles.com
+  lsangeles.store
+  oshlo.no
+  stvanger.no
+  svalbrd.no
+  trndheim.no
+  wshingtondc.com
+  wshingtondc.us
+)
+
 ALL_DOMAINS=(
   brgen.no:markedsplass,radio,dating,tv,takeaway,maps,messenger,ai
   longyearbyn.no:markedsplass,radio,dating,tv,takeaway,maps,messenger
