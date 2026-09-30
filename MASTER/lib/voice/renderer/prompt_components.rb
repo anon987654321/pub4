@@ -60,13 +60,13 @@ module Master
           status << "web: ready" if splash_web_url.to_s.include?("http")
           mode = Master::CLI::RuntimeMode.summary(config: @config).split(", ").first(3).join(", ")
           [
-            d("MASTER #{soul_version} ##{context[:build]}  #{status.join('  ')}"),
+            d("MASTER #{release_version} ##{context[:build]}  #{status.join('  ')}"),
             d("#{context[:user]}@#{context[:host]}:#{@config['root'] || Dir.pwd}"),
             splash_ready_line(context),
           ].join("\n")
         rescue StandardError
           [
-            d("MASTER #{soul_version} ##{context[:build]}"),
+            d("MASTER #{release_version} ##{context[:build]}"),
             d("#{context[:user]}@#{context[:host]}:#{@config['root'] || Dir.pwd}"),
             splash_ready_line(context),
           ].join("\n")
