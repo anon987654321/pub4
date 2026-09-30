@@ -80,3 +80,9 @@ recipes:
   - want: Full integrity on VPS
     run: ssh brgen 'cd /home/dev/pub4 && ruby34 OPENBSD/gates/integrity_gate.rb'
     expect: integrity clean after apps deployed
+  - want: OpenBSD service/system administration
+    run: MASTER/bin/operator vps admin status --remote
+    expect: read-only host, service, firewall, resource and update controls
+  - want: Check or restart a service on the VPS
+    run: MASTER/bin/operator vps admin service master check --remote
+    expect: rcctl check result; restart is an explicit separate action
