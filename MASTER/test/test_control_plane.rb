@@ -79,6 +79,24 @@ class ControlPlaneSpec < Minitest::Test
     end
   end
 
+  def test_cycle_claims_and_releases_the_execution_slot_around_control_work
+    Dir.mktmpdir("master-control") do |root|
+      plane = Master::Ops::ControlPlane.new(root:, interval: 5, out: StringIO.new)
+      observed = []
+      plane.define_singleton_method(:clean?) { true }
+      plane.define_singleton_method(:fetch!) { observed << Master::Ops::LoopOwner.active.fetch("loop") }
+      plane.define_singleton_method(:synchronize_refs!) { observed << Master::Ops::LoopOwner.active.fetch("loop") }
+      plane.define_singleton_method(:deploy_if_needed!) { observed << Master::Ops::LoopOwner.active.fetch("loop") }
+
+      plane.cycle
+
+      assert_equal %w[control_plane control_plane control_plane], observed
+      assert_nil Master::Ops::LoopOwner.active
+    ensure
+      Master::Ops::LoopOwner.release
+    end
+  end
+
   def test_cycle_rejects_a_non_main_checkout
     Dir.mktmpdir("master-control") do |root|
       plane = Master::Ops::ControlPlane.new(root:, interval: 5, out: StringIO.new)
