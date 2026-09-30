@@ -49,6 +49,12 @@ class TestCliOperatorLayer < Minitest::Test
     assert_includes source, "Master::Voice::Playback.speak(spoken_form(text))"
   end
 
+  def test_streamed_bridge_footer_does_not_speak_the_reply_twice
+    source = File.read(File.join(Master::ROOT, "lib", "cli", "session", "bridge_run.rb"))
+
+    refute_includes source, "Master::Voice::Playback.speak(summary)"
+  end
+
   def test_local_cli_voice_can_satisfy_boot_without_an_edge_daemon
     source = File.read(File.join(Master::ROOT, "lib", "boot", "master_boot.rb"))
 
