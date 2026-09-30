@@ -130,6 +130,26 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes css, ".item-detail--luxury .luxury-detail-grid"
     assert_includes css, ".item-detail--luxury .luxury-meta"
   end
+  def test_amber_looks_use_one_3d_mannequin_and_wrapped_photos
+    looks = read("amber/app/views/home/_looks.html.erb")
+    mannequin = read("amber/app/javascript/controllers/mannequin_3d_controller.js")
+    carousel = read("amber/app/javascript/controllers/wardrobe_carousel_controller.js")
+    dressing = read("amber/app/views/shared/_dressing_room.html.erb")
+    css = read("amber/app/assets/stylesheets/application.scss")
+
+    assert_includes looks, 'data-controller="mannequin-3d"'
+    assert_includes looks, "data-mannequin-3d-slides-value"
+    assert_includes looks, "responsive_image_url(garment.photos.first, widths: [720])"
+    assert_includes mannequin, "drawWrapped"
+    assert_includes mannequin, "surfacePoint"
+    assert_includes mannequin, "this.rotation"
+    assert_includes mannequin, "data-mannequin-3d"
+    assert_includes carousel, "amber:mannequin-change"
+    assert_includes dressing, 'data-controller="mannequin-3d"'
+    assert_includes dressing, "data-mannequin-3d-zones-value"
+    assert_includes css, "mannequin-3d"
+  end
+
   def test_commerce_polish_keeps_marketplace_and_amber_distinct
     brgen_css = read("brgen/app/assets/stylesheets/application.scss")
     brgen_polish = read("brgen/app/assets/stylesheets/_commerce_polish.scss")
