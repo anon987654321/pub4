@@ -56,6 +56,22 @@ class TestCliOperatorLayer < Minitest::Test
     assert_includes source, "Voice::Playback.available?"
   end
 
+  def test_fix_completion_has_previous_question_continuity_hook
+    source = File.read(File.join(Master::ROOT, "lib", "cli", "session", "result_display.rb"))
+
+    assert_includes source, "print_previous_question_footer"
+    assert_includes source, "last_user_question(before: @last_input)"
+    assert_includes source, '"next0: your previous question — #{question}"'
+  end
+
+  def test_vm23_operator_exposes_single_master_screen_lifecycle
+    source = File.read(File.join(Master::ROOT, "bin", "operator"))
+
+    assert_includes source, 'bin/operator vps master <status|start|stop|restart>'
+    assert_includes source, 'screen -dmS master'
+    assert_includes source, 'MASTER/bin/master --daemon'
+  end
+
   def test_short_cli_replies_are_not_silenced
     source = File.read(File.join(Master::ROOT, "lib", "cli", "session", "result_display.rb"))
 
