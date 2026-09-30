@@ -255,7 +255,7 @@ module Master
           ids = local_only_chain(task_type:)
           return ids.first if ids.any?
 
-          @config.model.to_s if @config.model.to_s.match?(/A(?:ollama:|ollama\/|local:)/)
+          @config.model.to_s if @config.model.to_s.match?(/\A(?:ollama:|ollama\/|local:)/)
         end
 
         def load_rules
