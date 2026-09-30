@@ -178,6 +178,8 @@ module Master
           text.to_s.length
         end
 
+        def release_version = Master::VERSION
+
         def splash_ready_line(context)
           short_host = context[:host].split(".").first
           if Aesthetic.wscons?
