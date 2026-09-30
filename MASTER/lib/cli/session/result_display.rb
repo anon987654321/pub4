@@ -22,7 +22,7 @@ module Master
           @exit_code = exit_code_for(err)
           return exit_cli if err.category == :shutdown
 
-          puts @refs.renderer.render(format_error_message(err), mode: :error)
+          Master::Trace::Dmesg.status("err0", format_error_message(err))
         end
       end
 
