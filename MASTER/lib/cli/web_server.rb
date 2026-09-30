@@ -25,14 +25,14 @@ module Master
         host = config["web_host"] || "127.0.0.1"
         RUBY_PLATFORM.include?("openbsd") ? openbsd_status(config:, host:, port:, io:) : spawn_local(config:, host:, port:, io:)
       rescue StandardError => e
-        Master::Trace::Dmesg.status("web0", "failed, #{e.class}: #{e.message}")
+        Master::Trace::Dmesg.status("web0", "failed, #{e.class}: #{e.message}", io:)
       end
 
       def openbsd_status(config:, host:, port:, io:)
         running = system("pgrep", "-qf", "falcon.*#{port}")
         base_url = config["web_public_url"] || "http://#{host}:#{port}"
-        Master::Trace::Dmesg.status("web0", "#{base_url}, #{running ? "up" : "down — run: doas rcctl start master"}")
-        Master::Trace::Dmesg.status("web0", "token set, see .master/config.yml") if config["web_token"].to_s.length >= 8
+        Master::Trace::Dmesg.status("web0", "#{base_url}, #{running ? "up" : "down — run: doas rcctl start master"}", io:)
+        Master::Trace::Dmesg.status("web0", "token set, see .master/config.yml", io:) if config["web_token"].to_s.length >= 8
       end
 
       def spawn_local(config:, host:, port:, io:)
@@ -52,7 +52,7 @@ module Master
           "--bind", "http://#{host}:#{port}", "-n", count,
           chdir: web_dir, out: File::NULL, err: File::NULL, unsetenv_others: true
         )
-        Master::Trace::Dmesg.status("web0", "http://#{host}:#{port}")
+        Master::Trace::Dmesg.status("web0", "http://#{host}:#{port}", io:)
       end
 
       # Rails refuses to boot in production without a stable SECRET_KEY_BASE,
