@@ -124,7 +124,7 @@
 .welcome-onboarding-steps p {
   margin: var(--space-1) 0 0;
   color: var(--text-secondary);
-  line-height: 1.45;
+  line-height: var(--leading-normal);
 }
 
 .welcome-onboarding-actions {

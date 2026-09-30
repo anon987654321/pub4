@@ -61,24 +61,9 @@
   color: var(--text-secondary);
 }
 
-.page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 1rem; /* 12/16 — eight_px_rhythm */
-  min-height: 48px; /* design_rules eight_px_rhythm (was 53px off-grid) */
-  position: sticky;
-  top: 0;
-  background: var(--bg);
-  z-index: 10;
-}
-
-.page-header h1 {
-  font-size: var(--text-title);
-  font-weight: var(--weight-heavy);
-  font-family: var(--font);
-  letter-spacing: var(--tracking-tighter);
-}
+/* Page-header geometry belongs to _layout_chrome.scss.
+   Keeping one authority prevents the old sticky widget header from leaking
+   into document pages, where the same class is a normal title/action row. */
 
 .flash-alert {
   background: var(--hover-subtle);

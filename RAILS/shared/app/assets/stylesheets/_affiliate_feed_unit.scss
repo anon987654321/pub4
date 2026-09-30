@@ -51,7 +51,7 @@
   min-width: 0;
   display: grid;
   grid-template-rows: auto auto 1fr auto auto;
-  gap: 6px;
+  gap: var(--space-1);
   padding: 0 0 var(--space-2);
   border: 0;
   color: inherit;
@@ -95,7 +95,7 @@
   color: var(--text);
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
-  line-height: 1.35;
+  line-height: var(--leading-snug);
 }
 
 .affiliate_feed_price {
@@ -113,10 +113,10 @@
 .affiliate_feed_amazon_mark {
   display: inline-flex;
   align-items: center;
-  min-height: 22px;
+  min-height: var(--space-6);
   width: fit-content;
-  padding-inline: 7px;
-  border-radius: 3px;
+  padding-inline: var(--space-2);
+  border-radius: var(--radius-xs);
   background: var(--text);
   color: var(--surface);
   font-size: var(--text-xs);

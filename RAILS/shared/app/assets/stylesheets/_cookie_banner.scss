@@ -41,7 +41,7 @@
 .cookie-banner-copy p {
   margin: 0;
   max-width: 48rem;
-  line-height: 1.45;
+  line-height: var(--leading-normal);
 }
 
 .cookie-banner-policy {
@@ -115,7 +115,7 @@
 
 .cookie-purpose span {
   display: block;
-  line-height: 1.45;
+  line-height: var(--leading-normal);
 }
 
 .cookie-purpose strong {

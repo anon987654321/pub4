@@ -13,6 +13,7 @@ class LayoutContractTest < Minitest::Test
   FACE_CSS = File.join(REPO, "MASTER", "web", "public", "face.css")
   TOKENS = File.join(SHARED, "design_tokens.yml")
   LAYOUT_CHROME = File.join(SHARED, "app", "assets", "stylesheets", "_layout_chrome.scss")
+  SHELL_WIDGETS = File.join(SHARED, "app", "assets", "stylesheets", "_shell_widgets.scss")
   SHELL = File.join(SHARED, "app", "assets", "stylesheets", "_shell.scss")
   DIALECT = File.join(SHARED, "app", "assets", "stylesheets", "_dialect_tokens.scss")
 
@@ -126,6 +127,17 @@ class LayoutContractTest < Minitest::Test
     assert_includes body, "--tap-min"
     assert_includes body, "--chrome-inset"
     assert_includes body, ".page-header"
+  end
+
+  def test_page_header_has_one_mobile_first_authority
+    layout = File.read(LAYOUT_CHROME)
+    widgets = File.read(SHELL_WIDGETS)
+
+    assert_includes layout, "flex-direction: column"
+    assert_includes layout, "@media (min-width: 640px)"
+    assert_includes layout, "flex-direction: row"
+    refute_match(/\.page-header\s*\{/, widgets,
+                 "_shell_widgets must not redefine the shared page-header")
   end
 
   # The mark is the brand and nothing else, so it is one length on every host.

@@ -66,25 +66,61 @@ body[data-layout="document"] {
 /* Shared page header — vertical homes, indexes, auth siblings. */
 .page-header {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-3);
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: var(--space-2);
   margin-block-end: var(--space-4);
-  max-width: var(--measure);
+  max-inline-size: var(--measure);
+  min-inline-size: 0;
+}
+
+.page-header > :where(h1, h2, h3, hgroup, .page-title, .btn, nav) {
+  min-inline-size: 0;
+}
+
+.page-header hgroup {
+  display: grid;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.page-header hgroup > :where(h1, h2, h3, p) {
+  margin: 0;
 }
 
 .page-header h1 {
   margin: 0;
+  max-inline-size: 100%;
   font-size: var(--text-title);
   font-weight: var(--weight-heavy);
   letter-spacing: var(--tracking-tighter);
-  line-height: 1.25;
+  line-height: var(--leading-tight);
+  overflow-wrap: anywhere;
+  text-wrap: balance;
 }
 
 .page-header p {
-  margin: 0.25rem 0 0;
-  max-width: var(--measure);
+  margin: 0;
+  max-inline-size: var(--measure);
+  color: var(--text-secondary);
+  line-height: var(--leading-snug);
+}
+
+@media (min-width: 640px) {
+  .page-header {
+    flex-direction: row;
+    align-items: flex-end;
+    gap: var(--space-4);
+  }
+
+  .page-header > :where(h1, hgroup, .page-title) {
+    flex: 1 1 auto;
+  }
+
+  .page-header > :where(.btn, nav, .page-actions) {
+    flex: 0 0 auto;
+  }
 }
 
 /* Prose / lead blocks share one measure with face HUD caption width discipline. */
