@@ -243,6 +243,7 @@ end
 
 class OwnedDomainFactsAgreeTest < Minitest::Test
   RAILS_APPS = File.expand_path("../../RAILS/apps.yml", __dir__)
+  OPERATOR = File.expand_path("../OPERATOR.sh", __dir__)
   EXPECTED = %w[
     amberapp.art amberapp.no amberapp.online brgen.no bsdports.net bsdports.org
     cardff.uk denvr.us edinbrgh.uk foball.no frankfrt.de lndon.uk lsangeles.com
@@ -256,9 +257,10 @@ class OwnedDomainFactsAgreeTest < Minitest::Test
   end
 
   def test_openbsd_owned_domains_match_rails_inventory
-    block = OPERATOR[/^OWNED_DOMAINS=\\(\\n.*?\\n\\)$/m]
+    operator = File.read(OPERATOR, encoding: "UTF-8")
+    block = operator[/^OWNED_DOMAINS=\(\n.*?\n\)$/m]
     refute_nil block, "no OWNED_DOMAINS block in OPERATOR.sh"
-    out, status = Open3.capture2("zsh", "-f", "-c", "#{block}\\nprint -rl -- $OWNED_DOMAINS")
+    out, status = Open3.capture2("zsh", "-f", "-c", "#{block}\nprint -rl -- $OWNED_DOMAINS")
     assert status.success?, "zsh could not evaluate OWNED_DOMAINS"
     assert_equal YAML.safe_load_file(RAILS_APPS).fetch("owned_domains"), out.lines.map(&:chomp)
   end
