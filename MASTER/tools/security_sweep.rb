@@ -140,7 +140,7 @@ end
 # run the whole sweep and read its output — which is how the rule shipped with a
 # sixteen-hit false-positive rate on translated UI copy.
 if $PROGRAM_NAME == __FILE__
-  failures, samples = sweep
+  failures, = sweep
 
   if failures.any?
     warn "Security sweep failures:"
