@@ -11,8 +11,8 @@
 #
 # domain: :all scopes the cookie to the request's registrable domain, so it
 # spans one city's subdomains and still never reaches another city's apex --
-# lsangeles.com stays separate from brgen.no, which is the point of the
-# no-city-switcher design.
+# lsangeles.com stays separate from brgen.no, even when a reader follows the
+# city network link between them.
 Rails.application.config.session_store :cookie_store,
   key: "_app_session",
   domain: :all,
