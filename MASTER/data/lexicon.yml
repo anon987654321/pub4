@@ -22,6 +22,23 @@ respellings:
   nginx: engine X
 
   # Acronyms a voice otherwise runs together into a syllable.
+  LLM: L L M
+  API: A P I
+  URL: U R L
+  SSH: S S H
+  DNS: D N S
+  HTTP: H T T P
+  HTML: H T M L
+  JSON: J S O N
+  SQL: sequel
+  GPU: G P U
+  CPU: C P U
+  IDE: I D E
+  JWT: J W T
+  CI: C I
+  CD: C D
+  WASM: W A S M
+  PWA: P W A
   OpenBSD: Open B S D
   BSD: B S D
   DNSSEC: DNS sec
