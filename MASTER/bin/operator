@@ -31,6 +31,7 @@ def usage
       bin/operator vps state [--json] [--remote]
       bin/operator vps deploy <app|master> [--remote]
       bin/operator vps logs <app> [--lines N] [--remote]
+      bin/operator vps admin <status|services|service|pf|disk|memory|swap|dmesg|packages|updates|upgrade|reboot> [args] [--remote]
       bin/operator post-pull
       bin/operator measure [--deep] [--json]
       bin/operator measure --why <row>    the members behind one number
@@ -542,6 +543,16 @@ when "vps"
       ssh_run("cd /home/dev/pub4 && #{Shellwords.join(["zsh", "OPENBSD/bin/vps-deploy", app])}")
     else
       exec(File.join(OPENBSD_OPS, "bin", "vps-deploy"), app, *ARGV)
+    end
+  when "admin"
+    remote = !ARGV.delete("--remote").nil?
+    args = ARGV.dup
+    abort("usage: bin/operator vps admin <status|services|service|pf|disk|memory|swap|dmesg|packages|updates|upgrade|reboot> [args] [--remote]") if args.empty?
+    command = ["ruby40", "OPENBSD/bin/vps-admin", *args]
+    if remote
+      ssh_run("cd /home/dev/pub4 && #{Shellwords.join(command)}")
+    else
+      exec(File.join(OPENBSD_OPS, "bin", "vps-admin"), *args)
     end
   when "logs"
     app = ARGV.shift
