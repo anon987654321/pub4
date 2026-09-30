@@ -43,6 +43,15 @@ class TestBootReceipt < Minitest::Test
 
   # MASTER-136 asks for offline as a named capability rather than a mysterious
   # failure. Whatever this host has, the receipt must name the state.
+  def test_tts_capability_uses_the_runtime_backend_guard
+    Master::Voice::Speech.stub(:available?, true) do
+      assert Receipt.capabilities["tts"]
+    end
+    Master::Voice::Speech.stub(:available?, false) do
+      refute Receipt.capabilities["tts"]
+    end
+  end
+
   def test_degraded_capabilities_are_named_not_implied
     line = Receipt.degraded_line(%w[network])
 
