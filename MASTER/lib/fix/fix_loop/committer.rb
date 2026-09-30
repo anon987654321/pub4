@@ -2,6 +2,7 @@
 
 require "pathname"
 require_relative "../../ground/known_good"
+require_relative "../../operator/ratchet_sponsor"
 
 module Master
   module Fix
@@ -172,6 +173,7 @@ module Master
 
         def validate_paths(message, paths)
           return false unless boundary_scope_ok?(paths)
+          return false unless ratchet_sponsorship_ok?(paths)
 
           broken = ruby_files(paths).reject { |path| ruby_parses?(path) }
           return block_commit(broken) && false unless broken.empty?
@@ -286,6 +288,15 @@ module Master
             "fix0",
             "architecture scope blocked: #{boundaries.join(", ")} outside #{@boundary_scope.join(", ")}"
           )
+          false
+        end
+
+        def ratchet_sponsorship_ok?(paths)
+          Operator::RatchetSponsor.validate!(root: @root, changed_paths: paths)
+          true
+        rescue StandardError => e
+          @bus&.publish("fix_loop:commit_blocked", reason: "ratchet_sponsorship", error: e.message)
+          Master::Trace::Dmesg.status("fix0", e.message)
           false
         end
 
