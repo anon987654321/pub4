@@ -12,6 +12,12 @@
 
 ## Current recovery state — 2026-09-30
 
+- 2026-09-30: model failover now promotes a successful automatic fallback to the
+  runtime current model. Explicit `/model` pins remain pinned, while failed
+  automatic lanes are quarantined and skipped. Single-shot and chat paths use
+  the same promotion seam; operation-specific quality constraints remain intact.
+  Live-provider outage proof is still a runtime evidence gate.
+
 - Structural repository sprawl rollback is complete. main deliberately keeps the pre-sprawl topology; no mass flattening or moves should be reintroduced.
 - The current main boot baseline includes the post-baseline Ruby/runtime fixes that are independent of topology: the stale builder rollback require is removed; PassRunner, swallow ledger, prompt syntax and runtime YAML fixes are restored.
 - Source audit confirms these previously-open seams are already implemented in this tree and now require evidence rather than another implementation pass: CQS memoisation contracts, per-process resource RSS recording, TTS socket health reporting, browser-gate inconclusive semantics, reason-coded guest-page coverage, drag-only reorder controls, and offline send storage.
