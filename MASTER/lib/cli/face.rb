@@ -16,7 +16,7 @@ module Master
     # terminal, which is what lets a test draw it at any size.
     module Face
       STATES = %i[idle listening thinking speaking].freeze
-      FPS = 15
+      FPS = 20
       # Below this there is not room for a face worth the name, and the frame
       # names the state instead.
       MIN_ROWS = 8
@@ -118,7 +118,8 @@ module Master
         CAMERA = 3.2
         # Only points nearer than this, after turning, are drawn.
         NEAR = -0.05
-        SHIMMER = 0.35
+        # Preserve the silhouette; movement comes from depth and light, not holes.
+        SHIMMER = 0.16
         # The void between the lips at rest, and how far the loudest syllable
         # opens it, in the points' own units.
         VOID = 0.045
@@ -153,7 +154,7 @@ module Master
           cy, sy, cp, sp, cr, sr = [@look.yaw, @look.pitch, @look.roll].flat_map { |a| [Math.cos(a), Math.sin(a)] }
           reach = @head.scale * @look.scale
           mid_x = @braille.dots_wide / 2.0
-          mid_y = (@braille.dots_high / 2.0) - (@look.bob * @head.scale)
+          mid_y = (@braille.dots_high * 0.46) - (@look.bob * @head.scale)
           @head.each_point do |x, y, z, lum, zone, phase|
             next if @shimmer.rand < SHIMMER
 
@@ -171,7 +172,7 @@ module Master
             depth = CAMERA / (CAMERA - rz) * reach
             px = mid_x + (((rx * cr) - (ry * sr)) * depth)
             py = mid_y - (((rx * sr) + (ry * cr)) * depth)
-            @braille.dot(px.floor, py.floor, lum)
+            @braille.dot(px.floor, py.floor, illumination(lum, x, y, z, phase))
           end
         end
 
@@ -197,13 +198,22 @@ module Master
           [x + (gaze_x * 0.3), y + (gaze_y * 0.3)]
         end
 
+        def illumination(lum, x, y, z, phase)
+          depth = ((z / 0.72) + 0.5).clamp(0.0, 1.0)
+          key = (0.5 + (0.32 * x) + (0.22 * y) + (0.46 * depth)).clamp(0.0, 1.0)
+          sweep = 0.5 + (0.5 * Math.sin((@t * 0.58) + phase))
+          (lum * (0.68 + (0.20 * depth) + (0.16 * key) + (0.08 * sweep))).clamp(0.0, 1.0)
+        end
+
         def specks
           reach = @head.scale * SPECK_SPAN
           mid_x = @braille.dots_wide / 2.0
           mid_y = @braille.dots_high / 2.0
           @look.particles.each do |x, y, z|
-            depth = CAMERA / (CAMERA - (z * SPECK_SPAN))
-            @braille.dot((mid_x + (x * depth * reach)).floor, (mid_y - (y * depth * reach)).floor, SPECK_LIGHT, head: false)
+            camera = CAMERA / @look.dolly
+            depth = camera / (camera - (z * SPECK_SPAN))
+            light = SPECK_LIGHT * (0.72 + (0.28 * (((z * SPECK_SPAN) + 0.5).clamp(0.0, 1.0))))
+            @braille.dot((mid_x + (x * depth * reach)).floor, (mid_y - (y * depth * reach)).floor, light, head: false)
           end
         end
       end

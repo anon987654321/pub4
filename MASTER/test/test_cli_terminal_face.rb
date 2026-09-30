@@ -1,30 +1,156 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require_relative "../lib/cli/face"
+require_relative "../lib/cli/face/window"
 
 class TestCliTerminalFace < Minitest::Test
-  def test_normal_prompt_draws_the_face_above_the_existing_shell_prompt
-    session = Master::CLI::Session.allocate
-    refs = Struct.new(:agent, :session, :renderer, :bus).new(
-      Struct.new(:model).new("test-model"),
-      Struct.new(:phase, :token_est, :cost).new(:idle, 0, 0),
-      nil,
-      nil
+  Quiet = Struct.new(:missing) do
+    def available? = missing.nil?
+  end
+
+  BRAILLE = /[⠁-⣿]/
+
+  def window
+    Master::CLI::Face::Window.new(
+      turn: ->(_) {},
+      ear: Quiet.new(nil),
+      mouth: Quiet.new(nil),
+      input: StringIO.new,
+      output: StringIO.new,
+      size: -> { [30, 60] }
     )
-    session.instance_variable_set(:@refs, refs)
-    session.instance_variable_set(:@last_ok, true)
-    session.instance_variable_set(:@violations, 0)
-    session.instance_variable_set(:@violations_mutex, Mutex.new)
-    session.define_singleton_method(:terminal_face) { "⠁⠂⠄\n⠈⠐⠠" }
+  end
 
-    renderer = Object.new
-    renderer.define_singleton_method(:prompt_line) { |*| ["state0", "% "] }
-    refs.renderer = renderer
-
-    $stdout.stub(:tty?, true) do
-      output = capture_io { session.send(:normal_prompt) }.first
-      assert_includes output, "⠁⠂⠄"
-      assert_includes output, "state0"
+  def rows_of(screen)
+    screen.scan(/\e\[(\d+);1H(.*?)\e\[K/).to_h do |row, text|
+      [row.to_i, text.gsub(/\e\[[0-9;?]*[A-Za-z]/, "")]
     end
+  end
+
+  def test_the_face_uses_the_full_viewport
+    painted = rows_of(window.screen(30, 60, 2.0))
+    head_rows = painted.select { |_, text| text.match?(BRAILLE) }.keys
+    refute_empty head_rows
+    assert_operator head_rows.max, :>, 10
+  end
+
+  def test_every_row_of_the_window_is_painted
+    assert_equal (1..30).to_a, rows_of(window.screen(30, 60, 2.0)).keys.sort
+  end
+
+  def test_the_renderer_receives_the_full_terminal_height
+    seen_rows = nil
+    renderer = ->(**kwargs) do
+      seen_rows = kwargs.fetch(:rows)
+      Array.new(seen_rows, " ").join("\n")
+    end
+    Master::CLI::Face.stub(:frame, renderer) { window.screen(30, 60, 2.0) }
+    assert_equal 30, seen_rows
+  end
+
+  def test_motion_has_a_camera_dolly
+    motion = Master::CLI::Face::Motion.new(seed: 7)
+    motion.step(state: :idle, t: 1.0)
+    thinking = motion.step(state: :thinking, t: 2.0).dolly
+    assert_operator thinking, :>, 0.95
+  end
+
+  def test_motion_keeps_the_face_readable
+    motion = Master::CLI::Face::Motion.new(seed: 7)
+    120.times do |i|
+      look = motion.step(state: :idle, t: (i + 1) / 15.0)
+      assert_operator look.yaw.abs, :<=, 0.5
+      assert_operator look.dolly, :between?, 0.95, 1.10
+    end
+  end
+
+  def test_the_column_under_the_head_keeps_three_jobs
+    face = window
+    5.times { |i| face.send(:note_job, ["job #{i}"]) }
+    text = rows_of(face.screen(30, 60, 2.0)).values.join("\n")
+    assert_includes text, "job 4"
+    assert_includes text, "job 2"
+    refute_includes text, "job 1"
+  end
+
+  def test_a_failed_turn_does_not_start_picture_work
+    face = Master::CLI::Face::Window.new(
+      turn: ->(_) { Master::Result.err("talk0: empty response", category: :provider_error) },
+      ear: Quiet.new(false),
+      mouth: Quiet.new(false),
+      input: StringIO.new,
+      output: StringIO.new,
+      size: -> { [24, 80] }
+    )
+    face.stub(:picture, ->(_) { flunk("picture work started after a failed turn") }) { face.send(:answer, "Bug and ember lay out.") }
+    text = rows_of(face.screen(24, 80, 1.0)).values.join("\n")
+    assert_includes text, "talk0: empty response"
+  end
+
+  def test_successful_turn_can_start_picture_work
+    face = Master::CLI::Face::Window.new(
+      turn: ->(_) { Master::Result.ok("Reply") },
+      ear: Quiet.new(false),
+      mouth: Quiet.new(false),
+      input: StringIO.new,
+      output: StringIO.new,
+      size: -> { [24, 80] }
+    )
+    pictured = nil
+    face.stub(:picture, ->(text) { pictured = text }) { face.send(:answer, "Bug and ember lay out.") }
+    assert_equal "Bug and ember lay out.", pictured
+  end
+
+  def test_speaking_does_not_arm_the_microphone
+    face = Master::CLI::Face::Window.new(
+      turn: ->(_) {},
+      ear: Quiet.new(nil),
+      mouth: Quiet.new(nil),
+      input: StringIO.new,
+      output: StringIO.new,
+      size: -> { [24, 80] }
+    )
+    face.send(:set, :speaking, ["reply"])
+    face.send(:arm_ear)
+    assert_nil face.instance_variable_get(:@hearing)
+  end
+
+  class FakeBus
+    attr_reader :patterns
+    def initialize = @patterns = {}
+    def subscribe(pattern, &handler)
+      (@patterns[pattern] ||= []) << handler
+      -> { @patterns[pattern].delete(handler) }
+    end
+    def publish(event)
+      @patterns.each_value { |handlers| handlers.each { |handler| handler.call(event: event) } }
+    end
+  end
+
+  def test_terminal_face_subscribes_to_runtime_event_families
+    bus = FakeBus.new
+    face = Master::CLI::Face::Window.new(
+      turn: ->(_) {},
+      ear: Quiet.new(nil),
+      mouth: Quiet.new(nil),
+      input: StringIO.new,
+      output: StringIO.new,
+      size: -> { [24, 80] },
+      event_bus: bus
+    )
+    assert_equal %w[council:** llm:** phantom:** pipeline:**], bus.patterns.keys.sort
+    bus.publish("pipeline:stage_start")
+    assert_equal [:thinking], face.instance_variable_get(:@events)
+    face.send(:unsubscribe_from_bus)
+    bus.publish("council:deliberation")
+    assert_equal [:thinking], face.instance_variable_get(:@events)
+  end
+
+  def test_face_command_arguments_are_recognised
+    assert Master::CLI::Face::Window.asked?(["/face"])
+    assert Master::CLI::Face::Window.asked?(["face"])
+    refute Master::CLI::Face::Window.asked?(["hello"])
+    refute Master::CLI::Face::Window.asked?(["/face", "extra"])
   end
 end

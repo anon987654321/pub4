@@ -72,64 +72,16 @@ module Master
         @refs.renderer.render("#{@refs.renderer.prompt_token} ", mode: :dim)
       end
 
-      # One zsh line, and above it a state line only when the state moved. The
-      # state line prints here and the prompt goes to Reline, which redraws
-      # the prompt it owns; a prompt printed around it is erased by its
-      # cursor probe and leaves the probe glyph behind.
+      # The ordinary shell keeps Reline in charge of the prompt. /face opens the
+      # dedicated alternate-screen stage when the operator wants the full face.
       def normal_prompt
         state, prompt = @refs.renderer.prompt_line(
           @refs.agent.model, @refs.session.phase,
           last_ok: @last_ok, violations: violations_count,
           tokens: @refs.session.token_est, cost: @refs.session.cost
         )
-        face = terminal_face
-        puts face if face
         puts state if state_changed?
         prompt
-      end
-
-      # The face is part of the shell now: it paints above the ordinary zsh-like
-      # prompt rather than opening a second terminal surface. One frame per
-      # meaningful state keeps Reline in control of the editable input line.
-      def terminal_face
-        return unless $stdout.tty?
-
-        key = [@refs.session.phase, @last_ok, violations_count]
-        return if @last_face_state == key
-
-        @last_face_state = key
-        Master::CLI::Face.frame(
-          state: terminal_face_state,
-          rows: terminal_face_rows,
-          cols: terminal_face_cols,
-          t: Process.clock_gettime(Process::CLOCK_MONOTONIC),
-          motion: (@terminal_face_motion ||= Master::CLI::Face::Motion.new(seed: Process.pid)),
-          color: ENV["NO_COLOR"] != "1"
-        )
-      rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "cli.terminal_face", event_bus: @refs.bus)
-        nil
-      end
-
-      def terminal_face_state
-        return :speaking if @refs.session.phase.to_s == "speaking"
-        return :thinking unless @last_ok
-        return :thinking if @refs.session.phase.to_s == "implement"
-        :idle
-      end
-
-      def terminal_face_rows
-        rows = IO.console&.winsize&.first.to_i
-        return 8 unless rows.positive?
-
-        [(rows / 5), 8].max.clamp(8, 12)
-      end
-
-      def terminal_face_cols
-        cols = IO.console&.winsize&.last.to_i
-        return 40 unless cols.positive?
-
-        [(cols - 8), 32].max.clamp(32, 60)
       end
 
       # Context grows every turn, so it counts as movement only by the step —

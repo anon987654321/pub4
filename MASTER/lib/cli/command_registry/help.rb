@@ -149,6 +149,15 @@ module Master
           detail: ["/why <law|path|scan_rule|anti_pattern|style.key> — Trace::WhyExplainer looks it",
                    "up in the constitution, architecture and path ownership, then asks the model only when nothing matches."],
         },
+        "face" => {
+          summary: "the full-screen 3D terminal face",
+          detail: [
+            "/face — open the large MASTER face in the alternate terminal screen.",
+            "It uses the same TurnRouter, ear, mouth and runtime event bus as the shell.",
+            "The face uses controlled depth, camera motion, lighting, parallax and eased particle motion.",
+            "Type a line, press enter, or speak while idle. Ctrl-C interrupts; Ctrl-D leaves.",
+          ],
+        },
       }.freeze
 
       def help_text(command = nil)

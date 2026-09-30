@@ -40,6 +40,7 @@ module Master
           @seed = seed
           @t = nil
           @yaw, @pitch, @roll, @lean, @dip = Array.new(5) { Spring.new(0.0, 0.0) }
+          @dolly = Spring.new(1.0, 0.0)
           @eye = Spring.new(1.0, 0.0)
           @gaze_lon, @gaze_lat, @mouth = Array.new(3) { Spring.new(0.0, 0.0) }
           @next_blink = 2.2
@@ -82,6 +83,7 @@ module Master
           when :phantom
             @roll.v += @rng.rand(-0.8..0.8)
             @dip.v += 0.5
+            @dolly.v += 0.08
             @particles.each { |p| p.push += @rng.rand(0.8..1.5) }
           when :council
             @yaw.v += @rng.rand(-0.3..0.3)
@@ -103,6 +105,12 @@ module Master
           @roll.toward(state == :listening ? 0.13 : 0.18 * Math.sin(t * 0.7), 4.0, dt)
           @lean.toward(state == :listening ? 0.1 : 0.0, 4.0, dt)
           @dip.toward(0.0, 7.0, dt)
+          @dolly.toward(dolly_for(state, t), 3.8, dt)
+        end
+
+        def dolly_for(state, t)
+          base = { idle: 1.0, listening: 1.018, thinking: 1.045, speaking: 1.032 }.fetch(state, 1.0)
+          base + (0.012 * Math.sin(t * 0.37))
         end
 
         def pitch_for(state, t)
@@ -177,6 +185,7 @@ module Master
           breath = 1.0 + (0.025 * Math.sin(t * 1.6))
           Look.new(
             yaw: @yaw.x, pitch: @pitch.x, roll: @roll.x, scale: breath * (1.0 + @lean.x),
+            dolly: @dolly.x.clamp(0.96, 1.09),
             bob: (0.02 * Math.sin(t * 1.1)) + (0.01 * noise(t * 0.5, 6)) + @dip.x,
             eye_open: @eye.x.clamp(0.0, 1.5), gaze: [@gaze_lon.x, @gaze_lat.x], mouth: @mouth.x.clamp(0.0, 1.0),
             particles: @particles.map { |p| place(p, t) }
@@ -191,7 +200,7 @@ module Master
         end
 
         # One frame's worth of motion, in model units and radians.
-        Look = Data.define(:yaw, :pitch, :roll, :scale, :bob, :eye_open, :gaze, :mouth, :particles)
+        Look = Data.define(:yaw, :pitch, :roll, :scale, :dolly, :bob, :eye_open, :gaze, :mouth, :particles)
 
         # Smooth value noise in [-1, 1]: lattice values from an integer hash,
         # eased between, so drift wanders without repeating.

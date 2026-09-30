@@ -21,9 +21,9 @@ module Master
         # A head is not quite as deep as it is wide, and the painting's
         # brightness stands a little proud of it: nose and cheeks out,
         # sockets in.
-        DEPTH_RATIO = 0.88
-        RELIEF = 0.14
-        BACK_LIGHT = 0.45
+        DEPTH_RATIO = 1.05
+        RELIEF = 0.18
+        BACK_LIGHT = 0.34
         CACHE_LIMIT = 8
         # Where the eyes and the mouth void sit, in the points' own space, and
         # how far each reaches: the painted socket, the painted pupil, and the
@@ -147,7 +147,8 @@ module Master
             xs << x
             ys << y
           end
-          @scale = [(@dots_wide * 0.8) / (xs.max - xs.min), (@dots_high * 0.8) / (ys.max - ys.min)].min
+          # The dedicated face is the hero surface, not a prompt ornament.
+          @scale = [(@dots_wide * 0.9) / (xs.max - xs.min), (@dots_high * 0.9) / (ys.max - ys.min)].min
         end
       end
     end

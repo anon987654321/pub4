@@ -42,6 +42,7 @@ module Master
           "rules" => command(:dispatch_rules, root),
           "snapshot" => command(:dispatch_snapshot, d[:root]),
           "why" => command(:dispatch_why, d[:agent], d[:root]),
+          "face" => Command.new { |_ctx| dispatch_face },
           "help" => command(:help_text, nil),
         ).merge(control_commands(ai[:standing], ai[:soul]))
       end
@@ -178,6 +179,25 @@ module Master
         Master::Snapshot.new(root: Master::ROOT, output: File.expand_path(arg, Master.repo_root)).write!
       rescue StandardError => e
         "snapshot0: failed — #{e.class}: #{e.message}"
+      end
+
+      # Open the full-screen terminal face without inventing a second model route.
+      def dispatch_face(_ctx = nil)
+        return "face0: needs a terminal" unless $stdin.tty?
+
+        container = Fiber[:master_cli_container]
+        return "face0: no session" unless container
+
+        turn = ->(text) do
+          streamed = +""
+          result = TurnRouter.call(message: text, container:, on_turn: ->(line) { streamed << line << "\n" })
+          return result if streamed.strip.empty? || result.err?
+
+          streamed
+        end
+        Face::Window.new(turn:, event_bus: container[:bus]).run
+      rescue StandardError => e
+        "face0: failed — #{e.class}: #{e.message}"
       end
 
       def dispatch_device(_root, ctx: nil)
