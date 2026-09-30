@@ -17,7 +17,7 @@ class ChromeAuditFlatContractTest < Minitest::Test
 
   def test_auth_and_promo_surfaces_do_not_reintroduce_container_borders
     auth = read("shared/app/assets/stylesheets/_auth_form.scss")
-    promo = read("../brgen/app/assets/stylesheets/vertical_promo.css")
+    promo = read("brgen/app/assets/stylesheets/vertical_promo.css")
     assert_includes auth, ".oauth-button {"
     assert_includes auth, "border: 0;"
     assert_includes promo, ".brgen-vertical-promo {"
@@ -30,7 +30,7 @@ class ChromeAuditFlatContractTest < Minitest::Test
     modal = read("shared/app/assets/stylesheets/_modal.scss")
     cookie = read("shared/app/assets/stylesheets/_cookie_banner.scss")
     affiliate = read("shared/app/assets/stylesheets/_affiliate_feed_unit.scss")
-    commerce = read("../brgen/app/assets/stylesheets/_commerce_polish.scss")
+    commerce = read("brgen/app/assets/stylesheets/_commerce_polish.scss")
 
     [modal, cookie, affiliate, commerce].each do |source|
       refute_match(/box-shadow:\s*(?!none)/, source)
