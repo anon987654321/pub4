@@ -162,6 +162,35 @@ class TestSpeech < Minitest::Test
     ENV["MASTER_TTS_MODE"] = original
   end
 
+  def test_fast_socket_resolution_returns_nil_without_a_socket
+    speech = Master::Voice::Speech
+    speech.stub(:fast_tts_mode?, true) do
+      Master::Voice::TtsSupervisor.stub(:next_socket, nil) do
+        Master::Voice::TtsSupervisor.stub(:ensure_daemon!, ->(*) { raise "fast mode must not start a daemon" }) do
+          assert_nil speech.send(:resolve_socket_path)
+        end
+      end
+    end
+  end
+
+  def test_fast_streaming_does_not_start_a_missing_daemon
+    speech = Master::Voice::Speech
+    speech.stub(:edge_tts_available?, true) do
+      speech.stub(:fast_tts_mode?, true) do
+        Master::Voice::TtsSupervisor.stub(:ensure_daemon!, ->(*) { raise "fast mode must not start a daemon" }) do
+          speech.stub(:attempt_socket_synthesis, false) do
+            speech.stub(:attempt_oneshot_synthesis, false) do
+              Dir.mktmpdir("master_tts_fast_stream") do |dir|
+                path = File.join(dir, "answer.mp3")
+                refute speech.send(:edge_stream_written?, "hello", :jenny, { rate: "+0%", pitch: "+0Hz" }, path, nil)
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+
   def test_native_audio_mime_types
     assert_equal "audio/mpeg", Master::Voice::Speech.mime_type_for(".mp3")
     assert_equal "audio/wav", Master::Voice::Speech.mime_type_for(".wav")
