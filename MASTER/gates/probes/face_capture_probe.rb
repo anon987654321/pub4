@@ -3,9 +3,9 @@
 
 # face_capture_probe — get the MASTER face on screen, so it can be recorded.
 #
-#   ruby gates/probes/face_capture_probe.rb                    # one still
-#   ruby gates/probes/face_capture_probe.rb --frames 200       # a sequence
-#   ruby gates/probes/face_capture_probe.rb --url http://127.0.0.1:53187/
+#   ruby gates/face_capture_probe.rb                    # one still
+#   ruby gates/face_capture_probe.rb --frames 200       # a sequence
+#   ruby gates/face_capture_probe.rb --url http://127.0.0.1:53187/
 #
 # Why this exists: the face refuses to exist until someone taps it, so anything
 # that records the page without tapping records the primer screen.
@@ -50,8 +50,8 @@
 require "fileutils"
 require "json"
 require "optparse"
-require_relative "../support/cdp_session"
-require_relative "../support/fleet"
+require_relative "support/cdp_session"
+require_relative "support/fleet"
 
 options = { url: nil, frames: 1, out: "tmp/face_capture", interval: 0.04, timeout: 30 }
 OptionParser.new do |o|
