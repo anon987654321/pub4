@@ -41,6 +41,40 @@ class TestCliBootE2e < Minitest::Test
     assert_match(/help|command/i, combined)
   end
 
+  def test_bin_ruby_wrapper_reaches_master_boot
+    output = +""
+    env = BOOT_ENV.merge("MASTER_FAST" => "1")
+    PTY.spawn(env, File.join(ROOT, "bin", "ruby"), CLI, "--fast", chdir: ROOT) do |reader, writer, pid|
+      writer.close
+      deadline = Time.now + COMMAND_TIMEOUT
+      status = nil
+
+      while Time.now < deadline
+        begin
+          output << reader.readpartial(4096) if reader.wait_readable(0.2)
+        rescue Errno::EIO, EOFError
+          done, status = Process.waitpid2(pid)
+          break if done
+        end
+
+        done, status = Process.waitpid2(pid, Process::WNOHANG)
+        break if done
+      end
+
+      unless status
+        Process.kill("TERM", pid)
+        Process.wait(pid)
+        flunk "bin/ruby cli boot timed out: #{output[0, 1000]}"
+      end
+
+      assert status.success?, "bin/ruby cli boot failed: #{output[0, 1000]}"
+      assert_match(/boot0:|status|ready/i, output)
+    ensure
+      writer&.close unless writer&.closed?
+      reader&.close unless reader&.closed?
+    end
+  end
+
   def test_tty_fast_boot_reaches_master_boot
     output = +""
     env = BOOT_ENV.merge("MASTER_FAST" => "1")
