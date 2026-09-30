@@ -7,7 +7,7 @@ require_relative "../cli/routing/provider_health"
 
 module Operator
   class CapabilityGraph
-    NODE_ORDER = %w[constitution model voice web audio rails openbsd].freeze
+    NODE_ORDER = %w[constitution model voice web audio rails openbsd studio].freeze
 
     def initialize(root:, path: File.join(root, ".master", "capabilities.json"))
       @root = root
@@ -25,6 +25,7 @@ module Operator
           "audio" => executable_state(%w[afplay termux-media-player pactl]),
           "rails" => tree_state("RAILS"),
           "openbsd" => tree_state("OPENBSD"),
+          "studio" => tree_state("STUDIO"),
         },
       }
       FileUtils.mkdir_p(File.dirname(@path))
