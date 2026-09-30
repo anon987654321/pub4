@@ -35,6 +35,7 @@ class TestDeviceSetup < Minitest::Test
     steps = setup_with.plan
     assert_equal %i[packages whisper model], steps.map(&:name)
     assert_equal [%w[pkg install -y termux-api sox ffmpeg pulseaudio]], steps[0].tries.first
+    assert_equal %w[termux-speech-to-text termux-tts-speak termux-media-player sox ffmpeg parec], Setup::PACKAGE_COMMANDS
     pkg_try, build = steps[1].tries
     assert_equal [%w[pkg install -y x11-repo], %w[pkg install -y whisper-cpp]], pkg_try
     assert_equal %w[pkg install -y git cmake clang make curl], build[0]
@@ -45,7 +46,7 @@ class TestDeviceSetup < Minitest::Test
   end
 
   def test_nothing_runs_when_the_ear_is_in_place
-    @present.concat(%w[termux-speech-to-text sox ffmpeg parec whisper-cli])
+    @present.concat(%w[termux-speech-to-text termux-tts-speak termux-media-player sox ffmpeg parec whisper-cli])
     setup = setup_with
     model = File.join(@dir, "ggml-base.bin")
     File.open(model, "wb") { |f| f.truncate(Master::CLI::Face::Transcriber::MIN_MODEL_BYTES) }
@@ -56,7 +57,7 @@ class TestDeviceSetup < Minitest::Test
   end
 
   def test_whisper_builds_from_source_when_pkg_lacks_it
-    @present.concat(%w[termux-speech-to-text sox ffmpeg parec])
+    @present.concat(%w[termux-speech-to-text termux-tts-speak termux-media-player sox ffmpeg parec])
     setup = setup_with(fails: ["whisper-cpp"], installs: { ["install", "-m", "755", File.join(Setup::SOURCE, "build", "bin", "whisper-cli")] => "whisper-cli" })
     setup.define_singleton_method(:plan) { super().select { |step| step.name == :whisper } }
     setup.run
@@ -66,7 +67,7 @@ class TestDeviceSetup < Minitest::Test
   end
 
   def test_a_finished_step_is_not_repeated_on_the_next_boot
-    installs = { %w[pkg install -y termux-api] => %w[termux-speech-to-text sox ffmpeg parec] }
+    installs = { %w[pkg install -y termux-api] => %w[termux-speech-to-text termux-tts-speak termux-media-player sox ffmpeg parec] }
     setup = setup_with(installs:)
     setup.define_singleton_method(:plan) { super().first(1) }
     setup.run
