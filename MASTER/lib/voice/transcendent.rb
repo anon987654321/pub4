@@ -116,7 +116,7 @@ module Master
       end
 
       def resolve_voice_and_prosody(clean, cfg, voice:, style:, rate:, pitch:, voice_locked:, style_locked:)
-        resolved_voice = if Language.detect(clean) == :nb
+        resolved_voice = if Language.detect(clean) != :en
                              Speech.voice_for_text(clean)
                            else
                              voice || Speech.default_voice
