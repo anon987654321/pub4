@@ -43,8 +43,6 @@ module Master
         MASTER/data/scan_coverage.yml
       ].freeze
 
-      RUBY_EXTENSIONS = %w[.rb .rake .ru .gemspec].freeze
-
       Result = Data.define(:ok, :files, :bytes, :ruby_files, :phases, :failures) do
         def clean?
           ok && failures.empty?
@@ -73,7 +71,7 @@ module Master
         bytes = reread(files, failures)
         phases[:read] = "#{bytes} bytes"
 
-        ruby_files = files.select { |path| RUBY_EXTENSIONS.include?(File.extname(path).downcase) }
+        ruby_files = files.select { |path| Master.language_for(path) == "ruby" }
         syntax_check(ruby_files, failures)
         phases[:syntax] = "#{ruby_files.size} ruby files"
 
