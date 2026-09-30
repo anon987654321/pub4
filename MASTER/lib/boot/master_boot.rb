@@ -64,6 +64,16 @@ module Master
     def ensure_services!(root: ROOT)
       return true if ENV["MASTER_SKIP_TTS"] == "1"
 
+      # TTS is a capability, not synonymous with the Edge daemon. On a local
+      # terminal, macOS say plus afplay (or espeak plus a player) is already
+      # a complete voice path; do not mark the session degraded or spend 15s
+      # trying to start an Edge worker the CLI does not need.
+      if Voice::Speech.available? && (!$stdout.tty? || Voice::Playback.available?)
+        ENV.delete("MASTER_TTS_DEGRADED")
+        ENV.delete("MASTER_TTS_REASON")
+        return true
+      end
+
       supervisor = Ground::ServiceSupervisor.new(root:)
       result = supervisor.ensure(
         name: "tts",
