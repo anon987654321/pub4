@@ -1,4 +1,4 @@
-# frozen_string_literal: true
+  frozen_string_literal: true
 
 require "json"
 require "yaml"
@@ -6,7 +6,7 @@ require_relative "../../tools/generate_route_manifest"
 require_relative "brgen_vertical_surfaces"
 
 module Deploy
-  # Canonical inventory of full-page Rails surfaces for UI/UX simulation.
+    Canonical inventory of full-page Rails surfaces for UI/UX simulation.
   # Discovers non-partial HTML views under brgen, amber, and MASTER web, then
   # maps each to a host + path + guest/auth persona.
   module PageInventory
@@ -32,24 +32,8 @@ module Deploy
       "maps" => "#{BrgenVerticalSurfaces.registry_subdomain('MAPS_SUBDOMAINS')}.#{APEX}",
     }.freeze
 
-    APPS = {
-      "brgen" => {
-        views: File.join(ROOT, "RAILS", "brgen", "app", "views"),
-        port_key: "brgen",
-      },
-      "amber" => {
-        views: File.join(ROOT, "RAILS", "amber", "app", "views"),
-        port_key: "amber",
-      },
-      "bsdports" => {
-        views: File.join(ROOT, "RAILS", "bsdports", "app", "views"),
-        port_key: "bsdports",
-      },
-      "master" => {
-        views: nil, # special-cased
-        port_key: "master",
-      },
-    }.freeze
+    APPS = Fleet.app_names.to_h { |app| [app, { views: File.join(ROOT, "RAILS", app, "app", "views"), port_key: app }] }
+      .merge("master" => { views: nil, port_key: "master" }).freeze
 
     SHARED_ROOT = File.join(ROOT, "RAILS", "shared", "app", "views")
 
@@ -166,7 +150,7 @@ module Deploy
     def shared_pages
       SHARED_PAGES.flat_map do |parts, row|
         shared_abs = File.join(SHARED_ROOT, "#{parts.join("/")}.html.erb")
-        Array(row[:apps] || %w[brgen amber bsdports]).map do |app|
+        Array(row[:apps] || Fleet.app_names).map do |app|
           abs = app_override(app, parts) || shared_abs
           {
             id: "#{app}/shared/#{parts.join("/")}",
