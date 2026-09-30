@@ -152,10 +152,6 @@ ownership:
       installs; nothing here reaches vm23
     risk: low
     check: ruby OPENBSD/test/test_githooks.rb
-  dotfiles/:
-    purpose: operator Mac desktop setup; not installed by OPERATOR.sh
-    risk: low
-    check: none
   quarantine/:
     purpose: the pen for inert malware samples; nothing here runs, and today it
       holds only its README
