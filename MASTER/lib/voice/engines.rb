@@ -331,7 +331,7 @@ module Master
       end
 
       def synth_say(text, out_path)
-        aiff = out_path.sub(/\.mp3\z/, ".aiff")
+        aiff = out_path.sub(/\.[^.]+\z/, ".aiff")
         spd = 175 + rand(25)
         ok = system("say", "-v", "Samantha", "-r", spd.to_s, "-o", aiff, text.to_s, out: File::NULL, err: File::NULL) ||
              system("say", "-o", aiff, text.to_s, out: File::NULL, err: File::NULL)

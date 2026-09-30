@@ -16,7 +16,9 @@
 # below is the Mac's. MASTER_TTS_MODE remains the explicit operator override.
 transcendent:
   enabled: true
-  default_mode: transcendent
+  # Conversational speech uses the single-request Edge path by default. Set MASTER_TTS_MODE=transcendent for the expressive multi-engine path.
+  fast_mode: true
+  default_mode: classic
   personality: warm_erratic
   # mlx needs Python 3.10+ (brew install python@3.11). Until then: fast Edge voices.
   # English quality chain: expressive local engines first, then the stable Edge
@@ -28,8 +30,8 @@ transcendent:
   melodic_threshold: 0.28
   # Phrase segmentation and the rests between phrases, without the contour.
   # Separate from melodic_* because it is rhythm rather than style. Costs one
-  # Edge round trip per phrase, capped at Melody::MAX_PHRASES; false restores a
-  # single call at one rate and one pitch.
+  # Edge round trip per phrase, capped at Melody::MAX_PHRASES. fast_mode bypasses
+  # this for ordinary conversation; disabling fast_mode restores phrase rendering.
   phrase_rhythm_enabled: true
   # A Norwegian clause is always rendered with Pernille; English uses Jenny.
   # Language routing is a speech rule, not an optional stylistic switch.

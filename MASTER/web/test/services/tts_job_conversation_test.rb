@@ -57,4 +57,25 @@ class TtsJobConversationTest < ActiveSupport::TestCase
     assert job.ready?
     refute job.failed?, "a job with audio must not answer as failed"
   end
+
+  test "native wav audio is ready and reports its real mime type" do
+    job = TtsJob.new(text: "native wav", voice: :jenny, style: :brief)
+    File.binwrite(TtsJob::CACHE_DIR.join("#{job.job_id}.wav"), "RIFF fake wav")
+
+    assert job.ready?
+    assert_equal "audio/wav", job.mime_type
+    assert_equal "RIFF fake wav", job.bytes
+  end
+
+  test "cancel removes every supported native audio format" do
+    job = TtsJob.new(text: "cancel native", voice: :jenny, style: :brief, conversation: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+    job.write_token
+    File.binwrite(TtsJob::CACHE_DIR.join("#{job.job_id}.wav"), "wav")
+    File.binwrite(TtsJob::CACHE_DIR.join("#{job.job_id}.m4a"), "m4a")
+
+    assert TtsJob.cancel(job.job_id, conversation: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+    refute File.exist?(TtsJob::CACHE_DIR.join("#{job.job_id}.wav"))
+    refute File.exist?(TtsJob::CACHE_DIR.join("#{job.job_id}.m4a"))
+  end
+
 end

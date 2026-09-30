@@ -297,6 +297,8 @@ module Master
         return ENV["MASTER_TTS_MODE"] if ENV.key?("MASTER_TTS_MODE")
 
         cfg = Transcendent.load_config
+        return "classic" if cfg["fast_mode"] == true
+
         if Engines.openbsd? && Transcendent.enabled?
           return "transcendent"
         end
@@ -420,16 +422,19 @@ module Master
         # one flat Edge utterance while the CLI already had emotion, phrase
         # rhythm and engine fallback. Use the same expressive path when enabled;
         # short lines or unavailable engines fall through to the proven Edge path.
-        return true if transcendent_stream_written?(text_str, voice, opts, output_path, on_chunk)
-        return true if edge_stream_written?(text_str, voice, style_config, output_path, on_chunk)
+        return output_path if transcendent_stream_written?(text_str, voice, opts, output_path, on_chunk)
+        return output_path if edge_stream_written?(text_str, voice, style_config, output_path, on_chunk)
 
         # Edge TTS is a third-party network call (Microsoft) that can time out
         # or be unreachable independent of anything local; without this, a
         # single Edge hiccup meant no audio at all even though espeak-ng sits
         # right there. synthesize() (the non-streaming caller) already had
         # this fallback -- this path (the one TtsJob actually uses) didn't.
-        return true if attempt_espeak_synthesis(text_str, output_path, on_chunk)
-        return true if attempt_say_synthesis(text_str, output_path, on_chunk)
+        path = attempt_espeak_synthesis(text_str, output_path, on_chunk)
+        return path if path
+
+        path = attempt_say_synthesis(text_str, output_path, on_chunk)
+        return path if path
 
         @last_error ||= "streaming synthesis produced empty audio"
         false
@@ -462,8 +467,11 @@ module Master
       def transcendent_streaming_enabled?(opts)
         return false if opts[:transcendent] == false
         return true if opts[:transcendent] == true
+        return true if ENV["MASTER_TTS_MODE"].to_s == "transcendent"
 
         require_relative "transcendent"
+        return false if Transcendent.load_config["fast_mode"] == true
+
         Transcendent.enabled?
       rescue StandardError
         false
@@ -537,18 +545,14 @@ module Master
         wav_path = synthesize_espeak(text_str)
         return false unless wav_path
 
-        # output_path is always the caller's fixed *.mp3 cache path (TtsJob),
-        # so espeak's wav needs transcoding, not just a file move -- reuse the
-        # same ffmpeg conversion the say/Kokoro engines already rely on.
-        ok = Engines.convert_to_mp3(wav_path, output_path)
-        unless ok && File.exist?(output_path) && File.size(output_path) > 0
-          warn_tts("espeak fallback: mp3 conversion failed")
-          File.unlink(wav_path) rescue nil
-          return false
-        end
-
-        on_chunk&.call(File.size(output_path))
-        true
+        native_path = output_path.sub(/\.[^.]+\z/, ".wav")
+        FileUtils.mv(wav_path, native_path)
+        on_chunk&.call(File.size(native_path))
+        native_path
+      rescue StandardError => e
+        warn_tts("espeak fallback failed: #{e.class}: #{e.message}")
+        File.unlink(wav_path) rescue nil if defined?(wav_path) && wav_path
+        false
       end
 
       # macOS ships say even when espeak-ng is absent. The web TTS job
@@ -557,10 +561,11 @@ module Master
       def attempt_say_synthesis(text_str, output_path, on_chunk)
         return false unless Engines.available?("say", {})
 
+        native_path = output_path.sub(/\.[^.]+\z/, ".m4a")
         ok = Engines.synth(
           "say",
           text: text_str,
-          out_path: output_path,
+          out_path: native_path,
           cfg: {},
           emotion: {},
           melody: { phrases: [] },
@@ -568,17 +573,23 @@ module Master
           rate: nil,
           pitch: nil,
         )
-        return false unless ok && File.exist?(output_path) && File.size?(output_path)
+        return false unless ok && File.exist?(native_path) && File.size?(native_path)
 
-        on_chunk&.call(File.size(output_path))
-        true
+        on_chunk&.call(File.size(native_path))
+        native_path
       rescue StandardError => e
         warn_tts("say fallback failed: #{e.class}: #{e.message}")
         false
       end
 
       def mime_type_for(path)
-        File.extname(path.to_s).downcase == ".wav" ? "audio/wav" : "audio/mpeg"
+        case File.extname(path.to_s).downcase
+        when ".wav" then "audio/wav"
+        when ".m4a", ".mp4" then "audio/mp4"
+        when ".aiff", ".aif" then "audio/aiff"
+        when ".ogg", ".oga" then "audio/ogg"
+        else "audio/mpeg"
+        end
       end
 
       def synthesize_edge(text, voice:, style_config:)

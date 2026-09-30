@@ -6,6 +6,8 @@ require "json"
 
 class TtsJob
   CACHE_DIR = Rails.root.join("tmp", "tts_cache")
+  AUDIO_EXTENSIONS = %w[.mp3 .m4a .wav .aiff .aif].freeze
+  CACHE_VERSION = "native-audio-v2-fast"
 
   # Lower number is spoken sooner. The client already ranks its playback lanes
   # error > response > nudge (face_speech_runtime.js), but this queue was plain
@@ -170,7 +172,7 @@ class TtsJob
     return false unless owned?(job_id, conversation)
 
     FileUtils.mkdir_p(CACHE_DIR)
-    %w[.mp3 .job .err].each do |ext|
+    (AUDIO_EXTENSIONS + %w[.job .err .meta.json]).each do |ext|
       path = CACHE_DIR.join("#{job_id}#{ext}")
       File.delete(path) if File.exist?(path)
     end
@@ -211,12 +213,15 @@ class TtsJob
     # A hash of voice and text on purpose: identical lines share one synthesis and one cache
     # entry. Guessing an id requires the utterance, and the mp3 holds nothing beyond it;
     # TtsController#readable_job still checks ownership of a pending job.
-    @fingerprint = Digest::SHA256.hexdigest("#{@voice}|#{@style}|#{@rate}|#{@pitch}|#{@text}")
+    @fingerprint = Digest::SHA256.hexdigest(
+      "#{CACHE_VERSION}|#{@voice}|#{@style}|#{@rate}|#{@pitch}|#{@text}"
+    )
     @job_id = @fingerprint[0, 32]
   end
 
   def ready?
-    File.file?(cache_path) && !File.zero?(cache_path)
+    path = audio_path
+    path && File.file?(path) && !File.zero?(path)
   end
 
   # Audio on disk outranks a recorded failure. The face asked for "Still
@@ -247,13 +252,18 @@ class TtsJob
   end
 
   def bytes
-    File.binread(cache_path) if ready?
+    File.binread(audio_path) if ready?
+  end
+
+  def mime_type
+    Master::Voice::Speech.mime_type_for(audio_path || ".mp3")
   end
 
   def bytes_available
-    return 0 unless File.file?(cache_path)
+    path = audio_path
+    return 0 unless path && File.file?(path)
 
-    File.size(cache_path)
+    File.size(path)
   end
 
   def partial_bytes
@@ -313,9 +323,10 @@ class TtsJob
   private
 
   def synthesize_streaming_to_cache
-    Master::Voice::Speech.synthesize_streaming_to_file(
+    requested_path = CACHE_DIR.join("#{job_id}.mp3")
+    path = Master::Voice::Speech.synthesize_streaming_to_file(
       @text,
-      output_path: cache_path.to_s,
+      output_path: requested_path.to_s,
       voice: @voice,
       style: @style,
       rate: @rate,
@@ -324,6 +335,14 @@ class TtsJob
       style_locked: @style_locked,
       on_chunk: method(:publish_chunk_progress),
     )
+    return unless path
+
+    path = path == true ? requested_path.to_s : path.to_s
+    extension = File.extname(path).downcase
+    extension = ".mp3" unless AUDIO_EXTENSIONS.include?(extension)
+    destination = CACHE_DIR.join("#{job_id}#{extension}")
+    FileUtils.mv(path, destination.to_s) if File.expand_path(path) != File.expand_path(destination.to_s)
+    destination.to_s
   end
 
   def publish_chunk_progress(bytes)
@@ -352,6 +371,7 @@ class TtsJob
         job_id: @job_id,
         voice: @voice.to_s,
         style: @style.to_s,
+        mime_type:,
         **stream.transform_keys(&:to_s),
       ),
     )
@@ -362,7 +382,10 @@ class TtsJob
   def record_failure(message)
     FileUtils.mkdir_p(CACHE_DIR)
     File.write(error_path, message.to_s)
-    File.delete(cache_path) if File.exist?(cache_path)
+    AUDIO_EXTENSIONS.each do |ext|
+      path = CACHE_DIR.join("#{job_id}#{ext}")
+      File.delete(path) if File.exist?(path)
+    end
     @bus&.publish("tts:job_error", job_id: @job_id, error: message)
   end
 end
