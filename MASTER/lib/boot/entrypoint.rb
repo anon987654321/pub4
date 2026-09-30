@@ -44,10 +44,10 @@ module Master
           BUNDLE_USER_HOME BUNDLE_VERSION BUNDLE_WITH BUNDLE_WITHOUT
         ].each { |key| clean_env.delete(key) }
         clean_env["MASTER_BUNDLER_REEXEC_DONE"] = "1"
-        out.puts("bundler0: switching #{active} -> #{lock_version}")
+        out.puts("bundler0: switching #{active} to #{lock_version}")
         exec(clean_env, File.expand_path(program), *argv)
       rescue Errno::ENOENT => e
-        out.puts("bundler0: cannot re-exec #{program}: #{e.message}")
+        out.puts("bundler0: cannot re-exec #{program}, #{e.message}")
         exit 78
       end
 
@@ -79,7 +79,7 @@ module Master
 
         wrapper = File.join(root, "bin", "ruby")
         unless File.executable?(wrapper)
-          out.puts("ruby0: #{RUBY_VERSION}; #{expected} required; #{wrapper} is unavailable")
+          out.puts("ruby0: #{RUBY_VERSION}, #{expected} required, #{wrapper} unavailable")
           exit 78
         end
 
@@ -87,10 +87,10 @@ module Master
         # program and argv through it lets every executable share that logic.
         return if File.expand_path(program) == File.expand_path(wrapper)
 
-        out.puts("ruby0: switching #{RUBY_VERSION} -> #{expected}")
+        out.puts("ruby0: switching #{RUBY_VERSION} to #{expected}")
         exec(wrapper, File.expand_path(program), *argv)
       rescue ArgumentError
-        out.puts("ruby0: invalid .ruby-version in #{version_file}")
+        out.puts("ruby0: invalid .ruby-version, #{version_file}")
         exit 78
       end
     end
