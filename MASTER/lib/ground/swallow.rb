@@ -41,7 +41,17 @@ module Master
         def log(error, context:, event_bus: nil, severity: :cosmetic, **meta)
           payload = build_payload(error, context, severity, meta)
           bus = event_bus || @event_bus
-          bus&.publish("error:swallowed", payload)
+          reporting = Thread.current.thread_variable_get(:master_swallow_reporting)
+
+          unless reporting
+            Thread.current.thread_variable_set(:master_swallow_reporting, true)
+            begin
+              bus&.publish("error:swallowed", payload)
+            ensure
+              Thread.current.thread_variable_set(:master_swallow_reporting, false)
+            end
+          end
+
           write_structured_log(payload)
         rescue StandardError => e
           # Last resort: stderr if even the logger fails, once per cause. On a
