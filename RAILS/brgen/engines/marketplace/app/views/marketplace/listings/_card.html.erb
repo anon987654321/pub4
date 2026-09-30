@@ -43,6 +43,13 @@
       <% if (seller = listing.user&.display_name).present? %>
         <%= tag.span t("marketplace.seller_badge", name: seller), class: "store-badge" %>
       <% end %>
+      <% if @search_ranker.present? && (reasons = @search_ranker.reasons(listing)).any? %>
+        <div class="listing-ranking-reasons" aria-label="<%= t("marketplace.ranking_reasons.label") %>">
+          <% reasons.each do |reason| %>
+            <%= tag.span reason, class: "store-badge listing-ranking-reason" %>
+          <% end %>
+        </div>
+      <% end %>
     </div>
   <% end %>
 
