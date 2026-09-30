@@ -100,6 +100,11 @@ class TestMasterLoop < Minitest::Test
     end
   end
 
+  def test_fix_loop_builder_contract_has_no_retired_rollback_dependency
+    parameters = Master::Fix::FixLoop.instance_method(:build_pass_runner).parameters
+    assert_empty parameters.select { |kind, name| kind == :keyreq && name == :rollback }
+  end
+
   def test_boot_self_test_is_opt_in
     ran = []
     self_test = Object.new
