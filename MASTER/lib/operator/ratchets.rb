@@ -64,11 +64,13 @@ module Operator
     # exists because two of those disagreed (see file_length_rows below). A row
     # that genuinely cannot enumerate itself leaves it nil and --why says so.
     Row = Struct.new(:name, :current, :ceiling, :direction, :source, :note, :members, keyword_init: true) do
-      def over? = current && ceiling && current > ceiling
-      def slack? = current && ceiling && current < ceiling
+      def readable? = !current.nil? && !ceiling.nil?
+
+      def over? = readable? && current > ceiling
+      def slack? = readable? && current < ceiling
 
       def state
-        return "unreadable" if current.nil?
+        return "unreadable" unless readable?
         return "OVER +#{current - ceiling}" if over?
         return "SLACK -#{ceiling - current}" if slack?
 
@@ -84,7 +86,7 @@ module Operator
       # blind and the gate goes green. Seen 2026-08-15 running the ratchets from
       # a detached worktree, where `require "master"` does not resolve and the
       # spine row vanished from the output entirely rather than failing.
-      def ok? = !current.nil? && !over? && !slack?
+      def ok? = readable? && !over? && !slack?
     end
 
     module_function
