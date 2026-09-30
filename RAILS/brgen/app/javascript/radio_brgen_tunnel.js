@@ -877,34 +877,75 @@ class VisualEngine {
   #renderFallback() {
     const ctx = this.ctx
     if (!ctx) return
-    ctx.fillStyle = `rgba(0,0,0,${(1 - TRAIL_DECAY).toFixed(3)})`
+
+    // Fallback keeps the same connected tunnel using native paths. It is
+    // intentionally lower density than WebGL, so an older browser degrades
+    // gracefully instead of recreating the original pixel-grind.
+    ctx.fillStyle = "#000"
     ctx.fillRect(0, 0, this.w, this.h)
-    const { fov } = this.config
+
+    const { fov, particleCountPerRow, zStep } = this.config
+    const rows = Math.max(1, Math.round((fov * 2) / zStep))
     const span = fov * 2
-    const radius = Math.hypot(this.w, this.h) * 0.19 * (1 + (this.bass || 0) * 0.18) * (this.breath || 1)
-    const c = this.centerNow
-    for (let i = 0; i < this.pointCount; i++) {
-      const z = ((this.cpuRingT[i] * span + this.zOffset) % span + span) % span - fov
-      const ang = this.cpuAngle[i] + this.time
+    const radius = Math.hypot(this.w, this.h) * 0.19 *
+      (1 + (this.bass || 0) * 0.18) * (this.breath || 1)
+    const center = this.centerNow
+    const point = (ring, index) => {
+      const z = ((((ring / rows) * span + this.zOffset) % span) + span) % span - fov
+      const ang = (index / particleCountPerRow) * Math.PI * 2 + this.time + z * 0.0016
+      let warp = 1 +
+        Math.sin(ang * 3 + z * 0.02 - this.time * 1.65) *
+        (0.08 + (this.mid || 0) * 0.08) *
+        (0.30 + 0.70 * Math.min(1, Math.max(0, 1 - (z + fov) / span)))
+      let skew = Math.cos(ang * 2 - z * 0.013 + this.time * 0.72) *
+        (0.035 + (this.beat || 0) * 0.045)
+      const r = radius * warp
       const scale = fov / Math.max(0.5, fov + z)
-      const x = Math.cos(ang) * radius * scale + c.x
-      const y = Math.sin(ang) * radius * scale + c.y
-      if (x < 0 || x >= this.w || y < 0 || y >= this.h) continue
-      const near = Math.min(1, Math.max(0, 1 - (z + fov) / span)) ** 2
-      let a = INK_ALPHA_MIN + (INK_ALPHA_MAX - INK_ALPHA_MIN) * near
-      // The same lid as the shader. Without this the 2D path would quietly never
-      // blink, and the difference between the two renderers would be a behaviour
-      // rather than a resolution.
-      if (this.blink >= 0) {
-        const d = Math.min(1, Math.abs(near - this.blink) / 0.16)
-        a *= 1 - 0.92 * (1 - (d * d * (3 - 2 * d)))
+      return {
+        x: Math.cos(ang) * r * scale + center.x + skew * radius * scale,
+        y: Math.sin(ang) * r * scale + center.y - skew * radius * scale * 0.7,
+        z
       }
+    }
+
+    ctx.lineWidth = 1
+    ctx.globalCompositeOperation = "source-over"
+
+    for (let ring = 0; ring < rows; ring++) {
+      const first = point(ring, 0)
+      const near = Math.min(1, Math.max(0, 1 - (first.z + fov) / span))
+      const alpha = INK_ALPHA_MIN + (INK_ALPHA_MAX - INK_ALPHA_MIN) * near * near
       const r = Math.round((INK_FAR.r + (INK_NEAR.r - INK_FAR.r) * near) * 255)
       const g = Math.round((INK_FAR.g + (INK_NEAR.g - INK_FAR.g) * near) * 255)
       const b = Math.round((INK_FAR.b + (INK_NEAR.b - INK_FAR.b) * near) * 255)
-      ctx.fillStyle = `rgba(${r},${g},${b},${a.toFixed(3)})`
-      ctx.fillRect(x | 0, y | 0, 1, 1)
+      ctx.globalAlpha = alpha
+      ctx.strokeStyle = `rgb(${r} ${g} ${b})`
+      ctx.beginPath()
+      ctx.moveTo(first.x, first.y)
+      for (let j = 1; j <= particleCountPerRow; j++) {
+        const p = point(ring, j % particleCountPerRow)
+        ctx.lineTo(p.x, p.y)
+      }
+      ctx.stroke()
     }
+
+    // Only every fourth seam in the fallback: enough to preserve the tunnel
+    // lattice without turning an old CPU renderer into the same bottleneck.
+    for (let ring = 0; ring < rows - 1; ring++) {
+      for (let j = 0; j < particleCountPerRow; j += 4) {
+        const a = point(ring, j)
+        const b = point(ring + 1, j)
+        const near = Math.min(1, Math.max(0, 1 - (a.z + fov) / span))
+        const alpha = INK_ALPHA_MIN + (INK_ALPHA_MAX - INK_ALPHA_MIN) * near * near
+        ctx.globalAlpha = alpha * 0.72
+        ctx.strokeStyle = `rgb(${Math.round((INK_FAR.r + (INK_NEAR.r - INK_FAR.r) * near) * 255)} ${Math.round((INK_FAR.g + (INK_NEAR.g - INK_FAR.g) * near) * 255)} ${Math.round((INK_FAR.b + (INK_NEAR.b - INK_FAR.b) * near) * 255)})`
+        ctx.beginPath()
+        ctx.moveTo(a.x, a.y)
+        ctx.lineTo(b.x, b.y)
+        ctx.stroke()
+      }
+    }
+    ctx.globalAlpha = 1
   }
 
   setTouch(x, y, active) {
