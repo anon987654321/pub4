@@ -2,7 +2,7 @@
   inline-size: min(42rem, calc(100vw - 2rem));
   max-inline-size: 42rem;
   padding: 0;
-  border: 1px solid var(--border);
+  border: 0;
   background: var(--surface);
   color: var(--text);
 }
@@ -75,8 +75,8 @@
   inline-size: 100%;
   min-block-size: var(--tap-min);
   padding-inline: var(--control-pad-inline);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-pill);
+  border: 0;
+  border-radius: 0;
   background: var(--surface);
   color: var(--text);
   font: inherit;
@@ -99,8 +99,8 @@
 .newsletter-capture-actions button {
   min-block-size: var(--tap-min);
   padding-inline: var(--control-pad-inline);
-  border: 1px solid var(--text);
-  border-radius: var(--radius-pill);
+  border: 0;
+  border-radius: 0;
   background: var(--text);
   color: var(--surface);
   font: inherit;

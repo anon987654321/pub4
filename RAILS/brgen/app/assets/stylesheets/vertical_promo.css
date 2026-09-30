@@ -1,12 +1,11 @@
 /* First-party vertical awareness unit.
  *
- * The circle keeps the historic “Spin for the win!” geometry: one border,
- * one dot, one rotating wordmark. CSS handles it directly, so the feed adds
- * no animation library or canvas cost for a decorative promotion.
+ * The circle keeps the historic “Spin for the win!” geometry: one dot,
+ * one rotating wordmark. The feed remains a flat, content-led surface; the
+ * signal is carried by motion and ink rather than a decorative container line.
  */
 .brgen-vertical-promo {
   --promo-signal: var(--accent);
-  border-block: 1px solid var(--border);
   background: var(--bg);
 }
 
@@ -36,7 +35,7 @@
   place-items: center;
   width: clamp(8rem, 42vw, 18rem);
   aspect-ratio: 1;
-  border: 1px solid var(--promo-signal);
+  border: 0;
   border-radius: 50%;
   animation: brgen-vertical-promo-spin 100s linear infinite;
 }

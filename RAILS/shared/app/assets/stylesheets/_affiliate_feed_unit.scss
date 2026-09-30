@@ -9,8 +9,8 @@
   display: block;
   margin: var(--space-5) 0;
   padding: var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-card);
+  border: 0;
+  border-radius: 0;
   background: var(--surface);
 }
 
@@ -127,8 +127,8 @@
   align-content: center;
   min-height: 100%;
   padding: var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  border: 0;
+  border-radius: 0;
   background: var(--surface-elevated);
 }
 
@@ -259,7 +259,7 @@
 .affiliate_feed_unit--brgen .affiliate_feed_media {
   aspect-ratio: 16 / 9;
   border-radius: 0;
-  border: 1px solid var(--border);
+  border: 0;
   background: var(--surface-elevated);
 }
 
