@@ -183,9 +183,11 @@ class TestTraceSupport < Minitest::Test
     end
 
     lines = logging.dmesg.lines.map(&:chomp)
-    assert_equal "tool: write lib/a.rb 12B", lines[0]
+    assert_equal "tool0 at master0: write, path lib/a.rb, bytes 12", lines[0]
     assert_equal "boot0: ready", lines[1]
+    assert_includes lines[2], "model0 at master0: call"
     refute_includes lines[2], "0123456789abcdef0123456789abcdef"
+    refute_includes lines[0], "="
   end
 
   # The coding loop prints like the kernel: a parent attaches once, each effect
