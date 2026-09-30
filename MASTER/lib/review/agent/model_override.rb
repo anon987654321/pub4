@@ -46,6 +46,14 @@ module Master
         # /model may save a provider that later disappears. Keep an explicit
         # choice while it remains reachable; otherwise leave selection to the
         # live router instead of pinning a dead lane.
+        def pinned_model_reachable_for(model_id)
+          return true unless @model_router.respond_to?(:unreachable_reason)
+          @model_router.unreachable_reason(model_id, wait: false).nil?
+        rescue StandardError => e
+          @bus&.publish("llm:model_reachability_error", model: model_id, error: e.message)
+          false
+        end
+
         def pin_boot_model!
           saved = @config["model"].to_s
           return if @pinned_model || saved.empty? || saved == Ground::Config::DEFAULTS["model"]
@@ -66,8 +74,6 @@ module Master
         def promote_runtime_model(from:, to:)
           return if @pinned_model
           return if from.to_s.empty? || to.to_s.empty? || from.to_s == to.to_s
-          return unless @config["model"].to_s == from.to_s
-
           @runtime_model = to.to_s
           @bus&.publish("llm:model_switched", from:, to: @runtime_model, reason: "fallback_success")
         rescue StandardError => e
@@ -77,7 +83,9 @@ module Master
         def model_for(operation:)
           pinned = @pinned_model if @pinned_model && !Io::ModelSkipCache.skipped?(@pinned_model) &&
                                    pinned_model_reachable?
-          pinned || model || @model_router&.constrained_for(operation:)
+          runtime = @runtime_model if @runtime_model && !Io::ModelSkipCache.skipped?(@runtime_model) &&
+                                      pinned_model_reachable_for(@runtime_model)
+          pinned || runtime || @model_router&.constrained_for(operation:) || model
         end
 
         # The full fallback chain (cheap-first/strong-first as configured),
