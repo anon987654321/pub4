@@ -52,12 +52,17 @@ module Master
           "#{key.to_s.tr("_", " ")} #{value}"
         end.join(", ")
         details = Master::Ground::Redactor.text(details)
-        prefix = parent == unit ? "#{unit}: #{action}" : "#{unit} at #{parent}: #{action}"
+        attached = DmesgUnit.ATTACHED.include?(component.to_s)
+        prefix = attached && parent != unit ? "#{unit} at #{parent}: #{action}" : "#{unit}: #{action}"
         details.empty? ? prefix : "#{prefix}, #{details}"
       end
     end
 
     module DmesgUnit
+      ATTACHED = %w[
+        llm route infer tool scan rule_loop council git test validation runtime pipeline fix_loop
+      ].freeze
+
       MAP = {
         "llm" => "model0",
         "route" => "model0",
