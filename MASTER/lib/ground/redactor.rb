@@ -18,17 +18,34 @@ module Master
       MAX_DEPTH = 16
 
       def self.text(value)
-        # Normalize String subclasses before redaction. A boot payload can carry
-        # framework strings with overridden to_s/gsub; redaction must never call
-        # back into itself through those overrides.
-        out = value.is_a?(String) ? String.new(value) : value.to_s
+        # Normalize String subclasses before redaction. Redaction stays on a
+        # plain String and uses Regexp#match so String#gsub overrides cannot
+        # re-enter this method.
+        out = value.is_a?(String) ? String.new(value) : String.new(value.to_s)
         KEY_PATTERNS.each do |pattern|
-          out = String.instance_method(:gsub).bind(out).call(pattern, "[REDACTED]")
+          out = redact_pattern(out, pattern)
         end
         out
       end
 
-      def self.payload(hash, seen: {}, depth: 0)
+      def self.redact_pattern(value, pattern)
+        parts = []
+        offset = 0
+        while (match = pattern.match(value, offset))
+          parts << value.byteslice(offset, match.begin(0) - offset)
+          parts << "[REDACTED]"
+          offset = match.end(0)
+        end
+        return value if parts.empty?
+
+        parts << value.byteslice(offset, value.bytesize - offset)
+        parts.join
+      end
+
+      def self.payload(hash = nil, seen: {}, depth: 0, **fields)
+        hash = fields if hash.nil?
+        raise ArgumentError, "payload requires a Hash" unless hash.is_a?(Hash)
+
         scrub_container(hash, seen:, depth:)
       end
 
