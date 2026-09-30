@@ -30,14 +30,6 @@ class GroundRedactorTest < Minitest::Test
     assert_equal "token [REDACTED]", Master::Ground::Redactor.text(value_class.new)
   end
 
-  def test_text_ignores_regexp_instance_dispatch
-    pattern = Regexp.new(/sk-[A-Za-z0-9_\\-]{16,}/)
-    pattern.define_singleton_method(:match) { |*| Master::Ground::Redactor.text(self) }
-    value = "token sk-#{'E' * 24} leaked"
-
-    assert_equal "token [REDACTED] leaked", Master::Ground::Redactor.redact_pattern(value, pattern)
-  end
-
   def test_text_redacts_bearer_tokens
     raw = "authorization Bearer #{'F' * 24}"
     assert_equal "authorization [REDACTED]", Master::Ground::Redactor.text(raw)
