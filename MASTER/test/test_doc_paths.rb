@@ -44,6 +44,7 @@ class TestDocPaths < Minitest::Test
     RAILS/README.md
     RAILS/CLAUDE.md
     MASTER/tools/README.md
+    STUDIO/README.md
   ].freeze
 
   def test_authority_order_puts_executable_law_above_harnesses
@@ -113,9 +114,9 @@ class TestDocPaths < Minitest::Test
     assert_includes body, "docs:agent_contracts" # source-assertion: ok — a document has no behaviour but its text
   end
 
-  # The repo root has three governed trees and CLAUDE.md. bin/ moved under MASTER and
+  # The repo root has four governed trees and CLAUDE.md. bin/ moved under MASTER and
   # dotfiles/ under OPENBSD, so neither is a top-level tree any more.
-  TREES = %w[MASTER RAILS OPENBSD].freeze
+  TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
   # Paths that name a thing on the VPS, not a thing in the repo.
   ABSOLUTE_OR_REMOTE = %r{\A(/|~|https?:|[a-z]+@)}
 
