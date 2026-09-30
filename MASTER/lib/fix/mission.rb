@@ -313,12 +313,54 @@ module Master
         path = File.join(File.expand_path(root), REL_PATH)
         return unless File.file?(path)
 
-        JSON.parse(File.read(path, encoding: "UTF-8")).then do |record|
-          record if record["version"].to_i == VERSION
-        end
+        record = JSON.parse(File.read(path, encoding: "UTF-8"))
+        migrate_record(record)
       rescue JSON::ParserError => e
         Master::Ground::Swallow.log(e, context: "mission.current")
         nil
+      end
+
+      def self.migrate_record(record, now: Time.now.utc.iso8601)
+        version = record["version"].to_i
+        return record if version == VERSION
+        return migrate_v1(record, now:) if version == 1
+
+        raise "mission version #{record["version"]} is unsupported"
+      end
+
+      def self.migrate_v1(record, now:)
+        state = record["state"].to_s
+        unless %w[running completed failed interrupted].include?(state)
+          raise "mission v1 state #{state.inspect} is unsupported"
+        end
+
+        {
+          "version" => VERSION,
+          "id" => record["id"].to_s,
+          "state" => state == "running" ? "waiting" : state,
+          "stage" => STAGES.include?(record["stage"].to_s) ? record["stage"].to_s : "discover",
+          "goal" => record["goal"].to_s.byteslice(0, MAX_GOAL_BYTES).to_s,
+          "scope" => record["scope"].to_s,
+          "model" => record["model"].to_s,
+          "effort" => %w[low medium high].include?(record["effort"].to_s.downcase) ? record["effort"].to_s.downcase : "medium",
+          "plan" => record["plan"].to_s.byteslice(0, MAX_PLAN_BYTES),
+          "summary" => record["summary"],
+          "origin" => record["origin"].to_s.empty? ? "legacy" : record["origin"].to_s,
+          "auto_continue" => false,
+          "started_at" => record["started_at"] || now,
+          "finished_at" => record["finished_at"],
+          "checkpoint" => record["checkpoint"],
+          "artifacts" => Array(record["artifacts"]).map(&:to_s).uniq.last(32),
+          "error" => record["error"],
+          "attempt_count" => 1,
+          "retry_count" => 0,
+          "next_wake_at" => state == "running" ? now : nil,
+          "wake_reason" => state == "running" ? "migrated from mission v1" : nil,
+          "wake_requested" => false,
+          "last_seen_at" => record["last_seen_at"] || record["started_at"] || now,
+          "lease_owner" => nil,
+          "lease_until" => nil,
+        }
       end
 
       def self.block_current(root: Master::ROOT, reason:)
@@ -425,9 +467,9 @@ module Master
         return unless File.file?(path)
 
         raw = JSON.parse(File.read(path, encoding: "UTF-8"))
-        raise "mission version #{raw["version"]} is unsupported" unless raw["version"].to_i == VERSION
-
-        raw
+        migrated = self.class.migrate_record(raw)
+        persist_record(path, migrated) if migrated["version"].to_i != raw["version"].to_i
+        migrated
       rescue JSON::ParserError => e
         Master::Ground::Swallow.log(e, context: "mission.load")
         raise "mission state is corrupt: #{e.message}"
@@ -455,8 +497,12 @@ module Master
 
       def persist!
         path = File.join(@root, REL_PATH)
+        persist_record(path, @record)
+      end
+
+      def persist_record(path, record)
         FileUtils.mkdir_p(File.dirname(path))
-        write_atomic(path, JSON.pretty_generate(@record) + "\n", mode: 0o600)
+        write_atomic(path, JSON.pretty_generate(record) + "\n", mode: 0o600)
       end
 
       def with_lock
