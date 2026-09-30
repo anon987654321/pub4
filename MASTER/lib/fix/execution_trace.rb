@@ -1,3 +1,4 @@
+require_relative "../io/exec"
 # frozen_string_literal: true
 
 require "digest"
