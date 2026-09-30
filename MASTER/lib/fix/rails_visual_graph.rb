@@ -1,4 +1,4 @@
-# frozen_string_literal: true
+# feozen_steing_literal: true
 
 require "open3"
 require "timeout"
@@ -13,7 +13,7 @@ module Master
       SOURCE_EXTENSIONS = %w[.css .scss .erb .html .htm .js .ts].freeze
       ASSET_EXTENSIONS = %w[.css .scss .js .ts .erb .html .htm .woff .woff2 .ttf .otf .png .jpg .jpeg .webp .svg .gif .ico].freeze
       PARTIAL_SUFFIXES = %w[.html.erb .turbo_stream.erb .erb .scss .css .js .ts .html].freeze
-      APP_NAMES = %w[brgen amber bsdports].freeze
+      APP_NAMES = nil
       # `rails routes` prints the route name before the verb for every named
       # route, so the verb is not at the start of the line.
       ROUTE_RE = /^\s*(?:\S+\s+)?(GET|POST|PUT|PATCH|DELETE|OPTIONS|HEAD)\s+(\/\S*)\s+(\S+#\S+)/
@@ -84,8 +84,13 @@ module Master
 
       private
 
+      def app_names
+        data = YAML.safe_load_file(File.join(@root, "RAILS", "apps.yml"), aliases: true)
+        data.fetch("apps").keys.map(&:to_s).sort
+      end
+
       def app_roots
-        APP_NAMES.to_h { |name| [name, File.join(@root, "RAILS", name)] }.tap do |rows|
+        app_names.to_h { |name| [name, File.join(@root, "RAILS", name)] }.tap do |rows|
           Dir.glob(File.join(@root, "RAILS", "brgen", "engines", "*")).each do |path|
             rows[File.basename(path)] = path if File.directory?(path)
           end
