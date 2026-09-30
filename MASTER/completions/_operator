@@ -17,7 +17,7 @@ _operator() {
     'rules:one rule, its exemption, and what it finds'
     'readers:who reaches this file, across all three governed trees'
     'hooks:install the shared-tree commit guard'
-    'vps:state, deploy or logs on the box'
+    'vps:state, deploy, logs or admin on the box'
     'pushed?:is this content on origin/main'
   )
 
