@@ -8,6 +8,8 @@ class VpsAdminTest < Minitest::Test
     assert_equal [["doas", "df", "-h"]], OpenBSDAdmin.commands_for(["disk"])
     assert_equal [["doas", "pfctl", "-si"]], OpenBSDAdmin.commands_for(["pf", "status"])
     assert_equal [["doas", "syspatch", "-c"]], OpenBSDAdmin.commands_for(["updates"])
+    assert_equal [["doas", "pkg_info"]], OpenBSDAdmin.commands_for(["packages"])
+    assert_equal [["doas", "sysupgrade", "-n"]], OpenBSDAdmin.commands_for(["upgrade", "stage"])
   end
 
   def test_service_actions_are_allowlisted
