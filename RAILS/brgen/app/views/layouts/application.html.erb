@@ -26,7 +26,7 @@
       and a dark color-scheme hint gave it dark scrollbars and form controls. The
       browser bar takes each ground's own --bg. %>
   <%= tag.meta name: "color-scheme", content: surface_theme %>
-  <%= tag.meta name: "theme-color", content: "#ffffff", data: { light_color: "#ffffff", dark_color: "#000000" } %>
+  <%= tag.meta name: "theme-color", content: "#143d5b", data: { light_color: "#143d5b", dark_color: "#143d5b" } %>
     <%= render "shared/theme_bootstrap", storage_key: "brgen-theme" %>
   <%# content_for(:x) with no block is the read form: it already returns nil when unset,
       so content_for?(:x) ? yield(:x) : … was two lookups and the key named twice. %>
@@ -71,6 +71,7 @@
       at the top of that file, which names this tunnel), so there is nothing left
       to paint. %>
   <a class="skip-link" href="#main-content"><%= t("skip_to_content") %></a>
+  <div class="brgen-top-chrome" aria-hidden="true"></div>
   <%# After the skip link, not before it — the sprite is inert (aria-hidden,
       focusable="false", 0x0) so it cannot take focus either way, but the rule
       above is that nothing precedes the skip link. %>
