@@ -22,23 +22,40 @@ module Master
         out
       end
 
-      def self.payload(hash)
+      def self.payload(hash, seen: {})
+        return "[CYCLE]" if seen.key?(hash.object_id)
+
+        seen[hash.object_id] = true
         hash.each_with_object({}) do |(key, value), out|
-          out[key] = scrub_value(key, value)
+          out[key] = scrub_value(key, value, seen:)
         end
+      ensure
+        seen.delete(hash.object_id)
       end
 
-      def self.scrub_value(key, value)
+      def self.scrub_value(key, value, seen: {})
         return "[REDACTED]" if key.to_s.match?(SENSITIVE_KEYS)
 
         case value
-        when Hash then payload(value)
-        when Array then value.map { |item| scrub_value(key, item) }
-        when String then truncate(text(value))
-        else value
+        when Hash
+          payload(value, seen:)
+        when Array
+          scrub_array(key, value, seen:)
+        when String
+          truncate(text(value))
+        else
+          value
         end
       end
 
+      def self.scrub_array(key, array, seen:)
+        return "[CYCLE]" if seen.key?(array.object_id)
+
+        seen[array.object_id] = true
+        array.map { |item| scrub_value(key, item, seen:) }
+      ensure
+        seen.delete(array.object_id)
+      end
       def self.truncate(value)
         text = value.to_s
         return text if text.length <= DMESG_MAX
