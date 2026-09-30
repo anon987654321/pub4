@@ -130,6 +130,35 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes css, ".item-detail--luxury .luxury-detail-grid"
     assert_includes css, ".item-detail--luxury .luxury-meta"
   end
+  def test_brgen_radio_restores_the_original_eight_track_warp_tunnel
+    source = read("brgen/app/javascript/radio_brgen_tunnel.js")
+    importmap = read("brgen/config/importmap.rb")
+
+    %w[
+      9EGHwkDix78
+      jnP3tRG-LZs
+      1XJLtZJ9Ook
+      t6T-Q6HMbEo
+      zoGTC7uROZE
+      7611GgbJAbM
+      j0z_-7TfPeM
+      Fo7WoYn_FEs
+    ].each { |id| assert_includes source, id }
+
+    assert_includes source, 'title: "Microphone Master [Extended]"'
+    assert_includes source, 'const OPENING_TRACK_ID = "9EGHwkDix78"'
+    assert_includes source, "float warp = sin"
+    assert_includes source, "lineAngleBuf"
+    assert_includes source, "gl.drawArrays(gl.LINES"
+    assert_includes source, "preserveDrawingBuffer: false"
+    assert_includes source, "mode: " + '"radio:tunnel"'
+    refute_includes source, "radio_visualizers"
+    refute_includes source, "cycleVisualizer"
+    refute_includes source, "vizMode"
+    refute_includes importmap, 'radio_visualizers'
+    refute File.exist?(File.join(ROOT, "brgen/app/javascript/radio_visualizers.js"))
+  end
+
   def test_amber_looks_use_one_3d_mannequin_and_wrapped_photos
     looks = read("amber/app/views/home/_looks.html.erb")
     mannequin = read("amber/app/javascript/controllers/mannequin_3d_controller.js")
