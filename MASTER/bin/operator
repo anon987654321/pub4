@@ -307,6 +307,8 @@ when "rules"
   master_root = File.join(ROOT, "MASTER")
 
   if health
+    row = Operator::LawInventory.health(id)
+    abort("rule: nothing named #{id.inspect}") unless row
     puts Operator::LawInventory.render(id:, deep: true, json: json_health)
     exit 0
   end
