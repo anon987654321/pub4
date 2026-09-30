@@ -102,6 +102,39 @@ module Master
         nil
       end
 
+      # Synchronous path for an operator-facing hardware test. Normal replies
+      # remain asynchronous; a test must not report "queued" and leave the
+      # process to decide whether the worker ever reached the speaker.
+      def speak_now(text)
+        str = text.to_s.strip
+        return false if str.empty?
+        return false unless enabled?
+
+        unless available?
+          warn_once("no audio player found (looked for #{PLAYERS.keys.join(', ')}) — replies stay silent")
+          return false
+        end
+
+        path = synthesize(str)
+        unless path
+          warn_once("synthesis failed#{Speech.last_error ? ": #{Speech.last_error}" : ""}")
+          return false
+        end
+
+        ok = play(path)
+        unless ok
+          warn_once("audio player failed — #{player&.first || "no player"}")
+        else
+          spoken(str)
+        end
+        ok
+      rescue StandardError => e
+        warn_once("voice test failed — #{e.class}: #{e.message}")
+        false
+      ensure
+        File.delete(path) if defined?(path) && path && path.start_with?("/tmp/m_tts_") && File.exist?(path)
+      end
+
       # Under the lock the queue is built with, so a push and a drain cannot
       # disagree about what is pending.
       def echo?(str)
