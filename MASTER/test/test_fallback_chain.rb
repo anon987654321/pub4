@@ -90,6 +90,28 @@ class TestFallbackChain < Minitest::Test
     assert_equal "z-ai/glm-4.5-air:free", dispatcher.calls[1]
   end
 
+  def test_an_explicit_model_does_not_get_replaced_by_automatic_failover
+    dispatcher = CountingDispatcher.new(
+      "chosen-model" => -> { Master::Result.err("offline", category: :offline) },
+      "fallback-model" => -> { Master::Result.ok("fallback ok") },
+    )
+    agent = build_agent(dispatcher)
+    agent.instance_variable_set(:@pinned_model, "chosen-model")
+
+    response = agent.send(
+      :attempt_chat_with_fallbacks,
+      candidate_models: %w[chosen-model fallback-model],
+      prompt: "hi",
+      context: [],
+      stream: false,
+    )
+
+    assert_equal "fallback ok", response.value!
+    assert_equal "chosen-model", agent.instance_variable_get(:@pinned_model)
+  ensure
+    Master::Io::ModelSkipCache.clear!
+  end
+
   def test_a_successful_fallback_becomes_the_runtime_current_model
     dispatcher = CountingDispatcher.new(
       "cheap-model" => -> { Master::Result.err("offline", category: :offline) },
