@@ -22,7 +22,7 @@ class CapabilityStampTest < Minitest::Test
       policy = Master::CLI::Routing::AvailabilityPolicy.new(root: dir)
 
       assert_equal(
-        "[served: claude-cli:opus @L4 | health: fresh 41s | degraded: no]",
+        "model0 at master0: served claude-cli:opus, level L4, health fresh 41s, degraded no",
         Master::CLI::CapabilityStamp.render(model: "claude-cli:opus", root: dir, provider_health: health, policy:)
       )
     end
@@ -39,7 +39,7 @@ class CapabilityStampTest < Minitest::Test
       policy = Master::CLI::Routing::AvailabilityPolicy.new(root: dir)
 
       assert_equal(
-        "[served: web-chat:grok @L3 | health: stale 180s | degraded: yes]",
+        "model0 at master0: served web-chat:grok, level L3, health stale 180s, degraded yes",
         Master::CLI::CapabilityStamp.render(model: "web-chat:grok", root: dir, provider_health: health_now, policy:)
       )
     end
@@ -50,7 +50,7 @@ class CapabilityStampTest < Minitest::Test
       policy = Master::CLI::Routing::AvailabilityPolicy.new(root: dir)
 
       assert_equal(
-        "[served: ollama:qwen3 @L2 | health: unknown | degraded: unknown]",
+        "model0 at master0: served ollama:qwen3, level L2, health unknown, degraded unknown",
         Master::CLI::CapabilityStamp.render(model: "ollama:qwen3", root: dir, policy:)
       )
     end
