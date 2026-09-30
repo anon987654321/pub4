@@ -7,15 +7,15 @@
 # that check as an instrument, so the next one is found by running a script
 # instead of by a thumb. Usage (triangle must be up):
 #
-#   ruby gates/probes/tap_target_probe.rb                 # default page set
-#   ruby gates/probes/tap_target_probe.rb http://127.0.0.1:38182/posts
+#   ruby gates/tap_target_probe.rb                 # default page set
+#   ruby gates/tap_target_probe.rb http://127.0.0.1:38182/posts
 #
 # An element under min in BOTH dimensions is reported; one squeezed in a
 # single dimension inside a roomy row (a text link in prose) is WCAG-fine and
 # skipped. display:none/zero-rect elements are invisible, not undersized.
 
-require_relative "../support/cdp_session"
-require_relative "../support/fleet"
+require_relative "support/cdp_session"
+require_relative "support/fleet"
 
 PAGES = Fleet.urls({
   # Routes, not numbers. This map restated the whole fleet, which
