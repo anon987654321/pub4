@@ -129,7 +129,7 @@ module Master
           end
         end
 
-        require_relative "../finding"
+        require_relative "finding"
         # LLM review for rules whose violations resist lexical detection.
         # Each executable Law with an ask surface is folded into one LLM call per
         # file. A law may also have a deterministic detector; that is layered
