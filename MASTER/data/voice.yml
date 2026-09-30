@@ -16,9 +16,17 @@ tts:
   neural: en-US-JennyNeural
   rotation:
     - jenny
+  # Language locks are families, not a stylistic lottery. Female is the default;
+  # MASTER_TTS_GENDER=male selects the declared male counterpart for that
+  # language. English remains Jenny unless an explicit operator policy changes it.
   language_voices:
     en: jenny
     nb: pernille
+    ms: yasmin
+  language_voice_families:
+    en: { female: jenny, male: andrew }
+    nb: { female: pernille, male: finn }
+    ms: { female: yasmin, male: osman }
   persona_affects_text_only: true
   # ON as of 2026-08-14. pushLiveStreamTts (face.part1.txt) pulls each finished
   # sentence off the model's stream and speaks it while the rest is still being
