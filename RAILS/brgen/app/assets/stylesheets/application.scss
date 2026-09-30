@@ -4626,10 +4626,7 @@ label.field--check-label > input { min-height: var(--tap-min); min-width: var(--
 .map-search-input { flex: 1; min-height: var(--tap-min); padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: inherit; font-size: var(--text-base); }
 .map-place-popup { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: var(--space-3); font-size: var(--text-sm); }
 
-/* In-feed affiliate unit. The original pen packed uneven images with Packery
-   and tilted them with Parallax.js over jQuery; grid packs them here and one
-   Stimulus controller does the tilt, so the unit costs no dependency and no
-   licence. See RAILS/shared/reference/affiliate_banner/ for the original. */
+/* In-feed affiliate unit. Grid packs the images and one Stimulus controller does the tilt, so the unit costs no dependency and no extra license. */
 
 // The shared in-feed unit loads right after brgen's affiliate rules, so its
 // rules follow them in the cascade.

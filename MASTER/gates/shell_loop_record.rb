@@ -3,7 +3,7 @@
 
 # shell_loop_record — record a terminal session as a video, frame by frame.
 #
-#   ruby RAILS/gates/probes/shell_loop_record.rb --out ../MASTER/loop2.mp4 \
+#   ruby RAILS/gates/shell_loop_record.rb --out ../MASTER/loop2.mp4 \
 #        --audio ../MASTER/tools/dilla/demo.wav --fps 20
 #
 # The companion to face_loop_record, which records the face; this one records a

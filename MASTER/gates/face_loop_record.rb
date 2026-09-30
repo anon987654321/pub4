@@ -3,7 +3,7 @@
 
 # face_loop_record — record the MASTER face speaking a wav, frame by frame.
 #
-#   ruby gates/probes/face_loop_record.rb --audio ../MASTER/tts.wav \
+#   ruby gates/face_loop_record.rb --audio ../MASTER/tts.wav \
 #        --out ../MASTER/loop.mp4 --fps 20 --clip 440,90,400,540
 #
 # The companion to face_capture_probe, which exists to get the face on screen;
@@ -39,8 +39,8 @@ require "base64"
 require "fileutils"
 require "json"
 require "optparse"
-require_relative "../support/cdp_session"
-require_relative "../support/fleet"
+require_relative "support/cdp_session"
+require_relative "support/fleet"
 
 options = {
   url: nil, audio: nil, out: nil, fps: 20, seconds: nil, clip: nil,

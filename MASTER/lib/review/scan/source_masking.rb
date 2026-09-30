@@ -206,7 +206,7 @@ module Master
     # A heredoc whose tag names another language is not Ruby, and a Ruby law
     # must not read it.
     #
-    # `cdp.evaluate(<<~JS)` in RAILS/gates/probes/face_capture_probe.rb holds
+    # `cdp.evaluate(<<~JS)` in MASTER/gates/face_capture_probe.rb holds
     # `f && f.primerFired` — correct JavaScript, and four SAFE_NAVIGATION
     # findings telling it to use Ruby's `&.`, which JavaScript does not have.
     # TODO.md records the same shape costing more: RUBY_NUMERIC_UNDERSCORE fired

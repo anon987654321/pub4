@@ -15,7 +15,7 @@
 #   1. README.md becomes speakable prose and then README.wav, read by the voice
 #      data/voice.yml names. Code blocks, the image and the HTML comment are
 #      dropped: they are for a reader's eye and are noise read aloud.
-#   2. The face speaks it, recorded frame by frame by MASTER/gates/probes/
+#   2. The face speaks it, recorded frame by frame by MASTER/gates/
 #      face_loop_record.rb, in slices with a fresh browser each time. One
 #      browser holding four minutes of this face grows until the machine
 #      complains.
@@ -261,7 +261,7 @@ def record!
     ok = false
     ATTEMPTS.times do |attempt|
       ok = system({ "RBENV_VERSION" => PINNED_RUBY }, "rbenv", "exec", "ruby",
-                  "gates/probes/face_loop_record.rb",
+                  "gates/face_loop_record.rb",
                   "--audio", WAV, "--out", MP4, "--fps", FPS.to_s,
                   "--viewport", VIEWPORT, "--scale", "2", "--clip", CLIP,
                   "--warmup", "60", "--timeout", "90", "--crf", CRF.to_s,
