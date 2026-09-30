@@ -107,7 +107,7 @@ def acquire_master_process_lock
     begin
       return IO.for_fd(Integer(inherited, 10))
     rescue ArgumentError, Errno::EBADF => e
-      warn "master0: inherited process lock is invalid — #{e.message}"
+      warn "master0: inherited process lock is invalid, #{e.message}"
       exit 75
     end
   end
@@ -132,25 +132,25 @@ control_plane = nil
 def save_cli_session_safely(cli)
   cli&.container&.dig(:session)&.save!
 rescue StandardError => e
-  warn "cli: session save failed: #{e.class}: #{e.message}"
+  warn "cli0: session save failed, #{e.class}: #{e.message}"
 end
 
 def stop_cli_background_loop_safely(cli)
   cli&.send(:stop_background_loop)
 rescue StandardError => e
-  warn "cli: background stop failed: #{e.class}: #{e.message}"
+  warn "cli0: background stop failed, #{e.class}: #{e.message}"
 end
 
 def stop_control_plane_safely(control_plane)
   control_plane&.stop!
 rescue StandardError => e
-  warn "control0: stop failed: #{e.class}: #{e.message}"
+  warn "control0: stop failed, #{e.class}: #{e.message}"
 end
 
 trap("INT") { $stderr.puts "\nexiting"; exit!(130) }
 trap("TERM") { exit!(143) }
 trap("TSTP") do
-  $stderr.puts "\ncli: suspended — fg then /exit; Ctrl-Z leaves ~200MB ruby on 1GB hosts"
+  $stderr.puts "\ncli0: suspended — fg then /exit; Ctrl-Z leaves ~200MB ruby on 1GB hosts"
   trap("TSTP", "DEFAULT")
   Process.kill("STOP", Process.pid)
 end
