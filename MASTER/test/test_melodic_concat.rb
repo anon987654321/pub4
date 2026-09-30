@@ -71,6 +71,30 @@ class TestMelodicConcat < Minitest::Test
     assert_equal fmt[:channels], E.send(:silence_format, rest)[:channels]
   end
 
+
+  def test_multiphase_melodic_speech_never_returns_only_the_first_phrase_without_ffmpeg
+    first = File.join(@dir, "first.mp3")
+    second = File.join(@dir, "second.mp3")
+    File.write(first, "first")
+    File.write(second, "second")
+    parts = [[first, 0], [second, 250]]
+    out = File.join(@dir, "out.mp3")
+    reported = []
+
+    E.stub(:ffmpeg?, false) do
+      E.stub(:synthesize_phrase_parts, parts) do
+        E.stub(:report_missing_ffmpeg, ->(where, consequence) { reported << [where, consequence] }) do
+          refute E.send(:synth_edge_melodic, "one. two.", out, { phrases: [{ text: "one." }, { text: "two." }] }, :jenny, "+0%", "+0Hz")
+        end
+      end
+    end
+
+    refute File.exist?(out), "the fallback must not publish phrase one as a fake complete reply"
+    assert_equal false, File.exist?(first)
+    assert_equal false, File.exist?(second)
+    assert_equal [["synth_edge_melodic", "melodic phrases not joined; falling through to next engine"]], reported
+  end
+
   def test_rests_are_interleaved_before_the_phrase_they_precede
     a = tone("a.mp3", 0.3)
     b = tone("b.mp3", 0.3)
