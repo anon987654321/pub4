@@ -139,10 +139,17 @@ module Master
           text, part, last = job.is_a?(Array) ? job : [job, job, true]
           path = synthesize(part)
           spoken(text) if last
-          next unless path
+          unless path
+            warn_once("synthesis failed#{Speech.last_error ? ": #{Speech.last_error}" : ""}")
+            next
+          end
 
-          play(path)
+          unless play(path)
+            warn_once("audio player failed — #{player&.first || "no player"}")
+          end
           File.delete(path) if path.start_with?("/tmp/m_tts_") && File.exist?(path)
+        rescue StandardError => e
+          warn_once("playback worker failed — #{e.class}: #{e.message}")
         end
       end
 
@@ -167,12 +174,15 @@ module Master
       end
 
       def play(path)
-        return unless File.exist?(path)
+        return false unless File.exist?(path)
 
         name, args = player
+        return false unless name && args
+
         system(name, *args, path, out: File::NULL, err: File::NULL)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Voice::Playback.play")
+        false
       end
 
       # A missing player is a real condition the operator can fix, so it is said
