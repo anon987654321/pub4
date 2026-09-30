@@ -81,6 +81,15 @@
   font-variant-numeric: tabular-nums;
 }
 
+.amber-look-slide[data-active] {
+  border-block-start-color: var(--figure-ink);
+}
+
+.amber-look-slide[data-active] figcaption {
+  font-weight: var(--weight-bold);
+}
+
+
 .amber-look-body {
   display: none;
 }
