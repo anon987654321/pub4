@@ -223,7 +223,10 @@ const VOICE_IDLE_SIGNATURES = {
   'nb-NO-FinnNeural': { breath: 1.02, saccade: 0.20, pulse_floor: 0.10, blink_ms: 3000 },
   'en-US-AndrewNeural': { breath: 0.94, saccade: 0.16, pulse_floor: 0.07, blink_ms: 2600 },
   'en-US-JennyNeural': { breath: 0.98, saccade: 0.14, pulse_floor: 0.07, blink_ms: 3400 },
-  'nb-NO-PernilleNeural': { breath: 0.90, saccade: 0.10, pulse_floor: 0.05, blink_ms: 4200 }, // future-human: composed, steady gaze, still baseline, slow deliberate blink
+  'nb-NO-PernilleNeural': { breath: 0.90, saccade: 0.10, pulse_floor: 0.05, blink_ms: 4200 },
+  'nb-NO-FinnNeural': { breath: 1.02, saccade: 0.18, pulse_floor: 0.08, blink_ms: 3000 },
+  'ms-MY-YasminNeural': { breath: 0.97, saccade: 0.13, pulse_floor: 0.07, blink_ms: 3600 },
+  'ms-MY-OsmanNeural': { breath: 1.01, saccade: 0.18, pulse_floor: 0.08, blink_ms: 3100 }, // future-human: composed, steady gaze, still baseline, slow deliberate blink
   'en-NG-EzinneNeural': { breath: 1.10, saccade: 0.26, pulse_floor: 0.12, blink_ms: 3400 },
   'en-SG-WayneNeural': { breath: 0.92, saccade: 0.15, pulse_floor: 0.06, blink_ms: 2500 }
 };
