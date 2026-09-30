@@ -57,34 +57,39 @@ module Master
         # /fix is the operator trace: every event is visible in the same append-only
         # OpenBSD dmesg grammar. An explicit quiet/normal/verbose flag still wins.
         rendered = with_dmesg_verbosity(raw, default: "trace") do
-          run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
-                   target:, apply: apply.nil? || apply, critique: _critique.nil? ? true : _critique, aesthetic:, only: nil)
-        end
-        return rendered unless apply.nil? || apply
+          value = run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
+                           target:, apply: apply.nil? || apply, critique: _critique.nil? ? true : _critique,
+                           aesthetic:, only: nil)
+          next value unless apply.nil? || apply
 
-        gate_rounds = 0
-        gate_status = 0
-        gate_changed = []
-        loop do
-          gate_status, gate_changed = Operator::GateChain.verify_fix(target:)
-          gate_rounds += 1
-          break if gate_status == 0 && gate_changed.empty?
-          break if gate_changed.empty? || gate_rounds >= MAX_FIX_GATE_ROUNDS
+          gate_rounds = 0
+          gate_status = 0
+          gate_changed = []
+          loop do
+            gate_status, gate_changed = Operator::GateChain.verify_fix(target:)
+            gate_rounds += 1
+            break if gate_status == 0 && gate_changed.empty?
+            break if gate_changed.empty? || gate_rounds >= MAX_FIX_GATE_ROUNDS
 
-          rendered = [rendered, "gate0: verification changed #{gate_changed.size} file(s), re-entering /fix"].join("\n")
-          rendered = with_dmesg_verbosity(raw) do
-            run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
-                     target:, apply: true, critique: _critique.nil? ? true : _critique, aesthetic:, only: "fix")
+            Master::Trace::Dmesg.status(
+              "gate0", "verification changed #{gate_changed.size} file(s), re-entering /fix"
+            )
+            value = run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
+                             target:, apply: true, critique: _critique.nil? ? true : _critique,
+                             aesthetic:, only: "fix")
           end
-        end
 
-        if gate_status != 0
-          rendered = [rendered, "gate0: verification did not pass, status #{gate_status}"].join("\n")
-        end
-        if gate_rounds >= MAX_FIX_GATE_ROUNDS && gate_status == 0 && gate_changed.any?
-          rendered = [rendered, "gate0: verification reached #{MAX_FIX_GATE_ROUNDS} rounds without a stable tree"].join("\n")
-        end
+          if gate_status != 0
+            Master::Trace::Dmesg.status("gate0", "verification did not pass, status #{gate_status}")
+          end
+          if gate_rounds >= MAX_FIX_GATE_ROUNDS && gate_status == 0 && gate_changed.any?
+            Master::Trace::Dmesg.status(
+              "gate0", "verification reached #{MAX_FIX_GATE_ROUNDS} rounds without a stable tree"
+            )
+          end
 
+          value
+        end
         return rendered unless Master::Fix::CodeWatch.requested?
 
         # A run that stopped for newer code continues on it, in this process.
