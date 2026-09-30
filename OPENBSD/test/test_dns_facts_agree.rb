@@ -239,3 +239,33 @@ class DomainAlignmentGateFixtureTest < Minitest::Test
     assert_equal @declared.size, result.checks_ran
   end
 end
+
+
+class OwnedDomainFactsAgreeTest < Minitest::Test
+  RAILS_APPS = File.expand_path("../../RAILS/apps.yml", __dir__)
+  EXPECTED = %w[
+    amberapp.art amberapp.no amberapp.online brgen.no bsdports.net bsdports.org
+    cardff.uk denvr.us edinbrgh.uk foball.no frankfrt.de lndon.uk lsangeles.com
+    lsangeles.store oshlo.no stvanger.no svalbrd.no trndheim.no wshingtondc.com
+    wshingtondc.us
+  ].freeze
+
+  def test_rails_owned_domains_match_the_registrar_export_inventory
+    inventory = YAML.safe_load_file(RAILS_APPS).fetch("owned_domains")
+    assert_equal EXPECTED, inventory
+  end
+
+  def test_openbsd_owned_domains_match_rails_inventory
+    block = OPERATOR[/^OWNED_DOMAINS=\\(\\n.*?\\n\\)$/m]
+    refute_nil block, "no OWNED_DOMAINS block in OPERATOR.sh"
+    out, status = Open3.capture2("zsh", "-f", "-c", "#{block}\\nprint -rl -- $OWNED_DOMAINS")
+    assert status.success?, "zsh could not evaluate OWNED_DOMAINS"
+    assert_equal YAML.safe_load_file(RAILS_APPS).fetch("owned_domains"), out.lines.map(&:chomp)
+  end
+
+  def test_domain_watch_includes_owned_domains_without_turning_them_into_zones
+    owned = Deploy::DomainWatch.owned_domains
+    assert_equal EXPECTED.sort, owned.sort
+    assert_equal RenderDns.zones.sort, (Deploy::DomainWatch.zones - owned).sort
+  end
+end
