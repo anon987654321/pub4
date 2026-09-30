@@ -50,11 +50,13 @@ module Shared
 
     def amber_handoff_url(base:, title:, category:, source_url:, commerce_key:)
       query = URI.encode_www_form(
-        title: title.to_s,
-        category: category.to_s.presence,
-        source_url: source_url.to_s,
-        commerce_key: commerce_key.to_s
-      ).sub(/(^|&)category=/, "\\1category=")
+        {
+          title: title.to_s,
+          category: category.to_s.presence,
+          source_url: source_url.to_s,
+          commerce_key: commerce_key.to_s
+        }.compact
+      )
       "#{base.to_s.sub(%r{/$}, "")}/items/new?#{query}"
     rescue StandardError
       nil
