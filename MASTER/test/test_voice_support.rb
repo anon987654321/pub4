@@ -162,6 +162,27 @@ ensure
   PB.instance_variable_set(:@last_said, nil)
 end
 
+
+  def test_interrupt_clears_queued_speech_and_forgets_last_utterance
+    queue = Queue.new
+    queue << ["queued", "queued", true, 0]
+    PB.instance_variable_set(:@queue, queue)
+    PB.instance_variable_set(:@generation, 0)
+    PB.instance_variable_set(:@pending, Set.new(["queued"]))
+    PB.instance_variable_set(:@last_said, "queued")
+
+    assert PB.interrupt!("voice")
+    assert_equal 0, PB.instance_variable_get(:@queue).size
+    assert_empty PB.instance_variable_get(:@pending)
+    assert_nil PB.instance_variable_get(:@last_said)
+    assert_equal 1, PB.instance_variable_get(:@generation)
+  ensure
+    PB.instance_variable_set(:@queue, nil)
+    PB.instance_variable_set(:@pending, nil)
+    PB.instance_variable_set(:@last_said, nil)
+    PB.instance_variable_set(:@generation, 0)
+  end
+
   DNA = Master::Voice::ProductionDna
 
   def test_the_dna_brief_restates_the_dilla_table
