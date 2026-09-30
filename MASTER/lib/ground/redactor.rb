@@ -80,8 +80,8 @@ module Master
             left = value.getbyte(cursor + index)
             right = needle.getbyte(index)
             if ignore_case
-              left -= 32 if left && left >= 65 && left <= 90
-              right -= 32 if right && right >= 65 && right <= 90
+              left -= 32 if left && left >= 97 && left <= 122
+              right -= 32 if right && right >= 97 && right <= 122
             end
             if left != right
               matched = false

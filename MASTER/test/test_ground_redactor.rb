@@ -38,6 +38,8 @@ class GroundRedactorTest < Minitest::Test
 
   def test_text_survives_hostile_string_search_methods
     script = <<~'RUBY'
+      require "ground/redactor"
+
       module HostileStringMethods
         def index(*)
           Master::Ground::Redactor.text(self)
