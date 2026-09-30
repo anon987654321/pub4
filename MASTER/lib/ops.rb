@@ -3,11 +3,59 @@
 require "fileutils"
 require "json"
 require "time"
+require "socket"
 require "timeout"
 require "yaml"
 
 module Master
   module Ops
+    module ProcessLock
+      PATH = File.join(Master::ROOT, ".master", "process.lock").freeze
+
+      module_function
+
+      def acquire!(path: nil, root: Master::ROOT, mode: "master")
+        path ||= File.join(root, ".master", "process.lock")
+        FileUtils.mkdir_p(File.dirname(path))
+        io = File.open(path, File::RDWR | File::CREAT, 0o600)
+        return nil unless io.flock(File::LOCK_EX | File::LOCK_NB)
+
+        io.close_on_exec = false
+        io.rewind
+        io.truncate(0)
+        io.write(JSON.generate(
+          pid: Process.pid,
+          host: Socket.gethostname,
+          mode: mode.to_s,
+          at: Time.now.utc.iso8601
+        ))
+        io.write("\n")
+        io.flush
+        io.fsync
+        io
+      rescue StandardError
+        io&.close
+        raise
+      end
+
+      def release(io)
+        return unless io
+
+        io.flock(File::LOCK_UN)
+        io.close
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "ProcessLock.release")
+      end
+
+      def owner(path: PATH)
+        return {} unless File.exist?(path)
+
+        JSON.parse(File.read(path))
+      rescue JSON::ParserError, SystemCallError
+        {}
+      end
+    end
+
     module LoopOwner
       DIR = File.join(Master::ROOT, ".master", "active_loop").freeze
       INFO = File.join(DIR, "owner.json").freeze
