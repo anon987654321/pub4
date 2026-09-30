@@ -45,9 +45,10 @@ module Master
 
       def self.find_prefixed_secret(value, offset, prefix)
         cursor = offset
-        while (start = value.index(prefix, cursor))
+        index = String.instance_method(:index).bind(value)
+        while (start = index.call(prefix, cursor))
           finish = start + prefix.bytesize
-          return [start, finish + secret_run_end(value, finish, SECRET_ALPHANUMERIC_DASH)] if secret_run_length(value, finish, SECRET_ALPHANUMERIC_DASH) >= 16
+          return [start, secret_run_end(value, finish, SECRET_ALPHANUMERIC_DASH)] if secret_run_length(value, finish, SECRET_ALPHANUMERIC_DASH) >= 16
           cursor = start + prefix.bytesize
         end
         nil
@@ -55,7 +56,10 @@ module Master
 
       def self.find_bearer_secret(value, offset)
         cursor = offset
-        while (start = value.downcase.index("bearer", cursor))
+        downcase = String.instance_method(:downcase).bind(value)
+        index = String.instance_method(:index).bind(value)
+        lowered = downcase.call
+        while (start = index.call("bearer", cursor))
           separator = start + 6
           separator += 1 while separator < value.bytesize && ASCII_WHITESPACE.include?(value.getbyte(separator))
           length = secret_run_length(value, separator, SECRET_BEARER)
