@@ -8,26 +8,57 @@ set -euo pipefail
 sync_tree() {
   local src=$1 dst=$2
   local delete=${3:-1}
-  ${_PRIV} mkdir -p "$dst"
+
   if [[ -n ${SYNC_USE_OPENRSYNC:-} ]]; then
     if [[ $delete == 1 ]]; then
       ${_PRIV} openrsync -a --delete "${src%/}/." "${dst%/}/" && return 0
     else
       ${_PRIV} openrsync -a "${src%/}/." "${dst%/}/" && return 0
     fi
-    log_warn "openrsync failed; falling back to tar copy"
+    log_warn "openrsync failed; falling back to staged tar copy"
   fi
-  if [[ $delete == 1 ]]; then
-    ${_PRIV} sh -c 'cd "$1" && for entry in * .[!.]* ..?*; do
-      [[ -e "$entry" ]] || continue
-      case "$entry" in db|storage|log|tmp|vendor|.bundle) continue ;; esac
-      rm -rf -- "$entry"
-    done' _ "${dst%/}" 2>/dev/null || true
-  fi
-  ${_PRIV} sh -c "cd '${src%/}' && tar cf - ." | ${_PRIV} sh -c "cd '${dst%/}' && tar xf -"
-  ${_PRIV} find "${dst%/}" -name '._*' -delete 2>/dev/null || true
-}
 
+  if [[ $delete == 1 ]]; then
+    local parent=${dst:h}
+    local base=${dst:t}
+    local stage="${parent}/.${base}.sync.$$"
+    local old="${parent}/.${base}.previous.$$"
+
+    ${_PRIV} rm -rf "$stage" "$old"
+    ${_PRIV} mkdir -p "$stage"
+
+    if ! ${_PRIV} sh -c "cd '${src%/}' && tar cf - ." | ${_PRIV} sh -c "cd '${stage%/}' && tar xf -"; then
+      ${_PRIV} rm -rf "$stage"
+      log_err "staged tar copy failed; destination left untouched"
+      return 1
+    fi
+
+    if ! ${_PRIV} mv "$dst" "$old"; then
+      ${_PRIV} rm -rf "$stage"
+      log_err "could not stage current destination"
+      return 1
+    fi
+    if ! ${_PRIV} mv "$stage" "$dst"; then
+      ${_PRIV} mv "$old" "$dst" || log_err "CRITICAL: destination restore failed"
+      ${_PRIV} rm -rf "$stage"
+      log_err "could not activate staged destination"
+      return 1
+    fi
+    ${_PRIV} rm -rf "$old"
+  else
+    ${_PRIV} mkdir -p "$dst"
+    if ! ${_PRIV} sh -c "cd '${src%/}' && tar cf - ." | ${_PRIV} sh -c "cd '${dst%/}' && tar xf -"; then
+      log_err "tar overlay failed"
+      return 1
+    fi
+  fi
+
+  local entry
+  for entry in "${dst%/}"/**/._*(N) "${dst%/}"/._*(N); do
+    [[ -e $entry ]] || continue
+    ${_PRIV} rm -f "$entry"
+  done
+}
 # overlay_shared_initializers APP_DIR — shared config wins over stale per-app copies
 overlay_shared_initializers() {
   local app_dir=$1

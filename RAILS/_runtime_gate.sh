@@ -43,7 +43,14 @@ rails_runtime_gate() {
   local app_name=${1:-}
   local app_dir=${2:-$1}
   [[ -d $app_dir ]] || { log_warn "rails_runtime_gate: missing ${app_dir}"; return 0; }
-  [[ -n ${SKIP_RUNTIME_GATE:-} ]] && { log "runtime gate skipped (SKIP_RUNTIME_GATE)"; return 0; }
+  if [[ ${SKIP_RUNTIME_GATE:-} == 1 ]]; then
+    if [[ ${I_UNDERSTAND_FAST_DEPLOY:-0} != 1 ]]; then
+      log_err "runtime gate skip requires I_UNDERSTAND_FAST_DEPLOY=1"
+      return 1
+    fi
+    log_warn "runtime gate skipped by explicit fast-deploy acknowledgement"
+    return 0
+  fi
   if [[ -n $app_name ]]; then
     master_scan_dep "$app_name" || { log_err "MASTER scan failed"; return 1; }
   fi

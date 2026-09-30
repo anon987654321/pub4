@@ -427,9 +427,9 @@ class TestRuleLoopPolicy < Minitest::Test
     assert_equal [false], deletions_asked_with(nil)
   end
 
-  # The quorum is asked only under MASTER_CONSENSUS_FIXES=1, and its answer
-  # decides; unset, a fix lands without three model calls.
-  def test_consensus_is_asked_only_when_consensus_fixes_is_set
+  # High-risk fixes require independent consensus even when no environment
+  # switch is present. Lower-risk fixes remain opt-in to control spend.
+  def test_error_and_critical_fixes_require_consensus_by_default
     Dir.mktmpdir do |root|
       asked = []
       consensus = Object.new
@@ -437,16 +437,37 @@ class TestRuleLoopPolicy < Minitest::Test
       agent = Agent.new
       agent.define_singleton_method(:consensus) { consensus }
       loop = build_loop(root:, bus: FakeBus.new, scanner: Scanner.new, agent:)
-      violation = { file: File.join(root, "sample.rb"), rule: "TEST_RULE" }
       previous = ENV["MASTER_CONSENSUS_FIXES"]
 
       ENV.delete("MASTER_CONSENSUS_FIXES")
-      assert loop.send(:consensus_approves?, violation, "new source")
+      %i[error critical].each do |severity|
+        violation = { file: File.join(root, "sample.rb"), rule: "TEST_RULE", severity: }
+        refute loop.send(:consensus_approves?, violation, "candidate-#{severity}")
+      end
+      assert_equal ["candidate-error", "candidate-critical"], asked
+    ensure
+      previous.nil? ? ENV.delete("MASTER_CONSENSUS_FIXES") : ENV["MASTER_CONSENSUS_FIXES"] = previous
+    end
+  end
+
+  def test_warning_fixes_keep_consensus_opt_in
+    Dir.mktmpdir do |root|
+      asked = []
+      consensus = Object.new
+      consensus.define_singleton_method(:approve_fix?) { |**kwargs| asked << kwargs[:candidate]; false }
+      agent = Agent.new
+      agent.define_singleton_method(:consensus) { consensus }
+      loop = build_loop(root:, bus: FakeBus.new, scanner: Scanner.new, agent:)
+      violation = { file: File.join(root, "sample.rb"), rule: "TEST_RULE", severity: :warning }
+      previous = ENV["MASTER_CONSENSUS_FIXES"]
+
+      ENV.delete("MASTER_CONSENSUS_FIXES")
+      assert loop.send(:consensus_approves?, violation, "warning-default")
       assert_empty asked
 
       ENV["MASTER_CONSENSUS_FIXES"] = "1"
-      refute loop.send(:consensus_approves?, violation, "new source")
-      assert_equal ["new source"], asked
+      refute loop.send(:consensus_approves?, violation, "warning-opt-in")
+      assert_equal ["warning-opt-in"], asked
     ensure
       previous.nil? ? ENV.delete("MASTER_CONSENSUS_FIXES") : ENV["MASTER_CONSENSUS_FIXES"] = previous
     end

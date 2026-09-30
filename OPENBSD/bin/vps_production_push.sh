@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 # Production push, the fast path: `bin/vps-deploy all` with the CI and runtime
-# gates skipped, then an optional demo seed.
+# gates skipped only after an explicit human acknowledgement, then an optional demo seed.
 #
 # Usage (on vm23, as dev):
 #   zsh OPENBSD/bin/vps_production_push.sh
@@ -18,14 +18,19 @@
 set -euo pipefail
 
 if [[ ${1:-} == -h || ${1:-} == --help ]]; then
-  print "usage: zsh OPENBSD/bin/vps_production_push.sh   (DEMO_SEED_ON_DEPLOY=1 to seed brgen's demo)"
+  print "usage: I_UNDERSTAND_FAST_DEPLOY=1 zsh OPENBSD/bin/vps_production_push.sh   (DEMO_SEED_ON_DEPLOY=1 to seed brgen's demo)"
   exit 0
 fi
 
 repo=${PUB4_ROOT:-/home/dev/pub4}
 
+if [[ ${I_UNDERSTAND_FAST_DEPLOY:-0} != 1 ]]; then
+  print -u2 "err: fast production push skips CI/runtime verification; set I_UNDERSTAND_FAST_DEPLOY=1 explicitly"
+  exit 2
+fi
+
 export SKIP_CI=1
-export SKIP_RUNTIME_GATE=${SKIP_RUNTIME_GATE:-1}
+export SKIP_RUNTIME_GATE=1
 zsh "$repo/OPENBSD/bin/vps-deploy" all
 
 if [[ ${DEMO_SEED_ON_DEPLOY:-0} == 1 ]]; then
