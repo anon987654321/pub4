@@ -615,7 +615,7 @@ if (_hasWebGL && THREE) {
     // resolves as partial coverage across up to four of them, so every particle
     // came out dim and smeared rather than crisp. Multisampling a pixel-art
     // buffer costs bandwidth to destroy the thing being drawn.
-    renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: false, alpha: false, preserveDrawingBuffer: true });
+    renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: false, alpha: false, depth: true, stencil: false, preserveDrawingBuffer: false, powerPreference: 'high-performance' });
     renderer.setClearColor(0x000000, 1);
     renderer.autoClear = true;
   } catch (e) {
@@ -1017,7 +1017,7 @@ function sampleDepthMapGrid(canvas, cols, rows) {
 
 function particleScale() {
   const area = Math.max(320 * 480, window.innerWidth * window.innerHeight);
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const dpr = Math.min(window.devicePixelRatio || 1, 1.25);
   return Math.max(0.7, Math.min(1.35, Math.sqrt((area * dpr) / (1280 * 720))));
 }
 const FACE_GRID_COLS = Math.round((State.coarsePointer ? 26 : 40) * particleScale());
