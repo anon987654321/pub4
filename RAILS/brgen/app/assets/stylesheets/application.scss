@@ -2122,12 +2122,12 @@ body[class*="vertical-"] .compose-launcher {
 
 .mobile-sheet-links {
   display: grid;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 .mobile-sheet-links a {
   display: block;
-  padding: 0.875rem 0.75rem;
+  padding: var(--space-3) var(--space-3);
   border-radius: var(--radius-sm);
   background: var(--surface-elevated);
   color: var(--text);
@@ -2322,11 +2322,11 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
   padding: 16px;
   margin: 0;
   display: grid;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 .community-list li {
-  padding: 0.75rem 1rem;
+  padding: var(--space-3) var(--space-4);
   background: var(--surface-elevated);
   border-radius: var(--radius-card);
   transition: background var(--transition-fast) var(--ease-out);
@@ -2807,7 +2807,7 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 .sort-tab {
   padding: 16px 16px; /* mobile tighter */
   text-align: center;
-  font: 0.875rem/1 var(--font);
+  font: var(--text-sm)/var(--leading-none) var(--font);
   font-weight: var(--weight-bold);
   color: var(--text-secondary);
   transition: background var(--transition-fast) var(--ease-out), color var(--transition-fast) var(--ease-out);
@@ -3852,7 +3852,7 @@ body.vertical-marketplace .top-offers-rail .sale-ad .deal-price {
 // The class (0,1,1) outranks that pair (0,0,2), and 1.17em is the UA h3 ratio,
 // the size the heading reads at.
 .order-chat h2 {
-  font-size: 1.17em;
+  font-size: var(--text-lg);
   margin-bottom: var(--space-2);
 }
 
@@ -4165,7 +4165,7 @@ body.vertical-marketplace .top-offers-rail .sale-ad .deal-price {
   background: var(--surface-elevated);
   border: 1px solid var(--border);
   border-radius: var(--radius-card);
-  padding: 0.75rem 1rem;
+  padding: var(--space-3) var(--space-4);
   pointer-events: all;
   animation: nearby-in 280ms cubic-bezier(.34, 1.56, .64, 1) both;
 }
@@ -4648,7 +4648,7 @@ label.field--check-label > input { min-height: var(--tap-min); min-width: var(--
   grid-area: 1 / 1;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--space-3);
   background: var(--dating-card, var(--surface));
   border: 1px solid var(--dating-border, var(--border));
   border-radius: var(--radius-lg);
@@ -8420,7 +8420,7 @@ body.vertical-messenger .roster-nick {
 // :not([class]) keeps this off .post-show-aside, .sidebar-card, .sidebar,
 // .widgets and .channel-roster, all of which size their own headings.
 aside:not([class]) > h2 {
-  font-size: 1.17em;
+  font-size: var(--text-lg);
   margin-bottom: var(--space-2);
 }
 

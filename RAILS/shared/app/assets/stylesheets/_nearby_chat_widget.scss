@@ -35,7 +35,7 @@
 .nearby-chat-widget-tab {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   background: var(--surface-elevated);
   /* The elevated surface is the separation. Three edges of hairline around a
      44px tab was the most line-per-pixel chrome on the page. */
@@ -47,7 +47,7 @@
      at every width. */
   border-radius: 0;
   color: var(--text);
-  padding: 0.625rem var(--space-4);
+  padding: var(--space-2) var(--space-4);
   min-height: var(--tap-min);
   font: var(--text-xs)/1 var(--font-mono);
   letter-spacing: var(--tracking-normal);
@@ -154,7 +154,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  padding: 0.625rem 0.875rem;
+  padding: var(--space-2) var(--space-3);
   border-bottom: 1px solid var(--border);
   color: var(--text);
   flex-shrink: 0;
@@ -190,7 +190,7 @@
   align-items: center;
   justify-content: center;
   min-height: var(--tap-min);
-  padding: 0.5rem 0.75rem;
+  padding: var(--space-2) var(--space-3);
   border: 1px solid var(--border);
   background: var(--bg);
   color: var(--text);
@@ -241,7 +241,7 @@
   flex: 1;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 0.5rem 0.75rem;
+  padding: var(--space-2) var(--space-3);
   margin: 0;
   list-style: none;
   font-family: var(--font);
@@ -252,8 +252,8 @@
 .nearby-chat-widget-composer {
   display: flex;
   align-items: flex-end;
-  gap: 8px;
-  padding: 0.5rem;
+  gap: var(--space-2);
+  padding: var(--space-2);
   border-top: 1px solid var(--border);
   flex-shrink: 0;
   font-family: var(--font);
@@ -266,7 +266,7 @@
   border: 1px solid var(--border);
   border-radius: 0;
   color: var(--text);
-  padding: 0.5rem var(--space-2);
+  padding: var(--space-2) var(--space-2);
   min-height: var(--tap-min);
   max-height: 6.5rem;
   font-family: var(--font);
@@ -300,8 +300,8 @@
 .nearby-chat-widget-empty {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  padding: 1rem var(--space-4);
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-4);
   font-family: var(--font);
   font-size: var(--text-sm);
   line-height: 1.5;
@@ -326,7 +326,7 @@
 
 .nearby-chat-widget-status {
   margin: 0;
-  padding: var(--space-2) 0.75rem;
+  padding: var(--space-2) var(--space-3);
   font-family: var(--font);
   font-size: var(--text-sm);
   line-height: 1.4;
@@ -342,9 +342,9 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px 0.5rem;
+  gap: var(--space-1) var(--space-2);
   margin: 0;
-  padding: 4px 0.75rem;
+  padding: var(--space-1) var(--space-3);
   font-family: var(--font);
   font-size: var(--text-sm);
   line-height: 1.4;
@@ -362,7 +362,7 @@
   cursor: pointer;
   min-height: var(--tap-min);
   min-width: var(--tap-min);
-  padding: 0 4px;
+  padding: 0 var(--space-1);
   text-decoration: underline;
   text-underline-offset: 2px;
   border-radius: 0;
@@ -387,7 +387,7 @@
   align-items: center;
   justify-content: center;
   min-height: var(--tap-min);
-  padding: 0.5rem var(--space-3);
+  padding: var(--space-2) var(--space-3);
   border: 1px solid var(--border);
   border-radius: 0;
   background: var(--bg);
@@ -402,7 +402,7 @@
 }
 
 .nearby-chat-widget-log li {
-  padding: 4px 0;
+  padding: var(--space-1) 0;
   border-bottom: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
 }
 
