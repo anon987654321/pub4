@@ -37,6 +37,7 @@ module Deploy
   module DomainWatch
     ROOT = File.expand_path("../..", __dir__)
     SNAPSHOT = File.join(ROOT, "OPENBSD/data/domain_inventory.yml")
+    RAILS_APPS = File.join(ROOT, "RAILS/apps.yml")
 
     # Registries whose referral the local whois does not follow correctly.
     SERVERS = {
@@ -68,10 +69,13 @@ module Deploy
     end
 
     def owned_domains
-      block = File.read(File.join(ROOT, "OPENBSD/OPERATOR.sh"), encoding: "UTF-8")[/^OWNED_DOMAINS=\(\n(.*?)\n\)$/m, 1]
-      raise "OWNED_DOMAINS block not found in OPERATOR.sh" unless block
+      inventory = YAML.safe_load_file(RAILS_APPS)
+      domains = inventory.fetch("owned_domains")
+      raise "owned_domains must be a non-empty array" unless domains.is_a?(Array) && domains.any?
 
-      block.lines.map(&:strip).reject { |line| line.empty? || line.start_with?("#") }
+      domains.map(&:to_s).reject(&:empty?).uniq.sort
+    rescue Errno::ENOENT, Psych::Exception, KeyError => e
+      raise "owned domain inventory unreadable: #{e.class}: #{e.message}"
     end
 
     # Bounded, portable, and no shell. /usr/bin/timeout is OpenBSD's and absent
