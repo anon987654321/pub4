@@ -376,32 +376,9 @@ module Master
                                output: join_output(output, native_output))
           end
 
-          report("rebuilding native bundle extensions")
-          return fail_result("stale native bundle cleanup failed", output: join_output(output, native_output)) unless discard_stale_native_bundle!
-          repair_ok, repair_stdout, repair_stderr = run_bundle(
-            "install", "--jobs", bundle_jobs.to_s, "--retry", "3"
-          )
-          repair_output = join_output(repair_stdout, repair_stderr)
-          unless repair_ok
-            return fail_result(
-              "bundle native extension repair failed",
-              output: join_output(output, native_output, repair_output),
-            )
-          end
-
-          repaired_ok, repaired_stdout, repaired_stderr = probe_native_bundle
-          repaired_output = join_output(repaired_stdout, repaired_stderr)
-          return ok_result(
-            "bundle native extensions repaired",
-            changed: true,
-            bundle: true,
-            output: join_output(output, native_output, repair_output, repaired_output),
-          ) if repaired_ok
-
-          fail_result(
-            "bundle native extension repair failed",
-            output: join_output(output, native_output, repair_output, repaired_output),
-          )
+          repair_native_bundle(join_output(output, native_output))
+        elsif native_build_failure?(output)
+          repair_native_bundle(output)
         elsif permission_failure?(output)
           install_to_user_path(output)
         else
@@ -410,6 +387,39 @@ module Master
             "bundle install failed"
           fail_result(message, output: output)
         end
+      end
+
+      def repair_native_bundle(previous_output)
+        report("rebuilding native bundle extensions")
+        return fail_result(
+          "stale native bundle cleanup failed",
+          output: previous_output,
+        ) unless discard_stale_native_bundle!
+
+        repair_ok, repair_stdout, repair_stderr = run_bundle(
+          "install", "--jobs", bundle_jobs.to_s, "--retry", "3"
+        )
+        repair_output = join_output(repair_stdout, repair_stderr)
+        unless repair_ok
+          return fail_result(
+            "bundle native extension repair failed",
+            output: join_output(previous_output, repair_output),
+          )
+        end
+
+        repaired_ok, repaired_stdout, repaired_stderr = probe_native_bundle
+        repaired_output = join_output(repaired_stdout, repaired_stderr)
+        return ok_result(
+          "bundle native extensions repaired",
+          changed: true,
+          bundle: true,
+          output: join_output(previous_output, repair_output, repaired_output),
+        ) if repaired_ok
+
+        fail_result(
+          "bundle native extension repair failed",
+          output: join_output(previous_output, repair_output, repaired_output),
+        )
       end
 
       def install_to_user_path(previous_output)
