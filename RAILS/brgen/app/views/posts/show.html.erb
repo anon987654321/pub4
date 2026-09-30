@@ -76,6 +76,11 @@
       </section>
 
       <div class="feed-post-actions">
+        <%= link_to post_path(@post, anchor: "comments-section"), class: "feed-action",
+              aria: { label: t("post.comment_aria", count: @post.comment_count) } do %>
+          <%= render "shared/feed_icon", name: "comment" %>
+          <span class="feed-action-count"><%= @post.comment_count.positive? ? @post.comment_count : "" %></span>
+        <% end %>
         <button type="button" class="feed-action" data-controller="share"
                 data-share-title-value="<%= @post.title %>"
                 data-share-url-value="<%= request.original_url %>"
@@ -100,7 +105,7 @@
   <h2>
     <%= t("comments.submit") %>
     <%= tag.strong Current.user&.guest? ? t("chat.anon") : (Current.user&.username || t("chat.anon")) %>
-    <% unless authenticated? %> · <%= link_to t("nav.sign_in"), new_session_path %><% end %>
+    <% unless authenticated? %> · <%= render "shared/post_auth_prompt", post: @post %><% end %>
   </h2>
   <% if authenticated? || guest? %>
     <%= render "comments/form", comment: @new_comment, commentable: @post %>

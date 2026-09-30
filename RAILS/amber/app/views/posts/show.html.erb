@@ -26,6 +26,11 @@
   <% if @post.outfit %><p><em><%= t("post.outfit_label") %>: <%= link_to @post.outfit.name, outfit_path(@post.outfit) %></em></p><% end %>
   <% if @post.item %><p><em><%= t("post.item_label") %>: <%= link_to @post.item.title, item_path(@post.item) %></em></p><% end %>
   <footer class="post-show-actions feed-card-actions">
+    <%= link_to post_path(@post, anchor: "comments"), class: "feed-action",
+          aria: { label: t("post.comment_aria", count: @post.comment_count) } do %>
+      <%= render "shared/feed_icon", name: "comment" %>
+      <span class="feed-action-count"><%= @post.comment_count.to_i.positive? ? @post.comment_count : "" %></span>
+    <% end %>
     <%= render "posts/like_button", post: @post %>
     <%= render "shared/post_embed_action", post: @post, url: post_url(@post) %>
     <% if @post.user == Current.user %>
@@ -43,6 +48,8 @@
   </div>
   <% if authenticated? %>
     <%= render "comments/form", comment: @comment, commentable: @post %>
+  <% else %>
+    <%= render "shared/post_auth_prompt", post: @post %>
   <% end %>
 </section>
 

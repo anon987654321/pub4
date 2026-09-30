@@ -2934,3 +2934,51 @@ performance_runtime:
     role: deterministic timing and output-digest comparison
   - path: RAILS/_bundle.sh
     role: content-addressed gem-artifact cache shared by Rails applications
+
+social_frontpage_reference:
+  id: social_frontpage_reference
+  status: active
+  date: 2026-09-30
+  purpose: Keep the useful interaction patterns from Reddit, X and TikTok while preserving each pub4 surface's own visual dialect.
+  research:
+    reddit:
+      recommendations: https://support.reddithelp.com/hc/en-us/articles/53416317564820-Changelog-September-10-2026
+      communities: https://support.reddithelp.com/hc/en-us/articles/28621027395220-How-to-join-or-leave-a-community
+      welcoming: https://support.reddithelp.com/hc/en-us/articles/15484358732692-Welcoming-new-members
+      setup: https://support.reddithelp.com/hc/en-us/articles/45959071783316-Changelog-February-4-2026
+    x:
+      timeline: https://help.x.com/en/using-x/x-timeline
+      signup: https://help.x.com/en/using-x/create-x-account
+      cookies: https://help.x.com/en/rules-and-policies/x-cookies
+      follow_widget: https://help.x.com/en/using-x/add-follow-button-to-website
+      recommendations: https://help.x.com/en/rules-and-policies/recommendations
+    tiktok:
+      for_you: https://support.tiktok.com/en/getting-started/for-you/test-for-you
+      desktop: https://newsroom.tiktok.com/new-features-bring-tiktok-magic-to-desktop?lang=en
+  rules:
+    feed:
+      - Put the content stream before explanatory marketing chrome.
+      - Keep feed modes only when they change the retrieval set; do not duplicate navigation and sorting.
+      - Let behavior improve recommendations instead of forcing a long preference wizard.
+    onboarding:
+      - Show the product before asking for setup.
+      - Keep first-run instruction to one short story with three concrete actions at most.
+      - Make dismissal obvious and persistent per surface.
+    consent:
+      - Necessary storage must be named separately from optional measurement or advertising.
+      - Accept, reject and customize must be first-layer peers.
+      - Optional technology stays off until explicit consent.
+    post_detail:
+      - Preserve the post's reading measure and content order.
+      - Keep social proof and primary actions close to the content.
+      - Use a small auth popover for incidental actions when a full-page login would interrupt reading.
+      - Never hide the public content behind authentication when the surface is intentionally guest-open.
+    micro_interactions:
+      - Prefer native popover/dialog primitives over bespoke overlay state.
+      - Keep a 44px interaction floor and visible focus state.
+      - Stage live feed arrivals instead of shifting content under the reader.
+      - Use explicit labels for sponsored/promotional units and keep their visual grammar native to the feed.
+  mapping:
+    brgen: feed-first-local-social-posts-with-light-auth-prompt
+    amber: editorial-reading-detail-with-light-auth-prompt
+    master: treat these as durable UX constraints and evidence sources, not as a mandate to clone another product's colors or chrome

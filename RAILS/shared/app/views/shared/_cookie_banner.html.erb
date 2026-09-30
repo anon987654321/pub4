@@ -29,6 +29,11 @@
 
     <fieldset>
       <legend class="visually-hidden"><%= t("cookie_consent.settings_title") %></legend>
+      <div class="cookie-purpose cookie-purpose--necessary">
+        <span class="cookie-purpose-state" aria-hidden="true">✓</span>
+        <span><strong><%= t("cookie_consent.purposes.necessary.title") %></strong><%= t("cookie_consent.purposes.necessary.body") %></span>
+      </div>
+
       <label class="cookie-purpose">
         <input type="checkbox" data-cookie-consent-target="analytics">
         <span><strong><%= t("cookie_consent.purposes.analytics.title") %></strong><%= t("cookie_consent.purposes.analytics.body") %></span>
