@@ -87,6 +87,7 @@ module Master
         warn: { rate: "-4%", pitch: "-20Hz" },
         fail: { rate: "-8%", pitch: "-40Hz" },
         question: { rate: "+0%", pitch: "+15Hz" },
+        warm: { rate: "-3%", pitch: "+0Hz" },
 
         dramatic:     { rate: "-15%", pitch: "-60Hz" },
         intimate:     { rate: "-5%",  pitch: "-25Hz" },
@@ -99,7 +100,7 @@ module Master
       }.freeze
 
       DEFAULT_VOICE = Policy.single_voice_key
-      DEFAULT_STYLE = :calm
+      DEFAULT_STYLE = :warm
       CHUNK_CHARS = 220
 
       extend SpeechWorker
