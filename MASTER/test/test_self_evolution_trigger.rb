@@ -23,12 +23,14 @@ class TestSelfEvolutionTrigger < Minitest::Test
   def test_stays_dormant_when_self_evolution_is_disabled
     previous = ENV["MASTER_SELF_EVOLUTION"]
     ENV["MASTER_SELF_EVOLUTION"] = "0"
+    dir = Dir.mktmpdir("self-evolution")
 
-    result = Master::Trace::SelfEvolutionTrigger.new(root: Dir.mktmpdir("self-evolution")).call
+    result = Master::Trace::SelfEvolutionTrigger.new(root: dir).call
 
     assert_equal "self-evolution: disabled", result
   ensure
     ENV["MASTER_SELF_EVOLUTION"] = previous
+    FileUtils.remove_entry(dir) if dir && Dir.exist?(dir)
   end
 
   private
