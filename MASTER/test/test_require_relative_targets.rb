@@ -1,23 +1,22 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require "pathname"
+require_relative "../tools/require_graph"
 
 class TestRequireRelativeTargets < Minitest::Test
-  ROOT = File.expand_path("../lib", __dir__)
+  ROOT = File.expand_path("../..", __dir__)
 
-  def test_literal_require_relative_targets_exist
-    missing = []
+  def test_every_literal_require_relative_resolves
+    report = Operator::RequireGraph.run(root: ROOT)
 
-    Dir.glob(File.join(ROOT, "**", "*.rb")).sort.each do |source|
-      base = File.dirname(source)
-      File.read(source).scan(/require_relative\s+["']([^"']+)["']/).flatten.each do |spec|
-        target = File.expand_path(spec, base)
-        candidates = ["#{target}.rb", File.join(target, "index.rb")]
-        missing << "#{source.delete_prefix("#{ROOT}/")}: #{spec}" unless candidates.any? { |path| File.file?(path) }
-      end
-    end
+    assert report["clean"], "broken imports:\n#{report["broken"].map { |row|
+      "#{row["file"]}:#{row["line"]}: #{row["require_relative"]} -> #{row["target"]}"
+    }.join("\n")}"
+  end
 
-    assert_empty missing, "broken require_relative targets:\n#{missing.join("\n")}"
+  def test_all_three_first_party_trees_are_scanned
+    report = Operator::RequireGraph.run(root: ROOT)
+
+    assert_operator report["scanned"], :>, 1500
   end
 end
