@@ -58,7 +58,7 @@ module Operator
     # bin/operator calls. Everything below is a stage or a helper one of these three
     # reaches, so the file reads in the order the ladder runs rather than the
     # order it was written.
-    TREES = %w[MASTER RAILS OPENBSD].freeze
+    TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
 
     # /fix already owns observation, council critique and repair. Its verification
     # tail proves the repaired tree without recursively invoking /fix or debating
@@ -82,11 +82,13 @@ module Operator
             when "MASTER" then MASTER
             when "RAILS" then File.join(ROOT, "RAILS")
             when "OPENBSD" then File.join(ROOT, "OPENBSD")
+            when "STUDIO" then File.join(ROOT, "STUDIO")
             else File.expand_path(text, ROOT)
             end
       return TREES if abs == ROOT
       return ["RAILS"] if abs == File.join(ROOT, "RAILS") || abs.start_with?("#{File.join(ROOT, "RAILS")}/")
       return ["OPENBSD"] if abs == File.join(ROOT, "OPENBSD") || abs.start_with?("#{File.join(ROOT, "OPENBSD")}/")
+      return ["STUDIO"] if abs == File.join(ROOT, "STUDIO") || abs.start_with?("#{File.join(ROOT, "STUDIO")}/")
       return ["MASTER"] if abs == MASTER || abs.start_with?("#{MASTER}/")
 
       abort "gate: target is outside pub4 trees: #{target}"
@@ -152,7 +154,7 @@ module Operator
     # whole under every --tree — the ratchets and the sprawl census are
     # repo-wide measurements by definition, and both are cheap.
     def stages(scan_only:, trees: TREES)
-      scope = trees == TREES ? "all three trees" : trees.join(", ")
+      scope = trees == TREES ? "all four trees" : trees.join(", ")
       [
         lexical_stage(scan_only:, trees:, scope:),
         rails_stage(scan_only:, trees:),

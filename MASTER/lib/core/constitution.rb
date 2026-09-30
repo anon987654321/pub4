@@ -18,10 +18,10 @@ module Master::Core
       def watches?(verb) = verbs.include?(verb)
     end
 
-    REPO_TREES = %w[MASTER RAILS OPENBSD].freeze
+    REPO_TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
     FORBIDDEN_BASENAMES = %w[summary.md analysis.md report.md todo.md notes.md changelog.md].freeze
     TWO_HATS_LINES = 200
-    SCOPE_TREES = 3
+    SCOPE_TREES = 4
     SCOPE_SECONDS = 1_800
     FEAT_RX = /\b(feat|fix|add|ship|implement)\b/i
     REFACTOR_RX = /\b(refactor|cleanup|clean up|restructure|rewrite)\b/i
