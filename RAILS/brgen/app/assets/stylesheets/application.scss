@@ -11090,25 +11090,9 @@ body.vertical-marketplace .store-buybox .btn-primary:hover {
    Functional shopping UI stays sans; campaign/display moments get a restrained
    serif contrast. The pairing follows the practical/editorial split visible in
    fashion-commerce publishing without turning catalogue metadata into magazine copy. */
-@font-face {
-  font-family: "DM Sans";
-  src: url("https://fonts.gstatic.com/s/dmsans/v16/rP2Yp2ywxg089UriI5-g7M8btVsD8Ck0q7u0-K6z9mXg.woff2") format("woff2");
-  font-style: normal;
-  font-weight: 100 1000;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "DM Serif Display";
-  src: url("https://fonts.gstatic.com/s/dmserifdisplay/v16/-nFnOHM81r4j6k0gjAW3mujVU2B2G_Bx0vrx52g.woff2") format("woff2");
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-}
-
 body.vertical-marketplace {
-  --font-commerce-sans: "DM Sans", var(--font), Arial, sans-serif;
-  --font-commerce-display: "DM Serif Display", Georgia, serif;
+  --font-commerce-sans: "Helvetica Neue", "Helvetica Neue Pro", Arial, sans-serif;
+  --font-commerce-display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
 }
 
 body.vertical-marketplace .bol-market-hero-copy h2,
