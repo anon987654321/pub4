@@ -213,6 +213,7 @@ module Master
 
       def drain
         while (job = @queue.pop)
+          path = nil
           begin
             text, part, last = job.is_a?(Array) ? [job[0], job[1], job[2]] : [job, job, true]
             generation = @lock.synchronize { @job_generations.delete(job.object_id) || @generation }
@@ -234,9 +235,10 @@ module Master
               end
             end
             spoken(text) if last && generation_active?(generation)
-            File.delete(path) if path.start_with?("/tmp/m_tts_") && File.exist?(path)
           rescue StandardError => e
             warn_once("playback worker failed — #{e.class}: #{e.message}")
+          ensure
+            File.delete(path) if path&.start_with?("/tmp/m_tts_") && File.exist?(path)
           end
         end
       end
