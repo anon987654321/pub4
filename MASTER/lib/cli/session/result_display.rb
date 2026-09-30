@@ -110,9 +110,9 @@ module Master
         model = ok.model
         return if model.to_s.empty?
 
-        puts @refs.renderer.render(
-          Master::CLI::CapabilityStamp.render(model:, root: Master::ROOT),
-          mode: :dim,
+        Master::Trace::Dmesg.status(
+          "model0",
+          Master::CLI::CapabilityStamp.render(model:, root: Master::ROOT).to_s.delete_prefix("model0 at master0: "),
         )
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "cli.capability_stamp", event_bus: @refs.bus)
