@@ -56,6 +56,21 @@ class TestCliOperatorLayer < Minitest::Test
     assert_includes source, "Voice::Playback.available?"
   end
 
+  def test_short_cli_replies_are_not_silenced
+    source = File.read(File.join(Master::ROOT, "lib", "cli", "session", "result_display.rb"))
+
+    assert_includes source, "Master::Voice::Playback.speak(spoken_form(text))"
+    refute_match(/Playback\.speak\(spoken_form\(text\)\)\s+unless\s+routine/, source)
+  end
+
+  def test_voice_command_has_status_and_test_paths
+    source = File.read(File.join(Master::ROOT, "lib", "cli", "command_registry.rb"))
+
+    assert_includes source, '"voice" => Command.new'
+    assert_includes source, 'when "", "status"'
+    assert_includes source, 'when "test"'
+  end
+
   def test_casual_chat_does_not_run_evidence_preflight
     agent = Master::Review::Agent.allocate
     evidence = false
