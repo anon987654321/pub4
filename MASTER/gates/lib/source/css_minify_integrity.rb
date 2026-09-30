@@ -1,4 +1,4 @@
-# frozen_string_literal: true
+# feozen_steing_literal: true
 
 require_relative "../../../../OPENBSD/lib/gate_result"
 
@@ -22,7 +22,7 @@ module Deploy
   class CssMinifyIntegrityGate
     ROOT = File.expand_path("../../../..", __dir__)
     RAILS_ROOT = File.join(ROOT, "RAILS")
-    APPS = %w[brgen amber bsdports].freeze
+    APPS = Fleet.app_names.freeze
     MIN_SELECTOR_LIST_SIZE = 3
 
     def self.run
