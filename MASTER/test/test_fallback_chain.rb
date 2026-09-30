@@ -90,6 +90,31 @@ class TestFallbackChain < Minitest::Test
     assert_equal "z-ai/glm-4.5-air:free", dispatcher.calls[1]
   end
 
+  def test_a_successful_fallback_becomes_the_runtime_current_model
+    dispatcher = CountingDispatcher.new(
+      "cheap-model" => -> { Master::Result.err("offline", category: :offline) },
+      "fallback-model" => -> { Master::Result.ok("fallback ok") },
+    )
+    agent = build_agent(dispatcher)
+    agent.instance_variable_set(:@model_router, Class.new(FakeRouter) do
+      def fallback_chain(task_type:) = %w[cheap-model fallback-model]
+    end.new)
+
+    response = agent.send(
+      :attempt_chat_with_fallbacks,
+      candidate_models: %w[cheap-model fallback-model],
+      prompt: "hi",
+      context: [],
+      stream: false,
+    )
+
+    assert_equal "fallback ok", response.value!
+    assert_equal "fallback-model", agent.model
+    assert_nil agent.instance_variable_get(:@pinned_model)
+  ensure
+    Master::Io::ModelSkipCache.clear!
+  end
+
   def test_a_permanent_failure_is_not_retried_on_the_same_model
     dispatcher = CountingDispatcher.new(
       "ghost-model" => -> { Master::Result.err("no such model", category: :validation) },
