@@ -41,6 +41,9 @@
           before <main> on every page, and a stream lands on the first element
           with its target id, so sharing an index page's #live_search_results
           sent that page's results in here, behind a closed dialog. %>
+      <%= render "shared/city_network",
+                 container_class: "search_palette_cities",
+                 heading_id: "search-palette-cities-title" %>
       <%= tag.div id: SearchController::PALETTE_RESULTS, class: "search_palette_results", aria: { live: "polite" } %>
     </div>
   </div>
