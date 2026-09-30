@@ -111,6 +111,24 @@ class TestTtsSupervisor < Minitest::Test
     end
   end
 
+  def test_fast_mode_uses_existing_socket_without_health_probe_or_respawn
+    Dir.mktmpdir("master_tts_fast_socket") do |dir|
+      socket = Sup.socket_path(dir, index: 0)
+      server = UNIXServer.new(socket)
+
+      Master::Voice::Speech.stub(:fast_tts_mode?, true) do
+        Sup.stub(:socket_alive?, ->(*) { raise "health probe should not run in fast mode" }) do
+          Sup.stub(:pool_size, 1) do
+            Sup.instance_variable_set(:@pool_rr, 0)
+            assert_equal socket, Sup.next_socket(dir)
+          end
+        end
+      end
+    ensure
+      server&.close
+    end
+  end
+
   def test_socket_health_rejects_a_stale_worker_generation
     Dir.mktmpdir("master_tts_generation") do |dir|
       worker = File.join(dir, "bin", "tts-worker")
