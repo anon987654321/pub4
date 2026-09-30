@@ -113,18 +113,27 @@ module Master
         def play(path, part, on_level:, stop:)
           levels = envelope(path)
           length = levels.empty? ? part.length / CHARS_PER_S : levels.size * FRAME_S
-          playing, halt = start(path)
+          state = start(path)
+          playing, halt, status = state
           started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+          stopped = false
           loop do
             elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
-            break quietly(halt) if stop.call
+            if stop.call
+              stopped = true
+              quietly(halt)
+              break
+            end
             break unless playing.call(elapsed, length)
 
             on_level.call(levels.empty? ? nil : levels.fetch((elapsed / FRAME_S).floor, 0.0))
             sleep FRAME_S
           end
           on_level.call(0.0)
-          true
+          return true if stopped
+
+          process_status = status.call
+          process_status ? process_status.success? : false
         rescue StandardError => e
           Master::Trace::Dmesg.status("voice0", "playback failed, #{e.class}: #{e.message}")
           false
@@ -139,7 +148,7 @@ module Master
           name, args = Master::Voice::Playback.player
           pid = Process.spawn(name, *args, path, out: File::NULL, err: File::NULL)
           waiter = Process.detach(pid)
-          [->(_elapsed, _length) { waiter.alive? }, -> { Process.kill("TERM", pid) }]
+          [->(_elapsed, _length) { waiter.alive? }, -> { Process.kill("TERM", pid) }, -> { waiter.value }]
         end
 
         def termux_take(path)
