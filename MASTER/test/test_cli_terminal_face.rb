@@ -102,6 +102,55 @@ class TestCliTerminalFace < Minitest::Test
     assert_equal "Bug and ember lay out.", pictured
   end
 
+  def test_face_falls_back_to_native_speech_when_synthesis_is_missing
+    spoken = []
+    mouth = Master::CLI::Face::Mouth.new(
+      device: Object.new.tap { |d| d.define_singleton_method(:android?) { false } },
+      synthesize: ->(_) { nil },
+    )
+    mouth.stub(:direct_speech?, true) do
+      mouth.stub(:direct_speak, ->(text) { spoken << text; true }) do
+        Master::Voice::Playback.stub(:enabled?, true) do
+          Master::Voice::Playback.stub(:player, ["/usr/bin/afplay", []]) do
+            Master::Voice::Speech.stub(:available?, true) do
+              Master::Voice::Speech.stub(:chunks, ["hello"]) do
+                assert mouth.say("hello", on_level: ->(_level) {})
+              end
+            end
+          end
+        end
+      end
+    end
+    assert_equal ["hello"], spoken
+  end
+
+  def test_face_falls_back_to_native_speech_when_audio_player_fails
+    spoken = []
+    mouth = Master::CLI::Face::Mouth.new(
+      device: Object.new.tap { |d| d.define_singleton_method(:android?) { false } },
+      synthesize: ->(_) { "/tmp/fake-face-tts.mp3" },
+    )
+    File.write("/tmp/fake-face-tts.mp3", "audio")
+    mouth.stub(:direct_speech?, true) do
+      mouth.stub(:direct_speak, ->(text) { spoken << text; true }) do
+        mouth.stub(:play, false) do
+          Master::Voice::Playback.stub(:enabled?, true) do
+            Master::Voice::Playback.stub(:player, ["/usr/bin/afplay", []]) do
+              Master::Voice::Speech.stub(:available?, true) do
+                Master::Voice::Speech.stub(:chunks, ["hello"]) do
+                  assert mouth.say("hello", on_level: ->(_level) {})
+                end
+              end
+            end
+          end
+        end
+      end
+    end
+    assert_equal ["hello"], spoken
+  ensure
+    File.delete("/tmp/fake-face-tts.mp3") if File.exist?("/tmp/fake-face-tts.mp3")
+  end
+
   def test_speaking_does_not_arm_the_microphone
     face = Master::CLI::Face::Window.new(
       turn: ->(_) {},
