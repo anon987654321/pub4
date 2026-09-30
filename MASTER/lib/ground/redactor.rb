@@ -23,6 +23,7 @@ module Master
       end
 
       def self.payload(hash, seen: {})
+        seen.compare_by_identity
         return "[CYCLE]" if seen.key?(hash)
 
         seen[hash] = true
@@ -50,6 +51,7 @@ module Master
       end
 
       def self.scrub_array(key, array, seen:)
+        seen.compare_by_identity
         return "[CYCLE]" if seen.key?(array)
 
         seen[array] = true
