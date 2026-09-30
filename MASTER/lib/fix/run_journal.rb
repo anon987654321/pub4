@@ -176,7 +176,7 @@ module Master
       def emit(event, **payload)
         @bus&.publish(event, **payload)
       rescue StandardError => e
-        warn("trace0: #{e.class}: #{e.message}") if ENV["MASTER_TRACE_STRICT"] == "1"
+        Master::Trace::Dmesg.once("fix0", "journal publish failed, #{e.class}: #{e.message}") if ENV["MASTER_TRACE_STRICT"] == "1"
         nil
       end
 
