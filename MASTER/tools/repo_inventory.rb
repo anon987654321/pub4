@@ -32,6 +32,7 @@ ALLOWED_ROOT_FILES = %w[
   GEMINI.md
   TODO.md
   TREE.md
+  VERSION
 ].freeze
 ALLOWED_ROOT_DIRS = %w[
   .claude
