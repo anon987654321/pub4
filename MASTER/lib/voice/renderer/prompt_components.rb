@@ -125,8 +125,10 @@ module Master
           return text unless $stdout.tty?
           return text if ENV["NO_COLOR"] || ENV["MASTER_BOOT_COLOR"] == "0"
 
-          plain = text.to_s.gsub(ANSI_ESCAPE, "")
-          "#{BOOT_BG}#{BOOT_FG}#{plain}#{BOOT_RESET}"
+          lines = text.to_s.gsub(ANSI_ESCAPE, "").lines(chomp: true)
+          width = lines.map(&:length).max.to_i
+          body = lines.map { |line| line.ljust(width) }.join("\n")
+          "#{BOOT_BG}#{BOOT_FG}#{body}#{BOOT_RESET}"
         end
 
         # The prompt is set like text, not a status bar: location first,
