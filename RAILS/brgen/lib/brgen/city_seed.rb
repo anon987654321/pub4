@@ -100,7 +100,7 @@ module Brgen
 
     # City data is driven from the authoritative list in DomainRegistry so that
     # every supported TLD/domain gets a proper City record for automatic resolution.
-    # No city switcher UI exists — resolution is purely from the incoming host/TLD.
+    # City network links are navigation only; resolution still comes from the host/TLD.
     def self.rows_from_registry
       return [] unless defined?(Brgen::DomainRegistry)
 
