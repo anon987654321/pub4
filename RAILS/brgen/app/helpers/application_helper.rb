@@ -35,6 +35,19 @@ module ApplicationHelper
   # affiliate_deals_for used to sit under this comment at zero indentation, with
   # its own paragraph run together with this one. It is Shared::AffiliateHelper
   # now, with the rest of the affiliate stack.
+  # City navigation keeps an existing city-scoped vertical only when the
+  # destination is actually live. Product network membership and deployment
+  # evidence remain separate: parked or unverified cities always receive their
+  # apex, never a guessed vertical hostname.
+  def city_network_href(entry)
+    subdomain = Brgen::DomainRegistry.city_subdomain_for(active_vertical, entry) if active_vertical
+    if subdomain.present? && Brgen::DomainRegistry.live_city_domain?(entry.domain)
+      "https://#{subdomain}.#{entry.domain}/"
+    else
+      "https://#{entry.domain}/"
+    end
+  end
+
   def marketplace_subdomain
     Brgen::DomainRegistry::ENTRIES_BY_DOMAIN[Current.domain.to_s]&.marketplace_subdomain || "marketplace"
   end
