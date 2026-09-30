@@ -78,7 +78,11 @@ if [[ -n $PINNED_VERSION ]]; then
   ACTUAL=$("$RUBY" -e "print RUBY_VERSION")
   if [[ $ACTUAL != $PINNED_VERSION ]]; then
     print -u2 -- "ruby0: $ACTUAL detected; $PINNED_VERSION required"
-    if [[ -n $RBENV ]]; then
+    if [[ ${OSTYPE:-} == openbsd* ]] && (( $+commands[pkg_add] )); then
+      print -u2 -- "ruby0: OpenBSD needs ruby%4.0 for MASTER"
+      print -u2 -- "ruby0: doas pkg_add -U ruby%4.0"
+      print -u2 -- "ruby0: rerun bin/ruby after pkg_add installs /usr/local/bin/ruby40"
+    elif [[ -n $RBENV ]]; then
       print -u2 -- "ruby0: run RBENV_VERSION=$PINNED_VERSION $RBENV install -s $PINNED_VERSION"
     else
       print -u2 -- "ruby0: install rbenv + ruby-build, then rbenv install -s $PINNED_VERSION"
