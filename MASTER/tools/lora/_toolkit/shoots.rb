@@ -19,7 +19,7 @@ require "yaml"
 require "pathname"
 # replicate composes the prompt and counts its tokens; this file chooses the
 # sittings and the subject.
-require_relative "../../replicate/lib/craft"
+require_relative "../../replicate/craft"
 
 LORA_ROOT = Pathname.new(__dir__).join("..").expand_path
 

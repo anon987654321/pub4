@@ -7,13 +7,13 @@ require_relative "test_helper"
 # dmesg from every event, and Triggers runs named handlers without letting one
 # failure stop the rest.
 class TestTraceSupport < Minitest::Test
-  def test_verbose_is_the_default_operator_mode
+  def test_normal_is_the_default_operator_mode
     previous = ENV["MASTER_DMESG"]
     previous_quiet = ENV["MASTER_QUIET"]
     ENV.delete("MASTER_DMESG")
     ENV.delete("MASTER_QUIET")
     Master::Trace::Dmesg.reload!
-    assert_equal "verbose", Master::Trace::Dmesg.verbosity
+    assert_equal "normal", Master::Trace::Dmesg.verbosity
   ensure
     previous.nil? ? ENV.delete("MASTER_DMESG") : ENV["MASTER_DMESG"] = previous
     previous_quiet.nil? ? ENV.delete("MASTER_QUIET") : ENV["MASTER_QUIET"] = previous_quiet
@@ -61,13 +61,15 @@ class TestTraceSupport < Minitest::Test
     def emit(pattern, payload) = @handlers[pattern].each { |h| h.call(payload) }
   end
 
-  # Verbose is the operator default: every model send/outcome is visible.
-  def test_verbose_model_calls_are_visible_by_default
+  # Verbose remains available explicitly: every model send/outcome is visible.
+  def test_verbose_model_calls_are_visible_when_requested
     console = Master::Trace::Dmesg::Console.new
     Fiber[:master_unit] = "scan0"
-    printed = 8.times.flat_map do |i|
-      console.lines(event: "llm:send", model: i.even? ? "claude-cli:claude-opus-4-8" : "ollama:gemma3:4b") +
-        console.lines(event: "llm:provider_outcome", model: "x", status: :success, latency_ms: 10)
+    printed = Master::Trace::Dmesg.with_verbosity("verbose") do
+      8.times.flat_map do |i|
+        console.lines(event: "llm:send", model: i.even? ? "claude-cli:claude-opus-4-8" : "ollama:gemma3:4b") +
+          console.lines(event: "llm:provider_outcome", model: "x", status: :success, latency_ms: 10)
+      end
     end
 
     assert_equal 16, printed.size

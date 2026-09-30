@@ -3,7 +3,7 @@
 require "fileutils"
 require "time"
 require "yaml"
-require_relative "../../../lib/io/atomic_write"
+require_relative "../../lib/io/atomic_write"
 
 module Replicate
   module SchemaSnapshot

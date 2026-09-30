@@ -219,7 +219,7 @@ end
 # would stop the fold running its own tests. The two are told apart by whether
 # the policy recognised the command by name.
 class CoreBridgeSandboxTest < Minitest::Test
-  def sandbox = Master::CLI::CoreBridge.send(:shell_sandbox)
+  def sandbox = Master::CLI::CoreBridge.send(:shell_sandbox, root: Dir.pwd)
 
   def test_a_recognised_ask_asks_a_person_instead_of_proceeding
     assert_equal({ ask: "matched ask pattern" }, sandbox.call(%w[git push origin main]))

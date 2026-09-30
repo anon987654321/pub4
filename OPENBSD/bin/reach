@@ -13,8 +13,8 @@
 # box's crontab nor its filesystem, because the merge loop skipped the line
 # correctly and silently.
 #
-#   ruby OPENBSD/tools/reach.rb
-#   ruby OPENBSD/tools/reach.rb --json
+#   ruby OPENBSD/bin/reach
+#   ruby OPENBSD/bin/reach --json
 #
 # Three questions, each about the tree rather than the box. Box state is
 # health_check.rb's job; this is what a fresh OPERATOR.sh run would produce.
