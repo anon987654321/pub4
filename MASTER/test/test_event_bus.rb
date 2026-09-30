@@ -16,6 +16,31 @@ class TestEventBus < Minitest::Test
     FileUtils.rm_rf(@dir)
   end
 
+  def test_nested_publish_is_queued_instead_of_recursing
+    seen = []
+    @bus.subscribe("outer") do
+      seen << :outer
+      @bus.publish("inner")
+    end
+    @bus.subscribe("inner") { seen << :inner }
+
+    @bus.publish("outer")
+
+    assert_equal %i[outer inner], seen
+  end
+
+  def test_recursive_event_cascade_is_bounded
+    seen = 0
+    @bus.subscribe("loop") do
+      seen += 1
+      @bus.publish("loop") if seen < Master::Trace::EventBus::MAX_DISPATCHED_EVENTS + 10
+    end
+
+    @bus.publish("loop")
+
+    assert_equal Master::Trace::EventBus::MAX_DISPATCHED_EVENTS, seen
+  end
+
   def test_publish_stamps_the_fiber_conversation
     seen = nil
     @bus.subscribe("tool:before") { |ev| seen = ev }
