@@ -12,6 +12,7 @@ module Master
 
       BOOT_TIME = Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond)
       PATTERN_CACHE_MAX = 512
+      MAX_DISPATCHED_EVENTS = 64
 
       def initialize(event_log: nil, evidence_log: nil)
         super()
@@ -27,6 +28,48 @@ module Master
       end
 
       def publish(event, payload = {})
+        state = Thread.current.thread_variable_get(:master_event_dispatch)
+        unless state
+          state = { queue: [], dispatched: 0, warned: false }
+          Thread.current.thread_variable_set(:master_event_dispatch, state)
+          begin
+            enqueue(state, event, payload)
+            drain(state)
+          ensure
+            Thread.current.thread_variable_set(:master_event_dispatch, nil)
+          end
+          return self
+        end
+
+        enqueue(state, event, payload)
+        self
+      end
+
+      private
+
+      # Handlers are allowed to publish follow-up events, but those events are
+      # queued rather than recursively calling publish -> handler -> publish.
+      # The queue is per thread, so independent model/tool workers still publish
+      # normally. A bounded cascade prevents a broken telemetry handler from
+      # generating an unbounded stream of its own error event.
+      def enqueue(state, event, payload)
+        if state[:dispatched] + state[:queue].size >= MAX_DISPATCHED_EVENTS
+          warn_dispatch_limit(state, event)
+          return
+        end
+
+        state[:queue] << [event, payload]
+      end
+
+      def drain(state)
+        until state[:queue].empty?
+          event, payload = state[:queue].shift
+          state[:dispatched] += 1
+          dispatch_one(event, payload)
+        end
+      end
+
+      def dispatch_one(event, payload)
         ts = elapsed_ms
         # One process-wide bus. ChatService (and anything else that writes a
         # visitor's SSE from a handler) must be able to ignore another
@@ -51,11 +94,16 @@ module Master
             Master::Ground::Swallow.log(e, context: "event_bus.handler", event:)
           end
         end
-
-        self
       end
 
-      private
+      def warn_dispatch_limit(state, event)
+        return if state[:warned]
+
+        state[:warned] = true
+        Kernel.warn("event_bus: dispatch limit #{MAX_DISPATCHED_EVENTS} reached at #{event}; dropping recursive telemetry")
+      rescue StandardError
+        nil
+      end
 
       def persist_event(event, payload)
         safe_payload = Master::Ground::Redactor.payload(payload)
