@@ -47,13 +47,12 @@ all three top-level trees; `MASTER/bin/operator measure` prints every ratchet wi
 Run the smallest check that proves the work, and never report done without its
 output. Before targeted reading on an unfamiliar or broad task, run `ruby MASTER/tools/agent_context.rb --tree` for a bounded source map.
 
-The public runtime surface has one writing verb and two read-only companions.
-`/review [path]` runs the whole read-only pass — scan, critique, principle map.
-`/critique` is the council. `/fix` is the convergence operation: it scans,
-renders when applicable, repairs findings, and — even when deterministic checks
-are clean — asks the council for anchored micro-improvements. It then verifies
-the result and repeats until the tree converges, stops improving, or reaches a
-state MASTER may not settle alone. `/scan` remains only as a private
+The public runtime surface has one canonical operation and two read-only
+compatibility views. `/fix [path]` is the convergence lifecycle: it observes,
+critiques, repairs findings, re-observes and verifies until the tree converges,
+stops improving, or reaches a state MASTER may not settle alone. `/review [path]`
+and `/critique` read or argue through the same pipeline without writing; they do
+not own separate review lifecycles. `/scan` remains only as a private
 compatibility alias for legacy gates; it is not a separate public operation.
 
 `/fix` also has a canonical executable procedure in `Master::Fix::Protocol`. Do not infer the repair lifecycle from prose: run `MASTER/bin/master --fix-context <target>` when handing the operation to an external LLM, and treat its live corpus, rule metadata, repair strategies and terminal states as the task context.
