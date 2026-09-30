@@ -104,16 +104,17 @@ module Master
         queue = ensure_worker
         return if echo?(str)
 
-        # Sentence by sentence, so the first words are heard while the rest is
-        # still being synthesised. Speech.chunks packs sentences up to 220
-        # characters and had no caller: one Edge round trip carried the whole
-        # reply, so a long answer stood silent for its entire synthesis and
-        # then spoke. The worker stays single, so they are heard in order.
+        # Sentence by sentence, so the first complete thought is heard while
+        # the rest is still being synthesised. The reply's voice and style are
+        # selected once here and carried through every chunk: a failed later
+        # synthesis must never rotate to a second narrator.
         parts = Speech.chunks(str)
         parts = [str] if parts.empty?
+        reply_voice = Speech.voice_for_text(str)
+        reply_style = Speech.infer_style(str, fallback: Speech.default_style)
         generation = current_generation
         parts.each_with_index do |part, index|
-          job = [str, part, index == parts.size - 1]
+          job = [str, part, index == parts.size - 1, reply_voice, reply_style]
           @lock.synchronize do
             next unless generation == @generation
             @job_generations[job.object_id] = generation
@@ -215,16 +216,21 @@ module Master
         while (job = @queue.pop)
           path = nil
           begin
-            text, part, last = job.is_a?(Array) ? [job[0], job[1], job[2]] : [job, job, true]
+            text, part, last, voice, style = if job.is_a?(Array)
+              [job[0], job[1], job[2], job[3], job[4]]
+            else
+              [job, job, true, Speech.voice_for_text(job), Speech.infer_style(job, fallback: Speech.default_style)]
+            end
             generation = @lock.synchronize { @job_generations.delete(job.object_id) || @generation }
             next unless generation_active?(generation)
 
-            path = synthesize(part)
+            path = synthesize(part, voice:, style:)
             next unless generation_active?(generation)
 
             unless path
-              next if native_say(text)
-
+              # Speech already owns its engine fallback. Calling macOS say here
+              # with the full reply was a second, unscoped fallback that could
+              # switch speaker and replay everything after one failed chunk.
               warn_once("synthesis failed#{Speech.last_error ? ": #{Speech.last_error}" : ""}")
               next
             end
@@ -256,8 +262,16 @@ module Master
       # volume anywhere in the synthesis path, browser_payload does not carry
       # it either, and inventing a fourth reader for it here would change how
       # MASTER sounds on an assumption rather than a decision.
-      def synthesize(text)
-        Speech.synthesize(text, rate: Policy.default_rate, pitch: Policy.default_pitch)
+      def synthesize(text, voice: nil, style: nil)
+        Speech.synthesize(
+          text,
+          voice:,
+          style: style || Speech.default_style,
+          rate: Policy.default_rate,
+          pitch: Policy.default_pitch,
+          voice_locked: true,
+          style_locked: true,
+        )
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Voice::Playback.synthesize")
         nil
