@@ -90,6 +90,7 @@ export default class extends Controller {
     }
     this.images.clear()
     cancelAnimationFrame(this.raf)
+    cancelAnimationFrame(this.trackFrame)
     this.canvas?.remove()
   }
 
@@ -171,18 +172,23 @@ export default class extends Controller {
   }
 
   load(url) {
-    if (this.images.has(url)) return this.images.get(url)
-    const image = new Image()
-    image.decoding = "async"
-    image.loading = "lazy"
-    const promise = new Promise(resolve => {
-      image.onload = () => resolve(image)
-      image.onerror = () => resolve(null)
-    })
-    this.images.set(url, promise)
-    image.src = url
-    promise.then(() => this.draw())
-    return promise
+    const existing = this.images.get(url)
+    if (existing) return existing
+
+    const entry = { image: new Image(), ready: false }
+    entry.image.decoding = "async"
+    entry.image.loading = "lazy"
+    entry.image.onload = () => {
+      entry.ready = true
+      this.draw()
+    }
+    entry.image.onerror = () => {
+      entry.ready = false
+    }
+    entry.image.src = url
+    if (entry.image.complete && entry.image.naturalWidth > 0) entry.ready = true
+    this.images.set(url, entry)
+    return entry
   }
 
   buildPoints() {
@@ -318,15 +324,13 @@ export default class extends Controller {
   }
 
   drawGarments(ctx) {
-    const scale = Math.min(this.width / 420, this.height / 760)
     this.normalizedItems().forEach(({ zone, item }) => {
-      this.load(item.url).then(image => {
-        if (image) this.drawWrapped(ctx, image, BODY[zone], scale)
-      })
+      const entry = this.load(item.url)
+      if (entry.ready) this.drawWrapped(ctx, entry.image, BODY[zone])
     })
   }
 
-  drawWrapped(ctx, image, body, scale) {
+  drawWrapped(ctx, image, body) {
     const cols = 12
     const rows = 14
     const x0 = this.width * 0.5
