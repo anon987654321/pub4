@@ -42,7 +42,7 @@ module Operator
           next
         end
 
-        next unless current && (match = line.match(/^(`{3,})(?:[A-Za-z0-9_-]+)?\s*$/))
+        next unless current && (match = line.match(/^(`{3,})[A-Za-z0-9_-]*\s*$/))
         fence = match[1]
         body = []
       end
