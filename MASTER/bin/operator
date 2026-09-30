@@ -31,6 +31,7 @@ def usage
       bin/operator gate [--scan-only] [--only=a,b] [--tree=T] [--list] [--release]  every gate in the repo, fixing as it goes
       bin/operator status [--json]
       bin/operator vps state [--json] [--remote]
+      bin/operator vps master <status|start|stop|restart> [--remote]
       bin/operator vps deploy <app|master> [--remote]
       bin/operator vps logs <app> [--lines N] [--remote]
       bin/operator vps admin <status|services|service|pf|disk|memory|swap|dmesg|packages|updates|upgrade|reboot> [args] [--remote]
@@ -559,6 +560,48 @@ when "test"
 when "vps"
   sub = ARGV.shift
   case sub
+  when "master"
+    action = ARGV.shift.to_s
+    remote = !ARGV.delete("--remote").nil?
+    abort("usage: bin/operator vps master <status|start|stop|restart> [--remote]") unless %w[status start stop restart].include?(action) && ARGV.empty?
+    script = <<~SH
+      set -e
+      cd /home/dev/pub4
+      case #{Shellwords.escape(action)} in
+      status)
+        if screen -list 2>/dev/null | grep -q '[.]master'; then
+          echo "master0: screen master active"
+          screen -S master -Q select . 2>&1 || true
+        else
+          echo "master0: screen master stopped"
+        fi
+        ruby40 -I MASTER/lib -e 'require "master"; p=Master::Ops::ProcessLock.owner(File.join(Master::ROOT, ".master", "process.lock")); puts(p.empty? ? "master0: process lock free" : "master0: pid=#{p["pid"]} host=#{p["host"]} mode=#{p["mode"]}")'
+        ;;
+      stop)
+        screen -S master -X quit 2>/dev/null || true
+        echo "master0: screen master stopped"
+        ;;
+      start)
+        if screen -list 2>/dev/null | grep -q '[.]master'; then
+          echo "master0: screen master already active"
+        else
+          screen -dmS master sh -lc 'cd /home/dev/pub4 && exec MASTER/bin/master --daemon'
+          echo "master0: screen master started"
+        fi
+        ;;
+      restart)
+        screen -S master -X quit 2>/dev/null || true
+        sleep 1
+        screen -dmS master sh -lc 'cd /home/dev/pub4 && exec MASTER/bin/master --daemon'
+        echo "master0: screen master restarted"
+        ;;
+      esac
+    SH
+    if remote
+      ssh_run(script)
+    else
+      exec("sh", "-lc", script)
+    end
   when "state"
     if ARGV.delete("--remote")
       ssh_run("cd /home/dev/pub4 && #{Shellwords.join(["ruby40", "OPENBSD/bin/vps-state", *ARGV])}")
