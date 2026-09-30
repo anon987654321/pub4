@@ -20,8 +20,8 @@ require "yaml"
 # stating it once here is what makes `local_urls` complete enough to replace the
 # hand-written maps rather than merely shorten them.
 module Fleet
-  ROOT = File.expand_path("../..", __dir__)
-  APPS_YML = File.join(ROOT, "apps.yml")
+  ROOT = File.expand_path("../../..", __dir__)
+  APPS_YML = File.join(ROOT, "RAILS", "apps.yml")
 
   MASTER_NAME = "master"
   MASTER_PORT = 53_187
@@ -43,7 +43,11 @@ module Fleet
     end
   end
 
-  # The three apps plus MASTER's face, which is the set the browser probes walk.
+  def app_names
+    app_ports.keys.sort
+  end
+
+  # The apps plus MASTER's face, which is the set the browser probes walk.
   def ports
     app_ports.merge(MASTER_NAME => MASTER_PORT)
   end
