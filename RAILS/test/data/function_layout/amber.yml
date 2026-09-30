@@ -26,7 +26,7 @@ checks:
   # --- home / compose / posts ---
   # The home page is the mark, four looks on the particle mannequin and the
   # footer (operator, 2026-09-25); the compose box lives with the feed.
-  - {id: home.looks, in: amber/app/views/home/_looks.html.erb, has: [particle-mannequin, amber-look-track, amber-look-slide]}
+  - {id: home.looks, in: amber/app/views/home/_looks.html.erb, has: [mannequin-3d, amber-look-track, amber-look-slide, data-mannequin-3d-slides-value]}
   - {id: posts.guest_compose, in: amber/app/views/posts/index.html.erb, has: [shared/feed_compose, empty.no_posts_yet, empty.guest_post]}
   - {id: compose.box, in: amber/app/views/shared/_feed_compose.html.erb, has: [amber-compose-box, "text_area :body", posts_path, feed-compose]}
   - {id: compose.guest_anon, in: amber/app/views/shared/_feed_compose.html.erb, has: [anonymous, guest_hint]}

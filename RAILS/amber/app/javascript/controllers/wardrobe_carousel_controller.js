@@ -131,5 +131,19 @@ export default class extends Controller {
     // Empty rather than absent: the form posts a fixed four inputs and the
     // server drops the blanks, so a zone with no garment saves as three items.
     if (pickEl) pickEl.value = item?.id ?? ""
+    this.broadcastSelection()
+  }
+
+  broadcastSelection() {
+    const zones = Object.fromEntries(
+      ZONES.map(zone => {
+        const items = this.zonesValue[zone] || []
+        return [zone, items[this.idx[zone]] || null]
+      })
+    )
+    this.element.dispatchEvent(new CustomEvent("amber:mannequin-change", {
+      bubbles: true,
+      detail: { zones }
+    }))
   }
 }

@@ -36,11 +36,12 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     css_select(".amber-look-title").each { |title| assert_predicate title.text.strip, :present? }
     assert_includes response.body, I18n.t("home.looks.names.morning")
     assert_select ".amber-look-position", minimum: 8
-    # Each look is worn by the dressing room's particle mannequin.
-    assert_select ".amber-look [data-controller=particle-mannequin][aria-hidden=true]", 4
+    # Each look is worn by the shared 3D mannequin renderer.
+    assert_select ".amber-look [data-controller=mannequin-3d]", 4
+    assert_select ".amber-look [data-mannequin-3d-slides-value]", 4
     # Each look opens on the whole outfit, then one slide per garment.
     assert_select ".amber-look:first-of-type .amber-look-slide:first-child figcaption", /\A#{Regexp.escape(I18n.t("home.looks.whole"))}/
-    assert_select ".look-zone svg", minimum: 8
+    refute_includes response.body, "look-zone"
     # A garment name reaches the page whether or not a demo wardrobe is seeded.
     assert_includes response.body, "Gold hoop earrings"
     # No hero, no rails, no feed.
