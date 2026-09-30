@@ -50,7 +50,6 @@ module Master
       VOICE_ALIASES = {
         osman: "ms-MY-OsmanNeural",
         ryan: "en-GB-RyanNeural",
-        finn: "nb-NO-FinnNeural",
         andrew: "en-US-AndrewNeural",
         guy: "en-US-GuyNeural",
         william: "en-AU-WilliamNeural",
