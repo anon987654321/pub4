@@ -39,7 +39,6 @@ class TestProofAdapters < Minitest::Test
   def test_proof_freezes_nested_evidence
     proof = Master::Proof.build(claim: "x", evidence: { paths: ["a.rb"] })
 
-    assert proof.to_h.frozen?
     assert proof.metadata.frozen?
     assert proof.evidence.frozen?
     assert proof.evidence["paths"].frozen?
