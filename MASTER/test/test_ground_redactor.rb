@@ -27,7 +27,7 @@ class GroundRedactorTest < Minitest::Test
       define_method(:to_s) { string_class.new("token sk-#{'D' * 24}") }
     end
 
-    assert_equal "[REDACTED]", Master::Ground::Redactor.text(value_class.new)
+    assert_equal "token [REDACTED]", Master::Ground::Redactor.text(value_class.new)
   end
 
   def test_payload_accepts_keyword_fields
