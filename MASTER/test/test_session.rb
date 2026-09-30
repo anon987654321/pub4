@@ -38,6 +38,18 @@ class TestSession < Minitest::Test
     end
   end
 
+  def test_last_user_question_skips_commands_and_the_current_fix
+    Dir.mktmpdir("session_question") do |dir|
+      session = Master::Trace::Session.new(root: dir)
+      session.add_message(role: :user, content: "what should we improve next?")
+      session.add_message(role: :user, content: "/status")
+      session.add_message(role: :user, content: "/fix MASTER")
+
+      assert_equal "what should we improve next?",
+                   session.last_user_question(before: "/fix MASTER")
+    end
+  end
+
   def test_record_cost_bills_the_same_tokens_the_meter_shows
     Dir.mktmpdir("session_cost") do |dir|
       session = Master::Trace::Session.new(root: dir)
