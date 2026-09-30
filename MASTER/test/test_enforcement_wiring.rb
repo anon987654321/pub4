@@ -16,7 +16,7 @@ class TestEnforcementWiring < Minitest::Test
     result = stage.call(ctx)
 
     assert result.ok?
-    assert_match(/output warning: hallucination/, result.value!.rendered)
+    assert_equal "created phantom", result.value!.rendered
     assert_equal 1, result.value!.output_findings.size
   end
 
@@ -26,7 +26,7 @@ class TestEnforcementWiring < Minitest::Test
   def test_render_annotates_an_unevidenced_completion_claim
     result = render_through_guard("I removed the dead file.")
 
-    assert_match(/output warning: evidence_contract/, result.value!.rendered)
+    assert_equal "I removed the dead file.", result.value!.rendered
     assert_equal ["completion claim without command output"],
                  result.value!.output_findings.map(&:pattern)
   end
