@@ -2,6 +2,7 @@
 
 require "json"
 require "fileutils"
+require "digest"
 
 module Master
   module Voice
@@ -34,7 +35,7 @@ module Master
         chipper: { rate: "+6%", pitch: "+7Hz" },
       }.freeze
 
-      FAST_STYLES = %i[brief clear question amused energetic].freeze
+      FAST_STYLES = %i[warm clear question amused energetic].freeze
 
       HUMOR_RE = /\b(lol|haha|heh|anyway|plot twist|whoops|oops|wild|chaos|honestly|fair enough|not gonna lie|for what it'?s worth)\b/i
       GOOD_NEWS_RE = /\b(done|complete|success|great|perfect|nice|queued|ready|finished|works|fixed|all set|sorted|boom)\b/i
@@ -46,12 +47,20 @@ module Master
       def pick(text)
         style = pick_style(text)
         voice, style = pick_voice(style, text)
-        prosody_for(voice, style).tap { |r| remember_voice(r[:voice]) }
+        with_prosody_text(text) { prosody_for(voice, style) }.tap { |r| remember_voice(r[:voice]) }
       end
 
       def pick_for_voice(voice, text, style: nil)
         resolved_style = style || pick_style(text)
-        prosody_for(voice, resolved_style)
+        with_prosody_text(text) { prosody_for(voice, resolved_style) }
+      end
+
+      def with_prosody_text(text)
+        previous = Thread.current.thread_variable_get(:master_tts_prosody_text)
+        Thread.current.thread_variable_set(:master_tts_prosody_text, text.to_s)
+        yield
+      ensure
+        Thread.current.thread_variable_set(:master_tts_prosody_text, previous)
       end
 
       def bad_news?(text)
@@ -62,24 +71,29 @@ module Master
 
       def pick_style(text)
         t = text.to_s.strip
-        return :calm if t.empty?
+        return :warm if t.empty?
 
         words = t.split.length
-        return %i[calm intimate].sample if bad_news?(t)
-        return %i[chipper energetic amused brief].sample if t.match?(GOOD_NEWS_RE)
-        return FAST_STYLES.sample if t.end_with?("?")
-        return FAST_STYLES.sample if words <= SHORT_WORD_COUNT
+        return stable_style(%i[calm intimate], t) if bad_news?(t)
+        return stable_style(%i[warm amused energetic], t) if t.match?(GOOD_NEWS_RE)
+        return :question if t.end_with?("?")
+        return stable_style(%i[warm clear brief], t) if words <= SHORT_WORD_COUNT
 
         if words <= MEDIUM_WORD_COUNT
-          return %i[amused deadpan energetic brief].sample if t.match?(HUMOR_RE)
-          return FAST_STYLES.sample if t.match?(CASUAL_RE)
-          return FAST_STYLES.sample
+          return stable_style(%i[amused deadpan warm], t) if t.match?(HUMOR_RE)
+          return stable_style(%i[warm clear intimate], t) if t.match?(CASUAL_RE)
+          return stable_style(%i[warm clear], t)
         end
 
-        return FAST_STYLES.sample if t.match?(HUMOR_RE) || t.match?(/[!]{1,2}/)
-        return %i[clear storyteller amused energetic].sample if words > LONG_WORD_COUNT
+        return stable_style(%i[amused warm storyteller], t) if t.match?(HUMOR_RE) || t.match?(/[!]{1,2}/)
+        return stable_style(%i[storyteller warm clear], t) if words > LONG_WORD_COUNT
 
-        FAST_STYLES.sample
+        :warm
+      end
+
+      def stable_style(styles, text)
+        digest = Digest::SHA256.digest("style|#{text}")
+        styles[digest.getbyte(0) % styles.length]
       end
 
       def pick_voice(style, _text)
@@ -108,28 +122,31 @@ module Master
         nil
       end
 
-      def jitter_rate(rate)
+      def jitter_rate(rate, text)
         base = rate.to_s.delete("%").to_i
-        value = (base + rand(-2..2)).clamp(-10, 8)
-        format("%+d%%", value)
+        digest = Digest::SHA256.digest("rate|#{text}")
+        delta = (digest.getbyte(0) % 3) - 1
+        format("%+d%%", (base + delta).clamp(-10, 8))
       end
 
-      def jitter_pitch(pitch)
+      def jitter_pitch(pitch, text)
         base = pitch.to_s.delete("Hz").to_i
-        value = (base + rand(-3..3)).clamp(-14, 14)
-        format("%+dHz", value)
+        digest = Digest::SHA256.digest("pitch|#{text}")
+        delta = (digest.getbyte(0) % 5) - 2
+        format("%+dHz", (base + delta).clamp(-14, 14))
       end
 
       def prosody_for(voice, style)
-        cfg = STYLES.fetch(style, STYLES[:clear])
+        cfg = STYLES.fetch(style, STYLES[:warm])
+        text = Thread.current.thread_variable_get(:master_tts_prosody_text).to_s
         {
           voice: voice.to_sym,
           style:,
-          rate: jitter_rate(cfg[:rate]),
-          pitch: jitter_pitch(cfg[:pitch]),
+          rate: jitter_rate(cfg[:rate], text),
+          pitch: jitter_pitch(cfg[:pitch], text),
         }
       end
-      private_class_method :bad_news?, :pick_style, :pick_voice, :surprise_guest, :weighted_choice, :jitter_rate, :jitter_pitch, :prosody_for
+      private_class_method :bad_news?, :pick_style, :pick_voice, :surprise_guest, :weighted_choice, :stable_style, :jitter_rate, :jitter_pitch, :prosody_for, :with_prosody_text
     end
   end
 end
