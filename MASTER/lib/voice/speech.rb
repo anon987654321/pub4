@@ -217,6 +217,11 @@ module Master
           return VOICES.key?(sym) ? sym : DEFAULT_VOICE
         end
 
+        if ENV.key?("MASTER_TTS_GENDER")
+          chosen = Policy.voice_for_language(:en)
+          return chosen if VOICES.key?(chosen)
+        end
+
         chosen = Policy.voice_for_utterance
         VOICES.key?(chosen) ? chosen : DEFAULT_VOICE
       end
