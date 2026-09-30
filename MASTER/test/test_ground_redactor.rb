@@ -38,6 +38,16 @@ class GroundRedactorTest < Minitest::Test
     assert_equal "token [REDACTED] leaked", Master::Ground::Redactor.redact_pattern(value, pattern)
   end
 
+  def test_text_redacts_bearer_tokens
+    raw = "authorization Bearer #{'F' * 24}"
+    assert_equal "authorization [REDACTED]", Master::Ground::Redactor.text(raw)
+  end
+
+  def test_text_redacts_long_bare_alphanumeric_tokens
+    raw = "value #{'G' * 32}"
+    assert_equal "value [REDACTED]", Master::Ground::Redactor.text(raw)
+  end
+
   def test_payload_accepts_keyword_fields
     scrubbed = Master::Ground::Redactor.payload(text: "sk-#{'C' * 24}")
 
