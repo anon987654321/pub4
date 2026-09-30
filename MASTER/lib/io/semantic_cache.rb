@@ -58,7 +58,7 @@ module Master
       end
 
       def fuzzy_cache_hit(prompt, key)
-        near = fuzzy_index.nearest(prompt)
+        near = fuzzy_index.nearest(prompt, scope: key)
         return unless near
 
         @bus&.publish("cache:fuzzy_hit", key:)
@@ -68,7 +68,7 @@ module Master
       def store_result(prompt, result, path:, key:)
         return unless cacheable_result?(result)
 
-        fuzzy_index.remember(prompt, result)
+        fuzzy_index.remember(prompt, result, scope: key)
         @lock.synchronize { write_entry(path:, value: result, key:) }
       end
 
