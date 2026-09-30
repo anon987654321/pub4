@@ -211,7 +211,8 @@ module Master
           key = dot(nx, ny, nz, -0.48, 0.28, 0.84)
           fill = dot(nx, ny, nz, 0.34, -0.08, 0.94) * 0.52
           rim_phase = 0.55 + (0.45 * Math.sin((@t * 0.31) + phase))
-          rim = [(nx * -0.25) + (nz * 0.96), 0.0].max * 0.22 * rim_phase
+          edge = (1.0 - nz.abs).clamp(0.0, 1.0)
+          rim = edge * (0.18 + (0.08 * ((nx + 1.0) * 0.5))) * rim_phase
           depth = ((nz + 1.0) * 0.5).clamp(0.0, 1.0)
           grade = 0.78 + (0.12 * depth) + (0.05 * fill) + (0.12 * key) + rim
           (lum * grade).clamp(0.0, 1.0)
