@@ -206,6 +206,11 @@ module Operator
       )
     end
 
+    def suite_purpose(trees)
+      scope = trees == TREES ? "all four trees" : trees.join(", ")
+      "complete test suites over #{scope}"
+    end
+
     def ratchets_stage
       Stage.new(
         name: "ratchets",
