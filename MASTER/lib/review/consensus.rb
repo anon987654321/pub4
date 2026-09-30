@@ -13,7 +13,14 @@ module Master
       # copy of the three ids under a comment asking the next reader to keep the
       # two in step, which is a list where the next model swapped in one place
       # leaves the other voting with a model nothing else routes to.
-      def self.default_models = Master.three_mirror_pool
+      def self.default_models
+        return Master.three_mirror_pool unless ENV["MASTER_LOCAL_ONLY"] == "1"
+
+        Array(Master.models_config(root: Master::ROOT).dig("models", "local"))
+          .filter_map { |row| row["id"].to_s unless row["id"].to_s.end_with?(":cloud", "-cloud") }
+          .first(3)
+          .freeze
+      end
 
       def initialize(agent:, event_bus: nil, models: nil, quorum: QUORUM)
         models ||= self.class.default_models
