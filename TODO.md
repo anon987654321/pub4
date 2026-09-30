@@ -10,6 +10,15 @@
 - The next work remains evidence-first: the real Mac runtime, Rails/browser gates, vm23/OpenBSD, Termux, money/staging, and snapshot regeneration are not claimed complete until watched results exist.
 
 
+## Current recovery state — 2026-09-30
+
+- Structural repository sprawl rollback is complete. main deliberately keeps the pre-sprawl topology; no mass flattening or moves should be reintroduced.
+- The current main boot baseline includes the post-baseline Ruby/runtime fixes that are independent of topology: the stale builder rollback require is removed; PassRunner, swallow ledger, prompt syntax and runtime YAML fixes are restored.
+- Source audit confirms these previously-open seams are already implemented in this tree and now require evidence rather than another implementation pass: CQS memoisation contracts, per-process resource RSS recording, TTS socket health reporting, browser-gate inconclusive semantics, reason-coded guest-page coverage, drag-only reorder controls, and offline send storage.
+- 2026-09-30: interrupted browser-face turns now remain recoverable when the transport dies before any assistant content arrives. Completed or partially streamed turns are not blindly requeued.
+- Remaining work is evidence- or operator-bound unless a future re-measurement proves otherwise: Mac runtime boot proof, Rails/browser rendered gates, vm23 deployment/DNS/resource checks, payment staging, Termux ear proof, Dilla asset/audio verification, registrar/money actions, visual/taste decisions, and final snapshots.
+- backup/main-before-sprawl-rollback-20260930 preserves the pre-recovery tree; recovery/pre-sprawl-20260930 preserves the clean rollback point.
+
 # pub4 backlog
 
 The single backlog for the repo. Authority: `MASTER/data/soul.yml` > `MASTER/data/rules.yml` > executable law (`MASTER/law/*.rb` and `MASTER/lib/review/scan/rules/*.rb`) > repo harnesses (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.cursorrules`, `.github/copilot-instructions.md`) > per-tree contracts. Feature truth is `RAILS/apps.yml`; aspiration is `RAILS/apps.horizon.yml`; executable behavior and git history outrank prose.
