@@ -425,6 +425,31 @@ class TestFixConvergence < Minitest::Test
     assert_nil runner.send(:council_preamble, { cherry_picks: [] })
   end
 
+  def test_fix_council_uses_hard_review_briefing
+    round = Master::Fix::FixLoop::CouncilRound.new(agent: nil, root: @root, bus: @bus)
+    briefing = round.send(:hard_briefing, [File.join(@root, "dummy.yml")])
+
+    assert_includes briefing, "HARD REVIEW"
+    assert_includes briefing, "authority"
+    assert_includes briefing, "bypasses"
+    assert_includes briefing, "verification"
+    assert_includes briefing, "inversion"
+    assert_includes briefing, "dummy.yml"
+  end
+
+  def test_hard_review_disable_is_runtime_safe
+    previous = ENV["MASTER_FIX_HARD_CRITIQUE"]
+    ENV["MASTER_FIX_HARD_CRITIQUE"] = "0"
+    round = Master::Fix::FixLoop::CouncilRound.new(agent: nil, root: @root, bus: @bus)
+
+    result = round.send(:critique, [File.join(@root, "dummy.yml")])
+
+    assert_predicate result, :ok?
+    assert_equal [], result.value![:cherry_picks]
+  ensure
+    previous.nil? ? ENV.delete("MASTER_FIX_HARD_CRITIQUE") : ENV["MASTER_FIX_HARD_CRITIQUE"] = previous
+  end
+
   def test_council_result_is_passed_into_the_repair_stage
     council = Object.new
     council.define_singleton_method(:run) do |files:, pass:, deadline:|

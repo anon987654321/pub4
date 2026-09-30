@@ -11,7 +11,7 @@ module Master
       class Critique
         MODES = Modes::TABLE
 
-        def initialize(mode:, agent:, event_bus: nil, audio_path: nil, files: nil, visual_image: nil, visual_context: nil)
+        def initialize(mode:, agent:, event_bus: nil, audio_path: nil, files: nil, visual_image: nil, visual_context: nil, briefing: nil)
           @mode = MODES.fetch(mode) { raise ArgumentError, "unknown critique mode: #{mode}" }
           @agent = agent
           @bus = event_bus
@@ -19,6 +19,7 @@ module Master
           @files_override = files
           @visual_image = visual_image
           @visual_context = visual_context
+          @briefing = briefing.to_s.strip
         end
 
         def run
@@ -141,7 +142,8 @@ module Master
         end
 
         def build_context
-          Context.new(preset_key: @mode[:preset_key], quality_kind: @mode[:quality_kind]).to_s
+          base = Context.new(preset_key: @mode[:preset_key], quality_kind: @mode[:quality_kind]).to_s
+          [base, @briefing.empty? ? nil : "HARD REVIEW BRIEFING\n#{@briefing}"].compact.join("\n\n")
         end
 
         def load_preset
