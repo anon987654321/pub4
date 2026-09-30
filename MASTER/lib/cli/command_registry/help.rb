@@ -106,6 +106,11 @@ module Master
                    "/doctor device battery|camera|sensors|audio — query the matching Termux:API endpoint.",
                    "/doctor device location [gps|network|passive] — explicitly request location; never sampled at boot."],
         },
+        "voice" => {
+          summary: "CLI voice status and an explicit speaker test",
+          detail: ["/voice — player, synthesis mode and on/off state.",
+                   "/voice test — synthesize and queue “MASTER voice test.” through the same CLI playback path."],
+        },
         "help" => {
           summary: "this list",
           detail: ["/help", "/help <command>"],
