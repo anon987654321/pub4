@@ -73,9 +73,9 @@ module Master
       def extract_entities(message, spec)
         {
           action: first_hit(message, spec["actions"]),
-          object: first_hit(message, spec["objects"]),
+          object: canonical_or_first_hit(message, spec["objects"]),
           recency: canonical_hit(message, spec["recency"]),
-          count: quantity(message, spec["quantities"]),
+          count: quantity(message, spec["quantities"], spec["objects"], spec["recency"]),
           location: canonical_hit(message, spec["locations"]),
           file_type: canonical_hit(message, spec["file_types"]),
           preset: canonical_hit(message, spec["presets"]),
@@ -93,6 +93,12 @@ module Master
         phrase_hits(message, values).first
       end
 
+      def canonical_or_first_hit(message, values)
+        return first_hit(message, values) unless values.is_a?(Hash)
+
+        canonical_hit(message, values)
+      end
+
       def canonical_hit(message, table)
         return unless table.is_a?(Hash)
 
@@ -102,16 +108,27 @@ module Master
         nil
       end
 
-      def quantity(message, table)
-        number = message[/\b(\d+)\b/, 1]
-        return number.to_i if number
-
+      def quantity(message, table, objects, recency)
         return unless table.is_a?(Hash)
+
+        object_terms = phrase_terms(objects)
+        recency_terms = phrase_terms(recency)
+        context = (object_terms + recency_terms).sort_by { |term| -term.length }.join("|")
+        number = message.match(/\b(\d+)\s+(?:(?:latest|newest|most\s+recent|recent)\s+)?(?:#{context})\b/i)&.captures&.first
+        number ||= message.match(/(?:#{recency_terms.join("|")})\s+(\d+)\b/i)&.captures&.first unless recency_terms.empty?
+        return number.to_i if number
 
         table.each do |canonical, aliases|
           return canonical.to_i if phrase_hits(message, aliases).any?
         end
         nil
+      end
+
+      def phrase_terms(value)
+        return [] if value.nil?
+        return value.flat_map { |key, aliases| [key, *Array(aliases)] } if value.is_a?(Hash)
+
+        Array(value)
       end
 
       def path(message)
@@ -128,7 +145,7 @@ module Master
       end
 
       private_class_method :score_candidate, :extract_entities, :phrase_hits, :first_hit,
-                           :canonical_hit, :quantity, :path, :boundary_pattern, :patterns
+                           :canonical_hit, :quantity, :path, :boundary_pattern, :patterns, :phrase_terms
     end
   end
 end
