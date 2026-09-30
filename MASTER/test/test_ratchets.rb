@@ -246,4 +246,30 @@ class TestRatchets < Minitest::Test
     refute_nil core
     assert_equal :fixed, core.direction
   end
+  def test_a_missing_ceiling_is_unreadable
+    row = Operator::Ratchets::Row.new(
+      name: "test",
+      current: 7,
+      ceiling: nil,
+      direction: :down,
+      source: "test"
+    )
+
+    assert_equal "unreadable", row.state
+    refute row.ok?
+  end
+
+  def test_a_missing_current_is_unreadable
+    row = Operator::Ratchets::Row.new(
+      name: "test",
+      current: nil,
+      ceiling: 7,
+      direction: :down,
+      source: "test"
+    )
+
+    assert_equal "unreadable", row.state
+    refute row.ok?
+  end
+
 end
