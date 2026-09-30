@@ -57,6 +57,8 @@ module Master
         christopher: "en-US-ChristopherNeural",
         eric: "en-US-EricNeural",
         pernille: "nb-NO-PernilleNeural",
+        finn: "nb-NO-FinnNeural",
+        yasmin: "ms-MY-YasminNeural",
         davis: "en-US-DavisNeural",
         wayne: "en-SG-WayneNeural",
         ezinne: "en-NG-EzinneNeural",
