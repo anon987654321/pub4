@@ -51,10 +51,13 @@ module Master
             path = @synthesize.call(part)
             if path && File.exist?(path)
               on_chunk&.call(part)
-              spoken ||= play(path, part, on_level:, stop:)
+              played = play(path, part, on_level:, stop:)
+              played = direct_speak(part) unless played
+              spoken ||= played
+              show_direct_fallback unless played
             else
               spoken ||= direct_speak(part)
-              show_direct_fallback(part) unless path
+              show_direct_fallback unless spoken
             end
           ensure
             File.delete(path) if path && File.exist?(path)
