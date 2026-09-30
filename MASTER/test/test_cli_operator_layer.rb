@@ -69,6 +69,8 @@ class TestCliOperatorLayer < Minitest::Test
     assert_includes source, '"voice" => Command.new'
     assert_includes source, 'when "", "status"'
     assert_includes source, 'when "test"'
+    assert_includes source, "Voice::Playback.speak_now"
+    assert_includes source, "voice0: test passed"
   end
 
   def test_casual_chat_does_not_run_evidence_preflight
