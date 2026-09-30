@@ -39,12 +39,15 @@ class TestFixConvergence < Minitest::Test
   end
 
   def setup
+    @previous_deep_trace = ENV["MASTER_FIX_DEEP_TRACE"]
+    ENV["MASTER_FIX_DEEP_TRACE"] = "0"
     @root = Dir.mktmpdir("fix_convergence")
     File.write(File.join(@root, "dummy.yml"), "---\n")
     @bus = FakeBus.new
   end
 
   def teardown
+    @previous_deep_trace.nil? ? ENV.delete("MASTER_FIX_DEEP_TRACE") : ENV["MASTER_FIX_DEEP_TRACE"] = @previous_deep_trace
     FileUtils.remove_entry(@root) if @root && Dir.exist?(@root)
   end
 
