@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-require_relative "lib/version"
+require "yaml"
 
 Gem::Specification.new do |spec|
   spec.name    = "master"
   # Release version is canonical at the pub4 root; soul.yml remains the
   # constitutional revision and is intentionally independent.
-  spec.version = Master::VERSION
+  spec.version = File.read(File.join(__dir__, "..", "VERSION"), encoding: "UTF-8").strip
   spec.authors = ["dev"]
   spec.summary = "Constitutional AI agent"
 
