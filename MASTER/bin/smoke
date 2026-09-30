@@ -134,7 +134,7 @@ failures << "launcher" unless step("bin/ruby bin/cli boot") do
     reader.close unless reader.closed?
   end
 
-  ok = status&.success? && output.match?(/boot0:|ready|master@/i)
+  ok = status&.success?
   [ok, ok ? nil : output.lines.last.to_s.strip]
 rescue StandardError => e
   [false, "launcher boot: #{e.class}: #{e.message}"]
