@@ -12,9 +12,9 @@ module Master
 
       def on_usr1
         Zeitwerk::Loader.for_gem.reload
-        puts "\n#{@refs.renderer.render("reloaded", mode: :success)}"
+        Master::Trace::Dmesg.status("reload0", "complete")
       rescue StandardError => e
-        puts "\n#{@refs.renderer.render("reload failed: #{e.message}", mode: :error)}"
+        Master::Trace::Dmesg.status("reload0", "failed, #{e.class}: #{e.message}")
       end
 
       # ^C cancels a running turn; at the prompt it ends the session. A trap
