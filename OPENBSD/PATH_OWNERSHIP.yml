@@ -152,8 +152,3 @@ ownership:
       installs; nothing here reaches vm23
     risk: low
     check: ruby OPENBSD/test/test_githooks.rb
-  quarantine/:
-    purpose: the pen for inert malware samples; nothing here runs, and today it
-      holds only its README
-    risk: low
-    check: ruby MASTER/tools/security_sweep.rb
