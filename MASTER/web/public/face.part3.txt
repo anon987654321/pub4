@@ -420,7 +420,8 @@ function frame(t) {
       const camDepth = Math.max(-0.16, Math.min(0.16, Math.hypot(pInput.x, pInput.y) * 0.16));
       camera.position.x += (Math.sin(sec * 0.11) * 0.018 + camOffX - camera.position.x) * 0.055;
       camera.position.y += (Math.cos(sec * 0.09) * 0.012 + camOffY - camera.position.y) * 0.055;
-      camera.position.z += (4.6 - camDepth - camera.position.z) * 0.045;
+      const speechDepth = (State.mode === 'speaking' || tts.playing) ? Math.min(0.12, (State.visemeAmp || 0) * 0.12) : 0;
+      camera.position.z += (4.6 - camDepth - speechDepth - camera.position.z) * 0.055;
     }
     head.rotation.y += (yaw   - head.rotation.y) * 0.06;
     head.rotation.x += (pitch - head.rotation.x) * 0.06;
@@ -436,7 +437,9 @@ function frame(t) {
     if (gestureStart) State.pressureTension = Math.min(1, (t - pressStart) / 1200);
     else State.pressureTension = Math.max(0, (State.pressureTension || 0) * 0.92);
     const tensionScale = 1 - (State.pressureTension || 0) * 0.05;
-    const breath = silenceScale * idleSig.breath * tensionScale * (State.reducedMotion ? 1 : 1 + Math.sin(sec * breathHz) * breathAmp + State.pulse * 0.08 + councilBreath);
+    const speakingEnergy = State.mode === 'speaking' || tts.playing ? Math.max(0, Math.min(1, State.visemeAmp || 0)) : 0;
+    const speechBreath = speakingEnergy * (0.035 + Math.sin(sec * 8.0) * 0.008);
+    const breath = silenceScale * idleSig.breath * tensionScale * (State.reducedMotion ? 1 : 1 + Math.sin(sec * breathHz) * breathAmp + State.pulse * 0.08 + councilBreath + speechBreath);
     head.scale.setScalar(breath);
     State.lean = (State.lean || 0) * 0.97;
     if (State.shake > 0.01 && !State.reducedMotion && isRichMotionProfile()) {
