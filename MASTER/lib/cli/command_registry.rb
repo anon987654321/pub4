@@ -210,9 +210,13 @@ module Master
           engine = Voice::Speech.synthesis_mode
           "voice0: #{enabled ? "on" : "off"} player=#{player ? player.first : "none"} engine=#{engine}"
         when "test"
-          Voice::Playback.speak("MASTER voice test.")
+          ok = Voice::Playback.speak_now("MASTER voice test.")
           player = Voice::Playback.player
-          "voice0: test queued player=#{player ? player.first : "none"}"
+          if ok
+            "voice0: test passed player=#{player ? player.first : "none"}"
+          else
+            "voice0: test failed — see voice/tts diagnostics"
+          end
         else
           "voice  voice status  voice test"
         end
