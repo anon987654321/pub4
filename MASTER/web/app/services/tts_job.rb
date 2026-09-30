@@ -252,7 +252,11 @@ class TtsJob
   end
 
   def bytes
-    File.binread(cache_path) if ready?
+    File.binread(audio_path) if ready?
+  end
+
+  def mime_type
+    Master::Voice::Speech.mime_type_for(audio_path || ".mp3")
   end
 
   def bytes_available
@@ -357,10 +361,6 @@ class TtsJob
 
   def error_path
     CACHE_DIR.join("#{@job_id}.err")
-  end
-
-  def mime_type
-    Master::Voice::Speech.mime_type_for(audio_path || ".mp3")
   end
 
   def write_meta_json
