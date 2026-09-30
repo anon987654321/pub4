@@ -31,19 +31,28 @@ module Master
         }.freeze
         def splash(model)
           context = splash_context(model)
-          return compact_splash(context) unless verbose_boot?
-
-          lines = [*identity_lines(context), *splash_dmesg_lines, *device_lines_for(context),
-                   root_on_line(context)]
-          host_status = Master::Ground::HostBudget.status_line
-          lines << d(host_status) if host_status
-          lines.concat(["", splash_ready_line(context)])
-          lines.join("\n")
+          text = if verbose_boot?
+                   lines = [*identity_lines(context), *splash_dmesg_lines, *device_lines_for(context),
+                            root_on_line(context)]
+                   host_status = Master::Ground::HostBudget.status_line
+                   lines << d(host_status) if host_status
+                   lines.concat(["", splash_ready_line(context)])
+                   lines.join("\n")
+                 else
+                   compact_splash(context)
+                 end
+          boot_surface(text)
         end
         alias banner splash
 
         def verbose_boot?
-          ENV["MASTER_BOOT_STATUS"] == "1" || ENV["MASTER_CLI_VERBOSE"] == "1" || ENV["MASTER_CLI_TRACE"] == "1"
+          return false if ENV["MASTER_QUIET"] == "1"
+          return false if %w[0 quiet].include?(ENV["MASTER_DMESG"].to_s.downcase)
+
+          $stdout.tty? ||
+            ENV["MASTER_BOOT_STATUS"] == "1" ||
+            ENV["MASTER_CLI_VERBOSE"] == "1" ||
+            ENV["MASTER_CLI_TRACE"] == "1"
         end
 
         def compact_splash(context)
