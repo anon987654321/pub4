@@ -100,6 +100,7 @@ unless $MASTER_PROCESS_LOCK
   warn "master0: another MASTER process owns the control plane#{detail}"
   exit 75
 end
+ENV["MASTER_PROCESS_LOCK_FD"] = $MASTER_PROCESS_LOCK.fileno.to_s
 
 # A bare instruction is what a person types; -m is what bin/cli parses. Passing
 # it through as -m keeps quoting behaviour identical whether the instruction has
