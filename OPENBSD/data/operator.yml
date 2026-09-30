@@ -27,9 +27,15 @@ app_layout:
 
 single_source_of_truth:
   features: RAILS/apps.yml
+  owned_domains: RAILS/apps.yml#owned_domains
   horizon: RAILS/apps.horizon.yml
   debt: TODO.md
   deploy_identity: OPENBSD/deploy_inventory.json
+
+domain_ownership:
+  source: RAILS/apps.yml#owned_domains
+  shell_mirror: OPENBSD/OPERATOR.sh#OWNED_DOMAINS
+  snapshot: OPENBSD/data/domain_inventory.yml
 
 recipes:
   - want: See where I am
