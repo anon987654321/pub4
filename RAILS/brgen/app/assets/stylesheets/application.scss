@@ -10881,3 +10881,207 @@ form[data-publishing="true"] .post-progressive-nav {
 .mobile-sheet-cities .city-network-list {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
+
+
+/* marketplace commerce finish
+   Keep the existing bol-derived anatomy, but make the storefront feel lighter,
+   friendlier and more product-led: white paper, clear blue actions, soft wells,
+   rounded product imagery and restrained red only for price/deal signals. */
+body.vertical-marketplace {
+  --bol-blue: #0066d4;
+  --bol-blue-dark: #004f9e;
+  --bol-blue-soft: #eef5ff;
+  --bol-mint: #e9f8f0;
+  --bol-peach: #fff2e8;
+  --bol-page: #ffffff;
+  --bol-ink: #20242a;
+  --bol-muted: #667085;
+  --bol-rule: #dfe5ec;
+  --bol-price: #c82435;
+  --store-page: #ffffff;
+  --store-ink: #20242a;
+  --store-ink-soft: #667085;
+  --store-rule: #ccd4de;
+  --store-hairline: #dfe5ec;
+  --store-well: #f4f7fb;
+  --store-green: #0066d4;
+  --store-red: #c82435;
+  --store-focus: #0066d4;
+  background: var(--bol-page);
+  color: var(--bol-ink);
+}
+
+body.vertical-marketplace #navBar.storefront-nav--bol {
+  background: #fff;
+  color: var(--bol-ink);
+  border-block-end: 1px solid var(--bol-rule);
+}
+
+body.vertical-marketplace .storefront-utility--bol {
+  min-height: 36px;
+  background: #fff;
+  color: var(--bol-muted);
+  border-block-end: 1px solid var(--bol-rule);
+}
+
+body.vertical-marketplace #topHalf {
+  min-height: 64px;
+  padding-block: 8px;
+}
+
+body.vertical-marketplace #navBar .section {
+  color: var(--bol-ink);
+  border: 0;
+  border-radius: 10px 10px 0 0;
+}
+
+body.vertical-marketplace #navBar .section--active,
+body.vertical-marketplace #navBar .section:hover {
+  color: var(--bol-blue);
+  background: var(--bol-blue-soft);
+}
+
+body.vertical-marketplace #bottomHalf {
+  min-height: 72px;
+  background: #f4f7fb;
+  border-block-start: 1px solid var(--bol-rule);
+}
+
+body.vertical-marketplace #navBar .nav-search-input {
+  border-color: #cbd5e1;
+  border-radius: 999px 0 0 999px;
+  background: #fff;
+}
+
+body.vertical-marketplace #navBar .nav-search-submit {
+  width: 52px;
+  border-radius: 0 999px 999px 0;
+  background: var(--bol-blue);
+}
+
+body.vertical-marketplace #navBar .nav-search-submit:hover {
+  background: var(--bol-blue-dark);
+}
+
+body.vertical-marketplace .bol-market-hero {
+  min-height: 340px;
+  margin-block: 24px 32px;
+  border: 1px solid #e3eafa;
+  border-radius: 20px;
+  overflow: hidden;
+  background: var(--bol-blue-soft);
+}
+
+body.vertical-marketplace .bol-market-hero-media {
+  background: #f8fafc;
+}
+
+body.vertical-marketplace .bol-primary {
+  border-radius: 999px;
+  background: var(--bol-blue);
+}
+
+body.vertical-marketplace .bol-primary:hover {
+  background: var(--bol-blue-dark);
+}
+
+body.vertical-marketplace .bol-kind-tabs {
+  margin-block-end: 32px;
+  border-color: var(--bol-rule);
+}
+
+body.vertical-marketplace .bol-kind-tabs a {
+  border-bottom-width: 3px;
+}
+
+body.vertical-marketplace .bol-filter-column .listing-filter-group {
+  border-color: var(--bol-rule);
+}
+
+body.vertical-marketplace .listing-filter-controls select,
+body.vertical-marketplace .listing-filter-controls input {
+  border-color: #d3dbe5;
+  border-radius: 12px;
+}
+
+body.vertical-marketplace .deal-grid {
+  gap: 28px 18px;
+}
+
+body.vertical-marketplace a.deal-card:hover .deal-card-title,
+body.vertical-marketplace .deal-card:hover .deal-card-title {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+body.vertical-marketplace .deal-card-img {
+  padding: 18px;
+  border: 1px solid #e7ecf2;
+  border-radius: 14px;
+  background: #f7f9fc;
+}
+
+body.vertical-marketplace .deal-card:nth-child(3n) .deal-card-img {
+  background: var(--bol-mint);
+}
+
+body.vertical-marketplace .deal-card:nth-child(4n) .deal-card-img {
+  background: var(--bol-peach);
+}
+
+body.vertical-marketplace .deal-card-img .deal-badge--sale {
+  border-radius: 999px;
+  background: var(--bol-price);
+}
+
+body.vertical-marketplace .store-badge {
+  border-radius: 999px;
+  background: var(--bol-blue-soft);
+  color: var(--bol-blue);
+}
+
+body.vertical-marketplace .store-buybox {
+  border-color: var(--bol-rule);
+  border-radius: 16px;
+}
+
+body.vertical-marketplace .store-buybox .btn-primary {
+  border-radius: 999px;
+  background: var(--bol-blue);
+}
+
+body.vertical-marketplace .store-buybox .btn-primary:hover {
+  background: var(--bol-blue-dark);
+}
+
+@media (max-width: 767px) {
+  body.vertical-marketplace #topHalf {
+    min-height: 56px;
+  }
+
+  body.vertical-marketplace #bottomHalf {
+    min-height: 64px;
+  }
+
+  body.vertical-marketplace .bol-market-hero {
+    grid-template-columns: 1fr;
+    min-height: 0;
+    border-radius: 16px;
+  }
+
+  body.vertical-marketplace .bol-market-hero-media {
+    min-height: 240px;
+    order: -1;
+  }
+
+  body.vertical-marketplace .bol-market-hero-copy {
+    padding: 24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.vertical-marketplace .deal-card:hover .deal-card-title {
+    transition: none;
+  }
+}
