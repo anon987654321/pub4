@@ -139,8 +139,8 @@ module Master
         nil
       end
 
-      FAST_WORKER_TIMEOUT_S = Integer(ENV.fetch("MASTER_TTS_FAST_TIMEOUT", "8"))
-      FAST_WORKER_TIMEOUT_MAX = Integer(ENV.fetch("MASTER_TTS_FAST_TIMEOUT_MAX", "12"))
+      FAST_WORKER_TIMEOUT_S = Integer(ENV.fetch("MASTER_TTS_FAST_TIMEOUT", "4"))
+      FAST_WORKER_TIMEOUT_MAX = Integer(ENV.fetch("MASTER_TTS_FAST_TIMEOUT_MAX", "6"))
 
       def worker_timeout(text_length = 0)
         return Integer(ENV.fetch("MASTER_TTS_TIMEOUT")) if ENV.key?("MASTER_TTS_TIMEOUT")
