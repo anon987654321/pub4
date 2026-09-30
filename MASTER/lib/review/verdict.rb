@@ -8,6 +8,18 @@ module Master
     class Verdict
       Result = Struct.new(:pass, :score, :reasons, keyword_init: true) do
         def pass? = pass
+
+        def to_proof(claim:, rule: nil, subject: nil, source: :council)
+          Master::Proof.build(
+            claim:,
+            rule:,
+            subject:,
+            evidence: reasons,
+            source:,
+            status: pass? ? :proven : :failed,
+            metadata: { score: score, reasons: reasons },
+          )
+        end
       end
 
       def initialize(rubric_threshold: 0.6)
