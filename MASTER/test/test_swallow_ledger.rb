@@ -69,6 +69,21 @@ class TestSwallowLedger < Minitest::Test
   # the topic. Ground::Swallow.log is what every rescue in the tree calls, and
   # naming the topic in this file only ever proved the two halves of this file
   # agree. A rename on either side fails here now.
+  def test_recursive_swallow_reporting_publishes_only_once
+    @bus.subscribe("error:swallowed") do
+      Master::Ground::Swallow.log(
+        IOError.new("nested"), context: "test.swallow_nested", event_bus: @bus, severity: :cosmetic
+      )
+    end
+
+    Master::Ground::Swallow.log(
+      IOError.new("outer"), context: "test.swallow_nested", event_bus: @bus, severity: :cosmetic
+    )
+
+    assert_equal 1, @ledger.total
+    assert_equal 1, @ledger.snapshot["test.swallow_nested"]
+  end
+
   def test_a_real_swallow_reaches_the_ledger
     Master::Ground::Swallow.log(
       IOError.new("probe"), context: "test.swallow_ledger", event_bus: @bus, severity: :cosmetic
