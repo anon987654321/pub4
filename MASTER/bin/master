@@ -21,8 +21,8 @@ Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
 #
 # Everything past this point is MASTER's: data/soul.yml and data/rules.yml
 # govern the session, and every durable write is validated against them. This
-# wrapper parses only --help and --fix-context; all other arguments belong to
-# MASTER/bin/cli.
+# wrapper parses --help, --fix-context and --daemon; all other arguments belong
+# to MASTER/bin/cli.
 #
 # Two surfaces at the repo root and no third: bin/operator is the operator surface
 # (status, vps state/deploy/logs, post-pull) and this is the instruction
