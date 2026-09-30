@@ -1,3 +1,24 @@
+# frozen_string_literal: true
+
+require "digest"
+require "fileutils"
+require "open3"
+require "set"
+require "time"
+require_relative "pass_runner/fast_stage"
+require_relative "pass_runner/llm_stage"
+require_relative "pass_runner/stagnation_detection"
+require_relative "pass_runner/evidence_stage"
+require_relative "pass_runner/stream_stage"
+require_relative "structural_stage"
+require_relative "../transaction"
+require_relative "../resource_budget"
+
+module Master
+  module Fix
+    class FixLoop
+      class PassRunner
+        PASS_BUDGET_SECONDS = Integer(ENV.fetch("MASTER_FIX_PASS_BUDGET_S", 8 * 60))
 
         PassResult = Struct.new(:status, :message, :consecutive_clean, keyword_init: true)
 
