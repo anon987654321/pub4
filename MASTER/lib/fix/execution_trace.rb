@@ -56,9 +56,10 @@ module Master
         end
       end
 
-      def initialize(root:, files: nil, digestor: nil, ruby_checker: nil)
+      def initialize(root:, files: nil, digestor: nil, ruby_checker: nil, dependencies: {})
         @root = File.expand_path(root)
         @files = files
+        @dependencies = dependencies
         @digestor = digestor || ->(path) { Digest::SHA256.file(path) }
         @ruby_checker = ruby_checker || ->(path) { RubyVM::InstructionSequence.compile_file(path) }
       end
@@ -82,7 +83,11 @@ module Master
         verify_configuration(failures)
         phases[:configuration] = "#{BOOT_CONFIG.size} files"
 
-        Result.new(ok: failures.empty?, files: files.size, bytes:, ruby_files: ruby_files.size,
+        verify_live_graph(failures)
+        phases[:live_graph] = "scanner/fix_loop/council/bus"
+
+        Result.new
+(ok: failures.empty?, files: files.size, bytes:, ruby_files: ruby_files.size,
                    phases:, failures:)
       rescue StandardError => e
         Result.new(ok: false, files: 0, bytes: 0, ruby_files: 0,
@@ -139,6 +144,25 @@ module Master
           failures << "#{path}: expected a hash" unless body.is_a?(Hash)
         rescue StandardError => e
           failures << "#{path}: unreadable: #{e.class}: #{e.message}"
+        end
+      end
+
+      def verify_live_graph(failures)
+        required = {
+          scanner: [:scan, :scan_dir],
+          fix_loop: [:run, :preview],
+          deliberation: [:review_convergent],
+          bus: [:publish, :subscribe]
+        }
+
+        required.each do |name, methods|
+          object = @dependencies[name]
+          failures << "live_graph: #{name} missing" unless object
+          next unless object
+
+          methods.each do |method|
+            failures << "live_graph: #{name} missing ##{method}" unless object.respond_to?(method)
+          end
         end
       end
 
