@@ -191,6 +191,28 @@ class TestFixConvergence < Minitest::Test
     assert_includes result, "DONE: clean"
   end
 
+  def test_fix_wraps_the_full_lifecycle_in_trace_verbosity
+    levels = []
+    fix_loop = Object.new
+    fix_loop.define_singleton_method(:run) { |target, **| Master::Result.ok("DONE: clean") }
+    scanner = Object.new
+    def scanner.scan(*) = Master::Result.ok([])
+    def scanner.scan_dir(*) = Master::Result.ok([])
+
+    Master::Trace::Dmesg.stub(:with_verbosity, ->(level, &block) { levels << level; block.call }) do
+      Operator::GateChain.stub(:verify_fix, ->(target:) { [0, []] }) do
+        Master::CLI::CommandRegistry.stub(:observe, ->(*) { "clean" }) do
+          Master::CLI::CommandRegistry.dispatch_fix(
+            scanner:, fix_loop:, deliberation: nil, root: Master::ROOT, bus: nil,
+            ctx: { args: "RAILS --no-aesthetic" }
+          )
+        end
+      end
+    end
+
+    assert_equal ["trace"], levels
+  end
+
   def test_fix_surfaces_a_gate_failure_when_it_makes_no_changes
     fix_loop = Object.new
     fix_loop.define_singleton_method(:run) { |target, **| Master::Result.ok("DONE: clean") }
