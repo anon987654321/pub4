@@ -253,7 +253,7 @@ module Master
         return true if id.start_with?("local:")
         return false unless id.start_with?("ollama:", "ollama/")
 
-        !id.sub(%r{Aollama[:/]}, "").match?(/A.+(?::cloud|-cloud)z/)
+        !id.sub(%r{\Aollama[:/]}, "").match?(/\A.+(?::cloud|-cloud)\z/)
       end
 
       def forced_lane_unavailable(model)
