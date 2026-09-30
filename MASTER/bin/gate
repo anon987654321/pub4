@@ -4,7 +4,7 @@
 require_relative "../lib/boot/entrypoint"
 Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
 
-# The scan and critique pass over all three trees — two stages of the
+# The scan and critique pass over all four trees — two stages of the
 # repo-wide chain, not the chain itself. `MASTER/bin/operator gate` is the chain:
 # it runs this for the lexical and semantic tiers, then the RAILS gates, the
 # suites, the ratchets and the sprawl census, and attributes every file each
@@ -15,7 +15,7 @@ Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
 #   ruby bin/gate --lexical-only       law/ and the scan registry, no council
 #   ruby bin/gate --semantic-only      the critique stage; exit 3 = not measured
 #   ruby bin/gate --explain            prints the ladder, runs nothing
-#   ruby bin/gate --tree=RAILS         one tree instead of four
+#   ruby bin/gate --tree=RAILS         one tree instead of the four
 #
 # --tree narrows the scan, not the assertion. A /fix pass aimed at one tree can
 # still write into another, so the clean-tree check at the bottom always
@@ -93,9 +93,9 @@ def lines_for(path)
   end
 end
 
-# The three top-level trees, by the name a person types. `.` is MASTER because this script
+# The four top-level trees, by the name a person types. `.` is MASTER because this script
 # runs from inside it.
-TREE_PATHS = { "MASTER" => ".", "RAILS" => "../RAILS", "OPENBSD" => "../OPENBSD" }.freeze
+TREE_PATHS = { "MASTER" => ".", "RAILS" => "../RAILS", "OPENBSD" => "../OPENBSD", "STUDIO" => "../STUDIO" }.freeze
 
 # Named trees when --tree is given, all three otherwise. An unknown name is
 # refused rather than silently narrowing the gate to nothing — a gate that
