@@ -20,12 +20,19 @@ module Master
       # /review — the read-only pass. It observes, asks the council and prints
       # the principle map; it changes nothing. The verb that changes the tree is
       # /fix, and it owns the repair.
+      # /review is a read-only compatibility adapter over the canonical /fix
+      # pipeline. It cannot turn writes back on, even if a stale caller passes
+      # --apply.
       def dispatch_review(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, swarm: nil, **_legacy)
         raw = arg_for(ctx).to_s.strip
-        apply, critique, aesthetic, only, target = parse_pass_flags(raw)
+        _apply, critique, aesthetic, only, target = parse_pass_flags(raw)
+        selected = only || "fix,critique,map"
+        selected = selected.split(",").reject { |stage| stage.strip == "fix" }.join(",")
+        selected = "critique,map" if selected.empty?
+        selected = "critique,map" if critique == false && only.nil?
         with_dmesg_verbosity(raw) do
           run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
-                   target:, apply: apply || false, critique:, aesthetic:, only: only || "critique,map")
+                   target:, apply: false, critique: critique != false, aesthetic:, only: selected)
         end
       end
 
@@ -34,7 +41,8 @@ module Master
       # one, validates it and observes again, until the tree converges, stops
       # improving, or hands back a state only a person can settle. `--dry-run`
       # stops after the reading and says what it would take on.
-      # /critique — the council stage only. It observes and argues, but does not write.
+      # /critique is a read-only compatibility adapter. The canonical lifecycle
+      # is /fix; this method preserves the explicit council-only entry point.
       def dispatch_critique(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, swarm: nil, **_legacy)
         raw = arg_for(ctx).to_s.strip
         _apply, _critique, aesthetic, _only, target = parse_pass_flags(raw)
@@ -51,7 +59,7 @@ module Master
         apply, _critique, aesthetic, _only, target = parse_pass_flags(raw)
         rendered = with_dmesg_verbosity(raw) do
           run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
-                   target:, apply: apply.nil? || apply, critique: false, aesthetic:, only: "fix")
+                   target:, apply: apply.nil? || apply, critique: true, aesthetic:, only: nil)
         end
         return rendered unless apply.nil? || apply
 
