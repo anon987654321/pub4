@@ -22,6 +22,20 @@ class TestConsensus < Minitest::Test
     assert_equal pool, Master::Review::Consensus.default_models
   end
 
+  def test_local_only_consensus_uses_only_non_cloud_local_models
+    previous = ENV["MASTER_LOCAL_ONLY"]
+    ENV["MASTER_LOCAL_ONLY"] = "1"
+
+    models = Master::Review::Consensus.default_models
+
+    refute_empty models
+    assert_operator models.size, :<=, 3
+    assert(models.all? { |id| id.start_with?("ollama:") || id.start_with?("local:") })
+    refute(models.any? { |id| id.end_with?(":cloud") || id.end_with?("-cloud") })
+  ensure
+    ENV["MASTER_LOCAL_ONLY"] = previous
+  end
+
   # The injection point stays: a caller naming its own models is not overridden
   # by the default, which is what makes the default safe to read from a file.
   def test_an_explicit_pool_wins
