@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../../ai/orientation"
+require_relative "../../ai"
 require_relative "../../cli/context_layers"
 
 module Master
