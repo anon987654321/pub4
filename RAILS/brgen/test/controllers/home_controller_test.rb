@@ -31,6 +31,8 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     # inline live-feed form. A guest still gets it — brgen creates a guest user
     # per browser and PostsController#create allows anonymous posts.
     assert_includes response.body, "compose-launcher"
+    assert_includes response.body, "brgen-top-chrome"
+    assert_match(/name="theme-color"[^>]+#143d5b/, response.body)
     assert_includes response.body, "feed-panel"
     # The "Bergen, akkurat nå" intro banner was removed — the page opens straight
     # into the feed. Wayfinding to the verticals now lives in the top nav.
