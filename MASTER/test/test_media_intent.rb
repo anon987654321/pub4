@@ -49,6 +49,17 @@ class MediaIntentTest < Minitest::Test
     assert_equal "photo", parsed.entities[:object]
   end
 
+  def test_natural_media_intent_does_not_read_digits_from_a_path_as_a_count
+    parsed = Master::Io::NaturalIntent.resolve(
+      "run postpro over "/tmp/master-media-12345/new photos""
+    )
+
+    refute_nil parsed
+    assert_equal :postprocess, parsed.intent
+    assert_nil parsed.entities[:count]
+    assert_equal "photo", parsed.entities[:object]
+  end
+
   def test_natural_postpro_language_defaults_recent_selection_when_count_is_omitted
     Dir.mktmpdir do |source|
       6.times do |index|
