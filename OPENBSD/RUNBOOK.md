@@ -281,7 +281,7 @@ deliberately:
 | Script | CI | Scope | When |
 |--------|----|-------|------|
 | `zsh OPENBSD/bin/vps_ci_all.sh` | **Yes** — serial `vps_ci.sh` per app | brgen, amber, bsdports | Normal code change; tests must pass |
-| `zsh OPENBSD/bin/vps_production_push.sh` | **No** — `SKIP_CI=1 SKIP_RUNTIME_GATE=1 bin/vps-deploy all`; only the post-restart gates run. What each flag skips: `CLAUDE.md`, "`SKIP_CI=1` does not mean skip CI" | master + every app, in vps-deploy's order; `DEMO_SEED_ON_DEPLOY=1` adds brgen's demo seed | Fast hotfix; skips test gate |
+| `I_UNDERSTAND_FAST_DEPLOY=1 zsh OPENBSD/bin/vps_production_push.sh` | **No** — `SKIP_CI=1 SKIP_RUNTIME_GATE=1 bin/vps-deploy all`; only the post-restart gates run, and the runtime skip requires that exact acknowledgement. | master + every app, in vps-deploy's order; `DEMO_SEED_ON_DEPLOY=1` adds brgen's demo seed | Fast hotfix; skips test gate |
 | `zsh OPENBSD/bin/deploy_all.sh` | **No** | Runs from a workstation: syncs pub4 to vm23 and runs `OPERATOR.sh`, so it reapplies `/etc`, relayd and the services, not just app code. `--per-app` also runs each `RAILS/<app>/<app>.sh` | The box's config has drifted or a fresh install needs redoing — not for shipping a code change |
 | `doas ksh OPENBSD/bin/start_all_apps.sh` | **No** — not a deploy at all | Enables and starts master, brgen, amber, bsdports, restarts relayd, then `health_check.rb --all-ready-apps` | Recovery. It writes `/var/db/pub4_all_apps`, which pins the four against `resource_guard.sh` shedding |
 

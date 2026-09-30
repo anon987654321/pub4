@@ -9,13 +9,11 @@ sync_tree() {
   local src=$1 dst=$2
   local delete=${3:-1}
 
-  if [[ -n ${SYNC_USE_OPENRSYNC:-} ]]; then
-    if [[ $delete == 1 ]]; then
-      ${_PRIV} openrsync -a --delete "${src%/}/." "${dst%/}/" && return 0
-    else
-      ${_PRIV} openrsync -a "${src%/}/." "${dst%/}/" && return 0
-    fi
-    log_warn "openrsync failed; falling back to staged tar copy"
+  if [[ -n ${SYNC_USE_OPENRSYNC:-} && $delete != 1 ]]; then
+    ${_PRIV} openrsync -a "${src%/}/." "${dst%/}/" && return 0
+    log_warn "openrsync failed; falling back to tar overlay"
+  elif [[ -n ${SYNC_USE_OPENRSYNC:-} ]]; then
+    log_warn "openrsync disabled for destructive sync; using staged tar copy"
   fi
 
   if [[ $delete == 1 ]]; then
@@ -33,18 +31,24 @@ sync_tree() {
       return 1
     fi
 
-    if ! ${_PRIV} mv "$dst" "$old"; then
-      ${_PRIV} rm -rf "$stage"
-      log_err "could not stage current destination"
-      return 1
+    if [[ -e "$dst" ]]; then
+      if ! ${_PRIV} mv "$dst" "$old"; then
+        ${_PRIV} rm -rf "$stage"
+        log_err "could not stage current destination"
+        return 1
+      fi
+    else
+      old=""
     fi
     if ! ${_PRIV} mv "$stage" "$dst"; then
-      ${_PRIV} mv "$old" "$dst" || log_err "CRITICAL: destination restore failed"
+      if [[ -n "$old" ]]; then
+        ${_PRIV} mv "$old" "$dst" || log_err "CRITICAL: destination restore failed"
+      fi
       ${_PRIV} rm -rf "$stage"
       log_err "could not activate staged destination"
       return 1
     fi
-    ${_PRIV} rm -rf "$old"
+    [[ -n "$old" ]] && ${_PRIV} rm -rf "$old"
   else
     ${_PRIV} mkdir -p "$dst"
     if ! ${_PRIV} sh -c "cd '${src%/}' && tar cf - ." | ${_PRIV} sh -c "cd '${dst%/}' && tar xf -"; then
