@@ -34,6 +34,38 @@ class TestVoiceSupport < Minitest::Test
     previous.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
   end
 
+  def test_playback_speak_now_falls_back_to_native_speech_when_synthesis_is_missing
+    spoken = []
+    PB.stub(:enabled?, true) do
+      PB.stub(:available?, true) do
+        PB.stub(:synthesize, nil) do
+          PB.stub(:native_say, ->(text) { spoken << text; true }) do
+            assert PB.speak_now("hello")
+          end
+        end
+      end
+    end
+
+    assert_equal ["hello"], spoken
+  end
+
+  def test_playback_background_speech_falls_back_to_native_speech_when_synthesis_is_missing
+    spoken = []
+    queue = Queue.new
+    queue << ["hello", "hello", true]
+    PB.instance_variable_set(:@queue, queue)
+    PB.stub(:native_say, ->(text) { spoken << text; true }) do
+      PB.stub(:synthesize, nil) do
+        worker = Thread.new { PB.send(:drain) }
+        worker.join
+      end
+    end
+
+    assert_equal ["hello"], spoken
+  ensure
+    PB.instance_variable_set(:@queue, nil)
+  end
+
   def test_playback_is_silent_off_a_terminal_and_when_told_to_be
     $stdout.stub(:isatty, true) do
       with_env("MASTER_CLI_SPEAK" => nil, "MASTER_SKIP_TTS" => nil, "CI" => nil) { assert PB.enabled? }
