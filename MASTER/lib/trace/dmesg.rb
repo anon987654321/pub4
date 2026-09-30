@@ -10,7 +10,7 @@ module Master
     # OpenBSD dmesg-style kernel lines for operator progress.
     # Shape: "unitN at parent: detail" / "unitN: status". Prose, not key=value:
     # "scan0: 3 violations in 2 files", as the kernel says "sd0: 244198MB".
-    # Config: data/limits.yml#dmesg (enabled: true). Default verbosity is verbose;
+    # Config: data/limits.yml#dmesg (enabled: true). Normal is the configured default; verbose and trace are explicit.
     # ENV MASTER_DMESG accepts 0, quiet, normal, verbose, or trace.
     #
     # This shape is the CLI's whole style guide: append-only, one line per fact,
