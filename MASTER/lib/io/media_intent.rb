@@ -255,18 +255,8 @@ module Master
         Result.ok({ output: result, rendered: result, media: :kick_loop, path: result })
       end
 
-      POSTPRO_PRESETS = [
-        [/\bvhs\b/i, "vhs_tape"],
-        [/\bcrt\b/i, "crt_broadcast"],
-        [/\bcamcorder|mini\s*dv|hi\s*8\b/i, "camcorder_glitch"],
-        [/\bportrait\b/i, "portrait"],
-        [/\bnoir|black\s+and\s+white\b/i, "noir"],
-        [/\blo[ -]?fi\b/i, "lo_fi"],
-        [/\bmagic\s+hour|golden\s+hour\b/i, "magic_hour"],
-      ].freeze
-
       def postpro_preset_for(text)
-        POSTPRO_PRESETS.find { |pattern, _preset| text.match?(pattern) }&.last || "cinematic"
+        NaturalIntent.resolve(text)&.entities&.fetch(:preset, nil) || "cinematic"
       end
 
       DEFAULT_BEAT_BARS = 12
