@@ -36,7 +36,6 @@ module Master
       BOOT_CONFIG = %w[
         MASTER/data/rules.yml
         MASTER/data/soul.yml
-        MASTER/data/workflow.yml
         MASTER/data/providers.yml
         MASTER/data/patterns.yml
         MASTER/data/limits.yml
