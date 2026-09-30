@@ -22,9 +22,8 @@
   <%= tag.meta name: "apple-mobile-web-app-capable", content: "yes" %>
   <%= tag.meta name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" %>
   <%= tag.meta name: "apple-mobile-web-app-title", content: city_name %>
-  <%# The stated theme, not a hardcoded dark: the page paints light by default,
-      and a dark color-scheme hint gave it dark scrollbars and form controls. The
-      browser bar takes each ground's own --bg. %>
+  <%# The stated theme still controls page surfaces, while the browser chrome
+      follows Brgen's restored dark-blue header on both light and dark themes. %>
   <%= tag.meta name: "color-scheme", content: surface_theme %>
   <%= tag.meta name: "theme-color", content: "#143d5b", data: { light_color: "#143d5b", dark_color: "#143d5b" } %>
     <%= render "shared/theme_bootstrap", storage_key: "brgen-theme" %>
