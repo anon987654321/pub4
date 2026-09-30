@@ -67,7 +67,7 @@ module Master
         idx = @pool_rr % size
         @pool_rr += 1
         path = socket_path(root, index: idx)
-        return path if socket_alive?(path)
+        return path if socket_alive?(path, root: root)
 
         ensure_pool_worker!(root:, index: idx)
         path
@@ -75,7 +75,7 @@ module Master
 
       def ensure_pool_worker!(root:, index:)
         path = socket_path(root, index:)
-        if socket_alive?(path)
+        if socket_alive?(path, root: root)
           @busy_strikes[index] = 0
           return true
         end
