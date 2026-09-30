@@ -79,13 +79,13 @@ module Master
         LEVELS.include?(value) ? value : "normal"
       end
 
-      def attach(unit, parent, detail = nil)
+      def attach(unit, parent, detail = nil, io: $stdout)
         line = detail.to_s.empty? ? "#{unit} at #{parent}" : "#{unit} at #{parent}: #{detail}"
-        emit(line)
+        emit(line, io:)
       end
 
-      def status(unit, msg)
-        emit("#{unit}: #{msg}")
+      def status(unit, msg, io: $stdout)
+        emit("#{unit}: #{msg}", io:)
       end
 
       # Work that calls a model names itself, and the calls attach under it.
@@ -99,16 +99,16 @@ module Master
       end
 
       # Once per process, for a fact every lane would otherwise repeat.
-      def once(unit, msg)
+      def once(unit, msg, io: $stdout)
         @once ||= {}
         line = "#{unit}: #{msg}"
         return if @once[line]
 
         @once[line] = true
-        emit(line)
+        emit(line, io:)
       end
 
-      def emit(line)
+      def emit(line, io: $stdout)
         return unless enabled?
 
         # Normal mode keeps conversational turns quiet. Verbose and trace are
@@ -122,9 +122,9 @@ module Master
         # the end of it.
         # Dim like the boot lines above it: kernel lines recede, and the reply
         # is the one thing at full weight.
-        $stdout.print "\r\e[K" if $stdout.tty?
-        $stdout.puts($stdout.tty? ? pastel.dim(text) : text)
-        $stdout.flush
+        io.print "\r\e[K" if io.tty?
+        io.puts(io.tty? ? pastel.dim(text) : text)
+        io.flush
         text
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Trace::Dmesg.emit")
