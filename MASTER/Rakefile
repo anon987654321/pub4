@@ -1122,3 +1122,17 @@ task :mutate, [:source, :test] do |_t, args|
 
   ruby File.join(__dir__, "tools", "mutate.rb"), args.source, args.test
 end
+
+namespace :lint do
+  desc "Reject broken literal require_relative imports across MASTER, RAILS and OPENBSD"
+  task :require_graph do
+    run_tool("tools/require_graph.rb")
+  end
+end
+
+# Import paths are structural prerequisites for every source-oriented suite.
+# Run this before tests and selftest so file moves cannot reach a green result
+# with a dead relative require waiting for a later boot path to discover it.
+Rake::Task[:test].enhance(["lint:require_graph"])
+Rake::Task[:selftest].enhance(["lint:require_graph"])
+Rake::Task["test:subsystems"].enhance(["lint:require_graph"])
