@@ -576,12 +576,6 @@ face_enhancements:
     status: implemented
     handler: js
     summary: Auto-enable face3d preview on desktop via visual_bridge
-  - id: enh_tts_audio_stream
-    area: tts
-    tier: p0
-    status: implemented
-    handler: both
-    summary: Partial MP3 stream endpoint during TTS synthesis
   - id: enh_pre_speech_inhale
     area: tts
     tier: p0
@@ -2511,7 +2505,7 @@ runtime:
   - emotional_timeline
   - council_room_ui
   - face_micro_interactions
-  - tts_audio_stream
+
   - chat_scroll_snap
   - provider_tint_chip
   - face3d_canonical

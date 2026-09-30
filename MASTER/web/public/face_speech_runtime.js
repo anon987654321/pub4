@@ -450,28 +450,6 @@ function forwardEarlyVisemePlan(visemes) {
   if (typeof startVisemeAnim === 'function' && tts.current) startVisemeAnim(tts.current);
 }
 
-async function tryPartialTTSPlay(job, bytes) {
-  if (!window.MASTER_RUNTIME?.enhancements?.includes?.('tts_audio_stream')) return;
-  if (bytes < 4096 || tts._partialPlayed) return;
-  try {
-    const res = await fetch(`/chat/tts/stream?job=${encodeURIComponent(job)}`);
-    if (!res.ok || res.status === 202) return;
-    const blob = await res.blob();
-    if (!blob || blob.size < 4096) return;
-    tts._partialPlayed = true;
-    emitTtsEvent('tts:chunk:partial', { job, bytes: blob.size });
-    const url = URL.createObjectURL(blob);
-    const partial = new Audio(url);
-    partial.preload = 'auto';
-    // The streamed partial played 15% under everything else for no stated
-    // reason, so the first thing heard of every utterance was the quietest.
-    partial.volume = Math.min(1, tts.volume || 1);
-    partial.addEventListener('ended', () => URL.revokeObjectURL(url), { once: true });
-    partial.addEventListener('error', () => URL.revokeObjectURL(url), { once: true });
-    if (!tts.playing) partial.play().catch(() => URL.revokeObjectURL(url));
-  } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:stream_partial", err); }
-}
-
 async function pollTTSJob(job, signal) {
   const streamChunk = window.MASTER_RUNTIME?.enhancements?.includes?.('tts_stream_chunk');
   // ~3 minutes of patience, not ~26s: synthesis is a serial queue on a 1-CPU
