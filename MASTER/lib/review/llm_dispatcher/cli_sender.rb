@@ -202,8 +202,8 @@ end
         Open3.popen3(env, *cmd) do |stdin, stdout, stderr, wait_thr|
           stdin.write(stdin_data) if stdin_data
           stdin.close
-          out_reader = Thread.new { stdout.read }
-          err_reader = Thread.new { stderr.read }
+          out_reader = Thread.new { stdout.read }.tap { |thread| thread.report_on_exception = false }
+          err_reader = Thread.new { stderr.read }.tap { |thread| thread.report_on_exception = false }
           if wait_thr.join(timeout_s)
             [out_reader.value, err_reader.value, wait_thr.value]
           else

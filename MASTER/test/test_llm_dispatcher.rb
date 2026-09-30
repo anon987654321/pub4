@@ -181,6 +181,22 @@ class TestLLMDispatcher < Minitest::Test
     assert_equal :offline, dispatcher.send(:classified_call_failure, SocketError.new("Network is unreachable")).category
   end
 
+  def test_timeout_pipe_readers_are_silent_when_the_child_closes_first
+    dispatcher, = build_dispatcher
+
+    assert_raises(Timeout::Error) do
+      _out, _err = capture_io do
+        dispatcher.send(
+          :capture3_with_timeout,
+          0.05,
+          RbConfig.ruby,
+          "-e",
+          "trap('TERM') { exit! }; sleep 2"
+        )
+      end
+    end
+  end
+
   def test_send_claude_cli_returns_timeout_error
     dispatcher, _session, _bus = build_dispatcher
     def dispatcher.capture3_with_timeout(_timeout_s, *_args, **)
