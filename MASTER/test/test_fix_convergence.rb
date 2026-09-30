@@ -137,9 +137,9 @@ class TestFixConvergence < Minitest::Test
   end
 
   def test_gate_chain_recognizes_all_three_tree_names
-    assert_equal %w[MASTER RAILS OPENBSD],
+    assert_equal %w[MASTER RAILS OPENBSD STUDIO],
                  Operator::GateChain.trees_for_target("MASTER RAILS OPENBSD")
-    assert_equal %w[MASTER RAILS OPENBSD],
+    assert_equal %w[MASTER RAILS OPENBSD STUDIO],
                  Operator::GateChain.trees_for_target("openbsd,rails,master")
   end
 

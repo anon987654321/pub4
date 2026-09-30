@@ -4,7 +4,7 @@ module Master
   module CLI
     class Pipeline
       module TargetResolver
-        ALL_TREE_NAMES = %w[MASTER RAILS OPENBSD].freeze
+        ALL_TREE_NAMES = %w[MASTER RAILS OPENBSD STUDIO].freeze
 
         def resolve_target(raw)
           text = raw.to_s.strip

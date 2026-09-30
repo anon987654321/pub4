@@ -8,7 +8,7 @@ module Master
     class OpportunityPass
       RULE_ID = "CONVERGENCE_OPPORTUNITY"
       TEXT_FILES = %w[.md .rb .rake .yml .yaml .erb .html .js .css .scss].freeze
-      SOURCE_ROOTS = %w[MASTER RAILS OPENBSD].freeze
+      SOURCE_ROOTS = %w[MASTER RAILS OPENBSD STUDIO].freeze
       # %r{} delimiters, not /.../ -- the character class needs a literal /
       # (repo-relative paths), which /.../ regex literals cannot hold
       # unescaped. Same bug as visual_pass.rb's SURFACE_RE, same fix.
