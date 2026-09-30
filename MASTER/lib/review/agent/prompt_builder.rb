@@ -108,7 +108,7 @@ module Master
           [
             conversational_register_line,
             ("Current task: #{@session.topic}" if @session.respond_to?(:topic) && @session.topic),
-            @memory.turn_recall(last_user_message) if @memory.respond_to?(:turn_recall)
+            (@memory.turn_recall(last_user_message) if @memory.respond_to?(:turn_recall))
           ].compact.join("\n\n")
         end
 
