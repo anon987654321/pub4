@@ -261,7 +261,7 @@ def record!
     ok = false
     ATTEMPTS.times do |attempt|
       ok = system({ "RBENV_VERSION" => PINNED_RUBY }, "rbenv", "exec", "ruby",
-                  "gates/probes/face_loop_record.rb",
+                  "gates/face_loop_record.rb",
                   "--audio", WAV, "--out", MP4, "--fps", FPS.to_s,
                   "--viewport", VIEWPORT, "--scale", "2", "--clip", CLIP,
                   "--warmup", "60", "--timeout", "90", "--crf", CRF.to_s,
