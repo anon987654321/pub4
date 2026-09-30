@@ -12,6 +12,28 @@
 # Feature statuses are verified against landed code + TODO.md, not asserted from memory.
 # Planned/aspirational work lives in apps.horizon.yml (agent: ignore). Active apps: 0 port/missing gaps.
 
+owned_domain_facts:
+  amberapp.art: { expires: '2027-09-25', renew: true, registrar: Domeneshop }
+  amberapp.no: { expires: '2027-09-25', renew: true, registrar: Domeneshop }
+  amberapp.online: { expires: '2027-09-25', renew: true, registrar: Domeneshop }
+  brgen.no: { expires: '2027-08-25', renew: true, registrar: Domeneshop }
+  bsdports.net: { expires: '2027-08-08', renew: true, registrar: Domeneshop }
+  bsdports.org: { expires: '2027-08-08', renew: true, registrar: Domeneshop }
+  cardff.uk: { expires: '2027-08-13', renew: true, registrar: Domeneshop }
+  denvr.us: { expires: '2027-08-13', renew: true, registrar: Domeneshop }
+  edinbrgh.uk: { expires: '2027-08-13', renew: true, registrar: Domeneshop }
+  foball.no: { expires: '2027-07-30', renew: false, registrar: Domeneshop }
+  frankfrt.de: { expires: '2027-08-17', renew: true, registrar: Domeneshop }
+  lndon.uk: { expires: '2027-09-23', renew: true, registrar: Domeneshop }
+  lsangeles.com: { expires: '2027-09-23', renew: true, registrar: Domeneshop }
+  lsangeles.store: { expires: '2027-09-23', renew: true, registrar: Domeneshop }
+  oshlo.no: { expires: '2027-08-22', renew: true, registrar: Domeneshop }
+  stvanger.no: { expires: '2027-08-22', renew: true, registrar: Domeneshop }
+  svalbrd.no: { expires: '2026-09-06', renew: true, registrar: Domeneshop }
+  trndheim.no: { expires: '2027-08-22', renew: true, registrar: Domeneshop }
+  wshingtondc.com: { expires: '2027-08-22', renew: true, registrar: Domeneshop }
+  wshingtondc.us: { expires: '2027-08-20', renew: true, registrar: Domeneshop }
+
 owned_domains:
   - amberapp.art
   - amberapp.no
