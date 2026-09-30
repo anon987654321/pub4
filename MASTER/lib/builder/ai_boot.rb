@@ -96,7 +96,7 @@ module Master
 
     def publish_self_test(bus, self_test)
       if self_test.err?
-        warn("builder: #{self_test.message}")
+        Trace::Dmesg.status("boot0", "builder self-test failed, #{self_test.message}")
         bus&.publish("builder:self_test", ok: false, error: self_test.message)
       elsif !self_test.value!.ok?
         summary = self_test.value!
@@ -199,7 +199,7 @@ module Master
         block.call
       rescue StandardError, ScriptError => e
         bus&.publish("boot:thread_died", where:, error: "#{e.class}: #{e.message}")
-        warn("[boot] #{where} thread died: #{e.class}: #{e.message}")
+        Trace::Dmesg.status("boot0", "#{where} thread died, #{e.class}: #{e.message}")
       end.tap { |t| t.abort_on_exception = false }
     end
 
