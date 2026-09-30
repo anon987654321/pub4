@@ -130,6 +130,26 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes css, ".item-detail--luxury .luxury-detail-grid"
     assert_includes css, ".item-detail--luxury .luxury-meta"
   end
+  def test_commerce_polish_keeps_marketplace_and_amber_distinct
+    brgen_css = read("brgen/app/assets/stylesheets/application.scss")
+    brgen_polish = read("brgen/app/assets/stylesheets/_commerce_polish.scss")
+    amber_css = read("amber/app/assets/stylesheets/application.scss")
+    amber_polish = read("amber/app/assets/stylesheets/_commerce_polish.scss")
+    seller = read("brgen/engines/marketplace/app/views/marketplace/stores/show.html.erb")
+    item = read("amber/app/views/items/show.html.erb")
+
+    assert_includes brgen_css, 'commerce_polish'
+    assert_includes brgen_polish, ".listing-ranking-reasons"
+    assert_includes brgen_polish, ".store-seller-center"
+    assert_includes amber_css, '@use "commerce_polish";'
+    assert_includes amber_polish, ".commerce-fit-suggestion"
+    assert_includes amber_polish, ".commerce-fit-reasons"
+    assert_includes seller, 'class="store-seller-center"'
+    assert_includes item, 'class="commerce-fit-list"'
+    assert_includes item, 'class="commerce-fit-source"'
+    assert_includes item, 'class="commerce-fit-reasons"'
+  end
+
 
   def test_brgen_new_post_is_progressive_and_photo_first
     form = read("brgen/app/views/posts/new.html.erb")

@@ -304,6 +304,7 @@ html.palette-open {
 }
 
 @include meta.load-css("shell_widgets");
+@include meta.load-css("commerce_polish");
 
 @include meta.load-css("embeds");
 
