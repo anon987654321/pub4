@@ -10,8 +10,9 @@
 
 :root {
   // BRGEN_OLD dark — dark-inverted port of the real 2014 desktop.css/
-  // mobile.css (pub/__OLD_BACKUPS/BRGEN_OLD). True grayscale, no accent
-  // hue: this app's identity is the direction itself, not a rotated hue.
+  // mobile.css (pub/__OLD_BACKUPS/BRGEN_OLD). Page surfaces remain true
+  // grayscale; the restored legacy utility/header band carries the dark-blue
+  // chrome shown in the current sketch.
   @include x.brgen-old-dark-tokens;
   @include x.app-root-tokens;
   color-scheme: dark;
