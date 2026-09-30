@@ -23,6 +23,12 @@ class TestBootBanner < Minitest::Test
     ENV.delete("MASTER_BOOT_STATUS")
   end
 
+  def test_banner_lines_use_dmesg_unit_grammar
+    lines = Master::CLI::BootBanner.banner_lines
+
+    assert(lines.all? { |line| line.match?(/\A(?:[a-z]+\d+ at [a-z]+\d+: |[a-z]+\d+: )/) }, lines.inspect)
+  end
+
   def test_banner_lines_reflect_env_flags
     lines = Master::CLI::BootBanner.banner_lines
     assert(lines.any? { |line| line.start_with?("boot0 at mainbus0: safe ") })
