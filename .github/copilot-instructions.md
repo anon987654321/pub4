@@ -19,15 +19,16 @@ executable law (`law/*.rb` and `lib/review/scan/rules/*.rb`) > repo harnesses
 every sentence written about it. Harness files route agents to the law; they never
 override executable law and never become a second copy of it.
 
-The three top-level trees, and how each is entered:
+The four top-level trees, and how each is entered:
 
 - `MASTER/` — a constitutional AI runtime in pure Ruby. `MASTER/bin/master "<instruction>"`.
 - `RAILS/` — brgen (a city social network, verticals as mounted engines), amber, bsdports. `RAILS/bin/triangle up`.
 - `OPENBSD/` — the deploy pipeline and the VPS runbook. Production is one box, vm23.
-`MASTER/tools/` is the canonical tool plane inside MASTER: dilla, postpro, replicate, lora and bplans.
+- `STUDIO/` — media-production tools and their data/state.
+`STUDIO/` is the canonical media tool plane: dilla, postpro, replicate and lora. `MASTER/tools/` keeps compatibility symlinks.
 
 Two commands cover most work. `MASTER/bin/operator gate` runs the whole ladder over
-all three top-level trees; `MASTER/bin/operator measure` prints every ratchet with its ceiling.
+all four top-level trees; `MASTER/bin/operator measure` prints every ratchet with its ceiling.
 Run the smallest check that proves the work, and never report done without its
 output. Before targeted reading on an unfamiliar or broad task, run `ruby MASTER/tools/agent_context.rb --tree` for a bounded source map.
 
