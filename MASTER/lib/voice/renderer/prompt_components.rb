@@ -222,7 +222,7 @@ module Master
         # OpenBSD 7.1 (GENERIC.MP) #400: date / builder@host:/path
         def identity_lines(context)
           [
-            d("MASTER #{soul_version} (CONSTITUTIONAL) ##{context[:build]}: " \
+            d("MASTER #{release_version} (CONSTITUTIONAL) ##{context[:build]}: " \
               "#{context[:now].strftime('%a %b %e %H:%M:%S %Z %Y')}"),
             d("    #{context[:user]}@#{context[:host]}:#{@config['root'] || Dir.pwd}"),
           ]
