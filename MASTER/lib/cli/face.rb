@@ -8,7 +8,7 @@ module Master
     # (Face::Head), stippled grey to white on black, a void in the lower face
     # where the points thin out, turned in 3D and projected onto Braille
     # dots, two across and four down in every cell. Where points pile into
-    # one cell it burns brighter, in the 256-colour greys from 240 to 255.
+    # one cell it burns brighter, in the 256-colour greys from 232 to 255.
     # Face::Motion keeps all of it moving.
     #
     # A frame is a function of state, size, time and events, with one small
