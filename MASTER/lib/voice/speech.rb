@@ -631,7 +631,11 @@ module Master
         return if @warned_tts[message]
 
         @warned_tts[message] = true
-        ::Kernel.warn("tts: #{message}")
+        if defined?(Master::Trace::Dmesg)
+          Master::Trace::Dmesg.once("voice0", message)
+        else
+          ::Kernel.warn("voice0: #{message}")
+        end
       end
     end
   end
