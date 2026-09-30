@@ -6,6 +6,7 @@ require "time"
 require_relative "../boot/paths"
 require_relative "script_dispatch"
 require_relative "constraint_dsl"
+require_relative "natural_intent"
 
 module Master
   module Io
@@ -62,6 +63,9 @@ module Master
       end
 
       def postpro_intent?(text)
+        parsed = NaturalIntent.resolve(text)
+        return true if parsed&.intent == :postprocess
+
         text.match?(POSTPRO_COMMAND_RE) || text.match?(POSTPRO_RE)
       end
 
@@ -73,9 +77,13 @@ module Master
       end
 
       def postprocess(text, root:)
-        downloads = text.match?(/\b(?:my\s+|the\s+)?(?:local\s+)?downloads?(?:\s+folder)?\b/i)
+        intent = NaturalIntent.resolve(text)
+        entities = intent&.entities || {}
+        downloads = entities[:location] == "downloads" ||
+                    text.match?(/\b(?:my\s+|the\s+)?(?:local\s+)?downloads?(?:\s+folder)?\b/i)
         source = downloads_directory if downloads
         return Result.err("postpro: Downloads folder not found", category: :validation) if downloads && source.to_s.empty?
+        source ||= entities[:path]
         source ||= text.match(POSTPRO_SUBJECT_RE)&.captures&.first
         source ||= text.match(POSTPRO_SUBJECT_TOKEN_RE)&.captures&.first
         source ||= text.match(POSTPRO_PATH_TOKEN_RE)&.captures&.first
@@ -85,7 +93,7 @@ module Master
         source = File.expand_path(source)
         return Result.err("postpro: input not found #{source}", category: :validation) unless File.file?(source) || File.directory?(source)
 
-        selection = postpro_selection(text, source)
+        selection = postpro_selection(text, source, intent:)
         return run_postpro_selection(selection[:files], text, root:) if selection
         return run_postpro_file(source, text, root:) if File.file?(source)
 
@@ -104,13 +112,18 @@ module Master
         ].find { |path| File.directory?(path) }
       end
 
-      def postpro_selection(text, source)
+      def postpro_selection(text, source, intent: NaturalIntent.resolve(text))
         return unless File.directory?(source)
 
-        count = text.match(/\b(\d+)\s+(?:latest|newest|most\s+recent)\b/i)&.captures&.first&.to_i
-        return if count.nil? || count <= 0
+        entities = intent&.entities || {}
+        recent = %w[latest recent].include?(entities[:recency].to_s)
+        count = entities[:count].to_i if entities[:count]
+        count = recent_count_default if recent && (!count || count <= 0)
+        count = text.match(/\b(\d+)\s+(?:latest|newest|most\s+recent)\b/i)&.captures&.first&.to_i if (!count || count <= 0)
+        return if !recent && (!count || count <= 0)
 
-        extension = text.match(/\b(jpe?g|png|webp|tiff?)s?\b/i)&.captures&.first
+        extension = entities[:file_type]
+        extension ||= text.match(/\b(jpe?g|png|webp|tiff?)s?\b/i)&.captures&.first
         files = Dir.glob(File.join(source, "**", "*"), File::FNM_DOTMATCH).select do |path|
           next false unless File.file?(path)
           next false if extension && File.extname(path).delete_prefix(".").downcase != extension.downcase.sub("jpeg", "jpg")
@@ -119,6 +132,13 @@ module Master
         files.sort_by { |path| -File.mtime(path).to_f }.first([count, 24].min).then { |rows| { files: rows } }
       rescue StandardError
         { files: [] }
+      end
+
+      def recent_count_default
+        config = Master.patterns_config["media"]
+        Integer(config.dig("postprocess", "recent_count") || 5)
+      rescue StandardError
+        5
       end
 
       def run_postpro_selection(files, text, root:)
