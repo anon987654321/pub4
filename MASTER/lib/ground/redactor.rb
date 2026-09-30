@@ -27,7 +27,11 @@ module Master
 
       def self.plain_string(value)
         return value if value.instance_of?(String)
-        return String.instance_method(:bytes).bind(value).call.pack("C*") if value.is_a?(String)
+        if value.is_a?(String)
+          bytes = String.instance_method(:bytes).bind(value).call.pack("C*")
+          encoding = String.instance_method(:encoding).bind(value).call
+          return String.instance_method(:force_encoding).bind(bytes).call(encoding)
+        end
 
         value.to_s
       end
@@ -47,10 +51,10 @@ module Master
       end
 
       def self.payload(hash = nil, seen: {}, depth: 0, **fields)
-        hash = fields if hash.nil?
+        hash = hash ? hash.merge(fields) : fields unless fields.empty?
         raise ArgumentError, "payload requires a Hash" unless hash.is_a?(Hash)
 
-        scrub_container(hash, seen:, depth:)
+        scrub_container(hash || {}, seen:, depth:)
       end
 
       def self.scrub_value(key, value, seen: {}, depth: 0)
