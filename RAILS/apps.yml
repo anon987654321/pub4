@@ -12,6 +12,27 @@
 # Feature statuses are verified against landed code + TODO.md, not asserted from memory.
 # Planned/aspirational work lives in apps.horizon.yml (agent: ignore). Active apps: 0 port/missing gaps.
 
+owned_domains:
+  - amberapp.art
+  - amberapp.no
+  - amberapp.online
+  - brgen.no
+  - bsdports.net
+  - bsdports.org
+  - cardff.uk
+  - denvr.us
+  - edinbrgh.uk
+  - foball.no
+  - frankfrt.de
+  - lndon.uk
+  - lsangeles.com
+  - lsangeles.store
+  - oshlo.no
+  - stvanger.no
+  - svalbrd.no
+  - trndheim.no
+  - wshingtondc.com
+  - wshingtondc.us
 apps:
 
   brgen:
