@@ -25,7 +25,6 @@ module Master
           findings = @output_check ? @output_check.check(rendered) : []
           findings += guard_findings(rendered, mode)
           publish_findings(findings, ctx)
-          rendered = annotate(rendered, findings) if findings.any? { |finding| finding.severity == :error }
 
           Result.ok(ctx.merge(rendered:, output_findings: findings))
         end
