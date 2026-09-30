@@ -43,7 +43,7 @@ body.vertical-marketplace .store-pdp .page-header h1 {
 body.vertical-marketplace .store-buybox {
   gap: 12px;
   padding: 20px;
-  border: 1px solid var(--store-hairline);
+  border: 0;
   box-shadow: none;
 }
 
@@ -96,8 +96,8 @@ body.vertical-marketplace .store-pdp-description a.btn {
   max-width: 100%;
   padding: 4px 8px;
   overflow: hidden;
-  border: 1px solid var(--store-hairline, var(--border));
-  border-radius: var(--radius-xs);
+  border: 0;
+  border-radius: 0;
   background: transparent;
   color: var(--store-ink-soft, var(--text-secondary));
   font-size: var(--text-xs);
