@@ -21,6 +21,11 @@ module Master
         "runtime" => "runtime0",
         "pipeline" => "pipeline0",
         "fix_loop" => "fix0",
+        "event_bus" => "event0",
+        "swallow" => "error0",
+        "boot" => "boot0",
+        "cli" => "cli0",
+        "tts" => "voice0",
       }.freeze
 
       module_function
@@ -89,7 +94,7 @@ module Master
         return if @logger_failure_warned
 
         @logger_failure_warned = true
-        Kernel.warn("trace: logging degraded — #{error.class}: #{error.message}")
+        Master::Trace::Dmesg.once("trace0", "logging degraded, #{error.class}: #{error.message}")
       rescue StandardError
         nil
       end
