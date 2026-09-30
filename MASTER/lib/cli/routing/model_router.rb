@@ -76,6 +76,7 @@ module Master
 
         def preferred(task_type: :exploration)
           return @config.model unless enabled?
+          return preferred_local(task_type:) if local_only?
 
           empirical_best = @capability_map.best_model_for(task_type)
           candidates = reachable_candidates(task_type)
@@ -106,6 +107,8 @@ module Master
         # table and spending the strongest lane on “hello”. Keep it available as
         # fallback, but let the task-specific preference lead.
         def chain_for(task_type)
+          return local_only_chain(task_type:) if local_only?
+
           lanes = { pref: [preferred(task_type:)], tiers: tier_ids.reject { |id| ollama_model?(id) },
                     free: continuity_models + ollama_cloud_models + local_server_models + hosted_models,
                     subscription: agy_catalog_models + Ground::AuthProfileLane.models_for_router(self) + primary_models + cli_lane_models }
@@ -114,6 +117,8 @@ module Master
         end
 
         def constrained_for(operation:)
+          return preferred_local(task_type: operation) if local_only?
+
           constraint = @rules.dig("operation_constraints", operation.to_s)
           return preferred unless constraint
 
@@ -226,6 +231,31 @@ module Master
           s = [score.fetch("speed", 1.0).to_f * sw, 0.01].max
           c = [score.fetch("cost", 0.5).to_f * cw, 0.001].max
           q * s * c
+        end
+
+        def local_only?
+          ENV["MASTER_LOCAL_ONLY"] == "1"
+        end
+
+        def local_only_chain(task_type:)
+          candidates = local_candidates
+          ids = candidates.select { |id| reachable?(id) && !unhealthy?(id) }
+          selected = @compute_pool.rank(ids, task_type:)
+          selected.empty? ? ids : selected
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "model_router.local_only_chain")
+          []
+        end
+
+        def local_candidates
+          (Array(local_models) + Array(local_server_models)).map(&:to_s).reject(&:empty?).uniq
+        end
+
+        def preferred_local(task_type:)
+          ids = local_only_chain(task_type:)
+          return ids.first if ids.any?
+
+          @config.model.to_s if @config.model.to_s.match?(/A(?:ollama:|ollama\/|local:)/)
         end
 
         def load_rules
