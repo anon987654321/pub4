@@ -63,7 +63,13 @@ module Master
       end
 
       def available?
-        !player.nil? || native_say_available?
+        !player.nil? || native_say_available? || android_audio_available?
+      end
+
+      def android_audio_available?
+        Device::Audio.available?
+      rescue NameError
+        false
       end
 
       def native_say_available?
@@ -121,13 +127,14 @@ module Master
 
         path = synthesize(str)
         unless path
-          ok = native_say(str)
+          ok = android_speak(str) || native_say(str)
           warn_once("synthesis failed#{Speech.last_error ? ": #{Speech.last_error}" : ""}") unless ok
           spoken(str) if ok
           return ok
         end
 
         ok = play(path)
+        ok = android_speak(str) unless ok
         ok = native_say(str) unless ok
         unless ok
           warn_once("audio playback failed — #{player&.first || "no player or native speech"}")
@@ -188,7 +195,7 @@ module Master
             end
 
             unless play(path)
-              unless native_say(text)
+              unless android_speak(text) || native_say(text)
                 warn_once("audio playback failed — #{player&.first || "no player or native speech"}")
               end
             end
@@ -219,6 +226,15 @@ module Master
         nil
       end
 
+      def android_speak(text)
+        return false unless android_audio_available?
+
+        Device::Audio.speak(text)
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Voice::Playback.android_speak")
+        false
+      end
+
       def native_say(text)
         return false unless native_say_available?
 
@@ -230,6 +246,10 @@ module Master
 
       def play(path)
         return false unless File.exist?(path)
+
+        if Device::Audio.media_player_available?
+          return Device::Audio.play(path)
+        end
 
         name, args = player
         return false unless name && args
