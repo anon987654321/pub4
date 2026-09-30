@@ -39,6 +39,16 @@ class TestRenderer < Minitest::Test
     end
   end
 
+  def test_compact_splash_names_the_release_version
+    old = ENV.delete("MASTER_BOOT_STATUS")
+    $stdout.stub(:tty?, false) do
+      text = FakeRenderer.new(config: {}).splash("model")
+      assert_includes strip_ansi(text), "MASTER 1.0.0"
+    end
+  ensure
+    ENV["MASTER_BOOT_STATUS"] = old if old
+  end
+
   def test_splash_keeps_multiline_boot_shape_when_verbose
     ENV["MASTER_BOOT_STATUS"] = "1"
     lines = FakeRenderer.new(config: {}).splash("model").lines
