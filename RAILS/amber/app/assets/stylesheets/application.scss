@@ -2509,25 +2509,9 @@ body[data-surface="luxury"] .commerce-handoff-note {
    editorial serif for display and a compact sans for navigation, product data and
    interaction. That contrast gives the page a Vogue-like editorial voice while
    retaining the scanning speed a beauty catalogue needs. */
-@font-face {
-  font-family: "DM Sans";
-  src: url("https://fonts.gstatic.com/s/dmsans/v16/rP2Yp2ywxg089UriI5-g7M8btVsD8Ck0q7u0-K6z9mXg.woff2") format("woff2");
-  font-style: normal;
-  font-weight: 100 1000;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Bodoni Moda";
-  src: url("https://fonts.gstatic.com/s/bodonimoda/v25/aFTQ7PxzY382XsXX63LUYJSKSKg.woff2") format("woff2");
-  font-style: normal;
-  font-weight: 400 900;
-  font-display: swap;
-}
-
 body[data-surface="luxury"] {
-  --font-beauty-sans: "DM Sans", var(--font), Arial, sans-serif;
-  --font-editorial: "Bodoni Moda", "Bodoni 72", "Didot", "Iowan Old Style", Georgia, serif;
+  --font-beauty-sans: "Helvetica Neue", "Helvetica Neue Pro", Arial, sans-serif;
+  --font-editorial: "Bodoni 72", "Didot", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
   font-family: var(--font-beauty-sans);
   font-optical-sizing: auto;
 }
