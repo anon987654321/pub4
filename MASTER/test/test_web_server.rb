@@ -4,6 +4,21 @@ require_relative "test_helper"
 require "stringio"
 
 class TestWebServer < Minitest::Test
+  def test_openbsd_status_uses_dmesg_shape
+    ENV["MASTER_WEB"] = "1"
+    config = { "web_public_url" => "https://ai.brgen.no", "web_token" => "" }
+    running = true
+    Master.stub_const(:RUBY_PLATFORM, "openbsd") do
+      Kernel.stub(:system, running) do
+        out, = capture_io do
+          Master::CLI::WebServer.openbsd_status(config:, host: "127.0.0.1", port: 53187, io: $stderr)
+        end
+        assert_includes out, "web0: https://ai.brgen.no, up"
+      end
+    end
+  ensure
+    ENV.delete("MASTER_WEB")
+  end
   def test_start_is_a_no_op_when_master_web_is_not_enabled
     ENV["MASTER_WEB"] = "0"
     io = StringIO.new
