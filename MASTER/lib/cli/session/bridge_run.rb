@@ -15,7 +15,7 @@ module Master
           puts @refs.renderer.measure(summary, width: reply_measure)
           Master::Voice::Playback.speak(summary)
         end
-        puts @refs.renderer.render("fold0: #{fold[:reason]}, #{fold[:turns]} turns", mode: :dim) unless @unit_sub
+        Master::Trace::Dmesg.status("fold0", "#{fold[:reason]}, #{fold[:turns]} turns") unless @unit_sub
       end
     end
   end
