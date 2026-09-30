@@ -192,6 +192,17 @@
       <p class="site-footer-head"><%= city_name %></p>
       <% brgen_nav_items.each do |_slug, label, href| %><%= link_to label, href %><% end %>
     </div>
+    <div class="site-footer-col">
+      <p class="site-footer-head"><%= t("nav.cities") %></p>
+      <% city_network_entries.each do |entry| %>
+        <% if entry.domain == Current.domain %>
+          <span aria-current="page"><%= entry.city %></span>
+        <% else %>
+          <%= link_to entry.city, "https://#{entry.domain}/",
+                      aria: { label: "#{entry.city} (#{entry.domain})" } %>
+        <% end %>
+      <% end %>
+    </div>
   <% end %>
   <%= render "shared/site_legal_footer" %>
 </body>
