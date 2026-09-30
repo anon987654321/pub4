@@ -455,7 +455,7 @@ end
       cli.send(:display_result, result: Master::Result.err("unknown command: /dmesg", category: :validation), accumulated: "", streamed: false)
     end
 
-    assert_equal "error: unknown command: /dmesg\n", out
+    assert_equal "err0: unknown command: /dmesg\n", out
   end
 
   def test_a_cancelled_turn_prints_nothing
