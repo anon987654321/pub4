@@ -292,6 +292,27 @@ module Master
         msg
       end
 
+      # The last substantive question before the current turn. Slash commands and
+      # shell-shaped inputs are not conversational questions, and the current turn
+      # is excluded by giving callers the message they are about to answer.
+      def last_user_question(before: nil, key: nil)
+        cutoff = before.to_s.strip
+        @mutex.synchronize do
+          conversation(key || current_key)[:messages].reverse_each do |message|
+            next unless message[:role].to_s == "user"
+
+            content = message[:content].to_s.strip
+            next if content.empty? || (!cutoff.empty? && content == cutoff)
+            next if content.start_with?("/")
+            next if content.match?(%r{\A(?:cd|ls|pwd|grep|find|cat|echo|git|bundle|ruby|zsh|sh)\b})
+            next unless content.include?("?")
+
+            return content.gsub(/\s+/, " ")[0, 320]
+          end
+        end
+        nil
+      end
+
       # The row names the model that answered, which after a fallback is not
       # the one routed, and says when the amount is a guess: a model the
       # price registry does not carry is billed at a flat rate.
