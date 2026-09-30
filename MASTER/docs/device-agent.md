@@ -34,10 +34,11 @@ After pairing, `/owner intro` shows the small profile the owner may choose to fi
 A normal interactive boot starts the resident thread automatically on Android
 unless `MASTER_DEVICE_AGENT=0`.
 
-    bundle exec ruby bin/cli /face
+    bundle exec ruby bin/cli
 
-This keeps the face and resident agent in the same process. Closing the face
-also ends that process.
+The terminal face is part of the normal shell prompt, so there is no separate
+face command or alternate terminal window. The resident agent and shell session
+remain in the same MASTER process.
 
 ## Resident service
 
@@ -83,7 +84,7 @@ The architecture therefore is:
       |                 +-- personal StandingOrders
       |                 +-- personal USER.md / MEMORY.md
       |
-      +-- /face  <- interaction surface
+      +-- MASTER shell + inline face  <- interaction surface
 
 This is a local personal-agent architecture, not device takeover. Android
 remains the authority over permissions and process lifetime.
@@ -106,8 +107,8 @@ uses the local whisper model to detect those phrases; audio is not uploaded.
 The resident installer also creates a supervised `master-wake` service, but
 that service remains inert until `/wake on`. Disable it with `/wake off`.
 
-After a wake phrase, the service hands the microphone to the existing
-`Face::Ear` and the same `Face::Talk` session used by the interactive face.
+After a wake phrase, the service hands the microphone to `Face::Ear` and routes
+spoken turns through the same `CLI::TurnRouter` used by the interactive shell.
 The greeting is spoken locally through Termux TTS, spoken turns are added to
 the normal session transcript, and twenty seconds of silence returns the
 phone to low-power wake listening.

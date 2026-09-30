@@ -44,6 +44,12 @@ class TestCommandRegistryDispatch < Minitest::Test
     assert Registry.respond_to?(:dispatch_device_agent)
   end
 
+  def test_face_is_not_a_command_surface
+    refute built.key?("face")
+    refute_includes Registry::HELP_TOPICS.keys, "face"
+    refute_includes Registry.slash_commands, "/face"
+  end
+
   def test_critique_is_a_documented_discoverable_command
     assert built.key?("critique")
     assert_includes Registry::HELP_TOPICS.keys, "critique"

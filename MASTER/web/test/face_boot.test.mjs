@@ -456,6 +456,16 @@ test("face runtime keeps named SSE reactions on the POST stream path", () => {
   assert.match(runtime, /MASTER_SSE\?\.dispatchNamed/);
 });
 
+test("web face is an evolved rendering of the CLI face", () => {
+  const part3 = readFileSync(join(publicDir, "face.part3.txt"), "utf8");
+  const cliFace = readFileSync(join(root, "..", "lib", "cli", "face.rb"), "utf8");
+  assert.match(cliFace, /GREYS = \(240\.\.255\)/);
+  assert.match(cliFace, /SPECK_LIGHT/);
+  assert.match(part3, /CLI_FACE_WEB_DENSITY = 2400/);
+  assert.match(part3, /orbitalField = new THREE\.Points/);
+  assert.match(part3, /size: 1/);
+});
+
 test("face runtime keeps chat stream and particle worker boot paths", () => {
   const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
   assert.match(runtime, /function sendMessage/);

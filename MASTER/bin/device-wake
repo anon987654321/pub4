@@ -20,7 +20,7 @@ require_relative "../lib/device/wake_signal"
 session = Master.boot(root: ROOT)
 container = session.container
 ear = Master::CLI::Face::Ear.new(device: Master::Device)
-talk = Master::CLI::Face::Talk.for_session(session)
+talk = ->(text) { Master::CLI::TurnRouter.call(message: text, container:) }
 wake = Master::Device::WakeWord.new(root: ROOT)
 
 trap("TERM") { wake.stop! }

@@ -43,7 +43,6 @@ module Master
           "snapshot" => command(:dispatch_snapshot, d[:root]),
           "why" => command(:dispatch_why, d[:agent], d[:root]),
           "help" => command(:help_text, nil),
-          "face" => Command.new { |_ctx| dispatch_face },
         ).merge(control_commands(ai[:standing], ai[:soul]))
       end
 
@@ -179,19 +178,6 @@ module Master
         Master::Snapshot.new(root: Master::ROOT, output: File.expand_path(arg, Master.repo_root)).write!
       rescue StandardError => e
         "snapshot0: failed — #{e.class}: #{e.message}"
-      end
-
-      # The Braille face owns the terminal until it closes. The turn is the
-      # same router a typed line uses, so the session keeps the conversation.
-      def dispatch_face(_ctx = nil)
-        return "face0: needs a terminal" unless $stdin.tty?
-
-        container = Fiber[:master_cli_container]
-        session = container[:session] if container
-        return "face0: no session" unless session
-
-        turn = Face::Talk.for_session(session, container:)
-        Face::Window.new(turn:, event_bus: container[:bus]).run
       end
 
       def dispatch_device(_root, ctx: nil)
