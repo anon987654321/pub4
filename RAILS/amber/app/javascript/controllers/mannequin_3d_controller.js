@@ -194,9 +194,15 @@ export default class extends Controller {
 
   buildPoints() {
     const points = []
-    const sections = ["head", "top", "bottom", "left-arm", "right-arm", "left-leg", "right-leg"]
+    const sections = [
+      "head", "top", "bottom", "left-arm", "right-arm",
+      "left-leg", "right-leg", "ambient"
+    ]
 
-    for (let i = 0; i < 760; i += 1) {
+    // Sparse by design: the points should describe the body's volume without
+    // becoming a grey cloud. The open field around the figure is what gives
+    // the landing surface its quiet Antigravity-like air.
+    for (let i = 0; i < 432; i += 1) {
       points.push({
         section: sections[i % sections.length],
         u: hash(i, 11),
@@ -251,8 +257,8 @@ export default class extends Controller {
     for (const point of this.points) {
       const geometry = this.pointGeometry(point, now)
       const projected = this.project(geometry.x, geometry.y, geometry.depth)
-      const size = 0.7 + geometry.depth * 1.15
-      ctx.globalAlpha = 0.07 + geometry.depth * 0.27
+      const size = 0.62 + geometry.depth * 0.82
+      ctx.globalAlpha = 0.06 + geometry.depth * 0.22
       ctx.fillRect(projected.x, projected.y, size, size)
     }
     ctx.globalAlpha = 1
@@ -311,6 +317,14 @@ export default class extends Controller {
         x = 0.5 + side * (0.06 + point.u * 0.055)
         y = 0.64 + point.v * 0.28
         depth = 0.24 + point.u * 0.48
+        break
+      }
+      case "ambient": {
+        const side = point.u < 0.5 ? -1 : 1
+        const spread = 0.31 + point.v * 0.16
+        x = 0.5 + side * spread
+        y = 0.12 + point.u * 0.68
+        depth = 0.08 + hash(point.v * 1000, 97) * 0.38
         break
       }
     }
