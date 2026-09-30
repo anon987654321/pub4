@@ -27,14 +27,19 @@ module Master
         hvis hvor når dem seg sitt disse etter mellom
         ser gjør går kommer riktig ferdig faktisk
       ].freeze
-      MARKER_RE = Regexp.new("(?<![\\w-])(#{MARKERS.join('|')})(?![\\w-])", Regexp::IGNORECASE)
+      MALAY_MARKERS = %w[
+        yang dan tidak saya ini itu untuk dengan dari pada ada akan boleh
+        kita kamu kami mereka apa siapa mana sudah belum juga hanya sangat
+        kerana sebab memang dalam kepada sebagai apabila
+      ].freeze
+      MALAY_MARKER_RE = Regexp.new("(?<![\\w-])(#{MALAY_MARKERS.join('|')})(?![\\w-])", Regexp::IGNORECASE)
 
       module_function
 
       def detect(text)
         body = text.to_s
         return :nb if body.match?(NORDIC_LETTERS)
-
+        return :ms if body.match?(MALAY_MARKER_RE)
         body.match?(MARKER_RE) ? :nb : :en
       end
     end
