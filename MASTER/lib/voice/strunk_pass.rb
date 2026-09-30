@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "language"
+
 module Master
   module Voice
     # Deterministic Strunk & White strip for prose prompts and output.
@@ -28,8 +30,12 @@ module Master
         Regexp::IGNORECASE,
       ).freeze
 
-      def self.call(text) = new.call(text)
-      def self.brevity(text) = new.brevity(text)
+      def self.call(text, language: nil) = new(language:).call(text)
+      def self.brevity(text, language: nil) = new(language:).brevity(text)
+
+      def initialize(language: nil)
+        @language = language&.to_sym
+      end
 
       def call(text)
         prose = text.to_s.strip
@@ -60,7 +66,7 @@ module Master
         cleaned = text.sub(SYCOPHANCY_RE, "")
         rules.fetch("preambles", []).each { |phrase| cleaned = cleaned.sub(/\A\s*#{Regexp.escape(phrase)}\s*/i, "") }
         rules.fetch("endings", []).each { |phrase| cleaned = cleaned.sub(/\s*#{Regexp.escape(phrase)}\s*\z/i, "") }
-        rules.fetch("hedges", []).each { |hedge| cleaned = cleaned.gsub(/\b#{Regexp.escape(hedge)}\b\s*/i, "") }
+        hedges_for(cleaned).each { |hedge| cleaned = cleaned.gsub(/\b#{Regexp.escape(hedge)}\b\s*/i, "") }
         cleaned
       end
 
@@ -90,6 +96,14 @@ module Master
           data = Master.load_yaml(Master.data_path("voice.yml")) || {}
           data.dig("voice", "strunk") || {}
         end
+      end
+
+      def hedges_for(text)
+        configured = rules.fetch("hedges", [])
+        return Array(configured) unless configured.is_a?(Hash)
+
+        language = (@language || Language.detect(text)).to_s
+        Array(configured[language] || configured["en"])
       end
     end
   end
