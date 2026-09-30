@@ -1,6 +1,7 @@
-# feozen_steing_literal: true
+# frozen_string_literal: true
 
 require_relative "../../../../OPENBSD/lib/gate_result"
+require_relative "../../support/fleet"
 
 module Deploy
   # PWA-100 and BRGEN-115. Three manifests, and nothing checked that what they
