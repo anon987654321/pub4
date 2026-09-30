@@ -6,6 +6,17 @@ module Brgen
     # enough to establish the commerce layer without turning the feed into an ad
     # rail. Keep the cadence local to Brgen; Amber keeps its own shared rhythm.
     AFFILIATE_EVERY = 2
+    PROMOTION_EVERY = AFFILIATE_EVERY * 3
+    VERTICAL_PROMOTIONS = %i[
+      radio
+      marketplace
+      takeaway
+      messenger
+      maps
+      tv
+      dating
+      ai
+    ].freeze
 
     module_function
 
@@ -21,12 +32,12 @@ module Brgen
     # alternative.
     #
     # It was the other way round: every branch here ordered by HOT_SQL and
-    # newest-first existed only as `?sort=latest` reordering the result, so a
+    # newest-first existed only as ?sort=latest reordering the result, so a
     # city feed that calls itself the city's now ranked by score and a post
     # could be hours old before it surfaced. Ranking is a thing a reader asks
     # for; freshness is what a feed is.
     #
-    # `latest` is still accepted and still means fresh — it is what every
+    # latest is still accepted and still means fresh — it is what every
     # existing link says — so no URL anyone has bookmarked changes meaning.
     def scope(feed: nil, authenticated: false, user: Current.user, sort: nil)
       ranked = ranked?(sort:)
@@ -51,6 +62,17 @@ module Brgen
 
     def ranked?(sort:)
       sort.to_s == "hot"
+    end
+
+    def promotion_slot?(position)
+      position.to_i.positive? && (position.to_i % PROMOTION_EVERY).zero?
+    end
+
+    def promotion_for(position)
+      return unless promotion_slot?(position)
+
+      index = (position.to_i / PROMOTION_EVERY) - 1
+      VERTICAL_PROMOTIONS.fetch(index % VERTICAL_PROMOTIONS.length)
     end
 
     # A blocker never sees blocked users' posts in any feed.
