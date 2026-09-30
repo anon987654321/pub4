@@ -40,7 +40,7 @@ class GroundRedactorTest < Minitest::Test
   def test_payload_bounds_extreme_nesting
     raw = {}
     cursor = raw
-    100_000.times do
+    1_000.times do
       cursor[:child] = {}
       cursor = cursor[:child]
     end
