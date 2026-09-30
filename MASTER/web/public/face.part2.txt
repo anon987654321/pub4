@@ -132,6 +132,16 @@ void main(){
   if(uBloom > 0.0) p.xy += normalize(p.xy + vec2(0.001)) * uBloom * 0.30 * (1.0 - radial * 0.6);
   vec4 mv=modelViewMatrix*vec4(p,1.);
   float depth=clamp(p.z/0.82,0.,1.);
+  // Treat the point cloud as a shallow physical surface instead of a flat depth gradient.
+  // The ellipsoid normal gives the same face genuine key/fill/rim lighting while keeping
+  // one-pixel rasterisation. Lighting is computed per vertex, so it adds no extra draw call.
+  vec3 normal = normalize(vec3(p.x / 0.62, p.y / 0.62, p.z / 0.82));
+  vec3 keyDir = normalize(vec3(-0.48, 0.28, 0.84));
+  vec3 fillDir = normalize(vec3(0.34, -0.08, 0.94));
+  float keyLight = max(dot(normal, keyDir), 0.0);
+  float fillLight = max(dot(normal, fillDir), 0.0);
+  float rimLight = pow(1.0 - abs(dot(normal, vec3(0.0, 0.0, 1.0))), 2.0);
+  float sculptLight = 0.60 + (0.46 * keyLight) + (0.18 * fillLight) + (0.16 * rimLight);
   // One point is one pixel. The renderer draws into a FACE_RENDER_SCALE buffer
   // that CSS upscales with image-rendering:pixelated, so a single fragment here
   // IS the visible square block on screen. A point that grew toward the camera
@@ -168,10 +178,8 @@ void main(){
   // shader, so the scale saturates the mid-depth points to white and leaves the
   // far ones a real gradient rather than a run to almost nothing. Depth is the
   // only 3D cue a 1px field has, and it survives this.
-  float shade=mix(0.35,1.0,depth)*2.2;
-  // Warm, not cool. Receding points used to tint blue-violet, which reads
-  // clinical on black. A face meant to be comfortable to sit with warms as it
-  // recedes and resolves to a warm white at the nearest points.
+  float shade = sculptLight * mix(0.78, 1.08, depth);
+  // Warm depth remains subtle; the normal-driven light now carries form.
   vec3 warmDepth=mix(vec3(0.74,0.66,0.58),vec3(1.0,0.98,0.94),depth);
   vColor=(hc>0.0?vec3(1.0,1.0,1.0):uColor*warmDepth*shade);
   vDepth=depth;
