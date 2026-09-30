@@ -719,6 +719,7 @@ async function connectTTSAudio(audio, boostValue = 1.35) {
   masterGain.gain.value = masterGainValue;
   tts.playbackGain = masterGainValue;
   analyser.fftSize = 256;
+  analyser.smoothingTimeConstant = 0.72;
   if (chain) {
     msrc.connect(chain.input);
     chain.output.connect(masterGain);
