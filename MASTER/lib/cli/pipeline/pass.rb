@@ -279,10 +279,15 @@ def default_apply?(*) = false
         end
 
         def run_fix(abs)
-          result = @fix_loop.run(abs, requested: true)
-          msg = result.ok? ? result.value!.to_s : "fix: #{result.message}"
-          Master::Trace::Dmesg.status("fix0", result.ok? ? msg[0, 80] : "failed: #{result.message}")
-          msg
+          # On vm23 the control plane shares this process and owns Git sync + deploy.
+          # Claim the same execution slot around an interactive /fix so the control
+          # plane cannot fetch, rebase or deploy while the fix loop is mutating main.
+          Master::Ops::LoopOwner.with_claim("fix") do
+            result = @fix_loop.run(abs, requested: true)
+            msg = result.ok? ? result.value!.to_s : "fix: #{result.message}"
+            Master::Trace::Dmesg.status("fix0", result.ok? ? msg[0, 80] : "failed: #{result.message}")
+            msg
+          end
         rescue StandardError => e
           stage_failure("fix", "fix0", e)
         end
