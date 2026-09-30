@@ -39,6 +39,7 @@ module Master
           "owner" => command(:dispatch_owner, root),
           "wake" => command(:dispatch_wake, root),
           "doctor" => command(:dispatch_doctor, root),
+          "voice" => Command.new { |ctx| dispatch_voice(ctx:) },
           "rules" => command(:dispatch_rules, root),
           "snapshot" => command(:dispatch_snapshot, d[:root]),
           "why" => command(:dispatch_why, d[:agent], d[:root]),
@@ -198,6 +199,25 @@ module Master
         device_command(arg_for(ctx))
       rescue Master::Device::Error => e
         "device0: unavailable — #{e.message}"
+      end
+
+      def dispatch_voice(ctx: nil)
+        arg = arg_for(ctx)
+        case arg
+        when "", "status"
+          player = Voice::Playback.player
+          enabled = Voice::Playback.enabled?
+          engine = Voice::Speech.synthesis_mode
+          "voice0: #{enabled ? "on" : "off"} player=#{player ? player.first : "none"} engine=#{engine}"
+        when "test"
+          Voice::Playback.speak("MASTER voice test.")
+          player = Voice::Playback.player
+          "voice0: test queued player=#{player ? player.first : "none"}"
+        else
+          "voice  voice status  voice test"
+        end
+      rescue StandardError => e
+        "voice0: failed — #{e.class}: #{e.message}"
       end
 
       def device_command(arg)
