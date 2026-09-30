@@ -20,7 +20,7 @@ class MinimalismContractTest < Minitest::Test
   end
 
   def test_audits_are_report_first_not_decoration_first
-    source = File.read(File.join(ROOT, "MASTER/tools/web/minimal_audit.rb"))
+    source = File.read(File.join(ROOT, "MASTER/tools/minimal_audit.rb"))
     assert_includes source, "MINIMAL_AUDIT_STRICT"
     assert_includes source, "box_shadow"
     assert_includes source, "href_hash"
