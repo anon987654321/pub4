@@ -111,6 +111,53 @@ class TestTtsSupervisor < Minitest::Test
     end
   end
 
+  def test_socket_health_rejects_a_stale_worker_generation
+    Dir.mktmpdir("master_tts_generation") do |dir|
+      worker = File.join(dir, "bin", "tts-worker")
+      FileUtils.mkdir_p(File.dirname(worker))
+      File.write(worker, "current worker")
+      path = File.join(dir, "tts-0.sock")
+      server = UNIXServer.new(path)
+      expected = Sup.send(:worker_version, dir)
+      received = nil
+      thread = Thread.new do
+        client = server.accept
+        received = client.gets
+        client.write("ok #{expected}\\n")
+        client.close
+      end
+
+      assert Sup.socket_alive?(path, root: dir), "current worker generation must pass health"
+      thread.join
+      assert_equal "{\"health\":true}\\n", received
+    ensure
+      server&.close
+      thread&.kill
+    end
+  end
+
+  def test_socket_health_rejects_the_legacy_unversioned_ok_response
+    Dir.mktmpdir("master_tts_legacy") do |dir|
+      worker = File.join(dir, "bin", "tts-worker")
+      FileUtils.mkdir_p(File.dirname(worker))
+      File.write(worker, "current worker")
+      path = File.join(dir, "tts-0.sock")
+      server = UNIXServer.new(path)
+      thread = Thread.new do
+        client = server.accept
+        client.gets
+        client.write("ok\\n")
+        client.close
+      end
+
+      refute Sup.socket_alive?(path, root: dir), "an old unversioned daemon must be rejected"
+      thread.join
+    ensure
+      server&.close
+      thread&.kill
+    end
+  end
+
   def test_dead_pid_is_never_treated_as_busy
     Dir.mktmpdir("master_tts_dead") do |dir|
       path = File.join(dir, "tts-0.sock")
