@@ -153,8 +153,8 @@ module Master
 
         def termux_take(path)
           pid = Process.spawn("termux-media-player", "play", path, out: File::NULL, err: File::NULL)
-          Process.detach(pid)
-          [->(elapsed, length) { elapsed < length }, -> { system("termux-media-player", "stop", out: File::NULL, err: File::NULL) }]
+          waiter = Process.detach(pid)
+          [->(elapsed, length) { elapsed < length }, -> { system("termux-media-player", "stop", out: File::NULL, err: File::NULL) }, -> { waiter.value }]
         end
 
         def direct_speech?
