@@ -101,6 +101,31 @@ end
 # raise before the usage text is ever reached.
 initial_message_from_argv(ARGV.dup) if ARGV.include?("-h") || ARGV.include?("--help")
 
+def acquire_master_process_lock
+  inherited = ENV["MASTER_PROCESS_LOCK_FD"]
+  if inherited
+    begin
+      return IO.for_fd(Integer(inherited, 10))
+    rescue ArgumentError, Errno::EBADF => e
+      warn "master0: inherited process lock is invalid — #{e.message}"
+      exit 75
+    end
+  end
+
+  lock = Master::Ops::ProcessLock.acquire!(
+    root: Master::ROOT,
+    mode: ENV["MASTER_CONTROL_PLANE"] == "1" ? "control_plane" : "cli"
+  )
+  return lock if lock
+
+  owner = Master::Ops::ProcessLock.owner
+  detail = owner.empty? ? "" : " pid=#{owner["pid"]} host=#{owner["host"]} mode=#{owner["mode"]}"
+  warn "master0: another MASTER process owns the control plane#{detail}"
+  exit 75
+end
+
+$MASTER_PROCESS_LOCK = acquire_master_process_lock
+
 cli = nil
 control_plane = nil
 
