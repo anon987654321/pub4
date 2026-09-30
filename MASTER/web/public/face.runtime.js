@@ -203,13 +203,13 @@ initUiScale();
 initFocusMode();
 
 const RATE_KEY = 'master:tts-rate';
-const RATES = [0.75, 1.0, 1.25, 1.5, 2.0];
+const RATES = [0.75, 1.0, 1.1, 1.25, 1.5, 2.0];
 function getTtsRate() {
   const v = parseFloat(localStorage.getItem(RATE_KEY));
-  return Number.isFinite(v) && v > 0 ? v : 1.25;
+  return Number.isFinite(v) && v > 0 ? v : 1.0;
 }
 function setTtsRate(r) {
-  const rate = Number.isFinite(r) && r > 0 ? r : 1.25;
+  const rate = Number.isFinite(r) && r > 0 ? r : 1.0;
   localStorage.setItem(RATE_KEY, rate);
   if (window.MASTER_FACE?.tts?.audio) window.MASTER_FACE.tts.audio.playbackRate = rate;
   const el = document.getElementById('tts-rate');
@@ -224,7 +224,11 @@ const VOICE_IDLE_SIGNATURES = {
   'en-GB-RyanNeural': { breath: 0.96, saccade: 0.18, pulse_floor: 0.08, blink_ms: 2800 },
   'nb-NO-FinnNeural': { breath: 1.02, saccade: 0.20, pulse_floor: 0.10, blink_ms: 3000 },
   'en-US-AndrewNeural': { breath: 0.94, saccade: 0.16, pulse_floor: 0.07, blink_ms: 2600 },
-  'nb-NO-PernilleNeural': { breath: 0.90, saccade: 0.10, pulse_floor: 0.05, blink_ms: 4200 }, // future-human: composed, steady gaze, still baseline, slow deliberate blink
+  'en-US-JennyNeural': { breath: 0.98, saccade: 0.14, pulse_floor: 0.07, blink_ms: 3400 },
+  'nb-NO-PernilleNeural': { breath: 0.90, saccade: 0.10, pulse_floor: 0.05, blink_ms: 4200 },
+  'nb-NO-FinnNeural': { breath: 1.02, saccade: 0.18, pulse_floor: 0.08, blink_ms: 3000 },
+  'ms-MY-YasminNeural': { breath: 0.97, saccade: 0.13, pulse_floor: 0.07, blink_ms: 3600 },
+  'ms-MY-OsmanNeural': { breath: 1.01, saccade: 0.18, pulse_floor: 0.08, blink_ms: 3100 }, // future-human: composed, steady gaze, still baseline, slow deliberate blink
   'en-NG-EzinneNeural': { breath: 1.10, saccade: 0.26, pulse_floor: 0.12, blink_ms: 3400 },
   'en-SG-WayneNeural': { breath: 0.92, saccade: 0.15, pulse_floor: 0.06, blink_ms: 2500 }
 };
@@ -613,7 +617,7 @@ if (_hasWebGL && THREE) {
     // resolves as partial coverage across up to four of them, so every particle
     // came out dim and smeared rather than crisp. Multisampling a pixel-art
     // buffer costs bandwidth to destroy the thing being drawn.
-    renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: false, alpha: false, preserveDrawingBuffer: true });
+    renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: false, alpha: false, depth: true, stencil: false, preserveDrawingBuffer: false, powerPreference: 'high-performance' });
     renderer.setClearColor(0x000000, 1);
     renderer.autoClear = true;
   } catch (e) {
@@ -1015,7 +1019,7 @@ function sampleDepthMapGrid(canvas, cols, rows) {
 
 function particleScale() {
   const area = Math.max(320 * 480, window.innerWidth * window.innerHeight);
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const dpr = Math.min(window.devicePixelRatio || 1, 1.25);
   return Math.max(0.7, Math.min(1.35, Math.sqrt((area * dpr) / (1280 * 720))));
 }
 const FACE_GRID_COLS = Math.round((State.coarsePointer ? 26 : 40) * particleScale());
@@ -1160,6 +1164,16 @@ void main(){
   if(uBloom > 0.0) p.xy += normalize(p.xy + vec2(0.001)) * uBloom * 0.30 * (1.0 - radial * 0.6);
   vec4 mv=modelViewMatrix*vec4(p,1.);
   float depth=clamp(p.z/0.82,0.,1.);
+  // Treat the point cloud as a shallow physical surface instead of a flat depth gradient.
+  // The ellipsoid normal gives the same face genuine key/fill/rim lighting while keeping
+  // one-pixel rasterisation. Lighting is computed per vertex, so it adds no extra draw call.
+  vec3 normal = normalize(vec3(p.x / 0.62, p.y / 0.62, p.z / 0.82));
+  vec3 keyDir = normalize(vec3(-0.48, 0.28, 0.84));
+  vec3 fillDir = normalize(vec3(0.34, -0.08, 0.94));
+  float keyLight = max(dot(normal, keyDir), 0.0);
+  float fillLight = max(dot(normal, fillDir), 0.0);
+  float rimLight = pow(1.0 - abs(dot(normal, vec3(0.0, 0.0, 1.0))), 2.0);
+  float sculptLight = 0.60 + (0.46 * keyLight) + (0.18 * fillLight) + (0.16 * rimLight);
   // One point is one pixel. The renderer draws into a FACE_RENDER_SCALE buffer
   // that CSS upscales with image-rendering:pixelated, so a single fragment here
   // IS the visible square block on screen. A point that grew toward the camera
@@ -1196,10 +1210,8 @@ void main(){
   // shader, so the scale saturates the mid-depth points to white and leaves the
   // far ones a real gradient rather than a run to almost nothing. Depth is the
   // only 3D cue a 1px field has, and it survives this.
-  float shade=mix(0.35,1.0,depth)*2.2;
-  // Warm, not cool. Receding points used to tint blue-violet, which reads
-  // clinical on black. A face meant to be comfortable to sit with warms as it
-  // recedes and resolves to a warm white at the nearest points.
+  float shade = sculptLight * mix(0.78, 1.08, depth);
+  // Warm depth remains subtle; the normal-driven light now carries form.
   vec3 warmDepth=mix(vec3(0.74,0.66,0.58),vec3(1.0,0.98,0.94),depth);
   vColor=(hc>0.0?vec3(1.0,1.0,1.0):uColor*warmDepth*shade);
   vDepth=depth;
@@ -1832,33 +1844,38 @@ function frame(t) {
     const saccadeX = attn.saccadeX || 0;
     const microJitter = attn.microJitter || 0;
     _attnEyeClose = attn.eyeCloseTarget || 0;
-    const yaw   = State.mouseX * 0.7 * openness + State.tiltX * 0.5 + Math.sin(sec * 0.2) * 0.05 * composureFactor + saccadeX + microJitter;
-    const pitch = State.mouseY * 0.4 * openness + State.tiltY * 0.4 + Math.sin(sec * 0.27) * 0.03 * composureFactor + (attn.fixationPitch || 0);
+    const yaw   = State.mouseX * 0.9 * openness + State.tiltX * 0.62 + Math.sin(sec * 0.2) * 0.055 * composureFactor + saccadeX + microJitter;
+    const pitch = State.mouseY * 0.52 * openness + State.tiltY * 0.5 + Math.sin(sec * 0.27) * 0.035 * composureFactor + (attn.fixationPitch || 0);
     if (camera) {
       const pInput = State.coarsePointer
         ? { x: State.tiltX, y: -State.tiltY }
         : { x: State.mouseX, y: -State.mouseY };
-      State.parX += (pInput.x * 0.055 - State.parX) * 0.04;
-      State.parY += (pInput.y * 0.032 - State.parY) * 0.04;
+      State.parX += (pInput.x * 0.095 - State.parX) * 0.055;
+      State.parY += (pInput.y * 0.060 - State.parY) * 0.055;
       const camOffX = 0.015 + State.parX, camOffY = 0.008 + State.parY;
-      camera.position.x += (Math.sin(sec * 0.11) * 0.018 + camOffX - camera.position.x) * 0.04;
-      camera.position.y += (Math.cos(sec * 0.09) * 0.012 + camOffY - camera.position.y) * 0.04;
+      const camDepth = Math.max(-0.16, Math.min(0.16, Math.hypot(pInput.x, pInput.y) * 0.16));
+      camera.position.x += (Math.sin(sec * 0.11) * 0.018 + camOffX - camera.position.x) * 0.055;
+      camera.position.y += (Math.cos(sec * 0.09) * 0.012 + camOffY - camera.position.y) * 0.055;
+      const speechDepth = (State.mode === 'speaking' || tts.playing) ? Math.min(0.12, (State.visemeAmp || 0) * 0.12) : 0;
+      camera.position.z += (4.6 - camDepth - speechDepth - camera.position.z) * 0.055;
     }
     head.rotation.y += (yaw   - head.rotation.y) * 0.06;
     head.rotation.x += (pitch - head.rotation.x) * 0.06;
     nodImpulse *= 0.87;
     head.rotation.x += nodImpulse;
-    const microOrbit = Math.sin(sec * 0.157) * 0.014 * composureFactor;
+    const microOrbit = Math.sin(sec * 0.157) * 0.022 * composureFactor;
     head.rotation.z = -0.021 + microOrbit * 0.3;
     const silenceScale = (State.mode === 'idle' && !tts.playing) ? 0.982 : 1.0;
     const hiddenTab = State.hidden || document.hidden;
     const breathHz = hiddenTab ? 0.55 : 1.1;
-    const breathAmp = hiddenTab ? 0.018 : (0.009 + (1 - State.confidence) * 0.006 + (State.entropy || 0) * 0.004);
+    const breathAmp = hiddenTab ? 0.018 : (0.014 + (1 - State.confidence) * 0.008 + (State.entropy || 0) * 0.005);
     const councilBreath = document.documentElement.dataset.councilBreath === '1' ? Math.sin(sec * 0.85) * 0.018 : 0;
     if (gestureStart) State.pressureTension = Math.min(1, (t - pressStart) / 1200);
     else State.pressureTension = Math.max(0, (State.pressureTension || 0) * 0.92);
     const tensionScale = 1 - (State.pressureTension || 0) * 0.05;
-    const breath = silenceScale * idleSig.breath * tensionScale * (State.reducedMotion ? 1 : 1 + Math.sin(sec * breathHz) * breathAmp + State.pulse * 0.08 + councilBreath);
+    const speakingEnergy = State.mode === 'speaking' || tts.playing ? Math.max(0, Math.min(1, State.visemeAmp || 0)) : 0;
+    const speechBreath = speakingEnergy * (0.035 + Math.sin(sec * 8.0) * 0.008);
+    const breath = silenceScale * idleSig.breath * tensionScale * (State.reducedMotion ? 1 : 1 + Math.sin(sec * breathHz) * breathAmp + State.pulse * 0.08 + councilBreath + speechBreath);
     head.scale.setScalar(breath);
     State.lean = (State.lean || 0) * 0.97;
     if (State.shake > 0.01 && !State.reducedMotion && isRichMotionProfile()) {
@@ -2968,6 +2985,7 @@ async function connectTTSAudio(audio, boostValue = 1.35) {
   masterGain.gain.value = masterGainValue;
   tts.playbackGain = masterGainValue;
   analyser.fftSize = 256;
+  analyser.smoothingTimeConstant = 0.72;
   if (chain) {
     msrc.connect(chain.input);
     chain.output.connect(masterGain);
@@ -3152,18 +3170,18 @@ function highQualityVoiceEnabled() {
   return true;
 }
 function browserTtsFallbackAllowed() {
-  // The browser voice is the fallback now, not the default. It starts speaking
-  // immediately and costs the VPS nothing, which is why it led for a while --
-  // but the server's latency floor turned out not to be large enough to be
-  // worth giving up the voice for, and what a visitor heard instead was
-  // whatever face their browser happened to ship.
-  //
-  // This still returns true whenever the server voice is switched off, so the
-  // fallback path below is unchanged and a failed synthesis still speaks.
+  // A face must never be silent merely because the server TTS lane is absent
+  // from a local or freshly booted environment. Server synthesis remains the
+  // quality path; browser speech is the immediate safety net when synthesis
+  // does not start promptly.
   if (!highQualityVoiceEnabled()) return true;
   if (new URLSearchParams(window.location.search).get('tts_fallback') === '1') return true;
-  try { return localStorage.getItem('master:tts-fallback') === '1'; } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:fallback_allowed_read", err); }
-  return false;
+  try {
+    const stored = localStorage.getItem('master:tts-fallback');
+    if (stored === '0') return false;
+    if (stored === '1') return true;
+  } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:fallback_allowed_read", err); }
+  return true;
 }
 // speechSynthesis.getVoices() is populated asynchronously in Chrome: it
 // returns [] on first call and fills in on the 'voiceschanged' event. Touch it
@@ -3419,12 +3437,21 @@ function ttsTick() {
   const edgeBlob = tts.prefetch.get(text) || loadTTSBlob(text, voice, style);
   tts.prefetch.delete(text);
   tts.meta.delete(text);
+  let browserFallbackTimer = setTimeout(() => {
+    if (!tts.playing || tts.current !== text || token !== tts.cancelToken) return;
+    const browserToken = ++tts.cancelToken;
+    if (!speakWithBrowserTTS(text, browserToken)) {
+      tts.cancelToken = token;
+      return;
+    }
+  }, 1800);
   const nextSpeech = nextQueuedSpeech();
   if (nextSpeech) fetchTTS(nextSpeech);
 
   let settled = false;
 
   async function playEdge(blob) {
+    clearTimeout(browserFallbackTimer);
     if (settled || token !== tts.cancelToken) return;
     settled = true;
     const src = URL.createObjectURL(blob);
@@ -3462,6 +3489,7 @@ function ttsTick() {
   edgeBlob
     .then(blob => { if (!blob) throw new Error('empty'); playEdge(blob); })
     .catch(() => {
+      clearTimeout(browserFallbackTimer);
       tts.serverFailureCount = (tts.serverFailureCount || 0) + 1;
       tts.serverUnavailable = true;
       tts.serverUnavailableUntil = Date.now() + Math.min(30000, 5000 * tts.serverFailureCount);
