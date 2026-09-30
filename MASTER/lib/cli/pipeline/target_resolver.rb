@@ -8,6 +8,9 @@ module Master
 
         def resolve_target(raw)
           text = raw.to_s.strip
+          # Shell-style recursive targets are scope notation, not literal
+          # directories. /fix RAILS/** therefore governs the RAILS tree itself.
+          text = text.sub(%r{/\*\*(?:/\*)?\z}, "")
           return Master::REPO_ROOT if all_tree_target?(text)
           return Master::REPO_ROOT if text.empty? || text.match?(%r{\A(?:all|everything|the|code|codebase|it|this|that)\z}i)
           aliases = target_aliases
