@@ -30,9 +30,10 @@ function hash(index, salt = 0) {
 
 export default class extends Controller {
   static values = {
-    slides: { type: Object, default: {} },
+    slides: { type: Array, default: [] },
     zones: { type: Object, default: {} }
   }
+  static targets = ["track"]
 
   connect() {
     this.canvas = document.createElement("canvas")
@@ -49,6 +50,14 @@ export default class extends Controller {
     this.points = this.buildPoints()
     this.resizeObserver = new ResizeObserver(() => this.resize())
     this.resizeObserver.observe(this.element)
+    this.onTrackScroll = this.onTrackScroll.bind(this)
+    this.onSlideClick = this.onSlideClick.bind(this)
+    if (this.hasTrackTarget) {
+      this.trackTarget.addEventListener("scroll", this.onTrackScroll, { passive: true })
+      this.trackTarget.querySelectorAll(".amber-look-slide").forEach(slide => {
+        slide.addEventListener("click", this.onSlideClick)
+      })
+    }
     this.pointerMove = this.onPointerMove.bind(this)
     this.pointerLeave = () => {
       this.pointerActive = false
@@ -73,6 +82,12 @@ export default class extends Controller {
     this.element.removeEventListener("pointerleave", this.pointerLeave)
     this.element.removeEventListener("amber:mannequin-change", this.onMannequinChange)
     this.element.removeEventListener("amber:mannequin-slide", this.onSlide)
+    if (this.hasTrackTarget) {
+      this.trackTarget.removeEventListener("scroll", this.onTrackScroll)
+      this.trackTarget.querySelectorAll(".amber-look-slide").forEach(slide => {
+        slide.removeEventListener("click", this.onSlideClick)
+      })
+    }
     this.images.clear()
     cancelAnimationFrame(this.raf)
     this.canvas?.remove()
@@ -94,6 +109,40 @@ export default class extends Controller {
     this.setItems(event.detail?.zones || event.detail || {})
   }
 
+  onTrackScroll() {
+    if (this.trackFrame) return
+    this.trackFrame = requestAnimationFrame(() => {
+      this.trackFrame = null
+      this.syncSlideToTrack()
+    })
+  }
+
+  onSlideClick(event) {
+    const slide = event.currentTarget
+    const slides = Array.from(this.trackTarget.querySelectorAll(".amber-look-slide"))
+    const position = slides.indexOf(slide)
+    if (position < 0) return
+    slide.scrollIntoView({ behavior: this.reducedMotion ? "auto" : "smooth", inline: "center", block: "nearest" })
+    this.setSlide(position)
+  }
+
+  syncSlideToTrack() {
+    const slides = Array.from(this.trackTarget.querySelectorAll(".amber-look-slide"))
+    if (!slides.length) return
+    const center = this.trackTarget.getBoundingClientRect().left + this.trackTarget.clientWidth / 2
+    let nearest = 0
+    let distance = Infinity
+    slides.forEach((slide, index) => {
+      const box = slide.getBoundingClientRect()
+      const next = Math.abs(box.left + box.width / 2 - center)
+      if (next < distance) {
+        distance = next
+        nearest = index
+      }
+    })
+    if (nearest !== this.activeSlide) this.setSlide(nearest)
+  }
+
   firstItemsFromZones() {
     return Object.fromEntries(
       Object.entries(this.zonesValue || {}).map(([zone, items]) => [zone, Array.isArray(items) ? items[0] : items])
@@ -112,7 +161,13 @@ export default class extends Controller {
     const slides = Array.isArray(this.slidesValue) ? this.slidesValue : []
     const slide = slides[position]
     if (!slide) return
+    this.activeSlide = position
     this.setItems(slide.zones || slide.items || {})
+    if (this.hasTrackTarget) {
+      this.trackTarget.querySelectorAll(".amber-look-slide").forEach((node, index) => {
+        node.toggleAttribute("data-active", index === position)
+      })
+    }
   }
 
   load(url) {
