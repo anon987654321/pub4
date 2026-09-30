@@ -180,13 +180,12 @@ end
 # its caller can report the tier as skipped; every other mode keeps aborting,
 # because there the tier that went blind is the one that was supposed to work.
 def inconclusive!(message)
+  # A deterministic checklist is not a semantic review. Running it here created
+  # two different things with nearly the same operator-facing meaning: "the
+  # semantic tier was unavailable" and "the semantic tier was satisfied by the
+  # floor". Keep the states separate.
   if message.start_with?("/critique ")
-    target = message.delete_prefix("/critique ").split.first.to_s
-    target = "." if target.empty?
-    floor = File.join(ROOT, "bin", "council-floor")
-    puts "gate: semantic tier unavailable; running deterministic checklist floor for #{target}"
-    floor_status = system(SAFE_ENV, RUBY, floor, target, chdir: ROOT)
-    warn "gate: deterministic checklist floor failed" unless floor_status && $?.success?
+    warn "gate: semantic tier INCONCLUSIVE — deterministic checklist is supplemental and does not satisfy semantic review"
   end
 
   if TIER == :semantic

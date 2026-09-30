@@ -69,11 +69,12 @@ if anyone widens that listener again, pf becomes the exposure's only guard.
   prepares the databases, precompiles assets and runs `bin/ci` inside the
   deployed `/home/<app>/app` tree. CI still runs, in a different place.
 
-The flag that skips CI is `SKIP_RUNTIME_GATE=1`, which returns from
-`rails_runtime_gate` before any of that. `vps_production_push.sh` sets both, so
-the hotfix path runs no `bin/ci` at all, only the loopback gates `vps-deploy`
-runs after every restart. When a hotfix ships a break `bin/ci` catches, that
-pair of flags is why, not a tooling bug.
+The fast hotfix path uses `SKIP_RUNTIME_GATE=1` and `SKIP_CI=1`, but the
+runtime skip is now protected by the human-only `I_UNDERSTAND_FAST_DEPLOY=1`
+acknowledgement. Without that exact acknowledgement, `rails_runtime_gate`
+refuses to bypass CI. When the acknowledgement is supplied, the hotfix path
+runs no `bin/ci`; only the loopback gates `vps-deploy` runs after each
+restart.
 
 ## `bin/ci`'s `Setup` step behaves differently locally vs. on the VPS
 

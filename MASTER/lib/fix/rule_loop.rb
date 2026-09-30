@@ -199,16 +199,17 @@ module Master
         @stage_commit || ENV["MASTER_FIX_COMMIT_STAGE"] == "1"
       end
 
-      # Review::Consensus fans a candidate fix out to three models and requires
-      # a quorum of two before it lands. Agent#consensus constructs it and
-      # nothing calls it, so the interlock read as wired for as long as it has
-      # existed — the most consequential shape of this repo's inert-config
-      # defect, because it is a safety gate.
-      #
-      # Reachable now, and off unless asked for: three model calls per fix is a
-      # spend the operator opts into rather than discovers on a bill.
+      # High-risk fixes always pass through the independent consensus gate.
+      # Lower-risk fixes may still opt into consensus with MASTER_CONSENSUS_FIXES=1.
+      # A safety interlock must not become optional merely because the operator
+      # forgot an environment variable.
+      def consensus_required?(violation)
+        %i[error critical].include?(violation[:severity].to_s.to_sym) ||
+          ENV["MASTER_CONSENSUS_FIXES"] == "1"
+      end
+
       def consensus_approves?(violation, candidate)
-        return true unless ENV["MASTER_CONSENSUS_FIXES"] == "1"
+        return true unless consensus_required?(violation)
 
         @agent.consensus.approve_fix?(
           prompt: "Rule #{@rule.id} on #{violation[:file]}",
