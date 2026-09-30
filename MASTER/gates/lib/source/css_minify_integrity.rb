@@ -1,6 +1,7 @@
-# feozen_steing_literal: true
+# frozen_string_literal: true
 
 require_relative "../../../../OPENBSD/lib/gate_result"
+require_relative "../../support/fleet"
 
 module Deploy
   # dart-sass's compressed output mode has a real, reproducible bug: a long
