@@ -2,6 +2,34 @@
 
 module Master
   module Trace
+    module DmesgUnit
+      ATTACHED = %w[
+        llm route infer tool scan rule_loop council git test validation runtime pipeline fix_loop
+      ].freeze
+
+      MAP = {
+        "llm" => "model0",
+        "route" => "model0",
+        "infer" => "model0",
+        "tool" => "tool0",
+        "scan" => "scan0",
+        "rule_loop" => "scan0",
+        "council" => "council0",
+        "git" => "git0",
+        "test" => "test0",
+        "validation" => "test0",
+        "runtime" => "runtime0",
+        "pipeline" => "pipeline0",
+        "fix_loop" => "fix0",
+      }.freeze
+
+      module_function
+
+      def name(component)
+        MAP.fetch(component.to_s, "#{component}0")
+      end
+    end
+
     class Logging
       DEFAULT_DMESG_LINES = 50
       attr_reader :buffer
@@ -83,32 +111,5 @@ module Master
       end
     end
 
-    module DmesgUnit
-      ATTACHED = %w[
-        llm route infer tool scan rule_loop council git test validation runtime pipeline fix_loop
-      ].freeze
-
-      MAP = {
-        "llm" => "model0",
-        "route" => "model0",
-        "infer" => "model0",
-        "tool" => "tool0",
-        "scan" => "scan0",
-        "rule_loop" => "scan0",
-        "council" => "council0",
-        "git" => "git0",
-        "test" => "test0",
-        "validation" => "test0",
-        "runtime" => "runtime0",
-        "pipeline" => "pipeline0",
-        "fix_loop" => "fix0",
-      }.freeze
-
-      module_function
-
-      def name(component)
-        MAP.fetch(component.to_s, "#{component}0")
-      end
-    end
   end
 end
