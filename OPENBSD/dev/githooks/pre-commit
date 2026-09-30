@@ -27,7 +27,7 @@
 # Installed by `bin/operator hooks`, which sets core.hooksPath to this directory.
 # The real fix is still `bin/operator worktree <name>`.
 
-TREES = %w[MASTER RAILS OPENBSD].freeze
+TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
 
 def tree_of(path)
   head = path.split("/").first

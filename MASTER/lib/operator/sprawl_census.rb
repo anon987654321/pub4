@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Shape census over every tracked file in all three governed trees. The tree's shape is
+# Shape census over every tracked file in all four governed trees. The tree's shape is
 # conduct: a directory bought for one file, a name that repeats its parent, a
 # name that says nothing, and a path deeper than its neighbours all cost a
 # reader something. FILE_SPRAWL in the scan registry measures the first two for
@@ -61,6 +61,7 @@ module Operator
       "MASTER" => %w[AGENTS.md data/soul.yml data/rules.yml bin/operator bin/check],
       "RAILS" => %w[CLAUDE.md shared/README.md shared/design_tokens.yml apps.yml],
       "OPENBSD" => %w[CLAUDE.md PATH_OWNERSHIP.yml data/operator.yml bin/check],
+      "STUDIO" => %w[README.md postpro/postpro.rb replicate/replicate.rb lora/lora.rb dilla/dilla.rb],
     }.freeze
 
     def base_tree_findings
