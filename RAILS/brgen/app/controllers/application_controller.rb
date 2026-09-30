@@ -40,8 +40,7 @@ class ApplicationController < ActionController::Base
 
   def set_domain_context
     # City (and full branding/locale) is resolved automatically from the request's TLD/domain.
-    # There is no city switcher UI — a visitor on lsangeles.com only ever sees the Los Angeles
-    # experience and has no knowledge of brgen.no, oshlo.no or any other city domains.
+    # The city network footer links peer apexes without changing tenant context.
     result = Brgen::DomainRegistry.resolve(request.host)
 
     Current.city = result.entry.city
