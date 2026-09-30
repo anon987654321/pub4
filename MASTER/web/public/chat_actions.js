@@ -175,6 +175,21 @@ async function drainOfflineQueue() {
   }
 }
 
+function transportFailure(err) {
+  return !navigator.onLine || err?.name === "TypeError";
+}
+
+async function queueTransportFailure(message, err, assistantText) {
+  if (assistantText?.trim()) return false;
+  if (!transportFailure(err)) return false;
+  try {
+    return await queueOfflineSend(message);
+  } catch (queueErr) {
+    window.MASTER_LOG?.warn?.("chat:offline_queue", queueErr);
+    return false;
+  }
+}
+
 async function startChatStream(payload, handlers) {
   closeChatStream();
   const ac = new AbortController();
@@ -308,7 +323,9 @@ async function sendMessage(text) {
         window._chatOnError?.(err?.message || "stream interrupted");
       }
     });
-  } catch (_) {
+  } catch (err) {
+    const queued = await queueTransportFailure(message, err, assistantBuffer);
+    if (queued) return true;
     return false;
   }
   return true;
