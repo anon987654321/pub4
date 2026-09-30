@@ -204,6 +204,8 @@ canvas {
   image-rendering: pixelated;
   image-rendering: crisp-edges;
   touch-action: none;
+  contain: strict;
+  will-change: transform;
   transition: filter var(--transition-fast) var(--ease-out);
 }
 
