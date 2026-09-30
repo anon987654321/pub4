@@ -140,6 +140,18 @@ class LayoutContractTest < Minitest::Test
                  "_shell_widgets must not redefine the shared page-header")
   end
 
+  def test_app_surfaces_use_explicit_type_and_rhythm_tokens
+    brgen = File.read(File.join(ROOT, "brgen", "app/assets/stylesheets/application.scss"))
+    amber = File.read(File.join(ROOT, "amber", "app/assets/stylesheets/application.scss"))
+    nearby = File.read(File.join(SHARED, "app/assets/stylesheets/_nearby_chat_widget.scss"))
+
+    refute_includes brgen, "font-size: 1.17em;"
+    refute_includes amber, "font-size: 1.17em;"
+    refute_includes amber, "line-height:.98;"
+    assert_includes nearby, "padding: var(--space-2) var(--space-3);"
+    assert_includes nearby, "gap: var(--space-2);"
+  end
+
   # The mark is the brand and nothing else, so it is one length on every host.
   #
   # It used to render the whole hostname on a vertical, and that string varying

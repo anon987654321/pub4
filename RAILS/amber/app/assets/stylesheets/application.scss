@@ -1340,7 +1340,7 @@ main#main-content header > nav form {
 // ratio, so the heading level fits the outline without growing the type.
 // amber's h1, h2 rule in the base supplies family, weight and tracking.
 .occasion-card h2 {
-  font-size: 1.17em;
+  font-size: var(--text-lg);
   margin-bottom: var(--space-2);
 }
 
@@ -2193,28 +2193,28 @@ main#main-content .amber-look-title {
   color: var(--text-secondary);
 }
 
-.amber-editorial-nav{display:flex;align-items:center;justify-content:center;gap:clamp(1rem,3vw,2.75rem);max-width:1280px;margin:0 auto;padding:0 var(--page-gutter) var(--space-5);border-bottom:1px solid var(--border);overflow-x:auto;white-space:nowrap}
+.amber-editorial-nav{display:flex;align-items:center;justify-content:flex-start;gap:clamp(1rem,3vw,2.75rem);max-width:1280px;margin:0 auto;padding:0 var(--page-gutter) var(--space-5);border-bottom:1px solid var(--border);overflow-x:auto;white-space:nowrap}
 .amber-editorial-nav a{min-height:var(--tap-min);display:inline-flex;align-items:center;color:var(--text);font-size:var(--luxury-font-meta);font-weight:var(--weight-bold);letter-spacing:.02em;text-transform:uppercase;text-decoration:none}
 .amber-editorial-nav a:hover,.amber-editorial-nav a:focus-visible{text-decoration:underline;text-underline-offset:.18em}
 .amber-masthead--home{min-height:auto;padding-block:clamp(1rem,2vw,1.5rem) var(--space-3)}
 .amber-masthead--home .amber-logo-home{width:min(100%,380px)}
 .amber-looks{max-width:1280px;margin-inline:auto;padding-inline:var(--page-gutter);gap:0}
-.amber-look{display:grid;grid-template-columns:minmax(12rem,.55fr) minmax(0,1.45fr);gap:clamp(1.5rem,5vw,5rem);align-items:center;min-height:min(72vh,760px);padding-block:clamp(2rem,7vw,6rem);border-top:1px solid var(--border)}
-.amber-look:nth-child(even){grid-template-columns:minmax(0,1.45fr) minmax(12rem,.55fr)}
+.amber-look{display:grid;grid-template-columns:1fr;gap:var(--space-6);align-items:center;min-height:auto;padding-block:var(--space-8);border-top:1px solid var(--border)}
+.amber-look:nth-child(even){grid-template-columns:1fr}
 .amber-look:nth-child(even) .amber-look-title{order:2}
 .amber-look:nth-child(even) .amber-look-stage{order:1}
-.amber-look-title{max-width:8ch;margin:0;font-size:clamp(2rem,5vw,4.5rem);line-height:.98;letter-spacing:-.035em}
+.amber-look-title{max-inline-size:none;margin:0;font-size:clamp(2rem,5vw,4.5rem);line-height:var(--leading-none);letter-spacing:var(--tracking-tight)}
 .amber-look-stage{min-width:0;min-height:min(60vw,620px)}
 .amber-look-slide{min-width:min(78vw,560px)}
 .amber-messenger-composer{padding:var(--space-3);border-top:1px solid var(--border)}
 .amber-messenger-composer form{display:grid;gap:var(--space-2)}
 .amber-messenger-composer .field{margin:0}
 .amber-messenger-composer .field:first-of-type{display:none}
-.amber-messenger-composer textarea,.amber-messenger-composer select{width:100%;min-height:var(--tap-min);border:1px solid var(--border);border-radius:0;background:var(--surface);color:var(--text);padding:.65rem .75rem;font:inherit}
+.amber-messenger-composer textarea,.amber-messenger-composer select{width:100%;min-height:var(--tap-min);border:1px solid var(--border);border-radius:0;background:var(--surface);color:var(--text);padding:var(--space-2) var(--space-3);font:inherit}
 .amber-messenger-composer .btn{width:100%}
-.amber-message{padding:.75rem 1rem}
-.amber-message header{display:flex;align-items:baseline;justify-content:space-between;gap:.75rem;font-size:var(--text-xs)}
-.amber-message p{margin:.35rem 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.amber-message{padding:var(--space-3) var(--space-4)}
+.amber-message header{display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-3);font-size:var(--text-xs)}
+.amber-message p{margin:var(--space-1) 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
 .amber-message--mine{text-align:end}.amber-message--mine p{text-align:start;margin-inline-start:15%}
 .post-show-reading {
   max-width: 880px;
@@ -2257,7 +2257,15 @@ main#main-content .amber-look-title {
   margin: var(--space-4) auto var(--space-8);
 }
 .post-embed-action { text-decoration: none !important; }
-@media(max-width:767px){.amber-editorial-nav{justify-content:flex-start}.amber-look,.amber-look:nth-child(even){grid-template-columns:1fr;gap:var(--space-6);min-height:auto}.amber-look:nth-child(even) .amber-look-title,.amber-look:nth-child(even) .amber-look-stage{order:initial}.amber-look-title{max-width:none}.amber-look-stage{min-height:82vw}}
+@media (min-width: 768px){
+  .amber-editorial-nav{justify-content:center}
+  .amber-look{grid-template-columns:minmax(12rem,.55fr) minmax(0,1.45fr);gap:clamp(1.5rem,5vw,5rem);min-height:min(72vh,760px);padding-block:clamp(2rem,7vw,6rem)}
+  .amber-look:nth-child(even){grid-template-columns:minmax(0,1.45fr) minmax(12rem,.55fr)}
+  .amber-look:nth-child(even) .amber-look-title{order:2}
+  .amber-look:nth-child(even) .amber-look-stage{order:1}
+  .amber-look-stage{min-height:min(60vw,620px)}
+  .amber-look-title{max-inline-size:8ch}
+}
 
 /* Editorial product page: image is the primary object, metadata stays in reach on wide screens. */
 .item-detail--luxury .luxury-detail-grid {
@@ -2266,7 +2274,7 @@ main#main-content .amber-look-title {
 .item-detail--luxury .luxury-title {
   max-inline-size: 12ch;
   font-size: clamp(2rem, 4.8vw, 4rem);
-  line-height: .98;
+  line-height: var(--leading-none);
 }
 @media (min-width: 1024px) {
   .item-detail--luxury .luxury-detail-grid {
