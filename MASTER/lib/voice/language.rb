@@ -27,6 +27,7 @@ module Master
         hvis hvor når dem seg sitt disse etter mellom
         ser gjør går kommer riktig ferdig faktisk
       ].freeze
+      MARKER_RE = Regexp.new("(?<![\\w-])(#{MARKERS.join('|')})(?![\\w-])", Regexp::IGNORECASE)
       MALAY_MARKERS = %w[
         yang dan tidak saya ini itu untuk dengan dari pada ada akan boleh
         kita kamu kami mereka apa siapa mana sudah belum juga hanya sangat
