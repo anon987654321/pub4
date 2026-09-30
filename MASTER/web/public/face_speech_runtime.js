@@ -1179,7 +1179,6 @@ function ttsTick() {
   let settled = false;
 
   async function playEdge(blob) {
-    if (typeof browserFallbackTimer !== 'undefined') clearTimeout(browserFallbackTimer);
     if (settled || token !== tts.cancelToken) return;
     settled = true;
     const src = URL.createObjectURL(blob);
@@ -1217,7 +1216,6 @@ function ttsTick() {
   edgeBlob
     .then(blob => { if (!blob) throw new Error('empty'); playEdge(blob); })
     .catch(() => {
-      if (typeof browserFallbackTimer !== 'undefined') clearTimeout(browserFallbackTimer);
       tts.serverFailureCount = (tts.serverFailureCount || 0) + 1;
       tts.serverUnavailable = true;
       tts.serverUnavailableUntil = Date.now() + Math.min(30000, 5000 * tts.serverFailureCount);
