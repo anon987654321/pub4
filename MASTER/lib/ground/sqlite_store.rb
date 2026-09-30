@@ -23,7 +23,11 @@ module Master
           return if @chmod_warned
 
           @chmod_warned = true
-          warn "sqlite_store: chmod unsupported for #{path}; continuing with filesystem permissions"
+          if defined?(Master::Trace::Dmesg)
+            Master::Trace::Dmesg.once("sqlite0", "chmod unsupported for #{path}, continuing with filesystem permissions")
+          else
+            warn "sqlite0: chmod unsupported for #{path}, continuing with filesystem permissions"
+          end
         end
       end
 
@@ -96,7 +100,11 @@ module Master
         return if @sqlite_warned
 
         @sqlite_warned = true
-        warn "sqlite_store: #{message}"
+        if defined?(Master::Trace::Dmesg)
+          Master::Trace::Dmesg.once("sqlite0", message)
+        else
+          warn "sqlite0: #{message}"
+        end
       end
     end
   end
