@@ -19,7 +19,7 @@ transcendent:
   default_mode: transcendent
   personality: warm_erratic
   # mlx needs Python 3.10+ (brew install python@3.11). Until then: fast Edge voices.
-  engine_chain: edge_melodic, edge, replicate_kokoro, say
+  engine_chain: edge_melodic, edge, say
   emotion_enabled: true
   # The pentatonic contour: a stylistic mode, for lyrical text only.
   melodic_enabled: true
