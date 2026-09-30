@@ -68,7 +68,7 @@ module Deploy
     end
 
     def owned_domains
-      block = File.read(File.join(ROOT, "OPENBSD/OPERATOR.sh"), encoding: "UTF-8")[/^OWNED_DOMAINS=\\(\\n(.*?)\\n\\)$/m, 1]
+      block = File.read(File.join(ROOT, "OPENBSD/OPERATOR.sh"), encoding: "UTF-8")[/^OWNED_DOMAINS=\(\n(.*?)\n\)$/m, 1]
       raise "OWNED_DOMAINS block not found in OPERATOR.sh" unless block
 
       block.lines.map(&:strip).reject { |line| line.empty? || line.start_with?("#") }
