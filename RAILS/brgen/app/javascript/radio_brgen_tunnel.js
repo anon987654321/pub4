@@ -3,34 +3,19 @@ import { publishVisual } from "pub4/visual_field"
 'use strict'
 
 const DEFAULT_TRACKS = [
-  { title: "Microphone Master", id: "9EGHwkDix78", artist: "J Dilla" },
-  { title: "In Space", id: "vO2nWXCVt6o", artist: "J Dilla" },
-  { title: "Timeless", id: "dbbfo9_7D8g", artist: "J Dilla" },
-  { title: "Due Time", id: "WC09qDzU9y4", artist: "AFTA-1" },
-  { title: "Massage Situation", id: "6oUx6wGCekM", artist: "Flying Lotus" },
-  { title: "Eye", id: "ScVz2mntmCE", artist: "Madlib" },
-  { title: "Players", id: "KsULjOCYdnY", artist: "Slum Village" },
-  { title: "Exhibit A", id: "H3UIHZshNQ0", artist: "Jay Electronica" },
-  { title: "La La (Instrumental)", id: "EYJxxHQ7sX0", artist: "Slum Village" },
-  { title: "Get It Together", id: "t6T-Q6HMbEo", artist: "Slum Village" },
-  { title: "Fantastic", id: "a3ISYWWYgz8", artist: "Slum Village" },
-  { title: "me Yesterday//Corded", id: "8DgAhgmpXNA", artist: "Flying Lotus" },
-  { title: "Camel", id: "fU9YRGLPDQ8", artist: "Flying Lotus" },
-  { title: "Golden Diva", id: "iu4FVvR2QQs", artist: "Flying Lotus" },
-  { title: "Worlds Full of Sadness", id: "MU3nfxsz2XA", artist: "Slum Village" },
-  { title: "Sarria's Mind", id: "gFKArkiz8vU", artist: "A. Mochi & Takaaki Itoh" },
-  { title: "Rounded", id: "oeaY2h_cKsg", artist: "Samiyam" },
-  { title: "Traffic", id: "bH-30pDoQdo", artist: "Chase Swayze" },
-  { title: "Underrated", id: "1jjFk2Vp5ok", artist: "Chase Swayze" },
-  { title: "BTS Radio 2006", id: "6nWdggkulHk", artist: "Flying Lotus" }
+  { title: "Microphone Master [Extended]", id: "9EGHwkDix78", artist: "J Dilla" },
+  { title: "Sounds Like Love (Extended)", id: "jnP3tRG-LZs", artist: "J Dilla" },
+  { title: "Searchin' (Instrumental)", id: "1XJLtZJ9Ook", artist: "Jay Dee Aka J Dilla" },
+  { title: "Get It Together (Instrumental)", id: "t6T-Q6HMbEo", artist: "J-88 (Slum Village)" },
+  { title: "Hustle (Instrumental Mix)", id: "zoGTC7uROZE", artist: "J Dilla" },
+  { title: "Stupid Lies (Instrumental)", id: "7611GgbJAbM", artist: "J Dilla" },
+  { title: "Fantastic (Instrumental)", id: "j0z_-7TfPeM", artist: "J Dilla" },
+  { title: "Can I Be Me (Instrumental)", id: "Fo7WoYn_FEs", artist: "J Dilla" }
 ]
 
-// Radio Bergen opens on the same track every session. A station has a signature
-// tune; a shuffle has none, and the first thing a visitor heard used to be
-// whichever of 24 tracks Math.random landed on. AFTA-1's "Due Time" is the
-// opener by operator decision. Rotation is random only after it has played, and
-// the lookup is by id so reordering the manifest cannot silently unpin it.
-const OPENING_TRACK_ID = "WC09qDzU9y4"
+// The original Radio Bergen surface opens on Microphone Master and keeps one
+// persistent warped tunnel through the whole eight-track set.
+const OPENING_TRACK_ID = "9EGHwkDix78"
 
 // FFT band edges as a fraction of the spectrum. 2048 bins over ~44.1kHz puts
 // bass under ~250Hz, mids to ~2kHz, highs above — the split that makes a kick
@@ -39,9 +24,8 @@ const BAND_BASS = 0.012
 const BAND_MID = 0.09
 
 class AudioEngine {
-  constructor({ iframe, trackDisplay, tracks = DEFAULT_TRACKS, onTrackChange }) {
+  constructor({ iframe, trackDisplay, tracks = DEFAULT_TRACKS }) {
     this.iframe = iframe
-    this.onTrackChange = onTrackChange
     this.trackDisplay = trackDisplay
     this.tracks = tracks.length ? tracks : DEFAULT_TRACKS
     this.isPlaying = false
@@ -222,7 +206,20 @@ class AudioEngine {
     this.loadCurrentTrack()
     this.updateTrackDisplay()
     this.#syncMediaSession()
-    this.onTrackChange?.()
+    this.#publishTrack()
+  }
+
+  publishTrack() {
+    const track = this.tracks[this.currentTrack]
+    publishVisual("radio:track", {
+      topology: "tunnel",
+      mode: "radio:tunnel",
+      activity: 0.72,
+      arousal: 0.62,
+      confidence: 0.9,
+      beat: 0.65,
+      name: track?.title || "radio"
+    })
   }
 
   nextTrack() {
@@ -231,7 +228,7 @@ class AudioEngine {
     this.loadCurrentTrack()
     this.updateTrackDisplay()
     this.#syncMediaSession()
-    this.onTrackChange?.()
+    this.#publishTrack()
   }
 
   getAudioData() {
@@ -280,16 +277,26 @@ class AudioEngine {
       return { bass, mid, high, average, beat: this.beat, flux: spectralFlux }
     }
 
-    // A YouTube embed cannot be analysed. Rather than invent a spectrum for it,
-    // report a low steady level: the tunnel keeps its own breathing and lean,
-    // which are autonomous, and simply does not claim to be hearing anything.
-    const level = 0.18
-    this.bassLevel = level
-    this.midLevel = level
-    this.highLevel = level * 0.5
-    this.beat *= 0.72
-    this.audioLevel = level
-    return { bass: level, mid: level, high: level * 0.5, average: level, beat: this.beat, flux: 0 }
+    // YouTube is cross-origin, so the iframe cannot supply an AnalyserNode.
+    // Restore the reference's musical motion as a deterministic visual groove:
+    // it is not presented to the renderer as a measured spectrum. Local hosted
+    // tracks above still use their real FFT values.
+    const t = (performance.now() - this.startTime) / 1000
+    const bpm = 84 + (this.currentTrack * 5) % 17
+    const beatPhase = t * bpm / 60 * Math.PI * 2
+    const swing = Math.sin(t * 1.73 + this.currentTrack) * 0.08
+    const pocket = Math.cos(t * 0.61 + this.currentTrack * 0.37) * 0.05
+    const bass = Math.max(0, Math.min(1, 0.22 + 0.40 * (0.5 + 0.5 * Math.sin(beatPhase + pocket)) + swing)) * this.bassInfluence
+    const mid = Math.max(0, Math.min(1, 0.28 + 0.24 * (0.5 + 0.5 * Math.sin(beatPhase * 2.0 + swing)))) * this.midInfluence
+    const high = Math.max(0, Math.min(1, 0.10 + 0.22 * (0.5 + 0.5 * Math.sin(beatPhase * 3.0 + pocket)))) * this.highInfluence
+    const average = (bass + mid + high) / 3
+    const pulse = Math.max(0, Math.sin(beatPhase))
+    this.beat = Math.max(pulse * 0.8, this.beat * 0.72)
+    this.bassLevel = bass
+    this.midLevel = mid
+    this.highLevel = high
+    this.audioLevel = average
+    return { bass, mid, high, average, beat: this.beat, flux: pulse * 0.5, proxy: true }
   }
 
   updateTrackDisplay() {
@@ -325,8 +332,9 @@ class AudioEngine {
 // warm paper amber is built on. Full-saturation ember only ever appears at
 // INK_ALPHA_MIN over black, so the far end reads as a dark coal, not as a
 // warning colour.
-const INK_FAR = { r: 167 / 255, g: 71 / 255, b: 59 / 255 }
-const INK_NEAR = { r: 248 / 255, g: 245 / 255, b: 240 / 255 }
+// The original Radio Bergen palette: cool blue/teal on black.
+const INK_FAR = { r: 4 / 255, g: 27 / 255, b: 37 / 255 }
+const INK_NEAR = { r: 78 / 255, g: 205 / 255, b: 196 / 255 }
 // Far rings barely present, near rings solid — the 8%-to-full range the face
 // works in, expressed 0..1.
 const INK_ALPHA_MIN = 0.08
@@ -345,8 +353,6 @@ const BUFFER_MAX_H = 640
 // glow, and it is a trail rather than a halo: an additive second pass over the
 // same geometry is what NO_WEBGL_GLOW_PASS forbids, and it is also what made
 // MASTER's face read as a lit wireframe.
-const TRAIL_DECAY = 0.82
-
 // Postures. Named weight sets the engine eases toward, never snaps to — the
 // easing is the whole effect, because a creature that changed shape on a frame
 // boundary would read as a scene cut. Weights compose, so `dormant` still
@@ -433,7 +439,22 @@ void main() {
   radius *= uSpread * (1.0 + uSag * aSeed * 0.22);
 
   float ang = aAngle + uTime + z * uTwist;
+
+  // Distortion is a real geometric warp: three slow, incommensurate waves pinch
+  // each ring differently along depth, restoring the crooked hand-drawn tunnel.
+  float warp = sin(ang * 3.0 + z * 0.020 - uTime * 1.65) *
+    (0.08 + uMid * 0.08) *
+    (0.30 + 0.70 * near);
+  float skew = cos(ang * 2.0 - z * 0.013 + uTime * 0.72) *
+    (0.035 + uBeat * 0.045);
   vec2 p = vec2(cos(ang), sin(ang)) * radius;
+  p.x *= 1.0 + warp;
+  p.y *= 1.0 - warp * 0.58;
+  p += vec2(
+    sin(z * 0.018 - uTime * 0.62) * uRadius * 0.035 * uLean,
+    cos(z * 0.015 + uTime * 0.47) * uRadius * 0.028 * uLean
+  );
+  p += vec2(skew, -skew * 0.7) * radius;
 
   p += leanAt(aRingT, uTime) * uLean * uRadius * (0.25 + 0.75 * (1.0 - near));
   // Gravity on the far end only — the near rings hold, so the tube sags away
@@ -503,16 +524,6 @@ void main() {
   gl_FragColor = vec4(col, alpha);
 }`
 
-const FADE_VERT = `
-precision highp float;
-attribute vec2 aQuad;
-void main() { gl_Position = vec4(aQuad, 0.0, 1.0); }`
-
-const FADE_FRAG = `
-precision highp float;
-uniform float uFade;
-void main() { gl_FragColor = vec4(0.0, 0.0, 0.0, uFade); }`
-
 function compile(gl, type, src, label) {
   const s = gl.createShader(type)
   gl.shaderSource(s, src)
@@ -567,12 +578,11 @@ class VisualEngine {
       fov: 250,
       speed: 0.75,
       particleCountPerRow: this.isMobile ? 32 : 48,
-      zStep: this.isMobile ? 6 : 4
+      zStep: this.isMobile ? 7 : 5
     }
-    // antialias: false. Nothing here has an edge to smooth, and MSAA resolves a
-    // 1px point as partial coverage across up to four pixels — it costs
-    // bandwidth to destroy exactly the crispness this renderer exists for.
-    const opts = { alpha: false, antialias: false, depth: false, preserveDrawingBuffer: true }
+    // One-pixel line drawing, no antialiasing. The back buffer is disposable:
+    // the tunnel clears each frame, so preserving it only adds memory traffic.
+    const opts = { alpha: false, antialias: false, depth: false, preserveDrawingBuffer: false }
     this.gl = canvas.getContext("webgl", opts) || canvas.getContext("experimental-webgl", opts)
     if (this.gl) {
       try {
@@ -589,7 +599,6 @@ class VisualEngine {
   #initGL() {
     const gl = this.gl
     this.prog = program(gl, VERT, FRAG, "tunnel")
-    this.fadeProg = program(gl, FADE_VERT, FADE_FRAG, "phosphor fade")
     this.attr = {
       angle: gl.getAttribLocation(this.prog, "aAngle"),
       ringT: gl.getAttribLocation(this.prog, "aRingT"),
@@ -602,14 +611,12 @@ class VisualEngine {
       "uPeristalsis", "uLean", "uTwist", "uSag", "uSpread", "uBlink", "uDither"]) {
       this.uni[n] = gl.getUniformLocation(this.prog, n)
     }
-    this.fadeAttr = gl.getAttribLocation(this.fadeProg, "aQuad")
-    this.fadeUni = gl.getUniformLocation(this.fadeProg, "uFade")
-    this.quadBuf = gl.createBuffer()
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.quadBuf)
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW)
     this.angleBuf = gl.createBuffer()
     this.ringBuf = gl.createBuffer()
     this.seedBuf = gl.createBuffer()
+    this.lineAngleBuf = gl.createBuffer()
+    this.lineRingBuf = gl.createBuffer()
+    this.lineSeedBuf = gl.createBuffer()
     gl.disable(gl.DEPTH_TEST)
     gl.enable(gl.BLEND)
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
@@ -666,7 +673,41 @@ class VisualEngine {
         k += 1
       }
     }
+
+    // The original tunnel was a connected mesh, not a cloud of dots. Keep that
+    // character, but put the entire edge list in three static GPU buffers:
+    // ring loops + longitudinal seams become one GL_LINES draw instead of
+    // thousands of CPU line/pixel operations every frame.
+    const edgeCount = particleCountPerRow * (rows + rows - 1)
+    const lineVertexCount = edgeCount * 2
+    const lineAngle = new Float32Array(lineVertexCount)
+    const lineRingT = new Float32Array(lineVertexCount)
+    const lineSeed = new Float32Array(lineVertexCount)
+    let edge = 0
+    const pushVertex = (index, out) => {
+      lineAngle[out] = angle[index]
+      lineRingT[out] = ringT[index]
+      lineSeed[out] = seed[index]
+    }
+    for (let i = 0; i < rows; i++) {
+      for (let j = 0; j < particleCountPerRow; j++) {
+        const a = i * particleCountPerRow + j
+        const b = i * particleCountPerRow + ((j + 1) % particleCountPerRow)
+        pushVertex(a, edge * 2)
+        pushVertex(b, edge * 2 + 1)
+        edge += 1
+        if (i < rows - 1) {
+          const c = (i + 1) * particleCountPerRow + j
+          pushVertex(a, edge * 2)
+          pushVertex(c, edge * 2 + 1)
+          edge += 1
+        }
+      }
+    }
+
     this.pointCount = count
+    this.lineVertexCount = lineVertexCount
+    this.rows = rows
     this.particles = []
     this.centers = []
     if (!this.gl) {
@@ -682,6 +723,12 @@ class VisualEngine {
     gl.bufferData(gl.ARRAY_BUFFER, ringT, gl.STATIC_DRAW)
     gl.bindBuffer(gl.ARRAY_BUFFER, this.seedBuf)
     gl.bufferData(gl.ARRAY_BUFFER, seed, gl.STATIC_DRAW)
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.lineAngleBuf)
+    gl.bufferData(gl.ARRAY_BUFFER, lineAngle, gl.STATIC_DRAW)
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.lineRingBuf)
+    gl.bufferData(gl.ARRAY_BUFFER, lineRingT, gl.STATIC_DRAW)
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.lineSeedBuf)
+    gl.bufferData(gl.ARRAY_BUFFER, lineSeed, gl.STATIC_DRAW)
   }
 
   update(audioData) {
@@ -774,16 +821,8 @@ class VisualEngine {
 
   #renderGL() {
     const gl = this.gl
-    // Phosphor: dim the previous frame instead of clearing it. A black quad at
-    // alpha (1 - decay) under normal blending is dst * decay — the trail.
-    gl.useProgram(this.fadeProg)
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.quadBuf)
-    gl.enableVertexAttribArray(this.fadeAttr)
-    gl.vertexAttribPointer(this.fadeAttr, 2, gl.FLOAT, false, 0, 0)
-    gl.uniform1f(this.fadeUni, 1 - TRAIL_DECAY)
-    gl.drawArrays(gl.TRIANGLES, 0, 3)
-
-    gl.useProgram(this.prog)
+    // Clear like the original reference. This keeps the buffer disposable and
+    // lets the browser avoid a costly preserved-backbuffer path.\n\n    gl.useProgram(this.prog)
     const bind = (buf, loc) => {
       if (loc < 0) return
       gl.bindBuffer(gl.ARRAY_BUFFER, buf)
@@ -839,40 +878,95 @@ class VisualEngine {
     gl.uniform1f(u.uAlphaMax, INK_ALPHA_MAX)
     gl.uniform1f(u.uExposure, (0.85 + (this.audioBoost || 0) * 0.3) * post.exposure)
 
-    gl.drawArrays(gl.POINTS, 0, this.pointCount)
+    if (this.lineVertexCount > 0) {
+      const bindLine = (buf, loc) => {
+        if (loc < 0) return
+        gl.bindBuffer(gl.ARRAY_BUFFER, buf)
+        gl.enableVertexAttribArray(loc)
+        gl.vertexAttribPointer(loc, 1, gl.FLOAT, false, 0, 0)
+      }
+      bindLine(this.lineAngleBuf, this.attr.angle)
+      bindLine(this.lineRingBuf, this.attr.ringT)
+      bindLine(this.lineSeedBuf, this.attr.seed)
+      // The shader already calculates the same distorted 3D position for both
+      // endpoints. GL_LINES reconnects the historic radial grid without
+      // touching the CPU per frame.
+      gl.drawArrays(gl.LINES, 0, this.lineVertexCount)
+    }
   }
 
   #renderFallback() {
     const ctx = this.ctx
     if (!ctx) return
-    ctx.fillStyle = `rgba(0,0,0,${(1 - TRAIL_DECAY).toFixed(3)})`
+
+    // Fallback keeps the same connected tunnel using native paths. It is
+    // intentionally lower density than WebGL, so an older browser degrades
+    // gracefully instead of recreating the original pixel-grind.
+    ctx.fillStyle = "#000"
     ctx.fillRect(0, 0, this.w, this.h)
-    const { fov } = this.config
+
+    const { fov, particleCountPerRow, zStep } = this.config
+    const rows = Math.max(1, Math.round((fov * 2) / zStep))
     const span = fov * 2
-    const radius = Math.hypot(this.w, this.h) * 0.19 * (1 + (this.bass || 0) * 0.18) * (this.breath || 1)
-    const c = this.centerNow
-    for (let i = 0; i < this.pointCount; i++) {
-      const z = ((this.cpuRingT[i] * span + this.zOffset) % span + span) % span - fov
-      const ang = this.cpuAngle[i] + this.time
+    const radius = Math.hypot(this.w, this.h) * 0.19 *
+      (1 + (this.bass || 0) * 0.18) * (this.breath || 1)
+    const center = this.centerNow
+    const point = (ring, index) => {
+      const z = ((((ring / rows) * span + this.zOffset) % span) + span) % span - fov
+      const ang = (index / particleCountPerRow) * Math.PI * 2 + this.time + z * 0.0016
+      let warp = 1 +
+        Math.sin(ang * 3 + z * 0.02 - this.time * 1.65) *
+        (0.08 + (this.mid || 0) * 0.08) *
+        (0.30 + 0.70 * Math.min(1, Math.max(0, 1 - (z + fov) / span)))
+      let skew = Math.cos(ang * 2 - z * 0.013 + this.time * 0.72) *
+        (0.035 + (this.beat || 0) * 0.045)
+      const r = radius * warp
       const scale = fov / Math.max(0.5, fov + z)
-      const x = Math.cos(ang) * radius * scale + c.x
-      const y = Math.sin(ang) * radius * scale + c.y
-      if (x < 0 || x >= this.w || y < 0 || y >= this.h) continue
-      const near = Math.min(1, Math.max(0, 1 - (z + fov) / span)) ** 2
-      let a = INK_ALPHA_MIN + (INK_ALPHA_MAX - INK_ALPHA_MIN) * near
-      // The same lid as the shader. Without this the 2D path would quietly never
-      // blink, and the difference between the two renderers would be a behaviour
-      // rather than a resolution.
-      if (this.blink >= 0) {
-        const d = Math.min(1, Math.abs(near - this.blink) / 0.16)
-        a *= 1 - 0.92 * (1 - (d * d * (3 - 2 * d)))
+      return {
+        x: Math.cos(ang) * r * scale + center.x + skew * radius * scale,
+        y: Math.sin(ang) * r * scale + center.y - skew * radius * scale * 0.7,
+        z
       }
+    }
+
+    ctx.lineWidth = 1
+    ctx.globalCompositeOperation = "source-over"
+
+    for (let ring = 0; ring < rows; ring++) {
+      const first = point(ring, 0)
+      const near = Math.min(1, Math.max(0, 1 - (first.z + fov) / span))
+      const alpha = INK_ALPHA_MIN + (INK_ALPHA_MAX - INK_ALPHA_MIN) * near * near
       const r = Math.round((INK_FAR.r + (INK_NEAR.r - INK_FAR.r) * near) * 255)
       const g = Math.round((INK_FAR.g + (INK_NEAR.g - INK_FAR.g) * near) * 255)
       const b = Math.round((INK_FAR.b + (INK_NEAR.b - INK_FAR.b) * near) * 255)
-      ctx.fillStyle = `rgba(${r},${g},${b},${a.toFixed(3)})`
-      ctx.fillRect(x | 0, y | 0, 1, 1)
+      ctx.globalAlpha = alpha
+      ctx.strokeStyle = `rgb(${r} ${g} ${b})`
+      ctx.beginPath()
+      ctx.moveTo(first.x, first.y)
+      for (let j = 1; j <= particleCountPerRow; j++) {
+        const p = point(ring, j % particleCountPerRow)
+        ctx.lineTo(p.x, p.y)
+      }
+      ctx.stroke()
     }
+
+    // Only every fourth seam in the fallback: enough to preserve the tunnel
+    // lattice without turning an old CPU renderer into the same bottleneck.
+    for (let ring = 0; ring < rows - 1; ring++) {
+      for (let j = 0; j < particleCountPerRow; j += 4) {
+        const a = point(ring, j)
+        const b = point(ring + 1, j)
+        const near = Math.min(1, Math.max(0, 1 - (a.z + fov) / span))
+        const alpha = INK_ALPHA_MIN + (INK_ALPHA_MAX - INK_ALPHA_MIN) * near * near
+        ctx.globalAlpha = alpha * 0.72
+        ctx.strokeStyle = `rgb(${Math.round((INK_FAR.r + (INK_NEAR.r - INK_FAR.r) * near) * 255)} ${Math.round((INK_FAR.g + (INK_NEAR.g - INK_FAR.g) * near) * 255)} ${Math.round((INK_FAR.b + (INK_NEAR.b - INK_FAR.b) * near) * 255)})`
+        ctx.beginPath()
+        ctx.moveTo(a.x, a.y)
+        ctx.lineTo(b.x, b.y)
+        ctx.stroke()
+      }
+    }
+    ctx.globalAlpha = 1
   }
 
   setTouch(x, y, active) {
@@ -891,7 +985,7 @@ class VisualEngine {
   setPerformanceMode(value) {
     this.isMobile = value
     this.config.particleCountPerRow = value ? 32 : 48
-    this.config.zStep = value ? 6 : 4
+    this.config.zStep = value ? 7 : 5
     this.initParticles()
   }
 }
@@ -904,15 +998,10 @@ export class RadioBrgen {
     this.isStarted = false
     this.isMobile = window.innerWidth < 768 || "ontouchstart" in window
     this._boundHandlers = []
-    // 0 is the tunnel. Each new track steps to the next of radio_visualizers.js's
-    // seven 2D renderers and wraps back round to the tunnel.
-    this.vizMode = 0
-
     this.audioEngine = new AudioEngine({
       iframe: options.youtubePlayer,
       trackDisplay: options.trackDisplay,
-      tracks: options.tracks,
-      onTrackChange: () => this.cycleVisualizer()
+      tracks: options.tracks
     })
     this.visualEngine = new VisualEngine(this.canvas)
 
@@ -929,33 +1018,9 @@ export class RadioBrgen {
     this.isStarted = true
     this.audioEngine.setUserInteracted()
     this.audioEngine.start()
+    this.audioEngine.publishTrack?.()
     if (this.overlay) this.overlay.hidden = true
     this.onStart?.()
-  }
-
-  // The renderers load on the first track change rather than with the page, so
-  // a visit that hears one track fetches none of them.
-  async cycleVisualizer() {
-    this._deck ??= import("radio_visualizers")
-      .then(({ VisualizerDeck }) => new VisualizerDeck(this.canvas))
-      .catch((error) => {
-        console.warn("radio_brgen_tunnel: visualizers unavailable, staying on the tunnel", error)
-        this._deck = null
-        return null
-      })
-    publishVisual("radio:track", {
-      topology: "tunnel",
-      mode: "radio:track",
-      activity: 0.72,
-      arousal: 0.62,
-      confidence: 0.9,
-      beat: 0.65
-    })
-    const deck = await this._deck
-    if (!deck || this._destroyed) return
-    this.deck = deck
-    this.vizMode = (this.vizMode + 1) % deck.size
-    deck.show(this.vizMode, this.visualEngine.w, this.visualEngine.h)
   }
 
   setupEventListeners() {
@@ -1003,7 +1068,7 @@ export class RadioBrgen {
       clearTimeout(this._resizeTimer)
       this._resizeTimer = setTimeout(() => {
         this.visualEngine.resize()
-        this.deck?.resize(this.vizMode, this.visualEngine.w, this.visualEngine.h)
+
       }, 250)
     }
 
@@ -1068,7 +1133,7 @@ export class RadioBrgen {
           this._lastVisualSignalAt = visualNow
           publishVisual("radio:audio", {
             topology: "tunnel",
-            mode: this.vizMode === 0 ? "radio:tunnel" : "radio:deck",
+            mode: "radio:tunnel",
             activity: audioData.average,
             arousal: audioData.average,
             confidence: 0.92,
@@ -1078,14 +1143,7 @@ export class RadioBrgen {
             beat: audioData.beat
           })
         }
-        const visualInput = {
-          ...audioData,
-          parallax: this.visualEngine.parallaxOffset(audioData)
-        }
-        // The tunnel keeps its state moving underneath a 2D renderer, so it
-        // resumes mid-flight rather than from a cold start when the cycle returns.
-        if (this.vizMode === 0 || !this.deck) this.visualEngine.render()
-        else this.deck.frame(this.vizMode, visualInput)
+        this.visualEngine.render()
       } catch (error) {
         if (typeof console !== "undefined" && console.warn) {
           console.warn("radio_brgen_tunnel: animation frame failed, continuing", error)
@@ -1099,9 +1157,7 @@ export class RadioBrgen {
   destroy() {
     this._destroyed = true
     cancelAnimationFrame(this._raf)
-    this.deck?.destroy()
     this.audioEngine.stop()
-    if (this.gui) this.gui.destroy()
     this._boundHandlers.forEach(([target, event, handler]) => {
       const el = target === "overlay" ? this.overlay : target === "window" ? window : document
       if (el) el.removeEventListener(event, handler)

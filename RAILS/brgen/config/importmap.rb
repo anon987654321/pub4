@@ -36,9 +36,5 @@ pin "pub4/stimulus_boot_social", to: "stimulus_boot_social.js"
 pin "pub4/stimulus_boot_brgen", to: "stimulus_boot_brgen.js"
 
 pin "radio_brgen_tunnel", to: "radio_brgen_tunnel.js"
-# The tunnel imports this on its first track change. A preload would fetch the
-# seven renderers on every brgen page, not only on the radio.
-pin "radio_visualizers", to: "radio_visualizers.js", preload: false
-
 # No tiptap pin here. It is pinned once in shared/config/importmap_baseline.rb,
 # vendored to shared/vendor/javascript/tiptap.js rather than fetched from a CDN.
