@@ -100,16 +100,21 @@ class TestFixLoopOscillation < Minitest::Test
     FileUtils.remove_entry(@root) if @root && Dir.exist?(@root)
   end
 
-  def build_loop(violations)
-    Master::Fix::FixLoop.new(
-      rules: [StubRule.new("TEST_RULE", :warning)],
-      agent: OpenCircuitAgent.new,
-      scanner: ConstantScanner.new(violations),
-      root: @root,
-      bus: @bus,
-      git: StubGit.new,
-      rollback:,
-    ).tap { |loop| calm(loop) }
+  def build_loop(violations, committer: nil)
+    committer ||= CommitterSpy.new
+    loop = nil
+    Master::Fix::FixLoop::Committer.stub(:new, committer) do
+      loop = Master::Fix::FixLoop.new(
+        rules: [StubRule.new("TEST_RULE", :warning)],
+        agent: OpenCircuitAgent.new,
+        scanner: ConstantScanner.new(violations),
+        root: @root,
+        bus: @bus,
+        git: StubGit.new,
+      )
+    end
+    calm(loop)
+    [loop, committer]
   end
 
   def build_loop_with_scanner(scanner)
@@ -134,7 +139,7 @@ class TestFixLoopOscillation < Minitest::Test
 
   def test_oscillation_fires_when_violation_set_repeats
     # Pass 1: snapshot recorded. Pass 2: same snapshot -> oscillation break.
-    loop = build_loop([{ rule: "TEST_RULE", file: "dummy.yml", line: 1, message: "osc" }], rollback:)
+    loop, committer = build_loop([{ rule: "TEST_RULE", file: "dummy.yml", line: 1, message: "osc" }])
     result = loop.run(@root)
 
     assert result.ok?
@@ -143,13 +148,13 @@ class TestFixLoopOscillation < Minitest::Test
     osc = @bus.events.select { |e| e[:event] == "fix_loop:oscillation" }
     assert_equal 1, osc.size
     assert_equal 1, osc.first[:payload][:violations]
-    assert_equal 1, rollback.calls.size
-    assert_equal :policy, rollback.calls.first.category
+    assert_equal [:abort], committer.calls
+    rollback = @bus.events.find { |e| e[:event] == "fix_loop:transaction_rollback" }
+    assert_equal "fix loop oscillation", rollback[:payload][:reason]
   end
 
   def test_progressed_pass_spares_oscillation_rollback
-    rollback = RollbackSpy.new
-    loop = build_loop([{ rule: "TEST_RULE", file: "dummy.yml", line: 1, message: "osc" }], rollback:)
+    loop, committer = build_loop([{ rule: "TEST_RULE", file: "dummy.yml", line: 1, message: "osc" }])
     pass_runner = loop.instance_variable_get(:@pass_runner)
 
     stagnant = pass_runner.send(
@@ -163,6 +168,7 @@ class TestFixLoopOscillation < Minitest::Test
     )
 
     refute stagnant
+    assert_empty committer.calls
     refute_includes @bus.events.map { |e| e[:event] }, "fix_loop:transaction_rollback"
     assert_empty @bus.events.select { |e| e[:event] == "fix_loop:oscillation" }
   end
