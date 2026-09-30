@@ -69,7 +69,7 @@ module Master
       # model only when nothing local matches.
       def dispatch_why(agent:, root:, ctx: nil)
         rule = arg_for(ctx)
-        return "usage: /why <law|scan_rule|anti_pattern|style.key>" if rule.empty?
+        return "usage: /why <law|path|scan_rule|anti_pattern|style.key>" if rule.empty?
         local = Trace::WhyExplainer.new(root:).explain(rule)
         return local if local
         agent.ask_once(Voice::Personality.why_prompt(rule))
