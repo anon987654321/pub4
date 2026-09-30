@@ -63,7 +63,10 @@
     its own reading of the same gesture. %>
 <section class="mobile-sheet" data-level="0" aria-label="<%= t("nav.quick_actions") %>" data-bottom-sheet-target="sheet" data-action="pointerdown->bottom-sheet#pointerDown pointermove->bottom-sheet#pointerMove pointerup->bottom-sheet#pointerUp pointercancel->bottom-sheet#pointerUp">
   <div class="mobile-sheet-handle"></div>
-  <div class="mobile-sheet-links">
+  <%= render "shared/city_network",
+               container_class: "mobile-sheet-cities",
+               heading_id: "mobile-sheet-cities-title" %>
+    <div class="mobile-sheet-links">
     <%# AI, Nearby and New post are tab items three centimetres above this
         sheet, and listing them again made More read as "everything" rather
         than "the rest". The sheet is what the bar has no room for: seven tabs
