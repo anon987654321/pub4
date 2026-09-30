@@ -121,7 +121,7 @@ module Master
         end
         return unless should_warn
 
-        Kernel.warn("event_bus: #{key} failed — #{error.class}: #{error.message}")
+        Master::Trace::Dmesg.once("event0", "#{key} failed, #{error.class}: #{error.message}")
       rescue StandardError
         nil
       end
@@ -130,7 +130,7 @@ module Master
         return if state[:warned]
 
         state[:warned] = true
-        Kernel.warn("event_bus: dispatch limit #{MAX_DISPATCHED_EVENTS} reached at #{event}; dropping recursive telemetry")
+        Master::Trace::Dmesg.once("event0", "dispatch limit #{MAX_DISPATCHED_EVENTS} reached at #{event}, dropping recursive telemetry")
       rescue StandardError
         nil
       end
