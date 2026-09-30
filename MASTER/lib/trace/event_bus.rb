@@ -84,6 +84,8 @@ module Master
 
         persist_event(event, enriched)
 
+        previous_conversation = Fiber[:master_conversation]
+        Fiber[:master_conversation] = conversation
         # No per-subscriber deadline. Ruby bounds a handler only by raising into
         # it at whatever line it reached, and the handlers are inline writers of
         # log lines and SSE frames that a raise mid-write leaves torn. A handler's
@@ -96,6 +98,8 @@ module Master
             report_handler_failure(event, e)
           end
         end
+      ensure
+        Fiber[:master_conversation] = previous_conversation
       end
 
       def report_handler_failure(event, error)
