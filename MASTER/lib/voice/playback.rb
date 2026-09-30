@@ -169,20 +169,22 @@ module Master
 
       def drain
         while (job = @queue.pop)
-          text, part, last = job.is_a?(Array) ? job : [job, job, true]
-          path = synthesize(part)
-          spoken(text) if last
-          unless path
-            warn_once("synthesis failed#{Speech.last_error ? ": #{Speech.last_error}" : ""}")
-            next
-          end
+          begin
+            text, part, last = job.is_a?(Array) ? job : [job, job, true]
+            path = synthesize(part)
+            spoken(text) if last
+            unless path
+              warn_once("synthesis failed#{Speech.last_error ? ": #{Speech.last_error}" : ""}")
+              next
+            end
 
-          unless play(path)
-            warn_once("audio player failed — #{player&.first || "no player"}")
+            unless play(path)
+              warn_once("audio player failed — #{player&.first || "no player"}")
+            end
+            File.delete(path) if path.start_with?("/tmp/m_tts_") && File.exist?(path)
+          rescue StandardError => e
+            warn_once("playback worker failed — #{e.class}: #{e.message}")
           end
-          File.delete(path) if path.start_with?("/tmp/m_tts_") && File.exist?(path)
-        rescue StandardError => e
-          warn_once("playback worker failed — #{e.class}: #{e.message}")
         end
       end
 
