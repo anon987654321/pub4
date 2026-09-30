@@ -124,7 +124,7 @@ module Master
       # fallback Transcendent already had, and a workstation without Edge or
       # espeak was silent for no reason of its own.
       def synthesize_say(text)
-        audio_path = "/tmp/m_tts_#{SecureRandom.hex(8)}.mp3"
+        audio_path = "/tmp/m_tts_#{SecureRandom.hex(8)}.m4a"
         return audio_path if Engines.synth_say(text, audio_path) && File.size?(audio_path)
 
         warn_tts("say failed or produced empty audio")
