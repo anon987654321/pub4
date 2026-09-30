@@ -9,7 +9,7 @@ require_relative "security_error"
 begin
   require "openssl"
 rescue LoadError => e
-  warn "openssl: #{e.message} — LLM calls fail"
+  warn "crypto0: #{e.message}, LLM calls fail"
 end
 
 module Master
@@ -110,7 +110,7 @@ module Master
     chunk = File.open(path, "rb") { |io| io.read(4096) } || ""
     chunk.include?("\x00")
   rescue StandardError => e
-    warn("binary_check: #{path}: #{e.message}")
+    warn("binary0: #{path}, #{e.message}")
     true
   end
 
@@ -188,7 +188,7 @@ module Master
       rule.is_a?(Hash) && !rule["id"].to_s.strip.empty?
     end
   rescue StandardError => e
-    warn("rule_count: #{e.message}")
+    warn("rule0: count failed, #{e.message}")
     0
   end
 
