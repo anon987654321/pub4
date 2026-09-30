@@ -186,11 +186,7 @@ module Master
 
         def splash_ready_line(context)
           short_host = context[:host].split(".").first
-          if Aesthetic.wscons?
-            return d("#{context[:user]}@#{short_host}#{context[:prompt]} ready")
-          end
-
-          @p.bold.red("master") + @p.dim("@#{context[:host]} ready")
+          d("console0 at master0: #{context[:user]}@#{short_host}#{context[:prompt]} ready")
         end
 
         def splash_context(model)
@@ -226,9 +222,8 @@ module Master
         # OpenBSD 7.1 (GENERIC.MP) #400: date / builder@host:/path
         def identity_lines(context)
           [
-            d("MASTER #{release_version} (CONSTITUTIONAL) ##{context[:build]}: " \
-              "#{context[:now].strftime('%a %b %e %H:%M:%S %Z %Y')}"),
-            d("    #{context[:user]}@#{context[:host]}:#{@config['root'] || Dir.pwd}"),
+            d("master0 at mainbus0: MASTER #{release_version} (CONSTITUTIONAL) ##{context[:build]}"),
+            d("host0 at mainbus0: #{context[:user]}@#{context[:host]}:#{@config['root'] || Dir.pwd}"),
           ]
         end
 
