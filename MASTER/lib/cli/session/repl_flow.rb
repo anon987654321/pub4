@@ -44,7 +44,7 @@ module Master
         puts
         return if close_requested?
 
-        puts @refs.renderer.render("^C again to exit", mode: :dim)
+        Master::Trace::Dmesg.status("cli0", "^C again to exit")
         :interrupted
       end
 
