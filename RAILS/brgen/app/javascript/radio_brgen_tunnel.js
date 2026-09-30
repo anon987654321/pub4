@@ -310,8 +310,9 @@ class AudioEngine {
 // warm paper amber is built on. Full-saturation ember only ever appears at
 // INK_ALPHA_MIN over black, so the far end reads as a dark coal, not as a
 // warning colour.
-const INK_FAR = { r: 167 / 255, g: 71 / 255, b: 59 / 255 }
-const INK_NEAR = { r: 248 / 255, g: 245 / 255, b: 240 / 255 }
+// The original Radio Bergen palette: cool blue/teal on black.
+const INK_FAR = { r: 4 / 255, g: 27 / 255, b: 37 / 255 }
+const INK_NEAR = { r: 78 / 255, g: 205 / 255, b: 196 / 255 }
 // Far rings barely present, near rings solid — the 8%-to-full range the face
 // works in, expressed 0..1.
 const INK_ALPHA_MIN = 0.08
@@ -330,8 +331,6 @@ const BUFFER_MAX_H = 640
 // glow, and it is a trail rather than a halo: an additive second pass over the
 // same geometry is what NO_WEBGL_GLOW_PASS forbids, and it is also what made
 // MASTER's face read as a lit wireframe.
-const TRAIL_DECAY = 0.82
-
 // Postures. Named weight sets the engine eases toward, never snaps to — the
 // easing is the whole effect, because a creature that changed shape on a frame
 // boundary would read as a scene cut. Weights compose, so `dormant` still
@@ -418,7 +417,22 @@ void main() {
   radius *= uSpread * (1.0 + uSag * aSeed * 0.22);
 
   float ang = aAngle + uTime + z * uTwist;
+
+  // Distortion is a real geometric warp: three slow, incommensurate waves pinch
+  // each ring differently along depth, restoring the crooked hand-drawn tunnel.
+  float warp = sin(ang * 3.0 + z * 0.020 - uTime * 1.65) *
+    (0.08 + uMid * 0.08) *
+    (0.30 + 0.70 * near);
+  float skew = cos(ang * 2.0 - z * 0.013 + uTime * 0.72) *
+    (0.035 + uBeat * 0.045);
   vec2 p = vec2(cos(ang), sin(ang)) * radius;
+  p.x *= 1.0 + warp;
+  p.y *= 1.0 - warp * 0.58;
+  p += vec2(
+    sin(z * 0.018 - uTime * 0.62) * uRadius * 0.035 * uLean,
+    cos(z * 0.015 + uTime * 0.47) * uRadius * 0.028 * uLean
+  );
+  p += vec2(skew, -skew * 0.7) * radius;
 
   p += leanAt(aRingT, uTime) * uLean * uRadius * (0.25 + 0.75 * (1.0 - near));
   // Gravity on the far end only — the near rings hold, so the tube sags away
@@ -487,16 +501,6 @@ void main() {
   }
   gl_FragColor = vec4(col, alpha);
 }`
-
-const FADE_VERT = `
-precision highp float;
-attribute vec2 aQuad;
-void main() { gl_Position = vec4(aQuad, 0.0, 1.0); }`
-
-const FADE_FRAG = `
-precision highp float;
-uniform float uFade;
-void main() { gl_FragColor = vec4(0.0, 0.0, 0.0, uFade); }`
 
 function compile(gl, type, src, label) {
   const s = gl.createShader(type)
@@ -574,7 +578,6 @@ class VisualEngine {
   #initGL() {
     const gl = this.gl
     this.prog = program(gl, VERT, FRAG, "tunnel")
-    this.fadeProg = program(gl, FADE_VERT, FADE_FRAG, "phosphor fade")
     this.attr = {
       angle: gl.getAttribLocation(this.prog, "aAngle"),
       ringT: gl.getAttribLocation(this.prog, "aRingT"),
@@ -587,11 +590,6 @@ class VisualEngine {
       "uPeristalsis", "uLean", "uTwist", "uSag", "uSpread", "uBlink", "uDither"]) {
       this.uni[n] = gl.getUniformLocation(this.prog, n)
     }
-    this.fadeAttr = gl.getAttribLocation(this.fadeProg, "aQuad")
-    this.fadeUni = gl.getUniformLocation(this.fadeProg, "uFade")
-    this.quadBuf = gl.createBuffer()
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.quadBuf)
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW)
     this.angleBuf = gl.createBuffer()
     this.ringBuf = gl.createBuffer()
     this.seedBuf = gl.createBuffer()
@@ -802,16 +800,8 @@ class VisualEngine {
 
   #renderGL() {
     const gl = this.gl
-    // Phosphor: dim the previous frame instead of clearing it. A black quad at
-    // alpha (1 - decay) under normal blending is dst * decay — the trail.
-    gl.useProgram(this.fadeProg)
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.quadBuf)
-    gl.enableVertexAttribArray(this.fadeAttr)
-    gl.vertexAttribPointer(this.fadeAttr, 2, gl.FLOAT, false, 0, 0)
-    gl.uniform1f(this.fadeUni, 1 - TRAIL_DECAY)
-    gl.drawArrays(gl.TRIANGLES, 0, 3)
-
-    gl.useProgram(this.prog)
+    // Clear like the original reference. This keeps the buffer disposable and
+    // lets the browser avoid a costly preserved-backbuffer path.\n\n    gl.useProgram(this.prog)
     const bind = (buf, loc) => {
       if (loc < 0) return
       gl.bindBuffer(gl.ARRAY_BUFFER, buf)
