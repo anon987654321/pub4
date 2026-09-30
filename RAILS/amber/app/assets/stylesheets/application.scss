@@ -2290,3 +2290,216 @@ main#main-content .amber-look-title {
     align-self: start;
   }
 }
+
+
+/* AMBER commerce finish
+   Lyko direction: white paper, playful Nordic pastels, compact product cards,
+   clear category navigation and friendly retail controls. The existing Amber
+   wordmark remains untouched; the surrounding system carries the new mood. */
+body[data-surface="luxury"] {
+  --amber-pink: #f6d8e7;
+  --amber-pink-strong: #e7a9c8;
+  --amber-lilac: #e8def6;
+  --amber-blue: #dcecf8;
+  --amber-mint: #dff1e7;
+  --amber-yellow: #fff0c9;
+  --amber-ink: #2d2831;
+  --amber-muted: #746d77;
+  --amber-rule: #ebe4ee;
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-elevated: #fcf8fd;
+  --luxury-bg: #ffffff;
+  --luxury-surface: #ffffff;
+  --luxury-text: var(--amber-ink);
+  --luxury-muted: var(--amber-muted);
+  --luxury-border: var(--amber-rule);
+  --text: var(--amber-ink);
+  --text-secondary: var(--amber-muted);
+  --border: var(--amber-rule);
+  --accent: #a96e96;
+  --color-black: var(--amber-ink);
+  --color-white: #ffffff;
+}
+
+body[data-surface="luxury"] .amber-editorial-nav {
+  padding-block-end: 12px;
+  border-color: var(--amber-rule);
+  background: #fff;
+}
+
+body[data-surface="luxury"] .amber-editorial-nav a {
+  padding-inline: 12px;
+  border-radius: 999px;
+  text-transform: none;
+  letter-spacing: 0.01em;
+}
+
+body[data-surface="luxury"] .amber-editorial-nav a:hover,
+body[data-surface="luxury"] .amber-editorial-nav a:focus-visible {
+  background: var(--amber-pink);
+  text-decoration: none;
+}
+
+body[data-surface="luxury"] .amber-masthead,
+body[data-surface="luxury"] .amber-masthead--home {
+  background: #fff;
+}
+
+body[data-surface="luxury"] .amber-looks {
+  background: #fff;
+}
+
+body[data-surface="luxury"] .amber-look {
+  min-height: 0;
+  margin-block: 12px;
+  padding: clamp(24px, 4vw, 48px);
+  border: 0;
+  border-radius: 24px;
+  background: var(--amber-lilac);
+}
+
+body[data-surface="luxury"] .amber-look:nth-child(2n) {
+  background: var(--amber-pink);
+}
+
+body[data-surface="luxury"] .amber-look:nth-child(3n) {
+  background: var(--amber-blue);
+}
+
+body[data-surface="luxury"] .amber-look:nth-child(4n) {
+  background: var(--amber-mint);
+}
+
+body[data-surface="luxury"] .amber-look-title {
+  max-inline-size: 10ch;
+  color: var(--amber-ink);
+}
+
+body[data-surface="luxury"] .item-grid--luxury {
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 18px;
+}
+
+body[data-surface="luxury"] .item-card--luxury {
+  gap: 10px;
+  padding: 0 0 14px;
+  overflow: hidden;
+  border: 1px solid var(--amber-rule);
+  border-radius: 16px;
+  background: #fff;
+}
+
+body[data-surface="luxury"] .item-card--luxury .item-photo-wrap {
+  padding: 8px;
+  background: var(--amber-lilac);
+}
+
+body[data-surface="luxury"] .item-card--luxury:nth-child(4n) .item-photo-wrap {
+  background: var(--amber-pink);
+}
+
+body[data-surface="luxury"] .item-card--luxury:nth-child(4n + 1) .item-photo-wrap {
+  background: var(--amber-blue);
+}
+
+body[data-surface="luxury"] .item-card--luxury:nth-child(4n + 2) .item-photo-wrap {
+  background: var(--amber-mint);
+}
+
+body[data-surface="luxury"] .item-card--luxury:nth-child(4n + 3) .item-photo-wrap {
+  background: var(--amber-yellow);
+}
+
+body[data-surface="luxury"] .item-card--luxury .item-photo {
+  border-radius: 12px;
+  background: #fff;
+}
+
+body[data-surface="luxury"] .item-card--luxury .item-title,
+body[data-surface="luxury"] .item-card--luxury .item-meta,
+body[data-surface="luxury"] .item-card--luxury nav {
+  margin-inline: 14px;
+}
+
+body[data-surface="luxury"] .item-card--luxury .item-title {
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.35;
+  letter-spacing: 0;
+}
+
+body[data-surface="luxury"] .item-card--luxury nav {
+  inset-inline: 14px;
+  bottom: 12px;
+}
+
+body[data-surface="luxury"] .item-card--luxury nav .btn-sm {
+  background: var(--amber-pink);
+  color: var(--amber-ink);
+  border: 1px solid transparent;
+}
+
+body[data-surface="luxury"] .item-card--luxury nav .btn-sm:hover {
+  background: var(--amber-lilac);
+}
+
+body[data-surface="luxury"] .luxury-section {
+  padding: 24px;
+  border-radius: 24px;
+  background: #fff;
+}
+
+body[data-surface="luxury"] .btn {
+  border-radius: 999px;
+  background: var(--amber-pink);
+  color: var(--amber-ink);
+}
+
+body[data-surface="luxury"] .btn:hover {
+  background: var(--amber-lilac);
+  text-decoration: none;
+}
+
+body[data-surface="luxury"] .btn-danger {
+  background: #f2c9c9;
+  color: #52282b;
+}
+
+body[data-surface="luxury"] input,
+body[data-surface="luxury"] select,
+body[data-surface="luxury"] textarea {
+  border-color: var(--amber-rule);
+  border-radius: 12px;
+  background: #fff;
+}
+
+body[data-surface="luxury"] .badge,
+body[data-surface="luxury"] .commerce-fit-source {
+  border-radius: 999px;
+  background: var(--amber-lilac);
+  color: var(--amber-ink);
+}
+
+body[data-surface="luxury"] .shop-feed-note,
+body[data-surface="luxury"] .commerce-fit-reasons,
+body[data-surface="luxury"] .commerce-handoff-note {
+  color: var(--amber-muted);
+}
+
+@media (min-width: 768px) {
+  body[data-surface="luxury"] .item-grid--luxury {
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  }
+
+  body[data-surface="luxury"] .amber-look {
+    grid-template-columns: minmax(12rem, .6fr) minmax(0, 1.4fr);
+    gap: clamp(24px, 5vw, 64px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-surface="luxury"] .item-card--luxury {
+    transition: none;
+  }
+}
