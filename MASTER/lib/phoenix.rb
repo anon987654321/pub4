@@ -35,6 +35,10 @@ module Master
         end.freeze
       end
 
+      def repository_root(root: Master::ROOT)
+        repo_root(root)
+      end
+
       def boundary_for(path, root: Master::ROOT)
         absolute = File.expand_path(path.to_s, root)
         found = boundaries(root:).max_by do |boundary|
