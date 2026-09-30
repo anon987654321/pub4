@@ -17,13 +17,13 @@ module Master
       MAX_DEPTH = 16
 
       def self.text(value)
-        return "[REDACTED]" if Fiber[:master_redactor_active]
+        return "[REDACTED]" if Thread.current.thread_variable_get(:master_redactor_active)
 
-        Fiber[:master_redactor_active] = true
+        Thread.current.thread_variable_set(:master_redactor_active, true)
         begin
           redact_secrets(plain_string(value))
         ensure
-          Fiber[:master_redactor_active] = false
+          Thread.current.thread_variable_set(:master_redactor_active, false)
         end
       end
 
