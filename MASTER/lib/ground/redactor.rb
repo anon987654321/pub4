@@ -23,15 +23,14 @@ module Master
       end
 
       def self.payload(hash, seen: {})
-        return "[CYCLE]" if seen.key?(hash.object_id)
+        return "[CYCLE]" if seen.key?(hash)
 
-        seen[hash.object_id] = true
-        marked = true
+        seen[hash] = true
         hash.each_with_object({}) do |(key, value), out|
           out[key] = scrub_value(key, value, seen:)
         end
       ensure
-        seen.delete(hash.object_id) if marked
+        seen.delete(hash) if defined?(hash) && seen
       end
 
       def self.scrub_value(key, value, seen: {})
@@ -50,13 +49,12 @@ module Master
       end
 
       def self.scrub_array(key, array, seen:)
-        return "[CYCLE]" if seen.key?(array.object_id)
+        return "[CYCLE]" if seen.key?(array)
 
-        seen[array.object_id] = true
-        marked = true
+        seen[array] = true
         array.map { |item| scrub_value(key, item, seen:) }
       ensure
-        seen.delete(array.object_id) if marked
+        seen.delete(array) if defined?(array) && seen
       end
       def self.truncate(value)
         text = value.to_s
