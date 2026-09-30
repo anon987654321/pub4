@@ -54,24 +54,28 @@ module Master
         end
 
         def compact_splash(context)
-          status = []
-          status << "model: #{short_model(context[:model])}" unless context[:model].to_s.empty?
-          status << "voice: unavailable" if ENV["MASTER_TTS_DEGRADED"] == "1"
-          status << "web: ready" if splash_web_url.to_s.include?("http")
-          mode = Master::CLI::RuntimeMode.summary(config: @config).split(", ").first(3).join(", ")
+          model = short_model(context[:model])
+          web = if splash_web_url.to_s.include?("http")
+                  @config["web_token"].to_s.empty? ? "ready" : "ready, token set, /pair issue for a code"
+                else
+                  "not configured"
+                end
+          voice = ENV["MASTER_TTS_DEGRADED"] == "1" ? "degraded" : "ready"
           [
-            d("MASTER #{release_version} ##{context[:build]}  #{status.join('  ')}"),
-            d("#{context[:user]}@#{context[:host]}:#{@config['root'] || Dir.pwd}"),
-            splash_ready_line(context),
+            d("master0 at mainbus0: MASTER #{release_version} ##{context[:build]}, model #{model}"),
+            d("host0 at mainbus0: #{context[:user]}@#{context[:host]}:#{@config['root'] || Dir.pwd}"),
+            d("voice0 at mainbus0: #{voice}"),
+            d("web0 at mainbus0: #{web}"),
+            d("root on master0"),
           ].join("\n")
         rescue StandardError
           [
-            d("MASTER #{release_version} ##{context[:build]}"),
-            d("#{context[:user]}@#{context[:host]}:#{@config['root'] || Dir.pwd}"),
-            splash_ready_line(context),
+            d("master0 at mainbus0: MASTER #{release_version}"),
+            d("host0 at mainbus0: #{context[:user]}@#{context[:host]}"),
+            d("voice0 at mainbus0: unknown"),
+            d("root on master0"),
           ].join("\n")
         end
-
 
         # [state line or nil, prompt]. The state line carries what a status bar
         # used to: the caller prints it only when one of its values moves.
