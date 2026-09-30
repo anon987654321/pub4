@@ -77,6 +77,11 @@ class TestRenderer < Minitest::Test
     ENV["MASTER_DMESG"] = old_dmesg
   end
 
+  def test_session_line_is_dmesg_shaped
+    renderer = FakeRenderer.new(config: {})
+    assert_equal "session0 at master0: main, 3 messages kept", strip_ansi(renderer.session_line("Main", 3))
+  end
+
   def test_prompt_line_handles_missing_model
     renderer = FakeRenderer.new(config: {})
     state, prompt = renderer.prompt_line(nil, "idle", tokens: 0)
