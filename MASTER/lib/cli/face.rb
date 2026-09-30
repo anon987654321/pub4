@@ -49,7 +49,7 @@ module Master
         # The bit for the dot at [row][column] inside a cell, from U+2800.
         BITS = [[0x01, 0x08], [0x02, 0x10], [0x04, 0x20], [0x40, 0x80]].freeze
         BASE = 0x2800
-        GREYS = (240..255)
+        GREYS = (232..255)
         # A cell reads as fully lit from about three bright points.
         FULL = 2.5
 
@@ -152,6 +152,7 @@ module Master
         # the input line.
         def points
           cy, sy, cp, sp, cr, sr = [@look.yaw, @look.pitch, @look.roll].flat_map { |a| [Math.cos(a), Math.sin(a)] }
+          camera = CAMERA / @look.dolly
           reach = @head.scale * @look.scale
           mid_x = @braille.dots_wide / 2.0
           mid_y = (@braille.dots_high * 0.46) - (@look.bob * @head.scale)
@@ -169,7 +170,6 @@ module Master
             rz = (y * sp) + (rz * cp)
             next if rz < NEAR
 
-            camera = CAMERA / @look.dolly
             depth = camera / (camera - rz) * reach
             px = mid_x + (((rx * cr) - (ry * sr)) * depth)
             py = mid_y - (((rx * sr) + (ry * cr)) * depth)
@@ -225,8 +225,8 @@ module Master
           reach = @head.scale * SPECK_SPAN
           mid_x = @braille.dots_wide / 2.0
           mid_y = @braille.dots_high / 2.0
+          camera = CAMERA / @look.dolly
           @look.particles.each do |x, y, z|
-            camera = CAMERA / @look.dolly
             depth = camera / (camera - (z * SPECK_SPAN))
             light = SPECK_LIGHT * (0.72 + (0.28 * (((z * SPECK_SPAN) + 0.5).clamp(0.0, 1.0))))
             @braille.dot((mid_x + (x * depth * reach)).floor, (mid_y - (y * depth * reach)).floor, light, head: false)
