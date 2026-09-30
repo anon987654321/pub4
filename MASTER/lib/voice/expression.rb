@@ -234,6 +234,8 @@ end
         # deliberate blink" tuning. This table had generic values instead, so the
         # face idled differently depending on which side computed the signature.
         pernille: { breath: 0.90, saccade: 0.10, pulse_floor: 0.05, blink_ms: 4200 },
+        finn: { breath: 1.02, saccade: 0.18, pulse_floor: 0.08, blink_ms: 3000 },
+        yasmin: { breath: 0.97, saccade: 0.13, pulse_floor: 0.07, blink_ms: 3600 },
         wayne: { breath: 0.92, saccade: 0.15, pulse_floor: 0.06, blink_ms: 2500 },
       }.freeze
 
