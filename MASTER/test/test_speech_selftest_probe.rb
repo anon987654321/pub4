@@ -25,6 +25,15 @@ class TestSpeechSelftestProbe < Minitest::Test
 
   # The worker's own requires are the list. If this fails, the worker cannot
   # speak on this host, and every other assertion here is about the reporting.
+  def test_worker_keeps_the_bundle_context_activated_by_entrypoint
+    source = File.read(File.join(Master::ROOT, "bin", "tts-worker"))
+
+    refute_match(/BUNDLE_ISOLATION_KEYS\.each\s*\{\s*\|key\|\s*ENV\.delete\(key\)/, source)
+    assert_includes source, "Entrypoint.prepare!"
+    assert_includes source, 'ENV["BUNDLE_GEMFILE"] = File.join(ROOT, "Gemfile")'
+    assert_includes source, "require \"bundler/setup\""
+  end
+
   def test_worker_selftest_exits_zero_and_names_its_versions
     out, err, status = Open3.capture3(RbConfig.ruby, Speech::WORKER, "--selftest", chdir: Master::ROOT)
 
