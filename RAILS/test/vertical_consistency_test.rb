@@ -2,7 +2,7 @@
 
 require "minitest/autorun"
 require "set"
-require_relative "../../MASTER/tools/design/scss_rules"
+require_relative "../../MASTER/tools/scss_rules"
 
 # brgen is one site. Its verticals are mountable engines, and each one's styles
 # are a body.vertical-<name> scope in brgen's stylesheet, which is exactly the
