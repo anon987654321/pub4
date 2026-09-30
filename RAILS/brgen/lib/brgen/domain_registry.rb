@@ -108,11 +108,24 @@ module Brgen
 
     ENTRIES_BY_DOMAIN = ENTRIES.index_by(&:domain).freeze
 
+    # The city apexes that belong to the public city network. This is deliberately
+    # separate from LIVE_DOMAINS: a network link is a product relationship, while
+    # LIVE_DOMAINS is the deployment/TLS fact set. Never use LIVE_DOMAINS to infer
+    # which cities exist, and never use CITY_NETWORK_DOMAINS to assert a certificate.
+    CITY_NETWORK_DOMAINS = %w[
+      brgen.no oshlo.no stvanger.no trndheim.no cardff.uk edinbrgh.uk frankfrt.de
+      lndon.uk denvr.us lsangeles.com wshingtondc.com
+    ].freeze
+
+    def self.city_network_entries
+      CITY_NETWORK_DOMAINS.map { |domain| ENTRIES_BY_DOMAIN.fetch(domain) }.sort_by(&:city)
+    end
+
     # The city apexes that actually serve this app. Every other ENTRIES row is a
     # domain we intend to run and have wired into OPERATOR.sh#ALL_DOMAINS, but
     # relayd only answers for an apex whose certificate exists on disk — see
-    # TODO.md "City vanity TLS". Linking the rest puts dead links in
-    # front of every visitor, so nothing user-facing may iterate ENTRIES.
+    # TODO.md "City vanity TLS". LIVE_DOMAINS stays deployment evidence, not
+    # navigation data.
     #
     # Ground truth is `grep keypair /etc/relayd.conf` on vm23, and domain_alignment
     # now asserts this list equals (ENTRIES ∩ those keypairs) so it cannot drift
