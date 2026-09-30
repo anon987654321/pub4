@@ -119,7 +119,7 @@ end
 
 def build_shell
   puts "loop2 — the shell"
-  sh("ruby", File.join(ROOT, "RAILS", "gates", "probes", "shell_loop_record.rb"),
+  sh("ruby", File.join(ROOT, "MASTER", "gates", "shell_loop_record.rb"),
      "--out", File.join(MASTER, "loop2.mp4"), "--audio", DEMO, "--fps", "20")
   report(File.join(MASTER, "loop2.mp4"))
   gif_for(File.join(MASTER, "loop2.mp4"), seconds: 9)
