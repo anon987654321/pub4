@@ -5,7 +5,6 @@ require "timeout"
 require "zeitwerk"
 require "yaml"
 require_relative "security_error"
-require_relative "version"
 
 begin
   require "openssl"
@@ -15,6 +14,7 @@ end
 
 module Master
   # Constitutional automation runtime and governed repository-work pipeline.
+  VERSION = File.read(File.expand_path("../../VERSION", __dir__), encoding: "UTF-8").strip.freeze
   ROOT = File.expand_path("..", __dir__).freeze
   REPO_ROOT = File.expand_path("..", ROOT).freeze
   OPENBSD_ROOT = File.join(REPO_ROOT, "OPENBSD").freeze
