@@ -306,6 +306,14 @@ module Master
         cfg["default_mode"].to_s == "transcendent" && Transcendent.enabled? ? "transcendent" : "classic"
       end
 
+      def fast_tts_mode?
+        return ENV["MASTER_TTS_MODE"] != "transcendent" if ENV.key?("MASTER_TTS_MODE")
+
+        Transcendent.load_config["fast_mode"] == true
+      rescue StandardError
+        true
+      end
+
       def synthesize(text, voice: nil, style: default_style, rate: nil, pitch: nil, mode: nil, voice_locked: false, style_locked: false)
         text_str = clean_text(text)
         return if text_str.empty?
@@ -508,7 +516,8 @@ module Master
       end
 
       def attempt_socket_synthesis(text_str, voice_name, style_config, output_path, on_chunk)
-        2.times do |attempt|
+        attempts = fast_tts_mode? ? 1 : 2
+        attempts.times do |attempt|
           path = synthesize_edge_socket(
             text: text_str,
             voice_name:,
@@ -595,8 +604,9 @@ module Master
       def synthesize_edge(text, voice:, style_config:)
         audio_path = "/tmp/m_tts_#{SecureRandom.hex(8)}.mp3"
         voice_name = VOICES.fetch(voice.to_sym, VOICES[default_voice])
+        attempts = fast_tts_mode? ? 1 : 2
 
-        2.times do |attempt|
+        attempts.times do |attempt|
           sock_path = synthesize_edge_socket(text:, voice_name:, style_config:, audio_path:)
           return shaped(sock_path) if sock_path
           break unless attempt.zero? && edge_tts_available?
@@ -604,6 +614,8 @@ module Master
           TtsSupervisor.ensure_daemon!
           sleep 0.15
         end
+
+        return nil if fast_tts_mode?
 
         shaped(synthesize_edge_oneshot(text:, voice_name:, style_config:, audio_path:))
       end

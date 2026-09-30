@@ -139,8 +139,15 @@ module Master
         nil
       end
 
+      FAST_WORKER_TIMEOUT_S = Integer(ENV.fetch("MASTER_TTS_FAST_TIMEOUT", "4"))
+      FAST_WORKER_TIMEOUT_MAX = Integer(ENV.fetch("MASTER_TTS_FAST_TIMEOUT_MAX", "6"))
+
       def worker_timeout(text_length = 0)
         return Integer(ENV.fetch("MASTER_TTS_TIMEOUT")) if ENV.key?("MASTER_TTS_TIMEOUT")
+
+        if respond_to?(:fast_tts_mode?) && fast_tts_mode?
+          return [FAST_WORKER_TIMEOUT_S + (text_length * 0.01).ceil, FAST_WORKER_TIMEOUT_MAX].min
+        end
 
         [Speech::WORKER_TIMEOUT + (text_length * Speech::WORKER_TIMEOUT_PER_CHAR).ceil, Speech::WORKER_TIMEOUT_MAX].min
       rescue ArgumentError

@@ -67,7 +67,9 @@ module Master
         idx = @pool_rr % size
         @pool_rr += 1
         path = socket_path(root, index: idx)
+        return path if Speech.fast_tts_mode? && File.socket?(path)
         return path if socket_alive?(path, root: root)
+        return nil if Speech.fast_tts_mode?
 
         ensure_pool_worker!(root:, index: idx)
         path
