@@ -5,6 +5,7 @@ require "timeout"
 require "zeitwerk"
 require "yaml"
 require_relative "security_error"
+require_relative "version"
 
 begin
   require "openssl"
