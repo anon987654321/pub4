@@ -229,6 +229,7 @@ module Master
         def device_lines_for(context)
           mode = Master::CLI::RuntimeMode.summary(config: @config).split(", ")
           [
+            d("release0 at mainbus0: pub4 #{release_version}"),
             d("ruby0 at mainbus0: ruby #{RUBY_VERSION} #{RUBY_PLATFORM}"),
             d("shell0 at mainbus0: #{context[:shell]}, user #{context[:user]}"),
             d("soul0 at mainbus0: constitution rev #{soul_version}"),
