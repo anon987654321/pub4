@@ -18,7 +18,6 @@ module Master
         PROMPT_PATH_MAX = 44
         ANSI_ESCAPE = /\e\[[0-9;?]*[ -\/]*[@-~]/
         BOOT_FG = "\e[37m"
-        BOOT_BG = "\e[44m"
         BOOT_RESET = "\e[0m"
         # The prompt token alone carries the phase; the path and state stay quiet.
         PHASE_COLORS = {
@@ -123,19 +122,26 @@ module Master
           lines = text.to_s.gsub(ANSI_ESCAPE, "").lines(chomp: true)
           width = lines.map(&:length).max.to_i
           body = lines.map { |line| line.ljust(width) }.join("\n")
-          "#{BOOT_BG}#{BOOT_FG}#{body}#{BOOT_RESET}"
+          "#{BOOT_FG}#{body}#{BOOT_RESET}"
         end
 
         # The prompt is set like text, not a status bar: location first,
         # repository state second, phase third, cursor last. Keep the whole line
         # near a 66-character measure when the terminal permits it, and let the
         # path yield before the meaningful state does.
+        # A small shell prompt, borrowing the useful parts of nvim and
+        # oh-my-zsh: one identity mark, the working path, git state, phase and
+        # cursor. It stays information-dense without becoming a dashboard.
+        PROMPT_ORB = "◉"
+
         def zsh_prompt(phase, last_ok)
           git = git_prompt_segments
           phase_text = phase_label(phase)
-          suffix = [git, phase_text, phase_prompt(last_ok, phase)].reject(&:empty?).join(" ")
-          path = prompt_path(suffix_length: visible_length(suffix))
-          [d(path), suffix].reject(&:empty?).join(" ") + " "
+          cursor = phase_prompt(last_ok, phase)
+          suffix = [git, phase_text, cursor].reject(&:empty?).join(" ")
+          path = prompt_path(suffix_length: visible_length(suffix) + visible_length(PROMPT_ORB) + 1)
+          orb = Aesthetic.wscons? ? PROMPT_ORB : @p.magenta(PROMPT_ORB)
+          [orb, d(path), suffix].reject(&:empty?).join(" ") + " "
         end
 
         # zsh's own %~: home as a tilde, and a long path cut from the left so
@@ -262,7 +268,9 @@ module Master
           parts << "-#{behind}" if behind.positive?
           label = parts.join(" ")
           return d(label) if Aesthetic.wscons?
-          dirty ? @p.red(label) : @p.dim(label)
+          return @p.red(label) if dirty
+
+          @p.cyan(label)
         end
 
         def phase_label(phase)
