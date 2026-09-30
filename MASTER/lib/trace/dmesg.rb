@@ -88,6 +88,9 @@ module Master
         emit("#{unit}: #{msg}")
       end
 
+      def once(unit, msg)
+      end
+
       # Work that calls a model names itself, and the calls attach under it.
       # Fiber storage reaches the threads the work spawns, and is put back after.
       def under(unit)
