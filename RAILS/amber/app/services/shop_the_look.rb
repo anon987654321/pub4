@@ -20,14 +20,15 @@ module ShopTheLook
       epi = Shared::LinkConverter.epi_for(surface: "amber", post_id: item.id)
 
       Array(item.affiliate_links).map do |link|
+        link_metadata = link.metadata.is_a?(Hash) ? link.metadata : {}
         Suggestion.new(
-          link.title.presence || item.title.to_s,
+          link_metadata["title"].to_s.presence || item.title.to_s,
           link.merchant.to_s,
           Shared::LinkConverter.wrap(link.url.to_s, epi: epi),
           "saved",
           1.0,
           [ I18n.t("commerce_fit.saved", default: "Saved by you.") ],
-          link.metadata.is_a?(Hash) ? link.metadata["commerce_key"].to_s.presence : nil
+          link_metadata["commerce_key"].to_s.presence
         )
       end
     end
