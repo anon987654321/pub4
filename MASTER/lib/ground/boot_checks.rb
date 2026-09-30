@@ -44,8 +44,12 @@ module Master
           warnings = results.select { |r| !r.ok && r.severity == :warning }
           return if warnings.empty?
 
-          messages = warnings.map { |w| "  ⚠ #{w.name}: #{w.message}" }.join("\n")
-          warn "BOOT WARNINGS — #{warnings.size} warning(s):\n#{messages}"
+          detail = warnings.map { |w| "#{w.name}, #{w.message}" }.join("; ")
+          if defined?(Master::Trace::Dmesg)
+            Master::Trace::Dmesg.status("boot0", "#{warnings.size} warning(s), #{detail}")
+          else
+            warn "boot0: #{warnings.size} warning(s), #{detail}"
+          end
         end
 
         private
