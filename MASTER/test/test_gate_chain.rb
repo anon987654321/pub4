@@ -79,6 +79,15 @@ class TestGateChain < Minitest::Test
     assert_equal true, tools[5]
   end
 
+  def test_studio_scope_has_a_media_suite
+    jobs = G.suite_jobs(%w[STUDIO])
+    studio = jobs.find { |job| job.first == "STUDIO media" }
+
+    refute_nil studio
+    assert_equal "STUDIO", studio[4]
+    assert_equal [G::RUBY, "-S", "rake", "test:dilla", "test:postpro", "test:replicate", "test:lora"], studio[1]
+  end
+
   def test_every_suite_job_names_a_tree_the_scoping_knows
     strays = G.suite_jobs.map { |job| job[4] } - G::TREES
 
