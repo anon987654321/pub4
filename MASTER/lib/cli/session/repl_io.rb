@@ -139,7 +139,7 @@ module Master
 
         # One line, as a disk attaches: the entries are `/tree` away, and two
         # hundred of them buried the prompt on a first boot.
-        puts @refs.renderer.render("tree0 at master0: #{File.basename(@refs.root)}, #{lines.size} entries", mode: :dim)
+        Master::Trace::Dmesg.status("tree0", "#{File.basename(@refs.root)}, #{lines.size} entries")
         mark_booted
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "cli.print_repo_tree", event_bus: @refs.bus)
