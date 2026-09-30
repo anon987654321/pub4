@@ -19,7 +19,7 @@ provider failures. Credentials are never repository outputs.
 
 ### Invocation
 
-Use the tool entrypoints under `MASTER/tools/lora/` or the documented helper
+Use the tool entrypoints under `STUDIO/lora/` or the documented helper
 scripts in `_toolkit/`. Provider work is explicit; local inspection stays
 possible without credentials.
 
@@ -49,7 +49,7 @@ non-success states, not inferred passes.
 
 ### MASTER integration
 
-LoRA is a canonical MASTER tool. MASTER provides governance and dispatch; LoRA
+LoRA is a canonical STUDIO tool. MASTER provides governance; STUDIO owns the media workflow; LoRA
 owns the training/media workflow.
 
 
@@ -379,12 +379,12 @@ training; a sample from the newest checkpoint; check, generate and grade in one
 pass; and two Replicate renders, the second a dry run.
 
 ```sh
-MASTER/tools/lora/ragnhild/lora --check
-MASTER/tools/lora/ragnhild/lora --train
-MASTER/tools/lora/ragnhild/lora --generate
-MASTER/tools/lora/ragnhild/lora --all
-MASTER/tools/lora/ragnhild/lora --generate-replicate --set selfies
-MASTER/tools/lora/ragnhild/lora --generate-replicate --set distance --dry-run
+STUDIO/lora/ragnhild/lora --check
+STUDIO/lora/ragnhild/lora --train
+STUDIO/lora/ragnhild/lora --generate
+STUDIO/lora/ragnhild/lora --all
+STUDIO/lora/ragnhild/lora --generate-replicate --set selfies
+STUDIO/lora/ragnhild/lora --generate-replicate --set distance --dry-run
 ```
 
 ## Security and trust boundaries
@@ -404,6 +404,6 @@ GraphQL-specific controls belong at the API boundary: authenticate and authorize
 
 ## MASTER integration
 
-LoRA is a creative/model tool under MASTER/tools/lora. MASTER provides governance and invocation; LoRA owns model composition, prompt construction, adapter data, and artifact provenance.
+LoRA is a creative/model tool under STUDIO/lora. MASTER provides governance and invocation; LoRA owns model composition, prompt construction, adapter data, and artifact provenance.
 
-New automation should reference MASTER/tools/lora, never the retired MASTER/tools/lora path.
+New automation should reference STUDIO/lora, never the retired STUDIO/lora path.

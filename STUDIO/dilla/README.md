@@ -20,7 +20,7 @@ diagnostic reports. No output is considered valid merely because a file exists.
 
 ### Invocation
 
-Use `ruby MASTER/tools/dilla/dilla.rb <command>`. The entrypoint is
+Use `ruby STUDIO/dilla/dilla.rb <command>`. The entrypoint is
 standalone-loadable and does not depend on the MASTER process already being
 booted.
 
@@ -51,7 +51,7 @@ reported rather than silently replaced.
 
 ### MASTER integration
 
-Dilla is a canonical MASTER tool. MASTER governs dispatch and lifecycle; Dilla
+Dilla is a canonical STUDIO tool. MASTER governs dispatch and lifecycle; Dilla
 owns music-specific generation and measurement.
 
 
@@ -103,7 +103,7 @@ and every piece set to the same loudness under a true-peak ceiling. The bed bega
 as the pad under MASTER's narration and became the engine's render because it
 sounded better than the engine's own catalogue; `ruby dilla.rb bed` still plays
 it under the narration, ducking while a line is spoken, and
-`MASTER/tools/dilla/data/bed.yml` holds every number it uses. `ruby dilla.rb demo-all`
+`STUDIO/dilla/data/bed.yml` holds every number it uses. `ruby dilla.rb demo-all`
 renders the older engine's catalogue.
 
 Old work comes back whole. An Ableton set is a gzipped XML document, so
@@ -153,8 +153,8 @@ render resolved. Two ways remain to hear the engine without rendering a file:
 `ruby dilla.rb live`, which plays the catalogue and, as `live set`, the livesets
 in `lib/livesets.rb`, and `ruby dilla.rb sines`, which runs the sine stream.
 
-For local soundcard playback, `ruby MASTER/tools/dilla/dilla.rb live default`
-starts the detached live player and `ruby MASTER/tools/dilla/liveset.rb` runs
+For local soundcard playback, `ruby STUDIO/dilla/dilla.rb live default`
+starts the detached live player and `ruby STUDIO/dilla/liveset.rb` runs
 the frozen endless liveset directly. The live path needs ffmpeg and either SoX
 or ffplay. Player discovery checks Homebrew's standard locations before PATH, so
 a GUI-launched terminal does not need a separately configured shell PATH just to
@@ -686,7 +686,7 @@ drums more 909, the chords more Dilla or the textures more FlyLo.
 
 ## Running it
 
-Run everything from `MASTER/tools/dilla`. `ruby dilla.rb out.wav 18` renders one
+Run everything from `STUDIO/dilla`. `ruby dilla.rb out.wav 18` renders one
 track of eighteen bars, and `TRACK=kembara_rindu` in front of it picks the
 track. Bare `ruby dilla.rb` renders the ten-piece showcase into `demo.wav`,
 `piece <name>` renders one row, `compose` the six-minute piece, `stream` plays
@@ -748,9 +748,9 @@ Dilla is a MASTER tool, not a second application framework. Its source of truth 
 
 Canonical commands:
 
-ruby MASTER/tools/dilla/dilla.rb knobs
-ruby MASTER/tools/dilla/dilla.rb ears demo.wav
-ruby MASTER/tools/dilla/dilla.rb config-provenance
-ruby MASTER/tools/dilla/dilla.rb audit
+ruby STUDIO/dilla/dilla.rb knobs
+ruby STUDIO/dilla/dilla.rb ears demo.wav
+ruby STUDIO/dilla/dilla.rb config-provenance
+ruby STUDIO/dilla/dilla.rb audit
 
-The canonical path is now MASTER/tools/dilla. Retired MASTER/tools/dilla references should not be copied into new automation.
+The canonical path is now STUDIO/dilla. Retired STUDIO/dilla references should not be copied into new automation.

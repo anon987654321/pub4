@@ -20,7 +20,7 @@ because the process exited zero.
 
 ### Invocation
 
-Use `ruby MASTER/tools/postpro/postpro.rb <options>`.
+Use `ruby STUDIO/postpro/postpro.rb <options>`.
 
 ### Architecture
 
@@ -47,7 +47,7 @@ Failures in media decoding, processing, or output replacement remain explicit.
 
 ### MASTER integration
 
-Postpro is a canonical MASTER tool and the standard image-processing boundary
+Postpro is a canonical STUDIO tool and the standard image-processing boundary
 for MASTER and the RAILS applications.
 
 
@@ -56,7 +56,7 @@ imitating the result.** A filter is a lookup table with an opinion. This is an
 emulsion: crystals with a size and a statistics, a base that reflects light back
 into the layer it came through, a curve that spends contrast instead of adding
 it, and a print stock after that. It is the house grade for stills, and its
-entry point is `MASTER/tools/postpro/postpro.rb`.
+entry point is `STUDIO/postpro/postpro.rb`.
 
 Give it `--input`, `--output` and `--preset` and it runs headless. Give it
 nothing and it opens the interactive menu — presets, random chains, or a custom
@@ -369,7 +369,7 @@ defaults. There is no `master.json` in the repo, so `CONFIG` is empty and every
 read of it takes a built-in fallback. `--vocab-check` reports that as a note
 rather than a problem.
 
-Camera profiles load from `MASTER/tools/postpro/camera_profiles.json`, and they
+Camera profiles load from `STUDIO/postpro/camera_profiles.json`, and they
 exist: 121 bodies across Canon, Sony, Nikon, Fujifilm, Leica and Olympus, each a
 3×3 sensor matrix recovered from a VSCO DCP archive. The pass matches on EXIF
 Make and Model and applies the body's own colour response before anything else
@@ -395,7 +395,7 @@ expecting film curves.
 `MASTER/web/app/services/image_presenter.rb` grades web photos through it. The
 Rails apps reach it through `Operator::DeployPaths#postpro_script` for newsletter
 heroes and TV thumbnails, by way of `Shared::NewsletterVisuals` and brgen's
-`PostproJob`. `MASTER/tools/replicate/replicate.rb --postpro PRESET` hands a fresh
+`PostproJob`. `STUDIO/replicate/replicate.rb --postpro PRESET` hands a fresh
 generation straight here.
 
 Programmatic invocation goes through `Master::Io::ScriptDispatch` under the tool
@@ -415,22 +415,22 @@ then repeats and exposure spread across a set. The listing and export flags
 process no image.
 
 ```sh
-ruby MASTER/tools/postpro/postpro.rb photo.jpg
-ruby MASTER/tools/postpro/postpro.rb ~/Pictures
-ruby MASTER/tools/postpro/postpro.rb --input in.jpg --output out.jpg --preset portrait
-ruby MASTER/tools/postpro/postpro.rb --random
-ruby MASTER/tools/postpro/postpro.rb --random --rough
-ruby MASTER/tools/postpro/postpro.rb --vocab-check
-ruby MASTER/tools/postpro/postpro.rb --fit-grain scan.tif
-ruby MASTER/tools/postpro/postpro.rb --measure photo.jpg
-ruby MASTER/tools/postpro/postpro.rb --set ~/Pictures/trip
-ruby MASTER/tools/postpro/postpro.rb --list-presets
-ruby MASTER/tools/postpro/postpro.rb --list-stocks
-ruby MASTER/tools/postpro/postpro.rb --list-lenses
-ruby MASTER/tools/postpro/postpro.rb --describe-preset noir
-ruby MASTER/tools/postpro/postpro.rb --export-lut cinematic --output cinematic.cube
-ruby MASTER/tools/postpro/postpro.rb --css-filter portrait
-ruby MASTER/tools/postpro/postpro.rb --capabilities
+ruby STUDIO/postpro/postpro.rb photo.jpg
+ruby STUDIO/postpro/postpro.rb ~/Pictures
+ruby STUDIO/postpro/postpro.rb --input in.jpg --output out.jpg --preset portrait
+ruby STUDIO/postpro/postpro.rb --random
+ruby STUDIO/postpro/postpro.rb --random --rough
+ruby STUDIO/postpro/postpro.rb --vocab-check
+ruby STUDIO/postpro/postpro.rb --fit-grain scan.tif
+ruby STUDIO/postpro/postpro.rb --measure photo.jpg
+ruby STUDIO/postpro/postpro.rb --set ~/Pictures/trip
+ruby STUDIO/postpro/postpro.rb --list-presets
+ruby STUDIO/postpro/postpro.rb --list-stocks
+ruby STUDIO/postpro/postpro.rb --list-lenses
+ruby STUDIO/postpro/postpro.rb --describe-preset noir
+ruby STUDIO/postpro/postpro.rb --export-lut cinematic --output cinematic.cube
+ruby STUDIO/postpro/postpro.rb --css-filter portrait
+ruby STUDIO/postpro/postpro.rb --capabilities
 ```
 
 ## Security and trust boundaries
@@ -450,12 +450,12 @@ HTTP request smuggling, JWT algorithm confusion, and GraphQL depth/batching cont
 
 ## MASTER integration
 
-Postpro is the image-processing tool at MASTER/tools/postpro. It is invoked by MASTER through its tool-dispatch boundary and can also be called directly.
+Postpro is the image-processing tool at STUDIO/postpro. It is invoked by MASTER through its tool-dispatch boundary and can also be called directly.
 
 Canonical examples:
 
-ruby MASTER/tools/postpro/postpro.rb --capabilities
-ruby MASTER/tools/postpro/postpro.rb --list-presets
-ruby MASTER/tools/postpro/postpro.rb --measure photo.jpg
+ruby STUDIO/postpro/postpro.rb --capabilities
+ruby STUDIO/postpro/postpro.rb --list-presets
+ruby STUDIO/postpro/postpro.rb --measure photo.jpg
 
-New documentation and automation should use MASTER/tools/postpro, not the retired MASTER/tools/postpro path.
+New documentation and automation should use STUDIO/postpro, not the retired STUDIO/postpro path.

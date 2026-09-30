@@ -19,7 +19,7 @@ sidecars, capability reports, and explicit provider failures.
 
 ### Invocation
 
-Use `ruby MASTER/tools/replicate/replicate.rb <command>`.
+Use `ruby STUDIO/replicate/replicate.rb <command>`.
 
 ### Architecture
 
@@ -47,7 +47,7 @@ audits report inability to measure rather than passing silently.
 
 ### MASTER integration
 
-Replicate is a canonical MASTER tool. MASTER governs routing and lifecycle;
+Replicate is a canonical STUDIO tool. MASTER governs routing and lifecycle;
 Replicate owns photographic vocabulary, model mapping, request construction,
 and artifact provenance.
 
@@ -203,7 +203,7 @@ describes the subject, the crop, the camera height and the background — not th
 compiled prompt, which is how the image was made rather than what it is of.
 
 `--postpro PRESET` hands the finished file straight to
-`MASTER/tools/postpro/postpro.rb`. The `capabilities` command emits the executable
+`STUDIO/postpro/postpro.rb`. The `capabilities` command emits the executable
 60-item Replicate/LoRA contract as JSON.
 
 ## Keeping the model table honest
@@ -245,15 +245,15 @@ The last two commands, run from `STUDIO`, hold the model table against the live
 schemas and print an entry to paste for a model the table does not have.
 
 ```sh
-ruby MASTER/tools/replicate/replicate.rb generate \
+ruby STUDIO/replicate/replicate.rb generate \
   --prompt "Bergen rain, 35mm documentary photograph" --output .master/media/bergen.webp
-ruby MASTER/tools/replicate/replicate.rb search flux --limit 100
-ruby MASTER/tools/replicate/replicate.rb sync --limit 250
-ruby MASTER/tools/replicate/replicate.rb stats
-ruby MASTER/tools/replicate/replicate.rb capabilities
-ruby MASTER/tools/replicate/replicate.rb vocab-check
+ruby STUDIO/replicate/replicate.rb search flux --limit 100
+ruby STUDIO/replicate/replicate.rb sync --limit 250
+ruby STUDIO/replicate/replicate.rb stats
+ruby STUDIO/replicate/replicate.rb capabilities
+ruby STUDIO/replicate/replicate.rb vocab-check
 
-ruby MASTER/tools/replicate/replicate.rb generate \
+ruby STUDIO/replicate/replicate.rb generate \
   --prompt "a fisherman on a dock" \
   --stock hp5 --lens 85mm --distance portrait --camera-height eye \
   --lighting rembrandt --weather drizzle --time-of-day blue_hour \
@@ -283,12 +283,12 @@ Subdomain ownership is also part of deployment: hostnames used for generated-med
 
 ## MASTER integration
 
-Replicate lives at MASTER/tools/replicate and is the canonical image-generation boundary. MASTER owns governance and dispatch; Replicate owns vocabulary, provider capability mapping, request construction, generation, and artifact provenance.
+Replicate lives at STUDIO/replicate and is the canonical image-generation boundary. MASTER owns governance; STUDIO owns dispatch and media production; Replicate owns vocabulary, provider capability mapping, request construction, generation, and artifact provenance.
 
 Canonical examples:
 
-ruby MASTER/tools/replicate/replicate.rb capabilities
-ruby MASTER/tools/replicate/replicate.rb vocab-check
-ruby MASTER/tools/replicate/replicate.rb generate --prompt "Bergen rain" --dry-run
+ruby STUDIO/replicate/replicate.rb capabilities
+ruby STUDIO/replicate/replicate.rb vocab-check
+ruby STUDIO/replicate/replicate.rb generate --prompt "Bergen rain" --dry-run
 
-Use MASTER/tools/replicate in new scripts and documentation. MASTER/tools/replicate is a retired path.
+Use STUDIO/replicate in new scripts and documentation. STUDIO/replicate is a retired path.
