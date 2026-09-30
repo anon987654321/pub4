@@ -142,10 +142,21 @@ class TestSpeech < Minitest::Test
     original = ENV["MASTER_TTS_MODE"]
     ENV.delete("MASTER_TTS_MODE")
 
-    speech::Transcendent.stub(:load_config, { "fast_mode" => true, "default_mode" => "transcendent" }) do
+    Master::Voice::Transcendent.stub(:load_config, { "fast_mode" => true, "default_mode" => "transcendent" }) do
       assert_equal "classic", speech.synthesis_mode
       ENV["MASTER_TTS_MODE"] = "transcendent"
       assert_equal "transcendent", speech.synthesis_mode
+    end
+  ensure
+    ENV["MASTER_TTS_MODE"] = original
+  end
+
+  def test_streaming_skips_transcendent_when_fast_mode_is_enabled
+    original = ENV["MASTER_TTS_MODE"]
+    ENV.delete("MASTER_TTS_MODE")
+
+    Master::Voice::Transcendent.stub(:load_config, { "fast_mode" => true }) do
+      assert_equal false, Master::Voice::Speech.send(:transcendent_streaming_enabled?, {})
     end
   ensure
     ENV["MASTER_TTS_MODE"] = original
