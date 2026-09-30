@@ -37,6 +37,21 @@ class GroundRedactorTest < Minitest::Test
     assert_equal "[CYCLE]", scrubbed[:array][0]
   end
 
+  def test_payload_bounds_extreme_nesting
+    raw = {}
+    cursor = raw
+    100_000.times do
+      cursor[:child] = {}
+      cursor = cursor[:child]
+    end
+
+    scrubbed = Master::Ground::Redactor.payload(raw)
+
+    cursor = scrubbed
+    15.times { cursor = cursor[:child] }
+    assert_equal "[DEPTH]", cursor[:child]
+  end
+
   def test_payload_redacts_note_text_and_sensitive_keys
     scrubbed = Master::Ground::Redactor.payload(
       text: "sk-#{'B' * 24}",
