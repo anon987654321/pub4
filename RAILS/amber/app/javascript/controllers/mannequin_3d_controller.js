@@ -70,7 +70,7 @@ export default class extends Controller {
     this.carouselElement?.addEventListener("amber:mannequin-change", this.onMannequinChange)
     this.element.addEventListener("amber:mannequin-slide", this.onSlide)
 
-    if (this.element.dataset.mannequin3dSlidesValue) this.setSlide(0)
+    if (this.slidesValue.length) this.setSlide(0)
     else this.setItems(this.firstItemsFromZones())
 
     this.resize()
