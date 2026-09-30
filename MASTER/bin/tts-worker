@@ -72,6 +72,9 @@ require "open3"
 require "securerandom"
 require "openssl"
 require "uri"
+require "digest"
+
+WORKER_VERSION = Digest::SHA256.file(__FILE__).hexdigest[0, 16]
 
 # The daemon's JSON request and the one-shot argv-plus-stdin contract carry the
 # same four values; out_path stays apart because it names the destination.
