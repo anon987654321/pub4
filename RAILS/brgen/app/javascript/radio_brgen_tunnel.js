@@ -13,11 +13,8 @@ const DEFAULT_TRACKS = [
   { title: "Can I Be Me (Instrumental)", id: "Fo7WoYn_FEs", artist: "J Dilla" }
 ]
 
-// Radio Bergen opens on the same track every session. A station has a signature
-// tune; a shuffle has none, and the first thing a visitor heard used to be
-// whichever of 24 tracks Math.random landed on. AFTA-1's "Due Time" is the
-// opener by operator decision. Rotation is random only after it has played, and
-// the lookup is by id so reordering the manifest cannot silently unpin it.
+// The original Radio Bergen surface opens on Microphone Master and keeps one
+// persistent warped tunnel through the whole eight-track set.
 const OPENING_TRACK_ID = "9EGHwkDix78"
 
 // FFT band edges as a fraction of the spectrum. 2048 bins over ~44.1kHz puts
@@ -212,7 +209,7 @@ class AudioEngine {
     this.#publishTrack()
   }
 
-  #publishTrack() {
+  publishTrack() {
     const track = this.tracks[this.currentTrack]
     publishVisual("radio:track", {
       topology: "tunnel",
@@ -583,9 +580,8 @@ class VisualEngine {
       particleCountPerRow: this.isMobile ? 32 : 48,
       zStep: this.isMobile ? 7 : 5
     }
-    // antialias: false. The tunnel is a one-pixel line drawing. Preserving the
-    // back buffer costs memory bandwidth and is unnecessary because the
-    // phosphor pass is rendered explicitly.
+    // One-pixel line drawing, no antialiasing. The back buffer is disposable:
+    // the tunnel clears each frame, so preserving it only adds memory traffic.
     const opts = { alpha: false, antialias: false, depth: false, preserveDrawingBuffer: false }
     this.gl = canvas.getContext("webgl", opts) || canvas.getContext("experimental-webgl", opts)
     if (this.gl) {
@@ -1022,6 +1018,7 @@ export class RadioBrgen {
     this.isStarted = true
     this.audioEngine.setUserInteracted()
     this.audioEngine.start()
+    this.audioEngine.publishTrack?.()
     if (this.overlay) this.overlay.hidden = true
     this.onStart?.()
   }
@@ -1161,7 +1158,6 @@ export class RadioBrgen {
     this._destroyed = true
     cancelAnimationFrame(this._raf)
     this.audioEngine.stop()
-    if (this.gui) this.gui.destroy()
     this._boundHandlers.forEach(([target, event, handler]) => {
       const el = target === "overlay" ? this.overlay : target === "window" ? window : document
       if (el) el.removeEventListener(event, handler)
