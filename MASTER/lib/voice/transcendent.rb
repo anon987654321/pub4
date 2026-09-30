@@ -29,7 +29,6 @@ module Master
         # a recorded decision, and this is the one thing that would break it.
         # The machinery is here so the choice is a flag rather than a rewrite.
         "phrase_language_switching" => true,
-        "phrase_language_voices" => { "nb" => "pernille", "ms" => "yasmin", "en" => "jenny" },
         "mlx_model" => "mlx-community/chatterbox-fp16",
         "mlx_voice" => "default",
         "exaggeration" => 0.62,
@@ -107,8 +106,7 @@ module Master
       end
 
       def synthesize_via_chain(clean, cfg, emotion, melody, resolved_voice, resolved_rate, resolved_pitch, out_path)
-        @_clean_for_chain = clean
-        chain = build_engine_chain(cfg, emotion)
+        chain = build_engine_chain(cfg, emotion, clean)
         played, used_engine = try_engine_chain(
           chain, clean, cfg, emotion, melody, resolved_voice, resolved_rate, resolved_pitch, out_path
         )
@@ -170,19 +168,18 @@ module Master
       def phrase_languages(cfg)
         return unless cfg["phrase_language_switching"] == true
 
-        voices = cfg["phrase_language_voices"]
-        return unless voices.is_a?(Hash)
-
-        voices.filter_map { |lang, key| [lang.to_s.to_sym, key.to_s.to_sym] if key.to_s != "" }.to_h
+        Policy.language_voice_families.each_key.each_with_object({}) do |language, voices|
+          voices[language.to_sym] = Policy.voice_for_language(language)
+        end
       end
 
-      def build_engine_chain(cfg, emotion)
+      def build_engine_chain(cfg, emotion, clean)
         chain = cfg["engine_chain"].to_s.split(",").map(&:strip).reject(&:empty?)
         chain = chain.reject { |e| e == "edge_melodic" } unless phrase_rendered?(cfg, emotion)
         chain = chain.reject { |e| %w[mlx chatterbox].include?(e) } unless cfg["emotion_enabled"]
         # The current adapters are wired for English output. Native Norwegian
         # and Malay utterances must stay on their declared language families.
-        language = Language.detect(@_clean_for_chain.to_s)
+        language = Language.detect(clean)
         chain.reject { |e| %w[mlx chatterbox].include?(e) && language != :en }
       end
 
