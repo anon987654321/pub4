@@ -18,8 +18,11 @@ module Master
       MAX_DEPTH = 16
 
       def self.text(value)
-        out = value.to_s
-        KEY_PATTERNS.each { |pattern| out = out.gsub(pattern, "[REDACTED]") }
+        # Normalize String subclasses before redaction. A boot payload can carry
+        # framework strings with overridden to_s/gsub; redaction must never call
+        # back into itself through those overrides.
+        out = value.is_a?(String) ? String.new(value) : value.to_s
+        KEY_PATTERNS.each { |pattern| out = String.instance_method(:gsub).bind(out).call(pattern, "[REDACTED]") }
         out
       end
 
