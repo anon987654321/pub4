@@ -71,6 +71,19 @@ class TestSelfFindingsDrift < Minitest::Test
     end
   end
 
+  def test_stale_members_name_deleted_or_out_of_range_records
+    baseline = {
+      "findings" => 2,
+      "finding_members" => [
+        "RULE MASTER/lib/operator/self_findings.rb:999999",
+        "RULE MASTER/lib/operator/does_not_exist.rb:1"
+      ]
+    }
+    with_baseline(baseline) do
+      assert_equal baseline["finding_members"], Tool.stale_recorded_members("law")
+    end
+  end
+
   def test_a_rule_that_disappeared_is_reported_too
     with_baseline({ "findings" => 2, "by_rule" => { "GONE" => 2 } }) do
       out, = capture_io { Tool.report_drift({}) }
