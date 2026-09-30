@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
+require "open3"
 require "yaml"
 
 module Operator
@@ -113,31 +114,29 @@ module Operator
       return JSON.pretty_generate(row) if json
       return "rule: #{id}: not found" unless row
 
-      lines = [
-        "rule: #{row[:id]}",
-        "  name: #{row[:name]}" if row[:name],
-        "  severity: #{row[:severity]}" if row[:severity],
-        "  mode: #{row[:mode]}" if row[:mode],
-        "  enforcement: #{row[:enforcement]}" if row[:enforcement],
-        "  languages: #{row[:languages].join(", ")}" unless row[:languages].empty?,
-        "  scope: #{row[:scope]}" if row[:scope],
-        "  source: #{row[:source]}" if row[:source],
-        "  scanner: #{row[:scanner]}",
-        "  semantic: #{row[:semantic]}",
-        "  practice: #{row[:practice]}",
-        "  fixture: #{row[:fixture]}",
-        "  successor: #{Array(row[:successor]).join(", ")}" unless Array(row[:successor]).empty?,
-        "  dependencies: #{Array(row[:dependencies]).join(", ")}" unless Array(row[:dependencies]).empty?,
-        "  council_axes: #{Array(row[:council_axes]).join(", ")}" unless Array(row[:council_axes]).empty?,
-      ].compact
+      lines = []
+      lines << "rule: #{row[:id]}"
+      lines << "  name: #{row[:name]}" if row[:name]
+      lines << "  severity: #{row[:severity]}" if row[:severity]
+      lines << "  mode: #{row[:mode]}" if row[:mode]
+      lines << "  enforcement: #{row[:enforcement]}" if row[:enforcement]
+      lines << "  languages: #{row[:languages].join(", ")}" unless row[:languages].empty?
+      lines << "  scope: #{row[:scope]}" if row[:scope]
+      lines << "  source: #{row[:source]}" if row[:source]
+      lines << "  scanner: #{row[:scanner]}"
+      lines << "  semantic: #{row[:semantic]}"
+      lines << "  practice: #{row[:practice]}"
+      lines << "  fixture: #{row[:fixture]}"
+      lines << "  successor: #{Array(row[:successor]).join(", ")}" unless Array(row[:successor]).empty?
+      lines << "  dependencies: #{Array(row[:dependencies]).join(", ")}" unless Array(row[:dependencies]).empty?
+      lines << "  council_axes: #{Array(row[:council_axes]).join(", ")}" unless Array(row[:council_axes]).empty?
+
       if deep
         health = row[:health] || {}
-        lines.concat([
-          "  executable_law: #{row[:executable_law]}",
-          "  twin: #{row[:twin][:kind]}" if row[:twin].is_a?(Hash),
-          "  history: #{row[:history]}" if row[:history],
-          "  silent_reason: #{row[:silent_reason]}" if row[:silent_reason]
-        ].compact)
+        lines << "  executable_law: #{row[:executable_law]}"
+        lines << "  twin: #{row[:twin][:kind]}" if row[:twin].is_a?(Hash)
+        lines << "  history: #{row[:history]}" if row[:history]
+        lines << "  silent_reason: #{row[:silent_reason]}" if row[:silent_reason]
         health.each { |key, value| lines << "  #{key}: #{value}" }
       end
       lines.join("\n")
@@ -213,7 +212,15 @@ module Operator
       {}
     end
 
-    def first_present(*values)\n      values.each do |value|\n        array = Array(value)\n        return array unless array.empty?\n      end\n      []\n    end\n\n    def source_mentions_any?(rule, axes)
+    def first_present(*values)
+      values.each do |value|
+        array = Array(value)
+        return array unless array.empty?
+      end
+      []
+    end
+
+    def source_mentions_any?(rule, axes)
       source = rule&.source.to_s.upcase
       axes.any? { |axis| source.include?(axis.to_s.upcase) }
     end
