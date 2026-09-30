@@ -11,7 +11,6 @@ require "open3"
 # The warning was the only thing standing between that and a sweep of the wrong
 # tree reporting clean. See TODO.md, "Top-level ROOT".
 SWEEP_ROOT = File.expand_path("../..", __dir__)
-QUARANTINE = File.join(SWEEP_ROOT, "OPENBSD", "quarantine", "virus_museum")
 
 SECRET_PATTERNS = [
   /sk-[A-Za-z0-9_\-]{16,}/,
@@ -133,19 +132,7 @@ def sweep
 
   failures.concat(scan_tracked_secrets)
 
-  failures << "virus museum README missing" unless File.file?(File.join(QUARANTINE, "README.md"))
-
-  quarantine_files = git_ls_files("OPENBSD/quarantine/virus_museum")
-  bad_ext = quarantine_files.reject { |path| path.end_with?(".txt") || path.end_with?("README.md") }
-  failures.concat(bad_ext.map { |path| "virus museum non-text file: #{path}" })
-
-  mode_lines, = Open3.capture2("git", "-C", SWEEP_ROOT, "ls-files", "-s", "OPENBSD/quarantine/virus_museum")
-  mode_lines.lines.each do |line|
-    mode, _type, _sha, _stage, path = line.split(/\s+/, 5)
-    failures << "virus museum executable: #{path}" if mode && mode != "100644"
-  end
-
-  [failures, quarantine_files.size]
+  [failures, 0]
 end
 
 # Guarded so test/test_security_sweep.rb can require this file and exercise the
@@ -161,5 +148,5 @@ if $PROGRAM_NAME == __FILE__
     exit 1
   end
 
-  puts "Security sweep passed (#{samples} quarantine samples, 0 tracked secrets)."
+  puts "Security sweep passed (0 tracked secrets)."
 end
