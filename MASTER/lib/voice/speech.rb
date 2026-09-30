@@ -275,6 +275,11 @@ module Master
           .then { |t| Lexicon.apply(t) }
       end
 
+      # Keep normal speech units sentence-complete. A hard character
+      # cut makes the listener hear a fragment and then another engine or
+      # sentence starts, which is especially jarring when Edge falls back.
+      # The max remains a packing target: only a genuinely oversized
+      # sentence is allowed to stand alone rather than being cut arbitrarily.
       def chunks(text, max: CHUNK_CHARS)
         clean = clean_text(text)
         return [] if clean.empty?
@@ -282,10 +287,9 @@ module Master
         sentences = clean.scan(/[^.!?]+[.!?]?/).map(&:strip).reject(&:empty?)
         out = []
         sentences.each do |sentence|
-          if out.any? && (out[-1].length + sentence.length + 1) <= max
+          if out.any? && sentence.length <= max &&
+             (out[-1].length + sentence.length + 1) <= max
             out[-1] = "#{out[-1]} #{sentence}"
-          elsif sentence.length > max
-            out.concat(sentence.scan(/.{1,#{max}}(?:\s|\z)/).map(&:strip).reject(&:empty?))
           else
             out << sentence
           end
