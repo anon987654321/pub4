@@ -31,8 +31,11 @@ class ChromeAuditFlatContractTest < Minitest::Test
     cookie = read("shared/app/assets/stylesheets/_cookie_banner.scss")
     affiliate = read("shared/app/assets/stylesheets/_affiliate_feed_unit.scss")
     commerce = read("brgen/app/assets/stylesheets/_commerce_polish.scss")
+    offline = read("shared/app/assets/stylesheets/_offline_page.scss")
+    widgets = read("shared/app/assets/stylesheets/_shell_widgets.scss")
+    newsletter = read("shared/app/assets/stylesheets/_newsletter_capture.scss")
 
-    [modal, cookie, affiliate, commerce].each do |source|
+    [modal, cookie, affiliate, commerce, offline, widgets, newsletter].each do |source|
       refute_match(/box-shadow:\s*(?!none)/, source)
     end
 
@@ -40,5 +43,8 @@ class ChromeAuditFlatContractTest < Minitest::Test
     assert_includes cookie, ".cookie-banner {"
     assert_includes affiliate, ".affiliate_feed_unit {"
     assert_includes commerce, ".store-buybox {"
+    assert_includes offline, ".offline-page-retry {"
+    assert_includes widgets, ".sidebar-card {"
+    assert_includes newsletter, ".newsletter-capture {"
   end
 end
