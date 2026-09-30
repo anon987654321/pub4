@@ -20,7 +20,12 @@ module Master
         "default_rate" => "-7%",
         "default_pitch" => "+0Hz",
         "rotation" => %w[jenny],
-        "language_voices" => { "en" => "jenny", "nb" => "pernille" },
+        "language_voices" => { "en" => "jenny", "nb" => "pernille", "ms" => "yasmin" },
+        "language_voice_families" => {
+          "en" => { "female" => "jenny", "male" => "andrew" },
+          "nb" => { "female" => "pernille", "male" => "finn" },
+          "ms" => { "female" => "yasmin", "male" => "osman" }
+        },
         "post_chain" => nil,
         "bed" => nil,
       }.freeze
@@ -60,6 +65,19 @@ module Master
 
       def rotating? = rotation_keys.size > 1
 
+      def language_voice_families
+        value = data["language_voice_families"]
+        return {} unless value.is_a?(Hash)
+
+        value.each_with_object({}) do |(language, family), result|
+          next unless family.is_a?(Hash)
+          result[language.to_s.strip.downcase] = family.each_with_object({}) do |(gender, voice), row|
+            key = voice.to_s.strip.downcase
+            row[gender.to_s.strip.downcase] = key.to_sym unless key.empty?
+          end
+        end
+      end
+
       def language_voices
         value = data["language_voices"]
         return {} unless value.is_a?(Hash)
@@ -70,10 +88,17 @@ module Master
         end
       end
 
-      def voice_for_language(language)
-        voice = language_voices[language.to_s.strip.downcase]
-        return single_voice_key if voice.nil?
+      def voice_for_language(language, gender: nil)
+        lang = language.to_s.strip.downcase
+        family = language_voice_families[lang]
+        requested_gender = gender.to_s.strip.downcase
+        requested_gender = ENV.fetch("MASTER_TTS_GENDER", "female").to_s.strip.downcase if requested_gender.empty?
+        if family
+          chosen = family[requested_gender] || family["female"] || family.values.first
+          return chosen if Speech::VOICES.key?(chosen)
+        end
 
+        voice = language_voices[lang]
         Speech::VOICES.key?(voice) ? voice : single_voice_key
       end
 
@@ -146,6 +171,7 @@ module Master
           neural: neural_voice,
           rotation: rotation_keys.map(&:to_s),
           language_voices: language_voices.transform_values(&:to_s),
+          language_voice_families: language_voice_families.transform_values { |family| family.transform_values(&:to_s) },
           voices: voice_aliases,
           post_chain:,
           bed:,
