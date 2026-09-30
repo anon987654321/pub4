@@ -14,10 +14,18 @@ class SpeechContractSpec < Minitest::Test
     refute_includes cleaned, "`"
   end
 
-  def test_chunks_respect_sentence_boundaries
-    chunks = Master::Voice::Speech.chunks("One sentence. Two sentence. Three sentence.", max: 24)
-    assert_operator chunks.length, :>=, 2
-    assert chunks.all? { |chunk| chunk.length <= 24 }
+  def test_chunks_keep_normal_sentences_intact
+    chunks = Master::Voice::Speech.chunks(
+      "One sentence. Two sentence. Three sentence.",
+      max: 8,
+    )
+    assert_equal ["One sentence.", "Two sentence.", "Three sentence."], chunks
+  end
+
+  def test_chunks_do_not_split_an_oversized_sentence_at_arbitrary_words
+    sentence = "This is one deliberately long sentence that remains one thought."
+    chunks = Master::Voice::Speech.chunks(sentence, max: 16)
+    assert_equal [sentence], chunks
   end
 
   def test_voice_and_style_are_env_configurable

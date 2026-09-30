@@ -49,10 +49,10 @@ class TestVoiceSupport < Minitest::Test
     assert_equal ["hello"], spoken
   end
 
-  def test_playback_background_speech_falls_back_to_native_speech_when_synthesis_is_missing
+  def test_playback_background_speech_does_not_repeat_a_failed_reply_through_native_voice
     spoken = []
     queue = Queue.new
-    queue << ["hello", "hello", true]
+    queue << ["hello", "hello", true, :jenny, :warm]
     PB.instance_variable_set(:@queue, queue)
     PB.stub(:native_say, ->(text) { spoken << text; true }) do
       PB.stub(:synthesize, nil) do
@@ -61,7 +61,7 @@ class TestVoiceSupport < Minitest::Test
       end
     end
 
-    assert_equal ["hello"], spoken
+    assert_empty spoken
   ensure
     PB.instance_variable_set(:@queue, nil)
   end
