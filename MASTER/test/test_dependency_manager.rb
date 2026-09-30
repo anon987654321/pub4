@@ -57,6 +57,14 @@ class TestDependencyManager < Minitest::Test
     end
   end
 
+  def test_master_lock_declares_openbsd_platform_and_source_sqlite
+    source = File.read(File.join(Master::ROOT, "Gemfile.lock"))
+    platforms = source[/^PLATFORMS\n(.*?)\n\nDEPENDENCIES/m, 1].to_s
+
+    assert_includes platforms, "x86_64-openbsd"
+    assert_match(/^    sqlite3 \(2\.9\.4\)$/m, source)
+  end
+
   def test_watcher_gems_use_install_if_across_master_bundles
     [File.join(Master::ROOT, "Gemfile"), File.join(Master::ROOT, "web", "Gemfile")].each do |path|
       source = File.read(path)

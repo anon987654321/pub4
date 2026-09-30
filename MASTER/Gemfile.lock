@@ -214,6 +214,7 @@ GEM
     simplecov-html (0.13.2)
     simplecov_json_formatter (0.1.4)
     simpleidn (0.3.0)
+    sqlite3 (2.9.4)
     sqlite3 (2.9.4-arm64-darwin)
     sqlite3 (2.9.4-x86_64-linux-gnu)
     stringio (3.2.0)
@@ -249,6 +250,7 @@ GEM
 PLATFORMS
   arm64-darwin-25
   x86_64-linux
+  x86_64-openbsd
 
 DEPENDENCIES
   coltrane (~> 2.1)

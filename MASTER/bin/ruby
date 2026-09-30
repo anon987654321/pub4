@@ -53,10 +53,15 @@ if [[ -n $RBENV ]]; then
 fi
 
 if [[ -z $RUBY && -n $PINNED_VERSION ]]; then
-  ruby_command="ruby${PINNED_VERSION%.*}"
-  if (( $+commands[$ruby_command] )); then
-    RUBY=${commands[$ruby_command]}
-  fi
+  ruby_major=${PINNED_VERSION%%.*}
+  ruby_rest=${PINNED_VERSION#*.}
+  ruby_minor=${ruby_rest%%.*}
+  for ruby_command in "ruby${ruby_major}${ruby_minor}" "ruby${ruby_major}.${ruby_minor}"; do
+    if (( $+commands[$ruby_command] )); then
+      RUBY=${commands[$ruby_command]}
+      break
+    fi
+  done
 fi
 
 if [[ -z $RUBY ]] && (( $+commands[ruby] )); then
