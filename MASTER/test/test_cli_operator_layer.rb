@@ -43,6 +43,19 @@ class TestCliOperatorLayer < Minitest::Test
     assert dispatcher.send(:invalid_request_error?, error)
   end
 
+  def test_cli_reply_display_is_wired_to_voice_playback
+    source = File.read(File.join(Master::ROOT, "lib", "cli", "session", "result_display.rb"))
+
+    assert_includes source, "Master::Voice::Playback.speak(spoken_form(text))"
+  end
+
+  def test_local_cli_voice_can_satisfy_boot_without_an_edge_daemon
+    source = File.read(File.join(Master::ROOT, "lib", "boot", "master_boot.rb"))
+
+    assert_includes source, "Voice::Speech.available?"
+    assert_includes source, "Voice::Playback.available?"
+  end
+
   def test_casual_chat_does_not_run_evidence_preflight
     agent = Master::Review::Agent.allocate
     evidence = false
